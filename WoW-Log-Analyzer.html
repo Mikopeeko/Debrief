@@ -12694,8 +12694,11 @@ const allOf = (n, one, many) => (n === 1 ? one : n === 2 ? 'both ' + many : 'all
 function wrThumbFit(root) {
   (root || document).querySelectorAll('.wr-map').forEach((a) => { const svg = a.querySelector('svg.zmap'); if (!svg || !svg.dataset.focus || a.dataset.fit) return; a.dataset.fit = '1';
     const f = svg.dataset.focus.split(',').map(Number), k = f[2] / 480; svg.setAttribute('viewBox', f.join(' '));
-    for (const g of svg.querySelectorAll('g.ic')) { const x = +g.dataset.x, y = +g.dataset.y; g.setAttribute('transform', 'translate(' + x + ' ' + y + ') scale(' + k + ') translate(' + -x + ' ' + -y + ')'); }
-    hydrateMapIcons(a); });
+    const fitIc = () => { for (const g of svg.querySelectorAll('g.ic')) { const x = +g.dataset.x, y = +g.dataset.y; g.setAttribute('transform', 'translate(' + x + ' ' + y + ') scale(' + k + ') translate(' + -x + ' ' + -y + ')'); } };
+    fitIc(); hydrateMapIcons(a);
+    // (Oct 22: it plays like the big maps, only while it's on screen; no Key moment banner on something this small)
+    const src = MM_REG.get(+svg.dataset.mm);
+    if (src && typeof bindAnim === 'function') { a._zoomApply = fitIc; a._onPause = () => {}; try { bindAnim(a, src[0], src[1], true); } catch (e) { /* (a small map that can't play stays still) */ } } });
 }
 // (a box that works as a button: a click, or Enter or Space when it has focus)
 const onPress = (el, go) => { el.onclick = go; el.onkeydown = (e) => { if (e.target === el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(); } }; };
@@ -14244,6 +14247,7 @@ const PATCH_NOTES = [
     'Rotation\'s Work on these first no longer leads with gear and stats.',
     'Home: while your team\'s nights come in for the first time, a loading screen shows how far along it is, and the page fills in by itself when it\'s done.',
   ], f: [
+    'Debriefing: the small maps on the mechanic cards (like All pulls\' Guillotine) play now, like the big ones, instead of standing still.',
     'The Coiled Altar: a healer who immunes the 2nd Guillotine (like a Holy Paladin with Divine Shield) is no longer told to stay out of it.',
     'Debrief in game: the pull chips on the card no longer run past its edge, lines without a spell icon show a clean tick or dot instead of a question mark, long names stay inside the card, and a training dummy recap no longer says "No boss mistakes".',
     'Debrief in game: the PC app\'s desktop icon no longer goes blank after the app updates itself (it showed an empty picture after today\'s new logo).',
@@ -20141,7 +20145,11 @@ function mapLook(mp) {
   LOOK_MP.set(mp, out); return out;
 }
 let MAP_RN = 0;
+// (Oct 22, your note: the small maps on cards, like All pulls' Guillotine, never moved: they're drawn once and only fitted by
+// wrThumbFit. Every animated map remembers what it was drawn from (data-mm), so wrThumbFit can start a small one playing too)
+const MM_REG = new Map(); let MM_N = 0;
 function miniMap(mp, pmap) {
+  let mmId = 0; if (mp && mp.ft == null && mp.frames && mp.frames.length > 1) { mmId = ++MM_N; MM_REG.set(mmId, [mp, pmap]); if (MM_REG.size > 3000) MM_REG.delete(MM_REG.keys().next().value); }
   mp = mapLook(mp); pmap = lookPmap(pmap);
   const pts = mapObjs(mp.pts || []);
   if (!pts.length && !(mp.frames && mp.frames.some((f) => f.pts.length))) return '<p class="muted">No position data at this moment (needs Advanced Combat Logging).</p>';
@@ -20183,7 +20191,7 @@ function miniMap(mp, pmap) {
   const icl = (x, y, inner) => '<g class="ic icl" data-x="' + x.toFixed(1) + '" data-y="' + y.toFixed(1) + '">' + inner + '</g>'; /* (a label: kept inside the map's edges, see bindZoom) */
   // opens on the whole arena when there is one; "Zoom to mechanic" (or double-click) goes in
   const startVB = A ? fullVB : focusVB;
-  let s = '<svg viewBox="' + startVB.join(' ') + '" data-o="' + x0 + ',' + y0 + '" class="map zmap" style="max-width:560px;width:100%;aspect-ratio:1;background:#0b0d12;touch-action:none" data-zmax="' + (mp.gdzLook && A && A.f ? (Math.max(A.w, A.h) / A.s * yd * 1.05).toFixed(1) : 0) + '" data-focus="' + focusVB.join(',') + '" data-full="' + fullVB.join(',') + '" data-yd="' + yd + '">';
+  let s = '<svg viewBox="' + startVB.join(' ') + '" data-o="' + x0 + ',' + y0 + '"' + (mmId ? ' data-mm="' + mmId + '"' : '') + ' class="map zmap" style="max-width:560px;width:100%;aspect-ratio:1;background:#0b0d12;touch-action:none" data-zmax="' + (mp.gdzLook && A && A.f ? (Math.max(A.w, A.h) / A.s * yd * 1.05).toFixed(1) : 0) + '" data-focus="' + focusVB.join(',') + '" data-full="' + fullVB.join(',') + '" data-yd="' + yd + '">';
   // the boss's arena map (built in), or a room image the user added on the Interrupts map
   const arena = mp.noArena ? '' : arenaImg(MB, { x0, y0, yd }) + arenaHi(MB, { x0, y0, yd }, mp.artAt ? (mp.artAt.filter((q) => q[0] <= (mp.ft != null ? mp.ft : mp.t || 0)).pop() || [0, mp.art])[1] : mp.art, mp.gdzLook && A && A.sq, A); /* (the sharp render on every boss that has one, Oct 20) */
   const mi = arena || mp.noArena ? null : mapImg(MB);
