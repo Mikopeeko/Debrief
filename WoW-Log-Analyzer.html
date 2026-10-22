@@ -25521,7 +25521,7 @@ function graphsBoard(r, end, NP) {
   const SECS = [
     ['dmg', 'Damage', (night ? 'All pulls added up. ' : '') + 'Click a bar for that player\'s spells.', byK.get('dmg') + ch('Boss or adds', 'Damage into the boss and into everything else' + (night ? ALLP : ', over the whole pull'), stack(bossAdds, [{ n: 'Boss', col: '@cls' }, { n: 'Adds and others', col: '@cls', op: 0.35 }])) + ch('Biggest damage spells', 'The single spells that did the most, raid-wide' + ALLP, bars(spellTop))],
     ['heal', 'Healing', (night ? 'All pulls added up. ' : '') + 'Click a bar for that player\'s spells.', byK.get('heal') + ch('Healing and overhealing', 'Healing that landed, and what was more than needed' + (night ? ALLP : ', over the whole pull'), stack(healOver, [{ n: 'Healing', col: '@cls' }, { n: 'Overhealing', col: '#5c6270' }]))],
-    ['taken', 'Damage taken', (night ? 'All pulls added up. ' : '') + 'Click a bar for what hit that player.', byK.get('taken') + ch('Damage taken by mechanic', 'Each source\'s damage across all players' + ALLP, bars(takenSrc))],
+    ['taken', 'Damage taken', (night ? 'All pulls added up. ' : '') + 'Click a bar for what hit that player.', byK.get('taken') + ch('Mechanic damage', 'Each source\'s damage across all players' + ALLP, bars(takenSrc))],
     ['util', 'Deaths and utility', 'Who died, kicked and dispelled.', (byK.get('death') || '') + (byK.get('kick') || '') + (byK.get('disp') || '')],
     ['cast', 'Casting', 'How busy everyone was' + (night ? ', all pulls.' : '.'), byK.get('cpm') || '']].filter((x) => x[3]);
   // (Oct 20, "one graph at a time with them all listed at the top, but let people select up to 3 of them to view at a time": a button per
@@ -25529,7 +25529,7 @@ function graphsBoard(r, end, NP) {
   if (GB_PICK) { const GR = [['dmg', 'Damage done', byK.get('dmg')], ['tgt', 'Boss or adds', ch('Boss or adds', 'Damage into the boss and into everything else' + (night ? ALLP : ', over the whole pull'), stack(bossAdds, [{ n: 'Boss', col: '@cls' }, { n: 'Adds and others', col: '@cls', op: 0.35 }]))],
       ['spells', 'Biggest damage spells', ch('Biggest damage spells', 'The single spells that did the most, raid-wide' + ALLP, bars(spellTop))], ['heal', 'Healing done', byK.get('heal')],
       ['oh', 'Healing and overhealing', ch('Healing and overhealing', 'Healing that landed, and what was more than needed' + (night ? ALLP : ', over the whole pull'), stack(healOver, [{ n: 'Healing', col: '@cls' }, { n: 'Overhealing', col: '#5c6270' }]))],
-      ['taken', 'Damage taken', byK.get('taken')], ['src', 'Damage taken by mechanic', ch('Damage taken by mechanic', 'Each source\'s damage across all players' + ALLP, bars(takenSrc))],
+      ['taken', 'Damage taken', byK.get('taken')], ['src', 'Mechanic damage', ch('Mechanic damage', 'Each source\'s damage across all players' + ALLP, bars(takenSrc))],
       ['death', 'Deaths', byK.get('death')], ['kick', 'Interrupts', byK.get('kick')], ['disp', 'Dispels', byK.get('disp')], ['cpm', 'Casts a minute', byK.get('cpm')]].filter((x) => x[2]);
     let pk = (S.gbPick || (() => { try { return JSON.parse(store.get('wla-gb-pick') || 'null'); } catch (x) { return null; } })() || ['dmg']) /* (your last picks, remembered on this browser) */.filter((k) => GR.some((x) => x[0] === k)); if (!pk.length && GR.length) pk = [GR[0][0]];
     // (Oct 22, "at the top of this, make a brief summary of the most important parts of the pull or all pulls": a row of the site's tiles,
@@ -25813,7 +25813,7 @@ function perfDetail(r, kind, p, bossN, rowsAll) {
     if (kind === 'dmg') { const by = new Map(); for (const q of r.players.values()) for (const [n, v] of q.dmgT) by.set(n, (by.get(n) || 0) + v);
       body = sec('Where the damage went', 'whole pull', barList([...by].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([n, v]) => ({ html: esc(n) + (bossN.has(n) ? ' <span class="sub">boss</span>' : ''), v })), PERF_COL.dmg)); }
     else { const by = new Map(); for (const q of r.players.values()) for (const a of (kind === 'heal' ? q.healAb : q.takenAb).values()) { const x = by.get(a.name) || { name: a.name, id: a.id, total: 0 }; x.total += a.total; by.set(a.name, x); }
-      body = sec(kind === 'heal' ? 'The biggest heals' : 'Damage taken by mechanic', 'whole pull', barList([...by.values()].sort((a, b) => b.total - a.total).slice(0, 10).map((a) => ({ html: spell(a.id, a.name) + (FIGHT_HEAL.has(a.id) ? ' <span class="sub">trinket</span>' : ''), v: a.total, attr: kind === 'taken' ? ' data-src="' + esc(a.name) + '" role="button" tabindex="0" title="Who took it"' : '' })), PERF_COL[kind])); }
+      body = sec(kind === 'heal' ? 'The biggest heals' : 'Mechanic damage', 'whole pull', barList([...by.values()].sort((a, b) => b.total - a.total).slice(0, 10).map((a) => ({ html: spell(a.id, a.name) + (FIGHT_HEAL.has(a.id) ? ' <span class="sub">trinket</span>' : ''), v: a.total, attr: kind === 'taken' ? ' data-src="' + esc(a.name) + '" role="button" tabindex="0" title="Who took it"' : '' })), PERF_COL[kind])); }
     // (Healing: just the hint; the role split and the biggest heals weren't useful there)
     if (kind === 'heal') return '<h3 class="nh"><span>The raid</span></h3>' + hint;
     return '<h3 class="nh"><span>The raid</span></h3>' + hint + sec('By role', '', roleBar) + (kind === 'taken' ? '' : body); // (what hit the raid is on Debriefing)
