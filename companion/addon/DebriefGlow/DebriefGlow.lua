@@ -9,6 +9,7 @@ local DB
 local DEF = {
   enabled = true, style = "pulse", colorName = "gold", r = 0.90, g = 0.71, b = 0.31, a = 1, thick = 3, pad = 2, speed = 1, lines = 8, scale = 1,
   lead = 0, hold = 8, stopOnPress = true, fallback = true, iconSize = 56,
+  gameColors = true, timer = true, timerSize = 22, timerColor = "white", timerPos = "middle", timerTenths = false,
   sound = "none", channel = "Master",
   tts = false, ttsText = "{spell}", ttsVoice = 0, ttsVolume = 100, ttsRate = 0, countdown = 0,
 }
@@ -56,22 +57,77 @@ local function cdmItemFor(id)
 end
 
 -- ---- the glows: one frame per spell, drawn in the chosen style ----
+-- (our own four styles, then the game's own glows: the same animated art Blizzard uses, asked for by name, never bundled)
 local STYLES = { { "pulse", "Pulse (soft glow that breathes)" }, { "border", "Border (solid edge)" }, { "pixel", "Pixel lines (running around the edge)" },
-  { "sparkle", "Sparkles (dots circling the icon)" }, { "proc", "Proc (like a spell proc on your action bar)" } }
+  { "sparkle", "Sparkles (dots circling the icon)" },
+  { "proc", "Game: action bar proc (burst, then the swirl)" }, { "assist", "Game: rotation helper (blue ants)" },
+  { "onebutton", "Game: one-button proc" }, { "altglow", "Game: soft proc ring" }, { "pandemic", "Game: Cooldown Manager \"ending soon\" pulse" } }
+local GAME = { proc = true, assist = true, onebutton = true, altglow = true, pandemic = true }
+-- (the game's art for each one; a style whose art the game doesn't have falls back to Pulse)
+local ART = {
+  proc = { "UI-HUD-ActionBar-Proc-Start-Flipbook", "UI-HUD-ActionBar-Proc-Loop-Flipbook" },
+  onebutton = { "OneButton_ProcStart_Flipbook", "OneButton_ProcLoop_Flipbook" },
+  assist = { "rotationhelper_ants_flipbook" },
+  altglow = { "UI-HUD-RotationHelper-ProcAltGlow" },
+  pandemic = { "UI-CooldownManager-PandemicBorder", "UI-CooldownManager-PandemicFX-Icon01", "UI-CooldownManager-PandemicFX-Icon02", "UI-CooldownManager-PandemicFX-Icon03", "UI-CooldownManager-PandemicBorder-Mask" },
+}
+local function hasAtlas(a) return C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(a) and true or false end
+local function hasArt(st) for _, a in ipairs(ART[st] or {}) do if not hasAtlas(a) then return false end end; return ART[st] ~= nil end
 local HALO = "Interface\\GLUES\\Models\\UI_Draenei\\GenericGlow64"
 local WHITE = "Interface\\Buttons\\WHITE8X8"
 local glows, pool = {}, {}
+local timers, tpool, waiting = {}, {}, {} -- (countdown numbers on the icons, and reminders still counting down)
+-- (a flipbook: a texture that plays the frames of one atlas; once = play through once, else loop)
+local function flipbook(g, layer)
+  local t = g:CreateTexture(nil, layer or "OVERLAY"); t:Hide()
+  t.ag = t:CreateAnimationGroup(); t.fb = t.ag:CreateAnimation("FlipBook")
+  return t
+end
+local function playFlip(t, atlas, rows, cols, frames, dur, once)
+  t:SetAtlas(atlas); t.ag:Stop(); t.ag:SetLooping(once and "NONE" or "REPEAT")
+  t.fb:SetFlipBookRows(rows); t.fb:SetFlipBookColumns(cols); t.fb:SetFlipBookFrames(frames); t.fb:SetDuration(dur)
+  t:Show(); t.ag:Play()
+end
 local function newGlow()
   local g = table.remove(pool); if g then return g end
   g = CreateFrame("Frame", nil, UIParent); g:SetFrameStrata("HIGH")
   g.halo = g:CreateTexture(nil, "BACKGROUND"); g.halo:SetTexture(HALO); g.halo:SetBlendMode("ADD")
   g.edges = {}; for i = 1, 4 do local t = g:CreateTexture(nil, "OVERLAY"); t:SetTexture(WHITE); g.edges[i] = t end
   g.bits = {}; for i = 1, 16 do local t = g:CreateTexture(nil, "OVERLAY"); t:SetTexture(WHITE); t:Hide(); g.bits[i] = t end
-  g.proc = g:CreateTexture(nil, "OVERLAY")
   g.ag = g:CreateAnimationGroup(); g.ag:SetLooping("BOUNCE")
   g.fade = g.ag:CreateAnimation("Alpha"); g.fade:SetFromAlpha(1); g.fade:SetToAlpha(0.3)
-  g.pag = g.proc.CreateAnimationGroup and g.proc:CreateAnimationGroup(); if g.pag then g.pag:SetLooping("REPEAT"); g.flip = g.pag:CreateAnimation("FlipBook") end
+  -- (the game's glows: a burst, a loop, a single ring, and the Cooldown Manager's border with three waves inside it)
+  g.burst = flipbook(g); g.loop = flipbook(g); g.ring = g:CreateTexture(nil, "OVERLAY"); g.ring:Hide()
+  g.burst.ag:SetScript("OnFinished", function() g.burst:Hide(); if g.loop.atlas then playFlip(g.loop, g.loop.atlas, 6, 5, 30, 1 / (DB.speed or 1)) end end)
+  g.pborder = g:CreateTexture(nil, "OVERLAY"); g.pborder:Hide()
+  g.pmask = g.CreateMaskTexture and g:CreateMaskTexture()
+  g.waves = {}
+  for i = 1, 3 do
+    local t = g:CreateTexture(nil, "ARTWORK"); t:SetAllPoints(); t:Hide()
+    if g.pmask and t.AddMaskTexture then t:AddMaskTexture(g.pmask) end
+    -- (each wave grows from a quarter to one and a half times the icon and fades in and out; the three take turns every 1.5 s)
+    local ag = t:CreateAnimationGroup(); ag:SetLooping("REPEAT")
+    local sc = ag:CreateAnimation("Scale"); sc:SetScaleFrom(0.25, 0.25); sc:SetScaleTo(1.5, 1.5); sc:SetSmoothing("IN_OUT")
+    local fin = ag:CreateAnimation("Alpha"); fin:SetFromAlpha(0); fin:SetToAlpha(1)
+    local hold = ag:CreateAnimation("Alpha"); hold:SetFromAlpha(1); hold:SetToAlpha(1)
+    local fout = ag:CreateAnimation("Alpha"); fout:SetFromAlpha(1); fout:SetToAlpha(0)
+    local rest = ag:CreateAnimation("Alpha"); rest:SetFromAlpha(0); rest:SetToAlpha(0)
+    t.ag, t.parts, t.delay = ag, { sc, fin, fout, rest, hold }, (i - 1) * 1.5
+    g.waves[i] = t
+  end
   return g
+end
+-- (sets the pandemic waves' timing for the speed setting: the same 4.5 s cycle as the game at normal speed)
+local function timeWaves(g, sp)
+  for _, t in ipairs(g.waves) do
+    local sc, fin, fout, rest, hold = t.parts[1], t.parts[2], t.parts[3], t.parts[4], t.parts[5]
+    local d = t.delay / sp
+    sc:SetStartDelay(d); sc:SetDuration(2 / sp)
+    fin:SetStartDelay(d); fin:SetDuration(0.5 / sp)
+    hold:SetStartDelay(d + 0.5 / sp); hold:SetDuration(1 / sp)
+    fout:SetStartDelay(d + 1.5 / sp); fout:SetDuration(0.5 / sp)
+    rest:SetStartDelay(d + 2 / sp); rest:SetDuration((4.5 - t.delay - 2) / sp + 0.001)
+  end
 end
 -- (places each part for the style; pixel lines and sparkles move on every frame, around the edge of the icon)
 local function perimeter(w, h, p) p = p % 1; local L = 2 * (w + h); local d = p * L
@@ -85,23 +141,59 @@ local function animate(g, elapsed)
     b:ClearAllPoints(); b:SetPoint("CENTER", g, "TOPLEFT", x, y)
   end
 end
+-- (the game's art in its own colours, or turned grey and tinted with yours)
+local function tint(t, c)
+  if t.SetDesaturated then t:SetDesaturated(c and true or false) end
+  if c then t:SetVertexColor(c[1], c[2], c[3]) else t:SetVertexColor(1, 1, 1) end
+end
+local function quiet(g)
+  g.ag:Stop(); g:SetScript("OnUpdate", nil)
+  g.halo:Hide(); g.ring:Hide(); g.pborder:Hide(); for _, t in ipairs(g.edges) do t:Hide() end; for _, t in ipairs(g.bits) do t:Hide() end
+  for _, t in ipairs({ g.burst, g.loop }) do t.ag:Stop(); t:Hide() end; g.loop.atlas = nil
+  for _, t in ipairs(g.waves) do t.ag:Stop(); t:Hide() end
+end
 local function dress(g, id)
   local p = per(id)
   local r, gg, b, a = DB.r, DB.g, DB.b, DB.a or 1
   if p.color then r, gg, b = p.color[1], p.color[2], p.color[3] end
   local th, st = DB.thick or 3, p.style or DB.style
-  g.ag:Stop(); if g.pag then g.pag:Stop() end; g:SetScript("OnUpdate", nil); g:SetAlpha(a)
-  g.halo:Hide(); g.proc:Hide(); for _, t in ipairs(g.edges) do t:Hide() end; for _, t in ipairs(g.bits) do t:Hide() end
-  if st == "proc" and g.flip and C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo("UI-HUD-ActionBar-Proc-Loop-Flipbook") then
-    g.proc:SetAtlas("UI-HUD-ActionBar-Proc-Loop-Flipbook"); g.proc:ClearAllPoints(); g.proc:SetPoint("TOPLEFT", -th * 4, th * 4); g.proc:SetPoint("BOTTOMRIGHT", th * 4, -th * 4)
-    g.proc:SetVertexColor(r, gg, b); g.proc:Show()
-    g.flip:SetFlipBookRows(6); g.flip:SetFlipBookColumns(5); g.flip:SetFlipBookFrames(30); g.flip:SetDuration(1 / (DB.speed or 1)); g.pag:Play()
+  local sp = DB.speed or 1
+  quiet(g); g:SetAlpha(a)
+  if GAME[st] and not hasArt(st) then st = "pulse" end
+  g.drawn = st
+  if GAME[st] then
+    -- (the game's colours unless you've turned that off, or this spell has a colour of its own)
+    local c = (p.color or not DB.gameColors) and { r, gg, b } or nil
+    g.tinted = c
+    local w = g.size or 40
+    if st == "proc" or st == "onebutton" then
+      local art = ART[st]
+      g.burst:ClearAllPoints(); g.burst:SetPoint("CENTER"); g.burst:SetSize(w * (st == "proc" and 150 / 45 or 1.5), w * (st == "proc" and 150 / 45 or 1.5))
+      g.loop:ClearAllPoints(); g.loop:SetPoint("CENTER"); g.loop:SetSize(w * (st == "proc" and 1.4 or 1.5), w * (st == "proc" and 1.4 or 1.5))
+      tint(g.burst, c); tint(g.loop, c)
+      g.loop.atlas = art[2]
+      playFlip(g.burst, art[1], 6, 5, 30, 0.7 / sp, true)
+    elseif st == "assist" then
+      g.loop:ClearAllPoints(); g.loop:SetPoint("CENTER"); g.loop:SetSize(w * 66 / 45, w * 66 / 45); tint(g.loop, c)
+      playFlip(g.loop, ART.assist[1], 6, 5, 30, 1 / sp)
+    elseif st == "altglow" then
+      local info = C_Texture.GetAtlasInfo(ART.altglow[1]) or {}
+      local k = w / 45
+      g.ring:SetAtlas(ART.altglow[1]); g.ring:ClearAllPoints(); g.ring:SetPoint("CENTER"); g.ring:SetSize((info.width or 64) * k, (info.height or 64) * k); tint(g.ring, c); g.ring:Show()
+      g.fade:SetDuration(0.45 / sp); g.ag:Play()
+    elseif st == "pandemic" then
+      g.pborder:SetAtlas(ART.pandemic[1]); g.pborder:SetAllPoints(); tint(g.pborder, c); g.pborder:Show()
+      if g.pmask then g.pmask:SetAtlas(ART.pandemic[5]); g.pmask:SetAllPoints() end
+      timeWaves(g, sp)
+      for i, t in ipairs(g.waves) do t:SetAtlas(ART.pandemic[i + 1]); tint(t, c); t:SetAlpha(0); t:Show(); t.ag:Play() end
+    end
     return
   end
-  if st == "pulse" or st == "proc" then
+  g.tinted = { r, gg, b }
+  if st == "pulse" then
     g.halo:ClearAllPoints(); g.halo:SetPoint("TOPLEFT", -th * 5, th * 5); g.halo:SetPoint("BOTTOMRIGHT", th * 5, -th * 5); g.halo:SetVertexColor(r, gg, b, 1); g.halo:Show()
   end
-  if st == "pulse" or st == "border" or st == "proc" then
+  if st == "pulse" or st == "border" then
     local e = g.edges
     e[1]:ClearAllPoints(); e[1]:SetPoint("TOPLEFT"); e[1]:SetPoint("TOPRIGHT"); e[1]:SetHeight(th)
     e[2]:ClearAllPoints(); e[2]:SetPoint("BOTTOMLEFT"); e[2]:SetPoint("BOTTOMRIGHT"); e[2]:SetHeight(th)
@@ -109,7 +201,7 @@ local function dress(g, id)
     e[4]:ClearAllPoints(); e[4]:SetPoint("TOPRIGHT"); e[4]:SetPoint("BOTTOMRIGHT"); e[4]:SetWidth(th)
     for _, t in ipairs(e) do t:SetVertexColor(r, gg, b, 1); t:Show() end
   end
-  if st == "pulse" or st == "proc" then g.fade:SetDuration(0.45 / (DB.speed or 1)); g.ag:Play() end
+  if st == "pulse" then g.fade:SetDuration(0.45 / sp); g.ag:Play() end
   if st == "pixel" or st == "sparkle" then
     local n = math.max(1, math.min(16, DB.lines or 8))
     for i = 1, n do local t = g.bits[i]; t:SetVertexColor(r, gg, b, 1)
@@ -141,13 +233,49 @@ local function stop(id)
   local g = glows[id]; if not g then return end
   glows[id] = nil
   if g.timer then g.timer:Cancel(); g.timer = nil end
-  g.ag:Stop(); if g.pag then g.pag:Stop() end; g:SetScript("OnUpdate", nil); g:Hide(); g:ClearAllPoints()
-  if g.onFloat and float then float:Hide() end; g.onFloat = nil
+  quiet(g); g:Hide(); g:ClearAllPoints()
+  if g.onFloat and float then local busy = false; for _, o in pairs(glows) do if o.onFloat then busy = true end end; for _, f in pairs(timers) do if f.onFloat then busy = true end end; if not busy then float:Hide() end end; g.onFloat = nil
   pool[#pool + 1] = g
 end
+-- ---- the countdown on the icon: NSRT's own timer (its reminder ends at info.expires), counting down on the spell ----
+-- (so it reaches 0 together with NSRT's bar; its length is your NSRT reminder duration)
+local function floatBusy() for _, g in pairs(glows) do if g.onFloat then return true end end; for _, f in pairs(timers) do if f.onFloat then return true end end end
+local function stopTimer(id)
+  local f = timers[id]; if not f then return end
+  timers[id] = nil; f:SetScript("OnUpdate", nil); f:Hide(); f:ClearAllPoints(); tpool[#tpool + 1] = f
+  if f.onFloat and float and not floatBusy() then float:Hide() end; f.onFloat = nil
+end
+local function tick(f)
+  local left = f.expires - GetTime()
+  if left <= 0 then stopTimer(f.id); return end
+  f.text:SetText((DB.timerTenths and left < 3) and string.format("%.1f", left) or tostring(math.ceil(left)))
+end
+local TIMER_COLORS = { white = { 1, 1, 1 }, gold = { 1, 0.82, 0 }, red = { 1, 0.25, 0.2 } }
+local function showTimer(id, expires, label)
+  if not DB.timer then return end
+  local it = cdmItemFor(id)
+  if not it then
+    if not DB.fallback then return end
+    placeFloat(); float.tex:SetTexture(spellIcon(id)); float.txt:SetText(label or spellName(id) or ""); float:Show(); it = float
+  end
+  stopTimer(id)
+  local f = table.remove(tpool)
+  if not f then f = CreateFrame("Frame", nil, UIParent); f:SetFrameStrata("HIGH"); f.text = f:CreateFontString(nil, "OVERLAY") end
+  f:SetAllPoints(it); f:SetFrameLevel((it.GetFrameLevel and it:GetFrameLevel() or 1) + 20)
+  f.text:SetFont(STANDARD_TEXT_FONT, DB.timerSize or 22, "THICKOUTLINE")
+  local c = TIMER_COLORS[DB.timerColor] or per(id).color or { DB.r, DB.g, DB.b }
+  f.text:SetTextColor(c[1], c[2], c[3], 1)
+  f.text:ClearAllPoints()
+  if DB.timerPos == "top" then f.text:SetPoint("BOTTOM", f, "TOP", 0, 2)
+  elseif DB.timerPos == "bottom" then f.text:SetPoint("TOP", f, "BOTTOM", 0, -2)
+  else f.text:SetPoint("CENTER", f, "CENTER", 0, 0) end
+  f.id, f.expires, f.onFloat = id, expires, it == float
+  timers[id] = f; f:SetScript("OnUpdate", tick); f:Show(); tick(f)
+end
+
 -- (the boss is over or NSRT hid its reminders: every glow stops, and glows, sounds and countdowns still waiting are called off)
 local round = 0
-local function stopAll() round = round + 1; for id in pairs(glows) do stop(id) end end
+local function stopAll() round = round + 1; for id in pairs(glows) do stop(id) end; for id in pairs(timers) do stopTimer(id) end; wipe(waiting) end
 -- (glows the icon for this spell: on the Cooldown Manager, or on the big icon of its own when it isn't there)
 local function start(id, hold, label)
   local it = cdmItemFor(id)
@@ -156,6 +284,7 @@ local function start(id, hold, label)
   local g = newGlow(); local pad = DB.pad or 2
   if not it then placeFloat(); float.tex:SetTexture(spellIcon(id)); float.txt:SetText(label or spellName(id) or ""); float:Show(); it = float; g.onFloat = true end
   g:SetScale(DB.scale or 1)
+  local w = it.GetWidth and it:GetWidth() or 0; g.size = (w and w > 0) and w or 40
   g:SetPoint("TOPLEFT", it, "TOPLEFT", -pad, pad); g:SetPoint("BOTTOMRIGHT", it, "BOTTOMRIGHT", pad, -pad)
   g:SetFrameLevel((it.GetFrameLevel and it:GetFrameLevel() or 1) + 10); g:Show(); dress(g, id)
   glows[id] = g
@@ -198,12 +327,18 @@ local function fire(id, label)
 end
 local function schedule(id, wait, label)
   if not spellOn(id) then return end
-  local lead, my = math.max(0, DB.lead or 0), round
+  local lead, my = math.max(0, DB.lead or 0), {}
   local at = math.max(0, wait - lead)
+  -- (still on: not called off by the end of the fight, and not pressed early)
+  waiting[id] = my
+  local function live() return waiting[id] == my end
+  if wait > 0.05 then showTimer(id, GetTime() + wait, label) end
   if wordsFor(id, label) and (DB.countdown or 0) > 0 then
-    for i = DB.countdown, 1, -1 do local t = at - i; if t >= 0 then C_Timer.After(t, function() if DB.enabled and round == my then speak(tostring(i)) end end) end end
+    -- (counts to the press moment like the number on the icon; with "start early", numbers after the glow starts are left out)
+    for i = DB.countdown, 1, -1 do local t = wait - i; if t >= 0 and t < at - 0.05 then C_Timer.After(t, function() if DB.enabled and live() then speak(tostring(i)) end end) end end
   end
-  if at > 0.05 then C_Timer.After(at, function() if round == my then fire(id, label) end end) else fire(id, label) end
+  local function go() if live() then waiting[id] = nil; fire(id, label) end end
+  if at > 0.05 then C_Timer.After(at, go) else go() end
 end
 
 -- ---- NSRT: it says a reminder of yours is showing; its countdown ends at the moment to press ----
@@ -224,16 +359,19 @@ local function hookNSRT()
   pcall(NSAPI.RegisterCallback, "DebriefGlow", "NSRT_ALERT_WOULD_SHOW", onReminder) -- (NSRT's reminders shown on Blizzard's timeline instead)
   pcall(NSAPI.RegisterCallback, "DebriefGlow", "NSRT_HIDE_REMINDERS", stopAll)
 end
+-- (pressing the spell ends its glow; pressed during NSRT's countdown, the countdown and the glow still to come are called off too)
 local function onCast(id)
-  if not DB or DB.stopOnPress == false or not id or secret(id) or not next(glows) then return end
-  if glows[id] then stop(id) return end
-  local n = spellName(id); if n then for g in pairs(glows) do if spellName(g) == n then stop(g) end end end
+  if not DB or DB.stopOnPress == false or not id or secret(id) then return end
+  local n = spellName(id)
+  local function same(x) return x == id or (n and spellName(x) == n) end
+  for x in pairs(glows) do if same(x) then stop(x) end end
+  for x in pairs(waiting) do if same(x) then waiting[x] = nil; stopTimer(x) end end
 end
 
 -- ---- test: every Cooldown Manager icon glows for 3 s with the sound and voice, so you can see your settings without a raid ----
 function DebriefGlow_Test(quiet)
   local n = 0
-  for _, e in ipairs(cdmItems()) do if spellOn(e.ids[1]) and start(e.ids[1], 3) then n = n + 1 end end
+  for _, e in ipairs(cdmItems()) do if spellOn(e.ids[1]) and start(e.ids[1], 3) then n = n + 1; showTimer(e.ids[1], GetTime() + 3) end end
   if n == 0 and DB.fallback then start(31821, 3, "Test"); n = 1 end
   playSound(); if DB.tts and not quiet then speak(ttsFor(31821, "Test")) end
   if not quiet then
@@ -278,7 +416,8 @@ local function buildSettings()
   slider("iconSize", "Big icon size", nil, 32, 128, 4, function(v) return v .. " px" end)
 
   header("How it looks")
-  list("style", "Style", "Changing it shows a quick preview on your Cooldown Manager.", V.String, function() return STYLES end); watch("style")
+  list("style", "Style", "Changing it shows a quick preview on your Cooldown Manager. The \"Game\" ones are the game's own glows.", V.String, function() return STYLES end); watch("style")
+  check("gameColors", "Game styles keep the game's colours", "Off: the game's glows take your colour instead. A spell with its own colour always uses it."); watch("gameColors")
   list("colorName", "Colour", "Pick a colour, or Custom for any colour.", V.String, function() local o = {}; for _, c in ipairs(COLORS) do o[#o + 1] = { c[1], c[2] } end; o[#o + 1] = { "custom", "Custom (pick below)" }; return o end)
   if Settings.SetOnValueChangedCallback then Settings.SetOnValueChangedCallback("DebriefGlow_colorName", function(_, s, v) for _, c in ipairs(COLORS) do if c[1] == v then DB.r, DB.g, DB.b = c[3][1], c[3][2], c[3][3] end end; preview() end) end
   button("Custom colour", "Pick a colour", function()
@@ -295,6 +434,13 @@ local function buildSettings()
   slider("speed", "Speed", "How fast it pulses, runs or spins.", 0.25, 3, 0.25, function(v) return v .. "x" end); watch("speed")
   slider("lines", "Lines or sparkles", "For the Pixel lines and Sparkles styles.", 1, 16, 1); watch("lines")
   slider("a", "Opacity", nil, 0.1, 1, 0.05, function(v) return math.floor(v * 100 + 0.5) .. "%" end); watch("a")
+
+  header("Countdown on the spell")
+  check("timer", "Count down on the spell", "NSRT's countdown as a number on the spell's icon. It reaches 0 together with NSRT's bar (its length is your NSRT reminder duration)."); watch("timer")
+  slider("timerSize", "Number size", nil, 12, 48, 2, function(v) return v .. " px" end); watch("timerSize")
+  list("timerColor", "Number colour", nil, V.String, function() return { { "white", "White" }, { "gold", "Gold" }, { "red", "Red" }, { "glow", "Same as the glow" } } end); watch("timerColor")
+  list("timerPos", "Where", nil, V.String, function() return { { "middle", "On the icon" }, { "top", "Above the icon" }, { "bottom", "Below the icon" } } end); watch("timerPos")
+  check("timerTenths", "Tenths in the last 3 s", "2.9, 2.8 ... instead of 3, 2, 1."); watch("timerTenths")
 
   header("Sound")
   list("sound", "Sound", "Plays when the glow starts.", V.String, function()
@@ -350,7 +496,7 @@ local function spellList()
   return list
 end
 local function testSpell(id)
-  start(id, 3); playSound(soundFor(id)); local w = wordsFor(id); if w then speak(w) end
+  start(id, 3); showTimer(id, GetTime() + 3); playSound(soundFor(id)); local w = wordsFor(id); if w then speak(w) end
 end
 local function colorText(c, text) return string.format("|cff%02x%02x%02x%s|r", math.floor(c[1] * 255 + 0.5), math.floor(c[2] * 255 + 0.5), math.floor(c[3] * 255 + 0.5), text) end
 local function soundOptions()
