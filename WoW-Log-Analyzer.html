@@ -3865,6 +3865,7 @@ details.dbr-more[data-oa] > :not(summary) { margin-top: 12px; }
 .cch-tag { display: inline-block; margin-left: 4px; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; background: rgba(255,255,255,.07); color: var(--muted); vertical-align: 1px; } .cch-tag.rep { background: rgba(229,83,75,.15); color: #ff8f87; } .cch-tag.up { background: rgba(95,211,95,.14); color: #8fe38f; }
 .cch-how { display: inline-block; margin-top: 3px; font-size: 13px; color: var(--gold); }
 /* kill baselines (Oct 22) */ .cch-tag.kb { background: rgba(255,255,255,.06); color: var(--muted); } .cch-tag.kb.hi { background: rgba(230,183,80,.16); color: var(--gold); }
+/* deaths and avoidable damage in the coach (Oct 22) */ .cch-acct { margin: 10px 0 0; display: flex; flex-direction: column; gap: 4px; } .cch-acct p { margin: 0; font-size: 14px; line-height: 1.45; padding-left: 10px; border-left: 3px solid var(--line2); } .cch-acct p.warn { border-left-color: var(--warn); } .cch-acct p.ok { border-left-color: var(--good, #5fd35f); } .cch-acct b { color: var(--text); }
 /* small maps open big (Oct 21) */ .wr-map > .mz-big { display: grid !important; place-items: center; position: absolute; right: 6px; bottom: 6px; z-index: 3; width: 28px; height: 28px; padding: 0; border-radius: 7px; border: 1px solid rgba(255,255,255,.28); background: rgba(10,11,15,.78); color: #fff; font-size: 16px; line-height: 1; cursor: zoom-in; }
 .wr-map > .mz-big:hover, .wr-map > .mz-big:focus-visible { border-color: var(--gold); color: var(--gold); } .wr-map:not(.mcx-map) > .mz-big { width: 20px; height: 20px; font-size: 12px; right: 3px; bottom: 3px; border-radius: 5px; }
 .mzo { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 16px; background: rgba(5,6,9,.8); }
@@ -14394,6 +14395,8 @@ const PATCH_NOTES = [
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
+    'Coach: every coach has a Deaths line (who died, when, to what, and whether it was on them, by the site\'s one death rule) and an Avoidable damage line (the worst sources and who took them); the full coaching lists them all.',
+    'Coach: your headline says the fix itself ("Your one fix: when Venom Rupture keeps ticking you down, press Unending Resolve"), not just its name.',
     'Deaths are judged the same way on every tab: too fast to react (2 seconds or less) is never on you, your own mistake or dying slowly with a defensive still ready is, and a death after the pull was lost only counts if it was your own mistake while most of the raid was still up. The Report card lists every death with what happened.',
     'Rotation: the lower half is now closed sections, each with its checks counted (clean, some mistakes, failed) and a clear Show button. Every card starts closed too, so the page is about a quarter as long.',
     'Rotation: every check was double-checked against both class guides and the top players. Bars even the top players miss were lowered (Restoration Druid, Preservation Evoker, Balance, Affliction, Augmentation, Blood, Vengeance), help you give others (Innervate, Source of Magic, a Shadow Priest\'s Power Infusion) is never red, and a mistake\'s cost now counts only what you lost next to the top players, so Work on these first starts with what matters most.',
@@ -14427,6 +14430,7 @@ const PATCH_NOTES = [
     'The bosses are in the same order everywhere on the site.',
     'Long patch notes fold after six lines.',
   ], f: [
+    'Page tips: a click anywhere outside the tip closes them. Before, the dark layer took every click until Next was pressed through.',
     'Rotation: Balance Druids no longer get dozens of "Sunfire was about to fall off" slips while the boss is out of reach. On a real pull their priority went from about 40% to 73%.',
     'Debriefing: with a note loaded, the note\'s bar (Swap players, Load a note, Copy for the game) stays right under the coach instead of in the bottom drawer.',
     'Debriefing: "went clean" now reads "done right".',
@@ -21460,7 +21464,7 @@ function coachMine(reps, name) { return oaCache(reps, 'c:' + name, () => {
     const key = own ? own.mechanic : m ? m.mechanic : rw ? rw.l : d.ability || 'a hit', slow = !own && !ow && kit;
     const rc = slow ? keptMistakes(r).filter((q) => q.player === 'Raid' && q.severity !== 'Low' && q.mechanic !== 'Death' && q.t >= d.t - 20 && q.t <= d.t + 1).sort((a, b) => b.t - a.t)[0] : null; /* (a raid mistake just before a slow death: what caused it) */
     const g = dG.get(lc(key)) || { key, pulls: new Set(), d, slow, fix: '', how: '', causedBy: rc ? rc.mechanic : '' }; g.pulls.add(r.item.pull);
-    if (!g.fix) g.fix = (rw && oaFlip(rw.why)) || (m && m.fix && dbfTip1(m.fix)) || fixer(key, p.name) || (slow ? 'When your health keeps dropping, press ' + dbfKit(d)[0].replace(/^an? /, 'your ') + '.' : '') || (ow && !own && !m ? 'Stay out of ' + key + ': it\'s dodgeable.' : '') /* (a dodgeable death says so, not "press a defensive" (Oct 22)) */ || dbfTip1((d.prevent || []).find((x) => !/^No (clear )?mistake/i.test(x)) || '');
+    if (!g.fix) g.fix = (rw && oaFlip(rw.why)) || (m && m.fix && dbfTip1(m.fix)) || fixer(key, p.name) || (slow ? 'When ' + key + ' keeps ticking you down, press ' + dbfKit(d)[0].replace(/^an? /, 'your ') + ' before it\'s too late.' : '') || (ow && !own && !m ? 'Stay out of ' + key + ': it\'s dodgeable.' : '') /* (a dodgeable death says so, not "press a defensive" (Oct 22)) */ || dbfTip1((d.prevent || []).find((x) => !/^No (clear )?mistake/i.test(x)) || '');
     if (!g.how) g.how = cHtml((m && m.fix) || (d.prevent || []).filter((x) => !/^No (clear )?mistake/i.test(x)).slice(0, 2).join(' ') || (slow ? 'You were dropping for a while with ' + lpAnd(dbfKit(d).slice(0, 2)) + ' still up. A defensive pressed at half health buys the healers the time they need.' : ''));
     dG.set(lc(key), g); }
   for (const g of [...dG.values()].filter((x) => x.pulls.size >= need && x.fix).sort((a, b) => b.pulls.size - a.pulls.size))
@@ -21604,6 +21608,45 @@ function coachTag(x, night) {
   if (x.kb) { const r = x.kb.ok / x.kb.k; t.push(r >= 0.7 ? '<span class="cch-tag kb hi" title="' + esc(x.kb.ok + ' of the ' + x.kb.k + ' fastest kills got it right') + '">kills get this right</span>' : r <= 0.3 ? '<span class="cch-tag kb" title="' + esc('only ' + x.kb.ok + ' of the ' + x.kb.k + ' fastest kills got it fully right') + '">even kills slip here</span>' : ''); }
   return t.join(' ');
 }
+// ---- Deaths and avoidable damage, always accounted for in the coach (your asks, Oct 22: "make sure deaths are accounted for in the
+// coaching", "same with avoidable damage"): one line each in the short box, every one in the full coaching, judged by the same rules
+// as everywhere else (up to the wipe filter; 2 s or less from a raid mistake isn't on the player; tanks loosely)
+function coachDeaths(reps, name) {
+  const night = reps.length > 1, mine = name ? oaMine(reps, name) : null, L = [];
+  for (const r of reps) { const p = mine ? (mine.find((x) => x.r === r) || {}).p : null; if (mine && !p) continue;
+    for (const d of r.deaths.slice().sort((a, b) => a.t - b.t)) { if (p && d.guid !== p.guid && d.player !== p.name) continue;
+      const v = deathVerdict(r, d); L.push({ r, d, v, after: !v.counts, why: { k: v.why, t: v.word } }); } } /* (the site's one death rule (Oct 22)) */
+  const kept = L.filter((x) => !x.after), nAfter = L.length - kept.length, ab = (d) => d.ability || d.killer || 'a hit';
+  const onThem = kept.filter((x) => x.v.on).length;
+  const top = (l) => { const m = new Map(); for (const x of l) m.set(ab(x.d), (m.get(ab(x.d)) || 0) + 1); return [...m].sort((a, b) => b[1] - a[1]); };
+  let line;
+  if (!kept.length) line = name ? (L.length ? 'You only died after the pull was lost (' + plural(nAfter, 'death') + ' after the wipe filter, not counted).' : night ? 'You stayed alive in every pull.' : 'You stayed alive.')
+    : (L.length ? 'Nobody died before the wipe filter (' + plural(nAfter, 'death') + ' after it, not counted).' : 'Nobody died.');
+  else if (!night) line = kept.slice(0, 3).map((x) => (name ? 'You' : String(x.d.player).split('-')[0]) + ' at ' + T(x.d.t) + ' to ' + ab(x.d) + ' (' + x.why.t + ')').join('; ') + (kept.length > 3 ? '; and ' + (kept.length - 3) + ' more' : '') + '.' + (nAfter ? ' ' + plural(nAfter, 'more death') + ' after the wipe filter, not counted.' : '');
+  else { const t3 = top(kept).slice(0, 3).map(([a, n]) => a + ' ×' + n).join(', '), pulls = new Set(kept.map((x) => x.r.item.pull)).size;
+    line = name ? 'You died in ' + pulls + ' of ' + plural(reps.length, 'pull') + ': ' + t3 + '. ' + (onThem ? onThem + (onThem === 1 ? ' was' : ' were') + ' on you (your own mistake, or a slow death you could have stopped).' : 'None were on you.')
+      : plural(kept.length, 'death') + ' before the wipe filter (' + (kept.length / reps.length).toFixed(1) + ' a pull), most to ' + t3 + '. ' + onThem + ' of them ' + (onThem === 1 ? 'was' : 'were') + ' on the player (their own mistake, or a slow death they could have stopped).'; }
+  const li = (x) => '<li>' + (night ? 'Pull ' + x.r.item.pull + ', ' : '') + T(x.d.t) + ': ' + (name ? '' : '<b>' + esc(String(x.d.player).split('-')[0]) + '</b> ') + 'to ' + esc(ab(x.d)) + ' · <span class="sub">' + (x.after ? 'after the wipe filter, not counted' : esc(x.why.t)) + '</span></li>';
+  const list = L.length ? '<ul class="cch-ul">' + L.slice(0, 16).map(li).join('') + (L.length > 16 ? '<li class="sub">and ' + (L.length - 16) + ' more</li>' : '') + '</ul>' : '';
+  return { line, list, n: kept.length, onThem, bad: onThem > 0 };
+}
+function coachAvoid(reps, name) {
+  const night = reps.length > 1, base = name ? oaBase(name) : '', S3 = new Map(); let any = false;
+  for (const r of reps) { const x = pullSections(r).get('avoid'); if (!x) continue; any = true;
+    for (const g of x.s.groups || []) for (const row of g.rows || []) { const p = row[0] && row[0].p; if (!p || (name && oaBase(p) !== base)) continue;
+      const hits = parseInt((row[1] && row[1].txt) || '0', 10) || 0, flag = row[1] && (row[1].bad ? 'bad' : row[1].warn ? 'warn' : ''), tank = /tank/.test((row[0] && row[0].sub) || '');
+      const k = g.title || g.label || 'Avoidable damage', s = S3.get(k) || { k, hits: 0, who: new Map(), bad: 0, warn: 0, pulls: new Set() };
+      s.hits += hits; if (flag === 'bad') s.bad++; else if (flag === 'warn') s.warn++; if (flag) { s.pulls.add(r.item.pull); if (!tank) s.who.set(p, (s.who.get(p) || 0) + hits); } S3.set(k, s); } }
+  if (!any) return null;
+  const flagged = [...S3.values()].filter((s) => s.bad || s.warn).sort((a, b) => b.bad - a.bad || b.warn - a.warn || b.hits - a.hits);
+  const nm = (p) => String(p).split('-')[0], whoT = (s) => [...s.who].sort((a, b) => b[1] - a[1]).slice(0, 2).map(([p, n]) => nm(p) + ' ' + plural(n, 'hit')).join(', ');
+  let line;
+  if (!flagged.length) line = name ? 'No avoidable damage worth flagging. Nice.' : 'Nobody took avoidable damage worth flagging.';
+  else if (name) line = 'You took more than you should from ' + lpAnd(flagged.slice(0, 3).map((s) => s.k + (night ? ' (' + s.pulls.size + ' of ' + reps.length + ' pulls)' : ' (' + plural(s.hits, 'hit') + ')'))) + '.';
+  else line = 'Most from ' + lpAnd(flagged.slice(0, 3).map((s) => s.k + (whoT(s) ? ' (' + whoT(s) + ')' : ''))) + '.' + (flagged.length > 3 ? ' ' + plural(flagged.length - 3, 'more source') + ' in the full coaching.' : '');
+  const list = flagged.length ? '<ul class="cch-ul">' + flagged.slice(0, 8).map((s) => '<li><b>' + esc(s.k) + '</b> · <span class="sub">' + (s.bad ? s.bad + ' dangerous' : '') + (s.bad && s.warn ? ', ' : '') + (s.warn ? s.warn + ' too many' : '') + (night ? ' · in ' + plural(s.pulls.size, 'pull') : '') + (!name && whoT(s) ? ' · most: ' + esc(whoT(s)) : '') + '</span></li>').join('') + '</ul>' : '';
+  return { line, list, bad: flagged.some((s) => s.bad) };
+}
 function coachSummary(reps, name) {
   reps = (reps || []).filter((r) => r && r.players && !r.allPulls); if (!reps.length) return null;
   return oaCache(reps, 'cs:' + (name || ''), () => {
@@ -21613,7 +21656,7 @@ function coachSummary(reps, name) {
     const at0 = dbfAt(pullShort(it)), res = kill ? 'Boss down on pull ' + kill.item.pull : night ? reps.length + ' pulls tonight' : 'We wiped ' + (/^(P\d|Int)/i.test(at0) ? 'in ' : 'at ') + at0;
     /* (the first domino in a few words, for the raid's headline on one pull: "set 4's adds were still alive") */
     let why0 = ''; if (!night && !kill && !name) { try { const o = whyWiped(reps[0]); if (o) why0 = cHtml(whyShort(o, new Map()).short); } catch (e) { why0 = ''; } }
-    const headline = name ? (w0 ? who + ', ' + (wrong.some((x) => x.sev === 'bad') ? (right.length ? 'some good things ' + (night ? 'tonight' : 'this pull') + ', and one thing to fix first.' : 'one thing to fix first.') : 'good ' + (night ? 'night' : 'pull') + ' from you, with one thing to sharpen.') + ' Your one fix: ' + dbfCap(w0.label) + '.' : who + ', ' + (night ? 'nothing you did twice tonight.' : 'clean pull from you.') + ' Keep doing exactly this.')
+    const headline = name ? (w0 ? who + ', ' + (wrong.some((x) => x.sev === 'bad') ? (right.length ? 'some good things ' + (night ? 'tonight' : 'this pull') + ', and one thing to fix first.' : 'one thing to fix first.') : 'good ' + (night ? 'night' : 'pull') + ' from you, with one thing to sharpen.') + ' Your one fix: ' + String(w0.fix).replace(/\.?$/, '.') : who + ', ' + (night ? 'nothing you did twice tonight.' : 'clean pull from you.') + ' Keep doing exactly this.')
       : kill ? res + '. Great work, everyone.' + (w0 && night ? ' What cost us the most: ' + w0.label + '.' : '') : res + '.' + (w0 ? ' ' + (night ? 'What cost us the most: ' : 'It came down to ') + (w0.cause || w0.label) + (night && w0.n ? ' (' + w0.n + ' wipes)' : why0 ? ': ' + why0.charAt(0).toLowerCase() + why0.slice(1) : '') + '.' : '');
     const focus = w0 ? w0.fix : kill ? 'Same plan next time.' : 'Same plan. Execute it.';
     // (the full coaching: why we wiped in the raid lead's words, each problem with how to fix it, every death that counted, what went right)
@@ -21624,10 +21667,11 @@ function coachSummary(reps, name) {
     let deaths = ''; if (name) { const L = []; for (const { r, p } of oaMine(reps, name)) for (const d of r.deaths.filter((q) => q.guid === p.guid).sort((a, b) => a.t - b.t)) { const after = d.t > cutT(r) + 0.05, fast = dbfFast(d);
         L.push('<li>' + (night ? 'Pull ' + r.item.pull + ', ' : '') + T(d.t) + ': ' + esc(d.ability || d.killer || 'a hit') + ' · <span class="sub">' + (after ? 'after the wipe filter, doesn\'t count' : fast && !deathOwn(r, d) && !(d.links || []).some((l) => !l.raid) ? 'too fast to react, not on you' : 'counts') + '</span></li>'); }
       deaths = L.length ? '<h5>Your deaths</h5><ul class="cch-ul">' + L.slice(0, 12).join('') + (L.length > 12 ? '<li class="sub">and ' + (L.length - 12) + ' more</li>' : '') + '</ul>' : ''; }
+    const DD = coachDeaths(reps, name), AV = coachAvoid(reps, name); if (!name && DD.list) deaths = '<h5>Deaths</h5>' + DD.list;
     const full = (whyFull ? '<h5>' + (night ? 'The night, as a raid lead would say it' : 'Why we wiped') + '</h5>' + whyFull : '') +
-      (all.length ? '<h5>What to work on, in order</h5><ol class="cch-ol">' + all.map(item).join('') + '</ol>' : '') + deaths +
+      (all.length ? '<h5>What to work on, in order</h5><ol class="cch-ol">' + all.map(item).join('') + '</ol>' : '') + deaths + (AV && AV.list ? '<h5>Avoidable damage</h5>' + AV.list : '') +
       (allR.length ? '<h5>What went right</h5><ul class="cch-ul">' + allR.map((t) => '<li>' + esc(t) + '</li>').join('') + '</ul>' : '');
-    return { headline, right, wrong, focus, full, name: name || null, night }; }); }
+    return { headline, right, wrong, focus, full, name: name || null, night, deaths: DD, avoid: AV }; }); }
 // (the short box: headline, what went right, what went wrong with how, Focus next pull, and the full coaching folded)
 function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' + (o.key || 'x');
   const pm = c.name ? [...((S.rep && S.rep.players) || new Map()).values()].find((p) => p.name && oaBase(p.name) === oaBase(c.name)) : null;
@@ -21635,7 +21679,8 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
     '<p class="cch-h">' + esc(c.headline) + '</p>' +
     '<div class="cch-cols">' + (c.right.length ? '<div class="cch-ok"><h5>What went right</h5><ul>' + c.right.map((x) => '<li>' + esc(x.t) + '</li>').join('') + '</ul></div>' : '') +
     (c.wrong.length ? '<div class="cch-no"><h5>What went wrong</h5><ul>' + c.wrong.map((x) => '<li class="cch-' + x.sev + '"' + (x.sec ? ' data-sec="' + esc(x.sec) + '"' : '') + '><b>' + esc(dbfCap(x.label)) + '</b> ' + coachTag(x, c.night) + (x.what ? '<span class="cch-what">' + esc(x.what) + '</span>' : '') + '<span class="cch-fx"><span class="cch-nx">Next time:</span> ' + esc(x.fix) + '</span>' + (x.guide || '') + '</li>').join('') + '</ul></div>' : '') + '</div>' +
-    '<div class="cch-focus"><b>Focus ' + (c.night ? 'next raid' : 'next pull') + ':</b> ' + esc(c.focus) + '</div>' +
+    '<div class="cch-acct">' + (c.deaths ? '<p class="' + (c.deaths.bad ? 'warn' : c.deaths.n ? 'meh' : 'ok') + '"><b>Deaths:</b> ' + esc(c.deaths.line) + '</p>' : '') + (c.avoid ? '<p class="' + (c.avoid.bad ? 'warn' : 'ok') + '"><b>Avoidable damage:</b> ' + esc(c.avoid.line) + '</p>' : '') + '</div>' +
+    (String(c.headline).includes(String(c.focus).replace(/\.$/, '')) ? '' : '<div class="cch-focus"><b>Focus ' + (c.night ? 'next raid' : 'next pull') + ':</b> ' + esc(c.focus) + '</div>') +
     (c.full ? '<details class="cch-more" data-k="' + k + '"' + (S.openSecs.has(k) ? ' open' : '') + '><summary>Read the full coaching</summary><div class="cch-full">' + c.full + '</div></details>' : '') + '</section>'; }
 document.addEventListener('toggle', (e) => { const d = e.target; if (d && d.matches && d.matches('details.spc-chd[data-k]') && S.openSecs) { if (d.open) S.openSecs.add(d.dataset.k); else S.openSecs.delete(d.dataset.k); } }, true); /* (Rotation's sections stay open once opened) */
 document.addEventListener('toggle', (e) => { const d = e.target; if (d && d.matches && d.matches('details.cch-more[data-k]')) { if (d.open) S.openSecs.add(d.dataset.k); else S.openSecs.delete(d.dataset.k); } }, true); /* (the full coaching stays open once opened) */
@@ -36045,6 +36090,9 @@ function runTips(k, steps) {
   let i = 0, raf = 0;
   const ov = document.createElement('div'); ov.id = 'ptip'; ov.className = 'ptip';
   ov.quit = () => finish(false);
+  /* (a click anywhere outside the tip closes the tips (your note, Oct 22: "the preview is bugged i cant click anything": the dark
+     layer took every click until Next was pressed through, and on a small screen the tip can sit out of view)) */
+  ov.addEventListener('click', (e) => { if (!(e.target.closest && e.target.closest('.pt-bub'))) finish(); });
   ov.innerHTML = '<div class="pt-hole"></div><div class="pt-bub" role="dialog" aria-modal="true" aria-label="Tips for this page"></div>';
   document.body.appendChild(ov);
   const hole = ov.querySelector('.pt-hole'), bub = ov.querySelector('.pt-bub');
