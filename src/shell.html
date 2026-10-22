@@ -867,7 +867,11 @@ button.nm-cell { cursor: pointer; } button.nm-cell:hover { outline: 2px solid va
 .ddv-1 { font-weight: 600; color: var(--text); font-size: 15px; }
 .ddv-2 { color: var(--text); } .ddv-2 b { color: #f3c06a; }
 .ddv-3 { font-size: 13px; color: var(--muted); } .ddv-3 b { display: inline; font-variant-numeric: tabular-nums; } .ddv-3 b.ddh-hi { color: #5fbf7a; } .ddv-3 b.ddh-md { color: #f3c06a; } .ddv-3 b.ddh-lo { color: #ff8f87; }
-.ddv + .dd-sum { display: none; }
+.ddv + .dd-sum, .ddv ~ .dd-hits { display: none; }
+/* the coach box's death chips open a death's summary in place (Oct 22) */
+.dch[data-ddg], .dch[data-ddmore] { cursor: pointer; } .dch[data-ddg]:hover { filter: brightness(1.15); } .dch.on { box-shadow: 0 0 0 2px currentColor inset; } .dch-late { opacity: .6; } .dch[hidden] { display: none !important; } .cch-ddbox:not([hidden]) ~ .cch-ddtip { display: none; }
+.cch-ddbox { margin-top: 10px; } .cch-ddbox .ddv { margin: 0; } .cch-ddh { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 6px; font-size: 13px; color: var(--muted); } .cch-ddh b { color: var(--text); }
+.cch-ddtip { margin-top: 6px; font-size: 12px; color: var(--muted); } .ddv-3 b.ddh-av { color: #f3c06a; }
 @media (max-width: 600px) { .ddl-f { padding-left: 0; } .ddl { gap: 2px 6px; } }
 .dd-hits { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; max-width: 640px; }
 .dd-hit { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 56px; gap: 10px; align-items: center; font-size: 13px; } .dd-hit b { text-align: right; font-variant-numeric: tabular-nums; }
