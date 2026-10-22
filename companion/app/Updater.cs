@@ -12,6 +12,7 @@ using System.Web.Script.Serialization;
 namespace Debrief {
   static class Updater {
     const string Latest = "https://debriefme.io/companion/latest.json";
+    public static string LastSeen; // (the newest version the last check found, for the Check for updates button)
 
     // (files a running copy holds open can't be overwritten, but Windows lets them be renamed: the old one becomes *.old, gone next start)
     public static void CleanOld(string here) {
@@ -25,6 +26,7 @@ namespace Debrief {
     }
 
     public static bool Run(string here) {
+      LastSeen = null;
       try {
         ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
         string text;
@@ -34,6 +36,7 @@ namespace Debrief {
         var m = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(text);
         string ver = m.ContainsKey("version") ? Convert.ToString(m["version"]) : null, url = m.ContainsKey("url") ? Convert.ToString(m["url"]) : null,
           sha = m.ContainsKey("sha256") ? Convert.ToString(m["sha256"]) : null;
+        LastSeen = ver;
         if (string.IsNullOrEmpty(ver) || string.IsNullOrEmpty(url) || string.IsNullOrEmpty(sha)) return false;
         if (!Newer(ver, Program.Version)) return false;
         if (!url.StartsWith("https://debriefme.io/") && !(test != null && url.StartsWith("http://localhost:"))) return false;

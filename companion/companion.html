@@ -156,6 +156,7 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
   <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 2 57 11.5V30c0 15.5-11.3 26.6-25 32C18.3 56.6 7 45.5 7 30V11.5Z" fill="url(#lgfMetal)" stroke="#4a300a" stroke-width=".8"/><path d="M32 7 52.5 14.8V30c0 12.8-9.2 22-20.5 26.6C20.7 52 11.5 42.8 11.5 30V14.8Z" fill="url(#lgfMetalDk)"/><path d="M32 9.2 50.5 16.3V30c0 11.7-8.3 20.2-18.5 24.5C21.8 50.2 13.5 41.7 13.5 30V16.3Z" fill="url(#lgfEnamel)"/><path d="M32 9.2 50.5 16.3V23C40 20.5 24 20.5 13.5 23V16.3Z" fill="#fff" opacity=".07"/><path fill-rule="evenodd" transform="translate(0 1.2)" fill="#000" opacity=".55" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path fill-rule="evenodd" fill="url(#lgfMetal)" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path d="m29 32.4 2.7 2.7 5.6-6.1" fill="none" stroke="url(#lgfEmerald)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
   <h1>Debrief Companion<small>Feeds your recap to the Debrief addon in WoW after every pull</small></h1>
   <div class="stat" id="stat"><i></i><span id="statT">Starting…</span></div>
+  <button class="btn quit" id="upd" type="button" title="Looks for a newer Debrief on debriefme.io and installs it now.">Check for updates</button>
   <button class="btn quit" id="quit" type="button" title="Stops Debrief Companion. Open it again with the Debrief icon on your desktop.">Quit</button>
 </header>
 
@@ -394,6 +395,16 @@ async function clip(text) {
 }
 $('copyAgain').addEventListener('click', () => clip($('codeOut').value));
 // (closing this window keeps Debrief running in the background; Quit stops it)
+// (Check for updates: the app updates now, unless a pull is on; the window then reopens as the new version)
+$('upd').addEventListener('click', async () => {
+  const b = $('upd'); b.disabled = true; b.textContent = 'Checking…';
+  let r = ''; try { r = (await j('/update', { method: 'POST' })).result || ''; } catch (e) { r = 'offline'; }
+  const v = r.split(':')[1] || '';
+  const say = r.startsWith('updating') ? 'Updating to ' + v + '. Debrief reopens in a moment.' : r.startsWith('current') ? 'You have the newest version (' + v + ').' :
+    r === 'busy' ? 'A pull is on. Try again a minute after it ends.' : "Couldn't reach debriefme.io. Try again later.";
+  stat(say, r.startsWith('updating') ? 'busy' : r.startsWith('current') ? 'live' : '');
+  b.textContent = r.startsWith('updating') ? 'Updating…' : 'Check for updates'; b.disabled = r.startsWith('updating');
+});
 $('quit').addEventListener('click', async () => {
   L.live = false;
   try { await fetch('/quit', { method: 'POST' }); } catch (e) { /* already stopped */ }

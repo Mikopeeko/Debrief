@@ -117,6 +117,7 @@ namespace Debrief {
           SendJson(res, new Dictionary<string, object> { { "ok", ok } });
         }
         else if (get && path == "/addon") SendJson(res, new Dictionary<string, object> { { "msg", Wow.InstallAddon(here) } });
+        else if (post && path == "/update") SendJson(res, new Dictionary<string, object> { { "result", Program.UpdateNow() } }); // (the Check for updates button)
         else if (get && path == "/app-version") SendJson(res, new Dictionary<string, object> { { "version", Program.Version }, { "addon", AddonVersion() } });
         else if (post && path == "/quit") { SendJson(res, new Dictionary<string, object> { { "ok", true } }); res.Close(); Quit?.Invoke(); }
         else if (post && path == "/folder") {

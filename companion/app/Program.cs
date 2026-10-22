@@ -18,6 +18,7 @@ namespace Debrief {
   static class Program {
     public static string Here, Version = "0.0.0";
     public static bool StartQuiet, EdgeFallback;
+    static MainForm Form; static readonly object updLock = new object();
     static readonly object logLock = new object();
 
     public static void Log(string s) {
@@ -78,7 +79,7 @@ namespace Debrief {
 
       Application.EnableVisualStyles();
       Application.SetCompatibleTextRenderingDefault(false);
-      var form = new MainForm(Here, port);
+      var form = new MainForm(Here, port); Form = form;
       var server = new Server(Here, port) { SetClipboard = form.CopyText, Quit = form.QuitApp };
       var up = false;
       for (int i = 0; i < 8 && !(up = server.Start()); i++) { Thread.Sleep(750); if (i == 2) Setup.StopOldApp(); }
@@ -93,15 +94,7 @@ namespace Debrief {
         Thread.Sleep(TimeSpan.FromMinutes(10));
         while (true) {
           try {
-            if (Environment.GetEnvironmentVariable("DBF_NO_UPDATE") == null && !DbfScan.Busy() && Updater.Run(Here)) {
-              Log("updated while running: " + Wow.InstallAddon(Here));
-              var exe = Process.GetCurrentProcess().MainModule.FileName;
-              var show = false; try { show = (bool)form.Invoke(new Func<bool>(() => form.Visible)); } catch { }
-              var a = "--updated --wait-pid=" + Process.GetCurrentProcess().Id + (show ? "" : " --quiet");
-              Process.Start(new ProcessStartInfo(exe, a) { UseShellExecute = false, WorkingDirectory = Here });
-              try { form.BeginInvoke(new Action(form.QuitApp)); } catch { Environment.Exit(0); }
-              return;
-            }
+            if (Environment.GetEnvironmentVariable("DBF_NO_UPDATE") == null && UpdateNow().StartsWith("updating")) return;
           } catch (Exception e) { Log("hourly update: " + e.Message); }
           Thread.Sleep(TimeSpan.FromMinutes(60));
         }
@@ -118,6 +111,24 @@ namespace Debrief {
       server.Stop();
       Log("quit");
       GC.KeepAlive(one);
+    }
+
+    // Updates now unless a boss or practice pull is on: the new files and addon go in, then this copy hands over to the new one.
+    // Answers "busy", "current:<version>", "updating:<version>" or "offline".
+    public static string UpdateNow() {
+      if (DbfScan.Busy()) return "busy";
+      lock (updLock) {
+        if (!Updater.Run(Here)) return Updater.LastSeen == null ? "offline" : "current:" + Version;
+        Log("updated while running: " + Wow.InstallAddon(Here));
+        var exe = Process.GetCurrentProcess().MainModule.FileName;
+        var show = false; try { show = (bool)Form.Invoke(new Func<bool>(() => Form.Visible)); } catch { }
+        var a = "--updated --wait-pid=" + Process.GetCurrentProcess().Id + (show ? "" : " --quiet");
+        Process.Start(new ProcessStartInfo(exe, a) { UseShellExecute = false, WorkingDirectory = Here });
+        var v = Updater.LastSeen;
+        // (a moment later, so the window gets its answer first)
+        new Thread(() => { Thread.Sleep(1500); try { Form.BeginInvoke(new Action(Form.QuitApp)); } catch { Environment.Exit(0); } }) { IsBackground = true }.Start();
+        return "updating:" + v;
+      }
     }
 
     // (no WebView2 on this PC: the old way, an Edge window in app mode, else the default browser)
