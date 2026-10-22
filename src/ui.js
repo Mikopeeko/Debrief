@@ -5326,7 +5326,7 @@ function planRosCard(R, sp, inUse) { const inn = R.players.filter((p) => !p.benc
 function planRosH() { const o = rostersGet(), sp = planSp(), cur = planRoster();
   if (S.planRosEd) return planRosEdH(sp);
   return '<div class="plan-rhead"><div><b>Your rosters</b><span class="sub">Who\'s raiding, with a bench. The roster in use fills new plans and the note builder\'s "Who\'s raiding?" step.</span></div><button class="btn primary" type="button" data-plrnew="1">+ New roster</button></div>' +
-    (o.list.length ? o.list.map((R) => planRosCard(R, sp, cur && R.id === cur.id)).join('') : '<div class="panel plan-empty"><b>No roster yet</b><p class="sub">Make one from your team\'s core raiders, or type the names yourself.</p></div>'); }
+    (o.list.length ? o.list.map((R) => planRosCard(R, sp, cur && R.id === cur.id)).join('') : planRosEmptyH()); }
 // (the roster editor: in, bench, or not on it; anyone from your pool, or typed in)
 function planRosEdH(sp) { const E0 = S.planRosEd, P = planPool(), on = E0.on, nIn = [...on.values()].filter((p) => !p.bench).length, nB = on.size - nIn;
   const info = (n) => planInfo(sp, on.get(n.toLowerCase()) || { n });
@@ -5916,10 +5916,32 @@ function pnDraftAll() { const o = pnGet(), ps = pnPeople(o); if (!ps.length) ret
 function pnState(o, boss) { const id = o.notes[boss], n = id && notesOf(boss).list.find((x) => x.id === id); if (!n) return { k: 'no', t: 'Not planned' };
   const st = o.st[boss] || {}, ch = st.on && st.on !== (o.on[boss] || []).slice().sort().join('|'); if (ch) return { k: 'wn', t: 'Roster changed' };
   const i = (o.iss[boss] || []).length; return i ? { k: 'wn', t: i + ' to fix' } : { k: 'ok', t: 'Ready' }; }
+// ---- the empty Plan page (Oct 22, the user: "i think plan tab should also have an 'Or upload your note' option", then "revamp
+// the empty plan page"): two ways in, a roster or the NSRT note your raid already uses; the note you already loaded (through
+// Debriefing too) up top with "Make a roster from it"; the three steps folded under How it works; the sample raid a quiet link ----
+function planLastNote() { let best = null; for (const b of planBosses()) for (const n of notesOf(b).list) if (!n.example && (!best || (n.saved || 0) > (best.n.saved || 0))) best = { b, n }; return best; }
+const planNoteNames = (n) => { try { return ndzNoteRoster(n) || [...new Set(noteNames(noteResolve(n.text)).map((x) => String(x).split('-')[0]).filter(Boolean))]; } catch (e) { return []; } };
+function planNoteHave(L, names) { return '<div class="pln0-have"><span class="pln0-hk">Your note</span><span class="pln0-hn"><b>' + esc(L.n.name || 'Your note') + '</b><span class="sub">' + esc(L.b) + (names.length ? ' · ' + plural(names.length, 'raider') : '') + '</span></span>' +
+  '<span class="pln0-hb">' + (names.length ? '<button class="btn primary" type="button" data-plnros="' + esc(L.b + '|' + L.n.id) + '">Make a roster from it</button>' : '') + '<button class="btn" type="button" data-planopen="' + esc(L.b + '|' + L.n.id) + '">Open it</button></span></div>'; }
+function planEmptyH() { const L = planLastNote(), names = L ? planNoteNames(L.n) : [];
+  const card = (ic, t, d, btn) => '<div class="pln0-c"><span class="pln0-ic" aria-hidden="true">' + ic + '</span><b>' + t + '</b><p>' + d + '</p>' + btn + '</div>';
+  return '<div class="panel pln0"><span class="pln0-k">Plan your raid night</span><p class="pln0-h">Every boss planned in a minute: jobs, kicks, soaks and raid cooldowns, ready to paste into the game.</p>' + (L ? planNoteHave(L, names) : '') +
+    '<div class="pln0-cs">' + card('👥', 'Start from a roster', 'Your raiders and who\'s on the bench. Debrief picks who plays each boss and drafts every plan.', '<button class="btn' + (L ? '' : ' primary') + '" type="button" data-planv="ros">Make a roster</button>') +
+    card('📋', L ? 'Or load another note' : 'Or load your note', 'Paste the Northern Sky Raid Tools note your raid already uses. Debriefing checks every pull against it, and its names can become your roster.', '<button class="btn" type="button" data-ndzwiz="1">Load a note</button>') + '</div>' +
+    '<details class="pln0-how"><summary>How it works</summary><ol class="nt-steps"><li><b>Make a roster</b><span>Your raiders and who\'s on the bench.</span></li><li><b>Plan the whole night</b><span>Debrief picks who plays each boss and drafts every plan.</span></li><li><b>Copy into the game</b><span>Paste each plan into Northern Sky Raid Tools. Debriefing then checks the pulls against it.</span></li></ol></details>' +
+    '<p class="pln0-try sub">New here? <button class="linkbtn" type="button" data-plansample="1" data-tt="' + esc('<b>Try it with a sample raid</b><br>Adds a made-up 20-player roster and sample plans so you can click around. Remove them any time.') + '">Try it with a sample raid ›</button></p></div>'; }
+function planRosEmptyH() { const L = planLastNote(), names = L ? planNoteNames(L.n) : [];
+  return '<div class="panel plan-empty pln0-re"><b>No roster yet</b><p class="sub">Make one from your team\'s core raiders with + New roster, or type the names yourself.' + (L && names.length ? ' Or start from the note you already loaded:' : ' Or load the note your raid uses, and make one from its names.') + '</p>' +
+    (L && names.length ? planNoteHave(L, names) : '<button class="btn" type="button" data-ndzwiz="1">Load a note</button>') + '</div>'; }
+// (Make a roster from it: everyone the note names, nobody on the bench yet; it becomes the roster in use, then Rosters opens on it)
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-plnros]'); if (!b || S.page !== 'plan') return; e.preventDefault();
+  const [boss, id] = planKey(b.dataset.plnros), n = notesOf(boss).list.find((x) => x.id === id), names = n ? planNoteNames(n) : []; if (!names.length) return;
+  const sp = planSp(), IC = (() => { try { return ndzInferCls(noteResolve(n.text)); } catch (e) { return new Map(); } })(), players = names.map((x) => { const i = planInfo(sp, { n: x }), g = i.cls ? null : IC.get(String(x).toLowerCase()); return { n: x, cls: i.cls || (g && g.cls) || null, sid: i.sid || (g && g.sid) || 0, role: i.role || 'dps', bench: false }; }); /* (classes from your team, else guessed from the note's spells, like the note builder) */
+  const o = rostersGet(), R = { id: 'r' + Date.now().toString(36), name: 'From ' + (n.name || boss), players, saved: Date.now() }; o.list.push(R); o.cur = R.id; rostersSet(o); PLAN_RC = null;
+  S.planV = 'ros'; store.set(PLAN_VK, 'ros'); S.planRosEd = null; planAssign(); window.scrollTo({ top: 0 });
+  toastOk('Made the roster <b>' + esc(R.name) + '</b> from your note: ' + plural(players.length, 'raider') + '. Edit it to put people on the bench.', 6000); });
 function pnH() { const o = pnGet(), ps = pnPeople(o), bosses = planBosses(), RL = rostersGet().list;
-  if (!RL.length) return '<div class="panel nt-empty"><h3>Plan a raid night</h3><p class="sub">Every boss planned in a minute: jobs, kicks, soaks and raid cooldowns, ready to paste into the game.</p>' +
-    '<ol class="nt-steps"><li><b>Make a roster</b><span>Your raiders and who\'s on the bench.</span></li><li><b>Plan the whole night</b><span>Debrief picks who plays each boss and drafts every plan.</span></li><li><b>Copy into the game</b><span>Paste each plan into Northern Sky Raid Tools. Debriefing then checks the pulls against it.</span></li></ol>' +
-    '<div class="nt-ebtn"><button class="btn primary" type="button" data-planv="ros">Make a roster</button><button class="btn" type="button" data-plansample="1" data-tt="' + esc('<b>Try it with a sample raid</b><br>Adds a made-up 20-player roster and sample plans so you can click around. Remove them any time.') + '">Try it with a sample raid</button></div></div>'; /* (the three steps and a sample to try, Oct 22) */
+  if (!RL.length) return planEmptyH(); /* (the empty Plan page, revamped Oct 22: two ways in, a roster or your note; the three steps fold under How it works) */
   if (!o.on || !bosses.every((b) => Array.isArray(o.on[b]))) { const pk = pnPick(o, ps); o.on = Object.assign({}, pk.on, o.on); pnSet(o); }
   const size = (b) => pnSize(b, o.diff, ps.length), sit = (n, b) => !(o.on[b] || []).includes(n), core = ps.filter((p) => !p.bench), col = (p) => (E.CLASSES[p.cls] || [])[1] || 'inherit';
   const planned = bosses.filter((b) => pnState(o, b).k !== 'no'), sum = (k) => planned.reduce((s, b) => s + ((o.st[b] || {})[k] || 0), 0), todo = bosses.flatMap((b) => (o.iss[b] || []).map((t) => ({ b, t }))), changed = bosses.filter((b) => pnState(o, b).t === 'Roster changed');
