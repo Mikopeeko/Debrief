@@ -3891,7 +3891,7 @@ details.dbr-more[data-oa] > :not(summary) { margin-top: 12px; }
 .cch2 .cch-chips { display: flex; flex-wrap: wrap; gap: 6px; } .cch2 .cch-none { font-size: 13.5px; color: #a8eaa8; } .cch2 .cch-anote { flex-basis: 100%; margin-top: 4px; font-size: 12px; color: var(--muted); }
 .cch2 .dch, .cch2 .ach { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 8px; border-radius: 999px; font-size: 12.5px; background: rgba(255,255,255,.05); border: 1px solid var(--line2); }
 .cch2 .dch::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--faint, #6b7280); flex: none; }
-.cch2 .dch.k-own::before, .cch2 .dch.k-ready::before, .cch2 .dch.k-on::before { background: var(--bad); } .cch2 .dch.k-nothing::before { background: var(--warn); }
+.cch2 .dch.k-own::before, .cch2 .dch.k-ready::before, .cch2 .dch.k-on::before { background: var(--bad); } .cch2 .dch.k-nothing::before, .cch2 .dch.k-half::before { background: var(--warn); }
 .cch2 .dch i { font-style: normal; color: var(--muted); } .cch2 .dch.more, .cch2 .ach.more { color: var(--muted); } .cch2 .dch.more::before { display: none; }
 .cch2 .ach.bad { border-color: rgba(229,83,75,.4); } .cch2 .ach span { color: var(--muted); }
 @media (max-width: 640px) { .cch2 { padding: 12px; } .cch2 .cch-h { font-size: 16px; } .cch2 .cch-fv { font-size: 15px; } .cch2 .cch-p { grid-template-columns: 26px minmax(0, 1fr); padding: 10px; gap: 10px; } .cch2 .cch-p.cch-hasmap { grid-template-columns: 26px minmax(0, 1fr) 56px; } .cch2 .cch-pmap .cch-thumb.wr-map, .cch2 .cch-pmap .cch-thumb.wr-map svg.zmap { width: 56px !important; height: 56px !important; } .cch2 .cch-acct2 { grid-template-columns: 1fr; } .cch2 .cch-fx { flex-direction: column; gap: 0; } }
@@ -14498,7 +14498,7 @@ const PATCH_NOTES = [
     'Long patch notes fold after six lines.',
   ], f: [
     'Why we wiped: a raid mistake logged a few seconds after the deaths it caused now counts, even past the wipe filter. A pull lost to colliding orbs said "Put a raid cooldown on Venom Rupture"; now it says what happened and how to avoid it.',
-    'The coach\'s Deaths chips: every death counted on the player is red, so the colours match the count. "17 mores" reads "17 more".',
+    'The coach\'s Deaths chips: a death fully on the player is red, one half on them is amber (like the Deaths section and the Report card), so the colours match the count. "17 mores" reads "17 more".',
     'Venom orbs (Into the frontals) in the coach now says what went wrong, like "Deluge #3: 4, then 6 orbs popped", and what the tanks should do, instead of just "Into the frontals".',
     'The Coiled Altar: Malacrass is no longer flagged for being pushed after his next Dreadmarch, which even the fastest kills do. Now he\'s flagged when he gets a second shield.',
     'Page tips: a click anywhere outside the tip closes them. Before, the dark layer took every click until Next was pressed through.',
@@ -21726,9 +21726,9 @@ function coachDeaths(reps, name) {
   const li = (x) => '<li>' + (night ? 'Pull ' + x.r.item.pull + ', ' : '') + T(x.d.t) + ': ' + (name ? '' : '<b>' + esc(String(x.d.player).split('-')[0]) + '</b> ') + 'to ' + esc(ab(x.d)) + ' · <span class="sub">' + (x.after ? 'after the wipe filter, not counted' : esc(x.why.t)) + '</span></li>';
   const list = L.length ? '<ul class="cch-ul">' + L.slice(0, 16).map(li).join('') + (L.length > 16 ? '<li class="sub">and ' + (L.length - 16) + ' more</li>' : '') + '</ul>' : '';
   /* (chips: each death on one pull, the causes with counts on a night; the line stays for the full coaching and the empty case) */
-  const items = !kept.length ? [] : night ? top(kept).slice(0, 5).map(([a2, n2]) => ({ ab: a2, n: n2, k: 'n' })) : kept.slice(0, 6).map((x) => ({ t: T(x.d.t), who: name ? '' : String(x.d.player).split('-')[0], ab: ab(x.d), k: x.v.on && x.why.k !== 'own' && x.why.k !== 'ready' ? 'on' : x.why.k, word: x.why.t }));
+  const items = !kept.length ? [] : night ? top(kept).slice(0, 5).map(([a2, n2]) => ({ ab: a2, n: n2, k: 'n' })) : kept.slice(0, 6).map((x) => ({ t: T(x.d.t), who: name ? '' : String(x.d.player).split('-')[0], ab: ab(x.d), k: x.v.on && x.v.w < 1 ? 'half' : x.v.on && x.why.k !== 'own' && x.why.k !== 'ready' ? 'on' : x.why.k, word: x.why.t })); /* (half on them = amber, like the Deaths section and the Report card (Oct 22)) */
   const more = !night && kept.length > 6 ? kept.length - 6 : night ? Math.max(0, top(kept).length - 5) : 0;
-  const note = !kept.length ? '' : (onThem ? onThem + ' of ' + plural(kept.length, 'death') + (name ? ' on you' : ' on the player') + ' (red: their own mistake or a slow death with something ready).' : 'None on ' + (name ? 'you' : 'the player') + '.') + (nAfter ? ' ' + nAfter + ' more after the wipe filter, not counted.' : '');
+  const note = !kept.length ? '' : (onThem ? onThem + ' of ' + plural(kept.length, 'death') + (name ? ' on you' : ' on the player') + ' (red: their own mistake or a slow death with something ready' + (kept.some((x) => x.v.on && x.v.w < 1) ? '; amber: half on them' : '') + ').' : 'None on ' + (name ? 'you' : 'the player') + '.') + (nAfter ? ' ' + nAfter + ' more after the wipe filter, not counted.' : '');
   return { line, list, n: kept.length, onThem, bad: onThem > 0, items, more, note };
 }
 function coachAvoid(reps, name) {
