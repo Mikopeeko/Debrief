@@ -159,6 +159,16 @@ const allOf = (n, one, many) => (n === 1 ? one : n === 2 ? 'both ' + many : 'all
 // across the top, the wins in two columns), and what to improve follows, with Latest pull's "Fix first" beside it (o.rightTop).
 // ---- small maps on What went wrong lines (your note, Oct 18: everywhere a line has a map) ----
 // (a small map, zoomed to its mechanic once it's on the page: the class icons filled in)
+// (a small map, big over the page: the same map as the mechanic's own, with + and −, the scroll wheel and the play bar; Esc or a click outside closes it)
+function mapBig(mp, pmap) {
+  const old = document.querySelector('.mzo'); if (old) old.remove();
+  const o = document.createElement('div'); o.className = 'mzo'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true');
+  o.innerHTML = '<div class="mzo-box"><button class="mzo-x" type="button" aria-label="Close">✕</button><div class="mm mzo-m"></div></div>';
+  document.body.appendChild(o); const box = o.querySelector('.mzo-m');
+  box.innerHTML = miniMap(mp, pmap); bindZoom(box); try { bindAnim(box, mp, pmap); } catch (e) { /* (a still map) */ } hydrateMapIcons(box); refreshIcons();
+  const close = () => { o.remove(); document.removeEventListener('keydown', key); }, key = (e) => { if (e.key === 'Escape') close(); };
+  o.onclick = (e) => { if (e.target === o) close(); }; o.querySelector('.mzo-x').onclick = close; document.addEventListener('keydown', key); o.querySelector('.mzo-x').focus();
+}
 function wrThumbFit(root) {
   (root || document).querySelectorAll('.wr-map').forEach((a) => { const svg = a.querySelector('svg.zmap'); if (!svg || !svg.dataset.focus || a.dataset.fit) return; a.dataset.fit = '1';
     // (the whole room, like the big maps, not zoomed to each mechanic (your call, Oct 21: "keep the map in a more static spot so you can see the whole arena"))
@@ -167,7 +177,10 @@ function wrThumbFit(root) {
     fitIc(); hydrateMapIcons(a);
     // (Oct 22: it plays like the big maps, only while it's on screen; no Key moment banner on something this small)
     const src = MM_REG.get(+svg.dataset.mm);
-    if (src && typeof bindAnim === 'function') { a._zoomApply = fitIc; a._onPause = () => {}; try { bindAnim(a, src[0], src[1], true); } catch (e) { /* (a small map that can't play stays still) */ } } });
+    // (a corner button opens it big, with zoom and the play bar (your ask, Oct 21: "a way to zoom in or make them slightly bigger"))
+    if (src && !a.querySelector('.mz-big')) { a.insertAdjacentHTML('beforeend', '<button class="mz-big" type="button" title="Open the map big (zoom in with the scroll wheel or + and −)" aria-label="Open the map big">⤢</button>');
+      const open = (e) => { e.preventDefault(); e.stopPropagation(); mapBig(src[0], src[1]); }; a.querySelector('.mz-big').onclick = open; if (a.closest('.nml-map')) a.onclick = open; }
+    if (src && src[0].ft == null && src[0].frames && src[0].frames.length > 1 && typeof bindAnim === 'function') { a._zoomApply = fitIc; a._onPause = () => {}; try { bindAnim(a, src[0], src[1], true); } catch (e) { /* (a small map that can't play stays still) */ } } });
 }
 // (a box that works as a button: a click, or Enter or Space when it has focus)
 const onPress = (el, go) => { el.onclick = go; el.onkeydown = (e) => { if (e.target === el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(); } }; };
@@ -1655,6 +1668,7 @@ const PATCH_NOTES = [
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
+    'Debriefing: every small map (the Fix these cards, the All pulls lines) has a button in its corner that opens it big, with zoom and the play bar. The All pulls line maps are a bit bigger too.',
     'Debrief in game: the PC app is one clean screen now, with just the status, two switches and your combat log. Your recap shows in WoW.',
     'Debriefing, All pulls: a new Deaths line. Deaths per pull as bars, what killed people most, who died most, and each pull\'s first death with a › to that pull.',
     'Report card and the boss grade: deaths now count. A death that was on you (your own mistake, like an avoidable hit, or dying slowly with a defensive ready) costs Survival points; a one-shot that wasn\'t your mistake, the raid\'s mistake and deaths after the wipe filter don\'t.',
@@ -7627,7 +7641,7 @@ let MAP_RN = 0;
 // wrThumbFit. Every animated map remembers what it was drawn from (data-mm), so wrThumbFit can start a small one playing too)
 const MM_REG = new Map(); let MM_N = 0;
 function miniMap(mp, pmap) {
-  let mmId = 0; if (mp && mp.ft == null && mp.frames && mp.frames.length > 1) { mmId = ++MM_N; MM_REG.set(mmId, [mp, pmap]); if (MM_REG.size > 3000) MM_REG.delete(MM_REG.keys().next().value); }
+  let mmId = 0; if (mp) { mmId = ++MM_N; /* (every map, so a small one can open big; only the moving ones play) */ MM_REG.set(mmId, [mp, pmap]); if (MM_REG.size > 3000) MM_REG.delete(MM_REG.keys().next().value); }
   mp = mapLook(mp); pmap = lookPmap(pmap);
   const pts = mapObjs(mp.pts || []);
   if (!pts.length && !(mp.frames && mp.frames.some((f) => f.pts.length))) return '<p class="muted">No position data at this moment (needs Advanced Combat Logging).</p>';

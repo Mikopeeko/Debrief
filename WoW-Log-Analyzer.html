@@ -3779,10 +3779,16 @@ a.dbr-fx.st-bad { border-top-color: var(--bad); } a.dbr-fx:hover { transform: tr
 .nmc .dbck > details.nml .mcx-ln .nmc-big, .nmc .dbck > details.nml .mcx-ln .nmc-who { flex-basis: auto; } .nmc .dbck > details.nml .mcx-ln .nmc-big b { font-size: 18px; }
 .nmc .dbck > details.nml .mcx-ln .npc { flex: 0 1 240px; height: 18px; margin-left: auto; } .nmc .dbck > details.nml .mcx-ln .mcx-who .icw { width: 18px; height: 18px; }
 .nmc .dbck > details.nml .mcx-ln .mcx-s { -webkit-line-clamp: unset; display: inline; }
-.nml-map { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; margin: 4px 0 10px; } .nml-map .wr-map.mcx-map { width: 340px; max-width: 100%; height: 190px; display: block; border-radius: 12px; overflow: hidden; }
-.nml-map .wr-map.mcx-map svg.zmap { width: 100% !important; height: 190px !important; max-width: none !important; display: block; }
+.nml-map { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; margin: 4px 0 10px; } .nml-map .wr-map.mcx-map { width: 420px; max-width: 100%; height: 236px; cursor: zoom-in; display: block; border-radius: 12px; overflow: hidden; }
+.nml-map .wr-map.mcx-map svg.zmap { width: 100% !important; height: 236px !important; max-width: none !important; display: block; }
 /* (Oct 22, your note: hovering a card's map blew it up 3.2 times and half of it ran off the screen. That zoom is for the tiny
    84 px maps on What went wrong lines; the card maps are already big, so they stay put and only get a gold edge) */
+/* small maps open big (Oct 21) */ .wr-map > .mz-big { display: grid !important; place-items: center; position: absolute; right: 6px; bottom: 6px; z-index: 3; width: 28px; height: 28px; padding: 0; border-radius: 7px; border: 1px solid rgba(255,255,255,.28); background: rgba(10,11,15,.78); color: #fff; font-size: 16px; line-height: 1; cursor: zoom-in; }
+.wr-map > .mz-big:hover, .wr-map > .mz-big:focus-visible { border-color: var(--gold); color: var(--gold); } .wr-map:not(.mcx-map) > .mz-big { width: 20px; height: 20px; font-size: 12px; right: 3px; bottom: 3px; border-radius: 5px; }
+.mzo { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 16px; background: rgba(5,6,9,.8); }
+.mzo-box { position: relative; width: min(100%, calc(100vh - 110px), 880px); padding: 44px 12px 12px; border: 1px solid var(--line2); border-radius: 14px; background: var(--panel); box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+.mzo-t { margin: 2px 40px 8px 2px; font-size: 14px; font-weight: 600; } .mzo-x { position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; padding: 0; border-radius: 8px; border: 1px solid var(--line2); background: transparent; color: var(--text); cursor: pointer; } .mzo-x:hover { border-color: var(--gold); color: var(--gold); }
+.mzo-m .zwrap { max-width: none !important; } .mzo-m svg.zmap { max-width: none !important; width: 100% !important; }
 .nml-map .wr-map.mcx-map:hover, .mcx-tile .wr-map.mcx-map:hover { transform: none !important; box-shadow: none !important; border-color: var(--gold); }
 .nml-f { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 10px; font-size: 13px; color: var(--muted); } .nml-f .npc { height: 30px; }
 /* All pulls Deaths (Oct 21) */ .ndh-w { margin: 12px 0; } .ndh-lead { margin: 0 0 10px; font-size: 14px; } .ndh { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 0 0 12px; } .ndh-c { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; } .ndh-h { display: block; font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 4px; } .ndh-r { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; font-size: 13px; } .ndh-r + .ndh-r { border-top: 1px solid var(--line); } .ndh-t td:last-child { width: 24px; text-align: right; } .ndh-go { color: var(--gold); text-decoration: none; font-size: 16px; padding: 0 4px; }
@@ -12696,6 +12702,16 @@ const allOf = (n, one, many) => (n === 1 ? one : n === 2 ? 'both ' + many : 'all
 // across the top, the wins in two columns), and what to improve follows, with Latest pull's "Fix first" beside it (o.rightTop).
 // ---- small maps on What went wrong lines (your note, Oct 18: everywhere a line has a map) ----
 // (a small map, zoomed to its mechanic once it's on the page: the class icons filled in)
+// (a small map, big over the page: the same map as the mechanic's own, with + and −, the scroll wheel and the play bar; Esc or a click outside closes it)
+function mapBig(mp, pmap) {
+  const old = document.querySelector('.mzo'); if (old) old.remove();
+  const o = document.createElement('div'); o.className = 'mzo'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true');
+  o.innerHTML = '<div class="mzo-box"><button class="mzo-x" type="button" aria-label="Close">✕</button><div class="mm mzo-m"></div></div>';
+  document.body.appendChild(o); const box = o.querySelector('.mzo-m');
+  box.innerHTML = miniMap(mp, pmap); bindZoom(box); try { bindAnim(box, mp, pmap); } catch (e) { /* (a still map) */ } hydrateMapIcons(box); refreshIcons();
+  const close = () => { o.remove(); document.removeEventListener('keydown', key); }, key = (e) => { if (e.key === 'Escape') close(); };
+  o.onclick = (e) => { if (e.target === o) close(); }; o.querySelector('.mzo-x').onclick = close; document.addEventListener('keydown', key); o.querySelector('.mzo-x').focus();
+}
 function wrThumbFit(root) {
   (root || document).querySelectorAll('.wr-map').forEach((a) => { const svg = a.querySelector('svg.zmap'); if (!svg || !svg.dataset.focus || a.dataset.fit) return; a.dataset.fit = '1';
     // (the whole room, like the big maps, not zoomed to each mechanic (your call, Oct 21: "keep the map in a more static spot so you can see the whole arena"))
@@ -12704,7 +12720,10 @@ function wrThumbFit(root) {
     fitIc(); hydrateMapIcons(a);
     // (Oct 22: it plays like the big maps, only while it's on screen; no Key moment banner on something this small)
     const src = MM_REG.get(+svg.dataset.mm);
-    if (src && typeof bindAnim === 'function') { a._zoomApply = fitIc; a._onPause = () => {}; try { bindAnim(a, src[0], src[1], true); } catch (e) { /* (a small map that can't play stays still) */ } } });
+    // (a corner button opens it big, with zoom and the play bar (your ask, Oct 21: "a way to zoom in or make them slightly bigger"))
+    if (src && !a.querySelector('.mz-big')) { a.insertAdjacentHTML('beforeend', '<button class="mz-big" type="button" title="Open the map big (zoom in with the scroll wheel or + and −)" aria-label="Open the map big">⤢</button>');
+      const open = (e) => { e.preventDefault(); e.stopPropagation(); mapBig(src[0], src[1]); }; a.querySelector('.mz-big').onclick = open; if (a.closest('.nml-map')) a.onclick = open; }
+    if (src && src[0].ft == null && src[0].frames && src[0].frames.length > 1 && typeof bindAnim === 'function') { a._zoomApply = fitIc; a._onPause = () => {}; try { bindAnim(a, src[0], src[1], true); } catch (e) { /* (a small map that can't play stays still) */ } } });
 }
 // (a box that works as a button: a click, or Enter or Space when it has focus)
 const onPress = (el, go) => { el.onclick = go; el.onkeydown = (e) => { if (e.target === el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(); } }; };
@@ -14192,6 +14211,7 @@ const PATCH_NOTES = [
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
+    'Debriefing: every small map (the Fix these cards, the All pulls lines) has a button in its corner that opens it big, with zoom and the play bar. The All pulls line maps are a bit bigger too.',
     'Debrief in game: the PC app is one clean screen now, with just the status, two switches and your combat log. Your recap shows in WoW.',
     'Debriefing, All pulls: a new Deaths line. Deaths per pull as bars, what killed people most, who died most, and each pull\'s first death with a › to that pull.',
     'Report card and the boss grade: deaths now count. A death that was on you (your own mistake, like an avoidable hit, or dying slowly with a defensive ready) costs Survival points; a one-shot that wasn\'t your mistake, the raid\'s mistake and deaths after the wipe filter don\'t.',
@@ -20164,7 +20184,7 @@ let MAP_RN = 0;
 // wrThumbFit. Every animated map remembers what it was drawn from (data-mm), so wrThumbFit can start a small one playing too)
 const MM_REG = new Map(); let MM_N = 0;
 function miniMap(mp, pmap) {
-  let mmId = 0; if (mp && mp.ft == null && mp.frames && mp.frames.length > 1) { mmId = ++MM_N; MM_REG.set(mmId, [mp, pmap]); if (MM_REG.size > 3000) MM_REG.delete(MM_REG.keys().next().value); }
+  let mmId = 0; if (mp) { mmId = ++MM_N; /* (every map, so a small one can open big; only the moving ones play) */ MM_REG.set(mmId, [mp, pmap]); if (MM_REG.size > 3000) MM_REG.delete(MM_REG.keys().next().value); }
   mp = mapLook(mp); pmap = lookPmap(pmap);
   const pts = mapObjs(mp.pts || []);
   if (!pts.length && !(mp.frames && mp.frames.some((f) => f.pts.length))) return '<p class="muted">No position data at this moment (needs Advanced Combat Logging).</p>';
