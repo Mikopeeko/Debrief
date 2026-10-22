@@ -108,6 +108,9 @@ kbd { font: 700 12px var(--body); background: #232835; border: 1px solid #4a5060
 .more .k { margin-bottom: 7px; }
 .more select { width: 100%; height: 34px; padding: 4px 30px 4px 12px; border: 1px solid var(--line2); border-radius: 7px; background: var(--raised); font-size: 13px; color: var(--text); }
 .note { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
+.foot .archb { flex: none; border: 1px solid var(--line2); border-radius: 6px; padding: 3px 10px; color: var(--muted); font-weight: 600; }
+.foot .archb:hover { border-color: var(--faint); color: var(--text); }
+.foot .archb:disabled { opacity: .5; cursor: default; }
 .group { border: 1px solid var(--line); border-radius: 8px; background: rgba(30,34,44,.45); padding: 6px; margin-bottom: 10px; }
 .bossname { display: flex; align-items: baseline; gap: 8px; font: 700 16px var(--head); margin: 4px 8px 4px; color: var(--text); }
 .bossname span { font: 600 12px var(--body); color: var(--faint); text-transform: uppercase; letter-spacing: .06em; }
@@ -219,7 +222,7 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
   <aside class="more" id="more" hidden>
     <h2>Settings <button class="btn ib" id="moreX" type="button" aria-label="Close settings">✕</button></h2>
     <div><p class="k">Combat log</p><select id="logSel" aria-label="Combat log"></select><p class="note" id="logInfo"></p></div>
-    <div><p class="k">Every pull in this log</p><div id="pulls"><p class="empty">Looking for your combat log…</p></div></div>
+    <div id="pulls" hidden></div>
     <div><p class="k">Updates</p><button class="btn" id="upd" type="button" title="Looks for a newer Debrief on debriefme.io and installs it now.">Check for updates</button></div>
     <p class="note">Close this window any time: Debrief keeps running in the background. Quit stops it. Raiders with the addon get their card from you automatically.</p>
     <details class="code"><summary>The code that was copied</summary><textarea id="codeOut" readonly></textarea></details>
@@ -229,6 +232,7 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
 
 <footer class="foot">
   <button class="lnk" id="logT" type="button" title="Pick another combat log">Log: looking…</button>
+  <button class="lnk archb" id="archB" type="button" title="Moves your old combat logs into the archive folder next to them, so the Logs folder starts clean. Nothing is deleted: they stay in the log list behind the gear.">Archive old logs</button>
   <span id="addonT"></span>
   <button class="quit" id="quit" type="button" title="Stops Debrief Companion. Open it again with the Debrief icon on your desktop.">Quit</button>
 </footer>
@@ -266,9 +270,28 @@ async function loadLogs() {
   $('folderBox').hidden = true; L.state = 'ok';
   L.files = x.files || [];
   if (!L.files.length) { $('pulls').innerHTML = '<p class="empty">No combat log yet. In WoW, type <kbd>/combatlog</kbd> (or turn on Advanced Combat Logging and log your raid). Pulls show up here as they end.</p>'; stat('Waiting for a combat log', 'busy'); L.state = 'nolog'; renderMain(); waitNew(); return; }
-  $('logSel').innerHTML = L.files.map((f, i) => '<option value="' + i + '" title="' + esc(f.name) + '">' + (i === 0 && !f.old ? 'Latest log' : 'Older log') + ' · ' + new Date(f.mtime).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' · ' + (f.size / 1048576).toFixed(0) + ' MB</option>').join('');
+  fillLogSel();
+  if (L.files[0].old) waitNew(true); // (only archived logs: watch for WoW's next fresh one)
   await openLog(0);
 }
+function fillLogSel() {
+  $('logSel').innerHTML = L.files.map((f, i) => '<option value="' + i + '" title="' + esc(f.name) + '">' + (i === 0 && !f.old ? 'Latest log' : 'Older log') + ' · ' + new Date(f.mtime).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' · ' + (f.size / 1048576).toFixed(0) + ' MB</option>').join('');
+  const i = L.files.findIndex((f) => f.name === L.name); if (i >= 0) $('logSel').value = String(i);
+}
+// (the Archive old logs button: the helper moves them into the archive folder; the log being followed stays open)
+$('archB').addEventListener('click', async () => {
+  const b = $('archB'); b.disabled = true; b.textContent = 'Archiving…';
+  try {
+    const r = await j('/archive', { method: 'POST' }), mb = r.mb || 0, size = mb >= 1024 ? (mb / 1024).toFixed(1) + ' GB' : mb + ' MB';
+    const say = r.moved ? 'Moved ' + r.moved + ' old log' + (r.moved === 1 ? '' : 's') + ' (' + size + ') into the archive' + ((r.kept || []).length ? '. The one WoW is writing stays' : '')
+      : (r.kept || []).length ? 'Nothing else to archive: only the log WoW is writing is left' : 'Nothing to archive';
+    b.title = say + '. WoW starts a fresh log the next time combat logging turns on. Nothing is deleted.';
+    stat(say, 'live'); clearTimeout(b.t); b.t = setTimeout(() => { if ($('statT').textContent === say) stat(L.live ? 'Watching your combat log' : 'Older log: not watching it', L.live ? 'live' : ''); }, 10000);
+    const x = await j('/logs'); L.files = x.files || [];
+    if (L.files.some((f) => f.name === L.name)) fillLogSel(); else await loadLogs();
+  } catch (e) { stat("Couldn't archive: " + e.message, 'err'); }
+  b.disabled = false; b.textContent = 'Archive old logs';
+});
 $('logSel').addEventListener('change', (e) => openLog(+e.target.value));
 
 async function openLog(i) {
@@ -332,8 +355,9 @@ async function waitLoop() {
   }
   L.waiting = false;
 }
-async function waitNew() { // (no combat log yet: check for one every so often)
-  for (;;) { await new Promise((r) => setTimeout(r, 5000)); try { const x = await j('/logs'); if ((x.files || []).length) { loadLogs(); return; } } catch (e) { /* keep waiting */ } }
+async function waitNew(fresh) { // (no combat log yet, or only archived ones: check for a new one every so often)
+  if (waitNew.on) return; waitNew.on = true;
+  try { for (;;) { await new Promise((r) => setTimeout(r, 5000)); try { const x = await j('/logs'), fs = x.files || []; if (fresh ? fs.some((f) => !f.old) : fs.length) { loadLogs(); return; } } catch (e) { /* keep waiting */ } } } finally { waitNew.on = false; }
 }
 
 // ---------- reading one pull ----------
@@ -433,10 +457,8 @@ function renderTop() {
     (e || g.dummy ? '' : ' <span style="color:var(--faint)">Reading it…</span>');
   const f = e && e.f ? shortFocus(e.f) : '';
   $('focT').hidden = !f; if (f) $('focT').innerHTML = '<span class="np">' + (b.kill ? 'Next time' : 'Next pull') + '</span>' + paint(f, e);
-  const sent = L.sent.has(b.startByte), busy = !!L.reading;
-  const acts = (view || (!sent && !busy) ? '<button class="btn ' + (view ? 'gold' : 'em') + '" type="button" data-send="' + b.startByte + '">Send pull ' + b.pull + (sent ? ' again' : ' to WoW') + '</button>' : '') +
-    (!view && sent && !busy ? '<button class="lnk" type="button" data-send="' + b.startByte + '">Send it again</button>' : '') +
-    (view ? '<button class="lnk" type="button" data-back="1">Back to the last pull</button>' : '');
+  const sent = L.sent.has(b.startByte);
+  const acts = view ? '<button class="btn gold" type="button" data-send="' + b.startByte + '">Send pull ' + b.pull + (sent ? ' again' : ' to WoW') + '</button><button class="lnk" type="button" data-back="1">Back to the last pull</button>' : '';
   $('acts').hidden = !acts; if ($('acts').innerHTML !== acts) $('acts').innerHTML = acts;
 }
 const lerpC = (a, b, t) => { const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)), A = p(a), B = p(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); };

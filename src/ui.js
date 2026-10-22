@@ -1709,6 +1709,7 @@ const PATCH_NOTES = [
     { t: 'Since last raid', d: 'All pulls now remembers each night and compares it with your last raid on the same boss: what you fixed, what got better or worse, and what\'s still going wrong. Pick a player to see their mistakes that also happened last raid.' },
   ], n: [
     'The coach box is calmer: each problem shows at most two tags (how often, and the one that matters most). The rest are in Read the full coaching.',
+    'Debrief Companion: an Archive old logs button at the bottom moves your old combat logs out of the way so the Logs folder starts clean (nothing is deleted), and the home screen is tidier.',
     'All pulls shows how long is left while it reads the night, like "12 of 30, about 25 seconds left".',
     'A night read from your PC now says so on its Share bar: its page address won\'t open for anyone else, so use Share. When your team\'s Warcraft Logs has the same raid, Open the Warcraft Logs version takes you to the same pull, where every pull has its own link.',
     'Debrief Addon: a kill on your recap card opens with the raid lead\'s kill call, the same one as Debriefing, like "Boss down! 30 pulls tonight, and we got it." with shout-outs.',

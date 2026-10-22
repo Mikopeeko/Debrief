@@ -99,6 +99,28 @@ namespace Debrief {
       catch { try { return new FileInfo(path).Length; } catch { return 0; } }
     }
 
+    // (the Archive old logs button: old combat logs move into warcraftlogsarchive next to them, the folder the app already lists
+    // as "Older log". Nothing is deleted. The log WoW may be writing stays put: WoW starts a fresh one when logging next turns on)
+    public static Dictionary<string, object> ArchiveLogs(string here) {
+      var d = FindLogsDir(here); if (d == null) throw new Exception("No WoW Logs folder found.");
+      bool on = false; foreach (var n in new[] { "Wow", "WowT", "WowB" }) { try { if (System.Diagnostics.Process.GetProcessesByName(n).Length > 0) on = true; } catch { } }
+      return ArchiveIn(d, on);
+    }
+    public static Dictionary<string, object> ArchiveIn(string d, bool wowOn) {
+      var arc = Path.Combine(d, "warcraftlogsarchive"); Directory.CreateDirectory(arc);
+      int moved = 0; long bytes = 0; var kept = new List<object>();
+      var files = new DirectoryInfo(d).GetFiles("WoWCombatLog*.txt").OrderByDescending(f => f.LastWriteTimeUtc).ToList();
+      for (int i = 0; i < files.Count; i++) {
+        var f = files[i];
+        // (WoW is open: its newest log, or any written in the last 10 minutes, may still be in use)
+        if (wowOn && (i == 0 || DateTime.UtcNow - f.LastWriteTimeUtc < TimeSpan.FromMinutes(10))) { kept.Add(f.Name); continue; }
+        var to = Path.Combine(arc, "Archive-" + f.Name);
+        for (int k = 2; File.Exists(to); k++) to = Path.Combine(arc, "Archive-" + Path.GetFileNameWithoutExtension(f.Name) + " (" + k + ").txt");
+        try { long len = f.Length; File.Move(f.FullName, to); moved++; bytes += len; } catch { kept.Add(f.Name); }
+      }
+      return new Dictionary<string, object> { { "moved", moved }, { "mb", (long)Math.Round(bytes / 1048576.0) }, { "kept", kept }, { "wow", wowOn } };
+    }
+
     public static FileInfo NewestLog(string dir) {
       try { return new DirectoryInfo(dir).GetFiles("WoWCombatLog*.txt").OrderByDescending(f => f.LastWriteTimeUtc).FirstOrDefault(); } catch { return null; }
     }
