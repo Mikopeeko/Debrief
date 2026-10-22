@@ -490,6 +490,118 @@ body.ndz-tlbig-on { overflow: hidden; } body.ndz-tlbig-on::after { content: ''; 
 .ndz-bgt tr.grp td { border-top: 0; padding: 10px 4px 2px; text-align: left; font: 600 11px var(--body); color: var(--faint); text-transform: uppercase; letter-spacing: .06em; position: static; background: none; } .ndz-bgt tr.addr td { text-align: left; border-top: 1px solid var(--line); } .ndz-bgt tfoot td { border-top: 1px solid var(--line2); } .ndz-bgt tfoot td.pl { color: var(--muted); font-size: 13px; }
 .ndz-bgd { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line2); background: transparent; cursor: pointer; padding: 0; display: inline-grid; place-items: center; } .ndz-bgd:hover { border-color: var(--good); } .ndz-bgd.on { background: var(--good); border-color: var(--good); } .ndz-bgd.on::after { content: '✓'; color: #0d1a10; font: 700 13px var(--body); } .ndz-bgd:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; } .ndz-bgnote { margin: 4px 0 0; font-size: 12px; }
 @media (max-width: 640px) { .ndz-brow { grid-template-columns: 1fr auto; } .ndz-brow .cl { grid-column: 1 / -1; grid-row: 2; } .ndz-bgt th, .ndz-bgt td { padding: 6px 3px; } .ndz-bgt .ndz-bcnt .of { display: none; } .ndz-bgt td.pl small { white-space: normal; max-width: 112px; } }
+/* cooldown planner */ #ndzTl.big { padding: 0; display: flex; flex-direction: column; overflow: hidden; } #ndzTl.big > .ndz-cth, #ndzTl.big > .ndz-ctb { margin: 0 16px; }
+.ndz-plh { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); } .ndz-plh > b { font: 700 20px var(--head); } .ndz-plsp { flex: 1; }
+.ndz-plv { display: inline-flex; border: 1px solid var(--line2); border-radius: 999px; padding: 2px; margin-left: 10px; } .ndz-plv button { border: 0; background: none; color: var(--muted); font: 600 13px var(--body); padding: 4px 14px; border-radius: 999px; cursor: pointer; } .ndz-plv button.on { background: var(--gold); color: #15120a; }
+.ndz-plb2 { border: 1px solid var(--line2); background: var(--raised); color: var(--text); border-radius: 8px; padding: 5px 11px; font: 600 13px var(--body); cursor: pointer; } .ndz-plb2:hover:not(:disabled) { border-color: var(--gold); } .ndz-plb2:disabled { opacity: .4; cursor: default; } .ndz-plb2.gold { border-color: rgba(230,180,80,.6); color: var(--gold); }
+.ndz-plw { flex: 1; min-height: 0; display: grid; grid-template-columns: 250px 1fr; } .ndz-pla { overflow: auto; border-right: 1px solid var(--line); padding: 10px 12px 20px; } .ndz-plm { overflow: auto; padding: 10px 16px 24px; min-width: 0; }
+.ndz-plat { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; } .ndz-plall { font-size: 12px; color: var(--muted); display: inline-flex; gap: 5px; align-items: center; cursor: pointer; }
+.ndz-plg { margin-top: 8px; } .ndz-plgl { display: block; font: 600 11px var(--body); color: var(--faint); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; } .ndz-plp { padding: 5px 0; border-top: 1px solid var(--line); } .ndz-plpn { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 14px; } .ndz-plpn small { font: 600 11px var(--body); color: var(--muted); background: var(--pill); border-radius: 999px; padding: 0 6px; }
+.ndz-plps { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; } .ndz-pls { padding: 0; border: 2px solid transparent; border-radius: 7px; background: none; cursor: pointer; line-height: 0; } .ndz-pls .icw { width: 26px; height: 26px; } .ndz-pls:hover { border-color: var(--line2); } .ndz-pls.on { border-color: var(--gold); box-shadow: 0 0 10px rgba(230,180,80,.6); }
+.ndz-plst { margin: 0 0 8px; padding: 7px 12px; border-radius: 8px; background: rgba(230,180,80,.1); border: 1px solid rgba(230,180,80,.35); font-size: 13px; } .ndz-plst.sub { background: none; border-color: var(--line); } .ndz-plx { margin-left: 6px; border: 1px solid var(--line2); background: none; color: var(--text); border-radius: 6px; padding: 1px 8px; font: 600 12px var(--body); cursor: pointer; }
+.ndz-plm .ndz-ctl:not(.hits):not(.boss) .ndz-ctr { cursor: pointer; } .ndz-plm .ndz-ctl:not(.hits):not(.boss):hover { background: rgba(255,255,255,.035); } .ndz-plm.stamping .ndz-ctl:not(.hits):not(.boss) .ndz-ctr { cursor: crosshair; }
+.ndz-plpick { position: fixed; z-index: 1001; min-width: 220px; max-height: 60vh; overflow: auto; background: #12141a; border: 1px solid var(--gold); border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.6); padding: 6px; } .ndz-plpk { padding: 4px 8px 6px; font-size: 13px; color: var(--muted); } .ndz-plpick button { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: none; color: var(--text); text-align: left; padding: 5px 8px; border-radius: 6px; font: 600 13px var(--body); cursor: pointer; } .ndz-plpick button:hover { background: var(--raised); } .ndz-plpick button .icw { width: 24px; height: 24px; flex: none; } .ndz-plpick button span { display: flex; flex-direction: column; } .ndz-plpick button small { color: var(--warn); font-weight: 500; font-size: 11px; } .ndz-plpick button.busy { opacity: .75; }
+.ndz-plgw { overflow-x: auto; } .ndz-plgt { border-collapse: separate; border-spacing: 0; } .ndz-plgt th, .ndz-plgt td { border-top: 1px solid var(--line); padding: 4px; text-align: center; vertical-align: middle; } .ndz-plgt thead th { border-top: 0; font: 600 11px var(--body); color: var(--muted); min-width: 62px; max-width: 90px; position: relative; padding-bottom: 8px; } .ndz-plgt thead th .t { display: block; color: var(--text); font-size: 12px; } .ndz-plgt thead th .n { display: block; white-space: normal; line-height: 1.15; }
+.ndz-plcv { position: absolute; left: 50%; bottom: 1px; width: 26px; height: 3px; margin-left: -13px; border-radius: 3px; } .ndz-plcv.red { background: #e5534b; } .ndz-plcv.amber { background: #e8a23a; } .ndz-plcv.green { background: #45c15c; } .ndz-plgt thead th.mech .n { color: var(--faint); }
+.ndz-plgt td.pl, .ndz-plgt th.pl { text-align: left; white-space: nowrap; position: sticky; left: 0; background: #171a22; z-index: 1; font-weight: 600; font-size: 13px; padding-right: 12px; } .ndz-plgt td.cell { height: 34px; cursor: pointer; } .ndz-plgt td.cell:hover { background: rgba(255,255,255,.05); } .ndz-plgt td.cell .ndz-ctc { position: static; display: inline-block; margin: 1px; } .ndz-plgt td.cell .ndz-ctc .icw { width: 24px; height: 24px; } .ndz-plloose { margin-top: 8px; }
+@media (max-width: 760px) { .ndz-plw { grid-template-columns: 1fr; grid-template-rows: auto 1fr; } .ndz-pla { border-right: 0; border-bottom: 1px solid var(--line); max-height: 34vh; } .ndz-plh > b { font-size: 17px; } .ndz-plh .sub { display: none; } }
+/* plan night */ .nt-head { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; padding: 14px 18px; } .nt-ht { display: flex; align-items: center; gap: 10px; } .nt-ht h2 { margin: 0; font: 700 24px var(--head); } .nt-date { background: var(--raised); border: 1px solid var(--line2); color: var(--text); border-radius: 8px; padding: 4px 8px; font: 500 13px var(--body); color-scheme: dark; }
+.nt-pick { display: inline-flex; align-items: center; gap: 6px; } .nt-pick select { background: var(--raised); border: 1px solid var(--line2); color: var(--text); border-radius: 8px; padding: 5px 8px; font: 600 13px var(--body); } .nt-sp { flex: 1; }
+.nt-did { display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-top: 12px; } .nt-card { padding: 14px 16px; } .nt-card h4 { margin: 0 0 6px; font: 700 17px var(--head); } .nt-card h4 .sub { font: 500 13px var(--body); } .nt-card > p { margin: 0; font-size: 14px; }
+.nt-stats { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; } .nt-stats span { flex: 1; min-width: 90px; background: var(--raised); border: 1px solid var(--line); border-radius: 10px; padding: 7px 10px; font-size: 12px; color: var(--muted); } .nt-stats b { display: block; font: 700 21px var(--head); color: var(--text); } .nt-stats b.ok { color: #7ee08f; } .nt-stats b.wn { color: #f0bd6b; }
+.nt-todo { display: flex; gap: 9px; align-items: flex-start; padding: 7px 0; border-top: 1px solid var(--line); font-size: 14px; } .nt-card h4 + .nt-todo { border-top: 0; } .nt-todo .d { width: 8px; height: 8px; border-radius: 50%; background: var(--warn); margin-top: 7px; flex: none; } .nt-go { margin-left: auto; border: 0; background: none; color: var(--gold); font: 600 13px var(--body); cursor: pointer; white-space: nowrap; }
+.nt-gw { margin-top: 12px; padding: 12px 0 10px; } .nt-gh { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; padding: 0 16px 10px; } .nt-gh b { font: 700 17px var(--head); } .nt-gh .btn { margin-left: auto; } .nt-gs { overflow-x: auto; }
+.nt-g { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 980px; } .nt-g th, .nt-g td { border-top: 1px solid var(--line); text-align: center; padding: 0; } .nt-g thead th { border-top: 0; vertical-align: bottom; }
+.nt-bh { position: relative; display: block; width: 100%; min-width: 80px; height: 86px; overflow: hidden; border: 0; padding: 0; background: #14161d; cursor: pointer; color: var(--text); } .nt-bh img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .9; transition: opacity .15s, transform .2s; } .nt-bh:hover img { opacity: 1; transform: scale(1.04); } .nt-bh::after { content: ''; position: absolute; inset: 0; background: linear-gradient(rgba(15,17,23,.05) 35%, rgba(15,17,23,.92)); }
+.nt-bh b { position: absolute; left: 6px; right: 6px; bottom: 22px; z-index: 1; font: 700 13px/1.05 var(--head); text-align: left; } .nt-st { position: absolute; left: 6px; bottom: 5px; z-index: 1; font: 600 11px var(--body); padding: 1px 6px; border-radius: 999px; } .nt-st.ok { background: rgba(69,193,92,.18); color: #7ee08f; } .nt-st.wn { background: rgba(232,162,58,.2); color: #f0bd6b; } .nt-st.no { background: rgba(152,160,173,.16); color: var(--muted); }
+.nt-g th.pl, .nt-g td.pl { text-align: left; position: sticky; left: 0; z-index: 2; background: var(--panel); padding: 0 12px; min-width: 170px; white-space: nowrap; } .nt-g thead th.pl { vertical-align: bottom; padding-bottom: 8px; } .nt-g td.pl .nm { font-weight: 600; } .nt-g td.pl small { color: var(--faint); font-size: 12px; margin-left: 6px; }
+.nt-g tr.grp td { text-align: left; padding: 9px 12px 3px; font: 600 11px var(--body); color: var(--faint); text-transform: uppercase; letter-spacing: .07em; position: sticky; left: 0; } .nt-g td.c { height: 32px; } .nt-g tfoot td { padding: 7px 0; font-size: 13px; color: var(--muted); } .nt-g tfoot td.bad { color: #ff9c94; font-weight: 600; }
+.nt-tk { width: 24px; height: 24px; border-radius: 7px; border: 0; padding: 0; cursor: pointer; display: inline-grid; place-items: center; font: 700 13px var(--body); vertical-align: middle; } .nt-tk.in { background: rgba(69,193,92,.85); color: #0d1a10; } .nt-tk.in::after { content: '✓'; } .nt-tk.sug { background: rgba(230,180,80,.2); border: 1px solid var(--gold); color: var(--gold); } .nt-tk.sug::after { content: '✓'; } .nt-tk.sit { background: transparent; border: 1px solid rgba(229,83,75,.6); color: #ff9c94; } .nt-tk.sit::after { content: '–'; } .nt-tk.out { background: transparent; border: 1px dashed var(--line2); } .nt-tk:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.nt-leg { display: flex; gap: 16px; flex-wrap: wrap; padding: 10px 16px 0; font-size: 12px; color: var(--muted); } .nt-leg span { display: inline-flex; gap: 6px; align-items: center; } .nt-leg .nt-tk { width: 16px; height: 16px; font-size: 10px; cursor: default; } .nt-empty { padding: 22px; } .nt-empty h3 { margin: 0 0 6px; font: 700 20px var(--head); }
+@media (max-width: 760px) { .nt-did { grid-template-columns: 1fr; } .nt-ht h2 { font-size: 20px; } .nt-g th.pl, .nt-g td.pl { min-width: 120px; } .nt-g td.pl small { display: none; } }
+/* plan night slim */ .nt-one { padding: 0; overflow: hidden; } .nt-one .nt-head { padding: 10px 14px; gap: 8px 12px; border-bottom: 1px solid var(--line); } .nt-one .nt-ht h2 { font-size: 20px; } .nt-one .nt-date, .nt-one .nt-pick select { padding: 3px 7px; font-size: 12px; } .nt-one .nt-diff button { padding: 3px 12px; font-size: 13px; }
+.nt-sum { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; padding: 8px 14px; border-bottom: 1px solid var(--line); background: rgba(230,180,80,.04); font-size: 13px; } .nt-sumt { font: 700 15px var(--head); } .nt-sumn { color: var(--muted); } .nt-sumn b { color: var(--text); font: 700 15px var(--head); } .nt-sumi { color: var(--faint); cursor: help; }
+.nt-sumw { color: #f0bd6b; font-weight: 600; margin-left: 6px; } .nt-sumok { color: #7ee08f; font-weight: 600; margin-left: 6px; } .nt-fix { border: 1px solid rgba(232,162,58,.45); background: rgba(232,162,58,.08); color: var(--text); border-radius: 999px; padding: 2px 10px; font: 600 12px var(--body); cursor: pointer; } .nt-fix:hover { border-color: var(--gold); }
+.nt-one .nt-gw { margin: 0; padding: 8px 0 6px; } .nt-one .nt-gh { padding: 0 14px 8px; align-items: center; } .nt-one .nt-gh b { font-size: 15px; } .nt-ghs { font-size: 12px; cursor: help; } .nt-one .nt-gh .btn { margin-left: 0; } .nt-one .nt-leg { padding: 0; margin-left: auto; font-size: 11px; gap: 10px; } .nt-one .nt-leg .nt-tk { width: 13px; height: 13px; font-size: 9px; border-radius: 4px; }
+.nt-one .nt-bh { height: 58px; min-width: 70px; } .nt-one .nt-bh b { bottom: 18px; font-size: 12px; } .nt-one .nt-st { bottom: 3px; font-size: 10px; padding: 0 5px; } .nt-one .nt-g { min-width: 860px; } .nt-one .nt-g td.c { height: 25px; } .nt-one .nt-tk { width: 19px; height: 19px; font-size: 11px; border-radius: 5px; }
+.nt-one .nt-g td.pl { font-size: 13px; padding: 0 10px; min-width: 150px; } .nt-one .nt-g tr.grp td { padding: 5px 10px 1px; font-size: 10px; } .nt-one .nt-g tfoot td { padding: 4px 0; font-size: 12px; }
+@media (max-width: 760px) { .nt-one .nt-leg { display: none; } .nt-one .nt-g td.pl { min-width: 104px; } }
+/* plan night blocks */ .nt-one .nt-g td.c { padding: 2px 3px; } .nt-one .nt-tk { width: 100%; max-width: 76px; min-width: 40px; height: 18px; border-radius: 4px; display: block; margin: 0 auto; transition: filter .12s, transform .12s; } .nt-one .nt-tk::after { content: none; }
+.nt-one .nt-tk.in { background: #3fae55; border: 0; } .nt-one .nt-tk.sug { background: #d9a441; border: 0; } .nt-one .nt-tk.sit { background: rgba(229,83,75,.28); border: 1px solid rgba(229,83,75,.7); } .nt-one .nt-tk.out { background: transparent; border: 1px dashed var(--line2); }
+.nt-one .nt-tk:hover { filter: brightness(1.18); transform: scaleY(1.12); } .nt-one .nt-leg .nt-tk { width: 18px; min-width: 0; height: 10px; display: inline-block; border-radius: 3px; }
+/* boss page */ .bj-main { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); align-items: start; } .bj-more { margin-top: 12px; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); }
+.bj-jobs { padding-bottom: 6px; } .bj-card { background: var(--raised); border: 1px solid var(--line); border-radius: 12px; padding: 9px 12px 6px; margin-top: 10px; } .bj-ch { display: flex; align-items: center; gap: 8px; } .bj-ch .icw { width: 24px; height: 24px; flex: none; } .bj-ch b { font: 700 15px var(--head); }
+.bj-st { margin-left: auto; font-size: 12px; font-weight: 600; white-space: nowrap; } .bj-st.ok { color: #7ee08f; } .bj-st.wn { color: #f0bd6b; cursor: help; } .bj-st.no { color: var(--faint); font-weight: 500; }
+.bj-card .ndz-brows { margin: 2px 0 0; } .bj-card .ndz-brow { padding: 5px 0; grid-template-columns: minmax(70px, max-content) 1fr auto; } .bj-card .ndz-brow .lab b { font-size: 13px; } .bj-card .ndz-bwhy { display: none; } .bj-card .ndz-bcore { margin: 8px 0 2px; padding: 6px 10px; } .bj-card .ndz-bgw { margin: 8px 0 2px; } .bj-card .ndz-bgnote { display: none; }
+@media (max-width: 980px) { .bj-main, .bj-more { grid-template-columns: 1fr; } }
+/* set blocks */ .ndz-bgt td { padding: 3px 4px; } .ndz-bgt td.pl { padding-top: 4px; padding-bottom: 4px; } .ndz-bgd { width: 100%; max-width: 84px; min-width: 40px; height: 20px; border-radius: 4px; display: block; margin: 0 auto; border: 1px dashed var(--line2); background: transparent; transition: filter .12s, transform .12s; }
+.ndz-bgd.on { background: #3fae55; border: 0; } .ndz-bgd.on::after { content: none; } .ndz-bgd:hover { filter: brightness(1.18); transform: scaleY(1.12); border-color: #3fae55; }
+/* boss page tidy */ .bj-act { flex-wrap: wrap; } .bj-mm { position: relative; } .bj-mm > summary { list-style: none; cursor: pointer; } .bj-mm > summary::-webkit-details-marker { display: none; } .bj-mmp { position: absolute; z-index: 30; top: calc(100% + 6px); right: 0; min-width: 210px; display: flex; flex-direction: column; gap: 4px; padding: 6px; background: #12141a; border: 1px solid var(--line2); border-radius: 10px; box-shadow: 0 12px 30px rgba(0,0,0,.55); } .bj-mmp .btn, .bj-mmp .ndz-how { width: 100%; justify-content: flex-start; } .bj-mmp .ndz-hdb { display: contents; }
+.bj-main > .ndz-dcol:last-child { position: sticky; top: 10px; align-self: start; } body.ndz-tlbig-on .bj-main > .ndz-dcol:last-child { position: static; } /* (the full-screen planner must not be trapped under the backdrop) */
+.ndz-bsing { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 14px; margin: 6px 0 4px; } .ndz-bsi { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 4px 0; border-top: 1px solid var(--line); } .ndz-bsi .lab { font: 600 12px var(--body); color: var(--muted); flex: 0 0 auto; max-width: 52%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ndz-bsi .cl { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-width: 0; } .ndz-bsi.none .lab { color: #f0bd6b; }
+.bj-fold { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 0; } .bj-fold > summary { list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; padding: 12px 16px; } .bj-fold > summary::-webkit-details-marker { display: none; } .bj-fold > summary b { font: 700 16px var(--head); } .bj-fold > summary::after { content: '›'; margin-left: auto; color: var(--gold); font-weight: 700; } .bj-fold[open] > summary::after { content: '⌄'; } .bj-fold > .panel { margin: 0 10px 10px; }
+@media (max-width: 980px) { .bj-main > .ndz-dcol:last-child { position: static; } } @media (max-width: 560px) { .ndz-bsing { grid-template-columns: 1fr; } }
+/* boss page sheet */ .bj-on .plan-head { padding: 8px 14px; } .bj-on .plan-head .plan-ht .sub { display: none; } .bj-on .plan-head h2 { font-size: 18px; }
+.bj-on .plan-bh { height: auto; overflow: hidden; } .bj-on .plan-bh .bh-t { position: relative; } .bj-back { margin: 0 0 6px; } .bj-back .btn { padding: 2px 9px; font-size: 12px; background: rgba(15,17,23,.55); }
+.ndz-dhd.bj-in { position: relative; z-index: 2; margin: 0; border: 0; border-top: 1px solid rgba(255,255,255,.07); border-radius: 0; background: rgba(15,17,23,.82); backdrop-filter: blur(3px); padding: 10px 16px; } .ndz-dhd.bj-in .ndz-dtt { display: none; } .bj-on .ndz-dash { margin-top: 12px; }
+@media (hover: hover) { .bj-jobs .ndz-p { position: relative; } .bj-jobs .ndz-p .ndz-ex[data-bx] { position: absolute; top: -7px; right: -7px; width: 17px; height: 17px; padding: 0; border-radius: 50%; background: #2b303c; border: 1px solid var(--line2); font-size: 11px; line-height: 14px; text-align: center; opacity: 0; pointer-events: none; transition: opacity .12s; z-index: 2; }
+  .bj-jobs .ndz-p:hover .ndz-ex[data-bx], .bj-jobs .ndz-p:focus-within .ndz-ex[data-bx] { opacity: 1; pointer-events: auto; } .bj-jobs .ndz-p .ndz-ex[data-bx]:hover { background: #e5534b; color: #fff; border-color: #e5534b; } .bj-jobs .ndz-p[draggable] .ndz-ex[data-bup] { display: none; } }
+.bj-jobs .ndz-p[draggable] { cursor: grab; } .bj-jobs .ndz-p.drag { opacity: .45; } .bj-jobs .ndz-p.dropto { box-shadow: -3px 0 0 var(--gold); }
+.bj-jobs .ndz-brow.tall { grid-template-columns: 1fr auto; } .bj-jobs .ndz-brow.tall .lab { flex-direction: row; gap: 8px; align-items: baseline; } .bj-jobs .ndz-brow.tall .cl { grid-column: 1 / -1; grid-row: 2; }
+.bj-jobs .ndz-brow .ndz-bcnt:not(.short), .bj-jobs .ndz-bsi .ndz-bcnt:not(.short) { display: none; }
+/* boss page blocks */ .bj-jobs .ndz-p { --cc: var(--gold); background: color-mix(in srgb, var(--cc) 15%, #1c2029); border: 1px solid color-mix(in srgb, var(--cc) 42%, transparent); border-left: 3px solid var(--cc); border-radius: 6px; padding: 4px 10px 4px 8px; gap: 5px; } .bj-jobs .ndz-p .nm { font-weight: 600; } .bj-jobs .ndz-p i { color: color-mix(in srgb, var(--cc) 70%, #fff); font-style: normal; font-weight: 700; font-size: 11px; }
+.bj-jobs .ndz-p[draggable] { cursor: grab; } .bj-jobs .ndz-p[draggable]:hover { background: color-mix(in srgb, var(--cc) 24%, #1c2029); } .bj-jobs .ndz-p[draggable]:active { cursor: grabbing; } .bj-jobs .ndz-p.drag { opacity: .4; } .bj-jobs .ndz-p.dropto { box-shadow: -4px 0 0 var(--gold); } .bj-jobs [data-bjrow].dropto { background: rgba(230,180,80,.08); border-radius: 8px; outline: 1px dashed rgba(230,180,80,.6); }
+/* uniform blocks */ .bj-jobs .ndz-p { box-sizing: border-box; width: 128px; height: 30px; flex: none; padding: 0 9px 0 8px; align-items: center; overflow: visible; } .bj-jobs .ndz-p .nm { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .bj-jobs .ndz-p small { display: none; }
+.bj-jobs .ndz-bplus { box-sizing: border-box; width: 128px; height: 30px; border-radius: 6px; text-align: center; text-align-last: center; font-size: 13px; } .bj-jobs .ndz-bplus option[value=''] { font-size: 13px; }
+.bj-jobs .ndz-brow .cl, .bj-jobs .ndz-bsi .cl { gap: 6px; } .bj-jobs .ndz-bsing { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); } .bj-jobs .ndz-bsi .lab { max-width: 110px; }
+/* uniform blocks 2 */ .bj-jobs .ndz-p, .bj-jobs .ndz-bplus { width: 120px; height: 28px; font-size: 13px; } .bj-jobs .ndz-p .nm { font-size: 13px; }
+.bj-jobs .ndz-brow, .bj-jobs .ndz-brow.tall { grid-template-columns: 124px 1fr auto; align-items: start; } .bj-jobs .ndz-brow .lab, .bj-jobs .ndz-brow.tall .lab { flex-direction: column; gap: 0; padding-top: 5px; grid-column: auto; } .bj-jobs .ndz-brow.tall .cl { grid-column: auto; grid-row: auto; }
+.bj-jobs .ndz-bsing { display: block; margin: 0; } .bj-jobs .ndz-bsi { display: grid; grid-template-columns: 124px 1fr; gap: 0 12px; padding: 5px 0; } .bj-jobs .ndz-bsi .lab { max-width: none; white-space: normal; padding-top: 5px; font: 600 13px var(--head); color: var(--text); } .bj-jobs .ndz-bsi.none .lab { color: #f0bd6b; }
+.bj-jobs .ndz-bgt td { padding: 3px 4px; } .bj-jobs .ndz-bgd { width: 120px; max-width: 120px; min-width: 0; height: 28px; border-radius: 6px; } .bj-jobs .ndz-bgt td.pl { width: 124px; } .bj-jobs select[data-bgadd] { box-sizing: border-box; width: 120px; height: 28px; border-radius: 6px; padding: 0 6px; font-size: 12px; text-align: center; text-align-last: center; }
+.bj-jobs .ndz-bcore { display: flex; flex-wrap: wrap; align-items: center; padding-left: 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; margin: 4px 0 0; } .bj-jobs .ndz-bcore .lab { flex: 0 0 124px; margin-right: 6px; }
+/* slim blocks */ .bj-jobs .ndz-p, .bj-jobs .ndz-bplus, .bj-jobs .ndz-bgd, .bj-jobs select[data-bgadd] { width: 112px; max-width: 112px; height: 20px; border-radius: 4px; } .bj-jobs .ndz-p { padding: 0 7px 0 6px; border-left-width: 2px; gap: 4px; } .bj-jobs .ndz-p .nm { font-size: 12px; line-height: 18px; } .bj-jobs .ndz-p i { font-size: 10px; }
+.bj-jobs .ndz-bplus, .bj-jobs select[data-bgadd] { font-size: 12px; line-height: 18px; padding: 0; } .bj-jobs .ndz-brow .cl, .bj-jobs .ndz-bsi .cl { gap: 4px; } .bj-jobs .ndz-brow, .bj-jobs .ndz-bsi { padding: 4px 0; } .bj-jobs .ndz-brow .lab, .bj-jobs .ndz-bsi .lab { padding-top: 1px; }
+.bj-jobs .ndz-bgt td { padding: 2px 3px; } .bj-jobs .ndz-bgt td.pl { font-size: 12px; } .bj-jobs .ndz-bgt tr.grp td { padding: 6px 4px 1px; } .bj-jobs .ndz-p .ndz-ex[data-bx] { top: -6px; right: -6px; width: 14px; height: 14px; font-size: 10px; line-height: 12px; }
+/* boss page one look */ .bj-jobs .ndz-p { background: #1d2129; border: 1px solid var(--line2); border-left: 3px solid var(--cc); } .bj-jobs .ndz-p[draggable]:hover { background: #252a34; } .bj-jobs .ndz-p .nm { color: var(--cc) !important; }
+.bj-jobs .ndz-bcore { background: none; padding: 4px 0; } .bj-jobs .ndz-bcore .lab { font: 600 13px var(--head); color: var(--text); text-transform: none; letter-spacing: 0; } .bj-jobs .ndz-dph .sub { margin-left: auto; }
+.bj-st.wn { font-size: 12px; padding: 1px 8px; border-radius: 999px; background: rgba(232,162,58,.14); }
+.bj-okc { font-size: 12px; font-weight: 600; color: #7ee08f; background: rgba(69,193,92,.12); border-radius: 999px; padding: 1px 9px; } .bj-ki { color: var(--faint); cursor: help; font-size: 13px; margin-left: 2px; } .bj-ki:hover { color: var(--text); }
+.bj-tabs { padding: 0; margin-top: 12px; } .bj-tbar { display: flex; gap: 2px; padding: 8px 10px 0; border-bottom: 1px solid var(--line); overflow-x: auto; } .bj-tbar button { border: 0; background: none; color: var(--muted); font: 600 14px var(--body); padding: 8px 14px; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; } .bj-tbar button.on { color: var(--text); border-bottom-color: var(--gold); }
+.bj-tp { display: none; padding: 4px 6px 8px; } .bj-tabs[data-bjt='who'] .bj-tp[data-p='who'], .bj-tabs[data-bjt='ros'] .bj-tp[data-p='ros'], .bj-tabs[data-bjt='aud'] .bj-tp[data-p='aud'], .bj-tabs[data-bjt='kick'] .bj-tp[data-p='kick'] { display: block; }
+.bj-tp .panel { border: 0; background: none; box-shadow: none; margin: 0; } .bj-tp .ndz-dph b, .bj-tp .ndz-who > .ndz-dph > b, .bj-tp .ndz-thead .ndz-ttl { display: none; }
+/* jobs in fight order */ .bj-vsw { margin-left: auto; } .bj-vsw button { padding: 3px 12px; font-size: 12px; }
+.bjf { margin-top: 6px; } .bjf-src { margin: 2px 0 6px; font-size: 12px; } .bjf-ph { position: sticky; top: 0; z-index: 2; margin: 12px 0 4px; padding: 4px 0; font: 700 12px var(--body); color: var(--gold); text-transform: uppercase; letter-spacing: .08em; background: var(--panel); border-bottom: 1px solid var(--line); }
+.bjf-m { display: grid; grid-template-columns: 44px 30px 1fr; gap: 0 8px; padding: 7px 0; border-bottom: 1px solid var(--line); position: relative; } .bjf-m::before { content: ''; position: absolute; left: 66px; top: 0; bottom: 0; width: 2px; background: var(--line); z-index: 0; }
+.bjf-t { font: 700 13px var(--head); color: var(--muted); padding-top: 3px; text-align: right; } .bjf-ic { position: relative; z-index: 1; } .bjf-ic .icw { width: 24px; height: 24px; border-radius: 6px; } .bjf-dot { display: block; width: 10px; height: 10px; margin: 7px 0 0 7px; border-radius: 50%; background: var(--line2); }
+.bjf-mh { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-height: 24px; } .bjf-mh b { font: 700 14px var(--head); } .bjf-mh .sub { font-size: 12px; } .bjf-m.later .bjf-t, .bjf-m.whole .bjf-t { font-size: 11px; font-weight: 600; }
+.bjf-cds { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: auto; } .bjf-cd { display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 7px 0 2px; border-radius: 4px; background: #1d2129; border: 1px solid var(--line2); border-left: 3px solid var(--cc); font: 600 11px var(--body); color: var(--cc); } .bjf-cd .icw { width: 16px; height: 16px; border-radius: 3px; }
+.bjf .ndz-brow { border-top: 0; padding: 3px 0; } .bjf .ndz-brow .lab b { font-size: 12px; color: var(--muted); } .bjf .ndz-brow .lab small { font: 500 11px var(--body); color: var(--faint); } .bjf .ndz-brow.none .lab b { color: #f0bd6b; }
+@media (max-width: 560px) { .bjf-m { grid-template-columns: 38px 24px 1fr; } .bjf-m::before { left: 52px; } .bjf-cds { margin-left: 0; } }
+/* jobs on phones */ .bj-on .ndz-dash { grid-template-columns: minmax(0, 1fr); } .bj-on .ndz-dash > * { min-width: 0; max-width: 100%; } .bj-main > .ndz-dcol, .bj-more > .ndz-dcol, .bjf-b, .bjf-job { min-width: 0; } @media (max-width: 980px) { .bj-main, .bj-more { grid-template-columns: minmax(0, 1fr) !important; } } .bj-jobs .ndz-brow .cl, .bj-jobs .ndz-bsi .cl { min-width: 0; } @media (max-width: 560px) { .bj-jobs .ndz-brow, .bj-jobs .ndz-brow.tall, .bj-jobs .ndz-bsi { grid-template-columns: 1fr auto; } .bj-jobs .ndz-brow .cl, .bj-jobs .ndz-bsi .cl { grid-column: 1 / -1; grid-row: 2; padding-top: 4px; } .bj-jobs .ndz-p, .bj-jobs .ndz-bplus { width: 98px; max-width: 98px; } .bj-jobs .ndz-bcore .lab { flex-basis: 100%; } }
+/* boss timeline */ .bj-main > .ndz-dcol { grid-template-columns: minmax(0, 1fr); } #ndzTl { min-width: 0; } .btl-sc { overflow-x: auto; overflow-y: hidden; margin: 6px -4px 0; padding: 0 4px 6px; scrollbar-width: thin; } .btl { position: relative; }
+.btl-dmg { position: absolute; left: 0; opacity: .5; pointer-events: none; } .btl-dmg path { stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.btl-hit { position: absolute; top: 0; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; z-index: 3; cursor: help; } .btl-hit em { font: 600 10px var(--body); color: var(--muted); font-style: normal; } .btl-hit i { width: 10px; height: 10px; transform: rotate(45deg); border-radius: 2px; background: #45c15c; } .btl-hit.amber i { background: #e8a23a; } .btl-hit.red i { background: #e5534b; }
+.btl-vl { position: absolute; width: 0; border-left: 1px dashed rgba(69,193,92,.35); pointer-events: none; z-index: 1; } .btl-vl.red { border-left-color: rgba(229,83,75,.6); } .btl-vl.amber { border-left-color: rgba(232,162,58,.45); }
+.btl-unc { position: absolute; transform: translateX(-50%); background: repeating-linear-gradient(135deg, rgba(229,83,75,.18) 0 6px, transparent 6px 12px); pointer-events: none; z-index: 1; } .btl-ub { position: absolute; transform: translateX(-50%); z-index: 4; white-space: nowrap; }
+.btl-m { position: absolute; z-index: 2; cursor: help; line-height: 0; } .btl-m .icw { width: 22px; height: 22px; border-radius: 5px; box-shadow: 0 0 0 1px rgba(229,83,75,.6); }
+.btl-g { position: absolute; width: 0; border-left: 1px solid color-mix(in srgb, var(--cc) 45%, transparent); pointer-events: none; z-index: 1; }
+.btl-c { position: absolute; z-index: 3; display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 7px 0 0; border-radius: 4px; background: rgba(23,26,34,.88); border: 1px solid color-mix(in srgb, var(--cc) 55%, transparent); white-space: nowrap; cursor: help; } .btl-c .icw { width: 22px; height: 22px; border-radius: 3px 0 0 3px; } .btl-c b { font: 600 11px var(--body); color: var(--cc); } .btl-c.late { box-shadow: 0 0 0 2px #e5534b; }
+.btl-dur { position: absolute; z-index: 2; height: 3px; border-radius: 2px; background: var(--cc); opacity: .75; pointer-events: none; }
+.btl-ax { position: absolute; left: 0; right: 0; height: 18px; border-top: 1px solid var(--line); } .btl-ax span { position: absolute; top: 3px; transform: translateX(-50%); font-size: 10px; color: var(--faint); } .btl-ax span:first-child { transform: none; } .btl-none { margin: 4px 0 0; font-size: 12px; }
+/* boss timeline 2 */ .btl-wrap { position: relative; } .btl-y { position: absolute; left: 0; top: 0; z-index: 6; pointer-events: none; } .btl-y span { position: absolute; left: 2px; transform: translateY(-50%); font: 600 10px var(--body); color: var(--muted); background: rgba(23,26,34,.85); border-radius: 4px; padding: 0 4px; white-space: nowrap; }
+.btl-gl { position: absolute; left: 0; right: 0; border-top: 1px dashed rgba(255,255,255,.08); pointer-events: none; }
+.btl-x { position: absolute; width: 0; border-left: 1px solid rgba(255,255,255,.5); pointer-events: none; z-index: 5; } .btl-q { position: absolute; z-index: 7; min-width: 150px; padding: 6px 9px; border-radius: 8px; background: #12141a; border: 1px solid var(--line2); box-shadow: 0 8px 24px rgba(0,0,0,.5); font-size: 12px; pointer-events: none; }
+.btl-q .t { font: 700 13px var(--head); margin-bottom: 2px; } .btl-q .h.red { color: #ff9c94; } .btl-q .h.green { color: #7ee08f; } .btl-q .h.amber { color: #f0bd6b; } .btl-q .m { color: var(--muted); } .btl-q .n { color: var(--faint); } .btl-q .c { font-weight: 600; }
+.btl-jumps { display: inline-flex; gap: 4px; flex-wrap: wrap; } .btl-jump { border: 1px solid rgba(229,83,75,.6); background: rgba(229,83,75,.12); color: #ff9c94; border-radius: 999px; padding: 1px 9px; font: 600 12px var(--body); cursor: pointer; } .btl-jump:hover { background: rgba(229,83,75,.22); }
+/* boss timeline 3 */ .btl-mb { position: absolute; z-index: 0; background: rgba(229,83,75,.07); border-left: 1px solid rgba(229,83,75,.3); pointer-events: none; transition: background .12s; } .btl-mb.on { background: rgba(229,83,75,.2); }
+.btl-md { position: absolute; z-index: 2; height: 3px; border-radius: 2px; background: rgba(229,83,75,.7); pointer-events: none; }
+/* boss timeline tiles */ .btl-c { box-sizing: border-box; overflow: visible; padding: 0; gap: 0; background: color-mix(in srgb, var(--cc) 22%, rgba(23,26,34,.92)); border: 1px solid color-mix(in srgb, var(--cc) 65%, transparent); } .btl-c .icw { flex: none; } .btl-c b { position: absolute; left: 27px; top: 50%; transform: translateY(-50%); white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,.9), 0 0 4px rgba(0,0,0,.8); }
+/* boss icons round */ .btl-m .icw { width: 22px; height: 22px; border-radius: 50%; box-shadow: 0 0 0 2px #e5534b, 0 0 7px rgba(229,83,75,.55); } .btl-m:hover .icw { box-shadow: 0 0 0 2px #ff8a82, 0 0 10px rgba(229,83,75,.8); }
+/* boss timeline tidy */ .btl-m .icw { width: 20px; height: 20px; } .btl-g { border-left-color: color-mix(in srgb, var(--cc) 30%, transparent); } .btl-c { height: 22px; }
+/* boss timeline fill */ .btl-c { height: 28px; align-items: center; overflow: hidden; padding: 0 0 0 2px; background: rgba(23,26,34,.94); border: 1px solid color-mix(in srgb, var(--cc) 55%, transparent); } .btl-c .icw { position: relative; z-index: 1; width: 22px; height: 22px; border-radius: 3px; } .btl-c b { position: absolute; left: 29px; top: 3px; transform: none; font-size: 11px; line-height: 13px; z-index: 1; } .btl-f { position: absolute; left: 29px; top: 18px; height: 5px; border-radius: 3px; background: var(--cc); pointer-events: none; z-index: 1; }
+/* boss timeline small */ .btl-c { height: 22px; padding: 0; overflow: visible; background: none; border: 0; align-items: flex-start; } .btl-c .icw { width: 14px; height: 14px; border-radius: 3px; transition: transform .12s; transform-origin: left center; box-shadow: 0 0 0 1px rgba(0,0,0,.6); } /* (no zoom: your call, Oct 22) */
+.btl-c b { position: absolute; left: 18px; top: 0; font-size: 11px; line-height: 14px; text-shadow: 0 1px 2px rgba(0,0,0,.95), 0 0 4px rgba(0,0,0,.9); } .btl-c:hover { z-index: 9; } .btl-f { left: 0; top: 17px; height: 4px; border-radius: 2px; opacity: .9; } .btl-c.late .btl-f { background: repeating-linear-gradient(90deg, #e5534b 0 4px, transparent 4px 7px); } .btl-c.late { box-shadow: none; }
+/* boss page stacked */ .bj-main.bj-stack { grid-template-columns: minmax(0, 1fr) !important; gap: 12px; } .bj-main.bj-stack > .ndz-dcol { position: static !important; }
 .ndz { padding: 20px 22px; } .ndz-hd { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; } .ndz-hd h3 { margin: 0; font-size: 20px; }
 .ndz-test { padding: 2px 9px; border-radius: 999px; background: var(--warn-bg); color: #f3c06a; font-size: 12px; font-weight: 700; }
 .ndz-key { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 12px; font-size: 13px; color: var(--muted); }
@@ -14725,7 +14837,7 @@ const setHeadRes = refreshHead;
 // (the top bar's Progress button is lit while the Progress page is up)
 // (Graphs is on everywhere since Oct 18, now that it's plain numbers and charts (your call). Set this back to
 // () => !!window.WLA_HOSTED to grey it out on the website again ("Under development"), with the buttons that jump into it)
-const ASG_OFF = () => !!window.WLA_HOSTED && !/-debrief\.[^.]+\.workers\.dev$/.test(location.hostname); /* (greyed out on the website (Oct 21, your call); on in the app on your PC and on practice links. () => false puts it back live) */
+const ASG_OFF = () => !!window.WLA_HOSTED && !/-debrief\.[^.]+\.workers\.dev$/.test(location.hostname) && !(typeof gdzOwner === 'function' && gdzOwner()); /* (the Plan tab on the website: only for you, Oct 22) */ /* (greyed out on the website (Oct 21, your call); on in the app on your PC and on practice links. () => false puts it back live) */
 const PERF_OFF = () => false; /* (on for everyone since Oct 21, your call; () => !!window.WLA_HOSTED greys it out on the website again) */
 // (Power Infusion, one of Graphs' views, was greyed out on the website until its rework; on everywhere since Oct 18
 // (your call). Set this back to () => !!window.WLA_HOSTED to grey it out there again, with its plan line on Pull recap)
@@ -16061,7 +16173,12 @@ function ndzCant(text, a, p) {
 }
 const ndzSpellNm = (id) => { for (const rep of CACHE.values()) for (const p of rep.players.values()) for (const c of (p.castAb ? p.castAb.values() : [])) if (c && c.id === id && c.name) return c.name;
   for (const [n, v] of E.SPELLID) if (v === id) return n.replace(/\b\w/g, (ch) => ch.toUpperCase());
-  for (const g of (typeof NDZ_BUFFS !== 'undefined' ? NDZ_BUFFS : [])) for (const x of g[2]) if (+x[3] === +id) return x[0]; /* (the Roster audit's list) */ return ''; };
+  for (const g of (typeof NDZ_BUFFS !== 'undefined' ? NDZ_BUFFS : [])) for (const x of g[2]) if (+x[3] === +id) return x[0]; /* (the Roster audit's list) */ return NDZ_CDNM[+id] || ''; /* (the common cooldowns by id, Oct 22) */ };
+const NDZ_CDNM = { 31884: 'Avenging Wrath', 216331: 'Avenging Crusader', 31821: 'Aura Mastery', 322118: "Invoke Yu'lon, the Jade Serpent", 325197: 'Invoke Chi-Ji, the Red Crane', 115310: 'Revival', 388615: 'Restoral', 443028: 'Celestial Conduit',
+  200183: 'Apotheosis', 64843: 'Divine Hymn', 265202: 'Holy Word: Salvation', 47788: 'Guardian Spirit', 62618: 'Power Word: Barrier', 47536: 'Rapture', 246287: 'Evangelism', 421453: 'Ultimate Penitence', 15286: 'Vampiric Embrace', 10060: 'Power Infusion',
+  740: 'Tranquility', 33891: 'Incarnation: Tree of Life', 197721: 'Flourish', 391528: 'Convoke the Spirits', 98008: 'Spirit Link Totem', 108280: 'Healing Tide Totem', 114052: 'Ascendance',
+  363534: 'Rewind', 370537: 'Stasis', 374968: 'Time Spiral', 374227: 'Zephyr', 359816: 'Dream Flight', 370960: 'Emerald Communion',
+  51052: 'Anti-Magic Zone', 196718: 'Darkness', 97462: 'Rallying Cry', 2825: 'Bloodlust', 32182: 'Heroism', 80353: 'Time Warp', 390386: 'Fury of the Aspects', 1714: 'Curse of Tongues' };
 // (the swap screen's line under a row: what the new character can't press)
 function ndzCantH(text, a, p, r) { const l = ndzCant(text, a, p); if (!l.length) return ''; const nm = esc(p.name.split('-')[0]), one = l.length === 1;
   // (who could take each one instead: picked by default, or leave it out)
@@ -16215,18 +16332,24 @@ function ndzSuggest(d, r) {
   const tanks = pl.filter((p) => p.role === 'tank'), off = (tanks.length > 1 && tanks.find((p) => +p.sid === 66)) || tanks[1] || null; /* (the off-tank: a Protection Paladin when there is one, as in every top kill) */
 
   // (purple orb carriers are busy: they're picked last for extra jobs; with no orb line yet, Warlocks and Mages will carry them)
-  const orbs = good(find('Purple Orbs')) ? find('Purple Orbs').names.map((y) => y.n) : pl.filter((p) => p.cls === 'WARLOCK' || p.cls === 'MAGE').map((p) => p.n), busy = (p) => orbs.includes(p.n);
-  // 1) kicks, as the three fastest Mythic kills did it: the off-tank (a Protection Paladin in all three) takes most of the marked add's
-  //    kicks; the rest are ranged with the shortest kicks (a Restoration Shaman too), melee only to fill. 3-4 kickers each.
+  // (purple carriers, your notes Oct 22: Mages (Arcane first), the off-tank, Affliction then Destruction Warlocks, Balance Druids, an Evoker;
+  // never Demonology, never hunters (Turtle is for the soaks). Picked first, so the soaks can leave them out)
+  const orbPool = pl.filter((p) => p.cls === 'MAGE').sort((a, b) => (+b.sid === 62) - (+a.sid === 62)).concat(off ? [off] : [], pl.filter((p) => p.cls === 'WARLOCK' && +p.sid !== 266).sort((a, b) => (+b.sid === 265) - (+a.sid === 265)), pl.filter((p) => +p.sid === 102), pl.filter((p) => p.cls === 'EVOKER'), pl.filter((p) => p.role !== 'tank' && p.cls !== 'HUNTER' && +p.sid !== 266 && !p.melee)).filter((p, k, a) => a.indexOf(p) === k);
+  const orbs = good(find('Purple Orbs')) ? find('Purple Orbs').names.map((y) => y.n) : orbPool.slice(0, 4).map((p) => p.n), busy = (p) => orbs.includes(p.n) && p.role !== 'tank';
+  // 1) kicks (your notes, Oct 22: notes/Guides/Coiled Altar strategy review - Oct 22.md): the raid marks the RANGED add, the unmarked one
+  //    is the MELEE add. Melee kick the melee add, and its 2nd kick is always a melee player; ranged (and a Restoration Shaman) kick the
+  //    marked add. Shortest kicks first, 4 a side; the off-tank (Rebuke) backs up the melee add, an Evoker (Quell) the ranged one.
   const kicking = new Set(d.rows.filter((x) => x.kick && good(x)).flatMap((x) => x.names.map((y) => y.n))), kOf = (p) => ndzKickOf({ role: p.role, cls: p.cls, specId: p.sid });
-  const offK = off && kOf(off) ? off : null; /* (the off-tank: a Protection Paladin if there is one) */
+  const kSort = (a, b) => kOf(a)[1] - kOf(b)[1] || a.n.localeCompare(b.n), kWhy = (p, extra) => (extra ? extra + ', ' : '') + kOf(p)[0] + ' (' + kOf(p)[1] + ' s' + (NDZ_KICK_PLUS[+p.sid] ? '; ' + NDZ_KICK_PLUS[+p.sid] : '') + ')';
   for (const [key, lab] of [['P20', 'Unmarked add'], ['P21', 'Marked add']]) {
-    const k = d.rows.find((x) => x.kick === key), have = good(k) ? k.names.map((y) => ({ n: y.n })) : [], add = [];
-    const first = key === 'P21' && offK && !kicking.has(offK.n) && !have.some((h) => h.n === offK.n) ? [offK] : [];
-    if (have.length < 3) for (const p of first.concat(pl.filter((q) => !kicking.has(q.n) && q.role !== 'tank' && kOf(q)).sort((a, b) => a.melee - b.melee || kOf(a)[1] - kOf(b)[1]))) {
-      if (have.length + add.length >= 4) break; add.push({ n: p.n, why: (p.role === 'tank' ? 'off-tank, ' : '') + kOf(p)[0] + ' (' + kOf(p)[1] + ' s' + (NDZ_KICK_PLUS[+p.sid] ? '; ' + NDZ_KICK_PLUS[+p.sid] : '') + ')' }); kicking.add(p.n); }
+    const k = d.rows.find((x) => x.kick === key), have = good(k) ? k.names.map((y) => ({ n: y.n })) : [], add = [], free = (p) => !kicking.has(p.n) && !have.some((h) => h.n === p.n) && kOf(p);
+    if (have.length < 3) {
+      const melee = pl.filter((p) => free(p) && p.role !== 'tank' && p.melee).sort(kSort), ranged = pl.filter((p) => free(p) && p.role !== 'tank' && !p.melee).sort(kSort), offB = off && free(off) ? [off] : [];
+      const pool = key === 'P20' ? melee.concat(offB, ranged) : ranged.concat(melee, offB);
+      for (const p of pool) { if (have.length + add.length >= 4) break; add.push({ n: p.n, why: kWhy(p, p.role === 'tank' ? 'off-tank, backup' : '') }); kicking.add(p.n); }
+      if (key === 'P20') { const all = have.concat(add), i2 = all.findIndex((x, i) => i >= 1 && (P(x.n) || {}).melee); if (all.length > 1 && !(P(all[1].n) || {}).melee && i2 > 1) { const m = add.splice(add.findIndex((a) => a.n === all[i2].n), 1)[0]; add.splice(Math.max(0, 1 - have.length), 0, m); } } /* (the 2nd kick on the melee add must be a melee) */ }
     row({ kick: key }, 'Kicks', lab, have.concat(add), add.length ? (have.length ? 'mix' : 'sug') : 'kept',
-      add.length ? (have.length ? 'only ' + plural(have.length, 'kicker') + ' in your pulls. Added ' : '') + (key === 'P21' ? 'the off-tank takes most of this add\'s kicks in top raids, then ranged' : 'ranged kicks first, as top raids do; melee stay on the boss') + ': ' + add.map((a) => a.why).join(', ') : keptWhy(k));
+      add.length ? (have.length ? 'only ' + plural(have.length, 'kicker') + ' in your pulls. Added ' : '') + (key === 'P20' ? 'the melee add: melee kicks, the 2nd always a melee' : 'the ranged add (the marked one): ranged kicks') + ': ' + add.map((a) => a.n + ' (' + a.why + ')').join(', ') : keptWhy(k));
   }
 
   for (const x of d.rows.filter((y) => /^P3[01]$/.test(y.kick || '') && good(y))) keep(x);
@@ -16236,10 +16359,10 @@ function ndzSuggest(d, r) {
   const imm = (p, T) => T[p.cls] && p.role !== 'tank', wall = (p) => (p.cls === 'PRIEST' && +p.sid !== 258 ? null : NDZ_WALL[p.cls]) /* (Dispersion is Shadow's only) */, wRank = (p) => ({ WARRIOR: 0, ROGUE: 1, PRIEST: 1, DEATHKNIGHT: 2, DEMONHUNTER: 3, MONK: 3 })[p.cls] ?? 4 /* (soak 1's walls: the guide's Warrior walls, Feint, Dispersion first) */;
   const soakRow = (lab, want, pool, why, note) => { const k = find(lab); if (good(k) && k.names.length >= want - 1) return keep(k); const have = good(k) ? k.names.map((y) => ({ n: y.n })) : [];
     const add = fill(want - have.length, pool.filter((p) => !have.some((h) => h.n === p.n)), why); row(k, 'Guillotine soaks', lab, have.concat(add), have.length ? 'mix' : 'sug', note + ': ' + add.map((a) => a.n + ' (' + a.why + ')').join(', ')); };
-  soakRow('Guillotine 2', 4, tanks.concat(pl.filter((p) => imm(p, NDZ_IMMUNE)).sort((a, b) => (b.cls === 'HUNTER') - (a.cls === 'HUNTER')), pl.filter((p) => p.role !== 'tank' && wall(p) && !orbs.includes(p.n))), (p) => (p.role === 'tank' ? 'tank' : NDZ_IMMUNE[p.cls] || wall(p)), 'exactly 5 with the target');
+  soakRow('Guillotine 2', 4, tanks.concat(pl.filter((p) => imm(p, NDZ_IMMUNE) && !busy(p)).sort((a, b) => (b.cls === 'HUNTER') - (a.cls === 'HUNTER')), pl.filter((p) => p.role !== 'tank' && wall(p) && !orbs.includes(p.n))), (p) => (p.role === 'tank' ? 'tank' : NDZ_IMMUNE[p.cls] || wall(p)), 'exactly 5 with the target');
   // soak 1: everyone who'll immune soak 2 (so they can't be its target), then tanky players; orb carriers and other immunities last
   const g2imm = ((out.find((o) => o.label === 'Guillotine 2') || { names: [] }).names.map((y) => y.n)).filter((n) => { const p = P(n); return p && imm(p, NDZ_IMMUNE); });
-  soakRow('Guillotine 1', 7, pl.filter((p) => g2imm.includes(p.n)).concat(pl.filter((p) => p.role !== 'tank' && wall(p) && !imm(p, NDZ_IMMUNE) && !orbs.includes(p.n)).sort((a, b) => wRank(a) - wRank(b)), pl.filter((p) => imm(p, NDZ_IMMUNE) && !orbs.includes(p.n))),
+  soakRow('Guillotine 1', 7, pl.filter((p) => g2imm.includes(p.n)).concat(pl.filter((p) => p.role !== 'tank' && wall(p) && !imm(p, NDZ_IMMUNE) && !orbs.includes(p.n)).sort((a, b) => wRank(a) - wRank(b)), pl.filter((p) => imm(p, NDZ_IMMUNE) && !busy(p))),
     (p) => (g2imm.includes(p.n) ? 'immunes soak 2, so not its target' : wall(p) || NDZ_IMMUNE[p.cls]), 'the soak 2 immunities first, then strong walls');
   // P3, as top raids did it: soak 1's group takes axes 1 and 3 again, the other players axe 2 (two groups that alternate all fight);
   // immunities can do two axes when they're back in time (Cloak of Shadows, 2 min, does axes 1 and 3)
@@ -16261,30 +16384,37 @@ function ndzSuggest(d, r) {
     else if (evo.length) row(z, 'Guillotine soaks', 'Zephyr Guillotine ' + k, [{ n: evo[(k - 1) % evo.length].n }], 'sug', 'Zephyr cuts the damage for everyone soaking' + (evo.length > 1 ? '; two Evokers take turns (2-minute cooldown)' : ''));
   }
 
-  // 3) purple orbs: Warlocks (gateway, circle), Mages, the off-tank, then a mobile healer (Evoker)
+  // 3) purple orbs (your notes: 4 purples since the Oct 13 tuning). Top kills carried with Arcane Mages, the Protection Paladin off-tank and
+  //    Affliction Warlocks; Demonology carried none in 20 kills, and hunters keep Turtle for the soaks. Balance Druids (Stampeding Roar,
+  //    Wild Charge) next, then a mobile healer in a pinch.
   { const x = find('Purple Orbs'); if (good(x) && x.names.length >= 4) keep(x);
-    else { const have = good(x) ? x.names.map((y) => ({ n: y.n })) : [], pool = pl.filter((p) => p.cls === 'MAGE').concat(off ? [off] : [], pl.filter((p) => p.cls === 'WARLOCK'), pl.filter((p) => p.cls === 'EVOKER'), pl.filter((p) => p.cls === 'HUNTER'), pl.filter((p) => +p.sid === 102)); /* (top kills: both Mages and the off-tank every time) */
-      const add = fill(5 - have.length, pool.filter((p) => !have.some((h) => h.n === p.n)), (p) => (p.cls === 'WARLOCK' ? 'gateway and circle' : p.cls === 'MAGE' ? 'Blink and Ice Block' : p.role === 'tank' ? 'off-tank, free between frontals' : p.cls === 'EVOKER' ? 'Hover, and Time Spiral' : p.cls === 'HUNTER' ? 'Disengage and Turtle' : 'mobile'));
-      row(x, 'Orbs, mind controls, curses', 'Purple Orbs', have.concat(add), have.length ? 'mix' : 'sug', 'purples are hard-assigned: ' + add.map((a) => a.n + ' (' + a.why + ')').join(', ')); } }
+    else { const have = good(x) ? x.names.map((y) => ({ n: y.n })) : [], mage = pl.filter((p) => p.cls === 'MAGE').sort((a, b) => (+b.sid === 62) - (+a.sid === 62)), lock = pl.filter((p) => p.cls === 'WARLOCK' && +p.sid !== 266).sort((a, b) => (+b.sid === 265) - (+a.sid === 265));
+      const pool = orbPool;
+      const add = fill(4 - have.length, pool.filter((p) => !have.some((h) => h.n === p.n)), (p) => (p.cls === 'MAGE' ? 'Blink' + (+p.sid === 62 ? ', top kills carry with Arcane' : '') : p.role === 'tank' ? 'off-tank, the floater: takes the awkward purple' : p.cls === 'WARLOCK' ? 'gateway and circle' : +p.sid === 102 ? 'Stampeding Roar and Wild Charge' : p.cls === 'EVOKER' ? 'Hover, a mobile healer in a pinch' : 'mobile, free in P1'));
+      row(x, 'Orbs, mind controls, curses', 'Purple Orbs', have.concat(add), have.length ? 'mix' : 'sug', '4 purples since the Oct 13 tuning, hard-assigned (no Demonology or hunters: Turtle is for the soaks): ' + add.map((a) => a.n + ' (' + a.why + ')').join(', ')); } }
 
-  // 4) the CC order on mind controls: keep what worked, then add by class until there are 4
+  // 4) the CC on each Dreadmarch (one line per cast, 1st to 4th): keep what worked, then by class: Ring of Peace, Ursol's Vortex,
+  //    Shockwave (a Protection Warrior tank is fine, your notes), Chaos Nova, Capacitor Totem, Gorefiend's Grasp, Hammer of Justice
   { const ORD = ['1st', '2nd', '3rd', '4th', '5th', '6th'], have = [];
     for (const o of ORD) { const x = find(o + ' CC on Mindcontrol'); if (good(x)) have.push({ x, n: x.names[0].n }); }
     have.forEach((h, i) => row(h.x, 'Orbs, mind controls, curses', ORD[i] + ' CC on Mindcontrol', [{ n: h.n }], 'kept', keptWhy(h.x)));
-    let i = have.length; for (const [c, sp] of NDZ_CC) { if (i >= 4) break; for (const p of pl.filter((q) => q.cls === c && q.role !== 'tank' && !have.some((h) => h.n === q.n))) { if (i >= 4) break;
-      row(null, 'Orbs, mind controls, curses', ORD[i] + ' CC on Mindcontrol', [{ n: p.n }], 'sug', sp + (i >= 3 ? ', as a backup' : '')); have.push({ n: p.n }); i++; } } }
+    let i = have.length; for (const [c, sp] of NDZ_CC) { if (i >= 4) break; for (const p of pl.filter((q) => q.cls === c && (q.role !== 'tank' || c === 'WARRIOR') && !have.some((h) => h.n === q.n))) { if (i >= 4) break;
+      row(null, 'Orbs, mind controls, curses', ORD[i] + ' CC on Mindcontrol', [{ n: p.n }], 'sug', sp + (p.role === 'tank' ? ' (the tank can do it)' : '') + (i >= 3 ? ', as a backup' : '')); have.push({ n: p.n }); i++; } } }
 
-  // 5) curses: one Warlock per add
-  { const locks = pl.filter((p) => p.cls === 'WARLOCK'); let li = 0;
-    for (const lab of ['Curse Unmarked Add', 'Curse Raid-Marked Add']) { const x = find(lab); if (good(x)) { keep(x); continue; }
-      const p = locks.find((q) => !out.some((o) => /^Curse/.test(o.label) && o.names.some((y) => y.n === q.n))) || locks[li++]; if (p) row(x, 'Orbs, mind controls, curses', lab, [{ n: p.n }], 'sug', 'Curse of Tongues or Curse of the Satyr slows the add\'s casts (top raids used Satyr)'); } }
+  // 5) curses (your notes): Curse of Tongues on the ranged (marked) add, an Affliction Warlock first; a second Warlock can take the melee add
+  { const locks = pl.filter((p) => p.cls === 'WARLOCK').sort((a, b) => (+b.sid === 265) - (+a.sid === 265)); let li = 0;
+    for (const lab of ['Curse Raid-Marked Add', 'Curse Unmarked Add']) { const x = find(lab); if (good(x)) { keep(x); continue; }
+      const p = locks[li++]; if (p) row(x, 'Orbs, mind controls, curses', lab, [{ n: p.n }], 'sug', lab === 'Curse Raid-Marked Add' ? 'Curse of Tongues on the ranged add slows its casts, so its kicks line up' : 'a second Warlock can curse the melee add too'); } }
 
-  // 6) cooldowns: the healing and raid cooldowns as your raid pressed them, then DPS cooldowns split across the Nightfall shields
+  // 6) cooldowns: the healing and raid cooldowns as your raid pressed them (Debrief then plans the rest, each as often as it's back);
+  //    damage cooldowns as your notes say: at P2 start (the first Dreadmarch and the first adds) and with Bloodlust at the intermission
   for (const x of d.rows.filter((y) => y.rem && good(y))) keep(x);
-  { const dps = pl.filter((p) => p.role === 'dps' && NDZ_BIG[+p.sid]), half = [dps.filter((_, i) => i % 2 === 0), dps.filter((_, i) => i % 2 === 1)];
-    if (dps.length >= 2) for (const [ph, t, k] of NDZ_SHIELDS) { const g = half[k - 1].slice(0, 4); if (!g.length) continue;
-      row({ rem: { time: t, ph, tag: g.map((p) => p.n).join(' '), id: null, text: 'DPS cooldown for the Nightfall shield' } }, 'Cooldowns', 'P' + ph + ' Nightfall shield ' + k, g.map((p) => ({ n: p.n, why: NDZ_BIG[+p.sid] })), 'sug',
-        'big damage cooldowns (' + g.map((p) => NDZ_BIG[+p.sid]).join(', ') + '). The two shields are too close for one 2-minute cooldown, so each half of the DPS takes one'); } }
+  { const dps = pl.filter((p) => p.role === 'dps' && NDZ_BIG[+p.sid]);
+    if (dps.length) for (const [ph, t, lab, why] of [[2, 0, 'P2 start damage cooldowns', 'press them as P2 starts: the first Dreadmarch and the first adds come right after (top kills hold them from about 2:00)'], [2.5, 0, 'Intermission damage cooldowns', 'everything at the intermission, with Bloodlust and potions (top kills cast about twice what our pulls did here)']])
+      row({ rem: { time: t, ph, tag: dps.map((p) => p.n).join(' '), id: null, text: lab } }, 'Cooldowns', lab, dps.map((p) => ({ n: p.n, why: NDZ_BIG[+p.sid] })), 'sug', why, { kind: 'dpscd' });
+    const LUST = [['SHAMAN', 'Heroism', 32182], ['MAGE', 'Time Warp', 80353], ['EVOKER', 'Fury of the Aspects', 390386], ['HUNTER', 'Primal Rage', 264667]];
+    for (const [c, nm, id] of LUST) { const p = pl.find((q) => q.cls === c); if (!p) continue;
+      row({ rem: { time: 0, ph: 2.5, tag: p.n, id, text: nm } }, 'Cooldowns', 'Bloodlust', [{ n: p.n, why: nm }], 'sug', 'lust at the intermission start, as all 20 fastest kills did', { kind: 'dpscd' }); break; } }
   // (one heading per kind of job, in fight order, whether a line was kept or suggested)
   const SEC = { 'Kick orders': 'Kicks', 'Soak groups': 'Guillotine soaks', Orbs: 'Orbs, mind controls, curses', 'Mind controls': 'Orbs, mind controls, curses', Curses: 'Orbs, mind controls, curses' }, ORDER = ['Kicks', 'Guillotine soaks', 'Orbs, mind controls, curses', 'Cooldowns'];
   return out.map((x, k) => ({ ...x, sec: SEC[x.sec] || x.sec, k })).sort((a, b) => ORDER.indexOf(a.sec) - ORDER.indexOf(b.sec) || a.k - b.k).map((x, i) => ({ ...x, i }));
@@ -16555,7 +16685,7 @@ function ndzCards(r, used) {
       (j.length ? '<div class="ndz-tgs">' + j.map((x) => '<span class="ndz-tg k-' + x.k + '"' + (x.tip ? ' title="' + esc(x.tip) + '"' : '') + '>' + esc(x.t) + '</span>').join('') + '</div>' : '<span class="ndz-rcn">No job yet</span>') + '</div>'; };
   const ps = st.ps.slice().filter((p) => !one || ndzPn(p) === one).sort((a, b) => ndzPn(a).localeCompare(ndzPn(b)));
   const pick = one ? '<span class="ndz-me">Showing <b>' + esc(one) + '</b> only <button class="btn sm" type="button" data-ndzme="">Show everyone</button></span>' : ''; /* (your call: no Just one raider picker) */
-  const view = S.ndzWhoV || 'ab', sw = '<span class="ndz-seg"><button type="button" data-ndzwv="ab" class="' + (view === 'ab' ? 'on' : '') + '">By ability</button><button type="button" data-ndzwv="rd" class="' + (view === 'rd' ? 'on' : '') + '">By raider</button></span>';
+  const view = S.ndzWhoV || (S.page === 'plan' && S.planOpen ? 'rd' : 'ab'), /* (the Boss page opens on By raider: its Jobs already go by ability) */ sw = '<span class="ndz-seg"><button type="button" data-ndzwv="ab" class="' + (view === 'ab' ? 'on' : '') + '">By ability</button><button type="button" data-ndzwv="rd" class="' + (view === 'rd' ? 'on' : '') + '">By raider</button></span>';
   if (view === 'ab') return '<div class="panel ndz-who ndz-rcards nolk' + (one ? ' focus' : '') + '"><div class="ndz-thead"><span class="ndz-ttl">Who does what</span>' + sw + pick + '</div>' + ndzAbil(r, st, one, !!$('#ndzDashWho')) + '</div>'; /* (on the one-screen page the timeline shows the cooldowns: the list is folded) */
   return '<div class="panel ndz-who ndz-rcards nolk"><div class="ndz-thead"><span class="ndz-ttl">Who does what</span>' + sw + pick + (one ? '' : '<button class="btn sm" type="button" data-ndzall="1">' + (S.ndzAllOpen ? 'Close all' : 'Open all') + '</button>') + '<span class="ndz-lg"><span class="ndz-tg k-soak">Soak</span><span class="ndz-tg k-kick">Kick</span><span class="ndz-tg k-cc">CC and orbs</span><span class="ndz-tg k-cd">Cooldown</span></span></div>' +
     ['tank', 'healer', 'dps'].map((ro) => { const l = ps.filter((p) => p.role === ro); return l.length ? '<div class="ndz-grp">' + ndzRole[ro] + '</div><div class="ndz-rcg">' + l.map(card).join('') + '</div>' : ''; }).join('') + '</div>';
@@ -16743,11 +16873,11 @@ const NDZ_BUILD = {
     { key: 'g3', title: 'P3 Grim Guillotines', icon: 'Grim Guillotine', explain: 'Three more axes in P3, and this hit is magic, so Cloak of Shadows counts as an immunity too.', tip: 'Use different players on each axe: anyone hit keeps Guillotined, and an immunity isn\'t back in time for the next one.',
       slots: [{ label: 'P3 Guillotine 1', want: 5 }, { label: 'P3 Guillotine 2', want: 5 }, { label: 'P3 Guillotine 3', want: 5 }] },
     { key: 'orbs', mythic: true, title: 'Purple orbs', icon: 'Virulent Mutation', explain: 'Purple orbs must never touch another orb. They\'re carried by a few hard-assigned players; everyone else clears green orbs.', tip: 'Warlocks (gateway, circle), Mages (Blink), the off-tank, then a mobile healer.',
-      slots: [{ label: 'Purple Orbs', want: 5 }] },
+      slots: [{ label: 'Purple Orbs', want: 4 }] },
     { key: 'mc', title: 'Dreadmarch mind controls', icon: 'Dreadmarch', explain: 'Dreadmarch mind controls a few players, who walk off the edge. Stun or root them in this order; the next one covers a CC that\'s on cooldown.', tip: 'Ring of Peace, Shockwave, Ursol\'s Vortex, Chaos Nova, Capacitor Totem.',
       slots: [{ label: '1st CC on Mindcontrol', want: 1 }, { label: '2nd CC on Mindcontrol', want: 1 }, { label: '3rd CC on Mindcontrol', want: 1 }, { label: '4th CC on Mindcontrol', want: 1 }] },
     { key: 'curse', title: 'Curses on the adds', icon: 'Curse of Tongues', explain: 'Curse of Tongues slows each Spiteful Soulcoiler\'s casts, so kicks line up easier.', tip: 'One Warlock per add.',
-      slots: [{ label: 'Curse Unmarked Add', want: 1 }, { label: 'Curse Raid-Marked Add', want: 1 }] },
+      slots: [{ label: 'Curse Unmarked Add', want: 0 }, { label: 'Curse Raid-Marked Add', want: 1 }] },
   ],
   'The Twin Fangs': [
     { key: 'feast', title: 'Ravenous Feast groups', icon: 'Ravenous Feast', head: 'Ravenous Feast and Tainted Blood Groups', explain: 'Ravenous Feast smashes three times. Anyone hit can\'t take another hit (Feasted), so three groups take one strike each, in order: Left first, Right second, Center third. Each group then soaks a Tainted Blood orb.', tip: 'A third of the raid each, with a healer in every group. Tanks soak too.',
@@ -16846,6 +16976,7 @@ function ndzBuildStart(B) {
   if (B.src === 'sug') { const plan = ndzCdPlan(B, pr); if (plan) { B.cds = plan.rows; B.cdFrom = 'plan'; B.cdN = plan.n; B.cdTop = plan.top; } }
   if (!B.calls) ndzPersFromNote(B); /* (a note being edited keeps its raid calls and externals) */
   if (B.cds && B.cds.length) ndzCdAutoWho(B); /* (nobody left on "Who?" when someone can take it) */
+  if (B.cdFrom === 'plan') { for (const x of sug.filter((y) => y.rem && y.kind === 'dpscd')) B.cds.push({ ph: x.rem.ph, t: x.rem.time, id: x.rem.id || null, text: x.rem.text, who: x.names.map((y) => y.n).join(' ') }); } /* (the damage cooldowns and Bloodlust from the boss's own plan, Oct 22) */
   if (B.cdFrom === 'plan') ndzCdMore(B); /* (a new plan uses each cooldown as often as it's back (your rule, Oct 21)) */
   ndzSrcFill(B, pr);
 }
@@ -17665,7 +17796,7 @@ const NDZ_DGC = [[0, [46, 160, 67]], [0.35, [212, 167, 44]], [0.65, [232, 116, 4
 // With a note set: a slim header (the boss, the note, a ready ring, quick ticks, the buttons), what to fix if anything, then
 // two columns: the roster audit and kicks on the left (icons one size), the cooldown timeline and Who does what on the right.
 // The timeline is the note's cooldown reminders, one row per raider, a phase at a time, with the raid's biggest hits from the
-// fastest kills on top: red when no raid cooldown is pressed 6 s before to 4 s after, amber when only a healer's own burst is.
+// fastest kills on top: red when no raid cooldown is pressed 6 s before to 4 s after or still running, amber when only a healer's own burst is.
 // Test copy only (NDZ_NEW). The boss's own mechanics on the timeline come later (each boss's timings, from top kills).
 const NDZ_RCD_IDS = new Set([31821, 64843, 115310, 363534, 740, 98008, 62618, 108280, 51052, 97462, 196718, 374227, 15286, 265202, 359816]);
 const ndzIsRaidCd = (id) => NDZ_RCD_IDS.has(+id) || RCD_CD[ndzSpellNm(+id)] != null;
@@ -17716,13 +17847,15 @@ const ndzCdLen = (id) => { const n = ndzSpellNm(+id); return (n && (NDZ_CDLEN[n]
 // (how long until a cooldown is back: the site's raid and spec cooldown tables; 0 when unknown, so no false alarms)
 const ndzRech = (id) => { const n = ndzSpellNm(+id); if (!n) return 0; if (RCD_CD[n]) return RCD_CD[n]; for (const l of Object.values(PERF_CDS)) for (const [m, cd] of l) if (m === n) return cd; return 0; };
 // (the timeline's data: the note's cooldowns by raider and phase, the fastest kills' big hits, each phase's length)
+// (a mechanic's spell id and kind on the fight clock: stored as [id, kind] (or { id, kind }))
+const ndzMeta = (bt, l) => { const v = ((bt || {}).meta || {})[l]; return Array.isArray(v) ? { id: +v[0] || 0, kind: v[1] || '' } : { id: (v && +v.id) || 0, kind: (v && v.kind) || '' }; };
 function ndzTlData(r, u0, text, players) {
   let hd = {}; try { hd = (E.parseNote(text) || {}).header || {}; } catch (e) { hd = {}; }
   const boss = r.item.boss, diff = /heroic|15/i.test(String(hd.difficulty || '')) ? 'Heroic' : /mythic|16/i.test(String(hd.difficulty || '')) ? 'Mythic' : r.item.diff || 'Mythic';
   const ok = new Set(players.map((p) => String(p.n).toLowerCase())), cds = [];
   for (const x of ndzRems(text)) { if (NDZ_DC_JOB.test(x.text || '')) continue; for (const t of x.tags) { const n = String(t).split('-')[0]; if (ok.has(n.toLowerCase())) cds.push({ ph: x.ph, t: x.time, who: n, id: x.spellid, dur: ndzCdLen(x.spellid) }); } }
   const SD = NDZ_CDSTART[boss] || {}, sd = SD[diff] || SD.Mythic || SD.Heroic || null, hits = sd ? sd.pk.map(([ph, rel, vk, hit]) => ({ ph, rel, v: vk, hit })) : [];
-  const BT = NDZ_BOSSTL[boss] || {}, bt = BT[diff] || BT.Mythic || BT.Heroic || null, mech = bt ? bt.tl.map(([ph, rel, label, dur]) => ({ ph, rel, label, dur: dur || 0, id: (bt.meta[label] || {}).id || 0, kind: (bt.meta[label] || {}).kind || '' })) : []; /* (the boss's mechanics in the fastest kills) */
+  const BT = NDZ_BOSSTL[boss] || {}, bt = BT[diff] || BT.Mythic || BT.Heroic || null, mech = bt ? bt.tl.map(([ph, rel, label, dur]) => ({ ph, rel, label, dur: dur || 0, id: ndzMeta(bt, label).id, kind: ndzMeta(bt, label).kind })) : []; /* (the boss's mechanics in the fastest kills) */
   const phs = [...new Set(cds.map((c) => c.ph).concat(sd ? sd.phs.map((p) => p.ph) : []))].sort((a, b) => a - b).map((ph) => { const p0 = sd && sd.phs.find((q) => q.ph === ph);
     return { ph, len: Math.max(p0 ? p0.len : 0, ...cds.filter((c) => c.ph === ph).map((c) => c.t + Math.max(15, c.dur + 3)), ...hits.filter((h) => h.ph === ph).map((h) => h.rel + 10), ...mech.filter((m) => m.ph === ph).map((m) => m.rel + Math.max(8, m.dur + 3)), 60) }; });
   const DG = NDZ_TLDMG[boss] || {}, dg = DG[diff] || DG.Mythic || DG.Heroic || null, dmg = dg ? dg.ph || dg : null, dmgK = (dg && dg.k) || 0; /* (the raid's damage taken, 2 s at a time, per phase) */
@@ -17732,7 +17865,7 @@ function ndzTlData(r, u0, text, players) {
   const gapOf = gapW(own || new Map()), gapFast = gapW(own || new Map((sd ? sd.phs : []).map((p) => [p.ph, p.start]))); /* (not ready: your pull's phases, else the same phase only; Cover it: the fastest kills, the soonest it could be needed) */
   const byKey = new Map(); for (const c of cds) { const k = c.who.toLowerCase() + '|' + c.id; if (!byKey.has(k)) byKey.set(k, []); byKey.get(k).push(c); }
   for (const l of byKey.values()) { const cd = ndzRech(l[0].id); if (!cd || l.length < 2) continue; l.sort((a, b) => a.ph - b.ph || a.t - b.t); for (let i = 1; i < l.length; i++) { const g = gapOf(l[i - 1], l[i]); if (g != null && g < cd * 0.85) l[i].late = { prev: l[i - 1], cd, short: cd - g }; } }
-  const cover = (h) => { const near = cds.filter((c) => !c.late && c.ph === h.ph && c.t >= h.rel - 6 && c.t <= h.rel + 4); return near.some((c) => ndzIsRaidCd(c.id)) ? 'green' : near.length ? 'amber' : 'red'; };
+  const cover = (h) => { const near = cds.filter((c) => !c.late && c.ph === h.ph && c.t <= h.rel + 4 && (c.t >= h.rel - 6 || c.t + (c.dur || 0) >= h.rel)) /* (pressed near it, or still running when it lands, Oct 22) */; h.by = near.slice().sort((a, b) => ndzIsRaidCd(b.id) - ndzIsRaidCd(a.id) || a.t - b.t); return near.some((c) => ndzIsRaidCd(c.id)) ? 'green' : near.length ? 'amber' : 'red'; };
   for (const h of hits) h.c = cover(h);
   // (Cover it: a raid or healer cooldown someone on the roster brings and has ready 2 s before the hit; fewest jobs first)
   const NH = ndzNoteHas(text), RC = NDZ_BUFFS.filter(([lab]) => /^(healer|raid) cooldowns$/i.test(lab)).flatMap(([, , l]) => l).filter(([nm]) => nm !== 'Devotion Aura'), TIER = (nm) => (/^(Spirit Link Totem|Aura Mastery|Power Word: Barrier|Rallying Cry|Darkness|Anti-Magic Zone)$/.test(nm) ? 0 : /^(Tranquility|Revival|Divine Hymn|Rewind)$/.test(nm) ? 1 : 2), cnt = (n) => cds.filter((c) => c.who.toLowerCase() === String(n).toLowerCase()).length;
@@ -17749,7 +17882,7 @@ function ndzTimelineH(D) {
   if (!D || !D.phs.length) return '<div class="ndz-cth"><b>Cooldowns</b></div><p class="sub">No cooldown reminders in this note yet.</p>';
   const cur = D.phs.some((p) => p.ph === S.ndzTlPh) ? S.ndzTlPh : D.phs[0].ph, len = D.phs.find((p) => p.ph === cur).len, x = (t) => (100 * t / len).toFixed(3) + '%';
   const phN = (p) => (p % 1 ? 'Intermission' : NDZ_ONEPH.has(D.boss) && D.phs.length === 1 ? 'Fight' : 'P' + p), mmss = (t) => Math.floor(t / 60) + ':' + String(Math.round(t % 60)).padStart(2, '0');
-  const cds = D.cds.filter((c) => c.ph === cur), hits = D.hits.filter((h) => h.ph === cur), who = [...new Set(D.cds.map((c) => c.who))].filter((n) => cds.some((c) => c.who === n)), maxV = Math.max(1, ...D.hits.map((h) => h.v));
+  const cds = D.cds.filter((c) => c.ph === cur), hits = D.hits.filter((h) => h.ph === cur), who = D.lanes || [...new Set(D.cds.map((c) => c.who))].filter((n) => cds.some((c) => c.who === n)), maxV = Math.max(1, ...D.hits.map((h) => h.v));
   const tabs = D.phs.length > 1 ? '<span class="ndz-ctt">' + D.phs.map((p) => '<button type="button" data-ndztl="' + p.ph + '" class="' + (p.ph === cur ? 'on' : '') + '">' + (p.ph % 1 ? 'Int' : phN(p.ph)) + (D.hits.some((h) => h.ph === p.ph && h.c === 'red') ? ' <i class="ndz-ctred" aria-label="has an uncovered big hit">●</i>' : '') + '</button>').join('') + '</span>' : '';
   const W = { red: 'No raid cooldown here', amber: 'Only a healer\'s own burst', green: 'Covered by a raid cooldown' };
   const hl = hits.length ? '<div class="ndz-ctl hits"><span class="ndz-ctw">Big hits</span><span class="ndz-ctr">' + hits.map((h) => '<span class="ndz-cthit ' + h.c + '" style="left:' + x(h.rel) + '" data-tt="' + esc('<b>' + esc(h.hit) + '</b> at ' + mmss(h.rel) + (ndzMechTip(D.boss, h.hit) ? '<br>' + esc(ndzMechTip(D.boss, h.hit)) : '') + '<br>' + W[h.c] + ' · about ' + (h.v / 1000).toFixed(1) + 'M damage a second in the fastest ' + D.diff + ' kills') + '"><em>' + mmss(h.rel) + '</em><i style="transform:rotate(45deg) scale(' + (0.75 + 0.5 * h.v / maxV).toFixed(2) + ')"></i></span>').join('') + '</span></div>' : '';
@@ -17784,8 +17917,8 @@ function ndzTimelineH(D) {
   const lateH = lt.length ? '<div class="ndz-ctu bad"><b>' + plural(lt.length, 'cooldown') + ' in ' + where + ' won\'t be ready:</b> ' + esc(lt.map((c) => c.who + '\'s ' + (ndzSpellNm(c.id) || 'cooldown') + ' at ' + mmss(c.t) + ' (pressed at ' + phN(c.late.prev.ph) + ' ' + mmss(c.late.prev.t) + '; it takes ' + mmss(c.late.cd) + ' to come back)').join('; ')) + '. Move it, or give it to someone else.</div>' : '';
   const covH = u.length ? '<div class="ndz-cov">' + u.map((h) => (h.fix && D.noteId ? '<button class="btn sm" type="button" data-ndzcover="' + D.hits.indexOf(h) + '" data-tt="' + esc('<b>Adds to your note</b><br>' + esc(h.fix.name) + ' for ' + esc(h.fix.who) + ' at ' + phN(h.ph) + ' ' + mmss(h.fix.t) + ', 2 s before ' + esc(h.hit) + '. Undo is right here after.') + '">Cover ' + esc(h.hit) + ': ' + esc(h.fix.name) + ' · <b style="color:' + D.color(h.fix.who) + '">' + esc(h.fix.who) + '</b> at ' + mmss(h.fix.t) + '</button>' : '<span class="sub">' + esc(h.hit) + ': nobody on your roster has a raid cooldown ready then.</span>')).join('') + '</div>' : '';
   const U = S.ndzCovUndo && S.ndzCovUndo.boss === D.boss && S.ndzCovUndo.id === D.noteId ? S.ndzCovUndo : null, undoH = U ? '<div class="ndz-ctu ok"><b>✓ Added to your note:</b> ' + esc(U.msg) + '. <button class="btn sm" type="button" data-ndzundo="1">Undo</button></div>' : '';
-  return '<div class="ndz-cth"><b>Cooldowns</b>' + tabs + '<span class="sub">' + plural(D.cds.length, 'reminder') + '</span>' + sw + ndzTlEditH(D) + '</div><div class="ndz-ctb">' + bg + yl + hl + ml + lanes + vl + ndzUncH(D, hits, len, top) + mvl + '<span class="ndz-ctx" hidden></span><span class="ndz-ctxd" hidden></span><div class="ndz-ctq" hidden></div></div><div class="ndz-cta">' + ax + '</div>' + key +
-    undoH + lateH + (!D.fast ? '' : u.length ? '<div class="ndz-ctu bad"><b>' + plural(u.length, 'big hit') + ' in ' + where + ' with no raid cooldown:</b> ' + esc(u.map((h) => h.hit + ' at ' + mmss(h.rel)).join(', ')) + '. Move one there, or add one.' + covH + '</div>' : hits.length ? '<div class="ndz-ctu ok"><b>✓ Every big hit in ' + (cur % 1 ? 'the intermission' : phN(cur)) + ' has a raid cooldown.</b></div>' : ''); }
+  return '<div class="ndz-cth"><b>Cooldowns</b>' + tabs + '<span class="sub">' + plural(D.cds.length, 'reminder') + '</span>' + sw + ndzTlEditH(D) + (ndzBjQuiet() ? (D.fast && hits.length && !u.length ? '<span class="bj-okc">✓ Big hits covered</span>' : '') + '<span class="bj-ki" tabindex="0" data-tt="' + esc(key) + '">ⓘ</span>' : '') + '</div><div class="ndz-ctb">' + bg + yl + hl + ml + lanes + vl + ndzUncH(D, hits, len, top) + mvl + '<span class="ndz-ctx" hidden></span><span class="ndz-ctxd" hidden></span><div class="ndz-ctq" hidden></div></div><div class="ndz-cta">' + ax + '</div>' + (ndzBjQuiet() ? '' : key) +
+    undoH + lateH + (!D.fast ? '' : u.length ? '<div class="ndz-ctu bad"><b>' + plural(u.length, 'big hit') + ' in ' + where + ' with no raid cooldown:</b> ' + esc(u.map((h) => h.hit + ' at ' + mmss(h.rel)).join(', ')) + '. Move one there, or add one.' + covH + '</div>' : hits.length && !ndzBjQuiet() ? '<div class="ndz-ctu ok"><b>✓ Every big hit in ' + (cur % 1 ? 'the intermission' : phN(cur)) + ' has a raid cooldown.</b></div>' : ''); }
 document.addEventListener('mouseover', (e) => { const t = e.target.closest && e.target.closest('#ndzTl [data-mi]'), box = $('#ndzTl'); if (!box) return; const k = t ? t.dataset.mi : null; if (box._mi === k) return; box._mi = k;
   box.querySelectorAll('.ndz-ctmh.on').forEach((x) => x.classList.remove('on')); if (k != null) { const h = box.querySelector('.ndz-ctmh[data-mh="' + k + '"]'); if (h) h.classList.add('on'); } });
 // (pointing at the chart: a line at the mouse, a dot on the damage curve, and what's going on at that moment)
@@ -17808,8 +17941,8 @@ const ndzTlHover = (e) => { const b = e.target.closest && e.target.closest('#ndz
 document.addEventListener('pointermove', ndzTlHover); document.addEventListener('pointerdown', ndzTlHover);
 // (the Boss mechanics switch: off at first, remembered in this browser)
 const ndzTlBossOn = () => (S.ndzTlBoss != null ? S.ndzTlBoss : (() => { try { return store.get('wla-ndz-tlboss') === '1'; } catch (e) { return false; } })());
-document.addEventListener('change', (e) => { const c = e.target.closest && e.target.closest('[data-ndztlb]'); if (!c || !NDZ_TL) return; S.ndzTlBoss = c.checked; try { store.set('wla-ndz-tlboss', c.checked ? '1' : '0'); } catch (x) { /* (just this visit) */ } const el = $('#ndzTl'); if (el) el.innerHTML = ndzTimelineH(NDZ_TL); });
-document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndztl]'); if (!b || !NDZ_TL) return; S.ndzTlPh = +b.dataset.ndztl; const el = $('#ndzTl'); if (el) el.innerHTML = ndzTimelineH(NDZ_TL); });
+document.addEventListener('change', (e) => { const c = e.target.closest && e.target.closest('[data-ndztlb]'); if (!c || !NDZ_TL) return; S.ndzTlBoss = c.checked; try { store.set('wla-ndz-tlboss', c.checked ? '1' : '0'); } catch (x) { /* (just this visit) */ } const el = $('#ndzTl'); if (el) el.innerHTML = ndzTlBody(NDZ_TL); });
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndztl]'); if (!b || !NDZ_TL) return; S.ndzTlPh = +b.dataset.ndztl; const el = $('#ndzTl'); if (el) el.innerHTML = ndzTlBody(NDZ_TL); });
 // (the roster, class colored: by role, spec on hover; whoever isn't known yet last)
 function ndzRosterH(r, A) { const sp = ndzSpecs(), here = new Map(ndzIn(r).map((p) => [ndzPn(p).toLowerCase(), p])), TK = [66, 73, 104, 250, 268, 581], HL = [65, 105, 256, 257, 264, 270, 1468];
   const PS = typeof planSp === 'function' ? planSp() : {}, rr = (p) => (PS[String(p.n).toLowerCase()] || {}).role;
@@ -17839,12 +17972,21 @@ function ndzDash(r, u0, st, lines, go, tlk, how, more, fixBtn, opt) { opt = opt 
     '<span class="ndz-dring" style="--p:' + pct + '" data-tt="' + esc('<b>' + pct + '% ready</b><br>Raiders with a job, raid buffs' + (D.hits.length ? ' and big hits covered' : '') + ', averaged') + '"><span>' + pct + '%</span></span>' +
     '<span class="ndz-dtks">' + tk(!JN.idle.length, JN.jobs + ' of ' + JN.n + ' have a job', true, tJob) + tk(!au.miss, au.miss ? plural(au.miss, 'buff') + ' missing' : 'Every buff', false, tBuff) + tkn(au.have + '/' + au.of + ' utility', tUt) + tkn(plural(K.n, 'kick'), tKick) +
     (D.hits.length ? tk(!unc, unc ? plural(unc, 'big hit') + ' uncovered' : 'Big hits covered', false, tHit) : '') + (late.length ? tk(false, plural(late.length, 'cooldown') + ' not ready', false, '<b>Planned before it\'s back</b><br>' + late.map((c) => esc(c.who) + '\'s ' + esc(ndzSpellNm(c.id) || 'cooldown') + ' at ' + (c.ph % 1 ? 'Int ' : 'P' + c.ph + ' ') + mmss(c.t)).join('<br>')) : '') + '</span>' +
-    '<span class="ndz-dact">' + go + '<button class="btn" type="button" data-ndzwiz="1"' + (opt.plan ? ' data-ndzwizboss="' + esc(b) + '"' : '') + ' data-tt="' + esc('<b>Import note</b><br>Paste an NSRT note you already have. Debrief checks it and saves it for its boss.') + '">📋 Import note</button><button class="btn" type="button" ' + (opt.plan ? 'data-ndzpcopy="' + esc(opt.plan.key) + '"' : 'data-dbncopy="1"') + '>Copy for the game</button><button class="btn" type="button" data-ndzdc="' + (opt.plan ? esc(opt.plan.key) : 'cur') + '" data-tt="' + esc('<b>The note as one picture</b><br>Everyone in their class color. Paste it in Discord with Ctrl+V.') + '">💬 Copy for Discord</button>' + (opt.plan ? opt.plan.back : '<button class="btn" type="button" data-ndzdb="1">Debriefing →</button>') + tlk + '</span>' + how + '</div>';
+    (opt.bjMain != null ? '<span class="ndz-dact bj-act">' + opt.bjMain + '<button class="btn" type="button" data-ndzpcopy="' + esc(opt.plan.key) + '">Copy for the game</button><details class="bj-mm"><summary class="btn">More ▾</summary><div class="bj-mmp">' + go +
+      '<button class="btn" type="button" data-ndzwiz="1" data-ndzwizboss="' + esc(b) + '">📋 Import note</button><button class="btn" type="button" data-ndzdc="' + esc(opt.plan.key) + '">💬 Copy for Discord</button>' + how + '</div></details></span></div>' :
+    '<span class="ndz-dact">' + go + '<button class="btn" type="button" data-ndzwiz="1"' + (opt.plan ? ' data-ndzwizboss="' + esc(b) + '"' : '') + ' data-tt="' + esc('<b>Import note</b><br>Paste an NSRT note you already have. Debrief checks it and saves it for its boss.') + '">📋 Import note</button><button class="btn" type="button" ' + (opt.plan ? 'data-ndzpcopy="' + esc(opt.plan.key) + '"' : 'data-dbncopy="1"') + '>Copy for the game</button><button class="btn" type="button" data-ndzdc="' + (opt.plan ? esc(opt.plan.key) : 'cur') + '" data-tt="' + esc('<b>The note as one picture</b><br>Everyone in their class color. Paste it in Discord with Ctrl+V.') + '">💬 Copy for Discord</button>' + (opt.plan ? opt.plan.back : '<button class="btn" type="button" data-ndzdb="1">Debriefing →</button>') + tlk + '</span>' + how + '</div>');
   const fix = lines ? '<div class="panel ndz-dal">' + lines + (fixBtn || '') + '</div>' : '';
+  if (opt.jobs) return '<div class="ndz-dash">' + head + fix + more + '<div class="ndz-dgrid bj-main bj-stack"><div class="ndz-dcol"><div class="panel ndz-dpan ndz-dtl" id="ndzTl">' + ndzTlBody(D) + '</div></div><div class="ndz-dcol">' + opt.jobs + '</div></div>' + /* (the Boss page: the cooldowns full width on top, the jobs under them, Oct 22) */
+    ((M) => { const ki = M.indexOf('<div class="panel ndz-dpan"><div class="ndz-dph"><b>Kicks</b>'), t = S.bjTab && S.bjTab !== 'who' ? S.bjTab : 'ros', /* (Who does what left the Boss page, Oct 22) */ tb = (k, l) => '<button type="button" data-bjtab="' + k + '" class="' + (t === k ? 'on' : '') + '">' + l + '</button>';
+      return '<div class="panel bj-tabs" data-bjt="' + t + '"><div class="bj-tbar">' + tb('ros', 'Roster · ' + A.ps.length) + tb('aud', au.miss ? 'Raid buffs · ' + au.miss + ' missing' : 'Raid buffs · all') + tb('kick', 'Kicks · ' + K.n) + '</div>' +
+        '<div class="bj-tp" data-p="who"><div id="ndzDashWho"></div></div><div class="bj-tp" data-p="ros">' + ndzRosterH(r, A) + '</div><div class="bj-tp" data-p="aud">' + (ki < 0 ? M : M.slice(0, ki)) + '</div><div class="bj-tp" data-p="kick">' + (ki < 0 ? '' : M.slice(ki)) + '</div></div></div>'; })(ndzDashMore(r, A, au, K));
   return '<div class="ndz-dash">' + head + fix + more + '<div class="ndz-dgrid"><div class="ndz-dcol">' + ndzRosterH(r, A) +
     '<div class="panel ndz-dpan"><div class="ndz-dph"><b>Roster audit</b><span class="sub">' + esc(A.who) + (A.unknown && A.unknown.length ? '<span class="ndz-unk" tabindex="0" data-tt="' + esc('<b>Class not set</b><br>' + esc(andL(A.unknown)) + '<br>Set their class in the Roster list (click a name), so the audit and kicks count what they bring.') + '"> · ' + A.unknown.length + ' with no class set</span>' : '') + '</span></div>' + au.html + '</div>' +
     '<div class="panel ndz-dpan"><div class="ndz-dph"><b>Kicks</b><span class="sub">' + plural(K.n, 'player') + '</span></div>' + K.html + '</div></div>' +
-    '<div class="ndz-dcol"><div class="panel ndz-dpan ndz-dtl" id="ndzTl">' + ndzTimelineH(D) + '</div><div id="ndzDashWho"></div></div></div></div>'; }
+    '<div class="ndz-dcol"><div class="panel ndz-dpan ndz-dtl" id="ndzTl">' + ndzTlBody(D) + '</div><div id="ndzDashWho"></div></div></div></div>'; }
+// (the roster audit and kicks panels, shared by the Boss page and the dashboard)
+function ndzDashMore(r, A, au, K) { const tt = (tip) => (tip ? ' tabindex="0" data-tt="' + esc(tip) + '"' : ''); return '<div class="panel ndz-dpan"><div class="ndz-dph"><b>Roster audit</b><span class="sub">' + esc(A.who) + (A.unknown && A.unknown.length ? '<span class="ndz-unk" tabindex="0" data-tt="' + esc('<b>Class not set</b><br>' + esc(andL(A.unknown)) + '<br>Set their class in the Roster list (click a name), so the audit and kicks count what they bring.') + '"> · ' + A.unknown.length + ' with no class set</span>' : '') + '</span></div>' + au.html + '</div>' +
+    '<div class="panel ndz-dpan"><div class="ndz-dph"><b>Kicks</b><span class="sub">' + plural(K.n, 'player') + '</span></div>' + K.html + '</div>'; }
 // (assign() puts Who does what in the page's slot, folded list of cooldowns included; '' when the page isn't showing)
 function ndzDashWho(r, used) { const el = $('#ndzDashWho'); if (!el || !NDZ_NEW()) return ''; if (NDZ_PLANON) return ' '; /* (the plan view fills its own) */ el.innerHTML = ndzWhoH(r, used); return ' '; }
 // ---- Plan view (Oct 20, your OK): pick any boss's card, or Plan view on a saved note, and that note fills the page (roster
@@ -17865,7 +18007,7 @@ function ndzPlanBoard(r, pb) { const l = notesOf(pb).list.filter((n) => !n.examp
   const how = '<span class="ndz-hdb">' + ndzPill() + '<button class="ndz-how" type="button" data-ndztip="1"><span aria-hidden="true">?</span> Show me how</button></span>';
   let who = ''; try { who = ndzWhoH(pr, n); } catch (e) { try { who = '<div class="panel ndz-who ndz-rcards nolk">' + ndzAbil(pr, st, null) + '</div>'; } catch (x) { who = ''; } }
   const toDb = pb === r.item.boss && r.duration ? '<div class="ndz-pdb"><a href="#" data-ndzdb="1">See how your pulls went against this plan →</a></div>' : '';
-  return pick + ndzDash(pr, n, st, lines, B('data-ndzbuild="1" data-noteboss="' + esc(pb) + '" data-noteid="' + esc(n.id) + '"', '✏️ Edit step by step', 'primary') + B(nb, 'Build new note'), '', how, '', '', { plan: { key: pb + '|' + n.id, back } }).replace('<div id="ndzDashWho"></div>', '<div id="ndzDashWho">' + who + '</div>') + toDb; }
+  return pick + ndzDash(pr, n, st, lines, B('data-ndzbuild="1" data-noteboss="' + esc(pb) + '" data-noteid="' + esc(n.id) + '"', '✏️ Edit step by step', S.page === 'plan' ? '' : 'primary') + B(nb, 'Build new note'), '', how, '', '', { plan: { key: pb + '|' + n.id, back }, jobs: S.page === 'plan' ? ndzBjH(pb, n) : '', bjMain: S.page === 'plan' ? B('data-bjplanner="1"', '✏️ Open planner', 'primary') + B('data-bjredo="' + esc(pb + '|' + n.id) + '"', '↻ Redo it for me') : null }).replace('<div id="ndzDashWho"></div>', '<div id="ndzDashWho">' + who + '</div>') + toDb; }
 // (the pickers: another boss, or another note for it)
 document.addEventListener('change', (e) => { const s = e.target.closest && e.target.closest('[data-ndzpbs], [data-ndzpns]'); if (!s || !ndzR()) return; if (s.dataset.ndzpbs) { S.ndzPick = s.value; store.set(PLAN_BK, s.value); S.ndzPlanId = null; } else S.ndzPlanId = s.value; S.ndzPickRep = ndzR().item.boss; renderMain(); });
 // (Debriefing's note bar: who from the plan is here tonight, and who's missing)
@@ -17874,7 +18016,7 @@ function ndzPlanHere(NJ, r) { const u = NJ && NJ.used; if (!u) return ''; const 
   return '<span class="dbn-gone' + (miss.length ? '' : ' ndz-allhere') + '">' + k + ' of ' + plural(names.length, 'planned raider') + ' ' + (k === 1 ? 'is' : 'are') + ' here tonight' + (miss.length ? '. Missing: ' + esc(andL(miss.slice(0, 6))) + (miss.length > 6 ? ' and ' + (miss.length - 6) + ' more' : '') + '.' : '.') + '</span>'; }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndzpcopy]'); if (!b) return; const k = b.dataset.ndzpcopy, i = k.lastIndexOf('|'), n = notesOf(k.slice(0, i)).list.find((x) => x.id === k.slice(i + 1)); if (n) copyBtn(b, n.text); });
 // (Cover it: the suggested cooldown goes into the note, 2 s before the hit; Undo puts the note back as it was)
-const ndzNoteSet = (boss, id, text) => { const o = notesOf(boss), n = o.list.find((x) => x.id === id); if (!n) return false; n.text = text; notesSave(boss, o); for (const rep of CACHE.values()) if (rep.item.boss === boss) { try { applyNote(rep); } catch (x) { /* (checked on the next look) */ } } return true; };
+const ndzNoteSet = (boss, id, text) => { const o = notesOf(boss), n = o.list.find((x) => x.id === id); if (!n) return false; if (S.page === 'plan' && !S.ndzPlNoHist && n.text !== text) { const H = ndzPlHist(boss, id); H.undo.push(n.text); if (H.undo.length > 60) H.undo.shift(); H.redo = []; } /* (the planner's Undo) */ n.text = text; notesSave(boss, o); for (const rep of CACHE.values()) if (rep.item.boss === boss) { try { applyNote(rep); } catch (x) { /* (checked on the next look) */ } } return true; };
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndzcover]'); if (!b || !NDZ_TL) return; const h = NDZ_TL.hits[+b.dataset.ndzcover], f = h && h.fix, n = notesOf(NDZ_TL.boss).list.find((x) => x.id === NDZ_TL.noteId); if (!f || !n) return;
   S.ndzCovUndo = { boss: NDZ_TL.boss, id: n.id, text: n.text, msg: f.name + ' for ' + f.who + ' at ' + (f.ph % 1 ? 'Int' : 'P' + f.ph) + ' ' + Math.floor(f.t / 60) + ':' + String(f.t % 60).padStart(2, '0') };
   const y = window.scrollY; ndzNoteSet(NDZ_TL.boss, n.id, String(n.text).replace(/\s*$/, '') + '\ntime:' + f.t + ';ph:' + f.ph + ';tag:' + f.who + ';spellid:' + f.id + ';text:' + f.name + ';'); renderMain(); window.scrollTo({ top: y }); });
@@ -18119,7 +18261,7 @@ const planBosses = () => E.PACKS.map((p) => p.encounter).filter((x, i, a) => a.i
 function planBoss() { const l = planBosses(); let b = S.ndzPick || store.get(PLAN_BK);
   if (!l.includes(b)) b = (PROG_BACK && l.includes(PROG_BACK.boss) ? PROG_BACK.boss : null) || l.find((x) => notesOf(x).list.some((n) => !n.example)) || l[0];
   return b; }
-const planV0 = () => { const v = S.planV || store.get(PLAN_VK); return v === 'ros' || v === 'notes' ? v : 'plans'; };
+const planV0 = () => { const v = S.planV || store.get(PLAN_VK); return v === 'ros' || v === 'notes' || v === 'plans' ? v : 'night'; }; /* (Night is the first page, Oct 22) */
 // (your rosters: { list: [{ id, name, players: [{ n, cls, role, bench }], saved }], cur }; the one in use fills new plans)
 const rostersGet = () => { try { const o = JSON.parse(store.get(PLAN_RK) || 'null'); return o && Array.isArray(o.list) ? o : { list: [], cur: null }; } catch (e) { return { list: [], cur: null }; } };
 const rostersSet = (o) => store.set(PLAN_RK, JSON.stringify(o));
@@ -18162,16 +18304,17 @@ function planAssign() { const box = $('#assignBox'); if (!box) return; const bos
   const v = planV0(), seg = (k, l) => '<button type="button" data-planv="' + k + '" class="' + (v === k ? 'on' : '') + '" aria-pressed="' + (v === k) + '">' + l + '</button>';
   const R = planRoster(), nN = planBosses().reduce((s, b) => s + notesOf(b).list.filter((n) => !n.example).length, 0), nR = rostersGet().list.length;
   const head = '<div class="panel plan-head"><div class="plan-ht"><h2>Plan</h2><span class="sub">Your raid\'s prep for every boss. It doesn\'t use your logs: Debriefing checks a note against your pulls.</span></div>' +
-    '<span class="ndz-seg plan-seg">' + seg('plans', 'Boss plans') + seg('ros', 'Rosters' + (nR ? ' · ' + nR : '')) + seg('notes', 'All notes' + (nN ? ' · ' + nN : '')) + '</span></div>';
+    '<span class="ndz-seg plan-seg">' + seg('night', 'Night') + seg('plans', 'Boss plans') + seg('ros', 'Rosters' + (nR ? ' · ' + nR : '')) + seg('notes', 'All notes' + (nN ? ' · ' + nN : '')) + '</span></div>';
   let body = '';
-  if (v === 'ros') body = planRosH();
+  if (v === 'night') body = pnH();
+  else if (v === 'ros') body = planRosH();
   else if (v === 'notes') body = planNotesH();
   else { if (S.noteMade) { S.planOpen = true; const mb = S.noteMade.planBoss || S.noteMade.boss; if (mb && planBosses().includes(mb) && mb !== S.ndzPick) { S.ndzPick = mb; store.set(PLAN_BK, mb); return planAssign(); } }
     body = S.planOpen ? (S.noteMade ? noteMadeBox(S.noteMade) : '') + ndzPlanBoard(r, boss) : planOverH(); }
   box.innerHTML = head + body;
   if ($('#nmCopy')) $('#nmCopy').onclick = () => { const m = S.noteMade, n = m && notesOf(m.planBoss || m.boss).list.find((x) => x.id === m.id); if (n) copyBtn($('#nmCopy'), n.text); };
   if ($('#nmOk')) $('#nmOk').onclick = () => { S.noteMade = null; planAssign(); };
-  if (v === 'ros') planRosBind(); ndzTlBigSync(); /* (the big graph stays big across redraws) */
+  if (v === 'ros') planRosBind(); ndzTlBigSync(); /* (the big graph stays big across redraws) */ bjMerge(); /* (the Boss page: one banner) */
   { const st = $('#assignBox .plan-bstrip'), on = st && st.querySelector('.plan-bc.on'); if (on && st.scrollWidth > st.clientWidth) st.scrollLeft = Math.max(0, on.offsetLeft - st.offsetLeft - 8); } /* (on a phone, the boss row starts at the picked boss) */ }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-planv]'); if (!b || S.page !== 'plan') return; e.preventDefault();
   S.planV = b.dataset.planv; store.set(PLAN_VK, S.planV); if (S.planV === 'plans') S.planOpen = false; S.noteMade = null; S.planRosEd = null; planAssign(); window.scrollTo({ top: 0 }); });
@@ -18485,10 +18628,10 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
 // onto another raider's row to hand it to them (only someone whose class and spec can press it: green row yes, red no). The note
 // is saved at once, with Undo. "⤢ Bigger" opens the graph large over the page (Esc or Close goes back).
 let NDZ_DRAG = null;
-const ndzTlEditH = (D) => (S.page === 'plan' && D && D.noteId ? '<span class="sub ndz-tlhint">Drag an icon to move it, or onto another raider</span><button type="button" class="ndz-tlbig" data-ndztlbig="1">' + (S.ndzTlBig ? '✕ Close' : '⤢ Bigger') + '</button>' : '');
+const ndzTlEditH = (D) => (S.page === 'plan' && D && D.noteId && !S.ndzTlBig && !S.planOpen ? '<span class="sub ndz-tlhint">Drag an icon to move it, or onto another raider</span><button type="button" class="ndz-tlbig" data-ndztlbig="1">✏️ Open planner</button>' : ''); /* (the planner has its own Close) */
 function ndzTlBigSync() { const t = $('#ndzTl'), on = !!S.ndzTlBig && !!t && S.page === 'plan'; if (t) t.classList.toggle('big', on); document.body.classList.toggle('ndz-tlbig-on', on); }
-const ndzTlRedraw = () => { const el = $('#ndzTl'); if (el && NDZ_TL) el.innerHTML = ndzTimelineH(NDZ_TL); ndzTlBigSync(); };
-document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndztlbig]'); if (!b) return; S.ndzTlBig = !S.ndzTlBig; ndzTlRedraw(); });
+const ndzTlRedraw = () => { const el = $('#ndzTl'); if (el && NDZ_TL) el.innerHTML = ndzTlBody(NDZ_TL); ndzTlBigSync(); };
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndztlbig]'); if (!b) return; S.ndzTlBig = !S.ndzTlBig; if (!S.ndzTlBig) { S.ndzStamp = null; ndzPlClosePick(); } ndzTlRedraw(); });
 document.addEventListener('click', (e) => { if (S.ndzTlBig && e.target === document.body) { S.ndzTlBig = false; ndzTlRedraw(); } });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.ndzTlBig) { S.ndzTlBig = false; ndzTlRedraw(); } });
 // (can this raider press that spell: the roster audit's lists by class and spec; a spell they don't list, the same class as now)
@@ -18507,7 +18650,7 @@ document.addEventListener('pointermove', (e) => { const G = NDZ_DRAG; if (!G) re
   if (nm && nm !== G.c.who) { const ok = ndzCanPress(nm, G.c.id, G.c.who); ln.classList.add(ok ? 'drop' : 'nodrop'); if (ok) who = nm; else bad = true; } G.who = who;
   const ph = NDZ_TL.phs.some((p) => p.ph === S.ndzTlPh) ? S.ndzTlPh : NDZ_TL.phs[0].ph;
   ndzDragTip(e, (ph % 1 ? 'Int ' : 'P' + ph + ' ') + Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0') + (bad ? ' · ' + nm + " can't press it" : who !== G.c.who ? ' · to ' + who : ''), bad); });
-document.addEventListener('pointerup', (e) => { const G = NDZ_DRAG; NDZ_DRAG = null; const tip = $('#ndzDragTip'); if (tip) tip.hidden = true; if (!G || !G.on) return;
+document.addEventListener('pointerup', (e) => { const G = NDZ_DRAG; NDZ_DRAG = null; if (G && G.on) S.ndzDragEnd = Date.now(); /* (the planner doesn't take a drag's end for a click) */ const tip = $('#ndzDragTip'); if (tip) tip.hidden = true; if (!G || !G.on) return;
   if (G.t === G.c.t && G.who === G.c.who) { ndzTlRedraw(); return; }
   const boss = NDZ_TL.boss, n = notesOf(boss).list.find((x) => x.id === NDZ_TL.noteId); if (!n) return;
   const lines = String(n.text).split('\n'), lc = (s) => String(s).split('-')[0].toLowerCase(); let done = false;
@@ -18538,9 +18681,10 @@ function ndzUncH(D, hits, len, top) { const pos = (t) => 'calc(var(--ctw) + (100
 // every group said once in an "Every set" strip, a small + to add. A reason said word for word on every row is said once in the
 // Why these picks box (folded into the page's intro card); each player's own reason (Ice Cold, off-tank) sits by their name.
 const ndzBKey = (pg, sl) => pg.key + '|' + sl.label;
-const ndzBGrid = (pg) => pg.slots.length >= 3 && !pg.exclusive && !pg.slots.some((sl) => sl.order) && /* (only sets of one kind: "Orb Soak 1, 2, 3…", not different jobs) */
+const ndzBGrid = (pg) => false && pg.slots.length >= 3 && !pg.exclusive && !pg.slots.some((sl) => sl.order) && /* (only sets of one kind: "Orb Soak 1, 2, 3…", not different jobs) */
   ((m) => m.every((x) => x && x[1] === m[0][1]))(pg.slots.map((sl) => /^(.*?)\s*(\d+)$/.exec(sl.label)));
-function ndzBCore(B, pg) { if (pg.slots.length < 2 || pg.exclusive || pg.slots.some((sl) => sl.order)) return [];
+const ndzBSingle = (pg) => pg.slots.length >= 2 && pg.slots.every((sl) => (sl.want || 0) <= 1 && !sl.order); /* (one person a job: 1st CC, 2nd CC…) */
+function ndzBCore(B, pg) { if (pg.slots.length < 2 || pg.exclusive || pg.slots.some((sl) => sl.order) || ndzBSingle(pg)) return [];
   const ls = pg.slots.map((sl) => B.sel[ndzBKey(pg, sl)].n); return ls[0].filter((n) => ls.every((l) => l.includes(n))); }
 // (each player's own reason from the suggestion text: "Boltzzx (Ice Cold)" -> Ice Cold)
 function ndzBTags(B, pg, names) { const tg = new Map(), keep = (B.ntag = B.ntag || {}); /* (kept once seen: adding someone by hand clears the row's suggestion text, not the tags) */
@@ -18582,14 +18726,19 @@ function ndzBSlotsH(B, pg, ps, col) {
       (!whys.same && whys.ws.some(Boolean) ? '<p class="sub ndz-bgnote">Hover a set number to see why it\'s picked that way.</p>' : ''); }
   // (A: tidy rows)
   const inPage = new Map(); for (const sl of pg.slots) for (const n of B.sel[ndzBKey(pg, sl)].n) inPage.set(n, (inPage.get(n) || 0) + 1);
-  const chip = (n, x, k, i, sl) => '<span class="ndz-p' + (pg.exclusive && inPage.get(n) > 1 ? ' warn' : '') + '">' + (sl && sl.order ? '<i>' + (i + 1) + '</i>' : '') + '<span class="nm" style="color:' + col(n) + '">' + esc(n) + '</span>' + tagH(n) +
+  const drag = S.page === 'plan' && S.planOpen && !S.noteBuild, chip = (n, x, k, i, sl) => '<span class="ndz-p' + (pg.exclusive && inPage.get(n) > 1 ? ' warn' : '') + '" style="--cc:' + col(n) + '"' + (drag && sl ? ' draggable="true" data-bjdrag="' + esc(k + '|' + i) + '"' : '') + '>' + (sl && sl.order ? '<i>' + (i + 1) + '</i>' : '') + '<span class="nm" style="color:' + col(n) + '" title="' + esc(n + (tags.has(n) ? ' · ' + tags.get(n) : '')) + '">' + esc(n) + '</span>' + tagH(n) +
     (sl && sl.order && i ? '<button class="ndz-ex" type="button" data-bup="' + esc(k + '|' + i) + '" aria-label="Move up">↑</button>' : '') + '<button class="ndz-ex" type="button" ' + x + ' aria-label="Remove ' + esc(n) + '">×</button></span>';
   const strip = core.length ? '<div class="ndz-bcore"><span class="lab">Every ' + esc(pre ? pre.toLowerCase() : 'group') + '</span>' + core.map((n) => chip(n, 'data-bcx="' + esc(pg.key + '|' + n) + '"', '', 0, null)).join('') +
     ndzBPlus('data-bcadd="' + esc(pg.key) + '"', ps, core, 'Add someone to every group') + '</div>' : '';
-  return strip + '<div class="ndz-brows">' + pg.slots.map((sl, si) => { const k = ndzBKey(pg, sl), v = B.sel[k];
-    return '<div class="ndz-brow"><span class="lab"><b>' + esc(sl.label) + '</b>' + (sl.order ? '<small>in kick order</small>' : '') + '</span><span class="cl">' +
+  if (ndzBSingle(pg)) return '<div class="ndz-bsing">' + pg.slots.map((sl) => { const k = ndzBKey(pg, sl), v = B.sel[k];
+    return '<div class="ndz-bsi' + (v.n.length ? '' : ' none') + '" data-bjrow="' + esc(k) + '"><span class="lab">' + esc(sl.label) + '</span><span class="cl">' + v.n.map((n, i) => chip(n, 'data-bx="' + esc(k + '|' + i) + '"', k, i, sl)).join('') + (v.n.length ? '' : ndzBPlus('data-badd="' + esc(k) + '"', ps, v.n, 'Add a player to ' + sl.label)) + '</span></div>'; }).join('') + '</div>';
+  const one = (sl) => (sl.want || 0) <= 1 && !sl.order && !pg.exclusive, sing = (sl) => { const k = ndzBKey(pg, sl), v = B.sel[k];
+    return '<div class="ndz-bsi' + (v.n.length ? '' : ' none') + '" data-bjrow="' + esc(k) + '"><span class="lab">' + esc(sl.label) + '</span><span class="cl">' + v.n.map((n, i) => chip(n, 'data-bx="' + esc(k + '|' + i) + '"', k, i, sl)).join('') + (v.n.length ? '' : ndzBPlus('data-badd="' + esc(k) + '"', ps, v.n, 'Add a player to ' + sl.label)) + '</span></div>'; };
+  const runs = []; for (const sl of pg.slots) { const last = runs[runs.length - 1]; if (one(sl) && last && last.one) last.l.push(sl); else runs.push({ one: one(sl), l: [sl] }); } /* (one-person jobs side by side when two or more are in a row) */
+  return strip + '<div class="ndz-brows">' + runs.map((g) => (g.one && g.l.length > 1 ? '<div class="ndz-bsing">' + g.l.map(sing).join('') + '</div>' : g.l.map((sl) => { const k = ndzBKey(pg, sl), v = B.sel[k];
+    return '<div class="ndz-brow' + (v.n.length > 4 ? ' tall' : '') + '" data-bjrow="' + esc(k) + '"><span class="lab"><b>' + esc(sl.label) + '</b>' + (sl.order ? '<small>in kick order</small>' : '') + '</span><span class="cl">' +
       v.n.map((n, i) => (core.includes(n) ? '' : chip(n, 'data-bx="' + esc(k + '|' + i) + '"', k, i, sl))).join('') + ndzBPlus('data-badd="' + esc(k) + '"', ps, v.n, 'Add a player to ' + sl.label) + '</span>' + ndzBCnt(sl, v.n.length) +
-      ((wt) => (!whys.same && (wt || v.src) ? '<div class="ndz-bwhy">' + (v.src ? '<span class="ndz-bsg src">' + NDZ_SRC_TAG[v.src] + '</span>' : '') + esc(wt.charAt(0).toUpperCase() + wt.slice(1)) + '</div>' : ''))(v.why ? ndzBTrim(v.why, tags) : '') + '</div>'; }).join('') + '</div>'; }
+      ((wt) => (!whys.same && (wt || v.src) ? '<div class="ndz-bwhy">' + (v.src ? '<span class="ndz-bsg src">' + NDZ_SRC_TAG[v.src] + '</span>' : '') + esc(wt.charAt(0).toUpperCase() + wt.slice(1)) + '</div>' : ''))(v.why ? ndzBTrim(v.why, tags) : '') + '</div>'; }).join(''))).join('') + '</div>'; }
 // (the grid's dots, its + Add a player, and the Every set strip's × and +)
 function ndzBGridBind(B, redraw) {
   const pg = () => B.pages[B.step - 1];
@@ -18599,6 +18748,397 @@ function ndzBGridBind(B, redraw) {
   $$('#assignBox [data-bcadd]').forEach((s) => (s.onchange = () => { if (!s.value) return; for (const sl of pg().slots) { const l = B.sel[ndzBKey(pg(), sl)].n; if (!l.includes(s.value)) l.push(s.value); } redraw(); }));
   $$('#assignBox .ndz-bwhyd').forEach((d) => (d.ontoggle = () => { S.ndzWhyOpen = d.open; }));
 }
+// ---- The cooldown planner (Oct 22, your ask: "Turn this whole tab into a much better version of [a raid cooldown planner]") ----
+// On the Plan page, "✏️ Open planner" opens the boss's cooldown graph full screen as a planner: every raider down the side with
+// the cooldowns their class and spec bring (click one to stamp it, then click anyone's row at the moment you want), a Timeline
+// view (click an empty spot on a row to pick from that raider's spells; drag to move; right-click to remove) and a Grid view
+// (raiders down the side, the boss's big hits and mechanics across, one cell per raider per moment). Undo and Redo (Ctrl+Z,
+// Ctrl+Shift+Z) cover every change on the Plan page; "Cover every big hit" adds the suggested cooldown to each uncovered hit.
+// The note stays the one place the plan lives: every change is a line in it, ready for NSRT.
+const NDZ_PL_GROUPS = ['Raid cooldowns', 'Healer cooldowns', 'Externals', 'Movement'];
+const ndzPlOn = () => !!S.ndzTlBig && S.page === 'plan';
+// (the spells a raider can plan: the roster audit's lists, by class and spec)
+function ndzPlSpells(p) { const out = []; if (!p || !p.cls) return out;
+  for (const g of NDZ_BUFFS) if (NDZ_PL_GROUPS.includes(g[0])) for (const x of g[2]) if (x[1].includes(p.cls) && (!x[2] || !p.sid || x[2].includes(+p.sid)) && !out.some((o) => o.id === x[3]) && x[0] !== 'Devotion Aura') out.push({ name: x[0], id: x[3], grp: g[0] });
+  return out; }
+const NDZ_PL_ROLE = (p) => { const TK = [66, 73, 104, 250, 268, 581], HL = [65, 105, 256, 257, 264, 270, 1468], PS = typeof planSp === 'function' ? planSp() : {}, rr = (PS[String(p.n).toLowerCase()] || {}).role;
+  return !p.sid ? (rr || 'dps') : TK.includes(+p.sid) ? 'tank' : HL.includes(+p.sid) ? 'healer' : 'dps'; };
+function ndzPlPeople(D) { const ord = { healer: 0, tank: 1, dps: 2 };
+  return (D.ps || []).map((p) => ({ n: String(p.n), cls: p.cls, sid: p.sid, role: NDZ_PL_ROLE(p), sp: ndzPlSpells(p) })).filter((p) => p.sp.length).sort((a, b) => ord[a.role] - ord[b.role] || a.n.localeCompare(b.n)); }
+// (the lanes on show: everyone with a planned spell, or everyone who has one to plan)
+const ndzPlLanes = (D) => { const pp = ndzPlPeople(D), has = new Set(D.cds.map((c) => c.who.toLowerCase())); return (S.ndzPlAll === false ? pp.filter((p) => has.has(p.n.toLowerCase())) : pp).map((p) => p.n); };
+const ndzTlBody = (D) => (ndzPlOn() && D && D.noteId ? ndzPlannerH(D) : D && typeof ndzBjQuiet === 'function' && ndzBjQuiet() ? bjTlH(D) : ndzTimelineH(D)); /* (the Boss page: the condensed timeline, Oct 22) */
+const ndzPlMm = (t) => Math.floor(t / 60) + ':' + String(Math.round(t % 60)).padStart(2, '0');
+function ndzPlannerH(D) {
+  const pp = ndzPlPeople(D), st = S.ndzStamp, cur = D.phs.some((p) => p.ph === S.ndzTlPh) ? S.ndzTlPh : (D.phs[0] || {}).ph, H = S.ndzPlHist && S.ndzPlHist.key === D.boss + '|' + D.noteId ? S.ndzPlHist : null;
+  const roleN = { healer: 'Healers', tank: 'Tanks', dps: 'Damage dealers' }, view = S.ndzPlView === 'grid' ? 'grid' : 'tl', reds = D.hits.filter((h) => h.c === 'red' && h.fix).length;
+  const side = ['healer', 'tank', 'dps'].map((ro) => { const l = pp.filter((p) => p.role === ro); if (!l.length) return '';
+    return '<div class="ndz-plg"><span class="ndz-plgl">' + roleN[ro] + '</span>' + l.map((p) => { const col = (E.CLASSES[p.cls] || [])[1] || 'inherit', used = D.cds.filter((c) => c.who.toLowerCase() === p.n.toLowerCase()).length;
+      return '<div class="ndz-plp"><span class="ndz-plpn" style="color:' + col + '">' + esc(p.n) + (used ? '<small>' + used + '</small>' : '') + '</span><span class="ndz-plps">' + p.sp.map((s) => { const on = st && st.who === p.n && +st.id === +s.id;
+        return '<button type="button" class="ndz-pls' + (on ? ' on' : '') + '" data-pls="' + esc(p.n + '|' + s.id + '|' + s.name) + '" aria-pressed="' + !!on + '" data-tt="' + esc('<b>' + esc(s.name) + '</b> · ' + esc(p.n) + '<br>' + esc(s.grp.replace(/s$/, '')) + (ndzRech(s.id) ? ' · back after ' + ndzPlMm(ndzRech(s.id)) : '') + '<br>' + (on ? 'Click again to stop placing.' : 'Click, then click on the graph to place it.')) + '">' + spellIcon(s.id, s.name) + '</button>'; }).join('') + '</span></div>'; }).join('') + '</div>'; }).join('');
+  const hint = st ? '<div class="ndz-plst">Placing <b>' + esc(st.name) + '</b> for <b>' + esc(st.who) + '</b>: click on ' + (view === 'grid' ? 'their row under a big hit' : 'their row at the moment you want') + '. <button type="button" class="ndz-plx" data-plstop="1">Stop (Esc)</button></div>'
+    : '<div class="ndz-plst sub">' + (view === 'grid' ? 'Click an empty cell to give that raider a cooldown for that moment. Right-click an icon to remove it.' : 'Click an empty spot on a raider\'s row to give them a cooldown then. Drag an icon to move it, right-click to remove it.') + '</div>';
+  const head = '<div class="ndz-plh"><b>Cooldown planner</b><span class="sub">' + esc(D.boss) + ' · ' + esc(D.diff) + '</span>' +
+    '<span class="ndz-plv" role="group" aria-label="View"><button type="button" data-plview="tl" class="' + (view === 'tl' ? 'on' : '') + '">Timeline</button><button type="button" data-plview="grid" class="' + (view === 'grid' ? 'on' : '') + '">Grid</button></span>' +
+    '<span class="ndz-plsp"></span><button type="button" class="ndz-plb2" data-plundo="1"' + (H && H.undo.length ? '' : ' disabled') + ' data-tt="Undo (Ctrl+Z)">↶ Undo</button><button type="button" class="ndz-plb2" data-plredo="1"' + (H && H.redo.length ? '' : ' disabled') + ' data-tt="Redo (Ctrl+Shift+Z)">↷ Redo</button>' +
+    (reds ? '<button type="button" class="ndz-plb2 gold" data-plcover="1" data-tt="' + esc('Adds the suggested raid cooldown to each big hit with none, in every phase (' + plural(reds, 'hit') + ' now). Undo takes them all back.') + '">✨ Cover every big hit</button>' : '') +
+    '<button type="button" class="ndz-plb2" data-plcopy="1">Copy for the game</button><button type="button" class="ndz-plb2" data-ndztlbig="1">✕ Close</button></div>';
+  const show = '<label class="ndz-plall"><input type="checkbox" data-plall="1"' + (S.ndzPlAll === false ? '' : ' checked') + '> Show everyone</label>';
+  return head + '<div class="ndz-plw"><aside class="ndz-pla"><div class="ndz-plat"><b>Raiders</b>' + show + '</div>' + side + '</aside><div class="ndz-plm' + (st ? ' stamping' : '') + '">' + hint +
+    (view === 'grid' ? ndzPlGridH(D, cur) : ndzTimelineH(Object.assign({}, D, { lanes: ndzPlLanes(D) }))) + '</div></div>' + '<div class="ndz-plpick" id="ndzPlPick" hidden></div>'; }
+// (the grid: raiders down the side, this phase's boss moments across; each cooldown sits under the moment it's nearest to)
+function ndzPlGridH(D, cur) {
+  const len = (D.phs.find((p) => p.ph === cur) || {}).len || 60, mmss = ndzPlMm, ev = [];
+  for (const h of D.hits.filter((x) => x.ph === cur)) ev.push({ t: h.rel, name: h.hit, kind: 'hit', c: h.c, i: D.hits.indexOf(h) });
+  if (ndzTlBossOn()) for (const m of D.mech.filter((x) => x.ph === cur)) if (!ev.some((e) => Math.abs(e.t - m.rel) < 4)) ev.push({ t: m.rel, name: m.label, kind: 'mech', id: m.id });
+  ev.sort((a, b) => a.t - b.t);
+  const tabs = D.phs.length > 1 ? '<span class="ndz-ctt">' + D.phs.map((p) => '<button type="button" data-ndztl="' + p.ph + '" class="' + (p.ph === cur ? 'on' : '') + '">' + (p.ph % 1 ? 'Int' : 'P' + p.ph) + (D.hits.some((h) => h.ph === p.ph && h.c === 'red') ? ' <i class="ndz-ctred">●</i>' : '') + '</button>').join('') + '</span>' : '';
+  const sw = D.mech.length ? '<label class="ndz-ctsw"><input type="checkbox" data-ndztlb="1"' + (ndzTlBossOn() ? ' checked' : '') + '> Boss mechanics too</label>' : '';
+  if (!ev.length) return '<div class="ndz-cth"><b>Grid</b>' + tabs + sw + '</div><p class="sub">No big hits known for this phase yet. The Timeline view has the whole phase.</p>';
+  const near = (c) => { let k = -1, best = 1e9; ev.forEach((e, i) => { const d = c.t - e.t; if (d >= -10 && d <= 6 && Math.abs(d) < best) { best = Math.abs(d); k = i; } }); return k; };
+  const cds = D.cds.filter((c) => c.ph === cur), lanes = ndzPlLanes(D), loose = cds.filter((c) => near(c) < 0);
+  const W = { red: 'No raid cooldown here', amber: 'Only a healer\'s own burst', green: 'Covered by a raid cooldown' };
+  const th = ev.map((e) => '<th class="' + (e.kind === 'hit' ? 'hit ' + e.c : 'mech') + '" data-tt="' + esc('<b>' + esc(e.name) + '</b> at ' + mmss(e.t) + (ndzMechTip(D.boss, e.name) ? '<br>' + esc(ndzMechTip(D.boss, e.name)) : '') + (e.kind === 'hit' ? '<br>' + W[e.c] : '')) + '"><span class="t">' + mmss(e.t) + '</span><span class="n">' + esc(e.name) + '</span>' + (e.kind === 'hit' ? '<i class="ndz-plcv ' + e.c + '"></i>' : '') + '</th>').join('');
+  const rows = lanes.map((n) => { const col = D.color(n), mine = cds.filter((c) => c.who === n);
+    return '<tr><td class="pl"><span style="color:' + col + '">' + esc(n) + '</span></td>' + ev.map((e, i) => { const here = mine.filter((c) => near(c) === i);
+      return '<td class="cell' + (here.length ? ' has' : '') + '" data-plcell="' + esc(n + '|' + cur + '|' + Math.max(0, Math.round(e.t - 2))) + '">' + here.map((c) => '<span class="ndz-ctc' + (c.late ? ' late' : '') + '" data-cdi="' + D.cds.indexOf(c) + '" data-tt="' + esc('<b>' + esc(ndzSpellNm(c.id) || 'Cooldown') + '</b> · ' + esc(n) + ' at ' + mmss(c.t) + (c.late ? '<br><span class="no">Not ready then</span>' : '') + '<br>Right-click to remove') + '">' + spellIcon(c.id, ndzSpellNm(c.id) || '') + '</span>').join('') + '</td>'; }).join('') + '</tr>'; }).join('');
+  return '<div class="ndz-cth"><b>Grid</b>' + tabs + sw + '<span class="sub">' + plural(ev.length, 'moment') + ' · phase length about ' + mmss(len) + '</span></div><div class="ndz-plgw"><table class="ndz-plgt"><thead><tr><th class="pl"></th>' + th + '</tr></thead><tbody>' + rows + '</tbody></table></div>' +
+    (loose.length ? '<p class="sub ndz-plloose">Not near a big hit: ' + esc(loose.map((c) => c.who + '\'s ' + (ndzSpellNm(c.id) || 'cooldown') + ' at ' + mmss(c.t)).join(', ')) + '. The Timeline view shows them.</p>' : ''); }
+// (a note change from the planner: saved, the page redrawn, the planner kept open)
+function ndzPlSave(text, msg) { const D = NDZ_TL; if (!D) return; const y = window.scrollY; ndzNoteSet(D.boss, D.noteId, text); planAssign(); window.scrollTo({ top: y }); ndzTlBigSync(); if (msg) toast(msg, 3500); }
+const ndzPlNote = () => (NDZ_TL ? notesOf(NDZ_TL.boss).list.find((x) => x.id === NDZ_TL.noteId) : null);
+function ndzPlAdd(who, id, name, ph, t) { const n = ndzPlNote(); if (!n) return; const D = NDZ_TL, cd = ndzRech(id), clash = cd ? D.cds.find((c) => c.who.toLowerCase() === who.toLowerCase() && +c.id === +id && c.ph === ph && Math.abs(c.t - t) < cd) : null;
+  ndzPlSave(String(n.text).replace(/\s*$/, '') + '\ntime:' + t + ';ph:' + ph + ';tag:' + who + ';spellid:' + id + ';text:' + name + ';', name + ' for ' + who + ' at ' + (ph % 1 ? 'Int ' : 'P' + ph + ' ') + ndzPlMm(t) + (clash ? '. Careful: it isn\'t back yet from ' + ndzPlMm(clash.t) + ' (' + ndzPlMm(cd) + ' cooldown).' : '.')); }
+// (the note line behind a cooldown on the graph: same phase, time, raider and spell)
+function ndzPlLine(lines, c) { const lc = (s) => String(s).split('-')[0].toLowerCase();
+  for (let i = 0; i < lines.length; i++) { const ln = lines[i]; if (!/(^|;)\s*time:/i.test(ln)) continue; const f = {}; for (const kv of ln.split(';')) { const j = kv.indexOf(':'); if (j > 0) f[kv.slice(0, j).trim().toLowerCase()] = kv.slice(j + 1).trim(); }
+    if ((+f.ph || 1) === +c.ph && (+f.time || 0) === +c.t && String(f.tag || '').split(/\s+/).some((w) => lc(w) === lc(c.who)) && (+f.spellid || ndzSpellIdOf(f.text)) === +c.id) return i; }
+  return -1; }
+function ndzPlRemove(ci) { const D = NDZ_TL, c = D && D.cds[+ci], n = ndzPlNote(); if (!c || !n) return; const lines = String(n.text).split('\n'), i = ndzPlLine(lines, c); if (i < 0) return;
+  const f = lines[i], tags = (/(?:^|;)\s*tag:([^;]*)/i.exec(f) || [])[1] || '', rest = tags.split(/\s+/).filter((w) => w && w.split('-')[0].toLowerCase() !== c.who.toLowerCase());
+  if (rest.length) lines[i] = f.replace(/((?:^|;)\s*tag:)[^;]*/i, '$1' + rest.join(' ')); else lines.splice(i, 1); /* (a line shared with others keeps them) */
+  ndzPlSave(lines.join('\n'), (ndzSpellNm(c.id) || 'Cooldown') + ' removed from ' + c.who + '. Ctrl+Z brings it back.'); }
+// (undo and redo: every note change on the Plan page, kept for this visit)
+function ndzPlHist(boss, id) { const k = boss + '|' + id; if (!S.ndzPlHist || S.ndzPlHist.key !== k) S.ndzPlHist = { key: k, undo: [], redo: [] }; return S.ndzPlHist; }
+function ndzPlStep(back) { const D = NDZ_TL, n = ndzPlNote(); if (!D || !n) return; const H = ndzPlHist(D.boss, D.noteId), from = back ? H.undo : H.redo, to = back ? H.redo : H.undo; if (!from.length) return;
+  to.push(n.text); S.ndzPlNoHist = true; try { ndzPlSave(from.pop(), back ? 'Undone.' : 'Redone.'); } finally { S.ndzPlNoHist = false; } }
+// (a small menu of a raider's spells, for a click on their row or an empty grid cell)
+function ndzPlPick(e, who, ph, t) { const D = NDZ_TL, p = ndzPlPeople(D).find((q) => q.n.toLowerCase() === who.toLowerCase()), box = $('#ndzPlPick'); if (!p || !box) return;
+  const mine = D.cds.filter((c) => c.who.toLowerCase() === who.toLowerCase() && c.ph === ph);
+  box.innerHTML = '<div class="ndz-plpk"><b style="color:' + ((E.CLASSES[p.cls] || [])[1] || 'inherit') + '">' + esc(p.n) + '</b> at ' + (ph % 1 ? 'Int ' : 'P' + ph + ' ') + ndzPlMm(t) + '</div>' + p.sp.map((s) => { const cd = ndzRech(s.id), busy = cd ? mine.find((c) => +c.id === +s.id && Math.abs(c.t - t) < cd) : null;
+    return '<button type="button" data-plput="' + esc(p.n + '|' + s.id + '|' + s.name + '|' + ph + '|' + t) + '"' + (busy ? ' class="busy"' : '') + '>' + spellIcon(s.id, s.name) + '<span>' + esc(s.name) + (busy ? '<small>not back yet (used at ' + ndzPlMm(busy.t) + ')</small>' : '') + '</span></button>'; }).join('');
+  box.hidden = false; const R = box.getBoundingClientRect(); box.style.left = Math.max(8, Math.min(window.innerWidth - R.width - 8, e.clientX + 6)) + 'px'; box.style.top = Math.max(8, Math.min(window.innerHeight - R.height - 8, e.clientY + 6)) + 'px'; }
+const ndzPlClosePick = () => { const b = $('#ndzPlPick'); if (b) b.hidden = true; };
+// (the planner's clicks)
+document.addEventListener('click', (e) => { if (!ndzPlOn() || !e.target.closest) return; const t = e.target;
+  const s = t.closest('[data-pls]'); if (s) { const [who, id, name] = s.dataset.pls.split('|'); S.ndzStamp = S.ndzStamp && S.ndzStamp.who === who && +S.ndzStamp.id === +id ? null : { who, id: +id, name }; ndzPlClosePick(); ndzTlRedraw(); return; }
+  if (t.closest('[data-plstop]')) { S.ndzStamp = null; ndzTlRedraw(); return; }
+  const v = t.closest('[data-plview]'); if (v) { S.ndzPlView = v.dataset.plview; ndzPlClosePick(); ndzTlRedraw(); return; }
+  if (t.closest('[data-plundo]')) { ndzPlStep(true); return; } if (t.closest('[data-plredo]')) { ndzPlStep(false); return; }
+  if (t.closest('[data-plcopy]')) { const n = ndzPlNote(); if (n) copyText(n.text).then((ok) => toast(ok ? 'Copied: paste it into NSRT in game.' : 'Copy didn\'t work here. Use Copy for the game on the plan.', 4000)); return; }
+  if (t.closest('[data-plcover]')) { const D = NDZ_TL, n = ndzPlNote(); if (!D || !n) return; const add = D.hits.filter((h) => h.c === 'red' && h.fix).map((h) => 'time:' + h.fix.t + ';ph:' + h.fix.ph + ';tag:' + h.fix.who + ';spellid:' + h.fix.id + ';text:' + h.fix.name + ';');
+    if (add.length) ndzPlSave(String(n.text).replace(/\s*$/, '') + '\n' + add.join('\n'), plural(add.length, 'cooldown') + ' added, one on each big hit that had none. Ctrl+Z takes them back.'); return; }
+  const put = t.closest('[data-plput]'); if (put) { const [who, id, name, ph, tt] = put.dataset.plput.split('|'); ndzPlClosePick(); ndzPlAdd(who, +id, name, +ph, +tt); return; }
+  if (!t.closest('#ndzPlPick')) ndzPlClosePick();
+  const cell = t.closest('[data-plcell]'); if (cell && !t.closest('.ndz-ctc')) { const [who, ph, tt] = cell.dataset.plcell.split('|'), st = S.ndzStamp;
+    if (st) { if (st.who.toLowerCase() === who.toLowerCase() || ndzCanPress(who, st.id, st.who)) ndzPlAdd(who, st.id, st.name, +ph, +tt); else toast(esc(who) + ' can\'t press ' + esc(st.name) + '.', 3000); }
+    else ndzPlPick(e, who, +ph, +tt); return; } });
+document.addEventListener('contextmenu', (e) => { if (!ndzPlOn() || !e.target.closest) return; const ic = e.target.closest('#ndzTl .ndz-ctc[data-cdi]'); if (ic) { e.preventDefault(); ndzPlRemove(ic.dataset.cdi); return; } if (S.ndzStamp && e.target.closest('#ndzTl')) { e.preventDefault(); S.ndzStamp = null; ndzTlRedraw(); } });
+// (a click on an empty spot of a raider's row in the Timeline view: the stamp goes there, or their spells to pick from)
+document.addEventListener('click', (e) => { if (!ndzPlOn() || e.button > 0 || !e.target.closest || S.ndzPlView === 'grid' || NDZ_DRAG || Date.now() - (S.ndzDragEnd || 0) < 300) return; const tr = e.target.closest('#ndzTl .ndz-plm .ndz-ctl:not(.hits):not(.boss) .ndz-ctr'); if (!tr || e.target.closest('.ndz-ctc, [data-tt]:not(.ndz-ctr)')) return;
+  const D = NDZ_TL, cur = D.phs.some((p) => p.ph === S.ndzTlPh) ? S.ndzTlPh : D.phs[0].ph, len = D.phs.find((p) => p.ph === cur).len, R = tr.getBoundingClientRect(), t = Math.max(0, Math.min(Math.floor(len), Math.round((e.clientX - R.left) / R.width * len)));
+  const who = ((tr.parentNode.querySelector('.ndz-ctw') || {}).textContent || '').trim(); if (!who) return; const st = S.ndzStamp;
+  if (st) { if (st.who.toLowerCase() === who.toLowerCase() || ndzCanPress(who, st.id, st.who)) ndzPlAdd(who, st.id, st.name, cur, t); else toast(esc(who) + ' can\'t press ' + esc(st.name) + '.', 3000); }
+  else ndzPlPick(e, who, cur, t); });
+document.addEventListener('change', (e) => { const c = e.target.closest && e.target.closest('[data-plall]'); if (!c) return; S.ndzPlAll = c.checked; ndzTlRedraw(); });
+document.addEventListener('keydown', (e) => { if (!ndzPlOn() || /^(INPUT|SELECT|TEXTAREA)$/.test((e.target || {}).tagName || '')) return;
+  if (e.key === 'Escape' && (S.ndzStamp || !($('#ndzPlPick') || {}).hidden)) { e.stopImmediatePropagation(); S.ndzStamp = null; ndzPlClosePick(); ndzTlRedraw(); return; }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); ndzPlStep(!e.shiftKey); return; }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y')) { e.preventDefault(); ndzPlStep(false); } }, true);
+// ---- Night: plan the whole raid in one click (Oct 22, your pick from notes/Plan tab rebuild mockups - Oct 22: "build it as a test
+// copy, starting with the Night page") ----
+// The Plan tab's first page. Pick the night, the roster and the difficulty: Debrief picks who plays each boss (the fastest kills'
+// tanks, healers, melee and ranged, your core first, and whoever sat out the boss before gets the next spot), and "Plan the
+// whole night" drafts every boss's note at once (jobs, kicks, cooldowns as often as they're back, raid calls), the same way the
+// step-by-step builder does. A grid of raiders × bosses shows who's in; click a tick to swap. What needs a person is listed with
+// a link to that boss. "Copy every boss for NSRT" copies all the night's notes in one go.
+const NIGHT_K = 'wla-night';
+const pnToday = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+function pnGet() { let o = null; try { o = JSON.parse(store.get(NIGHT_K) || 'null'); } catch (e) { o = null; } const R = planRoster();
+  o = Object.assign({ date: pnToday(), rid: R ? R.id : null, diff: 'Mythic', on: {}, man: {}, notes: {}, iss: {}, st: {}, at: 0 }, o || {});
+  if (!rostersGet().list.some((x) => x.id === o.rid)) o.rid = R ? R.id : null; return o; }
+const pnSet = (o) => { try { store.set(NIGHT_K, JSON.stringify(o)); } catch (e) { /* (this visit only) */ } };
+const pnDay = (iso) => { const d = new Date(iso + 'T12:00:00'); return isNaN(d) ? iso : d.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' }); };
+const pnShort = (b) => ({ 'Nymrissa Wavecaller': 'Nymrissa', "Nek'zali the Soulcoiler": "Nek'zali", 'Entombed Sentinels': 'Sentinels', 'The Lost Explorers': 'Explorers', 'Vashnik the Malignant': 'Vashnik', 'The Twin Fangs': 'Twin Fangs', 'The Coiled Altar': 'Coiled Altar' })[b] || b;
+// (the night's raiders: the roster's players with class, spec and role, bench last)
+function pnPeople(o) { const R = rostersGet().list.find((x) => x.id === o.rid); if (!R) return []; const sp = planSp();
+  return R.players.map((p) => { const s = planInfo(sp, p), sid = +(s.sid || p.sid || 0), role = s.role || p.role || planRoleOf(sid); return { n: p.n, cls: s.cls || p.cls, sid, bench: !!p.bench, role, kind: role === 'tank' || role === 'healer' ? role : NDZ_MELEE.has(sid) ? 'melee' : 'ranged', spec: s.spec || '' }; }); }
+const pnSize = (boss, diff, n) => (diff === 'Mythic' ? 20 : Math.min(30, n));
+// (who plays each boss: the fastest kills' make-up; core before bench; a spot opens for whoever sat out more tonight)
+function pnPick(o, ps) { const sits = new Map(), out = {}, why = {};
+  for (const boss of planBosses()) { if (o.man[boss] && Array.isArray(o.on[boss])) { out[boss] = o.on[boss]; ps.forEach((p) => { if (!o.on[boss].includes(p.n)) sits.set(p.n, (sits.get(p.n) || 0) + 1); }); continue; }
+    const size = pnSize(boss, o.diff, ps.length); if (ps.length <= size) { out[boss] = ps.map((p) => p.n); continue; }
+    const D0 = NDZ_COMP[boss] || {}, D = D0[o.diff] || D0.Mythic || null, T = Math.round((D && D.T) || 2), H = Math.round((D && D.H) || 4), dps = size - T - H, M = Math.round(D ? dps * D.M / Math.max(1, D.M + D.R) : dps / 2);
+    const want = { tank: T, healer: H, melee: M, ranged: dps - M }, clsW = {}; for (const [k, v] of Object.entries((D && D.cls) || {})) if (v >= 0.85) clsW[k] = v >= 2 ? 2 : 1;
+    const picked = [], has = (c) => picked.filter((x) => x.cls === c).length, val = (x) => (x.bench ? 0 : 1) + 0.7 * (sits.get(x.n) || 0) + (x.cls && clsW[x.cls] > has(x.cls) ? 0.4 : 0);
+    const take = (k, n) => { for (let i = 0; i < n; i++) { const l = ps.filter((x) => !picked.includes(x) && x.kind === k).sort((a, b) => val(b) - val(a) || a.n.localeCompare(b.n)); if (!l.length) return; picked.push(l[0]); } };
+    take('tank', T); take('healer', H); take('melee', want.melee); take('ranged', want.ranged);
+    const left = ps.filter((x) => !picked.includes(x) && x.kind !== 'tank' && x.kind !== 'healer').sort((a, b) => val(b) - val(a) || a.n.localeCompare(b.n)); picked.push(...left.slice(0, Math.max(0, size - picked.length)));
+    out[boss] = picked.map((x) => x.n); why[boss] = 'The fastest kills ran ' + T + ' tanks, ' + H + ' healers, ' + want.melee + ' melee and ' + want.ranged + ' ranged.';
+    ps.forEach((p) => { if (!out[boss].includes(p.n)) sits.set(p.n, (sits.get(p.n) || 0) + 1); }); }
+  return { on: out, why }; }
+// (one boss's plan, drafted the way the builder does it with Fill in suggested picks)
+function pnDraftBoss(o, boss, on) { const B = { fixed: true, boss, pick: boss, diff: o.diff, on: new Set(on), team: store.get(GROUP_CUR) || null, roles: {}, step: 1, sel: null, cds: null, src: 'sug', noteId: null, name: '', draft: null };
+  ndzBuildStart(B); if (typeof ndzPersFill === 'function') { try { ndzPersFill(B); } catch (e) { /* (raid calls stay empty) */ } }
+  const text = ndzBuildText(B), iss = ndzBuildIssues(B).map((x) => x.t);
+  const jobs = (B.pages || []).reduce((s, pg) => s + pg.slots.filter((sl) => (B.sel[pg.key + '|' + sl.label] || { n: [] }).n.length).length, 0), cds = (B.cds || []).filter((c) => c.who).length;
+  const kicks = (B.pages || []).reduce((s, pg) => s + pg.slots.filter((sl) => sl.block === 'int' || sl.kick || sl.order).reduce((t, sl) => t + (B.sel[pg.key + '|' + sl.label] || { n: [] }).n.length, 0), 0);
+  return { text, iss, jobs, cds, kicks }; }
+function pnDraftAll() { const o = pnGet(), ps = pnPeople(o); if (!ps.length) return; const pk = pnPick(o, ps), lab = pnDay(o.date), done = [];
+  o.on = pk.on; o.iss = {}; o.st = {};
+  for (const boss of planBosses()) { if (!NDZ_BUILD[boss]) continue; let d; try { d = pnDraftBoss(o, boss, o.on[boss] || []); } catch (e) { o.iss[boss] = ['Couldn\'t draft it: ' + e.message]; continue; }
+    const L = notesOf(boss), id = o.notes[boss], ex = id && L.list.find((x) => x.id === id);
+    if (ex) Object.assign(ex, { text: d.text, saved: Date.now(), name: ex.name || 'Night of ' + lab });
+    else { const n = { id: 'n' + Date.now().toString(36) + done.length, name: 'Night of ' + lab, text: d.text, saved: Date.now(), night: o.date }; L.list.push(n); o.notes[boss] = n.id; }
+    notesSave(boss, L); o.iss[boss] = d.iss; o.st[boss] = { jobs: d.jobs, cds: d.cds, kicks: d.kicks, on: (o.on[boss] || []).slice().sort().join('|') }; done.push(boss); }
+  o.at = Date.now(); pnSet(o); return done; }
+// (a boss's state: planned and fine, something to fix, the roster changed since, or not planned)
+function pnState(o, boss) { const id = o.notes[boss], n = id && notesOf(boss).list.find((x) => x.id === id); if (!n) return { k: 'no', t: 'Not planned' };
+  const st = o.st[boss] || {}, ch = st.on && st.on !== (o.on[boss] || []).slice().sort().join('|'); if (ch) return { k: 'wn', t: 'Roster changed' };
+  const i = (o.iss[boss] || []).length; return i ? { k: 'wn', t: i + ' to fix' } : { k: 'ok', t: 'Ready' }; }
+function pnH() { const o = pnGet(), ps = pnPeople(o), bosses = planBosses(), RL = rostersGet().list;
+  if (!RL.length) return '<div class="panel nt-empty"><h3>Plan a raid night</h3><p class="sub">Start with a roster: your team\'s raiders, with who\'s on the bench. Debrief then picks who plays each boss and drafts every plan.</p><button class="btn primary" type="button" data-planv="ros">Make a roster</button></div>';
+  if (!o.on || !bosses.every((b) => Array.isArray(o.on[b]))) { const pk = pnPick(o, ps); o.on = Object.assign({}, pk.on, o.on); pnSet(o); }
+  const size = (b) => pnSize(b, o.diff, ps.length), sit = (n, b) => !(o.on[b] || []).includes(n), core = ps.filter((p) => !p.bench), col = (p) => (E.CLASSES[p.cls] || [])[1] || 'inherit';
+  const planned = bosses.filter((b) => pnState(o, b).k !== 'no'), sum = (k) => planned.reduce((s, b) => s + ((o.st[b] || {})[k] || 0), 0), todo = bosses.flatMap((b) => (o.iss[b] || []).map((t) => ({ b, t }))), changed = bosses.filter((b) => pnState(o, b).t === 'Roster changed');
+  const head = '<div class="nt-head"><div class="nt-ht"><h2>' + esc(pnDay(o.date)) + '</h2><input type="date" class="nt-date" data-ntdate="1" value="' + esc(o.date) + '" aria-label="Raid night"></div>' +
+    '<label class="nt-pick"><span class="sub">Roster</span><select data-ntros="1">' + RL.map((R) => '<option value="' + esc(R.id) + '"' + (R.id === o.rid ? ' selected' : '') + '>' + esc(R.name) + ' · ' + R.players.length + '</option>').join('') + '</select></label>' +
+    '<span class="ndz-seg nt-diff">' + ['Mythic', 'Heroic'].map((d) => '<button type="button" data-ntdiff="' + d + '" class="' + (o.diff === d ? 'on' : '') + '">' + d + '</button>').join('') + '</span><span class="nt-sp"></span>' +
+    '<button class="btn sm primary" type="button" data-ntplan="1">✨ ' + (planned.length ? 'Plan the whole night again' : 'Plan the whole night') + '</button>' +
+    (planned.length ? '<button class="btn sm" type="button" data-ntcopy="1">Copy every boss for NSRT</button>' : '') + '</div>';
+  const did = planned.length ? '<div class="nt-sum"><span class="nt-sumt">✨ ' + (planned.length === bosses.length ? 'All ' + bosses.length + ' planned' : planned.length + ' of ' + bosses.length + ' planned') + '</span>' +
+    '<span class="nt-sumn"><b>' + sum('jobs') + '</b> jobs</span><span class="nt-sumn"><b>' + sum('cds') + '</b> cooldowns</span><span class="nt-sumn"><b>' + sum('kicks') + '</b> kickers</span>' +
+    '<span class="nt-sumi" tabindex="0" data-tt="' + esc('Each boss\'s plan is saved under its name as “Night of ' + esc(pnDay(o.date)) + '”: jobs and kicks picked the way the builder suggests them, cooldowns from your pulls where you have them and the fastest kills where you don\'t, each only as often as it\'s back.') + '">ⓘ</span>' +
+    (todo.length || changed.length ? '<span class="nt-sumw">' + (todo.length + changed.length) + ' need' + (todo.length + changed.length === 1 ? 's' : '') + ' you:</span>' + changed.map((b) => '<button type="button" class="nt-fix" data-ntboss="' + esc(b) + '" data-tt="' + esc('Who plays changed since the plan. Plan the whole night again to redo it.') + '">' + esc(pnShort(b)) + ': roster changed</button>').join('') +
+      todo.slice(0, 6).map((x) => '<button type="button" class="nt-fix" data-ntboss="' + esc(x.b) + '" data-tt="' + esc('<b>' + esc(x.b) + '</b><br>' + esc(x.t) + '<br><span class="sub">Click to open it</span>') + '">' + esc(pnShort(x.b)) + ' · ' + esc(x.t) + '</button>').join('') + (todo.length > 6 ? '<span class="sub">+' + (todo.length - 6) + ' more</span>' : '') : '<span class="nt-sumok">✓ Nothing needs you</span>') + '</div>' : '';
+  const th = bosses.map((b) => { const H = BOSS_HERO[b], s = pnState(o, b), n = (o.on[b] || []).length, sz = size(b);
+    return '<th><button type="button" class="nt-bh" data-ntboss="' + esc(b) + '" aria-label="Open ' + esc(b) + '">' + (H ? '<img src="https://wow.zamimg.com/uploads/guide/header/' + H[0] + '.jpg" alt="" loading="lazy" style="object-position:' + H[1] + '% 30%">' : '') + '<b>' + esc(pnShort(b)) + '</b><span class="nt-st ' + s.k + '">' + esc(s.t) + '</span></button></th>'; }).join('');
+  const groups = [['tank', 'Tanks'], ['healer', 'Healers'], ['melee', 'Melee'], ['ranged', 'Ranged']];
+  const row = (p) => '<tr><td class="pl"><span class="nm" style="color:' + col(p) + '">' + esc(p.n) + '</span>' + (p.spec ? '<small>' + esc(p.spec.replace(/ (Death Knight|Demon Hunter|Druid|Evoker|Hunter|Mage|Monk|Paladin|Priest|Rogue|Shaman|Warlock|Warrior)$/, '')) + '</small>' : '') + '</td>' +
+    bosses.map((b) => { const out = sit(p.n, b), k = out ? (p.bench ? 'out' : 'sit') : p.bench ? 'sug' : 'in';
+      return '<td class="c"><button type="button" class="nt-tk ' + k + '" data-nttk="' + esc(b + '|' + p.n) + '" aria-pressed="' + !out + '" data-tt="' + esc('<b>' + esc(p.n) + '</b> · ' + esc(b) + '<br>' + (k === 'in' ? 'Playing' : k === 'sug' ? 'In from the bench' : k === 'sit' ? 'Sits this boss' : 'On the bench') + '<br><span class="sub">Click to ' + (out ? 'put them in' : 'sit them') + '</span>') + '"></button></td>'; }).join('') + '</tr>';
+  const body = groups.map(([k, lab]) => { const l = core.filter((p) => p.kind === k); return l.length ? '<tr class="grp"><td colspan="' + (bosses.length + 1) + '">' + lab + '</td></tr>' + l.map(row).join('') : ''; }).join('') +
+    (ps.some((p) => p.bench) ? '<tr class="grp"><td colspan="' + (bosses.length + 1) + '">Bench</td></tr>' + ps.filter((p) => p.bench).map(row).join('') : '');
+  const foot = '<tr><td class="pl">Playing</td>' + bosses.map((b) => { const n = (o.on[b] || []).length, sz = size(b); return '<td class="' + (o.diff === 'Mythic' && n !== sz ? 'bad' : '') + '">' + n + (o.diff === 'Mythic' ? ' / ' + sz : '') + '</td>'; }).join('') + '</tr>';
+  const grid = '<div class="nt-gw"><div class="nt-gh"><b>Who plays each boss</b><span class="sub nt-ghs"' + (ps.length > size(bosses[0]) ? ' tabindex="0" data-tt="' + esc('Picked from the fastest kills\' tanks, healers, melee and ranged; your core first; whoever sat out a boss gets the next spot.') + '">Debrief\'s picks ⓘ' : '>Everyone plays every boss') + '</span>' +
+     '<span class="nt-leg"><span><i class="nt-tk in"></i>Playing</span><span><i class="nt-tk sug"></i>From the bench</span><span><i class="nt-tk sit"></i>Sits</span><span><i class="nt-tk out"></i>Bench</span></span>' +
+    (ps.length > size(bosses[0]) ? '<button type="button" class="btn sm" data-ntrepick="1">↻ Pick again</button>' : '') + '</div><div class="nt-gs"><table class="nt-g"><thead><tr><th class="pl"><span class="sub">' + plural(ps.length, 'raider') + '</span></th>' + th + '</tr></thead><tbody>' + body + '</tbody><tfoot>' + foot + '</tfoot></table></div></div>';
+  return '<div class="panel nt-one">' + head + did + grid + '</div>'; }
+// (the page's clicks)
+document.addEventListener('click', (e) => { if (S.page !== 'plan' || !e.target.closest) return; const t = e.target;
+  const tk = t.closest('[data-nttk]'); if (tk) { const o = pnGet(), i = tk.dataset.nttk.indexOf('|'), b = tk.dataset.nttk.slice(0, i), n = tk.dataset.nttk.slice(i + 1), l = (o.on[b] || []).slice(), j = l.indexOf(n);
+    if (j >= 0) l.splice(j, 1); else l.push(n); o.on[b] = l; o.man[b] = true; pnSet(o); const y = window.scrollY; planAssign(); window.scrollTo({ top: y }); return; }
+  if (t.closest('[data-ntrepick]')) { const o = pnGet(); o.man = {}; o.on = pnPick(o, pnPeople(o)).on; pnSet(o); planAssign(); toast('Picked again: who plays each boss. Your own swaps were reset.', 4000); return; }
+  const df = t.closest('[data-ntdiff]'); if (df) { const o = pnGet(); if (o.diff !== df.dataset.ntdiff) { o.diff = df.dataset.ntdiff; o.man = {}; o.on = pnPick(o, pnPeople(o)).on; pnSet(o); planAssign(); } return; }
+  if (t.closest('[data-ntplan]')) { const b = t.closest('[data-ntplan]'); b.disabled = true; b.textContent = 'Planning every boss…'; setTimeout(() => { let d = []; try { d = pnDraftAll() || []; } catch (x) { toast('Something went wrong: ' + esc(x.message), 6000); } planAssign(); if (d.length) toast('Planned ' + d.length + (d.length === 1 ? ' boss' : ' bosses') + '. Open one to look it over.', 5000); }, 30); return; }
+  if (t.closest('[data-ntcopy]')) { const o = pnGet(), txt = planBosses().map((b) => { const n = o.notes[b] && notesOf(b).list.find((x) => x.id === o.notes[b]); return n ? String(n.text).trim() : ''; }).filter(Boolean).join('\n\n');
+    copyText(txt).then((ok) => toast(ok ? 'Copied every boss\'s note. Paste it into NSRT: each one starts with its boss line.' : 'Copy didn\'t work here.', 5000)); return; }
+  const bo = t.closest('[data-ntboss]'); if (bo) { const o = pnGet(), b = bo.dataset.ntboss; S.ndzPick = b; store.set(PLAN_BK, b); if (o.notes[b]) S.ndzPlanId = o.notes[b]; S.planV = 'plans'; store.set(PLAN_VK, 'plans'); S.planOpen = true; planAssign(); window.scrollTo({ top: 0 }); } });
+document.addEventListener('change', (e) => { if (S.page !== 'plan' || !e.target.closest) return; const t = e.target;
+  if (t.closest('[data-ntdate]')) { const o = pnGet(); if (t.value && t.value !== o.date) { const keep = o.rid, d = o.diff; pnSet({ date: t.value, rid: keep, diff: d, on: {}, man: {}, notes: {}, iss: {}, st: {}, at: 0 }); planAssign(); } return; }
+  if (t.closest('[data-ntros]')) { const o = pnGet(); o.rid = t.value; o.man = {}; o.on = pnPick(o, pnPeople(o)).on; pnSet(o); planAssign(); } });
+// ---- Boss page: every job on one page, changed in place (Oct 22, your OK: "Build the Boss page next, as a test copy") ----
+// A boss's plan on the Plan tab now opens with its jobs on the left, one card per mechanic, read straight from the note (the
+// same pages as the step-by-step builder), and the cooldown graph on the right. × and + on any chip, the grid's dots and the
+// "Every …" strip change just that line of the note (nothing else in it is rewritten), with Undo. "↻ Redo it for me" drafts
+// the boss again for the same raiders; "✏️ Open planner" opens the graph full screen. The roster, roster audit, kicks and
+// Who does what sit under it, as before.
+// (the builder's pages filled from the note alone: a job the note doesn't have stays empty, never a suggestion)
+function ndzBjB(boss, n) { const k = boss + '|' + n.id + '|' + n.text; if (S.bjB && S.bjB.k === k) return S.bjB.B; /* (the whole text: a move or an Undo keeps its length) */
+  let hd = {}; try { hd = (E.parseNote(n.text) || {}).header || {}; } catch (e) { hd = {}; }
+  const names = ndzNoteRoster(n) || [...new Set(noteNames(noteResolve(n.text)).map((x) => String(x).split('-')[0]))];
+  const B = { fixed: true, boss, pick: boss, diff: /heroic|15/i.test(String(hd.difficulty || '')) ? 'Heroic' : 'Mythic', on: new Set(names), team: store.get(GROUP_CUR) || null, roles: {}, step: 1, sel: null, cds: null, src: 'note', noteId: n.id, name: n.name, draft: null };
+  ndzBuildStart(B);
+  { const L = String(n.text).split('\n'), rows = (blk) => { const S0 = blk === 'int' ? /^intstart$/i : /^transitionstart$/i, E0 = blk === 'int' ? /^intend$/i : /^transitionend$/i, a = L.findIndex((l) => S0.test(l.trim())); if (a < 0) return [];
+      const b = L.findIndex((l, i) => i > a && E0.test(l.trim())); return L.slice(a + 1, b < 0 ? L.length : b).map((l) => l.trim().split(/\s+/).filter(Boolean).map((x) => x.split('-')[0])); };
+    for (const blk of ['int', 'trans']) { const R0 = rows(blk); let k = 0; for (const pg of B.pages) for (const sl of pg.slots) if (sl.block === blk) { const v = R0[k++]; if (v) B.sel[pg.key + '|' + sl.label] = { n: v, why: '', src: 'note' }; } } } /* (kick teams and soak groups live in the note's intstart and transitionStart blocks, a row each) */
+  for (const k2 of Object.keys(B.sel || {})) if (B.sel[k2].src !== 'note') B.sel[k2] = { n: [], why: '' };
+  B.gx = (S.bjGx || {})[boss] || {}; S.bjB = { k, B }; return B; }
+const ndzBjEsc = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+// (one job's line in the note: "Label: names", under its section heading when the label repeats; a kick or soak block's own row)
+function ndzBjWrite(text, B, pg, sl, names) { const lines = String(text).replace(/\s+$/, '').split('\n'), nm = names.map((x) => String(x).split('-')[0]).join(' ');
+  const KS = ['P20', 'P21', 'P30', 'P31'], kk = B.pick === 'The Coiled Altar' && sl.kick ? KS.indexOf(sl.kick) : -1, blk = sl.block || (kk >= 0 ? 'int' : null); /* (The Coiled Altar's kick teams are rows of its intstart block, in P20, P21, P30, P31 order) */
+  if (blk) { let k = kk; if (k < 0) { k = 0; outer: for (const p of B.pages) for (const s of p.slots) { if (p === pg && s === sl) break outer; if (s.block === blk) k++; } }
+    const S0 = blk === 'int' ? /^intstart$/i : /^transitionstart$/i, E0 = blk === 'int' ? /^intend$/i : /^transitionend$/i; let a = lines.findIndex((l) => S0.test(l.trim()));
+    if (a < 0) { if (!nm) return lines.join('\n'); lines.splice(1, 0, blk === 'int' ? 'intstart' : 'transitionStart', ...Array.from({ length: k }, () => ''), nm, blk === 'int' ? 'intend' : 'transitionEnd'); return lines.join('\n'); }
+    let b = lines.findIndex((l, i) => i > a && E0.test(l.trim())); if (b < 0) b = lines.length; while (a + 1 + k >= b) { lines.splice(b, 0, ''); b++; } /* (rows before it kept, empty if need be) */
+    lines[a + 1 + k] = nm; while (b - 1 > a && !lines[b - 1].trim()) { lines.splice(b - 1, 1); b--; } return lines.join('\n'); }
+  const re = new RegExp('^\\s*(\\{[^}]*\\}\\s*)*' + ndzBjEsc(sl.label) + '\\s*:', 'i'), hits = lines.map((l, i) => (re.test(l) ? i : -1)).filter((i) => i >= 0);
+  let i = hits[0]; if (hits.length > 1 && pg.head) { const h = lines.findIndex((l) => l.trim().toLowerCase() === String(pg.head).toLowerCase()); const after = hits.find((x) => x > h); if (h >= 0 && after != null) i = after; }
+  if (i != null && i >= 0) { const c = lines[i].indexOf(':'); if (nm) lines[i] = lines[i].slice(0, c + 1) + ' ' + nm; else lines.splice(i, 1); return lines.join('\n'); }
+  if (!nm) return lines.join('\n'); const r0 = lines.findIndex((l) => /(^|;)\s*time:/i.test(l)), at = r0 < 0 ? lines.length : r0; lines.splice(at, 0, sl.label + ': ' + nm); return lines.join('\n'); }
+function ndzBjH(boss, n) { let B; try { B = ndzBjB(boss, n); } catch (e) { return '<div class="panel ndz-dpan bj-jobs"><div class="ndz-dph"><b>Jobs</b></div><p class="sub">Couldn\'t read the jobs: ' + esc(e.message) + '</p></div>'; }
+  const ps = [...B.pr.players.values()].sort((a, b) => ({ tank: 0, healer: 1, dps: 2 })[a.role] - ({ tank: 0, healer: 1, dps: 2 })[b.role] || a.name.localeCompare(b.name)), col = (x) => (B.pr.players.get(x) || {}).color || 'inherit';
+  const iss = ndzBuildIssues(B), cards = (B.pages || []).map((pg, i) => { const mine = iss.filter((x) => x.step === i + 1), filled = pg.slots.filter((sl) => B.sel[pg.key + '|' + sl.label].n.length).length;
+    const st = mine.length ? '<span class="bj-st wn" data-tt="' + esc(mine.map((x) => esc(x.t)).join('<br>')) + '" tabindex="0">' + mine.length + ' to fix' + '</span>' : filled ? '<span class="bj-st ok">✓</span>' : '<span class="bj-st no">Not in the note</span>';
+    return '<div class="bj-card" data-bjpg="' + esc(pg.key) + '"><div class="bj-ch">' + (ndzPgIconId(pg) ? spellIcon(ndzPgIconId(pg), pg.icon) : spIc(pg.icon)) + '<b>' + esc(pg.title) + '</b>' + st + '</div>' + ndzBSlotsH(B, pg, ps, col) + '</div>'; }).join('');
+  const vw = bjView(), sw = '<span class="ndz-seg bj-vsw" role="group" aria-label="Show jobs"><button type="button" data-bjview="mech" class="' + (vw === 'flow' ? '' : 'on') + '">By mechanic</button><button type="button" data-bjview="flow" class="' + (vw === 'flow' ? 'on' : '') + '">In fight order</button></span>'; /* (Oct 22: the jobs as a timeline) */
+  return '<div class="panel ndz-dpan bj-jobs"><div class="ndz-dph"><b>Jobs</b>' + sw + '</div>' + (vw === 'flow' ? bjfH(B, boss, n, ps, col) : (cards || '<p class="sub">No jobs for this boss in the builder yet.</p>')) + '</div>'; }
+// (a change to one or more jobs: the note's lines for them rewritten, saved with Undo, the page drawn again where it was)
+function ndzBjSave(B, pg, slots, msg) { S.bjB = null; /* (read the note again next draw) */ const boss = B.pick, n = notesOf(boss).list.find((x) => x.id === B.noteId); if (!n) return; let t = n.text;
+  for (const sl of slots) t = ndzBjWrite(t, B, pg, sl, B.sel[pg.key + '|' + sl.label].n);
+  if (t === n.text) return; S.ndzCovUndo = { boss, id: n.id, text: n.text, msg: msg || 'Job changed' }; const y = window.scrollY; ndzNoteSet(boss, n.id, t); planAssign(); window.scrollTo({ top: y });
+  toast(esc(msg || 'Saved in the note') + '. <button class="btn sm" type="button" data-ndzundo="1">Undo</button>', 5000); }
+document.addEventListener('click', (e) => { if (S.page !== 'plan' || !e.target.closest) return; const card = e.target.closest('.bj-jobs [data-bjpg]'); if (!card || !S.bjB) return; const B = S.bjB.B, pg = (B.pages || []).find((p) => p.key === card.dataset.bjpg); if (!pg) return;
+  const slot = (k) => pg.slots.find((sl) => pg.key + '|' + sl.label === k), t = e.target;
+  const x = t.closest('[data-bx]'); if (x) { const p = x.dataset.bx.split('|'), i = +p.pop(), k = p.join('|'), sl = slot(k); if (!sl) return; const who = B.sel[k].n[i]; B.sel[k].n.splice(i, 1); ndzBjSave(B, pg, [sl], who + ' off ' + sl.label); return; }
+  const u = t.closest('[data-bup]'); if (u) { const p = u.dataset.bup.split('|'), i = +p.pop(), k = p.join('|'), sl = slot(k), l = B.sel[k].n; if (!sl || i < 1) return; [l[i - 1], l[i]] = [l[i], l[i - 1]]; ndzBjSave(B, pg, [sl], l[i - 1] + ' moved up in ' + sl.label); return; }
+  const g = t.closest('[data-bgt]'); if (g) { const p = g.dataset.bgt.split('|'), who = p.pop(), k = p.join('|'), sl = slot(k), l = B.sel[k].n, j = l.indexOf(who); if (!sl) return; if (j >= 0) l.splice(j, 1); else l.push(who); ndzBjSave(B, pg, [sl], who + (j >= 0 ? ' off ' : ' on ') + sl.label); return; }
+  const c = t.closest('[data-bcx]'); if (c) { const who = c.dataset.bcx.split('|').pop(), ch = []; for (const sl of pg.slots) { const l = B.sel[pg.key + '|' + sl.label].n, j = l.indexOf(who); if (j >= 0) { l.splice(j, 1); ch.push(sl); } } ndzBjSave(B, pg, ch, who + ' off every ' + pg.title.toLowerCase()); } });
+document.addEventListener('change', (e) => { if (S.page !== 'plan' || !e.target.closest) return; const s = e.target.closest('.bj-jobs select'); if (!s || !s.value || !S.bjB) return; const card = s.closest('[data-bjpg]'), B = S.bjB.B, pg = card && (B.pages || []).find((p) => p.key === card.dataset.bjpg); if (!pg) return; const who = s.value;
+  if (s.dataset.badd) { const sl = pg.slots.find((x) => pg.key + '|' + x.label === s.dataset.badd); if (!sl) return; B.sel[s.dataset.badd].n.push(who); ndzBjSave(B, pg, [sl], who + ' on ' + sl.label); return; }
+  if (s.dataset.bcadd) { const ch = []; for (const sl of pg.slots) { const l = B.sel[pg.key + '|' + sl.label].n; if (!l.includes(who)) { l.push(who); ch.push(sl); } } ndzBjSave(B, pg, ch, who + ' on every ' + pg.title.toLowerCase()); return; }
+  if (s.dataset.bgadd) { S.bjGx = S.bjGx || {}; const gx = (S.bjGx[B.pick] = S.bjGx[B.pick] || {}); (gx[pg.key] = gx[pg.key] || []).push(who); S.bjB = null; const y = window.scrollY; planAssign(); window.scrollTo({ top: y }); } });
+// (Redo it for me: the boss drafted again for the same raiders, the way Plan the whole night does it; Undo puts it back)
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-bjredo]'); if (!b || S.page !== 'plan') return; const [boss, id] = planKey(b.dataset.bjredo), n = notesOf(boss).list.find((x) => x.id === id); if (!n) return;
+  if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Click again: redo every job and cooldown'; setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = '↻ Redo it for me'; } }, 4000); return; }
+  const names = ndzNoteRoster(n) || [...new Set(noteNames(noteResolve(n.text)).map((x) => String(x).split('-')[0]))]; let hd = {}; try { hd = (E.parseNote(n.text) || {}).header || {}; } catch (x) { hd = {}; }
+  let d; try { d = pnDraftBoss({ diff: /heroic|15/i.test(String(hd.difficulty || '')) ? 'Heroic' : 'Mythic' }, boss, names); } catch (x) { toast('Couldn\'t redo it: ' + esc(x.message), 5000); return; }
+  S.ndzCovUndo = { boss, id, text: n.text, msg: 'Redone' }; const y = window.scrollY; ndzNoteSet(boss, id, d.text); S.bjB = null; planAssign(); window.scrollTo({ top: y });
+  toast('Redone: ' + d.jobs + ' jobs and ' + d.cds + ' cooldowns for the same ' + names.length + ' raiders. <button class="btn sm" type="button" data-ndzundo="1">Undo</button>', 7000); });
+document.addEventListener('toggle', (e) => { if (e.target && e.target.classList && e.target.classList.contains('bj-fold')) S.bjFold = e.target.open; }, true);
+document.addEventListener('click', (e) => { if (!e.target.closest || e.target.closest('.bj-mm')) return; document.querySelectorAll('.bj-mm[open]').forEach((d) => (d.open = false)); }); /* (More closes on a click elsewhere) */
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-bjplanner]'); if (!b || S.page !== 'plan') return; S.ndzTlBig = true; ndzTlRedraw(); });
+
+// (one banner: the ready check row and the back link go inside the boss banner)
+function bjMerge() { const box = $('#assignBox'); if (!box) return; const bh = box.querySelector('.plan-bh'), dh = box.querySelector('.ndz-dash > .ndz-dhd'), bk = box.querySelector('.plan-back');
+  box.classList.toggle('bj-on', !!(bh && dh)); if (!bh || !dh) return; dh.classList.add('bj-in'); bh.appendChild(dh); if (bk) { bk.classList.add('bj-back'); const t = bh.querySelector('.bh-t') || bh; t.insertBefore(bk, t.firstChild); } }
+// (kickers in order: drag a name onto another to put it there)
+let BJ_DRAG = null;
+document.addEventListener('dragstart', (e) => { const c = e.target.closest && e.target.closest('.bj-jobs [data-bjdrag]'); if (!c) return; BJ_DRAG = c.dataset.bjdrag; c.classList.add('drag'); try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', BJ_DRAG); } catch (x) { /* (fine) */ } });
+document.addEventListener('dragend', (e) => { BJ_DRAG = null; document.querySelectorAll('.bj-jobs .drag, .bj-jobs .dropto').forEach((x) => x.classList.remove('drag', 'dropto')); });
+// (where a dragged name lands: before the name you drop it on, or at the end of the row you drop it in)
+const bjDropAt = (e) => { const c = e.target.closest && e.target.closest('.bj-jobs [data-bjdrag]'), r = e.target.closest && e.target.closest('.bj-jobs [data-bjrow]'); if (c) { const p = c.dataset.bjdrag.split('|'), i = +p.pop(); return { k: p.join('|'), i, el: c }; } if (r) return { k: r.dataset.bjrow, i: null, el: r }; return null; };
+document.addEventListener('dragover', (e) => { if (!BJ_DRAG) return; document.querySelectorAll('.bj-jobs .dropto').forEach((x) => x.classList.remove('dropto')); const t = bjDropAt(e); if (!t) return; e.preventDefault(); t.el.classList.add('dropto'); });
+document.addEventListener('drop', (e) => { if (!BJ_DRAG || !S.bjB) return; const t = bjDropAt(e); if (!t) return; e.preventDefault(); const a = BJ_DRAG.split('|'), i = +a.pop(), k = a.join('|'); BJ_DRAG = null;
+  const B = S.bjB.B, pgOf = (key) => (B.pages || []).find((p) => p.slots.some((x) => p.key + '|' + x.label === key)), pa = pgOf(k), pb = pgOf(t.k); if (!pa || !pb) return;
+  const sa = pa.slots.find((x) => pa.key + '|' + x.label === k), sb = pb.slots.find((x) => pb.key + '|' + x.label === t.k), la = B.sel[k].n, lb = B.sel[t.k].n, who = la[i]; if (!who) return;
+  const ord = (n) => n + (n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th');
+  if (k === t.k) { const j = t.i == null ? la.length - 1 : t.i; if (j === i) return; la.splice(i, 1); la.splice(j > i && t.i != null ? j - 1 : j, 0, who); ndzBjSave(B, pa, [sa], sa.order ? who + ' is now ' + ord(la.indexOf(who) + 1) + ' in ' + sa.label : who + ' moved'); return; }
+  if (lb.includes(who)) { toast(esc(who) + ' is already on ' + esc(sb.label) + '.', 3000); return; }
+  if (pa === pb) { la.splice(i, 1); lb.splice(t.i == null ? lb.length : t.i, 0, who); ndzBjSave(B, pa, [sa, sb], who + ' moved from ' + sa.label + ' to ' + sb.label); return; } /* (within a card: a move) */
+  lb.splice(t.i == null ? lb.length : t.i, 0, who); ndzBjSave(B, pb, [sb], who + ' also on ' + sb.label + ' (still on ' + sa.label + ')'); }); /* (onto another card: added there too) */
+
+// (the Boss page draws the cooldown panel quietly: the key behind ⓘ, "all covered" as a chip)
+const ndzBjQuiet = () => S.page === 'plan' && !!S.planOpen && !S.ndzTlBig;
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-bjtab]'); if (!b) return; S.bjTab = b.dataset.bjtab; const p = b.closest('.bj-tabs'); if (p) { p.dataset.bjt = S.bjTab; p.querySelectorAll('[data-bjtab]').forEach((x) => x.classList.toggle('on', x === b)); } });
+// ---- Jobs in fight order (Oct 22, your ask: "is there a way to show a progression timeline with the assignments in it?") ----
+// A switch on the Boss page's Jobs panel: "By mechanic" (the cards) or "In fight order": every job at the moment it happens, phase
+// by phase, from the fastest kills' clock (NDZ_BOSSTL), with the raid cooldowns the note puts at that moment beside it. A job is
+// matched to its mechanic by the page's spell (Guillotine, Dreadmarch…), its number to the 1st, 2nd… time it happens ("P3" only
+// counts phase 3). Jobs with no one moment (kicks, curses, grips) sit in "Whole fight" at the top. Names drag, ×, + as on the cards.
+const bjfMm = (t) => Math.floor(t / 60) + ':' + String(Math.round(t % 60)).padStart(2, '0');
+const bjfPh = (ph) => (ph % 1 ? 'Intermission' : 'Phase ' + ph);
+function bjfH(B, boss, n, ps, col) {
+  const BT = NDZ_BOSSTL[boss] || {}, bt = BT[B.diff] || BT.Mythic || BT.Heroic || null, tl = bt ? bt.tl.map(([ph, rel, label, dur]) => ({ ph, rel, label, dur: dur || 0, id: ndzMeta(bt, label).id })) : [];
+  const labels = [...new Set(tl.map((m) => m.label))], norm = (s) => String(s).toLowerCase().replace(/[^a-z ]/g, '').trim();
+  const ALIAS = { 'The Coiled Altar|orbs': 'Toxic Deluge', 'Nymrissa Wavecaller|adds': 'Murloc set' }; /* (jobs whose mechanic has another name on the clock: the purples come off Toxic Deluge) */
+  const mechOf = (pg) => { const al = ALIAS[boss + '|' + pg.key]; if (al) { const l0 = labels.filter((x) => x === al || x.startsWith(al + ' ')); if (l0.length) return l0; } const ic = norm(pg.icon), ti = norm(pg.title); let l = labels.filter((x) => norm(x) === ic); if (!l.length) l = labels.filter((x) => norm(x).replace(/ \d+$/, '') === ic); if (!l.length) l = labels.filter((x) => ti.includes(norm(x).replace(/ \d+$/, '')) && norm(x).length > 4); return l; };
+  const moments = new Map(), whole = [], later = [], key = (m) => m.ph + '|' + m.rel + '|' + m.label;
+  const at = (m) => { const k = key(m); if (!moments.has(k)) moments.set(k, { ...m, jobs: [], cds: [] }); return moments.get(k); };
+  for (const pg of B.pages || []) { const L = mechOf(pg), occ = tl.filter((m) => L.includes(m.label)).sort((a, b) => a.ph - b.ph || a.rel - b.rel);
+    for (const sl of pg.slots) { const lab = String(sl.label), ph = (/^P(\d)\b/i.exec(lab) || [])[1], num = +((/(\d+)\s*$/.exec(lab) || [])[1] || (/^(\d+)(st|nd|rd|th)\b/i.exec(lab) || [])[1] || 0);
+      const pool = ph ? occ.filter((m) => m.ph === +ph) : occ;
+      if (!pool.length) { whole.push({ pg, sl }); continue; }
+      if (!num) { at(pool[0]).jobs.push({ pg, sl, every: pool.length > 1 ? pool.length : 0 }); continue; }
+      if (num <= pool.length) at(pool[num - 1]).jobs.push({ pg, sl }); else later.push({ pg, sl, ph: ph ? +ph : pool[pool.length - 1].ph, after: pool[pool.length - 1] }); } }
+  // (the note's raid cooldowns: beside the job moment they're nearest to, else their own moment at the big hit they're for)
+  const SD = NDZ_CDSTART[boss] || {}, sd = SD[B.diff] || SD.Mythic || SD.Heroic || null, hits = sd ? sd.pk.map(([ph, rel, v, hit]) => ({ ph, rel, hit })) : [];
+  let rems = []; try { rems = ndzRems(n.text).filter((x) => x.spellid && !NDZ_DC_JOB.test(x.text || '')); } catch (e) { rems = []; }
+  for (const r of rems) { const who = r.tags.map((t) => String(t).split('-')[0]).filter((t) => !/^(everyone|healer|tank|dps|melee|ranged)$/i.test(t)); if (!who.length) continue;
+    const near = [...moments.values()].filter((m) => m.ph === r.ph && r.time >= m.rel - 8 && r.time <= m.rel + 4).sort((a, b) => Math.abs(a.rel - r.time) - Math.abs(b.rel - r.time))[0];
+    const hit = hits.filter((h) => h.ph === r.ph && Math.abs(h.rel - r.time) <= 8).sort((a, b) => Math.abs(a.rel - r.time) - Math.abs(b.rel - r.time))[0];
+    const m = near || at({ ph: r.ph, rel: hit ? Math.round(hit.rel) : r.time, label: hit ? hit.hit : 'Raid cooldowns', id: hit ? ndzMeta(bt, hit.hit).id : 0, dur: 0 });
+    for (const w of who) m.cds.push({ who: w, id: r.spellid, t: r.time }); }
+  const chip = (pg, sl, x, i) => { const k = pg.key + '|' + sl.label; return '<span class="ndz-p" style="--cc:' + col(x) + '" draggable="true" data-bjdrag="' + esc(k + '|' + i) + '">' + (sl.order ? '<i>' + (i + 1) + '</i>' : '') + '<span class="nm" style="color:' + col(x) + '" title="' + esc(x) + '">' + esc(x) + '</span><button class="ndz-ex" type="button" data-bx="' + esc(k + '|' + i) + '" aria-label="Remove ' + esc(x) + '">×</button></span>'; };
+  const row = (j, note) => { const k = j.pg.key + '|' + j.sl.label, v = B.sel[k] || { n: [] };
+    return '<div class="bjf-job" data-bjpg="' + esc(j.pg.key) + '"><div class="ndz-brow' + (v.n.length ? '' : ' none') + '" data-bjrow="' + esc(k) + '"><span class="lab"><b>' + esc(j.sl.label) + '</b>' + (note ? '<small>' + esc(note) + '</small>' : '') + '</span><span class="cl">' +
+      v.n.map((x, i) => chip(j.pg, j.sl, x, i)).join('') + ndzBPlus('data-badd="' + esc(k) + '"', ps, v.n, 'Add a player to ' + j.sl.label) + '</span></div></div>'; };
+  const cdH = (c) => '<span class="bjf-cd" style="--cc:' + col(c.who) + '" data-tt="' + esc('<b>' + esc(ndzSpellNm(c.id) || 'Cooldown') + '</b> · ' + esc(c.who) + ' at ' + bjfMm(c.t)) + '">' + spellIcon(c.id, ndzSpellNm(c.id) || '') + '<span>' + esc(c.who) + '</span></span>';
+  const momH = (m) => '<div class="bjf-m"><span class="bjf-t">' + bjfMm(m.rel) + '</span><span class="bjf-ic">' + (m.id ? spellIcon(m.id, m.label) : m.label !== 'Raid cooldowns' ? spIc(m.label) : '<i class="bjf-dot"></i>') + '</span><div class="bjf-b"><div class="bjf-mh"><b>' + esc(m.label) + '</b>' + (ndzMechTip(boss, m.label) ? '<span class="bj-ki" tabindex="0" data-tt="' + esc('<b>' + esc(m.label) + '</b><br>' + esc(ndzMechTip(boss, m.label))) + '">ⓘ</span>' : '') +
+    (m.cds.length ? '<span class="bjf-cds">' + m.cds.map(cdH).join('') + '</span>' : '') + '</div>' + m.jobs.map((j) => row(j, j.every ? 'every time (' + j.every + ')' : '')).join('') + '</div></div>';
+  const list = [...moments.values()].filter((m) => m.jobs.length || m.cds.length).sort((a, b) => a.ph - b.ph || a.rel - b.rel), phs = [...new Set(list.map((m) => m.ph).concat(later.map((x) => x.ph)))].sort((a, b) => a - b);
+  const wholeH = whole.length ? '<div class="bjf-ph">Whole fight</div><div class="bjf-m whole"><span class="bjf-t">—</span><span class="bjf-ic"><i class="bjf-dot"></i></span><div class="bjf-b">' + [...new Set(whole.map((x) => x.pg))].map((pg) => '<div class="bjf-mh"><b>' + esc(pg.title) + '</b></div>' + whole.filter((x) => x.pg === pg).map((x) => row(x)).join('')).join('') + '</div></div>' : '';
+  const body = phs.map((ph) => '<div class="bjf-ph">' + bjfPh(ph) + '</div>' + list.filter((m) => m.ph === ph).map(momH).join('') +
+    later.filter((x) => x.ph === ph).map((x) => '<div class="bjf-m later"><span class="bjf-t">later</span><span class="bjf-ic"><i class="bjf-dot"></i></span><div class="bjf-b"><div class="bjf-mh"><b>' + esc(x.pg.title) + '</b><span class="sub">if the phase runs past ' + bjfMm(x.after.rel) + '</span></div>' + row(x) + '</div></div>').join('')).join('');
+  return '<div class="bjf">' + (bt ? '<p class="sub bjf-src">Times from the fastest ' + esc(B.diff) + ' kills, phase by phase. Cooldowns from your note.</p>' : '<p class="sub">No fight clock for this boss yet: every job is under Whole fight.</p>') + wholeH + body + '</div>'; }
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-bjview]'); if (!b || S.page !== 'plan') return; S.bjView = b.dataset.bjview; try { store.set('wla-bj-view', S.bjView); } catch (x) { /* (this visit) */ } const y = window.scrollY; planAssign(); window.scrollTo({ top: y }); });
+const bjView = () => S.bjView || (() => { try { return store.get('wla-bj-view') || 'mech'; } catch (e) { return 'mech'; } })();
+// ---- The Boss page's cooldown timeline, condensed (Oct 22, your idea: "remove the names from the side, turn this into a horizontal
+// scrolling timeline with the raid CD on it as icons, and the player name next to them") ----
+// No name column: one wide timeline you scroll sideways. Each cooldown is its icon with the raider's name beside it, in their class
+// colour, at its time; cooldowns that land together stack in rows. The big hits, "Not covered" bands, raid damage behind it all, the
+// boss's mechanics (with the switch) and Cover it stay. The full-screen planner keeps its rows for editing.
+let NDZ_BTLV = null;
+const BTL_PX = 6; /* (pixels a second: a 2:30 phase is 900 px wide) */
+function bjTlH(D) {
+  if (!D || !D.phs.length) return '<div class="ndz-cth"><b>Cooldowns</b></div><p class="sub">No cooldown reminders in this note yet.</p>';
+  const cur = D.phs.some((p) => p.ph === S.ndzTlPh) ? S.ndzTlPh : D.phs[0].ph, len = D.phs.find((p) => p.ph === cur).len, W = Math.max(360, Math.round(len * BTL_PX)), X = (t) => Math.round(Math.max(0, Math.min(len, t)) * BTL_PX);
+  const mmss = (t) => Math.floor(t / 60) + ':' + String(Math.round(t % 60)).padStart(2, '0'), phN = (p) => (p % 1 ? 'Int' : NDZ_ONEPH.has(D.boss) && D.phs.length === 1 ? 'Fight' : 'P' + p);
+  const cds = D.cds.filter((c) => c.ph === cur).sort((a, b) => a.t - b.t), hits = D.hits.filter((h) => h.ph === cur), u = hits.filter((h) => h.c === 'red'), bon = (S.ndzTlBoss != null ? S.ndzTlBoss : (() => { try { return store.get('wla-ndz-tlboss') !== '0'; } catch (e) { return true; } })()) && D.mech.length /* (on by default here, Oct 22) */, ms = bon ? D.mech.filter((m) => m.ph === cur) : [];
+  const col = (n) => (D.color(n) === 'inherit' ? 'var(--gold)' : D.color(n));
+  // (stack things that would overlap: each takes the first row free at its left edge)
+  const pack = (items, wOf) => { const ends = []; return items.map((it) => { const x = X(it.t), w = wOf(it); let r = ends.findIndex((e) => e <= x - 4); if (r < 0) { r = ends.length; ends.push(0); } ends[r] = x + w; return { ...it, x, r }; }); };
+  const dwOf = (c) => (c.dur ? Math.round(Math.min(c.dur, len - c.t) * BTL_PX) : 0), cw = (c) => Math.max(dwOf(c), 18 + Math.round(String(c.who).length * 6) + 4); /* (the wider of icon + name and the real-time bar) */ /* (the tile is the cooldown's length; the name may run past it) */
+  const CP = pack(cds.map((c) => ({ ...c })), cw), cRows = Math.max(1, ...CP.map((c) => c.r + 1)), ms1 = ms.filter((m, i) => !ms.slice(0, i).some((o) => o.label === m.label && Math.abs(o.rel - m.rel) < 6)) /* (one icon for repeats within 6 s) */, MP = ((P) => P.map((m) => ({ ...m, r: m.r % 2 })))(pack(ms1.map((m) => ({ ...m, t: m.rel })), () => 23)) /* (at most 2 rows) */, mRows = bon && MP.length ? Math.max(...MP.map((m) => m.r + 1)) : 0;
+  const HH = 30, MH = 24, CH = 26, AX = 18, top0 = HH + mRows * MH + (mRows ? 4 : 0), H = Math.max(top0 + cRows * CH + 8, top0 + 170) + AX; /* (at least 170 px of damage to read the spikes) */
+  // (raid damage behind it all, one scale for the fight, green calm to red the worst of this phase)
+  const dv = D.dmg && D.dmg[cur], dmax = D.dmg ? Math.max(1, ...Object.values(D.dmg).map((a) => Math.max(0, ...a))) : 1, sv = dv ? dv.map((v, i) => (dv[Math.max(0, i - 1)] + 2 * v + dv[Math.min(dv.length - 1, i + 1)]) / 4) : null;
+  let bg = ''; if (sv && sv.length > 2) { const lo = Math.min(...sv), hi = Math.max(...sv), G = NDZ_DGC, cOf = (v) => { const t = Math.max(0, Math.min(1, (v - lo) / Math.max(1e-9, hi - lo))); let i = 0; while (i < G.length - 2 && t > G[i + 1][0]) i++; const [a, ca] = G[i], [b, cb] = G[i + 1], f = Math.max(0, Math.min(1, (t - a) / (b - a))); return 'rgb(' + ca.map((c, k) => Math.round(c + (cb[k] - c) * f)).join(',') + ')'; };
+    const id = 'btlDg' + (NDZ_DGN = (NDZ_DGN || 0) + 1), hb = H - AX - top0;
+    bg = '<svg class="btl-dmg" style="top:' + top0 + 'px;height:' + hb + 'px;width:' + W + 'px" viewBox="0 0 ' + W + ' 100" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="' + id + '" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="' + W + '" y2="0">' + sv.map((v, i) => '<stop offset="' + Math.min(1, X(i * 2 + 1) / W).toFixed(4) + '" stop-color="' + cOf(v) + '"/>').join('') + '</linearGradient></defs>' +
+      '<path style="fill:url(#' + id + ');stroke:url(#' + id + ')" d="M0,100 ' + sv.map((v, i) => 'L' + X(i * 2 + 1) + ',' + (100 - 92 * v / dmax).toFixed(1)).join(' ') + ' L' + X(dv.length * 2) + ',100 Z"/></svg>'; }
+  const W2 = { red: 'No raid cooldown here', amber: 'Only a healer\'s own burst', green: 'Covered by a raid cooldown' };
+  const hitsH = hits.map((h) => '<span class="btl-hit ' + h.c + '" style="left:' + X(h.rel) + 'px" data-tt="' + esc('<b>' + esc(h.hit) + '</b> at ' + mmss(h.rel) + (ndzMechTip(D.boss, h.hit) ? '<br>' + esc(ndzMechTip(D.boss, h.hit)) : '') + '<br>' + W2[h.c] + (h.by || []).slice(0, 3).map((c) => '<br>· ' + esc(c.who) + ': ' + esc(ndzSpellNm(+c.id) || 'cooldown') + (c.t < h.rel - 6 ? ' (still running from ' + mmss(c.t) + ')' : ' at ' + mmss(c.t))).join('')) + '"><em>' + mmss(h.rel) + '</em><i></i></span>' +
+    '<span class="btl-vl ' + h.c + '" style="left:' + X(h.rel) + 'px;top:' + HH + 'px;height:' + (H - HH - AX) + 'px"></span>').join('');
+  const unc = u.map((h) => { const fix = h.fix && D.noteId; return '<span class="btl-unc" style="left:' + X(h.rel - 3) + 'px;width:' + (6 * BTL_PX) + 'px;top:' + HH + 'px;height:' + (H - HH - AX) + 'px"></span>' +
+    '<button type="button" class="ndz-ctub btl-ub' + (fix ? '' : ' nofix') + '" style="left:' + X(h.rel) + 'px;top:' + (HH - 4) + 'px"' + (fix ? ' data-ndzcover="' + D.hits.indexOf(h) + '"' : ' tabindex="0"') + ' data-tt="' + esc('<b>' + esc(h.hit) + ' at ' + mmss(h.rel) + '</b><br>No raid cooldown is pressed near this hit or still running.' + (fix ? '<br>Click to add ' + esc(h.fix.name) + ' for ' + esc(h.fix.who) + ' at ' + mmss(h.fix.t) + '.' : '')) + '">⚠ Not covered</button>'; }).join('');
+  const mechH = MP.map((m, i) => { const tip = ndzMechTip(D.boss, m.label), dw = 0; /* (no duration bands for the boss: your call, Oct 22) */
+    return (dw ? '<span class="btl-mb" data-bm="' + i + '" style="left:' + m.x + 'px;width:' + dw + 'px;top:' + HH + 'px;height:' + (H - HH - AX) + 'px"></span><span class="btl-md" style="left:' + m.x + 'px;width:' + dw + 'px;top:' + (HH + m.r * MH + 24) + 'px"></span>' : '') +
+      '<span class="btl-m" data-bmi="' + i + '" style="left:' + m.x + 'px;top:' + (HH + m.r * MH + 1) + 'px" data-tt="' + esc('<b>' + esc(m.label) + '</b> at ' + mmss(m.rel) + (m.dur ? ' · lasts about ' + m.dur + ' s' : '') + (tip ? '<br>' + esc(tip) : '')) + '">' + (m.id ? spellIcon(m.id, m.label) : spIc(m.label)) + '</span>'; }).join('');
+  const cdH = CP.map((c) => { const nm = ndzSpellNm(c.id) || 'Cooldown';
+    return '<span class="btl-g" style="left:' + c.x + 'px;top:' + HH + 'px;height:' + (H - HH - AX) + 'px;--cc:' + col(c.who) + '"></span>' + /* (where it lands on the damage) */
+      '<span class="btl-c' + (dwOf(c) ? ' dur' : '') + (c.late ? ' late' : '') + '" style="left:' + c.x + 'px;width:' + cw(c) + 'px;top:' + (top0 + c.r * CH) + 'px;--cc:' + col(c.who) + '" data-tt="' + esc('<b>' + esc(nm) + '</b> · ' + esc(c.who) + '<br>' + phN(cur) + ' ' + mmss(c.t) + (c.dur ? ' · lasts ' + c.dur + ' s' : '') + (c.late ? '<br><span class="no">Not ready: it takes ' + mmss(c.late.cd) + ' to come back</span>' : '')) + '">' + spellIcon(c.id, nm) + '<b>' + esc(c.who) + '</b>' + (dwOf(c) ? '<span class="btl-f" style="width:' + dwOf(c) + 'px"></span>' : '') + '</span>'; }).join('');
+  const hb0 = H - AX - top0, yOf = (v) => top0 + hb0 * (100 - 92 * v / dmax) / 100, fmK = (k) => (k >= 1000 ? +(k / 1000).toFixed(1) + 'M' : k + 'K');
+  const stp = [250, 500, 1000, 2000, 5000].find((q) => dmax / q <= 4.5) || 5000, ticks = sv ? Array.from({ length: Math.floor(dmax / stp) }, (_, i) => (i + 1) * stp) : [];
+  const gl = ticks.map((v) => '<span class="btl-gl" style="top:' + yOf(v).toFixed(1) + 'px"></span>').join(''), yl = ticks.map((v) => '<span style="top:' + yOf(v).toFixed(1) + 'px">' + fmK(v) + '/s</span>').join('');
+  NDZ_BTLV = { len, sv, cds, hits, ms, W, HH: top0, hb: hb0, col, ph: cur }; /* (for the readout under the mouse) */
+  let ax = ''; const step = len > 150 ? 30 : 15; for (let t = 0; t <= len; t += step) ax += '<span style="left:' + X(t) + 'px">' + mmss(t) + '</span>';
+  const tabs = D.phs.length > 1 ? '<span class="ndz-ctt">' + D.phs.map((p) => '<button type="button" data-ndztl="' + p.ph + '" class="' + (p.ph === cur ? 'on' : '') + '">' + (p.ph % 1 ? 'Int' : phN(p.ph)) + (D.hits.some((h) => h.ph === p.ph && h.c === 'red') ? ' <i class="ndz-ctred">●</i>' : '') + '</button>').join('') + '</span>' : '';
+  const sw = D.mech.length ? '<label class="ndz-ctsw"><input type="checkbox" data-ndztlb="1"' + (bon ? ' checked' : '') + '> Boss mechanics</label>' : '';
+  const key = 'Raid damage taken behind it (green calm, red the worst of this phase)' + (D.dmgK ? ', average of the ' + D.dmgK + ' fastest kills' : '') + '. Diamonds: the big hits (green a raid cooldown is pressed or still running, amber only a healer\'s own burst, red nothing). Scroll sideways for the whole phase; the bar under a cooldown is how long it lasts.';
+  const okc = D.fast && hits.length && !u.length ? '<span class="bj-okc">✓ Big hits covered</span>' : '';
+  const where = cur % 1 ? 'the intermission' : phN(cur), covH = u.length ? '<div class="ndz-ctu bad"><b>' + plural(u.length, 'big hit') + ' in ' + where + ' with no raid cooldown:</b> ' + esc(u.map((h) => h.hit + ' at ' + mmss(h.rel)).join(', ')) + '.<div class="ndz-cov">' + u.filter((h) => h.fix && D.noteId).map((h) => '<button class="btn sm" type="button" data-ndzcover="' + D.hits.indexOf(h) + '">Cover ' + esc(h.hit) + ': ' + esc(h.fix.name) + ' · <b style="color:' + col(h.fix.who) + '">' + esc(h.fix.who) + '</b> at ' + mmss(h.fix.t) + '</button>').join('') + '</div></div>' : '';
+  const lt = cds.filter((c) => c.late), lateH = lt.length ? '<div class="ndz-ctu bad"><b>' + plural(lt.length, 'cooldown') + ' won\'t be ready:</b> ' + esc(lt.map((c) => c.who + '\'s ' + (ndzSpellNm(c.id) || 'cooldown') + ' at ' + mmss(c.t)).join('; ')) + '. Move it, or give it to someone else.</div>' : '';
+  const U = S.ndzCovUndo && S.ndzCovUndo.boss === D.boss && S.ndzCovUndo.id === D.noteId ? S.ndzCovUndo : null, undoH = U ? '<div class="ndz-ctu ok"><b>✓ Added to your note:</b> ' + esc(U.msg) + '. <button class="btn sm" type="button" data-ndzundo="1">Undo</button></div>' : '';
+  NDZ_TLV = null; /* (the readout here is the timeline's own) */
+  return '<div class="ndz-cth"><b>Cooldowns</b>' + tabs + '<span class="sub">' + plural(D.cds.length, 'reminder') + '</span>' + sw + okc + (u.length ? '<span class="btl-jumps">' + u.map((h) => '<button type="button" class="btl-jump" data-btlgo="' + X(h.rel) + '" data-tt="' + esc('<b>' + esc(h.hit) + ' at ' + mmss(h.rel) + '</b><br>No raid cooldown near it. Click to scroll there.') + '">⚠ ' + mmss(h.rel) + ' not covered</button>').join('') + '</span>' : '') + '<span class="bj-ki" tabindex="0" data-tt="' + esc(key) + '">ⓘ</span></div>' +
+    '<div class="btl-wrap"><div class="btl-y" style="height:' + H + 'px">' + yl + '</div><div class="btl-sc"><div class="btl" style="width:' + W + 'px;height:' + H + 'px">' + gl + bg + hitsH + unc + mechH + cdH + '<div class="btl-ax" style="top:' + (H - AX) + 'px">' + ax + '</div><span class="btl-x" hidden></span><div class="btl-q" hidden></div></div></div></div>' +
+    (cds.length ? '' : '<p class="sub btl-none">No cooldowns in ' + where + ' yet.</p>') + undoH + lateH + covH; }
+
+// (pointing at the timeline: a line at the mouse and what's going on then: the raid's damage, a big hit, the boss, the cooldowns up)
+const btlHover = (e) => { const b = e.target.closest && e.target.closest('#ndzTl .btl'), V = NDZ_BTLV; document.querySelectorAll('#ndzTl .btl-x, #ndzTl .btl-q').forEach((x) => { if (!b || !b.contains(x)) x.hidden = true; }); if (!b || !V) return;
+  const R0 = b.getBoundingClientRect(), x = e.clientX - R0.left, t = Math.max(0, Math.min(V.len, x / BTL_PX)), ln = b.querySelector('.btl-x'), q = b.querySelector('.btl-q'); if (!ln || !q) return;
+  const mm = (s0) => Math.floor(s0 / 60) + ':' + String(Math.floor(s0 % 60)).padStart(2, '0'), fm = (k) => (k >= 1000 ? (k / 1000).toFixed(1) + 'M' : Math.round(k) + 'K'), v = V.sv && t < V.sv.length * 2 ? V.sv[Math.floor(t / 2)] : null;
+  const hit = V.hits.find((h) => Math.abs(h.rel - t) <= 3), up = V.cds.filter((c) => t >= c.t && t <= c.t + Math.max(c.dur || 0, 1.5)), mech = [...new Set(V.ms.filter((m) => (m.dur ? t >= m.rel && t <= m.rel + m.dur : Math.abs(t - m.rel) <= 1.5)).map((m) => m.label))];
+  ln.hidden = false; ln.style.left = x + 'px'; ln.style.top = V.HH + 'px'; ln.style.height = V.hb + 'px';
+  q.innerHTML = '<div class="t">' + mm(t) + '</div>' + (v != null ? '<div>Raid damage: <b>' + fm(v) + '</b> a second</div>' : '') + (hit ? '<div class="h ' + hit.c + '">' + esc(hit.hit) + (hit.c === 'red' ? ' (no raid cooldown)' : '') + '</div>' : '') + (mech.length ? '<div class="m">Boss: ' + esc(mech.join(', ')) + '</div>' : '') +
+    (up.length ? up.map((c) => '<div class="c" style="color:' + V.col(c.who) + '">' + esc(ndzSpellNm(c.id) || 'Cooldown') + ' · ' + esc(c.who) + '</div>').join('') : '<div class="n">No cooldown up</div>');
+  q.hidden = false; const w = q.offsetWidth, sc = b.parentNode, left = x + 14 + w > sc.scrollLeft + sc.clientWidth ? x - w - 14 : x + 14; q.style.left = Math.max(sc.scrollLeft + 4, left) + 'px'; q.style.top = (V.HH + 6) + 'px'; };
+document.addEventListener('pointermove', btlHover); document.addEventListener('pointerdown', btlHover);
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-btlgo]'); if (!b) return; const sc = document.querySelector('#ndzTl .btl-sc'); if (sc) sc.scrollTo({ left: Math.max(0, +b.dataset.btlgo - sc.clientWidth / 2), behavior: 'smooth' }); });
+
+document.addEventListener('mouseover', (e) => { const t = e.target.closest && e.target.closest('#ndzTl [data-bmi]'); document.querySelectorAll('#ndzTl .btl-mb.on').forEach((x) => x.classList.remove('on')); if (!t) return; const b = document.querySelector('#ndzTl .btl-mb[data-bm="' + t.dataset.bmi + '"]'); if (b) b.classList.add('on'); });
 // ---- Draft a note from your pulls (TEST, Oct 20: on the local copy only, not the live site, until you say) ----
 // Reads every pull of this boss and difficulty in the log and writes an NSRT note of who did which job (kick orders, soak
 // groups, orb carriers, CC order, curses, raid cooldowns). A job done in most pulls is the assignment; a one-off is a mistake
