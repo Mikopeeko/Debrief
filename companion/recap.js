@@ -863,7 +863,9 @@ function buildOne(b, rep, same, W, L, cutN) {
     const names0 = new Set([].concat(...top.map((x) => String(x.k).split(/\s+/)), ...raid.mech.map((x) => String(x[2]).split(/[\s()]+/))));
     const Ld = [], first1 = (s) => (sentences(s || '')[0] || '').trim(), nm = (n) => String(n).split('-')[0];
     const low = (s) => { const t = String(s || '').replace(/\.$/, ''), w = t.split(/\s+/)[0]; return names0.has(w) ? t : t.replace(/^./, (c) => c.toLowerCase()); };
-    Ld.push(first1(raid.story) || (b.kill ? 'Boss down on pull ' + b.pull + '. Nice work, everyone.' : 'We wiped' + (pr && pr.label ? ' at ' + String(pr.label).split(',')[0] : '') + '.'));
+    // (a kill opens with the raid lead's kill call from the site, without its "To tidy" line)
+    let KC = ''; if (b.kill && b.id !== 990001) { try { if (!rep.item) rep.item = b; const k = W.killCall ? W.killCall([rep], null) : null; KC = k && k.text ? plain(k.text).replace(/\s*To tidy[^.]*\.\s*$/, '').trim() : ''; } catch (e) { KC = ''; } }
+    Ld.push(KC || first1(raid.story) || (b.kill ? 'Boss down on pull ' + b.pull + '. Nice work, everyone.' : 'We wiped' + (pr && pr.label ? ' at ' + String(pr.label).split(',')[0] : '') + '.'));
     if (!b.kill && b.id !== 990001) {
       const ds = allDeaths, wave = (d) => ds.filter((x) => Math.abs(x.t - d.t) <= 5), d0 = ds[0];
       if (d0 && wave(d0).length >= 4) {
@@ -878,7 +880,7 @@ function buildOne(b, rep, same, W, L, cutN) {
         if (later) Ld.push('Then ' + wave(later).length + ' of us went down within seconds at ' + mmss(later.t) + '.');
       } else { const f = raid.mech.find((x) => x[0] === 'bad'); Ld.push(f ? 'Nobody died before the wipe, but ' + f[2].replace(/\s*\(.*\)$/, '') + ' failed.' : 'Nobody died before the wipe.'); }
     }
-    const headN = Ld.length, fixTop = [], nx1 = first1(raid.next);
+    const headN = Ld.length, fixTop = [], nx1 = first1(String(raid.next || '').replace(/^Kill! (Next time: )?/, '')); /* (on a kill too: "Kill! Next time: X" is X) */
     for (const g of top.filter((x) => x.fix && first1(x.fix) !== nx1).slice(0, 3)) {
       const ws = [...g.who.keys()].filter((n) => real.has(n)), who = !ws.length ? '' : ws.length === 1 ? '@' + nm(ws[0]) : ws.length + ' of us';
       fixTop.push([g.sev >= 3 ? 'bad' : 'warn', g.k + (g.hit ? ' hit ' + (who || 'us') : who ? ' went wrong for ' + who : ' went wrong') + ': ' + low(first1(g.fix)) + '.']);
@@ -930,7 +932,7 @@ function buildOne(b, rep, same, W, L, cutN) {
       const h2 = [], c2 = [], seen2 = new Set(), head = plain(CO.headline), hl = head.toLowerCase();
       const nm2 = (x) => plain(x.label).replace(/\s*\(.*\)\s*$/, '').replace(/[.\s]+$/, ''), paren = (x) => (plain(x.label).match(/\(([^)]*)\)\s*$/) || ['', ''])[1].toLowerCase();
       const one = (t) => plain(t).trim().replace(/^./, (c) => c.toUpperCase()).replace(/([^.!?])$/, '$1.');
-      for (const x of sents(head)) h2.push([b.kill ? 'ok' : 'info', x]);
+      if (b.kill) h2.push(['ok', head.replace(/\s*To tidy[^.]*\.\s*$/, '').trim()]); else for (const x of sents(head)) h2.push(['info', x]); /* (the kill call stays one line) */
       const d0 = hap.find((x) => /^It (started|fell apart)/.test(x[1])); const dw = d0 ? (d0[1].match(/@([^\s,]+) died to ([^,.]+)/) || d0[1].match(/most to ([^.]+)/) || []) : []; if (d0 && !b.kill && !dw.slice(1).some((w) => w && hl.includes(String(w).toLowerCase()))) h2.push(d0); /* (unless the headline already names them or what killed them) */ /* (who died first: the headline names the cause, this the moment) */
       for (const x of CO.right) h2.push(['ok', one(x.t)]);
       for (const x of CO.wrong) { const n = nm2(x), w = plain(x.what || '').replace(/^Lost to [^:]+: /, '');
