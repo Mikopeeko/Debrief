@@ -1668,6 +1668,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-22', h: [
+    { t: 'Pushes timed against the fastest kills', d: 'On The Coiled Altar Mythic, Phase changes now shows how long each phase took next to the 20 fastest kills, like "P2 took 3:33 (kills: about 2:30, never past 2:56)", and how healthy Zul\'jan came back after the intermission. The coach tells you when a slow push cost the pull.' },
     { t: 'Your cooldowns glow when it\'s time', d: 'Debrief in game can now light up your own cooldown on Blizzard\'s Cooldown Manager at the exact moment your NSRT note says to press it, then stop when you press it. Turn it on in /dmo, Raid, Glow my cooldowns.' },
     { t: 'The coach compares you with the fastest kills', d: 'On The Coiled Altar Mythic, each problem now says how the 20 fastest kills did it, like "even the fastest kills slip here" or "kills get this right", and the coach puts first what the kills nearly always get right. More bosses to come.' },
     { t: 'Your coach on Rotation', d: 'Every Rotation page now opens with your coach: the one thing to focus on next pull, your top three fixes with why they matter and how to do them, and what you did well. It names the same first fix as Debriefing.' },
@@ -1675,6 +1676,10 @@ const PATCH_NOTES = [
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
+    'The coach is easier to read: a Focus box, numbered problem cards with Next time on its own line, spell icons next to every ability, and every name in its class colour.',
+    'On a single pull, each coach card\'s small map shows that card\'s own mistake.',
+    'The coach\'s first problem shows how to do it and how the fastest kills did it, and the raid\'s headline says what lost the pull in the raid lead\'s words.',
+    'Deaths are judged by the same rule everywhere on Debriefing: the Deaths list, Still had ready, Why we wiped and the coach.',
     'Debrief in game: the card is now one bullet summary, what happened and what to change next, taken from your Debriefing coach, so it says the same #1 fix. Your own line ends with your focus for the next pull.',
     'Debrief in game: Who died says why each death was or wasn\'t on the player (too fast, own mistake, kit ready, the raid\'s mistake), the same rule as the site.',
     'Coach: every coach has a Deaths line (who died, when, to what, and whether it was on them, by the site\'s one death rule) and an Avoidable damage line (the worst sources and who took them); the full coaching lists them all.',
@@ -1712,6 +1717,8 @@ const PATCH_NOTES = [
     'The bosses are in the same order everywhere on the site.',
     'Long patch notes fold after six lines.',
   ], f: [
+    'Venom orbs (Into the frontals) in the coach now says what went wrong, like "Deluge #3: 4, then 6 orbs popped", and what the tanks should do, instead of just "Into the frontals".',
+    'The Coiled Altar: Malacrass is no longer flagged for being pushed after his next Dreadmarch, which even the fastest kills do. Now he\'s flagged when he gets a second shield.',
     'Page tips: a click anywhere outside the tip closes them. Before, the dark layer took every click until Next was pressed through.',
     'Rotation: Balance Druids no longer get dozens of "Sunfire was about to fall off" slips while the boss is out of reach. On a real pull their priority went from about 40% to 73%.',
     'Debriefing: with a note loaded, the note\'s bar (Swap players, Load a note, Copy for the game) stays right under the coach instead of in the bottom drawer.',
@@ -6823,7 +6830,7 @@ function audit() {
     // (without the plain nickname in brackets: "Ravage (frontal)" is still "Ravage" here)
     const gTitle = (s, t) => { const n = s.title.split(': ')[0].replace(/ \([^)]*\)/, ''); if (!t.toLowerCase().startsWith(n.toLowerCase() + ' ')) return t; const x = t.slice(n.length + 1); return /^\d/.test(x) ? '#' + x : x; };
     // (a death says it short: "3:20 Kargaryen died to Dreadful Presence, with Healthstone still ready"; the rest is in Deaths)
-    const deathLine = (d) => { const ready = d.react !== false && d.available && d.available.length ? d.available : [];
+    const deathLine = (d) => { const v0 = dvR(d), ready = v0 ? (v0.why === 'ready' ? d.available || [] : []) : d.react !== false && d.available && d.available.length ? d.available : []; /* (the one death rule (Oct 22)) */
       return T(d.t) + ' ' + d.player + ' died to ' + (d.ability || d.killer || 'something') + (ready.length ? ', with ' + ready[0] + (ready.length > 1 ? ' and more' : '') + ' still ready' : ''); };
     const firstProb = (s, b) => { const want = (row) => (b ? row.some((c) => c.bad) : row.some((c) => c.warn));
       if (s.id === 'deaths') { const row = (s.rows || []).find(want); if (row && row[0] && row[0].death) return deathLine(row[0].death); }
@@ -7148,10 +7155,10 @@ function audit() {
       // (the mistake in a few words: its first clause, without the numbers; the mechanic's name only when it doesn't say it)
       if (l) { const det = l.detail.replace(/( for [\d,.]+| and |: |\. |, leaving |; ).*$/, '').replace(/\.$/, '');
         return { st: l.severity === 'High' ? 'bad' : 'warn', txt: det.toLowerCase().includes(String(l.mechanic).toLowerCase()) ? det + (l.raid ? ' (the raid\'s mistake)' : '') : l.mechanic + (l.raid ? ' (the raid)' : '') + ': ' + det }; }
-      if (av.length && d.react !== false) return { st: 'warn', txt: cap(av[0]) + (av.length > 1 ? ' and ' + (av.length - 1) + ' more were ready' : ' was ready') };
+      const v0 = dvR(d); if (av.length && (v0 ? v0.why === 'ready' : d.react !== false)) return { st: 'warn', txt: cap(av[0]) + (av.length > 1 ? ' and ' + (av.length - 1) + ' more were ready' : ' was ready') };
       const pv = (d.prevent || []).find((x) => !/^No clear mistake/i.test(x));
       if (pv) return { st: 'warn', txt: pv.replace(/\.$/, '') };
-      return { st: 'na', txt: d.react === false ? 'too fast to react' : 'no clear mistake' };
+      return { st: 'na', txt: v0 && v0.why !== 'nothing' ? v0.word : d.react === false ? 'too fast to react' : 'no clear mistake' };
     };
     // the three biggest hits of the last 15 seconds (a spell's smaller hits added up, "×10"), as bars
     const top3 = (d) => { const hits = (d.recap || []).filter((e) => !e.heal && e.t >= d.t - 10), last = hits[hits.length - 1], grp = new Map();
@@ -7620,7 +7627,7 @@ function deathSection(r) {
     // (the first cell carries the death itself: the Mechanics tab draws deaths as a list and a detail pane from it)
     rows: ds.map((d) => [{ t: d.t, death: d }, { p: d.player }, { txt: d.ability || d.killer, bad: true, sub: d.healthy && d.window > 0 ? Math.round(d.startHp) + '% to 0 in ' + d.window.toFixed(1) + 's' : d.startHp > 0 ? 'never above ' + Math.round(d.startHp) + '% in the last 10s' : '' },
       // (still had ready only counts against them when there was time to press it)
-      { txt: (d.prevent || [])[0] || '—', dim: true }, d.available && d.available.length ? (d.react === false ? { txt: andList(d.available) + ' (too fast to use)', dim: true } : { txt: andList(d.available), warn: true }) : { txt: 'nothing left', dim: true },
+      { txt: (d.prevent || [])[0] || '—', dim: true }, d.available && d.available.length ? (deathVerdict(r, d).why !== 'ready' ? { txt: andList(d.available) + ' (' + deathVerdict(r, d).word + ')', dim: true } : { txt: andList(d.available), warn: true }) : { txt: 'nothing left', dim: true },
       { more: recap(d), label: 'Why + recap', dg: d.guid + '@' + d.t.toFixed(2) }]) };
 }
 // Defensives per player (the old Survivability cards): red = Poor, amber = Okay; Details opens the full list.
@@ -8509,7 +8516,7 @@ function whyWiped(r) {
     else if (late) o = fromM(late);
     else if (wave.length >= 4) { const wm = wave.find((x) => why(x)), ww = wm ? why(wm) : null;
       o = wm ? { k: 'mistake', t: d0.t, d: wm, l: ww.l, why: ww.why, av: !!ww.av, kick: !!ww.kick, how: 'own' } : { k: 'heal', t: d0.t, d: d0, how: 'wave' }; }
-    else if (!dbfFast(d0) && dbfKit(d0).length) o = { k: 'mistake', t: d0.t, d: d0, how: 'kit' };
+    else if (deathVerdict(r, d0).why === 'ready') o = { k: 'mistake', t: d0.t, d: d0, how: 'kit' }; /* (the one death rule (Oct 22)) */
     else if ((d0.why || []).some((w) => /Very little healing/.test(w))) o = { k: 'heal', t: d0.t, d: d0, how: 'bleed' };
     else if (p0 && p0.role === 'tank' && (!d0.ability || d0.ability === 'Melee')) o = { k: 'heal', t: d0.t, d: d0, how: 'tank' };
     else o = { k: 'unclear', t: d0.t, d: d0, how: 'death' };
@@ -8692,12 +8699,12 @@ function oaLayout(v, el) {
   const nbar = v.querySelector('.dbn-bar:not(.dbn-none)'); if (nbar && nbar.previousElementSibling !== el) { el.after(nbar); nbar.classList.add('oa-note'); }
   // (a small map on each of the coach's problems: the Fix card's own map for that mechanic)
   const cards = [...v.querySelectorAll('a.dbr-fx')];
-  for (const li of el.querySelectorAll('.cch-no li')) { if (li.querySelector('.wr-map')) continue;
+  for (const li of el.querySelectorAll('.cch-p')) { if (li.querySelector('.wr-map')) { li.querySelectorAll('.cch-pmap .mz-big').forEach((x) => x.remove()); continue; }
     const sec = li.dataset.sec || '', lab = ((li.querySelector('b') || {}).textContent || '').trim().toLowerCase();
     const c = cards.find((a) => { const hr = a.getAttribute('href') || ''; return (sec && (hr.indexOf('#sec-' + sec + '-') === 0 || hr === '#nml-' + sec)) || ((a.querySelector('.dbr-fxb b') || {}).textContent || '').trim().toLowerCase() === lab; });
     const m = c && c.querySelector('.wr-map'); if (!m) continue;
     const k = m.cloneNode(true); k.removeAttribute('data-fit'); k.classList.remove('dbr-fxm', 'mcx-map'); k.classList.add('cch-thumb'); k.querySelectorAll('.mz-big').forEach((x) => x.remove());
-    li.classList.add('cch-hasmap'); const body = document.createElement('div'); while (li.firstChild) body.appendChild(li.firstChild); li.appendChild(k); li.appendChild(body); }
+    li.classList.add('cch-hasmap'); (li.querySelector('.cch-pmap') || li).appendChild(k); }
   wrThumbFit(el);
   // (the mechanics of each phase that were done right, in one line: "✓ 4 done right", open to see them)
   for (const ck of v.querySelectorAll('details.phase .dbck, .mcx-ph .dbck')) { if (ck.querySelector(':scope > details.cln-fold')) continue;
@@ -8792,7 +8799,7 @@ function coachRaid(reps) { return oaCache(reps, 'c:raid', () => {
         for (const m of km) if (Math.abs(m.t - tc.t) <= 3 && (ps.has(m.player) || (!ps.size && m.player === 'Raid'))) { const t1 = dbfTip1(m.fix); cnt.set(t1, (cnt.get(t1) || 0) + 1); if (cHtml(m.fix).length > full.length) full = cHtml(m.fix); } } }
     const top = [...cnt].sort((a, b) => b[1] - a[1])[0]; return top ? { fx: top[0], full } : null; };
   for (const g of L) { const nm = dbfSecName(g.s), rf = rowFix(g.id), ins = (String(g.s.title || '').match(/\(([^)]+)\)\s*$/) || [])[1], shared = [...S2.values()].filter((y) => lc(dbfSecName(y.s)) === lc(nm)).length > 1 || [...S2.values()].some((y) => y !== g && y.s.spell && g.s.spell && lc(y.s.spell[1]) === lc(g.s.spell[1])),
-      fx = rf ? rf.fx : (!shared && fixer(nm)) || (ins ? dbfCap(ins) + '.' : ''); /* (no mistake on its rows: its fix by name, unless another mechanic shares that name; then its own short instruction) */ if (!fx || out.some((y) => y.fix === fx)) continue; /* (one fix said once) */
+      fx = rf ? rf.fx : (g.s.fix && cHtml(g.s.fix)) || (!shared && fixer(nm)) || (ins ? dbfCap(ins) + '.' : ''); /* (no mistake on its rows: its fix by name, unless another mechanic shares that name; then its own short instruction) */ if (!fx || out.some((y) => y.fix === fx)) continue; /* (one fix said once) */
     const full = rf ? rf.full : ms.filter((m) => lc(m.mechanic) === lc(nm)).map((m) => cHtml(m.fix)).sort((a, b) => b.length - a.length)[0] || dbfTip1(cHtml(g.s.how || '')); /* (else the mechanic's own explanation) */
     out.push({ kind: 'mech', sec: g.id, sev: g.bad * 2 >= g.pulls.length ? 'bad' : 'warn', label: shortT(g.s.title), n: g.pulls.length, of: reps.length, pulls: g.pulls, fix: fx, how: full }); }
   return { list: out, S2 }; }) || { list: [], S2: new Map() }; }
@@ -8824,7 +8831,7 @@ function coachRight(reps, name, S2) {
 const KILL_BASE = {
   'The Coiled Altar': { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
     avoid: { k: 20, ok: 0, med: 32 }, dmghost: { k: 20, ok: 11, med: 0 }, addsets: { k: 20, ok: 12, med: 0 }, gloom: { k: 20, ok: 2, med: 6 },
-    push: { k: 20, ok: 9, med: 33 }, orbs: { k: 20, ok: 2, med: 13 }, tankfront: { k: 20, ok: 2, med: 14 }, soakq: { k: 20, ok: 3, med: 50 },
+    push: { k: 20, ok: 16, med: 0 }, orbs: { k: 20, ok: 2, med: 13 }, tankfront: { k: 20, ok: 2, med: 14 }, soakq: { k: 20, ok: 3, med: 50 },
     shield: { k: 20, ok: 17, med: 0 }, inter: { k: 20, ok: 16, med: 0 }, vf: { k: 20, ok: 3, med: 33 } } } },
 };
 const kbOf = (it, sec) => { const b = it && KILL_BASE[it.boss] && KILL_BASE[it.boss][it.diffId]; return b && sec && b.sec[sec] ? b.sec[sec] : null; };
@@ -8844,6 +8851,21 @@ function oaLed(r, keys, title) { const lc = (x) => String(x || '').toLowerCase()
   for (const m of keptMistakes(r)) { if (m.player !== 'Raid' || m.severity === 'Low' || !(keys.includes(lc(m.mechanic)) || (tl && tl.includes(lc(m.mechanic))))) continue;
     for (const d of dd) if (d.t >= m.t - 0.5 && d.t <= m.t + 20 && !(d.links || []).some((l) => !l.raid)) seen.add(d.guid + '@' + d.t.toFixed(1)); }
   return seen.size; }
+// (what happened, for a mechanic that writes no mistake line (like the orbs): its worst flagged row read out, "Deluge #3 at 4:12: 4, then 6
+// orbs (aim for 2 to 3, then none), too many in one frontal.")
+function oaRowWhat(reps, id, night) { let best = null;
+  for (const r of reps.slice().reverse()) { const y = pullSections(r).get(id); if (!y) continue;
+    for (const [row, g] of y.s.rows.map((rw) => [rw, null]).concat(...(y.s.groups || []).map((gg) => (gg.rows || []).map((rw) => [rw, gg])))) { if (!Array.isArray(row)) continue; const sev = row.some((c) => c && c.bad) ? 2 : row.some((c) => c && c.warn) ? 1 : 0; if (sev && (!best || sev > best.sev)) best = { sev, row, g, r, s: y.s }; }
+    if (best && best.sev === 2) break; }
+  if (!best) return ''; let t = ''; try { t = cHtml(rowText(best.s, best.row)); } catch (e) { t = ''; } if (!t) return '';
+  return (night ? 'Pull ' + best.r.item.pull + ': ' : '') + (best.g && best.g.title ? cHtml(best.g.title) + ', ' : '') + t.charAt(0).toUpperCase() + t.slice(1) + (/[.!?]$/.test(t) ? '' : '.'); }
+// (the map of one flagged row: the moment nearest the time the card talks about, else its first red one)
+const cRowMap = (row) => { for (const c of row || []) { if (!c) continue; if (c.map) return c.map; if (c.maps && c.maps.length) return c.maps[0][1]; } return null; };
+function oaCardMap(r, id, tAt) { const y = pullSections(r).get(id); if (!y) return null;
+  const rt = (row) => { const c = row.find((q) => q && q.t != null); return c ? c.t : null; };
+  const fl = y.s.rows.concat(...(y.s.groups || []).map((g) => g.rows || [])).filter((row) => Array.isArray(row) && row.some((c) => c && (c.bad || c.warn)) && cRowMap(row));
+  const near = tAt == null ? null : fl.filter((row) => rt(row) != null && Math.abs(rt(row) - tAt) <= 8).sort((p, q) => Math.abs(rt(p) - tAt) - Math.abs(rt(q) - tAt))[0];
+  const row = near || fl.find((rw) => rw.some((c) => c && c.bad)) || fl[0]; return row ? cRowMap(row) : null; }
 function coachEnrich(list, reps, name) {
   const night = reps.length > 1, it = reps[reps.length - 1].item, lc = (x) => String(x || '').toLowerCase();
   const secs = new Map(); for (const r of reps) for (const [id, x] of pullSections(r)) if (!secs.has(id)) secs.set(id, x.s);
@@ -8859,8 +8881,12 @@ function coachEnrich(list, reps, name) {
       else if (x.kind === 'raid' && !night) { try { const o = whyWiped(reps[0]); if (o) { const w = whyShort(o, new Map()); x.what = cHtml(w.label) + ': ' + cHtml(w.short) + '.'; } } catch (e) { /* (no line) */ } }
       else if (x.kind === 'raid') x.what = 'It wiped us ' + (x.n === 2 ? 'twice' : x.n + ' times') + ' tonight.';
       else if (x.m && x.m.detail) x.what = dbfTip1(cHtml(x.m.detail));
-      else if (x.kind === 'mech') { const m = reps.slice().reverse().flatMap((r) => keptMistakes(r).filter((q) => q.detail && q.mechanic !== 'Death' && (name ? oaBase(q.player) === oaBase(name) : true) && (keys.includes(lc(q.mechanic)) || (s && lc(s.title).includes(lc(q.mechanic))))))[0]; if (m) x.what = dbfTip1(cHtml(m.detail)); } }
+      else if (x.kind === 'mech') { const m = reps.slice().reverse().flatMap((r) => keptMistakes(r).filter((q) => q.detail && q.mechanic !== 'Death' && (name ? oaBase(q.player) === oaBase(name) : true) && (keys.includes(lc(q.mechanic)) || (s && lc(s.title).includes(lc(q.mechanic))))))[0]; if (m) { x.what = (!name && m.player && m.player !== 'Raid' ? String(m.player).split('-')[0] + ': ' : '') + dbfTip1(cHtml(m.detail)); x.whatT = m.t; } /* (who, on the raid's view) */ else if (s) x.what = oaRowWhat(reps, s.id, night); } }
+    if (!night && s) { try { x.map = oaCardMap(reps[0], s.id, x.whatT != null ? x.whatT : x.kind === 'death' && x.d ? x.d.t : x.m && x.m.t != null ? x.m.t : null); } catch (e) { x.map = null; } }
     if (x.what) x.what = cClip(x.what, 140);
+    // (how: the longest written fix for that mechanic, else the mechanic's own explanation, so problem #1 can teach it (Oct 22))
+    if (!x.how && s) { const fx = reps.flatMap((r) => keptMistakes(r)).filter((m) => m.fix && (keys.includes(lc(m.mechanic)) || lc(s.title).includes(lc(m.mechanic)))).map((m) => cHtml(m.fix)).sort((a, b) => b.length - a.length)[0];
+      x.how = fx && cHtml(fx) !== cHtml(x.fix) ? fx : (() => { const h = cHtml(s.how || ''), m = h.match(/^(?:.*?[.!?](?:\s|$)){1,2}/); return m ? m[0].trim() : h; })(); }
     // (how many deaths a raid mistake led to)
     if (!name && (x.kind === 'raid' || x.kind === 'mech')) { const n = reps.reduce((t, r) => t + oaLed(r, keys, s && s.title), 0); if (n) x.led = n; }
     // (the kind of error: once, again, every pull; on a night, getting better or still happening)
@@ -8910,7 +8936,11 @@ function coachDeaths(reps, name) {
       : plural(kept.length, 'death') + ' before the wipe filter (' + (kept.length / reps.length).toFixed(1) + ' a pull), most to ' + t3 + '. ' + onThem + ' of them ' + (onThem === 1 ? 'was' : 'were') + ' on the player (their own mistake, or a slow death they could have stopped).'; }
   const li = (x) => '<li>' + (night ? 'Pull ' + x.r.item.pull + ', ' : '') + T(x.d.t) + ': ' + (name ? '' : '<b>' + esc(String(x.d.player).split('-')[0]) + '</b> ') + 'to ' + esc(ab(x.d)) + ' · <span class="sub">' + (x.after ? 'after the wipe filter, not counted' : esc(x.why.t)) + '</span></li>';
   const list = L.length ? '<ul class="cch-ul">' + L.slice(0, 16).map(li).join('') + (L.length > 16 ? '<li class="sub">and ' + (L.length - 16) + ' more</li>' : '') + '</ul>' : '';
-  return { line, list, n: kept.length, onThem, bad: onThem > 0 };
+  /* (chips: each death on one pull, the causes with counts on a night; the line stays for the full coaching and the empty case) */
+  const items = !kept.length ? [] : night ? top(kept).slice(0, 5).map(([a2, n2]) => ({ ab: a2, n: n2, k: 'n' })) : kept.slice(0, 6).map((x) => ({ t: T(x.d.t), who: name ? '' : String(x.d.player).split('-')[0], ab: ab(x.d), k: x.why.k, word: x.why.t }));
+  const more = !night && kept.length > 6 ? kept.length - 6 : night ? Math.max(0, top(kept).length - 5) : 0;
+  const note = !kept.length ? '' : (onThem ? onThem + ' of ' + plural(kept.length, 'death') + (name ? ' on you' : ' on the player') + ' (red: their own mistake or a slow death with something ready).' : 'None on ' + (name ? 'you' : 'the player') + '.') + (nAfter ? ' ' + plural(nAfter, 'more') + ' after the wipe filter, not counted.' : '');
+  return { line, list, n: kept.length, onThem, bad: onThem > 0, items, more, note };
 }
 function coachAvoid(reps, name) {
   const night = reps.length > 1, base = name ? oaBase(name) : '', S3 = new Map(); let any = false;
@@ -8927,7 +8957,8 @@ function coachAvoid(reps, name) {
   else if (name) line = 'You took more than you should from ' + lpAnd(flagged.slice(0, 3).map((s) => s.k + (night ? ' (' + s.pulls.size + ' of ' + reps.length + ' pulls)' : ' (' + plural(s.hits, 'hit') + ')'))) + '.';
   else line = 'Most from ' + lpAnd(flagged.slice(0, 3).map((s) => s.k + (whoT(s) ? ' (' + whoT(s) + ')' : ''))) + '.' + (flagged.length > 3 ? ' ' + plural(flagged.length - 3, 'more source') + ' in the full coaching.' : '');
   const list = flagged.length ? '<ul class="cch-ul">' + flagged.slice(0, 8).map((s) => '<li><b>' + esc(s.k) + '</b> · <span class="sub">' + (s.bad ? s.bad + ' dangerous' : '') + (s.bad && s.warn ? ', ' : '') + (s.warn ? s.warn + ' too many' : '') + (night ? ' · in ' + plural(s.pulls.size, 'pull') : '') + (!name && whoT(s) ? ' · most: ' + esc(whoT(s)) : '') + '</span></li>').join('') + '</ul>' : '';
-  return { line, list, bad: flagged.some((s) => s.bad) };
+  const items = flagged.slice(0, 4).map((s) => ({ k: s.k, who: name ? (night ? s.pulls.size + ' of ' + reps.length + ' pulls' : plural(s.hits, 'hit')) : whoT(s), bad: s.bad > 0 }));
+  return { line, list, bad: flagged.some((s) => s.bad), items, more: Math.max(0, flagged.length - 4) };
 }
 function coachSummary(reps, name) {
   reps = (reps || []).filter((r) => r && r.players && !r.allPulls); if (!reps.length) return null;
@@ -8940,30 +8971,75 @@ function coachSummary(reps, name) {
     let why0 = ''; if (!night && !kill && !name) { try { const o = whyWiped(reps[0]); if (o) why0 = cHtml(whyShort(o, new Map()).short); } catch (e) { why0 = ''; } }
     const headline = name ? (w0 ? who + ', ' + (wrong.some((x) => x.sev === 'bad') ? (right.length ? 'some good things ' + (night ? 'tonight' : 'this pull') + ', and one thing to fix first.' : 'one thing to fix first.') : 'good ' + (night ? 'night' : 'pull') + ' from you, with one thing to sharpen.') + ' Your one fix: ' + String(w0.fix).replace(/\.?$/, '.') : who + ', ' + (night ? 'nothing you did twice tonight.' : 'clean pull from you.') + ' Keep doing exactly this.')
       : kill ? res + '. Great work, everyone.' + (w0 && night ? ' What cost us the most: ' + w0.label + '.' : '') : res + '.' + (w0 ? ' ' + (night ? 'What cost us the most: ' : 'It came down to ') + (w0.cause || w0.label) + (night && w0.n ? ' (' + w0.n + ' wipes)' : why0 ? ': ' + why0.charAt(0).toLowerCase() + why0.slice(1) : '') + '.' : '');
+    /* (the raid lead's take, a sentence or two, in place of the plain cause (your OK, Oct 22)) */
+    const s1 = (t, n) => { const x = cHtml(t), m = x.match(new RegExp('^(?:.*?[.!?](?:\\s|$)){1,' + (n || 1) + '}')); return m ? m[0].trim() : x; };
+    let talk = ''; if (!name && !kill) { try { const pmT = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !pmT.has(p.name)) pmT.set(p.name, p);
+      if (!night) { const o = whyWiped(reps[0]); if (o) { const k = whyKey(o), prevR = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull < it.pull && CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.players);
+          const nth = k === '?' ? 1 : 1 + prevR.map((x) => whyWiped(x)).filter((y) => y && whyKey(y) === k).length, w = whySay(o, pmT, nth); talk = cHtml(w.h) + ' ' + s1(w.s); } }
+      else { const hn = whyNight(reps, pmT), p = (hn.match(/<p>([\s\S]*?)<\/p>/) || [])[1]; if (p) talk = s1(p, 2); } } catch (e) { talk = ''; } }
+    const headline2 = talk ? res + '. ' + talk : headline;
     const focus = w0 ? w0.fix : kill ? 'Same plan next time.' : 'Same plan. Execute it.';
     // (the full coaching: why we wiped in the raid lead's words, each problem with how to fix it, every death that counted, what went right)
     const pm = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !pm.has(p.name)) pm.set(p.name, p);
     let whyFull = ''; try { if (night) whyFull = whyNight(reps, pm); else if (!kill) { const prev = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.players); whyFull = whyLine(reps[0], pm, prev); } } catch (e) { whyFull = ''; }
     const all = coachEnrich(name ? coachMine(reps, name) : RD.list, reps, name).slice(0, 6), allR = coachRight(reps, name, RD.S2);
     const item = (x, i) => '<li class="cch-' + x.sev + '"><b>' + (i + 1) + '. ' + esc(dbfCap(x.label)) + '</b> ' + coachTag(x, night) + (x.what ? '<br><span class="sub">What happened: ' + esc(x.what) + '</span>' : '') + '<br><span class="cch-fx">Next time: ' + esc(x.fix) + '</span>' + (x.kbLine ? '<br><span class="sub">Against kills: ' + esc(x.kbLine) + '</span>' : '') + (x.guide ? ' ' + x.guide : '') + (x.how && cHtml(x.how) !== cHtml(x.fix) ? '<br><span class="sub">How: ' + esc(x.how) + '</span>' : '') + '</li>';
-    let deaths = ''; if (name) { const L = []; for (const { r, p } of oaMine(reps, name)) for (const d of r.deaths.filter((q) => q.guid === p.guid).sort((a, b) => a.t - b.t)) { const after = d.t > cutT(r) + 0.05, fast = dbfFast(d);
-        L.push('<li>' + (night ? 'Pull ' + r.item.pull + ', ' : '') + T(d.t) + ': ' + esc(d.ability || d.killer || 'a hit') + ' · <span class="sub">' + (after ? 'after the wipe filter, doesn\'t count' : fast && !deathOwn(r, d) && !(d.links || []).some((l) => !l.raid) ? 'too fast to react, not on you' : 'counts') + '</span></li>'); }
+    let deaths = ''; if (name) { const L = []; for (const { r, p } of oaMine(reps, name)) for (const d of r.deaths.filter((q) => q.guid === p.guid).sort((a, b) => a.t - b.t)) { const v = deathVerdict(r, d), after = !v.counts; void dbfFast;
+        L.push('<li>' + (night ? 'Pull ' + r.item.pull + ', ' : '') + T(d.t) + ': ' + esc(d.ability || d.killer || 'a hit') + ' · <span class="sub">' + (after ? 'after the wipe filter, doesn\'t count' : !v.on ? 'not on you: ' + v.word : v.why === 'nothing' ? 'counts half: nothing left to press' : 'counts: ' + v.word) + '</span></li>'); }
       deaths = L.length ? '<h5>Your deaths</h5><ul class="cch-ul">' + L.slice(0, 12).join('') + (L.length > 12 ? '<li class="sub">and ' + (L.length - 12) + ' more</li>' : '') + '</ul>' : ''; }
     const DD = coachDeaths(reps, name), AV = coachAvoid(reps, name); if (!name && DD.list) deaths = '<h5>Deaths</h5>' + DD.list;
     const full = (whyFull ? '<h5>' + (night ? 'The night, as a raid lead would say it' : 'Why we wiped') + '</h5>' + whyFull : '') +
       (all.length ? '<h5>What to work on, in order</h5><ol class="cch-ol">' + all.map(item).join('') + '</ol>' : '') + deaths + (AV && AV.list ? '<h5>Avoidable damage</h5>' + AV.list : '') +
       (allR.length ? '<h5>What went right</h5><ul class="cch-ul">' + allR.map((t) => '<li>' + esc(t) + '</li>').join('') + '</ul>' : '');
-    return { headline, right, wrong, focus, full, name: name || null, night, deaths: DD, avoid: AV }; }); }
-// (the short box: headline, what went right, what went wrong with how, Focus next pull, and the full coaching folded)
-function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' + (o.key || 'x');
-  const pm = c.name ? [...((S.rep && S.rep.players) || new Map()).values()].find((p) => p.name && oaBase(p.name) === oaBase(c.name)) : null;
-  return '<section class="cch" aria-label="Coach"><div class="cch-hd"><span class="cch-k">' + esc(o.title || (c.name ? 'Your coach' : 'Coach')) + '</span>' + (pm ? '<span class="nm" style="color:' + pm.color + '">' + esc(c.name.split('-')[0]) + '</span>' : '') + '</div>' +
+    return { headline: headline2, right, wrong, focus, full, name: name || null, night, deaths: DD, avoid: AV }; }); }
+// (the short box, easier to read (your note, Oct 22: "make this more visually appealing/easier to read", "class color names when they
+// are mentioned"): the headline, then Focus as the big takeaway, the problems as numbered cards (what happened, Next time on its own
+// line, the map on the right), what went right as green chips, deaths and avoidable damage as small chips, and the full coaching folded.
+// Every player name is in their class colour)
+function coachPm() { const m = new Map(); for (const r of [S.rep].concat([...CACHE.values()])) if (r && r.players) for (const p of r.players.values()) if (p.name && p.color && !m.has(oaBase(p.name))) m.set(oaBase(p.name), p); return m; }
+function colorNames(html, pm) {
+  const names = [...pm.values()].map((p) => String(p.name).split('-')[0]).filter((n) => n.length >= 3).sort((a, b) => b.length - a.length); if (!names.length) return html;
+  const re = new RegExp('(?<![\\p{L}\\p{N}])(' + names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')(?![\\p{L}\\p{N}])', 'giu');
+  let inNm = 0; return html.split(/(<[^>]+>)/).map((seg) => { if (seg.startsWith('<')) { if (/^<span[^>]*class="nm/.test(seg)) inNm++; else if (inNm && seg === '</span>') inNm--; return seg; }
+    if (inNm || !seg) return seg; return seg.replace(re, (m0) => { const p = pm.get(m0.toLowerCase()); return p ? '<span class="nm" style="color:' + p.color + '">' + m0 + '</span>' : m0; }); }).join('');
+}
+// (every ability the coach names gets its icon: the ones already linked, and boss and class spells found in the text, written with a capital)
+function iconSpells(html) {
+  html = html.replace(/<span class="sp mt" data-sid="(\d+)" data-sn="([^"]*)">(?!<span class="icw)/g, (m0, id, n) => m0 + spellIcon(+id, n));
+  let b = null; try { b = S.rep && S.item ? bossRx(false) : null; } catch (e) { b = null; } if (!b) return html;
+  const st = []; return html.split(/(<[^>]+>)/).map((seg) => {
+    if (seg.startsWith('<')) { const op = seg.match(/^<(span|a|abbr|b|i)\b/), cl = seg.match(/^<\/(span|a|abbr|b|i)>/);
+      if (op && !/\/>$/.test(seg)) st.push(/class="(sp|nm|icw)\b/.test(seg)); else if (cl) st.pop(); return seg; }
+    if (st.some(Boolean) || seg.length < 4) return seg;
+    b.rx.lastIndex = 0; seg = seg.replace(/([A-Z][\p{L}'’-]*(?: (?:of|the|on|in|to|a|[A-Z][\p{L}'’-]*))*?)s(?![\p{L}\p{N}])/gu, (m0, w) => { const ws = w.split(' '); for (let j = 0; j < ws.length; j++) { if (!/^[A-Z]/.test(ws[j])) continue; const w2 = ws.slice(j).join(' '), sid = b.names.get(w2.toLowerCase()); if (sid && w2.length > 3) return ws.slice(0, j).concat('').join(' ') + '\u0001' + sid + '\u0002' + w2 + '\u0003s'; } return m0; });
+    seg = seg.split(/(\u0001\d+\u0002[^\u0003]*\u0003)/).map((p) => p[0] === '\u0001' ? p : p.replace(b.rx, (w) => { if (w[0] === w[0].toLowerCase()) return w; const sid = b.names.get(w.toLowerCase()); return sid ? '<span class="sp mt" data-sid="' + sid + '" data-sn="' + w + '">' + spellIcon(sid, w) + w + '</span>' : w; })).join('');
+    return seg.replace(/\u0001(\d+)\u0002([^\u0003]*)\u0003/g, (m0, sid, w) => '<span class="sp mt" data-sid="' + sid + '" data-sn="' + w + '">' + spellIcon(+sid, w) + w + '</span>');
+  }).join('');
+}
+// (problem #1's How, minus the words Next time already says; nothing when it adds nothing)
+function howRest(x) { const h = String(x.how || '').trim(), fx = String(x.fix || '').trim(); if (!h) return ''; const n = (s) => s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  if (n(h) === n(fx)) return ''; if (fx && n(h).startsWith(n(fx))) { const r = h.slice(fx.length).replace(/^[\s.,;:]+/, ''); return n(r).length > 3 ? r : ''; } return h; }
+function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' + (o.key || 'x'), PM = coachPm();
+  const pm = c.name ? PM.get(oaBase(c.name)) : null;
+  const MAPS = [], pmc = (() => { try { return new Map(players().map((p) => [p.name, p])); } catch (e) { return new Map(); } })();
+  const mapOf = (x) => { if (!x.map) return ''; let h = ''; try { h = miniMap(x.map, pmc); } catch (e) { h = ''; } if (!h) return ''; MAPS.push('<span class="wr-map cch-thumb">' + h + '</span>'); return ' data-mi="' + (MAPS.length - 1) + '"'; };
+  const prob = (x, i) => { const mi = mapOf(x); return '<li class="cch-p cch-' + x.sev + (mi ? ' cch-hasmap' : '') + '"' + (x.sec ? ' data-sec="' + esc(x.sec) + '"' : '') + '><span class="cch-pn">' + (i + 1) + '</span><div class="cch-pb">' +
+    '<div class="cch-pt"><b>' + esc(dbfCap(x.label)) + '</b> ' + coachTag(x, c.night) + '</div>' + (x.what ? '<div class="cch-what">' + esc(x.what) + '</div>' : '') +
+    '<div class="cch-fx"><span class="cch-nx">Next time</span><span>' + esc(x.fix) + '</span></div>' +
+    (!i && howRest(x) ? '<div class="cch-x1"><b>How:</b> ' + esc(cClip(howRest(x), 220)) + '</div>' : '') + (!i && x.kbLine ? '<div class="cch-x1"><b>Against kills:</b> ' + esc(x.kbLine) + '</div>' : '') +
+    (x.guide ? '<div class="cch-pg">' + x.guide + '</div>' : '') + '</div><span class="cch-pmap"' + mi + '></span></li>'; };
+  const focusSame = String(c.headline).includes(String(c.focus).replace(/\.$/, ''));
+  const D = c.deaths, A = c.avoid;
+  const dch = D ? (D.items && D.items.length ? D.items.map((it) => '<span class="dch k-' + esc(it.k || 'n') + '" title="' + esc(it.word || '') + '">' + (it.t ? '<i>' + esc(it.t) + '</i>' : '') + (it.who ? '<b>' + esc(it.who) + '</b>' : '') + '<span>' + esc(it.ab) + (it.n > 1 ? ' ×' + it.n : '') + '</span></span>').join('') + (D.more ? '<span class="dch more">+' + D.more + ' more</span>' : '') : '<span class="cch-none">' + esc(D.line) + '</span>') + (D.note ? '<div class="cch-anote">' + esc(D.note) + '</div>' : '') : '';
+  const ach = A ? (A.items && A.items.length ? A.items.map((it) => '<span class="ach' + (it.bad ? ' bad' : '') + '"><b>' + esc(it.k) + '</b>' + (it.who ? '<span>' + esc(it.who) + '</span>' : '') + '</span>').join('') + (A.more ? '<span class="ach more">+' + A.more + ' more</span>' : '') : '<span class="cch-none">' + esc(A.line) + '</span>') : '';
+  const html = '<section class="cch cch2" aria-label="Coach"><div class="cch-hd"><span class="cch-k">' + esc(o.title || (c.name ? 'Your coach' : 'Coach')) + '</span>' + (pm ? '<span class="nm" style="color:' + pm.color + '">' + esc(c.name.split('-')[0]) + '</span>' : '') + '</div>' +
     '<p class="cch-h">' + esc(c.headline) + '</p>' +
-    '<div class="cch-cols">' + (c.right.length ? '<div class="cch-ok"><h5>What went right</h5><ul>' + c.right.map((x) => '<li>' + esc(x.t) + '</li>').join('') + '</ul></div>' : '') +
-    (c.wrong.length ? '<div class="cch-no"><h5>What went wrong</h5><ul>' + c.wrong.map((x) => '<li class="cch-' + x.sev + '"' + (x.sec ? ' data-sec="' + esc(x.sec) + '"' : '') + '><b>' + esc(dbfCap(x.label)) + '</b> ' + coachTag(x, c.night) + (x.what ? '<span class="cch-what">' + esc(x.what) + '</span>' : '') + '<span class="cch-fx"><span class="cch-nx">Next time:</span> ' + esc(x.fix) + '</span>' + (x.guide || '') + '</li>').join('') + '</ul></div>' : '') + '</div>' +
-    '<div class="cch-acct">' + (c.deaths ? '<p class="' + (c.deaths.bad ? 'warn' : c.deaths.n ? 'meh' : 'ok') + '"><b>Deaths:</b> ' + esc(c.deaths.line) + '</p>' : '') + (c.avoid ? '<p class="' + (c.avoid.bad ? 'warn' : 'ok') + '"><b>Avoidable damage:</b> ' + esc(c.avoid.line) + '</p>' : '') + '</div>' +
-    (String(c.headline).includes(String(c.focus).replace(/\.$/, '')) ? '' : '<div class="cch-focus"><b>Focus ' + (c.night ? 'next raid' : 'next pull') + ':</b> ' + esc(c.focus) + '</div>') +
-    (c.full ? '<details class="cch-more" data-k="' + k + '"' + (S.openSecs.has(k) ? ' open' : '') + '><summary>Read the full coaching</summary><div class="cch-full">' + c.full + '</div></details>' : '') + '</section>'; }
+    (focusSame ? '' : '<div class="cch-focus"><span class="cch-fk">🎯 Focus ' + (c.night ? 'next raid' : 'next pull') + '</span><span class="cch-fv">' + esc(c.focus) + '</span></div>') +
+    (c.wrong.length ? '<div class="cch-sh">What went wrong</div><ol class="cch-ps cch-no">' + c.wrong.map(prob).join('') + '</ol>' : '') +
+    (c.right.length ? '<div class="cch-good">' + c.right.map((x) => '<span class="cch-gd">✓ ' + esc(x.t) + '</span>').join('') + '</div>' : '') +
+    (D || A ? '<div class="cch-acct2">' + (D ? '<div class="cch-ab' + (D.bad ? ' warn' : '') + '"><span class="cch-al">Deaths</span><div class="cch-chips">' + dch + '</div></div>' : '') + (A ? '<div class="cch-ab' + (A.bad ? ' warn' : '') + '"><span class="cch-al">Avoidable damage</span><div class="cch-chips">' + ach + '</div></div>' : '') + '</div>' : '') +
+    (c.full ? '<details class="cch-more" data-k="' + k + '"' + (S.openSecs.has(k) ? ' open' : '') + '><summary>Read the full coaching</summary><div class="cch-full">' + c.full + '</div></details>' : '') + '</section>';
+  return colorNames(iconSpells(html), PM).replace(/<span class="cch-pmap" data-mi="(\d+)"><\/span>/g, (m0, n) => '<span class="cch-pmap">' + (MAPS[+n] || '') + '</span>'); }
 document.addEventListener('toggle', (e) => { const d = e.target; if (d && d.matches && d.matches('details.spc-chd[data-k]') && S.openSecs) { if (d.open) S.openSecs.add(d.dataset.k); else S.openSecs.delete(d.dataset.k); } }, true); /* (Rotation's sections stay open once opened) */
 document.addEventListener('toggle', (e) => { const d = e.target; if (d && d.matches && d.matches('details.cch-more[data-k]')) { if (d.open) S.openSecs.add(d.dataset.k); else S.openSecs.delete(d.dataset.k); } }, true); /* (the full coaching stays open once opened) */
 const oaRaidTop = (reps) => ((coachRaid(reps) || {}).list || [])[0] || null; /* (the raid's #1, the same as the coach's) */
@@ -9173,7 +9249,7 @@ function rowText(s, row) {
     // intermission", not "At the intermission still alive at the intermission")
     if (ws.length > 1 && /^[a-z]/.test(v) && /\s/.test(v.trim())) return v;
     if (ws.length === 1) return has(lv, w) ? v : col + ' ' + v;
-    return /^\d[\d.,]*\s+\S+$/.test(v) && has(lv, ws[0]) ? v + ' ' + ws.slice(1).join(' ') : col + ' ' + v; };
+    return /^\d[\d.,]*(?:, then \d[\d.,]*)*\s+\S+$/.test(v) && has(lv, ws[0]) /* ("4, then 6 orbs popped" too (Oct 22)) */ ? v + ' ' + ws.slice(1).join(' ') : col + ' ' + v; };
   const flat = (t) => String(t).replace(/\s*\(([^()]*)\)/g, ', $1');
   const bits = row.map((c, i) => ({ c, col: s.cols[i] || '' })).filter(({ c }) => (c.bad || c.warn) && c !== first && !c.map && !c.maps && !c.more)
     .map(({ c, col }) => { const v = String(cellTxt(c)), plain = /^(result|rating|notes?|what happened)$/i.test(col); return v ? (col && !c.s && !plain ? label(col, v) : v) + (c.sub && !/^(result|rating)$/i.test(col) ? ' (' + flat(c.sub) + ')' : '') : ''; }).filter(Boolean);
@@ -20453,6 +20529,8 @@ function deathVerdict(r, d) {
   const word = { wipe: 'after the pull was lost', own: 'their own mistake', fast: 'too fast to react', raid: 'the raid\'s mistake', ready: andList((defs.length ? defs : kit).slice(0, 2)) + ' still ready', nothing: 'nothing left to press' }[why];
   const v = { why, w, on: w > 0, counts: !after || late, late, fast, own, raid, defs, kit, word, story: d.story || '' };
   d._dv = { ct, v }; return v; }
+// (a death's verdict when only the death is at hand (Debriefing's lines): from the pull it belongs to)
+const dvR = (d) => { const r0 = S.rep; if (r0 && r0.deaths && r0.deaths.includes(d)) return deathVerdict(r0, d); for (const x of CACHE.values()) if (x && x.deaths && x.deaths.includes(d)) return deathVerdict(x, d); return null; };
 // (a player's deaths over some pulls: all of them (the full count), the ones that count, the ones on them, and their weight in the grade)
 function deathsOf(reps, name) { const all = []; for (const r of reps) for (const d of r.deaths) if (d.player === name) all.push({ r, d, v: deathVerdict(r, d), pull: r.item.pull });
   const counted = all.filter((x) => x.v.counts); return { all, n: all.length, counted, on: counted.filter((x) => x.v.on), w: counted.reduce((s, x) => s + x.v.w, 0), wipe: all.length - counted.length }; }
@@ -22037,7 +22115,7 @@ function dbfStats(r) {
     def += (p.defs || []).reduce((n, d) => n + inT(d.uses).length, 0); hs += inT(p.cons.healthstone).length; hp += inT(p.cons.healpot).length;
     if ((r.item.kill || end >= 120) && !p.cons.combatpot.concat(p.cons.manapot || []).some((u) => u.t <= ct + 0.05) && !prepotted(r, p)) noPot.push(p.name); }
   // (not the deaths in a mass wipe, 4 or more within 5 seconds, where a defensive wouldn't have saved anyone)
-  const defReady = ds.filter((d) => !dbfFast(d) && (d.available || []).some((a) => !/^(Healthstone|a healing potion)$/i.test(a)) && ds.filter((x) => Math.abs(x.t - d.t) <= 5).length < 4).map((d) => d.player);
+  const defReady = ds.filter((d) => { const v = deathVerdict(r, d); return v.why === 'ready' && v.defs.length > 0; }).filter((d) => ds.filter((x) => Math.abs(x.t - d.t) <= 5).length < 4).map((d) => d.player);
   const kicks = r.interrupts.filter((k) => k.t <= ct + 0.05).length, missK = (r.missedKicks || []).filter((m) => m.t <= ct + 0.05).length;
   return (r._dbf = { ct, r, it: r.item, left: r.item.kill ? 0 : pullPct(r.item), label: pullLabel(r.item), dur: r.duration, end, ds, first: ds[0] || null, early, dps: dmg / Math.max(1, end), def, hs, hp, noPot, defReady, kicks, missK, cause: causeOf(r) });
 }

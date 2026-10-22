@@ -3617,6 +3617,10 @@ function buildCoiledAltar(ev, r, h) {
 
   // ---- pushes and cooldowns ----
   const pushRows = [];
+  // (the 20 fastest Mythic kills, Oct 22: when each phase ended. Heroic has no kill numbers yet, so it's shown, not judged)
+  const KT = { p1: [134, 157], p2: [150, 176], zj: [22, 33] }, P2K = 'about 2:30, never past 2:56', ms2 = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+  const MT = (t, sev, detail, fix) => mistakes.push({ t, player: 'Raid', mechanic: 'Phase changes', id: S('fangs of the coiled altar')[0], severity: sev, detail, fix });
+  const hpAtT = (gs, t) => { let v = null; for (const g of gs) { const u = r.hpUnits && r.hpUnits.get(g); if (u) for (const [s2, f2] of u.samples) { if (s2 > t) break; v = f2; } } return v == null ? null : Math.round(100 * v); };
   if (p2 != null) {
     const pt = zeroAt(zj) ?? p2;
     // compare with the Fangs that was due: the last one if the push came right after it, otherwise the next one
@@ -3624,28 +3628,44 @@ function buildCoiledAltar(ev, r, h) {
     // The plan: after the last Toxic Deluge (the pools), hold the last frontal on empty ground, then kill Zul'jan in
     // the middle; his death explodes the orbs left (aim for 9 to 11 stacks) under stacked raid cooldowns.
     const lastDel = deluges.filter((t) => t <= pt).pop();
+    const fangs = casts('fangs of the coiled altar').filter((t) => t < p2 - 1).length, p1Late = mythic && p2 > KT.p1[1] + 3, p1Bad = mythic && fangs >= 3;
+    if (p1Bad || p1Late) MT(p2, p1Bad ? 'High' : 'Medium', 'Zul\'jan went down at ' + ms2(p2) + (p1Bad ? ', after the third Noxious Ground pools' : '') + ' (fastest kills: ' + ms2(KT.p1[0]) + ' to ' + ms2(KT.p1[1]) + ').',
+      'Push Zul\'jan right after the second pools: hold the last frontal on empty ground, then burn him with cooldowns stacked.');
     const st = stackAt(pt + 5), mx = st.length ? Math.max(...st) : 0;
     const cds = pcasts(RAID_CD).filter((e) => e.t >= pt - 8 && e.t <= pt + 12);
     const pots = healPots(pt - 5, pt + 20);
     if (mx > 11) M(pt, 'Raid', 'venom rupture', mx >= 14 ? 'High' : 'Medium', 'The raid had up to ' + mx + ' Venom Rupture stacks after the P1 push (plan: 9 to 11).', 'Pop fewer orbs with the last frontals (2 to 3, then none), so the push explosion lands on fewer stacks.');
     if (!cds.length && mythic) M(pt, 'Raid', 'fangs of the coiled altar', 'Medium', 'No raid cooldown was used around the P1 push (' + mx + ' Venom Rupture stacks).', 'Group up and stack Darkness, Anti-Magic Zone and Spirit Link Totem for the push, and stay in them until the stacks fall off.');
-    pushRows.push([{ txt: 'P1 → P2' }, { t: pt }, { txt: lastDel != null ? (pt - lastDel).toFixed(0) + ' s after the last Toxic Deluge' : '—', dim: true },
+    pushRows.push([{ txt: 'P1 → P2' }, { t: pt }, { txt: 'P1 took ' + ms2(p2) + (mythic ? ' (kills: ' + ms2(KT.p1[0]) + ' to ' + ms2(KT.p1[1]) + ')' : ''), bad: p1Bad, warn: !p1Bad && p1Late, sub: lastDel != null ? (pt - lastDel).toFixed(0) + ' s after the last Toxic Deluge' + (fangs >= 3 ? ', after the third pools' : '') : '' },
       { txt: mx + ' Venom Rupture (plan 9 to 11)', bad: mx >= 14, warn: mx > 11 }, { txt: fmtList(cds) || 'none', bad: mythic && !cds.length }, { txt: pots.length ? pots.length + ' (' + pots.join(', ') + ')' : 'none', dim: !pots.length }]);
   }
+  // (P2, Malacrass: how long he took against the kills, with the moment it went late: his second shield (amber, 4 of the 20 kills
+  // had one) or a 5th Dreadmarch or 3:00 (red, no kill got there). Judged at that moment, so the wipe filter counts it fairly;
+  // a pull that wipes in P2 gets its own line)
+  const p2End = inter ?? (p2 != null && !r.item.kill ? dur : null);
+  const P2T = p2 == null || p2End == null ? null : (() => {
+    const dmT = dm.filter((t) => t >= p2 - 1 && t < p2End), enT = ev.filter((x) => x.k === 'start' && L(x.spell) === 'eternal nightfall' && x.t >= p2 && x.t < p2End).map((x) => x.t).sort((p, q) => p - q).filter((t, i, l) => !i || t - l[i - 1] > 10);
+    const len = p2End - p2, badAt = [dmT[4], p2 + 180].filter((t) => t != null && t < p2End), warnAt = [enT[1], p2 + 163].filter((t) => t != null && t < p2End);
+    const bad = mythic && badAt.length > 0, warn = mythic && !bad && warnAt.length > 0, got = [enT.length >= 2 ? 'a second Eternal Nightfall' : '', dmT.length >= 5 ? 'a ' + dmT.length + 'th Dreadmarch' : ''].filter(Boolean);
+    const at = bad || warn ? Math.min(...(bad ? badAt : warnAt)) : null;
+    if (bad || warn) MT(at, bad ? 'High' : 'Medium', (inter != null ? 'Malacrass took ' : 'P2 went on for ') + ms2(len) + (inter != null ? '' : ' before the wipe') + ' (the fastest kills: ' + P2K + ')' + (got.length ? ', so he got ' + got.join(' and ') : '') + '.',
+      'Push Malacrass before his second shield: keep damage on him between add sets and save cooldowns for his first shield. Kills finish P2 in about 2:30.');
+    return { len, dmN: dmT.length, enN: enT.length, bad, warn, at };
+  })();
+  const p2Cell = (x) => ({ txt: 'P2 ' + (inter != null ? 'took ' : 'lasted ') + ms2(x.len) + (mythic ? ' (kills: ' + P2K + ')' : ''), bad: x.bad, warn: x.warn, sub: (x.enN === 1 ? '1 shield' : x.enN + ' shields') + ', ' + x.dmN + ' Dreadmarch casts' + (mythic ? ' (kills: 1 shield, 4 casts)' : '') });
+  if (P2T && inter == null) pushRows.push([{ txt: 'P2 (wiped)' }, { t: P2T.at ?? p2End }, p2Cell(P2T), { txt: '' }, { txt: '' }, { txt: '' }]);
   if (inter != null) {
     const pt = zeroAt(mal) ?? inter;
     const ssAll = casts('soul sever'), ss = ssAll.filter((t) => t <= pt + 1).pop();
     const delta = ss != null ? pt - ss : null;
-    const gapS = ssAll.length > 1 ? ssAll[ssAll.length - 1] - ssAll[ssAll.length - 2] : null, dueS = ss != null && gapS ? ss + gapS : null;
-    // (the push is late once the next Dreadmarch went out before it: new ghosts and mind controls on the raid. A top
-    // Mythic kill pushed 25 seconds after the last Soul Sever, still before the next Dreadmarch, with nothing going wrong)
-    const dmFirst = ss != null ? dm.filter((t) => t > ss + 0.5 && t < pt) : [], late = dmFirst.length > 0;
-    if (late) M(pt, 'Raid', 'soul sever', 'Medium', 'Malacrass was pushed ' + delta.toFixed(1) + ' s after the last Soul Sever, after the next Dreadmarch had gone out.', 'Hold damage until the frontal clears the ghosts, then push before the next Dreadmarch, or the raid gets mind controlled.');
     const lust = pcasts(LUST).filter((e) => e.t >= inter - 20 && e.t <= inter + 25);
     if (!lust.length && mythic) M(inter, 'Raid', 'soulbinding', 'Low', 'No Bloodlust or Heroism during the Soulbinding intermission.', 'Use Hero/Lust on the intermission, because it is the big damage window on Zul\'jan.');
     const zjDmg = ev.filter((e) => e.k === 'pdmg' && e.t >= inter && e.t <= (p3 ?? dur) && zj.includes(e.dst)).reduce((s, e) => s + e.amt, 0);
-    pushRows.push([{ txt: 'P2 → Intermission' }, { t: pt }, { txt: delta == null ? 'no Soul Sever found' : delta.toFixed(1) + ' s after the last Soul Sever' + (late ? ', after the next Dreadmarch (' + h.fmtT(dmFirst[0]) + ')' : ', before the next Dreadmarch'), bad: delta != null && dueS != null && pt > dueS, warn: late }, // red once the next Soul Sever was due (ghosts pile up)
-      { txt: 'Lust: ' + (lust.length ? fmtList(lust) : 'none'), bad: !lust.length && mythic }, { txt: 'Damage to Zul\'jan in intermission: ' + h.compact(zjDmg) }, { txt: '' }]);
+    const zjBack = p3 != null ? hpAtT(zj, p3) : null, zjBad = mythic && zjBack != null && zjBack > 40, zjWarn = mythic && !zjBad && zjBack != null && zjBack > 35;
+    if (zjBad || zjWarn) MT(p3, zjBad ? 'High' : 'Medium', 'Zul\'jan was still at ' + zjBack + '% after the intermission (fastest kills: ' + KT.zj[0] + ' to ' + KT.zj[1] + '%).', 'Lust in the intermission and put every damage cooldown on Zul\'jan: he takes double damage while he heals. A faster P2 gives him less time to heal, too.');
+    const c2 = P2T ? p2Cell(P2T) : { txt: '' }; if (P2T && delta != null) c2.sub += '; ' + delta.toFixed(0) + ' s after the last Soul Sever';
+    pushRows.push([{ txt: 'P2 → Intermission' }, { t: P2T && P2T.at != null ? Math.min(P2T.at, pt) : pt }, c2,
+      { txt: 'Lust: ' + (lust.length ? fmtList(lust) : 'none'), bad: !lust.length && mythic }, { txt: zjBack != null ? 'Zul\'jan back at ' + zjBack + '%' + (mythic ? ' (kills: ' + KT.zj[0] + ' to ' + KT.zj[1] + '%)' : '') : 'Damage to Zul\'jan in intermission: ' + h.compact(zjDmg), bad: zjBad, warn: zjWarn, sub: zjBack != null ? 'damage to him in the intermission: ' + h.compact(zjDmg) : '' }, { txt: '' }]);
   }
   if (p3 != null) {
     const defil = casts('defilement of the coiled altar').filter((t) => t >= p3);
@@ -3669,9 +3689,9 @@ function buildCoiledAltar(ev, r, h) {
       { txt: offTop.length ? 'Most damage on Malacrass outside shields: ' + offTop.map(([g, a]) => pname(g) + ' ' + h.compact(a)).join(', ') : '' }, { txt: '' }]);
   }
   sections.unshift({ id: 'push', title: 'Phase changes (Push on time)', spell: S('fangs of the coiled altar'),
-    verdict: mistakes.some((x) => ['Fangs of the Coiled Altar', 'Soul Sever', 'Soulbinding', 'Defilement of the Coiled Altar'].includes(x.mechanic) && x.player === 'Raid') ? 'warn' : 'good',
-    summary: 'It shows the push timing against the plan, raid cooldowns and potions at the P1 push, Bloodlust and damage in the intermission, and boss balance in P3.',
-    cols: ['Transition', 'When', 'Timing', 'Stacks / Lust / balance', 'Cooldowns / damage', 'Potions at push'], rows: pushRows });
+    verdict: mistakes.some((x) => ['Phase changes', 'Fangs of the Coiled Altar', 'Soulbinding', 'Defilement of the Coiled Altar'].includes(x.mechanic) && x.player === 'Raid') ? 'warn' : 'good',
+    summary: 'Each phase change against the 20 fastest kills: when Zul\'jan went down, how long Malacrass took (kills push him before his second shield), how healthy Zul\'jan came back after the intermission, and boss balance in P3. Also the stacks and raid cooldowns at the P1 push and Bloodlust in the intermission.',
+    cols: ['Transition', 'When', 'Timing', 'Stacks / Lust / balance', 'Cooldowns / Zul\'jan\'s health', 'Potions at push'], rows: pushRows });
 
   // ---- Sever orb accounting ----
   // frontals are timed to when they land (cast success, ~3s after the cast bar starts): that's when orbs pop
@@ -4007,6 +4027,7 @@ function buildCoiledAltar(ev, r, h) {
     delete orbSec0.groups;
     orbSec0.title = 'Venom orbs (Into the frontals)'; orbSec0.place = 'Venom orbs into the frontals'; orbSec0.mythicOnly = false;
     orbSec0.cols = ['Deluge', 'When', 'Orbs popped', 'Result', ''];
+    orbSec0.fix = mythic ? 'Tanks, take turns and point each frontal at its own orbs: 5 to 6 per frontal (never 8), 2 to 3 on the second-to-last before the push, and the last one into empty ground.' : 'Tanks, point each frontal at the orbs on the ground so it clears them.';
     orbSec0.summary = orbSec0.summary + ' Each Toxic Deluge is followed by its frontals, the tanks taking turns so each cone pops its own set of orbs. Each row shows how many orbs each frontal popped (each one is a Venom Rupture stack on everyone) against the plan, and its map plays every cone in order.';
   }
   // Dreadmarch: targets should pixel-stack on the nearest edge marker so ghost spawns are consistent

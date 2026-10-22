@@ -32,7 +32,7 @@ about 13% of it wrong; we got 25%."
 - Tags: "kills get this right" (gold) or "even kills slip here" (grey). Full coaching: "Against kills: …".
 
 ## Coiled Altar Mythic, Oct 22 (20 fastest kills, 489–514 s)
-Done right in: shield 17/20, interrupts 16/20, adds 12/20, Dreadmarch 11/20, phase push 9/20, Guillotine soaks 3/20,
+Done right in: shield 17/20, interrupts 16/20, adds 12/20, Dreadmarch 11/20, phase push 16/20 (was 9/20 before the timing checks, Oct 22: the old Malacrass rule flagged even the fastest kill), Guillotine soaks 3/20,
 Venomfang 3/20, orbs 2/20, Gloombombs 2/20, tank frontals 2/20, avoidable damage 0/20. No kill failed any mechanic.
 
 ## Next
