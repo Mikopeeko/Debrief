@@ -230,7 +230,7 @@ local PRESETS = {
   medium = { compact = false, maxSlips = 3, maxBoss = 4, maxRaid = 3, maxDied = 3, maxMech = 6, width = "normal", show = {} },
   heavy = { compact = false, maxSlips = 5, maxBoss = 7, maxRaid = 5, maxDied = 6, maxMech = 12, width = "wide", show = {} },
   -- (the default since Oct 21: a larger card with number tiles, the raid's side on your own view, and two next-pull tips)
-  detailed = { compact = false, maxSlips = 4, maxBoss = 5, maxRaid = 3, maxDied = 3, maxMech = 6, width = "large", detailed = true, show = {} },
+  detailed = { compact = false, maxSlips = 4, maxBoss = 5, maxRaid = 5, maxDied = 3, maxMech = 12, width = "large", detailed = true, show = {} },
 }
 function Debrief_SetPreset(key)
   local p = PRESETS[key]; if not p or not DB then return end
@@ -1560,7 +1560,7 @@ local function buildOptions()
   stepper("Raid mistakes", "The biggest ones, with names.", 1, 5, function() return DB.maxRaid or 3 end, function(v) DB.maxRaid = v end)
   stepper("Deaths listed", "Who died first, and to what. 0 hides the list.", 0, 8, function() return DB.maxDied or 3 end, function(v) DB.maxDied = v end)
   stepper("Stop at death", "On a wipe, nothing after this death counts. 0 counts the whole pull.", 0, 8, function() return DB.deathCut or 0 end, function(v) DB.deathCut = v end)
-  stepper("Boss mechanics", "How each mechanic went, worst first. 0 hides them.", 0, 12, function() return DB.maxMech or 6 end, function(v) DB.maxMech = v end)
+  stepper("Boss mechanics", "How each mechanic went, worst first. 0 hides them.", 0, 16, function() return DB.maxMech or 6 end, function(v) DB.maxMech = v end)
   panelEnd()
   -- Goals
   page("goals")

@@ -237,7 +237,7 @@ function buildOne(b, rep, same, W, L, cutN) {
       }
       raid.mech.push([flag, sec.spell && sec.spell[0] ? String(sec.spell[0]) : '', plain(sec.title), shortTo(t.replace(/\s*\(see How it works\)/gi, '').replace(/\.\./g, '.').trim(), 210)]);
     } catch (e) { raid.mech.push([sec.verdict === 'bad' ? 'bad' : sec.verdict === 'warn' ? 'warn' : 'ok', sec.spell && sec.spell[0] ? String(sec.spell[0]) : '', plain(sec.title || ''), { bad: 'Went wrong.', warn: 'Some mistakes.' }[sec.verdict] || 'Done right.']); } }
-    const rank = { bad: 0, warn: 1, ok: 2 }; raid.mech.sort((a, c) => rank[a[0]] - rank[c[0]]); raid.mech = raid.mech.slice(0, 12);
+    const rank = { bad: 0, warn: 1, ok: 2 }; raid.mech.sort((a, c) => rank[a[0]] - rank[c[0]]); raid.mech = raid.mech.slice(0, 16); /* (every mechanic, and avoidable damage on top) */
   }
   raid.next = b.kill ? (top.length ? 'Kill! Next time: ' + (sentences(top[0].fix || '')[0] || 'clean up ' + top[0].k + '.') : 'Kill! Clean pull.') : (top.length && top[0].fix ? sentences(top[0].fix)[0] : 'Same plan, cleaner.');
   return { h, players, raid };
