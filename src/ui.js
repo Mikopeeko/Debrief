@@ -1672,6 +1672,9 @@ const PATCH_NOTES = [
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
+    'Debriefing is calmer: the numbers on top, then the coach, then the mechanics (the clean ones folded into one line), and everything else in one drawer at the bottom.',
+    'The coach shows a small map on each problem, and Copy for Discord and Load a note are small buttons in its corner.',
+    'Debriefing says each thing once: the Fix cards follow the coach\'s list, and the lines that repeated the coach are gone.',
     'Externals (Blessing of Sacrifice, Pain Suppression, Guardian Spirit and the rest) are judged by need: did someone need it while it was ready, and did you press it? If nobody was in real danger, holding it is full marks.',
     'Deaths are read over the last 15 seconds, not 10, and the Report card tells each one in a line (a slow slide with little healing, a big hit while low, dodgeable damage) with what to do next time.',
     'Graphs: click a summary tile to open its graph, a player\'s tabs sit in three rows (what they did, used and got), and the graphs you picked stay picked next time.',
@@ -1692,6 +1695,7 @@ const PATCH_NOTES = [
     'The bosses are in the same order everywhere on the site.',
     'Long patch notes fold after six lines.',
   ], f: [
+    'Coach: a death you could have dodged now says to dodge it, not to press a defensive.',
     'Why we wiped only looks at what happened before the wipe filter (a pull said it was lost at 6:53 when the filter stopped at 4:59).',
     'Ula\'tek: Mephitic Thrash no longer flags players when the whole raid got hit by it; only a thrash most of the raid stayed out of counts.',
     'The Back button closes the Start now setup instead of leaving Debrief, and closes any open tips or menu before going back a page.',
@@ -7255,10 +7259,10 @@ function audit() {
         return { s, nB, nW, lc, lv: lvlOf(lc) }; });
       const nC = all.filter((x) => x.lv === 'clean').length, nM = all.filter((x) => x.lv === 'minor').length, nF = all.length - nC - nM;
       const num = (k, v, sub) => '<div class="dbr-n"><span class="dbr-k">' + k + '</span><span class="dbr-v">' + v + '</span><span class="dbr-s">' + sub + '</span></div>';
-      top += '<div class="dbr-4">' + num('Result', res, resSub) + num('Deaths', '<b>' + deaths.length + '</b>', deaths.length ? 'first at ' + T(deaths[0].t) + ' (' + esc(deaths[0].player) + ')' : 'nobody died') +
+      void res; void resSub; top += '<div class="dbr-4 dbr-3">' + num( /* (no Result tile: the banner and the coach say it (Oct 22)) */'Deaths', '<b>' + deaths.length + '</b>', deaths.length ? 'first at ' + T(deaths[0].t) + ' (' + esc(deaths[0].player) + ')' : 'nobody died') +
         num('Mechanics', '<b class="' + (nC ? 'dbr-ok' : 'dbr-z') + '">' + nC + '</b><em> clean</em> <b class="' + (nM ? 'dbr-w' : 'dbr-z') + '">' + nM + '</b><em> with mistakes</em> <b class="' + (nF ? 'dbr-b' : 'dbr-z') + '">' + nF + '</b><em> failed</em>', 'of ' + plural(all.length, 'mechanic')) +
         num('Raid damage', '<b>' + C(dmg / Math.max(1, endT)) + '</b>', 'a second' + (cut ? ', up to the wipe filter' : '') + dbdVsLast(r, dmg / Math.max(1, endT))) + (NJ ? dbnNum(NJ, num) : '') + '</div>';
-      if (NJ) top = top.replace('<div class="dbr-4">', '<div class="dbr-4 dbn-five">');
+      if (NJ) top = top.replace('<div class="dbr-4 dbr-3">', '<div class="dbr-4">'); /* (with a note: four tiles) */
       top = dbnBar(NJ, r) + top;
       { const lab = it.kill ? 'kill' : 'wipe at ' + pullShort(it) + (it.endPct != null ? ' (' + Math.round(100 - it.endPct) + '% of the fight done)' : '');
         const L = ['**Pull ' + it.pull + ' · ' + it.boss + ' ' + (it.diff || '') + ' · ' + lab + '**'];
@@ -7266,7 +7270,11 @@ function audit() {
       top = '<div class="dbd-acts"><button type="button" class="btn sm dbd-copy" data-dbcopy="1">Copy for Discord</button></div>' + top;
       // (the three to fix: failed first, then slips; within each, the boss's most important first, then the most problems)
       const imp = IMPORTANCE[it.boss] || [], ix = (id) => (id === 'deaths' ? -1 : imp.indexOf(id) < 0 ? 99 : imp.indexOf(id)), rk = { major: 0, moderate: 0, minor: 1, clean: 9 };
-      const pick = all.filter((x) => x.lv !== 'clean').sort((a, b) => rk[a.lv] - rk[b.lv] || (b.nB > 0) - (a.nB > 0) || ix(a.s.id) - ix(b.s.id) || (b.nB + b.nW) - (a.nB + a.nW)).slice(0, 3); /* (real misses before slips (Oct 21)) */
+      const pick0 = all.filter((x) => x.lv !== 'clean').sort((a, b) => rk[a.lv] - rk[b.lv] || (b.nB > 0) - (a.nB > 0) || ix(a.s.id) - ix(b.s.id) || (b.nB + b.nW) - (a.nB + a.nW)); /* (real misses before slips (Oct 21)) */
+      /* (the coach's What went wrong first, in its order (Oct 22: the cards were a second, different list)) */
+      const cs0 = (() => { try { return coachSummary([r], S.mechP && [...r.players.values()].some((p) => p.name === S.mechP) ? S.mechP : null); } catch (e) { return null; } })();
+      const byC = cs0 ? cs0.wrong.map((w) => pick0.find((x) => (w.sec && x.s.id === w.sec) || cMatch(x.s, w.label) || cMatch(x.s, w.cause))).filter(Boolean) : [];
+      const pick = [...new Set(byC.concat(pick0))].slice(0, 3);
       S.pfix1 = { r, id: pick.length ? pick[0].s.id : null }; /* (the Next pull line follows the first card (Oct 21)) */
       if (pick.length && tileOf) {
         top += '<div class="dbr-h">Fix ' + (pick.length === 1 ? 'this' : 'these') + ' next pull</div><div class="dbr-fx3">' + pick.map((x) => { const k = firstAt.has(x.s.id) ? firstAt.get(x.s.id) : 'w', ti = tileOf(x.s, x.s.rows, x.s.groups || [], k);
@@ -7458,7 +7466,7 @@ function audit() {
   $('#view').querySelectorAll('.md-i, .dd-r').forEach((b) => b.addEventListener('click', () => setTimeout(drawMaps, 0)));
   // (the player picker: one player, or everyone again; the pick stays as you change pulls)
   bindOnePick(audit);
-  if (!r.allPulls) oaFill([r]); /* (the coach on top (Oct 22)) */
+  S._drawMaps = drawMaps; if (!r.allPulls) oaFill([r]); /* (the coach on top (Oct 22)) */
 }
 // Fight audit panels shown as a list with a detail pane (the ones with many columns per row)
 const MD_SECS = new Set(['soakq', 'push', 'tankfront', 'shield', 'addsets']);
@@ -8577,7 +8585,47 @@ function oaFill(reps) {
   const name = S.mechP && R.some((r) => [...r.players.values()].some((p) => oaBase(p.name) === oaBase(S.mechP))) ? S.mechP : null;
   const pm = new Map(); for (const r of R) for (const p of r.players.values()) if (p.name && !pm.has(p.name)) pm.set(p.name, p);
   el.innerHTML = coachBox(coachSummary(R, name), { key: night ? 'n' : 'p', title: name ? 'Your coach' : night ? 'The night, coached' : 'This pull, coached' }); /* (the coach on top (Oct 22): the page under it stays as it was) */
-  el.hidden = !el.innerHTML;  refreshIcons();
+  el.hidden = !el.innerHTML; try { oaLayout(v, el); } catch (e) { console.error(e); } refreshIcons();
+}
+// (the tab in four layers (your note, Oct 22: "full of info, which is great. However maybe a little overwhelming"): the numbers on top,
+// the coach (Copy for Discord and Load a note as small buttons in its corner, a small map on each problem), the mechanics with the clean
+// ones folded into one line, and everything else in one drawer at the bottom. Nothing removed, only moved)
+function oaLayout(v, el) {
+  if (!el.innerHTML) return;
+  const tiles = v.querySelector('.dbr-4'); if (tiles && tiles.nextElementSibling !== el) { v.insertBefore(tiles, el); tiles.classList.add('oa-tiles'); }
+  // (the small buttons)
+  const hd = el.querySelector('.cch-hd');
+  if (hd && !hd.querySelector('.cch-acts')) { const acts = document.createElement('span'); acts.className = 'cch-acts';
+    const cp = v.querySelector('.dbd-copy'); if (cp) { const box = cp.closest('.dbd-acts'); acts.appendChild(cp); if (box && !box.children.length) box.remove(); }
+    const nb = v.querySelector('.dbn-bar.dbn-none'); if (nb) { const bs = [...nb.querySelectorAll('button')]; if (bs.length) { bs.forEach((b) => { b.classList.add('sm'); acts.appendChild(b); }); nb.remove(); } }
+    if (acts.children.length) hd.appendChild(acts); }
+  // (a small map on each of the coach's problems: the Fix card's own map for that mechanic)
+  const cards = [...v.querySelectorAll('a.dbr-fx')];
+  for (const li of el.querySelectorAll('.cch-no li')) { if (li.querySelector('.wr-map')) continue;
+    const sec = li.dataset.sec || '', lab = ((li.querySelector('b') || {}).textContent || '').trim().toLowerCase();
+    const c = cards.find((a) => { const hr = a.getAttribute('href') || ''; return (sec && (hr.indexOf('#sec-' + sec + '-') === 0 || hr === '#nml-' + sec)) || ((a.querySelector('.dbr-fxb b') || {}).textContent || '').trim().toLowerCase() === lab; });
+    const m = c && c.querySelector('.wr-map'); if (!m) continue;
+    const k = m.cloneNode(true); k.removeAttribute('data-fit'); k.classList.remove('dbr-fxm', 'mcx-map'); k.classList.add('cch-thumb'); k.querySelectorAll('.mz-big').forEach((x) => x.remove());
+    li.classList.add('cch-hasmap'); const body = document.createElement('div'); while (li.firstChild) body.appendChild(li.firstChild); li.appendChild(k); li.appendChild(body); }
+  wrThumbFit(el);
+  // (the clean mechanics of each phase in one line: "✓ 4 went clean", open to see them)
+  for (const ck of v.querySelectorAll('details.phase .dbck, .mcx-ph .dbck')) { if (ck.querySelector(':scope > details.cln-fold')) continue;
+    const ok = [...ck.querySelectorAll(':scope > details.st-ok')]; if (ok.length < 2) continue;
+    const nm = (d) => (((d.querySelector('.sechd b') || d.querySelector('summary b') || {}).textContent) || '').replace(/\s*\(.*$/, '').trim();
+    const f = document.createElement('details'); f.className = 'panel cln-fold'; f.dataset.k = 'cln-' + (ck.closest('details.phase') ? [...v.querySelectorAll('details.phase')].indexOf(ck.closest('details.phase')) : 0); if (S.openSecs.has(f.dataset.k)) f.open = true;
+    f.innerHTML = '<summary><span class="cln-t">✓ ' + ok.length + ' went clean</span><span class="sub">' + esc(ok.map(nm).filter(Boolean).join(', ')) + '</span></summary>';
+    ok.forEach((d) => f.appendChild(d)); ck.appendChild(f);
+    f.addEventListener('toggle', () => { if (f.open) S.openSecs.add(f.dataset.k); else S.openSecs.delete(f.dataset.k); if (f.open && S._drawMaps) { try { S._drawMaps(); } catch (e) { /* (maps draw when their line opens) */ } } }); }
+  // (everything else in the one drawer at the bottom)
+  const dr = v.querySelector('details.dbr-more'); if (!dr || dr.dataset.oa) return; dr.dataset.oa = '1';
+  const sm = dr.querySelector(':scope > summary'); let at = sm;
+  const put = (n) => { if (!n || dr.contains(n) || n.contains(dr) || n === el || n.contains(el)) return; at.after(n); at = n; };
+  put(v.querySelector('.dbr-top')); put(v.querySelector('#rcTop')); put(v.querySelector('.nmc > .lpv.dbf:not(.rc-more)')); put(v.querySelector('.rc-hp'));
+  v.querySelectorAll('.mcx-tl').forEach(put); put(v.querySelector('.panel.brw'));
+  put([...v.querySelectorAll('details.panel')].find((d) => /^Data check/.test(((d.querySelector('summary') || {}).textContent || '').trim())));
+  const night = !!v.querySelector('.nmc');
+  if (sm) sm.innerHTML = '<b>' + (night ? 'More from all pulls' : 'More from this pull') + '</b><span class="sub">the fix cards and their maps, better and worse, the timeline, ' + (night ? 'the progress chart, the night start to finish and the numbers' : 'phase times, burst windows, the survival kit, raid cooldowns, kicks and the numbers') + '</span>';
+  dr.addEventListener('toggle', () => { if (dr.open) { if (S._drawMaps) { try { S._drawMaps(); } catch (e) { /* (maps draw when their line opens) */ } } wrThumbFit(dr); } });
 }
 // ---- The coach (your ask, Oct 22: "an in-depth summary of what went wrong and what went right as if it is a world first raid leader,
 // coaching them and telling them how they can improve"): one brain every tab calls, so the #1 fix reads the same everywhere.
@@ -8587,6 +8635,8 @@ function oaFill(reps) {
 // was their own mistake), overhealing never flagged, proc-driven Rotation lines never graded (only red/amber checks are used).
 const cHtml = (t) => String(t || '').replace(/<[^>]+>/g, '').replace(/&#39;/g, '\'').replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
 const cSec = (s) => shortT(s.title || '').replace(/\s*\(.*$/, '') || (s.spell && s.spell[1]) || '';
+// (does a mechanic line go by this name: its title, its short name or its spell, like Spiritcackle for the Soulcoiler adds)
+const cMatch = (s, l) => { const k = String(l || '').toLowerCase(); return !!k && [cSec(s), shortT(s.title || ''), dbfSecName(s), s.spell && s.spell[1]].filter(Boolean).some((x) => String(x).toLowerCase() === k); };
 // (one player's list, ranked the way a raid lead would: a death they could have stopped, a serious mechanic miss, their costliest
 // Rotation slip, then smaller mechanic slips and avoidable damage)
 function coachMine(reps, name) { return oaCache(reps, 'c:' + name, () => {
@@ -8602,7 +8652,7 @@ function coachMine(reps, name) { return oaCache(reps, 'c:' + name, () => {
     const rw = !own && !m ? oaRowWhy(r, d) : null;
     const key = own ? own.mechanic : m ? m.mechanic : rw ? rw.l : d.ability || 'a hit', slow = !own && !ow && kit;
     const g = dG.get(lc(key)) || { key, pulls: new Set(), d, slow, fix: '', how: '' }; g.pulls.add(r.item.pull);
-    if (!g.fix) g.fix = (rw && oaFlip(rw.why)) || (m && m.fix && dbfTip1(m.fix)) || fixer(key, p.name) || (slow ? 'When your health keeps dropping, press ' + dbfKit(d)[0].replace(/^an? /, 'your ') + '.' : '') || dbfTip1((d.prevent || []).find((x) => !/^No (clear )?mistake/i.test(x)) || '');
+    if (!g.fix) g.fix = (rw && oaFlip(rw.why)) || (m && m.fix && dbfTip1(m.fix)) || fixer(key, p.name) || (slow ? 'When your health keeps dropping, press ' + dbfKit(d)[0].replace(/^an? /, 'your ') + '.' : '') || (ow && !own && !m ? 'Stay out of ' + key + ': it\'s dodgeable.' : '') /* (a dodgeable death says so, not "press a defensive" (Oct 22)) */ || dbfTip1((d.prevent || []).find((x) => !/^No (clear )?mistake/i.test(x)) || '');
     if (!g.how) g.how = cHtml((m && m.fix) || (d.prevent || []).filter((x) => !/^No (clear )?mistake/i.test(x)).slice(0, 2).join(' ') || (slow ? 'You were dropping for a while with ' + lpAnd(dbfKit(d).slice(0, 2)) + ' still up. A defensive pressed at half health buys the healers the time they need.' : ''));
     dG.set(lc(key), g); }
   for (const g of [...dG.values()].filter((x) => x.pulls.size >= need && x.fix).sort((a, b) => b.pulls.size - a.pulls.size))
@@ -8623,12 +8673,13 @@ function coachMine(reps, name) { return oaCache(reps, 'c:' + name, () => {
 // (the raid's list: what wiped us most, then the mechanics that went wrong (on a night, in 2 or more pulls))
 function coachRaid(reps) { return oaCache(reps, 'c:raid', () => {
   const out = [], first = oaRaidFix(reps), night = reps.length > 1, need = night ? 2 : 1, fixer = dbfFixer(reps), lc = (x) => String(x || '').toLowerCase();
-  if (first) out.push({ ...first, kind: 'raid', sev: 'bad', how: '' });
+  if (first) { const sec = [...new Map(reps.flatMap((r) => [...pullSections(r).values()]).map((x) => [x.s.id, x.s])).values()].find((s) => cMatch(s, first.label));
+    out.push({ ...first, kind: 'raid', sev: 'bad', how: '', cause: first.label, label: sec ? shortT(sec.title) : first.label, sec: sec ? sec.id : null }); }
   const imp = IMPORTANCE[reps[0].item.boss] || [], S2 = new Map();
   for (const r of reps) for (const [id, x] of pullSections(r)) { if (id === 'deaths' || x.s.info || x.st === 'na') continue;
     const g = S2.get(id) || { id, s: x.s, bad: 0, warn: 0, ok: 0, pulls: [] }; if (x.st === 'bad') g.bad++; else if (x.st === 'warn') g.warn++; else g.ok++; if (x.st !== 'ok') g.pulls.push(r.item.pull); S2.set(id, g); }
   const ms = reps.flatMap((r) => keptMistakes(r)).filter((m) => m.fix);
-  const L = [...S2.values()].filter((g) => g.pulls.length >= need && !(first && lc(cSec(g.s)) === lc(first.label))).sort((a, b) => (b.bad > 0) - (a.bad > 0) || b.pulls.length - a.pulls.length || (imp.indexOf(a.id) < 0 ? 99 : imp.indexOf(a.id)) - (imp.indexOf(b.id) < 0 ? 99 : imp.indexOf(b.id)));
+  const L = [...S2.values()].filter((g) => g.pulls.length >= need && !(first && cMatch(g.s, first.label))).sort((a, b) => (b.bad > 0) - (a.bad > 0) || b.pulls.length - a.pulls.length || (imp.indexOf(a.id) < 0 ? 99 : imp.indexOf(a.id)) - (imp.indexOf(b.id) < 0 ? 99 : imp.indexOf(b.id)));
   // (a mechanic's fix from the mistakes on its own flagged rows (the same players, within 3 s), so two mechanics that share a spell name,
   // like the tank frontals and the ghosts' Soul Sever, each get their own; else by name)
   const rowFix = (id) => { const cnt = new Map(); let full = '';
@@ -8641,7 +8692,7 @@ function coachRaid(reps) { return oaCache(reps, 'c:raid', () => {
   for (const g of L) { const nm = dbfSecName(g.s), rf = rowFix(g.id), ins = (String(g.s.title || '').match(/\(([^)]+)\)\s*$/) || [])[1], shared = [...S2.values()].filter((y) => lc(dbfSecName(y.s)) === lc(nm)).length > 1 || [...S2.values()].some((y) => y !== g && y.s.spell && g.s.spell && lc(y.s.spell[1]) === lc(g.s.spell[1])),
       fx = rf ? rf.fx : (!shared && fixer(nm)) || (ins ? dbfCap(ins) + '.' : ''); /* (no mistake on its rows: its fix by name, unless another mechanic shares that name; then its own short instruction) */ if (!fx || out.some((y) => y.fix === fx)) continue; /* (one fix said once) */
     const full = rf ? rf.full : ms.filter((m) => lc(m.mechanic) === lc(nm)).map((m) => cHtml(m.fix)).sort((a, b) => b.length - a.length)[0] || dbfTip1(cHtml(g.s.how || '')); /* (else the mechanic's own explanation) */
-    out.push({ kind: 'mech', sev: g.bad * 2 >= g.pulls.length ? 'bad' : 'warn', label: shortT(g.s.title), n: g.pulls.length, of: reps.length, pulls: g.pulls, fix: fx, how: full }); }
+    out.push({ kind: 'mech', sec: g.id, sev: g.bad * 2 >= g.pulls.length ? 'bad' : 'warn', label: shortT(g.s.title), n: g.pulls.length, of: reps.length, pulls: g.pulls, fix: fx, how: full }); }
   return { list: out, S2 }; }) || { list: [], S2: new Map() }; }
 // (what went right)
 function coachRight(reps, name, S2) {
@@ -8674,7 +8725,7 @@ function coachSummary(reps, name) {
     /* (the first domino in a few words, for the raid's headline on one pull: "set 4's adds were still alive") */
     let why0 = ''; if (!night && !kill && !name) { try { const o = whyWiped(reps[0]); if (o) why0 = cHtml(whyShort(o, new Map()).short); } catch (e) { why0 = ''; } }
     const headline = name ? (w0 ? who + ', ' + (wrong.some((x) => x.sev === 'bad') ? (right.length ? 'some good things ' + (night ? 'tonight' : 'this pull') + ', and one thing to fix first.' : 'one thing to fix first.') : 'good ' + (night ? 'night' : 'pull') + ' from you, with one thing to sharpen.') + ' Your one fix: ' + dbfCap(w0.label) + '.' : who + ', ' + (night ? 'nothing you did twice tonight.' : 'clean pull from you.') + ' Keep doing exactly this.')
-      : kill ? res + '. Great work, everyone.' + (w0 && night ? ' What cost us the most: ' + w0.label + '.' : '') : res + '.' + (w0 ? ' ' + (night ? 'What cost us the most: ' : 'It came down to ') + w0.label + (night && w0.n ? ' (' + w0.n + ' wipes)' : why0 ? ': ' + why0.charAt(0).toLowerCase() + why0.slice(1) : '') + '.' : '');
+      : kill ? res + '. Great work, everyone.' + (w0 && night ? ' What cost us the most: ' + w0.label + '.' : '') : res + '.' + (w0 ? ' ' + (night ? 'What cost us the most: ' : 'It came down to ') + (w0.cause || w0.label) + (night && w0.n ? ' (' + w0.n + ' wipes)' : why0 ? ': ' + why0.charAt(0).toLowerCase() + why0.slice(1) : '') + '.' : '');
     const focus = w0 ? w0.fix : kill ? 'Same plan next time.' : 'Same plan. Execute it.';
     // (the full coaching: why we wiped in the raid lead's words, each problem with how to fix it, every death that counted, what went right)
     const pm = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !pm.has(p.name)) pm.set(p.name, p);
@@ -8694,7 +8745,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
   return '<section class="cch" aria-label="Coach"><div class="cch-hd"><span class="cch-k">' + esc(o.title || (c.name ? 'Your coach' : 'Coach')) + '</span>' + (pm ? '<span class="nm" style="color:' + pm.color + '">' + esc(c.name.split('-')[0]) + '</span>' : '') + '</div>' +
     '<p class="cch-h">' + esc(c.headline) + '</p>' +
     '<div class="cch-cols">' + (c.right.length ? '<div class="cch-ok"><h5>What went right</h5><ul>' + c.right.map((x) => '<li>' + esc(x.t) + '</li>').join('') + '</ul></div>' : '') +
-    (c.wrong.length ? '<div class="cch-no"><h5>What went wrong</h5><ul>' + c.wrong.map((x) => '<li class="cch-' + x.sev + '"><b>' + esc(dbfCap(x.label)) + '</b>' + (c.night && x.n ? ' <span class="oa-n">' + x.n + ' of ' + x.of + '</span>' : '') + '<span class="cch-fx"> ' + esc(x.fix) + '</span></li>').join('') + '</ul></div>' : '') + '</div>' +
+    (c.wrong.length ? '<div class="cch-no"><h5>What went wrong</h5><ul>' + c.wrong.map((x) => '<li class="cch-' + x.sev + '"' + (x.sec ? ' data-sec="' + esc(x.sec) + '"' : '') + '><b>' + esc(dbfCap(x.label)) + '</b>' + (c.night && x.n ? ' <span class="oa-n">' + x.n + ' of ' + x.of + '</span>' : '') + '<span class="cch-fx"> ' + esc(x.fix) + '</span></li>').join('') + '</ul></div>' : '') + '</div>' +
     '<div class="cch-focus"><b>Focus ' + (c.night ? 'next raid' : 'next pull') + ':</b> ' + esc(c.focus) + '</div>' +
     (c.full ? '<details class="cch-more" data-k="' + k + '"' + (S.openSecs.has(k) ? ' open' : '') + '><summary>Read the full coaching</summary><div class="cch-full">' + c.full + '</div></details>' : '') + '</section>'; }
 document.addEventListener('toggle', (e) => { const d = e.target; if (d && d.matches && d.matches('details.cch-more[data-k]')) { if (d.open) S.openSecs.add(d.dataset.k); else S.openSecs.delete(d.dataset.k); } }, true); /* (the full coaching stays open once opened) */
@@ -21825,7 +21876,7 @@ function dbfPull(o) {
     // (Debriefing: the four blocks with "Next pull" in them, and the story on its own for the bottom)
     cards: four(dbfNext('Next pull', focus)), story: '<div class="panel dbf-short rc-story"><div class="dbf-k">' + (it.kill ? 'The kill, phase by phase' : 'The pull, phase by phase') + '</div><p>' + s1 + ' ' + (story || s2) + '</p></div>', nums,
     // (the Debriefing rebuild, Oct 19: under the four numbers and the cards to fix, only the next pull's plan and what changed since the last one)
-    slim: WHY || focus || U.length || Dn.length ? '<div class="panel dbr-next">' + WHY + (focus ? '<p class="dbr-nx"><b>Next pull:</b> ' + esc(focus) + '</p>' : '') + (U.length ? '<p class="dbr-up"><span>▲ Better</span> ' + U.join(' ') + '</p>' : '') + (Dn.length ? '<p class="dbr-dn"><span>▼ Worse</span> ' + Dn.join(' ') + '</p>' : '') + '</div>' : '' };
+    slim: U.length || Dn.length ? '<div class="panel dbr-next">' + (U.length ? '<p class="dbr-up"><span>▲ Better</span> ' + U.join(' ') + '</p>' : '') + (Dn.length ? '<p class="dbr-dn"><span>▼ Worse</span> ' + Dn.join(' ') + '</p>' : '') + '</div>' : '' };
 }
 // ---- the whole night ----
 function dbfNight(o) {
@@ -21929,7 +21980,7 @@ function dbfNight(o) {
   return { top: '<div class="panel dbf-short"><div class="dbf-k">All pulls</div>' + WHYN + '<p>' + s1 + s2 + '</p>' + (arc ? '<p>' + arc + '</p>' : '') + (focus ? '<p><b>Next time:</b> ' + esc(focus) + '</p>' : '') + '</div>' + bars + nums, lists: four(''),
     cards: four(dbfNext('Next time', focus)), story: '<div class="panel dbf-short rc-story"><div class="dbf-k">The night, start to finish</div><p>' + s1 + s2 + '</p>' + (arc ? '<p>' + arc + '</p>' : '') + '</div>', bars, nums,
     // (the Debriefing rebuild on All pulls, Oct 19: under the four numbers and the cards to fix, the next raid's plan and what changed through the night)
-    slim: WHYN || focus || U.length || Dn.length ? '<div class="panel dbr-next">' + WHYN + (focus ? '<p class="dbr-nx"><b>Next time:</b> ' + esc(focus) + '</p>' : '') + (U.length ? '<p class="dbr-up"><span>▲ Better</span> ' + U.join(' ') + '</p>' : '') + (Dn.length ? '<p class="dbr-dn"><span>▼ Worse</span> ' + Dn.join(' ') + '</p>' : '') + '</div>' : '' };
+    slim: U.length || Dn.length ? '<div class="panel dbr-next">' + (U.length ? '<p class="dbr-up"><span>▲ Better</span> ' + U.join(' ') + '</p>' : '') + (Dn.length ? '<p class="dbr-dn"><span>▼ Worse</span> ' + Dn.join(' ') + '</p>' : '') + '</div>' : '' };
 }
 // (Recap is information only: the side boxes' links to other tabs become plain text there)
 function dbfNoGo(el) { if (!el) return; el.querySelectorAll('button.lp-dgo').forEach((b) => { const x = document.createElement('span'); x.className = b.className + ' dbf-ng'; x.innerHTML = b.innerHTML.replace(/\s*›\s*$/, ''); b.replaceWith(x); }); }
