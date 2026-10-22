@@ -107,8 +107,8 @@ local function expect(what, got, want) print((got == want and "  ok   " or "  FA
 local function newPull() PULL_ID = PULL_ID + 1; fire(ev, "ENCOUNTER_END"); ADVANCE(NOW + 30); expect("nothing left glowing before the pull", GLOWING(), "nothing"); heard(); NOW = 0; TIMERS = {} end
 local styles = { "pulse", "border", "pixel", "sparkle", "proc", "assist", "onebutton", "altglow", "pandemic" }
 
-print("-- defaults: a gold ring on the icon's edge (Border, 2 px, no gap), no sound, no voice")
-expect("default style", DebriefGlowDB.style, "border"); expect("ring sits on the edge (no gap)", DebriefGlowDB.pad, 0); expect("ring thickness", DebriefGlowDB.thick, 2)
+print("-- defaults: a gold ring on the icon's edge (Border, 3 px, 1 px out), no sound, no voice")
+expect("default style", DebriefGlowDB.style, "border"); expect("ring 1 px out from the picture", DebriefGlowDB.pad, 1); expect("ring thickness", DebriefGlowDB.thick, 3)
 newPull(); pull(); at(19.9, "just before Aura Mastery"); at(20, "Aura Mastery due"); press(31821); at(20.5, "pressed")
 
 print("-- the countdown on the spell matches NSRT's (NSRT shows Aura Mastery 8 s early)")
@@ -227,27 +227,38 @@ print("-- the x button puts a spell back on the main settings")
 R[31884].reset:GetScript("OnClick")(R[31884].reset)
 expect("Avenging Wrath back to main", DebriefGlowDB.spells[31884], nil)
 newPull(); pull(); at(45, "Avenging Wrath: main look again"); press(31884)
-print("-- a custom icon: 52 x 40 at 150% (Edit Mode), a higher strata, its cooldown swipe at level 50, its inner picture moved by a skin")
+print("-- a custom icon (Edit Mode 150%, a higher strata, cooldown swipe at level 50): Blizzard's picture hidden, a skin draws its own 52 x 40 picture")
 do
   local ds; for _, f in ipairs(ESS) do if f._label == "Divine Shield" then ds = f end end
   local swipe = CreateFrame("Cooldown"); swipe.GetFrameLevel = function() return 50 end
+  local skinF = CreateFrame("Frame"); skinF.GetEffectiveScale = function() return 1.5 end
+  local skinT = CreateFrame("Texture"); skinT._label = "skin picture"
+  skinT.GetTexture = function() return 135642 end; skinT.IsVisible = function() return true end; skinT.GetAlpha = function() return 1 end
+  skinT.GetWidth = function() return 52 end; skinT.GetHeight = function() return 40 end; skinT.GetParent = function() return skinF end
+  skinF.GetRegions = function() return skinT end
+  local pic = CreateFrame("Texture"); pic.GetTexture = function() return 135642 end; pic.IsVisible = function() return false end; pic.IsShown = function() return false end
+  pic.GetWidth = function() return 40 end; pic.GetHeight = function() return 40 end
+  local border = CreateFrame("Texture"); border.GetTexture = function() return 999 end; border.IsVisible = function() return true end; border.GetAlpha = function() return 1 end
+  border.GetWidth = function() return 70 end; border.GetHeight = function() return 70 end
+  ds.Icon = pic; ds.GetRegions = function() return pic, border end
   ds.GetEffectiveScale = function() return 1.5 end; ds.GetFrameStrata = function() return "DIALOG" end; ds.GetFrameLevel = function() return 12 end
-  ds.GetChildren = function() return swipe end
-  ds.GetWidth = function() return 52 end; ds.GetHeight = function() return 40 end
-  local pic = CreateFrame("Texture"); pic.GetWidth = function() return 30 end; pic.GetHeight = function() return 30 end; pic.IsShown = function() return true end; ds.Icon = pic
+  ds.GetChildren = function() return swipe, skinF end
+  local was = DebriefGlowDB.style; DebriefGlowDB.style = "border"
   newPull(); DebriefGlow_Test(true)
-  local g; for _, f in ipairs(FRAMES) do if f._shown and rawget(f, "_anchor") == ds and rawget(f, "drawn") then g = f end end
-  expect("glow box is the icon's slot, not its moved picture", g and rawget(g, "_anchor") == ds, true)
-  expect("game glows sized to the slot on screen (52 x 40 at 150%)", g and (rawget(g, "w") .. " x " .. rawget(g, "h")), "78.0 x 60.0")
+  local g; for _, f in ipairs(FRAMES) do if f._shown and rawget(f, "_anchor") == skinT and rawget(f, "drawn") then g = f end end
+  expect("ring fits the skin's picture (not the hidden one, not the border art)", g ~= nil, true)
+  expect("sized to it on screen (52 x 40 at 150%)", g and (rawget(g, "w") .. " x " .. rawget(g, "h")), "78.0 x 60.0")
+  expect("default: a ring straddling the edge", (g and rawget(g, "drawn") or "?") .. ", " .. DebriefGlowDB.pad .. " px out, " .. DebriefGlowDB.thick .. " px thick", "border, 1 px out, 3 px thick")
   local back = g and rawget(g, "back")
-  expect("soft halo behind the icon (same strata, one level under)", back and (rawget(back, "_strata") .. " " .. rawget(back, "_level")), "DIALOG 11")
-  SlashCmdList.DEBRIEFGLOW("size")
+  expect("soft halo layer behind the icon (same strata, one level under)", back and (rawget(back, "_strata") .. " " .. rawget(back, "_level")), "DIALOG 11")
   expect("glow in the icon's higher strata", g and rawget(g, "_strata"), "DIALOG")
   expect("glow above the cooldown swipe", g and rawget(g, "_level") > 50, true)
-  local n; for _, f in ipairs(FRAMES) do if f._shown and rawget(f, "expires") and rawget(f, "_anchor") == ds then n = f end end
-  expect("number above the glow", n and rawget(n, "_level") > rawget(g, "_level"), true)
+  local n; for _, f in ipairs(FRAMES) do if f._shown and rawget(f, "expires") and rawget(f, "_anchor") == skinT then n = f end end
+  expect("countdown centred on the skin's picture", n ~= nil, true)
+  expect("number above the glow", n and g and rawget(n, "_level") > rawget(g, "_level"), true)
+  SlashCmdList.DEBRIEFGLOW("size")
   ADVANCE(NOW + 3.1); heard()
-  ds.GetEffectiveScale = nil; ds.GetFrameStrata = nil; ds.GetFrameLevel = nil; ds.GetChildren = nil; ds.GetWidth = nil; ds.GetHeight = nil; ds.Icon = nil
+  ds.GetEffectiveScale = nil; ds.GetFrameStrata = nil; ds.GetFrameLevel = nil; ds.GetChildren = nil; ds.GetRegions = nil; ds.Icon = nil; DebriefGlowDB.style = was
 end
 print("-- /dglow test skips a spell that's off")
 newPull(); DebriefGlow_Test(true); expect("Blessing of Sacrifice not in the test", GLOWING():find("Sacrifice") == nil, true); ADVANCE(NOW + 3.1); heard()

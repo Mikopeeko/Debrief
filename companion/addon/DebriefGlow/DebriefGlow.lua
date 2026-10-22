@@ -7,7 +7,7 @@
 local ADDON = ...
 local DB
 local DEF = {
-  enabled = true, style = "border", colorName = "gold", r = 0.90, g = 0.71, b = 0.31, a = 1, thick = 2, pad = 0, speed = 1, lines = 8, scale = 1,
+  enabled = true, style = "border", colorName = "gold", r = 0.90, g = 0.71, b = 0.31, a = 1, thick = 3, pad = 1, speed = 1, lines = 8, scale = 1,
   lead = 0, hold = 8, stopOnPress = true, fallback = true, iconSize = 56,
   gameColors = true, timer = true, timerSize = 22, timerColor = "white", timerPos = "middle", timerTenths = false,
   sound = "none", channel = "Master",
@@ -90,11 +90,39 @@ end
 -- (the icon's slot, the frame the Cooldown Manager lays out, in screen units: width and height apart, so Edit Mode's icon size
 -- (a scale) and icons that aren't square both fit. Its inner picture isn't used: skins can move or replace it.)
 local function scaleOf(f) local e = f and f.GetEffectiveScale and f:GetEffectiveScale(); return (type(e) == "number" and e > 0) and e or 1 end
+-- (the spell's picture as it's drawn: the visible texture showing the same icon file as Blizzard's own, the biggest if several.
+-- Skins and icon-size addons move, stretch or replace Blizzard's picture, so the frame alone doesn't say where it is.
+-- In combat the file can be hidden from addons, so the last one found for each icon is kept.)
+local artCache = setmetatable({}, { __mode = "k" })
+local function regionsOf(f, out, depth)
+  if f.GetRegions then for _, r in ipairs({ f:GetRegions() }) do if type(r) == "table" and r.GetTexture then out[#out + 1] = r end end end
+  if depth > 0 and f.GetChildren then for _, c in ipairs({ f:GetChildren() }) do if type(c) == "table" then regionsOf(c, out, depth - 1) end end end
+  return out
+end
+local function iconArt(it)
+  local ic = type(it.Icon) == "table" and it.Icon.GetTexture and it.Icon
+  if not ic then return it end
+  local ok, ref = pcall(ic.GetTexture, ic)
+  if not ok or ref == nil or secret(ref) then return artCache[it] or it end
+  local best, bw = nil, 0
+  for _, r in ipairs(regionsOf(it, {}, 2)) do
+    local ok2, t = pcall(r.GetTexture, r)
+    if ok2 and t ~= nil and not secret(t) and t == ref and r.IsVisible and r:IsVisible() and (r:GetAlpha() or 1) > 0 then
+      local w, h = r:GetWidth() or 0, r:GetHeight() or 0
+      if type(w) == "number" and type(h) == "number" and not secret(w) and w * h > bw then best, bw = r, w * h end
+    end
+  end
+  best = best or it
+  artCache[it] = best
+  return best
+end
 local function iconBox(it)
-  local w, h = it:GetWidth() or 0, it:GetHeight() or 0
-  if not w or w <= 0 then w = 40 end; if not h or h <= 0 then h = w end
-  local k = scaleOf(it) / scaleOf(UIParent)
-  return w * k, h * k
+  local art = iconArt(it)
+  local w, h = art:GetWidth() or 0, art:GetHeight() or 0
+  if type(w) ~= "number" or w <= 0 then w = 40 end; if type(h) ~= "number" or h <= 0 then h = w end
+  local host = art.GetParent and art ~= it and art:GetParent() or it
+  local k = scaleOf(host) / scaleOf(UIParent)
+  return w * k, h * k, art
 end
 -- (behind the icon: the same strata, one level under it, so a soft glow shows around its edges without covering the picture)
 local function below(f, it)
@@ -285,7 +313,8 @@ function timerLook(f, id)
   f.text:ClearAllPoints()
   if DB.timerPos == "top" then f.text:SetPoint("BOTTOM", f, "TOP", 0, 2)
   elseif DB.timerPos == "bottom" then f.text:SetPoint("TOP", f, "BOTTOM", 0, -2)
-  else f.text:SetPoint("CENTER", f, "CENTER", 0, 0) end
+  else f.text:SetPoint("CENTER", f, "CENTER", 0.5, -math.floor((DB.timerSize or 22) * 0.05 + 0.5)) end
+  f.text:SetJustifyH("CENTER"); f.text:SetJustifyV("MIDDLE")
 end
 local function showTimer(id, expires, label)
   if not DB.timer then return end
@@ -297,7 +326,7 @@ local function showTimer(id, expires, label)
   stopTimer(id)
   local f = table.remove(tpool)
   if not f then f = CreateFrame("Frame", nil, UIParent); f:SetFrameStrata("HIGH"); f.text = f:CreateFontString(nil, "OVERLAY") end
-  f:ClearAllPoints(); f:SetAllPoints(it); above(f, it, 20)
+  f:ClearAllPoints(); f:SetAllPoints(iconArt(it)); above(f, it, 20)
   timerLook(f, id)
   f.id, f.expires, f.onFloat = id, expires, it == float
   timers[id] = f; f:SetScript("OnUpdate", tick); f:Show(); tick(f)
@@ -311,8 +340,8 @@ local function stopAll() round = round + 1; for id in pairs(glows) do stop(id) e
 function place(g, it, id)
   local pad = DB.pad or 2
   g:SetScale(DB.scale or 1)
-  g.w, g.h = iconBox(it)
-  g:ClearAllPoints(); g:SetPoint("TOPLEFT", it, "TOPLEFT", -pad, pad); g:SetPoint("BOTTOMRIGHT", it, "BOTTOMRIGHT", pad, -pad)
+  local w, h, art = iconBox(it); g.w, g.h, g.art = w, h, art
+  g:ClearAllPoints(); g:SetPoint("TOPLEFT", art, "TOPLEFT", -pad, pad); g:SetPoint("BOTTOMRIGHT", art, "BOTTOMRIGHT", pad, -pad)
   above(g, it, 10); below(g.back, it); g:Show(); dress(g, id)
 end
 local function start(id, hold, label)
@@ -1079,6 +1108,8 @@ SlashCmdList.DEBRIEFGLOW = function(msg)
       say(string.format("%s: slot %.0f x %.0f, scale %.2f, on screen %.0f x %.0f, layer %s %s%s", spellName(items[i].ids[1]) or "?", it:GetWidth() or 0, it:GetHeight() or 0,
         scaleOf(it), w, h, tostring(it:GetFrameStrata()), tostring(it:GetFrameLevel()),
         ic and string.format("; picture %.0f x %.0f%s", ic:GetWidth() or 0, ic:GetHeight() or 0, ic:IsShown() and "" or " (hidden)") or ""))
+      local art = iconArt(it)
+      say(string.format("   fits to: %s, %.0f x %.0f on screen", art == it and "the icon's slot" or (art == ic and "Blizzard's picture" or "a skin's picture"), w, h))
     end
   elseif msg == "move" then
     placeFloat(); float.tex:SetTexture(spellIcon(31821)); float.txt:SetText("Drag me, then /dglow move again"); float.moving = not float.moving; float:EnableMouse(float.moving)
@@ -1098,9 +1129,14 @@ ev:SetScript("OnEvent", function(_, e, a1, a2, a3)
     -- (0.4.3: the ring on the icon's edge became the default look; settings still on the old defaults move to it once)
     if not DB.ringDefault then
       if DB.style == "pulse" then DB.style = "border" end
-      if DB.pad == 2 then DB.pad = 0 end
-      if DB.thick == 3 then DB.thick = 2 end
-      DB.ringDefault = true
+      if DB.pad == 2 then DB.pad = 1 end
+      DB.ringDefault, DB.ringOnBorder = true, true
+    end
+    -- (0.4.4: the ring moved onto the border (3 px, 1 px out); settings still on 0.4.3's ring move with it once)
+    if not DB.ringOnBorder then
+      if DB.pad == 0 then DB.pad = 1 end
+      if DB.thick == 2 then DB.thick = 3 end
+      DB.ringOnBorder = true
     end
     if DB.colorName == nil then DB.colorName = "gold" end
     registerSettings()
