@@ -3915,7 +3915,7 @@ function buildCoiledAltar(ev, r, h) {
   for (const d of r.deaths) {
     const ph = phaseAt(d.t); if (ph !== 'P2' && ph !== 'P3') continue;
     const lastHit = d.recap.filter((x) => !x.heal).pop();
-    const fell = lastHit && /fall/i.test(lastHit.spell);
+    const fell = lastHit && /^falling$/i.test(lastHit.spell); // (the log's falling damage only: "Eternal Nightfall" isn't a fall (Oct 22))
     const noHit = !lastHit || d.t - lastHit.t > 4;
     if (fell || noHit) {
       M(d.t, d.player, 'dreadmarch', 'High', 'Died ' + (fell ? 'from falling' : 'with no damage in the seconds before') + ' in ' + ph + ', most likely mind controlled off the platform.', 'Cancel shields and absorbs when mind controlled, and keep a stun plus a grip or ring ready for every Dreadmarch.');
@@ -6598,7 +6598,8 @@ function survivability(r) {
     const p = r.players.get(d.guid); if (!p) continue;
     const avail = [];
     for (const def of p.defs || []) if (!def.uses.some((u) => u <= d.t && u > d.t - def.cd)) avail.push(def.name);
-    if (stonesExist && !p.cons.healthstone.some((u) => u.t <= d.t)) avail.push('Healthstone');
+    // (a Warlock's own Demonic Healthstone comes back about a minute later: 2 or 3 a pull in our logs (deaths research, Oct 22))
+    if (stonesExist && !p.cons.healthstone.some((u) => u.t <= d.t && !(/^demonic/i.test(u.name || '') && u.t < d.t - 60))) avail.push('Healthstone');
     if (!p.cons.healpot.some((u) => u.t <= d.t)) avail.push('a healing potion');
     d.available = avail;
     // how fast they went down: from the last moment they were healthy (90%+), or their highest health in the window
@@ -6699,7 +6700,15 @@ function explainDeaths(r) {
     const dmg = hits.reduce((n, e) => n + e.amount, 0), heal = heals.reduce((n, e) => n + e.amount, 0);
     const by = new Map(); for (const e of hits) { const k = e.spell || 'Melee'; let o = by.get(k); if (!o) by.set(k, o = { name: k, id: e.id, src: e.src, amt: 0, n: 0 }); o.amt += e.amount; o.n++; }
     const top = [...by.values()].sort((a, b) => b.amt - a.amt);
-    const fast = d.window > 0 && d.window <= 2 && d.startHp >= 50, slow = d.window >= 5, low = !d.healthy && d.startHp > 0 && d.startHp < 35;
+    // (too fast to react: from half health or more to dead in 2 s or less. A hit from 70% that kills is a one-shot too, so it's timed
+    // from the last moment they were at 50%+, not 90% (deaths research, Oct 22). Tanks sit at half health on purpose: from 90%+, as before)
+    const hl0 = (r.php && r.php.get(d.guid)) || []; let l50 = null; for (const [ts, fr] of hl0) { if (ts > d.t) break; if (fr >= 0.5) l50 = ts; }
+    const tank = !!(p && p.role === 'tank'), mxHp = (r.pMax && r.pMax.get(d.guid)) || 0, old2 = d.window > 0 && d.window <= 2 && d.startHp >= 50;
+    d.t50 = l50 == null ? null : Math.round(10 * (d.t - l50)) / 10;
+    // (the biggest hit of their last 1.5 s against their health: over 150% only an immunity helps; 500% and up is a mechanic that kills outright, like Gravebound)
+    d.hitPct = mxHp ? Math.round(100 * hits.filter((e) => e.t >= d.t - 1.5).reduce((m, e) => Math.max(m, e.amount), 0) / mxHp) : null;
+    const fast = tank || d.t50 == null ? old2 : d.t50 <= 2, slow = d.window >= 5, low = !d.healthy && d.startHp > 0 && d.startHp < 35;
+    d.fast = fast; const huge = (d.hitPct || 0) >= 150, scripted = (d.hitPct || 0) >= 500;
     // kickable casts that got off in their last 15 seconds and hit them (e.g. Visceral Burst from a Broodling)
     const gotOff = (r.kicks || []).map((k) => ({ k, at: k.missedAt.filter((m) => m.t >= d.t - 15 && m.t <= d.t + 0.2) })).filter((x) => x.at.length && by.has(x.k.name));
     const defs = (d.available || []).filter((a) => !/^(Healthstone|a healing potion)$/.test(a)), cons = (d.available || []).filter((a) => /^(Healthstone|a healing potion)$/.test(a));
@@ -6727,19 +6736,25 @@ function explainDeaths(r) {
     for (const a of avoid.slice(0, 2)) if (a.x.tip && !fix.includes(a.x.tip) && pct(a.amt, dmg) >= 20) fix.push(a.x.tip); /* (a small avoidable hit 12 s earlier is not what killed them) */
     if (envBig) fix.push('Stay out of the ' + env.name + ' (room damage, not a boss ability).');
     if (low && !fast) fix.push('Get topped up before the next mechanic. Use a Healthstone, potion or defensive while low, or call for healing.');
-    if (defs.length && !(envBig && pct(env.amt, dmg) >= 80)) fix.push(fast ? 'Press ' + defs[0] + ' before ' + killer + ' lands. It was ready.' : 'Use ' + andJoin(defs.slice(0, 2)) + ' when your health starts dropping. ' + (defs.length > 1 ? 'Both were' : 'It was') + ' ready.');
-    if (cons.length && !fast) fix.push(andJoin(cons) + ' would have bought time.');
+    // (a button is only advice when there was time to press it, and only one that could have saved them: a hit over 1.5 times
+    // their health needs an immunity, and a mechanic that kills outright needs the mechanic done (deaths research, Oct 22))
+    const defsOk = scripted ? [] : huge ? defs.filter((a) => DEATH_IMMUNE.test(a)) : defs;
+    if (scripted) fix.unshift(killer + ' kills outright: no defensive or heal saves you. Do the mechanic it punishes.');
+    if (defsOk.length && !fast && !(envBig && pct(env.amt, dmg) >= 80)) fix.push('Use ' + andJoin(defsOk.slice(0, 2)) + ' when your health starts dropping. ' + (defsOk.length > 1 ? 'Both were' : 'It was') + ' ready.');
+    if (cons.length && !fast && !scripted && d.reactable !== false) fix.push(andJoin(cons) + ' would have bought time.');
     if (dmg && slow && heal < dmg * 0.2) fix.push((p && p.role === 'healer' ? 'Stay in range of the other healers, or ' : 'Stay in healer range, or ') + 'call for an external when you are taking steady damage.');
     if (p && p.role === 'tank' && top[0] && /melee/i.test(top[0].name) && !defs.length) fix.push('This is tank damage. Plan an external or a tank swap for this point.');
-    if (!fix.length) fix.push(fast ? 'No mistake found in the log and nothing was left to press. This looks like a raid damage check. Plan a raid cooldown or a personal before ' + killer + '.' : 'No clear mistake found in the log. Open the recap to see the hits in order.');
+    if (!fix.length) fix.push(fast ? 'Too fast to react: nothing to fix on your side. If it keeps happening, the raid can plan a cooldown before ' + killer + '.' : 'No clear mistake found in the log. Open the recap to see the hits in order.');
     d.why = why; d.prevent = fix;
     // (their health 15, 10, 5 and 2 seconds before, and the story in a line: how they went down, read from all of it (your ask, Oct 22))
-    const hl = (r.php && r.php.get(d.guid)) || [], hpAt = (t) => { let v = null; for (const [ts, fr] of hl) { if (ts > t) break; v = fr; } return v == null ? null : Math.round(100 * v); };
+    const hl = hl0, hpAt = (t) => { let v = null; for (const [ts, fr] of hl) { if (ts > t) break; v = fr; } return v == null ? null : Math.round(100 * v); };
     d.hpPath = [15, 10, 5, 2].map((s) => [s, hpAt(d.t - s)]).filter(([, v]) => v != null);
     d.avoidPct = dmg ? pct(avoid.reduce((n, a) => n + a.amt, 0), dmg) : 0; d.ownAvoid = d.avoidPct >= 50; /* (dodgeable damage did half or more: their own death) */ d.avoidName = avoid[0] ? avoid[0].x.name : '';
     d.healPct = dmg ? pct(heal, dmg) : 0;
     const path = d.hpPath.length >= 3 ? ' (' + d.hpPath.map(([, v]) => v + '%').join(', ') + ', then dead)' : '';
-    d.story = fast ? (d.healthy ? 'from ' + Math.round(d.startHp) + '% to dead in ' + d.window.toFixed(1) + ' s' : 'one big hit while already low') + ', too fast to react'
+    const hp50 = l50 == null ? null : hpAt(l50);
+    d.story = scripted ? killer + ' kills outright'
+      : fast ? (d.healthy && d.window <= 2 ? 'from ' + Math.round(d.startHp) + '% to dead in ' + d.window.toFixed(1) + ' s' : hp50 != null && d.t50 != null ? 'from ' + hp50 + '% to dead in ' + d.t50.toFixed(1) + ' s' : 'one big hit while already low') + ', too fast to react'
       : d.avoidPct >= 50 ? (d.avoidName || 'avoidable damage') + ', which you can dodge, did ' + d.avoidPct + '% of the damage'
       : mine.length ? 'right after a mistake on ' + mine[0].mechanic
       : low ? 'stuck under 35% health for the whole 15 seconds' + path
@@ -6759,7 +6774,19 @@ function explainDeaths(r) {
     d.healed5 = heals.filter((e) => e.t >= d.t - 5).reduce((n, e) => n + e.amount, 0);
     d.react = !fast; // (false: from 50%+ to dead in 2 s or less, too fast to press anything)
   }
+  // (a mass death: 3+ of us dead within 1.5 s to the same hit is one raid event, like an orb exploding into the pile, not 14 mistakes.
+  // Not a mechanic that kills each player outright for their own miss (Gravebound), and not their own death when their own mistake
+  // was that hit (they stood in that Sever). Deaths research, Oct 22: 51 of 105 counted deaths on the Oct 21 night)
+  const lc = (s) => String(s || '').toLowerCase(), abOf = (d) => lc(d.ability || d.killer);
+  for (const d of r.deaths) { const ab = abOf(d); d.mass = 0; if (!ab || (d.hitPct || 0) >= 500) continue;
+    const near = r.deaths.filter((x) => Math.abs(x.t - d.t) <= 1.5 && abOf(x) === ab && (x.hitPct || 0) < 500); if (near.length < 3) continue;
+    d.mass = near.length;
+    if ((d.links || []).some((l) => !l.raid && lc(l.mechanic) === ab) || (d.ownAvoid && lc(d.avoidName) === ab)) continue;
+    d.story = 'one of ' + near.length + ' of us killed by ' + (d.ability || d.killer) + ' at once';
+    d.prevent = ['Not on you: ' + (d.ability || d.killer) + ' killed ' + near.length + ' of us at once. Fix what set it off as a raid.']; }
 }
+// (the buttons that can save a hit bigger than your health: immunities and full resets)
+const DEATH_IMMUNE = /^(Ice Block|Divine Shield|Aspect of the Turtle|Netherwalk|Cloak of Shadows|Dispersion|Alter Time)$/;
 const andJoin = (a) => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' or ' + a[a.length - 1];
 function insights(r) {
   const it = r.item, ins = r.insights, dur = r.duration;
