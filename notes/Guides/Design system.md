@@ -120,6 +120,15 @@ A 4px grid: **4, 8, 12, 16, 20, 24, 32**.
 - Nothing scrolls sideways except the pull bars and wide tables (each in its own scroller).
 - Touch targets are at least 32px tall.
 
+## 10b. The automatic design check (Oct 22)
+
+Every build (src/build.ps1) runs src/design-check.ps1 and ends its last line with `design check: OK` or `design check: N
+warning(s), see above`. It never stops the build. It warns about:
+- a flag colour outside the three (the old alarm red, the orange, the second yellow), with the file and line;
+- new text under 12px in shell.html that isn't in src/design-baseline.txt (chart, map and timeline labels may be small).
+If the small size is on purpose (a new chart label), run `powershell -File src/design-check.ps1 -update` and commit the
+baseline. Small print goes behind the shared ⓘ: `<span class="ds-i" tabindex="0" role="note" data-tt="…">ⓘ</span>`.
+
 ## 11. Checklist for any page change
 
 1. Does the page have one main box with the answer at the top?

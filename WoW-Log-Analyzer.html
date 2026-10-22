@@ -1463,6 +1463,10 @@ line.tl-t { stroke: #ece8df; stroke-width: 2.5; vector-effect: non-scaling-strok
 .gb-dtabs { display: flex; flex-direction: column; align-items: stretch; gap: 2px; } .gb-dgr { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; } .gb-dgr + .gb-dgr { border-top: 1px solid var(--line); padding-top: 2px; }
 .gb-dgl { flex: 0 0 112px; padding: 0 8px 0 6px; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--faint); } @media (max-width: 640px) { .gb-dgl { flex-basis: 100%; padding: 4px 6px 0; } }
 .gb-pkn button.on { border-color: var(--gold); color: var(--gold); background: rgba(230,180,80,.1); }
+/* (design system, Oct 22: the picker is a toggle row: pills, the picked ones gold-tinted; what's counted and the ⓘ at its end; More views are small buttons) */
+.gb-pkn { align-items: center; } .gb-pkn button { border-radius: 999px; background: transparent; color: var(--muted); } .gb-pkn button:hover { color: var(--text); border-color: var(--faint); }
+.gb-pkn button.on { color: var(--gold); border-color: var(--gold); background: rgba(230,180,80,.12); }
+.gb-cnt { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; color: var(--muted); font-size: 13px; } .gb-pv { background: var(--raised); border-color: var(--line2); }
 .gb-pkg { margin-top: 4px; } .gb-pkg.n3 { grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); } /* (three in a row only when each has room for its names) */
 .gb-dr .gb-br { grid-template-columns: minmax(0, 190px) minmax(110px, 1fr) minmax(0, 38%); } .gb-dr .gb-bx { white-space: normal; line-height: 1.3; } /* (a long note wraps, so every bar keeps its room) */
 .gb-dmore { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
@@ -5581,6 +5585,12 @@ header.fight.bh.bhx, header.fight.bh.bhx.hero { display: block; min-height: 0; p
   .rp-open, .fpx-link, .gs-just, .gdz-howto, .gdz-wrong, .spc-hwb, .spc-mtx, .spc-sltc, .spc-mo, .ndh-go { padding-top: 8px; padding-bottom: 8px; margin-top: -8px; margin-bottom: -8px; }
 }
 /* ===== end of round 3 ===== */
+/* ===== Design system, shared parts (Oct 22): the ⓘ tip for small print (data-tt holds the text; §8) ===== */
+.ds-i { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line2); color: var(--muted); font-size: 13px; line-height: 1; cursor: help; flex: none; }
+.ds-i:hover, .ds-i:focus { color: var(--gold); border-color: rgba(230,180,80,.5); outline: none; }
+@media (max-width: 760px) { .ds-i { width: 32px; height: 32px; } }
+/* quick fixes (Oct 22): Home's rank labels and its kill tiles' labels at 12px, and its tiles with tile corners */
+.pg-chips .pgc { font-size: 12px !important; font-weight: 700; } .yu-bt em { font-size: 12px !important; } .yu-t, .yu-bt { border-radius: var(--ds-card) !important; }
 </style>
 
 
@@ -25538,8 +25548,9 @@ function graphsBoard(r, end, NP) {
       tile('Deaths', String(dl.length), !dl.length ? 'nobody died' : night ? (most ? 'most: ' + nm(most) + ' (' + most.v + ')' : '') : 'first: ' + nm({ p: dl[0].who }) + ' at ' + T(dl[0].t) + (dl[0].ability ? ', ' + esc(dl[0].ability) : ''), 'death'),
       src ? tile('Hit the raid hardest', '<span class="gb-sumn">' + esc(src.n) + '</span>', C(src.v) + ', ' + pctS(src.v / Math.max(1, srcT)) + ' of all damage taken', 'src') : '',
       tile('Kicks and dispels', nK + ' <small>·</small> ' + nX, 'interrupts · dispels', 'kick')].join('') + '</div>';
-    return sum + '<div class="gb"><nav class="gb-nav gb-pkn" aria-label="Graphs">' + GR.map(([id, t]) => '<button type="button" data-gp="' + id + '" aria-pressed="' + pk.includes(id) + '"' + (pk.includes(id) ? ' class="on"' : '') + '>' + esc(t) + '</button>').join('') + '</nav>' +
-      '<p class="gb-note sub">Pick up to 3 graphs to see side by side. Hover any bar for its numbers, and click a player\'s bar for what made it up. ' + (night ? 'All ' + NP.length + ' pulls, each up to its wipe filter.' : end < r.duration - 0.5 ? 'Counted up to ' + T(end) + ', the wipe filter.' : 'The whole pull.') + '</p>' +
+    return sum + '<div class="gb"><nav class="gb-nav gb-pkn" aria-label="Graphs">' + GR.map(([id, t]) => '<button type="button" data-gp="' + id + '" aria-pressed="' + pk.includes(id) + '"' + (pk.includes(id) ? ' class="on"' : '') + '>' + esc(t) + '</button>').join('') +
+      /* (design system, Oct 22: what's counted at the end of the picker row, and the how-to behind an ⓘ instead of a line of small print) */
+      '<span class="gb-cnt">' + (night ? 'All ' + NP.length + ' pulls, each up to its wipe filter' : end < r.duration - 0.5 ? 'Counted up to ' + T(end) + ', the wipe filter' : 'The whole pull') + '<span class="ds-i" tabindex="0" role="note" aria-label="How it works" data-tt="Pick up to 3 graphs to see side by side. Hover any bar for its numbers, and click a player\'s bar for what made it up.">ⓘ</span></span></nav>' +
       '<div class="gb-grid gb-pkg n' + pk.length + '">' + pk.map((k) => GR.find((x) => x[0] === k)[2]).join('') + '</div>' +
       '<div class="gb-morev"><span class="sub">More views:</span>' + [['pi', 'Power Infusion'], ['dmg', 'Charts over time']].filter(([k]) => k !== 'pi' || !PI_OFF()).map(([k, l]) => '<button type="button" class="gb-pv" data-pv="' + k + '">' + esc(l) + ' ›</button>').join('') + '</div></div>'; }
   return '<div class="gb"><nav class="gb-nav" aria-label="Sections">' + SECS.map(([id, t]) => '<button type="button" data-gs="' + id + '">' + esc(t) + '</button>').join('') + '</nav>' +

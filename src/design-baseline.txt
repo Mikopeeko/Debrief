@@ -1,0 +1,130 @@
+# Text under 12px that the design check allows (chart, map and timeline labels, and what was already there on Oct 22).
+# One rule per line: selector | size. Rebuild it with: powershell -File src/design-check.ps1 -update
+.bgread | 11px
+.bhp-b.best::after | 11px
+.bhp-b.kill::after | 11px
+.bhp-b.next::after | 9px
+.bhp-band em | 10px
+.bhp-n | 10px
+.bhp-n | 11px
+.bjf .ndz-brow .lab small | 11px
+.bjf-cd | 11px
+.bjf-m.later .bjf-t, .bjf-m.whole .bjf-t | 11px
+.bj-jobs .ndz-p .ndz-ex[data-bx] | 10px
+.bj-jobs .ndz-p .ndz-ex[data-bx] | 11px
+.bj-jobs .ndz-p i | 10px
+.bj-jobs .ndz-p i | 11px
+.bj-talf | 11px
+.btl-ax span | 10px
+.btl-c b | 11px
+.btl-hit em | 10px
+.btl-phd b | 10px
+.btl-y span | 10px
+.cch2 .cch-al | 11.5px
+.cch2 .cch-fk | 11.5px
+.cch2 .cch-nx | 11.5px
+.cch2 .cch-wk2k | 11px
+.cch-tag | 11.5px
+.chp-th | 11px
+.dbf-down li::before | 10px
+.dbf-l li::before | 10px
+.dbf-up li::before | 10px
+.fcard.best::after | 10px
+.fc-next .fc-h span.fc-lv | 11px
+.fpb-card i | 11px
+.fpb-det li em | 11px
+.fp-more > summary::before | 10px
+.fp-mt | 10px
+.fp-seg em | 10px
+.fpx-badge b | 11px
+.gb-dgl | 11px
+.gb-ds | 10px
+.gs-wch .me-c .sub | 11.5px
+.gv-ic .csil | 10px
+.hm-use > summary::before | 10px
+.howit > summary::before | 10px
+.kbrank | 11.5px
+.kbrank | 11px
+.map .ml.mlp | 9.5px
+.mcx-dot.mcx-grp > i | 10px
+.mcx-wipe span | 10px
+.my-dtag | 11px
+.nd-mr em | 11px
+.ndz-ac i | 11px
+.ndz-bf .sub | 11.5px
+.ndz-bgt tr.grp td | 11px
+.ndz-both | 10px
+.ndz-bsg | 11px
+.ndz-bsz | 11px
+.ndz-build .ndz-pp .sub | 11px
+.ndz-cta span | 10.5px
+.ndz-cthit em | 10px
+.ndz-ctk > .sub | 11.5px
+.ndz-ctl.boss .ndz-ctw | 11.5px
+.ndz-ctl.hits .ndz-ctw | 11.5px
+.ndz-ctq .t span | 11.5px
+.ndz-ctub | 11px
+.ndz-ctw | 11.5px
+.ndz-cty em | 10px
+.ndz-dagl | 10.5px
+.ndz-dkh | 10.5px
+.ndz-dkr i | 10.5px
+.ndz-dpl | 11px
+.ndz-drl | 11px
+.ndz-gbest | 11px
+.ndz-kcd | 11.5px
+.ndz-kh | 11.5px
+.ndz-kp | 10.5px
+.ndz-li | 11px
+.ndz-p i | 11px
+.ndz-plgl | 11px
+.ndz-plgt thead th | 11px
+.ndz-plpick button small | 11px
+.ndz-plpn small | 11px
+.ndz-prd | 11px
+.ndz-pxp h5 | 11.5px
+.ndz-satg | 11.5px
+.ndz-tag | 11px
+.ndz-ugl | 11px
+.npg-b span | 10px
+.nt-g tr.grp td | 11px
+.nt-hint | 11px
+.nt-leg .nt-tk | 10px
+.nt-one .nt-g tr.grp td | 10px
+.nt-one .nt-leg .nt-tk | 9px
+.nt-one .nt-leg | 11px
+.nt-one .nt-st | 10px
+.nt-one .nt-tk | 11px
+.nt-st | 11px
+.pf-row.cb.cb-h | 10px
+.pft-g > b | 10px
+.pg-intab .tm2 .pg-chips .pgc | 11px
+.pg-you .hb-t | 10px
+.pills .pull.best::after | 10px
+.plan-bcs | 11.5px
+.pli b | 10px
+.plmvp | 10px
+.plmv-row .mvc-p | 10px
+.pn-r .pn-dn | 11px
+.pnw-ti em | 10.5px
+.rcc-fb small | 11px
+.rcn-hm th small | 10px
+.rcn-ox | 10px
+.rct-st i | 10px
+.rk-m i | 10px
+.spc-rc span | 10px
+.sumv .gtr | 10px
+.tab-lv | 11px
+.tm-g span | 10px
+.tm-lg b | 10px
+.tm-n b | 8.5px
+.trg-x | 11px
+.tt .tt-f | 10px
+.tt .tt-n b | 10px
+.wnm-pn td[data-pull] span | 11px
+.yu-bt em | 11px
+.yu-t em | 11px
+.zkey .zleg | 11px
+.zleg::before | 11px
+body .mcx-tl2 .mcx-lt > span | 11.5px
+header.fight.bh .phb em | 10px

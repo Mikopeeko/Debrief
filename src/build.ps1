@@ -34,4 +34,6 @@ $w = $w.Replace('__HTML__', (& $js $hosted)).Replace("`r`n", "`n")
 if ($w -match '__[A-Z_]+_Q__|__HTML__|/\*TOPSPEC\*/') { throw 'worker.js still has a placeholder' }
 New-Item -ItemType Directory -Force (Join-Path $root 'online') | Out-Null
 [IO.File]::WriteAllText((Join-Path $root 'online\worker.js'), $w, $utf8)
-"app: {0:N0} chars; worker: {1:N0} chars" -f $html.Length, $w.Length
+# the design check (Oct 22): warns about new code that breaks notes/Guides/Design system.md; it never stops the build
+$dc = 0; try { $dc = & (Join-Path $src 'design-check.ps1') -src $src } catch { Write-Host "  the design check didn't run: $_" }
+"app: {0:N0} chars; worker: {1:N0} chars; design check: {2}" -f $html.Length, $w.Length, $(if ($dc) { "$dc warning(s), see above" } else { 'OK' })

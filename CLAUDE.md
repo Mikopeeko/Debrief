@@ -49,3 +49,4 @@ Edit files in src/, run `python build.py` inside src/, refresh the browser tab o
 - Mechanic rules are only as good as their spell names/IDs: unverified ones are flagged. The Fight audit "Data check" panel shows which tracked spells a real pull contained.
 - Midnight: healers have no interrupts except Restoration Shaman (Wind Shear 30s).
 - Wording in the UI: plain, short, player-facing; "sets" (not waves) for add groups.
+- Look: follow notes/Guides/Design system.md (one look on every page). The build ends with "design check: OK" or warnings about off-palette flag colours or new text under 12px; fix them, or run src/design-check.ps1 -update when a small label is on purpose.
