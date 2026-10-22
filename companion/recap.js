@@ -134,16 +134,23 @@ function buildOne(b, rep, same, W, L, cutN) {
 
   // ---- the raid: top 3 mistakes with names, who died, the next pull ----
   const byMech = new Map();
-  for (const m of mist) { if (!m.player) continue; const k = m.mechanic; if (!byMech.has(k)) byMech.set(k, { k, sev: 0, who: new Map(), id: m.id, fix: m.fix, n: 0 }); const g = byMech.get(k); g.sev = Math.max(g.sev, SEV[m.severity] || 1); g.who.set(m.player, (g.who.get(m.player) || 0) + 1); g.n++; if (!g.fix && m.fix) g.fix = m.fix; }
+  for (const m of mist) { if (!m.player) continue; const k = m.mechanic; if (!byMech.has(k)) byMech.set(k, { k, sev: 0, who: new Map(), id: m.id, fix: m.fix, fixRaid: m.player === 'Raid', n: 0 }); const g = byMech.get(k); g.sev = Math.max(g.sev, SEV[m.severity] || 1); g.who.set(m.player, (g.who.get(m.player) || 0) + 1); g.n++; if (m.fix && (!g.fix || (g.fixRaid && m.player !== 'Raid'))) { g.fix = m.fix; g.fixRaid = m.player === 'Raid'; } /* (the fix of a named player's mistake, not of a raid-wide one with the same name) */ if (/\b(hit|walked into|stood|clipped|took|caught)\b/i.test(m.detail || '')) g.hit = true; }
   const top = [...byMech.values()].sort((a, c) => c.sev * c.who.size - a.sev * a.who.size || c.n - a.n).slice(0, 5);
   const raid = { bad: [], died: [], more: '', next: '' };
   const real = new Set(ps.map((p) => p.name));
   for (const g of top) {
     // (a raid-wide mistake has no one to name)
-    const names = [...g.who].filter(([n]) => real.has(n)).sort((a, c) => c[1] - a[1]).map(([n, k]) => '@' + n + (k > 1 ? ' ' + k : ''));
-    if (!names.length) { raid.bad.push([g.sev >= 3 ? 'bad' : 'warn', g.id ? String(g.id) : '', g.k, shortTo(g.n + (g.n === 1 ? ' time. ' : ' times. ') + (g.fix ? sentences(g.fix)[0] : ''), 190)]); continue; }
-    const lead = names.length === 1 ? '' : names.length + ' players. ';
-    raid.bad.push([g.sev >= 3 ? 'bad' : 'warn', g.id ? String(g.id) : '', g.k, shortTo(lead + (names.length > 4 ? names.slice(0, 4).join(', ') + ' and ' + (names.length - 4) + ' more.' : names.join(', ') + '.') + (g.fix ? ' ' + sentences(g.fix)[0] : ''), 190)]);
+    // (worded as a sentence (the user's note, Oct 21: "not worded well"): "Hit @Jangokin 2 times. Fix: Only the tank belongs in
+    // front of the boss." / "Hit 11 players: @Dashtoswirly (3), @Optt (2), @Urgdragon, @Shockabunga and 7 more." / "Hit @Schooty
+    // and @Huservoker, 2 times each.")
+    const fix = g.fix ? ' Fix: ' + sentences(g.fix)[0] : '';
+    const ws = [...g.who].filter(([n]) => real.has(n)).sort((a, c) => c[1] - a[1]);
+    if (!ws.length) { raid.bad.push([g.sev >= 3 ? 'bad' : 'warn', g.id ? String(g.id) : '', g.k, shortTo('Happened ' + (g.n === 1 ? 'once.' : g.n + ' times.') + fix, 190)]); continue; }
+    const same = ws.every(([, k]) => k === ws[0][1]), shown = ws.slice(0, 4).map(([n, k]) => '@' + n + (!same && k > 1 ? ' (' + k + ')' : ''));
+    const list = ws.length > 4 ? shown.join(', ') + ' and ' + (ws.length - 4) + ' more' : shown.length > 1 ? shown.slice(0, -1).join(', ') + ' and ' + shown[shown.length - 1] : shown[0];
+    const times = same && ws[0][1] > 1 ? (ws.length > 1 ? ', ' + ws[0][1] + ' times each' : ' ' + ws[0][1] + ' times') : '';
+    const lead = g.hit ? 'Hit ' : 'Went wrong for '; // (not every mistake is a hit: a ghost too far from the clump, a missed soak)
+    raid.bad.push([g.sev >= 3 ? 'bad' : 'warn', g.id ? String(g.id) : '', g.k, shortTo(lead + (ws.length > 4 ? ws.length + ' players' + times + ': ' + list : list + times) + '.' + fix, 230)]);
   }
   // (deaths that mattered: the first few, before the wipe was called)
   const D = allDeaths; const show = D.slice(0, 8);
