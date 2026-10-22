@@ -172,6 +172,7 @@ function buildOne(b, rep, same, W, L, cutN) {
         const ts = (sec.rows || []).map((row) => { const nm = row[0] && row[0].txt, at = row[1] && row[1].t; if (!nm || at == null) return '';
           const ph = String(nm).split(/\s*→\s*/)[0]; return /→/.test(nm) ? ph + ' pushed at ' + mmss(at) : ph + ' began at ' + mmss(at); }).filter(Boolean);
         if (ts.length) t = (t.trim() ? t.trim().replace(/([^.!?])$/, '$1.') + ' ' : '') + ts.join(', ') + '.';
+        else t = 'Still in P1 when the pull ended (' + mmss(Math.min(T, rep.duration || 0)) + ').'; // (no push yet: nothing to time)
       }
       raid.mech.push([flag, sec.spell && sec.spell[0] ? String(sec.spell[0]) : '', plain(sec.title), shortTo(t.replace(/\s*\(see How it works\)/gi, '').trim(), 210)]);
     }
