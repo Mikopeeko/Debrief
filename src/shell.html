@@ -5144,6 +5144,17 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .spc-chd > summary > .spc-chx { order: 5; } .spc-chd > summary > .spc-cht { order: 6; margin-left: 4px; } .spc-chd > summary > .spc-chx + .spc-cht { margin-left: 4px; } .spc-chd > summary > .spc-cht:first-of-type { }
 .spc-chd > summary > .spc-chs { flex: 0 1 auto; } .spc-chd > summary > .spc-dots { margin-right: auto; }
 .spc-chb { padding: 4px 14px 0; } .spc-chd .spc-chs { letter-spacing: 0; text-transform: none; }
+/* Rotation section rows, design system round 2 (Oct 22): like Debriefing's rows: a sentence-case title (15px/600), the grey hint, the dots and
+   the count on the right, then a quiet Show ▸ that turns when open; the number in a neutral square (gold is only for the coach box) */
+.spc-chd > summary.spc-chap { font: 600 15px var(--body); letter-spacing: 0; text-transform: none; color: var(--text); text-shadow: none; gap: 10px; min-height: 32px; }
+.spc-chd > summary.spc-chap > span:not([class]) { font: 600 15px var(--body); color: var(--text); }
+.spc-chd > summary > .spc-chn { width: 24px; height: 24px; border-radius: 8px; background: var(--raised); border: 1px solid var(--line2); color: var(--muted); font: 700 13px var(--body); text-shadow: none; box-shadow: none; }
+.spc-chd > summary:hover { background: rgba(255,255,255,.03); }
+.spc-chd > summary > .spc-chx { font: 500 13px var(--body); color: var(--muted); }
+.spc-chd > summary > .spc-cht { display: inline-flex; align-items: center; gap: 6px; padding: 4px 2px 4px 8px; border: 0; border-radius: 8px; font: 600 13px var(--body); color: var(--muted); }
+.spc-chd > summary > .spc-cht { margin-left: auto; } .spc-chd > summary > .spc-chx + .spc-cht { margin-left: 4px; } .spc-chd > summary:hover > .spc-cht { color: var(--text); } .spc-chv { font-style: normal; display: inline-block; transition: transform .15s; } .spc-chd[open] > summary .spc-chv { transform: rotate(90deg); }
+.spc-mrb { font-size: 12.5px; } .trg-x { font-size: 12px; } /* (the Saves tile's "your" tag was 11px) */
+@media (max-width: 760px) { .spc-chd > summary > .spc-cht, .spc-chd > summary > .spc-chx + .spc-cht { order: 5; margin-left: auto; } .spc-chd > summary > .spc-chx { order: 6; } } /* (phone: Show stays on the title line, the count under it) */
 details.spc-tl > summary { position: relative; padding-right: 30px; } details.spc-tl > summary::after { content: '▾'; position: absolute; right: 12px; top: 10px; color: var(--faint); font-size: 13px; }
 details.spc-tl[open] > summary::after { content: '▴'; color: var(--gold); } details.spc-tl > summary:hover::after { color: var(--gold); }
 @media (max-width: 760px) { .spc-chx { margin-left: 0; flex-basis: 100%; } .spc-chd > summary.spc-chap { padding: 10px 12px; } }

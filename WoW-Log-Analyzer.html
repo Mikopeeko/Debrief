@@ -5144,6 +5144,17 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .spc-chd > summary > .spc-chx { order: 5; } .spc-chd > summary > .spc-cht { order: 6; margin-left: 4px; } .spc-chd > summary > .spc-chx + .spc-cht { margin-left: 4px; } .spc-chd > summary > .spc-cht:first-of-type { }
 .spc-chd > summary > .spc-chs { flex: 0 1 auto; } .spc-chd > summary > .spc-dots { margin-right: auto; }
 .spc-chb { padding: 4px 14px 0; } .spc-chd .spc-chs { letter-spacing: 0; text-transform: none; }
+/* Rotation section rows, design system round 2 (Oct 22): like Debriefing's rows: a sentence-case title (15px/600), the grey hint, the dots and
+   the count on the right, then a quiet Show ▸ that turns when open; the number in a neutral square (gold is only for the coach box) */
+.spc-chd > summary.spc-chap { font: 600 15px var(--body); letter-spacing: 0; text-transform: none; color: var(--text); text-shadow: none; gap: 10px; min-height: 32px; }
+.spc-chd > summary.spc-chap > span:not([class]) { font: 600 15px var(--body); color: var(--text); }
+.spc-chd > summary > .spc-chn { width: 24px; height: 24px; border-radius: 8px; background: var(--raised); border: 1px solid var(--line2); color: var(--muted); font: 700 13px var(--body); text-shadow: none; box-shadow: none; }
+.spc-chd > summary:hover { background: rgba(255,255,255,.03); }
+.spc-chd > summary > .spc-chx { font: 500 13px var(--body); color: var(--muted); }
+.spc-chd > summary > .spc-cht { display: inline-flex; align-items: center; gap: 6px; padding: 4px 2px 4px 8px; border: 0; border-radius: 8px; font: 600 13px var(--body); color: var(--muted); }
+.spc-chd > summary > .spc-cht { margin-left: auto; } .spc-chd > summary > .spc-chx + .spc-cht { margin-left: 4px; } .spc-chd > summary:hover > .spc-cht { color: var(--text); } .spc-chv { font-style: normal; display: inline-block; transition: transform .15s; } .spc-chd[open] > summary .spc-chv { transform: rotate(90deg); }
+.spc-mrb { font-size: 12.5px; } .trg-x { font-size: 12px; } /* (the Saves tile's "your" tag was 11px) */
+@media (max-width: 760px) { .spc-chd > summary > .spc-cht, .spc-chd > summary > .spc-chx + .spc-cht { order: 5; margin-left: auto; } .spc-chd > summary > .spc-chx { order: 6; } } /* (phone: Show stays on the title line, the count under it) */
 details.spc-tl > summary { position: relative; padding-right: 30px; } details.spc-tl > summary::after { content: '▾'; position: absolute; right: 12px; top: 10px; color: var(--faint); font-size: 13px; }
 details.spc-tl[open] > summary::after { content: '▴'; color: var(--gold); } details.spc-tl > summary:hover::after { color: var(--gold); }
 @media (max-width: 760px) { .spc-chx { margin-left: 0; flex-basis: 100%; } .spc-chd > summary.spc-chap { padding: 10px 12px; } }
@@ -28381,7 +28392,7 @@ function hpalChecks(reps, name, one) {
     return facts([mx ? [(tot / mx).toFixed(1), 'bars of mana spent'] : [C(tot), 'mana spent'], gain ? [pctM(gain), (mx && gain < mx ? 'of a bar ' : '') + 'given back'] : null, low && !(endK != null && Math.abs(low[1] - endK) < 0.015) ? [pct(low[1]), one ? 'lowest, at ' + T(low[0]) : 'lowest point'] : null]) + tb +
       (() => { const oth = [...mnG].filter(([q]) => MANA_EXT.includes(q)).sort((a, b) => b[1] - a[1]), own = [...mnG].filter(([q]) => !MANA_EXT.includes(q)).sort((a, b) => b[1] - a[1]), tO = oth.reduce((v, [, y]) => v + y, 0), tY = own.reduce((v, [, y]) => v + y, 0);
         return (tY ? barRow(0, 'From you', own.map(([q, v], i) => [q, v, PC[(i + 3) % PC.length], '', pctM(v)]), tY, ofBar(tY)) : ''); })() +
-      '<p class="sub spc-note">Healing per mana is each spell\'s own healing, without overhealing, divided by its mana. Healing your Beacons pass on can\'t be split by spell, so it isn\'t counted. Holy Light is how you manage your mana. Cast more of it when you have mana to spare, and fewer when you\'re running low.</p>'; })();
+      '<p class="sub spc-note">' + spcFold('hpm', 'Healing per mana is each spell\'s own healing, without overhealing, divided by its mana. Healing your Beacons pass on can\'t be split by spell, so it isn\'t counted. Holy Light is how you manage your mana. Cast more of it when you have mana to spare, and fewer when you\'re running low.', 60) + '</p>'; })();
   // (Judgment: what it did, in numbers)
   const jT2 = jN ? facts([[jN, 'Judgments cast'], [jHp, 'Holy Power from Judgment'], jProc ? [jProc, 'Infusions Judgment granted'] : null, truth && heal.get('Truth Prevails') ? [C(heal.get('Truth Prevails')), 'healed by Truth Prevails'] : null,
     gj && heal.get('Greater Judgment') ? [C(heal.get('Greater Judgment')), 'prevented by Greater Judgment'] : null, revel && mnG.get('Divine Revelations') ? [ofBar(mnG.get('Divine Revelations')), 'mana back (Divine Revelations)'] : null]) +
@@ -29292,7 +29303,7 @@ function specPage(o) {
   const sec = (t, sb, b) => (b ? '<section class="spc-card"><header class="spc-ch"><span class="spc-ri">' + spellIcon(0, (o.secIc || {})[t] || t, true) + '</span><div><h3>' + t + '</h3>' + (sb ? '<span class="sub">' + sb + '</span>' : '') + '</div></header>' + b + '</section>' : '');
   // (numbered, with a few words on what's in each (the Rotation redesign, Oct 19); the pull at a glance opens the Cooldowns chapter, next to the cooldowns it
   // draws, and stays at the top on a page without one)
-  const glance = o.tl ? sec('Your pull at a glance', o.tlSub || '', o.tl) : o.pullT ? sec('Pull by pull', 'Click a pull to open it, or a column name to sort.', o.pullT) : '';
+  const glance = o.tl ? sec('Your pull at a glance', spcFold('tl', o.tlSub || '', 90), o.tl) : o.pullT ? sec('Pull by pull', 'Click a pull to open it, or a column name to sort.', o.pullT) : '';
   let chOn = null, chN = 0, glIn = false; const chap = (n) => '<h2 class="spc-chap"><i class="spc-chn">' + (++chN) + '</i><span>' + esc(n) + '</span>' + (SPC_CHS[n] ? '<em class="spc-chs">' + esc(SPC_CHS[n]) + '</em>' : '') + '</h2>';
   // (every chapter a closed section (your call, Oct 22): its number, name and a few words, the flags as dots and in words, and a clear Show;
   // opened, its blocks. The pull at a glance is a section of its own, first. A section you open stays open while you move around)
@@ -29302,7 +29313,7 @@ function specPage(o) {
     const said = [cn('bad') ? cn('bad') + ' failed' : '', cn('warn') ? cn('warn') + ' with some mistakes' : '', cn('ok') ? cn('ok') + ' clean' : ''].filter(Boolean).join(' · ');
     return '<details class="spc-chd" data-k="' + k + '"' + (S.openSecs && S.openSecs.has(k) ? ' open' : '') + '><summary class="spc-chap"><i class="spc-chn">' + chN + '</i><span>' + esc(n) + '</span>' +
       ((sub || SPC_CHS[n]) ? '<em class="spc-chs">' + esc(sub || SPC_CHS[n]) + '</em>' : '') + (l.length ? dots(l) : '') + (said ? '<b class="spc-chx">' + said + '</b>' : '') +
-      '<span class="spc-cht"><span class="o">Show ▾</span><span class="c">Hide ▴</span></span></summary><div class="spc-chb">' + inner + '</div></details>'; };
+      '<span class="spc-cht"><span class="o">Show</span><span class="c">Hide</span><i class="spc-chv" aria-hidden="true">▸</i></span></summary><div class="spc-chb">' + inner + '</div></details>'; };
   const body0 = (glance ? chSec(o.tl ? 'Your pull at a glance' : 'Pull by pull', glance, [], o.tl ? 'every button you pressed, over the pull' : 'every pull, side by side') : '') + chList.map((c) => chSec(c.n, c.h.join(''), c.l)).join(''); glIn = true;
   const gx = SF === 'all' ? spcExtras(per, UN, one) : '';
   const body = (body0 + (gx ? chSec('Gear and extras', gx, []) : '')) || '<p class="muted">No checks to show.</p>';
@@ -29584,7 +29595,12 @@ const spcHw = (k, how) => { if (!how) return ['', '']; const id = 'spc-hw-' + St
 // after the lines)
 const SPC_MK = { ok: '✓', warn: '!', bad: '✕', na: '•' };
 // (a block's slim line on the Rotation tab: its icon, its name, its sentence of why, and a dot for each check)
-const spcGh2 = (ic, t, lead, dt) => '<div class="spc-gh2">' + (ic ? spIc(ic) : '') + '<b>' + esc(t) + '</b>' + (lead ? '<span class="spc-gl2">' + esc(lead) + '</span>' : '') + (dt || '') + '</div>';
+// (design system round 2 (Oct 22): a long explanation shows its first sentence; the rest opens in place with "More" (the same toggle as
+// "How it's judged", remembered while you look around). Nothing is cut)
+const spcFold = (k, txt, max) => { const t = String(txt || ''), m = t.length > (max || 140) ? /^([\s\S]{40,}?[.!?])\s+([\s\S]+)$/.exec(t) : null; if (!m) return esc(t);
+  const id = 'spc-hw-' + ('more-' + k).replace(/[^a-z0-9]+/gi, '-').toLowerCase(), on = !!(S.spcHwOpen && S.spcHwOpen['more:' + k]);
+  return esc(m[1]) + ' <button type="button" class="spc-hwb spc-mrb" data-hw="more:' + esc(k) + '" aria-expanded="' + on + '" aria-controls="' + id + '">More</button><span class="spc-mrt" id="' + id + '"' + (on ? '' : ' hidden') + '> ' + esc(m[2]) + '</span>'; };
+const spcGh2 = (ic, t, lead, dt) => '<div class="spc-gh2">' + (ic ? spIc(ic) : '') + '<b>' + esc(t) + '</b>' + (lead ? '<span class="spc-gl2">' + spcFold('gl-' + t, lead) + '</span>' : '') + (dt || '') + '</div>';
 const spcTip = (c) => (c.tip && (c.st === 'warn' || c.st === 'bad') ? '<p class="spc-tip"><b>Next time:</b> ' + esc(tipNow(c.tip)) + '</p>' : '');
 const spcLine = (c, top, id, v, bic) => { const hw = spcHw(c.k, c.how); return '<div class="spc-sl ' + c.st + '" id="' + id + '"><span class="spc-si">' + SPC_MK[c.st] + '</span><div class="spc-sm"><div class="spc-sh"><span class="spc-shl">' + (c.ic && c.ic !== bic ? spIc(c.ic) : '') + '<b>' + esc(c.label) + '</b></span><span class="spc-shv">' + top + '<span class="cst-f ' + c.st + '">' + c.v + '</span></span></div><p>' + esc(c.sub) + hw[0] + '</p>' + hw[1] + spcTip(c) + v + '</div></div>'; };
 const spcMini = (c, top, id, extra) => { const hw = spcHw(c.k, c.how); return '<div class="spc-mini ' + c.st + '" id="' + id + '"><div class="spc-mh">' + (c.ic ? spIc(c.ic) : '') + '<b>' + esc(c.label) + '</b><span class="spc-si">' + SPC_MK[c.st] + '</span></div><div class="spc-mv"><span class="cst-f ' + c.st + '">' + c.v + '</span>' + top + '</div><p>' + esc(c.sub) + hw[0] + '</p>' + hw[1] + spcTip(c) + (extra || '') + '</div>'; };
@@ -30038,7 +30054,7 @@ function rdruChecks(reps, name, one) {
     const own = [...mnG].filter(([q]) => !MANA_EXT.includes(q) || q === 'Innervate').sort((a, b) => b[1] - a[1]), tY = own.reduce((v, [, y]) => v + y, 0);
     return spcFacts([mx ? [(tot / mx).toFixed(1), 'bars of mana spent'] : [C(tot), 'mana spent'], gain ? [pctM(gain), (mx && gain < mx ? 'of a bar ' : '') + 'given back'] : null, low && !(endK != null && Math.abs(low[1] - endK) < 0.015) ? [pct(low[1]), one ? 'lowest, at ' + T(low[0]) : 'lowest point'] : null, endK != null ? [pct(endK), 'left at the kill', endK <= 0.35 ? '' : 'warn'] : null]) + tb +
       (tY ? spcBarRow(0, 'Mana back', own.map(([q, v], i) => [q, v, SPC_PC[(i + 3) % SPC_PC.length], '', pctM(v)]), tY, ofBar(tY)) : '') +
-      '<p class="sub spc-note">Healing per mana is each spell\'s own healing, without overhealing, divided by its mana. Rejuvenation\'s and Regrowth\'s numbers leave out what they add to your other heals through Mastery.</p>'; })();
+      '<p class="sub spc-note">' + spcFold('hpm', 'Healing per mana is each spell\'s own healing, without overhealing, divided by its mana. Rejuvenation\'s and Regrowth\'s numbers leave out what they add to your other heals through Mastery.', 60) + '</p>'; })();
   // (the procs as bars: what each was spent on, and what was wasted)
   const procT = procs.map((x) => { const sp = [...x.by].sort((a, b) => b[1] - a[1]); return spcBarRow(x.id, x.n, sp.map(([q, v], i) => [spellNm(q), v, SPC_PC[i % SPC_PC.length]]).concat(x.wasted ? [['wasted', x.wasted, '', 'w']] : []), x.gained, (x.n === "Nature's Swiftness" ? plw(x.gained, 'press', 'presses') : plural(x.gained, 'proc'))); }).join('');
   // ---- the order on the page: one block per part of the kit ----
