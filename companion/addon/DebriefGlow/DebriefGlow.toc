@@ -2,7 +2,7 @@
 ## Title: Debrief Glow
 ## Notes: Your NSRT note's cooldowns count down and glow on Blizzard's Cooldown Manager when it's time to press them. Pick the look (ours or the game's own glows), a sound or a voice, for all spells or each one.
 ## Author: Debrief
-## Version: 0.4.5
+## Version: 0.4.6
 ## SavedVariables: DebriefGlowDB
 ## OptionalDeps: NorthernSkyRaidTools
 ## AddonCompartmentFunc: DebriefGlow_OnAddonCompartmentClick

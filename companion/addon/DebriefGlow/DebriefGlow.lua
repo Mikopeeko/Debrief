@@ -60,14 +60,17 @@ end
 -- (our own four styles, then the game's own glows: the same animated art Blizzard uses, asked for by name, never bundled)
 local STYLES = { { "pulse", "Pulse (soft glow that breathes)" }, { "border", "Border (a ring on the icon's edge)" }, { "pixel", "Pixel lines (running around the edge)" },
   { "sparkle", "Sparkles (dots circling the icon)" },
+  { "cdmants", "Game: Cooldown Manager ants (in your colour)" }, { "cdmflash", "Game: Cooldown Manager flash (in your colour)" },
   { "proc", "Game: action bar proc (burst, then the swirl)" }, { "assist", "Game: rotation helper (blue ants)" },
   { "onebutton", "Game: one-button proc" }, { "altglow", "Game: soft proc ring" }, { "pandemic", "Game: Cooldown Manager \"ending soon\" pulse" } }
-local GAME = { proc = true, assist = true, onebutton = true, altglow = true, pandemic = true }
+local GAME = { proc = true, assist = true, onebutton = true, altglow = true, pandemic = true, cdmants = true, cdmflash = true }
 -- (the game's art for each one; a style whose art the game doesn't have falls back to Pulse)
 local ART = {
   proc = { "UI-HUD-ActionBar-Proc-Start-Flipbook", "UI-HUD-ActionBar-Proc-Loop-Flipbook" },
   onebutton = { "OneButton_ProcStart_Flipbook", "OneButton_ProcLoop_Flipbook" },
   assist = { "rotationhelper_ants_flipbook" },
+  -- (the Cooldown Manager's own alerts, made for its icons; Blizzard colours them itself, so they take your colour)
+  cdmants = { "VisualAlert_Ants_Flipbook" }, cdmflash = { "UI-CooldownManager-VisualAlert-Glow" },
   altglow = { "UI-HUD-RotationHelper-ProcAltGlow" },
   pandemic = { "UI-CooldownManager-PandemicBorder", "UI-CooldownManager-PandemicFX-Icon01", "UI-CooldownManager-PandemicFX-Icon02", "UI-CooldownManager-PandemicFX-Icon03", "UI-CooldownManager-PandemicBorder-Mask" },
 }
@@ -122,7 +125,7 @@ local function iconBox(it)
   if type(w) ~= "number" or w <= 0 then w = 40 end; if type(h) ~= "number" or h <= 0 then h = w end
   local host = art.GetParent and art ~= it and art:GetParent() or it
   local k = scaleOf(host) / scaleOf(UIParent)
-  return w * k, h * k, art
+  return w * k, h * k, art, k
 end
 -- (behind the icon: the same strata, one level under it, so a soft glow shows around its edges without covering the picture)
 local function below(f, it)
@@ -196,6 +199,11 @@ local function animate(g, elapsed)
     b:ClearAllPoints(); b:SetPoint("CENTER", g, "TOPLEFT", x, y)
   end
 end
+-- (a game glow stretched over the picture's edges, so it hugs icons of any shape: out = how far past the edge, like the game's)
+local function over(t, g, out, out2)
+  local pad = DB.pad or 0; out2 = out2 or out
+  t:ClearAllPoints(); t:SetPoint("TOPLEFT", g, "TOPLEFT", -(out - pad), out - pad); t:SetPoint("BOTTOMRIGHT", g, "BOTTOMRIGHT", out2 - pad, -(out2 - pad))
+end
 -- (the game's art in its own colours, or turned grey and tinted with yours)
 local function tint(t, c)
   if t.SetDesaturated then t:SetDesaturated(c and true or false) end
@@ -223,17 +231,29 @@ local function dress(g, id)
     local w, h = g.w or 40, g.h or g.w or 40
     if st == "proc" or st == "onebutton" then
       local art = ART[st]
-      g.burst:ClearAllPoints(); g.burst:SetPoint("CENTER"); g.burst:SetSize(w * (st == "proc" and 150 / 45 or 1.5), h * (st == "proc" and 150 / 45 or 1.5))
-      g.loop:ClearAllPoints(); g.loop:SetPoint("CENTER"); g.loop:SetSize(w * (st == "proc" and 1.4 or 1.5), h * (st == "proc" and 1.4 or 1.5))
+      local m = math.min(w, h)
+      g.burst:ClearAllPoints(); g.burst:SetPoint("CENTER"); g.burst:SetSize(m * (st == "proc" and 150 / 45 or 1.5), m * (st == "proc" and 150 / 45 or 1.5))
+      over(g.loop, g, m * (st == "proc" and 0.2 or 0.25))
       tint(g.burst, c); tint(g.loop, c)
       g.loop.atlas = art[2]
       playFlip(g.burst, art[1], 6, 5, 30, 0.7 / sp, true)
+    elseif st == "cdmants" or st == "cdmflash" then
+      -- (placed exactly as the Cooldown Manager places its own: 8 past the top-left, 9 past the bottom-right, in the icon's scale)
+      local k = g.k or 1
+      g.tinted = { r, gg, b }
+      if st == "cdmants" then
+        over(g.loop, g, 8 * k, 9 * k); if g.loop.SetDesaturated then g.loop:SetDesaturated(false) end; g.loop:SetVertexColor(r, gg, b)
+        playFlip(g.loop, ART.cdmants[1], 6, 5, 30, 1 / sp)
+      else
+        g.ring:SetAtlas(ART.cdmflash[1]); over(g.ring, g, 8 * k, 9 * k); if g.ring.SetDesaturated then g.ring:SetDesaturated(false) end; g.ring:SetVertexColor(r, gg, b); g.ring:Show()
+        g.fade:SetDuration(0.5 / sp); g.ag:Play()
+      end
     elseif st == "assist" then
-      g.loop:ClearAllPoints(); g.loop:SetPoint("CENTER"); g.loop:SetSize(w * 66 / 45, h * 66 / 45); tint(g.loop, c)
+      over(g.loop, g, math.min(w, h) * 10.5 / 45); tint(g.loop, c)
       playFlip(g.loop, ART.assist[1], 6, 5, 30, 1 / sp)
     elseif st == "altglow" then
       local info = C_Texture.GetAtlasInfo(ART.altglow[1]) or {}
-      g.ring:SetAtlas(ART.altglow[1]); g.ring:ClearAllPoints(); g.ring:SetPoint("CENTER"); g.ring:SetSize((info.width or 64) * w / 45, (info.height or 64) * h / 45); tint(g.ring, c); g.ring:Show()
+      g.ring:SetAtlas(ART.altglow[1]); over(g.ring, g, math.max(0, ((info.width or 64) / 45 - 1) / 2) * math.min(w, h)); tint(g.ring, c); g.ring:Show()
       g.fade:SetDuration(0.45 / sp); g.ag:Play()
     elseif st == "pandemic" then
       g.pborder:SetAtlas(ART.pandemic[1]); g.pborder:SetAllPoints(); tint(g.pborder, c); g.pborder:Show()
@@ -340,7 +360,7 @@ local function stopAll() round = round + 1; for id in pairs(glows) do stop(id) e
 function place(g, it, id)
   local pad = DB.pad or 2
   g:SetScale(DB.scale or 1)
-  local w, h, art = iconBox(it); g.w, g.h, g.art = w, h, art
+  local w, h, art, k = iconBox(it); g.w, g.h, g.art, g.k = w, h, art, k
   g:ClearAllPoints(); g:SetPoint("TOPLEFT", art, "TOPLEFT", -pad, pad); g:SetPoint("BOTTOMRIGHT", art, "BOTTOMRIGHT", pad, -pad)
   above(g, it, 10); below(g.back, it); g:Show(); dress(g, id)
 end
@@ -1137,6 +1157,12 @@ ev:SetScript("OnEvent", function(_, e, a1, a2, a3)
     if not DB.ringForAll then
       DB.style, DB.pad, DB.thick = "border", 1, 3
       DB.ringForAll, DB.ringOnBorder, DB.ringDefault = true, true, true
+    end
+    -- (0.4.6: the rotation helper's ants are action-bar art; the Cooldown Manager's own ants sit on its icons' borders, so
+    -- anyone on the rotation helper moves to them once, in their colour. The rotation helper stays in Look.)
+    if not DB.cdmAnts then
+      if DB.style == "assist" then DB.style = "cdmants" end
+      DB.cdmAnts = true
     end
     -- (0.4.4: the ring moved onto the border (3 px, 1 px out); settings still on 0.4.3's ring move with it once)
     if not DB.ringOnBorder then

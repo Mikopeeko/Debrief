@@ -9,7 +9,7 @@ const base = fs.readFileSync(__dirname + '/run24.js', 'utf8');
 let stub = base.slice(base.indexOf('const stub = `') + 14); stub = stub.slice(0, stub.indexOf('\n`;'));
 stub = stub.replace('if k == "SetFont" then return function() return true end end',
   'if k == "SetFont" then return function() return true end end\n' +
-  '    if k == "SetPoint" then return function(self, p, rel) if type(rel) == "table" then self._anchor = rel end end end\n' +
+  '    if k == "SetPoint" then return function(self, p, rel, rp, x, y) if type(rel) == "table" then self._anchor = rel end; if type(x) == "number" then local t = rawget(self, \"_pts\") or {}; rawset(self, \"_pts\", t); t[p] = string.format("%.1f,%.1f", x, y) end end end\n' +
   '    if k == "ClearAllPoints" then return function(self) self._anchor = nil end end\n' +
   '    if k == "SetAllPoints" then return function(self, rel) if type(rel) == "table" then self._anchor = rel end end end\n' +
   '    if k == "SetVertexColor" then return function(self, r, g, b) self._rgb = { r, g, b } end end\n' +
@@ -85,13 +85,13 @@ run('local f = assert(load(' + JSON.stringify(src).replace(/\\u([0-9a-f]{4})/gi,
 lua.lua_pushstring(L, to_luastring(NOTE)); lua.lua_setglobal(L, to_luastring('NOTE'));
 run(`
 local ev = DebriefGlowEvents; local fire = ev:GetScript("OnEvent")
--- (the user's saved settings from before 0.4.5: the rotation helper ants in blue, 2 px out)
-DebriefGlowDB = { style = "assist", pad = 2, thick = 3, r = 0.3, g = 0.6, b = 1, colorName = "blue", timerColor = "glow" }
+-- (the user's saved settings after 0.4.5: they picked the rotation helper ants again, in blue)
+DebriefGlowDB = { style = "assist", pad = 1, thick = 3, r = 0.3, g = 0.6, b = 1, colorName = "blue", timerColor = "glow", ringForAll = true, ringOnBorder = true, ringDefault = true }
 fire(ev, "ADDON_LOADED", "DebriefGlow"); fire(ev, "PLAYER_LOGIN")
-print("-- saved settings from before 0.4.5 move to the ring once, in their own colour")
+print("-- the rotation helper ants move once to the Cooldown Manager ants, in their own colour")
 local function expectE(what, got, want) print((got == want and "  ok   " or "  FAIL ") .. what .. ": " .. tostring(got)) end
-expectE("style", DebriefGlowDB.style, "border"); expectE("1 px out", DebriefGlowDB.pad, 1); expectE("3 px thick", DebriefGlowDB.thick, 3); expectE("colour kept (blue)", DebriefGlowDB.colorName, "blue")
-DebriefGlowDB.r, DebriefGlowDB.g, DebriefGlowDB.b, DebriefGlowDB.colorName, DebriefGlowDB.timerColor = 0.90, 0.71, 0.31, "gold", "white"
+expectE("style", DebriefGlowDB.style, "cdmants"); expectE("colour kept (blue)", DebriefGlowDB.colorName, "blue")
+DebriefGlowDB.style, DebriefGlowDB.r, DebriefGlowDB.g, DebriefGlowDB.b, DebriefGlowDB.colorName, DebriefGlowDB.timerColor = "border", 0.90, 0.71, 0.31, "gold", "white"
 print("in Options > AddOns as: " .. tostring(CANVAS()))
 print("hooked into NSRT: " .. tostring(CB.NSRT_REMINDER_SHOW ~= nil))
 local PH = { [1] = 0, [2] = 150 }
@@ -111,7 +111,7 @@ local function press(id) fire(ev, "UNIT_SPELLCAST_SUCCEEDED", "player", "g", id)
 local function expect(what, got, want) print((got == want and "  ok   " or "  FAIL ") .. what .. ": " .. tostring(got) .. (got == want and "" or ("  (wanted " .. tostring(want) .. ")"))) end
 -- (a new pull: the boss is over, every glow from before has stopped, the fake clock starts again)
 local function newPull() PULL_ID = PULL_ID + 1; fire(ev, "ENCOUNTER_END"); ADVANCE(NOW + 30); expect("nothing left glowing before the pull", GLOWING(), "nothing"); heard(); NOW = 0; TIMERS = {} end
-local styles = { "pulse", "border", "pixel", "sparkle", "proc", "assist", "onebutton", "altglow", "pandemic" }
+local styles = { "pulse", "border", "pixel", "sparkle", "cdmants", "cdmflash", "proc", "assist", "onebutton", "altglow", "pandemic" }
 
 print("-- defaults: a gold ring on the icon's edge (Border, 3 px, 1 px out), no sound, no voice")
 expect("default style", DebriefGlowDB.style, "border"); expect("ring 1 px out from the picture", DebriefGlowDB.pad, 1); expect("ring thickness", DebriefGlowDB.thick, 3)
@@ -264,6 +264,15 @@ do
   expect("number above the glow", n and g and rawget(n, "_level") > rawget(g, "_level"), true)
   SlashCmdList.DEBRIEFGLOW("size")
   ADVANCE(NOW + 3.1); heard()
+  print("  the Cooldown Manager ants on that icon, like Blizzard's own (8 past the top-left, 9 past the bottom-right, in the icon's scale)")
+  DebriefGlowDB.style = "cdmants"; DebriefGlowDB.r, DebriefGlowDB.g, DebriefGlowDB.b = 0.3, 0.6, 1
+  newPull(); DebriefGlow_Test(true)
+  local a; for _, f in ipairs(FRAMES) do if f._shown and rawget(f, "_anchor") == skinT and rawget(f, "drawn") == "cdmants" then a = f end end
+  local lp = a and rawget(a, "loop"); local pts = lp and rawget(lp, "_pts")
+  expect("ants drawn on the icon", a ~= nil, true)
+  expect("ants stretched over the edges (12 out top-left, 13.5 out bottom-right at 150%, minus the 1 px gap)", pts and (pts.TOPLEFT .. " / " .. pts.BOTTOMRIGHT), "-11.0,11.0 / 12.5,-12.5")
+  expect("ants in your colour", lp and lp._rgb and (lp._rgb[1] .. "," .. lp._rgb[2] .. "," .. lp._rgb[3]), "0.3,0.6,1")
+  ADVANCE(NOW + 3.1); heard(); DebriefGlowDB.style = "border"; DebriefGlowDB.r, DebriefGlowDB.g, DebriefGlowDB.b = 0.90, 0.71, 0.31
   ds.GetEffectiveScale = nil; ds.GetFrameStrata = nil; ds.GetFrameLevel = nil; ds.GetChildren = nil; ds.GetRegions = nil; ds.Icon = nil; DebriefGlowDB.style = was
 end
 print("-- /dglow test skips a spell that's off")
