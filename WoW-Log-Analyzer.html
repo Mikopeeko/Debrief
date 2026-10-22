@@ -14243,6 +14243,7 @@ const PATCH_NOTES = [
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
+    'Boss guides: The Twin Fangs and The Coiled Altar now have Heroic whole-fight videos too, timed by our real Heroic kills (6:58 and 5:32), so every boss has one on both difficulties. On Heroic Coiled Altar the orb set under the second pools plays in the lane down the middle, and the pools go when phase 2 starts.',
     'Boss guides: Nek\'zali, Entombed Sentinels and The Lost Explorers now have Heroic whole-fight videos timed by our real Heroic kills. The Lost Explorers shows both Mighty Thuds, four crates a set (six when the fish is in it) and the real healer count (its Mythic video skips the stretches that play twice, so it runs 10 minutes, not 15); Sentinels Mythic adds the last round\'s Blighted Blood.',
     'Boss guides: Vashnik and Sszorak now have a Heroic whole-fight video, timed by a real Heroic kill (7:07 and 6:44), with every cast in order. Sszorak\'s tank combos play in the order they really came, on both difficulties, and Vashnik\'s Heroic maps show the right number of Plague Froths, biles and infections.',
     'Debrief in game: every boss now gets its own mechanic lines on the recap, not just The Coiled Altar. Each says what went wrong first, with the number against the plan, when and who, like “Soak 4 at 3:09: 7 soakers (needs 8), marked Volkovod.” A clean mechanic shows the number that proves it.',
@@ -36862,6 +36863,27 @@ function gdzCaLane(k, t) {
     .at(t, 'r1', -38, -6).at(t, 'r2', -38, 6).at(t, 'r3', 41, -2).at(t, 'r4', 41, 2);
   return k;
 }
+// Heroic Toxic Deluge under the second Fangs pools (whole fight only): the pools leave a lane down the room, narrowest by the boss, so the
+// circles land on players spread down the south end, the orbs go in a small pile in front of Zul'jan and the carriers walk round behind him
+// before the off-tank's Sever (in the room's own frame, like the pools)
+const GDZ_CA_LANEH = { spots: [[-12, -36], [12, -36], [0, -36], [-5, -26], [5, -26], [0, -17]], start: [[-12, -29.5], [12, -29.5], [0, -29.5], [-5, -19.5], [5, -19.5], [0, -23]],
+  back: [[-4, 24], [4, 24], [-6, 28], [6, 28], [-3, 36], [3, 36]], who: ['r2', 'r1', 'r3', 'r4', 'r5', 'r6'] };
+// (everyone's lane spot, in the room's own frame: Heroic's second Fangs scene puts them there before the pools pour in)
+function gdzCaLaneH(k, t) {
+  k.at(t, 't1', 0, 4).at(t, 't2', 0, -5).at(t, ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7'], 0, 9, 2.5).at(t, ['h1', 'h2', 'h3', 'h4'], 0, 16, 2.5).at(t, 'r7', 0, 32);
+  GDZ_CA_LANEH.who.forEach((id, i) => k.at(t, id, GDZ_CA_LANEH.start[i][0], GDZ_CA_LANEH.start[i][1])); return k;
+}
+function gdzCaOrbsLaneH() {
+  const k = gdzKit('The Coiled Altar', 16); k.rot(0); k.boss('zj', 'Zul\'jan', 0, 0, 0);
+  const { spots, back, who } = GDZ_CA_LANEH; gdzCaLaneH(k, 0);
+  spots.forEach(([x, y]) => k.ring({ x, y, r: 5, fx: 'soak', t0: 1, at: 3, dur: 2.6, color: '#5fd35f', cn: 'Toxic Deluge', legend: 'circle lands and leaves an orb' }));
+  spots.forEach(([x, y], i) => { const [dx, dy] = gdzSpot(i, 6, 2.5); gdzCarry(k, who[i], 'o' + i, 'orb', 3, x, y, 3.4 + i * 0.35, dx, -12 + dy, 6 + i * 0.2, back[i]); k.show('o' + i, 3, 14.4); });
+  k.call(11, 13, 'Taunt', { on: 't2', color: '#5aa0ff', ink: '#fff' });
+  k.cast('zj', 'Sever', 12, 13.6).cone({ from: 'zj', to: 't2', at: 13.6, r: 35, hit: ['o0', 'o1', 'o2', 'o3', 'o4', 'o5'] }).ring1(['t1', 't2']);
+  k.step(1).step(3).step(3.4).step(11).step(13.6);
+  k.pause(13.1, 'Freeze. The pools leave only a lane down the middle. The orbs go in a small pile in front of the boss, and everyone else waits behind him.', { x: 0, y: -10, r: 10 });
+  return k.done({ title: 'Toxic Deluge between the pools', focus: { x: 0, y: -4, r: 30 }, tagLabel: 'Carrying an orb', hlLabel: 'orb carriers and tanks' });
+}
 function gdzCaRaid(k, skip) {
   const s = new Set(skip || []), g = (ids) => ids.filter((x) => !s.has(x));
   k.at(0, g(['t1']), 0, 3).at(0, g(['t2']), 7, 7).at(0, g(['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7']), 0, 16, 7).at(0, g(['h1', 'h2']), -16, 14, 3).at(0, g(['h3', 'h4']), 16, 14, 3)
@@ -36919,7 +36941,7 @@ function gdzAxeHits(k, ids, pos, axes, t0, t1, from) {
 // sprint, then carries on with what their scene has them doing; the steps are fixed, so the scenes keep their timing)
 function gdzAxeDodge(k, ids, pos, n, t0, t1) {
   const K = k.peek(), RI = (x, y) => [y, -x]; /* (the overlay is drawn turned 90 degrees, like the scenes) */
-  const bad = K.rings.filter((g) => (g.r < 40 || /Noxious Ground/.test(g.cn || '')) && /Noxious Ground|Gloombomb|Bomb|Toxic Deluge|Guillotine|Execution|soak/i.test((g.cn || '') + ' ' + (g.fx || ''))), coneT = K.cones.map((c) => c.at).filter((x) => x != null);
+  const bad = K.rings.filter((g) => (g.r < 40 || /Noxious Ground|Widow/.test(g.cn || '')) && /Noxious Ground|Widow|Gloombomb|Bomb|Toxic Deluge|Guillotine|Execution|soak/i.test((g.cn || '') + ' ' + (g.fx || ''))), coneT = K.cones.map((c) => c.at).filter((x) => x != null);
   const inBad = (p, t) => bad.some((g) => { if (t < g.t0 || t > g.t0 + (g.dur || 0)) return false; const c = g.on ? (/^[thmr]\d$/.test(g.on) ? k.posAt(g.on, t) : null) : RI(g.x, g.y); return c && Math.hypot(p[0] - c[0], p[1] - c[1]) < g.r + 1.5; });
   for (const id of ids) { const keys = []; let ox = 0, oy = 0;
     for (let t = Math.ceil(t0 * 2) / 2; t <= t1 + 0.001; t += 0.5) { const b = k.posAt(id, t), b0 = k.posAt(id, t - 0.5), b2 = k.posAt(id, t + 1.5); if (!b) { ox = oy = 0; continue; }
@@ -37277,9 +37299,9 @@ const GDZ_CA_BEATS = {
 // the real kill's order, by its clock (seconds): a mechanic of the guide (mech, with its own options) or a short scene (beat)
 // (how long each part lasts on the real kill's clock, for the written version's overlaps: an orb set from the circles to the second
 // frontal, an axe from the target to the eruption, the Fangs pools until they fade, a shield until it breaks)
-const GDZ_CA_DUR = { 'm:grinder': 183, 'm:orbs': 27, 'm:axe': 13, 'm:dm': 12, 'm:bombs': 12, 'm:frags': 38, 'm:diamond': 15, 'b:venomfang': 5, 'b:fangs': 28, 'b:nightfall': 8, 'b:p3orbs': 14, 'b:defile': 6, 'b:transition': 12, 'b:p2end': 7, 'b:start': 2, 'b:kill': 0 };
+const GDZ_CA_DUR = { 'm:kicks': 12, 'm:gloomh': 10, 'm:grim': 13, 'm:grinder': 183, 'm:orbs': 27, 'm:axe': 13, 'm:dm': 12, 'm:bombs': 12, 'm:frags': 38, 'm:diamond': 15, 'b:venomfang': 5, 'b:fangs': 28, 'b:nightfall': 8, 'b:p3orbs': 14, 'b:defile': 6, 'b:transition': 12, 'b:p2end': 7, 'b:start': 2, 'b:kill': 0 };
 // (how dangerous a miss is: 3 can wipe the raid, 2 can kill players, 1 minor)
-const GDZ_CA_SEV = { 'm:grinder': 2, 'm:orbs': 3, 'b:p3orbs': 3, 'm:diamond': 3, 'm:axe': 3, 'm:dm': 3, 'b:nightfall': 3, 'm:frags': 3, 'm:bombs': 2, 'b:fangs': 2, 'b:transition': 2, 'b:venomfang': 1, 'b:defile': 1, 'b:p2end': 1, 'b:start': 1, 'b:kill': 1 };
+const GDZ_CA_SEV = { 'm:kicks': 2, 'm:gloomh': 2, 'm:grim': 3, 'm:grinder': 2, 'm:orbs': 3, 'b:p3orbs': 3, 'm:diamond': 3, 'm:axe': 3, 'm:dm': 3, 'b:nightfall': 3, 'm:frags': 3, 'm:bombs': 2, 'b:fangs': 2, 'b:transition': 2, 'b:venomfang': 1, 'b:defile': 1, 'b:p2end': 1, 'b:start': 1, 'b:kill': 1 };
 const GDZ_CA_SIM = [
   { at: 0, beat: 'start', ph: 0 }, { at: 2, mech: 'orbs', ph: 0 }, { at: 12, mech: 'grinder', ph: 0 }, { at: 30, beat: 'venomfang', ph: 0 }, { at: 43, mech: 'axe', ph: 0 },
   { at: 45, mech: 'orbs', ph: 0 }, { at: 65, beat: 'venomfang', ph: 0, o: { on: ['r4', 'm5'] } }, { at: 85, beat: 'fangs', ph: 0 }, { at: 87, mech: 'orbs', ph: 0, label: 'Toxic Deluge (In the lane between the pools)', o: { lane: true, do: ['Pools are down: the whole raid plays in the lane down the middle. Warlocks wait at the entrance end, Mages at the far end.', 'Everyone else: clear the greens out of the purple carriers\' way first. Greens only. Never touch a purple.', 'Entrance side first: purples to the tip, greens between them and the boss. The raid waits on the far side of the boss.', 'Off-tank: taunt right before Sever and pop the whole entrance triangle. 5 or 6 orbs, never more than 7.', 'Now the far side. The raid walks past the boss to the entrance half, and the off-tank brings the last purple.', 'Boss tank: taunt back and take the second Sever through the far triangle.'] } },
@@ -37295,24 +37317,47 @@ const GDZ_CA_SIM = [
   { at: 532, beat: 'defile', ph: 3 }, { at: 533, beat: 'p3orbs', ph: 3 }, { at: 564, beat: 'nightfall', ph: 3, o: { ph: 3 } }, { at: 583, mech: 'dm', ph: 3 }, { at: 589, mech: 'bombs', ph: 3, label: 'Last adds (Just kick them)', o: { kick: true, do: ['The last adds of the fight: no bombs needed.', 'Kick every Wail of Terror. Each kick makes the add teleport.', 'Keep the kick rotation going on both adds.', 'Damage stays on the bosses: the kill is close.'] } },
   { at: 611, mech: 'axe', ph: 3, o: { at: [35, 35], soak: 'g3', do: GDZ_CA_AXES.g3.do }, label: 'Grim Guillotine 3 (Send everyone free)' }, { at: 618, beat: 'kill', ph: 3 },
 ];
+// (Heroic, by Wolfthorn's Heroic kill N1PK29BXAf7g6rYL #9, 5:32: no stacking for phase 2, a short phase 2 with no shield, one Grim Guillotine)
+const GDZ_CA_BEATS_H = Object.assign({}, GDZ_CA_BEATS, {
+  start: Object.assign({}, GDZ_CA_BEATS.start, { do: ['The boss tank takes Zul\'jan to the middle, the raid around him.', 'Fangs of the Coiled Altar: raid damage, and poison pools pour in from both side walls. Stay out of them.'] }),
+  fangs: Object.assign({}, GDZ_CA_BEATS.fangs, { run() { const k = gdzKit('The Coiled Altar', 3.5); gdzCaBoss(k, 0); k.rot(0); gdzCaLaneH(k, 0); k.cast('zj', 'Fangs of the Coiled Altar', 0, 1.6); k.step(0.2); } }),
+  kill: { name: 'The kill (Together)', do: ['Kill both bosses close together: when one dies, the other gets 500% stronger (Soulbound).'],
+    run() { const k = gdzKit('The Coiled Altar', 5.5); gdzCaBoss(k, 3);
+      k.call(0.3, 2.2, 'Both together', { on: 'zj' });
+      k.ring({ on: 'zj', r: 7, fx: 'burst', t0: 1.6, at: 2.2, dur: 0.8, color: '#ffd23b', cn: 'Zul\'jan dies', legend: 'the kill' }); k.show('zj', 0, 2.4);
+      k.ring({ on: 'hm', r: 7, fx: 'burst', t0: 2.2, at: 2.8, dur: 0.8, color: '#ffd23b', cn: 'Malacrass dies', legend: 'the kill' }); k.show('hm', 0, 3);
+      k.call(3.2, 5.2, 'Kill', { x: 14, y: 2 }); k.step(0.3); } },
+});
+const GDZ_CA_SIM_H = [
+  { at: 0, beat: 'start', ph: 0 }, { at: 2, mech: 'orbs', ph: 0, label: 'Toxic Deluge 1', o: { near: 1 } }, { at: 12, mech: 'grinder', ph: 0 }, { at: 28, beat: 'venomfang', ph: 0 },
+  { at: 43, mech: 'axe', ph: 0 }, { at: 45, mech: 'orbs', ph: 0, label: 'Toxic Deluge 2' }, { at: 62, beat: 'venomfang', ph: 0, o: { on: ['r4', 'm5'] } },
+  { at: 85, beat: 'fangs', ph: 0 }, { at: 87, mech: 'orbs', ph: 0, label: 'Toxic Deluge 3 (In the lane between the pools)', o: { lane: 1 } },
+  { at: 108, mech: 'dm', ph: 1, label: 'Dreadmarch 1' }, { at: 116, mech: 'kicks', ph: 1, label: 'Spiritcackle 1' }, { at: 125, mech: 'gloomh', ph: 1, label: 'Gloombomb 1' },
+  { at: 145, mech: 'dm', ph: 1, label: 'Dreadmarch 2' }, { at: 149, mech: 'kicks', ph: 1, label: 'Spiritcackle 2' }, { at: 163, mech: 'gloomh', ph: 1, label: 'Gloombomb 2' }, { at: 171, beat: 'p2end', ph: 1 },
+  { at: 174, mech: 'frags', ph: 2 },
+  { at: 212, beat: 'defile', ph: 3 }, { at: 215, mech: 'orbs', ph: 3, label: 'Toxic Deluge 4' }, { at: 230, mech: 'grim', ph: 3 }, { at: 239, mech: 'gloomh', ph: 3, label: 'Gloombomb 3' },
+  { at: 252, beat: 'nightfall', ph: 3, o: { ph: 3 } }, { at: 262, mech: 'orbs', ph: 3, label: 'Toxic Deluge 5' }, { at: 273, mech: 'dm', ph: 3, label: 'Dreadmarch 3' }, { at: 289, mech: 'gloomh', ph: 3, label: 'Gloombomb 4' },
+  { at: 318, beat: 'defile', ph: 3 }, { at: 319, mech: 'orbs', ph: 3, label: 'Toxic Deluge 6' }, { at: 323, mech: 'gloomh', ph: 3, label: 'Gloombomb 5' }, { at: 332, beat: 'kill', ph: 3 },
+];
 // (phase 3 has both bosses up: a scene borrowed from phase 1 or 2 gets the other one beside it)
 function gdzCaSimAdd(k, e) {
   if (e.ph !== 3 || !e.mech || e.mech === 'diamond') return; const z = k.posAt('zj', 0), h = k.posAt('hm', 0);
   if (z && !h) k.boss('hm', 'Malacrass', 0, z[0] + 4, z[1] + 4); else if (h && !z) k.boss('zj', 'Zul\'jan', 0, h[0] - 4, h[1] - 4);
 }
 // running through the whole simulation: the rolling axes (5 from 0:14, 5 more from 1:39, each set for 3 minutes) and the Fangs puddles at the sides
-function gdzCaSimOverlay(k, rt2sim, end) {
+function gdzCaSimOverlay(k, rt2sim, end, SIM, gone2) {
+  SIM = SIM || GDZ_CA_SIM;
   const p2 = rt2sim(177);
   // (Noxious Ground, measured from about 1,600 hits on 11 Mythic kills (your notes, Oct 20: from the exact middle of each side, equal
   // sizes): each pool pours from the middle of the west or east wall. After the first Fangs it reaches to about 24 yards short of
   // the centre; after the second it stops about 4 yards short of the boss, so the two nearly touch there, and the gap widens to about 25 yards 30 yards north and south (where unhit players stood, Oct 20). Each hurts for about 28 seconds, then fades)
   const W = 52, life = 28;
   [[-W, 0], [W, 0]].forEach(([x, y]) => { k.ring({ x, y, r: 28, clip: true, fx: 'puddle', t0: rt2sim(0) + 2.6, dur: rt2sim(life) - rt2sim(0) - 2.6, color: '#c4f03c', fill: 'rgba(52,128,30,.5)', cn: 'Noxious Ground', legend: 'pools from Fangs: stay in the middle lane' });
-    k.ring({ x, y, r: 48, clip: true, fx: 'puddle', t0: rt2sim(85) + 0.8, dur: rt2sim(85 + life) - rt2sim(85) - 0.8, color: '#c4f03c', fill: 'rgba(52,128,30,.46)', cn: 'Noxious Ground', legend: 'pools from Fangs: stay in the middle lane' }); });
+    k.ring({ x, y, r: 48, clip: true, fx: 'puddle', t0: rt2sim(85) + 0.8, dur: rt2sim(gone2 || 85 + life) - rt2sim(85) - 0.8, color: '#c4f03c', fill: 'rgba(52,128,30,.46)', cn: 'Noxious Ground', legend: 'pools from Fangs: stay in the middle lane' }); });
   // (the rolling axes, as on the real kills: each throw's 5 roll on from the end of its own scene for 3 minutes, then vanish; in the
   // layout's turn (simRot 90), like the scenes; anyone one touches takes a hit)
   k.rot(90); const ov = [];
-  GDZ_CA_SIM.forEach((e, j) => { if (e.mech !== 'grinder') return; const S = rt2sim(e.at), nx = GDZ_CA_SIM[j + 1], a = nx ? rt2sim(nx.at - 0.001) : S + 14, b = Math.min(end, rt2sim(e.at + 3 + 180));
+  SIM.forEach((e, j) => { if (e.mech !== 'grinder') return; const S = rt2sim(e.at), nx = SIM[j + 1], a = nx ? rt2sim(nx.at - 0.001) : S + 14, b = Math.min(end, rt2sim(e.at + 3 + 180));
     for (let n = 0; n < 5; n++) { const i = (e.o && e.o.more ? 5 : 0) + n, id = 'axo' + i, P = (t) => GDZ_CA_AXP[i](t - S - 3.4); for (let t = a; t <= b + 0.001; t += 1) { const q = P(t); k.obj(id, 'axe', t, q[0], q[1]); }
       k.show(id, a, b).ring({ on: id, r: 3, fx: 'zone', t0: a, dur: b - a, color: '#ff9628', cn: 'Axegrinder', legend: 'rolling axe: hurts if it touches you' }); ov.push({ a, b, P }); } });
   if (ov.length) { const pos = (i, t) => (t >= ov[i].a && t <= ov[i].b ? ov[i].P(t) : null), t0 = Math.min(...ov.map((x) => x.a)), t1 = Math.max(...ov.map((x) => x.b));
@@ -37414,6 +37459,8 @@ GDZ['The Coiled Altar'] = {
   },
   sum: 'Zul\'jan first, then Hex Lord Malacrass, then both at once. Orbs go to the front for the frontal, axes get soaked by five, and ghosts get led into the frontal too.',
   // (the Mythic guide credits its source by name (your call, Oct 20): a name only, never a link out)
+  h: { simRot: 90, sim: GDZ_CA_SIM_H, simDur: GDZ_CA_DUR, simSev: GDZ_CA_SEV, beats: GDZ_CA_BEATS_H, simOverlay: (k, r, e) => gdzCaSimOverlay(k, r, e, GDZ_CA_SIM_H, 103), simAdd: gdzCaSimAdd,
+    simAlways: ['Axegrinder: 5 axes roll around the room from 0:12 for about 3 minutes. Step out of their way: every touch hurts.', 'Orbs: never pop more than a handful at once, and pop them all before Zul\'jan dies.', 'From phase 3, Defilement ground stays down: stay out of it.'] },
   m: { simRot: 90, sim: GDZ_CA_SIM, simSkip: [{ from: 267, to: 352, label: "The cycle repeats", text: "The same cycle plays again: two Dreadmarch and add sets, then Eternal Nightfall (5:32)." }], simDur: GDZ_CA_DUR, simSev: GDZ_CA_SEV, simBands: [{ t0: 15, t1: 100, n: 5 }, { t0: 100, t1: 195, n: 10 }, { t0: 195, t1: 280, n: 5 }], simAlways: ['Axegrinder: 5 axes roll around the room from 0:14, 10 from 1:39, and the last ones vanish around 4:40. Step out of their way: every touch hurts.', 'From phase 3, Defilement ground stays down: stay out of it.'], beats: GDZ_CA_BEATS, simOverlay: gdzCaSimOverlay, simAdd: gdzCaSimAdd, source: 'Tactyks\' Mythic Coiled Altar guide and first-kill video', sum: 'Zul\'jan, then Hex Lord Malacrass, then both. Purple orbs must never touch another orb, every axe\'s soakers are planned, ghosts must never touch, and bombs go on the adds. This follows a plan that killed it, with its markers; your raid may mark the room its own way.' },
   facts: [['Phases', '3 + intermission'], ['Bloodlust', 'Intermission'], ['Healers', '5', 'm'], ['Hardest part', 'Orbs and ghosts', 'h'], ['Hardest part', 'Purple orbs', 'm']],
   phases: [
@@ -37429,9 +37476,10 @@ GDZ['The Coiled Altar'] = {
             note: 'Carrying an orb gives Tainted Blood (its damage around you goes up 200% for 10 seconds), so take turns carrying.' },
           map: (d, o) => {
             if (d === 'm') return o && o.lane ? GDZ_CA_M.orbsLane() : GDZ_CA_M.orbs();
+            if (o && o.lane) return gdzCaOrbsLaneH();
             const k = gdzKit('The Coiled Altar', 16);
             k.boss('zj', 'Zul\'jan', 0, 0, 10); gdzCaRaid(k);
-            const spots = [[-32, -16], [26, -12], [-31, -4], [32, -2], [-10, -30], [12, -32]], who = ['r2', 'r6', 'r3', 'r7', 'r4', 'r5'];
+            const spots = [[-32, -16], [26, -12], [-31, -4], [32, -2], o && o.near ? [-9, -19] : [-10, -30], o && o.near ? [11, -20] : [12, -32]], who = ['r2', 'r6', 'r3', 'r7', 'r4', 'r5'];
             spots.forEach(([x, y]) => k.ring({ x, y, r: 5, fx: 'soak', t0: 1, at: 3, dur: 2.6, color: '#5fd35f', cn: 'Toxic Deluge', legend: 'circle lands and leaves an orb' }));
             spots.forEach(([x, y], i) => { const [dx, dy] = gdzSpot(i, 6, 4.5), back = [dx < 0 ? -18 : 18, -12]; /* (then a step to the side, clear of the frontal) */ gdzCarry(k, who[i], 'o' + i, 'orb', 3, x, y, 3.4 + i * 0.35, dx, -15 + dy, 6 + i * 0.2, back); k.show('o' + i, 3, 14.4); });
             k.at(11.8, 't2', 7, 7).at(12.8, 't2', 0, 2).at(11.8, 't1', 0, 3).at(12.8, 't1', 6, 6);
@@ -39955,6 +40003,21 @@ const TF_SIM = [
   { at: 315, beat: 'pace3', ph: 4 }, { at: 318, mech: 'beams', ph: 4, label: 'Caustic Deluge 5', o: { p: 2 } }, { at: 333, mech: 'slams', ph: 4, label: 'Stone Breaker 5', o: { p: 2 } }, { at: 343, mech: 'emergence', ph: 4, label: 'Venomous Emergence 5 (Nobody above 8 stacks)', o: { p: 2 } }, { at: 344, mech: 'brood', ph: 4, label: 'Rouse the Brood 5', o: { p: 2 } },
   { at: 350, mech: 'ichor', ph: 4, label: 'Coiling Ichor 5', o: { p: 2 } }, { at: 357, mech: 'waves', ph: 4, label: 'Stir the Depths 5', o: { p: 2 } }, { at: 367, mech: 'feast', ph: 4, label: 'Ravenous Feast 5', o: { p: 2 } }, { at: 379, mech: 'beams', ph: 4, label: 'Caustic Deluge 6', o: { p: 2 } }, { at: 394, mech: 'slams', ph: 4, label: 'Stone Breaker 6', o: { p: 2 } }, { at: 403, beat: 'kill', ph: 4 },
 ];
+// (Heroic, by Wolfthorn's Heroic kill b8W2ZaGJAjYgL6Cp #28, 6:58: a set every 68 seconds, no Broodlings; the platform scenes say what Heroic needs)
+const TF_BEATS_H = Object.assign({}, TF_BEATS, {
+  pace2: Object.assign({}, TF_BEATS.pace2, { name: 'Platform 2 (Watch your stacks)', do: ['The same two sets on the next corner. Low-stack players soak the globules; 10 stacks kills.'] }),
+  pace3: Object.assign({}, TF_BEATS.pace3, { name: 'Platform 3 (Low stacks soak)', do: ['The last platform: stacks are high now. Only low-stack players soak; nobody goes to 10. Kill both bosses together.'] }),
+});
+const tfSetH = (t, n, p, ph) => { const o = { p }, x = ph == null ? {} : { ph };
+  return [{ at: t, mech: 'beams', label: 'Caustic Deluge ' + n, o }, { at: t + 16, mech: 'slams', label: 'Stone Breaker ' + n, o }, { at: t + 28, mech: 'emergence', label: 'Venomous Emergence ' + n, o },
+    { at: t + 36, mech: 'ichor', label: 'Coiling Ichor ' + n, o }, { at: t + 44, mech: 'waves', label: 'Stir the Depths ' + n, o }, { at: t + 55, mech: 'feast', label: 'Ravenous Feast ' + n, o }].map((e) => Object.assign(e, x)); };
+const TF_SIM_H = [
+  { at: 0, beat: 'start' }, ...tfSetH(8, 1, 0), ...tfSetH(76, 2, 0),
+  { at: 150, mech: 'submerge', ph: 1, label: 'Submerge 1', o: { p: 0 } },
+  { at: 175, beat: 'pace2', ph: 2 }, ...tfSetH(178, 3, 1, 2), ...tfSetH(246, 4, 1, 2),
+  { at: 319, mech: 'submerge', ph: 3, label: 'Submerge 2', o: { p: 1 } },
+  { at: 344, beat: 'pace3', ph: 4 }, ...tfSetH(347, 5, 2, 4), { at: 415, mech: 'beams', ph: 4, label: 'Caustic Deluge 6', o: { p: 2 } }, { at: 418, beat: 'kill', ph: 4 },
+];
 const TF_DUR = { 'm:beams': 12, 'm:slams': 8, 'm:emergence': 12, 'm:brood': 10, 'm:ichor': 8, 'm:waves': 6, 'm:feast': 14, 'm:submerge': 24, 'b:start': 2, 'b:pace2': 2, 'b:pace3': 2, 'b:kill': 0 };
 const TF_SEV = { 'm:beams': 3, 'm:slams': 2, 'm:emergence': 3, 'm:brood': 3, 'm:ichor': 2, 'm:waves': 2, 'm:feast': 3, 'm:submerge': 3, 'b:start': 1, 'b:pace2': 1, 'b:pace3': 2, 'b:kill': 1 };
 GDZ['The Twin Fangs'] = {
@@ -39965,6 +40028,8 @@ GDZ['The Twin Fangs'] = {
     'Ravenous Feast (Three groups, one hit each)': ['', '', '', ''], 'Submerge (Let the beam pass, then follow it)': ['', '', '', ''],
   },
   sum: 'Two bosses, three platforms, two sets on each, then a Submerge to the next. Everything adds venom stacks and too many kills you, so the fight is about stack control: soak globules on pace, kill the Spawns before they Spit twice, dodge the waves and beams. Kill both together.',
+  h: { sim: TF_SIM_H, simSkip: [{ from: 175, to: 344, label: 'Platform 2 (the same two sets)', text: 'Platform 2 plays the same two sets on the next corner (Caustic Deluge at 2:58 and 4:06), then the second Submerge at 5:19.' }], simDur: TF_DUR, simSev: TF_SEV, beats: TF_BEATS_H,
+    simAlways: ['Eternal Venom: 10 stacks kills. Only low-stack players soak the globules.', 'Every set is rinse and repeat: beams and globules, slams, Spawns, Coiling Ichor, waves, Feast.', 'Kill both bosses together: the survivor gets stronger every few seconds.'] },
   m: { sim: TF_SIM, simSkip: [{ from: 160, to: 315, label: 'Platform 2 (the same two sets)', text: 'Platform 2 plays the same two sets on the next corner (stack pace: about 3), then the second Submerge at 4:51.' }], simDur: TF_DUR, simSev: TF_SEV, beats: TF_BEATS,
     roles: {
       t: ['Both beams at once: your biggest defensives.', 'Stone Breaker: step into each slam in order; swap after each set.', 'Stir the Depths: look back and call where each set of waves comes from.', 'Protection Paladins: the Broodlings at the tip, then fill in.', 'Ravenous Feast: one of you in the right group, one in the left, then straight back to your boss.'],
