@@ -50,6 +50,115 @@ function cutModule(m, T) {
   return { ...m, sections, phases: (m.phases || []).filter((p) => p.start <= T).map((p) => ({ ...p, end: Math.min(p.end, T) })) };
 }
 
+// ---- one recipe per boss mechanic (the research, Oct 21: notes/Guides/Debrief in game - mechanic lines research.md) ----
+// Each reads the rows the website's check already built and returns one sentence: the problem first, need against did, when and
+// who; a clean mechanic in a few words with the number that proves it. null keeps the generic line. Keyed by the check's title.
+const andList = (l) => (l.length < 2 ? l.join('') : l.slice(0, -1).join(', ') + ' and ' + l[l.length - 1]);
+const capF = (s) => String(s || '').replace(/^./, (c) => c.toUpperCase());
+const ctxt = (c) => (!c ? '' : c.p ? c.p : c.ps ? c.ps.join(', ') : c.txt != null ? plain(c.txt) : '');
+const isHurt = (c) => !!(c && (c.bad || c.warn));
+const rowsOf = (gs) => gs.flatMap((g) => (g.rows || []).map((r) => ({ g, r })));
+const tOf = (r) => { const c = r.find((x) => x && x.t != null); return c ? c.t : null; };
+const at = (r) => (tOf(r) != null ? ' at ' + mmss(tOf(r)) : '');
+const allN = (n, noun) => (n === 2 ? 'Both ' + noun : 'All ' + n + ' ' + noun);
+const RECIPES = {
+  // The Coiled Altar
+  'Venom orbs': ({ rows }) => {
+    const live = rows.filter((r) => !/no frontal/i.test(ctxt(r[2]))), bad = rows.filter((r) => r.some(isHurt));
+    if (!bad.length) return live.length > 1 ? allN(live.length, 'Deluges') + ' clean: 5 to 6 orbs per frontal.' : live.length ? 'Clean: 5 to 6 orbs per frontal.' : null;
+    const r = bad[0], sub = (r[2] && r[2].sub) || '', sv = [...sub.matchAll(/Sever (\d): (\d+)/g)].map((m) => 'Sever ' + m[1] + ' hit ' + m[2]);
+    const plan = (sub.match(/plan: (.+)$/) || [])[1], why = /clean/i.test(ctxt(r[3])) ? '' : ctxt(r[3]);
+    const planT = plan ? plan.replace(/\s*\(hits empty ground\)/, '').replace(/ each/, '').replace(/\s*\((\d+) at most\)/, ', $1 at most').trim() : '';
+    return (rows.length > 1 ? bad.length + ' of ' + rows.length + ' went wrong. ' : '') + ctxt(r[0]).replace('#', '') + at(r) + ': ' + (sv.length ? sv.join(', ') : ctxt(r[2])) + (why ? ', ' + why : '') + (planT ? ' (plan: ' + planT + ')' : '') + '.';
+  },
+  'Guillotine': ({ rows }) => {
+    const it = rows.map((r) => ({ r, name: ((r[1] && r[1].sub) || 'soak').replace(' · ', ', '), n: parseInt(ctxt(r[2]), 10), need: parseInt(((r[2] && r[2].sub) || '').replace(/\D/g, ''), 10) || 5, bad: isHurt(r[2]), target: r[4] && r[4].p, died: (r[6] && r[6].ps) || [] }));
+    const bad = it.filter((x) => x.bad || x.died.length);
+    if (!bad.length) return it.length > 1 ? allN(it.length, 'soaks') + ' had 5 or more (' + it.map((x) => x.n).join(', ') + ').' : it.length ? 'Soaked with ' + it[0].n + '.' : null;
+    const x = bad[0];
+    return (it.length > 1 ? bad.length + ' of ' + it.length + ' went wrong. ' : '') + capF(x.name) + at(x.r) + ': ' + x.n + ' in the circle (needs ' + x.need + ')' + (x.died.length ? ', ' + andList(x.died.map((n) => '@' + n)) + ' died' : '') + (x.target ? '. Target @' + x.target : '') + '.';
+  },
+  'Tank frontals': ({ rows }) => {
+    if (!rows.length || !rows[0][2] || !rows[0][2].p) return null;
+    const bad = rows.filter((r) => r.some(isHurt));
+    if (!bad.length) return allN(rows.length, 'frontals') + ' taken right: a defensive on every stack 2.';
+    const line = (r) => '@' + (r[2].p || '?') + at(r) + ': ' + ctxt(r[3]) + ' with ' + (ctxt(r[4]) || 'nothing up') + (/died/i.test(ctxt(r[5])) ? ', died' : !/nothing/i.test(ctxt(r[4])) ? ' (plan: a defensive and two externals)' : '');
+    return bad.length + ' of ' + rows.length + ' went wrong. ' + bad.slice(0, 2).map(line).join('. ') + '.';
+  },
+  'Phase changes': ({ rows, flag, t, T, dur }) => {
+    const ts = rows.map((r) => { const nm = ctxt(r[0]), tt = r[1] && r[1].t; if (!nm || tt == null) return ''; const ph = nm.split(/\s*→\s*/)[0], st = ctxt(r[3]).match(/^(\d+) Venom Rupture \(plan (\d+) to (\d+)\)/);
+      return /→/.test(nm) ? ph + ' pushed at ' + mmss(tt) + (st ? ' at ' + st[1] + ' stacks (plan ' + st[2] + '-' + st[3] + ')' : '') : ph + ' began at ' + mmss(tt); }).filter(Boolean);
+    return ts.length ? (flag === 'ok' ? 'Done right. ' : String(t).replace(/([^.!?])$/, '$1.') + ' ') + ts.join(', ') + '.' : 'Still in P1 when the pull ended (' + mmss(Math.min(T, dur)) + ').';
+  },
+  'Dreadmarch': ({ gs }) => {
+    if (!gs.length) return null;
+    const all = rowsOf(gs), badG = gs.filter((g) => g.bad || g.warn);
+    if (!badG.length) return (gs.length > 1 ? allN(gs.length, 'Dreadmarches') + ' done right' : 'Done right') + ': no ghosts touched, every soul fragment picked up.';
+    const col = all.filter((x) => /collision/i.test(ctxt(x.r[0]))), grave = all.filter((x) => /Gravebound death/i.test(ctxt(x.r[0])));
+    const missed = all.filter((x) => /^Soul Sever$/i.test(ctxt(x.r[0]))).reduce((a, x) => a + (parseInt(ctxt(x.r[3]), 10) || 0), 0), p = [];
+    if (col.length) p.push(col.length + (col.length === 1 ? ' ghost collision' : ' ghost collisions'));
+    if (grave.length) p.push(grave.length + ' Gravebound ' + (grave.length === 1 ? 'death' : 'deaths') + ' (soul fragments not picked up)');
+    if (missed) p.push(missed + (missed === 1 ? ' ghost' : ' ghosts') + ' missed by Soul Sever');
+    const f = all.find((x) => x.r.some((c) => c && c.bad)), who = f ? (f.r[2] && f.r[2].ps ? andList(f.r[2].ps.map((n) => '@' + n)) + (/collision/i.test(ctxt(f.r[0])) ? "'s ghosts touched" : '') : f.r[2] && f.r[2].p ? '@' + f.r[2].p + (/Gravebound/.test(ctxt(f.r[0])) ? ' died to Gravebound' : ' ' + ctxt(f.r[3])) : ctxt(f.r[3])) : '';
+    return badG.length + ' of ' + gs.length + ' went wrong: ' + (p.length ? andList(p) : plain(badG[0].sub)) + '.' + (f ? ' First: ' + plain(f.g.title).replace('#', '') + at(f.r) + ', ' + who + '.' : '');
+  },
+  'Soulcoiler adds': ({ gs }) => {
+    if (!gs.length) return null;
+    const all = rowsOf(gs), wails = all.filter((x) => /Wail of Terror/.test(ctxt(x.r[0]))), thr = wails.filter((x) => !/kicked/i.test(ctxt(x.r[3])));
+    const malice = gs.reduce((a, g) => a + (parseInt((plain(g.sub || '').match(/(\d+) deaths? to Retaliatory Malice/) || [])[1], 10) || 0), 0);
+    const alive = all.filter((x) => /^Soulcoiler \d+$/.test(ctxt(x.r[0])) && /alive/i.test(ctxt(x.r[3]))), bad = gs.filter((g) => g.bad || g.warn), p = [];
+    if (!bad.length) return (gs.length > 1 ? allN(gs.length, 'sets') : 'The set') + ' dead in time, every Wail kicked (' + wails.length + ' kicks).';
+    if (thr.length) p.push(thr.length + (thr.length > 1 ? ' Wails' : ' Wail') + ' got through (first' + at(thr[0].r) + ')');
+    if (malice) p.push(malice + (malice === 1 ? ' death' : ' deaths') + ' to Retaliatory Malice');
+    if (alive.length) p.push(alive.length + (alive.length > 1 ? ' adds' : ' add') + ' still alive');
+    return bad.length + ' of ' + gs.length + ' sets went wrong: ' + (p.length ? andList(p) : plain(bad[0].sub)) + '.';
+  },
+  'Gloombombs': ({ gs }) => {
+    if (!gs.length) return null;
+    const all = rowsOf(gs), bad = gs.filter((g) => g.bad || g.warn), p = [];
+    if (!bad.length) return (gs.length > 1 ? allN(gs.length, 'sets') : 'The set') + ': every bomb on the adds, every Spirit Shield broken.';
+    const unb = all.filter((x) => /shield/i.test(ctxt(x.r[0])) && /not broken/i.test(ctxt(x.r[3]))), clips = all.filter((x) => /clip/i.test(ctxt(x.r[0])));
+    const miss = gs.reduce((a, g) => { const m = plain(g.sub || '').match(/(\d+) of (\d+) on this set/); return a + (m ? +m[2] - +m[1] : 0); }, 0);
+    if (unb.length) p.push(unb.length + (unb.length > 1 ? ' Spirit Shields' : ' Spirit Shield') + ' not broken');
+    if (miss) p.push(miss + (miss > 1 ? ' bombs' : ' bomb') + ' off the adds');
+    if (clips.length) p.push(andList([...new Set(clips.map((x) => '@' + ctxt(x.r[2])))]) + ' clipped by someone else\'s bomb (first' + at(clips[0].r) + ')');
+    return bad.length + ' of ' + gs.length + ' sets went wrong: ' + (p.length ? andList(p) : plain(bad[0].sub)) + '.';
+  },
+  'Eternal Nightfall': ({ rows }) => {
+    if (!rows.length) return null;
+    const spare = (r) => parseFloat((ctxt(r[3]).match(/\(([\d.]+) s to spare/) || [])[1]);
+    const fail = rows.filter((r) => /not broken|finished/i.test(ctxt(r[3]) + ' ' + ctxt(r[5])));
+    if (fail.length) return capF(ctxt(fail[0][0])) + at(fail[0]) + ': not broken, the cast finished.' + (rows.length > 1 ? ' ' + (rows.length - fail.length) + ' of ' + rows.length + ' stopped.' : '');
+    const tight = rows.filter((r) => spare(r) < 1.5);
+    if (tight.length) return capF(ctxt(tight[0][0])) + at(tight[0]) + ' broke with only ' + spare(tight[0]) + ' s to spare.';
+    const s = rows.map(spare).filter((x) => !isNaN(x));
+    return (rows.length > 1 ? allN(rows.length, 'shields') : 'The shield') + ' broken and kicked' + (s.length ? ' (' + s.map((x) => x + ' s').join(', ') + ' to spare)' : '') + '.';
+  },
+  'Intermission (Stop the fragments)': ({ rows }) => {
+    if (!rows.length) return null;
+    const thr = rows.filter((r) => /^Round/i.test(ctxt(r[0])) && /\d/.test(ctxt(r[3])) && !/none/i.test(ctxt(r[3]))), over = rows.filter((r) => isHurt(r[2])), peak = Math.max(...rows.map((r) => parseInt(ctxt(r[2]), 10) || 0)), p = [];
+    if (!thr.length && !over.length) return 'No fragment got through, every soak round within plan (peak ' + peak + ' stacks).';
+    if (thr.length) p.push(capF(ctxt(thr[0][0]).toLowerCase()) + at(thr[0]) + ': ' + ctxt(thr[0][3]) + ' to Zul\'jan');
+    if (over.length) { const r = over[0], cds = /cooldowns:/.test((r[2] && r[2].sub) || ''); p.push(capF(ctxt(r[0]).toLowerCase()) + at(r) + ': ' + ctxt(r[2]) + (cds ? ' (plan up to 10 with cooldowns)' : ' with no cooldowns (plan 3 to 5)')); }
+    return p.join('. ') + '.' + (thr.length ? '' : ' No fragment got through.');
+  },
+  'Venomfang': ({ rows }) => {
+    if (!rows.length || !rows[0][1] || !rows[0][1].p) return null;
+    const s = rows.map((r) => ({ r, v: parseFloat(ctxt(r[2])) })).filter((x) => !isNaN(x.v)).sort((a, b) => b.v - a.v), late = rows.filter((r) => r.some(isHurt)).length;
+    if (!s.length) return null;
+    if (!late) return (rows.length > 1 ? allN(rows.length, 'dispelled') : 'Dispelled') + ' in time (slowest ' + s[0].v + ' s).';
+    const w = s[0];
+    return 'Slowest: @' + w.r[1].p + ', ' + w.v + ' s' + at(w.r) + (w.r[3] && w.r[3].p ? ' (dispelled by @' + w.r[3].p + ')' : '') + '. ' + (rows.length - late) + ' of ' + rows.length + ' in time.';
+  },
+  // every boss
+  'Interrupts': ({ rows, gs }) => {
+    const all = rows.length ? rows : rowsOf(gs).map((x) => x.r); if (!all.length) return null;
+    const thr = all.filter((r) => r.some((c) => c && c.bad));
+    if (!thr.length) return (all.length > 1 ? allN(all.length, 'kicked') : 'Kicked') + '.';
+    return thr.length + ' got through: ' + andList(thr.slice(0, 2).map((r) => (ctxt(r[1]) || 'a cast') + at(r))) + (thr.length > 2 ? ' and ' + (thr.length - 2) + ' more' : '') + '. ' + (all.length - thr.length) + ' of ' + all.length + ' kicked.';
+  },
+};
+
 window.DBF_BUILD = (b, rep, same, W, L) => {
   // (Rotation checks are the whole pull: worked out once, shared by every version)
   const memo = new Map(), W2 = Object.assign({}, W, { specRun: (...a) => { const k = a[0] + '|' + a[2]; if (!memo.has(k)) memo.set(k, W.specRun(...a)); return memo.get(k); } });
@@ -233,13 +342,11 @@ function buildOne(b, rep, same, W, L, cutN) {
         const n = gs.length || rows.length;
         t = n > 2 ? 'All ' + n + ' done right.' : n === 2 ? 'Both done right.' : 'Done right.';
       }
-      // (phase changes: when each phase was pushed, in the pull's own time (the user's ask, Oct 21: "P1 pushed at 2:19"))
-      if (sec.id === 'push') {
-        const ts = rows.map((row) => { const nm = row[0] && row[0].txt, at = row[1] && row[1].t; if (!nm || at == null) return '';
-          const ph = String(nm).split(/\s*→\s*/)[0]; return /→/.test(nm) ? ph + ' pushed at ' + mmss(at) : ph + ' began at ' + mmss(at); }).filter(Boolean);
-        t = ts.length ? (flag === 'ok' ? 'Done right. ' : t.replace(/([^.!?])$/, '$1.') + ' ') + ts.join(', ') + '.' : 'Still in P1 when the pull ended (' + mmss(Math.min(T, rep.duration || 0)) + ').';
-      }
-      raid.mech.push([flag, sec.spell && sec.spell[0] ? String(sec.spell[0]) : '', plain(sec.title), shortTo(t.replace(/\s*\(see How it works\)/gi, '').replace(/\.\./g, '.').trim(), 210)]);
+      // (a recipe for this mechanic, from the research (notes/Guides/Debrief in game - mechanic lines research.md): its most useful
+      // fact first, need against did, when and who. Without one, or if it can't read the rows, the generic line above stays)
+      const rc = RECIPES[plain(sec.title)] || RECIPES[plain(sec.title).replace(/\s*\(.*\)$/, '')];
+      if (rc) { try { const x = rc({ sec, rows, gs, flag, t, mmss, cellTxt, rowLine, hurt, rowBad, T, dur: rep.duration || 0 }); if (x) t = x; } catch (e) { /* keep the generic line */ } }
+      raid.mech.push([flag, sec.spell && sec.spell[0] ? String(sec.spell[0]) : '', plain(sec.title), shortTo(t.replace(/\s*\(see How it works\)/gi, '').replace(/\.\./g, '.').trim(), 230)]);
     } catch (e) { raid.mech.push([sec.verdict === 'bad' ? 'bad' : sec.verdict === 'warn' ? 'warn' : 'ok', sec.spell && sec.spell[0] ? String(sec.spell[0]) : '', plain(sec.title || ''), { bad: 'Went wrong.', warn: 'Some mistakes.' }[sec.verdict] || 'Done right.']); } }
     const rank = { bad: 0, warn: 1, ok: 2 }; raid.mech.sort((a, c) => rank[a[0]] - rank[c[0]]); raid.mech = raid.mech.slice(0, 16); /* (every mechanic, and avoidable damage on top) */
   }
