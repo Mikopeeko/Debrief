@@ -1691,7 +1691,6 @@ function buildEntombedSentinels(ev, r, h) {
 
   // ---- 10. avoidable damage ----
   const av = avoidPanel(ev, r, h, [
-    { n: ['protovenom eruption'], label: 'Protovenom Eruption', harm: 'High', why: 'a circle touching a player without one, which blasts and knocks back both' },
     { n: ['living venom'], label: 'Living Venom', harm: 'Medium', why: 'a droplet\'s venom flying back to the Breath of Ula\'tek (375k a hit)', warnAt: 1, badAt: 3 },
     { n: ['blood venom'], label: 'Blood pools', harm: 'Medium', why: 'standing in a blood pool (166k a second)', skip: (e) => e.id !== ES.pool },
   ]);
@@ -3136,7 +3135,7 @@ const HOW = {
     addsets: 'Spiritcackle summons two Spiteful Soulcoilers that cast Wail of Terror, a raid-wide fear that must be interrupted. They jump after each kick and become immune to kicks at full energy. Kick as soon as the Gloombomb cast starts, so the add stays put for the Gloombomb overlap and there is time for the next kick. The melee add\'s second kick should be a melee player. Kill both adds before the next set spawns: on Mythic each add hits the raid with Retaliatory Malice every 3 seconds for as long as it lives. (Their Spirit Shields and the Gloombombs are in the Gloombombs panel.)',
     gloom: 'On Mythic each Spiteful Soulcoiler spawns with Spirit Shield (99% damage reduction, 2 stacks). Malacrass puts Gloombomb on two melee and two ranged players; 5 seconds later each one explodes in a 15-yard circle, and every Soulcoiler inside loses a stack. Each pair overlaps its circles on its own add (melee on the unmarked melee add, ranged on the marked ranged add), so both shields break. A bomb that misses, or lands on a leftover add from an earlier set, leaves this set\'s shield up. Everyone else stays out of the circles.',
     inter: 'Malacrass channels Soulbinding: Zul\'jan takes double damage, so use Bloodlust and burn him. Fragments of Malacrass rush toward Zul\'jan and heal him for about 10% if they reach him, which is close to a wipe. Players block them, but every block gives the whole raid a Spirit Erasure stack (more damage taken), so soak in rounds: 3 to 5 stacks, let them drop, repeat; near the end stack raid cooldowns in the middle and go up to 7 to 10. Spread soakers around the room, including the inner ring. Zul\'jan under 35% when it ends is on pace for the kill.',
-    avoid: 'Every source of damage that positioning can avoid, most harmful first. Dangerous (red on any hit): tank frontals on non-tanks and ghosts touching. Harmful: the statue poison pools (Noxious Ground), Axegrinder axes, someone else\'s Gloombomb, standing near a purple orb carrier, and P3 Defiled Ground. Minor: standing near a green orb carrier and Toxic Deluge impacts. Each hit is one time walking into it (a pool or axe ticks fast while you stand in it, and the ticks are listed under it). Tanks aren\'t judged on Axegrinder. Raid-wide damage (orb pulses and ruptures, Dreadful Presence, Retaliatory Malice, the Guillotine burst) isn\'t avoidable and isn\'t listed.',
+    avoid: 'Every source of damage that positioning can avoid, most harmful first. Dangerous (red on any hit): tank frontals on non-tanks and ghosts touching. Harmful: the statue poison pools (Noxious Ground), Axegrinder axes, someone else\'s Gloombomb, standing near a purple orb carrier, and P3 Defiled Ground. Minor: standing near a green orb carrier and Toxic Deluge impacts. Pools count the seconds you stood in them, axes and the rest the times you walked into them, against the fastest kills by the same point of the fight: the second Fangs fills the middle, so a few seconds there is normal. Tanks aren\'t judged on Axegrinder. Raid-wide damage (orb pulses and ruptures, Dreadful Presence, Retaliatory Malice, the Guillotine burst) isn\'t avoidable and isn\'t listed.',
     vf: 'Zul\'jan\'s Venomfang puts a 14-second poison on random players. Dispel it quickly: any healer can take it. It\'s a small part of the raid\'s damage, and it doesn\'t kill on its own, so a slow dispel is a small slip, never a fail. Each row is one Venomfang: how long it stayed on and who dispelled it. Amber: on for more than 4 seconds or never dispelled.',
     push: 'Phase changes are timed. In P1 hold damage, keep the last frontal on empty ground, then kill Zul\'jan in the middle after the last Toxic Deluge with Darkness, Anti-Magic Zone and Spirit Link stacked (aim for 9 to 11 stacks). Push Malacrass right after a Soul Sever clears the ghosts (watch the knockback at the edge), use Lust in the intermission, and in P3 kill Zul\'jan first, before the Defilement that follows the burn, with Malacrass at about 7 to 8%, then finish Malacrass before he enrages.',
   },
@@ -3234,41 +3233,64 @@ const HOW_KICKS = {
 const pl2e = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
 
 // One "Avoidable damage" panel for a boss: a set per source (most harmful first), a row per player hit by it.
-// Hits are counted per touch (hits more than 1.5s apart), so a puddle or axe that ticks fast counts once per time
-// you walked into it. harm: High (dangerous: any hit is a problem), Medium (harmful), Low (minor). A death to it
-// is always red. Tanks (your note, Oct 18): they often take these on purpose, holding the boss in place, and can live
-// through them, so a tank's hits are listed but not judged, unless it killed them or they kept standing in it (at least
-// twice the hits that make anyone else red, and at least 6). A source that is a tank's own job to avoid sets tankJudged.
+// Judged against the fastest kills (your ask, Oct 22: "Do the same thing for avoidable damage"; notes/Guides/Avoidable damage -
+// how to judge it.md). AVOID_BASE: for each boss's source, how much 9 in 10 non-tank raiders in the fastest Mythic kills took by
+// each point of the fight ([t, amount], never lower later). A pull is judged at its own length (up to the wipe filter), at the
+// next point at or after it. Pools and ground count the seconds you stood in them (a tick is about a second); everything else
+// counts hits (times you walked into it, hits more than 1.5 s apart). Amber: more than the kills' line (and at least 2), "a bit
+// more than most". Red: twice that, a death to it, or any hit from a Dangerous source. Without a kill bar (a source no kill was
+// hit by), the old fixed numbers. Heroic and Normal use the Mythic bars until they have their own (lenient: those fights are slower).
+// Tanks (your note, Oct 18): they often take these on purpose, holding the boss in place, so a tank's hits are listed but not
+// judged, unless it killed them or they kept standing in it (twice the red line, at least 6). A source that is a tank's own job to
+// avoid sets tankJudged.
+const AVOID_BASE = {"The Coiled Altar":{"Axegrinder":[0,20,[[30,1],[60,2],[120,3],[150,4],[180,5],[240,7]]],"Noxious Ground":[1,20,[[30,3],[120,16]]],"Gloombomb (not your own)":[0,13,[[30,0]]],"Mutagenic Venom (near a purple carrier)":[0,20,[[30,0],[120,1]]],"Volatile Venom (near a green carrier)":[0,20,[[30,1],[120,2],[420,3]]],"Toxic Deluge impacts":[0,10,[[30,0]]]},"Nymrissa Wavecaller":{"Swirling Whirlpools":[0,3,[[30,0]]],"Water Jet":[0,6,[[30,0]]],"Lingering Frost":[0,10,[[30,0],[60,1],[180,2],[240,3]]]},"Nek'zali the Soulcoiler":{"Latent Cultist":[1,10,[[30,0],[120,1],[150,2],[240,3]]],"Anguished Echoes":[0,9,[[30,0]]],"Swirling Spirit":[0,4,[[30,0]]]},"Entombed Sentinels":{"Living Venom":[0,10,[[30,1]]]},"The Lost Explorers":{"Aftershock":[1,10,[[30,0],[90,1],[120,3]]]},"Vashnik the Malignant":{"Plague Wave":[0,10,[[30,1],[180,2]]],"Stygian Burst":[0,10,[[30,0],[240,1]]],"Umbral Ejection":[0,8,[[30,0]]],"Plague Froth (nearby)":[0,10,[[30,1],[60,2],[150,3],[240,4]]]},"Sszorak":{"Caustic Claws":[0,9,[[30,0],[90,1]]],"Caustic Residue":[1,10,[[30,0],[90,1],[120,4],[180,5],[240,7]]]},"Ula'tek":{"Caustic Waves":[0,5,[[30,0],[180,1]]],"Fester Burst":[0,5,[[30,0]]],"Desperate Thrash (Doomscale frontal)":[0,5,[[30,0]]],"Warden's Protection":[0,5,[[30,0],[240,2]]],"Virulent Spit":[0,3,[[30,0]]]},"Kith'ix":{"Venom Roar":[0,5,[[30,0]]],"Nullshards":[0,5,[[30,0]]],"Twisted Appendage":[0,5,[[30,0],[120,1]]],"Voidscar":[0,2,[[30,0]]]}};
+// (sources measured in seconds stood in them, not hits)
+const AV_SECS = /noxious ground|defiled ground|caustic residue|blood pool|aftershock|evil eyes|latent cultist|lingering frost|stir the depths/i;
+const AV_SECS_DEF = { High: [1, 1], Medium: [4, 8], Low: [8, 16] };
 const HARM = { High: 'Dangerous', Medium: 'Harmful', Low: 'Minor' };
-// (how many touches before a tank "kept standing in it": twice what makes anyone else red, and at least 6)
+// (how much before a tank "kept standing in it": twice what makes anyone else red, and at least 6)
 const tankKept = (bad) => Math.max(6, 2 * (bad || 1));
+// (a source's [amber, red] lines at t seconds into the pull, and whether they come from the kills)
+function avLim(r, src, secs) {
+  const dur = r.duration || 0, DEF = { High: [1, 1], Medium: [2, 5], Low: [5, 10] };
+  if (src.harm === 'High') return { kb: false, lim: () => [1, 1] };
+  const b = AVOID_BASE[r.item && r.item.boss] && AVOID_BASE[r.item.boss][src.label];
+  if (b && !!b[0] === !!secs) { const bars = b[2];
+    return { kb: true, k: b[1], lim: (t) => { const at = dur ? Math.min(t, dur) : t, x = bars.find((q) => q[0] >= at) || bars[bars.length - 1], a = Math.max(2, x[1] + 1); return [a, 2 * a]; } }; }
+  const d = secs ? AV_SECS_DEF[src.harm] : [src.warnAt ?? DEF[src.harm][0], src.badAt ?? DEF[src.harm][1]];
+  return { kb: false, lim: () => d };
+}
 function avoidPanel(ev, r, h, list) {
   const L = (x) => String(x).toLowerCase(), groups = [];
-  const DEF = { High: [1, 1], Medium: [2, 5], Low: [5, 10] };
   // (one source's set from its hits and deaths up to cut; the wipe filter builds it again with recut, so a hit or a death
   // after the filter never shows or counts)
   const build = (src, all, cut) => {
     // (a hit that did no damage, met with an immunity or fully absorbed, isn't avoidable damage taken (scan, Oct 19: a top kill's
     // Blast Wave "hits" were four immunities))
     const hits = all.filter((e) => e.t <= cut + 0.05 && e.amt !== 0); if (!hits.length) return null;
-    const [wA, bA] = [src.warnAt ?? DEF[src.harm][0], src.badAt ?? DEF[src.harm][1]];
+    const secs = src.secs != null ? !!src.secs : AV_SECS.test(src.label), L2 = avLim(r, src, secs), [wA, bA] = L2.lim(cut);
     const per = new Map();
-    for (const e of hits) { let x = per.get(e.dst); if (!x) per.set(e.dst, x = { g: e.dst, touches: 0, ticks: 0, amt: 0, last: -9, ts: [] }); x.ticks++; x.amt += e.amt; if (e.t - x.last > 1.5) { x.touches++; x.ts.push(e.t); } x.last = e.t; }
+    for (const e of hits) { let x = per.get(e.dst); if (!x) per.set(e.dst, x = { g: e.dst, touches: 0, ticks: 0, amt: 0, last: -9, ts: [], tk: [] }); x.ticks++; x.tk.push(e.t); x.amt += e.amt; if (e.t - x.last > 1.5) { x.touches++; x.ts.push(e.t); } x.last = e.t; }
+    const val = (x) => (secs ? x.ticks : x.touches);
     const diedT = new Map(r.deaths.filter((d) => d.t <= cut + 0.05 && src.n.includes(L(d.ability || ''))).map((d) => [d.guid, d.t])), died = new Set(diedT.keys());
-    const rows = [...per.values()].sort((a, b) => b.touches - a.touches || b.amt - a.amt).map((x) => {
-      const tank = !src.tankJudged && h.role(x.g) === 'tank', dd = died.has(x.g), kept = tank && x.touches >= tankKept(bA);
-      const bad = dd || kept || (!tank && x.touches >= bA), warn = !bad && !tank && x.touches >= wA;
-      return [{ p: h.name(x.g), sub: tank ? (kept ? 'tank, kept standing in it' : 'tank') : '' }, { txt: x.touches + (x.touches === 1 ? ' hit' : ' hits'), bad, warn, sub: x.ticks > x.touches ? x.ticks + ' damage ticks' : '' }, { n: x.amt }, { txt: dd ? 'died to it' : '—', bad: dd, dim: !dd }];
+    const rows = [...per.values()].sort((a, b) => val(b) - val(a) || b.amt - a.amt).map((x) => {
+      const v = val(x), tank = !src.tankJudged && h.role(x.g) === 'tank', dd = died.has(x.g), kept = tank && v >= tankKept(bA);
+      const bad = dd || kept || (!tank && v >= bA), warn = !bad && !tank && v >= wA;
+      return [{ p: h.name(x.g), sub: tank ? (kept ? 'tank, kept standing in it' : 'tank') : '' }, { txt: secs ? v + ' s in it' : v + (v === 1 ? ' hit' : ' hits'), bad, warn,
+        sub: secs ? (x.touches > 1 ? x.touches + ' times' : '') : x.ticks > x.touches ? x.ticks + ' damage ticks' : '' }, { n: x.amt }, { txt: dd ? 'died to it' : '—', bad: dd, dim: !dd }];
     });
-    const nT = [...per.values()].reduce((s, x) => s + x.touches, 0), amt = [...per.values()].reduce((s, x) => s + x.amt, 0);
+    const nT = [...per.values()].reduce((s, x) => s + val(x), 0), amt = [...per.values()].reduce((s, x) => s + x.amt, 0);
     // (the spell, for its icon and tooltip: the source's own, else what hit players most often under it, with its name)
     const byId = new Map(); for (const e of hits) if (e.id) { const c = byId.get(e.id) || { n: 0, name: e.spell }; c.n++; byId.set(e.id, c); }
     const top = [...byId].sort((a, b) => b[1].n - a[1].n)[0], sid = src.id || (top && top[0]) || 0;
     const sname = (sid && byId.has(sid) && byId.get(sid).name) || (top && top[1].name) || src.label;
-    return { title: src.label, t: null, harm: src.harm, spell: sid ? [sid, sname] : null, sub: HARM[src.harm] + ': ' + src.why + '. ' + pl2e(nT, 'hit') + ' on ' + pl2e(per.size, 'player') + ', for ' + compact(amt) + ' damage.',
+    const line = src.harm === 'High' ? ' Any hit is a mistake.' : L2.kb ? ' In the fastest kills, 9 in 10 raiders took ' + (secs ? (wA - 1) + ' s or less' : wA - 1 === 0 ? 'no hits' : (wA - 1) + (wA - 1 === 1 ? ' hit' : ' hits') + ' or fewer') + ' by this point.' : '';
+    return { title: src.label, t: null, harm: src.harm, secs, spell: sid ? [sid, sname] : null, sub: HARM[src.harm] + ': ' + src.why + '. ' + (secs ? nT + ' s in it' : pl2e(nT, 'hit')) + ' on ' + pl2e(per.size, 'player') + ', for ' + compact(amt) + ' damage.' + line,
       bad: rows.some((x) => x.some((c) => c.bad)), warn: rows.some((x) => x.some((c) => c.warn)), rows, nT, amt, label: src.label,
-      // for the Night summary report card: each player's touch times, so it can stop at the wipe filter
-      names: src.n, wA, bA, judge: [...per.values()].map((x) => ({ p: h.name(x.g), tank: !src.tankJudged && h.role(x.g) === 'tank' && x.touches < tankKept(bA), ts: x.ts, dt: diedT.has(x.g) ? diedT.get(x.g) : null })) };
+      // for the Night summary report card: each player's moments (hit times, or each second in it), so it can stop at the wipe filter;
+      // lim(t) gives the lines at any cut
+      names: src.n, wA, bA, kb: L2.kb, lim: L2.lim, skip: src.skip || null, fix: src.fix || '',
+      judge: [...per.values()].map((x) => ({ p: h.name(x.g), tank: !src.tankJudged && h.role(x.g) === 'tank' && val(x) < tankKept(bA), ts: secs ? x.tk : x.ts, amt: x.amt, dt: diedT.has(x.g) ? diedT.get(x.g) : null })) };
   };
   for (const src of list) {
     const all = ev.filter((e) => e.k === 'dmg' && h.isPlayer(e.dst) && src.n.includes(L(e.spell)) && !(src.skip && src.skip(e))).sort((a, b) => a.t - b.t);
@@ -3279,10 +3301,35 @@ function avoidPanel(ev, r, h, list) {
   if (!groups.length) return null;
   const rank = { High: 0, Medium: 1, Low: 2 };
   groups.sort((a, b) => rank[a.harm] - rank[b.harm] || b.amt - a.amt);
-  const by = (k) => groups.filter((g) => g.harm === k).reduce((s, g) => s + g.nT, 0);
-  return { id: 'avoid', title: 'Avoidable damage', spell: [0, 'Avoidable damage'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
-    summary: 'Every avoidable damage source this pull, most harmful first: ' + ['High', 'Medium', 'Low'].map((k) => by(k) ? by(k) + ' ' + HARM[k].toLowerCase() : '').filter(Boolean).join(', ') + ' hits. A hit is one time walking into it.',
+  const by = (k) => groups.filter((g) => g.harm === k && !g.secs).reduce((s, g) => s + g.nT, 0);
+  return { id: 'avoid', title: 'Avoidable damage', spell: [0, 'Avoidable damage'], verdict: groups.some((g) => g.bad) ? 'bad' : 'good',
+    summary: 'Every avoidable damage source this pull, most harmful first, against what the fastest kills take by the same point of the fight. Amber: a bit more than most of their raiders. Red: twice that, a death to it, or a dangerous hit. Pools count the seconds you stood in them.' + (['High', 'Medium', 'Low'].some(by) ? ' ' + ['High', 'Medium', 'Low'].map((k) => by(k) ? by(k) + ' ' + HARM[k].toLowerCase() : '').filter(Boolean).join(', ') + ' hits.' : ''),
     cols: ['Player', 'Hits', 'Damage taken', 'Died'], rows: [], groups };
+}
+// The avoid panel's verdict as mistakes, so the coach, Homework and a raider's fixes say what the panel says (one answer): the rule
+// pack's own avoidable mistakes for the same spells give way to it. Red (twice the kills' line, a death to it, a dangerous hit) is a
+// High mistake; amber is a Low one marked avAmber (a slip: it becomes a fix only when it keeps happening, 3+ pulls of a night).
+function avoidMistakes(r) {
+  const sec = ((r.module && r.module.sections) || []).find((s) => s.id === 'avoid' && (s.groups || []).some((g) => g.judge)); if (!sec) return;
+  const L = (x) => String(x || '').toLowerCase(), names = new Set(sec.groups.flatMap((g) => (g.names || []).concat(L(g.label)))), ids = new Set(sec.groups.map((g) => g.spell && g.spell[0]).filter(Boolean));
+  const pack = PACKS.find((p) => p.encounter === r.item.boss), tipOf = (g) => { const x = pack && pack.rules.find((q) => q.type === 'avoidable' && ((g.names || []).includes(L(q.name)) || L(q.name) === L(g.label))); return x ? x.tip : ''; };
+  r.mistakes = r.mistakes.filter((m) => !(m.avoidRule && (names.has(L(m.mechanic)) || (m.ruleIds || []).some((i) => ids.has(i)))));
+  const fmt = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k');
+  // (judged where the panel is by default: the whole kill, or a wipe up to its 2nd death (the wipe filter's default), so both say the same)
+  const ds = r.deaths.map((d) => d.t).sort((a, b) => a - b), T = Math.min(r.duration || Infinity, !r.item.kill && ds.length >= 2 ? ds[1] : Infinity);
+  for (const g of sec.groups) for (const j of g.judge || []) {
+    if (j.tank) continue; const ts = j.ts.filter((t) => t <= T + 0.05).sort((a, b) => a - b), [wA, bA] = g.lim(T);
+    const tA = ts.length >= wA ? ts[wA - 1] : null, tR = j.dt != null && j.dt <= T + 0.05 ? j.dt : ts.length >= bA ? ts[bA - 1] : null;
+    if (tA == null && tR == null) continue;
+    // (the fight's own check already flagged this hit (the frontal on a raider, ghosts touching): one mistake, not two)
+    const tt = tR != null ? tR : tA; if (r.mistakes.some((m) => !m.avoidRule && m.player === j.p && (g.names || []).includes(L(m.mechanic)) && Math.abs(m.t - tt) <= 3)) continue;
+    const red = tR != null, n = ts.length, died = j.dt != null && j.dt <= T + 0.05, short = g.label.replace(/\s*\(.*$/, '');
+    const what = g.secs ? 'Stood in ' + short + ' for ' + n + ' s' : g.harm === 'High' ? 'Hit by ' + ((g.spell && g.spell[1]) || short) + (n > 1 ? ' ' + n + ' times' : '') : 'Hit by ' + short + ' ' + (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times');
+    const vs = g.harm === 'High' || !g.kb || n < wA ? '' : ', more than 9 in 10 raiders in the fastest kills by then';
+    r.mistakes.push({ t: red ? tR : tA, player: j.p, mechanic: g.label, id: (g.spell && g.spell[0]) || 0, severity: red ? 'High' : 'Low', avAmber: !red, dmg: j.amt, pos: true, avoidRule: true, avoid: true, touches: n, ruleIds: [],
+      detail: what + (j.amt >= 1 ? ' (' + fmt(j.amt) + ')' : '') + vs + (died ? ', and died to it.' : '.'), fix: g.fix || tipOf(g) || (g.secs ? 'Stay out of ' + short + '.' : 'Dodge ' + short + '.') });
+  }
+  r.mistakes.sort((a, b) => a.t - b.t);
 }
 // (The Coiled Altar: when each Fangs cast's pools were down, from the cast to the last Noxious Ground hit after it. Sizes from 9 Mythic
 // kills (Oct 20): the first cast's pools reach about 28 yards from the middle of the west and east walls, later ones about 48)
@@ -3573,15 +3620,15 @@ function buildCoiledAltar(ev, r, h) {
   // (from the encounter journal: what positioning can avoid; raid-wide pulses and random-target hits are left out)
   {
     const sec = avoidPanel(ev, r, h, [
-      { n: ['sever', 'soul sever', 'blighted sever'], label: 'Tank frontals on non-tanks', id: S('sever')[0], harm: 'High', why: 'a big hit plus a 200% damage-taken debuff', skip: (e) => role(e.dst) === 'tank' },
-      { n: ['malevolent resonance'], label: 'Malevolent Resonance', id: S('malevolent resonance')[0], harm: 'High', why: 'two ghosts touching, which is a lethal damage over time' },
-      { n: ['noxious ground'], label: 'Noxious Ground', harm: 'Medium', why: 'the poison pools under the snake statues, every second you stand in them', warnAt: 2, badAt: 5 },
+      { n: ['sever', 'soul sever', 'blighted sever'], label: 'Tank frontals on non-tanks', id: S('sever')[0], harm: 'High', why: 'a big hit plus a 200% damage-taken debuff', fix: 'Only the tank belongs in front of the boss. Stay out of the frontal cone.', skip: (e) => role(e.dst) === 'tank' },
+      { n: ['malevolent resonance'], label: 'Malevolent Resonance', id: S('malevolent resonance')[0], harm: 'High', why: 'two ghosts touching, which is a lethal damage over time', fix: 'When the mind control breaks, stand still, so your ghost spawns in the clump and never touches another.' },
+      { n: ['noxious ground'], label: 'Noxious Ground', harm: 'Medium', why: 'the poison pools under the snake statues, every second you stand in them', warnAt: 2, badAt: 5, fix: 'Stay out of the poison pools by the statues. When the second set fills the middle, cross it quickly.' },
       { n: ['axegrinder'], label: 'Axegrinder', id: S('axegrinder')[0], harm: 'Medium', why: 'damage and a knockback every half second in an axe', warnAt: 5, badAt: 8, tankOk: true },
-      { n: ['gloombomb'], label: 'Gloombomb (not your own)', id: S('gloombomb')[0], harm: 'Medium', why: 'Gravebound: collect your soul fragments or die', warnAt: 1, badAt: 2, skip: (e) => gbT.some((a) => a.dst === e.dst && e.t - a.t >= 0 && e.t - a.t <= 10) },
-      { n: ['mutagenic venom'], label: 'Mutagenic Venom (near a purple carrier)', id: S('mutagenic venom')[0], harm: 'Medium', why: 'heavy damage from standing near a purple orb carrier', warnAt: 2, badAt: 5, skip: (e) => carriersAt(e.t).some((c) => c.g === e.dst) },
+      { n: ['gloombomb'], label: 'Gloombomb (not your own)', id: S('gloombomb')[0], harm: 'Medium', why: 'Gravebound: collect your soul fragments or die', warnAt: 1, badAt: 2, fix: 'Stay out of the Gloombomb circles on other players.', skip: (e) => gbT.some((a) => a.dst === e.dst && e.t - a.t >= 0 && e.t - a.t <= 10) },
+      { n: ['mutagenic venom'], label: 'Mutagenic Venom (near a purple carrier)', id: S('mutagenic venom')[0], harm: 'Medium', why: 'heavy damage from standing near a purple orb carrier', warnAt: 2, badAt: 5, fix: 'Give purple orb carriers room: they have right of way.', skip: (e) => carriersAt(e.t).some((c) => c.g === e.dst) },
       { n: ['defiled ground'], label: 'Defiled Ground', harm: 'Medium', why: 'P3 ground that absorbs healing every second', warnAt: 2, badAt: 5 },
-      { n: ['volatile venom'], label: 'Volatile Venom (near a green carrier)', harm: 'Low', why: 'damage from standing near a green orb carrier', skip: (e) => carryingVV(e.dst, e.t) },
-      { n: ['toxic deluge'], label: 'Toxic Deluge impacts', id: S('toxic deluge')[0], harm: 'Low', why: 'the 4-yard missile impacts' },
+      { n: ['volatile venom'], label: 'Volatile Venom (near a green carrier)', harm: 'Low', why: 'damage from standing near a green orb carrier', fix: 'Give green orb carriers 5 yards of room.', skip: (e) => carryingVV(e.dst, e.t) },
+      { n: ['toxic deluge'], label: 'Toxic Deluge impacts', id: S('toxic deluge')[0], harm: 'Low', why: 'the 4-yard missile impacts', fix: 'Dodge the Toxic Deluge circles, most of all when you are low.' },
     ]);
     if (sec) sections.push(sec);
   }
@@ -6209,6 +6256,7 @@ function* analyzeSteps(item, text, opts) {
     const helpers = { name: (g) => (r.players.get(g) || {}).name || g, role: (g) => (r.players.get(g) || {}).role, isPlayer, fmtT, unitName: (g) => unitNames.get(g), compact, snap: snapAt, frames: framesAt };
     try {
       r.module = mod.build(modEv, r, helpers); r.mistakes.push(...r.module.mistakes); r.mistakes.sort((a, b) => a.t - b.t);
+      try { avoidMistakes(r); } catch (e) { console.error(e); } /* (the avoid panel's verdict is the one answer (Oct 22)) */
       if (mod.encounter === 'The Coiled Altar') r.module.pools = caPools(modEv); // (for the maps: the Fangs pools as they really were)
       for (const s of r.module.sections) s.how = (HOW[mod.encounter] || {})[s.id] || ''; // short strategy note per mechanic
     }
@@ -6689,7 +6737,10 @@ function triageSaves(r) {
 // mechanic mistakes they made just before, the boss's avoidable spells, and what they still had ready.
 function explainDeaths(r) {
   const pack = PACKS.find((p) => p.encounter === r.item.boss), rules = pack ? pack.rules : [];
-  const ruleFor = (e) => rules.find((x) => (x.spellIds || []).includes(e.id) || (x.name && x.name.toLowerCase() === String(e.spell).toLowerCase()));
+  // (and every source in the boss's Avoidable damage panel, so a death to Noxious Ground or a Deluge circle reads as dodgeable too;
+  // a source with a skip (tank frontals on a tank, a carrier's own orb) needs to know who, so only the rule pack counts there)
+  const avP = new Map(); for (const g of ((((r.module && r.module.sections) || []).find((q) => q.id === 'avoid') || {}).groups || [])) if (!g.skip && g.judge) for (const n of g.names || []) avP.set(n, { type: 'avoidable', name: g.label, tip: '' });
+  const ruleFor = (e) => rules.find((x) => (x.spellIds || []).includes(e.id) || (x.name && x.name.toLowerCase() === String(e.spell).toLowerCase())) || avP.get(String(e.spell).toLowerCase()) || null;
   // boss spells can log with no source (e.g. Caustic Globule), so 'Environment' alone doesn't mean room damage
   const mod = MODULES.find((m) => m.encounter === r.item.boss), modSpells = new Set(mod ? mod.spells.map((x) => String(x).toLowerCase()) : []);
   const isRoom = (t) => /^environment$/i.test(t.src || '') && !ruleFor({ id: t.id, spell: t.name }) && !modSpells.has(String(t.name).toLowerCase()) && !(mod && mod.ids && mod.ids.includes(t.id));

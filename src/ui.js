@@ -1668,6 +1668,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-22', h: [
+    { t: 'Fairer avoidable damage', d: 'Avoidable damage is now judged against what the fastest kills take by the same point of the fight, and pools count the seconds you stood in them. The poison pools everyone has to touch no longer flag the whole raid; dying to something dodgeable, a frontal or ghosts still does, and a raider who keeps standing in it stands out.' },
     { t: 'Fairer deaths', d: 'When one explosion kills half the raid at once, it\'s no longer counted against each of you. A hit that takes you from 70% to dead in a second now counts as too fast to react. Mind controlled off the edge counts half. Every death\'s advice now matches what really killed you, like "Pick up your soul fragments" for Gravebound instead of "press a defensive".' },
     { t: 'Pushes timed against the fastest kills', d: 'On The Coiled Altar Mythic, Phase changes now shows how long each phase took next to the 20 fastest kills, like "P2 took 3:33 (kills: about 2:30, never past 2:56)", and how healthy Zul\'jan came back after the intermission. The coach tells you when a slow push cost the pull.' },
     { t: 'Your cooldowns glow when it\'s time', d: 'Debrief in game can now light up your own cooldown on Blizzard\'s Cooldown Manager at the exact moment your NSRT note says to press it, then stop when you press it. Turn it on in /dmo, Raid, Glow my cooldowns.' },
@@ -7027,7 +7028,7 @@ function audit() {
         // (avoidable damage counts players: a row is one player and one source, so "40 of 70" meant nothing)
         const who = (f) => new Set(all.filter((x) => f(x.row)).map((x) => x.row[0].p)), pb = who(isBadRow), pw = [...who(isWarnRow)].filter((p) => !pb.has(p)).length, hitN = new Set(all.map((x) => x.row[0].p)).size;
         lead = !pb.size && !pw ? 'Nobody took avoidable damage worth flagging' + (hitN ? ' (' + plural(hitN, 'player') + ' clipped by something minor).' : '.')
-          : (pb.size ? plural(pb.size, 'player') + ' took dangerous or repeated hits' + (pw ? ', and ' + pw + ' more took a few smaller ones' : '') : plural(pw, 'player') + ' took a few avoidable hits') +
+          : (pb.size ? plural(pb.size, 'player') + ' took dangerous or repeated hits' + (pw ? ', and ' + pw + ' more took a bit more than most' : '') : plural(pw, 'player') + ' took a bit more than most') +
             (hitN > pb.size + pw ? ' (' + hitN + ' were hit by something avoidable in all).' : '.');
       } else if (s.id === 'eggs') {
         // (Ula'tek eggs: each red row is a Viper, each amber one an egg picked up with Rancid Yolk on)
@@ -7610,7 +7611,9 @@ const tierOf = (boss, id) => { if (id === 'avoid') return 'minor'; const t = TIE
 // mechanic failed when at least half of its results went wrong (a single result that went wrong counts), or, for Deaths, 3 or
 // more. Slips alone (amber rows) are never red. How much a mechanic matters (TIERS, IMPORTANCE) only sets the order now.
 // (internal names: major = red, failed; minor = yellow, some mistakes; clean = green; moderate is no longer used)
-const lvlJudge = (id, nBad, nWarn, nAll) => (!nBad && !nWarn ? 'clean' : nBad && (id === 'deaths' ? nBad >= 3 : nBad * 2 >= Math.max(1, nAll || nBad)) ? 'major' : 'minor');
+// (Avoidable damage (Oct 22): an amber row is a raider a bit over what 9 in 10 raiders in the fastest kills take, which the kills
+// have too, so only a red row (twice that, a death to it, a dangerous hit) flags the pull or the source)
+const lvlJudge = (id, nBad, nWarn, nAll) => (id === 'avoid' && !nBad ? 'clean' : !nBad && !nWarn ? 'clean' : nBad && (id === 'deaths' ? nBad >= 3 : nBad * 2 >= Math.max(1, nAll || nBad)) ? 'major' : 'minor');
 // (a list of mechanics: how many failed and how many had some mistakes; its level is the worst of them)
 const lvlCounts = (id, nBad, nWarn, nAll) => { const v = lvlJudge(id, nBad, nWarn, nAll); return { major: v === 'major' ? 1 : 0, moderate: 0, minor: v === 'minor' ? 1 : 0 }; };
 const lvlOf = (o) => (o.major ? 'major' : o.moderate ? 'moderate' : o.minor ? 'minor' : 'clean');
@@ -8829,10 +8832,10 @@ function coachMine(reps, name) { return oaCache(reps, 'c:' + name, () => {
   for (const g of [...nG.values()].filter((x) => x.pulls.size >= need).sort((a, b) => b.pulls.size - a.pulls.size)) out.push({ kind: 'note', sev: 'bad', label: g.key + ' (your job in the note)', n: g.pulls.size, of: reps.length, pulls: [...g.pulls], m: g.m, fix: 'It was your job in the NSRT note. Turn on its reminder for it, so it pops up on your screen at the right moment.', how: cHtml(g.m.detail || '') });
   // 2. mechanic misses of their own: serious ones, then the smaller ones and avoidable damage
   const mG = new Map();
-  for (const { r, p } of mine) for (const m of keptMistakes(r)) { if (m.player !== p.name || m.mechanic === 'Death' || m.fromNote || m.severity === 'Low') continue;
-    const g = mG.get(lc(m.mechanic)) || { key: m.mechanic, pulls: new Set(), hi: 0, m, av: !!(m.avoidRule || m.avoid || m.dmg != null) }; g.pulls.add(r.item.pull); if (m.severity === 'High') { g.hi++; g.m = m; } mG.set(lc(m.mechanic), g); }
+  for (const { r, p } of mine) for (const m of keptMistakes(r)) { if (m.player !== p.name || m.mechanic === 'Death' || m.fromNote || (m.severity === 'Low' && !m.avAmber)) continue;
+    const g = mG.get(lc(m.mechanic)) || { key: m.mechanic, pulls: new Set(), hi: 0, amb: true, m, av: !!(m.avoidRule || m.avoid || m.dmg != null) }; g.pulls.add(r.item.pull); if (!m.avAmber) g.amb = false; if (m.severity === 'High') { g.hi++; g.m = m; } mG.set(lc(m.mechanic), g); }
   const secOf = (k) => { for (const r of reps) for (const [id, x] of pullSections(r)) if (cMatch(x.s, k) || lc(x.s.title).includes(lc(k))) return id; return null; }, it0 = reps[0].item;
-  const mL = [...mG.values()].filter((g) => g.pulls.size >= need && !dG.has(lc(g.key))).sort((a, b) => (b.hi > 0) - (a.hi > 0) || kbImp(it0, secOf(b.key)) - kbImp(it0, secOf(a.key)) || b.pulls.size - a.pulls.size); /* (what kills nearly always get right first (Oct 22)) */
+  const mL = [...mG.values()].filter((g) => g.pulls.size >= (g.amb && night ? 3 : need) && !(dG.has(lc(g.key)) && dG.get(lc(g.key)).pulls.size >= need && dG.get(lc(g.key)).fix)) /* (only a death item that was shown takes its mechanic's place) */.sort((a, b) => (b.hi > 0) - (a.hi > 0) || kbImp(it0, secOf(b.key)) - kbImp(it0, secOf(a.key)) || b.pulls.size - a.pulls.size); /* (what kills nearly always get right first (Oct 22)) */
   const mItem = (g) => { const fx = (g.m.fix && dbfTip1(g.m.fix)) || fixer(g.key, mine[0].p.name); return fx ? { kind: g.av ? 'avoid' : 'mech', m: g.m, sev: g.hi ? 'bad' : 'warn', label: g.key, n: g.pulls.size, of: reps.length, pulls: [...g.pulls], fix: fx, how: cHtml(g.m.fix || g.m.detail || '') } : null; };
   for (const g of mL.filter((x) => x.hi)) { const it = mItem(g); if (it) out.push(it); }
   // 3. their Rotation slips (on a night only the red ones; proc-driven lines are never red or amber)
@@ -8896,7 +8899,7 @@ function coachRight(reps, name, S2) {
 // matters most when we miss it; one even the best kills slip on matters less. Mythic only so far; other bosses come one at a time.
 const KILL_BASE = {
   'The Coiled Altar': { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
-    avoid: { k: 20, ok: 0, med: 32 }, dmghost: { k: 20, ok: 11, med: 0 }, addsets: { k: 20, ok: 12, med: 0 }, gloom: { k: 20, ok: 2, med: 6 },
+    avoid: { k: 20, ok: 9, med: 2 }, dmghost: { k: 20, ok: 11, med: 0 }, addsets: { k: 20, ok: 12, med: 0 }, gloom: { k: 20, ok: 2, med: 6 },
     push: { k: 20, ok: 16, med: 0 }, orbs: { k: 20, ok: 2, med: 13 }, tankfront: { k: 20, ok: 2, med: 14 }, soakq: { k: 20, ok: 3, med: 50 },
     shield: { k: 20, ok: 17, med: 0 }, inter: { k: 20, ok: 16, med: 0 }, vf: { k: 20, ok: 3, med: 33 } } } },
 };
@@ -9017,14 +9020,14 @@ function coachAvoid(reps, name) {
   for (const r of reps) { const x = pullSections(r).get('avoid'); if (!x) continue; any = true;
     for (const g of x.s.groups || []) for (const row of g.rows || []) { const p = row[0] && row[0].p; if (!p || (name && oaBase(p) !== base)) continue;
       const hits = parseInt((row[1] && row[1].txt) || '0', 10) || 0, flag = row[1] && (row[1].bad ? 'bad' : row[1].warn ? 'warn' : ''), tank = /tank/.test((row[0] && row[0].sub) || '');
-      const k = g.title || g.label || 'Avoidable damage', s = S3.get(k) || { k, hits: 0, who: new Map(), bad: 0, warn: 0, pulls: new Set() };
+      const k = g.title || g.label || 'Avoidable damage', s = S3.get(k) || { k, hits: 0, who: new Map(), bad: 0, warn: 0, pulls: new Set(), secs: !!g.secs };
       s.hits += hits; if (flag === 'bad') s.bad++; else if (flag === 'warn') s.warn++; if (flag) { s.pulls.add(r.item.pull); if (!tank) s.who.set(p, (s.who.get(p) || 0) + hits); } S3.set(k, s); } }
   if (!any) return null;
-  const flagged = [...S3.values()].filter((s) => s.bad || s.warn).sort((a, b) => b.bad - a.bad || b.warn - a.warn || b.hits - a.hits);
-  const nm = (p) => String(p).split('-')[0], whoT = (s) => [...s.who].sort((a, b) => b[1] - a[1]).slice(0, 2).map(([p, n]) => nm(p) + ' ' + plural(n, 'hit')).join(', ');
+  const flagged = [...S3.values()].filter((s) => s.bad || (s.warn && s.pulls.size >= (night ? 3 : 1))).sort((a, b) => b.bad - a.bad || b.warn - a.warn || b.hits - a.hits);
+  const nm = (p) => String(p).split('-')[0], whoT = (s) => [...s.who].sort((a, b) => b[1] - a[1]).slice(0, 2).map(([p, n]) => nm(p) + ' ' + (s.secs ? n + ' s' : plural(n, 'hit'))).join(', ');
   let line;
   if (!flagged.length) line = name ? 'No avoidable damage worth flagging. Nice.' : 'Nobody took avoidable damage worth flagging.';
-  else if (name) line = 'You took more than you should from ' + lpAnd(flagged.slice(0, 3).map((s) => s.k + (night ? ' (' + s.pulls.size + ' of ' + reps.length + ' pulls)' : ' (' + plural(s.hits, 'hit') + ')'))) + '.';
+  else if (name) line = 'You took more than you should from ' + lpAnd(flagged.slice(0, 3).map((s) => s.k + (night ? ' (' + s.pulls.size + ' of ' + reps.length + ' pulls)' : ' (' + (s.secs ? s.hits + ' s in it' : plural(s.hits, 'hit')) + ')'))) + '.';
   else line = 'Most from ' + lpAnd(flagged.slice(0, 3).map((s) => s.k + (whoT(s) ? ' (' + whoT(s) + ')' : ''))) + '.' + (flagged.length > 3 ? ' ' + plural(flagged.length - 3, 'more source') + ' in the full coaching.' : '');
   const list = flagged.length ? '<ul class="cch-ul">' + flagged.slice(0, 8).map((s) => '<li><b>' + esc(s.k) + '</b> · <span class="sub">' + (s.bad ? s.bad + ' dangerous' : '') + (s.bad && s.warn ? ', ' : '') + (s.warn ? s.warn + ' too many' : '') + (night ? ' · in ' + plural(s.pulls.size, 'pull') : '') + (!name && whoT(s) ? ' · most: ' + esc(whoT(s)) : '') + '</span></li>').join('') + '</ul>' : '';
   const items = flagged.slice(0, 4).map((s) => ({ k: s.k, who: name ? (night ? s.pulls.size + ' of ' + reps.length + ' pulls' : plural(s.hits, 'hit')) : whoT(s), bad: s.bad > 0 }));
@@ -9127,6 +9130,8 @@ const letterOf = (s) => GRADES.find(([, min]) => Math.round(s) >= min)[0]; // (t
 const raidBlend = (pl, rm) => (pl == null ? rm : rm == null ? pl : 0.5 * pl + 0.5 * rm);
 const raidMechOf = (reps) => { try { const g = reps && reps.length ? gradeBoss(reps) : null; return g && g.overall != null ? g.overall : null; } catch (e) { return null; } };
 const CARD_W ={ mech: 30, avoid: 30, death: 25, kick: 15 };
+// (an avoidable source's [amber, red] lines at the wipe filter: from the fastest kills by that point of the pull (Oct 22), else fixed)
+const avLimAt = (g, t) => (g.lim ? g.lim(t) : [g.wA, g.bA]);
 function gradeBoss(reps) {
   const L = (x) => String(x || '').toLowerCase(), clamp = (v) => Math.max(0, Math.min(100, v));
   const boss = reps[0] && reps[0].item.boss;
@@ -9155,8 +9160,8 @@ function gradeBoss(reps) {
     const cost = new Map(), add = (p, label, c) => { cost.set(p, (cost.get(p) || 0) + c); na.set(label, (na.get(label) || 0) + c); };
     if (av) { sawAvoid = true; for (const g of av.groups) for (const x of g.judge || []) {
       if (x.tank) continue;
-      const n = x.ts.filter(ok).length, died = x.dt != null && ok(x.dt);
-      if (died || n >= g.bA) add(x.p, g.label, 100); else if (n >= g.wA) add(x.p, g.label, 40);
+      const n = x.ts.filter(ok).length, died = x.dt != null && ok(x.dt), [wA, bA] = avLimAt(g, ct);
+      if (died || n >= bA) add(x.p, g.label, 100); else if (n >= wA) add(x.p, g.label, 25);
     } } else {
       const am = r.mistakes.filter((m) => ok(m.t) && (m.avoid || m.dmg != null) && m.player !== 'Raid');
       if (am.length) sawAvoid = true;
@@ -9256,7 +9261,7 @@ function nightDebrief(pulls, reps) {
     const ct = cutT(r), ok = (t) => t == null || t <= ct + 0.05; let flagged = 0;
     const av = r.module && !r.module.error && (r.module.sections || []).find((s) => s.id === 'avoid' && s.groups && s.groups.some((g) => g.judge));
     const hit = (label, harm, p, over, died, lim) => { let y = src.get(label); if (!y) src.set(label, y = { label, harm, pts: 0, n: 0, died: 0, who: new Map(), lim }); y.pts += over; y.n++; if (died) y.died++; bump(y.who, p); flagged++; };
-    if (av) { for (const g of av.groups) for (const x of g.judge || []) { if (x.tank) continue; const n = x.ts.filter(ok).length, died = x.dt != null && ok(x.dt), over = died || n >= g.bA ? 2 : n >= g.wA ? 1 : 0; if (over) hit(g.label, g.harm, x.p, over, died, g.wA); } }
+    if (av) { for (const g of av.groups) for (const x of g.judge || []) { if (x.tank) continue; const n = x.ts.filter(ok).length, died = x.dt != null && ok(x.dt), [wA, bA] = avLimAt(g, ct), over = died || n >= bA ? 2 : n >= wA ? 1 : 0; if (over) hit(g.label, g.harm, x.p, over, died, wA); } }
     else for (const m of keptMistakes(r)) if ((m.avoid || m.dmg != null) && m.player !== 'Raid' && m.severity !== 'Low') hit(m.mechanic, m.severity, m.player, m.severity === 'High' ? 2 : 1, false);
     if (early.has(r)) avE += flagged; if (late.has(r)) avL += flagged;
   }
@@ -9362,7 +9367,7 @@ function mechAcross(reps) {
       const nR = Math.max(rows.length, groups.length, nb + nw);
       let sc = st === 'na' || !nR ? null : Math.max(0, 100 * (nR - nb - 0.5 * nw) / nR);
       if (s.id === 'avoid' && groups.some((g) => g.judge)) { const ct = cutT(r), ok = (t) => t == null || t <= ct + 0.05, cost = new Map();
-        for (const g of groups) for (const j of g.judge || []) { if (j.tank) continue; const n = j.ts.filter(ok).length, c = (j.dt != null && ok(j.dt)) || n >= g.bA ? 100 : n >= g.wA ? 40 : 0; if (c) cost.set(j.p, (cost.get(j.p) || 0) + c); }
+        for (const g of groups) for (const j of g.judge || []) { if (j.tank) continue; const n = j.ts.filter(ok).length, [wA, bA] = avLimAt(g, ct), c = (j.dt != null && ok(j.dt)) || n >= bA ? 100 : n >= wA ? 25 : 0; if (c) cost.set(j.p, (cost.get(j.p) || 0) + c); }
         sc = Math.max(0, 100 - [...cost.values()].reduce((a, v) => a + Math.min(100, v), 0) / Math.max(1, r.players.size)); }
       x.per.set(r.item.pull, { st, nb, nw, lines, who, sc, nR });
     }
@@ -9384,7 +9389,7 @@ function avoidChart(reps, whoT) {
     for (const g of s.groups || []) {
       if (g.t != null && g.t > ct + 0.05) continue;
       // (a set that doesn't say how harmful it is, or its totals, gets them from its rows: Harmful, each row's hits and damage)
-      let x = src.get(g.title); if (!x) src.set(g.title, x = { title: g.title, harm: HARM_COL[g.harm] ? g.harm : 'Medium', spell: g.spell, amt: 0, hits: 0, by: new Map() });
+      let x = src.get(g.title); if (!x) src.set(g.title, x = { title: g.title, harm: HARM_COL[g.harm] ? g.harm : 'Medium', spell: g.spell, amt: 0, hits: 0, by: new Map(), secs: !!g.secs });
       x.amt += g.amt != null ? g.amt : g.rows.reduce((s, row) => s + ((row[2] && row[2].n) || 0), 0);
       x.hits += g.nT != null ? g.nT : g.rows.reduce((s, row) => s + (parseInt(row[1] && row[1].txt, 10) || 0), 0);
       for (const row of g.rows) { const p = row[0].p; let y = x.by.get(p); if (!y) x.by.set(p, y = { hits: 0, amt: 0, pulls: new Set(), tank: /tank/.test(row[0].sub || ''), died: 0 }); y.hits += parseInt(row[1].txt, 10) || 0; y.amt += (row[2] && row[2].n) || 0; y.pulls.add(r.item.pull); if (row[3] && row[3].bad) y.died++; }
@@ -9396,9 +9401,9 @@ function avoidChart(reps, whoT) {
   const col = HARM_COL, lab = { High: 'Dangerous', Medium: 'Harmful', Low: 'Minor' };
   return '<div class="av-chart">' + list.map((x) => { const ps = [...x.by].sort((a, b) => a[1].tank - b[1].tank || b[1].hits - a[1].hits || b[1].amt - a[1].amt), pmax = Math.max(1, ...ps.map(([, y]) => y.hits));
     return '<details class="av-src"><summary class="av-row"><span class="av-l"><b>' + srcTitle(x) + '</b><span class="av-h" style="color:' + col[x.harm] + '">' + lab[x.harm] + '</span></span>' +
-      '<span class="av-bar"><i style="width:' + Math.max(2, x.amt ? 100 * x.amt / max : 100 * x.hits / hmax).toFixed(1) + '%;background:' + col[x.harm] + '"></i><span>' + (x.amt ? C(x.amt) + ' · ' : '') + plural(x.hits, 'hit') + ' · ' + plural(ps.length, 'player') + '</span></span><span class="av-c" aria-hidden="true">▸</span></summary>' +
-      '<div class="av-ps">' + ps.map(([p, y]) => '<div class="av-p"><span>' + whoT(p) + (y.tank ? ' <span class="sub">tank</span>' : '') + '</span><span class="av-pb"><i style="width:' + (100 * y.hits / pmax).toFixed(1) + '%;background:' + col[x.harm] + '"></i></span><b>' + y.hits + (y.hits === 1 ? ' hit' : ' hits') + '</b><span class="sub">' + C(y.amt) + ' · ' + y.pulls.size + (y.pulls.size === 1 ? ' pull' : ' pulls') + (y.died ? ' · <span class="hotv">died ' + y.died + '×</span>' : '') + '</span></div>').join('') + '</div></details>'; }).join('') +
-    '</div><p class="sub" style="margin-top:8px">Each bar\'s length is the damage taken up to each pull\'s wipe filter. A hit is one time walking into it.</p>';
+      '<span class="av-bar"><i style="width:' + Math.max(2, x.amt ? 100 * x.amt / max : 100 * x.hits / hmax).toFixed(1) + '%;background:' + col[x.harm] + '"></i><span>' + (x.amt ? C(x.amt) + ' · ' : '') + (x.secs ? x.hits + ' s in it' : plural(x.hits, 'hit')) + ' · ' + plural(ps.length, 'player') + '</span></span><span class="av-c" aria-hidden="true">▸</span></summary>' +
+      '<div class="av-ps">' + ps.map(([p, y]) => '<div class="av-p"><span>' + whoT(p) + (y.tank ? ' <span class="sub">tank</span>' : '') + '</span><span class="av-pb"><i style="width:' + (100 * y.hits / pmax).toFixed(1) + '%;background:' + col[x.harm] + '"></i></span><b>' + y.hits + (x.secs ? ' s' : y.hits === 1 ? ' hit' : ' hits') + '</b><span class="sub">' + C(y.amt) + ' · ' + y.pulls.size + (y.pulls.size === 1 ? ' pull' : ' pulls') + (y.died ? ' · <span class="hotv">died ' + y.died + '×</span>' : '') + '</span></div>').join('') + '</div></details>'; }).join('') +
+    '</div><p class="sub" style="margin-top:8px">Each bar\'s length is the damage taken up to each pull\'s wipe filter. A hit is one time walking into it; pools count the seconds stood in them.</p>';
 }
 // every NSRT check across the pulls (nsrtChecks), one row per assignment and phase ("Guillotine, P1"); healing cooldowns
 // by phase too
