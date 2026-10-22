@@ -208,8 +208,9 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
       <div class="acts" id="acts" hidden></div>
       <svg class="night" id="night" aria-label="How far each pull got tonight"></svg>
       <div class="swrow">
-        <label class="tg" for="auto" title="Copies each new pull's recap by itself, with a chime, ready for Ctrl+V in WoW."><input type="checkbox" id="auto" checked>Send to WoW</label>
-        <label class="tg" for="snd" title="A short chime when a recap is copied."><input type="checkbox" id="snd" checked>Chime</label>
+        <label class="tg" for="pop" title="After each boss pull, a small bar floats over the game: click it for your recap. It never takes focus from WoW and closes when the next pull starts."><input type="checkbox" id="pop" checked>Pop-up recap</label>
+        <label class="tg" for="auto" title="For the one person who shares with the raid: copies each pull's code by itself, ready for Ctrl+V in WoW. What you had copied comes back a couple of minutes later."><input type="checkbox" id="auto">Copy every pull for my raid</label>
+        <label class="tg" for="snd" title="A short chime when your recap is ready."><input type="checkbox" id="snd" checked>Chime</label>
         <button class="btn gold" id="copyAgain" type="button" hidden>Copy it again</button>
       </div>
       <div id="folderBox" hidden>
@@ -223,6 +224,7 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
     <h2>Settings <button class="btn ib" id="moreX" type="button" aria-label="Close settings">✕</button></h2>
     <div><p class="k">Combat log</p><select id="logSel" aria-label="Combat log"></select><p class="note" id="logInfo"></p></div>
     <div id="pulls" hidden></div>
+    <div><p class="k">Pop-up recap</p><label class="tg" for="popFull"><input type="checkbox" id="popFull">Open the full recap right away</label><p class="note">Off: a slim "Your recap is ready" bar first, one click for the card. Drag the pop-up by its top to move it.</p></div>
     <div><p class="k">Updates</p><button class="btn" id="upd" type="button" title="Looks for a newer Debrief on debriefme.io and installs it now.">Check for updates</button></div>
     <p class="note">Close this window any time: Debrief keeps running in the background. Quit stops it. Raiders with the addon get their card from you automatically.</p>
     <details class="code"><summary>The code that was copied</summary><textarea id="codeOut" readonly></textarea></details>
@@ -348,7 +350,7 @@ async function waitLoop() {
     if (x.size !== L.size || L.dummy) {
       try {
         const fresh = await scanMore(false);
-        if (fresh.length && $('auto').checked) send(fresh[fresh.length - 1], false);
+        if (fresh.length && ($('auto').checked || $('pop').checked)) send(fresh[fresh.length - 1], false);
         if (fresh.length) fillNight();
       } catch (e) { stat('Read error: ' + e.message, 'err'); }
     }
@@ -374,6 +376,15 @@ async function readText(b, quiet) {
   return new TextDecoder().decode(all);
 }
 function progress(f) { L.prog = f; renderRing(); }
+for (const [id, def] of [['pop', true], ['auto', false], ['snd', true], ['popFull', false]]) { $(id).checked = store.get('dbf-sw-' + id, def); $(id).addEventListener('change', () => store.set('dbf-sw-' + id, $(id).checked)); }
+// (the pop-up over the game: this pull's recap, or hidden when the next pull starts)
+function popShow(model, code, copied) {
+  if (!$('pop').checked || !model || !model.h) return;
+  L.popUp = true;
+  const data = { h: model.h, coach: (model.coach && model.coach.raid) || null, cls: (model.players || []).map((p) => [String(p.name || '').split('-')[0], p.cls]), code, copiedAlready: !!copied, full: $('popFull').checked };
+  j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: true, data, sound: $('snd').checked && !copied }) }).catch(() => {});
+}
+function popHide() { if (!L.popUp) return; L.popUp = false; j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: false }) }).catch(() => {}); }
 
 // ---------- the window: the ring, the last pull's coach line, the night line (look B, Oct 22) ----------
 const RING = 326.7;
@@ -418,10 +429,11 @@ function renderRing() {
   if (L.reading) return ring('go', Math.max(0.03, L.prog || 0), '<b>Reading</b><span>pull ' + L.reading.pull + '</span>');
   const g = curGroup(), N = nightOf(L.name), done = g ? g.list.filter((b) => b.endByte) : [], lastDone = done[done.length - 1];
   const tail = L.items[L.items.length - 1], on = L.live && tail && !tail.endByte ? tail : null;
-  if (on) return ring('on', 1, '<b>Pull ' + on.pull + '</b><span>on now</span>', 'A boss pull is on. Your recap is copied the moment it ends.');
+  if (on) { popHide(); return ring('on', 1, '<b>Pull ' + on.pull + '</b><span>on now</span>', 'A boss pull is on. Your recap is ready the moment it ends.'); }
   const s = L.lastSent, sb = s && L.items.find((b) => b.startByte === s.sb);
   if (sb && ((lastDone && s.sb === lastDone.startByte) || Date.now() - s.at < 90e3)) {
     if (!s.ok) return ring('fail', 1, '<b>Not copied</b><span>press Copy it again</span>');
+    if (!s.shared) return ring('sent', 1, '<b>✓</b><span>' + (sb.kill ? 'Kill recap is up' : 'Recap is up') + '</span><em>' + ($('pop').checked ? 'in the pop-up' : 'click its dot to share') + '</em>', $('pop').checked ? 'Pull ' + sb.pull + "'s recap is in the pop-up over the game. Share it with your raid from there." : '');
     return ring('sent', 1, '<b>✓</b><span>' + (sb.kill ? 'Kill sent to WoW' : 'Sent to WoW') + '</span><em>' + (lastDone && s.sb === lastDone.startByte ? '' : 'pull ' + sb.pull + ' · ') + 'press <kbd>Ctrl</kbd>+<kbd>V</kbd></em>', 'Pull ' + sb.pull + "'s recap is copied. In WoW, press Ctrl+V when it asks.");
   }
   const best = done.reduce((m, b) => { const e = N[b.startByte]; return e && e.l != null ? Math.max(m, 100 - e.l) : m; }, 0);
@@ -617,8 +629,10 @@ async function send(b, byHand) {
       const code = RECAP.encode(model);
       $('codeOut').value = code; $('copyAgain').disabled = false;
       RECAP.lastModel = model; renderPreview(model);
-      const ok = await clip(code); $('copyAgain').hidden = ok;
-      L.reading = null; L.lastSent = { sb: b.startByte, ok, at: Date.now() }; saveNight(b, rep, model.coach && model.coach.raid);
+      // (copied only when you ask: Send on a pull, or Copy every pull for my raid; otherwise your clipboard is left alone)
+      const share = !!byHand || $('auto').checked, ok = share ? await clip(code) : false; $('copyAgain').hidden = !share || ok;
+      L.reading = null; L.lastSent = { sb: b.startByte, ok: ok || !share, shared: share, at: Date.now() }; saveNight(b, rep, model.coach && model.coach.raid);
+      popShow(model, code, ok);
       L.sent.add(b.startByte); renderPulls(); progress(null);
       stat(L.live ? 'Watching your combat log' : 'Sent pull ' + b.pull, L.live ? 'live' : ''); renderMain();
     } catch (e) { console.error(e); L.reading = null; progress(null); renderMain(); stat('Could not read pull ' + b.pull + ': ' + e.message, 'err'); }

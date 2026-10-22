@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Debrief recap</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* The recap pop-up (Oct 22): the in-game card's coach box, floating over WoW right after a pull, without taking focus.
+   Same words and look as the addon's card; Share with raid copies the code for one Ctrl+V in WoW. */
+:root { --bg: #171a22; --raised: #1e222c; --line: #2a2f3b; --line2: #353b49; --text: #ece8df; --muted: #98a0ad; --faint: #6c7381; --soft: #d6d1c6;
+  --gold: #e6b450; --gold-ink: #1b1406; --em: #5fdc7a; --good: #45c15c; --goodT: #7ee08f; --bad: #e5534b; --badT: #ff8f87; --warn: #e8a23a; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 Barlow, 'Segoe UI', system-ui, sans-serif; overflow: hidden; }
+body { border: 1px solid var(--line2); border-radius: 10px; }
+.wrap { display: flex; flex-direction: column; max-height: 100vh; }
+.top { display: flex; align-items: center; gap: 8px; padding: 10px 10px 9px 14px; border-bottom: 1px solid var(--line); app-region: drag; -webkit-app-region: drag; cursor: move; flex: none; }
+.top svg { width: 17px; height: 19px; flex: none; }
+.top b { font: 700 16px 'Barlow Semi Condensed', Barlow, sans-serif; }
+.top .bt { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.top .pill { margin-left: auto; font: 700 12px Barlow, sans-serif; border-radius: 5px; padding: 2px 9px; background: #3a1d1d; color: var(--badT); white-space: nowrap; }
+.top .pill.k { background: #17301e; color: var(--goodT); }
+.x { app-region: no-drag; -webkit-app-region: no-drag; background: none; border: 0; color: var(--faint); font-size: 15px; width: 26px; height: 26px; border-radius: 5px; cursor: pointer; flex: none; }
+.x:hover { color: var(--text); background: var(--raised); }
+.body { padding: 12px 14px 4px; overflow: auto; flex: 1; min-height: 0; }
+.body::-webkit-scrollbar { width: 8px; } .body::-webkit-scrollbar-thumb { background: #2f3542; border-radius: 4px; }
+.cl { color: var(--gold); font: 700 11.5px/1 Barlow, sans-serif; letter-spacing: .05em; margin: 2px 0 8px; } .cl.mut { color: var(--muted); margin-top: 6px; }
+.chd { font: 600 16px/1.35 'Barlow Semi Condensed', Barlow, sans-serif; margin: 0 0 12px; }
+.cfoc { background: rgba(230,180,80,.08); border: 1px solid rgba(230,180,80,.55); border-radius: 6px; padding: 10px 14px 11px; margin-bottom: 12px; }
+.cfoc div { color: var(--gold); font: 700 11.5px/1 Barlow, sans-serif; letter-spacing: .05em; margin-bottom: 6px; }
+.cfoc p { margin: 0; font: 600 14px/1.4 Barlow, sans-serif; }
+.cw { display: flex; gap: 10px; background: var(--raised); border: 1px solid var(--line); border-left: 3px solid var(--warn); border-radius: 6px; padding: 10px 12px 10px 9px; margin-bottom: 8px; } .cw.bad { border-left-color: var(--bad); }
+.cn { flex: 0 0 22px; height: 22px; border-radius: 50%; background: rgba(232,162,58,.25); color: var(--warn); font: 700 12.5px/22px Barlow, sans-serif; text-align: center; } .cw.bad .cn { background: rgba(229,83,75,.25); color: var(--bad); }
+.cwb { flex: 1; min-width: 0; } .cwt { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; } .cwt b { font: 600 14px/1.3 Barlow, sans-serif; }
+.tg { font: 700 11.5px Barlow, sans-serif; color: var(--warn); } .cw.bad .tg { color: var(--badT); }
+.cwh { color: var(--muted); font: 13px/1.4 Barlow, sans-serif; margin: 5px 0; }
+.cfx { display: flex; gap: 10px; font: 13.5px/1.4 Barlow, sans-serif; color: var(--soft); margin-top: 5px; } .cfx span:first-child { flex: 0 0 70px; white-space: nowrap; color: var(--gold); font: 700 11.5px/1.6 Barlow, sans-serif; letter-spacing: .04em; }
+.cok { display: flex; gap: 8px; color: var(--goodT); font: 13.5px/1.4 Barlow, sans-serif; margin: 4px 0 6px; } .cok span { color: var(--good); font-weight: 700; }
+.more { color: var(--faint); font-size: 12.5px; margin: 0 0 8px; }
+.cfd { background: var(--raised); border: 1px solid var(--line); border-radius: 6px; margin-top: 8px; padding: 0 12px; }
+.cfh { display: flex; justify-content: space-between; color: var(--muted); font: 700 12px/32px Barlow, sans-serif; letter-spacing: .04em; cursor: pointer; user-select: none; } .cfh:hover { color: var(--gold); }
+.cr { display: flex; align-items: center; gap: 8px; font: 13.5px/26px Barlow, sans-serif; color: var(--soft); cursor: default; } .cr.has { cursor: pointer; } .cr.has:hover { color: var(--text); }
+.cr .t { color: var(--faint); width: 30px; flex: none; } .cr i { width: 8px; height: 8px; border-radius: 50%; flex: none; } .cr b { font-weight: 600; white-space: nowrap; }
+.cr .ab { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.cst { margin: 0 0 8px 24px; color: var(--muted); font: 13px/1.4 Barlow, sans-serif; }
+.cnt { color: var(--faint); font: 12px/1.4 Barlow, sans-serif; margin: 4px 0 8px; }
+.ic { width: 20px; height: 20px; border-radius: 3px; background: #262b36; border: 1px solid #000; flex: none; display: inline-block; vertical-align: middle; overflow: hidden; }
+.ic img { width: 100%; height: 100%; display: block; transform: scale(1.1); }
+.foot { display: flex; align-items: center; gap: 10px; padding: 10px 14px 12px; border-top: 1px solid var(--line); flex: none; }
+.btn { background: var(--gold); color: var(--gold-ink); border: 1px solid var(--gold); border-radius: 7px; padding: 7px 14px; font: 600 13.5px Barlow, sans-serif; cursor: pointer; white-space: nowrap; }
+.btn:hover { background: #efc265; }
+.btn.done { background: #17301e; border-color: #2b5a36; color: var(--goodT); cursor: default; }
+.lnk { background: none; border: 0; padding: 0; color: var(--muted); font: 600 12.5px Barlow, sans-serif; cursor: pointer; }
+.lnk:hover { color: var(--text); }
+.hint { color: var(--faint); font-size: 12px; margin-left: auto; text-align: right; }
+.empty { padding: 30px 16px; text-align: center; color: var(--muted); }
+/* the slim bar a pull opens with: one click for the whole card */
+body.isMini { border-color: rgba(230,180,80,.85); box-shadow: inset 0 0 0 1px rgba(230,180,80,.25); background: linear-gradient(90deg, rgba(230,180,80,.16), rgba(230,180,80,.04) 60%), var(--bg); }
+.mini { display: flex; align-items: center; gap: 12px; padding: 13px 12px 13px 16px; app-region: drag; -webkit-app-region: drag; cursor: move; animation: slideIn .45s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes slideIn { from { transform: translateX(36px); opacity: 0; } to { transform: none; opacity: 1; } }
+.mini svg { width: 28px; height: 31px; flex: none; filter: drop-shadow(0 0 8px rgba(230,180,80,.45)); }
+.mini .btn { font-size: 15px; padding: 9px 18px; box-shadow: 0 0 0 0 rgba(230,180,80,.6); animation: nudge 1.6s ease-out .5s 4; }
+@keyframes nudge { 0% { box-shadow: 0 0 0 0 rgba(230,180,80,.65); } 70% { box-shadow: 0 0 0 12px rgba(230,180,80,0); } 100% { box-shadow: 0 0 0 0 rgba(230,180,80,0); } }
+.mini .mt { min-width: 0; flex: 1; }
+.mini .m1 { font: 700 17px/1.2 'Barlow Semi Condensed', Barlow, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini .m2 em { font-style: normal; font-weight: 600; color: var(--badT); } .mini .m2 em.k { color: var(--goodT); }
+.mini .m2 { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini .btn, .mini .x { app-region: no-drag; -webkit-app-region: no-drag; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="empty">Your recap shows here after a boss pull.</div></div>
+<script>
+(() => {
+'use strict';
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const CC = { WARRIOR: '#C69B6D', PALADIN: '#F48CBA', HUNTER: '#AAD372', ROGUE: '#FFF468', PRIEST: '#FFFFFF', DEATHKNIGHT: '#C41E3A', SHAMAN: '#0070DD', MAGE: '#3FC7EB', WARLOCK: '#8788EE', MONK: '#00FF98', DRUID: '#FF7C0A', DEMONHUNTER: '#A330C9', EVOKER: '#33937F' };
+const KCOL = { own: '#e5534b', ready: '#e5534b', on: '#e5534b', half: '#e8a23a', nothing: '#e8a23a' };
+const LOGO = '<svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="pm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff4cf"/><stop offset=".5" stop-color="#d9a441"/><stop offset="1" stop-color="#7a4f14"/></linearGradient><linearGradient id="pe" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c8ffd2"/><stop offset="1" stop-color="#178a3c"/></linearGradient></defs><path d="M32 2 57 11.5V30c0 15.5-11.3 26.6-25 32C18.3 56.6 7 45.5 7 30V11.5Z" fill="url(#pm)"/><path d="M32 9.2 50.5 16.3V30c0 11.7-8.3 20.2-18.5 24.5C21.8 50.2 13.5 41.7 13.5 30V16.3Z" fill="#161a25"/><path fill-rule="evenodd" fill="url(#pm)" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path d="m29 32.4 2.7 2.7 5.6-6.1" fill="none" stroke="url(#pe)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const wv = window.chrome && window.chrome.webview;
+const post = (m) => { try { if (wv) wv.postMessage(m); else console.log('popup →', m); } catch (e) { /* not in the app */ } };
+// (spell icons: the same cache as the app's main window, which shares this address)
+let ICONS = {}; try { ICONS = JSON.parse(localStorage.getItem('dbf-icons') || '{}') || {}; } catch (e) { ICONS = {}; }
+function ic(id) {
+  if (!id) return '';
+  const n = ICONS[id]; if (n) return '<span class="ic"><img src="https://wow.zamimg.com/images/wow/icons/medium/' + esc(n) + '.jpg" alt=""></span>';
+  fetch('https://nether.wowhead.com/tooltip/spell/' + encodeURIComponent(id) + '?dataEnv=1&locale=0').then((r) => r.json()).then((x) => {
+    if (!x || !x.icon) return; ICONS[id] = x.icon; try { localStorage.setItem('dbf-icons', JSON.stringify(ICONS)); } catch (e) { /* fine */ }
+    document.querySelectorAll('[data-ic="' + id + '"]').forEach((el) => { el.innerHTML = '<img src="https://wow.zamimg.com/images/wow/icons/medium/' + x.icon + '.jpg" alt="">'; });
+  }).catch(() => {});
+  return '<span class="ic" data-ic="' + esc(id) + '"></span>';
+}
+let D = null; const OPEN = {}; let copied = false, big = false;
+function render() {
+  const app = document.getElementById('app'); if (!D || !D.h) return;
+  const h = D.h, c = D.coach, cls = new Map(D.cls || []);
+  document.body.classList.toggle('isMini', !big);
+  if (!big) {
+    const r0 = h.kill ? '<em class="k">Kill</em>' : '<em>Wipe' + (h.pct !== '' && h.pct != null ? ' ' + esc(h.pct) + '%' : '') + '</em>';
+    app.innerHTML = '<div class="mini">' + LOGO + '<div class="mt"><div class="m1">Your recap is ready</div><div class="m2">Pull ' + esc(h.pull) + ' · ' + r0 + ' · ' + esc(h.boss) + (D.copiedAlready ? ' · copied: press Ctrl+V in WoW' : '') + '</div></div>' +
+      '<button class="btn" type="button" data-big="1">See recap ›</button><button class="x" type="button" title="Close (it comes back after the next pull)" data-close="1">✕</button></div>';
+    fit(); return;
+  }
+  const paint = (s) => { let x = esc(s); for (const [n, k] of cls) if (n.length > 2 && x.includes(n)) x = x.split(n).join('<b style="color:' + (CC[k] || '#ece8df') + ';font-weight:600">' + n + '</b>'); return x; };
+  const res = h.kill ? 'Kill' : 'Wipe' + (h.pct !== '' && h.pct != null ? ' ' + h.pct + '%' : '');
+  let body = '';
+  if (c && c.headline) {
+    body += '<div class="cl">' + (c.kill ? 'THE KILL, COACHED' : 'THIS PULL, COACHED') + '</div><p class="chd">' + paint(c.headline) + '</p>';
+    if (!c.focusSame && c.focus) body += '<div class="cfoc"><div>' + (c.kill ? 'FOCUS NEXT WEEK' : 'FOCUS NEXT PULL') + '</div><p>' + paint(c.focus) + '</p></div>';
+    const W = c.wrong || [], cap = 3;
+    if (W.length) body += '<div class="cl mut">WHAT WENT WRONG</div>' + W.slice(0, cap).map((x, i) => '<div class="cw ' + (x.sev === 'bad' ? 'bad' : '') + '"><span class="cn">' + (i + 1) + '</span><div class="cwb"><div class="cwt">' + ic(x.id) + '<b>' + esc(x.label) + '</b>' + (x.tag ? '<span class="tg">' + esc(x.tag) + '</span>' : '') + '</div>' + (x.what ? '<div class="cwh">' + paint(x.what) + '</div>' : '') + (x.fix ? '<div class="cfx"><span>NEXT TIME</span><span>' + paint(x.fix) + '</span></div>' : '') + '</div></div>').join('') +
+      (W.length > cap ? '<p class="more">' + (W.length - cap) + ' more on the website.</p>' : '');
+    body += (c.right || []).map((x) => '<div class="cok"><span>✓</span>' + paint(x.t) + '</div>').join('');
+    const fold = (key, title, items, row, note) => { const o = !!OPEN[key];
+      return '<div class="cfd"><div class="cfh" data-fold="' + key + '"><span>' + title + (items.length ? '  ·  ' + items.length : '') + '</span><span>' + (o ? '–' : '+') + '</span></div>' + (o ? items.map((it, i) => row(it, i) + (OPEN[key + i] && it.story ? '<p class="cst">' + paint(it.story) + '</p>' : '')).join('') + (note ? '<p class="cnt">' + esc(note) + '</p>' : '') : '') + '</div>'; };
+    if (c.deaths && (c.deaths.items || []).length) body += fold('d', 'DEATHS', c.deaths.items, (d, i) => '<div class="cr' + (d.story ? ' has' : '') + '" data-row="d' + i + '"><span class="t">' + esc(d.t) + '</span><i style="background:' + (KCOL[d.k] || '#6c7381') + '"></i><b style="color:' + (CC[d.cls] || '#ece8df') + '">' + esc(d.who) + '</b>' + ic(d.id) + '<span class="ab">' + esc(d.ab) + '</span></div>', 'Click a death to see what happened.');
+    if (c.avoid && (c.avoid.items || []).length) body += fold('a', 'AVOIDABLE DAMAGE', c.avoid.items, (a, i) => '<div class="cr' + (a.story ? ' has' : '') + '" data-row="a' + i + '">' + ic(a.id) + '<span class="ab">' + esc(a.k) + '</span><b style="color:' + (CC[a.cls] || '#ece8df') + '">' + esc(a.who) + '</b><span style="color:' + (a.bad ? '#ff8f87' : '#e8a23a') + '">' + esc(a.n) + '</span></div>', 'Click one to see what happened.');
+    body += '<p class="cnt" style="margin-top:10px">The full coaching is on the website, in the Debriefing tab.</p>';
+  } else body += '<p class="chd">' + esc(res) + ' · ' + esc(h.dur) + '</p><p class="cnt">No coaching for this pull.</p>';
+  app.innerHTML = '<div class="top">' + LOGO + '<b>Debrief</b><span class="bt">' + esc(h.boss) + ' · ' + esc(h.diff) + ' · Pull ' + esc(h.pull) + '</span><span class="pill' + (h.kill ? ' k' : '') + '">' + esc(res) + '</span><button class="x" type="button" title="Close (it comes back after the next pull)" data-close="1">✕</button></div>' +
+    '<div class="body">' + body + '</div>' +
+    '<div class="foot">' + (D.code ? (copied ? '<button class="btn done" type="button">Copied: in WoW, press Ctrl+V</button>' : '<button class="btn" type="button" data-share="1" title="Copies this pull for the addon. Paste it in WoW and everyone in your raid with the addon gets it.">Share with raid</button>') : '') +
+    '<button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">' + (D.copiedAlready ? 'Copied for WoW: press Ctrl+V' : 'Closes when the next pull starts') + '</span></div>';
+  fit();
+}
+// (the window grows to fit the card, up to most of the screen; the rest scrolls)
+function fit() { requestAnimationFrame(() => { const a = document.getElementById('app'), m = a.querySelector('.mini'), t = a.querySelector('.top'), b = a.querySelector('.body'), f = a.querySelector('.foot');
+  const want = m ? m.offsetHeight + 2 : (t ? t.offsetHeight : 0) + (b ? b.scrollHeight : 0) + (f ? f.offsetHeight : 0) + 2; post('h:' + Math.ceil(want)); }); }
+document.addEventListener('click', (e) => {
+  const t = e.target.closest ? e.target.closest('[data-fold],[data-row],[data-close],[data-share],[data-open],[data-big]') : null; if (!t) return;
+  if (t.dataset.big) { big = true; render(); return; }
+  if (t.dataset.close) { post('close'); return; }
+  if (t.dataset.open) { post('open'); return; }
+  if (t.dataset.share) { post('share:' + D.code); return; }
+  if (t.dataset.fold) { OPEN[t.dataset.fold] = !OPEN[t.dataset.fold]; render(); return; }
+  if (t.dataset.row && t.classList.contains('has')) { OPEN[t.dataset.row] = !OPEN[t.dataset.row]; render(); }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') post('close'); });
+// (the app sends each pull's recap, and whether Share worked)
+function take(d) {
+  if (!d) return;
+  if (d.copied != null) { copied = !!d.copied; render(); return; }
+  D = d; copied = !!d.copiedAlready; big = !!d.full; for (const k of Object.keys(OPEN)) delete OPEN[k]; render();
+  const b = document.querySelector('.body'); if (b) b.scrollTop = 0;
+}
+window.DBF_SHOW = take; // (tests)
+if (wv) wv.addEventListener('message', (e) => take(e.data));
+post('ready');
+})();
+</script>
+</body>
+</html>

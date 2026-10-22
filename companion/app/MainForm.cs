@@ -17,6 +17,7 @@ namespace Debrief {
     readonly WebView2 web = new WebView2();
     readonly NotifyIcon tray = new NotifyIcon();
     bool quitting, shownOnce, pageStarted, wantShow, sized;
+    PopupForm popup;
 
     public MainForm(string here, int port) {
       this.here = here; this.port = port;
@@ -126,13 +127,31 @@ namespace Debrief {
       quitting = true; tray.Visible = false; Close(); Application.Exit();
     }
 
+    // ---------- the recap pop-up over the game (it never takes focus) ----------
+    public void Popup(string json, bool show) {
+      if (InvokeRequired) { BeginInvoke(new Action(() => Popup(json, show))); return; }
+      if (Program.EdgeFallback || web.CoreWebView2 == null) return;
+      if (!show) { if (popup != null && popup.Visible) popup.Hide(); return; }
+      if (popup == null) popup = new PopupForm(this, here, port, web.CoreWebView2.Environment);
+      popup.ShowRecap(json);
+    }
+
     // ---------- the clipboard (it wants this window's own thread) ----------
-    public bool CopyText(string text) {
+    // (what you had copied comes back a couple of minutes later, unless you copied something else since: Debrief never
+    // keeps your clipboard (a tester's ask, Oct 22))
+    public bool CopyText(string text) { return CopyText(text, true); }
+    public bool CopyText(string text, bool giveBack) {
       if (string.IsNullOrEmpty(text)) return false;
       bool ok = false;
       Action a = () => {
+        string old = null; try { if (Clipboard.ContainsText()) old = Clipboard.GetText(); } catch { }
         for (int i = 0; i < 10 && !ok; i++) {
           try { Clipboard.SetDataObject(text, true, 5, 60); ok = true; } catch { System.Threading.Thread.Sleep(80); }
+        }
+        if (ok && giveBack && !string.IsNullOrEmpty(old) && old != text) {
+          var t = new Timer { Interval = 150000 };
+          t.Tick += (x, y) => { t.Stop(); t.Dispose(); try { if (Clipboard.ContainsText() && Clipboard.GetText() == text) Clipboard.SetDataObject(old, true, 5, 60); } catch { } };
+          t.Start();
         }
       };
       try { if (InvokeRequired) Invoke(a); else a(); } catch (Exception e) { Program.Log("clipboard: " + e.Message); }

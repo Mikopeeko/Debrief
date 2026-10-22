@@ -29,7 +29,7 @@ if ($LASTEXITCODE -ne 0 -or -not (Test-Path (Join-Path $exeOut 'Debrief Companio
 foreach ($f in 'Debrief Companion.exe', 'Debrief Companion.exe.config', 'Microsoft.Web.WebView2.Core.dll', 'Microsoft.Web.WebView2.WinForms.dll') { Copy-Item -LiteralPath (Join-Path $exeOut $f) -Destination $app }
 Copy-Item -LiteralPath (Join-Path $exeOut 'runtimes') -Destination (Join-Path $app 'runtimes') -Recurse
 # (companion.ps1 and Start Debrief.vbs now only start the app: they move copies from 0.5 and older over)
-foreach ($f in 'companion.ps1', 'companion.html', 'recap.js', 'Start Debrief.vbs', 'debrief.ico', 'version.txt') { Copy-Item -LiteralPath (Join-Path $here $f) -Destination $app }
+foreach ($f in 'companion.ps1', 'companion.html', 'popup.html', 'recap.js', 'Start Debrief.vbs', 'debrief.ico', 'version.txt') { Copy-Item -LiteralPath (Join-Path $here $f) -Destination $app }
 # (the engine: DBF_ENGINE names a clean, committed build; otherwise the one in this folder, which may hold unfinished work)
 $engine = if ($env:DBF_ENGINE) { $env:DBF_ENGINE } else { Join-Path $root 'WoW-Log-Analyzer.html' }
 Copy-Item -LiteralPath $engine -Destination (Join-Path $app 'Debrief.html')

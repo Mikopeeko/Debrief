@@ -80,7 +80,7 @@ namespace Debrief {
       Application.EnableVisualStyles();
       Application.SetCompatibleTextRenderingDefault(false);
       var form = new MainForm(Here, port); Form = form;
-      var server = new Server(Here, port) { SetClipboard = form.CopyText, Quit = form.QuitApp };
+      var server = new Server(Here, port) { SetClipboard = form.CopyText, Quit = form.QuitApp, Popup = form.Popup };
       var up = false;
       for (int i = 0; i < 8 && !(up = server.Start()); i++) { Thread.Sleep(750); if (i == 2) Setup.StopOldApp(); }
       if (!up) {

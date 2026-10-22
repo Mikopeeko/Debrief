@@ -18,6 +18,7 @@ namespace Debrief {
     readonly HttpListener listener = new HttpListener();
     readonly object scanLock = new object();
     public Func<string, bool> SetClipboard; // (the window copies: the clipboard wants the window's own thread)
+    public Action<string, bool> Popup; // (the recap pop-up over the game)
     public Action Quit;
     static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
     // (the window marks its requests; an old Edge window from the PowerShell app still open on this address gets told to stand down,
@@ -70,7 +71,7 @@ namespace Debrief {
           if (!(get && (path == "/log/info" || path == "/log/read" || path == "/app-version"))) { res.StatusCode = 403; Send(res, Encoding.UTF8.GetBytes("No"), "text/plain"); return; }
         }
         if (post && !string.IsNullOrEmpty(origin) && origin != "http://localhost:" + Port) { res.StatusCode = 403; Send(res, Encoding.UTF8.GetBytes("No"), "text/plain"); return; }
-        if (!fromApp && (path == "/wait" || path == "/scan" || path == "/clip" || path == "/read" || path == "/archive" || path == "/" || path == "/index.html")) {
+        if (!fromApp && (path == "/wait" || path == "/scan" || path == "/clip" || path == "/read" || path == "/archive" || path == "/popup" || path == "/" || path == "/index.html")) {
           if (path == "/wait") { Thread.Sleep(25000); SendJson(res, new Dictionary<string, object> { { "size", Num(q["size"]) }, { "name", q["name"] ?? "" } }); return; }
           if (path == "/" || path == "/index.html") { Send(res, Encoding.UTF8.GetBytes(Moved), "text/html; charset=utf-8"); return; }
           res.StatusCode = 409; SendJson(res, new Dictionary<string, object> { { "error", "Debrief Companion is its own app now. Close this window." } }); return;
@@ -140,6 +141,16 @@ namespace Debrief {
         else if (get && path == "/app-version") SendJson(res, new Dictionary<string, object> { { "version", Program.Version }, { "addon", AddonVersion() } });
         else if (post && path == "/quit") { SendJson(res, new Dictionary<string, object> { { "ok", true } }); res.Close(); Quit?.Invoke(); }
         else if (post && path == "/archive") SendJson(res, Wow.ArchiveLogs(here)); // (the Archive old logs button)
+        else if (get && path == "/popup") Send(res, File.ReadAllBytes(Path.Combine(here, "popup.html")), "text/html; charset=utf-8");
+        else if (post && path == "/popup") {
+          // (the main page: show this pull's recap over the game, or hide it when the next pull starts)
+          if (!(req.ContentType ?? "").StartsWith("application/json")) throw new Exception("Expected JSON.");
+          var raw = Body(req); var body = Json.Deserialize<Dictionary<string, object>>(raw);
+          bool show = body.ContainsKey("show") && body["show"] is bool sb && sb;
+          if (Popup != null) Popup(show && body.ContainsKey("data") ? Json.Serialize(body["data"]) : null, show);
+          if (show && body.ContainsKey("sound") && body["sound"] is bool snd && snd) Chime();
+          SendJson(res, new Dictionary<string, object> { { "ok", Popup != null } });
+        }
         else if (post && path == "/folder") {
           if (!(req.ContentType ?? "").StartsWith("application/json")) throw new Exception("Expected JSON.");
           var body = Json.Deserialize<Dictionary<string, object>>(Body(req));
