@@ -43,7 +43,7 @@ Marks: ✅ done · 🟡 partly · ❌ missing · ➖ not needed · ⏳ another c
 | Vashnik the Malignant | 🧪 20 kills | 🧪 unsoaked bile below Mythic fixed; avoidable fails 4 kills (told the Avoidable chat) | ✅ | 🟡 Pace shown, not judged | ✅ | 🟡 | 🟡 | ✅ | ❌ Mythic only | ✅ shared |
 | Sszorak | 🧪 20 kills | ✅ nothing failed | ✅ | 🟡 Pace shown, not judged | ✅ | ✅ | ➖ | ✅ | ❌ Mythic only | ✅ shared |
 | The Twin Fangs | 🧪 20 kills | 🧪 Feast with few soakers below Mythic fixed | ✅ | 🟡 Pace shown, not judged | ✅ | ✅ | 🟡 | ✅ | ❌ Mythic only | ✅ shared |
-| The Coiled Altar | 🧪 20 kills | ⏳ Dreadmarch 1 kill, orbs 2 kills fail: the Debriefing chat owns it and will raise it with the user (likely Mythic-strict rules on Heroic) | ✅ | 🟡 push shown | ✅ | ✅ | ✅ | ✅ | ❌ Mythic only | ✅ shared |
+| The Coiled Altar | 🧪 20 kills | ✅ frontal on a non-tank is yellow below Mythic unless it killed (3158c80); Gravebound deaths stay (real) | ✅ | 🟡 push shown | ✅ | ✅ | ✅ | ✅ | ❌ Mythic only | ✅ shared |
 | Ula'tek | 🧪 20 kills | ✅ nothing failed | ✅ | 🟡 Pace shown, not judged | ✅ | ✅ | ✅ | ✅ | ❌ Mythic only | ✅ shared |
 | Kith'ix | 🧪 20 kills | ✅ nothing failed | ✅ | 🟡 Pace shown, not judged | ✅ | ❌ | ✅ | ✅ | ❌ Mythic only | ✅ shared |
 
