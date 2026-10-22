@@ -5413,6 +5413,9 @@ button, .btn, a, summary, .tab, .pull, .my-chip, .rcb-tr, .dbr-fx, .spc-tl, .md-
 .hwk-m { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.05); font-size: 14px; } .hwk-m > span:nth-child(2) { flex: 1; min-width: 0; } .hwk-m b { font-weight: 600; }
 .hwk-ok { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; } .hwk-ok span { font-size: 13px; color: #7ee08f; background: var(--good-bg); padding: 3px 10px; border-radius: 20px; }
 .hwk-clean { margin: 0; color: #7ee08f; } .hwk-how { margin: 12px 0 0; font-size: 12px; }
+/* Homework folded into the Report card (Oct 22): the smaller things, folded under Their night */
+.rcw-more { grid-column: 1 / -1; margin-top: -6px; } .rcw-more > summary { cursor: pointer; color: var(--muted); font-size: 14px; }
+.rcw-l .hwk-pill { margin-left: 4px; vertical-align: 1px; } .rcw-l .hwk-tr { margin-left: 2px; } .rcw-ok { margin-top: 8px; }
 /* Design system round 2 (Oct 22): the ⓘ tip beside a title, the night banner's tiles, Homework's empty state as a main box */
 .rcb-i { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--line2); color: var(--muted); font-size: 13px; line-height: 1; cursor: help; align-self: center; flex: none; }
 .rcb-i:hover, .rcb-i:focus { color: var(--gold); border-color: rgba(230,180,80,.5); outline: none; }
@@ -14477,10 +14480,10 @@ function cacheTrim() {
 // pulls) and Players. The keys stay as they were ('perf' is Graphs), so saved spots and links still open the same page.
 // (Oct 18, your pick: option B of the getting-around review: one row of tabs, and the pull strip picks one pull or the
 // whole night for every tab; Night summary is Recap on the whole night)
-const TABS = [['audit', 'Debriefing'], ['overview', 'Assignments'], ['rot', 'Rotation'], ['perf', 'Graphs'], ['player', 'Report card'], ['hw', 'Homework'], ['gdz', 'Guides'], ['cmp', 'Compare']];
+const TABS = [['audit', 'Debriefing'], ['overview', 'Assignments'], ['rot', 'Rotation'], ['perf', 'Graphs'], ['player', 'Report card'], ['gdz', 'Guides'], ['cmp', 'Compare']];
 // (the tabs still being built: a construction sign and a hazard stripe on the tab, and a banner on the page (your call, Oct 19))
 const WIP_TABS = new Set([]); /* (your call, Oct 19: no under-construction marks on the tabs: no 🚧, no hazard stripes) */
-const TAB_ORDER = ['audit', 'rot', 'perf', 'player', 'hw', 'cmp']; /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Guides is its own page from the menu now (your call, Oct 20)) */ /* (Assignments is inside Debriefing (your call, Oct 20)) */ // (Recap is merged into Debriefing (Oct 19))
+const TAB_ORDER = ['audit', 'rot', 'perf', 'player', 'cmp']; /* (Homework is part of each raider's Report card now (your call, Oct 22)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Guides is its own page from the menu now (your call, Oct 20)) */ /* (Assignments is inside Debriefing (your call, Oct 20)) */ // (Recap is merged into Debriefing (Oct 19))
 // (Rotation and Graphs are one page underneath: Rotation always shows Spec checks, Graphs every other view)
 const PF_TAB = (t) => t === 'perf' || t === 'rot';
 // One pull or all pulls (S.scope): Summary is the all-pulls page (every pull's mechanics and assignments, with their
@@ -14509,7 +14512,7 @@ const TAB_TIP = {
   rot: 'How each player played their own spec in this pull, checked against the guides: what they pressed and when, their cooldowns, their resources and their talents.',
   perf: 'The raw numbers for this pull, player by player and over time: damage, healing, damage taken, casts, resources, cooldowns, buffs and utility. The phases, boss mechanics, Bloodlust and deaths are marked on the charts.',
   night: 'Every pull of this boss together. It shows report cards, how far you got, what to fix before the next raid, and each mechanic and assignment pull by pull.',
-  hw: 'Your own to-do list for this boss from every pull tonight: the three things worth the most first, what to do next pull, and what you already fixed.',
+
   player: 'Each player\'s page, for this pull or all pulls. It shows one grade from their mechanics and Rotation, what they should fix first, and their prep.',
 };
 const TICO = { check: '<rect x="4.5" y="3.5" width="15" height="17" rx="2.5"/><path d="M8.5 12.2l2.4 2.4 4.6-4.8"/>', home: '<path d="M3.5 11.5 12 4.5l8.5 7"/><path d="M6 10v9.5h4.5v-5h3v5H18V10"/>', clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>', list: '<rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M9 3.5h6v3H9zM8.5 12.5l2 2 4.5-4.5"/>',
@@ -14765,7 +14768,7 @@ function myPageInTab(root, g) { const pg = root.querySelector('.home.prog'); if 
   let meCard = null; if (you || again) { meCard = el('panel my-you' + (you ? ' my-youa' : ''), 'div', '<div class="my-lab">You</div>'); if (you && you.style.getPropertyValue('--sart')) meCard.style.setProperty('--sart', you.style.getPropertyValue('--sart')); meCard.append(you || again); }
   flow.append(who); if (q1('#meLdBox')) flow.append(q1('#meLdBox')); /* (a character you just picked, still coming in) */ if (q1('#pgEmpty')) flow.append(q1('#pgEmpty')); if (q1('#pgRk')) flow.append(q1('#pgRk'));
   if (q1('#pgNow')) flow.append(q1('#pgNow')); /* (the boss you're on, right under your team) */
-  { const hwp = hwMyPanel(); if (hwp) flow.append(hwp); } /* (your homework's top three, under the boss you're on) */
+  { const hwp = hwMyPanel(); if (hwp) flow.append(hwp); } /* (your to-do list from the Report card, under the boss you're on) */
   // the whole raid at a glance
   const order = (E.PACKS || []).map((p) => p.encounter), cards = grid ? [...grid.querySelectorAll('.pc-card[data-boss]')] : [], byB = new Map(cards.map((c) => [c.dataset.boss, c]));
   const notP = new Set([...pg.querySelectorAll('.pc-open .pc-chip')].map((x) => x.textContent.trim())), list = order.filter((b) => byB.has(b) || notP.has(b));
@@ -15045,6 +15048,7 @@ const PATCH_NOTES = [
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
     { t: 'Since last raid', d: 'All pulls now remembers each night and compares it with your last raid on the same boss: what you fixed, what got better or worse, and what\'s still going wrong. Pick a player to see their mistakes that also happened last raid.' },
   ], n: [
+    'Homework is part of the Report card now: pick a raider and their to-do list sits in Their night (their one fix first, getting better or worse, the smaller things folded, and green ticks for what they fixed). Old Homework links open the Report card, and Home\x27s card is now Your to-do list.',
     'More tabs got the new look: Rotation\'s sections read like Debriefing\'s rows, the Report card and Homework tuck their small print behind an ⓘ, the night banner\'s numbers are tiles, and the Boss guides\' switches are one gold toggle style.',
     'Every tab now shares one look: the same small labels, title sizes and rounded corners everywhere, and Rotation\'s coach and the Report card\'s night summary look like Debriefing\'s coach box.',
     'Debrief Addon: every card style now shows the coach box. The style only decides how much: Simple shows the top mistake, Glance and Medium up to three, Heavy and Detailed up to five with Deaths and Avoidable damage already open.',
@@ -15544,6 +15548,7 @@ function renderMain() {
   const r = S.rep, it = r.item, single = it.kind === 'run' || !!it.run;
   if (S.tab === 'kicks' || S.tab === 'mistakes' || S.tab === 'deaths' || S.tab === 'surv') S.tab = 'audit'; // (old tabs, e.g. from a saved resume)
   if (S.tab === 'raid') S.tab = 'player'; // (the Raid audit is part of the Player audit now)
+  if (S.tab === 'hw') { S.tab = 'player'; if (S.hwSel) S.rcbSel = S.hwSel; } // (Homework is part of each raider's Report card now (Oct 22))
   if (OLD_ALL[S.tab]) { S.tab = 'live'; S.scope = 'all'; }
   // (a jump into Spec checks from an old saved spot or link opens Rotation; Graphs then opens on its last view)
   if (S.tab === 'perf' && S.perfKind === 'spec') { S.tab = 'rot'; S.perfKind = null; }
@@ -36057,11 +36062,23 @@ function rcwRaider(c, F) {
   const s2 = (top[0] ? 'Your ' + top[0].l.toLowerCase() + (/s$/.test(top[0].l) ? ' were #' : ' was #') + top[0].r + (top[0].grp ? ' of the ' + top[0].grp : ' in the raid') + (issue ? ', but ' + issue : '') : issue ? capS(issue) : 'Nothing big cost you points') + '.';
   const oaR = oaPlayerFix(a.per.map((g) => g.r), nm); /* (the one answer (Oct 22)) */
   const nf = (a.fixes || [])[0], next = oaR ? (oaR.kind === 'clean' ? esc(oaR.fix) : esc(dbfCap(oaR.label)) + ': ' + esc(oaR.fix)) : defs.length >= 2 ? 'when your health keeps dropping, press ' + esc(defN[0]) + '.' : worstM && worstM.fix ? esc(worstM.t) + ': ' + esc(dbfTip1(worstM.fix)) : nf && (nf.gain || 0) >= 0.5 ? esc(nf.t) + '. ' + esc(dbfTip1(nf.x)) : '';
-  const li = (l) => '<ul>' + l.slice(0, 3).map((t) => '<li>' + capS(t) + '</li>').join('') + '</ul>';
+  // ---- Homework, folded in (your call, Oct 22): the shared #1 first, then the to-do list's next two with "getting better / worse",
+  // the smaller things folded, what they fixed and "Ready at the pull" as green ticks. Home's card reads this list (hwSave)
+  const oaL = oaR && oaR.kind !== 'clean' ? String(oaR.label).toLowerCase().replace(/^dying (slowly )?to /, '') : '', hwA = hwItems(a), todo = hwA.filter((o) => !o.fixed && !(oaL && String(o.t).toLowerCase() === oaL));
+  const hwTop = todo.slice(0, oaL ? 2 : 3), hwRest = todo.slice(hwTop.length, hwTop.length + 6), hwFix = hwA.filter((o) => o.fixed);
+  const one = oaL ? { t: dbfCap(oaR.label), x: oaR.fix || '', mech: oaR.kind === 'mech' || oaR.kind === 'avoid', det: '', w: oaR.fix || '', sev: 'bad', cat: oaR.kind === 'rot' ? HW_CAT.card : HW_CAT.audit, id: 0, n: oaR.of || n, k: oaR.n || 1, pulls: oaR.pulls || [], tr: null } : null;
+  const hwLine = (o) => esc(o.t) + ' <span class="sub">· ' + esc(hwWhen(o).replace(/^In /, 'in ')) + '</span>' + (hwTr(o) ? ' ' + hwTr(o) : '');
+  const todoL = (one ? ['<b>' + esc(one.t) + '</b> <span class="hwk-pill bad">Your one fix</span>'] : []).concat(hwTop.map(hwLine));
+  if (todoL.length) X.splice(0, X.length, ...todoL);
+  // (what they fixed and "Ready at the pull" as small green ticks under Went well, as Homework had them)
+  const ticks = hwFix.map((o) => '✓ ' + esc(o.t) + ' (fixed)').concat(a.mech != null && a.mech >= 95 && !hwA.some((o) => o.mech && !o.fixed) ? ['✓ No boss mistakes'] : [], a.prep != null && a.prep >= 95 ? ['✓ Ready at the pull'] : []);
+  { const me = meOf(); if (me && String(nm).split('-')[0].toLowerCase() === String(me.name).split('-')[0].toLowerCase()) hwSave(a, (one ? [one] : []).concat(hwTop), S.rep.item); }
+  const more = hwRest.length ? '<details class="rcw-more"><summary>' + plural(hwRest.length, 'smaller thing') + ' to work on</summary>' + hwRest.map((o) => '<div class="hwk-m">' + hwIc(o, true) + '<span><b>' + esc(o.t) + '</b><span class="sub"> · ' + esc(hwWhen(o).replace(/^In /, 'in ')) + '</span></span>' + hwTr(o) + '<span class="hwk-pill ' + o.sev + '">' + esc(o.cat[0]) + '</span></div>').join('') + '</details>' : '';
+  const li = (l) => '<ul>' + l.slice(0, 4).map((t) => '<li>' + capS(t) + '</li>').join('') + '</ul>';
   return '<section class="rcw-you" style="--cc:' + p.color + '"><div><div class="rcb-k">Their night</div><div class="rcw-hd"><img src="' + whIcon(pIcon(p)) + '" alt="" style="box-shadow:0 0 0 2px ' + p.color + '" onerror="this.style.visibility=\'hidden\'"><b class="nm" style="color:' + p.color + '">' + esc(nm) + '</b><span class="sub">' + esc(p.specName || '') + ' · ' + gradeChip(L) + ' #' + B.rk.score.m.get(x) + ' of ' + B.rk.score.n + '</span></div>' +
     '<p>' + tone + '. ' + s2 + '</p>' + (next ? '<div class="rcw-nx">Next pull: ' + next + '</div>' : '') + '</div>' +
-    '<div class="rcw-l g"><h5>Went well</h5>' + (W.length ? li(W) : '<p class="sub">Nothing stood out yet. The first fixes are on the right.</p>') + '</div>' +
-    '<div class="rcw-l w"><h5>Work on</h5>' + (X.length ? li(X) : '<p class="okv">Nothing that cost points. A clean night.</p>') + '</div></section>'; }
+    '<div class="rcw-l g"><h5>Went well</h5>' + (W.length ? li(W) : '<p class="sub">Nothing stood out yet. The first fixes are on the right.</p>') + (ticks.length ? '<div class="hwk-ok rcw-ok">' + ticks.map((t) => '<span>' + t + '</span>').join('') + '</div>' : '') + '</div>' +
+    '<div class="rcw-l w"><h5>Work on</h5>' + (X.length ? li(X) : '<p class="okv">Nothing that cost points. A clean night.</p>') + '</div>' + more + '</section>'; }
 // ---- The coach (your ask, Oct 22): at the very top, a raid leader coaching the night as if for a world-first race: what went right, what
 // went wrong with how to fix it, and one focus for next raid; "Read the full coaching" opens the in-depth version in place. With Everyone it
 // coaches the raid, with a raider picked (the player picker) that raider over every pull. Built from the night's numbers, nothing graded again.
@@ -36354,15 +36371,15 @@ function hw() {
   bossReps(it, still, (k, of) => { const el = $('#plBody'); if (!el) return; const line = 'Reading tonight\'s pulls… ' + k + ' of ' + of; if (el.querySelector('.ld')) loadSet(el, line, of ? k / of : null); else el.innerHTML = loadCard('Making your homework', line, of ? k / of : 0); }, true) /* (the whole night, by itself (Oct 20)) */
     .then((got) => { if (!got || !still()) return; return plData(got.reps, still).then((data) => { if (!data || !still()) return; S.plData = { key, reps: got.reps, data, load: loadBar(got.reps.length, got.pulls.length, got.skipped, 'plAll'), wait: data.some((a) => a.wait) }; draw(S.plData); setHeadRes(); }); });
 }
-// (My Page: your homework's top three from the last boss you opened, and a button to the tab when that raid is open)
+// (Home: your to-do list from the last boss you opened (the Report card's raider view writes it), and a button to the Report card)
 function hwMyPanel() { let o = null; try { o = JSON.parse(store.get(HW_KEY) || 'null'); } catch (e) { o = null; } const me = meOf();
   if (!o || !o.items || !me || String(o.name).split('-')[0].toLowerCase() !== String(me.name).split('-')[0].toLowerCase()) return null;
   const open = S.rep && S.rep.item && S.rep.item.boss === o.boss && S.rep.item.kind !== 'run';
   const sec = document.createElement('section'); sec.className = 'panel hwk hwk-my';
-  sec.innerHTML = '<div class="hwk-h"><h2>Your homework</h2><span class="sub">' + esc(o.boss) + ' ' + esc(o.diff) + ' · ' + plural(o.n, 'pull') + ' · ' + esc(new Date(o.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) + '</span>' + (open ? '<button type="button" class="btn sm" id="hwkGo">Open Homework</button>' : '') + '</div>' +
+  sec.innerHTML = '<div class="hwk-h"><h2>Your to-do list</h2><span class="sub">' + esc(o.boss) + ' ' + esc(o.diff) + ' · ' + plural(o.n, 'pull') + ' · ' + esc(new Date(o.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) + '</span>' + (open ? '<button type="button" class="btn sm" id="hwkGo">Open Report card</button>' : '') + '</div>' +
     (o.items.length ? '<div class="hwk-3">' + o.items.map((x, i) => '<div class="hwk-c ' + x.sev + '"><div class="hwk-ct"><span class="hwk-n">' + (i + 1) + '</span><i class="hwk-ic">' + (x.id ? spellIcon(x.id, x.t) : plIco(x.cat[1])) + '</i><b>' + esc(x.t) + '</b></div><p>' + esc(x.w) + '</p>' + (x.x ? '<div class="hwk-fix"><span>Next pull:</span> ' + esc(x.x) + '</div>' : '') + '<div class="hwk-ft"><span class="hwk-pill ' + x.sev + '">' + esc(x.cat[0]) + '</span><span class="sub">' + esc(x.when) + '</span></div></div>').join('') + '</div>'
       : '<p class="hwk-clean">Nothing to work on from your last boss. Keep it up.</p>');
-  const b = sec.querySelector('#hwkGo'); if (b) b.onclick = () => { S.tab = 'hw'; renderMain(); window.scrollTo(0, 0); };
+  const b = sec.querySelector('#hwkGo'); if (b) b.onclick = () => { S.tab = 'player'; S.rcbSel = o.name; renderMain(); window.scrollTo(0, 0); };
   return sec; }
 // Players: a row picks a player (again, or Show the raid, for everyone); the order and role switches; a fix's link opens
 // the tab that shows it with that player; a pull's square opens that pull here
@@ -37520,7 +37537,7 @@ let NAV_RESTORE = false, NAV_BOOT = true; // (the first page drawn after a load 
 // raider, or Debriefing's one-player view)
 const navSel = () => (S.tab === 'rot' ? S.specSel : S.tab === 'player' ? S.rcbSel : S.tab === 'hw' ? S.hwSel : S.tab === 'audit' ? S.mechP : null) || null;
 // (and back: a link's or a step's player goes onto its tab)
-function navApplySel(tab, p) { if (!p) return; if (tab === 'rot') S.specSel = p; else if (tab === 'player') S.rcbSel = p; else if (tab === 'hw') S.hwSel = p; else if (tab === 'audit') setOneP(p); }
+function navApplySel(tab, p) { if (tab === 'hw') tab = 'player'; /* (old Homework links (Oct 22)) */ if (!p) return; if (tab === 'rot') S.specSel = p; else if (tab === 'player') S.rcbSel = p; else if (tab === 'hw') S.hwSel = p; else if (tab === 'audit') setOneP(p); }
 function navState() {
   if (S.page === 'pull' && S.item) { const it = S.item; return { nav: 1, v: 'p', code: it.wcl ? it.wcl.code : null, fight: it.wcl ? it.wcl.fight : null, bi: S.index && S.index.bosses ? S.index.bosses.indexOf(it) : -1, ...shrNav(it), tab: S.tab, scope: S.scope || 'pull', sel: navSel() }; }
   if (S.page === 'prog') return { nav: 1, v: 'g', g: S.progView == null ? null : S.progView, mine: S.progMine ? 1 : 0 }; // (mine: your own page, not your team's)
@@ -39372,7 +39389,7 @@ if ($('#tbIdea') && IDEAS_ON()) { $('#tbIdea').hidden = false; $('#tbIdea').oncl
 // (a visit always starts on the front page, with the team and character pick (your call, Oct 18). The address keeps the
 // open pull, so it can be copied and shared, and a shared link still opens its report; but your own last report doesn't
 // open again: not on a reload, not with Back, and not when the browser fills in the last address you had)
-const RQ = new URLSearchParams(location.search), RNAV = ((performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || {}).type;
+const RQ = ((q) => { if (q.get('tab') === 'hw') q.set('tab', 'player'); return q; })(new URLSearchParams(location.search)), /* (old Homework links open the Report card (Oct 22)) */ RNAV = ((performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || {}).type;
 // (a reload, F5 or the refresh button, keeps you where you were (your call, Oct 19): the page's step from Back and Forward
 // (the pull, its tab, one pull or the whole night, or the teams page) opens again; a reload of a pull address with no step
 // opens that pull like a shared link)
