@@ -9,106 +9,128 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-/* Debrief's own look: slate panels, gold for what matters, Barlow type. Left: your pulls. Right: what the game will show. */
+/* Debrief's own look, in colour (Oct 22, look B): slate, the logo's gold and emerald, Barlow type. One ring says where things stand,
+   the last pull's coach line says what to change, and the night line shows how far each pull got. Everything else sits behind the gear. */
 :root {
-  --bg: #0f1117; --panel: #171a22; --raised: #1e222c; --line: #2a2f3b; --line2: #353b49;
+  --bg: #0f1117; --panel: #151922; --raised: #1e222c; --line: #222733; --line2: #353b49;
   --text: #ece8df; --muted: #98a0ad; --faint: #6c7381;
-  --gold: #e6b450; --gold-ink: #1b1406; --bad: #e5534b; --bad-bg: #3a1d1d; --warn: #e8a23a; --warn-bg: #3a2c16;
-  --good: #45c15c; --good-bg: #17301e; --blue: #6aa8ff;
+  --gold: #e6b450; --gold-ink: #1b1406; --em: #5fdc7a; --em-d: #178a3c; --em-l: #c8ffd2; --em-ink: #0f2416;
+  --bad: #e5534b; --bad-bg: #3a1d1d; --warn: #e8a23a; --warn-bg: #3a2c16; --good: #45c15c; --good-bg: #17301e; --blue: #6aa8ff;
   --r: 10px; --head: 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif; --body: 'Barlow', 'Segoe UI', system-ui, sans-serif;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font: 15px/1.5 var(--body); }
-body { background: radial-gradient(900px 420px at 12% -10%, rgba(230,180,80,.07), transparent 60%), var(--bg); }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 15px/1.5 var(--body); }
+body { display: flex; flex-direction: column; overflow: hidden;
+  background: radial-gradient(700px 380px at 6% 0%, rgba(95,220,122,.07), transparent 60%), radial-gradient(800px 420px at 100% 0%, rgba(230,180,80,.05), transparent 60%), var(--bg); }
 button, input, select { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 4px; }
-/* the top: logo, name, status, Quit */
-.top { display: flex; align-items: center; gap: 14px; padding: 16px 28px; border-bottom: 1px solid var(--line); background: rgba(23,26,34,.85); flex-wrap: wrap; }
-.top svg { width: 30px; height: 33px; flex: none; filter: drop-shadow(0 2px 6px rgba(230,180,80,.25)); }
-.top h1 { font: 700 23px/1.1 var(--head); margin: 0; letter-spacing: .2px; }
-.top h1 small { display: block; font: 500 13px var(--body); color: var(--muted); margin-top: 2px; }
-.stat { margin-left: auto; display: flex; align-items: center; gap: 9px; font: 600 13.5px var(--body); color: var(--text); background: var(--raised); border: 1px solid var(--line2); border-radius: 999px; padding: 6px 14px; max-width: 100%; }
-.stat i { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); flex: none; }
-.stat.live i { background: var(--good); box-shadow: 0 0 0 0 rgba(69,193,92,.5); animation: pulse 2s infinite; }
-.stat.busy i { background: var(--gold); }
-.stat.err i { background: var(--bad); }
-.stat span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(69,193,92,.45); } 70% { box-shadow: 0 0 0 8px rgba(69,193,92,0); } 100% { box-shadow: 0 0 0 0 rgba(69,193,92,0); } }
-.quit { padding: 6px 14px; background: transparent; }
+[hidden] { display: none !important; }
+/* the top: logo, name, what Debrief is doing, the website, the gear */
+.top { flex: none; display: flex; align-items: center; gap: 14px; padding: 13px 22px; border-bottom: 1px solid var(--line); background: rgba(21,25,34,.9); }
+.top svg { width: 32px; height: 35px; flex: none; filter: drop-shadow(0 2px 6px rgba(230,180,80,.25)); }
+.top .tt { min-width: 0; }
+.top h1 { margin: 0; font: 700 20px/1.1 var(--head); letter-spacing: .2px; }
+.grow { flex: 1; }
+.stat { display: flex; align-items: center; gap: 7px; margin-top: 3px; font: 600 12.5px var(--body); color: var(--muted); white-space: nowrap; min-width: 0; }
+.stat i { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); flex: none; }
+.stat span { overflow: hidden; text-overflow: ellipsis; }
+.stat.live { color: var(--em); } .stat.live i { background: var(--em); animation: pulse 2s infinite; }
+.stat.busy { color: var(--gold); } .stat.busy i { background: var(--gold); }
+.stat.err { color: #ff8f87; } .stat.err i { background: var(--bad); }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(95,220,122,.45); } 70% { box-shadow: 0 0 0 7px rgba(95,220,122,0); } 100% { box-shadow: 0 0 0 0 rgba(95,220,122,0); } }
+.btn { background: var(--raised); border: 1px solid var(--line2); border-radius: 7px; padding: 8px 14px; cursor: pointer; font: 600 13.5px var(--body); transition: border-color .12s, background .12s; white-space: nowrap; }
+.btn:hover { border-color: var(--faint); }
+.btn.gold { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
+.btn.gold:hover { background: #efc265; }
+.btn.em { background: linear-gradient(90deg, var(--em-d), var(--em)); color: var(--em-ink); border-color: var(--em); }
+.btn:disabled { opacity: .45; cursor: default; }
+a.btn { text-decoration: none; display: inline-flex; align-items: center; }
+.ib { width: 36px; height: 36px; padding: 0; display: grid; place-items: center; font-size: 18px; color: var(--muted); }
+.ib[aria-expanded="true"] { border-color: var(--gold); color: var(--gold); }
 .bye { max-width: 520px; margin: 18vh auto; text-align: center; color: var(--muted); }
 .bye h2 { font: 700 26px var(--head); color: var(--text); margin: 0 0 8px; }
-.wrap { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 26px 28px 18px; max-width: 780px; margin: 0 auto; }
-[hidden] { display: none !important; }
-/* the one line about the combat log being watched */
-.logline { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; }
-.logline .lk { font: 700 12px var(--body); color: var(--faint); letter-spacing: .08em; text-transform: uppercase; }
-.logline select { margin-left: auto; min-width: 0; max-width: 100%; height: 32px; padding: 4px 30px 4px 12px; border: 1px solid var(--line2); border-radius: 7px; background: var(--raised); font-size: 13px; color: var(--text); }
-.logline #folderBox { flex-basis: 100%; }
-.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px; }
-.panel h2 { font: 700 19px var(--head); margin: 0; display: flex; align-items: baseline; gap: 10px; }
-.panel h2 .sub { font: 500 13px var(--body); color: var(--faint); }
-/* the status card: what happens next, in three steps */
-.step { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px 24px; align-items: center; padding: 18px 20px; border-color: rgba(230,180,80,.35);
-  background: linear-gradient(135deg, rgba(230,180,80,.09), rgba(230,180,80,.02) 55%), var(--panel); position: relative; overflow: hidden; }
-.step::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--gold); }
-#stepT { margin: 0; font: 700 21px/1.25 var(--head); }
-#stepT b { color: var(--gold); }
-.flow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; padding: 0; list-style: none; }
-.flow li { display: flex; align-items: center; gap: 8px; background: rgba(15,17,23,.55); border: 1px solid var(--line2); border-radius: 999px; padding: 5px 12px 5px 6px; font-size: 13.5px; color: var(--muted); }
-.flow li b { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(230,180,80,.16); color: var(--gold); font: 700 12px var(--body); }
-.flow li em { font-style: normal; color: var(--text); font-weight: 600; }
-.flow .arrow { color: var(--faint); background: none; border: 0; padding: 0 2px; }
-kbd { font: 700 12px var(--body); background: var(--raised); border: 1px solid var(--line2); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; color: var(--text); }
-.toggles { display: flex; flex-direction: column; gap: 10px; }
-/* slim on/off switches, like the addon's settings */
-.sw { display: flex; align-items: center; justify-content: space-between; gap: 14px; font: 600 14px var(--body); color: var(--text); cursor: pointer; user-select: none; }
-.sw input { appearance: none; -webkit-appearance: none; width: 38px; height: 22px; border-radius: 999px; background: var(--raised); border: 1px solid var(--line2); position: relative; margin: 0; cursor: pointer; transition: background .15s; flex: none; }
-.sw input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--muted); transition: left .15s, background .15s; }
-.sw input:checked { background: var(--gold); border-color: var(--gold); }
-.sw input:checked::after { left: 19px; background: var(--gold-ink); }
-.bar { grid-column: 1 / -1; height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; margin: 2px 0 0; }
-.bar i { display: block; height: 100%; width: 0; background: var(--gold); transition: width .2s; }
-.btn { background: var(--raised); border: 1px solid var(--line2); border-radius: 7px; padding: 7px 12px; cursor: pointer; font: 600 13.5px var(--body); transition: border-color .12s, background .12s; }
-.btn:hover { border-color: var(--faint); }
-.btn.primary { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
-.btn:disabled { opacity: .45; cursor: default; }
-a.btn.web { text-decoration: none; display: inline-flex; align-items: center; }
-/* your pulls */
-.phead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
-.phead select { margin-left: auto; min-width: 0; max-width: 100%; height: 34px; padding: 4px 30px 4px 12px; border: 1px solid var(--line2); border-radius: 7px; background: var(--raised); font-size: 13.5px; color: var(--muted); }
+/* the middle: the ring on the left, the night on the right */
+.stage { flex: 1; min-height: 0; position: relative; display: flex; }
+.main { flex: 1; min-width: 0; display: flex; gap: 30px; align-items: center; padding: 18px 34px; overflow: auto; }
+.ring { position: relative; width: 184px; height: 184px; flex: 0 0 184px; }
+.ring svg { width: 100%; height: 100%; filter: drop-shadow(0 0 18px rgba(95,220,122,.12)); }
+.ring .arc { transition: stroke-dashoffset .5s ease, opacity .3s; }
+.ring.on .arc { animation: breathe 1.8s ease-in-out infinite; }
+@keyframes breathe { 50% { opacity: .4; } }
+.ring .in { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-align: center; padding: 0 28px; }
+.ring b { font: 700 30px/1.05 var(--head); background: linear-gradient(135deg, #f1cd7a, #5fdc7a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.ring.sent b { background: none; color: var(--em); font-size: 38px; line-height: 1; }
+.ring.fail b { background: none; color: var(--warn); }
+.ring.dim b { background: none; color: var(--text); font-size: 24px; }
+.ring span { font: 600 13.5px/1.3 var(--body); color: var(--muted); }
+.ring.sent span { color: var(--em-l); }
+.ring em { font: 500 12px var(--body); color: var(--muted); font-style: normal; margin-top: 4px; }
+.mid { flex: 1; min-width: 0; align-self: stretch; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
+.k { margin: 0; font: 700 11.5px/1.25 var(--body); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.k .bn { color: var(--text); }
+.ht { margin: 2px 0 0; font: 600 17px/1.35 var(--head); }
+.ht .pv { color: var(--gold); }
+.ht .who { color: #ff8f87; font-weight: 700; }
+.ht .ab { color: #c39bff; font-weight: 700; }
+.fc { margin: 0; font: 500 14px/1.45 var(--body); color: #d6d1c6; }
+.np { display: inline-block; font: 700 11px/1 var(--body); letter-spacing: .05em; text-transform: uppercase; color: var(--em-ink); background: var(--em); border-radius: 4px; padding: 4px 7px; margin-right: 6px; vertical-align: 1px; }
+.acts { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.acts .btn { padding: 5px 12px; font-size: 12.5px; }
+.lnk { background: none; border: 0; padding: 0; color: var(--muted); cursor: pointer; font: 600 12.5px var(--body); }
+.lnk:hover { color: var(--text); }
+/* the night line: one dot per pull, as high as it got; coloured bands for the phases */
+.night { display: block; width: 100%; height: 140px; flex: 0 1 140px; min-height: 84px; margin-top: 2px; overflow: visible; }
+.night .pdot { cursor: pointer; }
+.night .pdot:hover .face { stroke-width: 3; }
+.night text { font-family: var(--body); }
+/* slim on/off switches, in the logo's green */
+.swrow { display: flex; align-items: center; gap: 26px; flex-wrap: wrap; }
+.tg { display: flex; align-items: center; gap: 10px; font: 600 13.5px var(--body); color: #d6d1c6; cursor: pointer; user-select: none; }
+.tg input { appearance: none; -webkit-appearance: none; width: 36px; height: 20px; border-radius: 999px; background: #2a2f3b; position: relative; margin: 0; cursor: pointer; transition: background .15s; flex: none; }
+.tg input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: #6c7381; transition: left .15s, background .15s; }
+.tg input:checked { background: linear-gradient(90deg, var(--em-d), var(--em)); }
+.tg input:checked::after { left: 19px; background: var(--em-ink); }
+kbd { font: 700 12px var(--body); background: #232835; border: 1px solid #4a5060; border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; color: var(--text); }
+/* the small print, at the bottom */
+.foot { flex: none; display: flex; align-items: center; gap: 18px; padding: 9px 22px; border-top: 1px solid var(--line); background: rgba(21,25,34,.6); font: 12.5px var(--body); color: var(--faint); min-width: 0; }
+.foot > * { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.foot .lnk { color: var(--faint); font: inherit; }
+.foot .lnk:hover { color: var(--text); }
+.foot .ok { color: var(--em); font-weight: 600; } .foot .warn { color: var(--warn); font-weight: 600; }
+.foot .quit { margin-left: auto; flex: none; background: none; border: 0; padding: 2px 4px; color: var(--muted); font: 700 12.5px var(--body); cursor: pointer; }
+.foot .quit:hover { color: var(--text); }
+/* behind the gear: the combat log, every pull, updates */
+.more { position: absolute; top: 0; right: 0; bottom: 0; width: min(420px, 100%); z-index: 5; display: flex; flex-direction: column; gap: 18px; padding: 18px 20px; overflow: auto;
+  background: var(--panel); border-left: 1px solid var(--line2); box-shadow: -18px 0 40px rgba(0,0,0,.45); }
+.more h2 { margin: 0; display: flex; align-items: center; justify-content: space-between; font: 700 19px var(--head); }
+.more h2 .ib { width: 30px; height: 30px; font-size: 14px; }
+.more .k { margin-bottom: 7px; }
+.more select { width: 100%; height: 34px; padding: 4px 30px 4px 12px; border: 1px solid var(--line2); border-radius: 7px; background: var(--raised); font-size: 13px; color: var(--text); }
+.note { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
 .group { border: 1px solid var(--line); border-radius: 8px; background: rgba(30,34,44,.45); padding: 6px; margin-bottom: 10px; }
 .bossname { display: flex; align-items: baseline; gap: 8px; font: 700 16px var(--head); margin: 4px 8px 4px; color: var(--text); }
 .bossname span { font: 600 12px var(--body); color: var(--faint); text-transform: uppercase; letter-spacing: .06em; }
-.pull { width: 100%; display: grid; grid-template-columns: 58px auto auto 1fr auto; gap: 12px; align-items: center; padding: 6px 8px; border-radius: 6px; font-size: 14px; }
+.pull { width: 100%; display: grid; grid-template-columns: 54px auto auto 1fr auto; gap: 10px; align-items: center; padding: 5px 8px; border-radius: 6px; font-size: 13.5px; }
 .pull + .pull { border-top: 1px solid rgba(42,47,59,.6); }
 .pull:hover { background: var(--raised); }
-.pull.sel { background: #2a2618; box-shadow: inset 2px 0 0 var(--gold); }
+.pull.sel { background: #1b2a20; box-shadow: inset 2px 0 0 var(--em); }
 .pull .n { color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
-.pull .d { color: var(--faint); font-variant-numeric: tabular-nums; font-size: 13px; }
-.pull .btn { grid-column: 5; padding: 4px 12px; font-size: 12.5px; opacity: .85; }
+.pull .d { color: var(--faint); font-variant-numeric: tabular-nums; font-size: 12.5px; }
+.pull .btn { grid-column: 5; padding: 3px 10px; font-size: 12px; opacity: .85; }
 .pull:hover .btn, .pull.sel .btn { opacity: 1; }
+.pull .btn.em { opacity: 1; }
 .chip { font: 700 12px var(--body); border-radius: 5px; padding: 2px 9px; white-space: nowrap; }
 .chip.kill { background: var(--good-bg); color: #7ee08f; }
 .chip.wipe { background: var(--bad-bg); color: #ff8f87; }
 .chip.other { background: var(--raised); color: var(--muted); }
-.empty { color: var(--muted); font-size: 14px; padding: 8px 4px; }
-.list { max-height: calc(100vh - 300px); min-height: 220px; overflow: auto; margin: 0 -6px; padding: 0 6px; }
-.side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.prevh { font: 700 12px var(--body); color: var(--faint); letter-spacing: .08em; margin: 2px 0 2px 2px; text-transform: uppercase; }
-/* before the first pull: a quiet placeholder where the card will be */
-.wait { border: 1px dashed var(--line2); border-radius: 10px; padding: 34px 22px; text-align: center; color: var(--muted); background: rgba(23,26,34,.5); }
-.wait svg { width: 34px; height: 37px; opacity: .9; margin-bottom: 8px; }
-.wait b { display: block; font: 700 18px var(--head); color: var(--text); margin-bottom: 4px; }
-.wait p { margin: 0; font-size: 13.5px; }
+.empty { color: var(--muted); font-size: 14px; padding: 6px 2px; margin: 0; }
+.side { display: none; }
 details.code summary { cursor: pointer; color: var(--faint); font-size: 13px; }
 details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: var(--raised); border: 1px solid var(--line2); border-radius: 8px; color: var(--muted); font: 12px/1.4 Consolas, monospace; padding: 8px; resize: vertical; }
 .folder { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-.folder input { flex: 1 1 260px; background: var(--raised); border: 1px solid var(--line2); border-radius: 8px; padding: 7px 10px; }
-/* the small print, at the bottom */
-.foot { max-width: 780px; margin: 0 auto; padding: 0 28px 22px; justify-content: center; text-align: center; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12.5px; color: var(--faint); }
-.foot span::before { content: "·"; margin-right: 18px; color: var(--line2); }
-.foot span:first-child::before { content: none; margin: 0; } .foot span:empty { display: none; }
+.folder input { flex: 1 1 240px; background: var(--raised); border: 1px solid var(--line2); border-radius: 8px; padding: 7px 10px; }
+@media (max-width: 760px) { .main { gap: 20px; padding: 16px 20px; } .ring { width: 150px; height: 150px; flex-basis: 150px; } .ring b { font-size: 25px; } .top { gap: 10px; padding: 12px 16px; } }
 
 /* ---------- the in-game card (same layout as the addon) ---------- */
 .card { width: 100%; max-width: 400px; background: var(--panel); border: 1px solid var(--line2); border-radius: 10px; box-shadow: 0 18px 46px rgba(0,0,0,.6); overflow: hidden; }
@@ -160,51 +182,55 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="lgfMetal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff4cf"/><stop offset=".22" stop-color="#f6d27a"/><stop offset=".5" stop-color="#d9a441"/><stop offset=".62" stop-color="#a8701f"/><stop offset=".8" stop-color="#f2c862"/><stop offset="1" stop-color="#7a4f14"/></linearGradient><linearGradient id="lgfMetalDk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6e4611"/><stop offset=".5" stop-color="#c48a2c"/><stop offset="1" stop-color="#ffe3a0"/></linearGradient><radialGradient id="lgfEnamel" cx=".5" cy=".3" r=".8"><stop offset="0" stop-color="#2b3247"/><stop offset=".6" stop-color="#161a25"/><stop offset="1" stop-color="#0a0c12"/></radialGradient><linearGradient id="lgfEmerald" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c8ffd2"/><stop offset=".45" stop-color="#5fdc7a"/><stop offset="1" stop-color="#178a3c"/></linearGradient></defs></svg>
 <header class="top">
   <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 2 57 11.5V30c0 15.5-11.3 26.6-25 32C18.3 56.6 7 45.5 7 30V11.5Z" fill="url(#lgfMetal)" stroke="#4a300a" stroke-width=".8"/><path d="M32 7 52.5 14.8V30c0 12.8-9.2 22-20.5 26.6C20.7 52 11.5 42.8 11.5 30V14.8Z" fill="url(#lgfMetalDk)"/><path d="M32 9.2 50.5 16.3V30c0 11.7-8.3 20.2-18.5 24.5C21.8 50.2 13.5 41.7 13.5 30V16.3Z" fill="url(#lgfEnamel)"/><path d="M32 9.2 50.5 16.3V23C40 20.5 24 20.5 13.5 23V16.3Z" fill="#fff" opacity=".07"/><path fill-rule="evenodd" transform="translate(0 1.2)" fill="#000" opacity=".55" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path fill-rule="evenodd" fill="url(#lgfMetal)" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path d="m29 32.4 2.7 2.7 5.6-6.1" fill="none" stroke="url(#lgfEmerald)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  <h1>Debrief Companion<small>Your recap in WoW after every pull</small></h1>
-  <div class="stat" id="stat"><i></i><span id="statT">Starting…</span></div>
-  <a class="btn primary quit web" id="web" href="https://debriefme.io/?pc" target="_blank" rel="noopener" title="Opens debriefme.io in your browser. It follows this PC's combat log, so every pull shows up there as it ends.">See pulls on the website</a>
-  <button class="btn quit" id="upd" type="button" title="Looks for a newer Debrief on debriefme.io and installs it now.">Check for updates</button>
-  <button class="btn quit" id="quit" type="button" title="Stops Debrief Companion. Open it again with the Debrief icon on your desktop.">Quit</button>
+  <div class="tt"><h1>Debrief Companion</h1><div class="stat" id="stat"><i></i><span id="statT">Starting…</span></div></div>
+  <span class="grow"></span>
+  <a class="btn gold" id="web" href="https://debriefme.io/?pc" target="_blank" rel="noopener" title="Opens debriefme.io in your browser. It follows this PC's combat log, so every pull shows up there as it ends.">Open on the website</a>
+  <button class="btn ib" id="gear" type="button" aria-expanded="false" aria-controls="more" title="Settings: your combat log, every pull, updates">⚙</button>
 </header>
 
-<div class="wrap">
-  <section class="panel step" id="step">
-    <div>
-      <p id="stepT"><b>Ready.</b> Waiting for your next boss pull.</p>
-      <ol class="flow">
-        <li><b>1</b>A boss pull ends</li>
-        <li><b>2</b>Debrief copies your recap and <em>chimes</em></li>
-        <li><b>3</b>In WoW, press <kbd>Ctrl</kbd>+<kbd>V</kbd> when it asks</li>
-      </ol>
+<div class="stage">
+  <main class="main">
+    <div class="ring dim" id="ring" title="">
+      <svg viewBox="0 0 120 120" aria-hidden="true"><defs>
+        <linearGradient id="rgGo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e6b450"/><stop offset="1" stop-color="#5fdc7a"/></linearGradient>
+        <linearGradient id="rgSent" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c8ffd2"/><stop offset="1" stop-color="#178a3c"/></linearGradient></defs>
+        <circle cx="60" cy="60" r="52" fill="none" stroke="#1f2430" stroke-width="9"/>
+        <circle class="arc" id="arc" cx="60" cy="60" r="52" fill="none" stroke="url(#rgGo)" stroke-width="9" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7" transform="rotate(-90 60 60)"/></svg>
+      <div class="in" id="ringT"><b>…</b><span>Starting</span></div>
     </div>
-    <div class="toggles">
-      <label class="sw" for="auto">Send each new pull <input type="checkbox" id="auto" checked></label>
-      <label class="sw" for="snd">Chime <input type="checkbox" id="snd" checked></label>
-      <button class="btn primary" id="copyAgain" type="button" hidden>Copy it again</button>
+    <div class="mid">
+      <p class="k" id="bossK">Tonight</p>
+      <p class="ht" id="headT">After each boss pull, Debrief copies your recap and chimes. In WoW, press <kbd>Ctrl</kbd>+<kbd>V</kbd>.</p>
+      <p class="fc" id="focT" hidden></p>
+      <div class="acts" id="acts" hidden></div>
+      <svg class="night" id="night" aria-label="How far each pull got tonight"></svg>
+      <div class="swrow">
+        <label class="tg" for="auto" title="Copies each new pull's recap by itself, with a chime, ready for Ctrl+V in WoW."><input type="checkbox" id="auto" checked>Send to WoW</label>
+        <label class="tg" for="snd" title="A short chime when a recap is copied."><input type="checkbox" id="snd" checked>Chime</label>
+        <button class="btn gold" id="copyAgain" type="button" hidden>Copy it again</button>
+      </div>
+      <div id="folderBox" hidden>
+        <p class="empty">I couldn't find your WoW Logs folder. Paste where WoW is installed (for example <b>C:\Program Files (x86)\World of Warcraft</b>).</p>
+        <div class="folder"><input id="folderIn" placeholder="C:\Program Files (x86)\World of Warcraft"><button class="btn gold" id="folderGo" type="button">Use this folder</button></div>
+      </div>
     </div>
-    <div class="bar" id="bar" hidden><i></i></div>
-  </section>
+  </main>
 
-  <section class="panel logline">
-    <span class="lk">Combat log</span><span class="sub" id="logInfo"></span>
-    <select id="logSel" aria-label="Combat log"></select>
-    <div id="folderBox" hidden>
-      <p class="empty">I couldn't find your WoW Logs folder. Paste where WoW is installed (for example <b>C:\Program Files (x86)\World of Warcraft</b>).</p>
-      <div class="folder"><input id="folderIn" placeholder="C:\Program Files (x86)\World of Warcraft"><button class="btn primary" id="folderGo" type="button">Use this folder</button></div>
-    </div>
-    <div class="list" id="pulls" hidden><p class="empty">Looking for your combat log…</p></div>
-  </section>
-
-  <aside class="side" hidden>
-    <p class="prevh">What the game will show</p>
-    <div id="preview"><div class="wait"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 2 57 11.5V30c0 15.5-11.3 26.6-25 32C18.3 56.6 7 45.5 7 30V11.5Z" fill="url(#lgfMetal)" stroke="#4a300a" stroke-width=".8"/><path d="M32 7 52.5 14.8V30c0 12.8-9.2 22-20.5 26.6C20.7 52 11.5 42.8 11.5 30V14.8Z" fill="url(#lgfMetalDk)"/><path d="M32 9.2 50.5 16.3V30c0 11.7-8.3 20.2-18.5 24.5C21.8 50.2 13.5 41.7 13.5 30V16.3Z" fill="url(#lgfEnamel)"/><path d="M32 9.2 50.5 16.3V23C40 20.5 24 20.5 13.5 23V16.3Z" fill="#fff" opacity=".07"/><path fill-rule="evenodd" transform="translate(0 1.2)" fill="#000" opacity=".55" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path fill-rule="evenodd" fill="url(#lgfMetal)" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path d="m29 32.4 2.7 2.7 5.6-6.1" fill="none" stroke="url(#lgfEmerald)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Your next recap shows here</b><p>Or press Send on any pull to see its card.</p></div></div>
+  <aside class="more" id="more" hidden>
+    <h2>Settings <button class="btn ib" id="moreX" type="button" aria-label="Close settings">✕</button></h2>
+    <div><p class="k">Combat log</p><select id="logSel" aria-label="Combat log"></select><p class="note" id="logInfo"></p></div>
+    <div><p class="k">Every pull in this log</p><div id="pulls"><p class="empty">Looking for your combat log…</p></div></div>
+    <div><p class="k">Updates</p><button class="btn" id="upd" type="button" title="Looks for a newer Debrief on debriefme.io and installs it now.">Check for updates</button></div>
+    <p class="note">Close this window any time: Debrief keeps running in the background. Quit stops it. Raiders with the addon get their card from you automatically.</p>
     <details class="code"><summary>The code that was copied</summary><textarea id="codeOut" readonly></textarea></details>
   </aside>
+  <aside class="side" hidden><div id="preview"></div></aside>
 </div>
+
 <footer class="foot">
-  <span>Close this window any time: Debrief keeps running in the background. Quit stops it.</span>
-  <span>Raiders with the addon get their card from you automatically.</span>
+  <button class="lnk" id="logT" type="button" title="Pick another combat log">Log: looking…</button>
   <span id="addonT"></span>
+  <button class="quit" id="quit" type="button" title="Stops Debrief Companion. Open it again with the Debrief icon on your desktop.">Quit</button>
 </footer>
 <iframe id="eng" src="/app" title="Debrief engine" style="position:absolute;width:10px;height:10px;left:-9999px;top:0;border:0" tabindex="-1" aria-hidden="true"></iframe>
 
@@ -229,17 +255,17 @@ const engineReady = new Promise((ok, no) => {
 });
 
 // ---------- combat log: pulls ----------
-const L = { files: [], name: null, size: 0, done: 0, ix: null, items: [], live: false, waiting: false, reps: new Map(), sent: new Set(), busy: Promise.resolve() };
+const L = { state: 'start', view: null, lastSent: null, reading: null, prog: null, fresh: true, files: [], name: null, size: 0, done: 0, ix: null, items: [], live: false, waiting: false, reps: new Map(), sent: new Set(), busy: Promise.resolve() };
 const DIFFN = { 0: 'Practice', 14: 'Normal', 15: 'Heroic', 16: 'Mythic', 17: 'LFR', 233: 'Mythic' };
 const DUMMY = 990001; // (a practice pull on a training dummy, made by the scanner)
 
 async function loadLogs() {
   let x;
   try { x = await j('/logs'); } catch (e) { stat('Companion not reachable: ' + e.message, 'err'); return; }
-  if (x.error === 'nodir') { $('folderBox').hidden = false; $('pulls').innerHTML = ''; stat('No WoW Logs folder found', 'err'); return; }
-  $('folderBox').hidden = true;
+  if (x.error === 'nodir') { $('folderBox').hidden = false; $('pulls').innerHTML = ''; stat('No WoW Logs folder found', 'err'); L.state = 'nodir'; renderMain(); return; }
+  $('folderBox').hidden = true; L.state = 'ok';
   L.files = x.files || [];
-  if (!L.files.length) { $('pulls').innerHTML = '<p class="empty">No combat log yet. In WoW, type <kbd>/combatlog</kbd> (or turn on Advanced Combat Logging and log your raid). Pulls show up here as they end.</p>'; stat('Waiting for a combat log', 'busy'); waitNew(); return; }
+  if (!L.files.length) { $('pulls').innerHTML = '<p class="empty">No combat log yet. In WoW, type <kbd>/combatlog</kbd> (or turn on Advanced Combat Logging and log your raid). Pulls show up here as they end.</p>'; stat('Waiting for a combat log', 'busy'); L.state = 'nolog'; renderMain(); waitNew(); return; }
   $('logSel').innerHTML = L.files.map((f, i) => '<option value="' + i + '" title="' + esc(f.name) + '">' + (i === 0 && !f.old ? 'Latest log' : 'Older log') + ' · ' + new Date(f.mtime).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' · ' + (f.size / 1048576).toFixed(0) + ' MB</option>').join('');
   await openLog(0);
 }
@@ -249,15 +275,17 @@ async function openLog(i) {
   const f = L.files[i]; if (!f) return;
   L.name = f.name; L.ix = W ? W.E.createIndexer() : null; L.items = []; L.ci = {}; L.done = 0; L.size = 0; L.reps.clear(); L.sent.clear();
   L.live = !f.old && i === 0; // (the newest log is always watched: new pulls on it, or a newer log, are picked up by themselves)
-  const fresh = Date.now() - f.mtime < 2 * 3600e3;
+  L.fresh = Date.now() - f.mtime < 12 * 3600e3; L.view = null; L.lastSent = null;
+  $('logT').textContent = 'Log: ' + new Date(f.mtime).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + (L.live ? '' : ' (older)'); $('logT').title = f.name + ' · pick another log';
   $('pulls').innerHTML = '<p class="empty">Finding your boss pulls…</p>';
   stat('Reading your combat log…', 'busy');
   await engineReady.catch((e) => stat(e.message, 'err'));
   L.ix = W.E.createIndexer();
   await scanMore(true);
-  if (L.live) { stat('Waiting for your next boss pull', 'live'); if (!L.waiting) waitLoop(); }
-  else stat('Old log: pick a pull to send', '');
-  try { const a = await j('/addon'); if (a.msg) $('addonT').textContent = a.msg; } catch (e) { /* older helper */ }
+  if (L.live) { stat('Watching your combat log', 'live'); if (!L.waiting) waitLoop(); }
+  else stat('Older log: not watching it', '');
+  renderMain(); fillNight();
+  try { const a = await j('/addon'); addonLine(a.msg); } catch (e) { /* older helper */ }
 }
 async function scanMore(first) {
   const name = L.name;
@@ -270,19 +298,21 @@ async function scanMore(first) {
   renderPulls();
   return first ? [] : L.items.filter((b) => b.endByte && !before.has(b.startByte));
 }
+const wipePct = (b) => { const r = L.reps.get(b.startByte), e = L.name && NIGHT[L.name] && NIGHT[L.name][b.startByte]; return r && r.pct != null ? r.pct : e && e.l != null ? Math.round(e.l) : null; };
 function renderPulls() {
   const box = $('pulls');
-  if (!L.items.length) { box.innerHTML = '<p class="empty">No boss pulls in this log yet. They show up here as they end.</p>'; $('logInfo').textContent = ''; return; }
+  if (!L.items.length) { box.innerHTML = '<p class="empty">No boss pulls in this log yet. They show up here as they end.</p>'; $('logInfo').textContent = ''; renderMain(); return; }
   $('logInfo').textContent = L.items.length + ' boss pull' + (L.items.length === 1 ? '' : 's');
   const groups = new Map();
   for (const b of L.items) { const k = b.boss + ' · ' + (DIFFN[b.diffId] || b.diff); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(b); }
   box.innerHTML = [...groups].reverse().map(([k, l]) => '<div class="group"><div class="bossname">' + esc(k.split(' · ')[0]) + '<span>' + esc(k.split(' · ')[1] || '') + '</span></div>' + l.slice().reverse().map((b) => {
     const i = L.items.indexOf(b), done = !!b.endByte, sel = L.sel === i;
-    const chip = !done ? '<span class="chip other">In progress</span>' : b.kill ? '<span class="chip kill">Kill</span>' : '<span class="chip wipe">Wipe' + (L.reps.get(b.startByte) && L.reps.get(b.startByte).pct != null ? ' ' + L.reps.get(b.startByte).pct + '%' : '') + '</span>';
+    const chip = !done ? '<span class="chip other">In progress</span>' : b.kill ? '<span class="chip kill">Kill</span>' : '<span class="chip wipe">Wipe' + (wipePct(b) != null ? ' ' + wipePct(b) + '%' : '') + '</span>';
     return '<div class="pull' + (sel ? ' sel' : '') + '"><span class="n">Pull ' + b.pull + '</span><span>' + chip + '</span><span class="d">' + (done ? mmss(b.duration) : '') + '</span>' +
-      '<button class="btn' + (sel ? ' primary' : '') + '" type="button" data-i="' + i + '"' + (done ? '' : ' disabled') + '>' + (L.sent.has(b.startByte) ? 'Send again' : 'Send to game') + '</button></div>';
+      '<button class="btn' + (sel ? ' em' : '') + '" type="button" data-i="' + i + '"' + (done ? '' : ' disabled') + '>' + (L.sent.has(b.startByte) ? 'Send again' : 'Send to WoW') + '</button></div>';
   }).join('') + '</div>').join('');
-  box.querySelectorAll('button[data-i]').forEach((btn) => btn.addEventListener('click', () => send(L.items[+btn.dataset.i], true)));
+  box.querySelectorAll('button[data-i]').forEach((btn) => btn.addEventListener('click', () => { setMore(false); send(L.items[+btn.dataset.i], true); }));
+  renderMain();
 }
 
 // ---------- live: wait for the log to grow (no timers, so it keeps up while minimized) ----------
@@ -296,6 +326,7 @@ async function waitLoop() {
       try {
         const fresh = await scanMore(false);
         if (fresh.length && $('auto').checked) send(fresh[fresh.length - 1], false);
+        if (fresh.length) fillNight();
       } catch (e) { stat('Read error: ' + e.message, 'err'); }
     }
   }
@@ -306,19 +337,197 @@ async function waitNew() { // (no combat log yet: check for one every so often)
 }
 
 // ---------- reading one pull ----------
-async function readText(b) {
+async function readText(b, quiet) {
   const parts = []; let at = b.startByte, got = 0; const total = b.endByte - b.startByte;
   while (at < b.endByte) {
     const to = Math.min(b.endByte, at + 16 * 1048576);
     const r = await fetch('/read?name=' + encodeURIComponent(L.name) + '&from=' + at + '&to=' + to);
     if (!r.ok) throw new Error('Could not read the log.');
     const buf = new Uint8Array(await r.arrayBuffer()); if (!buf.length) break;
-    parts.push(buf); at += buf.length; got += buf.length; progress(got / total * 0.5);
+    parts.push(buf); at += buf.length; got += buf.length; if (!quiet) progress(got / total * 0.5);
   }
   const all = new Uint8Array(got); let o = 0; for (const p of parts) { all.set(p, o); o += p.length; }
   return new TextDecoder().decode(all);
 }
-function progress(f) { const bar = $('bar'); bar.hidden = f == null; if (f != null) bar.firstElementChild.style.width = Math.round(f * 100) + '%'; }
+function progress(f) { L.prog = f; renderRing(); }
+
+// ---------- the window: the ring, the last pull's coach line, the night line (look B, Oct 22) ----------
+const RING = 326.7;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const DIFFC = { Mythic: '#ff8000', Heroic: '#c27cff', Normal: '#5fdc7a', LFR: '#6aa8ff' };
+const PHC = { P1: '#5aa9ff', P2: '#b07cff', P3: '#5fdc7a', P4: '#ff9d4d', Intermission: '#e6b450' };
+// (how far each pull got and its coach line, kept on this PC per log, so reopening Debrief doesn't read the night again)
+const NIGHT = store.get('dbf-night', {});
+const nightOf = (n) => (NIGHT[n] = NIGHT[n] || {});
+function keepNight() { const ks = Object.keys(NIGHT); for (const k of ks.slice(0, Math.max(0, ks.length - 4))) delete NIGHT[k]; store.set('dbf-night', NIGHT); }
+function saveNight(b, rep, coach) {
+  if (!rep || !L.name || b.id === DUMMY) return;
+  if (!rep.item) rep.item = b;
+  let c = coach || null, pr = null;
+  const CA = W && W.CACHE, had = !CA || CA.has(b); if (!had) CA.set(b, rep); // (the coach reads how far the pull got from the site's pulls)
+  try { if (!c && W.coachGame) c = W.coachGame(rep, null); } catch (e) { c = null; }
+  try { pr = W.progressOf ? W.progressOf(rep) : null; } catch (e) { pr = null; } finally { if (!had) CA.delete(b); }
+  const h = (c && c.headline) || '', f = (c && c.focus) || '', both = h + ' ' + f;
+  const nm = [...new Set([...rep.players.values()].map((p) => String(p.name || '').split('-')[0]).filter((n) => n && both.includes(n)))];
+  const ab = !c ? [] : [...new Set([...((c.deaths && c.deaths.items) || []).map((x) => x.ab), ...((c.avoid && c.avoid.items) || []).map((x) => x.k),
+    ...(c.wrong || []).map((x) => String(x.label || '').replace(/\s*\(.*\)\s*$/, ''))].filter((a) => a && a.length > 2 && both.includes(a)))];
+  nightOf(L.name)[b.startByte] = { k: b.kill ? 1 : 0, ph: (pr && pr.phase) || '', l: b.kill ? 0 : pr && pr.left != null ? Math.round(pr.left * 10) / 10 : null, lb: b.kill ? 'Kill' : (pr && pr.label) || '', h, f, nm, ab };
+  keepNight();
+}
+// (the boss being pulled now, or the last one pulled: the window is about it)
+function curGroup() {
+  const real = L.items.filter((b) => b.id !== DUMMY), last = real[real.length - 1] || L.items[L.items.length - 1];
+  if (!last) return null;
+  return { last, boss: last.boss, diff: DIFFN[last.diffId] || last.diff, dummy: last.id === DUMMY, list: L.items.filter((x) => x.id === last.id && x.diffId === last.diffId) };
+}
+function ring(kind, fill, html, tip) {
+  const r = $('ring'), a = $('arc'); fill = Math.max(0, Math.min(1, fill || 0));
+  r.className = 'ring ' + kind; r.title = tip || '';
+  a.setAttribute('stroke', kind === 'sent' ? 'url(#rgSent)' : kind === 'fail' ? '#e8a23a' : 'url(#rgGo)');
+  a.setAttribute('stroke-dashoffset', (RING * (1 - fill)).toFixed(1)); a.style.opacity = fill > 0.005 ? '' : '0';
+  if ($('ringT').innerHTML !== html) $('ringT').innerHTML = html;
+}
+function renderRing() {
+  if (L.state === 'nodir') return ring('dim', 0, "<b>Where's WoW?</b><span>show me your WoW folder</span>");
+  if (L.state === 'nolog') return ring('dim', 0, '<b>No log yet</b><span>type <kbd>/combatlog</kbd> in WoW</span>');
+  if (!L.name) return ring('dim', 0, '<b>…</b><span>Starting</span>');
+  if (L.reading) return ring('go', Math.max(0.03, L.prog || 0), '<b>Reading</b><span>pull ' + L.reading.pull + '</span>');
+  const g = curGroup(), N = nightOf(L.name), done = g ? g.list.filter((b) => b.endByte) : [], lastDone = done[done.length - 1];
+  const tail = L.items[L.items.length - 1], on = L.live && tail && !tail.endByte ? tail : null;
+  if (on) return ring('on', 1, '<b>Pull ' + on.pull + '</b><span>on now</span>', 'A boss pull is on. Your recap is copied the moment it ends.');
+  const s = L.lastSent, sb = s && L.items.find((b) => b.startByte === s.sb);
+  if (sb && ((lastDone && s.sb === lastDone.startByte) || Date.now() - s.at < 90e3)) {
+    if (!s.ok) return ring('fail', 1, '<b>Not copied</b><span>press Copy it again</span>');
+    return ring('sent', 1, '<b>✓</b><span>' + (sb.kill ? 'Kill sent to WoW' : 'Sent to WoW') + '</span><em>' + (lastDone && s.sb === lastDone.startByte ? '' : 'pull ' + sb.pull + ' · ') + 'press <kbd>Ctrl</kbd>+<kbd>V</kbd></em>', 'Pull ' + sb.pull + "'s recap is copied. In WoW, press Ctrl+V when it asks.");
+  }
+  const best = done.reduce((m, b) => { const e = N[b.startByte]; return e && e.l != null ? Math.max(m, 100 - e.l) : m; }, 0);
+  if (!L.live) return ring('dim', best / 100, '<b>Older log</b><span>click a dot to send a pull</span>');
+  const next = !g ? 'for your first pull' : g.dummy ? 'for your next pull' : 'for pull ' + (lastDone ? lastDone.pull + 1 : 1);
+  return ring('go', Math.max(best / 100, 0.04), '<b>Ready</b><span>' + next + '</span>', best ? 'The ring fills as far as your best pull on this boss got.' : '');
+}
+// (the coach line with names in red and abilities in purple, like the website's coach box)
+function paint(t, e) {
+  const parts = [...((e && e.ab) || []).map((a) => [esc(a), 'ab']), ...((e && e.nm) || []).map((n) => [esc(n), 'who'])];
+  let h = esc(t).replace(/(That one's on )([^.<]+)/, '$1<span class="who">$2</span>'); /* (what the coach blames, in red) */
+  if (!parts.length) return h;
+  parts.sort((x, y) => y[0].length - x[0].length);
+  const cls = new Map(parts), re = new RegExp('(?<![\\p{L}\\p{N}])(' + parts.map(([s]) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')(?![\\p{L}\\p{N}])', 'gu');
+  return h.replace(re, (m) => '<span class="' + cls.get(m) + '">' + m + '</span>');
+}
+const shortFocus = (f) => { let s = String(f || '').split(/:\s/)[0].trim(); s = s.split(/(?<=[.!?])\s/)[0]; return s && !/[.!?]$/.test(s) ? s + '.' : s; };
+function renderTop() {
+  const g = curGroup();
+  if (!g) {
+    $('bossK').textContent = L.name ? 'No boss pulls in this log yet' : 'Tonight';
+    $('headT').innerHTML = 'After each boss pull, Debrief copies your recap and chimes. In WoW, press <kbd>Ctrl</kbd>+<kbd>V</kbd>.';
+    $('focT').hidden = true; $('acts').hidden = true; return;
+  }
+  const done = g.list.filter((b) => b.endByte), n = done.length;
+  $('bossK').innerHTML = '<span class="bn">' + esc(g.dummy ? 'Training dummy' : g.boss) + '</span>' + (g.dummy ? '' : ' · <span style="color:' + (DIFFC[g.diff] || 'var(--muted)') + '">' + esc(g.diff) + '</span>') +
+    ' · ' + n + ' pull' + (n === 1 ? '' : 's') + (L.fresh ? ' tonight' : ' in this log');
+  const view = L.view != null ? done.find((b) => b.startByte === L.view) : null, b = view || done[n - 1];
+  if (!b) { $('headT').textContent = 'Your first pull is on. Your recap is copied the moment it ends.'; $('focT').hidden = true; $('acts').hidden = true; return; }
+  const e = nightOf(L.name)[b.startByte], pv = view ? '<span class="pv">Pull ' + b.pull + ':</span> ' : '';
+  if (e && e.h) $('headT').innerHTML = pv + paint(e.h, e);
+  else $('headT').innerHTML = pv + esc((view ? '' : 'Pull ' + b.pull + ': ') + (b.kill ? 'kill in ' : 'wipe after ') + mmss(b.duration) + (e && e.lb && !b.kill ? ', ' + e.lb : '') + '.') +
+    (e || g.dummy ? '' : ' <span style="color:var(--faint)">Reading it…</span>');
+  const f = e && e.f ? shortFocus(e.f) : '';
+  $('focT').hidden = !f; if (f) $('focT').innerHTML = '<span class="np">' + (b.kill ? 'Next time' : 'Next pull') + '</span>' + paint(f, e);
+  const sent = L.sent.has(b.startByte), busy = !!L.reading;
+  const acts = (view || (!sent && !busy) ? '<button class="btn ' + (view ? 'gold' : 'em') + '" type="button" data-send="' + b.startByte + '">Send pull ' + b.pull + (sent ? ' again' : ' to WoW') + '</button>' : '') +
+    (!view && sent && !busy ? '<button class="lnk" type="button" data-send="' + b.startByte + '">Send it again</button>' : '') +
+    (view ? '<button class="lnk" type="button" data-back="1">Back to the last pull</button>' : '');
+  $('acts').hidden = !acts; if ($('acts').innerHTML !== acts) $('acts').innerHTML = acts;
+}
+const lerpC = (a, b, t) => { const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)), A = p(a), B = p(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
+function renderNight() {
+  const sv = $('night'), g = curGroup(), Wd = Math.max(260, Math.round(sv.clientWidth || 600)), H = Math.max(80, Math.round(sv.clientHeight || 140));
+  sv.setAttribute('viewBox', '0 0 ' + Wd + ' ' + H);
+  const done = g && !g.dummy ? g.list.filter((b) => b.endByte) : [];
+  if (!done.length) {
+    sv.innerHTML = '<rect x="0.5" y="0.5" width="' + (Wd - 1) + '" height="' + (H - 1) + '" rx="10" fill="rgba(23,26,34,.5)" stroke="#2a2f3b" stroke-dasharray="4 4"/><text x="' + Wd / 2 + '" y="' + (H / 2 + 5) +
+      '" text-anchor="middle" fill="#6c7381" font-size="13" font-weight="600">' + esc(g && g.dummy ? 'Practice pulls on a dummy have no night line.' : "Tonight's pulls show up here: one dot each, as high as it got.") + '</text>';
+    return;
+  }
+  const N = nightOf(L.name), pl = 12, pr = 40, pt = 24, pb = 12, last = done.length - 1;
+  const X = (i) => (done.length < 2 ? pl + (Wd - pl - pr) / 2 : pl + 8 + i * (Wd - pl - pr - 16) / last), Y = (v) => H - pb - v * (H - pt - pb) / 100;
+  let s = '<defs><linearGradient id="nlG" gradientUnits="userSpaceOnUse" x1="' + X(0).toFixed(1) + '" x2="' + (X(last) + 0.1).toFixed(1) + '" y1="0" y2="0"><stop offset="0" stop-color="#e6b450"/><stop offset="1" stop-color="#5fdc7a"/></linearGradient></defs>';
+  let bands = null; try { bands = W && W.phaseBands ? W.phaseBands(g.boss) : null; } catch (e) { bands = null; }
+  if (bands && bands.length) for (const [k, a, b] of bands) { const c = PHC[k] || '#98a0ad';
+    s += '<rect x="' + (pl - 4) + '" y="' + Y(b).toFixed(1) + '" width="' + (Wd - pl - pr + 8) + '" height="' + (Y(a) - Y(b)).toFixed(1) + '" fill="' + c + '" opacity=".09"/>' +
+      '<text x="' + (Wd - pr + 10) + '" y="' + ((Y(a) + Y(b)) / 2 + 4).toFixed(1) + '" fill="' + c + '" font-size="11" font-weight="700">' + esc(k === 'Intermission' ? 'Int' : k) + '</text>'; }
+  else for (const v of [25, 50, 75]) s += '<line x1="' + (pl - 4) + '" x2="' + (Wd - pr + 4) + '" y1="' + Y(v).toFixed(1) + '" y2="' + Y(v).toFixed(1) + '" stroke="#2a2f3b" stroke-dasharray="3 5"/>' +
+    '<text x="' + (Wd - pr + 10) + '" y="' + (Y(v) + 4).toFixed(1) + '" fill="#6c7381" font-size="11" font-weight="600">' + (100 - v) + '%</text>';
+  s += '<line x1="' + (pl - 4) + '" x2="' + (Wd - pr + 4) + '" y1="' + Y(100) + '" y2="' + Y(100) + '" stroke="#e6b450" stroke-opacity=".35" stroke-dasharray="2 4"/><text x="' + (Wd - pr + 10) + '" y="' + (Y(100) + 4) + '" fill="#e6b450" font-size="11" font-weight="700">Kill</text>';
+  const pts = done.map((b, i) => { const e = N[b.startByte]; return { b, i, e, x: X(i), v: e ? (e.k ? 100 : e.l != null ? 100 - e.l : null) : null }; }), known = pts.filter((p) => p.v != null);
+  if (known.length > 1) s += '<path d="' + known.map((p, j) => (j ? 'L' : 'M') + p.x.toFixed(1) + ' ' + Y(p.v).toFixed(1)).join(' ') + '" fill="none" stroke="url(#nlG)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>';
+  let best = null; for (const p of known) if (!best || p.v >= best.v) best = p;
+  for (const p of pts) {
+    const x = p.x.toFixed(1), y = (p.v != null ? Y(p.v) : H - pb).toFixed(1), isLast = p.i === last, sel = L.view === p.b.startByte;
+    const col = p.e && PHC[p.e.ph] ? PHC[p.e.ph] : lerpC('#e6b450', '#5fdc7a', last ? p.i / last : 1);
+    const tip = 'Pull ' + p.b.pull + ' · ' + (p.b.kill ? 'Kill' : 'Wipe' + (p.e && p.e.lb ? ' · ' + p.e.lb : '')) + ' · ' + mmss(p.b.duration) + (p.e ? '' : ' · not read yet') + '. Click to see it.';
+    s += '<g class="pdot" data-sb="' + p.b.startByte + '"><title>' + esc(tip) + '</title><circle cx="' + x + '" cy="' + y + '" r="11" fill="transparent"/>' +
+      (isLast && p.v != null ? '<circle cx="' + x + '" cy="' + y + '" r="10" fill="#5fdc7a" opacity=".22"/>' : '') +
+      (p.v == null ? '<circle class="face" cx="' + x + '" cy="' + y + '" r="3" fill="#2a2f3b" stroke="#4a5060" stroke-width="1.5"/>'
+        : p.b.kill ? '<circle class="face" cx="' + x + '" cy="' + y + '" r="6" fill="#e6b450" stroke="#fff4cf" stroke-width="1.5"/>'
+        : '<circle class="face" cx="' + x + '" cy="' + y + '" r="' + (isLast ? 5.5 : 3.6) + '" fill="' + (isLast ? '#5fdc7a' : '#12151c') + '" stroke="' + col + '" stroke-width="2"/>') +
+      (sel ? '<circle cx="' + x + '" cy="' + y + '" r="9" fill="none" stroke="#ece8df" stroke-width="1.5"/>' : '') + '</g>';
+  }
+  if (best) {
+    const kill = !!best.b.kill, lab = kill ? 'Kill · pull ' + best.b.pull : (best.i === last ? 'Best yet · pull ' : 'Best · pull ') + best.b.pull, right = best.x > Wd / 2;
+    s += '<text x="' + (best.x + (right ? -9 : 9)).toFixed(1) + '" y="' + Math.max(12, Y(best.v) - 11).toFixed(1) + '" fill="' + (kill ? '#e6b450' : best.i === last ? '#5fdc7a' : '#d9b766') +
+      '" font-size="11.5" font-weight="700" text-anchor="' + (right ? 'end' : 'start') + '">' + lab + '</text>';
+  }
+  sv.innerHTML = s;
+}
+function renderMain() { renderRing(); renderTop(); renderNight(); }
+// (the earlier pulls on this boss, read quietly one by one so the night line fills in; never while a pull is on)
+let FILLING = false;
+async function fillNight() {
+  if (FILLING) return; FILLING = true;
+  try {
+    for (let guard = 0; guard < 60; guard++) {
+      await L.busy;
+      const g = curGroup(), nm = L.name; if (!g || g.dummy || !nm || !W) break;
+      const tail = L.items[L.items.length - 1]; if (tail && !tail.endByte) { await sleep(4000); continue; }
+      const have = nightOf(nm), todo = g.list.filter((b) => b.endByte && !have[b.startByte]).reverse();
+      if (!todo.length) break;
+      stat('Reading tonight\'s pulls: ' + todo.length + ' to go', 'busy');
+      const b = todo[0];
+      const run = (async () => {
+        try {
+          const old = L.reps.get(b.startByte);
+          let rep = old && old.rep;
+          if (!rep) { const text = await readText(b, true); if (nm !== L.name) return; await sleep(20); rep = W.E.analyze(b, text, { packs: (W.S && W.S.packs) || W.E.PACKS, overrides: {} }); rememberSpecs(rep); }
+          saveNight(b, rep, null);
+        } catch (e) { have[b.startByte] = { k: b.kill ? 1 : 0, ph: '', l: null, lb: '', h: '', f: '', nm: [], ab: [] }; }
+      })();
+      L.busy = run.catch(() => {}); await run; renderMain();
+      await sleep(500);
+    }
+  } finally { FILLING = false; if (L.name && !L.reading) stat(L.live ? 'Watching your combat log' : 'Older log: not watching it', L.live ? 'live' : ''); }
+}
+function addonLine(msg) {
+  const v = /version ([\d.]+)/.exec(msg || ''), ok = /^(The Debrief addon|Installed the Debrief addon)/.test(msg || '');
+  $('addonT').innerHTML = ok && v ? 'Addon ' + esc(v[1]) + ' <span class="ok">✓ up to date</span>' : msg ? '<span class="warn">' + esc(msg) + '</span>' : '';
+  $('addonT').title = msg || '';
+}
+const setMore = (on) => { $('more').hidden = !on; $('gear').setAttribute('aria-expanded', on ? 'true' : 'false'); };
+$('gear').addEventListener('click', () => setMore($('more').hidden));
+$('moreX').addEventListener('click', () => setMore(false));
+$('logT').addEventListener('click', () => setMore(true));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMore(false); });
+window.addEventListener('resize', () => renderNight());
+$('night').addEventListener('click', (ev) => {
+  const d = ev.target.closest && ev.target.closest('.pdot'); if (!d) return;
+  const sb = +d.dataset.sb, g = curGroup(), done = g ? g.list.filter((b) => b.endByte) : [];
+  L.view = L.view === sb || (done.length && done[done.length - 1].startByte === sb) ? null : sb; renderMain();
+});
+$('acts').addEventListener('click', (ev) => {
+  const t = ev.target.closest && ev.target.closest('button'); if (!t) return;
+  if (t.dataset.back) { L.view = null; renderMain(); return; }
+  const b = L.items.find((x) => x.startByte === +t.dataset.send); if (b) send(b, true);
+});
 async function analyze(b) {
   if (L.reps.has(b.startByte) && L.reps.get(b.startByte).rep) return L.reps.get(b.startByte).rep;
   const E = W.E, text = b.id === DUMMY ? withSpecs(await readText(b), E) : await readText(b);
@@ -376,7 +585,7 @@ async function send(b, byHand) {
   L.sel = L.items.indexOf(b); renderPulls();
   const run = L.busy.then(async () => {
     try {
-      stat('Reading pull ' + b.pull + ' of ' + b.boss + '…', 'busy'); progress(0.02);
+      L.reading = b; L.view = null; stat('Reading pull ' + b.pull + ' of ' + b.boss + '…', 'busy'); progress(0.02); renderTop();
       await engineReady;
       // (the pull before it on the same boss, read first, so "vs last pull" works)
       const same = L.items.filter((x) => x.endByte && x.id === b.id && x.diffId === b.diffId), k = same.indexOf(b);
@@ -387,10 +596,10 @@ async function send(b, byHand) {
       $('codeOut').value = code; $('copyAgain').disabled = false;
       RECAP.lastModel = model; renderPreview(model);
       const ok = await clip(code); $('copyAgain').hidden = ok;
+      L.reading = null; L.lastSent = { sb: b.startByte, ok, at: Date.now() }; saveNight(b, rep, model.coach && model.coach.raid);
       L.sent.add(b.startByte); renderPulls(); progress(null);
-      $('stepT').innerHTML = ok ? '<b>Pull ' + b.pull + ' is copied</b> (' + esc(resultText(model.h)) + '). In WoW, press Ctrl+V.' : '<b>Pull ' + b.pull + ' is ready</b>, but copying failed. Press Copy it again.';
-      stat(L.live ? 'Waiting for your next boss pull' : 'Sent pull ' + b.pull, L.live ? 'live' : '');
-    } catch (e) { console.error(e); progress(null); stat('Could not read pull ' + b.pull + ': ' + e.message, 'err'); }
+      stat(L.live ? 'Watching your combat log' : 'Sent pull ' + b.pull, L.live ? 'live' : ''); renderMain();
+    } catch (e) { console.error(e); L.reading = null; progress(null); renderMain(); stat('Could not read pull ' + b.pull + ': ' + e.message, 'err'); }
   });
   L.busy = run.catch(() => {});
   return run;
@@ -558,7 +767,7 @@ RECAP.renderPreview = renderPreview;
 RECAP.build = (b, rep, same) => window.DBF_BUILD(b, rep, same, W, L);
 
 j('/app-version').then((x) => { RECAP.addonV = x.addon || ''; }).catch(() => {});
-stat('Loading Debrief…', 'busy');
+stat('Loading Debrief…', 'busy'); renderMain();
 engineReady.then(() => loadLogs()).catch((e) => stat(e.message, 'err'));
 })();
 </script>

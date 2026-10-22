@@ -146,7 +146,7 @@ namespace Debrief {
     string BoundsFile { get { return Path.Combine(here, "window2.txt") /* (new name: the window got smaller, so everyone starts at the new size once) */; } }
     Rectangle SavedBounds() {
       var wa = Screen.FromHandle(Handle).WorkingArea;
-      int w = Math.Min(Px(1000), wa.Width - 40), h = Math.Min(Px(460), wa.Height - 40); // (the simple window: status, two switches, the log line)
+      int w = Math.Min(Px(1000), wa.Width - 40), h = Math.Min(Px(540), wa.Height - 40); // (look B: the ring, the coach line, the night line, two switches)
       var r = new Rectangle(wa.Left + (wa.Width - w) / 2, wa.Top + (wa.Height - h) / 2, w, h);
       try {
         var p = File.ReadAllText(BoundsFile).Split(',');
