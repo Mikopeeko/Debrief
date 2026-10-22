@@ -1586,6 +1586,7 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .pl-det h3 .rot-sel { margin-left: 2px; vertical-align: 0; }
 .rot-sel:hover, .rot-sel:focus { color: var(--text); border-color: var(--gold); outline: none; }
 .rot-hn .rot-shot { display: inline-block; margin: 0 0 0 8px; padding: 4px 10px; border: 1px solid rgba(230,180,80,.5); border-radius: 8px; background: transparent; color: var(--gold); font: 600 13px var(--body); cursor: pointer; vertical-align: 2px; }
+.rot-shotting, .rot-shotting * { animation: none !important; transition: none !important; } /* (Copy as image: no fade-in while the picture is taken) */
 .rot-hn .rot-shot:hover:not(:disabled), .rot-hn .rot-shot:focus-visible { background: rgba(230,180,80,.12); outline: none; } .rot-hn .rot-shot:disabled { cursor: default; opacity: .85; } .rot-sel option, .rot-sel optgroup { background: #1b1f29; color: var(--text); }
 @media (max-width: 560px) { .rot-hn .rot-sel { display: block; margin: 6px 0 0; vertical-align: 0; } }
 .spc-kts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; max-width: 520px; }
@@ -14256,6 +14257,7 @@ const PATCH_NOTES = [
     'The bosses are in the same order everywhere on the site.',
     'Long patch notes fold after six lines.',
   ], f: [
+    'Rotation: Copy as image now works on long pages. It came out blank or failed before; now the picture has every icon and the site\'s own fonts.',
     'The Coiled Altar: Malacrass counts as a boss, not an add, in damage splits.',
     'The Next pull line under the Fix cards now says the first card\'s fix.',
     'A boss guide\'s address follows the boss and the difficulty you pick, so a shared guide link opens the right one.',
@@ -30364,13 +30366,26 @@ function rotSite0(what, chg) {
 let H2I = null;
 const h2iLoad = () => H2I || (H2I = new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js';
   sc.onload = () => (window.htmlToImage ? ok(window.htmlToImage) : no(new Error('no library'))); sc.onerror = () => { H2I = null; no(new Error('could not load')); }; document.head.appendChild(sc); }));
+// (the site's fonts as data inside the picture, latin letters only: a picture can't fetch them itself)
+let H2F = null;
+const h2iFonts = () => H2F || (H2F = (async () => { const l = document.querySelector('link[rel="stylesheet"][href*="fonts.googleapis.com/css"]'); if (!l) return '';
+  const css = await (await fetch(l.href)).text(), blocks = css.split('@font-face').slice(1).filter((x) => /U\+0000-00FF/.test(x));
+  const out = await Promise.all(blocks.map(async (x) => { const m = x.match(/url\((https:[^)]+)\)/); if (!m) return ''; const bl = await (await fetch(m[1])).blob();
+    const d = await new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = no; fr.readAsDataURL(bl); }); return '@font-face' + x.split(m[1]).join(d); }));
+  return out.join('\n'); })().catch(() => { H2F = null; return ''; }));
+// (every icon on the page loaded first: the ones further down load only when scrolled to)
+const shotImgs = async (el) => { const t0 = Date.now(); for (;;) { const l = [...el.querySelectorAll('img')]; l.forEach((i) => { if (i.loading === 'lazy') i.loading = 'eager'; }); const w = l.filter((i) => !i.complete); if (!w.length || Date.now() - t0 > 8000) return;
+  await Promise.race([Promise.all(w.map((i) => new Promise((ok) => { i.addEventListener('load', ok, { once: true }); i.addEventListener('error', ok, { once: true }); }))), new Promise((ok) => setTimeout(ok, 1000))]); } };
 function rotShot(b) {
   const el = b.closest('.rot-pickp'); if (!el || b.disabled) return; const lab = b.textContent; b.disabled = true; b.textContent = 'Making the picture…';
-  const bg = getComputedStyle(el).backgroundColor || '#171a22', hh = el.scrollHeight, pr = Math.max(1, Math.min(2, window.devicePixelRatio || 1, 16000 / Math.max(1, hh)));
-  const skip = (n) => !(n.classList && (n.classList.contains('rot-shot') || n.classList.contains('rot-sel')));
-  const png = h2iLoad().then((L) => L.toBlob(el, { backgroundColor: bg, pixelRatio: pr, filter: skip })).then((x) => { if (!x) throw new Error('no picture'); return x; });
+  const bg = getComputedStyle(el).backgroundColor || '#171a22', pr = 1; /* (normal size: on a long page a sharper picture is too big for the browser and fails) */
+  const skip = (n) => !(n.classList && (n.classList.contains('rot-shot') || n.classList.contains('rot-sel'))) && !(n.tagName === 'IMG' && (!n.complete || !n.naturalWidth));
+  const page = () => (el.isConnected ? el : document.querySelector('.rot-pickp') || el);
+  const take = (L, fcss) => shotImgs(page()).then(() => { const p = page(); p.classList.add('rot-shotting'); return new Promise((ok) => setTimeout(ok, 60))
+    .then(() => L.toBlob(p, Object.assign({ backgroundColor: bg, pixelRatio: pr, filter: skip, imagePlaceholder: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7' }, fcss ? { fontEmbedCSS: fcss } : {}))).finally(() => p.classList.remove('rot-shotting')); });
+  const png = Promise.all([h2iLoad(), h2iFonts()]).then(([L, fcss]) => take(L, fcss).catch(() => null).then((x) => x || new Promise((ok) => setTimeout(ok, 500)).then(() => take(L, fcss)))).then((x) => { if (!x) throw new Error('no picture'); return x; });
   png.catch(() => null);
-  const done = (t) => { b.textContent = t; setTimeout(() => { b.textContent = lab; b.disabled = false; }, 2500); };
+  const done = (t) => { const bs = [b, document.querySelector('.rot-shot')].filter(Boolean); bs.forEach((x) => (x.textContent = t)); setTimeout(() => bs.forEach((x) => { x.textContent = lab; x.disabled = false; }), 2500); };
   let w; try { w = navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]); } catch (x) { w = Promise.reject(x); }
   w.then(() => done('✓ Copied. Paste it in Discord')).catch(() => png.then((x) => { const a = document.createElement('a'); a.href = URL.createObjectURL(x); a.download = 'Rotation - ' + (S.specSel || 'player') + '.png'; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000); done('✓ Saved as a picture'); }).catch(() => done('Could not make the picture')));
