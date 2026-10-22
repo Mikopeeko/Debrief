@@ -1728,6 +1728,7 @@ const PATCH_NOTES = [
     'The bosses are in the same order everywhere on the site.',
     'Long patch notes fold after six lines.',
   ], f: [
+    'The Coiled Altar Heroic: a tank frontal that hits someone else is now yellow, not red, unless it killed them (the 20 fastest Heroic kills all live through one). It counts each frontal once, not the damage it leaves behind every 2 seconds, so Coalesced Venom and Dreadmarch no longer fail clean kills. Mythic is unchanged.',
     'Mechanic names read cleanly again: the name you see in game with a short instruction, like "Coalesced Venom (Pop the orbs with the frontals)" and "Sever (Defensive on the second stack)", and no dotted underlines inside them. The Coiled Altar and Ula\'tek got new names; the same name shows everywhere.',
     'Debriefing\'s maps no longer zoom or slide by themselves while they play: the room stays put and only the players move. The Coiled Altar\'s maps are Debriefing\'s own again (no boss-guide freezes); they still show the pools as they were in your pull.',
     'Why we wiped: a raid mistake logged a few seconds after the deaths it caused now counts, even past the wipe filter. A pull lost to colliding orbs said "Put a raid cooldown on Venom Rupture"; now it says what happened and how to avoid it.',

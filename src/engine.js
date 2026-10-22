@@ -3527,8 +3527,19 @@ function buildCoiledAltar(ev, r, h) {
 
   // ---- 1. frontals hitting non-tanks ----
   const front = [];
-  for (const n of ['sever', 'soul sever', 'blighted sever']) for (const e of dmg(n)) if (role(e.dst) !== 'tank') front.push(e);
-  for (const e of front) { M(e.t, pname(e.dst), L(e.spell), 'High', 'Stood in ' + e.spell + ' (tank frontal) for ' + Math.round(e.amt).toLocaleString('en-US') + ' and picked up its 200% vulnerability.', 'Only the tank belongs in front of the boss. Stay out of the cone unless you are placing orbs or ghosts for it and step out before it lands.'); mistakes[mistakes.length - 1].avoid = true; }
+  // (Heroic and Normal (Oct 22): all 20 fastest Heroic kills live through a frontal on a non-tank, so there it's yellow unless it killed
+  // them; only each frontal's first hit on a player counts (not the damage it leaves every 2 s); and in a log with no specs, a player
+  // two different frontals hit is a tank. Mythic is unchanged)
+  const fKeep = new Set(), fTanks = new Set();
+  if (!mythic) {
+    const seen = new Set(), hitAt = new Map();
+    for (const n of ['sever', 'soul sever', 'blighted sever']) for (const e of dmg(n)) { const c = casts(n).filter((t) => e.t >= t - 0.5 && e.t <= t + 5).pop(); if (c == null || seen.has(n + c + e.dst)) continue; seen.add(n + c + e.dst); fKeep.add(e);
+      if (!(r.players.get(e.dst) || {}).specId) { const l = hitAt.get(e.dst) || []; if (!l.some((t) => Math.abs(t - e.t) < 8)) l.push(e.t); hitAt.set(e.dst, l); } }
+    for (const [g, l] of hitAt) if (l.length >= 2) fTanks.add(g);
+  }
+  for (const n of ['sever', 'soul sever', 'blighted sever']) for (const e of dmg(n)) if (role(e.dst) !== 'tank' && (mythic || (fKeep.has(e) && !fTanks.has(e.dst))))
+    front.push(mythic ? e : { ...e, soft: !(r.deaths || []).some((d) => d.guid === e.dst && d.t >= e.t - 0.5 && d.t <= e.t + 3) });
+  for (const e of front) { M(e.t, pname(e.dst), L(e.spell), e.soft ? 'Medium' : 'High', 'Stood in ' + e.spell + ' (tank frontal) for ' + Math.round(e.amt).toLocaleString('en-US') + ' and picked up its 200% vulnerability.', 'Only the tank belongs in front of the boss. Stay out of the cone unless you are placing orbs or ghosts for it and step out before it lands.'); mistakes[mistakes.length - 1].avoid = true; }
   sections.push({ id: 'front', title: 'Tank frontals (Raid hits)', place: 'Tank frontals hitting the raid', spell: S('sever'),
     verdict: front.length ? 'bad' : 'good', summary: front.length ? pl(front.length, 'non-tank hit') + ' from Sever, Soul Sever and Blighted Sever.' : 'Only tanks were hit by the frontals.',
     cols: ['When', 'Player', 'Frontal', 'Damage'], rows: front.map((e) => [{ t: e.t }, { p: pname(e.dst) }, { s: S(L(e.spell)) }, { n: e.amt }]) });
@@ -4344,18 +4355,18 @@ function buildCoiledAltar(ev, r, h) {
         : rowsOf(oSec).find(({ row }) => row[2] && row[2].s && L(row[2].s[1]) === n && Math.abs(row[1].t - e.t) <= 2);
       // (the orbs panel is a row per Deluge, its frontals' cones on one map: a hit goes on the Deluge whose map has its cone, marked on the Result)
       const dRow = n === 'soul sever' || hitRow ? null : (oSec && oSec.rows || []).find((row) => row.some((x) => x.map && (x.map.cones || []).some((c0) => Math.abs(c0.at - e.t) <= 2)));
-      if (dRow) { const rc = dRow[3]; rc.hits = (rc.hits || []).concat(who); rc.sub = (rc.sub && !/^hit non-tank/.test(rc.sub) ? rc.sub + ' · ' : '') + 'hit non-tank: ' + rc.hits.join(', '); rc.bad = true;
+      if (dRow) { const rc = dRow[3]; rc.hits = (rc.hits || []).concat(who); rc.sub = (rc.sub && !/^hit non-tank/.test(rc.sub) ? rc.sub + ' · ' : '') + 'hit non-tank: ' + rc.hits.join(', '); if (e.soft) { rc.warn = true; if (rc.txt === 'clean') rc.txt = 'a frontal hit a non-tank'; } else rc.bad = true;
         const mc = dRow.find((x) => x.map); mc.map.bad = (mc.map.bad || []).concat(e.dst); mc.map.badLabel = 'non-tank hit by the frontal'; continue; }
       if (!hitRow) { loose.push(e); continue; }
       const c = n === 'soul sever' ? hitRow.row[0] : hitRow.row[2];
-      c.hits = (c.hits || []).concat(who); c.sub = 'hit non-tank: ' + c.hits.join(', '); c.bad = true; hitRow.g.bad = true;
+      c.hits = (c.hits || []).concat(who); c.sub = 'hit non-tank: ' + c.hits.join(', '); if (e.soft) { c.warn = true; hitRow.g.warn = true; } else { c.bad = true; hitRow.g.bad = true; }
       const mc = hitRow.row.find((x) => x.map); if (mc) { mc.map.bad = (mc.map.bad || []).concat(e.dst); mc.map.badLabel = 'non-tank hit by the frontal'; }
     }
     for (const g of (oSec && oSec.groups || []).concat(gSec && gSec.groups || [])) if (g.rows.some((row) => (row[0].hits || row[2] && row[2].hits)) && !/non-tank/.test(g.sub)) g.sub = g.sub.replace(/, clean$/, ', orbs clean') + ', a frontal hit a non-tank';
-    if (front.length && oSec) { oSec.verdict = 'bad'; oSec.summary += ' Frontals that hit a non-tank are marked in red on their row.'; }
+    if (front.length && oSec) { const hard = front.some((e) => !e.soft); oSec.verdict = hard ? 'bad' : oSec.verdict === 'bad' ? 'bad' : 'warn'; oSec.summary += ' Frontals that hit a non-tank are marked in ' + (hard ? 'red' : 'yellow') + ' on their row.'; }
     if (loose.length && oSec) oSec.summary += ' ' + pl(loose.length, 'other non-tank frontal hit') + ': ' + loose.map((e) => pname(e.dst) + ' (' + e.spell + ' at ' + h.fmtT(e.t) + ')').join(', ') + '.';
     // (a hit with no row of its own (a Sever before the first Deluge) gets its own row and map, so a death to it shows the cone (your note, Oct 20))
-    if (loose.length && oSec && oSec.rows) { for (const e of loose) { const mp = frontMap(e); oSec.rows.push([{ txt: S(L(e.spell))[1], sub: 'no Deluge before it' }, { t: e.t }, { p: pname(e.dst) }, { txt: 'hit a non-tank', sub: h.compact(e.amt), bad: true }, mp ? { map: mp } : { txt: '' }]); }
+    if (loose.length && oSec && oSec.rows) { for (const e of loose) { const mp = frontMap(e); oSec.rows.push([{ txt: S(L(e.spell))[1], sub: 'no Deluge before it' }, { t: e.t }, { p: pname(e.dst) }, { txt: 'hit a non-tank', sub: h.compact(e.amt), bad: !e.soft, warn: !!e.soft }, mp ? { map: mp } : { txt: '' }]); }
       oSec.rows.sort((a, b) => a[1].t - b[1].t); }
   }
   // Spiritcackle adds: each set with its adds (kick timing, shield, death)
