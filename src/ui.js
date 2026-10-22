@@ -1668,12 +1668,15 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-22', h: [
+    { t: 'Your cooldowns glow when it\'s time', d: 'Debrief in game can now light up your own cooldown on Blizzard\'s Cooldown Manager at the exact moment your NSRT note says to press it, then stop when you press it. Turn it on in /dmo, Raid, Glow my cooldowns.' },
     { t: 'The coach compares you with the fastest kills', d: 'On The Coiled Altar Mythic, each problem now says how the 20 fastest kills did it, like "even the fastest kills slip here" or "kills get this right", and the coach puts first what the kills nearly always get right. More bosses to come.' },
     { t: 'Your coach on Rotation', d: 'Every Rotation page now opens with your coach: the one thing to focus on next pull, your top three fixes with why they matter and how to do them, and what you did well. It names the same first fix as Debriefing.' },
     { t: 'Your coach on Debriefing', d: 'Every pull and every night now opens with a coach right under the boss banner: what went right, what went wrong and how to fix it, and one thing to focus on next pull. Pick yourself at the top right and it coaches you. Read the full coaching opens the long version.' },
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
+    'Debrief in game: the card is now one bullet summary, what happened and what to change next, taken from your Debriefing coach, so it says the same #1 fix. Your own line ends with your focus for the next pull.',
+    'Debrief in game: Who died says why each death was or wasn\'t on the player (too fast, own mistake, kit ready, the raid\'s mistake), the same rule as the site.',
     'Coach: every coach has a Deaths line (who died, when, to what, and whether it was on them, by the site\'s one death rule) and an Avoidable damage line (the worst sources and who took them); the full coaching lists them all.',
     'Coach: your headline says the fix itself ("Your one fix: when Venom Rupture keeps ticking you down, press Unending Resolve"), not just its name.',
     'Deaths are judged the same way on every tab: too fast to react (2 seconds or less) is never on you, your own mistake or dying slowly with a defensive still ready is, and a death after the pull was lost only counts if it was your own mistake while most of the raid was still up. The Report card lists every death with what happened.',

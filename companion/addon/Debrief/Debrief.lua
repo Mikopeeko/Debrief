@@ -55,7 +55,7 @@ local function decode(code)
   code = code:gsub("||", "|")
   if code:sub(1, 4) ~= "DBF1" then return nil, "That isn't a Debrief code. Copy it again from Debrief Companion." end
   if code:sub(-2) ~= "^Z" then return nil, "The code got cut off. Copy it again from Debrief Companion." end
-  local m, by = { players = {}, raid = { bad = {}, died = {}, mech = {}, tiles = {}, good = {}, fixes = {}, more = "", next = "", story = "", better = "", worse = "", ghead = "", gnext = "" } }, {}
+  local m, by = { players = {}, raid = { bad = {}, died = {}, mech = {}, tiles = {}, good = {}, fixes = {}, ghap = {}, gchg = {}, more = "", next = "", story = "", better = "", worse = "", ghead = "", gnext = "" } }, {}
   for _, r in ipairs(split(code, "^")) do
     local f = split(r, "~")
     -- (the wipe filter: K~versions~line is a line only some "stop at death" numbers have, e.g. K~012~R~... is in 0, 1 and 2)
@@ -78,6 +78,8 @@ local function decode(code)
     elseif t == "A" then add(m.raid.tiles, { g(2), g(3), g(4), g(5) }) -- (the Debriefing tab's four raid numbers)
     elseif t == "W" then add(m.raid.good, { "ok", nil, g(2) }) -- (the Glance card: went well)
     elseif t == "F" then add(m.raid.fixes, { g(2), nil, g(3) }) -- (and fix next)
+    elseif t == "GH" then add(m.raid.ghap, { g(2), nil, g(3) }) -- (the bullet summary: what happened)
+    elseif t == "GC" then add(m.raid.gchg, { "next", nil, g(2) }) -- (and what to change next)
     elseif t == "Y" or t == "G" or t == "J" or t == "L" or t == "I" or t == "NX" then local k = ({ Y = "story", G = "better", J = "worse", L = "lead", I = "ghead", NX = "gnext" })[t]; if K then m.raid[k .. "K"] = m.raid[k .. "K"] or {}; table.insert(m.raid[k .. "K"], { K, g(2) }) else m.raid[k] = g(2) end
     elseif t == "E" and by[g(2)] then local p = by[g(2)]; if K then p.leadK = p.leadK or {}; table.insert(p.leadK, { K, g(3) }) else p.lead = g(3) end -- (the raid lead's word to you)
     elseif t == "R" then add(m.raid.bad, { g(2), g(3), g(4), g(5) })
@@ -489,7 +491,7 @@ local function cutView(m)
   local v = { h = m.h, addonV = m.addonV, cutN = m.cutN, players = {},
     raid = { bad = keep(m.raid.bad, true), died = keep(m.raid.died), mech = keep(m.raid.mech, true), more = pick(m.raid.more, m.raid.moreK), next = pick(m.raid.next, m.raid.nextK),
       tiles = keep(m.raid.tiles), story = pick(m.raid.story or "", m.raid.storyK), better = pick(m.raid.better or "", m.raid.betterK), worse = pick(m.raid.worse or "", m.raid.worseK), lead = pick(m.raid.lead or "", m.raid.leadK),
-      good = keep(m.raid.good), fixes = keep(m.raid.fixes), ghead = pick(m.raid.ghead or "", m.raid.gheadK), gnext = pick(m.raid.gnext or "", m.raid.gnextK) } }
+      good = keep(m.raid.good), fixes = keep(m.raid.fixes), ghap = keep(m.raid.ghap), gchg = keep(m.raid.gchg), ghead = pick(m.raid.ghead or "", m.raid.gheadK), gnext = pick(m.raid.gnext or "", m.raid.gnextK) } }
   for _, p in ipairs(m.players) do
     local q = {}; for k, x in pairs(p) do q[k] = x end
     q.slips, q.boss, q.surv, q.next = keep(p.slips), keep(p.boss), keep(p.surv), pick(p.next, p.nextK)
@@ -693,6 +695,21 @@ function render()
   -- (the Glance card: the raid lead's quick read)
   local function glanceBody()
     local R = m.raid
+    -- (the bullet summary (the user's ask, Oct 22: "just a big bullet point summary, explaining what happened and what needs to
+    -- change next"): a dot in the line's colour by each point; the changes get gold dots)
+    local function bullets(title, list, gold)
+      local l = FS("bold", 12, COL.gold); l:SetPoint("TOPLEFT", 2, -y); l:SetText(title); y = y + 22
+      for _, r in ipairs(list) do
+        local d = TEX("ARTWORK"); d:SetTexture(SLICE .. "dot"); d:SetPoint("TOPLEFT", 4, -(y + 7)); d:SetSize(8, 8); d:SetVertexColor(rgb(gold and COL.gold or FLAG[r[1]] or COL.muted))
+        local t = FS("body", 14.5, COL.text); t:SetPoint("TOPLEFT", 22, -y); t:SetWidth(CW - 26); t:SetText(names(r[3]))
+        y = y + math.max(18, t:GetStringHeight()) + 8
+      end
+      y = y + 10
+    end
+    if #(R.ghap or {}) > 0 then
+      bullets("WHAT HAPPENED", R.ghap)
+      if #(R.gchg or {}) > 0 then bullets(m.h.kill and "WHAT TO CLEAN UP NEXT TIME" or "WHAT TO CHANGE NEXT", R.gchg, true) end
+    else
     -- the raid lead's two sentences
     local t = FS("body", 14.5, COL.text); t:SetWidth(CW - 34); t:SetText(names(R.ghead))
     local hh = 12 + 17 + t:GetStringHeight() + 12
@@ -704,6 +721,7 @@ function render()
     if #R.fixes > 0 then section("gfix", m.h.kill and "Clean up next time" or "Fix next", R.fixes, 3, function(r) y = row(y, r[1], nil, r[3]) end) end
     -- the next pull, and your own line
     if (R.gnext or "") ~= "" then y = nextBox(y + 2, R.gnext) end
+    end
     if P and (P.lead or "") ~= "" then
       local k = FS("bold", 13.5, COL.gold); k:SetPoint("TOPLEFT", 4, -(y + 2)); k:SetText("You")
       local u = FS("body", 13.5, COL.soft); u:SetPoint("TOPLEFT", 44, -(y + 2)); u:SetWidth(CW - 48); u:SetText(names(P.lead)); y = y + math.max(18, u:GetStringHeight()) + 12
@@ -1679,6 +1697,10 @@ local function buildOptions()
   stepper("Stop at death", "On a wipe, nothing after this death counts. 0 counts the whole pull.", 0, 8, function() return DB.deathCut or 0 end, function(v) DB.deathCut = v end)
   stepper("Boss mechanics", "How each mechanic went, worst first. 0 hides them.", 0, 16, function() return DB.maxMech or 6 end, function(v) DB.maxMech = v end)
   panelEnd()
+  panel("In the fight", "from your NSRT note", "Spell_Holy_AuraMastery")
+  switch("Glow my cooldowns", "Your NSRT spells glow on the Cooldown Manager when it's time.", function() return DB.glowCds == true end, function(v) DB.glowCds = v end, true)
+  panelEnd()
+  buttons({ { "Test the glow", function() Debrief_TestGlow() end, 150 } })
   -- Goals
   page("goals")
   local function lastOf(role)
@@ -1727,7 +1749,7 @@ local function buildOptions()
   panel("Commands", "type them in chat", "INV_Misc_Note_02")
   local HELP = {
     { "/dmo", "these settings" }, { "/debrief", "show or hide your recap" }, { "/debrief big", "the big window" }, { "/debrief mini", "the mini bar on or off" },
-    { "/debrief paste", "paste a recap by hand" }, { "/debrief log", "combat logging on or off" }, { "/debrief demo", "a sample recap" }, { "/debrief tutorial", "the tutorial again" },
+    { "/debrief paste", "paste a recap by hand" }, { "/debrief log", "combat logging on or off" }, { "/debrief glow", "test the cooldown glow" }, { "/debrief demo", "a sample recap" }, { "/debrief tutorial", "the tutorial again" },
   }
   for i, h in ipairs(HELP) do
     if i > 1 then local ln = P:CreateTexture(nil, "ARTWORK"); ln:SetPoint("TOPLEFT", LX, -y); ln:SetPoint("TOPRIGHT", -LX, -y); ln:SetHeight(1); fill(ln, COL.line, 0.7) end
@@ -1892,6 +1914,7 @@ SlashCmdList.DEBRIEF = function(msg)
     local m = decode(SAMPLE)
     if m then addPull(m); paste:Hide(); showCard(); say("showing a sample Heroic Ula'tek kill (made-up names). Use the arrows to see other players.") end
   elseif msg == "log" then Debrief_ToggleLog()
+  elseif msg == "glow" then Debrief_TestGlow()
   elseif msg == "focus" then DB.autoFocus = (DB.autoFocus == false); say("paste box ready for Ctrl+V after a pull " .. (DB.autoFocus ~= false and "on." or "off: click it first."))
   elseif msg == "test" then DB.testMode = not DB.testMode; say("test mode " .. (DB.testMode and "on: the box pops up after every fight and when you log in." or "off: the box only pops up after boss pulls."))
   elseif msg == "share" then DB.share = (DB.share == false); say("sharing your pastes with the group " .. (DB.share ~= false and "on." or "off."))
@@ -1899,6 +1922,116 @@ SlashCmdList.DEBRIEF = function(msg)
   elseif msg == "help" then say("/dmo or /debrief options: your settings. /debrief tutorial: the tutorial again. /debrief: show or hide the card. /debrief big: the big window. /debrief mini: the mini bar on or off. /debrief paste: paste a new pull. /debrief demo: a sample card. /debrief test: test mode on or off. /debrief log: combat logging on or off (or the button on the card, or a key in Keybindings > AddOns > Debrief). /debrief focus: paste box ready for Ctrl+V on or off. /debrief raid: Raid view on or off. /debrief share: send your pastes to the group on or off. /debrief auto: paste box after each pull on or off. /debrief reset: move the card back.")
   else Debrief_Toggle() end
 end
+
+-- ---- Glow my cooldowns (the user's ask, Oct 22: "read the NSRT note and glow my cooldown manager icons when i need to use
+-- them in raid combat"). Opt-in: /dmo > Raid. When NSRT shows one of YOUR reminders that has a spell, that spell's icon on
+-- Blizzard's Cooldown Manager glows at the moment NSRT counts down to, until you press it or 8 s pass. The timing is NSRT's own
+-- (its NSRT_REMINDER_SHOW callback), so phases and times match its pop-ups exactly; NSRT only fires it for reminders tagged to you.
+-- Debrief only draws its own glow frame on top of the icon: the Cooldown Manager isn't a protected frame, and no combat data is read.
+local CDM_VIEWERS = { "EssentialCooldownViewer", "UtilityCooldownViewer" }
+local glows, glowPool, nsrtHooked = {}, {}, false
+local function secret(x) return issecretvalue and issecretvalue(x) end
+local function spellName(id) local n = C_Spell and C_Spell.GetSpellName and C_Spell.GetSpellName(id); if n and not secret(n) then return n end end
+-- (every Cooldown Manager icon on screen, with the spell IDs it stands for: base, current and override)
+local function cdmItems()
+  local out = {}
+  for _, vn in ipairs(CDM_VIEWERS) do
+    local v = _G[vn]
+    if v and v.GetItemFrames then
+      local ok, items = pcall(v.GetItemFrames, v)
+      if ok and type(items) == "table" then
+        for _, it in ipairs(items) do
+          local ids = {}
+          for _, fn in ipairs({ "GetSpellID", "GetBaseSpellID" }) do
+            if it[fn] then local ok2, x = pcall(it[fn], it); if ok2 and x and not secret(x) then ids[#ids + 1] = x end end
+          end
+          local ci = it.cooldownInfo
+          if type(ci) == "table" then for _, k in ipairs({ "spellID", "overrideSpellID", "overrideTooltipSpellID" }) do local x = ci[k]; if x and not secret(x) then ids[#ids + 1] = x end end end
+          if #ids > 0 then out[#out + 1] = { frame = it, ids = ids } end
+        end
+      end
+    end
+  end
+  return out
+end
+local function cdmItemFor(spellID)
+  local name = spellName(spellID)
+  for _, e in ipairs(cdmItems()) do
+    for _, x in ipairs(e.ids) do if x == spellID or (name and spellName(x) == name) then return e.frame end end
+  end
+end
+-- (the glow: four gold edges and a soft halo, pulsing; one frame per spell, reused)
+local function newGlow()
+  local g = table.remove(glowPool)
+  if g then return g end
+  g = CreateFrame("Frame", nil, UIParent); g:SetFrameStrata("HIGH")
+  local r, gg, b = rgb(COL.gold)
+  g.halo = g:CreateTexture(nil, "BACKGROUND"); g.halo:SetTexture(SLICE .. "shadow"); g.halo:SetPoint("TOPLEFT", -12, 12); g.halo:SetPoint("BOTTOMRIGHT", 12, -12); g.halo:SetVertexColor(r, gg, b, 0.9)
+  local function edge(p1, p2, w, h) local t = g:CreateTexture(nil, "OVERLAY"); t:SetColorTexture(r, gg, b, 1); t:SetPoint(p1); t:SetPoint(p2); if w then t:SetWidth(w) else t:SetHeight(h) end end
+  edge("TOPLEFT", "TOPRIGHT", nil, 3); edge("BOTTOMLEFT", "BOTTOMRIGHT", nil, 3); edge("TOPLEFT", "BOTTOMLEFT", 3); edge("TOPRIGHT", "BOTTOMRIGHT", 3)
+  g.ag = g:CreateAnimationGroup(); g.ag:SetLooping("BOUNCE")
+  local a = g.ag:CreateAnimation("Alpha"); a:SetFromAlpha(1); a:SetToAlpha(0.35); a:SetDuration(0.45)
+  return g
+end
+local function glowStop(id)
+  local g = glows[id]; if not g then return end
+  glows[id] = nil
+  if g.timer then g.timer:Cancel(); g.timer = nil end
+  g.ag:Stop(); g:Hide(); g:ClearAllPoints()
+  glowPool[#glowPool + 1] = g
+end
+local function glowStopAll() for id in pairs(glows) do glowStop(id) end end
+local function glowStart(id, hold)
+  local it = cdmItemFor(id)
+  if not it then return false end
+  glowStop(id)
+  local g = newGlow()
+  g:SetPoint("TOPLEFT", it, "TOPLEFT", -2, 2); g:SetPoint("BOTTOMRIGHT", it, "BOTTOMRIGHT", 2, -2)
+  g:SetFrameLevel((it.GetFrameLevel and it:GetFrameLevel() or 1) + 10); g:Show(); g.ag:Play()
+  glows[id] = g
+  g.timer = C_Timer.NewTimer(hold or 8, function() g.timer = nil; glowStop(id) end)
+  return true
+end
+-- (NSRT says a reminder of yours is showing: glow its spell when its countdown ends, the moment to press it)
+local function onReminder(_, info)
+  if not (DB and DB.glowCds) or type(info) ~= "table" then return end
+  if C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("DebriefGlow") then return end -- (Debrief Glow does it, with its own look: never two glows)
+  local id = info.spellID or info.spellid
+  if not id or secret(id) then return end
+  id = tonumber(id); if not id then return end
+  local wait = info.expires and not secret(info.expires) and (info.expires - GetTime()) or (tonumber(info.dur) or 8)
+  if wait > 0.05 then C_Timer.After(wait, function() if DB.glowCds then glowStart(id) end end) else glowStart(id) end
+end
+local function hookNSRT()
+  if nsrtHooked or not (NSAPI and NSAPI.RegisterCallback) then return end
+  nsrtHooked = true
+  pcall(NSAPI.RegisterCallback, "DebriefGlow", "NSRT_REMINDER_SHOW", onReminder)
+  pcall(NSAPI.RegisterCallback, "DebriefGlow", "NSRT_ALERT_WOULD_SHOW", onReminder) -- (NSRT's reminders shown on Blizzard's timeline instead)
+  pcall(NSAPI.RegisterCallback, "DebriefGlow", "NSRT_HIDE_REMINDERS", glowStopAll)
+end
+-- (pressing the spell clears its glow)
+local function onCast(id)
+  if not id or secret(id) or not next(glows) then return end
+  if glows[id] then glowStop(id) return end
+  local n = spellName(id)
+  if n then for g in pairs(glows) do if spellName(g) == n then glowStop(g) end end end
+end
+-- (/debrief glow, or Test the glow in /dmo: every Cooldown Manager icon glows for 3 s, so you can see it without a raid)
+function Debrief_TestGlow()
+  if not NSAPI then say("NSRT isn't loaded. The glow follows NSRT's reminders, so it needs NSRT on.") end
+  local items, n = cdmItems(), 0
+  for _, e in ipairs(items) do if glowStart(e.ids[1], 3) then n = n + 1 end end
+  if n == 0 then say("no Cooldown Manager icons found. Turn on Blizzard's Cooldown Manager (Options > Gameplay Enhancements) and add your cooldowns to it.")
+  else say(n .. " Cooldown Manager icons glowing for 3 s. In a raid only your own NSRT spells glow, when it's time to press them" .. (DB.glowCds and "." or ". Turn it on in /dmo > Raid.")) end
+end
+local gev = CreateFrame("Frame", "DebriefGlowEvents")
+gev:RegisterEvent("PLAYER_LOGIN"); gev:RegisterEvent("ADDON_LOADED"); gev:RegisterEvent("ENCOUNTER_END")
+gev:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
+gev:SetScript("OnEvent", function(_, e, a1, a2, a3)
+  if e == "UNIT_SPELLCAST_SUCCEEDED" then onCast(a3)
+  elseif e == "ENCOUNTER_END" then glowStopAll()
+  else hookNSRT() end
+end)
 
 local ev = CreateFrame("Frame")
 ev:RegisterEvent("ADDON_LOADED"); ev:RegisterEvent("PLAYER_LOGIN"); ev:RegisterEvent("CHAT_MSG_ADDON"); ev:RegisterEvent("PLAYER_REGEN_ENABLED"); ev:RegisterEvent("PLAYER_REGEN_DISABLED"); ev:RegisterEvent("ENCOUNTER_END"); ev:RegisterEvent("PLAYER_ENTERING_WORLD"); ev:RegisterEvent("ZONE_CHANGED_NEW_AREA"); ev:RegisterEvent("PLAYER_TARGET_CHANGED")

@@ -38,6 +38,7 @@ function slipLine(c) {
 const deathIcon = (d) => d.abilityId === 1 || /^melee$/i.test(d.ability || '') ? 'inv_sword_04' : d.abilityId ? String(d.abilityId) : '';
 // The wipe filter (the website's own): on a wipe, stop counting at the Nth death, since what comes after is the wipe, not
 // the plan. The card picks the number (Stop at − n +), so the recap is built once per number: 0 (off, the whole pull) to 8.
+const FOCUS = new WeakMap(); /* (each player's coach focus per pull: worked out once, shared by every wipe-filter version) */
 const cutTime = (rep, n) => { const ds = (rep.deaths || []).slice().sort((a, b) => a.t - b.t); return n && ds.length >= n ? ds[n - 1].t : Infinity; };
 const before = (t, T) => t == null || t <= T + 0.05;
 // the module's results with everything after the cutoff removed (the website's cutModule): timed rows, sets, phases after it
@@ -638,10 +639,12 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
   } finally { try { if (W.setCut && was != null) W.setCut(was); } catch (e) { /* fine */ } }
 };
 function buildOne(b, rep, same, W, L, cutN) {
-  const T = cutTime(rep, cutN);
+  const T = cutTime(rep, cutN), t0 = Date.now();
+  try { if (W.setCut) W.setCut(cutN); } catch (e) { /* fine */ }
+  const dv = (d) => { try { return W.deathVerdict ? W.deathVerdict(rep, d) : null; } catch (e) { return null; } };
   const pr = W.progressOf ? W.progressOf(rep) : null;
   const pct = b.id === 990001 ? '' : b.kill ? 0 : pr && pr.left != null ? Math.round(pr.left) : ''; // (a practice pull on a dummy has no boss health)
-  const allDeaths = (rep.deaths || []).filter((d) => before(d.t, T)).sort((a, c) => a.t - c.t), roleOf = new Map([...rep.players.values()].map((p) => [p.name, p.role]));
+  const allDeaths = (rep.deaths || []).filter((d) => before(d.t, T) || (dv(d) && dv(d).late)).sort((a, c) => a.t - c.t), roleOf = new Map([...rep.players.values()].map((p) => [p.name, p.role]));
   // (deaths have their own lines; a tank's notes on hits tanks take on purpose aren't mistakes)
   const mist = [].concat(rep.mistakes || [], (rep.module && !rep.module.error && rep.module.mistakes) || []).filter((m) => m && m.mechanic !== 'Death' && !/only a note/i.test(m.detail || '') && !(m.tankJudged && roleOf.get(m.player) === 'tank') && before(m.t, T));
   const h = { boss: b.boss, diff: DIFFN[b.diffId] || b.diff || '', pull: b.pull, kill: !!b.kill, pct, dur: mmss(b.duration || rep.duration),
@@ -681,7 +684,8 @@ function buildOne(b, rep, same, W, L, cutN) {
       P.boss.push([flagOf(m.severity), m.id ? String(m.id) : '', shortTo(m.mechanic + ': ' + plain(m.detail || ''), 150)]); if (m.fix) tips.push(sentences(m.fix)[0]); }
     const dd = allDeaths.filter((d) => d.player === p.name)[0];
     const ready = dd && dd.reactable && (dd.available || []).length ? ' You still had ' + dd.available.slice(0, 3).join(', ').replace(/, ([^,]*)$/, ' and $1') + ' ready.' : '';
-    if (dd) P.boss.push(['dead', deathIcon(dd), 'You died at ' + mmss(dd.t) + (dd.ability ? ' to ' + dd.ability : '') + '.' + (!b.kill && rep.duration - dd.t < 8 ? ' The pull was already lost.' : ready)]);
+    const V = dd ? dv(dd) : null, WHY = V ? { own: ' That one was on you.', fast: ' Too fast to react, not on you.', raid: ' It came from the raid\'s mistake, not yours.', ready: ' You still had ' + V.word.replace(/ still ready$/, '') + ' ready.', nothing: ' Nothing was left to press.', wipe: ' The pull was already lost.' }[V.why] : null;
+    if (dd) P.boss.push(['dead', deathIcon(dd), 'You died at ' + mmss(dd.t) + (dd.ability ? ' to ' + dd.ability : '') + '.' + (WHY != null ? WHY : !b.kill && rep.duration - dd.t < 8 ? ' The pull was already lost.' : ready)]);
     // (more about your boss play: avoidable damage and where you rank, your kicks and dispels)
     const avo = p.avoidable || 0;
     if (avo > 0) { const ra = ps.filter((q) => (q.avoidable || 0) > avo).length + 1, big = ps.length >= 6;
@@ -749,7 +753,8 @@ function buildOne(b, rep, same, W, L, cutN) {
   }
   // (deaths that mattered: the first few, before the wipe was called)
   const D = allDeaths; const show = D.slice(0, 8);
-  for (const d of show) { const p = [...rep.players.values()].find((q) => q.name === d.player); raid.died.push([mmss(d.t), d.player, (p && p.cls) || '', deathIcon(d), d.ability || 'Unknown']); }
+  const SHORT = { own: 'own mistake', fast: 'too fast', raid: "raid's mistake", ready: 'kit ready', nothing: 'nothing left', wipe: 'after the wipe' };
+  for (const d of show) { const p = [...rep.players.values()].find((q) => q.name === d.player), V = dv(d); raid.died.push([mmss(d.t), d.player, (p && p.cls) || '', deathIcon(d), (d.ability || 'Unknown') + (V && SHORT[V.why] ? ' (' + SHORT[V.why] + ')' : '')]); }
   const extra = D.length - show.length;
   if (extra > 0) raid.more = '+' + extra + ' more by ' + h.dur + '.';
   else if (b.kill && !D.length) raid.more = 'Nobody died.';
@@ -883,12 +888,12 @@ function buildOne(b, rep, same, W, L, cutN) {
     if (nx && !(b.kill && /^Clean pull/i.test(nx))) Ld.push(b.kill ? nx : 'Next pull: ' + low(nx).replace(/^./, (c) => c.toUpperCase()) + '.');
     raid.lead = Ld.filter(Boolean).join(' ').replace(/\.\./g, '.');
     // (the Glance card: the head, up to 3 good, up to 3 to fix, the next pull)
-    const cut1 = (t, n) => { let x = String(t).replace(/^\d+ of \d+ (sets )?went wrong[.:]\s*/i, '').replace(/^Done right\.\s*/, ''); x = (sentences(x)[0] || x).replace(/\.$/, '');
+    const cut1 = (t, n) => { let x = String(t).replace(/^\d+ of \d+ (sets )?went wrong[.:]\s*/i, '').replace(/^Done right\.\s*/, ''); x = (x.split(/(?<=[.!?])\s+(?=[A-Z0-9@"(])/)[0] || x).replace(/\.$/, '');
       while (x.length > n && /, | \(/.test(x)) x = x.slice(0, Math.max(x.lastIndexOf(', '), x.lastIndexOf(' ('))); return x + '.'; };
     const fixOf = (name) => { const g = top.find((y) => y.k === name && y.fix); return g ? ': ' + low(first1(g.fix)) : ''; };
     const say = (name, text, n) => { const h = String(text).match(/^(\d+) hits? on (\d+) players?(?:, (\d+) deaths?)?/);
       return h ? name + ' hit ' + (h[2] === '1' ? 'one of us' : h[2] + ' of us') + (h[3] ? ', ' + h[3] + ' died' : '') + fixOf(name) + '.' : name + ': ' + lc(cut1(text, n)); };
-    const lc = (t) => (/^(Both|All|The|Slowest|Hit|No|Every|Taken|Soaked|Clean)\b/.test(t) ? t.replace(/^./, (c) => c.toLowerCase()) : t), base = (t) => String(t).replace(/\s*\(.*\)$/, '');
+    const lc = (t) => (/^(Both|All|The|Slowest|Hit|No|Every|Taken|Soaked|Clean|Nobody|Everyone|Up|Target|Swapped)\b/.test(t) ? t.replace(/^./, (c) => c.toLowerCase()) : t), base = (t) => String(t).replace(/\s*\(.*\)$/, '');
     const good = [], fix = [], d0g = allDeaths[0];
     if (/best pull/i.test(Ld[0])) good.push('Our best pull so far.'); else if (/further than last pull/i.test(Ld[0])) good.push('We got further than last pull.');
     if (b.id !== 990001) { if (!d0g) good.push(b.kill ? 'Nobody died.' : 'Nobody died before the wipe.'); else if (!b.kill && d0g.t > 90) good.push('Nobody died until ' + mmss(d0g.t) + '.'); }
@@ -897,6 +902,47 @@ function buildOne(b, rep, same, W, L, cutN) {
     for (const x of fixTop) { if (fix.length >= 3) break; if (!fix.some((y) => y[1].split(':')[0] === x[1].split(' hit ')[0].split(' went wrong')[0])) fix.push(x); }
     for (const x of raid.mech.filter((y) => y[0] === 'warn')) { if (fix.length >= 3) break; fix.push(['warn', say(base(x[2]), x[3], 90)]); }
     raid.glance = { head: Ld.slice(0, headN).join(' ').replace(/\.\./g, '.'), good, fix, next: nx && !(b.kill && /^Clean pull/i.test(nx)) ? nx.replace(/^Next time: /, '').replace(/([^.!?])$/, '$1.') : '' };
+    // (the bullet summary: what happened, then what to change next, one fix per problem, each said once)
+    const hap = [], chg = [], said = new Set(), cap = (t) => String(t || '').trim().replace(/^./, (c) => c.toUpperCase()).replace(/([^.!?])$/, '$1.');
+    const sents = (t) => String(t || '').split(/(?<=[.!?])\s+(?=[A-Z0-9@"(])/).map((x) => x.trim()).filter(Boolean);
+    const DO = /^(Stand|Stay|Step|Dodge|Avoid|Move|Kill|Kick|Interrupt|Soak|Spread|Stack|Use|Pop|Press|Wait|Give|Get|Keep|Leave|Pick|Point|Drop|Run|Walk|Face|Turn|Don't|Do not|Never|Always|Call|Clear|Heal|Dispel|Swap|Taunt|Break|Grip|Save|Line|Go|Aim|Hold|Bait|Put|Space|Stop|Let|Watch|Cancel|Focus|Bring|Make|Look|Collide|Catch|Grab|Take|Send|Over-send|Push|Hide|Find|Spend|Plan|Assign|Head|Burn|Damage|Cover|Only|Remove|Tank|Be|Fly)\b/i;
+    const doOf = (t) => sents(t).find((x) => DO.test(x)) || '';
+    const lowDo = (t) => (DO.test(t) ? t.replace(/^./, (c) => c.toLowerCase()) : t).replace(/\.$/, '');
+    if (b.kill) hap.push(['ok', raid.glance.head]); else for (const x of sents(raid.glance.head)) hap.push([/^(It started|It fell apart|Then )/.test(x) ? 'bad' : 'info', x]);
+    for (const x of good) hap.push(['ok', x]);
+    const probs = raid.mech.filter((y) => y[0] === 'bad').slice(0, 2).concat(raid.mech.filter((y) => y[0] === 'warn').slice(0, 1));
+    const fact = (t) => { const p = sents(t), lead = /^\d+ (of \d+ )?[\w' ]*went wrong\.?$/.test(p[0] || '') ? p.shift() : ''; if (p[0]) p[0] = p[0].replace(/^First: /, ''); let x = p[0] || lead || String(t);
+      while (x.length > 130 && /, |; | \(/.test(x)) x = x.slice(0, Math.max(x.lastIndexOf(', '), x.lastIndexOf('; '), x.lastIndexOf(' ('))); return lc(x.replace(/([^.!?)])$/, '$1.').replace(/\)$/, ').')); };
+    for (const x of probs) { const h = String(x[3]).match(/^(\d+) hits? on (\d+) players?(?:, (\d+) deaths?)?/);
+      const ft = h ? '' : fact(x[3]), same = !h && ft.toLowerCase().startsWith(base(x[2]).split(' ')[0].toLowerCase());
+      hap.push([x[0], same ? capF(ft) : h ? base(x[2]) + ' hit ' + (h[2] === '1' ? 'one of us' : h[2] + ' of us') + (h[3] ? ', ' + h[3] + ' died' : '') + '.' : base(x[2]) + ': ' + ft]); }
+    const nxDo = raid.glance.next && (DO.test(raid.glance.next) || /^(If|When|After|Before|On|Everyone|Ranged|Melee|Healers|Tanks|The tank|Kill|Purple)\b/.test(raid.glance.next)) ? raid.glance.next : '';
+    if (nxDo) { chg.push(cap(nxDo)); said.add(first1(nxDo).toLowerCase()); }
+    const fixFor = (name) => top.find((y) => y.fix && (y.k === name || String(y.k).toLowerCase() === String(name).toLowerCase()));
+    const addFix = (name, g) => { const f = doOf(g.fix), k = f.toLowerCase(); if (!f || said.has(k) || chg.length >= 4) return; said.add(k); chg.push(name + ': ' + lowDo(f) + '.'); };
+    for (const x of probs) { const g = fixFor(base(x[2])); if (g) addFix(base(x[2]), g); }
+    for (const g of top) if (g.fix) addFix(g.k, g);
+    if (!chg.length) chg.push(b.kill ? 'Same plan next time.' : 'Same plan, cleaner.');
+    // (Debriefing's coach, when the site has it: its headline, what went right and wrong, its focus and fixes, the same #1 as the tab.
+    // The lines above stay when it can't be read)
+    let CO = null; try { if (W.coachSummary && b.id !== 990001) { if (!rep.item) rep.item = b; CO = W.coachSummary([rep], null); } } catch (e) { CO = null; }
+    if (CO && (CO.wrong.length || CO.right.length)) {
+      const h2 = [], c2 = [], seen2 = new Set(), head = plain(CO.headline), hl = head.toLowerCase();
+      const nm2 = (x) => plain(x.label).replace(/\s*\(.*\)\s*$/, '').replace(/[.\s]+$/, ''), paren = (x) => (plain(x.label).match(/\(([^)]*)\)\s*$/) || ['', ''])[1].toLowerCase();
+      const one = (t) => plain(t).trim().replace(/^./, (c) => c.toUpperCase()).replace(/([^.!?])$/, '$1.');
+      for (const x of sents(head)) h2.push([b.kill ? 'ok' : 'info', x]);
+      const d0 = hap.find((x) => /^It (started|fell apart)/.test(x[1])); const dw = d0 ? (d0[1].match(/@([^\s,]+) died to ([^,.]+)/) || d0[1].match(/most to ([^.]+)/) || []) : []; if (d0 && !b.kill && !dw.slice(1).some((w) => w && hl.includes(String(w).toLowerCase()))) h2.push(d0); /* (unless the headline already names them or what killed them) */ /* (who died first: the headline names the cause, this the moment) */
+      for (const x of CO.right) h2.push(['ok', one(x.t)]);
+      for (const x of CO.wrong) { const n = nm2(x), w = plain(x.what || '').replace(/^Lost to [^:]+: /, '');
+        if (hl.includes(n.toLowerCase()) || (x.cause && hl.includes(plain(x.cause).toLowerCase()))) continue; /* (the headline already says it) */
+        if (w) h2.push([x.sev === 'bad' ? 'bad' : 'warn', n + ': ' + lc(w).replace(/([^.!?])$/, '$1.')]); }
+      const addC = (pre, t) => { const v = plain(t).trim().replace(/([^.!?])$/, '$1.'), k = v.toLowerCase().replace(/[.!?]$/, '');
+        if (!v || seen2.has(k) || c2.length >= 4) return; seen2.add(k); c2.push(pre ? pre + ': ' + lowDo(v) + '.' : one(v)); };
+      addC('', CO.focus);
+      for (const x of CO.wrong) { if (!x.fix) continue; const fx = plain(x.fix).trim(); if (paren(x) && fx.toLowerCase().replace(/[.!?]$/, '') === paren(x)) continue; addC(fx.toLowerCase().includes(nm2(x).toLowerCase()) ? '' : nm2(x), fx); }
+      hap.length = 0; hap.push(...h2); if (c2.length) { chg.length = 0; chg.push(...c2); }
+    }
+    raid.glance.hap = hap.slice(0, 7); raid.glance.chg = chg;
   } catch (e) { raid.lead = ''; raid.glance = null; }
   // ("You:" for each player: their death, else their first mistake, else their biggest slip, else a clean pull)
   for (const P of players) {
@@ -904,6 +950,11 @@ function buildOne(b, rep, same, W, L, cutN) {
     const mm = [...new Set(P.boss.filter((x) => (x[0] === 'bad' || x[0] === 'warn') && !skip.test(x[1] || '')).map((x) => String(x[2]).split(':')[0]))], sl = P.slips.filter((x) => x[0] === 'bad' || x[0] === 'warn').length;
     const bits = []; if (mm.length) bits.push(mm.length + (mm.length === 1 ? ' boss mistake' : ' boss mistakes') + ' (' + andList(mm.slice(0, 2)) + (mm.length > 2 ? ' and more' : '') + ')'); if (sl) bits.push(sl + (sl === 1 ? ' rotation tip' : ' rotation tips'));
     P.lead = (d ? (String(d[2]).match(/^You died at [\d:]+/) || ['You died'])[0] + '. ' : '') + (bits.length ? capF(andList(bits)) + ' below.' : d ? 'Nothing else to fix from you.' : 'Clean pull from you. Same again.');
+    /* (each player's coach is worked out once, for the whole pull, and shared by every wipe-filter version; with a time limit, so a big raid never holds the recap up) */
+    const fk = P.name; if (!FOCUS.has(rep)) FOCUS.set(rep, { m: new Map(), t: 0 }); const FC = FOCUS.get(rep);
+    if (!FC.m.has(fk) && W.coachSummary && b.id !== 990001 && FC.t < 2500) { const s0 = Date.now(); let pc = null; try { pc = W.coachSummary([rep], P.name); } catch (e) { pc = null; } FC.t += Date.now() - s0; FC.m.set(fk, pc && pc.wrong && pc.wrong.length && pc.focus ? plain(pc.focus).replace(/([^.!?])$/, '$1.') : ''); }
+    const pf = FC.m.get(fk);
+    if (pf) P.lead = (d ? (String(d[2]).match(/^You died at [\d:]+/) || ['You died'])[0] + '. ' : '') + 'Focus next pull: ' + pf;
   }
   // (the Next pull fix isn't said again at the end of a top mistake)
   if (raid.next) raid.bad = raid.bad.map((x) => { const f = ' Fix: ' + raid.next; return String(x[3]).endsWith(f) ? [x[0], x[1], x[2], x[3].slice(0, -f.length)] : x; });
