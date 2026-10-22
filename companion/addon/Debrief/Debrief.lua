@@ -58,23 +58,28 @@ local function decode(code)
   local m, by = { players = {}, raid = { bad = {}, died = {}, mech = {}, more = "", next = "" } }, {}
   for _, r in ipairs(split(code, "^")) do
     local f = split(r, "~")
+    -- (the wipe filter: K~versions~line is a line only some "stop at death" numbers have, e.g. K~012~R~... is in 0, 1 and 2)
+    local K
+    if f[1] == "K" then K = f[2]; table.remove(f, 1); table.remove(f, 1) end
     local t = f[1]
     local function g(i) return f[i] or "" end
+    local function add(list, item) item.k = K; list[#list + 1] = item end
     if t == "H" then
       m.h = { boss = g(2), diff = g(3), pull = g(4), kill = g(5) == "1", pct = g(6), dur = g(7), where = g(8), deaths = g(9) }
     elseif t == "P" then
       local p = { name = g(2), cls = g(3), spec = g(4), role = g(5), unit = g(6), v = g(7), d = tonumber(g(8)), vs = g(9), best = g(10), bp = g(11), rank = g(12), icon = g(13), slips = {}, boss = {}, surv = {}, next = "" }
       m.players[#m.players + 1] = p; by[p.name] = p
-    elseif t == "S" and by[g(2)] then table.insert(by[g(2)].slips, { g(3), g(4), g(5) })
-    elseif t == "B" and by[g(2)] then table.insert(by[g(2)].boss, { g(3), g(4), g(5) })
-    elseif t == "U" and by[g(2)] then table.insert(by[g(2)].surv, { g(3), g(4), g(5) }) -- (survival: defensives, Healthstone, potion)
-    elseif t == "N" and by[g(2)] then by[g(2)].next = g(3)
-    elseif t == "R" then table.insert(m.raid.bad, { g(2), g(3), g(4), g(5) })
-    elseif t == "D" then table.insert(m.raid.died, { g(2), g(3), g(4), g(5), g(6) })
-    elseif t == "M" then table.insert(m.raid.mech, { g(2), g(3), g(4), g(5) }) -- (how each boss mechanic went)
+    elseif t == "S" and by[g(2)] then add(by[g(2)].slips, { g(3), g(4), g(5) })
+    elseif t == "B" and by[g(2)] then add(by[g(2)].boss, { g(3), g(4), g(5) })
+    elseif t == "U" and by[g(2)] then add(by[g(2)].surv, { g(3), g(4), g(5) }) -- (survival: defensives, Healthstone, potion)
+    elseif t == "N" and by[g(2)] then local p = by[g(2)]; if K then p.nextK = p.nextK or {}; table.insert(p.nextK, { K, g(3) }) else p.next = g(3) end
+    elseif t == "R" then add(m.raid.bad, { g(2), g(3), g(4), g(5) })
+    elseif t == "D" then add(m.raid.died, { g(2), g(3), g(4), g(5), g(6) })
+    elseif t == "M" then add(m.raid.mech, { g(2), g(3), g(4), g(5) }) -- (how each boss mechanic went)
     elseif t == "V" then m.addonV = g(2) -- (the addon version the PC app that made this carries)
-    elseif t == "X" then m.raid.more = g(2)
-    elseif t == "Q" then m.raid.next = g(2)
+    elseif t == "C" then m.cutN = tonumber(g(2)) -- (the wipe filter: versions 0 to n)
+    elseif t == "X" then if K then m.raid.moreK = m.raid.moreK or {}; table.insert(m.raid.moreK, { K, g(2) }) else m.raid.more = g(2) end
+    elseif t == "Q" then if K then m.raid.nextK = m.raid.nextK or {}; table.insert(m.raid.nextK, { K, g(2) }) else m.raid.next = g(2) end
     end
   end
   if not m.h then return nil, "That code has no pull in it. Copy it again from Debrief Companion." end
@@ -220,8 +225,8 @@ local bossT = top:CreateFontString(nil, "OVERLAY"); setFont(bossT, "body", 13); 
 PRESET_NAME = { simple = "Simple", medium = "Medium", heavy = "Heavy" }
 local PRESETS = {
   simple = { compact = true, maxSlips = 1, maxBoss = 1, maxRaid = 1, maxDied = 0, maxMech = 3, width = "normal", show = { rank = false, best = false } },
-  medium = { compact = false, maxSlips = 3, maxBoss = 4, maxRaid = 3, maxDied = 0, maxMech = 6, width = "normal", show = {} },
-  heavy = { compact = false, maxSlips = 5, maxBoss = 7, maxRaid = 5, maxDied = 0, maxMech = 12, width = "wide", show = {} },
+  medium = { compact = false, maxSlips = 3, maxBoss = 4, maxRaid = 3, maxDied = 3, maxMech = 6, width = "normal", show = {} },
+  heavy = { compact = false, maxSlips = 5, maxBoss = 7, maxRaid = 5, maxDied = 6, maxMech = 12, width = "wide", show = {} },
 }
 function Debrief_SetPreset(key)
   local p = PRESETS[key]; if not p or not DB then return end
@@ -437,12 +442,39 @@ local function pickWho(m)
   return m.players[1]
 end
 
+-- (the wipe filter: on a wipe, stop counting at this death; 0 is off. A pull with fewer deaths than that counts in full)
+local function ordN(n) local s = ({ "st", "nd", "rd" })[n % 10]; if n % 100 >= 11 and n % 100 <= 13 or not s then s = "th" end; return n .. s end
+local function cutIdx(m)
+  local c = DB.deathCut or 0
+  if not m or not m.cutN or (m.h and m.h.kill) or c > m.cutN then return 0 end
+  return c
+end
+local SEVR = { dead = 0, bad = 0, warn = 1 }
+local function cutView(m)
+  if not m or not m.cutN then return m end
+  local c = tostring(cutIdx(m))
+  local function keep(list, sort)
+    local o = {}; for i, r in ipairs(list or {}) do if not r.k or r.k:find(c, 1, true) then o[#o + 1] = r; r._i = i end end
+    if sort then table.sort(o, function(a, b) local x, y = SEVR[a[1]] or 2, SEVR[b[1]] or 2; if x ~= y then return x < y end; return a._i < b._i end) end
+    return o
+  end
+  local function pick(def, kl) if kl then for _, x in ipairs(kl) do if x[1]:find(c, 1, true) then return x[2] end end; return "" end; return def end
+  local v = { h = m.h, addonV = m.addonV, cutN = m.cutN, players = {},
+    raid = { bad = keep(m.raid.bad, true), died = keep(m.raid.died), mech = keep(m.raid.mech, true), more = pick(m.raid.more, m.raid.moreK), next = pick(m.raid.next, m.raid.nextK) } }
+  for _, p in ipairs(m.players) do
+    local q = {}; for k, x in pairs(p) do q[k] = x end
+    q.slips, q.boss, q.surv, q.next = keep(p.slips), keep(p.boss), keep(p.surv), pick(p.next, p.nextK)
+    v.players[#v.players + 1] = q
+  end
+  return v
+end
+
 local function showPull(i)
   if not DB.pulls[i] then return end
   DB.cur = i; wipe(EXPANDED); render()
 end
 function render()
-  local m = DB.pulls[DB.cur]; CUR = m
+  local raw = DB.pulls[DB.cur]; local m = cutView(raw); CUR = m
   if not m then return end
   W = WIDTHS[DB.width or "normal"] or 400; CW = W - PAD * 2; card:SetWidth(W); body:SetWidth(CW); bossT:SetWidth(W - 230)
   if detailBtn then detailBtn.t:SetText(PRESET_NAME[DB.preset] or "Custom"); detailBtn:SetWidth(detailBtn.t:GetStringWidth() + 18) end
@@ -532,39 +564,50 @@ function render()
     panel(y0, y - y0)
     IND = 0; y = y + 10
   end
-  -- (who died, on both views: a row with the count and − n + to choose how many deaths to list, right here on the card; 0 lists none)
+  -- (who died, on both views, with the wipe filter on the right: Stop at − n +. On a wipe nothing after that death counts:
+  -- mistakes, mechanics, deaths. 0 is off, the whole pull. A kill always counts in full)
   local function diedRow()
-    if DB.compact or SH.died == false then return end
-    local nd, show = #m.raid.died, DB.maxDied or 0
+    if DB.compact then return end
+    local nd, show, cut = #m.raid.died, DB.maxDied or 3, cutIdx(raw)
     local y0 = y; IND = 12; y = y + 12
     local t = FS("head", 15, COL.text); t:SetPoint("TOPLEFT", IND, -y); t:SetText("Who died")
     local c = FS("body", 12.5, COL.faint); c:SetPoint("BOTTOMLEFT", t, "BOTTOMRIGHT", 8, 1); c:SetText(h.deaths .. (h.deaths == "1" and " death" or " deaths"))
-    local function stepBtn(lbl, right, d)
-      local bt = BTN(); bt:SetSize(22, 22); bt:SetPoint("TOPRIGHT", body, "TOPLEFT", right, -(y - 3))
-      local bg = RT("BORDER"); bg:SetAllPoints(bt); rounded(bg, "fill", 5, COL.bg, 1)
-      local tx = FS("bold", 12.5, COL.muted); tx:SetPoint("CENTER", bt, "CENTER", 0, 0); tx:SetText(lbl)
-      bt:SetScript("OnClick", function() DB.maxDied = math.max(0, math.min(8, (DB.maxDied or 0) + d)); if Debrief_RefreshOptions then Debrief_RefreshOptions() end; render() end)
-      bt:SetScript("OnEnter", function() tx:SetTextColor(rgb(COL.gold)) end); bt:SetScript("OnLeave", function() tx:SetTextColor(rgb(COL.muted)) end)
-    end
-    stepBtn("+", CW - IND, 1)
-    local v = FS("bold", 13.5, COL.text); v:SetJustifyH("CENTER"); v:SetWidth(26); v:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - IND - 24, -(y + 1)); v:SetText(show)
-    stepBtn("–", CW - IND - 52, -1)
-    y = y + 27
-    if show == 0 then
-      local hint = FS("body", 12.5, COL.faint); hint:SetPoint("TOPLEFT", IND, -y); hint:SetText(nd > 0 and "Press + to list who died first." or "Nobody died."); y = y + 20
-    elseif nd == 0 then y = row(y, "ok", nil, m.raid.more ~= "" and m.raid.more or "Nobody died.")
-    else
-      for i = 1, math.min(show, nd) do
-        local d = m.raid.died[i]
-        local tm = FS("body", 13.5, COL.muted); tm:SetPoint("TOPLEFT", IND, -y); tm:SetText(d[1])
-        local nm = FS("bold", 13.5, classHex(d[3])); nm:SetPoint("TOPLEFT", IND + 44, -y); nm:SetWidth(124); nm:SetWordWrap(false); nm:SetText(d[2])
-        icon(IND + 174, y - 1, 18, d[4])
-        local w = FS("body", 13.5, COL.muted); w:SetPoint("TOPLEFT", IND + 200, -y); w:SetWidth(CW - 200 - IND * 2); w:SetWordWrap(false); w:SetText(d[5])
-        y = y + 23
+    if raw.cutN then
+      local function stepBtn(lbl, right, d)
+        local bt = BTN(); bt:SetSize(22, 22); bt:SetPoint("TOPRIGHT", body, "TOPLEFT", right, -(y - 3))
+        local bg = RT("BORDER"); bg:SetAllPoints(bt); rounded(bg, "fill", 5, COL.bg, 1)
+        local tx = FS("bold", 12.5, COL.muted); tx:SetPoint("CENTER", bt, "CENTER", 0, 0); tx:SetText(lbl)
+        bt:SetScript("OnClick", function() DB.deathCut = math.max(0, math.min(8, (DB.deathCut or 0) + d)); wipe(EXPANDED); if Debrief_RefreshOptions then Debrief_RefreshOptions() end; render(); if big and big:IsShown() and bigRender then bigRender() end end)
+        bt:SetScript("OnEnter", function() tx:SetTextColor(rgb(COL.gold)) end); bt:SetScript("OnLeave", function() tx:SetTextColor(rgb(COL.muted)) end)
       end
-      local rest = nd - math.min(show, nd)
-      local more = rest > 0 and ("+" .. rest .. " more listed with +.") or m.raid.more
-      if more ~= "" then local mo = FS("body", 12.5, COL.faint); mo:SetPoint("TOPLEFT", IND, -(y - 2)); mo:SetText(more); y = y + 18 end
+      stepBtn("+", CW - IND, 1)
+      local v = FS("bold", 13, COL.text); v:SetJustifyH("CENTER"); v:SetWidth(28); v:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - IND - 23, -(y + 1)); v:SetText((DB.deathCut or 0) == 0 and "off" or (DB.deathCut .. ""))
+      stepBtn("–", CW - IND - 52, -1)
+      local l = FS("body", 12.5, COL.faint); l:SetJustifyH("RIGHT"); l:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - IND - 80, -(y + 2)); l:SetText("Stop at")
+    elseif h.kill then
+      local l = FS("body", 12.5, COL.faint); l:SetJustifyH("RIGHT"); l:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - IND, -(y + 2)); l:SetText("Kill, so all of it counts")
+    end
+    y = y + 26
+    local note
+    if cut > 0 then local d = raw.raid.died[cut]; note = "Counted up to the " .. ordN(cut) .. " death" .. (d and (" (" .. d[2] .. ", " .. d[1] .. ")") or "") .. ". What came after isn't counted."
+    elseif raw.cutN and (DB.deathCut or 0) > 0 then note = "Fewer than " .. DB.deathCut .. " deaths, so the whole pull counts."
+    elseif raw.cutN then note = "Press + to stop counting at a death, so the wipe at the end isn't counted." end
+    if note then local n2 = FS("body", 12.5, COL.faint); n2:SetPoint("TOPLEFT", IND, -y); n2:SetWidth(CW - IND * 2); n2:SetText(note); y = y + n2:GetStringHeight() + 6 end
+    if SH.died ~= false and show > 0 then
+      if nd == 0 then y = row(y, "ok", nil, m.raid.more ~= "" and m.raid.more or "Nobody died.")
+      else
+        for i = 1, math.min(show, nd) do
+          local d = m.raid.died[i]
+          local tm = FS("body", 13.5, COL.muted); tm:SetPoint("TOPLEFT", IND, -y); tm:SetText(d[1])
+          local nm = FS("bold", 13.5, classHex(d[3])); nm:SetPoint("TOPLEFT", IND + 44, -y); nm:SetWidth(124); nm:SetWordWrap(false); nm:SetText(d[2])
+          icon(IND + 174, y - 1, 18, d[4])
+          local w = FS("body", 13.5, COL.muted); w:SetPoint("TOPLEFT", IND + 200, -y); w:SetWidth(CW - 200 - IND * 2); w:SetWordWrap(false); w:SetText(d[5])
+          y = y + 23
+        end
+        local rest = nd - math.min(show, nd)
+        local more = rest > 0 and ("+" .. rest .. " more.") or m.raid.more
+        if more ~= "" then local mo = FS("body", 12.5, COL.faint); mo:SetPoint("TOPLEFT", IND, -(y - 2)); mo:SetText(more); y = y + 18 end
+      end
     end
     y = y + 3
     panel(y0, y - y0)
@@ -706,7 +749,7 @@ mini:SetScript("OnEnter", function() mGo:SetTextColor(rgb(COL.gold)) end); mini:
 mini:SetScript("OnClick", function() mini:Hide(); card:Show(); render() end)
 mini:SetScale(1)
 miniShow = function()
-  local m = DB.pulls[DB.cur]; if not m then return end
+  local m = cutView(DB.pulls[DB.cur]); if not m then return end
   CUR = m
   local P = pickWho(m)
   mT:SetText("Pull " .. m.h.pull)
@@ -868,7 +911,7 @@ end
 
 local bView = "me"
 bigRender = function()
-  local m = DB.pulls[DB.cur]; if not m then return end
+  local raw = DB.pulls[DB.cur]; local m = cutView(raw); if not m then return end
   CUR = m
   if DB.bigPos then big:ClearAllPoints(); big:SetPoint(DB.bigPos[1], UIParent, DB.bigPos[2], DB.bigPos[3], DB.bigPos[4]) end
   bReset()
@@ -1013,8 +1056,8 @@ bigRender = function()
       end)
     end
   end
-  if (DB.maxDied or 0) > 0 then
-    yr = bPanel(XR, yr, COLW, "Who died", m.h.deaths .. "", function(yy)
+  if (DB.maxDied or 3) > 0 then
+    yr = bPanel(XR, yr, COLW, "Who died", cutIdx(raw) > 0 and (m.h.deaths .. ", counted up to the " .. ordN(cutIdx(raw))) or (m.h.deaths .. ""), function(yy)
       if #m.raid.died == 0 then local tt = bFS(bm, "body", 13, COL.faint); tt:SetPoint("TOPLEFT", XR + 14, -yy); tt:SetText(m.raid.more ~= "" and m.raid.more or "Nobody died."); return yy + 22 end
       for _, d in ipairs(m.raid.died) do
         local tm = bFS(bm, "body", 13.5, COL.muted); tm:SetPoint("TOPLEFT", XR + 14, -yy); tm:SetText(d[1])
@@ -1475,7 +1518,8 @@ local function buildOptions()
   panel("Raid view", "the raid's biggest mistakes and who died", "Ability_Warrior_BattleShout")
   switch("Raid view for everyone", "Off: only raid leads and assistants see it.", function() return DB.raidAlways ~= false end, function(v) DB.raidAlways = v end, true)
   stepper("Raid mistakes", "The biggest ones, with names.", 1, 5, function() return DB.maxRaid or 3 end, function(v) DB.maxRaid = v end)
-  stepper("Deaths listed", "Who died first, and to what. 0 hides the list.", 0, 8, function() return DB.maxDied or 0 end, function(v) DB.maxDied = v end)
+  stepper("Deaths listed", "Who died first, and to what. 0 hides the list.", 0, 8, function() return DB.maxDied or 3 end, function(v) DB.maxDied = v end)
+  stepper("Stop at death", "On a wipe, nothing after this death counts. 0 counts the whole pull.", 0, 8, function() return DB.deathCut or 0 end, function(v) DB.deathCut = v end)
   stepper("Boss mechanics", "How each mechanic went, worst first. 0 hides them.", 0, 12, function() return DB.maxMech or 6 end, function(v) DB.maxMech = v end)
   panelEnd()
   -- Goals
@@ -1766,7 +1810,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     reapplyFonts(); card:SetScale(DB.scale or 1); paste:SetScale(DB.scale or 1); big:SetScale(DB.bigScale or 1); mini:SetScale(DB.miniScale or 1)
     Debrief_ApplyStyle()
     if DB.testMode == nil then DB.testMode = false end
-    if not DB.diedHidden then DB.maxDied = 0; DB.diedHidden = true end
+    if not DB.diedBack then DB.maxDied = 3; DB.diedBack = true end -- (once: the Who died list is shown again; the filter is Stop at)
     autoLog() -- (/debrief test turns it on: the box after every fight)
     if DB.pos then card:ClearAllPoints(); card:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) end
   elseif e == "PLAYER_LOGIN" then

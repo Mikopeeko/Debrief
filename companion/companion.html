@@ -419,8 +419,26 @@ const resultText = (h) => h.kill ? 'Kill, ' + h.dur : 'Wipe' + (h.pct !== '' ? '
 // DBF1^H~boss~diff~pull~kill~pct~dur~where~deaths^P~name~CLASS~spec~role~unit~value~delta~vs~best~bp~rank~icon^S~name~flag~icon~text
 // ^B~name~flag~icon~text^N~name~text^R~flag~icon~title~text^D~time~name~CLASS~icon~why^X~text^Q~text^Z
 const clean = (s) => String(s == null ? '' : s).replace(/[\^~|\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
+// (the wipe filter: ^C~n says the code holds versions 0 to n, one per "stop at death" number; ^K~versions~line is a line only
+// some of them have, e.g. K~012~R~... is in versions 0, 1 and 2. Lines in every version are written as they are)
 RECAP.encode = (m) => {
-  const rec = [['DBF1'], ['H', m.h.boss, m.h.diff, m.h.pull, m.h.kill ? 1 : 0, m.h.pct, m.h.dur, m.h.where, m.h.deaths]];
+  const body = (v) => RECAP.lines(v), head = [['DBF1'], ['H', m.h.boss, m.h.diff, m.h.pull, m.h.kill ? 1 : 0, m.h.pct, m.h.dur, m.h.where, m.h.deaths]];
+  let rec;
+  if (!m.cuts || m.cuts.length < 2) rec = head.concat(body(m));
+  else {
+    const lists = m.cuts.map(body), order = [], vers = new Map(), line = new Map();
+    lists.forEach((l, vi) => { const seen = new Map(); let cur = -1;
+      l.forEach((r) => { const s0 = r.map(clean).join('~'), k = s0 + '#' + ((seen.get(s0) || 0) + 1); seen.set(s0, (seen.get(s0) || 0) + 1);
+        let at = order.indexOf(k); if (at < 0) { at = cur + 1; order.splice(at, 0, k); line.set(k, r); vers.set(k, ''); }
+        vers.set(k, vers.get(k) + vi); cur = at; }); });
+    rec = head.concat([['C', m.cuts.length - 1]], order.map((k) => (vers.get(k).length === lists.length ? line.get(k) : ['K', vers.get(k)].concat(line.get(k)))));
+  }
+  if (RECAP.addonV) rec.push(['V', RECAP.addonV]); // (the addon version this app carries: an older addon then says /reload, or where to get the new one)
+  rec.push(['Z']);
+  return rec.map((r) => r.map(clean).join('~')).join('^');
+};
+RECAP.lines = (m) => {
+  const rec = [];
   for (const p of m.players) {
     rec.push(['P', p.name, p.cls, p.spec, p.role, p.unit, p.v, p.d == null ? '' : p.d, p.vs || '', p.best || '', p.bp || '', p.rank || '', p.icon || '']);
     for (const s of p.slips) rec.push(['S', p.name, s[0], s[1] || '', s[2]]);
@@ -433,14 +451,14 @@ RECAP.encode = (m) => {
   for (const r of m.raid.mech || []) rec.push(['M', r[0], r[1] || '', r[2], r[3]]);
   if (m.raid.more) rec.push(['X', m.raid.more]);
   if (m.raid.next) rec.push(['Q', m.raid.next]);
-  if (RECAP.addonV) rec.push(['V', RECAP.addonV]); // (the addon version this app carries: an older addon then says /reload, or where to get the new one)
-  rec.push(['Z']);
-  return rec.map((r) => r.map(clean).join('~')).join('^');
+  return rec;
 };
 RECAP.decode = (code) => {
   const m = { h: null, players: [], raid: { bad: [], died: [], mech: [], more: '', next: '' } }, by = new Map();
   for (const r of String(code).trim().split('^')) {
-    const f = r.split('~'), t = f[0];
+    let f = r.split('~');
+    if (f[0] === 'K') { if (!f[1].includes('0')) continue; f = f.slice(2); } // (the wipe filter's other versions: the preview shows the whole pull)
+    const t = f[0];
     if (t === 'H') m.h = { boss: f[1], diff: f[2], pull: f[3], kill: f[4] === '1', pct: f[5], dur: f[6], where: f[7], deaths: f[8] };
     else if (t === 'P') { const p = { name: f[1], cls: f[2], spec: f[3], role: f[4], unit: f[5], v: f[6], d: f[7] === '' ? null : +f[7], vs: f[8], best: f[9], bp: f[10], rank: f[11], icon: f[12], slips: [], boss: [], surv: [], next: '' }; m.players.push(p); by.set(p.name, p); }
     else if (t === 'S' && by.get(f[1])) by.get(f[1]).slips.push([f[2], f[3], f[4]]);

@@ -36,18 +36,35 @@ function slipLine(c) {
 }
 // (melee has no spell of its own: a sword icon, by its file name)
 const deathIcon = (d) => d.abilityId === 1 || /^melee$/i.test(d.ability || '') ? 'inv_sword_04' : d.abilityId ? String(d.abilityId) : '';
-function deathsOf(W, rep) {
-  let l = rep.deaths || [];
-  try { const k = W.keptDeaths && W.keptDeaths(rep); if (Array.isArray(k) && k.length) l = k; } catch (e) { /* use all */ }
-  return l.slice().sort((a, b) => a.t - b.t);
+// The wipe filter (the website's own): on a wipe, stop counting at the Nth death, since what comes after is the wipe, not
+// the plan. The card picks the number (Stop at − n +), so the recap is built once per number: 0 (off, the whole pull) to 8.
+const cutTime = (rep, n) => { const ds = (rep.deaths || []).slice().sort((a, b) => a.t - b.t); return n && ds.length >= n ? ds[n - 1].t : Infinity; };
+const before = (t, T) => t == null || t <= T + 0.05;
+// the module's results with everything after the cutoff removed (the website's cutModule): timed rows, sets, phases after it
+function cutModule(m, T) {
+  if (!isFinite(T)) return m;
+  const rowT = (row) => { const c = row.find((x) => x && x.t != null); return c ? c.t : null; };
+  const sections = m.sections.map((s) => ({ ...s, rows: (s.rows || []).filter((row) => before(rowT(row), T)),
+    groups: (s.groups || []).flatMap((g) => { if (g.recut) { const c = g.recut(T); return c ? [{ ...c, recut: g.recut }] : []; }
+      return before(g.t, T) ? [{ ...g, sub: g.cutSub ? g.cutSub(T) : g.sub, rows: (g.rows || []).filter((row) => before(rowT(row), T)) }] : []; }) }));
+  return { ...m, sections, phases: (m.phases || []).filter((p) => p.start <= T).map((p) => ({ ...p, end: Math.min(p.end, T) })) };
 }
 
 window.DBF_BUILD = (b, rep, same, W, L) => {
+  // (Rotation checks are the whole pull: worked out once, shared by every version)
+  const memo = new Map(), W2 = Object.assign({}, W, { specRun: (...a) => { const k = a[0] + '|' + a[2]; if (!memo.has(k)) memo.set(k, W.specRun(...a)); return memo.get(k); } });
+  const m = buildOne(b, rep, same, W2, L, 0), nd = (rep.deaths || []).length;
+  if (b.kill || b.id === 990001 || !nd) return m; // (a kill or a dummy always counts in full)
+  m.cuts = [m]; for (let n = 1; n <= Math.min(8, nd); n++) m.cuts.push(buildOne(b, rep, same, W2, L, n));
+  return m;
+};
+function buildOne(b, rep, same, W, L, cutN) {
+  const T = cutTime(rep, cutN);
   const pr = W.progressOf ? W.progressOf(rep) : null;
   const pct = b.id === 990001 ? '' : b.kill ? 0 : pr && pr.left != null ? Math.round(pr.left) : ''; // (a practice pull on a dummy has no boss health)
-  const allDeaths = deathsOf(W, rep), roleOf = new Map([...rep.players.values()].map((p) => [p.name, p.role]));
+  const allDeaths = (rep.deaths || []).filter((d) => before(d.t, T)).sort((a, c) => a.t - c.t), roleOf = new Map([...rep.players.values()].map((p) => [p.name, p.role]));
   // (deaths have their own lines; a tank's notes on hits tanks take on purpose aren't mistakes)
-  const mist = [].concat(rep.mistakes || [], (rep.module && !rep.module.error && rep.module.mistakes) || []).filter((m) => m && m.mechanic !== 'Death' && !/only a note/i.test(m.detail || '') && !(m.tankJudged && roleOf.get(m.player) === 'tank'));
+  const mist = [].concat(rep.mistakes || [], (rep.module && !rep.module.error && rep.module.mistakes) || []).filter((m) => m && m.mechanic !== 'Death' && !/only a note/i.test(m.detail || '') && !(m.tankJudged && roleOf.get(m.player) === 'tank') && before(m.t, T));
   const h = { boss: b.boss, diff: DIFFN[b.diffId] || b.diff || '', pull: b.pull, kill: !!b.kill, pct, dur: mmss(b.duration || rep.duration),
     where: b.kill || b.id === 990001 ? '' : pr && pr.phase ? String(pr.phase).replace(/^P(\d)$/, 'Phase $1') : '', deaths: (rep.deaths || []).length };
 
@@ -83,7 +100,7 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
     const seen = new Set();
     for (const m of own) { if (seen.has(m.mechanic)) continue; seen.add(m.mechanic); if (P.boss.length >= 5) break;
       P.boss.push([flagOf(m.severity), m.id ? String(m.id) : '', shortTo(m.mechanic + ': ' + plain(m.detail || ''), 150)]); if (m.fix) tips.push(sentences(m.fix)[0]); }
-    const dd = (rep.deaths || []).filter((d) => d.player === p.name).sort((a, c) => a.t - c.t)[0];
+    const dd = allDeaths.filter((d) => d.player === p.name)[0];
     const ready = dd && dd.reactable && (dd.available || []).length ? ' You still had ' + dd.available.slice(0, 3).join(', ').replace(/, ([^,]*)$/, ' and $1') + ' ready.' : '';
     if (dd) P.boss.push(['dead', deathIcon(dd), 'You died at ' + mmss(dd.t) + (dd.ability ? ' to ' + dd.ability : '') + '.' + (!b.kill && rep.duration - dd.t < 8 ? ' The pull was already lost.' : ready)]);
     // (more about your boss play: avoidable damage and where you rank, your kicks and dispels)
@@ -103,7 +120,7 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
     const times = (l) => l.slice(0, 3).map((x) => mmss(x.t)).join(', ').replace(/, ([^,]*)$/, ' and $1');
     if (ps.some((q) => q.cls === 'WARLOCK' || (q.cons && q.cons.healthstone.length))) P.surv.push([stones.length ? 'ok' : 'info', stones.length && stones[0].id ? String(stones[0].id) : 'inv_stone_04', stones.length ? 'Healthstone: used at ' + times(stones) + '.' : 'Healthstone: not used.']);
     P.surv.push([pots.length ? 'ok' : 'info', pots.length && pots[0].id ? String(pots[0].id) : 'inv_alchemy_70_red', pots.length ? 'Health potion: used at ' + times(pots) + '.' : 'Health potion: not used.']);
-    const missed = (p.closeCalls || []).filter((c) => c.judged && !c.def && !c.stone && !c.pot && c.kitAvail);
+    const missed = (p.closeCalls || []).filter((c) => c.judged && !c.def && !c.stone && !c.pot && c.kitAvail && before(c.tl, T));
     if (missed.length) {
       // (name what was still ready: a Healthstone only when a Warlock made them or someone used one)
       const c = missed[0], hasStone = ps.some((q) => q.cls === 'WARLOCK' || (q.cons && q.cons.healthstone.length)) && !stones.some((u) => u.t < c.t - 2), hasPot = !pots.some((u) => u.t < c.t - 2);
@@ -131,20 +148,25 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
   // (deaths that mattered: the first few, before the wipe was called)
   const D = allDeaths; const show = D.slice(0, 8);
   for (const d of show) { const p = [...rep.players.values()].find((q) => q.name === d.player); raid.died.push([mmss(d.t), d.player, (p && p.cls) || '', deathIcon(d), d.ability || 'Unknown']); }
-  const extra = (rep.deaths || []).length - show.length;
+  const extra = D.length - show.length;
   if (extra > 0) raid.more = '+' + extra + ' more by ' + h.dur + '.';
   else if (b.kill && !D.length) raid.more = 'Nobody died.';
   // (how each mechanic went, one line each, from the fight audit: worst first)
   raid.mech = [];
   if (rep.module && !rep.module.error) {
-    for (const sec of rep.module.sections || []) {
+    const full = rep.module.sections || [], secs = isFinite(T) ? cutModule(rep.module, T).sections : full;
+    for (const sec of secs) {
       if (sec.id === 'avoid' || sec.info || !sec.title) continue; // (avoidable damage has its own lines; "shown, not judged" isn't graded)
       const gs = sec.groups || [], n = gs.length, bad = gs.filter((g) => g.bad).length, warn = gs.filter((g) => !g.bad && g.warn).length;
-      const flag = sec.verdict === 'bad' || bad ? 'bad' : sec.verdict === 'warn' || warn ? 'warn' : 'ok';
+      // (cut by the wipe filter: a mechanic that lost rows or sets is graded on what's left, and its whole-pull summary isn't used)
+      const was = full.find((x) => x.id === sec.id), changed = was && (was.rows || []).length + (was.groups || []).length !== (sec.rows || []).length + gs.length;
+      if (changed && !(sec.rows || []).length && !n) continue; // (nothing of it happened before the cutoff)
+      const cells = (sec.rows || []).flat().filter(Boolean), verdict = changed ? (cells.some((x) => x.bad) ? 'bad' : cells.some((x) => x.warn) ? 'warn' : n ? '' : 'ok') : sec.verdict;
+      const flag = verdict === 'bad' || bad ? 'bad' : verdict === 'warn' || warn ? 'warn' : 'ok';
       const worst = gs.find((g) => g.bad) || gs.find((g) => g.warn);
       let t = n > 1 ? (n - bad - warn) + ' of ' + n + ' done right. ' : '';
       if (worst) t += plain(worst.title) + (worst.sub ? ': ' + plain(worst.sub) : '.');
-      else { const said = sentences(sec.summary || '').filter((x) => !/^It shows|How it works|against the plan|\bmaps?\b|\brows?\b|\bchart\b|\btable\b|\bbelow\b/i.test(x)); t += said[0] || (n > 1 && flag === 'ok' ? '' : { ok: 'Done right.', warn: 'Some mistakes.', bad: 'Went wrong.' }[flag]); } // (the website's own words about its page don't fit on a card)
+      else { const said = changed ? [] : sentences(sec.summary || '').filter((x) => !/^It shows|How it works|against the plan|\bmaps?\b|\brows?\b|\bchart\b|\btable\b|\bbelow\b/i.test(x)); t += said[0] || (n > 1 && flag === 'ok' ? '' : { ok: 'Done right.', warn: 'Some mistakes.', bad: 'Went wrong.' }[flag]); } // (the website's own words about its page don't fit on a card)
       raid.mech.push([flag, sec.spell && sec.spell[0] ? String(sec.spell[0]) : '', plain(sec.title), shortTo(t.replace(/\s*\(see How it works\)/gi, '').trim(), 210)]);
     }
     const rank = { bad: 0, warn: 1, ok: 2 }; raid.mech.sort((a, c) => rank[a[0]] - rank[c[0]]); raid.mech = raid.mech.slice(0, 12);
