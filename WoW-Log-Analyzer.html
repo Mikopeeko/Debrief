@@ -14243,6 +14243,7 @@ const PATCH_NOTES = [
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
+    'Boss guides: Nek\'zali, Entombed Sentinels and The Lost Explorers now have Heroic whole-fight videos timed by our real Heroic kills. The Lost Explorers shows both Mighty Thuds, four crates a set (six when the fish is in it) and the real healer count; Sentinels Mythic adds the last round\'s Blighted Blood.',
     'Boss guides: Vashnik and Sszorak now have a Heroic whole-fight video, timed by a real Heroic kill (7:07 and 6:44), with every cast in order. Sszorak\'s tank combos play in the order they really came, on both difficulties, and Vashnik\'s Heroic maps show the right number of Plague Froths, biles and infections.',
     'Debrief in game: every boss now gets its own mechanic lines on the recap, not just The Coiled Altar. Each says what went wrong first, with the number against the plan, when and who, like “Soak 4 at 3:09: 7 soakers (needs 8), marked Volkovod.” A clean mechanic shows the number that proves it.',
     'Report card: each raider\'s card shows every death, how many counted and why. A death to something avoidable counts even after the wipe filter, while fewer than a quarter of the raid is dead.',
@@ -38211,7 +38212,7 @@ const seBosses = (k) => k.boss('bg', 'Breath of Ula\'tek', 0, SE_G[0], SE_G[1]).
 // halves' players swapped so each half stays on its own side while the bosses cross; dy moves everything up the walls
 const SE_SW = { t1: 't2', t2: 't1', h1: 'h3', h3: 'h1', h2: 'h4', h4: 'h2', m1: 'm5', m5: 'm1', m2: 'm6', m6: 'm2', m3: 'm7', m7: 'm3', m4: 'r7', r7: 'm4', r1: 'r4', r4: 'r1', r2: 'r5', r5: 'r2', r3: 'r6', r6: 'r3' };
 function seK(k, o) {
-  const mx = !!(o && o.mx), dy = (o && o.dy) || 0; if (!mx && !dy) return k;
+  const mx = !!(o && o.mx), dy = (o && o.dy) || 0; if (o && o.pre) sePre(k, o.pre); if (!mx && !dy) return k;
   const X = (x) => (x == null ? x : mx ? -x : x), Y = (y) => (y == null ? y : y + dy), I = (id) => (mx && typeof id === 'string' && SE_SW[id]) || id, Is = (v) => (Array.isArray(v) ? v.map(I) : I(v));
   const P = {}, W = (r) => (r === k ? P : r), O = (q) => { if (!q) return q; const z = { ...q }; if (z.x != null) z.x = X(z.x); if (z.y != null) z.y = Y(z.y); for (const f of ['on', 'from', 'to']) if (z[f]) z[f] = I(z[f]); if (z.toYd) z.toYd = { x: X(z.toYd.x), y: Y(z.toYd.y) }; return z; };
   for (const key of Object.keys(k)) { const v = k[key]; P[key] = typeof v === 'function' ? (...a) => W(v.apply(k, a)) : v; }
@@ -38445,7 +38446,7 @@ SE_M.blighted = function (fail, d, o) {
     k.pause(9.2, 'Nobody dispelled it, so the poison ran out where they stood: three puddles in the middle of the red stack. That floor stays used.', { x: -24, y: -10, r: 14 });
     return k.done({ title: 'Mistake: nobody dispels it', focus: { x: -24, y: -14, r: 20 }, badLabel: 'no dispel' });
   }
-  k.hold(2.2, 'r6').at(7.6, 'r6', Q[0], Q[1]).hold(8.6, 'r6').at(10.8, 'r6', Q[0], Q[1] + 9); pu(Q[0], Q[1], 8.6, !!(o && o.sim)); /* (and out of it again) */
+  k.hold(2.2, 'r6').at(7.6, 'r6', Q[0], Q[1]).hold(8.6, 'r6').at(10.8, 'r6', Q[0], Q[1] + (SE_PQ[(o && o.rnd) || 0][1] > 0 ? -9 : 9)); pu(Q[0], Q[1], 8.6, !!(o && o.sim)); /* (and out of it again) */
   k.call(1.5, 4.5, 'Dispel it fast', { x: -22, y: 8, color: '#e6b450', ink: '#141006' }); k.call(5.2, 8.2, 'Too late for a dispel: walk to the old puddles', { on: 'r6', color: '#e6b450', ink: '#141006' }); k.call(8.8, 11.8, 'Next to the old ones', { x: Q[0] + 9, y: Q[1] + 9, color: '#7ee36a', ink: '#0a1a06' });
   k.ring1(['h3', 'h4', 'r6']).step(1.3).step(3.1).step(5.4);
   k.pause(3.6, 'Healers dispel Blighted Blood right away, one each. A poison that is dispelled never drops a puddle.', { x: -24, y: -10, r: 16 });
@@ -38554,21 +38555,22 @@ const SE_SIM = [
   { at: 318, mech: 'drops', o: { ...SE_R4, do: SE_DO.drops2 }, label: 'Toxic Droplets 2' }, { at: 329, mech: 'miasma', o: { ...SE_R4, do: SE_DO.miasma2 }, label: 'Unstable Miasma 2' },
   { at: 335, mech: 'coag', o: { ...SE_R4, do: SE_DO.coag2 }, label: 'Venom Coagulation 2 (Dead before the intermission)' }, { at: 351, mech: 'proto', o: { ...SE_R4, do: SE_DO.hard, hard: 1 }, label: 'Droplets and circles together (The hard moment)' },
   { at: 361, mech: 'helix', o: { mx: 1, dy: 25 }, label: 'Intermission 4 (Make 4)' },
-  { at: 387, mech: 'swap', o: SE_R5 }, { at: 390, mech: 'coag', o: SE_R5 }, { at: 393, mech: 'drops', o: SE_R5 }, { at: 395, mech: 'miasma', o: SE_R5 }, { at: 417, mech: 'proto', o: SE_R5 }, { at: 428, beat: 'kill', o: SE_R5 },
+  { at: 387, mech: 'swap', o: SE_R5 }, { at: 390, mech: 'coag', o: SE_R5 }, { at: 393, mech: 'drops', o: SE_R5 }, { at: 395, mech: 'miasma', o: SE_R5 }, { at: 417, mech: 'proto', o: SE_R5 }, { at: 418, mech: 'blighted', o: SE_R5 }, { at: 423, mech: 'drops', o: { ...SE_R5, do: SE_DO.drops2 }, label: 'Toxic Droplets 2' }, { at: 428, beat: 'kill', o: SE_R5 },
 ];
 // (how long each part lasts on the real clock, and how bad a miss is: 3 can wipe the raid, 2 can kill players, 1 minor)
+SE_PQ.push([-30.4, 41.8]); /* (round five's Blighted Blood: next to the soak in the top-left nook) */
 sePost(SE_SIM);
 // (Heroic: no circles, so no hard moment; the second soak and add say what is true on Heroic)
 const SE_DO_H = { miasma2: ['Second soak of the round. Same stack, everyone in it.', 'Drop the new puddles next to the old ones, not in the middle.'], coag2: ['Second add: it spawns right before the intermission. It has to die before the bosses go to the middle.', 'Same as before: the ranged stack far, Breath on its far side, every ranged on both halves burns it.'], coag3: ['The last add: kill it fast, then burn both bosses together.', 'Same as before: the ranged stack far, Breath on its far side, every ranged on both halves burns it.'] };
 const SE_SIM_H = sePost([
-  { at: 0, beat: 'start' }, { at: 5, mech: 'split', o: SE_R1, label: 'Two bosses (Stay 40 yards apart)' }, { at: 13, mech: 'coag', o: SE_R1, label: 'Venom Coagulation (First add)' }, { at: 15, mech: 'drops', o: SE_R1 }, { at: 18, mech: 'miasma', o: SE_R1, label: 'Unstable Miasma (First soak)' },
+  { at: 0, beat: 'start' }, { at: 5, mech: 'split', o: SE_R1, label: 'Two bosses (Stay 40 yards apart)' }, { at: 12, mech: 'coag', o: SE_R1, label: 'Venom Coagulation (First add)' }, { at: 15, mech: 'drops', o: SE_R1 }, { at: 18, mech: 'miasma', o: SE_R1, label: 'Unstable Miasma (First soak)' },
   { at: 43, mech: 'blighted', o: SE_R1 }, { at: 46, mech: 'helix', o: SE_R1, label: 'Intermission 1 (Make 4)' },
-  { at: 66, mech: 'swap', o: SE_R2 }, { at: 69, mech: 'coag', o: SE_R2 }, { at: 70, mech: 'drops', o: SE_R2 }, { at: 72, mech: 'miasma', o: SE_R2 }, { at: 99, mech: 'blighted', o: SE_R2 },
-  { at: 103, mech: 'drops', o: { ...SE_R2, do: SE_DO.drops2 }, label: 'Toxic Droplets 2' }, { at: 113, mech: 'miasma', o: { ...SE_R2, do: SE_DO_H.miasma2 }, label: 'Unstable Miasma 2' },
-  { at: 120, mech: 'coag', o: { ...SE_R2, do: SE_DO_H.coag2 }, label: 'Venom Coagulation 2 (Dead before the intermission)' }, { at: 146, mech: 'helix', o: SE_R2, label: 'Intermission 2 (Make 4)' },
-  { at: 166, mech: 'swap', o: SE_R3 }, { at: 169, mech: 'coag', o: SE_R3 }, { at: 170, mech: 'drops', o: SE_R3 }, { at: 172, mech: 'miasma', o: SE_R3 }, { at: 199, mech: 'blighted', o: SE_R3 },
-  { at: 203, mech: 'drops', o: { ...SE_R3, do: SE_DO.drops2 }, label: 'Toxic Droplets 2' }, { at: 213, mech: 'miasma', o: { ...SE_R3, do: SE_DO_H.miasma2 }, label: 'Unstable Miasma 2' },
-  { at: 220, mech: 'coag', o: { ...SE_R3, do: SE_DO_H.coag3 }, label: 'Venom Coagulation 2 (The last add)' }, { at: 246, beat: 'kill', o: SE_R3 },
+  { at: 64, mech: 'swap', o: SE_R2 }, { at: 67, mech: 'coag', o: SE_R2 }, { at: 70, mech: 'drops', o: SE_R2 }, { at: 72, mech: 'miasma', o: SE_R2 }, { at: 98, mech: 'blighted', o: SE_R2 },
+  { at: 103, mech: 'drops', o: { ...SE_R2, do: SE_DO.drops2 }, label: 'Toxic Droplets 2' }, { at: 114, mech: 'miasma', o: { ...SE_R2, do: SE_DO_H.miasma2 }, label: 'Unstable Miasma 2' },
+  { at: 119, mech: 'coag', o: { ...SE_R2, do: SE_DO_H.coag2 }, label: 'Venom Coagulation 2 (Dead before the intermission)' }, { at: 146, mech: 'helix', o: SE_R2, label: 'Intermission 2 (Make 4)' },
+  { at: 164, mech: 'swap', o: SE_R3 }, { at: 169, mech: 'coag', o: SE_R3 }, { at: 172, mech: 'drops', o: SE_R3 }, { at: 175, mech: 'miasma', o: SE_R3 }, { at: 200, mech: 'blighted', o: SE_R3 },
+  { at: 205, mech: 'drops', o: { ...SE_R3, do: SE_DO.drops2 }, label: 'Toxic Droplets 2' }, { at: 216, mech: 'miasma', o: { ...SE_R3, do: SE_DO_H.miasma2 }, label: 'Unstable Miasma 2' },
+  { at: 221, mech: 'coag', o: { ...SE_R3, do: SE_DO_H.coag3 }, label: 'Venom Coagulation 2 (The last add)' }, { at: 246, beat: 'kill', o: SE_R3 },
 ]);
 const SE_BEATS_H = { start: SE_BEATS.start, kill: { name: 'The kill (Burn them together)', do: ['The last round: the soak puddles go next to the old ones. Burn both bosses down together.'],
   run(o) { const k = seK(gdzKit('Entombed Sentinels', 6), o); seBosses(k); seRaid(k);
@@ -38661,6 +38663,11 @@ GDZ['Entombed Sentinels'].h = { sim: SE_SIM_H, simSkip: [{ from: 169, to: 246, l
 const gdzFillDo = (boss) => { const G = GDZ[boss]; ['h', 'm'].forEach((D) => { const sim = (G[D] || {}).sim; if (!sim) return; const by = {};
   G.phases.forEach((p) => (p.mechs || []).forEach((m) => { if (m.id) by[m.id] = Object.assign({}, m, m[D] || {}); }));
   sim.forEach((e) => { const m = e.mech && by[e.mech]; if (m && e.o && e.o.do && m.do && e.o.do.length < m.do.length) e.o = Object.assign({}, e.o, { do: e.o.do.concat(m.do.slice(e.o.do.length)) }); }); }); };
+const sePre = (k, pre) => { (pre.s || []).forEach((si) => SE_PS[si].forEach((p) => k.ring({ x: p[0], y: p[1], r: 3, fx: 'puddle', t0: 0, dur: 999, color: '#ff5a4f', fill: 'rgba(255,90,79,.3)', cn: 'Blood Venom', legend: 'Blood Venom: every puddle stays all fight' })));
+  (pre.b || []).forEach((bi) => k.ring({ x: SE_PB[bi][0], y: SE_PB[bi][1], r: 7, fx: 'puddle', t0: 0, dur: 999, color: '#ff5a4f', fill: 'rgba(255,90,79,.35)', cn: 'Blood Venom', legend: 'Blood Venom: every puddle stays all fight' })); };
+(() => { const G = GDZ['Entombed Sentinels'], sim = (G.m || {}).sim || []; ((G.m || {}).simSkip || []).forEach((x) => { const nx = sim.find((e) => e.at >= x.to); if (!nx) return; const pre = { s: [], b: [] };
+  sim.forEach((e) => { if (e.at >= x.from && e.at < x.to && e.o) { if (e.o.set != null) pre.s.push(e.o.set); if (e.o.big != null) pre.b.push(e.o.big); } });
+  if (pre.s.length || pre.b.length) { const q = (nx.o && nx.o.pre) || { s: [], b: [] }; nx.o = Object.assign({}, nx.o, { pre: { s: q.s.concat(pre.s), b: q.b.concat(pre.b) } }); } }); })();
 gdzFillDo('Entombed Sentinels');
 
 // ===== Nek'zali the Soulcoiler (notes/Guides/Bosses/1 Nek'zali the Soulcoiler.md: Tactyks' Mythic and Normal/Heroic videos read in full,
@@ -38812,7 +38819,7 @@ const NZ_M = {
   // by a door: its tank stands in the doorway, so Soul Transfer's frontal (at the end of a 15-second cast) points into the door and the raid
   // stays behind it, on the room side. o.two: the second Echo, by the east door (fail: a melee in front at the end of the cast)
   echoes(fail, o) {
-    o = o || {}; const two = !!o.two, sx = two ? 1 : -1, L = 15, k = gdzKit(NZ, L), E = [sx * 40, 0], th = two ? 0 : 180, TD = [sx * 45.5, 0];
+    o = o || {}; const two = !!o.two, sx = o.door ? (o.door === 'e' ? 1 : -1) : two ? 1 : -1, L = 15, k = gdzKit(NZ, L), E = [sx * 40, 0], th = sx > 0 ? 0 : 180, TD = [sx * 45.5, 0];
     if (two) nzHome(k, o, L); else { nzHome(k); nzBoss(k, 0.3); k.boss('nz', NZ, 2.6, NZ_IB[0], NZ_IB[1]); k.call(0.4, 2.6, 'Free damage', { on: 'nz', color: '#7ee36a', ink: '#0a1a06' });
       k.ring({ on: 'nz', r: 4, fx: 'safe', t0: 2.7, dur: L - 2.7, color: '#b9a6ff', cn: 'Tether of Awakening', legend: 'immune while her Echoes live' }); }
     // (the tank heads for the doorway first; the Echo walks in; the raid gathers behind it, on the room side)
@@ -38824,9 +38831,9 @@ const NZ_M = {
     if (fail) { ulHit(k, 'm1', 12.4, 'Soul Transfer'); k.oops('m1', 12.4); k.step(0.3).step(5.4).step(12.4);
       k.pause(12.7, 'This melee walked round to the Echo\'s front and was still there when its cast ended: Soul Transfer hits for over a million.', { on: 'm1', r: 8 });
       return k.done({ title: 'Mistake: in front at the end of the cast', focus: { x: sx * 36, y: 0, r: 18 }, badLabel: 'hit by the frontal' }); }
-    k.call(12.8, 14.8, two ? 'Then to the east pile' : 'Then to a body pile', { x: sx * 30, y: 11, color: '#e6b450', ink: '#141006' });
+    k.call(12.8, 14.8, sx > 0 ? 'Then to the east pile' : two ? 'Then to the west pile' : 'Then to a body pile', { x: sx * 30, y: 11, color: '#e6b450', ink: '#141006' });
     k.ring1(['t1']).step(0.3).step(5.4).step(10).step(12.8);
-    k.pause(10.6, (two ? 'Echo two comes in by the east door. ' : 'Echo one comes in by the west door. ') + 'Its tank stands in the doorway, so the big frontal at the end of each cast points into the door. Everyone else stays behind it.', { on: 'ex', r: 12 });
+    k.pause(10.6, ((two ? 'Echo two' : 'Echo one') + ' comes in by the ' + (sx > 0 ? 'east' : 'west') + ' door. ') + 'Its tank stands in the doorway, so the big frontal at the end of each cast points into the door. Everyone else stays behind it.', { on: 'ex', r: 12 });
     return k.done({ title: two ? 'Echo two: tank it in the doorway' : 'Intermission: tank the Echo in the doorway', focus: { x: sx * 30, y: 0, r: 24 }, hlLabel: 'the Echo\'s tank' });
   },
   // Hungering Pyre: a fire soak on the Echo's tank, split between everyone within 10 yards (the real hit is smaller: stand in the dead
@@ -38988,6 +38995,17 @@ GDZ['Nek\'zali the Soulcoiler'].m.roles = {
   d: ['Casters break the add shields with magic; everyone cleaves them.', 'Never let an add reach the well.', 'Hit squads take turns in the well; kick the curse late. Skip a trip at the very start of a phase change or with her under 10%.', 'Ranged: walk your fire circle over the bodies the pyre misses.', 'Stop casting before Invoke lands.'],
 };
 
+const NZ_SIM_H = [
+  { at: 0, beat: 'start' }, { at: 0.5, mech: 'ignite', label: 'Soulcoil Ignition' }, { at: 16, mech: 'rend', label: 'Essence Rend 1' }, { at: 28, mech: 'barrage', label: 'Possession Barrage 1' },
+  { at: 53, mech: 'amani', label: 'Restless Amani 1 (southeast)', o: { th0: -39, r: 36 } }, { at: 56, mech: 'rend', label: 'Essence Rend 2' }, { at: 64, mech: 'barrage', label: 'Possession Barrage 2' },
+  { at: 72, beat: 'int', ph: 1 }, { at: 83, mech: 'echoes', ph: 1, label: 'Echo of Jawae 1 (east door)', o: { door: 'e' } }, { at: 102, mech: 'pyre', ph: 1, label: 'Hungering Pyre 1 (east doorway)', o: { E: [32, 0], th: 0 } },
+  { at: 117, mech: 'echoes', ph: 1, label: 'Echo of Jawae 2 (west door)', o: { two: 1, door: 'w', E: [-12, -4], th: 180, noEcho: 1 } }, { at: 135, mech: 'pyre', ph: 1, label: 'Hungering Pyre 2 (west doorway)', o: { E: [-32, 0], th: 180 } },
+  { at: 150, beat: 'p2', ph: 2 }, { at: 163, mech: 'invoke', ph: 2, label: 'Invoke 1' }, { at: 185, mech: 'amani', ph: 2, label: 'Restless Amani (east)', o: { th0: -5, r: 24 } }, { at: 195, mech: 'barrage', ph: 2, label: 'Possession Barrage 3' },
+  { at: 206, mech: 'rend', ph: 2, label: 'Essence Rend 3' }, { at: 211, mech: 'invoke', ph: 2, label: 'Invoke 2' }, { at: 223, mech: 'barrage', ph: 2, label: 'Possession Barrage 4' }, { at: 226, mech: 'amani', ph: 2, label: 'Restless Amani (east, the last set)', o: { th0: 10, r: 27 } },
+  { at: 230, beat: 'kill', ph: 2 },
+];
+GDZ['Nek\'zali the Soulcoiler'].h = { sim: NZ_SIM_H, simDur: NZ_DUR, simSev: NZ_SEV, beats: NZ_BEATS,
+  simAlways: ['No add may reach the well: each one hits the raid and gives her 5 energy.', 'Essence Rend circles stay all fight: drop them at the edge, behind the raid.', 'Every body pile you make in phase one gets burned in the intermission.'] };
 gdzFillDo('Nek\'zali the Soulcoiler');
 
 // ===== Vashnik the Malignant (notes/Guides/Bosses/4 Vashnik the Malignant.md: Tactyks' Mythic video read in full, the spell text, and
@@ -40884,38 +40902,38 @@ const LE_M = {
   // Throw Junk: crates land on marked spots; breaking one bleeds the breaker (Mythic: the whole raid: Splinters); two assigned breakers
   // break them in pairs, a few seconds apart; one hides the fish, which its carrier picks up; a crate left too long explodes (Relic Rupture)
   crates(fail, d, o) {
-    const myth = d !== 'h', L = 14, k = gdzKit(LE, L), h = leHome(k, -80, (o && o.mode) || 'IG'), C = o && o.mode === 'IN' ? [[30, -4], [5, 21], [14, -12], [-8, 18]] : [[-20, -6], [16, -2], [-6, -2], [5, -1]], BR = ['r4', 'r1'];
-    k.cast('ge', 'Throw Junk', 0.3, 1.6);
-    C.forEach(([x, y], i) => { k.ring({ x, y, r: 3, fx: 'zone', t0: 0.4, dur: 1.6, color: '#d7a35a', fill: 'rgba(215,163,90,.18)', cn: 'Crate landing', legend: 'a crate is about to land here' });
-      const tb = fail && i === 3 ? L : [4.6, 4.6, 9.4, 9.4][i]; k.ring({ x, y, r: 2.4, fx: 'puddle', t0: 2, dur: tb - 2, color: '#a8743a', fill: 'rgba(168,116,58,.85)', cn: 'Crate of junk', legend: 'a crate: walk over it to break it' }); });
+    const myth = d !== 'h', six = !fail && !(o && (o.nofish || o.mode)), L = six ? 19 : 14, k = gdzKit(LE, L), h = leHome(k, -80, (o && o.mode) || 'IG'), C = (o && o.mode === 'IN' ? [[30, -4], [5, 21], [14, -12], [-8, 18]] : [[-20, -6], [16, -2], [-6, -2], [5, -1]]).concat(six ? [[-13, 2], [11, 3]] : []), BR = ['r4', 'r1'];
+    k.cast('ge', 'Throw Junk', 0.3, 1.6); k.cast('ge', 'Throw Junk', 4.3, 1.6); if (six) k.cast('ge', 'Throw Junk', 8.3, 1.6);
+    C.forEach(([x, y], i) => { const lt = 0.4 + 4 * (i >> 1); k.ring({ x, y, r: 3, fx: 'zone', t0: lt, dur: 1.6, color: '#d7a35a', fill: 'rgba(215,163,90,.18)', cn: 'Crate landing', legend: 'a crate is about to land here' });
+      const tb = fail && i === 3 ? L : [4.6, 4.6, 9.4, 9.4, 14.2, 14.2][i]; k.ring({ x, y, r: 2.4, fx: 'puddle', t0: lt + 1.6, dur: tb - lt - 1.6, color: '#a8743a', fill: 'rgba(168,116,58,.85)', cn: 'Crate of junk', legend: 'a crate: walk over it to break it' }); });
     // (the two breakers step on their crates in pairs, the west one and the east one; the fish carrier collects the fish)
-    BR.forEach((id, j) => { const p0 = k.posAt(id, 0), c1 = C[j], c2 = C[2 + j]; k.hold(2, id).at(4.4, id, c1[0] + 1.6, c1[1] + 1.2).hold(5, id); if (!(fail && j === 1)) { k.at(9.2, id, c2[0] + 1.6, c2[1] + 1.2).hold(10, id).at(13.4, id, p0[0], p0[1]); } else k.at(9, id, p0[0], p0[1]); });
+    BR.forEach((id, j) => { const p0 = k.posAt(id, 0), c1 = C[j], c2 = C[2 + j]; k.hold(2, id).at(4.4, id, c1[0] + 1.6, c1[1] + 1.2).hold(5, id); if (!(fail && j === 1)) { k.at(9.2, id, c2[0] + 1.6, c2[1] + 1.2).hold(10, id); if (six) k.at(13.8, id, C[4 + j][0] + 1.6, C[4 + j][1] + 1.2).hold(14.6, id).at(18, id, p0[0], p0[1]); else k.at(13.4, id, p0[0], p0[1]); } else k.at(9, id, p0[0], p0[1]); });
     k.call(2.2, 4.5, 'Crates landed: break two at a time', { x: 0, y: 8, color: '#d7a35a', ink: '#1a0f00' });
     k.call(4.6, 6.4, myth ? 'Splinters: the whole raid bleeds' : 'Splinters: the breaker bleeds', { x: 0, y: 8, color: '#ff8a5a', ink: '#1a0a00' });
-    if (!fail) { k.call(9.4, 11.2, myth ? 'Second pair: raid bleed again' : 'Second pair', { x: 0, y: 8, color: '#ff8a5a', ink: '#1a0a00' });
-      const F = C[2], q = k.posAt('r7', 0); if (!(o && o.nofish)) { k.hold(9.6, 'r7').at(11.6, 'r7', F[0] + 1.6, F[1] + 1.8).hold(12, 'r7').at(14, 'r7', q[0], q[1]); k.tag('r7', 'Fish', 11.6, L);
-      k.ring({ x: F[0], y: F[1], r: 1.4, fx: 'zone', t0: 9.4, dur: 2.2, color: '#7ee36a', fill: 'rgba(126,227,106,.6)', cn: 'Disgusting Fish', legend: 'the fish: its carrier picks it up' }); } }
+    if (!fail) { k.call(9.4, 11.2, myth ? 'Second pair: raid bleed again' : 'Second pair', { x: 0, y: 8, color: '#ff8a5a', ink: '#1a0a00' }); if (six) k.call(14.2, 16, myth ? 'Last pair, with the fish: raid bleed again' : 'Last pair, with the fish', { x: 0, y: 8, color: '#ff8a5a', ink: '#1a0a00' });
+      const F = six ? C[4] : C[2], q = k.posAt('r7', 0), f0 = six ? 14.2 : 9.4; if (!(o && o.nofish)) { k.hold(f0 + 0.2, 'r7').at(f0 + 2.2, 'r7', F[0] + 1.6, F[1] + 1.8).hold(f0 + 2.6, 'r7').at(f0 + 4.6, 'r7', q[0], q[1]); k.tag('r7', 'Fish', f0 + 2.2, L);
+      k.ring({ x: F[0], y: F[1], r: 1.4, fx: 'zone', t0: f0, dur: 2.2, color: '#7ee36a', fill: 'rgba(126,227,106,.6)', cn: 'Disgusting Fish', legend: 'the fish: its carrier picks it up' }); } }
     if (fail) { k.ring({ x: C[3][0], y: C[3][1], r: 8, fx: 'burst', t0: 11.6, at: 12, dur: 0.8, color: '#ff3b3b', cn: 'Relic Rupture', legend: 'a crate left too long explodes' }); gdzFailBlast(k, 12.2, 'A crate exploded: a big raid hit', 0, 10, [], 'Relic Rupture'); k.step(0.3).step(4.6).step(12);
       k.pause(11.4, 'Nobody broke this crate. It sat there until it exploded: a big hit on the whole raid.', { x: C[3][0], y: C[3][1], r: 9 });
       return k.done({ title: 'Mistake: a crate left to explode', focus: { x: 0, y: -10, r: 20 } }); }
-    k.ring1(o && o.nofish ? BR : BR.concat(['r7'])).step(0.3).step(2.2).step(4.6); if (!(o && o.nofish)) k.step(9.4);
+    k.ring1(o && o.nofish ? BR : BR.concat(['r7'])).step(0.3).step(2.2).step(4.6); if (!(o && o.nofish)) k.step(six ? 14.2 : 9.4);
     k.pause(3.6, myth ? 'Two breakers, two crates at a time, a few seconds apart: each crate makes the whole raid bleed. Everyone else, and the melee most of all, watch your feet.' : 'Two breakers, two crates at a time. Everyone else, and the melee most of all, watch your feet: a crate you step on bleeds you.', { x: 0, y: -9, r: 16 });
     return k.done({ title: 'Crates: break them in pairs', focus: o && o.mode === 'IN' ? { x: 10, y: 6, r: 30 } : { x: 0, y: -8, r: 22 }, hlLabel: 'the two breakers, and the fish carrier' });
   },
   // Shell Spin: Nama throws three shells in a cone at a random melee (4-second stun); with Nama in the pair, the melee picked steps to the
   // outer side so the shells fly out of the room, then steps out of the line (fail: baited toward the ranged)
-  shell(fail) {
-    const L = 9.5, k = gdzKit(LE, L), h = leHome(k, 120, 'IN'), V = 'm6'; k.cast('na', 'Shell Spin', 0.6, 4.4);
-    const out = nzAdd(h.N, fail ? 228 : 30, fail ? 10 : 8); k.hold(0.6, V).at(2.4, V, out[0], out[1]); k.call(0.7, 3, fail ? 'Shells: picked' : 'Shells: take them outside', { on: V, color: '#e6b450', ink: '#141006' });
-    if (!fail) { const st = nzAdd(out, 120, 6); k.hold(2.6, V).at(3.3, V, st[0], st[1]); }
-    k.cone({ from: 'na', deg: fail ? 228 : 30, r: 26, width: 40, at: 4.6, color: '#5ce1e6', legend: 'Shell Spin: three shells in a cone, a 4-second stun' });
+  shell(fail, o) {
+    const L = 9.5, k = gdzKit(LE, L), h = leHome(k, 120, (o && o.mode) || 'IN'), V = 'm6', ou = Math.atan2(h.N[1], h.N[0]) * 180 / Math.PI + 4, ta = 2.4, hs = o && o.mode === 'GN' ? 0.05 : 0.6; /* (Nama is further from the raid in Iku's turn: the melee sets off at once, so the walk is no faster than a run) */ k.cast('na', 'Shell Spin', 0.6, 4.4);
+    const out = nzAdd(h.N, fail ? ou + 198 : ou, fail ? 10 : 8); k.hold(hs, V).at(ta, V, out[0], out[1]); k.call(0.7, ta + 0.6, fail ? 'Shells: picked' : 'Shells: take them outside', { on: V, color: '#e6b450', ink: '#141006' });
+    if (!fail) { const st = nzAdd(out, ou + 90, 6); k.hold(ta + 0.2, V).at(ta + 0.9, V, st[0], st[1]); }
+    k.cone({ from: 'na', deg: fail ? ou + 198 : ou, r: 26, width: 40, at: 4.6, color: '#5ce1e6', legend: 'Shell Spin: three shells in a cone, a 4-second stun' });
     if (fail) { const inC = ['m1', 'm2', 'm3', 'm4', 'm5', 'm7'].concat(LE_RNG).filter((id) => { const p = k.posAt(id, 4), dx = p[0] - h.N[0], dy = p[1] - h.N[1], d0 = Math.hypot(dx, dy); let a = Math.atan2(dy, dx) * 180 / Math.PI - 228; while (a > 180) a -= 360; while (a < -180) a += 360; return d0 > 1 && d0 < 26 && Math.abs(a) <= 20; }).slice(0, 4);
       inC.forEach((id, i) => { ulHit(k, id, 4.8 + i * 0.1, 'Stunned'); k.oops(id, 4.9); }); k.step(0.6).step(2.4).step(4.6);
       k.pause(5.2, 'This melee baited the shells in toward the raid: they flew through the ranged and healers and stunned them for 4 seconds.', { x: h.N[0] - 10, y: h.N[1] - 8, r: 14 });
       return k.done({ title: 'Mistake: shells baited into the raid', focus: { x: 18, y: 10, r: 22 }, badLabel: 'stunned' }); }
-    k.ring1([V]).step(0.6).step(2.4).step(3.3);
-    k.pause(2.8, 'The melee the shells are coming for steps to the outside of the room, so they fly away from the raid, then steps out of their line.', { on: V, r: 10 });
-    return k.done({ title: 'Shell Spin: take it outside', focus: { x: 24, y: 14, r: 20 }, hlLabel: 'the melee the shells are aimed at' });
+    k.ring1([V]).step(0.6).step(ta).step(ta + 0.9);
+    k.pause(ta + 0.4, 'The melee the shells are coming for steps to the outside of the room, so they fly away from the raid, then steps out of their line.', { on: V, r: 10 });
+    return k.done({ title: 'Shell Spin: take it outside', focus: { x: h.N[0] * 0.9, y: h.N[1] * 1.08, r: 20 }, hlLabel: 'the melee the shells are aimed at' });
   },
   // Blink Nova: Iku marks a ranged and teleports to them 7 seconds later; the raid takes falloff damage, less the farther away: the marked
   // player walks a little way out in front, toward the edge, so the melee keep cleaving (fail: they stay in the raid)
@@ -41101,11 +41119,11 @@ const LE_BEATS = {
 const LE_SIM = [
   { at: 0, beat: 'start' }, { at: 5, mech: 'pair', label: 'Two together, one apart' }, { at: 10, mech: 'blink', label: 'Blink Nova 1' }, { at: 18, mech: 'shell', label: 'Shell Spin' }, { at: 20, mech: 'crates', label: 'Crates (First set)' },
   { at: 30, mech: 'swap', label: 'Shredding Shards 1' }, { at: 36, mech: 'kicks', label: 'Icebound Flames' }, { at: 41, mech: 'blink', label: 'Blink Nova 2' }, { at: 45, mech: 'fish', label: 'The fish: Gebbo\'s turn', o: { to: 'ge' } },
-  { at: 51, mech: 'crates', label: 'Crates (No fish in this set)', o: { nofish: 1, do: ['Marked spots: crates are landing. Step out of them.', 'Two assigned breakers walk over two crates together.', 'Wait a few seconds for the bleed to fade, then the next two. Everyone else watches their feet.'] } }, { at: 57, mech: 'eyes', ph: 1 }, { at: 66, mech: 'bomb', ph: 1, label: 'Explosive Surprise 1' }, { at: 90, mech: 'crates', ph: 1, label: 'Crates (Gebbo\'s turn, no fish)', o: { nofish: 1, mode: 'IN', do: ['Marked spots: crates are landing. Step out of them.', 'Two assigned breakers walk over two crates together.', 'Wait a few seconds for the bleed to fade, then the next two. Everyone else watches their feet.'] } }, { at: 93, mech: 'swap', ph: 1, label: 'Shredding Shards 2' }, { at: 98, mech: 'bomb', ph: 1, label: 'Explosive Surprise 2' },
-  { at: 133, mech: 'blink', label: 'Blink Nova 3' }, { at: 143, mech: 'crates', label: 'Crates (A later set)' }, { at: 153, mech: 'swap', label: 'Shredding Shards 3' }, { at: 164, mech: 'blink', label: 'Blink Nova 4' }, { at: 170, mech: 'fish', ph: 2, label: 'The fish: Iku\'s turn', o: { to: 'ik' } },
-  { at: 174, mech: 'crates', label: 'Crates (No fish in this set)', o: { nofish: 1, do: ['Marked spots: crates are landing. Step out of them.', 'Two assigned breakers walk over two crates together.', 'Wait a few seconds for the bleed to fade, then the next two. Everyone else watches their feet.'] } }, { at: 181, mech: 'eyes', ph: 2 }, { at: 194, mech: 'crates', ph: 2, label: 'Crates (Iku\'s turn, no fish)', o: { nofish: 1, mode: 'GN', do: ['Marked spots: crates are landing. Step out of them.', 'Two assigned breakers walk over two crates together.', 'Wait a few seconds for the bleed to fade, then the next two. Everyone else watches their feet.'] } }, { at: 195, mech: 'frostfire', ph: 2, label: 'Frostfire Volley 1' }, { at: 208, mech: 'blink', ph: 2, label: 'Blink Nova 5 (Iku\'s turn)', o: { mode: 'GN' } }, { at: 217, mech: 'swap', ph: 2, label: 'Shredding Shards 4' }, { at: 221, mech: 'crates', ph: 2, label: 'Crates (Iku\'s turn, no fish)', o: { nofish: 1, mode: 'GN', do: ['Marked spots: crates are landing. Step out of them.', 'Two assigned breakers walk over two crates together.', 'Wait a few seconds for the bleed to fade, then the next two. Everyone else watches their feet.'] } }, { at: 222, mech: 'frostfire', ph: 2, label: 'Frostfire Volley 2' },
-  { at: 257, mech: 'blink', label: 'Blink Nova 6' }, { at: 267, mech: 'crates', label: 'Crates (A later set)' }, { at: 277, mech: 'swap', label: 'Shredding Shards 5' }, { at: 288, mech: 'blink', label: 'Blink Nova 7' }, { at: 290, mech: 'fish', ph: 3, label: 'The fish: Nama\'s turn', o: { to: 'na' } },
-  { at: 298, mech: 'crates', ph: 3, label: 'Crates (No fish in this set)', o: { nofish: 1, do: ['Marked spots: crates are landing. Step out of them.', 'Two assigned breakers walk over two crates together.', 'Wait a few seconds for the bleed to fade, then the next two. Everyone else watches their feet.'] } }, { at: 299, mech: 'eyes', ph: 3 }, { at: 308, mech: 'thud', ph: 3, label: 'Mighty Thud' }, { at: 325, mech: 'crates', ph: 3, label: 'Crates (Nama\'s turn, no fish)', o: { nofish: 1, do: ['Marked spots: crates are landing. Step out of them.', 'Two assigned breakers walk over two crates together.', 'Wait a few seconds for the bleed to fade, then the next two. Everyone else watches their feet.'] } }, { at: 336, beat: 'kill', ph: 3 },
+  { at: 51, mech: 'crates', label: 'Crates (No fish in this set)', o: { nofish: 1, do: ['Marked spots: crates are landing. Step out of them.', 'Two assigned breakers walk over two crates together.', 'Wait a few seconds for the bleed to fade, then the next two. Everyone else watches their feet.'] } }, { at: 57, mech: 'eyes', ph: 1 }, { at: 60, mech: 'kicks', ph: 1, label: 'Icebound Flames' }, { at: 66, mech: 'bomb', ph: 1, label: 'Explosive Surprise 1' }, { at: 70, mech: 'shell', ph: 1, label: 'Shell Spin (Nama with Iku)' }, { at: 81, mech: 'kicks', ph: 1, label: 'Icebound Flames' }, { at: 90, mech: 'crates', ph: 1, label: 'Crates (Gebbo\'s turn, no fish)', o: { nofish: 1, mode: 'IN', do: ['Marked spots: crates are landing. Step out of them.', 'Two assigned breakers walk over two crates together.', 'Wait a few seconds for the bleed to fade, then the next two. Everyone else watches their feet.'] } }, { at: 93, mech: 'swap', ph: 1, label: 'Shredding Shards 2' }, { at: 98, mech: 'bomb', ph: 1, label: 'Explosive Surprise 2' },
+  { at: 102, mech: 'shell', ph: 1, label: 'Shell Spin (Nama with Iku)' }, { at: 113, mech: 'kicks', ph: 1, label: 'Icebound Flames' }, { at: 133, mech: 'blink', label: 'Blink Nova 3' }, { at: 143, mech: 'crates', label: 'Crates (A later set)' }, { at: 153, mech: 'swap', label: 'Shredding Shards 3' }, { at: 159, mech: 'kicks', label: 'Icebound Flames' }, { at: 164, mech: 'blink', label: 'Blink Nova 4' }, { at: 170, mech: 'fish', ph: 2, label: 'The fish: Iku\'s turn', o: { to: 'ik' } },
+  { at: 174, mech: 'crates', label: 'Crates (No fish in this set)', o: { nofish: 1, do: ['Marked spots: crates are landing. Step out of them.', 'Two assigned breakers walk over two crates together.', 'Wait a few seconds for the bleed to fade, then the next two. Everyone else watches their feet.'] } }, { at: 181, mech: 'eyes', ph: 2 }, { at: 194, mech: 'crates', ph: 2, label: 'Crates (Iku\'s turn, no fish)', o: { nofish: 1, mode: 'GN', do: ['Marked spots: crates are landing. Step out of them.', 'Two assigned breakers walk over two crates together.', 'Wait a few seconds for the bleed to fade, then the next two. Everyone else watches their feet.'] } }, { at: 195, mech: 'frostfire', ph: 2, label: 'Frostfire Volley 1' }, { at: 203, mech: 'shell', ph: 2, label: 'Shell Spin (Nama with Gebbo)', o: { mode: 'GN' } }, { at: 208, mech: 'blink', ph: 2, label: 'Blink Nova 5 (Iku\'s turn)', o: { mode: 'GN' } }, { at: 217, mech: 'swap', ph: 2, label: 'Shredding Shards 4' }, { at: 221, mech: 'crates', ph: 2, label: 'Crates (Iku\'s turn, no fish)', o: { nofish: 1, mode: 'GN', do: ['Marked spots: crates are landing. Step out of them.', 'Two assigned breakers walk over two crates together.', 'Wait a few seconds for the bleed to fade, then the next two. Everyone else watches their feet.'] } }, { at: 222, mech: 'frostfire', ph: 2, label: 'Frostfire Volley 2' },
+  { at: 230, mech: 'shell', ph: 2, label: 'Shell Spin (Nama with Gebbo)', o: { mode: 'GN' } }, { at: 257, mech: 'blink', label: 'Blink Nova 6' }, { at: 267, mech: 'crates', label: 'Crates (A later set)' }, { at: 277, mech: 'swap', label: 'Shredding Shards 5' }, { at: 283, mech: 'kicks', label: 'Icebound Flames' }, { at: 288, mech: 'blink', label: 'Blink Nova 7' }, { at: 290, mech: 'fish', ph: 3, label: 'The fish: Nama\'s turn', o: { to: 'na' } },
+  { at: 298, mech: 'crates', ph: 3, label: 'Crates (No fish in this set)', o: { nofish: 1, do: ['Marked spots: crates are landing. Step out of them.', 'Two assigned breakers walk over two crates together.', 'Wait a few seconds for the bleed to fade, then the next two. Everyone else watches their feet.'] } }, { at: 299, mech: 'eyes', ph: 3 }, { at: 308, mech: 'thud', ph: 3, label: 'Mighty Thud 1' }, { at: 316, mech: 'kicks', ph: 3, label: 'Icebound Flames' }, { at: 325, mech: 'crates', ph: 3, label: 'Crates (Nama\'s turn, no fish)', o: { nofish: 1, do: ['Marked spots: crates are landing. Step out of them.', 'Two assigned breakers walk over two crates together.', 'Wait a few seconds for the bleed to fade, then the next two. Everyone else watches their feet.'] } }, { at: 326, mech: 'kicks', ph: 3, label: 'Icebound Flames' }, { at: 340, mech: 'thud', ph: 3, label: 'Mighty Thud 2' }, { at: 348, mech: 'kicks', ph: 3, label: 'Icebound Flames' }, { at: 356, mech: 'crates', ph: 3, label: 'Crates (Nama\'s turn, no fish)', o: { nofish: 1, do: ['Marked spots: crates are landing. Step out of them.', 'Two assigned breakers walk over two crates together.', 'Wait a few seconds for the bleed to fade, then the next two. Everyone else watches their feet.'] } }, { at: 358, mech: 'kicks', ph: 3, label: 'Icebound Flames' }, { at: 365, mech: 'kicks', ph: 3, label: 'Icebound Flames' }, { at: 370, beat: 'kill', ph: 3 },
 ];
 const LE_DUR = { 'm:pair': 0, 'm:blink': 7, 'm:shell': 4, 'm:crates': 25, 'm:swap': 3, 'm:kicks': 2, 'm:fish': 15, 'm:bomb': 12, 'm:frostfire': 10, 'm:thud': 14, 'b:start': 2, 'm:eyes': 5, 'b:kill': 0 };
 const LE_SEV = { 'm:pair': 1, 'm:blink': 2, 'm:shell': 1, 'm:crates': 2, 'm:swap': 2, 'm:kicks': 1, 'm:fish': 3, 'm:bomb': 3, 'm:frostfire': 3, 'm:thud': 3, 'b:start': 1, 'm:eyes': 1, 'b:kill': 1 };
@@ -41119,8 +41137,8 @@ GDZ['The Lost Explorers'] = {
   sum: 'Three bosses: two tanked together, the third 30+ yards away, and whichever boss has eaten the fish is the one on its own. Break crates in pairs, feed the fish at 95 energy, survive each boss\'s ultimate, and bring all three down together.',
   m: { sim: LE_SIM, simDur: LE_DUR, simSev: LE_SEV, beats: LE_BEATS,
     simAlways: ['Two bosses together, one 30+ yards away: never all three within 30 yards.', 'The boss that ate the fish is the one kept apart.', 'Crates two at a time, a few seconds apart: each one makes the whole raid bleed.', 'Kick every Icebound Flames; swap tanks on every Shredding Shards.'],
-    source: 'Tactyks\' Mythic Lost Explorers video', sum: 'Three bosses: two tanked together, the third 30+ yards away, and whichever boss has eaten the fish is the one on its own. Crates make the whole raid bleed, so pop them two at a time (six a set). Gebbo\'s bomb comes with one mushroom for each bomb. Feed the fish at 95 energy, survive each ultimate, and bring all three down together.' },
-  facts: [['Bosses', '3: Gebbo, Iku, Nama'], ['Bloodlust', 'On the pull'], ['Healers', '4 (5 on early kills)', 'm'], ['Hardest part', 'The ultimates'], ['Fight length', 'About 5 to 6 minutes', 'm']],
+    source: 'Tactyks\' Mythic Lost Explorers video', sum: 'Three bosses: two tanked together, the third 30+ yards away, and whichever boss has eaten the fish is the one on its own. Crates make the whole raid bleed, so pop them two at a time (four in a set, six when the fish is in it). Gebbo\'s bomb comes with one mushroom for each bomb. Feed the fish at 95 energy, survive each ultimate, and bring all three down together.' },
+  facts: [['Bosses', '3: Gebbo, Iku, Nama'], ['Bloodlust', 'On the pull'], ['Healers', '4 (the fastest kills use 3)', 'm'], ['Hardest part', 'The ultimates'], ['Fight length', 'About 5 to 6 minutes', 'm']],
   phases: [
     { id: 'p1', name: 'Phase 1: before the first fish', sum: 'All fight long: two bosses together, one apart, crates, shells, Blink Nova, kicks and tank swaps. Then the fish, three times.',
       mechs: [
@@ -41130,12 +41148,12 @@ GDZ['The Lost Explorers'] = {
           map: () => LE_M.pair() },
         { id: 'crates', fail: LE_FAIL.crates, name: 'Crates (Break them in pairs)', spell: 'Throw Junk', what: 'Gebbo throws crates onto marked spots. Walking over one breaks it and bleeds you (Splinters). One crate holds the fish. A crate left too long explodes.',
           do: ['Marked spots: crates are landing. Step out of them.', 'Two assigned breakers walk over two crates together.', 'Wait a few seconds for the bleed to fade, then the next two.', 'The fish carrier picks up the fish. Everyone else watches their feet.'],
-          m: { what: 'Gebbo throws crates onto marked spots. Walking over one breaks it and bleeds the whole raid (Splinters). One crate holds the fish. A crate left too long explodes.', plan: ['Six crates a set: pop two, wait for the bleed to drop, pop two more. Never three at once, and never during a Blink Nova.', 'Breakers: the off-tank with a mobile ranged, then two mobile ranged. The fish carrier is someone else.', 'Melee: stepping on a crate by accident is the most common wipe here.', 'Don\'t break crates during Gebbo\'s bomb.'] },
+          m: { what: 'Gebbo throws crates onto marked spots. Walking over one breaks it and bleeds the whole raid (Splinters). One crate holds the fish. A crate left too long explodes.', plan: ['Four crates a set, six when the fish is in it: pop two, wait for the bleed to drop, pop two more. Never three at once, and never during a Blink Nova.', 'Breakers: the off-tank with a mobile ranged, then two mobile ranged. The fish carrier is someone else.', 'Melee: stepping on a crate by accident is the most common wipe here.', 'Don\'t break crates during Gebbo\'s bomb.'] },
           map: (d, o) => LE_M.crates(false, d, o) },
         { id: 'shell', fail: LE_FAIL.shell, name: 'Shell Spin (Take it outside)', spell: 'Shell Spin', what: 'Nama throws three spinning shells in a cone at a random melee. Anyone they touch is stunned for 4 seconds.',
           do: ['The melee picked steps to the outside of the room.', 'The shells fly outward, away from the ranged.', 'Then step out of their line.'],
           m: { plan: ['Call every Shell Spin.', 'When Nama is the boss on her own, the shells come from far away: just dodge them.'] },
-          map: () => LE_M.shell() },
+          map: (d, o) => LE_M.shell(false, o) },
         { id: 'blink', fail: LE_FAIL.blink, name: 'Blink Nova (Out in front)', spell: 'Blink Nova', what: 'Iku marks a ranged player and teleports to them 7 seconds later. The nova hits the whole raid, less the farther away you are.',
           do: ['Marked? Walk out in front of the raid, toward the edge.', 'Iku lands on you: the nova is weaker for everyone else.', 'Her tank picks her back up.'],
           plan: ['Go ahead of where Gebbo is walking, so the bosses don\'t drift into each other and become immune. It always picks a ranged player.'],
@@ -41187,9 +41205,20 @@ GDZ['The Lost Explorers'] = {
 };
 GDZ['The Lost Explorers'].m.roles = {
   t: ['Iku next to Gebbo, Nama 30+ yards away; the boss with its ultimate is the one apart.', 'Swap on every Shredding Shards: trade bosses.', 'Kick Icebound Flames first in the order.'],
-  h: ['Crates bleed the whole raid: heal through each pair, and have a fifth healer on early kills.', 'Dispel any Icebound Flames that lands.', 'Blink Nova hurts the whole raid: be ready for it.', 'Cooldowns for Frostfire clears and the Mighty Thud soaks.'],
+  h: ['Crates bleed the whole raid: heal through each pair. Our kills used four healers; the fastest raids use three.', 'Dispel any Icebound Flames that lands.', 'Blink Nova hurts the whole raid: be ready for it.', 'Cooldowns for Frostfire clears and the Mighty Thud soaks.'],
   d: ['Melee: never step on a crate by accident.', 'Shell Spin on you: take it to the outside.', 'Blink Nova on you: out in front, toward the edge.', 'Frostfire: spread in fire and frost pairs; clear one pair at a time.'],
 };
+const LE_SIM_H = [
+  { at: 0, beat: 'start' }, { at: 5, mech: 'pair', label: 'Two together, one apart' }, { at: 10, mech: 'blink', label: 'Blink Nova 1' }, { at: 20, mech: 'crates', label: 'Crates (First set, with the fish)' },
+  { at: 30, mech: 'swap', label: 'Shredding Shards 1' }, { at: 36, mech: 'kicks', label: 'Icebound Flames' }, { at: 41, mech: 'blink', label: 'Blink Nova 2' }, { at: 43, mech: 'fish', ph: 3, label: 'The fish: Nama\'s turn', o: { to: 'na' } },
+  { at: 51, mech: 'crates', ph: 3, label: 'Crates (No fish in this set)', o: { nofish: 1, do: ['Marked spots: crates are landing. Step out of them.', 'Two assigned breakers walk over two crates together.', 'Wait a few seconds for the bleed to fade, then the next two. Everyone else watches their feet.'] } }, { at: 54, mech: 'eyes', ph: 3 }, { at: 60, mech: 'kicks', ph: 3, label: 'Icebound Flames' }, { at: 71, mech: 'kicks', ph: 3, label: 'Icebound Flames' },
+  { at: 73, mech: 'thud', ph: 3, label: 'Mighty Thud 1' }, { at: 80, mech: 'crates', ph: 3, label: 'Crates (No fish in this set)', o: { nofish: 1, do: ['Marked spots: crates are landing. Step out of them.', 'Two assigned breakers walk over two crates together.', 'Wait a few seconds for the bleed to fade, then the next two. Everyone else watches their feet.'] } }, { at: 81, mech: 'kicks', ph: 3, label: 'Icebound Flames' }, { at: 90, mech: 'swap', ph: 3, label: 'Shredding Shards 2' },
+  { at: 103, mech: 'kicks', ph: 3, label: 'Icebound Flames' }, { at: 105, mech: 'thud', ph: 3, label: 'Mighty Thud 2' }, { at: 111, mech: 'crates', ph: 3, label: 'Crates (No fish in this set)', o: { nofish: 1, do: ['Marked spots: crates are landing. Step out of them.', 'Two assigned breakers walk over two crates together.', 'Wait a few seconds for the bleed to fade, then the next two. Everyone else watches their feet.'] } }, { at: 113, mech: 'kicks', ph: 3, label: 'Icebound Flames' }, { at: 120, mech: 'kicks', ph: 3, label: 'Icebound Flames' },
+  { at: 130, mech: 'blink', ph: 3, label: 'Blink Nova 3' }, { at: 141, mech: 'crates', ph: 3, label: 'Crates (With the fish)' }, { at: 150, mech: 'swap', ph: 3, label: 'Shredding Shards 3' }, { at: 156, mech: 'kicks', ph: 3, label: 'Icebound Flames' },
+  { at: 167, mech: 'fish', ph: 1, label: 'The fish: Gebbo\'s turn', o: { to: 'ge' } }, { at: 171, mech: 'crates', ph: 1, label: 'Crates (No fish in this set)', o: { nofish: 1, do: ['Marked spots: crates are landing. Step out of them.', 'Two assigned breakers walk over two crates together.', 'Wait a few seconds for the bleed to fade, then the next two. Everyone else watches their feet.'] } }, { at: 178, mech: 'eyes', ph: 1 }, { at: 186, beat: 'kill', ph: 1 },
+];
+GDZ['The Lost Explorers'].h = { sim: LE_SIM_H, simDur: LE_DUR, simSev: LE_SEV, beats: LE_BEATS,
+  simAlways: ['Two bosses together, one 30+ yards away: never all three within 30 yards.', 'The boss that ate the fish is the one kept apart.', 'Crates two at a time, a few seconds apart: each one makes the whole raid bleed.', 'Kick every Icebound Flames; swap tanks on every Shredding Shards.'] };
 gdzFillDo('The Lost Explorers');
 // ---- Something wrong here? (your OK, Oct 20): Report a problem, with this guide, its difficulty and the mechanic filled in ----
 // (only where reports can be sent: the website)
