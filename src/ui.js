@@ -1669,6 +1669,7 @@ function openReport() {
 const PATCH_NOTES = [
   { d: '2026-10-22', h: [
     { t: 'Your coach on Debriefing', d: 'Every pull and every night now opens with a coach right under the boss banner: what went right, what went wrong and how to fix it, and one thing to focus on next pull. Pick yourself at the top right and it coaches you. Read the full coaching opens the long version.' },
+    { t: 'A coach on the Report card', d: 'The Report card now opens with a coach for the whole night: what went right, what went wrong, how to fix it and why it matters, with the same #1 fix as Debriefing. Pick a raider and it coaches their night. Read the full coaching opens the rest.' },
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
@@ -20924,7 +20925,8 @@ function rcwNight(c, F) {
   if (every.length) s.push(andList(every.map((o) => esc(o.n))) + ' went wrong in every pull.');
   // (the one thing for next time: the mechanic that cost the most points late in the night)
   const late = (o) => o.per.slice(k ? n - k : 0).reduce((t, v) => t + v, 0), foc = M.filter((o) => late(o) > 0).sort((u, v) => v.pts * late(v) / v.tot - u.pts * late(u) / u.tot)[0];
-  const nx = foc ? '<span class="rcw-nx">Next ' + (kill ? 'week' : 'pull') + ': <b>' + esc(foc.n) + '</b>. ' + esc(dbfTip1(foc.fix) || 'It cost us the most points late in the night.') + '</span>' : '';
+  if (!F._rcco) rccoRaid(c, F); /* (the coach's #1 is the strip's next thing, so the page never says two different things) */
+  const nx = F._rcco && F._rcco.focus ? '<span class="rcw-nx">Next ' + (kill ? 'week' : 'pull') + ': ' + F._rcco.focus + '</span>' : foc ? '<span class="rcw-nx">Next ' + (kill ? 'week' : 'pull') + ': <b>' + esc(foc.n) + '</b>. ' + esc(dbfTip1(foc.fix) || 'It cost us the most points late in the night.') + '</span>' : '';
   return '<section class="rcw-strip"><span class="rcw-q">The night, in short</span><p>' + s.join(' ') + (nx ? ' ' + nx : '') + '</p></section>'; }
 function rcwRaider(c, F) {
   const B = rcbFacts(c, F), x = rcbSel(c, F); if (!x) return ''; const a = x.a, p = a.p, nm = p.name, pf = F.pl.get(nm), L = letterOf(x.score), n = a.n;
@@ -20969,11 +20971,125 @@ function rcwRaider(c, F) {
     '<p>' + tone + '. ' + s2 + '</p>' + (next ? '<div class="rcw-nx">Next pull: ' + next + '</div>' : '') + '</div>' +
     '<div class="rcw-l g"><h5>Went well</h5>' + (W.length ? li(W) : '<p class="sub">Nothing stood out yet. The first fixes are on the right.</p>') + '</div>' +
     '<div class="rcw-l w"><h5>Work on</h5>' + (X.length ? li(X) : '<p class="okv">Nothing that cost points. A clean night.</p>') + '</div></section>'; }
+// ---- The coach (your ask, Oct 22): at the very top, a raid leader coaching the night as if for a world-first race: what went right, what
+// went wrong with how to fix it, and one focus for next raid; "Read the full coaching" opens the in-depth version in place. With Everyone it
+// coaches the raid, with a raider picked (the player picker) that raider over every pull. Built from the night's numbers, nothing graded again.
+const RCCO_HOW_DEF = (d) => 'When your health drops and keeps dropping, press ' + d + '. Pressed a little early it still saves you; never pressed, it does nothing. Make it a habit to check it when you take a big hit.';
+// (why it matters, as a coach would put it, by the kind of problem: the reason to change, not just the change)
+const RCCO_WHY = { death: 'A dead player does no damage and no healing for the rest of the pull. On progression, one more player alive at the end is often the whole difference between a wipe and a kill.',
+  def: 'Defensives exist for exactly this moment. Pressed in time, a death becomes a close call, the pull keeps going, and we see more of the fight.',
+  pot: 'A potion is free damage. On progression the wall is often a damage check or a phase timer, and those few percent across the raid decide it.',
+  out: 'Damage and healing decide whether we push phases on time. A few percent from each of us adds up to a kill.',
+  prep: 'Flask, food, oil and rune are free numbers. The best raids never go into a pull without them.' };
+const rccoWhyM = (name) => { const t = String(name || '').toLowerCase(); return /kick|interrupt/.test(t) ? 'A cast that gets through can wipe us outright, or burn a healing cooldown we needed later.' : /soak|guillotine|assign|note/.test(t) ? 'Soaks are planned around exact groups. One player missing or extra and someone takes double, and the next soak breaks too.' : /frontal|sever|cone|tank|cleave/.test(t) ? 'The tank is built to take that hit. Anyone else in it takes damage the healers never planned for.' : /venom|bomb|kiss|spread|circle|resonance|ghost/.test(t) ? 'When it lands on more than one player the damage doubles and chains into deaths. That is how a clean pull falls apart.' : 'Avoidable damage drains healer mana. Late in the pull that mana is what keeps everyone alive, so every hit we dodge now is a heal we have later.'; };
+const rccoWhyF = (f) => { const k = String(f.key || ''); return /^m\|/.test(k) ? rccoWhyM(f.t) : /^c\|pot/.test(k) || /potion/i.test(f.t) ? RCCO_WHY.pot : /^p\|/.test(k) ? RCCO_WHY.prep : RCB_FIX.surv(f) ? RCCO_WHY.death : /^(r\||pace)/.test(k) ? RCCO_WHY.out : ''; };
+// (deaths that are on the player: slower than 2 seconds from healthy, with a defensive still ready)
+const rccoDefs = (dd) => dd.filter((d) => (d.window || 0) > 2).map((d) => (d.available || []).filter((y) => !/^(Healthstone|a healing potion)$/.test(y))).filter((l) => l.length);
+const rccoTop = (l, k) => { const m = new Map(); for (const x of l) m.set(x, (m.get(x) || 0) + 1); return [...m].sort((u, v) => v[1] - u[1]).slice(0, k || 3); };
+// (the #1 fix is Debriefing's shared coach (coachSummary), so it's the same on every tab: it leads What went wrong and is the focus;
+// our own item on the same subject steps aside. Until that's on the site, our own biggest item is used.)
+function rccoShared(reps, name, W) { if (typeof coachSummary !== 'function') return null; let cs = null; try { cs = coachSummary(reps, name); } catch (e) { return null; } const w0 = cs && cs.wrong && cs.wrong[0]; if (!w0 || w0.kind === 'clean') return null;
+  // (its fields are plain text; our own item on the same subject steps aside: same words, or both about deaths)
+  const STOP = /^(with|your|that|this|were|went|from|they|them|their|ready|still|pull|pulls|times|wrong|most|often|defensive|deaths?)$/, key = String(w0.label || '').toLowerCase().split(/[^a-z']+/).filter((x) => x.length > 3 && !STOP.test(x));
+  for (let i = W.length - 1; i >= 0; i--) { const t = W[i].t.replace(/<[^>]+>/g, '').toLowerCase(); if (key.some((x) => t.includes(x)) || (w0.kind === 'death' && W[i].why === RCCO_WHY.def)) W.splice(i, 1); }
+  // (n is what the kind counts: wipes it caused for the raid's fix, pulls it happened in for a player's)
+  const cnt = !(w0.n && w0.of) ? '' : w0.kind === 'raid' ? ' wiped us ' + (w0.n === 1 ? 'once' : w0.n + ' times') + ', more than anything else' : ' in ' + w0.n + ' of ' + plural(w0.of, 'pull');
+  W.unshift({ w: Infinity, t: '<b>' + esc(w0.label || '') + '</b>' + esc(cnt) + '.', fix: esc(w0.how || w0.fix || ''), why: w0.kind === 'death' ? RCCO_WHY.def : w0.kind === 'rot' ? RCCO_WHY.out : w0.kind === 'raid' ? 'It ended more of our pulls than anything else. Fix this one and we see more of the fight on every pull.' : 'Of everything you did tonight, this cost the most. Get it right and the rest of the fight gets easier, because you are still alive to do it.' }); return esc(cs.focus || w0.fix || ''); }
+// (the coach's look: the headline, went right, went wrong (each with its fix), the focus, then the full coaching folded)
+function rccoBox(o) {
+  const right = o.right.slice(0, 2).map((t) => '<li>' + t + '</li>').join(''), wrong = o.wrong.slice(0, 3).map((w) => '<li><b>' + w.t + '</b>' + (w.fix ? '<span class="rcco-fx">' + dbfTip1(w.fix) + '</span>' : '') /* (the first sentence up top; the whole how-to is in the full coaching) */ + (w.why ? '<span class="rcco-why"><b>Why it matters:</b> ' + w.why + '</span>' : '') + '</li>').join('');
+  return '<section class="rcco"' + (o.cc ? ' style="--cc:' + o.cc + '"' : '') + '><div class="rcco-k">' + o.k + '</div><p class="rcco-h">' + o.head + '</p>' +
+    '<div class="rcco-2">' + (right ? '<div class="rcco-l g"><h5>What went right</h5><ul>' + right + '</ul></div>' : '') + (wrong ? '<div class="rcco-l w"><h5>What went wrong, and how to fix it</h5><ul>' + wrong + '</ul></div>' : '<div class="rcco-l g"><h5>What went wrong</h5><p class="okv">Nothing that cost points. Keep doing exactly this.</p></div>') + '</div>' +
+    (o.focus ? '<div class="rcco-f"><span class="rcco-fk">Focus next raid</span>' + o.focus + '</div>' : '') +
+    '<details class="rcco-more"' + (S.rccoOpen ? ' open' : '') + '><summary>Read the full coaching</summary><div class="rcco-full">' + o.full + '</div></details></section>'; }
+const rccoSec = (t, body) => (body ? '<div class="rcco-s"><h4>' + t + '</h4>' + body + '</div>' : '');
+// the raid's night
+function rccoRaid(c, F) {
+  const P = F.pulls, n = P.length, kill = P.find((q) => q.it.kill), wip = P.filter((q) => !q.it.kill), M = [...F.mech.values()].sort((u, v) => v.pts - u.pts), it = F.reps[0].item, B = rcbFacts(c, F);
+  const raid = c.data.reduce((s, a) => s + a.score, 0) / c.data.length, best = wip.filter((q) => q.left != null).sort((u, v) => u.left - v.left)[0], k = n >= 6 ? Math.ceil(n / 3) : 0;
+  const dp = (l) => l.reduce((t, q) => t + q.kept.length, 0) / l.length, early = k ? dp(P.slice(0, k)) : null, late = k ? dp(P.slice(n - k)) : null;
+  const fixed = k ? M.filter((o) => o.per.slice(0, k).filter(Boolean).length >= 2 && !o.per.slice(n - k).some(Boolean)) : [];
+  const pullsWith = (o) => o.per.filter(Boolean).length, who = (o, m) => rccoTop([...o.who].flatMap(([w, x]) => Array(x).fill(w)), m || 2).map(([w, x]) => esc(w) + ' (' + x + ')');
+  // ---- the headline ----
+  const head = (kill ? '<b>We killed ' + esc(it.boss) + ' on pull ' + kill.it.pull + '</b>' + (wip.length ? ', after ' + plural(wip.length, 'wipe') : '') + ', and the raid graded <b>' + letterOf(raid) + '</b> (' + Math.round(raid) + ').'
+    : '<b>No kill tonight</b>, but ' + (best ? 'our best pull reached <b>' + esc(best.label) + '</b>' : 'every pull taught us something') + ', and the raid graded <b>' + letterOf(raid) + '</b> (' + Math.round(raid) + ').') +
+    (k && late <= early * 0.8 ? ' We got better as the night went on, and that is exactly how progression looks.' : k && late >= early * 1.25 ? ' We got sloppier late, which usually means we were tired. Short breaks help.' : '');
+  // ---- what went right ----
+  const right = [];
+  if (k && late <= early * 0.8) right.push('We got steadier: deaths that counted fell from ' + early.toFixed(1) + ' a pull early on to ' + late.toFixed(1) + ' by the end. That is the raid learning the fight.');
+  if (fixed.length) right.push('We fixed ' + andList(fixed.slice(0, 2).map((o) => '<b>' + esc(o.n) + '</b>')) + ': it went wrong early and was clean in the last ' + plural(k, 'pull') + '. Proof that when we talk a mechanic through, we fix it.');
+  const subs = RCB_SUBJ.map(([k0, l]) => { const v = B.rows.filter((x) => x[k0] != null); return v.length ? { k: k0, l, v: v.reduce((s, x) => s + x[k0], 0) / v.length } : null; }).filter(Boolean).sort((u, v) => v.v - u.v);
+  const sb = subs.find((s) => s.k !== 'mech' && s.k !== 'out'); /* (Mechanics here is each raider's own mistakes, so it can read high on a night a mechanic failed) */ if (sb) right.push('Our ' + sb.l.toLowerCase() + ' was a real strength: ' + Math.round(sb.v) + ' across the raid' + ({ prep: ', so flasks, food, oil and runes were there' , surv: ', so defensives and Healthstones got used', play: ', so the buttons got pressed well', pot: ', so potions got drunk' }[sb.k] || '') + '. Those are free numbers, and we did not leave them on the table.');
+  // ---- what went wrong (biggest first), each with how to fix it ----
+  const allD = P.flatMap((q) => q.kept), dRdy = rccoDefs(allD), potU = P.reduce((s, q) => s + q.used, 0), potE = P.reduce((s, q) => s + q.expect, 0);
+  // (what killed us most counts too: a killer that shares a word with a mechanic (Venom Rupture, Mutagenic Venom) adds its deaths to it)
+  const kc = rccoTop(allD.map((d) => d.ability).filter(Boolean), 3), wd = (t) => String(t).toLowerCase().split(/[^a-z']+/).filter((w) => w.length > 3), kOf = (o) => kc.find(([ab, x]) => x >= Math.max(5, allD.length / 5) && wd(ab).some((w) => wd(o.n).includes(w)));
+  const W = M.map((o) => { const kk = kOf(o); return { w: o.pts + (kk ? 8 * kk[1] : 0), t: '<b>' + esc(o.n) + '</b> went wrong in ' + pullsWith(o) + ' of ' + plural(n, 'pull') + (kk ? ', and <b>' + esc(kk[0]) + '</b> killed us ' + kk[1] + ' times' : '') + (o.who.size ? (kk ? '. Most often ' : ', most often ') + andList(who(o)) : '') + '.', fix: esc(o.fix || 'Go over it together before the next pull, and say who does what.'), why: kk ? 'That is ' + kk[1] + ' times we lost a player for the rest of the pull. Fix this one and every pull goes longer and further.' : rccoWhyM(o.n) }; });
+  { const k0 = kc[0]; if (k0 && k0[1] >= Math.max(5, allD.length / 4) && !M.some((o) => kOf(o) === k0)) W.push({ w: 5 * k0[1], t: '<b>' + esc(k0[0]) + '</b> killed us ' + k0[1] + ' times, more than anything else.', fix: 'Find out who it hits and when, then plan a defensive or a big heal for that moment.', why: RCCO_WHY.death }); }
+  if (dRdy.length >= 3) W.push({ w: dRdy.length * 8, t: '<b>' + dRdy.length + ' of our ' + plural(allD.length, 'death') + '</b> came with a defensive still ready.', fix: 'When your health drops and keeps dropping, press your defensive. Healers, call it out when someone is sliding. A defensive pressed early still saves a life; one never pressed does nothing.', why: RCCO_WHY.def });
+  if (potE && potU / potE < 0.8) W.push({ w: (potE - potU) * 2, t: 'We drank combat potions in only <b>' + Math.round(100 * potU / potE) + '%</b> of the chances we had.', fix: 'Drink it with Bloodlust and your big cooldowns, every pull.', why: RCCO_WHY.pot });
+  W.sort((u, v) => v.w - u.w);
+  const shared = rccoShared(P.map((q) => q.r), null, W), focus = shared != null ? shared : W[0] ? dbfTip1(W[0].fix) : ''; /* (already safe text) */
+  // ---- the full coaching ----
+  const arc = k ? '<p>Early on (pulls ' + P[0].it.pull + ' to ' + P[k - 1].it.pull + ') we averaged ' + early.toFixed(1) + ' deaths a pull; in the middle ' + dp(P.slice(k, n - k)).toFixed(1) + '; late (pulls ' + P[n - k].it.pull + ' to ' + P[n - 1].it.pull + ') ' + late.toFixed(1) + '.' + (best && !kill ? ' Our best was pull ' + best.it.pull + ', at ' + esc(best.label) + '.' : '') + '</p>' : '';
+  const mech = M.length ? '<ul class="rcco-ml">' + M.slice().sort((u, v) => (pullsWith(v) >= n / 2) - (pullsWith(u) >= n / 2) || pullsWith(v) - pullsWith(u) || v.pts - u.pts).map((o) => { const pw = pullsWith(o), red = pw >= n / 2; return '<li><i class="rcco-fl ' + (red ? 'r' : 'y') + '"></i><div><b>' + esc(o.n) + '</b> <span class="sub">' + (red ? 'Failed' : 'Some mistakes') + ' · wrong in ' + pw + ' of ' + n + ' pulls, ' + plural(o.tot, 'time') + (o.who.size ? ' · ' + who(o, 3).join(', ') : '') + '</span>' + (o.fix ? '<div class="rcco-fx">' + esc(o.fix) + '</div>' : '') + '<div class="rcco-why"><b>Why it matters:</b> ' + rccoWhyM(o.n) + '</div></div></li>'; }).join('') + '</ul>' : '<p class="okv">No mechanic mistakes that cost points all night.</p>';
+  const killers = rccoTop(allD.map((d) => d.ability || 'unknown'));
+  const alive = '<p>' + plural(allD.length, 'death') + ' counted over ' + plural(n, 'pull') + ' (up to the wipe filter).' + (killers.length ? ' What killed us most: ' + andList(killers.map(([a, x]) => esc(a) + ' (' + x + ')')) + '.' : '') +
+    (dRdy.length ? ' In ' + dRdy.length + ' of them the player went down slowly with a defensive still ready' + (() => { const t = rccoTop(allD.filter((d) => rccoDefs([d]).length).map((d) => d.player), 3); return t.length ? ', most often ' + andList(t.map(([w, x]) => esc(w) + ' (' + x + ')')) : ''; })() + '.' : '') + '</p>' + (dRdy.length ? '<p class="rcco-fx">' + RCCO_HOW_DEF('your defensive') + '</p>' : '');
+  const potLow = c.data.map((a) => ({ a, f: F.pl.get(a.p.name) })).filter((x) => x.f.expect && x.f.used / x.f.expect < 0.7).sort((u, v) => u.f.used / u.f.expect - v.f.used / v.f.expect).slice(0, 4);
+  const prep = '<p>Combat potions: ' + (potE ? Math.round(100 * potU / potE) + '% of the chances we had' : 'not judged') + '.' + (potLow.length ? ' Missed the most: ' + andList(potLow.map((x) => esc(x.a.p.name) + ' (' + x.f.used + ' of ' + x.f.expect + ')')) + '.' : '') + (subs.find((s) => s.k === 'prep') ? ' Prep (flask, food, oil, rune, enchants, gems): ' + Math.round(subs.find((s) => s.k === 'prep').v) + ' across the raid.' : '') + '</p>';
+  const top3 = c.data.slice().sort((u, v) => v.score - u.score).slice(0, 3), imp = c.data.filter((a) => a.trend != null && a.trend >= 3).sort((u, v) => v.trend - u.trend).slice(0, 3);
+  const ppl = '<p>The best report cards tonight: ' + andList(top3.map((a) => '<b class="nm" style="color:' + a.p.color + '">' + esc(a.p.name) + '</b> (' + letterOf(a.score) + ' ' + Math.round(a.score) + ')')) + '.' + (imp.length ? ' Most improved over the night: ' + andList(imp.map((a) => '<b class="nm" style="color:' + a.p.color + '">' + esc(a.p.name) + '</b> (+' + Math.round(a.trend) + ')')) + '.' : '') + ' Pick anyone in the player picker for their own coaching.</p>';
+  const full = rccoSec('How the night went', arc) + rccoSec('Mechanics, worst first', mech) + rccoSec('Staying alive', alive) + rccoSec('Prep and potions', prep) + rccoSec('The people', ppl);
+  F._rcco = { focus }; /* (the night in short says the same next thing as the coach) */
+  return rccoBox({ k: 'Coach · the raid\'s night', head, right, wrong: W, focus, full }); }
+// one raider's night, over every pull
+function rccoRaider(c, F, a) {
+  const B = rcbFacts(c, F), x = B.rows.find((y) => y.a === a); if (!x) return ''; const p = a.p, nm = p.name, pf = F.pl.get(nm), L = letterOf(a.score), n = a.n, first = esc(nm);
+  const pullsN = a.per.map((g) => g.r.item.pull), lateP = pullsN[Math.floor(pullsN.length * 2 / 3)] || 0, midP = pullsN[Math.floor((pullsN.length - 1) / 2)] || 0;
+  const mm = new Map(); for (const g of a.per) for (const m of keptMistakes(g.r)) if (m.player === nm && m.mechanic !== 'Death') { const o = mm.get(m.mechanic) || { t: m.mechanic, n: 0, pulls: new Set(), fix: '' }; o.n++; o.pulls.add(g.r.item.pull); if (!o.fix && m.fix) o.fix = m.fix; mm.set(m.mechanic, o); }
+  const dd = []; for (const g of a.per) for (const d of keptDeaths(g.r)) if (d.player === nm) dd.push({ pull: g.r.item.pull, ...d });
+  const defs = rccoDefs(dd), defN = rccoTop(defs.flat(), 2).map((z) => z[0]);
+  const cdm = new Map(); for (const g of a.per) { const C0 = perfContext(g.r), y = C0.per.get(g.p.name); if (!y) continue; for (const cd of bigCds(g.r, g.p, Math.max(0, Math.min(y.until, C0.end)), C0.lust)) { const o = cdm.get(cd.name) || { name: cd.name, used: 0, poss: 0 }; o.used += cd.used; o.poss += cd.poss; cdm.set(cd.name, o); } }
+  const RL = { out: (p.role || 'dps') === 'healer' ? 'Healing' : 'Damage' }, subs = RCB_SUBJ.filter(([k0]) => x[k0] != null).map(([k0, l, , why]) => ({ k: k0, l: RL[k0] || l, why, v: x[k0], r: B.rk[k0].m.get(x), N: B.rk[k0].n }));
+  const top = subs.filter((y) => y.r <= 3 || y.v >= 95).sort((u, v) => u.r - v.r || v.v - u.v), low = subs.filter((y) => y.r > y.N / 2).sort((u, v) => u.v - v.v)[0];
+  const worstM = [...mm.values()].filter((o) => o.n >= 2).sort((u, v) => v.n - u.n)[0], fx = (a.fixes || []).filter((f) => (f.gain || 0) >= 0.5);
+  // ---- the headline ----
+  const tone = { S: 'An outstanding night', A: 'A strong night', B: 'A good night', C: 'A decent night, with real points on the table', D: 'A tough night, but every one of these is fixable', F: 'A rough night, but every one of these is fixable' }[L] || 'Your night';
+  const head = tone + ', <b class="nm" style="color:' + p.color + '">' + first + '</b>. You finished <b>#' + B.rk.score.m.get(x) + ' of ' + B.rk.score.n + '</b> with a <b>' + L + '</b> (' + Math.round(a.score) + ') over ' + plural(n, 'pull') + (pf.last != null && Math.abs(pf.last) >= 1 ? ', ' + (pf.last > 0 ? 'up ' : 'down ') + Math.round(Math.abs(pf.last)) + ' on last night' : '') + '. I went through every pull, and here is what I would tell you.';
+  // ---- what went right ----
+  const right = top.slice(0, 2).map((y) => 'Your <b>' + y.l.toLowerCase() + '</b>: ' + Math.round(y.v) + ', #' + y.r + ' of ' + y.N + ' in the raid. ' + ({ prep: 'Free numbers, every pull. Keep it that way.', pot: 'That is free damage you never left behind.', mech: 'Clean mechanics keep the healers free to heal everyone else.', surv: 'Staying alive is the first job, and you did it.' }[y.k] || 'That is the output that pushes phases on time.'));
+  const cdG = [...cdm.values()].filter((o) => o.poss >= 3 && o.used / o.poss >= 0.85 && !RAID_CD_N.has(o.name.toLowerCase())).sort((u, v) => v.poss - u.poss)[0];
+  if (cdG) right.push('You got <b>' + esc(cdG.name) + '</b> out ' + cdG.used + ' of the ' + cdG.poss + ' times you could. Big cooldowns pressed on time are where most of your numbers come from.');
+  if (!pf.deaths) right.push('No deaths that counted in ' + plural(n, 'pull') + '. Staying alive is the first job.');
+  const cleaned = [...mm.values()].filter((o) => Math.max(...o.pulls) <= midP && pullsN.filter((q) => q > Math.max(...o.pulls)).length >= 3)[0];
+  if (cleaned) right.push('You fixed <b>' + esc(cleaned.t) + '</b>: clean since pull ' + pullsN.find((q) => q > Math.max(...cleaned.pulls)) + '.');
+  // ---- what went wrong, biggest first, each with how ----
+  const W = [];
+  if (defs.length) W.push({ w: defs.length * 6, t: (defs.length === dd.length && dd.length > 1 ? (dd.length === 2 ? 'Both of your deaths' : 'All ' + dd.length + ' of your deaths') : defs.length + ' of your ' + plural(dd.length, 'death')) + ' came with ' + esc(rcwOr(defN)) + ' still ready.', fix: esc(RCCO_HOW_DEF(defN[0])), why: RCCO_WHY.def });
+  if (worstM) { const mx = Math.max(...worstM.pulls); W.push({ w: worstM.n * 3, t: '<b>' + esc(worstM.t) + '</b> got you in ' + worstM.pulls.size + ' of ' + plural(n, 'pull') + (mx >= lateP ? ', still in pull ' + mx : '') + '.', fix: esc(worstM.fix || 'Watch for it on the next pull and ask the raid leader where you should be.'), why: rccoWhyM(worstM.t) }); }
+  const lowFix = low && fx.find((f) => (RCB_FIX[low.k] || (() => false))(f));
+  if (low) W.push({ w: (100 - low.v) / 4, t: 'Your <b>' + low.l.toLowerCase() + '</b> was #' + low.r + ' of ' + low.N + ' in the raid.', fix: lowFix ? '<b>' + esc(lowFix.t) + '.</b> ' + esc(lowFix.x) : esc(low.why) + '.', why: { surv: RCCO_WHY.death, pot: RCCO_WHY.pot, prep: RCCO_WHY.prep, mech: rccoWhyM('') }[low.k] || RCCO_WHY.out });
+  for (const f of fx) { if (W.length >= 4) break; if (f === lowFix || (defs.length && RCB_FIX.surv(f)) || (worstM && f.key === 'm|' + worstM.t)) continue; W.push({ w: f.gain, t: '<b>' + esc(f.t) + '</b>' + (f.k > 1 ? ' (in ' + f.k + ' of ' + n + ' pulls)' : '') + '.', fix: esc(f.x), why: rccoWhyF(f) }); }
+  W.sort((u, v) => v.w - u.w);
+  // (focus: the same one fix Debriefing and Homework give this player, when it's there)
+  const shared = rccoShared(a.per.map((g) => g.r), nm, W);
+  const focus = shared != null ? shared : defs.length >= 2 ? 'When your health keeps dropping, press ' + esc(defN[0]) + '.' : W[0] ? dbfTip1(W[0].fix.replace(/<[^>]+>/g, '')) : '';
+  // ---- the full coaching ----
+  const grade = '<ul class="rcco-gl">' + subs.map((y) => '<li><span>' + y.l + '</span>' + rcbV(y.v) + '<em>#' + y.r + ' of ' + y.N + '</em><small>' + esc(y.why) + '</small></li>').join('') + '</ul>';
+  const fixes = fx.length ? '<ol class="rcco-ol">' + fx.map((f) => '<li><b>' + esc(f.t) + '</b> <span class="rk-gain">+' + plural(Math.max(1, Math.round(f.gain)), 'point') + '</span>' + (f.k > 1 ? ' <span class="sub">in ' + f.k + ' of ' + n + ' pulls</span>' : '') + '<div class="rcco-fx">' + esc(f.x) + '</div>' + (rccoWhyF(f) ? '<div class="rcco-why"><b>Why it matters:</b> ' + rccoWhyF(f) + '</div>' : '') + '</li>').join('') + '</ol>' : '<p class="okv">Nothing cost you points. A clean night.</p>';
+  const mech = mm.size ? '<ul class="rcco-ml">' + [...mm.values()].sort((u, v) => v.n - u.n).map((o) => '<li><i class="rcco-fl ' + (o.pulls.size >= n / 2 ? 'r' : 'y') + '"></i><div><b>' + esc(o.t) + '</b> <span class="sub">' + plural(o.n, 'time') + ' · pull' + (o.pulls.size > 1 ? 's ' : ' ') + [...o.pulls].join(', ') + '</span>' + (o.fix ? '<div class="rcco-fx">' + esc(o.fix) + '</div>' : '') + '<div class="rcco-why"><b>Why it matters:</b> ' + rccoWhyM(o.t) + '</div></div></li>').join('') + '</ul>' : '<p class="okv">No mechanic mistakes that cost points.</p>';
+  const deaths = dd.length ? '<ul class="rcco-dl">' + dd.map((d) => { const df = rccoDefs([d])[0]; return '<li><b>Pull ' + d.pull + ', ' + T(d.t) + '</b> · killed by ' + esc(d.ability || 'unknown') + ((d.window || 0) <= 2 ? ' <span class="sub">(under 2 seconds from healthy: not on you)</span>' : df ? ' <span class="warnv">· ' + esc(rcwOr(df)) + ' was ready</span>' : ' <span class="sub">· nothing left to press</span>') + '</li>'; }).join('') + '</ul>' : '<p class="okv">No deaths that counted.</p>';
+  const cds = cdm.size ? '<ul class="rcco-dl">' + [...cdm.values()].map((o) => '<li><b>' + esc(o.name) + '</b> · ' + o.used + ' of ' + o.poss + ' possible' + (o.poss && o.used / o.poss < 0.6 && !RAID_CD_N.has(o.name.toLowerCase()) ? ' <span class="warnv">· press it on cooldown, lined up with Bloodlust when it comes</span>' : '') + '</li>').join('') + '</ul>' : '';
+  const pot = pf.expect ? '<p>Combat potions: ' + pf.used + ' of the ' + pf.expect + ' your pulls had room for.' + (pf.used < pf.expect ? ' Drink it with Bloodlust and your big cooldowns, every pull.' : ' Every one. Nice.') + '</p>' : '';
+  const full = rccoSec('Your grade, subject by subject', grade) + rccoSec('Every fix, biggest gain first', fixes) + rccoSec('Mechanics', mech) + rccoSec('Your deaths', deaths) + rccoSec('Big cooldowns', cds) + rccoSec('Potions', pot);
+  return rccoBox({ k: 'Coach · ' + esc(nm) + '\'s night', cc: p.color, head, right, wrong: W, focus, full }); }
+function rccoPage(c, F) { const a = S.plSel && c.data.find((y) => y.p.name === S.plSel); return a ? rccoRaider(c, F, a) : rccoRaid(c, F); }
 function rcnPage(c) {
   const F = rcnFacts(c), open = S.rctOpen && c.data.find((a) => a.p.name === S.rctOpen);
   const ovl = open ? '<div class="rct-ovl" data-rctx="1"><div class="panel rct-ovp" role="dialog" aria-label="' + esc(open.p.name) + '\'s night"><button type="button" class="rct-x" data-rctx="1" aria-label="Close">×</button>' + rcnPlayer(c, F, open, true) + '</div></div>' : '';
   // (mockup B (your pick, Oct 19): the night, the raid's report card, then the ranked roster with the picked raider's report card beside it)
-  return '<div class="rcn rct rcb">' + rcbBanner(c, F) + rcwNight(c, F) + rcbRaid(c, F) + rcwRaider(c, F) + '<div class="rcb-2">' + rcbTable(c, F) + rcbSide(c, F) + '</div>' + ovl + '</div>';
+  return '<div class="rcn rct rcb">' + rccoPage(c, F) + rcbBanner(c, F) + rcwNight(c, F) + rcbRaid(c, F) + rcwRaider(c, F) + '<div class="rcb-2">' + rcbTable(c, F) + rcbSide(c, F) + '</div>' + ovl + '</div>';
 }
 function bindRcn(c) {
   const v = $('#plBody'), again = () => { const y = window.scrollY; player(); window.scrollTo({ top: y }); }; // (redrawn in place: the page stays where it was)
@@ -20983,6 +21099,7 @@ function bindRcn(c) {
   v.querySelectorAll('[data-rcbs]').forEach((b) => (b.onclick = () => { S.rcbSort = b.dataset.rcbs; again(); }));
   v.querySelectorAll('[data-rcbp]').forEach((b) => (b.onclick = () => { setOneP(b.dataset.rcbp); again(); }));
   v.querySelectorAll('[data-rcngear]').forEach((b) => (b.onclick = () => { S.rcnGear = S.rcnGear === b.dataset.rcngear ? null : b.dataset.rcngear; again(); }));
+  v.querySelectorAll('.rcco-more').forEach((d) => d.addEventListener('toggle', () => { S.rccoOpen = d.open; })); // (the full coaching stays open when the page redraws)
   // (Escape closes an open card)
   if (!window._rctKey) { window._rctKey = 1; document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.rctOpen && S.tab === 'player') { S.rctOpen = null; const y = window.scrollY; player(); window.scrollTo({ top: y }); } }); }
   spcTipInit();
