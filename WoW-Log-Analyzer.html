@@ -35939,13 +35939,19 @@ if (WCL.HOSTED && !window.WLA_DESKTOP) {
   const pq = RQ.get('pc'), port = /^\d{4,5}$/.test(pq || '') ? pq : store.get('dbf-pc-port') || '8772';
   if (RQ.has('pc')) { store.set('dbf-pc', '1'); store.set('dbf-pc-port', port); try { history.replaceState(history.state, '', location.pathname); } catch (e) { /* ignore */ } }
   if (store.get('dbf-pc') === '1') {
-    const base = 'http://localhost:' + port, c = new AbortController(); setTimeout(() => c.abort(), 8000);
-    fetch(base + '/log/info', { cache: 'no-store', signal: c.signal }).then((r) => r.json()).then((j) => {
+    // (no time limit: Chrome holds the request while it asks "may debriefme.io talk to apps on this PC?", and giving up took the box
+    // away before it could be answered. With the app closed the request fails at once anyway. While Chrome asks, a note says so)
+    const base = 'http://localhost:' + port;
+    let ask = null;
+    try { navigator.permissions.query({ name: 'loopback-network' }).catch(() => navigator.permissions.query({ name: 'local-network-access' })).then((p) => {
+      if (p && p.state === 'prompt' && !PC_ON) ask = toast('<span><b>One click to link the Debrief app</b> Chrome is asking if debriefme.io may talk to apps on this PC. Press <b>Allow</b> in the box at the top of the window.</span>'); }).catch(() => {}); } catch (e) { /* older browser */ }
+    fetch(base + '/log/info', { cache: 'no-store' }).then((r) => r.json()).then((j) => {
+      if (ask) ask.remove();
       if (!j || j.error === 'nodir') return;
       HELPER_BASE = base; PC_ON = true;
       const busy = S.rep || S.wclCode || FH.dir || S.file || sharedLink || reloadSt && reloadSt.code || document.querySelector('.ld, #ndD') || ['guides', 'plan', 'ingame'].some((k) => RQ.has(k));
       if (!busy) startFileLive(HELPER_LOG);
-    }).catch(() => { /* the app isn't running: the site works as always */ });
+    }).catch(() => { if (ask) ask.remove(); /* the app isn't running (or Chrome was told no): the site works as always */ });
   }
 }
 // ---------- Guides: how each boss works, with animated maps (your call, Oct 20) ----------
