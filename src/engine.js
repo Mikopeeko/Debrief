@@ -4758,6 +4758,10 @@ function buildUlatek(ev, r, h) {
     summary: 'It shows each Shrieker\'s time alive and what it got off (the first Acidic Expulsion comes right after it spawns), and any Rawling that cast Acidic Expulsion (a raid-wide damage over time).', cols: ['When', 'Add', 'Killed', 'Got off'], rows: shRows });
 
   // ---- 10. avoidable damage ----
+  // (each Mephitic Thrash's hit window, and whether half the raid or more was hit by it)
+  const thrashW = ev.filter((c) => c.id === UL.thrash && (c.k === 'cast' || c.k === 'start')).map((c) => (c.k === 'cast' ? [c.t - 0.5, c.t + 1.5] : [c.t + 3, c.t + 5.5]))
+    .map(([a0, b0]) => { const hit = new Set(ev.filter((e) => e.k === 'dmg' && h.isPlayer(e.dst) && String(e.spell).toLowerCase() === 'mephitic thrash' && e.t >= a0 && e.t <= b0 && e.amt !== 0).map((e) => e.dst)); return { a0, b0, raid: hit.size * 2 >= Math.max(10, r.players.size) }; });
+  const thrashWin = (t) => thrashW.find((w) => t >= w.a0 && t <= w.b0) || null;
   const av = avoidPanel(ev, r, h, [
     { n: ['noxious splash'], label: 'Noxious Splash', harm: 'High', why: 'two egg carriers within 3 yards of each other' },
     { n: ['desperate thrash'], label: 'Desperate Thrash (Doomscale frontal)', harm: 'Medium', warnAt: 1, badAt: 2, tankOk: true, why: 'standing in front of a Weakened Doomscale' },
@@ -4769,7 +4773,7 @@ function buildUlatek(ev, r, h) {
     // (Oct 21: the tail's Mephitic Thrash hits everyone within 35 yards as its 4 s cast ends (spell 1296301: a hit, a 10 s damage
     // over time and a knockback). Only that hit counts, not the ticks after it; tanks are judged loosely as usual)
     { n: ['mephitic thrash'], label: 'Mephitic Thrash', harm: 'Medium', warnAt: 1, badAt: 2, why: 'within 35 yards of the tail when it thrashed (knockback and a damage over time)',
-      skip: (e) => !ev.some((c) => c.id === UL.thrash && ((c.k === 'cast' && e.t >= c.t - 0.5 && e.t <= c.t + 1.5) || (c.k === 'start' && e.t >= c.t + 3 && e.t <= c.t + 5.5))) },
+      skip: (e) => { const w = thrashWin(e.t); return !w || w.raid; } }, /* (only a thrash most of the raid stayed out of is judged: a top kill had all 19 hit by both (Oct 22), so then it's raid damage) */
   ]);
   if (av) sections.push(av);
 

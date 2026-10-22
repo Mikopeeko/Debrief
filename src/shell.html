@@ -3812,6 +3812,29 @@ a.dbr-fx.st-bad { border-top-color: var(--bad); } a.dbr-fx:hover { transform: tr
 .nml-map .wr-map.mcx-map svg.zmap { width: 100% !important; height: 236px !important; max-width: none !important; display: block; }
 /* (Oct 22, your note: hovering a card's map blew it up 3.2 times and half of it ran off the screen. That zoom is for the tiny
    84 px maps on What went wrong lines; the card maps are already big, so they stay put and only get a gold edge) */
+/* the coach (Oct 22): a short summary on top of a tab, the full coaching folded in place */
+.cch { border: 1px solid var(--line2); border-left: 4px solid var(--gold); border-radius: 12px; background: var(--panel); padding: 14px 18px 12px; }
+.cch-hd { display: flex; align-items: baseline; gap: 10px; } .cch-k { font-size: 12px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--gold); }
+.cch-h { margin: 6px 0 10px; font-size: 17px; font-weight: 600; line-height: 1.4; }
+.cch-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 10px 22px; }
+.cch-cols > div:only-child { grid-column: 1 / -1; }
+.cch h5 { margin: 0 0 4px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.cch-ok ul, .cch-no ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.cch-ok li, .cch-no li { position: relative; padding-left: 16px; font-size: 14px; line-height: 1.45; }
+.cch-ok li::before { content: '✓'; position: absolute; left: 0; color: var(--good, #5fd35f); font-weight: 700; }
+.cch-no li::before { content: ''; position: absolute; left: 2px; top: .55em; width: 8px; height: 8px; border-radius: 50%; background: var(--warn); }
+.cch-no li.cch-bad::before { background: var(--bad); }
+.cch-fx { color: var(--muted); }
+.cch-focus { margin: 12px 0 0; padding: 10px 12px; border-radius: 8px; background: rgba(230,183,80,.08); border: 1px solid rgba(230,183,80,.28); font-size: 15px; }
+.cch-focus b { color: var(--gold); }
+details.cch-more { margin-top: 10px; } details.cch-more > summary { cursor: pointer; color: var(--gold); font-size: 14px; font-weight: 600; list-style: none; }
+details.cch-more > summary::-webkit-details-marker { display: none; } details.cch-more > summary::after { content: ' ▸'; } details.cch-more[open] > summary::after { content: ' ▾'; }
+.cch-full { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.5; }
+.cch-full h5 { margin: 14px 0 6px; } .cch-full h5:first-child { margin-top: 0; }
+.cch-full .dbr-why { margin: 0; } .cch-ol, .cch-ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; } .cch-ol { list-style: none; padding-left: 0; }
+.cch-ol li.cch-bad b { color: #ff8f87; } .cch-ol li.cch-warn b { color: #f2c14e; }
+#oaTop { margin: 0 0 14px; } #oaTop[hidden] { display: none; } .hwk-one { border-color: var(--gold) !important; } .oa-n { display: inline-block; margin-left: 4px; padding: 1px 8px; border-radius: 999px; font-size: 12px; background: rgba(229,83,75,.15); color: #ff8f87; }
+@media (max-width: 640px) { .cch { padding: 12px 12px 10px; } .cch-h { font-size: 15px; } .cch-cols { grid-template-columns: 1fr; } .cch-ok li, .cch-no li { font-size: 13.5px; } .cch-focus { font-size: 14px; } }
 /* small maps open big (Oct 21) */ .wr-map > .mz-big { display: grid !important; place-items: center; position: absolute; right: 6px; bottom: 6px; z-index: 3; width: 28px; height: 28px; padding: 0; border-radius: 7px; border: 1px solid rgba(255,255,255,.28); background: rgba(10,11,15,.78); color: #fff; font-size: 16px; line-height: 1; cursor: zoom-in; }
 .wr-map > .mz-big:hover, .wr-map > .mz-big:focus-visible { border-color: var(--gold); color: var(--gold); } .wr-map:not(.mcx-map) > .mz-big { width: 20px; height: 20px; font-size: 12px; right: 3px; bottom: 3px; border-radius: 5px; }
 .mzo { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 16px; background: rgba(5,6,9,.8); }
