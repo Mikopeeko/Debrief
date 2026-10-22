@@ -1059,6 +1059,23 @@ async function night(req, env, url) {
   return json({ ok: true });
 }
 
+// A plan shared from the Plan tab (Oct 22): one boss's plan as JSON, kept 90 days. Its link name comes from a key only the sharer's
+// browser has (the same way as shared nights), so only that browser can update it.
+const PLAN_TTL = 90 * 86400;
+async function planShare(req, env, url) {
+  if (!env.DEBRIEF_KV) return json({ error: 'Sharing isn\'t set up on this copy of Debrief.' }, 503);
+  const id = url.searchParams.get('id') || ''; if (!NIGHT_ID.test(id)) return json({ error: 'That plan link is missing something.' }, 400);
+  const k = 'plan:' + id;
+  if (req.method === 'GET') { const v = await env.DEBRIEF_KV.get(k); return v ? new Response(v, { headers: { ...CORS, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } }) : json({ error: 'That shared plan wasn\'t found. Shared plans last 90 days.' }, 404); }
+  if (req.method !== 'PUT') return json({ error: 'Share plans from the website.' }, 405);
+  if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once. Wait a minute and try again.' }, 429);
+  if ((await nightIdOf(req.headers.get('X-Plan-Key'))) !== id) return json({ error: 'That isn\'t your shared plan.' }, 403);
+  const body = await req.arrayBuffer(); let j = null; try { j = JSON.parse(new TextDecoder().decode(body)); } catch (e) { /* not JSON */ }
+  if (!j || typeof j.text !== 'string' || typeof j.boss !== 'string' || body.byteLength > 256 * 1024) return json({ error: 'That plan isn\'t right.' }, 400);
+  await env.DEBRIEF_KV.put(k, body, { expirationTtl: PLAN_TTL });
+  return json({ ok: true });
+}
+
 export default {
   async scheduled(ev, env, ctx) { ctx.waitUntil(Promise.allSettled([announcePatch(env), discordJobs(env, ev.scheduledTime || Date.now())]).then((r) => r.forEach((x) => { if (x.status === 'rejected') console.warn('Cron:', x.reason && x.reason.message); }))); },
   async fetch(req, env, ctx) {
@@ -1068,6 +1085,7 @@ export default {
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
     if (url.pathname === '/api/discord') return req.method === 'POST' ? discordClick(req, env, ctx) : json({ error: 'Discord only.' }, 405);
     if (url.pathname === '/api/night' || url.pathname === '/api/night/part') return night(req, env, url);
+    if (url.pathname === '/api/plan') return planShare(req, env, url); /* (shared plans, Oct 22) */
     if (url.pathname === '/api/idea') return req.method === 'POST' ? fileIdea(req, env, url) : json({ error: 'Send ideas with the website\'s form.' }, 405);
     if (url.pathname === '/api/signout') return req.method === 'POST' ? signOut(req, env) : json({ error: 'Sign out from the website.' }, 405);
     if (url.pathname === '/api/myreports') return myReports(req, env);
