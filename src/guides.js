@@ -4596,13 +4596,32 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
 // ---- From a pull to the guide (your ask, Oct 20): a Debriefing mechanic's "How to do it" opens the guide right at that mechanic ----
 // (Debriefing's sections, by id, to the guide's mechanic (its id) or tile (its name's start))
 const GDZ_SEC = { "Ula'tek": { eggs: 'eggs', coils: 'coils', waves: 'waves', tank: 'wrath', incub: 'wretch', wretch: 'wretch', amps: 'heart', fangs: 'fangs', doomscale: 'doomscales', kicks: 'doomscales', bite: 'bite', shriek: 'Blightscale Shrieker' }, 'The Coiled Altar': { orbs: 'orbs', soakq: 'axe', dmghost: 'dm', gloom: 'bombs', inter: 'frags', vf: 'Venomfang', shield: 'Eternal Nightfall', addsets: 'Spiritcackle', tankfront: 'Soul Sever' } };
-function gdzHowTo(secId) {
+// (Oct 21, every boss: a mechanic with no entry above finds the guide's mechanic of the same name ("Dreadmarch (…)" to "Dreadmarch (…)"),
+// and one with no match opens the boss's guide at the top: its jobs and what wipes us)
+function gdzTarget(b, secId, title) {
+  const t = (GDZ_SEC[b] || {})[secId]; if (t) return t;
+  const G = GDZ[b]; if (!G || !title) return '';
+  const base = (x) => String(x || '').toLowerCase().replace(/\s*\(.*$/, '').replace(/^(the|a|an)\s+/, '').trim(), want = base(title); if (!want) return '';
+  const all = (G.phases || []).flatMap((p) => p.mechs || []).filter((m) => m.id);
+  const m = all.find((x) => base(x.name) === want) || all.find((x) => { const n = base(x.name); return n && Math.min(n.length, want.length) >= 5 && (n.startsWith(want) || want.startsWith(n)); });
+  return m ? m.id : '';
+}
+const gdzBossOf = (bo) => (bo === 'The Bargained Crown' ? 'The Coiled Altar' : bo);
+function gdzHowTo(secId, title, boss, diffId) {
   gdzUnlock();
-  const bo = S.rep && S.rep.item && S.rep.item.boss, b = bo === 'The Bargained Crown' ? 'The Coiled Altar' : bo, t = (GDZ_SEC[b] || {})[secId]; if (!t || !GDZ[b]) return '';
-  return '<button type="button" class="btn sm gdz-howto" data-gb="' + esc(b) + '" data-gt="' + esc(t) + '" style="margin:2px 0 10px">How to do it, in the guide ›</button>';
+  const b = gdzBossOf(boss || (S.rep && S.rep.item && S.rep.item.boss)); if (!b || !GDZ[b] || secId === 'avoid' || secId === 'deaths') return '';
+  const t = gdzTarget(b, secId, title), d = (diffId != null ? diffId : S.rep && S.rep.item && S.rep.item.diffId) === 16 ? 'm' : 'h';
+  return '<button type="button" class="btn sm gdz-howto" data-gb="' + esc(b) + '" data-gt="' + esc(t) + '" data-gd="' + d + '" style="margin:2px 0 10px">' + (t ? 'How to do it, in the guide ›' : 'How this fight works, in the guide ›') + '</button>';
+}
+// (under the Fix cards (Oct 21): each card's mechanic, one click from its part of the guide)
+function gdzLearn(boss, diffId, list) {
+  gdzUnlock();
+  const b = gdzBossOf(boss), d = diffId === 16 ? 'm' : 'h'; if (!b || !GDZ[b]) return '';
+  const L = list.filter((x) => x.id !== 'avoid' && x.id !== 'deaths').map((x) => ({ ...x, t: gdzTarget(b, x.id, x.title) })).filter((x) => x.t); if (!L.length) return '';
+  return '<div class="gdz-learn"><span>How to do ' + (L.length === 1 ? 'it' : 'them') + ', in the guide:</span>' + L.map((x) => '<button type="button" class="linkbtn gdz-howto" data-gb="' + esc(b) + '" data-gt="' + esc(x.t) + '" data-gd="' + d + '">' + esc(String(x.title).replace(/\s*\(.*$/, '').replace(/^[^:]+: /, '')) + ' ›</button>').join('') + '</div>';
 }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.gdz-howto'); if (!b) return; e.preventDefault();
-  S.gdzGo = b.dataset.gt; openGuides(b.dataset.gb, S.rep && S.rep.item && S.rep.item.diffId === 16 ? 'm' : 'h'); });
+  S.gdzGo = b.dataset.gt || null; openGuides(b.dataset.gb, b.dataset.gd || (S.rep && S.rep.item && S.rep.item.diffId === 16 ? 'm' : 'h')); });
 // (on the guide: show that part, open it in Quick, scroll to it and make it glow)
 function gdzGoTo(root) {
   if (!S.gdzGo) return; const g = S.gdzGo; S.gdzGo = null;
@@ -4675,11 +4694,19 @@ function gdzPauseUi(zbox, label) {
 // Boss guides as a page of its own (your call, Oct 20: in the menu, not a tab, open to anyone without a report or sign-in).
 // Coming from a pull, a button takes you back to it.
 let GDZ_BACK = null;
+// (which one a guide opens on (Oct 21: a Heroic raider landed on Mythic): your last pick, else the pull you came from, else Mythic
+// only when most of your saved pulls this month were Mythic)
+function gdzDefDiff() {
+  try { const s = localStorage.getItem('gdz-diff'); if (s === 'm' || s === 'h') return s; } catch (e) { /* (private window) */ }
+  if (S.rep && S.rep.item && S.rep.item.diffId) return S.rep.item.diffId === 16 ? 'm' : 'h';
+  let m = 0, h = 0; const since = Date.now() - 30 * 864e5; try { for (const v of HIST.mem.values()) { if ((v.at || 0) < since) continue; if (v.diffId === 16) m++; else if (v.diffId === 15) h++; } } catch (e) { /* none saved */ }
+  return m > h ? 'm' : 'h';
+}
 function openGuides(boss, d) {
   gdzUnlock();
   if (S.page === 'pull' && S.item) GDZ_BACK = { item: S.item, tab: S.tab, scope: S.scope };
   if (typeof LIVE !== 'undefined' && LIVE.on) setLive(false);
-  if (boss && GDZ[boss]) S.gdzBoss = boss; if (d === 'm' || d === 'h') S.gdzDiff = d; else if (!S.gdzDiff) S.gdzDiff = 'm';
+  if (boss && GDZ[boss]) S.gdzBoss = boss; if (d === 'm' || d === 'h') S.gdzDiff = d; else if (!S.gdzDiff) S.gdzDiff = gdzDefDiff();
   S.item = null; S.rep = null; S.page = 'guides';
   $('#list').innerHTML = ''; $('#bossHead').innerHTML = ''; $('#bossPick').innerHTML = '';
   $('#main').innerHTML = '<div class="gdz-pagetop">' + (GDZ_BACK && S.index ? '<button type="button" class="btn gdz-back">‹ Back to your pull</button>' : '') + '<div><div class="gdz-kick">Debrief</div><h1>Boss guides</h1><p>How each fight works: the plan in plain words, animated maps, what goes wrong, and the whole fight played out.</p></div></div><section id="view"></section>';
@@ -4728,7 +4755,7 @@ function gdzView() {
   gdzGoTo(root);
   gdzLookApply(root, G, D); /* (the Raider look: Learn or Quick, your role, the fight at a glance) */
   root.querySelectorAll('.gdz-pb:not(.soon)').forEach((b) => (b.onclick = () => { S.gdzBoss = b.dataset.b; gdzView(); if (S.page === 'guides') navNote(); window.scrollTo({ top: Math.min(window.scrollY, (document.querySelector('#view').getBoundingClientRect().top + window.scrollY) - 70) }); }));
-  root.querySelectorAll('.gdz-diff button').forEach((b) => (b.onclick = () => { if (b.dataset.d === D) return; S.gdzDiff = b.dataset.d; const y = window.scrollY; gdzView(); window.scrollTo({ top: y }); if (S.page === 'guides') navNote(); }));
+  root.querySelectorAll('.gdz-diff button').forEach((b) => (b.onclick = () => { if (b.dataset.d === D) return; S.gdzDiff = b.dataset.d; try { localStorage.setItem('gdz-diff', b.dataset.d); } catch (e) { /* (private window) */ } const y = window.scrollY; gdzView(); window.scrollTo({ top: y }); if (S.page === 'guides') navNote(); }));
   root.querySelectorAll('.gdz-phc').forEach((a) => (a.onclick = (e) => { e.preventDefault(); const el = document.getElementById(a.getAttribute('href').slice(1)); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' }); }));
   // the maps: built when they're first near the screen, then played by the Debriefing's own player
   const pmap = gdzPmap();

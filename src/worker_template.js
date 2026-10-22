@@ -1072,7 +1072,8 @@ export default {
         if (!hasC && r.out && r.out.error && url.pathname === '/api/report') r.out.error += ' If it\'s your log or your guild\'s, sign in with Warcraft Logs (Start now, or Home) to open it.';
         return send(r, false);
       } catch (err) {
-        return json({ error: String(err && err.message || err) }, 502);
+        const msg = String(err && err.message || err), down = msg === WCL_DOWN; // (Warcraft Logs out of service: said at once, so the page doesn't try 4 times (Oct 21))
+        return json(down ? { error: msg, down: true } : { error: msg }, down ? 503 : 502);
       }
     }
     if (PREVIEW_BOTS.test(req.headers.get('User-Agent') || '')) return new Response(await previewPage(env, url), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=600' } });

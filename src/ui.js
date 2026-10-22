@@ -5,6 +5,9 @@ const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const C = E.compact, T = E.fmtT;
+// (the raid's boss order, the same everywhere (Oct 21: the front page, the team page and the guides each had their own), as in the guide library)
+const RAID_ORDER = ['Nymrissa Wavecaller', "Nek'zali the Soulcoiler", 'Entombed Sentinels', 'The Lost Explorers', 'Vashnik the Malignant', 'Sszorak', 'The Twin Fangs', 'The Coiled Altar', "Ula'tek", "Kith'ix"];
+{ const ix = (p) => { const i = RAID_ORDER.indexOf(p.encounter); return i < 0 ? 99 : i; }; E.PACKS.sort((a, b) => ix(a) - ix(b)); }
 
 const CACHE = new Map();
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage off */ } } };
@@ -733,7 +736,9 @@ function grTick() {
   GR_T = null; const r = GR_Q.shift(); if (!r) return; const v = HIST.mem.get(histKey(r.item));
   if (v) try { const credit = assignCredit(r), gr = {};
     for (const p of r.players.values()) { if (!p.name || /^Player-/.test(p.name)) continue; const g = plGrade(r, p, null, credit); if (g.perf == null) continue; gr[p.name] = [Math.round(g.score), Math.round(g.until || 0), p.cls || '']; }
-    HIST.put({ ...v, gr }); } catch (e) { /* (not graded: it's tried again the next time the pull is read) */ }
+    // (and the raid's own mechanics score that pull, Debriefing's, for the raid's grade (Oct 21))
+    let rm = null; try { const gb = gradeBoss([r]); rm = gb && gb.overall != null ? Math.round(gb.overall) : null; } catch (e) { /* no module */ }
+    HIST.put({ ...v, gr, ...(rm != null ? { rm } : {}) }); } catch (e) { /* (not graded: it's tried again the next time the pull is read) */ }
   if (GR_Q.length) GR_T = setTimeout(grTick, 30);
 }
 // the saved nights on this boss before the night shown (a raid night is one date; tonight's pulls come from the log itself)
@@ -1000,7 +1005,7 @@ const DANCERS = [
 ];
 const LOAD_TIPS = ['Click any pull card at the top to jump to it.', 'Click a player\'s name anywhere to open their page.', 'Hover a spell\'s name to see what it does.',
   'The wipe filter stops counting after a set number of deaths, so the end of a wipe doesn\'t pile up mistakes.', 'Paste your NSRT note on Assignments, and soaks, kicks, orbs and cooldowns get checked on every pull.',
-  'Recap explains the pull in a few sentences: what went well, what didn\'t, and what changed since the last pull.', 'Pick All pulls above the pull cards to see how the night went, with how far each pull got.', 'Report card gives everyone one grade from their mechanics, their Rotation, and how they stayed alive.'];
+  'Debriefing explains the pull in a few sentences: what went well, what didn\'t, and what changed since the last pull.', 'Pick All pulls above the pull cards to see how the night went, with how far each pull got.', 'Report card gives everyone one grade from their mechanics, their Rotation, and how they stayed alive.'];
 let LD_LAST = -1;
 function loadCard(title, line, frac, id) {
   let k = Math.floor(Math.random() * DANCERS.length); if (k === LD_LAST) k = (k + 1) % DANCERS.length; LD_LAST = k;
@@ -1298,7 +1303,7 @@ function chpBind(g, list) {
       html = [...ns.entries()].slice(0, F.show).map(([nk, ps]) => { ps.sort((a, b) => a.at - b.at); const ks = ps.filter((v) => v.kill), bo = [...new Set(ps.map((v) => v.boss))], bp = ks[0] || ps.filter((v) => v.left != null).sort((a, c) => a.left - c.left)[0], open = every || S.chpNOpen.has(nk), d = new Date(ps[0].at - 6 * 3600e3);
         return '<button class="pn-row chp-nr' + (ks.length ? ' pn-k' : '') + (open ? ' chp-on' : '') + '" type="button" data-chn="' + nk + '" aria-expanded="' + open + '"><span class="pn-d"><b>' + esc(d.toLocaleDateString('en-US', { weekday: 'short' })) + '</b><span>' + esc(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) + '</span></span>' +
           '<span class="pn-b"><b>' + esc(bo.length > 1 ? bo[0] + ' + ' + (bo.length - 1) + ' more' : bo[0]) + '</b><span class="sub">' + plural(ps.length, 'pull') + ' · ' + plural(ks.length, 'kill') + '</span></span>' +
-          '<span class="pn-r" style="color:' + (bp ? chpCol(bp) : 'var(--muted)') + '">' + (ks.length ? 'Kill' : bp && bp.left != null ? Math.floor(100 - bp.left) + '%' : '—') + '</span><span class="pn-go" aria-hidden="true">' + (open ? '▴' : '▾') + '</span></button>' +
+          '<span class="pn-r" style="color:' + (bp ? chpCol(bp) : 'var(--muted)') + '">' + (ks.length ? 'Kill' : bp && bp.left != null ? Math.floor(100 - bp.left) + '%<small class="pn-dn">done</small>' : '—') + '</span><span class="pn-go" aria-hidden="true">' + (open ? '▴' : '▾') + '</span></button>' +
           (open ? '<div class="pn-list chp-nl">' + ps.map(row).join('') + '</div>' : ''); }).join('');
       $('#chpMore').hidden = ns.size <= F.show; }
     else { l = l.filter((v) => (F.so === 'fast' ? v.kill : !v.kill)).sort(F.so === 'fast' ? (a, b) => (a.dur || 1e9) - (b.dur || 1e9) : (a, b) => (a.left ?? 101) - (b.left ?? 101));
@@ -1675,6 +1680,13 @@ const PATCH_NOTES = [
     'Debriefing, All pulls: a new Deaths line. Deaths per pull as bars, what killed people most, who died most, and each pull\'s first death with a › to that pull.',
     'Report card and the boss grade: deaths now count. A death that was on you (your own mistake, like an avoidable hit, or dying slowly with a defensive ready) costs Survival points; a one-shot that wasn\'t your mistake, the raid\'s mistake and deaths after the wipe filter don\'t.',
     'Debriefing: the small maps on the cards show the whole room, like the big ones, instead of zooming in on each mechanic.',
+    'Every mechanic links to its part of the boss guide: under the Fix cards, and inside each mechanic.',
+    'The raid\'s grade is now half the raiders\' own grades and half how the raid did each mechanic, so a mechanic that fails every pull shows in it.',
+    'Boss guides open on Heroic or Mythic to match how you raid, and remember the one you pick.',
+    'When Warcraft Logs is down, a bar says so right away, and your saved nights and the guides still work.',
+    'Plainer words: orbs per frontal ("4, then 6 orbs, aim for 2 to 3"), units on the counts, pets named as pets, and "% done" beside the boss health left.',
+    'The bosses are in the same order everywhere on the site.',
+    'Long patch notes fold after six lines.',
     'Debrief in game: The Coiled Altar mechanics on the recap card each say what matters most, like Deluge 3 at 1:27: Sever 2 hit 6 (plan: 2 to 3), or Soak 1 at 6:53: 2 in the circle (needs 5). Other bosses next.',
     'Debrief in game: turn combat logging on or off with one press. Click Logging: On/Off at the bottom of the card, type /debrief log, or set a key in Options > Keybindings > AddOns > Debrief.',
     'Debrief in game: the Detailed card says each thing once. Your view is about you and the Raid view is about the raid, with no lines repeated between tiles, lists and the next pull.',
@@ -1739,6 +1751,11 @@ const PATCH_NOTES = [
     'Home: while your team\'s nights come in for the first time, a loading screen shows how far along it is, and the page fills in by itself when it\'s done.',
   ], f: [
     'Debriefing: a single pull\'s Deaths lists every death again. The ones after the wipe filter are in grey and not counted, instead of only "19 more deaths".',
+    'The Coiled Altar: Malacrass counts as a boss, not an add, in damage splits.',
+    'The Next pull line under the Fix cards now says the first card\'s fix.',
+    'A boss guide\'s address follows the boss and the difficulty you pick, so a shared guide link opens the right one.',
+    'Report card: healing and damage are ranked among your own role, and the sentences read right ("were #1", "both of your deaths").',
+    'Odd numbers fixed: top players over 100%, and a tiny mana amount that showed as 0.01.',
     'Debriefing: the small maps on the mechanic cards (like All pulls\' Guillotine) play now, like the big ones, instead of standing still.',
     'Debriefing: hovering a card\'s map no longer blows it up off the screen.',
     'The Coiled Altar: a healer who immunes the 2nd Guillotine (like a Holy Paladin with Divine Shield) is no longer told to stay out of it.',
@@ -1912,7 +1929,9 @@ function openPatchNotes() {
   if ($('#pnzBox')) return;
   const el = document.createElement('div'); el.id = 'pnzBox'; el.className = 'tour pnz-wrap'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Patch notes');
   const day = (d) => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-  const list = (h, c, a) => a && a.length ? '<div class="pnz-g"><h4 class="pnz-h ' + c + '">' + h + '</h4><ul>' + a.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul></div>' : '';
+  // (the first 6 of a list, the rest a click away (Oct 21: one day had 54 lines))
+  const li = (x) => '<li>' + esc(x) + '</li>';
+  const list = (h, c, a) => a && a.length ? '<div class="pnz-g"><h4 class="pnz-h ' + c + '">' + h + '</h4><ul>' + a.slice(0, 6).map(li).join('') + '</ul>' + (a.length > 6 ? '<details class="pnz-more"><summary>Show ' + (a.length - 6) + ' more</summary><ul>' + a.slice(6).map(li).join('') + '</ul></details>' : '') + '</div>' : '';
   const hl = (a) => a && a.length ? '<div class="pnz-g"><h4 class="pnz-h feat">New features</h4><div class="pnz-hl">' + a.map((x) => '<div class="pnz-card"><b>' + esc(x.t) + '</b><span>' + esc(x.d) + '</span></div>').join('') + '</div></div>' : '';
   const cnt = (p) => [p.h && p.h.length ? p.h.length + ' new feature' + (p.h.length > 1 ? 's' : '') : '', p.n && p.n.length ? p.n.length + (p.h ? ' improvement' + (p.n.length > 1 ? 's' : '') : ' new') : '', p.f && p.f.length ? p.f.length + (p.h ? ' fix' + (p.f.length > 1 ? 'es' : '') : ' fixed') : ''].filter(Boolean).join(' · ');
   el.innerHTML = '<div class="panel pnz-sheet"><div class="pnz-top"><div><h2>Patch notes</h2><p>What\'s new on Debrief and what we fixed, newest first.</p></div><button class="pnz-x" type="button" aria-label="Close">×</button></div>' +
@@ -6414,10 +6433,11 @@ function pfPick(ps) {
 // Burst windows (your call, Oct 19: "highlight burst phase dps and the mechanic it happened on, also boss damage and any relevant add
 // damage"): the raid's damage over the pull, boss and adds stacked, with Bloodlust, the boss's damage windows and its shield shaded;
 // then a card per window: damage a second against the rest of the pull, boss and adds in it, and the mechanics going on. Facts only, no grade.
-const BURST_BOSS_TOO = { "Ula'tek": ['Venomous Heart', 'Gore Rattle'] }; // (units that share the boss's health: their damage is boss damage)
+const BURST_BOSS_TOO = { "Ula'tek": ['Venomous Heart', 'Gore Rattle'], 'The Coiled Altar': ["Zul'jan", 'Hex Lord Malacrass', 'Malacrass'] }; // (units that share the boss's health: their damage is boss damage; and a council's other boss (Oct 21: Malacrass was counted as an add))
+const bossNamesOf = (r) => new Set((r.bossUnits || []).concat(BURST_BOSS_TOO[(r.item || {}).boss] || []));
 function burstPanel(r, m, cut) {
   const S0 = r.dmgTS || [], end = Math.max(1, Math.min(r.duration, cut ? cut.t : r.duration, S0.length)); if (end < 20) return '';
-  const bossN = new Set((r.bossUnits || []).concat(BURST_BOSS_TOO[r.item.boss] || []));
+  const bossN = bossNamesOf(r);
   const sec = (i) => { let b = 0, a = 0; const o = S0[i]; if (o) for (const k in o) { if (bossN.has(k)) b += o[k]; else a += o[k]; } return [b, a]; };
   const sum = (a0, e0) => { let b = 0, a = 0; const by = new Map(); for (let i = Math.max(0, Math.floor(a0)); i < Math.min(end, Math.ceil(e0)); i++) { const [x, y] = sec(i); b += x; a += y; const o = S0[i]; if (o) for (const k in o) if (!bossN.has(k)) by.set(k, (by.get(k) || 0) + o[k]); } return { b, a, by }; };
   const all = sum(0, end), tot = all.b + all.a; if (!tot) return '';
@@ -6430,7 +6450,7 @@ function burstPanel(r, m, cut) {
   const shields = SH ? (r.bossAuras || []).filter((w) => w.n === SH.aura && w.a < end).map((w) => ({ a: w.a, e: Math.min(end, w.e == null ? end : w.e) })) : [];
   // (the raid's hardest 20 seconds, when it isn't already one of the windows above)
   { let best = null; for (let i = 0; i + 20 <= end; i++) { if (W.some((w) => i < w.e && i + 20 > w.a)) continue; let v = 0; for (let j = i; j < i + 20; j++) { const [x, y] = sec(j); v += x + y; } if (!best || v > best.v) best = { a: i, v }; }
-    const say = W.length ? 'Our hardest 20 seconds outside ' + (W.every((w) => w.kind === 'lust') ? 'Bloodlust' : W.every((w) => w.kind === 'amp') ? wn : 'those windows') : 'Our hardest 20 seconds';
+    const say = W.length ? 'Our biggest 20 seconds of damage outside ' + (W.every((w) => w.kind === 'lust') ? 'Bloodlust' : W.every((w) => w.kind === 'amp') ? wn : 'those windows') : 'Our biggest 20 seconds of damage';
     if (best) W.push({ kind: 'push', a: best.a, e: best.a + 20, name: say, ic: 'Avenging Wrath', say }); }
   W.sort((u, v) => u.a - v.a);
   // what was going on: each mechanic's moments, and the deaths
@@ -6450,7 +6470,7 @@ function burstPanel(r, m, cut) {
   const chart = '<svg class="brw-ch" viewBox="0 -4 ' + VW + ' ' + (VH + 22) + '" preserveAspectRatio="none" role="img" aria-label="The raid\'s damage a second over the pull">' + tick.join('') + shade +
     '<path d="' + area((p) => p[0] + p[1]) + '" fill="#6aa8ff" fill-opacity=".55"/><path d="' + area((p) => p[0]) + '" fill="#e6b450" fill-opacity=".75"/></svg>';
   const key = '<div class="brw-key"><span><i style="background:#e6b450"></i>Boss</span><span><i style="background:#6aa8ff"></i>Adds</span>' + (W.some((w) => w.kind === 'lust') ? '<span><i class="brw-kw" style="border-color:#e5534b"></i>Bloodlust</span>' : '') +
-    (W.some((w) => w.kind === 'amp') ? '<span><i class="brw-kw" style="border-color:#e6b450"></i>' + esc(wn) + '</span>' : '') + (W.some((w) => w.kind === 'push') ? '<span><i class="brw-kw" style="border-color:#6aa8ff"></i>Hardest 20 seconds</span>' : '') +
+    (W.some((w) => w.kind === 'amp') ? '<span><i class="brw-kw" style="border-color:#e6b450"></i>' + esc(wn) + '</span>' : '') + (W.some((w) => w.kind === 'push') ? '<span><i class="brw-kw" style="border-color:#6aa8ff"></i>Biggest 20 seconds</span>' : '') +
     (shields.length ? '<span><i style="background:#98a0ad;opacity:.4"></i>' + esc(SH.what) + '</span>' : '') + '</div>';
   // the boss and the adds, the whole pull
   const pct = (v) => Math.round(100 * v / tot) + '%', adds = [...all.by.entries()].filter(([k, v]) => v > tot * 0.01).sort((u, v) => v[1] - u[1]).slice(0, 6);
@@ -6579,7 +6599,8 @@ function dbdPhases(r) { const it = r.item; if (it.kill || it.kind === 'run') ret
   const rows = P.map((p, i) => { const j = Q.findIndex((x) => x.name === p.name); if (j < 0) return null; return { n: p.name, last: i === P.length - 1, at: p.start, bat: Q[j].start, a: len(P, i, r.duration), b: j + 1 < Q.length ? len(Q, j, br.duration) : null }; }).filter(Boolean);
   if (!rows.length) return '';
   const say = (d) => (Math.abs(d) < 3 ? 'about the same' : T(Math.abs(d)) + (d > 0 ? ' slower' : ' faster'));
-  return '<div class="panel dbd-ph"><div class="dbd-phh">Phases against your best pull <span class="sub">pull ' + best.pull + ', ' + esc(pullLabel(best)) + '</span></div>' +
+  const nextB = pullPct(r.item) != null && pullPct(best) != null && pullPct(r.item) <= pullPct(best); /* (on the night's best pull, the one it's held against is the next best (Oct 21)) */
+  return '<div class="panel dbd-ph"><div class="dbd-phh">Phases against your ' + (nextB ? 'next best' : 'best') + ' pull <span class="sub">pull ' + best.pull + ', ' + esc(pullLabel(best)) + '</span></div>' +
     rows.map((x) => { if (x.last) return '<span class="dbd-phr"><b>' + esc(x.n) + '</b> reached at ' + T(x.at) + ' <span class="sub">(best ' + T(x.bat) + ')</span>, then ' + T(x.a) + ' in it before the wipe</span>';
       if (x.b == null) return '<span class="dbd-phr"><b>' + esc(x.n) + '</b> took ' + T(x.a) + ' <span class="sub">(the best pull ended in it)</span></span>';
       const d = x.a - x.b, c = Math.abs(d) < 3 ? '' : d > 0 ? 'warn' : 'ok'; return '<span class="dbd-phr"><b>' + esc(x.n) + '</b> took ' + T(x.a) + ' <span class="sub">(best ' + T(x.b) + ')</span> <span class="pill-s ' + c + '">' + say(d) + '</span></span>'; }).join('') + '</div>'; }
@@ -7088,7 +7109,7 @@ function audit() {
     const tiLn = ti && (ti.tag || ti.more || ti.txt || ti.who) ? '<span class="mcx-ln">' + (ti.tag ? '<span class="wr-tag">' + esc(ti.tag) + '</span>' : '') + (ti.more ? '<span class="wr-plus">+' + ti.more + ' more</span>' : '') + (ti.who || '') + (ti.txt ? '<span class="mcx-s">' + esc(ti.txt) + '</span>' : '') + '</span>' : '';
     let b = '<details class="panel secd st-' + stc + (ti && tile !== 'line' ? ' mcx-tile' : '') + (tile === 'line' ? ' dbr-line' : '') + '" id="sec-' + sid + '" data-k="' + sid + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + (tile === 'line' ? '' : ti && ti.map ? '<span class="wr-map mcx-map">' + ti.map + '</span>' : ti && ti.alt ? ti.alt : '') + (ti && tile !== 'line' ? '<span class="mcx-hd">' : '') + secHead(s) +
       '<span class="sst ' + stc + '">' + (nBad || nWarn ? lvlText(lc, true) : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0Clean') + '</span>' + (ti ? (tile === 'line' ? '' : '</span>') + tiLn : '') + dbnTag(jobs) + dbdDots(s.id, DD) + '</summary><div class="secbody">' + (dbdLinkOf(r, s.id) && s.id !== 'deaths' ? '<div class="dbd-lk"><button type="button" class="btn sm" data-dblink="' + esc(dbdLinkOf(r, s.id)) + '">Copy link</button></div>' : '') + dbnBox(jobs) +
-      (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '') + (typeof gdzHowTo === 'function' ? gdzHowTo(s.id) : '') /* (a link to this mechanic in the Boss guide, Oct 20) */ + synopsis(s, rows, groups); // (the old counts summary was dropped: the synopsis and the table cover it)
+      (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '') + (typeof gdzHowTo === 'function' ? gdzHowTo(s.id, s.title) : '') /* (a link to this mechanic in the Boss guide, Oct 20) */ + synopsis(s, rows, groups); // (the old counts summary was dropped: the synopsis and the table cover it)
     // grouped sections: one header row per set, then that set's rows
     // (column headings live inside each opened set's card, so the list of sets stays clean)
     // the bulky panels: a list on the left (one entry per soak, transition, frontal, shield or set) and the picked
@@ -7214,11 +7235,13 @@ function audit() {
       // (the three to fix: failed first, then slips; within each, the boss's most important first, then the most problems)
       const imp = IMPORTANCE[it.boss] || [], ix = (id) => (id === 'deaths' ? -1 : imp.indexOf(id) < 0 ? 99 : imp.indexOf(id)), rk = { major: 0, moderate: 0, minor: 1, clean: 9 };
       const pick = all.filter((x) => x.lv !== 'clean').sort((a, b) => rk[a.lv] - rk[b.lv] || (b.nB > 0) - (a.nB > 0) || ix(a.s.id) - ix(b.s.id) || (b.nB + b.nW) - (a.nB + a.nW)).slice(0, 3); /* (real misses before slips (Oct 21)) */
+      S.pfix1 = { r, id: pick.length ? pick[0].s.id : null }; /* (the Next pull line follows the first card (Oct 21)) */
       if (pick.length && tileOf) {
         top += '<div class="dbr-h">Fix ' + (pick.length === 1 ? 'this' : 'these') + ' next pull</div><div class="dbr-fx3">' + pick.map((x) => { const k = firstAt.has(x.s.id) ? firstAt.get(x.s.id) : 'w', ti = tileOf(x.s, x.s.rows, x.s.groups || [], k);
           const nm = x.s.title.split(': ')[0], line = [ti.tag, ti.txt].filter(Boolean).join(' · ');
           return '<a class="tlink dbr-fx st-' + LVL_CLS[x.lv] + '" href="#sec-' + esc(x.s.id) + '-' + k + '">' + (ti.map ? '<span class="wr-map mcx-map dbr-fxm">' + ti.map + '</span>' : ti.alt ? '<span class="dbr-fxm dbr-fxa">' + ti.alt + '</span>' : '') +
             '<span class="dbr-fxb"><span class="sst ' + LVL_CLS[x.lv] + '">' + lvlText(x.lc, true) + '</span><b>' + esc(nm) + '</b><span class="dbr-fxt">' + esc(line) + (ti.more ? ' <span class="wr-plus">+' + ti.more + ' more</span>' : '') + '</span></span></a>'; }).join('') + '</div>';
+        if (typeof gdzLearn === 'function') top += gdzLearn(it.boss, it.diffId, pick.map((x) => ({ id: x.s.id, title: x.s.title }))); /* (each card's part of the guide (Oct 21)) */
       } else if (all.length) top += '<div class="dbr-h">Every mechanic went clean</div>';
       { const mk = { major: '❌', moderate: '❌', minor: '⚠️' }, L = S.dbCopy || [];
         for (const x of pick) { if (x.s.id === 'deaths') continue; const k = firstAt.has(x.s.id) ? firstAt.get(x.s.id) : 'w', ti = tileOf ? tileOf(x.s, x.s.rows, x.s.groups || [], k) : {}, line = [ti.tag, ti.txt].filter(Boolean).join(' · ');
@@ -8324,7 +8347,11 @@ function causeOf(r) {
 // "Avoidable damage" panel decides which hits are dangerous or harmful). Survival: the raid's average survival kit score (survivalOf). Interrupts: share of the kickable casts that were kicked. The overall grade weights them 30 / 30 / 25 / 15.
 const GRADES = [['S', 97], ['A', 92], ['B', 84], ['C', 72], ['D', 55], ['F', 0]]; // (stricter on Oct 20, the top-raider pass: 17 of 20 raiders were A or S on a 52-death night)
 const letterOf = (s) => GRADES.find(([, min]) => s >= min)[0];
-const CARD_W = { mech: 30, avoid: 30, death: 25, kick: 15 };
+// (the raid's grade (Oct 21, your call: "the grades are too generous"): half the raiders' own grades, half how the raid did each
+// mechanic (Debriefing's raid mechanics score), so a night where a mechanic fails every pull can't come out an A)
+const raidBlend = (pl, rm) => (pl == null ? rm : rm == null ? pl : 0.5 * pl + 0.5 * rm);
+const raidMechOf = (reps) => { try { const g = reps && reps.length ? gradeBoss(reps) : null; return g && g.overall != null ? g.overall : null; } catch (e) { return null; } };
+const CARD_W ={ mech: 30, avoid: 30, death: 25, kick: 15 };
 function gradeBoss(reps) {
   const L = (x) => String(x || '').toLowerCase(), clamp = (v) => Math.max(0, Math.min(100, v));
   const boss = reps[0] && reps[0].item.boss;
@@ -8676,6 +8703,7 @@ const nplStrip = (ns, st) => '<span class="npl">' + ns.map((n) => { const k = st
 // Major / Moderate / Minor / Clean totals. Then each phase as its own card (its number, a ring of how much was clean, its level),
 // its problem mechanics as tiles (the worst with a map big, "Fix this first"; each says in how many pulls it went wrong), and its
 // clean ones as small chips. A tile or a dot opens that pull's Mechanics at the mechanic.
+let NFIX1 = null; // (the night's first Fix card, for the Next time line under it)
 function nightMechC(o) {
   const { groups, pullNs, byPull, mByPull, pm, one, res, gm, boss } = o, N = pullNs.length;
   const stAt = (r, n) => { const p = r.x.per.get(n); return p ? p.st : 'na'; }, judged = (r) => pullNs.filter((n) => stAt(r, n) !== 'na');
@@ -8691,9 +8719,9 @@ function nightMechC(o) {
   const lateOf = (r) => r._late || (r._late = nightLate(pullNs, (n) => stAt(r, n)));
   const factsOf = (r) => { let R = 0, Wr = 0, Bd = 0; for (const p of r.x.per.values()) { if (p.st === 'na') continue; R += p.nR || 0; Wr += (p.nb || 0) + (p.nw || 0); Bd += p.nb || 0; } return { R, Wr, Bd, Sl: Wr - Bd }; };
   // (what went wrong, misses and slips apart (Oct 20): "73 of 90 went wrong" on a yellow line read like a fail when they were all just a little off)
-  const wrTags = (F) => (F.Bd ? '<span class="wr-tag">' + F.Bd + ' of ' + F.R + ' went wrong</span>' : '') + (F.Sl ? '<span class="wr-tag">' + F.Sl + (F.Bd ? '' : ' of ' + F.R) + ' a little off</span>' : '');
+  const wrTags = (F) => (F.Bd ? '<span class="wr-tag">' + F.Bd + ' of ' + F.R + ' checks went wrong</span>' : '') + (F.Sl ? '<span class="wr-tag">' + F.Sl + (F.Bd ? '' : ' of ' + F.R + ' checks') + ' a little off</span>' : ''); // ("checks": a number needs its unit (Oct 21))
   const bars = (r) => '<span class="npc">' + pullNs.map((n) => { const p = r.x.per.get(n), st = p ? p.st : 'na', h = !p || st === 'na' || p.sc == null ? 0 : Math.max(8, p.sc); return '<i class="npc-' + st + '" data-npq="' + n + '" style="--h:' + h.toFixed(0) + '%" title="' + esc('Pull ' + n + ': ' + (st === 'na' ? 'didn\'t come up' : Math.round(p.sc) + '% done right' + (p.nb + p.nw ? ', ' + (p.nb + p.nw) + ' went wrong' : ''))) + '"></i>'; }).join('') + '</span>';
-  const whoTop = (r) => { if (one) return ''; const m = new Map(); for (const p of r.x.per.values()) for (const w of p.who || []) m.set(w, (m.get(w) || 0) + 1); return [...m].filter(([n]) => pm.has(n)).sort((u, v) => v[1] - u[1]).slice(0, 3).map(([n, k]) => '<span style="color:' + pm.get(n).color + '">' + esc(n.split('-')[0]) + '</span> ' + k).join(', '); };
+  const whoTop = (r) => { if (one) return ''; const m = new Map(); for (const p of r.x.per.values()) for (const w of p.who || []) m.set(w, (m.get(w) || 0) + 1); return [...m].filter(([n]) => pm.has(n)).sort((u, v) => v[1] - u[1]).slice(0, 3).map(([n, k]) => '<span style="color:' + pm.get(n).color + '">' + esc(n.split('-')[0]) + '</span> ×' + k).join(', '); };
   const tile = (r, big) => { const lv = lvOf(r), wN = judged(r).filter((n) => stAt(r, n) !== 'ok').length, worst = worstOf(r), L = lateOf(r), F = factsOf(r);
     let mp = null; for (const n of [worst].concat(judged(r).filter((q) => stAt(r, q) !== 'ok').reverse())) { mp = mapIn(n, r.x.id); if (mp) break; }
     const who = new Map(); if (!one) for (const p of r.x.per.values()) for (const w of new Set(p.who || [])) who.set(w, (who.get(w) || 0) + 1);
@@ -8715,7 +8743,7 @@ function nightMechC(o) {
       : '<span class="nmc-big"><b>' + (F.R ? Math.round(100 * (F.R - F.Wr) / F.R) + '%' : '—') + '</b> done right</span>' + wrTags(F) + '<span class="wr-tag">' + wN + ' of ' + plural(judged(r).length, 'pull') + '</span>' + (worst ? '<span class="wr-plus">worst: pull ' + worst + '</span>' : '') + (faces ? '<span class="mcx-who">' + faces + '</span>' : '') + bars(r) + (whoTop(r) ? '<span class="nmc-who">Most often: ' + whoTop(r) + '</span>' : '');
     return '<details class="panel secd st-' + LC[lv] + ' dbr-line nml" id="' + sid + '" data-k="' + sid + '" data-sec="sec-' + esc(r.x.id) + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + secHead({ title: shortT(r.title), spell: r.x.spell, icon: r.x.icon }) + '<span class="sst ' + LC[lv] + '">' + LW[lv] + '</span>' +
       '<span class="mcx-ln">' + facts + '</span></summary><div class="secbody">' + (M ? '<div class="nml-map"><span class="wr-map mcx-map">' + miniMap(M.mp, pm) + '</span><span class="sub">Pull ' + M.n + (byPull.get(M.n) ? ', ' + esc(res(byPull.get(M.n))) : '') + '</span></div>' : '') +
-      '<div class="nml-f">' + facts + '</div>' + (r.body || '') + '</div></details>'; };
+      '<div class="nml-f">' + facts + '</div>' + (typeof gdzHowTo === 'function' ? gdzHowTo(r.x.id, r.title, boss, o.reps && o.reps[0] ? o.reps[0].item.diffId : null) : '') + (r.body || '') + '</div></details>'; };
   // (Deaths over the night (your call, Oct 21: "deaths should be accounted for on all pulls"): a bar per pull (deaths up to the
   // wipe filter), what killed people most, who died most, and each pull's first death with a › to that pull's Deaths)
   const deathsLine = () => { const reps = (o.reps || []).slice().sort((a, b) => a.item.pull - b.item.pull); if (!reps.length) return '';
@@ -8788,11 +8816,13 @@ function nightMechC(o) {
     const badP = (r) => [...r.x.per.values()].filter((q) => q.st !== 'na' && (q.nb || 0) > 0).length, recent = (r) => judged(r).slice(-4).filter((n) => stAt(r, n) !== 'ok').length;
     const fxScore = (r) => (badP(r) + 0.2 * Math.max(0, wN(r) - badP(r))) * (1 + (ix(r.x.id) < 99 && imp.length ? (imp.length - ix(r.x.id)) / imp.length : 0)) * (recent(r) ? 1 : 0.3);
     const pick = probs.slice().sort((a, b) => rk[lvOf(a)] - rk[lvOf(b)] || fxScore(b) - fxScore(a) || ix(a.x.id) - ix(b.x.id)).slice(0, 3);
+    NFIX1 = { boss, id: pick.length ? pick[0].x.id : null }; /* (the Next time line follows the first card (Oct 21)) */
     if (pick.length) top += '<div class="dbr-h">Fix ' + (pick.length === 1 ? 'this' : 'these') + ' next raid</div><div class="dbr-fx3">' + pick.map((r) => { const lv = lvOf(r), M = mapAt(r), L = lateOf(r), worst = worstOf(r);
       const txt = 'Wrong in ' + wN(r) + ' of ' + plural(judged(r).length, 'pull') + (L.recent ? ', ' + L.recent + ' of the last ' + L.K : '') + (worst ? ' · worst: pull ' + worst : '');
       return '<a class="dbr-fx nml-go st-' + LC[lv] + '" href="#nml-' + esc(r.x.id) + '" data-nml="nml-' + esc(r.x.id) + '">' + (M ? '<span class="wr-map mcx-map dbr-fxm">' + miniMap(M.mp, pm) + '</span>' : '<span class="dbr-fxm dbr-fxs" data-sec="sec-' + esc(r.x.id) + '">' + bars(r) + '</span>') +
         '<span class="dbr-fxb"><span class="sst ' + LC[lv] + '">' + LW[lv] + '</span><b>' + esc(shortT(r.title).split(' (')[0]) + '</b><span class="dbr-fxt">' + esc(txt) + '</span></span></a>'; }).join('') + '</div>';
     else if (all.length) top += '<div class="dbr-h">Every mechanic went clean in every pull</div>';
+    if (pick.length && typeof gdzLearn === 'function') top += gdzLearn(boss, reps[0] ? reps[0].item.diffId : null, pick.map((r) => ({ id: r.x.id, title: r.title }))); /* (each card's part of the guide (Oct 21)) */
   } catch (e) { console.error(e); top = ''; }
   const hp = o.b0 && o.pulls ? nightHpChart(o.b0, o.pulls) : '';
   return { html: (top ? '<section class="dbr-top">' + top + '</section>' : '') + '<div class="dbr-slot"></div>' + hp + head + (() => { try { return deathsLine(); } catch (e) { console.error(e); return ''; } })() + (phases || '<div class="panel"><p class="muted" style="margin:0">Mechanic checks for this boss aren\'t built yet.</p></div>'), MAPS };
@@ -9523,7 +9553,7 @@ async function progress(all) {
   const rec = [...agg.values()].sort((a, b) => b.pulls.size - a.pulls.size || b.n - a.n).slice(0, 10);
   h += '<div class="meters"><div class="panel"><h3>What keeps going wrong <small>mechanics by how many pulls they hit</small></h3>' + (rec.length ? rec.map((a) =>
     '<div class="drow"><div style="flex:1;min-width:0"><div class="line1"><span>' + spell(a.id, a.name) + '</span><span class="val">' + a.pulls.size + ' of ' + ok.length + ' pulls</span></div><div class="bar"><div style="width:' + (100 * a.pulls.size / ok.length) + '%;background:var(--warn)"></div></div>' +
-    '<div class="sub">' + (a.who.size ? 'Most often: ' + esc([...a.who].sort((x, y) => y[1] - x[1]).slice(0, 4).map(([n, c]) => n + ' ' + c).join(', ')) : 'Raid-wide') + '</div></div></div>').join('') : '<p class="muted">No mechanic mistakes recorded across these pulls' + (ok[0] && !ok[0].hasPack ? ' (this boss has no rules yet)' : '') + '.</p>') + '</div>';
+    '<div class="sub">' + (a.who.size ? 'Most often: ' + esc([...a.who].sort((x, y) => y[1] - x[1]).slice(0, 4).map(([n, c]) => n + ' ×' + c).join(', ')) : 'Raid-wide') + '</div></div></div>').join('') : '<p class="muted">No mechanic mistakes recorded across these pulls' + (ok[0] && !ok[0].hasPack ? ' (this boss has no rules yet)' : '') + '.</p>') + '</div>';
   // players across pulls
   const pl = new Map();
   for (const x of ok) for (const p of x.players.values()) {
@@ -10191,7 +10221,7 @@ function graphsBoard(r, end, NP) {
   const healSl = (() => { const l = ps.map((p) => ({ n: p.name, col: p.color || '#9aa0ac', v: sumH(p) })).filter((x) => x.v > 0).sort((u, w) => w.v - u.v), tot = l.reduce((v, x) => v + x.v, 0), big = l.filter((x) => x.v >= 0.03 * tot), rest = l.filter((x) => x.v < 0.03 * tot);
     return rest.length ? big.concat([{ n: 'Everyone else', col: '#5c6270', v: rest.reduce((v, x) => v + x.v, 0), more: [rest.length + ' players'] }]) : big; })();
   const top5 = ps.map((p) => ({ p, v: sumD(p) })).sort((u, w) => w.v - u.v).slice(0, 5).filter((x) => x.v > 0);
-  const bossN = new Set(night ? NP.flatMap((it) => it.r.bossUnits || []) : r.bossUnits || []), bossAdds = ps.map((p) => { let b = 0, o = 0; for (const [n, v] of p.dmgT || []) { if (bossN.has(n)) b += v; else o += v; } return { p, s: [b, o] }; });
+  const bossN = new Set(night ? NP.flatMap((it) => [...bossNamesOf(it.r)]) : [...bossNamesOf(r)]), bossAdds = ps.map((p) => { let b = 0, o = 0; for (const [n, v] of p.dmgT || []) { if (bossN.has(n)) b += v; else o += v; } return { p, s: [b, o] }; });
   const spellTop = ps.flatMap((p) => [...(p.dmgAb || new Map()).values()].map((y) => ({ n: String(y.name), ic: String(y.name).replace(/^[^:]+: /, ''), who: p.name, col: p.color, v: y.total, more: [y.hits + (y.hits === 1 ? ' hit' : ' hits') + (y.hits ? ', ' + Math.round(100 * (y.crits || 0) / y.hits) + '% crit' : '')] })));
   const takenSrc = (() => { const m = new Map(); for (const p of ps) (p.takenAbS || []).slice(0, E1).forEach((o) => { if (o) for (const [n, v] of Object.entries(o)) { const x = m.get(n) || { n, v: 0, hits: 0, big: 0, who: new Set() }; x.v += v[1] || 0; x.hits += v[2] || 0; x.big = Math.max(x.big, v[3] || 0); x.who.add(p.name); m.set(n, x); } }); return [...m.values()].map((x) => ({ n: x.n, v: x.v, more: [x.hits + ' hits on ' + x.who.size + (x.who.size === 1 ? ' player' : ' players'), 'biggest hit ' + C(x.big)] })); })();
   const healOver = ps.map((p) => ({ p, s: [p.healing || 0, p.overheal || 0] }));
@@ -10273,7 +10303,7 @@ function perf() {
   const sumWin = (arr) => { let s = 0; for (let i = Math.max(0, Math.floor(w0)); i < Math.min(arr.length, Math.ceil(w1)); i++) s += arr[i] || 0; return s; };
   const firstDeath = (p) => { const d = r.deaths.filter((x) => x.guid === p.guid && x.t <= end + 0.05).map((x) => x.t); return d.length ? Math.min(...d) : null; };
   const inWin = (t) => t != null && t >= w0 && t <= w1;
-  const bossN = new Set(r.bossUnits || []), KEY = { dmg: 'dmgS', heal: 'healS', taken: 'takenS' };
+  const bossN = bossNamesOf(r), KEY = { dmg: 'dmgS', heal: 'healS', taken: 'takenS' };
   // (per player: their total in the window, seconds alive in it (a battle res gives time back) and their rate while alive)
   const rowsOf = (k) => ps.map((p) => { const tot = sumWin(p[KEY[k]] || []), al = aliveSecs(r, p, w0, w1); return { p, tot, al, alive: al >= 1 ? tot / al : 0, died: firstDeath(p), back: deadSpans(r, p).some(([a, b]) => inWin(a) && b <= w1), over: p.healing + p.overheal ? p.overheal / (p.healing + p.overheal) : 0, avoidShare: p.taken ? Math.min(1, p.avoidable / p.taken) : 0 }; })
     .filter((x) => x.tot > 0).sort((a, b) => b.tot - a.tot);
@@ -13234,7 +13264,7 @@ function hpalChecks(reps, name, one) {
   const VIZ = Object.assign({ apl: () => (one && rows.length === 1 && rows[0].apl && rows[0].apl.log ? aplWhere(rows[0].apl.log, wins.map((w) => ({ t: w.a, e: w.e })), rows[0].len, { n: wingN }, { n: 'Holy Power' }) : aplViz(aplSl)), dth: () => { const l = rows.flatMap((s) => s.dtC || []); if (!l.length) return ''; const n = {}; for (const q of l) n[dtCls(q)] = (n[dtCls(q)] || 0) + 1; return spcSumBar(n, virtue ? LG.dt : { ok: 'Nothing wasted, or 1 or 2', warn: '3 or more wasted' }) + dtBoxes(); } }, { devam: () => amCards(), aw: () => winT }, bwD && bwD.bws.length ? { act: () => bvBoxes() + (one && bwD && bwD.bws.length ? '<div class="spc-ws">' + bwD.bws.map(bvCard).join('') + '</div>' : '') } : {});
   // (a bar made of parts, with its legend: Procs, Holy Power's sources and spenders, mana's)
   const PC = SPC_PC, barRow = spcBarRow, facts = spcFacts;
-  const pctM = (v) => (!mx ? C(v) : barNum(v / mx) + (v >= mx ? ' bars' : '')), ofBar = (v) => pctM(v) + (mx && v < mx ? ' of a bar' : '');
+  const pctM = (v) => (!mx ? C(v) : barNum(v / mx) + (v >= mx ? ' bars' : '')), ofBar = (v) => (mx && v > 0 && v < mx * 0.1 ? Math.max(1, Math.round(100 * v / mx)) + '% of a bar' : pctM(v) + (mx && v < mx ? ' of a bar' : '')); // (a small amount as a share: "0.01" read as nothing (Oct 21))
   // (Holy Power: the numbers, where it came from, what spent it)
   const hpT = (() => { if (!hpG) return ''; const srcs = [...hpSrc].sort((a, b) => b[1][0] - a[1][0]), sps = [...hpSp].sort((a, b) => b[1][0] - a[1][0]), free = sps.reduce((v, [, y]) => v + y[2], 0), spent = sps.reduce((v, [, y]) => v + y[1] * 3, 0), cap = sum((s) => s.hpCap);
     const H = { 'Divine Toll': 'Divine Toll', 'Aura Mastery': 'Aura Mastery', 'Holy Shock': 'Holy Shock', 'Flash of Light': 'Flash of Light', 'Holy Light': 'Holy Light', Judgment: 'Judgment' };
@@ -13252,7 +13282,7 @@ function hpalChecks(reps, name, one) {
       '<p class="sub spc-note">Healing per mana is each spell\'s own healing, without overhealing, divided by its mana. Healing your Beacons pass on can\'t be split by spell, so it isn\'t counted. Holy Light is how you manage your mana. Cast more of it when you have mana to spare, and fewer when you\'re running low.</p>'; })();
   // (Judgment: what it did, in numbers)
   const jT2 = jN ? facts([[jN, 'Judgments cast'], [jHp, 'Holy Power from Judgment'], jProc ? [jProc, 'Infusions Judgment granted'] : null, truth && heal.get('Truth Prevails') ? [C(heal.get('Truth Prevails')), 'healed by Truth Prevails'] : null,
-    gj && heal.get('Greater Judgment') ? [C(heal.get('Greater Judgment')), 'prevented by Greater Judgment'] : null, revel && mnG.get('Divine Revelations') ? [pctM(mnG.get('Divine Revelations')), 'mana back (Divine Revelations)'] : null]) +
+    gj && heal.get('Greater Judgment') ? [C(heal.get('Greater Judgment')), 'prevented by Greater Judgment'] : null, revel && mnG.get('Divine Revelations') ? [ofBar(mnG.get('Divine Revelations')), 'mana back (Divine Revelations)'] : null]) +
     '' : '';
   const bvCard = (w) => { const g = bwD ? bwD.bwG(w) : 2, st = g >= 2 ? 'ok' : g === 1 ? 'warn' : 'bad';
     return '<div class="spc-w ' + st + '" role="button" tabindex="0" data-mt="' + w.t.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(w.t) + '–' + T(w.e || w.t + 9) + '</b><span class="sub">' + (bwD ? bwD.GN[g] : '') + '</span></div>' +
@@ -14135,7 +14165,7 @@ function specPage(o) {
   const row = (c) => '<article class="spc-row ' + c.st + '" id="spc-r-' + slug(c.k) + '"><header class="spc-rh">' + icB(c.ic) + '<div class="spc-rt"><h4>' + esc(c.label) + '</h4></div><div class="spc-rv"><b class="cst-f ' + c.st + '">' + c.v + '</b><span class="spc-bd ' + c.st + '">' + BADGE[c.st] + '</span></div></header>' +
     '<div class="spc-rb"><div class="spc-rd"><p class="spc-rs">' + esc(c.sub) + spcHw(c.k, c.how)[0] + '</p>' + spcHw(c.k, c.how)[1] + viz(c) + '</div></div></article>';
   const dots = (l) => '<span class="spc-dots">' + l.map((c) => '<i class="' + c.st + '"></i>').join('') + '</span>';
-  const TOPB = o.TOPB, TOPP = o.TOPP || new Set(), topT = (k) => (TOPB && TOPB[k] && (one || TOPP.has(k)) ? '<span class="spc-tp" title="' + esc(o.topTip || topWho(o.top, TOPB)) + '">' + esc(o.topL || 'Top players') + ': ' + (k === 'mnx' && /%$/.test(String(TOPB[k])) ? barsTxt(parseFloat(TOPB[k]), 100) : TOPB[k]) + '</span>' : '');
+  const TOPB = o.TOPB, TOPP = o.TOPP || new Set(), topT = (k) => (TOPB && TOPB[k] && (one || TOPP.has(k)) ? '<span class="spc-tp" title="' + esc(o.topTip || topWho(o.top, TOPB)) + '">' + esc(o.topL || 'Top players') + ': ' + (k === 'mnx' && /%$/.test(String(TOPB[k])) ? barsTxt(parseFloat(TOPB[k]), 100) : topCap(TOPB[k])) + '</span>' : '');
   const blk = (g, gi, info, vis) => { const gd = g.l.filter((c) => c.st !== 'na'), worst = gd.some((c) => c.st === 'bad') ? 'bad' : gd.some((c) => c.st === 'warn') ? 'warn' : gd.length ? 'ok' : 'na', main = g.l.find((c) => c.k === info.main) || g.l[0];
     // (the A+B mockup (Oct 19): no box round a block; a slim line with its name and its sentence of why, then its tiles)
     return '<section class="spc-grp spc-gx2 ' + worst + '" id="spc-g-' + gi + '">' + spcGh2(info.ic, g.t, info.lead, dots(g.l)) + spcTiles(vis, viz, topT, slug, (c) => momT(c, 6)) + (info.det ? '<div class="spc-det spc-dt2">' + info.det + '</div>' : '') + '</section>'; };
@@ -14235,9 +14265,14 @@ const spcExtras = (per, UN, one) => { const heal = UN === 'healing', ab = new Ma
     return card(spellIcon(sp1.id, nm), esc(x.g), C(x.total), pc(x.total) + ' of your ' + W + ' · ' + C(x.total / dur) + ' a second' + (nm !== x.g ? '<br>from ' + esc(x.l.map((a) => a.name.replace(/^[^:]+: /, '')).filter((v, i, l) => v && l.indexOf(v) === i).slice(0, 3).join(', ')) : '')); });
   const gSum = gl.length ? card((gl[0] ? spellIcon(gl[0].l[0].id, gl[0].l[0].name.replace(/^[^:]+: /, '')) : ''), 'All your gear effects', pc(gT), C(gT) + ' ' + W + ' from ' + gl.length + (gl.length === 1 ? ' item' : ' items') + (one ? ' this pull' : ' over these pulls'), 'rgx-sum') : '';
   // (where it came from: the five biggest sources and the rest, as one split bar)
-  const top = [...ab.values()].sort((a, b) => b.total - a.total).slice(0, 5), COL = ['#e6c27a', '#6fb7e8', '#8fd18a', '#c99be8', '#e88f6f'], rest = tot - top.reduce((v, x) => v + x.total, 0);
+  // (a pet's abilities ("Sweat: Kill Command") join up by ability and say whose they are: "Kill Command (your pets)" (Oct 21), so
+  // two pets' Kill Commands are one source and less lands in Everything else)
+  const srcs = new Map(); for (const a of ab.values()) { const m = /^([^:]+): (.+)$/.exec(a.name), pet = m && m[1] !== m[2] ? m[1] : null, nm = pet ? m[2] : a.name.replace(/^([^:]+): \1$/, '$1'), k = nm + (pet ? '|pet' : '');
+    const o = srcs.get(k) || { name: nm, id: a.id, total: 0, pets: new Set() }; o.total += a.total; if (pet) o.pets.add(pet); srcs.set(k, o); }
+  for (const o of srcs.values()) if (o.pets.size) o.name = o.name + (o.pets.size === 1 ? ' (your pet ' + [...o.pets][0] + ')' : ' (your pets)');
+  const top = [...srcs.values()].sort((a, b) => b.total - a.total).slice(0, 5), COL = ['#e6c27a', '#6fb7e8', '#8fd18a', '#c99be8', '#e88f6f'], rest = tot - top.reduce((v, x) => v + x.total, 0), restN = Math.max(0, srcs.size - top.length);
   const split = '<div class="rgx-src"><div class="rgx-h"><span>Where your ' + W + ' came from</span></div><div class="rgx-bar">' + top.map((x, i) => '<i style="width:' + (100 * x.total / tot).toFixed(2) + '%;background:' + COL[i] + '" title="' + esc(x.name) + ': ' + pc(x.total) + '"></i>').join('') + '<i class="rgx-rest" style="width:' + (100 * Math.max(0, rest) / tot).toFixed(2) + '%"></i></div>' +
-    '<div class="rgx-lg">' + top.map((x, i) => '<span><u style="background:' + COL[i] + '"></u>' + spellIcon(x.id, x.name.replace(/^[^:]+: /, '')) + esc(x.name.replace(/^([^:]+): \1$/, '$1')) + ' <b>' + pc(x.total) + '</b></span>').join('') + (rest > 0 ? '<span><u class="rgx-rest"></u>Everything else <b>' + pc(rest) + '</b></span>' : '') + '</div></div>';
+    '<div class="rgx-lg">' + top.map((x, i) => '<span><u style="background:' + COL[i] + '"></u>' + spellIcon(x.id, x.name.replace(/ \(your pets?.*\)$/, '')) + esc(x.name) + ' <b>' + pc(x.total) + '</b></span>').join('') + (rest > 0 ? '<span><u class="rgx-rest"></u>Everything else' + (restN ? ' (' + restN + ' smaller)' : '') + ' <b>' + pc(rest) + '</b></span>' : '') + '</div></div>';
   // (your biggest single hit, and the combat potion's window: its 30 seconds against the rest of the pull)
   const bigC = big ? card(spellIcon(big.id, big.n), 'Biggest ' + (heal ? 'heal' : 'hit'), C(big.v), esc(big.n) + (!one && big.pull ? ', pull ' + big.pull : '')) : '';
   let pin = 0, pinT = 0, pout = 0, poutT = 0, pN = 0, pNm = '', pId = 0;
@@ -14249,7 +14284,7 @@ const spcExtras = (per, UN, one) => { const heal = UN === 'healing', ab = new Ma
   // (boss and adds (your idea, Oct 19): your damage on the boss (and the units that share its health) and on everything else, the adds you hit most,
   // and the raid's damage dealers' share on adds next to yours. Damage dealers and tanks; facts, not graded)
   let bD = 0, aD = 0, rB = 0, rA = 0; const adds = new Map();
-  if (!heal) for (const x of per) { const r = x.r, bn = new Set((r.bossUnits || []).concat(BURST_BOSS_TOO[(r.item || {}).boss] || [])); if (!bn.size) continue;
+  if (!heal) for (const x of per) { const r = x.r, bn = bossNamesOf(r); if (!bn.size) continue;
     for (const [n, v] of x.p.dmgT || []) { if (bn.has(n)) bD += v; else { aD += v; adds.set(n, (adds.get(n) || 0) + v); } }
     for (const q of r.players.values()) if (q.role === 'dps' && q.dmgT) for (const [n, v] of q.dmgT) { if (bn.has(n)) rB += v; else rA += v; } }
   const dT = bD + aD, aF = dT ? aD / dT : 0, rF = rB + rA ? rA / (rB + rA) : null, pc2 = (v) => (v >= 0.1 ? Math.round(100 * v) : (100 * v).toFixed(1)) + '%';
@@ -15456,13 +15491,26 @@ function prePullOf(r, p, q) {
   if (q.notSelf) return named ? !(cb.auras || []).some((a) => nms.includes(a.name) && a.source === cb.self) : null;
   return named ? b0 || (cb.auras || []).some((a) => nms.includes(a.name) && (!q.self || a.source === cb.self)) : b0 ? true : null;
 }
+// (a top players' share over 100%, like Barbed Shot's 101% when resets give an extra cast, reads as 100% (Oct 21))
+const topCap = (v) => (/^\d+(\.\d+)?%$/.test(String(v)) && parseFloat(v) > 100 ? '100%' : v);
+// (casts a minute by spell, buttons pressed only (Oct 21: Holy Paladin read 88 a minute, 38 of them Reclamation): a spell whose casts
+// nearly all land at the same moment as another spell's cast is a proc riding on that press, not a press of its own)
+const CPM_PROCS = new Set(['reclamation', 'shattered souls']); // (procs Warcraft Logs marks as not pressed: left out of a combat log too)
+function cpmPresses(ab, t1, p) {
+  const fk = (p && p.fakeT) || new Map(), isFake = (n, t) => (fk.get(String(n).toLowerCase()) || []).some((u) => Math.abs(u - t) < 0.01);
+  const L = ab.filter((y) => !COMBAT_POTS.includes(String(y.name).toLowerCase()) && !/flask|potion|healthstone/i.test(y.name) && !CPM_PROCS.has(String(y.name).toLowerCase())).map((y) => ({ n: y.name, ts: y.ts.filter((t) => t <= t1 && !isFake(y.name, t)) })).filter((y) => y.ts.length);
+  const all = L.flatMap((y, i) => y.ts.map((t) => [t, i])).sort((a, b) => a[0] - b[0]);
+  const near = (i, t) => { let lo = 0, hi = all.length; while (lo < hi) { const m = (lo + hi) >> 1; if (all[m][0] < t - 0.08) lo = m + 1; else hi = m; }
+    for (let k = lo; k < all.length && all[k][0] <= t + 0.08; k++) if (all[k][1] !== i) return true; return false; };
+  return L.filter((y, i) => y.ts.length < 6 || y.ts.filter((t) => near(i, t)).length < 0.8 * y.ts.length).map((y) => [y.n, y.ts.length]).sort((u, w) => w[1] - u[1]);
+}
 // (casts that did not finish, and casts a minute by spell, the same reading as the shared module's)
 function castMetricsOf(r, p, c, t1) {
   const dd = deadSpans(r, p).map(([a, b]) => [a, b == null ? t1 : Math.min(b, t1)]).filter(([a, b]) => a < t1 && b > a), inDead = (t) => dd.some(([a, b]) => t >= a - 1 && t <= b + 1), alive = Math.max(1, t1 - dd.reduce((v, [a, b]) => v + b - a, 0));
   const sts = (p.starts || []).filter((y) => y.t <= t1 - 1.5 && !inDead(y.t + 1.5)), allT = c.all.concat(sts.map((y) => y.t)).sort((u, w) => u - w), nextAfter = (t) => { for (const u of allT) if (u > t + 0.05) return u; return t1; };
   const unf = sts.filter((y) => y.done == null && nextAfter(y.t) - y.t >= 0.4);
   return { cc: { n: sts.length, unf: unf.map((y) => ({ t: y.t, n: y.spell, lost: Math.min(4, Math.max(0, nextAfter(y.t) - y.t)) })) }, ccT: unf.map((y) => y.t),
-    cpmBy: c.ab.filter((y) => !COMBAT_POTS.includes(String(y.name).toLowerCase()) && !/flask|potion|healthstone/i.test(y.name)).map((y) => [y.name, y.ts.filter((t) => t <= t1).length]).filter(([, n]) => n).sort((u, w) => w[1] - u[1]), cpmAl: alive };
+    cpmBy: cpmPresses(c.ab, t1, p), cpmAl: alive };
 }
 // (the stretches you were casting or on a global cooldown, from each cast bar and each instant)
 function busyOf(p, c, t1) {
@@ -15684,7 +15732,7 @@ function genRun(spec, D, reps, name, one) {
     { const sts = (p.starts || []).filter((y) => y.t <= t1 - 1.5 && !inDead(y.t + 1.5)), allT = c.all.concat(sts.map((y) => y.t)).sort((u, w) => u - w), nextAfter = (t) => { for (const u of allT) if (u > t + 0.05) return u; return t1; };
       const unf = sts.filter((y) => y.done == null && nextAfter(y.t) - y.t >= 0.4); s.cc = { n: sts.length, unf: unf.map((y) => ({ t: y.t, n: y.spell, lost: Math.min(4, Math.max(0, nextAfter(y.t) - y.t)) })) }; s.m.cc = unf.map((y) => y.t); }
     // (casts a minute: every spell you pressed (not potions, flasks or healthstones), a minute of your time alive)
-    s.cpmBy = c.ab.filter((y) => !COMBAT_POTS.includes(lc(y.name)) && !/flask|potion|healthstone/i.test(y.name)).map((y) => [y.name, y.ts.filter((t) => t <= t1).length]).filter(([, n]) => n).sort((u, w) => w[1] - u[1]); s.cpmAl = alive;
+    s.cpmBy = cpmPresses(c.ab, t1, p); s.cpmAl = alive;
     // (haste, for a cooldown it shortens: from the global cooldown, 1.5 seconds before haste; read from the middle of the quick presses, not the fastest)
     const gMid = gs.length ? gs[Math.floor(gs.length * 0.35)] : 1.5, hasteF = D.gcd1 ? 1 : Math.max(1, Math.min(1.6, 1.5 / Math.max(0.75, gMid)));
     // (each spell pressed on cooldown and each big cooldown, against how often it could have been pressed)
@@ -16200,7 +16248,7 @@ function genRun(spec, D, reps, name, one) {
   // (one window's card: its time, what you did in it against your usual, what went in before and with it, then its lower half)
   const winCard = (w) => { const ck = (ok, t) => '<span class="' + (ok ? 'ok' : 'no') + '">' + (ok ? '✓ ' : '✕ ') + esc(t) + '</span>';
     return '<div class="spc-w ' + w.st + '" role="button" tabindex="0" data-mt="' + w.t.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(w.t) + '–' + T(w.e) + '</b><span class="sub">' + Math.round(w.len) + ' seconds</span></div>' +
-      '<div class="spc-wv">' + C(w.rate) + '<span> ' + (UNW === 'healing' ? 'HPS' : 'DPS') + '</span></div>' + (w.outR > 0 ? '<div class="spc-wo">Rest of the pull: ' + C(w.outR) + '</div>' : '') + '<div class="spc-wc spc-chk">' + (w.lateBy == null ? '' : WIN.ready.info ? (w.lateBy >= 1 ? '<span class="sub">Ready ' + Math.round(w.lateBy) + ' s before you went in</span>' : '') : ck(!w.late, w.lateBy < 1 ? 'Went in right away' : 'Went in ' + Math.round(w.lateBy) + ' s after it was ready')) + w.parts.map((q) => ck(q.ok, q.n)).join('') + (w.key != null ? ck(!w.low, keyW(w.key)) : '') + (WIN.noPace ? '' : ck(!w.slow, w.slow ? 'Slower casting' : 'Kept casting')) + (w.setup || []).filter((q) => !q.info || q.ok).map((q) => ck(q.ok, q.lbl || q.n + (q.post ? ' with it' : ' before'))).join('') + (w.steps || []).map((q) => (q.ok == null ? '<span class="sub">' + esc(q.txt) + '</span>' : ck(q.ok, q.txt))).join('') + (WIN.dotsThrough ? ck(!(w.dotsShort || []).length, (w.dotsShort || []).length ? andL(w.dotsShort) + ' ran out in it' : 'Damage over time lasted') : '') + (w.potIn ? ck(true, 'Potion') : '') + (w.lustIn ? '<span class="sub">Bloodlust</span>' : '') + (w.wasted && w.wasted.length ? ck(false, w.wasted.length + (w.wasted.length === 1 ? ' proc' : ' procs') + ' wasted') : '') +
+      '<div class="spc-wv">' + C(w.rate) + '<span> ' + (UNW === 'healing' ? 'HPS' : 'DPS') + '</span></div>' + (w.outR > 0 ? '<div class="spc-wo">Rest of the pull: ' + C(w.outR) + '</div>' : '') + (UNW !== 'healing' && w.outR > 0 && w.rate < 0.5 * w.outR ? '<div class="spc-wo spc-wlow">Under half your usual damage: the boss may have been out of reach, or you were on adds.</div>' : '') /* (Oct 21: a 43K window was all green with no word why) */ + '<div class="spc-wc spc-chk">' + (w.lateBy == null ? '' : WIN.ready.info ? (w.lateBy >= 1 ? '<span class="sub">Ready ' + Math.round(w.lateBy) + ' s before you went in</span>' : '') : ck(!w.late, w.lateBy < 1 ? 'Went in right away' : 'Went in ' + Math.round(w.lateBy) + ' s after it was ready')) + w.parts.map((q) => ck(q.ok, q.n)).join('') + (w.key != null ? ck(!w.low, keyW(w.key)) : '') + (WIN.noPace ? '' : ck(!w.slow, w.slow ? 'Slower casting' : 'Kept casting')) + (w.setup || []).filter((q) => !q.info || q.ok).map((q) => ck(q.ok, q.lbl || q.n + (q.post ? ' with it' : ' before'))).join('') + (w.steps || []).map((q) => (q.ok == null ? '<span class="sub">' + esc(q.txt) + '</span>' : ck(q.ok, q.txt))).join('') + (WIN.dotsThrough ? ck(!(w.dotsShort || []).length, (w.dotsShort || []).length ? andL(w.dotsShort) + ' ran out in it' : 'Damage over time lasted') : '') + (w.potIn ? ck(true, 'Potion') : '') + (w.lustIn ? '<span class="sub">Bloodlust</span>' : '') + (w.wasted && w.wasted.length ? ck(false, w.wasted.length + (w.wasted.length === 1 ? ' proc' : ' procs') + ' wasted') : '') +
       (WIN.dotsUp ? ck(!w.dotsMiss.length, w.dotsMiss.length ? andL(w.dotsMiss) + ' not up' : 'Damage over time up') : '') + (w.heavy != null ? ck(w.heavy, w.heavy ? 'Into heavy damage' : 'Not into heavy damage') : '') + (w.cnt != null ? '<span class="sub">' + w.cnt + ' ' + esc(WIN.cnt.lbl) + ' out at the peak</span>' : '') + '</div>' + winMore(w) + '</div>'; };
   // (a card for one of the more windows: its time, its healing or damage against the rest of the pull, its key spell, what went in before it, then its lower half)
   const moreCard = (q, w) => { const ck = (ok, t) => '<span class="' + (ok ? 'ok' : 'no') + '">' + (ok ? '✓ ' : '✕ ') + esc(t) + '</span>', kn = q.key ? moreKn(q) : '';
@@ -20102,12 +20150,12 @@ function plPage(data, reps, one) {
     missL.map((a) => '<div class="lp-pr"><span class="lp-pk">' + lpWho(a.p) + '</span><span>' + esc(andList(a.last.x.issues.map((t, i) => (i ? t.charAt(0).toLowerCase() + t.slice(1) : t)))) + '</span></div>').join('') + '</div>' : '';
   // (the raid's report card (your ask, Oct 19): the raid's grade and each of the six parts, averaged over everyone, in the
   // same card as Recap's grade for the night; the Prep tile opens who is missing what)
-  const raidG = avg((a) => a.score), partTxt = { mech: mist ? plural(mist, 'mistake') + ' that cost points' : 'no mistakes that cost points', rot: 'how each player played their spec', surv: 'defensives, Healthstones, health potions',
+  const raidG = raidBlend(avg((a) => a.score), raidMechOf(reps)), partTxt = { mech: mist ? plural(mist, 'mistake') + ' that cost points' : 'no mistakes that cost points', rot: 'how each player played their spec', surv: 'defensives, Healthstones, health potions',
     prep: !lastX.length ? 'no gear logged' : fullPrep === lastX.length ? 'everyone fully set up' + (one ? '' : ' at the last pull') : (lastX.length - fullPrep) + ' missing something ' + (S.plPrepOpen ? '▴' : '▾'), asg: 'the NSRT note\'s jobs', tool: 'combat or mana potions, externals' };
   const partTile = (k) => { const v = avg((a) => a[k === 'rot' ? 'play' : k]), t = plTile(plGr(v), PL_PN[k], v == null ? '—' : Math.round(v) + '<span> / 100</span>', gBucket(v), v == null ? (k === 'asg' ? 'no NSRT note, or no jobs in it' : 'not judged') : partTxt[k], true);
     return k === 'prep' && fullPrep < lastX.length ? '<button class="pt-go pl-prepgo' + (S.plPrepOpen ? ' on' : '') + '" type="button" id="plPrepGo" aria-expanded="' + !!S.plPrepOpen + '" title="See who is missing what">' + t + '</button>' : t; };
   const tiles = raidG == null ? '' : '<div class="panel nc-rc2 pl-rc"><div class="rc-all" title="Grades go S, A, B, C, D and F, and each pull counts up to the wipe filter">' + gradeChip(letterOf(raidG), true) + '<div><div class="pt-l">The raid\'s report card</div><div class="rc-sc">' + Math.round(raidG) + '<span> / 100</span></div><div class="sub">' +
-    plural(data.length, 'player') + (one ? ', this pull' : ' · ' + plural(reps.length, 'pull')) + '. Each player\'s grade, averaged.</div></div></div><div class="pts rc-cats" style="--n:6">' + Object.keys(PL_PW).map(partTile).join('') + '</div></div>' + prepL;
+    plural(data.length, 'player') + (one ? ', this pull' : ' · ' + plural(reps.length, 'pull')) + '. Half each player\'s grade, half how the raid did each mechanic.</div></div></div><div class="pts rc-cats" style="--n:6">' + Object.keys(PL_PW).map(partTile).join('') + '</div></div>' + prepL;
   // ---- a row per player: their grade on the bar, the trend (all pulls) or their first fix's points (one pull) ----
   const bars = rows.map((a, i) => { const on = sel === a, m = mvp.get(a.p.name);
     return cbRow({ tag: 'button', cls: (on ? ' on' : '') + ' pl-r', attrs: ' type="button" data-pn="' + esc(a.p.name) + '" aria-pressed="' + on + '"', k: i + 1, p: a.p, segs: [[Math.max(1, a.score), 'm']], v: '<span class="pl-g">' + plGr(a.score) + '<b>' + Math.round(a.score) + '</b></span>',
@@ -20237,9 +20285,14 @@ function rcnFacts(c) {
   const it0 = reps[0].item, tonight = nightOf(it0.wallMs || it0.startMs || Date.now()), nights = new Map();
   for (const v of HIST.mem.values()) { if (v.boss !== it0.boss || v.diffId !== it0.diffId || !v.gr) continue; const k = nightOf(v.at); if (!nights.has(k)) nights.set(k, []); nights.get(k).push(v); }
   const nightAvg = (l) => { const m = new Map(); for (const v of l) for (const [n, [sc, u]] of Object.entries(v.gr)) { const w = Math.max(20, u || 0), y = m.get(n) || { s: 0, w: 0 }; y.s += sc * w; y.w += w; m.set(n, y); }
-    const per = new Map([...m].map(([n, y]) => [n, y.s / y.w])); return { per, raid: per.size ? [...per.values()].reduce((s, x) => s + x, 0) / per.size : null, at: l[0].at, deaths: l.reduce((s, v) => s + (v.deaths || 0), 0) / l.length }; };
+    const per = new Map([...m].map(([n, y]) => [n, y.s / y.w])), rms = l.map((v) => v.rm).filter((x) => x != null), rmA = rms.length ? rms.reduce((s, x) => s + x, 0) / rms.length : null;
+    const pl = per.size ? [...per.values()].reduce((s, x) => s + x, 0) / per.size : null;
+    return { per, pl, rmA, raid: raidBlend(pl, rmA), at: l[0].at, deaths: l.reduce((s, v) => s + (v.deaths || 0), 0) / l.length }; };
   const ks = [...nights.keys()].sort(), nowN = nights.has(tonight) ? nightAvg(nights.get(tonight)) : null, before = ks.filter((k) => k < tonight).slice(-2).map((k) => nightAvg(nights.get(k)));
   const last = before[before.length - 1] || null;
+  // (a night saved before the raid's mechanics score was kept has only the raiders' grades: no up or down arrow against it, so the
+  // change in how the grade is made doesn't read as a better or worse night (Oct 21))
+  const mixed = [nowN].concat(before).some((n) => n && n.rmA == null);
   // ---- mechanics: every mistake that counts (up to the wipe filter), by mechanic, pull by pull and by player ----
   const mech = new Map();
   reps.forEach((r, i) => { for (const m of keptMistakes(r)) { if (m.mechanic === 'Death' || !byName.has(m.player)) continue; let o = mech.get(m.mechanic); if (!o) mech.set(m.mechanic, o = { n: m.mechanic, per: reps.map(() => 0), who: new Map(), tot: 0, pts: 0, sev: m.severity, fix: m.fix || '' });
@@ -20275,7 +20328,7 @@ function rcnFacts(c) {
   { const alive = data.filter((a) => a.n === reps.length && reps.length >= 3 && !pl.get(a.p.name).deaths); if (alive.length) moment('🎖️', 'All night', 'Perfect attendance', alive.length === 1 ? alive[0].p.name : null, (alive.length === 1 ? 'Alive at the end of every pull.' : andList(alive.slice(0, 4).map((a) => a.p.name)) + (alive.length > 4 ? ' and ' + (alive.length - 4) + ' more' : '') + ': alive at the end of every pull.'), null); }
   { const br = new Map(); for (const r of reps) for (const p of r.players.values()) for (const h of p.helpL || []) if (BRES_N.includes(String(h.spell).toLowerCase()) && h.t <= cutT(r)) br.set(p.name, (br.get(p.name) || 0) + 1);
     const b = [...br].sort((x, y) => y[1] - x[1])[0]; if (b && b[1] >= 2) moment('🔁', 'All night', 'Back on their feet', b[0], 'Brought back ' + plural(b[1], 'player') + ' with a battle res.', null); }
-  return (c._rn = { reps, pulls, mech: [...mech.values()].filter((m) => m.pts > 0).sort((a, b) => b.pts - a.pts || b.tot - a.tot), pl, awards, moments, top, before, nowN, last, byName });
+  return (c._rn = { reps, pulls, mech: [...mech.values()].filter((m) => m.pts > 0).sort((a, b) => b.pts - a.pts || b.tot - a.tot), pl, awards, moments, top, before, nowN, last, byName, rm: raidMechOf(reps), mixed });
 }
 // one player's breakdown, under their row: mechanics, deaths, output pull by pull, cooldowns, prep, and what to fix first
 function rcnPlayer(c, F, a, side) {
@@ -20347,10 +20400,10 @@ function rctCard(c, F, a, sm) {
 }
 // the night's result: VICTORY (or the best pull), the raid grade, the numbers that sum up the night
 function rctBanner(c, F) {
-  const data = c.data, raid = data.reduce((s, a) => s + a.score, 0) / data.length, it = F.reps[0].item, kill = F.pulls.find((q) => q.it.kill), nr = nightResult(it), deaths = F.pulls.reduce((s, q) => s + q.kept.length, 0);
+  const data = c.data, raid = raidBlend(data.reduce((s, a) => s + a.score, 0) / data.length, F.rm), it = F.reps[0].item, kill = F.pulls.find((q) => q.it.kill), nr = nightResult(it), deaths = F.pulls.reduce((s, q) => s + q.kept.length, 0);
   const potU = F.pulls.reduce((s, q) => s + q.used, 0), potE = F.pulls.reduce((s, q) => s + q.expect, 0), mist = F.mech.reduce((s, m) => s + m.tot, 0);
   const kpi = (l, v, st) => '<div><b class="' + (st || '') + '">' + v + '</b><small>' + l + '</small></div>';
-  const trend = F.before.length && F.nowN ? '<div class="rct-tr"><span>Night grades on this boss</span>' + F.before.map((n) => '<span class="rcn-wk">' + esc(nightLabel(n.at)) + ' ' + gradeChip(letterOf(n.raid)) + '</span>').join('') + '<span class="rcn-wk now">Tonight ' + gradeChip(letterOf(F.nowN.raid)) + '</span>' + rcnDelta(F.nowN.raid - F.last.raid) + '</div>' : '';
+  const trend = F.before.length && F.nowN ? '<div class="rct-tr"><span>Night grades on this boss</span>' + F.before.map((n) => '<span class="rcn-wk">' + esc(nightLabel(n.at)) + ' ' + gradeChip(letterOf(n.raid)) + '</span>').join('') + '<span class="rcn-wk now">Tonight ' + gradeChip(letterOf(F.nowN.raid)) + '</span>' + (F.mixed ? '' : rcnDelta(F.nowN.raid - F.last.raid)) + '</div>' : '';
   return '<section class="rct-ban' + (kill ? ' win' : '') + '"><div class="rct-bw"><h2>' + (kill ? 'Victory' : esc(nr.big)) + '</h2><p><b>' + esc(it.boss) + '</b> · ' + esc(it.diff || '') + ' · ' + esc(nightLabel(it.wallMs || it.startMs || Date.now())) + ' · ' + (kill ? 'killed on pull ' + kill.it.pull : plural(F.pulls.length, 'pull')) + '</p></div>' +
     '<div class="rct-bg">' + gradeChip(letterOf(raid), true) + '<small>Raid grade<br>' + Math.round(raid) + ' out of 100</small></div>' +
     '<div class="rct-k">' + kpi('pulls', F.pulls.length) + kpi('deaths that counted', deaths, deaths / F.pulls.length >= 4 ? 'warnv' : '') + kpi('combat potions drunk', potE ? Math.round(100 * potU / potE) + '%' : '—', potE && potU / potE < 0.85 ? 'warnv' : 'okv') + kpi('mistakes that cost points', mist, mist ? '' : 'okv') + '</div>' + trend + '</section>';
@@ -20394,10 +20447,10 @@ function rcbFacts(c, F) {
   return (F._rcb = { rows, rk, rkRole }); }
 // the night: the boss's art, the result, the numbers, and the raid's grade as a ring
 function rcbBanner(c, F) {
-  const data = c.data, raid = data.reduce((s, a) => s + a.score, 0) / data.length, it = F.reps[0].item, kill = F.pulls.find((q) => q.it.kill), nr = nightResult(it), deaths = F.pulls.reduce((s, q) => s + q.kept.length, 0);
+  const data = c.data, raid = raidBlend(data.reduce((s, a) => s + a.score, 0) / data.length, F.rm), it = F.reps[0].item, kill = F.pulls.find((q) => q.it.kill), nr = nightResult(it), deaths = F.pulls.reduce((s, q) => s + q.kept.length, 0);
   const potU = F.pulls.reduce((s, q) => s + q.used, 0), potE = F.pulls.reduce((s, q) => s + q.expect, 0), mist = F.mech.reduce((s, m) => s + m.tot, 0), H = BOSS_HERO[it.boss];
   const kpi = (l, v, st) => '<span><b class="' + (st || '') + '">' + v + '</b>' + l + '</span>';
-  const trend = F.before.length && F.nowN ? '<div class="rct-tr rcb-tr"><span>Night grades on this boss</span>' + F.before.map((n) => '<span class="rcn-wk">' + esc(nightLabel(n.at)) + ' ' + gradeChip(letterOf(n.raid)) + '</span>').join('') + '<span class="rcn-wk now">Tonight ' + gradeChip(letterOf(F.nowN.raid)) + '</span>' + rcnDelta(F.nowN.raid - F.last.raid) + '</div>' : '';
+  const trend = F.before.length && F.nowN ? '<div class="rct-tr rcb-tr"><span>Night grades on this boss</span>' + F.before.map((n) => '<span class="rcn-wk">' + esc(nightLabel(n.at)) + ' ' + gradeChip(letterOf(n.raid)) + '</span>').join('') + '<span class="rcn-wk now">Tonight ' + gradeChip(letterOf(F.nowN.raid)) + '</span>' + (F.mixed ? '' : rcnDelta(F.nowN.raid - F.last.raid)) + '</div>' : '';
   return '<section class="rcb-ban' + (kill ? ' win' : '') + '">' + (H ? '<img class="rcb-banbg" src="https://wow.zamimg.com/uploads/guide/header/' + H[0] + '.jpg" alt="" style="object-position:' + H[1] + '% 30%" onerror="this.remove()">' : '') + '<i class="rcb-bansh"></i>' +
     '<div class="rcb-banl"><div class="rcb-k">End of night · ' + esc(nightLabel(it.wallMs || it.startMs || Date.now())) + '</div><h2>' + esc(it.boss) + '</h2><div class="sub">' + esc(it.diff || '') + ' · ' + (kill ? 'killed on pull ' + kill.it.pull : plural(F.pulls.length, 'pull') + ' · best pull ' + esc(String(nr.big).replace(/^Best:\s*/, ''))) + '</div>' +
     '<div class="rcb-bst">' + kpi('pulls', F.pulls.length) + kpi('deaths that counted', deaths, deaths / F.pulls.length >= 4 ? 'warnv' : '') + kpi('combat potions drunk', potE ? Math.round(100 * potU / potE) + '%' : '—', potE && potU / potE < 0.85 ? 'warnv' : 'okv') + kpi('mistakes that cost points', mist, mist ? '' : 'okv') + kpi('raiders graded', data.length) + '</div>' + trend + '</div>' +
@@ -20405,8 +20458,11 @@ function rcbBanner(c, F) {
 // the raid's report card: each subject averaged over the raid, its letter, and tonight's best
 function rcbRaid(c, F) {
   const B = rcbFacts(c, F);
-  return '<section class="panel rcb-sec"><div class="rcb-sh"><h3>The raid\'s report card</h3><span class="sub">each subject averaged over the ' + B.rows.length + ' raiders, with tonight\'s best</span></div><div class="rcb-subs">' +
-    RCB_SUBJ.map(([k, l, ic, why]) => { const l0 = B.rows.filter((x) => x[k] != null); if (!l0.length) return ''; const av = l0.reduce((s, x) => s + x[k], 0) / l0.length, top = l0.slice().sort((u, v) => v[k] - u[k])[0], L = letterOf(av);
+  return '<section class="panel rcb-sec"><div class="rcb-sh"><h3>The raid\'s report card</h3><span class="sub">' + (F.rm != null ? 'Mechanics is how the raid did each mechanic; the rest are' : 'each subject') + ' averaged over the ' + B.rows.length + ' raiders, with tonight\'s best</span></div><div class="rcb-subs">' +
+    RCB_SUBJ.map(([k, l, ic, why]) => { const l0 = B.rows.filter((x) => x[k] != null); if (!l0.length) return '';
+      // (the raid's Mechanics is how the raid did each mechanic, the same score as Debriefing (Oct 21); each raider's own mistakes are on their card)
+      const raidM = k === 'mech' && F.rm != null, av = raidM ? F.rm : l0.reduce((s, x) => s + x[k], 0) / l0.length, top = l0.slice().sort((u, v) => v[k] - u[k])[0], L = letterOf(av);
+      if (raidM) why = 'How the raid did each mechanic, the same score as Debriefing. Each raider\'s own mistakes are on their card.';
       return '<div class="rcb-st" data-tt="' + esc(why) + '"><div class="rcb-sth">' + rcbIc(ic) + '<span>' + l + '</span>' + gradeChip(L) + '</div><b class="' + rcbQ(av) + '">' + Math.round(av) + '</b><div class="rcb-bar"><i class="' + rcbQ(av) + '" style="width:' + Math.max(2, Math.round(av)) + '%"></i></div><span class="sub">Best: <b class="nm" style="color:' + top.a.p.color + '">' + esc(top.a.p.name) + '</b> ' + Math.round(top[k]) + '</span></div>'; }).join('') + '</div></section>'; }
 // every raider in one list, ranked by grade or by any subject; a row picks that raider for the card beside it
 function rcbTable(c, F) {
@@ -20463,11 +20519,13 @@ function rcwRaider(c, F) {
   const defs = dd.map((d) => (d.available || []).filter((y) => !/^(Healthstone|a healing potion)$/.test(y))).filter((l) => l.length), dfc = new Map(); for (const z of defs.flat()) dfc.set(z, (dfc.get(z) || 0) + 1); const defN = [...dfc].sort((u, v) => v[1] - u[1]).map((z) => z[0]); /* (the one they had ready most often first) */
   const cdm = new Map(); for (const g of a.per) { const C0 = perfContext(g.r), y = C0.per.get(g.p.name); if (!y) continue; for (const cd of bigCds(g.r, g.p, Math.max(0, Math.min(y.until, C0.end)), C0.lust)) { const o = cdm.get(cd.name) || { name: cd.name, used: 0, poss: 0 }; o.used += cd.used; o.poss += cd.poss; cdm.set(cd.name, o); } }
   const RL = { out: (p.role || 'dps') === 'healer' ? 'Healing' : 'Damage' }, lab = (k, l) => RL[k] || l;
-  const subs = RCB_SUBJ.filter(([k0]) => x[k0] != null).map(([k0, l]) => ({ k: k0, l: lab(k0, l), v: x[k0], r: B.rk[k0].m.get(x), N: B.rk[k0].n }));
-  const top = subs.filter((y) => y.r <= 3).sort((u, v) => u.r - v.r || v.v - u.v), low = subs.filter((y) => y.r > y.N / 2).sort((u, v) => u.v - v.v)[0];
+  // (Output is against their own role (Oct 21: a healer read "Healing #18 of 20 in the raid"), so it's ranked among that role)
+  const myRole = p.role || 'dps', roleW = { tank: 'tanks', healer: 'healers', dps: 'damage dealers' }[myRole], outL = B.rows.filter((y) => y.role === myRole && y.out != null).sort((u, v) => v.out - u.out);
+  const subs = RCB_SUBJ.filter(([k0]) => x[k0] != null).map(([k0, l]) => (k0 === 'out' ? { k: k0, l: lab(k0, l), v: x[k0], r: outL.findIndex((y) => Math.round(y.out) === Math.round(x.out)) + 1, N: outL.length, grp: roleW } : { k: k0, l: lab(k0, l), v: x[k0], r: B.rk[k0].m.get(x), N: B.rk[k0].n }));
+  const top = subs.filter((y) => y.r <= 3 && (y.k !== 'out' || (y.r === 1 && y.N >= 2))).sort((u, v) => u.r - v.r || v.v - u.v), low = subs.filter((y) => y.r > y.N / 2).sort((u, v) => u.v - v.v)[0];
   const worstM = [...mm.values()].filter((o) => o.n >= 2).sort((u, v) => v.n - u.n)[0];
   // ---- went well ----
-  const W = top.slice(0, 2).map((y) => y.l + ' ' + Math.round(y.v) + ', #' + y.r + ' of ' + y.N + ' in the raid');
+  const W = top.slice(0, 2).map((y) => y.l + ' ' + Math.round(y.v) + ', #' + y.r + ' of ' + y.N + (y.grp ? ' ' + y.grp : ' in the raid'));
   if (p.role === 'healer') { const sv = new Map(); for (const g of a.per) for (const v of g.r.saves || []) { const hp = [...g.r.players.values()].find((q) => q.name === v.by); if (hp && hp.role === 'healer') sv.set(v.by, (sv.get(v.by) || 0) + 1); }
     const k = sv.get(nm) || 0, most = k && [...sv.values()].every((v) => v <= k); /* (your idea, Oct 20: saves, when they're a highlight) */
     if (most || k >= 10) W.splice(Math.min(1, W.length), 0, 'Saved ' + plural(k, 'raider') + ' from dying' + (most ? ', the most in the raid' : '')); }
@@ -20482,12 +20540,12 @@ function rcwRaider(c, F) {
   const X = []; if (defs.length) X.push(plural(defs.length, 'death') + ' with ' + esc(rcwOr(defN.slice(0, 2))) + ' ready');
   if (worstM) { const mx = Math.max(...worstM.pulls); X.push(esc(worstM.t) + ' got you in ' + plural(worstM.pulls.size, 'pull') + (mx >= lateP ? ', still in pull ' + mx : '')); }
   const lowFix = low && (a.fixes || []).find((f) => (f.gain || 0) >= 0.5 && (RCB_FIX[low.k] || (() => false))(f));
-  if (low) X.push(low.l + ' #' + low.r + ' of ' + low.N + ' in the raid' + (lowFix ? '. First fix: ' + esc(lowFix.t) : ''));
+  if (low) X.push(low.l + ' #' + low.r + ' of ' + low.N + (low.grp ? ' ' + low.grp : ' in the raid') + (lowFix ? '. First fix: ' + esc(lowFix.t) : ''));
   for (const f of (a.fixes || []).filter((z) => (z.gain || 0) >= 0.5)) { if (X.length >= 3) break; if (f === lowFix || (defs.length && RCB_FIX.surv(f)) || (worstM && f.key === 'm|' + worstM.t)) continue; X.push(esc(f.t) + (f.k > 1 ? ' (in ' + f.k + ' of ' + n + ' pulls)' : '')); }
   // ---- the short version and the one thing for next pull ----
   const tone = { S: 'An outstanding night', A: 'Strong night', B: 'Good night', C: 'A decent night with room to grow', D: 'A tough night', F: 'A rough night' }[L] || 'Your night';
-  const issue = defs.length >= 2 ? (defs.length === dd.length ? 'all ' + dd.length + ' of your deaths' : defs.length + ' of your ' + plural(dd.length, 'death')) + ' came with a defensive still ready' : worstM && worstM.n >= 3 ? esc(worstM.t) + ' caught you in ' + plural(worstM.pulls.size, 'pull') : low ? 'your ' + low.l.toLowerCase() + ' is where the points are' : '';
-  const s2 = (top[0] ? 'Your ' + top[0].l.toLowerCase() + ' was #' + top[0].r + ' in the raid' + (issue ? ', but ' + issue : '') : issue ? capS(issue) : 'Nothing big cost you points') + '.';
+  const issue = defs.length >= 2 ? (defs.length === dd.length ? (dd.length === 2 ? 'both of your deaths' : 'all ' + dd.length + ' of your deaths') : defs.length + ' of your ' + plural(dd.length, 'death')) + ' came with a defensive still ready' : worstM && worstM.n >= 3 ? esc(worstM.t) + ' caught you in ' + plural(worstM.pulls.size, 'pull') : low ? 'your ' + low.l.toLowerCase() + ' is where the points are' : '';
+  const s2 = (top[0] ? 'Your ' + top[0].l.toLowerCase() + (/s$/.test(top[0].l) ? ' were #' : ' was #') + top[0].r + (top[0].grp ? ' of the ' + top[0].grp : ' in the raid') + (issue ? ', but ' + issue : '') : issue ? capS(issue) : 'Nothing big cost you points') + '.';
   const nf = (a.fixes || [])[0], next = defs.length >= 2 ? 'when your health keeps dropping, press ' + esc(defN[0]) + '.' : worstM && worstM.fix ? esc(worstM.t) + ': ' + esc(dbfTip1(worstM.fix)) : nf && (nf.gain || 0) >= 0.5 ? esc(nf.t) + '. ' + esc(dbfTip1(nf.x)) : '';
   const li = (l) => '<ul>' + l.slice(0, 3).map((t) => '<li>' + capS(t) + '</li>').join('') + '</ul>';
   return '<section class="rcw-you" style="--cc:' + p.color + '"><div><div class="rcb-k">Their night</div><div class="rcw-hd"><img src="' + whIcon(pIcon(p)) + '" alt="" style="box-shadow:0 0 0 2px ' + p.color + '" onerror="this.style.visibility=\'hidden\'"><b class="nm" style="color:' + p.color + '">' + esc(nm) + '</b><span class="sub">' + esc(p.specName || '') + ' · ' + gradeChip(L) + ' #' + B.rk.score.m.get(x) + ' of ' + B.rk.score.n + '</span></div>' +
@@ -20625,7 +20683,7 @@ function hwItems(a) {
   return out;
 }
 // (a fix's example comes from one pull; on the all-pulls view it says so instead of "this pull" (Oct 20))
-const hwOne = (o, x) => (o.n > 1 && /\bthis pull\b/i.test(x) ? 'In one pull: ' + x.charAt(0).toLowerCase() + x.slice(1).replace(/\bthis pull\b/gi, 'that pull') : x);
+const hwOne = (o, x) => (o.n > 1 && /\bthis pull\b/i.test(x) ? 'For example, in one pull: ' + x.replace(/\s*\bthis pull\b/gi, '') : x); // (Oct 21: "In one pull: blessing of Sacrifice never went out that pull" lowercased the spell and said the pull twice)
 const hwIc = (o, sm) => '<i class="hwk-ic' + (sm ? ' sm' : '') + '">' + (o.id ? spellIcon(o.id, o.t) : plIco(o.cat[1])) + '</i>';
 const hwWhen = (o) => (o.n === 1 ? 'This pull' : 'In ' + o.k + ' of ' + o.n + ' pulls' + (o.k <= 5 && o.k < o.n ? ' (' + (o.k === 1 ? 'pull ' : 'pulls ') + andList(o.pulls.map(String)) + ')' : ''));
 const hwTr = (o) => (o.tr === 'up' ? '<span class="hwk-tr up">▲ getting better</span>' : o.tr === 'dn' ? '<span class="hwk-tr dn">▼ getting worse</span>' : '');
@@ -20781,7 +20839,7 @@ const PL_PW = { mech: 25, rot: 25, surv: 15, prep: 15, asg: 10, tool: 10 };
 const PL_PN = { mech: 'Mechanics', rot: 'Rotation', surv: 'Survival', prep: 'Prep', asg: 'Assignments', tool: 'Toolkit' };
 function perfContext(r) {
   const ct = cutT(r); if (r._pc && r._pc.ct === ct) return r._pc;
-  const end = Math.max(1, Math.min(r.duration, ct)), boss = new Set(r.bossUnits || []), per = new Map();
+  const end = Math.max(1, Math.min(r.duration, ct)), boss = bossNamesOf(r), per = new Map();
   const sumTo = (arr) => { let s = 0; for (let i = 0; i < Math.min(arr.length, Math.ceil(end)); i++) s += arr[i] || 0; return s; };
   const mc = new Map(); const dm = r.module && !r.module.error && r.module._dm; if (dm) for (const d of dm) for (const x of d.mc) { if (!mc.has(x.n)) mc.set(x.n, []); mc.get(x.n).push([x.s, x.e]); }
   for (const p of r.players.values()) {
@@ -21116,7 +21174,9 @@ function dbfPull(o) {
   // (a minor one counts too when it's on what killed them, like walking into an axe)
   const ownM = (d) => { const ab = String(d.ability || '').toLowerCase(), l = keptMistakes(r).filter((m) => m.player === d.player && m.mechanic !== 'Death' && m.t >= d.t - 10 && m.t <= d.t + 0.5 && (m.severity !== 'Low' || String(m.mechanic).toLowerCase() === ab));
     return l.find((m) => String(m.mechanic).toLowerCase() === ab) || l[0] || null; };
-  const focus = it.kill ? '' : (raidCause && fixFor(raidCause.label)) || (w0 && fixFor(topAb(w0))) || (A.first && ownM(A.first) && ownM(A.first).fix && dbfTip1(ownM(A.first).fix)) || (bad.length && secFix(bad[0][1])) || '';
+  // (the Next pull line says the first Fix card's fix (Oct 21: it said the axes while the first card was Dreadmarch); a deaths card keeps the death's own fix)
+  const pf1 = !it.kill && S.pfix1 && S.pfix1.r === r && S.pfix1.id && S.pfix1.id !== 'deaths' ? P.get(S.pfix1.id) : null;
+  const focus = it.kill ? '' : (pf1 && secFix(pf1)) || (raidCause && fixFor(raidCause.label)) || (w0 && fixFor(topAb(w0))) || (A.first && ownM(A.first) && ownM(A.first).fix && dbfTip1(ownM(A.first).fix)) || (bad.length && secFix(bad[0][1])) || '';
   const told = new Set([focus]), tip = (t) => { if (!t || told.has(t)) return ''; told.add(t); return ' ' + esc(t); }; // (each fix once, and never the "Next pull" one again)
   // ---- the numbers (against the last pull) ----
   const dlt = (a, b, lowGood, f) => (B == null || a == null || b == null || Math.abs(a - b) < 0.5 ? '' : dbfD((a > b ? '▲' : '▼') + f(Math.abs(a - b)), lowGood ? a < b : a > b));
@@ -21261,7 +21321,8 @@ function dbfNight(o) {
     M.push({ x, v, j, wr, L, who, nm: esc(shortT(x.title)), lv: lvlJudge(null, j.filter((q) => stM(q) === 'bad').length, j.filter((q) => stM(q) === 'warn').length, j.length) }); }
   const LV = ['major', 'moderate', 'minor'];
   const mW = M.filter((m) => m.L.recent).sort((a, b) => LV.indexOf(a.lv) - LV.indexOf(b.lv) || b.wr.length / b.j.length - a.wr.length / a.j.length);
-  const focus = kill ? '' : (topC && topC.n >= 2 && fixFor(topC.c.label, topC.c.who)) || (mW.length && mFix(mW[0].x)) || '';
+  const nf1 = !kill && NFIX1 && NFIX1.id && rs[0] && NFIX1.boss === rs[0].item.boss ? M.find((m) => m.x.id === NFIX1.id) : null; /* (the first Fix card's fix (Oct 21)) */
+  const focus = kill ? '' : (nf1 && mFix(nf1.x)) || (topC && topC.n >= 2 && fixFor(topC.c.label, topC.c.who)) || (mW.length && mFix(mW[0].x)) || '';
   const told = new Set([focus]), tip = (t) => { if (!t || told.has(t)) return ''; told.add(t); return ' ' + esc(t); }; // (each fix once, and never the "Next time" one again)
   // ---- the story of the night: early, in the middle and late, where we wiped and what ended it ----
   const segs = n >= 6 ? (() => { const k = Math.ceil(n / 3); return [S.slice(0, k), S.slice(k, 2 * k), S.slice(2 * k)].filter((g) => g.length); })() : [];
@@ -21301,7 +21362,7 @@ function dbfNight(o) {
     for (const m of M) if (m.L.solved) U.push('We fixed ' + pn(m) + ': it\'s gone right every pull since pull ' + m.L.solved + '.');
     { const wl = (l, up) => { if (!l.length) return; (up ? Dn : U).push((up ? 'More' : 'Fewer') + ' of our wipes are coming from ' + lpAnd(l.map((y, i) => mech(y.c.label, y.c.id) + ' (' + (i ? y.e + ', then ' + y.l : nz(y.e) + ' in the first ' + h + ' pulls, ' + nz(y.l) + ' in the last ' + h) + ')')) + '.'); };
       const cw = cs.filter((y) => Math.abs(y.e - y.l) >= 2); wl(cw.filter((y) => y.l > y.e), true); wl(cw.filter((y) => y.l < y.e), false); }
-    for (const m of M) if (!m.L.solved && m.v.real) (m.v.better ? U : Dn).push(pn(m) + ' went wrong in ' + nz(m.v.e) + ' of the first ' + m.v.half + ' pulls, ' + (m.v.better ? 'and' : 'but') + ' in ' + nz(m.v.l) + ' of the last ' + m.v.half + '.');
+    for (const m of M) if (!m.L.solved && m.v.real && (m.v.better || m.lv !== 'minor')) (m.v.better ? U : Dn).push(pn(m) + ' went wrong in ' /* (small slips only, like Venomfang, aren't a Worse line (Oct 21)) */ + nz(m.v.e) + ' of the first ' + m.v.half + ' pulls, ' + (m.v.better ? 'and' : 'but') + ' in ' + nz(m.v.l) + ' of the last ' + m.v.half + '.');
     const big = (a, b) => Math.abs(a - b) >= Math.max(3, 0.25 * Math.max(a, b));
     const k1 = H1.reduce((t, x) => t + x.missK, 0), k2 = H2.reduce((t, x) => t + x.missK, 0); if (big(k1, k2)) (tr(k1, k2, true) ? U : Dn).push((k2 < k1 ? 'Fewer' : 'More') + ' casts are getting through our kicks: ' + nz(k2) + ' in the last ' + h + ' pulls, ' + (k2 < k1 ? 'down' : 'up') + ' from ' + nz(k1) + ' in the first ' + h + '.');
   }
@@ -21825,7 +21886,7 @@ function navState() {
   if (S.page === 'ingame') return { nav: 1, v: 'ig' };
   return null;
 }
-const navKey = (st) => (st ? [st.v, st.code, st.fight, st.bi, st.night, st.tab, st.scope, st.g, st.mine].join('|') : '');
+const navKey = (st) => (st ? [st.v, st.code, st.fight, st.bi, st.night, st.tab, st.scope, st.g, st.mine, st.b, st.d].join('|') : ''); // (b, d: a guide's boss and Heroic or Mythic, so its address follows them (Oct 21))
 function navNote() {
   const st = navState(); if (!st) return;
   const cur = history.state && history.state.nav ? navKey(history.state) : null, k = navKey(st);
@@ -22196,7 +22257,7 @@ function teamTile(g, all, order) {
 function homePreviews() {
   const card = (k, t, body) => '<button class="tp-card" type="button" data-tour="' + k + '"><span class="tp-t">' + t + '</span><span class="tp-art">' + body + '</span></button>';
   return '<section class="th-what"><h2>What Debrief does</h2><div class="tp-row">' +
-    card(1, 'Recap', '<span class="tp-l ok">✓ Every kick landed</span><span class="tp-l bad">✕ The first death was to Caustic Waves</span><span class="tp-l warn">! Missed soak, 2 players</span><span class="tp-l fix">Fix first: spread for the waves</span>') +
+    card(1, 'Debriefing', '<span class="tp-l ok">✓ Every kick landed</span><span class="tp-l bad">✕ The first death was to Caustic Waves</span><span class="tp-l warn">! Missed soak, 2 players</span><span class="tp-l fix">Fix first: spread for the waves</span>') +
     card(2, 'Mechanics and maps', '<span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg class="tp-map" viewBox="0 0 120 44" aria-hidden="true"><circle cx="86" cy="22" r="13" class="tp-zone"/><circle cx="20" cy="22" r="4" class="tp-dot"/></svg>') +
     card(3, 'Rotation and graphs', '<span class="tp-bars"><i style="--w:96%;--c:#C69B6D"></i><i style="--w:84%;--c:#3FC7EB"></i><i style="--w:73%;--c:#B44BE0"></i><i style="--w:61%;--c:#AAD372"></i></span>') +
     card(4, 'Teams', '<svg class="tp-line" viewBox="0 0 120 44" aria-hidden="true"><polyline class="a" points="2,8 20,16 36,11 54,24 70,21 88,32 104,29 118,40"/><polyline class="b" points="2,8 20,11 54,24 88,32 118,40"/></svg>') + '</div></section>';
@@ -22209,7 +22270,7 @@ const TOUR_KEY = 'wla-tour-done', tourDone = () => store.get(TOUR_KEY) === '1';
 const TOUR = [
   { t: 'Welcome to Debrief', p: 'Debrief reads your raid\'s combat logs and Warcraft Logs reports, and turns every pull into a short list: what went wrong, what went right, and what to fix next. Here\'s a quick look around.',
     art: () => '<svg class="tr-logo" viewBox="0 0 64 64" aria-hidden="true"><path class="s1" d="M32 3 56 12v18c0 15-11 26-24 31C19 56 8 45 8 30V12Z"/><path class="s2" d="M22 18h10c9 0 14 6 14 14s-5 14-14 14H22Z"/><path class="s3" d="m27 32.5 4 4 8.5-9.5"/><g class="tr-gold"><path d="M32 2 57 11.5V30c0 15.5-11.3 26.6-25 32C18.3 56.6 7 45.5 7 30V11.5Z" fill="url(#lgfMetal)" stroke="#4a300a" stroke-width=".8"/><path d="M32 7 52.5 14.8V30c0 12.8-9.2 22-20.5 26.6C20.7 52 11.5 42.8 11.5 30V14.8Z" fill="url(#lgfMetalDk)"/><path d="M32 9.2 50.5 16.3V30c0 11.7-8.3 20.2-18.5 24.5C21.8 50.2 13.5 41.7 13.5 30V16.3Z" fill="url(#lgfEnamel)"/><path d="M32 9.2 50.5 16.3V23C40 20.5 24 20.5 13.5 23V16.3Z" fill="#fff" opacity=".07"/><path fill-rule="evenodd" transform="translate(0 1.2)" fill="#000" opacity=".55" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path fill-rule="evenodd" fill="url(#lgfMetal)" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path d="m29 32.4 2.7 2.7 5.6-6.1" fill="none" stroke="url(#lgfEmerald)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>' },
-  { t: 'Every pull, explained', p: 'The moment a pull ends, Recap explains it in plain words: what went well, what didn\'t, and what changed since the last pull. Click a pull at the top to see any of them.',
+  { t: 'Every pull, explained', p: 'The moment a pull ends, Debriefing explains it in plain words: what went well, what didn\'t, and what changed since the last pull. Click a pull at the top to see any of them.',
     art: () => '<div class="tr-pull"><span class="k">Pull 18 · Mythic</span><b>Wipe in P2 · Malacrass 34%</b><span class="l ok">✓ Every Wail of Terror kicked</span><span class="l bad">✕ Brann died first, at 1:42, to Grim Guillotine</span><span class="l warn">! 2 players missed the soak</span><span class="l fix">Fix first: at least 5 in the circle</span></div>' },
   { t: 'Mechanics, with maps', p: 'Open any mechanic on the Debriefing tab to see a map of where everyone stood, and press Play to watch the moment again. Every mechanic is checked for every player. Add your raid\'s NSRT note and Debrief checks soaks, kicks and cooldowns against it too.',
     art: () => '<div class="tr-mech"><span class="tp-chips"><span class="bad">Eggs ✕3</span><span class="warn">Soak !1</span><span class="ok">+6 clean</span></span><svg viewBox="0 0 200 70" aria-hidden="true"><circle cx="140" cy="35" r="22" class="tp-zone"/><circle cx="26" cy="35" r="6" class="tp-dot"/><circle cx="148" cy="26" r="5" class="tp-dot2"/><circle cx="131" cy="44" r="5" class="tp-dot2"/></svg></div>' },
@@ -22243,6 +22304,12 @@ function startTour(at) {
 // on the page (no note yet, say) is skipped. They wait until the home tour is done, and for the page to fill in.
 // "Tips for this page" in the menu plays them again.
 const PAGE_TIPS = {
+  // (the Debrief in game page's own tips (Oct 21: Help there started the whole tour))
+  ingame: [
+    { sel: '#main .igm-cta', t: 'Get it', p: 'Download for Windows puts in the PC app and the addon in one go. Everyone else in the raid only needs the addon.' },
+    { sel: '#main .igm-who', t: 'Who needs what', p: 'Only one person runs the PC app, like the raid leader. Everyone else just has the addon, and their recap opens by itself.' },
+    { sel: '#main .igm-steps', t: 'After every pull', p: 'The app chimes, the person with it presses Ctrl+V in WoW, and the whole raid gets their recap.' },
+    { sel: '#main .igm-cmds', t: 'Handy commands', p: 'Type /dmo in game for the settings, or /debrief big for every pull of the night.' }],
   live: [
     { sel: '#list .film', t: 'Every pull of the night', p: 'Each card is one pull. Click one to see it. Its color shows how far it got, and orange is a kill.' },
     { sel: '#view .lp-tiles', t: 'The pull at a glance', p: 'Green went right; yellow had some mistakes; red failed. The ▲ and ▼ arrows compare it with the last pull. Click a box for its details.' },
@@ -22298,7 +22365,7 @@ const PAGE_TIPS = {
 const TIPS_V = { live: 2, perf: 4, audit: 2, overview: 5, team: 2 }; // (bumped when a page's tips change, so they show once more)
 const TIPS_KEY = (k) => 'wla-tips-' + k + (TIPS_V[k] ? '-v' + TIPS_V[k] : '');
 // (which page is up: a pull's tab, the teams page, or a team's page)
-const tipsPage = () => ($('#main .pg-hub') && !S.hubHome ? 'hub' : $('#pgEdit') ? 'team' : S.rep && $('#view') ? S.tab : null);
+const tipsPage = () => (S.page === 'ingame' && $('#main .igm-page') ? 'ingame' : $('#main .pg-hub') && !S.hubHome ? 'hub' : $('#pgEdit') ? 'team' : S.rep && $('#view') ? S.tab : null);
 const tipVis = (sel) => { for (const e of document.querySelectorAll(sel)) { const b = e.getBoundingClientRect(); if (b.width > 4 && b.height > 4) return e; } return null; };
 let TIPS_WAIT = null;
 function pageTips(k, force) {
@@ -22415,7 +22482,7 @@ function bindHomeStart() {
 const homeTeamsSoon = () => HIST.load().then(() => { const s = $('#homeTeams'); if (s) { s.outerHTML = homeTeams(); bindHomeTeams(); } groupsBackfill(); });
 // ---- the website's front page, Oct 20 (your OK): every boss this season, each card opening to what Debrief checks on it ----
 // (season order: Nymrissa Wavecaller first, the eight in The Venomous Abyss, Kith'ix last)
-const FPB_ORDER = ['Nymrissa Wavecaller', "Nek'zali the Soulcoiler", 'The Twin Fangs', 'Entombed Sentinels', 'Vashnik the Malignant', 'The Lost Explorers', 'Sszorak', 'The Coiled Altar', "Ula'tek", "Kith'ix"];
+const FPB_ORDER = RAID_ORDER;
 const FPB_KIND = { avoidable: 'Who got hit', raidFail: 'Raid mistake', interrupt: 'Kicks', debuff: 'Who got it', stacks: 'Stacks', bossBuff: 'Boss buff' };
 // (each check's line is the instruction in its tip; these few tips start with what went wrong, so they get their own)
 const FPB_DO = { 'Unending Tides': 'Kill Nymrissa before her enrage floods the raid.', 'Relic Rupture': 'Keep popping the boxes on the 2-stack rhythm so none ruptures.' };
@@ -22468,6 +22535,13 @@ const fphFoot = () => '<footer class="fph-foot"><div class="fph-fb">' + LOGO + '
   (DISCORD_URL ? '<a href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">Join our Discord</a>' : '') +
   (REPORT_ON() ? '<a href="#" class="rp-open">Report a problem</a>' : '') + '</nav></footer>';
 // (one logo at a time on the front page: the top bar's shows once the big one has scrolled away)
+// (Warcraft Logs out of service (Oct 21): one bar under the top bar says so, and that saved nights and the guides still work;
+// it goes when Warcraft Logs answers again, or with its ×)
+let WCL_DOWN_X = false;
+addEventListener('wla-wcl-down', () => { if (WCL_DOWN_X || $('#wclDown')) return; const tb = $('#topbar'); if (!tb) return;
+  tb.insertAdjacentHTML('afterend', '<div class="wcl-down" id="wclDown" role="status"><span><b>Warcraft Logs is down right now</b>, so new reports can\'t load. Your saved nights and the boss guides still work.</span><button type="button" aria-label="Hide this">×</button></div>');
+  $('#wclDown button').onclick = () => { WCL_DOWN_X = true; const b = $('#wclDown'); if (b) b.remove(); }; });
+addEventListener('wla-wcl-up', () => { const b = $('#wclDown'); if (b) b.remove(); });
 addEventListener('scroll', () => { const l = $('.fph-logo'); document.body.classList.toggle('fph-past', !l || l.getBoundingClientRect().bottom < 60); }, { passive: true });
 // (the Discord box on the front page, under the boss cards (Oct 21, your ask))
 const fphDiscord = () => DISCORD_URL ? '<section class="fph-dc"><div class="fph-dc-ico">' + DISC_SVG + '</div><div class="fph-dc-t"><h2>Join the raiders shaping Debrief</h2>' +
@@ -22514,12 +22588,12 @@ function homeHosted() {
     '<section class="fpx-sec"><div class="fpx-in fpx-night"><div><div class="fp-k">Between pulls</div><h2>From first wipe to the kill</h2>' +
         '<p>After every pull, Debrief says what to fix first. Fix it, pull again, and watch the boss go lower each time.</p>' + demoBtn('fpDemo2') + '<div class="fp-msg fp-note" id="fpDemoMsg2"></div></div>' +
       '<div class="fpx-chart"><h4><span>The Coiled Altar · Mythic</span><span>Example</span></h4>' +
-        bar(15, 29, 'P1 · 71%', 'Fix: Dreadmarch, stand still') + bar(16, 41, 'P1 · 59%', 'Fix: Guillotine, soak with 5') + bar(17, 48, 'P2 · 52%', 'Fix: save cooldowns for the shield') +
-        bar(18, 66, 'P2 · 34%', 'Fix: kick order, set 2') + bar(19, 100, 'Kill', 'Clean. Well done.', true) + '</div></div></section>' +
+        bar(15, 29, 'P1 · 71%', 'Fix: Dreadmarch, stand still') + bar(16, 41, 'P1 · 59%', 'Fix: kick order, set 2') + bar(17, 48, 'P2 · 52%', 'Fix: save cooldowns for the shield') +
+        bar(18, 66, 'P2 · 34%', 'Fix: Grim Guillotine, 5 in the circle') + bar(19, 100, 'Kill', 'Clean. Well done.', true) + '</div></div></section>' +
     '<section class="fpx-sec"><div class="fpx-in"><div class="fpx-sh"><div class="fp-k">What you get</div><h2>The whole night, made simple</h2></div>' +
       row('mech', 'Debriefing', 'Every mechanic, done right or not', 'Each soak, kick and frontal gets a green, yellow or red flag, with the players and the time.', ['Who was missing from a soak', 'Who got clipped, and by what', 'A map of who stood where']) +
       row('rot', 'Rotation', 'Your buttons, checked like a coach would', 'Plain sentences that say what to press instead, for every raid spec.', ['Cooldowns lined up with the fight', 'What each big button did'], true) +
-      row('assign', 'Your NSRT note', 'The plan, next to what happened', 'Bring your raid note and see who did their job: kicks in order, soaks, crowd control.') +
+      row('assign', 'Your NSRT note', 'The plan, next to what happened', 'Bring your raid\'s NSRT note (the plan from Northern Sky Raid Tools) and see who did their job: kicks in order, soaks, crowd control.') +
     '</div></section>' +
     '<section class="fpx-sec"><div class="fpx-in"><div class="fpx-end"><h2>Ready for raid night?</h2><p>Set up once, then every pull explains itself.</p><ol class="fph-steps">' +
       '<li><b>Add your team</b><span>Your character and your team\'s Warcraft Logs page. It takes about a minute.</span></li>' +
@@ -23380,7 +23454,7 @@ function renderProgress(msg, msgErr) {
     // (short by default: the boss, its result and one line of totals; a click opens the chart, the totals and its nights)
     const open = S.pcOpen && S.pcOpen.has(boss);
     return '<article class="pc-card' + (open ? '' : ' mini') + '" style="--ec:' + (b ? qc(b) : 'var(--line2)') + '" data-boss="' + esc(boss) + '">' + art(boss) + '<header class="pc-h" role="button" tabindex="0" aria-expanded="' + !!open + '"><div><h3>' + esc(boss) + '</h3><div class="pc-st">' + st + '</div></div>' +
-      '<div class="pc-big" style="color:' + (b ? qc(b) : 'var(--muted)') + '">' + (kills.length ? 'Killed' : b ? Math.floor(done) + '%' : '—') + '<span>' + (kills.length ? '' : 'of the encounter') + '</span></div></header>' +
+      '<div class="pc-big" style="color:' + (b ? qc(b) : 'var(--muted)') + '">' + (kills.length ? 'Killed' : b ? Math.floor(done) + '%' : '—') + '<span>' + (kills.length ? '' : 'of the encounter done') + '</span></div></header>' +
       '<div class="pc-mini">' + plural(prog.length, 'pull') + (kills.length ? ' to the kill' : '') + ' · ' + plural(nights.size, 'night') + ' · ' + durH(time) + (kills.length ? ' to the kill' : ' on the boss') + ' · last ' + esc(new Date(last - 6 * 3600e3).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) + '<span class="pc-more">' + (open ? 'Show less ▴' : 'Chart and nights ▾') + '</span></div>' +
       '<div class="pc-stats"><div><b>' + prog.length + '</b>' + (kills.length ? 'pulls to the kill' : 'pulls') + '</div><div><b>' + nights.size + '</b>' + (nights.size === 1 ? 'night' : 'nights') + '</div><div><b>' + durH(time) + '</b>' + (kills.length ? 'to the kill' : 'on the boss') + '</div>' +
         '<div' + (after ? ' title="' + plural(after, 'pull') + ' since the first kill"' : '') + '><b>' + esc(new Date(last - 6 * 3600e3).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) + '</b>last pulled</div></div>' +
@@ -23402,7 +23476,7 @@ function renderProgress(msg, msgErr) {
   // right away, from the first look at their reports), one row each)
   const rwAll = g && g.kind === 'char' && !g.raidsWithNo ? (g.raidsWithAll || (g.raidsWith ? [g.raidsWith] : [])).filter((t) => !groups().some((o) => o.kind !== 'char' && o.id === t.id)) : [];
   const one = rwAll.length === 1 ? rwAll[0] : null;
-  const sugg = rwAll.length ? pgDlg('pgSugg', '<section class="pg-sugg" id="pgSugg"><span class="pg-sg-ic" aria-hidden="true">+</span><div class="pg-sg-t"><b id="pgSuggT">' + (one ? 'You raid with ' + esc(one.name) : 'Are you on these teams?') + '</b><span class="sub">' +
+  const sugg = rwAll.length ? /* (a card on the page, not a pop-up the moment it opens (Oct 21)) */ ('<section class="pg-sugg" id="pgSugg"><span class="pg-sg-ic" aria-hidden="true">+</span><div class="pg-sg-t"><b id="pgSuggT">' + (one ? 'You raid with ' + esc(one.name) : 'Are you on these teams?') + '</b><span class="sub">' +
       (one ? one.n + ' of your ' + one.of + ' raid nights this tier were logged by them. Add them too to see the whole team\'s progress.' : 'They logged your raid nights this tier. Add the ones you raid with to see the whole team\'s progress.') + '</span>' +
       (one ? '' : '<div class="pg-sg-l">' + rwAll.map((t) => '<div class="pg-sg-r"><b>' + esc(t.name) + '</b><span class="sub">' + t.n + ' of your ' + t.of + ' raid nights</span><button class="btn sm" type="button" data-rwadd="' + t.id + '">Add</button></div>').join('') + '</div>') + '</div>' +
       '<div class="pg-sg-b">' + (one ? '<button class="btn primary" type="button" data-rwadd="' + one.id + '">Add ' + esc(one.name) + '</button>' : '') + '<button class="btn" id="pgSuggNo" type="button">Skip</button></div></section>') : '';
@@ -23439,13 +23513,13 @@ function renderProgress(msg, msgErr) {
     return { k, at: l[0].at, by, main, kills: by.filter((x) => x.l.some((v) => v.kill)).map((x) => x.boss), nb: bestOf(main.l), op: nightOpen(l) }; });
   const dayOf = (at) => new Date(at - 6 * 3600e3);
   const pnRow = (n) => { const kill = n.main.l.some((v) => v.kill), d = dayOf(n.at), others = n.by.filter((x) => x !== n.main).map((x) => x.boss), killO = n.kills.filter((b) => b !== n.main.boss);
-    const sub = plural(n.main.l.length, 'pull') + (kill ? ', killed on pull ' + n.main.l.find((v) => v.kill).pull : n.nb ? ', best ' + n.nb.label : '') +
+    const sub = plural(n.main.l.length, 'pull') + (kill ? ', killed on pull ' + n.main.l.find((v) => v.kill).pull : n.nb ? ', best ' + n.nb.label + (/%$/.test(n.nb.label) ? ' left' : '') : '') + /* (boss health left, beside the % done on the right (Oct 21)) */
       (others.length ? ' · also ' + (killO.length ? 'killed ' + (killO.length === 1 ? killO[0] : killO.length + ' more') : others.length === 1 ? others[0] : others.length + ' more bosses') : ''); // (short: one boss by name, more as a count)
     return '<button class="pn-row' + (kill ? ' pn-k' : '') + '" type="button"' + (n.op ? ' data-code="' + esc(n.op.code) + '" data-fight="' + esc(String(n.op.fight)) + '"' : ' disabled title="This night is only in your combat log"') + '>' +
       '<span class="pn-d"><b>' + esc(d.toLocaleDateString('en-US', { weekday: 'short' })) + '</b><span>' + esc(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) + '</span></span>' +
       (BOSS_HERO[n.main.boss] ? '<img class="pn-th" src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[n.main.boss][0] + '.jpg" alt="" loading="lazy" style="object-position:' + BOSS_HERO[n.main.boss][1] + '% 25%" onerror="this.remove()">' : '') +
       '<span class="pn-b"><b>' + esc(n.main.boss) + '</b><span class="sub">' + esc(sub) + '</span></span>' +
-      '<span class="pn-r" style="color:' + (kill ? '#ff8000' : n.nb ? qc(n.nb) : 'var(--muted)') + '">' + (kill ? 'Kill' : n.nb && n.nb.left != null ? Math.floor(100 - n.nb.left) + '%' : '—') + '</span><span class="pn-go" aria-hidden="true">›</span></button>'; };
+      '<span class="pn-r" style="color:' + (kill ? '#ff8000' : n.nb ? qc(n.nb) : 'var(--muted)') + '">' + (kill ? 'Kill' : n.nb && n.nb.left != null ? Math.floor(100 - n.nb.left) + '%<small class="pn-dn">done</small>' : '—') + '</span><span class="pn-go" aria-hidden="true">›</span></button>'; };
   const PN_MAX = 6;
   const nightsHtml = nightsL.length ? '<section class="panel pg-nights" id="pgNights"><div class="pg-sh"><h2>Raid nights</h2><span class="sub">' + plural(nightsL.length, 'night') + ' on ' + esc(diffName) + '</span></div>' +
     '<div class="pn-list">' + nightsL.slice(0, S.pnAll ? nightsL.length : PN_MAX).map(pnRow).join('') + '</div>' +
@@ -23462,9 +23536,9 @@ function renderProgress(msg, msgErr) {
     const col = bk.length ? '#ff8000' : nb ? qc(nb) : 'var(--muted)';
     nowHtml = '<section class="pg-now" id="pgNow" style="--ec:' + col + '">' + (BOSS_HERO[nowBoss] ? '<img class="pnw-art" src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[nowBoss][0] + '.jpg" alt="" loading="lazy" style="object-position:' + BOSS_HERO[nowBoss][1] + '% 20%" onerror="this.remove()">' : '') +
       '<div class="pnw-t"><div><span class="pnw-k">' + (openB ? 'Now on' : 'Last kill') + ' · ' + esc(diffName) + '</span><h2>' + esc(nowBoss) + '</h2><span class="sub">' +
-        esc(bk.length ? 'Killed ' + nightLabel(bk[0].at) + ' on pull ' + bk[0].pull + ' of the night' : nb ? 'Best: ' + nb.label : 'No result yet') + '</span>' +
+        esc(bk.length ? 'Killed ' + nightLabel(bk[0].at) + ' on pull ' + bk[0].pull + ' of the night' : nb ? 'Best: ' + nb.label + (/%$/.test(nb.label) ? ' left' : '') : 'No result yet') + '</span>' +
         '<div class="pnw-tiles">' + [[bk.length ? 'Pulls to the kill' : 'Pulls', pr.length], ['Nights', nts], ['Time on the boss', durH(time)]].map(([l, v]) => '<span class="pnw-ti"><em>' + l + '</em><b>' + esc(String(v)) + '</b></span>').join('') + '</div></div>' +
-        '<div class="pnw-big" style="color:' + col + '">' + (bk.length ? 'Killed' : nb && nb.left != null ? Math.floor(100 - nb.left) + '%' : '—') + (bk.length ? '' : '<span>of the encounter</span>') + '</div></div>' +
+        '<div class="pnw-big" style="color:' + col + '">' + (bk.length ? 'Killed' : nb && nb.left != null ? Math.floor(100 - nb.left) + '%' : '—') + (bk.length ? '' : '<span>of the encounter done</span>') + '</div></div>' +
       progChart(pr, nowBoss, [1000, 210], true) +
       (lastOp ? '<div class="pnw-b"><button class="btn primary" id="pnwGo" type="button" data-code="' + esc(lastOp.code) + '" data-fight="' + esc(String(lastOp.fight)) + '">Open the last night</button><span class="sub">' + esc(nightLabel(lastN.at)) + ' · ' + plural(lastL.length, 'pull') + ' on ' + esc(nowBoss) + '</span></div>' : '') + '</section>';
   }

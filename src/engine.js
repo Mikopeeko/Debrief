@@ -3986,12 +3986,14 @@ function buildCoiledAltar(ev, r, h) {
       const fBad = fs.some((f) => f.bad), fWarn = !fBad && fs.some((f) => f.warn), raidMax = Math.max(0, ...fs.map((f) => f.raidMax));
       // (purple orbs are Mythic only: Heroic and Normal leave them out)
       const who = mythic ? [pl(picks.length, 'purple pickup') + (picks.length ? ' (' + [...new Set(picks.map((c) => pname(c.g)))].join(', ') + ')' : ''), cl ? pl(cl, 'player') + ' clipped by carriers' : ''].filter(Boolean).join(', ') : '';
-      const cnt = fs.length ? { txt: fs.map((f) => f.popped).join(' + ') + (fs.length === 1 && fs[0].popped === 1 ? ' orb' : ' orbs'), bad: fBad, warn: fWarn,
-        sub: (many ? fs.map((f, k) => S(f.s.n)[1] + ' ' + (k + 1) + ': ' + f.popped).join(' · ') + ' · ' : '') + (new Set(fs.map((f) => f.plan)).size === 1 ? 'plan: ' + (!many ? fs[0].plan : fs[0].plan.includes(' (') ? fs[0].plan.replace(' (', ' each (') : fs[0].plan + ' each') : 'plan: ' + fs.map((f) => f.plan).join(', then ')) + (raidMax > 12 ? ' · raid at ' + raidMax + ' stacks after' : '') } : { txt: 'no frontal', dim: true };
+      // (Oct 21, plain words: "4, then 6 orbs (aim for 2 to 3, then none)", the frontals in order, instead of "4 + 6 orbs (Sever 1: 4 · Sever 2: 6 · plan: …)")
+      const aim = (x) => x.replace(/\s*\(hits empty ground\)/, ', into empty ground');
+      const cnt = fs.length ? { txt: fs.map((f) => f.popped).join(', then ') + (fs.length === 1 && fs[0].popped === 1 ? ' orb' : ' orbs'), bad: fBad, warn: fWarn,
+        sub: 'aim for ' + (new Set(fs.map((f) => f.plan)).size === 1 ? (!many ? aim(fs[0].plan) : fs[0].plan.includes(' (') ? aim(fs[0].plan).replace(' (', ' each (') : aim(fs[0].plan) + ' each') : fs.map((f) => aim(f.plan)).join(', then ')) + (raidMax > 12 ? ' · the raid ended at ' + raidMax + ' stacks' : '') } : { txt: 'no frontal', dim: true };
       const res = coll ? { txt: 'orbs collided', sub: '+' + coll.gain + ' stacks at once: a purple touched other orbs', bad: true }
         : left ? { txt: 'orb left at the next Deluge', sub: 'it erupted on the raid', bad: true }
         : det.length ? { txt: 'Defilement detonation', sub: '+' + det[0].gain + ' stacks at once: orbs still on the ground', bad: true }
-        : fBad ? { txt: 'too many at once', bad: true } : fWarn ? { txt: 'off the plan', warn: true } : { txt: 'clean' };
+        : fBad ? { txt: 'too many in one frontal', bad: true } : fWarn ? { txt: 'a little off the plan', warn: true } : { txt: 'clean' };
       // (one map: every cone of the Deluge, in the order it landed, each popping the orbs it held; it plays from just before
       // the first to just after the last, the orbs on the ground switching to each frontal's own as it comes)
       const fc = fs.filter((f) => f.cone), all = new Map(); for (const f of fs) for (const o of f.ground) if (!all.has(o.guid)) all.set(o.guid, o);

@@ -30,8 +30,10 @@ async function api(path) {
       last = r && !r.ok ? new Error('The server answered ' + r.status + ' (tried ' + TRIES + ' times). Click the pull again in a minute.')
         : new Error((read ? 'The download from the Debrief site was cut off' : 'Couldn\'t reach the Debrief site') + ' (tried ' + TRIES + ' times: ' + why + '). Check your connection, then click the pull again.' + (read ? '' : ' If you use an ad blocker or privacy extension, allow this site in it.'));
       await wait(i); continue; }
-    if (r.ok && !j.error) return j;
+    if (r.ok && !j.error) { try { window.dispatchEvent(new Event('wla-wcl-up')); } catch (e) { /* not a page */ } return j; }
     last = new Error(j.error || ('The server answered ' + r.status));
+    // (Warcraft Logs out of service (Oct 21): no point trying again in a second; the page shows a bar saying so)
+    if (j.down || /^Warcraft Logs is down/.test(String(j.error || ''))) { last.down = true; try { window.dispatchEvent(new Event('wla-wcl-down')); } catch (e) { /* not a page */ } throw last; }
     if (!(r.status >= 500 || r.status === 429)) throw last;
     // (too many requests at once: the site counts a minute at a time, so a quick retry would only be refused again)
     await (r.status === 429 ? new Promise((res) => setTimeout(res, 10000 * (i + 1))) : wait(i));
