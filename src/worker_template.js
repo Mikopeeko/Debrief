@@ -253,8 +253,8 @@ async function runBugs(env) {
     // one (the user's call, Oct 20: "just wait for me to react with the button presses"))
     try {
       const quote = text.split(/\r?\n/).map((l) => '> ' + l).join('\n').slice(0, 1200);
-      const ideaTag = idea ? tagOf(((await dc(env, '/channels/' + REVIEW_FORUM)).available_tags) || [], 'Idea') : null;
-      const rp = await dc(env, '/channels/' + REVIEW_FORUM + '/threads', { method: 'POST', body: { name: t.name.slice(0, 95), applied_tags: ideaTag ? [ideaTag] : [],
+      const ideaTag = idea ? tagOf(((await dc(env, '/channels/' + IDEA_REVIEW)).available_tags) || [], 'Idea') : null;
+      const rp = await dc(env, '/channels/' + (idea ? IDEA_REVIEW : REVIEW_FORUM) + '/threads', { method: 'POST', body: { name: t.name.slice(0, 95), applied_tags: ideaTag ? [ideaTag] : [],
         message: { content: '<@' + OWNER + '> ' + (idea ? '**New idea**' : '**New bug report**') + ' from ' + who.replace(/[@*_`~|]/g, '') + ' (<#' + t.id + '>):\n' + quote + (files.length ? '\n(' + files.length + ' picture' + (files.length > 1 ? 's' : '') + ' in the post)' : '') +
           '\n\n' + (idea ? 'Tap **Think it through** and I\'ll look at how we\'d build it, or **Build it** if you want it.' : 'Tap **Look into it** and I\'ll investigate, or **Fix it** if it\'s clear.'), allowed_mentions: { parse: [], users: [OWNER] }, components: idea ? IDEA_ROW : REVIEW_ROW } } });
       const revs = (await env.DEBRIEF_KV.get('dc-reviews', 'json')) || {}; revs[issue.number] = rp.id; await env.DEBRIEF_KV.put('dc-reviews', JSON.stringify(revs));
@@ -287,8 +287,8 @@ async function runBugs(env) {
     if (!nope && !idea) await bugHunter(env, tid).catch((err) => console.warn('Bug Hunter:', err && err.message));
     const rt = ((await env.DEBRIEF_KV.get('dc-reviews', 'json')) || {})[n];
     if (rt) {
-      const rf = await dc(env, '/channels/' + REVIEW_FORUM).catch(() => null), rth = await dc(env, '/channels/' + rt).catch(() => null);
-      if (rf && rth) { const drop = ['In progress', 'Done', 'Not a bug', 'Needs your call'].map((x) => tagOf(rf.available_tags, x)), id = tagOf(rf.available_tags, nope ? 'Not a bug' : 'Done');
+      const rf = await dc(env, '/channels/' + (idea ? IDEA_REVIEW : REVIEW_FORUM)).catch(() => null), rth = await dc(env, '/channels/' + rt).catch(() => null);
+      if (rf && rth) { const drop = ['In progress', 'Done', 'Not a bug', 'Not planned', 'Needs your call'].map((x) => tagOf(rf.available_tags, x)), id = tagOf(rf.available_tags, nope ? (idea ? 'Not planned' : 'Not a bug') : 'Done');
         const k = new Set((rth.applied_tags || []).filter((x) => !drop.includes(x))); if (id) k.add(id);
         await dc(env, '/channels/' + rt, { method: 'PATCH', body: { archived: false, applied_tags: [...k].slice(0, 5) } }).catch(() => {}); }
       await dc(env, '/channels/' + rt + '/messages', { method: 'POST', body: { content: '<@' + OWNER + '> ' + (nope ? (idea ? 'Closed as not planned.' : 'Closed as not a bug.') : (idea ? '✅ Done: this idea is built.' : '✅ Done: this one is fixed.')) + ' ' + (uid ? 'The reporter was tagged on their post.' : 'Its post was updated.') + ' Both posts close in 24 hours.', allowed_mentions: { parse: [], users: [OWNER] } } }).catch(() => {});
@@ -357,7 +357,7 @@ async function runInbox(env) {
           // (every post and update tags the owner, so each one shows in their channel list: the user's call, Oct 20)
           const head = '<@' + OWNER + '> ', men = { parse: [], users: [OWNER] };
           let to = reviews[n] || null;
-          if (!to && /^\d{17,20}$/.test(String(o.thread || ''))) { const th = await dc(env, '/channels/' + o.thread).catch(() => null); if (th && th.parent_id === rev.id) to = th.id; }
+          if (!to && /^\d{17,20}$/.test(String(o.thread || ''))) { const th = await dc(env, '/channels/' + o.thread).catch(() => null); if (th && (th.parent_id === rev.id || th.parent_id === IDEA_REVIEW)) to = th.id; }
           if (to) {
             await dc(env, '/channels/' + to, { method: 'PATCH', body: tagIds.length ? { archived: false, applied_tags: tagIds } : { archived: false } }).catch(() => {});
             await dc(env, '/channels/' + to + '/messages', { method: 'POST', body: { content: head + text, allowed_mentions: men } });
@@ -401,7 +401,7 @@ async function runInbox(env) {
         } else if (o.op === 'buttons' && /^\d{17,20}$/.test(String(o.thread || ''))) {
           // (adds the answer buttons to a #bug-review post written before they existed: its first message, which is the bot's)
           const th = await dc(env, '/channels/' + o.thread).catch(() => null);
-          if (th && th.parent_id === REVIEW_FORUM) await dc(env, '/channels/' + th.id + '/messages/' + th.id, { method: 'PATCH', body: { components: REVIEW_ROW } });
+          if (th && (th.parent_id === REVIEW_FORUM || th.parent_id === IDEA_REVIEW)) await dc(env, '/channels/' + th.id + '/messages/' + th.id, { method: 'PATCH', body: { components: th.parent_id === IDEA_REVIEW ? IDEA_ROW : REVIEW_ROW } });
         } else if ((o.op === 'ping' || o.op === 'ask') && text) {
           let ch = thread[n];
           if (!ch) { if (!mod) mod = ((await dc(env, '/guilds/' + GUILD + '/channels')).find((c) => c.name === 'moderator-only') || {}).id; ch = mod; }
@@ -502,11 +502,12 @@ async function runQuestions(env, all) {
 // for the twice-a-day check, which acts on them. Reactions: ✅ fix it, 👀 look again, ❌ not a bug, ⏳ in progress, 🏁 done
 // (⏳, 🏁 and ❌ also set the post's tag at once). A reply or ✅ / 👀 gets a short "got it".
 const REVIEW_FORUM = '1562143289304424578';
+const IDEA_REVIEW = '1562689353895907458'; // (#idea-review: the owner's private forum for #suggestions, apart from bugs: the user's call, Oct 21)
 const DRAFTS_FORUM = '1562225772134015106'; // (#post-drafts: the owner's private forum for #new-features drafts, apart from bugs)
 const REACTS = { '✅': ['fix it', null], '👀': ['look into it again', null], '❌': ['not a bug, close it', 'Not a bug'], '⏳': ['in progress', 'In progress'], '🏁': ['done', 'Done'] };
 const GOT_IT = 'Got it! I\'ll pick this up within about 15 minutes (while your PC is on).';
 async function runReplies(env, all) {
-  const posts = all.filter((t) => t.parent_id === REVIEW_FORUM || t.parent_id === DRAFTS_FORUM); if (!posts.length) return;
+  const posts = all.filter((t) => t.parent_id === REVIEW_FORUM || t.parent_id === IDEA_REVIEW || t.parent_id === DRAFTS_FORUM); if (!posts.length) return;
   const seen = (await env.DEBRIEF_KV.get('dc-revseen', 'json')) || {}, reviews = (await env.DEBRIEF_KV.get('dc-reviews', 'json')) || {};
   const issueOf = {}; for (const [n, tid] of Object.entries(reviews)) issueOf[tid] = +n;
   const inbox = (await env.DEBRIEF_KV.get('review-inbox', 'json')) || [], start = inbox.length; let dirty = false, forum = null;
@@ -537,7 +538,7 @@ async function runReplies(env, all) {
         s.r.push(e); dirty = true; const [meaning, tag] = REACTS[e];
         inbox.push({ ...item, kind: 'reaction', emoji: e, text: meaning, at: new Date().toISOString() });
         if (tag) {
-          if (!forum) forum = await dc(env, '/channels/' + REVIEW_FORUM);
+          forum = await dc(env, '/channels/' + t.parent_id);
           const id = tagOf(forum.available_tags, tag), keep = new Set((t.applied_tags || []).filter((x) => !['In progress', 'Done', 'Not a bug'].map((n) => tagOf(forum.available_tags, n)).includes(x)));
           if (id) { keep.add(id); await dc(env, '/channels/' + t.id, { method: 'PATCH', body: { applied_tags: [...keep].slice(0, 5) } }).catch(() => {}); }
         } else { const g = await say(env, t.id, GOT_IT); if (g && g.id) s.m = g.id; }
@@ -611,8 +612,8 @@ async function discordClick(req, env, ctx) {
       else { const st = await env.DEBRIEF_KV.get('dc-bugs', 'json'); if (st) { st.arch = [...(st.arch || []), [thread, Date.now()]].slice(-200); await env.DEBRIEF_KV.put('dc-bugs', JSON.stringify(st)); } }
     }
     if (b[4] && env.DISCORD_BOT_TOKEN) {
-      const forum = await dc(env, '/channels/' + REVIEW_FORUM), th = await dc(env, '/channels/' + thread);
-      const drop = ['In progress', 'Done', 'Not a bug'].map((n) => tagOf(forum.available_tags, n)), id = tagOf(forum.available_tags, b[4]);
+      const th = await dc(env, '/channels/' + thread), forum = await dc(env, '/channels/' + th.parent_id), ideaPost = th.parent_id === IDEA_REVIEW;
+      const drop = ['In progress', 'Done', 'Not a bug', 'Not planned'].map((n) => tagOf(forum.available_tags, n)), id = tagOf(forum.available_tags, ideaPost && b[4] === 'Not a bug' ? 'Not planned' : b[4]);
       const keep = new Set((th.applied_tags || []).filter((x) => !drop.includes(x))); if (id) keep.add(id);
       await dc(env, '/channels/' + thread, { method: 'PATCH', body: { applied_tags: [...keep].slice(0, 5) } });
     }
