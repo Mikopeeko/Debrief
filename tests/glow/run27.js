@@ -13,6 +13,8 @@ stub = stub.replace('if k == "SetFont" then return function() return true end en
   '    if k == "ClearAllPoints" then return function(self) self._anchor = nil end end\n' +
   '    if k == "SetAllPoints" then return function(self, rel) if type(rel) == "table" then self._anchor = rel end end end\n' +
   '    if k == "SetVertexColor" then return function(self, r, g, b) self._rgb = { r, g, b } end end\n' +
+  '    if k == "SetFrameStrata" then return function(self, v) self._strata = v end end\n' +
+  '    if k == "SetFrameLevel" then return function(self, v) self._level = v end end\n' +
   '    if k == "SetChecked" then return function(self, v) self._checked = not not v end end\n' +
   '    if k == "GetChecked" then return function(self) return self._checked end end\n' +
   '    if k == "CreateAnimationGroup" then return function(self) return mk("AnimationGroup") end end\n' +
@@ -224,6 +226,22 @@ print("-- the x button puts a spell back on the main settings")
 R[31884].reset:GetScript("OnClick")(R[31884].reset)
 expect("Avenging Wrath back to main", DebriefGlowDB.spells[31884], nil)
 newPull(); pull(); at(45, "Avenging Wrath: main look again"); press(31884)
+print("-- a custom-sized icon (Edit Mode at 150%), in a higher strata, with its cooldown swipe at level 50")
+do
+  local ds; for _, f in ipairs(ESS) do if f._label == "Divine Shield" then ds = f end end
+  local swipe = CreateFrame("Cooldown"); swipe.GetFrameLevel = function() return 50 end
+  ds.GetEffectiveScale = function() return 1.5 end; ds.GetFrameStrata = function() return "DIALOG" end; ds.GetFrameLevel = function() return 12 end
+  ds.GetChildren = function() return swipe end
+  newPull(); DebriefGlow_Test(true)
+  local g; for _, f in ipairs(FRAMES) do if f._shown and rawget(f, "_anchor") == ds and rawget(f, "drawn") then g = f end end
+  expect("glow fits the bigger icon (40 x 150%)", g and rawget(g, "size"), 60)
+  expect("glow in the icon's higher strata", g and rawget(g, "_strata"), "DIALOG")
+  expect("glow above the cooldown swipe", g and rawget(g, "_level") > 50, true)
+  local n; for _, f in ipairs(FRAMES) do if f._shown and rawget(f, "expires") and rawget(f, "_anchor") == ds then n = f end end
+  expect("number above the glow", n and rawget(n, "_level") > rawget(g, "_level"), true)
+  ADVANCE(NOW + 3.1); heard()
+  ds.GetEffectiveScale = nil; ds.GetFrameStrata = nil; ds.GetFrameLevel = nil; ds.GetChildren = nil
+end
 print("-- /dglow test skips a spell that's off")
 newPull(); DebriefGlow_Test(true); expect("Blessing of Sacrifice not in the test", GLOWING():find("Sacrifice") == nil, true); ADVANCE(NOW + 3.1); heard()
 

@@ -78,6 +78,23 @@ local WHITE = "Interface\\Buttons\\WHITE8X8"
 local glows, pool = {}, {}
 local timers, tpool, waiting = {}, {}, {} -- (countdown numbers on the icons, and reminders still counting down)
 local timerLook, place, pv -- (shared with the preview below)
+-- (on top of the icon: its strata if that's higher than ours, and above it and everything drawn on it, like its cooldown swipe)
+local STRATA = { BACKGROUND = 1, LOW = 2, MEDIUM = 3, HIGH = 4, DIALOG = 5, FULLSCREEN = 6, FULLSCREEN_DIALOG = 7, TOOLTIP = 8 }
+local function above(f, it, extra)
+  local st = it.GetFrameStrata and it:GetFrameStrata()
+  f:SetFrameStrata((STRATA[st] or 0) > STRATA.HIGH and st or "HIGH")
+  local lvl = it.GetFrameLevel and it:GetFrameLevel() or 1
+  if it.GetChildren then for _, c in ipairs({ it:GetChildren() }) do local l = type(c) == "table" and c.GetFrameLevel and c:GetFrameLevel(); if type(l) == "number" and l > lvl then lvl = l end end end
+  f:SetFrameLevel(math.min(9000, lvl + (extra or 10)))
+end
+-- (the icon as drawn: its picture if it has one, and its width in screen units, so Edit Mode's icon size (a scale) is counted)
+local function iconArt(it)
+  local art = (type(it.Icon) == "table" and it.Icon.GetWidth) and it.Icon or it
+  local w = art:GetWidth() or 0
+  local e = it.GetEffectiveScale and it:GetEffectiveScale() or 1; if not e or e <= 0 then e = 1 end
+  local u = UIParent and UIParent.GetEffectiveScale and UIParent:GetEffectiveScale() or 1; if not u or u <= 0 then u = 1 end
+  return art, (w and w > 0) and (w * e / u) or 40
+end
 -- (a flipbook: a texture that plays the frames of one atlas; once = play through once, else loop)
 local function flipbook(g, layer)
   local t = g:CreateTexture(nil, layer or "OVERLAY"); t:Hide()
@@ -272,7 +289,7 @@ local function showTimer(id, expires, label)
   stopTimer(id)
   local f = table.remove(tpool)
   if not f then f = CreateFrame("Frame", nil, UIParent); f:SetFrameStrata("HIGH"); f.text = f:CreateFontString(nil, "OVERLAY") end
-  f:SetAllPoints(it); f:SetFrameLevel((it.GetFrameLevel and it:GetFrameLevel() or 1) + 20)
+  local art = iconArt(it); f:ClearAllPoints(); f:SetAllPoints(art); above(f, it, 20)
   timerLook(f, id)
   f.id, f.expires, f.onFloat = id, expires, it == float
   timers[id] = f; f:SetScript("OnUpdate", tick); f:Show(); tick(f)
@@ -286,9 +303,9 @@ local function stopAll() round = round + 1; for id in pairs(glows) do stop(id) e
 function place(g, it, id)
   local pad = DB.pad or 2
   g:SetScale(DB.scale or 1)
-  local w = it.GetWidth and it:GetWidth() or 0; g.size = (w and w > 0) and w or 40
-  g:ClearAllPoints(); g:SetPoint("TOPLEFT", it, "TOPLEFT", -pad, pad); g:SetPoint("BOTTOMRIGHT", it, "BOTTOMRIGHT", pad, -pad)
-  g:SetFrameLevel((it.GetFrameLevel and it:GetFrameLevel() or 1) + 10); g:Show(); dress(g, id)
+  local art, w = iconArt(it); g.size = w
+  g:ClearAllPoints(); g:SetPoint("TOPLEFT", art, "TOPLEFT", -pad, pad); g:SetPoint("BOTTOMRIGHT", art, "BOTTOMRIGHT", pad, -pad)
+  above(g, it, 10); g:Show(); dress(g, id)
 end
 local function start(id, hold, label)
   local it = cdmItemFor(id)
