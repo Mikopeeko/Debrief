@@ -1084,7 +1084,7 @@ export default {
     if ((url.hostname === 'www.' + HOME_HOST || url.origin === OLD_SITE) && (req.method === 'GET' || req.method === 'HEAD') && !/^\/(?:api|wcl|auth)\//.test(url.pathname)) return moveHome(req, url);
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
     if (url.pathname === '/api/discord') return req.method === 'POST' ? discordClick(req, env, ctx) : json({ error: 'Discord only.' }, 405);
-    if (url.pathname === '/api/night' || url.pathname === '/api/night/part') return night(req, env, url);
+    if ((url.pathname === '/api/night' && !url.searchParams.has('code')) || url.pathname === '/api/night/part') return night(req, env, url); /* (a ?code= read is a raid night's pulls for a team import, not a shared night, Oct 22) */
     if (url.pathname === '/api/plan') return planShare(req, env, url); /* (shared plans, Oct 22) */
     if (url.pathname === '/api/idea') return req.method === 'POST' ? fileIdea(req, env, url) : json({ error: 'Send ideas with the website\'s form.' }, 405);
     if (url.pathname === '/api/signout') return req.method === 'POST' ? signOut(req, env) : json({ error: 'Sign out from the website.' }, 405);
