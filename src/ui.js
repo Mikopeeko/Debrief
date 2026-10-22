@@ -1649,6 +1649,7 @@ const PATCH_NOTES = [
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
+    'Debrief in game: a Survival section on your recap card. Your defensives (used, out of how many you could have), your Healthstone and health potion, and a low-health moment you could have answered. A death line now says what you still had ready.',
     'Debrief in game: a Check for updates button in the PC app, next to Quit. It installs a newer version right away, unless a pull is on.',
     'Debrief in game: the PC app now updates itself while it runs, about once an hour and never during a pull, and puts the new addon into WoW. Your addon then tells you in chat to type /reload. Raiders without the app are told when a newer Debrief is out.',
     'Debrief in game: the combat log and Advanced Combat Logging stay on whenever the addon is loaded, everywhere, not just in raids. /debrief log turns it off.',

@@ -63,10 +63,11 @@ local function decode(code)
     if t == "H" then
       m.h = { boss = g(2), diff = g(3), pull = g(4), kill = g(5) == "1", pct = g(6), dur = g(7), where = g(8), deaths = g(9) }
     elseif t == "P" then
-      local p = { name = g(2), cls = g(3), spec = g(4), role = g(5), unit = g(6), v = g(7), d = tonumber(g(8)), vs = g(9), best = g(10), bp = g(11), rank = g(12), icon = g(13), slips = {}, boss = {}, next = "" }
+      local p = { name = g(2), cls = g(3), spec = g(4), role = g(5), unit = g(6), v = g(7), d = tonumber(g(8)), vs = g(9), best = g(10), bp = g(11), rank = g(12), icon = g(13), slips = {}, boss = {}, surv = {}, next = "" }
       m.players[#m.players + 1] = p; by[p.name] = p
     elseif t == "S" and by[g(2)] then table.insert(by[g(2)].slips, { g(3), g(4), g(5) })
     elseif t == "B" and by[g(2)] then table.insert(by[g(2)].boss, { g(3), g(4), g(5) })
+    elseif t == "U" and by[g(2)] then table.insert(by[g(2)].surv, { g(3), g(4), g(5) }) -- (survival: defensives, Healthstone, potion)
     elseif t == "N" and by[g(2)] then by[g(2)].next = g(3)
     elseif t == "R" then table.insert(m.raid.bad, { g(2), g(3), g(4), g(5) })
     elseif t == "D" then table.insert(m.raid.died, { g(2), g(3), g(4), g(5), g(6) })
@@ -89,7 +90,7 @@ local function resultOf(h, long)
   return (h.pct ~= "" and (h.pct .. "%") or "Wipe"), COL.badT, COL.badBg, "6a2f2b"
 end
 -- (a pull to try the card with: a real Heroic Ula'tek kill with made-up names; /debrief demo shows it)
-local SAMPLE = [==[DBF1^H~Ula'tek~Heroic~3~1~0~7:30~~6^P~Ironvow~PALADIN~Protection Paladin~tank~DPS~148k~-13~2~171k~2~~ability_paladin_shieldofthetemplar^S~Ironvow~warn~389539~Opener, step by step: 3 of 4. Missed: step 1, Hand of Reckoning (not in your opener).^S~Ironvow~warn~~Stat order: Crit › Mastery › Haste › Vers. Yours: Critical Strike 1,198, then Mastery 1,041, then Haste 979, then Versatility 0.^N~Ironvow~Follow the guide opener: Hand of Reckoning, then 3 of Avenger's Shield, Sentinel, Avenging Wrath or Divine Toll, in any order.^P~Lumensong~PALADIN~Holy Paladin~healer~HPS~333k~5~2~317k~2~1st of 4 healers~spell_holy_holybolt^S~Lumensong~warn~200025~Beacon of Virtue: 63%. It sat ready for 168 seconds.^S~Lumensong~warn~223819~Divine Purpose: 4 wasted. 2 were lost to a Divine Toll pressed while you still held one.^S~Lumensong~bad~82326~Mana at the kill: 60%. About a few more Holy Lights were left in it.^N~Lumensong~Press Beacon of Virtue as the damage goes out, close to every 15 seconds. From 0:52, it sat ready for 36 seconds.^P~Dawnmender~PALADIN~Holy Paladin~healer~HPS~316k~13~2~280k~2~2nd of 4 healers~spell_holy_holybolt^S~Dawnmender~warn~223819~Divine Purpose: 6 wasted. 3 were lost to a Divine Toll pressed while you still held one.^S~Dawnmender~warn~31821~Cooldowns into the big hits: 1 of 3. 1 of your 3 healing cooldowns went out in the heaviest damage of the pull.^S~Dawnmender~warn~31884~Casting in Avenging Wrath: 83%. You were casting for 83% of your Avenging Wrath windows.^B~Dawnmender~dead~1286835~You died at 3:50 to Necrotic Vapors.^N~Dawnmender~Spend Divine Purpose before it runs out, or before a new one replaces it. Your first wasted one was at 2:50.^P~Thornroot~DRUID~Restoration Druid~healer~HPS~281k~-1~2~284k~2~3rd of 4 healers~spell_nature_healingtouch^S~Thornroot~warn~391528~Convoke the Spirits uses: 6 of 8. It sat ready for 2 minutes in all.^S~Thornroot~bad~48438~Mana at the kill: 58%. About 13 more Wild Growths were left in it at the kill.^S~Thornroot~warn~263725~Clearcasting: 11 wasted. 9 were replaced by a new one while you still had it.^N~Thornroot~Press Convoke the Spirits a little sooner each time it comes back.^P~Arcspark~MAGE~Arcane Mage~dps~DPS~275k~31~2~210k~2~3rd of 21 DPS~spell_holy_magicalsentry^S~Arcspark~warn~30451~Rotation priority: 77% of your casts were the best button to press.^S~Arcspark~warn~30451~Always be casting: 72%. Your longest stretch with nothing pressed was 6 seconds, at 3:22, while you were moving.^S~Arcspark~warn~321507~Touch of the Magi on cooldown: 8 of 10. It sat ready, unused, for 2 minutes in all.^N~Arcspark~With Clearcasting and under 12 Arcane Salvo, Arcane Missiles comes first. Not in Arcane Soul, where each Barrage gives you Clearcasting and Salvo back.^P~Frostwhisper~MAGE~Frost Mage~dps~DPS~156k~-36~2~244k~2~17th of 21 DPS~spell_frost_frostbolt02^S~Frostwhisper~bad~116~Always be casting: 70%. Your longest stretch with nothing pressed was 5 seconds, at 1:52, while you were moving.^S~Frostwhisper~bad~190446~Brain Freeze: 3 wasted. You got 24 procs.^S~Frostwhisper~warn~269748~Ray of Frost on cooldown: 6 of 8. It sat ready, unused, for 21 seconds in all.^B~Frostwhisper~dead~1301007~You died at 4:20 to Unchecked Rage.^N~Frostwhisper~Press something every global cooldown. When you have to move, use an instant spell instead of stopping.^R~warn~1292403~Caustic Waves~5 players. @Moonquill, @Mistpalm, @Grimshade, @Voidfang and 1 more. Dodge the venom waves from Ula'tek and her tail.^R~bad~1301007~Unchecked Rage~1 time. Nobody was in melee of Ula'tek, so she hit the raid.^D~2:44~Hawkfeather~HUNTER~6603~Melee^D~2:46~Stonefist~WARRIOR~6603~Melee^D~3:50~Dawnmender~PALADIN~1286835~Necrotic Vapors^D~3:53~Jadewind~MONK~6603~Melee^X~+2 more by 7:30.^Q~Kill! Next time: Dodge the venom waves from Ula'tek and her tail.^Z]==]
+local SAMPLE = [==[DBF1^H~Ula'tek~Heroic~3~1~0~7:30~~6^P~Ironvow~PALADIN~Protection Paladin~tank~DPS~148k~-13~2~171k~2~~ability_paladin_shieldofthetemplar^S~Ironvow~warn~389539~Opener, step by step: 3 of 4. Missed: step 1, Hand of Reckoning (not in your opener).^S~Ironvow~warn~~Stat order: Crit › Mastery › Haste › Vers. Yours: Critical Strike 1,198, then Mastery 1,041, then Haste 979, then Versatility 0.^N~Ironvow~Follow the guide opener: Hand of Reckoning, then 3 of Avenger's Shield, Sentinel, Avenging Wrath or Divine Toll, in any order.^P~Lumensong~PALADIN~Holy Paladin~healer~HPS~333k~5~2~317k~2~1st of 4 healers~spell_holy_holybolt^S~Lumensong~warn~200025~Beacon of Virtue: 63%. It sat ready for 168 seconds.^S~Lumensong~warn~223819~Divine Purpose: 4 wasted. 2 were lost to a Divine Toll pressed while you still held one.^S~Lumensong~bad~82326~Mana at the kill: 60%. About a few more Holy Lights were left in it.^U~Lumensong~ok~498~Defensives: Divine Protection 2 of 4, Lay on Hands 1 of 1.^U~Lumensong~ok~6262~Healthstone: used at 2:10.^U~Lumensong~info~inv_alchemy_70_red~Health potion: not used.^N~Lumensong~Press Beacon of Virtue as the damage goes out, close to every 15 seconds. From 0:52, it sat ready for 36 seconds.^P~Dawnmender~PALADIN~Holy Paladin~healer~HPS~316k~13~2~280k~2~2nd of 4 healers~spell_holy_holybolt^S~Dawnmender~warn~223819~Divine Purpose: 6 wasted. 3 were lost to a Divine Toll pressed while you still held one.^S~Dawnmender~warn~31821~Cooldowns into the big hits: 1 of 3. 1 of your 3 healing cooldowns went out in the heaviest damage of the pull.^S~Dawnmender~warn~31884~Casting in Avenging Wrath: 83%. You were casting for 83% of your Avenging Wrath windows.^B~Dawnmender~dead~1286835~You died at 3:50 to Necrotic Vapors.^N~Dawnmender~Spend Divine Purpose before it runs out, or before a new one replaces it. Your first wasted one was at 2:50.^P~Thornroot~DRUID~Restoration Druid~healer~HPS~281k~-1~2~284k~2~3rd of 4 healers~spell_nature_healingtouch^S~Thornroot~warn~391528~Convoke the Spirits uses: 6 of 8. It sat ready for 2 minutes in all.^S~Thornroot~bad~48438~Mana at the kill: 58%. About 13 more Wild Growths were left in it at the kill.^S~Thornroot~warn~263725~Clearcasting: 11 wasted. 9 were replaced by a new one while you still had it.^N~Thornroot~Press Convoke the Spirits a little sooner each time it comes back.^P~Arcspark~MAGE~Arcane Mage~dps~DPS~275k~31~2~210k~2~3rd of 21 DPS~spell_holy_magicalsentry^S~Arcspark~warn~30451~Rotation priority: 77% of your casts were the best button to press.^S~Arcspark~warn~30451~Always be casting: 72%. Your longest stretch with nothing pressed was 6 seconds, at 3:22, while you were moving.^S~Arcspark~warn~321507~Touch of the Magi on cooldown: 8 of 10. It sat ready, unused, for 2 minutes in all.^N~Arcspark~With Clearcasting and under 12 Arcane Salvo, Arcane Missiles comes first. Not in Arcane Soul, where each Barrage gives you Clearcasting and Salvo back.^P~Frostwhisper~MAGE~Frost Mage~dps~DPS~156k~-36~2~244k~2~17th of 21 DPS~spell_frost_frostbolt02^S~Frostwhisper~bad~116~Always be casting: 70%. Your longest stretch with nothing pressed was 5 seconds, at 1:52, while you were moving.^S~Frostwhisper~bad~190446~Brain Freeze: 3 wasted. You got 24 procs.^S~Frostwhisper~warn~269748~Ray of Frost on cooldown: 6 of 8. It sat ready, unused, for 21 seconds in all.^B~Frostwhisper~dead~1301007~You died at 4:20 to Unchecked Rage.^N~Frostwhisper~Press something every global cooldown. When you have to move, use an instant spell instead of stopping.^R~warn~1292403~Caustic Waves~5 players. @Moonquill, @Mistpalm, @Grimshade, @Voidfang and 1 more. Dodge the venom waves from Ula'tek and her tail.^R~bad~1301007~Unchecked Rage~1 time. Nobody was in melee of Ula'tek, so she hit the raid.^D~2:44~Hawkfeather~HUNTER~6603~Melee^D~2:46~Stonefist~WARRIOR~6603~Melee^D~3:50~Dawnmender~PALADIN~1286835~Necrotic Vapors^D~3:53~Jadewind~MONK~6603~Melee^X~+2 more by 7:30.^Q~Kill! Next time: Dodge the venom waves from Ula'tek and her tail.^Z]==]
 
 -- ---------- small helpers for drawing ----------
 local NOICON = { ok = "Interface\\RaidFrame\\ReadyCheck-Ready", bad = "Interface\\RaidFrame\\ReadyCheck-NotReady", dead = "Interface\\RaidFrame\\ReadyCheck-NotReady" }
@@ -362,7 +363,7 @@ end
 -- leave only what went wrong (Style: "Only what went wrong")
 local function onlyBad(list)
   if not DB.onlyBad then return list end
-  local o = {}; for _, r in ipairs(list) do if r[1] ~= "ok" then o[#o + 1] = r end end
+  local o = {}; for _, r in ipairs(list) do if r[1] ~= "ok" and r[1] ~= "info" then o[#o + 1] = r end end
   return o
 end
 local function names(s)
@@ -531,6 +532,44 @@ function render()
     panel(y0, y - y0)
     IND = 0; y = y + 10
   end
+  -- (who died, on both views: a row with the count and − n + to choose how many deaths to list, right here on the card; 0 lists none)
+  local function diedRow()
+    if DB.compact or SH.died == false then return end
+    local nd, show = #m.raid.died, DB.maxDied or 0
+    local y0 = y; IND = 12; y = y + 12
+    local t = FS("head", 15, COL.text); t:SetPoint("TOPLEFT", IND, -y); t:SetText("Who died")
+    local c = FS("body", 12.5, COL.faint); c:SetPoint("BOTTOMLEFT", t, "BOTTOMRIGHT", 8, 1); c:SetText(h.deaths .. (h.deaths == "1" and " death" or " deaths"))
+    local function stepBtn(lbl, right, d)
+      local bt = BTN(); bt:SetSize(22, 22); bt:SetPoint("TOPRIGHT", body, "TOPLEFT", right, -(y - 3))
+      local bg = RT("BORDER"); bg:SetAllPoints(bt); rounded(bg, "fill", 5, COL.bg, 1)
+      local tx = FS("bold", 12.5, COL.muted); tx:SetPoint("CENTER", bt, "CENTER", 0, 0); tx:SetText(lbl)
+      bt:SetScript("OnClick", function() DB.maxDied = math.max(0, math.min(8, (DB.maxDied or 0) + d)); if Debrief_RefreshOptions then Debrief_RefreshOptions() end; render() end)
+      bt:SetScript("OnEnter", function() tx:SetTextColor(rgb(COL.gold)) end); bt:SetScript("OnLeave", function() tx:SetTextColor(rgb(COL.muted)) end)
+    end
+    stepBtn("+", CW - IND, 1)
+    local v = FS("bold", 13.5, COL.text); v:SetJustifyH("CENTER"); v:SetWidth(26); v:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - IND - 24, -(y + 1)); v:SetText(show)
+    stepBtn("–", CW - IND - 52, -1)
+    y = y + 27
+    if show == 0 then
+      local hint = FS("body", 12.5, COL.faint); hint:SetPoint("TOPLEFT", IND, -y); hint:SetText(nd > 0 and "Press + to list who died first." or "Nobody died."); y = y + 20
+    elseif nd == 0 then y = row(y, "ok", nil, m.raid.more ~= "" and m.raid.more or "Nobody died.")
+    else
+      for i = 1, math.min(show, nd) do
+        local d = m.raid.died[i]
+        local tm = FS("body", 13.5, COL.muted); tm:SetPoint("TOPLEFT", IND, -y); tm:SetText(d[1])
+        local nm = FS("bold", 13.5, classHex(d[3])); nm:SetPoint("TOPLEFT", IND + 44, -y); nm:SetWidth(124); nm:SetWordWrap(false); nm:SetText(d[2])
+        icon(IND + 174, y - 1, 18, d[4])
+        local w = FS("body", 13.5, COL.muted); w:SetPoint("TOPLEFT", IND + 200, -y); w:SetWidth(CW - 200 - IND * 2); w:SetWordWrap(false); w:SetText(d[5])
+        y = y + 23
+      end
+      local rest = nd - math.min(show, nd)
+      local more = rest > 0 and ("+" .. rest .. " more listed with +.") or m.raid.more
+      if more ~= "" then local mo = FS("body", 12.5, COL.faint); mo:SetPoint("TOPLEFT", IND, -(y - 2)); mo:SetText(more); y = y + 18 end
+    end
+    y = y + 3
+    panel(y0, y - y0)
+    IND = 0; y = y + 10
+  end
   if view == "me" and P then
     -- the tile: your damage or healing, against your last pull and your best
     if SH.tile ~= false then
@@ -562,7 +601,10 @@ function render()
       local bos = function() section("boss", "Boss mechanics", onlyBad(P.boss), DB.maxBoss or 2, function(r) y = row(y, r[1], r[2], r[3]) end, "No boss mistakes.") end
       if m.h.practice and #P.boss == 0 then bos = function() end end -- (a training dummy has no boss mechanics)
       if DB.bossFirst then bos(); rot() else rot(); bos() end
+      -- (survival: your defensives, Healthstone and health potion)
+      if P.surv and #P.surv > 0 and SH.surv ~= false then section("surv", "Survival", onlyBad(P.surv), 5, function(r) y = row(y, r[1], r[2], r[3]) end) end
     end
+    if not (m.h.practice) then diedRow() end -- (the death filter here too: a dummy has no deaths)
     if P.next ~= "" and SH.next ~= false then y = nextBox(y + 2, P.next) end
   else
     section("mistakes", h.kill and "What to clean up" or "Top mistakes", m.raid.bad, DB.compact and 1 or (DB.maxRaid or 3), function(r) y = row(y, r[1], r[2], r[4], r[3]) end, "Nothing big.")
@@ -570,43 +612,7 @@ function render()
     if m.raid.mech and #m.raid.mech > 0 and (DB.maxMech or 6) > 0 then
       section("mech", "Boss mechanics", m.raid.mech, DB.compact and math.min(3, DB.maxMech or 3) or (DB.maxMech or 6), function(r) y = row(y, r[1], r[2], r[4], r[3]) end)
     end
-    -- (who died: a row with the count and − n + to choose how many deaths to list, right here on the card; 0 lists none)
-    if not DB.compact and SH.died ~= false then
-      local nd, show = #m.raid.died, DB.maxDied or 0
-      local y0 = y; IND = 12; y = y + 12
-      local t = FS("head", 15, COL.text); t:SetPoint("TOPLEFT", IND, -y); t:SetText("Who died")
-      local c = FS("body", 12.5, COL.faint); c:SetPoint("BOTTOMLEFT", t, "BOTTOMRIGHT", 8, 1); c:SetText(h.deaths .. (h.deaths == "1" and " death" or " deaths"))
-      local function stepBtn(lbl, right, d)
-        local bt = BTN(); bt:SetSize(22, 22); bt:SetPoint("TOPRIGHT", body, "TOPLEFT", right, -(y - 3))
-        local bg = RT("BORDER"); bg:SetAllPoints(bt); rounded(bg, "fill", 5, COL.bg, 1)
-        local tx = FS("bold", 12.5, COL.muted); tx:SetPoint("CENTER", bt, "CENTER", 0, 0); tx:SetText(lbl)
-        bt:SetScript("OnClick", function() DB.maxDied = math.max(0, math.min(8, (DB.maxDied or 0) + d)); if Debrief_RefreshOptions then Debrief_RefreshOptions() end; render() end)
-        bt:SetScript("OnEnter", function() tx:SetTextColor(rgb(COL.gold)) end); bt:SetScript("OnLeave", function() tx:SetTextColor(rgb(COL.muted)) end)
-      end
-      stepBtn("+", CW - IND, 1)
-      local v = FS("bold", 13.5, COL.text); v:SetJustifyH("CENTER"); v:SetWidth(26); v:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - IND - 24, -(y + 1)); v:SetText(show)
-      stepBtn("–", CW - IND - 52, -1)
-      y = y + 27
-      if show == 0 then
-        local hint = FS("body", 12.5, COL.faint); hint:SetPoint("TOPLEFT", IND, -y); hint:SetText(nd > 0 and "Press + to list who died first." or "Nobody died."); y = y + 20
-      elseif nd == 0 then y = row(y, "ok", nil, m.raid.more ~= "" and m.raid.more or "Nobody died.")
-      else
-        for i = 1, math.min(show, nd) do
-          local d = m.raid.died[i]
-          local tm = FS("body", 13.5, COL.muted); tm:SetPoint("TOPLEFT", IND, -y); tm:SetText(d[1])
-          local nm = FS("bold", 13.5, classHex(d[3])); nm:SetPoint("TOPLEFT", IND + 44, -y); nm:SetWidth(124); nm:SetWordWrap(false); nm:SetText(d[2])
-          icon(IND + 174, y - 1, 18, d[4])
-          local w = FS("body", 13.5, COL.muted); w:SetPoint("TOPLEFT", IND + 200, -y); w:SetWidth(CW - 200 - IND * 2); w:SetWordWrap(false); w:SetText(d[5])
-          y = y + 23
-        end
-        local rest = nd - math.min(show, nd)
-        local more = rest > 0 and ("+" .. rest .. " more listed with +.") or m.raid.more
-        if more ~= "" then local mo = FS("body", 12.5, COL.faint); mo:SetPoint("TOPLEFT", IND, -(y - 2)); mo:SetText(more); y = y + 18 end
-      end
-      y = y + 3
-      panel(y0, y - y0)
-      IND = 0; y = y + 10
-    end
+    diedRow()
     if m.raid.next ~= "" and SH.next ~= false then y = nextBox(y + 2, m.raid.next) end
   end
   body:SetHeight(math.max(10, y))
@@ -960,6 +966,7 @@ bigRender = function()
       end)
     end
     if DB.bossFirst then list("Boss mechanics", P.boss); list("Rotation", P.slips) else list("Rotation", P.slips); list("Boss mechanics", P.boss) end
+    if P.surv and #P.surv > 0 and (DB.show or {}).surv ~= false then list("Survival", P.surv) end
     if P.next ~= "" then
       local tx = bFS(bm, "body", 14, COL.text); tx:SetWidth(COLW - 32); tx:SetText(names(P.next))
       local hh = 28 + tx:GetStringHeight() + 12
@@ -1409,7 +1416,7 @@ local function buildOptions()
   switch("Boss mistakes first", "Above your rotation tips.", function() return DB.bossFirst == true end, function(v) DB.bossFirst = v end)
   switch("Next pull tip", "One thing to try next time.", function() return S().next ~= false end, function(v) S().next = v end)
   switch("Your last pulls along the top", "Click one to look at it again.", function() return S().chips ~= false end, function(v) S().chips = v end)
-  switch("Only what went wrong", "Hide the lines you did right.", function() return DB.onlyBad == true end, function(v) DB.onlyBad = v end, true)
+  switch("Survival", "Your defensives, Healthstone and health potion.", function() return S().surv ~= false end, function(v) S().surv = v end)
   panelEnd()
 
   -- Look
@@ -1440,6 +1447,7 @@ local function buildOptions()
     function() return DB.mini and "mini" or (DB.bigDefault and "big" or "card") end, function(v) DB.mini = (v == "mini"); DB.bigDefault = (v == "big") end, true)
   switch("Open it by itself", "As soon as it arrives.", function() return DB.autoShow ~= false end, function(v) DB.autoShow = v end, true)
   switch("Sound", "A soft sound when it opens.", function() return DB.sound ~= false end, function(v) DB.sound = v end, true)
+  switch("Only what went wrong", "Hide the lines you did right.", function() return DB.onlyBad == true end, function(v) DB.onlyBad = v end, true)
   panelEnd()
   panel("On your screen", nil, "INV_Misc_PocketWatch_01")
   switch("Hide during combat", "Back when the fight ends.", function() return DB.hideCombat ~= false end, function(v) DB.hideCombat = v end, true)

@@ -69,7 +69,7 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
     const lastV = last != null ? H.get(last).get(p.name) : null;
     let best = null, bp = null; for (const n of prevPulls) { const x = H.get(n).get(p.name); if (x != null && (best == null || x > best)) { best = x; bp = n; } }
     const P = { name: p.name, cls: p.cls || '', spec: p.specName, role: p.role || 'dps', unit: p.role === 'healer' ? 'HPS' : 'DPS', v: kfmt(v),
-      d: lastV ? Math.round(100 * (v - lastV) / lastV) : null, vs: last != null ? last : '', best: best != null ? kfmt(best) : '', bp: bp != null ? bp : '', rank: rankIn(p), icon: p.specIcon || '', slips: [], boss: [], next: '' };
+      d: lastV ? Math.round(100 * (v - lastV) / lastV) : null, vs: last != null ? last : '', best: best != null ? kfmt(best) : '', bp: bp != null ? bp : '', rank: rankIn(p), icon: p.specIcon || '', slips: [], boss: [], surv: [], next: '' };
     // Rotation: the three checks that cost the most (the website's "focus"), or what went right
     let x = null; try { x = W.specRun(p.specName, [rep], p.name, true); } catch (e) { x = null; }
     const tips = [];
@@ -84,7 +84,8 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
     for (const m of own) { if (seen.has(m.mechanic)) continue; seen.add(m.mechanic); if (P.boss.length >= 5) break;
       P.boss.push([flagOf(m.severity), m.id ? String(m.id) : '', shortTo(m.mechanic + ': ' + plain(m.detail || ''), 150)]); if (m.fix) tips.push(sentences(m.fix)[0]); }
     const dd = (rep.deaths || []).filter((d) => d.player === p.name).sort((a, c) => a.t - c.t)[0];
-    if (dd) P.boss.push(['dead', deathIcon(dd), 'You died at ' + mmss(dd.t) + (dd.ability ? ' to ' + dd.ability : '') + '.' + (!b.kill && rep.duration - dd.t < 8 ? ' The pull was already lost.' : '')]);
+    const ready = dd && dd.reactable && (dd.available || []).length ? ' You still had ' + dd.available.slice(0, 3).join(', ').replace(/, ([^,]*)$/, ' and $1') + ' ready.' : '';
+    if (dd) P.boss.push(['dead', deathIcon(dd), 'You died at ' + mmss(dd.t) + (dd.ability ? ' to ' + dd.ability : '') + '.' + (!b.kill && rep.duration - dd.t < 8 ? ' The pull was already lost.' : ready)]);
     // (more about your boss play: avoidable damage and where you rank, your kicks and dispels)
     const avo = p.avoidable || 0;
     if (avo > 0) { const ra = ps.filter((q) => (q.avoidable || 0) > avo).length + 1, big = ps.length >= 6;
@@ -92,6 +93,23 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
     else if (ps.length >= 6 && !own.length) P.boss.push(['ok', 'ability_rogue_sprint', 'No avoidable damage taken. Nice dodging.']);
     if (p.interrupts > 0) P.boss.push(['ok', 'ability_kick', 'Interrupts: ' + p.interrupts + '.']);
     if (p.dispels > 0) P.boss.push(['ok', 'spell_holy_dispelmagic', 'Dispels: ' + p.dispels + '.']);
+    // (survival: your defensives, Healthstone and health potion, and a close call you could have answered)
+    const defs = (p.defs || []).filter((d) => d.possible > 0);
+    if (defs.length) {
+      const usedN = defs.reduce((a, d) => a + Math.min(d.uses.length, d.possible), 0);
+      P.surv.push([usedN === 0 && (rep.duration || 0) > 60 ? 'warn' : 'ok', defs[0].id ? String(defs[0].id) : '', shortTo('Defensives: ' + defs.map((d) => d.name + ' ' + Math.min(d.uses.length, d.possible) + ' of ' + d.possible).join(', ') + '.', 160)]);
+    }
+    const stones = (p.cons && p.cons.healthstone) || [], pots = (p.cons && p.cons.healpot) || [];
+    const times = (l) => l.slice(0, 3).map((x) => mmss(x.t)).join(', ').replace(/, ([^,]*)$/, ' and $1');
+    if (ps.some((q) => q.cls === 'WARLOCK' || (q.cons && q.cons.healthstone.length))) P.surv.push([stones.length ? 'ok' : 'info', stones.length && stones[0].id ? String(stones[0].id) : 'inv_stone_04', stones.length ? 'Healthstone: used at ' + times(stones) + '.' : 'Healthstone: not used.']);
+    P.surv.push([pots.length ? 'ok' : 'info', pots.length && pots[0].id ? String(pots[0].id) : 'inv_alchemy_70_red', pots.length ? 'Health potion: used at ' + times(pots) + '.' : 'Health potion: not used.']);
+    const missed = (p.closeCalls || []).filter((c) => c.judged && !c.def && !c.stone && !c.pot && c.kitAvail);
+    if (missed.length) {
+      // (name what was still ready: a Healthstone only when a Warlock made them or someone used one)
+      const c = missed[0], hasStone = ps.some((q) => q.cls === 'WARLOCK' || (q.cons && q.cons.healthstone.length)) && !stones.some((u) => u.t < c.t - 2), hasPot = !pots.some((u) => u.t < c.t - 2);
+      const kit = hasStone && hasPot ? 'a Healthstone and a potion' : hasStone ? 'a Healthstone' : 'a potion';
+      P.surv.push(['warn', hasStone ? 'inv_stone_04' : 'inv_alchemy_70_red', 'You dropped to ' + Math.round(c.low * 100) + '% at ' + mmss(c.tl) + ' and pressed nothing, with ' + kit + ' still ready.' + (missed.length > 1 ? ' It happened ' + (missed.length - 1) + ' more time' + (missed.length > 2 ? 's.' : '.') : '')]);
+    }
     P.next = tips[0] || (P.slips.length && P.slips.every((s) => s[0] === 'ok') && !own.length ? 'Clean pull from you. Same again.' : '');
     players.push(P);
   }

@@ -134,7 +134,7 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
 .c-row { display: grid; grid-template-columns: 8px 22px 1fr; gap: 10px; align-items: start; font-size: 14px; line-height: 1.42; margin-top: 9px; color: #d6d1c6; }
 .c-row:first-of-type { margin-top: 0; }
 .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; }
-.dot.ok { background: var(--good); } .dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); } .dot.dead { background: var(--faint); }
+.dot.ok { background: var(--good); } .dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); } .dot.dead { background: var(--faint); } .dot.info { background: var(--faint); }
 .ic { width: 22px; height: 22px; border-radius: 4px; background: var(--raised); border: 1px solid #000; overflow: hidden; display: block; }
 .ic img { width: 100%; height: 100%; display: block; transform: scale(1.1); }
 .c-row strong { display: block; font-weight: 600; }
@@ -425,6 +425,7 @@ RECAP.encode = (m) => {
     rec.push(['P', p.name, p.cls, p.spec, p.role, p.unit, p.v, p.d == null ? '' : p.d, p.vs || '', p.best || '', p.bp || '', p.rank || '', p.icon || '']);
     for (const s of p.slips) rec.push(['S', p.name, s[0], s[1] || '', s[2]]);
     for (const s of p.boss) rec.push(['B', p.name, s[0], s[1] || '', s[2]]);
+    for (const s of p.surv || []) rec.push(['U', p.name, s[0], s[1] || '', s[2]]); // (survival: defensives, Healthstone, potion)
     if (p.next) rec.push(['N', p.name, p.next]);
   }
   for (const r of m.raid.bad) rec.push(['R', r[0], r[1] || '', r[2], r[3]]);
@@ -441,9 +442,10 @@ RECAP.decode = (code) => {
   for (const r of String(code).trim().split('^')) {
     const f = r.split('~'), t = f[0];
     if (t === 'H') m.h = { boss: f[1], diff: f[2], pull: f[3], kill: f[4] === '1', pct: f[5], dur: f[6], where: f[7], deaths: f[8] };
-    else if (t === 'P') { const p = { name: f[1], cls: f[2], spec: f[3], role: f[4], unit: f[5], v: f[6], d: f[7] === '' ? null : +f[7], vs: f[8], best: f[9], bp: f[10], rank: f[11], icon: f[12], slips: [], boss: [], next: '' }; m.players.push(p); by.set(p.name, p); }
+    else if (t === 'P') { const p = { name: f[1], cls: f[2], spec: f[3], role: f[4], unit: f[5], v: f[6], d: f[7] === '' ? null : +f[7], vs: f[8], best: f[9], bp: f[10], rank: f[11], icon: f[12], slips: [], boss: [], surv: [], next: '' }; m.players.push(p); by.set(p.name, p); }
     else if (t === 'S' && by.get(f[1])) by.get(f[1]).slips.push([f[2], f[3], f[4]]);
     else if (t === 'B' && by.get(f[1])) by.get(f[1]).boss.push([f[2], f[3], f[4]]);
+    else if (t === 'U' && by.get(f[1])) by.get(f[1]).surv.push([f[2], f[3], f[4]]);
     else if (t === 'N' && by.get(f[1])) by.get(f[1]).next = f[2];
     else if (t === 'R') m.raid.bad.push([f[1], f[2], f[3], f[4]]);
     else if (t === 'D') m.raid.died.push([f[1], f[2], f[3], f[4], f[5]]);
@@ -483,6 +485,7 @@ function renderPreview(m) {
     body = '<div class="c-tile">' + iconImg(P.icon) + '<div><div class="l">' + (P.role === 'healer' ? 'Your healing' : 'Your damage') + '</div><div class="v">' + esc(P.v) + '<small>' + esc(P.unit) + '</small></div></div><div class="s">' + delta + (P.best ? 'Best ' + esc(P.best) + ' (pull ' + esc(P.bp) + ')' : 'First pull read') + (P.rank ? '<br>' + esc(P.rank) : '') + '</div></div>' +
       '<div><p class="c-h">Rotation</p>' + (P.slips.length ? P.slips.map((r) => row(r)).join('') : '<div class="c-row"><i class="dot ok"></i><span class="ic"></span><div>No rotation checks for this spec yet.</div></div>') + '</div>' +
       '<div><p class="c-h">Boss mechanics</p>' + (P.boss.length ? P.boss.map((r) => row(r)).join('') : '<div class="c-row"><i class="dot ok"></i><span class="ic"></span><div>No boss mistakes.</div></div>') + '</div>' +
+      ((P.surv || []).length ? '<div><p class="c-h">Survival</p>' + P.surv.map((r) => row(r)).join('') + '</div>' : '') +
       (P.next ? '<div class="c-next"><p class="c-h">Next pull</p><p>' + names2(P.next) + '</p></div>' : '');
   } else {
     body = '<div><p class="c-h">' + (h.kill ? 'What to clean up' : 'Top mistakes') + '</p>' + (m.raid.bad.length ? m.raid.bad.map((r) => row(r, true)).join('') : '<div class="c-row"><i class="dot ok"></i><span class="ic"></span><div>Nothing big.</div></div>') + '</div>' +
