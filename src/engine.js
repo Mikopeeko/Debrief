@@ -5771,7 +5771,7 @@ function* analyzeSteps(item, text, opts) {
   const bossNames = new Set(item.kind === 'run' ? item.bosses.map((b) => b.boss) : [item.boss]);
   const P = (g, n) => { let p = r.players.get(g); if (!p) r.players.set(g, p = newPlayer(g)); if (n && !p.name) p.name = shortName(g, n); return p; };
   // each player's last 12 seconds of damage and healing (was the last 16 events, which is under a second in heavy raid damage)
-  const recap = (g, e) => { let l = recaps.get(g); if (!l) recaps.set(g, l = []); l.push(e); while (l.length > 400 || (l.length && l[0].t < e.t - 12)) l.shift(); };
+  const recap = (g, e) => { let l = recaps.get(g); if (!l) recaps.set(g, l = []); l.push(e); while (l.length > 600 || (l.length && l[0].t < e.t - 16)) l.shift(); }; // (16 s kept: a death reads its last 15 s (your ask, Oct 22))
   let lastT = 0;
   const units = new Map(); // enemy health from advanced logging: guid -> { name, max, cur, samples }
   const seenHp = (g, n, cur, mx, t) => {
@@ -5833,7 +5833,7 @@ function* analyzeSteps(item, text, opts) {
       if (!isPlayer(dg)) { const u = units.get(dg); if (u) u.samples.push([t | 0, 0]); if (!r.enemyDied.has(dg)) r.enemyDied.set(dg, t); if (mod) modEv.push({ k: 'die', t, guid: dg, name: dn }); continue; }
       if (f[8] === '1') continue;
       const p = P(dg, dn); p.deaths++;
-      const recent = (recaps.get(dg) || []).filter((e) => e.t >= t - 10);
+      const recent = (recaps.get(dg) || []).filter((e) => e.t >= t - 15);
       let last = null; for (const e of recent) if (!e.heal) last = e;
       r.deaths.push({ t, guid: dg, player: p.name, killer: last ? last.src : 'Unknown', ability: last ? last.spell : '', abilityId: last ? last.id : 0, recap: recent });
       continue;
@@ -6663,7 +6663,7 @@ function triageSaves(r) {
 }
 
 // Why each player died and what would have prevented it, in plain words (shown with each death in the Fight audit).
-// Built from the last 10 seconds before the death: what hit them and how fast, how much healing came in, any
+// Built from the last 15 seconds before the death (10 until Oct 22: a slow slide often starts earlier): what hit them and how fast, how much healing came in, any
 // mechanic mistakes they made just before, the boss's avoidable spells, and what they still had ready.
 function explainDeaths(r) {
   const pack = PACKS.find((p) => p.encounter === r.item.boss), rules = pack ? pack.rules : [];
@@ -6679,8 +6679,8 @@ function explainDeaths(r) {
     const by = new Map(); for (const e of hits) { const k = e.spell || 'Melee'; let o = by.get(k); if (!o) by.set(k, o = { name: k, id: e.id, src: e.src, amt: 0, n: 0 }); o.amt += e.amount; o.n++; }
     const top = [...by.values()].sort((a, b) => b.amt - a.amt);
     const fast = d.window > 0 && d.window <= 2 && d.startHp >= 50, slow = d.window >= 5, low = !d.healthy && d.startHp > 0 && d.startHp < 35;
-    // kickable casts that got off in their last 10 seconds and hit them (e.g. Visceral Burst from a Broodling)
-    const gotOff = (r.kicks || []).map((k) => ({ k, at: k.missedAt.filter((m) => m.t >= d.t - 10 && m.t <= d.t + 0.2) })).filter((x) => x.at.length && by.has(x.k.name));
+    // kickable casts that got off in their last 15 seconds and hit them (e.g. Visceral Burst from a Broodling)
+    const gotOff = (r.kicks || []).map((k) => ({ k, at: k.missedAt.filter((m) => m.t >= d.t - 15 && m.t <= d.t + 0.2) })).filter((x) => x.at.length && by.has(x.k.name));
     const defs = (d.available || []).filter((a) => !/^(Healthstone|a healing potion)$/.test(a)), cons = (d.available || []).filter((a) => /^(Healthstone|a healing potion)$/.test(a));
     // the player's own mechanic mistakes just before dying (the fix text says what to do instead)
     const mine = r.mistakes.filter((m) => m.player === d.player && m.mechanic !== 'Death' && m.t >= d.t - 10 && m.t <= d.t + 0.5).sort((a, b) => (b.severity === 'High') - (a.severity === 'High') || b.t - a.t);
@@ -6694,8 +6694,8 @@ function explainDeaths(r) {
     if (top.length > 1 || (top[0] && top[0].name !== d.ability)) why.push('Most of the damage in their last seconds: ' + top.slice(0, 3).map((t) => t.name + ' ' + pct(t.amt, dmg) + '%').join(', ') + '.');
     if (dmg && slow && heal < dmg * 0.2) why.push('Very little healing came in (' + pct(heal, dmg) + '% of the damage taken) over ' + d.window.toFixed(0) + 's.');
     for (const m of mine.slice(0, 2)) why.push('Just before: ' + m.detail.replace(/\.$/, '') + '.');
-    for (const a of avoid.slice(0, 2)) if (!mine.some((m) => m.mechanic === a.x.name)) why.push(a.x.name + ' is avoidable and made up ' + pct(a.amt, dmg) + '% of the damage.');
-    if (low) why.push('They never got above ' + Math.round(d.startHp) + '% health in their last 10 seconds, so there was no buffer left.');
+    for (const a of avoid.slice(0, 2)) if (!mine.some((m) => m.mechanic === a.x.name) && pct(a.amt, dmg) >= 20) why.push(a.x.name + ' is avoidable and made up ' + pct(a.amt, dmg) + '% of the damage.');
+    if (low) why.push('They never got above ' + Math.round(d.startHp) + '% health in their last 15 seconds, so there was no buffer left.');
     for (const x of gotOff) why.push(x.k.name + ' was not interrupted (' + x.at.length + (x.at.length === 1 ? ' cast' : ' casts') + ' got off at ' + x.at.map((m) => fmtT(m.t)).join(', ') + ') and did ' + pct(by.get(x.k.name).amt, dmg) + '% of the damage.');
     const envBig = env && pct(env.amt, dmg) >= 30;
     if (envBig) why.push(env.name + ' is room damage and did ' + pct(env.amt, dmg) + '% of what hit them.');
@@ -6703,7 +6703,7 @@ function explainDeaths(r) {
     const fix = [];
     for (const x of gotOff) fix.push('Interrupt ' + x.k.name + (x.at[0].caster ? ' (' + x.at[0].caster + ')' : '') + ': the raid needs a kicker on every cast.');
     for (const m of mine.slice(0, 2)) if (m.fix && !fix.includes(m.fix)) fix.push(m.fix);
-    for (const a of avoid.slice(0, 2)) if (a.x.tip && !fix.includes(a.x.tip)) fix.push(a.x.tip);
+    for (const a of avoid.slice(0, 2)) if (a.x.tip && !fix.includes(a.x.tip) && pct(a.amt, dmg) >= 20) fix.push(a.x.tip); /* (a small avoidable hit 12 s earlier is not what killed them) */
     if (envBig) fix.push('Stay out of the ' + env.name + ' (room damage, not a boss ability).');
     if (low && !fast) fix.push('Get topped up before the next mechanic. Use a Healthstone, potion or defensive while low, or call for healing.');
     if (defs.length && !(envBig && pct(env.amt, dmg) >= 80)) fix.push(fast ? 'Press ' + defs[0] + ' before ' + killer + ' lands. It was ready.' : 'Use ' + andJoin(defs.slice(0, 2)) + ' when your health starts dropping. ' + (defs.length > 1 ? 'Both were' : 'It was') + ' ready.');
@@ -6712,6 +6712,19 @@ function explainDeaths(r) {
     if (p && p.role === 'tank' && top[0] && /melee/i.test(top[0].name) && !defs.length) fix.push('This is tank damage. Plan an external or a tank swap for this point.');
     if (!fix.length) fix.push(fast ? 'No mistake found in the log and nothing was left to press. This looks like a raid damage check. Plan a raid cooldown or a personal before ' + killer + '.' : 'No clear mistake found in the log. Open the recap to see the hits in order.');
     d.why = why; d.prevent = fix;
+    // (their health 15, 10, 5 and 2 seconds before, and the story in a line: how they went down, read from all of it (your ask, Oct 22))
+    const hl = (r.php && r.php.get(d.guid)) || [], hpAt = (t) => { let v = null; for (const [ts, fr] of hl) { if (ts > t) break; v = fr; } return v == null ? null : Math.round(100 * v); };
+    d.hpPath = [15, 10, 5, 2].map((s) => [s, hpAt(d.t - s)]).filter(([, v]) => v != null);
+    d.avoidPct = dmg ? pct(avoid.reduce((n, a) => n + a.amt, 0), dmg) : 0; d.ownAvoid = d.avoidPct >= 50; /* (dodgeable damage did half or more: their own death) */ d.avoidName = avoid[0] ? avoid[0].x.name : '';
+    d.healPct = dmg ? pct(heal, dmg) : 0;
+    const path = d.hpPath.length >= 3 ? ' (' + d.hpPath.map(([, v]) => v + '%').join(', ') + ', then dead)' : '';
+    d.story = fast ? (d.healthy ? 'from ' + Math.round(d.startHp) + '% to dead in ' + d.window.toFixed(1) + ' s' : 'one big hit while already low') + ', too fast to react'
+      : d.avoidPct >= 50 ? (d.avoidName || 'avoidable damage') + ', which you can dodge, did ' + d.avoidPct + '% of the damage'
+      : mine.length ? 'right after a mistake on ' + mine[0].mechanic
+      : low ? 'stuck under 35% health for the whole 15 seconds' + path
+      : slow && heal < dmg * 0.3 ? 'a slow slide over ' + d.window.toFixed(0) + ' s with little healing coming in' + path
+      : slow ? 'a slow slide over ' + d.window.toFixed(0) + ' s' + path
+      : 'from ' + Math.round(d.startHp || 100) + '% to dead in ' + (d.window || 0).toFixed(1) + ' s';
     // for the Deaths panel: the hit that did it (the biggest of their last 4 seconds, when it was well over the finishing
     // one: a 447k globule explosion, then a 59k tick "finished" them), the mistakes linked to it (their own in the last
     // 10 seconds, and the raid's within 4 seconds, like a globule exploding on everyone), damage taken and healing

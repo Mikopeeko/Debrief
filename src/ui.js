@@ -1673,6 +1673,8 @@ const PATCH_NOTES = [
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
+    'Externals (Blessing of Sacrifice, Pain Suppression, Guardian Spirit and the rest) are judged by need: did someone need it while it was ready, and did you press it? If nobody was in real danger, holding it is full marks.',
+    'Deaths are read over the last 15 seconds, not 10, and the Report card tells each one in a line (a slow slide with little healing, a big hit while low, dodgeable damage) with what to do next time.',
     'Graphs: click a summary tile to open its graph, a player\'s tabs sit in three rows (what they did, used and got), and the graphs you picked stay picked next time.',
     'Graphs opens with a short summary on top: the raid\'s damage and healing, who did the most, deaths, what hit the raid hardest, and kicks and dispels.',
     'One fix everywhere: your #1 fix reads the same on Debriefing, Homework (now #1) and the Report card\'s Next pull.',
@@ -7035,7 +7037,7 @@ function audit() {
   const trCls = (row) => isBadRow(row) ? ' class="rbad"' : isWarnRow(row) ? ' class="rwarn"' : okRow(row) ? ' class="rok"' : '';
   // Deaths as a list and a detail pane, like the other sections: on the left each death in order (who, when, what did
   // it; deaths from the same hit grouped), on the right the picked one: what did it, the mistakes linked to it, what was
-  // ready, damage in and healing out, their health over the last 10 seconds with each hit, the biggest hits, what would
+  // ready, damage in and healing out, their health over the last 15 seconds with each hit, the biggest hits, what would
   // have helped, and every event on demand
   const secOf = new Map(); for (const s of m.sections) { const n = (s.spell && s.spell[1]) || ''; if (n && !secOf.has(n.toLowerCase())) secOf.set(n.toLowerCase(), s.id); const tt = String(s.title || '').split(':')[0].toLowerCase(); if (tt && !secOf.has(tt)) secOf.set(tt, s.id); }
   const allDeaths = r.deaths.slice().sort((a, b) => a.t - b.t);
@@ -7059,7 +7061,7 @@ function audit() {
       if (pv) return { st: 'warn', txt: pv.replace(/\.$/, '') };
       return { st: 'na', txt: d.react === false ? 'too fast to react' : 'no clear mistake' };
     };
-    // the three biggest hits of the last 10 seconds (a spell's smaller hits added up, "×10"), as bars
+    // the three biggest hits of the last 15 seconds (a spell's smaller hits added up, "×10"), as bars
     const top3 = (d) => { const hits = (d.recap || []).filter((e) => !e.heal && e.t >= d.t - 10), last = hits[hits.length - 1], grp = new Map();
       for (const e of hits) { const k = e.spell || 'Melee'; const g = grp.get(k) || { spell: k, id: e.id, n: 0, amt: 0, kb: false, big: null, src: e.src }; g.n++; g.amt += e.amount; if (!g.big || e.amount > g.big.amount) g.big = e; if (e === last) g.kb = true; grp.set(k, g); }
       const list = [...grp.values()].sort((a, b) => b.amt - a.amt).slice(0, 3), mx = Math.max(1, ...list.map((x) => x.amt));
@@ -7513,11 +7515,11 @@ function deathSection(r) {
   const ds = r.deaths.slice().sort((a, b) => a.t - b.t);
   const recap = (d) => '<div class="dwhy"><div><b>Why they died</b><ul>' + (d.why || []).map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul></div>' +
     '<div><b>What would have prevented it</b><ul>' + (d.prevent || []).map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul></div></div>' +
-    '<div class="sub" style="margin:8px 0 6px">' + esc(d.player) + ': the last 10 seconds before dying at ' + T(d.t) + '</div>' +
+    '<div class="sub" style="margin:8px 0 6px">' + esc(d.player) + ': the last 15 seconds before dying at ' + T(d.t) + '</div>' +
     (d.available && d.available.length ? '<div class="note">Still available: ' + esc(andList(d.available)) + '</div>' : '') +
     '<div class="recap">' + (d.recap.slice(-40).map((e) => '<div class="ev"><span class="muted">' + T(e.t) + '</span><span class="' + (e.heal ? 'heal' : 'dmg') + '">' + (e.heal ? '+' : '−') + C(e.amount) + '</span><span>' + spell(e.id, e.spell) + ' <span class="sub">' + esc(e.src) + '</span></span><span class="muted">' + (e.hp >= 0 ? Math.round(e.hp) + '% hp' : '') + '</span></div>').join('') || '<p class="muted">No events recorded before this death.</p>') + '</div>';
   return { id: 'deaths', title: 'Deaths', spell: [0, 'Death'], verdict: ds.length ? 'bad' : 'good', summary: ds.length ? pl2(ds.length, 'death') + ' this pull.' : 'Nobody died.',
-    how: 'Every player death this pull, in order. Pick one on the left. It says what did it (the biggest hit of their last seconds, which isn\'t always the one that finished them), the mistakes linked to it (theirs, or the raid\'s at that moment, like a globule exploding on everyone), their health over the last 10 seconds with each hit, the biggest hits, and what they still had ready. Ready only counts against them when there was time to press it: from over 50% to dead in 2 seconds or less is too fast. Deaths from the same hit are grouped. "Every event" lists everything in their last 10 seconds.',
+    how: 'Every player death this pull, in order. Pick one on the left. It says what did it (the biggest hit of their last seconds, which isn\'t always the one that finished them), the mistakes linked to it (theirs, or the raid\'s at that moment, like a globule exploding on everyone), their health over the last 15 seconds with each hit, the biggest hits, and what they still had ready. Ready only counts against them when there was time to press it: from over 50% to dead in 2 seconds or less is too fast. Deaths from the same hit are grouped. "Every event" lists everything in their last 10 seconds.',
     cols: ['When', 'Player', 'Killed by', 'What would have helped', 'Still had ready', ''],
     // (the first cell carries the death itself: the Mechanics tab draws deaths as a list and a detail pane from it)
     rows: ds.map((d) => [{ t: d.t, death: d }, { p: d.player }, { txt: d.ability || d.killer, bad: true, sub: d.healthy && d.window > 0 ? Math.round(d.startHp) + '% to 0 in ' + d.window.toFixed(1) + 's' : d.startHp > 0 ? 'never above ' + Math.round(d.startHp) + '% in the last 10s' : '' },
@@ -20020,6 +20022,7 @@ const TANK_MECH = new Set(['Sever', 'Soul Sever', 'Blighted Sever']);
 // (how many raiders were in the pull, for "a quarter of the raid")
 const raidSizeOf = (r) => [...r.players.values()].filter((x) => x.cls || x.specName).length || 20;
 function deathOwn(r, d) {
+  if (d.ownAvoid) return true; // (dodgeable damage did half or more of what killed them (Oct 22))
   const m = r.module; if (!m || m.error || !m.sections) return false;
   const k = d.guid + '@' + d.t.toFixed(2); r._dOwn = r._dOwn || new Map(); if (r._dOwn.has(k)) return r._dOwn.get(k);
   let own = false;
@@ -20216,10 +20219,10 @@ function cardOf(r, p) {
   // ---- Staying alive: their own defensives and kit and the deaths that were on them (Oct 21) ----
   // (and a death with a defensive still ready (Oct 20, the top-raider pass: Survival read 100 next to 6 deaths). One-shots,
   // healthy to dead in under 1.5 s, never count: survivalOf leaves them out)
-  { const cnt = sv.dieList.filter((x) => x.w > 0), whyD = (x) => T(x.d.t) + ' to ' + (x.d.ability || x.d.killer || 'a hit') + (x.w < 1 ? ' (half: nothing left to press)' : (x.d.links || []).some((l) => !l.raid) || deathOwn(r, x.d) ? ' (your own mistake)' : ' (with something still ready)');
+  { const cnt = sv.dieList.filter((x) => x.w > 0), whyD = (x) => T(x.d.t) + ' to ' + (x.d.ability || x.d.killer || 'a hit') + (x.d.story ? ', ' + x.d.story : '') + (x.w < 1 ? ' (half: nothing left to press)' : (x.d.links || []).some((l) => !l.raid) || deathOwn(r, x.d) ? ' (your own mistake)' : (() => { const df = (x.d.available || []).filter((a) => !/^(Healthstone|a healing potion)$/.test(a)); return df.length ? ' (' + andList(df.slice(0, 2)) + ' still ready)' : ' (with something still ready)'; })());
     add('alive', { k: 'died', label: 'Deaths', sc: sv.die, w: 80, num: sv.dieN, nt: 'sum', word: 'death',
       html: cnt.length ? '<b>' + plural(cnt.length, 'death') + '</b> that counted: ' + esc(cnt.map(whyD).join(', ')) + (sv.deaths > cnt.length ? '<span class="sub"> · ' + (sv.deaths - cnt.length) + ' more not on you (too fast, or the raid\'s mistake)</span>' : '') : sv.deaths ? 'No deaths that counted<span class="sub"> · ' + plural(sv.deaths, 'death') + ' too fast or from the raid\'s mistake</span>' : 'Stayed alive',
-      fix: cnt.length ? { t: 'Stay alive', x: 'You died ' + (cnt.length === 1 ? 'once' : cnt.length + ' times') + ' in a way you could have stopped: ' + cnt.map(whyD).join(', ') + '. A death costs the raid your damage or healing for the rest of the pull; open Deaths on Debriefing to see what hit you.' } : null }); }
+      fix: cnt.length ? { t: 'Stay alive', x: 'You died ' + (cnt.length === 1 ? 'once' : cnt.length + ' times') + ' in a way you could have stopped. ' + cnt.map((y) => capS(whyD(y)) + '.').join(' ') + (cnt[0].d.prevent && cnt[0].d.prevent[0] ? ' Next time: ' + cnt[0].d.prevent[0] : '') + ' A death costs the raid your damage or healing for the rest of the pull.' } : null }); }
   add('alive', { k: 'dready', label: 'Died with a defensive still ready', sc: Math.max(0, 100 - 40 * sv.defReady), w: 35, num: sv.defReady, nt: 'sum', word: 'death',
     html: sv.defReady ? '<b>' + plural(sv.defReady, 'death') + '</b> with a defensive still ready' : 'No deaths with a defensive still ready',
     fix: sv.defReady ? { t: 'Press a defensive before you die', x: 'You died with a defensive still ready. When your health drops and keeps dropping, press it: that is what it\'s for.' } : null });
@@ -20249,12 +20252,22 @@ function cardOf(r, p) {
   // externals (Pain Suppression, Blessing of Sacrifice, Time Dilation…) are held for emergencies or a mechanic on the note,
   // so they aren't expected on cooldown: one use in a pull of 90 s or more is full marks, none is "could be better" (65), and
   // each counts a third of a potion. One the note assigns is checked on Assignments, where missing it is serious.
+  // (Oct 22, your ask: a better way to score them) judged by need, not by count: a "moment" is another player in real danger
+  // while it was ready (a close call with time to answer it, or a death that wasn't instant). Pressed within a few seconds of one
+  // answers it. No moment while it was ready: held well, full marks. The log can't tell range, so a moment anywhere counts.
+  const kd = keptDeaths(r), mass = (t) => kd.filter((x) => Math.abs(x.t - t) <= 3).length >= 3, myEnd = Math.min(until, ...kd.filter((x) => x.guid === p.guid).map((x) => x.t - 2));
+  const danger = (() => { const l = []; for (const q of r.players.values()) { if (!q.name || q.guid === p.guid || !q.role) continue;
+      for (const c of q.closeCalls || []) if (c.judged !== false && c.tl <= myEnd) l.push({ t: c.t, a: c.t - 6, b: c.tl + 3, who: q.name, txt: q.name + ' dropped to ' + Math.max(1, Math.round(100 * c.low)) + '% at ' + T(c.tl) });
+      for (const d of kd) if (d.guid === q.guid && d.react !== false && d.t <= myEnd && !mass(d.t)) l.push({ t: d.t - Math.min(d.window || 3, 8), a: d.t - 10, b: d.t, who: q.name, txt: q.name + ' died at ' + T(d.t) + (d.story ? ' (' + d.story.replace(/ \(.*$/, '') + ')' : ''), death: true }); }
+    return l.sort((u, v) => u.t - v.t).filter((x, i, a) => !a.slice(0, i).some((y) => y.who === x.who && x.t - y.t < 8)); })();
   for (const [n, cd] of RC_EXT[p.specId] || []) {
-    const ts = one((p.byName.get(n.toLowerCase()) || []).filter((t) => t <= until)), poss = 1 + Math.floor(until / cd), judged = until >= 90, sc = judged ? (ts.length ? 100 : 65) : null;
+    const all = one(p.byName.get(n.toLowerCase()) || []), ts = all.filter((t) => t <= until), poss = 1 + Math.floor(until / cd), judged = until >= 60;
+    const ready = (t) => !all.some((u) => u <= t && u > t - cd), need = danger.filter((x) => ready(x.a) || all.some((u) => u >= x.a && u <= x.b)), hit = need.filter((x) => all.some((u) => u >= x.a && u <= x.b)), miss = need.filter((x) => !hit.includes(x));
+    const chances = Math.min(need.length, poss), sc = !judged ? null : !chances ? 100 : Math.max(ts.length ? 50 : 30, Math.round(100 * Math.min(1, hit.length / chances)));
     const id = (p.castAb.get(n) || {}).id || sidOf(n);
-    add('kit', { k: 'ext', label: n, sc, w: judged ? 10 : 0, num: ts.length, den: poss, nt: 'frac', word: 'possible uses',
-      html: spell(id, n) + ': <b>' + ts.length + ' of ' + poss + '</b> possible uses' + (ts.length ? '<span class="sub"> · at ' + ts.map(T).join(', ') + '</span>' : '<span class="sub">, held all pull</span>'),
-      fix: judged && !ts.length ? { t: 'Use ' + n + ' at least once', x: n + ' never went out this pull. It\'s for emergencies and the note\'s mechanics, so it doesn\'t need to go out on cooldown, but one use a pull can save someone, like the tank on a big hit or anyone about to die.' } : null });
+    add('kit', { k: 'ext', label: n, sc, w: judged ? (chances ? 15 : 5) : 0, num: hit.length, den: chances || null, nt: 'frac', word: 'moments someone needed it',
+      html: spell(id, n) + ': ' + (!need.length ? (ts.length ? 'pressed at ' + ts.map(T).join(', ') : 'held') + '<span class="sub"> · nobody was in real danger while it was ready, so holding it was fine</span>' : '<b>' + hit.length + ' of ' + need.length + '</b> moments someone needed it' + (miss.length ? rcSub('warn', 'Ready while ' + miss.slice(0, 3).map((x) => x.txt).join(', ')) : '')),
+      fix: judged && miss.length && sc < 90 ? { t: 'Save someone with ' + n, x: n + ' was ready while ' + andList(miss.slice(0, 3).map((x) => x.txt)) + '. Put it on whoever is sliding toward death or about to take a big hit: one well-timed external is a life, and a life keeps the pull going.' } : null });
   }
   const disp = new Set((p.dispL || []).filter((d) => d.t <= until).map((d) => String(d.on || '') + '|' + d.t.toFixed(1))).size;
   if (disp) add('kit', { k: 'disp', label: 'Dispels', sc: null, w: 0, num: disp, nt: 'sum', word: 'dispel', html: '<b>' + plural(disp, 'dispel') + '</b><span class="sub"> · on Utility</span>' });
@@ -20433,7 +20446,7 @@ function deaths() {
   const d = ds[Math.min(S.death, ds.length - 1)];
   const list = ds.map((x, i) => '<button class="mrowp' + (x === d ? ' sel' : '') + '" data-i="' + i + '">' + avatar(x, true) + '<div class="main"><div class="line1"><span><span class="nm" style="color:' + x.color + '">' + esc(x.player) + '</span> <span class="sub">' + esc(x.ability || x.killer) + '</span></span><span class="val">' + T(x.t) + '</span></div></div></button>').join('');
   const rec = d.recap.map((e) => '<div class="ev"><span class="muted">' + T(e.t) + '</span><span class="' + (e.heal ? 'heal' : 'dmg') + '">' + (e.heal ? '+' : '−') + C(e.amount) + '</span><span>' + spell(e.id, e.spell) + ' <span class="sub">' + esc(e.src) + '</span></span><span class="muted">' + (e.hp >= 0 ? Math.round(e.hp) + '% hp' : '') + '</span></div>').join('');
-  view('<div class="meters"><div class="panel"><h3>Deaths <small>in order</small></h3>' + list + '</div><div class="panel"><h3>' + esc(d.player) + ' <small>last 10 seconds before dying at ' + T(d.t) + '</small></h3>' +
+  view('<div class="meters"><div class="panel"><h3>Deaths <small>in order</small></h3>' + list + '</div><div class="panel"><h3>' + esc(d.player) + ' <small>last 15 seconds before dying at ' + T(d.t) + '</small></h3>' +
     (d.available && d.available.length ? '<div class="note">Still available: ' + esc(andList(d.available)) + '</div>' : '') +
     '<div class="recap">' + (rec || '<p class="muted">No events recorded before this death.</p>') + '</div></div></div>');
   $('#view').querySelectorAll('.mrowp').forEach((b) => (b.onclick = () => { S.death = +b.dataset.i; deaths(); refreshIcons(); }));
@@ -21083,7 +21096,7 @@ function rccoRaider(c, F, a) {
   const grade = '<ul class="rcco-gl">' + subs.map((y) => '<li><span>' + y.l + '</span>' + rcbV(y.v) + '<em>#' + y.r + ' of ' + y.N + '</em><small>' + esc(y.why) + '</small></li>').join('') + '</ul>';
   const fixes = fx.length ? '<ol class="rcco-ol">' + fx.map((f) => '<li><b>' + esc(f.t) + '</b> <span class="rk-gain">+' + plural(Math.max(1, Math.round(f.gain)), 'point') + '</span>' + (f.k > 1 ? ' <span class="sub">in ' + f.k + ' of ' + n + ' pulls</span>' : '') + '<div class="rcco-fx">' + esc(f.x) + '</div>' + (rccoWhyF(f) ? '<div class="rcco-why"><b>Why it matters:</b> ' + rccoWhyF(f) + '</div>' : '') + '</li>').join('') + '</ol>' : '<p class="okv">Nothing cost you points. A clean night.</p>';
   const mech = mm.size ? '<ul class="rcco-ml">' + [...mm.values()].sort((u, v) => v.n - u.n).map((o) => '<li><i class="rcco-fl ' + (o.pulls.size >= n / 2 ? 'r' : 'y') + '"></i><div><b>' + esc(o.t) + '</b> <span class="sub">' + plural(o.n, 'time') + ' · pull' + (o.pulls.size > 1 ? 's ' : ' ') + [...o.pulls].join(', ') + '</span>' + (o.fix ? '<div class="rcco-fx">' + esc(o.fix) + '</div>' : '') + '<div class="rcco-why"><b>Why it matters:</b> ' + rccoWhyM(o.t) + '</div></div></li>').join('') + '</ul>' : '<p class="okv">No mechanic mistakes that cost points.</p>';
-  const deaths = dd.length ? '<ul class="rcco-dl">' + dd.map((d) => { const df = rccoDefs([d])[0]; return '<li><b>Pull ' + d.pull + ', ' + T(d.t) + '</b> · killed by ' + esc(d.ability || 'unknown') + ((d.window || 0) <= 2 ? ' <span class="sub">(under 2 seconds from healthy: not on you)</span>' : df ? ' <span class="warnv">· ' + esc(rcwOr(df)) + ' was ready</span>' : ' <span class="sub">· nothing left to press</span>') + '</li>'; }).join('') + '</ul>' : '<p class="okv">No deaths that counted.</p>';
+  const deaths = dd.length ? '<ul class="rcco-dl">' + dd.map((d) => { const df = rccoDefs([d])[0]; return '<li><b>Pull ' + d.pull + ', ' + T(d.t) + '</b> · killed by ' + esc(d.ability || 'unknown') + (d.story ? ', ' + esc(d.story) : '') + ((d.window || 0) <= 2 ? ' <span class="sub">(under 2 seconds from healthy: not on you)</span>' : df ? ' <span class="warnv">· ' + esc(rcwOr(df)) + ' was ready</span>' : ' <span class="sub">· nothing left to press</span>') + '</li>'; }).join('') + '</ul>' : '<p class="okv">No deaths that counted.</p>';
   const cds = cdm.size ? '<ul class="rcco-dl">' + [...cdm.values()].map((o) => '<li><b>' + esc(o.name) + '</b> · ' + o.used + ' of ' + o.poss + ' possible' + (o.poss && o.used / o.poss < 0.6 && !RAID_CD_N.has(o.name.toLowerCase()) ? ' <span class="warnv">· press it on cooldown, lined up with Bloodlust when it comes</span>' : '') + '</li>').join('') + '</ul>' : '';
   const pot = pf.expect ? '<p>Combat potions: ' + pf.used + ' of the ' + pf.expect + ' your pulls had room for.' + (pf.used < pf.expect ? ' Drink it with Bloodlust and your big cooldowns, every pull.' : ' Every one. Nice.') + '</p>' : '';
   const full = rccoSec('Your grade, subject by subject', grade) + rccoSec('Every fix, biggest gain first', fixes) + rccoSec('Mechanics', mech) + rccoSec('Your deaths', deaths) + rccoSec('Big cooldowns', cds) + rccoSec('Potions', pot);
