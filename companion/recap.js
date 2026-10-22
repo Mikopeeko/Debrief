@@ -386,7 +386,7 @@ function buildOne(b, rep, same, W, L, cutN) {
   // (the raid lead's word after the pull (the user's ask, Oct 22: "brief summaries as if you are the raid lead explaining why we
   // wiped"): how far we got, what broke it, the two biggest fixes with who and what to do, and the next pull. "We", short sentences.
   // A death in 2 s or less isn't on the player; a slow one with a defensive or Healthstone still ready is)
-  raid.lead = '';
+  raid.lead = ''; raid.glance = null;
   try {
     // (a fix's first word goes lower case after a colon, unless it's a mechanic's name: "Gloombomb targets move...")
     const names0 = new Set([].concat(...top.map((x) => String(x.k).split(/\s+/)), ...raid.mech.map((x) => String(x[2]).split(/[\s()]+/))));
@@ -407,15 +407,31 @@ function buildOne(b, rep, same, W, L, cutN) {
         if (later) Ld.push('Then ' + wave(later).length + ' of us went down within seconds at ' + mmss(later.t) + '.');
       } else { const f = raid.mech.find((x) => x[0] === 'bad'); Ld.push(f ? 'Nobody died before the wipe, but ' + f[2].replace(/\s*\(.*\)$/, '') + ' failed.' : 'Nobody died before the wipe.'); }
     }
-    const nx1 = first1(raid.next);
-    for (const g of top.filter((x) => x.fix && first1(x.fix) !== nx1).slice(0, 2)) {
+    const headN = Ld.length, fixTop = [], nx1 = first1(raid.next);
+    for (const g of top.filter((x) => x.fix && first1(x.fix) !== nx1).slice(0, 3)) {
       const ws = [...g.who.keys()].filter((n) => real.has(n)), who = !ws.length ? '' : ws.length === 1 ? '@' + nm(ws[0]) : ws.length + ' of us';
-      Ld.push(g.k + (g.hit ? ' hit ' + (who || 'us') : who ? ' went wrong for ' + who : ' went wrong') + ': ' + low(first1(g.fix)) + '.');
+      fixTop.push([g.sev >= 3 ? 'bad' : 'warn', g.k + (g.hit ? ' hit ' + (who || 'us') : who ? ' went wrong for ' + who : ' went wrong') + ': ' + low(first1(g.fix)) + '.']);
     }
+    Ld.push(...fixTop.slice(0, 2).map((x) => x[1]));
     let nx = String(raid.next || '').replace(/^Kill! /, ''); if (nx.length > 70 && /: /.test(nx)) nx = nx.split(': ')[0] + (/^Next time$/i.test(nx.split(': ')[0]) ? ': ' + nx.split(': ')[1].split(': ')[0] : ''); /* (the short part: the Next pull box has the rest) */
     if (nx && !(b.kill && /^Clean pull/i.test(nx))) Ld.push(b.kill ? nx : 'Next pull: ' + low(nx).replace(/^./, (c) => c.toUpperCase()) + '.');
     raid.lead = Ld.filter(Boolean).join(' ').replace(/\.\./g, '.');
-  } catch (e) { raid.lead = ''; }
+    // (the Glance card: the head, up to 3 good, up to 3 to fix, the next pull)
+    const cut1 = (t, n) => { let x = String(t).replace(/^\d+ of \d+ (sets )?went wrong[.:]\s*/i, '').replace(/^Done right\.\s*/, ''); x = (sentences(x)[0] || x).replace(/\.$/, '');
+      while (x.length > n && /, | \(/.test(x)) x = x.slice(0, Math.max(x.lastIndexOf(', '), x.lastIndexOf(' ('))); return x + '.'; };
+    const fixOf = (name) => { const g = top.find((y) => y.k === name && y.fix); return g ? ': ' + low(first1(g.fix)) : ''; };
+    const say = (name, text, n) => { const h = String(text).match(/^(\d+) hits? on (\d+) players?(?:, (\d+) deaths?)?/);
+      return h ? name + ' hit ' + (h[2] === '1' ? 'one of us' : h[2] + ' of us') + (h[3] ? ', ' + h[3] + ' died' : '') + fixOf(name) + '.' : name + ': ' + lc(cut1(text, n)); };
+    const lc = (t) => (/^(Both|All|The|Slowest|Hit|No|Every|Taken|Soaked|Clean)\b/.test(t) ? t.replace(/^./, (c) => c.toLowerCase()) : t), base = (t) => String(t).replace(/\s*\(.*\)$/, '');
+    const good = [], fix = [], d0g = allDeaths[0];
+    if (/best pull/i.test(Ld[0])) good.push('Our best pull so far.'); else if (/further than last pull/i.test(Ld[0])) good.push('We got further than last pull.');
+    if (b.id !== 990001) { if (!d0g) good.push(b.kill ? 'Nobody died.' : 'Nobody died before the wipe.'); else if (!b.kill && d0g.t > 90) good.push('Nobody died until ' + mmss(d0g.t) + '.'); }
+    for (const x of raid.mech.filter((y) => y[0] === 'ok' && !/Still in P1/.test(y[3]))) { if (good.length >= 3) break; good.push(base(x[2]) + ': ' + lc(cut1(x[3], 70))); }
+    for (const x of raid.mech.filter((y) => y[0] === 'bad')) { if (fix.length >= 2) break; fix.push(['bad', say(base(x[2]), x[3], 90)]); }
+    for (const x of fixTop) { if (fix.length >= 3) break; if (!fix.some((y) => y[1].split(':')[0] === x[1].split(' hit ')[0].split(' went wrong')[0])) fix.push(x); }
+    for (const x of raid.mech.filter((y) => y[0] === 'warn')) { if (fix.length >= 3) break; fix.push(['warn', say(base(x[2]), x[3], 90)]); }
+    raid.glance = { head: Ld.slice(0, headN).join(' ').replace(/\.\./g, '.'), good, fix, next: nx && !(b.kill && /^Clean pull/i.test(nx)) ? nx.replace(/^Next time: /, '').replace(/([^.!?])$/, '$1.') : '' };
+  } catch (e) { raid.lead = ''; raid.glance = null; }
   // ("You:" for each player: their death, else their first mistake, else their biggest slip, else a clean pull)
   for (const P of players) {
     const d = P.boss.find((x) => x[0] === 'dead'), skip = /^(ability_rogue_sprint|ability_kick|spell_holy_dispelmagic)$/;

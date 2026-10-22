@@ -55,7 +55,7 @@ local function decode(code)
   code = code:gsub("||", "|")
   if code:sub(1, 4) ~= "DBF1" then return nil, "That isn't a Debrief code. Copy it again from Debrief Companion." end
   if code:sub(-2) ~= "^Z" then return nil, "The code got cut off. Copy it again from Debrief Companion." end
-  local m, by = { players = {}, raid = { bad = {}, died = {}, mech = {}, tiles = {}, more = "", next = "", story = "", better = "", worse = "" } }, {}
+  local m, by = { players = {}, raid = { bad = {}, died = {}, mech = {}, tiles = {}, good = {}, fixes = {}, more = "", next = "", story = "", better = "", worse = "", ghead = "", gnext = "" } }, {}
   for _, r in ipairs(split(code, "^")) do
     local f = split(r, "~")
     -- (the wipe filter: K~versions~line is a line only some "stop at death" numbers have, e.g. K~012~R~... is in 0, 1 and 2)
@@ -76,7 +76,9 @@ local function decode(code)
     elseif t == "T" and by[g(2)] then add(by[g(2)].tiles, { g(3), g(4), g(5), g(6) }) -- (the Detailed card's number tiles)
     elseif t == "O" and by[g(2)] then local p = by[g(2)]; if K then p.next2K = p.next2K or {}; table.insert(p.next2K, { K, g(3) }) else p.next2 = g(3) end
     elseif t == "A" then add(m.raid.tiles, { g(2), g(3), g(4), g(5) }) -- (the Debriefing tab's four raid numbers)
-    elseif t == "Y" or t == "G" or t == "J" or t == "L" then local k = ({ Y = "story", G = "better", J = "worse", L = "lead" })[t]; if K then m.raid[k .. "K"] = m.raid[k .. "K"] or {}; table.insert(m.raid[k .. "K"], { K, g(2) }) else m.raid[k] = g(2) end
+    elseif t == "W" then add(m.raid.good, { "ok", nil, g(2) }) -- (the Glance card: went well)
+    elseif t == "F" then add(m.raid.fixes, { g(2), nil, g(3) }) -- (and fix next)
+    elseif t == "Y" or t == "G" or t == "J" or t == "L" or t == "I" or t == "NX" then local k = ({ Y = "story", G = "better", J = "worse", L = "lead", I = "ghead", NX = "gnext" })[t]; if K then m.raid[k .. "K"] = m.raid[k .. "K"] or {}; table.insert(m.raid[k .. "K"], { K, g(2) }) else m.raid[k] = g(2) end
     elseif t == "E" and by[g(2)] then local p = by[g(2)]; if K then p.leadK = p.leadK or {}; table.insert(p.leadK, { K, g(3) }) else p.lead = g(3) end -- (the raid lead's word to you)
     elseif t == "R" then add(m.raid.bad, { g(2), g(3), g(4), g(5) })
     elseif t == "D" then add(m.raid.died, { g(2), g(3), g(4), g(5), g(6) })
@@ -227,18 +229,20 @@ local logo = top:CreateTexture(nil, "ARTWORK"); logo:SetSize(20, 20); logo:SetPo
 local title = top:CreateFontString(nil, "OVERLAY"); setFont(title, "head", 17); title:SetPoint("LEFT", logo, "RIGHT", 7, 0); title:SetTextColor(rgb(COL.text)); title:SetText("Debrief")
 local bossT = top:CreateFontString(nil, "OVERLAY"); setFont(bossT, "body", 13); bossT:SetPoint("LEFT", title, "RIGHT", 9, -1); bossT:SetTextColor(rgb(COL.muted)); bossT:SetWidth(250); bossT:SetJustifyH("LEFT"); bossT:SetWordWrap(false)
 -- detail presets: one click sets how much the card shows (Simple / Medium / Heavy); any change by hand makes it Custom
-PRESET_NAME = { simple = "Simple", medium = "Medium", heavy = "Heavy", detailed = "Detailed" }
+PRESET_NAME = { glance = "Glance", simple = "Simple", medium = "Medium", heavy = "Heavy", detailed = "Detailed" }
 local PRESETS = {
   simple = { compact = true, maxSlips = 1, maxBoss = 1, maxRaid = 1, maxDied = 0, maxMech = 3, width = "normal", show = { rank = false, best = false } },
   medium = { compact = false, maxSlips = 3, maxBoss = 4, maxRaid = 3, maxDied = 3, maxMech = 6, width = "normal", show = {} },
   heavy = { compact = false, maxSlips = 5, maxBoss = 7, maxRaid = 5, maxDied = 6, maxMech = 12, width = "wide", show = {} },
-  -- (the default since Oct 21: a larger card with number tiles, the raid's side on your own view, and two next-pull tips)
+  -- (the default since Oct 22: the raid lead's quick read, the good and the bad, one view for everyone)
+  glance = { compact = false, maxSlips = 3, maxBoss = 4, maxRaid = 3, maxDied = 3, maxMech = 6, width = "wide", glance = true, show = {} },
+  -- (a larger card with number tiles, the raid's side on your own view, and two next-pull tips)
   detailed = { compact = false, maxSlips = 4, maxBoss = 5, maxRaid = 5, maxDied = 3, maxMech = 12, width = "xl", detailed = true, show = {} },
 }
 function Debrief_SetPreset(key)
   local p = PRESETS[key]; if not p or not DB then return end
   DB.compact, DB.maxSlips, DB.maxBoss, DB.maxRaid, DB.maxDied, DB.maxMech, DB.width = p.compact, p.maxSlips, p.maxBoss, p.maxRaid, p.maxDied, p.maxMech, p.width
-  DB.detailed = p.detailed or nil
+  DB.detailed = p.detailed or nil; DB.glance = p.glance or nil
   DB.show = {}; for k, v in pairs(p.show) do DB.show[k] = v end
   DB.collapsed = nil; DB.preset = key
   if Debrief_RefreshOptions then Debrief_RefreshOptions() end
@@ -250,8 +254,8 @@ close:SetScript("OnClick", function() card:Hide() end)
 detailBtn = CreateFrame("Button", nil, card); detailBtn:SetSize(70, 22); detailBtn:SetPoint("RIGHT", close, "LEFT", -6, 0)
 skin(detailBtn, 5, COL.raised, 1, COL.line2, 1)
 detailBtn.t = detailBtn:CreateFontString(nil, "OVERLAY"); setFont(detailBtn.t, "bold", 11.5); detailBtn.t:SetPoint("CENTER", 0, 0); detailBtn.t:SetTextColor(rgb(COL.muted)); detailBtn.t:SetText("Medium")
-detailBtn:SetScript("OnClick", function() local order = { simple = "medium", medium = "heavy", heavy = "detailed", detailed = "simple" }; Debrief_SetPreset(order[DB.preset] or "detailed") end)
-detailBtn:SetScript("OnEnter", function() detailBtn.t:SetTextColor(rgb(COL.text)); GameTooltip:SetOwner(detailBtn, "ANCHOR_TOP"); GameTooltip:SetText("How much the card shows: Simple, Medium, Heavy or Detailed"); GameTooltip:Show() end)
+detailBtn:SetScript("OnClick", function() local order = { glance = "simple", simple = "medium", medium = "heavy", heavy = "detailed", detailed = "glance" }; Debrief_SetPreset(order[DB.preset] or "glance") end)
+detailBtn:SetScript("OnEnter", function() detailBtn.t:SetTextColor(rgb(COL.text)); GameTooltip:SetOwner(detailBtn, "ANCHOR_TOP"); GameTooltip:SetText("How much the card shows: Glance, Simple, Medium, Heavy or Detailed"); GameTooltip:Show() end)
 detailBtn:SetScript("OnLeave", function() detailBtn.t:SetTextColor(rgb(COL.muted)); GameTooltip:Hide() end)
 -- (the Expand button: the big window, with tonight's pulls and charts)
 local bigBtn = CreateFrame("Button", nil, card); bigBtn:SetSize(64, 22); bigBtn:SetPoint("RIGHT", detailBtn, "LEFT", -6, 0)
@@ -484,7 +488,8 @@ local function cutView(m)
   local function pick(def, kl) if kl then for _, x in ipairs(kl) do if x[1]:find(c, 1, true) then return x[2] end end; return "" end; return def end
   local v = { h = m.h, addonV = m.addonV, cutN = m.cutN, players = {},
     raid = { bad = keep(m.raid.bad, true), died = keep(m.raid.died), mech = keep(m.raid.mech, true), more = pick(m.raid.more, m.raid.moreK), next = pick(m.raid.next, m.raid.nextK),
-      tiles = keep(m.raid.tiles), story = pick(m.raid.story or "", m.raid.storyK), better = pick(m.raid.better or "", m.raid.betterK), worse = pick(m.raid.worse or "", m.raid.worseK), lead = pick(m.raid.lead or "", m.raid.leadK) } }
+      tiles = keep(m.raid.tiles), story = pick(m.raid.story or "", m.raid.storyK), better = pick(m.raid.better or "", m.raid.betterK), worse = pick(m.raid.worse or "", m.raid.worseK), lead = pick(m.raid.lead or "", m.raid.leadK),
+      good = keep(m.raid.good), fixes = keep(m.raid.fixes), ghead = pick(m.raid.ghead or "", m.raid.gheadK), gnext = pick(m.raid.gnext or "", m.raid.gnextK) } }
   for _, p in ipairs(m.players) do
     local q = {}; for k, x in pairs(p) do q[k] = x end
     q.slips, q.boss, q.surv, q.next = keep(p.slips), keep(p.boss), keep(p.surv), pick(p.next, p.nextK)
@@ -539,14 +544,15 @@ function render()
   if DB.detailed and not DB.compact and view == "raid" and canRaid() and #(m.raid.tiles or {}) > 0 then meta = { h.diff, "Pull " .. h.pull } end
   metaT:SetWidth(CW); metaT:SetText(table.concat(meta, "   ·   "))
   -- (tabs and the body sit lower when the pull chips show)
-  TOPY = ((DB.show or {}).chips ~= false) and 180 or 150
+  local glanceOn = DB.glance and (m.raid.ghead or "") ~= "" -- (the Glance card: one view, so no tabs; older pulls without it keep the tabs)
+  TOPY = (((DB.show or {}).chips ~= false) and 180 or 150) - (glanceOn and 38 or 0)
   tMe:ClearAllPoints(); tMe:SetPoint("TOPLEFT", card, "TOPLEFT", PAD - 10, -TOPY + 38); tRaid:ClearAllPoints(); tRaid:SetPoint("LEFT", tMe, "RIGHT", 0, 0)
   nextB:ClearAllPoints(); nextB:SetPoint("TOPRIGHT", card, "TOPRIGHT", -PAD, -TOPY + 36)
   tabLine:ClearAllPoints(); tabLine:SetPoint("TOPLEFT", card, "TOPLEFT", 1, -TOPY + 12); tabLine:SetPoint("TOPRIGHT", card, "TOPRIGHT", -1, -TOPY + 12)
   scroller:ClearAllPoints(); scroller:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -TOPY)
   -- tabs
   local raidOk = canRaid()
-  tRaid:SetShown(raidOk)
+  tRaid:SetShown(raidOk and not glanceOn); tMe:SetShown(not glanceOn); tabLine:SetShown(not glanceOn)
   if not raidOk then view = "me" end
   for k, b in pairs(tabs) do
     local on = (k == view)
@@ -554,7 +560,7 @@ function render()
     b:SetScript("OnClick", function() view = k; render() end)
   end
   local P = pickWho(m)
-  local showWho = (view == "me" and P and #m.players > 1)
+  local showWho = (view == "me" and P and #m.players > 1) and not glanceOn
   who:SetShown(showWho); prevB:SetShown(showWho); nextB:SetShown(showWho)
   if P then who:SetWidth(math.max(80, CW - 190)); who:SetText("|cff" .. classHex(P.cls) .. P.name .. "|r") end
   local function step(dir)
@@ -684,7 +690,34 @@ function render()
     if u then local k = FS("bold", 13.5, COL.gold); k:SetPoint("TOPLEFT", 16, -(y + 28 + t:GetStringHeight() + 8)); k:SetText("You"); u:SetPoint("TOPLEFT", 56, -(y + 28 + t:GetStringHeight() + 8)) end
     y = y + hh + 12
   end
-  if view == "me" and P then
+  -- (the Glance card: the raid lead's quick read)
+  local function glanceBody()
+    local R = m.raid
+    -- the raid lead's two sentences
+    local t = FS("body", 14.5, COL.text); t:SetWidth(CW - 34); t:SetText(names(R.ghead))
+    local hh = 12 + 17 + t:GetStringHeight() + 12
+    box(y, hh, COL.gold, 0.07, COL.gold, 0.5, COL.gold)
+    local l = FS("bold", 11.5, COL.gold); l:SetPoint("TOPLEFT", 16, -(y + 11)); l:SetText(m.h.kill and "THE KILL" or "WHY WE WIPED")
+    t:SetPoint("TOPLEFT", 16, -(y + 28)); y = y + hh + 12
+    -- went well, fix next: a tick or a cross by each, the raid lead's words
+    if #R.good > 0 then section("ggood", "Went well", R.good, 3, function(r) y = row(y, "ok", nil, r[3]) end) end
+    if #R.fixes > 0 then section("gfix", m.h.kill and "Clean up next time" or "Fix next", R.fixes, 3, function(r) y = row(y, r[1], nil, r[3]) end) end
+    -- the next pull, and your own line
+    if (R.gnext or "") ~= "" then y = nextBox(y + 2, R.gnext) end
+    if P and (P.lead or "") ~= "" then
+      local k = FS("bold", 13.5, COL.gold); k:SetPoint("TOPLEFT", 4, -(y + 2)); k:SetText("You")
+      local u = FS("body", 13.5, COL.soft); u:SetPoint("TOPLEFT", 44, -(y + 2)); u:SetWidth(CW - 48); u:SetText(names(P.lead)); y = y + math.max(18, u:GetStringHeight()) + 12
+    end
+    -- the full recap, one click away
+    local bt = BTN(); bt:SetPoint("TOPLEFT", 0, -(y - 2)); bt:SetSize(CW, 22)
+    local lk = FS("bold", 12.5, COL.gold); lk:SetPoint("TOPLEFT", 4, -y); lk:SetText("See the full recap ›")
+    bt:SetScript("OnClick", function() card:Hide(); big:Show(); bigRender() end)
+    bt:SetScript("OnEnter", function() lk:SetTextColor(rgb(COL.text)) end); bt:SetScript("OnLeave", function() lk:SetTextColor(rgb(COL.gold)) end)
+    y = y + 22
+  end
+  if glanceOn then
+    glanceBody()
+  elseif view == "me" and P then
     leadBox(P.lead)
     -- the tile: your damage or healing, against your last pull and your best
     if SH.tile ~= false then
@@ -1547,17 +1580,17 @@ local function buildOptions()
 
   -- Layout: three cards to click (the website's feature cards), then the fine-tune panel
   page("layout")
-  local CW3 = (OW - PX * 2 - 36) / 4
+  local CW3 = (OW - PX * 2 - 48) / 5
   local pcs = {}
-  local PDESC = { simple = "Your numbers, your top slip and the next pull.", medium = "Your numbers, 3 slips, your boss mistakes and the next pull.", heavy = "More of everything, on a wider card.", detailed = "The biggest card: number tiles, the raid's side and two tips." }
-  for i, k in ipairs({ "simple", "medium", "heavy", "detailed" }) do
+  local PDESC = { glance = "The raid lead's quick read: good, bad, next pull.", simple = "Your numbers, your top slip, the next pull.", medium = "Your numbers, slips and boss mistakes.", heavy = "More of everything, wider.", detailed = "Everything: tiles, the raid's side, two tips." }
+  for i, k in ipairs({ "glance", "simple", "medium", "heavy", "detailed" }) do
     local b = CreateFrame("Button", nil, P); b:SetSize(CW3, 92); b:SetPoint("TOPLEFT", PX + (i - 1) * (CW3 + 12), 0)
     skin(b, 8, PANEL, 1, COL.line, 1)
     b.bar = b:CreateTexture(nil, "ARTWORK"); b.bar:SetPoint("TOPLEFT", 1, -8); b.bar:SetPoint("BOTTOMLEFT", 1, 8); b.bar:SetWidth(3); fill(b.bar, COL.gold)
     b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "head", 18); b.t:SetPoint("TOPLEFT", 16, -11); b.t:SetText(PRESET_NAME[k])
     b.d = b:CreateFontString(nil, "OVERLAY"); setFont(b.d, "body", 12.5); b.d:SetPoint("TOPLEFT", 16, -35); b.d:SetWidth(CW3 - 30); b.d:SetJustifyH("LEFT"); b.d:SetText(PDESC[k])
     b.lines = {}
-    for li = 1, ({ simple = 2, medium = 4, heavy = 6, detailed = 7 })[k] do
+    for li = 1, ({ glance = 3, simple = 2, medium = 4, heavy = 6, detailed = 7 })[k] do
       local ln = b:CreateTexture(nil, "ARTWORK"); ln:SetSize(li == 1 and 30 or (li % 2 == 0 and 22 or 26), 3); ln:SetPoint("TOPRIGHT", -14, -(14 + (li - 1) * (k == "detailed" and 5 or 6))); b.lines[li] = ln
     end
     b:SetScript("OnClick", function() Debrief_SetPreset(k); applySettings() end)
@@ -1942,6 +1975,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     if DB.raidAlways == nil then DB.raidAlways = true end
     DB.show = DB.show or {}
     if DB.detailed and DB.width == "large" and not DB.xlOnce then DB.width = "xl" end; DB.xlOnce = true
+    if not DB.glanceDefault then DB.glanceDefault = true; DB.detailedDefault = true; if DB.preset == nil or DB.preset == "medium" or DB.preset == "detailed" then Debrief_SetPreset("glance") end end -- (Glance is the default since Oct 22)
     if not DB.detailedDefault then DB.detailedDefault = true; if DB.preset == nil or DB.preset == "medium" then Debrief_SetPreset("detailed") end end -- (the Detailed card is the default since Oct 21)
     registerSettings()
     reapplyFonts(); card:SetScale(DB.scale or 1); paste:SetScale(DB.scale or 1); big:SetScale(DB.bigScale or 1); mini:SetScale(DB.miniScale or 1)

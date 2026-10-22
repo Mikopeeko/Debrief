@@ -461,6 +461,8 @@ RECAP.lines = (m) => {
   if (m.raid.more) rec.push(['X', m.raid.more]);
   if (m.raid.next) rec.push(['Q', m.raid.next]);
   if (m.raid.lead) rec.push(['L', m.raid.lead]); // (the raid lead's word after the pull: why we wiped)
+  // (the Glance card: I head, W went well, F fix next (flag, text), NX the next pull in a few words)
+  if (m.raid.glance) { const g = m.raid.glance; if (g.head) rec.push(['I', g.head]); for (const x of g.good) rec.push(['W', x]); for (const x of g.fix) rec.push(['F', x[0], x[1]]); if (g.next) rec.push(['NX', g.next]); }
   // (the Debriefing tab's summary: four raid numbers, the pull phase by phase, better and worse than last pull)
   for (const x of m.raid.tiles || []) rec.push(['A', x[0], x[1], x[2], x[3] || '']);
   if (m.raid.story) rec.push(['Y', m.raid.story]);
