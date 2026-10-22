@@ -87,13 +87,21 @@ local function above(f, it, extra)
   if it.GetChildren then for _, c in ipairs({ it:GetChildren() }) do local l = type(c) == "table" and c.GetFrameLevel and c:GetFrameLevel(); if type(l) == "number" and l > lvl then lvl = l end end end
   f:SetFrameLevel(math.min(9000, lvl + (extra or 10)))
 end
--- (the icon as drawn: its picture if it has one, and its width in screen units, so Edit Mode's icon size (a scale) is counted)
-local function iconArt(it)
-  local art = (type(it.Icon) == "table" and it.Icon.GetWidth) and it.Icon or it
-  local w = art:GetWidth() or 0
-  local e = it.GetEffectiveScale and it:GetEffectiveScale() or 1; if not e or e <= 0 then e = 1 end
-  local u = UIParent and UIParent.GetEffectiveScale and UIParent:GetEffectiveScale() or 1; if not u or u <= 0 then u = 1 end
-  return art, (w and w > 0) and (w * e / u) or 40
+-- (the icon's slot, the frame the Cooldown Manager lays out, in screen units: width and height apart, so Edit Mode's icon size
+-- (a scale) and icons that aren't square both fit. Its inner picture isn't used: skins can move or replace it.)
+local function scaleOf(f) local e = f and f.GetEffectiveScale and f:GetEffectiveScale(); return (type(e) == "number" and e > 0) and e or 1 end
+local function iconBox(it)
+  local w, h = it:GetWidth() or 0, it:GetHeight() or 0
+  if not w or w <= 0 then w = 40 end; if not h or h <= 0 then h = w end
+  local k = scaleOf(it) / scaleOf(UIParent)
+  return w * k, h * k
+end
+-- (behind the icon: the same strata, one level under it, so a soft glow shows around its edges without covering the picture)
+local function below(f, it)
+  local st = it.GetFrameStrata and it:GetFrameStrata()
+  f:SetFrameStrata(STRATA[st] and st or "MEDIUM")
+  local lvl = it.GetFrameLevel and it:GetFrameLevel()
+  f:SetFrameLevel(math.max(0, (type(lvl) == "number" and lvl or 1) - 1))
 end
 -- (a flipbook: a texture that plays the frames of one atlas; once = play through once, else loop)
 local function flipbook(g, layer)
@@ -109,7 +117,8 @@ end
 local function newGlow()
   local g = table.remove(pool); if g then return g end
   g = CreateFrame("Frame", nil, UIParent); g:SetFrameStrata("HIGH")
-  g.halo = g:CreateTexture(nil, "BACKGROUND"); g.halo:SetTexture(HALO); g.halo:SetBlendMode("ADD")
+  g.back = CreateFrame("Frame", nil, g); g.back:SetAllPoints(g)
+  g.halo = g.back:CreateTexture(nil, "BACKGROUND"); g.halo:SetTexture(HALO); g.halo:SetBlendMode("ADD")
   g.edges = {}; for i = 1, 4 do local t = g:CreateTexture(nil, "OVERLAY"); t:SetTexture(WHITE); g.edges[i] = t end
   g.bits = {}; for i = 1, 16 do local t = g:CreateTexture(nil, "OVERLAY"); t:SetTexture(WHITE); t:Hide(); g.bits[i] = t end
   g.ag = g:CreateAnimationGroup(); g.ag:SetLooping("BOUNCE")
@@ -183,21 +192,20 @@ local function dress(g, id)
     -- (the game's colours unless you've turned that off, or this spell has a colour of its own)
     local c = (p.color or not DB.gameColors) and { r, gg, b } or nil
     g.tinted = c
-    local w = g.size or 40
+    local w, h = g.w or 40, g.h or g.w or 40
     if st == "proc" or st == "onebutton" then
       local art = ART[st]
-      g.burst:ClearAllPoints(); g.burst:SetPoint("CENTER"); g.burst:SetSize(w * (st == "proc" and 150 / 45 or 1.5), w * (st == "proc" and 150 / 45 or 1.5))
-      g.loop:ClearAllPoints(); g.loop:SetPoint("CENTER"); g.loop:SetSize(w * (st == "proc" and 1.4 or 1.5), w * (st == "proc" and 1.4 or 1.5))
+      g.burst:ClearAllPoints(); g.burst:SetPoint("CENTER"); g.burst:SetSize(w * (st == "proc" and 150 / 45 or 1.5), h * (st == "proc" and 150 / 45 or 1.5))
+      g.loop:ClearAllPoints(); g.loop:SetPoint("CENTER"); g.loop:SetSize(w * (st == "proc" and 1.4 or 1.5), h * (st == "proc" and 1.4 or 1.5))
       tint(g.burst, c); tint(g.loop, c)
       g.loop.atlas = art[2]
       playFlip(g.burst, art[1], 6, 5, 30, 0.7 / sp, true)
     elseif st == "assist" then
-      g.loop:ClearAllPoints(); g.loop:SetPoint("CENTER"); g.loop:SetSize(w * 66 / 45, w * 66 / 45); tint(g.loop, c)
+      g.loop:ClearAllPoints(); g.loop:SetPoint("CENTER"); g.loop:SetSize(w * 66 / 45, h * 66 / 45); tint(g.loop, c)
       playFlip(g.loop, ART.assist[1], 6, 5, 30, 1 / sp)
     elseif st == "altglow" then
       local info = C_Texture.GetAtlasInfo(ART.altglow[1]) or {}
-      local k = w / 45
-      g.ring:SetAtlas(ART.altglow[1]); g.ring:ClearAllPoints(); g.ring:SetPoint("CENTER"); g.ring:SetSize((info.width or 64) * k, (info.height or 64) * k); tint(g.ring, c); g.ring:Show()
+      g.ring:SetAtlas(ART.altglow[1]); g.ring:ClearAllPoints(); g.ring:SetPoint("CENTER"); g.ring:SetSize((info.width or 64) * w / 45, (info.height or 64) * h / 45); tint(g.ring, c); g.ring:Show()
       g.fade:SetDuration(0.45 / sp); g.ag:Play()
     elseif st == "pandemic" then
       g.pborder:SetAtlas(ART.pandemic[1]); g.pborder:SetAllPoints(); tint(g.pborder, c); g.pborder:Show()
@@ -289,7 +297,7 @@ local function showTimer(id, expires, label)
   stopTimer(id)
   local f = table.remove(tpool)
   if not f then f = CreateFrame("Frame", nil, UIParent); f:SetFrameStrata("HIGH"); f.text = f:CreateFontString(nil, "OVERLAY") end
-  local art = iconArt(it); f:ClearAllPoints(); f:SetAllPoints(art); above(f, it, 20)
+  f:ClearAllPoints(); f:SetAllPoints(it); above(f, it, 20)
   timerLook(f, id)
   f.id, f.expires, f.onFloat = id, expires, it == float
   timers[id] = f; f:SetScript("OnUpdate", tick); f:Show(); tick(f)
@@ -303,9 +311,9 @@ local function stopAll() round = round + 1; for id in pairs(glows) do stop(id) e
 function place(g, it, id)
   local pad = DB.pad or 2
   g:SetScale(DB.scale or 1)
-  local art, w = iconArt(it); g.size = w
-  g:ClearAllPoints(); g:SetPoint("TOPLEFT", art, "TOPLEFT", -pad, pad); g:SetPoint("BOTTOMRIGHT", art, "BOTTOMRIGHT", pad, -pad)
-  above(g, it, 10); g:Show(); dress(g, id)
+  g.w, g.h = iconBox(it)
+  g:ClearAllPoints(); g:SetPoint("TOPLEFT", it, "TOPLEFT", -pad, pad); g:SetPoint("BOTTOMRIGHT", it, "BOTTOMRIGHT", pad, -pad)
+  above(g, it, 10); below(g.back, it); g:Show(); dress(g, id)
 end
 local function start(id, hold, label)
   local it = cdmItemFor(id)
@@ -612,7 +620,7 @@ do
     for i = 1, 3 do
       local f = CreateFrame("Frame", nil, frame); f:SetSize(IS, IS); f:SetPoint("CENTER", frame, "TOP", (i - 2) * (IS + 6), -128)
       f.tex = f:CreateTexture(nil, "ARTWORK"); f.tex:SetAllPoints(); f.tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-      f._label = "preview"
+      f._label = "preview"; f:SetFrameLevel(frame:GetFrameLevel() + 5)
       icons[i] = f
     end
     numF = CreateFrame("Frame", nil, icons[2]); numF:SetAllPoints(icons[2]); numF:SetFrameLevel(icons[2]:GetFrameLevel() + 30); numF.text = numF:CreateFontString(nil, "OVERLAY")
@@ -913,7 +921,7 @@ local function buildOptions()
   note("When NSRT (Northern Sky Raid Tools) starts the countdown for one of YOUR note's spells, the same number counts down on that spell's icon on Blizzard's Cooldown Manager. At 0 the icon glows, until you press it or the time runs out. A sound and a voice can go with it.\n\nIt follows NSRT's own timing, so phases and times always match NSRT's pop-ups. Only your own reminders count.")
   panelEnd()
   panel("Commands")
-  note("/dglow  opens this window\n/dglow test  every Cooldown Manager icon glows for 3 seconds\n/dglow spells  opens Your spells\n/dglow move  place the big icon\n/dglow on, /dglow off  turn it on or off")
+  note("/dglow  opens this window\n/dglow test  every Cooldown Manager icon glows for 3 seconds\n/dglow spells  opens Your spells\n/dglow move  place the big icon\n/dglow size  what your Cooldown Manager icons measure, if a glow doesn't fit\n/dglow on, /dglow off  turn it on or off")
   panelEnd()
   panel("Getting ready")
   note("Turn on Blizzard's Cooldown Manager (Esc > Options > Gameplay Enhancements) and put your cooldowns on it. Load your NSRT note as usual, then press NSRT's Test Active Reminder button to see it work.")
@@ -1063,6 +1071,15 @@ SlashCmdList.DEBRIEFGLOW = function(msg)
   msg = (msg or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
   if msg == "test" then DebriefGlow_Test()
   elseif msg == "spells" then DebriefGlow_Spells()
+  elseif msg == "size" then
+    local items = cdmItems()
+    if #items == 0 then say("no Cooldown Manager icons found.") end
+    for i = 1, math.min(3, #items) do
+      local it = items[i].frame; local w, h = iconBox(it); local ic = type(it.Icon) == "table" and it.Icon
+      say(string.format("%s: slot %.0f x %.0f, scale %.2f, on screen %.0f x %.0f, layer %s %s%s", spellName(items[i].ids[1]) or "?", it:GetWidth() or 0, it:GetHeight() or 0,
+        scaleOf(it), w, h, tostring(it:GetFrameStrata()), tostring(it:GetFrameLevel()),
+        ic and string.format("; picture %.0f x %.0f%s", ic:GetWidth() or 0, ic:GetHeight() or 0, ic:IsShown() and "" or " (hidden)") or ""))
+    end
   elseif msg == "move" then
     placeFloat(); float.tex:SetTexture(spellIcon(31821)); float.txt:SetText("Drag me, then /dglow move again"); float.moving = not float.moving; float:EnableMouse(float.moving)
     if float.moving then float:Show(); say("drag the big icon where you want it, then type /dglow move again.") else float:Hide(); say("big icon placed.") end

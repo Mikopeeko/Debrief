@@ -226,21 +226,27 @@ print("-- the x button puts a spell back on the main settings")
 R[31884].reset:GetScript("OnClick")(R[31884].reset)
 expect("Avenging Wrath back to main", DebriefGlowDB.spells[31884], nil)
 newPull(); pull(); at(45, "Avenging Wrath: main look again"); press(31884)
-print("-- a custom-sized icon (Edit Mode at 150%), in a higher strata, with its cooldown swipe at level 50")
+print("-- a custom icon: 52 x 40 at 150% (Edit Mode), a higher strata, its cooldown swipe at level 50, its inner picture moved by a skin")
 do
   local ds; for _, f in ipairs(ESS) do if f._label == "Divine Shield" then ds = f end end
   local swipe = CreateFrame("Cooldown"); swipe.GetFrameLevel = function() return 50 end
   ds.GetEffectiveScale = function() return 1.5 end; ds.GetFrameStrata = function() return "DIALOG" end; ds.GetFrameLevel = function() return 12 end
   ds.GetChildren = function() return swipe end
+  ds.GetWidth = function() return 52 end; ds.GetHeight = function() return 40 end
+  local pic = CreateFrame("Texture"); pic.GetWidth = function() return 30 end; pic.GetHeight = function() return 30 end; pic.IsShown = function() return true end; ds.Icon = pic
   newPull(); DebriefGlow_Test(true)
   local g; for _, f in ipairs(FRAMES) do if f._shown and rawget(f, "_anchor") == ds and rawget(f, "drawn") then g = f end end
-  expect("glow fits the bigger icon (40 x 150%)", g and rawget(g, "size"), 60)
+  expect("glow box is the icon's slot, not its moved picture", g and rawget(g, "_anchor") == ds, true)
+  expect("game glows sized to the slot on screen (52 x 40 at 150%)", g and (rawget(g, "w") .. " x " .. rawget(g, "h")), "78.0 x 60.0")
+  local back = g and rawget(g, "back")
+  expect("soft halo behind the icon (same strata, one level under)", back and (rawget(back, "_strata") .. " " .. rawget(back, "_level")), "DIALOG 11")
+  SlashCmdList.DEBRIEFGLOW("size")
   expect("glow in the icon's higher strata", g and rawget(g, "_strata"), "DIALOG")
   expect("glow above the cooldown swipe", g and rawget(g, "_level") > 50, true)
   local n; for _, f in ipairs(FRAMES) do if f._shown and rawget(f, "expires") and rawget(f, "_anchor") == ds then n = f end end
   expect("number above the glow", n and rawget(n, "_level") > rawget(g, "_level"), true)
   ADVANCE(NOW + 3.1); heard()
-  ds.GetEffectiveScale = nil; ds.GetFrameStrata = nil; ds.GetFrameLevel = nil; ds.GetChildren = nil
+  ds.GetEffectiveScale = nil; ds.GetFrameStrata = nil; ds.GetFrameLevel = nil; ds.GetChildren = nil; ds.GetWidth = nil; ds.GetHeight = nil; ds.Icon = nil
 end
 print("-- /dglow test skips a spell that's off")
 newPull(); DebriefGlow_Test(true); expect("Blessing of Sacrifice not in the test", GLOWING():find("Sacrifice") == nil, true); ADVANCE(NOW + 3.1); heard()
