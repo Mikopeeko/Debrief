@@ -218,9 +218,9 @@ local bossT = top:CreateFontString(nil, "OVERLAY"); setFont(bossT, "body", 13); 
 -- detail presets: one click sets how much the card shows (Simple / Medium / Heavy); any change by hand makes it Custom
 PRESET_NAME = { simple = "Simple", medium = "Medium", heavy = "Heavy" }
 local PRESETS = {
-  simple = { compact = true, maxSlips = 1, maxBoss = 1, maxRaid = 1, maxDied = 2, maxMech = 3, width = "normal", show = { rank = false, best = false } },
-  medium = { compact = false, maxSlips = 3, maxBoss = 4, maxRaid = 3, maxDied = 4, maxMech = 6, width = "normal", show = {} },
-  heavy = { compact = false, maxSlips = 5, maxBoss = 7, maxRaid = 5, maxDied = 8, maxMech = 12, width = "wide", show = {} },
+  simple = { compact = true, maxSlips = 1, maxBoss = 1, maxRaid = 1, maxDied = 0, maxMech = 3, width = "normal", show = { rank = false, best = false } },
+  medium = { compact = false, maxSlips = 3, maxBoss = 4, maxRaid = 3, maxDied = 0, maxMech = 6, width = "normal", show = {} },
+  heavy = { compact = false, maxSlips = 5, maxBoss = 7, maxRaid = 5, maxDied = 0, maxMech = 12, width = "wide", show = {} },
 }
 function Debrief_SetPreset(key)
   local p = PRESETS[key]; if not p or not DB then return end
@@ -570,8 +570,8 @@ function render()
     if m.raid.mech and #m.raid.mech > 0 and (DB.maxMech or 6) > 0 then
       section("mech", "Boss mechanics", m.raid.mech, DB.compact and math.min(3, DB.maxMech or 3) or (DB.maxMech or 6), function(r) y = row(y, r[1], r[2], r[4], r[3]) end)
     end
-    if not DB.compact then
-      section("died", "Who died", m.raid.died, DB.maxDied or 4, function(d)
+    if not DB.compact and (DB.maxDied or 0) > 0 then -- (hidden unless turned up in /dmo > Raid > Deaths listed)
+      section("died", "Who died", m.raid.died, DB.maxDied, function(d)
         local t = FS("body", 13.5, COL.muted); t:SetPoint("TOPLEFT", IND, -y); t:SetText(d[1])
         local nm = FS("bold", 13.5, classHex(d[3])); nm:SetPoint("TOPLEFT", IND + 44, -y); nm:SetWidth(124); nm:SetWordWrap(false); nm:SetText(d[2])
         icon(IND + 174, y - 1, 18, d[4])
@@ -979,18 +979,20 @@ bigRender = function()
       end)
     end
   end
-  yr = bPanel(XR, yr, COLW, "Who died", m.h.deaths .. "", function(yy)
-    if #m.raid.died == 0 then local tt = bFS(bm, "body", 13, COL.faint); tt:SetPoint("TOPLEFT", XR + 14, -yy); tt:SetText(m.raid.more ~= "" and m.raid.more or "Nobody died."); return yy + 22 end
-    for _, d in ipairs(m.raid.died) do
-      local tm = bFS(bm, "body", 13.5, COL.muted); tm:SetPoint("TOPLEFT", XR + 14, -yy); tm:SetText(d[1])
-      local nm = bFS(bm, "bold", 13.5, classHex(d[3])); nm:SetPoint("TOPLEFT", XR + 58, -yy); nm:SetWidth(120); nm:SetWordWrap(false); nm:SetText(d[2])
-      bIcon(bm, XR + 184, yy - 1, 18, d[4])
-      local w = bFS(bm, "body", 13.5, COL.muted); w:SetPoint("TOPLEFT", XR + 210, -yy); w:SetWidth(COLW - 224); w:SetWordWrap(false); w:SetText(d[5])
-      yy = yy + 24
-    end
-    if m.raid.more ~= "" then local mo = bFS(bm, "body", 12.5, COL.faint); mo:SetPoint("TOPLEFT", XR + 14, -(yy + 2)); mo:SetText(m.raid.more); yy = yy + 22 end
-    return yy
-  end)
+  if (DB.maxDied or 0) > 0 then
+    yr = bPanel(XR, yr, COLW, "Who died", m.h.deaths .. "", function(yy)
+      if #m.raid.died == 0 then local tt = bFS(bm, "body", 13, COL.faint); tt:SetPoint("TOPLEFT", XR + 14, -yy); tt:SetText(m.raid.more ~= "" and m.raid.more or "Nobody died."); return yy + 22 end
+      for _, d in ipairs(m.raid.died) do
+        local tm = bFS(bm, "body", 13.5, COL.muted); tm:SetPoint("TOPLEFT", XR + 14, -yy); tm:SetText(d[1])
+        local nm = bFS(bm, "bold", 13.5, classHex(d[3])); nm:SetPoint("TOPLEFT", XR + 58, -yy); nm:SetWidth(120); nm:SetWordWrap(false); nm:SetText(d[2])
+        bIcon(bm, XR + 184, yy - 1, 18, d[4])
+        local w = bFS(bm, "body", 13.5, COL.muted); w:SetPoint("TOPLEFT", XR + 210, -yy); w:SetWidth(COLW - 224); w:SetWordWrap(false); w:SetText(d[5])
+        yy = yy + 24
+      end
+      if m.raid.more ~= "" then local mo = bFS(bm, "body", 12.5, COL.faint); mo:SetPoint("TOPLEFT", XR + 14, -(yy + 2)); mo:SetText(m.raid.more); yy = yy + 22 end
+      return yy
+    end)
+  end
   local hgt = math.max(yl, yr, sy + 10)
   bm:SetHeight(hgt); big:SetHeight(math.min(900, 66 + hgt + 14))
 end
@@ -1090,7 +1092,8 @@ local function import(text)
   paste:Hide(); if toast:IsShown() then closeToast() end
   showCard()
   say("pull " .. m.h.pull .. " of " .. m.h.boss .. " loaded.")
-  share(text)
+  -- (someone else already sent this pull to the group: don't send it twice)
+  if new then share(text) end
   return true
 end
 eb:SetScript("OnTextChanged", function(self, userInput)
@@ -1437,7 +1440,7 @@ local function buildOptions()
   panel("Raid view", "the raid's biggest mistakes and who died", "Ability_Warrior_BattleShout")
   switch("Raid view for everyone", "Off: only raid leads and assistants see it.", function() return DB.raidAlways ~= false end, function(v) DB.raidAlways = v end, true)
   stepper("Raid mistakes", "The biggest ones, with names.", 1, 5, function() return DB.maxRaid or 3 end, function(v) DB.maxRaid = v end)
-  stepper("Deaths listed", "Who died first, and to what.", 1, 8, function() return DB.maxDied or 4 end, function(v) DB.maxDied = v end)
+  stepper("Deaths listed", "Who died first, and to what. 0 hides the list.", 0, 8, function() return DB.maxDied or 0 end, function(v) DB.maxDied = v end)
   stepper("Boss mechanics", "How each mechanic went, worst first. 0 hides them.", 0, 12, function() return DB.maxMech or 6 end, function(v) DB.maxMech = v end)
   panelEnd()
   -- Goals
@@ -1728,6 +1731,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     reapplyFonts(); card:SetScale(DB.scale or 1); paste:SetScale(DB.scale or 1); big:SetScale(DB.bigScale or 1); mini:SetScale(DB.miniScale or 1)
     Debrief_ApplyStyle()
     if DB.testMode == nil then DB.testMode = false end
+    if not DB.diedHidden then DB.maxDied = 0; DB.diedHidden = true end
     autoLog() -- (/debrief test turns it on: the box after every fight)
     if DB.pos then card:ClearAllPoints(); card:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) end
   elseif e == "PLAYER_LOGIN" then
