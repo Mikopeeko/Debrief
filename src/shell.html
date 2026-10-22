@@ -4941,6 +4941,17 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 @media (max-width: 760px) { .rgx-g { grid-template-columns: 1fr 1fr; } .spc-chs { display: none; } }
 /* Rotation, the A+B mockup (Oct 19): talents in the card, blocks without boxes */
 .spc-tq .spc-tqg { zoom: .7; }
+/* the lower half as closed sections (Oct 22) */
+.spc-chd { margin: 10px 0 0; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); } .spc-chd[open] { padding-bottom: 6px; }
+.spc-chd > summary.spc-chap { margin: 0; padding: 12px 16px; cursor: pointer; list-style: none; flex-wrap: wrap; row-gap: 4px; } .spc-chd > summary.spc-chap::-webkit-details-marker { display: none; }
+.spc-chd > summary.spc-chap::before, .spc-chd > summary.spc-chap::after { display: none; } .spc-chd > summary:hover { background: rgba(230,180,80,.05); border-radius: 12px; }
+.spc-chx { margin-left: auto; font: 600 12px var(--body); letter-spacing: 0; text-transform: none; color: var(--muted); text-shadow: none; }
+.spc-cht { flex: none; padding: 3px 10px; border: 1px solid rgba(230,180,80,.45); border-radius: 999px; font: 700 12px var(--body); letter-spacing: 0; text-transform: none; color: var(--gold); text-shadow: none; }
+.spc-cht .c { display: none; } .spc-chd[open] > summary .spc-cht .o { display: none; } .spc-chd[open] > summary .spc-cht .c { display: inline; } .spc-chd[open] > summary { border-bottom: 1px solid var(--line); border-radius: 12px 12px 0 0; }
+.spc-chb { padding: 4px 14px 0; } .spc-chd .spc-chs { letter-spacing: 0; text-transform: none; }
+details.spc-tl > summary { position: relative; padding-right: 30px; } details.spc-tl > summary::after { content: '▾'; position: absolute; right: 12px; top: 10px; color: var(--faint); font-size: 13px; }
+details.spc-tl[open] > summary::after { content: '▴'; color: var(--gold); } details.spc-tl > summary:hover::after { color: var(--gold); }
+@media (max-width: 760px) { .spc-chx { margin-left: 0; flex-basis: 100%; } .spc-chd > summary.spc-chap { padding: 10px 12px; } }
 /* one card per spell (Oct 22) */
 .spc-tlg > summary .spc-tgm { font-size: 12px; color: var(--muted); margin-top: -2px; } .spc-tgl { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; font-size: 12.5px; color: var(--muted); }
 .spc-tgr { display: flex; align-items: baseline; gap: 6px; } .spc-tgr i { width: 7px; height: 7px; border-radius: 50%; background: var(--line2); flex: none; transform: translateY(-1px); } .spc-tgr.ok i { background: #45c15c; } .spc-tgr.warn i { background: #e8a23a; } .spc-tgr.bad i { background: #e5534b; }

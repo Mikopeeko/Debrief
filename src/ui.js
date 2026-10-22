@@ -1674,6 +1674,7 @@ const PATCH_NOTES = [
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
+    'Rotation: the lower half is now closed sections, each with its checks counted (clean, some mistakes, failed) and a clear Show button. Every card starts closed too, so the page is about a quarter as long.',
     'Rotation: every check was double-checked against both class guides and the top players. Bars even the top players miss were lowered (Restoration Druid, Preservation Evoker, Balance, Affliction, Augmentation, Blood, Vengeance), help you give others (Innervate, Source of Magic, a Shadow Priest\'s Power Infusion) is never red, and a mistake\'s cost now counts only what you lost next to the top players, so Work on these first starts with what matters most.',
     'Holy Paladin: a Flash of Light without an Infusion inside Beacon of Virtue no longer counts against you (both guides fill the window with it), and Casting in Avenging Wrath uses the same bar as Always be casting.',
     'Rotation: one card per spell. The cards about the same spell, like the five for Avenging Wrath, are now one card with its most important number up top and the rest underneath. The filter buttons and Copy as image are gone, and your card with your talents sits at the very top.',
@@ -8913,6 +8914,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
     (c.wrong.length ? '<div class="cch-no"><h5>What went wrong</h5><ul>' + c.wrong.map((x) => '<li class="cch-' + x.sev + '"' + (x.sec ? ' data-sec="' + esc(x.sec) + '"' : '') + '><b>' + esc(dbfCap(x.label)) + '</b> ' + coachTag(x, c.night) + (x.what ? '<span class="cch-what">' + esc(x.what) + '</span>' : '') + '<span class="cch-fx"><span class="cch-nx">Next time:</span> ' + esc(x.fix) + '</span>' + (x.guide || '') + '</li>').join('') + '</ul></div>' : '') + '</div>' +
     '<div class="cch-focus"><b>Focus ' + (c.night ? 'next raid' : 'next pull') + ':</b> ' + esc(c.focus) + '</div>' +
     (c.full ? '<details class="cch-more" data-k="' + k + '"' + (S.openSecs.has(k) ? ' open' : '') + '><summary>Read the full coaching</summary><div class="cch-full">' + c.full + '</div></details>' : '') + '</section>'; }
+document.addEventListener('toggle', (e) => { const d = e.target; if (d && d.matches && d.matches('details.spc-chd[data-k]') && S.openSecs) { if (d.open) S.openSecs.add(d.dataset.k); else S.openSecs.delete(d.dataset.k); } }, true); /* (Rotation's sections stay open once opened) */
 document.addEventListener('toggle', (e) => { const d = e.target; if (d && d.matches && d.matches('details.cch-more[data-k]')) { if (d.open) S.openSecs.add(d.dataset.k); else S.openSecs.delete(d.dataset.k); } }, true); /* (the full coaching stays open once opened) */
 const oaRaidTop = (reps) => ((coachRaid(reps) || {}).list || [])[0] || null; /* (the raid's #1, the same as the coach's) */
 // ---- report card: letter grades (S, A, B, C, D, F) for how a boss's pulls were played ----
@@ -14792,9 +14794,18 @@ function specPage(o) {
   // draws, and stays at the top on a page without one)
   const glance = o.tl ? sec('Your pull at a glance', o.tlSub || '', o.tl) : o.pullT ? sec('Pull by pull', 'Click a pull to open it, or a column name to sort.', o.pullT) : '';
   let chOn = null, chN = 0, glIn = false; const chap = (n) => '<h2 class="spc-chap"><i class="spc-chn">' + (++chN) + '</i><span>' + esc(n) + '</span>' + (SPC_CHS[n] ? '<em class="spc-chs">' + esc(SPC_CHS[n]) + '</em>' : '') + '</h2>';
-  const body0 = groups.map((g, gi) => ({ g, gi })).filter(({ g }) => g.l.length || (MERGE[g.t] && MERGE[g.t].det && SF === 'all')).map((x) => { const h = blkOf(x); if (!h) return ''; let hd = x.g.ch && x.g.ch !== chOn ? chap(x.g.ch) : ''; if (hd) chOn = x.g.ch; if (hd && x.g.ch === 'Cooldowns' && o.tl && glance) { hd += glance; glIn = true; } return hd + h; }).join('');
+  // (every chapter a closed section (your call, Oct 22): its number, name and a few words, the flags as dots and in words, and a clear Show;
+  // opened, its blocks. The pull at a glance is a section of its own, first. A section you open stays open while you move around)
+  const chList = []; for (const x of groups.map((g, gi) => ({ g, gi })).filter(({ g }) => g.l.length || (MERGE[g.t] && MERGE[g.t].det && SF === 'all'))) {
+    const hb = blkOf(x); if (!hb) continue; const n = x.g.ch || 'More'; let c = chList.find((y) => y.n === n); if (!c) chList.push(c = { n, h: [], l: [] }); c.h.push(hb); c.l.push(...x.g.l); }
+  const chSec = (n, inner, l, sub) => { chN++; const k = 'spcch-' + slug(n), gd = l.filter((c) => c.st !== 'na'), cn = (st) => gd.filter((c) => c.st === st).length;
+    const said = [cn('bad') ? cn('bad') + ' failed' : '', cn('warn') ? cn('warn') + ' with some mistakes' : '', cn('ok') ? cn('ok') + ' clean' : ''].filter(Boolean).join(' · ');
+    return '<details class="spc-chd" data-k="' + k + '"' + (S.openSecs && S.openSecs.has(k) ? ' open' : '') + '><summary class="spc-chap"><i class="spc-chn">' + chN + '</i><span>' + esc(n) + '</span>' +
+      ((sub || SPC_CHS[n]) ? '<em class="spc-chs">' + esc(sub || SPC_CHS[n]) + '</em>' : '') + (l.length ? dots(l) : '') + (said ? '<b class="spc-chx">' + said + '</b>' : '') +
+      '<span class="spc-cht"><span class="o">Show ▾</span><span class="c">Hide ▴</span></span></summary><div class="spc-chb">' + inner + '</div></details>'; };
+  const body0 = (glance ? chSec(o.tl ? 'Your pull at a glance' : 'Pull by pull', glance, [], o.tl ? 'every button you pressed, over the pull' : 'every pull, side by side') : '') + chList.map((c) => chSec(c.n, c.h.join(''), c.l)).join(''); glIn = true;
   const gx = SF === 'all' ? spcExtras(per, UN, one) : '';
-  const body = (body0 + (gx ? chap('Gear and extras') + gx : '')) || '<p class="muted">No checks match that filter.</p>';
+  const body = (body0 + (gx ? chSec('Gear and extras', gx, []) : '')) || '<p class="muted">No checks to show.</p>';
   // (the menu: the blocks, grouped under their chapters)
   const navL = groups.map((g, gi) => ({ g, gi })).filter(({ g }) => g.l.length), chs = [...new Set(navL.map((x) => x.g.ch || ''))];
   const nav = '<nav class="spc-nav" aria-label="Groups">' + chs.map((ch) => '<span class="spc-navg">' + (ch ? '<b>' + esc(ch) + '</b>' : '') + navL.filter((x) => (x.g.ch || '') === ch).map(({ g, gi }) => '<button type="button" data-gj="' + gi + '"><span class="nolk">' + esc(g.t) + '</span>' + dots(g.l) + '</button>').join('') + '</span>').join('') + '</nav>';
@@ -15062,13 +15073,13 @@ const spcGroupTiles = (vis) => { const by = new Map(), out = [];
     const main = l.slice().sort((a, b) => (SPC_RK[b.st] || 0) - (SPC_RK[a.st] || 0) || (b.share || 0) - (a.share || 0))[0];
     return { k: 'grp-' + x.ref, label: x.ref, ic: x.ic || x.ref, st: main.st, main, members: [main].concat(l.filter((y) => y !== main)) }; }); };
 const spcBadge = (c, top) => (c.bdg ? '<span class="spc-tlb na">' + esc(c.bdg) + '</span>' : spcUnder(c, top) ? '<span class="spc-tlb warn">Close to the top</span>' : '<span class="spc-tlb ' + c.st + '">' + (c.st === 'ok' ? SPC_MK.ok + ' ' : '') + SPC_BW[c.st] + '</span>');
-const spcGroupTile = (c, vz, top, slug, tmo) => { const m = c.main, rest = c.members.slice(1), open = m.st === 'bad';
+const spcGroupTile = (c, vz, top, slug, tmo) => { const m = c.main, rest = c.members.slice(1), open = false;
   return '<details class="spc-tl spc-tlg ' + c.st + '" id="spc-r-' + slug(c.k) + '"' + (open ? ' open' : '') + '><summary><span class="spc-tll">' + spIc(c.ic) + '<span>' + esc(c.label) + '</span></span>' +
     '<b class="cst-f ' + m.st + '">' + m.v + '</b><span class="spc-tgm">' + esc(m.label) + '</span>' + spcBadge(m, top) + (top(m.k) ? '<span class="spc-tlt">' + top(m.k) + '</span>' : '') +
     '<span class="spc-tgl">' + rest.map((y) => '<span class="spc-tgr ' + y.st + '"><i></i>' + esc(y.label) + ' <b>' + y.v + '</b></span>').join('') + '</span></summary>' +
     '<div class="spc-tld">' + c.members.map((y) => { const hw = spcHw(y.k, y.how), v = vz(y) || (tmo ? tmo(y) : '');
       return '<div class="spc-tgs" id="spc-r-' + slug(y.k) + '"><h5 class="spc-tgh"><span>' + esc(y.label) + '</span><b class="cst-f ' + y.st + '">' + y.v + '</b>' + spcBadge(y, top) + '</h5><p class="spc-rs">' + esc(y.sub) + hw[0] + '</p>' + hw[1] + spcTip(y) + v + '</div>'; }).join('') + '</div></details>'; };
-const spcTiles = (vis, vz, top, slug, tmo) => '<div class="spc-tls">' + spcGroupTiles(vis).map((c) => { if (c.members) return spcGroupTile(c, vz, top, slug, tmo); const hw = spcHw(c.k, c.how), v = vz(c) || (tmo ? tmo(c) : ''), open = c.st === 'bad' || vis.length === 1 || (c.k === 'apl' && c.st !== 'ok') || String(v || '').includes('class="spc-w ');
+const spcTiles = (vis, vz, top, slug, tmo) => '<div class="spc-tls">' + spcGroupTiles(vis).map((c) => { if (c.members) return spcGroupTile(c, vz, top, slug, tmo); const hw = spcHw(c.k, c.how), v = vz(c) || (tmo ? tmo(c) : ''), open = false; /* (every card starts closed (your call, Oct 22)) */
   return '<details class="spc-tl ' + c.st + '" id="spc-r-' + slug(c.k) + '"' + (open ? ' open' : '') + '><summary><span class="spc-tll">' + (c.ic ? spIc(c.ic) : '') + '<span>' + esc(c.label) + '</span></span>' +
     '<b class="cst-f ' + c.st + '">' + c.v + '</b>' + (c.bdg ? '<span class="spc-tlb na">' + esc(c.bdg) + '</span>' : spcUnder(c, top) ? '<span class="spc-tlb warn">Close to the top</span>' : '<span class="spc-tlb ' + c.st + '">' + (c.st === 'ok' ? SPC_MK.ok + ' ' : '') + SPC_BW[c.st] + '</span>') + (top(c.k) ? '<span class="spc-tlt">' + top(c.k) + '</span>' : '') + '</summary>' +
     '<div class="spc-tld"><p class="spc-rs">' + esc(c.sub) + hw[0] + '</p>' + hw[1] + spcTip(c) + v + '</div></details>'; }).join('') + '</div>';
@@ -19989,7 +20000,7 @@ function bindPerf() {
     $$('.spc-pt [data-gopull]').forEach((b) => (b.onclick = () => spcOpen(+b.dataset.gopull)));
     $$('.spc-mo[data-mt], .spc-w[data-mt], .spc-bx[data-mt], .spc-sltc[data-mt]').forEach((el) => keyGo(el, () => { const t = +el.dataset.mt; if (el.dataset.mp) { S.specPin = t; spcOpen(+el.dataset.mp); } else spcPin(t, true); }));
     spcSortBind(); spcTlBind();
-    $$('#view [data-fo]').forEach((b) => (b.onclick = () => { const id = '#spc-r-' + b.dataset.fo, go = () => { const el = $(id); if (!el) return; if (el.tagName === 'DETAILS') el.open = true; el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); };
+    $$('#view [data-fo]').forEach((b) => (b.onclick = () => { const id = '#spc-r-' + b.dataset.fo, go = () => { const el = $(id); if (!el) return; for (let q = el; q; q = q.parentElement) if (q.tagName === 'DETAILS') q.open = true; el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); };
       if (!$(id)) { S.specFilter = 'all'; perf(); requestAnimationFrame(go); } else go(); }));
     $$('#view [data-gj]').forEach((b) => (b.onclick = () => { const el = $('#spc-g-' + b.dataset.gj); if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' }); }));
     $$('#view [data-tgt]').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.specTreeTab = b.dataset.tgt; S.specTree = true; perf(); }));
