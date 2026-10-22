@@ -2902,7 +2902,7 @@ function buildVashnik(ev, r, h) {
   // ---- 8. avoidable damage ----
   const frothOn = (g, t) => froths.some((f) => f.ends.some((x) => x.g === g && t >= f.t - 0.2 && t <= x.t + 0.2));
   const av = avoidPanel(ev, r, h, [
-    { n: ['plague wave'], label: 'Plague Wave', harm: mythic ? 'Medium' : 'High', why: 'the four lines from a Plague Froth target as it ends' + (mythic ? ' (on Mythic the totems come first, so a hit is less of a mistake)' : '') },
+    { n: ['plague wave'], label: 'Plague Wave', harm: 'Medium', why: 'the four lines from a Plague Froth target as it ends' + (mythic ? ' (on Mythic the totems come first, so a hit is less of a mistake)' : '') },
     { n: ['umbral ejection'], label: 'Umbral Ejection', harm: 'Medium', why: 'the circles a Shrouded Venom leaves when it dies' },
     { n: ['stygian burst'], label: 'Stygian Burst', harm: 'Medium', why: 'standing within 6 yards of a player with Stygian Infection', skip: (e) => aur(VS.stygian).some((x) => x.dst === e.dst && x.op === 'apply' && e.t >= x.t - 0.2 && e.t <= x.t + 20) },
     { n: ['plague froth'], label: 'Plague Froth (nearby)', harm: 'Low', warnAt: 6, badAt: 12, why: 'standing within 5 yards of a Plague Froth target', skip: (e) => frothOn(e.dst, e.t) },
@@ -3311,6 +3311,8 @@ const pl2e = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
 // avoid sets tankJudged.
 const AVOID_BASE = {"The Coiled Altar":{"Axegrinder":[0,20,[[30,1],[60,2],[120,3],[150,4],[180,5],[240,7]]],"Noxious Ground":[1,20,[[30,3],[120,16]]],"Gloombomb (not your own)":[0,13,[[30,0]]],"Mutagenic Venom (near a purple carrier)":[0,20,[[30,0],[120,1]]],"Volatile Venom (near a green carrier)":[0,20,[[30,1],[120,2],[420,3]]],"Toxic Deluge impacts":[0,10,[[30,0]]]},"Nymrissa Wavecaller":{"Swirling Whirlpools":[0,3,[[30,0]]],"Water Jet":[0,6,[[30,0]]],"Lingering Frost":[0,10,[[30,0],[60,1],[180,2],[240,3]]]},"Nek'zali the Soulcoiler":{"Latent Cultist":[1,10,[[30,0],[120,1],[150,2],[240,3]]],"Anguished Echoes":[0,9,[[30,0]]],"Swirling Spirit":[0,4,[[30,0]]]},"Entombed Sentinels":{"Living Venom":[0,10,[[30,1]]]},"The Lost Explorers":{"Aftershock":[1,10,[[30,0],[90,1],[120,3]]]},"Vashnik the Malignant":{"Plague Wave":[0,10,[[30,1],[180,2]]],"Stygian Burst":[0,10,[[30,0],[240,1]]],"Umbral Ejection":[0,8,[[30,0]]],"Plague Froth (nearby)":[0,10,[[30,1],[60,2],[150,3],[240,4]]]},"Sszorak":{"Caustic Claws":[0,9,[[30,0],[90,1]]],"Caustic Residue":[1,10,[[30,0],[90,1],[120,4],[180,5],[240,7]]]},"Ula'tek":{"Caustic Waves":[0,5,[[30,0],[180,1]]],"Fester Burst":[0,5,[[30,0]]],"Desperate Thrash (Doomscale frontal)":[0,5,[[30,0]]],"Warden's Protection":[0,5,[[30,0],[240,2]]],"Virulent Spit":[0,3,[[30,0]]]},"Kith'ix":{"Venom Roar":[0,5,[[30,0]]],"Nullshards":[0,5,[[30,0]]],"Twisted Appendage":[0,5,[[30,0],[120,1]]],"Voidscar":[0,2,[[30,0]]]}};
 // (sources measured in seconds stood in them, not hits)
+// (the same from the 20 fastest Heroic kills (Oct 22); a source with no Heroic line falls back to the Mythic one)
+const AVOID_BASE_H = {"The Coiled Altar":{"Axegrinder":[0,17,[[30,0],[60,1]]],"Noxious Ground":[1,14,[[30,0]]],"Volatile Venom (near a green carrier)":[0,20,[[30,1],[240,2]]],"Toxic Deluge impacts":[0,6,[[30,0]]],"Gloombomb (not your own)":[0,7,[[30,0]]]},"Nymrissa Wavecaller":{"Lingering Frost":[0,20,[[30,0],[60,2],[120,4]]],"Swirling Whirlpools":[0,8,[[30,0]]]},"Nek'zali the Soulcoiler":{"Latent Cultist":[1,19,[[30,0],[90,1],[150,2],[180,3]]],"Anguished Echoes":[0,20,[[30,1]]]},"Entombed Sentinels":{"Living Venom":[0,20,[[30,1]]]},"The Lost Explorers":{"Aftershock":[1,12,[[30,0],[90,2],[120,4]]],"Fungal Burst":[0,3,[[30,0]]]},"Vashnik the Malignant":{"Plague Wave":[0,20,[[30,1],[90,2],[150,3]]],"Stygian Burst":[0,14,[[30,0]]],"Plague Froth (nearby)":[0,20,[[30,1],[60,2],[120,3]]],"Umbral Ejection":[0,13,[[30,0]]]},"Sszorak":{"Caustic Claws":[0,19,[[30,0]]]},"Ula'tek":{"Falling Debris":[0,16,[[30,0]]],"Caustic Waves":[0,20,[[30,0],[120,1]]],"Virulent Spit":[0,19,[[30,0],[240,1]]],"Desperate Thrash (Doomscale frontal)":[0,20,[[30,0],[420,1]]],"Warden's Protection":[0,19,[[30,0],[240,1]]]},"Kith'ix":{"Nullshards":[0,20,[[30,0],[150,1]]],"Twisted Appendage":[0,19,[[30,0],[120,1]]],"Venom Roar":[0,14,[[30,0]]],"Voidscar":[0,9,[[30,0]]]}};
 const AV_SECS = /noxious ground|defiled ground|caustic residue|blood pool|aftershock|evil eyes|latent cultist|lingering frost|stir the depths/i;
 const AV_SECS_DEF = { High: [1, 1], Medium: [4, 8], Low: [8, 16] };
 const HARM = { High: 'Dangerous', Medium: 'Harmful', Low: 'Minor' };
@@ -3320,11 +3322,11 @@ const tankKept = (bad) => Math.max(6, 2 * (bad || 1));
 function avLim(r, src, secs) {
   const dur = r.duration || 0, DEF = { High: [1, 1], Medium: [2, 5], Low: [5, 10] };
   if (src.harm === 'High') return { kb: false, lim: () => [1, 1] };
-  const b = AVOID_BASE[r.item && r.item.boss] && AVOID_BASE[r.item.boss][src.label];
+  const bs = r.item && r.item.boss, bH = r.item && r.item.diffId !== 16 && AVOID_BASE_H[bs] && AVOID_BASE_H[bs][src.label], b = bH || (AVOID_BASE[bs] && AVOID_BASE[bs][src.label]);
   if (b && !!b[0] === !!secs) { const bars = b[2];
-    return { kb: true, k: b[1], lim: (t) => { const at = dur ? Math.min(t, dur) : t, x = bars.find((q) => q[0] >= at) || bars[bars.length - 1], a = Math.max(2, x[1] + 1); return [a, 2 * a]; } }; }
+    return { kb: true, k: b[1], lim: (t) => { const at = dur ? Math.min(t, dur) : t, x = bars.find((q) => q[0] >= at) || bars[bars.length - 1], a = Math.max(secs ? 3 : 2, x[1] + 1); return [a, src.harm === 'Low' ? Infinity : Math.max(2 * a, a + (secs ? 5 : 3))]; /* (a Minor source is amber at most; a death to it is still red) */ } }; }
   const d = secs ? AV_SECS_DEF[src.harm] : [src.warnAt ?? DEF[src.harm][0], src.badAt ?? DEF[src.harm][1]];
-  return { kb: false, lim: () => d };
+  return { kb: false, lim: () => (src.harm === 'Low' ? [d[0], Infinity] : d) };
 }
 // ---- Pace (Oct 22, boss coverage; your OK: "build the timing checks as planned"): the timing each boss's plan relies on, against the
 // 20 fastest Mythic kills (notes/Guides/Boss coverage.md, the Coiled Altar's Phase changes is the model). Being slower than the world's
@@ -5006,7 +5008,7 @@ function buildUlatek(ev, r, h) {
     { n: ['caustic waves'], label: 'Caustic Waves', harm: 'Medium', why: 'the venom waves from Ula\'tek and her tail' },
     { n: ['fester burst'], label: 'Fester Burst', harm: 'Medium', why: 'more than 10 yards from the Blightscale Wretch when it bursts' },
     { n: ['virulent spit'], label: 'Virulent Spit', harm: 'Medium', why: 'the swirlies in Stage 2' },
-    { n: ['falling debris'], label: 'Falling Debris', harm: 'High', why: 'the brown circles during Rage of the Shackled (they kill anyone, tanks too)' },
+    { n: ['falling debris'], label: 'Falling Debris', harm: mythic ? 'High' : 'Medium', why: 'the brown circles during Rage of the Shackled' + (mythic ? ' (they kill anyone, tanks too)' : '') },
     { n: ["warden's protection"], label: "Warden's Protection", harm: 'Low', warnAt: 2, badAt: 5, why: 'standing on or next to an egg while its Doomscale Warden is alive' },
     // (Oct 21: the tail's Mephitic Thrash hits everyone within 35 yards as its 4 s cast ends (spell 1296301: a hit, a 10 s damage
     // over time and a knockback). Only that hit counts, not the ticks after it; tanks are judged loosely as usual)

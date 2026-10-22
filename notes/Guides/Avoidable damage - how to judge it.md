@@ -160,3 +160,16 @@ Exact bars: `AVOID_BASE` in src/engine.js.
 [AMR] Ask Mr. Robot blog (avoidable share: <1% top teams vs 14–27%).
 Data: 20 fastest Coiled Altar Mythic kills + 10 (6 for Ula'tek and Kith'ix) fastest of every other boss, via debriefme.io
 /api/topkills, Oct 22, 2026; the user's Oct 21 night.
+
+## 6. Heroic (Oct 22, round 2)
+The user: "Yes, fix Heroic avoidable damage the same way." Heroic used the Mythic lines, and on Vashnik every Plague Wave hit
+was Dangerous: all 20 of the fastest Heroic kills were flagged (10 "failed", 319 red rows). Read the 20 fastest Heroic kills of
+every boss (events saved by the Roll-out chat, offline) and built `AVOID_BASE_H` the same way (a source with no Heroic line falls
+back to the Mythic one). Also:
+- Vashnik Plague Wave is Harmful on every difficulty (judged against the kills; a death to it is still red).
+- Ula'tek Falling Debris is Dangerous on Mythic only (13 of 20 Heroic kills had raiders clipped, nobody died).
+- Red needs a real gap over the kills: twice the line and at least 3 more hits (5 more seconds for pools; pools' amber line is at
+  least 3 s). A line of 1 hit had made 4 hits red where Heroic kills barely get touched.
+- A Minor source is amber at most; only a death to it is red.
+Heroic kills flagged yellow after (before): Vashnik 3 (20), Ula'tek 7 (17), Lost Explorers 9 (11), Coiled Altar 8 (6, frontals on
+non-tanks and 9+ s in pools), Nymrissa 0 (4), the rest 0-3. None failed. The Mythic night stays at 12 of 19.
