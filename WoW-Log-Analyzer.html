@@ -1018,6 +1018,7 @@ details[id^="sec-"] { scroll-margin-top: 96px; } /* (a jump to a mechanic lands 
 @media not all and (hover: hover) and (pointer: fine) { .zbox:has(> .zanim) .zscale, .zbox:has(> .zanim) .zctl { bottom: 62px; } }
 .map g.pl.k > circle { stroke: #fff; stroke-width: 1.5; }
 .map .ml { fill: #ece8df; font-size: 12px; text-anchor: middle; font-weight: 600; paint-order: stroke; stroke: #0f1117; stroke-width: 3px; }
+.map .ml.mlp { font-size: 9.5px; stroke-width: 2.5px; } /* (player names, a size smaller (Oct 22: "the names on the maps are a bit large")) */
 .map .ml.dim { fill: #8a92a6; font-weight: 500; } .map .ml.hot { fill: #ff8f87; font-size: 13px; }
 .map .scale { stroke: #ece8df; stroke-width: 2; }
 @media (max-width: 900px) { .mapwrap { grid-template-columns: 1fr; } }
@@ -14552,7 +14553,7 @@ const PATCH_NOTES = [
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
-    'Debriefing\'s maps show each player\'s spec icon and name in their class colour. The player a moment is about is always named; in a tight stack the others show on hover.',
+    'Debriefing\'s maps show each player\'s spec icon and name in their class colour, a size smaller so more fit. The player a moment is about is always named; in a tight stack the others show on hover.',
     'Maps no longer zoom by themselves: small maps stay their size when you hover them, and scrolling the page over a map scrolls the page. Zoom with + and −, or open the map big.',
     'All pulls: hover a pull\'s bar to see how that pull ended, how long it went, and that mechanic\'s own numbers in it (like how long each phase took, or how many stood in the Guillotine), worst first. On the Deaths row, who died and to what.',
     'The coach is easier to read: a Focus box, numbered problem cards with Next time on its own line, spell icons next to every ability, and every name in its class colour.',
@@ -21070,13 +21071,13 @@ function miniMap(mp, pmap) {
     s += ic(X(p), Y(p), (me ? '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="12.5" fill="rgba(230,180,80,.14)" stroke="#e6b450" stroke-width="2.5"/>' : '') + playerDot(X(p), Y(p), pl, on ? 7 : 6, ' class="pl' + (on && !mark ? ' k' : '') + '" style="opacity:' + (on ? 1 : 0.6) + '"', p.name) +
       (mark === 'good' ? okMark(X(p), Y(p)) : mark === 'bad' ? badMark(X(p), Y(p)) : mark === 'warn' ? warnMark(X(p), Y(p)) : ''));
     const nm0 = pl && pl.glyph ? p.name : String(p.name).split('-')[0]; /* (every player gets a name now, in their class colour (Oct 22); the others only where there's room) */
-    nameL.push({ x: X(p), y: Y(p), ly: Y(p) - 19, w: (nm0.length + (tg ? String(tg).length + 1 : 0)) * 6.2, pri: me ? 0 : mark === 'bad' || bad.has(p.guid) ? 1 : mark === 'warn' ? 2 : hl.has(p.guid) ? 3 : on ? 4 : 5, must: on,
-      mk: (ly) => '<text x="' + X(p) + '" y="' + (ly + 4) + '" class="ml' + (on ? '' : ' mlo') + '" style="fill:' + col + '">' + esc(nm0) + (tg ? '<tspan fill="#f3d48a" font-weight="800"> ' + esc(tg) + '</tspan>' : '') + '</text>' });
+    nameL.push({ x: X(p), y: Y(p), ly: Y(p) - 17, w: (nm0.length + (tg ? String(tg).length + 1 : 0)) * 5.1, pri: me ? 0 : mark === 'bad' || bad.has(p.guid) ? 1 : mark === 'warn' ? 2 : hl.has(p.guid) ? 3 : on ? 4 : 5, must: on,
+      mk: (ly) => '<text x="' + X(p) + '" y="' + (ly + 4) + '" class="ml mlp' + (on ? '' : ' mlo') + '" style="fill:' + col + '">' + esc(nm0) + (tg ? '<tspan fill="#f3d48a" font-weight="800"> ' + esc(tg) + '</tspan>' : '') + '</text>' });
   }
   { const put = [], hit = (n, ly) => put.some((q) => Math.abs(q.x - n.x) < (q.w + n.w) / 2 && Math.abs(q.ly - ly) < 12);
     for (const n of nameL.sort((a, b) => a.pri - b.pri)) { if (!n.mk) { if (hit(n, n.ly)) continue; put.push(n); s += ic(n.x, n.y, n.html); continue; }
       /* (above the icon; below it when above is taken; the player the row is about is always named, the others only where there's room) */
-      const ly = !hit(n, n.ly) ? n.ly : !hit(n, n.y + 21) ? n.y + 21 : n.must ? n.ly : null; if (ly == null) continue; put.push({ ...n, ly }); s += ic(n.x, n.y, n.mk(ly)); } }
+      const ly = !hit(n, n.ly) ? n.ly : !hit(n, n.y + 19) ? n.y + 19 : n.must ? n.ly : null; if (ly == null) continue; put.push({ ...n, ly }); s += ic(n.x, n.y, n.mk(ly)); } }
   // legend inside the image: only what this map shows
   // (a guide's map (liveLeg): the key lists only what's on the map at this moment, and changes as it plays)
   const LL = !!(mp.liveLeg && live), lm = LL ? { ...mp, rings: (mp.rings || []).filter((g) => ringAt(g)), tags: (mp.tags || []).filter(([, , a, b]) => a == null || (ft >= a && ft < b)), links: (mp.links || []).filter((l) => ft >= l.t0 && ft <= l.t1), arrows: (mp.arrows || []).filter((a) => ft >= a.t0 - 0.05 && ft <= a.t1 + 0.05), frames: null } : mp,
