@@ -5522,6 +5522,13 @@ header.fight.bh.bhx, header.fight.bh.bhx.hero { display: block; min-height: 0; p
 .hwk-c, .rcc-cd { border: 1px solid var(--line2) !important; border-left: 3px solid var(--line2) !important; }
 .hwk-c.bad, .rcc-cd.bad { border-left-color: var(--bad) !important; } .hwk-c.warn, .rcc-cd { border-left-color: var(--warn) !important; } .rcc-cd.gap { border-left-color: var(--gold) !important; }
 /* ===== end of the design system layer ===== */
+/* ===== Design system, round 2 (Oct 22): shared tidy-ups (each tab's own are in its CSS area). Rules: notes/Guides/Design system.md ===== */
+/* folded rows all end in the same ▸, which turns when open (More from this pull had none) */
+.dbr-more > summary::after { content: '▸'; margin-left: auto; color: var(--muted); transition: transform .15s; } .dbr-more[open] > summary::after { transform: rotate(90deg); }
+/* Patch notes: a New feature is the standard card with a gold edge (no glow box); Improvements and Bug fixes are plain labels */
+.pnz-card { border: 1px solid var(--line2) !important; border-left: 3px solid var(--gold) !important; border-radius: var(--ds-card) !important; background: rgba(255,255,255,.02) !important; }
+.pnz-h.new, .pnz-h.fix { background: var(--raised) !important; color: var(--ds-label) !important; }
+/* ===== end of round 2 ===== */
 </style>
 
 
