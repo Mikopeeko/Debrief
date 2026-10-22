@@ -1726,6 +1726,16 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .mebar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 16px; margin: 10px max(var(--gmin), calc((100% - var(--wrap)) / 2)) 0; border-left: 3px solid var(--accent, #e6b450); }
 .mebar .mb-t { flex: 1; min-width: 260px; display: flex; flex-direction: column; gap: 2px; }
 .mebar .mb-t .sub { line-height: 1.45; }
+/* (Share tonight (Oct 21): the slim bar under the banner, and its pop-up) */
+.shr-bar { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; padding: 9px 16px; margin: 10px max(var(--gmin), calc((100% - var(--wrap)) / 2)) 0; border-left: 3px solid var(--gold, #e6b450); }
+.shr-bar .shr-t { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 2px; }
+.shr-bar .shr-t .sub { line-height: 1.45; }
+.shr-dlg .shr-warn { margin: 14px 0; padding: 10px 12px; border-radius: 10px; background: rgba(230,180,80,.1); border: 1px solid rgba(230,180,80,.35); line-height: 1.45; }
+.shr-dlg .shr-lk { margin-top: 12px; }
+.shr-dlg .shr-lh { font-weight: 600; margin-bottom: 6px; }
+.shr-dlg .shr-lk input { font-size: 14px; }
+.shr-dlg .shr-pb { margin-top: 10px; }
+@media (max-width: 640px) { .shr-bar .btn { width: 100%; } .shr-dlg .shr-lk .fph-box { flex-direction: column; } .shr-dlg .shr-lk .btn { width: 100%; } }
 .lnk { background: none; border: 0; padding: 0; font: inherit; color: var(--accent, #e6b450); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
 .lnk:hover { color: var(--text); }
 .tbl.xn td { vertical-align: middle; }

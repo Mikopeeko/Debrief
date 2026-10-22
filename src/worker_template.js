@@ -993,6 +993,43 @@ async function announcePatch(env) {
     body: JSON.stringify({ content, username: 'Claude Van Patch', allowed_mentions: { parse: ping ? ['everyone'] : [] } }) }); // (the user's call: bots get funny Claude names)
   if (r.ok) await env.DEBRIEF_KV.put('patch-announced', p.d);
 }
+// ---- Shared nights (Oct 21, your ask: "a copyable link to share my report from tonight with the officers", with Warcraft Logs down).
+// A night read from a PC's own log is shared by its Share button: the page packs each pull's log lines small (gzip) and sends
+// them here, in parts of up to 20 MB, kept in DEBRIEF_KV for 30 days. The night's name in the link is made from a random key
+// only the sharer's browser has (the first half of its SHA-256), so it can't be guessed, and only that browser can add to it.
+// Opening the link reads the list of pulls (meta), then each pull's parts, and the page reads them like a log on that PC.
+const NIGHT_ID = /^[A-Za-z0-9_-]{22}$/, NIGHT_TTL = 30 * 86400, NIGHT_PART = 20 * 1024 * 1024;
+async function nightIdOf(key) {
+  if (typeof key !== 'string' || !/^[a-f0-9]{48}$/.test(key)) return null;
+  const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key))).slice(0, 16);
+  return btoa(String.fromCharCode(...h)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+async function night(req, env, url) {
+  if (!env.DEBRIEF_KV) return json({ error: 'Sharing isn\'t set up on this copy of Debrief.' }, 503);
+  const p = url.searchParams, id = p.get('id') || '', n = p.get('n'), m = p.get('m'), part = url.pathname === '/api/night/part';
+  if (!NIGHT_ID.test(id) || (part && (!/^\d{1,3}$/.test(n || '') || !/^\d{1,2}$/.test(m || '')))) return json({ error: 'That shared night link is missing something.' }, 400);
+  const k = part ? 'nightp:' + id + ':' + n + ':' + m : 'night:' + id;
+  if (req.method === 'GET') {
+    if (!part) { const v = await env.DEBRIEF_KV.get(k); return v ? new Response(v, { headers: { ...CORS, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } }) : json({ error: 'That shared night wasn\'t found. Shared nights last 30 days.' }, 404); }
+    const cache = caches.default, ck = new Request(url.toString(), { method: 'GET' }), hit = await cache.match(ck); if (hit) return hit;
+    const v = await env.DEBRIEF_KV.get(k, 'arrayBuffer'); if (!v) return json({ error: 'A part of that shared night is missing.' }, 404);
+    const res = new Response(v, { headers: { ...CORS, 'Content-Type': 'application/octet-stream', 'Cache-Control': 'public, max-age=86400, immutable' } });
+    await cache.put(ck, res.clone()).catch(() => {}); return res;
+  }
+  if (req.method !== 'PUT') return json({ error: 'Share nights from the website.' }, 405);
+  if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once. Wait a minute and try again.' }, 429);
+  if ((await nightIdOf(req.headers.get('X-Night-Key'))) !== id) return json({ error: 'That isn\'t your shared night.' }, 403);
+  const body = await req.arrayBuffer();
+  if (part) {
+    const u = new Uint8Array(body, 0, Math.min(2, body.byteLength));
+    if (!body.byteLength || body.byteLength > NIGHT_PART || (m === '0' && (u[0] !== 0x1f || u[1] !== 0x8b))) return json({ error: 'That part of the night isn\'t right.' }, 400);
+  } else {
+    let j = null; try { j = JSON.parse(new TextDecoder().decode(body)); } catch (e) { /* not JSON */ }
+    if (!j || !Array.isArray(j.items) || body.byteLength > 1024 * 1024) return json({ error: 'That list of pulls isn\'t right.' }, 400);
+  }
+  await env.DEBRIEF_KV.put(k, body, { expirationTtl: NIGHT_TTL });
+  return json({ ok: true });
+}
 
 export default {
   async scheduled(ev, env, ctx) { ctx.waitUntil(Promise.allSettled([announcePatch(env), discordJobs(env, ev.scheduledTime || Date.now())]).then((r) => r.forEach((x) => { if (x.status === 'rejected') console.warn('Cron:', x.reason && x.reason.message); }))); },
@@ -1002,6 +1039,7 @@ export default {
     if ((url.hostname === 'www.' + HOME_HOST || url.origin === OLD_SITE) && (req.method === 'GET' || req.method === 'HEAD') && !/^\/(?:api|wcl|auth)\//.test(url.pathname)) return moveHome(req, url);
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
     if (url.pathname === '/api/discord') return req.method === 'POST' ? discordClick(req, env, ctx) : json({ error: 'Discord only.' }, 405);
+    if (url.pathname === '/api/night' || url.pathname === '/api/night/part') return night(req, env, url);
     if (url.pathname === '/api/idea') return req.method === 'POST' ? fileIdea(req, env, url) : json({ error: 'Send ideas with the website\'s form.' }, 405);
     if (url.pathname === '/api/signout') return req.method === 'POST' ? signOut(req, env) : json({ error: 'Sign out from the website.' }, 405);
     if (url.pathname === '/api/myreports') return myReports(req, env);

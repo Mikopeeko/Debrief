@@ -458,7 +458,7 @@ document.addEventListener('drop', (e) => { e.preventDefault(); const f = e.dataT
 
 async function openFile(file) {
   if (FH.dir) { FH.dir = null; if (LIVE.on) setLive(false); } // (opening a file stops watching the local log)
-  S.file = file; S.wclCreds = null; S.wclCode = null; CACHE.clear();
+  S.file = file; S.wclCreds = null; S.wclCode = null; S.shr = null; CACHE.clear();
   const prog = $('#prog'), bar = prog.firstElementChild;
   prog.style.display = 'block'; bar.style.width = '0';
   $('#bossHead').innerHTML = ''; $('#list').innerHTML = '<p class="muted" style="padding:8px">Reading ' + esc(file.name) + '…</p>';
@@ -667,7 +667,7 @@ const listAdd = (k, xs) => { const l = listGet(k); for (const x of xs) if (x && 
 const listDel = (k, x) => store.set(k, JSON.stringify(listGet(k).filter((y) => y !== x)));
 const team = () => listGet(TEAM_KEY);
 // the log or report this is (a yes or no covers all of its pulls)
-const srcKey = () => (S.wclCode ? 'wcl:' + S.wclCode : FH.dir && FH.name ? 'log:' + FH.name : S.file ? 'log:' + S.file.name : '');
+const srcKey = () => (S.wclCode ? 'wcl:' + S.wclCode : S.shr ? 'night:' + S.shr.id :FH.dir && FH.name ? 'log:' + FH.name : S.file ? 'log:' + S.file.name : '');
 const rosterOf = (r) => [...r.players.values()].map((p) => p.name);
 // everyone known to be on your team: your saved raids' roster, and the players of the pulls your teams and guilds brought in
 // (not a character's: their pugs aren't your raid)
@@ -1020,7 +1020,8 @@ async function readRep(item) {
     const st = () => document.getElementById('loadmsg');
     const events = await WCL.loadEvents(S.wclCreds, item, (n) => { if (S.item === item && st()) st().textContent = 'Downloading ' + item.boss + ' pull ' + item.pull + ' from Warcraft Logs: ' + n.toLocaleString('en-US') + ' events…'; });
     text = WCL.translateAsync ? await WCL.translateAsync(item, events, anPause) : WCL.translate(item, events); /* (the lines, written in steps so the page can draw) */
-  } else text = FH.dir ? await fhText(item.startByte, item.endByte) : await S.file.slice(item.startByte, item.endByte).text();
+  } else if (item.shr) text = await shrText(item); /* (a shared night: the pull's lines from Debrief's storage) */
+  else text = FH.dir ? await fhText(item.startByte, item.endByte) : await S.file.slice(item.startByte, item.endByte).text();
   const rep = E.analyzeAsync ? await analyzeSoft(item, text, { packs: S.packs, overrides: overrides() }) : E.analyze(item, text, { packs: S.packs, overrides: overrides() });
   // Raid audit: each player's gear (with enchants) and buffs at the pull, straight from Warcraft Logs
   if (item.wcl) {
@@ -1644,6 +1645,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-21', h: [
+    { t: 'Share a night from your own log', d: 'A night read from your PC (no Warcraft Logs needed) now has a Share button under the banner. It gives you a link your officers can open on any PC or phone, with every tab. Anyone with the link can see that night.' },
     { t: 'Debrief in game', d: 'Your pull recap inside WoW a few seconds after every boss pull: your numbers, your slips, your boss mistakes and who died, shared to the whole raid. Download it at debriefme.io/companion.' },
     { t: 'Boss guides for every boss', d: 'Every boss now has a Heroic and a Mythic guide: an animated map for each mechanic, the whole fight as a video, and your job by role. Open Boss guides from the menu.' },
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
@@ -2040,7 +2042,7 @@ function renderMain() {
   const allMode = S.scope === 'all' && !single;
   const serious = allMode ? 0 : keptMistakes(r).filter((m) => m.severity === 'High' && m.mechanic !== 'Death').length;
   // (the banner sits above the pull cards, outside #main; the tabs and the tab's view are in #main)
-  $('#bossHead').innerHTML = headerHtml(r, allMode) + '<div class="bh-pk" id="bhPk"></div><div class="bh-cutpop" id="bhCutPop" hidden></div>' + meBar(r); // (and, when this log isn't known yet, "Is this your raid?")
+  $('#bossHead').innerHTML = headerHtml(r, allMode) + '<div class="bh-pk" id="bhPk"></div><div class="bh-cutpop" id="bhCutPop" hidden></div>' + meBar(r) + shrBar(); // (and, when this log isn't known yet, "Is this your raid?")
   $('#main').innerHTML =
     // the Pull recap first (with a red dot while live logging is on), then the rest, each group under its label;
     // every tab is about this raid (your teams are under Your teams in the top bar, on every page)
@@ -6537,7 +6539,7 @@ function dbdNext(s, fixF, r) { const k = dbfSecName(s), t = String(s.title || ''
   if (!x) { const m = keptMistakes(r).find((q) => q.fix && q.mechanic && q.mechanic !== 'Death' && t.includes(String(q.mechanic).toLowerCase())); if (m) x = dbfTip1(m.fix); }
   return x; }
 // (a link that opens Debrief on this pull with this mechanic open: Warcraft Logs reports only, since a log on this PC can't be shared)
-const dbdLinkOf = (r, id) => (r.item.wcl && r.item.wcl.code ? location.origin + location.pathname + '?report=' + encodeURIComponent(r.item.wcl.code) + '&fight=' + r.item.wcl.fight + '&m=' + encodeURIComponent(id) : '');
+const dbdLinkOf = (r, id) => (shrNav(r.item).night ? location.origin + '/' + shrUrl(shrNav(r.item)) + '&m=' + encodeURIComponent(id) : r.item.wcl && r.item.wcl.code ? location.origin + location.pathname + '?report=' + encodeURIComponent(r.item.wcl.code) + '&fight=' + r.item.wcl.fight + '&m=' + encodeURIComponent(id) : '');
 // (phase timing against the best pull tonight: each phase's start, sooner or later, when that pull has been opened on this PC)
 function dbdPhases(r) { const it = r.item; if (it.kill || it.kind === 'run') return '';
   const others = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b !== it && !b.kill && pullPct(b) != null);
@@ -21437,7 +21439,7 @@ async function openWcl(link, creds, live, fresh) {
     rep.bosses = rep.bosses.map((b) => { const o = b.wcl && was.get(b.wcl.fight); return o && o.wcl.end === b.wcl.end && o.wcl.start === b.wcl.start ? o : b; });
     const keep = new Set(rep.bosses); for (const k of [...CACHE.keys()]) if (!keep.has(k)) CACHE.delete(k); }
   else CACHE.clear();
-  S.file = null; S.wclCreds = creds; S.wclCode = link.code;
+  S.file = null; S.wclCreds = creds; S.wclCode = link.code; S.shr = null;
   S.index = { bosses: rep.bosses, runs: [] };
   $('.brand p').textContent = 'Warcraft Logs: ' + (rep.title || link.code);
   renderList();
@@ -21529,7 +21531,7 @@ const fhRead = async (a, b, each) => {
 const fhText = async (a, b) => { const parts = await fhRead(a, b), all = new Uint8Array(parts.reduce((s, x) => s + x.length, 0)); let o = 0; for (const x of parts) { all.set(x, o); o += x.length; } return new TextDecoder().decode(all); };
 async function startFileLive(dir) {
   FH.dir = dir; FH.name = ''; FH.ix = null; FH.size = 0; FH.err = '';
-  S.wclCode = null; S.wclCreds = null; CACHE.clear(); S.index = { bosses: [], runs: [] }; S.item = null; S.rep = null;
+  S.wclCode = null; S.wclCreds = null; S.shr = null; CACHE.clear(); S.index = { bosses: [], runs: [] }; S.item = null; S.rep = null;
   const one = dir.kind === 'file', auto = dir.kind === 'helper';
   $('.brand p').textContent = 'Live: ' + (auto ? 'your combat log' : one ? dir.name.replace(/\.txt$/i, '') : dir.name + ' folder');
   renderList();
@@ -21735,18 +21737,18 @@ const navSel = () => (S.tab === 'rot' ? S.specSel : S.tab === 'player' ? S.rcbSe
 // (and back: a link's or a step's player goes onto its tab)
 function navApplySel(tab, p) { if (!p) return; if (tab === 'rot') S.specSel = p; else if (tab === 'player') S.rcbSel = p; else if (tab === 'hw') S.hwSel = p; else if (tab === 'audit') setOneP(p); }
 function navState() {
-  if (S.page === 'pull' && S.item) { const it = S.item; return { nav: 1, v: 'p', code: it.wcl ? it.wcl.code : null, fight: it.wcl ? it.wcl.fight : null, bi: S.index && S.index.bosses ? S.index.bosses.indexOf(it) : -1, tab: S.tab, scope: S.scope || 'pull', sel: navSel() }; }
+  if (S.page === 'pull' && S.item) { const it = S.item; return { nav: 1, v: 'p', code: it.wcl ? it.wcl.code : null, fight: it.wcl ? it.wcl.fight : null, bi: S.index && S.index.bosses ? S.index.bosses.indexOf(it) : -1, ...shrNav(it), tab: S.tab, scope: S.scope || 'pull', sel: navSel() }; }
   if (S.page === 'prog') return { nav: 1, v: 'g', g: S.progView == null ? null : S.progView, mine: S.progMine ? 1 : 0 }; // (mine: your own page, not your team's)
   if (S.page === 'home') return { nav: 1, v: 'h' };
   if (S.page === 'guides') return { nav: 1, v: 'gd', b: S.gdzBoss || null, d: S.gdzDiff || null };
   if (S.page === 'ingame') return { nav: 1, v: 'ig' };
   return null;
 }
-const navKey = (st) => (st ? [st.v, st.code, st.fight, st.bi, st.tab, st.scope, st.g, st.mine].join('|') : '');
+const navKey = (st) => (st ? [st.v, st.code, st.fight, st.bi, st.night, st.tab, st.scope, st.g, st.mine].join('|') : '');
 function navNote() {
   const st = navState(); if (!st) return;
   const cur = history.state && history.state.nav ? navKey(history.state) : null, k = navKey(st);
-  const url = WCL.HOSTED ? (st.v === 'p' && st.code ? '?report=' + st.code + '&fight=' + st.fight + '&tab=' + encodeURIComponent(st.tab || 'audit') + (st.scope === 'all' ? '&all=1' : '') + (st.sel ? '&p=' + encodeURIComponent(st.sel) : '') : st.v === 'gd' ? '?guides' + (st.b ? '&boss=' + encodeURIComponent(st.b) : '') + (st.d ? '&d=' + st.d : '') : st.v === 'ig' ? '?ingame' : location.pathname) : location.pathname + location.search;
+  const url = WCL.HOSTED ? (st.v === 'p' && st.night ? shrUrl(st) : st.v === 'p' && st.code ? '?report=' + st.code + '&fight=' + st.fight + '&tab=' + encodeURIComponent(st.tab || 'audit') + (st.scope === 'all' ? '&all=1' : '') + (st.sel ? '&p=' + encodeURIComponent(st.sel) : '') : st.v === 'gd' ? '?guides' + (st.b ? '&boss=' + encodeURIComponent(st.b) : '') + (st.d ? '&d=' + st.d : '') : st.v === 'ig' ? '?ingame' : location.pathname) : location.pathname + location.search;
   const boot = NAV_BOOT; NAV_BOOT = false;
   // (the same page with another player picked on Rotation: the step is kept up to date for a reload, not a new step)
   try { if (cur === k) { if ((history.state.sel || null) !== (st.sel || null)) history.replaceState(st, '', url); return; } if (NAV_RESTORE || boot || cur == null) history.replaceState(st, '', url); else history.pushState(st, '', url); } catch (e) { /* ignore */ }
@@ -21760,6 +21762,7 @@ async function navGo(st) {
     let b = null;
     if (st.code) { if (S.wclCode !== st.code || !S.index) { let creds = null; try { creds = await wclCreds(); } catch (e) { creds = null; } await openWcl({ code: st.code, fight: st.fight }, creds); }
       b = S.index && S.index.bosses ? S.index.bosses.find((x) => x.wcl && x.wcl.code === st.code && x.wcl.fight === st.fight) : null; }
+    else if (st.night && !st.own) { if (!S.shr || S.shr.id !== st.night) await openShared(st.night, { quiet: true }); b = S.index && S.index.bosses ? S.index.bosses.find((x) => x.shr && x.shr.n === st.sn) : null; } /* (a shared night (Oct 21); your own night, shared, reloads as before) */
     else if (S.index && S.index.bosses && st.bi >= 0) b = S.index.bosses[st.bi];
     if (!b) { home(); return; }
     S.tab = st.tab || S.tab; S.scope = st.scope || 'pull'; navApplySel(S.tab, st.sel);
@@ -21773,6 +21776,123 @@ window.addEventListener('popstate', (e) => { const st = e.state; if (!st || !st.
 function syncUrl(item) {
   if (!WCL.HOSTED || !item || !item.wcl) return;
   store.set('wla-last-report', item.wcl.code); // (so coming back to the site doesn't reopen it: see the start below)
+}
+// ---------- Share a night read on this PC (Oct 21, your ask: "a copyable link to share my report from tonight with the officers") ----------
+// Warcraft Logs links only open Warcraft Logs reports, and a night read from this PC's own log is only on this PC. Share puts a
+// copy on Debrief, only when you press it: each pull's log lines are packed small (gzip) and saved in Debrief's own storage for
+// 30 days, under a random name nobody can guess (see night() in the Worker). Anyone with the link sees the night on any PC or
+// phone, with no app or sign-in: the pulls are read there like a log on that PC, so every tab works. Pressed again later, it only
+// adds the pulls that ended since. Once shared, the address bar has the link too.
+const SHR_PART = 20 * 1024 * 1024;
+const shrUrl = (st) => '?night=' + st.night + (st.sn != null ? '&pull=' + st.sn : '') + (st.tab ? '&tab=' + encodeURIComponent(st.tab) : '') + (st.scope === 'all' ? '&all=1' : '') + (st.sel ? '&p=' + encodeURIComponent(st.sel) : '');
+const shrIdent = (b) => b.id + ':' + b.diffId + ':' + b.startMs;
+const shrMine = () => (S.index && S.index.bosses ? S.index.bosses.filter((b) => !b.wcl && !b.shr && b.endByte > b.startByte) : []);
+// (this night's share, remembered on this PC: the key that lets this browser add to it, its name, and the pulls sent so far)
+const shrKey = () => { const l = shrMine(); return l.length && srcKey() ? 'dbf-shr:' + srcKey() + ':' + l[0].startMs : ''; };
+let SHR_ST = { k: null, v: null };
+const shrSaved = () => { const k = shrKey(); if (!k) return null; if (SHR_ST.k !== k) { let v = null; try { v = JSON.parse(store.get(k) || 'null'); } catch (e) { v = null; } SHR_ST = { k, v }; } return SHR_ST.v; };
+const shrKeep = (v) => { const k = shrKey(); if (!k) return; SHR_ST = { k, v }; store.set(k, JSON.stringify(v)); };
+// (where a pull is in a shared night: its night and number there; your own pull once you've shared it, too)
+function shrNav(it) {
+  if (!it) return {}; if (it.shr) return { night: it.shr.id, sn: it.shr.n };
+  if (it.wcl || !WCL.HOSTED) return {}; const v = shrSaved(), x = v && v.sent[shrIdent(it)]; return x ? { night: v.id, sn: x.n, own: 1 } : {};
+}
+const shrOk = () => WCL.HOSTED && !window.WLA_DESKTOP && !S.shr && !S.wclCode && !!(FH.dir || S.file) && shrMine().length > 0;
+const shrWhen = (ms) => new Date(ms).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' }); /* (log times are the PC's wall time, read as UTC) */
+function shrBar() {
+  if (S.shr) return '<div class="panel shr-bar"><span class="shr-t"><b>Shared raid night</b><span class="sub">' + esc([S.shr.by ? 'Shared by ' + S.shr.by : 'A shared copy', S.shr.title].filter(Boolean).join(' · ')) + '. Anyone with the link can see it.</span></span>' +
+    '<button class="btn sm" type="button" data-shrcopy="1">Copy link</button></div>';
+  if (!shrOk()) return '';
+  const v = shrSaved(), left = shrMine().filter((b) => !(v && v.sent[shrIdent(b)])).length;
+  return '<div class="panel shr-bar"><span class="shr-t"><b>' + (v ? 'Tonight is shared' : 'Share tonight with your officers') + '</b><span class="sub">' +
+    (v ? (left ? plural(left, 'new pull') + ' since you shared. Press Share to add ' + (left === 1 ? 'it' : 'them') + '.' : 'Anyone with the link can see tonight\'s raid.') : 'Get a link anyone can open, on a PC or phone. Anyone with the link can see tonight\'s raid.') + '</span></span>' +
+    '<button class="btn ' + (v && !left ? '' : 'primary ') + 'sm" type="button" data-shr="1">' + (v && !left ? 'Copy link' : 'Share') + '</button></div>';
+}
+const shrRedraw = () => { const b = $('#bossHead .shr-bar'); if (b) b.outerHTML = shrBar() || ''; };
+async function shrIdOf(key) { const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key))).slice(0, 16); return btoa(String.fromCharCode(...h)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+// (sends the pulls not sent yet, then the list of pulls; step(done, of, pull) says how far it is)
+async function shrSend(step) {
+  const list = shrMine(); let v = shrSaved();
+  if (!v) { const a = new Uint8Array(24); crypto.getRandomValues(a); const key = [...a].map((x) => x.toString(16).padStart(2, '0')).join(''); v = { key, id: await shrIdOf(key), sent: {}, n: 0 }; }
+  const put = async (path, body) => { let err = null;
+    for (let k = 0; k < 4; k++) { if (k) await new Promise((r) => setTimeout(r, 1500 * k));
+      let r; try { r = await fetch(path, { method: 'PUT', headers: { 'X-Night-Key': v.key }, body }); } catch (e) { err = new Error('Couldn\'t reach Debrief. Check your internet and try again.'); continue; }
+      if (r.ok) return; const j = await r.json().catch(() => ({})); err = new Error(j.error || 'Debrief couldn\'t save it (error ' + r.status + '). Try again in a minute.'); if (r.status < 500 && r.status !== 429) break; }
+    throw err; };
+  const todo = list.filter((b) => !v.sent[shrIdent(b)]);
+  for (let i = 0; i < todo.length; i++) { const b = todo[i]; step(i, todo.length, b);
+    const raw = FH.dir ? new Blob(await fhRead(b.startByte, b.endByte)) : S.file.slice(b.startByte, b.endByte);
+    const gz = await new Response(raw.stream().pipeThrough(new CompressionStream('gzip'))).blob(), parts = Math.max(1, Math.ceil(gz.size / SHR_PART)), n = v.n;
+    for (let m = 0; m < parts; m++) await put('/api/night/part?id=' + v.id + '&n=' + n + '&m=' + m, gz.slice(m * SHR_PART, (m + 1) * SHR_PART));
+    v.sent[shrIdent(b)] = { n, parts }; v.n = n + 1; shrKeep(v); } /* (kept after every pull, so a second press carries on where it stopped) */
+  step(todo.length, todo.length, null);
+  const prim = (b) => { const o = {}; for (const [k, x] of Object.entries(b)) if (['number', 'string', 'boolean'].includes(typeof x) && !['startByte', 'endByte', 'skip'].includes(k)) o[k] = x; return o; };
+  const sent = list.filter((b) => v.sent[shrIdent(b)]), bossN = [...new Set(sent.map((b) => b.boss + ' ' + b.diff))];
+  const meta = { v: 1, at: Date.now(), by: (meOf() || {}).name || '', title: shrWhen(sent[0].startMs) + ' · ' + (bossN.length > 2 ? bossN.length + ' bosses' : bossN.join(', ')),
+    items: sent.map((b) => ({ ...prim(b), n: v.sent[shrIdent(b)].n, parts: v.sent[shrIdent(b)].parts })) };
+  await put('/api/night?id=' + v.id, JSON.stringify(meta));
+  v.done = v.n; shrKeep(v); return v.id;
+}
+// (the Share pop-up: what it does and who can see it, then the links to copy)
+function shrDlg() {
+  if ($('#shD')) return;
+  const list = shrMine(), v0 = shrSaved(), left = list.filter((b) => !(v0 && v0.sent[shrIdent(b)])).length;
+  document.body.insertAdjacentHTML('beforeend', pgDlg('sh', '<section class="wt nd shr-dlg"><button class="gs-x" id="shX" type="button" aria-label="Close">×</button><h2 id="shT">Share tonight\'s raid</h2>' +
+    '<p class="sub">Debrief keeps a copy of tonight\'s ' + plural(list.length, 'pull') + ' and gives you a link. Your officers open it on any PC or phone and see the same tabs you do. No app or sign-in needed. The link works for 30 days.</p>' +
+    '<div class="shr-warn"><b>Anyone with the link can see tonight\'s raid</b>: every pull, and every player\'s name and numbers. Only share it with people you trust.</div>' +
+    '<div id="shBody">' + (v0 && !left ? '' : '<button class="btn primary" id="shGo" type="button" style="width:100%">' + (v0 ? 'Add the ' + plural(left, 'new pull') + ' and get the link' : 'Share and get the link') + '</button>') + '</div><div class="fp-msg" id="shMsg"></div></section>'));
+  const d = $('#shD'), close = () => { d.remove(); document.removeEventListener('keydown', key, true); };
+  const key = (e) => { if (e.key === 'Escape' && document.body.contains(d)) { e.preventDefault(); e.stopPropagation(); close(); } };
+  document.addEventListener('keydown', key, true); d.onclick = (e) => { if (e.target === d) close(); }; $('#shX').onclick = close;
+  const links = (id) => { const nv = shrNav(S.item), one = S.scope !== 'all' && nv.night ? location.origin + '/' + shrUrl({ night: id, sn: nv.sn, tab: 'audit' }) : '';
+    const row = (lab, u) => '<div class="shr-lk"><div class="shr-lh">' + lab + '</div><div class="fph-box sm"><input readonly value="' + esc(u) + '" aria-label="' + lab + ' link"><button class="btn primary" type="button" data-shrc="' + esc(u) + '">Copy</button></div></div>';
+    $('#shBody').innerHTML = row('The whole night', location.origin + '/' + shrUrl({ night: id })) + (one ? row('This pull (' + esc(S.item.boss) + ', pull ' + S.item.pull + ')', one) : '');
+    $('#shBody').querySelectorAll('input').forEach((x) => (x.onfocus = () => x.select()));
+    $('#shMsg').textContent = '';
+    try { const st = navState(); if (st && st.night) history.replaceState(st, '', shrUrl(st)); } catch (e) { /* ignore */ } /* (the address bar has the link too) */
+    shrRedraw(); };
+  if (v0 && !left) { links(v0.id); return; }
+  $('#shGo').onclick = async () => { const b = $('#shGo'); b.disabled = true;
+    $('#shBody').insertAdjacentHTML('beforeend', '<div class="ld-b shr-pb"><i style="width:0"></i></div>');
+    const bar = $('#shBody .shr-pb i'), msg = $('#shMsg'); msg.style.color = '';
+    try { const id = await shrSend((i, n, p) => { b.textContent = p ? 'Saving ' + p.boss + ' pull ' + p.pull + ' (' + (i + 1) + ' of ' + n + ')…' : 'Making the link…'; bar.style.width = (100 * (n ? i / n : 1)).toFixed(1) + '%'; });
+      if (document.body.contains(d)) links(id); else { shrRedraw(); toast('<span><b>Tonight is shared</b> Press Share again to copy the link.</span>', 6000); } }
+    catch (err) { b.disabled = false; b.textContent = 'Try again'; const pb = $('#shBody .shr-pb'); if (pb) pb.remove(); msg.style.color = 'var(--bad, #e5534b)'; msg.textContent = err.message + (/reach/.test(err.message) ? '' : ' The pulls saved so far are kept, so Try again carries on.'); console.error(err); } };
+}
+document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-shr], [data-shrcopy], [data-shrc]'); if (!t) return; e.preventDefault();
+  if (t.dataset.shr) { shrDlg(); return; }
+  const u = t.dataset.shrc || location.href, o = t.textContent, ok = () => { t.textContent = '✓ Copied'; setTimeout(() => { t.textContent = o; }, 1800); };
+  (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(ok, () => { window.prompt('Copy this link:', u); }); });
+// (opening a shared night: its list of pulls, then the pull the link names (or the night's main boss), on the link's tab)
+async function openShared(id, o) {
+  o = o || {};
+  if (!o.quiet) $('#main').innerHTML = '<div class="empty">' + loadCard('Opening the shared raid night', 'Getting the list of pulls…', null, 'loadmsg') + '</div>';
+  const r = await fetch('/api/night?id=' + encodeURIComponent(id), { cache: 'no-store' }).catch(() => null), j = r ? await r.json().catch(() => null) : null;
+  if (!r || !r.ok || !j || !Array.isArray(j.items)) throw new Error((j && j.error) || 'Couldn\'t reach Debrief. Check your internet and try again.');
+  if (!j.items.length) throw new Error('That shared night has no pulls.');
+  if (FH.dir) { FH.dir = null; if (LIVE.on) setLive(false); }
+  S.file = null; S.wclCreds = null; S.wclCode = null; CACHE.clear();
+  S.shr = { id, at: j.at, by: j.by || '', title: j.title || '' };
+  S.index = { bosses: j.items.map((x) => ({ ...x, run: null, shr: { id, n: x.n, parts: x.parts } })), runs: [] };
+  $('.brand p').textContent = 'Shared raid night' + (j.title ? ': ' + j.title : '');
+  renderList();
+  if (o.quiet) return;
+  const B = S.index.bosses; let pick = o.pull != null ? B.find((b) => b.shr.n === o.pull) : null;
+  if (!pick) { const cnt = new Map(); for (const b of B) cnt.set(b.id + ':' + b.diffId, (cnt.get(b.id + ':' + b.diffId) || 0) + 1);
+    const top = [...cnt].sort((x, y) => y[1] - x[1])[0][0], l = B.filter((b) => b.id + ':' + b.diffId === top); pick = l.find((b) => b.kill) || l[l.length - 1]; }
+  const tb = o.tab; S.tab = tb && (tb === 'live' || TABS.some(([k]) => k === tb)) ? tb : 'live'; S.scope = o.all || o.pull == null ? 'all' : 'pull'; navApplySel(S.tab, o.p);
+  if (o.m) { S.tab = 'audit'; S.scope = 'pull'; S.pendingSec = 'sec-' + o.m; }
+  await select(pick);
+}
+async function shrText(it) {
+  const st = () => document.getElementById('loadmsg'), bufs = [];
+  for (let m = 0; m < it.shr.parts; m++) {
+    if (S.item === it && st()) st().textContent = 'Downloading ' + it.boss + ' pull ' + it.pull + '…';
+    let r = null; for (let k = 0; k < 3 && !(r && r.ok); k++) { if (k) await new Promise((x) => setTimeout(x, 1200 * k)); r = await fetch('/api/night/part?id=' + it.shr.id + '&n=' + it.shr.n + '&m=' + m).catch(() => null); if (r && r.status === 404) break; }
+    if (!r || !r.ok) throw new Error(r && r.status === 404 ? 'This pull is missing from the shared night. Shared nights last 30 days.' : 'Couldn\'t download this pull. Check your internet and try again.');
+    bufs.push(await r.blob());
+  }
+  return new Response(new Blob(bufs).stream().pipeThrough(new DecompressionStream('gzip'))).text();
 }
 
 // ---------- start screen ----------
@@ -23420,6 +23540,7 @@ const reloadSt = WCL.HOSTED && RNAV === 'reload' && history.state && history.sta
 const backAgain = WCL.HOSTED && !!RQ.get('report') && !RQ.get('tab') && RNAV !== 'reload' && (RNAV === 'back_forward' || RQ.get('report') === store.get('wla-last-report')); // (a link with its tab (Oct 21) always opens)
 if (backAgain) try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
 const sharedLink = WCL.HOSTED && !!RQ.get('report') && !backAgain && !reloadSt;
+const nightLink = WCL.HOSTED && /^[A-Za-z0-9_-]{22}$/.test(RQ.get('night') || '') && !reloadSt; /* (a shared night's link (Oct 21)) */
 // (the website's welcome is the setup behind Start now (your idea, Oct 19), so the old tour doesn't open by itself there,
 // and a shared pull link gets that page's own tips; "Take the tour" in the menu still plays it)
 if (WCL.HOSTED && !window.WLA_DESKTOP && !tourDone()) store.set(TOUR_KEY, '1');
@@ -23434,6 +23555,7 @@ if (WCL.HOSTED) {
   else if (qp.has('plan')) setTimeout(() => { if (ASG_OFF()) home(); else { planPage(); window.scrollTo(0, 0); } }, 0); /* (a ?plan address opens the Plan tab) */
   else if (qp.has('ingame')) setTimeout(openInGame, 0); /* (a ?ingame address opens the Debrief in game page) */
   else if (qp.has('guides') || qp.get('tab') === 'gdz') setTimeout(() => openGuides(qp.get('boss'), qp.get('d')), 0); /* (once the guides code below has loaded) */
+  else if (nightLink) openShared(qp.get('night'), { pull: qp.has('pull') ? +qp.get('pull') : null, tab: qp.get('tab'), all: !!qp.get('all'), m: qp.get('m'), p: qp.get('p') }).catch((err) => { $('#main').innerHTML = '<div class="empty"><div class="drop"><h2>Couldn\'t open that shared night</h2><p class="muted">' + esc(err.message) + '</p></div></div>'; });
   else if (sharedLink) { { const tb = qp.get('tab'); if (tb && (tb === 'live' || TABS.some(([k]) => k === tb))) S.tab = tb; if (tb || qp.get('all')) S.scope = qp.get('all') ? 'all' : 'pull'; navApplySel(S.tab, qp.get('p')); } /* (its tab, one pull or all, and its player (Oct 21)) */
     if (qp.get('m')) { S.tab = 'audit'; S.scope = 'pull'; S.pendingSec = 'sec-' + qp.get('m'); } /* (a link to one mechanic (Oct 20)) */
     if (qp.get('tab') === 'gdz') { setTimeout(() => openGuides(null, qp.get('d')), 0); } else /* (the first Guides links (Oct 20) open the guides page) */ hostedPanel('Loading the report…'); openWcl({ code: qp.get('report'), fight: +qp.get('fight') || null }, null, false, !qp.get('fight')).catch((err) => hostedPanel(err.message)); }
@@ -23464,7 +23586,7 @@ if (WCL.HOSTED && !window.WLA_DESKTOP) {
       if (ask) ask.remove();
       if (!j || j.error === 'nodir') return;
       HELPER_BASE = base; PC_ON = true;
-      const busy = S.rep || S.wclCode || FH.dir || S.file || sharedLink || reloadSt && reloadSt.code || document.querySelector('.ld, #ndD') || ['guides', 'plan', 'ingame'].some((k) => RQ.has(k));
+      const busy = S.rep || S.wclCode || FH.dir || S.file || sharedLink || nightLink || S.shr || reloadSt && reloadSt.code || document.querySelector('.ld, #ndD') || ['guides', 'plan', 'ingame'].some((k) => RQ.has(k));
       if (!busy) startFileLive(HELPER_LOG);
     }).catch(() => { if (ask) ask.remove(); /* the app isn't running (or Chrome was told no): the site works as always */ });
   }
