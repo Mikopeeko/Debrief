@@ -216,6 +216,20 @@ async function closeAgain(env, id) {
   const st = await env.DEBRIEF_KV.get('dc-bugs', 'json'); if (!st) return;
   st.arch = [...(st.arch || []).filter(([x]) => x !== id), [id, Date.now()]].slice(-200); await env.DEBRIEF_KV.put('dc-bugs', JSON.stringify(st));
 }
+// (anything tagged as finished (Done, Not a bug, Not planned, Fixed, Can't reproduce) is closed 4 hours after it is first seen so,
+// whoever set the tag: a button, the Claude watcher or the owner by hand. The user's ask, Oct 22: "once things are resolved, auto close them")
+async function sweepDone(env, all) {
+  const forums = [REVIEW_FORUM, IDEA_REVIEW, FORUM_BUGS, FORUM_IDEAS];
+  const posts = all.filter((t) => forums.includes(t.parent_id) && !(t.flags & 2) && (t.applied_tags || []).length); if (!posts.length) return;
+  const st = await env.DEBRIEF_KV.get('dc-bugs', 'json'); if (!st) return;
+  const have = new Set((st.arch || []).map(([id]) => id)), ids = {}; let dirty = false;
+  for (const t of posts) {
+    if (have.has(t.id)) continue;
+    if (!ids[t.parent_id]) { const fm = await dc(env, '/channels/' + t.parent_id).catch(() => null); ids[t.parent_id] = new Set(['Done', 'Not a bug', 'Not planned', 'Fixed', 'Can\'t reproduce'].map((n) => tagOf((fm && fm.available_tags) || [], n)).filter(Boolean)); }
+    if ((t.applied_tags || []).some((x) => ids[t.parent_id].has(x))) { st.arch = [...(st.arch || []), [t.id, Date.now()]]; dirty = true; }
+  }
+  if (dirty) { st.arch = st.arch.slice(-200); await env.DEBRIEF_KV.put('dc-bugs', JSON.stringify(st)); }
+}
 const ARCH_MS = 4 * 36e5; // (a finished post is closed 4 hours later: the user's call, Oct 22, was 24 hours)
 const GUILD = '1561476082643771394', FORUM_BUGS = '1561538061366599782', FORUM_IDEAS = '1561481557959643156', FORUM_QS = '1561477989919891588';
 const snowAt = (id) => Number((BigInt(id) >> 22n) + 1420070400000n);
@@ -835,6 +849,7 @@ async function discordJobs(env, now) {
   if (!env.DISCORD_BOT_TOKEN || !env.DEBRIEF_KV || !env.GITHUB_TOKEN) return;
   const all = await runBugs(env);
   await runReplies(env, all).catch((err) => console.warn('Replies:', err && err.message));
+  await sweepDone(env, all).catch((err) => console.warn('Sweep:', err && err.message));
   await ensureCommands(env).catch((err) => console.warn('Commands:', err && err.message));
   await runKillFeed(env, now).catch((err) => console.warn('Kill feed:', err && err.message));
   await runFeatures(env).catch((err) => console.warn('Features:', err && err.message));
