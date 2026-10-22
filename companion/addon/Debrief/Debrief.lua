@@ -476,8 +476,8 @@ local function cutView(m)
   if not m or not m.cutN then return m end
   local c = tostring(cutIdx(m))
   local function keep(list, sort)
-    local o = {}; for i, r in ipairs(list or {}) do if not r.k or r.k:find(c, 1, true) then o[#o + 1] = r; r._i = i end end
-    if sort then table.sort(o, function(a, b) local x, y = SEVR[a[1]] or 2, SEVR[b[1]] or 2; if x ~= y then return x < y end; return a._i < b._i end) end
+    local o, at = {}, {}; for i, r in ipairs(list or {}) do r._i = nil; if not r.k or r.k:find(c, 1, true) then o[#o + 1] = r; at[r] = i end end
+    if sort then table.sort(o, function(a, b) local x, y = SEVR[a[1]] or 2, SEVR[b[1]] or 2; if x ~= y then return x < y end; return at[a] < at[b] end) end
     return o
   end
   local function pick(def, kl) if kl then for _, x in ipairs(kl) do if x[1]:find(c, 1, true) then return x[2] end end; return "" end; return def end
@@ -882,7 +882,11 @@ local bLine = big:CreateTexture(nil, "ARTWORK"); bLine:SetPoint("TOPLEFT", 1, -5
 local bSideBg = big:CreateTexture(nil, "BACKGROUND", nil, -5); bSideBg:SetPoint("TOPLEFT", 1, -51); bSideBg:SetPoint("BOTTOMLEFT", 1, 1); bSideBg:SetWidth(SIDE); fill(bSideBg, "13161d", 0.6)
 local bSideLine = big:CreateTexture(nil, "ARTWORK"); bSideLine:SetPoint("TOPLEFT", SIDE + 1, -51); bSideLine:SetPoint("BOTTOMLEFT", SIDE + 1, 1); bSideLine:SetWidth(1); fill(bSideLine, COL.line)
 local side = CreateFrame("Frame", nil, big); side:SetPoint("TOPLEFT", 8, -60); side:SetSize(SIDE - 14, 560)
-local bm = CreateFrame("Frame", nil, big); bm:SetPoint("TOPLEFT", SIDE + MX, -66); bm:SetSize(MW, 560)
+-- (the big window scrolls with the mouse wheel when it's taller than the screen leaves room for)
+local bscroll = CreateFrame("ScrollFrame", nil, big); bscroll:SetPoint("TOPLEFT", SIDE + MX, -66); bscroll:SetSize(MW, 560)
+local bm = CreateFrame("Frame", nil, bscroll); bm:SetSize(MW, 560); bscroll:SetScrollChild(bm)
+bscroll:EnableMouseWheel(true)
+bscroll:SetScript("OnMouseWheel", function(self, d) local mx = math.max(0, (bm:GetHeight() or 0) - (self:GetHeight() or 0)); self:SetVerticalScroll(math.min(mx, math.max(0, (self:GetVerticalScroll() or 0) - d * 48))) end)
 
 -- pooled pieces (text, plain textures, rounded textures, buttons, chart lines)
 local bpool = { fs = {}, tex = {}, rt = {}, btn = {}, ln = {} }
@@ -1099,6 +1103,18 @@ bigRender = function()
       yl = yl + hh + 12
     end
   else
+    if (m.raid.story or "") ~= "" then
+      yl = bPanel(XL, yl, COLW, "The pull", nil, function(yy)
+        local t = bFS(bm, "body", 13.5, COL.soft); t:SetPoint("TOPLEFT", XL + 14, -yy); t:SetWidth(COLW - 28); t:SetText(names(m.raid.story)); yy = yy + t:GetStringHeight() + 8
+        for _, bw in ipairs({ { m.raid.better, "Better", COL.goodT }, { m.raid.worse, "Worse", COL.warn } }) do
+          if (bw[1] or "") ~= "" then
+            local k = bFS(bm, "bold", 12, bw[3]); k:SetPoint("TOPLEFT", XL + 14, -yy); k:SetText(bw[2])
+            local tx = bFS(bm, "body", 13, COL.soft); tx:SetPoint("TOPLEFT", XL + 84, -yy); tx:SetWidth(COLW - 98); tx:SetText(names(bw[1])); yy = yy + math.max(18, tx:GetStringHeight()) + 6
+          end
+        end
+        return yy
+      end)
+    end
     yl = bPanel(XL, yl, COLW, h.kill and "What to clean up" or "Top mistakes", #m.raid.bad .. " found", function(yy)
       if #m.raid.bad == 0 then return bRow(XL + 14, yy, COLW - 28, "ok", nil, "Nothing big.") end
       for _, r in ipairs(m.raid.bad) do yy = bRow(XL + 14, yy, COLW - 28, r[1], r[2], r[4], r[3]) end
@@ -1152,7 +1168,10 @@ bigRender = function()
     end)
   end
   local hgt = math.max(yl, yr, sy + 10)
-  bm:SetHeight(hgt); big:SetHeight(math.min(900, 66 + hgt + 14))
+  bm:SetHeight(hgt)
+  local room = math.max(400, ((UIParent and UIParent.GetHeight and UIParent:GetHeight()) or 768) / math.max(0.5, (big.GetScale and big:GetScale()) or 1) - 40)
+  local bh = math.min(room, 66 + hgt + 14); big:SetHeight(bh); bscroll:SetHeight(math.max(10, bh - 80))
+  bscroll:SetVerticalScroll(math.min((bscroll:GetVerticalScroll() or 0), math.max(0, hgt - (bh - 80))))
 end
 function Debrief_ToggleBig()
   if not DB or #DB.pulls == 0 then say("no pulls yet. /debrief demo shows a sample."); return end
@@ -1269,9 +1288,16 @@ local opt
 local refreshers = {}
 local FONT_CHOICES = { { "debrief", "Debrief (website)" }, { "wow", "WoW default" }, { "arial", "Arial Narrow" }, { "morpheus", "Morpheus headings" } }
 local WIDTH_CHOICES = { { "narrow", "Narrow" }, { "normal", "Normal" }, { "wide", "Wide" }, { "large", "Large" }, { "xl", "Extra wide" } }
+function Debrief_FitPreview()
+  if not (opt and opt:IsShown() and card:IsShown()) then return end
+  local avail = ((UIParent and UIParent:GetWidth()) or 1600) - ((opt:GetRight() or 900) * (opt:GetEffectiveScale() or 1) / ((UIParent and UIParent:GetEffectiveScale()) or 1)) - 24
+  local w = (card:GetWidth() or 400) * (DB.scale or 1)
+  card:SetScale((w > avail and avail > 200) and math.max(0.55, (DB.scale or 1) * avail / w) or (DB.scale or 1))
+end
 local function applySettings()
   reapplyFonts()
   card:SetScale(DB.scale or 1); paste:SetScale(DB.scale or 1); big:SetScale(DB.bigScale or 1); mini:SetScale(DB.miniScale or 1)
+  Debrief_FitPreview()
   Debrief_ApplyStyle()
   if card:IsShown() then render() end
   if big:IsShown() then bigRender() end
@@ -1651,7 +1677,7 @@ local function buildOptions()
   panel("Commands", "type them in chat", "INV_Misc_Note_02")
   local HELP = {
     { "/dmo", "these settings" }, { "/debrief", "show or hide your recap" }, { "/debrief big", "the big window" }, { "/debrief mini", "the mini bar on or off" },
-    { "/debrief paste", "paste a recap by hand" }, { "/debrief demo", "a sample recap" }, { "/debrief tutorial", "the tutorial again" },
+    { "/debrief paste", "paste a recap by hand" }, { "/debrief log", "combat logging on or off" }, { "/debrief demo", "a sample recap" }, { "/debrief tutorial", "the tutorial again" },
   }
   for i, h in ipairs(HELP) do
     if i > 1 then local ln = P:CreateTexture(nil, "ARTWORK"); ln:SetPoint("TOPLEFT", LX, -y); ln:SetPoint("TOPRIGHT", -LX, -y); ln:SetHeight(1); fill(ln, COL.line, 0.7) end
@@ -1678,11 +1704,12 @@ function Debrief_ToggleOptions()
     opt.prev = opt:CreateFontString(nil, "OVERLAY"); setFont(opt.prev, "bold", 12.5); opt.prev:SetTextColor(rgb(COL.gold))
     opt.prev:SetText("PREVIEW  ·  changes as you click")
     opt:HookScript("OnHide", function()
-      card:ClearAllPoints()
+      card:SetScale(DB.scale or 1); card:ClearAllPoints()
       if DB.pos then card:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) else card:SetPoint("CENTER", 260, 60) end
     end)
   end
   opt.prev:ClearAllPoints(); opt.prev:SetPoint("BOTTOMLEFT", card, "TOPLEFT", 2, 7)
+  Debrief_FitPreview()
 end
 function Debrief_OnAddonCompartmentClick() Debrief_ToggleOptions() end
 -- (in WoW's own Options > AddOns list too)
@@ -1691,7 +1718,7 @@ local function registerSettings()
   local p = CreateFrame("Frame"); p:Hide()
   local t = p:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge"); t:SetPoint("TOPLEFT", 16, -16); t:SetText("Debrief")
   local d = p:CreateFontString(nil, "OVERLAY", "GameFontHighlight"); d:SetPoint("TOPLEFT", 16, -44); d:SetWidth(560); d:SetJustifyH("LEFT")
-  d:SetText("Your pull recap in game. Choose how much the card shows (Simple, Medium, Heavy or your own mix), the font and sizes, and what happens after a pull.")
+  d:SetText("Your pull recap in game. Choose how much the card shows (Simple, Medium, Heavy, Detailed or your own mix), the font and sizes, and what happens after a pull.")
   local b = CreateFrame("Button", nil, p, "UIPanelButtonTemplate"); b:SetSize(200, 26); b:SetPoint("TOPLEFT", 16, -80); b:SetText("Open Debrief settings")
   b:SetScript("OnClick", function() if SettingsPanel and SettingsPanel:IsShown() then HideUIPanel(SettingsPanel) end; if not (opt and opt:IsShown()) then Debrief_ToggleOptions() end end)
   local cat = Settings.RegisterCanvasLayoutCategory(p, "Debrief"); Settings.RegisterAddOnCategory(cat)

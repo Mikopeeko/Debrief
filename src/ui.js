@@ -1669,6 +1669,7 @@ const PATCH_NOTES = [
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
+    'Debrief in game: Healthstone and potion share one line on your card, raid-wide mistakes say what happened, and the big window scrolls instead of running off your screen and opens the Raid view with The pull.',
     'Debriefing: every small map (the Fix these cards, the All pulls lines) has a button in its corner that opens it big, with zoom and the play bar. The All pulls line maps are a bit bigger too.',
     'Debrief in game: the PC app is one clean screen now, with just the status, two switches and your combat log. Your recap shows in WoW.',
     'Debriefing, All pulls: a new Deaths line. Deaths per pull as bars, what killed people most, who died most, and each pull\'s first death with a › to that pull.',

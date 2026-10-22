@@ -132,7 +132,7 @@ const RECIPES = {
     const tight = rows.filter((r) => spare(r) < 1.5);
     if (tight.length) return capF(ctxt(tight[0][0])) + at(tight[0]) + ' broke with only ' + spare(tight[0]) + ' s to spare.';
     const s = rows.map(spare).filter((x) => !isNaN(x));
-    return (rows.length > 1 ? allN(rows.length, 'shields') : 'The shield') + ' broken and kicked' + (s.length ? ' (' + s.map((x) => x + ' s').join(', ') + ' to spare)' : '') + '.';
+    return (rows.length > 1 ? allN(rows.length, 'shields') + ' broken' : 'The shield was broken') + ' and kicked' + (s.length ? ' (' + s.map((x) => x + ' s').join(', ') + ' to spare)' : '') + '.';
   },
   'Intermission (Stop the fragments)': ({ rows }) => {
     if (!rows.length) return null;
@@ -231,8 +231,12 @@ function buildOne(b, rep, same, W, L, cutN) {
     }
     const stones = (p.cons && p.cons.healthstone) || [], pots = (p.cons && p.cons.healpot) || [];
     const times = (l) => l.slice(0, 3).map((x) => mmss(x.t)).join(', ').replace(/, ([^,]*)$/, ' and $1');
-    if (ps.some((q) => q.cls === 'WARLOCK' || (q.cons && q.cons.healthstone.length))) P.surv.push([stones.length ? 'ok' : 'info', stones.length && stones[0].id ? String(stones[0].id) : 'inv_stone_04', stones.length ? 'Healthstone: used at ' + times(stones) + '.' : 'Healthstone: not used.']);
-    P.surv.push([pots.length ? 'ok' : 'info', pots.length && pots[0].id ? String(pots[0].id) : 'inv_alchemy_70_red', pots.length ? 'Health potion: used at ' + times(pots) + '.' : 'Health potion: not used.']);
+    // (Healthstone and health potion as one line: shorter to send and one line less on the card. A Healthstone only counts when a
+    // Warlock made them or someone used one)
+    const stoneOn = ps.some((q) => q.cls === 'WARLOCK' || (q.cons && q.cons.healthstone.length)), used = [];
+    if (stones.length) used.push('Healthstone at ' + times(stones)); if (pots.length) used.push((used.length ? 'potion' : 'Health potion') + ' at ' + times(pots));
+    P.surv.push([used.length ? 'ok' : 'info', stones.length && stones[0].id ? String(stones[0].id) : pots.length && pots[0].id ? String(pots[0].id) : stoneOn ? 'inv_stone_04' : 'inv_alchemy_70_red',
+      used.length ? used.join(', ') + (stoneOn && !stones.length ? '. No Healthstone.' : !pots.length ? '. No potion.' : '.') : stoneOn ? 'No Healthstone or potion used.' : 'No health potion used.']);
     const missed = (p.closeCalls || []).filter((c) => c.judged && !c.def && !c.stone && !c.pot && c.kitAvail && before(c.tl, T));
     if (missed.length) {
       // (name what was still ready: a Healthstone only when a Warlock made them or someone used one)
@@ -255,7 +259,7 @@ function buildOne(b, rep, same, W, L, cutN) {
 
   // ---- the raid: top 3 mistakes with names, who died, the next pull ----
   const byMech = new Map();
-  for (const m of mist) { if (!m.player) continue; const k = m.mechanic; if (!byMech.has(k)) byMech.set(k, { k, sev: 0, who: new Map(), id: m.id, fix: m.fix, fixRaid: m.player === 'Raid', n: 0 }); const g = byMech.get(k); g.sev = Math.max(g.sev, SEV[m.severity] || 1); g.who.set(m.player, (g.who.get(m.player) || 0) + 1); g.n++; if (m.fix && (!g.fix || (g.fixRaid && m.player !== 'Raid'))) { g.fix = m.fix; g.fixRaid = m.player === 'Raid'; } /* (the fix of a named player's mistake, not of a raid-wide one with the same name) */ if (/\b(hit|walked into|stood|clipped|took|caught)\b/i.test(m.detail || '')) g.hit = true;
+  for (const m of mist) { if (!m.player) continue; const k = m.mechanic; if (!byMech.has(k)) byMech.set(k, { k, sev: 0, who: new Map(), id: m.id, fix: m.fix, fixRaid: m.player === 'Raid', n: 0, what: m.player === 'Raid' ? plain(m.detail || '') : '' }); const g = byMech.get(k); g.sev = Math.max(g.sev, SEV[m.severity] || 1); g.who.set(m.player, (g.who.get(m.player) || 0) + 1); g.n++; if (m.fix && (!g.fix || (g.fixRaid && m.player !== 'Raid'))) { g.fix = m.fix; g.fixRaid = m.player === 'Raid'; } /* (the fix of a named player's mistake, not of a raid-wide one with the same name) */ if (/\b(hit|walked into|stood|clipped|took|caught)\b/i.test(m.detail || '')) g.hit = true;
     /* (the damage it cost each player, from the mistake's own words: "for 1,065,271 avoidable damage") */ const dm = String(m.detail || '').match(/\bfor ([\d,]{4,})/); if (dm) { g.dmg = g.dmg || new Map(); g.dmg.set(m.player, (g.dmg.get(m.player) || 0) + +dm[1].replace(/,/g, '')); } }
   const top = [...byMech.values()].sort((a, c) => c.sev * c.who.size - a.sev * a.who.size || c.n - a.n).slice(0, 5);
   const raid = { bad: [], died: [], more: '', next: '' };
@@ -269,7 +273,7 @@ function buildOne(b, rep, same, W, L, cutN) {
     // (with the damage each took (the user's idea, Oct 21), the most hurt first: "Hit 17 players: @Larryg 1.1m, @Flëxørçïst 1.07m, ...")
     const dmgOf = (n) => (g.dmg && g.dmg.get(n)) || 0, withDmg = !!g.dmg;
     const ws = [...g.who].filter(([n]) => real.has(n)).sort((a, c) => (withDmg ? dmgOf(c[0]) - dmgOf(a[0]) : 0) || c[1] - a[1]);
-    if (!ws.length) { raid.bad.push([g.sev >= 3 ? 'bad' : 'warn', g.id ? String(g.id) : '', g.k, shortTo('Happened ' + (g.n === 1 ? 'once.' : g.n + ' times.') + fix, 190)]); continue; }
+    if (!ws.length) { raid.bad.push([g.sev >= 3 ? 'bad' : 'warn', g.id ? String(g.id) : '', g.k, shortTo((g.what ? sentences(g.what)[0].replace(/\.$/, '') + (g.n > 1 ? ' (' + g.n + ' times).' : '.') : 'Happened ' + (g.n === 1 ? 'once.' : g.n + ' times.')) + fix, 230)]); continue; }
     const same = ws.every(([, k]) => k === ws[0][1]), shown = ws.slice(0, 4).map(([n, k]) => '@' + n + (withDmg && dmgOf(n) && ws.length > 1 ? ' ' + kfmt(dmgOf(n)) : !same && k > 1 ? ' (' + k + ')' : ''));
     const one = ws.length === 1 && withDmg && dmgOf(ws[0][0]) ? ', for ' + kfmt(dmgOf(ws[0][0])) : ''; /* ("Hit @Earthday 2 times, for 555k.") */
     const list = ws.length > 4 ? shown.join(', ') + ' and ' + (ws.length - 4) + ' more' : shown.length > 1 ? shown.slice(0, -1).join(', ') + ' and ' + shown[shown.length - 1] : shown[0];
