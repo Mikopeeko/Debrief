@@ -957,7 +957,7 @@ function buildTwinFangs(ev, r, h) {
     // a death counts for the last strike that player soaked (strikes are ~1.5s apart)
     strikes.forEach((s, k) => { s.died = s.who.filter((g) => !strikes.slice(k + 1).some((z) => z.who.includes(g))).map((g) => diedNear(g, s.t, 3)).filter(Boolean); });
     for (const s of strikes) for (const g of s.repeat)
-      M(s.t, pname(g), 'ravenous feast', 'Medium', 'Soaked a second Ravenous Feast strike while already Feasted.', 'Soak only your own group\'s strike, then step away so the next group takes theirs.',
+      M(s.t, pname(g), 'ravenous feast', s.who.length - s.repeat.length < 4 ? 'Medium' : 'Low', 'Soaked a second Ravenous Feast strike while already Feasted.', 'Soak only your own group\'s strike, then step away so the next group takes theirs.',
         { t: s.t, hl: s.who, hlLabel: 'in this strike', bad: [g], badLabel: 'already Feasted', title: 'Ravenous Feast #' + (i + 1) + ' at ' + h.fmtT(s.t), pts: s.pts, rings: s.ring ? [s.ring] : [] });
     const gs = [...hist.keys()].filter((g) => !r.deaths.some((d) => d.guid === g && d.t < t));
     const before = gs.map((g) => stackAt(g, t - 0.5)), after = gs.map((g) => stackAt(g, t + 14));
@@ -968,7 +968,11 @@ function buildTwinFangs(ev, r, h) {
   const lowStrike = (s) => s.who.length - s.repeat.length < 4;
   // under 4 fresh soakers on a strike: the raid takes the full hit (medium, raid-wide)
   for (const f of feastGroups) f.strikes.forEach((s, k) => { if (lowStrike(s)) M(s.t, 'Raid', 'ravenous feast', 'Medium', 'Ravenous Feast #' + (f.i + 1) + ' strike ' + (k + 1) + ' had only ' + (s.who.length - s.repeat.length) + ' fresh soakers (needs 4). The raid took the full hit.', 'Each strike needs at least 4 players who haven\'t soaked this Feast. Stick to your group and its strike.'); });
-  const strikeBad = (s) => s.repeat.length > 0 || s.died.length > 0;
+  // (Oct 22, boss coverage: 7 of the 14 fastest Mythic kills had someone step into a strike they'd already soaked, one kill on
+  // every second and third strike. With 4 fresh soakers still in it nothing goes wrong, so that's a slip; it's the mistake when it
+  // leaves under 4 fresh soakers, or someone dies)
+  // (below Mythic the fastest Heroic kills soak strikes 2 and 3 with one or two players: there it's a slip unless someone dies)
+  const strikeBad = (s) => (s.repeat.length > 0 && lowStrike(s) && diff === 'Mythic') || s.died.length > 0, strikeSlip = (s) => s.repeat.length > 0 && !strikeBad(s);
   // (one map for the whole Feast (your note, Oct 18), on its own row above the strikes: every strike's circle numbered in
   // order, each filling as its strike comes, then slamming; a green check on each player from the strike they soaked, red
   // from a repeat soak or a death)
@@ -986,14 +990,14 @@ function buildTwinFangs(ev, r, h) {
       focus: { x, y, r: Math.max(10, ...fc.map((p) => Math.hypot(p.x - x, p.y - y) + p.r + 2)) } } }]);
   };
   sections.push({ id: 'feast', title: 'Ravenous Feast (Soak in groups of 4)', place: 'Ravenous Feast (group soaks)', spell: S('ravenous feast'),
-    verdict: feastGroups.some((f) => f.strikes.some(strikeBad)) ? 'bad' : feastGroups.some((f) => f.strikes.some(lowStrike)) ? 'warn' : 'good',
+    verdict: feastGroups.some((f) => f.strikes.some(strikeBad)) ? 'bad' : feastGroups.some((f) => f.strikes.some((s) => lowStrike(s) || strikeSlip(s))) ? 'warn' : 'good',
     summary: pl(feasts.length, 'Ravenous Feast') + '. Each strike should be soaked by 4 or more players who haven\'t soaked one yet this Feast.',
     cols: ['Strike', 'When', 'Soakers', 'Players', 'Already Feasted', 'Died', ''],
     groups: feastGroups.map((f) => {
-      const bad = f.strikes.some(strikeBad), warn = f.strikes.some(lowStrike);
+      const bad = f.strikes.some(strikeBad), warn = f.strikes.some((s) => lowStrike(s) || strikeSlip(s));
       return { title: 'Feast ' + (f.i + 1), t: f.t, bad, warn,
         sub: pl(f.strikes.length, 'strike') + ', ' + f.strikes.map((s) => s.who.length).join(', ').replace(/, (\d+)$/, ' and $1') + ' soakers' + (f.strikes.some((s) => s.repeat.length) ? ', ' + pl(f.strikes.reduce((n, s) => n + s.repeat.length, 0), 'repeat soak') : '') + '. Average venom went from ' + f.avgB + ' to ' + f.avgA + '.',
-        rows: [feastWhole(f)].concat(f.strikes.map((s, k) => [{ txt: 'Strike ' + (k + 1) }, { t: s.t }, { txt: String(s.who.length), warn: lowStrike(s) }, { ps: s.who.map(pname) }, { ps: s.repeat.map(pname), none: '—', bad: s.repeat.length > 0 }, { ps: s.died.map((d) => d.player), none: '—', bad: s.died.length > 0 },
+        rows: [feastWhole(f)].concat(f.strikes.map((s, k) => [{ txt: 'Strike ' + (k + 1) }, { t: s.t }, { txt: String(s.who.length), warn: lowStrike(s) }, { ps: s.who.map(pname) }, { ps: s.repeat.map(pname), none: '—', bad: s.repeat.length > 0 && lowStrike(s) && diff === 'Mythic', warn: strikeSlip(s) }, { ps: s.died.map((d) => d.player), none: '—', bad: s.died.length > 0 },
           { txt: '' }])) };
     }), rows: [] });
 
@@ -1366,6 +1370,7 @@ function buildTwinFangs(ev, r, h) {
     // (map x is east and y north, so a positive cross product is to the left of the way the raid faces)
     return (x, y) => (d[0] * (y - mid[1]) - d[1] * (x - mid[0]) > 0 ? 'left' : 'right');
   })();
+  { const pc = paceCard(ev, r, h, mistakes, "The Twin Fangs"); if (pc) sections.push(pc); } /* (Pace, Oct 22: boss coverage) */
   return { _feasts, _globSets, _globCC, diag, kickSide, title: diff + ' audit: The Twin Fangs', reached: phases[phases.length - 1].name, phases, marks, sections, mistakes,
     legend: 'Rows: Stir the Depths, soaks, Venomous Emergence and Ravenous Feast, Sanguine Storm. Red ticks are deaths. Hover any icon for its time.',
     note: '' };
@@ -1599,10 +1604,13 @@ function buildEntombedSentinels(ev, r, h) {
     const tg = (miTg.find((e) => e.t >= t - 1 && e.t <= t + 8) || {}).dst, died = soak.map((g) => diedNear(g, t1 ?? t, 3)).filter(Boolean);
     // (one short is amber, two or more red (scan, Oct 19): a top Mythic kill soaked every other one with 7 and nobody died, so 7
     // works, just with more stacks each; the guides' plan is 8)
-    const few = need && soak.length < need, veryFew = need && soak.length < need - 1;
+    // (Oct 22, boss coverage: 4 of the 20 fastest Mythic kills soaked some with 6 and nobody died, and the last one before a kill is
+    // often left. Now 6 or 7 is a slip, under 6 the mistake, and a soak in the last 20 s of a kill isn't judged)
+    const endK = r.item.kill && (t1 ?? t) >= dur - 20;
+    const few = need && soak.length < need && !endK, veryFew = few && soak.length < need - 2;
     if (few) M(t1 ?? t, 'Raid', 'Unstable Miasma', veryFew ? 'High' : 'Medium', 'Unstable Miasma ' + (i + 1) + ' had ' + pl(soak.length, 'soaker') + ', but Mythic needs at least ' + need + ', so each soaker got more stacks and a bigger pool.', 'Get at least eight players into every Unstable Miasma, far back in a corner.');
     for (const d of died) M(d.t, d.player, 'Unstable Miasma', 'High', 'Died in the Unstable Miasma soak.', 'Soak at full health, with a defensive if you\'re low. More soakers means less damage each.');
-    return [{ txt: 'Soak ' + (i + 1) }, { t: t1 ?? t }, tg ? { p: pname(tg) } : { txt: '—', dim: true }, { txt: String(soak.length) + (need ? ' (' + need + ' needed)' : ''), bad: !!veryFew, warn: !!few && !veryFew, sub: soak.map(pname).join(', ') }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
+    return [{ txt: 'Soak ' + (i + 1) }, { t: t1 ?? t }, tg ? { p: pname(tg) } : { txt: '—', dim: true }, { txt: String(soak.length) + (need ? ' (' + need + ' needed)' : ''), bad: !!veryFew, warn: !!few && !veryFew, dim: endK, sub: endK ? 'the end of the kill' + (soak.length ? ': ' + soak.map(pname).join(', ') : '') : soak.map(pname).join(', ') }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
       // (the soak: 7.5 yd around the marked player, its published radius, shown from 3 s before it lands)
       t1 != null ? { map: { t: t1, good: soak, goodLabel: 'soaked', goodAt: soak.map((g) => [g, t1]), pendLabel: 'in the soak (before it lands)', hl: tg ? [tg] : [], hlLabel: 'marked', title: 'Unstable Miasma ' + (i + 1) + ' at ' + h.fmtT(t1), pts: h.snap(t1), frames: frames(t1 - 3, t1 + 1.5),
         rings: tg ? [{ guid: tg, r: 7.5, ...mcol('Unstable Miasma'), label: '7.5 yd', t0: t1 - 3.2, dur: 3.6, fx: 'soak', at: t1, legend: 'Unstable Miasma soak (7.5 yd)' }] : [] } } : { txt: '' }];
@@ -1737,6 +1745,7 @@ function buildEntombedSentinels(ev, r, h) {
     { name: 'Whole fight', sub: 'Shifting Protovenom, the Marks, boss balance, tanks', ids: ['protovenom', 'marks', 'balance', 'tanks'] },
     { name: 'Deaths and avoidable damage', sub: '', ids: ['deaths', 'avoid', 'kicks'], rest: true },
   ];
+  { const pc = paceCard(ev, r, h, mistakes, "Entombed Sentinels", { inters }); if (pc) sections.push(pc); } /* (Pace, Oct 22: boss coverage) */
   return { _sides, _cycles: phases, diag, title: r.item.diff + ' audit: Entombed Sentinels', reached: phases[phases.length - 1].name, phases: [], sectionGroups, marks, sections, mistakes,
     legend: 'Grouped by mechanic: each boss\'s side, the intermission, the rest (Shifting Protovenom, the Marks, boss balance, tanks), then deaths and avoidable damage.', note: '' };
 }
@@ -2051,6 +2060,7 @@ function buildSszorak(ev, r, h) {
     { name: 'Intermission', sub: 'Dig In: three winds, a cyst for each', ids: ['winds'] },
     { name: 'Deaths and avoidable damage', sub: '', ids: ['deaths', 'avoid', 'kicks'], rest: true },
   ];
+  { const pc = paceCard(ev, r, h, mistakes, "Sszorak"); if (pc) sections.push(pc); } /* (Pace, Oct 22: boss coverage) */
   return { _sz, diag, title: r.item.diff + ' audit: Sszorak', reached: inters.length ? 'After intermission ' + inters.length : 'Before the first intermission', phases: [], sectionGroups, marks, sections, mistakes,
     legend: 'Grouped the way the fight loops: the tank combo, the Venomous Surge cysts, Raging Crosswinds, Serpent\'s Fury (Mythic), the intermission, then deaths and avoidable damage.', note: '' };
 }
@@ -2237,6 +2247,7 @@ function buildNymrissa(ev, r, h) {
     for (const x of ev) if (x.id === id) { if (x.k === 'cast' || x.k === 'start') c.cast++; else if (x.k === 'dmg') c.dmg++; else if (x.k === 'aura') c.aura++; else c.other++; }
     return { name, id, ...c, total: c.cast + c.dmg + c.aura + c.other };
   });
+  { const pc = paceCard(ev, r, h, mistakes, "Nymrissa Wavecaller"); if (pc) sections.push(pc); } /* (Pace, Oct 22: boss coverage) */
   return { _ny, diag, title: r.item.diff + ' audit: Nymrissa Wavecaller', reached: '', phases: [], marks, sections, mistakes, legend: 'The murloc sets and their Frostscales, the Frost Orb soaks and their bursts, the tank swaps, Abyssal Rain, the whirlpools and Pop!, then avoidable damage.', note: '' };
 }
 
@@ -2381,12 +2392,17 @@ function buildKithix(ev, r, h) {
     const cap = mythic ? 3 : diff === 'Heroic' ? 5 : 6;
     const nu = aur(KX.nullify).filter((e) => (e.op === 'apply' || e.op === 'dose') && h.isPlayer(e.dst)), by = new Map();
     for (const e of nu) { const o = by.get(e.dst) || { g: e.dst, t: e.t, mx: 0 }; if ((e.stacks || 1) >= o.mx) { o.mx = e.stacks || 1; o.t = e.t; } by.set(e.dst, o); }
-    const rows = [...by.values()].filter((o) => o.mx >= cap || diedNear(o.g, o.t, 4)).sort((a, b) => b.mx - a.mx).map((o) => { const d = diedNear(o.g, o.t, 4);
-      if (d) M(o.t, pname(o.g), 'Nullify', 'High', 'Died with ' + o.mx + ' Nullify stacks.', 'Dodge the Nullshards the gates spray: ' + cap + ' stacks kill on ' + diff + '.');
+    // (Oct 22, boss coverage: the fastest kills all lose players to Nullify and Explosive Restabilization in the last half minute of
+    // the burn (4 of 5 top kills showed red here). On a kill, the last 30 s are shown but not judged: it's the race, not a mistake)
+    const endRace = (t) => r.item.kill && t >= dur - 30;
+    const rows = [...by.values()].filter((o) => o.mx >= cap || diedNear(o.g, o.t, 4)).sort((a, b) => b.mx - a.mx).map((o) => { const d = diedNear(o.g, o.t, 4), late = endRace(o.t);
+      if (d && !late) M(o.t, pname(o.g), 'Nullify', 'High', 'Died with ' + o.mx + ' Nullify stacks.', 'Dodge the Nullshards the gates spray: ' + cap + ' stacks kill on ' + diff + '.');
+      if (late) return [{ p: pname(o.g) }, { t: o.t }, { txt: o.mx + ' of ' + cap + ' stacks', dim: true, sub: 'the last 30 s of the kill' }, d ? { txt: 'died', dim: true } : { txt: '—', dim: true }];
       return [{ p: pname(o.g) }, { t: o.t }, { txt: o.mx + ' of ' + cap + ' stacks', bad: !!d, warn: !d }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }]; });
     const ng = aur([KX.negation]).filter((e) => h.isPlayer(e.dst)), rs = clusters(dmgId(KX.restab), 1.5);
     for (const e of ng.filter((x) => x.op === 'apply')) { const rm = ng.find((x) => x.op === 'remove' && x.dst === e.dst && x.t > e.t), end = rm ? rm.t : dur, n = rs.filter((c) => c.t >= e.t && c.t <= end + 1).length, need = mythic ? 3 : 1;
       const dd = diedNear(e.dst, end - 0.3, 1.5);
+      if (endRace(end)) { rows.push([{ p: pname(e.dst), sub: 'Negation' }, { t: e.t }, { txt: pl(n, 'gate') + ' closed', dim: true, sub: 'the last 30 s of the kill' }, dd ? { txt: 'died', dim: true } : { txt: '—', dim: true }]); continue; }
       if (n < need && rm) M(e.t, pname(e.dst), 'Negation', 'High', 'Negation ended' + (dd ? ' with their death' : '') + ' after closing ' + pl(n, 'Null Gate') + (mythic ? ' (Mythic needs 3).' : '.'), 'With Negation, run into the Null Gates to close them before it runs out, with a defensive for each Explosive Restabilization.');
       rows.push([{ p: pname(e.dst), sub: 'Negation' }, { t: e.t }, { txt: pl(n, 'gate') + ' closed', bad: !!rm && n < need, warn: !rm && n < need }, dd ? { txt: 'died', bad: true } : { txt: '—', dim: true }]); }
     if (rows.length) sections.push({ id: 'kxgate', title: 'Null Gates (Dodge the shards)', place: 'Null Gates: Nullify kept under ' + cap + ', gates closed', spell: [KX.gate[0], 'Null Gate'], verdict: rows.some((x) => x[2].bad || x[3].bad) ? 'bad' : rows.some((x) => x[2].warn) ? 'warn' : 'good',
@@ -2415,6 +2431,7 @@ function buildKithix(ev, r, h) {
     for (const x of ev) if (x.id === id) { if (x.k === 'cast' || x.k === 'start') c.cast++; else if (x.k === 'dmg') c.dmg++; else if (x.k === 'aura') c.aura++; else c.other++; }
     return { name, id, ...c, total: c.cast + c.dmg + c.aura + c.other };
   });
+  { const pc = paceCard(ev, r, h, mistakes, "Kith'ix", { inter, howl }); if (pc) sections.push(pc); } /* (Pace, Oct 22: boss coverage) */
   return { diag, title: diff + ' audit: Kith\'ix', reached: howl != null ? 'P2' : inter.length ? 'After intermission ' + inter.length : 'P1', phases, marks, sections, mistakes,
     legend: 'By phase: the add sets, beetles, Extinguish, fears and tanks in P1, Abyssal Grasp and fragments in the intermissions, then the Null Gates and the DPS check in P2.', note: heroic ? '' : 'Heroic and Mythic checks (eggs, fragments) are hidden on this difficulty.' };
 }
@@ -2527,7 +2544,7 @@ function buildNekzali(ev, r, h) {
     const e0 = energyAt(s - 0.1), e1 = energyAt(t1);
     const rows = [[{ txt: 'Going in' }, { t: s }, burnOn ? (burned.length ? { txt: pl(burned.length, 'player') + ' with Ritual Burn', warn: true, sub: src.length ? 'from ' + src.join(', ') : '' } : { txt: 'no Ritual Burn' }) : { txt: '—', dim: true },
       died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true }, { txt: e0 != null && e1 != null ? 'energy ' + e0 + ' to ' + e1 : '', dim: true }]]
-      .concat([...by.values()].map((o) => { const d = died.find((x) => x.guid === o.g); return [{ p: pname(o.g), sub: isTank(o.g) ? 'tank' : '' }, { t: o.t }, { txt: pl(o.n, 'circle hit'), warn: !d && o.n < 3 && !isTank(o.g), bad: o.n >= 3 || !!d, dim: isTank(o.g) && !d && o.n < 3, sub: fmtM(o.amt) + (isTank(o.g) && !d ? ', a tank: only a note' : '') }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }, { txt: '' }]; }));
+      .concat([...by.values()].map((o) => { const d = died.find((x) => x.guid === o.g); return [{ p: pname(o.g), sub: isTank(o.g) ? 'tank' : '' }, { t: o.t }, { txt: pl(o.n, 'circle hit'), warn: !d && o.n < 3 && !isTank(o.g), bad: (o.n >= 3 && !isTank(o.g)) || !!d, dim: isTank(o.g) && !d, sub: fmtM(o.amt) + (isTank(o.g) && !d ? ', a tank: only a note' : '') /* (Oct 22: a tank's hits stay a note, even 3 of them; a top kill showed red for it) */ }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }, { txt: '' }]; }));
     return { title: 'Soulcoil Ignition ' + (i + 1) + (cut ? ' (cut short by the intermission)' : ''), t: s, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[2].warn), sub: (by.size ? pl(by.size, 'player') + ' hit by the circles' : 'nobody hit by the circles') + (burned.length ? ', ' + burned.length + ' with Ritual Burn' : ''), rows };
   });
   if (igGroups.length) sections.push({ id: 'ignition', title: 'Soulcoil Ignition (Dodge the circles)', place: 'Soulcoil Ignition (boss channel): no Ritual Burn, circles dodged', spell: [NZ.ignition, 'Soulcoil Ignition'], verdict: igGroups.some((g) => g.bad) ? 'bad' : igGroups.some((g) => g.warn) ? 'warn' : 'good',
@@ -2656,7 +2673,9 @@ function buildNekzali(ev, r, h) {
     const ivRows = invC.map((t, k) => {
       const who = [...new Set(inv.filter((e) => Math.abs(e.t - t) < 0.6).map((e) => e.dst))];
       for (const g of who) M(t, pname(g), 'Invoke', 'Low', 'Was still casting when Invoke finished, so got interrupted and silenced for 3 seconds.', 'Stop casting just before Invoke finishes (it has a 5-second cast bar).');
-      return [{ txt: 'Invoke ' + (k + 1) }, { t }, who.length ? { txt: pl(who.length, 'player') + ' interrupted', warn: true } : { txt: 'nobody interrupted' }, who.length ? { ps: who.map(pname) } : { txt: '—', dim: true }, { txt: '' }];
+      // (Oct 22, boss coverage: in the 10 fastest Mythic kills, 22 of 27 Invokes caught someone, up to 3 players most times. A few
+      // caught is normal; 4 or more is a slip)
+      return [{ txt: 'Invoke ' + (k + 1) }, { t }, who.length ? { txt: pl(who.length, 'player') + ' interrupted', warn: who.length >= 4, sub: who.length < 4 ? 'a few is normal' : '' } : { txt: 'nobody interrupted' }, who.length ? { ps: who.map(pname) } : { txt: '—', dim: true }, { txt: '' }];
     });
     sections.push({ id: 'invoke', title: 'Invoke (Stop casting)', place: 'Invoke (stop casting): nobody caught', spell: [NZ.invoke, 'Invoke'], verdict: ivRows.some((x) => x[2].warn) ? 'warn' : 'good',
       summary: pl(ivRows.length, 'Invoke') + '. It shows who was still casting when it finished, which interrupts and silences them for 3 seconds.', cols: ['Cast', 'When', 'Result', 'Who', ''], rows: ivRows });
@@ -2828,12 +2847,15 @@ function buildVashnik(ev, r, h) {
     const rows = castOk(VS.catalyst).map((t, i) => {
       const w = (e) => e.t >= t + 3 && e.t <= t + 11, sk = soak.filter(w), un = clusters(raid.filter(w), 1);
       const who = [...new Set(sk.map((e) => e.dst))], biles = clusters(sk, 0.3).length;
-      if (un.length) M(un[0].t, 'Raid', 'Catalytic Bile', 'High', pl(un.length, 'Catalytic Bile') + ' landed with nobody under it and hit the whole raid.', 'Spread out before the bile lands so every impact has someone within 6 yards.');
+      // (Oct 22, boss coverage: below Mythic, 3 of the 20 fastest Heroic kills let a bile land on nobody every time and nobody died; there
+      // it's a slip unless it kills someone)
+      const soft = !mythic && !r.deaths.some((d) => /catalytic bile/i.test(d.ability || '') && d.t >= t + 3 && d.t <= t + 14);
+      if (un.length) M(un[0].t, 'Raid', 'Catalytic Bile', soft ? 'Medium' : 'High', pl(un.length, 'Catalytic Bile') + ' landed with nobody under it and hit the whole raid.', 'Spread out before the bile lands so every impact has someone within 6 yards.');
       const tm = (sk[0] || un[0] || { t: t + 7 }).t;
-      return [{ txt: 'Malignant Catalyst ' + (i + 1) }, { t: tm }, un.length ? { txt: pl(un.length, 'bile') + ' unsoaked', bad: true, sub: 'the whole raid took it' } : { txt: biles ? 'every bile soaked' : '—', dim: !biles }, { txt: who.length ? pl(who.length, 'soaker') : '—', dim: !who.length, sub: who.map(pname).join(', ') },
+      return [{ txt: 'Malignant Catalyst ' + (i + 1) }, { t: tm }, un.length ? { txt: pl(un.length, 'bile') + ' unsoaked', bad: !soft, warn: soft, sub: 'the whole raid took it' } : { txt: biles ? 'every bile soaked' : '—', dim: !biles }, { txt: who.length ? pl(who.length, 'soaker') : '—', dim: !who.length, sub: who.map(pname).join(', ') },
         { txt: '' }];
     });
-    if (rows.length) sections.push({ id: 'bile', title: 'Catalytic Bile (Soak every bile)', place: 'Catalytic Bile (soaks): every impact covered', spell: [VS.catalyst, 'Malignant Catalyst'], verdict: rows.some((x) => x[2].bad) ? 'bad' : 'good',
+    if (rows.length) sections.push({ id: 'bile', title: 'Catalytic Bile (Soak every bile)', place: 'Catalytic Bile (soaks): every impact covered', spell: [VS.catalyst, 'Malignant Catalyst'], verdict: rows.some((x) => x[2].bad) ? 'bad' : rows.some((x) => x[2].warn) ? 'warn' : 'good',
       summary: pl(rows.length, 'Malignant Catalyst') + '. It shows who stood under the biles, and any bile that landed on nobody.', cols: ['Cast', 'When', 'Result', 'Soakers', ''], rows });
   }
 
@@ -2902,6 +2924,7 @@ function buildVashnik(ev, r, h) {
     { name: 'Tanks', sub: '', ids: ['fangs'] },
     { name: 'Deaths and avoidable damage', sub: '', ids: ['deaths', 'avoid', 'kicks'], rest: true },
   ];
+  { const pc = paceCard(ev, r, h, mistakes, "Vashnik the Malignant", { imb }); if (pc) sections.push(pc); } /* (Pace, Oct 22: boss coverage) */
   return { diag, title: r.item.diff + ' audit: Vashnik the Malignant', reached: imb.length ? 'Imbibe ' + imb.length : 'Before the first Imbibe', phases: [], sectionGroups, marks, sections, mistakes,
     legend: 'Grouped by mechanic: Imbibe and the adds, Plague Froth' + (mythic ? ' and the totems' : '') + ', the Catalyst soaks, the infections, the tanks, then deaths and avoidable damage.', note: mythic ? '' : 'Mythic-only checks (Malignant Totems) are hidden on this difficulty.' };
 }
@@ -2965,14 +2988,17 @@ function buildLostExplorers(ev, r, h) {
   // ---- 2. United Defense: all three explorers within 30 yards of each other (99% less damage taken) ----
   {
     const ud = aur(LE.united).filter((e) => !h.isPlayer(e.dst)), on = clusters(ud.filter((e) => e.op === 'apply'), 2);
+    // (Oct 22, boss coverage: in the 10 fastest Mythic kills it flickered on 14 times, never longer than 2.4 s, as the explorers
+    // crossed paths. Under 3 s is shown but not judged; 3 to 5 s is a slip; over 5 s is the mistake)
     const rows = on.map((c) => { const off = ud.find((e) => e.op === 'remove' && e.t >= c.t); const len = (off ? off.t : dur) - c.t;
+      if (len < 3) return [{ txt: 'United Defense' }, { t: c.t }, { txt: 'up for ' + len.toFixed(1) + ' s', dim: true, sub: 'a brush as they crossed: fine' }, { txt: phOf(c.t), dim: true }, ''];
       M(c.t, 'Raid', 'United Defense', len > 5 ? 'High' : 'Medium', 'All three explorers came within 30 yards of each other: United Defense (99% less damage taken) for ' + len.toFixed(1) + ' s.', 'Keep at most two explorers together. Tanks move them apart as soon as a third gets close.');
       return [{ txt: 'United Defense' }, { t: c.t }, { txt: 'up for ' + len.toFixed(1) + ' s', warn: len <= 5, bad: len > 5 }, { txt: phOf(c.t), dim: true },
         // (the three explorers joined by red lines while United Defense was up: they were within 30 yards of each other)
         { map: { t: c.t + 0.3, title: 'United Defense at ' + T(c.t), pts: h.snap(c.t + 0.3), frames: frames(c.t - 4, c.t + Math.min(len, 6) + 1),
           links: (() => { const ex = h.snap(c.t + 0.3).filter((p) => p.kind === 'boss').slice(0, 3), l = []; for (let i = 0; i < ex.length; i++) for (let j = i + 1; j < ex.length; j++) l.push({ from: ex[i].guid, to: ex[j].guid, t0: c.t - 0.3, t1: c.t + len + 0.3, color: '#ff5a4f', legend: 'the explorers were within 30 yards of each other (United Defense)' }); return l; })() } }]; });
-    sections.push({ id: 'united', title: 'United Defense (Keep the bosses apart)', place: 'United Defense (boss shield): explorers kept apart', spell: [LE.united, 'United Defense'], verdict: rows.some((x) => x[2].bad) ? 'bad' : rows.length ? 'warn' : 'good',
-      summary: rows.length ? pl(rows.length, 'time') + ' all three explorers came within 30 yards of each other.' : 'All three explorers were never within 30 yards of each other.', cols: ['What', 'When', 'Result', 'Turn', ''], rows });
+    sections.push({ id: 'united', title: 'United Defense (Keep the bosses apart)', place: 'United Defense (boss shield): explorers kept apart', spell: [LE.united, 'United Defense'], verdict: rows.some((x) => x[2].bad) ? 'bad' : rows.some((x) => x[2].warn) ? 'warn' : 'good',
+      summary: rows.length ? pl(rows.length, 'time') + ' all three explorers came within 30 yards of each other' + (rows.every((x) => x[2].dim) ? ', each for under 3 seconds (a brush as they cross is fine).' : '.') : 'All three explorers were never within 30 yards of each other.', cols: ['What', 'When', 'Result', 'Turn', ''], rows });
   }
 
   // ---- 3. Final Ascension: fed a fish in time, every time ----
@@ -2981,12 +3007,15 @@ function buildLostExplorers(ev, r, h) {
     const rows = fish.map((t, k) => [{ txt: 'Fish ' + (k + 1) }, { t }, { txt: 'fed' }, { txt: phOf(t + 1), dim: true }]);
     for (const c of clusters(hits, 3)) {
       const who = new Set(c.list.map((e) => e.dst)), died = deadBy(/final ascension/i, c.t, c.t1 + 2);
-      M(c.t, 'Raid', 'Final Ascension', 'High', 'Final Ascension went off on the raid (' + pl(who.size, 'player') + ' hit' + (died.length ? ', ' + pl(died.length, 'death') : '') + ') before a fish stopped it.', 'Feed the Disgusting Fish in time, every time (about 4 seconds left on the cast). The fourth time, it can\'t be stopped.');
-      rows.push([{ txt: 'Final Ascension' }, { t: c.t }, { txt: 'went off', bad: true, sub: pl(who.size, 'player') + ' hit for ' + (c.t1 - c.t + 0.5).toFixed(1) + ' s' }, died.length ? { txt: pl(died.length, 'death'), bad: true } : { txt: '—', dim: true }]);
+      // (Oct 22, boss coverage: below Mythic it's a raid hit, not a wipe: 4 of the 20 fastest Heroic kills let one go off and nobody
+      // died. There it's a slip unless it kills someone)
+      const soft = !mythic && !died.length;
+      M(c.t, 'Raid', 'Final Ascension', soft ? 'Medium' : 'High', 'Final Ascension went off on the raid (' + pl(who.size, 'player') + ' hit' + (died.length ? ', ' + pl(died.length, 'death') : '') + ') before a fish stopped it.', 'Feed the Disgusting Fish in time, every time (about 4 seconds left on the cast). The fourth time, it can\'t be stopped.');
+      rows.push([{ txt: 'Final Ascension' }, { t: c.t }, { txt: 'went off', bad: !soft, warn: soft, sub: pl(who.size, 'player') + ' hit for ' + (c.t1 - c.t + 0.5).toFixed(1) + ' s' }, died.length ? { txt: pl(died.length, 'death'), bad: true } : { txt: '—', dim: true }]);
     }
     asc.filter((t) => !hits.some((e) => e.t >= t && e.t <= t + 9)).forEach((t) => rows.push([{ txt: 'Final Ascension cast' }, { t }, { txt: 'stopped by the fish' }, { txt: '' }]));
     rows.sort((a, b) => a[1].t - b[1].t);
-    if (rows.length) sections.push({ id: 'ascension', title: 'Final Ascension (Feed a fish in time)', place: 'Final Ascension (enrage): a fish in time', spell: [LE.fish, 'Disgusting Fish'], verdict: rows.some((x) => x[2].bad) ? 'bad' : 'good', info: !rows.some((x) => x[2].bad),
+    if (rows.length) sections.push({ id: 'ascension', title: 'Final Ascension (Feed a fish in time)', place: 'Final Ascension (enrage): a fish in time', spell: [LE.fish, 'Disgusting Fish'], verdict: rows.some((x) => x[2].bad) ? 'bad' : rows.some((x) => x[2].warn) ? 'warn' : 'good', info: !rows.some((x) => x[2].bad || x[2].warn),
       summary: (fish.length === 1 ? '1 fish' : fish.length + ' fish') + ' fed. It shows every Final Ascension cast, and any that went off on the raid.', cols: ['What', 'When', 'Result', 'Turn'], rows });
   }
 
@@ -3094,10 +3123,13 @@ function buildLostExplorers(ev, r, h) {
     const bm = aur(LE.bomb).filter((e) => e.op === 'apply' && h.isPlayer(e.dst)), bo = aur(LE.bounce).filter((e) => e.op === 'apply' && h.isPlayer(e.dst)), bw = dmgName('blast wave'), fb = dmgName('fungal burst');
     const rows = bm.map((e) => {
       const t1 = e.t + 30, up = [...new Set(bo.filter((x) => x.t >= e.t && x.t <= t1).map((x) => x.dst))], hitW = [...new Set(bw.filter((x) => x.t >= e.t && x.t <= t1 && x.amt !== 0 /* (an immunity or a shield that took all of it is a way over it too) */).map((x) => x.dst))], hitF = [...new Set(fb.filter((x) => x.t >= e.t - 10 && x.t <= t1).map((x) => x.dst))];
-      for (const g of hitW) M(e.t + 10, pname(g), 'Blast Wave', 'High', 'Hit by the Blast Wave from Explosive Surprise.', 'Bounce over the Blast Wave on a mushroom, or use a blink, teleport or leap.');
-      return [{ p: pname(e.dst), sub: 'had the bomb' }, { t: e.t }, hitW.length ? { txt: pl(hitW.length, 'player') + ' hit by the Blast Wave', bad: true, sub: hitW.map(pname).join(', ') } : { txt: 'nobody hit by the Blast Wave' }, { txt: pl(up.length, 'player') + ' bounced', dim: true, sub: hitF.length ? pl(hitF.length, 'Fungal Burst hit') : '' }];
+      // (Oct 22, boss coverage: the fastest Mythic kills had 1 to 4 players caught by a wave and still killed it. A few caught is a
+      // slip; a quarter of the raid or a death to it is the mistake, except deaths in the last 20 s of a kill, as for every death)
+      const wDied = r.deaths.some((d) => /blast wave/i.test(d.ability || '') && d.t >= e.t && d.t <= t1 + 3 && !(r.item.kill && d.t >= dur - 20)), wBad = wDied || hitW.length >= Math.max(5, Math.ceil(r.players.size / 4));
+      for (const g of hitW) M(e.t + 10, pname(g), 'Blast Wave', wBad ? 'High' : 'Medium', 'Hit by the Blast Wave from Explosive Surprise.', 'Bounce over the Blast Wave on a mushroom, or use a blink, teleport or leap.');
+      return [{ p: pname(e.dst), sub: 'had the bomb' }, { t: e.t }, hitW.length ? { txt: pl(hitW.length, 'player') + ' hit by the Blast Wave', bad: wBad, warn: !wBad, sub: hitW.map(pname).join(', ') } : { txt: 'nobody hit by the Blast Wave' }, { txt: pl(up.length, 'player') + ' bounced', dim: true, sub: hitF.length ? pl(hitF.length, 'Fungal Burst hit') : '' }];
     });
-    if (rows.length) sections.push({ id: 'bomb', title: 'Explosive Surprise (Bounce over the wave)', place: 'Explosive Surprise (bomb): over the Blast Wave', spell: [LE.bomb, 'Explosive Surprise'], verdict: rows.some((x) => x[2].bad) ? 'bad' : 'good',
+    if (rows.length) sections.push({ id: 'bomb', title: 'Explosive Surprise (Bounce over the wave)', place: 'Explosive Surprise (bomb): over the Blast Wave', spell: [LE.bomb, 'Explosive Surprise'], verdict: rows.some((x) => x[2].bad) ? 'bad' : rows.some((x) => x[2].warn) ? 'warn' : 'good',
       summary: pl(rows.length, 'bomb') + '. It shows who had it, who bounced over the wave on a mushroom, and anyone the Blast Wave hit.', cols: ['Bomb', 'When', 'Result', 'Bounced'], rows });
   }
 
@@ -3134,6 +3166,7 @@ function buildLostExplorers(ev, r, h) {
     for (const x of ev) if (x.id === id) { if (x.k === 'cast' || x.k === 'start') c.cast++; else if (x.k === 'dmg') c.dmg++; else if (x.k === 'aura') c.aura++; else c.other++; }
     return { name, id, ...c, total: c.cast + c.dmg + c.aura + c.other };
   });
+  { const pc = paceCard(ev, r, h, mistakes, "The Lost Explorers", { phases }); if (pc) sections.push(pc); } /* (Pace, Oct 22: boss coverage) */
   return { diag, title: r.item.diff + ' audit: The Lost Explorers', reached: phases[phases.length - 1].name, phases, marks, sections, mistakes, note: '' };
 }
 
@@ -3249,6 +3282,15 @@ HOW["Ula'tek"] = {
 };
 
 // "How it works" for the Interrupts mechanic, per boss
+// (Pace, Oct 22: boss coverage)
+HOW["Kith'ix"] = Object.assign(HOW["Kith'ix"] || {}, { pace: "The hardest part is the third intermission, so the plan skips it: Lust, potions and every cooldown on the pull, hold the 2-minute cooldowns from 4:00 for Last Light, and push him to 25% before the third beetle set (about 4:10 to 4:20). The fastest kills reach 25% at 3:46 to 4:11." });
+HOW["Vashnik the Malignant"] = Object.assign(HOW["Vashnik the Malignant"] || {}, { pace: "Every Imbibe stacks Toxic Vapor on him, so he hits harder each time: the soft enrage. Burn him so the last totem set can be ignored; the fastest kills finish after the third or fourth Imbibe." });
+HOW["Entombed Sentinels"] = Object.assign(HOW["Entombed Sentinels"] || {}, { pace: "Keep both Sentinels even and on pace: the fastest kills have both under 76%, 44% and 14% as the three intermissions begin, and finish in the fourth cycle. The enrage comes after the fourth cycle." });
+HOW["Ula'tek"] = Object.assign(HOW["Ula'tek"] || {}, { pace: "Rage of the Shackled opens three damage windows. On pace: Ula'tek at 67% or lower after the first and 45% or lower after the second (the fastest kills: 60 to 66% and 32 to 40%)." });
+HOW["The Twin Fangs"] = Object.assign(HOW["The Twin Fangs"] || {}, { pace: "Cleave Vexhul into execute first, then swap to Ithraz at 35%. On pace: about 25% Vexhul and 40% Ithraz by the last platform; kill Vexhul around the final soak before the enrage (about 8 minutes)." });
+HOW["Nymrissa Wavecaller"] = Object.assign(HOW["Nymrissa Wavecaller"] || {}, { pace: "She enrages after a few Pops (about 7:15). The fastest kills finish between the second and third Pop, at 3:49 to 4:35." });
+HOW["Sszorak"] = Object.assign(HOW["Sszorak"] || {}, { pace: "He enrages at about 6:20; after the last Dig In, leave the fourth cyst. The fastest kills finish at 4:43 to 5:01, with him at 34 to 39% at 3:00." });
+HOW["The Lost Explorers"] = Object.assign(HOW["The Lost Explorers"] || {}, { pace: "Each explorer takes a turn being empowered. With enough damage the third turn never comes: all 20 of the fastest kills finish in two turns." });
 const HOW_KICKS = {
   "Ula'tek": 'Three adds cast spells that must be interrupted: the Doomscale Warden\'s Malice (Stage 2, a deadly raid-wide channel), the Weakened Doomscale\'s Anguished Cry (Stage 2) and the Blightscale Shrieker\'s Vicious Echoes (Stage 3, a raid hit and stun). Give each add a kicker and a backup.',
   'The Twin Fangs': 'The Broodling of Ithraz adds cast Visceral Burst, and every cast should be interrupted. Each add is marked left or right, by its side of the platform as the raid faces the twins at the pull (Vexhul starts on the left). The first two sets come five on each side. Later sets come all on one side. Give each side its kickers and a backup, and use the map to see who was in range when a cast got off.',
@@ -3283,6 +3325,91 @@ function avLim(r, src, secs) {
     return { kb: true, k: b[1], lim: (t) => { const at = dur ? Math.min(t, dur) : t, x = bars.find((q) => q[0] >= at) || bars[bars.length - 1], a = Math.max(2, x[1] + 1); return [a, 2 * a]; } }; }
   const d = secs ? AV_SECS_DEF[src.harm] : [src.warnAt ?? DEF[src.harm][0], src.badAt ?? DEF[src.harm][1]];
   return { kb: false, lim: () => d };
+}
+// ---- Pace (Oct 22, boss coverage; your OK: "build the timing checks as planned"): the timing each boss's plan relies on, against the
+// 20 fastest Mythic kills (notes/Guides/Boss coverage.md, the Coiled Altar's Phase changes is the model). Being slower than the world's
+// best is only a slip (amber); red only where the plan breaks (a third Kith'ix intermission, a sixth Imbibe, an enrage). Mythic only:
+// on other difficulties the rows are shown, not judged. Each mistake is dated to the moment it went late, so the wipe filter is fair.
+// x: what the boss's module already knows (its intermissions, Imbibes or turns).
+function paceCard(ev, r, h, mistakes, boss, x) {
+  x = x || {};
+  const dur = r.duration, mythic = r.item.diff === 'Mythic', kill = r.item.kill, rows = [];
+  const ms2 = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+  const ids = (a) => (Array.isArray(a) ? a : [a]);
+  const gapT = (l, g) => l.sort((a, b) => a - b).filter((t, i, s) => !i || t - s[i - 1] > g);
+  const castsOf = (a, g) => gapT(ev.filter((e) => (e.k === 'cast') && ids(a).includes(e.id)).map((e) => e.t), g || 3);
+  const auraOn = (a, g) => gapT(ev.filter((e) => e.k === 'aura' && e.op === 'apply' && ids(a).includes(e.id) && !h.isPlayer(e.dst)).map((e) => e.t), g || 5);
+  const hitsOf = (a, g) => gapT(ev.filter((e) => e.k === 'dmg' && ids(a).includes(e.id) && h.isPlayer(e.dst)).map((e) => e.t), g || 5);
+  // (a boss's health at a moment: the unit with that name the log followed longest)
+  const unitOf = (re) => [...(r.hpUnits || new Map()).values()].filter((u) => re.test(u.name || '')).sort((a, b) => b.samples.length - a.samples.length)[0];
+  const hpAt = (re, t) => { const u = unitOf(re); if (!u) return null; let v = null; for (const [s, f] of u.samples) { if (s > t) break; v = f; } return v == null ? null : Math.round(100 * v); };
+  // (one row: lvl 0 on pace, 1 a slip, 2 the plan broke; a mistake for 1 and 2 on Mythic)
+  const row = (what, t, txt, kills, lvl, sub, detail, fix, noMistake) => {
+    const l = mythic ? lvl || 0 : 0;
+    if (l && !noMistake) mistakes.push({ t, player: 'Raid', mechanic: 'Pace', id: spell[0], severity: l === 2 ? 'High' : 'Medium', detail, fix });
+    rows.push([{ txt: what }, { t }, { txt, bad: l === 2, warn: l === 1, sub: sub || '' }, { txt: mythic ? kills : '', dim: true }]);
+  };
+  let spell = [0, 'Pace'], title = '', summary = '';
+  if (boss === "Kith'ix") {
+    spell = [KX.lastLight[0], 'Last Light']; title = 'Pace (Reach 25% before the third intermission)';
+    summary = 'The plan skips the third intermission: Lust and every cooldown on the pull, then push Kith\'ix to 25% (Last Light) before he reaches 100 energy a third time. The fastest kills got there at 3:46 to 4:11.';
+    const inter = x.inter || [], howl = x.howl, fix = 'Lust and every cooldown on the pull, then push Kith\'ix to 25% before the third intermission (about 4:20); hold your 2-minute cooldowns from 4:00 for Last Light.';
+    if (inter[1] != null) { const v = hpAt(/^Kith'ix$/, inter[1]); row('Intermission 2 began', inter[1], 'Kith\'ix at ' + (v ?? '?') + '%', 'kills: 44 to 52%', 0); }
+    if (howl != null) {
+      const third = inter.filter((t) => t < howl)[2], late = howl > 265;
+      if (third != null) row('Last Light (25%)', third, 'reached at ' + ms2(howl) + ', after a third intermission', 'kills: 3:46 to 4:11', 2, '', 'The third intermission came at ' + ms2(third) + ' with Kith\'ix at ' + (hpAt(/^Kith'ix$/, third) ?? '?') + '% (the fastest kills reach 25% by 4:11 and skip it).', fix);
+      else row('Last Light (25%)', late ? 265 : howl, 'reached at ' + ms2(howl), 'kills: 3:46 to 4:11', late ? 1 : 0, '', 'Kith\'ix was still at ' + (hpAt(/^Kith'ix$/, 265) ?? '?') + '% at 4:25 (the fastest kills reach 25% by 4:11).', fix);
+    } else if (kill) { /* (a kill whose log lost the Stygian Howl: nothing to judge) */
+    } else if (inter[2] != null) row('Last Light (25%)', inter[2], 'a third intermission at ' + ms2(inter[2]), 'kills: 3:46 to 4:11', 2, '', 'The third intermission came at ' + ms2(inter[2]) + ' with Kith\'ix still at ' + (hpAt(/^Kith'ix$/, inter[2]) ?? '?') + '% (the fastest kills reach 25% by 4:11 and skip it).', fix);
+    else if (dur > 265) row('Last Light (25%)', 265, 'not reached by 4:25', 'kills: 3:46 to 4:11', 1, '', 'Kith\'ix was still at ' + (hpAt(/^Kith'ix$/, 265) ?? '?') + '% at 4:25 (the fastest kills reach 25% by 4:11).', fix);
+  } else if (boss === 'Vashnik the Malignant') {
+    spell = [VS.imbibe, 'Imbibe']; title = 'Pace (Kill before Imbibe 5)';
+    summary = 'Each Imbibe makes Vashnik hit harder (Toxic Vapor stacks): the soft enrage. The fastest kills finish after the third or fourth Imbibe; the plan is to burn him before the sixth.';
+    const imb = x.imb || [], fix = 'Burn Vashnik so the last totem set can be ignored: the fastest kills finish before a fifth Imbibe.';
+    imb.forEach((t, i) => { const v = hpAt(/^Vashnik/, t), k = i + 1, lvl = k >= 6 ? 2 : k === 5 ? 1 : 0;
+      row('Imbibe ' + k, t, 'Vashnik at ' + (v ?? '?') + '%', k <= 4 ? 'kills: ' + ['', '67 to 73%', '49 to 54%', '28 to 36%', '8 to 18%'][k] : 'kills: dead by now', lvl, '', 'Vashnik was still at ' + (v ?? '?') + '% at the ' + (k === 5 ? 'fifth' : k + 'th') + ' Imbibe (the fastest kills finish after the third or fourth).', fix); });
+  } else if (boss === 'Entombed Sentinels') {
+    spell = [ES.stasis[0], 'Vitriolic Stasis']; title = 'Pace (Low enough at each intermission)';
+    summary = 'Both Sentinels\' health as each intermission begins, the higher of the two. The enrage comes after the fourth cycle, so the fastest kills finish in the fourth.';
+    const inters = x.inters || [], KB = [76, 44, 14], fix = 'Keep damage on both Sentinels evenly: the fastest kills have both under ' + KB.join('%, ') + '% at the three intermissions.';
+    inters.forEach((it, i) => { const a = hpAt(/^Breath of Ula'tek$/, it.t0), b = hpAt(/^Blood of Ula'tek$/, it.t0), v = Math.max(a ?? 0, b ?? 0);
+      if (i >= 3) { row('Intermission ' + (i + 1), it.t0, 'a fourth intermission: the enrage follows', 'kills: dead before it', 2, 'Breath ' + (a ?? '?') + '%, Blood ' + (b ?? '?') + '%', 'A fourth intermission began at ' + ms2(it.t0) + ' with the Sentinels at ' + (a ?? '?') + '% and ' + (b ?? '?') + '%; the enrage follows it.', fix); return; }
+      const lvl = v > KB[i] + 5 ? 1 : 0;
+      row('Intermission ' + (i + 1), it.t0, 'up to ' + v + '%', 'kills: ' + KB[i] + '% or lower', lvl, 'Breath ' + (a ?? '?') + '%, Blood ' + (b ?? '?') + '%', 'The Sentinels were still at ' + (a ?? '?') + '% and ' + (b ?? '?') + '% at intermission ' + (i + 1) + ' (the fastest kills: ' + KB[i] + '% or lower).', fix); });
+  } else if (boss === "Ula'tek") {
+    spell = [UL.rage, 'Rage of the Shackled']; title = 'Pace (Burst the heart on time)';
+    summary = 'Ula\'tek\'s health right after each Rage of the Shackled window. On pace: 67% or lower after the first and 45% or lower after the second (the fastest kills: 60 to 66% and 32 to 40%).';
+    const wins = auraOn(UL.rage, 30), G = [67, 45], K = ['60 to 66%', '32 to 40%'], fix = 'Line up damage cooldowns and potions for the Rage of the Shackled windows, and keep everyone alive into the second one.';
+    wins.slice(0, 2).forEach((s, i) => { const t = s + 22; if (t > dur) return; const v = hpAt(/^Ula'tek$/, t); if (v == null) return; const lvl = v > G[i] + 10 ? 2 : v > G[i] ? 1 : 0;
+      row('After window ' + (i + 1), t, 'Ula\'tek at ' + v + '%', 'kills: ' + K[i], lvl, 'on pace: ' + G[i] + '% or lower', 'Ula\'tek was still at ' + v + '% after damage window ' + (i + 1) + ' (on pace: ' + G[i] + '% or lower; the fastest kills: ' + K[i] + ').', fix); });
+  } else if (boss === 'The Twin Fangs') {
+    spell = [1308356, 'Rouse the Brood']; title = 'Pace (Low enough before the last platform)';
+    summary = 'Both Fangs\' health at 4:12, the last add set on the second platform (the log doesn\'t show the Submerge itself). The fastest kills: Vexhul 15 to 26%, Ithraz 22 to 32%. The guides\' pace: about 25% and 40% by the last platform, then kill Vexhul around the final soak before the enrage.';
+    const t = dur > 252 ? 252 : null, fix = 'Cleave Vexhul into execute first, then swap to Ithraz at 35%: about 25% Vexhul and 40% Ithraz by the last platform.';
+    if (t != null) { const a = hpAt(/^Vexhul$/, t), b = hpAt(/^Ithraz$/, t), over = Math.max((a ?? 0) - 30, (b ?? 0) - 40), lvl = over > 10 ? 2 : over > 0 ? 1 : 0;
+      row('At 4:12', t, 'Vexhul ' + (a ?? '?') + '%, Ithraz ' + (b ?? '?') + '%', 'kills: Vexhul 15 to 26%, Ithraz 22 to 32%', lvl, 'on pace: Vexhul 30% or lower, Ithraz 40% or lower', 'The Fangs were still at ' + (a ?? '?') + '% (Vexhul) and ' + (b ?? '?') + '% (Ithraz) at 4:12 (the fastest kills: 15 to 26% and 22 to 32%).', fix); }
+  } else if (boss === 'Nymrissa Wavecaller') {
+    spell = [NY.popHit, 'Pop!']; title = 'Pace (Kill before the third Pop)';
+    summary = 'Nymrissa enrages after a few Pops (about 7:15). The fastest kills finish between the second and third Pop (3:49 to 4:35), with her at 20 to 33% at 3:00.';
+    const pops = hitsOf(NY.popHit, 5), fix = 'Burn Nymrissa through the second Pop: the fastest kills finish before the third.';
+    if (dur > 180) { const v = hpAt(/^Nymrissa/, 180); if (v != null) row('At 3:00', 180, 'Nymrissa at ' + v + '%', 'kills: 20 to 33%', 0); }
+    if (pops[2] != null) { const v = hpAt(/^Nymrissa/, pops[2]); row('Third Pop', pops[2], 'Nymrissa at ' + (v ?? '?') + '%', 'kills: dead before it', 1, '', 'Nymrissa was still at ' + (v ?? '?') + '% at the third Pop (the fastest kills finish before it).', fix); }
+    const enr = hitsOf([1294867, 1295086], 30)[0];
+    if (enr != null) row('Enrage (Unending Tides)', enr, 'she enraged', 'kills: never', 2, '', '', '', true);
+  } else if (boss === 'Sszorak') {
+    spell = [SZ.fury, 'Serpent\'s Fury']; title = 'Pace (Kill before the enrage)';
+    summary = 'Sszorak enrages at about 6:20. The fastest kills finish at 4:43 to 5:01, with him at 34 to 39% at 3:00. After the last Dig In, leave the fourth cyst.';
+    const fix = 'Keep damage on Sszorak through the intermissions: the fastest kills have him at 34 to 39% at 3:00.';
+    if (dur > 180) { const v = hpAt(/^Sszorak$/, 180); if (v != null) row('At 3:00', 180, 'Sszorak at ' + v + '%', 'kills: 34 to 39%', v > 44 ? 1 : 0, '', 'Sszorak was still at ' + v + '% at 3:00 (the fastest kills: 34 to 39%).', fix); }
+    if (dur > 380 && !kill) { const v = hpAt(/^Sszorak$/, 380); row('Enrage (6:20)', 380, 'Sszorak at ' + (v ?? '?') + '%', 'kills: dead by 5:01', 2, '', 'Sszorak was still at ' + (v ?? '?') + '% at the enrage (6:20).', fix); }
+  } else if (boss === 'The Lost Explorers') {
+    spell = [0, 'Turns']; title = 'Pace (Kill in two turns)';
+    summary = 'Each explorer takes a turn being empowered. All 20 of the fastest kills finish in two turns, so the third explorer never gets one. A third turn is a slip, never a fail.';
+    const turns = (x.phases || []).filter((p) => /turn$/.test(p.name) && !/^Before/.test(p.name));
+    turns.forEach((p, i) => { const lvl = i >= 2 ? 1 : 0; row('Turn ' + (i + 1), p.start, p.name, i >= 2 ? 'kills: all 20 finish before it' : 'kills: two turns', lvl, '', 'A third turn (' + p.name + ') began at ' + ms2(p.start) + ' (all 20 of the fastest kills finish in two).', 'Push damage so the explorers die before a third one is empowered.'); });
+  } else return null;
+  if (!rows.length) return null;
+  return { id: 'pace', title, spell, verdict: rows.some((x) => x[2].bad) ? 'bad' : rows.some((x) => x[2].warn) ? 'warn' : 'good', summary, cols: ['Moment', 'When', 'Result', mythic ? 'Fastest kills' : ''], rows };
 }
 function avoidPanel(ev, r, h, list) {
   const L = (x) => String(x).toLowerCase(), groups = [];
@@ -4651,6 +4778,9 @@ function buildUlatek(ev, r, h) {
     const incT = !src && !big && !inc && incCasts.some((t) => a.t >= t && a.t <= t + 18);
     const amt = tickOf.get(a) || 0;
     const died = r.deaths.find((d) => d.guid === a.dst && d.t >= a.t && d.t <= a.t + 10.5 && /caustic waves/i.test(d.ability || ''));
+    // (Oct 22, boss coverage: 4 of the 14 fastest Mythic kills lost someone to a wave in the last 20 s; as for every death, the end
+    // of a kill isn't judged)
+    if (died && r.item.kill && died.t >= dur - 20) return [{ t: a.t }, { ps: [pname(a.dst)] }, { txt: 'a wave in the last 20 s of the kill', dim: true }, { n: tickOf.get(a) || 0, sub: a.op === 'dose' ? 'a second wave on top' : '' }, { txt: 'died', dim: true, sub: 'the end of the kill' }];
     const from = src ? 'the tail\'s wave, heading ' + compass(src.ux, src.uy) : big ? (big.id === UL.waveBig[2] ? 'Ula\'tek\'s waves' : 'Ula\'tek and the tail\'s waves') : inc ? 'waves from ' + pname(inc.dst) + ' (Toxic Incubation)' : incT ? 'Toxic Incubation\'s waves' : 'not clear from the log';
     return [{ t: a.t }, { ps: [pname(a.dst)], warn: true }, { txt: from }, { n: amt, sub: a.op === 'dose' ? 'a second wave on top' : '' }, { txt: died ? 'died' : '—', bad: !!died, dim: !died }];
   });
@@ -4844,7 +4974,10 @@ function buildUlatek(ev, r, h) {
   const exp = ev.filter((e) => e.k === 'cast' && e.id === UL.expulsion), boil = ev.filter((e) => (e.k === 'cast' || e.k === 'start') && e.id === UL.boilS), shRows = [];
   // (a Shrieker gets one Acidic Expulsion off soon after it spawns; a second one, or Boiling Venom, means it lived too long)
   for (const x of unitsNamed(/^Blightscale Shrieker$/)) { const nE = exp.filter((e) => e.src === x.g).length, b = boil.some((e) => e.src === x.g);
-    shRows.push([{ t: x.t0 }, { txt: 'Blightscale Shrieker' }, { txt: x.died != null ? 'killed in ' + Math.round(x.died - x.t0) + 's' : 'still up', warn: x.died == null && dur - x.t0 > 30 }, { txt: (b ? 'Boiling Venom' : '') + (b && nE ? ', ' : '') + (nE ? pl(nE, 'Acidic Expulsion') : '') || '—', warn: b || nE > 1, dim: !b && nE < 2 }]); }
+    // (Oct 22, boss coverage: every one of the 9 fastest Mythic kills let each Shrieker cast Boiling Venom and one Expulsion, and killed
+    // it in 20 to 32 s; the last one is still up when the kill ends. Over 40 s alive or a second Expulsion is the slip)
+    const life = x.died != null ? x.died - x.t0 : dur - x.t0;
+    shRows.push([{ t: x.t0 }, { txt: 'Blightscale Shrieker' }, { txt: x.died != null ? 'killed in ' + Math.round(life) + 's' : 'still up', warn: life > 40 && !(x.died == null && r.item.kill), dim: x.died == null && r.item.kill }, { txt: (b ? 'Boiling Venom' : '') + (b && nE ? ', ' : '') + (nE ? pl(nE, 'Acidic Expulsion') : '') || '—', warn: nE > 1, dim: nE < 2 }]); }
   const rawEx = exp.filter((e) => /Rawling/.test(h.unitName(e.src) || ''));
   for (const e of rawEx) shRows.push([{ t: e.t }, { txt: 'Blightscale Rawling' }, { txt: 'lived long enough to expel' }, { txt: 'Acidic Expulsion', warn: true }]);
   shRows.sort((a, b) => a[0].t - b[0].t);
@@ -4879,6 +5012,7 @@ function buildUlatek(ev, r, h) {
   });
   // (the Performance tab's damage windows)
   const windows = wins.map((w, i) => ({ label: 'Rage of the Shackled ' + (i + 1), short: 'Rage ' + (i + 1), t0: w.s, t1: w.e }));
+  { const pc = paceCard(ev, r, h, mistakes, "Ula'tek"); if (pc) sections.push(pc); } /* (Pace, Oct 22: boss coverage) */
   return { diag, windows, title: diff + " audit: Ula'tek", reached: phases[phases.length - 1].name, phases, marks, sections: sections.filter((s) => mythic || !s.mythicOnly), mistakes,
     note: mythic ? '' : 'Mythic-only checks (Toxic Incubation, Rancid Yolk, Revenge) are hidden on this difficulty.' };
 }

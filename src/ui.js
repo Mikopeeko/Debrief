@@ -1668,6 +1668,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-22', h: [
+    { t: 'Pace on every boss', d: 'Debriefing now has a Pace card on eight more bosses, against the 20 fastest Mythic kills: Kith\'ix reaching 25% before the third intermission, Ula\'tek after each damage window, both Sentinels at each intermission, the Twin Fangs before the last platform, Vashnik before Imbibe 5, Nymrissa before the third Pop, Sszorak before the enrage, the Lost Explorers in two turns. Slower than the world\'s best is only yellow; red is when the plan breaks.' },
     { t: 'Tap an avoidable hit', d: 'On a pull, each avoidable damage chip in the coach box now opens a card: whether it was on them, every hit with how much of their health it took, a map of the moment, and what the fastest kills take. The separate Avoidable damage row is gone from single pulls.' },
     { t: 'Fairer avoidable damage', d: 'Avoidable damage is now judged against what the fastest kills take by the same point of the fight, and pools count the seconds you stood in them. The poison pools everyone has to touch no longer flag the whole raid; dying to something dodgeable, a frontal or ghosts still does, and a raider who keeps standing in it stands out.' },
     { t: 'Fairer deaths', d: 'When one explosion kills half the raid at once, it\'s no longer counted against each of you. A hit that takes you from 70% to dead in a second now counts as too fast to react. Mind controlled off the edge counts half. Every death\'s advice now matches what really killed you, like "Pick up your soul fragments" for Gravebound instead of "press a defensive".' },
@@ -1679,6 +1680,9 @@ const PATCH_NOTES = [
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
+    'Every boss, not just The Coiled Altar: the coach compares each mechanic with that boss\'s 20 fastest Mythic and Heroic kills, so it puts first what the kills nearly always get right and says when even they slip.',
+    'Fixed checks that marked the world\'s fastest kills as failed: Kith\'ix Null Gates in the last 30 seconds of a kill, Lost Explorers United Defense brushes under 3 seconds and a few Blast Wave hits, Nek\'zali Invoke catching 1 to 3 players, a tank\'s Soulcoil Ignition circles, Ula\'tek Shriekers\' Boiling Venom, Twin Fangs Feast strikes that still had 4 fresh soakers, and Entombed Sentinels Miasma soaks with 6 or 7.',
+    'On Heroic, an unsoaked Vashnik bile, a Twin Fangs Feast strike with few soakers or a Lost Explorers Final Ascension is now a slip (yellow) unless it kills someone, as the fastest Heroic kills show.',
     'The menu\'s Debrief in game page is now called Debrief Addon.',
     'Debriefing\'s maps show each player\'s spec icon and name in their class colour, a size smaller so more fit. The player a moment is about is always named; in a tight stack the others show on hover.',
     'Maps no longer zoom by themselves: small maps stay their size when you hover them, and scrolling the page over a map scrolls the page. Zoom with + and −, or open the map big.',
@@ -7586,19 +7590,22 @@ const MD_SECS = new Set(['soakq', 'push', 'tankfront', 'shield', 'addsets']);
 // then what kills players, then what adds stacks or damage, then minor. Sections not listed go last.
 const IMPORTANCE = {
   'The Coiled Altar': ['orbs', 'sever', 'shield', 'dmghost', 'ghosts', 'mc', 'soakq', 'inter', 'gloom', 'addsets', 'adds', 'addx', 'push', 'soulsever', 'dmstack', 'tankfront', 'front', 'kicks', 'avoid', 'vf'],
-  'The Twin Fangs': ['kicks', 'bulwark', 'soaks', 'venom', 'feast', 'founts', 'stone', 'spit', 'twins', 'avoid', 'ichor'],
-  'Entombed Sentinels': ['helix', 'protovenom', 'miasma', 'droplets', 'coag', 'balance', 'blighted', 'marks', 'tanks', 'avoid', 'pools'],
+  'The Twin Fangs': ['kicks', 'bulwark', 'soaks', 'venom', 'feast', 'founts', 'stone', 'spit', 'twins', 'pace', 'avoid', 'ichor'],
+  'Entombed Sentinels': ['helix', 'protovenom', 'miasma', 'droplets', 'coag', 'balance', 'blighted', 'marks', 'tanks', 'pace', 'avoid', 'pools'],
   // (the two biggest wipe causes are failed Fury pops and Tempest; then the winds, the Crosswinds, the soaks)
-  Sszorak: ['fury', 'tempest', 'winds', 'crosswinds', 'mutilate', 'virulence', 'cysts', 'ravage', 'avoid'],
+  Sszorak: ['fury', 'tempest', 'winds', 'crosswinds', 'mutilate', 'virulence', 'cysts', 'ravage', 'pace', 'avoid'],
   // (the Mythic wipes: corpses back at once in the intermission, Amani in the well, a Curse in the well, the enrage)
   // (Mythic: totems left at Imbibe and venoms in the middle wipe; Plague Wave lines kill the most players)
-  'Vashnik the Malignant': ['totems', 'venoms', 'froth', 'bile', 'infect', 'imbibe', 'fangs', 'avoid'],
+  'Vashnik the Malignant': ['totems', 'venoms', 'froth', 'bile', 'infect', 'imbibe', 'fangs', 'pace', 'avoid'],
   // (the Mythic wipes: a box rupture, a late fish, an Elemental Explosion, an empty leap; then United Defense and deaths)
-  'The Lost Explorers': ['boxes', 'ascension', 'frostfire', 'thud', 'united', 'bomb', 'blink', 'tankstacks', 'avoid'],
+  'The Lost Explorers': ['boxes', 'ascension', 'frostfire', 'thud', 'united', 'bomb', 'blink', 'tankstacks', 'pace', 'avoid'],
   "Nek'zali the Soulcoiler": ['ritual', 'amani', 'depths', 'energy', 'ignition', 'rend', 'barrage', 'invoke', 'avoid'],
-  "Ula'tek": ['eggs', 'coils', 'waves', 'tank', 'incub', 'wretch', 'amps', 'fangs', 'doomscale', 'kicks', 'bite', 'shriek', 'avoid'],
+  "Ula'tek": ['eggs', 'coils', 'waves', 'tank', 'incub', 'wretch', 'amps', 'fangs', 'doomscale', 'kicks', 'bite', 'shriek', 'pace', 'avoid'],
   // (the Mythic wipes: murlocs reaching the bubble (Berserker), Frost Bursts stacked during Abyssal Rain, sharks after Pop!)
-  'Nymrissa Wavecaller': ['nyadds', 'nyburst', 'orbs', 'nypop', 'nyrain', 'nyscale', 'nyjet', 'avoid'],
+  'Nymrissa Wavecaller': ['nyadds', 'nyburst', 'orbs', 'nypop', 'nyrain', 'nyscale', 'nyjet', 'pace', 'avoid'],
+  // (Oct 22, boss coverage: the wipes are adds alive at the intermission (Dark Frenzy), fragments reaching Liadrin, beetles popped
+  // together and the Last Light race; the fastest kills slip on fears, motes and late Nullify deaths without it costing the kill)
+  "Kith'ix": ['kxadds', 'kxdps', 'kxfrag', 'kxbeetle', 'kxtank', 'kxgrasp', 'kxgate', 'kxext', 'kxfear', 'pace', 'avoid'],
 };
 // Each mechanic's tier (Oct 19, your rule): what failing it does. Major likely wipes the raid, Moderate could kill one or a few players,
 // Minor makes the fight harder. A mistake (red) takes its mechanic's tier; a slip (amber) is always Minor. Deaths are Moderate, Avoidable
@@ -7613,6 +7620,7 @@ const TIERS = {
   "Nek'zali the Soulcoiler": { major: ['ritual', 'amani', 'depths', 'energy'], minor: [] },
   "Ula'tek": { major: ['eggs', 'coils', 'waves', 'tank'], minor: ['kicks', 'shriek'] },
   'Nymrissa Wavecaller': { major: ['nyadds', 'nyburst', 'orbs'], minor: ['nyscale'] },
+  "Kith'ix": { major: ['kxadds', 'kxdps', 'kxfrag'], minor: ['kxext', 'kxfear'] },
 };
 const tierOf = (boss, id) => { if (id === 'avoid') return 'minor'; const t = TIERS[boss]; return t && t.major.includes(id) ? 'major' : t && t.minor.includes(id) ? 'minor' : 'moderate'; };
 // Three flags (Oct 19, your call: "4 is too much"): green, done right; yellow, mostly right with some mistakes; red, failed. A
@@ -8962,16 +8970,96 @@ function coachRight(reps, name, S2) {
 // ---- Kill baselines (your OK, Oct 22: "yea try it"; notes/Guides/Kill baselines - how to build one.md): how the fastest kills did each
 // mechanic, read through Debrief itself, the way Wipefest scores against real kills. Per mechanic line: k kills read, ok = how many were
 // done right (no flagged row), med = the median share of its moments that went wrong. A mechanic kills nearly always get right
-// matters most when we miss it; one even the best kills slip on matters less. Mythic only so far; other bosses come one at a time.
+// matters most when we miss it; one even the best kills slip on matters less. All 10 bosses (Oct 22); see notes/Guides/Boss coverage.md.
 const KILL_BASE = {
+  // (Oct 22, boss coverage: every boss now, read in node with the real engine on the fastest kills (notes/Guides/Boss coverage.md);
+  // med null = a card that lists only what went wrong, so it has no share to compare)
+  'Nymrissa Wavecaller': { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
+    orbs: { k: 20, ok: 20, med: 0 }, nyburst: { k: 20, ok: 4, med: 20 }, nyadds: { k: 20, ok: 11, med: 0 },
+    nyscale: { k: 20, ok: 13, med: 0 }, nyjet: { k: 20, ok: 15, med: 0 }, nyrain: { k: 20, ok: 20, med: 0 },
+    nypop: { k: 12, ok: 0, med: 67 }, avoid: { k: 20, ok: 4, med: 18 } } },
+    15: { from: '20 fastest Heroic kills, Oct 22', sec: {
+    orbs: { k: 20, ok: 19, med: 0 }, nyadds: { k: 20, ok: 12, med: 0 }, nyrain: { k: 20, ok: 18, med: 0 },
+    avoid: { k: 20, ok: 10, med: 3 } } } },
+  "Nek'zali the Soulcoiler": { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
+    amani: { k: 20, ok: 20, med: 0 }, ignition: { k: 20, ok: 5, med: 37 }, depths: { k: 20, ok: 17, med: 0 },
+    rend: { k: 20, ok: 12, med: 0 }, barrage: { k: 20, ok: 5, med: 71 }, ritual: { k: 20, ok: 20, med: 0 },
+    invoke: { k: 20, ok: 12, med: 0 }, avoid: { k: 20, ok: 6, med: 14 } } },
+    15: { from: '20 fastest Heroic kills, Oct 22', sec: {
+    amani: { k: 20, ok: 15, med: 0 }, ignition: { k: 20, ok: 0, med: 67 }, rend: { k: 20, ok: 10, med: 10 },
+    barrage: { k: 20, ok: 2, med: null }, ritual: { k: 20, ok: 19, med: 0 }, avoid: { k: 20, ok: 3, med: 19 } } } },
+  'Entombed Sentinels': { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
+    helix: { k: 20, ok: 19, med: 0 }, protovenom: { k: 20, ok: 5, med: 7 }, droplets: { k: 20, ok: 0, med: 7 },
+    coag: { k: 20, ok: 10, med: 8 }, miasma: { k: 20, ok: 5, med: 33 }, blighted: { k: 20, ok: 0, med: 42 },
+    marks: { k: 20, ok: 3, med: 55 }, balance: { k: 20, ok: 8, med: 33 }, tanks: { k: 20, ok: 20, med: 0 },
+    avoid: { k: 20, ok: 2, med: 23 } } },
+    15: { from: '20 fastest Heroic kills, Oct 22', sec: {
+    helix: { k: 20, ok: 18, med: 0 }, droplets: { k: 20, ok: 0, med: 9 }, coag: { k: 20, ok: 20, med: 0 },
+    miasma: { k: 20, ok: 17, med: 0 }, blighted: { k: 20, ok: 2, med: 50 }, marks: { k: 20, ok: 1, med: 67 },
+    balance: { k: 20, ok: 10, med: 25 }, tanks: { k: 20, ok: 20, med: 0 }, avoid: { k: 20, ok: 4, med: 23 } } } },
+  'The Lost Explorers': { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
+    boxes: { k: 20, ok: 2, med: 9 }, united: { k: 16, ok: 15, med: 0 }, frostfire: { k: 16, ok: 2, med: 5 },
+    blink: { k: 20, ok: 20, med: 0 }, thud: { k: 20, ok: 6, med: 10 }, avoid: { k: 20, ok: 4, med: 26 },
+    kicks: { k: 20, ok: 16, med: 0 } } },
+    15: { from: '20 fastest Heroic kills, Oct 22', sec: {
+    boxes: { k: 20, ok: 8, med: 2 }, united: { k: 12, ok: 11, med: 0 }, blink: { k: 20, ok: 20, med: 0 },
+    thud: { k: 12, ok: 0, med: 20 }, avoid: { k: 15, ok: 0, med: 33 }, kicks: { k: 20, ok: 19, med: 0 } } } },
+  'Vashnik the Malignant': { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
+    venoms: { k: 20, ok: 6, med: 25 }, totems: { k: 20, ok: 16, med: 0 }, froth: { k: 20, ok: 1, med: 11 },
+    bile: { k: 20, ok: 17, med: 0 }, infect: { k: 20, ok: 0, med: 37 }, fangs: { k: 20, ok: 19, med: 0 },
+    avoid: { k: 20, ok: 2, med: 9 } } },
+    15: { from: '20 fastest Heroic kills, Oct 22', sec: {
+    venoms: { k: 20, ok: 5, med: 67 }, froth: { k: 20, ok: 0, med: 89 }, bile: { k: 20, ok: 12, med: 0 },
+    infect: { k: 20, ok: 2, med: 30 }, fangs: { k: 20, ok: 20, med: 0 }, avoid: { k: 20, ok: 0, med: 44 } } } },
+  Sszorak: { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
+    ravage: { k: 20, ok: 18, med: 0 }, mutilate: { k: 20, ok: 18, med: 0 }, tempest: { k: 20, ok: 0, med: 67 },
+    cysts: { k: 20, ok: 19, med: 0 }, winds: { k: 20, ok: 15, med: 0 }, crosswinds: { k: 20, ok: 0, med: 13 },
+    fury: { k: 20, ok: 18, med: 0 }, virulence: { k: 20, ok: 0, med: 38 }, avoid: { k: 20, ok: 4, med: 9 } } },
+    15: { from: '20 fastest Heroic kills, Oct 22', sec: {
+    ravage: { k: 20, ok: 17, med: 0 }, mutilate: { k: 20, ok: 16, med: 0 }, tempest: { k: 20, ok: 0, med: 74 },
+    cysts: { k: 20, ok: 20, med: 0 }, winds: { k: 20, ok: 16, med: 0 }, crosswinds: { k: 20, ok: 2, med: 10 },
+    avoid: { k: 19, ok: 18, med: 0 } } } },
+  'The Twin Fangs': { 16: { from: '19 fastest Mythic kills, Oct 22', sec: {
+    venom: { k: 19, ok: 2, med: 15 }, feast: { k: 19, ok: 10, med: 0 }, founts: { k: 19, ok: 19, med: 0 },
+    soaks: { k: 19, ok: 2, med: 3 }, bulwark: { k: 19, ok: 2, med: 3 }, spit: { k: 19, ok: 2, med: 13 },
+    ichor: { k: 19, ok: 19, med: 0 }, stone: { k: 19, ok: 13, med: 0 }, avoid: { k: 19, ok: 0, med: 43 },
+    kicks: { k: 19, ok: 18, med: 0 } } },
+    15: { from: '20 fastest Heroic kills, Oct 22', sec: {
+    venom: { k: 20, ok: 2, med: 10 }, feast: { k: 20, ok: 1, med: 25 }, soaks: { k: 20, ok: 13, med: 0 },
+    spit: { k: 20, ok: 1, med: 25 }, ichor: { k: 20, ok: 19, med: 0 }, stone: { k: 20, ok: 18, med: 0 },
+    avoid: { k: 20, ok: 0, med: 29 } } } },
   'The Coiled Altar': { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
-    avoid: { k: 20, ok: 9, med: 2 }, dmghost: { k: 20, ok: 11, med: 0 }, addsets: { k: 20, ok: 12, med: 0 }, gloom: { k: 20, ok: 2, med: 6 },
-    push: { k: 20, ok: 16, med: 0 }, orbs: { k: 20, ok: 2, med: 13 }, tankfront: { k: 20, ok: 2, med: 14 }, soakq: { k: 20, ok: 3, med: 50 },
-    shield: { k: 20, ok: 17, med: 0 }, inter: { k: 20, ok: 16, med: 0 }, vf: { k: 20, ok: 3, med: 33 } } } },
+    avoid: { k: 20, ok: 1, med: 10 }, dmghost: { k: 20, ok: 11, med: 0 }, addsets: { k: 20, ok: 12, med: 0 },
+    gloom: { k: 20, ok: 2, med: 6 }, push: { k: 20, ok: 16, med: 0 }, orbs: { k: 20, ok: 2, med: 13 },
+    tankfront: { k: 20, ok: 2, med: 11 }, soakq: { k: 20, ok: 3, med: 42 }, shield: { k: 20, ok: 17, med: 0 },
+    inter: { k: 20, ok: 16, med: 0 }, vf: { k: 20, ok: 3, med: 33 } } },
+    15: { from: '20 fastest Heroic kills, Oct 22', sec: {
+    avoid: { k: 20, ok: 11, med: 0 }, dmghost: { k: 20, ok: 16, med: 0 }, addsets: { k: 20, ok: 19, med: 0 },
+    push: { k: 20, ok: 19, med: 0 }, orbs: { k: 20, ok: 13, med: 0 }, tankfront: { k: 19, ok: 13, med: 0 },
+    soakq: { k: 20, ok: 20, med: 0 }, shield: { k: 20, ok: 20, med: 0 }, vf: { k: 19, ok: 2, med: 75 } } } },
+  "Ula'tek": { 16: { from: '19 fastest Mythic kills, Oct 22', sec: {
+    eggs: { k: 19, ok: 7, med: 2 }, coils: { k: 19, ok: 18, med: 0 }, waves: { k: 19, ok: 0, med: null },
+    tank: { k: 19, ok: 18, med: 0 }, incub: { k: 19, ok: 19, med: 0 }, wretch: { k: 19, ok: 6, med: 25 },
+    amps: { k: 19, ok: 19, med: 0 }, fangs: { k: 19, ok: 18, med: 0 }, doomscale: { k: 19, ok: 0, med: 25 },
+    bite: { k: 19, ok: 1, med: 8 }, shriek: { k: 19, ok: 18, med: 0 }, avoid: { k: 19, ok: 1, med: 20 },
+    kicks: { k: 19, ok: 19, med: 0 } } },
+    15: { from: '20 fastest Heroic kills, Oct 22', sec: {
+    eggs: { k: 20, ok: 1, med: 10 }, coils: { k: 20, ok: 16, med: 0 }, waves: { k: 20, ok: 0, med: null },
+    tank: { k: 20, ok: 18, med: 0 }, amps: { k: 20, ok: 20, med: 0 }, fangs: { k: 20, ok: 11, med: 0 },
+    doomscale: { k: 20, ok: 20, med: 0 }, bite: { k: 20, ok: 7, med: 20 }, avoid: { k: 20, ok: 1, med: 23 },
+    kicks: { k: 20, ok: 20, med: 0 } } } },
+  "Kith'ix": { 16: { from: '19 fastest Mythic kills, Oct 22', sec: {
+    kxadds: { k: 19, ok: 17, med: 0 }, kxbeetle: { k: 19, ok: 13, med: 0 }, kxext: { k: 19, ok: 0, med: null },
+    kxfear: { k: 19, ok: 2, med: 40 }, kxtank: { k: 19, ok: 19, med: 0 }, kxgrasp: { k: 19, ok: 2, med: 11 },
+    kxgate: { k: 19, ok: 15, med: 0 }, avoid: { k: 19, ok: 1, med: 19 } } },
+    15: { from: '20 fastest Heroic kills, Oct 22', sec: {
+    kxadds: { k: 20, ok: 19, med: 0 }, kxbeetle: { k: 20, ok: 5, med: 33 }, kxext: { k: 18, ok: 0, med: null },
+    kxfear: { k: 20, ok: 3, med: 67 }, kxtank: { k: 20, ok: 18, med: 0 }, kxgrasp: { k: 20, ok: 5, med: 10 },
+    kxgate: { k: 20, ok: 20, med: 0 }, avoid: { k: 20, ok: 4, med: 13 } } } },
 };
 const kbOf = (it, sec) => { const b = it && KILL_BASE[it.boss] && KILL_BASE[it.boss][it.diffId]; return b && sec && b.sec[sec] ? b.sec[sec] : null; };
 // (how much a mechanic matters by the kills: 2 = they nearly always get it right, 1 = most do, 0 = even they slip on it)
-const kbImp = (it, sec) => { const b = kbOf(it, sec); if (!b) return 1; const r = b.ok / b.k; return r >= 0.7 ? 2 : r >= 0.4 ? 1 : 0; };
+const kbImp = (it, sec) => { if (sec === 'pace') return 0; /* (Pace, Oct 22: being slower than the world's best is never ranked above a mechanic; it topped the coach on a kill) */ const b = kbOf(it, sec); if (!b) return 1; const r = b.ok / b.k; return r >= 0.7 ? 2 : r >= 0.4 ? 1 : 0; };
 // ---- Coach logic, round 2 (your ask, Oct 22: "build better logic for mechanical execution ... enhance the advice"; the research:
 // notes/Guides/Coach logic - research and plan.md). Each problem gets what happened (feed back) before its fix (feed forward); the
 // kind of error decides the advice: once is a reminder, every pull needs the plan explained (the guide link), a note job missed
@@ -9036,7 +9124,7 @@ function coachEnrich(list, reps, name) {
     if (x.again && s) x.guide = oaGuideBtn(it, s.id, s.title);
     /* (the kills' baseline: how they do it, and ours against it) */ if (s) { const b = kbOf(it, s.id); if (b) { x.kb = b; const ours = reps.map((r) => pullSections(r).get(s.id)).filter(Boolean).map((y) => { const rows = y.s.rows.concat(...(y.s.groups || []).map((gg) => gg.rows || [])); return rows.length ? rows.filter((row) => row.some((c) => c && (c.bad || c.warn))).length / rows.length : 0; });
       const mine = ours.length ? Math.round(100 * ours.sort((p, q) => p - q)[Math.floor(ours.length / 2)]) : null; const rt = b.ok / b.k; x.kbLine = (rt >= 0.7 ? b.ok + ' of the ' + b.k + ' fastest kills got this fully right' : rt >= 0.4 ? 'About half the fastest kills got this fully right (' + b.ok + ' of ' + b.k + ')' : 'Even the fastest kills slip here: only ' + b.ok + ' of ' + b.k + ' got it fully right') +
-        (mine != null && !name ? (b.med < 5 ? '. A typical kill gets almost none of it wrong; we got ' + mine + '% of it wrong.' : '. A typical kill gets about ' + b.med + '% of it wrong; we got ' + mine + '%.') : '.'); } }
+        (mine != null && !name && b.med != null ? (b.med < 5 ? '. A typical kill gets almost none of it wrong; we got ' + mine + '% of it wrong.' : '. A typical kill gets about ' + b.med + '% of it wrong; we got ' + mine + '%.') : '.'); } }
     return x; })
     // (on a night, what's already fixed in the last pulls goes to the end)
     .sort((a, b) => (a.trend === 'better') - (b.trend === 'better'));
@@ -23790,7 +23878,7 @@ const FPB_DO = { 'Unending Tides': 'Kill Nymrissa before her enrage floods the r
 const FPB_VERB = /^(Kill|Soak|Stand|Get|Step|Stay|Dodge|Spread|Keep|Interrupt|Kick|Feed|Dispel|Avoid|Don't|Walk|Move|Use|Drop|Face|Save|Clear|Tank|Swap|Switch)\b/;
 // (Oct 21, the world-first pass: a boss card listed only its rule-pack checks (3 for The Coiled Altar) while Debriefing checks 10;
 // these are Debriefing's own mechanic lines, read from each fight module, in its order)
-const FPB_MECH = {"Nymrissa Wavecaller":["Frost Orbs (Soak every orb)","Frost Burst (Soak one at a time)","Murloc sets (Kill them before the bubble)","Bubblefin Frostscales (Kill them first)","Water Jet (Swap every jet)","Abyssal Rain (Cover it with cooldowns)","Whirlpools and Pop! (Find the gap, stay dry)"],"The Twin Fangs":["Twin balance (Kill them together)","Eternal Venom (Stay under the limit)","Ravenous Feast (Soak in groups of 4)","Tainted Blood (Heal the absorbs off)","Caustic Globules (One soak each)","Barbed Bulwark (CC breaks it)","Stone Breaker (Tank catches the circles)"],"Entombed Sentinels":["Helical Toxins (Pair up and solve)","Shifting Protovenom (Clear circles in pairs)","Toxic Droplets (Step on one each)","Venom Coagulation (Kill before the intermission)","Unstable Miasma (Soak with 8)","Blighted Blood (Dispel fast)","Blood pools (Keep the floor clear)","Boss balance (Keep them even)","Tanks (Swap at each intermission)"],"Nek'zali the Soulcoiler":["Restless Amani (Kill before the well)","Soulcoil Ignition (Dodge the circles)","Grasping Depths (Kill the Echo, kick the Curse)","Essence Rend (Dispel at the side)","Possession Barrage (Tank steps away)","Intermission (Soak the Pyres)","Invoke (Stop casting)"],"The Lost Explorers":["Boxes (Pop early)","United Defense (Keep the bosses apart)","Final Ascension (Feed a fish in time)","Frostfire Volley (Swap patches)","Blink Nova (Target runs out)","Mighty Thud (Soak every leap)","Explosive Surprise (Bounce over the wave)","Tank stacks (Swap before too many)"],"Vashnik the Malignant":["Imbibe (Fountains drained)","Living Venoms (Kill one at a time)","Malignant Totems (Clear before the next Imbibe)","Plague Froth (Aim the lines at totems)","Catalytic Bile (Soak every bile)","Adaptive Infection (Dispel one at a time)","Dripping Fangs (Tanks swap)"],"Sszorak":["Ravage (Tanks swap)","Mutilate (Soak in two groups)","Tempest (Dodge the tornadoes)","Venomous Surge (Save cysts for the winds)","Intermission (A cyst for each wind)","Raging Crosswinds (Collide in the air)","Virulence (Spread out)"],"Ula'tek":["Eggs (Don't let them hatch)","Spectral Coils (Soak the circles)","Caustic Waves (Dodge the waves)","Tail (Always a tank on it)","Toxic Incubation (Off-tank soaks the beam)","Blightscale Wretch (Stand in its bubble)","Rage of the Shackled (Burst the heart)","Grasping Fangs (Tether breaks)","Wardens and Doomscales (Kick and kill)","Shriekers and Rawlings (Kill the adds)"],"Kith'ix":["Voidswarm (Kill before the intermission)","Bomber Beetles (Pop one at a time)","Overwhelming Fear (Dispel one at a time)","Dark Devastation (Tank swap)","Abyssal Grasp (Heal it off)","Eclipse Fragments (Catch them in turns)","Null Gates (Dodge the shards)","Last Light (Kill before the 8th Eclipse)"],"The Coiled Altar":["Coalesced Venom (Pop the orbs with the frontals)","Sever (Defensive on the second stack)","Guillotine (Soak with 5)","Phase changes (Push on time)","Dreadmarch (Stack, then stand still)","Spiteful Soulcoiler (Kick and kill)","Gloombomb (Drop it on the adds)","Eternal Nightfall (Break and kick)","Intermission (Stop the fragments)","Venomfang (Dispel fast)"]};
+const FPB_MECH = {"Nymrissa Wavecaller":["Frost Orbs (Soak every orb)","Frost Burst (Soak one at a time)","Murloc sets (Kill them before the bubble)","Bubblefin Frostscales (Kill them first)","Water Jet (Swap every jet)","Abyssal Rain (Cover it with cooldowns)","Whirlpools and Pop! (Find the gap, stay dry)","Pace (Kill before the third Pop)"],"The Twin Fangs":["Twin balance (Kill them together)","Eternal Venom (Stay under the limit)","Ravenous Feast (Soak in groups of 4)","Tainted Blood (Heal the absorbs off)","Caustic Globules (One soak each)","Barbed Bulwark (CC breaks it)","Stone Breaker (Tank catches the circles)","Pace (Low enough before the last platform)"],"Entombed Sentinels":["Helical Toxins (Pair up and solve)","Shifting Protovenom (Clear circles in pairs)","Toxic Droplets (Step on one each)","Venom Coagulation (Kill before the intermission)","Unstable Miasma (Soak with 8)","Blighted Blood (Dispel fast)","Blood pools (Keep the floor clear)","Boss balance (Keep them even)","Tanks (Swap at each intermission)","Pace (Low enough at each intermission)"],"Nek'zali the Soulcoiler":["Restless Amani (Kill before the well)","Soulcoil Ignition (Dodge the circles)","Grasping Depths (Kill the Echo, kick the Curse)","Essence Rend (Dispel at the side)","Possession Barrage (Tank steps away)","Intermission (Soak the Pyres)","Invoke (Stop casting)"],"The Lost Explorers":["Boxes (Pop early)","United Defense (Keep the bosses apart)","Final Ascension (Feed a fish in time)","Frostfire Volley (Swap patches)","Blink Nova (Target runs out)","Mighty Thud (Soak every leap)","Explosive Surprise (Bounce over the wave)","Tank stacks (Swap before too many)","Pace (Kill in two turns)"],"Vashnik the Malignant":["Imbibe (Fountains drained)","Living Venoms (Kill one at a time)","Malignant Totems (Clear before the next Imbibe)","Plague Froth (Aim the lines at totems)","Catalytic Bile (Soak every bile)","Adaptive Infection (Dispel one at a time)","Dripping Fangs (Tanks swap)","Pace (Kill before Imbibe 5)"],"Sszorak":["Ravage (Tanks swap)","Mutilate (Soak in two groups)","Tempest (Dodge the tornadoes)","Venomous Surge (Save cysts for the winds)","Intermission (A cyst for each wind)","Raging Crosswinds (Collide in the air)","Virulence (Spread out)","Pace (Kill before the enrage)"],"Ula'tek":["Eggs (Don't let them hatch)","Spectral Coils (Soak the circles)","Caustic Waves (Dodge the waves)","Tail (Always a tank on it)","Toxic Incubation (Off-tank soaks the beam)","Blightscale Wretch (Stand in its bubble)","Rage of the Shackled (Burst the heart)","Grasping Fangs (Tether breaks)","Wardens and Doomscales (Kick and kill)","Shriekers and Rawlings (Kill the adds)","Pace (Burst the heart on time)"],"Kith'ix":["Voidswarm (Kill before the intermission)","Bomber Beetles (Pop one at a time)","Overwhelming Fear (Dispel one at a time)","Dark Devastation (Tank swap)","Abyssal Grasp (Heal it off)","Eclipse Fragments (Catch them in turns)","Null Gates (Dodge the shards)","Last Light (Kill before the 8th Eclipse)","Pace (Reach 25% before the third intermission)"],"The Coiled Altar":["Coalesced Venom (Pop the orbs with the frontals)","Sever (Defensive on the second stack)","Guillotine (Soak with 5)","Phase changes (Push on time)","Dreadmarch (Stack, then stand still)","Spiteful Soulcoiler (Kick and kill)","Gloombomb (Drop it on the adds)","Eternal Nightfall (Break and kick)","Intermission (Stop the fragments)","Venomfang (Dispel fast)"]};
 const fpbList = (b) => (FPB_MECH[b] ? FPB_MECH[b].map((t) => { const m = /^(.*?) \((.*)\)$/.exec(t) || [0, t, '']; return { n: m[1], k: '', t: m[2] ? m[2] + '.' : '' }; }) : fpbChecks(b));
 const fpbMore = (b) => { const pk = E.PACKS.find((q) => q.encounter === b), av = pk ? [...new Set(pk.rules.filter((q) => q.type === 'avoidable').map((q) => q.name))] : [];
   return 'Plus ' + (av.length ? 'avoidable damage (' + andList(av) + '), ' : '') + 'every death, every kick, the raid cooldowns and the jobs in your NSRT note, with a map of who stood where.'; };
