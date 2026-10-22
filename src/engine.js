@@ -635,6 +635,30 @@ const CA_CURSE = ['curse of tongues', 'curse of the satyr'];
 // Personal defensives by name (from DEFENSIVES, minus raid-wide ones), for soak checks.
 // (Metamorphosis is a Havoc damage cooldown under the same name, so it isn't treated as a defensive in soaks)
 const PERSONAL = [...new Set(Object.values(DEFENSIVES).flat().map((d) => d[0].toLowerCase()).filter((n) => n !== 'rallying cry' && n !== 'darkness' && n !== 'metamorphosis'))];
+// Mechanic titles (your rule, Oct 22: "the nicknames to boss mechanics has gotten weird again"): "Name (Short instruction)": the name
+// players know in game, then a short, clear instruction; nothing after the bracket; no glossary underlines inside a title (ui.js
+// secHead). A check that changes its title says so here, so every tab, the coach, Homework, the Report card, Copy for Discord and
+// the in-game recap use the same name. Guide: notes/Guides/Mechanic titles - the rule.md
+const TITLE_FIX = {
+  'The Coiled Altar': {
+    'Venom orbs (Into the frontals)': 'Coalesced Venom (Pop the orbs with the frontals)',
+    'Tank frontals (Defensives on stack 2)': 'Sever (Defensive on the second stack)',
+    'Soulcoiler adds (Kick and kill)': 'Spiteful Soulcoiler (Kick and kill)',
+    'Gloombombs (Drop them on the adds)': 'Gloombomb (Drop it on the adds)'
+  },
+  "Ula'tek": {
+    'Eggs (No Vipers)': "Eggs (Don't let them hatch)",
+    'Spectral Coils (Soak circles)': 'Spectral Coils (Soak the circles)',
+    'Caustic Waves (Dodge waves)': 'Caustic Waves (Dodge the waves)',
+    'Tanks (Tail tanking)': 'Tail (Always a tank on it)',
+    'Toxic Incubation (Beam)': 'Toxic Incubation (Off-tank soaks the beam)',
+    'Blightscale Wretch (Bubble)': 'Blightscale Wretch (Stand in its bubble)',
+    'Rage of the Shackled (Damage windows)': 'Rage of the Shackled (Burst the heart)',
+    'Wardens and Doomscales (Big adds)': 'Wardens and Doomscales (Kick and kill)',
+    'Serpent\'s Bite (Soak)': 'Serpent\'s Bite (Soak with 3)',
+    'Shriekers and Rawlings (Adds)': 'Shriekers and Rawlings (Kill the adds)'
+  }
+};
 const MODULES = [{
   encounter: 'Nymrissa Wavecaller',
   units: [],
@@ -6259,6 +6283,7 @@ function* analyzeSteps(item, text, opts) {
       try { avoidMistakes(r); } catch (e) { console.error(e); } /* (the avoid panel's verdict is the one answer (Oct 22)) */
       if (mod.encounter === 'The Coiled Altar') r.module.pools = caPools(modEv); // (for the maps: the Fangs pools as they really were)
       for (const s of r.module.sections) s.how = (HOW[mod.encounter] || {})[s.id] || ''; // short strategy note per mechanic
+      for (const s of r.module.sections) { const nt = (TITLE_FIX[mod.encounter] || {})[s.title]; if (nt) { if (!s.place) s.place = s.title; s.title = nt; } } /* (one name everywhere, see TITLE_FIX) */
     }
     catch (err) { r.module = { title: mod.encounter + ' audit', error: String(err && err.message || err), sections: [], phases: [], marks: [] }; }
   }
