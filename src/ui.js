@@ -1614,7 +1614,7 @@ window.addEventListener('unhandledrejection', (e) => keepErr('Unhandled: ' + ((e
 const TAB_NAME = { me: 'Home', live: 'Recap', audit: 'Debriefing', overview: 'Assignments', rot: 'Rotation', perf: 'Graphs', night: 'All pulls', player: 'Report card', hw: 'Homework', gdz: 'Guides' };
 function reportCtx() {
   const it = S.rep && S.rep.item, c = { page: S.rep && $('#view') ? TAB_NAME[S.tab] || S.tab : $('#main .pg-hub') ? 'Teams' : 'Start page' };
-  if (S.page === 'guides') c.page = 'Boss guides'; if (S.page === 'ingame') c.page = 'Debrief in game'; if (S.rpAbout) c.about = S.rpAbout; /* (a guide's Something wrong here?: which part) */
+  if (S.page === 'guides') c.page = 'Boss guides'; if (S.page === 'ingame') c.page = 'Addon'; if (S.rpAbout) c.about = S.rpAbout; /* (a guide's Something wrong here?: which part) */
   if (it) { c.boss = it.boss + (it.diff ? ' (' + it.diff + ')' : ''); if (it.pull) c.pull = it.pull; if (S.scope === 'all') c.scope = 'all pulls'; }
   if (it && it.wcl) c.report = 'https://www.warcraftlogs.com/reports/' + it.wcl.code + '#fight=' + it.wcl.fight; else if (S.wclCode) c.report = 'https://www.warcraftlogs.com/reports/' + S.wclCode; else if (S.file) c.report = 'a combat log file';
   if (typeof LIVE !== 'undefined' && LIVE.on) c.live = 'yes';
@@ -1678,6 +1678,7 @@ const PATCH_NOTES = [
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
+    'The menu\'s Debrief in game page is now called Addon.',
     'Debriefing\'s maps show each player\'s spec icon and name in their class colour, a size smaller so more fit. The player a moment is about is always named; in a tight stack the others show on hover.',
     'Maps no longer zoom by themselves: small maps stay their size when you hover them, and scrolling the page over a map scrolls the page. Zoom with + and −, or open the map big.',
     'All pulls: hover a pull\'s bar to see how that pull ended, how long it went, and that mechanic\'s own numbers in it (like how long each phase took, or how many stood in the Guillotine), worst first. On the Deaths row, who died and to what.',
@@ -2014,7 +2015,7 @@ function openPatchNotes() {
   el.onclick = (e) => { if (e.target === el || e.target.closest('.pnz-x, .rp-open')) close(); };
   setTimeout(() => { const x = el.querySelector('.pnz-x'); if (x) x.focus(); }, 60);
 }
-// Debrief in game (the menu's "Debrief in game" page, ?ingame on the website; Oct 21): the addon and the PC app, with the
+// The Addon page (the menu's "Addon", called Debrief in game until Oct 22; ?ingame on the website; Oct 21): the addon and the PC app, with the
 // downloads, who needs what, what happens after a pull, pictures and the handy commands. Open to anyone, no report or sign-in.
 // The downloads are the site's own files (site-assets/companion): the app updates itself from latest.json there, so this page
 // only links to them. The pictures are in site-assets/companion/shots.
@@ -2046,7 +2047,7 @@ function openInGame() {
   const all = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8.5" r="3.2" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="16.5" cy="8.5" r="3.2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M2 19.5c.6-3 2.9-4.8 6-4.8s5.4 1.8 6 4.8M13.6 15c.9-.2 1.9-.3 2.9-.3 3.1 0 5.4 1.8 6 4.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
   const shot = (s, i) => '<button type="button" class="igm-shot' + (i ? '' : ' feat') + '" data-i="' + i + '" aria-label="' + esc(s[1]) + ': see it big"><span class="igm-thumb"><img src="' + U + 'shots/' + s[0] + '" alt="' + esc(s[1]) + '" loading="lazy"></span><span class="igm-cap"><b>' + esc(s[1]) + '</b><span>' + esc(s[2]) + '</span>' + (i ? '' : '<em>Click any picture to see it big.</em>') + '</span></button>';
   $('#main').innerHTML = '<section id="view" class="igm-page"><div class="igm">' +
-    '<div class="igm-top">' + (IGM_BACK && S.index ? '<button type="button" class="btn igm-back">‹ Back to your pull</button>' : '') + '<h1>Debrief in game</h1></div>' +
+    '<div class="igm-top">' + (IGM_BACK && S.index ? '<button type="button" class="btn igm-back">‹ Back to your pull</button>' : '') + '<h1>Addon</h1></div>' +
     '<header class="igm-hero"><div class="igm-hin"><div class="igm-kick">An addon and a small PC app</div><h2>Your pull recap, inside WoW</h2>' +
       '<p class="igm-lead">A few seconds after every boss pull, your recap opens right in the game, and the whole raid gets theirs too.</p>' +
       '<ul class="igm-gets" aria-label="What you get">' + ['Your numbers', 'Your biggest slips', 'Your boss mistakes', 'Who died', 'One thing to try next pull'].map((x) => '<li>' + x + '</li>').join('') + '</ul>' +
@@ -2071,7 +2072,7 @@ function openInGame() {
     '<section class="igm-sec"><div class="igm-sh"><h2>What it looks like</h2><p>The card, the raid view, the big window and the settings.</p></div><div class="igm-gal">' + IGM_SHOTS.map(shot).join('') + '</div></section>' +
     '<section class="igm-sec"><div class="igm-sh"><h2>Handy commands</h2><p>Type these in the chat box in WoW. Click one to copy it.</p></div><div class="igm-cmds">' +
       IGM_CMDS.map(([c, d]) => '<button type="button" class="igm-cmd" data-c="' + esc(c) + '"><code>' + esc(c) + '</code><span>' + esc(d) + '</span><em>Copy</em></button>').join('') + '</div></section>' +
-    '<p class="igm-foot">Debrief in game is new. ' + (REPORT_ON() ? 'Found something off? <a href="#" class="rp-open">Report a problem</a> and it goes on our list.' : 'Found something off? Tell us on our Discord.') + '</p>' +
+    '<p class="igm-foot">The addon is new. ' + (REPORT_ON() ? 'Found something off? <a href="#" class="rp-open">Report a problem</a> and it goes on our list.' : 'Found something off? Tell us on our Discord.') + '</p>' +
   '</div></section>';
   const root = $('#main .igm');
   const bk = root.querySelector('.igm-back'); if (bk) bk.onclick = () => { const g = IGM_BACK; IGM_BACK = null; S.tab = g.tab || 'audit'; S.scope = g.scope || 'pull'; select(g.item); };
