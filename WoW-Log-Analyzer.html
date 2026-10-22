@@ -5494,6 +5494,34 @@ header.fight.bh.bhx, header.fight.bh.bhx.hero { display: block; min-height: 0; p
   .bhp-bars { height: 58px; gap: 2px; } .bhp-ns { gap: 2px; } .bhp-n { font-size: 10px; }
   .bhp-cut { margin-left: 0; }
 }
+/* ===== Design system (Oct 22): one look on every page. The rules and why: notes/Guides/Design system.md. Round 1 only
+   lines up what the model pieces (Debriefing's coach box, the one header, the front page) already do: small labels, titles,
+   corners, tiles and each tab's main box. A page's own layout stays as it is. (!important only where an older, more specific
+   rule would otherwise win.) ===== */
+:root { --ds-label: #a4abb8; --ds-ls: .08em; --ds-box: 12px; --ds-card: 10px; }
+/* small labels: 12px, bold, UPPERCASE, one letter spacing; grey, or gold when Debrief is talking to you */
+.dbr-k, .dbr-h, .mcx-cap, .mcx-refh, .dbd-phh, .brw-al, .cch-sh, .cch-al, .rcb-k, .rcc-n, .tile .l { font-size: 12px !important; font-weight: 700 !important; letter-spacing: var(--ds-ls) !important; text-transform: uppercase; color: var(--ds-label) !important; }
+.cch-k, .cch-fk, .cch-nx, .dbf-k, .rcw-q, .rcb-k.gold, .spc-hft { font-size: 12px !important; font-weight: 700 !important; letter-spacing: var(--ds-ls) !important; text-transform: uppercase; color: var(--gold) !important; }
+/* tags and ranks: never under 12px */
+.cch-tag, .kbrank { font-size: 12px !important; }
+/* (Plan's own small print, the Plan chat's list, Oct 22: never under 12px either) */
+.ndz-both, .ndz-li, .btl-phd b, .nt-hint, .bj-talf, .bjf-m.later .bjf-t, .bjf-m.whole .bjf-t { font-size: 12px !important; }
+/* (chart and timeline labels may stay at 10 to 11px, like map labels: the boss timeline's tiles and axis, big-hit marks, chip numbers) */
+/* titles: a section's title is 18px semibold, the same on every tab */
+.rcb-sh h3 { font: 600 18px var(--head) !important; }
+#view h3.nh { font-size: 18px; font-weight: 600; }
+/* corners: boxes and panels 12px; cards and tiles 10px */
+.panel, .rcb-sec, .rcb-ban, .rcw-strip, .rcw-you, .rcb-yp, .dbr-next, .dbf-c, .spc-hero, .spc-card, .spc-chd, .rcc, .zwrap { border-radius: var(--ds-box) !important; }
+.tile, .dbr-n, .cch-p, .rcb-st, .rcb-ydl, .brw-c, .av-src, .spc-tl, .spc-slr, .spc-det, .spc-f, .spc-w, .rgx-c, .rgx-src, .rcc-cd, .rcc-fb, .spc-kt, .hwk-c { border-radius: var(--ds-card) !important; }
+/* tiles: a label, one big number, one short line (like Debriefing's Deaths, Mechanics, Raid damage) */
+.tile .v { font: 700 28px/1.15 var(--head) !important; }
+.tile .s { color: var(--muted); font-size: 13px; }
+/* each tab's main box (its answer) looks like Debriefing's coach: the panel, a hairline, a 4px gold edge */
+.rcc, .rcw-strip { background: var(--panel) !important; border: 1px solid var(--line2) !important; border-left: 4px solid var(--gold) !important; }
+/* cards: their flag colour runs down the left edge, like Debriefing's numbered cards (Homework's and the Rotation coach's ran across the top) */
+.hwk-c, .rcc-cd { border: 1px solid var(--line2) !important; border-left: 3px solid var(--line2) !important; }
+.hwk-c.bad, .rcc-cd.bad { border-left-color: var(--bad) !important; } .hwk-c.warn, .rcc-cd { border-left-color: var(--warn) !important; } .rcc-cd.gap { border-left-color: var(--gold) !important; }
+/* ===== end of the design system layer ===== */
 </style>
 
 
@@ -14984,6 +15012,7 @@ const PATCH_NOTES = [
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
     { t: 'Since last raid', d: 'All pulls now remembers each night and compares it with your last raid on the same boss: what you fixed, what got better or worse, and what\'s still going wrong. Pick a player to see their mistakes that also happened last raid.' },
   ], n: [
+    'Every tab now shares one look: the same small labels, title sizes and rounded corners everywhere, and Rotation\'s coach and the Report card\'s night summary look like Debriefing\'s coach box.',
     'The coach box is calmer: each problem shows at most two tags (how often, and the one that matters most). The rest are in Read the full coaching.',
     'Debrief Companion: an Archive old logs button at the bottom moves your old combat logs out of the way so the Logs folder starts clean (nothing is deleted), and the home screen is tidier.',
     'All pulls shows how long is left while it reads the night, like "12 of 30, about 25 seconds left".',
