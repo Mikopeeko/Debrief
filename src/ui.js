@@ -181,7 +181,7 @@ function wrThumbFit(root) {
     // (Oct 22: it plays like the big maps, only while it's on screen; no Key moment banner on something this small)
     const src = MM_REG.get(+svg.dataset.mm);
     // (a corner button opens it big, with zoom and the play bar (your ask, Oct 21: "a way to zoom in or make them slightly bigger"))
-    if (src && !a.querySelector('.mz-big')) { a.insertAdjacentHTML('beforeend', '<button class="mz-big" type="button" title="Open the map big (zoom in with the scroll wheel or + and −)" aria-label="Open the map big">⤢</button>');
+    if (src && !a.querySelector('.mz-big')) { a.insertAdjacentHTML('beforeend', '<button class="mz-big" type="button" title="Open the map big (zoom in with + and −)" aria-label="Open the map big">⤢</button>');
       const open = (e) => { e.preventDefault(); e.stopPropagation(); mapBig(src[0], src[1]); }; a.querySelector('.mz-big').onclick = open; if (a.closest('.nml-map')) a.onclick = open; }
     if (src && src[0].ft == null && src[0].frames && src[0].frames.length > 1 && typeof bindAnim === 'function') { a._zoomApply = fitIc; a._onPause = () => {}; try { bindAnim(a, src[0], src[1], true); } catch (e) { /* (a small map that can't play stays still) */ } } });
 }
@@ -1676,6 +1676,9 @@ const PATCH_NOTES = [
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
+    'Debriefing\'s maps show each player\'s spec icon and name in their class colour. The player a moment is about is always named; in a tight stack the others show on hover.',
+    'Maps no longer zoom by themselves: small maps stay their size when you hover them, and scrolling the page over a map scrolls the page. Zoom with + and −, or open the map big.',
+    'All pulls: hover a pull\'s bar to see how that pull ended, how long it went, how the mechanic went and who was in its first mistake. On the Deaths row, who died and to what.',
     'The coach is easier to read: a Focus box, numbered problem cards with Next time on its own line, spell icons next to every ability, and every name in its class colour.',
     'On a single pull, each coach card\'s small map shows that card\'s own mistake.',
     'The coach\'s first problem shows how to do it and how the fastest kills did it, and the raid\'s headline says what lost the pull in the raid lead\'s words.',
@@ -7780,6 +7783,7 @@ const mapObjs = (l) => { const seen = new Set(); return l.map((p) => { const k =
 // really were in this pull (when, from the log; how big, from real kills), and a short freeze at each frontal. Still the pull's own data.
 const LOOK_PM = new WeakMap(), LOOK_MP = new WeakMap();
 function lookPmap(pmap) {
+  /* (Oct 22, your note: Debriefing's maps show each player's spec icon, not the guides' role tokens; the Boss guides keep theirs) */ return pmap; /* eslint-disable-next-line no-unreachable */
   if (!pmap || typeof pmap.get !== 'function' || [...pmap.values()].some((p) => p && p.glyph)) return pmap; if (LOOK_PM.has(pmap)) return LOOK_PM.get(pmap);
   const out = new Map([...pmap].map(([k, p]) => [k, p ? { ...p, glyph: p.role === 'tank' ? 't' : p.role === 'healer' ? 'h' : MELEE_DPS.has(p.specId) ? 'm' : 'r' } : p]));
   LOOK_PM.set(pmap, out); return out;
@@ -8138,15 +8142,19 @@ function miniMap(mp, pmap) {
     const tg = tagOf.get(p.guid);
     s += ic(X(p), Y(p), (me ? '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="12.5" fill="rgba(230,180,80,.14)" stroke="#e6b450" stroke-width="2.5"/>' : '') + playerDot(X(p), Y(p), pl, on ? 7 : 6, ' class="pl' + (on && !mark ? ' k' : '') + '" style="opacity:' + (on ? 1 : 0.6) + '"', p.name) +
       (mark === 'good' ? okMark(X(p), Y(p)) : mark === 'bad' ? badMark(X(p), Y(p)) : mark === 'warn' ? warnMark(X(p), Y(p)) : ''));
-    if (on) nameL.push({ x: X(p), y: Y(p), ly: Y(p) - 19, w: (p.name.length + (tg ? String(tg).length + 1 : 0)) * 6.2, pri: me ? 0 : mark === 'bad' || bad.has(p.guid) ? 1 : mark === 'warn' ? 2 : hl.has(p.guid) ? 3 : 4,
-      html: '<text x="' + X(p) + '" y="' + (Y(p) - 15) + '" class="ml" fill="' + col + '">' + esc(p.name) + (tg ? '<tspan fill="#f3d48a" font-weight="800"> ' + esc(tg) + '</tspan>' : '') + '</text>' });
+    const nm0 = pl && pl.glyph ? p.name : String(p.name).split('-')[0]; /* (every player gets a name now, in their class colour (Oct 22); the others only where there's room) */
+    nameL.push({ x: X(p), y: Y(p), ly: Y(p) - 19, w: (nm0.length + (tg ? String(tg).length + 1 : 0)) * 6.2, pri: me ? 0 : mark === 'bad' || bad.has(p.guid) ? 1 : mark === 'warn' ? 2 : hl.has(p.guid) ? 3 : on ? 4 : 5, must: on,
+      mk: (ly) => '<text x="' + X(p) + '" y="' + (ly + 4) + '" class="ml' + (on ? '' : ' mlo') + '" style="fill:' + col + '">' + esc(nm0) + (tg ? '<tspan fill="#f3d48a" font-weight="800"> ' + esc(tg) + '</tspan>' : '') + '</text>' });
   }
-  { const put = []; for (const n of nameL.sort((a, b) => a.pri - b.pri)) { if (put.some((q) => Math.abs(q.x - n.x) < (q.w + n.w) / 2 && Math.abs(q.ly - n.ly) < 12)) continue; put.push(n); s += ic(n.x, n.y, n.html); } }
+  { const put = [], hit = (n, ly) => put.some((q) => Math.abs(q.x - n.x) < (q.w + n.w) / 2 && Math.abs(q.ly - ly) < 12);
+    for (const n of nameL.sort((a, b) => a.pri - b.pri)) { if (!n.mk) { if (hit(n, n.ly)) continue; put.push(n); s += ic(n.x, n.y, n.html); continue; }
+      /* (above the icon; below it when above is taken; the player the row is about is always named, the others only where there's room) */
+      const ly = !hit(n, n.ly) ? n.ly : !hit(n, n.y + 21) ? n.y + 21 : n.must ? n.ly : null; if (ly == null) continue; put.push({ ...n, ly }); s += ic(n.x, n.y, n.mk(ly)); } }
   // legend inside the image: only what this map shows
   // (a guide's map (liveLeg): the key lists only what's on the map at this moment, and changes as it plays)
   const LL = !!(mp.liveLeg && live), lm = LL ? { ...mp, rings: (mp.rings || []).filter((g) => ringAt(g)), tags: (mp.tags || []).filter(([, , a, b]) => a == null || (ft >= a && ft < b)), links: (mp.links || []).filter((l) => ft >= l.t0 && ft <= l.t1), arrows: (mp.arrows || []).filter((a) => ft >= a.t0 - 0.05 && ft <= a.t1 + 0.05), frames: null } : mp,
     cNow = LL ? CONES.filter((c) => c.at == null || (ftA - c.at >= -1.4 && ftA - c.at < 1.6)) : CONES;
-  const leg = [[(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#9aa0ac" stroke="#000"/>', mp.playerLabel || 'Player (role icon, class colour)']];
+  const leg = [[(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#9aa0ac" stroke="#000"/>', mp.playerLabel || ([...pmap.values()].some((q) => q && q.glyph) ? 'Player (role icon, class colour)' : 'Player (spec icon, class colour)')]];
   if (meN && pts.some((q) => q.name === meN)) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="#e6b450" stroke-width="2.5"/>', 'Gold ring: ' + meN]);
   if ([...hl].some((g) => !good.has(g) && !bad.has(g))) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#9aa0ac" stroke="#fff" stroke-width="2.5"/>', 'White ring: ' + (mp.hlLabel || 'player this is about')]);
   if (mp.goodAt && good.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#9aa0ac" stroke="#fff" stroke-width="1.5"/>', 'White ring: ' + (mp.pendLabel || 'not done yet')]);
@@ -8289,7 +8297,8 @@ function bindZoom(box) {
   const toSvg = (e) => { const r = svg.getBoundingClientRect(); return [vb[0] + (e.clientX - r.left) / r.width * vb[2], vb[1] + (e.clientY - r.top) / r.height * vb[3]]; };
   box._zoomTo = (v) => { vb = v.slice(); apply(); }; /* (a guide's simulation moves the camera to each scene) */
   box._zoomApply = apply; // animated maps redraw the contents and re-apply the icon scale
-  svg.addEventListener('wheel', (e) => {
+  const guide = !!box.closest('.gdz-m, .gdz-mapc, .gdz'); /* (Debriefing: no zooming by itself (Oct 22); + and − only. The Boss guides keep the wheel) */
+  svg.addEventListener('wheel', (e) => { if (!guide) return;
     e.preventDefault();
     const [px, py] = toSvg(e), f = e.deltaY < 0 ? 1 / 1.15 : 1.15, nw = Math.min(Math.max(vb[2] * f, 40), Math.max(full[2] * 1.3, focus[2] * 1.3, +(svg.dataset.zmax || 0))), q = nw / vb[2];
     vb = [px - (px - vb[0]) * q, py - (py - vb[1]) * q, nw, nw]; apply();
@@ -8298,7 +8307,7 @@ function bindZoom(box) {
   svg.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY, vb: vb.slice() }; svg.setPointerCapture(e.pointerId); svg.style.cursor = 'grabbing'; });
   svg.addEventListener('pointermove', (e) => { if (!drag) return; const r = svg.getBoundingClientRect(); vb = [drag.vb[0] - (e.clientX - drag.x) / r.width * vb[2], drag.vb[1] - (e.clientY - drag.y) / r.height * vb[3], vb[2], vb[3]]; apply(); });
   svg.addEventListener('pointerup', () => { drag = null; svg.style.cursor = ''; });
-  svg.addEventListener('dblclick', () => { vb = (hasArena && vb[2] < full[2] * 0.95 ? full : focus).slice(); apply(); });
+  svg.addEventListener('dblclick', () => { if (!guide) return; vb = (hasArena && vb[2] < full[2] * 0.95 ? full : focus).slice(); apply(); });
   const fb = box.querySelector('.zfocus'), ub = box.querySelector('.zfull');
   if (fb) fb.onclick = () => { vb = focus.slice(); apply(); };
   if (ub) ub.onclick = () => { vb = full.slice(); apply(); };
@@ -9425,7 +9434,16 @@ function nightMechC(o) {
   const factsOf = (r) => { let R = 0, Wr = 0, Bd = 0; for (const p of r.x.per.values()) { if (p.st === 'na') continue; R += p.nR || 0; Wr += (p.nb || 0) + (p.nw || 0); Bd += p.nb || 0; } return { R, Wr, Bd, Sl: Wr - Bd }; };
   // (what went wrong, misses and slips apart (Oct 20): "73 of 90 went wrong" on a yellow line read like a fail when they were all just a little off)
   const wrTags = (F) => (F.Bd ? '<span class="wr-tag">' + F.Bd + ' of ' + F.R + ' checks went wrong</span>' : '') + (F.Sl ? '<span class="wr-tag">' + F.Sl + (F.Bd ? '' : ' of ' + F.R + ' checks') + ' a little off</span>' : ''); // ("checks": a number needs its unit (Oct 21))
-  const bars = (r) => '<span class="npc">' + pullNs.map((n) => { const p = r.x.per.get(n), st = p ? p.st : 'na', h = !p || st === 'na' || p.sc == null ? 0 : Math.max(8, p.sc); return '<i class="npc-' + st + '" data-npq="' + n + '" style="--h:' + h.toFixed(0) + '%" title="' + esc('Pull ' + n + ': ' + (st === 'na' ? 'didn\'t come up' : Math.round(p.sc) + '% done right' + (p.nb + p.nw ? ', ' + (p.nb + p.nw) + ' went wrong' : ''))) + '"></i>'; }).join('') + '</span>';
+  // (each bar's tooltip says about the pull (your note, Oct 22: "these should have some tooltip information available about the pull"):
+  // how it ended and how long it went, how this mechanic went, its first mistake and who was in it; a click still opens the pull)
+  const barTip = (r, n) => { const p = r.x.per.get(n), st = p ? p.st : 'na', R = mByPull.get(n), it = R && R.item;
+    const head = 'Pull ' + n + (it ? ' · ' + (it.kill ? 'Kill' : 'Wipe at ' + pullShort(it)) : ''), len = R && R.duration ? T(R.duration) + ' long' : '';
+    const how = st === 'na' ? 'It didn\'t come up in this pull' + (R && cutT(R) < Infinity ? ' (before the wipe filter)' : '') + '.' : st === 'ok' ? 'Done right.' : Math.round(p.sc) + '% done right: ' + plural(p.nb + p.nw, 'moment') + ' went wrong.';
+    let first = ''; if (st === 'bad' || st === 'warn') { try { const s = cutModule(R.module, cutT(R)).m.sections.find((q) => q.id === r.x.id); const all = s ? (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || [])) : [];
+      const row = all.find((rw) => rw.some((c) => c && c.bad)) || all.find((rw) => rw.some((c) => c && c.warn)); if (row) first = cHtml(rowText(s, row)); } catch (e) { first = ''; } }
+    const who = p && p.who && p.who.length ? [...new Set(p.who)].filter((w) => pm.has(w)).slice(0, 5).map((w) => '<span style="color:' + pm.get(w).color + '">' + esc(String(w).split('-')[0]) + '</span>').join(', ') : '';
+    return '<div class="tt-h">' + esc(head) + '</div>' + (len ? '<div class="sub">' + esc(len) + '</div>' : '') + '<div>' + esc(how) + '</div>' + (first ? '<div class="sub">' + esc(cClip(first, 160)) + '</div>' : '') + (who ? '<div>Who: ' + who + '</div>' : '') + '<div class="sub">Click to open this pull.</div>'; };
+  const bars = (r) => '<span class="npc">' + pullNs.map((n) => { const p = r.x.per.get(n), st = p ? p.st : 'na', h = !p || st === 'na' || p.sc == null ? 0 : Math.max(8, p.sc); return '<i class="npc-' + st + '" data-npq="' + n + '" style="--h:' + h.toFixed(0) + '%" data-tt="' + esc(barTip(r, n)) + '" aria-label="' + esc('Pull ' + n + ': ' + (st === 'na' ? 'didn\'t come up' : Math.round(p.sc) + '% done right')) + '"></i>'; }).join('') + '</span>';
   const whoTop = (r) => { if (one) return ''; const m = new Map(); for (const p of r.x.per.values()) for (const w of p.who || []) m.set(w, (m.get(w) || 0) + 1); return [...m].filter(([n]) => pm.has(n)).sort((u, v) => v[1] - u[1]).slice(0, 3).map(([n, k]) => '<span style="color:' + pm.get(n).color + '">' + esc(n.split('-')[0]) + '</span> ×' + k).join(', '); };
   const tile = (r, big) => { const lv = lvOf(r), wN = judged(r).filter((n) => stAt(r, n) !== 'ok').length, worst = worstOf(r), L = lateOf(r), F = factsOf(r);
     let mp = null; for (const n of [worst].concat(judged(r).filter((q) => stAt(r, q) !== 'ok').reverse())) { mp = mapIn(n, r.x.id); if (mp) break; }
@@ -9459,7 +9477,10 @@ function nightMechC(o) {
     const nBadP = P.filter((x) => stOf(x) === 'bad').length, nSome = P.filter((x) => x.kept.length).length, lv = !nSome ? 'clean' : nBadP * 2 >= P.length ? 'major' : 'minor';
     const mx = Math.max(1, ...P.map((x) => x.kept.length)), byN = new Map(P.map((x) => [x.n, x]));
     const dbars = '<span class="npc">' + pullNs.map((n) => { const x = byN.get(n); if (!x) return '<i class="npc-na" style="--h:0%"></i>'; const st = stOf(x);
-      return '<i class="npc-' + st + '" data-npq="' + n + '" style="--h:' + (x.kept.length ? Math.max(12, 100 * x.kept.length / mx) : 8).toFixed(0) + '%" title="' + esc('Pull ' + n + ': ' + (x.kept.length ? plural(x.kept.length, 'death') : 'nobody died') + (x.late ? ' (' + x.late + ' more after the wipe filter)' : '')) + '"></i>'; }).join('') + '</span>';
+      return '<i class="npc-' + st + '" data-npq="' + n + '" style="--h:' + (x.kept.length ? Math.max(12, 100 * x.kept.length / mx) : 8).toFixed(0) + '%" data-tt="' + esc((() => { const R = mByPull.get(n), it = R && R.item; /* (the pull's details on hover, like the mechanics' bars (Oct 22)) */
+        const who = x.kept.slice(0, 5).map((d) => { const p = pm.get(d.player); return '<span' + (p ? ' style="color:' + p.color + '"' : '') + '>' + esc(String(d.player).split('-')[0]) + '</span>' + (d.ability ? ' <span class="sub">' + esc(d.ability) + '</span>' : ''); }).join('<br>');
+        return '<div class="tt-h">' + esc('Pull ' + n + (it ? ' · ' + (it.kill ? 'Kill' : 'Wipe at ' + pullShort(it)) : '')) + '</div>' + (R && R.duration ? '<div class="sub">' + esc(T(R.duration) + ' long') + '</div>' : '') +
+          '<div>' + esc((x.kept.length ? plural(x.kept.length, 'death') : 'Nobody died') + (x.late ? ' (' + x.late + ' more after the wipe filter)' : '')) + '</div>' + (who ? '<div>' + who + '</div>' : '') + '<div class="sub">Click to open this pull.</div>'; })()) + '"></i>'; }).join('') + '</span>';
     const cnt = (l, k) => { const m2 = new Map(); for (const d of l) { const v = k(d); m2.set(v, (m2.get(v) || 0) + 1); } return [...m2].sort((a, b) => b[1] - a[1]); };
     const kept = P.flatMap((x) => x.kept), causes = cnt(kept, causeOf).slice(0, 5), whoL = one ? [] : cnt(kept, (d) => d.player).slice(0, 6), firsts = cnt(P.filter((x) => x.kept.length).map((x) => x.kept[0]), causeOf);
     const nm = (n) => { const p = pm.get(n); return p ? '<span class="who sm">' + avatar(p, true) + '<span class="nm" style="color:' + p.color + '">' + esc(n.split('-')[0]) + '</span></span>' : '<b>' + esc(String(n).split('-')[0]) + '</b>'; };
