@@ -466,6 +466,15 @@ RECAP.lines = (m) => {
     for (const x of g.hap || []) rec.push(['GH', x[0], x[1]]); for (const x of g.chg || []) rec.push(['GC', x]); } // (the bullet summary: what happened, what to change)
   // (the Debriefing tab's summary: four raid numbers, the pull phase by phase, better and worse than last pull)
   for (const x of m.raid.tiles || []) rec.push(['A', x[0], x[1], x[2], x[3] || '']);
+  // (Debriefing's coach box: CH headline, CF focus, CW a problem, CR a good chip, CD a death, CN the deaths note, CA avoidable damage,
+  // CL / CV the plain lines when there are none, PC each player's own coach line and focus)
+  if (m.coach && m.coach.raid) { const c = m.coach.raid;
+    rec.push(['CH', c.headline]); rec.push(['CF', c.focus, c.focusSame ? 1 : '', c.kill ? 1 : '']);
+    for (const x of c.wrong || []) rec.push(['CW', x.sev, x.id || '', x.label, x.tag || '', x.what || '', x.fix || '']);
+    for (const x of c.right || []) rec.push(['CR', x.id || '', x.t]);
+    if (c.deaths) { for (const x of c.deaths.items || []) rec.push(['CD', x.t, x.who, x.cls || '', x.id || '', x.ab, x.k || 'n', x.story || '']); if (c.deaths.note) rec.push(['CN', c.deaths.note]); if (!(c.deaths.items || []).length && c.deaths.line) rec.push(['CL', c.deaths.line]); }
+    if (c.avoid) { for (const x of c.avoid.items || []) rec.push(['CA', x.id || '', x.k, x.who, x.cls || '', x.n || '', x.bad ? 1 : '', x.story || '']); if (!(c.avoid.items || []).length && c.avoid.line) rec.push(['CV', c.avoid.line]); }
+    for (const [n, v] of Object.entries(m.coach.you || {})) rec.push(['PC', n, v[0], v[1]]); }
   if (m.raid.story) rec.push(['Y', m.raid.story]);
   if (m.raid.better) rec.push(['G', m.raid.better]);
   if (m.raid.worse) rec.push(['J', m.raid.worse]);

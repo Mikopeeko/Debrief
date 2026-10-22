@@ -633,8 +633,16 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
   let was = null; try { was = W.getCut ? W.getCut() : null; } catch (e) { was = null; }
   try {
     const m = buildOne(b, rep, same, W2, L, 0), nd = (rep.deaths || []).length;
+    // (Debriefing's coach box for the card (the user's ask, Oct 22): at the site's own wipe filter, once, shared by every version)
+    let coach = null;
+    if (W.coachGame && b.id !== 990001) {
+      try { if (W.setCut && was != null) W.setCut(was); if (!rep.item) rep.item = b; const raid = W.coachGame(rep, null), you = {}, t0 = Date.now();
+        for (const p of m.players) { if (Date.now() - t0 > 3000) break; try { const c = W.coachSummary ? W.coachSummary([rep], p.name) : null; if (c && c.headline) you[p.name] = [plain(c.headline), plain(c.focus || '')]; } catch (e) { /* (no line for them) */ } }
+        coach = raid ? { raid, you } : null; } catch (e) { coach = null; }
+    }
+    m.coach = coach;
     if (b.kill || b.id === 990001 || !nd) return m; // (a kill or a dummy always counts in full)
-    m.cuts = [m]; for (let n = 1; n <= Math.min(8, nd); n++) m.cuts.push(buildOne(b, rep, same, W2, L, n));
+    m.cuts = [m]; for (let n = 1; n <= Math.min(8, nd); n++) { const x = buildOne(b, rep, same, W2, L, n); x.coach = coach; m.cuts.push(x); }
     return m;
   } finally { try { if (W.setCut && was != null) W.setCut(was); } catch (e) { /* fine */ } }
 };

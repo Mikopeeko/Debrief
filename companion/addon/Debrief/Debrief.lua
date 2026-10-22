@@ -95,6 +95,17 @@ local function decode(code)
     elseif t == "D" then add(m.raid.died, { g(2), g(3), g(4), g(5), g(6) })
     elseif t == "M" then add(m.raid.mech, { g(2), g(3), g(4), g(5) }) -- (how each boss mechanic went)
     elseif t == "V" then m.addonV = g(2) -- (the addon version the PC app that made this carries)
+    -- (Debriefing's coach box: the same on every wipe-filter version)
+    elseif t == "CH" then m.coach = m.coach or { wrong = {}, right = {}, deaths = {}, avoid = {} }; m.coach.head = g(2)
+    elseif t == "CF" and m.coach then m.coach.focus = g(2); m.coach.focusSame = g(3) == "1"; m.coach.kill = g(4) == "1"
+    elseif t == "CW" and m.coach then table.insert(m.coach.wrong, { sev = g(2), id = g(3), label = g(4), tag = g(5), what = g(6), fix = g(7) })
+    elseif t == "CR" and m.coach then table.insert(m.coach.right, { id = g(2), t = g(3) })
+    elseif t == "CD" and m.coach then table.insert(m.coach.deaths, { t = g(2), who = g(3), cls = g(4), id = g(5), ab = g(6), k = g(7), story = g(8) })
+    elseif t == "CN" and m.coach then m.coach.dnote = g(2)
+    elseif t == "CL" and m.coach then m.coach.dline = g(2)
+    elseif t == "CA" and m.coach then table.insert(m.coach.avoid, { id = g(2), k = g(3), who = g(4), cls = g(5), n = g(6), bad = g(7) == "1", story = g(8) })
+    elseif t == "CV" and m.coach then m.coach.aline = g(2)
+    elseif t == "PC" and by[g(2)] then by[g(2)].coach = { head = g(3), focus = g(4) } -- (your own coach line and focus)
     elseif t == "C" then m.cutN = tonumber(g(2)) -- (the wipe filter: versions 0 to n)
     elseif t == "X" then if K then m.raid.moreK = m.raid.moreK or {}; table.insert(m.raid.moreK, { K, g(2) }) else m.raid.more = g(2) end
     elseif t == "Q" then if K then m.raid.nextK = m.raid.nextK or {}; table.insert(m.raid.nextK, { K, g(2) }) else m.raid.next = g(2) end
@@ -497,7 +508,7 @@ local function cutView(m)
     return o
   end
   local function pick(def, kl) if kl then for _, x in ipairs(kl) do if x[1]:find(c, 1, true) then return x[2] end end; return "" end; return def end
-  local v = { h = m.h, addonV = m.addonV, cutN = m.cutN, players = {},
+  local v = { h = m.h, addonV = m.addonV, cutN = m.cutN, coach = m.coach, players = {},
     raid = { bad = keep(m.raid.bad, true), died = keep(m.raid.died), mech = keep(m.raid.mech, true), more = pick(m.raid.more, m.raid.moreK), next = pick(m.raid.next, m.raid.nextK),
       tiles = keep(m.raid.tiles), story = pick(m.raid.story or "", m.raid.storyK), better = pick(m.raid.better or "", m.raid.betterK), worse = pick(m.raid.worse or "", m.raid.worseK), lead = pick(m.raid.lead or "", m.raid.leadK),
       good = keep(m.raid.good), fixes = keep(m.raid.fixes), ghap = keep(m.raid.ghap), gchg = keep(m.raid.gchg), ghead = pick(m.raid.ghead or "", m.raid.gheadK), gnext = pick(m.raid.gnext or "", m.raid.gnextK) } }
@@ -555,7 +566,9 @@ function render()
   if DB.detailed and not DB.compact and view == "raid" and canRaid() and #(m.raid.tiles or {}) > 0 then meta = { h.diff, "Pull " .. h.pull } end
   metaT:SetWidth(CW); metaT:SetText(table.concat(meta, "   ·   "))
   -- (tabs and the body sit lower when the pull chips show)
-  local glanceOn = DB.glance and (m.raid.ghead or "") ~= "" -- (the Glance card: one view, so no tabs; older pulls without it keep the tabs)
+  local coachOn = DB.glance and m.coach and (m.coach.head or "") ~= "" and not m.h.practice -- (Debriefing's coach box, with the Raid view and You tabs)
+  local glanceOn = DB.glance and (m.raid.ghead or "") ~= "" and not coachOn -- (the Glance card: one view, so no tabs; older pulls without it keep the tabs)
+  if coachOn and not DB.viewPicked and canRaid() then view = "raid" end -- (the coach box first, until you pick a tab yourself)
   TOPY = (((DB.show or {}).chips ~= false) and 180 or 150) - (glanceOn and 38 or 0)
   tMe:ClearAllPoints(); tMe:SetPoint("TOPLEFT", card, "TOPLEFT", PAD - 10, -TOPY + 38); tRaid:ClearAllPoints(); tRaid:SetPoint("LEFT", tMe, "RIGHT", 0, 0)
   nextB:ClearAllPoints(); nextB:SetPoint("TOPRIGHT", card, "TOPRIGHT", -PAD, -TOPY + 36)
@@ -568,7 +581,7 @@ function render()
   for k, b in pairs(tabs) do
     local on = (k == view)
     b.t:SetTextColor(rgb(on and COL.text or COL.muted)); b.u:SetShown(on)
-    b:SetScript("OnClick", function() view = k; render() end)
+    b:SetScript("OnClick", function() view = k; DB.viewPicked = true; render() end)
   end
   local P = pickWho(m)
   local showWho = (view == "me" and P and #m.players > 1) and not glanceOn
@@ -742,10 +755,133 @@ function render()
     bt:SetScript("OnEnter", function() lk:SetTextColor(rgb(COL.text)) end); bt:SetScript("OnLeave", function() lk:SetTextColor(rgb(COL.gold)) end)
     y = y + 22
   end
-  if glanceOn then
+  -- (player names in the coach's words, in their class colours)
+  local function paint(s0)
+    s0 = " " .. names(s0 or "")
+    for _, p in ipairs(m.players) do local n = p.name:match("^([^%-]+)") or p.name
+      if #n > 2 then s0 = s0:gsub("([^|%w])(" .. n:gsub("(%W)", "%%%1") .. ")", function(a, b2) return a .. "|cff" .. classHex(p.cls) .. b2 .. "|r" end) end end
+    return (s0:gsub("^ ", ""))
+  end
+  local KCOL = { own = COL.bad, ready = COL.bad, on = COL.bad, half = COL.warn, nothing = COL.warn }
+  -- (a folding heading for the coach's lists: closed until clicked, then remembered)
+  local function fold(key, title, n)
+    DB.coachOpen = DB.coachOpen or {}
+    local open = DB.coachOpen[key]
+    local t = FS("bold", 12, COL.muted); t:SetPoint("TOPLEFT", 14, -(y + 11)); t:SetText(title .. (n and n > 0 and ("  ·  " .. n) or ""))
+    local sign = FS("bold", 14, COL.faint); sign:SetJustifyH("RIGHT"); sign:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - 14, -(y + 9)); sign:SetText(open and "–" or "+")
+    local b = BTN(); b:SetPoint("TOPLEFT", 0, -y); b:SetSize(CW, 32)
+    b:SetScript("OnClick", function() DB.coachOpen[key] = not DB.coachOpen[key] or nil; render() end)
+    b:SetScript("OnEnter", function() t:SetTextColor(rgb(COL.gold)); sign:SetTextColor(rgb(COL.gold)) end); b:SetScript("OnLeave", function() t:SetTextColor(rgb(COL.muted)); sign:SetTextColor(rgb(COL.faint)) end)
+    return open
+  end
+  -- (a row in Deaths or Avoidable damage: click it for its short story under it)
+  local STORY = CARD_STORY or {}; CARD_STORY = STORY
+  local function chipRow(key, parts, idv, story)
+    local x = 14
+    for _, pt in ipairs(parts) do
+      if pt.icon then icon(x, y + 4, 18, pt.icon); x = x + 24
+      elseif pt.dot then local d = TEX("ARTWORK"); d:SetTexture(SLICE .. "dot"); d:SetPoint("TOPLEFT", x, -(y + 9)); d:SetSize(8, 8); d:SetVertexColor(rgb(pt.dot)); x = x + 15
+      else local f = FS(pt.bold and "bold" or "body", 13.5, pt.col or COL.soft); f:SetPoint("TOPLEFT", x, -(y + 5)); f:SetWordWrap(false); f:SetText(pt.t); x = x + f:GetStringWidth() + (pt.gap or 8) end
+    end
+    local open = STORY[key]
+    if story and story ~= "" then
+      local b = BTN(); b:SetPoint("TOPLEFT", 0, -y); b:SetSize(CW, 26)
+      b:SetScript("OnClick", function() STORY[key] = not STORY[key] or nil; render() end)
+    end
+    y = y + 27
+    if open and story and story ~= "" then
+      local f = FS("body", 13, COL.muted); f:SetPoint("TOPLEFT", 38, -y); f:SetWidth(CW - 52); f:SetText(paint(story)); y = y + f:GetStringHeight() + 10
+    end
+  end
+  -- (Debriefing's coach box, the Raid view)
+  local function coachBody()
+    local c = m.coach
+    local lab = FS("bold", 11.5, COL.gold); lab:SetPoint("TOPLEFT", 2, -y); lab:SetText(c.kill and "THE KILL, COACHED" or "THIS PULL, COACHED"); y = y + 19
+    local hd = FS("head", 16.5, COL.text); hd:SetPoint("TOPLEFT", 2, -y); hd:SetWidth(CW - 4); hd:SetText(paint(c.head)); y = y + hd:GetStringHeight() + 12
+    if not c.focusSame and (c.focus or "") ~= "" then
+      local ft = FS("bold", 14, COL.text); ft:SetWidth(CW - 32); ft:SetText(paint(c.focus))
+      local hh = 11 + 18 + ft:GetStringHeight() + 12
+      box(y, hh, COL.gold, 0.08, COL.gold, 0.55)
+      local l = FS("bold", 11.5, COL.gold); l:SetPoint("TOPLEFT", 16, -(y + 11)); l:SetText(c.kill and "FOCUS NEXT WEEK" or "FOCUS NEXT PULL")
+      ft:SetPoint("TOPLEFT", 16, -(y + 29)); y = y + hh + 14
+    end
+    if #c.wrong > 0 then
+      local l = FS("bold", 11.5, COL.muted); l:SetPoint("TOPLEFT", 2, -y); l:SetText("WHAT WENT WRONG"); y = y + 20
+      for i, x in ipairs(c.wrong) do
+        local sev = x.sev == "bad" and COL.bad or COL.warn
+        local tx, tw = 44, CW - 44 - 14
+        local lt = FS("bold", 14.5, COL.text); lt:SetWordWrap(false); lt:SetText(x.label)
+        local pt; if (x.tag or "") ~= "" then pt = FS("bold", 11.5, x.sev == "bad" and COL.badT or COL.warn); pt:SetWordWrap(false); pt:SetText(x.tag) end
+        local wt; if (x.what or "") ~= "" then wt = FS("body", 13, COL.muted); wt:SetWidth(tw); wt:SetText(paint(x.what)) end
+        local nk = FS("bold", 11.5, COL.gold); nk:SetText("NEXT TIME")
+        local fx = FS("body", 13.5, COL.soft); fx:SetWidth(tw - 76); fx:SetText(paint(x.fix))
+        local hh = 12 + 22 + (wt and (wt:GetStringHeight() + 6) or 0) + math.max(16, fx:GetStringHeight()) + 12
+        box(y, hh, COL.raised, DB.cardStyle == "glass" and 0.55 or 1, COL.line, 1, sev)
+        local d = TEX("ARTWORK"); d:SetTexture(SLICE .. "dot"); d:SetPoint("TOPLEFT", 12, -(y + 13)); d:SetSize(22, 22); d:SetVertexColor(rgb(sev)); d:SetAlpha(0.25)
+        local nn = FS("bold", 12.5, sev); nn:SetPoint("CENTER", d, "CENTER", 0, 0); nn:SetText(tostring(i))
+        local lx = tx; if (x.id or "") ~= "" then icon(tx, y + 12, 20, x.id); lx = tx + 26 end
+        lt:SetPoint("TOPLEFT", lx, -(y + 14)); lt:SetWidth(math.min(lt:GetStringWidth() + 2, tw - (lx - tx) - (pt and 110 or 0)))
+        if pt then pt:SetPoint("LEFT", lt, "RIGHT", 10, 0) end
+        local yy = y + 12 + 22
+        if wt then wt:SetPoint("TOPLEFT", tx, -yy); yy = yy + wt:GetStringHeight() + 6 end
+        nk:SetPoint("TOPLEFT", tx, -(yy + 2)); fx:SetPoint("TOPLEFT", tx + 76, -yy)
+        y = y + hh + 8
+      end
+      y = y + 4
+    end
+    for _, x in ipairs(c.right) do
+      local ok = TEX("ARTWORK"); ok:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready"); ok:SetPoint("TOPLEFT", 4, -(y + 2)); ok:SetSize(16, 16)
+      local f = FS("body", 13.5, COL.goodT); f:SetPoint("TOPLEFT", 26, -(y + 1)); f:SetWidth(CW - 30); f:SetText(paint(x.t)); y = y + math.max(18, f:GetStringHeight()) + 7
+    end
+    y = y + 6
+    -- deaths, folded until clicked
+    if #c.deaths > 0 or (c.dline or "") ~= "" then
+      local y0 = y; local open = fold("cdeaths", "DEATHS", #c.deaths); y = y + 32
+      if open then
+        if #c.deaths == 0 then local f = FS("body", 13, COL.muted); f:SetPoint("TOPLEFT", 14, -y); f:SetWidth(CW - 28); f:SetText(paint(c.dline)); y = y + f:GetStringHeight() + 8 end
+        for i, d in ipairs(c.deaths) do
+          chipRow(m.h.pull .. "d" .. i, { { t = d.t, col = COL.faint, gap = 6 }, { dot = KCOL[d.k] or COL.faint }, { t = d.who, bold = true, col = classHex(d.cls), gap = 8 }, { icon = d.id }, { t = d.ab } }, d.id, d.story)
+        end
+        if (c.dnote or "") ~= "" then local f = FS("body", 12, COL.faint); f:SetPoint("TOPLEFT", 14, -(y + 2)); f:SetWidth(CW - 28); f:SetText(c.dnote); y = y + f:GetStringHeight() + 6 end
+        if #c.deaths > 0 then local f = FS("body", 12, COL.faint); f:SetPoint("TOPLEFT", 14, -(y + 2)); f:SetText("Click a death to see what happened."); y = y + 18 end
+        y = y + 4
+      end
+      panel(y0, y - y0); y = y + 8
+    end
+    -- avoidable damage, folded until clicked
+    if #c.avoid > 0 or (c.aline or "") ~= "" then
+      local y0 = y; local open = fold("cavoid", "AVOIDABLE DAMAGE", #c.avoid); y = y + 32
+      if open then
+        if #c.avoid == 0 then local f = FS("body", 13, COL.muted); f:SetPoint("TOPLEFT", 14, -y); f:SetWidth(CW - 28); f:SetText(paint(c.aline)); y = y + f:GetStringHeight() + 8 end
+        for i, a in ipairs(c.avoid) do
+          chipRow(m.h.pull .. "a" .. i, { { icon = a.id }, { t = a.k }, { t = a.who, bold = true, col = classHex(a.cls), gap = 6 }, { t = a.n, col = a.bad and COL.badT or COL.warn } }, a.id, a.story)
+        end
+        if #c.avoid > 0 then local f = FS("body", 12, COL.faint); f:SetPoint("TOPLEFT", 14, -(y + 2)); f:SetText("Click one to see what happened."); y = y + 18 end
+        y = y + 4
+      end
+      panel(y0, y - y0); y = y + 8
+    end
+    local ft = FS("body", 12.5, COL.faint); ft:SetPoint("TOPLEFT", 2, -(y + 2)); ft:SetWidth(CW - 4); ft:SetText("The full coaching is on the website, in the Debriefing tab."); y = y + ft:GetStringHeight() + 8
+  end
+  -- (your own coach: the You view opens with it)
+  local function youCoach(P)
+    if not (P and P.coach and (P.coach.head or "") ~= "") then return false end
+    local t = FS("body", 14.5, COL.text); t:SetWidth(CW - 34); t:SetText(paint(P.coach.head))
+    local f; if (P.coach.focus or "") ~= "" and not P.coach.head:find(P.coach.focus:gsub("%.$", ""), 1, true) then f = FS("bold", 13.5, COL.text); f:SetWidth(CW - 34); f:SetText(paint(P.coach.focus)) end
+    local hh = 12 + 17 + t:GetStringHeight() + (f and (14 + 16 + f:GetStringHeight()) or 0) + 12
+    box(y, hh, COL.gold, 0.07, COL.gold, 0.5, COL.gold)
+    local l = FS("bold", 11.5, COL.gold); l:SetPoint("TOPLEFT", 16, -(y + 11)); l:SetText("YOUR COACH")
+    t:SetPoint("TOPLEFT", 16, -(y + 28))
+    if f then local k = FS("bold", 11.5, COL.gold); k:SetPoint("TOPLEFT", 16, -(y + 28 + t:GetStringHeight() + 14)); k:SetText(m.coach and m.coach.kill and "FOCUS NEXT WEEK" or "FOCUS NEXT PULL"); f:SetPoint("TOPLEFT", 16, -(y + 28 + t:GetStringHeight() + 30)) end
+    y = y + hh + 12
+    return true
+  end
+  if coachOn and view ~= "me" then
+    coachBody()
+  elseif glanceOn then
     glanceBody()
   elseif view == "me" and P then
-    leadBox(P.lead)
+    if not (coachOn and youCoach(P)) then leadBox(P.lead) end
     -- the tile: your damage or healing, against your last pull and your best
     if SH.tile ~= false then
       local th = 62
