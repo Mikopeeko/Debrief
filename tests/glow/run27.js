@@ -171,17 +171,21 @@ DebriefGlowDB.tts = false; DebriefGlowDB.countdown = 0
 
 print("-- the settings window (the website's look)")
 DebriefGlow_Open(); local W = DebriefGlowOptions
-expect("opens on When it glows", W.pages.glow._shown, true)
+expect("opens on Glow", W.pages.glow._shown, true)
+local tabNames = {}; for _, k in ipairs({ "glow", "sound", "spells", "fine" }) do tabNames[#tabNames + 1] = W.tabs[k] and rawget(W.tabs[k], "t")._text or "?" end
+expect("four tabs", table.concat(tabNames, ", "), "Glow, Sound and voice, Your spells, Fine-tune")
+expect("no old tabs", W.tabs.look == nil and W.tabs.count == nil and W.tabs.help == nil, true)
 local lead = rawget(W, "lead"); lead.plus:GetScript("OnClick")(); expect("Start early +", DebriefGlowDB.lead, 0.5); expect("shows it", lead.val:GetText(), "0.5 s early"); lead.minus:GetScript("OnClick")()
 local sw = rawget(W, "stopOnPress"); sw:GetScript("OnClick")(sw); expect("Stop when I press it, off", DebriefGlowDB.stopOnPress, false); sw:GetScript("OnClick")(sw); expect("and on", DebriefGlowDB.stopOnPress, true)
-W.tabs.look:GetScript("OnClick")(); expect("Look tab", W.pages.look._shown and not W.pages.glow._shown, true)
+W.tabs.fine:GetScript("OnClick")(); expect("Fine-tune tab", W.pages.fine._shown and not W.pages.glow._shown, true)
 local st = rawget(W, "style"); st:GetScript("OnClick")(st)
 local picked = false; for _, b in ipairs(rawget(DebriefGlowMenu, "items")) do if b._shown and rawget(b, "t")._text == "Cooldown Manager flash" then b:GetScript("OnClick")(b); picked = true end end
 expect("Style menu: Cooldown Manager flash", DebriefGlowDB.style, "cdmflash");
 local listed = {}; for _, o in ipairs(st.options()) do listed[#listed + 1] = o[2] end
 local Q = string.char(34); expect("Style list (Blizzard glows only, plus Pulse)", table.concat(listed, ", "), "Cooldown Manager ants, Cooldown Manager flash, Cooldown Manager " .. Q .. "ending soon" .. Q .. " pulse, Action bar proc, Rotation helper, One-button proc, Soft proc ring, Pulse")
 CHOOSE(st, "Rotation helper"); expect("Style: rotation helper", DebriefGlowDB.style, "assist"); CHOOSE(st, "Pulse")
-local tc = rawget(W, "timerColor"); tc[2]:GetScript("OnClick")(); expect("Number colour: Gold", DebriefGlowDB.timerColor, "gold"); tc[1]:GetScript("OnClick")()
+local tc = rawget(W, "timerColor"); CHOOSE(tc, "Gold"); expect("Number colour: Gold", DebriefGlowDB.timerColor, "gold"); CHOOSE(tc, "White")
+local gs = 0; for _ in pairs(W.pages) do gs = gs + 1 end; expect("pages", gs, 4)
 ADVANCE(NOW + 3.1)
 
 print("-- the preview beside the window (main settings)")
@@ -191,6 +195,9 @@ expect("preview open beside the window", DebriefGlowPreview._shown, true)
 print("  1.0 s  " .. PREVIEW(1)); print("  3.5 s  " .. PREVIEW(2.5)); print("  5.1 s  " .. PREVIEW(1.6)); print("  6.0 s  " .. PREVIEW(0.9))
 CHOOSE(rawget(W, "style"), "Cooldown Manager ants"); print("  style: Cooldown Manager ants  " .. PREVIEW(0.1)); CHOOSE(rawget(W, "style"), "Pulse")
 print("  8.5 s  " .. PREVIEW(2.4)); print("  9.3 s  " .. PREVIEW(0.8)); print("  next loop, 1.0 s  " .. PREVIEW(1))
+print("  the preview's Test on my bar button")
+local tb = rawget(DebriefGlowPreview, "test"); expect("Test button on the preview", tb ~= nil and rawget(tb, "t")._text, "Test on my bar")
+tb:GetScript("OnClick")(tb); expect("your bar glows", GLOWING():find("Aura Mastery") ~= nil, true); ADVANCE(NOW + 3.1); heard()
 ADVANCE(NOW + 3.1)
 
 print("-- Your spells")
@@ -225,7 +232,7 @@ R[31884].hit:GetScript("OnClick")(R[31884].hit); ADVANCE(NOW + 3.1); heard()
 expect("preview is Avenging Wrath", rawget(DEBRIEF_PV(), "who")._text, "Avenging Wrath")
 print("  5.1 s  " .. PREVIEW(5.1))
 R[6940].hit:GetScript("OnClick")(R[6940].hit); print("  Blessing of Sacrifice (off): " .. PREVIEW(5.1))
-W.tabs.look:GetScript("OnClick")(); expect("back to the main settings on other tabs", rawget(DEBRIEF_PV(), "who")._text, "Aura Mastery")
+W.tabs.glow:GetScript("OnClick")(); expect("back to the main settings on other tabs", rawget(DEBRIEF_PV(), "who")._text, "Aura Mastery")
 W.tabs.spells:GetScript("OnClick")()
 expect("Lay on Hands added", found, true)
 

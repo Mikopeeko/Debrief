@@ -652,8 +652,11 @@ do
       icons[i] = f
     end
     numF = CreateFrame("Frame", nil, icons[2]); numF:SetAllPoints(icons[2]); numF:SetFrameLevel(icons[2]:GetFrameLevel() + 30); numF.text = numF:CreateFontString(nil, "OVERLAY")
-    cap = txt(frame, "bold", 13.5, COL.muted); cap:SetPoint("BOTTOM", 0, 40)
-    local foot = txt(frame, "body", 12, COL.faint); foot:SetPoint("BOTTOM", 0, 16); foot:SetText("Plays again every few seconds")
+    cap = txt(frame, "bold", 13.5, COL.muted); cap:SetPoint("BOTTOM", 0, 58)
+    local tb = button(frame, "Test on my bar", 180, true, 30); tb:SetPoint("BOTTOM", 0, 16)
+    tb:SetScript("OnClick", function() if pv.onTest then pv.onTest() end end)
+    tip(tb, "Your Cooldown Manager glows for 3 seconds, with your sound and voice.")
+    frame.test = tb
     frame:SetScript("OnUpdate", step)
     frame:SetScript("OnHide", function() stopGlow() end)
     frame:SetScript("OnShow", function() pv.t = 0; pv.restyle() end)
@@ -698,6 +701,7 @@ local function spellList()
   return list
 end
 local function pvFocus(id) pv.spell = id; pv.t = 0; pv.restyle() end
+pv.onTest = function() if pv.spell then testSpell(pv.spell) else pv.t = 0; DebriefGlow_Test() end end
 local function testSpell(id)
   pvFocus(id); start(id, 3); showTimer(id, GetTime() + 3); playSound(soundFor(id)); local w = wordsFor(id); if w then speak(w) end
 end
@@ -741,10 +745,10 @@ local function buildOptions()
   ver:SetText("Saves as you go  ·  /dglow opens this  ·  Version " .. ((C_AddOns and C_AddOns.GetAddOnMetadata and C_AddOns.GetAddOnMetadata(ADDON, "Version")) or ""))
   local bigT = txt(opt, "head", 30); bigT:SetPoint("TOPLEFT", 24, -70); bigT:SetText("Settings")
   local pNote = txt(opt, "body", 14, COL.muted); pNote:SetPoint("BOTTOMLEFT", bigT, "BOTTOMRIGHT", 14, 4); pNote:SetWidth(OW - 220); pNote:SetJustifyH("LEFT"); pNote:SetWordWrap(false)
-  -- (underline tabs, like the website's Boss guides bar)
-  local MENU = { { "glow", "When it glows" }, { "look", "Look" }, { "count", "Countdown" }, { "sound", "Sound and voice" }, { "spells", "Your spells" }, { "help", "Help" } }
-  local NOTES = { glow = "When the glow starts and stops.", look = "Pick a style and colour. Your Cooldown Manager shows each change.", count = "NSRT's countdown, as a number on the spell.",
-    sound = "Off unless you turn it on. NSRT can speak too: use one of them.", spells = "Click a spell to see it in the preview. Give it its own look, sound or words.", help = "How it works, and the commands." }
+  -- (underline tabs, like the website's Boss guides bar: the basics first, the small settings tucked away in Fine-tune)
+  local MENU = { { "glow", "Glow" }, { "sound", "Sound and voice" }, { "spells", "Your spells" }, { "fine", "Fine-tune" } }
+  local NOTES = { glow = "The basics. The preview beside this shows every change.", sound = "Off unless you turn them on. NSRT can speak too: use one of them.",
+    spells = "Click a spell to see it in the preview. Give it its own look, sound or words.", fine = "Smaller settings. The defaults work for most people." }
   local TAB_Y, PAGE_TOP = 114, 164
   local tline = opt:CreateTexture(nil, "ARTWORK"); tline:SetPoint("TOPLEFT", 24, -(TAB_Y + 34)); tline:SetPoint("TOPRIGHT", -24, -(TAB_Y + 34)); tline:SetHeight(1); fill(tline, COL.line)
   local pages, tabs, cur = {}, {}, "glow"
@@ -772,34 +776,36 @@ local function buildOptions()
   end
   opt.pages, opt.tabs = pages, tabs
 
-  -- (rows live inside rounded panels: a heading with a small grey note, then the rows with thin lines between, the control on the right)
-  local PX, LX = 24, 42
+  -- (rows live inside rounded panels: a heading with a small grey note, then the rows with thin lines between, the control on the
+  -- right. A panel spans the page, or one of two columns on Fine-tune: CL and CR are its left and right edges.)
+  local CL, CR = 24, OW - 24
   local P, y, panelY, firstRow
-  local function page(k) P = pages[k]; y = 0; panelY = nil end
+  local function page(k) P = pages[k]; y = 0; panelY = nil; CL, CR = 24, OW - 24 end
+  local function column(i) y = 0; panelY = nil; if i == 1 then CL, CR = 24, OW / 2 - 7 else CL, CR = OW / 2 + 7, OW - 24 end end
   local function panel(title, note)
     panelY = y; firstRow = true
-    local h = txt(P, "head", 17); h:SetPoint("TOPLEFT", LX, -(y + 14)); h:SetText(title)
+    local h = txt(P, "head", 17); h:SetPoint("TOPLEFT", CL + 18, -(y + 14)); h:SetText(title)
     if note then local n = txt(P, "body", 12.5, COL.faint); n:SetPoint("BOTTOMLEFT", h, "BOTTOMRIGHT", 10, 1); n:SetText(note) end
     y = y + 44
   end
   local function panelEnd()
     if not panelY then return end
     y = y + 6
-    local f = P:CreateTexture(nil, "BACKGROUND"); f:SetPoint("TOPLEFT", PX, -panelY); f:SetSize(OW - PX * 2, y - panelY); rounded(f, "fill", 8, PANEL, 1)
+    local f = P:CreateTexture(nil, "BACKGROUND"); f:SetPoint("TOPLEFT", CL, -panelY); f:SetSize(CR - CL, y - panelY); rounded(f, "fill", 8, PANEL, 1)
     local l = P:CreateTexture(nil, "BORDER"); l:SetAllPoints(f); rounded(l, "line", 8, COL.line, 1)
     panelY = nil; y = y + 14
   end
   local function rowBase(label, sub)
     local h = sub and 50 or 44
-    if not firstRow then local ln = P:CreateTexture(nil, "ARTWORK"); ln:SetPoint("TOPLEFT", LX, -y); ln:SetPoint("TOPRIGHT", -LX, -y); ln:SetHeight(1); fill(ln, COL.line, 0.7) end
+    if not firstRow then local ln = P:CreateTexture(nil, "ARTWORK"); ln:SetPoint("TOPLEFT", CL + 18, -y); ln:SetWidth(CR - CL - 36); ln:SetHeight(1); fill(ln, COL.line, 0.7) end
     firstRow = false
-    local t = txt(P, "bold", 15); t:SetPoint("TOPLEFT", LX, -(y + (sub and 9 or 14))); t:SetText(label)
-    if sub then local s2 = txt(P, "body", 13, COL.faint); s2:SetPoint("TOPLEFT", LX, -(y + 28)); s2:SetWidth(540); s2:SetJustifyH("LEFT"); s2:SetWordWrap(false); s2:SetText(sub) end
+    local t = txt(P, "bold", 15); t:SetPoint("TOPLEFT", CL + 18, -(y + (sub and 9 or 14))); t:SetText(label)
+    if sub then local s2 = txt(P, "body", 13, COL.faint); s2:SetPoint("TOPLEFT", CL + 18, -(y + 28)); s2:SetWidth(CR - CL - 380); s2:SetJustifyH("LEFT"); s2:SetWordWrap(false); s2:SetText(sub) end
     local cy = y + h / 2
     y = y + h
     return cy
   end
-  local function right(f, cy) f:SetPoint("RIGHT", P, "TOPRIGHT", -LX, -cy) end
+  local function right(f, cy) f:SetPoint("RIGHT", P, "TOPLEFT", CR - 18, -cy) end
   local function switchRow(label, sub, key, after)
     local cy = rowBase(label, sub)
     local b = switch(P, function() return DB[key] end, function(v) DB[key] = v; if after then after() end end); right(b, cy)
@@ -828,59 +834,34 @@ local function buildOptions()
     opt[key] = b
     return b
   end
-  -- (a pill switcher, like the website's "Heroic | Mythic")
-  local function segRow(label, sub, key, list, after)
-    local cy = rowBase(label, sub)
-    local box = CreateFrame("Frame", nil, P); box:SetHeight(32); skin(box, 15, DEEP, 1, COL.line2, 1)
-    local btns, w = {}, 4
-    for i, c in ipairs(list) do
-      local b = CreateFrame("Button", nil, box); b:SetHeight(24)
-      b.bg = b:CreateTexture(nil, "BACKGROUND"); b.bg:SetAllPoints()
-      b.t = txt(b, "bold", 13); b.t:SetPoint("CENTER", 0, 0); b.t:SetText(c[2])
-      b:SetWidth(b.t:GetStringWidth() + 26); b:SetPoint("LEFT", box, "LEFT", w, 0); w = w + b:GetWidth() + 2
-      b:SetScript("OnClick", function() DB[key] = c[1]; refreshAll(); if after then after() end end)
-      btns[i] = b
-    end
-    box:SetWidth(w + 2); right(box, cy)
-    local function show() for i, b in ipairs(btns) do local on = DB[key] == list[i][1]; rounded(b.bg, "fill", 8, COL.gold, on and 1 or 0); b.t:SetTextColor(rgb(on and COL.ink or COL.muted)) end end
-    refreshers[#refreshers + 1] = show; show()
-    opt[key] = btns
+  local function buttonRow(label, text, fn)
+    local cy = rowBase(label)
+    local b = button(P, text, 160, false, 28); right(b, cy); b:SetScript("OnClick", fn)
   end
   local function buttons(list)
     local prev
     for i, b in ipairs(list) do
       local bt = button(P, b[1], b[3] or 170, i == 1, 30)
-      if prev then bt:SetPoint("LEFT", prev, "RIGHT", 10, 0) else bt:SetPoint("TOPLEFT", PX, -y) end
+      if prev then bt:SetPoint("LEFT", prev, "RIGHT", 10, 0) else bt:SetPoint("TOPLEFT", CL, -y) end
       bt:SetScript("OnClick", b[2]); prev = bt
     end
     y = y + 44
   end
   local function note(text)
-    local n = txt(P, "body", 13, COL.faint); n:SetPoint("TOPLEFT", PX + 2, -y); n:SetWidth(OW - PX * 2 - 4); n:SetJustifyH("LEFT"); n:SetText(text)
+    local n = txt(P, "body", 13, COL.faint); n:SetPoint("TOPLEFT", CL + 2, -y); n:SetWidth(CR - CL - 4); n:SetJustifyH("LEFT"); n:SetText(text)
+    if n.SetSpacing then n:SetSpacing(3) end
     y = y + n:GetStringHeight() + 12
   end
-  local sec = function(v) return v == 0 and "On time" or (v .. " s early") end
+  local pct = function(v) return math.floor(v * 100 + 0.5) .. "%" end
+  local px = function(v) return v .. " px" end
 
-  -- When it glows
+  -- Glow: the basics on one card
   page("glow")
-  panel("When it glows", "NSRT says when; Debrief Glow shows it")
-  switchRow("Glow my NSRT cooldowns", "Your own NSRT reminders with a spell make that spell glow on the Cooldown Manager.", "enabled")
-  stepRow("Start early", "Seconds before NSRT's countdown ends. On time glows at the moment to press.", "lead", 0, 5, 0.5, sec)
-  stepRow("Keep glowing", "If you don't press it, the glow stops after this long.", "hold", 2, 20, 1, function(v) return v .. " s" end)
-  switchRow("Stop when I press it", "The glow ends as soon as you cast the spell.", "stopOnPress")
-  panelEnd()
-  panel("Spells that aren't on your bar")
-  switchRow("Show a big icon instead", "A spell that isn't on your Cooldown Manager gets a big icon of its own.", "fallback")
-  stepRow("Big icon size", nil, "iconSize", 32, 128, 4, function(v) return v .. " px" end)
-  panelEnd()
-  buttons({ { "Test the glow", function() DebriefGlow_Test() end }, { "Place the big icon", function() SlashCmdList.DEBRIEFGLOW("move") end } })
-
-  -- Look
-  page("look")
-  panel("Style and colour", "Each change shows on your Cooldown Manager")
-  pickRow("Style", "The game's own glows, placed on your icons the way Blizzard does. Pulse is a soft glow of ours.", "style", 300, function() return styleList() end, preview)
+  panel("Your glow", "NSRT says when, Debrief Glow shows it")
+  switchRow("Glow my NSRT cooldowns", "Your own NSRT reminders with a spell make it glow on the Cooldown Manager.", "enabled", preview)
+  pickRow("Look", "The game's own glows, placed the way Blizzard does. Pulse is ours.", "style", 300, function() return styleList() end, preview)
   do -- (colour dots, then Any colour for the colour picker)
-    local cy = rowBase("Colour", "Eight ready colours, or any colour and how see-through it is.")
+    local cy = rowBase("Colour", "Eight ready colours, or any colour you like.")
     local any = button(P, "Any colour", 104, false, 28); right(any, cy)
     any:SetScript("OnClick", function()
       if not (ColorPickerFrame and ColorPickerFrame.SetupColorPickerAndShow) then return end
@@ -902,56 +883,54 @@ local function buildOptions()
     end
     refreshers[#refreshers + 1] = function() for i, b in ipairs(dots) do local on = DB.colorName == COLORS[i][1]; b.ring:SetVertexColor(rgb(COL.text)); b.ring:SetAlpha(on and 1 or 0) end end
   end
-  switchRow("Game styles keep the game's colours", "Off: the game's glows take your colour instead. A spell with its own colour always uses it.", "gameColors", preview)
+  switchRow("Count down on the spell", "The same number as NSRT's bar, right on the icon.", "timer", preview)
+  stepRow("Start early", "On time glows the moment NSRT's countdown ends.", "lead", 0, 5, 0.5, function(v) return v == 0 and "On time" or (v .. " s early") end)
+  switchRow("Stop when I press it", "The glow ends as soon as you cast the spell.", "stopOnPress")
   panelEnd()
-  panel("Shape and speed")
-  stepRow("Thickness", "For Pulse.", "thick", 1, 8, 1, function(v) return v .. " px" end, preview)
-  stepRow("Distance from the icon", nil, "pad", 0, 10, 1, function(v) return v .. " px" end, preview)
-  stepRow("Size", nil, "scale", 0.5, 2, 0.05, function(v) return math.floor(v * 100 + 0.5) .. "%" end, preview)
-  stepRow("Speed", "How fast it pulses, runs or spins.", "speed", 0.25, 3, 0.25, function(v) return v .. "x" end, preview)
-  stepRow("Opacity", nil, "a", 0.1, 1, 0.05, function(v) return math.floor(v * 100 + 0.5) .. "%" end, preview)
-  panelEnd()
+  note("How it works: when NSRT counts down one of your note's spells, that spell's icon on Blizzard's Cooldown Manager counts down with it and glows at 0.\nCommands: /dglow opens this, /dglow test tries it on your bar, /dglow spells opens Your spells, /dglow move places the big icon.")
 
-  -- Countdown
-  page("count")
-  panel("Countdown on the spell", "The same number as NSRT's bar")
-  switchRow("Count down on the spell", "Starts with NSRT's countdown and reaches 0 with it. Its length is your NSRT reminder duration.", "timer", preview)
-  stepRow("Number size", nil, "timerSize", 12, 48, 2, function(v) return v .. " px" end, preview)
-  segRow("Number colour", nil, "timerColor", { { "white", "White" }, { "gold", "Gold" }, { "red", "Red" }, { "glow", "Glow colour" } }, preview)
-  segRow("Where", nil, "timerPos", { { "middle", "On the icon" }, { "top", "Above" }, { "bottom", "Below" } }, preview)
-  switchRow("Tenths in the last 3 seconds", "2.9, 2.8 ... instead of 3, 2, 1.", "timerTenths", preview)
-  panelEnd()
-  buttons({ { "Test it", function() DebriefGlow_Test() end } })
-
-  -- Sound and voice
+  -- Sound and voice: four rows
   page("sound")
-  panel("Sound", "Plays when the glow starts")
+  panel("Sound and voice", "When the glow starts")
   pickRow("Sound", nil, "sound", 260, function() return soundList() end, function() playSound() end)
-  segRow("Sound channel", "Master plays even with game sounds turned down.", "channel", { { "Master", "Master" }, { "SFX", "Effects" }, { "Dialog", "Dialog" }, { "Ambience", "Ambience" } })
-  panelEnd()
-  panel("Voice", "Text to speech")
-  switchRow("Say it out loud", "NSRT can speak its reminders too: turn one of them off so you don't hear it twice.", "tts")
+  switchRow("Say it out loud", "NSRT can speak too: turn one of them off so you don't hear it twice.", "tts")
+  pickRow("What it says", nil, "ttsText", 260, function() return { { "{spell}", "The spell's name" }, { "{spell} now", "\"Aura Mastery now\"" }, { "Press {spell}", "\"Press Aura Mastery\"" }, { "Cooldown", "\"Cooldown\"" }, { "Go", "\"Go\"" } } end)
   pickRow("Voice", nil, "ttsVoice", 260, function()
     local o = { { 0, "Default" } }
     for _, v in ipairs((C_VoiceChat and C_VoiceChat.GetTtsVoices and C_VoiceChat.GetTtsVoices()) or {}) do if v.voiceID ~= 0 then o[#o + 1] = { v.voiceID, v.name } end end
     return o end)
-  pickRow("What it says", nil, "ttsText", 260, function() return { { "{spell}", "The spell's name" }, { "{spell} now", "\"Aura Mastery now\"" }, { "Press {spell}", "\"Press Aura Mastery\"" }, { "Cooldown", "\"Cooldown\"" }, { "Go", "\"Go\"" } } end)
-  stepRow("Voice volume", nil, "ttsVolume", 0, 100, 5, function(v) return v .. "%" end)
-  stepRow("Voice speed", nil, "ttsRate", -10, 10, 1, function(v) return v == 0 and "Normal" or (v > 0 and "+" .. v or tostring(v)) end)
-  stepRow("Count down out loud", "Says 3, 2, 1 before the moment (with Say it out loud on).", "countdown", 0, 5, 1, function(v) return v == 0 and "Off" or (v .. " s") end)
   panelEnd()
   buttons({ { "Hear it", function() playSound(); if DB.tts then speak(ttsFor(31821, "Aura Mastery")) end end } })
 
-  -- Help
-  page("help")
-  panel("How it works")
-  note("When NSRT (Northern Sky Raid Tools) starts the countdown for one of YOUR note's spells, the same number counts down on that spell's icon on Blizzard's Cooldown Manager. At 0 the icon glows, until you press it or the time runs out. A sound and a voice can go with it.\n\nIt follows NSRT's own timing, so phases and times always match NSRT's pop-ups. Only your own reminders count.")
+  -- Fine-tune: the small settings, in two columns
+  page("fine")
+  column(1)
+  panel("Glow")
+  stepRow("Keep glowing", nil, "hold", 2, 20, 1, function(v) return v .. " s" end)
+  stepRow("Size", nil, "scale", 0.5, 2, 0.05, pct, preview)
+  stepRow("Speed", nil, "speed", 0.25, 3, 0.25, function(v) return v .. "x" end, preview)
+  stepRow("Opacity", nil, "a", 0.1, 1, 0.05, pct, preview)
+  stepRow("Distance from the icon", nil, "pad", 0, 10, 1, px, preview)
+  stepRow("Pulse thickness", nil, "thick", 1, 8, 1, px, preview)
+  switchRow("Game looks in the game's colours", nil, "gameColors", preview)
   panelEnd()
-  panel("Commands")
-  note("/dglow  opens this window\n/dglow test  every Cooldown Manager icon glows for 3 seconds\n/dglow spells  opens Your spells\n/dglow move  place the big icon\n/dglow size  what your Cooldown Manager icons measure, if a glow doesn't fit\n/dglow on, /dglow off  turn it on or off")
+  panel("Spells not on your bar")
+  switchRow("Show a big icon", nil, "fallback")
+  stepRow("Big icon size", nil, "iconSize", 32, 128, 4, px)
+  buttonRow("Where it shows", "Place the big icon", function() SlashCmdList.DEBRIEFGLOW("move") end)
   panelEnd()
-  panel("Getting ready")
-  note("Turn on Blizzard's Cooldown Manager (Esc > Options > Gameplay Enhancements) and put your cooldowns on it. Load your NSRT note as usual, then press NSRT's Test Active Reminder button to see it work.")
+  column(2)
+  panel("Countdown number")
+  stepRow("Number size", nil, "timerSize", 12, 48, 2, px, preview)
+  pickRow("Number colour", nil, "timerColor", 150, function() return { { "white", "White" }, { "gold", "Gold" }, { "red", "Red" }, { "glow", "Glow colour" } } end, preview)
+  pickRow("Where", nil, "timerPos", 150, function() return { { "middle", "On the icon" }, { "top", "Above it" }, { "bottom", "Below it" } } end, preview)
+  switchRow("Tenths in the last 3 s", nil, "timerTenths", preview)
+  panelEnd()
+  panel("Sound and voice")
+  pickRow("Sound channel", nil, "channel", 150, function() return { { "Master", "Master" }, { "SFX", "Effects" }, { "Dialog", "Dialog" }, { "Ambience", "Ambience" } } end)
+  stepRow("Voice volume", nil, "ttsVolume", 0, 100, 5, function(v) return v .. "%" end)
+  stepRow("Voice speed", nil, "ttsRate", -10, 10, 1, function(v) return v == 0 and "Normal" or (v > 0 and "+" .. v or tostring(v)) end)
+  stepRow("Count down out loud", nil, "countdown", 0, 5, 1, function(v) return v == 0 and "Off" or (v .. " s") end)
   panelEnd()
 
   spellsPage.build(pages.spells)
