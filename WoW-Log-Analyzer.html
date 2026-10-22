@@ -4926,7 +4926,7 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .rgx-n { margin: 8px 2px 0; } .rgx-i { width: 18px; height: 18px; border-radius: 4px; flex: none; } .rgx-c.rgx-boss { border-left-color: #d9534f; } .rgx-c.rgx-add { border-left-color: #8fd18a; }
 @media (max-width: 760px) { .rgx-g { grid-template-columns: 1fr 1fr; } .spc-chs { display: none; } }
 /* Rotation, the A+B mockup (Oct 19): talents in the card, blocks without boxes */
-.spc-tq .spc-tqg { zoom: .7; } .spc-tq .tm { margin: 0; } .spc-tq .spc-hft { margin-bottom: 2px; }
+.spc-tq .spc-tqg { zoom: .7; } .spc-v2 { font: 700 15px var(--head) !important; color: var(--muted) !important; } .spc-tq .tm { margin: 0; } .spc-tq .spc-hft { margin-bottom: 2px; }
 @media (max-width: 760px) { .spc-tq .spc-tqg { zoom: .62; overflow-x: auto; } }
 .spc-htal { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; width: 100%; margin-top: 12px; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(217,180,106,.28); background: rgba(8,8,10,.55); color: var(--muted); font: 500 13px var(--body); text-align: left; cursor: pointer; }
 .spc-htal:hover { border-color: rgba(217,180,106,.6); } .spc-htal > b { color: var(--gold); font: 700 13px var(--head); letter-spacing: .4px; }
@@ -27249,13 +27249,17 @@ function specPage(o) {
     for (const [ch, blocks] of o.LAYOUT) for (const [t, keys] of blocks) { const l = []; for (const k of keys) for (const x of all) if (!used.has(x.c) && sl(x.c.k) === k) { used.add(x.c); l.push(x.c); } out.push({ t, ch, l }); }
     const lastCh = o.LAYOUT[o.LAYOUT.length - 1][0]; for (const x of all) { if (used.has(x.c)) continue; let g = out.find((y) => y.t === x.t); if (!g) out.push(g = { t: x.t, ch: lastCh, l: [] }); g.l.push(x.c); used.add(x.c); }
     o.groups.splice(0, o.groups.length, ...out.filter((g) => g.l.length || ((o.MERGE || {})[g.t] || {}).det)); }
+  // (one tile per subject (your note, Oct 22): a cooldown's amount tile, not graded, folds into its "uses" tile as a second number, its details under the uses')
+  { const all = o.groups.flatMap((g) => g.l.map((c) => ({ g, c })));
+    for (const { c: d } of all) { const m = all.find((y) => y.c !== d && y.c.st === 'na' && !y.c.also && String(d.label) === String(y.c.label) + ' uses'); if (!m || d.also) continue; const c = m.c;
+      d.also = c; d.v = d.v + ' <span class="spc-v2">· ' + c.v + '</span>'; d.sub = d.sub + ' ' + c.sub; m.g.l.splice(m.g.l.indexOf(c), 1); } }
   // (each check's section, its icon and whether it's the section's main number: Compare shows one chip a section)
   for (const g of o.groups) { const inf = (o.MERGE || {})[g.t] || {}, m = g.l.find((c) => c.k === inf.main) || g.l[0]; for (const c of g.l) { c.sec = g.t; c.secIc = inf.ic || c.ic; c.isMain = c === m; c.secLead = inf.lead || ''; c.lgN = (o.LG || {})[c.k] || (String(c.k).startsWith('p:') ? { ok: 'Spent', bad: 'Wasted' } : null); } }
   // (a percentage within 10 points of the top players' is never red, only yellow: chasing the last few points of a proc-driven number costs
   // more than it gives (your note, Oct 19))
   if (o.TOPB) { const LB = /^(p:|res$|hp$|ssw$|ess$|mana$|mnx$|fol$|dbh$|ebh$|rgb$|jhs$|cm$|rep$|dbec$|tyc$|imp$)/, pv = (x) => { const m = String(x == null ? '' : x).replace(/<[^>]+>/g, '').trim().match(/^(\d+(?:\.\d+)?)%$/); return m ? +m[1] : null; };
     for (const c of o.groups.flatMap((g) => g.l)) { if (c.st !== 'bad' || o.TOPB[c.k] == null) continue; const a = pv(c.v), b = pv(o.TOPB[c.k]); if (a != null && b != null && (LB.test(c.k) ? a - b : b - a) <= 10) c.st = 'warn'; } }
-  const { per, rows, groups, one } = o, P0 = o.P0, SF = S.specFilter || 'all', checks = groups.flatMap((g) => g.l), cnt = { bad: 0, warn: 0, ok: 0 }; for (const c of checks) if (cnt[c.st] != null) cnt[c.st]++;
+  const { per, rows, groups, one } = o, P0 = o.P0, SF = 'all', checks = groups.flatMap((g) => g.l), cnt = { bad: 0, warn: 0, ok: 0 }; for (const c of checks) if (cnt[c.st] != null) cnt[c.st]++;
   const sum = (f) => rows.reduce((v, s) => v + (f(s) || 0), 0), pct = (f) => Math.round(100 * f) + '%';
   const slug = (k) => String(k).replace(/[^a-z0-9]+/gi, '-').toLowerCase(), dur1 = one && per.length === 1 ? Math.max(1, per[0].end) : 0, X1 = per[0];
   const lgOf = (k) => (o.LG || {})[k] || (k.startsWith('p:') ? { ok: 'Spent', bad: 'Wasted' } : null);
@@ -27283,7 +27287,8 @@ function specPage(o) {
       : '<div class="spc-mos">' + [...new Set(mo.map((m) => m.pull))].slice(0, 10).map((pl) => { const l = mo.filter((m) => m.pull === pl); return '<span class="spc-mp"><b>Pull ' + pl + '</b></span>' + l.slice(0, 5).map(tm).join('') + (l.length > 5 ? '<span class="sub">and ' + (l.length - 5) + ' more</span>' : ''); }).join('') + '</div>'; };
   const BADGE = { ok: '✓ Clean', warn: 'Some mistakes', bad: 'Failed', na: 'Not graded' }; // (the same three words as Mechanics (Oct 19))
   const icB = (n) => '<span class="spc-ri">' + spIc(n, true) + '</span>';
-  const viz = (c) => { const own = o.VIZ && o.VIZ[c.k] ? o.VIZ[c.k](c) : ''; if (own) return own; if (c.bx.length && !LANE[c.k] && c.bx.every((b) => b.cls === 'ok' || b.cls === 'g3')) return ''; if (!c.bx.length) return ''; return (lgOf(c.k) && c.bx.length ? sumBar(countBx(c.bx), lgOf(c.k)) + boxes(c) : '') + (LANE[c.k] || !c.bx.length ? lane(c) : '') + (!c.bx.length ? momT(c) : ''); };
+  const viz = (c) => vizOne(c) + (c.also ? vizOne(c.also) : '');
+  const vizOne = (c) => { const own = o.VIZ && o.VIZ[c.k] ? o.VIZ[c.k](c) : ''; if (own) return own; if (c.bx.length && !LANE[c.k] && c.bx.every((b) => b.cls === 'ok' || b.cls === 'g3')) return ''; if (!c.bx.length) return ''; return (lgOf(c.k) && c.bx.length ? sumBar(countBx(c.bx), lgOf(c.k)) + boxes(c) : '') + (LANE[c.k] || !c.bx.length ? lane(c) : '') + (!c.bx.length ? momT(c) : ''); };
   const row = (c) => '<article class="spc-row ' + c.st + '" id="spc-r-' + slug(c.k) + '"><header class="spc-rh">' + icB(c.ic) + '<div class="spc-rt"><h4>' + esc(c.label) + '</h4></div><div class="spc-rv"><b class="cst-f ' + c.st + '">' + c.v + '</b><span class="spc-bd ' + c.st + '">' + BADGE[c.st] + '</span></div></header>' +
     '<div class="spc-rb"><div class="spc-rd"><p class="spc-rs">' + esc(c.sub) + spcHw(c.k, c.how)[0] + '</p>' + spcHw(c.k, c.how)[1] + viz(c) + '</div></div></article>';
   const dots = (l) => '<span class="spc-dots">' + l.map((c) => '<i class="' + c.st + '"></i>').join('') + '</span>';
@@ -27347,7 +27352,7 @@ function specPage(o) {
   const hero = '<div class="spc-hero' + (fr ? ' spc-sf' : '') + ' cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--cc:' + (P0.color || '#ff7c0a') + ';--sart:' + specArt(P0) + (fr ? fr.vars : '') + '">' + (fr ? fr.orn : '') +
     '<div class="spc-hl"><div class="spc-rw">' + ring + '<div class="spc-rc" title="' + esc(o.ringTip || 'Each check counts as much as it matters. A clean check counts in full, and a minor one counts half.') + '"><b>' + score + '</b><span>out of 100</span></div></div>' +
     '<div class="spc-hm"><div class="spc-hn">' + heroAvHd(P0) + '<div><h3>' + esc(P0.name) + (o.heroN ? '<span class="rot-herot">' + esc(o.heroN) + '</span>' : '') + '</h3><div class="spc-hs">' + esc(P0.specName || '') + '</div><div class="sub">' + meta + '</div></div></div>' + outH +
-    (TOPB && TOPB.score ? '<div class="spc-htp" title="' + esc(topWho(o.top, TOPB)) + '">' + 'Top ' + esc(o.top) + ' score about ' + TOPB.score + '.</div>' : '') + '<div class="spc-pills">' + pill('all', 'All', checks.length, 'all') + pill('bad', 'Failed', cnt.bad, 'bad') + pill('warn', 'Some mistakes', cnt.warn, 'warn') + pill('ok', '✓ Clean', cnt.ok, 'ok') + '</div></div></div>' + talP + '</div>';
+    (TOPB && TOPB.score ? '<div class="spc-htp" title="' + esc(topWho(o.top, TOPB)) + '">' + 'Top ' + esc(o.top) + ' score about ' + TOPB.score + '.</div>' : '') + '</div></div>' + talP + '</div>';
   // (your talents as one line, points in each tree, with the tree folded until you open it (the Rotation redesign, Oct 19))
   const tSum = o.TAL ? talentSum(LP.r, LP.p) : null;
   const build = talTree ? '' : o.TAL ? '<div class="spc-build spc-bl1' + (htal ? ' spc-bl2' : '') + ' cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--sart:' + specArt(P0) + '"><details class="spc-all"' + (S.specTree === true ? ' open' : '') + '><summary><b>Talents</b>' + (tSum && tSum.length ? tSum.map((x) => '<span class="spc-tsp">' + esc(x.l) + ' <i>' + x.n + (x.cap ? '/' + x.cap : '') + '</i></span>').join('') : '') + (one ? '' : '<span class="sub">from the latest pull</span>') + '<span class="spc-tsh"><span class="spc-tso">Show talents</span><span class="spc-tsc">Hide talents</span> ▸</span></summary>' + (talentGraphHtml(LP.r, LP.p, o.keyN || new Set()) || '') + '</details></div>'
@@ -30870,7 +30875,7 @@ function specView(reps, one) {
   // grouped by role inside it)
   const sel = '<select class="rot-sel" aria-label="Change player"><option value="" selected disabled>Change player</option>' + ROLES.map(([k, l]) => { const l2 = inRole(k); return l2.length ? '<optgroup label="' + l + '">' +
     l2.map((p) => '<option value="' + esc(p.name) + '"' + (p.name === S.specSel ? ' disabled' : '') + '>' + esc(p.name) + (p.name === meN ? ' (you)' : '') + ' · ' + esc(p.specName || '') + '</option>').join('') + '</optgroup>' : ''; }).join('') + '</select>';
-  const x0 = SPEC_CHECKS[pm.get(S.specSel).specName](reps, S.specSel, one), x = x0 ? { ...x0, html: x0.html.replace('<div><h3>', '<div class="rot-hn"><h3>').replace('</h3><div class="spc-hs">', '</h3>' + sel + '<button type="button" class="rot-shot" title="Copy this whole page as a picture, to paste in Discord">Copy as image</button><div class="spc-hs">') } : x0;
+  const x0 = SPEC_CHECKS[pm.get(S.specSel).specName](reps, S.specSel, one), x = x0 ? { ...x0, html: x0.html.replace('<div><h3>', '<div class="rot-hn"><h3>').replace('</h3><div class="spc-hs">', '</h3>' + sel + '<div class="spc-hs">') } : x0;
   const ak = S.specSel + '|' + (one ? (S.rep && S.rep.item ? S.rep.item.pull : '') : 'all'), an = ak !== SPC_AK ? ' spc-anim' : ''; SPC_AK = ak;
   const page = x ? '<div class="pf-inl pf-srcd spc-v' + an + '">' + x.html + '</div>' + (x.wait ? '<p class="sub" style="margin:8px 0 0">Reading the spells\' cooldowns…</p>' : '') : '<p class="muted" style="margin:10px 0 0">No Rotation page for ' + esc(S.specSel) + (one ? ' this pull' : ' over these pulls') + '.</p>';
   return '<div class="pf-cols solo" data-st="spec"><div class="panel rot-pickp">' + page + '</div></div>' + PERF_HOW.spec; // (full width: no side panel)
