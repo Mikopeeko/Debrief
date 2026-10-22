@@ -1,6 +1,8 @@
 (function () {
 'use strict';
 const E = window.ENGINE;
+// (a spell's name, never "Spell 12345" (Oct 22): the name we have, our cooldown names, else plain words)
+const spNm = (id, nm, alt) => nm || (E && E.cdName && E.cdName(id)) || alt || 'their cooldown';
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1756,6 +1758,7 @@ const PATCH_NOTES = [
     'The bosses are in the same order everywhere on the site.',
     'Long patch notes fold after six lines.',
   ], f: [
+    'Spell names everywhere: a cooldown the log never saw by that exact ID (like Revival when the monk pressed Restoral) now shows its name instead of "Spell 115310", on Debriefing, the Plan tab and every list.',
     'Healing cooldowns from your note are judged fairly: a cooldown still recharging from an earlier press, or pressed up to 45 seconds late, isn\'t "missed" any more, the same spell under another ID counts, on time is within 8 seconds, and a phase is red only when half or more were missed. A cooldown someone never pressed all night says "maybe not talented, check the note".',
     'Debrief Addon: "See your recap?" only comes up after raid bosses now, not after a delve or dungeon boss, where there was nothing to paste.',
     'Debrief Addon: the Font setting now steps through every font your other addons share as well as Debrief, WoW, Arial Narrow and Morpheus, so it still changes when a font pack has replaced the game\'s fonts.',
@@ -4654,7 +4657,7 @@ function ndzTimelineH(D) {
   const tabs = D.phs.length > 1 ? '<span class="ndz-ctt">' + D.phs.map((p) => '<button type="button" data-ndztl="' + p.ph + '" class="' + (p.ph === cur ? 'on' : '') + '">' + (p.ph % 1 ? 'Int' : phN(p.ph)) + (D.hits.some((h) => h.ph === p.ph && h.c === 'red') ? ' <i class="ndz-ctred" aria-label="has an uncovered big hit">●</i>' : '') + '</button>').join('') + '</span>' : '';
   const W = { red: 'No raid cooldown here', amber: 'Only a healer\'s own burst', green: 'Covered by a raid cooldown' };
   const hl = hits.length ? '<div class="ndz-ctl hits"><span class="ndz-ctw">Big hits</span><span class="ndz-ctr">' + hits.map((h) => '<span class="ndz-cthit ' + h.c + '" style="left:' + x(h.rel) + '" data-tt="' + esc('<b>' + esc(h.hit) + '</b> at ' + mmss(h.rel) + (ndzMechTip(D.boss, h.hit) ? '<br>' + esc(ndzMechTip(D.boss, h.hit)) : '') + '<br>' + W[h.c] + ' · about ' + (h.v / 1000).toFixed(1) + 'M damage a second in the fastest ' + D.diff + ' kills') + '"><em>' + mmss(h.rel) + '</em><i style="transform:rotate(45deg) scale(' + (0.75 + 0.5 * h.v / maxV).toFixed(2) + ')"></i></span>').join('') + '</span></div>' : '';
-  const lanes = who.map((n) => '<div class="ndz-ctl"><span class="ndz-ctw" style="color:' + D.color(n) + '">' + esc(n) + '</span><span class="ndz-ctr">' + cds.filter((c) => c.who === n).sort((a, b) => a.t - b.t).map((c, i, a) => { const d = a.slice(0, i).filter((q) => Math.abs(q.t - c.t) < 4).length, nm = ndzSpellNm(c.id) || 'Spell ' + c.id;
+  const lanes = who.map((n) => '<div class="ndz-ctl"><span class="ndz-ctw" style="color:' + D.color(n) + '">' + esc(n) + '</span><span class="ndz-ctr">' + cds.filter((c) => c.who === n).sort((a, b) => a.t - b.t).map((c, i, a) => { const d = a.slice(0, i).filter((q) => Math.abs(q.t - c.t) < 4).length, nm = ndzSpellNm(c.id) || spNm(c.id, '', 'a cooldown');
     return (c.dur ? '<span class="ndz-ctd' + (c.late ? ' late' : '') + '" style="left:' + x(c.t) + ';width:' + (100 * Math.min(c.dur, len - c.t) / len).toFixed(3) + '%;--c:' + (D.color(n) === 'inherit' ? 'var(--gold)' : D.color(n)) + '"></span>' : '') +
       '<span class="ndz-ctc' + (c.late ? ' late' : '') + '"' + (S.page === 'plan' && D.noteId ? ' data-cdi="' + D.cds.indexOf(c) + '"' : '') + ' style="left:' + x(c.t) + (d ? ';margin-left:' + d * 11 + 'px' : '') + '" data-tt="' + esc('<b>' + esc(nm) + '</b> · ' + esc(n) + '<br>' + phN(cur) + ' ' + mmss(c.t) + (c.dur ? ' to ' + mmss(Math.min(c.t + c.dur, len)) + ' · lasts ' + c.dur + ' s' : '') + (ndzIsRaidCd(c.id) ? '<br>Raid cooldown' : '') + (c.late ? '<br><span class="no">Not ready: pressed at ' + phN(c.late.prev.ph) + ' ' + mmss(c.late.prev.t) + ', and it takes ' + mmss(c.late.cd) + ' to come back (' + mmss(c.late.short) + ' short)</span>' : '')) + '">' + spellIcon(c.id, nm) + '</span>'; }).join('') + '</span></div>').join('');
   const vl = hits.map((h) => '<span class="ndz-ctv ' + h.c + '" style="left:calc(var(--ctw) + (100% - var(--ctw)) * ' + (h.rel / len).toFixed(4) + ')"></span>').join('');
@@ -6706,7 +6709,7 @@ function assign(only, capture) { // (only: just the note, for the all-pulls NSRT
       const hSt = !due.length ? 'na' : missedN * 2 >= due.length ? 'bad' : late ? 'warn' : 'ok', /* (three flags (Oct 22)) */ hTxt = !due.length ? 'none came up' + (isFinite(ct) ? ' before the wipe filter' : ' this pull') : late ? [missedN ? missedN + ' missed' : '', lateN ? lateN + ' late or early' : ''].filter(Boolean).join(' and ') : allOf(due.length, 'pressed on time', 'on time');
       addTile('as-hcd', icoWh('spell_holy_divinehymn'), 'Healing cooldowns', due.length ? due.length - late + '<span> / ' + due.length + ' on time</span>' : '—', hSt, hTxt);
       const res = (c) => { if (c.expected != null && !kept(c.expected)) return hst('na', AFTER); const s = c.status, k = s === 'on time' ? 'ok' : s === 'missed' ? 'bad' : s === 'late' || s === 'early' ? 'warn' : 'na'; return hst(k, s === 'late' || s === 'early' ? Math.abs(c.delta).toFixed(1) + 's ' + s : s); };
-      const rowH = (c) => '<tr class="' + (kept(c.expected) ? ({ 'on time': 'rok', late: 'rwarn', early: 'rwarn', missed: 'rbad' }[c.status] || '') : 'rna') + '"><td>' + who(c.player) + '</td><td>' + spell(c.spellid, c.spell || ('Spell ' + c.spellid)) + '</td><td class="tc">' + (Number.isInteger(+c.ph) ? 'P' + c.ph : 'Intermission') + ', ' + T(c.time) + '</td><td class="tc">' + (c.expected != null ? T(c.expected) : '—') + '</td><td class="tc">' + (c.used != null ? T(c.used) + ' <span class="sub">(' + (c.delta >= 0 ? '+' : '') + c.delta.toFixed(1) + 's)</span>' : '—') + '</td><td class="cdr">' + res(c) + '</td></tr>';
+      const rowH = (c) => '<tr class="' + (kept(c.expected) ? ({ 'on time': 'rok', late: 'rwarn', early: 'rwarn', missed: 'rbad' }[c.status] || '') : 'rna') + '"><td>' + who(c.player) + '</td><td>' + spell(c.spellid, spNm(c.spellid, c.spell)) + '</td><td class="tc">' + (Number.isInteger(+c.ph) ? 'P' + c.ph : 'Intermission') + ', ' + T(c.time) + '</td><td class="tc">' + (c.expected != null ? T(c.expected) : '—') + '</td><td class="tc">' + (c.used != null ? T(c.used) + ' <span class="sub">(' + (c.delta >= 0 ? '+' : '') + c.delta.toFixed(1) + 's)</span>' : '—') + '</td><td class="cdr">' + res(c) + '</td></tr>';
       // (each phase's cooldowns as a timeline (your note, Oct 18: pleasing graphics): a ring where each was planned and a dot in
       // the player's colour where it was pressed, joined when it was off; a red cross for one never pressed; hover for the times)
       const hcdTl = (list, name) => {
@@ -6718,7 +6721,7 @@ function assign(only, capture) { // (only: just the note, for the all-pulls NSRT
         for (const x of list) { if (x.expected == null) continue;
           const st = !kept(x.expected) ? 'na' : x.status === 'on time' ? 'ok' : x.status === 'missed' ? 'bad' : x.status === 'late' || x.status === 'early' ? 'warn' : 'na';
           const p = pmap.get(x.player), col = p ? p.color : '#9aa0ac', xe = X(x.expected);
-          const tip = ctData([esc(x.player) + ' · ' + esc(x.spell || 'Spell ' + x.spellid), 'planned at ' + T(x.expected), x.used != null ? 'pressed at ' + T(x.used) + ' (' + (x.delta >= 0 ? '+' : '') + x.delta.toFixed(1) + ' s)' : "didn't press it"]);
+          const tip = ctData([esc(x.player) + ' · ' + esc(spNm(x.spellid, x.spell)), 'planned at ' + T(x.expected), x.used != null ? 'pressed at ' + T(x.used) + ' (' + (x.delta >= 0 ? '+' : '') + x.delta.toFixed(1) + ' s)' : "didn't press it"]);
           if (x.used != null && Math.abs(x.used - x.expected) > 0.6) g += '<line x1="' + xe.toFixed(1) + '" x2="' + X(x.used).toFixed(1) + '" y1="' + y + '" y2="' + y + '" class="hct-ln ' + st + '"/>';
           g += '<g class="hct-m ' + st + '"' + tip + '><rect x="' + (xe - 12).toFixed(1) + '" y="' + (y - 14) + '" width="24" height="28" fill="transparent"/><circle cx="' + xe.toFixed(1) + '" cy="' + y + '" r="8" class="hct-pl"/>' +
             (x.used != null ? '<circle cx="' + X(x.used).toFixed(1) + '" cy="' + y + '" r="5.5" fill="' + col + '" class="hct-pr"/>' : '<path d="M' + (xe - 4).toFixed(1) + ' ' + (y - 4) + 'l8 8M' + (xe + 4).toFixed(1) + ' ' + (y - 4) + 'l-8 8" class="hct-x"/>') + '</g>'; }
@@ -6726,7 +6729,7 @@ function assign(only, capture) { // (only: just the note, for the all-pulls NSRT
           '<div class="hct-k sub"><span><i class="k-pl"></i>planned</span><span><i class="k-pr"></i>pressed</span><span><i class="k-x">✕</i>not pressed</span></div>';
       };
       // (and one sentence for each, in the order they were planned)
-      const sayC = (x) => { const sp = spell(x.spellid, x.spell || ('Spell ' + x.spellid)), w = who(x.player), pl = x.expected != null ? T(x.expected) : '';
+      const sayC = (x) => { const sp = spell(x.spellid, spNm(x.spellid, x.spell)), w = who(x.player), pl = x.expected != null ? T(x.expected) : '';
         if (x.expected != null && !kept(x.expected)) return ['na', w + ' ' + sp + ' <span class="sub">(after the wipe filter, not counted)</span>', pl];
         if (x.status === 'on time') return ['ok', w + ' pressed ' + sp + ' at ' + T(x.used) + ', on time.', pl];
         if (x.status === 'late' || x.status === 'early') return ['warn', w + ' pressed ' + sp + ' at ' + T(x.used) + ', ' + Math.abs(x.delta).toFixed(0) + ' s ' + x.status + ' (planned for ' + pl + ').', pl];
@@ -6767,7 +6770,7 @@ function assign(only, capture) { // (only: just the note, for the all-pulls NSRT
     // went; their full list stays in Healing cooldowns below)
     const dueC = (a.cds || []).filter((c) => c.expected != null && c.expected <= r.duration && kept(c.expected)), offC = dueC.filter((c) => c.status !== 'on time');
     if (offC.length) probs.push({ sev: offC.some((c) => c.status === 'missed') ? 'bad' : 'warn', when: T(offC[0].expected),
-      html: '<b>Healing cooldowns</b>: ' + offC.slice(0, 3).map((c) => esc(c.player) + (c.status === 'missed' ? " didn't press " : ' pressed ') + esc(c.spell || 'Spell ' + c.spellid) + (c.status === 'missed' ? '' : ' ' + Math.abs(c.delta).toFixed(0) + ' s ' + c.status)).join('; ') + (offC.length > 3 ? ', and ' + (offC.length - 3) + ' more' : '') + '.' });
+      html: '<b>Healing cooldowns</b>: ' + offC.slice(0, 3).map((c) => esc(c.player) + (c.status === 'missed' ? " didn't press " : ' pressed ') + esc(spNm(c.spellid, c.spell)) + (c.status === 'missed' ? '' : ' ' + Math.abs(c.delta).toFixed(0) + ' s ' + c.status)).join('; ') + (offC.length > 3 ? ', and ' + (offC.length - 3) + ' more' : '') + '.' });
     if (probs.length || any || dueC.length) box = wrongRight(probs, right, { sub: isFinite(ct) ? 'up to the wipe filter (' + T(ct) + ')' : '', none: 'Every assignment in the note that came up this pull was done.', noneRight: 'Nothing fully clean this pull.', moreWhere: 'in the rows below' });
     // (nothing in the note came up: say so, and why, instead of a page that looks empty)
     else {
@@ -7164,7 +7167,7 @@ function dbnPlayers(NJ, r, pmap) {
       const mine = mist.map((x, i) => [x, i]).filter(([x, i]) => !used.has(i) && x.player === n && ((ln.label && String(x.detail || '').toLowerCase().includes(String(ln.label).toLowerCase())) || String(x.mechanic || '').toLowerCase() === lab.toLowerCase()));
       const mm = mine.length ? mine[0][0] : null; mine.forEach(([, i]) => used.add(i)); const more = mine.length > 1 ? ' (' + mine.length + ' times)' : '';
       job(n, { t: lab, st: mm ? (mine.some(([x]) => x.severity !== 'Low') ? 'bad' : 'warn') : unchecked.has(ln.label) ? 'na' : 'ok', x: mm ? mm.detail + more : unchecked.has(ln.label) ? 'not checked yet' : '' }); } }
-  for (const c of a.cds || []) job(c.player, { t: (c.spell || 'Spell ' + c.spellid) + ' at ' + T(c.expected != null ? c.expected : c.time), st: c.status === 'on time' ? 'ok' : c.status === 'missed' ? 'bad' : /late|early/.test(c.status) ? 'warn' : 'na', x: c.status === 'on time' ? 'on time' : c.delta != null ? Math.abs(c.delta).toFixed(0) + ' s ' + c.status : c.status });
+  for (const c of a.cds || []) job(c.player, { t: (spNm(c.spellid, c.spell)) + ' at ' + T(c.expected != null ? c.expected : c.time), st: c.status === 'on time' ? 'ok' : c.status === 'missed' ? 'bad' : /late|early/.test(c.status) ? 'warn' : 'na', x: c.status === 'on time' ? 'on time' : c.delta != null ? Math.abs(c.delta).toFixed(0) + ' s ' + c.status : c.status });
   { const left = new Map(); mist.forEach((x, i) => { if (used.has(i) || x.mechanic === 'Assigned cooldown' || !here.has(String(x.player).toLowerCase())) return; const k = x.player + '|' + x.mechanic, o = left.get(k); if (o) { o.n++; if (x.severity !== 'Low') o.bad = true; } else left.set(k, { x, n: 1, bad: x.severity !== 'Low' }); });
     for (const { x, n, bad } of left.values()) job(x.player, { t: x.mechanic, st: bad ? 'bad' : 'warn', x: x.detail + (n > 1 ? ' (' + n + ' times)' : '') }); }
   const one = S.mechP && per.has(S.mechP) ? S.mechP : null, MK = { ok: '✓', warn: '!', bad: '✕', na: '–' }, rk = { bad: 0, warn: 1, ok: 2, na: 3 };
@@ -9044,7 +9047,7 @@ function nsrtChecks(r) {
     put('Kick teams', k.label, k.label, missed ? 'bad' : 'ok', (missed ? plural(missed, 'cast') + ' got through' : 'No casts got through') + (k.idle && k.idle.length ? '. Landed no kicks: ' + names(k.idle) : ''), 0, missed ? k.idle || [] : []);
   }
   for (const c of a.cds) {
-    const label = c.player + ' · ' + (c.spell || 'Spell ' + c.spellid) + ' · P' + c.ph + ' ' + T(c.time), key = c.player + '|' + c.spellid + '|' + c.ph + '|' + c.time;
+    const label = c.player + ' · ' + (spNm(c.spellid, c.spell)) + ' · P' + c.ph + ' ' + T(c.time), key = c.player + '|' + c.spellid + '|' + c.ph + '|' + c.time;
     if (c.expected != null && !ok(c.expected)) { put('Assigned cooldowns', key, label, 'na', 'After the wipe filter'); continue; }
     const st = c.status === 'on time' ? 'ok' : c.status === 'late' || c.status === 'early' ? 'warn' : c.status === 'missed' ? 'bad' : 'na';
     put('Assigned cooldowns', key, label, st, c.status + (c.used != null ? ' (pressed ' + T(c.used) + ', ' + (c.delta >= 0 ? '+' : '') + c.delta.toFixed(1) + 's)' : ''), 0, [c.player]);
@@ -21223,7 +21226,7 @@ async function resolveCombatants(cs) {
   const [ad, idt] = await Promise.all([Promise.all(needA.map((id) => tipData(id))), Promise.all(needI.map((id) => itemTip(String(id))))]);
   const an = new Map(needA.map((id, k) => [id, ad[k]])), inf = new Map(needI.map((id, k) => [id, idt[k]]));
   for (const c of cs) {
-    for (const a of c.auras) { const d = an.get(a.ability); if (!a.name) { a.name = d && d.name ? d.name : 'Spell ' + a.ability; a.icon = d && d.icon; } }
+    for (const a of c.auras) { const d = an.get(a.ability); if (!a.name) { a.name = d && d.name ? d.name : spNm(a.ability, '', 'a buff'); a.icon = d && d.icon; } }
     for (const g of c.gear) { if (!g || !g.id || g.icon) continue; const d = inf.get(g.id); g.looked = true; if (d) { g.icon = d.icon; if (g.quality == null) g.quality = d.quality; } }
   }
 }

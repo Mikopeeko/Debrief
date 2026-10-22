@@ -5063,6 +5063,10 @@ function parseNote(text) {
   return out;
 }
 
+// (the name of every healing and raid cooldown a note can assign, for when the log never saw that exact ID (Oct 22: Revival showed
+// as "Spell 115310" because the monk pressed Restoral))
+const CD_NAMES = new Map(Object.entries({"633":"Lay on Hands","740":"Tranquility","1022":"Blessing of Protection","2825":"Bloodlust","6940":"Blessing of Sacrifice","10060":"Power Infusion","15286":"Vampiric Embrace","31821":"Aura Mastery","31884":"Avenging Wrath","32182":"Heroism","33206":"Pain Suppression","33891":"Incarnation: Tree of Life","47536":"Rapture","47788":"Guardian Spirit","51052":"Anti-Magic Zone","62618":"Power Word: Barrier","64843":"Divine Hymn","64844":"Divine Hymn","77764":"Stampeding Roar","80353":"Time Warp","97462":"Rallying Cry","98008":"Spirit Link Totem","102342":"Ironbark","106898":"Stampeding Roar","108280":"Healing Tide Totem","114052":"Ascendance","115310":"Revival","116849":"Life Cocoon","145629":"Anti-Magic Zone","157982":"Tranquility","192077":"Wind Rush Totem","196718":"Darkness","197721":"Flourish","200183":"Apotheosis","207399":"Ancestral Protection Totem","216331":"Avenging Crusader","264667":"Primal Rage","265202":"Holy Word: Salvation","322118":"Invoke Yu'lon, the Jade Serpent","325197":"Invoke Chi-Ji, the Red Crane","357170":"Time Dilation","359816":"Dream Flight","363534":"Rewind","370537":"Stasis","370564":"Stasis","374227":"Zephyr","374968":"Time Spiral","388615":"Restoral","390386":"Fury of the Aspects","391528":"Convoke the Spirits","421453":"Ultimate Penitence","443028":"Celestial Conduit"}).map(([k, v]) => [+k, v]));
+const cdName = (id) => CD_NAMES.get(+id) || '';
 // (the same button under another ID: a heal vs its cast, a talent choice for the same slot)
 const CD_ALIAS = [[64843, 64844], [115310, 388615], [740, 157982], [51052, 145629]];
 const cdIds = (id) => { const g = CD_ALIAS.find((x) => x.includes(id)); return g || [id]; };
@@ -5344,6 +5348,7 @@ const JOB_MELEE = new Set([71, 72, 73, 70, 66, 250, 251, 252, 259, 260, 261, 268
 function spellNameOf(r, p, id) {
   const of = (q) => (q && q.castAb && [...q.castAb.values()].find((c) => c.id === id) || {}).name;
   let n = of(p); if (n) return n;
+  if (CD_NAMES.has(id)) return CD_NAMES.get(id); /* (our own name for a raid or healing cooldown (Oct 22)) */
   for (const q of r.players.values()) { n = of(q); if (n) return n; }
   for (const [k, v] of SPELLID) if (v === id) return k.replace(/(^|[\s:'-])([a-z])/g, (m, a, b) => a + b.toUpperCase()).replace(/ (Of|The|And) /g, (m) => m.toLowerCase());
   return '';
@@ -7112,7 +7117,7 @@ function coach(p, r, cut) {
   return tips.sort((a, b) => b.w - a.w).slice(0, 4);
 }
 
-const api = { MECH_COL, liveIndexer, parseNote, checkAssignments, CONSUMABLES, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
+const api = { MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CONSUMABLES, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
 root.ENGINE = api;
 if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
