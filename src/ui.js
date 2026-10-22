@@ -22551,16 +22551,17 @@ function rcbFacts(c, F) {
 function rcbBanner(c, F) {
   const data = c.data, raid = raidBlend(data.reduce((s, a) => s + a.score, 0) / data.length, F.rm), it = F.reps[0].item, kill = F.pulls.find((q) => q.it.kill), nr = nightResult(it), deaths = F.pulls.reduce((s, q) => s + q.kept.length, 0);
   const potU = F.pulls.reduce((s, q) => s + q.used, 0), potE = F.pulls.reduce((s, q) => s + q.expect, 0), mist = F.mech.reduce((s, m) => s + m.tot, 0), H = BOSS_HERO[it.boss];
-  const kpi = (l, v, st) => '<span><b class="' + (st || '') + '">' + v + '</b>' + l + '</span>';
+  const kpi = (l, v, st) => '<div class="tile rcb-bt"><div class="l">' + l + '</div><div class="v' + (st ? ' ' + st : '') + '">' + v + '</div></div>'; // (tiles, design system round 2)
   const trend = F.before.length && F.nowN ? '<div class="rct-tr rcb-ntr"><span class="rcb-ntl">Night grades on this boss</span>' + F.before.map((n) => '<span class="rcn-wk">' + esc(nightLabel(n.at)) + ' ' + gradeChip(letterOf(n.raid)) + '</span>').join('') + '<span class="rcn-wk now">Tonight ' + gradeChip(letterOf(F.nowN.raid)) + '</span>' + (F.mixed ? '' : rcnDelta(F.nowN.raid - F.last.raid)) + '</div>' : '';
   return '<section class="rcb-ban' + (kill ? ' win' : '') + '">' + (H ? '<img class="rcb-banbg" src="https://wow.zamimg.com/uploads/guide/header/' + H[0] + '.jpg" alt="" style="object-position:' + H[1] + '% 30%" onerror="this.remove()">' : '') + '<i class="rcb-bansh"></i>' +
     '<div class="rcb-banl"><div class="rcb-k">End of night · ' + esc(nightLabel(it.wallMs || it.startMs || Date.now())) + '</div><h2>' + esc(it.boss) + '</h2><div class="sub">' + esc(it.diff || '') + ' · ' + (kill ? 'killed on pull ' + kill.it.pull : plural(F.pulls.length, 'pull') + ' · best pull ' + esc(String(nr.big).replace(/^Best:\s*/, ''))) + '</div>' +
     '<div class="rcb-bst">' + kpi('pulls', F.pulls.length) + kpi('deaths that counted', deaths, deaths / F.pulls.length >= 4 ? 'warnv' : '') + kpi('combat potions drunk', potE ? Math.round(100 * potU / potE) + '%' : '—', potE && potU / potE < 0.85 ? 'warnv' : 'okv') + kpi('mistakes that cost points', mist, mist ? '' : 'okv') + kpi('raiders graded', data.length) + '</div>' + trend + '</div>' +
     '<div class="rcb-banr">' + rcbRing(raid, 136) + '<div class="sub">Raid grade</div></div></section>'; }
+const rcbI = (t) => '<span class="rcb-i" tabindex="0" role="note" aria-label="' + esc(t) + '" data-tt="' + esc(t) + '">ⓘ</span>'; // (design system round 2, Oct 22: small print folds into a tip)
 // the raid's report card: each subject averaged over the raid, its letter, and tonight's best
 function rcbRaid(c, F) {
   const B = rcbFacts(c, F);
-  return '<section class="panel rcb-sec"><div class="rcb-sh"><h3>The raid\'s report card</h3><span class="sub">' + (F.rm != null ? 'Mechanics is how the raid did each mechanic; the rest are' : 'each subject') + ' averaged over the ' + B.rows.length + ' raiders, with tonight\'s best</span></div><div class="rcb-subs">' +
+  return '<section class="panel rcb-sec"><div class="rcb-sh"><h3>The raid\'s report card</h3>' + rcbI(capS((F.rm != null ? 'Mechanics is how the raid did each mechanic; the rest are' : 'each subject') + ' averaged over the ' + B.rows.length + ' raiders, with tonight\'s best.')) + '</div><div class="rcb-subs">' +
     RCB_SUBJ.map(([k, l, ic, why]) => { const l0 = B.rows.filter((x) => x[k] != null); if (!l0.length) return '';
       // (the raid's Mechanics is how the raid did each mechanic, the same score as Debriefing (Oct 21); each raider's own mistakes are on their card)
       const raidM = k === 'mech' && F.rm != null, av = raidM ? F.rm : l0.reduce((s, x) => s + x[k], 0) / l0.length, top = l0.slice().sort((u, v) => v[k] - u[k])[0], L = letterOf(av);
@@ -22576,7 +22577,7 @@ function rcbTable(c, F) {
   const rows = list.map((x, i) => { const p = x.a.p, L = letterOf(x.score), n = (sk === 'score' ? B.rk.score : B.rk[sk]).m.get(x) || i + 1;
     return '<button type="button" class="rcb-tr' + (sel === x ? ' sel' : '') + (me && me.name === p.name ? ' me' : '') + '" data-rcbp="' + esc(p.name) + '"><i class="rcb-rk' + (n <= 3 ? ' r' + n : '') + '">' + n + '</i><span class="rcb-who"><img src="' + whIcon(pIcon(p)) + '" alt="" style="box-shadow:0 0 0 1px ' + p.color + '" onerror="this.style.visibility=\'hidden\'"><span><b class="nm" style="color:' + p.color + '">' + esc(p.name) + '</b><small>' + esc(p.specName || '') + '</small></span></span>' +
       '<span class="rcb-g">' + gradeChip(L) + Math.round(x.score) + '</span>' + RCB_SUBJ.map(([k]) => '<span>' + rcbV(x[k]) + '</span>').join('') + '<span class="rcb-d">' + (x.deaths ? x.deaths : '<em>none</em>') + '</span></button>'; }).join('');
-  return '<section class="panel rcb-sec rcb-tbl"><div class="rcb-sh"><h3>Ranked roster</h3><span class="sub">ranked by ' + (sk === 'score' ? 'grade' : RCB_SUBJ.find(([k]) => k === sk)[1].toLowerCase()) + ' · click a column to rank by it, a raider for their report card</span>' + roles + '</div>' + head + rows + '</section>'; }
+  return '<section class="panel rcb-sec rcb-tbl"><div class="rcb-sh"><h3>Ranked roster</h3>' + rcbI('Ranked by ' + (sk === 'score' ? 'grade' : RCB_SUBJ.find(([k]) => k === sk)[1].toLowerCase()) + '. Click a column to rank by it, or a raider for their report card.') + roles + '</div>' + head + rows + '</section>'; }
 // (the raider on the card: the one you picked, else you, else the top of the raid)
 function rcbSel(c, F) { const B = rcbFacts(c, F), me = meOf(); return B.rows.find((x) => x.a.p.name === S.rcbSel) || (me && B.rows.find((x) => x.a.p.name === me.name)) || B.rows.slice().sort((u, v) => v.score - u.score)[0]; }
 // the picked raider's report card: their grade, their place in the raid and in their role, each subject with its place, their best and their room to grow
@@ -22930,7 +22931,7 @@ function hwPage(c) {
   const pick = S.hwSel || S.mechP || (me && me.name), a = pick ? c.data.find((x) => x.p.name === pick) || c.data.find((x) => base(x.p.name) === base(pick)) : null;
   const opts = c.data.slice().sort((u, v) => u.p.name.localeCompare(v.p.name)).map((x) => '<option value="' + esc(x.p.name) + '"' + (a && x === a ? ' selected' : '') + '>' + esc(x.p.name) + (me && base(x.p.name) === base(me.name) ? ' (you)' : '') + '</option>').join('');
   const sel = '<label class="hwk-who"><span class="sub">Showing</span><select id="hwkSel">' + (a ? '' : '<option value="">Pick a raider…</option>') + opts + '</select></label>';
-  if (!a) return '<section class="panel hwk"><div class="hwk-h"><h2>Your homework</h2>' + sel + '</div><p class="sub" style="margin:0">' + (me ? esc(me.name) + ' isn\'t in these pulls. Pick a raider to see their homework.' : 'Pick yourself to see your homework for ' + esc(it.boss) + '.') + '</p></section>';
+  if (!a) return '<section class="panel hwk hwk-empty"><div class="hwk-ek">Your homework</div><p class="hwk-eq">' + (me ? esc(me.name) + ' isn\'t in these pulls. Pick a raider to see their homework.' : 'Pick yourself to see your homework for ' + esc(it.boss) + '.') + '</p>' + sel + '</section>'; // (a main box, design system round 2)
   /* (#1 is the one answer, the same fix Debriefing and the Report card show (Oct 22); the next two follow it) */
   const oaF = oaPlayerFix(a.per.map((g) => g.r), a.p.name), one1 = oaF && oaF.kind !== 'clean' ? oaF : null, oaL = one1 ? String(one1.label).toLowerCase().replace(/^dying (slowly )?to /, '') : '';
   const all = hwItems(a), todo = all.filter((o) => !o.fixed && !(oaL && String(o.t).toLowerCase() === oaL)), top = todo.slice(0, one1 ? 2 : 3), rest = todo.slice(one1 ? 2 : 3, 9), fixed = all.filter((o) => o.fixed);
@@ -22942,13 +22943,13 @@ function hwPage(c) {
     '<p>' + esc(hwOne(o, o.mech ? o.det || o.x : o.x)) + '</p>' + (o.mech && o.x && o.det ? '<div class="hwk-fix"><span>Next pull:</span> ' + esc(o.x) + '</div>' : '') +
     '<div class="hwk-ft"><span class="hwk-pill ' + o.sev + '">' + esc(o.cat[0]) + '</span><span class="sub">' + esc(hwWhen(o)) + '</span>' + hwTr(o) + '</div></div>';
   const mini = (o) => '<div class="hwk-m">' + hwIc(o, true) + '<span><b>' + esc(o.t) + '</b><span class="sub"> · ' + esc(hwWhen(o).replace(/^In /, 'in ')) + '</span></span>' + hwTr(o) + '<span class="hwk-pill ' + o.sev + '">' + esc(o.cat[0]) + '</span></div>';
-  const head = '<div class="hwk-h"><h2>' + (me && base(a.p.name) === base(me.name) ? 'Your homework' : esc(a.p.name) + '\'s homework') + '</h2><span class="sub"><b style="color:' + (a.p.color || 'inherit') + '">' + esc(a.p.name) + '</b> · ' + esc(a.p.specName || '') + ' · ' + esc(it.boss) + ' ' + esc(it.diff || '') + ' · ' + plural(a.n, 'pull') + (dd.length ? ' · ' + plural(dd.length, 'death') : '') + '</span>' + sel + '</div>';
+  const head = '<div class="hwk-h"><h2>' + (me && base(a.p.name) === base(me.name) ? 'Your homework' : esc(a.p.name) + '\'s homework') + '</h2>' + '<span class="rcb-i" tabindex="0" role="note" aria-label="How it works" data-tt="From every pull of this boss tonight, up to the wipe filter, biggest gain first. Red came up in half the pulls or more. Something you stopped doing in your last pulls moves to the green ticks.">ⓘ</span><span class="sub"><b style="color:' + (a.p.color || 'inherit') + '">' + esc(a.p.name) + '</b> · ' + esc(a.p.specName || '') + ' · ' + esc(it.boss) + ' ' + esc(it.diff || '') + ' · ' + plural(a.n, 'pull') + (dd.length ? ' · ' + plural(dd.length, 'death') : '') + '</span>' + sel + '</div>';
   const oneC = one1 ? '<div class="hwk-c bad hwk-one"><div class="hwk-ct"><span class="hwk-n">1</span><i class="hwk-ic">' + plIco(one1.kind === 'rot' ? 'spell_holy_borrowedtime' : 'spell_shadow_plaguecloud') + '</i><b>' + esc(dbfCap(one1.label)) + '</b></div><p>' + esc(one1.fix) + '</p><div class="hwk-ft"><span class="hwk-pill bad">Your one fix</span><span class="sub">' + (one1.n >= 2 ? 'In ' + one1.n + ' of ' + one1.of + ' pulls' : 'Tonight') + '</span></div></div>' : '';
   const body = top.length || oneC ? '<div class="hwk-3">' + oneC + top.map((o, i) => card(o, one1 ? i + 1 : i)).join('') + '</div>' + (rest.length ? '<details class="hwk-more" open><summary>' + plural(rest.length, 'smaller thing') + '</summary>' + rest.map(mini).join('') + '</details>' : '')
     : '<p class="hwk-clean">Nothing to work on from these pulls. Keep it up.</p>';
   hwSave(a, top, it);
   return '<section class="panel hwk">' + head + body + (good.length ? '<div class="hwk-ok">' + good.map((t) => '<span>' + esc(t) + '</span>').join('') + '</div>' : '') +
-    '<p class="sub hwk-how">From every pull of this boss tonight, up to the wipe filter, biggest gain first. Red came up in half the pulls or more. Something you stopped doing in your last pulls moves to the green ticks.</p></section>';
+    '</section>';
 }
 // (your top three, kept for My Page: only your own, the latest boss you opened)
 function hwSave(a, top, it) { const me = meOf(); if (!me || String(a.p.name).split('-')[0].toLowerCase() !== String(me.name).split('-')[0].toLowerCase()) return;
@@ -22961,7 +22962,7 @@ function hw() {
   view('<div class="plv"><div id="plBody">' + (cached ? '' : loadCard('Making your homework', 'Reading tonight\'s pulls…', 0)) + '</div></div>');
   const still = () => S.tab === 'hw' && S.rep && S.rep.item === it && $('#plBody');
   const draw = (c) => { const el = $('#plBody'); if (!el) return; el.innerHTML = (c.load || '') + hwPage(c); refreshIcons();
-    const s = $('#hwkSel'); if (s) s.onchange = () => { if (!s.value) return; setOneP(s.value); draw(c); };
+    const s = $('#hwkSel'); if (s) s.onchange = () => { if (!s.value) return; setOneP(s.value); draw(c); }; spcTipInit(); /* (the ⓘ tip) */
     el.querySelectorAll('#plAll').forEach((b) => (b.onclick = () => { NIGHT_ALL = true; S.plData = null; hw(); })); };
   if (cached) { draw(cached); return; }
   bossReps(it, still, (k, of) => { const el = $('#plBody'); if (!el) return; const line = 'Reading tonight\'s pulls… ' + k + ' of ' + of; if (el.querySelector('.ld')) loadSet(el, line, of ? k / of : null); else el.innerHTML = loadCard('Making your homework', line, of ? k / of : 0); }, true) /* (the whole night, by itself (Oct 20)) */

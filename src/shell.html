@@ -5399,6 +5399,18 @@ button, .btn, a, summary, .tab, .pull, .my-chip, .rcb-tr, .dbr-fx, .spc-tl, .md-
 .hwk-m { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.05); font-size: 14px; } .hwk-m > span:nth-child(2) { flex: 1; min-width: 0; } .hwk-m b { font-weight: 600; }
 .hwk-ok { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; } .hwk-ok span { font-size: 13px; color: #7ee08f; background: var(--good-bg); padding: 3px 10px; border-radius: 20px; }
 .hwk-clean { margin: 0; color: #7ee08f; } .hwk-how { margin: 12px 0 0; font-size: 12px; }
+/* Design system round 2 (Oct 22): the ⓘ tip beside a title, the night banner's tiles, Homework's empty state as a main box */
+.rcb-i { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--line2); color: var(--muted); font-size: 13px; line-height: 1; cursor: help; align-self: center; flex: none; }
+.rcb-i:hover, .rcb-i:focus { color: var(--gold); border-color: rgba(230,180,80,.5); outline: none; }
+.rcb-bst { display: grid !important; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.rcb-bst .rcb-bt { background: rgba(10,12,17,.72); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; }
+.rcb-bst .rcb-bt .l { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); line-height: 1.3; }
+.rcb-bst .rcb-bt .v { font: 700 28px/1.15 var(--head); color: var(--text); font-variant-numeric: tabular-nums; margin-top: 4px; }
+.rcb-bst .rcb-bt .v.okv { color: var(--good); } .rcb-bst .rcb-bt .v.warnv { color: var(--warn); }
+.hwk-empty { border: 1px solid var(--line2); border-left: 4px solid var(--gold); border-radius: 12px; padding: 16px 20px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.hwk-ek { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--gold); }
+.hwk-eq { margin: 0; font-size: 18px; font-weight: 600; color: var(--text); } .hwk-empty .hwk-who { margin-left: 0; }
+@media (max-width: 760px) { .rcb-bst { grid-template-columns: repeat(2, minmax(0, 1fr)); } .rcb-bst .rcb-bt .v { font-size: 24px; } }
 @media (max-width: 760px) { .hwk-3 { grid-template-columns: 1fr; } .hwk-who { margin-left: 0; } .hwk-h > .btn { margin-left: 0; } }
 /* Debriefing extras (Oct 20): pull-by-pull dots, Copy for Discord, a link to one mechanic, the Next pull line, phase timing */
 .dbd-dots { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; padding-left: 10px; } .dbn-tag + .dbd-dots { margin-left: 8px; }
