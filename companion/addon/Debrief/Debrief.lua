@@ -23,9 +23,18 @@ local FONTSETS = {
   morpheus = { body = STANDARD_TEXT_FONT, bold = STANDARD_TEXT_FONT, head = "Fonts\\MORPHEUS.TTF" },
 }
 local FONTREG = setmetatable({}, { __mode = "k" })
+-- (fonts your other addons share through LibSharedMedia, by name: "lsm:Expressway")
+local function lsmFonts() local L = LibStub and LibStub("LibSharedMedia-3.0", true); return L, (L and L.List and L:List("font")) or {} end
+local function fontSet(key)
+  if type(key) == "string" and key:sub(1, 4) == "lsm:" then
+    local L = lsmFonts(); local p = L and L:Fetch("font", key:sub(5), true)
+    if p then return { body = p, bold = p, head = p } end
+  end
+  return FONTSETS[key or "debrief"] or FONT
+end
 local function setFont(fs, kind, size)
   FONTREG[fs] = { kind, size }
-  local set = FONTSETS[DebriefDB and DebriefDB.font or "debrief"] or FONT
+  local set = fontSet(DebriefDB and DebriefDB.font)
   local sz = size * ((DebriefDB and DebriefDB.fontScale) or 1)
   local ok = fs:SetFont(set[kind] or set.body or FONT.body, sz, "")
   if ok == false then fs:SetFont(STANDARD_TEXT_FONT, sz, "") end
@@ -1653,7 +1662,21 @@ local function buildOptions()
   pslider("Card size", nil, 0.7, 1.5, function() return DB.scale or 1 end, function(v) DB.scale = v end)
   pslider("Text size", nil, 0.85, 1.2, function() return DB.fontScale or 1 end, function(v) DB.fontScale = v end)
   segment("Card width", nil, WIDTH_CHOICES, function() return DB.width or "normal" end, function(v) DB.width = v end)
-  segment("Font", nil, { { "debrief", "Debrief" }, { "wow", "WoW" }, { "arial", "Arial" }, { "morpheus", "Morpheus" } }, function() return DB.font or "debrief" end, function(v) DB.font = v end, true)
+  -- (the font: ‹ name › through Debrief's own, the game's, and every font your other addons share)
+  do
+    local base = { { "debrief", "Debrief" }, { "wow", "WoW" }, { "arial", "Arial Narrow" }, { "morpheus", "Morpheus headings" } }
+    local function list() local l = {}; for _, x in ipairs(base) do l[#l + 1] = x end; local _, names = lsmFonts(); local seen = {}
+      for _, n in ipairs(names) do if not seen[n] and n ~= "Friz Quadrata TT" and n ~= "Arial Narrow" and n ~= "Morpheus" then seen[n] = true; l[#l + 1] = { "lsm:" .. n, n } end end; return l end
+    local cy = rowBase("Font", "Yours from other addons too.")
+    local nx = optButton(P, "›", 30, false, 28); nx:SetPoint("RIGHT", P, "TOPRIGHT", -LX, -cy)
+    local val = P:CreateFontString(nil, "OVERLAY"); setFont(val, "bold", 14); val:SetWidth(150); val:SetJustifyH("CENTER"); val:SetPoint("RIGHT", nx, "LEFT", -4, 0); val:SetTextColor(rgb(COL.text)); val:SetWordWrap(false)
+    local pv = optButton(P, "‹", 30, false, 28); pv:SetPoint("RIGHT", val, "LEFT", -4, 0)
+    local function idx(l) for i, x in ipairs(l) do if x[1] == (DB.font or "debrief") then return i end end; return 1 end
+    local function show() local l = list(); val:SetText(l[idx(l)][2]) end
+    local function step(d) local l = list(); local i = ((idx(l) - 1 + d) % #l) + 1; DB.font = l[i][1]; applySettings(); show() end
+    nx:SetScript("OnClick", function() step(1) end); pv:SetScript("OnClick", function() step(-1) end)
+    refreshers[#refreshers + 1] = show; show()
+  end
   pslider("Background", "How solid the card is.", 0.6, 1, function() return DB.alpha or 0.97 end, function(v) DB.alpha = v end)
   panelEnd()
 
@@ -2096,8 +2119,10 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
   elseif e == "ZONE_CHANGED_NEW_AREA" then
     if C_Timer then C_Timer.After(2, autoLog) end
   elseif e == "ENCOUNTER_END" then
-    -- (for whoever runs Debrief Companion: the paste box comes up by itself a few seconds after a boss pull, ready for Ctrl+V)
-    if DB and (DB.pasted or DB.hasApp or DB.testMode) and DB.autoBox ~= false and C_Timer then
+    -- (for whoever runs Debrief Companion: the paste box comes up by itself a few seconds after a boss pull, ready for Ctrl+V.
+    -- Raid bosses only: the app makes no recap for a delve or dungeon boss, so asking there leaves nothing to paste (tester report #6))
+    local itype = GetInstanceInfo and select(2, GetInstanceInfo()); local raidBoss = itype == "raid" or a3 == 14 or a3 == 15 or a3 == 16 or a3 == 17
+    if DB and (DB.pasted or DB.hasApp or DB.testMode) and (raidBoss or DB.testMode) and DB.autoBox ~= false and C_Timer then
       C_Timer.After(4, function() if not InCombatLockdown() and not paste:IsShown() and not toast:IsShown() then Debrief_OpenPaste(true) end end)
     end
   elseif e == "ADDON_LOADED" and arg == ADDON then
