@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <style>
 /* The recap pop-up (Oct 22): the in-game card's coach box, floating over WoW right after a pull, without taking focus.
-   Same words and look as the addon's card; Share with raid copies the code for one Ctrl+V in WoW. */
+   Debriefing's own coach box, word for word. */
 :root { --bg: #171a22; --raised: #1e222c; --line: #2a2f3b; --line2: #353b49; --text: #ece8df; --muted: #98a0ad; --faint: #6c7381; --soft: #d6d1c6;
   --gold: #e6b450; --gold-ink: #1b1406; --em: #5fdc7a; --good: #45c15c; --goodT: #7ee08f; --bad: #e5534b; --badT: #ff8f87; --warn: #e8a23a; color-scheme: dark; }
 * { box-sizing: border-box; }
@@ -121,7 +121,7 @@ function render() {
   } else body += '<p class="chd">' + esc(res) + ' · ' + esc(h.dur) + '</p><p class="cnt">No coaching for this pull.</p>';
   app.innerHTML = '<div class="top">' + LOGO + '<b>Debrief</b><span class="bt">' + esc(h.boss) + ' · ' + esc(h.diff) + ' · Pull ' + esc(h.pull) + '</span><span class="pill' + (h.kill ? ' k' : '') + '">' + esc(res) + '</span><button class="x" type="button" title="Close (it comes back after the next pull)" data-close="1">✕</button></div>' +
     '<div class="body' + (D.pack && D.pack.html ? ' sitebody' : '') + '">' + body + '</div>' +
-    '<div class="foot">' + (D.code ? (copied ? '<button class="btn done" type="button">Copied: in WoW, type /dp, then Ctrl+V</button>' : '<button class="btn" type="button" data-share="1" title="Copies this pull for the addon. Paste it in WoW and everyone in your raid with the addon gets it.">Share with raid</button>') : '') +
+    '<div class="foot">' + (copied ? '<span class="btn done">Copied: in WoW, type /dp, then Ctrl+V</span>' : '') +
     '<button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">' + (copied ? '' : 'Closes when the next pull starts') + '</span></div>';
   if (D.pack && D.pack.html) siteBox(document.getElementById('site'), D.pack);
   fit();
@@ -130,11 +130,10 @@ function render() {
 function fit() { requestAnimationFrame(() => { const a = document.getElementById('app'), m = a.querySelector('.mini'), t = a.querySelector('.top'), b = a.querySelector('.body'), f = a.querySelector('.foot');
   const want = m ? m.offsetHeight + 2 : (t ? t.offsetHeight : 0) + (b ? b.scrollHeight : 0) + (f ? f.offsetHeight : 0) + 2; post('h:' + Math.ceil(want)); }); }
 document.addEventListener('click', (e) => {
-  const t = e.target.closest ? e.target.closest('[data-fold],[data-row],[data-close],[data-share],[data-open],[data-big]') : null; if (!t) return;
+  const t = e.target.closest ? e.target.closest('[data-fold],[data-row],[data-close],[data-open],[data-big]') : null; if (!t) return;
   if (t.dataset.big) { big = true; render(); return; }
   if (t.dataset.close) { post('close'); return; }
   if (t.dataset.open) { post('open'); return; }
-  if (t.dataset.share) { post('share:' + D.code); return; }
   if (t.dataset.fold) { OPEN[t.dataset.fold] = !OPEN[t.dataset.fold]; render(); return; }
   if (t.dataset.row && t.classList.contains('has')) { OPEN[t.dataset.row] = !OPEN[t.dataset.row]; render(); }
 });

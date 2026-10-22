@@ -2301,7 +2301,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
       if SetBinding("CTRL-SHIFT-D", "DEBRIEF_PASTE") then SaveBindings(GetCurrentBindingSet()) end
       DB.keySet = true
     end
-    if DEBRIEF_POPUP ~= nil and not DEBRIEF_AUTOCOPY then say("ready. Your recap pops up on your PC after each boss pull. To share it with your raid: Share with raid, then /dp here and Ctrl+V.")
+    if DEBRIEF_POPUP ~= nil and not DEBRIEF_AUTOCOPY then say("ready. Your recap pops up on your PC after each boss pull. To share a pull with your raid: Send it from the app, then /dp here and Ctrl+V.")
     elseif DB.hasApp or DB.pasted then say("ready. After each boss pull Debrief asks \"See your recap?\": press Ctrl+V." .. (DB.testMode and " Test mode is on: /debrief demo shows a sample card." or ""))
     else say("ready. Your recap opens by itself after boss pulls when someone in your group runs Debrief Companion. /debrief demo shows a sample.") end
   end
