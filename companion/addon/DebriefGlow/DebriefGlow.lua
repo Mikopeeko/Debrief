@@ -879,7 +879,7 @@ local function buildOptions()
   -- Look
   page("look")
   panel("Style and colour", "Each change shows on your Cooldown Manager")
-  pickRow("Style", "The \"Game\" ones are the game's own glows.", "style", 300, function() return styleList() end, preview)
+  pickRow("Style", "Border fits any icon exactly. The \"Game\" ones are the game's own (square) glows.", "style", 300, function() return styleList() end, preview)
   do -- (colour dots, then Any colour for the colour picker)
     local cy = rowBase("Colour", "Eight ready colours, or any colour and how see-through it is.")
     local any = button(P, "Any colour", 104, false, 28); right(any, cy)
@@ -1131,6 +1131,12 @@ ev:SetScript("OnEvent", function(_, e, a1, a2, a3)
       if DB.style == "pulse" then DB.style = "border" end
       if DB.pad == 2 then DB.pad = 1 end
       DB.ringDefault, DB.ringOnBorder = true, true
+    end
+    -- (0.4.5: everyone moves to the Border ring once, in their own colour: the game's looks are square art that can't sit
+    -- exactly on icons that aren't square, and "on the border" is the look asked for. The other looks stay in Look.)
+    if not DB.ringForAll then
+      DB.style, DB.pad, DB.thick = "border", 1, 3
+      DB.ringForAll, DB.ringOnBorder, DB.ringDefault = true, true, true
     end
     -- (0.4.4: the ring moved onto the border (3 px, 1 px out); settings still on 0.4.3's ring move with it once)
     if not DB.ringOnBorder then

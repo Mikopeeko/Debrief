@@ -85,7 +85,13 @@ run('local f = assert(load(' + JSON.stringify(src).replace(/\\u([0-9a-f]{4})/gi,
 lua.lua_pushstring(L, to_luastring(NOTE)); lua.lua_setglobal(L, to_luastring('NOTE'));
 run(`
 local ev = DebriefGlowEvents; local fire = ev:GetScript("OnEvent")
+-- (the user's saved settings from before 0.4.5: the rotation helper ants in blue, 2 px out)
+DebriefGlowDB = { style = "assist", pad = 2, thick = 3, r = 0.3, g = 0.6, b = 1, colorName = "blue", timerColor = "glow" }
 fire(ev, "ADDON_LOADED", "DebriefGlow"); fire(ev, "PLAYER_LOGIN")
+print("-- saved settings from before 0.4.5 move to the ring once, in their own colour")
+local function expectE(what, got, want) print((got == want and "  ok   " or "  FAIL ") .. what .. ": " .. tostring(got)) end
+expectE("style", DebriefGlowDB.style, "border"); expectE("1 px out", DebriefGlowDB.pad, 1); expectE("3 px thick", DebriefGlowDB.thick, 3); expectE("colour kept (blue)", DebriefGlowDB.colorName, "blue")
+DebriefGlowDB.r, DebriefGlowDB.g, DebriefGlowDB.b, DebriefGlowDB.colorName, DebriefGlowDB.timerColor = 0.90, 0.71, 0.31, "gold", "white"
 print("in Options > AddOns as: " .. tostring(CANVAS()))
 print("hooked into NSRT: " .. tostring(CB.NSRT_REMINDER_SHOW ~= nil))
 local PH = { [1] = 0, [2] = 150 }
