@@ -1690,6 +1690,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-22', h: [
+    { t: 'What your stat items are worth', d: 'Gear and extras on the Rotation tab now has a tile for each stat trinket, Venomcursed item and stat weapon enchant: the stat it gave you on average over the pull, and about how much healing or damage a second that was worth. Every tile there now leads with your HPS or DPS.' },
     { t: 'Your coach, in the game', d: 'After every boss pull, Debrief Addon shows Debriefing\'s coach box: the same headline, the one thing to focus on next pull, what went wrong with how to fix it, and Deaths and Avoidable damage you can click open. The Me tab opens with your own coach line.' },
     { t: 'Your night in one header', d: 'The top of the page is now one header: every pull of the night is a bar, as high as it got, so you see your progress at a glance. Hover a bar for the boss\'s health, click it to open that pull. The wipe filter is behind its own small button.' },
     { t: 'Kills get a real raid-lead call', d: 'When the boss dies, the coach celebrates with what actually happened: how many pulls it took, how far pull 1 got, the mechanic that finally went right, and an earned shout-out or two. A first kill gets the big one, a quick farm kill a short "clean kill, nice work", then one thing to tidy for next week.' },
@@ -15810,7 +15811,7 @@ function specPage(o) {
   const BADGE = { ok: '✓ Clean', warn: 'Some mistakes', bad: 'Failed', na: 'Not graded' }; // (the same three words as Mechanics (Oct 19))
   const icB = (n) => '<span class="spc-ri">' + spIc(n, true) + '</span>';
   const viz = (c) => vizOne(c) + (c.also ? vizOne(c.also) : '');
-  const vizOne = (c) => { const own = o.VIZ && o.VIZ[c.k] ? o.VIZ[c.k](c) : ''; if (own) return own; if (c.bx.length && !LANE[c.k] && c.bx.every((b) => b.cls === 'ok' || b.cls === 'g3')) return ''; if (!c.bx.length) return ''; return (lgOf(c.k) && c.bx.length ? sumBar(countBx(c.bx), lgOf(c.k)) + boxes(c) : '') + (LANE[c.k] || !c.bx.length ? lane(c) : '') + (!c.bx.length ? momT(c) : ''); };
+  const vizOne = (c) => { const own = o.VIZ && o.VIZ[c.k] ? o.VIZ[c.k](c) : ''; if (own) return own; if (!c.bx) return ''; if (c.bx.length && !LANE[c.k] && c.bx.every((b) => b.cls === 'ok' || b.cls === 'g3')) return ''; if (!c.bx.length) return ''; return (lgOf(c.k) && c.bx.length ? sumBar(countBx(c.bx), lgOf(c.k)) + boxes(c) : '') + (LANE[c.k] || !c.bx.length ? lane(c) : '') + (!c.bx.length ? momT(c) : ''); };
   const row = (c) => '<article class="spc-row ' + c.st + '" id="spc-r-' + slug(c.k) + '"><header class="spc-rh">' + icB(c.ic) + '<div class="spc-rt"><h4>' + esc(c.label) + '</h4></div><div class="spc-rv"><b class="cst-f ' + c.st + '">' + c.v + '</b><span class="spc-bd ' + c.st + '">' + BADGE[c.st] + '</span></div></header>' +
     '<div class="spc-rb"><div class="spc-rd"><p class="spc-rs">' + esc(c.sub) + spcHw(c.k, c.how)[0] + '</p>' + spcHw(c.k, c.how)[1] + viz(c) + '</div></div></article>';
   const dots = (l) => '<span class="spc-dots">' + l.map((c) => '<i class="' + c.st + '"></i>').join('') + '</span>';
@@ -15987,7 +15988,7 @@ function spcCoach(d) {
 }
 // (a few words under each chapter's name on the Rotation tab)
 const SPC_CHS = { Rotation: 'casting, your priority and your procs', Resources: 'what you built and what you wasted', Cooldowns: 'your big buttons over the pull, and the boss\'s windows',
-  'Start of the pull': 'before the pull and the first seconds', Mitigation: 'your active mitigation and defensives','This boss': 'talents for this fight', Stats: 'your gear\'s stats', 'Gear and extras': 'boss and add damage, what your trinkets, enchants and potion added, and your biggest hit' };
+  'Start of the pull': 'before the pull and the first seconds', Mitigation: 'your active mitigation and defensives','This boss': 'talents for this fight', Stats: 'your gear\'s stats', 'Gear and extras': 'boss and add damage, what your trinkets, stat items, enchants and potion added, and your biggest hit' };
 // (points in each of a player's talent trees: class, hero, spec)
 const talentSum = (r, p) => { const tr = treeOf(p.specName), c = (r.combatants || []).find((x) => x.name === p.name); if (!tr || !c || !c.talents || !c.talents.length) return null;
   const got = new Map(); for (const t of c.talents) got.set(+t.id, (got.get(+t.id) || 0) + (+t.rank || 1));
@@ -16004,6 +16005,58 @@ const GEAR_NM = new Set(Object.values(GEAR_IT));
 const spcGearOf = (a) => { const n = String(a.name || ''), b = n.replace(/^[^:]+: /, ''); if (GEAR_SP.has(+a.id)) { const g = GEAR_IT[GEAR_SP.get(+a.id)] || null; return g && /Health Potion|Healthstone|Healing Potion/i.test(g) ? null : g; }
   if (GEAR_NM.has(b) && !/Potion|Healthstone/i.test(b)) return b; /* (a proc named after its item, like Preternatural Antivenom) */
   if (/^Rune of /i.test(b)) return 'Omnium Folio'; if (+a.id === 143924 || b === 'Leech') return 'Leech'; if (+a.id === 1307578 || b === 'Soulcoil Barrier') return 'Soulcoiler Ritual Vessel'; return null; };
+// (stat items (Oct 22, your idea): what a stat trinket, Venomcursed item or weapon enchant was worth. Its buff in the log (and its stacks) over the
+// pull, times its size at your item level, is the stat it added on average. A secondary stat point is worth about the same as any other (the game
+// prices them so: 54 Versatility, 46 Critical Strike or 44 Haste is about 1% more, and a crit or haste percent is worth a bit less than a full one),
+// so every 54 points is about 1% more healing or damage, a tenth less past your first falloff point and a fifth less past the second; a primary stat
+// adds its share of yours. Sizes are the item tooltips' at item levels 285 to 360, read straight across in between. An estimate, so it says "about")
+const SI_L = [285, 300, 315, 330, 345, 360], SI_VC = [291, 313, 335, 357, 379, 401], SI_VCN = [49, 52, 56, 60, 63, 67], SI_DR2 = { crit: 1840, haste: 1760, mastery: 1840, versatility: 2160 };
+const SI_VC_IT = { 271876: 'Awoken Dreadfang Cuirass', 271878: 'Chausses of Unbound Rancor', 268215: 'Abyssal Broodfiend\'s Bardiche', 268207: 'Caustic Repose Greatbow', 268202: 'Jaw of the Shackled Goddess' };
+const SI_VC_ST = { 271876: 'mastery', 271878: 'crit', 268215: 'mastery', 268207: 'crit', 268202: 'haste' }; // (each one's stat: a Venomcursed buff belongs to the item of its own stat)
+const SI_ST = { 'Haste': 'haste', 'Mastery': 'mastery', 'Critical Strike': 'crit', 'Versatility': 'versatility' };
+const STAT_GEAR = [
+  { n: 'Aqirbane Reliquary', it: [268265], b: [{ n: 'Venomcursed Ascendance', st: 'any', v: [298, 333, 367, 402, 436, 471], neg: [50, 56, 62, 68, 73, 79] }] },
+  { vc: true, it: Object.keys(SI_VC_IT).map(Number), b: Object.keys(SI_ST).map((k) => ({ n: 'Venomcursed ' + k, st: SI_ST[k], v: SI_VC, neg: SI_VCN })) },
+  { n: 'Jan\'thrazet, the Soul Fang', it: [271092], b: [{ n: 'Soul Fang Alacrity', st: 'haste', v: [107, 115, 123, 131, 139, 147] }] },
+  { n: 'Voracious Heart of Ula\'tek', it: [270175], b: [{ n: 'Voracious Heart of Ula\'tek', st: 'pri', v: [277, 318, 366, 421, 484, 557] }, { n: 'Devoured Strength', st: 'pri', v: [31, 36, 41, 47, 54, 62] }] },
+  { n: 'Vile Vial of Volatile Venom', it: [273796], b: [{ n: 'Empowering Venom', st: 'any', v: [774, 832, 891, 949, 1007, 1065], after: [111, 119, 127, 136, 144, 152] }] },
+  { n: 'Twisted Horror\'s Tendril', it: [281215], b: [{ n: 'Devastating Power', st: 'crit', v: [28, 30, 32, 34, 36, 38] }] },
+  { n: 'Hex Lord\'s Dooming Idol', it: [270169], b: [{ id: 1307470, n: 'Hex Lord\'s Doom', st: 'pri', v: [-1.7, -2, -2.3, -2.6, -3, -3.5] }, { id: 1295885, n: 'Hex Lord\'s Doom', st: 'pri', v: [22, 26, 30, 34, 39, 45], per: 1307470 }] },
+  { n: 'Wavecaller\'s Seastone', it: [270167], b: [{ n: 'Tidal Insight', st: 'pri', v: [41, 47, 54, 62, 72, 82] }] },
+  { n: 'Freightrunner\'s Flask', it: [250215], b: [{ n: 'Freightrunner\'s Flask', st: 'crit', v: [553, 595, 636, 678, 720, 761] }] },
+  { n: 'Keeper\'s Seething Core', it: [270165], b: [{ n: 'Focus of Ula\'tek', st: 'haste', v: [102, 110, 117, 125, 133, 140], two: 1.2 }] },
+  { n: 'Locus-Walker\'s Ribbon', it: [249809], b: ['Riftwalker\'s Temptation', 'Deepening Temptation'].map((n) => ({ n, st: 'pri', v: [259, 298, 343, 394, 453, 521], grow: 0.05 })) },
+  { n: 'Rite of the Hash\'ey', ench: true, b: [['Akil\'zon\'s Rite', 'mastery'], ['Jan\'alai\'s Rite', 'haste'], ['Halazzi\'s Rite', 'crit'], ['Nalorakk\'s Rite', 'versatility']].map(([n, st]) => ({ n, st, v: 139 })) },
+  { n: 'Jan\'alai\'s Precision', ench: true, b: [{ n: 'Precision of the Dragonhawk', st: 'crit', v: 124 }] },
+  { n: 'Arcane Mastery', ench: true, b: [{ n: 'Genius Insight', st: 'mastery', v: 124 }] },
+  { n: 'Berserker\'s Rage', ench: true, b: [{ n: 'Frenzied Focus', st: 'haste', v: 124 }] }];
+const SI_BY = (() => { const m = new Map(); for (const g of STAT_GEAR) for (const b of g.b) m.set(b.id || b.n.toLowerCase(), [g, b]); return m; })();
+const siAt = (v, il) => { if (!Array.isArray(v)) return v; if (il <= SI_L[0]) return v[0]; for (let i = 1; i < SI_L.length; i++) if (il <= SI_L[i]) return v[i - 1] + (v[i] - v[i - 1]) * (il - SI_L[i - 1]) / (SI_L[i] - SI_L[i - 1]); return v[v.length - 1]; };
+const siNm = { crit: 'Critical Strike', haste: 'Haste', mastery: 'Mastery', versatility: 'Versatility' };
+// (one pull: each stat item's average stat over the pull and its share of your healing or damage)
+function statItemsPull(r, p, t1) {
+  const out = new Map(); if (!p.statB || !p.statB.size || !(t1 > 5)) return out;
+  const cb = combOfR(r, p), st = (cb && cb.stats) || {}, gear = ((cb && cb.gear) || []).filter((g) => g && g.id);
+  const ils = gear.map((g) => g.itemLevel || 0).filter((v) => v > 100).sort((a, b) => a - b), ilMed = ils.length ? ils[Math.floor(ils.length / 2)] : 330;
+  const pri = Math.max(st.intellect || 0, st.agility || 0, st.strength || 0), priN = !pri ? '' : pri === st.intellect ? 'Intellect' : pri === st.agility ? 'Agility' : 'Strength';
+  const fDR = (k) => { const R = st[k] || 0; return !R ? 1 : R < STAT_DR[k] ? 1 : R < SI_DR2[k] ? 0.9 : 0.8; }, fAny = ['crit', 'haste', 'mastery', 'versatility'].reduce((v, k) => v + fDR(k), 0) / 4;
+  const fOth = (k) => ['crit', 'haste', 'mastery', 'versatility'].filter((x) => x !== k).reduce((v, x) => v + fDR(x), 0) / 3;
+  const area = (l, fn) => { let a = 0, k = 0; for (let i = 0; i < l.length; i++) { const [t, c] = l[i], e = Math.min(t1, i + 1 < l.length ? l[i + 1][0] : t1); if (i && c > l[i - 1][1] && l[i - 1][1] === 0) k++; else if (!i && c > 0) k++; if (e > t && c > 0) a += (e - Math.max(0, t)) * fn(c, k, t); } return a; };
+  for (const sb of p.statB.values()) { const hit = SI_BY.get(sb.id) || SI_BY.get(String(sb.name).toLowerCase()); if (!hit) continue; const [g, b] = hit, l = sb.l.filter((x) => x[0] <= t1); if (!l.length) continue;
+    const gi = g.it ? gear.find((x) => g.it.includes(x.id) && (!g.vc || SI_VC_ST[x.id] === b.st)) : null, il = g.ench ? 0 : gi ? gi.itemLevel || ilMed : ilMed, v = siAt(b.v, il);
+    const key = g.vc ? (gi ? SI_VC_IT[gi.id] : b.n) : g.n + (g.ench ? ' (enchant)' : '');
+    const o = out.get(key) || { key, g, il, sec: 0, pri: 0, up: [], ic: [sb.id, sb.name], priN, pri0: pri, b0: b, ench: !!g.ench }; out.set(key, o); if ((Array.isArray(o.b0.v) ? o.b0.v[0] : o.b0.v) < 0) o.b0 = b; /* (the Idol says what its press gives, not its drain) */
+    // (the stat-seconds it gave: stacks × size, the Core's 20% more with two or more, the Ribbon's 5% more for each one this pull, the Idol's press × its stacks)
+    let ss;
+    if (b.per) { const dl = (p.statB.get(b.per) || { l: [] }).l, at = (t) => { let c = 0; for (const [u, n] of dl) { if (u > t - 0.05) break; c = n; } return c; }; ss = area(l, (c, k, t) => v * Math.max(1, at(t))); }
+    else ss = area(l, (c, k) => c * v * (b.two && c >= 2 ? b.two : 1) * (b.grow ? 1 + b.grow * Math.min(10, Math.max(0, k - 1)) : 1));
+    if (b.st === 'pri') o.pri += ss; else o.sec += ss * (b.st === 'any' ? fAny : fDR(b.st));
+    if (b.neg) o.sec -= area(l, (c) => c * siAt(b.neg, il)) * 3 * (b.st === 'any' ? fAny : fOth(b.st));
+    if (b.after) { const w = siAt(b.after, il); for (let i = 1; i < l.length; i++) if (l[i][1] === 0 && l[i - 1][1] > 0) o.sec -= w * fAny * Math.max(0, Math.min(15, t1 - l[i][0])); }
+    for (let i = 0; i < l.length; i++) if (l[i][1] > 0 && (Array.isArray(b.v) ? b.v[0] : b.v) > 0) o.up.push([Math.max(0, l[i][0]), Math.min(t1, i + 1 < l.length ? l[i + 1][0] : t1)]); }
+  for (const o of out.values()) { o.up.sort((a, b) => a[0] - b[0]); let u = 0, e = -1; for (const [a, b] of o.up) { if (b <= e) continue; u += b - Math.max(a, e); e = b; } o.upF = u / t1; o.secAvg = o.sec / t1; o.priAvg = o.pri / t1; o.gn = o.secAvg / 5400 + (pri ? o.priAvg / pri : 0); }
+  return out;
+}
 const spcExtras = (per, UN, one) => { const heal = UN === 'healing', ab = new Map(); let tot = 0, dur = 0, big = null;
   for (const x of per) { const p = x.p, m = heal ? p.healAb : p.dmgAb; dur += Math.max(1, x.r.duration || x.end || x.t1 || 1); if (!m) continue;
     for (const a of m.values()) { const k = a.name, w = ab.get(k) || { name: k, id: a.id, total: 0, hits: 0 }; w.total += a.total || 0; w.hits += a.hits || 0; ab.set(k, w); tot += a.total || 0;
@@ -16013,10 +16066,22 @@ const spcExtras = (per, UN, one) => { const heal = UN === 'healing', ab = new Ma
   // (gear: each item's effects added up, the biggest first)
   const gear = new Map(); for (const a of ab.values()) { const g = spcGearOf(a); if (!g || a.total <= 0) continue; const w = gear.get(g) || { g, total: 0, l: [] }; w.total += a.total; w.l.push(a); gear.set(g, w); }
   const gl = [...gear.values()].sort((a, b) => b.total - a.total), gT = gl.reduce((v, x) => v + x.total, 0);
-  const card = (ic, l, v, sub, cls) => '<div class="rgx-c' + (cls ? ' ' + cls : '') + '"><div class="rgx-h">' + ic + '<span>' + l + '</span></div><b class="rgx-v">' + v + '</b><span class="rgx-s">' + sub + '</span></div>';
+  const card = (ic, l, v, sub, cls, how) => '<div class="rgx-c' + (cls ? ' ' + cls : '') + '"><div class="rgx-h">' + ic + '<span>' + l + '</span></div><b class="rgx-v">' + v + '</b><span class="rgx-s">' + sub + '</span>' + (how ? '<details class="rgx-hw"><summary>How we estimated</summary><p>' + how + '</p></details>' : '') + '</div>';
+  // (every tile leads with healing or damage a second; the total and the share are the smaller line under it (Oct 22, your call))
+  const U = heal ? 'HPS' : 'DPS', ps = (v) => C(v) + '<small> ' + U + '</small>';
+  // (stat items: each pull's average stat, worth its share of that pull's healing or damage, added up over the pulls)
+  const sti = new Map(); for (const x of per) { const t1 = Math.max(1, x.t1 || x.r.duration || x.end || 1), m = heal ? x.p.healAb : x.p.dmgAb; let tp = 0; if (m) for (const a of m.values()) tp += a.total || 0;
+    for (const o of statItemsPull(x.r, x.p, t1).values()) { const w = sti.get(o.key) || Object.assign({}, o, { est: 0, sec: 0, pri: 0, upT: 0, t: 0 }); w.est += tp * o.gn / (1 + o.gn); w.sec += o.sec; w.pri += o.pri; w.upT += o.upF * t1; w.t += t1; sti.set(o.key, w); } }
+  const stL = [...sti.values()].filter((w) => w.t > 0 && Math.abs(w.est) >= 1).sort((a, b) => b.est - a.est), stT = stL.reduce((v, w) => v + w.est, 0);
+  const fm0 = (v) => Math.round(v).toLocaleString('en-US'), sgn = (v) => (v < 0 ? '−' : '+') + fm0(Math.abs(v));
+  const stC = stL.slice(0, 6).map((w) => { const b = w.b0, sz = siAt(b.v, w.il), ng = b.neg ? siAt(b.neg, w.il) : 0, secA = w.sec / w.t, priA = w.pri / w.t;
+    const what = b.st === 'pri' ? sgn(sz) + ' ' + (w.priN || 'primary stat') + (w.g.b.length > 1 ? ' and more' : '') : b.st === 'any' ? sgn(sz) + ' to a random stat' + (ng ? ', ' + sgn(-ng) + ' to the other three' : b.after ? ', then ' + sgn(-siAt(b.after, w.il)) + ' to one for 15 seconds' : '') : w.g.ench && w.g.b.length > 1 ? sgn(sz) + ' to one stat' : sgn(sz) + ' ' + siNm[b.st] + (ng ? ', ' + sgn(-ng) + ' to the other three' : '');
+    const avg = (Math.abs(priA) >= Math.abs(secA) && w.pri ? sgn(priA) + ' ' + (w.priN || 'primary stat') : sgn(secA) + ' secondary stats') + ' on average';
+    const how = 'Its buff was up ' + Math.round(100 * w.upT / w.t) + '% of the time (' + (w.ench ? 'at the enchant\'s top rank' : 'at item level ' + Math.round(w.il)) + ': ' + what + (b.per ? ' a stack' : '') + '). ' + (b.st === 'pri' ? 'Your ' + (w.priN || 'primary stat') + ' was ' + fm0(w.pri0) + ', so each point of it is about ' + (100 / Math.max(1, w.pri0)).toFixed(3) + '% more ' + W + '.' : 'Every 54 points of any secondary stat is about 1% more ' + W + ' (they\'re worth about the same; a bit less past your falloff points).') + ' An estimate, not a measurement.';
+    return card(spellIcon(w.ic[0], w.ic[1]), esc(w.key), '<small>about </small>' + (w.est < 0 ? '−' : '') + C(Math.abs(w.est) / dur) + '<small> ' + U + '</small>', esc(avg) + ' · about ' + pc(Math.abs(w.est)) + ' of your ' + W, 'rgx-stat', esc(how)); });
   const gearC = gl.slice(0, 6).map((x) => { const sp1 = x.l.sort((a, b) => b.total - a.total)[0], nm = sp1.name.replace(/^[^:]+: /, '');
-    return card(spellIcon(sp1.id, nm), esc(x.g), C(x.total), pc(x.total) + ' of your ' + W + ' · ' + C(x.total / dur) + ' a second' + (nm !== x.g ? '<br>from ' + esc(x.l.map((a) => a.name.replace(/^[^:]+: /, '')).filter((v, i, l) => v && l.indexOf(v) === i).slice(0, 3).join(', ')) : '')); });
-  const gSum = gl.length ? card((gl[0] ? spellIcon(gl[0].l[0].id, gl[0].l[0].name.replace(/^[^:]+: /, '')) : ''), 'All your gear effects', pc(gT), C(gT) + ' ' + W + ' from ' + gl.length + (gl.length === 1 ? ' item' : ' items') + (one ? ' this pull' : ' over these pulls'), 'rgx-sum') : '';
+    return card(spellIcon(sp1.id, nm), esc(x.g), ps(x.total / dur), C(x.total) + ' total · ' + pc(x.total) + ' of your ' + W + (nm !== x.g ? '<br>from ' + esc(x.l.map((a) => a.name.replace(/^[^:]+: /, '')).filter((v, i, l) => v && l.indexOf(v) === i).slice(0, 3).join(', ')) : '')); });
+  const gSum = gl.length ? card((gl[0] ? spellIcon(gl[0].l[0].id, gl[0].l[0].name.replace(/^[^:]+: /, '')) : ''), 'All your gear effects', ps(gT / dur), pc(gT) + ' of your ' + W + ' · ' + C(gT) + ' from ' + gl.length + (gl.length === 1 ? ' item' : ' items') + (one ? ' this pull' : ' over these pulls') + (stT > 0 ? '<br>Plus about ' + C(stT / dur) + ' ' + U + ' from your stat items' : ''), 'rgx-sum') : '';
   // (where it came from: the five biggest sources and the rest, as one split bar)
   // (a pet's abilities ("Sweat: Kill Command") join up by ability and say whose they are: "Kill Command (your pets)" (Oct 21), so
   // two pets' Kill Commands are one source and less lands in Everything else)
@@ -16042,10 +16107,10 @@ const spcExtras = (per, UN, one) => { const heal = UN === 'healing', ab = new Ma
     for (const q of r.players.values()) if (q.role === 'dps' && q.dmgT) for (const [n, v] of q.dmgT) { if (bn.has(n)) rB += v; else rA += v; } }
   const dT = bD + aD, aF = dT ? aD / dT : 0, rF = rB + rA ? rA / (rB + rA) : null, pc2 = (v) => (v >= 0.1 ? Math.round(100 * v) : (100 * v).toFixed(1)) + '%';
   const topA = [...adds].sort((a, b) => b[1] - a[1]).slice(0, 3);
-  const bossC = dT >= 1000 ? card('<img class="rgx-i" src="' + whIcon('achievement_boss_generic_01') + '" alt="">', 'Boss damage', C(bD), pc2(1 - aF) + ' of your damage · ' + C(bD / dur) + ' a second' + (aD < dT * 0.01 ? '<br>All of it went on the boss.' : ''), 'rgx-boss') : '';
-  const addC = dT >= 1000 && aD >= dT * 0.01 ? card('<img class="rgx-i" src="' + whIcon('inv_misc_monsterhorn_03') + '" alt="">', 'Add damage', C(aD), pc2(aF) + ' of your damage' + (rF != null ? ' · the raid\'s damage dealers: ' + pc2(rF) : '') + (topA.length ? '<br>' + esc(topA.map(([n, v]) => n + ' ' + C(v)).join(', ')) : ''), 'rgx-add') : '';
-  return '<div class="rgx-g">' + bossC + addC + gSum + gearC.join('') + bigC + potC + '</div>' + split +
-    (gl.length ? '' : '<p class="sub rgx-n">No trinket, weapon or enchant effects did ' + W + ' you can see in the log' + (one ? ' this pull' : '') + '. Stat trinkets only show as stats.</p>'); };
+  const bossC = dT >= 1000 ? card('<img class="rgx-i" src="' + whIcon('achievement_boss_generic_01') + '" alt="">', 'Boss damage', ps(bD / dur), C(bD) + ' total · ' + pc2(1 - aF) + ' of your damage' + (aD < dT * 0.01 ? '<br>All of it went on the boss.' : ''), 'rgx-boss') : '';
+  const addC = dT >= 1000 && aD >= dT * 0.01 ? card('<img class="rgx-i" src="' + whIcon('inv_misc_monsterhorn_03') + '" alt="">', 'Add damage', ps(aD / dur), C(aD) + ' total · ' + pc2(aF) + ' of your damage' + (rF != null ? ' · the raid\'s damage dealers: ' + pc2(rF) : '') + (topA.length ? '<br>' + esc(topA.map(([n, v]) => n + ' ' + C(v)).join(', ')) : ''), 'rgx-add') : '';
+  return '<div class="rgx-g">' + bossC + addC + gSum + gearC.join('') + stC.join('') + bigC + potC + '</div>' + split +
+    (gl.length || stL.length ? '' : '<p class="sub rgx-n">No trinket, weapon or enchant effects did ' + W + ' or raised your stats that the log shows' + (one ? ' this pull' : '') + '.</p>'); };
 // (who a spec page's "Top players" marks come from, said in full)
 const topWho = (top, TOPB) => 'The middle of the ' + (TOPB && TOPB.n ? TOPB.n + ' ' : '') + top + ' who parsed 75 or higher in the fastest Mythic kills of this boss on Warcraft Logs';
 // (a check's "How it's judged": a small link at the end of its sentence that opens the explanation in place, and stays open)

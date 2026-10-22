@@ -5944,6 +5944,17 @@ function buffUp(p, id, name, t, by) { let b = p.buffs.get(name); if (!b) p.buffs
 // (debuffs on players the same way: when each went on and off, from whom, and the most stacks it reached)
 function debuffUp(p, id, name, t, by) { let b = p.debuffs.get(name); if (!b) p.debuffs.set(name, b = { name, id, sp: [], by: new Map(), mx: 1 }); const l = b.sp[b.sp.length - 1]; if (l && l[1] == null) return; if (b.sp.length < 400) b.sp.push([t, null]); if (by) b.by.set(by, (b.by.get(by) || 0) + 1); }
 function debuffDown(p, id, name, t) { const b = p.debuffs.get(name); if (!b) { p.debuffs.set(name, { name, id, sp: [[0, t]], by: new Map(), mx: 1 }); return; } const l = b.sp[b.sp.length - 1]; if (l && l[1] == null) l[1] = t; }
+// (stat items (Oct 22): buffs from trinkets, Venomcursed gear and weapon enchants that raise or lower a stat, by spell ID (Hex Lord's Doom
+// is two spells with one name), as their stacks over time ([t, stacks]) for Gear and extras' estimate. Copies that overlap come as stacks;
+// one that ends and starts again at the same moment keeps its count)
+const STAT_BUFF_N = new Set(['soul fang alacrity', 'voracious heart of ula\'tek', 'devoured strength', 'empowering venom', 'devastating power', 'hex lord\'s doom', 'tidal insight',
+  'freightrunner\'s flask', 'focus of ula\'tek', 'riftwalker\'s temptation', 'deepening temptation', 'akil\'zon\'s rite', 'jan\'alai\'s rite', 'halazzi\'s rite', 'nalorakk\'s rite',
+  'precision of the dragonhawk', 'genius insight', 'frenzied focus']);
+const isStatBuf = (n) => STAT_BUFF_N.has(n) || n.startsWith('venomcursed ');
+function statBuf(p, id, name, t, op, n) { if (!p.statB) p.statB = new Map(); let b = p.statB.get(id); if (!b) p.statB.set(id, b = { id, name, l: [], pv: 0 }); const l = b.l; if (l.length >= 4000) return;
+  const z = l[l.length - 1], cur = z ? z[1] : 0; let v;
+  if (op === 'a') v = z && cur === 0 && t - z[0] < 0.06 && b.pv > 0 ? b.pv : 1; else if (op === 'd') v = Math.max(0, n || 0); else { if (!z) l.push([0, 1]); b.pv = cur || 1; v = 0; }
+  l.push([t, v]); }
 function buffPre(p, id, name) { let b = p.buffs.get(name); if (!b) p.buffs.set(name, b = { name, id, sp: [[0, null]], by: new Map() }); return b; }
 function buffDown(p, id, name, t) { let b = p.buffs.get(name); if (!b) p.buffs.set(name, b = { name, id, sp: [], by: new Map() }); const l = b.sp[b.sp.length - 1]; if (l && l[1] == null) l[1] = t; else if (!b.sp.length) b.sp.push([0, t]); }
 // a player's mana from a cast's advanced block (the power lists are pipe-separated: "9|0" with "5|274744" is Holy Power 5
@@ -6245,6 +6256,7 @@ function* analyzeSteps(item, text, opts) {
         // (a debuff a player, their pet or their totem put on an enemy, e.g. a damage over time: when it went on, per target, for the spec checks' uptimes)
         if (!pl && owner && ev === 'SPELL_AURA_APPLIED' && f[11] === 'DEBUFF') { const q = P(owner, pet ? null : sn); if (!q.dotEv) q.dotEv = []; if (q.dotEv.length < 30000) q.dotEv.push([t, 1, f[9], dg]); }
         // (a buff's extra stack is a proc too, and its top stack: e.g. Infusion of Light at 2 with Inflorescence of the Sunwell)
+        if (pl && f[11] === 'BUFF' && isStatBuf(f[9].toLowerCase())) statBuf(P(dg, dn), num(f[8]), f[9], t, ev === 'SPELL_AURA_APPLIED' ? 'a' : 'd', stacks);
         if (pl && f[11] === 'BUFF' && ev === 'SPELL_AURA_APPLIED_DOSE') { const b = buffPre(P(dg, dn), num(f[8]), f[9]); if (b) { b.mx = Math.max(b.mx || 1, stacks); if (!b.dose) b.dose = []; if (b.dose.length < 600) b.dose.push([t, stacks]); } }
         if (pl && f[11] === 'DEBUFF') { const q = P(dg, dn); if (ev === 'SPELL_AURA_APPLIED') debuffUp(q, num(f[8]), f[9], t, sn && !isPlayer(sg) ? shortName(sg, sn) : ''); else { if (!q.debuffs.has(f[9])) debuffUp(q, num(f[8]), f[9], t, ''); const b = q.debuffs.get(f[9]); b.mx = Math.max(b.mx, stacks); } }
         break;
@@ -6252,7 +6264,7 @@ function* analyzeSteps(item, text, opts) {
       case 'SPELL_AURA_REMOVED':
         if (f.length >= 10 && W(f[9], f[8])) modEv.push({ k: 'aura', op: 'remove', t, dst: dg, spell: f[9], id: num(f[8]), stacks: 0, src: sg });
         if (f.length >= 10 && !isPlayer(dg) && BOSS_AURA_N.has(f[9].toLowerCase())) bossAura(r, f[9], t, false);
-        if (f.length >= 12 && f[11] === 'BUFF' && isPlayer(dg)) { buffDown(P(dg, dn), num(f[8]), f[9], t);
+        if (f.length >= 12 && f[11] === 'BUFF' && isPlayer(dg)) { buffDown(P(dg, dn), num(f[8]), f[9], t); if (isStatBuf(f[9].toLowerCase())) statBuf(P(dg, dn), num(f[8]), f[9], t, 'r');
           const ln = f[9].toLowerCase(); if (ln === 'devotion aura') devOn.delete(dg); else if (CD_DR.has(ln)) drOn.delete(dg + '|' + ln);
           else if (ln === 'aura mastery') { const u = cdPress(dg, 'Aura Mastery', t, false); if (u && t - u.t < 12) u.end = t; } }
         if (f.length >= 12 && f[11] === 'DEBUFF' && isPlayer(dg)) debuffDown(P(dg, dn), num(f[8]), f[9], t);
@@ -6283,6 +6295,7 @@ function* analyzeSteps(item, text, opts) {
       case 'SPELL_AURA_REMOVED_DOSE': {
         if (f.length >= 13 && W(f[9], f[8])) modEv.push({ k: 'aura', op: 'rdose', t, dst: dg, spell: f[9], id: num(f[8]), stacks: num(f[12]), src: sg });
         if (f.length < 13 || !isPlayer(dg)) break;
+        if (f[11] === 'BUFF' && isStatBuf(f[9].toLowerCase())) statBuf(P(dg, dn), num(f[8]), f[9], t, 'd', num(f[12]));
         if (f[11] === 'BUFF') { const b = buffPre(P(dg, dn), num(f[8]), f[9]); if (b) { if (!b.rd) b.rd = []; if (b.rd.length < 600) b.rd.push(t); } } // (a stack spent)
         const sr = mech.get('stacks', num(f[8]), f[9]);
         if (sr) stackEv.push({ t, guid: dg, rule: sr, stacks: num(f[12]), up: false, id: num(f[8]) });
