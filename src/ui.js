@@ -1669,7 +1669,6 @@ function openReport() {
 const PATCH_NOTES = [
   { d: '2026-10-22', h: [
     { t: 'Your coach on Debriefing', d: 'Every pull and every night now opens with a coach right under the boss banner: what went right, what went wrong and how to fix it, and one thing to focus on next pull. Pick yourself at the top right and it coaches you. Read the full coaching opens the long version.' },
-    { t: 'A coach on the Report card', d: 'The Report card now opens with a coach for the whole night: what went right, what went wrong, how to fix it and why it matters, with the same #1 fix as Debriefing. Pick a raider and it coaches their night. Read the full coaching opens the rest.' },
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
@@ -21106,7 +21105,7 @@ function rcnPage(c) {
   const F = rcnFacts(c), open = S.rctOpen && c.data.find((a) => a.p.name === S.rctOpen);
   const ovl = open ? '<div class="rct-ovl" data-rctx="1"><div class="panel rct-ovp" role="dialog" aria-label="' + esc(open.p.name) + '\'s night"><button type="button" class="rct-x" data-rctx="1" aria-label="Close">×</button>' + rcnPlayer(c, F, open, true) + '</div></div>' : '';
   // (mockup B (your pick, Oct 19): the night, the raid's report card, then the ranked roster with the picked raider's report card beside it)
-  return '<div class="rcn rct rcb">' + rccoPage(c, F) + rcbBanner(c, F) + rcwNight(c, F) + rcbRaid(c, F) + rcwRaider(c, F) + '<div class="rcb-2">' + rcbTable(c, F) + rcbSide(c, F) + '</div>' + ovl + '</div>';
+  return '<div class="rcn rct rcb">' + rcbBanner(c, F) /* (the coach box came off Oct 22: Debriefing coaches the night and each raider (your call)) */ + rcwNight(c, F) + rcbRaid(c, F) + rcwRaider(c, F) + '<div class="rcb-2">' + rcbTable(c, F) + rcbSide(c, F) + '</div>' + ovl + '</div>';
 }
 function bindRcn(c) {
   const v = $('#plBody'), again = () => { const y = window.scrollY; player(); window.scrollTo({ top: y }); }; // (redrawn in place: the page stays where it was)
