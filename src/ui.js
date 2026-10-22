@@ -544,35 +544,42 @@ function renderList() {
   if (pk) pk.innerHTML = groups.length > 1 ? '<div class="bp-pop" hidden>' +
     groups.map((g) => '<button class="bp-i' + (g === cur ? ' on' : '') + '" type="button" data-last="' + add(gLast(g)) + '"><b>' + esc(gName(g)) + '</b><span>' + (g.kind === 'run' ? esc(g.run.result) + ' · ' + T(g.run.duration) : plural(g.list.length, 'pull') + (g.list.some((b) => b.kill) ? ' · killed' : '')) + '</span></button>').join('') + '</div>' : '';
   if (pkB) { pkB.hidden = groups.length < 2; pkB.innerHTML = '<span class="bp-n">Change boss</span>' + CHEV; pkB.title = 'This log has ' + groups.length + ' bosses: pick one'; }
-  // (your pick, Oct 20: while you follow a live log, one more card at the end of the newest boss's pulls, where the next pull
-  // lands; it turns into the real pull about a minute after that pull ends)
-  const fcNext = (list) => { const last = bosses.filter((b) => !b.run).pop(); if (!LIVE.on || !last || list[list.length - 1] !== last) return '';
-    return '<div class="fcard fc-next" title="Following live: the next pull shows up here about a minute after it ends"><span class="fc-h"><b>' + (last.kill ? 'Next boss' : 'Pull ' + (last.pull + 1)) + '</b><span class="fc-lv">Live</span></span><span class="fc-p">Waiting for it…</span><i class="fc-bar"><b></b></i></div>'; };
   let h = '';
   if (cur.kind === 'boss') {
-    const list = cur.list, kill = list.find((b) => b.kill), known = list.map((b) => [b, pullPct(b)]).filter(([, v]) => v != null);
+    const list = cur.list, n = list.length, kill = list.find((b) => b.kill), known = list.map((b) => [b, pullPct(b)]).filter(([, v]) => v != null);
     const best = kill || (known.length ? known.reduce((m, x) => (x[1] < m[1] ? x : m))[0] : null);
-    // (each pull in WoW item-quality colours by how far through the whole encounter it got, all phases and bosses
-    // together; a kill is legendary, and a wipe is never red)
-    const card = (b) => {
-      // (a pull that never moved the boss is a reset: said so, with an empty bar, not a "100%" that looks unread)
-      const v = pullPct(b), reset = !b.kill && v != null && v >= 99.95, done = b.kill ? 100 : v == null || reset ? 0 : Math.max(3, 100 - v);
-      const col = pullCol(b) || '#6aa8ff', at = b.wallMs ? wallClock(b.wallMs) : clock(b.startMs);
-      const tip = 'Pull ' + b.pull + ' · ' + at + ' · ' + (b.kill ? 'kill' : v == null ? 'wipe' : reset ? 'reset at 100%' : 'wipe, ' + pullLabel(b)) + ' · ' + T(b.duration) + (b === best && !b.kill ? ' · best pull of the night' : '') +
-        (!b.kill && v != null && !reset ? ' · ' + Math.floor(100 - v) + '% of the encounter done' : ''); // (rounded down, like the colour steps)
-      return '<button class="pull fcard' + (b.kill ? ' kill' : '') + (b === best ? ' best' : '') + ((v == null || reset) && !b.kill ? ' unk' : '') + (b === S.item ? ' sel' : '') + (allMode ? ' dim' : '') + '" type="button" data-i="' + add(b) + '" title="' + esc(tip) + '" style="--pc:' + col + '">' +
-        '<span class="fc-h"><b>Pull ' + b.pull + whyDot(b) + '</b><span>' + esc(at) + '</span></span><span class="fc-p">' + glossify(esc(reset ? 'Reset at 100%' : v == null && !b.kill ? T(b.duration) : pullShort(b))) + '</span><i class="fc-bar"><b style="width:' + done.toFixed(1) + '%"></b></i></button>';
-    };
-    // (an "All pulls" card at the left end, always in view (back on Oct 18, when the pull switch left Rotation and Graphs):
-    // Rotation, Graphs and Players then show every pull of the boss together; the other tabs open Night summary)
-    // (the same three lines as a pull card (your pick, Oct 19): its name, how many pulls, and a gold bar of how far the
-    // night got, its kill or best pull)
-    const nDone = kill ? 100 : best && pullPct(best) != null ? Math.max(3, 100 - pullPct(best)) : 0;
-    const allC = list.length > 1 ? '<button class="fcard fall' + (allMode ? ' sel' : '') + '" type="button" data-all="' + add(list[list.length - 1]) + '" title="Every pull of this boss together' + (kill ? '. Killed on pull ' + kill.pull : best ? '. Best: pull ' + best.pull : '') + '" aria-pressed="' + allMode + '"><span class="fc-h"><b>All pulls</b></span><span class="fc-p">' + plural(list.length, 'pull') + '</span><i class="fc-bar"><b style="width:' + nDone.toFixed(1) + '%"></b></i></button>' : '';
-    // (the arrows float over the faded ends of the cards, so the cards run the full width, and only show when there's more that way)
-    // (on Report card the single pulls are greyed out and can't be picked: it's always the whole night (your call, Oct 19))
-    const lock = (S.tab === 'player' || S.tab === 'hw') && !!allC;
-    h = '<div class="sg-row">' + allC + '<div class="fwrap' + (lock ? ' fc-lock' : '') + '"><button class="fnav l" type="button" data-d="-1" aria-label="Earlier pulls">‹</button><div class="film">' + list.map(card).join('') + fcNext(list) + '</div><button class="fnav r" type="button" data-d="1" aria-label="Later pulls">›</button></div></div>';
+    // (your pick, Oct 22, mockup A: the pulls are the progress line, inside the banner (#bhPulls). Each pull is a bar as
+    // high as it got through the whole encounter, in WoW item-quality colours by how far (grey, white, green, blue, purple;
+    // a kill legendary orange with a ✓; a wipe never red), a star on tonight's best wipe, the phase lines across, the pull
+    // numbers under it with the Why we wiped dot, and a tip with the boss's health (your ask). All pulls first: Rotation,
+    // Graphs and Report card then show every pull together. Until the banner is drawn there's nothing to show here.)
+    const slot = $('#bhPulls');
+    if (slot) {
+      // (on Report card and Homework the single pulls can't be picked: it's always the whole night (your call, Oct 19))
+      const lock = (S.tab === 'player' || S.tab === 'hw') && n > 1, cfg = PROGRESS[list[0].boss];
+      let acc = 0;
+      const bands = cfg && !cfg.pool ? cfg.phases.map((p) => { const lo = acc, w = 100 * phShare(cfg, p); acc += w; return lo > 0.5 && w > 0 ? '<i class="bhp-band" style="bottom:' + lo.toFixed(1) + '%"><em>' + esc(p.replace('Intermission', 'Int')) + '</em></i>' : ''; }).join('') : '';
+      const whyLine = (b) => { try { const r = CACHE.get(b), o = r && r.players ? whyWiped(r) : null; return o ? '<div>' + whyDotI(o.k) + 'Why we wiped: ' + esc(WHY_K[o.k][0]) + '</div>' : ''; } catch (e) { return ''; } };
+      const bar = (b) => {
+        // (a pull that never moved the boss is a reset: an empty bar, not a "100%" that looks unread)
+        const v = pullPct(b), unk = !b.kill && v == null, reset = !b.kill && !unk && v >= 99.95, done = b.kill ? 100 : unk || reset ? 0 : Math.max(3, 100 - v);
+        const at = b.wallMs ? wallClock(b.wallMs) : clock(b.startMs), pg = pullProg(b);
+        const res = b.kill ? 'Kill' : unk ? (b.wcl || CACHE.has(b) ? 'Wipe' : 'Wipe (still reading this pull)') : reset ? 'Reset at 100%' : pg && pg.phase ? 'Wipe in ' + pg.label : 'Wipe, boss at ' + v.toFixed(1) + '% health';
+        const more = [T(b.duration), !b.kill && !unk && !reset ? Math.floor(100 - v) + '% of the fight done' : '', b === best && !b.kill ? 'best pull of the night' : ''].filter(Boolean).join(' · ');
+        const tt = '<div class="tt-h">Pull ' + b.pull + ' · ' + esc(at) + '</div><div>' + esc(res) + '</div><div class="tt-s">' + esc(more) + '</div>' + whyLine(b) + (lock ? '<div class="tt-s">This tab always covers every pull.</div>' : '');
+        return '<button class="pull bhp-b' + (b.kill ? ' kill' : '') + (b === best && !b.kill ? ' best' : '') + (unk ? ' unk' : '') + (b === S.item && !allMode ? ' sel' : '') + '" type="button" data-i="' + add(b) + '" style="--h:' + done.toFixed(1) + '%;--pc:' + (pullCol(b) || '#6aa8ff') + '" data-tt="' + esc(tt) + '" aria-label="' + esc('Pull ' + b.pull + ', ' + at + ': ' + res + ', ' + more) + '"' + (lock ? ' aria-disabled="true"' : '') + '><i></i></button>';
+      };
+      const num = (b, i) => '<span class="bhp-n' + (i === 0 || i === n - 1 || b.pull % 5 === 0 ? ' five' : '') + (b === S.item && !allMode ? ' sel' : '') + (b.kill ? ' kill' : '') + '">' + b.pull + whyDot(b) + '</span>';
+      // (your pick, Oct 20: while you follow a live log, a dashed spot after the newest boss's last pull, where the next pull
+      // lands; it turns into the real pull about a minute after that pull ends)
+      const last = bosses.filter((b) => !b.run).pop(), live = LIVE.on && !!last && list[n - 1] === last;
+      const nx = live ? '<span class="bhp-b next" tabindex="0" data-tt="' + esc('<div class="tt-h">' + (last.kill ? 'Next boss' : 'Pull ' + (last.pull + 1)) + '</div><div>Following live: it shows up here about a minute after it ends.</div>') + '" aria-label="Following live: the next pull shows up here"><i></i></span>' : '';
+      const allB = n > 1 ? '<button class="bhp-all' + (allMode ? ' sel' : '') + '" type="button" data-all="' + add(list[n - 1]) + '" title="Every pull of this boss together' + (kill ? '. Killed on pull ' + kill.pull : best ? '. Best: pull ' + best.pull : '') + '" aria-pressed="' + allMode + '">All pulls<span> · ' + plural(n, 'pull') + '</span></button>' : '';
+      // (All pulls is a slim pill at the start of the banner's second line, where its tag was (Oct 22: the tall box beside the bars was dead weight))
+      const as = $('#bhAll'); if (as) as.innerHTML = allB;
+      slot.innerHTML = '<div class="bhp-row"><div class="bhp-plot' + (bands ? ' ph' : '') + (lock ? ' lock' : '') + '" style="max-width:' + ((n + (live ? 1 : 0)) * 59 + (bands ? 28 : 0)) + 'px"><div class="bhp-bars"><div class="bhp-bands" aria-hidden="true">' + bands + '</div>' + list.map(bar).join('') + nx + '</div>' +
+        '<div class="bhp-ns" aria-hidden="true">' + list.map(num).join('') + (live ? '<span class="bhp-n five lv">' + (last.kill ? '·' : last.pull + 1) + '</span>' : '') + '</div></div></div>';
+    }
   } else {
     // a Mythic+ key: the whole key, then each boss in it
     h = '<div class="sg-row"><div class="film keys">' + cur.list.map((b, i) => { const ok = b.kill || b.result === 'Timed';
@@ -581,15 +588,17 @@ function renderList() {
   box.innerHTML = h;
   box.querySelectorAll('.fc-lock .pull').forEach((b) => { b.disabled = true; b.title = 'This tab always covers every pull'; });
   // the wipe filter: a card at the right end of a boss's pull cards (a Mythic+ key doesn't have one)
-  bhCutBind(); // (the wipe filter sits behind its chip in the banner)
+  bhCutBind(); bhCutPlace(); bhpFit(); // (the wipe filter sits behind its button in the banner; the pull numbers fit the bars)
   if (bosses.some((b) => !b.wcl && !CACHE.has(b))) warmPulls();
   // (clicking one pull shows that pull on every tab; All pulls shows every pull of the boss: see setScope)
   // (Recap shows the whole night or any single pull (your call, Oct 19: "Enable single pulls for recap"))
-  box.querySelectorAll('.pull').forEach((b) => (b.onclick = () => { const it = ITEMS[+b.dataset.i]; setScope('pull'); select(it); }));
-  box.querySelectorAll('[data-all]').forEach((b) => (b.onclick = () => { if (S.scope === 'all') return; const keep = S.item && S.rep && cur.list.includes(S.item); setScope('all'); if (keep) renderMain(); else select(ITEMS[+b.dataset.all]); }));
+  document.querySelectorAll('#list .pull, #bhPulls .pull').forEach((b) => (b.onclick = () => { if (b.getAttribute('aria-disabled') === 'true') return; const it = ITEMS[+b.dataset.i]; setScope('pull'); select(it); }));
+  document.querySelectorAll('#list [data-all], #bhPulls [data-all], #bhAll [data-all]').forEach((b) => (b.onclick = () => { if (S.scope === 'all') return; const keep = S.item && S.rep && cur.list.includes(S.item); setScope('all'); if (keep) renderMain(); else select(ITEMS[+b.dataset.all]); }));
   if (pk) {
     const pb = pkB, pop = pk.querySelector('.bp-pop'), nm = $('#bossHead .bh-name'); if (nm) nm.classList.toggle('pickable', !!pop);
-    if (pb && pop) pb.onclick = (e) => { e.stopPropagation(); pop.hidden = !pop.hidden; pb.setAttribute('aria-expanded', String(!pop.hidden)); };
+    if (pb && pop) pb.onclick = (e) => { e.stopPropagation(); pop.hidden = !pop.hidden; pb.setAttribute('aria-expanded', String(!pop.hidden));
+      // (the one header (Oct 22) is taller: the list opens right under Change boss, not under the banner)
+      if (!pop.hidden && pb.closest('.bhx')) { const hb = pk.getBoundingClientRect(), r = pb.getBoundingClientRect(); pop.style.top = Math.round(r.bottom - hb.top + 8) + 'px'; pop.style.left = Math.max(0, Math.min(Math.round(r.left - hb.left - 6), Math.round(hb.width - pop.offsetWidth))) + 'px'; } };
     if (nm && pb && pop) nm.onclick = (e) => pb.onclick(e); // (the name itself opens it too)
     pk.querySelectorAll('.bp-i').forEach((b) => (b.onclick = () => { if (pop) pop.hidden = true; select(ITEMS[+b.dataset.last]); })); // (the same tab, one pull or the whole night)
   }
@@ -619,7 +628,10 @@ function fitFilm() {
   for (let i = 0; i < 2; i++) { const g = 6, cw = film.clientWidth - 2, n = Math.max(1, Math.floor((cw + g) / (114 + g)));
     row.style.setProperty('--fw', ((cw - g * (n - 1)) / n).toFixed(2) + 'px'); }
 }
-{ let t = 0; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => { fitFilm(); const f = $('#strip .film'); if (f && f.onscroll) f.onscroll(); }, 120); }); }
+// (the pull bars: with many pulls for the width, as on a phone, only every fifth pull's number shows, with the first, the
+// last and the picked one)
+function bhpFit() { const p = $('#bhPulls .bhp-plot'); if (!p) return; const n = p.querySelectorAll('.bhp-n').length; p.classList.toggle('many', n > 1 && p.clientWidth / n < 24); }
+{ let t = 0; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => { fitFilm(); bhpFit(); bhCutPlace(); const f = $('#strip .film'); if (f && f.onscroll) f.onscroll(); }, 120); }); }
 // (a click anywhere else closes the boss picker)
 document.addEventListener('click', (e) => { const pop = $('#bhPk .bp-pop'); if (pop && !pop.hidden && !e.target.closest('#bhPk, .bh-pickb, .bh-name')) { pop.hidden = true; const b = $('#bossHead .bh-pickb'); if (b) b.setAttribute('aria-expanded', 'false'); } });
 // the top bar's menu: open a combat log, Warcraft Logs, the start screen
@@ -1003,9 +1015,9 @@ const DANCERS = [
     '<ellipse cx="37" cy="31" rx="9.5" ry="7" fill="#5bb586"/><ellipse cx="34" cy="29" rx="2.2" ry="2.8" fill="#f3d34a"/><ellipse cx="41" cy="29" rx="2.2" ry="2.8" fill="#f3d34a"/><rect x="33.6" y="27.2" width=".9" height="3.6" rx=".4" fill="#14231a"/><rect x="40.6" y="27.2" width=".9" height="3.6" rx=".4" fill="#14231a"/>' +
     '<path class="ld-tg" d="M29 34l-6 2.4M29 34l-5.6-1.6" stroke="#e0465a" stroke-width="1.5" stroke-linecap="round"/>'],
 ];
-const LOAD_TIPS = ['Click any pull card at the top to jump to it.', 'Click a player\'s name anywhere to open their page.', 'Hover a spell\'s name to see what it does.',
+const LOAD_TIPS = ['Click any pull\'s bar at the top to jump to it.', 'Click a player\'s name anywhere to open their page.', 'Hover a spell\'s name to see what it does.',
   'The wipe filter stops counting after a set number of deaths, so the end of a wipe doesn\'t pile up mistakes.', 'Paste your NSRT note on Assignments, and soaks, kicks, orbs and cooldowns get checked on every pull.',
-  'Debriefing explains the pull in a few sentences: what went well, what didn\'t, and what changed since the last pull.', 'Pick All pulls above the pull cards to see how the night went, with how far each pull got.', 'Report card gives everyone one grade from their mechanics, their Rotation, and how they stayed alive.'];
+  'Debriefing explains the pull in a few sentences: what went well, what didn\'t, and what changed since the last pull.', 'Pick All pulls beside the pull bars to see how the night went, with how far each pull got.', 'Report card gives everyone one grade from their mechanics, their Rotation, and how they stayed alive.'];
 let LD_LAST = -1;
 function loadCard(title, line, frac, id) {
   let k = Math.floor(Math.random() * DANCERS.length); if (k === LD_LAST) k = (k + 1) % DANCERS.length; LD_LAST = k;
@@ -1571,6 +1583,14 @@ function headerHtml(r, allMode) {
   // one pull wasn't): gold for the whole night, like its card; white for one pull, like the picked pull card)
   const kN = same.indexOf(it) + 1, scope = isKey || it.run ? '' : allMode ? '<span class="bh-scope all">All pulls<span> · ' + esc(plural(same.length, 'pull')) + '</span></span>'
     : '<span class="bh-scope one">Pull ' + it.pull + (kN && same.length > 1 ? '<span> · ' + (kN === same.length ? 'the latest' : kN + ' of ' + same.length) + '</span>' : '') + '</span>';
+  // (one header for the night (your pick, Oct 22, mockup A): the boss, its result and how it compares on top, the wipe
+  // filter behind a small button at the end; then the difficulty and raid, the pull's numbers and the team; then every pull
+  // of the boss tonight as a bar, as high as it got: the pull row is the progress line (renderList fills #bhPulls). The
+  // phase bar and the All pulls tag are merged into it. A Mythic+ key keeps the banner below and its cards.)
+  if (!isKey && !it.run) return '<header class="fight bh bhx ' + cls + (hero ? ' hero' : '') + (qcol ? ' q" style="--qc:' + qcol : '') + '">' + art + '<div class="bh-t">' +
+    '<div class="bh-l1"><h2 class="bh-name">' + esc(it.boss) + '</h2><button class="bh-pickb" type="button" aria-haspopup="true" aria-expanded="false" hidden></button><span class="bh-big">' + pill + '</span>' + (side ? '<span class="bh-side">' + side + '</span>' : '') + bhCutBtn() + '</div>' +
+    '<div class="bh-l2"><span class="bhp-as" id="bhAll"></span>' + (allMode ? '' : scope) + '<span class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</span><span class="bh-s">' + stats.map(([ic, t]) => '<span>' + bhIc(ic) + esc(t) + '</span>').join('') + '</span>' + tmL + '</div></div>' +
+    '<div class="bhp" id="bhPulls"></div></header>';
   return '<header class="fight bh ' + cls + (hero ? ' hero' : '') + (qcol ? ' q" style="--qc:' + qcol : '') + '">' + art + '<div class="bh-t">' +
     '<div class="bh-l1"><h2 class="bh-name">' + esc(it.boss) + '</h2><button class="bh-pickb" type="button" aria-haspopup="true" aria-expanded="false" hidden></button><span class="bh-big">' + pill + '</span>' + progBar(it, left, !allMode && !isKey && r ? (progressOf(r) || {}).phase : null, qcol) + tmL + '</div>' +
     '<div class="bh-l2">' + scope + '<span class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</span>' + (side ? '<span class="bh-side">' + side + '</span>' : '') +
@@ -1668,6 +1688,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-22', h: [
+    { t: 'Your night in one header', d: 'The top of the page is now one header: every pull of the night is a bar, as high as it got, so you see your progress at a glance. Hover a bar for the boss\'s health, click it to open that pull. The wipe filter is behind its own small button.' },
     { t: 'Kills get a real raid-lead call', d: 'When the boss dies, the coach celebrates with what actually happened: how many pulls it took, how far pull 1 got, the mechanic that finally went right, and an earned shout-out or two. A first kill gets the big one, a quick farm kill a short "clean kill, nice work", then one thing to tidy for next week.' },
     { t: 'Pace on every boss', d: 'Debriefing now has a Pace card on eight more bosses, against the 20 fastest Mythic kills: Kith\'ix reaching 25% before the third intermission, Ula\'tek after each damage window, both Sentinels at each intermission, the Twin Fangs before the last platform, Vashnik before Imbibe 5, Nymrissa before the third Pop, Sszorak before the enrage, the Lost Explorers in two turns. Slower than the world\'s best is only yellow; red is when the plan breaks.' },
     { t: 'Tap an avoidable hit', d: 'On a pull, each avoidable damage chip in the coach box now opens a card: whether it was on them, every hit with how much of their health it took, a map of the moment, and what the fastest kills take. The separate Avoidable damage row is gone from single pulls.' },
@@ -2181,7 +2202,7 @@ function renderMain() {
   const allMode = S.scope === 'all' && !single;
   const serious = allMode ? 0 : keptMistakes(r).filter((m) => m.severity === 'High' && m.mechanic !== 'Death').length;
   // (the banner sits above the pull cards, outside #main; the tabs and the tab's view are in #main)
-  $('#bossHead').innerHTML = headerHtml(r, allMode) + '<div class="bh-pk" id="bhPk"></div><div class="bh-cutpop" id="bhCutPop" hidden></div>' + meBar(r) + shrBar(); // (and, when this log isn't known yet, "Is this your raid?")
+  $('#bossHead').innerHTML = headerHtml(r, allMode) + '<div class="bh-pk" id="bhPk"></div>' + (single ? '<div class="bh-cutpop" id="bhCutPop" hidden></div>' : bhCutBox()) + meBar(r) + shrBar(); // (and, when this log isn't known yet, "Is this your raid?")
   $('#main').innerHTML =
     // the Pull recap first (with a red dot while live logging is on), then the rest, each group under its label;
     // every tab is about this raid (your teams are under Your teams in the top bar, on every page)
@@ -23317,6 +23338,17 @@ let CUT_NODE = null;
 // (its place: in the boss banner, the control itself, "Wipe filter ? stop at − 2 + deaths" (your call, Oct 19: one filter,
 // not a chip you click to open another one). Its "Why filter?" opens just under the banner, which clips what spills out.)
 function bhCutChip() { return '<span class="bh-cut" id="bhCut"></span>'; }
+// (the one header (Oct 22): the wipe filter behind a small button on the banner's first line, "Wipe filter: 2 deaths"; it
+// opens a box under it with the filter itself and its ? help. The box sits just under the banner (whose art is clipped),
+// is placed under the button when it opens, and stays open while you change the number.)
+function bhCutBtn() { const n = deathCutN(); return '<button class="bhp-cut' + (n ? '' : ' off') + '" type="button" id="bhCutB" aria-haspopup="true" aria-expanded="' + !!S.cutOpen + '" aria-controls="bhCutBox" title="' + (n ? 'On a wipe, nothing after the ' + ordinal(n) + ' death counts. A kill counts in full.' : 'Off: every pull counts in full') + '"><svg class="cs-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 4.5h11.5l-2.6 4 2.6 4H6"/></svg><span class="bhp-cl">Wipe filter: </span><b>' + (n ? plural(n, 'death') : 'off') + '</b></button>'; }
+const bhCutBox = () => '<div class="bhp-cw"><div class="bhp-cbox" id="bhCutBox"' + (S.cutOpen ? '' : ' hidden') + '><span class="bh-cut" id="bhCut"></span><div class="bh-cutpop" id="bhCutPop" hidden></div></div></div>';
+function bhCutPlace() { const box = $('#bhCutBox'), b = $('#bhCutB'); if (!box || !b) return; b.setAttribute('aria-expanded', String(!box.hidden)); if (box.hidden) return;
+  const hb = box.parentNode.getBoundingClientRect(), r = b.getBoundingClientRect(); box.style.top = Math.round(r.bottom - hb.top + 8) + 'px'; box.style.right = Math.max(0, Math.round(hb.right - r.right)) + 'px'; }
+document.addEventListener('click', (e) => { const t = e.target, box = $('#bhCutBox'); if (!box || !t || !t.closest) return;
+  if (t.closest('#bhCutB')) { S.cutOpen = box.hidden; box.hidden = !S.cutOpen; bhCutPlace(); return; }
+  if (!box.hidden && !t.closest('#bhCutBox')) { S.cutOpen = false; box.hidden = true; bhCutPlace(); } });
+document.addEventListener('keydown', (e) => { const box = $('#bhCutBox'); if (e.key === 'Escape' && box && !box.hidden) { S.cutOpen = false; box.hidden = true; bhCutPlace(); } });
 function bhCutBind() {
   if (!CUT_NODE) return; const slot = $('#bhCut'), pop = $('#bhCutPop');
   if (!slot) { if (CUT_NODE.parentNode) CUT_NODE.parentNode.removeChild(CUT_NODE); return; }
@@ -23830,7 +23862,7 @@ const PAGE_TIPS = {
     { sel: '#main .igm-steps', t: 'After every pull', p: 'The app chimes, the person with it presses Ctrl+V in WoW, and the whole raid gets their recap.' },
     { sel: '#main .igm-cmds', t: 'Handy commands', p: 'Type /dmo in game for the settings, or /debrief big for every pull of the night.' }],
   live: [
-    { sel: '#list .film', t: 'Every pull of the night', p: 'Each card is one pull. Click one to see it. Its color shows how far it got, and orange is a kill.' },
+    { sel: '#bhPulls .bhp-row, #list .film', t: 'Every pull of the night', p: 'Each bar is one pull: the higher it is, the further it got. Click one to see it. Its color shows how far it got too, and orange is a kill.' },
     { sel: '#view .lp-tiles', t: 'The pull at a glance', p: 'Green went right; yellow had some mistakes; red failed. The ▲ and ▼ arrows compare it with the last pull. Click a box for its details.' },
     { sel: '#view .lp-main', t: 'What went well, and what went wrong', p: 'What the raid did well comes first, then what went wrong, worst first, with who it was. Under them: what got better or worse since the last pull.' },
     { sel: '#view .lp-prep', t: 'Before the next pull', p: 'This shows who didn\'t drink a potion or had no flask or food, and the Power Infusion plan. Under it are the players to talk to, each with their one thing to fix.' },
@@ -23866,10 +23898,10 @@ const PAGE_TIPS = {
     { sel: '#view .pft-row', t: 'What to look at', p: 'Pick a view here: damage, healing or damage taken, casts and resources, cooldowns and buffs, or utility and survivability. Each one shows the raw numbers, player by player.' },
     { sel: '#view .pfph', t: 'One phase', p: 'Count the whole pull, or only one phase of it.' },
     { sel: '#view .pf-bars > h3', t: 'Every player', p: 'Click a player to see their numbers on the chart.' },
-    { sel: '#list .sg-row', t: 'Another pull', p: 'Pick another pull from the cards at the top. You stay on the same view.' }],
+    { sel: '#bhPulls .bhp-row, #list .sg-row', t: 'Another pull', p: 'Pick another pull from the bars at the top. You stay on the same view.' }],
   rot: [
     { sel: '#view .rot-sel', t: 'Every player', p: 'Change player to see how anyone else played their spec: what they pressed and when, their cooldowns, their resources and their talents. It opens on you when you\'re in the pull.' },
-    { sel: '#list .sg-row', t: 'Another pull', p: 'Pick another pull from the cards at the top. You stay on Rotation.' }],
+    { sel: '#bhPulls .bhp-row, #list .sg-row', t: 'Another pull', p: 'Pick another pull from the bars at the top. You stay on Rotation.' }],
   hub: [
     { sel: '.pg-hub .hc-card', t: 'Your teams', p: 'Each card is a team or a character. It shows the boss they\'re on now, a square per boss (orange once killed) and their kills on each difficulty. Click one to see every boss and night.' },
     { sel: '.pg-hub .pg-addc', t: 'Add more', p: 'Paste a team, guild or character page from Warcraft Logs. "Which link?" says exactly what to copy.' }],
