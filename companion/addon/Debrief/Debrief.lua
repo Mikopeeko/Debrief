@@ -666,8 +666,13 @@ end
 
 -- ---------- keeping pulls, showing the card ----------
 local function sameAs(a, b) return a.h.boss == b.h.boss and a.h.pull == b.h.pull and a.h.dur == b.h.dur end
-local function addPull(m)
-  for i, q in ipairs(DB.pulls) do if sameAs(q, m) then DB.cur = i; return false end end
+local function addPull(m, own)
+  for i, q in ipairs(DB.pulls) do if sameAs(q, m) then
+    -- (your own PC app's copy wins over one a guildmate's app sent first: theirs may be an older version, without the newest lines)
+    if own and not q.own then m.t = q.t; m.own = true; DB.pulls[i] = m; DB.cur = i; wipe(EXPANDED); return false, true end
+    DB.cur = i; return false
+  end end
+  m.own = own or nil
   m.t = m.t or (time and time()) or 0
   DB.pulls[#DB.pulls + 1] = m
   while #DB.pulls > (DB.keep or 30) do table.remove(DB.pulls, 1) end
@@ -1161,11 +1166,11 @@ local function import(text)
     if toast:IsShown() then toastSay(err:match("^[^%.]+%.") or err, COL.badT) else pMsg:SetTextColor(rgb(COL.badT)); pMsg:SetText(err) end
     return false
   end
-  local new = addPull(m)
+  local new, swapped = addPull(m, true)
   DB.pasted = true
   checkNewer(m, true)
   -- (pressed before the PC app had the new pull ready: that's the last one again, so wait for the chime and try again)
-  if not new and toast:IsShown() and not DB.testMode then toastSay("That's the last pull. Wait for the chime.", COL.warn); return true end
+  if not new and not swapped and toast:IsShown() and not DB.testMode then toastSay("That's the last pull. Wait for the chime.", COL.warn); return true end
   paste:Hide(); if toast:IsShown() then closeToast() end
   showCard()
   say("pull " .. m.h.pull .. " of " .. m.h.boss .. " loaded.")
