@@ -1774,6 +1774,7 @@ const PATCH_NOTES = [
     'The bosses are in the same order everywhere on the site.',
     'Long patch notes fold after six lines.',
   ], f: [
+    'Debrief Companion: after a training dummy, the app no longer thinks the fight is still going (it held up updates for half an hour).',
     'Your team\'s raid nights come in again: since Oct 21, adding a team or opening its page on the website found no new raid nights. Fixed, and the ones you missed come in the next time you open your team.',
     'Debrief Companion: clicking the newest pull on the night line now shows its Send button too.',
     'Debrief Addon: the last update didn\'t load in WoW (no card, and /debrief and /dmo did nothing). Fixed: the Debrief Companion app updates it for you, or download the addon again.',

@@ -13,7 +13,10 @@ namespace Debrief {
       // (and for a few minutes after one ends, while its recap is read and copied)
       lock (dummies) {
         foreach (var d in dummies.Values) {
-          if ((d.open || d.enc) && (DateTime.UtcNow - d.seen).TotalMinutes < 30) return true;
+          // (a practice pull with nothing written for 15 s is over, even when WoW has moved on to a new log that this one never hears from)
+          bool quiet = false;
+          if (d.open && !d.enc) { int now = (int)DateTime.Now.TimeOfDay.TotalMilliseconds, gap = now - d.lastMs; if (gap < 0) gap += 86400000; quiet = gap > 15000 && gap < 3600000 * 6; }
+          if ((d.enc || (d.open && !quiet)) && (DateTime.UtcNow - d.seen).TotalMinutes < 30) return true;
           if ((DateTime.UtcNow - d.ended).TotalMinutes < 3) return true;
         }
       }
