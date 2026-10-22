@@ -1758,6 +1758,7 @@ const PATCH_NOTES = [
     'The bosses are in the same order everywhere on the site.',
     'Long patch notes fold after six lines.',
   ], f: [
+    'The coach\'s wipe line reads properly when someone was hit by another player\'s mechanic: "you were hit by a Corrosive Spit aimed at Ashdknight, and it killed you", not "you hit by … and it got you".',
     'Spell names everywhere: a cooldown the log never saw by that exact ID (like Revival when the monk pressed Restoral) now shows its name instead of "Spell 115310", on Debriefing, the Plan tab and every list.',
     'Healing cooldowns from your note are judged fairly: a cooldown still recharging from an earlier press, or pressed up to 45 seconds late, isn\'t "missed" any more, the same spell under another ID counts, on time is within 8 seconds, and a phase is red only when half or more were missed. A cooldown someone never pressed all night says "maybe not talented, check the note".',
     'Debrief Addon: "See your recap?" only comes up after raid bosses now, not after a delve or dungeon boss, where there was nothing to paste.',
@@ -9175,7 +9176,9 @@ function whySay(o, pm, nth) {
   if (o.how === 'raid') return { h: o.k === 'dmg' ? (nth >= 2 ? 'Short on damage again, that\'s the ' + ordN(nth) + ' time tonight.' : 'We just didn\'t have the damage for that one.') : on(mech(o.mech, o.id)), s: esc(whyAt(plain(o.detail), T(o.t))) + end };
   if (o.how === 'none') return { h: 'Not sure what happened on that one.', s: 'Nobody died, so I think we called it.' };
   if (o.how === 'own') { const r1 = o.why ? toYou(o.why) : '', you = group.length > 1 ? names(group) : who(d), sameL = lc(o.l) === lc(d.ability);
-    const did = r1 ? (/\bdied\b/.test(r1) ? you + ', you ' + r1 + at + '.' : (/^your\b/.test(r1) ? you + ', ' + r1 : you + ', you ' + r1) + (sameL ? ' and it got you' + at + '.' : ' and ' + ab(d) + ' got you' + at + '.'))
+    /* ("hit by X" reads "you were hit by X, and it killed you", not "you hit by X and it got you" (Oct 22)) */
+    const pas = /^(hit|caught|clipped|struck|knocked|pulled|feared|stunned|grabbed|targeted|marked|chained|tethered)\b/i.test(r1);
+    const did = r1 ? (/\bdied\b/.test(r1) ? you + ', you ' + r1 + at + '.' : (/^your\b/.test(r1) ? you + ', ' + r1 : you + ', you ' + (pas ? 'were ' : '') + r1) + (sameL ? (pas ? ', and it killed you' : ' and it got you') + at + '.' : ' and ' + ab(d) + ' got you' + at + '.'))
       : o.kick ? you + ', ' + ab(d) + ' got you' + at + ' because a cast got through our kicks.' : o.av ? you + ', ' + ab(d) + ' got you' + at + '. That one\'s dodgeable.' : you + ', ' + ab(d) + ' got you' + at + '.';
     const others = near.filter((x) => !group.includes(x)), also = others.length ? ' ' + dbfCap(names(others)) + ' went down right then too.' : '';
     const lost = group.length + others.length;
