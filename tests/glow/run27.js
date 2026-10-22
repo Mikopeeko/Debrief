@@ -34,16 +34,16 @@ Settings = { VarType = { Boolean = "boolean", Number = "number", String = "strin
   RegisterAddOnSetting = function(cat, var, key, tbl, kind, name, def) SETTINGS[#SETTINGS + 1] = name .. " = " .. tostring(tbl[key]); return obj() end,
   CreateCheckbox = function() end, CreateSlider = function() end, CreateDropdown = function(cat, s, fn) local d = fn() end,
   CreateSliderOptions = function() return obj() end, CreateControlTextContainer = function() local c = { d = {} }; c.Add = function(self, v, l) self.d[#self.d + 1] = { v, l } end; c.GetData = function(self) return self.d end; return c end,
-  RegisterAddOnCategory = function() end, OpenToCategory = function(id) print("settings opened: " .. id) end, SetOnValueChangedCallback = function(v, fn) CHANGED = CHANGED or {}; CHANGED[v] = fn end }
+  RegisterCanvasLayoutCategory = function(frame, name) CANVAS_CAT = name; return obj() end, RegisterAddOnCategory = function() end, OpenToCategory = function(id) print("settings opened: " .. id) end, SetOnValueChangedCallback = function(v, fn) CHANGED = CHANGED or {}; CHANGED[v] = fn end }
 function CreateSettingsListSectionHeaderInitializer(t) return t end
 function CreateSettingsButtonInitializer(n, t, fn) BUTTONS = BUTTONS or {}; BUTTONS[n] = fn; return n end
 -- (drop-downs keep their menu so the test can open it; frames remember their parent)
 local _cf = CreateFrame
 function CreateFrame(kind, name, parent, tpl) local f = _cf(kind, name, parent, tpl); f._parent = parent
   if kind == "DropdownButton" then f.SetupMenu = function(self, gen) self._gen = gen end; f.GenerateMenu = function() end end; return f end
-function MENU(dd) local items = {}; local root = { CreateRadio = function(_, text, isSel, setSel) items[#items + 1] = { text = text, sel = isSel, set = setSel } end, SetScrollMode = function() end }; dd._gen(dd, root); return items end
-function CHOOSE(dd, text) for _, it in ipairs(MENU(dd)) do if it.text:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "") == text then it.set(); return end end; print("FAIL: no menu choice " .. text) end
-function CHOSEN(dd) for _, it in ipairs(MENU(dd)) do if it.sel() then return (it.text:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")) end end; return "?" end
+function CHOOSE(dd, text) for _, o in ipairs(dd.options()) do if o[2] == text then dd.choose(o[1]); return end end; print("FAIL: no menu choice " .. text) end
+function CHOSEN(dd) local cur = dd.get(); for _, o in ipairs(dd.options()) do if o[1] == cur then return o[2] end end; return "?" end
+function CANVAS() return CANVAS_CAT end
 PICKED = { 0.1, 0.8, 0.9 }
 ColorPickerFrame = { SetupColorPickerAndShow = function(self, info) self.info = info end, GetColorRGB = function() return PICKED[1], PICKED[2], PICKED[3] end }
 function IsPlayerSpell(id) return NAMES[id] ~= nil end
@@ -81,7 +81,7 @@ lua.lua_pushstring(L, to_luastring(NOTE)); lua.lua_setglobal(L, to_luastring('NO
 run(`
 local ev = DebriefGlowEvents; local fire = ev:GetScript("OnEvent")
 fire(ev, "ADDON_LOADED", "DebriefGlow"); fire(ev, "PLAYER_LOGIN")
-print("settings registered: " .. #SETTINGS)
+print("in Options > AddOns as: " .. tostring(CANVAS()))
 print("hooked into NSRT: " .. tostring(CB.NSRT_REMINDER_SHOW ~= nil))
 local PH = { [1] = 0, [2] = 150 }
 -- (a fake NSRT: the player's own lines with a spell, shown 8 s before their time; it stops when the boss is over)
@@ -140,8 +140,8 @@ print("-- a game style whose art this game version lacks falls back to Pulse")
 MISSING["OneButton_ProcLoop_Flipbook"] = true; DebriefGlowDB.style = "onebutton"; DebriefGlow_Test(true); expect("one-button proc missing", GLOWING():match("Aura Mastery %(([^)]+)%)"), "pulse, gold"); ADVANCE(NOW + 3.1); MISSING = {}
 DebriefGlowDB.style = "pulse"
 print("-- the colour list sets the colour (and previews it)")
-CHANGED.DebriefGlow_colorName(nil, nil, "red"); expect("red", DebriefGlowDB.r .. ", " .. DebriefGlowDB.g .. ", " .. DebriefGlowDB.b, "1, 0.25, 0.2")
-CHANGED.DebriefGlow_colorName(nil, nil, "gold")
+DebriefGlow_SetColor("red"); expect("red", DebriefGlowDB.r .. ", " .. DebriefGlowDB.g .. ", " .. DebriefGlowDB.b, "1, 0.25, 0.2")
+DebriefGlow_SetColor("gold"); ADVANCE(NOW + 3.1)
 
 print("-- off")
 DebriefGlowDB.enabled = false; newPull(); pull(); at(20, "Aura Mastery due (addon off)")
@@ -152,13 +152,25 @@ DebriefGlowDB.tts = true; DebriefGlowDB.countdown = 3
 newPull(); pull(); at(15, "NSRT showed Aura Mastery at 0:12"); PULL_ID = PULL_ID + 1; fire(ev, "ENCOUNTER_END"); at(15.1, "wipe"); at(25, "after the press time")
 DebriefGlowDB.tts = false; DebriefGlowDB.countdown = 0
 
-print("-- Your spells window")
+print("-- the settings window (the website's look)")
+DebriefGlow_Open(); local W = DebriefGlowOptions
+expect("opens on When it glows", W.pages.glow._shown, true)
+local lead = rawget(W, "lead"); lead.plus:GetScript("OnClick")(); expect("Start early +", DebriefGlowDB.lead, 0.5); expect("shows it", lead.val:GetText(), "0.5 s early"); lead.minus:GetScript("OnClick")()
+local sw = rawget(W, "stopOnPress"); sw:GetScript("OnClick")(sw); expect("Stop when I press it, off", DebriefGlowDB.stopOnPress, false); sw:GetScript("OnClick")(sw); expect("and on", DebriefGlowDB.stopOnPress, true)
+W.tabs.look:GetScript("OnClick")(); expect("Look tab", W.pages.look._shown and not W.pages.glow._shown, true)
+local st = rawget(W, "style"); st:GetScript("OnClick")(st)
+local picked = false; for _, b in ipairs(rawget(DebriefGlowMenu, "items")) do if b._shown and rawget(b, "t")._text == "Border" then b:GetScript("OnClick")(b); picked = true end end
+expect("Style menu: Border", DebriefGlowDB.style, "border"); expect("menu closed", DebriefGlowMenu._shown, false)
+CHOOSE(st, "Game: rotation helper"); expect("Style: game rotation helper", DebriefGlowDB.style, "assist"); CHOOSE(st, "Pulse")
+local tc = rawget(W, "timerColor"); tc[2]:GetScript("OnClick")(); expect("Number colour: Gold", DebriefGlowDB.timerColor, "gold"); tc[1]:GetScript("OnClick")()
+ADVANCE(NOW + 3.1)
+
+print("-- Your spells")
 NOTE_TEXT = NOTE
-DebriefGlow_Spells()
-local W = DebriefGlowSpells; local content = rawget(W, "content")
-expect("window open", W._shown, true)
+W:Hide(); DebriefGlow_Spells()
+expect("window open on Your spells", W._shown and W.pages.spells._shown, true)
 local R, order = {}, {}
-for _, f in ipairs(FRAMES) do if f._parent == content and rawget(f, "id") and f._shown then R[f.id] = f; order[#order + 1] = f end end
+for _, f in ipairs(FRAMES) do if rawget(f, "whereText") and f._shown then R[f.id] = f; order[#order + 1] = f end end
 table.sort(order, function(a, b) return NAMES[a.id] < NAMES[b.id] end)
 for _, r in ipairs(order) do print(string.format("  %-24s %-26s glow %-5s style %-12s colour %-12s sound %-12s words %s", r.name:GetText(), r.where:GetText(), tostring(r.on:GetChecked()), CHOSEN(r.style), CHOSEN(r.color), CHOSEN(r.sound), r.words:GetText() == "" and "(" .. r.words.hint:GetText() .. ")" or r.words:GetText())) end
 expect("Divine Hymn (someone else's) not listed", R[64843], nil)
@@ -167,8 +179,8 @@ print("  set: Avenging Wrath red + raid warning + \\"Wings now\\"; Aura Mastery 
 CHOOSE(R[31884].color, "Red"); CHOOSE(R[31884].sound, "Raid warning")
 R[31884].words:SetText("Wings now"); R[31884].words:GetScript("OnEnterPressed")(R[31884].words)
 CHOOSE(R[31821].style, "Pixel lines"); CHOOSE(R[1022].style, "Game: action bar proc")
-R[6940].on:SetChecked(false); R[6940].on:GetScript("OnClick")(R[6940].on)
-CHOOSE(R[375576].color, "Pick any colour..."); ColorPickerFrame.info.swatchFunc()
+R[6940].on:GetScript("OnClick")(R[6940].on)
+CHOOSE(R[375576].color, "Any colour..."); ColorPickerFrame.info.swatchFunc()
 heard(); ADVANCE(NOW + 3.1)
 expect("Avenging Wrath colour shows", CHOSEN(R[31884].color), "Red")
 expect("Avenging Wrath words saved", DebriefGlowDB.spells[31884].words, "Wings now")
@@ -176,9 +188,10 @@ expect("Divine Toll colour shows", CHOSEN(R[375576].color), "Your colour")
 expect("Blessing of Sacrifice off", DebriefGlowDB.spells[6940].off, true)
 print("  add a spell by name: Divine Protection is not a spell here, Lay on Hands is")
 NAMES[633] = "Lay on Hands"
-W.add:SetText("Divine Protection"); W.add:GetScript("OnEnterPressed")(W.add)
-W.add:SetText("Lay on Hands"); W.add:GetScript("OnEnterPressed")(W.add)
-local found = false; for _, f in ipairs(FRAMES) do if f._parent == content and rawget(f, "id") == 633 and f._shown then found = true end end
+local ADD; for _, f in ipairs(FRAMES) do local h = rawget(f, "hint"); if h and h._text == "Its name or spell ID" then ADD = f end end
+ADD:SetText("Divine Protection"); ADD:GetScript("OnEnterPressed")(ADD)
+ADD:SetText("Lay on Hands"); ADD:GetScript("OnEnterPressed")(ADD)
+local found = false; for _, f in ipairs(FRAMES) do if rawget(f, "whereText") and rawget(f, "id") == 633 and f._shown then found = true end end
 expect("Lay on Hands added", found, true)
 
 print("-- the pull with those spell settings (main: pulse, gold, no sound, no voice)")
@@ -198,6 +211,7 @@ newPull(); DebriefGlow_Test(true); expect("Blessing of Sacrifice not in the test
 print("-- /dglow test, /dglow spells, /dglow move, /dglow")
 SlashCmdList.DEBRIEFGLOW("test"); at(NOW + 0.1, "test"); ADVANCE(NOW + 3.1); expect("test glows stop after 3 s", GLOWING(), "nothing")
 W:Hide(); SlashCmdList.DEBRIEFGLOW("spells"); expect("/dglow spells opens the window", W._shown, true)
-SlashCmdList.DEBRIEFGLOW("move"); SlashCmdList.DEBRIEFGLOW("move"); SlashCmdList.DEBRIEFGLOW("")
-BUTTONS["Your spells"](); expect("settings button opens the window", W._shown, true)
+SlashCmdList.DEBRIEFGLOW("move"); SlashCmdList.DEBRIEFGLOW("move")
+W:Hide(); SlashCmdList.DEBRIEFGLOW(""); expect("/dglow opens the window", W._shown and W.pages.glow._shown, true)
+DebriefGlow_OnAddonCompartmentClick(); expect("the AddOns menu button closes it again", W._shown, false)
 `, 'scenario');

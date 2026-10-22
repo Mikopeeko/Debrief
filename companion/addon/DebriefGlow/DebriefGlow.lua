@@ -2,7 +2,7 @@
 -- Blizzard's Cooldown Manager glows at the moment to press it, until you press it or the hold time runs out. A sound and a voice
 -- can go with it. The timing is NSRT's own (its NSRT_REMINDER_SHOW callback), so phases and times match its pop-ups exactly, and
 -- NSRT only fires it for reminders tagged to you. Debrief Glow only draws its own frames on top of the icons: the Cooldown Manager
--- isn't a protected frame, and no combat data is read. Settings: Esc > Options > AddOns > Debrief Glow, or /dglow.
+-- isn't a protected frame, and no combat data is read. Settings: /dglow (a window in the website's look), or Esc > Options > AddOns.
 -- Each spell can have its own style, colour, sound and words: /dglow spells.
 local ADDON = ...
 local DB
@@ -381,93 +381,151 @@ function DebriefGlow_Test(quiet)
   end
 end
 
--- ---- settings: Esc > Options > AddOns > Debrief Glow ----
-local category
+-- ---- the settings window: the website's look (the same colours, Barlow type and rounded panels as debriefme.io and Debrief) ----
+-- (/dglow opens it; WoW's Esc > Options > AddOns > Debrief Glow has a button for it too)
 local function color(r, g, b) return { r, g, b } end
 local COLORS = { { "gold", "Gold", color(0.90, 0.71, 0.31) }, { "white", "White", color(1, 1, 1) }, { "red", "Red", color(1, 0.25, 0.2) }, { "green", "Green", color(0.3, 0.95, 0.4) },
   { "blue", "Blue", color(0.3, 0.6, 1) }, { "purple", "Purple", color(0.75, 0.4, 1) }, { "cyan", "Cyan", color(0.2, 0.95, 0.95) }, { "pink", "Pink", color(1, 0.45, 0.8) } }
 local function preview() if DB.enabled then DebriefGlow_Test(true) end end
-local function buildSettings()
-  if not (Settings and Settings.RegisterVerticalLayoutCategory and Settings.RegisterAddOnSetting) then return end
-  local cat, layout = Settings.RegisterVerticalLayoutCategory("Debrief Glow")
-  category = cat
-  local V = Settings.VarType
-  local function reg(key, kind, name, default) local s = Settings.RegisterAddOnSetting(cat, "DebriefGlow_" .. key, key, DB, kind, name, default); return s end
-  local function header(t) if CreateSettingsListSectionHeaderInitializer then layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(t)) end end
-  local function check(key, name, tip) Settings.CreateCheckbox(cat, reg(key, V.Boolean, name, DEF[key]), tip) end
-  local function slider(key, name, tip, lo, hi, step, fmt)
-    local s = reg(key, V.Number, name, DEF[key]); local o = Settings.CreateSliderOptions(lo, hi, step)
-    if MinimalSliderWithSteppersMixin and o.SetLabelFormatter then o:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, fmt or function(v) return tostring(v) end) end
-    Settings.CreateSlider(cat, s, o, tip); return s
-  end
-  local function list(key, name, tip, kind, options)
-    local s = reg(key, kind or V.String, name, DEF[key])
-    Settings.CreateDropdown(cat, s, function() local c = Settings.CreateControlTextContainer(); for _, o in ipairs(options()) do c:Add(o[1], o[2]) end; return c:GetData() end, tip); return s
-  end
-  local function button(name, text, fn, tip) if CreateSettingsButtonInitializer then layout:AddInitializer(CreateSettingsButtonInitializer(name, text, fn, tip, true)) end end
-  local function watch(key) if Settings.SetOnValueChangedCallback then Settings.SetOnValueChangedCallback("DebriefGlow_" .. key, preview) end end
-
-  header("When it glows")
-  check("enabled", "Glow my NSRT cooldowns", "Your own NSRT reminders with a spell make that spell glow on the Cooldown Manager.")
-  slider("lead", "Start early", "Seconds before NSRT's countdown ends. 0 glows at the moment to press.", 0, 5, 0.5, function(v) return v == 0 and "On time" or (v .. " s early") end)
-  slider("hold", "Keep glowing", "If you don't press it, the glow stops after this long.", 2, 20, 1, function(v) return v .. " s" end)
-  check("stopOnPress", "Stop when I press it", "The glow ends as soon as you cast the spell.")
-  check("fallback", "Big icon when it isn't on the bar", "A spell that isn't on your Cooldown Manager gets a big icon of its own (move it with /dglow move).")
-  slider("iconSize", "Big icon size", nil, 32, 128, 4, function(v) return v .. " px" end)
-
-  header("How it looks")
-  list("style", "Style", "Changing it shows a quick preview on your Cooldown Manager. The \"Game\" ones are the game's own glows.", V.String, function() return STYLES end); watch("style")
-  check("gameColors", "Game styles keep the game's colours", "Off: the game's glows take your colour instead. A spell with its own colour always uses it."); watch("gameColors")
-  list("colorName", "Colour", "Pick a colour, or Custom for any colour.", V.String, function() local o = {}; for _, c in ipairs(COLORS) do o[#o + 1] = { c[1], c[2] } end; o[#o + 1] = { "custom", "Custom (pick below)" }; return o end)
-  if Settings.SetOnValueChangedCallback then Settings.SetOnValueChangedCallback("DebriefGlow_colorName", function(_, s, v) for _, c in ipairs(COLORS) do if c[1] == v then DB.r, DB.g, DB.b = c[3][1], c[3][2], c[3][3] end end; preview() end) end
-  button("Custom colour", "Pick a colour", function()
-    if not ColorPickerFrame or not ColorPickerFrame.SetupColorPickerAndShow then return end
-    local r0, g0, b0, a0 = DB.r, DB.g, DB.b, DB.a
-    ColorPickerFrame:SetupColorPickerAndShow({ r = DB.r, g = DB.g, b = DB.b, opacity = DB.a, hasOpacity = true,
-      swatchFunc = function() DB.r, DB.g, DB.b = ColorPickerFrame:GetColorRGB(); DB.colorName = "custom"; preview() end,
-      opacityFunc = function() DB.a = ColorPickerFrame:GetColorAlpha(); preview() end,
-      cancelFunc = function() DB.r, DB.g, DB.b, DB.a = r0, g0, b0, a0 end })
-  end, "Any colour and how see-through it is.")
-  slider("thick", "Thickness", nil, 1, 8, 1, function(v) return v .. " px" end); watch("thick")
-  slider("pad", "Distance from the icon", nil, 0, 10, 1, function(v) return v .. " px" end); watch("pad")
-  slider("scale", "Size", nil, 0.5, 2, 0.05, function(v) return math.floor(v * 100 + 0.5) .. "%" end); watch("scale")
-  slider("speed", "Speed", "How fast it pulses, runs or spins.", 0.25, 3, 0.25, function(v) return v .. "x" end); watch("speed")
-  slider("lines", "Lines or sparkles", "For the Pixel lines and Sparkles styles.", 1, 16, 1); watch("lines")
-  slider("a", "Opacity", nil, 0.1, 1, 0.05, function(v) return math.floor(v * 100 + 0.5) .. "%" end); watch("a")
-
-  header("Countdown on the spell")
-  check("timer", "Count down on the spell", "NSRT's countdown as a number on the spell's icon. It reaches 0 together with NSRT's bar (its length is your NSRT reminder duration)."); watch("timer")
-  slider("timerSize", "Number size", nil, 12, 48, 2, function(v) return v .. " px" end); watch("timerSize")
-  list("timerColor", "Number colour", nil, V.String, function() return { { "white", "White" }, { "gold", "Gold" }, { "red", "Red" }, { "glow", "Same as the glow" } } end); watch("timerColor")
-  list("timerPos", "Where", nil, V.String, function() return { { "middle", "On the icon" }, { "top", "Above the icon" }, { "bottom", "Below the icon" } } end); watch("timerPos")
-  check("timerTenths", "Tenths in the last 3 s", "2.9, 2.8 ... instead of 3, 2, 1."); watch("timerTenths")
-
-  header("Sound")
-  list("sound", "Sound", "Plays when the glow starts.", V.String, function()
-    local o = {}; for _, s in ipairs(SOUNDS) do o[#o + 1] = { s[1], s[2] } end
-    local L = lsm(); if L and L.List then for _, n in ipairs(L:List("sound") or {}) do if n ~= "None" then o[#o + 1] = { "lsm:" .. n, n } end end end
-    return o end)
-  if Settings.SetOnValueChangedCallback then Settings.SetOnValueChangedCallback("DebriefGlow_sound", function() playSound() end) end
-  list("channel", "Sound channel", "Master plays even with game sounds turned down.", V.String, function() return { { "Master", "Master" }, { "SFX", "Effects" }, { "Dialog", "Dialog" }, { "Ambience", "Ambience" } } end)
-
-  header("Voice")
-  check("tts", "Say it out loud", "Text to speech when the glow starts. NSRT can speak its reminders too: turn one of them off so you don't hear it twice.")
-  list("ttsVoice", "Voice", nil, V.Number, function() local o = { { 0, "Default" } }; for _, v in ipairs((C_VoiceChat and C_VoiceChat.GetTtsVoices and C_VoiceChat.GetTtsVoices()) or {}) do o[#o + 1] = { v.voiceID, v.name } end; return o end)
-  list("ttsText", "What it says", nil, V.String, function() return { { "{spell}", "The spell's name" }, { "{spell} now", "\"Aura Mastery now\"" }, { "Press {spell}", "\"Press Aura Mastery\"" }, { "Cooldown", "\"Cooldown\"" }, { "Go", "\"Go\"" } } end)
-  slider("ttsVolume", "Voice volume", nil, 0, 100, 5, function(v) return v .. "%" end)
-  slider("ttsRate", "Voice speed", nil, -10, 10, 1, function(v) return v == 0 and "Normal" or (v > 0 and "+" .. v or tostring(v)) end)
-  slider("countdown", "Count down first", "Says 3, 2, 1 before the moment (with Say it out loud on).", 0, 5, 1, function(v) return v == 0 and "Off" or (v .. " s") end)
-
-  header("Each spell")
-  button("Your spells", "Colour, sound and words per spell", function() DebriefGlow_Spells() end, "Give each spell its own style, colour, sound or words, or turn one off.")
-
-  header("Try it")
-  button("Test", "Test the glow", function() DebriefGlow_Test() end, "Every Cooldown Manager icon glows for 3 s with your sound and voice.")
-  Settings.RegisterAddOnCategory(cat)
+function DebriefGlow_SetColor(name)
+  for _, c in ipairs(COLORS) do if c[1] == name then DB.r, DB.g, DB.b = c[3][1], c[3][2], c[3][3]; DB.colorName = name end end
+  preview()
 end
 
--- ---- Your spells: a window with one row per spell (from your NSRT note, your Cooldown Manager, and reminders you've had) ----
--- (each row: glow on/off, style, colour, sound, words and a Test button; "Main" means the main setting is used)
+local COL = { bg = "171a22", raised = "1e222c", line = "2a2f3b", line2 = "353b49", text = "ece8df", muted = "98a0ad", faint = "6c7381", soft = "d6d1c6", gold = "e6b450", ink = "1b1406" }
+local DEEP, PANEL = "0f1117", "171a22"
+local function rgb(hex) return tonumber(hex:sub(1, 2), 16) / 255, tonumber(hex:sub(3, 4), 16) / 255, tonumber(hex:sub(5, 6), 16) / 255 end
+local MEDIA = "Interface\\AddOns\\" .. (ADDON or "DebriefGlow") .. "\\"
+local SLICE = MEDIA .. "Media\\"
+local FONT = { body = MEDIA .. "Fonts\\Barlow-Medium.ttf", bold = MEDIA .. "Fonts\\Barlow-SemiBold.ttf", head = MEDIA .. "Fonts\\BarlowSemiCondensed-Bold.ttf" }
+local function setFont(fs, kind, size) local ok = fs:SetFont(FONT[kind] or FONT.body, size, ""); if ok == false then fs:SetFont(STANDARD_TEXT_FONT, size, "") end end
+local function fill(tex, hex, a) tex:SetColorTexture(rgb(hex)); tex:SetAlpha(a or 1) end
+-- (rounded shapes: a white rounded box and its 1px outline, sliced so the corners keep their size, then coloured per use)
+local function rounded(tex, kind, r, hex, a)
+  if tex.SetTextureSliceMargins then
+    tex:SetTexture(SLICE .. "round" .. r .. "_" .. kind)
+    tex:SetTextureSliceMargins(r + 1, r + 1, r + 1, r + 1)
+    if tex.SetTextureSliceMode and Enum and Enum.UITextureSliceMode then tex:SetTextureSliceMode(Enum.UITextureSliceMode.Stretched) end
+  elseif kind == "line" then tex:SetColorTexture(0, 0, 0, 0)
+  else tex:SetColorTexture(1, 1, 1, 1) end
+  tex:SetVertexColor(rgb(hex)); tex:SetAlpha(a or 1)
+end
+local function skin(f, r, fillHex, fillA, lineHex, lineA, shadow)
+  f.fillT = f.fillT or f:CreateTexture(nil, "BACKGROUND", nil, -6); f.fillT:SetAllPoints(); rounded(f.fillT, "fill", r, fillHex, fillA)
+  f.lineT = f.lineT or f:CreateTexture(nil, "BORDER", nil, -6); f.lineT:SetAllPoints(); rounded(f.lineT, "line", r, lineHex, lineA)
+  if shadow and not f.shT then
+    f.shT = f:CreateTexture(nil, "BACKGROUND", nil, -8); f.shT:SetPoint("TOPLEFT", -14, 12); f.shT:SetPoint("BOTTOMRIGHT", 14, -16)
+    f.shT:SetTexture(SLICE .. "shadow"); if f.shT.SetTextureSliceMargins then f.shT:SetTextureSliceMargins(24, 24, 24, 24) end; f.shT:SetAlpha(0.6)
+  end
+end
+local function txt(parent, kind, size, hex) local f = parent:CreateFontString(nil, "OVERLAY"); setFont(f, kind, size); f:SetTextColor(rgb(hex or COL.text)); return f end
+local function tip(f, text) f:SetScript("OnEnter", function() GameTooltip:SetOwner(f, "ANCHOR_TOP"); GameTooltip:SetText(text, 1, 1, 1, 1, true); GameTooltip:Show() end); f:SetScript("OnLeave", function() GameTooltip:Hide() end) end
+-- (a button: gold for the main action, dark with a thin outline for the rest)
+local function button(parent, label, w, primary, h)
+  local b = CreateFrame("Button", nil, parent); b:SetSize(w, h or 28)
+  skin(b, 5, primary and COL.gold or COL.raised, 1, primary and COL.gold or COL.line2, 1)
+  b.t = txt(b, "bold", 13, primary and COL.ink or COL.text); b.t:SetPoint("CENTER", 0, 0); b.t:SetText(label)
+  b:SetScript("OnEnter", function() if not primary then rounded(b.lineT, "line", 5, COL.faint, 1) end end)
+  b:SetScript("OnLeave", function() if not primary then rounded(b.lineT, "line", 5, COL.line2, 1) end end)
+  return b
+end
+-- (a small down arrow drawn with two short bars, so no art is needed)
+local function chevron(b)
+  for i, rot in ipairs({ 0.785, -0.785 }) do
+    local t = b:CreateTexture(nil, "OVERLAY"); t:SetSize(7, 1.6); fill(t, COL.muted); t:SetPoint("RIGHT", b, "RIGHT", i == 1 and -15 or -10.5, 0); t:SetRotation(rot)
+  end
+end
+
+-- ---- a drop-down list in the website's look (options: { value, label, colour }) ----
+local menuF
+local function openMenu(owner, options, get, set)
+  if not menuF then
+    menuF = CreateFrame("Frame", "DebriefGlowMenu", UIParent); menuF:SetFrameStrata("FULLSCREEN_DIALOG"); menuF:SetClampedToScreen(true); menuF:Hide()
+    skin(menuF, 8, DEEP, 0.99, COL.line2, 1, true); menuF:EnableMouse(true)
+    menuF.scroll = CreateFrame("ScrollFrame", nil, menuF); menuF.scroll:SetPoint("TOPLEFT", 4, -4); menuF.scroll:SetPoint("BOTTOMRIGHT", -4, 4)
+    menuF.list = CreateFrame("Frame", nil, menuF.scroll); menuF.scroll:SetScrollChild(menuF.list)
+    menuF.scroll:EnableMouseWheel(true)
+    menuF.scroll:SetScript("OnMouseWheel", function(self, d) local m = self:GetVerticalScrollRange() or 0; self:SetVerticalScroll(math.max(0, math.min(m, self:GetVerticalScroll() - d * 52))) end)
+    menuF.items = {}
+    tinsert(UISpecialFrames, "DebriefGlowMenu")
+    -- (a click anywhere else closes it)
+    menuF:RegisterEvent("GLOBAL_MOUSE_DOWN")
+    menuF:SetScript("OnEvent", function(self) if self:IsShown() and not self:IsMouseOver() and not (self.owner and self.owner:IsMouseOver()) then self:Hide() end end)
+  end
+  if menuF:IsShown() and menuF.owner == owner then menuF:Hide(); return end
+  local opts, cur, IH = options(), get(), 26
+  local W = math.max(owner:GetWidth() or 0, 190)
+  for i, o in ipairs(opts) do
+    local b = menuF.items[i]
+    if not b then
+      b = CreateFrame("Button", nil, menuF.list); b:SetHeight(IH)
+      b.hl = b:CreateTexture(nil, "BACKGROUND"); b.hl:SetAllPoints(); rounded(b.hl, "fill", 5, COL.raised, 0)
+      b.dot = b:CreateTexture(nil, "ARTWORK"); b.dot:SetSize(10, 10); b.dot:SetPoint("LEFT", 10, 0); b.dot:SetTexture(SLICE .. "dot")
+      b.t = txt(b, "body", 13.5); b.t:SetJustifyH("LEFT"); b.t:SetWordWrap(false)
+      b:SetScript("OnEnter", function(self) self.hl:SetAlpha(1) end); b:SetScript("OnLeave", function(self) self.hl:SetAlpha(self.on and 0.6 or 0) end)
+      menuF.items[i] = b
+    end
+    b:ClearAllPoints(); b:SetPoint("TOPLEFT", 0, -(i - 1) * IH); b:SetWidth(W - 8)
+    b.on = o[1] == cur; b.hl:SetAlpha(b.on and 0.6 or 0)
+    b.t:ClearAllPoints(); b.t:SetPoint("LEFT", o[3] and 28 or 10, 0); b.t:SetPoint("RIGHT", -8, 0); b.t:SetText(o[2]); b.t:SetTextColor(rgb(b.on and COL.gold or COL.text))
+    b.dot:SetShown(o[3] ~= nil); if o[3] then b.dot:SetVertexColor(o[3][1], o[3][2], o[3][3]) end
+    b:SetScript("OnClick", function() menuF:Hide(); set(o[1]) end)
+    b:Show()
+  end
+  for i = #opts + 1, #menuF.items do menuF.items[i]:Hide() end
+  menuF.list:SetSize(W - 8, math.max(1, #opts * IH))
+  menuF:SetSize(W, math.min(#opts, 12) * IH + 8)
+  menuF:ClearAllPoints(); menuF:SetPoint("TOPLEFT", owner, "BOTTOMLEFT", 0, -4)
+  menuF.owner = owner; menuF.scroll:SetVerticalScroll(0); menuF:Show()
+end
+-- (the box that opens it: the chosen value, its colour dot if it has one, and the arrow)
+local function picker(parent, w, options, get, set)
+  local b = button(parent, "", w, false, 28)
+  b.t:ClearAllPoints(); b.t:SetPoint("LEFT", 10, 0); b.t:SetPoint("RIGHT", -24, 0); b.t:SetJustifyH("LEFT"); b.t:SetWordWrap(false); setFont(b.t, "body", 13)
+  b.sw = b:CreateTexture(nil, "ARTWORK"); b.sw:SetSize(10, 10); b.sw:SetPoint("LEFT", 10, 0); b.sw:SetTexture(SLICE .. "dot")
+  chevron(b)
+  b.options, b.get, b.set = options, get, set
+  b.Refresh = function(self)
+    local cur, label, col = get(), "", nil
+    for _, o in ipairs(options()) do if o[1] == cur then label, col = o[2], o[3] end end
+    self.t:SetText(label); self.sw:SetShown(col ~= nil); if col then self.sw:SetVertexColor(col[1], col[2], col[3]) end
+    self.t:ClearAllPoints(); self.t:SetPoint("LEFT", col and 26 or 10, 0); self.t:SetPoint("RIGHT", -24, 0)
+  end
+  b.choose = function(v) set(v); b:Refresh() end
+  b:SetScript("OnClick", function(self) openMenu(self, options, get, self.choose) end)
+  b:Refresh()
+  return b
+end
+-- (the slim on/off switch)
+local function switch(parent, get, set)
+  local b = CreateFrame("Button", nil, parent); b:SetSize(40, 22)
+  b.tr = b:CreateTexture(nil, "ARTWORK"); b.tr:SetAllPoints()
+  b.trL = b:CreateTexture(nil, "OVERLAY"); b.trL:SetAllPoints()
+  b.k = b:CreateTexture(nil, "OVERLAY", nil, 2); b.k:SetSize(16, 16); b.k:SetTexture(SLICE .. "dot")
+  b.Refresh = function(self)
+    local on = get() and true or false
+    rounded(self.tr, "fill", 8, on and COL.gold or COL.raised, 1); rounded(self.trL, "line", 8, on and COL.gold or COL.line2, 1)
+    self.k:ClearAllPoints(); self.k:SetPoint("CENTER", self, on and "RIGHT" or "LEFT", on and -11 or 11, 0); self.k:SetVertexColor(rgb(on and COL.ink or COL.muted))
+  end
+  b.GetChecked = function() return get() and true or false end
+  b:SetScript("OnClick", function(self) set(not get()); self:Refresh() end)
+  b:Refresh()
+  return b
+end
+-- (a text box)
+local function inputBox(parent, w, h)
+  local bg = CreateFrame("Frame", nil, parent); bg:SetSize(w, h or 28); skin(bg, 5, DEEP, 1, COL.line2, 1)
+  local e = CreateFrame("EditBox", nil, bg); e:SetPoint("TOPLEFT", 8, -2); e:SetPoint("BOTTOMRIGHT", -8, 2); e:SetAutoFocus(false)
+  setFont(e, "body", 13); e:SetTextColor(rgb(COL.text))
+  e.hint = txt(bg, "body", 13, COL.faint); e.hint:SetPoint("LEFT", 9, 0)
+  e:SetScript("OnEditFocusGained", function(self) rounded(bg.lineT, "line", 5, COL.gold, 0.9); self.hint:Hide() end)
+  e:HookScript("OnEditFocusLost", function(self) rounded(bg.lineT, "line", 5, COL.line2, 1); self.hint:SetShown(self:GetText() == "") end)
+  e:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+  e.bg = bg
+  return e
+end
+
+-- ---- the spells this player uses: from the NSRT note, the Cooldown Manager, reminders already had, and spells added by hand ----
 local function noteSpells()
   local out = {}
   if not (NSAPI and NSAPI.GetReminderString) then return out end
@@ -487,10 +545,10 @@ end
 local function spellList()
   local src, list = {}, {}
   local function add(id, where) if id and spellName(id) then src[id] = src[id] or where end end
-  for id in pairs(noteSpells()) do add(id, "in your NSRT note") end
-  for id in pairs(DB.seen) do add(id, "in your NSRT note") end
-  for _, e in ipairs(cdmItems()) do add(e.ids[1], "on your Cooldown Manager") end
-  for id in pairs(DB.spells) do add(id, "added by you") end
+  for id in pairs(noteSpells()) do add(id, "In your NSRT note") end
+  for id in pairs(DB.seen) do add(id, "In your NSRT note") end
+  for _, e in ipairs(cdmItems()) do add(e.ids[1], "On your Cooldown Manager") end
+  for id in pairs(DB.spells) do add(id, "Added by you") end
   for id, where in pairs(src) do list[#list + 1] = { id = id, name = spellName(id), where = where } end
   table.sort(list, function(x, y) return x.name < y.name end)
   return list
@@ -498,148 +556,393 @@ end
 local function testSpell(id)
   start(id, 3); showTimer(id, GetTime() + 3); playSound(soundFor(id)); local w = wordsFor(id); if w then speak(w) end
 end
-local function colorText(c, text) return string.format("|cff%02x%02x%02x%s|r", math.floor(c[1] * 255 + 0.5), math.floor(c[2] * 255 + 0.5), math.floor(c[3] * 255 + 0.5), text) end
-local function soundOptions()
-  local o = { { "main", "Main sound" } }
-  for _, s in ipairs(SOUNDS) do o[#o + 1] = { s[1], s[2] } end
+local function soundList(first)
+  local o = { first or { "none", "No sound" } }
+  for _, s in ipairs(SOUNDS) do if s[1] ~= "none" then o[#o + 1] = { s[1], s[2] } end end
   local L = lsm(); if L and L.List then for _, n in ipairs(L:List("sound") or {}) do if n ~= "None" then o[#o + 1] = { "lsm:" .. n, n } end end end
   return o
 end
--- (a drop-down: Blizzard's menu button when the game has it; else a button that steps through the choices)
-local function pick(parent, w, options, get, set)
-  local ok, dd = pcall(CreateFrame, "DropdownButton", nil, parent, "WowStyle1DropdownTemplate")
-  if ok and dd and dd.SetupMenu then
-    dd:SetWidth(w)
-    dd:SetupMenu(function(_, root)
-      if root.SetScrollMode then root:SetScrollMode(360) end
-      for _, o in ipairs(options()) do root:CreateRadio(o[2], function() return get() == o[1] end, function() set(o[1]) end) end
-    end)
-    dd.Refresh = function(self) if self.GenerateMenu then self:GenerateMenu() end end
-    return dd
-  end
-  local b = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate"); b:SetSize(w, 22)
-  b.Refresh = function(self) local cur = get(); for _, o in ipairs(options()) do if o[1] == cur then self:SetText(o[2]) end end end
-  b:SetScript("OnClick", function(self)
-    local opts, cur = options(), get(); local nxt = opts[1][1]
-    for i, o in ipairs(opts) do if o[1] == cur then nxt = (opts[i + 1] or opts[1])[1] end end
-    set(nxt); self:Refresh()
-  end)
-  return b
+local function styleList(first)
+  local o = first and { first } or {}
+  for _, s in ipairs(STYLES) do o[#o + 1] = { s[1], (s[2]:gsub(" %(.*", "")) } end
+  return o
 end
 
-local win, rows = nil, {}
-local ROW_H, COLS = 40, { icon = 6, name = 42, on = 196, style = 226, color = 372, sound = 494, words = 640, test = 778, reset = 836 }
-local function newRow(parent)
-  local r = CreateFrame("Frame", nil, parent); r:SetSize(860, ROW_H)
-  r.bg = r:CreateTexture(nil, "BACKGROUND"); r.bg:SetAllPoints(); r.bg:SetColorTexture(1, 1, 1, 0.03)
-  r.icon = r:CreateTexture(nil, "ARTWORK"); r.icon:SetSize(30, 30); r.icon:SetPoint("LEFT", COLS.icon, 0); r.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-  r.name = r:CreateFontString(nil, "OVERLAY", "GameFontHighlight"); r.name:SetPoint("TOPLEFT", COLS.name, -6); r.name:SetWidth(150); r.name:SetJustifyH("LEFT")
-  r.where = r:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall"); r.where:SetPoint("TOPLEFT", r.name, "BOTTOMLEFT", 0, -2); r.where:SetWidth(150); r.where:SetJustifyH("LEFT")
-  r.on = CreateFrame("CheckButton", nil, r, "UICheckButtonTemplate"); r.on:SetPoint("LEFT", COLS.on, 0); r.on:SetSize(26, 26)
-  r.on:SetScript("OnClick", function(self) perSet(r.id, "off", (not self:GetChecked()) or nil); r:Refresh() end)
-  r.style = pick(r, 136, function() local o = { { "main", "Main style" } }; for _, s in ipairs(STYLES) do o[#o + 1] = { s[1], (s[2]:gsub(" %(.*", "")) } end; return o end,
-    function() return per(r.id).style or "main" end, function(v) perSet(r.id, "style", v ~= "main" and v or nil); testSpell(r.id) end)
-  r.style:SetPoint("LEFT", COLS.style, 0)
-  r.color = pick(r, 112, function()
-      local o = { { "main", colorText({ DB.r, DB.g, DB.b }, "Main colour") } }
-      for _, c in ipairs(COLORS) do o[#o + 1] = { c[1], colorText(c[3], c[2]) } end
-      local mine = per(r.id).color; if mine and not mine.preset then o[#o + 1] = { "custom", colorText(mine, "Your colour") } end
-      o[#o + 1] = { "pick", "Pick any colour..." }; return o end,
-    function() local c = per(r.id).color; return not c and "main" or c.preset or "custom" end,
-    function(v)
-      if v == "main" then perSet(r.id, "color", nil)
-      elseif v == "pick" then
-        if not (ColorPickerFrame and ColorPickerFrame.SetupColorPickerAndShow) then return end
-        local id, old = r.id, per(r.id).color; local c0 = old or { DB.r, DB.g, DB.b }
-        ColorPickerFrame:SetupColorPickerAndShow({ r = c0[1], g = c0[2], b = c0[3],
-          swatchFunc = function() local cr, cg, cb = ColorPickerFrame:GetColorRGB(); perSet(id, "color", { cr, cg, cb }); r:Refresh() end,
-          cancelFunc = function() perSet(id, "color", old); r:Refresh() end })
-        return
-      else for _, c in ipairs(COLORS) do if c[1] == v then perSet(r.id, "color", { c[3][1], c[3][2], c[3][3], preset = c[1] }) end end end
-      r:Refresh(); testSpell(r.id)
+-- ---- the window ----
+local OW, OH = 920, 740
+local opt, refreshers, showPage = nil, {}, nil
+local function refreshAll() for _, f in ipairs(refreshers) do f() end end
+local spellsPage -- (filled in below: the Your spells list)
+local function buildOptions()
+  opt = CreateFrame("Frame", "DebriefGlowOptions", UIParent)
+  opt:SetSize(OW, OH); opt:SetPoint("CENTER", 0, 20); opt:SetFrameStrata("HIGH"); opt:SetToplevel(true); opt:SetClampedToScreen(true); opt:Hide()
+  skin(opt, 8, DEEP, 0.98, COL.line2, 1, true)
+  opt:SetMovable(true); opt:EnableMouse(true); opt:RegisterForDrag("LeftButton")
+  opt:SetScript("OnDragStart", opt.StartMoving); opt:SetScript("OnDragStop", opt.StopMovingOrSizing)
+  tinsert(UISpecialFrames, "DebriefGlowOptions")
+  -- (the header bar, like the website's top bar, with a soft gold glow from the logo side)
+  local hb = opt:CreateTexture(nil, "BACKGROUND", nil, -5); hb:SetPoint("TOPLEFT", 1, -1); hb:SetPoint("TOPRIGHT", -1, -1); hb:SetHeight(55); fill(hb, PANEL, 1)
+  if hb.SetGradient and CreateColor then hb:SetColorTexture(1, 1, 1, 1); hb:SetGradient("HORIZONTAL", CreateColor(0.15, 0.13, 0.09, 1), CreateColor(0.09, 0.10, 0.13, 1)) end
+  local hl = opt:CreateTexture(nil, "ARTWORK"); hl:SetPoint("TOPLEFT", 1, -56); hl:SetPoint("TOPRIGHT", -1, -56); hl:SetHeight(1); fill(hl, COL.line)
+  local lg = opt:CreateTexture(nil, "ARTWORK"); lg:SetSize(30, 30); lg:SetPoint("TOPLEFT", 20, -13); lg:SetTexture(SLICE .. "logo")
+  local tt = txt(opt, "head", 21); tt:SetPoint("TOPLEFT", 54, -12); tt:SetText("Debrief Glow")
+  local ts = txt(opt, "body", 12.5, COL.muted); ts:SetPoint("TOPLEFT", 54, -34); ts:SetText("Your NSRT cooldowns, glowing on time")
+  local clb = CreateFrame("Button", nil, opt); clb:SetSize(34, 34); clb:SetPoint("TOPRIGHT", -14, -11); skin(clb, 8, DEEP, 1, COL.line2, 1)
+  clb.t = txt(clb, "bold", 17, COL.muted); clb.t:SetPoint("CENTER", 0, 1); clb.t:SetText("×")
+  clb:SetScript("OnClick", function() opt:Hide() end)
+  clb:SetScript("OnEnter", function() clb.t:SetTextColor(rgb(COL.text)); rounded(clb.lineT, "line", 8, COL.gold, 1) end)
+  clb:SetScript("OnLeave", function() clb.t:SetTextColor(rgb(COL.muted)); rounded(clb.lineT, "line", 8, COL.line2, 1) end)
+  local ver = txt(opt, "body", 12, COL.faint); ver:SetPoint("RIGHT", clb, "LEFT", -14, 0)
+  ver:SetText("Saves as you go  ·  /dglow opens this  ·  Version " .. ((C_AddOns and C_AddOns.GetAddOnMetadata and C_AddOns.GetAddOnMetadata(ADDON, "Version")) or ""))
+  local bigT = txt(opt, "head", 30); bigT:SetPoint("TOPLEFT", 24, -70); bigT:SetText("Settings")
+  local pNote = txt(opt, "body", 14, COL.muted); pNote:SetPoint("BOTTOMLEFT", bigT, "BOTTOMRIGHT", 14, 4); pNote:SetWidth(OW - 220); pNote:SetJustifyH("LEFT"); pNote:SetWordWrap(false)
+  -- (underline tabs, like the website's Boss guides bar)
+  local MENU = { { "glow", "When it glows" }, { "look", "Look" }, { "count", "Countdown" }, { "sound", "Sound and voice" }, { "spells", "Your spells" }, { "help", "Help" } }
+  local NOTES = { glow = "When the glow starts and stops.", look = "Pick a style and colour. Your Cooldown Manager shows each change.", count = "NSRT's countdown, as a number on the spell.",
+    sound = "Off unless you turn it on. NSRT can speak too: use one of them.", spells = "Give a spell its own look, sound or words, or turn one off.", help = "How it works, and the commands." }
+  local TAB_Y, PAGE_TOP = 114, 164
+  local tline = opt:CreateTexture(nil, "ARTWORK"); tline:SetPoint("TOPLEFT", 24, -(TAB_Y + 34)); tline:SetPoint("TOPRIGHT", -24, -(TAB_Y + 34)); tline:SetHeight(1); fill(tline, COL.line)
+  local pages, tabs, cur = {}, {}, "glow"
+  showPage = function(k)
+    cur = k
+    for kk, p in pairs(pages) do p:SetShown(kk == k) end
+    for kk, b in pairs(tabs) do local on = kk == k; b.t:SetTextColor(rgb(on and COL.text or COL.muted)); b.u:SetShown(on) end
+    pNote:SetText(NOTES[k] or "")
+    if k == "spells" and spellsPage then spellsPage.fill() end
+  end
+  local tx = 16
+  for _, it in ipairs(MENU) do
+    local key = it[1]
+    local b = CreateFrame("Button", nil, opt); b:SetHeight(34); b:SetPoint("TOPLEFT", tx, -TAB_Y)
+    b.t = txt(b, "bold", 14.5, COL.muted); b.t:SetPoint("CENTER", 0, 2); b.t:SetText(it[2])
+    b:SetWidth(b.t:GetStringWidth() + 22); tx = tx + b:GetWidth()
+    b.u = b:CreateTexture(nil, "OVERLAY"); b.u:SetPoint("BOTTOMLEFT", 8, 0); b.u:SetPoint("BOTTOMRIGHT", -8, 0); b.u:SetHeight(2); fill(b.u, COL.gold)
+    b:SetScript("OnClick", function() showPage(key) end)
+    b:SetScript("OnEnter", function() if cur ~= key then b.t:SetTextColor(rgb(COL.text)) end end)
+    b:SetScript("OnLeave", function() if cur ~= key then b.t:SetTextColor(rgb(COL.muted)) end end)
+    tabs[key] = b
+    local p = CreateFrame("Frame", nil, opt); p:SetPoint("TOPLEFT", 0, -PAGE_TOP); p:SetSize(OW, OH - PAGE_TOP - 10); p:Hide()
+    pages[key] = p
+  end
+  opt.pages, opt.tabs = pages, tabs
+
+  -- (rows live inside rounded panels: a heading with a small grey note, then the rows with thin lines between, the control on the right)
+  local PX, LX = 24, 42
+  local P, y, panelY, firstRow
+  local function page(k) P = pages[k]; y = 0; panelY = nil end
+  local function panel(title, note)
+    panelY = y; firstRow = true
+    local h = txt(P, "head", 17); h:SetPoint("TOPLEFT", LX, -(y + 14)); h:SetText(title)
+    if note then local n = txt(P, "body", 12.5, COL.faint); n:SetPoint("BOTTOMLEFT", h, "BOTTOMRIGHT", 10, 1); n:SetText(note) end
+    y = y + 44
+  end
+  local function panelEnd()
+    if not panelY then return end
+    y = y + 6
+    local f = P:CreateTexture(nil, "BACKGROUND"); f:SetPoint("TOPLEFT", PX, -panelY); f:SetSize(OW - PX * 2, y - panelY); rounded(f, "fill", 8, PANEL, 1)
+    local l = P:CreateTexture(nil, "BORDER"); l:SetAllPoints(f); rounded(l, "line", 8, COL.line, 1)
+    panelY = nil; y = y + 14
+  end
+  local function rowBase(label, sub)
+    local h = sub and 50 or 44
+    if not firstRow then local ln = P:CreateTexture(nil, "ARTWORK"); ln:SetPoint("TOPLEFT", LX, -y); ln:SetPoint("TOPRIGHT", -LX, -y); ln:SetHeight(1); fill(ln, COL.line, 0.7) end
+    firstRow = false
+    local t = txt(P, "bold", 15); t:SetPoint("TOPLEFT", LX, -(y + (sub and 9 or 14))); t:SetText(label)
+    if sub then local s2 = txt(P, "body", 13, COL.faint); s2:SetPoint("TOPLEFT", LX, -(y + 28)); s2:SetWidth(540); s2:SetJustifyH("LEFT"); s2:SetWordWrap(false); s2:SetText(sub) end
+    local cy = y + h / 2
+    y = y + h
+    return cy
+  end
+  local function right(f, cy) f:SetPoint("RIGHT", P, "TOPRIGHT", -LX, -cy) end
+  local function switchRow(label, sub, key, after)
+    local cy = rowBase(label, sub)
+    local b = switch(P, function() return DB[key] end, function(v) DB[key] = v; if after then after() end end); right(b, cy)
+    refreshers[#refreshers + 1] = function() b:Refresh() end
+    opt[key] = b
+  end
+  -- (− value + stepper)
+  local function stepRow(label, sub, key, lo, hi, step, fmt, after)
+    local cy = rowBase(label, sub)
+    local plus = button(P, "+", 30, false, 28); right(plus, cy)
+    local val = txt(P, "head", 18); val:SetWidth(92); val:SetJustifyH("CENTER"); val:SetPoint("RIGHT", plus, "LEFT", -4, 0)
+    local minus = button(P, "–", 30, false, 28); minus:SetPoint("RIGHT", val, "LEFT", -4, 0)
+    local function show() val:SetText((fmt or tostring)(DB[key])) end
+    local function go(d)
+      local v = math.floor((math.max(lo, math.min(hi, (DB[key] or lo) + d))) / step + 0.5) * step
+      if v ~= DB[key] then DB[key] = v; show(); if after then after() end end
+    end
+    minus:SetScript("OnClick", function() go(-step) end); plus:SetScript("OnClick", function() go(step) end)
+    refreshers[#refreshers + 1] = show; show()
+    opt[key] = { minus = minus, plus = plus, val = val }
+  end
+  local function pickRow(label, sub, key, w, options, after)
+    local cy = rowBase(label, sub)
+    local b = picker(P, w or 220, options, function() return DB[key] end, function(v) DB[key] = v; if after then after(v) end end); right(b, cy)
+    refreshers[#refreshers + 1] = function() b:Refresh() end
+    opt[key] = b
+    return b
+  end
+  -- (a pill switcher, like the website's "Heroic | Mythic")
+  local function segRow(label, sub, key, list, after)
+    local cy = rowBase(label, sub)
+    local box = CreateFrame("Frame", nil, P); box:SetHeight(32); skin(box, 15, DEEP, 1, COL.line2, 1)
+    local btns, w = {}, 4
+    for i, c in ipairs(list) do
+      local b = CreateFrame("Button", nil, box); b:SetHeight(24)
+      b.bg = b:CreateTexture(nil, "BACKGROUND"); b.bg:SetAllPoints()
+      b.t = txt(b, "bold", 13); b.t:SetPoint("CENTER", 0, 0); b.t:SetText(c[2])
+      b:SetWidth(b.t:GetStringWidth() + 26); b:SetPoint("LEFT", box, "LEFT", w, 0); w = w + b:GetWidth() + 2
+      b:SetScript("OnClick", function() DB[key] = c[1]; refreshAll(); if after then after() end end)
+      btns[i] = b
+    end
+    box:SetWidth(w + 2); right(box, cy)
+    local function show() for i, b in ipairs(btns) do local on = DB[key] == list[i][1]; rounded(b.bg, "fill", 8, COL.gold, on and 1 or 0); b.t:SetTextColor(rgb(on and COL.ink or COL.muted)) end end
+    refreshers[#refreshers + 1] = show; show()
+    opt[key] = btns
+  end
+  local function buttons(list)
+    local prev
+    for i, b in ipairs(list) do
+      local bt = button(P, b[1], b[3] or 170, i == 1, 30)
+      if prev then bt:SetPoint("LEFT", prev, "RIGHT", 10, 0) else bt:SetPoint("TOPLEFT", PX, -y) end
+      bt:SetScript("OnClick", b[2]); prev = bt
+    end
+    y = y + 44
+  end
+  local function note(text)
+    local n = txt(P, "body", 13, COL.faint); n:SetPoint("TOPLEFT", PX + 2, -y); n:SetWidth(OW - PX * 2 - 4); n:SetJustifyH("LEFT"); n:SetText(text)
+    y = y + n:GetStringHeight() + 12
+  end
+  local sec = function(v) return v == 0 and "On time" or (v .. " s early") end
+
+  -- When it glows
+  page("glow")
+  panel("When it glows", "NSRT says when; Debrief Glow shows it")
+  switchRow("Glow my NSRT cooldowns", "Your own NSRT reminders with a spell make that spell glow on the Cooldown Manager.", "enabled")
+  stepRow("Start early", "Seconds before NSRT's countdown ends. On time glows at the moment to press.", "lead", 0, 5, 0.5, sec)
+  stepRow("Keep glowing", "If you don't press it, the glow stops after this long.", "hold", 2, 20, 1, function(v) return v .. " s" end)
+  switchRow("Stop when I press it", "The glow ends as soon as you cast the spell.", "stopOnPress")
+  panelEnd()
+  panel("Spells that aren't on your bar")
+  switchRow("Show a big icon instead", "A spell that isn't on your Cooldown Manager gets a big icon of its own.", "fallback")
+  stepRow("Big icon size", nil, "iconSize", 32, 128, 4, function(v) return v .. " px" end)
+  panelEnd()
+  buttons({ { "Test the glow", function() DebriefGlow_Test() end }, { "Place the big icon", function() SlashCmdList.DEBRIEFGLOW("move") end } })
+
+  -- Look
+  page("look")
+  panel("Style and colour", "Each change shows on your Cooldown Manager")
+  pickRow("Style", "The \"Game\" ones are the game's own glows.", "style", 300, function() return styleList() end, preview)
+  do -- (colour dots, then Any colour for the colour picker)
+    local cy = rowBase("Colour", "Eight ready colours, or any colour and how see-through it is.")
+    local any = button(P, "Any colour", 104, false, 28); right(any, cy)
+    any:SetScript("OnClick", function()
+      if not (ColorPickerFrame and ColorPickerFrame.SetupColorPickerAndShow) then return end
+      local r0, g0, b0, a0 = DB.r, DB.g, DB.b, DB.a
+      ColorPickerFrame:SetupColorPickerAndShow({ r = DB.r, g = DB.g, b = DB.b, opacity = DB.a, hasOpacity = true,
+        swatchFunc = function() DB.r, DB.g, DB.b = ColorPickerFrame:GetColorRGB(); DB.colorName = "custom"; refreshAll(); preview() end,
+        opacityFunc = function() DB.a = ColorPickerFrame:GetColorAlpha(); refreshAll(); preview() end,
+        cancelFunc = function() DB.r, DB.g, DB.b, DB.a = r0, g0, b0, a0; refreshAll() end })
     end)
-  r.color:SetPoint("LEFT", COLS.color, 0)
-  r.swatch = r:CreateTexture(nil, "OVERLAY"); r.swatch:SetSize(10, 22); r.swatch:SetPoint("RIGHT", r.color, "LEFT", -3, 0)
-  r.sound = pick(r, 136, soundOptions, function() return per(r.id).sound or "main" end,
-    function(v) perSet(r.id, "sound", v ~= "main" and v or nil); playSound(soundFor(r.id)) end)
-  r.sound:SetPoint("LEFT", COLS.sound, 0)
-  r.words = CreateFrame("EditBox", nil, r, "InputBoxTemplate"); r.words:SetSize(126, 22); r.words:SetPoint("LEFT", COLS.words + 6, 0); r.words:SetAutoFocus(false); r.words:SetMaxLetters(60)
-  r.words.hint = r.words:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall"); r.words.hint:SetPoint("LEFT", 2, 0)
-  local function saveWords(self) local t = (self:GetText() or ""):gsub("^%s+", ""):gsub("%s+$", ""); perSet(r.id, "words", t ~= "" and t or nil); r:Refresh() end
-  r.words:SetScript("OnEnterPressed", function(self) saveWords(self); self:ClearFocus(); local w = wordsFor(r.id); if w then speak(w) end end)
-  r.words:SetScript("OnEditFocusLost", saveWords)
-  r.words:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
-  r.words:SetScript("OnTextChanged", function(self) self.hint:SetShown(self:GetText() == "" and not self:HasFocus()) end)
-  r.test = CreateFrame("Button", nil, r, "UIPanelButtonTemplate"); r.test:SetSize(52, 22); r.test:SetPoint("LEFT", COLS.test, 0); r.test:SetText("Test")
-  r.test:SetScript("OnClick", function() testSpell(r.id) end)
-  r.reset = CreateFrame("Button", nil, r, "UIPanelButtonTemplate"); r.reset:SetSize(24, 22); r.reset:SetPoint("LEFT", COLS.reset, 0); r.reset:SetText("x")
-  r.reset:SetScript("OnClick", function() DB.spells[r.id] = nil; r:Refresh() end)
-  r.reset:SetScript("OnEnter", function(self) GameTooltip:SetOwner(self, "ANCHOR_RIGHT"); GameTooltip:SetText("Back to the main settings"); GameTooltip:Show() end)
-  r.reset:SetScript("OnLeave", function() GameTooltip:Hide() end)
-  r.Refresh = function(self)
-    local p = per(self.id)
-    self.icon:SetTexture(spellIcon(self.id)); self.name:SetText(spellName(self.id) or ("Spell " .. self.id)); self.where:SetText(self.whereText or "")
-    self.on:SetChecked(not p.off); self.icon:SetDesaturated(p.off and true or false); self:SetAlpha(p.off and 0.55 or 1)
-    self.style:Refresh(); self.color:Refresh(); self.sound:Refresh()
-    local c = p.color or { DB.r, DB.g, DB.b }; self.swatch:SetColorTexture(c[1], c[2], c[3], 1)
-    if not self.words:HasFocus() then self.words:SetText(p.words or "") end
-    self.words.hint:SetText(DB.tts and "Main voice" or "No voice"); self.words.hint:SetShown((p.words or "") == "" and not self.words:HasFocus())
-    self.reset:SetShown(next(p) ~= nil)
+    local dots, prev = {}, any
+    for i = #COLORS, 1, -1 do
+      local c = COLORS[i]
+      local b = CreateFrame("Button", nil, P); b:SetSize(28, 28); b:SetPoint("RIGHT", prev, "LEFT", i == #COLORS and -14 or -6, 0); prev = b
+      b.ring = b:CreateTexture(nil, "BACKGROUND"); b.ring:SetAllPoints(); b.ring:SetTexture(SLICE .. "dot")
+      b.dot = b:CreateTexture(nil, "ARTWORK"); b.dot:SetSize(20, 20); b.dot:SetPoint("CENTER"); b.dot:SetTexture(SLICE .. "dot"); b.dot:SetVertexColor(c[3][1], c[3][2], c[3][3])
+      b:SetScript("OnClick", function() DebriefGlow_SetColor(c[1]); refreshAll() end)
+      tip(b, c[2])
+      dots[i] = b
+    end
+    refreshers[#refreshers + 1] = function() for i, b in ipairs(dots) do local on = DB.colorName == COLORS[i][1]; b.ring:SetVertexColor(rgb(COL.text)); b.ring:SetAlpha(on and 1 or 0) end end
   end
-  return r
+  switchRow("Game styles keep the game's colours", "Off: the game's glows take your colour instead. A spell with its own colour always uses it.", "gameColors", preview)
+  panelEnd()
+  panel("Shape and speed")
+  stepRow("Thickness", nil, "thick", 1, 8, 1, function(v) return v .. " px" end, preview)
+  stepRow("Distance from the icon", nil, "pad", 0, 10, 1, function(v) return v .. " px" end, preview)
+  stepRow("Size", nil, "scale", 0.5, 2, 0.05, function(v) return math.floor(v * 100 + 0.5) .. "%" end, preview)
+  stepRow("Speed", "How fast it pulses, runs or spins.", "speed", 0.25, 3, 0.25, function(v) return v .. "x" end, preview)
+  stepRow("Lines or sparkles", "For Pixel lines and Sparkles.", "lines", 1, 16, 1, nil, preview)
+  stepRow("Opacity", nil, "a", 0.1, 1, 0.05, function(v) return math.floor(v * 100 + 0.5) .. "%" end, preview)
+  panelEnd()
+
+  -- Countdown
+  page("count")
+  panel("Countdown on the spell", "The same number as NSRT's bar")
+  switchRow("Count down on the spell", "Starts with NSRT's countdown and reaches 0 with it. Its length is your NSRT reminder duration.", "timer", preview)
+  stepRow("Number size", nil, "timerSize", 12, 48, 2, function(v) return v .. " px" end, preview)
+  segRow("Number colour", nil, "timerColor", { { "white", "White" }, { "gold", "Gold" }, { "red", "Red" }, { "glow", "Glow colour" } }, preview)
+  segRow("Where", nil, "timerPos", { { "middle", "On the icon" }, { "top", "Above" }, { "bottom", "Below" } }, preview)
+  switchRow("Tenths in the last 3 seconds", "2.9, 2.8 ... instead of 3, 2, 1.", "timerTenths", preview)
+  panelEnd()
+  buttons({ { "Test it", function() DebriefGlow_Test() end } })
+
+  -- Sound and voice
+  page("sound")
+  panel("Sound", "Plays when the glow starts")
+  pickRow("Sound", nil, "sound", 260, function() return soundList() end, function() playSound() end)
+  segRow("Sound channel", "Master plays even with game sounds turned down.", "channel", { { "Master", "Master" }, { "SFX", "Effects" }, { "Dialog", "Dialog" }, { "Ambience", "Ambience" } })
+  panelEnd()
+  panel("Voice", "Text to speech")
+  switchRow("Say it out loud", "NSRT can speak its reminders too: turn one of them off so you don't hear it twice.", "tts")
+  pickRow("Voice", nil, "ttsVoice", 260, function()
+    local o = { { 0, "Default" } }
+    for _, v in ipairs((C_VoiceChat and C_VoiceChat.GetTtsVoices and C_VoiceChat.GetTtsVoices()) or {}) do if v.voiceID ~= 0 then o[#o + 1] = { v.voiceID, v.name } end end
+    return o end)
+  pickRow("What it says", nil, "ttsText", 260, function() return { { "{spell}", "The spell's name" }, { "{spell} now", "\"Aura Mastery now\"" }, { "Press {spell}", "\"Press Aura Mastery\"" }, { "Cooldown", "\"Cooldown\"" }, { "Go", "\"Go\"" } } end)
+  stepRow("Voice volume", nil, "ttsVolume", 0, 100, 5, function(v) return v .. "%" end)
+  stepRow("Voice speed", nil, "ttsRate", -10, 10, 1, function(v) return v == 0 and "Normal" or (v > 0 and "+" .. v or tostring(v)) end)
+  stepRow("Count down out loud", "Says 3, 2, 1 before the moment (with Say it out loud on).", "countdown", 0, 5, 1, function(v) return v == 0 and "Off" or (v .. " s") end)
+  panelEnd()
+  buttons({ { "Hear it", function() playSound(); if DB.tts then speak(ttsFor(31821, "Aura Mastery")) end end } })
+
+  -- Help
+  page("help")
+  panel("How it works")
+  note("When NSRT (Northern Sky Raid Tools) starts the countdown for one of YOUR note's spells, the same number counts down on that spell's icon on Blizzard's Cooldown Manager. At 0 the icon glows, until you press it or the time runs out. A sound and a voice can go with it.\n\nIt follows NSRT's own timing, so phases and times always match NSRT's pop-ups. Only your own reminders count.")
+  panelEnd()
+  panel("Commands")
+  note("/dglow  opens this window\n/dglow test  every Cooldown Manager icon glows for 3 seconds\n/dglow spells  opens Your spells\n/dglow move  place the big icon\n/dglow on, /dglow off  turn it on or off")
+  panelEnd()
+  panel("Getting ready")
+  note("Turn on Blizzard's Cooldown Manager (Esc > Options > Gameplay Enhancements) and put your cooldowns on it. Load your NSRT note as usual, then press NSRT's Test Active Reminder button to see it work.")
+  panelEnd()
+
+  spellsPage.build(pages.spells)
 end
-local function fillWin()
-  local list = spellList()
-  for i, s in ipairs(list) do
-    local r = rows[i] or newRow(win.content); rows[i] = r
-    r.id, r.whereText = s.id, s.where
-    r:ClearAllPoints(); r:SetPoint("TOPLEFT", win.content, "TOPLEFT", 0, -(i - 1) * (ROW_H + 2)); r.bg:SetShown(i % 2 == 1); r:Show(); r:Refresh()
+
+-- ---- Your spells: one row per spell (glow on/off, style, colour, sound, words, Test, and x to go back to the main settings) ----
+spellsPage = {}
+do
+  local L, ROW_H = 24, 46
+  local C = { icon = 12, name = 50, on = 200, style = 250, color = 428, sound = 550, words = 680, test = 788, reset = 842 }
+  local list, scroll, content, bar, thumb, empty, addBox
+  local rows = {}
+  local function newRow()
+    local r = CreateFrame("Frame", nil, content); r:SetSize(OW - L * 2 - 2, ROW_H)
+    r.bg = r:CreateTexture(nil, "BACKGROUND"); r.bg:SetAllPoints(); fill(r.bg, COL.raised, 0.5)
+    r.icon = r:CreateTexture(nil, "ARTWORK"); r.icon:SetSize(30, 30); r.icon:SetPoint("LEFT", C.icon, 0); r.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    r.name = txt(r, "bold", 14); r.name:SetPoint("TOPLEFT", C.name, -7); r.name:SetWidth(144); r.name:SetJustifyH("LEFT"); r.name:SetWordWrap(false)
+    r.where = txt(r, "body", 11.5, COL.faint); r.where:SetPoint("TOPLEFT", r.name, "BOTTOMLEFT", 0, -2); r.where:SetWidth(144); r.where:SetJustifyH("LEFT")
+    r.on = switch(r, function() return not per(r.id).off end, function(v) perSet(r.id, "off", (not v) or nil); r:Refresh() end); r.on:SetPoint("LEFT", C.on, 0)
+    r.style = picker(r, 172, function() return styleList({ "main", "Main style" }) end,
+      function() return per(r.id).style or "main" end, function(v) perSet(r.id, "style", v ~= "main" and v or nil); r:Refresh(); testSpell(r.id) end)
+    r.style:SetPoint("LEFT", C.style, 0)
+    r.color = picker(r, 116, function()
+        local o = { { "main", "Main colour", { DB.r, DB.g, DB.b } } }
+        for _, c in ipairs(COLORS) do o[#o + 1] = { c[1], c[2], c[3] } end
+        local mine = per(r.id).color; if mine and not mine.preset then o[#o + 1] = { "custom", "Your colour", mine } end
+        o[#o + 1] = { "pick", "Any colour..." }; return o end,
+      function() local c = per(r.id).color; return not c and "main" or c.preset or "custom" end,
+      function(v)
+        if v == "main" then perSet(r.id, "color", nil)
+        elseif v == "pick" then
+          if not (ColorPickerFrame and ColorPickerFrame.SetupColorPickerAndShow) then return end
+          local id, old = r.id, per(r.id).color; local c0 = old or { DB.r, DB.g, DB.b }
+          ColorPickerFrame:SetupColorPickerAndShow({ r = c0[1], g = c0[2], b = c0[3],
+            swatchFunc = function() local cr, cg, cb = ColorPickerFrame:GetColorRGB(); perSet(id, "color", { cr, cg, cb }); r:Refresh() end,
+            cancelFunc = function() perSet(id, "color", old); r:Refresh() end })
+          return
+        else for _, c in ipairs(COLORS) do if c[1] == v then perSet(r.id, "color", { c[3][1], c[3][2], c[3][3], preset = c[1] }) end end end
+        r:Refresh(); testSpell(r.id)
+      end)
+    r.color:SetPoint("LEFT", C.color, 0)
+    r.sound = picker(r, 124, function() return soundList({ "main", "Main sound" }) end, function() return per(r.id).sound or "main" end,
+      function(v) perSet(r.id, "sound", v ~= "main" and v or nil); r:Refresh(); playSound(soundFor(r.id)) end)
+    r.sound:SetPoint("LEFT", C.sound, 0)
+    r.words = inputBox(r, 100, 28); r.words.bg:SetPoint("LEFT", C.words, 0); r.words:SetMaxLetters(60)
+    local function saveWords(self) local t = (self:GetText() or ""):gsub("^%s+", ""):gsub("%s+$", ""); perSet(r.id, "words", t ~= "" and t or nil); r:Refresh() end
+    r.words:SetScript("OnEnterPressed", function(self) saveWords(self); self:ClearFocus(); local w = wordsFor(r.id); if w then speak(w) end end)
+    r.words:HookScript("OnEditFocusLost", saveWords)
+    r.test = button(r, "Test", 46, false, 28); r.test:SetPoint("LEFT", C.test, 0); r.test:SetScript("OnClick", function() testSpell(r.id) end)
+    r.reset = button(r, "×", 26, false, 28); r.reset:SetPoint("LEFT", C.reset, 0); setFont(r.reset.t, "bold", 16)
+    r.reset:SetScript("OnClick", function() DB.spells[r.id] = nil; r:Refresh() end)
+    tip(r.reset, "Back to the main settings")
+    r.Refresh = function(self)
+      local p = per(self.id)
+      self.icon:SetTexture(spellIcon(self.id)); self.name:SetText(spellName(self.id) or ("Spell " .. self.id)); self.where:SetText(self.whereText or "")
+      self.icon:SetDesaturated(p.off and true or false); self.name:SetTextColor(rgb(p.off and COL.faint or COL.text))
+      self.on:Refresh(); self.style:Refresh(); self.color:Refresh(); self.sound:Refresh()
+      for _, f in ipairs({ self.style, self.color, self.sound, self.words.bg, self.test }) do f:SetAlpha(p.off and 0.45 or 1) end
+      if not self.words:HasFocus() then self.words:SetText(p.words or "") end
+      self.words.hint:SetText(DB.tts and "Main voice" or "No voice"); self.words.hint:SetShown((p.words or "") == "" and not self.words:HasFocus())
+      self.reset:SetShown(next(p) ~= nil)
+    end
+    return r
   end
-  for i = #list + 1, #rows do rows[i]:Hide() end
-  win.content:SetHeight(math.max(1, #list * (ROW_H + 2)))
-  win.empty:SetShown(#list == 0)
-end
-local function addSpell(text)
-  text = (text or ""):gsub("^%s+", ""):gsub("%s+$", "")
-  local id = tonumber(text)
-  if not id and C_Spell and C_Spell.GetSpellInfo then local info = C_Spell.GetSpellInfo(text); id = info and not secret(info.spellID) and info.spellID end
-  if not id or not spellName(id) then say("no spell called \"" .. text .. "\". Type its name exactly, or its spell ID."); return end
-  DB.spells[id] = DB.spells[id] or {}; DB.spells[id].added = true
-  fillWin()
-end
-function DebriefGlow_Spells()
-  if not win then
-    win = CreateFrame("Frame", "DebriefGlowSpells", UIParent, "BasicFrameTemplateWithInset")
-    win:SetSize(906, 520); win:SetPoint("CENTER"); win:SetFrameStrata("HIGH"); win:SetToplevel(true)
-    win:SetMovable(true); win:EnableMouse(true); win:RegisterForDrag("LeftButton"); win:SetClampedToScreen(true)
-    win:SetScript("OnDragStart", win.StartMoving); win:SetScript("OnDragStop", win.StopMovingOrSizing)
-    tinsert(UISpecialFrames, "DebriefGlowSpells")
-    win.title = win:CreateFontString(nil, "OVERLAY", "GameFontHighlight"); win.title:SetPoint("TOP", 0, -5); win.title:SetText("Debrief Glow: your spells")
-    win.help = win:CreateFontString(nil, "OVERLAY", "GameFontNormal"); win.help:SetPoint("TOPLEFT", 14, -32); win.help:SetWidth(870); win.help:SetJustifyH("LEFT")
-    win.help:SetText("Give a spell its own look, sound or words. \"Main\" uses your main settings. Words are said out loud when it glows (\"{spell}\" says its name).")
-    local heads = { { "Spell", COLS.name }, { "Glow", COLS.on }, { "Style", COLS.style }, { "Colour", COLS.color }, { "Sound", COLS.sound }, { "Words", COLS.words + 6 } }
-    for _, h in ipairs(heads) do local t = win:CreateFontString(nil, "OVERLAY", "GameFontDisable"); t:SetPoint("TOPLEFT", 14 + h[2], -58); t:SetText(h[1]) end
-    win.scroll = CreateFrame("ScrollFrame", nil, win, "UIPanelScrollFrameTemplate")
-    win.scroll:SetPoint("TOPLEFT", 14, -76); win.scroll:SetPoint("BOTTOMRIGHT", -32, 48)
-    win.content = CreateFrame("Frame", nil, win.scroll); win.content:SetSize(860, 1); win.scroll:SetScrollChild(win.content)
-    win.empty = win:CreateFontString(nil, "OVERLAY", "GameFontDisable"); win.empty:SetPoint("TOP", win.scroll, "TOP", 0, -40); win.empty:SetWidth(600)
-    win.empty:SetText("No spells yet. Load your NSRT note, put your cooldowns on Blizzard's Cooldown Manager, or add a spell below.")
-    win.addLabel = win:CreateFontString(nil, "OVERLAY", "GameFontNormal"); win.addLabel:SetPoint("BOTTOMLEFT", 16, 18); win.addLabel:SetText("Add a spell:")
-    win.add = CreateFrame("EditBox", nil, win, "InputBoxTemplate"); win.add:SetSize(200, 22); win.add:SetPoint("LEFT", win.addLabel, "RIGHT", 10, 0); win.add:SetAutoFocus(false)
-    local function doAdd() addSpell(win.add:GetText()); win.add:SetText(""); win.add:ClearFocus() end
-    win.add:SetScript("OnEnterPressed", doAdd); win.add:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
-    win.addBtn = CreateFrame("Button", nil, win, "UIPanelButtonTemplate"); win.addBtn:SetSize(60, 22); win.addBtn:SetPoint("LEFT", win.add, "RIGHT", 6, 0); win.addBtn:SetText("Add")
-    win.addBtn:SetScript("OnClick", doAdd)
-    win.main = CreateFrame("Button", nil, win, "UIPanelButtonTemplate"); win.main:SetSize(140, 22); win.main:SetPoint("BOTTOMRIGHT", -16, 14); win.main:SetText("Main settings")
-    win.main:SetScript("OnClick", function() win:Hide(); DebriefGlow_Open() end)
-    win:SetScript("OnShow", fillWin)
+  -- (the thin scroll bar on the right, like the website's)
+  local function paintBar()
+    local range = scroll:GetVerticalScrollRange() or 0
+    bar:SetShown(range > 0)
+    if range > 0 then
+      local h = scroll:GetHeight() or 1; local th = math.max(30, h * h / (h + range))
+      thumb:SetHeight(th); thumb:ClearAllPoints(); thumb:SetPoint("TOP", bar, "TOP", 0, -((h - th) * (scroll:GetVerticalScroll() or 0) / range))
+    end
   end
+  function spellsPage.fill()
+    if not content then return end
+    local l = spellList()
+    for i, s in ipairs(l) do
+      local r = rows[i] or newRow(); rows[i] = r
+      r.id, r.whereText = s.id, s.where
+      r:ClearAllPoints(); r:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -(i - 1) * (ROW_H + 4)); r.bg:SetAlpha(i % 2 == 1 and 0.55 or 0.25); r:Show(); r:Refresh()
+    end
+    for i = #l + 1, #rows do rows[i]:Hide() end
+    content:SetHeight(math.max(1, #l * (ROW_H + 4)))
+    empty:SetShown(#l == 0)
+    paintBar()
+  end
+  spellsPage.rows = rows
+  function spellsPage.build(P)
+    local heads = { { "Spell", C.name }, { "Glow", C.on }, { "Style", C.style }, { "Colour", C.color }, { "Sound", C.sound }, { "Words (said out loud)", C.words } }
+    for _, h in ipairs(heads) do local t = txt(P, "bold", 12, COL.faint); t:SetPoint("TOPLEFT", L + h[2], -4); t:SetText(h[1]) end
+    scroll = CreateFrame("ScrollFrame", nil, P); scroll:SetPoint("TOPLEFT", L, -24); scroll:SetPoint("BOTTOMRIGHT", -L, 58)
+    content = CreateFrame("Frame", nil, scroll); content:SetSize(OW - L * 2 - 2, 1); scroll:SetScrollChild(content)
+    scroll:EnableMouseWheel(true)
+    scroll:SetScript("OnMouseWheel", function(self, d) local m = self:GetVerticalScrollRange() or 0; self:SetVerticalScroll(math.max(0, math.min(m, self:GetVerticalScroll() - d * (ROW_H + 4)))); paintBar() end)
+    bar = CreateFrame("Frame", nil, P); bar:SetWidth(4); bar:SetPoint("TOPLEFT", scroll, "TOPRIGHT", 6, 0); bar:SetPoint("BOTTOMLEFT", scroll, "BOTTOMRIGHT", 6, 0)
+    local track = bar:CreateTexture(nil, "BACKGROUND"); track:SetAllPoints(); rounded(track, "fill", 5, COL.line, 1)
+    thumb = bar:CreateTexture(nil, "ARTWORK"); thumb:SetWidth(4); rounded(thumb, "fill", 5, COL.faint, 1)
+    empty = txt(P, "body", 14, COL.muted); empty:SetPoint("TOP", scroll, "TOP", 0, -50); empty:SetWidth(560)
+    empty:SetText("No spells yet. Load your NSRT note, put your cooldowns on Blizzard's Cooldown Manager, or add a spell below.")
+    local lbl = txt(P, "bold", 14); lbl:SetPoint("BOTTOMLEFT", L + 2, 22); lbl:SetText("Add a spell")
+    addBox = inputBox(P, 240, 30); addBox.bg:SetPoint("LEFT", lbl, "RIGHT", 12, 0); addBox.hint:SetText("Its name or spell ID")
+    local addB = button(P, "Add", 70, true, 30); addB:SetPoint("LEFT", addBox.bg, "RIGHT", 8, 0)
+    local function doAdd()
+      local text = (addBox:GetText() or ""):gsub("^%s+", ""):gsub("%s+$", "")
+      addBox:SetText(""); addBox:ClearFocus()
+      local id = tonumber(text)
+      if not id and C_Spell and C_Spell.GetSpellInfo then local info = C_Spell.GetSpellInfo(text); id = info and not secret(info.spellID) and info.spellID end
+      if not id or not spellName(id) then say("no spell called \"" .. text .. "\". Type its name exactly, or its spell ID."); return end
+      DB.spells[id] = DB.spells[id] or {}; DB.spells[id].added = true
+      spellsPage.fill()
+    end
+    addBox:SetScript("OnEnterPressed", doAdd); addB:SetScript("OnClick", doAdd)
+    spellsPage.addBox, spellsPage.addB = addBox, addB
+    local n = txt(P, "body", 12.5, COL.faint); n:SetPoint("BOTTOMRIGHT", -L - 2, 28); n:SetText("\"Main\" uses your main settings.  {spell} in Words says its name.")
+  end
+end
+
+function DebriefGlow_Open(pg)
+  if not DB then return end
+  if not opt then buildOptions() end
   if SettingsPanel and SettingsPanel.IsShown and SettingsPanel:IsShown() and HideUIPanel then HideUIPanel(SettingsPanel) end
-  win:Show(); fillWin()
+  refreshAll(); opt:Show(); showPage(pg or "glow")
 end
-
-function DebriefGlow_Open() if category and Settings.OpenToCategory then Settings.OpenToCategory(category:GetID()) else say("settings: /dglow test, /dglow move.") end end
-function DebriefGlow_OnAddonCompartmentClick() DebriefGlow_Open() end
+function DebriefGlow_Spells() DebriefGlow_Open("spells") end
+function DebriefGlow_OnAddonCompartmentClick() if opt and opt:IsShown() then opt:Hide() else DebriefGlow_Open() end end
+-- (in WoW's own Options > AddOns list too: a short line and a button that opens the window)
+local function registerSettings()
+  if not (Settings and Settings.RegisterCanvasLayoutCategory and Settings.RegisterAddOnCategory) then return end
+  local p = CreateFrame("Frame"); p:Hide()
+  local t = p:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge"); t:SetPoint("TOPLEFT", 16, -16); t:SetText("Debrief Glow")
+  local d = p:CreateFontString(nil, "OVERLAY", "GameFontHighlight"); d:SetPoint("TOPLEFT", 16, -44); d:SetWidth(560); d:SetJustifyH("LEFT")
+  d:SetText("Your NSRT note's cooldowns count down and glow on Blizzard's Cooldown Manager when it's time to press them. Its settings have their own window.")
+  local b = CreateFrame("Button", nil, p, "UIPanelButtonTemplate"); b:SetSize(220, 26); b:SetPoint("TOPLEFT", 16, -80); b:SetText("Open Debrief Glow settings")
+  b:SetScript("OnClick", function() DebriefGlow_Open() end)
+  local cat = Settings.RegisterCanvasLayoutCategory(p, "Debrief Glow"); Settings.RegisterAddOnCategory(cat)
+end
 
 SLASH_DEBRIEFGLOW1 = "/dglow"
 SlashCmdList.DEBRIEFGLOW = function(msg)
@@ -649,7 +952,7 @@ SlashCmdList.DEBRIEFGLOW = function(msg)
   elseif msg == "move" then
     placeFloat(); float.tex:SetTexture(spellIcon(31821)); float.txt:SetText("Drag me, then /dglow move again"); float.moving = not float.moving; float:EnableMouse(float.moving)
     if float.moving then float:Show(); say("drag the big icon where you want it, then type /dglow move again.") else float:Hide(); say("big icon placed.") end
-  elseif msg == "on" or msg == "off" then DB.enabled = (msg == "on"); say(DB.enabled and "on." or "off.")
+  elseif msg == "on" or msg == "off" then DB.enabled = (msg == "on"); say(DB.enabled and "on." or "off."); refreshAll()
   else DebriefGlow_Open() end
 end
 
@@ -662,7 +965,7 @@ ev:SetScript("OnEvent", function(_, e, a1, a2, a3)
     for k, v in pairs(DEF) do if DB[k] == nil then DB[k] = v end end
     DB.spells = DB.spells or {}; DB.seen = DB.seen or {}
     if DB.colorName == nil then DB.colorName = "gold" end
-    buildSettings()
+    registerSettings()
   elseif e == "ADDON_LOADED" or e == "PLAYER_LOGIN" then hookNSRT()
   elseif e == "UNIT_SPELLCAST_SUCCEEDED" then onCast(a3)
   elseif e == "ENCOUNTER_END" then stopAll() end
