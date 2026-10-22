@@ -12269,7 +12269,7 @@ async function charInfo(creds, link) {
   let c;
   if (HOSTED) c = await api('/api/char?' + (link.id ? 'id=' + link.id : 'name=' + enc(link.name) + '&srv=' + enc(link.srv) + '&reg=' + enc(link.reg)));
   else { const d = await gql(creds, CHAR_INFO_Q, link.id ? { id: link.id } : { name: link.name, srv: link.srv, reg: link.reg }); c = d && d.characterData && d.characterData.character; }
-  if (!c) throw new Error('Warcraft Logs has no character at that link.');
+  if (!c) throw new Error('Warcraft Logs couldn\'t find that character. Check the name and the realm.');
   // (classID: Warcraft Logs' own class number, alphabetical: 1 Death Knight, 2 Druid … 11 Warrior, then 12 Demon Hunter and
   // 13 Evoker; for the card's colour and icon)
   const CLS = [null, 'DEATHKNIGHT', 'DRUID', 'HUNTER', 'MAGE', 'MONK', 'PALADIN', 'PRIEST', 'ROGUE', 'SHAMAN', 'WARLOCK', 'WARRIOR', 'DEMONHUNTER', 'EVOKER'];
@@ -14258,6 +14258,9 @@ const PATCH_NOTES = [
     'The bosses are in the same order everywhere on the site.',
     'Long patch notes fold after six lines.',
   ], f: [
+    'The Back button closes the Start now setup instead of leaving Debrief, and closes any open tips or menu before going back a page.',
+    'Help on My Page shows the tip about the boss cards again, without the short wait.',
+    'A character that can\'t be found says to check the name and realm.',
     'Rotation: Copy as image now works on long pages. It came out blank or failed before; now the picture has every icon and the site\'s own fonts.',
     'The Coiled Altar: Malacrass counts as a boss, not an add, in damage splits.',
     'The Next pull line under the Fix cards now says the first card\'s fix.',
@@ -34705,7 +34708,10 @@ async function navGo(st) {
   window.scrollTo(0, 0);
 }
 setInterval(() => { if (S.page !== 'pull' || !history.state || !history.state.nav) return; const st = navState(); if (st && navKey(st) === navKey(history.state) && (history.state.sel || null) !== (st.sel || null)) navNote(); }, 1000);
-window.addEventListener('popstate', (e) => { const st = e.state; if (!st || !st.nav) return; NAV_RESTORE = true; Promise.resolve().then(() => navGo(st)).catch((err) => console.warn('Back:', err && err.message)).finally(() => { NAV_RESTORE = false; }); });
+window.addEventListener('popstate', (e) => {
+  if (GS_POP) { GS_POP(); return; } if ($('#gs')) { gsClose(null, true); return; }
+  { const t = $('#ptip'); if (t && t.quit) t.quit(); const p = $('#tbMenuPop'); if (p) p.hidden = true; } /* (tips you left show again next visit) */
+  const st = e.state; if (!st || !st.nav) return; NAV_RESTORE = true; Promise.resolve().then(() => navGo(st)).catch((err) => console.warn('Back:', err && err.message)).finally(() => { NAV_RESTORE = false; }); });
 // Shareable addresses: ?report=CODE&fight=N opens that report and pull directly.
 function syncUrl(item) {
   if (!WCL.HOSTED || !item || !item.wcl) return;
@@ -35150,7 +35156,7 @@ const PAGE_TIPS = {
   team: [
     { sel: '#pgNow', t: 'What you\'re on now', p: 'The boss your team is working on, with your best pull and a dot for every pull. Open its last night from here.' },
     { sel: '#pgNights', t: 'Raid nights', p: 'Every raid night, newest first, with how far you got. Click one to go through it pull by pull.' },
-    { sel: '.pc-grid .pc-card', t: 'Each boss', p: 'Each card shows a boss\'s result and totals. Click one for the chart of every pull and its nights.' },
+    { sel: '.pc-grid .pc-card, .my-raid .my-bc', t: 'Each boss', p: 'Each card shows a boss\'s result and totals. Click one for the chart of every pull and its nights.' },
     { sel: '.pc-diffs', t: 'Pick a difficulty', p: 'Switch between Mythic, Heroic, Normal and LFR, with how many bosses are down on each.' },
     { sel: '#pgEdit', t: 'Edit', p: 'Remove this team.' }],
 };
@@ -35181,24 +35187,27 @@ function runTips(k, steps) {
   if ($('#ptip') || $('#tour')) return;
   let i = 0, raf = 0;
   const ov = document.createElement('div'); ov.id = 'ptip'; ov.className = 'ptip';
+  ov.quit = () => finish(false);
   ov.innerHTML = '<div class="pt-hole"></div><div class="pt-bub" role="dialog" aria-modal="true" aria-label="Tips for this page"></div>';
   document.body.appendChild(ov);
   const hole = ov.querySelector('.pt-hole'), bub = ov.querySelector('.pt-bub');
   // (the window around the spot, and the bubble below it, or above when there's no room; both follow a scroll)
-  const place = () => { const e = tipVis(steps[i].sel); if (!e) return; const b = e.getBoundingClientRect(), pad = 6, h = Math.min(b.height + 2 * pad, innerHeight - 24);
+  const place = () => { const e = tipVis(steps[i].sel); if (!e) return; const b = e.getBoundingClientRect(), pad = 6, h = b.height > innerHeight * 0.6 ? Math.round(innerHeight * 0.4) : Math.min(b.height + 2 * pad, innerHeight - 24);
     hole.style.left = (b.left - pad) + 'px'; hole.style.top = (b.top - pad) + 'px'; hole.style.width = (b.width + 2 * pad) + 'px'; hole.style.height = h + 'px';
     const bw = Math.min(360, innerWidth - 24); bub.style.width = bw + 'px'; const bh = bub.offsetHeight;
     let top = b.top - pad + h + 14, side = 'b'; if (top + bh > innerHeight - 10) { top = b.top - pad - bh - 14; side = 't'; } if (top < 10) { top = Math.max(10, Math.min(innerHeight - bh - 10, b.top + 12)); side = 'n'; }
     const left = Math.max(12, Math.min(innerWidth - bw - 12, b.left + Math.min(24, b.width / 2) - 24));
     bub.style.top = top + 'px'; bub.style.left = left + 'px'; bub.dataset.side = side; bub.style.setProperty('--ax', Math.max(18, Math.min(bw - 18, b.left + Math.min(b.width / 2, 60) - left)) + 'px'); };
   const follow = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(place); };
-  const finish = () => { store.set(TIPS_KEY(k), '1'); removeEventListener('scroll', follow, true); removeEventListener('resize', follow); document.removeEventListener('keydown', key, true); ov.classList.add('out'); setTimeout(() => ov.remove(), 220); };
+  const finish = (seen) => { if (seen !== false) store.set(TIPS_KEY(k), '1'); removeEventListener('scroll', follow, true); removeEventListener('resize', follow); document.removeEventListener('keydown', key, true); ov.classList.add('out'); setTimeout(() => ov.remove(), 220); };
   const draw = () => { const s = steps[i], last = i === steps.length - 1, e = tipVis(s.sel);
     bub.innerHTML = '<div class="pt-k">' + (i + 1) + ' of ' + steps.length + '</div><b>' + esc(s.t) + '</b><p>' + esc(s.p) + '</p><div class="pt-nav">' + (i ? '<button class="btn" data-p="back" type="button">Back</button>' : '<button class="linkbtn pt-tour" data-p="tour" type="button">Take the tour</button>') +
       '<button class="btn primary" data-p="' + (last ? 'done' : 'next') + '" type="button">' + (last ? 'Got it' : 'Next') + '</button></div>';
     bub.querySelectorAll('[data-p]').forEach((b) => (b.onclick = () => { const a = b.dataset.p; if (a === 'next') { i++; draw(); } else if (a === 'back') { i--; draw(); } else if (a === 'tour') { finish(); startTour(0); } else finish(); }));
     bub.classList.remove('in'); void bub.offsetWidth; bub.classList.add('in');
-    if (e) { const b = e.getBoundingClientRect(); if (b.top < 70 || b.bottom > innerHeight - 40) e.scrollIntoView({ block: 'center' }); }
+    if (e) { const b = e.getBoundingClientRect();
+      // (taller than most of the screen, like the debrief on a phone: its top comes into view, below the tabs)
+      if (b.height > innerHeight * 0.6) { e.style.scrollMarginTop = '150px'; e.scrollIntoView({ block: 'start' }); } else if (b.top < 70 || b.bottom > innerHeight - 40) e.scrollIntoView({ block: 'center' }); }
     place(); const f = bub.querySelector('.btn.primary'); if (f) f.focus(); };
   // (Enter or → for next, ← for back; Escape doesn't skip it)
   const key = (e) => { if (!document.body.contains(ov)) return; if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); } else if (e.key === 'ArrowRight' && i < steps.length - 1) { i++; draw(); } else if (e.key === 'ArrowLeft' && i > 0) { i--; draw(); } };
@@ -35441,11 +35450,17 @@ function gsStart() {
   document.body.appendChild(el); document.body.classList.add('touring');
   GS.key = (e) => { if (e.key === 'Escape' && $('#gs')) { e.preventDefault(); e.stopPropagation(); gsClose(); } };
   document.addEventListener('keydown', GS.key, true);
+  // (a step in the browser's history: Back, or a phone's back swipe, closes the setup instead of leaving Debrief)
+  try { history.pushState(Object.assign({}, history.state, { gs: 1 }), '', location.href); } catch (e) { /* ignore */ }
   gsDraw();
 }
-function gsClose(then) {
+// (popped: Back already took the setup's step away; otherwise × or a finished setup takes it away first, then carries on)
+let GS_POP = null;
+function gsClose(then, popped) {
   const el = $('#gs'); if (GS) { clearTimeout(GS.t); document.removeEventListener('keydown', GS.key, true); } GS = null;
   if (el) { el.classList.add('out'); document.body.classList.remove('touring'); setTimeout(() => el.remove(), 260); }
+  if (!popped && history.state && history.state.gs) { let ran = false; GS_POP = () => { if (ran) return; ran = true; GS_POP = null; if (then) then(); };
+    try { history.back(); } catch (e) { /* ignore */ } setTimeout(() => { if (GS_POP) GS_POP(); }, 700); return; }
   if (then) then();
 }
 const gsFind = (gid) => (gid ? groups().find((x) => x.gid === gid) : null);

@@ -297,7 +297,7 @@ async function charInfo(creds, link) {
   let c;
   if (HOSTED) c = await api('/api/char?' + (link.id ? 'id=' + link.id : 'name=' + enc(link.name) + '&srv=' + enc(link.srv) + '&reg=' + enc(link.reg)));
   else { const d = await gql(creds, CHAR_INFO_Q, link.id ? { id: link.id } : { name: link.name, srv: link.srv, reg: link.reg }); c = d && d.characterData && d.characterData.character; }
-  if (!c) throw new Error('Warcraft Logs has no character at that link.');
+  if (!c) throw new Error('Warcraft Logs couldn\'t find that character. Check the name and the realm.');
   // (classID: Warcraft Logs' own class number, alphabetical: 1 Death Knight, 2 Druid … 11 Warrior, then 12 Demon Hunter and
   // 13 Evoker; for the card's colour and icon)
   const CLS = [null, 'DEATHKNIGHT', 'DRUID', 'HUNTER', 'MAGE', 'MONK', 'PALADIN', 'PRIEST', 'ROGUE', 'SHAMAN', 'WARLOCK', 'WARRIOR', 'DEMONHUNTER', 'EVOKER'];
