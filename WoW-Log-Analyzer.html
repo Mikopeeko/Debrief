@@ -12713,7 +12713,7 @@ const CACHE = new Map();
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage off */ } } };
 const S = { file: null, index: null, item: null, rep: null, tab: 'live', role: 'all', meter: 'damage', mPlayer: null, pPlayer: null, death: 0, packs: E.PACKS.slice(), openSets: new Set(), openSecs: new Set() }; // (openSets: set lines opened in any tab)
 // local debugging only: the current pull's analysis, for checking mechanics against the raw log
-if (location.hostname === 'localhost' || /-debrief\./.test(location.hostname)) window.__wla = { coachSummary: (a, b) => coachSummary(a, b), pullSections: (r) => pullSections(r), /* (practice copies too, for testing (Oct 22)) */ gsStart: () => gsStart(), S, CACHE, getRep, select, maps: () => AUDITMAPS, miniMap: (a, b) => miniMap(a, b), players: () => players(), topSpecFor: (r, p, k) => topSpecFor(r, p, k), topFightFor: (r, w) => topFightFor(r, w), cmpKind: (p) => cmpKind(p), genSpecs: () => GEN_SPECS, pullAlert: (b, o) => pullAlert(b, o), mapAt: (...a) => mapAt(...a), dbfPull: (o) => dbfPull(o), dbfStats: (r) => dbfStats(r), setCut: (n) => store.set('wla-death-cut2', String(n)), getCut: () => deathCutN(), keptDeaths: (r) => keptDeaths(r), WCL, E, specRun: (sp, reps, n, one) => (SPEC_CHECKS[sp] ? SPEC_CHECKS[sp](reps, n, one) : null), gradeBoss: (r) => gradeBoss(r), survivalOf: (r, p) => survivalOf(r, p), prepotted: (r, p) => prepotted(r, p), auditChar: (c, p) => auditChar(c, p), resolveSockets: (cs) => resolveSockets(cs), resolveCombatants: (cs) => resolveCombatants(cs), get FH() { return FH; }, startFileLive: (h) => startFileLive(h), LIVE: () => LIVE, openWcl: (l, c) => openWcl(l, c), resOf: (r, p, ty, a, b) => resOf(r, p, ty, a, b), resUsers: (r, ps, ty) => resUsers(r, ps, ty), bossHpLine: (r, e, s) => bossHpLine(r, e, s), progressOf: (r) => progressOf(r), piPull: (r) => piPull(r) };
+if (location.hostname === 'localhost' || /-debrief\./.test(location.hostname)) window.__wla = { coachSummary: (a, b) => coachSummary(a, b), pullSections: (r) => pullSections(r), exampleNote: (r) => exampleNote(r), notesSave: (b, o) => notesSave(b, o), /* (practice copies too, for testing (Oct 22)) */ gsStart: () => gsStart(), S, CACHE, getRep, select, maps: () => AUDITMAPS, miniMap: (a, b) => miniMap(a, b), players: () => players(), topSpecFor: (r, p, k) => topSpecFor(r, p, k), topFightFor: (r, w) => topFightFor(r, w), cmpKind: (p) => cmpKind(p), genSpecs: () => GEN_SPECS, pullAlert: (b, o) => pullAlert(b, o), mapAt: (...a) => mapAt(...a), dbfPull: (o) => dbfPull(o), dbfStats: (r) => dbfStats(r), setCut: (n) => store.set('wla-death-cut2', String(n)), getCut: () => deathCutN(), keptDeaths: (r) => keptDeaths(r), WCL, E, specRun: (sp, reps, n, one) => (SPEC_CHECKS[sp] ? SPEC_CHECKS[sp](reps, n, one) : null), gradeBoss: (r) => gradeBoss(r), survivalOf: (r, p) => survivalOf(r, p), prepotted: (r, p) => prepotted(r, p), auditChar: (c, p) => auditChar(c, p), resolveSockets: (cs) => resolveSockets(cs), resolveCombatants: (cs) => resolveCombatants(cs), get FH() { return FH; }, startFileLive: (h) => startFileLive(h), LIVE: () => LIVE, openWcl: (l, c) => openWcl(l, c), resOf: (r, p, ty, a, b) => resOf(r, p, ty, a, b), resUsers: (r, ps, ty) => resUsers(r, ps, ty), bossHpLine: (r, e, s) => bossHpLine(r, e, s), progressOf: (r) => progressOf(r), piPull: (r) => piPull(r) };
 
 // ---------- icons ----------
 // Original icon set drawn in SVG, built into the app. Spell tiles are colored by magic school
@@ -14374,6 +14374,7 @@ const PATCH_NOTES = [
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
+    'Coach: the NSRT note\'s missed jobs show up in the raid\'s list too, with who missed them and the note\'s reminder as the fix.',
     'Coach: each problem says what happened, then what to do next time, with "first time tonight" or "third time tonight", and a How to do it link when it keeps happening.',
     'Coach: a raid mistake says how many deaths it led to, a death right after one says what caused it, and a missed NSRT note job suggests the note\'s reminder.',
     'Coach on All pulls: "still happening" or "fine in the last 3 pulls" on each problem.',
@@ -14401,6 +14402,7 @@ const PATCH_NOTES = [
     'The bosses are in the same order everywhere on the site.',
     'Long patch notes fold after six lines.',
   ], f: [
+    'Debriefing: with a note loaded, the note\'s bar (Swap players, Load a note, Copy for the game) stays right under the coach instead of in the bottom drawer.',
     'Debriefing: "went clean" now reads "done right".',
     'Coach: a death you could have dodged now says to dodge it, not to press a defensive.',
     'Why we wiped only looks at what happened before the wipe filter (a pull said it was lost at 6:53 when the filter stopped at 4:59).',
@@ -21374,6 +21376,8 @@ function oaLayout(v, el) {
     const cp = v.querySelector('.dbd-copy'); if (cp) { const box = cp.closest('.dbd-acts'); acts.appendChild(cp); if (box && !box.children.length) box.remove(); }
     const nb = v.querySelector('.dbn-bar.dbn-none'); if (nb) { const bs = [...nb.querySelectorAll('button')]; if (bs.length) { bs.forEach((b) => { b.classList.add('sm'); acts.appendChild(b); }); nb.remove(); } }
     if (acts.children.length) hd.appendChild(acts); }
+  // (a loaded NSRT note's bar stays in view, right under the coach: which note, what it checks, Swap players)
+  const nbar = v.querySelector('.dbn-bar:not(.dbn-none)'); if (nbar && nbar.previousElementSibling !== el) { el.after(nbar); nbar.classList.add('oa-note'); }
   // (a small map on each of the coach's problems: the Fix card's own map for that mechanic)
   const cards = [...v.querySelectorAll('a.dbr-fx')];
   for (const li of el.querySelectorAll('.cch-no li')) { if (li.querySelector('.wr-map')) continue;
@@ -21455,6 +21459,10 @@ function coachRaid(reps) { return oaCache(reps, 'c:raid', () => {
   const out = [], first = oaRaidFix(reps), night = reps.length > 1, need = night ? 2 : 1, fixer = dbfFixer(reps), lc = (x) => String(x || '').toLowerCase();
   if (first) { const sec = [...new Map(reps.flatMap((r) => [...pullSections(r).values()]).map((x) => [x.s.id, x.s])).values()].find((s) => cMatch(s, first.label));
     out.push({ ...first, kind: 'raid', sev: 'bad', how: '', cause: first.label, label: sec ? shortT(sec.title) : first.label, sec: sec ? sec.id : null }); }
+  // (the NSRT note's jobs that were missed: who, what, how often; a missed job is a reminder problem, not a skill problem)
+  { const nG = new Map(); for (const r of reps) for (const m of keptMistakes(r)) { if (!m.fromNote || m.player === 'Raid') continue; const g = nG.get(lc(m.mechanic)) || { key: m.mechanic, pulls: new Set(), who: new Map(), hi: 0, m }; g.pulls.add(r.item.pull); g.who.set(m.player, (g.who.get(m.player) || 0) + 1); if (m.severity !== 'Low') g.hi++; nG.set(lc(m.mechanic), g); }
+    for (const g of [...nG.values()].filter((x) => x.pulls.size >= need).sort((a, b) => b.hi - a.hi || b.pulls.size - a.pulls.size).slice(0, 2)) { const names = [...g.who].sort((a, b) => b[1] - a[1]).map(([n]) => String(n).split('-')[0]);
+      out.push({ kind: 'note', sev: g.hi ? 'bad' : 'warn', label: g.key + ' (from the note)', n: g.pulls.size, of: reps.length, pulls: [...g.pulls], what: 'Missed by ' + lpAnd(names.slice(0, 4)) + (names.length > 4 ? ' and ' + (names.length - 4) + ' more' : '') + '.', fix: lpAnd(names.slice(0, 3)) + (names.length > 3 ? ' and the others' : '') + ': it was your job in the NSRT note. Turn on the note\'s reminder for it.', how: cHtml(g.m.detail || '') }); } }
   const imp = IMPORTANCE[reps[0].item.boss] || [], S2 = new Map();
   for (const r of reps) for (const [id, x] of pullSections(r)) { if (id === 'deaths' || x.s.info || x.st === 'na') continue;
     const g = S2.get(id) || { id, s: x.s, bad: 0, warn: 0, ok: 0, pulls: [] }; if (x.st === 'bad') g.bad++; else if (x.st === 'warn') g.warn++; else g.ok++; if (x.st !== 'ok') g.pulls.push(r.item.pull); S2.set(id, g); }
