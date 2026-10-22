@@ -611,7 +611,7 @@ local function showCard()
 end
 
 do
--- ---------- style, goals, combat, the mini bar, raid chat and the big window ----------
+-- ---------- style, goals, combat, the mini bar and the big window ----------
 local function accentHex()
   -- (the colour of the class you're playing, unless you turn it off; a Priest's white is softened so text stays readable)
   if DB.classTheme ~= false or DB.accent == "class" then local _, c = UnitClass("player"); if c then local hx = classHex(c); return hx == "ffffff" and "e8e4da" or hx end end
@@ -655,30 +655,6 @@ onShow = function()
     end
     C_Timer.After(DB.autoClose, check)
   end
-end
-
--- ---------- raid chat: the pull, its top mistakes, who died, the next pull (one click, for raid leads) ----------
-function Debrief_PostRaid(m)
-  m = m or DB.pulls[DB.cur]; if not m then return end
-  local h = m.h
-  local ch = IsInGroup(2) and "INSTANCE_CHAT" or (IsInRaid() and "RAID") or (IsInGroup() and "PARTY") or nil
-  local function clean(s) return ((s or ""):gsub("@", ""):gsub("|", "")) end
-  local lines = { "Debrief: " .. h.boss .. " pull " .. h.pull .. ", " .. (h.practice and "practice on a training dummy" or (h.kill and "kill" or ("wipe at " .. h.pct .. "%"))) .. " (" .. h.dur .. ", " .. h.deaths .. " deaths)" }
-  if DB.postMistakes ~= false then
-    local t = {}; for i, r in ipairs(m.raid.bad) do if i <= 3 then t[#t + 1] = r[3] end end
-    if #t > 0 then lines[#lines + 1] = "Top mistakes: " .. table.concat(t, ", ") end
-  end
-  if DB.postDeaths and #m.raid.died > 0 then
-    local t = {}; for i, d in ipairs(m.raid.died) do if i <= 4 then t[#t + 1] = d[2] .. " " .. d[1] .. " (" .. d[5] .. ")" end end
-    lines[#lines + 1] = "First deaths: " .. table.concat(t, ", ")
-  end
-  if DB.postNext ~= false and m.raid.next ~= "" then lines[#lines + 1] = "Next pull: " .. clean(m.raid.next) end
-  local send = (C_ChatInfo and C_ChatInfo.SendChatMessage) or SendChatMessage
-  for _, l in ipairs(lines) do
-    l = clean(l):sub(1, 250)
-    if ch and send then send(l, ch) else say(l) end
-  end
-  if not ch then say("(you're not in a group, so that only shows here)") end
 end
 
 -- ---------- the mini bar: one line instead of the card; click it for the full card ----------
@@ -745,8 +721,6 @@ local function topButton(label, w)
 end
 local bCard = topButton("Card view", 92); bCard:SetPoint("RIGHT", bClose, "LEFT", -10, 0)
 bCard:SetScript("OnClick", function() big:Hide(); card:Show(); render() end)
-local bPost = topButton("Post to raid chat", 136); bPost:SetPoint("RIGHT", bCard, "LEFT", -8, 0)
-bPost:SetScript("OnClick", function() Debrief_PostRaid() end)
 local bLine = big:CreateTexture(nil, "ARTWORK"); bLine:SetPoint("TOPLEFT", 1, -50); bLine:SetPoint("TOPRIGHT", -1, -50); bLine:SetHeight(1); fill(bLine, COL.line)
 local bSideBg = big:CreateTexture(nil, "BACKGROUND", nil, -5); bSideBg:SetPoint("TOPLEFT", 1, -51); bSideBg:SetPoint("BOTTOMLEFT", 1, 1); bSideBg:SetWidth(SIDE); fill(bSideBg, "13161d", 0.6)
 local bSideLine = big:CreateTexture(nil, "ARTWORK"); bSideLine:SetPoint("TOPLEFT", SIDE + 1, -51); bSideLine:SetPoint("BOTTOMLEFT", SIDE + 1, 1); bSideLine:SetWidth(1); fill(bSideLine, COL.line)
@@ -867,7 +841,6 @@ bigRender = function()
   bReset()
   local h = m.h
   bCtx:SetText(h.boss .. "  ·  " .. h.diff)
-  bPost:SetShown(not IsInGroup() or UnitIsGroupLeader("player") or UnitIsGroupAssistant("player"))
   -- left: every saved pull, newest first, grouped by boss
   local sy, lastBoss = 0, nil
   local hd = bFS(side, "bold", 11.5, COL.muted); hd:SetPoint("TOPLEFT", 8, -sy); hd:SetText("SAVED PULLS")
@@ -1118,7 +1091,6 @@ local function import(text)
   showCard()
   say("pull " .. m.h.pull .. " of " .. m.h.boss .. " loaded.")
   share(text)
-  if DB.autoPost and IsInGroup() and (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) then Debrief_PostRaid(m) end
   return true
 end
 eb:SetScript("OnTextChanged", function(self, userInput)
@@ -1189,7 +1161,7 @@ local function buildOptions()
   }
   local NOTES = {
     layout = "How much your recap shows.", look = "Colours, sizes and font.", after = "What happens when your recap arrives.",
-    views = "Everything at once, or one slim line.", raid = "The whole raid's pull, and raid chat.", goals = "The number you're chasing.",
+    views = "Everything at once, or one slim line.", raid = "The whole raid's pull: mistakes, mechanics and who died.", goals = "The number you're chasing.",
     app = "Only for whoever runs Debrief Companion.", pulls = "Debrief keeps your pulls between sessions.", help = "Commands, the tutorial and a sample.",
   }
   local TAB_Y, PAGE_TOP = 114, 164
@@ -1460,7 +1432,7 @@ local function buildOptions()
     { "Show the mini bar", function() if #DB.pulls == 0 then SlashCmdList.DEBRIEF("demo") end; card:Hide(); miniShow() end, 170 } })
   note("Choose which one opens after a pull in After a pull. The Expand button on the card opens the big window any time.")
 
-  -- Raid: the Raid view tab, and raid chat
+  -- Raid: the Raid view tab
   page("raid")
   panel("Raid view", "the raid's biggest mistakes and who died", "Ability_Warrior_BattleShout")
   switch("Raid view for everyone", "Off: only raid leads and assistants see it.", function() return DB.raidAlways ~= false end, function(v) DB.raidAlways = v end, true)
@@ -1468,14 +1440,6 @@ local function buildOptions()
   stepper("Deaths listed", "Who died first, and to what.", 1, 8, function() return DB.maxDied or 4 end, function(v) DB.maxDied = v end)
   stepper("Boss mechanics", "How each mechanic went, worst first. 0 hides them.", 0, 12, function() return DB.maxMech or 6 end, function(v) DB.maxMech = v end)
   panelEnd()
-  panel("Raid chat", "for everyone without Debrief", "INV_Scroll_03")
-  switch("Top mistakes", "The three biggest, by name.", function() return DB.postMistakes ~= false end, function(v) DB.postMistakes = v end, true)
-  switch("First deaths", "Who died first, and to what.", function() return DB.postDeaths == true end, function(v) DB.postDeaths = v end, true)
-  switch("Next pull tip", "The one thing to try next time.", function() return DB.postNext ~= false end, function(v) DB.postNext = v end, true)
-  switch("Post by itself after each pull", "Only when you lead or assist.", function() return DB.autoPost == true end, function(v) DB.autoPost = v end, true)
-  panelEnd()
-  buttons({ { "Post the last pull now", function() Debrief_PostRaid() end, 200 } })
-
   -- Goals
   page("goals")
   local function lastOf(role)
@@ -1524,7 +1488,7 @@ local function buildOptions()
   panel("Commands", "type them in chat", "INV_Misc_Note_02")
   local HELP = {
     { "/dmo", "these settings" }, { "/debrief", "show or hide your recap" }, { "/debrief big", "the big window" }, { "/debrief mini", "the mini bar on or off" },
-    { "/debrief paste", "paste a recap by hand" }, { "/debrief post", "the pull in raid chat" }, { "/debrief demo", "a sample recap" }, { "/debrief tutorial", "the tutorial again" },
+    { "/debrief paste", "paste a recap by hand" }, { "/debrief demo", "a sample recap" }, { "/debrief tutorial", "the tutorial again" },
   }
   for i, h in ipairs(HELP) do
     if i > 1 then local ln = P:CreateTexture(nil, "ARTWORK"); ln:SetPoint("TOPLEFT", LX, -y); ln:SetPoint("TOPRIGHT", -LX, -y); ln:SetHeight(1); fill(ln, COL.line, 0.7) end
@@ -1607,7 +1571,7 @@ do
     { "Welcome to Debrief", "Your pull recap, right here in WoW, a few seconds after every boss pull: your numbers, your biggest slips, your boss mistakes and one thing to try next pull." },
     { "After a boss pull", "If you run Debrief Companion on your PC, this pops up after each boss pull: press Ctrl+V and your recap opens.\nEveryone else does nothing. Your recap opens by itself.", "prompt" },
     { "Your recap", "Me is your own pull. Raid view shows the raid's biggest mistakes and who died. Use the arrows to look at anyone, and Expand for the big window with the whole night.", "sample" },
-    { "Make it yours", "Type /dmo any time for the settings: Simple, Medium or Heavy, colours and sizes, the mini bar or the big window, goals and raid chat.", "settings" },
+    { "Make it yours", "Type /dmo any time for the settings: Simple, Medium or Heavy, colours and sizes, the mini bar or the big window, and goals.", "settings" },
   }
   local cur = 1
   local function done() DB.tutorialDone = true; tut:Hide() end
@@ -1680,7 +1644,6 @@ SlashCmdList.DEBRIEF = function(msg)
   elseif msg == "tutorial" or msg == "tour" then Debrief_Tutorial()
   elseif msg == "big" or msg == "b" then Debrief_ToggleBig()
   elseif msg == "mini" then DB.mini = not DB.mini; if DB.mini then DB.bigDefault = false end; say("mini bar " .. (DB.mini and "on: one slim line after each pull, click it for the card." or "off: the card after each pull.")); if DB.mini and #DB.pulls > 0 then card:Hide(); miniShow() else mini:Hide() end
-  elseif msg == "post" then Debrief_PostRaid()
   elseif msg == "raid" then DB.raidAlways = not DB.raidAlways; say("Raid view " .. (DB.raidAlways and "always on." or "only when you lead or assist.")); if card:IsShown() then render() end
   elseif msg == "reset" then DB.pos = nil; card:ClearAllPoints(); card:SetPoint("CENTER", 260, 60); say("card moved back to the middle.")
   elseif msg == "clear" then DB.pulls = {}; DB.cur = nil; card:Hide(); big:Hide(); mini:Hide(); say("pulls cleared.")
@@ -1693,7 +1656,7 @@ SlashCmdList.DEBRIEF = function(msg)
   elseif msg == "test" then DB.testMode = not DB.testMode; say("test mode " .. (DB.testMode and "on: the box pops up after every fight and when you log in." or "off: the box only pops up after boss pulls."))
   elseif msg == "share" then DB.share = (DB.share == false); say("sharing your pastes with the group " .. (DB.share ~= false and "on." or "off."))
   elseif msg == "auto" then DB.autoBox = (DB.autoBox == false); say("paste box after each boss pull " .. (DB.autoBox ~= false and "on." or "off."))
-  elseif msg == "help" then say("/dmo or /debrief options: your settings. /debrief tutorial: the tutorial again. /debrief: show or hide the card. /debrief big: the big window. /debrief mini: the mini bar on or off. /debrief post: the pull in raid chat. /debrief paste: paste a new pull. /debrief demo: a sample card. /debrief test: test mode on or off. /debrief log: combat log in raids on or off. /debrief focus: paste box ready for Ctrl+V on or off. /debrief raid: Raid view on or off. /debrief share: send your pastes to the group on or off. /debrief auto: paste box after each pull on or off. /debrief reset: move the card back.")
+  elseif msg == "help" then say("/dmo or /debrief options: your settings. /debrief tutorial: the tutorial again. /debrief: show or hide the card. /debrief big: the big window. /debrief mini: the mini bar on or off. /debrief paste: paste a new pull. /debrief demo: a sample card. /debrief test: test mode on or off. /debrief log: combat log in raids on or off. /debrief focus: paste box ready for Ctrl+V on or off. /debrief raid: Raid view on or off. /debrief share: send your pastes to the group on or off. /debrief auto: paste box after each pull on or off. /debrief reset: move the card back.")
   else Debrief_Toggle() end
 end
 
