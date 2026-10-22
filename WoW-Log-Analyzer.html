@@ -13069,7 +13069,7 @@ const CACHE = new Map();
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage off */ } } };
 const S = { file: null, index: null, item: null, rep: null, tab: 'live', role: 'all', meter: 'damage', mPlayer: null, pPlayer: null, death: 0, packs: E.PACKS.slice(), openSets: new Set(), openSecs: new Set() }; // (openSets: set lines opened in any tab)
 // local debugging only: the current pull's analysis, for checking mechanics against the raw log
-if (location.hostname === 'localhost' || /-debrief\./.test(location.hostname)) window.__wla = { miniMap: (m, p) => miniMap(m, p), modMaps: (r) => modMaps(r), coachSummary: (a, b) => coachSummary(a, b), pullSections: (r) => pullSections(r), exampleNote: (r) => exampleNote(r), notesSave: (b, o) => notesSave(b, o), /* (practice copies too, for testing (Oct 22)) */ gsStart: () => gsStart(), S, CACHE, getRep, select, maps: () => AUDITMAPS, miniMap: (a, b) => miniMap(a, b), players: () => players(), topSpecFor: (r, p, k) => topSpecFor(r, p, k), topFightFor: (r, w) => topFightFor(r, w), cmpKind: (p) => cmpKind(p), genSpecs: () => GEN_SPECS, pullAlert: (b, o) => pullAlert(b, o), mapAt: (...a) => mapAt(...a), dbfPull: (o) => dbfPull(o), dbfStats: (r) => dbfStats(r), setCut: (n) => store.set('wla-death-cut2', String(n)), getCut: () => deathCutN(), keptDeaths: (r) => keptDeaths(r), WCL, E, specRun: (sp, reps, n, one) => (SPEC_CHECKS[sp] ? SPEC_CHECKS[sp](reps, n, one) : null), gradeBoss: (r) => gradeBoss(r), survivalOf: (r, p) => survivalOf(r, p), prepotted: (r, p) => prepotted(r, p), auditChar: (c, p) => auditChar(c, p), resolveSockets: (cs) => resolveSockets(cs), resolveCombatants: (cs) => resolveCombatants(cs), get FH() { return FH; }, startFileLive: (h) => startFileLive(h), LIVE: () => LIVE, openWcl: (l, c) => openWcl(l, c), resOf: (r, p, ty, a, b) => resOf(r, p, ty, a, b), resUsers: (r, ps, ty) => resUsers(r, ps, ty), bossHpLine: (r, e, s) => bossHpLine(r, e, s), progressOf: (r) => progressOf(r), piPull: (r) => piPull(r), deathVerdict: (r, d) => deathVerdict(r, d), deathsOf: (reps, n) => deathsOf(reps, n), coachMine: (...a) => coachMine(...a), whyWiped: (r) => whyWiped(r) };
+if (location.hostname === 'localhost' || /-debrief\./.test(location.hostname)) window.__wla = { killCall: (a, w) => killCall(a, w), HIST: () => HIST, miniMap: (m, p) => miniMap(m, p), modMaps: (r) => modMaps(r), coachSummary: (a, b) => coachSummary(a, b), pullSections: (r) => pullSections(r), exampleNote: (r) => exampleNote(r), notesSave: (b, o) => notesSave(b, o), /* (practice copies too, for testing (Oct 22)) */ gsStart: () => gsStart(), S, CACHE, getRep, select, maps: () => AUDITMAPS, miniMap: (a, b) => miniMap(a, b), players: () => players(), topSpecFor: (r, p, k) => topSpecFor(r, p, k), topFightFor: (r, w) => topFightFor(r, w), cmpKind: (p) => cmpKind(p), genSpecs: () => GEN_SPECS, pullAlert: (b, o) => pullAlert(b, o), mapAt: (...a) => mapAt(...a), dbfPull: (o) => dbfPull(o), dbfStats: (r) => dbfStats(r), setCut: (n) => store.set('wla-death-cut2', String(n)), getCut: () => deathCutN(), keptDeaths: (r) => keptDeaths(r), WCL, E, specRun: (sp, reps, n, one) => (SPEC_CHECKS[sp] ? SPEC_CHECKS[sp](reps, n, one) : null), gradeBoss: (r) => gradeBoss(r), survivalOf: (r, p) => survivalOf(r, p), prepotted: (r, p) => prepotted(r, p), auditChar: (c, p) => auditChar(c, p), resolveSockets: (cs) => resolveSockets(cs), resolveCombatants: (cs) => resolveCombatants(cs), get FH() { return FH; }, startFileLive: (h) => startFileLive(h), LIVE: () => LIVE, openWcl: (l, c) => openWcl(l, c), resOf: (r, p, ty, a, b) => resOf(r, p, ty, a, b), resUsers: (r, ps, ty) => resUsers(r, ps, ty), bossHpLine: (r, e, s) => bossHpLine(r, e, s), progressOf: (r) => progressOf(r), piPull: (r) => piPull(r), deathVerdict: (r, d) => deathVerdict(r, d), deathsOf: (reps, n) => deathsOf(reps, n), coachMine: (...a) => coachMine(...a), whyWiped: (r) => whyWiped(r) };
 
 // ---------- icons ----------
 // Original icon set drawn in SVG, built into the app. Spell tiles are colored by magic school
@@ -14724,6 +14724,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-22', h: [
+    { t: 'Kills get a real raid-lead call', d: 'When the boss dies, the coach celebrates with what actually happened: how many pulls it took, how far pull 1 got, the mechanic that finally went right, and an earned shout-out or two. A first kill gets the big one, a quick farm kill a short "clean kill, nice work", then one thing to tidy for next week.' },
     { t: 'Pace on every boss', d: 'Debriefing now has a Pace card on eight more bosses, against the 20 fastest Mythic kills: Kith\'ix reaching 25% before the third intermission, Ula\'tek after each damage window, both Sentinels at each intermission, the Twin Fangs before the last platform, Vashnik before Imbibe 5, Nymrissa before the third Pop, Sszorak before the enrage, the Lost Explorers in two turns. Slower than the world\'s best is only yellow; red is when the plan breaks.' },
     { t: 'Tap an avoidable hit', d: 'On a pull, each avoidable damage chip in the coach box now opens a card: whether it was on them, every hit with how much of their health it took, a map of the moment, and what the fastest kills take. The separate Avoidable damage row is gone from single pulls.' },
     { t: 'Fairer avoidable damage', d: 'Avoidable damage is now judged against what the fastest kills take by the same point of the fight, and pools count the seconds you stood in them. The poison pools everyone has to touch no longer flag the whole raid; dying to something dodgeable, a frontal or ghosts still does, and a raider who keeps standing in it stands out.' },
@@ -22252,6 +22253,39 @@ function coachAvoid(reps, name) {
     ch.sort((a, b) => b.bad - a.bad || b.v - a.v); if (ch.length) { items = ch.slice(0, 4); rest = ch.slice(4); more = 0; } }
   return { line, list, bad: flagged.some((s) => s.bad), items, more, rest };
 }
+// ---- The kill call (your note, Oct 22: "not very enthusiastic raid leading LOL"): what a raid lead says in voice when the boss
+// dies. Celebrate first, with what's true: a first kill or farm (this PC's saved pulls), Mythic or Heroic, how many pulls it took
+// and where pull 1 died, the mechanic that finally went right (wrong in 2+ pulls tonight, clean on the kill), the deaths, and a
+// shout-out or two that's earned (2+ saves, top damage). A first Mythic kill gets the biggest call, a farm kill a short "clean
+// kill". Then one line on what to tidy. Shared: the Report card, Copy for Discord and the in-game card can call killCall(reps).
+function killCall(reps, w0) {
+  const kill = (reps || []).find((r) => r && r.item && r.item.kill); if (!kill) return null;
+  const it = kill.item, n = it.pull || 1, mythic = /mythic/i.test(it.diff || ''), diff = it.diff || '';
+  const pulls = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId), before = pulls.filter((b) => b.pull < n).sort((a, b) => a.pull - b.pull);
+  let first = null; try { const H = [...HIST.mem.values()].filter((v) => v.boss === it.boss && v.diffId === it.diffId); if (H.length) first = !H.some((v) => v.kill && v.at < (it.wallMs || Infinity) - 60000); } catch (e) { first = null; }
+  const again = first === false || before.some((b) => b.kill), farm = n <= 3 && (again || first == null); /* (farm: killed before (or unknown) and quick) */
+  const nm = (p) => String(p).split('-')[0], bits = [];
+  // (the headline: scaled to the kill)
+  if (farm) bits.push(n === 1 ? 'Clean one-shot, nice work.' : 'Clean kill on pull ' + n + ', nice work.');
+  else if (first === true) bits.push((mythic ? '🎉 ' : '') + 'First ' + diff + ' kill on ' + it.boss + '! ' + (n > 1 ? plural(n, 'pull') + ' tonight, and we got it.' : 'On the first pull, too.'));
+  else bits.push((again ? 'Boss down again! ' + plural(n, 'pull') + ' to get it tonight.' : 'Boss down! ' + plural(n, 'pull') + ' tonight, and we got it.'));
+  // (the story: where pull 1 ended)
+  if (!farm && before.length >= 3 && !before[0].kill) { const a = dbfAt(pullShort(before[0])); if (a) bits.push('From wiping ' + (/^(P\d|Int)/i.test(a) ? 'in ' : 'at ') + a + ' on pull ' + before[0].pull + ' to the kill.'); }
+  // (what clinched it: a mechanic that kept going wrong tonight and was clean on the kill)
+  try { const ks = pullSections(kill), earlier = before.filter((b) => CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.module); let best = null;
+    for (const [id, x] of ks) { if (id === 'deaths' || id === 'avoid' || x.st !== 'ok' || x.s.info) continue; const nb = earlier.filter((r) => { const y = pullSections(r).get(id); return y && (y.st === 'bad' || y.st === 'warn'); }).length; if (nb >= 2 && (!best || nb > best.n)) best = { n: nb, t: dbfPlain(x.s.title) }; }
+    if (best && !farm) bits.push(best.t + ' was clean this time, after going wrong in ' + plural(best.n, 'pull') + ' tonight.'); } catch (e) { /* (no clincher) */ }
+  // (deaths)
+  const dN = (kill.deaths || []).length; if (!dN) bits.push('Nobody died.'); else if (dN <= 2 && !farm) bits.push('Only ' + plural(dN, 'death') + '.');
+  // (shout-outs that are earned)
+  if (!farm) { const sv = new Map(); for (const s of kill.saves || []) if (s.by) sv.set(s.by, (sv.get(s.by) || 0) + 1); const topS = [...sv].sort((a, b) => b[1] - a[1])[0];
+    const topD = [...kill.players.values()].filter((p) => p && p.name && p.damage).sort((a, b) => b.damage - a.damage)[0], sh = [];
+    if (topS && topS[1] >= 2) sh.push(nm(topS[0]) + ' for ' + topS[1] + ' saves'); if (topD && (!topS || nm(topD.name) !== nm(topS[0]))) sh.push(nm(topD.name) + ' for top damage');
+    if (sh.length) bits.push('Shout-out to ' + lpAnd(sh) + '.'); }
+  // (then one line on what to tidy)
+  if (w0 && w0.label) bits.push('To tidy ' + (farm ? 'on farm' : 'for next week') + ': ' + dbfPlain(w0.label) + '.');
+  return { text: bits.join(' '), farm, first: first === true, mythic };
+}
 function coachSummary(reps, name) {
   reps = (reps || []).filter((r) => r && r.players && !r.allPulls); if (!reps.length) return null;
   return oaCache(reps, 'cs:' + (name || ''), () => {
@@ -22262,7 +22296,7 @@ function coachSummary(reps, name) {
     /* (the first domino in a few words, for the raid's headline on one pull: "set 4's adds were still alive") */
     let why0 = ''; if (!night && !kill && !name) { try { const o = whyWiped(reps[0]); if (o) why0 = cHtml(whyShort(o, new Map()).short); } catch (e) { why0 = ''; } }
     const headline = name ? (w0 ? who + ', ' + (wrong.some((x) => x.sev === 'bad') ? (right.length ? 'some good things ' + (night ? 'tonight' : 'this pull') + ', and one thing to fix first.' : 'one thing to fix first.') : 'good ' + (night ? 'night' : 'pull') + ' from you, with one thing to sharpen.') + ' Your one fix: ' + String(w0.fix).replace(/\.?$/, '.') : who + ', ' + (night ? 'nothing you did twice tonight.' : 'clean pull from you.') + ' Keep doing exactly this.')
-      : kill ? res + '. Great work, everyone.' + (w0 && night ? ' What cost us the most: ' + w0.label + '.' : '') : res + '.' + (w0 ? ' ' + (night ? 'What cost us the most: ' : 'It came down to ') + (w0.cause || w0.label) + (night && w0.n ? ' (' + w0.n + ' wipes)' : why0 ? ': ' + why0.charAt(0).toLowerCase() + why0.slice(1) : '') + '.' : '');
+      : kill ? ((() => { try { const kc = killCall(reps, w0); if (kc) return kc.text; } catch (e) { /* (the plain line) */ } return res + '. Great work, everyone.'; })()) : res + '.' + (w0 ? ' ' + (night ? 'What cost us the most: ' : 'It came down to ') + (w0.cause || w0.label) + (night && w0.n ? ' (' + w0.n + ' wipes)' : why0 ? ': ' + why0.charAt(0).toLowerCase() + why0.slice(1) : '') + '.' : '');
     /* (the raid lead's take, a sentence or two, in place of the plain cause (your OK, Oct 22)) */
     const s1 = (t, n) => { const x = cHtml(t), m = x.match(new RegExp('^(?:.*?[.!?](?:\\s|$)){1,' + (n || 1) + '}')); return m ? m[0].trim() : x; };
     let talk = ''; if (!name && !kill) { try { const pmT = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !pmT.has(p.name)) pmT.set(p.name, p);
@@ -22270,7 +22304,7 @@ function coachSummary(reps, name) {
           const nth = k === '?' ? 1 : 1 + prevR.map((x) => whyWiped(x)).filter((y) => y && whyKey(y) === k).length, w = whySay(o, pmT, nth); talk = cHtml(w.h) + ' ' + s1(w.s); } }
       else { const hn = whyNight(reps, pmT), p = (hn.match(/<p>([\s\S]*?)<\/p>/) || [])[1]; if (p) talk = s1(p, 2); } } catch (e) { talk = ''; } }
     const headline2 = talk ? res + '. ' + talk : headline;
-    const focus = w0 ? w0.fix : kill ? 'Same plan next time.' : 'Same plan. Execute it.';
+    const focus = w0 ? w0.fix : kill ? 'Same plan next week. Clean kills from here.' : 'Same plan. Execute it.';
     // (the full coaching: why we wiped in the raid lead's words, each problem with how to fix it, every death that counted, what went right)
     const pm = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !pm.has(p.name)) pm.set(p.name, p);
     let whyFull = ''; try { if (night) whyFull = whyNight(reps, pm); else if (!kill) { const prev = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.players); whyFull = whyLine(reps[0], pm, prev); } } catch (e) { whyFull = ''; }
