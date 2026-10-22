@@ -310,6 +310,17 @@ scroller:SetScript("OnMouseWheel", function(self, d) local mx = math.max(0, (bod
 local foot = card:CreateFontString(nil, "OVERLAY"); setFont(foot, "body", 11.5); foot:SetTextColor(rgb(COL.faint)); foot:SetJustifyH("LEFT")
 foot:SetText("/debrief opens this again  ·  /debrief paste for a new pull")
 local footLine = card:CreateTexture(nil, "ARTWORK"); footLine:SetHeight(1); fill(footLine, COL.line)
+-- (combat logging on or off, at the right of the footer: green when it's on, red when it's off)
+local logBtn = CreateFrame("Button", nil, card); logBtn:SetSize(120, 20)
+logBtn.t = logBtn:CreateFontString(nil, "OVERLAY"); setFont(logBtn.t, "bold", 11.5); logBtn.t:SetPoint("RIGHT", 0, 0); logBtn.t:SetJustifyH("RIGHT")
+function Debrief_LogButton()
+  local on = LoggingCombat and LoggingCombat()
+  logBtn.t:SetText(on and "|cff7ee08fLogging: On|r" or "|cffff8f87Logging: Off|r")
+  logBtn:SetWidth(math.max(60, logBtn.t:GetStringWidth() + 4))
+end
+logBtn:SetScript("OnClick", function() Debrief_ToggleLog() end)
+logBtn:SetScript("OnEnter", function() GameTooltip:SetOwner(logBtn, "ANCHOR_TOP"); GameTooltip:SetText("Combat logging, with Advanced Combat Logging. Click to turn it on or off. You can also set a key: Options > Keybindings > AddOns > Debrief."); GameTooltip:Show() end)
+logBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
 -- pooled pieces for the body (redrawn each time): text, plain textures, rounded textures
 local pool = { fs = {}, tex = {}, rt = {}, btn = {} }
@@ -724,7 +735,8 @@ function render()
   scroller:SetVerticalScroll(math.min((scroller:GetVerticalScroll() or 0), math.max(0, y - vh)))
   foot:SetText(y > vh + 4 and "Scroll for more  ·  /debrief opens this again" or "/debrief opens this again  ·  /debrief paste for a new pull")
   footLine:ClearAllPoints(); footLine:SetPoint("TOPLEFT", card, "TOPLEFT", 1, -(TOPY + vh + 10)); footLine:SetPoint("TOPRIGHT", card, "TOPRIGHT", -1, -(TOPY + vh + 10))
-  foot:ClearAllPoints(); foot:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -(TOPY + vh + 19))
+  foot:ClearAllPoints(); foot:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -(TOPY + vh + 19)); foot:SetWidth(W - PAD * 2 - 130); foot:SetWordWrap(false)
+  logBtn:ClearAllPoints(); logBtn:SetPoint("TOPRIGHT", card, "TOPRIGHT", -PAD, -(TOPY + vh + 15)); Debrief_LogButton()
   card:SetHeight(TOPY + vh + 42)
 end
 
@@ -1802,12 +1814,12 @@ SlashCmdList.DEBRIEF = function(msg)
     -- (the built-in sample pull: the card with no paste, not sent to the group)
     local m = decode(SAMPLE)
     if m then addPull(m); paste:Hide(); showCard(); say("showing a sample Heroic Ula'tek kill (made-up names). Use the arrows to see other players.") end
-  elseif msg == "log" then DB.autoLog = (DB.autoLog == false); say("combat log " .. (DB.autoLog ~= false and "and Advanced Combat Logging stay on while Debrief is loaded." or "is up to you (/combatlog).")); autoLog()
+  elseif msg == "log" then Debrief_ToggleLog()
   elseif msg == "focus" then DB.autoFocus = (DB.autoFocus == false); say("paste box ready for Ctrl+V after a pull " .. (DB.autoFocus ~= false and "on." or "off: click it first."))
   elseif msg == "test" then DB.testMode = not DB.testMode; say("test mode " .. (DB.testMode and "on: the box pops up after every fight and when you log in." or "off: the box only pops up after boss pulls."))
   elseif msg == "share" then DB.share = (DB.share == false); say("sharing your pastes with the group " .. (DB.share ~= false and "on." or "off."))
   elseif msg == "auto" then DB.autoBox = (DB.autoBox == false); say("paste box after each boss pull " .. (DB.autoBox ~= false and "on." or "off."))
-  elseif msg == "help" then say("/dmo or /debrief options: your settings. /debrief tutorial: the tutorial again. /debrief: show or hide the card. /debrief big: the big window. /debrief mini: the mini bar on or off. /debrief paste: paste a new pull. /debrief demo: a sample card. /debrief test: test mode on or off. /debrief log: combat log in raids on or off. /debrief focus: paste box ready for Ctrl+V on or off. /debrief raid: Raid view on or off. /debrief share: send your pastes to the group on or off. /debrief auto: paste box after each pull on or off. /debrief reset: move the card back.")
+  elseif msg == "help" then say("/dmo or /debrief options: your settings. /debrief tutorial: the tutorial again. /debrief: show or hide the card. /debrief big: the big window. /debrief mini: the mini bar on or off. /debrief paste: paste a new pull. /debrief demo: a sample card. /debrief test: test mode on or off. /debrief log: combat logging on or off (or the button on the card, or a key in Keybindings > AddOns > Debrief). /debrief focus: paste box ready for Ctrl+V on or off. /debrief raid: Raid view on or off. /debrief share: send your pastes to the group on or off. /debrief auto: paste box after each pull on or off. /debrief reset: move the card back.")
   else Debrief_Toggle() end
 end
 
@@ -1816,6 +1828,17 @@ ev:RegisterEvent("ADDON_LOADED"); ev:RegisterEvent("PLAYER_LOGIN"); ev:RegisterE
 -- (the combat log and Advanced Combat Logging stay on whenever Debrief is loaded, everywhere, so nobody has to type /combatlog.
 -- Debrief Companion reads the log. /debrief log or Settings > PC app turns this off.)
 local weLog, logPending, logSaid = false, false, false
+-- (one press: the button on the card, the key from Options > Keybindings > AddOns > Debrief, or /debrief log. On also turns
+-- Advanced Combat Logging on, and Debrief keeps it on; off stays off until it's pressed again)
+function Debrief_ToggleLog()
+  if not LoggingCombat or not DB then return end
+  local on = not LoggingCombat()
+  LoggingCombat(on); DB.autoLog = on
+  if on and GetCVar and SetCVar and GetCVar("advancedCombatLogging") ~= "1" then pcall(SetCVar, "advancedCombatLogging", 1) end
+  say(on and "combat logging is |cff7ee08fon|r, with Advanced Combat Logging. Debrief keeps it on." or "combat logging is |cffff8f87off|r. Press the button on the card, your key or /debrief log to turn it back on.")
+  if Debrief_LogButton then Debrief_LogButton() end
+end
+BINDING_NAME_DEBRIEF_TOGGLELOG = "Combat logging on or off"
 autoLog = function()
   if not DB or DB.autoLog == false or not LoggingCombat then return end
   if InCombatLockdown() then logPending = true; return end

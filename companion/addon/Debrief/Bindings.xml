@@ -5,4 +5,7 @@
   <Binding name="DEBRIEF_TOGGLE" category="ADDONS">
     Debrief_Toggle()
   </Binding>
+  <Binding name="DEBRIEF_TOGGLELOG" category="ADDONS">
+    Debrief_ToggleLog()
+  </Binding>
 </Bindings>
