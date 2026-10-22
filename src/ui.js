@@ -1680,6 +1680,7 @@ const PATCH_NOTES = [
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
+    'Comparisons with the fastest kills now say "top guilds": the coach\'s tags read "Top guilds get this right" or "Top guilds mess this up too", and timing rows say things like "P2 took 3:33 (top guilds: about 2:30)".',
     'Every boss, not just The Coiled Altar: the coach compares each mechanic with that boss\'s 20 fastest Mythic and Heroic kills, so it puts first what the kills nearly always get right and says when even they slip.',
     'Fixed checks that marked the world\'s fastest kills as failed: Kith\'ix Null Gates in the last 30 seconds of a kill, Lost Explorers United Defense brushes under 3 seconds and a few Blast Wave hits, Nek\'zali Invoke catching 1 to 3 players, a tank\'s Soulcoil Ignition circles, Ula\'tek Shriekers\' Boiling Venom, Twin Fangs Feast strikes that still had 4 fresh soakers, and Entombed Sentinels Miasma soaks with 6 or 7.',
     'On Heroic, an unsoaked Vashnik bile, a Twin Fangs Feast strike with few soakers or a Lost Explorers Final Ascension is now a slip (yellow) unless it kills someone, as the fastest Heroic kills show.',
@@ -7691,10 +7692,10 @@ function avTag(r, g, j, ct) {
   const other = /not your own|carrier|nearby/i.test(g.title), nmS = g.title.replace(/\s*\(.*$/, ''), u = g.secs ? ' s' : '';
   if (died) return { k: 'bad', p: 'On them', h: 'Died to ' + nmS + (came && !g.secs ? '. It reached them while they stood still, and they didn\'t move.' : '.'), v, wA, bA };
   if (g.harm === 'High') return { k: 'bad', p: 'On them', h: 'Hit by ' + ((g.spell && g.spell[1]) || nmS) + ': ' + String(g.sub || '').replace(/^Dangerous: /, '').split('. ')[0] + '.', v, wA, bA };
-  if (v >= bA) return { k: 'bad', p: 'On them', h: (g.secs ? 'Stood in ' + nmS + ' for ' + v + ' s' : 'Hit by ' + nmS + ' ' + v + ' times') + ', twice what the fastest kills allow by this point.', v, wA, bA };
+  if (v >= bA) return { k: 'bad', p: 'On them', h: (g.secs ? 'Stood in ' + nmS + ' for ' + v + ' s' : 'Hit by ' + nmS + ' ' + v + ' times') + ', twice what top guilds take by this point.', v, wA, bA };
   if (other && came) return { k: 'warn', p: 'Half on them', h: 'Someone else brought it to them: they were standing still. Still, step away when you see it coming.', v, wA, bA };
   if (came) return { k: 'warn', p: 'Half on them', h: 'It came to them while they stood still' + (g.secs ? ', and they stayed in it ' + v + ' s.' : ', ' + plural(v, 'time') + '.'), v, wA, bA };
-  return { k: 'warn', p: 'A bit much', h: (g.secs ? 'Stood in ' + nmS + ' for ' + v + ' s' : 'Hit by ' + nmS + ' ' + v + ' times') + ': a bit more than most raiders in the fastest kills (' + (wA - 1) + u + ' or less by this point).', v, wA, bA };
+  return { k: 'warn', p: 'A bit much', h: (g.secs ? 'Stood in ' + nmS + ' for ' + v + ' s' : 'Hit by ' + nmS + ' ' + v + ' times') + ': a bit more than most raiders in top guilds (' + (wA - 1) + u + ' or less by this point).', v, wA, bA };
 }
 function avBox(r, g, j) {
   const ct = Math.min(cutT(r), r.duration || Infinity), tg = avTag(r, g, j, ct), tl = (j.tl || []).filter((x) => x.t <= ct + 0.05); if (!tl.length) return '';
@@ -7709,13 +7710,13 @@ function avBox(r, g, j) {
   let map = ''; try { const own = mapAt(r, worst.t, sp, 2, 3), pools = /noxious ground/i.test(g.title) && r.module && r.module.pools, carrier = /carrier/i.test(g.title);
     const mp = own && drawsMap(own.map) ? own.map : (pools || carrier) && j.mk ? j.mk(worst.t) : null; if (mp && pools && !mp.pools) mp.pools = r.module.pools;
     AV_LAST = mp ? { mp, pm } : null; map = mp ? '<div class="avd-map">' + miniMap(mp, pm) + '</div>' : '<p class="ddv-3 sub">No map for this one: the log doesn\'t say where ' + esc(sp) + (/s$/i.test(sp) ? ' were' : ' was') + ', only who it hit.</p>'; } catch (err) { map = ''; }
-  const kills = g.harm === 'High' ? 'Any hit counts: even the fastest kills almost never take one.' : g.kb ? 'In the fastest kills, 9 in 10 raiders took ' + (tg.wA - 1) + (g.secs ? ' s' : tg.wA - 1 === 1 ? ' hit' : ' hits') + ' or less by ' + T(ct) + '. They took ' + tg.v + (g.secs ? ' s' : '') + '.' : '';
+  const kills = g.harm === 'High' ? 'Any hit counts: top guilds almost never take one.' : g.kb ? 'In top guilds, 9 in 10 raiders took ' + (tg.wA - 1) + (g.secs ? ' s' : tg.wA - 1 === 1 ? ' hit' : ' hits') + ' or less by ' + T(ct) + '. They took ' + tg.v + (g.secs ? ' s' : '') + '.' : '';
   const fix = (r.mistakes || []).find((m) => m.avoidRule && m.player === j.p && m.mechanic === g.label && m.fix);
   const fx = (fix && fix.fix) || g.fix || (g.secs ? 'Step out of ' + g.title.replace(/\s*\(.*$/, '') + ' right away.' : 'Dodge ' + g.title.replace(/\s*\(.*$/, '') + '.');
   return '<div class="ddv ' + tg.k + '"><p class="ddv-1">' + esc(tg.h) + '</p>' +
     '<p class="ddv-3">' + (g.secs ? 'In it for <b>' + tg.v + ' s</b>' : '<b>' + plural(tl.length, 'hit') + '</b>') + ', <b>' + kf(amt) + '</b> damage' + (mx ? ' (' + (amt >= 1.25 * mx ? 'about ' + (Math.round(2 * amt / mx) / 2) + ' times their health' : amt >= 0.9 * mx ? 'about their whole health' : Math.round(100 * amt / mx) + '% of their health') + ')' : '') + '.</p>' +
     '<p class="ddv-3">When: ' + tl.slice(0, 6).map(one).join(' · ') + (tl.length > 6 ? ' · and ' + (tl.length - 6) + ' more' : '') + '</p>' + map +
-    (kills ? '<p class="ddv-3"><b>Against kills:</b> ' + esc(kills) + '</p>' : '') +
+    (kills ? '<p class="ddv-3"><b>Against top guilds:</b> ' + esc(kills) + '</p>' : '') +
     '<p class="ddv-2"><b>Next time:</b> ' + esc(dbfTip1(fx) || fx) + '</p></div>';
 }
 document.addEventListener('click', (ev) => { const t = ev.target && ev.target.closest ? ev.target : null; if (!t) return;
@@ -9124,8 +9125,8 @@ function coachEnrich(list, reps, name) {
       x.nth = 1 + prev.filter(hit).length; x.again = x.nth >= 3; }
     if (x.again && s) x.guide = oaGuideBtn(it, s.id, s.title);
     /* (the kills' baseline: how they do it, and ours against it) */ if (s) { const b = kbOf(it, s.id); if (b) { x.kb = b; const ours = reps.map((r) => pullSections(r).get(s.id)).filter(Boolean).map((y) => { const rows = y.s.rows.concat(...(y.s.groups || []).map((gg) => gg.rows || [])); return rows.length ? rows.filter((row) => row.some((c) => c && (c.bad || c.warn))).length / rows.length : 0; });
-      const mine = ours.length ? Math.round(100 * ours.sort((p, q) => p - q)[Math.floor(ours.length / 2)]) : null; const rt = b.ok / b.k; x.kbLine = (rt >= 0.7 ? b.ok + ' of the ' + b.k + ' fastest kills got this fully right' : rt >= 0.4 ? 'About half the fastest kills got this fully right (' + b.ok + ' of ' + b.k + ')' : 'Even the fastest kills slip here: only ' + b.ok + ' of ' + b.k + ' got it fully right') +
-        (mine != null && !name && b.med != null ? (b.med < 5 ? '. A typical kill gets almost none of it wrong; we got ' + mine + '% of it wrong.' : '. A typical kill gets about ' + b.med + '% of it wrong; we got ' + mine + '%.') : '.'); } }
+      const mine = ours.length ? Math.round(100 * ours.sort((p, q) => p - q)[Math.floor(ours.length / 2)]) : null; const rt = b.ok / b.k; x.kbLine = (rt >= 0.7 ? b.ok + ' of ' + b.k + ' top guilds got this fully right' : rt >= 0.4 ? 'About half of top guilds got this fully right (' + b.ok + ' of ' + b.k + ')' : 'Top guilds mess this up too: only ' + b.ok + ' of ' + b.k + ' got it fully right') +
+        (mine != null && !name && b.med != null ? (b.med < 5 ? '. A top guild gets almost none of it wrong; we got ' + mine + '% of it wrong.' : '. A top guild gets about ' + b.med + '% of it wrong; we got ' + mine + '%.') : '.'); } }
     return x; })
     // (on a night, what's already fixed in the last pulls goes to the end)
     .sort((a, b) => (a.trend === 'better') - (b.trend === 'better'));
@@ -9137,7 +9138,7 @@ function coachTag(x, night) {
   if (!night && x.nth) t.push('<span class="cch-tag' + (x.nth >= 2 ? ' rep' : '') + '">' + (x.nth === 1 ? 'first time tonight' : (WHY_ORD[x.nth] ? dbfCap(WHY_ORD[x.nth]) : x.nth + 'th') + ' time tonight') + '</span>');
   if (x.trend === 'better') t.push('<span class="cch-tag up">▲ fine in the last 3 pulls</span>'); else if (x.trend === 'still') t.push('<span class="cch-tag rep">still happening</span>');
   if (x.led) t.push('<span class="cch-tag rep">led to ' + (x.led === 1 ? '1 death' : x.led + ' deaths') + '</span>');
-  if (x.kb) { const r = x.kb.ok / x.kb.k; t.push(r >= 0.7 ? '<span class="cch-tag kb hi" title="' + esc(x.kb.ok + ' of the ' + x.kb.k + ' fastest kills got it right') + '">kills get this right</span>' : r <= 0.3 ? '<span class="cch-tag kb" title="' + esc('only ' + x.kb.ok + ' of the ' + x.kb.k + ' fastest kills got it fully right') + '">even kills slip here</span>' : ''); }
+  if (x.kb) { const r = x.kb.ok / x.kb.k; t.push(r >= 0.7 ? '<span class="cch-tag kb hi" title="' + esc(x.kb.ok + ' of ' + x.kb.k + ' top guilds got this right') + '">Top guilds get this right</span>' : r <= 0.3 ? '<span class="cch-tag kb" title="' + esc('Only ' + x.kb.ok + ' of ' + x.kb.k + ' top guilds got this fully right') + '">Top guilds mess this up too</span>' : ''); }
   return t.join(' ');
 }
 // ---- Deaths and avoidable damage, always accounted for in the coach (your asks, Oct 22: "make sure deaths are accounted for in the
@@ -9218,7 +9219,7 @@ function coachSummary(reps, name) {
     const pm = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !pm.has(p.name)) pm.set(p.name, p);
     let whyFull = ''; try { if (night) whyFull = whyNight(reps, pm); else if (!kill) { const prev = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.players); whyFull = whyLine(reps[0], pm, prev); } } catch (e) { whyFull = ''; }
     const all = coachEnrich(name ? coachMine(reps, name) : RD.list, reps, name).slice(0, 6), allR = coachRight(reps, name, RD.S2);
-    const item = (x, i) => '<li class="cch-' + x.sev + '"><b>' + (i + 1) + '. ' + esc(dbfCap(x.label)) + '</b> ' + coachTag(x, night) + (x.what ? '<br><span class="sub">What happened: ' + esc(x.what) + '</span>' : '') + '<br><span class="cch-fx">Next time: ' + esc(x.fix) + '</span>' + (x.kbLine ? '<br><span class="sub">Against kills: ' + esc(x.kbLine) + '</span>' : '') + (x.guide ? ' ' + x.guide : '') + (x.how && cHtml(x.how) !== cHtml(x.fix) ? '<br><span class="sub">How: ' + esc(x.how) + '</span>' : '') + '</li>';
+    const item = (x, i) => '<li class="cch-' + x.sev + '"><b>' + (i + 1) + '. ' + esc(dbfCap(x.label)) + '</b> ' + coachTag(x, night) + (x.what ? '<br><span class="sub">What happened: ' + esc(x.what) + '</span>' : '') + '<br><span class="cch-fx">Next time: ' + esc(x.fix) + '</span>' + (x.kbLine ? '<br><span class="sub">Against top guilds: ' + esc(x.kbLine) + '</span>' : '') + (x.guide ? ' ' + x.guide : '') + (x.how && cHtml(x.how) !== cHtml(x.fix) ? '<br><span class="sub">How: ' + esc(x.how) + '</span>' : '') + '</li>';
     let deaths = ''; if (name) { const L = []; for (const { r, p } of oaMine(reps, name)) for (const d of r.deaths.filter((q) => q.guid === p.guid).sort((a, b) => a.t - b.t)) { const v = deathVerdict(r, d), after = !v.counts; void dbfFast;
         L.push('<li>' + (night ? 'Pull ' + r.item.pull + ', ' : '') + T(d.t) + ': ' + esc(d.ability || d.killer || 'a hit') + ' · <span class="sub">' + (after ? 'after the wipe filter, doesn\'t count' : !v.on ? 'not on you: ' + v.word : v.why === 'nothing' ? 'counts half: nothing left to press' : 'counts: ' + v.word) + '</span></li>'); }
       deaths = L.length ? '<h5>Your deaths</h5><ul class="cch-ul">' + L.slice(0, 12).join('') + (L.length > 12 ? '<li class="sub">and ' + (L.length - 12) + ' more</li>' : '') + '</ul>' : ''; }
@@ -9261,7 +9262,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
   const prob = (x, i) => { const mi = mapOf(x); return '<li class="cch-p cch-' + x.sev + (mi ? ' cch-hasmap' : '') + '"' + (x.sec ? ' data-sec="' + esc(x.sec) + '"' : '') + '><span class="cch-pn">' + (i + 1) + '</span><div class="cch-pb">' +
     '<div class="cch-pt"><b>' + esc(dbfCap(x.label)) + '</b> ' + coachTag(x, c.night) + '</div>' + (x.what ? '<div class="cch-what">' + esc(x.what) + '</div>' : '') +
     '<div class="cch-fx"><span class="cch-nx">Next time</span><span>' + esc(x.fix) + '</span></div>' +
-    (!i && howRest(x) ? '<div class="cch-x1"><b>How:</b> ' + esc(cClip(howRest(x), 220)) + '</div>' : '') + (!i && x.kbLine ? '<div class="cch-x1"><b>Against kills:</b> ' + esc(x.kbLine) + '</div>' : '') +
+    (!i && howRest(x) ? '<div class="cch-x1"><b>How:</b> ' + esc(cClip(howRest(x), 220)) + '</div>' : '') + (!i && x.kbLine ? '<div class="cch-x1"><b>Against top guilds:</b> ' + esc(x.kbLine) + '</div>' : '') +
     (x.guide ? '<div class="cch-pg">' + x.guide + '</div>' : '') + '</div><span class="cch-pmap"' + mi + '></span></li>'; };
   const focusSame = String(c.headline).includes(String(c.focus).replace(/\.$/, ''));
   const D = c.deaths, A = c.avoid;
