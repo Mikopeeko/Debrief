@@ -7,7 +7,7 @@
 local ADDON = ...
 local DB
 local DEF = {
-  enabled = true, style = "border", colorName = "gold", r = 0.90, g = 0.71, b = 0.31, a = 1, thick = 3, pad = 1, speed = 1, lines = 8, scale = 1,
+  enabled = true, style = "cdmants", colorName = "gold", r = 0.90, g = 0.71, b = 0.31, a = 1, thick = 3, pad = 1, speed = 1, scale = 1,
   lead = 0, hold = 8, stopOnPress = true, fallback = true, iconSize = 56,
   gameColors = true, timer = true, timerSize = 22, timerColor = "white", timerPos = "middle", timerTenths = false,
   sound = "none", channel = "Master",
@@ -57,12 +57,10 @@ local function cdmItemFor(id)
 end
 
 -- ---- the glows: one frame per spell, drawn in the chosen style ----
--- (our own four styles, then the game's own glows: the same animated art Blizzard uses, asked for by name, never bundled)
-local STYLES = { { "pulse", "Pulse (soft glow that breathes)" }, { "border", "Border (a ring on the icon's edge)" }, { "pixel", "Pixel lines (running around the edge)" },
-  { "sparkle", "Sparkles (dots circling the icon)" },
-  { "cdmants", "Game: Cooldown Manager ants (in your colour)" }, { "cdmflash", "Game: Cooldown Manager flash (in your colour)" },
-  { "proc", "Game: action bar proc (burst, then the swirl)" }, { "assist", "Game: rotation helper (blue ants)" },
-  { "onebutton", "Game: one-button proc" }, { "altglow", "Game: soft proc ring" }, { "pandemic", "Game: Cooldown Manager \"ending soon\" pulse" } }
+-- (the game's own glows: the same animated art Blizzard uses, asked for by name, never bundled; and Pulse, our soft glow)
+local STYLES = { { "cdmants", "Cooldown Manager ants (in your colour)" }, { "cdmflash", "Cooldown Manager flash (in your colour)" },
+  { "pandemic", "Cooldown Manager \"ending soon\" pulse" }, { "proc", "Action bar proc (burst, then the swirl)" }, { "assist", "Rotation helper (blue ants)" },
+  { "onebutton", "One-button proc" }, { "altglow", "Soft proc ring" }, { "pulse", "Pulse (a soft glow that breathes)" } }
 local GAME = { proc = true, assist = true, onebutton = true, altglow = true, pandemic = true, cdmants = true, cdmflash = true }
 -- (the game's art for each one; a style whose art the game doesn't have falls back to Pulse)
 local ART = {
@@ -151,7 +149,6 @@ local function newGlow()
   g.back = CreateFrame("Frame", nil, g); g.back:SetAllPoints(g)
   g.halo = g.back:CreateTexture(nil, "BACKGROUND"); g.halo:SetTexture(HALO); g.halo:SetBlendMode("ADD")
   g.edges = {}; for i = 1, 4 do local t = g:CreateTexture(nil, "OVERLAY"); t:SetTexture(WHITE); g.edges[i] = t end
-  g.bits = {}; for i = 1, 16 do local t = g:CreateTexture(nil, "OVERLAY"); t:SetTexture(WHITE); t:Hide(); g.bits[i] = t end
   g.ag = g:CreateAnimationGroup(); g.ag:SetLooping("BOUNCE")
   g.fade = g.ag:CreateAnimation("Alpha"); g.fade:SetFromAlpha(1); g.fade:SetToAlpha(0.3)
   -- (the game's glows: a burst, a loop, a single ring, and the Cooldown Manager's border with three waves inside it)
@@ -187,18 +184,6 @@ local function timeWaves(g, sp)
     rest:SetStartDelay(d + 2 / sp); rest:SetDuration((4.5 - t.delay - 2) / sp + 0.001)
   end
 end
--- (places each part for the style; pixel lines and sparkles move on every frame, around the edge of the icon)
-local function perimeter(w, h, p) p = p % 1; local L = 2 * (w + h); local d = p * L
-  if d < w then return d, 0 elseif d < w + h then return w, -(d - w) elseif d < 2 * w + h then return w - (d - w - h), -h else return 0, -(h - (d - 2 * w - h)) end end
-local function animate(g, elapsed)
-  g.t = (g.t or 0) + elapsed * (DB.speed or 1)
-  local w, h = g:GetWidth(), g:GetHeight(); if not w or w <= 0 then return end
-  local n = math.max(1, math.min(16, DB.lines or 8))
-  for i = 1, n do
-    local b = g.bits[i]; local x, y = perimeter(w, h, g.t * 0.25 + (i - 1) / n)
-    b:ClearAllPoints(); b:SetPoint("CENTER", g, "TOPLEFT", x, y)
-  end
-end
 -- (a game glow stretched over the picture's edges, so it hugs icons of any shape: out = how far past the edge, like the game's)
 local function over(t, g, out, out2)
   local pad = DB.pad or 0; out2 = out2 or out
@@ -211,7 +196,7 @@ local function tint(t, c)
 end
 local function quiet(g)
   g.ag:Stop(); g:SetScript("OnUpdate", nil)
-  g.halo:Hide(); g.ring:Hide(); g.pborder:Hide(); for _, t in ipairs(g.edges) do t:Hide() end; for _, t in ipairs(g.bits) do t:Hide() end
+  g.halo:Hide(); g.ring:Hide(); g.pborder:Hide(); for _, t in ipairs(g.edges) do t:Hide() end
   for _, t in ipairs({ g.burst, g.loop }) do t.ag:Stop(); t:Hide() end; g.loop.atlas = nil
   for _, t in ipairs(g.waves) do t.ag:Stop(); t:Hide() end
 end
@@ -222,7 +207,8 @@ local function dress(g, id)
   local th, st = DB.thick or 3, p.style or DB.style
   local sp = DB.speed or 1
   quiet(g); g:SetAlpha(a)
-  if GAME[st] and not hasArt(st) then st = "border" end
+  if not GAME[st] and st ~= "pulse" then st = "cdmants" end
+  if GAME[st] and not hasArt(st) then st = "pulse" end
   g.drawn = st
   if GAME[st] then
     -- (the game's colours unless you've turned that off, or this spell has a colour of its own)
@@ -267,7 +253,7 @@ local function dress(g, id)
   if st == "pulse" then
     g.halo:ClearAllPoints(); g.halo:SetPoint("TOPLEFT", -th * 5, th * 5); g.halo:SetPoint("BOTTOMRIGHT", th * 5, -th * 5); g.halo:SetVertexColor(r, gg, b, 1); g.halo:Show()
   end
-  if st == "pulse" or st == "border" then
+  if st == "pulse" then
     local e = g.edges
     e[1]:ClearAllPoints(); e[1]:SetPoint("TOPLEFT"); e[1]:SetPoint("TOPRIGHT"); e[1]:SetHeight(th)
     e[2]:ClearAllPoints(); e[2]:SetPoint("BOTTOMLEFT"); e[2]:SetPoint("BOTTOMRIGHT"); e[2]:SetHeight(th)
@@ -276,13 +262,6 @@ local function dress(g, id)
     for _, t in ipairs(e) do t:SetVertexColor(r, gg, b, 1); t:Show() end
   end
   if st == "pulse" then g.fade:SetDuration(0.45 / sp); g.ag:Play() end
-  if st == "pixel" or st == "sparkle" then
-    local n = math.max(1, math.min(16, DB.lines or 8))
-    for i = 1, n do local t = g.bits[i]; t:SetVertexColor(r, gg, b, 1)
-      if st == "pixel" then t:SetSize(th * 3, th) else t:SetSize(th * 1.6, th * 1.6) end; t:Show() end
-    if st == "sparkle" then g.halo:ClearAllPoints(); g.halo:SetPoint("TOPLEFT", -th * 3, th * 3); g.halo:SetPoint("BOTTOMRIGHT", th * 3, -th * 3); g.halo:SetVertexColor(r, gg, b, 0.5); g.halo:Show() end
-    g:SetScript("OnUpdate", animate)
-  end
 end
 
 -- (a big icon of its own, for a spell that isn't on your Cooldown Manager; drag it with /dglow move)
@@ -899,7 +878,7 @@ local function buildOptions()
   -- Look
   page("look")
   panel("Style and colour", "Each change shows on your Cooldown Manager")
-  pickRow("Style", "Border fits any icon exactly. The \"Game\" ones are the game's own (square) glows.", "style", 300, function() return styleList() end, preview)
+  pickRow("Style", "The game's own glows, placed on your icons the way Blizzard does. Pulse is a soft glow of ours.", "style", 300, function() return styleList() end, preview)
   do -- (colour dots, then Any colour for the colour picker)
     local cy = rowBase("Colour", "Eight ready colours, or any colour and how see-through it is.")
     local any = button(P, "Any colour", 104, false, 28); right(any, cy)
@@ -926,11 +905,10 @@ local function buildOptions()
   switchRow("Game styles keep the game's colours", "Off: the game's glows take your colour instead. A spell with its own colour always uses it.", "gameColors", preview)
   panelEnd()
   panel("Shape and speed")
-  stepRow("Thickness", nil, "thick", 1, 8, 1, function(v) return v .. " px" end, preview)
+  stepRow("Thickness", "For Pulse.", "thick", 1, 8, 1, function(v) return v .. " px" end, preview)
   stepRow("Distance from the icon", nil, "pad", 0, 10, 1, function(v) return v .. " px" end, preview)
   stepRow("Size", nil, "scale", 0.5, 2, 0.05, function(v) return math.floor(v * 100 + 0.5) .. "%" end, preview)
   stepRow("Speed", "How fast it pulses, runs or spins.", "speed", 0.25, 3, 0.25, function(v) return v .. "x" end, preview)
-  stepRow("Lines or sparkles", "For Pixel lines and Sparkles.", "lines", 1, 16, 1, nil, preview)
   stepRow("Opacity", nil, "a", 0.1, 1, 0.05, function(v) return math.floor(v * 100 + 0.5) .. "%" end, preview)
   panelEnd()
 
@@ -1146,30 +1124,19 @@ ev:SetScript("OnEvent", function(_, e, a1, a2, a3)
     DebriefGlowDB = DebriefGlowDB or {}; DB = DebriefGlowDB
     for k, v in pairs(DEF) do if DB[k] == nil then DB[k] = v end end
     DB.spells = DB.spells or {}; DB.seen = DB.seen or {}
-    -- (0.4.3: the ring on the icon's edge became the default look; settings still on the old defaults move to it once)
-    if not DB.ringDefault then
-      if DB.style == "pulse" then DB.style = "border" end
-      if DB.pad == 2 then DB.pad = 1 end
-      DB.ringDefault, DB.ringOnBorder = true, true
-    end
-    -- (0.4.5: everyone moves to the Border ring once, in their own colour: the game's looks are square art that can't sit
-    -- exactly on icons that aren't square, and "on the border" is the look asked for. The other looks stay in Look.)
-    if not DB.ringForAll then
-      DB.style, DB.pad, DB.thick = "border", 1, 3
-      DB.ringForAll, DB.ringOnBorder, DB.ringDefault = true, true, true
-    end
+    -- (only the game's own glows and Pulse: a look that's gone (Border, Pixel lines, Sparkles) becomes the Cooldown Manager ants,
+    -- and a spell with one of them goes back to the main look)
+    local function kept(st) return st == "pulse" or GAME[st] end
+    if not kept(DB.style) then DB.style = "cdmants" end
+    for _, sp in pairs(DB.spells) do if type(sp) == "table" and sp.style and not kept(sp.style) then sp.style = nil end end
+    DB.lines, DB.ringDefault, DB.ringForAll = nil, nil, nil
     -- (0.4.6: the rotation helper's ants are action-bar art; the Cooldown Manager's own ants sit on its icons' borders, so
     -- anyone on the rotation helper moves to them once, in their colour. The rotation helper stays in Look.)
     if not DB.cdmAnts then
       if DB.style == "assist" then DB.style = "cdmants" end
       DB.cdmAnts = true
     end
-    -- (0.4.4: the ring moved onto the border (3 px, 1 px out); settings still on 0.4.3's ring move with it once)
-    if not DB.ringOnBorder then
-      if DB.pad == 0 then DB.pad = 1 end
-      if DB.thick == 2 then DB.thick = 3 end
-      DB.ringOnBorder = true
-    end
+    DB.ringOnBorder = nil
     if DB.colorName == nil then DB.colorName = "gold" end
     registerSettings()
   elseif e == "ADDON_LOADED" or e == "PLAYER_LOGIN" then hookNSRT()

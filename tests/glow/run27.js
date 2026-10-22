@@ -86,12 +86,17 @@ lua.lua_pushstring(L, to_luastring(NOTE)); lua.lua_setglobal(L, to_luastring('NO
 run(`
 local ev = DebriefGlowEvents; local fire = ev:GetScript("OnEvent")
 -- (the user's saved settings after 0.4.5: they picked the rotation helper ants again, in blue)
-DebriefGlowDB = { style = "assist", pad = 1, thick = 3, r = 0.3, g = 0.6, b = 1, colorName = "blue", timerColor = "glow", ringForAll = true, ringOnBorder = true, ringDefault = true }
+DebriefGlowDB = { style = "assist", pad = 1, thick = 3, r = 0.3, g = 0.6, b = 1, colorName = "blue", timerColor = "glow", ringForAll = true, ringOnBorder = true, ringDefault = true,
+  spells = { [31821] = { style = "sparkle", words = "Go" }, [31884] = { style = "pulse" } } }
 fire(ev, "ADDON_LOADED", "DebriefGlow"); fire(ev, "PLAYER_LOGIN")
+-- (Blizzard glows only)
 print("-- the rotation helper ants move once to the Cooldown Manager ants, in their own colour")
 local function expectE(what, got, want) print((got == want and "  ok   " or "  FAIL ") .. what .. ": " .. tostring(got)) end
 expectE("style", DebriefGlowDB.style, "cdmants"); expectE("colour kept (blue)", DebriefGlowDB.colorName, "blue")
-DebriefGlowDB.style, DebriefGlowDB.r, DebriefGlowDB.g, DebriefGlowDB.b, DebriefGlowDB.colorName, DebriefGlowDB.timerColor = "border", 0.90, 0.71, 0.31, "gold", "white"
+print("-- Blizzard glows only: a spell on a removed look (Sparkles) goes back to the main look, its words kept; Pulse stays")
+expectE("Aura Mastery's own look cleared", DebriefGlowDB.spells[31821].style, nil); expectE("its words kept", DebriefGlowDB.spells[31821].words, "Go")
+expectE("Avenging Wrath keeps Pulse", DebriefGlowDB.spells[31884].style, "pulse"); DebriefGlowDB.spells = {}
+DebriefGlowDB.style, DebriefGlowDB.r, DebriefGlowDB.g, DebriefGlowDB.b, DebriefGlowDB.colorName, DebriefGlowDB.timerColor = "cdmants", 0.90, 0.71, 0.31, "gold", "white"
 print("in Options > AddOns as: " .. tostring(CANVAS()))
 print("hooked into NSRT: " .. tostring(CB.NSRT_REMINDER_SHOW ~= nil))
 local PH = { [1] = 0, [2] = 150 }
@@ -111,10 +116,10 @@ local function press(id) fire(ev, "UNIT_SPELLCAST_SUCCEEDED", "player", "g", id)
 local function expect(what, got, want) print((got == want and "  ok   " or "  FAIL ") .. what .. ": " .. tostring(got) .. (got == want and "" or ("  (wanted " .. tostring(want) .. ")"))) end
 -- (a new pull: the boss is over, every glow from before has stopped, the fake clock starts again)
 local function newPull() PULL_ID = PULL_ID + 1; fire(ev, "ENCOUNTER_END"); ADVANCE(NOW + 30); expect("nothing left glowing before the pull", GLOWING(), "nothing"); heard(); NOW = 0; TIMERS = {} end
-local styles = { "pulse", "border", "pixel", "sparkle", "cdmants", "cdmflash", "proc", "assist", "onebutton", "altglow", "pandemic" }
+local styles = { "cdmants", "cdmflash", "pandemic", "proc", "assist", "onebutton", "altglow", "pulse" }
 
-print("-- defaults: a gold ring on the icon's edge (Border, 3 px, 1 px out), no sound, no voice")
-expect("default style", DebriefGlowDB.style, "border"); expect("ring 1 px out from the picture", DebriefGlowDB.pad, 1); expect("ring thickness", DebriefGlowDB.thick, 3)
+print("-- defaults: a gold ring on the icon's edge (Cooldown Manager ants), no sound, no voice")
+expect("default look", DebriefGlowDB.style, "cdmants"); expect("1 px out from the picture", DebriefGlowDB.pad, 1)
 newPull(); pull(); at(19.9, "just before Aura Mastery"); at(20, "Aura Mastery due"); press(31821); at(20.5, "pressed")
 
 print("-- the countdown on the spell matches NSRT's (NSRT shows Aura Mastery 8 s early)")
@@ -149,7 +154,7 @@ print("-- game styles in your colour (Game styles keep the game's colours: off)"
 DebriefGlowDB.gameColors = false; DebriefGlowDB.style = "assist"; DebriefGlow_Test(true); expect("rotation helper tinted gold", GLOWING():match("Aura Mastery %(([^)]+)%)"), "assist, gold"); ADVANCE(NOW + 3.1)
 DebriefGlowDB.gameColors = true
 print("-- a game style whose art this game version lacks falls back to Pulse")
-MISSING["OneButton_ProcLoop_Flipbook"] = true; DebriefGlowDB.style = "onebutton"; DebriefGlow_Test(true); expect("one-button proc missing", GLOWING():match("Aura Mastery %(([^)]+)%)"), "border, gold"); ADVANCE(NOW + 3.1); MISSING = {}
+MISSING["OneButton_ProcLoop_Flipbook"] = true; DebriefGlowDB.style = "onebutton"; DebriefGlow_Test(true); expect("one-button proc missing", GLOWING():match("Aura Mastery %(([^)]+)%)"), "pulse, gold"); ADVANCE(NOW + 3.1); MISSING = {}
 DebriefGlowDB.style = "pulse"
 print("-- the colour list sets the colour (and previews it)")
 DebriefGlow_SetColor("red"); expect("red", DebriefGlowDB.r .. ", " .. DebriefGlowDB.g .. ", " .. DebriefGlowDB.b, "1, 0.25, 0.2")
@@ -171,9 +176,11 @@ local lead = rawget(W, "lead"); lead.plus:GetScript("OnClick")(); expect("Start 
 local sw = rawget(W, "stopOnPress"); sw:GetScript("OnClick")(sw); expect("Stop when I press it, off", DebriefGlowDB.stopOnPress, false); sw:GetScript("OnClick")(sw); expect("and on", DebriefGlowDB.stopOnPress, true)
 W.tabs.look:GetScript("OnClick")(); expect("Look tab", W.pages.look._shown and not W.pages.glow._shown, true)
 local st = rawget(W, "style"); st:GetScript("OnClick")(st)
-local picked = false; for _, b in ipairs(rawget(DebriefGlowMenu, "items")) do if b._shown and rawget(b, "t")._text == "Border" then b:GetScript("OnClick")(b); picked = true end end
-expect("Style menu: Border", DebriefGlowDB.style, "border"); expect("menu closed", DebriefGlowMenu._shown, false)
-CHOOSE(st, "Game: rotation helper"); expect("Style: game rotation helper", DebriefGlowDB.style, "assist"); CHOOSE(st, "Pulse")
+local picked = false; for _, b in ipairs(rawget(DebriefGlowMenu, "items")) do if b._shown and rawget(b, "t")._text == "Cooldown Manager flash" then b:GetScript("OnClick")(b); picked = true end end
+expect("Style menu: Cooldown Manager flash", DebriefGlowDB.style, "cdmflash");
+local listed = {}; for _, o in ipairs(st.options()) do listed[#listed + 1] = o[2] end
+local Q = string.char(34); expect("Style list (Blizzard glows only, plus Pulse)", table.concat(listed, ", "), "Cooldown Manager ants, Cooldown Manager flash, Cooldown Manager " .. Q .. "ending soon" .. Q .. " pulse, Action bar proc, Rotation helper, One-button proc, Soft proc ring, Pulse")
+CHOOSE(st, "Rotation helper"); expect("Style: rotation helper", DebriefGlowDB.style, "assist"); CHOOSE(st, "Pulse")
 local tc = rawget(W, "timerColor"); tc[2]:GetScript("OnClick")(); expect("Number colour: Gold", DebriefGlowDB.timerColor, "gold"); tc[1]:GetScript("OnClick")()
 ADVANCE(NOW + 3.1)
 
@@ -182,7 +189,7 @@ function DEBRIEF_PV() return DebriefGlowPreview end
 function DEBRIEF_PV_NUM() local n = rawget(DebriefGlowPreview, "num"); return n._shown and rawget(n, "text")._text or "-" end
 expect("preview open beside the window", DebriefGlowPreview._shown, true)
 print("  1.0 s  " .. PREVIEW(1)); print("  3.5 s  " .. PREVIEW(2.5)); print("  5.1 s  " .. PREVIEW(1.6)); print("  6.0 s  " .. PREVIEW(0.9))
-CHOOSE(rawget(W, "style"), "Sparkles"); print("  style: Sparkles  " .. PREVIEW(0.1)); CHOOSE(rawget(W, "style"), "Pulse")
+CHOOSE(rawget(W, "style"), "Cooldown Manager ants"); print("  style: Cooldown Manager ants  " .. PREVIEW(0.1)); CHOOSE(rawget(W, "style"), "Pulse")
 print("  8.5 s  " .. PREVIEW(2.4)); print("  9.3 s  " .. PREVIEW(0.8)); print("  next loop, 1.0 s  " .. PREVIEW(1))
 ADVANCE(NOW + 3.1)
 
@@ -196,10 +203,10 @@ table.sort(order, function(a, b) return NAMES[a.id] < NAMES[b.id] end)
 for _, r in ipairs(order) do print(string.format("  %-24s %-26s glow %-5s style %-12s colour %-12s sound %-12s words %s", r.name:GetText(), r.where:GetText(), tostring(r.on:GetChecked()), CHOSEN(r.style), CHOSEN(r.color), CHOSEN(r.sound), r.words:GetText() == "" and "(" .. r.words.hint:GetText() .. ")" or r.words:GetText())) end
 expect("Divine Hymn (someone else's) not listed", R[64843], nil)
 expect("Divine Shield (on the bar) listed", R[642] ~= nil, true)
-print("  set: Avenging Wrath red + raid warning + \\"Wings now\\"; Aura Mastery pixel lines; Blessing of Protection the game proc; Blessing of Sacrifice off; Divine Toll any colour")
+print("  set: Avenging Wrath red + raid warning + \\"Wings now\\"; Aura Mastery the Cooldown Manager flash; Blessing of Protection the game proc; Blessing of Sacrifice off; Divine Toll any colour")
 CHOOSE(R[31884].color, "Red"); CHOOSE(R[31884].sound, "Raid warning")
 R[31884].words:SetText("Wings now"); R[31884].words:GetScript("OnEnterPressed")(R[31884].words)
-CHOOSE(R[31821].style, "Pixel lines"); CHOOSE(R[1022].style, "Game: action bar proc")
+CHOOSE(R[31821].style, "Cooldown Manager flash"); CHOOSE(R[1022].style, "Action bar proc")
 R[6940].on:GetScript("OnClick")(R[6940].on)
 CHOOSE(R[375576].color, "Any colour..."); ColorPickerFrame.info.swatchFunc()
 heard(); ADVANCE(NOW + 3.1)
@@ -224,7 +231,7 @@ expect("Lay on Hands added", found, true)
 
 print("-- the pull with those spell settings (main: pulse, gold, no sound, no voice)")
 newPull(); pull()
-at(20, "Aura Mastery: pixel lines"); press(31821)
+at(20, "Aura Mastery: Cooldown Manager flash"); press(31821)
 at(45, "Avenging Wrath: red, sound, words"); press(31884)
 at(62, "Blessing of Sacrifice: turned off")
 at(70, "Blessing of Protection: game proc"); press(1022)
@@ -249,12 +256,12 @@ do
   ds.Icon = pic; ds.GetRegions = function() return pic, border end
   ds.GetEffectiveScale = function() return 1.5 end; ds.GetFrameStrata = function() return "DIALOG" end; ds.GetFrameLevel = function() return 12 end
   ds.GetChildren = function() return swipe, skinF end
-  local was = DebriefGlowDB.style; DebriefGlowDB.style = "border"
+  local was = DebriefGlowDB.style; DebriefGlowDB.style = "pulse"
   newPull(); DebriefGlow_Test(true)
   local g; for _, f in ipairs(FRAMES) do if f._shown and rawget(f, "_anchor") == skinT and rawget(f, "drawn") then g = f end end
   expect("ring fits the skin's picture (not the hidden one, not the border art)", g ~= nil, true)
   expect("sized to it on screen (52 x 40 at 150%)", g and (rawget(g, "w") .. " x " .. rawget(g, "h")), "78.0 x 60.0")
-  expect("default: a ring straddling the edge", (g and rawget(g, "drawn") or "?") .. ", " .. DebriefGlowDB.pad .. " px out, " .. DebriefGlowDB.thick .. " px thick", "border, 1 px out, 3 px thick")
+  expect("Pulse on the picture, 1 px out", (g and rawget(g, "drawn") or "?") .. ", " .. DebriefGlowDB.pad .. " px out", "pulse, 1 px out")
   local back = g and rawget(g, "back")
   expect("soft halo layer behind the icon (same strata, one level under)", back and (rawget(back, "_strata") .. " " .. rawget(back, "_level")), "DIALOG 11")
   expect("glow in the icon's higher strata", g and rawget(g, "_strata"), "DIALOG")
@@ -272,7 +279,7 @@ do
   expect("ants drawn on the icon", a ~= nil, true)
   expect("ants stretched over the edges (12 out top-left, 13.5 out bottom-right at 150%, minus the 1 px gap)", pts and (pts.TOPLEFT .. " / " .. pts.BOTTOMRIGHT), "-11.0,11.0 / 12.5,-12.5")
   expect("ants in your colour", lp and lp._rgb and (lp._rgb[1] .. "," .. lp._rgb[2] .. "," .. lp._rgb[3]), "0.3,0.6,1")
-  ADVANCE(NOW + 3.1); heard(); DebriefGlowDB.style = "border"; DebriefGlowDB.r, DebriefGlowDB.g, DebriefGlowDB.b = 0.90, 0.71, 0.31
+  ADVANCE(NOW + 3.1); heard(); DebriefGlowDB.style = "pulse"; DebriefGlowDB.r, DebriefGlowDB.g, DebriefGlowDB.b = 0.90, 0.71, 0.31
   ds.GetEffectiveScale = nil; ds.GetFrameStrata = nil; ds.GetFrameLevel = nil; ds.GetChildren = nil; ds.GetRegions = nil; ds.Icon = nil; DebriefGlowDB.style = was
 end
 print("-- /dglow test skips a spell that's off")
