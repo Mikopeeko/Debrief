@@ -1765,6 +1765,7 @@ const PATCH_NOTES = [
     'The bosses are in the same order everywhere on the site.',
     'Long patch notes fold after six lines.',
   ], f: [
+    'Debrief Addon: the last update didn\'t load in WoW (no card, and /debrief and /dmo did nothing). Fixed: the Debrief Companion app updates it for you, or download the addon again.',
     'Debrief Addon: the coach line on the card said "We wiped at Wipe" instead of how far the pull got.',
     'The coach\'s wipe line reads properly when someone was hit by another player\'s mechanic: "you were hit by a Corrosive Spit aimed at Ashdknight, and it killed you", not "you hit by … and it got you".',
     'Spell names everywhere: a cooldown the log never saw by that exact ID (like Revival when the monk pressed Restoral) now shows its name instead of "Spell 115310", on Debriefing, the Plan tab and every list.',

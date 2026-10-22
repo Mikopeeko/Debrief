@@ -525,8 +525,10 @@ local function showPull(i)
   if not DB.pulls[i] then return end
   DB.cur = i; wipe(EXPANDED); scroller:SetVerticalScroll(0); render()
 end
+-- (WoW allows a function 60 outside locals: render's small helpers sit in one table so it stays well under (Oct 22))
+local UI = { parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, canRaid = canRaid, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded }
 function render()
-  local raw = DB.pulls[DB.cur]; local m = cutView(raw); CUR = m
+  local raw = DB.pulls[DB.cur]; local m = UI.cutView(raw); CUR = m
   if not m then return end
   W = WIDTHS[DB.width or "normal"] or 400; CW = W - PAD * 2; card:SetWidth(W); body:SetWidth(CW); scroller:SetWidth(CW); bossT:SetWidth(W - 230)
   if detailBtn then detailBtn.t:SetText(PRESET_NAME[DB.preset] or "Custom"); detailBtn:SetWidth(detailBtn.t:GetStringWidth() + 18) end
@@ -537,7 +539,7 @@ function render()
   local n = #DB.pulls
   local first = math.max(1, n - #chips + 1)
   if (DB.show or {}).chips ~= false then
-    local function chipW(q) local rt = resultOf(q.h); chips[1].t:SetText("Pull " .. q.h.pull .. "  ·  " .. rt); return chips[1].t:GetStringWidth() + 20 end
+    local function chipW(q) local rt = UI.resultOf(q.h); chips[1].t:SetText("Pull " .. q.h.pull .. "  ·  " .. rt); return chips[1].t:GetStringWidth() + 20 end
     local total = 0; for k = first, n do total = total + chipW(DB.pulls[k]) + 6 end
     while first < n and total - 6 > CW do total = total - chipW(DB.pulls[first]) - 6; first = first + 1 end
   end
@@ -545,37 +547,37 @@ function render()
     local b, k = chips[i], first + i - 1
     local q = k <= n and DB.pulls[k] or nil
     if q and (DB.show or {}).chips ~= false then
-      local rt, rc, rb = resultOf(q.h)
+      local rt, rc, rb = UI.resultOf(q.h)
       b.t:SetText("Pull " .. q.h.pull .. "  ·  " .. rt)
-      chipColors(b, rb, k == DB.cur and COL.gold or rb, rc)
+      UI.chipColors(b, rb, k == DB.cur and COL.gold or rb, rc)
       b:SetWidth(b.t:GetStringWidth() + 20)
       b:ClearAllPoints()
       if i == 1 then b:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -110) else b:SetPoint("LEFT", chips[i - 1], "RIGHT", 6, 0) end
-      b:SetScript("OnClick", function() showPull(k) end)
+      b:SetScript("OnClick", function() UI.showPull(k) end)
       b:Show()
     else b:Hide() end
   end
   bossT:SetText("")
   resT:SetText(h.boss); resT:SetWidth(W - PAD * 2 - 110)
-  local rt, rc, rb, rl = resultOf(h, true)
+  local rt, rc, rb, rl = UI.resultOf(h, true)
   pill.t:SetText(rt); pill.t:SetTextColor(rgb(rc)); pill:SetWidth(pill.t:GetStringWidth() + 22)
-  rounded(pill.fillT, "fill", 5, rb, 1); rounded(pill.lineT, "line", 5, rl, 1)
+  UI.rounded(pill.fillT, "fill", 5, rb, 1); UI.rounded(pill.lineT, "line", 5, rl, 1)
   local meta = { h.diff, "Pull " .. h.pull, h.dur }
   if h.where ~= "" then meta[#meta + 1] = h.where end
   meta[#meta + 1] = h.deaths .. (h.deaths == "1" and " death" or " deaths")
-  if DB.detailed and not DB.compact and view == "raid" and canRaid() and #(m.raid.tiles or {}) > 0 then meta = { h.diff, "Pull " .. h.pull } end
+  if DB.detailed and not DB.compact and view == "raid" and UI.canRaid() and #(m.raid.tiles or {}) > 0 then meta = { h.diff, "Pull " .. h.pull } end
   metaT:SetWidth(CW); metaT:SetText(table.concat(meta, "   ·   "))
   -- (tabs and the body sit lower when the pull chips show)
   local coachOn = DB.glance and m.coach and (m.coach.head or "") ~= "" and not m.h.practice -- (Debriefing's coach box, with the Raid view and You tabs)
   local glanceOn = DB.glance and (m.raid.ghead or "") ~= "" and not coachOn -- (the Glance card: one view, so no tabs; older pulls without it keep the tabs)
-  if coachOn and not DB.viewPicked and canRaid() then view = "raid" end -- (the coach box first, until you pick a tab yourself)
+  if coachOn and not DB.viewPicked and UI.canRaid() then view = "raid" end -- (the coach box first, until you pick a tab yourself)
   TOPY = (((DB.show or {}).chips ~= false) and 180 or 150) - (glanceOn and 38 or 0)
   tMe:ClearAllPoints(); tMe:SetPoint("TOPLEFT", card, "TOPLEFT", PAD - 10, -TOPY + 38); tRaid:ClearAllPoints(); tRaid:SetPoint("LEFT", tMe, "RIGHT", 0, 0)
   nextB:ClearAllPoints(); nextB:SetPoint("TOPRIGHT", card, "TOPRIGHT", -PAD, -TOPY + 36)
   tabLine:ClearAllPoints(); tabLine:SetPoint("TOPLEFT", card, "TOPLEFT", 1, -TOPY + 12); tabLine:SetPoint("TOPRIGHT", card, "TOPRIGHT", -1, -TOPY + 12)
   scroller:ClearAllPoints(); scroller:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -TOPY)
   -- tabs
-  local raidOk = canRaid()
+  local raidOk = UI.canRaid()
   tRaid:SetShown(raidOk and not glanceOn); tMe:SetShown(not glanceOn); tabLine:SetShown(not glanceOn)
   if not raidOk then view = "me" end
   for k, b in pairs(tabs) do
@@ -583,10 +585,10 @@ function render()
     b.t:SetTextColor(rgb(on and COL.text or COL.muted)); b.u:SetShown(on)
     b:SetScript("OnClick", function() view = k; DB.viewPicked = true; render() end)
   end
-  local P = pickWho(m)
+  local P = UI.pickWho(m)
   local showWho = (view == "me" and P and #m.players > 1) and not glanceOn
   who:SetShown(showWho); prevB:SetShown(showWho); nextB:SetShown(showWho)
-  if P then who:SetWidth(math.max(80, CW - 190)); who:SetText("|cff" .. classHex(P.cls) .. P.name .. "|r") end
+  if P then who:SetWidth(math.max(80, CW - 190)); who:SetText("|cff" .. UI.classHex(P.cls) .. P.name .. "|r") end
   local function step(dir)
     local idx = 1; for i, p in ipairs(m.players) do if p == P then idx = i end end
     idx = ((idx - 1 + dir) % #m.players) + 1; DB.who = m.players[idx].name; render()
@@ -594,7 +596,7 @@ function render()
   prevB:SetScript("OnClick", function() step(-1) end); nextB:SetScript("OnClick", function() step(1) end)
 
   -- body
-  resetPool()
+  UI.resetPool()
   local y = 2
   local SH = DB.show or {}
   -- a panel behind a section, in the chosen card style: Panels (soft boxes), Glass (see-through) or Flat (a line under)
@@ -613,7 +615,7 @@ function render()
       else
         local n = EXPANDED[key] and #list or math.min(#list, limit)
         for i = 1, n do draw(list[i]) end
-        if #list > n then y = moreLink(y, key, #list - n) end
+        if #list > n then y = UI.moreLink(y, key, #list - n) end
       end
     end
     y = y + 3
@@ -624,14 +626,14 @@ function render()
   -- mistakes, mechanics, deaths. 0 is off, the whole pull. A kill always counts in full)
   local function diedRow()
     if DB.compact then return end
-    local nd, show, cut = #m.raid.died, DB.maxDied or 3, cutIdx(raw)
+    local nd, show, cut = #m.raid.died, DB.maxDied or 3, UI.cutIdx(raw)
     local y0 = y; IND = 12; y = y + 12
     local t = FS("head", 15, COL.text); t:SetPoint("TOPLEFT", IND, -y); t:SetText("Who died")
     local c = FS("body", 12.5, COL.faint); c:SetPoint("BOTTOMLEFT", t, "BOTTOMRIGHT", 8, 1); c:SetText((DB.detailed and view == "raid" and #(m.raid.tiles or {}) > 0) and "" or (h.deaths .. (h.deaths == "1" and " death" or " deaths")))
     if raw.cutN then
       local function stepBtn(lbl, right, d)
         local bt = BTN(); bt:SetSize(22, 22); bt:SetPoint("TOPRIGHT", body, "TOPLEFT", right, -(y - 3))
-        local bg = RT("BORDER"); bg:SetAllPoints(bt); rounded(bg, "fill", 5, COL.bg, 1)
+        local bg = RT("BORDER"); bg:SetAllPoints(bt); UI.rounded(bg, "fill", 5, COL.bg, 1)
         local tx = FS("bold", 12.5, COL.muted); tx:SetPoint("CENTER", bt, "CENTER", 0, 0); tx:SetText(lbl)
         bt:SetScript("OnClick", function() DB.deathCut = math.max(0, math.min(8, (DB.deathCut or 0) + d)); wipe(EXPANDED); if Debrief_RefreshOptions then Debrief_RefreshOptions() end; render(); if big and big:IsShown() and bigRender then bigRender() end end)
         bt:SetScript("OnEnter", function() tx:SetTextColor(rgb(COL.gold)) end); bt:SetScript("OnLeave", function() tx:SetTextColor(rgb(COL.muted)) end)
@@ -645,7 +647,7 @@ function render()
     end
     y = y + 26
     local note
-    if cut > 0 then local d = raw.raid.died[cut]; note = "Counted up to the " .. ordN(cut) .. " death" .. (d and (" (" .. d[2] .. ", " .. d[1] .. ")") or "") .. ". What came after isn't counted."
+    if cut > 0 then local d = raw.raid.died[cut]; note = "Counted up to the " .. UI.ordN(cut) .. " death" .. (d and (" (" .. d[2] .. ", " .. d[1] .. ")") or "") .. ". What came after isn't counted."
     elseif raw.cutN and (DB.deathCut or 0) > 0 then note = "Fewer than " .. DB.deathCut .. " deaths, so the whole pull counts."
     elseif raw.cutN then note = "Press + to stop counting at a death, so the wipe at the end isn't counted." end
     if note then local n2 = FS("body", 12.5, COL.faint); n2:SetPoint("TOPLEFT", IND, -y); n2:SetWidth(CW - IND * 2); n2:SetText(note); y = y + n2:GetStringHeight() + 6 end
@@ -655,7 +657,7 @@ function render()
         for i = 1, math.min(show, nd) do
           local d = m.raid.died[i]
           local tm = FS("body", 13.5, COL.muted); tm:SetPoint("TOPLEFT", IND, -y); tm:SetText(d[1])
-          local nm = FS("bold", 13.5, classHex(d[3])); nm:SetPoint("TOPLEFT", IND + 44, -y); nm:SetWidth(124); nm:SetWordWrap(false); nm:SetText(d[2])
+          local nm = FS("bold", 13.5, UI.classHex(d[3])); nm:SetPoint("TOPLEFT", IND + 44, -y); nm:SetWidth(124); nm:SetWordWrap(false); nm:SetText(d[2])
           icon(IND + 174, y - 1, 18, d[4])
           local w = FS("body", 13.5, COL.muted); w:SetPoint("TOPLEFT", IND + 200, -y); w:SetWidth(CW - 200 - IND * 2); w:SetWordWrap(false); w:SetText(d[5])
           y = y + 23
@@ -675,8 +677,8 @@ function render()
     local tw = math.floor((CW - gap * (n - 1)) / n)
     for i = 1, n do
       local tl, x = list[i], (i - 1) * (tw + gap)
-      local f = RT("BACKGROUND"); f:SetPoint("TOPLEFT", x, -y0); f:SetSize(tw, th2); rounded(f, "fill", 5, COL.raised, DB.cardStyle == "glass" and 0.55 or 1)
-      local l = RT("BORDER"); l:SetPoint("TOPLEFT", f, "TOPLEFT"); l:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT"); rounded(l, "line", 5, COL.line, 1)
+      local f = RT("BACKGROUND"); f:SetPoint("TOPLEFT", x, -y0); f:SetSize(tw, th2); UI.rounded(f, "fill", 5, COL.raised, DB.cardStyle == "glass" and 0.55 or 1)
+      local l = RT("BORDER"); l:SetPoint("TOPLEFT", f, "TOPLEFT"); l:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT"); UI.rounded(l, "line", 5, COL.line, 1)
       local a = FS("body", 12, COL.muted); a:SetPoint("TOPLEFT", x + 10, -(y0 + 8)); a:SetWidth(tw - 20); a:SetWordWrap(false); a:SetText(tl[1])
       local v = FS("head", #tostring(tl[2]) > 9 and 15 or 20, tl[4] == "bad" and COL.badT or tl[4] == "warn" and COL.warn or COL.text); v:SetPoint("TOPLEFT", x + 10, -(y0 + 22)); v:SetWidth(tw - 20); v:SetWordWrap(false); v:SetText(tl[2])
       local sb = FS("body", 11.5, COL.faint); sb:SetPoint("TOPLEFT", x + 10, -(y0 + 41)); sb:SetWidth(tw - 20); sb:SetWordWrap(false); sb:SetText(names(tl[3]))
@@ -742,7 +744,7 @@ function render()
     if #R.good > 0 then section("ggood", "Went well", R.good, 3, function(r) y = row(y, "ok", nil, r[3]) end) end
     if #R.fixes > 0 then section("gfix", m.h.kill and "Clean up next time" or "Fix next", R.fixes, 3, function(r) y = row(y, r[1], nil, r[3]) end) end
     -- the next pull, and your own line
-    if (R.gnext or "") ~= "" then y = nextBox(y + 2, R.gnext) end
+    if (R.gnext or "") ~= "" then y = UI.nextBox(y + 2, R.gnext) end
     end
     if P and (P.lead or "") ~= "" then
       local k = FS("bold", 13.5, COL.gold); k:SetPoint("TOPLEFT", 4, -(y + 2)); k:SetText("You")
@@ -759,7 +761,7 @@ function render()
   local function paint(s0)
     s0 = " " .. names(s0 or "")
     for _, p in ipairs(m.players) do local n = p.name:match("^([^%-]+)") or p.name
-      if #n > 2 then s0 = s0:gsub("([^|%w])(" .. n:gsub("(%W)", "%%%1") .. ")", function(a, b2) return a .. "|cff" .. classHex(p.cls) .. b2 .. "|r" end) end end
+      if #n > 2 then s0 = s0:gsub("([^|%w])(" .. n:gsub("(%W)", "%%%1") .. ")", function(a, b2) return a .. "|cff" .. UI.classHex(p.cls) .. b2 .. "|r" end) end end
     return (s0:gsub("^ ", ""))
   end
   local KCOL = { own = COL.bad, ready = COL.bad, on = COL.bad, half = COL.warn, nothing = COL.warn }
@@ -840,7 +842,7 @@ function render()
       if open then
         if #c.deaths == 0 then local f = FS("body", 13, COL.muted); f:SetPoint("TOPLEFT", 14, -y); f:SetWidth(CW - 28); f:SetText(paint(c.dline)); y = y + f:GetStringHeight() + 8 end
         for i, d in ipairs(c.deaths) do
-          chipRow(m.h.pull .. "d" .. i, { { t = d.t, col = COL.faint, gap = 6 }, { dot = KCOL[d.k] or COL.faint }, { t = d.who, bold = true, col = classHex(d.cls), gap = 8 }, { icon = d.id }, { t = d.ab } }, d.id, d.story)
+          chipRow(m.h.pull .. "d" .. i, { { t = d.t, col = COL.faint, gap = 6 }, { dot = KCOL[d.k] or COL.faint }, { t = d.who, bold = true, col = UI.classHex(d.cls), gap = 8 }, { icon = d.id }, { t = d.ab } }, d.id, d.story)
         end
         if (c.dnote or "") ~= "" then local f = FS("body", 12, COL.faint); f:SetPoint("TOPLEFT", 14, -(y + 2)); f:SetWidth(CW - 28); f:SetText(c.dnote); y = y + f:GetStringHeight() + 6 end
         if #c.deaths > 0 then local f = FS("body", 12, COL.faint); f:SetPoint("TOPLEFT", 14, -(y + 2)); f:SetText("Click a death to see what happened."); y = y + 18 end
@@ -854,7 +856,7 @@ function render()
       if open then
         if #c.avoid == 0 then local f = FS("body", 13, COL.muted); f:SetPoint("TOPLEFT", 14, -y); f:SetWidth(CW - 28); f:SetText(paint(c.aline)); y = y + f:GetStringHeight() + 8 end
         for i, a in ipairs(c.avoid) do
-          chipRow(m.h.pull .. "a" .. i, { { icon = a.id }, { t = a.k }, { t = a.who, bold = true, col = classHex(a.cls), gap = 6 }, { t = a.n, col = a.bad and COL.badT or COL.warn } }, a.id, a.story)
+          chipRow(m.h.pull .. "a" .. i, { { icon = a.id }, { t = a.k }, { t = a.who, bold = true, col = UI.classHex(a.cls), gap = 6 }, { t = a.n, col = a.bad and COL.badT or COL.warn } }, a.id, a.story)
         end
         if #c.avoid > 0 then local f = FS("body", 12, COL.faint); f:SetPoint("TOPLEFT", 14, -(y + 2)); f:SetText("Click one to see what happened."); y = y + 18 end
         y = y + 4
@@ -885,7 +887,7 @@ function render()
     -- the tile: your damage or healing, against your last pull and your best
     if SH.tile ~= false then
       local th = 62
-      local goal = goalFor(P, m)
+      local goal = UI.goalFor(P, m)
       if goal > 0 then th = 72 end
       panel(y, th)
       icon(12, y + 13, 36, P.icon)
@@ -900,7 +902,7 @@ function render()
       s:SetText(table.concat(lines, "\n"))
       -- (your goal: a thin bar along the bottom of the tile, gold until you reach it, then green)
       if goal > 0 then
-        local pct = parseK(P.v) / goal
+        local pct = UI.parseK(P.v) / goal
         local gl = FS("bold", 11, pct >= 1 and COL.goodT or COL.muted); gl:SetPoint("TOPLEFT", 60, -(y + 56)); gl:SetText("Goal " .. goal .. "k  ·  " .. math.floor(pct * 100 + 0.5) .. "%")
         local tr = TEX("ARTWORK"); tr:SetPoint("TOPLEFT", 160, -(y + 61)); tr:SetSize(CW - 172, 3); fill(tr, COL.line2)
         local fl = TEX("OVERLAY"); fl:SetPoint("TOPLEFT", 160, -(y + 61)); fl:SetSize(math.max(2, (CW - 172) * math.min(1, pct)), 3); fill(fl, pct >= 1 and COL.good or COL.gold)
@@ -910,14 +912,14 @@ function render()
     -- (the Detailed card: three small number tiles under yours: avoidable damage, kicks or dispels, your death)
     if DB.detailed and not DB.compact and P.tiles and #P.tiles > 0 then y = tilesRow(y, P.tiles) end
     if not DB.compact then
-      local rot = function() section("rotation", "Rotation", onlyBad(P.slips), DB.maxSlips or 3, function(r) y = row(y, r[1], r[2], r[3]) end, #P.slips > 0 and "Nothing to fix here." or "No rotation checks for this spec yet.") end
+      local rot = function() section("rotation", "Rotation", UI.onlyBad(P.slips), DB.maxSlips or 3, function(r) y = row(y, r[1], r[2], r[3]) end, #P.slips > 0 and "Nothing to fix here." or "No rotation checks for this spec yet.") end
       local bossL = P.boss
       if DB.detailed and P.tiles and #P.tiles > 0 then bossL = {}; for _, r in ipairs(P.boss) do if not ({ ability_rogue_sprint = true, ability_kick = true, spell_holy_dispelmagic = true })[r[2]] then bossL[#bossL + 1] = r end end end
-      local bos = function() section("boss", "Boss mechanics", onlyBad(bossL), DB.maxBoss or 2, function(r) y = row(y, r[1], r[2], r[3]) end, "No boss mistakes.") end
+      local bos = function() section("boss", "Boss mechanics", UI.onlyBad(bossL), DB.maxBoss or 2, function(r) y = row(y, r[1], r[2], r[3]) end, "No boss mistakes.") end
       if m.h.practice and #P.boss == 0 then bos = function() end end -- (a training dummy has no boss mechanics)
       if DB.bossFirst then bos(); rot() else rot(); bos() end
       -- (survival: your defensives, Healthstone and health potion)
-      if P.surv and #P.surv > 0 and SH.surv ~= false then section("surv", "Survival", onlyBad(P.surv), 5, function(r) y = row(y, r[1], r[2], r[3]) end) end
+      if P.surv and #P.surv > 0 and SH.surv ~= false then section("surv", "Survival", UI.onlyBad(P.surv), 5, function(r) y = row(y, r[1], r[2], r[3]) end) end
       -- (the Detailed card: the raid's side right here, so nobody has to switch to the Raid view)
       if DB.detailed and not m.h.practice and not raidOk then
         summary()
@@ -926,7 +928,7 @@ function render()
       end
     end
     if not m.h.practice and not (DB.detailed and raidOk) then diedRow() end -- (the death filter here too: a dummy has no deaths)
-    if P.next ~= "" and SH.next ~= false then y = nextBox(y + 2, (DB.detailed and (P.next2 or "") ~= "") and ("1. " .. P.next .. "\n2. " .. P.next2) or P.next) end
+    if P.next ~= "" and SH.next ~= false then y = UI.nextBox(y + 2, (DB.detailed and (P.next2 or "") ~= "") and ("1. " .. P.next .. "\n2. " .. P.next2) or P.next) end
   else
     leadBox(nil)
     if DB.detailed and not DB.compact and m.raid.tiles and #m.raid.tiles > 0 then y = tilesRow(y, m.raid.tiles) end
@@ -937,7 +939,7 @@ function render()
       section("mech", "Boss mechanics", m.raid.mech, DB.compact and math.min(3, DB.maxMech or 3) or (DB.maxMech or 6), function(r) y = row(y, r[1], r[2], r[4], r[3]) end)
     end
     diedRow()
-    if m.raid.next ~= "" and SH.next ~= false and not ((m.raid.lead or "") ~= "" and SH.lead ~= false) then y = nextBox(y + 2, m.raid.next) end
+    if m.raid.next ~= "" and SH.next ~= false and not ((m.raid.lead or "") ~= "" and SH.lead ~= false) then y = UI.nextBox(y + 2, m.raid.next) end
   end
   body:SetHeight(math.max(10, y))
   -- (never taller than the screen: the rest scrolls, and the footer says so)
