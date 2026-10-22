@@ -7661,17 +7661,11 @@ function deathLines(r, ds, who) { if (!ds.length) return ''; const used = new Se
     out.push('<span class="ddl ' + tg.k + '"><i class="ddl-t">' + T(d.t) + '</i><span class="ddl-w">' + (grp.length > 1 ? '<b class="ddl-n">' + grp.length + ' of us</b>' : who(d.player)) + '</span><span class="ddl-k">to ' + esc(ab) + (grp.length > 1 ? ' at once' : '') + '</span>' +
       '<span class="ddp ' + tg.k + '">' + esc(tg.p) + '</span>' + (grp.length > 1 ? '' : '<span class="ddl-v">' + esc(tg.h) + '</span>') + (tg.fix ? '<span class="ddl-f"><b>Next time:</b> ' + esc(tg.fix) + '</span>' : '') + '</span>'); }
   return '<span class="ddl-list">' + out.slice(0, 5).join('') + (out.length > 5 ? '<span class="ddl-more">and ' + (out.length - 5) + ' more (open to see all)</span>' : '') + '</span>'; }
-// (an opened death, as a card: the pill and one sentence, then What happened (with their health over the last 15 s as five
-// small bars), Still ready (the buttons that count bright, the rest faded with why) and Next time)
-function deathBox(tg, d) { if (!tg) return ''; const v = tg.v, av = d.available || [], use = new Set(v.defs.concat(v.kit));
-  const kfm = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k');
-  const what = capS(String(v.story || '').replace(/\s*\([^)]*then dead\)/, '').replace(/, too fast to react$/, '')) + '.' + (d.taken5 ? ' In their last 5 seconds they took ' + kfm(d.taken5) + ' damage and got ' + kfm(d.healed5 || 0) + ' healing.' : '');
-  const path = (d.hpPath || []).concat([[0, 0]]), hp = path.length > 1 ? '<div class="ddv-hp" aria-label="Their health before dying">' + path.map(([s, p]) => '<span><b>' + (s ? p + '%' : '☠') + '</b><em><i class="' + (p < 35 ? 'lo' : p < 60 ? 'md' : 'hi') + '" style="height:' + Math.max(4, Math.min(100, p)) + '%"></i></em><small>' + (s ? s + 's before' : 'dead') + '</small></span>').join('') + '</div>' : '';
-  const why0 = /^(fast|mass|end|wipe)$/.test(v.why) ? 'no time to use them, so not held against them' : v.why === 'raid' ? 'not held against them' : v.why === 'own' ? 'a button wouldn\'t have fixed this one' : 'a Healthstone or potion only counts after 2 seconds at low health';
-  const kit = av.length ? av.map((a) => '<span class="ddv-c' + (use.has(a) ? ' on' : '') + '">' + esc(capS(deathKit(a).replace(/^an? /, ''))) + '</span>').join('') + (av.some((a) => !use.has(a)) ? '<span class="ddv-n">Faded: ' + esc(why0) + '.</span>' : '') : '<span class="ddv-n">Nothing: every defensive, Healthstone and potion was used.</span>';
-  const row = (l, h) => '<div class="ddv-r"><span class="ddv-l">' + l + '</span><div class="ddv-x">' + h + '</div></div>';
-  return '<div class="ddv ' + tg.k + '"><div class="ddv-h"><span class="ddp ' + tg.k + '">' + esc(tg.p) + '</span><b>' + esc(tg.h) + '</b></div>' +
-    row('What happened', '<span class="ddv-s">' + esc(what) + '</span>' + hp) + row('Still ready', kit) + (tg.fix ? row('Next time', '<b class="ddv-f">' + esc(tg.fix) + '</b>') : '') + '</div>'; }
+// (an opened death, kept simple (your note, Oct 22: "feels overcomplicated still"): what happened in one sentence, the fix when it was
+// on them, and their health over the last 15 seconds in one line; the row above already says on them or not)
+function deathBox(tg, d) { if (!tg) return ''; const c = (p) => (p < 35 ? 'ddh-lo' : p < 60 ? 'ddh-md' : 'ddh-hi');
+  const path = (d.hpPath || []).length ? '<p class="ddv-3">Their health, last 15 seconds: ' + d.hpPath.map(([, p]) => '<b class="' + c(p) + '">' + p + '%</b>').join(' → ') + ' → <b class="ddh-lo">dead</b></p>' : '';
+  return '<div class="ddv ' + tg.k + '"><p class="ddv-1">' + esc(tg.h) + '</p>' + (tg.fix ? '<p class="ddv-2"><b>Next time:</b> ' + esc(tg.fix) + '</p>' : '') + path + '</div>'; }
 // (the death's fixes, the verdict's own line first, then the engine's other advice that agrees with it (deaths research, Oct 22))
 function deathFixes(r, d) { if (!(r.deaths || []).includes(d)) return (d.prevent || []).slice(0, 3); const v = deathVerdict(r, d), rest = /^(fast|mass|end|raid|wipe)$/.test(v.why) ? [] : (d.prevent || []).filter((x) => !/^No (clear )?mistake|^Too fast|^Not on you/i.test(x) && !(v.why === 'own' && /^(Use|Press) /.test(x)));
   return [v.fix].concat(rest.filter((x) => x !== v.fix)).filter(Boolean).slice(0, 3); }
@@ -20668,7 +20662,7 @@ function deathFix(r, d, v, ownM, rw, raidL) {
   if (v.why === 'fast') return 'Nothing to fix on your side: ' + k + ' was too fast to react to.';
   if (v.why === 'mass') return 'Not on you: ' + k + ' killed ' + d.mass + ' of us at once. Fix what set it off as a raid.';
   if (v.why === 'raid') return 'Not on you: ' + (raidL ? raidL.mechanic : k) + ' went wrong for the raid.';
-  if (v.why === 'shared') return /mind controlled/.test(v.word) ? 'Press your cancel macro the moment you\'re mind controlled; the CC team stops you.' : (v.defs.length ? 'Press ' + v.defs[0] : 'Use your ' + (v.kit[0] === 'Healthstone' ? 'Healthstone' : 'health potion')) + ' when you sit low, even when the raid caused it.';
+  if (v.why === 'shared') return /mind controlled/.test(v.word) ? 'Press your cancel macro the moment you\'re mind controlled; the CC team stops you.' : (v.defs.length ? 'Press ' + v.defs[0] : 'Use your ' + (v.kit[0] === 'Healthstone' ? 'Healthstone' : 'health potion')) + ' when you drop low.';
   if (v.why === 'nothing') return 'You had nothing left to press. ' + (d.healPct != null && d.healPct < 30 ? 'Little healing came in: stay in range and call for an external.' : 'Save a defensive for this point next time.');
   return ''; }
 // (a death's verdict when only the death is at hand (Debriefing's lines): from the pull it belongs to)
