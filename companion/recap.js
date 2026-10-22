@@ -167,6 +167,12 @@ function buildOne(b, rep, same, W, L, cutN) {
       let t = n > 1 ? (n - bad - warn) + ' of ' + n + ' done right. ' : '';
       if (worst) t += plain(worst.title) + (worst.sub ? ': ' + plain(worst.sub) : '.');
       else { const said = changed ? [] : sentences(sec.summary || '').filter((x) => !/^It shows|How it works|against the plan|\bmaps?\b|\brows?\b|\bchart\b|\btable\b|\bbelow\b/i.test(x)); t += said[0] || (n > 1 && flag === 'ok' ? '' : { ok: 'Done right.', warn: 'Some mistakes.', bad: 'Went wrong.' }[flag]); } // (the website's own words about its page don't fit on a card)
+      // (phase changes: when each phase was pushed, in the pull's own time (the user's ask, Oct 21: "P1 pushed at 2:19"))
+      if (sec.id === 'push') {
+        const ts = (sec.rows || []).map((row) => { const nm = row[0] && row[0].txt, at = row[1] && row[1].t; if (!nm || at == null) return '';
+          const ph = String(nm).split(/\s*→\s*/)[0]; return /→/.test(nm) ? ph + ' pushed at ' + mmss(at) : ph + ' began at ' + mmss(at); }).filter(Boolean);
+        if (ts.length) t = (t.trim() ? t.trim().replace(/([^.!?])$/, '$1.') + ' ' : '') + ts.join(', ') + '.';
+      }
       raid.mech.push([flag, sec.spell && sec.spell[0] ? String(sec.spell[0]) : '', plain(sec.title), shortTo(t.replace(/\s*\(see How it works\)/gi, '').trim(), 210)]);
     }
     const rank = { bad: 0, warn: 1, ok: 2 }; raid.mech.sort((a, c) => rank[a[0]] - rank[c[0]]); raid.mech = raid.mech.slice(0, 12);
