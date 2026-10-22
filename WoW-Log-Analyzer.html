@@ -3775,6 +3775,12 @@ a.dbr-fx.st-bad { border-top-color: var(--bad); } a.dbr-fx:hover { transform: tr
 .dbr-fxb { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px 12px; } .dbr-fxb .sst { align-self: flex-start; } .dbr-fxb b { font: 700 16px var(--head); }
 .dbr-fxt { color: var(--muted); font-size: 13px; }
 .dbr-next { padding: 10px 14px; margin-bottom: 12px; } .dbr-next p { margin: 4px 0; } .dbr-nx { font-size: 15px; }
+/* Why we wiped (Oct 21) */
+.dbr-why { font-size: 15px; } .dbr-why > .fc-why { width: 9px; height: 9px; margin: 0 8px 0 0; vertical-align: 1px; } .dbr-next .dbr-why + .dbr-nx { margin-top: 6px; } .dbr-whyd > summary { list-style: none; cursor: pointer; } .dbr-whyd > summary > .fc-why { width: 9px; height: 9px; margin: 0 8px 0 0; vertical-align: 1px; } .dbr-whyd > summary::-webkit-details-marker { display: none; } .dbr-whyd > p { margin: 6px 0 2px 17px; font-size: 14px; color: var(--muted); } .why-sep { color: var(--muted); } .why-again { margin-left: 8px; font-size: 12px; font-weight: 700; color: var(--warn); border: 1px solid currentColor; border-radius: 999px; padding: 0 7px; white-space: nowrap; } .why-more { margin-left: 8px; font-size: 12px; color: var(--muted); text-decoration: underline dotted; } .dbr-whyd[open] .why-more { display: none; } .why-g b { font-weight: 700; } .dbr-why b .sp { font-weight: inherit; }
+.why-t { display: inline-block; padding: 0 8px; border-radius: 999px; font-size: 12.5px; font-weight: 700; line-height: 20px; margin: 0 4px 0 2px; border: 1px solid currentColor; white-space: nowrap; }
+.why-bad { color: var(--bad); } .why-dmg { color: #e8843a; } .why-heal { color: #a77bf3; } .why-na { color: var(--muted); }
+.fc-why { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: currentColor; margin-left: 6px; vertical-align: 2px; }
+.why-bar { display: flex; gap: 2px; height: 6px; max-width: 360px; margin: 2px 0 8px; } .why-bar i { display: block; background: currentColor; border-radius: 3px; }
 .dbr-up, .dbr-dn { font-size: 13px; color: var(--muted); } .dbr-up > span { color: var(--good); font-weight: 700; margin-right: 4px; } .dbr-dn > span { color: var(--bad); font-weight: 700; margin-right: 4px; }
 .dbck { display: flex; flex-direction: column; gap: 6px; }
 .dbck > details.secd { margin: 0; }
@@ -13128,7 +13134,7 @@ function renderList() {
       const tip = 'Pull ' + b.pull + ' · ' + at + ' · ' + (b.kill ? 'kill' : v == null ? 'wipe' : reset ? 'reset at 100%' : 'wipe, ' + pullLabel(b)) + ' · ' + T(b.duration) + (b === best && !b.kill ? ' · best pull of the night' : '') +
         (!b.kill && v != null && !reset ? ' · ' + Math.floor(100 - v) + '% of the encounter done' : ''); // (rounded down, like the colour steps)
       return '<button class="pull fcard' + (b.kill ? ' kill' : '') + (b === best ? ' best' : '') + ((v == null || reset) && !b.kill ? ' unk' : '') + (b === S.item ? ' sel' : '') + (allMode ? ' dim' : '') + '" type="button" data-i="' + add(b) + '" title="' + esc(tip) + '" style="--pc:' + col + '">' +
-        '<span class="fc-h"><b>Pull ' + b.pull + '</b><span>' + esc(at) + '</span></span><span class="fc-p">' + glossify(esc(reset ? 'Reset at 100%' : v == null && !b.kill ? T(b.duration) : pullShort(b))) + '</span><i class="fc-bar"><b style="width:' + done.toFixed(1) + '%"></b></i></button>';
+        '<span class="fc-h"><b>Pull ' + b.pull + whyDot(b) + '</b><span>' + esc(at) + '</span></span><span class="fc-p">' + glossify(esc(reset ? 'Reset at 100%' : v == null && !b.kill ? T(b.duration) : pullShort(b))) + '</span><i class="fc-bar"><b style="width:' + done.toFixed(1) + '%"></b></i></button>';
     };
     // (an "All pulls" card at the left end, always in view (back on Oct 18, when the pull switch left Rotation and Graphs):
     // Rotation, Graphs and Players then show every pull of the boss together; the other tabs open Night summary)
@@ -14234,6 +14240,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-22', h: [
+    { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
     'Report card: each raider\'s card shows every death, how many counted and why. A death to something avoidable counts even after the wipe filter, while fewer than a quarter of the raid is dead.',
@@ -20912,6 +20919,167 @@ function causeOf(r) {
   if (d) return { label: d.ability === 'Melee' && d.killer && d.killer !== 'Unknown' ? 'Melee from ' + d.killer : d.ability || 'a fall (likely a mind control)', id: d.abilityId, t: d.t, who: d.player };
   return null;
 }
+// ---- Why we wiped (your call, Oct 21): one verdict per wipe, from what the pull already knows ----
+// It starts where the pull fell apart: the first death after which deaths kept coming (never a minute without one), so an early
+// death the raid played through for minutes isn't blamed. A mistake: a mechanic went wrong there (the raid's, or the player's
+// own: their mistake, a mechanic row flagged on their death, something avoidable, a cast that should have been kicked, or a
+// slow death with a defensive, Healthstone or potion still ready). Not enough damage: an enrage, a berserk, a shield not broken
+// in time. Too much damage taken: a mass death with no mistake found, a slow death with little healing coming in, or a tank
+// going down to melee. Not clear: nothing in the log says why (it never guesses). Kills and resets get no verdict.
+const WHY_DMG = /enrag|berserk|needed more damage|n't broken in time|was still at \d+%|still alive two sets/i;
+const WHY_K = { mistake: ['A mistake', 'bad'], dmg: ['Not enough damage', 'dmg'], heal: ['Too much damage taken', 'heal'], unclear: ['Not clear', 'na'] };
+function whyWiped(r) {
+  if (!r || !r.item || r.item.kill || r.allPulls || dbfReset(r.item) || !r.deaths || !r.mistakes) return null;
+  if (r._why) return r._why;
+  const lc = (x) => String(x || '').toLowerCase(), nm = (x) => lc(String(x || '').split('-')[0]), all = r.deaths.slice().sort((a, b) => a.t - b.t), ms = r.mistakes.filter((m) => m.mechanic !== 'Death');
+  const av = new Set(ms.filter((m) => m.avoidRule).map((m) => lc(m.mechanic)));
+  { const pk = E.PACKS.find((p) => p.encounter === r.item.boss); for (const x of (pk && pk.rules) || []) if (x.type === 'avoidable' && x.name) av.add(lc(x.name)); }
+  /* (their own mistake in the 10 seconds before: a serious or medium one, or any on what killed them) */
+  const ownM = (d) => ms.filter((m) => nm(m.player) === nm(d.player) && m.t >= d.t - 10 && m.t <= d.t + 2 && (m.severity !== 'Low' || lc(m.mechanic) === lc(d.ability))).sort((a, b) => (lc(b.mechanic) === lc(d.ability)) - (lc(a.mechanic) === lc(d.ability)) || (b.severity === 'High') - (a.severity === 'High'))[0] || null;
+  /* (a mechanic row on Debriefing flagged red for them at that moment, like a Gravebound death: its name and what the row says) */
+  const rowBad = (d) => { const secs = (r.module && !r.module.error && r.module.sections) || [];
+    for (const s of secs) { if (s.id === 'deaths' || s.info) continue; const rows = (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || []));
+      for (const row of rows) { if (!row.some((c) => c.bad)) continue; const tc = row.find((c) => c.t != null); if (!tc || tc.t < d.t - 3 || tc.t > d.t + 1) continue;
+        if (row.some((c) => c.p && nm(c.p) === nm(d.player))) { const tx = row.filter((c) => c.bad && c.txt && !c.p).map((c) => String(c.txt)); return { l: (s.spell && s.spell[1]) || String(s.title || '').replace(/\s*\(.*$/, ''), why: tx.length > 1 ? tx[tx.length - 1] : '' }; } } }
+    return null; };
+  const why = (d) => { const m = ownM(d); if (m) return { l: m.mechanic, why: m.detail || '' }; const b = rowBad(d); if (b) return b;
+    if (av.has(lc(d.ability))) return { l: '', why: '', av: true }; if ((d.why || []).some((w) => /was not interrupted/.test(w))) return { l: '', why: '', kick: true }; return null; };
+  let i0 = 0; for (let i = 1; i < all.length; i++) if (all[i].t - all[i - 1].t >= 60) i0 = i;
+  const d0 = all[i0] || null;
+  const raidM = (a, b, sev) => ms.filter((m) => m.player === 'Raid' && sev.includes(m.severity) && m.t >= a && m.t <= b).sort((x, y) => x.t - y.t)[0] || null;
+  const dmgM = ms.filter((m) => m.player === 'Raid' && WHY_DMG.test(m.detail || '')).sort((a, b) => a.t - b.t);
+  const fromM = (m, k) => ({ k: k || (WHY_DMG.test(m.detail || '') ? 'dmg' : 'mistake'), t: m.t, mech: m.mechanic, id: m.id, detail: m.detail, how: 'raid' });
+  const rm = d0 ? raidM(d0.t - 20, d0.t + 1, ['High']) : ms.filter((m) => m.player === 'Raid' && m.severity === 'High').sort((a, b) => a.t - b.t)[0];
+  let o;
+  if (rm) o = fromM(rm);
+  else if (d0) {
+    const wave = all.filter((x) => x.t >= d0.t && x.t - d0.t <= 5), p0 = r.players.get(d0.guid), w0 = why(d0);
+    /* (the raid's mistake logged just after the deaths it caused, like an orb exploding into other orbs) */
+    const late = raidM(d0.t - 10, d0.t + 8, wave.length >= 4 ? ['High', 'Medium'] : ['High']);
+    if (w0) o = { k: 'mistake', t: d0.t, d: d0, l: w0.l, why: w0.why, av: !!w0.av, kick: !!w0.kick, how: 'own' };
+    else if (late) o = fromM(late);
+    else if (wave.length >= 4) { const wm = wave.find((x) => why(x)), ww = wm ? why(wm) : null;
+      o = wm ? { k: 'mistake', t: d0.t, d: wm, l: ww.l, why: ww.why, av: !!ww.av, kick: !!ww.kick, how: 'own' } : { k: 'heal', t: d0.t, d: d0, how: 'wave' }; }
+    else if (!dbfFast(d0) && dbfKit(d0).length) o = { k: 'mistake', t: d0.t, d: d0, how: 'kit' };
+    else if ((d0.why || []).some((w) => /Very little healing/.test(w))) o = { k: 'heal', t: d0.t, d: d0, how: 'bleed' };
+    else if (p0 && p0.role === 'tank' && (!d0.ability || d0.ability === 'Melee')) o = { k: 'heal', t: d0.t, d: d0, how: 'tank' };
+    else o = { k: 'unclear', t: d0.t, d: d0, how: 'death' };
+  } else o = dmgM.length ? fromM(dmgM[0], 'dmg') : { k: 'unclear', how: 'none' };
+  o.all = all; o.pull = r.item.pull; o.size = r.players ? r.players.size : 20;
+  return (r._why = o);
+}
+// (the verdict in words, said the way a raid lead actually talks after a pull (your notes, Oct 21: "weird grammar", "from the
+// perspective of the raid lead", "a bit vague", "still doesn't sound like a raid lead", "it doesn't sound human"): casual and
+// short, contractions, a name and "you" for the player, "again" when it keeps happening. The fix itself is the Next pull line)
+const WHY_NUM = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+const WHY_ORD = ['', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
+// (what a wipe was "to", so the night and "again" can count the same thing)
+const whyKey = (o) => (o.k === 'dmg' ? 'dmg' : o.k === 'unclear' ? '?' : o.how === 'kit' ? 'kit' : o.how === 'bleed' ? 'bleed' : o.how === 'tank' ? 'tank' : o.how === 'wave' ? 'w:' + lc0(o.d && o.d.ability) : 'm:' + lc0(o.mech || o.l || (o.d && o.d.ability)));
+function whySay(o, pm, nth) {
+  const who = (d) => dbfWho(d.player, pm), lc = (x) => String(x || '').toLowerCase(), ab = (d) => (d.ability || d.killer ? dbfTo(d) : 'a hit');
+  const names = (l) => lpAnd([...new Set(l.map((d) => d.player))].map((p) => dbfWho(p, pm)));
+  /* (a mechanic's own note, made plain: no bracketed asides or damage numbers, a semicolon becomes a full stop, "players" are "us", one or two short sentences) */
+  const plain = (t) => { let x = String(t || '').trim(); for (let i = 0; i < 3; i++) x = x.replace(/\s*\([^()]*\)/g, '');
+    x = x.replace(/,? for [\d,.]+[kKmM]?( avoidable damage)?/g, '').replace(/;\s*(\w)/g, (m0, ch) => '. ' + ch.toUpperCase()).replace(/^1 player\b/, 'One player').replace(/\s+([.,:])/g, '$1');
+    x = x.replace(/\b(\d+|One) players? (?=died|got|were|was|took|stood|reached)/g, (m0, n) => n + ' of us ').replace(/\bby only (\d+) players?\b/g, 'by only $1 of us').replace(/\bplayers gained\b/g, 'we gained').replace(/\bthe raid gained\b/g, 'we gained').replace(/\bThe raid\b/g, 'We').replace(/\bthe raid\b/g, 'us');
+    const m = x.match(/^.*?[.!?](?=\s|$)/); if (!m) return x; const m2 = m[0].length < 70 ? x.slice(m[0].length).match(/^\s*.*?[.!?](?=\s|$)/) : null; return (m[0] + (m2 ? m2[0] : '')).trim(); };
+  /* (what the player did, said to them: "didn't pick up their soul fragments" becomes "didn't pick up your soul fragments") */
+  const toYou = (t) => { let x = plain(t).replace(/[.!]+$/, ''); if (/:\s/.test(x) && /^died to /i.test(x)) x = x.slice(x.lastIndexOf(': ') + 2);
+    x = x.replace(/\btheir\b/g, 'your').replace(/\bTheir\b/g, 'Your').replace(/\bthemselves\b/g, 'yourself').replace(/\bthey\b/g, 'you').replace(/\bthem\b/g, 'you'); return x ? x.charAt(0).toLowerCase() + x.slice(1) : ''; };
+  const at = o.t != null ? ' at ' + T(o.t) : '', d = o.d, all = o.all || [];
+  /* (who died in the same few seconds, and how it ended: everyone dead, or the wipe called) */
+  const t0 = o.t != null ? o.t : 0, near = all.filter((x) => x.t >= t0 - 2 && x.t <= t0 + 5), rest = all.filter((x) => x.t > t0 + 5);
+  const dead = new Set(all.filter((x) => x.t >= t0 - 2).map((x) => x.player)).size, everyone = dead >= (o.size || 20) - 2;
+  const end = near.length >= 3 ? ' Losing ' + (WHY_NUM[near.length] || near.length) + ' at once is too much to come back from.' : !rest.length ? (everyone ? '' : ' We called it after that.') : everyone ? ' We never really recovered after that.' : ' We lost ' + rest.length + ' more after that and called it.';
+  /* (the opener: "That one's on Dreadmarch.", or "Dreadmarch again, that's the third time tonight.") */
+  const on = (name) => (nth >= 2 ? name + ' again, that\'s the ' + (WHY_ORD[nth] || nth + 'th') + ' time tonight.' : 'That one\'s on ' + name + '.');
+  const same = near.filter((x) => x !== d && d && d.ability && lc(x.ability) === lc(d.ability)), group = d ? [d].concat(same) : [];
+  if (o.how === 'raid') return { h: o.k === 'dmg' ? (nth >= 2 ? 'Short on damage again, that\'s the ' + (WHY_ORD[nth] || nth + 'th') + ' time tonight.' : 'We just didn\'t have the damage for that one.') : on(mech(o.mech, o.id)), s: esc(whyAt(plain(o.detail), T(o.t))) + end };
+  if (o.how === 'none') return { h: 'Not sure what happened on that one.', s: 'Nobody died, so I think we called it.' };
+  if (o.how === 'own') { const r1 = o.why ? toYou(o.why) : '', you = group.length > 1 ? names(group) : who(d), sameL = lc(o.l) === lc(d.ability);
+    const did = r1 ? (/\bdied\b/.test(r1) ? you + ', you ' + r1 + at + '.' : (/^your\b/.test(r1) ? you + ', ' + r1 : you + ', you ' + r1) + (sameL ? ' and it got you' + at + '.' : ' and ' + ab(d) + ' got you' + at + '.'))
+      : o.kick ? you + ', ' + ab(d) + ' got you' + at + ' because a cast got through our kicks.' : o.av ? you + ', ' + ab(d) + ' got you' + at + '. That one\'s dodgeable.' : you + ', ' + ab(d) + ' got you' + at + '.';
+    const others = near.filter((x) => !group.includes(x)), also = others.length ? ' ' + dbfCap(names(others)) + ' went down right then too.' : '';
+    const lost = group.length + others.length;
+    return { h: o.l ? on(esc(o.l)) : o.av ? on(ab(d)) : o.kick ? on('our kicks') : 'That one started with ' + who(d) + '.', s: did + also + (lost >= 3 ? ' Losing ' + (WHY_NUM[lost] || lost) + ' at once is too much to come back from.' : end) }; }
+  if (o.how === 'wave') return { h: nth >= 2 ? 'Raid damage again, that\'s the ' + (WHY_ORD[nth] || nth + 'th') + ' time tonight.' : 'That one\'s on raid damage.', s: near.length + ' of us went down to ' + ab(d) + at + ', and I don\'t see anyone doing anything wrong. We need a raid cooldown there.' };
+  if (o.how === 'kit') return { h: nth >= 2 ? 'Another one we could\'ve saved.' : 'We could\'ve saved that one.', s: who(d) + ', you were dropping to ' + ab(d) + ' for a while' + at + ' and still had ' + lpAnd(dbfKit(d).slice(0, 2).map((x) => esc(x).replace(/^an? /, 'your '))) + '. If you\'re going down, use them.' + end };
+  if (o.how === 'bleed') return { h: 'That one\'s on healing.', s: who(d) + ', you were dropping to ' + ab(d) + ' for a while' + at + ' and barely got any healing. Healers, let\'s watch that spot.' + end };
+  if (o.how === 'tank') return { h: 'We lost a tank on that one.', s: who(d) + ', ' + ab(d) + ' got you' + at + '. Let\'s get an external or a swap ready there.' + end };
+  return { h: 'Not sure what happened on that one.', s: 'The first death was ' + who(d) + ' to ' + ab(d) + at + ', and nothing in the log jumps out.' + end };
+}
+const whyDotI = (k) => '<i class="fc-why why-' + WHY_K[k][1] + '" aria-hidden="true"></i>';
+// (prev: this boss's earlier pulls already read, for "again")
+function whyLine(r, pm, prev) { let o = null; try { o = whyWiped(r); } catch (e) { console.error(e); o = null; } if (!o) return '';
+  let nth = 1; try { const k = whyKey(o); if (k !== '?') nth = 1 + (prev || []).filter((x) => x && x.item && x.item.pull < r.item.pull && x.item.diffId === r.item.diffId).map((x) => whyWiped(x)).filter((y) => y && whyKey(y) === k).length; } catch (e) { nth = 1; }
+  const w = whySay(o, pm, nth), g = whyShort(o, pm), again = nth >= 2 ? '<span class="why-again">' + (WHY_ORD[nth] ? dbfCap(WHY_ORD[nth]) : nth + 'th') + ' time tonight</span>' : '';
+  /* (your note, Oct 22: "narrow down the root cause of a single wipe, and make it even briefer, at a glance": one line with the first
+     domino, and the raid lead's longer take opens under it) */
+  return '<details class="dbr-why dbr-whyd" title="Why we wiped: ' + esc(WHY_K[o.k][0]) + '"><summary>' + whyDotI(o.k) + '<b>' + g.label + '</b><span class="why-sep"> · </span>' + g.short + again + '<span class="why-more">more</span></summary><p>' + w.h + ' ' + w.s + '</p></details>'; }
+// (the first domino in a few words, for the one line: "Lost to Dreadmarch at 3:07", "Boltzzx didn't pick up their soul fragments")
+function whyShort(o, pm) {
+  const lc = (x) => String(x || '').toLowerCase(), who = (d) => dbfWho(d.player, pm), at = o.t != null ? ' at ' + T(o.t) : '', d = o.d;
+  const ab = (x) => (x && (x.ability || x.killer) ? dbfTo(x) : 'a hit'), all = o.all || [], t0 = o.t != null ? o.t : 0;
+  const near = all.filter((x) => x.t >= t0 - 2 && x.t <= t0 + 5), same = d ? [d].concat(near.filter((x) => x !== d && d.ability && lc(x.ability) === lc(d.ability))) : [];
+  const names = (l) => { const a = [...new Set(l.map((x) => x.player))].map((p) => dbfWho(p, pm)); return a.length > 3 ? a.length + ' of us' : lpAnd(a); };
+  const clip = (x) => { let s = String(x || '').trim().replace(/[.!]+$/, ''); const c = s.indexOf(': '); if (c > 12) s = s.slice(0, c); return s; };
+  /* (a mechanic note cut to its point: "Only 2 soaked Guillotine (needs 5)", "set 1's adds were still alive") */
+  const raidShort = (x) => { let x0 = String(x || ''); for (let i = 0; i < 3; i++) x0 = x0.replace(/\s*\([^()]*\)/g, ''); const p = clip(x0); let m = p.match(/^(.+?) was soaked by only (\d+) (?:players?|of us)\. It needs (\d+)$/) || p.match(/^(.+?) was soaked by only (\d+) (?:players?|of us)(?:; it needs (\d+))?/);
+    if (m) return 'only ' + m[2] + ' soaked ' + m[1] + (m[3] ? ' (needs ' + m[3] + ')' : '');
+    m = p.match(/ while (.+?) (were|was) alive/); if (m) return m[1] + ' ' + m[2] + ' still alive'; return p.replace(/^1 player\b/, 'one player'); };
+  const reason3 = (t) => { let x = String(t || '').trim().replace(/[.!]+$/, ''); if (/^died to [^:]+:\s/i.test(x)) x = x.slice(x.lastIndexOf(': ') + 2); x = x.replace(/\s*\([^()]*\)/g, '').replace(/,? for [\d,.]+.*$/, '');
+    if (x.length > 45 && x.indexOf(' and ') > 8) x = x.slice(0, x.indexOf(' and ')); return x ? x.charAt(0).toLowerCase() + x.slice(1) : ''; };
+  const cap = (s) => dbfCap(String(s));
+  if (o.how === 'raid') return o.k === 'dmg' ? { label: 'Short on damage' + at, short: esc(cap(raidShort(o.detail || ''))) } : { label: 'Lost to ' + mech(o.mech, o.id) + at, short: esc(cap(raidShort(o.detail || ''))) };
+  if (o.how === 'none') return { label: 'No clear cause', short: 'nobody died, so it was probably called' };
+  if (o.how === 'own') { const r1 = o.why ? reason3(o.why) : '', grp = names(same);
+    return { label: 'Lost to ' + esc(o.l || (d && d.ability) || 'a death') + at, short: r1 && !/^died\b/.test(r1) ? grp + ' ' + esc(r1) : o.kick ? who(d) + ' died to ' + ab(d) + ' after a missed kick' : o.av ? grp + ' died to ' + ab(d) + ' (dodgeable)' : grp + ' died to ' + ab(d) }; }
+  if (o.how === 'wave') return { label: 'Lost to raid damage' + at, short: near.length + ' died to ' + ab(d) + ' at once, no mistake found' };
+  if (o.how === 'kit') return { label: 'Lost to a slow death' + at, short: who(d) + ' died to ' + ab(d) + ' with ' + esc(dbfKit(d)[0] || 'a defensive') + ' unused' };
+  if (o.how === 'bleed') return { label: 'Lost to a slow death' + at, short: who(d) + ' bled out with little healing' };
+  if (o.how === 'tank') return { label: 'Lost our tank' + at, short: who(d) + ' died to ' + ab(d) };
+  return { label: 'No clear cause', short: 'first death was ' + who(d) + ' to ' + ab(d) + at };
+}
+// (the night, the way a raid lead sums it up at the end: the few things that got us most, each with why or what to do, how many
+// wipes fixing them would save, and the smaller ones in one line)
+function whyNight(reps, pm) {
+  const L = reps.map((r) => { try { return whyWiped(r); } catch (e) { return null; } }).filter(Boolean); if (L.length < 2) return '';
+  const fixFor = dbfFixer(reps), tip = (n) => { const t = fixFor(n); return t ? ' ' + esc(t) : ''; };
+  const times = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : (WHY_NUM[n] || n) + ' times');
+  const G = new Map(); for (const o of L) { const k = whyKey(o), g = G.get(k) || { k, l: [] }; g.l.push(o); G.set(k, g); }
+  const say = (g) => { const n = g.l.length, o = g.l[0], ab = o.d && o.d.ability;
+    if (g.k === 'dmg') return 'we came up short on damage ' + times(n) + '.';
+    if (g.k === 'kit') return times(n) + ' someone died slowly with a Healthstone or defensive still up, so if you\'re dropping, use them.';
+    if (g.k === 'bleed') return times(n) + ' someone bled out with barely any healing coming in.';
+    if (g.k === 'tank') return 'we lost a tank ' + times(n) + ', so let\'s get externals ready.';
+    if (/^w:/.test(g.k)) return 'the raid damage from <b>' + esc(ab || 'the boss') + '</b> got us ' + times(n) + ' with nobody doing anything wrong, so we need a cooldown there.';
+    const m = o.mech || o.l || ab || '', rs = g.l.map((x) => whyReason(x.why)).filter(Boolean), cnt = new Map(); for (const x of rs) cnt.set(x, (cnt.get(x) || 0) + 1);
+    const tr = [...cnt].sort((a, b) => b[1] - a[1])[0], why1 = tr && tr[1] >= 2 ? (tr[1] === n ? ', every time because someone ' : ', mostly because someone ') + esc(tr[0]) : '';
+    return '<b>' + esc(m) + '</b> got us ' + times(n) + why1 + (o.av && !o.l && !o.mech ? ', and that\'s dodgeable.' : '.' + (why1 ? '' : tip(m))); };
+  const name = (g) => { const o = g.l[0], ab = o.d && o.d.ability; return g.k === 'dmg' ? 'being short on damage' : g.k === 'kit' ? 'slow deaths with a Healthstone up' : g.k === 'bleed' ? 'bleeding out' : g.k === 'tank' ? 'losing a tank' : /^w:/.test(g.k) ? 'the ' + esc(ab || 'raid') + ' damage' : '<b>' + esc(o.mech || o.l || ab || '') + '</b>'; };
+  const gs = [...G.values()].filter((g) => g.k !== '?').sort((a, b) => b.l.length - a.l.length || Math.min(...a.l.map((o) => o.pull || 0)) - Math.min(...b.l.map((o) => o.pull || 0)));
+  const top = gs.filter((g) => g.l.length >= 2).slice(0, 3), main = top.length ? top : gs.slice(0, 1), inTop = main.reduce((s, g) => s + g.l.length, 0);
+  const small = gs.filter((g) => !main.includes(g) && g.l.length >= 2), unk = (G.get('?') || { l: [] }).l.length;
+  const head = main.length === 1 ? 'Okay, tonight mostly came down to one thing.' : 'Okay, tonight mostly came down to ' + WHY_NUM[main.length] + ' things.';
+  const body = main.map((g, i) => { const t = say(g); return (i && i === main.length - 1 && main.length > 1 ? 'And ' + t : dbfCap(t)); }).join(' ');
+  const tot = main.length > 1 && inTop < L.length ? ' Clean those up and that\'s ' + inTop + ' of our ' + L.length + ' wipes gone.' : '';
+  const sm = small.length ? ' ' + dbfCap(lpAnd(small.map(name))) + ' got us ' + (small.every((g) => g.l.length === 2) ? 'twice each too.' : 'a few times too.') : '';
+  const un = unk ? ' ' + (unk === 1 ? 'One wipe' : dbfCap(WHY_NUM[unk] || String(unk)) + ' wipes') + ' I can\'t really explain from the log.' : '';
+  /* (at a glance (your note, Oct 22): what wiped us and how often, in one line; the raid lead's summary opens under it) */
+  const gName = (g) => { const o = g.l[0], ab = o.d && o.d.ability; return g.k === 'dmg' ? 'short on damage' : g.k === 'kit' ? 'slow deaths, Healthstone unused' : g.k === 'bleed' ? 'bleeding out' : g.k === 'tank' ? 'losing a tank' : /^w:/.test(g.k) ? esc(ab || 'raid') + ' raid damage' : esc(o.mech || o.l || ab || ''); };
+  const gl = gs.filter((g) => g.l.length >= 2).slice(0, 6), gL = gl.length ? gl : gs.slice(0, 3), gRest = gs.filter((g) => !gL.includes(g)).reduce((s2, g) => s2 + g.l.length, 0) + ((G.get('?') || { l: [] }).l.length);
+  const glance = gL.map((g) => '<span class="why-g">' + dbfCap(gName(g)) + ' <b>×' + g.l.length + '</b></span>').join('<span class="why-sep"> · </span>') + (gRest ? '<span class="why-sep"> · </span><span class="why-g">+' + gRest + (gRest === 1 ? ' other' : ' others') + '</span>' : '');
+  return '<details class="dbr-why dbr-whyd"><summary><b>What wiped us:</b> ' + glance + '<span class="why-more">more</span></summary><p><b>' + head + '</b> ' + body + tot + sm + un + '</p></details>';
+}
+const lc0 = (x) => String(x || '').toLowerCase();
+// (a mechanic's note with its time worked in, the way you'd say it: "Only 2 of us soaked Guillotine at 2:08, and it needs 5.", "At 3:00, one of us died ...")
+const whyAt = (x, t) => { const m = x.match(/^(.+?) was soaked by only (\d+) of us\. It needs (\d+)\.?$/); if (m) return 'Only ' + m[2] + ' of us soaked ' + m[1] + ' at ' + t + ', and it needs ' + m[3] + '.';
+  return 'At ' + t + ', ' + (/^(A|An|The|One)\b/.test(x) ? x.charAt(0).toLowerCase() + x.slice(1) : x); };
+// (what a player did, for the night's summary in the third person: "didn't pick up their soul fragments"; only short, plain reasons)
+const whyReason = (t) => { let x = String(t || '').trim().replace(/[.!]+$/, ''); if (!x) return ''; if (/^died to [^:]+:\s/i.test(x)) x = x.slice(x.lastIndexOf(': ') + 2); else if (/^died\b/i.test(x)) return '';
+  x = x.replace(/\s*\([^()]*\)/g, '').replace(/,? for [\d,.]+.*$/, ''); return x.length <= 60 && !/\d{3}/.test(x) ? x.charAt(0).toLowerCase() + x.slice(1) : ''; };
+// (a small dot on a wipe's pull card, once the pull has been read)
+function whyDot(b) { try { const r = CACHE.get(b), o = r && r.players ? whyWiped(r) : null; return o ? '<i class="fc-why why-' + WHY_K[o.k][1] + '" title="Why we wiped: ' + esc(WHY_K[o.k][0]) + '"></i>' : ''; } catch (e) { return ''; } }
 // ---- report card: letter grades (S, A, B, C, D, F) for how a boss's pulls were played ----
 // Every score is out of 100 and only counts up to each pull's wipe filter (a pull's mess after the Nth death isn't
 // graded). Mechanics: each mistake on a boss mechanic (soaks, adds, orbs, raid-wide failures) takes points off its pull
@@ -33866,11 +34034,12 @@ function dbfPull(o) {
   const noPrev = B ? '' : it.pull > 1 ? 'The pulls before this were resets, so there\'s nothing to compare yet.' : 'This was our first pull, so there\'s nothing to compare yet.';
   const four = (nx) => '<div class="dbf-4">' + dbfCardP('ok', 'What went well', W1, null, 'Nothing stood out as done right this pull.') + dbfCardP('bad', 'What didn\'t go well', W2, L2, 'Nothing went wrong. Do that again.', nx) + '<i class="dbf-br"></i>' +
     dbfCardP('up', 'What\'s improving', U, LU, noPrev || 'Nothing clearly improved since last pull.') + dbfCardP('down', 'What\'s getting worse', Dn, LD, noPrev || 'Nothing clearly got worse since last pull.') + '</div>';
-  return { top: '<div class="panel dbf-short"><div class="dbf-k">' + (it.kill ? 'The kill' : 'Pull ' + it.pull) + '</div><p>' + s1 + ' ' + (story || s2) + '</p>' + (focus ? '<p><b>Next pull:</b> ' + esc(focus) + '</p>' : '') + '</div>' + nums, lists: four(''),
+  const WHY = whyLine(r, pm, others); /* (Why we wiped, your call Oct 21) */
+  return { top: '<div class="panel dbf-short"><div class="dbf-k">' + (it.kill ? 'The kill' : 'Pull ' + it.pull) + '</div>' + WHY + '<p>' + s1 + ' ' + (story || s2) + '</p>' + (focus ? '<p><b>Next pull:</b> ' + esc(focus) + '</p>' : '') + '</div>' + nums, lists: four(''),
     // (Debriefing: the four blocks with "Next pull" in them, and the story on its own for the bottom)
     cards: four(dbfNext('Next pull', focus)), story: '<div class="panel dbf-short rc-story"><div class="dbf-k">' + (it.kill ? 'The kill, phase by phase' : 'The pull, phase by phase') + '</div><p>' + s1 + ' ' + (story || s2) + '</p></div>', nums,
     // (the Debriefing rebuild, Oct 19: under the four numbers and the cards to fix, only the next pull's plan and what changed since the last one)
-    slim: focus || U.length || Dn.length ? '<div class="panel dbr-next">' + (focus ? '<p class="dbr-nx"><b>Next pull:</b> ' + esc(focus) + '</p>' : '') + (U.length ? '<p class="dbr-up"><span>▲ Better</span> ' + U.join(' ') + '</p>' : '') + (Dn.length ? '<p class="dbr-dn"><span>▼ Worse</span> ' + Dn.join(' ') + '</p>' : '') + '</div>' : '' };
+    slim: WHY || focus || U.length || Dn.length ? '<div class="panel dbr-next">' + WHY + (focus ? '<p class="dbr-nx"><b>Next pull:</b> ' + esc(focus) + '</p>' : '') + (U.length ? '<p class="dbr-up"><span>▲ Better</span> ' + U.join(' ') + '</p>' : '') + (Dn.length ? '<p class="dbr-dn"><span>▼ Worse</span> ' + Dn.join(' ') + '</p>' : '') + '</div>' : '' };
 }
 // ---- the whole night ----
 function dbfNight(o) {
@@ -33969,10 +34138,11 @@ function dbfNight(o) {
   const short = n < 6 ? 'Not enough pulls yet to say what\'s changing.' : '';
   const four = (nx) => '<div class="dbf-4">' + dbfCardP('ok', 'What went well', W1, null, 'Nothing was done right all night yet.') + dbfCardP('bad', 'What didn\'t go well', W2, null, 'Nothing kept going wrong. Keep it up.', nx) + '<i class="dbf-br"></i>' +
     dbfCardP('up', 'What\'s improving', U, null, short || 'Nothing is clearly improving yet.') + dbfCardP('down', 'What\'s getting worse', Dn, null, short || 'Nothing is clearly getting worse.') + '</div>';
-  return { top: '<div class="panel dbf-short"><div class="dbf-k">All pulls</div><p>' + s1 + s2 + '</p>' + (arc ? '<p>' + arc + '</p>' : '') + (focus ? '<p><b>Next time:</b> ' + esc(focus) + '</p>' : '') + '</div>' + bars + nums, lists: four(''),
+  const WHYN = whyNight(rs, pm); /* (Why we wiped over the night, your call Oct 21) */
+  return { top: '<div class="panel dbf-short"><div class="dbf-k">All pulls</div>' + WHYN + '<p>' + s1 + s2 + '</p>' + (arc ? '<p>' + arc + '</p>' : '') + (focus ? '<p><b>Next time:</b> ' + esc(focus) + '</p>' : '') + '</div>' + bars + nums, lists: four(''),
     cards: four(dbfNext('Next time', focus)), story: '<div class="panel dbf-short rc-story"><div class="dbf-k">The night, start to finish</div><p>' + s1 + s2 + '</p>' + (arc ? '<p>' + arc + '</p>' : '') + '</div>', bars, nums,
     // (the Debriefing rebuild on All pulls, Oct 19: under the four numbers and the cards to fix, the next raid's plan and what changed through the night)
-    slim: focus || U.length || Dn.length ? '<div class="panel dbr-next">' + (focus ? '<p class="dbr-nx"><b>Next time:</b> ' + esc(focus) + '</p>' : '') + (U.length ? '<p class="dbr-up"><span>▲ Better</span> ' + U.join(' ') + '</p>' : '') + (Dn.length ? '<p class="dbr-dn"><span>▼ Worse</span> ' + Dn.join(' ') + '</p>' : '') + '</div>' : '' };
+    slim: WHYN || focus || U.length || Dn.length ? '<div class="panel dbr-next">' + WHYN + (focus ? '<p class="dbr-nx"><b>Next time:</b> ' + esc(focus) + '</p>' : '') + (U.length ? '<p class="dbr-up"><span>▲ Better</span> ' + U.join(' ') + '</p>' : '') + (Dn.length ? '<p class="dbr-dn"><span>▼ Worse</span> ' + Dn.join(' ') + '</p>' : '') + '</div>' : '' };
 }
 // (Recap is information only: the side boxes' links to other tabs become plain text there)
 function dbfNoGo(el) { if (!el) return; el.querySelectorAll('button.lp-dgo').forEach((b) => { const x = document.createElement('span'); x.className = b.className + ' dbf-ng'; x.innerHTML = b.innerHTML.replace(/\s*›\s*$/, ''); b.replaceWith(x); }); }

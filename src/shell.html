@@ -3775,6 +3775,12 @@ a.dbr-fx.st-bad { border-top-color: var(--bad); } a.dbr-fx:hover { transform: tr
 .dbr-fxb { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px 12px; } .dbr-fxb .sst { align-self: flex-start; } .dbr-fxb b { font: 700 16px var(--head); }
 .dbr-fxt { color: var(--muted); font-size: 13px; }
 .dbr-next { padding: 10px 14px; margin-bottom: 12px; } .dbr-next p { margin: 4px 0; } .dbr-nx { font-size: 15px; }
+/* Why we wiped (Oct 21) */
+.dbr-why { font-size: 15px; } .dbr-why > .fc-why { width: 9px; height: 9px; margin: 0 8px 0 0; vertical-align: 1px; } .dbr-next .dbr-why + .dbr-nx { margin-top: 6px; } .dbr-whyd > summary { list-style: none; cursor: pointer; } .dbr-whyd > summary > .fc-why { width: 9px; height: 9px; margin: 0 8px 0 0; vertical-align: 1px; } .dbr-whyd > summary::-webkit-details-marker { display: none; } .dbr-whyd > p { margin: 6px 0 2px 17px; font-size: 14px; color: var(--muted); } .why-sep { color: var(--muted); } .why-again { margin-left: 8px; font-size: 12px; font-weight: 700; color: var(--warn); border: 1px solid currentColor; border-radius: 999px; padding: 0 7px; white-space: nowrap; } .why-more { margin-left: 8px; font-size: 12px; color: var(--muted); text-decoration: underline dotted; } .dbr-whyd[open] .why-more { display: none; } .why-g b { font-weight: 700; } .dbr-why b .sp { font-weight: inherit; }
+.why-t { display: inline-block; padding: 0 8px; border-radius: 999px; font-size: 12.5px; font-weight: 700; line-height: 20px; margin: 0 4px 0 2px; border: 1px solid currentColor; white-space: nowrap; }
+.why-bad { color: var(--bad); } .why-dmg { color: #e8843a; } .why-heal { color: #a77bf3; } .why-na { color: var(--muted); }
+.fc-why { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: currentColor; margin-left: 6px; vertical-align: 2px; }
+.why-bar { display: flex; gap: 2px; height: 6px; max-width: 360px; margin: 2px 0 8px; } .why-bar i { display: block; background: currentColor; border-radius: 3px; }
 .dbr-up, .dbr-dn { font-size: 13px; color: var(--muted); } .dbr-up > span { color: var(--good); font-weight: 700; margin-right: 4px; } .dbr-dn > span { color: var(--bad); font-weight: 700; margin-right: 4px; }
 .dbck { display: flex; flex-direction: column; gap: 6px; }
 .dbck > details.secd { margin: 0; }
