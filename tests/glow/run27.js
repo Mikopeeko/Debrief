@@ -63,6 +63,9 @@ C_Texture = { GetAtlasInfo = function(a) if MISSING[a] then return nil end; retu
 function COUNT() local l = {}; for _, f in ipairs(FRAMES) do if f._shown and rawget(f, "expires") then local up = f._scripts.OnUpdate; if up then up(f, 0) end
     if f._shown and f._anchor then local lb = rawget(f._anchor, "_label"); l[#l + 1] = (type(lb) == "string" and lb or "big icon") .. " " .. rawget(f, "text")._text end end end
   table.sort(l); return #l > 0 and table.concat(l, ", ") or "-" end
+function PREVIEW(secs) local f = DebriefGlowPreview; local up = f._scripts.OnUpdate; for i = 1, math.floor(secs * 10 + 0.5) do up(f, 0.1) end
+  local g = "no glow"; for _, x in ipairs(FRAMES) do if x._shown and type(rawget(x, "_anchor")) == "table" and rawget(x._anchor, "_label") == "preview" and rawget(x, "drawn") then local c = rawget(x, "tinted"); g = rawget(x, "drawn") .. (c and (" " .. string.format("%.2f,%.2f,%.2f", c[1], c[2], c[3])) or " game colours") end end
+  local n = DEBRIEF_PV_NUM(); return string.format("%-28s number %-4s glow %s", rawget(DEBRIEF_PV(), "cap")._text, n, g) end
 function GLOWING() local l = {}; for _, f in ipairs(FRAMES) do if f._shown and f._anchor and f._anchor ~= UIParent and rawget(f, "halo") then local lb = rawget(f._anchor, "_label"); l[#l + 1] = (type(lb) == "string" and lb or "big icon") .. look(f) end end; table.sort(l); return #l > 0 and table.concat(l, ", ") or "nothing" end
 `;
 const NOTE = `EncounterID:3600;Difficulty:Mythic;Name:The Coiled Altar
@@ -165,6 +168,15 @@ CHOOSE(st, "Game: rotation helper"); expect("Style: game rotation helper", Debri
 local tc = rawget(W, "timerColor"); tc[2]:GetScript("OnClick")(); expect("Number colour: Gold", DebriefGlowDB.timerColor, "gold"); tc[1]:GetScript("OnClick")()
 ADVANCE(NOW + 3.1)
 
+print("-- the preview beside the window (main settings)")
+function DEBRIEF_PV() return DebriefGlowPreview end
+function DEBRIEF_PV_NUM() local n = rawget(DebriefGlowPreview, "num"); return n._shown and rawget(n, "text")._text or "-" end
+expect("preview open beside the window", DebriefGlowPreview._shown, true)
+print("  1.0 s  " .. PREVIEW(1)); print("  3.5 s  " .. PREVIEW(2.5)); print("  5.1 s  " .. PREVIEW(1.6)); print("  6.0 s  " .. PREVIEW(0.9))
+CHOOSE(rawget(W, "style"), "Sparkles"); print("  style: Sparkles  " .. PREVIEW(0.1)); CHOOSE(rawget(W, "style"), "Pulse")
+print("  8.5 s  " .. PREVIEW(2.4)); print("  9.3 s  " .. PREVIEW(0.8)); print("  next loop, 1.0 s  " .. PREVIEW(1))
+ADVANCE(NOW + 3.1)
+
 print("-- Your spells")
 NOTE_TEXT = NOTE
 W:Hide(); DebriefGlow_Spells()
@@ -192,6 +204,13 @@ local ADD; for _, f in ipairs(FRAMES) do local h = rawget(f, "hint"); if h and h
 ADD:SetText("Divine Protection"); ADD:GetScript("OnEnterPressed")(ADD)
 ADD:SetText("Lay on Hands"); ADD:GetScript("OnEnterPressed")(ADD)
 local found = false; for _, f in ipairs(FRAMES) do if rawget(f, "whereText") and rawget(f, "id") == 633 and f._shown then found = true end end
+print("  click Avenging Wrath: the preview shows its own look")
+R[31884].hit:GetScript("OnClick")(R[31884].hit); ADVANCE(NOW + 3.1); heard()
+expect("preview is Avenging Wrath", rawget(DEBRIEF_PV(), "who")._text, "Avenging Wrath")
+print("  5.1 s  " .. PREVIEW(5.1))
+R[6940].hit:GetScript("OnClick")(R[6940].hit); print("  Blessing of Sacrifice (off): " .. PREVIEW(5.1))
+W.tabs.look:GetScript("OnClick")(); expect("back to the main settings on other tabs", rawget(DEBRIEF_PV(), "who")._text, "Aura Mastery")
+W.tabs.spells:GetScript("OnClick")()
 expect("Lay on Hands added", found, true)
 
 print("-- the pull with those spell settings (main: pulse, gold, no sound, no voice)")

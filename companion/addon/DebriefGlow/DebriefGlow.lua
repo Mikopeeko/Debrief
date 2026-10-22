@@ -77,6 +77,7 @@ local HALO = "Interface\\GLUES\\Models\\UI_Draenei\\GenericGlow64"
 local WHITE = "Interface\\Buttons\\WHITE8X8"
 local glows, pool = {}, {}
 local timers, tpool, waiting = {}, {}, {} -- (countdown numbers on the icons, and reminders still counting down)
+local timerLook, place, pv -- (shared with the preview below)
 -- (a flipbook: a texture that plays the frames of one atlas; once = play through once, else loop)
 local function flipbook(g, layer)
   local t = g:CreateTexture(nil, layer or "OVERLAY"); t:Hide()
@@ -251,6 +252,16 @@ local function tick(f)
   f.text:SetText((DB.timerTenths and left < 3) and string.format("%.1f", left) or tostring(math.ceil(left)))
 end
 local TIMER_COLORS = { white = { 1, 1, 1 }, gold = { 1, 0.82, 0 }, red = { 1, 0.25, 0.2 } }
+-- (the number's font, colour and place, from the settings)
+function timerLook(f, id)
+  f.text:SetFont(STANDARD_TEXT_FONT, DB.timerSize or 22, "THICKOUTLINE")
+  local c = TIMER_COLORS[DB.timerColor] or per(id).color or { DB.r, DB.g, DB.b }
+  f.text:SetTextColor(c[1], c[2], c[3], 1)
+  f.text:ClearAllPoints()
+  if DB.timerPos == "top" then f.text:SetPoint("BOTTOM", f, "TOP", 0, 2)
+  elseif DB.timerPos == "bottom" then f.text:SetPoint("TOP", f, "BOTTOM", 0, -2)
+  else f.text:SetPoint("CENTER", f, "CENTER", 0, 0) end
+end
 local function showTimer(id, expires, label)
   if not DB.timer then return end
   local it = cdmItemFor(id)
@@ -262,13 +273,7 @@ local function showTimer(id, expires, label)
   local f = table.remove(tpool)
   if not f then f = CreateFrame("Frame", nil, UIParent); f:SetFrameStrata("HIGH"); f.text = f:CreateFontString(nil, "OVERLAY") end
   f:SetAllPoints(it); f:SetFrameLevel((it.GetFrameLevel and it:GetFrameLevel() or 1) + 20)
-  f.text:SetFont(STANDARD_TEXT_FONT, DB.timerSize or 22, "THICKOUTLINE")
-  local c = TIMER_COLORS[DB.timerColor] or per(id).color or { DB.r, DB.g, DB.b }
-  f.text:SetTextColor(c[1], c[2], c[3], 1)
-  f.text:ClearAllPoints()
-  if DB.timerPos == "top" then f.text:SetPoint("BOTTOM", f, "TOP", 0, 2)
-  elseif DB.timerPos == "bottom" then f.text:SetPoint("TOP", f, "BOTTOM", 0, -2)
-  else f.text:SetPoint("CENTER", f, "CENTER", 0, 0) end
+  timerLook(f, id)
   f.id, f.expires, f.onFloat = id, expires, it == float
   timers[id] = f; f:SetScript("OnUpdate", tick); f:Show(); tick(f)
 end
@@ -277,16 +282,21 @@ end
 local round = 0
 local function stopAll() round = round + 1; for id in pairs(glows) do stop(id) end; for id in pairs(timers) do stopTimer(id) end; wipe(waiting) end
 -- (glows the icon for this spell: on the Cooldown Manager, or on the big icon of its own when it isn't there)
+-- (puts a glow on an icon, sized to it, in the spell's look)
+function place(g, it, id)
+  local pad = DB.pad or 2
+  g:SetScale(DB.scale or 1)
+  local w = it.GetWidth and it:GetWidth() or 0; g.size = (w and w > 0) and w or 40
+  g:ClearAllPoints(); g:SetPoint("TOPLEFT", it, "TOPLEFT", -pad, pad); g:SetPoint("BOTTOMRIGHT", it, "BOTTOMRIGHT", pad, -pad)
+  g:SetFrameLevel((it.GetFrameLevel and it:GetFrameLevel() or 1) + 10); g:Show(); dress(g, id)
+end
 local function start(id, hold, label)
   local it = cdmItemFor(id)
   if not it and not DB.fallback then return false end
   stop(id)
-  local g = newGlow(); local pad = DB.pad or 2
+  local g = newGlow()
   if not it then placeFloat(); float.tex:SetTexture(spellIcon(id)); float.txt:SetText(label or spellName(id) or ""); float:Show(); it = float; g.onFloat = true end
-  g:SetScale(DB.scale or 1)
-  local w = it.GetWidth and it:GetWidth() or 0; g.size = (w and w > 0) and w or 40
-  g:SetPoint("TOPLEFT", it, "TOPLEFT", -pad, pad); g:SetPoint("BOTTOMRIGHT", it, "BOTTOMRIGHT", pad, -pad)
-  g:SetFrameLevel((it.GetFrameLevel and it:GetFrameLevel() or 1) + 10); g:Show(); dress(g, id)
+  place(g, it, id)
   glows[id] = g
   g.timer = C_Timer.NewTimer(hold or DB.hold or 8, function() g.timer = nil; stop(id) end)
   return true
@@ -386,7 +396,7 @@ end
 local function color(r, g, b) return { r, g, b } end
 local COLORS = { { "gold", "Gold", color(0.90, 0.71, 0.31) }, { "white", "White", color(1, 1, 1) }, { "red", "Red", color(1, 0.25, 0.2) }, { "green", "Green", color(0.3, 0.95, 0.4) },
   { "blue", "Blue", color(0.3, 0.6, 1) }, { "purple", "Purple", color(0.75, 0.4, 1) }, { "cyan", "Cyan", color(0.2, 0.95, 0.95) }, { "pink", "Pink", color(1, 0.45, 0.8) } }
-local function preview() if DB.enabled then DebriefGlow_Test(true) end end
+local function preview() if pv and pv.restyle then pv.restyle() end; if DB.enabled then DebriefGlow_Test(true) end end
 function DebriefGlow_SetColor(name)
   for _, c in ipairs(COLORS) do if c[1] == name then DB.r, DB.g, DB.b = c[3][1], c[3][2], c[3][3]; DB.colorName = name end end
   preview()
@@ -525,6 +535,87 @@ local function inputBox(parent, w, h)
   return e
 end
 
+
+-- ---- the preview beside the window: a few of your icons; the middle one counts down like NSRT, then glows, on a loop ----
+-- (it uses the same drawing as the real thing, so every setting shows as you click; on Your spells it shows that spell's own look)
+pv = { spell = nil, t = 0 }
+do
+  local W, H, IS = 280, 262, 44
+  local LOOP_COUNT, LOOP_GLOW, LOOP_REST = 5, 3, 1.2
+  local frame, cap, who, sub, icons, numF, glowG
+  local function dueId() if pv.spell then return pv.spell end; local e = cdmItems()[1]; return e and e.ids[1] or 31821 end
+  local function sideIds(due)
+    local out = {}
+    for _, e in ipairs(cdmItems()) do if e.ids[1] ~= due and #out < 2 then out[#out + 1] = e.ids[1] end end
+    for _, x in ipairs({ 31884, 375576 }) do if #out < 2 and x ~= due then out[#out + 1] = x end end
+    return out
+  end
+  local function stopGlow() if glowG then quiet(glowG); glowG:Hide(); glowG:ClearAllPoints(); glowG:SetParent(UIParent); pool[#pool + 1] = glowG; glowG = nil end end
+  local function startGlow()
+    stopGlow()
+    glowG = newGlow(); glowG:SetParent(frame); glowG:SetFrameStrata(frame:GetFrameStrata())
+    place(glowG, icons[2], pv.spell or 0)
+  end
+  -- (who the preview is: the main settings, or one spell's own)
+  local function label()
+    local id = dueId()
+    icons[1].tex:SetTexture(spellIcon(sideIds(id)[1])); icons[3].tex:SetTexture(spellIcon(sideIds(id)[2])); icons[2].tex:SetTexture(spellIcon(id))
+    who:SetText(spellName(id) or "Your cooldown")
+    sub:SetText(pv.spell and "Its own settings (Your spells)" or "Your main settings")
+  end
+  function pv.restyle()
+    if not frame then return end
+    label(); timerLook(numF, pv.spell or 0)
+    if glowG then place(glowG, icons[2], pv.spell or 0) end
+  end
+  local function step(_, el)
+    pv.t = pv.t + el
+    local t, lead = pv.t, math.min(LOOP_COUNT, math.max(0, DB.lead or 0))
+    local on = DB.enabled and spellOn(pv.spell or 0)
+    local glowAt, glowEnd = LOOP_COUNT - lead, LOOP_COUNT + math.min(DB.hold or 8, LOOP_GLOW)
+    if t >= glowEnd + LOOP_REST then pv.t = 0; t = 0; stopGlow() end
+    -- (the number: NSRT's countdown, until 0)
+    local left = LOOP_COUNT - t
+    if on and DB.timer and left > 0 then numF.text:SetText((DB.timerTenths and left < 3) and string.format("%.1f", left) or tostring(math.ceil(left))); numF:Show() else numF:Hide() end
+    -- (the glow, from 0 (or earlier with Start early) for the hold, up to 3 s here)
+    if on and t >= glowAt and t < glowEnd then if not glowG then startGlow() end elseif glowG then stopGlow() end
+    if not on then cap:SetText(DB.enabled and "Turned off for this spell" or "The glow is off"); cap:SetTextColor(rgb(COL.faint))
+    elseif left > 0 then cap:SetText("NSRT: " .. (spellName(dueId()) or "your cooldown") .. " in " .. math.ceil(left)); cap:SetTextColor(rgb(COL.muted))
+    elseif t < glowEnd then cap:SetText("Press it now"); cap:SetTextColor(rgb(COL.gold))
+    else cap:SetText(" ") end
+  end
+  function pv.build(opt)
+    frame = CreateFrame("Frame", "DebriefGlowPreview", opt); frame:SetSize(W, H); frame:SetFrameStrata("HIGH")
+    skin(frame, 8, DEEP, 0.98, COL.line2, 1, true)
+    local lb = txt(frame, "bold", 12.5, COL.gold); lb:SetPoint("BOTTOMLEFT", frame, "TOPLEFT", 2, 7); lb:SetText("PREVIEW  ·  changes as you click")
+    who = txt(frame, "head", 17); who:SetPoint("TOPLEFT", 16, -14); who:SetWidth(W - 32); who:SetJustifyH("LEFT"); who:SetWordWrap(false)
+    sub = txt(frame, "body", 12.5, COL.faint); sub:SetPoint("TOPLEFT", 16, -36)
+    -- (three icons like a Cooldown Manager row, with room around them for the bigger glows)
+    icons = {}
+    for i = 1, 3 do
+      local f = CreateFrame("Frame", nil, frame); f:SetSize(IS, IS); f:SetPoint("CENTER", frame, "TOP", (i - 2) * (IS + 6), -128)
+      f.tex = f:CreateTexture(nil, "ARTWORK"); f.tex:SetAllPoints(); f.tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+      f._label = "preview"
+      icons[i] = f
+    end
+    numF = CreateFrame("Frame", nil, icons[2]); numF:SetAllPoints(icons[2]); numF:SetFrameLevel(icons[2]:GetFrameLevel() + 30); numF.text = numF:CreateFontString(nil, "OVERLAY")
+    cap = txt(frame, "bold", 13.5, COL.muted); cap:SetPoint("BOTTOM", 0, 40)
+    local foot = txt(frame, "body", 12, COL.faint); foot:SetPoint("BOTTOM", 0, 16); foot:SetText("Plays again every few seconds")
+    frame:SetScript("OnUpdate", step)
+    frame:SetScript("OnHide", function() stopGlow() end)
+    frame:SetScript("OnShow", function() pv.t = 0; pv.restyle() end)
+    pv.frame, frame.cap, frame.num, frame.who = frame, cap, numF, who
+  end
+  -- (to the right of the window, or the left when the screen has no room there)
+  function pv.place(opt)
+    if not frame then return end
+    frame:ClearAllPoints()
+    local right, room = opt:GetRight(), UIParent and UIParent:GetRight()
+    if right and room and right + W + 24 > room then frame:SetPoint("TOPRIGHT", opt, "TOPLEFT", -16, -26) else frame:SetPoint("TOPLEFT", opt, "TOPRIGHT", 16, -26) end
+    frame:Show(); pv.restyle()
+  end
+end
+
 -- ---- the spells this player uses: from the NSRT note, the Cooldown Manager, reminders already had, and spells added by hand ----
 local function noteSpells()
   local out = {}
@@ -553,8 +644,9 @@ local function spellList()
   table.sort(list, function(x, y) return x.name < y.name end)
   return list
 end
+local function pvFocus(id) pv.spell = id; pv.t = 0; pv.restyle() end
 local function testSpell(id)
-  start(id, 3); showTimer(id, GetTime() + 3); playSound(soundFor(id)); local w = wordsFor(id); if w then speak(w) end
+  pvFocus(id); start(id, 3); showTimer(id, GetTime() + 3); playSound(soundFor(id)); local w = wordsFor(id); if w then speak(w) end
 end
 local function soundList(first)
   local o = { first or { "none", "No sound" } }
@@ -575,7 +667,7 @@ local function refreshAll() for _, f in ipairs(refreshers) do f() end end
 local spellsPage -- (filled in below: the Your spells list)
 local function buildOptions()
   opt = CreateFrame("Frame", "DebriefGlowOptions", UIParent)
-  opt:SetSize(OW, OH); opt:SetPoint("CENTER", 0, 20); opt:SetFrameStrata("HIGH"); opt:SetToplevel(true); opt:SetClampedToScreen(true); opt:Hide()
+  opt:SetSize(OW, OH); opt:SetPoint("CENTER", -150, 0); opt:SetFrameStrata("HIGH"); opt:SetToplevel(true); opt:SetClampedToScreen(true); opt:Hide()
   skin(opt, 8, DEEP, 0.98, COL.line2, 1, true)
   opt:SetMovable(true); opt:EnableMouse(true); opt:RegisterForDrag("LeftButton")
   opt:SetScript("OnDragStart", opt.StartMoving); opt:SetScript("OnDragStop", opt.StopMovingOrSizing)
@@ -599,7 +691,7 @@ local function buildOptions()
   -- (underline tabs, like the website's Boss guides bar)
   local MENU = { { "glow", "When it glows" }, { "look", "Look" }, { "count", "Countdown" }, { "sound", "Sound and voice" }, { "spells", "Your spells" }, { "help", "Help" } }
   local NOTES = { glow = "When the glow starts and stops.", look = "Pick a style and colour. Your Cooldown Manager shows each change.", count = "NSRT's countdown, as a number on the spell.",
-    sound = "Off unless you turn it on. NSRT can speak too: use one of them.", spells = "Give a spell its own look, sound or words, or turn one off.", help = "How it works, and the commands." }
+    sound = "Off unless you turn it on. NSRT can speak too: use one of them.", spells = "Click a spell to see it in the preview. Give it its own look, sound or words.", help = "How it works, and the commands." }
   local TAB_Y, PAGE_TOP = 114, 164
   local tline = opt:CreateTexture(nil, "ARTWORK"); tline:SetPoint("TOPLEFT", 24, -(TAB_Y + 34)); tline:SetPoint("TOPRIGHT", -24, -(TAB_Y + 34)); tline:SetHeight(1); fill(tline, COL.line)
   local pages, tabs, cur = {}, {}, "glow"
@@ -609,6 +701,7 @@ local function buildOptions()
     for kk, b in pairs(tabs) do local on = kk == k; b.t:SetTextColor(rgb(on and COL.text or COL.muted)); b.u:SetShown(on) end
     pNote:SetText(NOTES[k] or "")
     if k == "spells" and spellsPage then spellsPage.fill() end
+    if k ~= "spells" and pv.spell then pv.spell = nil; pv.t = 0; pv.restyle() end
   end
   local tx = 16
   for _, it in ipairs(MENU) do
@@ -810,6 +903,7 @@ local function buildOptions()
   panelEnd()
 
   spellsPage.build(pages.spells)
+  pv.build(opt)
 end
 
 -- ---- Your spells: one row per spell (glow on/off, style, colour, sound, words, Test, and x to go back to the main settings) ----
@@ -825,7 +919,7 @@ do
     r.icon = r:CreateTexture(nil, "ARTWORK"); r.icon:SetSize(30, 30); r.icon:SetPoint("LEFT", C.icon, 0); r.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     r.name = txt(r, "bold", 14); r.name:SetPoint("TOPLEFT", C.name, -7); r.name:SetWidth(144); r.name:SetJustifyH("LEFT"); r.name:SetWordWrap(false)
     r.where = txt(r, "body", 11.5, COL.faint); r.where:SetPoint("TOPLEFT", r.name, "BOTTOMLEFT", 0, -2); r.where:SetWidth(144); r.where:SetJustifyH("LEFT")
-    r.on = switch(r, function() return not per(r.id).off end, function(v) perSet(r.id, "off", (not v) or nil); r:Refresh() end); r.on:SetPoint("LEFT", C.on, 0)
+    r.on = switch(r, function() return not per(r.id).off end, function(v) perSet(r.id, "off", (not v) or nil); r:Refresh(); pvFocus(r.id) end); r.on:SetPoint("LEFT", C.on, 0)
     r.style = picker(r, 172, function() return styleList({ "main", "Main style" }) end,
       function() return per(r.id).style or "main" end, function(v) perSet(r.id, "style", v ~= "main" and v or nil); r:Refresh(); testSpell(r.id) end)
     r.style:SetPoint("LEFT", C.style, 0)
@@ -849,15 +943,18 @@ do
       end)
     r.color:SetPoint("LEFT", C.color, 0)
     r.sound = picker(r, 124, function() return soundList({ "main", "Main sound" }) end, function() return per(r.id).sound or "main" end,
-      function(v) perSet(r.id, "sound", v ~= "main" and v or nil); r:Refresh(); playSound(soundFor(r.id)) end)
+      function(v) perSet(r.id, "sound", v ~= "main" and v or nil); r:Refresh(); pvFocus(r.id); playSound(soundFor(r.id)) end)
     r.sound:SetPoint("LEFT", C.sound, 0)
     r.words = inputBox(r, 100, 28); r.words.bg:SetPoint("LEFT", C.words, 0); r.words:SetMaxLetters(60)
-    local function saveWords(self) local t = (self:GetText() or ""):gsub("^%s+", ""):gsub("%s+$", ""); perSet(r.id, "words", t ~= "" and t or nil); r:Refresh() end
+    local function saveWords(self) local t = (self:GetText() or ""):gsub("^%s+", ""):gsub("%s+$", ""); perSet(r.id, "words", t ~= "" and t or nil); r:Refresh(); pvFocus(r.id) end
     r.words:SetScript("OnEnterPressed", function(self) saveWords(self); self:ClearFocus(); local w = wordsFor(r.id); if w then speak(w) end end)
     r.words:HookScript("OnEditFocusLost", saveWords)
     r.test = button(r, "Test", 46, false, 28); r.test:SetPoint("LEFT", C.test, 0); r.test:SetScript("OnClick", function() testSpell(r.id) end)
     r.reset = button(r, "×", 26, false, 28); r.reset:SetPoint("LEFT", C.reset, 0); setFont(r.reset.t, "bold", 16)
-    r.reset:SetScript("OnClick", function() DB.spells[r.id] = nil; r:Refresh() end)
+    r.reset:SetScript("OnClick", function() DB.spells[r.id] = nil; r:Refresh(); pvFocus(r.id) end)
+    -- (click the spell's icon or name to see it in the preview)
+    r.hit = CreateFrame("Button", nil, r); r.hit:SetPoint("TOPLEFT", 0, 0); r.hit:SetSize(C.on - 6, ROW_H)
+    r.hit:SetScript("OnClick", function() pvFocus(r.id) end); tip(r.hit, "Show it in the preview")
     tip(r.reset, "Back to the main settings")
     r.Refresh = function(self)
       local p = per(self.id)
@@ -928,7 +1025,7 @@ function DebriefGlow_Open(pg)
   if not DB then return end
   if not opt then buildOptions() end
   if SettingsPanel and SettingsPanel.IsShown and SettingsPanel:IsShown() and HideUIPanel then HideUIPanel(SettingsPanel) end
-  refreshAll(); opt:Show(); showPage(pg or "glow")
+  refreshAll(); opt:Show(); showPage(pg or "glow"); pv.place(opt)
 end
 function DebriefGlow_Spells() DebriefGlow_Open("spells") end
 function DebriefGlow_OnAddonCompartmentClick() if opt and opt:IsShown() then opt:Hide() else DebriefGlow_Open() end end
