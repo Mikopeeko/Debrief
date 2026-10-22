@@ -23,15 +23,16 @@ The page is mostly neutral: dark panels and warm white text. Colour always means
 |---|---|---|---|
 | Gold `#e6b450` | `--gold` | Debrief talking to you | the main box's label and edge, Focus, primary buttons, "Read more" links, the picked All pulls |
 | Green `#45c15c` (text `#7ee08f`) | `--good` | done right | the green flag, ✓ chips, ▲ better |
-| Yellow `#e8b923` (text `#ffd54a`) | `--lv-min` | some mistakes | the yellow flag only |
-| Red `#e5534b` (text `#ff8f87`) | `--bad` | failed (half or more wrong) | the red flag, ▼ worse, a death that was on you |
+| Yellow (amber) `#e8a23a` (text `#f3c969`) | `--warn` (= `--lv-min`) | some mistakes | the yellow flag only |
+| Red `#e5534b` (text `#ff8f87`) | `--bad` (= `--lv-maj`, `--lv-mod`) | failed (half or more wrong) | the red flag, ▼ worse, a death that was on you |
 | Blue `#6aa8ff` | `--blue` | a setting or a filter | the wipe filter, info notes |
 | Class colours | (WoW) | a player | player names only |
 | Pull quality (grey, white, green, blue, purple, orange) | `PULL_Q` | how far a pull got | pull bars, pull pills, the header's edge |
 | Grade quality (the same WoW colours) | | a grade or score | Report card letters and scores, like a parse |
 
 - **Three flags only:** green done right, yellow some mistakes, red failed. No orange "moderate" level, and no
-  Major/Moderate words.
+  Major/Moderate words. Since round 3 (Oct 22) the code has exactly these three colours: the old bright alarm red
+  (#d4111e/#ff3b46), the orange (#e2540f/#ff7a3d/#f07a3a) and the second yellow (#e8b923/#ffd54a) are gone. Use the tokens.
 - Never use colour just to decorate: no coloured headings, no rainbow tiles, and no gradients except the gold Focus tint and
   the header art.
 
