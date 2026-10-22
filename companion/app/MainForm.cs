@@ -98,7 +98,7 @@ namespace Debrief {
     protected override void OnHandleCreated(EventArgs e) {
       base.OnHandleCreated(e);
       // (the size and place, now that Windows says how big this screen's pixels are)
-      if (!sized) { sized = true; MinimumSize = new Size(Px(760), Px(560)); Bounds = SavedBounds(); }
+      if (!sized) { sized = true; MinimumSize = new Size(Px(700), Px(380)); Bounds = SavedBounds(); }
       if (!pageStarted) { pageStarted = true; BeginInvoke(new Action(async () => await StartPage())); }
       // (a dark title bar like the site's top bar)
       try { int on = 1; DwmSetWindowAttribute(Handle, 20, ref on, 4); int c = 0x0017110f; DwmSetWindowAttribute(Handle, 35, ref c, 4); } catch { }
@@ -143,10 +143,10 @@ namespace Debrief {
     // (sizes are in screen pixels: 1100 wide means 1100 at 100% scaling, 1650 at 150%)
     [DllImport("user32.dll")] static extern int GetDpiForWindow(IntPtr h);
     int Px(int v) { int dpi = 96; try { dpi = GetDpiForWindow(Handle); } catch { } if (dpi < 96) dpi = 96; return (int)Math.Round(v * dpi / 96.0); }
-    string BoundsFile { get { return Path.Combine(here, "window.txt"); } }
+    string BoundsFile { get { return Path.Combine(here, "window2.txt") /* (new name: the window got smaller, so everyone starts at the new size once) */; } }
     Rectangle SavedBounds() {
       var wa = Screen.FromHandle(Handle).WorkingArea;
-      int w = Math.Min(Px(1100), wa.Width - 40), h = Math.Min(Px(820), wa.Height - 40);
+      int w = Math.Min(Px(1000), wa.Width - 40), h = Math.Min(Px(460), wa.Height - 40); // (the simple window: status, two switches, the log line)
       var r = new Rectangle(wa.Left + (wa.Width - w) / 2, wa.Top + (wa.Height - h) / 2, w, h);
       try {
         var p = File.ReadAllText(BoundsFile).Split(',');
