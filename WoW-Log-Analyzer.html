@@ -5751,7 +5751,7 @@ const MODULES = [{
   encounter: 'The Coiled Altar',
   units: ["Zul'jan", 'Hex Lord Malacrass', 'Malacrass', 'Spiteful Soulcoiler', 'Fragment of Malacrass', 'Coalesced Venom Stalker', 'Virulent Mutation', 'Manifestation of Dread'],
   spells: Object.keys(CA_IDS).concat(['noxious ground', 'defiled ground', 'volatile venom', 'toxic deluge', 'bloodlust', 'heroism', 'time warp', 'fury of the aspects', 'primal rage', "harrier's cry", 'darkness', 'spirit link totem', 'anti-magic zone', 'rallying cry', 'power word: barrier', 'aura mastery', 'tranquility', 'revival', 'rewind', 'divine hymn', 'vampiric embrace',
-    'divine shield', 'ice block', 'aspect of the turtle', 'cloak of shadows', 'anti-magic shell', 'netherwalk', 'dispersion', 'blessing of spellwarding', 'blessing of protection', 'blessing of sacrifice', 'pain suppression', 'guardian spirit', 'ironbark', 'life cocoon', 'time dilation', 'zephyr', 'dreadful presence'], PERSONAL, CA_CC, CA_CURSE),
+    'divine shield', 'ice block', 'aspect of the turtle', 'cloak of shadows', 'anti-magic shell', 'netherwalk', 'dispersion', 'blessing of spellwarding', 'blessing of protection', 'blessing of sacrifice', 'pain suppression', 'guardian spirit', 'ironbark', 'life cocoon', 'time dilation', 'zephyr', 'dreadful presence', 'retaliatory malice'], PERSONAL, CA_CC, CA_CURSE),
   focus: new Set(["Zul'jan", 'Hex Lord Malacrass', 'Malacrass']),
   ids: [1286912], // the Eternal Nightfall absorb shield (its own aura, separate from the cast's 1310752)
   priority: ['Spiteful Soulcoiler'], // (the adds that have to die: the Performance tab's priority damage and switch speed)
@@ -7677,10 +7677,21 @@ function buildNekzali(ev, r, h) {
     const hits = pbHits.filter((e) => e.t >= c.t && e.t <= c.t + 4), tot = hits.reduce((s, e) => s + (e.raw || e.amt), 0), who = new Set(hits.map((e) => e.dst));
     const close = d != null && d < 25;
     if (close) M(c.t, pname(tk.dst), 'Possession Barrage', 'Low', 'Took Possession Barrage ' + Math.round(d) + ' yards from Nek\'zali, so the spirits hit the raid harder.', 'Step 30 or more yards away from the boss for Possession Barrage, away from the raid.');
-    return [{ p: tk ? pname(tk.dst) : '?' }, { t: c.t }, d != null ? { txt: Math.round(d) + ' yd from the boss', warn: close } : { txt: '—', dim: true }, { txt: who.size ? fmtM(tot / who.size) + ' each on average' : '—', sub: who.size ? pl(who.size, 'player') + ' hit' : '', dim: !who.size }, { txt: '' }];
+    // (Oct 21, the guide's rule: nobody stands between the boss and the tank, or the spirits burst on them early, near the boss,
+    // and hit the raid much harder. In the path = within 5 yards of the line from Nek'zali to the tank, a second after the cast)
+    const inPath = [];
+    if (d != null && d > 8) {
+      const ux = (tp.x - c.x) / d, uy = (tp.y - c.y) / d;
+      for (const p of h.snap(c.t + 1)) { if (p.kind !== 'player' || p.guid === tk.dst) continue;
+        const along = (p.x - c.x) * ux + (p.y - c.y) * uy, off = Math.abs((p.x - c.x) * uy - (p.y - c.y) * ux);
+        if (along > 4 && along < d - 3 && off <= 5) inPath.push(p.guid); }
+    }
+    for (const g of inPath) M(c.t, pname(g), 'Possession Barrage', 'Low', 'Stood between Nek\'zali and the tank as Possession Barrage went out, so the spirits could burst on them early.', 'Stay behind the boss for Possession Barrage: nobody between Nek\'zali and the tank running out.');
+    return [{ p: tk ? pname(tk.dst) : '?' }, { t: c.t }, d != null ? { txt: Math.round(d) + ' yd from the boss', warn: close } : { txt: '—', dim: true }, { txt: who.size ? fmtM(tot / who.size) + ' each on average' : '—', sub: who.size ? pl(who.size, 'player') + ' hit' : '', dim: !who.size },
+      inPath.length ? { txt: 'in the path: ' + inPath.map(pname).join(', '), warn: true } : { txt: d != null ? 'path clear' : '', dim: true }];
   });
-  if (pbRows.length) sections.push({ id: 'barrage', title: 'Possession Barrage (Tank steps away)', place: 'Possession Barrage (raid hit): tank far from the boss', spell: [NZ.barrage, 'Possession Barrage'], verdict: pbRows.some((x) => x[2].warn) ? 'warn' : 'good',
-    summary: pl(pbRows.length, 'Possession Barrage') + '. It shows how far the tank stood from Nek\'zali when it went out, and what it cost the raid.', cols: ['Tank', 'When', 'Distance', 'Raid damage', ''], rows: pbRows });
+  if (pbRows.length) sections.push({ id: 'barrage', title: 'Possession Barrage (Tank steps away)', place: 'Possession Barrage (raid hit): tank far from the boss', spell: [NZ.barrage, 'Possession Barrage'], verdict: pbRows.some((x) => x[2].warn || x[4].warn) ? 'warn' : 'good',
+    summary: pl(pbRows.length, 'Possession Barrage') + '. It shows how far the tank stood from Nek\'zali when it went out, what it cost the raid, and anyone standing in the path of the spirits, between her and the tank.', cols: ['Tank', 'When', 'Distance', 'Raid damage', 'Path'], rows: pbRows });
 
   // ---- 6. the intermission: corpses coming back, the Hungering Pyre soaks, Soul Transfer, the Echoes of Jawae ----
   if (ritT != null) {
@@ -8227,7 +8238,7 @@ const HOW = {
     tankfront: 'The boss frontals leave a debuff on the tank. In P1 the tanks taunt-swap so every Sever lands on a fresh tank. In P2 one tank takes every Soul Sever: a defensive on the first stack, a defensive plus two externals on the second, and the stacks drop before a third. Red: a tank died to it or took a third stack. Amber: a second stack without two externals, or a missed swap in P1.',
     shield: 'Every second set of adds is followed by Eternal Nightfall: Malacrass shields himself while casting it. This is the damage check of P2 and P3: assign cooldowns and pool damage for every shield. The cast can only be kicked once the shield is gone, so it takes two steps. Break the shield, then kick Malacrass before the 17s cast finishes. Give every shield a kicker and a backup. Broken shows how far into the cast the shield came off and how much time was left to kick.',
     dmghost: 'Dreadmarch mind controls a few players, who walk to the edge and jump off unless their absorb shield is broken in time. Targets stack on the raid\'s Dreadmarch marker and press a macro that cancels their own shields and speed buffs. Stuns and grips stop them walking. When the mind control breaks, stand still: your ghost spawns where you are a moment later, so the ghosts start in one clump. On Mythic only you can see your ghost (an interrupted Wail reveals them all briefly). Two ghosts touching hits both players hard (Malevolent Resonance). The boss tank aims Soul Sever to hit as many ghosts as possible; a ghost it misses is walked back for the next one, and staring at your ghost at the end of P2 makes it disappear at the transition. (Maps show ghosts where they spawned; the log has no later positions for them.)',
-    addsets: 'Spiritcackle summons two Spiteful Soulcoilers that cast Wail of Terror, a raid-wide fear that must be interrupted. They jump after each kick and become immune to kicks at full energy. Kick as soon as the Gloombomb cast starts, so the add stays put for the Gloombomb overlap and there is time for the next kick. The melee add\'s second kick should be a melee player. Kill both adds before the next set spawns. (Their Spirit Shields and the Gloombombs are in the Gloombombs panel.)',
+    addsets: 'Spiritcackle summons two Spiteful Soulcoilers that cast Wail of Terror, a raid-wide fear that must be interrupted. They jump after each kick and become immune to kicks at full energy. Kick as soon as the Gloombomb cast starts, so the add stays put for the Gloombomb overlap and there is time for the next kick. The melee add\'s second kick should be a melee player. Kill both adds before the next set spawns: on Mythic each add hits the raid with Retaliatory Malice every 3 seconds for as long as it lives. (Their Spirit Shields and the Gloombombs are in the Gloombombs panel.)',
     gloom: 'On Mythic each Spiteful Soulcoiler spawns with Spirit Shield (99% damage reduction, 2 stacks). Malacrass puts Gloombomb on two melee and two ranged players; 5 seconds later each one explodes in a 15-yard circle, and every Soulcoiler inside loses a stack. Each pair overlaps its circles on its own add (melee on the unmarked melee add, ranged on the marked ranged add), so both shields break. A bomb that misses, or lands on a leftover add from an earlier set, leaves this set\'s shield up. Everyone else stays out of the circles.',
     inter: 'Malacrass channels Soulbinding: Zul\'jan takes double damage, so use Bloodlust and burn him. Fragments of Malacrass rush toward Zul\'jan and heal him for about 10% if they reach him, which is close to a wipe. Players block them, but every block gives the whole raid a Spirit Erasure stack (more damage taken), so soak in rounds: 3 to 5 stacks, let them drop, repeat; near the end stack raid cooldowns in the middle and go up to 7 to 10. Spread soakers around the room, including the inner ring. Zul\'jan under 35% when it ends is on pace for the kill.',
     avoid: 'Every source of damage that positioning can avoid, most harmful first. Dangerous (red on any hit): tank frontals on non-tanks and ghosts touching. Harmful: the statue poison pools (Noxious Ground), Axegrinder axes, someone else\'s Gloombomb, standing near a purple orb carrier, and P3 Defiled Ground. Minor: standing near a green orb carrier and Toxic Deluge impacts. Each hit is one time walking into it (a pool or axe ticks fast while you stand in it, and the ticks are listed under it). Tanks aren\'t judged on Axegrinder. Raid-wide damage (orb pulses and ruptures, Dreadful Presence, Retaliatory Malice, the Guillotine burst) isn\'t avoidable and isn\'t listed.',
@@ -8569,6 +8580,10 @@ function buildCoiledAltar(ev, r, h) {
   const sc = casts('spiritcackle');
   const adds = [];
   for (const [g, t0] of r.firstSeen) { const nm = h.unitName(g); if (nm === 'Spiteful Soulcoiler') adds.push({ g, t0, died: (ev.find((e) => e.k === 'die' && e.guid === g) || {}).t }); }
+  // (Mythic, found in Oct 21's pulls, in no guide: every Soulcoiler casts Retaliatory Malice on itself the moment it spawns, and
+  // it hits the raid every 3 s until the add dies. Its hits are credited to the add that cast them; a death to it goes to the
+  // oldest set with an add alive at that moment)
+  const rmHits = dmg('retaliatory malice'), rmDeaths = r.deaths.filter((d) => /^retaliatory malice$/i.test(String(d.ability || ''))), rmUsed = new Set();
   const setRows = sc.map((t, i) => {
     // adds should die before the next set spawns (the last set before a phase change is cleaned up by the transition)
     const next = sc[i + 1] != null && phaseAt(sc[i + 1]) === phaseAt(t) ? sc[i + 1] : null;
@@ -8580,8 +8595,13 @@ function buildCoiledAltar(ev, r, h) {
     if (lateDm.length) M(next2, 'Raid', 'spiritcackle', 'High', lateDm.length + ' Spiteful Soulcoiler' + (lateDm.length > 1 ? 's were' : ' was') + ' still alive two sets later.', 'Break each Spirit Shield with two overlapping Gloombombs (melee targets on the melee add, ranged on the ranged add) and kill both adds before the next set.');
     else if (alive.length) M(next, 'Raid', 'spiritcackle', 'Low', alive.length + ' Spiteful Soulcoiler' + (alive.length > 1 ? 's were' : ' was') + ' still alive when the next set of adds spawned.', 'Kill both adds before the next set spawns. The shield comes first, but don\'t let sets pile up.');
     const kicks = r.interrupts.filter((k) => mine.some((a) => a.g === k.target));
-    return [{ txt: 'Set ' + (i + 1) }, { t }, { txt: mine.map((a) => a.died != null ? 'died ' + h.fmtT(a.died) + ' (' + Math.round(a.died - a.t0) + 's)' : 'not killed').join(', ') || 'no adds seen', bad: mine.some((a) => a.died == null) },
-      { txt: String(kicks.length) }, { txt: lateDm.length ? 'alive two sets later' : alive.length ? 'alive when the next set spawned' : next == null ? 'last set of the phase' : 'dead in time', bad: lateDm.length > 0, warn: alive.length > 0 }];
+    const rmAmt = rmHits.filter((e) => mine.some((a) => a.g === e.src)).reduce((s, e) => s + (e.amt || 0), 0);
+    const rmDead = rmDeaths.filter((d) => !rmUsed.has(d) && mine.some((a) => d.t >= a.t0 - 0.5 && (a.died == null || d.t <= a.died + 3))); rmDead.forEach((d) => rmUsed.add(d));
+    if (rmDead.length) M(rmDead[0].t, 'Raid', 'spiritcackle', 'High', pl(rmDead.length, 'player') + ' died to Retaliatory Malice while set ' + (i + 1) + '\'s adds were alive (' + (mine.length && mine.every((a) => a.died == null) ? (mine.length > 1 ? 'neither add was killed' : 'the add wasn\'t killed') : 'they lived ' + mine.map((a) => a.died != null ? Math.round(a.died - a.t0) + ' s' : 'until the pull ended').join(' and ')) + ').', 'Kill both adds fast: on Mythic each one hits the raid with Retaliatory Malice every 3 seconds from the moment it spawns until it dies.');
+    const row = [{ txt: 'Set ' + (i + 1) }, { t }, { txt: mine.map((a) => a.died != null ? 'died ' + h.fmtT(a.died) + ' (' + Math.round(a.died - a.t0) + 's)' : 'not killed').join(', ') || 'no adds seen', bad: mine.some((a) => a.died == null) },
+      { txt: String(kicks.length) }, { txt: (lateDm.length ? 'alive two sets later' : alive.length ? 'alive when the next set spawned' : next == null ? 'last set of the phase' : 'dead in time') + (rmDead.length ? ', ' + pl(rmDead.length, 'death') + ' to Retaliatory Malice' : ''), bad: lateDm.length > 0 || rmDead.length > 0, warn: alive.length > 0 }];
+    row.rm = { amt: rmAmt, dead: rmDead }; // (for the adds panel's Retaliatory Malice row)
+    return row;
   });
   const gbT = auras('gloombomb').filter((e) => e.op === 'apply' && h.isPlayer(e.dst));
   const gbClip = [];
@@ -9231,6 +9251,9 @@ function buildCoiledAltar(ev, r, h) {
         const t = r0[1].t, mine = (sAx ? sAx.rows : []).filter((x) => x[0].txt === 'Set ' + (i + 1));
         shieldOf[i] = mine.map((x, k) => ({ k: k + 1, t: x[1].t, cell: x[3] }));
         const rows = mine.map((x, k) => [{ txt: 'Soulcoiler ' + (k + 1) }, x[1], x[2], { txt: '' }, x[4]]); // (same numbering as the kick rows)
+        // (Mythic: the raid damage the adds' Retaliatory Malice did while they lived, and anyone it killed)
+        if (r0.rm && (r0.rm.amt || r0.rm.dead.length)) rows.push([{ txt: 'Retaliatory Malice', sub: 'hits the raid every 3 s while the adds live' }, { t }, { txt: h.compact(r0.rm.amt) + ' on the raid' },
+          { txt: '' }, r0.rm.dead.length ? { txt: (r0.rm.dead.length > 4 ? pl(r0.rm.dead.length, 'player') : r0.rm.dead.map((d) => d.player).join(', ')) + ' died', bad: true } : { txt: 'no deaths', dim: true }]);
         return { title: 'Set ' + (i + 1), t, bad: r0[4].bad || rows.some(isBad), warn: r0[4].warn, sub: r0[3].txt + ' kicks, ' + r0[4].txt, rows: rows.length ? rows : [[{ txt: 'no adds seen', dim: true }, { txt: '' }, { txt: '' }, { txt: '' }, { txt: '' }]] };
       });
       // the Gloombomb panel: per set, each add's Spirit Shield, then every bomb, then players clipped by someone's bomb
@@ -9846,6 +9869,10 @@ function buildUlatek(ev, r, h) {
     { n: ['virulent spit'], label: 'Virulent Spit', harm: 'Medium', why: 'the swirlies in Stage 2' },
     { n: ['falling debris'], label: 'Falling Debris', harm: 'High', why: 'the brown circles during Rage of the Shackled (they kill anyone, tanks too)' },
     { n: ["warden's protection"], label: "Warden's Protection", harm: 'Low', warnAt: 2, badAt: 5, why: 'standing on or next to an egg while its Doomscale Warden is alive' },
+    // (Oct 21: the tail's Mephitic Thrash hits everyone within 35 yards as its 4 s cast ends (spell 1296301: a hit, a 10 s damage
+    // over time and a knockback). Only that hit counts, not the ticks after it; tanks are judged loosely as usual)
+    { n: ['mephitic thrash'], label: 'Mephitic Thrash', harm: 'Medium', warnAt: 1, badAt: 2, why: 'within 35 yards of the tail when it thrashed (knockback and a damage over time)',
+      skip: (e) => !ev.some((c) => c.id === UL.thrash && ((c.k === 'cast' && e.t >= c.t - 0.5 && e.t <= c.t + 1.5) || (c.k === 'start' && e.t >= c.t + 3 && e.t <= c.t + 5.5))) },
   ]);
   if (av) sections.push(av);
 
@@ -14144,6 +14171,9 @@ const PATCH_NOTES = [
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
+    'The Coiled Altar (Mythic): each Soulcoiler add set shows the raid damage its Retaliatory Malice did while the adds lived, and anyone it killed. Kill the adds fast.',
+    'Nek\'zali: Possession Barrage names anyone standing between her and the tank as the spirits fly out.',
+    'Ula\'tek: the tail\'s Mephitic Thrash is in Avoidable damage (anyone within 35 yards when it thrashes).',
     'Debrief in game: the Detailed card now says what the Debriefing tab says: Result, Deaths, Mechanics and Raid damage, the pull phase by phase, the fix for next pull, and what got better or worse since last pull. It is wider too.',
     'Debrief in game: the Detailed card, the new default. A larger recap with three number tiles (avoidable damage, kicks or dispels, your death), the top raid mistakes and boss mechanics right on your own view, and two next-pull tips. It never gets taller than your screen: scroll for the rest.',
     'Debrief in game: Top mistakes show how much damage each player took from it, the most hurt first.',

@@ -1649,6 +1649,9 @@ const PATCH_NOTES = [
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
+    'The Coiled Altar (Mythic): each Soulcoiler add set shows the raid damage its Retaliatory Malice did while the adds lived, and anyone it killed. Kill the adds fast.',
+    'Nek\'zali: Possession Barrage names anyone standing between her and the tank as the spirits fly out.',
+    'Ula\'tek: the tail\'s Mephitic Thrash is in Avoidable damage (anyone within 35 yards when it thrashes).',
     'Debrief in game: the Detailed card now says what the Debriefing tab says: Result, Deaths, Mechanics and Raid damage, the pull phase by phase, the fix for next pull, and what got better or worse since last pull. It is wider too.',
     'Debrief in game: the Detailed card, the new default. A larger recap with three number tiles (avoidable damage, kicks or dispels, your death), the top raid mistakes and boss mechanics right on your own view, and two next-pull tips. It never gets taller than your screen: scroll for the rest.',
     'Debrief in game: Top mistakes show how much damage each player took from it, the most hurt first.',
