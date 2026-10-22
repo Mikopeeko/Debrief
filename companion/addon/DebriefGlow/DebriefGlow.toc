@@ -1,0 +1,11 @@
+## Interface: 120000, 120001, 120005, 120007, 120100, 120101, 120102, 120105, 120107
+## Title: Debrief Glow
+## Notes: Your NSRT note's cooldowns glow on Blizzard's Cooldown Manager when it's time to press them. Pick the look, a sound or a voice, for all spells or each one.
+## Author: Debrief
+## Version: 0.2.0
+## SavedVariables: DebriefGlowDB
+## OptionalDeps: NorthernSkyRaidTools
+## AddonCompartmentFunc: DebriefGlow_OnAddonCompartmentClick
+## Category: Combat
+
+DebriefGlow.lua
