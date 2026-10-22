@@ -67,7 +67,7 @@ const RECIPES = {
     const live = rows.filter((r) => !/no frontal/i.test(ctxt(r[2]))), bad = rows.filter((r) => r.some(isHurt));
     if (!bad.length) return live.length > 1 ? allN(live.length, 'Deluges') + ' clean: 5 to 6 orbs per frontal.' : live.length ? 'Clean: 5 to 6 orbs per frontal.' : null;
     const r = bad[0], sub = (r[2] && r[2].sub) || '', sv = [...sub.matchAll(/Sever (\d): (\d+)/g)].map((m) => 'Sever ' + m[1] + ' hit ' + m[2]);
-    const plan = (sub.match(/plan: (.+)$/) || [])[1], why = /clean/i.test(ctxt(r[3])) ? '' : ctxt(r[3]);
+    const plan = (sub.match(/plan: ([^·]+)/) || [])[1], why = /clean/i.test(ctxt(r[3])) ? '' : ctxt(r[3]);
     const planT = plan ? plan.replace(/\s*\(hits empty ground\)/, '').replace(/ each/, '').replace(/\s*\((\d+) at most\)/, ', $1 at most').trim() : '';
     return (rows.length > 1 ? bad.length + ' of ' + rows.length + ' went wrong. ' : '') + ctxt(r[0]).replace('#', '') + at(r) + ': ' + (sv.length ? sv.join(', ') : ctxt(r[2])) + (why ? ', ' + why : '') + (planT ? ' (plan: ' + planT + ')' : '') + '.';
   },
@@ -81,7 +81,7 @@ const RECIPES = {
   'Tank frontals': ({ rows }) => {
     if (!rows.length || !rows[0][2] || !rows[0][2].p) return null;
     const bad = rows.filter((r) => r.some(isHurt));
-    if (!bad.length) return allN(rows.length, 'frontals') + ' taken right: a defensive on every stack 2.';
+    if (!bad.length) return rows.length > 1 ? allN(rows.length, 'frontals') + ' taken right: a defensive on every stack 2.' : 'Taken right.';
     const line = (r) => '@' + (r[2].p || '?') + at(r) + ': ' + ctxt(r[3]) + ' with ' + (ctxt(r[4]) || 'nothing up') + (/died/i.test(ctxt(r[5])) ? ', died' : !/nothing/i.test(ctxt(r[4])) ? ' (plan: a defensive and two externals)' : '');
     return bad.length + ' of ' + rows.length + ' went wrong. ' + bad.slice(0, 2).map(line).join('. ') + '.';
   },
@@ -273,7 +273,7 @@ function buildOne(b, rep, same, W, L, cutN) {
     // (with the damage each took (the user's idea, Oct 21), the most hurt first: "Hit 17 players: @Larryg 1.1m, @Flëxørçïst 1.07m, ...")
     const dmgOf = (n) => (g.dmg && g.dmg.get(n)) || 0, withDmg = !!g.dmg;
     const ws = [...g.who].filter(([n]) => real.has(n)).sort((a, c) => (withDmg ? dmgOf(c[0]) - dmgOf(a[0]) : 0) || c[1] - a[1]);
-    if (!ws.length) { raid.bad.push([g.sev >= 3 ? 'bad' : 'warn', g.id ? String(g.id) : '', g.k, shortTo((g.what ? sentences(g.what)[0].replace(/\.$/, '') + (g.n > 1 ? ' (' + g.n + ' times).' : '.') : 'Happened ' + (g.n === 1 ? 'once.' : g.n + ' times.')) + fix, 230)]); continue; }
+    if (!ws.length) { raid.bad.push([g.sev >= 3 ? 'bad' : 'warn', g.id ? String(g.id) : '', g.k, shortTo((g.what ? sentences(g.what)[0].replace(/\.$/, '') + (g.n > 1 ? (/\)$/.test(sentences(g.what)[0].replace(/\.$/, '')) ? ', ' + g.n + ' times.' : ' (' + g.n + ' times).') : '.') : 'Happened ' + (g.n === 1 ? 'once.' : g.n + ' times.')) + fix, 230)]); continue; }
     const same = ws.every(([, k]) => k === ws[0][1]), shown = ws.slice(0, 4).map(([n, k]) => '@' + n + (withDmg && dmgOf(n) && ws.length > 1 ? ' ' + kfmt(dmgOf(n)) : !same && k > 1 ? ' (' + k + ')' : ''));
     const one = ws.length === 1 && withDmg && dmgOf(ws[0][0]) ? ', for ' + kfmt(dmgOf(ws[0][0])) : ''; /* ("Hit @Earthday 2 times, for 555k.") */
     const list = ws.length > 4 ? shown.join(', ') + ' and ' + (ws.length - 4) + ' more' : shown.length > 1 ? shown.slice(0, -1).join(', ') + ' and ' + shown[shown.length - 1] : shown[0];
@@ -382,6 +382,46 @@ function buildOne(b, rep, same, W, L, cutN) {
         }
       }
     } catch (e) { /* the summary is extra: the card works without it */ }
+  }
+  // (the raid lead's word after the pull (the user's ask, Oct 22: "brief summaries as if you are the raid lead explaining why we
+  // wiped"): how far we got, what broke it, the two biggest fixes with who and what to do, and the next pull. "We", short sentences.
+  // A death in 2 s or less isn't on the player; a slow one with a defensive or Healthstone still ready is)
+  raid.lead = '';
+  try {
+    // (a fix's first word goes lower case after a colon, unless it's a mechanic's name: "Gloombomb targets move...")
+    const names0 = new Set([].concat(...top.map((x) => String(x.k).split(/\s+/)), ...raid.mech.map((x) => String(x[2]).split(/[\s()]+/))));
+    const Ld = [], first1 = (s) => (sentences(s || '')[0] || '').trim(), nm = (n) => String(n).split('-')[0];
+    const low = (s) => { const t = String(s || '').replace(/\.$/, ''), w = t.split(/\s+/)[0]; return names0.has(w) ? t : t.replace(/^./, (c) => c.toLowerCase()); };
+    Ld.push(first1(raid.story) || (b.kill ? 'Boss down on pull ' + b.pull + '. Nice work, everyone.' : 'We wiped' + (pr && pr.label ? ' at ' + String(pr.label).split(',')[0] : '') + '.'));
+    if (!b.kill && b.id !== 990001) {
+      const ds = allDeaths, wave = (d) => ds.filter((x) => Math.abs(x.t - d.t) <= 5), d0 = ds[0];
+      if (d0 && wave(d0).length >= 4) {
+        const w = wave(d0), by = new Map(); for (const d of w) { const a = d.ability || 'something'; by.set(a, (by.get(a) || 0) + 1); }
+        const ab = [...by].sort((x, y) => y[1] - x[1])[0];
+        Ld.push('It fell apart at ' + mmss(d0.t) + ': ' + w.length + ' of us died within seconds, ' + (ab[1] === w.length ? 'all' : 'most') + ' to ' + ab[0] + '.');
+      } else if (d0) {
+        const own = mist.find((m) => m.player === d0.player && m.t >= d0.t - 10 && m.t <= d0.t + 0.5 && (m.severity !== 'Low' || String(m.mechanic).toLowerCase() === String(d0.ability || '').toLowerCase()));
+        const kit = d0.reactable && (d0.available || []).length ? ' with ' + andList(d0.available.slice(0, 2)) + ' still ready' : '';
+        Ld.push('It started at ' + mmss(d0.t) + ' when @' + nm(d0.player) + ' died to ' + (d0.ability || 'something') + (own ? ', and that one was avoidable' : kit || (d0.reactable === false ? ', too fast for anyone to react' : '')) + '.');
+        const later = ds.find((d) => d.t > d0.t + 5 && wave(d).length >= 4);
+        if (later) Ld.push('Then ' + wave(later).length + ' of us went down within seconds at ' + mmss(later.t) + '.');
+      } else { const f = raid.mech.find((x) => x[0] === 'bad'); Ld.push(f ? 'Nobody died before the wipe, but ' + f[2].replace(/\s*\(.*\)$/, '') + ' failed.' : 'Nobody died before the wipe.'); }
+    }
+    const nx1 = first1(raid.next);
+    for (const g of top.filter((x) => x.fix && first1(x.fix) !== nx1).slice(0, 2)) {
+      const ws = [...g.who.keys()].filter((n) => real.has(n)), who = !ws.length ? '' : ws.length === 1 ? '@' + nm(ws[0]) : ws.length + ' of us';
+      Ld.push(g.k + (g.hit ? ' hit ' + (who || 'us') : who ? ' went wrong for ' + who : ' went wrong') + ': ' + low(first1(g.fix)) + '.');
+    }
+    let nx = String(raid.next || '').replace(/^Kill! /, ''); if (nx.length > 70 && /: /.test(nx)) nx = nx.split(': ')[0] + (/^Next time$/i.test(nx.split(': ')[0]) ? ': ' + nx.split(': ')[1].split(': ')[0] : ''); /* (the short part: the Next pull box has the rest) */
+    if (nx && !(b.kill && /^Clean pull/i.test(nx))) Ld.push(b.kill ? nx : 'Next pull: ' + low(nx).replace(/^./, (c) => c.toUpperCase()) + '.');
+    raid.lead = Ld.filter(Boolean).join(' ').replace(/\.\./g, '.');
+  } catch (e) { raid.lead = ''; }
+  // ("You:" for each player: their death, else their first mistake, else their biggest slip, else a clean pull)
+  for (const P of players) {
+    const d = P.boss.find((x) => x[0] === 'dead'), skip = /^(ability_rogue_sprint|ability_kick|spell_holy_dispelmagic)$/;
+    const mm = [...new Set(P.boss.filter((x) => (x[0] === 'bad' || x[0] === 'warn') && !skip.test(x[1] || '')).map((x) => String(x[2]).split(':')[0]))], sl = P.slips.filter((x) => x[0] === 'bad' || x[0] === 'warn').length;
+    const bits = []; if (mm.length) bits.push(mm.length + (mm.length === 1 ? ' boss mistake' : ' boss mistakes') + ' (' + andList(mm.slice(0, 2)) + (mm.length > 2 ? ' and more' : '') + ')'); if (sl) bits.push(sl + (sl === 1 ? ' rotation tip' : ' rotation tips'));
+    P.lead = (d ? (String(d[2]).match(/^You died at [\d:]+/) || ['You died'])[0] + '. ' : '') + (bits.length ? capF(andList(bits)) + ' below.' : d ? 'Nothing else to fix from you.' : 'Clean pull from you. Same again.');
   }
   // (the Next pull fix isn't said again at the end of a top mistake)
   if (raid.next) raid.bad = raid.bad.map((x) => { const f = ' Fix: ' + raid.next; return String(x[3]).endsWith(f) ? [x[0], x[1], x[2], x[3].slice(0, -f.length)] : x; });

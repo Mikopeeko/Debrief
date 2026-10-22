@@ -76,7 +76,8 @@ local function decode(code)
     elseif t == "T" and by[g(2)] then add(by[g(2)].tiles, { g(3), g(4), g(5), g(6) }) -- (the Detailed card's number tiles)
     elseif t == "O" and by[g(2)] then local p = by[g(2)]; if K then p.next2K = p.next2K or {}; table.insert(p.next2K, { K, g(3) }) else p.next2 = g(3) end
     elseif t == "A" then add(m.raid.tiles, { g(2), g(3), g(4), g(5) }) -- (the Debriefing tab's four raid numbers)
-    elseif t == "Y" or t == "G" or t == "J" then local k = ({ Y = "story", G = "better", J = "worse" })[t]; if K then m.raid[k .. "K"] = m.raid[k .. "K"] or {}; table.insert(m.raid[k .. "K"], { K, g(2) }) else m.raid[k] = g(2) end
+    elseif t == "Y" or t == "G" or t == "J" or t == "L" then local k = ({ Y = "story", G = "better", J = "worse", L = "lead" })[t]; if K then m.raid[k .. "K"] = m.raid[k .. "K"] or {}; table.insert(m.raid[k .. "K"], { K, g(2) }) else m.raid[k] = g(2) end
+    elseif t == "E" and by[g(2)] then local p = by[g(2)]; if K then p.leadK = p.leadK or {}; table.insert(p.leadK, { K, g(3) }) else p.lead = g(3) end -- (the raid lead's word to you)
     elseif t == "R" then add(m.raid.bad, { g(2), g(3), g(4), g(5) })
     elseif t == "D" then add(m.raid.died, { g(2), g(3), g(4), g(5), g(6) })
     elseif t == "M" then add(m.raid.mech, { g(2), g(3), g(4), g(5) }) -- (how each boss mechanic went)
@@ -483,11 +484,11 @@ local function cutView(m)
   local function pick(def, kl) if kl then for _, x in ipairs(kl) do if x[1]:find(c, 1, true) then return x[2] end end; return "" end; return def end
   local v = { h = m.h, addonV = m.addonV, cutN = m.cutN, players = {},
     raid = { bad = keep(m.raid.bad, true), died = keep(m.raid.died), mech = keep(m.raid.mech, true), more = pick(m.raid.more, m.raid.moreK), next = pick(m.raid.next, m.raid.nextK),
-      tiles = keep(m.raid.tiles), story = pick(m.raid.story or "", m.raid.storyK), better = pick(m.raid.better or "", m.raid.betterK), worse = pick(m.raid.worse or "", m.raid.worseK) } }
+      tiles = keep(m.raid.tiles), story = pick(m.raid.story or "", m.raid.storyK), better = pick(m.raid.better or "", m.raid.betterK), worse = pick(m.raid.worse or "", m.raid.worseK), lead = pick(m.raid.lead or "", m.raid.leadK) } }
   for _, p in ipairs(m.players) do
     local q = {}; for k, x in pairs(p) do q[k] = x end
     q.slips, q.boss, q.surv, q.next = keep(p.slips), keep(p.boss), keep(p.surv), pick(p.next, p.nextK)
-    q.tiles, q.next2 = keep(p.tiles), pick(p.next2 or "", p.next2K)
+    q.tiles, q.next2, q.lead = keep(p.tiles), pick(p.next2 or "", p.next2K), pick(p.lead or "", p.leadK)
     v.players[#v.players + 1] = q
   end
   return v
@@ -658,7 +659,8 @@ function render()
     local y0 = y; IND = 12; y = y + 12
     y = head(y, "The pull", "story", DB.collapsed and DB.collapsed.story)
     if not (DB.collapsed and DB.collapsed.story) then
-      local t = FS("body", 13.5, COL.soft); t:SetPoint("TOPLEFT", IND, -y); t:SetWidth(CW - IND * 2); t:SetText(names(m.raid.story)); y = y + t:GetStringHeight() + 8
+      local st = m.raid.story; if (m.raid.lead or "") ~= "" and SH.lead ~= false then st = st:gsub("^[^%.!?]+[%.!?]%s*", "") end
+      local t = FS("body", 13.5, COL.soft); t:SetPoint("TOPLEFT", IND, -y); t:SetWidth(CW - IND * 2); t:SetText(names(st)); y = y + t:GetStringHeight() + 8
       for _, bw in ipairs({ { m.raid.better, "Better", COL.goodT or COL.good }, { m.raid.worse, "Worse", COL.warn } }) do
         if (bw[1] or "") ~= "" then
           local k = FS("bold", 12, bw[3]); k:SetPoint("TOPLEFT", IND, -y); k:SetText(bw[2]) --[[ (plain words: the game's fonts may not draw arrows) ]]
@@ -670,7 +672,20 @@ function render()
     panel(y0, y - y0)
     IND = 0; y = y + 10
   end
+  -- (the raid lead's word: why we wiped, or the kill, in a few sentences; on your own view a "You" line under it)
+  local function leadBox(you)
+    if (m.raid.lead or "") == "" or m.h.practice or SH.lead == false then return end
+    local t = FS("body", 14, COL.text); t:SetWidth(CW - 34); t:SetText(names(m.raid.lead))
+    local u; if you and (you or "") ~= "" then u = FS("body", 13.5, COL.soft); u:SetWidth(CW - 34 - 40); u:SetText(names(you)) end
+    local hh = 12 + 17 + t:GetStringHeight() + (u and (8 + u:GetStringHeight()) or 0) + 12
+    box(y, hh, COL.gold, 0.07, COL.gold, 0.5, COL.gold)
+    local l = FS("bold", 11.5, COL.gold); l:SetPoint("TOPLEFT", 16, -(y + 11)); l:SetText(m.h.kill and "THE KILL" or "WHY WE WIPED")
+    t:SetPoint("TOPLEFT", 16, -(y + 28))
+    if u then local k = FS("bold", 13.5, COL.gold); k:SetPoint("TOPLEFT", 16, -(y + 28 + t:GetStringHeight() + 8)); k:SetText("You"); u:SetPoint("TOPLEFT", 56, -(y + 28 + t:GetStringHeight() + 8)) end
+    y = y + hh + 12
+  end
   if view == "me" and P then
+    leadBox(P.lead)
     -- the tile: your damage or healing, against your last pull and your best
     if SH.tile ~= false then
       local th = 62
@@ -717,6 +732,7 @@ function render()
     if not m.h.practice and not (DB.detailed and raidOk) then diedRow() end -- (the death filter here too: a dummy has no deaths)
     if P.next ~= "" and SH.next ~= false then y = nextBox(y + 2, (DB.detailed and (P.next2 or "") ~= "") and ("1. " .. P.next .. "\n2. " .. P.next2) or P.next) end
   else
+    leadBox(nil)
     if DB.detailed and not DB.compact and m.raid.tiles and #m.raid.tiles > 0 then y = tilesRow(y, m.raid.tiles) end
     summary()
     section("mistakes", h.kill and "What to clean up" or "Top mistakes", m.raid.bad, DB.compact and 1 or (DB.maxRaid or 3), function(r) y = row(y, r[1], r[2], r[4], r[3]) end, "Nothing big.")
@@ -725,7 +741,7 @@ function render()
       section("mech", "Boss mechanics", m.raid.mech, DB.compact and math.min(3, DB.maxMech or 3) or (DB.maxMech or 6), function(r) y = row(y, r[1], r[2], r[4], r[3]) end)
     end
     diedRow()
-    if m.raid.next ~= "" and SH.next ~= false then y = nextBox(y + 2, m.raid.next) end
+    if m.raid.next ~= "" and SH.next ~= false and not ((m.raid.lead or "") ~= "" and SH.lead ~= false) then y = nextBox(y + 2, m.raid.next) end
   end
   body:SetHeight(math.max(10, y))
   -- (never taller than the screen: the rest scrolls, and the footer says so)
@@ -1626,6 +1642,7 @@ local function buildOptions()
   switch("Raid view for everyone", "Off: only raid leads and assistants see it.", function() return DB.raidAlways ~= false end, function(v) DB.raidAlways = v end, true)
   stepper("Raid mistakes", "The biggest ones, with names.", 1, 5, function() return DB.maxRaid or 3 end, function(v) DB.maxRaid = v end)
   stepper("Deaths listed", "Who died first, and to what. 0 hides the list.", 0, 8, function() return DB.maxDied or 3 end, function(v) DB.maxDied = v end)
+  switch("Why we wiped", "The raid lead's word at the top of the card, and a line for you.", function() return (DB.show or {}).lead ~= false end, function(v) DB.show = DB.show or {}; DB.show.lead = v end)
   stepper("Stop at death", "On a wipe, nothing after this death counts. 0 counts the whole pull.", 0, 8, function() return DB.deathCut or 0 end, function(v) DB.deathCut = v end)
   stepper("Boss mechanics", "How each mechanic went, worst first. 0 hides them.", 0, 16, function() return DB.maxMech or 6 end, function(v) DB.maxMech = v end)
   panelEnd()

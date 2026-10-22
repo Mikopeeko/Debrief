@@ -453,12 +453,14 @@ RECAP.lines = (m) => {
     if (p.next) rec.push(['N', p.name, p.next]);
     for (const x of p.tiles || []) rec.push(['T', p.name, x[0], x[1], x[2], x[3] || '']); // (the Detailed card's number tiles)
     if (p.next2) rec.push(['O', p.name, p.next2]); // (and its second next-pull tip)
+    if (p.lead) rec.push(['E', p.name, p.lead]); // (the raid lead's word to this player: You: ...)
   }
   for (const r of m.raid.bad) rec.push(['R', r[0], r[1] || '', r[2], r[3]]);
   for (const d of m.raid.died) rec.push(['D', d[0], d[1], d[2], d[3] || '', d[4]]);
   for (const r of m.raid.mech || []) rec.push(['M', r[0], r[1] || '', r[2], r[3]]);
   if (m.raid.more) rec.push(['X', m.raid.more]);
   if (m.raid.next) rec.push(['Q', m.raid.next]);
+  if (m.raid.lead) rec.push(['L', m.raid.lead]); // (the raid lead's word after the pull: why we wiped)
   // (the Debriefing tab's summary: four raid numbers, the pull phase by phase, better and worse than last pull)
   for (const x of m.raid.tiles || []) rec.push(['A', x[0], x[1], x[2], x[3] || '']);
   if (m.raid.story) rec.push(['Y', m.raid.story]);
@@ -479,6 +481,8 @@ RECAP.decode = (code) => {
     else if (t === 'U' && by.get(f[1])) by.get(f[1]).surv.push([f[2], f[3], f[4]]);
     else if (t === 'T' && by.get(f[1])) (by.get(f[1]).tiles = by.get(f[1]).tiles || []).push([f[2], f[3], f[4], f[5]]);
     else if (t === 'O' && by.get(f[1])) by.get(f[1]).next2 = f[2];
+    else if (t === 'E' && by.get(f[1])) by.get(f[1]).lead = f[2];
+    else if (t === 'L') m.raid.lead = f[1];
     else if (t === 'N' && by.get(f[1])) by.get(f[1]).next = f[2];
     else if (t === 'R') m.raid.bad.push([f[1], f[2], f[3], f[4]]);
     else if (t === 'D') m.raid.died.push([f[1], f[2], f[3], f[4], f[5]]);
