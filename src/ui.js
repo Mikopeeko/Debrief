@@ -1716,6 +1716,7 @@ const PATCH_NOTES = [
     'Home: while your team\'s nights come in for the first time, a loading screen shows how far along it is, and the page fills in by itself when it\'s done.',
   ], f: [
     'Debriefing: the small maps on the mechanic cards (like All pulls\' Guillotine) play now, like the big ones, instead of standing still.',
+    'Debriefing: hovering a card\'s map no longer blows it up off the screen.',
     'The Coiled Altar: a healer who immunes the 2nd Guillotine (like a Holy Paladin with Divine Shield) is no longer told to stay out of it.',
     'Debrief in game: the pull chips on the card no longer run past its edge, lines without a spell icon show a clean tick or dot instead of a question mark, long names stay inside the card, and a training dummy recap no longer says "No boss mistakes".',
     'Debrief in game: the PC app\'s desktop icon no longer goes blank after the app updates itself (it showed an empty picture after today\'s new logo).',

@@ -3780,6 +3780,9 @@ a.dbr-fx.st-bad { border-top-color: var(--bad); } a.dbr-fx:hover { transform: tr
 .nmc .dbck > details.nml .mcx-ln .mcx-s { -webkit-line-clamp: unset; display: inline; }
 .nml-map { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; margin: 4px 0 10px; } .nml-map .wr-map.mcx-map { width: 340px; max-width: 100%; height: 190px; display: block; border-radius: 12px; overflow: hidden; }
 .nml-map .wr-map.mcx-map svg.zmap { width: 100% !important; height: 190px !important; max-width: none !important; display: block; }
+/* (Oct 22, your note: hovering a card's map blew it up 3.2 times and half of it ran off the screen. That zoom is for the tiny
+   84 px maps on What went wrong lines; the card maps are already big, so they stay put and only get a gold edge) */
+.nml-map .wr-map.mcx-map:hover, .mcx-tile .wr-map.mcx-map:hover { transform: none !important; box-shadow: none !important; border-color: var(--gold); }
 .nml-f { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 10px; font-size: 13px; color: var(--muted); } .nml-f .npc { height: 30px; }
 .nmc .dbr-more { margin-top: 12px; } .nmc .dbr-more .rc-more { margin: 0; }
 @media (max-width: 600px) { .nmc .dbck > details.nml .mcx-ln .npc { flex-basis: 100%; margin-left: 0; } }
