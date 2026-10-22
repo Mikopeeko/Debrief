@@ -2062,6 +2062,9 @@ BINDING_NAME_DEBRIEF_PASTE = "Paste a pull recap"
 BINDING_NAME_DEBRIEF_TOGGLE = "Show or hide the recap card"
 
 -- (/dmo, "Debrief me open": the settings, in three letters)
+-- (/dp: the paste box, for a recap you shared from the app's pop-up)
+SLASH_DEBRIEFPASTE1 = "/dp"; SLASH_DEBRIEFPASTE2 = "/dpaste"
+SlashCmdList.DEBRIEFPASTE = function() Debrief_OpenPaste() end
 SLASH_DEBRIEFMO1 = "/dmo"
 SlashCmdList.DEBRIEFMO = function() Debrief_ToggleOptions() end
 SLASH_DEBRIEF1 = "/debrief"
@@ -2244,7 +2247,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     if pendingShow then pendingShow = false; showCard() end
     testBox(1.5)
     -- (a training dummy fight: whoever runs Debrief Companion gets the prompt too, a few seconds after the last hit)
-    if onDummy and DB and (DB.pasted or DB.hasApp) and DB.autoBox ~= false and not DB.testMode and C_Timer then
+    if onDummy and DB and (DB.pasted or DB.hasApp) and DB.autoBox ~= false and not DB.testMode and not (DEBRIEF_POPUP ~= nil and not DEBRIEF_AUTOCOPY) and C_Timer then
       onDummy = false
       C_Timer.After(3, function() if not InCombatLockdown() and not paste:IsShown() and not toast:IsShown() then Debrief_OpenPaste(true) end end)
     end
@@ -2262,6 +2265,8 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
   elseif e == "ZONE_CHANGED_NEW_AREA" then
     if C_Timer then C_Timer.After(2, autoLog) end
   elseif e == "ENCOUNTER_END" then
+    -- (with the app's recap pop-up on, the PC shows the recap: no prompt here unless the app copies every pull (Oct 22))
+    if DEBRIEF_POPUP ~= nil and not DEBRIEF_AUTOCOPY and not DB.testMode then return end -- (nothing was copied: the app copies only when Copy every pull is on)
     -- (for whoever runs Debrief Companion: the paste box comes up by itself a few seconds after a boss pull, ready for Ctrl+V.
     -- Raid bosses only: the app makes no recap for a delve or dungeon boss, so asking there leaves nothing to paste (tester report #6))
     local itype = GetInstanceInfo and select(2, GetInstanceInfo()); local raidBoss = itype == "raid" or a3 == 14 or a3 == 15 or a3 == 16 or a3 == 17
@@ -2296,7 +2301,8 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
       if SetBinding("CTRL-SHIFT-D", "DEBRIEF_PASTE") then SaveBindings(GetCurrentBindingSet()) end
       DB.keySet = true
     end
-    if DB.hasApp or DB.pasted then say("ready. After each boss pull Debrief asks \"See your recap?\": press Ctrl+V." .. (DB.testMode and " Test mode is on: /debrief demo shows a sample card." or ""))
+    if DEBRIEF_POPUP ~= nil and not DEBRIEF_AUTOCOPY then say("ready. Your recap pops up on your PC after each boss pull. To share it with your raid: Share with raid, then /dp here and Ctrl+V.")
+    elseif DB.hasApp or DB.pasted then say("ready. After each boss pull Debrief asks \"See your recap?\": press Ctrl+V." .. (DB.testMode and " Test mode is on: /debrief demo shows a sample card." or ""))
     else say("ready. Your recap opens by itself after boss pulls when someone in your group runs Debrief Companion. /debrief demo shows a sample.") end
   end
 end)

@@ -376,12 +376,15 @@ async function readText(b, quiet) {
   return new TextDecoder().decode(all);
 }
 function progress(f) { L.prog = f; renderRing(); }
-for (const [id, def] of [['pop', true], ['auto', false], ['snd', true], ['popFull', false]]) { $(id).checked = store.get('dbf-sw-' + id, def); $(id).addEventListener('change', () => store.set('dbf-sw-' + id, $(id).checked)); }
+for (const [id, def] of [['pop', true], ['auto', false], ['snd', true], ['popFull', false]]) { $(id).checked = store.get('dbf-sw-' + id, def); $(id).addEventListener('change', () => { store.set('dbf-sw-' + id, $(id).checked); if (id === 'pop' || id === 'auto') addonFlags(); }); }
+// (tells the addon: with the pop-up on and Copy every pull off, WoW doesn't ask "See your recap?" after a pull; WoW reads it at login or /reload)
+function addonFlags() { j('/addonflags', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ popup: $('pop').checked, autocopy: $('auto').checked }) }).catch(() => {}); }
+addonFlags();
 // (the pop-up over the game: this pull's recap, or hidden when the next pull starts)
-function popShow(model, code, copied) {
+function popShow(model, code, copied, pack) {
   if (!$('pop').checked || !model || !model.h) return;
   L.popUp = true;
-  const data = { h: model.h, coach: (model.coach && model.coach.raid) || null, cls: (model.players || []).map((p) => [String(p.name || '').split('-')[0], p.cls]), code, copiedAlready: !!copied, full: $('popFull').checked };
+  const data = { h: model.h, coach: (model.coach && model.coach.raid) || null, cls: (model.players || []).map((p) => [String(p.name || '').split('-')[0], p.cls]), code, copiedAlready: !!copied, full: $('popFull').checked, pack: pack || null };
   j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: true, data, sound: $('snd').checked && !copied }) }).catch(() => {});
 }
 function popHide() { if (!L.popUp) return; L.popUp = false; j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: false }) }).catch(() => {}); }
@@ -470,7 +473,7 @@ function renderTop() {
   const f = e && e.f ? shortFocus(e.f) : '';
   $('focT').hidden = !f; if (f) $('focT').innerHTML = '<span class="np">' + (b.kill ? 'Next time' : 'Next pull') + '</span>' + paint(f, e);
   const sent = L.sent.has(b.startByte);
-  const acts = view ? '<button class="btn gold" type="button" data-send="' + b.startByte + '">Send pull ' + b.pull + (sent ? ' again' : ' to WoW') + '</button><button class="lnk" type="button" data-back="1">Back to the last pull</button>' : '';
+  const acts = view ? '<button class="btn gold" type="button" data-send="' + b.startByte + '">Send pull ' + b.pull + (sent ? ' again' : ' to WoW') + '</button><button class="lnk" type="button" data-back="1">' + (view === done[n - 1] ? 'Done' : 'Back to the last pull') + '</button>' : '';
   $('acts').hidden = !acts; if ($('acts').innerHTML !== acts) $('acts').innerHTML = acts;
 }
 const lerpC = (a, b, t) => { const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)), A = p(a), B = p(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
@@ -555,7 +558,7 @@ window.addEventListener('resize', () => renderNight());
 $('night').addEventListener('click', (ev) => {
   const d = ev.target.closest && ev.target.closest('.pdot'); if (!d) return;
   const sb = +d.dataset.sb, g = curGroup(), done = g ? g.list.filter((b) => b.endByte) : [];
-  L.view = L.view === sb || (done.length && done[done.length - 1].startByte === sb) ? null : sb; renderMain();
+  L.view = L.view === sb ? null : sb; renderMain(); /* (any dot, the newest too, shows its Send button) */
 });
 $('acts').addEventListener('click', (ev) => {
   const t = ev.target.closest && ev.target.closest('button'); if (!t) return;
@@ -632,7 +635,9 @@ async function send(b, byHand) {
       // (copied only when you ask: Send on a pull, or Copy every pull for my raid; otherwise your clipboard is left alone)
       const share = !!byHand || $('auto').checked, ok = share ? await clip(code) : false; $('copyAgain').hidden = !share || ok;
       L.reading = null; L.lastSent = { sb: b.startByte, ok: ok || !share, shared: share, at: Date.now() }; saveNight(b, rep, model.coach && model.coach.raid);
-      popShow(model, code, ok);
+      // (Debriefing's own coach box, exactly as the tab draws it, for the pop-up)
+      let pack = null; try { if (W.coachPack && b.id !== DUMMY) { if (!rep.item) rep.item = b; pack = W.coachPack(rep); } } catch (e) { console.error(e); }
+      popShow(model, code, ok, pack);
       L.sent.add(b.startByte); renderPulls(); progress(null);
       stat(L.live ? 'Watching your combat log' : 'Sent pull ' + b.pull, L.live ? 'live' : ''); renderMain();
     } catch (e) { console.error(e); L.reading = null; progress(null); renderMain(); stat('Could not read pull ' + b.pull + ': ' + e.message, 'err'); }

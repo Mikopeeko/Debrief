@@ -50,10 +50,11 @@ body { border: 1px solid var(--line2); border-radius: 10px; }
 .btn { background: var(--gold); color: var(--gold-ink); border: 1px solid var(--gold); border-radius: 7px; padding: 7px 14px; font: 600 13.5px Barlow, sans-serif; cursor: pointer; white-space: nowrap; }
 .btn:hover { background: #efc265; }
 .btn.done { background: #17301e; border-color: #2b5a36; color: var(--goodT); cursor: default; }
-.lnk { background: none; border: 0; padding: 0; color: var(--muted); font: 600 12.5px Barlow, sans-serif; cursor: pointer; }
+.lnk { background: none; border: 0; padding: 0; color: var(--muted); font: 600 12.5px Barlow, sans-serif; cursor: pointer; white-space: nowrap; }
 .lnk:hover { color: var(--text); }
 .hint { color: var(--faint); font-size: 12px; margin-left: auto; text-align: right; }
 .empty { padding: 30px 16px; text-align: center; color: var(--muted); }
+.body.sitebody { padding: 10px 10px 4px; }
 /* the slim bar a pull opens with: one click for the whole card */
 body.isMini { border-color: rgba(230,180,80,.85); box-shadow: inset 0 0 0 1px rgba(230,180,80,.25); background: linear-gradient(90deg, rgba(230,180,80,.16), rgba(230,180,80,.04) 60%), var(--bg); }
 .mini { display: flex; align-items: center; gap: 12px; padding: 13px 12px 13px 16px; app-region: drag; -webkit-app-region: drag; cursor: move; animation: slideIn .45s cubic-bezier(.2,.8,.2,1) both; }
@@ -97,14 +98,15 @@ function render() {
   document.body.classList.toggle('isMini', !big);
   if (!big) {
     const r0 = h.kill ? '<em class="k">Kill</em>' : '<em>Wipe' + (h.pct !== '' && h.pct != null ? ' ' + esc(h.pct) + '%' : '') + '</em>';
-    app.innerHTML = '<div class="mini">' + LOGO + '<div class="mt"><div class="m1">Your recap is ready</div><div class="m2">Pull ' + esc(h.pull) + ' · ' + r0 + ' · ' + esc(h.boss) + (D.copiedAlready ? ' · copied: press Ctrl+V in WoW' : '') + '</div></div>' +
+    app.innerHTML = '<div class="mini">' + LOGO + '<div class="mt"><div class="m1">Your recap is ready</div><div class="m2">Pull ' + esc(h.pull) + ' · ' + r0 + ' · ' + esc(h.boss) + (D.copiedAlready ? ' · copied: type /dp in WoW, then Ctrl+V' : '') + '</div></div>' +
       '<button class="btn" type="button" data-big="1">See recap ›</button><button class="x" type="button" title="Close (it comes back after the next pull)" data-close="1">✕</button></div>';
     fit(); return;
   }
   const paint = (s) => { let x = esc(s); for (const [n, k] of cls) if (n.length > 2 && x.includes(n)) x = x.split(n).join('<b style="color:' + (CC[k] || '#ece8df') + ';font-weight:600">' + n + '</b>'); return x; };
   const res = h.kill ? 'Kill' : 'Wipe' + (h.pct !== '' && h.pct != null ? ' ' + h.pct + '%' : '');
   let body = '';
-  if (c && c.headline) {
+  if (D.pack && D.pack.html) body = '<div id="site"></div>';
+  else if (c && c.headline) {
     body += '<div class="cl">' + (c.kill ? 'THE KILL, COACHED' : 'THIS PULL, COACHED') + '</div><p class="chd">' + paint(c.headline) + '</p>';
     if (!c.focusSame && c.focus) body += '<div class="cfoc"><div>' + (c.kill ? 'FOCUS NEXT WEEK' : 'FOCUS NEXT PULL') + '</div><p>' + paint(c.focus) + '</p></div>';
     const W = c.wrong || [], cap = 3;
@@ -118,9 +120,10 @@ function render() {
     body += '<p class="cnt" style="margin-top:10px">The full coaching is on the website, in the Debriefing tab.</p>';
   } else body += '<p class="chd">' + esc(res) + ' · ' + esc(h.dur) + '</p><p class="cnt">No coaching for this pull.</p>';
   app.innerHTML = '<div class="top">' + LOGO + '<b>Debrief</b><span class="bt">' + esc(h.boss) + ' · ' + esc(h.diff) + ' · Pull ' + esc(h.pull) + '</span><span class="pill' + (h.kill ? ' k' : '') + '">' + esc(res) + '</span><button class="x" type="button" title="Close (it comes back after the next pull)" data-close="1">✕</button></div>' +
-    '<div class="body">' + body + '</div>' +
-    '<div class="foot">' + (D.code ? (copied ? '<button class="btn done" type="button">Copied: in WoW, press Ctrl+V</button>' : '<button class="btn" type="button" data-share="1" title="Copies this pull for the addon. Paste it in WoW and everyone in your raid with the addon gets it.">Share with raid</button>') : '') +
-    '<button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">' + (D.copiedAlready ? 'Copied for WoW: press Ctrl+V' : 'Closes when the next pull starts') + '</span></div>';
+    '<div class="body' + (D.pack && D.pack.html ? ' sitebody' : '') + '">' + body + '</div>' +
+    '<div class="foot">' + (D.code ? (copied ? '<button class="btn done" type="button">Copied: in WoW, type /dp, then Ctrl+V</button>' : '<button class="btn" type="button" data-share="1" title="Copies this pull for the addon. Paste it in WoW and everyone in your raid with the addon gets it.">Share with raid</button>') : '') +
+    '<button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">' + (copied ? '' : 'Closes when the next pull starts') + '</span></div>';
+  if (D.pack && D.pack.html) siteBox(document.getElementById('site'), D.pack);
   fit();
 }
 // (the window grows to fit the card, up to most of the screen; the rest scrolls)
@@ -142,6 +145,43 @@ function take(d) {
   if (d.copied != null) { copied = !!d.copied; render(); return; }
   D = d; copied = !!d.copiedAlready; big = !!d.full; for (const k of Object.keys(OPEN)) delete OPEN[k]; render();
   const b = document.querySelector('.body'); if (b) b.scrollTop = 0;
+}
+// ---------- Debriefing's own coach box ----------
+let SITECSS = null;
+const siteCss = () => SITECSS || (SITECSS = fetch('/app').then((r) => r.text()).then((t) => {
+  const head = t.slice(0, Math.max(0, t.indexOf('<script')) || t.length);
+  return (head.match(/<style[^>]*>[\s\S]*?<\/style>/g) || []).map((x) => x.replace(/^<style[^>]*>|<\/style>$/g, '')).join('\n').replace(/:root\b/g, ':host');
+}).catch(() => ''));
+const OFFICIAL = (n) => ['https://wow.zamimg.com/images/wow/icons/large/' + n + '.jpg', 'https://render.worldofwarcraft.com/us/icons/56/' + n + '.jpg'];
+function official(img, name) { const u = OFFICIAL(name); let k = 0; img.onload = () => { if (img.naturalWidth && img.parentNode) img.parentNode.classList.add('has'); }; img.onerror = () => { if (++k < u.length) img.src = u[k]; else img.remove(); }; img.src = u[0]; }
+function hydrate(root) {
+  root.querySelectorAll('img.oi:not([data-done])').forEach((img) => {
+    img.dataset.done = '1';
+    if (img.dataset.icon) return official(img, img.dataset.icon);
+    const id = img.dataset.sid; if (!id) return;
+    if (ICONS[id]) return official(img, ICONS[id]);
+    fetch('https://nether.wowhead.com/tooltip/spell/' + encodeURIComponent(id) + '?dataEnv=1&locale=0').then((r) => r.json()).then((x) => {
+      if (!x || !x.icon) return; ICONS[id] = x.icon; try { localStorage.setItem('dbf-icons', JSON.stringify(ICONS)); } catch (e) { /* fine */ } official(img, x.icon); }).catch(() => {});
+  });
+}
+async function siteBox(host, pack) {
+  const sh = host.shadowRoot || host.attachShadow({ mode: 'open' }), css = await siteCss();
+  sh.innerHTML = '<style>' + css + ':host{display:block;color:#ece8df;font:15px/1.5 Barlow,"Segoe UI",system-ui,sans-serif}.cch{margin:0!important}a{pointer-events:none;color:inherit;text-decoration:none}</style>' + pack.html;
+  sh.querySelectorAll('details.cch-more').forEach((d) => d.addEventListener('toggle', fit));
+  hydrate(sh); fit(); setTimeout(fit, 300);
+  if (sh._bound) return; sh._bound = 1;
+  sh.addEventListener('click', (e) => {
+    const t = e.target; if (!t || !t.closest) return;
+    const a = t.closest('a'); if (a) e.preventDefault();
+    const more = t.closest('[data-ddmore],[data-avmore]');
+    if (more) { more.parentNode.querySelectorAll(more.dataset.ddmore != null ? '.dch-x' : '.ach-x').forEach((x) => (x.hidden = false)); more.remove(); fit(); return; }
+    const chip = t.closest('.dch[data-ddg],.ach[data-avk]'); if (!chip) return;
+    const isD = chip.classList.contains('dch'), ab = chip.closest('.cch-ab'), box = ab && ab.querySelector(isD ? '.cch-ddbox' : '.cch-avbox'); if (!box) return;
+    const was = chip.classList.contains('on'); ab.querySelectorAll(isD ? '.dch.on' : '.ach.on').forEach((x) => x.classList.remove('on'));
+    if (was) { box.hidden = true; box.innerHTML = ''; fit(); return; }
+    const h = isD ? (pack.dd || {})[chip.dataset.ddg] : (pack.av || {})[chip.dataset.avk]; if (!h) return;
+    chip.classList.add('on'); box.innerHTML = h; box.hidden = false; hydrate(box); fit();
+  });
 }
 window.DBF_SHOW = take; // (tests)
 if (wv) wv.addEventListener('message', (e) => take(e.data));

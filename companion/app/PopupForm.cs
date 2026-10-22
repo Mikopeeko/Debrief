@@ -51,7 +51,7 @@ namespace Debrief {
     // (a pull's recap, as JSON from the main window's page)
     public void ShowRecap(string json) {
       pending = json;
-      if (!placed) { placed = true; Bounds = SavedBounds(Px(440), Px(62)); }
+      if (!placed) { placed = true; Bounds = SavedBounds(Px(580), Px(70)); }
       if (!Visible) { Show(); SetWindowPos(Handle, (IntPtr)(-1) /* HWND_TOPMOST */, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010 | 0x0040 /* NOSIZE NOMOVE NOACTIVATE SHOWWINDOW */); }
       if (web.CoreWebView2 == null) { if (!starting) { starting = true; BeginInvoke(new Action(async () => await Start())); } }
       else if (ready) Send(json);
@@ -64,11 +64,11 @@ namespace Debrief {
       else if (m == "close") { SaveBounds(); Hide(); }
       else if (m == "open") main.ShowInFront();
       else if (m.StartsWith("h:")) {
-        // (the window fits the card, up to most of the screen; its top edge stays put)
+        // (the window fits the card, up to most of the screen, and stays centred where it was: over your character)
         double h; if (!double.TryParse(m.Substring(2), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out h)) return;
         var wa = Screen.FromHandle(Handle).WorkingArea;
         int px = Math.Max(Px(56), Math.Min((int)Math.Ceiling(h * Dpi() / 96.0), (int)(wa.Height * 0.85)));
-        int top = Math.Min(Top, wa.Bottom - px - 8);
+        int top = Math.Min(Top + Height / 2 - px / 2, wa.Bottom - px - 8);
         SetBounds(Left, Math.Max(wa.Top, top), Width, px);
       }
       else if (m.StartsWith("share:")) {
@@ -79,15 +79,21 @@ namespace Debrief {
 
     protected override void OnMove(EventArgs e) { base.OnMove(e); if (placed && Visible) SaveBounds(); }
 
-    // ---------- its spot, kept between pulls and starts (right side of the screen at first) ----------
+    // ---------- its spot, kept between pulls and starts (right over your character at first: the middle of WoW's screen) ----------
     [DllImport("user32.dll")] static extern bool SetWindowPos(IntPtr h, IntPtr after, int x, int y, int cx, int cy, uint flags);
     [DllImport("user32.dll")] static extern int GetDpiForWindow(IntPtr h);
     int Dpi() { int dpi = 96; try { dpi = GetDpiForWindow(main.Handle); } catch { } return dpi < 96 ? 96 : dpi; }
     int Px(int v) { return (int)Math.Round(v * Dpi() / 96.0); }
-    string BoundsFile { get { return Path.Combine(here, "popup.txt"); } }
+    string BoundsFile { get { return Path.Combine(here, "popup2.txt"); } }
+    static Screen GameScreen() {
+      foreach (var n in new[] { "Wow", "WowT", "WowB" }) {
+        try { foreach (var p in System.Diagnostics.Process.GetProcessesByName(n)) if (p.MainWindowHandle != IntPtr.Zero) return Screen.FromHandle(p.MainWindowHandle); } catch { }
+      }
+      return Screen.PrimaryScreen;
+    }
     Rectangle SavedBounds(int w, int h) {
-      var wa = Screen.PrimaryScreen.WorkingArea;
-      var r = new Rectangle(wa.Right - w - Px(28), wa.Top + Px(240), w, h);
+      var wa = GameScreen().WorkingArea;
+      var r = new Rectangle(wa.Left + (wa.Width - w) / 2, wa.Top + wa.Height / 2 - h / 2, w, h); // (right over your character)
       try {
         var p = File.ReadAllText(BoundsFile).Split(',');
         var s = new Rectangle(int.Parse(p[0]), int.Parse(p[1]), w, h);

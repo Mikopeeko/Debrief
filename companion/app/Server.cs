@@ -71,7 +71,7 @@ namespace Debrief {
           if (!(get && (path == "/log/info" || path == "/log/read" || path == "/app-version"))) { res.StatusCode = 403; Send(res, Encoding.UTF8.GetBytes("No"), "text/plain"); return; }
         }
         if (post && !string.IsNullOrEmpty(origin) && origin != "http://localhost:" + Port) { res.StatusCode = 403; Send(res, Encoding.UTF8.GetBytes("No"), "text/plain"); return; }
-        if (!fromApp && (path == "/wait" || path == "/scan" || path == "/clip" || path == "/read" || path == "/archive" || path == "/popup" || path == "/" || path == "/index.html")) {
+        if (!fromApp && (path == "/wait" || path == "/scan" || path == "/clip" || path == "/read" || path == "/archive" || path == "/popup" || path == "/addonflags" || path == "/" || path == "/index.html")) {
           if (path == "/wait") { Thread.Sleep(25000); SendJson(res, new Dictionary<string, object> { { "size", Num(q["size"]) }, { "name", q["name"] ?? "" } }); return; }
           if (path == "/" || path == "/index.html") { Send(res, Encoding.UTF8.GetBytes(Moved), "text/html; charset=utf-8"); return; }
           res.StatusCode = 409; SendJson(res, new Dictionary<string, object> { { "error", "Debrief Companion is its own app now. Close this window." } }); return;
@@ -141,6 +141,13 @@ namespace Debrief {
         else if (get && path == "/app-version") SendJson(res, new Dictionary<string, object> { { "version", Program.Version }, { "addon", AddonVersion() } });
         else if (post && path == "/quit") { SendJson(res, new Dictionary<string, object> { { "ok", true } }); res.Close(); Quit?.Invoke(); }
         else if (post && path == "/archive") SendJson(res, Wow.ArchiveLogs(here)); // (the Archive old logs button)
+        else if (post && path == "/addonflags") {
+          // (the main page's switches, for the addon: see Wow.SetFlags)
+          if (!(req.ContentType ?? "").StartsWith("application/json")) throw new Exception("Expected JSON.");
+          var body = Json.Deserialize<Dictionary<string, object>>(Body(req));
+          Wow.SetFlags(here, !(body.ContainsKey("popup") && body["popup"] is bool p0 && !p0), body.ContainsKey("autocopy") && body["autocopy"] is bool a0 && a0);
+          SendJson(res, new Dictionary<string, object> { { "ok", true } });
+        }
         else if (get && path == "/popup") Send(res, File.ReadAllBytes(Path.Combine(here, "popup.html")), "text/html; charset=utf-8");
         else if (post && path == "/popup") {
           // (the main page: show this pull's recap over the game, or hide it when the next pull starts)

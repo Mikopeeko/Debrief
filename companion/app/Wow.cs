@@ -64,6 +64,17 @@ namespace Debrief {
     }
 
     // Puts the Debrief addon into WoW's AddOns folder (or updates it); never over a newer copy, say one CurseForge installed.
+    // (the app's switches the addon reads at login or /reload: with the recap pop-up on and Copy every pull off, WoW doesn't ask
+    // "See your recap?" after a pull (Oct 22))
+    static bool flagPopup = true, flagAuto = false;
+    static void WriteFlagFile(string dst) {
+      try { File.WriteAllText(Path.Combine(dst, "Companion.lua"), "-- Written by Debrief Companion: the app is on this PC, and its switches.\r\nDEBRIEF_HAS_APP = true\r\nDEBRIEF_POPUP = " + (flagPopup ? "true" : "false") + "\r\nDEBRIEF_AUTOCOPY = " + (flagAuto ? "true" : "false") + "\r\n", Encoding.ASCII); } catch { }
+    }
+    public static void SetFlags(string here, bool popup, bool auto) {
+      flagPopup = popup; flagAuto = auto;
+      var r = FindRetail(here); if (r == null) return;
+      var dst = Path.Combine(r, @"Interface\AddOns\Debrief"); if (Directory.Exists(dst)) WriteFlagFile(dst);
+    }
     public static string InstallAddon(string here) {
       var src = Path.Combine(here, "addon", "Debrief");
       if (!Directory.Exists(src)) return "";
@@ -76,7 +87,7 @@ namespace Debrief {
       try { newer = have != "" && new Version(have) >= new Version(v); } catch { newer = have == v; }
       // (tells the addon this PC runs the app, so the "See your recap?" prompt comes from your very first boss pull; written every start,
       // so it's back after CurseForge updates the addon)
-      Action flag = () => { try { File.WriteAllText(Path.Combine(dst, "Companion.lua"), "-- Written by Debrief Companion: the app is on this PC.\r\nDEBRIEF_HAS_APP = true\r\n", Encoding.ASCII); } catch { } };
+      Action flag = () => WriteFlagFile(dst);
       if (newer) { flag(); return "The Debrief addon (version " + have + ") is installed in " + dst; }
       try {
         CopyDir(src, dst);
