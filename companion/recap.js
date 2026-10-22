@@ -61,6 +61,20 @@ const rowsOf = (gs) => gs.flatMap((g) => (g.rows || []).map((r) => ({ g, r })));
 const tOf = (r) => { const c = r.find((x) => x && x.t != null); return c ? c.t : null; };
 const at = (r) => (tOf(r) != null ? ' at ' + mmss(tOf(r)) : '');
 const allN = (n, noun) => (n === 2 ? 'Both ' + noun : 'All ' + n + ' ' + noun);
+// (more helpers for the other bosses: "Both sets" / "All 5 sets" / "The set", "2 of 5 sets went wrong. ", names with "and 3 more")
+const every = (n, noun, one) => (n === 1 ? one : allN(n, noun));
+const pre = (b, n, noun) => (n > 1 ? b + ' of ' + n + ' ' + noun + ' went wrong. ' : '');
+const who = (l, n) => { const k = n || 3, x = [...new Set(l)].map((p) => '@' + p); return x.length > k ? x.slice(0, k).join(', ') + ' and ' + (x.length - k) + ' more' : andList(x); };
+const gt = (g) => (g.t != null ? ' at ' + mmss(g.t) : '');
+const lead1 = (t) => plain(String(t || '')).split(/\.\s|·/)[0].replace(/\.$/, '').trim();
+const badOf = (gs) => gs.filter((g) => g.bad || g.warn), worst = (gs) => gs.find((g) => g.bad) || gs.find((g) => g.warn);
+const pRows = (gs) => rowsOf(gs).filter((x) => x.r[0] && (x.r[0].p || x.r[0].ps));
+const numIn = (t, re) => { const m = String(t || '').match(re); return m ? parseFloat(m[1]) : NaN; };
+const maxOf = (l) => Math.max(...l.filter((x) => !isNaN(x))), minOf = (l) => Math.min(...l.filter((x) => !isNaN(x)));
+const diedTxt = (t) => String(t || '').replace(/^(.*) died$/, (m, x) => who(x.split(/,\s*|\s+and\s+/), 2) + ' died');
+const nWho = (l, noun) => { const u = [...new Set(l)]; return u.length <= 2 ? who(u, 2) : u.length + ' ' + noun; };
+const died = (c) => !!(c && c.bad && /died/i.test(ctxt(c)));
+const setLine = (gs, noun, okText) => { if (!gs.length) return null; const b = badOf(gs); if (!b.length) return okText; const g = worst(gs); return pre(b.length, gs.length, noun) + plain(g.title) + gt(g) + ': ' + lead1(g.sub) + '.'; };
 const RECIPES = {
   // The Coiled Altar
   'Venom orbs': ({ rows }) => {
@@ -150,11 +164,463 @@ const RECIPES = {
     const w = s[0];
     return 'Slowest: @' + w.r[1].p + ', ' + w.v + ' s' + at(w.r) + (w.r[3] && w.r[3].p ? ' (dispelled by @' + w.r[3].p + ')' : '') + '. ' + (rows.length - late) + ' of ' + rows.length + ' in time.';
   },
+  // Nymrissa Wavecaller
+  'Frost Orbs (Soak every orb)': ({ gs }) => setLine(gs, 'sets', every(gs.length, 'sets', 'The set') + ' soaked, no orb burst.'),
+  'Frost Burst (Soak one at a time)': ({ gs }) => {
+    if (!gs.length) return null;
+    const all = pRows(gs), gaps = all.map((x) => numIn(ctxt(x.r[2]), /([\d.]+) s after/)), b = badOf(gs);
+    if (!b.length) return every(gs.length, 'sets', 'The set') + ' soaked one at a time' + (gaps.some((x) => !isNaN(x)) ? ' (closest ' + minOf(gaps) + ' s apart)' : '') + '.';
+    const g = worst(gs), r = (g.rows || []).find((x) => x.some(isHurt));
+    if (!r) return pre(b.length, gs.length, 'sets') + plain(g.title) + gt(g) + ': ' + lead1(g.sub) + '.';
+    const sk = r[0] && r[0].p ? ['@' + r[0].p] : ctxt(r[0]).split(/,\s*/).filter(Boolean).map((n) => '@' + n), gap = ctxt(r[2]);
+    return pre(b.length, gs.length, 'sets') + plain(g.title) + at(r) + ': ' + andList(sk) + ' soaked' + (/after/.test(gap) ? ' ' + gap : '') + (isHurt(r[3]) ? '; ' + diedTxt(ctxt(r[3])) + (r[3].sub ? ' (' + plain(r[3].sub) + ')' : '') : '') + '.';
+  },
+  'Murloc sets (Kill them before the bubble)': ({ gs }) => {
+    const slow = maxOf(gs.map((g) => numIn(plain(g.sub), /in (\d+) s/)));
+    return setLine(gs, 'sets', every(gs.length, 'sets', 'The set') + ' dead before the bubble' + (isFinite(slow) ? ' (slowest ' + slow + ' s)' : '') + '.').replace(/got there/, 'reached the bubble');
+  },
+  'Bubblefin Frostscales (Kill them first)': ({ gs }) => {
+    if (!gs.length) return null;
+    const all = rowsOf(gs), life = all.map((x) => numIn(ctxt(x.r[2]), /dead (\d+) s/)), b = badOf(gs);
+    if (!b.length) return 'Every Frostscale died fast' + (isFinite(maxOf(life)) ? ' (slowest ' + maxOf(life) + ' s)' : '') + '.';
+    const g = worst(gs), r = (g.rows || []).find((x) => x.some(isHurt));
+    return pre(b.length, gs.length, 'sets') + plain(g.title) + gt(g) + ': ' + (r ? ctxt(r[0]) + ' lived ' + (numIn(ctxt(r[2]), /dead (\d+) s/) || '?') + ' s' + (ctxt(r[3]) ? ' (' + ctxt(r[3]) + ')' : '') : lead1(g.sub)) + '.';
+  },
+  'Water Jet (Swap every jet)': ({ rows }) => {
+    if (!rows.length) return null;
+    const bad = rows.filter((r) => r.some(isHurt));
+    if (!bad.length) return 'Swapped every jet (' + rows.length + ').';
+    return bad.slice(0, 2).map((r) => '@' + ((r[0] && r[0].p) || '?') + (/two in a row/i.test(ctxt(r[2])) ? ' took 2 jets in a row' : ' ' + ctxt(r[2])) + at(r) + (died(r[3]) ? ' and died' : '')).join('. ') + '.';
+  },
+  'Abyssal Rain (Cover it with cooldowns)': ({ rows }) => {
+    if (!rows.length) return null;
+    const cov = rows.filter((r) => ctxt(r[2]) && !/^none$/i.test(ctxt(r[2]))), bad = rows.filter((r) => r.some(isHurt));
+    if (!bad.length) return 'No deaths in ' + (rows.length > 1 ? rows.length + ' Rains' : 'the Rain') + '. Raid cooldowns on ' + cov.length + ' of ' + rows.length + '.';
+    const r = bad[0], d = ctxt(r[3]);
+    return pre(bad.length, rows.length, 'Rains') + ctxt(r[0]) + at(r) + ': ' + (/^none$/i.test(ctxt(r[2])) ? 'no raid cooldown' : ctxt(r[2])) + (d && d !== '—' ? ', ' + d : '') + '.';
+  },
+  'Whirlpools and Pop! (Find the gap, stay dry)': ({ gs }) => {
+    if (!gs.length) return null;
+    const b = badOf(gs); if (!b.length) return 'Everyone found the gap and stayed dry (' + (gs.length > 1 ? gs.length + ' Pops' : 'one Pop') + ').';
+    const g = worst(gs), rs = (g.rows || []).filter((r) => r[0] && r[0].p), hit = rs.filter((r) => /whirlpool/i.test(ctxt(r[2]))), wet = rs.filter((r) => /water/i.test(ctxt(r[2]))), dd = rs.filter((r) => died(r[3])).map((r) => r[0].p), p = [];
+    if (hit.length) p.push(nWho(hit.map((r) => r[0].p), 'players') + ' hit by a whirlpool');
+    if (wet.length) p.push(nWho(wet.map((r) => r[0].p), 'players') + ' knocked into the water');
+    return pre(b.length, gs.length, 'Pops') + plain(g.title) + gt(g) + ': ' + (p.length ? p.join(', ') : lead1(g.sub)) + (dd.length ? '; ' + (dd.length <= 2 ? who(dd, 2) : dd.length + ' of them') + ' died' : '') + '.';
+  },
+  // Nek'zali the Soulcoiler
+  'Restless Amani (Kill before the well)': ({ gs }) => {
+    const slow = maxOf(rowsOf(gs).map((x) => numIn(ctxt(x.r[3]), /killed after (\d+) s/)));
+    return setLine(gs, 'sets', every(gs.length, 'sets', 'The set') + ' dead before the well' + (isFinite(slow) ? ' (slowest ' + slow + ' s)' : '') + '.');
+  },
+  'Soulcoil Ignition (Dodge the circles)': ({ gs }) => {
+    if (!gs.length) return null;
+    const hit = pRows(gs).filter((x) => isHurt(x.r[2])), dd = hit.filter((x) => died(x.r[3]));
+    if (!hit.length) return 'Nobody hit by the circles (' + (gs.length > 1 ? gs.length + ' casts' : 'one cast') + ').';
+    return (hit.length === 1 ? 'The circles hit ' : 'The circles hit ' + hit.length + ' players: ') + who(hit.map((x) => x.r[0].p), 4) + ' (first' + at(hit[0].r) + ')' + (dd.length ? '; ' + who(dd.map((x) => x.r[0].p), 2) + ' died' : '') + '.';
+  },
+  'Grasping Depths (Kill the Echo, kick the Curse)': ({ gs }) => {
+    if (!gs.length) return null;
+    const all = rowsOf(gs), curse = all.filter((x) => /Curse/.test(ctxt(x.r[0]))), thr = curse.filter((x) => !/kicked/i.test(ctxt(x.r[2]))), slow = maxOf(gs.map((g) => numIn(plain(g.sub), /dead in (\d+) s/)));
+    if (thr.length) return "Soulcoiler's Curse got through" + at(thr[0].r) + (thr.length > 1 ? ' (' + thr.length + ' times)' : '') + '. ' + (curse.length - thr.length) + ' of ' + curse.length + ' kicked.';
+    return setLine(gs, 'casts', every(gs.length, 'Echoes', 'The Echo') + ' dead' + (isFinite(slow) ? ' (slowest ' + slow + ' s)' : '') + ', every Curse kicked.');
+  },
+  'Essence Rend (Dispel at the side)': ({ gs }) => {
+    if (!gs.length) return null;
+    const all = pRows(gs), yd = all.map((x) => numIn(ctxt(x.r[3]), /(\d+) yd/)), bad = all.filter((x) => x.r.some(isHurt));
+    if (!bad.length) return 'Every puddle at the side' + (isFinite(minOf(yd)) ? ' (closest ' + minOf(yd) + ' yd from the well)' : '') + '.';
+    const x = bad[0], by = x.r[2] && x.r[2].sub ? ' (' + plain(x.r[2].sub).replace(/^by /, 'dispelled by @') + ')' : '';
+    return (bad.length > 1 ? bad.length + ' puddles in the wrong spot. First: ' : '') + '@' + x.r[0].p + at(x.r) + ', ' + ctxt(x.r[3]) + by + '.';
+  },
+  'Possession Barrage (Tank steps away)': ({ rows }) => {
+    if (!rows.length) return null;
+    const yd = rows.map((r) => numIn(ctxt(r[2]), /(\d+) yd/)), bad = rows.filter((r) => r.some(isHurt));
+    if (!bad.length) return every(rows.length, 'Barrages', 'The Barrage') + ' taken ' + (isFinite(minOf(yd)) ? minOf(yd) + '+ yd out' : 'out') + ', path clear.';
+    return pre(bad.length, rows.length, 'Barrages') + bad.slice(0, 2).map((r) => { const inPath = (ctxt(r[4]).match(/in the path: (.*)/) || [])[1];
+      return (inPath ? who(inPath.split(/,\s*|\s+and\s+/)) + ' stood in the path' : 'tank @' + ((r[0] && r[0].p) || '?') + ' only ' + ctxt(r[2])) + at(r) + (isHurt(r[3]) ? ' (raid took ' + ctxt(r[3]) + ')' : ''); }).join('. ') + '.';
+  },
+  'Intermission (Soak the Pyres)': ({ gs }) => {
+    if (!gs.length) return null;
+    const py = rowsOf(gs).filter((x) => /Pyre/.test(ctxt(x.r[0]))).map((x) => parseInt(ctxt(x.r[2]), 10)).filter((n) => !isNaN(n)), b = badOf(gs), g = worst(gs) || gs[0];
+    const soaks = py.length ? (py.length > 1 ? 'Pyres soaked by ' + andList(py.map(String)) : 'Pyre soaked by ' + py[0]) : '';
+    if (!b.length) return 'No corpses came back' + (soaks ? '; ' + soaks : '') + '.';
+    return lead1(g.sub).replace(/^(\d+) corpses? came back/, '$1 came back') + (soaks ? ' (' + soaks + ')' : '') + '.';
+  },
+  'Invoke (Stop casting)': ({ rows }) => {
+    if (!rows.length) return null;
+    const bad = rows.filter((r) => r.some(isHurt)), n = new Map();
+    for (const r of bad) for (const p of (r[3] && r[3].ps) || []) n.set(p, (n.get(p) || 0) + 1);
+    if (!bad.length) return 'Nobody silenced (' + (rows.length > 1 ? rows.length + ' casts' : 'one cast') + ').';
+    const rep2 = [...n].filter(([, k]) => k > 1).sort((a, c) => c[1] - a[1]).map(([p]) => p), r = bad[0];
+    return pre(bad.length, rows.length, 'casts') + ctxt(r[0]) + at(r) + ' silenced ' + ((r[3] && r[3].ps) || []).length + ': ' + who((r[3] && r[3].ps) || [], 3) + '.' + (rep2.length ? ' More than once: ' + who(rep2, 2) + '.' : '');
+  },
+  // Entombed Sentinels
+  'Helical Toxins (Pair up and solve)': ({ gs }) => {
+    const slow = maxOf(gs.map((g) => numIn(plain(g.sub), /slowest \+?([\d.]+) s/)));
+    return setLine(gs, 'intermissions', 'Every pair solved in ' + (gs.length > 2 ? 'all ' + gs.length + ' intermissions' : gs.length === 2 ? 'both intermissions' : 'the intermission') + (isFinite(slow) ? ' (slowest ' + slow + ' s)' : '') + '.');
+  },
+  'Shifting Protovenom (Clear circles in pairs)': ({ gs }) => {
+    if (!gs.length) return null;
+    const slow = maxOf(gs.map((g) => numIn(plain(g.sub), /slowest ([\d.]+) s/))), b = badOf(gs);
+    if (!b.length) return every(gs.length, 'casts', 'The cast') + ' cleared in pairs' + (isFinite(slow) ? ' (slowest ' + slow + ' s)' : '') + '.';
+    const g = worst(gs), r = (g.rows || []).find((x) => x.some(isHurt)), bits = r ? [isHurt(r[3]) ? 'took ' + ctxt(r[3]) : '', isHurt(r[4]) ? ctxt(r[4]) : '', isHurt(r[5]) ? ctxt(r[5]) : ''].filter(Boolean) : [];
+    return pre(b.length, gs.length, 'casts') + plain(g.title) + gt(g) + ': ' + (r && r[0].p ? '@' + r[0].p + (r[2] && r[2].p ? ' and @' + r[2].p : '') + ' ' + (bits.join(', ') || 'went wrong') : lead1(g.sub)) + '.';
+  },
+  'Toxic Droplets (Step on one each)': ({ gs }) => {
+    if (!gs.length) return null;
+    const all = pRows(gs), dbl = all.filter((x) => isHurt(x.r[2])), back = gs.reduce((a, g) => a + (numIn(plain(g.sub), /(\d+) players? hit by the venom/) || 0), 0), dd = all.filter((x) => died(x.r[4])), b = badOf(gs), p = [];
+    if (!b.length) return 'Every droplet stepped on, one each (' + gs.length + (gs.length > 1 ? ' sets).' : ' set).');
+    if (dbl.length) p.push(nWho(dbl.map((x) => x.r[0].p), 'players') + ' took 2 or more at once (first @' + dbl[0].r[0].p + at(dbl[0].r) + ')');
+    if (back) p.push(back + ' hit by the venom flying back');
+    if (dd.length) p.push(nWho(dd.map((x) => x.r[0].p), 'players') + ' died');
+    return pre(b.length, gs.length, 'sets') + (p.length ? capF(p.join('; ')) : plain(worst(gs).title) + ': ' + lead1(worst(gs).sub)) + '.';
+  },
+  'Venom Coagulation (Kill before the intermission)': ({ rows }) => {
+    if (!rows.length) return null;
+    const late = rows.filter((r) => isHurt(r[4])), slow = maxOf(rows.map((r) => numIn(ctxt(r[2]), /in (\d+) s/)));
+    if (!late.length) return 'Every add dead before the intermission' + (isFinite(slow) ? ' (slowest ' + slow + ' s)' : '') + '.';
+    const nm = (r) => ctxt(r[0]).replace(/\s*\(.*\)$/, '');
+    return andList(late.map((r) => nm(r) + ' (' + mmss(tOf(r)) + ')')) + (late.length > 1 ? ' were' : ' was') + ' still alive at the intermission (Contaminate ' + andList(late.map((r) => ctxt(r[3]).replace(/ on the raid/, ''))) + ' on the raid).';
+  },
+  'Unstable Miasma (Soak with 8)': ({ rows }) => {
+    if (!rows.length) return null;
+    const n = rows.map((r) => parseInt(ctxt(r[3]), 10)), bad = rows.filter((r) => r.some(isHurt));
+    if (!bad.length) return every(rows.length, 'soaks', 'The soak') + ' had 8 or more' + (isFinite(minOf(n)) ? ' (fewest ' + minOf(n) + ')' : '') + '.';
+    return pre(bad.length, rows.length, 'soaks') + bad.slice(0, 2).map((r) => ctxt(r[0]) + at(r) + ': ' + (parseInt(ctxt(r[3]), 10) || 0) + ' soakers (needs 8)' + (r[2] && r[2].p ? ', marked @' + r[2].p : '') + (died(r[4]) || (r[4] && r[4].ps && r[4].ps.length) ? ', ' + ctxt(r[4]) + ' died' : '')).join('. ') + '.';
+  },
+  'Blighted Blood (Dispel fast)': ({ gs }) => {
+    if (!gs.length) return null;
+    const all = pRows(gs), v = all.map((x) => ({ x, s: numIn(ctxt(x.r[2]), /([\d.]+) s/) })).filter((y) => !isNaN(y.s)).sort((a, c) => c.s - a.s), slow = all.filter((x) => isHurt(x.r[2]) || isHurt(x.r[3])), dw = all.filter((x) => /died with it/i.test(ctxt(x.r[3])));
+    if (!slow.length && !dw.length) return 'Every Blighted Blood dispelled fast' + (v.length ? ' (slowest ' + v[0].s + ' s)' : '') + '.';
+    const w = v[0], p = [];
+    if (w && isHurt(w.x.r[2])) p.push('Slowest: @' + w.x.r[0].p + ', ' + w.s + ' s' + at(w.x.r) + (w.x.r[3] && w.x.r[3].p ? ' (dispelled by @' + w.x.r[3].p + ')' : ''));
+    if (dw.length) p.push(who(dw.map((x) => x.x ? x.x.r[0].p : x.r[0].p), 2) + ' died with it');
+    return (p.length ? p.join('. ') + '. ' : '') + (all.length - slow.length) + ' of ' + all.length + ' in time.';
+  },
+  "Marks (Stay on your boss's side)": ({ gs }) => {
+    if (!gs.length) return null;
+    const all = pRows(gs).filter((x) => x.r.some(isHurt)), b = badOf(gs);
+    if (!b.length) return "Nobody took the other boss's Mark (" + gs.length + (gs.length > 1 ? ' cycles).' : ' cycle).');
+    const top = all.map((x) => ({ x, n: numIn(ctxt(x.r[2]), /(\d+)/) })).sort((a, c) => c.n - a.n)[0];
+    return pre(b.length, gs.length, 'cycles') + (top ? '@' + top.x.r[0].p + ' had ' + ctxt(top.x.r[2]) + " of the other boss's Mark (" + plain(top.x.g.title) + ')' : plain(worst(gs).title) + ': ' + lead1(worst(gs).sub)) + (all.length > 1 ? '; ' + all.length + ' players in all' : '') + '.';
+  },
+  'Boss balance (Keep them even)': ({ rows }) => {
+    if (!rows.length) return null;
+    const ints = rows.filter((r) => /^Intermission/.test(ctxt(r[0]))), gap = ints.map((r) => numIn(ctxt(r[4]), /([\d.]+)/)), close = rows.find((r) => /close together/i.test(ctxt(r[0])) && r.some(isHurt)), wide = ints.filter((r) => r.some(isHurt)), p = [];
+    if (!close && !wide.length) return 'Even at every intermission' + (isFinite(maxOf(gap)) ? ' (largest gap ' + maxOf(gap) + ' points)' : '') + '.';
+    if (wide.length) p.push(ctxt(wide[0][0]) + ': ' + ctxt(wide[0][4]) + ' apart' + (ctxt(wide[0][5]) ? ' (' + ctxt(wide[0][5]) + ')' : ''));
+    if (close) p.push('Bosses ' + ctxt(close[2]) + ' ' + plain((close[2] && close[2].sub) || '') + (ctxt(close[4]) ? ' (' + ctxt(close[4]) + ')' : ''));
+    return p.join('. ').replace(/\s+\(/g, ' (') + '.';
+  },
+  'Tanks (Swap at each intermission)': ({ rows }) => {
+    if (!rows.length) return null;
+    const bad = rows.filter((r) => r.some(isHurt));
+    if (!bad.length) return 'Swapped at every intermission.';
+    return pre(bad.length, rows.length, 'cycles') + ctxt(bad[0][0]) + at(bad[0]) + ': ' + (ctxt(bad[0][4]) || 'not swapped') + '.';
+  },
+  // The Lost Explorers
+  'Boxes (Pop early)': ({ gs }) => {
+    if (!gs.length) return null;
+    const all = rowsOf(gs), rup = all.filter((x) => /ruptur|exploded/i.test(ctxt(x.r[2])) || isHurt(x.r[2])), n = gs.reduce((a, g) => a + (numIn(plain(g.sub), /(\d+) boxes/) || 0), 0), spl = maxOf(all.map((x) => numIn(ctxt(x.r[3]), /(\d+) stacks?/))), b = badOf(gs);
+    if (!b.length) return 'All ' + n + ' boxes popped in time' + (isFinite(spl) ? ' (most Splinters: ' + spl + ')' : '') + '.';
+    if (rup.length) return (rup.length > 1 ? rup.length + ' boxes went wrong. First: ' : '') + ctxt(rup[0].r[0]) + at(rup[0].r) + ' (' + plain(rup[0].g.title).replace(/^Boxes, /, '') + '): ' + ctxt(rup[0].r[2]) + '.';
+    const g = worst(gs); return plain(g.title).replace(/^Boxes, /, '') + gt(g) + ': ' + lead1(g.sub) + '.';
+  },
+  'United Defense (Keep the bosses apart)': ({ rows }) => {
+    if (!rows.length) return 'Never up: the bosses stayed apart.';
+    const bad = rows.filter((r) => r.some(isHurt)); if (!bad.length) return null;
+    const secs = bad.map((r) => numIn(ctxt(r[2]), /([\d.]+) s/)).filter((x) => !isNaN(x));
+    return 'Up ' + (bad.length === 1 ? 'once' : bad.length + ' times') + ': ' + andList(bad.slice(0, 3).map((r) => ctxt(r[2]).replace(/^up for /, '') + at(r))) + (bad.length > 3 ? ' and more' : '') + (secs.length ? ' (' + Math.round(secs.reduce((a, x) => a + x, 0) * 10) / 10 + ' s in all with the bosses taking far less damage)' : '') + '.';
+  },
+  'Frostfire Volley (Swap patches)': ({ gs }) => {
+    if (!gs.length) return null;
+    const all = pRows(gs), sl = maxOf(all.map((x) => numIn(ctxt(x.r[2]), /after ([\d.]+) s/))), bad = all.filter((x) => x.r.some(isHurt));
+    if (!bad.length) return 'Everyone cleared ' + (gs.length === 1 ? 'the volley' : gs.length === 2 ? 'both volleys' : 'all ' + gs.length + ' volleys') + (isFinite(sl) ? ' (slowest ' + sl + ' s)' : '') + '.';
+    return (bad.length > 1 ? bad.length + ' players went wrong. First: ' : '') + '@' + bad[0].r[0].p + at(bad[0].r) + ': ' + (ctxt(bad[0].r.find(isHurt)) || 'went wrong') + '.';
+  },
+  'Blink Nova (Target runs out)': ({ rows }) => {
+    if (!rows.length) return null;
+    const dmg = rows.map((r) => ctxt(r[2])), bad = rows.filter((r) => r.some(isHurt));
+    if (!bad.length) return every(rows.length, 'Blinks', 'The Blink') + ' taken out (the raid took ' + dmg.map((d) => d.replace(/ each on average/, '')).sort((a, c) => parseFloat(c) - parseFloat(a))[0] + ' each at most).';
+    return pre(bad.length, rows.length, 'Blinks') + bad.slice(0, 2).map((r) => 'Target @' + ((r[0] && r[0].p) || '?') + at(r) + ': ' + (isHurt(r[2]) ? 'the raid took ' + ctxt(r[2]) : 'raid took ' + ctxt(r[2]).replace(/ on average/, '')) + (died(r[3]) ? ', ' + diedTxt(ctxt(r[3])) : '')).join('. ') + '.';
+  },
+  'Mighty Thud (Soak every leap)': ({ gs }) => {
+    if (!gs.length) return null;
+    const b = badOf(gs), all = rowsOf(gs), n = all.map((x) => parseInt(ctxt(x.r[2]), 10)).filter((x) => !isNaN(x)), dd = [...new Set(all.flatMap((x) => (x.r[3] && x.r[3].ps) || (died(x.r[3]) ? [ctxt(x.r[3]).replace(/ died$/, '')] : [])))];
+    if (!b.length) return 'Every leap soaked' + (n.length ? ' (fewest ' + Math.min(...n) + ' soakers)' : '') + '.';
+    const g = worst(gs);
+    return pre(b.length, gs.length, 'sets') + 'Leaps' + gt(g) + ': ' + lead1(g.sub).replace(/^([\d, ]+) soakers/, (m, x) => andList(x.split(/,\s*/)) + ' soakers') + (dd.length ? '; ' + who(dd, 2) + ' died' : '') + '.';
+  },
+  'Explosive Surprise (Bounce over the wave)': ({ rows }) => {
+    if (!rows.length) return null;
+    const bad = rows.filter((r) => r.some(isHurt));
+    if (!bad.length) return every(rows.length, 'bombs', 'The bomb') + ': nobody hit by the Blast Wave.';
+    return pre(bad.length, rows.length, 'bombs') + 'Bomb' + at(bad[0]) + (bad[0][0] && bad[0][0].p ? ' (@' + bad[0][0].p + ')' : '') + ': ' + ctxt(bad[0][2]) + '.';
+  },
+  'Tank stacks (Swap before too many)': ({ rows }) => {
+    if (!rows.length) return null;
+    const bad = rows.filter((r) => r.some(isHurt));
+    if (!bad.length) return 'Tanks swapped before too many stacks (' + rows.length + ' swaps).';
+    return bad.slice(0, 2).map((r) => '@' + ((r[0] && r[0].p) || '?') + (died(r[3]) ? ' died' + (r[3].sub ? ' to ' + plain(r[3].sub) : '') : ' ' + ctxt(r.find(isHurt))) + at(r) + ' with ' + ctxt(r[2]).replace(/ before it dropped/, '') + ((r[0] && r[0].sub && !(r[3] && r[3].sub)) ? ' of ' + plain(r[0].sub) : '')).join('. ') + '.';
+  },
+  // Vashnik the Malignant
+  'Living Venoms (Kill one at a time)': ({ gs }) => {
+    if (!gs.length) return null;
+    const gaps = [];
+    for (const g of gs) { const d = (g.rows || []).filter((r) => /Burning Venom/.test(ctxt(r[0]))).map((r) => tOf(r) + numIn(ctxt(r[2]), /killed after (\d+) s/)).filter((x) => !isNaN(x)).sort((a, c) => a - c);
+      for (let i = 1; i < d.length; i++) gaps.push({ s: Math.round(d[i] - d[i - 1]), t: d[i] }); }
+    const close = gaps.sort((a, c) => a.s - c.s)[0], b = badOf(gs), tip = close && close.s < 8 ? ' Closest fire adds died ' + close.s + ' s apart at ' + mmss(close.t) + ' (aim for 9-10 s).' : '';
+    if (!b.length) return every(gs.length, 'sets', 'The set') + ' killed before the middle.' + tip;
+    const g = worst(gs), r = (g.rows || []).find((x) => x.some(isHurt));
+    return pre(b.length, gs.length, 'sets') + plain(g.title) + gt(g) + ': ' + (r ? ctxt(r.find(isHurt)) : lead1(g.sub)) + '.' + tip;
+  },
+  'Malignant Totems (Clear before the next Imbibe)': ({ gs }) => {
+    if (!gs.length) return null;
+    const b = badOf(gs); if (!b.length) return 'Every totem cleared before the next Imbibe (' + gs.length + (gs.length > 1 ? ' sets).' : ' set).');
+    const g = worst(gs), left = numIn(plain(g.sub), /(\d+) left/);
+    return pre(b.length, gs.length, 'sets') + plain(g.title).replace(/^Totems from /, '') + gt(g) + ': ' + (left ? left + (left > 1 ? ' totems' : ' totem') + ' still up at the next Imbibe' : lead1(g.sub)) + '.';
+  },
+  'Plague Froth (Aim the lines at totems)': ({ gs }) => {
+    if (!gs.length) return null;
+    const hurt = pRows(gs).filter((x) => x.r.some(isHurt)), dd = hurt.filter((x) => x.r.some(died));
+    if (!hurt.length) return 'Nobody hit hard by the lines (' + gs.length + (gs.length > 1 ? ' casts).' : ' cast).');
+    const x = dd[0] || hurt[0], whose = x.r[3] && x.r[3].p ? (dd.length ? " to @" : " by @") + x.r[3].p + "'s line" : '';
+    return '@' + x.r[0].p + (dd.length ? ' died' : ' was ' + ctxt(x.r[2])) + whose + at(x.r) + '.' + (hurt.length > 1 ? ' ' + hurt.length + ' hit hard in all' + (dd.length > 1 ? ', ' + dd.length + ' died' : '') + '.' : '');
+  },
+  'Catalytic Bile (Soak every bile)': ({ rows }) => {
+    if (!rows.length) return null;
+    const bad = rows.filter((r) => r.some(isHurt));
+    if (!bad.length) return 'Every bile soaked (' + rows.length + (rows.length > 1 ? ' casts).' : ' cast).');
+    return pre(bad.length, rows.length, 'casts') + ctxt(bad[0][0]).replace(/^Malignant Catalyst/, 'Catalyst') + at(bad[0]) + ': ' + ctxt(bad[0][2]) + (ctxt(bad[0][3]) ? ' (' + ctxt(bad[0][3]) + ')' : '') + '.';
+  },
+  'Adaptive Infection (Dispel one at a time)': ({ gs }) => {
+    if (!gs.length) return null;
+    const pairs = new Map();
+    for (const x of pRows(gs)) { const o = (ctxt(x.r[3]).match(/^with (.+)/) || [])[1]; if (!o || !isHurt(x.r[3])) continue; const k = [x.r[0].p, o].sort().join('|'); if (!pairs.has(k)) pairs.set(k, { a: x.r[0].p, b: o, t: tOf(x.r) }); }
+    const b = badOf(gs), l = [...pairs.values()];
+    if (!b.length) return 'Every Exploding Infection removed one at a time (' + gs.length + (gs.length > 1 ? ' casts).' : ' cast).');
+    if (!l.length) return null;
+    return '@' + l[0].a + ' and @' + l[0].b + ' dispelled together at ' + mmss(l[0].t) + ' (needs a gap).' + (l.length > 1 ? ' ' + l.length + ' pairs in all, in ' + b.length + ' of ' + gs.length + ' casts.' : '');
+  },
+  'Dripping Fangs (Tanks swap)': ({ rows }) => {
+    if (!rows.length) return null;
+    const bad = rows.filter((r) => r.some(isHurt));
+    if (!bad.length) return 'Swapped every cast (' + rows.length + ').';
+    return bad.slice(0, 2).map((r) => '@' + ((r[0] && r[0].p) || '?') + (isHurt(r[2]) ? ' ' + ctxt(r[2]) : '') + (died(r[3]) ? (isHurt(r[2]) ? ' and died' : ' died') : '') + at(r) + (!isHurt(r[2]) && /swapped/.test(ctxt(r[2])) ? ' (the swap was on time)' : '')).join('. ') + '.';
+  },
+  // Sszorak
+  'Ravage (Tanks swap)': ({ gs }) => {
+    if (!gs.length) return null;
+    const all = rowsOf(gs), bad = all.filter((x) => x.r.some(isHurt));
+    if (!bad.length) return 'Every Ravage on a fresh tank, nobody else hit (' + all.length + ').';
+    const x = bad[0], r = x.r, p = [];
+    if (isHurt(r[3])) p.push('hit @' + (((r[2] && r[2].ps) || [])[0] || '?') + ' with the debuff up');
+    if (isHurt(r[4])) p.push('also hit ' + ctxt(r[4]));
+    if (died(r[5]) || (r[5] && r[5].ps && r[5].ps.length)) p.push(ctxt(r[5]) + ' died');
+    return pre(bad.length, all.length, 'Ravages') + 'Ravage' + at(r) + ' ' + (p.join(', ') || 'went wrong') + '.';
+  },
+  'Mutilate (Soak in two groups)': ({ gs }) => {
+    if (!gs.length) return null;
+    const all = rowsOf(gs), n = all.map((x) => parseInt(ctxt(x.r[2]), 10)).filter((x) => !isNaN(x)), bad = all.filter((x) => x.r.some(isHurt));
+    if (!bad.length) return 'Every Mutilate soaked' + (n.length ? ' (fewest ' + Math.min(...n) + ' soakers)' : '') + '.';
+    const r = bad[0].r, dd = (r[4] && r[4].ps) || ((ctxt(r[4]).match(/^(.*) died$/) || ['', ''])[1].split(/,\s*/).filter(Boolean)), p = [(parseInt(ctxt(r[2]), 10) || 0) + ' soakers' + (isHurt(r[2]) ? ' (needs 5)' : '')];
+    if (isHurt(r[3]) || ((r[3] && r[3].ps) || []).length) p.push(((r[3] && r[3].ps) || []).length + ' with Gash');
+    if (dd.length) p.push(dd.length + ' of them died (' + who(dd, 2) + ')');
+    return pre(bad.length, all.length, 'Mutilates') + 'Mutilate' + at(r) + ': ' + p.join(', ') + '.';
+  },
+  'Tempest (Dodge the tornadoes)': ({ gs }) => {
+    if (!gs.length) return null;
+    const hit = pRows(gs).filter((x) => x.r.some(isHurt)), dd = hit.filter((x) => died(x.r[3])), tt = hit.reduce((a, x) => a + (parseInt(ctxt(x.r[2]), 10) || 0), 0);
+    if (!hit.length) return 'Nobody touched a tornado (' + gs.length + (gs.length > 1 ? ' Tempests).' : ' Tempest).');
+    const top = hit.slice().sort((a, c) => (parseInt(ctxt(c.r[2]), 10) || 0) - (parseInt(ctxt(a.r[2]), 10) || 0))[0];
+    return tt + ' touches on ' + new Set(hit.map((x) => x.r[0].p)).size + ' players' + (dd.length ? ', ' + dd.length + ' died (' + who(dd.map((x) => x.r[0].p), 2) + ')' : '') + '. Most: @' + top.r[0].p + ', ' + ctxt(top.r[2]) + at(top.r) + '.';
+  },
+  'Venomous Surge (Save cysts for the winds)': ({ gs }) => {
+    if (!gs.length) return null;
+    const bad = pRows(gs).filter((x) => x.r.some(isHurt)), n = pRows(gs).length;
+    if (!bad.length) return 'Every cyst saved for a wind (' + n + ').';
+    const dw = bad.filter((x) => /died with it/i.test(ctxt(x.r[2]))), early = bad.filter((x) => !dw.includes(x));
+    return [dw.length ? who(dw.map((x) => x.r[0].p), 2) + ' died with ' + (dw.length > 1 ? 'their cysts' : 'the cyst') + at(dw[0].r) : '', early.length ? '@' + early[0].r[0].p + "'s cyst " + (ctxt(early[0].r.find(isHurt)) || 'went wrong') + at(early[0].r) : ''].filter(Boolean).join('. ') + '.';
+  },
+  'Intermission (A cyst for each wind)': ({ gs }) => {
+    if (!gs.length) return null;
+    const winds = rowsOf(gs).filter((x) => /^Wind/.test(ctxt(x.r[0]))), bad = winds.filter((x) => x.r.some(isHurt) || /not coated/.test((x.r[3] && x.r[3].sub) || ''));
+    if (!bad.length) return 'Every wind had a cyst and everyone was coated (' + winds.length + ' winds).';
+    const r = bad.find((x) => x.r.some(isHurt)) || bad[0], nc = (((r.r[3] && r.r[3].sub) || '').match(/not coated: (.*)/) || [])[1], dd = (r.r[4] && r.r[4].ps) || [];
+    return pre(bad.length, winds.length, 'winds') + plain(r.g.title) + ', ' + ctxt(r.r[0]).toLowerCase() + at(r.r) + ': ' + [isHurt(r.r[2]) ? ctxt(r.r[2]) : '', ctxt(r.r[3]) + (nc ? ' (not ' + who(nc.split(/,\s*/), 2) + ')' : ''), dd.length ? who(dd, 2) + ' died' : ''].filter(Boolean).join(', ') + '.';
+  },
+  'Raging Crosswinds (Collide in the air)': ({ gs }) => {
+    if (!gs.length) return null;
+    const bad = pRows(gs).filter((x) => x.r.some(isHurt)), b = badOf(gs);
+    if (!b.length) return 'Every pair collided (' + gs.length + (gs.length > 1 ? ' casts).' : ' cast).');
+    if (!bad.length) return null;
+    const g = worst(gs), rs = (g.rows || []).filter((r) => r[0] && r[0].p && r.some(isHurt)), dr = rs.filter((r) => /drift/i.test(ctxt(r[3]))), dd = rs.filter((r) => /died/i.test(ctxt(r[3]))), by = rs.filter((r) => /flying player/i.test(ctxt(r[3]))), p = [];
+    if (dr.length) p.push(dr.length + ' drifted alone');
+    if (dd.length) p.push(dd.length + ' died (' + who(dd.map((r) => r[0].p), 2) + ')');
+    if (by.length) p.push(by.length + (by.length > 1 ? ' bystanders' : ' bystander') + ' hit');
+    const allDr = bad.filter((x) => /drift/i.test(ctxt(x.r[3]))).length;
+    return pre(b.length, gs.length, 'casts') + plain(g.title).replace(/^Raging Crosswinds/, 'Crosswinds') + gt(g) + ': ' + (p.join(', ') || lead1(g.sub)) + '.' + (allDr > dr.length ? ' ' + allDr + ' drifted in all.' : '');
+  },
+  "Serpent's Fury (Stack and pop it)": ({ rows }) => {
+    if (!rows.length) return null;
+    const rg = rows.map((r) => numIn(ctxt(r[4]), /(\d+)/)), sk = rows.map((r) => parseInt(ctxt(r[5]), 10)), bad = rows.filter((r) => r.some(isHurt));
+    if (!bad.length) return every(rows.length, 'Furies', 'The Fury') + ' popped in time' + (isFinite(maxOf(rg)) ? ' (rage at most ' + maxOf(rg) + ', fewest ' + minOf(sk) + ' soakers)' : '') + '.';
+    const r = bad[0], res = isHurt(r[6]) ? ctxt(r[6]) + (r[6].sub ? ' (' + lead1(r[6].sub) + ')' : '') : isHurt(r[5]) ? ctxt(r[5]) + ' (needs 14)' : ctxt(r.find(isHurt));
+    return pre(bad.length, rows.length, 'Furies') + ctxt(r[0]) + at(r) + ': ' + res + '.';
+  },
+  'Virulence (Spread out)': ({ gs }) => setLine(gs, 'bursts', 'Nobody clipped (' + gs.length + (gs.length > 1 ? ' bursts).' : ' burst).')),
+  // The Twin Fangs
+  'Eternal Venom (Stay under the limit)': ({ rows }) => {
+    if (!rows.length) return null;
+    const pk = rows.map((r) => parseInt(ctxt(r[1]), 10)), bad = rows.filter((r) => isHurt(r[1]) || isHurt(r[2]));
+    if (!bad.length) return 'Everyone stayed under the limit (peak ' + maxOf(pk) + ' stacks).';
+    const sec = (r) => { const m = ctxt(r[2]).match(/(\d+):(\d+)/); return m ? +m[1] * 60 + +m[2] : 1e9; }, first = bad.slice().sort((a, c) => sec(a) - sec(c))[0];
+    return (bad.length > 1 ? bad.length + ' of ' + rows.length + ' went over the limit. First: ' : '') + '@' + first[0].p + ' at ' + (ctxt(first[2]) || '?') + ' (peak ' + ctxt(first[1]) + ').' + (bad.length > 1 ? ' Peak in the raid: ' + maxOf(pk) + '.' : '');
+  },
+  'Ravenous Feast (Soak in groups of 4)': ({ gs }) => {
+    if (!gs.length) return null;
+    const st = rowsOf(gs).filter((x) => /^Strike/.test(ctxt(x.r[0]))), n = st.map((x) => parseInt(ctxt(x.r[2]), 10)).filter((x) => !isNaN(x)), bad = st.filter((x) => x.r.some(isHurt) || ((x.r[4] && x.r[4].ps) || []).length || ((x.r[5] && x.r[5].ps) || []).length);
+    if (!bad.length && !badOf(gs).length) return every(gs.length, 'Feasts', 'The Feast') + ' soaked (fewest ' + (n.length ? Math.min(...n) : '?') + ' per strike).';
+    if (!bad.length) return null;
+    const r = bad[0].r, af = (r[4] && r[4].ps) || [], dd = (r[5] && r[5].ps) || [];
+    return pre(badOf(gs).length || 1, gs.length, 'Feasts') + plain(bad[0].g.title) + ', ' + ctxt(r[0]).toLowerCase() + at(r) + ': ' + [(parseInt(ctxt(r[2]), 10) || 0) + ' soakers', af.length ? who(af, 2) + ' already Feasted' : '', dd.length ? who(dd, 2) + ' died' : ''].filter(Boolean).join(', ') + '.';
+  },
+  'Tainted Blood (Heal the absorbs off)': ({ rows }) => {
+    if (!rows.length) return null;
+    const bad = rows.filter((r) => r.some(isHurt) || (ctxt(r[3]) && !/^none$/i.test(ctxt(r[3]))));
+    if (!bad.length) return 'No Tainted Burst after any of the ' + rows.length + (rows.length > 1 ? ' Feasts.' : ' Feast.').replace(/any of the 1 Feast/, 'the Feast');
+    return pre(bad.length, rows.length, 'Feasts') + 'After ' + ctxt(bad[0][0]) + at(bad[0]) + ': Tainted Burst ' + ctxt(bad[0][3]) + '.';
+  },
+  'Caustic Globules (One soak each)': ({ gs }) => {
+    if (!gs.length) return null;
+    const b = badOf(gs); if (!b.length) return 'Every globule soaked once (' + gs.length + (gs.length > 1 ? ' sets).' : ' set).');
+    const g = worst(gs), faults = plain(g.sub).split(/,\s*/).filter((x) => /more than one|Bulwark|burst|died|risky|unsoaked|not soaked/i.test(x));
+    return pre(b.length, gs.length, 'sets') + plain(g.title) + gt(g) + ': ' + (faults.length ? andList(faults) : lead1(g.sub)) + '.';
+  },
+  'Barbed Bulwark (CC breaks it)': ({ gs }) => {
+    if (!gs.length) return null;
+    const slow = maxOf(gs.map((g) => numIn(plain(g.sub), /slowest ([\d.]+) s/))), b = badOf(gs), ran = rowsOf(gs).filter((x) => isHurt(x.r[5]) || (x.r[5] && x.r[5].ps && x.r[5].ps.length));
+    if (!b.length) return 'Every barrier broken before a soak' + (isFinite(slow) ? ' (slowest ' + slow + ' s)' : '') + '.';
+    const nm = ran.flatMap((x) => (x.r[5] && x.r[5].ps) || [ctxt(x.r[5])]).filter((n) => n && n !== '—');
+    return pre(b.length, gs.length, 'sets') + (nm.length ? who(nm, 3) + ' ran into a barrier (first' + at(ran[0].r) + ')' : plain(worst(gs).title) + ': ' + lead1(worst(gs).sub)) + '.';
+  },
+  "Corrosive Spit (Stay out of others' lines)": ({ gs }) => {
+    if (!gs.length) return null;
+    const b = badOf(gs), extra = gs.reduce((a, g) => a + (numIn(plain(g.sub), /(\d+) from adds that should have been dead/) || 0), 0), lived = gs.filter((g) => /should have been dead/.test(plain(g.sub))).length;
+    const hit = rowsOf(gs).filter((x) => ((x.r[4] && x.r[4].ps) || []).length);
+    if (!b.length) return every(gs.length, 'sets', 'The set') + ' dead before a 2nd Spit, nobody else hit.';
+    const p = [];
+    if (lived) p.push(lived + ' of ' + gs.length + ' sets lived to a 2nd Spit (' + extra + ' extra)');
+    if (hit.length) p.push(who(hit[0].r[4].ps, 2) + ' hit by @' + (((hit[0].r[2] && hit[0].r[2].ps) || [])[0] || '?') + "'s Spit" + at(hit[0].r) + (hit.length > 1 ? ' (' + hit.length + ' times in all)' : ''));
+    return (p.join('. ') || plain(worst(gs).title) + ': ' + lead1(worst(gs).sub)) + '.';
+  },
+  'Stone Breaker (Tank catches the circles)': ({ gs }) => {
+    if (!gs.length) return null;
+    const all = rowsOf(gs), bad = all.filter((x) => x.r.some(isHurt));
+    if (!bad.length && !badOf(gs).length) return 'Every circle caught by the tank (' + all.length + ' circles).';
+    if (!bad.length) return null;
+    return pre(badOf(gs).length || 1, gs.length, 'casts') + plain(bad[0].g.title) + ', ' + ctxt(bad[0].r[0]).toLowerCase() + at(bad[0].r) + ': ' + [ctxt(bad[0].r[2]) ? 'soaked by ' + ctxt(bad[0].r[2]) : 'missed', isHurt(bad[0].r[3]) ? 'raid hit ' + ctxt(bad[0].r[3]) : ''].filter(Boolean).join(', ') + '.';
+  },
+  // Ula'tek
+  'Eggs (No Vipers)': ({ rows, gs }) => {
+    const all = rows.map((r) => ({ r, g: null })).concat(rowsOf(gs)), vip = all.filter((x) => /Viper/.test(ctxt(x.r[2])) && !/no Viper/i.test(ctxt(x.r[2])));
+    const ground = all.filter((x) => /on the ground/i.test(ctxt(x.r[2])) && x.r.some(isHurt)), n = gs.reduce((a, g) => a + (numIn(plain(g.sub), /(\d+) eggs/) || 0), 0);
+    if (!vip.length && !ground.length) return 'No Vipers: every egg popped or dropped safely' + (n ? ' (' + n + ' eggs)' : '') + '.';
+    const p = [];
+    if (vip.length) p.push((vip.length > 1 ? vip.length + ' Vipers: ' : '1 Viper: ') + vip.slice(0, 2).map((x) => { const why = (ctxt(x.r[2]).match(/Viper[^:]*: (.*)$/) || [])[1]; return (x.r[1] && x.r[1].p ? "@" + x.r[1].p + "'s egg" : 'an egg') + at(x.r) + (why ? ' (' + why + ')' : ''); }).join(', '));
+    if (ground.length) p.push((ground.length > 1 ? ground.length + ' eggs' : 'An egg') + ' left on the ground' + at(ground[0].r));
+    return p.join('. ') + '.';
+  },
+  'Spectral Coils (Soak circles)': ({ gs }) => {
+    if (!gs.length) return null;
+    const c = rowsOf(gs).filter((x) => /^Circle/.test(ctxt(x.r[0]))), n = c.map((x) => parseInt(ctxt(x.r[2]), 10)).filter((x) => !isNaN(x)), bad = c.filter((x) => x.r.some(isHurt));
+    if (!bad.length && !badOf(gs).length) return 'Every circle soaked (' + c.length + ' circles, fewest ' + (n.length ? Math.min(...n) : '?') + ' soakers).';
+    if (!bad.length) return null;
+    const r = bad[0].r, dd = (r[5] && r[5].ps) || [];
+    return pre(bad.length, c.length, 'circles') + ctxt(r[0]) + ' (' + plain(bad[0].g.title).replace(/^Spectral Coils, /, '') + ')' + at(r) + ': ' + (parseInt(ctxt(r[2]), 10) || 0) + ' soakers' + (dd.length ? ', ' + who(dd, 2) + ' died' : '') + '.';
+  },
+  'Caustic Waves (Dodge waves)': ({ rows }) => {
+    if (!rows.length) return 'Nobody hit by a wave.';
+    const pl = rows.flatMap((r) => (r[1] && r[1].ps) || []), dd = rows.filter((r) => died(r[4])).flatMap((r) => (r[1] && r[1].ps) || []);
+    return rows.length + (rows.length > 1 ? ' hits' : ' hit') + ' on ' + new Set(pl).size + (new Set(pl).size > 1 ? ' players' : ' player') + (dd.length ? ', ' + dd.length + ' died (' + who(dd, 2) + ')' : '') + '. First' + at(rows[0]) + (ctxt(rows[0][2]) ? ', ' + ctxt(rows[0][2]) : '') + '.';
+  },
+  'Rage of the Shackled (Damage windows)': ({ rows }) => {
+    if (!rows.length) return null;
+    const l = rows.map((r) => { const a = ((r[3] && r[3].sub) || '').match(/from (\d+%)/), b = ctxt(r[3]).match(/(\d+%)/); return a && b ? 'Burn ' + ctxt(r[0]).replace('#', '') + ' took her from ' + a[1] + ' to ' + b[1] : ''; }).filter(Boolean);
+    return l.length ? l.join('; ') + '.' : null;
+  },
+  'Grasping Fangs (Tether breaks)': ({ gs }) => {
+    if (!gs.length) return null;
+    const g = worst(gs) || gs[gs.length - 1], s2 = plain(g.sub).split('·').map((x) => x.trim()).filter(Boolean);
+    return pre(badOf(gs).length, gs.length, 'casts') + (gs.length > 1 ? plain(g.title) + gt(g) + ': ' : '') + capF(s2.join(', ').replace(/^(\d+) tethers, broken in/, '$1 tethers broken in')) + '.';
+  },
+  "Serpent's Bite (Soak)": ({ gs }) => {
+    if (!gs.length) return null;
+    const corpse = rowsOf(gs).filter((x) => /Calcified Corpse/i.test(ctxt(x.r[2]))), b = badOf(gs);
+    if (corpse.length) return who(corpse.map((x) => x.r[1] && x.r[1].p).filter(Boolean), 2) + (corpse.length > 1 ? ' became Calcified Corpses' : ' became a Calcified Corpse') + ' (' + plain(corpse[0].g.title) + at(corpse[0].r) + ').';
+    if (!b.length) return every(gs.length, 'Bites', 'The Bite') + ' cleared in time.';
+    const g = worst(gs); return pre(b.length, gs.length, 'Bites') + plain(g.title) + gt(g) + ': ' + lead1(g.sub) + '.';
+  },
+  'Shriekers and Rawlings (Adds)': ({ rows }) => {
+    if (!rows.length) return null;
+    const up = rows.filter((r) => /still up/i.test(ctxt(r[2]))), got = rows.reduce((a, r) => a + (numIn(ctxt(r[3]), /^(\d+)/) || 0), 0), bad = rows.filter((r) => r.some(isHurt));
+    if (!bad.length) return 'Every add killed in time' + (got ? ' (' + got + ' casts got off)' : '') + '.';
+    const sp = ((rows.find((r) => /^\d+ /.test(ctxt(r[3]))) || [])[3]), spell = sp ? ctxt(sp).replace(/^\d+ /, '') : 'casts';
+    return (up.length ? up.length + ' ' + ctxt(up[0][1]) + (up.length > 1 ? 's' : '') + ' still up when the pull ended (the oldest since ' + mmss(tOf(up[0])) + ')' : ctxt(bad[0][1]) + at(bad[0]) + ': ' + ctxt(bad[0].find(isHurt))) + (got ? '. ' + got + ' ' + spell + (got > 1 && !/s$/.test(spell) ? 's' : '') + ' got off' : '') + '.';
+  },
+  // Kith'ix
+  'Voidswarm (Kill before the intermission)': ({ gs }) => {
+    const slow = maxOf(rowsOf(gs).map((x) => numIn(ctxt(x.r[2]), /dead (\d+) s/)));
+    return setLine(gs, 'sets', every(gs.length, 'sets', 'The set') + ' dead before the intermission' + (isFinite(slow) ? ' (slowest ' + slow + ' s)' : '') + '.');
+  },
+  'Bomber Beetles (Pop one at a time)': ({ gs }) => {
+    if (!gs.length) return null;
+    const gaps = rowsOf(gs).map((x) => numIn(ctxt(x.r[2]), /([\d.]+) s after/)), b = badOf(gs);
+    if (!b.length) return 'Every beetle popped one at a time' + (isFinite(minOf(gaps)) ? ' (closest ' + minOf(gaps) + ' s apart)' : '') + '.';
+    const g = worst(gs), rs = g.rows || [], close = rs.filter((r) => isHurt(r[2])), dd = rs.filter((r) => isHurt(r[3])).flatMap((r) => (ctxt(r[3]).match(/^(.*) died$/) || ['', ''])[1].split(/,\s*/)).filter(Boolean), p = [];
+    if (close.length) p.push(ctxt(close[0][0]).toLowerCase() + ' popped ' + ctxt(close[0][2]));
+    if (dd.length) p.push(who(dd, 3) + ' died');
+    return pre(b.length, gs.length, 'sets') + plain(g.title).replace(/ beetles$/, '') + gt(g) + ': ' + (p.join('; ') || lead1(g.sub)) + '.';
+  },
+  'Extinguish (Grab a mote)': ({ gs }) => {
+    if (!gs.length) return null;
+    const miss = pRows(gs).filter((x) => /no mote/i.test(ctxt(x.r[2]))), b = badOf(gs);
+    if (!miss.length) return 'Everyone grabbed a mote (' + gs.length + (gs.length > 1 ? ' casts).' : ' cast).');
+    const g = worst(gs) || miss[0].g, mine = miss.filter((x) => x.g === g);
+    return plain(g.title).replace(/\s*\(.*\)$/, '') + gt(g) + ': ' + mine.length + ' without a mote (' + who(mine.map((x) => x.r[0].p), 3) + ').' + (miss.length > mine.length ? ' ' + miss.length + ' in all over ' + gs.length + ' casts.' : '');
+  },
+  'Overwhelming Fear (Dispel one at a time)': ({ gs }) => {
+    if (!gs.length) return null;
+    const b = badOf(gs); if (!b.length) return 'Every fear removed one at a time (' + gs.length + (gs.length > 1 ? ' casts).' : ' cast).');
+    const g = worst(gs), w = (g.rows || []).filter((r) => r[0] && r[0].p && isHurt(r[3]));
+    return pre(b.length, gs.length, 'casts') + (w.length ? who(w.map((r) => r[0].p), 3) + ' came off together' + at(w[0]) + ' (two screams at once)' : plain(g.title) + ': ' + lead1(g.sub)) + '.';
+  },
+  'Dark Devastation (Tank swap)': ({ rows }) => {
+    if (!rows.length) return null;
+    const bad = rows.filter((r) => r.some(isHurt));
+    if (!bad.length) return 'Swapped every cast, nobody else hit (' + rows.length + ').';
+    return pre(bad.length, rows.length, 'casts') + bad.slice(0, 2).map((r) => (isHurt(r[2]) ? '@' + ((r[0] && r[0].p) || '?') + ' ' + ctxt(r[2]) : capF(ctxt(r[3]))) + at(r) + (r[0] && r[0].p && r[0].p !== '?' && !isHurt(r[2]) ? ' (tank @' + r[0].p + ')' : '')).join('. ') + '.';
+  },
+  'Abyssal Grasp (Heal it off)': ({ rows }) => {
+    if (!rows.length) return null;
+    const v = rows.map((r) => ({ r, s: numIn(ctxt(r[2]), /([\d.]+) s/) })).filter((x) => !isNaN(x.s)).sort((a, c) => c.s - a.s), bad = rows.filter((r) => r.some(isHurt)), dd = rows.filter((r) => died(r[3]));
+    if (!bad.length) return 'Every Grasp healed off in time' + (v.length ? ' (slowest ' + v[0].s + ' s)' : '') + '.';
+    const w = v[0];
+    return (w ? 'Slowest: @' + w.r[0].p + ', ' + w.s + ' s' + at(w.r) + '. ' : '') + (dd.length ? who(dd.map((r) => r[0].p), 2) + ' died. ' : '') + (rows.length - bad.length) + ' of ' + rows.length + ' in time.';
+  },
+  'Null Gates (Dodge the shards)': ({ rows }) => {
+    if (!rows.length) return null;
+    const bad = rows.filter((r) => r.some(isHurt));
+    if (!bad.length) return 'Nobody near the Nullify limit.';
+    const line = (r) => '@' + ((r[0] && r[0].p) || '?') + (/stacks/.test(ctxt(r[2])) ? ' reached ' + ctxt(r[2]).replace(/ stacks/, ' Nullify stacks') : /gates closed/.test(ctxt(r[2])) ? ' closed ' + ctxt(r[2]).replace(/^0 gates closed/, 'no gates').replace(/ gates closed/, ' gates') + (r[0].sub ? ' (' + plain(r[0].sub) + ')' : '') : ' ' + ctxt(r[2])) + at(r) + (died(r[3]) ? ' and died' : '');
+    return bad.slice(0, 2).map(line).join('. ') + '.' + (bad.length > 2 ? ' And ' + (bad.length - 2) + ' more.' : '');
+  },
   // every boss
   'Interrupts': ({ rows, gs }) => {
     const all = rows.length ? rows : rowsOf(gs).map((x) => x.r); if (!all.length) return null;
     const thr = all.filter((r) => r.some((c) => c && c.bad));
     if (!thr.length) return (all.length > 1 ? allN(all.length, 'kicked') : 'Kicked') + '.';
+    const one = thr.every((r) => ctxt(r[1]) && ctxt(r[1]) === ctxt(thr[0][1]));
+    if (one && thr.length > 1) return thr.length + ' ' + ctxt(thr[0][1]) + ' casts got through (first' + at(thr[0]) + '). ' + (all.length - thr.length) + ' of ' + all.length + ' kicked.';
     return thr.length + ' got through: ' + andList(thr.slice(0, 2).map((r) => (ctxt(r[1]) || 'a cast') + at(r))) + (thr.length > 2 ? ' and ' + (thr.length - 2) + ' more' : '') + '. ' + (all.length - thr.length) + ' of ' + all.length + ' kicked.';
   },
 };
