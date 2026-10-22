@@ -266,7 +266,7 @@ function Debrief_SetPreset(key)
   DB.compact, DB.maxSlips, DB.maxBoss, DB.maxRaid, DB.maxDied, DB.maxMech, DB.width = p.compact, p.maxSlips, p.maxBoss, p.maxRaid, p.maxDied, p.maxMech, p.width
   DB.detailed = p.detailed or nil; DB.glance = p.glance or nil
   DB.show = {}; for k, v in pairs(p.show) do DB.show[k] = v end
-  DB.collapsed = nil; DB.preset = key
+  DB.collapsed = nil; DB.coachOpen = nil; DB.preset = key
   if Debrief_RefreshOptions then Debrief_RefreshOptions() end
   if card:IsShown() then render() end
 end
@@ -568,7 +568,7 @@ function render()
   if DB.detailed and not DB.compact and view == "raid" and UI.canRaid() and #(m.raid.tiles or {}) > 0 then meta = { h.diff, "Pull " .. h.pull } end
   metaT:SetWidth(CW); metaT:SetText(table.concat(meta, "   ·   "))
   -- (tabs and the body sit lower when the pull chips show)
-  local coachOn = DB.glance and m.coach and (m.coach.head or "") ~= "" and not m.h.practice -- (Debriefing's coach box, with the Raid view and You tabs)
+  local coachOn = m.coach and (m.coach.head or "") ~= "" and not m.h.practice -- (Debriefing's coach box on every style, with the Raid view and You tabs; the style decides how much is open (Oct 22))
   local glanceOn = DB.glance and (m.raid.ghead or "") ~= "" and not coachOn -- (the Glance card: one view, so no tabs; older pulls without it keep the tabs)
   if coachOn and not DB.viewPicked and UI.canRaid() then view = "raid" end -- (the coach box first, until you pick a tab yourself)
   TOPY = (((DB.show or {}).chips ~= false) and 180 or 150) - (glanceOn and 38 or 0)
@@ -768,11 +768,11 @@ function render()
   -- (a folding heading for the coach's lists: closed until clicked, then remembered)
   local function fold(key, title, n)
     DB.coachOpen = DB.coachOpen or {}
-    local open = DB.coachOpen[key]
+    local open = DB.coachOpen[key]; if open == nil then open = DB.preset == "heavy" or DB.preset == "detailed" end
     local t = FS("bold", 12, COL.muted); t:SetPoint("TOPLEFT", 14, -(y + 11)); t:SetText(title .. (n and n > 0 and ("  ·  " .. n) or ""))
     local sign = FS("bold", 14, COL.faint); sign:SetJustifyH("RIGHT"); sign:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - 14, -(y + 9)); sign:SetText(open and "–" or "+")
     local b = BTN(); b:SetPoint("TOPLEFT", 0, -y); b:SetSize(CW, 32)
-    b:SetScript("OnClick", function() DB.coachOpen[key] = not DB.coachOpen[key] or nil; render() end)
+    b:SetScript("OnClick", function() DB.coachOpen[key] = not open; render() end)
     b:SetScript("OnEnter", function() t:SetTextColor(rgb(COL.gold)); sign:SetTextColor(rgb(COL.gold)) end); b:SetScript("OnLeave", function() t:SetTextColor(rgb(COL.muted)); sign:SetTextColor(rgb(COL.faint)) end)
     return open
   end
@@ -809,7 +809,12 @@ function render()
     end
     if #c.wrong > 0 then
       local l = FS("bold", 11.5, COL.muted); l:SetPoint("TOPLEFT", 2, -y); l:SetText("WHAT WENT WRONG"); y = y + 20
+      local cap = math.max(1, DB.maxRaid or 3)
       for i, x in ipairs(c.wrong) do
+        if i > cap then
+          local mt = FS("body", 12.5, COL.faint); mt:SetPoint("TOPLEFT", 2, -(y + 1)); mt:SetText((#c.wrong - cap) .. " more in the full coaching on the website."); y = y + 20
+          break
+        end
         local sev = x.sev == "bad" and COL.bad or COL.warn
         local tx, tw = 44, CW - 44 - 14
         local lt = FS("bold", 14.5, COL.text); lt:SetWordWrap(false); lt:SetText(x.label)
@@ -831,7 +836,7 @@ function render()
       end
       y = y + 4
     end
-    for _, x in ipairs(c.right) do
+    for _, x in ipairs(DB.compact and {} or c.right) do
       local ok = TEX("ARTWORK"); ok:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready"); ok:SetPoint("TOPLEFT", 4, -(y + 2)); ok:SetSize(16, 16)
       local f = FS("body", 13.5, COL.goodT); f:SetPoint("TOPLEFT", 26, -(y + 1)); f:SetWidth(CW - 30); f:SetText(paint(x.t)); y = y + math.max(18, f:GetStringHeight()) + 7
     end
