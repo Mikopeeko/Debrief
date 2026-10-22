@@ -1294,6 +1294,9 @@ line.tl-t { stroke: #ece8df; stroke-width: 2.5; vector-effect: non-scaling-strok
 /* (Oct 20: pick up to 3 graphs; a picked button is lit in gold, the picked graphs sit side by side) */
 .gb-sum { margin: 2px 0 14px; grid-template-columns: repeat(4, minmax(0, 1fr)); } @media (max-width: 640px) { .gb-sum { grid-template-columns: repeat(2, minmax(0, 1fr)); } } .gb-sum .v { font-size: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .gb-sum .v small { font: 500 13px var(--body); color: var(--muted); } .gb-sum .s { line-height: 1.35; } /* (Oct 22: the summary tiles on top of Graphs) */
 .gb-sumn { font-size: 18px; }
+.gb-sumt { cursor: pointer; transition: border-color .12s; } .gb-sumt:hover, .gb-sumt:focus-visible { border-color: var(--gold); outline: none; } /* (Oct 22: a summary tile opens its graph) */
+.gb-dtabs { display: flex; flex-direction: column; align-items: stretch; gap: 2px; } .gb-dgr { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; } .gb-dgr + .gb-dgr { border-top: 1px solid var(--line); padding-top: 2px; }
+.gb-dgl { flex: 0 0 112px; padding: 0 8px 0 6px; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--faint); } @media (max-width: 640px) { .gb-dgl { flex-basis: 100%; padding: 4px 6px 0; } }
 .gb-pkn button.on { border-color: var(--gold); color: var(--gold); background: rgba(230,180,80,.1); }
 .gb-pkg { margin-top: 4px; } .gb-pkg.n3 { grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); } /* (three in a row only when each has room for its names) */
 .gb-dr .gb-br { grid-template-columns: minmax(0, 190px) minmax(110px, 1fr) minmax(0, 38%); } .gb-dr .gb-bx { white-space: normal; line-height: 1.3; } /* (a long note wraps, so every bar keeps its room) */
@@ -14298,6 +14301,7 @@ const PATCH_NOTES = [
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
+    'Graphs: click a summary tile to open its graph, a player\'s tabs sit in three rows (what they did, used and got), and the graphs you picked stay picked next time.',
     'Graphs opens with a short summary on top: the raid\'s damage and healing, who did the most, deaths, what hit the raid hardest, and kicks and dispels.',
     'One fix everywhere: your #1 fix reads the same on Debriefing, Homework (now #1) and the Report card\'s Next pull.',
     'The player you pick is remembered on Debriefing, Homework and the Report card.',
@@ -23141,8 +23145,9 @@ function graphsBoard(r, end, NP) {
     ['kick', 'Interrupts', (p) => (kicks(p).length ? BD.kick(p) : '')],
     ['disp', 'Dispels', (p) => (disp(p).length ? BD.disp(p) : '')]];
   const K0 = { dmg: 'dmg', heal: 'heal', taken: 'taken', death: 'death', kick: 'kick', disp: 'disp', cpm: 'cpm' };
+  const DGRP = [['What they did', ['dmg', 'heal', 'cpm', 'kick', 'disp']], ['What they used', ['cds', 'def', 'aura', 'pots', 'res']], ['What they got', ['taken', 'help', 'death']]]; /* (the drawer's tabs in 3 sets (Oct 22)) */
   const drawer = (p, k) => { const L = DTABS.map(([tk, l, fn]) => [tk, l, fn(p)]).filter((x) => x[2]); if (!L.length) return '<p class="sub">Nothing to show.</p>'; const cur = L.find((x) => x[0] === (K0[k] || k)) || L[0];
-    return '<div class="gb-dtabs" role="tablist" aria-label="' + esc(p.name) + '">' + L.map(([tk, l]) => '<button type="button" role="tab" class="gb-dtab' + (tk === cur[0] ? ' on' : '') + '" aria-selected="' + (tk === cur[0]) + '" data-dt="' + tk + '">' + esc(l) + '</button>').join('') + '</div>' +
+    return '<div class="gb-dtabs" role="tablist" aria-label="' + esc(p.name) + '">' + DGRP.map(([gl, ks]) => { const g = L.filter(([tk]) => ks.includes(tk)); return g.length ? '<div class="gb-dgr"><span class="gb-dgl">' + gl + '</span>' + g.map(([tk, l]) => '<button type="button" role="tab" class="gb-dtab' + (tk === cur[0] ? ' on' : '') + '" aria-selected="' + (tk === cur[0]) + '" data-dt="' + tk + '">' + esc(l) + '</button>').join('') + '</div>' : ''; }).join('') + L.filter(([tk]) => !DGRP.some(([, ks]) => ks.includes(tk))).map(([tk, l]) => '<button type="button" role="tab" class="gb-dtab' + (tk === cur[0] ? ' on' : '') + '" aria-selected="' + (tk === cur[0]) + '" data-dt="' + tk + '">' + esc(l) + '</button>').join('') + '</div>' +
       '<div class="gb-dbody">' + cur[2].replace(/<div class="rk-go pf-go">[\s\S]*?<\/div>/g, '') /* (a view's own "See it in" row: the tabs say it here) */ + '</div><div class="gb-dmore"><span class="sub">More on ' + esc(p.name) + ':</span>' + [['util', 'Utility']].map(([k2, l]) => '<button type="button" class="btn sm" data-gpgo="' + k2 + '" data-pgn="' + esc(p.name) + '">' + l + ' ›</button>').join('') + '</div>'; };
   GB = { BD, drawer: GB_DRAWER ? drawer : null, byName: new Map(ps.map((p) => [p.name, p])) };
   const byK = new Map(CARDS.map((q) => [q.k, card(q)]));
@@ -23234,7 +23239,7 @@ function graphsBoard(r, end, NP) {
       ['oh', 'Healing and overhealing', ch('Healing and overhealing', 'Healing that landed, and what was more than needed' + (night ? ALLP : ', over the whole pull'), stack(healOver, [{ n: 'Healing', col: '@cls' }, { n: 'Overhealing', col: '#5c6270' }]))],
       ['taken', 'Damage taken', byK.get('taken')], ['src', 'What hit the raid', ch('What hit the raid', 'Each source\'s damage across all players' + ALLP, bars(takenSrc))],
       ['death', 'Deaths', byK.get('death')], ['kick', 'Interrupts', byK.get('kick')], ['disp', 'Dispels', byK.get('disp')], ['cpm', 'Casts a minute', byK.get('cpm')]].filter((x) => x[2]);
-    let pk = (S.gbPick || ['dmg']).filter((k) => GR.some((x) => x[0] === k)); if (!pk.length && GR.length) pk = [GR[0][0]];
+    let pk = (S.gbPick || (() => { try { return JSON.parse(store.get('wla-gb-pick') || 'null'); } catch (x) { return null; } })() || ['dmg']) /* (your last picks, remembered on this browser) */.filter((k) => GR.some((x) => x[0] === k)); if (!pk.length && GR.length) pk = [GR[0][0]];
     // (Oct 22, "at the top of this, make a brief summary of the most important parts of the pull or all pulls": a row of the site's tiles,
     // plain numbers like the rest of Graphs, no grades)
     const sumOf = (f) => ps.reduce((v, p) => v + f(p), 0), topBy = (f) => ps.map((p) => ({ p, v: f(p) })).filter((x) => x.v > 0).sort((a, b) => b.v - a.v)[0];
@@ -23242,15 +23247,15 @@ function graphsBoard(r, end, NP) {
     const dl = ps.flatMap((p) => deaths(p).map((d) => ({ ...d, who: p }))).sort((a, b) => (a.pull || 0) - (b.pull || 0) || a.t - b.t), most = topBy((p) => deaths(p).length);
     const src = takenSrc.slice().sort((a, b) => b.v - a.v)[0], srcT = takenSrc.reduce((v, x) => v + x.v, 0), nK = sumOf((p) => kicks(p).length), nX = sumOf((p) => disp(p).length);
     const nm = (x) => '<span style="color:' + (x.p.color || 'var(--text)') + '">' + esc(x.p.name) + '</span>';
-    const tile = (l, v, s) => '<div class="tile"><div class="l">' + l + '</div><div class="v">' + v + '</div><div class="s">' + (s || '') + '</div></div>';
+    const tile = (l, v, s, gp) => '<div class="tile' + (gp ? ' gb-sumt" role="button" tabindex="0" data-gp="' + gp + '" title="Show this graph' : '') + '"><div class="l">' + l + '</div><div class="v">' + v + '</div><div class="s">' + (s || '') + '</div></div>';
     const sum = '<div class="tiles gb-sum">' + [
-      tile('Raid damage', C(tD / dur) + '<small> a second</small>', C(tD) + ' in all' + (night ? ', ' + plural(NP.length, 'pull') : ', ' + T(end))),
-      tH > 0 ? tile('Raid healing', C(tH / dur) + '<small> a second</small>', C(tH) + ' in all') : '',
-      bD ? tile('Most damage', nm(bD), C(bD.v / pDur(bD.p)) + ' a second') : '',
-      bH ? tile('Most healing', nm(bH), C(bH.v / pDur(bH.p)) + ' a second') : '',
-      tile('Deaths', String(dl.length), !dl.length ? 'nobody died' : night ? (most ? 'most: ' + nm(most) + ' (' + most.v + ')' : '') : 'first: ' + nm({ p: dl[0].who }) + ' at ' + T(dl[0].t) + (dl[0].ability ? ', ' + esc(dl[0].ability) : '')),
-      src ? tile('Hit the raid hardest', '<span class="gb-sumn">' + esc(src.n) + '</span>', C(src.v) + ', ' + pctS(src.v / Math.max(1, srcT)) + ' of all damage taken') : '',
-      tile('Kicks and dispels', nK + ' <small>·</small> ' + nX, 'interrupts · dispels')].join('') + '</div>';
+      tile('Raid damage', C(tD / dur) + '<small> a second</small>', C(tD) + ' in all' + (night ? ', ' + plural(NP.length, 'pull') : ', ' + T(end)), 'dmg'),
+      tH > 0 ? tile('Raid healing', C(tH / dur) + '<small> a second</small>', C(tH) + ' in all', 'heal') : '',
+      bD ? tile('Most damage', nm(bD), C(bD.v / pDur(bD.p)) + ' a second', 'dmg') : '',
+      bH ? tile('Most healing', nm(bH), C(bH.v / pDur(bH.p)) + ' a second', 'heal') : '',
+      tile('Deaths', String(dl.length), !dl.length ? 'nobody died' : night ? (most ? 'most: ' + nm(most) + ' (' + most.v + ')' : '') : 'first: ' + nm({ p: dl[0].who }) + ' at ' + T(dl[0].t) + (dl[0].ability ? ', ' + esc(dl[0].ability) : ''), 'death'),
+      src ? tile('Hit the raid hardest', '<span class="gb-sumn">' + esc(src.n) + '</span>', C(src.v) + ', ' + pctS(src.v / Math.max(1, srcT)) + ' of all damage taken', 'src') : '',
+      tile('Kicks and dispels', nK + ' <small>·</small> ' + nX, 'interrupts · dispels', 'kick')].join('') + '</div>';
     return sum + '<div class="gb"><nav class="gb-nav gb-pkn" aria-label="Graphs">' + GR.map(([id, t]) => '<button type="button" data-gp="' + id + '" aria-pressed="' + pk.includes(id) + '"' + (pk.includes(id) ? ' class="on"' : '') + '>' + esc(t) + '</button>').join('') + '</nav>' +
       '<p class="gb-note sub">Pick up to 3 graphs to see side by side. Hover any bar for its numbers, and click a player\'s bar for what made it up. ' + (night ? 'All ' + NP.length + ' pulls, each up to its wipe filter.' : end < r.duration - 0.5 ? 'Counted up to ' + T(end) + ', the wipe filter.' : 'The whole pull.') + '</p>' +
       '<div class="gb-grid gb-pkg n' + pk.length + '">' + pk.map((k) => GR.find((x) => x[0] === k)[2]).join('') + '</div>' +
@@ -23276,13 +23281,15 @@ function graphsBoard(r, end, NP) {
     if (dt && GB && GB.drawer && dRow) { const p = GB.byName.get(dRow.dataset.p); if (!p) return; if (dt.id === 'pfAuraMore') S.auraMore = !S.auraMore; else dRow.dataset.dk = dt.dataset.dt; dr.innerHTML = GB.drawer(p, dRow.dataset.dk || dRow.dataset.k); refreshIcons(); return; }
     const gg = dr && e.target.closest('[data-gpgo]'); if (gg) { pfGo(gg.dataset.gpgo, gg.dataset.pgn); return; }
     const gp = e.target.closest && e.target.closest('.gb-pbar[data-gpull]'); if (gp && S.rep && S.index) { const it = S.rep.item, b = S.index.bosses.find((x) => x.id === it.id && x.diffId === it.diffId && String(x.pull) === gp.dataset.gpull); if (b) { S.scope = 'pull'; select(b); window.scrollTo({ top: 0 }); } return; }
+    const sumt = e.target.closest && e.target.closest('.gb-sum [data-gp]'); if (sumt) { const b = document.querySelector('.gb-pkn [data-gp="' + sumt.dataset.gp + '"]'); if (b && !b.classList.contains('on')) b.click(); /* (a summary tile opens its graph) */
+      setTimeout(() => { const g = document.querySelector('.gb-pkg [data-k="' + sumt.dataset.gp + '"]') || document.querySelector('.gb-pkg'); if (g) window.scrollTo({ top: g.getBoundingClientRect().top + scrollY - 80, behavior: 'smooth' }); }, 80); return; }
     const gpk = e.target.closest && e.target.closest('.gb-nav [data-gp]'); if (gpk) { const k = gpk.dataset.gp, shown = [...document.querySelectorAll('.gb-nav [data-gp].on')].map((b) => b.dataset.gp), cur = (S.gbPick || []).filter((x) => shown.includes(x)).concat(shown.filter((x) => !(S.gbPick || []).includes(x))); let l = cur.slice(); /* (in the order picked) */
       if (l.includes(k)) { if (l.length > 1) l = l.filter((x) => x !== k); } else { l.push(k); if (l.length > 3) l.shift(); } /* (up to 3; the oldest pick goes; the last one stays) */
-      S.gbPick = l; const y0 = scrollY; renderMain(); window.scrollTo({ top: y0 }); return; }
+      S.gbPick = l; store.set('wla-gb-pick', JSON.stringify(l)); const y0 = scrollY; renderMain(); window.scrollTo({ top: y0 }); return; }
     const gs = e.target.closest && e.target.closest('.gb-nav [data-gs]'); if (gs) { const t = document.getElementById('gbs-' + gs.dataset.gs); if (t) window.scrollTo({ top: t.getBoundingClientRect().top + scrollY - 70, behavior: 'smooth' }); return; }
     const pv = e.target.closest && e.target.closest('.gb-pv'); if (pv) { S.pfOld = true; S.perfKind = pv.dataset.pv; window.scrollTo({ top: 0 }); renderMain(); return; }
     if (e.target.closest && e.target.closest('#gbOld')) { S.pfOld = true; renderMain(); return; } if (e.target.closest && e.target.closest('#gbBack')) { S.pfOld = false; renderMain(); } });
-  document.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('gb-row')) { e.preventDefault(); open(e.target); } }); }
+  document.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('gb-sumt')) { e.preventDefault(); e.target.click(); return; } if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('gb-row')) { e.preventDefault(); open(e.target); } }); }
 function perf() {
   // (Rotation is always Spec checks; Graphs opens on the view you last had, Damage the first time. S.perfKind is the
   // Graphs view only, so going to Rotation and back keeps it)
