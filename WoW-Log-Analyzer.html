@@ -15496,7 +15496,9 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
 // (a note player's jobs, in short: their lines' labels and their reminders' spells or texts)
 function ndzJobsOf(text, a) { let n = {}; try { n = E.parseNote(text) || {}; } catch (e) { n = {}; } const la = String(a).toLowerCase(), out = [];
   const add = (s) => { if (s && !out.includes(s)) out.push(s); };
-  for (const ln of n.lines || []) if (!/^invitelist$/i.test(ln.label) && ln.words.some((w) => w.split('-')[0].toLowerCase() === la)) add(ln.label || 'a line');
+  let kb = false; /* (a line inside the intstart … intend block is a kick rotation) */
+  for (const ln of n.lines || []) { const w0 = String(ln.words[0] || '').toLowerCase(); if (!ln.label && ln.words.length === 1 && (w0 === 'intstart' || w0 === 'intend')) { kb = w0 === 'intstart'; continue; }
+    if (!/^invitelist$/i.test(ln.label) && ln.words.some((w) => w.split('-')[0].toLowerCase() === la)) add(ln.label || (kb ? 'Kicks' : 'a line')); }
   for (const x of n.reminders || []) if (x.tags.some((t) => t.split('-')[0].toLowerCase() === la)) add(x.text || ndzSpellNm(x.spellid) || 'a cooldown');
   return out; }
 function ndzSwapView(r) {
