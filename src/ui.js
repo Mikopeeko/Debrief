@@ -1649,6 +1649,7 @@ const PATCH_NOTES = [
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
+    'Debrief in game: clearer Boss mechanics lines on the recap card. Each says what went wrong first, with the time and who, like Deluge 3 at 1:27: too many orbs at once. Avoidable damage that hurt the raid gets its own lines, and clean mechanics are one short line.',
     'Debrief in game: your own recap now replaces a copy a guildmate sent first, so you always see the newest version of your pull.',
     'Debrief in game: the Phase changes line on your recap card says when each phase was pushed, like P1 pushed at 2:16.',
     'Debrief in game: See pulls on the website, a new button in the PC app. It opens debriefme.io, which follows your combat log on that PC, so each pull shows up as it ends. No Warcraft Logs needed. Chrome asks once if the site may talk to the app: press Allow.',

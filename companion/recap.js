@@ -155,27 +155,68 @@ function buildOne(b, rep, same, W, L, cutN) {
   raid.mech = [];
   if (rep.module && !rep.module.error) {
     const full = rep.module.sections || [], secs = isFinite(T) ? cutModule(rep.module, T).sections : full;
-    for (const sec of secs) {
-      if (sec.id === 'avoid' || sec.info || !sec.title) continue; // (avoidable damage has its own lines; "shown, not judged" isn't graded)
-      const gs = sec.groups || [], n = gs.length, bad = gs.filter((g) => g.bad).length, warn = gs.filter((g) => !g.bad && g.warn).length;
-      // (cut by the wipe filter: a mechanic that lost rows or sets is graded on what's left, and its whole-pull summary isn't used)
-      const was = full.find((x) => x.id === sec.id), changed = was && (was.rows || []).length + (was.groups || []).length !== (sec.rows || []).length + gs.length;
-      if (changed && !(sec.rows || []).length && !n) continue; // (nothing of it happened before the cutoff)
-      const cells = (sec.rows || []).flat().filter(Boolean), verdict = changed ? (cells.some((x) => x.bad) ? 'bad' : cells.some((x) => x.warn) ? 'warn' : n ? '' : 'ok') : sec.verdict;
-      const flag = verdict === 'bad' || bad ? 'bad' : verdict === 'warn' || warn ? 'warn' : 'ok';
-      const worst = gs.find((g) => g.bad) || gs.find((g) => g.warn);
-      let t = n > 1 ? (n - bad - warn) + ' of ' + n + ' done right. ' : '';
-      if (worst) t += plain(worst.title) + (worst.sub ? ': ' + plain(worst.sub) : '.');
-      else { const said = changed ? [] : sentences(sec.summary || '').filter((x) => !/^It shows|How it works|against the plan|\bmaps?\b|\brows?\b|\bchart\b|\btable\b|\bbelow\b/i.test(x)); t += said[0] || (n > 1 && flag === 'ok' ? '' : { ok: 'Done right.', warn: 'Some mistakes.', bad: 'Went wrong.' }[flag]); } // (the website's own words about its page don't fit on a card)
+    // (one table row as a short sentence: what (its first cell, and anyone named), when, then only the parts that went wrong:
+    // "Deluge #3 at 1:27: 5 + 6 orbs, too many at once.")
+    const real = new Set(ps.map((p) => p.name));
+    const cellTxt = (c) => (!c ? '' : c.p ? (real.has(c.p) ? '@' + c.p : c.p) : c.ps ? c.ps.map((n) => (real.has(n) ? '@' + n : n)).join(', ') : c.txt != null ? plain(c.txt) : '');
+    const hurt = (c) => c && (c.bad || c.warn);
+    const rowBad = (row) => row.some(hurt);
+    // (the subject: the row's own label when it leads the row (Deluge #3), else the first player named; other players come after
+    // with their column, "(dispelled by @Urgdragon)"; a short wrong part gets its column, "in circle: 0", "removed after: 4.5 s")
+    const dull = /^(clean|lived|—|-|ok|done right|yes|no)$/i;
+    const rowLine = (row, cols) => {
+      const col = (c) => String((cols || [])[row.indexOf(c)] || '').toLowerCase();
+      const tc = row.find((c) => c && c.t != null && c.txt == null && !c.p && !c.ps);
+      const lead = row[0] && row[0] !== tc && !hurt(row[0]) && !row[0].p && !row[0].ps && cellTxt(row[0]) && !dull.test(cellTxt(row[0])) ? cellTxt(row[0]) : '';
+      const names = row.filter((c) => c && (c.p || c.ps) && cellTxt(c)), subj = lead || (names[0] ? cellTxt(names[0]) : '');
+      const others = names.filter((c) => lead || c !== names[0]).map((c) => (col(c) && !/^(player|who|tank)$/.test(col(c)) ? col(c) + ' ' : '') + cellTxt(c));
+      const wrong = row.filter((c) => hurt(c) && !c.p && !c.ps && cellTxt(c) && !dull.test(cellTxt(c))).map((c) => { const v = cellTxt(c), k = col(c);
+        return k && (v.length <= 12 || /^\d/.test(v)) && !k.split(/\s|\//).some((w) => w && v.toLowerCase().includes(w)) && !/^(result|when|)$/.test(k) ? k + ': ' + v : v; }).join(', ');
+      return (subj || (tc ? 'At' : '')) + (tc ? (subj ? ' at ' : ' ') + mmss(tc.t) : '') + (wrong ? (subj || tc ? ': ' : '') + wrong : '') + (others.length ? ' (' + others.join(', ') + ')' : '') + '.';
+    };
+    const empty = (g) => /no adds seen|not reached|nothing to check|didn't happen/i.test(plain(g.title) + ' ' + plain(g.sub || '') + ' ' + (g.rows || []).flat().map(cellTxt).join(' '));
+    for (const sec of secs) { try { /* (a line that can't be worded never breaks the card: a plain line instead) */
+      if (sec.info || !sec.title) continue; // ("shown, not judged" isn't graded)
+      const rows = sec.rows || [], gs0 = sec.groups || [];
+      if (sec.id === 'avoid') {
+        // (avoidable damage: each source that hurt, how many hits on how many players, and who took the most)
+        for (const g of gs0.filter((x) => x.bad || x.warn).slice(0, 3)) {
+          const nums = (plain(g.sub || '').match(/\d+ hits? on \d+ players?/) || [''])[0], died = (g.rows || []).filter((r) => r.some((c) => c && c.bad && /died/i.test(cellTxt(c)))).length;
+          const most = (g.rows || []).slice(0, 3).map((r) => cellTxt(r[0]) + ' ' + (cellTxt(r[1]).match(/\d+/) || [''])[0]).filter((x) => x.trim()).join(', ');
+          raid.mech.push([g.bad ? 'bad' : 'warn', spellId(W, plain(g.title).replace(/\s*\(.*\)$/, '')), plain(g.title), shortTo((nums ? nums.replace(/^1 hits/, '1 hit') + (died ? ', ' + died + (died === 1 ? ' death' : ' deaths') : '') + '. ' : '') + (most ? 'Most: ' + most + '.' : ''), 210)]);
+        }
+        continue;
+      }
+      const gs = gs0.filter((g) => !empty(g));
+      if (gs0.length && !gs.length && !rows.length) continue; // (nothing of it happened this pull, e.g. no adds)
+      // (cut by the wipe filter: a mechanic that lost rows or sets is graded on what's left)
+      const was = full.find((x) => x.id === sec.id), changed = was && (was.rows || []).length + (was.groups || []).length !== rows.length + gs0.length;
+      if (changed && !rows.length && !gs0.length) continue; // (nothing of it happened before the cutoff)
+      const badG = gs.filter((g) => g.bad || g.warn), badR = rows.filter(rowBad);
+      const verdict = changed ? (rows.flat().some((c) => c && c.bad) ? 'bad' : rows.flat().some((c) => c && c.warn) ? 'warn' : '') : sec.verdict;
+      const flag = verdict === 'bad' || gs.some((g) => g.bad) ? 'bad' : verdict === 'warn' || badG.length || badR.length ? 'warn' : 'ok';
+      let t;
+      if (badG.length) {
+        // (sets: the first that went wrong, and what went wrong in it)
+        const g = gs.find((x) => x.bad) || badG[0], r = (g.rows || []).find(rowBad);
+        t = (gs.length > 1 ? badG.length + ' of ' + gs.length + ' went wrong. ' : '') + plain(g.title) + (g.t != null ? ' at ' + mmss(g.t) : '') + ': ' + (r ? rowLine(r, sec.cols).replace(/^.*?: /, '') : plain(g.sub || 'went wrong.'));
+      } else if (badR.length) {
+        // (rows: the first that went wrong; two if there's room)
+        t = (rows.length > 1 ? badR.length + ' of ' + rows.length + ' went wrong. ' : '') + ((l) => (l.some((x) => /: /.test(x)) ? l.filter((x) => /: /.test(x)) : l))(badR.map((r) => rowLine(r, sec.cols))).slice(0, 2).join(' ') /* (rows that say what went wrong) */;
+      } else if (flag !== 'ok') {
+        t = sentences(sec.summary || '').filter((x) => !/^(It shows|For each|Each row|How it works)/i.test(x))[0] || 'Some mistakes.';
+      } else {
+        const n = gs.length || rows.length;
+        t = n > 2 ? 'All ' + n + ' done right.' : n === 2 ? 'Both done right.' : 'Done right.';
+      }
       // (phase changes: when each phase was pushed, in the pull's own time (the user's ask, Oct 21: "P1 pushed at 2:19"))
       if (sec.id === 'push') {
-        const ts = (sec.rows || []).map((row) => { const nm = row[0] && row[0].txt, at = row[1] && row[1].t; if (!nm || at == null) return '';
+        const ts = rows.map((row) => { const nm = row[0] && row[0].txt, at = row[1] && row[1].t; if (!nm || at == null) return '';
           const ph = String(nm).split(/\s*→\s*/)[0]; return /→/.test(nm) ? ph + ' pushed at ' + mmss(at) : ph + ' began at ' + mmss(at); }).filter(Boolean);
-        if (ts.length) t = (t.trim() ? t.trim().replace(/([^.!?])$/, '$1.') + ' ' : '') + ts.join(', ') + '.';
-        else t = 'Still in P1 when the pull ended (' + mmss(Math.min(T, rep.duration || 0)) + ').'; // (no push yet: nothing to time)
+        t = ts.length ? (flag === 'ok' ? 'Done right. ' : t.replace(/([^.!?])$/, '$1.') + ' ') + ts.join(', ') + '.' : 'Still in P1 when the pull ended (' + mmss(Math.min(T, rep.duration || 0)) + ').';
       }
-      raid.mech.push([flag, sec.spell && sec.spell[0] ? String(sec.spell[0]) : '', plain(sec.title), shortTo(t.replace(/\s*\(see How it works\)/gi, '').trim(), 210)]);
-    }
+      raid.mech.push([flag, sec.spell && sec.spell[0] ? String(sec.spell[0]) : '', plain(sec.title), shortTo(t.replace(/\s*\(see How it works\)/gi, '').replace(/\.\./g, '.').trim(), 210)]);
+    } catch (e) { raid.mech.push([sec.verdict === 'bad' ? 'bad' : sec.verdict === 'warn' ? 'warn' : 'ok', sec.spell && sec.spell[0] ? String(sec.spell[0]) : '', plain(sec.title || ''), { bad: 'Went wrong.', warn: 'Some mistakes.' }[sec.verdict] || 'Done right.']); } }
     const rank = { bad: 0, warn: 1, ok: 2 }; raid.mech.sort((a, c) => rank[a[0]] - rank[c[0]]); raid.mech = raid.mech.slice(0, 12);
   }
   raid.next = b.kill ? (top.length ? 'Kill! Next time: ' + (sentences(top[0].fix || '')[0] || 'clean up ' + top[0].k + '.') : 'Kill! Clean pull.') : (top.length && top[0].fix ? sentences(top[0].fix)[0] : 'Same plan, cleaner.');
