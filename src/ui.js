@@ -1696,6 +1696,7 @@ const PATCH_NOTES = [
     'Rotation\'s Work on these first no longer leads with gear and stats.',
     'Home: while your team\'s nights come in for the first time, a loading screen shows how far along it is, and the page fills in by itself when it\'s done.',
   ], f: [
+    'The Coiled Altar: a healer who immunes the 2nd Guillotine (like a Holy Paladin with Divine Shield) is no longer told to stay out of it.',
     'Debrief in game: the pull chips on the card no longer run past its edge, lines without a spell icon show a clean tick or dot instead of a question mark, long names stay inside the card, and a training dummy recap no longer says "No boss mistakes".',
     'Debrief in game: the PC app\'s desktop icon no longer goes blank after the app updates itself (it showed an empty picture after today\'s new logo).',
     'Debrief in game: clicking the PC app\'s desktop icon now brings its window to the front. It could open behind your other windows, so it looked like nothing happened.',

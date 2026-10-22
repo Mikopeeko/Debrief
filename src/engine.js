@@ -3837,7 +3837,8 @@ function buildCoiledAltar(ev, r, h) {
     if (needsProt && tgt && !tag(tgt)) MS(s.t, pname(tgt), s.n, tgtDied ? 'High' : 'Low', 'Was the ' + S(s.n)[1] + ' target with no external or immunity' + (tgtDied ? ' and died' : '') + '.', 'The target gets an external (Blessing of Protection on the 2nd Guillotine, Spellwarding on Grim Guillotine 2).', map);
     if (immunitySoak) for (const g of s.who) if (g !== tgt && !tag(g)) MS(s.t, pname(g), s.n, 'Low', 'Soaked the immunity ' + S(s.n)[1] + ' without an immunity or tank personal active.', 'This soak is planned for tanks and immunities only.', map);
     if (mythic && key === 'g2') {
-      for (const g of s.who) if (role(g) === 'healer' && g !== tgt) MS(s.t, pname(g), s.n, 'Low', 'Healer in Guillotine 2, which is planned for the tanks and immunities only.', 'Healers stay out of the 2nd Guillotine.', map);
+      // (Oct 21, your note: a healer with an immunity up is one of the immunities, e.g. a Holy Paladin's Divine Shield)
+      for (const g of s.who) if (role(g) === 'healer' && g !== tgt && !IMMUNE.some((n) => has(g, n, hit))) MS(s.t, pname(g), s.n, 'Low', 'Healer in Guillotine 2 without an immunity: this soak is planned for the tanks and immunities only.', 'Healers stay out of the 2nd Guillotine unless they immune it (a Holy Paladin can with Divine Shield).', map);
       const tanks = s.who.filter((g) => role(g) === 'tank').length;
       if (tanks < 2) MS(s.t, 'Raid', s.n, 'Low', 'Only ' + tanks + ' tank' + (tanks === 1 ? '' : 's') + ' soaked Guillotine 2 (plan: both tanks, with a personal).', 'Both tanks go into the 2nd Guillotine with the immunities.', map);
     }
