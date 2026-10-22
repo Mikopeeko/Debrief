@@ -845,6 +845,7 @@ button.nm-cell { cursor: pointer; } button.nm-cell:hover { outline: 2px solid va
 .dd-bar { height: 8px; border-radius: 2px; background: rgba(255,255,255,.05); overflow: hidden; } .dd-bar i { display: block; height: 100%; background: #e5534b; opacity: .85; }
 .dd-act { display: flex; gap: 8px; margin-top: 10px; }
 .dmore { margin-top: 6px; padding: 8px 10px; border: 1px dashed var(--line2); border-radius: 8px; font-size: 13px; color: var(--muted); }
+.dd-sep { margin: 10px 0 2px; padding: 6px 10px 4px; border-top: 1px dashed var(--line2); font-size: 12px; color: var(--muted); } .md.dd .md-i.dd-r.dd-late:not(.on) { opacity: .6; }
 .dev-all { padding: 4px 10px; font-size: 13px; } .dev-all.on { border-color: #6aa8ff; color: #9ecbff; }
 .dchips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
 .dchip { display: inline-flex; align-items: baseline; gap: 6px; max-width: 100%; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); font: 500 13px var(--body); text-align: left; }
@@ -3784,6 +3785,7 @@ a.dbr-fx.st-bad { border-top-color: var(--bad); } a.dbr-fx:hover { transform: tr
    84 px maps on What went wrong lines; the card maps are already big, so they stay put and only get a gold edge) */
 .nml-map .wr-map.mcx-map:hover, .mcx-tile .wr-map.mcx-map:hover { transform: none !important; box-shadow: none !important; border-color: var(--gold); }
 .nml-f { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 10px; font-size: 13px; color: var(--muted); } .nml-f .npc { height: 30px; }
+/* All pulls Deaths (Oct 21) */ .ndh-w { margin: 12px 0; } .ndh-lead { margin: 0 0 10px; font-size: 14px; } .ndh { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 0 0 12px; } .ndh-c { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; } .ndh-h { display: block; font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 4px; } .ndh-r { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; font-size: 13px; } .ndh-r + .ndh-r { border-top: 1px solid var(--line); } .ndh-t td:last-child { width: 24px; text-align: right; } .ndh-go { color: var(--gold); text-decoration: none; font-size: 16px; padding: 0 4px; }
 .nmc .dbr-more { margin-top: 12px; } .nmc .dbr-more .rc-more { margin: 0; }
 @media (max-width: 600px) { .nmc .dbck > details.nml .mcx-ln .npc { flex-basis: 100%; margin-left: 0; } }
 .brw .nh small { margin-left: 8px; font: 400 13px var(--body); color: var(--muted); text-transform: none; letter-spacing: 0; }
@@ -12696,7 +12698,8 @@ const allOf = (n, one, many) => (n === 1 ? one : n === 2 ? 'both ' + many : 'all
 // (a small map, zoomed to its mechanic once it's on the page: the class icons filled in)
 function wrThumbFit(root) {
   (root || document).querySelectorAll('.wr-map').forEach((a) => { const svg = a.querySelector('svg.zmap'); if (!svg || !svg.dataset.focus || a.dataset.fit) return; a.dataset.fit = '1';
-    const f = svg.dataset.focus.split(',').map(Number), k = f[2] / 480; svg.setAttribute('viewBox', f.join(' '));
+    // (the whole room, like the big maps, not zoomed to each mechanic (your call, Oct 21: "keep the map in a more static spot so you can see the whole arena"))
+    const f = (svg.dataset.full || svg.dataset.focus).split(',').map(Number), k = f[2] / 480; svg.setAttribute('viewBox', f.join(' '));
     const fitIc = () => { for (const g of svg.querySelectorAll('g.ic')) { const x = +g.dataset.x, y = +g.dataset.y; g.setAttribute('transform', 'translate(' + x + ' ' + y + ') scale(' + k + ') translate(' + -x + ' ' + -y + ')'); } };
     fitIc(); hydrateMapIcons(a);
     // (Oct 22: it plays like the big maps, only while it's on screen; no Key moment banner on something this small)
@@ -14189,6 +14192,9 @@ const PATCH_NOTES = [
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
+    'Debriefing, All pulls: a new Deaths line. Deaths per pull as bars, what killed people most, who died most, and each pull\'s first death with a › to that pull.',
+    'Report card and the boss grade: deaths now count. A death that was on you (your own mistake, like an avoidable hit, or dying slowly with a defensive ready) costs Survival points; a one-shot that wasn\'t your mistake, the raid\'s mistake and deaths after the wipe filter don\'t.',
+    'Debriefing: the small maps on the cards show the whole room, like the big ones, instead of zooming in on each mechanic.',
     'Debrief in game: The Coiled Altar mechanics on the recap card each say what matters most, like Deluge 3 at 1:27: Sever 2 hit 6 (plan: 2 to 3), or Soak 1 at 6:53: 2 in the circle (needs 5). Other bosses next.',
     'Debrief in game: turn combat logging on or off with one press. Click Logging: On/Off at the bottom of the card, type /debrief log, or set a key in Options > Keybindings > AddOns > Debrief.',
     'Debrief in game: the Detailed card says each thing once. Your view is about you and the Raid view is about the raid, with no lines repeated between tiles, lists and the next pull.',
@@ -14252,6 +14258,7 @@ const PATCH_NOTES = [
     'Rotation\'s Work on these first no longer leads with gear and stats.',
     'Home: while your team\'s nights come in for the first time, a loading screen shows how far along it is, and the page fills in by itself when it\'s done.',
   ], f: [
+    'Debriefing: a single pull\'s Deaths lists every death again. The ones after the wipe filter are in grey and not counted, instead of only "19 more deaths".',
     'Debriefing: the small maps on the mechanic cards (like All pulls\' Guillotine) play now, like the big ones, instead of standing still.',
     'Debriefing: hovering a card\'s map no longer blows it up off the screen.',
     'The Coiled Altar: a healer who immunes the 2nd Guillotine (like a Holy Paladin with Divine Shield) is no longer told to stay out of it.',
@@ -19505,8 +19512,10 @@ function audit() {
   // open; opening a death shows the last 5 seconds in one line, its linked mistakes, the three biggest hits as bars, and
   // the Map and Every event buttons
   const deathsList = (rows, sid) => {
-    const ds = rows.map((row) => row[0].death).filter(Boolean); if (!ds.length) return '';
-    const same = ds.map((d, i) => { const p = ds[i - 1]; return p && d.t - p.t <= 2 && causeOf(p) === causeOf(d) ? p : null; });
+    const ds0 = rows.map((row) => row[0].death).filter(Boolean); if (!ds0.length) return '';
+    /* (deaths after the wipe filter are listed under the counted ones, in grey: shown, not counted (your call, Oct 21)) */
+    const cut0 = cut ? cut.t : Infinity, hasCut = isFinite(cut0) && ds0.some((d) => Math.abs(d.t - cut0) < 0.06), late = hasCut ? allDeaths.filter((d) => d.t > cut0 + 0.05 && (!mp1 || d.player === S.mechP)) : [], ds = ds0.concat(late), nLate = late.length;
+    const same = ds.map((d, i) => { const p = ds[i - 1]; return p && d.t - p.t <= 2 && causeOf(p) === causeOf(d) && (i < ds0.length) === (i - 1 < ds0.length) ? p : null; });
     const cap = (s) => String(s).replace(/^a /, '').replace(/^./, (c) => c.toUpperCase());
     // what would have helped, in one line: a linked mistake first, then a defensive that was ready, then the advice
     const helped = (d) => { const l = (d.links || [])[0], av = d.available || [];
@@ -19536,21 +19545,20 @@ function audit() {
         (links.length ? '<div class="dchips">' + links.join('') + '</div>' : '') + top3(d) +
         '<div class="dd-act">' + (d.map ? cell({ map: d.map }, sid) : '') + '<button class="btn dev-all" type="button">Every event</button></div>' +
         '<div class="recap dall" hidden>' + (rc || '<p class="muted">No events recorded before this death.</p>') + '</div><div class="mm md-map"></div>';
-      return { d, i, cause, how, h0, body, st: h0.st === 'na' ? 'bad' : h0.st };
+      return { d, i, cause, how, h0, body, st: i >= ds0.length ? 'na dd-late' : h0.st === 'na' ? 'bad' : h0.st, late: i >= ds0.length };
     });
-    const causes = new Map(); for (const x of items) causes.set(x.cause, (causes.get(x.cause) || 0) + 1);
-    const cut0 = cut ? cut.t : Infinity, hasCut = isFinite(cut0) && ds.some((d) => Math.abs(d.t - cut0) < 0.06), after = hasCut ? allDeaths.filter((d) => d.t > cut0 + 0.05).length : 0;
+    const causes = new Map(); for (const x of items) if (!x.late) causes.set(x.cause, (causes.get(x.cause) || 0) + 1);
     // (deaths from the same hit, each within 2 s of the one before, are one line: "Schooty and 14 more", every name
     // listed when it's opened, with the first one's recap)
     const groups = []; items.forEach((x, i) => { if (same[i] && groups.length) groups[groups.length - 1].push(x); else groups.push([x]); });
-    return '<div class="md dd"><p class="dd-top">' + (() => { const cs = [...causes].sort((a, b) => b[1] - a[1]); return ds.length === 1 ? '1 death, to ' + esc(cs[0][0]) + '.' : cs.length === 1 ? ds.length + ' deaths, ' + (ds.length === 2 ? 'both' : 'all') + ' to ' + esc(cs[0][0]) + '.' : plural(ds.length, 'death') + ': ' + cs.map(([c, n]) => n + ' to ' + esc(c)).join(', ') + '.'; })() + '</p>' +
-      groups.map((g, gi) => { const x = g[0], many = g.length > 1;
+    return '<div class="md dd"><p class="dd-top">' + (() => { const cs = [...causes].sort((a, b) => b[1] - a[1]); const n0 = ds0.length; return (n0 === 1 ? '1 death, to ' + esc(cs[0][0]) + '.' : cs.length === 1 ? n0 + ' deaths, ' + (n0 === 2 ? 'both' : 'all') + ' to ' + esc(cs[0][0]) + '.' : plural(n0, 'death') + ': ' + cs.map(([c, n]) => n + ' to ' + esc(c)).join(', ') + '.') + (nLate ? ' <span class="sub">' + plural(nLate, 'more death') + ' after the wipe filter, listed below in grey (not counted).</span>' : ''); })() + '</p>' +
+      groups.map((g, gi) => { const x = g[0], many = g.length > 1, sep = x.late && (gi === 0 || !groups[gi - 1][0].late) ? '<div class="dd-sep">After the wipe filter (' + ordinal(cut.n) + ' death): shown, not counted</div>' : '';
         const names = many ? '<div class="dd-all"><span class="sub">' + g.length + ' died to it: </span>' + g.map((y) => '<span class="nm" style="color:' + ((pmap.get(y.d.player) || {}).color || 'inherit') + '">' + esc(y.d.player) + '</span>').join(', ') + '</div>' : '';
-        return '<button class="md-i dd-r ' + x.st + (gi === 0 ? ' on' : '') + '" type="button" data-i="' + gi + '" data-dg="' + esc(x.d.guid + '@' + x.d.t.toFixed(2)) + '" data-dgs="' + esc(g.map((y) => y.d.guid + '@' + y.d.t.toFixed(2)).join(' ')) + '" aria-expanded="' + (gi === 0) + '">' +
+        return sep + '<button class="md-i dd-r ' + x.st + (gi === 0 ? ' on' : '') + '" type="button" data-i="' + gi + '" data-dg="' + esc(x.d.guid + '@' + x.d.t.toFixed(2)) + '" data-dgs="' + esc(g.map((y) => y.d.guid + '@' + y.d.t.toFixed(2)).join(' ')) + '" aria-expanded="' + (gi === 0) + '">' +
           '<span class="dd-t">' + T(x.d.t) + '</span><span class="dd-w">' + who(x.d.player) + (many ? '<span class="dd-n">and ' + (g.length - 1) + ' more</span>' : '') + '</span><span class="dd-c"><b>' + esc(x.cause) + '</b>' + (x.how ? ' <span class="sub">' + esc(x.how) + '</span>' : '') + '</span>' +
           '<span class="dd-h ' + x.h0.st + '">' + ('') + esc(x.h0.txt) + '</span><span class="dd-x" aria-hidden="true">▸</span></button>' +
           '<div class="md-d dd-b" data-i="' + gi + '"' + (gi === 0 ? '' : ' hidden') + '>' + names + x.body + '</div>'; }).join('') +
-      (after ? '<div class="dmore">' + plural(after, 'more death') + ' after the wipe filter</div>' : '') + '</div>';
+      '</div>';
   };
   // Avoidable damage as bars: each source on the left (most harmful first), the picked one's players on the right, a bar
   // per player as long as their hits (a hit is one time walking into it), coloured by the source's limits, with the
@@ -20841,14 +20849,14 @@ function gradeBoss(reps) {
   const L = (x) => String(x || '').toLowerCase(), clamp = (v) => Math.max(0, Math.min(100, v));
   const boss = reps[0] && reps[0].item.boss;
   const hasAvoidRules = S.packs.some((p) => (p.encounter === boss || (p.aliases || []).includes(boss)) && p.rules.some((x) => String(x.type).toLowerCase() === 'avoidable'));
-  const sc = { mech: [], avoid: [], death: [] }, kick = { landed: 0, total: 0 }, nm = new Map(), na = new Map(); let nMist = 0, deaths = 0, defReadyN = 0, potU = 0, potE = 0, sawAvoid = hasAvoidRules;
+  const sc = { mech: [], avoid: [], death: [] }, kick = { landed: 0, total: 0 }, nm = new Map(), na = new Map(); let nMist = 0, deaths = 0, dieN = 0, defReadyN = 0, potU = 0, potE = 0, sawAvoid = hasAvoidRules;
   for (const r of reps) {
     const ct = cutT(r), ok = (t) => t == null || t <= ct + 0.05, np = Math.max(1, r.players.size);
     // deaths
     // survival: the raid's average survival kit score this pull (survivalOf: defensives, Healthstones and potions, each up to the wipe filter)
     const sv = [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)).map((p) => survivalOf(r, p));
-    sc.death.push(sv.length ? sv.reduce((s, x) => s + x.score, 0) / sv.length : 100);
-    deaths += keptDeaths(r).length; for (const x of sv) { defReadyN += x.defReady; potU += x.used; potE += x.expect; }
+    sc.death.push(sv.length ? sv.reduce((s, x) => s + x.life, 0) / sv.length : 100); /* (deaths that counted as well as the kit (Oct 21)) */
+    deaths += keptDeaths(r).length; for (const x of sv) dieN += x.dieN; for (const x of sv) { defReadyN += x.defReady; potU += x.used; potE += x.expect; }
     // interrupts
     for (const k of r.kicks || []) {
       const landed = r.interrupts.filter((x) => ok(x.t) && (x.id === k.id || L(x.spell) === L(k.name))).length, missed = k.missedAt.filter((x) => ok(x.t)).length;
@@ -20877,7 +20885,7 @@ function gradeBoss(reps) {
   const avg = (a) => a.reduce((s, x) => s + x, 0) / a.length, top = (m, n) => [...m].sort((a, b) => b[1] - a[1]).slice(0, n).map((x) => x[0]);
   const cats = [{ key: 'mech', label: 'Mechanics', score: avg(sc.mech), sub: nMist ? plural(nMist, 'mistake') + ', most from ' + top(nm, 2).join(' and ') : 'No mechanic mistakes' }];
   if (sawAvoid) cats.push({ key: 'avoid', label: 'Avoidable damage', score: avg(sc.avoid), sub: na.size ? 'Most lost to: ' + top(na, 2).join(', ') : 'Nothing worth flagging' });
-  cats.push({ key: 'death', label: 'Survival', score: avg(sc.death), sub: (potE ? 'combat or mana pot ' + Math.min(100, Math.round(100 * potU / potE)) + '% · ' : '') + plural(defReadyN, 'death') + ' with a defensive or self-heal ready' });
+  cats.push({ key: 'death', label: 'Survival', score: avg(sc.death), sub: plural(Math.round(dieN), 'death') + ' that counted · ' + (potE ? 'combat or mana pot ' + Math.min(100, Math.round(100 * potU / potE)) + '% · ' : '') + plural(defReadyN, 'death') + ' with a defensive or self-heal ready' });
   if (kick.total) cats.push({ key: 'kick', label: 'Interrupts', score: 100 * kick.landed / kick.total, sub: kick.landed + ' of ' + kick.total + ' kicked' });
   const wsum = cats.reduce((s, c) => s + CARD_W[c.key], 0), overall = cats.reduce((s, c) => s + c.score * CARD_W[c.key], 0) / wsum;
   for (const c of cats) c.letter = letterOf(c.score);
@@ -21228,6 +21236,30 @@ function nightMechC(o) {
     return '<details class="panel secd st-' + LC[lv] + ' dbr-line nml" id="' + sid + '" data-k="' + sid + '" data-sec="sec-' + esc(r.x.id) + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + secHead({ title: shortT(r.title), spell: r.x.spell, icon: r.x.icon }) + '<span class="sst ' + LC[lv] + '">' + LW[lv] + '</span>' +
       '<span class="mcx-ln">' + facts + '</span></summary><div class="secbody">' + (M ? '<div class="nml-map"><span class="wr-map mcx-map">' + miniMap(M.mp, pm) + '</span><span class="sub">Pull ' + M.n + (byPull.get(M.n) ? ', ' + esc(res(byPull.get(M.n))) : '') + '</span></div>' : '') +
       '<div class="nml-f">' + facts + '</div>' + (r.body || '') + '</div></details>'; };
+  // (Deaths over the night (your call, Oct 21: "deaths should be accounted for on all pulls"): a bar per pull (deaths up to the
+  // wipe filter), what killed people most, who died most, and each pull's first death with a › to that pull's Deaths)
+  const deathsLine = () => { const reps = (o.reps || []).slice().sort((a, b) => a.item.pull - b.item.pull); if (!reps.length) return '';
+    const isMe = (d) => !one || d.player === one || String(d.player).split('-')[0] === one.split('-')[0];
+    const causeOf = (d) => (d.big ? d.big.spell : (d.last && d.last.spell) || d.ability || d.killer || 'an unknown hit');
+    const P = reps.map((r) => { const all = r.deaths.filter(isMe).sort((a, b) => a.t - b.t), kept = keptDeaths(r).filter(isMe).sort((a, b) => a.t - b.t); return { r, n: r.item.pull, all, kept, late: all.length - kept.length }; });
+    const stOf = (x) => (!x.kept.length ? 'ok' : x.kept.length >= 3 ? 'bad' : 'warn'), nAll = P.reduce((s, x) => s + x.kept.length, 0), nLate = P.reduce((s, x) => s + x.late, 0);
+    const nBadP = P.filter((x) => stOf(x) === 'bad').length, nSome = P.filter((x) => x.kept.length).length, lv = !nSome ? 'clean' : nBadP * 2 >= P.length ? 'major' : 'minor';
+    const mx = Math.max(1, ...P.map((x) => x.kept.length)), byN = new Map(P.map((x) => [x.n, x]));
+    const dbars = '<span class="npc">' + pullNs.map((n) => { const x = byN.get(n); if (!x) return '<i class="npc-na" style="--h:0%"></i>'; const st = stOf(x);
+      return '<i class="npc-' + st + '" data-npq="' + n + '" style="--h:' + (x.kept.length ? Math.max(12, 100 * x.kept.length / mx) : 8).toFixed(0) + '%" title="' + esc('Pull ' + n + ': ' + (x.kept.length ? plural(x.kept.length, 'death') : 'nobody died') + (x.late ? ' (' + x.late + ' more after the wipe filter)' : '')) + '"></i>'; }).join('') + '</span>';
+    const cnt = (l, k) => { const m2 = new Map(); for (const d of l) { const v = k(d); m2.set(v, (m2.get(v) || 0) + 1); } return [...m2].sort((a, b) => b[1] - a[1]); };
+    const kept = P.flatMap((x) => x.kept), causes = cnt(kept, causeOf).slice(0, 5), whoL = one ? [] : cnt(kept, (d) => d.player).slice(0, 6), firsts = cnt(P.filter((x) => x.kept.length).map((x) => x.kept[0]), causeOf);
+    const nm = (n) => { const p = pm.get(n); return p ? '<span class="who sm">' + avatar(p, true) + '<span class="nm" style="color:' + p.color + '">' + esc(n.split('-')[0]) + '</span></span>' : '<b>' + esc(String(n).split('-')[0]) + '</b>'; };
+    const facts = !nAll ? '<span class="mcx-s">Nobody died' + (P.length > 1 ? ' in any pull' : '') + (nLate ? ' before the wipe filter' : '') + '</span>' + dbars
+      : '<span class="nmc-big"><b>' + nAll + '</b> ' + (nAll === 1 ? 'death' : 'deaths') + '</span><span class="wr-tag">' + (nAll / P.length).toFixed(1) + ' a pull</span><span class="wr-tag">' + nSome + ' of ' + plural(P.length, 'pull') + '</span>' + (causes.length ? '<span class="wr-plus">most to ' + esc(causes[0][0]) + '</span>' : '') + dbars;
+    const list = (h, l, f) => (l.length ? '<div class="ndh-c"><b class="ndh-h">' + h + '</b>' + l.map(([k, v]) => '<div class="ndh-r"><span>' + f(k) + '</span><b>' + v + '</b></div>').join('') + '</div>' : '');
+    const body = (nAll ? '<p class="ndh-lead">' + esc((firsts.length ? 'The first death of a pull was most often to ' + firsts[0][0] + ' (' + firsts[0][1] + ' of ' + plural(nSome, 'pull') + ').' : '') + (nLate ? ' ' + plural(nLate, 'more death') + ' came after the wipe filter; they\'re listed in each pull, not counted here.' : '')) + '</p>' +
+      '<div class="ndh">' + list('Killed by', causes, (k) => esc(k)) + list('Died most', whoL, nm) + '</div>' : '') +
+      '<div class="scroll"><table class="tbl nsx ndh-t"><thead><tr><th>Pull</th><th>Deaths</th><th>First death</th><th></th></tr></thead><tbody>' + P.map((x) => { const d = x.kept[0] || x.all[0], st = stOf(x);
+        return '<tr class="r' + st + '"><td><b>' + x.n + '</b> <span class="sub">' + esc(res(x.r)) + '</span></td><td>' + (x.kept.length || (x.all.length ? '0' : '—')) + (x.late ? ' <span class="sub">+' + x.late + ' after the filter</span>' : '') + '</td>' +
+          '<td>' + (d ? nm(d.player) + ' <span class="sub">' + T(d.t) + ', to ' + esc(causeOf(d)) + '</span>' : '<span class="sub">nobody died</span>') + '</td><td><a href="#" class="ndh-go" data-np="' + x.n + '" data-sec="sec-deaths" title="Open this pull\'s deaths">›</a></td></tr>'; }).join('') + '</tbody></table></div>';
+    return '<div class="dbck ndh-w"><details class="panel secd st-' + LC[lv] + ' dbr-line nml" id="nml-deaths" data-k="nml-deaths" data-sec="sec-deaths"' + (S.openSecs.has('nml-deaths') ? ' open' : '') + '><summary>' + secHead({ title: 'Deaths', spell: [0, 'Death'] }) + '<span class="sst ' + LC[lv] + '">' + LW[lv] + '</span>' +
+      '<span class="mcx-ln">' + facts + '</span></summary><div class="secbody"><div class="nml-f">' + facts + '</div>' + body + '</div></details></div>'; };
   const ring = (l) => { const lv = l.map(lvOf), n = (k) => lv.filter((v) => v === k).length, tot = l.length; if (!tot) return ''; const C = 2 * Math.PI * 14;
     const seg = (k, off, col) => (n(k) ? '<circle r="14" cx="18" cy="18" fill="none" stroke="' + col + '" stroke-width="5" stroke-dasharray="' + (C * n(k) / tot).toFixed(2) + ' ' + C.toFixed(2) + '" stroke-dashoffset="' + (-C * off / tot).toFixed(2) + '" transform="rotate(-90 18 18)"/>' : '');
     return '<span class="mcx-ring" title="' + n('clean') + ' of ' + plural(tot, 'mechanic') + ' clean all night"><svg width="36" height="36" viewBox="0 0 36 36"><circle r="14" cx="18" cy="18" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="5"/>' + seg('clean', 0, '#45c15c') + seg('minor', n('clean'), '#e8b923') + seg('major', n('clean') + n('minor'), '#d4111e') + '</svg><span><b>' + n('clean') + '/' + tot + '</b>clean</span></span>'; };
@@ -21283,7 +21315,7 @@ function nightMechC(o) {
     else if (all.length) top += '<div class="dbr-h">Every mechanic went clean in every pull</div>';
   } catch (e) { console.error(e); top = ''; }
   const hp = o.b0 && o.pulls ? nightHpChart(o.b0, o.pulls) : '';
-  return { html: (top ? '<section class="dbr-top">' + top + '</section>' : '') + '<div class="dbr-slot"></div>' + hp + head + (phases || '<div class="panel"><p class="muted" style="margin:0">Mechanic checks for this boss aren\'t built yet.</p></div>'), MAPS };
+  return { html: (top ? '<section class="dbr-top">' + top + '</section>' : '') + '<div class="dbr-slot"></div>' + hp + head + (() => { try { return deathsLine(); } catch (e) { console.error(e); return ''; } })() + (phases || '<div class="panel"><p class="muted" style="margin:0">Mechanic checks for this boss aren\'t built yet.</p></div>'), MAPS };
 }
 // (a tile, a chip or a dot: that pull's Mechanics at the mechanic)
 function bindNightMechC(pulls) {
@@ -32060,6 +32092,19 @@ function prepotted(r, p) {
 const TANK_CD_SKIP = new Set(['rallying cry', 'darkness', 'divine shield', 'lay on hands']);
 // the mechanics only tanks are judged on (their frontals and stacks): a minor slip on one counts in a tank's execution
 const TANK_MECH = new Set(['Sever', 'Soul Sever', 'Blighted Sever']);
+// (a death the fight checks put on the player, even a one-shot (Oct 21: Boltzzx's Axegrinder axe, Dashtoswirly's Gravebound with no
+// soul fragments): the avoidable damage judge died on that hit, or a check's flagged row names them within 1.5 s of it)
+function deathOwn(r, d) {
+  const m = r.module; if (!m || m.error || !m.sections) return false;
+  const k = d.guid + '@' + d.t.toFixed(2); r._dOwn = r._dOwn || new Map(); if (r._dOwn.has(k)) return r._dOwn.get(k);
+  let own = false;
+  for (const s of m.sections) { if (own) break;
+    if (s.id === 'avoid') { own = (s.groups || []).some((g) => (g.judge || []).some((x) => x.p === d.player && !x.tank && x.dt != null && Math.abs(x.dt - d.t) < 0.6)); continue; }
+    for (const row of (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || []))) { const tc = row.find((c) => c && c.t != null);
+      if (tc && Math.abs(tc.t - d.t) <= 1.5 && row.some((c) => c && (c.p === d.player || (c.ps || []).includes(d.player))) && row.some((c) => c && c.bad)) { own = true; break; } } }
+  if (!own) own = (m.mistakes || []).some((x) => x.player === d.player && x.mechanic !== 'Death' && Math.abs(x.t - d.t) <= 1.5);
+  r._dOwn.set(k, own); return own;
+}
 function survivalOf(r, p) {
   const ct = cutT(r), ok = (t) => t <= ct + 0.05, dd = keptDeaths(r).filter((d) => d.guid === p.guid), fair = dd.filter((d) => !(d.healthy && d.window < 1.5)), tank = p.role === 'tank';
   const end = Math.min(r.duration, ct, dd.length ? Math.min(...dd.map((d) => d.t)) : Infinity);
@@ -32088,9 +32133,15 @@ function survivalOf(r, p) {
     const tail = potEnd - avail; if (tail >= 60) extra += 1 + Math.floor((tail - 60) / 300); return us.length + extra; })();
   const expect = end < 20 || shortW ? 0 : Math.max(1, potFit), used = Math.min(pots.length + (pre ? 1 : 0), expect || 9);
   const pot = expect ? 100 * Math.min(1, used / expect) : null;
+  // (the deaths that count against them (your ask, Oct 21: deaths in every grade), by the Recap's rule: their own mistake, or a slow death
+  // with a defensive, Healthstone or potion still ready, in full; a slow death with nothing left, half; a one-shot (50%+ to dead in 2 s
+  // or less) that wasn't their mistake, the raid's mistake, or after the wipe filter, not at all)
+  const ownL = (d) => (d.links || []).some((l) => !l.raid) || deathOwn(r, d), raidL = (d) => (d.links || []).some((l) => l.raid);
+  const dieList = dd.map((d) => ({ d, w: ownL(d) ? 1 : d.react === false || raidL(d) ? 0 : (d.available || []).length ? 1 : 0.5 })), dieN = dieList.reduce((s, x) => s + x.w, 0);
+  const die = Math.max(0, 100 - 50 * dieN);
   const W = tank ? [0.6, 0.15, 0.25] : [0.4, 0.3, 0.3];
   const score = pot == null ? (W[0] * def + W[1] * kit) / (W[0] + W[1]) : W[0] * def + W[1] * kit + W[2] * pot;
-  return { score, def, kit, pot, expect, used, pre, defReady, kitReady, calls: calls.length, silent, deaths: dd.length, oneShots: dd.length - fair.length, silentKit, tank, cds, cdUsed, cdPoss,
+  return { score, life: 0.6 * score + 0.4 * die, die, dieN, dieList, def, kit, pot, expect, used, pre, defReady, kitReady, calls: calls.length, silent, deaths: dd.length, oneShots: dd.length - fair.length, silentKit, tank, cds, cdUsed, cdPoss,
     stones: p.cons.healthstone.filter((u) => ok(u.t)).length, hpots: p.cons.healpot.filter((u) => ok(u.t)).length };
 }
 // ---------- Report card (Performance): how well each player played their own character ----------
@@ -32231,9 +32282,13 @@ function cardOf(r, p) {
     const pz = parsesFor(r, role === 'healer' ? 'heal' : 'dmg'), px = pz && pz.get(p.name);
     add('btn', { k: 'out', label: role === 'healer' ? 'Healing' : 'Damage', sc: null, w: 0, num: x.ps, nt: 'C', unit: ' per second alive', html: (role === 'healer' ? 'Healing' : 'Damage') + ' <b>' + C(x.ps) + '</b> per second alive ' + prsChip(px) + '<span class="sub"> · ' + ordinal(rank) + ' of ' + ranked.length + ' ' + (role === 'healer' ? 'healers' : 'DPS') + ' (median ' + C(C0.roleMed[role]) + '), shown for reference and not graded</span>' });
   }
-  // ---- Staying alive: their own defensives and kit (deaths are on Mechanics) ----
+  // ---- Staying alive: their own defensives and kit and the deaths that were on them (Oct 21) ----
   // (and a death with a defensive still ready (Oct 20, the top-raider pass: Survival read 100 next to 6 deaths). One-shots,
   // healthy to dead in under 1.5 s, never count: survivalOf leaves them out)
+  { const cnt = sv.dieList.filter((x) => x.w > 0), whyD = (x) => T(x.d.t) + ' to ' + (x.d.ability || x.d.killer || 'a hit') + (x.w < 1 ? ' (half: nothing left to press)' : (x.d.links || []).some((l) => !l.raid) || deathOwn(r, x.d) ? ' (your own mistake)' : ' (with something still ready)');
+    add('alive', { k: 'died', label: 'Deaths', sc: sv.die, w: 80, num: sv.dieN, nt: 'sum', word: 'death',
+      html: cnt.length ? '<b>' + plural(cnt.length, 'death') + '</b> that counted: ' + esc(cnt.map(whyD).join(', ')) + (sv.deaths > cnt.length ? '<span class="sub"> · ' + (sv.deaths - cnt.length) + ' more not on you (too fast, or the raid\'s mistake)</span>' : '') : sv.deaths ? 'No deaths that counted<span class="sub"> · ' + plural(sv.deaths, 'death') + ' too fast or from the raid\'s mistake</span>' : 'Stayed alive',
+      fix: cnt.length ? { t: 'Stay alive', x: 'You died ' + (cnt.length === 1 ? 'once' : cnt.length + ' times') + ' in a way you could have stopped: ' + cnt.map(whyD).join(', ') + '. A death costs the raid your damage or healing for the rest of the pull; open Deaths on Debriefing to see what hit you.' } : null }); }
   add('alive', { k: 'dready', label: 'Died with a defensive still ready', sc: Math.max(0, 100 - 40 * sv.defReady), w: 35, num: sv.defReady, nt: 'sum', word: 'death',
     html: sv.defReady ? '<b>' + plural(sv.defReady, 'death') + '</b> with a defensive still ready' : 'No deaths with a defensive still ready',
     fix: sv.defReady ? { t: 'Press a defensive before you die', x: 'You died with a defensive still ready. When your health drops and keeps dropping, press it: that is what it\'s for.' } : null });
@@ -32316,7 +32371,7 @@ function reportCard(reps, night) {
   const top = [...common].sort((a, b) => b[1] - a[1])[0];
   const tile = (sc, label, txt) => plTile(rcG(sc), label, sc == null ? '—' : Math.round(sc) + '<span>/100</span>', gBucket(sc), txt, true);
   const tiles = '<div class="pts n4 rk-tiles">' + tile(avgOf((x) => x.overall), 'Raid average', plural(all.length, 'player') + (night ? ' · ' + plural(reps.length, 'pull') : '')) +
-    RC_SEC.map(([k, l]) => tile(avgOf((x) => x.secs[k]), l, k === 'btn' ? 'casting, cooldowns, resources' : k === 'alive' ? 'close calls, defensives, Healthstones' : 'potion, externals, dispels')).join('') + '</div>' +
+    RC_SEC.map(([k, l]) => tile(avgOf((x) => x.secs[k]), l, k === 'btn' ? 'casting, cooldowns, resources' : k === 'alive' ? 'deaths, close calls, defensives, Healthstones' : 'potion, externals, dispels')).join('') + '</div>' +
     (top ? '<div class="rk-common"><span class="sub">Most common thing to work on:</span> <b>' + esc(top[0]) + '</b> <span class="sub">(' + plural(top[1], 'player') + ')</span></div>' : '');
   // ---- one row per player, most to gain first; a click opens their card ----
   const sel = S.rcSel && rows.some((x) => x.p.name === S.rcSel) ? S.rcSel : null;
@@ -32477,7 +32532,7 @@ function plGrade(r, p, x, credit, rot) {
   //  Mechanics: 100, less 14 per serious mistake of their own, 4 per medium, 1 per minor slip (2 on a tank's own frontals).
   //  Assignments: the share of their NSRT note jobs they did (assignCredit).
   //  Rotation: the Rotation tab's score; for a spec without a page, the card's pressing buttons (casting, cooldowns, resources).
-  //  Survival: the card's staying alive (defensives, big defensives, close calls, Healthstone and health potion).
+  //  Survival: the card's staying alive (deaths that counted, defensives, big defensives, close calls, Healthstone and health potion).
   //  Toolkit: the card's toolkit (combat or mana potion, externals).
   //  Prep: prepScore (flask, food, weapon oil, augment rune, enchants by rank, gems, empty slots).
   const mist = Math.max(0, 100 - own.reduce((s, m) => s + lostOf(m), 0)), c = credit.get(p.name), asS = c && c.of ? 100 * c.did / c.of : null;
@@ -32580,7 +32635,7 @@ function plPage(data, reps, one) {
   const sortSw = '';
   const left = '<div class="panel pf-bars pl-bars"><h3 class="nh"><span>Players</span><small>Each grade is made of six parts: mechanics, Rotation, survival, prep, assignments and toolkit.' + (one ? ' On the right are mechanics and Rotation.' :' The arrows show the change through the night.') + '</small>' + roleChips(has) + '</h3>' + sortSw +
     (bars ? cbHead('Grade', one ? 'Mech · Rot' : 'Trend', '', ' pl-hr') + bars : '<p class="muted">Nobody in this role.</p>') + '</div>';
-  const how = '<details class="howit"><summary>How it\'s graded</summary><div>Each player\'s grade is made of six parts, each out of 100. <b>Mechanics</b> (25%): 100, less 14 for each serious mistake of their own, 4 for each medium one and 1 for each small slip (2 for a tank\'s slip on their own frontals). <b>Rotation</b> (25%): their score on the Rotation tab, the same checks and the same number. For a spec without a Rotation page, how they pressed their buttons: casting, big cooldowns, wasted resources, casts that didn\'t finish. <b>Survival</b> (15%): personal and big defensives, close calls with nothing pressed, and the Healthstone and health potion, with a death that had one of them ready costing the most. <b>Prep</b> (15%), at the pull: a flask 25, food 20 (Hearty food, which stays through a death, in full; plain food 17), a weapon oil or stone 15 (rank 1: 10), an augment rune 5 (the current one in full, an older one 2), enchants 25 shared between the slots (rank 1 counts half, missing none), gem sockets 10 (5 off each empty one), and 15 off for an empty gear slot. A flask\'s rank isn\'t in the log, so any flask counts in full. <b>Assignments</b> (10%): the share of their NSRT note jobs they did (late or partly done counts half, an assigned external or Zephyr counts double, a healing cooldown reminder half). <b>Toolkit</b> (10%): their combat or mana potion, and externals. A part that doesn\'t apply (no note, no jobs in it, no gear logged, alive under 20 s) is left out and the others share its weight. <b>Fix these first</b>: everything that cost them points, the biggest first, each with what fixing it would add to the grade. Over the night, each pull counts by their time alive; the MVPs and most improved need half the pulls. The raid\'s report card is everyone\'s grade and parts, averaged. S is 95 or more, A 88, B 78, C 65, D 50.</div></details>';
+  const how = '<details class="howit"><summary>How it\'s graded</summary><div>Each player\'s grade is made of six parts, each out of 100. <b>Mechanics</b> (25%): 100, less 14 for each serious mistake of their own, 4 for each medium one and 1 for each small slip (2 for a tank\'s slip on their own frontals). <b>Rotation</b> (25%): their score on the Rotation tab, the same checks and the same number. For a spec without a Rotation page, how they pressed their buttons: casting, big cooldowns, wasted resources, casts that didn\'t finish. <b>Survival</b> (15%): deaths that were on them (dying to their own mistake, or slowly with something still ready, costs 50; slowly with nothing left 25; a one-shot that wasn\'t their mistake, the raid\'s mistake or a death after the wipe filter nothing), personal and big defensives, close calls with nothing pressed, and the Healthstone and health potion, with a death that had one of them ready costing the most. <b>Prep</b> (15%), at the pull: a flask 25, food 20 (Hearty food, which stays through a death, in full; plain food 17), a weapon oil or stone 15 (rank 1: 10), an augment rune 5 (the current one in full, an older one 2), enchants 25 shared between the slots (rank 1 counts half, missing none), gem sockets 10 (5 off each empty one), and 15 off for an empty gear slot. A flask\'s rank isn\'t in the log, so any flask counts in full. <b>Assignments</b> (10%): the share of their NSRT note jobs they did (late or partly done counts half, an assigned external or Zephyr counts double, a healing cooldown reminder half). <b>Toolkit</b> (10%): their combat or mana potion, and externals. A part that doesn\'t apply (no note, no jobs in it, no gear logged, alive under 20 s) is left out and the others share its weight. <b>Fix these first</b>: everything that cost them points, the biggest first, each with what fixing it would add to the grade. Over the night, each pull counts by their time alive; the MVPs and most improved need half the pulls. The raid\'s report card is everyone\'s grade and parts, averaged. S is 95 or more, A 88, B 78, C 65, D 50.</div></details>';
   // (a picked player's page is full width, like Rotation's, with a Change player dropdown in its header; the list comes back with Show the raid)
   if (sel) return tiles + '<div class="pf-cols solo"><div class="panel pf-det pl-det">' + plPlayer(sel, one, reps, mvp.get(sel.p.name), data) + '</div></div>' + how;
   return tiles + '<div class="pf-cols">' + left + '<div class="panel pf-det pl-det">' + plRaid(data, one, mvp, imp) + '</div></div>' + how;
@@ -32779,7 +32834,7 @@ function rcnPlayer(c, F, a, side) {
     '<div class="rcn-dc"><h4>Prep<small>at the last pull</small></h4>' + prep + '<h4 class="s">Fix these first<small>the biggest gain first</small></h4>' + fixes + '</div></div></div>';
 }
 // (what each part of the grade is, in a line)
-const RCN_WHY = { mech: (a) => (a.mistakes ? plural(a.mistakes, 'mistake') + ' that cost points' : 'No mistakes that cost points'), play: (a) => (a.rot != null ? 'Their score on the Rotation tab' : 'How they pressed their buttons: casting, cooldowns, resources'), surv: () => 'Defensives, close calls, Healthstone and health potion', prep: () => 'Flask, food, weapon oil, rune, enchants and gems at the pull', asg: () => 'The share of their NSRT note jobs they did', tool: () => 'Combat or mana potion, and externals' };
+const RCN_WHY = { mech: (a) => (a.mistakes ? plural(a.mistakes, 'mistake') + ' that cost points' : 'No mistakes that cost points'), play: (a) => (a.rot != null ? 'Their score on the Rotation tab' : 'How they pressed their buttons: casting, cooldowns, resources'), surv: () => 'Deaths, defensives, close calls, Healthstone and health potion', prep: () => 'Flask, food, weapon oil, rune, enchants and gems at the pull', asg: () => 'The share of their NSRT note jobs they did', tool: () => 'Combat or mana potion, and externals' };
 // ---- Team of the night (your pick, Oct 19): the night's result as a banner, the best of each role as the night's team, and
 // a rated card for every raider; a card opens that player's whole night. Built only on the Report card; the grades are
 // plData's, unchanged. A card's colour is where they rank in the raid tonight (the top tenth legendary orange, then epic
@@ -32843,7 +32898,7 @@ function rctAll(c, F) {
 const RCB_FIX = { mech: (f) => /^m\|/.test(f.key || ''), play: (f) => /^(r\||pace)/.test(f.key || ''), out: (f) => /^(r\||pace)/.test(f.key || ''), prep: (f) => /^p\|/.test(f.key || ''),
   pot: (f) => /potion/i.test(f.t || ''), surv: (f) => /defensive|healthstone|health potion/i.test((f.t || '') + ' ' + (f.x || '')) };
 const RCB_SUBJ = [['mech', 'Mechanics', 'spell_holy_borrowedtime', 'Mistakes on the boss\'s mechanics'], ['play', 'Rotation', 'spell_nature_lightning', 'The Rotation tab\'s score, or how they pressed their buttons'],
-  ['surv', 'Survival', 'spell_holy_ardentdefender', 'Defensives, close calls, Healthstone and health potion'], ['prep', 'Prep', 'inv_alchemy_90_flask_green', 'Flask, food, weapon oil, rune, enchants and gems'],
+  ['surv', 'Survival', 'spell_holy_ardentdefender', 'Deaths, defensives, close calls, Healthstone and health potion'], ['prep', 'Prep', 'inv_alchemy_90_flask_green', 'Flask, food, weapon oil, rune, enchants and gems'],
   ['pot', 'Potions', 'inv_alchemy_70_red', 'A combat or mana potion in each pull with room for one'], ['out', 'Output', 'ability_warrior_innerrage', 'Damage or healing a second against the others in their role tonight (fastest 99)']];
 const rcbQ = (v) => (v == null ? '' : v >= 95 ? 'q5' : v >= 85 ? 'q4' : v >= 75 ? 'q3' : v >= 50 ? 'q2' : 'q1');
 const rcbV = (v) => '<span class="rcb-v ' + rcbQ(v) + '">' + (v == null ? '–' : Math.round(v)) + '</span>';
@@ -33403,7 +33458,7 @@ function lpTalk(r) {
 }
 // (what Talk to brings up: a mechanic (not the note's healing cooldowns), big defensives, defensives, close calls with nothing
 // pressed, and Healthstones and health potions; never rotation, casting, resources or prep)
-function talkOk(f) { const k = String(f.key || ''); return (/^m\|/.test(k) && k !== 'm|Assigned cooldown') || /^c\|(defs|tcd|calls|kit)\|/.test(k); }
+function talkOk(f) { const k = String(f.key || ''); return (/^m\|/.test(k) && k !== 'm|Assigned cooldown') || /^c\|(died|defs|tcd|calls|kit)\|/.test(k); }
 // what the raid pressed this pull, up to the wipe filter (your ask, Oct 19): each priest's Power Infusions (used of the uses they
 // had, and on whom), each Restoration Druid's Innervates, and the raid's defensives, Healthstones and health potions in all
 function lpUsed(r) {
