@@ -1670,6 +1670,7 @@ const PATCH_NOTES = [
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
+    'Boss guides: Vashnik and Sszorak now have a Heroic whole-fight video, timed by a real Heroic kill (7:07 and 6:44), with every cast in order. Sszorak\'s tank combos play in the order they really came, on both difficulties, and Vashnik\'s Heroic maps show the right number of Plague Froths, biles and infections.',
     'Report card: each raider\'s card shows every death, how many counted and why. A death to something avoidable counts even after the wipe filter, while fewer than a quarter of the raid is dead.',
     'Report card: each death that was on you takes a point off your night\'s grade, up to 10.',
     'The raid\'s grade is now half the raiders\' own grades and half how the raid did each mechanic, so a mechanic that fails every pull shows in it.',
