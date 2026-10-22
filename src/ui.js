@@ -3722,12 +3722,12 @@ function ndzBuildView(r) {
           return '<span class="ndz-p' + (twice ? ' warn' : '') + '">' + (sl.order ? '<i>' + (i + 1) + '</i>' : '') + '<span class="nm" style="color:' + col(n) + '">' + esc(n) + '</span>' + (sl.order && i ? '<button class="ndz-ex" type="button" data-bup="' + esc(k + '|' + i) + '" aria-label="Move up">↑</button>' : '') + '<button class="ndz-ex" type="button" data-bx="' + esc(k + '|' + i) + '" aria-label="Remove ' + esc(n) + '">×</button></span>'; }).join('') +
         '<select class="ndz-eadd" data-badd="' + esc(k) + '" aria-label="Add a player"><option value="">+ Add</option>' + ps.filter((p) => !v.n.includes(p.name)).map((p) => '<option value="' + esc(p.name) + '" style="color:' + ndzOptCol(p) + '">' + esc(p.name) + ' (' + esc(p.specName || p.role) + ')</option>').join('') + '</select></div>' + (v.why ? '<div class="ndz-bwhy"><span class="ndz-bsg' + (v.src ? ' src' : '') + '">' + (v.src ? NDZ_SRC_TAG[v.src] : 'Suggested') + '</span>' + esc(v.why.charAt(0).toUpperCase() + v.why.slice(1)) + '</div>' : '') + '</div>'; };
     const twice = pg.exclusive ? [...inPage].filter(([, c]) => c > 1).map(([n]) => n) : [], none = pg.exclusive ? ps.filter((p) => !inPage.has(p.name)).map((p) => p.name) : [];
-    h = top(esc(pg.title)) + prog + '<div class="ndz-bexp"><div class="ndz-abh">' + (ndzPgIconId(pg) ? spellIcon(ndzPgIconId(pg), pg.icon) : spIc(pg.icon)) + '<b>' + esc(pg.title) + '</b></div><p>' + esc(pg.explain) + '</p><p class="ndz-btip">💡 ' + esc(pg.tip) + '</p>' + (B.diff === 'Heroic' && (NDZ_HEROIC[B.pick] || {})[pg.key] ? '<p class="ndz-bhero"><b>On Heroic:</b> ' + esc(NDZ_HEROIC[B.pick][pg.key]) + '</p>' : '') + '</div>' +
+    h = top(esc(pg.title)) + prog + '<div class="ndz-bexp"><div class="ndz-abh">' + (ndzPgIconId(pg) ? spellIcon(ndzPgIconId(pg), pg.icon) : spIc(pg.icon)) + '<b>' + esc(pg.title) + '</b></div><p>' + esc(pg.explain) + '</p><p class="ndz-btip">💡 ' + esc(pg.tip) + '</p>' + (B.diff === 'Heroic' && (NDZ_HEROIC[B.pick] || {})[pg.key] ? '<p class="ndz-bhero"><b>On Heroic:</b> ' + esc(NDZ_HEROIC[B.pick][pg.key]) + '</p>' : '') + /* (the Why box folds in here, Oct 22) */
       (pg.slots.every((sl) => !B.sel[pg.key + '|' + sl.label].n.length) ? '<div class="ndz-bwhyb ndz-bempty"><b>✏️ Your pick</b><p>Add players with + Add, or press Fill in suggested picks to see who Debrief would pick and why.</p></div>' : '') +
-      ((NDZ_BUILD_WHY[B.pick] || {})[pg.key] && pg.slots.some((sl) => B.sel[pg.key + '|' + sl.label].why) ? '<div class="ndz-bwhyb"><b>✨ Why these picks</b>' + (pg.slots.every((sl) => B.sel[pg.key + '|' + sl.label].src) ? '<p>Every group here is ' + (B.src === 'pulls' ? 'what your raid did on your pulls' : 'kept from your last note') + '.</p>' : (pg.slots.some((sl) => B.sel[pg.key + '|' + sl.label].src) ? '<p>Groups marked ' + NDZ_SRC_TAG[B.src] + ' are ' + (B.src === 'pulls' ? 'what your raid did' : 'kept from your note') + '. The rest are suggested:</p>' : '') + '<p>' + esc(NDZ_BUILD_WHY[B.pick][pg.key]) + '</p>') + '<p class="sub">They\'re only a start: × removes someone, + Add puts someone in, and Suggest this page again brings the picks back.</p></div>' : '') +
+      ((NDZ_BUILD_WHY[B.pick] || {})[pg.key] && pg.slots.some((sl) => B.sel[pg.key + '|' + sl.label].why) ? '<details class="ndz-bwhyd"' + (S.ndzWhyOpen ? ' open' : '') + '><summary>✨ Why these picks</summary>' + (pg.slots.every((sl) => B.sel[pg.key + '|' + sl.label].src) ? '<p>Every group here is ' + (B.src === 'pulls' ? 'what your raid did on your pulls' : 'kept from your last note') + '.</p>' : (pg.slots.some((sl) => B.sel[pg.key + '|' + sl.label].src) ? '<p>Groups marked ' + NDZ_SRC_TAG[B.src] + ' are ' + (B.src === 'pulls' ? 'what your raid did' : 'kept from your note') + '. The rest are suggested:</p>' : '') + '<p>' + esc(NDZ_BUILD_WHY[B.pick][pg.key]) + '</p>') + ndzBSharedH(B, pg) + '<p class="sub">They\'re only a start: × removes someone, + puts someone in, and Suggest this page again brings the picks back.</p></details>' : '') + '</div>' +
       (twice.length ? '<div class="ndz-hl warn"><span class="ndz-ic">!</span><span>' + esc(andL(twice)) + (twice.length === 1 ? ' is' : ' are') + ' in two groups here. Each raider should be in one.</span></div>' : '') +
       (none.length && none.length <= 6 ? '<div class="ndz-hl warn"><span class="ndz-ic">!</span><span>Not in any group yet: ' + esc(andL(none)) + '.</span></div>' : '') +
-      pg.slots.map(slotH).join('') + '<div class="ndz-pd">' + btn('id="ndzBSug"', pg.slots.every((sl) => !B.sel[pg.key + '|' + sl.label].n.length) ? '✨ Fill in suggested picks' : 'Suggest this page again', 'sm' + (pg.slots.every((sl) => !B.sel[pg.key + '|' + sl.label].n.length) ? ' primary' : '')) + btn('id="ndzBClr"', 'Clear this page', 'sm') + '</div>' + foot('Next →', true); }
+      ndzBSlotsH(B, pg, ps, col) + '<div class="ndz-pd">' + btn('id="ndzBSug"', pg.slots.every((sl) => !B.sel[pg.key + '|' + sl.label].n.length) ? '✨ Fill in suggested picks' : 'Suggest this page again', 'sm' + (pg.slots.every((sl) => !B.sel[pg.key + '|' + sl.label].n.length) ? ' primary' : '')) + btn('id="ndzBClr"', 'Clear this page', 'sm') + '</div>' + foot('Next →', true); }
   else if (B.step === pages.length + 1) { const ps = [...B.pr.players.values()], RCD = Object.keys(RCD_CD);
     const nmOf = (c) => (c.id && ndzSpellNm(c.id)) || c.text || 'Cooldown', cdOf = (c) => RCD_CD[nmOf(c)] || 0;
     const clash = (c, i) => !!cdOf(c) && (B.cds || []).some((x, j) => { if (j === i || !x.who || x.who !== c.who || nmOf(x) !== nmOf(c)) return false; const a = ndzAbsT(B, x.ph, x.t), b = ndzAbsT(B, c.ph, c.t); /* (across phases on the fastest kills' phase starts) */
@@ -3784,6 +3784,7 @@ function ndzBuildView(r) {
   const sel = (k) => B.sel[k];
   $$('#assignBox [data-badd]').forEach((s) => (s.onchange = () => { if (s.value) { sel(s.dataset.badd).n.push(s.value); sel(s.dataset.badd).why = ''; } redraw(); }));
   $$('#assignBox [data-bx]').forEach((b) => (b.onclick = () => { const p = b.dataset.bx.split('|'), i = +p.pop(); sel(p.join('|')).n.splice(i, 1); redraw(); }));
+  ndzBGridBind(B, redraw); /* (the grid's dots and the Every set strip) */
   $$('#assignBox [data-bup]').forEach((b) => (b.onclick = () => { const p = b.dataset.bup.split('|'), i = +p.pop(), l = sel(p.join('|')).n; [l[i - 1], l[i]] = [l[i], l[i - 1]]; redraw(); }));
   if ($('#ndzBSug')) $('#ndzBSug').onclick = () => { const keep = B.sel, keepC = B.cds, keepS = B.cdsSug, pg = B.pages[B.step - 1]; ndzBuildStart(B); const fresh = B.sel; B.sel = keep; B.cds = keepC; B.cdsSug = keepS; for (const sl of pg.slots) B.sel[pg.key + '|' + sl.label] = fresh[pg.key + '|' + sl.label]; redraw(); };
   if ($('#ndzBClr')) $('#ndzBClr').onclick = () => { const pg = B.pages[B.step - 1]; for (const sl of pg.slots) B.sel[pg.key + '|' + sl.label] = { n: [], why: '' }; redraw(); };
@@ -5336,6 +5337,73 @@ function ndzUncH(D, hits, len, top) { const pos = (t) => 'calc(var(--ctw) + (100
     if (h.c !== 'red') return band;
     const tt = '<b>' + esc(h.hit) + ' at ' + mmss(h.rel) + '</b><br>No raid cooldown is pressed near this hit.' + (fix ? '<br>Click to add ' + esc(h.fix.name) + ' for ' + esc(h.fix.who) + ' at ' + mmss(h.fix.t) + '.' : h.fix ? '' : '<br>Nobody on the roster has a raid cooldown back by then.');
     return band + '<button type="button" class="ndz-ctub' + (fix ? '' : ' nofix') + '" style="top:' + (top + 3) + 'px;left:' + pos(h.rel) + '"' + (fix ? ' data-ndzcover="' + i + '"' : ' tabindex="0"') + ' data-tt="' + esc(tt) + '">⚠ Not covered</button>'; }).join(''); }
+// ---- Calmer note builder pages (Oct 22, your pick "B + A" of notes/Builder pages mockups - Oct 22) ----
+// A page with 3 or more sets of the same kind (soak sets, orb sets) is a grid: players down the side, sets across the top, a dot
+// to put someone in or take them out, the ones in every set on top. Other pages are tidy rows: one line a group, the players in
+// every group said once in an "Every set" strip, a small + to add. A reason said word for word on every row is said once in the
+// Why these picks box (folded into the page's intro card); each player's own reason (Ice Cold, off-tank) sits by their name.
+const ndzBKey = (pg, sl) => pg.key + '|' + sl.label;
+const ndzBGrid = (pg) => pg.slots.length >= 3 && !pg.exclusive && !pg.slots.some((sl) => sl.order) && /* (only sets of one kind: "Orb Soak 1, 2, 3…", not different jobs) */
+  ((m) => m.every((x) => x && x[1] === m[0][1]))(pg.slots.map((sl) => /^(.*?)\s*(\d+)$/.exec(sl.label)));
+function ndzBCore(B, pg) { if (pg.slots.length < 2 || pg.exclusive || pg.slots.some((sl) => sl.order)) return [];
+  const ls = pg.slots.map((sl) => B.sel[ndzBKey(pg, sl)].n); return ls[0].filter((n) => ls.every((l) => l.includes(n))); }
+// (each player's own reason from the suggestion text: "Boltzzx (Ice Cold)" -> Ice Cold)
+function ndzBTags(B, pg, names) { const tg = new Map(), keep = (B.ntag = B.ntag || {}); /* (kept once seen: adding someone by hand clears the row's suggestion text, not the tags) */
+  for (const sl of pg.slots) for (const m of String(B.sel[ndzBKey(pg, sl)].why || '').matchAll(/([^\s(),:;]+) \(([^()]{1,40})\)/g)) if (names.has(m[1]) && !tg.has(m[1])) tg.set(m[1], m[2].replace(/^the /, ''));
+  for (const [n, t] of tg) keep[pg.key + '|' + n] = t;
+  for (const n of names) if (!tg.has(n) && keep[pg.key + '|' + n]) tg.set(n, keep[pg.key + '|' + n]);
+  return tg; }
+// (the rows' reasons: the same on every row once names are taken out -> said once; else each row keeps its own)
+function ndzBWhys(B, pg, names) { const ws = pg.slots.map((sl) => String(B.sel[ndzBKey(pg, sl)].why || ''));
+  const norm = (t) => { let s = t.replace(/\s*\([^()]*\)/g, ''); for (const n of names) s = s.split(n).join('@'); return s.replace(/\s+/g, ' ').trim(); }, ns = ws.map(norm);
+  const same = pg.slots.length > 1 && ns.every((x) => x && x === ns[0]);
+  return { same, ws, shared: same ? ns[0].split(/(?<=[.!])\s+/).filter((x) => x && !x.includes('@')) : [] }; }
+const ndzBPgNames = (B) => new Set([...B.pr.players.values()].map((p) => p.name));
+function ndzBSharedH(B, pg) { const w = ndzBWhys(B, pg, ndzBPgNames(B)); return w.shared.length ? '<p>' + esc(w.shared.join(' ')) + '</p>' : ''; }
+const ndzBPlus = (attr, ps, skip, lab) => '<select class="ndz-eadd ndz-bplus" ' + attr + ' aria-label="' + esc(lab) + '" title="' + esc(lab) + '"><option value="">+</option>' +
+  ps.filter((p) => !skip.includes(p.name)).map((p) => '<option value="' + esc(p.name) + '" style="color:' + ndzOptCol(p) + '">' + esc(p.name) + ' (' + esc(p.specName || p.role) + ')</option>').join('') + '</select>';
+const ndzBCnt = (sl, cnt) => { const short = sl.want && (cnt < (sl.approx ? sl.want - 1 : sl.want) || cnt > (sl.approx ? sl.want + 1 : sl.want)); return '<span class="ndz-bcnt' + (short ? ' short' : '') + '">' + cnt + (sl.want ? '<span class="of">' + (sl.approx ? ' · about ' + sl.want : ' of ' + sl.want) + '</span>' : '') + '</span>'; };
+// (a row's reason without the names its chips already tag: "Hold them back: Tdyipce (Binding Shot), Chaztank (Chains of Ice)." -> "Hold them back.")
+function ndzBTrim(t, tags) { let s = String(t).replace(/([^\s(),:;]+) \(([^()]{1,40})\)(,? and |, |)/g, (m, n) => (tags.has(n) ? '' : m));
+  s = s.replace(/[:,]\s*([.!])/g, '$1').replace(/[:,]\s*$/, '.').replace(/\s+([.,])/g, '$1').replace(/\s{2,}/g, ' ').trim(); return /[A-Za-z]{3}/.test(s) ? s : ''; }
+function ndzBSlotsH(B, pg, ps, col) {
+  const names = ndzBPgNames(B), tags = ndzBTags(B, pg, names), whys = ndzBWhys(B, pg, names), core = ndzBCore(B, pg);
+  const tagH = (n) => (tags.has(n) ? '<small>' + esc(tags.get(n)) + '</small>' : '');
+  const pre = (() => { const m = pg.slots.map((sl) => /^(.*?)\s*(\d+)$/.exec(sl.label)); return m.every((x) => x && x[1] === m[0][1]) ? m[0][1] : null; })();
+  if (ndzBGrid(pg)) {
+    const seen = [], add = (n) => { if (!seen.includes(n)) seen.push(n); };
+    core.forEach(add); for (const sl of pg.slots) B.sel[ndzBKey(pg, sl)].n.forEach(add); ((B.gx || {})[pg.key] || []).forEach(add);
+    const turn = seen.filter((n) => !core.includes(n));
+    const cell = (n, sl) => { const k = ndzBKey(pg, sl), on = B.sel[k].n.includes(n); return '<td><button type="button" class="ndz-bgd' + (on ? ' on' : '') + '" data-bgt="' + esc(k + '|' + n) + '" aria-pressed="' + on + '" aria-label="' + esc(n + ' in ' + sl.label) + '"></button></td>'; };
+    const row = (n) => '<tr' + (core.includes(n) ? ' class="core"' : '') + '><td class="pl"><span class="nm" style="color:' + col(n) + '">' + esc(n) + '</span>' + tagH(n) + '</td>' + pg.slots.map((sl) => cell(n, sl)).join('') + '</tr>';
+    const grp = (t) => '<tr class="grp"><td colspan="' + (pg.slots.length + 1) + '">' + t + '</td></tr>';
+    const th = (sl, i) => { const tip = !whys.same && whys.ws[i] ? ' data-tt="' + esc('<b>' + esc(sl.label) + '</b><br>' + esc(whys.ws[i].charAt(0).toUpperCase() + whys.ws[i].slice(1))) + '" tabindex="0" class="tip"' : ''; return '<th' + tip + '>' + esc(pre != null ? /(\d+)$/.exec(sl.label)[1] : sl.label) + '</th>'; };
+    return '<div class="ndz-bgw"><table class="ndz-bgt"><thead><tr><th class="pl">' + esc(pre || '') + '</th>' + pg.slots.map(th).join('') + '</tr></thead><tbody>' +
+      (core.length ? grp('Every set') + core.map(row).join('') + (turn.length ? grp('Taking turns') : '') : '') + turn.map(row).join('') +
+      (seen.length ? '' : '<tr><td class="pl sub" colspan="' + (pg.slots.length + 1) + '">Nobody yet: add players below, or press Fill in suggested picks.</td></tr>') +
+      '<tr class="addr"><td class="pl" colspan="' + (pg.slots.length + 1) + '"><select class="ndz-eadd" data-bgadd="' + esc(pg.key) + '" aria-label="Add a player"><option value="">+ Add a player</option>' +
+        ps.filter((p) => !seen.includes(p.name)).map((p) => '<option value="' + esc(p.name) + '" style="color:' + ndzOptCol(p) + '">' + esc(p.name) + ' (' + esc(p.specName || p.role) + ')</option>').join('') + '</select></td></tr>' +
+      '</tbody><tfoot><tr><td class="pl">In the set</td>' + pg.slots.map((sl) => '<td>' + ndzBCnt(sl, B.sel[ndzBKey(pg, sl)].n.length) + '</td>').join('') + '</tr></tfoot></table></div>' +
+      (!whys.same && whys.ws.some(Boolean) ? '<p class="sub ndz-bgnote">Hover a set number to see why it\'s picked that way.</p>' : ''); }
+  // (A: tidy rows)
+  const inPage = new Map(); for (const sl of pg.slots) for (const n of B.sel[ndzBKey(pg, sl)].n) inPage.set(n, (inPage.get(n) || 0) + 1);
+  const chip = (n, x, k, i, sl) => '<span class="ndz-p' + (pg.exclusive && inPage.get(n) > 1 ? ' warn' : '') + '">' + (sl && sl.order ? '<i>' + (i + 1) + '</i>' : '') + '<span class="nm" style="color:' + col(n) + '">' + esc(n) + '</span>' + tagH(n) +
+    (sl && sl.order && i ? '<button class="ndz-ex" type="button" data-bup="' + esc(k + '|' + i) + '" aria-label="Move up">↑</button>' : '') + '<button class="ndz-ex" type="button" ' + x + ' aria-label="Remove ' + esc(n) + '">×</button></span>';
+  const strip = core.length ? '<div class="ndz-bcore"><span class="lab">Every ' + esc(pre ? pre.toLowerCase() : 'group') + '</span>' + core.map((n) => chip(n, 'data-bcx="' + esc(pg.key + '|' + n) + '"', '', 0, null)).join('') +
+    ndzBPlus('data-bcadd="' + esc(pg.key) + '"', ps, core, 'Add someone to every group') + '</div>' : '';
+  return strip + '<div class="ndz-brows">' + pg.slots.map((sl, si) => { const k = ndzBKey(pg, sl), v = B.sel[k];
+    return '<div class="ndz-brow"><span class="lab"><b>' + esc(sl.label) + '</b>' + (sl.order ? '<small>in kick order</small>' : '') + '</span><span class="cl">' +
+      v.n.map((n, i) => (core.includes(n) ? '' : chip(n, 'data-bx="' + esc(k + '|' + i) + '"', k, i, sl))).join('') + ndzBPlus('data-badd="' + esc(k) + '"', ps, v.n, 'Add a player to ' + sl.label) + '</span>' + ndzBCnt(sl, v.n.length) +
+      ((wt) => (!whys.same && (wt || v.src) ? '<div class="ndz-bwhy">' + (v.src ? '<span class="ndz-bsg src">' + NDZ_SRC_TAG[v.src] + '</span>' : '') + esc(wt.charAt(0).toUpperCase() + wt.slice(1)) + '</div>' : ''))(v.why ? ndzBTrim(v.why, tags) : '') + '</div>'; }).join('') + '</div>'; }
+// (the grid's dots, its + Add a player, and the Every set strip's × and +)
+function ndzBGridBind(B, redraw) {
+  const pg = () => B.pages[B.step - 1];
+  $$('#assignBox [data-bgt]').forEach((b) => (b.onclick = () => { const p = b.dataset.bgt.split('|'), n = p.pop(), l = B.sel[p.join('|')].n, i = l.indexOf(n); if (i >= 0) l.splice(i, 1); else l.push(n); redraw(); }));
+  $$('#assignBox [data-bgadd]').forEach((s) => (s.onchange = () => { if (!s.value) return; B.gx = B.gx || {}; (B.gx[s.dataset.bgadd] = B.gx[s.dataset.bgadd] || []).push(s.value); redraw(); }));
+  $$('#assignBox [data-bcx]').forEach((b) => (b.onclick = () => { const n = b.dataset.bcx.split('|').pop(); for (const sl of pg().slots) { const l = B.sel[ndzBKey(pg(), sl)].n, i = l.indexOf(n); if (i >= 0) l.splice(i, 1); } redraw(); }));
+  $$('#assignBox [data-bcadd]').forEach((s) => (s.onchange = () => { if (!s.value) return; for (const sl of pg().slots) { const l = B.sel[ndzBKey(pg(), sl)].n; if (!l.includes(s.value)) l.push(s.value); } redraw(); }));
+  $$('#assignBox .ndz-bwhyd').forEach((d) => (d.ontoggle = () => { S.ndzWhyOpen = d.open; }));
+}
 // ---- Draft a note from your pulls (TEST, Oct 20: on the local copy only, not the live site, until you say) ----
 // Reads every pull of this boss and difficulty in the log and writes an NSRT note of who did which job (kick orders, soak
 // groups, orb carriers, CC order, curses, raid cooldowns). A job done in most pulls is the assignment; a one-off is a mistake
