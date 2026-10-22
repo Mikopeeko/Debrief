@@ -1649,6 +1649,7 @@ const PATCH_NOTES = [
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
+    'Debrief in game: the PC app now updates itself while it runs, about once an hour and never during a pull, and puts the new addon into WoW. Your addon then tells you in chat to type /reload. Raiders without the app are told when a newer Debrief is out.',
     'Debrief in game: the combat log and Advanced Combat Logging stay on whenever the addon is loaded, everywhere, not just in raids. /debrief log turns it off.',
     'Debrief Companion is a real Windows app now: its own window with the gold shield in the taskbar and Start menu (search "Debrief"), it opens in front every time, and closing it keeps it reading your pulls from the tray by the clock. Your copy switches over by itself the next time it starts.',
     'The front page is new: an example pull next to the headline, big boss cards you can swipe through, a night from first wipe to the kill, and the Discord easier to find.',

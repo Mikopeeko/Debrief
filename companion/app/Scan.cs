@@ -6,8 +6,19 @@ namespace Debrief {
   public static class DbfScan {
     static string Esc(string s) { var b = new StringBuilder(s.Length + 8); foreach (char c in s) { if (c == '"' || c == '\\') { b.Append('\\'); b.Append(c); } else if (c < 32) b.Append(' '); else b.Append(c); } return b.ToString(); }
     // (training dummies: hits on anything named "...Dummy" make a practice pull, closed after 8 quiet seconds; WoW starts no encounter for them)
-    class Dummy { public bool open; public long startOff, lastEnd; public int startMs, lastMs; public string startTs, lastTs; public Dictionary<string, string> ci = new Dictionary<string, string>(); }
+    class Dummy { public bool open, enc; public DateTime seen, ended; public long startOff, lastEnd; public int startMs, lastMs; public string startTs, lastTs; public Dictionary<string, string> ci = new Dictionary<string, string>(); }
     static readonly Dictionary<string, Dummy> dummies = new Dictionary<string, Dummy>();
+    // (a boss pull or a practice pull is open in a log read in the last half hour: the hourly update waits until it's over)
+    public static bool Busy() {
+      // (and for a few minutes after one ends, while its recap is read and copied)
+      lock (dummies) {
+        foreach (var d in dummies.Values) {
+          if ((d.open || d.enc) && (DateTime.UtcNow - d.seen).TotalMinutes < 30) return true;
+          if ((DateTime.UtcNow - d.ended).TotalMinutes < 3) return true;
+        }
+      }
+      return false;
+    }
     static int Tod(byte[] h, int n) {
       int sp = -1; for (int i = 0; i < n && i < 20; i++) if (h[i] == 32) { sp = i; break; }
       if (sp < 0 || sp + 12 >= n) return -1;
@@ -24,7 +35,7 @@ namespace Debrief {
       sb.Append("{\"o\":").Append(o).Append(",\"e\":").Append(e).Append(",\"t\":\"").Append(Esc(t)).Append("\"}");
     }
     static void Close(Dummy d, StringBuilder sb, ref bool first) {
-      d.open = false;
+      d.open = false; d.ended = DateTime.UtcNow;
       int dur = d.lastMs - d.startMs; if (dur < 0) dur += 86400000;
       if (dur < 10000) return; // (a few stray hits aren't a practice pull)
       Item(sb, ref first, d.startOff, d.startOff, d.startTs + "  ENCOUNTER_START,990001,\"Training Dummy\",0,0,0");
@@ -33,7 +44,8 @@ namespace Debrief {
     public static string Scan(string path, long from) {
       var sb = new StringBuilder(); sb.Append("{\"items\":[");
       bool first = true; long done;
-      Dummy dm; if (!dummies.TryGetValue(path, out dm) || from == 0) { dm = new Dummy(); dummies[path] = dm; }
+      Dummy dm; lock (dummies) { if (!dummies.TryGetValue(path, out dm) || from == 0) { dm = new Dummy(); dummies[path] = dm; } }
+      dm.seen = DateTime.UtcNow;
       using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, 1 << 16)) {
         long len = fs.Length; if (from < 0 || from > len) from = 0; done = from;
         fs.Seek(from, SeekOrigin.Begin);
@@ -49,6 +61,7 @@ namespace Debrief {
                   if (head[k] == 32 && head[k + 1] == 32) { dbl = k; }
                   if (head[k] == 32 && head[k + 1] == 32 && head[k + 2] == 69 && head[k + 3] == 78 && head[k + 4] == 67 && head[k + 11] == 95) {
                     if (dm.open) Close(dm, sb, ref first);
+                    dm.enc = head[k + 12] == 83; if (!dm.enc) dm.ended = DateTime.UtcNow; // (ENCOUNTER_START opens a boss pull, ENCOUNTER_END closes it)
                     string t = Encoding.UTF8.GetString(head, 0, hn).TrimEnd('\r');
                     Item(sb, ref first, lineStart, abs + i + 1, t);
                     break;

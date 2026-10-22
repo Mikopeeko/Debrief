@@ -71,6 +71,7 @@ local function decode(code)
     elseif t == "R" then table.insert(m.raid.bad, { g(2), g(3), g(4), g(5) })
     elseif t == "D" then table.insert(m.raid.died, { g(2), g(3), g(4), g(5), g(6) })
     elseif t == "M" then table.insert(m.raid.mech, { g(2), g(3), g(4), g(5) }) -- (how each boss mechanic went)
+    elseif t == "V" then m.addonV = g(2) -- (the addon version the PC app that made this carries)
     elseif t == "X" then m.raid.more = g(2)
     elseif t == "Q" then m.raid.next = g(2)
     end
@@ -1026,6 +1027,17 @@ function Debrief_ToggleBig()
 end
 end
 
+-- ---------- a newer addon: the PC app put it in WoW (type /reload), or it's out (get it on the website) ----------
+local function vnum(v) local a, b, c = tostring(v or ""):match("^(%d+)%.?(%d*)%.?(%d*)"); return (tonumber(a) or 0) * 1e6 + (tonumber(b) or 0) * 1e3 + (tonumber(c) or 0) end
+local MY_V = (C_AddOns and C_AddOns.GetAddOnMetadata and C_AddOns.GetAddOnMetadata(ADDON, "Version")) or (GetAddOnMetadata and GetAddOnMetadata(ADDON, "Version")) or "0"
+local toldV
+local function checkNewer(m, mine)
+  if not m.addonV or m.addonV == "" or vnum(m.addonV) <= vnum(MY_V) or toldV == m.addonV then return end
+  toldV = m.addonV
+  if mine or DB.hasApp then say("|cff" .. COL.goodT .. "Debrief was updated to " .. m.addonV .. ".|r Type /reload when you're ready.")
+  else say("a newer Debrief (" .. m.addonV .. ") is out. Get it at debriefme.io/companion.") end
+end
+
 -- ---------- sharing with the raid: one person pastes, everyone with Debrief gets their card ----------
 local PREFIX = "DebriefR"
 if C_ChatInfo and C_ChatInfo.RegisterAddonMessagePrefix then C_ChatInfo.RegisterAddonMessagePrefix(PREFIX) end
@@ -1070,6 +1082,7 @@ local inbox = {}
 local function receive(code, from)
   local m = decode(code)
   if not m then return end
+  checkNewer(m, false)
   if addPull(m) then
     say("pull " .. m.h.pull .. " of " .. m.h.boss .. " is in, from " .. from .. ".")
     if DB.autoShow ~= false then showCard() else say("type /debrief to see it.") end
@@ -1098,6 +1111,7 @@ local function import(text)
   end
   local new = addPull(m)
   DB.pasted = true
+  checkNewer(m, true)
   -- (pressed before the PC app had the new pull ready: that's the last one again, so wait for the chime and try again)
   if not new and toast:IsShown() and not DB.testMode then toastSay("That's the last pull. Wait for the chime.", COL.warn); return true end
   paste:Hide(); if toast:IsShown() then closeToast() end

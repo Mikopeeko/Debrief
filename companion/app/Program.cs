@@ -45,6 +45,9 @@ namespace Debrief {
       // (the addon and start with Windows only, then stop: what the PowerShell app's -InstallOnly did)
       if (Has(args, "--install-only", "-InstallOnly")) { Setup.SetAutostart(Here); Log(Wow.InstallAddon(Here)); return; }
 
+      // (restarted by an update while running: wait for the old copy to close first, so this one becomes the app)
+      var waitArg = args.FirstOrDefault(a => a.StartsWith("--wait-pid=", StringComparison.OrdinalIgnoreCase)); int waitPid;
+      if (waitArg != null && int.TryParse(waitArg.Substring(11), out waitPid)) { try { Process.GetProcessById(waitPid).WaitForExit(20000); } catch { } }
       Updater.CleanOld(Here);
       bool first;
       var one = new Mutex(true, @"Local\DebriefCompanion-" + port, out first);
@@ -84,6 +87,25 @@ namespace Debrief {
         return;
       }
       new Thread(() => { while (showMe.WaitOne()) form.ShowInFront(); }) { IsBackground = true, Name = "show" }.Start();
+      // (updates while running, so nobody has to reopen the app: about once an hour, never during a boss or practice pull.
+      // The new files go in, the new addon goes into WoW, then this copy hands over to the new one, its window as it was)
+      new Thread(() => {
+        Thread.Sleep(TimeSpan.FromMinutes(10));
+        while (true) {
+          try {
+            if (Environment.GetEnvironmentVariable("DBF_NO_UPDATE") == null && !DbfScan.Busy() && Updater.Run(Here)) {
+              Log("updated while running: " + Wow.InstallAddon(Here));
+              var exe = Process.GetCurrentProcess().MainModule.FileName;
+              var show = false; try { show = (bool)form.Invoke(new Func<bool>(() => form.Visible)); } catch { }
+              var a = "--updated --wait-pid=" + Process.GetCurrentProcess().Id + (show ? "" : " --quiet");
+              Process.Start(new ProcessStartInfo(exe, a) { UseShellExecute = false, WorkingDirectory = Here });
+              try { form.BeginInvoke(new Action(form.QuitApp)); } catch { Environment.Exit(0); }
+              return;
+            }
+          } catch (Exception e) { Log("hourly update: " + e.Message); }
+          Thread.Sleep(TimeSpan.FromMinutes(60));
+        }
+      }) { IsBackground = true, Name = "updates" }.Start();
 
       if (install) {
         var ok = addon.Contains("installed in") || addon.Contains("Installed the");

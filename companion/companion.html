@@ -421,6 +421,7 @@ RECAP.encode = (m) => {
   for (const r of m.raid.mech || []) rec.push(['M', r[0], r[1] || '', r[2], r[3]]);
   if (m.raid.more) rec.push(['X', m.raid.more]);
   if (m.raid.next) rec.push(['Q', m.raid.next]);
+  if (RECAP.addonV) rec.push(['V', RECAP.addonV]); // (the addon version this app carries: an older addon then says /reload, or where to get the new one)
   rec.push(['Z']);
   return rec.map((r) => r.map(clean).join('~')).join('^');
 };
@@ -493,6 +494,7 @@ RECAP.renderPreview = renderPreview;
 // recap builder lives below (filled in from the engine's results)
 RECAP.build = (b, rep, same) => window.DBF_BUILD(b, rep, same, W, L);
 
+j('/app-version').then((x) => { RECAP.addonV = x.addon || ''; }).catch(() => {});
 stat('Loading Debrief…', 'busy');
 engineReady.then(() => loadLogs()).catch((e) => stat(e.message, 'err'));
 })();

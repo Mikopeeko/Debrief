@@ -117,7 +117,7 @@ namespace Debrief {
           SendJson(res, new Dictionary<string, object> { { "ok", ok } });
         }
         else if (get && path == "/addon") SendJson(res, new Dictionary<string, object> { { "msg", Wow.InstallAddon(here) } });
-        else if (get && path == "/app-version") SendJson(res, new Dictionary<string, object> { { "version", Program.Version } });
+        else if (get && path == "/app-version") SendJson(res, new Dictionary<string, object> { { "version", Program.Version }, { "addon", AddonVersion() } });
         else if (post && path == "/quit") { SendJson(res, new Dictionary<string, object> { { "ok", true } }); res.Close(); Quit?.Invoke(); }
         else if (post && path == "/folder") {
           if (!(req.ContentType ?? "").StartsWith("application/json")) throw new Exception("Expected JSON.");
@@ -138,6 +138,11 @@ namespace Debrief {
     }
 
     static long Num(string s) { long v; return long.TryParse(s, out v) ? v : 0; }
+    // (the addon version this app carries, from its own copy's .toc: it rides along in each recap so the addon knows it's out of date)
+    string AddonVersion() {
+      try { foreach (var line in File.ReadAllLines(Path.Combine(here, @"addon\Debrief\Debrief.toc"))) if (line.StartsWith("## Version:")) return line.Substring(11).Trim(); } catch { }
+      return "";
+    }
 
     static void Chime() {
       var media = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Media");
