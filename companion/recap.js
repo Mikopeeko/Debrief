@@ -86,7 +86,7 @@ function buildOne(b, rep, same, W, L, cutN) {
     const lastV = last != null ? H.get(last).get(p.name) : null;
     let best = null, bp = null; for (const n of prevPulls) { const x = H.get(n).get(p.name); if (x != null && (best == null || x > best)) { best = x; bp = n; } }
     const P = { name: p.name, cls: p.cls || '', spec: p.specName, role: p.role || 'dps', unit: p.role === 'healer' ? 'HPS' : 'DPS', v: kfmt(v),
-      d: lastV ? Math.round(100 * (v - lastV) / lastV) : null, vs: last != null ? last : '', best: best != null ? kfmt(best) : '', bp: bp != null ? bp : '', rank: rankIn(p), icon: p.specIcon || '', slips: [], boss: [], surv: [], next: '' };
+      d: lastV ? Math.round(100 * (v - lastV) / lastV) : null, vs: last != null ? last : '', best: best != null ? kfmt(best) : '', bp: bp != null ? bp : '', rank: rankIn(p), icon: p.specIcon || '', slips: [], boss: [], surv: [], tiles: [], next: '', next2: '' };
     // Rotation: the three checks that cost the most (the website's "focus"), or what went right
     let x = null; try { x = W.specRun(p.specName, [rep], p.name, true); } catch (e) { x = null; }
     const tips = [];
@@ -128,6 +128,15 @@ function buildOne(b, rep, same, W, L, cutN) {
       P.surv.push(['warn', hasStone ? 'inv_stone_04' : 'inv_alchemy_70_red', 'You dropped to ' + Math.round(c.low * 100) + '% at ' + mmss(c.tl) + ' and pressed nothing, with ' + kit + ' still ready.' + (missed.length > 1 ? ' It happened ' + (missed.length - 1) + ' more time' + (missed.length > 2 ? 's.' : '.') : '')]);
     }
     P.next = tips[0] || (P.slips.length && P.slips.every((s) => s[0] === 'ok') && !own.length ? 'Clean pull from you. Same again.' : '');
+    // (the Detailed card (the user's ask, Oct 21: a bigger card that fits more): a second tip, and three small number tiles:
+    // avoidable damage and your place, your kicks or dispels against the raid's, and your death)
+    P.next2 = tips.slice(1).find((x) => x && x !== P.next) || '';
+    const heal = p.role === 'healer', mineK = (heal ? p.dispels : p.interrupts) || 0, raidK = ps.reduce((a, q) => a + ((heal ? q.dispels : q.interrupts) || 0), 0);
+    const avRank = ps.filter((q) => (q.avoidable || 0) > avo).length + 1;
+    P.tiles = [
+      ['Avoidable damage', avo > 0 ? kfmt(avo) : '0', avo > 0 ? ord(avRank) + ' most of ' + ps.length : 'Nice dodging', avo > 0 && ps.length >= 6 && avRank <= 3 ? 'warn' : 'ok'],
+      [heal ? 'Dispels' : 'Interrupts', String(mineK), 'raid: ' + raidK, 'ok'],
+      dd ? ['Died at', mmss(dd.t), dd.ability || 'Unknown', 'bad'] : ['Deaths', 'None', b.kill ? 'Alive at the kill' : 'Alive at the end', 'ok']];
     players.push(P);
   }
   players.sort((a, c) => (a.role === c.role ? 0 : a.role === 'tank' ? -1 : c.role === 'tank' ? 1 : a.role === 'healer' ? -1 : 1) || a.name.localeCompare(c.name));

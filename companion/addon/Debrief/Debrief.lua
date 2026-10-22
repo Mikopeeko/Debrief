@@ -67,12 +67,14 @@ local function decode(code)
     if t == "H" then
       m.h = { boss = g(2), diff = g(3), pull = g(4), kill = g(5) == "1", pct = g(6), dur = g(7), where = g(8), deaths = g(9) }
     elseif t == "P" then
-      local p = { name = g(2), cls = g(3), spec = g(4), role = g(5), unit = g(6), v = g(7), d = tonumber(g(8)), vs = g(9), best = g(10), bp = g(11), rank = g(12), icon = g(13), slips = {}, boss = {}, surv = {}, next = "" }
+      local p = { name = g(2), cls = g(3), spec = g(4), role = g(5), unit = g(6), v = g(7), d = tonumber(g(8)), vs = g(9), best = g(10), bp = g(11), rank = g(12), icon = g(13), slips = {}, boss = {}, surv = {}, tiles = {}, next = "", next2 = "" }
       m.players[#m.players + 1] = p; by[p.name] = p
     elseif t == "S" and by[g(2)] then add(by[g(2)].slips, { g(3), g(4), g(5) })
     elseif t == "B" and by[g(2)] then add(by[g(2)].boss, { g(3), g(4), g(5) })
     elseif t == "U" and by[g(2)] then add(by[g(2)].surv, { g(3), g(4), g(5) }) -- (survival: defensives, Healthstone, potion)
     elseif t == "N" and by[g(2)] then local p = by[g(2)]; if K then p.nextK = p.nextK or {}; table.insert(p.nextK, { K, g(3) }) else p.next = g(3) end
+    elseif t == "T" and by[g(2)] then add(by[g(2)].tiles, { g(3), g(4), g(5), g(6) }) -- (the Detailed card's number tiles)
+    elseif t == "O" and by[g(2)] then local p = by[g(2)]; if K then p.next2K = p.next2K or {}; table.insert(p.next2K, { K, g(3) }) else p.next2 = g(3) end
     elseif t == "R" then add(m.raid.bad, { g(2), g(3), g(4), g(5) })
     elseif t == "D" then add(m.raid.died, { g(2), g(3), g(4), g(5), g(6) })
     elseif t == "M" then add(m.raid.mech, { g(2), g(3), g(4), g(5) }) -- (how each boss mechanic went)
@@ -203,7 +205,7 @@ eb:SetScript("OnEscapePressed", function() paste:Hide(); if toast:IsShown() then
 -- ---------- the card ----------
 local W, PAD, TOPY = 400, 14, 172
 local CW = W - PAD * 2
-local WIDTHS = { narrow = 360, normal = 400, wide = 480 }
+local WIDTHS = { narrow = 360, normal = 400, wide = 480, large = 560 }
 local card = CreateFrame("Frame", "DebriefCard", UIParent)
 card:SetSize(W, 300); card:SetPoint("CENTER", 260, 60); card:SetFrameStrata("HIGH"); card:SetClampedToScreen(true); card:Hide()
 skin(card, 8, COL.bg, 0.97, COL.line2, 1, true)
@@ -222,15 +224,18 @@ local logo = top:CreateTexture(nil, "ARTWORK"); logo:SetSize(20, 20); logo:SetPo
 local title = top:CreateFontString(nil, "OVERLAY"); setFont(title, "head", 17); title:SetPoint("LEFT", logo, "RIGHT", 7, 0); title:SetTextColor(rgb(COL.text)); title:SetText("Debrief")
 local bossT = top:CreateFontString(nil, "OVERLAY"); setFont(bossT, "body", 13); bossT:SetPoint("LEFT", title, "RIGHT", 9, -1); bossT:SetTextColor(rgb(COL.muted)); bossT:SetWidth(250); bossT:SetJustifyH("LEFT"); bossT:SetWordWrap(false)
 -- detail presets: one click sets how much the card shows (Simple / Medium / Heavy); any change by hand makes it Custom
-PRESET_NAME = { simple = "Simple", medium = "Medium", heavy = "Heavy" }
+PRESET_NAME = { simple = "Simple", medium = "Medium", heavy = "Heavy", detailed = "Detailed" }
 local PRESETS = {
   simple = { compact = true, maxSlips = 1, maxBoss = 1, maxRaid = 1, maxDied = 0, maxMech = 3, width = "normal", show = { rank = false, best = false } },
   medium = { compact = false, maxSlips = 3, maxBoss = 4, maxRaid = 3, maxDied = 3, maxMech = 6, width = "normal", show = {} },
   heavy = { compact = false, maxSlips = 5, maxBoss = 7, maxRaid = 5, maxDied = 6, maxMech = 12, width = "wide", show = {} },
+  -- (the default since Oct 21: a larger card with number tiles, the raid's side on your own view, and two next-pull tips)
+  detailed = { compact = false, maxSlips = 4, maxBoss = 5, maxRaid = 3, maxDied = 3, maxMech = 6, width = "large", detailed = true, show = {} },
 }
 function Debrief_SetPreset(key)
   local p = PRESETS[key]; if not p or not DB then return end
   DB.compact, DB.maxSlips, DB.maxBoss, DB.maxRaid, DB.maxDied, DB.maxMech, DB.width = p.compact, p.maxSlips, p.maxBoss, p.maxRaid, p.maxDied, p.maxMech, p.width
+  DB.detailed = p.detailed or nil
   DB.show = {}; for k, v in pairs(p.show) do DB.show[k] = v end
   DB.collapsed = nil; DB.preset = key
   if Debrief_RefreshOptions then Debrief_RefreshOptions() end
@@ -242,8 +247,8 @@ close:SetScript("OnClick", function() card:Hide() end)
 detailBtn = CreateFrame("Button", nil, card); detailBtn:SetSize(70, 22); detailBtn:SetPoint("RIGHT", close, "LEFT", -6, 0)
 skin(detailBtn, 5, COL.raised, 1, COL.line2, 1)
 detailBtn.t = detailBtn:CreateFontString(nil, "OVERLAY"); setFont(detailBtn.t, "bold", 11.5); detailBtn.t:SetPoint("CENTER", 0, 0); detailBtn.t:SetTextColor(rgb(COL.muted)); detailBtn.t:SetText("Medium")
-detailBtn:SetScript("OnClick", function() local order = { simple = "medium", medium = "heavy", heavy = "simple" }; Debrief_SetPreset(order[DB.preset] or "medium") end)
-detailBtn:SetScript("OnEnter", function() detailBtn.t:SetTextColor(rgb(COL.text)); GameTooltip:SetOwner(detailBtn, "ANCHOR_TOP"); GameTooltip:SetText("How much the card shows: Simple, Medium or Heavy"); GameTooltip:Show() end)
+detailBtn:SetScript("OnClick", function() local order = { simple = "medium", medium = "heavy", heavy = "detailed", detailed = "simple" }; Debrief_SetPreset(order[DB.preset] or "detailed") end)
+detailBtn:SetScript("OnEnter", function() detailBtn.t:SetTextColor(rgb(COL.text)); GameTooltip:SetOwner(detailBtn, "ANCHOR_TOP"); GameTooltip:SetText("How much the card shows: Simple, Medium, Heavy or Detailed"); GameTooltip:Show() end)
 detailBtn:SetScript("OnLeave", function() detailBtn.t:SetTextColor(rgb(COL.muted)); GameTooltip:Hide() end)
 -- (the Expand button: the big window, with tonight's pulls and charts)
 local bigBtn = CreateFrame("Button", nil, card); bigBtn:SetSize(64, 22); bigBtn:SetPoint("RIGHT", detailBtn, "LEFT", -6, 0)
@@ -295,7 +300,11 @@ for _, b in ipairs({ prevB, nextB }) do
 end
 prevB.t:SetText("<"); nextB.t:SetText(">")
 
-local body = CreateFrame("Frame", nil, card); body:SetPoint("TOPLEFT", PAD, -TOPY); body:SetWidth(CW); body:SetHeight(10)
+-- (the card's body scrolls with the mouse wheel when it's taller than the screen leaves room for (the Detailed card, Oct 21))
+local scroller = CreateFrame("ScrollFrame", nil, card); scroller:SetPoint("TOPLEFT", PAD, -TOPY); scroller:SetSize(CW, 10)
+local body = CreateFrame("Frame", nil, scroller); body:SetWidth(CW); body:SetHeight(10); scroller:SetScrollChild(body)
+scroller:EnableMouseWheel(true)
+scroller:SetScript("OnMouseWheel", function(self, d) local mx = math.max(0, (body:GetHeight() or 0) - (self:GetHeight() or 0)); self:SetVerticalScroll(math.min(mx, math.max(0, (self:GetVerticalScroll() or 0) - d * 48))) end)
 local foot = card:CreateFontString(nil, "OVERLAY"); setFont(foot, "body", 11.5); foot:SetTextColor(rgb(COL.faint)); foot:SetJustifyH("LEFT")
 foot:SetText("/debrief opens this again  ·  /debrief paste for a new pull")
 local footLine = card:CreateTexture(nil, "ARTWORK"); footLine:SetHeight(1); fill(footLine, COL.line)
@@ -464,6 +473,7 @@ local function cutView(m)
   for _, p in ipairs(m.players) do
     local q = {}; for k, x in pairs(p) do q[k] = x end
     q.slips, q.boss, q.surv, q.next = keep(p.slips), keep(p.boss), keep(p.surv), pick(p.next, p.nextK)
+    q.tiles, q.next2 = keep(p.tiles), pick(p.next2 or "", p.next2K)
     v.players[#v.players + 1] = q
   end
   return v
@@ -471,12 +481,12 @@ end
 
 local function showPull(i)
   if not DB.pulls[i] then return end
-  DB.cur = i; wipe(EXPANDED); render()
+  DB.cur = i; wipe(EXPANDED); scroller:SetVerticalScroll(0); render()
 end
 function render()
   local raw = DB.pulls[DB.cur]; local m = cutView(raw); CUR = m
   if not m then return end
-  W = WIDTHS[DB.width or "normal"] or 400; CW = W - PAD * 2; card:SetWidth(W); body:SetWidth(CW); bossT:SetWidth(W - 230)
+  W = WIDTHS[DB.width or "normal"] or 400; CW = W - PAD * 2; card:SetWidth(W); body:SetWidth(CW); scroller:SetWidth(CW); bossT:SetWidth(W - 230)
   if detailBtn then detailBtn.t:SetText(PRESET_NAME[DB.preset] or "Custom"); detailBtn:SetWidth(detailBtn.t:GetStringWidth() + 18) end
   for _, c in ipairs(chips) do c:SetShown(false) end
   local h = m.h
@@ -517,7 +527,7 @@ function render()
   tMe:ClearAllPoints(); tMe:SetPoint("TOPLEFT", card, "TOPLEFT", PAD - 10, -TOPY + 38); tRaid:ClearAllPoints(); tRaid:SetPoint("LEFT", tMe, "RIGHT", 0, 0)
   nextB:ClearAllPoints(); nextB:SetPoint("TOPRIGHT", card, "TOPRIGHT", -PAD, -TOPY + 36)
   tabLine:ClearAllPoints(); tabLine:SetPoint("TOPLEFT", card, "TOPLEFT", 1, -TOPY + 12); tabLine:SetPoint("TOPRIGHT", card, "TOPRIGHT", -1, -TOPY + 12)
-  body:ClearAllPoints(); body:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -TOPY)
+  scroller:ClearAllPoints(); scroller:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -TOPY)
   -- tabs
   local raidOk = canRaid()
   tRaid:SetShown(raidOk)
@@ -639,6 +649,20 @@ function render()
       end
       y = y + th + 16
     end
+    -- (the Detailed card: three small number tiles under yours: avoidable damage, kicks or dispels, your death)
+    if DB.detailed and not DB.compact and P.tiles and #P.tiles > 0 then
+      local n, gap, th2 = math.min(3, #P.tiles), 8, 58
+      local tw = math.floor((CW - gap * (n - 1)) / n)
+      for i = 1, n do
+        local tl, x = P.tiles[i], (i - 1) * (tw + gap)
+        local f = RT("BACKGROUND"); f:SetPoint("TOPLEFT", x, -y); f:SetSize(tw, th2); rounded(f, "fill", 5, COL.raised, DB.cardStyle == "glass" and 0.55 or 1)
+        local l = RT("BORDER"); l:SetPoint("TOPLEFT", f, "TOPLEFT"); l:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT"); rounded(l, "line", 5, COL.line, 1)
+        local a = FS("body", 12, COL.muted); a:SetPoint("TOPLEFT", x + 10, -(y + 8)); a:SetWidth(tw - 20); a:SetWordWrap(false); a:SetText(tl[1])
+        local v = FS("head", 20, tl[4] == "bad" and COL.badT or tl[4] == "warn" and COL.warn or COL.text); v:SetPoint("TOPLEFT", x + 10, -(y + 22)); v:SetWidth(tw - 20); v:SetWordWrap(false); v:SetText(tl[2])
+        local sb = FS("body", 11.5, COL.faint); sb:SetPoint("TOPLEFT", x + 10, -(y + 41)); sb:SetWidth(tw - 20); sb:SetWordWrap(false); sb:SetText(names(tl[3]))
+      end
+      y = y + th2 + 14
+    end
     if not DB.compact then
       local rot = function() section("rotation", "Rotation", onlyBad(P.slips), DB.maxSlips or 3, function(r) y = row(y, r[1], r[2], r[3]) end, #P.slips > 0 and "Nothing to fix here." or "No rotation checks for this spec yet.") end
       local bos = function() section("boss", "Boss mechanics", onlyBad(P.boss), DB.maxBoss or 2, function(r) y = row(y, r[1], r[2], r[3]) end, "No boss mistakes.") end
@@ -646,9 +670,14 @@ function render()
       if DB.bossFirst then bos(); rot() else rot(); bos() end
       -- (survival: your defensives, Healthstone and health potion)
       if P.surv and #P.surv > 0 and SH.surv ~= false then section("surv", "Survival", onlyBad(P.surv), 5, function(r) y = row(y, r[1], r[2], r[3]) end) end
+      -- (the Detailed card: the raid's side right here, so nobody has to switch to the Raid view)
+      if DB.detailed and not m.h.practice then
+        if #m.raid.bad > 0 then section("rbad", "The raid: top mistakes", m.raid.bad, DB.maxRaid or 3, function(r) y = row(y, r[1], r[2], r[4], r[3]) end) end
+        if m.raid.mech and #m.raid.mech > 0 and (DB.maxMech or 6) > 0 then section("rmech", "The raid: boss mechanics", m.raid.mech, DB.maxMech or 6, function(r) y = row(y, r[1], r[2], r[4], r[3]) end) end
+      end
     end
     if not (m.h.practice) then diedRow() end -- (the death filter here too: a dummy has no deaths)
-    if P.next ~= "" and SH.next ~= false then y = nextBox(y + 2, P.next) end
+    if P.next ~= "" and SH.next ~= false then y = nextBox(y + 2, (DB.detailed and (P.next2 or "") ~= "") and ("1. " .. P.next .. "\n2. " .. P.next2) or P.next) end
   else
     section("mistakes", h.kill and "What to clean up" or "Top mistakes", m.raid.bad, DB.compact and 1 or (DB.maxRaid or 3), function(r) y = row(y, r[1], r[2], r[4], r[3]) end, "Nothing big.")
     -- (how each boss mechanic went: done right, some mistakes, or failed; worst first)
@@ -659,9 +688,15 @@ function render()
     if m.raid.next ~= "" and SH.next ~= false then y = nextBox(y + 2, m.raid.next) end
   end
   body:SetHeight(math.max(10, y))
-  footLine:ClearAllPoints(); footLine:SetPoint("TOPLEFT", card, "TOPLEFT", 1, -(TOPY + y + 10)); footLine:SetPoint("TOPRIGHT", card, "TOPRIGHT", -1, -(TOPY + y + 10))
-  foot:ClearAllPoints(); foot:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -(TOPY + y + 19))
-  card:SetHeight(TOPY + y + 42)
+  -- (never taller than the screen: the rest scrolls, and the footer says so)
+  local room = math.max(320, ((UIParent and UIParent.GetHeight and UIParent:GetHeight()) or 768) / math.max(0.5, (card.GetScale and card:GetScale()) or 1) - 60)
+  local vh = math.max(10, math.min(y, room - TOPY - 42))
+  scroller:SetSize(CW, vh)
+  scroller:SetVerticalScroll(math.min((scroller:GetVerticalScroll() or 0), math.max(0, y - vh)))
+  foot:SetText(y > vh + 4 and "Scroll for more  ·  /debrief opens this again" or "/debrief opens this again  ·  /debrief paste for a new pull")
+  footLine:ClearAllPoints(); footLine:SetPoint("TOPLEFT", card, "TOPLEFT", 1, -(TOPY + vh + 10)); footLine:SetPoint("TOPRIGHT", card, "TOPRIGHT", -1, -(TOPY + vh + 10))
+  foot:ClearAllPoints(); foot:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -(TOPY + vh + 19))
+  card:SetHeight(TOPY + vh + 42)
 end
 
 -- ---------- keeping pulls, showing the card ----------
@@ -676,7 +711,7 @@ local function addPull(m, own)
   m.t = m.t or (time and time()) or 0
   DB.pulls[#DB.pulls + 1] = m
   while #DB.pulls > (DB.keep or 30) do table.remove(DB.pulls, 1) end
-  DB.cur = #DB.pulls; DB.who = nil; wipe(EXPANDED)
+  DB.cur = #DB.pulls; DB.who = nil; wipe(EXPANDED); scroller:SetVerticalScroll(0)
   return true
 end
 local pendingShow = false
@@ -1192,7 +1227,7 @@ eb:SetScript("OnEnterPressed", function(self) local t = self:GetText(); if t ~= 
 local opt
 local refreshers = {}
 local FONT_CHOICES = { { "debrief", "Debrief (website)" }, { "wow", "WoW default" }, { "arial", "Arial Narrow" }, { "morpheus", "Morpheus headings" } }
-local WIDTH_CHOICES = { { "narrow", "Narrow" }, { "normal", "Normal" }, { "wide", "Wide" } }
+local WIDTH_CHOICES = { { "narrow", "Narrow" }, { "normal", "Normal" }, { "wide", "Wide" }, { "large", "Large" } }
 local function applySettings()
   reapplyFonts()
   card:SetScale(DB.scale or 1); paste:SetScale(DB.scale or 1); big:SetScale(DB.bigScale or 1); mini:SetScale(DB.miniScale or 1)
@@ -1429,18 +1464,18 @@ local function buildOptions()
 
   -- Layout: three cards to click (the website's feature cards), then the fine-tune panel
   page("layout")
-  local CW3 = (OW - PX * 2 - 24) / 3
+  local CW3 = (OW - PX * 2 - 36) / 4
   local pcs = {}
-  local PDESC = { simple = "Your numbers, your top slip and the next pull. Quick to read between pulls.", medium = "Your numbers, 3 slips, your boss mistakes and the next pull. The everyday choice.", heavy = "Everything, on a wider card: 5 slips, 3 boss mistakes, 5 raid mistakes, 8 deaths." }
-  for i, k in ipairs({ "simple", "medium", "heavy" }) do
-    local b = CreateFrame("Button", nil, P); b:SetSize(CW3, 84); b:SetPoint("TOPLEFT", PX + (i - 1) * (CW3 + 12), 0)
+  local PDESC = { simple = "Your numbers, your top slip and the next pull.", medium = "Your numbers, 3 slips, your boss mistakes and the next pull.", heavy = "More of everything, on a wider card.", detailed = "The biggest card: number tiles, the raid's side and two tips." }
+  for i, k in ipairs({ "simple", "medium", "heavy", "detailed" }) do
+    local b = CreateFrame("Button", nil, P); b:SetSize(CW3, 92); b:SetPoint("TOPLEFT", PX + (i - 1) * (CW3 + 12), 0)
     skin(b, 8, PANEL, 1, COL.line, 1)
     b.bar = b:CreateTexture(nil, "ARTWORK"); b.bar:SetPoint("TOPLEFT", 1, -8); b.bar:SetPoint("BOTTOMLEFT", 1, 8); b.bar:SetWidth(3); fill(b.bar, COL.gold)
     b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "head", 18); b.t:SetPoint("TOPLEFT", 16, -11); b.t:SetText(PRESET_NAME[k])
     b.d = b:CreateFontString(nil, "OVERLAY"); setFont(b.d, "body", 12.5); b.d:SetPoint("TOPLEFT", 16, -35); b.d:SetWidth(CW3 - 30); b.d:SetJustifyH("LEFT"); b.d:SetText(PDESC[k])
     b.lines = {}
-    for li = 1, ({ simple = 2, medium = 4, heavy = 6 })[k] do
-      local ln = b:CreateTexture(nil, "ARTWORK"); ln:SetSize(li == 1 and 30 or (li % 2 == 0 and 22 or 26), 3); ln:SetPoint("TOPRIGHT", -14, -(14 + (li - 1) * 6)); b.lines[li] = ln
+    for li = 1, ({ simple = 2, medium = 4, heavy = 6, detailed = 7 })[k] do
+      local ln = b:CreateTexture(nil, "ARTWORK"); ln:SetSize(li == 1 and 30 or (li % 2 == 0 and 22 or 26), 3); ln:SetPoint("TOPRIGHT", -14, -(14 + (li - 1) * (k == "detailed" and 5 or 6))); b.lines[li] = ln
     end
     b:SetScript("OnClick", function() Debrief_SetPreset(k); applySettings() end)
     b:SetScript("OnEnter", function() if DB.preset ~= k then rounded(b.lineT, "line", 8, COL.faint, 1) end end)
@@ -1456,7 +1491,7 @@ local function buildOptions()
       b.t:SetTextColor(rgb(COL.text)); b.d:SetTextColor(rgb(on and COL.soft or COL.faint))
     end
   end
-  y = 98
+  y = 106
   panel("Fine-tune", "changes your own mix", "INV_Misc_Gear_01")
   switch("Your damage or healing", "Against your last pull, your best and your place.", function() return S().tile ~= false end, function(v) S().tile = v end)
   stepper("Rotation tips", "Your biggest slips, worst first. 0 hides them.", 0, 5, function() return S().rotation == false and 0 or (DB.maxSlips or 3) end, function(v) S().rotation = v > 0; if v > 0 then DB.maxSlips = v end end)
@@ -1810,7 +1845,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     if DEBRIEF_HAS_APP then DB.hasApp = true end -- (Debrief Companion is on this PC: ask after every boss pull from the first one)
     if DB.raidAlways == nil then DB.raidAlways = true end
     DB.show = DB.show or {}
-    if DB.preset == nil and DB.maxSlips == nil and DB.compact == nil then DB.preset = "medium" end
+    if not DB.detailedDefault then DB.detailedDefault = true; if DB.preset == nil or DB.preset == "medium" then Debrief_SetPreset("detailed") end end -- (the Detailed card is the default since Oct 21)
     registerSettings()
     reapplyFonts(); card:SetScale(DB.scale or 1); paste:SetScale(DB.scale or 1); big:SetScale(DB.bigScale or 1); mini:SetScale(DB.miniScale or 1)
     Debrief_ApplyStyle()
