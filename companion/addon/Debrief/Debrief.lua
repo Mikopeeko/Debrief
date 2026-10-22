@@ -524,6 +524,7 @@ function render()
   local meta = { h.diff, "Pull " .. h.pull, h.dur }
   if h.where ~= "" then meta[#meta + 1] = h.where end
   meta[#meta + 1] = h.deaths .. (h.deaths == "1" and " death" or " deaths")
+  if DB.detailed and not DB.compact and view == "raid" and canRaid() and #(m.raid.tiles or {}) > 0 then meta = { h.diff, "Pull " .. h.pull } end
   metaT:SetWidth(CW); metaT:SetText(table.concat(meta, "   ·   "))
   -- (tabs and the body sit lower when the pull chips show)
   TOPY = ((DB.show or {}).chips ~= false) and 180 or 150
@@ -584,7 +585,7 @@ function render()
     local nd, show, cut = #m.raid.died, DB.maxDied or 3, cutIdx(raw)
     local y0 = y; IND = 12; y = y + 12
     local t = FS("head", 15, COL.text); t:SetPoint("TOPLEFT", IND, -y); t:SetText("Who died")
-    local c = FS("body", 12.5, COL.faint); c:SetPoint("BOTTOMLEFT", t, "BOTTOMRIGHT", 8, 1); c:SetText(h.deaths .. (h.deaths == "1" and " death" or " deaths"))
+    local c = FS("body", 12.5, COL.faint); c:SetPoint("BOTTOMLEFT", t, "BOTTOMRIGHT", 8, 1); c:SetText((DB.detailed and view == "raid" and #(m.raid.tiles or {}) > 0) and "" or (h.deaths .. (h.deaths == "1" and " death" or " deaths")))
     if raw.cutN then
       local function stepBtn(lbl, right, d)
         local bt = BTN(); bt:SetSize(22, 22); bt:SetPoint("TOPRIGHT", body, "TOPLEFT", right, -(y - 3))
@@ -635,7 +636,7 @@ function render()
       local f = RT("BACKGROUND"); f:SetPoint("TOPLEFT", x, -y0); f:SetSize(tw, th2); rounded(f, "fill", 5, COL.raised, DB.cardStyle == "glass" and 0.55 or 1)
       local l = RT("BORDER"); l:SetPoint("TOPLEFT", f, "TOPLEFT"); l:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT"); rounded(l, "line", 5, COL.line, 1)
       local a = FS("body", 12, COL.muted); a:SetPoint("TOPLEFT", x + 10, -(y0 + 8)); a:SetWidth(tw - 20); a:SetWordWrap(false); a:SetText(tl[1])
-      local v = FS("head", 20, tl[4] == "bad" and COL.badT or tl[4] == "warn" and COL.warn or COL.text); v:SetPoint("TOPLEFT", x + 10, -(y0 + 22)); v:SetWidth(tw - 20); v:SetWordWrap(false); v:SetText(tl[2])
+      local v = FS("head", #tostring(tl[2]) > 9 and 15 or 20, tl[4] == "bad" and COL.badT or tl[4] == "warn" and COL.warn or COL.text); v:SetPoint("TOPLEFT", x + 10, -(y0 + 22)); v:SetWidth(tw - 20); v:SetWordWrap(false); v:SetText(tl[2])
       local sb = FS("body", 11.5, COL.faint); sb:SetPoint("TOPLEFT", x + 10, -(y0 + 41)); sb:SetWidth(tw - 20); sb:SetWordWrap(false); sb:SetText(names(tl[3]))
     end
     return y0 + th2 + 14
@@ -688,19 +689,21 @@ function render()
     if DB.detailed and not DB.compact and P.tiles and #P.tiles > 0 then y = tilesRow(y, P.tiles) end
     if not DB.compact then
       local rot = function() section("rotation", "Rotation", onlyBad(P.slips), DB.maxSlips or 3, function(r) y = row(y, r[1], r[2], r[3]) end, #P.slips > 0 and "Nothing to fix here." or "No rotation checks for this spec yet.") end
-      local bos = function() section("boss", "Boss mechanics", onlyBad(P.boss), DB.maxBoss or 2, function(r) y = row(y, r[1], r[2], r[3]) end, "No boss mistakes.") end
+      local bossL = P.boss
+      if DB.detailed and P.tiles and #P.tiles > 0 then bossL = {}; for _, r in ipairs(P.boss) do if not ({ ability_rogue_sprint = true, ability_kick = true, spell_holy_dispelmagic = true })[r[2]] then bossL[#bossL + 1] = r end end end
+      local bos = function() section("boss", "Boss mechanics", onlyBad(bossL), DB.maxBoss or 2, function(r) y = row(y, r[1], r[2], r[3]) end, "No boss mistakes.") end
       if m.h.practice and #P.boss == 0 then bos = function() end end -- (a training dummy has no boss mechanics)
       if DB.bossFirst then bos(); rot() else rot(); bos() end
       -- (survival: your defensives, Healthstone and health potion)
       if P.surv and #P.surv > 0 and SH.surv ~= false then section("surv", "Survival", onlyBad(P.surv), 5, function(r) y = row(y, r[1], r[2], r[3]) end) end
       -- (the Detailed card: the raid's side right here, so nobody has to switch to the Raid view)
-      if DB.detailed and not m.h.practice then
+      if DB.detailed and not m.h.practice and not raidOk then
         summary()
         if #m.raid.bad > 0 then section("rbad", "The raid: top mistakes", m.raid.bad, DB.maxRaid or 3, function(r) y = row(y, r[1], r[2], r[4], r[3]) end) end
         if m.raid.mech and #m.raid.mech > 0 and (DB.maxMech or 6) > 0 then section("rmech", "The raid: boss mechanics", m.raid.mech, DB.maxMech or 6, function(r) y = row(y, r[1], r[2], r[4], r[3]) end) end
       end
     end
-    if not (m.h.practice) then diedRow() end -- (the death filter here too: a dummy has no deaths)
+    if not m.h.practice and not (DB.detailed and raidOk) then diedRow() end -- (the death filter here too: a dummy has no deaths)
     if P.next ~= "" and SH.next ~= false then y = nextBox(y + 2, (DB.detailed and (P.next2 or "") ~= "") and ("1. " .. P.next .. "\n2. " .. P.next2) or P.next) end
   else
     if DB.detailed and not DB.compact and m.raid.tiles and #m.raid.tiles > 0 then y = tilesRow(y, m.raid.tiles) end

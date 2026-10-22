@@ -139,8 +139,7 @@ function buildOne(b, rep, same, W, L, cutN) {
     const avRank = ps.filter((q) => (q.avoidable || 0) > avo).length + 1;
     P.tiles = [
       ['Avoidable damage', avo > 0 ? kfmt(avo) : '0', avo > 0 ? ord(avRank) + ' most of ' + ps.length : 'Nice dodging', avo > 0 && ps.length >= 6 && avRank <= 3 ? 'warn' : 'ok'],
-      [heal ? 'Dispels' : 'Interrupts', String(mineK), 'raid: ' + raidK, 'ok'],
-      dd ? ['Died at', mmss(dd.t), dd.ability || 'Unknown', 'bad'] : ['Deaths', 'None', b.kill ? 'Alive at the kill' : 'Alive at the end', 'ok']];
+      [heal ? 'Dispels' : 'Interrupts', String(mineK), 'raid: ' + raidK, 'ok']];
     players.push(P);
   }
   players.sort((a, c) => (a.role === c.role ? 0 : a.role === 'tank' ? -1 : c.role === 'tank' ? 1 : a.role === 'healer' ? -1 : 1) || a.name.localeCompare(c.name));
@@ -204,7 +203,8 @@ function buildOne(b, rep, same, W, L, cutN) {
       const rows = sec.rows || [], gs0 = sec.groups || [];
       if (sec.id === 'avoid') {
         // (avoidable damage: each source that hurt, how many hits on how many players, and who took the most)
-        for (const g of gs0.filter((x) => x.bad || x.warn).slice(0, 3)) {
+        const inTop = new Set(raid.bad.map((x) => String(x[2]).toLowerCase())), base = (t) => plain(t).replace(/\s*\(.*\)$/, '').toLowerCase();
+        for (const g of gs0.filter((x) => (x.bad || x.warn) && !inTop.has(base(x.title))).slice(0, 3)) {
           const nums = (plain(g.sub || '').match(/\d+ hits? on \d+ players?/) || [''])[0], died = (g.rows || []).filter((r) => r.some((c) => c && c.bad && /died/i.test(cellTxt(c)))).length;
           const most = (g.rows || []).slice(0, 3).map((r) => cellTxt(r[0]) + ' ' + (cellTxt(r[1]).match(/\d+/) || [''])[0]).filter((x) => x.trim()).join(', ');
           raid.mech.push([g.bad ? 'bad' : 'warn', spellId(W, plain(g.title).replace(/\s*\(.*\)$/, '')), plain(g.title), shortTo((nums ? nums.replace(/^1 hits/, '1 hit') + (died ? ', ' + died + (died === 1 ? ' death' : ' deaths') : '') + '. ' : '') + (most ? 'Most: ' + most + '.' : ''), 210)]);
@@ -252,7 +252,7 @@ function buildOne(b, rep, same, W, L, cutN) {
     let dps = null; try { if (W.setCut) W.setCut(cutN); const A = W.dbfStats ? W.dbfStats(rep) : null; dps = A ? A.dps : null; } catch (e) { dps = null; }
     const first = allDeaths[0];
     raid.tiles = [
-      ['Result', b.kill ? 'Kill' : pr && pr.label ? String(pr.label).replace(/^P(\d)/, 'P$1') : pct !== '' ? pct + '%' : 'Wipe', h.dur + (b.kill ? ' · kill' : ' · wipe'), b.kill ? 'ok' : ''],
+      ['Result', b.kill ? 'Kill' : pr && pr.label ? String(pr.label).split(',')[0] /* (the first boss: "P3 · Zul'jan 44%"; The pull has the rest) */ : pct !== '' ? pct + '%' : 'Wipe', h.dur + (b.kill ? ' · kill' : ' · wipe'), b.kill ? 'ok' : ''],
       ['Deaths', String(allDeaths.length), first ? 'first at ' + mmss(first.t) + ' (' + first.player.split('-')[0] + ')' : 'nobody died', allDeaths.length ? 'bad' : 'ok'],
       ['Mechanics', okN + ' clean', slips + ' with mistakes · ' + fails + ' failed', fails ? 'bad' : slips ? 'warn' : 'ok'],
       ['Raid damage', dps ? kfmt(dps) : '—', 'a second', '']];
@@ -272,6 +272,8 @@ function buildOne(b, rep, same, W, L, cutN) {
       }
     } catch (e) { /* the summary is extra: the card works without it */ }
   }
+  // (the Next pull fix isn't said again at the end of a top mistake)
+  if (raid.next) raid.bad = raid.bad.map((x) => { const f = ' Fix: ' + raid.next; return String(x[3]).endsWith(f) ? [x[0], x[1], x[2], x[3].slice(0, -f.length)] : x; });
   return { h, players, raid };
 };
 })();
