@@ -1756,6 +1756,7 @@ const PATCH_NOTES = [
     'The bosses are in the same order everywhere on the site.',
     'Long patch notes fold after six lines.',
   ], f: [
+    'The front page says Season two (patch 12.1.5), not Season one, and the boss guides say they\'re updated for 12.1.5.',
     'Why we wiped no longer says "Not sure what happened" when one early death is followed by a raid mistake that kills many of you at once. Example: an unsoaked globule that killed 17. It names the mistake and gives its fix.',
     'A kill\'s coach says "Focus next week", not "Focus next pull".',
     'All pulls: the Deaths number, the Deaths line and the coach now count deaths the same way (they said 105 in one place and 119 in another).',
@@ -24123,7 +24124,7 @@ function homeHosted() {
       '<span class="fpx-dbl"><b>Debrief is in beta.</b> Join our Discord to get the patch notes first and tell us what to build next.</span><span class="fpx-dbs"><b>Debrief is in beta.</b> Help shape it.</span>' +
       '<a href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">Join the Discord ›</a></div><button type="button" id="fpxBarX" aria-label="Hide this">×</button></div>' : '') +
     '<section class="fpx-hero" id="fpStart" style="--fpx-art:' + art('The Coiled Altar') + '"><div class="fpx-in fpx-hg">' +
-      '<div class="fpx-copy"><span class="fpx-badge"><b>Beta</b>Season one · The Venomous Abyss</span>' +
+      '<div class="fpx-copy"><span class="fpx-badge"><b>Beta</b>Season two · all 10 raid bosses</span>' +
         '<h1>Every pull, <span>explained.</span></h1>' +
         '<p class="fpx-lead">Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
         '<div class="fpx-cta"><button class="btn primary gs-go" id="gsGo" type="button">' + (tg ? 'Welcome Back!' : 'Start now') + '</button>' + demoBtn('fpDemo') +

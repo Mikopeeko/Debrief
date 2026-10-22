@@ -476,7 +476,7 @@ const QA_FAQ = [
   { re: /\b(phone|mobile|tablet|ipad|iphone|android)\b/i, a: 'Yes, every page works on a phone. It\'s laid out for a big screen first, so the maps and charts are easiest to read on a PC.' },
   { re: /\b(free|cost|price|pay|subscription)\b/i, a: 'Debrief is free to use while it\'s in beta.' },
   { re: /\b(which|what) (boss|bosses|raid)\b|\b(heroic|normal|lfr)\b/i,
-    a: 'Every boss of The Venomous Abyss and Kith\'ix. It\'s built for Mythic. Heroic and Normal pulls work too, though a few checks are Mythic only.' },
+    a: 'All 10 raid bosses of Midnight Season 2: The Venomous Abyss, Nymrissa Wavecaller and Kith\'ix. It\'s built for Mythic. Heroic and Normal pulls work too, though a few checks are Mythic only.' },
 ];
 const faqAnswer = (s) => { const hits = QA_FAQ.filter((f) => f.re.test(s)); return hits.length === 1 ? hits[0].a : null; }; // (only one clear match; two or more go to Claude)
 const QA_SIGN = '\n\n-# Claudette, the Debrief helper bot. Was this right? React ✅ or ❌. If not, someone from the team will follow up.';
@@ -484,7 +484,7 @@ function qaKnowledge() {
   const cut = (a, b) => { const i = APP_HTML.indexOf(a); if (i < 0) return ''; const j = APP_HTML.indexOf(b, i); return APP_HTML.slice(i, j < 0 ? i + 30000 : j + b.length); };
   return 'You are Claudette, the helper bot in the Debrief Discord. Debrief is a free website (' + SITE + ') that reads World of Warcraft raid logs ' +
     '(a Warcraft Logs link or your own combat log) and explains every pull: mechanics, deaths, NSRT note assignments, each player\'s rotation, graphs and a report card. ' +
-    'It is built for Mythic raid progression in The Venomous Abyss (patch 12.1) and is in beta.\n\n' +
+    'It is built for Mythic raid progression in Midnight Season 2 (patch 12.1.5): The Venomous Abyss, The Tidebound Grotto (Nymrissa Wavecaller) and The Unbinding of Kith\'ix, all 10 bosses. It is in beta.\n\n' +
     'Answer the question in the #questions forum post below, using ONLY the facts in this message. Rules:\n' +
     '- Plain, short, friendly sentences for raiders, at most about 120 words. No code words. Bold the buttons and tabs to press.\n' +
     '- Never mention other websites or guides by name (no Wowhead, Icy Veins, Raidbots, SimulationCraft, WoWAnalyzer); Warcraft Logs is fine.\n' +

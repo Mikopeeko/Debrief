@@ -14879,6 +14879,7 @@ const PATCH_NOTES = [
     'The bosses are in the same order everywhere on the site.',
     'Long patch notes fold after six lines.',
   ], f: [
+    'The front page says Season two (patch 12.1.5), not Season one, and the boss guides say they\'re updated for 12.1.5.',
     'Why we wiped no longer says "Not sure what happened" when one early death is followed by a raid mistake that kills many of you at once. Example: an unsoaked globule that killed 17. It names the mistake and gives its fix.',
     'A kill\'s coach says "Focus next week", not "Focus next pull".',
     'All pulls: the Deaths number, the Deaths line and the coach now count deaths the same way (they said 105 in one place and 119 in another).',
@@ -37246,7 +37247,7 @@ function homeHosted() {
       '<span class="fpx-dbl"><b>Debrief is in beta.</b> Join our Discord to get the patch notes first and tell us what to build next.</span><span class="fpx-dbs"><b>Debrief is in beta.</b> Help shape it.</span>' +
       '<a href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">Join the Discord ›</a></div><button type="button" id="fpxBarX" aria-label="Hide this">×</button></div>' : '') +
     '<section class="fpx-hero" id="fpStart" style="--fpx-art:' + art('The Coiled Altar') + '"><div class="fpx-in fpx-hg">' +
-      '<div class="fpx-copy"><span class="fpx-badge"><b>Beta</b>Season one · The Venomous Abyss</span>' +
+      '<div class="fpx-copy"><span class="fpx-badge"><b>Beta</b>Season two · all 10 raid bosses</span>' +
         '<h1>Every pull, <span>explained.</span></h1>' +
         '<p class="fpx-lead">Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
         '<div class="fpx-cta"><button class="btn primary gs-go" id="gsGo" type="button">' + (tg ? 'Welcome Back!' : 'Start now') + '</button>' + demoBtn('fpDemo') +
@@ -39399,7 +39400,7 @@ const GDZ_CA_FAIL = {
       k.step(0.3).step(2.4).step(6.4); return k.done({ title: 'Mistake: a purple left behind', focus: { x: -4, y: 4, r: 20 }, badLabel: 'dead' }); } },
 };
 GDZ['The Coiled Altar'] = {
-  upd: ['12.1', 'Oct 20, 2026'], // (when this guide was last checked against the game and real kills)
+  upd: ['12.1.5', 'Oct 20, 2026'], // (when this guide was last checked against the game and real kills)
   // (who each step is for, set by hand: '' everyone, t tanks, h healers, d DPS; the step lists of Heroic and Mythic by their names)
   stepRoles: {
     'Toxic Deluge (Carry orbs to the front)': ['', '', 'd', 't', ''], 'Toxic Deluge (Two triangles, purples at the tip)': ['dt', 'dh', 'd', 't', 'td', 't'],
@@ -40054,7 +40055,7 @@ const UX_SIM_H = [
 const UX_DUR = { 'm:wrath3': 8, 'm:eggs': 43, 'm:wretch': 66, 'm:wrath': 8, 'm:coils': 8, 'm:waves': 21, 'm:thrash': 6, 'm:heart': 26, 'm:warden': 22, 'm:fangs': 15, 'm:doomscales': 49, 'm:heart2': 26, 'm:intcoils': 56, 'm:clutches': 14, 'm:bite': 20, 'm:prey': 11, 'b:start': 2, 'b:dive': 9, 'b:kill': 0 };
 const UX_SEV = { 'm:wrath3': 1, 'm:eggs': 3, 'm:wretch': 2, 'm:wrath': 1, 'm:coils': 2, 'm:waves': 3, 'm:thrash': 1, 'm:heart': 2, 'm:warden': 2, 'm:fangs': 3, 'm:doomscales': 3, 'm:heart2': 2, 'm:intcoils': 3, 'm:clutches': 3, 'm:bite': 3, 'm:prey': 2, 'b:start': 1, 'b:dive': 2, 'b:kill': 1 };
 GDZ['Ula\'tek'] = {
-  upd: ['12.1', 'Oct 21, 2026'],
+  upd: ['12.1.5', 'Oct 21, 2026'],
   stepRoles: {
     'Call of the Serpent (Break, carry, spread)': ['', 'd', 'd', 'd'], 'Blightscale Wretch (Soak its venom, then the bubble)': ['', 't', '', ''],
     'Mother\'s Wrath (Run back in)': ['t', 't', 't', 't'], 'Mephitic Thrash (Get 35 yards away)': ['', '', ''], 'She dives (Watch the bubbles)': ['', '', 't'],
@@ -40596,7 +40597,7 @@ const SE_BEATS_H = { start: SE_BEATS.start, kill: { name: 'The kill (Burn them t
 const SE_DUR = { 'm:split': 6, 'm:swap': 6, 'm:coag': 14, 'm:drops': 8, 'm:miasma': 15, 'm:proto': 8, 'm:helix': 22, 'b:start': 4, 'b:swap': 3, 'm:blighted': 5, 'b:kill': 0 };
 const SE_SEV = { 'm:split': 2, 'm:swap': 2, 'm:coag': 2, 'm:drops': 3, 'm:miasma': 3, 'm:proto': 3, 'm:helix': 3, 'b:start': 1, 'b:swap': 1, 'm:blighted': 1, 'b:kill': 1 };
 GDZ['Entombed Sentinels'] = {
-  upd: ['12.1', 'Oct 21, 2026'],
+  upd: ['12.1.5', 'Oct 21, 2026'],
   stepRoles: {
     'Two bosses (Stay 40 yards apart)': ['', 't', ''], 'Venom Coagulation (Stack far, everyone burns it)': ['dh', 'dh', 'td', ''], 'Toxic Droplets (Tanks and immunities)': ['', 't', '', ''], 'Toxic Droplets (Tanks and the venom lines)': ['', 't', '', ''],
     'Unstable Miasma (8 or more soak, puddles on the wall)': ['', '', '', '', ''], 'Unstable Miasma (Soak together, puddles on the wall)': ['', '', '', '', ''], 'Shifting Protovenom (Circle to circle)': ['', '', '', '', ''], 'Helical Toxins (Make 4)': ['', '', '', ''], 'Tank swap (Taunt after every intermission)': ['', 't', 'dh', 't'],
@@ -40937,7 +40938,7 @@ const NZ_SIM = [
 const NZ_DUR = { 'm:ignite': 9, 'm:rend': 6, 'm:barrage': 8, 'm:depths': 20, 'm:amani': 20, 'm:echoes': 20, 'm:pyre': 8, 'm:invoke': 5, 'b:start': 2, 'b:int': 6, 'b:p2': 4, 'b:kill': 0 };
 const NZ_SEV = { 'm:ignite': 2, 'm:rend': 1, 'm:barrage': 2, 'm:depths': 3, 'm:amani': 3, 'm:echoes': 2, 'm:pyre': 3, 'm:invoke': 2, 'b:start': 1, 'b:int': 1, 'b:p2': 1, 'b:kill': 1 };
 GDZ['Nek\'zali the Soulcoiler'] = {
-  upd: ['12.1', 'Oct 21, 2026'],
+  upd: ['12.1.5', 'Oct 21, 2026'],
   stepRoles: {
     'Soulcoil Ignition (Heal through it, dodge the spirits)': ['', 'h', ''], 'Restless Amani (Break the shields, cleave them)': ['t', 'd', 'td', ''], 'Essence Rend (To the edge, then dispel)': ['', '', 'h', ''],
     'Possession Barrage (Tank runs, nobody in between)': ['t', '', ''], 'Grasping Depths (Hit squads take turns)': ['', '', 'd', ''], 'Echoes of Jawae (Tank it in the doorway)': ['', 't', '', 't'],
@@ -41336,7 +41337,7 @@ const VA_SIM_H = [
   { at: 410, mech: 'catalyst', label: 'Malignant Catalyst 10' }, { at: 423, mech: 'froth0', label: 'Plague Froth 11' }, { at: 427, beat: 'kill' },
 ];
 GDZ['Vashnik the Malignant'] = {
-  upd: ['12.1', 'Oct 21, 2026'],
+  upd: ['12.1.5', 'Oct 21, 2026'],
   stepRoles: {
     'Imbibe (Always Shadow and Flame)': ['t', 'h', ''], 'The venoms (Grip them in, kill the fire adds apart)': ['td', 'td', 'd', 'd'], 'Plague Froth (Walk out, aim away)': ['', '', '', ''], 'Plague Froth, first set (Mow the lawn)': ['', 'd', 'd', ''],
     'Plague Froth, second set (Clean up the last totems)': ['', '', ''], 'Malignant Catalyst (Someone in every bile)': ['', 'd', ''], 'Infections (Walk out, dispel a few at a time)': ['', 'h', '', 'h'], 'Dripping Fangs (Swap on every one)': ['t', '', 't'],
@@ -41643,7 +41644,7 @@ const SZ_SIM_H = [
 const SZ_DUR = { 'm:combo': 20, 'm:tempest': 30, 'm:fury': 6, 'm:surge': 11, 'm:crosswinds': 8, 'm:digin': 25, 'b:start': 5, 'b:toex': 8, 'b:end': 0 };
 const SZ_SEV = { 'm:combo': 3, 'm:tempest': 3, 'm:fury': 3, 'm:surge': 2, 'm:crosswinds': 2, 'm:digin': 3, 'b:start': 1, 'b:toex': 1, 'b:end': 1 };
 GDZ['Sszorak'] = {
-  upd: ['12.1', 'Oct 21, 2026'],
+  upd: ['12.1.5', 'Oct 21, 2026'],
   stepRoles: {
     'Apex Predator (Soaks take turns, Ravage at the edge)': ['d', 't', 't', 'd', ''], 'Tempest (Step off for the tornadoes)': ['', 'd', ''], "Serpent's Fury (14 in the circle, then spread)": ['', 'd', 'd', 'd'],
     'Venomous Surge (Cysts to the markers)': ['', 'd', 't', 'h'], 'Raging Crosswinds (Collide with a partner)': ['', 'd', 'd'], 'Dig In (Three winds, three cysts, then the exit)': ['', '', '', 'd', ''],
@@ -41990,7 +41991,7 @@ const TF_SIM_H = [
 const TF_DUR = { 'm:beams': 12, 'm:slams': 8, 'm:emergence': 12, 'm:brood': 10, 'm:ichor': 8, 'm:waves': 6, 'm:feast': 14, 'm:submerge': 24, 'b:start': 2, 'b:pace2': 2, 'b:pace3': 2, 'b:kill': 0 };
 const TF_SEV = { 'm:beams': 3, 'm:slams': 2, 'm:emergence': 3, 'm:brood': 3, 'm:ichor': 2, 'm:waves': 2, 'm:feast': 3, 'm:submerge': 3, 'b:start': 1, 'b:pace2': 1, 'b:pace3': 2, 'b:kill': 1 };
 GDZ['The Twin Fangs'] = {
-  upd: ['12.1', 'Oct 21, 2026'],
+  upd: ['12.1.5', 'Oct 21, 2026'],
   stepRoles: {
     'Caustic Deluge (Crowd control, then soak the globules)': ['', 't', 'd', 'd'], 'Caustic Deluge (Soak the globules)': ['', 't', '', 'd'], 'Stone Breaker (The tank takes each slam in order)': ['t', '', 't'], 'Venomous Emergence (Kill the Spawns before the second Spit)': ['', 'd', '', 'd'],
     'Rouse the Brood (A kick for every Broodling)': ['td', 't', 'td'], 'Coiling Ichor (Puddles packed at the edge)': ['', '', '', ''], 'Stir the Depths (Step into the gaps)': ['t', '', ''],
@@ -42412,7 +42413,7 @@ const NY_BEATS_H = { ...NY_BEATS, iceblade: { name: 'Iceblade Flurry (A defensiv
 const NY_DUR = { 'm:murlocs': 24, 'm:jet': 11, 'm:orbs': 19, 'm:whirl': 11, 'm:pop': 11, 'm:rain': 6, 'b:start': 3, 'b:rain': 6, 'b:iceblade': 9, 'b:burn': 4, 'b:kill': 0 };
 const NY_SEV = { 'm:murlocs': 3, 'm:jet': 2, 'm:orbs': 3, 'm:whirl': 3, 'm:pop': 2, 'm:rain': 2, 'b:start': 1, 'b:rain': 2, 'b:iceblade': 2, 'b:burn': 2, 'b:kill': 1 };
 GDZ['Nymrissa Wavecaller'] = {
-  upd: ['12.1', 'Oct 21, 2026'],
+  upd: ['12.1.5', 'Oct 21, 2026'],
   stepRoles: {
     'Alluring Bubble (Kill the murlocs before they reach it)': ['', 'td', 'd', 'd', 'd'], 'Alluring Bubble (Frostscale out, squads on the side packs)': ['t', 'd', 't', 'd', 't'],
     'Chilling Frost (Drop them at the edge, soak them all)': ['', '', '', 't'], 'Chilling Frost (Big steps, soak one at a time)': ['', '', '', '', 't'],
@@ -43209,7 +43210,7 @@ const LE_SIM = [
 const LE_DUR = { 'm:pair': 0, 'm:blink': 7, 'm:shell': 4, 'm:crates': 25, 'm:swap': 3, 'm:kicks': 2, 'm:fish': 15, 'm:bomb': 12, 'm:frostfire': 10, 'm:thud': 14, 'b:start': 2, 'm:eyes': 5, 'b:kill': 0 };
 const LE_SEV = { 'm:pair': 1, 'm:blink': 2, 'm:shell': 1, 'm:crates': 2, 'm:swap': 2, 'm:kicks': 1, 'm:fish': 3, 'm:bomb': 3, 'm:frostfire': 3, 'm:thud': 3, 'b:start': 1, 'm:eyes': 1, 'b:kill': 1 };
 GDZ['The Lost Explorers'] = {
-  upd: ['12.1', 'Oct 21, 2026'],
+  upd: ['12.1.5', 'Oct 21, 2026'],
   stepRoles: {
     'United Defense (Two together, one apart)': ['t', 'd', 't'], 'Crates (Break them in pairs)': ['', 'd', '', 'd'], 'Shell Spin (Take it outside)': ['d', 'd', ''], 'Blink Nova (Out in front)': ['d', '', ''],
     'Icebound Flames (Kick every one)': ['', 'td', 'h'], 'Shredding Shards (Swap at once)': ['t', 't', 't'], 'The fish (Feed it at 95 energy)': ['d', '', '', ''],
