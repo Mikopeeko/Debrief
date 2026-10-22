@@ -34913,6 +34913,10 @@ function rcbSide(c, F) {
 const rcwOr = (l) => (l.length < 2 ? l.join('') : l.slice(0, -1).join(', ') + ' or ' + l[l.length - 1]);
 function rcwNight(c, F) {
   const P = F.pulls, n = P.length, kill = P.find((q) => q.it.kill), wip = P.filter((q) => !q.it.kill), M = [...F.mech.values()];
+  // (a kill night is called like a raid lead would (Debriefing's killCall, Oct 22: "not very enthusiastic raid leading"), with the
+  // coach's #1 as the one thing to tidy, so the strip and the coach say the same thing)
+  if (kill && typeof killCall === 'function') { let kc = null; try { const cs = typeof coachSummary === 'function' ? coachSummary(F.reps, null) : null; kc = killCall(F.reps, cs && cs.wrong && cs.wrong[0]); } catch (e) { kc = null; }
+    if (kc && kc.text) return '<section class="rcw-strip"><span class="rcw-q">The night, in short</span><p>' + esc(kc.text) + '</p></section>'; }
   const best = wip.filter((q) => q.left != null).sort((u, v) => u.left - v.left)[0];
   const s = [kill ? '<b>We killed it on pull ' + kill.it.pull + '</b>' + (wip.length ? ', after ' + plural(wip.length, 'wipe') : '') + '.' : '<b>No kill yet</b> after ' + plural(n, 'pull') + (best ? '. Our best was pull ' + best.it.pull + ', at <b>' + esc(best.label) + '</b>.' : '.')];
   // (early against late: the first third of the night against the last, once there are 6 pulls)
