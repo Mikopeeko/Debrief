@@ -3891,6 +3891,11 @@ details.dbr-more[data-oa] > :not(summary) { margin-top: 12px; }
 /* coach logic round 2 (Oct 22) */ .cch-what { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; } .cch-no .cch-fx { display: block; color: var(--text); margin-top: 2px; } .cch-nx { color: var(--gold); font-weight: 600; }
 .cch-tag { display: inline-block; margin-left: 4px; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; background: rgba(255,255,255,.07); color: var(--muted); vertical-align: 1px; } .cch-tag.rep { background: rgba(229,83,75,.15); color: #ff8f87; } .cch-tag.up { background: rgba(95,211,95,.14); color: #8fe38f; }
 .cch-how { display: inline-block; margin-top: 3px; font-size: 13px; color: var(--gold); }
+/* a mechanic line's place among the fastest kills (Oct 22, a test): a small pill just left of the status */
+.kbrank { margin-left: auto; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; white-space: nowrap; background: rgba(255,255,255,.06); color: var(--muted); }
+.kbrank.hi { background: rgba(230,183,80,.14); color: var(--gold); } .kbrank.lo { color: #ff8f87; background: rgba(229,83,75,.12); }
+details.secd > summary .kbrank + .sst { margin-left: 8px; }
+@media (max-width: 560px) { .kbrank { white-space: normal; font-size: 11px; } }
 /* kill baselines (Oct 22) */ .cch-tag.kb { background: rgba(255,255,255,.06); color: var(--muted); } .cch-tag.kb.hi { background: rgba(230,183,80,.16); color: var(--gold); }
 /* deaths and avoidable damage in the coach (Oct 22) */ .cch-acct { margin: 10px 0 0; display: flex; flex-direction: column; gap: 4px; } .cch-acct p { margin: 0; font-size: 14px; line-height: 1.45; padding-left: 10px; border-left: 3px solid var(--line2); } .cch-acct p.warn { border-left-color: var(--warn); } .cch-acct p.ok { border-left-color: var(--good, #5fd35f); } .cch-acct b { color: var(--text); }
 /* problem #1 in full (Oct 22) */ .cch-x1 { display: block; margin-top: 3px; font-size: 13px; color: var(--muted); } .cch-x1 b { color: var(--text); font-weight: 600; }
@@ -8692,7 +8697,7 @@ function paceCard(ev, r, h, mistakes, boss, x) {
   const hpAt = (re, t) => { const u = unitOf(re); if (!u) return null; let v = null; for (const [s, f] of u.samples) { if (s > t) break; v = f; } return v == null ? null : Math.round(100 * v); };
   // (one row: lvl 0 on pace, 1 a slip, 2 the plan broke; a mistake for 1 and 2 on Mythic)
   const row = (what, t, txt, kills, lvl, sub, detail, fix, noMistake) => {
-    const l = mythic ? lvl || 0 : 0;
+    const l = mythic && !kill ? lvl || 0 : 0; /* (a kill is shown, not judged: the boss died, so the pace was enough (Oct 22: All pulls said Pace "0% done right" with the kill among the misses)) */
     if (l && !noMistake) mistakes.push({ t, player: 'Raid', mechanic: 'Pace', id: spell[0], severity: l === 2 ? 'High' : 'Medium', detail, fix });
     rows.push([{ txt: what }, { t }, { txt, bad: l === 2, warn: l === 1, sub: sub || '' }, { txt: mythic ? kills : '', dim: true }]);
   };
@@ -14737,6 +14742,8 @@ const PATCH_NOTES = [
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
+    'Each mechanic on Debriefing now has a small tag showing where you stand against top guilds, like "better than 9 of 19 top guilds" or "clean, like 18 of 19 top guilds". On All pulls it uses your typical pull. Hover it to see the numbers.',
+    'All pulls lists the two things that wiped you most when both did it several times, so a missed kick that wiped you 10 times no longer falls out of the top three.',
     'Comparisons with the fastest kills now say "top guilds": the coach\'s tags read "Top guilds get this right" or "Top guilds mess this up too", and timing rows say things like "P2 took 3:33 (top guilds: about 2:30)".',
     'Every boss, not just The Coiled Altar: the coach compares each mechanic with that boss\'s 20 fastest Mythic and Heroic kills, so it puts first what the kills nearly always get right and says when even they slip.',
     'Fixed checks that marked the world\'s fastest kills as failed: Kith\'ix Null Gates in the last 30 seconds of a kill, Lost Explorers United Defense brushes under 3 seconds and a few Blast Wave hits, Nek\'zali Invoke catching 1 to 3 players, a tank\'s Soulcoil Ignition circles, Ula\'tek Shriekers\' Boiling Venom, Twin Fangs Feast strikes that still had 4 fresh soakers, and Entombed Sentinels Miasma soaks with 6 or 7.',
@@ -14786,6 +14793,12 @@ const PATCH_NOTES = [
     'The bosses are in the same order everywhere on the site.',
     'Long patch notes fold after six lines.',
   ], f: [
+    'Why we wiped no longer says "Not sure what happened" when one early death is followed by a raid mistake that kills many of you at once. Example: an unsoaked globule that killed 17. It names the mistake and gives its fix.',
+    'A kill\'s coach says "Focus next week", not "Focus next pull".',
+    'All pulls: the Deaths number, the Deaths line and the coach now count deaths the same way (they said 105 in one place and 119 in another).',
+    'Pace no longer counts a kill as a miss. The boss died, so the pace was enough. The kill\'s times are still shown.',
+    'When something was mostly done right but still wiped you, All pulls says both, for example "We got it right 98% of the time, but one miss was enough."',
+    '"21th time tonight" now reads "21st".',
     'The Coiled Altar Heroic: a tank frontal that hits someone else is now yellow, not red, unless it killed them (the 20 fastest Heroic kills all live through one). It counts each frontal once, not the damage it leaves behind every 2 seconds, so Coalesced Venom and Dreadmarch no longer fail clean kills. Mythic is unchanged.',
     'Mechanic names read cleanly again: the name you see in game with a short instruction, like "Coalesced Venom (Pop the orbs with the frontals)" and "Sever (Defensive on the second stack)", and no dotted underlines inside them. The Coiled Altar and Ula\'tek got new names; the same name shows everywhere.',
     'Debriefing\'s maps no longer zoom or slide by themselves while they play: the room stays put and only the players move. The Coiled Altar\'s maps are Debriefing\'s own again (no boss-guide freezes); they still show the pools as they were in your pull.',
@@ -20316,6 +20329,7 @@ function audit() {
     const lc = lvlCounts(s.id, nBad, nWarn, allRows.length), stc = !nBad && !nWarn ? (s.info ? 'na' : 'ok') : LVL_CLS[lvlOf(lc)], ti = tile && tileOf ? tileOf(s, rows, groups, key) : null;
     const tiLn = ti && (ti.html || ti.tag || ti.more || ti.txt || ti.who) ? '<span class="mcx-ln">' + (ti.html || '') + (ti.tag ? '<span class="wr-tag">' + esc(ti.tag) + '</span>' : '') + (ti.more ? '<span class="wr-plus">+' + ti.more + ' more</span>' : '') + (ti.who || '') + (ti.txt ? '<span class="mcx-s">' + esc(ti.txt) + '</span>' : '') + '</span>' : '';
     let b = '<details class="panel secd st-' + stc + (ti && tile !== 'line' ? ' mcx-tile' : '') + (tile === 'line' ? ' dbr-line' : '') + '" id="sec-' + sid + '" data-k="' + sid + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + (tile === 'line' ? '' : ti && ti.map ? '<span class="wr-map mcx-map">' + ti.map + '</span>' : ti && ti.alt ? ti.alt : '') + (ti && tile !== 'line' ? '<span class="mcx-hd">' : '') + secHead(s) +
+      (s.info || !allRows.length || s.id === 'avoid' || r.allPulls ? '' : kbChip(r.item, s.id, 100 * (nBad + nWarn) / allRows.length)) /* (where we stand among the fastest kills (Oct 22, a test)) */ +
       '<span class="sst ' + stc + '">' + (nBad || nWarn ? lvlText(lc, true) : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0Clean') + '</span>' + (ti ? (tile === 'line' ? '' : '</span>') + tiLn : '') + dbnTag(jobs) + dbdDots(s.id, DD) + '</summary><div class="secbody">' + (dbdLinkOf(r, s.id) && s.id !== 'deaths' ? '<div class="dbd-lk"><button type="button" class="btn sm" data-dblink="' + esc(dbdLinkOf(r, s.id)) + '">Copy link</button></div>' : '') + dbnBox(jobs) +
       (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '') + (typeof gdzHowTo === 'function' ? gdzHowTo(s.id, s.title) : '') /* (a link to this mechanic in the Boss guide, Oct 20) */ + synopsis(s, rows, groups); // (the old counts summary was dropped: the synopsis and the table cover it)
     // grouped sections: one header row per set, then that set's rows
@@ -21708,8 +21722,13 @@ function whyWiped(r) {
   const dmgM = ms.filter((m) => m.player === 'Raid' && WHY_DMG.test(m.detail || '')).sort((a, b) => a.t - b.t);
   const fromM = (m, k) => ({ k: k || (WHY_DMG.test(m.detail || '') ? 'dmg' : 'mistake'), t: m.t, mech: m.mechanic, id: m.id, detail: m.detail, fix: m.fix, how: 'raid' }); /* (its own fix rides along (Oct 22)) */
   const rm = d0 ? raidM(d0.t - 20, d0.t + 1, ['High']) : ms.filter((m) => m.player === 'Raid' && m.severity === 'High').sort((a, b) => a.t - b.t)[0];
+  /* (a raid mistake after the first death that killed more of us at once than had died before it: that's what lost the pull, not the lone
+     death before it (Oct 22, Twin Fangs pull 29: one death at 4:55, then an unsoaked globule killed 17 at 5:08 and it said "Not sure what happened")) */
+  const boomN = (m) => r.deaths.filter((x) => x.t >= m.t - 2 && x.t <= m.t + 5).length;
+  const boom = d0 && !rm ? msNear.filter((m) => m.player === 'Raid' && m.severity === 'High' && m.t > d0.t + 1 && boomN(m) >= 4 && boomN(m) > all.filter((x) => x.t < m.t - 2).length).sort((a, b) => a.t - b.t)[0] || null : null;
   let o;
   if (rm) o = fromM(rm);
+  else if (boom) o = fromM(boom);
   else if (d0) {
     const wave = all.filter((x) => x.t >= d0.t && x.t - d0.t <= 5), p0 = r.players.get(d0.guid), w0 = why(d0);
     /* (the raid's mistake logged just after the deaths it caused, like an orb exploding into other orbs) */
@@ -21731,6 +21750,8 @@ function whyWiped(r) {
 // short, contractions, a name and "you" for the player, "again" when it keeps happening. The fix itself is the Next pull line)
 const WHY_NUM = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
 const WHY_ORD = ['', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
+// (past ten: 21st, 22nd, 23rd, 11th–13th (it said "21th time tonight", Oct 22))
+const ordN = (n) => WHY_ORD[n] || n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : { 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th');
 // (what a wipe was "to", so the night and "again" can count the same thing)
 const whyKey = (o) => (o.k === 'dmg' ? 'dmg' : o.k === 'unclear' ? '?' : o.how === 'kit' ? 'kit' : o.how === 'bleed' ? 'bleed' : o.how === 'tank' ? 'tank' : o.how === 'wave' ? 'w:' + lc0(o.d && o.d.ability) : 'm:' + lc0(o.mech || o.l || (o.d && o.d.ability)));
 function whySay(o, pm, nth) {
@@ -21750,9 +21771,9 @@ function whySay(o, pm, nth) {
   const dead = new Set(all.filter((x) => x.t >= t0 - 2).map((x) => x.player)).size, everyone = dead >= (o.size || 20) - 2;
   const end = near.length >= 3 ? ' Losing ' + (WHY_NUM[near.length] || near.length) + ' at once is too much to come back from.' : !rest.length ? (everyone ? '' : ' We called it after that.') : everyone ? ' We never really recovered after that.' : ' We lost ' + rest.length + ' more after that and called it.';
   /* (the opener: "That one's on Dreadmarch.", or "Dreadmarch again, that's the third time tonight.") */
-  const on = (name) => (nth >= 2 ? name + ' again, that\'s the ' + (WHY_ORD[nth] || nth + 'th') + ' time tonight.' : 'That one\'s on ' + name + '.');
+  const on = (name) => (nth >= 2 ? name + ' again, that\'s the ' + ordN(nth) + ' time tonight.' : 'That one\'s on ' + name + '.');
   const same = near.filter((x) => x !== d && d && d.ability && lc(x.ability) === lc(d.ability)), group = d ? [d].concat(same) : [];
-  if (o.how === 'raid') return { h: o.k === 'dmg' ? (nth >= 2 ? 'Short on damage again, that\'s the ' + (WHY_ORD[nth] || nth + 'th') + ' time tonight.' : 'We just didn\'t have the damage for that one.') : on(mech(o.mech, o.id)), s: esc(whyAt(plain(o.detail), T(o.t))) + end };
+  if (o.how === 'raid') return { h: o.k === 'dmg' ? (nth >= 2 ? 'Short on damage again, that\'s the ' + ordN(nth) + ' time tonight.' : 'We just didn\'t have the damage for that one.') : on(mech(o.mech, o.id)), s: esc(whyAt(plain(o.detail), T(o.t))) + end };
   if (o.how === 'none') return { h: 'Not sure what happened on that one.', s: 'Nobody died, so I think we called it.' };
   if (o.how === 'own') { const r1 = o.why ? toYou(o.why) : '', you = group.length > 1 ? names(group) : who(d), sameL = lc(o.l) === lc(d.ability);
     const did = r1 ? (/\bdied\b/.test(r1) ? you + ', you ' + r1 + at + '.' : (/^your\b/.test(r1) ? you + ', ' + r1 : you + ', you ' + r1) + (sameL ? ' and it got you' + at + '.' : ' and ' + ab(d) + ' got you' + at + '.'))
@@ -21760,7 +21781,7 @@ function whySay(o, pm, nth) {
     const others = near.filter((x) => !group.includes(x)), also = others.length ? ' ' + dbfCap(names(others)) + ' went down right then too.' : '';
     const lost = group.length + others.length;
     return { h: o.l ? on(esc(o.l)) : o.av ? on(ab(d)) : o.kick ? on('our kicks') : 'That one started with ' + who(d) + '.', s: did + also + (lost >= 3 ? ' Losing ' + (WHY_NUM[lost] || lost) + ' at once is too much to come back from.' : end) }; }
-  if (o.how === 'wave') return { h: nth >= 2 ? 'Raid damage again, that\'s the ' + (WHY_ORD[nth] || nth + 'th') + ' time tonight.' : 'That one\'s on raid damage.', s: near.length + ' of us went down to ' + ab(d) + at + ', and I don\'t see anyone doing anything wrong. We need a raid cooldown there.' };
+  if (o.how === 'wave') return { h: nth >= 2 ? 'Raid damage again, that\'s the ' + ordN(nth) + ' time tonight.' : 'That one\'s on raid damage.', s: near.length + ' of us went down to ' + ab(d) + at + ', and I don\'t see anyone doing anything wrong. We need a raid cooldown there.' };
   if (o.how === 'kit') return { h: nth >= 2 ? 'Another one we could\'ve saved.' : 'We could\'ve saved that one.', s: who(d) + ', you were dropping to ' + ab(d) + ' for a while' + at + ' and still had ' + lpAnd(dbfKit(d).slice(0, 2).map((x) => esc(x).replace(/^an? /, 'your '))) + '. If you\'re going down, use them.' + end };
   if (o.how === 'bleed') return { h: 'That one\'s on healing.', s: who(d) + ', you were dropping to ' + ab(d) + ' for a while' + at + ' and barely got any healing. Healers, let\'s watch that spot.' + end };
   if (o.how === 'tank') return { h: 'We lost a tank on that one.', s: who(d) + ', ' + ab(d) + ' got you' + at + '. Let\'s get an external or a swap ready there.' + end };
@@ -21770,7 +21791,7 @@ const whyDotI = (k) => '<i class="fc-why why-' + WHY_K[k][1] + '" aria-hidden="t
 // (prev: this boss's earlier pulls already read, for "again")
 function whyLine(r, pm, prev) { let o = null; try { o = whyWiped(r); } catch (e) { console.error(e); o = null; } if (!o) return '';
   let nth = 1; try { const k = whyKey(o); if (k !== '?') nth = 1 + (prev || []).filter((x) => x && x.item && x.item.pull < r.item.pull && x.item.diffId === r.item.diffId).map((x) => whyWiped(x)).filter((y) => y && whyKey(y) === k).length; } catch (e) { nth = 1; }
-  const w = whySay(o, pm, nth), g = whyShort(o, pm), again = nth >= 2 ? '<span class="why-again">' + (WHY_ORD[nth] ? dbfCap(WHY_ORD[nth]) : nth + 'th') + ' time tonight</span>' : '';
+  const w = whySay(o, pm, nth), g = whyShort(o, pm), again = nth >= 2 ? '<span class="why-again">' + dbfCap(ordN(nth)) + ' time tonight</span>' : '';
   /* (your note, Oct 22: "narrow down the root cause of a single wipe, and make it even briefer, at a glance": one line with the first
      domino, and the raid lead's longer take opens under it) */
   return '<details class="dbr-why dbr-whyd" title="Why we wiped: ' + esc(WHY_K[o.k][0]) + '"><summary>' + whyDotI(o.k) + '<b>' + g.label + '</b><span class="why-sep"> · </span>' + g.short + again + '<span class="why-more">more</span></summary><p>' + w.h + ' ' + w.s + '</p></details>'; }
@@ -21859,11 +21880,13 @@ function oaCache(reps, name, f) { const k = reps.map((r) => (r.item.id || r.item
   const c = OA_C.get(k); if (c && c.reps.length === reps.length && c.reps.every((r, i) => r === reps[i])) return c.v;
   let v = null; try { v = f(); } catch (e) { console.error(e); v = null; } OA_C.set(k, { reps: reps.slice(), v }); if (OA_C.size > 200) OA_C.delete(OA_C.keys().next().value); return v; }
 // (the raid's fix: the cause that wiped us most, and on All pulls only when it wiped us twice or more)
-function oaRaidFix(reps) { return oaCache(reps, '', () => {
+// (nth: 1 = what wiped us second most, for a night where two things each wiped us several times (Oct 22: missed kicks wiped us 10 times
+// and fell out of the night's top three behind the globules' 10))
+function oaRaidFix(reps, nth) { return oaCache(reps, nth ? 'rf' + nth : '', () => {
   const L = reps.map((r) => { try { return whyWiped(r); } catch (e) { return null; } }).filter((o) => o && o.k !== 'unclear'); if (!L.length) return null;
   const G = new Map(); for (const o of L) { const k = whyKey(o), g = G.get(k) || { k, l: [] }; g.l.push(o); G.set(k, g); }
-  const g = [...G.values()].sort((a, b) => b.l.length - a.l.length || (a.l[0].pull || 0) - (b.l[0].pull || 0))[0], o = g.l[0], n = g.l.length;
-  if (reps.length > 1 && n < 2) return null;
+  const g = [...G.values()].sort((a, b) => b.l.length - a.l.length || (a.l[0].pull || 0) - (b.l[0].pull || 0))[nth || 0]; if (!g) return null; const o = g.l[0], n = g.l.length;
+  if (reps.length > 1 && n < (nth ? 3 : 2)) return null;
   const ab = (o.d && o.d.ability) || '', m = o.mech || o.l || ab, fx = (o.fix && o.k !== 'dmg' && dbfTip1(cHtml(o.fix))) || oaFlip(o.why) || dbfFixer(reps)(m, o.d && o.d.player); /* (the raid mistake's own fix first (Oct 22): pull 3's orbs collided got "a raid cooldown") */
   const fix = o.k === 'dmg' ? 'Line up our big cooldowns, potions and Bloodlust for the damage check.' : g.k === 'kit' ? 'If you\'re dropping, press a defensive, Healthstone or potion before it\'s too late.'
     : g.k === 'bleed' ? 'Healers, watch for people bleeding out and top them up.' : g.k === 'tank' ? 'Get an external or a tank swap ready there.'
@@ -21982,6 +22005,10 @@ function coachRaid(reps) { return oaCache(reps, 'c:raid', () => {
   const out = [], first = oaRaidFix(reps), night = reps.length > 1, need = night ? 2 : 1, fixer = dbfFixer(reps), lc = (x) => String(x || '').toLowerCase();
   if (first) { const sec = [...new Map(reps.flatMap((r) => [...pullSections(r).values()]).map((x) => [x.s.id, x.s])).values()].find((s) => cMatch(s, first.label));
     out.push({ ...first, kind: 'raid', sev: 'bad', how: '', cause: first.label, label: sec ? shortT(sec.title) : first.label, sec: sec ? sec.id : null }); }
+  /* (on a night, the second thing that wiped us too, when it did at least 3 times and has its own fix) */
+  const second = first && night ? oaRaidFix(reps, 1) : null;
+  if (second && second.fix !== first.fix) { const sec = [...new Map(reps.flatMap((r) => [...pullSections(r).values()]).map((x) => [x.s.id, x.s])).values()].find((s) => cMatch(s, second.label));
+    out.push({ ...second, kind: 'raid', sev: 'bad', how: '', cause: second.label, label: sec ? shortT(sec.title) : second.label, sec: sec ? sec.id : null }); }
   // (the NSRT note's jobs that were missed: who, what, how often; a missed job is a reminder problem, not a skill problem)
   { const nG = new Map(); for (const r of reps) for (const m of keptMistakes(r)) { if (!m.fromNote || m.player === 'Raid') continue; const g = nG.get(lc(m.mechanic)) || { key: m.mechanic, pulls: new Set(), who: new Map(), hi: 0, m }; g.pulls.add(r.item.pull); g.who.set(m.player, (g.who.get(m.player) || 0) + 1); if (m.severity !== 'Low') g.hi++; nG.set(lc(m.mechanic), g); }
     for (const g of [...nG.values()].filter((x) => x.pulls.size >= need).sort((a, b) => b.hi - a.hi || b.pulls.size - a.pulls.size).slice(0, 2)) { const names = [...g.who].sort((a, b) => b[1] - a[1]).map(([n]) => String(n).split('-')[0]);
@@ -21990,7 +22017,7 @@ function coachRaid(reps) { return oaCache(reps, 'c:raid', () => {
   for (const r of reps) for (const [id, x] of pullSections(r)) { if (id === 'deaths' || x.s.info || x.st === 'na') continue;
     const g = S2.get(id) || { id, s: x.s, bad: 0, warn: 0, ok: 0, pulls: [] }; if (x.st === 'bad') g.bad++; else if (x.st === 'warn') g.warn++; else g.ok++; if (x.st !== 'ok') g.pulls.push(r.item.pull); S2.set(id, g); }
   const ms = reps.flatMap((r) => keptMistakes(r)).filter((m) => m.fix);
-  const it0 = reps[0].item, L = [...S2.values()].filter((g) => g.pulls.length >= need && !(first && cMatch(g.s, first.label))).sort((a, b) => (b.bad > 0) - (a.bad > 0) || kbImp(it0, b.id) - kbImp(it0, a.id) || b.pulls.length - a.pulls.length || (imp.indexOf(a.id) < 0 ? 99 : imp.indexOf(a.id)) - (imp.indexOf(b.id) < 0 ? 99 : imp.indexOf(b.id)));
+  const it0 = reps[0].item, L = [...S2.values()].filter((g) => g.pulls.length >= need && !out.some((y) => y.kind === 'raid' && (y.sec === g.id || cMatch(g.s, y.label) || (/interrupt|\bkick/i.test(y.label) && (g.id === 'kicks' || /interrupt|\bkick/i.test(g.s.title || ''))))) /* (a wipe cause already listed isn't listed again as its card) */).sort((a, b) => (b.bad > 0) - (a.bad > 0) || kbImp(it0, b.id) - kbImp(it0, a.id) || b.pulls.length - a.pulls.length || (imp.indexOf(a.id) < 0 ? 99 : imp.indexOf(a.id)) - (imp.indexOf(b.id) < 0 ? 99 : imp.indexOf(b.id)));
   // (a mechanic's fix from the mistakes on its own flagged rows (the same players, within 3 s), so two mechanics that share a spell name,
   // like the tank frontals and the ghosts' Soul Sever, each get their own; else by name)
   const rowFix = (id) => { const cnt = new Map(); let full = '';
@@ -22116,6 +22143,40 @@ const KILL_BASE = {
     kxfear: { k: 20, ok: 3, med: 67 }, kxtank: { k: 20, ok: 18, med: 0 }, kxgrasp: { k: 20, ok: 5, med: 10 },
     kxgate: { k: 20, ok: 20, med: 0 }, avoid: { k: 20, ok: 4, med: 13 } } } },
 };
+// (each kill's own share of a mechanic's moments that went wrong, lowest first: the same 20 fastest kills as KILL_BASE (Oct 22),
+// so a line can say where we stand among them. Avoidable damage is left out: its kill bars are AVOID_BASE)
+const KILL_DIST = {
+  'Nymrissa Wavecaller': { 15: { orbs: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17], nyadds: [0,0,0,0,0,0,0,0,0,0,0,0,17,17,20,20,33,33,33,40], nyrain: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,25,25] },
+    16: { orbs: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], nyburst: [0,0,0,0,12,13,13,13,17,20,20,20,25,26,26,29,39,39,45,54], nyadds: [0,0,0,0,0,0,0,0,0,0,0,13,13,25,25,25,29,33,38,40], nyscale: [0,0,0,0,0,0,0,0,0,0,0,0,0,10,13,20,20,20,30,30], nyjet: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,11,11,11,44], nyrain: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], nypop: [50,50,50,50,50,67,67,67,67,71,75,75] } },
+  'Sszorak': { 15: { ravage: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17,17,17], mutilate: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17,17,17,33], tempest: [63,67,69,70,71,71,72,73,73,73,74,74,75,77,77,78,79,80,81,82], cysts: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], winds: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,20,20,20,20], crosswinds: [0,0,4,4,4,5,6,7,7,10,11,11,11,14,15,17,19,21,21,28] },
+    16: { ravage: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,10], mutilate: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,20], tempest: [53,55,59,61,62,63,63,64,65,66,69,69,70,70,70,72,73,74,76,80], cysts: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8], winds: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,10,10,10,20], crosswinds: [4,7,9,9,9,9,11,11,11,13,13,13,13,16,17,17,20,21,22,23], fury: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17,20], virulence: [17,29,29,29,33,33,38,38,38,38,38,38,44,44,50,50,50,58,62,69] } },
+  'The Twin Fangs': { 15: { venom: [0,0,4,4,4,4,6,7,10,10,10,11,12,13,14,17,22,24,27,29], feast: [0,13,13,13,13,13,25,25,25,25,25,38,38,38,50,50,50,50,50,50], soaks: [0,0,0,0,0,0,0,0,0,0,0,0,0,3,3,3,3,3,3,4], spit: [0,9,9,11,13,14,14,20,21,21,29,29,32,32,35,38,41,42,44,60], ichor: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,50], stone: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,11,11], avoid: [11,17,19,20,20,24,25,26,28,29,29,36,38,39,40,40,42,50,53,53] },
+    16: { venom: [0,0,5,5,5,10,10,10,11,15,15,15,20,20,20,25,30,30,40], feast: [0,0,0,0,0,0,0,0,0,0,6,6,6,19,25,25,31,38,50], founts: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], soaks: [0,0,1,2,3,3,3,3,3,3,4,4,4,5,5,6,6,8,11], bulwark: [0,0,1,1,1,1,2,3,3,3,4,5,5,7,7,7,8,9,9], spit: [0,0,5,8,8,8,9,9,13,13,17,17,21,21,21,25,25,32,33], ichor: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], stone: [0,0,0,0,0,0,0,0,0,0,0,0,0,7,7,7,8,8,13], avoid: [15,24,35,35,35,37,38,38,40,43,44,44,45,45,48,50,60,60,71], kicks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2] } },
+  'The Coiled Altar': { 15: { dmghost: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,33,33,33,100], addsets: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17], push: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,33], orbs: [0,0,0,0,0,0,0,0,0,0,0,0,0,25,25,25,25,25,50,95], tankfront: [0,0,0,0,0,0,0,0,0,0,0,0,0,17,17,20,20,29,33], soakq: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], shield: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], vf: [0,0,25,50,56,60,63,63,63,75,75,80,80,88,89,90,100,100,100] },
+    16: { dmghost: [0,0,0,0,0,0,0,0,0,0,0,14,14,17,17,17,17,20,20,29], addsets: [0,0,0,0,0,0,0,0,0,0,0,0,2,2,2,3,4,4,5,7], gloom: [0,0,2,2,2,2,2,4,4,5,6,8,10,10,10,11,14,33,39,44], push: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,33,33,33,33], orbs: [0,0,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,25,29,29], tankfront: [0,0,7,7,7,8,8,8,8,8,14,14,14,14,15,15,15,21,21,21], soakq: [0,0,0,25,25,25,25,25,25,33,50,50,50,50,50,75,75,75,75,75], shield: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,25,25,25], inter: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14,17,17,17], vf: [0,0,0,17,17,17,17,33,33,33,33,50,50,50,50,50,67,67,83,100] } },
+  'Entombed Sentinels': { 15: { helix: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12,17], droplets: [2,2,3,6,6,7,7,8,8,9,9,10,10,11,11,11,14,15,16,16], coag: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], miasma: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,25,25,25], blighted: [0,0,17,25,25,33,33,33,50,50,50,50,50,50,50,50,75,75,83,83], marks: [0,33,33,33,33,50,50,60,67,67,67,75,75,80,80,80,83,83,89,100], balance: [0,0,0,0,0,0,0,0,0,0,50,50,50,50,50,50,50,50,100,100], tanks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+    16: { helix: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7], protovenom: [0,0,0,0,0,2,4,4,4,7,7,9,9,11,11,13,15,15,15,18], droplets: [3,4,4,5,5,5,6,6,6,6,7,8,8,8,9,9,9,10,10,13], coag: [0,0,0,0,0,0,0,0,0,0,17,17,17,17,17,17,17,17,20,20], miasma: [0,0,0,0,0,17,17,20,33,33,33,33,40,40,40,40,40,40,50,67], blighted: [8,8,25,33,33,33,33,42,42,42,42,50,50,50,50,50,58,58,58,67], marks: [0,0,0,25,25,25,25,25,40,50,60,60,60,63,67,67,67,75,83,86], balance: [0,0,0,0,0,0,0,0,33,33,33,33,33,33,33,33,67,67,67,67], tanks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] } },
+  'Vashnik the Malignant': { 15: { venoms: [0,0,0,0,0,33,33,33,33,67,67,67,67,67,67,67,67,67,67,67], froth: [75,80,81,84,87,88,88,88,88,89,89,90,91,91,92,92,93,93,93,94], bile: [0,0,0,0,0,0,0,0,0,0,0,0,25,25,25,25,25,50,75,75], infect: [0,0,10,18,22,22,22,30,30,30,30,31,42,44,46,50,50,53,58,74], fangs: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], avoid: [34,36,38,39,39,41,42,42,42,42,44,47,48,48,49,51,51,51,55,58] },
+    16: { venoms: [0,0,0,0,0,0,8,13,13,25,25,33,38,38,38,38,38,50,50,50], totems: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,7,7,8], froth: [0,4,4,5,6,6,7,7,8,11,11,13,14,15,15,17,18,22,26,36], bile: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17,17,17], infect: [19,25,29,31,31,31,32,33,37,37,38,39,41,43,46,46,48,50,53,61], fangs: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10], avoid: [0,0,6,7,8,11,12,12,13,13,14,15,17,18,19,19,19,20,21,34] } },
+  "Nek'zali the Soulcoiler": { 15: { amani: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,7,7,8,8], ignition: [25,33,40,40,50,50,50,50,67,67,67,67,67,67,75,75,75,75,78,90], rend: [0,0,0,0,0,0,0,0,0,0,20,20,20,20,30,30,40,40,50,60], barrage: [0,0,50,50,50,50,50,100,100,100,100,100,100,100,100,100,100,100,100,100], ritual: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,25] },
+    16: { amani: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], ignition: [0,0,0,0,0,25,25,33,33,33,40,40,43,50,50,50,60,60,67,78], depths: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,20,22,25], rend: [0,0,0,0,0,0,0,0,0,0,0,0,7,7,7,7,7,8,16,20], barrage: [0,0,0,0,0,25,50,50,50,67,75,75,75,75,75,100,100,100,100,100], ritual: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], invoke: [0,0,0,0,0,0,0,0,0,0,0,0,33,33,33,33,50,50,67,100] } },
+  "Ula'tek": { 15: { eggs: [0,2,5,6,7,7,8,9,9,9,11,12,12,13,13,13,13,14,15,15], coils: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,15,15,23], waves: [78,86,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100], tank: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,20,20], amps: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], fangs: [0,0,0,0,0,0,0,0,0,0,0,13,13,13,13,14,14,14,14,25], doomscale: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], bite: [0,0,0,0,0,0,0,20,20,20,20,20,20,20,20,33,33,33,33,33], kicks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+    16: { eggs: [0,0,0,0,0,0,0,2,2,2,2,2,4,4,4,6,6,7,10], coils: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,13], waves: [71,75,79,80,88,90,92,100,100,100,100,100,100,100,100,100,100,100,100], tank: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17], incub: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], wretch: [0,0,0,0,0,0,25,25,25,25,33,33,33,33,33,50,67,75,100], amps: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], fangs: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14], doomscale: [17,25,25,25,25,25,25,25,25,25,25,25,33,33,33,33,40,50,67], bite: [0,5,5,5,5,6,6,6,7,8,9,9,11,11,15,15,20,20,33], shriek: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,25], kicks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] } },
+  'The Lost Explorers': { 15: { boxes: [0,0,0,0,0,0,0,0,2,2,3,3,3,4,4,5,6,6,7,7], united: [0,0,0,0,0,0,0,0,0,0,0,50], blink: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], thud: [10,10,20,20,20,20,20,20,20,20,20,20], avoid: [29,30,30,38,40,42,42,44,44,54,55,56,57,58,60], kicks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17] },
+    16: { boxes: [0,0,3,6,6,6,6,8,8,9,9,10,10,12,13,15,17,19,20,27], united: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,33], frostfire: [0,0,5,5,5,5,5,5,5,10,10,10,15,15,15,15], blink: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], thud: [0,0,0,0,0,0,10,10,10,10,10,10,10,11,20,20,20,20,20,30], kicks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,8,8,15] } },
+  "Kith'ix": { 15: { kxadds: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,29], kxbeetle: [0,0,0,0,0,20,33,33,33,33,33,40,50,50,50,50,50,50,67,67], kxext: [100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100], kxfear: [0,0,0,33,33,33,33,50,50,67,67,67,80,83,83,83,83,83,100,100], kxtank: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,100,100], kxgrasp: [0,0,0,0,0,6,7,7,7,8,13,14,17,20,29,33,46,47,54,57], kxgate: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], avoid: [0,0,0,0,8,8,8,11,13,13,14,16,16,17,19,20,22,31,32,44] },
+    16: { kxadds: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,10], kxbeetle: [0,0,0,0,0,0,0,0,0,0,0,0,0,14,14,25,29,33,50], kxext: [100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100], kxfear: [0,0,18,18,33,33,33,36,40,40,40,45,50,50,55,58,70,75,82], kxtank: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], kxgrasp: [0,0,4,4,4,9,9,10,11,11,14,15,17,17,19,24,25,29,33], kxgate: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,17,17,25], avoid: [0,5,6,8,11,12,18,18,19,19,23,24,29,30,30,32,38,39,41] } },
+};
+// (a mechanic line's place among the fastest kills (your call, Oct 22: "lets try it see how it pans out visually"): our share of its
+// moments that went wrong against each kill's; nothing when the kills weren't read for it)
+const kbRank = (it, sec, share) => { const d = it && KILL_DIST[it.boss] && KILL_DIST[it.boss][it.diffId] && KILL_DIST[it.boss][it.diffId][sec];
+  if (!d || share == null || !isFinite(share)) return null; const n = d.length;
+  return { n, worse: d.filter((x) => x > share + 0.5).length, clean: d.filter((x) => x === 0).length, typ: d[Math.floor(n / 2)], share }; };
+const kbChip = (it, sec, share) => { const k = kbRank(it, sec, share); if (!k) return ''; const ok = share < 0.5;
+  /* (the site says "top guilds", never "kills" (your wording rule, Oct 22)) */
+  const txt = ok ? (k.clean === k.n ? 'clean, like every top guild' : 'clean, like ' + k.clean + ' of ' + k.n + ' top guilds') : k.worse ? 'better than ' + k.worse + ' of ' + k.n + ' top guilds' : 'behind all ' + k.n + ' top guilds';
+  const tip = 'Against ' + k.n + ' top guilds\' kills: a typical one got ' + k.typ + '% of this wrong; we got ' + Math.round(share) + '%.';
+  return '<span class="kbrank' + (ok || k.worse * 2 >= k.n ? ' hi' : !k.worse ? ' lo' : '') + '" title="' + esc(tip) + '">' + esc(txt) + '</span>'; };
 const kbOf = (it, sec) => { const b = it && KILL_BASE[it.boss] && KILL_BASE[it.boss][it.diffId]; return b && sec && b.sec[sec] ? b.sec[sec] : null; };
 // (how much a mechanic matters by the kills: 2 = they nearly always get it right, 1 = most do, 0 = even they slip on it)
 const kbImp = (it, sec) => { if (sec === 'pace') return 0; /* (Pace, Oct 22: being slower than the world's best is never ranked above a mechanic; it topped the coach on a kill) */ const b = kbOf(it, sec); if (!b) return 1; const r = b.ok / b.k; return r >= 0.7 ? 2 : r >= 0.4 ? 1 : 0; };
@@ -22156,12 +22217,17 @@ function coachEnrich(list, reps, name) {
   const prev = night ? [] : ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull < it.pull && CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.players);
   return list.map((x0) => { const x = { ...x0 };
     if (!x.sec) { const s = [...secs.values()].find((s) => cMatch(s, x.label) || cMatch(s, x.cause) || cMatch(s, String(x.label).replace(/^Dying (slowly )?to /, ''))); if (s) x.sec = s.id; }
+    /* (a missed kick belongs to the Interrupts card (Oct 22: "Missed interrupt" had no card, so nothing said how the kicks went overall)) */
+    if (!x.sec && /interrupt|\bkick/i.test(x.label + ' ' + (x.cause || ''))) { const s = [...secs.values()].find((s) => s.id === 'kicks' || /interrupt|\bkick/i.test(s.title || '')); if (s) x.sec = s.id; }
     const s = x.sec ? secs.get(x.sec) : null, keys = s ? [dbfSecName(s), s.spell && s.spell[1], cSec(s)].filter(Boolean).map(lc) : [lc(x.cause || x.label)];
     // (what happened)
     if (!x.what) {
       if (x.kind === 'death' && x.d) x.what = 'Died ' + (night ? 'in pull' + (x.pulls.length > 1 ? 's ' + lpAnd(x.pulls.slice(0, 4).map(String)) : ' ' + x.pulls[0]) : 'at ' + T(x.d.t)) + ' to ' + (x.d.ability || x.d.killer || 'a hit') + (x.causedBy ? ', right after ' + x.causedBy + ' went wrong' : '') + '.';
       else if (x.kind === 'raid' && !night) { try { const o = whyWiped(reps[0]); if (o) { const w = whyShort(o, new Map()); x.what = cHtml(w.label) + ': ' + cHtml(w.short) + '.'; } } catch (e) { /* (no line) */ } }
-      else if (x.kind === 'raid') x.what = 'It wiped us ' + (x.n === 2 ? 'twice' : x.n + ' times') + ' tonight.';
+      else if (x.kind === 'raid') { x.what = 'It wiped us ' + (x.n === 2 ? 'twice' : x.n + ' times') + ' tonight.';
+        /* (mostly done right but still the wipe: say both, so it doesn't read against the card's "98% done right" (Oct 22)) */
+        if (s) { let R = 0, B = 0; for (const r of reps) { const y = pullSections(r).get(s.id); if (!y) continue; const rows = y.s.rows.concat(...(y.s.groups || []).map((gg) => gg.rows || [])); R += rows.length; B += rows.filter((row) => row.some((c) => c && (c.bad || c.warn))).length; }
+          if (R >= 20 && B / R <= 0.1) x.what += ' We got it right ' + Math.floor(100 * (1 - B / R)) + '% of the time, but one miss was enough.'; } }
       else if (x.m && x.m.detail) x.what = dbfTip1(cHtml(x.m.detail));
       else if (x.kind === 'mech') { const m = reps.slice().reverse().flatMap((r) => keptMistakes(r).filter((q) => q.detail && q.mechanic !== 'Death' && (name ? oaBase(q.player) === oaBase(name) : true) && (keys.includes(lc(q.mechanic)) || (s && lc(s.title).includes(lc(q.mechanic))))))[0]; if (m) { x.what = (!name && m.player && m.player !== 'Raid' ? String(m.player).split('-')[0] + ': ' : '') + dbfTip1(cHtml(m.detail)); x.whatT = m.t; } /* (who, on the raid's view) */ else if (s) x.what = oaRowWhat(reps, s.id, night); } }
     if (!night && s) { try { x.map = oaCardMap(reps[0], s.id, x.whatT != null ? x.whatT : x.kind === 'death' && x.d ? x.d.t : x.m && x.m.t != null ? x.m.t : null); } catch (e) { x.map = null; } }
@@ -22192,7 +22258,7 @@ function coachEnrich(list, reps, name) {
 function coachTag(x, night) {
   const t = [];
   if (night && x.n) t.push('<span class="oa-n">' + x.n + ' of ' + x.of + '</span>');
-  if (!night && x.nth) t.push('<span class="cch-tag' + (x.nth >= 2 ? ' rep' : '') + '">' + (x.nth === 1 ? 'first time tonight' : (WHY_ORD[x.nth] ? dbfCap(WHY_ORD[x.nth]) : x.nth + 'th') + ' time tonight') + '</span>');
+  if (!night && x.nth) t.push('<span class="cch-tag' + (x.nth >= 2 ? ' rep' : '') + '">' + (x.nth === 1 ? 'first time tonight' : dbfCap(ordN(x.nth)) + ' time tonight') + '</span>');
   if (x.trend === 'better') t.push('<span class="cch-tag up">▲ fine in the last 3 pulls</span>'); else if (x.trend === 'still') t.push('<span class="cch-tag rep">still happening</span>');
   if (x.led) t.push('<span class="cch-tag rep">led to ' + (x.led === 1 ? '1 death' : x.led + ' deaths') + '</span>');
   if (x.kb) { const r = x.kb.ok / x.kb.k; t.push(r >= 0.7 ? '<span class="cch-tag kb hi" title="' + esc(x.kb.ok + ' of ' + x.kb.k + ' top guilds got this right') + '">Top guilds get this right</span>' : r <= 0.3 ? '<span class="cch-tag kb" title="' + esc('Only ' + x.kb.ok + ' of ' + x.kb.k + ' top guilds got this fully right') + '">Top guilds mess this up too</span>' : ''); }
@@ -22317,7 +22383,7 @@ function coachSummary(reps, name) {
     const full = (whyFull ? '<h5>' + (night ? 'The night, as a raid lead would say it' : 'Why we wiped') + '</h5>' + whyFull : '') +
       (all.length ? '<h5>What to work on, in order</h5><ol class="cch-ol">' + all.map(item).join('') + '</ol>' : '') + deaths + (AV && AV.list ? '<h5>Avoidable damage</h5>' + AV.list : '') +
       (allR.length ? '<h5>What went right</h5><ul class="cch-ul">' + allR.map((t) => '<li>' + esc(t) + '</li>').join('') + '</ul>' : '');
-    return { headline: headline2, right, wrong, focus, full, name: name || null, night, deaths: DD, avoid: AV }; }); }
+    return { headline: headline2, right, wrong, focus, full, name: name || null, night, kill: !!kill, deaths: DD, avoid: AV }; }); }
 // (the short box, easier to read (your note, Oct 22: "make this more visually appealing/easier to read", "class color names when they
 // are mentioned"): the headline, then Focus as the big takeaway, the problems as numbered cards (what happened, Next time on its own
 // line, the map on the right), what went right as green chips, deaths and avoidable damage as small chips, and the full coaching folded.
@@ -22363,7 +22429,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
   const ach = A ? (A.items && A.items.length ? A.items.map((it) => achip(it)).join('') + (A.rest && A.rest.length ? '<span class="ach more" role="button" tabindex="0" data-avmore>+' + A.rest.length + ' more</span>' + A.rest.map((it) => achip(it, 1)).join('') : A.more ? '<span class="ach more">+' + A.more + ' more</span>' : '') : '<span class="cch-none">' + esc(A.line) + '</span>') : '';
   const html = '<section class="cch cch2" aria-label="Coach"><div class="cch-hd"><span class="cch-k">' + esc(o.title || (c.name ? 'Your coach' : 'Coach')) + '</span>' + (pm ? '<span class="nm" style="color:' + pm.color + '">' + esc(c.name.split('-')[0]) + '</span>' : '') + '</div>' +
     '<p class="cch-h">' + esc(c.headline) + '</p>' +
-    (focusSame ? '' : '<div class="cch-focus"><span class="cch-fk">🎯 Focus ' + (c.night ? 'next raid' : 'next pull') + '</span><span class="cch-fv">' + esc(c.focus) + '</span></div>') +
+    (focusSame ? '' : '<div class="cch-focus"><span class="cch-fk">🎯 Focus ' + (c.night ? 'next raid' : c.kill ? 'next week' : 'next pull') /* (the boss is dead: no next pull (Oct 22)) */ + '</span><span class="cch-fv">' + esc(c.focus) + '</span></div>') +
     (c.wrong.length ? '<div class="cch-sh">What went wrong</div><ol class="cch-ps cch-no">' + c.wrong.map(prob).join('') + '</ol>' : '') +
     (c.right.length ? '<div class="cch-good">' + c.right.map((x) => '<span class="cch-gd">✓ ' + esc(x.t) + '</span>').join('') + '</div>' : '') +
     (D || A ? '<div class="cch-acct2">' + (D ? '<div class="cch-ab' + (D.bad ? ' warn' : '') + '"><span class="cch-al">Deaths</span><div class="cch-chips">' + dch + '</div>' + (D.items && D.items.some((it) => it.dg) ? '<div class="cch-ddbox" hidden></div><div class="cch-ddtip">Tap a death to see what happened.</div>' : '') + '</div>' : '') + (A ? '<div class="cch-ab' + (A.bad ? ' warn' : '') + '"><span class="cch-al">Avoidable damage</span><div class="cch-chips">' + ach + '</div>' + (A.items && A.items.some((it) => it.avk) ? '<div class="cch-avbox" hidden></div><div class="cch-ddtip">Tap one to see what happened.</div>' : '') + '</div>' : '') + '</div>' : '') +
@@ -22803,13 +22869,16 @@ function nightMechC(o) {
   // (Oct 19, the Debriefing rebuild on All pulls (the single pull's checklist with the night's data): one line per mechanic with its
   // facts and a square per pull; it opens in place to its map at the worst pull, the trend, who was flagged most and each pull that
   // went wrong (each with Open this pull). A square opens that pull)
+  /* (where our typical pull stands among the fastest kills: the median pull's share of moments that went wrong (Oct 22, a test)) */
+  const nightKb = (r) => { if (r.x.id === 'avoid' || isInfo(r)) return ''; const sh = judged(r).map((n) => r.x.per.get(n)).filter((p) => p && p.nR).map((p) => (100 * ((p.nb || 0) + (p.nw || 0))) / p.nR).sort((a, b) => a - b);
+    return sh.length ? kbChip({ boss, diffId: o.reps && o.reps[0] ? o.reps[0].item.diffId : null }, r.x.id, sh[Math.floor(sh.length / 2)]) : ''; };
   const mapAt = (r) => { for (const n of [worstOf(r)].concat(judged(r).filter((q) => stAt(r, q) !== 'ok').reverse())) { const mp = mapIn(n, r.x.id); if (mp) return { mp, n }; } return null; };
   const line = (r) => { const lv = lvOf(r), wN = judged(r).filter((n) => stAt(r, n) !== 'ok').length, worst = worstOf(r), F = factsOf(r), sid = 'nml-' + r.x.id, ok = lv === 'clean', M = ok ? null : mapAt(r);
     const who = new Map(); if (!one) for (const p of r.x.per.values()) for (const w of new Set(p.who || [])) who.set(w, (who.get(w) || 0) + 1);
     const faces = [...who].filter(([n]) => pm.has(n)).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([n]) => avatar(pm.get(n), true)).join('');
     const facts = ok ? '<span class="mcx-s">Clean in ' + (judged(r).length === 1 ? 'the one pull it came up in' : judged(r).length === 2 ? 'both pulls it came up in' : 'all ' + judged(r).length + ' pulls it came up in') + '</span>' + bars(r)
       : '<span class="nmc-big"><b>' + (F.R ? Math.round(100 * (F.R - F.Wr) / F.R) + '%' : '—') + '</b> done right</span>' + wrTags(F) + '<span class="wr-tag">' + wN + ' of ' + plural(judged(r).length, 'pull') + '</span>' + (worst ? '<span class="wr-plus">worst: pull ' + worst + '</span>' : '') + (faces ? '<span class="mcx-who">' + faces + '</span>' : '') + bars(r) + (whoTop(r) ? '<span class="nmc-who">Most often: ' + whoTop(r) + '</span>' : '');
-    return '<details class="panel secd st-' + LC[lv] + ' dbr-line nml" id="' + sid + '" data-k="' + sid + '" data-sec="sec-' + esc(r.x.id) + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + secHead({ title: shortT(r.title), spell: r.x.spell, icon: r.x.icon }) + '<span class="sst ' + LC[lv] + '">' + LW[lv] + '</span>' +
+    return '<details class="panel secd st-' + LC[lv] + ' dbr-line nml" id="' + sid + '" data-k="' + sid + '" data-sec="sec-' + esc(r.x.id) + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + secHead({ title: shortT(r.title), spell: r.x.spell, icon: r.x.icon }) + nightKb(r) + '<span class="sst ' + LC[lv] + '">' + LW[lv] + '</span>' +
       '<span class="mcx-ln">' + facts + '</span></summary><div class="secbody">' + (M ? '<div class="nml-map"><span class="wr-map mcx-map">' + miniMap(M.mp, pm) + '</span><span class="sub">Pull ' + M.n + (byPull.get(M.n) ? ', ' + esc(res(byPull.get(M.n))) : '') + '</span></div>' : '') +
       '<div class="nml-f">' + facts + '</div>' + (typeof gdzHowTo === 'function' ? gdzHowTo(r.x.id, r.title, boss, o.reps && o.reps[0] ? o.reps[0].item.diffId : null) : '') + (r.body || '') + '</div></details>'; };
   // (Deaths over the night (your call, Oct 21: "deaths should be accounted for on all pulls"): a bar per pull (deaths up to the
@@ -22817,7 +22886,7 @@ function nightMechC(o) {
   const deathsLine = () => { const reps = (o.reps || []).slice().sort((a, b) => a.item.pull - b.item.pull); if (!reps.length) return '';
     const isMe = (d) => !one || d.player === one || String(d.player).split('-')[0] === one.split('-')[0];
     const causeOf = (d) => (d.big ? d.big.spell : (d.last && d.last.spell) || d.ability || d.killer || 'an unknown hit');
-    const P = reps.map((r) => { const all = r.deaths.filter(isMe).sort((a, b) => a.t - b.t), kept = keptDeaths(r).filter(isMe).sort((a, b) => a.t - b.t); return { r, n: r.item.pull, all, kept, late: all.length - kept.length }; });
+    const P = reps.map((r) => { const all = r.deaths.filter(isMe).sort((a, b) => a.t - b.t), kept = all.filter((d) => deathVerdict(r, d).counts) /* (the site's one death rule, so this line, the tile and the coach say the same number (Oct 22)) */; return { r, n: r.item.pull, all, kept, late: all.length - kept.length }; });
     const stOf = (x) => (!x.kept.length ? 'ok' : x.kept.length >= 3 ? 'bad' : 'warn'), nAll = P.reduce((s, x) => s + x.kept.length, 0), nLate = P.reduce((s, x) => s + x.late, 0);
     const nBadP = P.filter((x) => stOf(x) === 'bad').length, nSome = P.filter((x) => x.kept.length).length, lv = !nSome ? 'clean' : nBadP * 2 >= P.length ? 'major' : 'minor';
     const mx = Math.max(1, ...P.map((x) => x.kept.length)), byN = new Map(P.map((x) => [x.n, x]));
@@ -22874,7 +22943,7 @@ function nightMechC(o) {
   try {
     const reps = o.reps || [], pulls = o.pulls || [], kill = o.kill, bestP = o.bestP, onBoss = pulls.reduce((s, b) => s + (b.duration || 0), 0);
     const isMe = (d) => !one || d.player === one || String(d.player).split('-')[0] === one.split('-')[0];
-    const nD = reps.reduce((s, r) => s + keptDeaths(r).filter(isMe).length, 0), nC = tot('clean'), nM = tot('minor'), nF = all.length - nC - nM;
+    const nD = reps.reduce((s, r) => s + r.deaths.filter(isMe).filter((d) => deathVerdict(r, d).counts).length, 0) /* (the site's one death rule, the same count as the coach's Deaths line: it said 105 here and 119 there (Oct 22)) */, nC = tot('clean'), nM = tot('minor'), nF = all.length - nC - nM;
     const num = (k, v, sub) => '<div class="dbr-n"><span class="dbr-k">' + k + '</span><span class="dbr-v">' + v + '</span><span class="dbr-s">' + sub + '</span></div>';
     top += '<div class="dbr-4">' + num('Pulls', '<b>' + pulls.length + '</b>', durH(onBoss) + ' on the boss' + (reps.length < pulls.length ? ' · ' + reps.length + ' read' : '')) +
       (kill ? num('Kill', '<b class="dbr-ok">Pull ' + kill.pull + '</b>', kill.pull > 1 ? 'after ' + plural(kill.pull - 1, 'wipe') : 'first try') : num('Best pull', '<b>' + (bestP ? esc(pullShort(bestP)) : '—') + '</b>', bestP ? 'pull ' + bestP.pull + ' · ' + esc(pullLabel(bestP)) : 'no result yet')) +

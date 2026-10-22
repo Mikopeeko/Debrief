@@ -3347,7 +3347,7 @@ function paceCard(ev, r, h, mistakes, boss, x) {
   const hpAt = (re, t) => { const u = unitOf(re); if (!u) return null; let v = null; for (const [s, f] of u.samples) { if (s > t) break; v = f; } return v == null ? null : Math.round(100 * v); };
   // (one row: lvl 0 on pace, 1 a slip, 2 the plan broke; a mistake for 1 and 2 on Mythic)
   const row = (what, t, txt, kills, lvl, sub, detail, fix, noMistake) => {
-    const l = mythic ? lvl || 0 : 0;
+    const l = mythic && !kill ? lvl || 0 : 0; /* (a kill is shown, not judged: the boss died, so the pace was enough (Oct 22: All pulls said Pace "0% done right" with the kill among the misses)) */
     if (l && !noMistake) mistakes.push({ t, player: 'Raid', mechanic: 'Pace', id: spell[0], severity: l === 2 ? 'High' : 'Medium', detail, fix });
     rows.push([{ txt: what }, { t }, { txt, bad: l === 2, warn: l === 1, sub: sub || '' }, { txt: mythic ? kills : '', dim: true }]);
   };
