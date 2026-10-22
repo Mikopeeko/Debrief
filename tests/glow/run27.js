@@ -107,7 +107,8 @@ local function expect(what, got, want) print((got == want and "  ok   " or "  FA
 local function newPull() PULL_ID = PULL_ID + 1; fire(ev, "ENCOUNTER_END"); ADVANCE(NOW + 30); expect("nothing left glowing before the pull", GLOWING(), "nothing"); heard(); NOW = 0; TIMERS = {} end
 local styles = { "pulse", "border", "pixel", "sparkle", "proc", "assist", "onebutton", "altglow", "pandemic" }
 
-print("-- defaults: Pulse, gold, no sound, no voice")
+print("-- defaults: a gold ring on the icon's edge (Border, 2 px, no gap), no sound, no voice")
+expect("default style", DebriefGlowDB.style, "border"); expect("ring sits on the edge (no gap)", DebriefGlowDB.pad, 0); expect("ring thickness", DebriefGlowDB.thick, 2)
 newPull(); pull(); at(19.9, "just before Aura Mastery"); at(20, "Aura Mastery due"); press(31821); at(20.5, "pressed")
 
 print("-- the countdown on the spell matches NSRT's (NSRT shows Aura Mastery 8 s early)")
@@ -142,7 +143,7 @@ print("-- game styles in your colour (Game styles keep the game's colours: off)"
 DebriefGlowDB.gameColors = false; DebriefGlowDB.style = "assist"; DebriefGlow_Test(true); expect("rotation helper tinted gold", GLOWING():match("Aura Mastery %(([^)]+)%)"), "assist, gold"); ADVANCE(NOW + 3.1)
 DebriefGlowDB.gameColors = true
 print("-- a game style whose art this game version lacks falls back to Pulse")
-MISSING["OneButton_ProcLoop_Flipbook"] = true; DebriefGlowDB.style = "onebutton"; DebriefGlow_Test(true); expect("one-button proc missing", GLOWING():match("Aura Mastery %(([^)]+)%)"), "pulse, gold"); ADVANCE(NOW + 3.1); MISSING = {}
+MISSING["OneButton_ProcLoop_Flipbook"] = true; DebriefGlowDB.style = "onebutton"; DebriefGlow_Test(true); expect("one-button proc missing", GLOWING():match("Aura Mastery %(([^)]+)%)"), "border, gold"); ADVANCE(NOW + 3.1); MISSING = {}
 DebriefGlowDB.style = "pulse"
 print("-- the colour list sets the colour (and previews it)")
 DebriefGlow_SetColor("red"); expect("red", DebriefGlowDB.r .. ", " .. DebriefGlowDB.g .. ", " .. DebriefGlowDB.b, "1, 0.25, 0.2")

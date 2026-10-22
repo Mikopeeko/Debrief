@@ -7,7 +7,7 @@
 local ADDON = ...
 local DB
 local DEF = {
-  enabled = true, style = "pulse", colorName = "gold", r = 0.90, g = 0.71, b = 0.31, a = 1, thick = 3, pad = 2, speed = 1, lines = 8, scale = 1,
+  enabled = true, style = "border", colorName = "gold", r = 0.90, g = 0.71, b = 0.31, a = 1, thick = 2, pad = 0, speed = 1, lines = 8, scale = 1,
   lead = 0, hold = 8, stopOnPress = true, fallback = true, iconSize = 56,
   gameColors = true, timer = true, timerSize = 22, timerColor = "white", timerPos = "middle", timerTenths = false,
   sound = "none", channel = "Master",
@@ -58,7 +58,7 @@ end
 
 -- ---- the glows: one frame per spell, drawn in the chosen style ----
 -- (our own four styles, then the game's own glows: the same animated art Blizzard uses, asked for by name, never bundled)
-local STYLES = { { "pulse", "Pulse (soft glow that breathes)" }, { "border", "Border (solid edge)" }, { "pixel", "Pixel lines (running around the edge)" },
+local STYLES = { { "pulse", "Pulse (soft glow that breathes)" }, { "border", "Border (a ring on the icon's edge)" }, { "pixel", "Pixel lines (running around the edge)" },
   { "sparkle", "Sparkles (dots circling the icon)" },
   { "proc", "Game: action bar proc (burst, then the swirl)" }, { "assist", "Game: rotation helper (blue ants)" },
   { "onebutton", "Game: one-button proc" }, { "altglow", "Game: soft proc ring" }, { "pandemic", "Game: Cooldown Manager \"ending soon\" pulse" } }
@@ -186,7 +186,7 @@ local function dress(g, id)
   local th, st = DB.thick or 3, p.style or DB.style
   local sp = DB.speed or 1
   quiet(g); g:SetAlpha(a)
-  if GAME[st] and not hasArt(st) then st = "pulse" end
+  if GAME[st] and not hasArt(st) then st = "border" end
   g.drawn = st
   if GAME[st] then
     -- (the game's colours unless you've turned that off, or this spell has a colour of its own)
@@ -1095,6 +1095,13 @@ ev:SetScript("OnEvent", function(_, e, a1, a2, a3)
     DebriefGlowDB = DebriefGlowDB or {}; DB = DebriefGlowDB
     for k, v in pairs(DEF) do if DB[k] == nil then DB[k] = v end end
     DB.spells = DB.spells or {}; DB.seen = DB.seen or {}
+    -- (0.4.3: the ring on the icon's edge became the default look; settings still on the old defaults move to it once)
+    if not DB.ringDefault then
+      if DB.style == "pulse" then DB.style = "border" end
+      if DB.pad == 2 then DB.pad = 0 end
+      if DB.thick == 3 then DB.thick = 2 end
+      DB.ringDefault = true
+    end
     if DB.colorName == nil then DB.colorName = "gold" end
     registerSettings()
   elseif e == "ADDON_LOADED" or e == "PLAYER_LOGIN" then hookNSRT()
