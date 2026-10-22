@@ -1681,6 +1681,7 @@ const PATCH_NOTES = [
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
+    'A night read from your PC now says so on its Share bar: its page address won\'t open for anyone else, so use Share. When your team\'s Warcraft Logs has the same raid, Open the Warcraft Logs version takes you to the same pull, where every pull has its own link.',
     'Debrief Addon: a kill on your recap card opens with the raid lead\'s kill call, the same one as Debriefing, like "Boss down! 30 pulls tonight, and we got it." with shout-outs.',
     'Each mechanic on Debriefing now has a small tag showing where you stand against top guilds, like "better than 9 of 19 top guilds" or "clean, like 18 of 19 top guilds". On All pulls it uses your typical pull. Hover it to see the numbers.',
     'All pulls lists the two things that wiped you most when both did it several times, so a missed kick that wiped you 10 times no longer falls out of the top three.',
@@ -23435,11 +23436,39 @@ function shrBar() {
   if (S.shr) return '<div class="panel shr-bar"><span class="shr-t"><b>Shared raid night</b><span class="sub">' + esc([S.shr.by ? 'Shared by ' + S.shr.by : 'A shared copy', S.shr.title].filter(Boolean).join(' · ')) + '. Anyone with the link can see it.</span></span>' +
     '<button class="btn sm" type="button" data-shrcopy="1">Copy link</button></div>';
   if (!shrOk()) return '';
-  const v = shrSaved(), left = shrMine().filter((b) => !(v && v.sent[shrIdent(b)])).length;
+  const v = shrSaved(), left = shrMine().filter((b) => !(v && v.sent[shrIdent(b)])).length, wv = shrWclHit();
+  if (!wv) setTimeout(shrWclFind, 0); /* (looks for the same raid on your teams' Warcraft Logs, once per night) */
   return '<div class="panel shr-bar"><span class="shr-t"><b>' + (v ? 'Tonight is shared' : 'Share tonight with your officers') + '</b><span class="sub">' +
+    '<span class="shr-pc">Read from your PC, so this page\'s address won\'t open for anyone else. Use ' + (v && !left ? 'Copy link' : 'Share') + (wv ? ', or open the Warcraft Logs version, where every pull has its own link' : '') + '.</span> ' +
     (v ? (left ? plural(left, 'new pull') + ' since you shared. Press Share to add ' + (left === 1 ? 'it' : 'them') + '.' : 'Anyone with the link can see tonight\'s raid.') : 'Get a link anyone can open, on a PC or phone. Anyone with the link can see tonight\'s raid.') + '</span></span>' +
+    (wv ? '<button class="btn sm" type="button" data-shrwcl="' + esc(wv.code) + '" title="' + esc(wv.title || 'Warcraft Logs') + '">Open the Warcraft Logs version</button>' : '') +
     '<button class="btn ' + (v && !left ? '' : 'primary ') + 'sm" type="button" data-shr="1">' + (v && !left ? 'Copy link' : 'Share') + '</button></div>';
 }
+// (the same raid on Warcraft Logs: a report from one of your teams (Teams page) whose time covers tonight's first pull. Log times are
+// the PC's own clock, so they're turned into real time with the pull's own offset, or this browser's time zone)
+let SHR_WCL = { k: null, v: null, busy: false };
+const shrWclKey = () => { const l = shrMine(); return l.length ? l[0].id + ':' + l[0].startMs : ''; };
+const shrWclHit = () => (SHR_WCL.k && SHR_WCL.k === shrWclKey() ? SHR_WCL.v : null);
+async function shrWclFind() {
+  const k = shrWclKey(); if (!k || SHR_WCL.k === k || SHR_WCL.busy || !WCL.HOSTED) return;
+  SHR_WCL = { k, v: null, busy: true };
+  try {
+    const l = shrMine(), real = (b) => (b.wallMs != null ? b.wallMs : b.startMs + new Date(b.startMs).getTimezoneOffset() * 60000);
+    const t0 = real(l[0]), t1 = real(l[l.length - 1]), creds = await wclCreds();
+    for (const g of groups().filter((x) => x.id && x.kind !== 'char')) {
+      let rs = []; try { rs = await WCL.latestReports(creds, g); } catch (e) { rs = []; }
+      const hit = (rs || []).find((r) => r.startTime <= t0 + 15 * 60000 && (r.endTime || 0) >= t1 - 15 * 60000);
+      if (hit) { SHR_WCL.v = { code: hit.code, title: hit.title || '' }; break; }
+    }
+  } catch (e) { /* (no Warcraft Logs version: the bar stays as it is) */ } finally { SHR_WCL.busy = false; }
+  if (SHR_WCL.v && SHR_WCL.k === shrWclKey()) shrRedraw();
+}
+// (opens the Warcraft Logs version at the same pull: same boss, difficulty and pull number, when it has one)
+document.addEventListener('click', async (e) => { const t = e.target.closest && e.target.closest('[data-shrwcl]'); if (!t) return; e.preventDefault();
+  const was = S.item, code = t.dataset.shrwcl; t.disabled = true;
+  try { await openWcl({ code, fight: null }, await wclCreds());
+    const m = was && S.index && S.index.bosses.find((b) => b.id === was.id && b.diffId === was.diffId && b.pull === was.pull); if (m) select(m);
+  } catch (x) { t.disabled = false; t.title = (x && x.message) || 'Couldn\'t open it'; } });
 const shrRedraw = () => { const b = $('#bossHead .shr-bar'); if (b) b.outerHTML = shrBar() || ''; };
 async function shrIdOf(key) { const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key))).slice(0, 16); return btoa(String.fromCharCode(...h)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
 // (sends the pulls not sent yet, then the list of pulls; step(done, of, pull) says how far it is)
