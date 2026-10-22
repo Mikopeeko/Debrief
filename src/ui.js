@@ -1668,10 +1668,12 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-22', h: [
+    { t: 'Your coach on Rotation', d: 'Every Rotation page now opens with your coach: the one thing to focus on next pull, your top three fixes with why they matter and how to do them, and what you did well. It names the same first fix as Debriefing.' },
     { t: 'Your coach on Debriefing', d: 'Every pull and every night now opens with a coach right under the boss banner: what went right, what went wrong and how to fix it, and one thing to focus on next pull. Pick yourself at the top right and it coaches you. Read the full coaching opens the long version.' },
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
   ], n: [
+    'Rotation: your talent tree now shows right in the header card, and the menu of blocks above the chapters is gone (the coach says what matters now).',
     'Debriefing is calmer: the numbers on top, then the coach, then the mechanics (the clean ones folded into one line), and everything else in one drawer at the bottom.',
     'The coach shows a small map on each problem, and Copy for Discord and Load a note are small buttons in its corner.',
     'Debriefing says each thing once: the Fix cards follow the coach\'s list, and the lines that repeated the coach are gone.',
@@ -14628,7 +14630,7 @@ function specPage(o) {
   const ring = '<svg class="spc-ring" viewBox="0 0 80 80" aria-hidden="true"><circle r="34" cx="40" cy="40" class="bg"/><g transform="rotate(-90 40 40)">' + arc(wS('ok'), 'ok') + arc(wS('warn'), 'warn') + arc(wS('bad'), 'bad') + '</g></svg>';
   const pill = (f, l, n, cls) => '<button type="button" class="spc-pill ' + cls + (SF === f ? ' on' : '') + '" data-sf="' + f + '" aria-pressed="' + (SF === f) + '">' + l + ' <b>' + n + '</b></button>';
   const it = per[per.length - 1].r.item, meta = one ? esc(it.boss || '') + ', pull ' + it.pull + ' (' + esc(pullLabel(it)) + ')' : rows.length + ' pulls of ' + esc(it.boss || '');
-  const focus = checks.filter((c) => (c.st === 'bad' || c.st === 'warn') && !/^st:/.test(String(c.k || ''))).sort((a, b) => (b.cost || 0) - (a.cost || 0) || (a.st === 'bad' ? -1 : 0) + (b.st === 'bad' ? 1 : 0)).slice(0, 3), fTot = focus.reduce((v, c) => v + (c.cost || 0), 0);
+  const focus = checks.filter((c) => (c.st === 'bad' || c.st === 'warn') && !/^st:/.test(String(c.k || ''))).sort((a, b) => (b.st === 'bad') - (a.st === 'bad') || (b.cost || 0) - (a.cost || 0) || (b.share || 0) - (a.share || 0)).slice(0, 3), fTot = focus.reduce((v, c) => v + (c.cost || 0), 0);
   // (your output: damage, or healing for a healer, a second over the pull (or the night's pulls, wipes included), as Warcraft Logs counts it: all of it over the
   // fight's length; on a kill, your parse, and how far you are from the middle of the top 100 parses for your spec on this boss, said as a gap)
   const outK = UN === 'healing' ? 'healS' : 'dmgS', outT = per.reduce((v, x) => v + ((x.p[outK] || []).reduce((w, y) => w + (y || 0), 0)), 0), durT = per.reduce((v, x) => v + Math.max(1, x.r.duration || x.end || x.t1), 0), outR = outT / durT;
@@ -14652,19 +14654,112 @@ function specPage(o) {
   const tSum0 = o.TAL ? talentSum(LP.r, LP.p) : null, trOpen = S.specTree === true;
   const htal = tSum0 && tSum0.length ? '<button type="button" class="spc-htal" aria-expanded="' + trOpen + '" onclick="var d=document.querySelector(\'.spc-bl2 details.spc-all\');if(d){d.open=!d.open;this.setAttribute(\'aria-expanded\',d.open);if(d.open)d.scrollIntoView({block:\'nearest\',behavior:\'smooth\'})}"><b>Talents</b>' +
     tSum0.map((x) => '<span class="spc-tsp">' + esc(x.l) + ' <i>' + x.n + (x.cap ? '/' + x.cap : '') + '</i></span>').join('') + (one ? '' : '<span class="sub">latest pull</span>') + '<span class="spc-tsh"><span class="spc-tso">Show talents ▸</span><span class="spc-tsc">Hide talents ▴</span></span></button>' : '';
+  // (your talents in the header (your call, Oct 22): the whole tree, always showing, without its legend; hover a talent for its name)
+  let talTree = ''; try { talTree = (talentGraphHtml(LP.r, LP.p, o.keyN || new Set()) || '').replace(/<div class="tm-lg">[\s\S]*$/, ''); } catch (e) { talTree = ''; }
+  const talP = talTree ? '<div class="spc-hf spc-tq"><div class="spc-hft">Your talents' + (one ? '' : '<span> · from the latest pull</span>') + '</div><div class="spc-tqg">' + talTree + '</div></div>' : '<div class="spc-hf">' + spcGap(prs1, outR, topOut, UN) + '</div>';
   const fr = null; // (the ornate spec frame, specFrame(P0), is off: the card is a plain panel like the site's other cards)
   const hero = '<div class="spc-hero' + (fr ? ' spc-sf' : '') + ' cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--cc:' + (P0.color || '#ff7c0a') + ';--sart:' + specArt(P0) + (fr ? fr.vars : '') + '">' + (fr ? fr.orn : '') +
     '<div class="spc-hl"><div class="spc-rw">' + ring + '<div class="spc-rc" title="' + esc(o.ringTip || 'Each check counts as much as it matters. A clean check counts in full, and a minor one counts half.') + '"><b>' + score + '</b><span>out of 100</span></div></div>' +
     '<div class="spc-hm"><div class="spc-hn">' + heroAvHd(P0) + '<div><h3>' + esc(P0.name) + (o.heroN ? '<span class="rot-herot">' + esc(o.heroN) + '</span>' : '') + '</h3><div class="spc-hs">' + esc(P0.specName || '') + '</div><div class="sub">' + meta + '</div></div></div>' + outH +
-    (TOPB && TOPB.score ? '<div class="spc-htp" title="' + esc(topWho(o.top, TOPB)) + '">' + esc(o.topH || 'The ' + o.top + ' who parsed 75 or higher in the fastest kills of this boss') + ' score about ' + TOPB.score + '.</div>' : '') + '<div class="spc-pills">' + pill('all', 'All', checks.length, 'all') + pill('bad', 'Failed', cnt.bad, 'bad') + pill('warn', 'Some mistakes', cnt.warn, 'warn') + pill('ok', '✓ Clean', cnt.ok, 'ok') + '</div>' + htal + '</div></div>' +
-    '<div class="spc-hf"><div class="spc-hft">Work on these first' + (fTot >= 20000 ? '<span> · fixing these is worth about ' + C(fTot) + ' ' + UN + '</span>' : '') + '</div>' + (focus.length ? focus.map((c) => '<button type="button" class="spc-fo ' + c.st + '" data-fo="' + slug(c.k) + '">' + spellIcon(0, c.ic) + '<span><b>' + esc(c.label) + '</b><span class="sub">' + esc(c.tip ? 'Next time: ' + tipNow(c.tip) : spcFirst(c.sub)) + '</span></span>' + (c.cost >= 20000 ? '<i class="spc-fc">' + C(c.cost) + '</i>' : '') + '</button>').join('') : spcGap(prs1, outR, topOut, UN)) + goodH + '</div></div>';
+    (TOPB && TOPB.score ? '<div class="spc-htp" title="' + esc(topWho(o.top, TOPB)) + '">' + 'Top ' + esc(o.top) + ' score about ' + TOPB.score + '.</div>' : '') + '<div class="spc-pills">' + pill('all', 'All', checks.length, 'all') + pill('bad', 'Failed', cnt.bad, 'bad') + pill('warn', 'Some mistakes', cnt.warn, 'warn') + pill('ok', '✓ Clean', cnt.ok, 'ok') + '</div></div></div>' + talP + '</div>';
   // (your talents as one line, points in each tree, with the tree folded until you open it (the Rotation redesign, Oct 19))
   const tSum = o.TAL ? talentSum(LP.r, LP.p) : null;
-  const build = o.TAL ? '<div class="spc-build spc-bl1' + (htal ? ' spc-bl2' : '') + ' cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--sart:' + specArt(P0) + '"><details class="spc-all"' + (S.specTree === true ? ' open' : '') + '><summary><b>Talents</b>' + (tSum && tSum.length ? tSum.map((x) => '<span class="spc-tsp">' + esc(x.l) + ' <i>' + x.n + (x.cap ? '/' + x.cap : '') + '</i></span>').join('') : '') + (one ? '' : '<span class="sub">from the latest pull</span>') + '<span class="spc-tsh"><span class="spc-tso">Show talents</span><span class="spc-tsc">Hide talents</span> ▸</span></summary>' + (talentGraphHtml(LP.r, LP.p, o.keyN || new Set()) || '') + '</details></div>'
+  const build = talTree ? '' : o.TAL ? '<div class="spc-build spc-bl1' + (htal ? ' spc-bl2' : '') + ' cls-' + esc(String(P0.cls || '').toLowerCase()) + '" style="--sart:' + specArt(P0) + '"><details class="spc-all"' + (S.specTree === true ? ' open' : '') + '><summary><b>Talents</b>' + (tSum && tSum.length ? tSum.map((x) => '<span class="spc-tsp">' + esc(x.l) + ' <i>' + x.n + (x.cap ? '/' + x.cap : '') + '</i></span>').join('') : '') + (one ? '' : '<span class="sub">from the latest pull</span>') + '<span class="spc-tsh"><span class="spc-tso">Show talents</span><span class="spc-tsc">Hide talents</span> ▸</span></summary>' + (talentGraphHtml(LP.r, LP.p, o.keyN || new Set()) || '') + '</details></div>'
     : (o.talents && o.talents.length ? '<div class="spc-build"><div class="spc-bh"><span class="sub">Read from ' + (one ? 'this pull' : 'these pulls') + '</span><div class="spc-tals">' + o.talents.map((t) => '<span class="spc-t">' + spellIcon(0, (o.talIc || {})[t] || t) + esc(t) + '</span>').join('') + '</div></div></div>' : '');
   // (the page: the summary; your talents, open unless you fold them; the pull at a glance (one pull's cooldowns over time, or the night's pulls); the chapters;
   // the guides' credit)
-  return { score, checks, html: hero + build + (glIn ? '' : glance) + nav + body + '<p class="sub spc-src">' + esc(o.src || '') + '</p>' };
+  let coach = ''; try { coach = spcCoach({ checks, focus, good, TOPB, score, outR, topOut, UN, one, kill: !!it.kill, top: o.top, numV, LOWB, WT, reps: per.map((x) => x.r), name: P0.name }).replace(/\s*\((?:both|your) guides?[^)]*\)|\s*\([^)]*\b(?:Wowhead|Icy Veins)\b[^)]*\)/gi, ''); } catch (e) { coach = ''; }
+  return { score, checks, html: coach + hero + build + (glIn ? '' : glance) + body + '<p class="sub spc-src">' + esc(o.src || '') + '</p>' };
+}
+// (the coach's note (your call, Oct 22): right under the header, what went right and what went wrong the way a world-first raid leader
+// would say it, each problem with how to fix it, and one thing to focus on next pull. Short first, so it fits a phone screen; "Read the
+// full coaching" opens the in-depth version in place. Written only from this page's own checks, so it never says anything the tiles don't:
+// the costliest fixes first (the same as Work on these first), then lines that are fine but clearly behind the top players. Proc-driven
+// lines and stats are never raised as mistakes; stats get one gear line)
+function spcCoach(d) {
+  const { checks, focus, good, UN, one } = d, top = d.TOPB || {}, txt = (v) => String(v == null ? '' : v).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  const tipOf = (c) => (c.tip ? tipNow(c.tip) : ''), first = (c) => spcFirst(c.sub), nm = d.top || 'top players', of = one ? (d.kill ? 'kill' : 'pull') : 'night';
+  // (behind the top players on a line that is fine: at least 3 points, the ones that count the most first)
+  const gap = checks.filter((c) => c.st === 'ok' && !focus.includes(c) && top[c.k] != null && !/^(p:|st:)/.test(String(c.k))).map((c) => { const a = d.numV(c.v), b = d.numV(top[c.k]); if (a == null || b == null) return null;
+    const g = d.LOWB.test(c.k) ? a - b : b - a; return g >= 3 ? { c, g } : null; }).filter(Boolean).sort((u, w) => (d.WT[w.c.k] || 1) * w.g - (d.WT[u.c.k] || 1) * u.g);
+  const wrong = focus.map((c) => ({ c, kd: c.st })).concat(gap.map((x) => ({ c: x.c, kd: 'gap' }))).slice(0, 3), right = good.slice(0, 2);
+  // (one #1 on every tab (Oct 22): the shared coach's first fix leads here too. A rotation one moves to the top of this list; a death or a
+  // mechanic becomes the Focus next pull line)
+  let S1 = null; try { S1 = typeof coachSummary === 'function' && d.reps && d.reps.length ? coachSummary(d.reps, d.name) : null; } catch (e) { S1 = null; }
+  const w1 = S1 && S1.wrong && S1.wrong[0];
+  if (w1 && w1.kind === 'rot' && w1.key) { const j = wrong.findIndex((x) => x.c.k === w1.key);
+    if (j > 0) wrong.unshift(wrong.splice(j, 1)[0]); else if (j < 0) { const c1 = checks.find((y) => y.k === w1.key); if (c1) { wrong.unshift({ c: c1, kd: c1.st }); if (wrong.length > 3) wrong.length = 3; } } }
+  const gear = checks.find((c) => /^st:/.test(String(c.k)) && (c.st === 'warn' || c.st === 'bad'));
+  // (full sentences, the way a top raider would explain it (your note, Oct 22): what happened, how it compares, why it matters, how to fix it)
+  const tS = top.score ? +top.score : null, sc = d.score, nW = ['', 'one habit', 'two habits', 'three habits'][wrong.length];
+  const head = sc >= (tS ? tS - 3 : 90) ? 'Strong ' + of + '. You scored ' + sc + (tS ? ', right where the top ' + nm + ' land' : '') + ', so this is about polish, not a rework.'
+    : sc >= 75 ? 'A good ' + of + ' with room to grow. You scored ' + sc + (tS ? ' and the top ' + nm + ' score about ' + tS + ', so you are close' : '') + '.'
+    : 'There is a lot to gain here, and that is good news, because the fixes are clear. You scored ' + sc + (tS ? ' and the top ' + nm + ' score about ' + tS : '') + '.';
+  const outL = d.topOut ? ' You did ' + C(d.outR) + ' ' + UN + ' a second, against their ' + C(d.topOut) + '.' : '';
+  const close = !wrong.length ? ' Nothing big stands out to fix, so keep doing exactly this.' : ' Most of the gap comes from ' + nW + ', and ' + (wrong.length === 1 ? 'it is' : 'each one is') + ' something you can practice on the very next pull.';
+  const clean = (t) => String(t || '').replace(/\s*\([^)]*\b(guides?|Wowhead|Icy Veins|SimulationCraft|Raidbots|Method)\b[^)]*\)/gi, '').replace(/\s+([.,])/g, '$1').trim();
+  const sent = (t) => { const x = clean(t); return x ? x.replace(/[.!?]?$/, (m) => m || '.') : ''; };
+  // (the fix, without repeating a reason the first sentence already gave)
+  const tipX = (c) => { let t = sent(tipOf(c)); const m = t.match(/,? because ([^.]+)\./i); if (m && sent(first(c)).toLowerCase().includes(m[1].slice(0, 24).toLowerCase())) t = t.replace(m[0], '.'); return t; };
+  // (a fix that is a list of buttons reads as an order to follow)
+  const VERB = /^(Put|Spend|Keep|Press|Use|Cast|Pick|Favor|Hold|Save|Line|Get|Move|Stand|Start|Aim|Try|Let|Drink|Refresh|Apply|Pool|Open|Avoid|Don|Never|Always|Fill|Wait|Plan|Time|Swap|Go|Stay|Make|Push|Weave|Delay|Align|Prepare|Pre-)/;
+  const howTo = (t) => (!t || VERB.test(t) || !/,? then /.test(t) ? t : 'Follow this order: ' + t);
+  const fixOf = (x) => (tipOf(x.c) ? 'To fix it: ' + howTo(tipX(x.c)) : x.kd === 'gap' ? 'Aim for their ' + txt(top[x.c.k]) + '.' : '');
+  const topS = (c) => { if (top[c.k] == null) return ''; const n0 = (txt(c.v).match(/\d+(?:\.\d+)?/) || [''])[0];
+    return n0 && sent(first(c)).includes(n0) ? 'The top players had ' + txt(top[c.k]) + '.' : 'You had ' + ofPct(txt(c.v), top[c.k]) + ', and the top players had ' + txt(top[c.k]) + '.'; };
+  // (why it matters (your note, Oct 22: "explain why it's important, the logic behind that kind of gameplay"): the check's own reasoning, without the
+  // judging rules or any site names; otherwise the plain reason for that kind of check)
+  const NOISE = /\b(Debrief|is good|are good|or more is|or less is|counts? (as|half|in full)|judged|listed|graded|within \d|Good is|top players|marked|shaded|the times|times below|Close values|the bar|bar is|is enough|counts? when)\b|Wowhead|Icy Veins|SimulationCraft|Raidbots|Method\b|Warcraft Logs/i;
+  const whyOf = (c, n) => { const how = String(c.how || '').replace(/<[^>]+>/g, ' '), t0 = sent(tipOf(c)).toLowerCase().slice(0, 20);
+    const l = how.split(/(?<=[.!?])\s+(?=[A-Z0-9])/).map((x) => clean(x).replace(/^(Both guides|Your guides|Both)[^:]{0,40}:\s*/i, '')).filter((x) => x.length > 25 && x.length <= 170 && !NOISE.test(x) && !/^This (is|counts|shows)\b/.test(x) && /\b(is|are|makes?|gives?|heals?|deals?|lets?|increases?|grants?|means?|does|will|can|costs?|loses?|wastes?|adds?|hits?|lasts?|resets?|refunds?|spends?)\b/i.test(x) && !(t0 && x.toLowerCase().startsWith(t0)));
+    const k = String(c.k), GEN = /^(abc|cpm|open|apl)$/.test(k);
+    if (l.length && !GEN) return l.slice(0, n || 2).map((x) => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
+    return /^p:/.test(k) ? 'A proc is free power, and letting one run out or get replaced throws away a cast you already earned.'
+      : /^(cd:|win:)/.test(k) ? 'Your big cooldowns are where most of your ' + UN + ' comes from, so every late press or lost second there costs the most.'
+      : /^(abc|cpm)$/.test(k) ? 'Every second you are not casting is ' + UN + ' you never get back, and over a long fight those seconds add up.'
+      : k === 'open' ? 'The opener lines your strongest buttons up with your cooldowns while everything is ready, so it sets the pace for the whole pull.'
+      : k === 'apl' ? 'The priority is the order that gets the most out of every global cooldown, so each slip is a weaker button pressed.'
+      : /^(mana|mnx)$/.test(k) ? 'Mana you end the fight with is healing you never did.' : ''; };
+  const costS = (c, i) => (c.cost >= 20000 ? 'That cost you about ' + C(c.cost) + ' ' + UN + (i === 0 ? ', more than anything else on this ' + of : '') + '.' : '');
+  const rightS = ({ c, b }) => { if (!b) return '<b>' + esc(c.label) + ':</b> ' + esc(sent(first(c))); const a = d.numV(c.v), t = d.numV(top[c.k]);
+    return 'On <b>' + esc(c.label) + '</b> you ' + (a != null && a === t ? 'matched' : 'beat') + ' the top players, with ' + esc(ofPct(txt(c.v), top[c.k])) + ' against their ' + esc(txt(top[c.k])) + '.'; };
+  const rightEnd = right.some((x) => x.b) ? ' That is the hard part of the spec, so keep it exactly like this.' : '';
+  // (no "why" that only repeats what the first sentence already said)
+  const wordsOf = (t) => new Set(String(t).toLowerCase().match(/[a-z]{4,}/g) || []);
+  const echo = (w, c) => { const a = wordsOf(w), b = wordsOf(first(c)); let n = 0; a.forEach((x) => { if (b.has(x)) n++; }); return a.size && n / a.size >= 0.5; };
+  const whyL = (c, n) => { const w = whyOf(c, n); return w && !echo(w, c) ? 'Why it matters: ' + w : ''; };
+  const wrongS = (x, i) => [sent(first(x.c)), topS(x.c), x.kd === 'gap' ? 'It is already fine, so this is polish rather than a mistake.' : i === 0 ? costS(x.c, 0) : '', whyL(x.c, 1), fixOf(x)].filter(Boolean).join(' ');
+  const short = (t) => clean(String(t).split(/(?<=[.!?])\s+/)[0]).replace(/[.!?]?$/, '.');
+  const next = wrong.length ? (tipOf(wrong[0].c) ? howTo(short(tipOf(wrong[0].c))) : 'Get your ' + wrong[0].c.label + ' closer to the top players.') + ' Everything else can wait until that feels natural.' : '';
+  // (the short version: two things that went right, up to three to fix, each in full sentences with its reason)
+  const sh = '<div class="rcc-cols">' + (right.length ? '<div class="rcc-ok"><h5>What went right</h5><ul>' + right.map((x, i) => '<li>' + rightS(x) + (i === right.length - 1 ? esc(rightEnd) : '') + '</li>').join('') + '</ul></div>' : '') +
+    (wrong.length ? '<div class="rcc-bad"><h5>What to fix</h5><ol>' + wrong.map((x, i) => '<li class="' + x.kd + '"><b>' + esc(x.c.label) + '.</b> ' + esc(wrongS(x, i)) + '</li>').join('') + '</ol></div>' : '') + '</div>';
+  // (the full coaching: each fix with what happened, the top players, what it cost, and how to do it)
+  const full = wrong.map((x, i) => { const c = x.c, parts = [sent(first(c)), topS(c), costS(c, i), x.kd === 'gap' ? 'It is already fine, but this is the polish that separates you from the best.' : ''].filter(Boolean).join(' '), why0 = whyOf(c, 2), why = why0 && !echo(why0, c) ? why0 : '';
+    return '<li class="' + x.kd + '"><b class="rcc-t">' + esc(c.label) + '</b>' + esc(parts) + (why ? '<span class="rcc-why">' + esc(why) + '</span>' : '') + (tipOf(c) ? '<span class="rcc-do">' + esc(howTo(tipX(c))) + '</span>' : '') + '</li>'; }).join('');
+  // (your pick, Oct 22: the numbered format with Why it matters and How is the coach itself, shown open; nothing is said twice. What went right
+  // stays two short lines; the focus line names where to start; more strengths and the gear line fold away)
+  const more = good.slice(right.length), keep = more.length ? '<p class="rcc-keep"><b>Also keep doing:</b> ' + more.map((x) => rightS(x)).join(' ') + '</p>' : '';
+  const gearL = gear ? '<p><b>Gear:</b> ' + esc([sent(first(gear)), gear.tip ? sent(tipOf(gear)) : ''].filter(Boolean).join(' ')) + '</p>' : '';
+  const lc1 = (t) => String(t).charAt(0).toLowerCase() + String(t).slice(1), tail = ' Everything else can wait until that feels natural.';
+  const startL = w1 && w1.kind !== 'rot' ? 'Start with ' + lc1(clean(w1.label)) + '. ' + sent(w1.fix) + tail
+    : wrong.length ? 'On your next pull, start with this one: ' + wrong[0].c.label + '.' + tail : '';
+  // (layout A (your pick, Oct 22): focus first, the fixes as cards side by side with their number, why and how, what went right as a strip)
+  const fT = w1 && w1.kind !== 'rot' ? clean(w1.label) : wrong.length ? (tipOf(wrong[0].c) ? short(tipX(wrong[0].c)) : wrong[0].c.label) : '';
+  const fS = w1 && w1.kind !== 'rot' ? sent(w1.fix) + tail : wrong.length ? tail.trim() : '';
+  const focusB = fT ? '<div class="rcc-fb"><small>Focus next pull</small><b>' + esc(fT.replace(/\.$/, '')) + '</b><span>' + esc(fS) + '</span></div>' : '';
+  const card = (x, i) => { const c = x.c, tv = top[c.k] != null ? txt(top[c.k]) : '', v0 = txt(c.v), num = v0 ? ofPct(v0, top[c.k] || '') : '';
+    const w0 = whyOf(c, 1), why = w0 && !echo(w0, c) ? w0 : '', cost = c.cost >= 20000 ? ' It cost about ' + C(c.cost) + ' ' + UN + '.' : '';
+    return '<div class="rcc-cd ' + x.kd + '"><span class="rcc-n">' + (i + 1) + (i === 0 ? ' · Fix first' : x.kd === 'gap' ? ' · Polish' : '') + '</span><h4>' + esc(c.label) + '</h4>' +
+      (num ? '<div class="rcc-num">' + esc(num) + (tv ? ' <span>top players ' + esc(tv) + '</span>' : '') + '</div>' : '') +
+      (why ? '<p class="rcc-y"><b>Why:</b> ' + esc(why + cost) + '</p>' : '<p class="rcc-y"><b>What happened:</b> ' + esc(sent(first(c)) + cost) + '</p>') +
+      (tipOf(c) ? '<p class="rcc-hw"><b>How:</b> ' + esc(howTo(tipX(c))) + '</p>' : '') + '</div>'; };
+  const chip = ({ c, b }) => { const a = d.numV(c.v), t = d.numV(top[c.k]); return '<span class="rcc-chip" title="' + esc(sent(first(c))) + '">' + esc(c.label) + (b ? ' <i>' + esc(ofPct(txt(c.v), top[c.k]) + (a != null && a === t ? ', same as the top' : ', top ' + txt(top[c.k]))) + '</i>' : '') + '</span>'; };
+  return '<section class="rcc"><div class="rcc-top"><div><div class="rcc-h"><span class="rcc-q" aria-hidden="true">“</span><h3>Your coach</h3><span class="sub">how to get better, from this ' + of + '</span></div>' +
+    '<p class="rcc-lead"><b>' + esc(head) + '</b>' + esc(outL + close) + '</p></div>' + focusB + '</div>' +
+    (wrong.length ? '<div class="rcc-cds">' + wrong.map(card).join('') + '</div>' : '') +
+    (good.length ? '<div class="rcc-strip"><b>What you did well</b>' + good.slice(0, 3).map(chip).join('') + '</div>' : '') +
+    (gearL ? '<details class="rcc-full"><summary>More from your coach</summary>' + gearL + '</details>' : '') + '</section>';
 }
 // (a few words under each chapter's name on the Rotation tab)
 const SPC_CHS = { Rotation: 'casting, your priority and your procs', Resources: 'what you built and what you wasted', Cooldowns: 'your big buttons over the pull, and the boss\'s windows',
