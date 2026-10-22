@@ -68,6 +68,7 @@ kbd { font: 700 12px var(--body); background: var(--raised); border: 1px solid v
 .btn:hover { border-color: var(--faint); }
 .btn.primary { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
 .btn:disabled { opacity: .45; cursor: default; }
+a.btn.web { text-decoration: none; display: inline-flex; align-items: center; }
 /* your pulls */
 .phead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
 .phead select { margin-left: auto; min-width: 0; max-width: 100%; height: 34px; padding: 4px 30px 4px 12px; border: 1px solid var(--line2); border-radius: 7px; background: var(--raised); font-size: 13.5px; color: var(--muted); }
@@ -156,6 +157,7 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
   <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 2 57 11.5V30c0 15.5-11.3 26.6-25 32C18.3 56.6 7 45.5 7 30V11.5Z" fill="url(#lgfMetal)" stroke="#4a300a" stroke-width=".8"/><path d="M32 7 52.5 14.8V30c0 12.8-9.2 22-20.5 26.6C20.7 52 11.5 42.8 11.5 30V14.8Z" fill="url(#lgfMetalDk)"/><path d="M32 9.2 50.5 16.3V30c0 11.7-8.3 20.2-18.5 24.5C21.8 50.2 13.5 41.7 13.5 30V16.3Z" fill="url(#lgfEnamel)"/><path d="M32 9.2 50.5 16.3V23C40 20.5 24 20.5 13.5 23V16.3Z" fill="#fff" opacity=".07"/><path fill-rule="evenodd" transform="translate(0 1.2)" fill="#000" opacity=".55" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path fill-rule="evenodd" fill="url(#lgfMetal)" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path d="m29 32.4 2.7 2.7 5.6-6.1" fill="none" stroke="url(#lgfEmerald)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
   <h1>Debrief Companion<small>Feeds your recap to the Debrief addon in WoW after every pull</small></h1>
   <div class="stat" id="stat"><i></i><span id="statT">Starting…</span></div>
+  <a class="btn primary quit web" id="web" href="https://debriefme.io/?pc" target="_blank" rel="noopener" title="Opens debriefme.io in your browser. It follows this PC's combat log, so every pull shows up there as it ends.">See pulls on the website</a>
   <button class="btn quit" id="upd" type="button" title="Looks for a newer Debrief on debriefme.io and installs it now.">Check for updates</button>
   <button class="btn quit" id="quit" type="button" title="Stops Debrief Companion. Open it again with the Debrief icon on your desktop.">Quit</button>
 </header>

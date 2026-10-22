@@ -14144,6 +14144,7 @@ const PATCH_NOTES = [
     { t: 'Your own character page', d: 'Every boss in one table: your best and median parse, kills, fastest kill and best throughput, in kill order, with your class art. Click a boss for its kills, or search every pull you were in.' },
     { t: 'Copy your Rotation as a picture', d: 'A Copy as image button on every Rotation page puts the whole page on your clipboard, ready to paste in Discord.' },
   ], n: [
+    'Debrief in game: See pulls on the website, a new button in the PC app. It opens debriefme.io, which follows your combat log on that PC, so each pull shows up as it ends. No Warcraft Logs needed. Chrome asks once if the site may talk to the app: press Allow.',
     'Debrief in game: the wipe filter on your recap card. On a wipe, press + next to Stop at on the Who died row, and nothing after that death counts: mistakes, mechanics and deaths. Off counts the whole pull, and a kill always counts in full. The Who died list shows again.',
     'Debrief in game: a Survival section on your recap card. Your defensives (used, out of how many you could have), your Healthstone and health potion, and a low-health moment you could have answered. A death line now says what you still had ready.',
     'Debrief in game: a Check for updates button in the PC app, next to Quit. It installs a newer version right away, unless a pull is on.',
@@ -33980,13 +33981,16 @@ const fhSet = async (v) => { try { const db = await fhDb(); db.transaction('h', 
 // helper (server.ps1 finds the WoW Logs folder itself and reads the newest log for the page: browsers won't let a
 // page pick files under Program Files, where WoW usually is)
 const HELPER_LOG = { kind: 'helper', name: 'your combat log' };
-const helperInfo = async () => { const r = await fetch('/log/info', { cache: 'no-store' }); const j = await r.json().catch(() => null); if (!j) throw new Error('the Debrief helper is out of date: close the start.bat window and run start.bat again'); return j; };
+// (on debriefme.io the same two questions go to the Debrief PC app on this PC, which answers them for debriefme.io only (Oct 21,
+// your ask: tonight's logs on the site while Warcraft Logs is down). HELPER_BASE is '' for start.bat's helper, this page's own address)
+let HELPER_BASE = '', PC_ON = false;
+const helperInfo = async () => { const r = await fetch(HELPER_BASE + '/log/info', { cache: 'no-store' }); const j = await r.json().catch(() => null); if (!j) throw new Error(PC_ON ? 'the Debrief app is out of date: press Check for updates in it' : 'the Debrief helper is out of date: close the start.bat window and run start.bat again'); return j; };
 const helperHandle = (name) => ({ getFile: async () => ({ slice: (a, b) => ({ arrayBuffer: async () => {
-  const r = await fetch('/log/read?name=' + encodeURIComponent(name) + '&from=' + a + '&to=' + b, { cache: 'no-store' });
-  if (!r.ok) throw new Error('the helper couldn\'t read the log (' + r.status + ')'); return r.arrayBuffer();
+  const r = await fetch(HELPER_BASE + '/log/read?name=' + encodeURIComponent(name) + '&from=' + a + '&to=' + b, { cache: 'no-store' });
+  if (!r.ok) throw new Error((PC_ON ? 'the Debrief app' : 'the helper') + ' couldn\'t read the log (' + r.status + ')'); return r.arrayBuffer();
 } }) }) });
 async function newestLog(dir) {
-  if (dir.kind === 'helper') { const j = await helperInfo(); if (j.error === 'nodir') throw new Error('couldn\'t find your WoW Logs folder: put its path in a logs-path.txt file next to start.bat'); if (j.error) return null; FH.where = j.dir; return { name: j.name, f: { size: j.size }, hd: helperHandle(j.name) }; }
+  if (dir.kind === 'helper') { const j = await helperInfo(); if (j.error === 'nodir') throw new Error(PC_ON ? 'the Debrief app couldn\'t find your WoW Logs folder' : 'couldn\'t find your WoW Logs folder: put its path in a logs-path.txt file next to start.bat'); if (j.error) return null; FH.where = j.dir; return { name: j.name, f: { size: j.size }, hd: helperHandle(j.name) }; }
   if (dir.kind === 'file') return { name: dir.name, f: await dir.getFile(), hd: dir };
   let best = null;
   for await (const [name, hd] of dir.entries()) if (hd.kind === 'file' && /^WoWCombatLog.*\.txt$/i.test(name)) { const f = await hd.getFile(); if (!best || f.lastModified > best.f.lastModified) best = { name, f, hd }; }
@@ -34444,7 +34448,7 @@ const TH_ICO = {
   tour: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17h.01"/></svg>',
   more: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>' };
 function teamsBar() {
-  const local = !(WCL.HOSTED && !window.WLA_DESKTOP);
+  const local = !(WCL.HOSTED && !window.WLA_DESKTOP) || PC_ON; /* (the Debrief PC app on this PC: Follow my combat log works on the site too) */
   return '<section class="th-hero"><h1>Every pull, explained.</h1><p class="th-lead">Open tonight\'s raid, or pick up where your team left off.</p>' +
     '<div class="th-box">' + TH_ICO.link + '<input id="thWcl" placeholder="' + (local ? 'Paste any Warcraft Logs report link' : 'Paste your raid\'s live log, or any Warcraft Logs report') + '" autocomplete="off" aria-label="Warcraft Logs report link"><button class="btn primary" id="thWclGo" type="button">Open</button></div>' +
     '<div class="th-links">' + (local ? '<button type="button" id="thLive">' + TH_ICO.play + 'Follow my combat log</button>' : '') + '<button type="button" id="thFile">' + TH_ICO.file + 'Open a log file</button>' +
@@ -35085,6 +35089,7 @@ function gsPlace() {
 function nightDlg() {
   if ($('#ndD')) return;
   document.body.insertAdjacentHTML('beforeend', pgDlg('nd', '<section class="wt nd"><button class="gs-x" id="ndX" type="button" aria-label="Close">×</button><h2 id="ndT">Open a raid night</h2><p class="sub">Paste a Warcraft Logs report or live log link. A live log keeps up with the raid as it goes.</p>' +
+    (PC_ON ? '<button class="btn primary" id="ndPc" type="button" style="width:100%;margin-bottom:12px">Follow tonight\'s log from the Debrief app</button>' : '') + /* (the Debrief PC app is running on this PC) */
     '<div class="fph-box sm"><input id="ndIn" placeholder="Report or live log link" autocomplete="off" aria-label="Warcraft Logs report or live log link"><button class="btn primary" id="ndGo" type="button">Open</button></div><div class="fp-msg" id="ndMsg"></div>' +
     (WCL.HOSTED && wclMe() ? '<div class="nd-mine" id="ndMine"><div class="nd-mh">Your logs on Warcraft Logs</div><div class="sub">Loading…</div></div>' : '') +
     '<div class="fph-alt">Or <button class="linkbtn" id="ndFile" type="button">open a combat log</button> from this PC, or <button class="linkbtn" id="ndDemo" type="button">see a real raid night</button>.</div></section>'));
@@ -35098,6 +35103,7 @@ function nightDlg() {
   $('#ndGo').onclick = () => go(inp.value); inp.onkeydown = (e) => { if (e.key === 'Enter') go(inp.value); };
   inp.onpaste = () => setTimeout(() => { if (WCL.parseLink(inp.value)) go(inp.value); }, 50); // (a pasted link opens at once)
   $('#ndFile').onclick = () => { close(); $('#fileIn').click(); };
+  if ($('#ndPc')) $('#ndPc').onclick = () => { close(); startFileLive(HELPER_LOG); };
   $('#ndDemo').onclick = () => go(DEMO_REPORT);
   // (signed in with Warcraft Logs (Oct 20): the logs you uploaded, private ones too, one tap each)
   const mine = $('#ndMine'); if (mine) fetch('/api/myreports').then((r) => r.json()).then((j) => { if (!document.body.contains(mine)) return; const l = (j && j.reports) || [];
@@ -35923,6 +35929,24 @@ if (!tourDone() && !sharedLink) { if (S.item) S.tourAfterPull = true; else setTi
 // (?patchnotes, the link in the Discord's patch-notes post, opens the Patch notes page over the front page)
 if (WCL_CB) setTimeout(wclSignBack, 300); // (back from Sign in with Warcraft Logs)
 if (RQ.has('patchnotes')) { try { history.replaceState(history.state, '', location.pathname); } catch (e) { /* ignore */ } setTimeout(openPatchNotes, 900); }
+// The Debrief PC app (Oct 21, your ask: tonight's logs on debriefme.io while Warcraft Logs is down). It answers this PC's newest combat
+// log on localhost:8772, to debriefme.io only. The site looks for it only once the app has sent you here (its "See pulls on the website"
+// button opens debriefme.io/?pc), so other visitors never get the browser's question about apps on their PC. Found, with nothing else
+// open: the site follows tonight's log, each pull showing up as it ends (Live on). The open dialog gets a button for it too.
+// (?pc=8779 tries another port, for testing a copy of the app)
+if (WCL.HOSTED && !window.WLA_DESKTOP) {
+  const pq = RQ.get('pc'), port = /^\d{4,5}$/.test(pq || '') ? pq : store.get('dbf-pc-port') || '8772';
+  if (RQ.has('pc')) { store.set('dbf-pc', '1'); store.set('dbf-pc-port', port); try { history.replaceState(history.state, '', location.pathname); } catch (e) { /* ignore */ } }
+  if (store.get('dbf-pc') === '1') {
+    const base = 'http://localhost:' + port, c = new AbortController(); setTimeout(() => c.abort(), 8000);
+    fetch(base + '/log/info', { cache: 'no-store', signal: c.signal }).then((r) => r.json()).then((j) => {
+      if (!j || j.error === 'nodir') return;
+      HELPER_BASE = base; PC_ON = true;
+      const busy = S.rep || S.wclCode || FH.dir || S.file || sharedLink || reloadSt && reloadSt.code || document.querySelector('.ld, #ndD') || ['guides', 'plan', 'ingame'].some((k) => RQ.has(k));
+      if (!busy) startFileLive(HELPER_LOG);
+    }).catch(() => { /* the app isn't running: the site works as always */ });
+  }
+}
 // ---------- Guides: how each boss works, with animated maps (your call, Oct 20) ----------
 // A teaching page, not a log check: each boss's phases, every mechanic in plain words with what to do, a top-down map
 // that plays the whole mechanic in order, and notes for tanks, healers and DPS. The maps are drawn by the same code as the

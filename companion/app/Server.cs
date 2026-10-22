@@ -57,6 +57,18 @@ namespace Debrief {
         if (Dev) Program.Log("req " + req.HttpMethod + " " + req.Url.PathAndQuery + (fromApp ? "" : " (not the app)"));
         // (a web page elsewhere can't press the app's buttons: posts only from this address)
         var origin = req.Headers["Origin"];
+        // (the website may read this PC's newest combat log, so debriefme.io can follow tonight's raid while Warcraft Logs is down:
+        // only the site's own addresses, only reading. Chrome asks you once whether debriefme.io may talk to apps on this PC)
+        if (SiteOrigin(origin)) {
+          res.AddHeader("Access-Control-Allow-Origin", origin); res.AddHeader("Vary", "Origin");
+          res.AddHeader("Access-Control-Allow-Private-Network", "true");
+          if (req.HttpMethod == "OPTIONS") {
+            res.AddHeader("Access-Control-Allow-Methods", "GET");
+            res.AddHeader("Access-Control-Allow-Headers", req.Headers["Access-Control-Request-Headers"] ?? "*");
+            res.AddHeader("Access-Control-Max-Age", "600"); res.StatusCode = 204; return;
+          }
+          if (!(get && (path == "/log/info" || path == "/log/read" || path == "/app-version"))) { res.StatusCode = 403; Send(res, Encoding.UTF8.GetBytes("No"), "text/plain"); return; }
+        }
         if (post && !string.IsNullOrEmpty(origin) && origin != "http://localhost:" + Port) { res.StatusCode = 403; Send(res, Encoding.UTF8.GetBytes("No"), "text/plain"); return; }
         if (!fromApp && (path == "/wait" || path == "/scan" || path == "/clip" || path == "/read" || path == "/" || path == "/index.html")) {
           if (path == "/wait") { Thread.Sleep(25000); SendJson(res, new Dictionary<string, object> { { "size", Num(q["size"]) }, { "name", q["name"] ?? "" } }); return; }
@@ -85,7 +97,7 @@ namespace Debrief {
           lock (scanLock) s = DbfScan.Scan(p, from);
           Send(res, Encoding.UTF8.GetBytes(s), "application/json");
         }
-        else if (get && path == "/read") {
+        else if (get && (path == "/read" || path == "/log/read")) {
           var p = Wow.FindLog(here, q["name"]); long from = Num(q["from"]), to = Num(q["to"]);
           using (var fs = new FileStream(p, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete)) {
             if (to > fs.Length) to = fs.Length;
@@ -95,6 +107,13 @@ namespace Debrief {
             if (got < n) Array.Resize(ref buf, got);
             Send(res, buf, "application/octet-stream");
           }
+        }
+        else if (get && path == "/log/info") {
+          // (for the website: the newest combat log, its name and size, as start.bat's helper answers it)
+          var d = Wow.FindLogsDir(here); var f = d == null ? null : Wow.NewestLog(d);
+          if (d == null) SendJson(res, new Dictionary<string, object> { { "error", "nodir" } });
+          else if (f == null) SendJson(res, new Dictionary<string, object> { { "dir", d }, { "error", "nolog" } });
+          else SendJson(res, new Dictionary<string, object> { { "dir", d }, { "name", f.Name }, { "size", Wow.LiveLength(f.FullName) }, { "mtime", Ms(f.LastWriteTimeUtc) } });
         }
         else if (get && path == "/wait") {
           // waits (up to 25 s) for the combat log to grow, or for a newer combat log to appear
@@ -140,6 +159,12 @@ namespace Debrief {
 
     static long Num(string s) { long v; return long.TryParse(s, out v) ? v : 0; }
     // (the addon version this app carries, from its own copy's .toc: it rides along in each recap so the addon knows it's out of date)
+    // debriefme.io, its www address, its practice links on workers.dev, and start.bat's local copy
+    static bool SiteOrigin(string o) {
+      if (string.IsNullOrEmpty(o)) return false;
+      return o == "https://debriefme.io" || o == "https://www.debriefme.io" || o == "http://localhost:8765" ||
+        System.Text.RegularExpressions.Regex.IsMatch(o, @"^https://([a-z0-9-]+-)?debrief\.james-m-nemecek\.workers\.dev$");
+    }
     string AddonVersion() {
       try { foreach (var line in File.ReadAllLines(Path.Combine(here, @"addon\Debrief\Debrief.toc"))) if (line.StartsWith("## Version:")) return line.Substring(11).Trim(); } catch { }
       return "";
