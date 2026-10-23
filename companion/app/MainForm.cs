@@ -136,6 +136,13 @@ namespace Debrief {
       popup.ShowRecap(json);
     }
 
+    // (the pop-up's Stop at death: the main page rebuilds the coach box at that setting and sends it back)
+    public void PopupCut(string n) {
+      int v; if (!int.TryParse(n, out v)) return;
+      if (InvokeRequired) { BeginInvoke(new Action(() => PopupCut(n))); return; }
+      try { if (web.CoreWebView2 != null) web.CoreWebView2.ExecuteScriptAsync("window.DBF_POPCUT && window.DBF_POPCUT(" + v + ")"); } catch { }
+    }
+
     // ---------- the clipboard (it wants this window's own thread) ----------
     // (what you had copied comes back a couple of minutes later, unless you copied something else since: Debrief never
     // keeps your clipboard (a tester's ask, Oct 22))
