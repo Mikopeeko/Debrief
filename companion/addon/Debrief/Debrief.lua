@@ -479,6 +479,18 @@ local function row(y, flag, ic, text, ttl)
   yy = yy + t:GetStringHeight()
   return math.max(y + 21, yy) + 9
 end
+-- (a row that shows its first sentence and keeps the rest for hover (Oct 22 audit): "Always be casting: 75%." with
+-- "You were casting for 75% of the time you were alive." in the tooltip)
+local function rowS(y, r)
+  local t = tostring(r[3] or ""); local a, b = t:match("^(.-[%.!%?])%s+(%S.+)$")
+  if not a or #t < 60 or #a < 12 or #b < 30 then return row(y, r[1], r[2], t) end -- (a short second sentence stays: "That one was on you.")
+  local y2 = row(y, r[1], r[2], a)
+  local i = FS("bold", 11, COL.faint); i:SetJustifyH("RIGHT"); i:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - 4, -(y + 3)); i:SetText("?")
+  local bt = BTN(); bt:SetPoint("TOPLEFT", 0, -y); bt:SetSize(CW, math.max(16, y2 - y - 6))
+  bt:SetScript("OnEnter", function() i:SetTextColor(rgb(COL.gold)); GameTooltip:SetOwner(bt, "ANCHOR_TOP"); GameTooltip:SetText(names(a), 1, 1, 1, 1, true); GameTooltip:AddLine(names(b), 0.8, 0.82, 0.86, true); GameTooltip:Show() end)
+  bt:SetScript("OnLeave", function() i:SetTextColor(rgb(COL.faint)); GameTooltip:Hide() end)
+  return y2
+end
 local function nextBox(y, text)
   local t = FS("body", 14, COL.text); t:SetWidth(CW - 32); t:SetText(names(text))
   local l = FS("bold", 11.5, COL.gold); l:SetText("NEXT PULL")
@@ -588,7 +600,7 @@ local function cardGrade(y, gr)
   local c = FS("body", 12.5, COL.soft); c:SetPoint("TOPLEFT", 58, -(y + 25)); c:SetWidth(CW - 70); c:SetWordWrap(false); c:SetText(gr.cats or "")
   return y + h + 8
 end
-local UI = { cardCharts = cardCharts, cardGrade = cardGrade, parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, canRaid = canRaid, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded }
+local UI = { rowS = rowS, cardCharts = cardCharts, cardGrade = cardGrade, parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, canRaid = canRaid, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded }
 function render()
   local raw = DB.pulls[DB.cur]; local m = UI.cutView(raw); CUR = m
   if not m then return end
@@ -686,6 +698,12 @@ function render()
   end
   -- (who died, on both views, with the wipe filter on the right: Stop at − n +. On a wipe nothing after that death counts:
   -- mistakes, mechanics, deaths. 0 is off, the whole pull. A kill always counts in full)
+  -- (the raid's survival in one section (Oct 22 audit): defensives, Healthstones and potions, deaths with one unused; each keeps its switch)
+  local function survRaid()
+    local L = {}
+    for _, k in ipairs({ { "rdefs", "defs" }, { "rcons", "cons" }, { "rkitd", "kitd" } }) do if SH[k[1]] ~= false then for _, r in ipairs(m.raid[k[2]] or {}) do L[#L + 1] = r end end end
+    if #L > 0 then section("rsurv", "Survival", L, 4, function(r) y = row(y, r[1], r[2], r[3]) end) end
+  end
   local function diedRow()
     if DB.compact then return end
     local nd, show, cut = #m.raid.died, DB.maxDied or 3, UI.cutIdx(raw)
@@ -824,14 +842,15 @@ function render()
   end
   local KCOL = { own = COL.bad, ready = COL.bad, on = COL.bad, half = COL.warn, nothing = COL.warn }
   -- (a folding heading for the coach's lists: closed until clicked, then remembered)
-  local function fold(key, title, n)
+  local function fold(key, title, n, extra, tip)
     DB.coachOpen = DB.coachOpen or {}
     local open = DB.coachOpen[key]; if open == nil then open = DB.preset == "heavy" or DB.preset == "detailed" end
-    local t = FS("bold", 12, COL.muted); t:SetPoint("TOPLEFT", 14, -(y + 11)); t:SetText(title .. (n and n > 0 and ("  ·  " .. n) or ""))
+    local t = FS("bold", 12, COL.muted); t:SetPoint("TOPLEFT", 14, -(y + 11)); t:SetText(title .. (n and n > 0 and ("  ·  " .. n) or "") .. ((extra or "") ~= "" and ("  ·  " .. extra) or ""))
     local sign = FS("bold", 14, COL.faint); sign:SetJustifyH("RIGHT"); sign:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - 14, -(y + 9)); sign:SetText(open and "–" or "+")
     local b = BTN(); b:SetPoint("TOPLEFT", 0, -y); b:SetSize(CW, 32)
     b:SetScript("OnClick", function() DB.coachOpen[key] = not open; render() end)
-    b:SetScript("OnEnter", function() t:SetTextColor(rgb(COL.gold)); sign:SetTextColor(rgb(COL.gold)) end); b:SetScript("OnLeave", function() t:SetTextColor(rgb(COL.muted)); sign:SetTextColor(rgb(COL.faint)) end)
+    b:SetScript("OnEnter", function() t:SetTextColor(rgb(COL.gold)); sign:SetTextColor(rgb(COL.gold)); if tip then GameTooltip:SetOwner(b, "ANCHOR_TOP"); GameTooltip:SetText(tip, 0.9, 0.9, 0.9, 1, true); GameTooltip:Show() end end)
+    b:SetScript("OnLeave", function() t:SetTextColor(rgb(COL.muted)); sign:SetTextColor(rgb(COL.faint)); GameTooltip:Hide() end)
     return open
   end
   -- (a row in Deaths or Avoidable damage: click it for its short story under it)
@@ -850,6 +869,8 @@ function render()
     if story and story ~= "" then
       local b = BTN(); b:SetPoint("TOPLEFT", cx, -y); b:SetSize(cw, 26)
       b:SetScript("OnClick", function() STORY[key] = not STORY[key] or nil; render() end)
+      local sg = FS("bold", 13, COL.faint); sg:SetJustifyH("RIGHT"); sg:SetPoint("TOPRIGHT", body, "TOPLEFT", cx + cw - 12, -(y + 5)); sg:SetText(open and "–" or "+")
+      b:SetScript("OnEnter", function() sg:SetTextColor(rgb(COL.gold)) end); b:SetScript("OnLeave", function() sg:SetTextColor(rgb(COL.faint)) end)
     end
     if grid then return end
     y = y + 27
@@ -904,6 +925,7 @@ function render()
         local pt; if (x.tag or "") ~= "" then pt = FS("bold", 11.5, x.sev == "bad" and COL.badT or COL.warn); pt:SetWordWrap(false); pt:SetText(x.tag) end
         local nk = FS("bold", 11.5, COL.gold); nk:SetText("NEXT TIME")
         local fx = FS("body", 13.5, COL.soft); fx:SetWidth(tw - LW); fx:SetText(paint(x.fix))
+        if not c.focusSame and (c.focus or "") ~= "" and ((x.fix or ""):gsub("%.$", "")) == (c.focus:gsub("%.$", "")) then fx:SetText("The focus above."); fx:SetTextColor(rgb(COL.gold)) end -- (said once (Oct 22 audit))
         local rows = {}
         if op then for _, mr in ipairs(more) do local a = FS("bold", 11.5, COL.muted); a:SetText(mr[1]); local b2 = FS("body", 13, COL.muted); b2:SetWidth(tw - LW); b2:SetText(paint(mr[2])); rows[#rows + 1] = { a, b2 } end end
         local hh = 12 + 22 + math.max(16, fx:GetStringHeight()) + 12
@@ -933,40 +955,52 @@ function render()
     y = y + 6
     -- deaths, folded until clicked
     if SH.cdeaths ~= false and (#c.deaths > 0 or (c.dline or "") ~= "") then
-      local y0 = y; local open = fold("cdeaths", "DEATHS", #c.deaths); y = y + 32
+      local on = (c.dnote or ""):match("(%d+) of %d+ deaths? on the player"); local aft = (c.dnote or ""):match("(%d+) more after")
+      local y0 = y; local open = fold("cdeaths", "DEATHS", #c.deaths, on and (on .. " on the player" .. (aft and ("  ·  " .. aft .. " not counted") or "")) or nil, "Red: on the player (their own mistake, or a slow death with something ready). Amber: half on them. Grey: not on them. Click a death for why."); y = y + 32
       if open then
         if #c.deaths == 0 then local f = FS("body", 13, COL.muted); f:SetPoint("TOPLEFT", 14, -y); f:SetWidth(CW - 28); f:SetText(paint(c.dline)); y = y + f:GetStringHeight() + 8 end
         chipList(m.h.pull .. "d", c.deaths, function(d) return { { t = d.t, col = COL.faint, gap = 6 }, { dot = KCOL[d.k] or COL.faint }, { t = d.who, bold = true, col = UI.classHex(d.cls), gap = 8 }, { icon = d.id }, { t = d.ab } }, d.id, d.story end)
-        if (c.dnote or "") ~= "" then local f = FS("body", 12, COL.faint); f:SetPoint("TOPLEFT", 14, -(y + 2)); f:SetWidth(CW - 28); f:SetText(c.dnote); y = y + f:GetStringHeight() + 6 end
-        if #c.deaths > 0 then local f = FS("body", 12, COL.faint); f:SetPoint("TOPLEFT", 14, -(y + 2)); f:SetText("Click a death to see what happened."); y = y + 18 end
+        if (c.dnote or "") ~= "" and not on then local f = FS("body", 12, COL.faint); f:SetPoint("TOPLEFT", 14, -(y + 2)); f:SetWidth(CW - 28); f:SetText(c.dnote); y = y + f:GetStringHeight() + 6 end
+        -- (no "click" hint line: each row has its + (Oct 22 audit))
         y = y + 4
       end
       panel(y0, y - y0); y = y + 8
     end
     -- avoidable damage, folded until clicked
     if SH.cavoid ~= false and (#c.avoid > 0 or (c.aline or "") ~= "") then
-      local y0 = y; local open = fold("cavoid", "AVOIDABLE DAMAGE", #c.avoid); y = y + 32
+      local y0 = y; local open = fold("cavoid", "AVOIDABLE DAMAGE", #c.avoid, nil, "Damage you could have dodged, judged against top guilds. Click one for what happened."); y = y + 32
       if open then
         if #c.avoid == 0 then local f = FS("body", 13, COL.muted); f:SetPoint("TOPLEFT", 14, -y); f:SetWidth(CW - 28); f:SetText(paint(c.aline)); y = y + f:GetStringHeight() + 8 end
         chipList(m.h.pull .. "a", c.avoid, function(a) return { { icon = a.id }, { t = a.k }, { t = a.who, bold = true, col = UI.classHex(a.cls), gap = 6 }, { t = a.n, col = a.bad and COL.badT or COL.warn } }, a.id, a.story end)
-        if #c.avoid > 0 then local f = FS("body", 12, COL.faint); f:SetPoint("TOPLEFT", 14, -(y + 2)); f:SetText("Click one to see what happened."); y = y + 18 end
+        -- (no "click" hint line here either)
         y = y + 4
       end
       panel(y0, y - y0); y = y + 8
     end
-    local ft = FS("body", 12.5, COL.faint); ft:SetPoint("TOPLEFT", 2, -(y + 2)); ft:SetWidth(CW - 4); ft:SetText("The full coaching is on the website, in the Debriefing tab."); y = y + ft:GetStringHeight() + 8
+    -- (no "full coaching is on the website" line (Oct 22 audit))
   end
   -- (your own coach: the You view opens with it)
+  -- (one box (Oct 22 audit): how your pull went in a few words, then your fixes for next pull, numbered; no second Next pull box)
+  local coachDrew = false
   local function youCoach(P)
     if not (P and P.coach and (P.coach.head or "") ~= "") then return false end
-    local t = FS("body", 14.5, COL.text); t:SetWidth(CW - 34); t:SetText(paint(P.coach.head))
-    local f; if (P.coach.focus or "") ~= "" and not P.coach.head:find(P.coach.focus:gsub("%.$", ""), 1, true) then f = FS("bold", 13.5, COL.text); f:SetWidth(CW - 34); f:SetText(paint(P.coach.focus)) end
-    local hh = 12 + 17 + t:GetStringHeight() + (f and (14 + 16 + f:GetStringHeight()) or 0) + 12
+    local verdict = P.coach.head:match("^(.-)%s*Your one fix:") or P.coach.head
+    if verdict:sub(1, #P.name + 2) == P.name .. ", " then verdict = verdict:sub(#P.name + 3) end
+    verdict = verdict:gsub("^%l", string.upper); verdict = verdict:gsub(", and one thing to fix first", ""):gsub(", with one thing to sharpen", "") -- (the list below says how many)
+    local tips = {}
+    -- (the same tip twice, one with an extra sentence, counts once: compared by its first sentence)
+    local function first(x) return ((x:match("^(.-)[%.!%?]%s") or x):gsub("[%.!%?]$", "")) end
+    local function addTip(s) s = s or ""; if s == "" then return end; local k = first(s); for _, q in ipairs(tips) do if first(q) == k then return end end; tips[#tips + 1] = s end
+    addTip(P.coach.focus); if SH.next ~= false then addTip(P.next); if DB.detailed then addTip(P.next2) end end
+    local t = FS("body", 13.5, COL.soft); t:SetWidth(CW - 34); t:SetText(paint(verdict))
+    local list = {}; for i, s in ipairs(tips) do list[i] = (#tips > 1 and (i .. ". ") or "") .. s end
+    local f; if #list > 0 then f = FS("bold", 14, COL.text); f:SetWidth(CW - 34); f:SetText(paint(table.concat(list, "\n"))) end
+    local hh = 12 + 17 + t:GetStringHeight() + (f and (12 + 16 + f:GetStringHeight()) or 0) + 12
     box(y, hh, COL.gold, 0.07, COL.gold, 0.5, COL.gold)
     local l = FS("bold", 11.5, COL.gold); l:SetPoint("TOPLEFT", 16, -(y + 11)); l:SetText("YOUR COACH")
     t:SetPoint("TOPLEFT", 16, -(y + 28))
-    if f then local k = FS("bold", 11.5, COL.gold); k:SetPoint("TOPLEFT", 16, -(y + 28 + t:GetStringHeight() + 14)); k:SetText(m.coach and m.coach.kill and "FOCUS NEXT WEEK" or "FOCUS NEXT PULL"); f:SetPoint("TOPLEFT", 16, -(y + 28 + t:GetStringHeight() + 30)) end
-    y = y + hh + 12
+    if f then local k = FS("bold", 11.5, COL.gold); k:SetPoint("TOPLEFT", 16, -(y + 28 + t:GetStringHeight() + 12)); k:SetText(m.coach and m.coach.kill and "NEXT WEEK" or "NEXT PULL"); f:SetPoint("TOPLEFT", 16, -(y + 28 + t:GetStringHeight() + 28)) end
+    y = y + hh + 12; coachDrew = true
     return true
   end
   -- (the wipe filter on top of the card (Oct 22): it decides what everything under it counts, the coach box included)
@@ -984,12 +1018,16 @@ function render()
     stepBtn("+", CW - IND, 1)
     local v = FS("bold", 13, COL.text); v:SetJustifyH("CENTER"); v:SetWidth(28); v:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - IND - 23, -(y + 2)); v:SetText((DB.deathCut or 0) == 0 and "off" or (DB.deathCut .. ""))
     stepBtn("–", CW - IND - 52, -1)
-    y = y + 26
+    -- (one line (Oct 22 audit): what it counts to, beside the name; the explanation on hover)
     local note
-    if cut > 0 then local d = raw.raid.died[cut]; note = "Counted up to the " .. UI.ordN(cut) .. " death" .. (d and (" (" .. d[2] .. ", " .. d[1] .. ")") or "") .. ". What came after isn't counted."
-    elseif (DB.deathCut or 0) > 0 then note = "Fewer than " .. DB.deathCut .. " deaths, so the whole pull counts."
-    else note = "The whole pull counts. Press + to stop counting at a death, so the wipe at the end isn't counted." end
-    local n2 = FS("body", 12.5, COL.faint); n2:SetPoint("TOPLEFT", IND, -y); n2:SetWidth(CW - IND * 2); n2:SetText(note); y = y + n2:GetStringHeight() + 10
+    if cut > 0 then local d = raw.raid.died[cut]; note = d and ("counted to " .. d[2] .. ", " .. d[1]) or ("counted to the " .. UI.ordN(cut) .. " death")
+    elseif (DB.deathCut or 0) > 0 then note = "fewer deaths, so all of it counts"
+    else note = "off, all of it counts" end
+    local n2 = FS("body", 12.5, COL.faint); n2:SetPoint("LEFT", t, "RIGHT", 10, 0); n2:SetWordWrap(false); n2:SetWidth(math.max(40, CW - IND * 2 - 120 - t:GetStringWidth())); n2:SetText(note)
+    local tb = BTN(); tb:SetPoint("TOPLEFT", 0, -(y - 2)); tb:SetSize(math.max(60, CW - 96), 24)
+    tb:SetScript("OnEnter", function() GameTooltip:SetOwner(tb, "ANCHOR_TOP"); GameTooltip:SetText("Stop at death", 1, 1, 1); GameTooltip:AddLine("On a wipe, nothing after this death counts, so the mess at the end isn't held against anyone. Press + or - to change it.", 0.8, 0.82, 0.86, true); GameTooltip:Show() end)
+    tb:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    y = y + 28
     panel(y0, y - y0); IND = 0; y = y + 10
   end
   -- (the Report card grade and the small charts, when their chips are on in the settings (Oct 22))
@@ -998,9 +1036,7 @@ function render()
   if coachOn and view ~= "me" then
     coachBody()
     if SH.mechs and m.raid.mech and #m.raid.mech > 0 and (DB.maxMech or 6) > 0 then section("mech", "Boss mechanics", m.raid.mech, DB.maxMech or 6, function(r) y = row(y, r[1], r[2], r[4], r[3]) end) end
-    if SH.rdefs ~= false and m.raid.defs and #m.raid.defs > 0 then section("rdefs", "Defensives", m.raid.defs, 2, function(r) y = row(y, r[1], r[2], r[3]) end) end
-    if SH.rcons ~= false and m.raid.cons and #m.raid.cons > 0 then section("rcons", "Healthstones and potions", m.raid.cons, 2, function(r) y = row(y, r[1], r[2], r[3]) end) end
-    if SH.rkitd ~= false and m.raid.kitd and #m.raid.kitd > 0 then section("rkitd", "Deaths with a Healthstone or potion unused", m.raid.kitd, 1, function(r) y = row(y, r[1], r[2], r[3]) end) end
+    survRaid()
   elseif glanceOn then
     glanceBody()
   elseif view == "me" and P then
@@ -1033,16 +1069,18 @@ function render()
     -- (the Detailed card: three small number tiles under yours: avoidable damage, kicks or dispels, your death)
     if DB.detailed and not DB.compact and P.tiles and #P.tiles > 0 then y = tilesRow(y, P.tiles) end
     if not DB.compact then
-      local rot = function() section("rotation", "Rotation", UI.onlyBad(P.slips), DB.maxSlips or 3, function(r) y = row(y, r[1], r[2], r[3]) end, #P.slips > 0 and "Nothing to fix here." or "No rotation checks for this spec yet.") end
+      local rot = function() section("rotation", "Rotation", UI.onlyBad(P.slips), DB.maxSlips or 3, function(r) y = UI.rowS(y, r) end, #P.slips > 0 and "Nothing to fix here." or "No rotation checks for this spec yet.") end
       local bossL = P.boss
       if DB.detailed and P.tiles and #P.tiles > 0 then bossL = {}; for _, r in ipairs(P.boss) do if not ({ ability_rogue_sprint = true, ability_kick = true, spell_holy_dispelmagic = true })[r[2]] then bossL[#bossL + 1] = r end end end
-      local bos = function() section("boss", "Boss mechanics", UI.onlyBad(bossL), DB.maxBoss or 2, function(r) y = row(y, r[1], r[2], r[3]) end, "No boss mistakes.") end
+      local bos = function() section("boss", "Boss mechanics", UI.onlyBad(bossL), DB.maxBoss or 2, function(r) y = UI.rowS(y, r) end, "No boss mistakes.") end
       if m.h.practice and #P.boss == 0 then bos = function() end end -- (a training dummy has no boss mechanics)
       if DB.bossFirst then bos(); rot() else rot(); bos() end
       -- (survival: your defensives, Healthstone and health potion)
-      if P.surv and #P.surv > 0 and SH.surv ~= false then section("surv", "Survival", UI.onlyBad(P.surv), 5, function(r) y = row(y, r[1], r[2], r[3]) end) end
-      if P.cons and #P.cons > 0 and SH.cons ~= false then section("cons", "Healthstone and potion", P.cons, 3, function(r) y = row(y, r[1], r[2], r[3]) end) end
-      if P.kitd and #P.kitd > 0 and SH.kitd ~= false then section("kitd", "Died with a Healthstone or potion unused", P.kitd, 2, function(r) y = row(y, r[1], r[2], r[3]) end) end
+      do local L = {} -- (one Survival section (Oct 22 audit): defensives, Healthstone and potion, a death with one unused)
+        if SH.surv ~= false then for _, r in ipairs(UI.onlyBad(P.surv or {})) do L[#L + 1] = r end end
+        if SH.cons ~= false then for _, r in ipairs(P.cons or {}) do L[#L + 1] = r end end
+        if SH.kitd ~= false then for _, r in ipairs(P.kitd or {}) do L[#L + 1] = r end end
+        if #L > 0 then section("surv", "Survival", L, 6, function(r) y = UI.rowS(y, r) end) end end
       -- (the Detailed card: the raid's side right here, so nobody has to switch to the Raid view)
       if DB.detailed and not m.h.practice and not raidOk then
         summary()
@@ -1051,7 +1089,7 @@ function render()
       end
     end
     if not m.h.practice and not (DB.detailed and raidOk) then diedRow() end -- (the death filter here too: a dummy has no deaths)
-    if P.next ~= "" and SH.next ~= false then y = UI.nextBox(y + 2, (DB.detailed and (P.next2 or "") ~= "") and ("1. " .. P.next .. "\n2. " .. P.next2) or P.next) end
+    if P.next ~= "" and SH.next ~= false and not coachDrew then y = UI.nextBox(y + 2, (DB.detailed and (P.next2 or "") ~= "") and ("1. " .. P.next .. "\n2. " .. P.next2) or P.next) end
   else
     leadBox(nil)
     if DB.detailed and not DB.compact and m.raid.tiles and #m.raid.tiles > 0 then y = tilesRow(y, m.raid.tiles) end
@@ -1061,9 +1099,7 @@ function render()
     if m.raid.mech and #m.raid.mech > 0 and (DB.maxMech or 6) > 0 then
       section("mech", "Boss mechanics", m.raid.mech, DB.compact and math.min(3, DB.maxMech or 3) or (DB.maxMech or 6), function(r) y = row(y, r[1], r[2], r[4], r[3]) end)
     end
-    if SH.rdefs ~= false and m.raid.defs and #m.raid.defs > 0 then section("rdefs", "Defensives", m.raid.defs, 2, function(r) y = row(y, r[1], r[2], r[3]) end) end
-    if SH.rcons ~= false and m.raid.cons and #m.raid.cons > 0 then section("rcons", "Healthstones and potions", m.raid.cons, 2, function(r) y = row(y, r[1], r[2], r[3]) end) end
-    if SH.rkitd ~= false and m.raid.kitd and #m.raid.kitd > 0 then section("rkitd", "Deaths with a Healthstone or potion unused", m.raid.kitd, 1, function(r) y = row(y, r[1], r[2], r[3]) end) end
+    survRaid()
     diedRow()
     if m.raid.next ~= "" and SH.next ~= false and not ((m.raid.lead or "") ~= "" and SH.lead ~= false) then y = UI.nextBox(y + 2, m.raid.next) end
   end

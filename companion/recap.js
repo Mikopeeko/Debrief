@@ -658,6 +658,8 @@ function buildOne(b, rep, same, W, L, cutN) {
   const T = cutTime(rep, cutN), t0 = Date.now();
   try { if (W.setCut) W.setCut(cutN); } catch (e) { /* fine */ }
   const dv = (d) => { try { return W.deathVerdict ? W.deathVerdict(rep, d) : null; } catch (e) { return null; } };
+  // (your own lines say "your", not "their" (Oct 22 audit): "Malevolent Resonance: Your ghost touched another ghost")
+  const youTxt = (s) => String(s).replace(/\bTheir\b/g, 'Your').replace(/\btheir\b/g, 'your').replace(/\bthemselves\b/g, 'yourself').replace(/\b([Tt])hey (didn't|did|were|weren't|stood|got|moved|took|had|died|ran|left|stayed|missed|soaked|dropped)\b/g, (m0, t, v) => (t === 'T' ? 'You ' : 'you ') + v);
   const pr = W.progressOf ? W.progressOf(rep) : null;
   const pct = b.id === 990001 ? '' : b.kill ? 0 : pr && pr.left != null ? Math.round(pr.left) : ''; // (a practice pull on a dummy has no boss health)
   const allDeaths = (rep.deaths || []).filter((d) => before(d.t, T) || (dv(d) && dv(d).late)).sort((a, c) => a.t - c.t), roleOf = new Map([...rep.players.values()].map((p) => [p.name, p.role]));
@@ -697,7 +699,7 @@ function buildOne(b, rep, same, W, L, cutN) {
     const own = mist.filter((m) => m.player === p.name).sort((a, c) => (SEV[c.severity] || 0) - (SEV[a.severity] || 0) || a.t - c.t);
     const seen = new Set();
     for (const m of own) { if (seen.has(m.mechanic)) continue; seen.add(m.mechanic); if (P.boss.length >= 5) break;
-      P.boss.push([flagOf(m.severity), m.id ? String(m.id) : '', shortTo(m.mechanic + ': ' + plain(m.detail || ''), 150)]); if (m.fix) tips.push(sentences(m.fix)[0]); }
+      P.boss.push([flagOf(m.severity), m.id ? String(m.id) : '', shortTo(m.mechanic + ': ' + youTxt(plain(m.detail || '')), 150)]); if (m.fix) tips.push(sentences(m.fix)[0]); }
     const dd = allDeaths.filter((d) => d.player === p.name)[0];
     const ready = dd && dd.reactable && (dd.available || []).length ? ' You still had ' + dd.available.slice(0, 3).join(', ').replace(/, ([^,]*)$/, ' and $1') + ' ready.' : '';
     const V = dd ? dv(dd) : null, WHY = V ? { own: ' That one was on you.', fast: ' Too fast to react, not on you.', raid: ' It came from the raid\'s mistake, not yours.', ready: ' You still had ' + V.word.replace(/ still ready$/, '') + ' ready.', nothing: ' Nothing was left to press.', wipe: ' The pull was already lost.' }[V.why] : null;

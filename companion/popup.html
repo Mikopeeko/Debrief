@@ -193,7 +193,27 @@ const siteCss = () => SITECSS || (SITECSS = fetch('/app').then((r) => r.text()).
 }).catch(() => ''));
 const OFFICIAL = (n) => ['https://wow.zamimg.com/images/wow/icons/large/' + n + '.jpg', 'https://render.worldofwarcraft.com/us/icons/56/' + n + '.jpg'];
 function official(img, name) { const u = OFFICIAL(name); let k = 0; img.onload = () => { if (img.naturalWidth && img.parentNode) img.parentNode.classList.add('has'); }; img.onerror = () => { if (++k < u.length) img.src = u[k]; else img.remove(); }; img.src = u[0]; }
+// (the site's icon rule, Oct 22: an icon where a spell's name leads its line, none inside a sentence; one icon per spell per line)
+function iconize(root) {
+  const iconish = (p) => p && p.nodeType === 1 && (p.matches('.icw, img, .ico, .emo-ic') || !!(p.lastElementChild && p.lastElementChild.matches('.icw, img')));
+  const before = (el) => { let n = el; for (let i = 0; i < 3; i++) { let p = n.previousSibling; while (p && p.nodeType === 3 && !p.nodeValue.trim()) p = p.previousSibling; if (p) return iconish(p); n = n.parentElement;
+    if (!n || /^(DIV|LI|TD|TH|SECTION|DETAILS|SUMMARY|P|BUTTON|LABEL)$/.test(n.tagName)) return false; } return false; };
+  root.querySelectorAll('.sp[data-sid]:not([data-ic])').forEach((el) => { el.dataset.ic = '1';
+    if (el.querySelector('.icw, img, svg') || el.closest('.no-ic, .spc-bx, svg, option') || before(el)) return;
+    const sid = +el.dataset.sid; if (!sid) return;
+    const blk = el.parentElement && el.parentElement.closest('p, li, td, th, summary, button, label, div'); if (blk && blk.querySelector('img.oi[data-sid="' + sid + '"]')) return;
+    el.insertAdjacentHTML('afterbegin', '<span class="icw inl"><img class="oi" data-sid="' + sid + '" alt=""></span>'); });
+  root.querySelectorAll('.sp[data-sid] > .icw:first-child').forEach((ic) => { if (before(ic.parentElement)) ic.remove(); });
+  const lineOf = (el) => { let n = el.parentElement; while (n && n.parentElement && /^(inline|contents)$/.test(getComputedStyle(n).display)) n = n.parentElement; return n; };
+  const midLine = (el) => { const ln = lineOf(el); if (!ln) return false; const r = document.createRange(); r.setStart(ln, 0); r.setEndBefore(el); return /\p{L}/u.test(r.toString()); };
+  root.querySelectorAll('.icw:not([data-icx])').forEach((ic) => { ic.dataset.icx = '1'; if (ic.closest('.no-ic, svg')) return;
+    const sp = ic.parentElement && ic.parentElement.matches('.sp[data-sid]') && ic.parentElement.firstElementChild === ic ? ic.parentElement : null;
+    let nx = ic.nextSibling; while (nx && nx.nodeType === 3 && !nx.nodeValue.trim()) nx = nx.nextSibling;
+    const name = sp || (nx && nx.nodeType === 1 && nx.matches('.sp[data-sid]') ? ic : null);
+    if (name && midLine(name)) ic.remove(); });
+}
 function hydrate(root) {
+  iconize(root);
   root.querySelectorAll('img.oi:not([data-done])').forEach((img) => {
     img.dataset.done = '1';
     if (img.dataset.icon) return official(img, img.dataset.icon);
@@ -205,19 +225,22 @@ function hydrate(root) {
 }
 async function siteBox(host, pack) {
   const sh = host.shadowRoot || host.attachShadow({ mode: 'open' }), css = await siteCss();
-  sh.innerHTML = '<style>' + css + ':host{display:block;color:#ece8df;font:15px/1.5 Barlow,"Segoe UI",system-ui,sans-serif}.cch{margin:0!important}a{pointer-events:none;color:inherit;text-decoration:none}.cch-pmap,.cch-thumb,.wr-map,.avd-map{display:none!important}.cch-pq{pointer-events:none}.cch-hasmap{padding-right:inherit}</style>' + pack.html;
+  sh.innerHTML = '<style>' + css + ':host{display:block;color:#ece8df;font:15px/1.5 Barlow,"Segoe UI",system-ui,sans-serif}.cch{margin:0!important}a{pointer-events:none;color:inherit;text-decoration:none}.cch-pmap,.cch-thumb,.wr-map,.avd-map{display:none!important}.cch-pq{pointer-events:none}.cch-acct2{grid-template-columns:1fr!important}.cch-hasmap{padding-right:inherit}</style>' + pack.html;
   sh.querySelectorAll('details.cch-more').forEach((d) => { if (DEEP()) d.open = true; d.addEventListener('toggle', fit); });
   sh.querySelectorAll('details.cch-pdx').forEach((d, i) => { if (DEEP() && i === 0) d.open = true; d.addEventListener('toggle', fit); });
   sh.querySelectorAll('details.cch-abx').forEach((d) => { if (DEEP()) d.open = true; d.addEventListener('toggle', fit); }); /* (the Deaths and Avoidable damage panels, Oct 22) */
   hydrate(sh); fit(); setTimeout(fit, 300);
   if (sh._bound) return; sh._bound = 1;
+  sh.addEventListener('toggle', () => fit(), true); /* (any panel or bar opening, Oct 22) */
   sh.addEventListener('click', (e) => {
     const t = e.target; if (!t || !t.closest) return;
     const a = t.closest('a'); if (a) e.preventDefault();
+    const mr = t.closest('.cbl-mrow[data-ddgo]'); if (mr) { const ch = mr.nextElementSibling; if (ch && ch.matches('.dch[data-ddg]')) { ch.hidden = false; ch.style.display = 'none'; ch.click(); mr.classList.toggle('on', ch.classList.contains('on')); } return; } /* (a death row in a mini bar graph, Oct 22) */
+    const sw = t.closest('[data-cblby]'); if (sw) { const bx = sw.closest('.cch-acct2'); if (bx) { bx.classList.toggle('cbl-on-m', sw.dataset.cblby === 'm'); bx.querySelectorAll('[data-cblby]').forEach((b) => b.classList.toggle('on', b === sw)); } fit(); return; } /* (By player / By mechanic, Oct 22) */
     const more = t.closest('[data-ddmore],[data-avmore]');
     if (more) { more.parentNode.querySelectorAll(more.dataset.ddmore != null ? '.dch-x' : '.ach-x').forEach((x) => (x.hidden = false)); more.remove(); fit(); return; }
     const chip = t.closest('.dch[data-ddg],.ach[data-avk]'); if (!chip) return;
-    const isD = chip.classList.contains('dch'), ab = chip.closest('.cch-ab'), box = ab && ab.querySelector(isD ? '.cch-ddbox' : '.cch-avbox'); if (!box) return;
+    const isD = chip.classList.contains('dch'), ab = chip.closest('.cch-ab'), cb = chip.closest('.cbl-body'), sel = isD ? '.cch-ddbox' : '.cch-avbox', box = (cb && cb.querySelector(sel)) || (ab && ab.querySelector(sel)); if (!box) return; /* (its own bar first, Oct 22) */
     const was = chip.classList.contains('on'); ab.querySelectorAll(isD ? '.dch.on' : '.ach.on').forEach((x) => x.classList.remove('on'));
     if (was) { box.hidden = true; box.innerHTML = ''; fit(); return; }
     const h = isD ? (pack.dd || {})[chip.dataset.ddg] : (pack.av || {})[chip.dataset.avk]; if (!h) return;
