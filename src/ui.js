@@ -10783,7 +10783,7 @@ function oaLayout(v, el) {
   const nbar = v.querySelector('.dbn-bar:not(.dbn-none)'); if (nbar && nbar.previousElementSibling !== el) { el.after(nbar); nbar.classList.add('oa-note'); }
   // (a small map on each of the coach's problems: the Fix card's own map for that mechanic)
   const cards = [...v.querySelectorAll('a.dbr-fx')];
-  for (const li of el.querySelectorAll('.cch-p, .cbr-w')) { if (li.querySelector('.wr-map')) { li.querySelectorAll('.cch-pmap .mz-big').forEach((x) => x.remove()); continue; }
+  for (const li of el.querySelectorAll('.cch-p')) { /* (the brief lines take no borrowed map: none on All pulls (Oct 23)) */ if (li.querySelector('.wr-map')) { li.querySelectorAll('.cch-pmap .mz-big').forEach((x) => x.remove()); continue; }
     const sec = li.dataset.sec || '', lab = ((li.querySelector('b') || {}).textContent || '').trim().toLowerCase();
     const c = cards.find((a) => { const hr = a.getAttribute('href') || ''; return (sec && (hr.indexOf('#sec-' + sec + '-') === 0 || hr === '#nml-' + sec)) || ((a.querySelector('.dbr-fxb b') || {}).textContent || '').trim().toLowerCase() === lab; });
     const m = c && c.querySelector('.wr-map'); if (!m) continue;
@@ -11538,7 +11538,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
      (the mechanic, its plain fix in grey, what happened under it; a click opens the rest in place), then one Next pull line. The PC
      app's pop-up (key 'pop') keeps the cards until the in-game chat moves it over) */
   const BRIEF = true; /* (the PC pop-up too, in its wide two-column window (Oct 23)) */
-  const briefLine = (x, i) => { const mi = mapOf(x), kk = 'cchp-' + (o.key || 'x') + '-' + (x.sec || x.label), nm = esc(dbfCap(String(x.label).replace(/\s*\(.*$/, ''))), ins = (String(x.label).match(/\(([^)]+)\)\s*$/) || [])[1];
+  const briefLine = (x, i) => { const mi = c.night ? '' : mapOf(x), /* (no map on All pulls: it lives on each pull (Oct 23)) */ kk = 'cchp-' + (o.key || 'x') + '-' + (x.sec || x.label), nm = esc(dbfCap(String(x.label).replace(/\s*\(.*$/, ''))), ins = (String(x.label).match(/\(([^)]+)\)\s*$/) || [])[1];
     const fx = String(x.fix || ''), nx = fx ? '<div class="cch-mr"><span class="cch-ml">Next time</span><span>' + esc(fx) + '</span></div>' : '';
     return '<li class="cbr-w cbr-' + (x.sev === 'bad' ? 'bad' : 'warn') + '"' + (x.sec ? ' data-sec="' + esc(x.sec) + '"' : '') + '><details class="cch-pdx cbr-dx" data-k="' + esc(kk) + '"' + (S.openSecs.has(kk) ? ' open' : '') + '><summary><span class="cbr-dot"></span><span class="cbr-t"><b>' + nm + '</b>' + (ins ? ' <span class="cbr-i">' + esc(ins.toLowerCase()) + '</span>' : '') + ledTag(x) +
       (x.what ? '<span class="cbr-wh">' + esc(cClip(tidyLine(x.what), 110)) + '</span>' : '') + '</span><span class="cch-chev" aria-hidden="true">▸</span></summary><div class="cbr-body">' + nx + (mi ? '<span class="cbr-map"><span class="cch-pmap"' + mi + '></span></span>' + (x.mapPull ? '<p class="cbr-nomap">The map is from pull ' + x.mapPull + '.</p>' : '') : '') /* (no 'no map' line: no map is just no map (Oct 23)) */ + more(x, 1) + '</div></details></li>'; };
