@@ -613,26 +613,34 @@ function renderList() {
       // (on Report card and Homework the single pulls can't be picked: it's always the whole night (your call, Oct 19))
       const lock = (S.tab === 'player' || S.tab === 'hw') && n > 1, cfg = PROGRESS[list[0].boss];
       let acc = 0;
-      const bands = cfg && !cfg.pool ? cfg.phases.map((p) => { const lo = acc, w = 100 * phShare(cfg, p); acc += w; return lo > 0.5 && w > 0 ? '<i class="bhp-band" style="bottom:' + lo.toFixed(1) + '%"><em>' + esc(p.replace('Intermission', 'Int')) + '</em></i>' : ''; }).join('') : '';
+      const lefts = kill ? [] : list.map((b) => pullPct(b)).filter((v) => v != null && v < 99.95), FL = lefts.length ? Math.min(100, Math.ceil((100 - Math.min(...lefts) + 12) / 5) * 5) : 100; /* (the line's bottom: a little past the best pull, or the kill) */
+      const bands = cfg && !cfg.pool ? cfg.phases.map((p) => { const lo = acc, w = 100 * phShare(cfg, p); acc += w; return lo > 0.5 && w > 0 && lo < FL - 0.5 ? '<i class="bhp-band" style="top:' + (lo / FL * 100).toFixed(1) + '%"><em>' /* (the line: a phase starts this far down) */ + esc(p.replace('Intermission', 'Int')) + '</em></i>' : ''; }).join('') : '';
       const whyLine = (b) => { try { const r = CACHE.get(b), o = r && r.players ? whyWiped(r) : null; return o ? '<div>' + whyDotI(o.k) + 'Why we wiped: ' + esc(WHY_K[o.k][0]) + '</div>' : ''; } catch (e) { return ''; } };
-      const bar = (b) => {
+      const N = n + (LIVE.on && list[n - 1] === bosses.filter((x) => !x.run).pop() ? 1 : 0), PX = (i) => ((i + 0.5) / N * 100).toFixed(2); /* (each point centred over its pull number) */
+      const PY = (b) => { const v = pullPct(b); return b.kill ? 100 : v == null || v >= 99.95 ? 0 : Math.min(100, (100 - v) / FL * 100); }; /* (how far down: the ground covered) */
+      const bar = (b, i) => {
         // (a pull that never moved the boss is a reset: an empty bar, not a "100%" that looks unread)
         const v = pullPct(b), unk = !b.kill && v == null, reset = !b.kill && !unk && v >= 99.95, done = b.kill ? 100 : unk || reset ? 0 : Math.max(3, 100 - v);
         const at = b.wallMs ? wallClock(b.wallMs) : clock(b.startMs), pg = pullProg(b);
         const res = b.kill ? 'Kill' : unk ? (b.wcl || CACHE.has(b) ? 'Wipe' : 'Wipe (still reading this pull)') : reset ? 'Reset at 100%' : pg && pg.phase ? 'Wipe in ' + pg.label : 'Wipe, boss at ' + v.toFixed(1) + '% health';
         const more = [T(b.duration), !b.kill && !unk && !reset ? Math.floor(100 - v) + '% of the fight done' : '', b === best && !b.kill ? 'best pull of the night' : ''].filter(Boolean).join(' · ');
         const tt = '<div class="tt-h">Pull ' + b.pull + ' · ' + esc(at) + '</div><div>' + esc(res) + '</div><div class="tt-s">' + esc(more) + '</div>' + whyLine(b) + (lock ? '<div class="tt-s">This tab always covers every pull.</div>' : '');
-        return '<button class="pull bhp-b' + (b.kill ? ' kill' : '') + (b === best && !b.kill ? ' best' : '') + (unk ? ' unk' : '') + (b === S.item && !allMode ? ' sel' : '') + '" type="button" data-i="' + add(b) + '" style="--h:' + done.toFixed(1) + '%;--pc:' + (pullCol(b) || '#6aa8ff') + '" data-tt="' + esc(tt) + '" aria-label="' + esc('Pull ' + b.pull + ', ' + at + ': ' + res + ', ' + more) + '"' + (lock ? ' aria-disabled="true"' : '') + '><i></i></button>';
+        return '<button class="pull bhp-b' + (b.kill ? ' kill' : '') + (b === best && !b.kill ? ' best' : '') + (unk ? ' unk' : '') + (b === S.item && !allMode ? ' sel' : '') + '" type="button" data-i="' + add(b) + '" style="--h:' + done.toFixed(1) + '%;left:' + PX(i) + '%;top:' + PY(b).toFixed(1) + '%;--pc:' + (pullCol(b) || '#6aa8ff') + '" data-tt="' + esc(tt) + '" aria-label="' + esc('Pull ' + b.pull + ', ' + at + ': ' + res + ', ' + more) + '"' + (lock ? ' aria-disabled="true"' : '') + '><i></i></button>';
       };
       const num = (b, i) => '<span class="bhp-n' + (i === 0 || i === n - 1 || b.pull % 5 === 0 ? ' five' : '') + (b === S.item && !allMode ? ' sel' : '') + (b.kill ? ' kill' : '') + '">' + b.pull + whyDot(b) + '</span>';
       // (your pick, Oct 20: while you follow a live log, a dashed spot after the newest boss's last pull, where the next pull
       // lands; it turns into the real pull about a minute after that pull ends)
       const last = bosses.filter((b) => !b.run).pop(), live = LIVE.on && !!last && list[n - 1] === last;
-      const nx = live ? '<span class="bhp-b next" tabindex="0" data-tt="' + esc('<div class="tt-h">' + (last.kill ? 'Next boss' : 'Pull ' + (last.pull + 1)) + '</div><div>Following live: it shows up here about a minute after it ends.</div>') + '" aria-label="Following live: the next pull shows up here"><i></i></span>' : '';
+      const nx = live ? '<span class="bhp-b next" tabindex="0" data-tt="' + esc('<div class="tt-h">' + (last.kill ? 'Next boss' : 'Pull ' + (last.pull + 1)) + '</div><div>Following live: it shows up here about a minute after it ends.</div>') + '" aria-label="Following live: the next pull shows up here" style="left:' + PX(n) + '%;top:0"><i></i></span>' : '';
+      // (the line: every pull faint, the best so far gold with the ground covered shaded above it, as on the Companion's night chart)
+      const kn = list.map((b, i) => [b, i]).filter(([b]) => b.kill || pullPct(b) != null);
+      let bs = 0; const bp = kn.map(([b, i]) => { bs = Math.max(bs, PY(b)); return PX(i) + ' ' + bs.toFixed(1); });
+      const lineSvg = kn.length > 1 ? '<svg class="bhp-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="bhp-area" d="M' + PX(kn[0][1]) + ' 0L' + bp.join('L') + 'L' + PX(kn[kn.length - 1][1]) + ' 0Z"/>' +
+        '<polyline class="bhp-all-l" points="' + kn.map(([b, i]) => PX(i) + ',' + PY(b).toFixed(1)).join(' ') + '"/><polyline class="bhp-best-l" points="' + bp.map((p) => p.replace(' ', ',')).join(' ') + '"/></svg>' : '';
       const allB = n > 1 ? '<button class="bhp-all' + (allMode ? ' sel' : '') + '" type="button" data-all="' + add(list[n - 1]) + '" title="Every pull of this boss together' + (kill ? '. Killed on pull ' + kill.pull : best ? '. Best: pull ' + best.pull : '') + '" aria-pressed="' + allMode + '">All pulls<span> · ' + plural(n, 'pull') + '</span></button>' : '';
       // (All pulls is a slim pill at the start of the banner's second line, where its tag was (Oct 22: the tall box beside the bars was dead weight))
       const as = $('#bhAll'); if (as) as.innerHTML = allB;
-      slot.innerHTML = '<div class="bhp-row"><div class="bhp-plot' + (bands ? ' ph' : '') + (lock ? ' lock' : '') + '" style="max-width:' + ((n + (live ? 1 : 0)) * 59 + (bands ? 28 : 0)) + 'px"><div class="bhp-bars"><div class="bhp-bands" aria-hidden="true">' + bands + '</div>' + list.map(bar).join('') + nx + '</div>' +
+      slot.innerHTML = '<div class="bhp-row"><div class="bhp-plot ln' + (bands ? ' ph' : '') + (lock ? ' lock' : '') + '" style="max-width:' + ((n + (live ? 1 : 0)) * 59 + (bands ? 28 : 0)) + 'px"><div class="bhp-bars"><div class="bhp-bands" aria-hidden="true">' + bands + '</div><div class="bhp-pa">' + lineSvg + list.map(bar).join('') + nx + '</div></div>' +
         '<div class="bhp-ns" aria-hidden="true">' + list.map(num).join('') + (live ? '<span class="bhp-n five lv">' + (last.kill ? '·' : last.pull + 1) + '</span>' : '') + '</div></div></div>';
     }
   } else {
