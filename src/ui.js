@@ -635,12 +635,17 @@ function renderList() {
       // (the line: every pull faint, the best so far gold with the ground covered shaded above it, as on the Companion's night chart)
       const kn = list.map((b, i) => [b, i]).filter(([b]) => b.kill || pullPct(b) != null);
       let bs = 0; const bp = kn.map(([b, i]) => { bs = Math.max(bs, PY(b)); return PX(i) + ' ' + bs.toFixed(1); });
-      const lineSvg = kn.length > 1 ? '<svg class="bhp-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="bhp-area" d="M' + PX(kn[0][1]) + ' 0L' + bp.join('L') + 'L' + PX(kn[kn.length - 1][1]) + ' 0Z"/>' +
-        '<polyline class="bhp-all-l" points="' + kn.map(([b, i]) => PX(i) + ',' + PY(b).toFixed(1)).join(' ') + '"/><polyline class="bhp-best-l" points="' + bp.map((p) => p.replace(' ', ',')).join(' ') + '"/></svg>' : '';
+      const lineSvg = kn.length > 1 ? '<svg class="bhp-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' + /* (one line only, the user: "not a huge fan of the yellow line") */
+        '<polyline class="bhp-all-l" points="' + kn.map(([b, i]) => PX(i) + ',' + PY(b).toFixed(1)).join(' ') + '"/></svg>' : '';
+      /* (refined, Oct 23: the pull you're on gets a thin guide down to its number; the best pull its label, as on the Companion's chart; the kill line when the bottom is the kill) */
+      const si = allMode ? -1 : list.indexOf(S.item), bi = best ? list.indexOf(best) : -1;
+      const guide = si >= 0 ? '<i class="bhp-gd" style="left:' + PX(si) + '%;top:' + PY(list[si]).toFixed(1) + '%"></i>' : '';
+      const bLab = false && bi >= 0 ? '<span class="bhp-bl' + (best.kill ? ' kill' : '') + (+PX(bi) > 60 ? ' r' : '') + (PY(best) > 70 ? ' up' : '') + '" style="left:' + PX(bi) + '%;top:' + PY(best).toFixed(1) + '%">' + (best.kill ? 'Kill' : 'Best') + ' · pull ' + best.pull + '</span>' : '';
+      const killL = FL >= 100 ? '<i class="bhp-kl"><em>' + 'Kill' + '</em></i>' : '';
       const allB = n > 1 ? '<button class="bhp-all' + (allMode ? ' sel' : '') + '" type="button" data-all="' + add(list[n - 1]) + '" title="Every pull of this boss together' + (kill ? '. Killed on pull ' + kill.pull : best ? '. Best: pull ' + best.pull : '') + '" aria-pressed="' + allMode + '">All pulls<span> · ' + plural(n, 'pull') + '</span></button>' : '';
       // (All pulls is a slim pill at the start of the banner's second line, where its tag was (Oct 22: the tall box beside the bars was dead weight))
       const as = $('#bhAll'); if (as) as.innerHTML = allB;
-      slot.innerHTML = '<div class="bhp-row"><div class="bhp-plot ln' + (bands ? ' ph' : '') + (lock ? ' lock' : '') + '" style="max-width:' + ((n + (live ? 1 : 0)) * 59 + (bands ? 28 : 0)) + 'px"><div class="bhp-bars"><div class="bhp-bands" aria-hidden="true">' + bands + '</div><div class="bhp-pa">' + lineSvg + list.map(bar).join('') + nx + '</div></div>' +
+      slot.innerHTML = '<div class="bhp-row"><div class="bhp-plot ln' + (bands ? ' ph' : '') + (lock ? ' lock' : '') + '" style="max-width:' + ((n + (live ? 1 : 0)) * 59 + (bands ? 28 : 0)) + 'px"><div class="bhp-bars"><div class="bhp-bands" aria-hidden="true">' + bands + '</div><div class="bhp-pa">' + killL + guide + lineSvg + list.map(bar).join('') + nx + bLab + '</div></div>' +
         '<div class="bhp-ns" aria-hidden="true">' + list.map(num).join('') + (live ? '<span class="bhp-n five lv">' + (last.kill ? '·' : last.pull + 1) + '</span>' : '') + '</div></div></div>';
     }
   } else {
