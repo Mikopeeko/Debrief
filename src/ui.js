@@ -1782,7 +1782,7 @@ const PATCH_NOTES = [
     'The bosses are in the same order everywhere on the site.',
     'Long patch notes fold after six lines.',
   ], f: [
-    'Debrief Addon: /dbr no longer opens the paste box when there's nothing to show; it says your recaps are in the Debrief Companion pop-up.',
+    'Debrief Addon: /dbr no longer opens the paste box when there is nothing to show; it says your recaps are in the Debrief Companion pop-up.',
     'The coach no longer leaves a stray letter behind a spell name, like "you stood in Noxious Ground s".',
     'Live now no longer disappears while your raid gets ready for the next boss: a live log stays live for 30 quiet minutes, not 10.',
     'Debrief Companion: after a training dummy, the app no longer thinks the fight is still going (it held up updates for half an hour).',
