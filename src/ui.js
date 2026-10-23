@@ -1766,6 +1766,7 @@ const PATCH_NOTES = [
     'A little Halloween spirit on the site until Nov 1 🎃',
     'The coach box is tidier: the thing to focus on next pull is said once, on the first card. Each Next time is one short instruction (open the card for the rest), cards carry at most one tag, and what went right is a short plain list.',
   ], f: [
+    'A note cooldown pressed too early now says to hold it for its reminder, instead of telling you to turn the reminder on.',
     'Debriefing maps: each thing that went wrong shows its own map again when it has one (the adds, Dreadmarch and the rest), on All pulls too with the pull it came from. When there is no map, the line says so.',
     'Death counts in the coach box no longer include mass wipes: when many of us die at once as the pull is lost, that counts as one raid moment, not a death for each player. The header says how many mass wipes there were, and they still show in grey in each player\'s list.',
   ] },
@@ -10741,7 +10742,7 @@ function oaRaidFix(reps, nth) { return oaCache(reps, nth ? 'rf' + nth : '', () =
     : g.k === 'bleed' ? 'Healers, watch for people bleeding out and top them up.' : g.k === 'tank' ? 'Get an external or a tank swap ready there.'
     : /^w:/.test(g.k) ? 'Put a raid cooldown on ' + (ab || 'that hit') + '.' : fx || (o.av ? 'That one\'s dodgeable: stay out of it.' : '');
   if (!fix) return null;
-  const label = o.k === 'dmg' ? 'Damage' : g.k === 'kit' ? 'Slow deaths' : g.k === 'bleed' ? 'Healing' : g.k === 'tank' ? 'Tank deaths' : /^w:/.test(g.k) ? (ab || 'Raid damage') : m;
+  const label = o.k === 'dmg' ? 'Short on damage' : g.k === 'kit' ? 'Slow deaths' : g.k === 'bleed' ? 'Healing' : g.k === 'tank' ? 'Tank deaths' : /^w:/.test(g.k) ? (ab || 'Raid damage') : m;
   return { kind: 'raid', label, n, of: reps.length, pulls: g.l.map((x) => x.pull), fix }; }); }
 // (one player's fix)
 function oaPlayerFix(reps, name) { const L = coachMine(reps, name); if (L.length) return L[0]; if (!oaMine(reps, name).length) return null;
@@ -10896,7 +10897,10 @@ function coachRaid(reps) { return oaCache(reps, 'c:raid', () => {
   // (the NSRT note's jobs that were missed: who, what, how often; a missed job is a reminder problem, not a skill problem)
   { const nG = new Map(); for (const r of reps) for (const m of keptMistakes(r)) { if (!m.fromNote || m.player === 'Raid') continue; const g = nG.get(lc(m.mechanic)) || { key: m.mechanic, pulls: new Set(), who: new Map(), hi: 0, m }; g.pulls.add(r.item.pull); g.who.set(m.player, (g.who.get(m.player) || 0) + 1); if (m.severity !== 'Low') g.hi++; nG.set(lc(m.mechanic), g); }
     for (const g of [...nG.values()].filter((x) => x.pulls.size >= need).sort((a, b) => b.hi - a.hi || b.pulls.size - a.pulls.size).slice(0, 2)) { const names = [...g.who].sort((a, b) => b[1] - a[1]).map(([n]) => String(n).split('-')[0]);
-      out.push({ kind: 'note', sev: g.hi ? 'bad' : 'warn', label: g.key + ' (from the note)', n: g.pulls.size, of: reps.length, pulls: [...g.pulls], what: 'Missed by ' + lpAnd(names.slice(0, 4)) + (names.length > 4 ? ' and ' + (names.length - 4) + ' more' : '') + '.', fix: lpAnd(names.slice(0, 3)) + (names.length > 3 ? ' and the others' : '') + ': it was your job in the NSRT note. Turn on the note\'s reminder for it.', how: cHtml(g.m.detail || '') }); } }
+      /* (Oct 23, your OK: the fix follows what happened. "Used Anti-Magic Zone at 2:19, 130 s before its reminder (4:29)" is a press too early, not a missed reminder) */
+      const dt = cHtml(g.m.detail || ''), sp = (dt.match(/Used (.+?) at \d/) || [])[1], at = (dt.match(/reminder \((\d+:\d\d)\)/) || [])[1], who3 = lpAnd(names.slice(0, 3)) + (names.length > 3 ? ' and the others' : '');
+      const fixN = /before its reminder|still recharging|early/i.test(dt) ? who3 + ': hold ' + (sp || 'it') + ' for its reminder' + (at ? ' at ' + at : '') + ', so it\'s ready when the note calls it.' : /after its reminder|late/i.test(dt) ? who3 + ': press ' + (sp || 'it') + ' as soon as the reminder shows.' : who3 + ': it was your job in the NSRT note. Turn on the note\'s reminder for it.';
+      out.push({ kind: 'note', sev: g.hi ? 'bad' : 'warn', label: /^assigned cooldown$/i.test(g.key) ? 'Note cooldowns' : g.key + ' (from the note)', n: g.pulls.size, of: reps.length, pulls: [...g.pulls], what: 'Missed by ' + lpAnd(names.slice(0, 4)) + (names.length > 4 ? ' and ' + (names.length - 4) + ' more' : '') + '.', fix: fixN, how: dt }); } }
   const imp = IMPORTANCE[reps[0].item.boss] || [], S2 = new Map();
   for (const r of reps) for (const [id, x] of pullSections(r)) { if (id === 'deaths' || x.s.info || x.st === 'na') continue;
     const g = S2.get(id) || { id, s: x.s, bad: 0, warn: 0, ok: 0, pulls: [] }; if (x.st === 'bad') g.bad++; else if (x.st === 'warn') g.warn++; else g.ok++; if (x.st !== 'ok') g.pulls.push(r.item.pull); S2.set(id, g); }
@@ -11526,10 +11530,10 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
   const briefLine = (x, i) => { const mi = mapOf(x), kk = 'cchp-' + (o.key || 'x') + '-' + (x.sec || x.label), nm = esc(dbfCap(String(x.label).replace(/\s*\(.*$/, ''))), ins = (String(x.label).match(/\(([^)]+)\)\s*$/) || [])[1];
     const fx = String(x.fix || ''), nx = fx ? '<div class="cch-mr"><span class="cch-ml">Next time</span><span>' + esc(fx) + '</span></div>' : '';
     return '<li class="cbr-w cbr-' + (x.sev === 'bad' ? 'bad' : 'warn') + '"' + (x.sec ? ' data-sec="' + esc(x.sec) + '"' : '') + '><details class="cch-pdx cbr-dx" data-k="' + esc(kk) + '"' + (S.openSecs.has(kk) ? ' open' : '') + '><summary><span class="cbr-dot"></span><span class="cbr-t"><b>' + nm + '</b>' + (ins ? ' <span class="cbr-i">' + esc(ins.toLowerCase()) + '</span>' : '') + ledTag(x) +
-      (x.what ? '<span class="cbr-wh">' + esc(cClip(tidyLine(x.what), 110)) + '</span>' : '') + '</span><span class="cch-chev" aria-hidden="true">▸</span></summary><div class="cbr-body">' + nx + (mi ? '<span class="cbr-map"><span class="cch-pmap"' + mi + '></span></span>' + (x.mapPull ? '<p class="cbr-nomap">The map is from pull ' + x.mapPull + '.</p>' : '') : x.noMap ? '<p class="cbr-nomap">' + esc(x.noMap) + '</p>' : '') + more(x, 1) + '</div></details></li>'; };
+      (x.what ? '<span class="cbr-wh">' + esc(cClip(tidyLine(x.what), 110)) + '</span>' : '') + '</span><span class="cch-chev" aria-hidden="true">▸</span></summary><div class="cbr-body">' + nx + (mi ? '<span class="cbr-map"><span class="cch-pmap"' + mi + '></span></span>' + (x.mapPull ? '<p class="cbr-nomap">The map is from pull ' + x.mapPull + '.</p>' : '') : '') /* (no 'no map' line: no map is just no map (Oct 23)) */ + more(x, 1) + '</div></details></li>'; };
   const briefH = () => (c.right.length ? '<div class="cbr-h ok">Wins</div><ul class="cbr-l">' + c.right.slice(0, 3).map((x) => '<li class="cbr-ok">' + esc(x.t) + '</li>').join('') + '</ul>' : '') +
     (() => { const W = (c.wrongAll && c.wrongAll.length ? c.wrongAll : c.wrong), maj = W.filter((x) => x.sev === 'bad'), mn = W.filter((x) => x.sev !== 'bad'), lead = maj.concat(mn.slice(0, Math.max(0, 3 - maj.length))), rest = W.filter((x) => !lead.includes(x));
-      return W.length ? '<div class="cbr-h bad">Mistakes</div><ul class="cbr-l">' + lead.map(briefLine).join('') + '</ul>' + (rest.length ? '<details class="cbr-more"><summary>+' + rest.length + ' smaller ' + (rest.length === 1 ? 'one' : 'ones') + '</summary><ul class="cbr-l">' + rest.map((x, k) => briefLine(x, lead.length + k)).join('') + '</ul></details>' : '') : ''; })() +
+      return W.length ? '<div class="cbr-h bad">Mistakes</div><ul class="cbr-l">' + lead.map(briefLine).join('') + '</ul>' + (rest.length ? '<details class="cbr-more"><summary>+' + rest.length + ' smaller ' + (rest.length === 1 ? 'one' : 'ones') + ' · ' + esc(lpAnd(rest.slice(0, 3).map((x) => dbfCap(String(x.label).replace(/\s*\(.*$/, ''))))) + (rest.length > 3 ? '…' : '') + '</summary><ul class="cbr-l">' + rest.map((x, k) => briefLine(x, lead.length + k)).join('') + '</ul></details>' : '') : ''; })() +
     ''; /* (no Next pull box (Oct 23): each line's fix shows when it opens) */
   const D = c.deaths, A = c.avoid;
   // (a death chip opens that death's short summary under the chips (Oct 22: deaths live only here on a single pull))
