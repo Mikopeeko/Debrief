@@ -9,7 +9,7 @@ local DB
 local DEF = {
   enabled = true, style = "cdmants", colorName = "gold", r = 0.90, g = 0.71, b = 0.31, a = 1, thick = 3, pad = 1, speed = 1, scale = 1,
   lead = 0, hold = 8, stopOnPress = true, fallback = true, iconSize = 56,
-  gameColors = true, timer = true, timerSize = 22, timerColor = "white", timerPos = "middle", timerTenths = false,
+  where = "mouse", gameColors = true, timer = true, timerSize = 22, timerColor = "white", timerPos = "middle", timerTenths = false,
   sound = "none", channel = "Master",
   tts = false, ttsText = "{spell}", ttsVoice = 0, ttsVolume = 100, ttsRate = 0, countdown = 0,
 }
@@ -274,22 +274,61 @@ local function dress(g, id)
   if st == "pulse" then g.fade:SetDuration(0.45 / sp); g.ag:Play() end
 end
 
--- (a big icon of its own, for a spell that isn't on your Cooldown Manager; drag it with /dglow move)
-local float
-local function floatIcon()
-  if float then return float end
-  float = CreateFrame("Frame", "DebriefGlowIcon", UIParent); float:SetFrameStrata("HIGH"); float:SetMovable(true); float:SetClampedToScreen(true)
-  float.tex = float:CreateTexture(nil, "ARTWORK"); float.tex:SetAllPoints(); float.tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-  float.txt = float:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge"); float.txt:SetPoint("TOP", float, "BOTTOM", 0, -4)
-  float:SetScript("OnMouseDown", function(self) if self.moving then self:StartMoving() end end)
-  float:SetScript("OnMouseUp", function(self) self:StopMovingOrSizing(); local p, _, rp, x, y = self:GetPoint(); DB.floatPos = { p, rp, x, y } end)
-  float:Hide()
-  return float
+-- ---- your own icons: the spell's icon next to your mouse (the default), or at a spot you choose. With "On my Cooldown Manager"
+-- they only show for a spell that isn't on your bar. Several at once sit side by side. /dglow move places the spot. ----
+local holder, icons, ipool, iconOrder = nil, {}, {}, 0
+local function where() return DB and DB.where or "mouse" end
+local function holderFrame()
+  if holder then return holder end
+  holder = CreateFrame("Frame", "DebriefGlowIcon", UIParent); holder:SetFrameStrata("HIGH"); holder:SetSize(1, 1); holder:SetMovable(true); holder:SetClampedToScreen(true)
+  -- (next to your mouse: a little below and to the right of the pointer, so it never covers what you click)
+  holder:SetScript("OnUpdate", function(self)
+    if where() ~= "mouse" or self.moving then return end
+    local x, y = GetCursorPosition(); local s = UIParent:GetEffectiveScale(); if not s or s <= 0 then s = 1 end
+    self:ClearAllPoints(); self:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x / s + (DB.mouseX or 22), y / s + (DB.mouseY or -22))
+  end)
+  return holder
 end
-local function placeFloat()
-  local f = floatIcon(); f:ClearAllPoints(); local p = DB.floatPos
-  if p then f:SetPoint(p[1], UIParent, p[2], p[3], p[4]) else f:SetPoint("CENTER", UIParent, "CENTER", 0, 180) end
-  f:SetSize(DB.iconSize or 56, DB.iconSize or 56)
+local function placeHolder()
+  local h = holderFrame()
+  if where() == "mouse" and not h.moving then return end
+  h:ClearAllPoints(); local p = DB.floatPos
+  if p then h:SetPoint(p[1], UIParent, p[2], p[3], p[4]) else h:SetPoint("CENTER", UIParent, "CENTER", 0, 180) end
+end
+local function layoutIcons()
+  local s, list = DB.iconSize or 48, {}
+  for _, f in pairs(icons) do list[#list + 1] = f end
+  table.sort(list, function(a, b) return a.order < b.order end)
+  for i, f in ipairs(list) do f:SetSize(s, s); f:ClearAllPoints(); f:SetPoint("TOPLEFT", holder, "TOPLEFT", (i - 1) * (s + 6), 0) end
+end
+local function iconFor(id)
+  local f = icons[id]
+  if not f then
+    placeHolder()
+    f = table.remove(ipool)
+    if not f then
+      f = CreateFrame("Frame", nil, holderFrame()); f:SetFrameLevel(holder:GetFrameLevel() + 2)
+      f.tex = f:CreateTexture(nil, "ARTWORK"); f.tex:SetAllPoints(); f.tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+      f._label = "your icon"
+    end
+    iconOrder = iconOrder + 1; f.order, f.id = iconOrder, id
+    f.tex:SetTexture(spellIcon(id)); icons[id] = f; f:Show(); layoutIcons()
+  end
+  return f
+end
+-- (gone once both its countdown and its glow are over)
+local function releaseIcon(id)
+  local f = icons[id]
+  if not f or glows[id] or timers[id] then return end
+  icons[id] = nil; f:Hide(); f:ClearAllPoints(); ipool[#ipool + 1] = f; layoutIcons()
+end
+-- (where this spell shows: your own icon, or its Cooldown Manager icon when you chose the bar; nil when it can't show)
+local function targetFor(id)
+  if where() == "bar" then
+    local it = cdmItemFor(id); if it then return it end
+    if not DB.fallback then return nil end
+  end
+  return iconFor(id), true
 end
 
 local function stop(id)
@@ -297,16 +336,15 @@ local function stop(id)
   glows[id] = nil
   if g.timer then g.timer:Cancel(); g.timer = nil end
   quiet(g); g:Hide(); g:ClearAllPoints()
-  if g.onFloat and float then local busy = false; for _, o in pairs(glows) do if o.onFloat then busy = true end end; for _, f in pairs(timers) do if f.onFloat then busy = true end end; if not busy then float:Hide() end end; g.onFloat = nil
+  if g.own then g.own = nil; releaseIcon(id) end
   pool[#pool + 1] = g
 end
 -- ---- the countdown on the icon: NSRT's own timer (its reminder ends at info.expires), counting down on the spell ----
 -- (so it reaches 0 together with NSRT's bar; its length is your NSRT reminder duration)
-local function floatBusy() for _, g in pairs(glows) do if g.onFloat then return true end end; for _, f in pairs(timers) do if f.onFloat then return true end end end
 local function stopTimer(id)
   local f = timers[id]; if not f then return end
   timers[id] = nil; f:SetScript("OnUpdate", nil); f:Hide(); f:ClearAllPoints(); tpool[#tpool + 1] = f
-  if f.onFloat and float and not floatBusy() then float:Hide() end; f.onFloat = nil
+  if f.own then f.own = nil; releaseIcon(id) end
 end
 local function tick(f)
   local left = f.expires - GetTime()
@@ -327,17 +365,14 @@ function timerLook(f, id)
 end
 local function showTimer(id, expires, label)
   if not DB.timer then return end
-  local it = cdmItemFor(id)
-  if not it then
-    if not DB.fallback then return end
-    placeFloat(); float.tex:SetTexture(spellIcon(id)); float.txt:SetText(label or spellName(id) or ""); float:Show(); it = float
-  end
   stopTimer(id)
+  local it, own = targetFor(id)
+  if not it then return end
   local f = table.remove(tpool)
   if not f then f = CreateFrame("Frame", nil, UIParent); f:SetFrameStrata("HIGH"); f.text = f:CreateFontString(nil, "OVERLAY") end
   f:ClearAllPoints(); f:SetAllPoints(iconArt(it)); above(f, it, 20)
   timerLook(f, id)
-  f.id, f.expires, f.onFloat = id, expires, it == float
+  f.id, f.expires, f.own = id, expires, own
   timers[id] = f; f:SetScript("OnUpdate", tick); f:Show(); tick(f)
 end
 
@@ -354,11 +389,10 @@ function place(g, it, id)
   above(g, it, 10); below(g.back, it); g:Show(); dress(g, id)
 end
 local function start(id, hold, label)
-  local it = cdmItemFor(id)
-  if not it and not DB.fallback then return false end
   stop(id)
-  local g = newGlow()
-  if not it then placeFloat(); float.tex:SetTexture(spellIcon(id)); float.txt:SetText(label or spellName(id) or ""); float:Show(); it = float; g.onFloat = true end
+  local it, own = targetFor(id)
+  if not it then return false end
+  local g = newGlow(); g.own = own
   place(g, it, id)
   glows[id] = g
   g.timer = C_Timer.NewTimer(hold or DB.hold or 8, function() g.timer = nil; stop(id) end)
@@ -425,9 +459,10 @@ local function reminder(event, info)
   id = tonumber(id); if not id then return end
   DB.seen[id] = true -- (so it shows in the Your spells window)
   local wait = info.expires and not secret(info.expires) and (info.expires - GetTime()) or (tonumber(info.dur) or 8)
-  local it = cdmItemFor(id)
+  local it = where() == "bar" and cdmItemFor(id)
   diary(string.format("%s in %.1f s (%s): %s", spellName(id) or ("spell " .. id), wait, event == "NSRT_ALERT_WOULD_SHOW" and "timeline" or "pop-up",
-    it and "found on your Cooldown Manager" or (DB.fallback and "not on your Cooldown Manager, big icon" or "not on your Cooldown Manager")))
+    where() == "mouse" and "next to your mouse" or where() == "spot" and "at your spot" or
+    (it and "found on your Cooldown Manager" or (DB.fallback and "not on your Cooldown Manager, big icon" or "not on your Cooldown Manager"))))
   schedule(id, wait)
 end
 local function onReminder(event, info)
@@ -453,12 +488,18 @@ end
 -- ---- test: every Cooldown Manager icon glows for 3 s with the sound and voice, so you can see your settings without a raid ----
 function DebriefGlow_Test(quiet)
   local n = 0
-  for _, e in ipairs(cdmItems()) do if spellOn(e.ids[1]) and start(e.ids[1], 3) then n = n + 1; showTimer(e.ids[1], GetTime() + 3) end end
+  if where() == "bar" then
+    for _, e in ipairs(cdmItems()) do if spellOn(e.ids[1]) and start(e.ids[1], 3) then n = n + 1; showTimer(e.ids[1], GetTime() + 3) end end
+  else
+    local e = cdmItems()[1]; local id = e and e.ids[1] or 31821
+    if start(id, 3) then n = 1; showTimer(id, GetTime() + 3) end
+  end
   if n == 0 and DB.fallback then start(31821, 3, "Test"); n = 1 end
   playSound(); if DB.tts and not quiet then speak(ttsFor(31821, "Test")) end
   if not quiet then
     if not NSAPI then say("NSRT isn't loaded. The glows follow NSRT's reminders, so turn NSRT on too.") end
-    if #cdmItems() == 0 then say("no Cooldown Manager icons found. Turn on Blizzard's Cooldown Manager (Options > Gameplay Enhancements) and add your cooldowns to it.")
+    if where() ~= "bar" then say(where() == "mouse" and "your icon shows next to your mouse for 3 s. In a raid it shows your own NSRT spells, counting down with NSRT." or "your icon shows at your spot for 3 s.")
+    elseif #cdmItems() == 0 then say("no Cooldown Manager icons found. Turn on Blizzard's Cooldown Manager (Options > Gameplay Enhancements) and add your cooldowns to it.")
     else say("your Cooldown Manager icons glow for 3 s. In a raid only your own NSRT spells glow, when it's time to press them.") end
   end
 end
@@ -672,9 +713,9 @@ do
     end
     numF = CreateFrame("Frame", nil, icons[2]); numF:SetAllPoints(icons[2]); numF:SetFrameLevel(icons[2]:GetFrameLevel() + 30); numF.text = numF:CreateFontString(nil, "OVERLAY")
     cap = txt(frame, "bold", 13.5, COL.muted); cap:SetPoint("BOTTOM", 0, 58)
-    local tb = button(frame, "Test on my bar", 180, true, 30); tb:SetPoint("BOTTOM", 0, 16)
+    local tb = button(frame, "Test it", 180, true, 30); tb:SetPoint("BOTTOM", 0, 16)
     tb:SetScript("OnClick", function() if pv.onTest then pv.onTest() end end)
-    tip(tb, "Your Cooldown Manager glows for 3 seconds, with your sound and voice.")
+    tip(tb, "Shows it for real for 3 seconds, with your sound and voice.")
     frame.test = tb
     frame:SetScript("OnUpdate", step)
     frame:SetScript("OnHide", function() stopGlow() end)
@@ -877,7 +918,9 @@ local function buildOptions()
   -- Glow: the basics on one card
   page("glow")
   panel("Your glow", "NSRT says when, Debrief Glow shows it")
-  switchRow("Glow my NSRT cooldowns", "Your own NSRT reminders with a spell make it glow on the Cooldown Manager.", "enabled", preview)
+  switchRow("Glow my NSRT cooldowns", "Your own NSRT reminders with a spell count down and glow.", "enabled", preview)
+  pickRow("Where it shows", "Next to your mouse, on your Cooldown Manager, or a spot you choose.", "where", 260, function() return { { "mouse", "Next to my mouse" }, { "bar", "On my Cooldown Manager" }, { "spot", "A spot I choose" } } end, function() layoutIcons(); preview() end)
+  stepRow("Icon size", "The icon next to your mouse or at your spot.", "iconSize", 24, 128, 4, function(v) return v .. " px" end, function() layoutIcons(); preview() end)
   pickRow("Look", "The game's own glows, placed the way Blizzard does. Pulse is ours.", "style", 300, function() return styleList() end, preview)
   do -- (colour dots, then Any colour for the colour picker)
     local cy = rowBase("Colour", "Eight ready colours, or any colour you like.")
@@ -906,7 +949,7 @@ local function buildOptions()
   stepRow("Start early", "On time glows the moment NSRT's countdown ends.", "lead", 0, 5, 0.5, function(v) return v == 0 and "On time" or (v .. " s early") end)
   switchRow("Stop when I press it", "The glow ends as soon as you cast the spell.", "stopOnPress")
   panelEnd()
-  note("How it works: when NSRT counts down one of your note's spells, that spell's icon on Blizzard's Cooldown Manager counts down with it and glows at 0.\nCommands: /dglow opens this, /dglow test tries it on your bar, /dglow spells opens Your spells, /dglow move places the big icon.")
+  note("How it works: when NSRT counts down one of your note's spells, that spell's icon shows next to your mouse (or where you chose), counts down with NSRT and glows at 0.\nCommands: /dglow opens this, /dglow test tries it, /dglow spells opens Your spells, /dglow move places your spot, /dglow why shows what happened.")
 
   -- Sound and voice: four rows
   page("sound")
@@ -933,10 +976,9 @@ local function buildOptions()
   stepRow("Pulse thickness", nil, "thick", 1, 8, 1, px, preview)
   switchRow("Game looks in the game's colours", nil, "gameColors", preview)
   panelEnd()
-  panel("Spells not on your bar")
-  switchRow("Show a big icon", nil, "fallback")
-  stepRow("Big icon size", nil, "iconSize", 32, 128, 4, px)
-  buttonRow("Where it shows", "Place the big icon", function() SlashCmdList.DEBRIEFGLOW("move") end)
+  panel("Your icon")
+  buttonRow("Your spot", "Place it", function() SlashCmdList.DEBRIEFGLOW("move") end)
+  switchRow("Icon when it's not on your bar", nil, "fallback")
   panelEnd()
   column(2)
   panel("Countdown number")
@@ -1112,8 +1154,19 @@ SlashCmdList.DEBRIEFGLOW = function(msg)
       say(string.format("   fits to: %s, %.0f x %.0f on screen", art == it and "the icon's slot" or (art == ic and "Blizzard's picture" or "a skin's picture"), w, h))
     end
   elseif msg == "move" then
-    placeFloat(); float.tex:SetTexture(spellIcon(31821)); float.txt:SetText("Drag me, then /dglow move again"); float.moving = not float.moving; float:EnableMouse(float.moving)
-    if float.moving then float:Show(); say("drag the big icon where you want it, then type /dglow move again.") else float:Hide(); say("big icon placed.") end
+    local h = holderFrame()
+    if not h.handle then
+      h.handle = CreateFrame("Frame", nil, h); h.handle:SetPoint("TOPLEFT"); h.handle:EnableMouse(true)
+      h.handle.tex = h.handle:CreateTexture(nil, "ARTWORK"); h.handle.tex:SetAllPoints(); h.handle.tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+      h.handle.txt = h.handle:CreateFontString(nil, "OVERLAY", "GameFontNormal"); h.handle.txt:SetPoint("TOP", h.handle, "BOTTOM", 0, -4); h.handle.txt:SetText("Drag me, then /dglow move again")
+      h.handle:SetScript("OnMouseDown", function() h:StartMoving() end)
+      h.handle:SetScript("OnMouseUp", function() h:StopMovingOrSizing(); local p, _, rp, x, y = h:GetPoint(); DB.floatPos = { p, rp, x, y } end)
+    end
+    h.moving = not h.moving
+    if h.moving then
+      DB.where = "spot"; placeHolder(); local s = DB.iconSize or 48; h.handle:SetSize(s, s); h.handle.tex:SetTexture(spellIcon(31821)); h.handle:Show(); refreshAll()
+      say("drag the icon where you want it, then type /dglow move again. Your icon now shows at that spot.")
+    else h.handle:Hide(); say("spot saved.") end
   elseif msg == "on" or msg == "off" then DB.enabled = (msg == "on"); say(DB.enabled and "on." or "off."); refreshAll()
   else DebriefGlow_Open() end
 end

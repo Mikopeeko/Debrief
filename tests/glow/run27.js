@@ -49,6 +49,7 @@ function CANVAS() return CANVAS_CAT end
 PICKED = { 0.1, 0.8, 0.9 }
 ColorPickerFrame = { SetupColorPickerAndShow = function(self, info) self.info = info end, GetColorRGB = function() return PICKED[1], PICKED[2], PICKED[3] end }
 function IsPlayerSpell(id) return NAMES[id] ~= nil end
+MOUSE = { 500, 300 }; function GetCursorPosition() return MOUSE[1], MOUSE[2] end
 COMBAT = false; HIDDEN = setmetatable({}, { __tostring = function() return "<secret>" end })
 function issecretvalue(x) return x == HIDDEN end
 function InCombatLockdown() return COMBAT end
@@ -124,6 +125,27 @@ local function expect(what, got, want) print((got == want and "  ok   " or "  FA
 -- (a new pull: the boss is over, every glow from before has stopped, the fake clock starts again)
 local function newPull() PULL_ID = PULL_ID + 1; fire(ev, "ENCOUNTER_END"); ADVANCE(NOW + 30); expect("nothing left glowing before the pull", GLOWING(), "nothing"); heard(); NOW = 0; TIMERS = {} end
 local styles = { "cdmants", "cdmflash", "pandemic", "proc", "assist", "onebutton", "altglow", "pulse" }
+expect("new default: next to the mouse", DebriefGlowDB.where, "mouse")
+print("-- the icon next to your mouse: NSRT counts down Aura Mastery; its icon follows the mouse with the number, then glows")
+do
+  newPull(); pull(); at(15, "Aura Mastery in 5")
+  local h = DebriefGlowIcon; local up = h._scripts.OnUpdate
+  local ic; for _, f in ipairs(FRAMES) do if f._shown and rawget(f, "_label") == "your icon" then ic = f end end
+  expect("an icon shows", ic ~= nil, true)
+  up(h); MOUSE = { 800, 200 }; up(h)
+  local pts = rawget(h, "_pts"); expect("it sits just below-right of the mouse, and moves with it", pts and pts.TOPLEFT, "822.0,178.0")
+  expect("the countdown is on it", COUNT(), "your icon 5")
+  at(20, "0: it glows"); expect("the glow is on it", GLOWING(), "your icon (cdmants, gold)")
+  press(31821); at(20.1, "pressed"); expect("gone once pressed", ic._shown, false)
+  print("  two at once sit side by side; Icon size sets their size")
+  DebriefGlowDB.iconSize = 64
+  CB.NSRT_REMINDER_SHOW("NSRT_REMINDER_SHOW", { spellID = 31884, dur = 3, expires = GetTime() + 3 }, nil); CB.NSRT_REMINDER_SHOW("NSRT_REMINDER_SHOW", { spellID = 375576, dur = 3, expires = GetTime() + 3 }, nil)
+  local xs = {}; for _, f in ipairs(FRAMES) do if f._shown and rawget(f, "_label") == "your icon" then xs[#xs + 1] = rawget(f, "_pts") and rawget(f, "_pts").TOPLEFT end end
+  table.sort(xs); expect("side by side, 64 px icons 6 px apart", table.concat(xs, " | "), "0.0,0.0 | 70.0,0.0")
+  ADVANCE(NOW + 3.1); fire(ev, "ENCOUNTER_END"); DebriefGlowDB.iconSize = 48
+end
+DebriefGlowDB.where = "bar"
+print("-- the rest runs with Where it shows: On my Cooldown Manager")
 
 print("-- defaults: a gold ring on the icon's edge (Cooldown Manager ants), no sound, no voice")
 expect("default look", DebriefGlowDB.style, "cdmants"); expect("1 px out from the picture", DebriefGlowDB.pad, 1)
@@ -157,7 +179,7 @@ print("-- countdown turned off")
 DebriefGlowDB.timer = false; newPull(); pull(); at(15, "no number"); DebriefGlowDB.timer = true
 print("-- a spell that isn't on the Cooldown Manager counts down on the big icon")
 newPull(); pull(); at(65, "Blessing of Protection in 5"); at(70, "glow on the big icon"); press(1022); at(70.5, "pressed: big icon gone")
-expect("big icon hidden", DebriefGlowIcon._shown, false)
+local anyIcon = false; for _, f in ipairs(FRAMES) do if f._shown and rawget(f, "_label") == "your icon" then anyIcon = true end end; expect("its icon is gone", anyIcon, false)
 
 print("-- Raid warning sound, voice \\"Press {spell}\\", 3 2 1 countdown, start 1 s early")
 DebriefGlowDB.sound = "raidwarning"; DebriefGlowDB.tts = true; DebriefGlowDB.ttsText = "Press {spell}"; DebriefGlowDB.countdown = 3; DebriefGlowDB.lead = 1; DebriefGlowDB.ttsVoice = 1
@@ -217,8 +239,8 @@ expect("preview open beside the window", DebriefGlowPreview._shown, true)
 print("  1.0 s  " .. PREVIEW(1)); print("  3.5 s  " .. PREVIEW(2.5)); print("  5.1 s  " .. PREVIEW(1.6)); print("  6.0 s  " .. PREVIEW(0.9))
 CHOOSE(rawget(W, "style"), "Cooldown Manager ants"); print("  style: Cooldown Manager ants  " .. PREVIEW(0.1)); CHOOSE(rawget(W, "style"), "Pulse")
 print("  8.5 s  " .. PREVIEW(2.4)); print("  9.3 s  " .. PREVIEW(0.8)); print("  next loop, 1.0 s  " .. PREVIEW(1))
-print("  the preview's Test on my bar button")
-local tb = rawget(DebriefGlowPreview, "test"); expect("Test button on the preview", tb ~= nil and rawget(tb, "t")._text, "Test on my bar")
+print("  the preview's Test it button")
+local tb = rawget(DebriefGlowPreview, "test"); expect("Test button on the preview", tb ~= nil and rawget(tb, "t")._text, "Test it")
 tb:GetScript("OnClick")(tb); expect("your bar glows", GLOWING():find("Aura Mastery") ~= nil, true); ADVANCE(NOW + 3.1); heard()
 ADVANCE(NOW + 3.1)
 
@@ -314,6 +336,9 @@ end
 print("-- /dglow test skips a spell that's off")
 newPull(); DebriefGlow_Test(true); expect("Blessing of Sacrifice not in the test", GLOWING():find("Sacrifice") == nil, true); ADVANCE(NOW + 3.1); heard()
 
+print("-- /dglow move picks your spot, and the icon shows there")
+SlashCmdList.DEBRIEFGLOW("move"); expect("Where it shows: A spot I choose", DebriefGlowDB.where, "spot"); SlashCmdList.DEBRIEFGLOW("move")
+DebriefGlowDB.where = "bar"
 print("-- /dglow test, /dglow spells, /dglow move, /dglow")
 SlashCmdList.DEBRIEFGLOW("test"); at(NOW + 0.1, "test"); ADVANCE(NOW + 3.1); expect("test glows stop after 3 s", GLOWING(), "nothing")
 W:Hide(); SlashCmdList.DEBRIEFGLOW("spells"); expect("/dglow spells opens the window", W._shown, true)
