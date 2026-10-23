@@ -15264,6 +15264,11 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
+  { d: '2026-10-23', h: [
+  ], n: [
+  ], f: [
+    'Death counts in the coach box no longer include mass wipes: when many of us die at once as the pull is lost, that counts as one raid moment, not a death for each player. The header says how many mass wipes there were, and they still show in grey in each player\'s list.',
+  ] },
   { d: '2026-10-22', h: [
     { t: 'Every death, step by step', d: 'Tap a death in the coach box to see the seconds before it as bars: each hit and each round of healing, with their health after it in green, amber or red. One line at the bottom says what killed them and how much health they had left.' },
     { t: 'Healthstones, potions and defensives', d: 'Two new panels in the coach box show who used a Healthstone or health potion and who pressed a defensive, one bar per raider. Tap a name for each use, and about how much damage each defensive took off.' },
@@ -23831,7 +23836,7 @@ function coachDeaths(reps, name) {
   // (one pull: the deaths past the first 6 and the ones after the wipe filter, behind "+N more"; each opens its summary (Oct 22))
   const rest = night ? nItems.slice(5) : kept.slice(6).concat(L.filter((x) => x.after)).map((x) => ({ t: T(x.d.t), who: name ? '' : String(x.d.player).split('-')[0], ab: ab(x.d), k: x.after ? 'n' : x.v.on && x.v.w < 1 ? 'half' : x.v.on && x.why.k !== 'own' && x.why.k !== 'ready' ? 'on' : x.why.k, word: x.after ? 'after the wipe filter, not counted' : x.why.t, dg: x.d.guid + '@' + x.d.t.toFixed(2), late: !!x.after }));
   const note = !kept.length ? '' : (onThem ? onThem + ' of ' + plural(kept.length, 'death') + (name ? ' on you' : ' on the player') + ' (red: their own mistake or a slow death with something ready' + (kept.some((x) => x.v.on && x.v.w < 1) ? '; amber: half on them' : '') + ').' : (name ? 'None of these are on you.' : 'None of these are on the players.')) + (nAfter ? ' ' + nAfter + ' more after the wipe filter, not counted.' : '');
-  return { line, list, n: kept.length, onThem, bad: onThem > 0, items, more, note, rest, nsum: nItems.map((x) => ({ key: x.dn, html: x.html })) };
+  return { line, list, n: kept.length, mass: kept.filter((x) => x.v.why === 'mass').length, onThem, bad: onThem > 0, items, more, note, rest, nsum: nItems.map((x) => ({ key: x.dn, html: x.html })) };
 }
 // Healthstones, potions and defensives in the coach box (your asks, Oct 22: "add healthstone/healthpot usage here, and defensive usage";
 // "healthstones/healthpots: I just want to make sure people are using them. Defensives: same thing, ... maybe including how much damage
@@ -24189,11 +24194,11 @@ function cblDeathsP(reps, who) {
   const pm = cblPm(reps), per = new Map(), night = reps.length > 1; CBL_REPS = reps;
   for (const r of reps) for (const d of (r.deaths || []).slice().sort((a, b) => a.t - b.t)) { if (who && oaBase(d.player) !== oaBase(who)) continue; let v; try { v = deathVerdict(r, d); } catch (e) { continue; }
     const k = v.on && v.w < 1 ? 'half' : v.on && v.why !== 'own' && v.why !== 'ready' ? 'on' : v.why, st = !v.counts ? '' : /^(own|ready|on)$/.test(k) ? 'bad' : /^(half|nothing)$/.test(k) ? 'warn' : '';
-    let o = per.get(d.player); if (!o) per.set(d.player, o = { p: d.player, n: 0, late: 0, on: 0, st: '', list: [] }); if (v.counts) o.n++; else o.late++; if (v.on && v.counts) o.on++; if (CBL_RK[st] < CBL_RK[o.st]) o.st = st;
-    o.list.push({ amt: (d.recap || []).filter((e) => !e.heal).reduce((s, e) => s + (e.amount || 0), 0), pull: r.item.pull, t: d.t, ab: d.ability || d.killer || 'a hit', word: v.counts ? v.word || '' : 'after the wipe filter', st, k: v.counts ? k : 'n', dg: d.guid + '@' + d.t.toFixed(2), late: !v.counts }); }
-  return [...per.values()].sort((a, b) => b.n - a.n || b.on - a.on || b.late - a.late).map((o) => ({ key: 'p:' + o.p, label: cblNm(o.p), p: pm.get(o.p), st: o.st, n: Math.max(o.n, o.late ? 0.35 : 0),
-    v: o.n ? '×' + o.n : '—', sub: o.on ? o.on + ' on them' : o.n ? 'not on them' : o.late + ' late',
-    body: cblMini(o.list.filter((x) => !x.late).map((x) => ({ label: (night ? 'P' + x.pull : T(x.t)) + ' · ' + x.ab, icon: spellIcon(0, x.ab), st: x.st, amt: Math.max(1, x.amt || 0), vt: x.amt ? C(x.amt) : '', ddg: x.dg, after: '<span class="dch" data-ddg="' + esc(x.dg) + '" hidden></span>' })), '') + (o.late ? '<p class="cbl-calm">+' + o.late + ' after the wipe filter, not counted</p>' : '') })); }
+    let o = per.get(d.player); if (!o) per.set(d.player, o = { p: d.player, n: 0, late: 0, on: 0, st: '', list: [] }); if (v.counts && v.why === 'mass') o.mass = (o.mass || 0) + 1; else if (v.counts) o.n++; else o.late++; /* (a mass wipe isn't one of theirs (Oct 23)) */ if (v.on && v.counts) o.on++; if (CBL_RK[st] < CBL_RK[o.st]) o.st = st;
+    o.list.push({ amt: (d.recap || []).filter((e) => !e.heal).reduce((s, e) => s + (e.amount || 0), 0), pull: r.item.pull, t: d.t, ab: d.ability || d.killer || 'a hit', word: v.counts ? v.word || '' : 'after the wipe filter', mass: v.counts && v.why === 'mass', st, k: v.counts ? k : 'n', dg: d.guid + '@' + d.t.toFixed(2), late: !v.counts }); }
+  return [...per.values()].sort((a, b) => b.n - a.n || b.on - a.on || b.late - a.late).map((o) => ({ key: 'p:' + o.p, label: cblNm(o.p), p: pm.get(o.p), st: o.st, n: Math.max(o.n, o.late || o.mass ? 0.35 : 0),
+    v: o.n ? '×' + o.n : '—', sub: o.on ? o.on + ' on them' : o.n ? 'not on them' : o.mass ? o.mass + ' mass' : o.late + ' late',
+    body: cblMini(o.list.filter((x) => !x.late).map((x) => ({ label: (night ? 'P' + x.pull : T(x.t)) + ' · ' + x.ab + (x.mass ? ' · mass wipe' : ''), icon: spellIcon(0, x.ab), st: x.st, amt: Math.max(1, x.amt || 0), vt: x.amt ? C(x.amt) : '', ddg: x.dg, after: '<span class="dch" data-ddg="' + esc(x.dg) + '" hidden></span>' })), '') + (o.late ? '<p class="cbl-calm">+' + o.late + ' after the wipe filter, not counted</p>' : '') })); }
 // (a drop-down's own little bar graph: rows { label, icon or p, st, amt, sub }, biggest first; one "Next time" line under it when something
 // went over the line (your ask, Oct 22: simple, at a glance))
 function cblMini(rows, fix) { rows = rows.filter((x) => x.amt > 0 || x.st).sort((a, b) => b.amt - a.amt); if (!rows.length) return ''; const mx = Math.max(1, ...rows.map((x) => x.amt));
@@ -24215,7 +24220,8 @@ function cblDeaths(D) { const all = (D.items || []).concat(D.rest || []), sev = 
   return [...by.values()].sort((a, b) => ({ bad: 0, warn: 1, '': 2 }[a.st] - { bad: 0, warn: 1, '': 2 }[b.st]) || b.n - a.n).map((o) => ({ ...o, n: Math.max(o.n, o.late ? 0.35 : 0), v: '×' + (o.n + o.late), sub: o.late ? o.late + ' late' : '',
     body: '<div class="cch-chips">' + o.list.map((it) => '<span class="dch k-' + esc(it.k || 'n') + (it.late ? ' dch-late' : '') + '" data-ddg="' + esc(it.dg) + '" role="button" tabindex="0" title="' + esc(it.word || '') + '">' + (it.t ? '<i>' + esc(it.t) + '</i>' : '') + (it.who ? '<b>' + esc(it.who) + '</b>' : '') + '<span>' + esc(it.ab) + '</span></span>').join('') + '</div>' })); }
 function coachAbSum(X, k) { const it = X.items || [], n = it.length + (X.rest || []).length;
-  if (k === 'd') return X.n ? plural(X.n, 'death') + ' · ' + (X.onThem || 0) + ' on the player' + (it[0] && it[0].n ? ' · most to ' + it[0].ab : '') : 'nobody died';
+  if (k === 'd') { const m = X.mass || 0, n0 = (X.n || 0) - m; /* (mass wipes apart (Oct 23): "179 deaths" read as unfiltered) */
+    return X.n ? (n0 ? plural(n0, 'death') : 'no deaths of their own') + ' · ' + (X.onThem || 0) + ' on the player' + (m ? ' · ' + m + ' in mass wipes' : '') + (!m && it[0] && it[0].n ? ' · most to ' + it[0].ab : '') : 'nobody died'; }
   return n ? (it[0] && it[0].k ? 'most from ' + it[0].k : '') + (n > 1 ? ' · ' + n + ' kinds' : '') : 'nothing worth flagging'; }
 document.addEventListener('toggle', (e) => { const d = e.target; if (d && d.matches && d.matches('details.cch-abx[data-k]') && S.openSecs) { if (d.open) S.openSecs.add(d.dataset.k); else S.openSecs.delete(d.dataset.k); } }, true);
 // (a chip opened by code or a jump (a pull button, "see it" links) opens its panel first, so the card can be seen; a link to the
