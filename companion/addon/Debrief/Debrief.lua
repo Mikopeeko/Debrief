@@ -2129,7 +2129,10 @@ end
 function Debrief_Toggle()
   if big:IsShown() then big:Hide(); return end
   if DB and DB.mini and #DB.pulls > 0 and not card:IsShown() then if mini:IsShown() then mini:Hide() else miniShow() end; return end
-  if card:IsShown() then card:Hide() elseif DB and DB.pulls and #DB.pulls > 0 then card:Show(); render() else Debrief_OpenPaste() end
+  if card:IsShown() then card:Hide() elseif DB and DB.pulls and #DB.pulls > 0 then card:Show(); render()
+  -- (nothing to show: with the PC app's pop-up, say where the recaps are; the paste box only opens with /dp (the user, Oct 22))
+  elseif DEBRIEF_HAS_APP then say("your recaps pop up from Debrief Companion on your PC. /dp pastes a pull you sent from there.")
+  else Debrief_OpenPaste() end
 end
 BINDING_HEADER_DEBRIEF = "Debrief"
 BINDING_NAME_DEBRIEF_PASTE = "Paste a pull recap"
