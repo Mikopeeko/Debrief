@@ -1711,6 +1711,7 @@ const PATCH_NOTES = [
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
     { t: 'Since last raid', d: 'All pulls now remembers each night and compares it with your last raid on the same boss: what you fixed, what got better or worse, and what\'s still going wrong. Pick a player to see their mistakes that also happened last raid.' },
   ], n: [
+    'Debrief in game: deaths with a Healthstone or health potion still unused (when there was time to press it) on your card and the raid card, each with a switch in /db. The PC pop-up now follows your card style: Detailed opens wider with more open.',
     'Debrief Companion 0.6.54: the Debriefing tab inside the app now has the folding What went wrong cards and the All pulls death and avoidable damage chips that open.',
     'Debrief Companion: updates wait just 20 seconds after a pull.',
     'Debrief Addon: your pulls are saved in game again. Debrief Companion saves each pull into the addon, so a /reload or login brings it in, no pasting. /recap opens your recap card.',

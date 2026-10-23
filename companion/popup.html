@@ -110,7 +110,8 @@ function ic(id) {
   }).catch(() => {});
   return '<span class="ic" data-ic="' + esc(id) + '"></span>';
 }
-let D = null; const OPEN = {}; let copied = false, big = false;
+let D = null; const OPEN = {};
+/* (Detailed or Heavy in the addon's settings: every section starts open) */ const DEEP = () => !!D && (D.look === 'detailed' || D.look === 'heavy'), isOpen = (k) => (OPEN[k] != null ? !!OPEN[k] : DEEP()); let copied = false, big = false;
 function render() {
   const app = document.getElementById('app'); if (!D || !D.h) return;
   const h = D.h, c = D.coach, cls = new Map(D.cls || []);
@@ -132,7 +133,7 @@ function render() {
     if (W.length) body += '<div class="cl mut">WHAT WENT WRONG</div>' + W.slice(0, cap).map((x, i) => '<div class="cw ' + (x.sev === 'bad' ? 'bad' : '') + '"><span class="cn">' + (i + 1) + '</span><div class="cwb"><div class="cwt">' + ic(x.id) + '<b>' + esc(x.label) + '</b>' + (x.tag ? '<span class="tg">' + esc(x.tag) + '</span>' : '') + '</div>' + (x.what ? '<div class="cwh">' + paint(x.what) + '</div>' : '') + (x.fix ? '<div class="cfx"><span>NEXT TIME</span><span>' + paint(x.fix) + '</span></div>' : '') + '</div></div>').join('') +
       (W.length > cap ? '<p class="more">' + (W.length - cap) + ' more on the website.</p>' : '');
     body += (c.right || []).map((x) => '<div class="cok"><span>✓</span>' + paint(x.t) + '</div>').join('');
-    const fold = (key, title, items, row, note) => { const o = !!OPEN[key];
+    const fold = (key, title, items, row, note) => { const o = isOpen(key);
       return '<div class="cfd"><div class="cfh" data-fold="' + key + '"><span>' + title + (items.length ? '  ·  ' + items.length : '') + '</span><span>' + (o ? '–' : '+') + '</span></div>' + (o ? items.map((it, i) => row(it, i) + (OPEN[key + i] && it.story ? '<p class="cst">' + paint(it.story) + '</p>' : '')).join('') + (note ? '<p class="cnt">' + esc(note) + '</p>' : '') : '') + '</div>'; };
     if (c.deaths && (c.deaths.items || []).length) body += fold('d', 'DEATHS', c.deaths.items, (d, i) => '<div class="cr' + (d.story ? ' has' : '') + '" data-row="d' + i + '"><span class="t">' + esc(d.t) + '</span><i style="background:' + (KCOL[d.k] || '#6c7381') + '"></i><b style="color:' + (CC[d.cls] || '#ece8df') + '">' + esc(d.who) + '</b>' + ic(d.id) + '<span class="ab">' + esc(d.ab) + '</span></div>', 'Click a death to see what happened.');
     if (c.avoid && (c.avoid.items || []).length) body += fold('a', 'AVOIDABLE DAMAGE', c.avoid.items, (a, i) => '<div class="cr' + (a.story ? ' has' : '') + '" data-row="a' + i + '">' + ic(a.id) + '<span class="ab">' + esc(a.k) + '</span><b style="color:' + (CC[a.cls] || '#ece8df') + '">' + esc(a.who) + '</b><span style="color:' + (a.bad ? '#ff8f87' : '#e8a23a') + '">' + esc(a.n) + '</span></div>', 'Click one to see what happened.');
@@ -172,7 +173,7 @@ document.addEventListener('click', (e) => {
   if (t.dataset.big) { big = true; render(); return; }
   if (t.dataset.close) { post('close'); return; }
   if (t.dataset.open) { post('open'); return; }
-  if (t.dataset.fold) { OPEN[t.dataset.fold] = !OPEN[t.dataset.fold]; render(); return; }
+  if (t.dataset.fold) { OPEN[t.dataset.fold] = !isOpen(t.dataset.fold); render(); return; }
   if (t.dataset.row && t.classList.contains('has')) { OPEN[t.dataset.row] = !OPEN[t.dataset.row]; render(); }
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') post('close'); });
@@ -204,8 +205,9 @@ function hydrate(root) {
 }
 async function siteBox(host, pack) {
   const sh = host.shadowRoot || host.attachShadow({ mode: 'open' }), css = await siteCss();
-  sh.innerHTML = '<style>' + css + ':host{display:block;color:#ece8df;font:15px/1.5 Barlow,"Segoe UI",system-ui,sans-serif}.cch{margin:0!important}a{pointer-events:none;color:inherit;text-decoration:none}.cch-pmap,.cch-thumb,.wr-map,.avd-map{display:none!important}.cch-hasmap{padding-right:inherit}</style>' + pack.html;
-  sh.querySelectorAll('details.cch-more').forEach((d) => d.addEventListener('toggle', fit));
+  sh.innerHTML = '<style>' + css + ':host{display:block;color:#ece8df;font:15px/1.5 Barlow,"Segoe UI",system-ui,sans-serif}.cch{margin:0!important}a{pointer-events:none;color:inherit;text-decoration:none}.cch-pmap,.cch-thumb,.wr-map,.avd-map{display:none!important}.cch-pq{pointer-events:none}.cch-hasmap{padding-right:inherit}</style>' + pack.html;
+  sh.querySelectorAll('details.cch-more').forEach((d) => { if (DEEP()) d.open = true; d.addEventListener('toggle', fit); });
+  sh.querySelectorAll('details.cch-pdx').forEach((d, i) => { if (DEEP() && i === 0) d.open = true; d.addEventListener('toggle', fit); });
   hydrate(sh); fit(); setTimeout(fit, 300);
   if (sh._bound) return; sh._bound = 1;
   sh.addEventListener('click', (e) => {

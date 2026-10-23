@@ -100,6 +100,22 @@ namespace Debrief {
         try { File.WriteAllText(Path.Combine(dst, "Pulls.lua"), sb.ToString(), new UTF8Encoding(false)); } catch { }
       }
     }
+    // (the card style picked in the addon's settings (Oct 22: "i have detailed selected but its not showing detailed view/size"):
+    // its width and style, read from WoW's saved settings for the addon, which WoW writes at /reload or logout; only read)
+    static string lookFile; static DateTime lookAt; static string[] look = { "normal", "" };
+    public static string[] AddonLook(string here) {
+      try {
+        var r = FindRetail(here); if (r == null) return look;
+        var acc = Path.Combine(r, @"WTF\Account"); if (!Directory.Exists(acc)) return look;
+        var f = Directory.GetFiles(acc, "Debrief.lua", SearchOption.AllDirectories).Where(x => x.IndexOf(@"\SavedVariables\", StringComparison.OrdinalIgnoreCase) >= 0)
+          .Select(x => new FileInfo(x)).OrderByDescending(x => x.LastWriteTimeUtc).FirstOrDefault();
+        if (f == null || (f.FullName == lookFile && f.LastWriteTimeUtc == lookAt)) return look;
+        var s = File.ReadAllText(f.FullName);
+        Func<string, string> last = (k) => { var ms = System.Text.RegularExpressions.Regex.Matches(s, @"^\[""" + k + @"""\] = ""(\w+)""", System.Text.RegularExpressions.RegexOptions.Multiline); return ms.Count > 0 ? ms[ms.Count - 1].Groups[1].Value : ""; };
+        var w = last("width"); look = new[] { w == "" ? "normal" : w, last("preset") }; lookFile = f.FullName; lookAt = f.LastWriteTimeUtc;
+      } catch { }
+      return look;
+    }
     public static string InstallAddon(string here) {
       var src = Path.Combine(here, "addon", "Debrief");
       if (!Directory.Exists(src)) return "";

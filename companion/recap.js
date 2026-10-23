@@ -732,6 +732,11 @@ function buildOne(b, rep, same, W, L, cutN) {
       P._ms = true;
       P.cons.push(['warn', hasStone ? 'inv_stone_04' : 'inv_alchemy_70_red', 'You dropped to ' + Math.round(c.low * 100) + '% at ' + mmss(c.tl) + ' and pressed nothing, with ' + kit + ' still ready.' + (missed.length > 1 ? ' It happened ' + (missed.length - 1) + ' more time' + (missed.length > 2 ? 's.' : '.') : '')]);
     }
+    // (deaths with a Healthstone or health potion still unused (Oct 22), by the site's one death rule: only a death that counts, with
+    // time to press it, never a one-shot or a mass death)
+    P._kd = allDeaths.filter((d) => d.player === p.name).map((d) => ({ d, V: dv(d) })).filter((x) => x.V && x.V.counts && (x.V.why === 'ready' || x.V.why === 'shared') && (x.V.kit || []).length);
+    P.kitd = P._kd.slice(0, 2).map(({ d, V }) => { const st = V.kit.includes('Healthstone'), kit = V.kit.map((a) => (a === 'Healthstone' ? 'Healthstone' : 'health potion'));
+      return ['bad', st ? 'inv_stone_04' : 'inv_alchemy_70_red', 'You died at ' + mmss(d.t) + (d.ability ? ' to ' + d.ability : '') + ' with your ' + kit.join(' and ') + ' unused' + (d.lowFor >= 2 ? ', after ' + Math.round(d.lowFor) + ' seconds low' : '') + '. If you\'re dropping, use ' + (kit.length > 1 ? 'them.' : 'it.')]; });
     P.next = tips[0] || (P.slips.length && P.slips.every((s) => s[0] === 'ok') && !own.length ? 'Clean pull from you. Same again.' : '');
     // (the Detailed card (the user's ask, Oct 21: a bigger card that fits more): a second tip, and three small number tiles:
     // avoidable damage and your place, your kicks or dispels against the raid's, and your death)
@@ -786,6 +791,12 @@ function buildOne(b, rep, same, W, L, cutN) {
   { const n = players.length, st = players.filter((q) => q._st).length, pt = players.filter((q) => q._pt).length, ms = players.filter((q) => q._ms).map((q) => '@' + q.name), on = players.some((q) => q._on);
     if (n) raid.cons = [[ms.length ? 'warn' : 'ok', on ? 'inv_stone_04' : 'inv_alchemy_70_red', (on ? 'Healthstones: ' + st + ' of ' + n + ' used' : 'No Healthstones this pull') + ', health potions: ' + pt + ' of ' + n + '.' +
       (ms.length ? ' Dropped low with one still ready: ' + ms.slice(0, 4).join(', ') + (ms.length > 4 ? ' and ' + (ms.length - 4) + ' more' : '') + '.' : '')]]; }
+  // (the raid's deaths with a Healthstone or potion unused (Oct 22): who, and when; a quiet "nobody" when deaths counted but none were that)
+  { const kd = []; for (const q of players) for (const x of q._kd || []) kd.push([x.d.t, q.name]); kd.sort((a, c) => a[0] - c[0]);
+    const counted = allDeaths.some((d) => { const V = dv(d); return V && V.counts; });
+    if (kd.length) { const shown = kd.slice(0, 5).map(([t, n]) => '@' + n + ' (' + mmss(t) + ')');
+      raid.kitd = [['bad', 'inv_stone_04', (kd.length === 1 ? '1 death' : kd.length + ' deaths') + ' with a Healthstone or potion unused: ' + (kd.length > 5 ? shown.join(', ') + ' and ' + (kd.length - 5) + ' more' : shown.length > 1 ? shown.slice(0, -1).join(', ') + ' and ' + shown[shown.length - 1] : shown[0]) + '.']]; }
+    else if (counted) raid.kitd = [['ok', 'inv_stone_04', 'Nobody died with a Healthstone or potion unused.']]; }
   if (rep.module && !rep.module.error) {
     const full = rep.module.sections || [], secs = isFinite(T) ? cutModule(rep.module, T).sections : full;
     // (one table row as a short sentence: what (its first cell, and anyone named), when, then only the parts that went wrong:

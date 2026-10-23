@@ -50,8 +50,12 @@ namespace Debrief {
 
     // (a pull's recap, as JSON from the main window's page)
     public void ShowRecap(string json) {
+      // (as wide as the card style picked in the addon: Detailed is the widest, and opens more; Oct 22)
+      var look = Wow.AddonLook(here); int w = Px(WidthOf(look[0]));
+      if (json.StartsWith("{")) json = "{\"look\":\"" + look[1] + "\"," + json.Substring(1);
       pending = json;
-      if (!placed) { placed = true; Bounds = SavedBounds(Px(580), Px(70)); }
+      if (!placed) { placed = true; Bounds = SavedBounds(w, Px(70)); }
+      else if (Width != w) { var wa = Screen.FromHandle(Handle).WorkingArea; int x = Left + Width / 2 - w / 2; SetBounds(Math.Max(wa.Left, Math.Min(x, wa.Right - w)), Top, w, Height); }
       if (!Visible) { Show(); SetWindowPos(Handle, (IntPtr)(-1) /* HWND_TOPMOST */, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010 | 0x0040 /* NOSIZE NOMOVE NOACTIVATE SHOWWINDOW */); }
       if (web.CoreWebView2 == null) { if (!starting) { starting = true; BeginInvoke(new Action(async () => await Start())); } }
       else if (ready) Send(json);
@@ -78,6 +82,8 @@ namespace Debrief {
         Send("{\"copied\":" + (ok ? "true" : "false") + "}");
       }
     }
+
+    static int WidthOf(string w) { return w == "narrow" ? 520 : w == "wide" ? 680 : w == "large" ? 780 : w == "xl" ? 900 : 580; }
 
     protected override void OnMove(EventArgs e) { base.OnMove(e); if (placed && Visible) SaveBounds(); }
 
