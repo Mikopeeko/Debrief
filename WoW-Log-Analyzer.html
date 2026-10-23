@@ -18052,10 +18052,13 @@ function ndzCdPlan(B, pr) {
   const better = (p, q) => (p[2] !== q[2] ? (p[2] > q[2] ? p : q) : p[1] >= q[1] ? p : q); /* (the higher score; on a tie, more uses) */
   for (const h of order) {
     const S = new Array(L + 2).fill(null), wl = []; for (let t = 0; t <= L; t += 2) { const v = worth(h.P, t); if (v > 0) wl.push(v); } wl.sort((x, y) => x - y); const typ = wl.length ? wl[Math.floor(wl.length / 2)] : 0;
-    for (let t = 0; t <= L; t++) { if (!free(h, t)) continue; const v = worth(h.P, t); if (v <= 0) continue; const [a0, b0] = win(h.P, t), span = Math.max(6, b0 - a0), dm = sumIn(d, a0, a0 + span, phOf[t]);
-      if (dm < (NDZ_ONCD.has(h.n) ? 0.15 : 0.4) * wmed * span / 10) continue; const [dc, c] = dcov(h, t, v); S[t] = [dc, (2 * dc + (c - dc) + 0.15 * v * dm / (wmed * span / 10) + 0.5 * typ + bigs.filter((x) => bare.has(x) && covers(h, t, x)).length * 0.5 * typ) * (1 + 0.25 * habit(h.n, t))]; } /* (deadly cover counts double; each use earns half a typical press, and so does each still-bare big hit it covers) */
+    // (lined up: the damage its window catches here against the best spot within 10 s; squared, so a press off the spike scores little)
+    const sw = new Array(L + 1).fill(0); for (let t = 0; t <= L; t++) { const [a1, b1] = win(h.P, t); sw[t] = sumIn(d, a1, b1, phOf[t]); }
+    const al = sw.map((v, t) => { let m = 0; for (let x = Math.max(0, t - 10); x <= Math.min(L, t + 10); x++) if (sw[x] > m) m = sw[x]; return m > 0 ? v / m : 0; });
+    for (let t = 0; t <= L; t++) { if (!free(h, t) || t > L - 8 || al[t] < (NDZ_ONCD.has(h.n) ? 0.4 : 0.5)) continue; const v = worth(h.P, t); if (v <= 0) continue; const [a0, b0] = win(h.P, t), span = Math.max(6, b0 - a0), dm = sumIn(d, a0, a0 + span, phOf[t]);
+      if (dm < (NDZ_ONCD.has(h.n) ? 0.15 : 0.4) * wmed * span / 10) continue; const [dc, c] = dcov(h, t, v); S[t] = [dc, (2 * dc + (c - dc) + 0.15 * v * dm / (wmed * span / 10) + 0.5 * typ + bigs.filter((x) => bare.has(x) && covers(h, t, x)).length * 0.5 * typ) * (1 + 0.25 * habit(h.n, t)) * al[t] * al[t]]; } /* (deadly cover counts double; each use earns half a typical press, and so does each still-bare big hit it covers) */
     if (NDZ_ONCD.has(h.n)) { // (on cooldown: the most uses, first press in the first 35 s, each next one as soon as it's back, held at most 10 s)
-      const g = new Array(L + 3).fill(null), lim = (t) => t + h.cd + 10 + (phOf[Math.min(L, t)] !== phOf[Math.min(L, t + h.cd + 10)] ? 5 : 0);
+      const g = new Array(L + 3).fill(null), lim = (t) => t + h.cd + 20 + (phOf[Math.min(L, t)] !== phOf[Math.min(L, t + h.cd + 20)] ? 5 : 0);
       for (let t = L; t >= 0; t--) { if (!S[t]) continue; let best = null;
         for (let u = t + h.cd; u <= L; u++) { if (u > lim(t) && best) break; if (!gapOk(h, t, u) || !g[u]) continue; if (!best || g[u][1] > best[1] || (g[u][1] === best[1] && g[u][0] > best[0])) best = [g[u][0], g[u][1], u]; if (u > lim(t)) break; }
         g[t] = best ? [S[t][1] + best[0], best[1] + 1, best[2]] : [S[t][1], 1, -1]; }
