@@ -3855,6 +3855,14 @@ details.secd.mcx-tile[open] .mcx-alt { display: none; }
 #view details.phase.mcx-ph > summary > .sub { padding: 2px 10px; border-radius: 8px; background: rgba(255,255,255,.07); font: 600 12px var(--body); color: var(--muted); font-variant-numeric: tabular-nums; }
 #view details.phase.mcx-ph > summary > .sst { margin-left: 10px; padding: 6px 12px; border-radius: 999px; font: 700 13px var(--body); }
 #view details.phase.mcx-ph > summary > .sst.bad { background: rgba(229,83,75,.14); box-shadow: inset 0 0 0 1px rgba(229,83,75,.4); } #view details.phase.mcx-ph > summary > .sst.warn { background: rgba(232,162,58,.14); box-shadow: inset 0 0 0 1px rgba(232,162,58,.4); } #view details.phase.mcx-ph > summary > .sst.ok { background: rgba(69,193,92,.12); box-shadow: inset 0 0 0 1px rgba(69,193,92,.35); }
+/* coach box clean-up (Oct 23 test): no number badge, grey instruction, Focus on card 1, plain done-right lines, the switch on the right */
+.cch2 .cch-pdx.cch-pdx2 > summary { grid-template-columns: minmax(0, 1fr) auto 18px; }
+.cch2 .cch-pi { font-weight: 500; color: var(--muted); }
+.cch2 .cch-nx.foc { color: var(--gold); }
+.cch2 .cch-also { display: flex; flex-wrap: wrap; gap: 6px; }
+.cch2 .cch-good2 { margin: 2px 0 12px; } .cch2 .cch-good2 p { margin: 0 0 3px; font-size: 14px; color: #8fd99a; }
+.cch2 .cch-acct2 .cbl-sw { justify-self: end; }
+@media (max-width: 640px) { .cch2 .cch-pdx.cch-pdx2 > summary { grid-template-columns: minmax(0, 1fr) auto 14px; } }
 /* simpler problem lines in a phase (Oct 23 test) */
 .sim-body tbody > tr.maprow { display: none; } .sim-body tbody > tr.maprow.sim-on { display: table-row; }
 .sim-body tbody:has(> tr.maprow) > tr:not(.maprow) { cursor: pointer; } .sim-body tbody > tr.sim-sel > td { box-shadow: inset 0 1px 0 var(--gold), inset 0 -1px 0 var(--gold); } .sim-body tbody > tr.sim-sel > td:first-child { box-shadow: inset 2px 0 0 var(--gold), inset 0 1px 0 var(--gold), inset 0 -1px 0 var(--gold); }
@@ -15266,6 +15274,7 @@ function openReport() {
 const PATCH_NOTES = [
   { d: '2026-10-23', h: [
   ], n: [
+    'The coach box is tidier: the thing to focus on next pull is said once, on the first card. Each Next time is one short instruction (open the card for the rest), cards carry at most one tag, and what went right is a short plain list.',
   ], f: [
     'Death counts in the coach box no longer include mass wipes: when many of us die at once as the pull is lost, that counts as one raid moment, not a death for each player. The header says how many mass wipes there were, and they still show in grey in each player\'s list.',
   ] },
@@ -24068,7 +24077,15 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
   const mapOf = (x) => { if (!x.map) return ''; let h = ''; try { h = miniMap(x.map, pmc); } catch (e) { h = ''; } if (!h) return ''; MAPS.push('<span class="wr-map cch-thumb">' + h + '</span>'); return ' data-mi="' + (MAPS.length - 1) + '"'; };
   /* (Oct 22, your ask: each card folds: closed is the glance (number, title, tags, Next time, small map), a click opens the rest) */
   const pmName = (n) => { const p = PM.get(oaBase(n)); return '<span class="nm"' + (p ? ' style="color:' + p.color + '"' : '') + '>' + esc(String(n).split('-')[0]) + '</span>'; };
-  const more = (x) => { const L = [];
+  /* (Oct 23 test, your ask "clean this section up": the Focus is said once (on card 1 when it's card 1's fix), Next time is one short
+     instruction (the rest inside the card), one tag at most ("led to N deaths"; the others move inside), no number badge) */
+  const normF = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, ''), focusIsFix = !!(c.wrong.length && c.focus && normF(c.wrong[0].fix) === normF(c.focus));
+  const shortFix = (t) => { t = String(t || ''); if (t.length <= 95) return t; const m = t.match(/^(.{12,110}?)(?::\s|;\s|\.\s)/); return m ? m[1].replace(/[,\s]+$/, '') + '.' : cClip(t, 100); };
+  const ledTag = (x) => (x.led ? '<span class="cch-tag rep">led to ' + (x.led === 1 ? '1 death' : x.led + ' deaths') + '</span>' : '');
+  const titleOf = (x) => esc(dbfCap(x.label)).replace(/^([^(]+?) \(([^)]+)\)$/, '$1 <span class="cch-pi">($2)</span>');
+  const more = (x, i) => { const L = []; const tg = coachTag({ ...x, led: 0, kb: null }, c.night, true) /* (the top-guild tag is the Against top guilds row) */, fx = String(x.fix || '');
+    if (fx && (i === 0 && focusIsFix ? false : shortFix(fx) !== fx)) L.push('<div class="cch-mr"><span class="cch-ml">Next time</span><span>' + esc(fx) + '</span></div>');
+    if (tg) L.push('<div class="cch-mr"><span class="cch-ml">Also</span><span class="cch-also">' + tg + '</span></div>');
     if (x.what) L.push('<div class="cch-mr"><span class="cch-ml">What happened</span><span>' + esc(x.what) + '</span></div>');
     if (x.whoL && x.whoL.length && !c.name) L.push('<div class="cch-mr"><span class="cch-ml">Who</span><span class="cch-mw">' + x.whoL.map(([n, k]) => '<span class="cch-wc">' + pmName(n) + (c.night || k > 1 ? ' <i>×' + k + '</i>' : '') + '</span>').join('') + '</span></div>');
     if (c.night && x.pst && x.pst.length > 1) L.push('<div class="cch-mr"><span class="cch-ml">Pull by pull</span><span class="cch-pst">' + x.pst.map((q) => '<button type="button" class="cch-pq ' + (q.st === 'bad' ? 'bad' : q.st === 'warn' ? 'warn' : q.st === 'ok' ? 'ok' : 'na') + '" data-cchpull="' + q.n + '"' + (x.sec ? ' data-cchsec="' + esc(x.sec) + '"' : '') + ' title="' + esc('Pull ' + q.n + ': ' + ({ bad: 'went wrong', warn: 'some mistakes', ok: 'done right' }[q.st] || 'didn\'t come up') + '. Click to open it.') + '">' + q.n + '</button>').join('') + '</span></div>');
@@ -24078,10 +24095,10 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
       '<span class="cch-avr">' + a.rows.map((q) => '<span class="cch-av' + (q.over ? ' over' : '') + '">' + pmName(q.p) + ' <b>' + (a.secs ? q.hits + ' s in it' : plural(q.hits, 'hit')) + '</b>' + (c.night && q.pulls > 1 ? ' in ' + plural(q.pulls, 'pull') : '') + (q.amt ? ', ' + C(q.amt) + ' damage' : '') + (q.over ? ' · over the top-guild line' + (c.night ? ' in ' + plural(q.over, 'pull') : '') : '') + '</span>').join('') + '</span></span></div>');
     if (x.guide) L.push('<div class="cch-pg">' + x.guide + '</div>');
     return L.length ? '<div class="cch-more2">' + L.join('') + '</div>' : ''; };
-  const prob = (x, i) => { const mi = mapOf(x), kk = 'cchp-' + (o.key || 'x') + '-' + (x.sec || x.label), m = more(x);
-    return '<li class="cch-p cch-pc cch-' + x.sev + (mi ? ' cch-hasmap' : '') + '"' + (x.sec ? ' data-sec="' + esc(x.sec) + '"' : '') + '><details class="cch-pdx" data-k="' + esc(kk) + '"' + (S.openSecs.has(kk) ? ' open' : '') + '><summary><span class="cch-pn">' + (i + 1) + '</span><div class="cch-pb">' +
-      '<div class="cch-pt"><b>' + esc(dbfCap(x.label)) + '</b> ' + coachTag(x, c.night) + '</div>' +
-      '<div class="cch-fx"><span class="cch-nx">Next time</span><span>' + esc(x.fix) + '</span></div></div><span class="cch-pmap"' + mi + '></span><span class="cch-chev" aria-hidden="true">▸</span></summary>' + m + '</details></li>'; };
+  const prob = (x, i) => { const mi = mapOf(x), kk = 'cchp-' + (o.key || 'x') + '-' + (x.sec || x.label), m = more(x, i), foc = i === 0 && focusIsFix;
+    return '<li class="cch-p cch-pc cch-' + x.sev + (mi ? ' cch-hasmap' : '') + '"' + (x.sec ? ' data-sec="' + esc(x.sec) + '"' : '') + '><details class="cch-pdx cch-pdx2" data-k="' + esc(kk) + '"' + (S.openSecs.has(kk) ? ' open' : '') + '><summary><div class="cch-pb">' +
+      '<div class="cch-pt"><b>' + titleOf(x) + '</b> ' + ledTag(x) + '</div>' +
+      '<div class="cch-fx"><span class="cch-nx' + (foc ? ' foc' : '') + '">' + (foc ? '🎯 Focus ' + (c.night ? 'next raid' : c.kill ? 'next week' : 'next pull') : 'Next time') + '</span><span>' + esc(foc ? x.fix : shortFix(x.fix)) + '</span></div></div><span class="cch-pmap"' + mi + '></span><span class="cch-chev" aria-hidden="true">▸</span></summary>' + m + '</details></li>'; };
   const focusSame = String(c.headline).includes(String(c.focus).replace(/\.$/, ''));
   const D = c.deaths, A = c.avoid;
   // (a death chip opens that death's short summary under the chips (Oct 22: deaths live only here on a single pull))
@@ -24091,10 +24108,10 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
   const ach = A ? (A.items && A.items.length ? A.items.map((it) => achip(it)).join('') + (A.rest && A.rest.length ? '<span class="ach more" role="button" tabindex="0" data-avmore>+' + A.rest.length + ' more</span>' + A.rest.map((it) => achip(it, 1)).join('') : A.more ? '<span class="ach more">+' + A.more + ' more</span>' : '') : '<span class="cch-none">' + esc(A.line) + '</span>') : '';
   const html = '<section class="cch cch2" aria-label="Coach"><div class="cch-hd"><span class="cch-k">' + esc(o.title || (c.name ? 'Your coach' : 'Coach')) + '</span>' + (pm ? '<span class="nm" style="color:' + pm.color + '">' + esc(c.name.split('-')[0]) + '</span>' : '') + '</div>' +
     '<p class="cch-h">' + esc(c.headline) + '</p>' +
-    (focusSame ? '' : '<div class="cch-focus"><span class="cch-fk">🎯 Focus ' + (c.night ? 'next raid' : c.kill ? 'next week' : 'next pull') /* (the boss is dead: no next pull (Oct 22)) */ + '</span><span class="cch-fv">' + esc(c.focus) + '</span></div>') +
+    (focusSame || focusIsFix ? '' : '<div class="cch-focus"><span class="cch-fk">🎯 Focus ' + (c.night ? 'next raid' : c.kill ? 'next week' : 'next pull') /* (the boss is dead: no next pull (Oct 22)) */ + '</span><span class="cch-fv">' + esc(c.focus) + '</span></div>') +
     (c.week ? '<div class="cch-wk2"><span class="cch-wk2k">Since last raid</span><span>' + esc(c.week.replace(/^Since last raid /, '').replace(/^\(([^)]*)\): /, (m0, d) => d.charAt(0).toUpperCase() + d.slice(1) + ': ')) + '</span></div>' : '') /* (week to week, Oct 22) */ +
     (c.wrong.length ? '<div class="cch-sh">What went wrong</div><ol class="cch-ps cch-no">' + c.wrong.map(prob).join('') + '</ol>' : '') +
-    (c.right.length ? '<div class="cch-good">' + c.right.map((x) => '<span class="cch-gd">✓ ' + esc(x.t) + '</span>').join('') + '</div>' : '') +
+    (c.right.length ? '<div class="cch-good2">' + c.right.map((x) => '<p>✓ ' + esc(x.t) + '</p>').join('') + '</div>' : '') +
     (D || A ? '<div class="cch-acct2' + (S.cblBy === 'm' ? ' cbl-on-m' : '') + '">' + (A && A.reps ? cblSwitch() : '') + (D ? '<details class="cch-ab cch-abx' + (D.bad ? ' warn' : '') + '" data-k="cch-ab-d"' + (S.openSecs && S.openSecs.has('cch-ab-d') ? ' open' : '') + '><summary class="cch-al">Deaths<span class="cch-abs">' + esc(coachAbSum(D, 'd')) + '</span></summary>' + (D.items && D.items.length ? cblBoth(coachBars(cblDeaths(D), (x) => x.n, (x) => x.body), A && A.reps ? coachBars(cblDeathsP(A.reps, A.who), (x) => x.n, (x) => x.body) : '') || '<div class="cch-chips">' + dch + '</div>' : '<div class="cch-chips">' + dch + '</div>') + '' + (D.nsum || []).map((x) => '<div class="dd-nsum" data-ddn="' + esc(x.key) + '" hidden>' + x.html + '</div>').join('') + (D.items && D.items.some((it) => it.dg || it.dn) ? '<div class="cch-ddbox" hidden></div><div class="cch-ddtip">Tap a death to see what happened.</div>' : '') + '</details>' : '') + (A ? '<details class="cch-ab cch-abx' + (A.bad ? ' warn' : '') + '" data-k="cch-ab-a"' + (S.openSecs && S.openSecs.has('cch-ab-a') ? ' open' : '') + '><summary class="cch-al">Avoidable damage<span class="cch-abs">' + esc(coachAbSum(A, 'a')) + '</span></summary>' + (A.bars && A.bars.length ? cblBoth(coachBars(A.bars, (x) => x.amt, (x) => { const pm = cblPm(x.reps || A.reps || []), list = x.pl instanceof Map ? [...x.pl.values()] : (x.pl || []); return cblMini(list.map((q) => ({ label: cblNm(q.p), p: pm.get(q.p), st: q.st, amt: q.amt, sub: x.secs ? q.v + ' s' : plural(q.v, 'hit') })), x.st ? cblFix(x.key, x.fix) : ''); }), A.reps ? coachBars(cblAvoidP(A), (x) => x.amt, (x) => x.body) : '') : '<div class="cch-chips">' + ach + '</div>') + '' + (A.items && A.items.some((it) => it.avk || it.avn) ? '<div class="cch-avbox" hidden></div><div class="cch-ddtip">Tap a bar to see what hit them.' + '</div>' : '') + '</details>' : '') + '</div>' : '') +
     (c.kit ? coachKitHtml(c.kit) : '') /* (Healthstones and potions, Defensives: a second row under Deaths and Avoidable damage (Oct 22)) */ +
     (c.full ? '<details class="cch-more" data-k="' + k + '"' + (S.openSecs.has(k) ? ' open' : '') + '><summary>Read the full coaching</summary><div class="cch-full">' + c.full + '</div></details>' : '') + '</section>';
