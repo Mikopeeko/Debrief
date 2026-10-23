@@ -15395,6 +15395,7 @@ const PATCH_NOTES = [
     { t: 'The wipe is called for you', d: 'No more "stop at the 2nd death". Debrief now calls the wipe at the moment no raid has ever come back from: more people dead than any kill of that boss survived at that point (battle rezzes counted), the damage check missed, or half the raid dead. Everything before it counts, so the deaths and mistakes that lost the pull are graded. Tested on 760 kills: it never calls a wipe on a pull that was won.' },
     { t: 'A shorter debrief', d: 'Each pull now opens like a raid lead\'s debrief: what went well, what went wrong (click a line for its map and details) and the one thing for next pull. The extra drawers are gone; the timeline, raid cooldowns and burst windows sit in the open below the phases.' },
   ], n: [
+    'Each death card ends with what you had that would have saved you (a Healthstone, potion, self-heal or defensive pressed when you first dropped under half). Mechanic mistakes keep their fix too; wipe mechanics and true one-shots list nothing.',
     'Death cards are shorter: Killed by, Cause, Why and Fix as short labels. When an earlier mistake led to the killing hit, the card says so (Cause: Soul Sever → Gravebound).',
     'A death only says you had something ready if it would really have saved you: a Healthstone, potion, self-heal or defensive big enough to cover the hits that followed. The tip names the cheapest one and how much it heals ("Use your Healthstone when you drop under half: it heals about 239k"); if nothing would have, it says so and it is not on you.',
     'Deaths are one number everywhere: Debriefing, the Deaths panel and the Report card show the same count of deaths that counted, with mass wipes (many of us at once) as a small second number.',
@@ -22976,7 +22977,7 @@ const deathKit = (a) => (a === 'a healing potion' ? 'a health potion' : a === 'H
 function deathTag(r, d) { const rr = deathRep(r, d); if (!rr) return null; const v = deathVerdict(rr, d);
   const k = v.why === 'heal' ? (v.on ? 'warn' : 'na') : { own: 'bad', ready: 'bad', shared: 'warn', nothing: 'warn' }[v.why] || 'na';
   const p = k === 'bad' ? 'On them' : k === 'warn' ? 'Half on them' : v.why === 'wipe' || v.why === 'end' ? 'Doesn\'t count' : 'Not on them';
-  const ready = (v.defs.length ? v.defs : v.kit).slice(0, 2).map(deathKit), raidL = (d.links || []).find((l) => l.raid), ab = d.ability || d.killer || 'a hit';
+  const ready = v.kit.concat(v.defs).slice(0, 2).map(deathKit), raidL = (d.links || []).find((l) => l.raid), ab = d.ability || d.killer || 'a hit';
   const h = v.why === 'own' ? capS(deathWhat(d, v)) + '.'
     : v.why === 'ready' ? 'Had ' + andList(ready) + ' ready and didn\'t press ' + (ready.length > 1 ? 'them' : 'it') + '.'
     : v.why === 'shared' ? (/mind controlled/.test(v.word) ? 'Mind controlled off the edge.' : (raidL ? 'Partly the raid\'s fault (' + deathMech(rr, raidL.mechanic) + ')' : 'Partly the raid\'s fault') + ', but they had ' + andList(ready) + ' ready.')
@@ -23168,8 +23169,12 @@ function deathBox(tg, d) { if (!tg) return ''; const v = tg.v, c = (p) => (p < 3
     : (d.hpPath || []).length ? '<p class="ddv-3">Their health: ' + d.hpPath.map(([, q]) => '<b class="' + c(q) + '">' + q + '%</b>').join(' → ') + ' → <b class="ddh-lo">dead</b></p>' : '';
   void path; return '<div class="ddv ' + tg.k + '"><p class="ddv-1"><span class="ddp ' + tg.k + '">' + esc(tg.p) + '</span> ' + head + '</p>' + (deathTimeline(d, rr, v) || path) /* (events as a progression (Oct 22); the health bars if there are none) */ +
     (false && top.length ? '<div class="ddv-hit"><span class="ddv-hbl">What hit them</span>' + cblMini(top.map((o) => ({ label: (o.k === 'Melee' ? 'Melee' : o.k) + (o.n > 1 ? ' ×' + o.n : ''), icon: o.k === 'Melee' ? '' : spellIcon(o.id || DEATH_DEF_ID.get(o.k) || sidOf(o.k) || 0, o.k), st: last && (last.spell || 'Melee') === o.k ? 'bad' : '', amt: o.a, vt: kf(o.a) })), '') + '</div>' : '') /* (a small bar graph, the killing blow in red (Oct 22)) */ +
-    (v.on && ready.length && !ready.some((a) => tg.h.includes(nm(a).replace(/^a /, ''))) /* (not when the headline already says it) */ ? '<p class="ddv-3">They had ' + andList(readyH) + ' ready and didn\'t use ' + (ready.length > 1 ? 'them' : 'it') + '.</p>' : '') +
-    (tg.fix ? '<p class="ddv-2"><b>Fix:</b> ' + esc(String(tg.fix).replace(/\.$/, '')) + '</p>' : '') + '</div>'; }
+    /* (what they had that would have saved them (engine d.saves: pressed when they first dropped under half, it covers the hits that came),
+       on every death but a wipe mechanic or a true one-shot (Oct 23); a mechanic mistake keeps its Fix too) */
+    (() => { const sv = /^(wipe|end|mass|fast)$/.test(v.why) ? [] : Object.entries(d.saves || {}).filter(([, x]) => x.ok).sort((p, q) => (q[1].heal ? 1 : 0) - (p[1].heal ? 1 : 0)).map(([a]) => a);
+      const only = sv.length && /^(ready|shared|nothing|nosave)$/.test(v.why);
+      return (sv.length ? '<p class="ddv-2"><b>Could have saved them:</b> ' + sv.slice(0, 3).map((a) => (a === 'a healing potion' ? 'Health potion' : deathSp(0, a))).join(' · ') + '</p>' : '') +
+        (!only && tg.fix ? '<p class="ddv-2"><b>Fix:</b> ' + esc(String(tg.fix).replace(/\.$/, '')) + '</p>' : ''); })() + '</div>'; }
 // (the death's fixes, the verdict's own line first, then the engine's other advice that agrees with it (deaths research, Oct 22))
 function deathFixes(r, d) { if (!(r.deaths || []).includes(d)) return (d.prevent || []).slice(0, 3); const v = deathVerdict(r, d), rest = /^(fast|mass|end|raid|wipe)$/.test(v.why) ? [] : (d.prevent || []).filter((x) => !/^No (clear )?mistake|^Too fast|^Not on you/i.test(x) && !(v.why === 'own' && /^(Use|Press) /.test(x)));
   return [v.fix].concat(rest.filter((x) => x !== v.fix)).filter(Boolean).slice(0, 3); }
