@@ -3925,6 +3925,17 @@ details.secd.mcx-tile[open] .mcx-alt { display: none; }
 #view details.phase.rw2-ph > summary { gap: 12px; } .rw2-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line2); flex: none; } .rw2-dot.bad { background: var(--bad); } .rw2-dot.warn { background: var(--warn); } .rw2-dot.ok { background: var(--good); }
 .rw2-st { margin-left: auto; font: 700 13.5px var(--body); } .rw2-st.bad { color: #ff8f87; } .rw2-st.warn { color: #f3c969; } .rw2-st.ok { color: #7ee08f; }
 @media (max-width: 640px) { #view details.secd.rw2 > summary, #view details.secd.dbr-line > summary:has(.rw2-pc) { grid-template-columns: minmax(0, 1fr) 54px 14px; } #view details.secd.rw2 > summary .npc, #view details.secd.dbr-line > summary .rw2-sq { grid-column: 1 / -1; } }
+.cch2 .cbr-more > summary { cursor: pointer; list-style: none; padding: 6px 8px; font-size: 13.5px; color: var(--muted); } .cch2 .cbr-more > summary::-webkit-details-marker { display: none; } .cch2 .cbr-more > summary:hover { color: var(--text); }
+/* the four detail panels as graded lines (Oct 23) */
+.cch2 summary.cch-al.cgl { display: grid !important; grid-template-columns: minmax(0, 150px) minmax(60px, 1fr) 44px 14px; grid-template-rows: auto auto; column-gap: 10px; row-gap: 2px; align-items: center; }
+.cch2 .cgl-n { font: 700 12px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cch2 .cgl-b { height: 6px; border-radius: 999px; background: rgba(255,255,255,.07); overflow: hidden; } .cch2 .cgl-b i { display: block; height: 100%; border-radius: 999px; background: var(--good); } .cch2 .cgl-b i.warn { background: var(--warn); } .cch2 .cgl-b i.bad { background: var(--bad); }
+.cch2 .cgl-p { font: 700 14px var(--body); text-align: right; } .cch2 .cgl-p.ok { color: #7ee08f; } .cch2 .cgl-p.warn { color: #f3c969; } .cch2 .cgl-p.bad { color: #ff8f87; }
+.cch2 .cgl-s { grid-column: 1 / 4; grid-row: 2; font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0 !important; }
+.cch2 details.cch-abx:has(> summary.cgl), .cch2 details:has(> summary.cgl) { border-color: var(--line) !important; }
+.cch2 summary.cch-al.cgl { grid-template-columns: minmax(0, 190px) minmax(60px, 1fr) 44px 14px; text-transform: none !important; letter-spacing: normal !important; } .cch2 .cgl-n { font: 600 14px var(--body) !important; letter-spacing: normal !important; text-transform: none !important; color: var(--text) !important; } .cch2 .cgl-n .icw, .cch2 summary.cgl .cgl-n img { display: none; } .cch2 .cgl-s { text-transform: none !important; letter-spacing: normal !important; font-weight: 500; }
+.cch2 summary.cch-al.cgl { grid-template-rows: auto; } .cch2 .cgl-d { margin: 4px 0 10px; font-size: 13.5px; color: var(--muted); }
+.cch2 summary.cch-al.cgl { grid-template-columns: 22px minmax(0, 180px) minmax(60px, 1fr) 44px 14px !important; } .cch2 summary.cgl .icw.cgl-i { width: 22px; height: 22px; margin: 0; }
 /* coach box polish (Oct 23): lines line up (no stray icon on one name), a label beside the switch, a little more air */
 .cch2 .cbr-t .icw { display: none; }
 .cch2 .cbr-h { margin: 18px 0 6px; } .cch2 .cbr-h:first-of-type { margin-top: 14px; }
