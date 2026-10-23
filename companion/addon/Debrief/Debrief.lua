@@ -73,6 +73,14 @@ local function decode(code)
     local t = f[1]
     local function g(i) return f[i] or "" end
     local function add(list, item) item.k = K; list[#list + 1] = item end
+    -- (the coach box: one per wipe-filter version on a wipe (Oct 22); m.coach is version 0, the whole pull)
+    local function coaches()
+      local o = {}
+      if not m.cutN then m.coach = m.coach or { wrong = {}, right = {}, deaths = {}, avoid = {} }; o[1] = m.coach; return o end
+      m.coachV = m.coachV or {}
+      for v = 0, m.cutN do local s = tostring(v); if not K or K:find(s, 1, true) then m.coachV[s] = m.coachV[s] or { wrong = {}, right = {}, deaths = {}, avoid = {} }; o[#o + 1] = m.coachV[s] end end
+      m.coach = m.coachV["0"] or m.coach; return o
+    end
     if t == "H" then
       m.h = { boss = g(2), diff = g(3), pull = g(4), kill = g(5) == "1", pct = g(6), dur = g(7), where = g(8), deaths = g(9) }
     elseif t == "P" then
@@ -95,16 +103,16 @@ local function decode(code)
     elseif t == "D" then add(m.raid.died, { g(2), g(3), g(4), g(5), g(6) })
     elseif t == "M" then add(m.raid.mech, { g(2), g(3), g(4), g(5) }) -- (how each boss mechanic went)
     elseif t == "V" then m.addonV = g(2) -- (the addon version the PC app that made this carries)
-    -- (Debriefing's coach box: the same on every wipe-filter version)
-    elseif t == "CH" then m.coach = m.coach or { wrong = {}, right = {}, deaths = {}, avoid = {} }; m.coach.head = g(2)
-    elseif t == "CF" and m.coach then m.coach.focus = g(2); m.coach.focusSame = g(3) == "1"; m.coach.kill = g(4) == "1"
-    elseif t == "CW" and m.coach then table.insert(m.coach.wrong, { sev = g(2), id = g(3), label = g(4), tag = g(5), what = g(6), fix = g(7) })
-    elseif t == "CR" and m.coach then table.insert(m.coach.right, { id = g(2), t = g(3) })
-    elseif t == "CD" and m.coach then table.insert(m.coach.deaths, { t = g(2), who = g(3), cls = g(4), id = g(5), ab = g(6), k = g(7), story = g(8) })
-    elseif t == "CN" and m.coach then m.coach.dnote = g(2)
-    elseif t == "CL" and m.coach then m.coach.dline = g(2)
-    elseif t == "CA" and m.coach then table.insert(m.coach.avoid, { id = g(2), k = g(3), who = g(4), cls = g(5), n = g(6), bad = g(7) == "1", story = g(8) })
-    elseif t == "CV" and m.coach then m.coach.aline = g(2)
+    -- (Debriefing's coach box, per wipe-filter version)
+    elseif t == "CH" then for _, c in ipairs(coaches()) do c.head = g(2) end
+    elseif t == "CF" then for _, c in ipairs(coaches()) do c.focus = g(2); c.focusSame = g(3) == "1"; c.kill = g(4) == "1" end
+    elseif t == "CW" then for _, c in ipairs(coaches()) do table.insert(c.wrong, { sev = g(2), id = g(3), label = g(4), tag = g(5), what = g(6), fix = g(7) }) end
+    elseif t == "CR" then for _, c in ipairs(coaches()) do table.insert(c.right, { id = g(2), t = g(3) }) end
+    elseif t == "CD" then for _, c in ipairs(coaches()) do table.insert(c.deaths, { t = g(2), who = g(3), cls = g(4), id = g(5), ab = g(6), k = g(7), story = g(8) }) end
+    elseif t == "CN" then for _, c in ipairs(coaches()) do c.dnote = g(2) end
+    elseif t == "CL" then for _, c in ipairs(coaches()) do c.dline = g(2) end
+    elseif t == "CA" then for _, c in ipairs(coaches()) do table.insert(c.avoid, { id = g(2), k = g(3), who = g(4), cls = g(5), n = g(6), bad = g(7) == "1", story = g(8) }) end
+    elseif t == "CV" then for _, c in ipairs(coaches()) do c.aline = g(2) end
     elseif t == "PC" and by[g(2)] then by[g(2)].coach = { head = g(3), focus = g(4) } -- (your own coach line and focus)
     elseif t == "C" then m.cutN = tonumber(g(2)) -- (the wipe filter: versions 0 to n)
     elseif t == "X" then if K then m.raid.moreK = m.raid.moreK or {}; table.insert(m.raid.moreK, { K, g(2) }) else m.raid.more = g(2) end
@@ -508,7 +516,7 @@ local function cutView(m)
     return o
   end
   local function pick(def, kl) if kl then for _, x in ipairs(kl) do if x[1]:find(c, 1, true) then return x[2] end end; return "" end; return def end
-  local v = { h = m.h, addonV = m.addonV, cutN = m.cutN, coach = m.coach, players = {},
+  local v = { h = m.h, addonV = m.addonV, cutN = m.cutN, coach = (m.coachV and m.coachV[c] and (m.coachV[c].head or "") ~= "" and m.coachV[c]) or m.coach, players = {},
     raid = { bad = keep(m.raid.bad, true), died = keep(m.raid.died), mech = keep(m.raid.mech, true), more = pick(m.raid.more, m.raid.moreK), next = pick(m.raid.next, m.raid.nextK),
       tiles = keep(m.raid.tiles), story = pick(m.raid.story or "", m.raid.storyK), better = pick(m.raid.better or "", m.raid.betterK), worse = pick(m.raid.worse or "", m.raid.worseK), lead = pick(m.raid.lead or "", m.raid.leadK),
       good = keep(m.raid.good), fixes = keep(m.raid.fixes), ghap = keep(m.raid.ghap), gchg = keep(m.raid.gchg), ghead = pick(m.raid.ghead or "", m.raid.gheadK), gnext = pick(m.raid.gnext or "", m.raid.gnextK) } }
@@ -630,7 +638,7 @@ function render()
     local y0 = y; IND = 12; y = y + 12
     local t = FS("head", 15, COL.text); t:SetPoint("TOPLEFT", IND, -y); t:SetText("Who died")
     local c = FS("body", 12.5, COL.faint); c:SetPoint("BOTTOMLEFT", t, "BOTTOMRIGHT", 8, 1); c:SetText((DB.detailed and view == "raid" and #(m.raid.tiles or {}) > 0) and "" or (h.deaths .. (h.deaths == "1" and " death" or " deaths")))
-    if raw.cutN then
+    if false then
       local function stepBtn(lbl, right, d)
         local bt = BTN(); bt:SetSize(22, 22); bt:SetPoint("TOPRIGHT", body, "TOPLEFT", right, -(y - 3))
         local bg = RT("BORDER"); bg:SetAllPoints(bt); UI.rounded(bg, "fill", 5, COL.bg, 1)
@@ -646,11 +654,7 @@ function render()
       local l = FS("body", 12.5, COL.faint); l:SetJustifyH("RIGHT"); l:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - IND, -(y + 2)); l:SetText("Kill, so all of it counts")
     end
     y = y + 26
-    local note
-    if cut > 0 then local d = raw.raid.died[cut]; note = "Counted up to the " .. UI.ordN(cut) .. " death" .. (d and (" (" .. d[2] .. ", " .. d[1] .. ")") or "") .. ". What came after isn't counted."
-    elseif raw.cutN and (DB.deathCut or 0) > 0 then note = "Fewer than " .. DB.deathCut .. " deaths, so the whole pull counts."
-    elseif raw.cutN then note = "Press + to stop counting at a death, so the wipe at the end isn't counted." end
-    if note then local n2 = FS("body", 12.5, COL.faint); n2:SetPoint("TOPLEFT", IND, -y); n2:SetWidth(CW - IND * 2); n2:SetText(note); y = y + n2:GetStringHeight() + 6 end
+    if cut > 0 and SH.died ~= false then local n2 = FS("body", 12.5, COL.faint); n2:SetPoint("TOPLEFT", IND, -y); n2:SetWidth(CW - IND * 2); n2:SetText("Deaths after the " .. UI.ordN(cut) .. " aren't counted."); y = y + n2:GetStringHeight() + 6 end
     if SH.died ~= false and show > 0 then
       if nd == 0 then y = row(y, "ok", nil, m.raid.more ~= "" and m.raid.more or "Nobody died.")
       else
@@ -882,6 +886,29 @@ function render()
     if f then local k = FS("bold", 11.5, COL.gold); k:SetPoint("TOPLEFT", 16, -(y + 28 + t:GetStringHeight() + 14)); k:SetText(m.coach and m.coach.kill and "FOCUS NEXT WEEK" or "FOCUS NEXT PULL"); f:SetPoint("TOPLEFT", 16, -(y + 28 + t:GetStringHeight() + 30)) end
     y = y + hh + 12
     return true
+  end
+  -- (the wipe filter on top of the card (Oct 22): it decides what everything under it counts, the coach box included)
+  if raw.cutN and not m.h.practice then
+    local y0 = y; IND = 12; y = y + 10
+    local function stepBtn(lbl, right, d)
+      local bt = BTN(); bt:SetSize(22, 22); bt:SetPoint("TOPRIGHT", body, "TOPLEFT", right, -(y - 2))
+      local bg = RT("BORDER"); bg:SetAllPoints(bt); UI.rounded(bg, "fill", 5, COL.bg, 1)
+      local tx = FS("bold", 12.5, COL.muted); tx:SetPoint("CENTER", bt, "CENTER", 0, 0); tx:SetText(lbl)
+      bt:SetScript("OnClick", function() DB.deathCut = math.max(0, math.min(8, (DB.deathCut or 0) + d)); wipe(EXPANDED); if Debrief_RefreshOptions then Debrief_RefreshOptions() end; render(); if big and big:IsShown() and bigRender then bigRender() end end)
+      bt:SetScript("OnEnter", function() tx:SetTextColor(rgb(COL.gold)) end); bt:SetScript("OnLeave", function() tx:SetTextColor(rgb(COL.muted)) end)
+    end
+    local cut = UI.cutIdx(raw)
+    local t = FS("bold", 13, COL.text); t:SetPoint("TOPLEFT", IND, -(y + 2)); t:SetText("Stop at death")
+    stepBtn("+", CW - IND, 1)
+    local v = FS("bold", 13, COL.text); v:SetJustifyH("CENTER"); v:SetWidth(28); v:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - IND - 23, -(y + 2)); v:SetText((DB.deathCut or 0) == 0 and "off" or (DB.deathCut .. ""))
+    stepBtn("–", CW - IND - 52, -1)
+    y = y + 26
+    local note
+    if cut > 0 then local d = raw.raid.died[cut]; note = "Counted up to the " .. UI.ordN(cut) .. " death" .. (d and (" (" .. d[2] .. ", " .. d[1] .. ")") or "") .. ". What came after isn't counted."
+    elseif (DB.deathCut or 0) > 0 then note = "Fewer than " .. DB.deathCut .. " deaths, so the whole pull counts."
+    else note = "The whole pull counts. Press + to stop counting at a death, so the wipe at the end isn't counted." end
+    local n2 = FS("body", 12.5, COL.faint); n2:SetPoint("TOPLEFT", IND, -y); n2:SetWidth(CW - IND * 2); n2:SetText(note); y = y + n2:GetStringHeight() + 10
+    panel(y0, y - y0); IND = 0; y = y + 10
   end
   if coachOn and view ~= "me" then
     coachBody()

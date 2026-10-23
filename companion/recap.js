@@ -631,21 +631,26 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
   const memo = new Map(), W2 = Object.assign({}, W, { specRun: (...a) => { const k = a[0] + '|' + a[2]; if (!memo.has(k)) memo.set(k, W.specRun(...a)); return memo.get(k); } });
   // (the Debriefing summary reads the engine's own wipe filter: each version sets it, and it's put back after)
   let was = null; try { was = W.getCut ? W.getCut() : null; } catch (e) { was = null; }
+  // (the pull sits in the site's pulls for the whole build, so every summary reads how far it got: "We wiped at Wipe" otherwise (Oct 22))
+  const CA0 = W.CACHE, had0 = !CA0 || CA0.has(b); if (!had0) { if (!rep.item) rep.item = b; CA0.set(b, rep); }
   try {
     const m = buildOne(b, rep, same, W2, L, 0), nd = (rep.deaths || []).length;
     // (Debriefing's coach box for the card (the user's ask, Oct 22): at the site's own wipe filter, once, shared by every version)
-    let coach = null;
+    let coach = null; const RAIDS = [];
     if (W.coachGame && b.id !== 990001) {
       const CA = W.CACHE, had = !CA || CA.has(b); /* (the coach reads how far the pull got from the site's pulls: "We wiped at Wipe" without it (Oct 22)) */
       try { if (W.setCut && was != null) W.setCut(was); if (!rep.item) rep.item = b; if (!had) CA.set(b, rep); const raid = W.coachGame(rep, null), you = {}, t0 = Date.now();
         for (const p of m.players) { if (Date.now() - t0 > 3000) break; try { const c = W.coachSummary ? W.coachSummary([rep], p.name) : null; if (c && c.headline) you[p.name] = [plain(c.headline), plain(c.focus || '')]; } catch (e) { /* (no line for them) */ } }
-        coach = raid ? { raid, you } : null; } catch (e) { coach = null; } finally { if (!had) CA.delete(b); }
+        coach = raid ? { raid, you } : null;
+        // (the coach box per wipe-filter version, so Stop at changes it too (Oct 22); your own line stays at the site's filter)
+        if (coach && !b.kill && nd && W.setCut) for (let n = 0; n <= Math.min(8, nd); n++) { try { W.setCut(n); const r = W.coachGame(rep, null); if (r) RAIDS[n] = r; } catch (e) { /* (that version keeps the shared one) */ } }
+      } catch (e) { coach = null; } finally { if (!had) CA.delete(b); if (W.setCut && was != null) W.setCut(was); }
     }
-    m.coach = coach;
+    m.coach = coach && RAIDS[0] ? { raid: RAIDS[0], you: coach.you } : coach;
     if (b.kill || b.id === 990001 || !nd) return m; // (a kill or a dummy always counts in full)
-    m.cuts = [m]; for (let n = 1; n <= Math.min(8, nd); n++) { const x = buildOne(b, rep, same, W2, L, n); x.coach = coach; m.cuts.push(x); }
+    m.cuts = [m]; for (let n = 1; n <= Math.min(8, nd); n++) { const x = buildOne(b, rep, same, W2, L, n); x.coach = coach && RAIDS[n] ? { raid: RAIDS[n], you: coach.you } : coach; m.cuts.push(x); }
     return m;
-  } finally { try { if (W.setCut && was != null) W.setCut(was); } catch (e) { /* fine */ } }
+  } finally { try { if (W.setCut && was != null) W.setCut(was); } catch (e) { /* fine */ } if (!had0) CA0.delete(b); }
 };
 function buildOne(b, rep, same, W, L, cutN) {
   const T = cutTime(rep, cutN), t0 = Date.now();
