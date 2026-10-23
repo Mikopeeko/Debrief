@@ -895,7 +895,9 @@ function render()
     local c = m.coach
     local lab = FS("bold", 11.5, COL.gold); lab:SetPoint("TOPLEFT", 2, -y); lab:SetText(c.kill and "THE KILL, COACHED" or "THIS PULL, COACHED"); y = y + 19
     local hd = FS("head", 16.5, COL.text); hd:SetPoint("TOPLEFT", 2, -y); hd:SetWidth(CW - 4); hd:SetText(paint(c.head)); y = y + hd:GetStringHeight() + 12
-    if not c.focusSame and (c.focus or "") ~= "" then
+    -- (like the website (Oct 23): the focus that is a card's fix lives on that card, labelled FOCUS NEXT PULL, with no separate box)
+    local focI; if not c.focusSame and (c.focus or "") ~= "" then local fk = c.focus:gsub("%.$", ""); for i, x in ipairs(c.wrong) do if i <= math.max(1, DB.maxRaid or 3) and ((x.fix or ""):gsub("%.$", "")) == fk then focI = i; break end end end
+    if not c.focusSame and (c.focus or "") ~= "" and not focI then
       local ft = FS("bold", 14, COL.text); ft:SetWidth(CW - 32); ft:SetText(paint(c.focus))
       local hh = 11 + 18 + ft:GetStringHeight() + 12
       box(y, hh, COL.gold, 0.08, COL.gold, 0.55)
@@ -920,12 +922,11 @@ function render()
         if (x.what or "") ~= "" then more[#more + 1] = { "WHAT HAPPENED", x.what } end
         if (x.how or "") ~= "" then more[#more + 1] = { "HOW", x.how } end
         if (x.kb or "") ~= "" then more[#more + 1] = { "AGAINST TOP GUILDS", x.kb } end
-        local LW = (op and #more > 0) and 136 or 76
+        local LW = (op and #more > 0) and 136 or 76; if focI == i then LW = math.max(LW, 124) end
         local lt = FS("bold", 14.5, COL.text); lt:SetWordWrap(false); lt:SetText(x.label)
         local pt; if (x.tag or "") ~= "" then pt = FS("bold", 11.5, x.sev == "bad" and COL.badT or COL.warn); pt:SetWordWrap(false); pt:SetText(x.tag) end
-        local nk = FS("bold", 11.5, COL.gold); nk:SetText("NEXT TIME")
+        local nk = FS("bold", 11.5, COL.gold); nk:SetText(focI == i and (c.kill and "FOCUS NEXT WEEK" or "FOCUS NEXT PULL") or "NEXT TIME")
         local fx = FS("body", 13.5, COL.soft); fx:SetWidth(tw - LW); fx:SetText(paint(x.fix))
-        if not c.focusSame and (c.focus or "") ~= "" and ((x.fix or ""):gsub("%.$", "")) == (c.focus:gsub("%.$", "")) then fx:SetText("The focus above."); fx:SetTextColor(rgb(COL.gold)) end -- (said once (Oct 22 audit))
         local rows = {}
         if op then for _, mr in ipairs(more) do local a = FS("bold", 11.5, COL.muted); a:SetText(mr[1]); local b2 = FS("body", 13, COL.muted); b2:SetWidth(tw - LW); b2:SetText(paint(mr[2])); rows[#rows + 1] = { a, b2 } end end
         local hh = 12 + 22 + math.max(16, fx:GetStringHeight()) + 12
