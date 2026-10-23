@@ -1001,6 +1001,10 @@ button.nm-cell { cursor: pointer; } button.nm-cell:hover { outline: 2px solid va
 /* the coach box's death chips open a death's summary in place (Oct 22) */
 .dch[data-ddg], .dch[data-ddmore] { cursor: pointer; } .dch[data-ddg]:hover { filter: brightness(1.15); } .dch.on { box-shadow: 0 0 0 2px currentColor inset; } .dch-late { opacity: .6; } .dch[hidden] { display: none !important; } .cch-ddbox:not([hidden]) ~ .cch-ddtip { display: none; }
 .cch2 .ach[data-avk], .cch2 .ach[data-avmore] { cursor: pointer; } .cch2 .ach[data-avk]:hover { filter: brightness(1.15); } .cch2 .ach.on { box-shadow: 0 0 0 2px currentColor inset; } .cch2 .ach[hidden] { display: none !important; }
+.cch2 .ach[data-avn] { cursor: pointer; } .cch2 .ach[data-avn]:hover { filter: brightness(1.15); }
+.avn-list { margin: 6px 0 4px; display: grid; gap: 4px; } .avn-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; } .avn-who { min-width: 96px; } .avn-tot { color: var(--muted); font-size: 13px; min-width: 70px; }
+.avn-ps { display: flex; flex-wrap: wrap; gap: 4px; } .avn-p { min-width: 26px; height: 22px; padding: 0 6px; border-radius: 6px; border: 1px solid var(--line2); background: rgba(255,255,255,.05); color: var(--text); font: inherit; font-size: 12px; cursor: pointer; }
+.avn-p.warn { border-color: rgba(243,192,106,.55); color: #f3c06a; } .avn-p.bad { border-color: rgba(255,107,98,.6); color: #ff8f87; } .avn-p:hover { filter: brightness(1.2); } .avn-fine { color: var(--muted); font-size: 12px; align-self: center; }
 .cch-avbox { margin-top: 10px; } .cch-avbox .ddv { margin: 0; } .cch-avbox:not([hidden]) + .cch-ddtip { display: none; }
 .cch-avbox .avd-map { margin: 8px 0 6px; max-width: 460px; } .cch-avbox .avd-map svg { width: 100%; height: auto; }
 .cch-ddbox { margin-top: 10px; } .cch-ddbox .ddv { margin: 0; } .cch-ddh { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 6px; font-size: 13px; color: var(--muted); } .cch-ddh b { color: var(--text); }

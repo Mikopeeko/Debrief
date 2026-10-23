@@ -1001,6 +1001,10 @@ button.nm-cell { cursor: pointer; } button.nm-cell:hover { outline: 2px solid va
 /* the coach box's death chips open a death's summary in place (Oct 22) */
 .dch[data-ddg], .dch[data-ddmore] { cursor: pointer; } .dch[data-ddg]:hover { filter: brightness(1.15); } .dch.on { box-shadow: 0 0 0 2px currentColor inset; } .dch-late { opacity: .6; } .dch[hidden] { display: none !important; } .cch-ddbox:not([hidden]) ~ .cch-ddtip { display: none; }
 .cch2 .ach[data-avk], .cch2 .ach[data-avmore] { cursor: pointer; } .cch2 .ach[data-avk]:hover { filter: brightness(1.15); } .cch2 .ach.on { box-shadow: 0 0 0 2px currentColor inset; } .cch2 .ach[hidden] { display: none !important; }
+.cch2 .ach[data-avn] { cursor: pointer; } .cch2 .ach[data-avn]:hover { filter: brightness(1.15); }
+.avn-list { margin: 6px 0 4px; display: grid; gap: 4px; } .avn-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; } .avn-who { min-width: 96px; } .avn-tot { color: var(--muted); font-size: 13px; min-width: 70px; }
+.avn-ps { display: flex; flex-wrap: wrap; gap: 4px; } .avn-p { min-width: 26px; height: 22px; padding: 0 6px; border-radius: 6px; border: 1px solid var(--line2); background: rgba(255,255,255,.05); color: var(--text); font: inherit; font-size: 12px; cursor: pointer; }
+.avn-p.warn { border-color: rgba(243,192,106,.55); color: #f3c06a; } .avn-p.bad { border-color: rgba(255,107,98,.6); color: #ff8f87; } .avn-p:hover { filter: brightness(1.2); } .avn-fine { color: var(--muted); font-size: 12px; align-self: center; }
 .cch-avbox { margin-top: 10px; } .cch-avbox .ddv { margin: 0; } .cch-avbox:not([hidden]) + .cch-ddtip { display: none; }
 .cch-avbox .avd-map { margin: 8px 0 6px; max-width: 460px; } .cch-avbox .avd-map svg { width: 100%; height: auto; }
 .cch-ddbox { margin-top: 10px; } .cch-ddbox .ddv { margin: 0; } .cch-ddh { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 6px; font-size: 13px; color: var(--muted); } .cch-ddh b { color: var(--text); }
@@ -21932,6 +21936,38 @@ function deathLines(r, ds, who) { if (!ds.length) return ''; const used = new Se
 // ---- Avoidable damage card (Oct 22): what a raid lead says about one raider and one source on one pull. Verdict first (on them, half on
 // them, a bit much), then the hits with their health, a map of the worst one, the fastest kills' line and one fix.
 let AV_LAST = null; /* (the open card's map, so its play bar can start) */
+let AV_NIGHT = null; /* (the night the coach box is about: its pulls, for the night cards) */
+// (one source over a night: every raider it hit, their total, and each pull as a small button coloured by that pull's verdict, which opens
+// that pull and its card; how often the raid went over the top guilds' line; and the fix)
+function avNight(reps, k, name) {
+  const per = new Map(), pulls = new Set(); let over = 0, red = 0, fix = '', secs = false, harm = '';
+  for (const r of reps) { const x = pullSections(r).get('avoid'), g = x && (x.s.groups || []).find((q) => q.title === k); if (!g) continue; secs = !!g.secs; harm = g.harm || harm; if (!fix) fix = g.fix || '';
+    for (const row of g.rows || []) { const p = row[0] && row[0].p; if (!p || /tank/.test(row[0].sub || '') || (name && oaBase(p) !== oaBase(name))) continue;
+      const v = parseInt(row[1].txt, 10) || 0, st = row[1].bad || (row[3] && row[3].bad) ? 'bad' : row[1].warn ? 'warn' : '', died = !!(row[3] && row[3].bad);
+      let o = per.get(p); if (!o) per.set(p, o = { p, v: 0, ps: [], bad: 0, warn: 0, died: 0 }); o.v += v; o.ps.push({ n: r.item.pull, v, st }); if (st === 'bad') { o.bad++; red++; } if (st === 'warn') o.warn++; if (st) over++; if (died) o.died++; pulls.add(r.item.pull); } }
+  if (!per.size) return '';
+  if (!fix) { const m = reps.flatMap((r) => r.mistakes || []).find((q) => q.avoidRule && q.mechanic === k && q.fix); fix = m ? m.fix : ''; }
+  const nmS = k.replace(/\s*\(.*$/, ''), u = (v) => (secs ? v + ' s' : plural(v, 'hit')), list = [...per.values()].sort((a, b) => b.bad - a.bad || b.warn - a.warn || b.v - a.v);
+  const pm = (() => { const m = new Map(); for (const r of reps) for (const q of r.players.values()) if (q.name && !m.has(q.name)) m.set(q.name, q); return m; })();
+  const keeps = list.filter((o) => o.bad + o.warn >= 3), tg = red && (keeps.length || red >= 3) ? { k: 'bad', p: 'Keeps happening' } : over ? { k: 'warn', p: 'Now and then' } : { k: 'na', p: 'Fine' };
+  const h = (name ? 'You were hit in ' : plural(per.size, 'raider') + ' hit, in ') + plural(pulls.size, 'pull') + ' of ' + reps.length + '.' + (keeps.length ? ' ' + lpAnd(keeps.slice(0, 3).map((o) => String(o.p).split('-')[0])) + (keeps.length === 1 && !name ? ' keeps' : ' keep') + ' going over the line.' : '');
+  const row = (o) => { const q = pm.get(o.p), col = q && q.color ? ' style="color:' + q.color + '"' : '';
+    return '<div class="avn-row"><b class="avn-who"' + col + '>' + esc(String(o.p).split('-')[0]) + '</b><span class="avn-tot">' + u(o.v) + (o.died ? ', <b class="ddh-lo">died ' + (o.died > 1 ? o.died + '×' : '') + '</b>' : '') + '</span><span class="avn-ps">' +
+      o.ps.filter((x) => x.st).sort((a, b) => a.n - b.n).map((x) => '<button type="button" class="avn-p' + (x.st ? ' ' + x.st : '') + '" data-avpull="' + x.n + '" data-avp="' + esc(o.p) + '" title="' + esc('Pull ' + x.n + ': ' + u(x.v) + (x.st === 'bad' ? ', far over the line' : x.st === 'warn' ? ', a bit over the line' : '')) + '">' + x.n + '</button>').join('') + (o.ps.some((x) => !x.st) ? '<span class="avn-fine">+' + o.ps.filter((x) => !x.st).length + ' fine</span>' : '') + '</span></div>'; };
+  const kills = harm === 'High' ? 'Any hit counts: top guilds almost never take one.' : 'In top guilds, 9 in 10 raiders stay under this line each pull. Tonight someone went over it ' + plural(over, 'time') + (red ? ' (' + red + ' far over)' : '') + '.';
+  const fx = (fix && (dbfTip1(fix) || fix)) || (secs ? 'Step out of ' + nmS + ' right away.' : 'Dodge ' + nmS + '.');
+  return { tg, html: '<div class="ddv ' + tg.k + '"><p class="ddv-1">' + esc(h) + '</p><div class="avn-list">' + list.filter((o) => o.bad + o.warn).slice(0, 12).map(row).join('') + (list.filter((o) => o.bad + o.warn).length > 12 ? '<p class="ddv-3 sub">and ' + (list.filter((o) => o.bad + o.warn).length - 12) + ' more over the line</p>' : '') + (list.some((o) => !(o.bad + o.warn)) ? '<p class="ddv-3 sub">' + plural(list.filter((o) => !(o.bad + o.warn)).length, 'more raider') + ' got clipped but stayed under the line every pull.</p>' : '') + '</div>' +
+    '<p class="ddv-3 sub">Red: far over the line that pull. Amber: a bit over. Tap a number to open that pull.</p><p class="ddv-3"><b>Against top guilds:</b> ' + esc(kills) + '</p><p class="ddv-2"><b>Next time:</b> ' + esc(fx) + '</p></div>' };
+}
+document.addEventListener('click', (ev) => { const t = ev.target && ev.target.closest ? ev.target : null; if (!t) return;
+  // (a pull number in a night card: open that pull, then that raider's card there)
+  const pb = t.closest('.avn-p[data-avpull]'); if (pb) { ev.preventDefault(); const n = +pb.dataset.avpull, p = pb.dataset.avp, k = (pb.closest('.cch-avbox') || {}).dataset ? pb.closest('.cch-avbox').dataset.avn : '';
+    const r = AV_NIGHT && AV_NIGHT.reps.find((q) => q.item.pull === n); if (!r) return; S.tab = 'audit'; S.scope = 'pull'; Promise.resolve(select(r.item)).then(() => { let i = 0; const go = () => { const c = document.querySelector('.ach[data-avk="' + CSS.escape(k + '|' + p) + '"]');
+      if (c) { if (!c.classList.contains('on')) c.click(); c.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; } if (++i < 30) setTimeout(go, 200); else { const a = document.querySelector('.cch-acct2'); if (a) a.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }; setTimeout(go, 200); }); return; }
+  const c = t.closest('.ach[data-avn]'); if (!c || !AV_NIGHT) return; const ab = c.closest('.cch-ab'), box = ab && ab.querySelector('.cch-avbox'); if (!box) return;
+  const was = c.classList.contains('on'); ab.querySelectorAll('.ach.on').forEach((x) => x.classList.remove('on')); if (was) { box.hidden = true; box.innerHTML = ''; return; }
+  const o = avNight(AV_NIGHT.reps, c.dataset.avn, AV_NIGHT.name); if (!o) return; c.classList.add('on'); box.dataset.avn = c.dataset.avn;
+  box.innerHTML = '<div class="cch-ddh"><b>' + esc(c.dataset.avn) + '</b> over the night <span class="ddp ' + o.tg.k + '">' + esc(o.tg.p) + '</span></div>' + o.html; box.hidden = false; refreshIcons && refreshIcons(); });
 function avTag(r, g, j, ct) {
   const tl = (j.tl || []).filter((x) => x.t <= ct + 0.05), v = j.ts.filter((t) => t <= ct + 0.05).length, [wA, bA] = avLimAt(g, ct), died = j.dt != null && j.dt <= ct + 0.05;
   const pu = r.positions && r.positions.get(j.g), at = (t) => { let b = null, bd = 1.2; for (const q of pu ? pu.pts : []) { const d = Math.abs(q[0] - t); if (d <= bd) { bd = d; b = q; } if (q[0] > t + 2) break; } return b; };
@@ -21975,7 +22011,7 @@ document.addEventListener('click', (ev) => { const t = ev.target && ev.target.cl
   c.classList.add('on'); box.innerHTML = '<div class="cch-ddh"><b>' + esc(String(p).split('-')[0]) + '</b> ' + esc(k) + ' <span class="ddp ' + avTag(r, g, j, Math.min(cutT(r), r.duration || Infinity)).k + '">' + esc(avTag(r, g, j, Math.min(cutT(r), r.duration || Infinity)).p) + '</span></div>' + avBox(r, g, j); box.hidden = false;
   /* (the map plays like every other map: zoom buttons, the play bar, spec icons (user, Oct 22: "map has no animation")) */
   const am = box.querySelector('.avd-map'); if (am && AV_LAST) { try { bindZoom(am); bindAnim(am, AV_LAST.mp, AV_LAST.pm); hydrateMapIcons(am); } catch (err) { /* (a still map) */ } } refreshIcons && refreshIcons(); });
-document.addEventListener('keydown', (ev) => { if ((ev.key === 'Enter' || ev.key === ' ') && ev.target && ev.target.matches && ev.target.matches('.ach[data-avk],.ach[data-avmore]')) { ev.preventDefault(); ev.target.click(); } });
+document.addEventListener('keydown', (ev) => { if ((ev.key === 'Enter' || ev.key === ' ') && ev.target && ev.target.matches && ev.target.matches('.ach[data-avk],.ach[data-avmore],.ach[data-avn]')) { ev.preventDefault(); ev.target.click(); } });
 function deathBox(tg, d) { if (!tg) return ''; const c = (p) => (p < 35 ? 'ddh-lo' : p < 60 ? 'ddh-md' : 'ddh-hi');
   const kf = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k'), rc = d.recap || [];
   const dmg = rc.filter((e) => !e.heal).reduce((n, e) => n + e.amount, 0), heal = rc.filter((e) => e.heal).reduce((n, e) => n + e.amount, 0);
@@ -23553,6 +23589,9 @@ function coachAvoid(reps, name) {
     for (const g of (x && x.s.groups) || []) for (const row of g.rows || []) { const p = row[0] && row[0].p; if (!p || /tank/.test(row[0].sub || '') || (name && oaBase(p) !== base) || !(row[1].bad || row[1].warn || (row[3] && row[3].bad))) continue;
       const v = parseInt(row[1].txt, 10) || 0; ch.push({ k: g.title, who: nm(p) + ' ' + (g.secs ? v + ' s' : plural(v, 'hit')), bad: !!(row[1].bad || (row[3] && row[3].bad)), v, avk: g.title + '|' + p }); }
     ch.sort((a, b) => b.bad - a.bad || b.v - a.v); if (ch.length) { items = ch.slice(0, 4); rest = ch.slice(4); more = 0; } }
+  /* (a night: a chip per source opens the night's card for it (your bug, Oct 22: "these are not clickable on all pulls")) */
+  else { AV_NIGHT = { reps, name: name || null }; const top1 = (s) => { const w = [...s.who].sort((a, b) => b[1] - a[1]); return w.length ? nm(w[0][0]) + ' ' + (s.secs ? w[0][1] + ' s' : plural(w[0][1], 'hit')) + (w.length > 1 ? ' +' + (w.length - 1) : '') : (name ? s.pulls.size + ' of ' + reps.length + ' pulls' : ''); };
+    const ch = flagged.map((s) => ({ k: s.k, who: name ? s.pulls.size + ' of ' + reps.length + ' pulls' : top1(s), bad: s.bad > 0, avn: s.k })); items = ch.slice(0, 4); rest = ch.slice(4); more = 0; }
   return { line, list, bad: flagged.some((s) => s.bad), items, more, rest };
 }
 // ---- The kill call (your note, Oct 22: "not very enthusiastic raid leading LOL"): what a raid lead says in voice when the boss
@@ -23682,7 +23721,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
   // (a death chip opens that death's short summary under the chips (Oct 22: deaths live only here on a single pull))
   const dchip = (it, x) => '<span class="dch k-' + esc(it.k || 'n') + (x ? ' dch-x' : '') + (it.late ? ' dch-late' : '') + '"' + (it.dg ? ' data-ddg="' + esc(it.dg) + '" role="button" tabindex="0"' : '') + (x ? ' hidden' : '') + ' title="' + esc(it.word || '') + '">' + (it.t ? '<i>' + esc(it.t) + '</i>' : '') + (it.who ? '<b>' + esc(it.who) + '</b>' : '') + '<span>' + esc(it.ab) + (it.n > 1 ? ' ×' + it.n : '') + '</span></span>';
   const dch = D ? (D.items && D.items.length ? D.items.map((it) => dchip(it)).join('') + (D.rest && D.rest.length ? '<span class="dch more" role="button" tabindex="0" data-ddmore>+' + D.rest.length + ' more</span>' + D.rest.map((it) => dchip(it, 1)).join('') : D.more ? '<span class="dch more">+' + D.more + ' more</span>' : '') : '<span class="cch-none">' + esc(D.line) + '</span>') + (D.note ? '<div class="cch-anote">' + esc(D.note) + '</div>' : '') : '';
-  const achip = (it, x) => '<span class="ach' + (it.bad ? ' bad' : '') + (x ? ' ach-x' : '') + '"' + (it.avk ? ' data-avk="' + esc(it.avk) + '" role="button" tabindex="0"' : '') + (x ? ' hidden' : '') + '><b>' + esc(it.k) + '</b>' + (it.who ? '<span>' + esc(it.who) + '</span>' : '') + '</span>';
+  const achip = (it, x) => '<span class="ach' + (it.bad ? ' bad' : '') + (x ? ' ach-x' : '') + '"' + (it.avk ? ' data-avk="' + esc(it.avk) + '" role="button" tabindex="0"' : it.avn ? ' data-avn="' + esc(it.avn) + '" role="button" tabindex="0"' : '') + (x ? ' hidden' : '') + '><b>' + esc(it.k) + '</b>' + (it.who ? '<span>' + esc(it.who) + '</span>' : '') + '</span>';
   const ach = A ? (A.items && A.items.length ? A.items.map((it) => achip(it)).join('') + (A.rest && A.rest.length ? '<span class="ach more" role="button" tabindex="0" data-avmore>+' + A.rest.length + ' more</span>' + A.rest.map((it) => achip(it, 1)).join('') : A.more ? '<span class="ach more">+' + A.more + ' more</span>' : '') : '<span class="cch-none">' + esc(A.line) + '</span>') : '';
   const html = '<section class="cch cch2" aria-label="Coach"><div class="cch-hd"><span class="cch-k">' + esc(o.title || (c.name ? 'Your coach' : 'Coach')) + '</span>' + (pm ? '<span class="nm" style="color:' + pm.color + '">' + esc(c.name.split('-')[0]) + '</span>' : '') + '</div>' +
     '<p class="cch-h">' + esc(c.headline) + '</p>' +
@@ -23690,7 +23729,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
     (c.week ? '<div class="cch-wk2"><span class="cch-wk2k">Since last raid</span><span>' + esc(c.week.replace(/^Since last raid /, '').replace(/^\(([^)]*)\): /, (m0, d) => d.charAt(0).toUpperCase() + d.slice(1) + ': ')) + '</span></div>' : '') /* (week to week, Oct 22) */ +
     (c.wrong.length ? '<div class="cch-sh">What went wrong</div><ol class="cch-ps cch-no">' + c.wrong.map(prob).join('') + '</ol>' : '') +
     (c.right.length ? '<div class="cch-good">' + c.right.map((x) => '<span class="cch-gd">✓ ' + esc(x.t) + '</span>').join('') + '</div>' : '') +
-    (D || A ? '<div class="cch-acct2">' + (D ? '<div class="cch-ab' + (D.bad ? ' warn' : '') + '"><span class="cch-al">Deaths</span><div class="cch-chips">' + dch + '</div>' + (D.items && D.items.some((it) => it.dg) ? '<div class="cch-ddbox" hidden></div><div class="cch-ddtip">Tap a death to see what happened.</div>' : '') + '</div>' : '') + (A ? '<div class="cch-ab' + (A.bad ? ' warn' : '') + '"><span class="cch-al">Avoidable damage</span><div class="cch-chips">' + ach + '</div>' + (A.items && A.items.some((it) => it.avk) ? '<div class="cch-avbox" hidden></div><div class="cch-ddtip">Tap one to see what happened.</div>' : '') + '</div>' : '') + '</div>' : '') +
+    (D || A ? '<div class="cch-acct2">' + (D ? '<div class="cch-ab' + (D.bad ? ' warn' : '') + '"><span class="cch-al">Deaths</span><div class="cch-chips">' + dch + '</div>' + (D.items && D.items.some((it) => it.dg) ? '<div class="cch-ddbox" hidden></div><div class="cch-ddtip">Tap a death to see what happened.</div>' : '') + '</div>' : '') + (A ? '<div class="cch-ab' + (A.bad ? ' warn' : '') + '"><span class="cch-al">Avoidable damage</span><div class="cch-chips">' + ach + '</div>' + (A.items && A.items.some((it) => it.avk || it.avn) ? '<div class="cch-avbox" hidden></div><div class="cch-ddtip">Tap one to see ' + (A.items.some((it) => it.avn) ? 'the night: who, which pulls, and the fix.' : 'what happened.') + '</div>' : '') + '</div>' : '') + '</div>' : '') +
     (c.full ? '<details class="cch-more" data-k="' + k + '"' + (S.openSecs.has(k) ? ' open' : '') + '><summary>Read the full coaching</summary><div class="cch-full">' + c.full + '</div></details>' : '') + '</section>';
   return colorNames(iconSpells(html), PM).replace(/<span class="cch-pmap" data-mi="(\d+)"><\/span>/g, (m0, n) => '<span class="cch-pmap">' + (MAPS[+n] || '') + '</span>'); }
 // (the whole Debriefing tab for one pull, as the site draws it, for the PC app's recap pop-up (Oct 22): the pull opens here (the app's
