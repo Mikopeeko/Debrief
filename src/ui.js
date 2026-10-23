@@ -4765,7 +4765,7 @@ function ndzNoteView(boss, id) {
   const info = (x) => sp[x.toLowerCase()] || null, kind = (s) => (!s ? 'other' : s.role === 'tank' ? 'tank' : s.role === 'healer' ? 'healer' : NDZ_MELEE.has(+s.sid) ? 'melee' : 'ranged');
   const ROLES = [['tank', 'Tanks'], ['melee', 'Melee'], ['healer', 'Healers'], ['ranged', 'Ranged'], ['other', 'Spec not seen yet']];
   const roster = ROLES.map(([k, l]) => { const g = names.filter((x) => kind(info(x)) === k).sort((a, b) => a.localeCompare(b)); if (!g.length) return '';
-    return '<div class="ndz-nvr"><div class="ndz-ch">' + l + ' · ' + g.length + '</div><div class="ndz-nvp">' + g.map((x) => { const s = info(x); return '<span class="ndz-nvc"><span class="nm" style="color:' + (s ? s.color : 'inherit') + '">' + esc(x) + '</span>' + (s && s.spec ? '<span class="sub">' + esc(s.spec) + '</span>' : '') + '</span>'; }).join('') + '</div></div>'; }).join('');
+    return '<div class="ndz-nvr"><div class="ndz-ch">' + l + ' · ' + g.length + '</div><div class="ndz-nvp">' + g.map((x) => { const s = info(x); return '<span class="ndz-nvc">' + (s ? ndzSpecIcH(s.sid, s.spec, s.cls) : '') + '<span class="nm" style="color:' + (s ? s.color : 'inherit') + '">' + esc(x) + '</span></span>'; }).join('') + '</div></div>'; }).join('');
   let box = $('#ndzNoteView'); if (!box) { box = document.createElement('div'); box.id = 'ndzNoteView'; box.className = 'ndz-wiz ndz-nv'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); document.body.appendChild(box); document.body.classList.add('ndz-modal'); }
   box.setAttribute('aria-label', n.name);
   box.innerHTML = '<div class="ndz-wbox ndz-nvbox"><div class="ndz-whead"><span class="sub">' + esc(boss) + (diff ? ' · ' + diff : '') + (n.saved ? ' · saved ' + esc(new Date(n.saved).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })) : '') + '</span><button class="ndz-ex" type="button" id="ndzNvX" aria-label="Close">✕</button></div>' +
@@ -5255,6 +5255,26 @@ const NDZ_SP0 = new URLSearchParams(location.search).get('sp'); /* (read before 
 setTimeout(() => { const id = NDZ_SP0; if (!id || !/^[A-Za-z0-9_-]{22}$/.test(id)) return; try { history.replaceState(null, '', location.pathname); } catch (e) { /* fine */ }
   if (typeof ASG_OFF === 'function' && ASG_OFF()) { toast('This is a shared raid plan. The Plan tab isn\'t out on Debrief yet: it opens here as soon as it is.', 9000); return; }
   planShareIn(id).catch((e) => { console.warn('Shared plan:', e); toast('Couldn\'t open that shared plan.', 6000); }); }, 0);
+
+// (a spec's icon with its name on hover, for the Plan lists; the engine's SPEC_ICON table, copied (engine.js doesn't share it); a class
+// icon when only the class is known)
+const NDZ_SPECIC = {
+  62: 'spell_holy_magicalsentry', 63: 'spell_fire_firebolt02', 64: 'spell_frost_frostbolt02',
+  65: 'spell_holy_holybolt', 66: 'ability_paladin_shieldofthetemplar', 70: 'spell_holy_auraoflight',
+  71: 'ability_warrior_savageblow', 72: 'ability_warrior_innerrage', 73: 'ability_warrior_defensivestance',
+  102: 'spell_nature_starfall', 103: 'ability_druid_catform', 104: 'ability_racial_bearform', 105: 'spell_nature_healingtouch',
+  250: 'spell_deathknight_bloodpresence', 251: 'spell_deathknight_frostpresence', 252: 'spell_deathknight_unholypresence',
+  253: 'ability_hunter_bestialdiscipline', 254: 'ability_hunter_focusedaim', 255: 'ability_hunter_camouflage',
+  256: 'spell_holy_powerwordshield', 257: 'spell_holy_guardianspirit', 258: 'spell_shadow_shadowwordpain',
+  259: 'ability_rogue_deadlybrew', 260: 'ability_rogue_waylay', 261: 'ability_stealth',
+  262: 'spell_nature_lightning', 263: 'spell_shaman_improvedstormstrike', 264: 'spell_nature_magicimmunity',
+  265: 'spell_shadow_deathcoil', 266: 'spell_shadow_metamorphosis', 267: 'spell_shadow_rainoffire',
+  268: 'spell_monk_brewmaster_spec', 269: 'spell_monk_windwalker_spec', 270: 'spell_monk_mistweaver_spec',
+  577: 'ability_demonhunter_specdps', 581: 'ability_demonhunter_spectank', 1480: 'inv_112_ability_demonhunter_metamorphasisvoid',
+  1467: 'classicon_evoker_devastation', 1468: 'classicon_evoker_preservation', 1473: 'classicon_evoker_augmentation',
+};
+function ndzSpecIcH(sid, spec, cls) { const ic = NDZ_SPECIC[+sid] || (cls ? 'classicon_' + String(cls).toLowerCase() : null); if (!ic) return '';
+  const nm = spec || (cls ? ndzClsName(cls) : ''); return '<img class="ndz-spi" src="https://wow.zamimg.com/images/wow/icons/medium/' + ic + '.jpg" alt="' + esc(nm) + '" loading="lazy" tabindex="0" data-tt="' + esc('<b>' + esc(nm) + '</b>') + '">'; }
 // ---- Share as image (Oct 20, your OK): the note as one picture for Discord, where text can't be class-colored. The boss art
 // and name on top, then every raider by role (tanks, healers, melee, ranged) in their class color with their jobs under the
 // name (up to three, then their cooldowns), flowing into four columns; debriefme.io at the bottom. Drawn on a canvas in the
@@ -5548,7 +5568,7 @@ function planAssign() { const box = $('#assignBox'); if (!box) return; const bos
   const v = planV0(), seg = (k, l) => '<button type="button" data-planv="' + k + '" class="' + (v === k ? 'on' : '') + '" aria-pressed="' + (v === k) + '">' + l + '</button>';
   const R = planRoster(), nN = planBosses().reduce((s, b) => s + notesOf(b).list.filter((n) => !n.example).length, 0), nR = rostersGet().list.length;
   const head = '<div class="panel plan-head"><div class="plan-ht"><h2>Plan</h2><span class="sub">Your raid\'s prep for every boss. It doesn\'t use your logs: Debriefing checks a note against your pulls.</span>' + planRosPickH() + '</div>' +
-    '<span class="ndz-seg plan-seg">' + seg('night', 'Night') + seg('plans', 'Boss plans') + seg('ros', 'Rosters' + (nR ? ' · ' + nR : '')) + seg('notes', 'All notes' + (nN ? ' · ' + nN : '')) + '</span></div>';
+    planStepsH(v, nN) + '</div>'; /* (three steps and a Next button instead of four tabs, Oct 23) */
   let body = '';
   if (v === 'night') body = pnH();
   else if (v === 'ros') body = planRosH();
@@ -5561,7 +5581,8 @@ function planAssign() { const box = $('#assignBox'); if (!box) return; const bos
   if (v === 'ros') planRosBind(); ndzTlBigSync(); /* (the big graph stays big across redraws) */ bjMerge(); /* (the Boss page: one banner) */ refreshIcons(); /* (spell icons on every redraw, Oct 22) */
   { const st = $('#assignBox .plan-bstrip'), on = st && st.querySelector('.plan-bc.on'); if (on && st.scrollWidth > st.clientWidth) st.scrollLeft = Math.max(0, on.offsetLeft - st.offsetLeft - 8); } /* (on a phone, the boss row starts at the picked boss) */ }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-planv]'); if (!b || S.page !== 'plan') return; e.preventDefault();
-  S.planV = b.dataset.planv; store.set(PLAN_VK, S.planV); if (S.planV === 'plans') S.planOpen = false; S.noteMade = null; S.planRosEd = null; planAssign(); window.scrollTo({ top: 0 }); });
+  S.planV = b.dataset.planv; store.set(PLAN_VK, S.planV); if (S.planV === 'plans') S.planOpen = false; S.noteMade = null; S.planRosEd = null; planAssign(); window.scrollTo({ top: 0 });
+  if (S.planV === 'ros' && !rostersGet().list.length) { const nb = $('#assignBox [data-plrnew]'); if (nb) nb.click(); } /* (no roster yet: straight into making one) */ });
 // ---- All notes: every boss's notes in one place (open, copy, delete) ----
 function planNotesH() { const when = (t) => (t ? new Date(t).toLocaleDateString([], { month: 'short', day: 'numeric' }) : '');
   const rows = planBosses().map((b) => { const l = notesOf(b).list.filter((n) => !n.example).sort((x, y) => (y.saved || 0) - (x.saved || 0)); if (!l.length) return '';
@@ -5593,8 +5614,23 @@ function planChip(sp, n, extra) { const s = sp[n.toLowerCase()] || {}, t = '<b>'
 function planRosCard(R, sp, inUse) { const inn = R.players.filter((p) => !p.bench), bench = R.players.filter((p) => p.bench), info = (p) => planInfo(sp, p);
   const rows = PLAN_GRP.map(([k, lab]) => { const l = inn.filter((p) => PLAN_ROLE(info(p)) === k).sort((a, b) => a.n.localeCompare(b.n)); return l.length ? '<div class="ndz-drg"><span class="ndz-drl">' + lab + ' · ' + l.length + '</span><span class="ndz-drn">' + l.map((p) => planChip(sp, p.n)).join('') + '</span></div>' : ''; }).join('') +
     (bench.length ? '<div class="ndz-drg plan-bench"><span class="ndz-drl">Bench · ' + bench.length + '</span><span class="ndz-drn">' + bench.map((p) => planChip(sp, p.n)).join('') + '</span></div>' : '');
-  return '<div class="panel ndz-drost plan-ros' + (inUse ? ' on' : '') + '"><div class="ndz-dph"><b>' + esc(R.name) + '</b><span class="sub">' + plural(inn.length, 'raider') + (bench.length ? ' · ' + bench.length + ' on the bench' : '') + '</span>' + (inUse ? '<span class="plan-use">✓ In use</span>' : '') +
-    '<span class="ndz-cb">' + (inUse ? '' : '<button class="btn sm primary" type="button" data-plruse="' + esc(R.id) + '">Use for new plans</button>') + '<button class="btn sm" type="button" data-plred="' + esc(R.id) + '">Edit</button><button class="btn sm" type="button" data-plrdel="' + esc(R.id) + '" aria-label="Delete ' + esc(R.name) + '">' + NOTE_TRASH + '</button></span></div>' + (rows || '<p class="sub">Nobody on it yet.</p>') + '</div>'; }
+  // (the banner: raider icons, the raid's make-up in class colours, role counts)
+  const RK = { tank: 0, healer: 1 }, ord = inn.slice().sort((x, y) => (RK[PLAN_ROLE(info(x))] ?? 2) - (RK[PLAN_ROLE(info(y))] ?? 2) || x.n.localeCompare(y.n));
+  const icn = (p) => { const i = info(p), ic = (typeof NDZ_SPECIC === 'object' && NDZ_SPECIC[+i.sid]) || (i.cls ? 'classicon_' + String(i.cls).toLowerCase() : null), col = (E.CLASSES[i.cls] || [])[1] || '#5b6272';
+    return ic ? '<img class="plr-av" src="https://wow.zamimg.com/images/wow/icons/medium/' + ic + '.jpg" alt="" loading="lazy" style="--cc:' + col + '">' : '<span class="plr-av plr-av0" style="--cc:' + col + '">' + esc(p.n.slice(0, 1)) + '</span>'; };
+  const av = ord.slice(0, 9).map(icn).join('') + (ord.length > 9 ? '<span class="plr-av plr-more">+' + (ord.length - 9) + '</span>' : '');
+  const byC = {}; for (const p of inn) { const c = info(p).cls || '?'; byC[c] = (byC[c] || 0) + 1; }
+  const strip = Object.entries(byC).sort((x, y) => y[1] - x[1]).map(([c, n]) => '<span style="flex:' + n + ';background:' + (((E.CLASSES[c] || [])[1]) || '#3a4152') + '" title="' + esc((c === '?' ? 'Class not set' : ndzClsName(c)) + ': ' + n) + '"></span>').join('');
+  const cnt = (k) => inn.filter((p) => PLAN_ROLE(info(p)) === k).length, nT = cnt('tank'), nH = cnt('healer'), nD = inn.length - nT - nH;
+  const pills = '<span class="plr-pill">' + plural(nT, 'Tank') + '</span><span class="plr-pill">' + plural(nH, 'Healer') + '</span><span class="plr-pill">' + nD + ' DPS</span>' + (bench.length ? '<span class="plr-pill dim">' + bench.length + ' on the bench</span>' : '');
+  const open = S.plRosOpen && S.plRosOpen[R.id];
+  return '<details class="panel ndz-drost plan-ros plr' + (inUse ? ' on' : '') + '" data-plrid="' + esc(R.id) + '"' + (open ? ' open' : '') + '><summary class="plr-sum"><span class="plr-avs">' + av + '</span>' +
+    '<span class="plr-mid"><span class="plr-t"><b>' + esc(R.name) + '</b>' + (inUse ? '<span class="plr-use">✓ In use</span>' : '') + '</span><span class="plr-strip" aria-hidden="true">' + strip + '</span><span class="plr-pills">' + pills + '</span>' + planBringsH(inn.map((p) => ({ n: p.n, ...info(p) }))) + '</span>' +
+    '<span class="ndz-cb">' + (inUse ? '' : '<button class="btn sm primary" type="button" data-plruse="' + esc(R.id) + '">Use for new plans</button>') + '<button class="btn sm" type="button" data-plred="' + esc(R.id) + '">Edit</button><button class="btn sm" type="button" data-plrdel="' + esc(R.id) + '" aria-label="Delete ' + esc(R.name) + '">' + NOTE_TRASH + '</button></span><span class="plr-chev" aria-hidden="true">▾</span></summary>' +
+    '<div class="plr-body">' + (rows || '<p class="sub">Nobody on it yet.</p>') + '</div></details>'; }
+// (a roster you open stays open; the buttons in its banner don't open or close it)
+document.addEventListener('toggle', (e) => { const d = e.target; if (!d || !d.classList || !d.classList.contains('plr') || !d.dataset.plrid) return; S.plRosOpen = S.plRosOpen || {}; S.plRosOpen[d.dataset.plrid] = d.open; }, true);
+document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('.plr-sum button')) e.preventDefault(); }, true);
 function planRosH() { const o = rostersGet(), sp = planSp(), cur = planRoster();
   if (S.planRosEd) return planRosEdH(sp);
   return '<div class="plan-rhead"><div><b>Your rosters</b><span class="sub">Who\'s raiding, with a bench. The roster in use fills new plans and the note builder\'s "Who\'s raiding?" step.</span></div><button class="btn primary" type="button" data-plrnew="1">+ New roster</button></div>' +
@@ -5735,6 +5771,43 @@ function planRosPickH() { const o = rostersGet(); if (!o.list.length || (S.planV
   return '<span class="plan-rpick"><label for="planRosPick">Roster</label><select id="planRosPick">' + o.list.map((R) => '<option value="' + esc(R.id) + '"' + (cur && R.id === cur.id ? ' selected' : '') + '>' + esc(R.name) + ' · ' + R.players.filter((x) => !x.bench).length + '</option>').join('') + '</select>' +
     (S.planV === 'ros' ? '' : '<button class="linkbtn" type="button" data-planv="ros">Edit rosters</button>') + '</span>'; }
 document.addEventListener('change', (e) => { if (!e.target || e.target.id !== 'planRosPick') return; const o = rostersGet(); o.cur = e.target.value; rostersSet(o); PLAN_RC = null; S.planRosEd = null; planAssign(); });
+
+// ---- Plan's three steps (Oct 23): where you are, what's done, and one Next button ----
+function planStepsH(v, nN) { const R = planRoster(), nIn = R ? R.players.filter((x) => !x.bench).length : 0, bosses = planBosses();
+  let o = null; try { o = R ? pnGet() : null; } catch (e) { o = null; }
+  const st = o ? bosses.map((b) => ({ b, s: pnState(o, b) })) : [], planned = st.filter((x) => x.s.k !== 'no'), fix = st.filter((x) => x.s.k === 'wn');
+  const s1 = !!(R && nIn), s2 = s1 && !!(o && o.on && bosses.every((b) => Array.isArray(o.on[b]))), s3 = s1 && planned.length === bosses.length && !fix.length;
+  const cur0 = s1 ? v : 'ros', card = (k, n, t, sub, done) => '<button type="button" class="pst' + (done ? ' done' : '') + (cur0 === k ? ' on' : '') + '" data-planv="' + k + '" aria-pressed="' + (cur0 === k) + '"><span class="pst-n">Step ' + n + '</span><b>' + t + '</b><span class="pst-s">' + (done ? '✓ ' : '') + esc(sub) + '</span></button>';
+  const next = !s1 ? '<button class="btn primary" type="button" data-plnext="ros">Make your roster →</button>'
+    : !planned.length ? '<button class="btn primary" type="button" data-plnext="all">Plan the whole night →</button>'
+    : fix.length ? '<button class="btn primary" type="button" data-ntboss="' + esc(fix[0].b) + '">Fix ' + esc(fix[0].b) + ' →</button>'
+    : planned.length < bosses.length ? '<button class="btn primary" type="button" data-plnext="all">Plan the other ' + (bosses.length - planned.length) + ' →</button>'
+    : '<button class="btn primary" type="button" data-planv="plans">Check the boss plans →</button>';
+  return '<div class="pst-row">' + card('ros', 1, 'Roster', s1 ? R.name + ' · ' + plural(nIn, 'raider') : 'Not set up: add your team', s1) +
+    card('night', 2, 'Who plays', s2 ? 'Picked for every boss' : s1 ? 'Pick who plays each boss' : 'After your roster', s2) +
+    card('plans', 3, 'Boss plans', s1 ? planned.length + ' of ' + bosses.length + ' ready' + (fix.length ? ' · ' + fix.length + ' to fix' : '') : 'After step 2', s3) +
+    '<span class="pst-next">' + next + '</span></div>' +
+    '<div class="pst-links"><button class="linkbtn" type="button" data-planv="notes">All notes' + (nN ? ' (' + nN + ')' : '') + '</button><span aria-hidden="true">·</span><button class="linkbtn" type="button" data-ndzwiz="1">Load a note you already have</button></div>'; }
+// (Next: make your roster opens the editor; plan the whole night drafts every boss from the Night page)
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-plnext]'); if (!b || S.page !== 'plan') return; e.preventDefault();
+  S.planV = b.dataset.plnext === 'ros' ? 'ros' : 'night'; store.set(PLAN_VK, S.planV); S.planRosEd = null; S.noteMade = null; planAssign(); window.scrollTo({ top: 0 });
+  if (b.dataset.plnext === 'ros') { const nb = $('#assignBox [data-plrnew]'); if (nb && !rostersGet().list.length) nb.click(); }
+  else { const pb = $('#assignBox [data-ntplan]'); if (pb) pb.click(); } });
+
+// (what a roster brings: a few counts with who on hover; green when there's plenty, plain when few, amber when none)
+function planBringsH(ps) { const G = (n) => ((NDZ_BUFFS.find((g) => g[0] === n) || [])[2] || []);
+  const can = (p, x) => p.cls && x[1].includes(p.cls) && (!x[2] || !x[2].length || (p.sid ? x[2].includes(+p.sid) : false));
+  const who = (list) => { const m = new Map(); for (const p of ps) for (const x of list) if (can(p, x)) { if (!m.has(p.n)) m.set(p.n, []); m.get(p.n).push(x[0]); } return m; };
+  const items = [];
+  { const k = ps.filter((p) => ndzKickOf({ ...p, specId: p.sid })); items.push(['kick', k.length, 'kicks', k.map((p) => p.n), 8]); }
+  { const m = who(G('Healer cooldowns').concat(G('Raid cooldowns').filter((x) => x[0] !== 'Devotion Aura'))); for (const p of ps) for (const [n] of (typeof NDZ_CDSPEC === 'object' ? NDZ_CDSPEC[+p.sid] : null) || []) { if (!m.has(p.n)) m.set(p.n, []); m.get(p.n).push(n); }
+    items.push(['hcd', [...m.values()].reduce((a, l) => a + l.length, 0), 'healing cooldowns', [...m].map(([n, l]) => n + ': ' + l.join(', ')), 8]); }
+  { const m = who(G('Externals')); items.push(['ext', [...m.values()].reduce((a, l) => a + l.length, 0), 'externals', [...m].map(([n, l]) => n + ': ' + l.join(', ')), 3]); }
+  { const m = who(G('Immunities')); items.push(['imm', m.size, 'immunities', [...m].map(([n, l]) => n + ': ' + l.join(', ')), 4]); }
+  { const c = ps.filter((p) => p.role !== 'tank' && NDZ_AOE_CC[p.cls]); items.push(['cc', c.length, 'CC', c.map((p) => p.n + ': ' + NDZ_AOE_CC[p.cls]), 6]); }
+  { const u = G('Utility'), br = u.filter((x) => /battle res/i.test(x[0])), bl = u.filter((x) => /bloodlust/i.test(x[0])), mb = who(br), ml = who(bl);
+    items.push(['br', mb.size, mb.size === 1 ? 'battle rez' : 'battle rezzes', [...mb.keys()], 2]); items.push(['bl', ml.size, 'Bloodlust', [...ml.keys()], 1]); }
+  return '<span class="plr-brings">' + items.map(([k, n, lab, l, good]) => '<span class="plr-b ' + (!n ? 'none' : n >= good ? 'ok' : '') + '" tabindex="0" data-tt="' + esc('<b>' + n + ' ' + lab + '</b>' + (l.length ? '<br>' + l.map((x) => esc(x)).join('<br>') : '<br>Nobody on this roster.')) + '">' + (k === 'bl' ? (n ? '✓ Bloodlust' : 'No Bloodlust') : n + ' ' + lab) + '</span>').join('') + '</span>'; }
 // (test copies only: sample notes and a roster, so a practice link with empty storage can be tried (Oct 21, "open the test copy
 // for me to try always"); the button shows on practice links and this PC's copies when you have no notes yet. Every sample
 // raider's class is known (the user: "classes should all be known"): the plans were built with the note builder from a real
@@ -6259,7 +6332,7 @@ function pnH() { const o = pnGet(), ps = pnPeople(o), bosses = planBosses(), RL 
   const th = bosses.map((b) => { const H = BOSS_HERO[b], s = pnState(o, b), n = (o.on[b] || []).length, sz = size(b);
     return '<th><button type="button" class="nt-bh" data-ntboss="' + esc(b) + '" aria-label="Open ' + esc(b) + '">' + (H ? '<img src="https://wow.zamimg.com/uploads/guide/header/' + H[0] + '.jpg" alt="" loading="lazy" style="object-position:' + H[1] + '% 30%">' : '') + '<b>' + esc(pnShort(b)) + '</b><span class="nt-st ' + s.k + '">' + esc(s.t) + '</span></button></th>'; }).join('');
   const groups = [['tank', 'Tanks'], ['healer', 'Healers'], ['melee', 'Melee'], ['ranged', 'Ranged']];
-  const row = (p) => '<tr><td class="pl"><span class="nm" style="color:' + col(p) + '">' + esc(p.n) + '</span>' + (p.spec ? '<small>' + esc(p.spec.replace(/ (Death Knight|Demon Hunter|Druid|Evoker|Hunter|Mage|Monk|Paladin|Priest|Rogue|Shaman|Warlock|Warrior)$/, '')) + '</small>' : '') + '</td>' +
+  const row = (p) => '<tr><td class="pl">' + ndzSpecIcH(p.sid, p.spec, p.cls) + '<span class="nm" style="color:' + col(p) + '">' + esc(p.n) + '</span></td>' +
     bosses.map((b) => { const out = sit(p.n, b), k = out ? (p.bench ? 'out' : 'sit') : p.bench ? 'sug' : 'in';
       return '<td class="c"><button type="button" class="nt-tk ' + k + '" data-nttk="' + esc(b + '|' + p.n) + '" aria-pressed="' + !out + '" data-tt="' + esc('<b>' + esc(p.n) + '</b> · ' + esc(b) + '<br>' + (k === 'in' ? 'Playing' : k === 'sug' ? 'In from the bench' : k === 'sit' ? 'Sits this boss' : 'On the bench') + '<br><span class="sub">Click to ' + (out ? 'put them in' : 'sit them') + '</span>') + '"></button></td>'; }).join('') + '</tr>';
   const body = groups.map(([k, lab]) => { const l = core.filter((p) => p.kind === k); return l.length ? '<tr class="grp"><td colspan="' + (bosses.length + 1) + '">' + lab + '</td></tr>' + l.map(row).join('') : ''; }).join('') +
