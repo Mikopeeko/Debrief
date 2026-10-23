@@ -409,7 +409,24 @@ document.addEventListener('click', (e) => {
 function who(p, sub) {
   return '<span class="who">' + avatar(p) + '<span style="min-width:0"><div class="nm" style="color:' + p.color + '">' + esc(p.name) + '</div><div class="sub">' + esc(sub == null ? p.specName : sub) + '</div></span></span>';
 }
-function refreshIcons() { linkBossText(); hydrateIcons(); } /* (linking first: the names it links carry icons now) */
+function refreshIcons() { linkBossText(); iconizeSpells(); hydrateIcons(); } /* (linking first: the names it links carry icons now) */
+// (Oct 22, the user: "Any time a spell, or mechanic is listed there should be a corresponding icon": every spell name on a page
+// (the .sp tags from mech(), linkBossText and the spell links) gets its icon in front, sized to its text (.icw.inl), unless it
+// already has one or one sits right before it. Timeline boxes and anything marked .no-ic are left alone. Tooltips too.)
+function iconizeSpells(root) {
+  const iconish = (p) => p && p.nodeType === 1 && (p.matches('.icw, img, .ico, .emo-ic') || !!(p.lastElementChild && p.lastElementChild.matches('.icw, img')));
+  const before = (el) => { let n = el; for (let i = 0; i < 3; i++) { let p = n.previousSibling; while (p && p.nodeType === 3 && !p.nodeValue.trim()) p = p.previousSibling; if (p) return iconish(p); n = n.parentElement;
+    if (!n || /^(DIV|LI|TD|TH|SECTION|DETAILS|SUMMARY|P|BUTTON|LABEL)$/.test(n.tagName)) return false; } return false; };
+  (root || document).querySelectorAll('.sp[data-sid]:not([data-ic])').forEach((el) => { el.dataset.ic = '1';
+    if (el.querySelector('.icw, img, svg') || el.closest('.no-ic, .spc-bx, svg, option') || before(el)) return;
+    const sid = +el.dataset.sid; if (!sid) return;
+    const blk = el.parentElement && el.parentElement.closest('p, li, td, th, summary, button, label, div'); if (blk && blk.querySelector('img.oi[data-sid="' + sid + '"]')) return; /* (one icon per spell per line) */
+    el.insertAdjacentHTML('afterbegin', spellIcon(sid, el.dataset.sn || el.textContent.trim()).replace('class="icw', 'class="icw inl')); });
+  /* (a row named after an add, like "Spiteful Soulcoiler (Kick and kill)": the add's own icon from ADD_LOOK, the one its map marker uses) */
+  (root || document).querySelectorAll('.cch-pt > b:first-child:not([data-ic])').forEach((b) => { b.dataset.ic = '1'; if (b.querySelector('.icw, img, svg') || before(b)) return;
+    const nm = b.textContent.replace(/\s*\(.*$/, '').trim(), L = ADD_LOOK[nm]; if (L) b.insertAdjacentHTML('afterbegin', spellIcon(L.sid, nm).replace('class="icw', 'class="icw inl')); });
+  /* (no doubles: a name that carries its own icon, with another icon right before it, drops its own) */
+  (root || document).querySelectorAll('.sp[data-sid] > .icw:first-child').forEach((ic) => { if (before(ic.parentElement)) ic.remove(); }); }
 // Spells named in plain text get the same tooltip as a spell shown with its icon, on every tab of a pull: boss abilities
 // (a rule's tip, a check's line, "fix first", a death's killing blow) and players' own spells (a fix like "Use Blessing of
 // Sacrifice more", "died with Divine Shield still ready", a coaching tip). Boss abilities: every one this boss's rules and
@@ -446,6 +463,7 @@ function bossRx(strict) {
   if (BOSS_RX.size > 40) BOSS_RX.clear(); BOSS_RX.set(key, v); return v;
 }
 function linkBossText() {
+  if (S.page === 'guides' || S.page === 'plan') { linkGuideText(S.page === 'plan' ? (typeof planBoss === 'function' ? planBoss() : null) : S.gdzBoss); return; } /* (the boss guides and Plan have no log open: the page's boss's own spells, Oct 22) */
   if (!S.rep || !S.item) return; const b = bossRx(!!PLAYER_TABS[S.tab]); if (!b) return;
   // (a jump link, like a Mechanics chip, still gets them; a spell's own link is already one; a player's name isn't a spell)
   const skip = '.sp, .nm, .nolk, svg, script, style, textarea, select, option, input, code, [contenteditable]', hits = [];
@@ -462,6 +480,21 @@ function linkBossText() {
     if (at) { f.append(s.slice(at)); t.replaceWith(f); }
   }
 }
+
+// (the boss guides and Plan, Oct 22: the page's boss's own spells named in its lines (steps, jobs, notes) get the spell tag, so they show
+// their icon and tooltip like everywhere else; headings, buttons and summaries are left alone, since card titles have their own icon)
+function linkGuideText(enc) {
+  const ids = enc && E.BOSS_IDS && E.BOSS_IDS[enc], box = $('#main'); if (!ids || !box) return;
+  const names = new Map(); for (const id of ids) { const n = E.BOSS_NAMES[id]; if (n && n.length >= 6 && !names.has(n.toLowerCase())) names.set(n.toLowerCase(), id); }
+  if (!names.size) return;
+  const rx = new RegExp('(?<![\\p{L}\\p{N}])(' + [...names.keys()].sort((a, b) => b.length - a.length).map((n) => n.replace(/[.*+?^$(){}|[\]\\]/g, '\\$&')).join('|') + ')(?![\\p{L}\\p{N}])', 'giu');
+  const skip = '.sp, .nm, .nolk, svg, script, style, textarea, select, option, input, code, button:not(.btl-jump), summary, h1, h2, h3, h4, h5, [contenteditable], [hidden]', hits = [];
+  const w = document.createTreeWalker(box, NodeFilter.SHOW_TEXT, { acceptNode: (t) => (t.nodeValue.length < 6 || !t.parentElement || t.parentElement.closest(skip) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) });
+  for (let t = w.nextNode(); t; t = w.nextNode()) { rx.lastIndex = 0; if (rx.test(t.nodeValue)) hits.push(t); }
+  for (const t of hits) { const s = t.nodeValue, f = document.createDocumentFragment(); let at = 0; rx.lastIndex = 0;
+    for (let m; (m = rx.exec(s)); ) { const word = m[1]; if (word[0] === word[0].toLowerCase()) continue;
+      f.append(s.slice(at, m.index)); const sp = document.createElement('span'); sp.className = 'sp mt'; sp.dataset.sid = names.get(word.toLowerCase()); sp.dataset.sn = word; sp.textContent = word; f.append(sp); at = m.index + word.length; }
+    if (at) { f.append(s.slice(at)); t.replaceWith(f); } } }
 
 // ---------- loading ----------
 $('#openBtn').onclick = () => $('#fileIn').click();
@@ -1713,6 +1746,7 @@ const PATCH_NOTES = [
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
     { t: 'Since last raid', d: 'All pulls now remembers each night and compares it with your last raid on the same boss: what you fixed, what got better or worse, and what\'s still going wrong. Pick a player to see their mistakes that also happened last raid.' },
   ], n: [
+    'Spell icons now show on every page, not just Debriefing: Rotation, Plan, the boss guides and tooltips. Add rows like Spiteful Soulcoiler get the add\'s own icon, and a spell never shows two icons side by side.',
     'Every spell named on Debriefing now shows its icon, in sentences, titles, chips and tooltips, including raid cooldowns like Anti-Magic Zone in a pull where nobody pressed them.',
     'Debrief in game: on a wide card, Deaths and Avoidable damage sit in two columns. What went wrong cards open on click to What happened, How and Against top guilds, like the website. A death now says why it happened and what to do next time.',
     'Debrief in game: deaths with a Healthstone or health potion still unused (when there was time to press it) on your card and the raid card, each with a switch in /db. The PC pop-up now follows your card style: Detailed opens wider with more open.',
@@ -5313,7 +5347,7 @@ function planAssign() { const box = $('#assignBox'); if (!box) return; const bos
   box.innerHTML = head + body;
   if ($('#nmCopy')) $('#nmCopy').onclick = () => { const m = S.noteMade, n = m && notesOf(m.planBoss || m.boss).list.find((x) => x.id === m.id); if (n) copyBtn($('#nmCopy'), n.text); };
   if ($('#nmOk')) $('#nmOk').onclick = () => { S.noteMade = null; planAssign(); };
-  if (v === 'ros') planRosBind(); ndzTlBigSync(); /* (the big graph stays big across redraws) */ bjMerge(); /* (the Boss page: one banner) */
+  if (v === 'ros') planRosBind(); ndzTlBigSync(); /* (the big graph stays big across redraws) */ bjMerge(); /* (the Boss page: one banner) */ refreshIcons(); /* (spell icons on every redraw, Oct 22) */
   { const st = $('#assignBox .plan-bstrip'), on = st && st.querySelector('.plan-bc.on'); if (on && st.scrollWidth > st.clientWidth) st.scrollLeft = Math.max(0, on.offsetLeft - st.offsetLeft - 8); } /* (on a phone, the boss row starts at the picked boss) */ }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-planv]'); if (!b || S.page !== 'plan') return; e.preventDefault();
   S.planV = b.dataset.planv; store.set(PLAN_VK, S.planV); if (S.planV === 'plans') S.planOpen = false; S.noteMade = null; S.planRosEd = null; planAssign(); window.scrollTo({ top: 0 }); });
@@ -16709,7 +16743,7 @@ const spcTipTxt = (tip) => { const m = String(tip || '').match(/^(\d+:\d\d(?:–
 // (the tooltip itself: one for the page, shown on hover, focus or a tap of anything with data-tt, and kept on screen)
 function spcTipInit() {
   if (window._spcTip) return; window._spcTip = 1; const tip = document.createElement('div'); tip.className = 'spc-tt'; tip.hidden = true; tip.setAttribute('role', 'tooltip'); document.body.appendChild(tip); let cur = null;
-  const show = (el) => { if (el === cur && !tip.hidden) return; const h = el.getAttribute('data-tt'); if (!h) return; cur = el; tip.innerHTML = h; tip.hidden = false; hydrateIcons();
+  const show = (el) => { if (el === cur && !tip.hidden) return; const h = el.getAttribute('data-tt'); if (!h) return; cur = el; tip.innerHTML = h; tip.hidden = false; iconizeSpells(tip); hydrateIcons();
     const r = el.getBoundingClientRect(), w = tip.offsetWidth, hh = tip.offsetHeight; let x = r.left + r.width / 2 - w / 2, y = r.top - hh - 10; x = Math.max(8, Math.min(innerWidth - w - 8, x)); if (y < 8) y = r.bottom + 10; tip.style.left = Math.round(x) + 'px'; tip.style.top = Math.round(y) + 'px'; };
   const hide = () => { tip.hidden = true; cur = null; }, at = (e) => (e.target && e.target.closest ? e.target.closest('[data-tt]') : null);
   document.addEventListener('mouseover', (e) => { const el = at(e); if (el) show(el); else if (cur) hide(); });
