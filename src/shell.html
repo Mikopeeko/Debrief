@@ -5828,6 +5828,38 @@ header.fight.bh.bhx, header.fight.bh.bhx.hero { display: block; min-height: 0; p
   .rp-open, .fpx-link, .gs-just, .gdz-howto, .gdz-wrong, .spc-hwb, .spc-mtx, .spc-sltc, .spc-mo, .ndh-go { padding-top: 8px; padding-bottom: 8px; margin-top: -8px; margin-bottom: -8px; }
 }
 /* ===== end of round 3 ===== */
+/* the header's pulls as a boss-health line (Oct 23): 100% at the top, the kill at the bottom; every pull a point in its quality colour,
+   the best so far a gold line with the ground covered shaded; the phase lines across; a point opens its pull, as the bars did */
+.bhp-plot.ln .bhp-bars { display: block; height: 118px; padding-top: 10px; padding-bottom: 8px; box-sizing: border-box; }
+.bhp-plot.ln .bhp-bars::after { display: none; }
+.bhp-plot.ln .bhp-bands { top: 10px; bottom: 8px; }
+.bhp-plot.ln .bhp-band { border-top: 1px dashed rgba(255,255,255,.22); } .bhp-plot.ln .bhp-band em { top: 3px; right: 0; }
+.bhp-plot.ln .bhp-ns { gap: 0; }
+.bhp-pa { position: absolute; left: 0; right: 0; top: 10px; bottom: 8px; }
+.bhp-plot.ln.ph .bhp-pa { right: 28px; }
+.bhp-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.bhp-svg .bhp-area { fill: rgba(230,180,80,.12); }
+.bhp-svg polyline { fill: none; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; }
+.bhp-svg .bhp-all-l { stroke: rgba(236,232,223,.5); stroke-width: 1.6; } .bhp-svg .bhp-best-l { stroke: #e6b450; stroke-width: 2.6; filter: drop-shadow(0 0 4px rgba(230,180,80,.45)); }
+.bhx .bhp-plot.ln .bhp-b { position: absolute; display: grid; place-items: center; width: 24px; height: 24px; flex: none; transform: translate(-50%, -50%); }
+.bhp-plot.ln .bhp-b i, .bhp-plot.ln .bhp-b.unk i { position: static; width: 7px; height: 7px; min-height: 0; border-radius: 50%; background: var(--pc); border: 1.5px solid #12151c; opacity: .95; box-sizing: content-box; }
+.bhp-plot.ln .bhp-b:hover i { filter: brightness(1.15); transform: scale(1.25); }
+.bhp-plot.ln .bhp-b.sel i { box-shadow: 0 0 0 2px #fff, 0 0 10px rgba(255,255,255,.35); }
+.bhp-plot.ln .bhp-b.unk i { background: transparent; border-color: rgba(255,255,255,.35); }
+.bhp-plot.ln .bhp-b.kill i { width: 13px; height: 13px; background: linear-gradient(180deg, #ffb347, #ff8000); border-color: #fff4cf; box-shadow: 0 0 12px rgba(255,128,0,.55); }
+.bhp-plot.ln .bhp-b.kill.sel i { box-shadow: 0 0 0 2px #fff, 0 0 12px rgba(255,128,0,.55); }
+.bhp-plot.ln .bhp-b.kill::after { display: none; }
+.bhp-plot.ln .bhp-b.best::after { bottom: auto; top: -9px; }
+.bhp-plot.ln .bhp-b.next i { width: 11px; height: 11px; border: 1.5px dashed rgba(229,83,75,.8); background: rgba(229,83,75,.12); }
+.bhp-plot.ln .bhp-b.next::after { content: 'LIVE'; top: auto; bottom: -8px; transform: translateX(-50%); }
+.bhp-plot.ln.lock .bhp-b i { opacity: .55; }
+.bhp-svg .bhp-area { fill: rgba(230,180,80,.1); }
+.bhp-gd { position: absolute; width: 0; bottom: -8px; border-left: 1px dashed rgba(255,255,255,.4); pointer-events: none; }
+.bhp-bl { position: absolute; transform: translate(10px, 6px); white-space: nowrap; color: #f3c969; font: 700 12px/1 var(--body); text-shadow: 0 1px 3px rgba(0,0,0,.9); pointer-events: none; }
+.bhp-bl.r { transform: translate(calc(-100% - 10px), 6px); } .bhp-bl.up { margin-top: -22px; } .bhp-bl.kill { color: #ffb35c; }
+.bhp-kl { position: absolute; left: 0; right: 0; top: 100%; border-top: 1px dashed rgba(255,128,0,.45); pointer-events: none; }
+.bhp-kl em { position: absolute; left: 0; top: -15px; font-size: 12px; opacity: .85; text-shadow: 0 1px 3px rgba(0,0,0,.9); color: #ffb35c; font: 700 12px/1 var(--head); font-style: normal; }
+.bhp-plot.ln .bhp-b.best::after { top: -6px; bottom: auto; }
 /* Halloween (Oct 20 to 31, html.hw set by ui.js; off by itself on Nov 1): a pumpkin on the logo, and on the front page a cobweb, three slow bats
    and one line. Frame only: never inside results. Bats rest still with reduced motion; one bat and a smaller web on phones */
 html.hw #brandHome { position: relative; }

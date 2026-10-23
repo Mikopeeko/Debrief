@@ -5828,6 +5828,38 @@ header.fight.bh.bhx, header.fight.bh.bhx.hero { display: block; min-height: 0; p
   .rp-open, .fpx-link, .gs-just, .gdz-howto, .gdz-wrong, .spc-hwb, .spc-mtx, .spc-sltc, .spc-mo, .ndh-go { padding-top: 8px; padding-bottom: 8px; margin-top: -8px; margin-bottom: -8px; }
 }
 /* ===== end of round 3 ===== */
+/* the header's pulls as a boss-health line (Oct 23): 100% at the top, the kill at the bottom; every pull a point in its quality colour,
+   the best so far a gold line with the ground covered shaded; the phase lines across; a point opens its pull, as the bars did */
+.bhp-plot.ln .bhp-bars { display: block; height: 118px; padding-top: 10px; padding-bottom: 8px; box-sizing: border-box; }
+.bhp-plot.ln .bhp-bars::after { display: none; }
+.bhp-plot.ln .bhp-bands { top: 10px; bottom: 8px; }
+.bhp-plot.ln .bhp-band { border-top: 1px dashed rgba(255,255,255,.22); } .bhp-plot.ln .bhp-band em { top: 3px; right: 0; }
+.bhp-plot.ln .bhp-ns { gap: 0; }
+.bhp-pa { position: absolute; left: 0; right: 0; top: 10px; bottom: 8px; }
+.bhp-plot.ln.ph .bhp-pa { right: 28px; }
+.bhp-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.bhp-svg .bhp-area { fill: rgba(230,180,80,.12); }
+.bhp-svg polyline { fill: none; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; }
+.bhp-svg .bhp-all-l { stroke: rgba(236,232,223,.5); stroke-width: 1.6; } .bhp-svg .bhp-best-l { stroke: #e6b450; stroke-width: 2.6; filter: drop-shadow(0 0 4px rgba(230,180,80,.45)); }
+.bhx .bhp-plot.ln .bhp-b { position: absolute; display: grid; place-items: center; width: 24px; height: 24px; flex: none; transform: translate(-50%, -50%); }
+.bhp-plot.ln .bhp-b i, .bhp-plot.ln .bhp-b.unk i { position: static; width: 7px; height: 7px; min-height: 0; border-radius: 50%; background: var(--pc); border: 1.5px solid #12151c; opacity: .95; box-sizing: content-box; }
+.bhp-plot.ln .bhp-b:hover i { filter: brightness(1.15); transform: scale(1.25); }
+.bhp-plot.ln .bhp-b.sel i { box-shadow: 0 0 0 2px #fff, 0 0 10px rgba(255,255,255,.35); }
+.bhp-plot.ln .bhp-b.unk i { background: transparent; border-color: rgba(255,255,255,.35); }
+.bhp-plot.ln .bhp-b.kill i { width: 13px; height: 13px; background: linear-gradient(180deg, #ffb347, #ff8000); border-color: #fff4cf; box-shadow: 0 0 12px rgba(255,128,0,.55); }
+.bhp-plot.ln .bhp-b.kill.sel i { box-shadow: 0 0 0 2px #fff, 0 0 12px rgba(255,128,0,.55); }
+.bhp-plot.ln .bhp-b.kill::after { display: none; }
+.bhp-plot.ln .bhp-b.best::after { bottom: auto; top: -9px; }
+.bhp-plot.ln .bhp-b.next i { width: 11px; height: 11px; border: 1.5px dashed rgba(229,83,75,.8); background: rgba(229,83,75,.12); }
+.bhp-plot.ln .bhp-b.next::after { content: 'LIVE'; top: auto; bottom: -8px; transform: translateX(-50%); }
+.bhp-plot.ln.lock .bhp-b i { opacity: .55; }
+.bhp-svg .bhp-area { fill: rgba(230,180,80,.1); }
+.bhp-gd { position: absolute; width: 0; bottom: -8px; border-left: 1px dashed rgba(255,255,255,.4); pointer-events: none; }
+.bhp-bl { position: absolute; transform: translate(10px, 6px); white-space: nowrap; color: #f3c969; font: 700 12px/1 var(--body); text-shadow: 0 1px 3px rgba(0,0,0,.9); pointer-events: none; }
+.bhp-bl.r { transform: translate(calc(-100% - 10px), 6px); } .bhp-bl.up { margin-top: -22px; } .bhp-bl.kill { color: #ffb35c; }
+.bhp-kl { position: absolute; left: 0; right: 0; top: 100%; border-top: 1px dashed rgba(255,128,0,.45); pointer-events: none; }
+.bhp-kl em { position: absolute; left: 0; top: -15px; font-size: 12px; opacity: .85; text-shadow: 0 1px 3px rgba(0,0,0,.9); color: #ffb35c; font: 700 12px/1 var(--head); font-style: normal; }
+.bhp-plot.ln .bhp-b.best::after { top: -6px; bottom: auto; }
 /* Halloween (Oct 20 to 31, html.hw set by ui.js; off by itself on Nov 1): a pumpkin on the logo, and on the front page a cobweb, three slow bats
    and one line. Frame only: never inside results. Bats rest still with reduced motion; one bat and a smaller web on phones */
 html.hw #brandHome { position: relative; }
@@ -14343,26 +14375,39 @@ function renderList() {
       // (on Report card and Homework the single pulls can't be picked: it's always the whole night (your call, Oct 19))
       const lock = (S.tab === 'player' || S.tab === 'hw') && n > 1, cfg = PROGRESS[list[0].boss];
       let acc = 0;
-      const bands = cfg && !cfg.pool ? cfg.phases.map((p) => { const lo = acc, w = 100 * phShare(cfg, p); acc += w; return lo > 0.5 && w > 0 ? '<i class="bhp-band" style="bottom:' + lo.toFixed(1) + '%"><em>' + esc(p.replace('Intermission', 'Int')) + '</em></i>' : ''; }).join('') : '';
+      const lefts = kill ? [] : list.map((b) => pullPct(b)).filter((v) => v != null && v < 99.95), FL = lefts.length ? Math.min(100, Math.ceil((100 - Math.min(...lefts) + 12) / 5) * 5) : 100; /* (the line's bottom: a little past the best pull, or the kill) */
+      const bands = cfg && !cfg.pool ? cfg.phases.map((p) => { const lo = acc, w = 100 * phShare(cfg, p); acc += w; return lo > 0.5 && w > 0 && lo < FL - 0.5 ? '<i class="bhp-band" style="top:' + (lo / FL * 100).toFixed(1) + '%"><em>' /* (the line: a phase starts this far down) */ + esc(p.replace('Intermission', 'Int')) + '</em></i>' : ''; }).join('') : '';
       const whyLine = (b) => { try { const r = CACHE.get(b), o = r && r.players ? whyWiped(r) : null; return o ? '<div>' + whyDotI(o.k) + 'Why we wiped: ' + esc(WHY_K[o.k][0]) + '</div>' : ''; } catch (e) { return ''; } };
-      const bar = (b) => {
+      const N = n + (LIVE.on && list[n - 1] === bosses.filter((x) => !x.run).pop() ? 1 : 0), PX = (i) => ((i + 0.5) / N * 100).toFixed(2); /* (each point centred over its pull number) */
+      const PY = (b) => { const v = pullPct(b); return b.kill ? 100 : v == null || v >= 99.95 ? 0 : Math.min(100, (100 - v) / FL * 100); }; /* (how far down: the ground covered) */
+      const bar = (b, i) => {
         // (a pull that never moved the boss is a reset: an empty bar, not a "100%" that looks unread)
         const v = pullPct(b), unk = !b.kill && v == null, reset = !b.kill && !unk && v >= 99.95, done = b.kill ? 100 : unk || reset ? 0 : Math.max(3, 100 - v);
         const at = b.wallMs ? wallClock(b.wallMs) : clock(b.startMs), pg = pullProg(b);
         const res = b.kill ? 'Kill' : unk ? (b.wcl || CACHE.has(b) ? 'Wipe' : 'Wipe (still reading this pull)') : reset ? 'Reset at 100%' : pg && pg.phase ? 'Wipe in ' + pg.label : 'Wipe, boss at ' + v.toFixed(1) + '% health';
         const more = [T(b.duration), !b.kill && !unk && !reset ? Math.floor(100 - v) + '% of the fight done' : '', b === best && !b.kill ? 'best pull of the night' : ''].filter(Boolean).join(' · ');
         const tt = '<div class="tt-h">Pull ' + b.pull + ' · ' + esc(at) + '</div><div>' + esc(res) + '</div><div class="tt-s">' + esc(more) + '</div>' + whyLine(b) + (lock ? '<div class="tt-s">This tab always covers every pull.</div>' : '');
-        return '<button class="pull bhp-b' + (b.kill ? ' kill' : '') + (b === best && !b.kill ? ' best' : '') + (unk ? ' unk' : '') + (b === S.item && !allMode ? ' sel' : '') + '" type="button" data-i="' + add(b) + '" style="--h:' + done.toFixed(1) + '%;--pc:' + (pullCol(b) || '#6aa8ff') + '" data-tt="' + esc(tt) + '" aria-label="' + esc('Pull ' + b.pull + ', ' + at + ': ' + res + ', ' + more) + '"' + (lock ? ' aria-disabled="true"' : '') + '><i></i></button>';
+        return '<button class="pull bhp-b' + (b.kill ? ' kill' : '') + (b === best && !b.kill ? ' best' : '') + (unk ? ' unk' : '') + (b === S.item && !allMode ? ' sel' : '') + '" type="button" data-i="' + add(b) + '" style="--h:' + done.toFixed(1) + '%;left:' + PX(i) + '%;top:' + PY(b).toFixed(1) + '%;--pc:' + (pullCol(b) || '#6aa8ff') + '" data-tt="' + esc(tt) + '" aria-label="' + esc('Pull ' + b.pull + ', ' + at + ': ' + res + ', ' + more) + '"' + (lock ? ' aria-disabled="true"' : '') + '><i></i></button>';
       };
       const num = (b, i) => '<span class="bhp-n' + (i === 0 || i === n - 1 || b.pull % 5 === 0 ? ' five' : '') + (b === S.item && !allMode ? ' sel' : '') + (b.kill ? ' kill' : '') + '">' + b.pull + whyDot(b) + '</span>';
       // (your pick, Oct 20: while you follow a live log, a dashed spot after the newest boss's last pull, where the next pull
       // lands; it turns into the real pull about a minute after that pull ends)
       const last = bosses.filter((b) => !b.run).pop(), live = LIVE.on && !!last && list[n - 1] === last;
-      const nx = live ? '<span class="bhp-b next" tabindex="0" data-tt="' + esc('<div class="tt-h">' + (last.kill ? 'Next boss' : 'Pull ' + (last.pull + 1)) + '</div><div>Following live: it shows up here about a minute after it ends.</div>') + '" aria-label="Following live: the next pull shows up here"><i></i></span>' : '';
+      const nx = live ? '<span class="bhp-b next" tabindex="0" data-tt="' + esc('<div class="tt-h">' + (last.kill ? 'Next boss' : 'Pull ' + (last.pull + 1)) + '</div><div>Following live: it shows up here about a minute after it ends.</div>') + '" aria-label="Following live: the next pull shows up here" style="left:' + PX(n) + '%;top:0"><i></i></span>' : '';
+      // (the line: every pull faint, the best so far gold with the ground covered shaded above it, as on the Companion's night chart)
+      const kn = list.map((b, i) => [b, i]).filter(([b]) => b.kill || pullPct(b) != null);
+      let bs = 0; const bp = kn.map(([b, i]) => { bs = Math.max(bs, PY(b)); return PX(i) + ' ' + bs.toFixed(1); });
+      const lineSvg = kn.length > 1 ? '<svg class="bhp-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' + /* (one line only, the user: "not a huge fan of the yellow line") */
+        '<polyline class="bhp-all-l" points="' + kn.map(([b, i]) => PX(i) + ',' + PY(b).toFixed(1)).join(' ') + '"/></svg>' : '';
+      /* (refined, Oct 23: the pull you're on gets a thin guide down to its number; the best pull its label, as on the Companion's chart; the kill line when the bottom is the kill) */
+      const si = allMode ? -1 : list.indexOf(S.item), bi = best ? list.indexOf(best) : -1;
+      const guide = si >= 0 ? '<i class="bhp-gd" style="left:' + PX(si) + '%;top:' + PY(list[si]).toFixed(1) + '%"></i>' : '';
+      const bLab = false && bi >= 0 ? '<span class="bhp-bl' + (best.kill ? ' kill' : '') + (+PX(bi) > 60 ? ' r' : '') + (PY(best) > 70 ? ' up' : '') + '" style="left:' + PX(bi) + '%;top:' + PY(best).toFixed(1) + '%">' + (best.kill ? 'Kill' : 'Best') + ' · pull ' + best.pull + '</span>' : '';
+      const killL = FL >= 100 ? '<i class="bhp-kl"><em>' + 'Kill' + '</em></i>' : '';
       const allB = n > 1 ? '<button class="bhp-all' + (allMode ? ' sel' : '') + '" type="button" data-all="' + add(list[n - 1]) + '" title="Every pull of this boss together' + (kill ? '. Killed on pull ' + kill.pull : best ? '. Best: pull ' + best.pull : '') + '" aria-pressed="' + allMode + '">All pulls<span> · ' + plural(n, 'pull') + '</span></button>' : '';
       // (All pulls is a slim pill at the start of the banner's second line, where its tag was (Oct 22: the tall box beside the bars was dead weight))
       const as = $('#bhAll'); if (as) as.innerHTML = allB;
-      slot.innerHTML = '<div class="bhp-row"><div class="bhp-plot' + (bands ? ' ph' : '') + (lock ? ' lock' : '') + '" style="max-width:' + ((n + (live ? 1 : 0)) * 59 + (bands ? 28 : 0)) + 'px"><div class="bhp-bars"><div class="bhp-bands" aria-hidden="true">' + bands + '</div>' + list.map(bar).join('') + nx + '</div>' +
+      slot.innerHTML = '<div class="bhp-row"><div class="bhp-plot ln' + (bands ? ' ph' : '') + (lock ? ' lock' : '') + '" style="max-width:' + ((n + (live ? 1 : 0)) * 59 + (bands ? 28 : 0)) + 'px"><div class="bhp-bars"><div class="bhp-bands" aria-hidden="true">' + bands + '</div><div class="bhp-pa">' + killL + guide + lineSvg + list.map(bar).join('') + nx + bLab + '</div></div>' +
         '<div class="bhp-ns" aria-hidden="true">' + list.map(num).join('') + (live ? '<span class="bhp-n five lv">' + (last.kill ? '·' : last.pull + 1) + '</span>' : '') + '</div></div></div>';
     }
   } else {
@@ -15477,6 +15522,7 @@ const PATCH_NOTES = [
     { t: 'The wipe is called for you', d: 'No more "stop at the 2nd death". Debrief now calls the wipe at the moment no raid has ever come back from: more people dead than any kill of that boss survived at that point (battle rezzes counted), the damage check missed, or half the raid dead. Everything before it counts, so the deaths and mistakes that lost the pull are graded. Tested on 760 kills: it never calls a wipe on a pull that was won.' },
     { t: 'A shorter debrief', d: 'Each pull now opens like a raid lead\'s debrief: what went well, what went wrong (click a line for its map and details) and the one thing for next pull. The extra drawers are gone; the timeline, raid cooldowns and burst windows sit in the open below the phases.' },
   ], n: [
+    'The pulls in the boss banner are now a line: each point is where the boss was when that pull ended, with the kill at the bottom. Click a point to open that pull.',
     'Every wiped pull now opens with its root cause in plain words ("Root cause: Not enough damage on Malacrass."), then the facts behind it. The Deaths tile is ranked against top kills too, with a dot for each death on the pull (a bar per pull on All pulls) and who died first, to what.',
     'All pulls now opens with your pulls on this boss across every night (next to how many pulls most guilds needed to kill it), deaths a pull, and the night\'s Raid DPS, DTPS and HPS against top kills.',
     'Mistakes lines now say if a mechanic is getting better or worse (across the night on All pulls, against the last pull on one pull), and a mechanic that wiped most of the raid says "caused the wipe" instead of counting deaths. Something that went wrong last pull and was done right this pull shows in Wins.',
