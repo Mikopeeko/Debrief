@@ -8496,7 +8496,7 @@ function deathTag(r, d) { const rr = deathRep(r, d); if (!rr) return null; const
     : v.why === 'shared' ? (/mind controlled/.test(v.word) ? 'Mind controlled off the edge.' : (raidL ? 'Partly the raid\'s fault (' + deathMech(rr, raidL.mechanic) + ')' : 'Partly the raid\'s fault') + ', but they had ' + andList(ready) + ' ready.')
     : v.why === 'nothing' ? 'Nothing left to press.'
     : v.why === 'fast' ? 'Too fast to react: ' + String(v.story || '').replace(/, too fast to react$/, '') + '.'
-    : v.why === 'mass' ? d.mass + ' of us died to ' + ab + ' at once.'
+    : v.why === 'mass' ? d.mass + ' of us died to ' + ab + ' at once' + deathCause(rr, d) + '.'
     : v.why === 'raid' ? (raidL ? 'The raid\'s fault (' + deathMech(rr, raidL.mechanic) + '), not theirs.' : 'The raid\'s fault, not theirs.')
     : v.why === 'end' ? 'In the last seconds of the kill.' : 'After the pull was lost.';
   return { v, k, p, h, t: p + ': ' + h.replace(/\.$/, ''), fix: v.on ? v.fix || '' : '' }; }
@@ -8520,6 +8520,9 @@ function deathNightItems(kept, top, ab) { if (DD_ITEMS.size > 3000) DD_ITEMS.cle
       '<p class="ddv-3">Pulls: ' + links + ' <span class="sub">· tap one to see that death</span></p>' +
       (fix ? '<p class="ddv-2"><b>Next time:</b> ' + esc(fix[0]) + '</p>' : '') + '</div>';
     return { ab: a2, n: n2, k: on && on * 2 >= g.length ? 'on' : on ? 'half' : 'n', dn: key, html, word: on + ' of ' + g.length + ' on the player' }; }); }
+// (why a mass death happened, from the raid's mistake logged around it: ", because a purple orb exploded into other orbs")
+function deathCause(r, d) { const m = ((r && r.mistakes) || []).filter((x) => x.player === 'Raid' && x.mechanic !== 'Death' && x.severity !== 'Low' && x.t >= d.t - 10 && x.t <= d.t + 8).sort((a, b) => Math.abs(a.t - d.t) - Math.abs(b.t - d.t))[0];
+  if (!m || !m.detail) return ''; let t = String(m.detail).replace(/( for [\d,.]+|: |\. |; ).*$/, '').replace(/\.$/, '').trim(); return t ? ', because ' + t.charAt(0).toLowerCase() + t.slice(1) : ''; }
 // (the collapsed section's lines: up to 5, a mass death as one line)
 function deathLines(r, ds, who) { if (!ds.length) return ''; const used = new Set(), out = [];
   for (const d of ds.slice().sort((a, b) => a.t - b.t)) { if (used.has(d)) continue; const tg = deathTag(r, d); if (!tg) continue;
@@ -8528,9 +8531,6 @@ function deathLines(r, ds, who) { if (!ds.length) return ''; const used = new Se
     out.push('<span class="ddl ' + tg.k + '"><i class="ddl-t">' + T(d.t) + '</i><span class="ddl-w">' + (grp.length > 1 ? '<b class="ddl-n">' + grp.length + ' of us</b>' : who(d.player)) + '</span><span class="ddl-k">to ' + esc(ab) + (grp.length > 1 ? ' at once' : '') + '</span>' +
       '<span class="ddp ' + tg.k + '">' + esc(tg.p) + '</span>' + (grp.length > 1 ? '' : '<span class="ddl-v">' + esc(tg.h) + '</span>') + (tg.fix ? '<span class="ddl-f"><b>Next time:</b> ' + esc(tg.fix) + '</span>' : '') + '</span>'); }
   return '<span class="ddl-list">' + out.slice(0, 5).join('') + (out.length > 5 ? '<span class="ddl-more">and ' + (out.length - 5) + ' more (open to see all)</span>' : '') + '</span>'; }
-// (an opened death as one short summary (your notes, Oct 22: "shorter summaries", "combining all of them", "received X healing, took
-// X damage, had XXX available", keep the health line): what happened, the damage and healing of their last 15 s, their health, the
-// biggest hits, what they had ready (and used), and the fix when it was on them. It replaces the hit bars and the 5-second line)
 // ---- Avoidable damage card (Oct 22): what a raid lead says about one raider and one source on one pull. Verdict first (on them, half on
 // them, a bit much), then the hits with their health, a map of the worst one, the fastest kills' line and one fix.
 let AV_LAST = null; /* (the open card's map, so its play bar can start) */
@@ -8610,23 +8610,28 @@ document.addEventListener('click', (ev) => { const t = ev.target && ev.target.cl
   /* (the map plays like every other map: zoom buttons, the play bar, spec icons (user, Oct 22: "map has no animation")) */
   const am = box.querySelector('.avd-map'); if (am && AV_LAST) { try { bindZoom(am); bindAnim(am, AV_LAST.mp, AV_LAST.pm); hydrateMapIcons(am); } catch (err) { /* (a still map) */ } } refreshIcons && refreshIcons(); });
 document.addEventListener('keydown', (ev) => { if ((ev.key === 'Enter' || ev.key === ' ') && ev.target && ev.target.matches && ev.target.matches('.ach[data-avk],.ach[data-avmore],.ach[data-avn]')) { ev.preventDefault(); ev.target.click(); } });
-function deathBox(tg, d) { if (!tg) return ''; const c = (p) => (p < 35 ? 'ddh-lo' : p < 60 ? 'ddh-md' : 'ddh-hi');
+// (an opened death, clear (user, Oct 22: "the explanation should expand under the character name. The explanation is still a bit
+// jumbled and unclear"): the verdict and one plain sentence first, then their health, then what hit them and the healing in, then
+// what they had ready only when the death was on them, and the fix. Every spell has its icon ("any time a spell is mentioned,
+// there should be a spell icon"): hits and buttons here, boss spells in the sentences by iconSpells where the card is opened)
+const DEATH_DEF_ID = (() => { const m = new Map(); for (const l of Object.values(E.DEFENSIVES || {})) for (const x of l) if (!m.has(x[0])) m.set(x[0], x[1]); m.set('Healthstone', 6262); return m; })();
+const deathSp = (id, n) => { const sid = id || DEATH_DEF_ID.get(n) || sidOf(n) || 0; return '<span class="sp" data-sid="' + sid + '" data-sn="' + esc(n) + '">' + (sid ? spellIcon(sid, n) : '') + esc(n) + '</span>'; };
+function deathBox(tg, d) { if (!tg) return ''; const v = tg.v, c = (p) => (p < 35 ? 'ddh-lo' : p < 60 ? 'ddh-md' : 'ddh-hi');
   const kf = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k'), rc = d.recap || [];
   const dmg = rc.filter((e) => !e.heal).reduce((n, e) => n + e.amount, 0), heal = rc.filter((e) => e.heal).reduce((n, e) => n + e.amount, 0);
-  const by = new Map(); for (const e of rc) if (!e.heal) { const k = e.spell || 'Melee', o = by.get(k) || { k, a: 0, n: 0 }; o.a += e.amount; o.n++; by.set(k, o); }
+  const by = new Map(); for (const e of rc) if (!e.heal) { const k = e.spell || 'Melee', o = by.get(k) || { k, id: e.id || 0, a: 0, n: 0 }; o.a += e.amount; o.n++; if (!o.id && e.id) o.id = e.id; by.set(k, o); }
   const last = rc.filter((e) => !e.heal).pop(), top = [...by.values()].sort((a, b) => b.a - a.a).slice(0, 3);
-  const hits = top.map((o) => esc(o.k) + ' ' + kf(o.a) + (o.n > 1 ? ' (' + o.n + ' hits)' : '') + (last && (last.spell || 'Melee') === o.k ? ', the last hit' : '')).join(' · ');
-  const rr = deathRep(null, d), p = rr && rr.players.get(d.guid), used = [];
-  if (p) { for (const df of p.defs || []) { const u = (df.uses || []).filter((t) => t <= d.t + 0.1 && t >= d.t - 60).pop(); if (u != null) used.push(df.name + ' at ' + T(u)); }
-    for (const [k, nm] of [['healthstone', 'Healthstone'], ['healpot', 'health potion']]) { const u = ((p.cons && p.cons[k]) || []).filter((x) => x.t <= d.t + 0.1 && x.t >= d.t - 60).pop(); if (u) used.push(nm + ' at ' + T(u.t)); } }
-  const mxh = (rr && rr.pMax && rr.pMax.get(d.guid)) || 0, nm = (a) => (a === 'a healing potion' ? 'a health potion' : a), weak = /^(Mortal Coil|Mirror Image)$/;
-  /* (only the buttons that would have saved them: the ones the verdict counts, strong ones first; the rest only when nothing else was there) */
-  const cnt = tg.v.defs.concat(tg.v.kit), strong = cnt.filter((a) => !weak.test(a)), av = (strong.length ? strong : cnt.length ? cnt : (d.available || [])).slice(0, 3).map(nm), noTime = !cnt.length && av.length;
-  const path = (d.hpPath || []).length ? '<p class="ddv-3">Health: ' + d.hpPath.map(([, q]) => '<b class="' + c(q) + '">' + q + '%</b>').join(' → ') + ' → <b class="ddh-lo">dead</b></p>' : '';
-  return '<div class="ddv ' + tg.k + '"><p class="ddv-1">' + esc(tg.h) + '</p>' +
-    (dmg ? '<p class="ddv-3">Took <b>' + kf(dmg) + '</b> damage' + (mxh && dmg / mxh >= 1.2 ? ' (about ' + (Math.round(2 * dmg / mxh) / 2) + ' times their health)' : '') + ' and got <b>' + kf(heal) + '</b> healing in their last 15 seconds.</p>' : '') + path +
-    (hits ? '<p class="ddv-3">Biggest hits: ' + hits + '</p>' : '') +
-    '<p class="ddv-3">' + (av.length ? (noTime ? 'Had ready, but no time to use it: ' : 'Had ready: ') + '<b class="ddh-av">' + esc(andList(av)) + '</b>' : 'Had nothing left to press') + (used.length ? ' · Used: ' + esc(andList(used)) : '') + '</p>' +
+  const hits = top.map((o) => (o.k === 'Melee' ? 'Melee' : deathSp(o.id, o.k)) + ' ' + kf(o.a) + (o.n > 1 ? ' (' + o.n + ' hits)' : '') + (last && (last.spell || 'Melee') === o.k ? ', the last hit' : '')).join(' · ');
+  const rr = deathRep(null, d), mxh = (rr && rr.pMax && rr.pMax.get(d.guid)) || 0;
+  const nm = (a) => (a === 'a healing potion' ? 'a health potion' : a), weak = /^(Mortal Coil|Mirror Image)$/;
+  const cnt = v.defs.concat(v.kit), strong = cnt.filter((a) => !weak.test(a)), ready = (strong.length ? strong : cnt).slice(0, 3);
+  const readyH = ready.map((a) => (a === 'a healing potion' ? 'a health potion' : deathSp(0, a)));
+  // (the sentence's own buttons get their icons too: "they had Unending Resolve ready")
+  let head = esc(tg.h); for (const a of v.defs.concat(v.kit)) { if (a === 'a healing potion') continue; const e0 = esc(a); if (head.includes(e0)) head = head.split(e0).join(deathSp(0, a)); }
+  const path = (d.hpPath || []).length ? '<p class="ddv-3">Their health: ' + d.hpPath.map(([, q]) => '<b class="' + c(q) + '">' + q + '%</b>').join(' → ') + ' → <b class="ddh-lo">dead</b></p>' : '';
+  return '<div class="ddv ' + tg.k + '"><p class="ddv-1"><span class="ddp ' + tg.k + '">' + esc(tg.p) + '</span> ' + head + '</p>' + path +
+    (hits ? '<p class="ddv-3">What hit them: ' + hits + (dmg ? ' · ' + kf(dmg) + ' in all' + (mxh && dmg / mxh >= 1.2 ? ' (about ' + (Math.round(2 * dmg / mxh) / 2) + ' times their health)' : '') + ', with ' + kf(heal) + ' healing coming in' : '') + '.</p>' : '') +
+    (v.on && ready.length ? '<p class="ddv-3">They had ' + andList(readyH) + ' ready and didn\'t use ' + (ready.length > 1 ? 'them' : 'it') + '.</p>' : '') +
     (tg.fix ? '<p class="ddv-2"><b>Next time:</b> ' + esc(tg.fix) + '</p>' : '') + '</div>'; }
 // (the death's fixes, the verdict's own line first, then the engine's other advice that agrees with it (deaths research, Oct 22))
 function deathFixes(r, d) { if (!(r.deaths || []).includes(d)) return (d.prevent || []).slice(0, 3); const v = deathVerdict(r, d), rest = /^(fast|mass|end|raid|wipe)$/.test(v.why) ? [] : (d.prevent || []).filter((x) => !/^No (clear )?mistake|^Too fast|^Not on you/i.test(x) && !(v.why === 'own' && /^(Use|Press) /.test(x)));
@@ -10164,7 +10169,7 @@ function coachDeaths(reps, name) {
   const more = !night && kept.length > 6 ? kept.length - 6 : night ? Math.max(0, top(kept).length - 5) : 0;
   // (one pull: the deaths past the first 6 and the ones after the wipe filter, behind "+N more"; each opens its summary (Oct 22))
   const rest = night ? nItems.slice(5) : kept.slice(6).concat(L.filter((x) => x.after)).map((x) => ({ t: T(x.d.t), who: name ? '' : String(x.d.player).split('-')[0], ab: ab(x.d), k: x.after ? 'n' : x.v.on && x.v.w < 1 ? 'half' : x.v.on && x.why.k !== 'own' && x.why.k !== 'ready' ? 'on' : x.why.k, word: x.after ? 'after the wipe filter, not counted' : x.why.t, dg: x.d.guid + '@' + x.d.t.toFixed(2), late: !!x.after }));
-  const note = !kept.length ? '' : (onThem ? onThem + ' of ' + plural(kept.length, 'death') + (name ? ' on you' : ' on the player') + ' (red: their own mistake or a slow death with something ready' + (kept.some((x) => x.v.on && x.v.w < 1) ? '; amber: half on them' : '') + ').' : 'None on ' + (name ? 'you' : 'the player') + '.') + (nAfter ? ' ' + nAfter + ' more after the wipe filter, not counted.' : '');
+  const note = !kept.length ? '' : (onThem ? onThem + ' of ' + plural(kept.length, 'death') + (name ? ' on you' : ' on the player') + ' (red: their own mistake or a slow death with something ready' + (kept.some((x) => x.v.on && x.v.w < 1) ? '; amber: half on them' : '') + ').' : (name ? 'None of these are on you.' : 'None of these are on the players.')) + (nAfter ? ' ' + nAfter + ' more after the wipe filter, not counted.' : '');
   return { line, list, n: kept.length, onThem, bad: onThem > 0, items, more, note, rest, nsum: nItems.map((x) => ({ key: x.dn, html: x.html })) };
 }
 function coachAvoid(reps, name) {
@@ -10406,12 +10411,12 @@ document.addEventListener('click', (e) => { const t = e.target && e.target.close
   const pg = t.closest('.dd-pgo'); if (pg) { e.preventDefault(); const o = DD_ITEMS.get(pg.dataset.ddp); if (!o || !o.it) return; S.tab = 'audit'; setScope('pull'); select(o.it); let n0 = 0;
     const iv = setInterval(() => { const c0 = document.querySelector('.dch[data-ddg="' + o.dg + '"]'); if (c0) { clearInterval(iv); if (!c0.classList.contains('on')) c0.click(); const b0 = c0.closest('.cch-ab'); if (b0) b0.scrollIntoView({ block: 'center' }); } else if (++n0 > 80) clearInterval(iv); }, 250); return; }
   const cn = t.closest('.dch[data-ddn]'); if (cn) { const ab0 = cn.closest('.cch-ab'), box0 = ab0 && ab0.querySelector('.cch-ddbox'), src = ab0 && [...ab0.querySelectorAll('.dd-nsum')].find((x) => x.dataset.ddn === cn.dataset.ddn); if (!box0 || !src) return;
-    const was = cn.classList.contains('on'); ab0.querySelectorAll('.dch.on').forEach((x) => x.classList.remove('on')); if (was) { box0.hidden = true; box0.innerHTML = ''; return; } cn.classList.add('on'); box0.innerHTML = src.innerHTML; box0.hidden = false; return; }
+    const was = cn.classList.contains('on'); ab0.querySelectorAll('.dch.on').forEach((x) => x.classList.remove('on')); if (was) { box0.hidden = true; box0.innerHTML = ''; return; } cn.classList.add('on'); box0.innerHTML = src.innerHTML; cn.after(box0); box0.hidden = false; return; }
   const c = t.closest('.dch[data-ddg]'); if (!c) return; const ab = c.closest('.cch-ab'), box = ab && ab.querySelector('.cch-ddbox'); if (!box) return;
   const was = c.classList.contains('on'); ab.querySelectorAll('.dch.on').forEach((x) => x.classList.remove('on')); if (was) { box.hidden = true; box.innerHTML = ''; return; }
   const [g, tt] = String(c.dataset.ddg).split('@'); let d = null; for (const x of [S.rep, ...CACHE.values()]) { if (!x || !x.deaths) continue; d = x.deaths.find((y) => y.guid === g && y.t.toFixed(2) === tt); if (d) break; }
   if (!d) return; const tg = deathTag(null, d); if (!tg) return; c.classList.add('on');
-  box.innerHTML = '<div class="cch-ddh"><b>' + esc(String(d.player).split('-')[0]) + '</b> died at ' + T(d.t) + ' to ' + esc(d.ability || d.killer || 'a hit') + ' <span class="ddp ' + tg.k + '">' + esc(tg.p) + '</span></div>' + deathBox(tg, d); box.hidden = false; refreshIcons && refreshIcons(); });
+  box.innerHTML = iconSpells(deathBox(tg, d)); c.after(box); box.hidden = false; /* (under the chip that was tapped (Oct 22)) */ refreshIcons && refreshIcons(); });
 document.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target && e.target.matches && e.target.matches('.dch[data-ddg],.dch[data-ddn],.dch[data-ddmore]')) { e.preventDefault(); e.target.click(); } });
 document.addEventListener('toggle', (e) => { const d = e.target; if (d && d.matches && d.matches('details.spc-chd[data-k]') && S.openSecs) { if (d.open) S.openSecs.add(d.dataset.k); else S.openSecs.delete(d.dataset.k); } }, true); /* (Rotation's sections stay open once opened) */
 document.addEventListener('toggle', (e) => { const d = e.target; if (d && d.matches && d.matches('details.cch-more[data-k]')) { if (d.open) S.openSecs.add(d.dataset.k); else S.openSecs.delete(d.dataset.k); } }, true); /* (the full coaching stays open once opened) */
