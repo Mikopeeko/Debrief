@@ -3104,7 +3104,7 @@ function ndzCover(text, a, id, rep, skip) {
   const cls = ndzSpellCls(id), RCDID = new Map(Object.keys(RCD_CD).map((k) => [k, E.SPELLID.get(k.toLowerCase())]));
   const nmOf = (sid) => String(ndzSpellNm(sid) || '').toLowerCase(), busy = (n, nm, cd) => rems.some((x) => nmOf(x.spellid) === String(nm).toLowerCase() && x.tags.some((t) => t.split('-')[0].toLowerCase() === n.toLowerCase()) && mine.some((m) => m.ph === x.ph && Math.abs(m.time - x.time) < cd));
   const ps = [...rep.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)).map((p) => ({ n: p.name.split('-')[0], p })).filter((x) => x.n.toLowerCase() !== la && (!skip || x.n.toLowerCase() !== String(skip).toLowerCase()));
-  const out = [], name = ndzSpellNm(id) || 'it', cdOf = (nm) => (NDZ_CDK[nm] ? NDZ_CDK[nm][2] : RCD_CD[nm]) || 180; /* (the planner's lengths, Oct 22) */
+  const out = [], name = ndzSpellNm(id) || 'it', cdOf = (nm) => ndzCdBack(nm); /* (one length table, Oct 23) */
   for (const x of ps) if (cls && x.p.cls === cls && !busy(x.n, name, cdOf(name))) out.push({ n: x.n, spell: name, sid: id, why: 'their own ' + name + ' is available then' });
   for (const x of ps) { if (out.some((o) => o.n === x.n)) continue;
     for (const [nm, sid0] of RCDID) { const sid = ((x.p.castAb && x.p.castAb.get(nm)) || {}).id || sid0; if (!sid || nm.toLowerCase() === String(name).toLowerCase()) continue; const has = ((x.p.byName && x.p.byName.get(nm.toLowerCase())) || []).length || (RCD_SPEC[x.p.specName] || []).includes(nm); if (!has || busy(x.n, nm, cdOf(nm))) continue;
@@ -3489,16 +3489,16 @@ function ndzPlanRep(P, sp) { const players = new Map();
   return { item: { boss: P.pick, diff: P.diff, id: NDZ_ENC[P.pick] || 0, kind: 'boss' }, players, deaths: [], duration: 0 }; }
 // (your newest note for a boss, as editable jobs: kick lines, labelled lines and cooldown reminders)
 function ndzNoteRows(boss, id) { const o = notesOf(boss), n = (id && o.list.find((x) => x.id === id)) || o.list.filter((x) => !x.example).sort((a, b) => (b.saved || 0) - (a.saved || 0))[0]; /* (a given note, else your newest) */ if (!n) return [];
-  const rows = []; let inInt = false, k = 0, head = null; const KK = ['P20', 'P21', 'P30', 'P31', 'P40', 'P41'];
+  const rows = []; let inInt = false, k = 0, head = null, hk = 0; const KK = ['P20', 'P21', 'P30', 'P31', 'P40', 'P41'];
   for (const raw of String(n.text).split(/\r?\n/)) { const ln = raw.trim(); if (!ln || /^EncounterID:/i.test(ln)) continue;
     if (/^intstart$/i.test(ln)) { inInt = true; continue; } if (/^intend$/i.test(ln)) { inInt = false; continue; }
     if (inInt) { rows.push({ sec: 'Kicks', label: 'Kick line ' + (k + 1), names: ln.split(/\s+/).filter(Boolean).map((w) => ({ n: w.split('-')[0] })), kick: KK[k++], on: true }); continue; }
     if (/(^|;)\s*time:/i.test(ln)) { const f = {}; for (const kv of ln.split(';')) { const i = kv.indexOf(':'); if (i > 0) f[kv.slice(0, i).trim().toLowerCase()] = kv.slice(i + 1).trim(); }
       if (!f.tag) continue; const what = f.text || ndzSpellNm(+f.spellid) || 'Reminder', ph = +f.ph || 1, t = +f.time || 0;
       rows.push({ sec: 'Cooldowns', label: what + ', ' + (ph % 1 ? 'intermission ' : 'P' + ph + ' ') + T(t), names: f.tag.split(/\s+/).filter(Boolean).map((w) => ({ n: w.split('-')[0] })), rem: { time: t, ph, tag: f.tag, id: +f.spellid || ndzSpellIdOf(f.text || what) || null, text: f.text || what, glow: f.glowunit || '' }, on: true }); continue; }
-    const body = ln.replace(/\{[^}]*\}/g, ' '), ci = body.indexOf(':'); if (ci < 0) { head = ln; continue; }
+    const body = ln.replace(/\{[^}]*\}/g, ' '), ci = body.indexOf(':'); if (ci < 0) { head = ln; hk++; continue; }
     const label = ln.slice(0, ln.indexOf(':')).trim(); if (/^invitelist$/i.test(label)) continue;
-    rows.push({ sec: 'Jobs', label, names: body.slice(ci + 1).split(/[\s,]+/).map((w) => w.replace(/[()[\]."]/g, '')).filter((w) => w.length >= 2 && /^\p{Lu}/u.test(w)).map((w) => ({ n: w.split('-')[0] })), head, custom: false, on: true }); }
+    rows.push({ sec: 'Jobs', hi: hk, label, names: body.slice(ci + 1).split(/[\s,]+/).map((w) => w.replace(/[()[\]."]/g, '')).filter((w) => w.length >= 2 && /^\p{Lu}/u.test(w)).map((w) => ({ n: w.split('-')[0] })), head, custom: false, on: true }); }
   return rows; }
 // (the Saved box: Copy finds the note under the boss it was planned for)
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('#nmCopy'); if (!b || !S.noteMade || !S.noteMade.planBoss) return; const m = S.noteMade, n = notesOf(m.planBoss).list.find((x) => x.id === m.id); if (n) copyBtn(b, n.text); });
@@ -3934,7 +3934,7 @@ function ndzBuildView(r) {
       (none.length && none.length <= 6 ? '<div class="ndz-hl warn"><span class="ndz-ic">!</span><span>Not in any group yet: ' + esc(andL(none)) + '.</span></div>' : '') +
       ndzBSlotsH(B, pg, ps, col) + '<div class="ndz-pd">' + btn('id="ndzBSug"', pg.slots.every((sl) => !B.sel[pg.key + '|' + sl.label].n.length) ? '✨ Fill in suggested picks' : 'Suggest this page again', 'sm' + (pg.slots.every((sl) => !B.sel[pg.key + '|' + sl.label].n.length) ? ' primary' : '')) + btn('id="ndzBClr"', 'Clear this page', 'sm') + '</div>' + foot('Next →', true); }
   else if (B.step === pages.length + 1) { const ps = [...B.pr.players.values()], RCD = Object.keys(RCD_CD);
-    const nmOf = (c) => (c.id && ndzSpellNm(c.id)) || c.text || 'Cooldown', cdOf = (c) => (NDZ_CDK[nmOf(c)] ? NDZ_CDK[nmOf(c)][2] : RCD_CD[nmOf(c)]) || 0; /* (the planner's Midnight lengths, Oct 22) */
+    const nmOf = (c) => (c.id && ndzSpellNm(c.id)) || c.text || 'Cooldown', cdOf = (c) => ndzCdBack(nmOf(c)); /* (one length table, Oct 23) */
     const clash = (c, i) => !!cdOf(c) && (B.cds || []).some((x, j) => { if (j === i || !x.who || x.who !== c.who || nmOf(x) !== nmOf(c)) return false; const a = ndzAbsT(B, x.ph, x.t), b = ndzAbsT(B, c.ph, c.t); /* (across phases on the fastest kills' phase starts) */
       return a != null && b != null ? a < b && b - a < cdOf(c) : x.ph === c.ph && x.t < c.t && c.t - x.t < cdOf(c); });
     const list = (B.cds || []).map((c, i) => ({ c, i })).sort((a, b) => a.c.ph - b.c.ph || a.c.t - b.c.t);
@@ -4056,7 +4056,7 @@ document.addEventListener('click', (e) => { const B = S.noteBuild, b = B && e.ta
   (B.cds || (B.cds = [])).push({ ph: +ph, t: +t, id: +id, text: nm, who, why: 'Added for ' + hit + '.' }); ndzPersRedraw(); });
 // (a cooldown's "who" list: only raiders whose class and spec have it (talent choices too) and who have it back at that moment;
 // whoever is already picked stays in the list, marked if it isn't back, so nothing changes by itself; Oct 22)
-function ndzWhoFree(B, c, nmOf, ps) { const nm = nmOf(c), K = NDZ_CDK[nm], cd = K ? K[2] : RCD_CD[nm] || 0; let ent = null;
+function ndzWhoFree(B, c, nmOf, ps) { const nm = nmOf(c), cd = ndzCdBack(nm); /* (one length table, Oct 23) */ let ent = null;
   for (const g of NDZ_BUFFS) for (const x of g[2]) if (!ent && (x[0] === nm || (+c.id && x[3] === +c.id))) ent = x;
   const talSpec = Object.entries(typeof NDZ_TALC === 'object' ? NDZ_TALC : {}).find(([, v]) => v[1].some((x) => x[0] === nm)), canT = (p) => !talSpec || +p.specId === +talSpec[0] || (!p.specId && p.role === 'healer');
   const can = (p) => (ent ? ent[1].includes(p.cls) && (!ent[2] || (p.specId ? ent[2].includes(+p.specId) : p.role === 'healer' || !ent[2].length)) : talSpec ? canT(p) : true);
@@ -4128,6 +4128,13 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.ndzGui
 // (a draft's job names, where they differ from the builder's pages; a Broodling side splits into its melee and ranged)
 const NDZ_PULL_ALIAS = { 'The Twin Fangs': { 'Feast groups|Group 1': 'Left', 'Feast groups|Group 2': 'Right', 'Feast groups|Group 3': 'Center', 'Globule CC|Odd sets': 'Odd set Orbs', 'Globule CC|Even sets': 'Even set Orbs',
   'Broodling kicks|Left': ['Left Melee', 'Left Range'], 'Broodling kicks|Right': ['Right Melee', 'Right Range'] } };
+// (a note's own names for the builder's jobs (Oct 23): notes made elsewhere, like the user's from Viserio, label them their own way;
+// first = only the first list under a repeated heading fills the slot, like the first of two Orb Carriers lists)
+const NDZ_NOTE_ALIAS = { 'The Coiled Altar': [
+  [/^P1 Soak (\d)$/i, 'Guillotine $1'], [/^Soak (\d)$/i, 'Guillotine $1'], [/^P3 Soak (\d)$/i, 'P3 Guillotine $1'],
+  [/^(?:P1 )?Guillotine (\d) External(?: Guillotine Target)?$/i, 'External Guillotine $1'], [/^(?:P1 )?Guillotine (\d) Zephyr(?: Guillotine)?$/i, 'Zephyr Guillotine $1'],
+  [/^(?:\{[^}]*\}\s*)*purple orbs?$/i, 'Purple Orbs', true]] };
+function ndzNoteAlias(boss, lab) { for (const [re, to, first] of NDZ_NOTE_ALIAS[boss] || []) if (re.test(String(lab).trim())) return { to: String(lab).trim().replace(re, to), first: !!first }; return null; }
 const ndzSrcOk = (B, r, s) => s === 'sug' || (s === 'pulls' && !!NDZ_FILL[B.pick] && B.pick === r.item.boss && ndzPulls(r).length > 0) || (s === 'note' && ndzNoteRows(B.pick, B.noteId).some((x) => x.names && x.names.length && !x.rem));
 function ndzSrcDef(r, v) { const B = { pick: NDZ_BUILD[r.item.boss] ? r.item.boss : 'The Coiled Altar' }; return v === 'note' && ndzSrcOk(B, r, v) ? v : 'sug'; } /* (your call: no more starting from your pulls) */
 const NDZ_SRC_TAG = { pulls: 'From your pulls', note: 'From your note' };
@@ -4147,11 +4154,16 @@ async function ndzSrcLoad(B, r, box) { const items = ndzPulls(r), msg = box.quer
 // (puts what your pulls or note say on each page, over the suggestions; names from them come off the page's other groups)
 function ndzSrcFill(B, pr) { if (!B.src || B.src === 'sug') return;
   const src = B.src === 'pulls' ? (B.draft ? B.draft.rows : []) : ndzNoteRows(B.pick, B.noteId); if (!src.length) return;
+  const isN = B.src === 'note', first = {}; B.nsrc = {}; B.noteLeft = [];
+  if (isN) for (const x of src) { const al = x.sec === 'Jobs' && ndzNoteAlias(B.pick, x.label); if (al && al.first && (first[al.to] == null || x.hi < first[al.to])) first[al.to] = x.hi; }
   const AL = B.src === 'pulls' ? NDZ_PULL_ALIAS[B.pick] || {} : {}, mel = (n) => { const p = pr.players.get(n); return !!p && (NDZ_MELEE.has(+p.specId) || p.role === 'tank'); }, got = new Map();
   for (const x of src) { const names = (x.names || []).map((y) => String(y.n).split('-')[0]); if (!names.length || x.lv === 'unsure' || x.rem) continue;
     const why = B.src === 'pulls' ? 'Done this way in ' + x.got + ' of ' + plural(x.of, x.unit || 'pull') + '.' : 'Kept as it was.', t = AL[x.sec + '|' + x.label];
-    const put = (lab, l) => { for (const pg of B.pages) for (const sl of pg.slots) if (lab === sl.label || (!t && sl.kick && x.kick === sl.kick)) { const k0 = pg.key + '|' + sl.label, o = got.get(k0); got.set(k0, { l: [...new Set((o ? o.l : []).concat(l))], why: o ? o.why : why }); } }; /* (a name said twice, like a kick reminder per kick, counts once) */
-    if (Array.isArray(t)) { put(t[0], names.filter(mel)); put(t[1], names.filter((n) => !mel(n))); } else put(t || x.label, names); }
+    let hit = false; const put = (lab, l) => { for (const pg of B.pages) for (const sl of pg.slots) if (lab === sl.label || (!t && sl.kick && x.kick === sl.kick)) { hit = true; const k0 = pg.key + '|' + sl.label, o = got.get(k0); got.set(k0, { l: [...new Set((o ? o.l : []).concat(l))], why: o ? o.why : why }); if (isN && x.sec === 'Jobs') (B.nsrc[k0] = B.nsrc[k0] || []).push(x.label); } }; /* (a name said twice, like a kick reminder per kick, counts once) */
+    const al = isN && x.sec === 'Jobs' ? ndzNoteAlias(B.pick, x.label) : null;
+    if (al && al.first && x.hi !== first[al.to]) { B.noteLeft.push({ label: x.label, head: x.head, why: 'a second list; the first one is used' }); continue; }
+    if (Array.isArray(t)) { put(t[0], names.filter(mel)); put(t[1], names.filter((n) => !mel(n))); } else put(al ? al.to : t || x.label, names);
+    if (isN && !hit && x.sec === 'Jobs') B.noteLeft.push({ label: x.label, head: x.head }); }
   for (const pg of B.pages) { const mine = new Set(); for (const sl of pg.slots) { const v = got.get(pg.key + '|' + sl.label); if (v) v.l.filter((n) => pr.players.has(n)).forEach((n) => mine.add(n)); }
     for (const sl of pg.slots) { const k = pg.key + '|' + sl.label, v = got.get(k);
       if (v) { const keep = v.l.filter((n) => pr.players.has(n)), out = v.l.filter((n) => !pr.players.has(n));
@@ -4179,7 +4191,15 @@ const NDZ_RCD_CLASS = { WARRIOR: 'Rallying Cry', DEMONHUNTER: 'Darkness', DEATHK
 // were Avenger's Shield). Shown beside the player, and a Protection Paladin counts as two kickers.
 const NDZ_KICK_PLUS = { 66: "Avenger's Shield also kicks, up to 3 adds, and Divine Toll throws 5 at once", 73: 'Disrupting Shout kicks every add around them' };
 const ndzKickN = (p) => (NDZ_KICK_PLUS[+(p.specId || p.sid)] ? 2 : 1);
-const ndzRcdCd = (n) => (typeof NDZ_CDK === 'object' && NDZ_CDK[n] ? NDZ_CDK[n][2] : RCD_CD[n]) || ({ Zephyr: 120 })[n] || 180; /* (Midnight lengths checked against top logs, Oct 22) */
+// (one cooldown length for every check, pick and suggestion (Oct 23): the planner's Midnight table, then the rest below, then each
+// spec's and the externals' own tables; an unknown one is said in the console once, never a silent 3 minutes)
+const NDZ_CDRECH = { 'Avenging Wrath': 120, 'Avenging Crusader': 120, Stasis: 90, 'Release Stasis': 90, 'Time Spiral': 120, 'Blessing of Sacrifice': 120, 'Blessing of Protection': 300,
+  'Guardian Spirit': 180, 'Pain Suppression': 180, Ironbark: 90, 'Life Cocoon': 120, 'Time Dilation': 60, 'Power Infusion': 120, Bloodlust: 300, Heroism: 300, 'Time Warp': 300, 'Fury of the Aspects': 300, 'Curse of Tongues': 0 };
+const NDZ_CDWARN = new Set();
+function ndzCdBack(n) { if (!n) return 0; if (typeof NDZ_CDK === 'object' && NDZ_CDK[n]) return NDZ_CDK[n][2]; if (n in NDZ_CDRECH) return NDZ_CDRECH[n]; if (RCD_CD[n]) return RCD_CD[n];
+  for (const T of [typeof RC_EXT === 'object' ? RC_EXT : {}, typeof PERF_CDS === 'object' ? PERF_CDS : {}]) for (const l of Object.values(T)) for (const [m, cd] of l) if (m === n) return cd;
+  if (!NDZ_CDWARN.has(n)) { NDZ_CDWARN.add(n); console.warn('Plan: no cooldown length for ' + n + ', so it isn\'t checked'); } return 0; }
+const ndzRcdCd = (n) => ndzCdBack(n) || 180; /* (the planner only places raid cooldowns it knows; 180 only after the console warning) */
 const ndzKickOf = (p) => (p.role === 'healer' && +p.specId !== 264 ? null : (E.INTERRUPTS[p.cls] || []).find((k) => !k[2] || k[2].includes(+p.specId)) || null); /* (healers can't kick, except a Restoration Shaman) */
 const ndzMel = (p) => NDZ_MELEE.has(+p.specId) || p.role === 'tank';
 
@@ -4863,7 +4883,7 @@ function ndzKickRows(players) { const K = ndzKickGroups(players), col = (c) => (
 // (how long a cooldown lasts: what the fastest kills' raiders got, else its own text; 0 when unknown)
 const ndzCdLen = (id) => { const n = ndzSpellNm(+id); return (n && (NDZ_CDLEN[n] || CD_LEN[n])) || 0; };
 // (how long until a cooldown is back: the site's raid and spec cooldown tables; 0 when unknown, so no false alarms)
-const ndzRech = (id) => { const n = ndzSpellNm(+id); if (!n) return 0; if (NDZ_CDK[n]) return NDZ_CDK[n][2]; /* (the planner's Midnight lengths first, so checks and picks agree, Oct 22) */ if (RCD_CD[n]) return RCD_CD[n]; for (const l of Object.values(PERF_CDS)) for (const [m, cd] of l) if (m === n) return cd; return 0; };
+const ndzRech = (id) => ndzCdBack(ndzSpellNm(+id)); /* (one length table for every check, Oct 23) */
 // (the timeline's data: the note's cooldowns by raider and phase, the fastest kills' big hits, each phase's length)
 // (a mechanic's spell id and kind on the fight clock: stored as [id, kind] (or { id, kind }))
 const ndzMeta = (bt, l) => { const v = ((bt || {}).meta || {})[l]; return Array.isArray(v) ? { id: +v[0] || 0, kind: v[1] || '' } : { id: (v && +v.id) || 0, kind: (v && v.kind) || '' }; };
@@ -4874,6 +4894,7 @@ function ndzTlData(r, u0, text, players) {
   const calls = []; for (const x of (() => { try { return (E.parseNote(text) || {}).reminders || []; } catch (e) { return []; } })()) { if ((x.tags || []).some((t) => /^everyone$/i.test(t)) && /^(healthstone|health potion)/i.test(x.text || '')) calls.push({ ph: x.ph, t: x.time, k: /^healthstone/i.test(x.text) ? 'hs' : 'pot' }); } /* (raid calls for the chart, Oct 22) */
   for (const x of ndzRems(text)) { if (NDZ_DC_JOB.test(x.text || '')) continue; for (const t of x.tags) { const n = String(t).split('-')[0]; if (ok.has(n.toLowerCase())) cds.push({ ph: x.ph, t: x.time, who: n, id: x.spellid, dur: ndzCdLen(x.spellid) }); } }
   const SD = NDZ_CDSTART[boss] || {}, sd = SD[diff] || SD.Mythic || SD.Heroic || null, hits = sd ? sd.pk.map(([ph, rel, vk, hit]) => ({ ph, rel, v: vk, hit })) : [];
+  const phFit = (ph) => { const p0 = sd && sd.phs.find((q) => q.ph === ph); return Math.max((u0 && u0.phl && +u0.phl[ph]) || (p0 ? p0.len : 0), ...cds.filter((c) => c.ph === ph).map((c) => c.t + 5)); }; /* (a phase lasts at least until its last reminder fires, Oct 23) */
   const BT = NDZ_BOSSTL[boss] || {}, bt = BT[diff] || BT.Mythic || BT.Heroic || null, mech = bt ? bt.tl.map(([ph, rel, label, dur]) => ({ ph, rel, label, dur: dur || 0, id: ndzMeta(bt, label).id, kind: ndzMeta(bt, label).kind })) : []; /* (the boss's mechanics in the fastest kills) */
   const phs = [...new Set(cds.map((c) => c.ph).concat(sd ? sd.phs.map((p) => p.ph) : []))].sort((a, b) => a - b).map((ph) => { const p0 = sd && sd.phs.find((q) => q.ph === ph);
     return { ph, len: Math.max((u0 && u0.phl && +u0.phl[ph]) || (p0 ? p0.len : 0), ...cds.filter((c) => c.ph === ph).map((c) => c.t + Math.max(15, c.dur + 3)), ...hits.filter((h) => h.ph === ph).map((h) => h.rel + 10), ...mech.filter((m) => m.ph === ph).map((m) => m.rel + Math.max(8, m.dur + 3)), 60) }; });
@@ -4881,12 +4902,12 @@ function ndzTlData(r, u0, text, players) {
   // (a cooldown planned before it's back: flagged, and it covers nothing)
   const own = (() => { const P = r.module && r.module.phases; if (NDZ_ONEPH.has(boss)) return new Map([[1, 0]]); if (!P || !P.length || !r.duration) return null; let real = 0; const m = new Map(); for (const p of P) { if (/intermission/i.test(p.name)) m.set(real + 0.5, p.start); else m.set(++real, p.start); } return m; })(); /* (this raid's own phase starts, from the loaded pull) */
   const gapW = (M) => (a, b) => { const x = M.has(a.ph) ? M.get(a.ph) + a.t : null, y = M.has(b.ph) ? M.get(b.ph) + b.t : null; return x != null && y != null ? y - x : a.ph === b.ph ? b.t - a.t : null; };
-  const planM = !own && sd ? (() => { const m = new Map(); let s = 0; for (const p of sd.phs.slice().sort((a, b) => a.start - b.start)) { m.set(p.ph, s); s += (u0 && u0.phl && +u0.phl[p.ph]) || p.len; } return m; })() : null; /* (a plan: phases back to back from your phase times, else the fastest kills', so a cooldown is checked across phases too) */
+  const planM = !own && sd ? (() => { const m = new Map(); let s = 0; for (const p of sd.phs.slice().sort((a, b) => a.start - b.start)) { m.set(p.ph, s); s += phFit(p.ph); } return m; })() : null; /* (a plan: phases back to back from your phase times, else the fastest kills', so a cooldown is checked across phases too) */
   const gapOf = gapW(own || planM || new Map()), gapFast = gapW(own || new Map((sd ? sd.phs : []).map((p) => [p.ph, p.start]))); /* (not ready: your pull's phases, else the same phase only; Cover it: the fastest kills, the soonest it could be needed) */
   const byKey = new Map(); for (const c of cds) { const k = c.who.toLowerCase() + '|' + c.id; if (!byKey.has(k)) byKey.set(k, []); byKey.get(k).push(c); }
   for (const l of byKey.values()) { const cd = ndzRech(l[0].id); if (!cd || l.length < 2) continue; l.sort((a, b) => a.ph - b.ph || a.t - b.t); for (let i = 1; i < l.length; i++) { const g = gapOf(l[i - 1], l[i]); if (g != null && g < cd * 0.85) l[i].late = { prev: l[i - 1], cd, short: cd - g }; else if (g != null && g < cd + 15 && l[i].ph !== l[i - 1].ph) l[i].tight = { prev: l[i - 1], cd, spare: Math.round(g - cd) }; } } /* (tight: back with under 15 s to spare across a phase change; inside one phase both times move together, so push speed can't break it) */
   const cover = (h) => { const near = cds.filter((c) => !c.late && c.ph === h.ph && c.t <= h.rel + 4 && (c.t >= h.rel - 6 || c.t + (c.dur || 0) >= h.rel)) /* (pressed near it, or still running when it lands, Oct 22) */; h.by = near.slice().sort((a, b) => ndzIsRaidCd(b.id) - ndzIsRaidCd(a.id) || a.t - b.t); return near.some((c) => ndzIsRaidCd(c.id)) ? 'green' : near.length ? 'amber' : 'red'; };
-  for (const h of hits) h.c = cover(h);
+  for (const h of hits) { h.c = cover(h); h.rel0 = h.rel; }
   // (Cover it: a raid or healer cooldown someone on the roster brings and has ready 2 s before the hit; fewest jobs first)
   const NH = ndzNoteHas(text), RC = NDZ_BUFFS.filter(([lab]) => /^(healer|raid) cooldowns$/i.test(lab)).flatMap(([, , l]) => l).filter(([nm]) => nm !== 'Devotion Aura'), TIER = (nm) => (/^(Spirit Link Totem|Aura Mastery|Power Word: Barrier|Rallying Cry|Darkness|Anti-Magic Zone)$/.test(nm) ? 0 : /^(Tranquility|Revival|Divine Hymn|Rewind)$/.test(nm) ? 1 : 2), cnt = (n) => cds.filter((c) => c.who.toLowerCase() === String(n).toLowerCase()).length;
   const sugg = []; /* (suggestions so far count as planned) */
@@ -4896,7 +4917,7 @@ function ndzTlData(r, u0, text, players) {
       if (free) opts.push({ who: p.n, id: +sid, name: nm, t, ph: h.ph, cd, k: cnt(p.n), tier: TIER(nm) }); }
     opts.sort((a, b) => a.tier - b.tier || a.k - b.k || a.cd - b.cd || a.who.localeCompare(b.who)); h.fix = opts[0] || null; if (h.fix) sugg.push({ who: h.fix.who, id: h.fix.id, ph: h.fix.ph, t: h.fix.t }); }
   const col = new Map(ndzIn(r).map((p) => [ndzPn(p).toLowerCase(), p.color])), sp = ndzSpecs();
-  return { boss, diff, cds, hits, phs, mech, calls, dmg, dmgK, phl: (u0 && u0.phl) || null, phDef: sd ? Object.fromEntries(sd.phs.map((p) => [p.ph, Math.round(p.len)])) : {}, noteId: (u0 && u0.id) || null, color: (n) => { const k = n.toLowerCase(), c = col.get(k), s = (sp[k] || {}).color, p = players.find((q) => String(q.n).toLowerCase() === k); return (c && c !== 'inherit' && c) || (s && s !== 'inherit' && s) || (p && p.cls && (E.CLASSES[p.cls] || [])[1]) || 'inherit'; }, fast: !!sd }; }
+  return { boss, diff, cds, hits, phs, mech, calls, dmg, dmgK, phl: (u0 && u0.phl) || null, phDef: sd ? Object.fromEntries(sd.phs.map((p) => [p.ph, Math.round(phFit(p.ph))])) : {}, noteId: (u0 && u0.id) || null, color: (n) => { const k = n.toLowerCase(), c = col.get(k), s = (sp[k] || {}).color, p = players.find((q) => String(q.n).toLowerCase() === k); return (c && c !== 'inherit' && c) || (s && s !== 'inherit' && s) || (p && p.cls && (E.CLASSES[p.cls] || [])[1]) || 'inherit'; }, fast: !!sd }; }
 let NDZ_TL = null, NDZ_TLV = null; /* (NDZ_TLV: the phase on show, for pointing at the chart) */
 function ndzTimelineH(D) {
   if (!D || !D.phs.length) return '<div class="ndz-cth"><b>Cooldowns</b></div><p class="sub">No cooldown reminders in this note yet.</p>';
@@ -5792,7 +5813,7 @@ const ndzBSingle = (pg) => pg.slots.length >= 2 && pg.slots.every((sl) => (sl.wa
 // ---- Plain names for note labels (Oct 22, Plan review): what the raider reads; the note keeps its own label for the game addon ----
 const NDZ_LAB_NICE = [
   [/^(1st|2nd|3rd|4th) CC on Mindcontrol$/, (m) => ['Stop the ' + m[1] + ' mind control', 'Stun, fear or sheep the ' + m[1] + ' raider the boss mind controls, so they can\'t hurt the raid.']],
-  [/^External Guillotine (\d)$/, (m) => ['Blessing of Protection on Guillotine ' + m[1], 'A Paladin puts Blessing of Protection on the player the axe targets: it stops the physical hit.']],
+  [/^External Guillotine (\d)$/, (m) => ['External on Guillotine ' + m[1], 'An external on the player the axe targets, like a Paladin\'s Blessing of Protection (it stops the physical hit).']],
   [/^Zephyr Guillotine (\d)$/, (m) => ['Zephyr on Guillotine ' + m[1], 'An Evoker presses Zephyr on the soak: everyone soaking takes less damage.']],
   [/^Curse Raid-Marked Add$/, () => ['Curse the marked add', 'Curse of Tongues on the add with a raid marker, so its casts are slower and easier to kick.']],
   [/^Curse Unmarked Add$/, () => ['Curse the unmarked add', 'Curse of Tongues on the add without a marker, so its casts are slower and easier to kick.']],
@@ -6114,6 +6135,11 @@ function ndzBjB(boss, n) { const k = boss + '|' + n.id + '|' + n.text; if (S.bjB
 const ndzBjEsc = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // (one job's line in the note: "Label: names", under its section heading when the label repeats; a kick or soak block's own row)
 function ndzBjWrite(text, B, pg, sl, names) { const lines = String(text).replace(/\s+$/, '').split('\n'), nm = names.map((x) => String(x).split('-')[0]).join(' ');
+  { const own = B.nsrc && B.nsrc[pg.key + '|' + sl.label]; if (own && own.length && !own.includes(sl.label)) { /* (a slot filled from the note's own lines, like "P1 Soak 1" or the four "{cross} purple orb" lines: those lines change) */
+    const at = own.map((lab) => lines.findIndex((l) => l.indexOf(':') > 0 && l.slice(0, l.indexOf(':')).trim() === lab)).filter((i) => i >= 0); if (at.length) { const ns = nm ? nm.split(' ') : [];
+      if (at.length === 1) { const i = at[0]; if (ns.length) lines[i] = lines[i].slice(0, lines[i].indexOf(':') + 1) + ' ' + ns.join(' '); else lines.splice(i, 1); return lines.join('\n'); }
+      const put = at.map((i, j) => (j < at.length - 1 ? ns.slice(j, j + 1) : ns.slice(j))); for (let j = at.length - 1; j >= 0; j--) { const i = at[j]; if (put[j].length) lines[i] = lines[i].slice(0, lines[i].indexOf(':') + 1) + ' ' + put[j].join(' '); else lines.splice(i, 1); }
+      return lines.join('\n'); } } }
   const KS = ['P20', 'P21', 'P30', 'P31'], kk = B.pick === 'The Coiled Altar' && sl.kick ? KS.indexOf(sl.kick) : -1, blk = sl.block || (kk >= 0 ? 'int' : null); /* (The Coiled Altar's kick teams are rows of its intstart block, in P20, P21, P30, P31 order) */
   if (blk) { let k = kk; if (k < 0) { k = 0; outer: for (const p of B.pages) for (const s of p.slots) { if (p === pg && s === sl) break outer; if (s.block === blk) k++; } }
     const S0 = blk === 'int' ? /^intstart$/i : /^transitionstart$/i, E0 = blk === 'int' ? /^intend$/i : /^transitionend$/i; let a = lines.findIndex((l) => S0.test(l.trim()));
@@ -6131,7 +6157,7 @@ function ndzBjH(boss, n) { let B; try { B = ndzBjB(boss, n); } catch (e) { retur
     const open = mine.length || !filled || (S.bjOpen && S.bjOpen[pg.key]); /* (done cards start closed, Oct 22) */
     return '<details class="bj-card" data-bjpg="' + esc(pg.key) + '"' + (open ? ' open' : '') + '><summary class="bj-ch">' + (ndzPgIconId(pg) ? spellIcon(ndzPgIconId(pg), pg.icon) : spIc(pg.icon)) + '<b>' + esc(pg.title) + '</b>' + st + '<span class="bj-chev" aria-hidden="true">▾</span></summary>' + ndzBSlotsH(B, pg, ps, col) + '</details>'; }).join('');
   const vw = bjView(), sw = '<span class="ndz-seg bj-vsw" role="group" aria-label="Show jobs"><button type="button" data-bjview="mech" class="' + (vw === 'flow' ? '' : 'on') + '">By mechanic</button><button type="button" data-bjview="flow" class="' + (vw === 'flow' ? 'on' : '') + '">In fight order</button></span>'; /* (Oct 22: the jobs as a timeline) */
-  return '<div class="panel ndz-dpan bj-jobs"><div class="ndz-dph"><b>Jobs</b>' + sw + '</div>' + (vw === 'flow' ? bjfH(B, boss, n, ps, col) : (cards || '<p class="sub">No jobs for this boss in the builder yet.</p>') + bjCallsH(boss, n, B.diff)) /* (+ the raid calls, Oct 22) */ + '</div>'; }
+  return '<div class="panel ndz-dpan bj-jobs"><div class="ndz-dph"><b>Jobs</b>' + sw + '</div>' + (vw === 'flow' ? bjfH(B, boss, n, ps, col) : (cards || '<p class="sub">No jobs for this boss in the builder yet.</p>') + bjLeftH(B) + bjCallsH(boss, n, B.diff)) /* (+ the raid calls, Oct 22) */ + '</div>'; }
 // (a change to one or more jobs: the note's lines for them rewritten, saved with Undo, the page drawn again where it was)
 function ndzBjSave(B, pg, slots, msg) { S.bjB = null; /* (read the note again next draw) */ const boss = B.pick, n = notesOf(boss).list.find((x) => x.id === B.noteId); if (!n) return; let t = n.text;
   for (const sl of slots) t = ndzBjWrite(t, B, pg, sl, B.sel[pg.key + '|' + sl.label].n);
@@ -6184,12 +6210,21 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
 document.addEventListener('toggle', (e) => { if (!e.target || !e.target.classList || !e.target.classList.contains('bj-card') || !e.target.dataset.bjpg) return; S.bjOpen = S.bjOpen || {}; S.bjOpen[e.target.dataset.bjpg] = e.target.open; }, true); /* (a card you open stays open) */
 
 // ---- The Boss page's Raid calls card (Oct 22): every Defensive / Healthstone / Health potion call in the note, add or remove one ----
-const BJ_CALLRE = /^\s*time:(\d+);ph:([\d.]+);tag:everyone;text:(Defensive|Healthstone|Health potion)([^;]*);\s*$/i;
+const BJ_CALLRE = /^\s*time:([\d.]+);ph:([\d.]+);(?:[^;]*;)*?tag:everyone;(?:[^;]*;)*?text:(Defensives?|Healthstones?|Health ?potions?)([^;]*);.*$/i; /* (also with dur/colors after, Oct 23) */
+// (the note's job lines that fit no slot on this page, in one plain line; ⓘ lists each)
+function bjLeftH(B) { const L = (B.noteLeft || []).filter((x) => x.label); if (!L.length) return ''; const heads = [...new Set(L.map((x) => x.head || x.label))];
+  const tip = '<b>In your note, not a job on this page</b><br>' + L.map((x) => esc(x.label) + (x.why ? ' <span class="sub">(' + esc(x.why) + ')</span>' : '')).join('<br>');
+  return '<p class="sub bj-left">' + plural(L.length, 'line') + ' in your note ' + (L.length > 1 ? 'aren\'t jobs' : 'isn\'t a job') + ' here yet: ' + esc(heads.slice(0, 4).join(', ')) + (heads.length > 4 ? ' and more' : '') + '. They stay in the note as they are. <span class="ds-i" tabindex="0" role="note" data-tt="' + esc(tip) + '">ⓘ</span></p>'; }
+// (with no raid calls: what the note does have, so an empty card isn't a mystery)
+function bjCallsNone(n) { const R0 = String(n.text).split('\n').filter((l) => /^\s*time:/i.test(l)), f = (l, k) => ((l.match(new RegExp('(?:^|;)' + k + ':([^;]*)', 'i')) || [])[1] || '').trim();
+  const ev = [...new Set(R0.filter((l) => /^everyone$/i.test(f(l, 'tag')) && f(l, 'text')).map((l) => f(l, 'text')))], own = R0.filter((l) => !/^everyone$/i.test(f(l, 'tag')) && /^(defensive|immune|healthstone|health ?potion)/i.test(f(l, 'text')));
+  const who = [...new Set(own.map((l) => f(l, 'tag')))];
+  return 'Your note has no Defensive, Healthstone or Health potion calls for everyone.' + (ev.length ? ' For everyone it says ' + andL(ev.map((x) => x.toUpperCase() === x ? x : '“' + x + '”')) + '.' : '') + (who.length ? ' ' + andL(who) + (who.length > 1 ? ' have' : ' has') + ' their own ' + andL([...new Set(own.map((l) => f(l, 'text').toUpperCase()))]) + ' reminder' + (own.length > 1 ? 's' : '') + '.' : '') + ' Add calls below.'; }
 function bjCallsH(boss, n, diff) { const L = String(n.text).split('\n').map((l, i) => { const m = BJ_CALLRE.exec(l); return m ? { i, t: +m[1], ph: +m[2], k: /^def/i.test(m[3]) ? 'def' : /^healthstone/i.test(m[3]) ? 'hs' : 'pot', lab: m[3] + m[4] } : null; }).filter(Boolean).sort((a, b) => a.ph - b.ph || a.t - b.t);
   const cnt = (k) => L.filter((c) => c.k === k).length, sum = [plural(cnt('def'), 'Defensive'), plural(cnt('hs'), 'Healthstone'), plural(cnt('pot'), 'Health potion')].join(' · ');
   return '<details class="bj-card bj-calls"' + (S.bjOpen && S.bjOpen.__calls === false ? '' : ' open') + ' data-bjpg="__calls"><summary class="bj-ch">' + ndzCallIc('def') + '<b>Raid calls</b><span class="sub bj-csum">' + sum + '</span><span class="bj-chev" aria-hidden="true">▾</span></summary>' +
     '<p class="sub">For everyone: when it pops up in game. A Healthstone is once a pull, a Health potion every 5 minutes.</p><div class="ndz-pxr">' +
-    L.map((c) => '<span class="ndz-pxc">' + ndzCallIc(c.k) + '<span>' + esc(c.lab) + '</span><span class="sub">' + ndzPhT(c.ph, c.t) + '</span><button type="button" class="ndz-pxx" data-bjcallx="' + c.i + '" aria-label="Remove ' + esc(c.lab) + '">✕</button></span>').join('') + (L.length ? '' : '<span class="sub">No raid calls in this plan yet.</span>') + '</div>' +
+    L.map((c) => '<span class="ndz-pxc">' + ndzCallIc(c.k) + '<span>' + esc(c.lab) + '</span><span class="sub">' + ndzPhT(c.ph, c.t) + '</span><button type="button" class="ndz-pxx" data-bjcallx="' + c.i + '" aria-label="Remove ' + esc(c.lab) + '">✕</button></span>').join('') + (L.length ? '' : '<span class="sub">' + esc(bjCallsNone(n)) + '</span>') + '</div>' +
     '<div class="ndz-pxg ndz-cat"><select id="bjCallK" aria-label="Which call">' + NDZ_CALLS.map(([k, l]) => '<option value="' + k + '">' + l + '</option>').join('') + '</select><select id="bjCallP" aria-label="Phase">' + NDZ_PHOPT(boss, diff).map(([v, l]) => '<option value="' + v + '">' + l + '</option>').join('') + '</select>' +
     '<input id="bjCallT" class="ndz-elab" style="width:70px" placeholder="1:30" aria-label="When it pops up, time into the phase"><button type="button" class="btn sm" data-bjcalladd="' + esc(boss + '|' + n.id + '|' + (diff || 'Mythic')) + '">+ Add the call</button></div></details>'; }
 document.addEventListener('click', (e) => { if (S.page !== 'plan' || !e.target.closest) return; const t = e.target.closest('[data-bjcallx], [data-bjcalladd]'); if (!t) return;
@@ -6264,15 +6299,15 @@ function bjTlH(D) {
   const pack = (items, wOf) => { const ends = []; return items.map((it) => { const x = X(it.t), w = wOf(it); let r = ends.findIndex((e) => e <= x - 4); if (r < 0) { r = ends.length; ends.push(0); } ends[r] = x + w; return { ...it, x, r }; }); };
   const dwOf = (c) => (c.dur ? Math.round(Math.min(c.dur, len - c.t) * BTL_PX) : 0), cw = (c) => Math.max(dwOf(c), 18 + Math.round(String(c.who).length * 6) + 4); /* (the wider of icon + name and the real-time bar) */ /* (the tile is the cooldown's length; the name may run past it) */
   const CP = pack(cds.map((c) => ({ ...c })), cw), cRows = Math.max(1, ...CP.map((c) => c.r + 1)), ms1 = ms.filter((m, i) => !ms.slice(0, i).some((o) => o.label === m.label && Math.abs(o.rel - m.rel) < 6)) /* (one icon for repeats within 6 s) */, MP = ((P) => P.map((m) => ({ ...m, r: m.r % 2 })))(pack(ms1.map((m) => ({ ...m, t: m.rel })), () => 23)) /* (at most 2 rows) */, mRows = bon && MP.length ? Math.max(...MP.map((m) => m.r + 1)) : 0;
-  const HH = 30, MH = 24, CH = 26, AX = 18, top0 = HH + mRows * MH + (mRows ? 4 : 0), H = Math.max(top0 + cRows * CH + 8, top0 + 170) + AX; /* (at least 170 px of damage to read the spikes) */
+  const HH = 30, MH = 24, CH = 28, AX = 18, top0 = HH + mRows * MH + (mRows ? 10 : 0), dTop = top0 + cRows * CH + (cRows ? 10 : 0), H = dTop + 210 + AX; /* (Oct 23: the names in their own band, 210 px of damage under them) */
   // (raid damage behind it all, one scale for the fight, green calm to red the worst of this phase)
   const dv = D.dmg && D.dmg[cur], dmax = D.dmg ? Math.max(1, ...Object.values(D.dmg).map((a) => Math.max(0, ...a))) : 1, sv = dv ? dv.map((v, i) => (dv[Math.max(0, i - 1)] + 2 * v + dv[Math.min(dv.length - 1, i + 1)]) / 4) : null;
   let bg = ''; if (sv && sv.length > 2) { const lo = Math.min(...sv), hi = Math.max(...sv), G = NDZ_DGC, cOf = (v) => { const t = Math.max(0, Math.min(1, (v - lo) / Math.max(1e-9, hi - lo))); let i = 0; while (i < G.length - 2 && t > G[i + 1][0]) i++; const [a, ca] = G[i], [b, cb] = G[i + 1], f = Math.max(0, Math.min(1, (t - a) / (b - a))); return 'rgb(' + ca.map((c, k) => Math.round(c + (cb[k] - c) * f)).join(',') + ')'; };
-    const id = 'btlDg' + (NDZ_DGN = (NDZ_DGN || 0) + 1), hb = H - AX - top0;
-    bg = '<svg class="btl-dmg" style="top:' + top0 + 'px;height:' + hb + 'px;width:' + W + 'px" viewBox="0 0 ' + W + ' 100" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="' + id + '" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="' + W + '" y2="0">' + sv.map((v, i) => '<stop offset="' + Math.min(1, X(i * 2 + 1) / W).toFixed(4) + '" stop-color="' + cOf(v) + '"/>').join('') + '</linearGradient></defs>' +
+    const id = 'btlDg' + (NDZ_DGN = (NDZ_DGN || 0) + 1), hb = H - AX - dTop;
+    bg = '<svg class="btl-dmg" style="top:' + dTop + 'px;height:' + hb + 'px;width:' + W + 'px" viewBox="0 0 ' + W + ' 100" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="' + id + '" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="' + W + '" y2="0">' + sv.map((v, i) => '<stop offset="' + Math.min(1, X(i * 2 + 1) / W).toFixed(4) + '" stop-color="' + cOf(v) + '"/>').join('') + '</linearGradient></defs>' +
       '<path style="fill:url(#' + id + ');stroke:url(#' + id + ')" d="M0,100 ' + sv.map((v, i) => 'L' + X(i * 2 + 1) + ',' + (100 - 92 * v / dmax).toFixed(1)).join(' ') + ' L' + X(dv.length * 2) + ',100 Z"/></svg>'; }
   const W2 = { red: 'No raid cooldown here', amber: 'Only a healer\'s own burst', green: 'Covered by a raid cooldown' };
-  const hitsH = hits.map((h) => '<span class="btl-hit ' + h.c + '" style="left:' + X(h.rel) + 'px" data-tt="' + esc('<b>' + esc(h.hit) + '</b> at ' + pT(h.rel) + (ndzMechTip(D.boss, h.hit) ? '<br>' + esc(ndzMechTip(D.boss, h.hit)) : '') + '<br>' + W2[h.c] + ndzCutH(h.by) + (h.by || []).slice(0, 3).map((c) => '<br>· ' + esc(c.who) + ': ' + esc(ndzSpellNm(+c.id) || 'cooldown') + (c.t < h.rel - 6 ? ' (still running from ' + pT(c.t) + ')' : ' at ' + pT(c.t))).join('')) + '"><em>' + pT(h.rel) + '</em><i></i></span>' +
+  const hitsH = hits.map((h) => '<span class="btl-hit ' + h.c + '" style="left:' + X(h.rel) + 'px" data-tt="' + esc('<b>' + esc(h.hit) + '</b> at ' + pT(h.rel) + (ndzMechTip(D.boss, h.hit) ? '<br>' + esc(ndzMechTip(D.boss, h.hit)) : '') + '<br>' + W2[h.c] + ndzCutH(h.by) + (h.by || []).slice(0, 3).map((c) => '<br>· ' + esc(c.who) + ': ' + esc(ndzSpellNm(+c.id) || 'cooldown') + (c.t < (h.rel0 != null ? h.rel0 : h.rel) - 6 ? ' (still running from ' + ndzCdAt(c) + ')' : ' at ' + ndzCdAt(c))).join('')) + '"><em>' + pT(h.rel) + '</em><i></i></span>' +
     '<span class="btl-vl ' + h.c + '" style="left:' + X(h.rel) + 'px;top:' + HH + 'px;height:' + (H - HH - AX) + 'px"></span>').join('');
   const unc = u.map((h) => { const fix = h.fix && D.noteId; return '<span class="btl-unc" style="left:' + X(h.rel - 3) + 'px;width:' + (6 * BTL_PX) + 'px;top:' + HH + 'px;height:' + (H - HH - AX) + 'px"></span>' +
     '<button type="button" class="ndz-ctub btl-ub' + (fix ? '' : ' nofix') + '" style="left:' + X(h.rel) + 'px;top:' + (HH - 4) + 'px"' + (fix ? ' data-ndzcover="' + (h._i != null ? h._i : D.hits.indexOf(h)) + '"' : ' tabindex="0"') + ' data-tt="' + esc('<b>' + esc(h.hit) + ' at ' + pT(h.rel) + '</b><br>No raid cooldown is pressed near this hit or still running.' + (fix ? '<br>Click to add ' + esc(h.fix.name) + ' for ' + esc(h.fix.who) + ' at ' + fixT(h.fix) + '.' : '')) + '">⚠ Not covered</button>'; }).join('');
@@ -6281,11 +6316,11 @@ function bjTlH(D) {
       '<span class="btl-m" data-bmi="' + i + '" style="left:' + m.x + 'px;top:' + (HH + m.r * MH + 1) + 'px" data-tt="' + esc('<b>' + esc(m.label) + '</b> at ' + pT(m.rel) + (m.dur ? ' · lasts about ' + m.dur + ' s' : '') + (tip ? '<br>' + esc(tip) : '')) + '">' + (m.id ? spellIcon(m.id, m.label) : spIc(m.label)) + '</span>'; }).join('');
   const cdH = CP.map((c) => { const nm = ndzSpellNm(c.id) || 'Cooldown';
     return '<span class="btl-g" style="left:' + c.x + 'px;top:' + HH + 'px;height:' + (H - HH - AX) + 'px;--cc:' + col(c.who) + '"></span>' + /* (where it lands on the damage) */
-      '<span class="btl-c' + (dwOf(c) ? ' dur' : '') + (c.late ? ' late' : '') + '" style="left:' + c.x + 'px;width:' + cw(c) + 'px;top:' + (top0 + c.r * CH) + 'px;--cc:' + col(c.who) + '" data-tt="' + esc('<b>' + esc(nm) + '</b> · ' + esc(c.who) + '<br>' + (WH ? pT(c.t) : phN(cur) + ' ' + mmss(c.t)) + (c.dur ? ' · lasts ' + c.dur + ' s' : '') + (c.late ? '<br><span class="no">Not ready: it takes ' + mmss(c.late.cd) + ' to come back</span>' : '')) + '">' + spellIcon(c.id, nm) + '<b>' + esc(c.who) + '</b>' + (dwOf(c) ? '<span class="btl-f" style="width:' + dwOf(c) + 'px"></span>' : '') + '</span>'; }).join('');
-  const hb0 = H - AX - top0, yOf = (v) => top0 + hb0 * (100 - 92 * v / dmax) / 100, fmK = (k) => (k >= 1000 ? +(k / 1000).toFixed(1) + 'M' : k + 'K');
+      '<span class="btl-c' + (dwOf(c) ? ' dur' : '') + (c.late ? ' late' : '') + '" style="left:' + c.x + 'px;width:' + cw(c) + 'px;top:' + (top0 + c.r * CH) + 'px;--cc:' + col(c.who) + '" data-tt="' + esc('<b>' + esc(nm) + '</b> · ' + esc(c.who) + '<br>' + (WH ? pT(c.t) : phN(cur) + ' ' + mmss(c.t)) + (c.dur ? ' · lasts ' + c.dur + ' s' : '') + (c.late ? '<br><span class="no">Not ready: ' + esc(ndzLateWhy(c)) + '</span>' : '')) + '">' + spellIcon(c.id, nm) + '<b>' + esc(c.who) + '</b>' + (dwOf(c) ? '<span class="btl-f" style="width:' + dwOf(c) + 'px"></span>' : '') + '</span>'; }).join('');
+  const hb0 = H - AX - dTop, yOf = (v) => dTop + hb0 * (100 - 92 * v / dmax) / 100, fmK = (k) => (k >= 1000 ? +(k / 1000).toFixed(1) + 'M' : k + 'K');
   const stp = [250, 500, 1000, 2000, 5000].find((q) => dmax / q <= 4.5) || 5000, ticks = sv ? Array.from({ length: Math.floor(dmax / stp) }, (_, i) => (i + 1) * stp) : [];
   const gl = ticks.map((v) => '<span class="btl-gl" style="top:' + yOf(v).toFixed(1) + 'px"></span>').join(''), yl = ticks.map((v) => '<span style="top:' + yOf(v).toFixed(1) + 'px">' + fmK(v) + '/s</span>').join('');
-  NDZ_BTLV = { len, sv, cds, hits, ms, W, HH: top0, hb: hb0, col, ph: cur }; /* (for the readout under the mouse) */
+  NDZ_BTLV = { len, sv, cds, hits, ms, W, HH: dTop, hb: hb0, col, ph: cur }; /* (for the readout under the mouse) */
   let ax = ''; const step = len > 150 ? 30 : 15; for (let t = 0; t <= len; t += step) ax += '<span style="left:' + X(t) + 'px">' + mmss(t) + '</span>';
   const divH = WH ? WH.slice(1).map((o) => '<span class="btl-phd" style="left:' + X(o.s) + 'px;top:' + HH + 'px;height:' + (H - HH - AX) + 'px"><b>' + o.lab + '</b></span>').join('') : ''; /* (where each phase starts) */
   const tabs = WH ? '<span class="ndz-ctt"><button type="button" class="on" data-btlwhole="1" data-tt="' + esc('<b>The whole fight</b><br>Every phase end to end. Click for one phase at a time.') + '">Whole fight</button>' + WH.map((o) => '<button type="button" data-btlgo="' + X(o.s) + '" data-tt="' + esc('Jump to ' + (o.lab === 'Int' ? 'the intermission' : o.lab)) + '">' + o.lab + (D._orig.hits.some((h) => h.ph === o.ph && h.c === 'red') ? ' <i class="ndz-ctred">●</i>' : '') + '</button>').join('') + '</span>' :
@@ -6294,7 +6329,7 @@ function bjTlH(D) {
   const key = 'Raid damage taken behind it (green calm, red the worst of this phase)' + (D.dmgK ? ', average of the ' + D.dmgK + ' fastest kills' : '') + '. Diamonds: the big hits (green a raid cooldown is pressed or still running, amber only a healer\'s own burst, red nothing). Scroll sideways for the whole phase; the bar under a cooldown is how long it lasts.';
   const okc = D.fast && hits.length && !u.length ? '<span class="bj-okc">✓ ' + phN(cur) + ' big hits covered</span>' : '';
   const where = cur === 99 ? 'the whole fight' : cur % 1 ? 'the intermission' : phN(cur), covH = u.length ? '<div class="ndz-ctu bad"><b>' + plural(u.length, 'big hit') + ' in ' + where + ' with no raid cooldown:</b> ' + esc(u.map((h) => h.hit + ' at ' + pT(h.rel)).join(', ')) + '.<div class="ndz-cov">' + u.filter((h) => h.fix && D.noteId).map((h) => '<button class="btn sm" type="button" data-ndzcover="' + (h._i != null ? h._i : D.hits.indexOf(h)) + '">Cover ' + esc(h.hit) + ': ' + esc(h.fix.name) + ' · <b style="color:' + col(h.fix.who) + '">' + esc(h.fix.who) + '</b> at ' + fixT(h.fix) + '</button>').join('') + '</div></div>' : '';
-  const lt = cds.filter((c) => c.late), lateH = lt.length ? '<div class="ndz-ctu bad"><b>' + plural(lt.length, 'cooldown') + ' won\'t be ready:</b> ' + esc(lt.map((c) => c.who + '\'s ' + (ndzSpellNm(c.id) || 'cooldown') + ' at ' + pT(c.t)).join('; ')) + '. Move it, or give it to someone else.</div>' : '';
+  const lt = cds.filter((c) => c.late), lateH = lt.length ? '<div class="ndz-ctu bad"><b>' + plural(lt.length, 'cooldown') + ' won\'t be ready:</b> ' + esc(lt.map((c) => c.who + '\'s ' + (ndzSpellNm(c.id) || 'cooldown') + ' at ' + ndzCdAt(c) + ' (' + ndzLateWhy(c) + ')').join('; ')) + '. Move it, or give it to someone else.</div>' : '';
   const U = S.ndzCovUndo && S.ndzCovUndo.boss === D.boss && S.ndzCovUndo.id === D.noteId ? S.ndzCovUndo : null, undoH = U ? '<div class="ndz-ctu ok"><b>✓ Added to your note:</b> ' + esc(U.msg) + '. <button class="btn sm" type="button" data-ndzundo="1">Undo</button></div>' : '';
   NDZ_TLV = null; /* (the readout here is the timeline's own) */
   const fmt = (s) => Math.floor(s / 60) + ':' + String(Math.round(s % 60)).padStart(2, '0'), phEd = D.noteId && S.btlPhEd === D.noteId ? '<div class="btl-phed"><b>Phase times</b><span class="sub">How long each phase lasts for your raid (minutes:seconds). Cooldowns are checked across phases with these.</span>' +
@@ -6337,9 +6372,14 @@ function ndzWholeD(D) { if (!D || D.phs.length < 2) return D; const P = D.phs.sl
   const plen = (p) => (D.phl && +D.phl[p.ph]) || (D.phDef && D.phDef[p.ph]) || p.len; /* (each phase its real length, so phases join where they do in game, Oct 22) */
   const offs = P.map((p) => { const o = { ph: p.ph, s, lab: p.ph % 1 ? 'Int' : 'P' + p.ph }; s += plen(p); return o; }), off = new Map(offs.map((o) => [o.ph, o.s]));
   const dmg = []; if (D.dmg) for (const p of P) { const a = D.dmg[p.ph] || D.dmg[String(p.ph)] || [], n = Math.ceil(plen(p) / 2); for (let i = 0; i < n; i++) dmg.push(a[i] || 0); }
-  return { ...D, _orig: D, _offs: offs, phs: [{ ph: 99, len: s }], cds: D.cds.filter((c) => off.has(c.ph)).map((c) => ({ ...c, ph: 99, t: off.get(c.ph) + c.t })), hits: D.hits.map((h, i) => ({ ...h, ph: 99, rel: (off.get(h.ph) || 0) + h.rel, _i: i })),
+  return { ...D, _orig: D, _offs: offs, phs: [{ ph: 99, len: s }], cds: D.cds.filter((c) => off.has(c.ph)).map((c) => ({ ...c, ph0: c.ph, t0: c.t, ph: 99, t: off.get(c.ph) + c.t })), hits: D.hits.map((h, i) => ({ ...h, ph: 99, rel: (off.get(h.ph) || 0) + h.rel, _i: i })),
     mech: D.mech.filter((m) => off.has(m.ph)).map((m) => ({ ...m, ph: 99, rel: off.get(m.ph) + m.rel })), calls: (D.calls || []).filter((c) => off.has(c.ph)).map((c) => ({ ...c, ph: 99, t: off.get(c.ph) + c.t })), dmg: D.dmg ? { 99: dmg } : null }; }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-btlwhole]'); if (!b || !NDZ_TL) return; S.btlWhole = S.btlWhole === false; const el = document.getElementById('ndzTl'); if (el) el.innerHTML = ndzTlBody(NDZ_TL); });
+
+// (a cooldown's own phase and time, "P2 · 1:47", whichever view it's drawn in; and why a planned one won't be ready, naming the press before it)
+const ndzMmss = (t) => Math.floor(t / 60) + ':' + String(Math.round(t % 60)).padStart(2, '0');
+const ndzCdAt = (c) => (c.ph0 != null ? c.ph0 : c.ph) % 1 ? 'Int · ' + ndzMmss(c.t0 != null ? c.t0 : c.t) : 'P' + (c.ph0 != null ? c.ph0 : c.ph) + ' · ' + ndzMmss(c.t0 != null ? c.t0 : c.t);
+function ndzLateWhy(c) { const L = c.late, gap = Math.max(0, Math.round(L.cd - L.short)); return 'only ' + ndzMmss(gap) + ' after the one at ' + ndzCdAt(L.prev) + ', and it takes ' + ndzMmss(L.cd) + ' to come back'; }
 // ---- Draft a note from your pulls (TEST, Oct 20: on the local copy only, not the live site, until you say) ----
 // Reads every pull of this boss and difficulty in the log and writes an NSRT note of who did which job (kick orders, soak
 // groups, orb carriers, CC order, curses, raid cooldowns). A job done in most pulls is the assignment; a one-off is a mistake
