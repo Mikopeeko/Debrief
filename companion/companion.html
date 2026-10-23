@@ -223,7 +223,6 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
     <h2>Settings <button class="btn ib" id="moreX" type="button" aria-label="Close settings">✕</button></h2>
     <div><p class="k">Combat log</p><select id="logSel" aria-label="Combat log"></select><p class="note" id="logInfo"></p></div>
     <div id="pulls" hidden></div>
-    <div><p class="k">Pop-up recap</p><label class="tg" for="popFull"><input type="checkbox" id="popFull">Open the full recap right away</label><p class="note">Off: a slim "Your recap is ready" bar first, one click for the card. Drag the pop-up by its top to move it.</p></div>
     <div><p class="k">Updates</p><button class="btn" id="upd" type="button" title="Looks for a newer Debrief on debriefme.io and installs it now.">Check for updates</button></div>
     <p class="note">Close this window any time: Debrief keeps running in the background. Quit stops it. Raiders with the addon get their card from you automatically.</p>
     <details class="code"><summary>The code that was copied</summary><textarea id="codeOut" readonly></textarea></details>
@@ -375,7 +374,7 @@ async function readText(b, quiet) {
   return new TextDecoder().decode(all);
 }
 function progress(f) { L.prog = f; renderRing(); }
-for (const [id, def] of [['pop', true], ['snd', true], ['popFull', false]]) { $(id).checked = store.get('dbf-sw-' + id, def); $(id).addEventListener('change', () => { store.set('dbf-sw-' + id, $(id).checked); if (id === 'pop') addonFlags(); }); }
+for (const [id, def] of [['pop', true], ['snd', true]]) { $(id).checked = store.get('dbf-sw-' + id, def); $(id).addEventListener('change', () => { store.set('dbf-sw-' + id, $(id).checked); if (id === 'pop') addonFlags(); }); }
 // (tells the addon: with the pop-up on and Copy every pull off, WoW doesn't ask "See your recap?" after a pull; WoW reads it at login or /reload)
 function addonFlags() { j('/addonflags', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ popup: $('pop').checked, autocopy: false }) }).catch(() => {}); }
 addonFlags();
@@ -383,7 +382,7 @@ addonFlags();
 function popShow(model, code, copied, pack) {
   if (!$('pop').checked || !model || !model.h) return;
   L.popUp = true;
-  const data = { h: model.h, coach: (model.coach && model.coach.raid) || null, cls: (model.players || []).map((p) => [String(p.name || '').split('-')[0], p.cls]), code, copiedAlready: !!copied, full: $('popFull').checked, pack: pack || null };
+  const data = { h: model.h, coach: (model.coach && model.coach.raid) || null, cls: (model.players || []).map((p) => [String(p.name || '').split('-')[0], p.cls]), code, copiedAlready: !!copied, full: true, pack: pack || null };
   j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: true, data, sound: $('snd').checked && !copied }) }).catch(() => {});
 }
 function popHide() { if (!L.popUp) return; L.popUp = false; j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: false }) }).catch(() => {}); }
@@ -688,6 +687,7 @@ RECAP.encode = (m) => {
         vers.set(k, vers.get(k) + vi); cur = at; }); });
     rec = head.concat([['C', m.cuts.length - 1]], order.map((k) => (vers.get(k).length === lists.length ? line.get(k) : ['K', vers.get(k)].concat(line.get(k)))));
   }
+  if (m.grade) rec.push(['RG', m.grade.letter, m.grade.score, m.grade.cats]); // (the Report card grade, for the card's chip (Oct 22))
   if (RECAP.addonV) rec.push(['V', RECAP.addonV]); // (the addon version this app carries: an older addon then says /reload, or where to get the new one)
   rec.push(['Z']);
   return rec.map((r) => r.map(clean).join('~')).join('^');

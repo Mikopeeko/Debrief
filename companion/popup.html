@@ -165,7 +165,7 @@ function hydrate(root) {
 }
 async function siteBox(host, pack) {
   const sh = host.shadowRoot || host.attachShadow({ mode: 'open' }), css = await siteCss();
-  sh.innerHTML = '<style>' + css + ':host{display:block;color:#ece8df;font:15px/1.5 Barlow,"Segoe UI",system-ui,sans-serif}.cch{margin:0!important}a{pointer-events:none;color:inherit;text-decoration:none}</style>' + pack.html;
+  sh.innerHTML = '<style>' + css + ':host{display:block;color:#ece8df;font:15px/1.5 Barlow,"Segoe UI",system-ui,sans-serif}.cch{margin:0!important}a{pointer-events:none;color:inherit;text-decoration:none}.cch-pmap,.cch-thumb,.wr-map,.avd-map{display:none!important}.cch-hasmap{padding-right:inherit}</style>' + pack.html;
   sh.querySelectorAll('details.cch-more').forEach((d) => d.addEventListener('toggle', fit));
   hydrate(sh); fit(); setTimeout(fit, 300);
   if (sh._bound) return; sh._bound = 1;

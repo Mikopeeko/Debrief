@@ -115,6 +115,7 @@ local function decode(code)
     elseif t == "CV" then for _, c in ipairs(coaches()) do c.aline = g(2) end
     elseif t == "PC" and by[g(2)] then by[g(2)].coach = { head = g(3), focus = g(4) } -- (your own coach line and focus)
     elseif t == "C" then m.cutN = tonumber(g(2)) -- (the wipe filter: versions 0 to n)
+    elseif t == "RG" then m.grade = { letter = g(2), score = g(3), cats = g(4) } -- (the Report card's grade for the pull)
     elseif t == "X" then if K then m.raid.moreK = m.raid.moreK or {}; table.insert(m.raid.moreK, { K, g(2) }) else m.raid.more = g(2) end
     elseif t == "Q" then if K then m.raid.nextK = m.raid.nextK or {}; table.insert(m.raid.nextK, { K, g(2) }) else m.raid.next = g(2) end
     end
@@ -363,7 +364,7 @@ local used = { fs = 0, tex = 0, rt = 0, btn = 0 }
 local EXPANDED = {} -- (lists opened with "Show N more", until the next pull)
 local IND = 0 -- (rows sit this far in, inside a section panel)
 local function resetPool()
-  used.fs, used.tex, used.rt, used.btn = 0, 0, 0, 0
+  used.fs, used.tex, used.rt, used.btn, used.ln = 0, 0, 0, 0, 0
   for _, l in pairs(pool) do for _, o in ipairs(l) do o:Hide(); o:ClearAllPoints() end end
 end
 local function FS(kind, size, hex)
@@ -516,7 +517,7 @@ local function cutView(m)
     return o
   end
   local function pick(def, kl) if kl then for _, x in ipairs(kl) do if x[1]:find(c, 1, true) then return x[2] end end; return "" end; return def end
-  local v = { h = m.h, addonV = m.addonV, cutN = m.cutN, coach = (m.coachV and m.coachV[c] and (m.coachV[c].head or "") ~= "" and m.coachV[c]) or m.coach, players = {},
+  local v = { h = m.h, addonV = m.addonV, cutN = m.cutN, coach = (m.coachV and m.coachV[c] and (m.coachV[c].head or "") ~= "" and m.coachV[c]) or m.coach, grade = m.grade, players = {},
     raid = { bad = keep(m.raid.bad, true), died = keep(m.raid.died), mech = keep(m.raid.mech, true), more = pick(m.raid.more, m.raid.moreK), next = pick(m.raid.next, m.raid.nextK),
       tiles = keep(m.raid.tiles), story = pick(m.raid.story or "", m.raid.storyK), better = pick(m.raid.better or "", m.raid.betterK), worse = pick(m.raid.worse or "", m.raid.worseK), lead = pick(m.raid.lead or "", m.raid.leadK),
       good = keep(m.raid.good), fixes = keep(m.raid.fixes), ghap = keep(m.raid.ghap), gchg = keep(m.raid.gchg), ghead = pick(m.raid.ghead or "", m.raid.gheadK), gnext = pick(m.raid.gnext or "", m.raid.gnextK) } }
@@ -534,7 +535,55 @@ local function showPull(i)
   DB.cur = i; wipe(EXPANDED); scroller:SetVerticalScroll(0); render()
 end
 -- (WoW allows a function 60 outside locals: render's small helpers sit in one table so it stays well under (Oct 22))
-local UI = { parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, canRaid = canRaid, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded }
+-- (the card's small charts (Oct 22): every pull on this boss tonight, as a line; the best one marked)
+local GRADEC = { S = "ff8000", A = "a335ee", B = "0070dd", C = "1eff00", D = "ece8df", F = "9d9d9d" }
+local function cardLine(x1, y1, x2, y2, hex, w)
+  if not body.CreateLine then return end
+  used.ln = (used.ln or 0) + 1; pool.ln = pool.ln or {}
+  local l = pool.ln[used.ln]; if not l then l = body:CreateLine(nil, "ARTWORK"); pool.ln[used.ln] = l end
+  l:SetStartPoint("TOPLEFT", body, x1, -y1); l:SetEndPoint("TOPLEFT", body, x2, -y2); l:SetThickness(w or 2); l:SetColorTexture(rgb(hex)); l:Show()
+end
+local function cardChart(y, title, pts, curPull, fmt)
+  local h = 78
+  local bg = TEX("BACKGROUND"); bg:SetPoint("TOPLEFT", 0, -y); bg:SetSize(CW, h); rounded(bg, "fill", 8, COL.raised, (DB.cardStyle == "glass") and 0.55 or 1)
+  local t = FS("bold", 10.5, COL.faint); t:SetPoint("TOPLEFT", 12, -(y + 9)); t:SetText(string.upper(title))
+  if #pts < 2 then local n = FS("body", 12, COL.faint); n:SetPoint("TOPLEFT", 12, -(y + 30)); n:SetWidth(CW - 24); n:SetText("Shows once you have two pulls on this boss tonight."); return y + h + 8 end
+  local lo, hi, best = math.huge, -math.huge, 1
+  for i, p in ipairs(pts) do lo = math.min(lo, p[2]); hi = math.max(hi, p[2]); if p[2] >= pts[best][2] then best = i end end
+  if hi == lo then hi = lo + 1 end
+  local x0, x1, y0, y1 = 16, CW - 16, y + 30, y + h - 12
+  local function px(i) return x0 + (i - 1) * (x1 - x0) / (#pts - 1) end
+  local function py(v) return y1 - (y1 - y0) * (v - lo) / (hi - lo) end
+  local function mix(i) local f = (i - 1) / math.max(1, #pts - 1); local a1, a2, a3 = rgb(COL.gold); local b1, b2, b3 = rgb("5fdc7a"); return string.format("%02x%02x%02x", (a1 + (b1 - a1) * f) * 255, (a2 + (b2 - a2) * f) * 255, (a3 + (b3 - a3) * f) * 255) end
+  for i = 2, #pts do cardLine(px(i - 1), py(pts[i - 1][2]), px(i), py(pts[i][2]), mix(i), 2) end
+  for i, p in ipairs(pts) do
+    local d = TEX("OVERLAY"); d:SetTexture(SLICE .. "dot"); local big = p[1] == curPull; d:SetSize(big and 9 or 6, big and 9 or 6); d:SetPoint("CENTER", body, "TOPLEFT", px(i), -py(p[2])); d:SetVertexColor(rgb(big and "5fdc7a" or mix(i)))
+  end
+  local b = FS("bold", 11, "5fdc7a"); b:SetJustifyH("RIGHT"); b:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - 12, -(y + 9)); b:SetText("Best: pull " .. pts[best][1] .. (fmt and (" · " .. fmt(pts[best][2])) or ""))
+  return y + h + 8
+end
+local function cardCharts(y, raw, P, SH)
+  local list = {}; for _, q in ipairs(DB.pulls) do if q.h and q.h.boss == raw.h.boss and q.h.diff == raw.h.diff then list[#list + 1] = q end end
+  if SH.chartNight then
+    local pts = {}; for _, q in ipairs(list) do local v = q.h.kill and 100 or (tonumber(q.h.pct) and (100 - tonumber(q.h.pct))); if v then pts[#pts + 1] = { q.h.pull, v } end end
+    y = cardChart(y, "How far each pull got", pts, raw.h.pull, function(v) return v >= 100 and "kill" or (math.floor(100 - v + 0.5) .. "% left") end)
+  end
+  if SH.chartLine and P then
+    local pts = {}; for _, q in ipairs(list) do for _, p in ipairs(q.players or {}) do if p.name == P.name then local v = parseK(p.v); if v and v > 0 then pts[#pts + 1] = { q.h.pull, v } end end end end
+    y = cardChart(y, (P.role == "healer" and "Your healing" or "Your damage") .. " tonight", pts, raw.h.pull, function(v) return v >= 1000 and (string.format("%.2f", v / 1000):gsub("0+$", ""):gsub("%.$", "") .. "M") or (math.floor(v + 0.5) .. "k") end)
+  end
+  return y
+end
+local function cardGrade(y, gr)
+  local h = 50
+  local bg = TEX("BACKGROUND"); bg:SetPoint("TOPLEFT", 0, -y); bg:SetSize(CW, h); rounded(bg, "fill", 8, COL.raised, (DB.cardStyle == "glass") and 0.55 or 1)
+  local L = string.sub(gr.letter or "", 1, 1)
+  local lt = FS("head", 30, GRADEC[L] or COL.text); lt:SetPoint("TOPLEFT", 14, -(y + 8)); lt:SetText(gr.letter or "")
+  local k = FS("bold", 10.5, COL.faint); k:SetPoint("TOPLEFT", 58, -(y + 9)); k:SetText("REPORT CARD  ·  " .. (gr.score or ""))
+  local c = FS("body", 12.5, COL.soft); c:SetPoint("TOPLEFT", 58, -(y + 25)); c:SetWidth(CW - 70); c:SetWordWrap(false); c:SetText(gr.cats or "")
+  return y + h + 8
+end
+local UI = { cardCharts = cardCharts, cardGrade = cardGrade, parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, canRaid = canRaid, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded }
 function render()
   local raw = DB.pulls[DB.cur]; local m = UI.cutView(raw); CUR = m
   if not m then return end
@@ -576,7 +625,7 @@ function render()
   if DB.detailed and not DB.compact and view == "raid" and UI.canRaid() and #(m.raid.tiles or {}) > 0 then meta = { h.diff, "Pull " .. h.pull } end
   metaT:SetWidth(CW); metaT:SetText(table.concat(meta, "   ·   "))
   -- (tabs and the body sit lower when the pull chips show)
-  local coachOn = m.coach and (m.coach.head or "") ~= "" and not m.h.practice -- (Debriefing's coach box on every style, with the Raid view and You tabs; the style decides how much is open (Oct 22))
+  local coachOn = m.coach and (m.coach.head or "") ~= "" and not m.h.practice and (DB.show or {}).coach ~= false -- (Debriefing's coach box on every style, with the Raid view and You tabs; the style decides how much is open (Oct 22))
   local glanceOn = DB.glance and (m.raid.ghead or "") ~= "" and not coachOn -- (the Glance card: one view, so no tabs; older pulls without it keep the tabs)
   if coachOn and not DB.viewPicked and UI.canRaid() then view = "raid" end -- (the coach box first, until you pick a tab yourself)
   TOPY = (((DB.show or {}).chips ~= false) and 180 or 150) - (glanceOn and 38 or 0)
@@ -840,13 +889,13 @@ function render()
       end
       y = y + 4
     end
-    for _, x in ipairs(DB.compact and {} or c.right) do
+    for _, x in ipairs((DB.compact or SH.right == false) and {} or c.right) do
       local ok = TEX("ARTWORK"); ok:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready"); ok:SetPoint("TOPLEFT", 4, -(y + 2)); ok:SetSize(16, 16)
       local f = FS("body", 13.5, COL.goodT); f:SetPoint("TOPLEFT", 26, -(y + 1)); f:SetWidth(CW - 30); f:SetText(paint(x.t)); y = y + math.max(18, f:GetStringHeight()) + 7
     end
     y = y + 6
     -- deaths, folded until clicked
-    if #c.deaths > 0 or (c.dline or "") ~= "" then
+    if SH.cdeaths ~= false and (#c.deaths > 0 or (c.dline or "") ~= "") then
       local y0 = y; local open = fold("cdeaths", "DEATHS", #c.deaths); y = y + 32
       if open then
         if #c.deaths == 0 then local f = FS("body", 13, COL.muted); f:SetPoint("TOPLEFT", 14, -y); f:SetWidth(CW - 28); f:SetText(paint(c.dline)); y = y + f:GetStringHeight() + 8 end
@@ -860,7 +909,7 @@ function render()
       panel(y0, y - y0); y = y + 8
     end
     -- avoidable damage, folded until clicked
-    if #c.avoid > 0 or (c.aline or "") ~= "" then
+    if SH.cavoid ~= false and (#c.avoid > 0 or (c.aline or "") ~= "") then
       local y0 = y; local open = fold("cavoid", "AVOIDABLE DAMAGE", #c.avoid); y = y + 32
       if open then
         if #c.avoid == 0 then local f = FS("body", 13, COL.muted); f:SetPoint("TOPLEFT", 14, -y); f:SetWidth(CW - 28); f:SetText(paint(c.aline)); y = y + f:GetStringHeight() + 8 end
@@ -888,7 +937,7 @@ function render()
     return true
   end
   -- (the wipe filter on top of the card (Oct 22): it decides what everything under it counts, the coach box included)
-  if raw.cutN and not m.h.practice then
+  if raw.cutN and not m.h.practice and SH.stopat ~= false then
     local y0 = y; IND = 12; y = y + 10
     local function stepBtn(lbl, right, d)
       local bt = BTN(); bt:SetSize(22, 22); bt:SetPoint("TOPRIGHT", body, "TOPLEFT", right, -(y - 2))
@@ -910,8 +959,12 @@ function render()
     local n2 = FS("body", 12.5, COL.faint); n2:SetPoint("TOPLEFT", IND, -y); n2:SetWidth(CW - IND * 2); n2:SetText(note); y = y + n2:GetStringHeight() + 10
     panel(y0, y - y0); IND = 0; y = y + 10
   end
+  -- (the Report card grade and the small charts, when their chips are on in the settings (Oct 22))
+  if SH.grade and m.grade and not m.h.practice then y = UI.cardGrade(y, m.grade) end
+  if (SH.chartNight or SH.chartLine) and not m.h.practice then y = UI.cardCharts(y, raw, P, SH) end
   if coachOn and view ~= "me" then
     coachBody()
+    if SH.mechs and m.raid.mech and #m.raid.mech > 0 and (DB.maxMech or 6) > 0 then section("mech", "Boss mechanics", m.raid.mech, DB.maxMech or 6, function(r) y = row(y, r[1], r[2], r[4], r[3]) end) end
   elseif glanceOn then
     glanceBody()
   elseif view == "me" and P then
@@ -1560,191 +1613,183 @@ local function optButton(parent, label, w, primary, h)
   b:SetScript("OnLeave", function() if not b.primary then rounded(b.lineT, "line", 5, COL.line2, 1) end end)
   return b
 end
-local OW, OH = 880, 700 -- (the settings window: the website's look, a header bar, a big title, underline tabs, rows in rounded panels)
+-- (the settings window, sleek like the website (Oct 22): a slim header, three tabs (Card, Look, More), thin rows, explanations in
+-- a tooltip on the little i, the card's pieces as chips, and the Companion's colours: green for what's on, gold for your picks)
+local OW, OH = 430, 640
 local DEEP, PANEL = "0f1117", "171a22"
+local EM, EMD = "5fdc7a", "178a3c"
+-- (a left-to-right colour fade: the Companion's gold to green, or green shades on a switch)
+local function grad(tex, a, b)
+  if tex.SetGradient and CreateColor then local r1, g1, b1 = rgb(a); local r2, g2, b2 = rgb(b); tex:SetVertexColor(1, 1, 1, 1); tex:SetGradient("HORIZONTAL", CreateColor(r1, g1, b1, 1), CreateColor(r2, g2, b2, 1))
+  else tex:SetVertexColor(rgb(b)) end
+end
 local function buildOptions()
   opt = CreateFrame("Frame", "DebriefOptions", UIParent)
   opt:SetSize(OW, OH); opt:SetPoint("CENTER", -220, 10); opt:SetFrameStrata("DIALOG"); opt:SetClampedToScreen(true); opt:Hide()
-  skin(opt, 8, DEEP, 0.98, COL.line2, 1, true)
+  skin(opt, 8, "13161d", 0.98, COL.line2, 1, true)
   opt:SetMovable(true); opt:EnableMouse(true); opt:RegisterForDrag("LeftButton")
   opt:SetScript("OnDragStart", opt.StartMoving); opt:SetScript("OnDragStop", opt.StopMovingOrSizing)
   tinsert(UISpecialFrames, "DebriefOptions")
-  -- the header bar, like the website's top bar
-  local hb = opt:CreateTexture(nil, "BACKGROUND", nil, -5); hb:SetPoint("TOPLEFT", 1, -1); hb:SetPoint("TOPRIGHT", -1, -1); hb:SetHeight(55); fill(hb, PANEL, 1)
-  -- (a soft gold glow from the logo side, like the website's top)
-  if hb.SetGradient and CreateColor then hb:SetColorTexture(1, 1, 1, 1); hb:SetGradient("HORIZONTAL", CreateColor(0.15, 0.13, 0.09, 1), CreateColor(0.09, 0.10, 0.13, 1)) end
-  local hl = opt:CreateTexture(nil, "ARTWORK"); hl:SetPoint("TOPLEFT", 1, -56); hl:SetPoint("TOPRIGHT", -1, -56); hl:SetHeight(1); fill(hl, COL.line)
-  local lg = opt:CreateTexture(nil, "ARTWORK"); lg:SetSize(30, 30); lg:SetPoint("TOPLEFT", 20, -13); lg:SetTexture(MEDIA .. "Media\\logo")
-  local tt = opt:CreateFontString(nil, "OVERLAY"); setFont(tt, "head", 21); tt:SetPoint("TOPLEFT", 54, -12); tt:SetTextColor(rgb(COL.text)); tt:SetText("Debrief")
-  local tsub = opt:CreateFontString(nil, "OVERLAY"); setFont(tsub, "body", 12.5); tsub:SetPoint("TOPLEFT", 54, -34); tsub:SetTextColor(rgb(COL.muted)); tsub:SetText("Your pull recap in game")
-  local clb = CreateFrame("Button", nil, opt); clb:SetSize(34, 34); clb:SetPoint("TOPRIGHT", -14, -11); skin(clb, 8, DEEP, 1, COL.line2, 1)
-  clb.t = clb:CreateFontString(nil, "OVERLAY"); setFont(clb.t, "bold", 17); clb.t:SetPoint("CENTER", 0, 1); clb.t:SetText("×"); clb.t:SetTextColor(rgb(COL.muted))
+  -- (a soft green glow from the logo's corner, like the Companion's window)
+  local glow = opt:CreateTexture(nil, "BACKGROUND", nil, -5); glow:SetPoint("TOPLEFT", 1, -1); glow:SetPoint("TOPRIGHT", -1, -1); glow:SetHeight(80)
+  if glow.SetGradient and CreateColor then glow:SetColorTexture(1, 1, 1, 1); glow:SetGradient("HORIZONTAL", CreateColor(0.37, 0.86, 0.48, 0.06), CreateColor(0.9, 0.7, 0.31, 0.02)) else glow:SetColorTexture(0, 0, 0, 0) end
+  -- the header: the logo, Debrief, Settings, and a plain ×
+  local lg = opt:CreateTexture(nil, "ARTWORK"); lg:SetSize(18, 18); lg:SetPoint("TOPLEFT", 16, -14); lg:SetTexture(MEDIA .. "Media\\logo")
+  local tt = opt:CreateFontString(nil, "OVERLAY"); setFont(tt, "head", 16); tt:SetPoint("LEFT", lg, "RIGHT", 7, 0); tt:SetTextColor(rgb(COL.text)); tt:SetText("Debrief")
+  local ts = opt:CreateFontString(nil, "OVERLAY"); setFont(ts, "body", 12); ts:SetPoint("LEFT", tt, "RIGHT", 7, -1); ts:SetTextColor(rgb(COL.faint)); ts:SetText("Settings")
+  local clb = CreateFrame("Button", nil, opt); clb:SetSize(24, 24); clb:SetPoint("TOPRIGHT", -10, -10)
+  clb.t = clb:CreateFontString(nil, "OVERLAY"); setFont(clb.t, "bold", 16); clb.t:SetPoint("CENTER", 0, 1); clb.t:SetText("×"); clb.t:SetTextColor(rgb(COL.faint))
   clb:SetScript("OnClick", function() opt:Hide() end)
-  clb:SetScript("OnEnter", function() clb.t:SetTextColor(rgb(COL.text)); rounded(clb.lineT, "line", 8, COL.gold, 1) end)
-  clb:SetScript("OnLeave", function() clb.t:SetTextColor(rgb(COL.muted)); rounded(clb.lineT, "line", 8, COL.line2, 1) end)
-  local ver = opt:CreateFontString(nil, "OVERLAY"); setFont(ver, "body", 12); ver:SetPoint("RIGHT", clb, "LEFT", -14, 0); ver:SetTextColor(rgb(COL.faint))
-  ver:SetText("Saves as you go  ·  /dmo opens this  ·  Version " .. ((C_AddOns and C_AddOns.GetAddOnMetadata and C_AddOns.GetAddOnMetadata(ADDON, "Version")) or ""))
-  -- the big title and the page's own line
-  local bigT = opt:CreateFontString(nil, "OVERLAY"); setFont(bigT, "head", 30); bigT:SetPoint("TOPLEFT", 24, -70); bigT:SetTextColor(rgb(COL.text)); bigT:SetText("Settings")
-  local pNote = opt:CreateFontString(nil, "OVERLAY"); setFont(pNote, "body", 14); pNote:SetPoint("BOTTOMLEFT", bigT, "BOTTOMRIGHT", 14, 4); pNote:SetWidth(OW - 220); pNote:SetJustifyH("LEFT"); pNote:SetWordWrap(false); pNote:SetTextColor(rgb(COL.muted))
-  -- underline tabs, like the Boss guides bar
-  local MENU = {
-    { "layout", "Layout" }, { "look", "Look" }, { "after", "After a pull" }, { "views", "Big window" }, { "raid", "Raid" },
-    { "goals", "Goals" }, { "app", "PC app" }, { "pulls", "Saved pulls" }, { "help", "Help" },
-  }
-  local NOTES = {
-    layout = "How much your recap shows.", look = "Colours, sizes and font.", after = "What happens when your recap arrives.",
-    views = "Everything at once, or one slim line.", raid = "The whole raid's pull: mistakes, mechanics and who died.", goals = "The number you're chasing.",
-    app = "Only for whoever runs Debrief Companion.", pulls = "Debrief keeps your pulls between sessions.", help = "Commands, the tutorial and a sample.",
-  }
-  local TAB_Y, PAGE_TOP = 114, 164
-  local tline = opt:CreateTexture(nil, "ARTWORK"); tline:SetPoint("TOPLEFT", 24, -(TAB_Y + 34)); tline:SetPoint("TOPRIGHT", -24, -(TAB_Y + 34)); tline:SetHeight(1); fill(tline, COL.line)
-  local pages, tabBtns, cur = {}, {}, "layout"
+  clb:SetScript("OnEnter", function() clb.t:SetTextColor(rgb(COL.text)) end); clb:SetScript("OnLeave", function() clb.t:SetTextColor(rgb(COL.faint)) end)
+  -- three tabs, plain words with the gold-to-green line under the open one
+  local MENU = { { "card", "Card" }, { "look", "Look" }, { "more", "More" } }
+  local TAB_Y, PAGE_TOP, FOOT = 40, 74, 30
+  local tline = opt:CreateTexture(nil, "ARTWORK"); tline:SetPoint("TOPLEFT", 1, -(TAB_Y + 28)); tline:SetPoint("TOPRIGHT", -1, -(TAB_Y + 28)); tline:SetHeight(1); fill(tline, COL.line)
+  local pages, tabBtns, cur = {}, {}, "card"
   local function showPage(k)
     cur = k
-    for kk, p in pairs(pages) do p:SetShown(kk == k) end
-    for kk, b in pairs(tabBtns) do local on = kk == k; b.t:SetTextColor(rgb(on and COL.text or COL.muted)); b.u:SetShown(on); fill(b.u, COL.gold) end
-    pNote:SetText(NOTES[k] or "")
+    for kk, p in pairs(pages) do p.sf:SetShown(kk == k) end
+    for kk, b in pairs(tabBtns) do local on = kk == k; b.t:SetTextColor(rgb(on and COL.text or COL.muted)); b.u:SetShown(on) end
   end
   local tx = 16
   for _, it in ipairs(MENU) do
     local key = it[1]
-    local b = CreateFrame("Button", nil, opt); b:SetHeight(34); b:SetPoint("TOPLEFT", tx, -TAB_Y)
-    b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "bold", 14.5); b.t:SetPoint("CENTER", 0, 2); b.t:SetText(it[2])
-    b:SetWidth(b.t:GetStringWidth() + 22); tx = tx + b:GetWidth()
-    b.u = b:CreateTexture(nil, "OVERLAY"); b.u:SetPoint("BOTTOMLEFT", 8, 0); b.u:SetPoint("BOTTOMRIGHT", -8, 0); b.u:SetHeight(2); fill(b.u, COL.gold)
+    local b = CreateFrame("Button", nil, opt); b:SetHeight(28); b:SetPoint("TOPLEFT", tx, -TAB_Y)
+    b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "bold", 13.5); b.t:SetPoint("CENTER", 0, 1); b.t:SetText(it[2])
+    b:SetWidth(b.t:GetStringWidth() + 4); tx = tx + b:GetWidth() + 20
+    b.u = b:CreateTexture(nil, "OVERLAY"); b.u:SetPoint("BOTTOMLEFT", 0, 0); b.u:SetPoint("BOTTOMRIGHT", 0, 0); b.u:SetHeight(2); b.u:SetColorTexture(1, 1, 1, 1); grad(b.u, COL.gold, EM)
     b:SetScript("OnClick", function() showPage(key) end)
     b:SetScript("OnEnter", function() if cur ~= key then b.t:SetTextColor(rgb(COL.text)) end end)
     b:SetScript("OnLeave", function() if cur ~= key then b.t:SetTextColor(rgb(COL.muted)) end end)
     tabBtns[key] = b
-    local p = CreateFrame("Frame", nil, opt); p:SetPoint("TOPLEFT", 0, -PAGE_TOP); p:SetSize(OW, OH - PAGE_TOP - 10); p:Hide()
+    -- (each page scrolls with the mouse wheel)
+    local sf = CreateFrame("ScrollFrame", nil, opt); sf:SetPoint("TOPLEFT", 0, -PAGE_TOP); sf:SetPoint("BOTTOMRIGHT", 0, FOOT + 1); sf:Hide()
+    local p = CreateFrame("Frame", nil, sf); p:SetSize(OW, 10); sf:SetScrollChild(p); p.sf = sf
+    sf:EnableMouseWheel(true)
+    sf:SetScript("OnMouseWheel", function(self, d) local mx = math.max(0, p:GetHeight() - (self:GetHeight() or 0)); self:SetVerticalScroll(math.max(0, math.min(mx, (self:GetVerticalScroll() or 0) - d * 40))) end)
     pages[key] = p
   end
   refreshers[#refreshers + 1] = function() showPage(cur) end
+  -- the small print at the bottom
+  local fl = opt:CreateTexture(nil, "ARTWORK"); fl:SetPoint("BOTTOMLEFT", 1, FOOT); fl:SetPoint("BOTTOMRIGHT", -1, FOOT); fl:SetHeight(1); fill(fl, COL.line)
+  local f1 = opt:CreateFontString(nil, "OVERLAY"); setFont(f1, "body", 11.5); f1:SetPoint("BOTTOMLEFT", 16, 10); f1:SetTextColor(rgb(COL.faint)); f1:SetText("Saves as you go")
+  local f2 = opt:CreateFontString(nil, "OVERLAY"); setFont(f2, "body", 11.5); f2:SetPoint("BOTTOMRIGHT", -16, 10); f2:SetTextColor(rgb(COL.faint))
+  f2:SetText("/dmo  ·  Version " .. ((C_AddOns and C_AddOns.GetAddOnMetadata and C_AddOns.GetAddOnMetadata(ADDON, "Version")) or ""))
 
-  -- rows live inside rounded panels (a heading and a small grey note, then the rows with thin lines between)
-  local PX, LX = 24, 42 -- (panel edge, row text)
-  local P, y, panelY, firstRow
-  local function page(k) P = pages[k]; y = 0; panelY = nil end
-  local function panel(title, note, ic)
-    panelY = y; firstRow = true
-    local hx = LX
-    -- (a small game icon beside the heading, like the website's coloured section icons; skipped if the game doesn't have it)
-    if ic and not (GetFileIDFromPath and not GetFileIDFromPath("Interface\\Icons\\" .. ic)) then
-      local t = P:CreateTexture(nil, "ARTWORK"); t:SetSize(20, 20); t:SetPoint("TOPLEFT", LX, -(y + 13)); t:SetTexture("Interface\\Icons\\" .. ic); t:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-      hx = LX + 28
-    end
-    local h = P:CreateFontString(nil, "OVERLAY"); setFont(h, "head", 17); h:SetPoint("TOPLEFT", hx, -(y + 14)); h:SetTextColor(rgb(COL.text)); h:SetText(title)
-    if note then local n = P:CreateFontString(nil, "OVERLAY"); setFont(n, "body", 12.5); n:SetPoint("BOTTOMLEFT", h, "BOTTOMRIGHT", 10, 1); n:SetTextColor(rgb(COL.faint)); n:SetText(note) end
-    y = y + 44
-  end
-  local function panelEnd()
-    if not panelY then return end
-    y = y + 6
-    local f = P:CreateTexture(nil, "BACKGROUND"); f:SetPoint("TOPLEFT", PX, -panelY); f:SetSize(OW - PX * 2, y - panelY); rounded(f, "fill", 8, PANEL, 1)
-    local l = P:CreateTexture(nil, "BORDER"); l:SetAllPoints(f); rounded(l, "line", 8, COL.line, 1)
-    panelY = nil; y = y + 14
+  -- ---------- the pieces every page is made of ----------
+  local PX = 16
+  local P, y, first
+  local function page(k) if P then P:SetHeight(y + 14) end; P = k and pages[k]; y = 6; first = true end
+  -- (a small upper-case label over a group: gold for the first on a page)
+  local function section(title, gold, new)
+    local h = P:CreateFontString(nil, "OVERLAY"); setFont(h, "bold", 10.5); h:SetPoint("TOPLEFT", PX, -(y + (first and 4 or 16))); h:SetTextColor(rgb(gold and COL.gold or COL.faint)); h:SetText(string.upper(title))
+    if new then local n = P:CreateFontString(nil, "OVERLAY"); setFont(n, "bold", 9.5); n:SetPoint("LEFT", h, "RIGHT", 6, 0); n:SetTextColor(rgb(EM)); n:SetText("NEW") end
+    y = y + (first and 22 or 34); first = false; P.rowFirst = true
   end
   local function custom() DB.preset = nil; Debrief_RefreshOptions() end
+  -- (one thin row: the label left, its control right; the longer word in a tooltip on a small i)
   local function rowBase(label, sub)
-    local h = sub and 50 or 44
-    if not firstRow then local ln = P:CreateTexture(nil, "ARTWORK"); ln:SetPoint("TOPLEFT", LX, -y); ln:SetPoint("TOPRIGHT", -LX, -y); ln:SetHeight(1); fill(ln, COL.line, 0.7) end
-    firstRow = false
-    local t = P:CreateFontString(nil, "OVERLAY"); setFont(t, "bold", 15); t:SetPoint("TOPLEFT", LX, -(y + (sub and 9 or 14))); t:SetTextColor(rgb(COL.text)); t:SetText(label)
-    if sub then local s2 = P:CreateFontString(nil, "OVERLAY"); setFont(s2, "body", 13); s2:SetPoint("TOPLEFT", LX, -(y + 28)); s2:SetWidth(430); s2:SetJustifyH("LEFT"); s2:SetWordWrap(false); s2:SetTextColor(rgb(COL.faint)); s2:SetText(sub) end
-    local cy = y + h / 2
-    y = y + h
+    if not P.rowFirst then local ln = P:CreateTexture(nil, "ARTWORK"); ln:SetPoint("TOPLEFT", PX, -y); ln:SetPoint("TOPRIGHT", -PX, -y); ln:SetHeight(1); fill(ln, COL.line, 0.8) end
+    P.rowFirst = false
+    local t = P:CreateFontString(nil, "OVERLAY"); setFont(t, "body", 13.5); t:SetPoint("TOPLEFT", PX, -(y + 8)); t:SetTextColor(rgb(COL.text)); t:SetText(label)
+    if sub then
+      local ring = P:CreateTexture(nil, "ARTWORK"); ring:SetTexture(SLICE .. "dot"); ring:SetSize(12, 12); ring:SetPoint("LEFT", t, "RIGHT", 6, 0); ring:SetVertexColor(rgb(COL.line2))
+      local it = P:CreateFontString(nil, "OVERLAY"); setFont(it, "bold", 9); it:SetPoint("CENTER", ring, "CENTER", 0, 0); it:SetTextColor(rgb(COL.muted)); it:SetText("i")
+      local hb = CreateFrame("Button", nil, P); hb:SetPoint("TOPLEFT", t, "TOPLEFT", -2, 4); hb:SetPoint("BOTTOMRIGHT", ring, "BOTTOMRIGHT", 2, -4)
+      hb:SetScript("OnEnter", function() GameTooltip:SetOwner(hb, "ANCHOR_RIGHT"); GameTooltip:SetText(label, 1, 1, 1); GameTooltip:AddLine(sub, 0.75, 0.78, 0.82, true); GameTooltip:Show() end)
+      hb:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    end
+    local cy = y + 15; y = y + 30
     return cy
   end
-  -- slim on/off switch
+  -- (a small on/off switch: the Companion's green when on)
   local function switch(label, sub, get, set, keepPreset)
     local cy = rowBase(label, sub)
-    local b = CreateFrame("Button", nil, P); b:SetSize(40, 22); b:SetPoint("RIGHT", P, "TOPRIGHT", -LX, -cy)
+    local b = CreateFrame("Button", nil, P); b:SetSize(28, 16); b:SetPoint("RIGHT", P, "TOPRIGHT", -PX, -cy)
     b.tr = b:CreateTexture(nil, "ARTWORK"); b.tr:SetAllPoints()
-    b.trL = b:CreateTexture(nil, "OVERLAY"); b.trL:SetAllPoints()
-    b.k = b:CreateTexture(nil, "OVERLAY", nil, 2); b.k:SetSize(16, 16); b.k:SetTexture(SLICE .. "dot")
+    b.k = b:CreateTexture(nil, "OVERLAY"); b.k:SetSize(12, 12); b.k:SetTexture(SLICE .. "dot")
     local function show()
       local on = get()
-      rounded(b.tr, "fill", 8, on and COL.gold or COL.raised, 1); rounded(b.trL, "line", 8, on and COL.gold or COL.line2, 1)
-      b.k:ClearAllPoints(); b.k:SetPoint("CENTER", b, on and "RIGHT" or "LEFT", on and -11 or 11, 0); b.k:SetVertexColor(rgb(on and "1b1406" or COL.muted))
+      rounded(b.tr, "fill", 5, on and "ffffff" or "2a2f3b", 1); if on then grad(b.tr, EMD, EM) end
+      b.k:ClearAllPoints(); b.k:SetPoint("CENTER", b, on and "RIGHT" or "LEFT", on and -8 or 8, 0); b.k:SetVertexColor(rgb(on and "0f2416" or COL.faint))
     end
     b:SetScript("OnClick", function() set(not get()); if not keepPreset then custom() end; show(); applySettings() end)
     refreshers[#refreshers + 1] = show; show()
   end
-  -- − 3 + stepper for counts
+  local function txtBtn(label)
+    local b = CreateFrame("Button", nil, P); b:SetSize(18, 20)
+    b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "bold", 13); b.t:SetPoint("CENTER", 0, 0); b.t:SetText(label); b.t:SetTextColor(rgb(COL.faint))
+    b:SetScript("OnEnter", function() b.t:SetTextColor(rgb(COL.gold)) end); b:SetScript("OnLeave", function() b.t:SetTextColor(rgb(COL.faint)) end)
+    return b
+  end
+  -- (– 3 + for counts)
   local function stepper(label, sub, minV, maxV, get, set, fmt, keepPreset, step)
     local cy = rowBase(label, sub)
-    local plus = optButton(P, "+", 30, false, 28); plus:SetPoint("RIGHT", P, "TOPRIGHT", -LX, -cy)
-    local val = P:CreateFontString(nil, "OVERLAY"); setFont(val, "head", 18); val:SetWidth(68); val:SetJustifyH("CENTER"); val:SetPoint("RIGHT", plus, "LEFT", -4, 0); val:SetTextColor(rgb(COL.text))
-    local minus = optButton(P, "–", 30, false, 28); minus:SetPoint("RIGHT", val, "LEFT", -4, 0)
+    local plus = txtBtn("+"); plus:SetPoint("RIGHT", P, "TOPRIGHT", -PX + 4, -cy)
+    local val = P:CreateFontString(nil, "OVERLAY"); setFont(val, "bold", 13); val:SetWidth(46); val:SetJustifyH("CENTER"); val:SetPoint("RIGHT", plus, "LEFT", 0, 0); val:SetTextColor(rgb(COL.text))
+    local minus = txtBtn("–"); minus:SetPoint("RIGHT", val, "LEFT", 0, 0)
     local function show() val:SetText((fmt or tostring)(get())) end
     local function go(d) local v = math.max(minV, math.min(maxV, get() + d)); if v ~= get() then set(v); if not keepPreset then custom() end; show(); applySettings() end end
     minus:SetScript("OnClick", function() go(-(step or 1)) end); plus:SetScript("OnClick", function() go(step or 1) end)
     refreshers[#refreshers + 1] = show; show()
   end
-  -- percentage slider with its value in a small chip
+  -- (a percentage slider: a thin gold-to-green line and its number)
   local function pslider(label, sub, minV, maxV, get, set)
     local cy = rowBase(label, sub)
-    local chip = CreateFrame("Frame", nil, P); chip:SetSize(56, 26); chip:SetPoint("RIGHT", P, "TOPRIGHT", -LX, -cy); skin(chip, 5, DEEP, 1, COL.line2, 1)
-    chip.t = chip:CreateFontString(nil, "OVERLAY"); setFont(chip.t, "bold", 13); chip.t:SetPoint("CENTER", 0, 0); chip.t:SetTextColor(rgb(COL.text))
-    local s = CreateFrame("Slider", nil, P); s:SetSize(170, 18); s:SetPoint("RIGHT", chip, "LEFT", -14, 0); s:SetOrientation("HORIZONTAL")
+    local vt = P:CreateFontString(nil, "OVERLAY"); setFont(vt, "bold", 11.5); vt:SetWidth(38); vt:SetJustifyH("RIGHT"); vt:SetPoint("RIGHT", P, "TOPRIGHT", -PX, -cy); vt:SetTextColor(rgb(COL.muted))
+    local s = CreateFrame("Slider", nil, P); s:SetSize(120, 16); s:SetPoint("RIGHT", vt, "LEFT", -8, 0); s:SetOrientation("HORIZONTAL")
     s:SetMinMaxValues(minV, maxV); s:SetValueStep(0.05); if s.SetObeyStepOnDrag then s:SetObeyStepOnDrag(true) end
-    local track = s:CreateTexture(nil, "BACKGROUND"); track:SetPoint("LEFT", 0, 0); track:SetPoint("RIGHT", 0, 0); track:SetHeight(4); fill(track, COL.line2)
-    local fillT = s:CreateTexture(nil, "BORDER"); fillT:SetPoint("LEFT", 0, 0); fillT:SetHeight(4); fill(fillT, COL.gold)
-    local thumb = s:CreateTexture(nil, "ARTWORK"); thumb:SetTexture(SLICE .. "dot"); thumb:SetSize(16, 16); thumb:SetVertexColor(rgb(COL.text)); s:SetThumbTexture(thumb)
+    local track = s:CreateTexture(nil, "BACKGROUND"); track:SetPoint("LEFT", 0, 0); track:SetPoint("RIGHT", 0, 0); track:SetHeight(3); fill(track, "2f3542")
+    local fillT = s:CreateTexture(nil, "BORDER"); fillT:SetPoint("LEFT", 0, 0); fillT:SetHeight(3); fillT:SetColorTexture(1, 1, 1, 1); grad(fillT, COL.gold, EM)
+    local thumb = s:CreateTexture(nil, "ARTWORK"); thumb:SetTexture(SLICE .. "dot"); thumb:SetSize(11, 11); thumb:SetVertexColor(rgb(COL.text)); s:SetThumbTexture(thumb)
     local busy = false
-    local function paint(v) fill(fillT, COL.gold); fillT:SetWidth(math.max(1, 170 * (v - minV) / (maxV - minV))); chip.t:SetText(math.floor(v * 100 + 0.5) .. "%") end
+    local function paint(v) fillT:SetWidth(math.max(1, 120 * (v - minV) / (maxV - minV))); vt:SetText(math.floor(v * 100 + 0.5) .. "%") end
     s:SetScript("OnValueChanged", function(self, v) v = math.floor(v * 20 + 0.5) / 20; paint(v); if busy or v == get() then return end; set(v); applySettings() end)
     s:EnableMouseWheel(true); s:SetScript("OnMouseWheel", function(self, d) self:SetValue(math.max(minV, math.min(maxV, self:GetValue() + d * 0.05))) end)
     local function show() busy = true; s:SetValue(get()); paint(get()); busy = false end
     refreshers[#refreshers + 1] = show; show()
   end
-  -- a choice from a short list: < value >  (a list item's third field colours the value, for the accent colours)
+  -- (‹ value › through a short list)
   local function choice(label, sub, list, get, set, keepPreset)
     local cy = rowBase(label, sub)
-    local nx = optButton(P, ">", 30, false, 28); nx:SetPoint("RIGHT", P, "TOPRIGHT", -LX, -cy)
-    local val = P:CreateFontString(nil, "OVERLAY"); setFont(val, "bold", 14); val:SetWidth(150); val:SetJustifyH("CENTER"); val:SetPoint("RIGHT", nx, "LEFT", -4, 0); val:SetTextColor(rgb(COL.text))
-    local pv = optButton(P, "<", 30, false, 28); pv:SetPoint("RIGHT", val, "LEFT", -4, 0)
+    local nx = txtBtn("›"); nx:SetPoint("RIGHT", P, "TOPRIGHT", -PX + 4, -cy)
+    local val = P:CreateFontString(nil, "OVERLAY"); setFont(val, "bold", 12.5); val:SetWidth(120); val:SetJustifyH("CENTER"); val:SetPoint("RIGHT", nx, "LEFT", 0, 0); val:SetTextColor(rgb(COL.text)); val:SetWordWrap(false)
+    local pv = txtBtn("‹"); pv:SetPoint("RIGHT", val, "LEFT", 0, 0)
     local function idx() for i, c in ipairs(list) do if c[1] == get() then return i end end return 1 end
-    local function show() local c = list[idx()]; val:SetText(c[2]); local hx = c[3]; if type(hx) == "function" then hx = hx() end; val:SetTextColor(rgb(hx or COL.text)) end
+    local function show() local c = list[idx()]; val:SetText(c[2]) end
     local function go(d) local i = ((idx() - 1 + d) % #list) + 1; set(list[i][1]); if not keepPreset then custom() end; applySettings(); Debrief_RefreshOptions() end
     pv:SetScript("OnClick", function() go(-1) end); nx:SetScript("OnClick", function() go(1) end)
     refreshers[#refreshers + 1] = show; show()
   end
-  -- a pill switcher, like the website's "Heroic | Mythic": a dark pill holding the options, the chosen one in gold
+  -- (a few words side by side; the chosen one in gold)
   local function segment(label, sub, list, get, set, keepPreset)
     local cy = rowBase(label, sub)
-    local box = CreateFrame("Frame", nil, P); box:SetHeight(32); skin(box, 15, DEEP, 1, COL.line2, 1)
-    local btns, w = {}, 4
-    for i, c in ipairs(list) do
-      local b = CreateFrame("Button", nil, box); b:SetHeight(24)
+    local btns, prev = {}, nil
+    for i = #list, 1, -1 do
+      local c = list[i]
+      local b = CreateFrame("Button", nil, P); b:SetHeight(20)
       b.bg = b:CreateTexture(nil, "BACKGROUND"); b.bg:SetAllPoints()
-      b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "bold", 13); b.t:SetPoint("CENTER", 0, 0); b.t:SetText(c[2])
-      b:SetWidth(b.t:GetStringWidth() + 26); b:SetPoint("LEFT", box, "LEFT", w, 0); w = w + b:GetWidth() + 2
+      b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "bold", 12); b.t:SetPoint("CENTER", 0, 0); b.t:SetText(c[2])
+      b:SetWidth(b.t:GetStringWidth() + 14)
+      if prev then b:SetPoint("RIGHT", prev, "LEFT", -2, 0) else b:SetPoint("RIGHT", P, "TOPRIGHT", -PX + 4, -cy) end
+      prev = b; btns[i] = b
       b:SetScript("OnClick", function() set(c[1]); if not keepPreset then custom() end; applySettings(); Debrief_RefreshOptions() end)
       b:SetScript("OnEnter", function() if get() ~= c[1] then b.t:SetTextColor(rgb(COL.text)) end end)
       b:SetScript("OnLeave", function() if get() ~= c[1] then b.t:SetTextColor(rgb(COL.muted)) end end)
-      btns[i] = b
     end
-    box:SetWidth(w + 2); box:SetPoint("RIGHT", P, "TOPRIGHT", -LX, -cy)
-    local function show()
-      for i, b in ipairs(btns) do
-        local on = get() == list[i][1]
-        rounded(b.bg, "fill", 8, COL.gold, on and 1 or 0); b.t:SetTextColor(rgb(on and "1b1406" or COL.muted))
-      end
-    end
+    local function show() for i, b in ipairs(btns) do local on = get() == list[i][1]; rounded(b.bg, "fill", 5, COL.gold, on and 0.15 or 0); b.t:SetTextColor(rgb(on and COL.gold or COL.muted)) end end
     refreshers[#refreshers + 1] = show; show()
   end
-  -- colour swatches: a round dot for each colour, a ring around the chosen one
+  -- (small colour dots, a ring round the chosen one)
   local function swatches(label, sub, list, get, set)
     local cy = rowBase(label, sub)
     local dots = {}
     for i = #list, 1, -1 do
       local c = list[i]
-      local b = CreateFrame("Button", nil, P); b:SetSize(28, 28)
-      if i == #list then b:SetPoint("RIGHT", P, "TOPRIGHT", -LX, -cy) else b:SetPoint("RIGHT", dots[i + 1], "LEFT", -8, 0) end
-      b.ring = b:CreateTexture(nil, "BACKGROUND"); b.ring:SetAllPoints(); b.ring:SetTexture(SLICE .. "dot")
-      b.dot = b:CreateTexture(nil, "ARTWORK"); b.dot:SetSize(20, 20); b.dot:SetPoint("CENTER"); b.dot:SetTexture(SLICE .. "dot")
+      local b = CreateFrame("Button", nil, P); b:SetSize(20, 20)
+      if i == #list then b:SetPoint("RIGHT", P, "TOPRIGHT", -PX + 3, -cy) else b:SetPoint("RIGHT", dots[i + 1], "LEFT", -2, 0) end
+      b.ring = b:CreateTexture(nil, "BACKGROUND"); b.ring:SetSize(18, 18); b.ring:SetPoint("CENTER"); b.ring:SetTexture(SLICE .. "dot")
+      b.dot = b:CreateTexture(nil, "ARTWORK"); b.dot:SetSize(13, 13); b.dot:SetPoint("CENTER"); b.dot:SetTexture(SLICE .. "dot")
       b:SetScript("OnClick", function() set(c[1]); applySettings(); Debrief_RefreshOptions() end)
       b:SetScript("OnEnter", function() GameTooltip:SetOwner(b, "ANCHOR_TOP"); GameTooltip:SetText(c[2]); GameTooltip:Show() end)
       b:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -1754,93 +1799,135 @@ local function buildOptions()
       for i, b in ipairs(dots) do
         local hx = list[i][3]; if type(hx) == "function" then hx = hx() end
         b.dot:SetVertexColor(rgb(hx)); local on = get() == list[i][1]
-        b.ring:SetVertexColor(rgb(on and COL.text or DEEP)); b.ring:SetAlpha(on and 1 or 0)
+        b.ring:SetVertexColor(rgb(COL.gold)); b.ring:SetAlpha(on and 1 or 0)
       end
     end
     refreshers[#refreshers + 1] = show; show()
   end
-  -- a row of buttons under a panel
-  local function buttons(list)
-    local prev
-    for i, b in ipairs(list) do
-      local bt = optButton(P, b[1], b[3] or 160, i == 1, 30)
-      if prev then bt:SetPoint("LEFT", prev, "RIGHT", 10, 0) else bt:SetPoint("TOPLEFT", PX, -y) end
-      bt:SetScript("OnClick", b[2]); prev = bt
+  -- (the card's pieces as small rectangles: green with a tick when on, grey when off; click to switch)
+  local function chips(items)
+    local x, rowH = PX, 28
+    for _, it in ipairs(items) do
+      local b = CreateFrame("Button", nil, P); b:SetHeight(22)
+      b.fillT = b:CreateTexture(nil, "BACKGROUND"); b.fillT:SetAllPoints(); b.lineT = b:CreateTexture(nil, "BORDER"); b.lineT:SetAllPoints()
+      b.ck = b:CreateTexture(nil, "OVERLAY"); b.ck:SetSize(11, 11); b.ck:SetPoint("LEFT", 8, 0); b.ck:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
+      b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "bold", 12); b.t:SetPoint("LEFT", 23, 0); b.t:SetText(it[1])
+      b:SetWidth(b.t:GetStringWidth() + 33)
+      if x + b:GetWidth() > OW - PX then x = PX; y = y + rowH end
+      b:SetPoint("TOPLEFT", x, -y); x = x + b:GetWidth() + 6
+      local function show()
+        local on = it[2]()
+        rounded(b.fillT, "fill", 5, on and EM or COL.raised, on and 0.12 or 0.5); rounded(b.lineT, "line", 5, on and EM or COL.line, on and 0.6 or 1)
+        b.t:SetTextColor(rgb(on and COL.text or COL.faint)); b.ck:SetShown(on)
+      end
+      b:SetScript("OnClick", function() it[3](not it[2]()); if not it[4] then custom() end; show(); applySettings() end)
+      if it[5] then b:SetScript("OnEnter", function() GameTooltip:SetOwner(b, "ANCHOR_TOP"); GameTooltip:SetText(it[1], 1, 1, 1); GameTooltip:AddLine(it[5], 0.75, 0.78, 0.82, true); GameTooltip:Show() end); b:SetScript("OnLeave", function() GameTooltip:Hide() end) end
+      refreshers[#refreshers + 1] = show; show()
     end
-    y = y + 44
+    y = y + rowH + 2
+  end
+  -- (the card's style: five small rectangles, the chosen one in gold)
+  local PDESC = { glance = "The raid lead's quick read: the coach box, folded lists.", simple = "The headline, the focus and your top mistake.", medium = "Up to three mistakes, folded lists.",
+    heavy = "Up to five mistakes, Deaths and Avoidable damage open.", detailed = "Everything open, with number tiles." }
+  local function styles()
+    local x, bs = PX, {}
+    for _, k in ipairs({ "simple", "glance", "medium", "heavy", "detailed" }) do
+      local b = CreateFrame("Button", nil, P); b:SetHeight(24)
+      b.fillT = b:CreateTexture(nil, "BACKGROUND"); b.fillT:SetAllPoints(); b.lineT = b:CreateTexture(nil, "BORDER"); b.lineT:SetAllPoints()
+      b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "bold", 12.5); b.t:SetPoint("CENTER", 0, 0); b.t:SetText(PRESET_NAME[k])
+      b:SetWidth(b.t:GetStringWidth() + 20); b:SetPoint("TOPLEFT", x, -y); x = x + b:GetWidth() + 6
+      b:SetScript("OnClick", function() Debrief_SetPreset(k); applySettings() end)
+      b:SetScript("OnEnter", function() GameTooltip:SetOwner(b, "ANCHOR_TOP"); GameTooltip:SetText(PRESET_NAME[k], 1, 1, 1); GameTooltip:AddLine(PDESC[k], 0.75, 0.78, 0.82, true); GameTooltip:Show() end)
+      b:SetScript("OnLeave", function() GameTooltip:Hide() end)
+      bs[k] = b
+    end
+    refreshers[#refreshers + 1] = function()
+      for k, b in pairs(bs) do local on = DB.preset == k
+        rounded(b.fillT, "fill", 5, COL.gold, on and 0.12 or 0); rounded(b.lineT, "line", 5, on and COL.gold or COL.line, 1); b.t:SetTextColor(rgb(on and COL.gold or COL.muted)) end
+    end
+    y = y + 30
   end
   local function note(text)
-    local n = P:CreateFontString(nil, "OVERLAY"); setFont(n, "body", 13); n:SetPoint("TOPLEFT", PX + 2, -y); n:SetWidth(OW - PX * 2 - 4); n:SetJustifyH("LEFT"); n:SetTextColor(rgb(COL.faint)); n:SetText(text)
-    y = y + n:GetStringHeight() + 12
+    local n = P:CreateFontString(nil, "OVERLAY"); setFont(n, "body", 11.5); n:SetPoint("TOPLEFT", PX, -(y + 2)); n:SetWidth(OW - PX * 2); n:SetJustifyH("LEFT"); n:SetTextColor(rgb(COL.faint)); n:SetText(text)
+    y = y + n:GetStringHeight() + 8
+  end
+  local function buttons(list)
+    local prev
+    for _, b in ipairs(list) do
+      local bt = optButton(P, b[1], b[3] or 130, false, 24)
+      if prev then bt:SetPoint("LEFT", prev, "RIGHT", 6, 0) else bt:SetPoint("TOPLEFT", PX, -(y + 6)) end
+      bt:SetScript("OnClick", b[2]); prev = bt
+    end
+    y = y + 36
   end
   local function S() DB.show = DB.show or {}; return DB.show end
 
-  -- Layout: three cards to click (the website's feature cards), then the fine-tune panel
-  page("layout")
-  local CW3 = (OW - PX * 2 - 48) / 5
-  local pcs = {}
-  local PDESC = { glance = "The raid lead's quick read: good, bad, next pull.", simple = "Your numbers, your top slip, the next pull.", medium = "Your numbers, slips and boss mistakes.", heavy = "More of everything, wider.", detailed = "Everything: tiles, the raid's side, two tips." }
-  for i, k in ipairs({ "glance", "simple", "medium", "heavy", "detailed" }) do
-    local b = CreateFrame("Button", nil, P); b:SetSize(CW3, 92); b:SetPoint("TOPLEFT", PX + (i - 1) * (CW3 + 12), 0)
-    skin(b, 8, PANEL, 1, COL.line, 1)
-    b.bar = b:CreateTexture(nil, "ARTWORK"); b.bar:SetPoint("TOPLEFT", 1, -8); b.bar:SetPoint("BOTTOMLEFT", 1, 8); b.bar:SetWidth(3); fill(b.bar, COL.gold)
-    b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "head", 18); b.t:SetPoint("TOPLEFT", 16, -11); b.t:SetText(PRESET_NAME[k])
-    b.d = b:CreateFontString(nil, "OVERLAY"); setFont(b.d, "body", 12.5); b.d:SetPoint("TOPLEFT", 16, -35); b.d:SetWidth(CW3 - 30); b.d:SetJustifyH("LEFT"); b.d:SetText(PDESC[k])
-    b.lines = {}
-    for li = 1, ({ glance = 3, simple = 2, medium = 4, heavy = 6, detailed = 7 })[k] do
-      local ln = b:CreateTexture(nil, "ARTWORK"); ln:SetSize(li == 1 and 30 or (li % 2 == 0 and 22 or 26), 3); ln:SetPoint("TOPRIGHT", -14, -(14 + (li - 1) * (k == "detailed" and 5 or 6))); b.lines[li] = ln
-    end
-    b:SetScript("OnClick", function() Debrief_SetPreset(k); applySettings() end)
-    b:SetScript("OnEnter", function() if DB.preset ~= k then rounded(b.lineT, "line", 8, COL.faint, 1) end end)
-    b:SetScript("OnLeave", function() if DB.preset ~= k then rounded(b.lineT, "line", 8, COL.line, 1) end end)
-    pcs[k] = b
-  end
-  refreshers[#refreshers + 1] = function()
-    for k, b in pairs(pcs) do
-      local on = DB.preset == k
-      rounded(b.fillT, "fill", 8, on and "221f17" or PANEL, 1); rounded(b.lineT, "line", 8, on and COL.gold or COL.line, 1)
-      b.bar:SetShown(on); fill(b.bar, COL.gold)
-      for _, ln in ipairs(b.lines) do fill(ln, on and COL.gold or COL.line2, on and 0.9 or 1) end
-      b.t:SetTextColor(rgb(COL.text)); b.d:SetTextColor(rgb(on and COL.soft or COL.faint))
-    end
-  end
-  y = 106
-  panel("Fine-tune", "changes your own mix", "INV_Misc_Gear_01")
-  switch("Your damage or healing", "Against your last pull, your best and your place.", function() return S().tile ~= false end, function(v) S().tile = v end)
-  stepper("Rotation tips", "Your biggest slips, worst first. 0 hides them.", 0, 5, function() return S().rotation == false and 0 or (DB.maxSlips or 3) end, function(v) S().rotation = v > 0; if v > 0 then DB.maxSlips = v end end)
-  stepper("Boss mistakes", "Your mistakes, avoidable damage, kicks and dispels. 0 hides them.", 0, 7, function() return S().boss == false and 0 or (DB.maxBoss or 2) end, function(v) S().boss = v > 0; if v > 0 then DB.maxBoss = v end end)
+  -- ---------- Card: the style, and every piece the card can show ----------
+  page("card")
+  section("Style", true)
+  styles()
+  note("How much opens by itself. Click a piece below to show or hide it; the card beside this window changes as you click.")
+  section("On the card")
+  chips({
+    { "Stop at death", function() return S().stopat ~= false end, function(v) S().stopat = v end, false, "The wipe filter, on top: on a wipe, nothing after that death counts." },
+    { "Coach box", function() return S().coach ~= false end, function(v) S().coach = v end, false, "Debriefing's coach: the headline, the focus and what went wrong." },
+    { "What went right", function() return S().right ~= false end, function(v) S().right = v end },
+    { "Deaths", function() return S().cdeaths ~= false end, function(v) S().cdeaths = v end },
+    { "Avoidable damage", function() return S().cavoid ~= false end, function(v) S().cavoid = v end },
+    { "Boss mechanics", function() return S().mechs == true end, function(v) S().mechs = v end, false, "How each mechanic went, worst first." },
+    { "Your last pulls", function() return S().chips ~= false end, function(v) S().chips = v end, false, "Your last pulls along the top. Click one to look at it again." },
+  })
+  section("Your view")
+  chips({
+    { "Your damage or healing", function() return S().tile ~= false end, function(v) S().tile = v end },
+    { "Rotation tips", function() return S().rotation ~= false end, function(v) S().rotation = v end },
+    { "Boss mistakes", function() return S().boss ~= false end, function(v) S().boss = v end },
+    { "Survival", function() return S().surv ~= false end, function(v) S().surv = v end, false, "Your defensives, Healthstone and health potion." },
+    { "Next pull tip", function() return S().next ~= false end, function(v) S().next = v end },
+  })
+  section("Charts", false, true)
+  chips({
+    { "Your numbers tonight", function() return S().chartLine == true end, function(v) S().chartLine = v end, true, "Your damage or healing, pull by pull, on this boss tonight." },
+    { "How far each pull got", function() return S().chartNight == true end, function(v) S().chartNight = v end, true, "Every pull on this boss tonight, the best one marked." },
+  })
+  section("From the website", false, true)
+  chips({
+    { "Report card grade", function() return S().grade == true end, function(v) S().grade = v end, true, "The pull's grade from the Report card, with mechanics, avoidable damage and survival." },
+  })
+  section("How many")
+  stepper("Mistakes", "The raid's biggest mistakes, with names.", 1, 5, function() return DB.maxRaid or 3 end, function(v) DB.maxRaid = v end)
+  stepper("Rotation tips", "Your biggest slips, worst first.", 1, 5, function() return DB.maxSlips or 3 end, function(v) DB.maxSlips = v end)
+  stepper("Boss mistakes", "Your mistakes, avoidable damage, kicks and dispels.", 1, 7, function() return DB.maxBoss or 2 end, function(v) DB.maxBoss = v end)
+  stepper("Deaths listed", "Who died first, and to what. 0 hides the list.", 0, 8, function() return DB.maxDied or 3 end, function(v) DB.maxDied = v end)
+  stepper("Boss mechanics", "How many mechanic lines.", 0, 16, function() return DB.maxMech or 6 end, function(v) DB.maxMech = v end)
+  stepper("Stop at death", "On a wipe, nothing after this death counts. 0 counts the whole pull.", 0, 8, function() return DB.deathCut or 0 end, function(v) DB.deathCut = v end, function(v) return v == 0 and "off" or tostring(v) end, true)
   switch("Boss mistakes first", "Above your rotation tips.", function() return DB.bossFirst == true end, function(v) DB.bossFirst = v end)
-  switch("Next pull tip", "One thing to try next time.", function() return S().next ~= false end, function(v) S().next = v end)
-  switch("Your last pulls along the top", "Click one to look at it again.", function() return S().chips ~= false end, function(v) S().chips = v end)
-  switch("Survival", "Your defensives, Healthstone and health potion.", function() return S().surv ~= false end, function(v) S().surv = v end)
-  panelEnd()
 
-  -- Look
+  -- ---------- Look: colour, size and font ----------
   page("look")
   local function classCol() local _, c = UnitClass("player"); return classHex(c) end
-  panel("Colours", "the card beside this window changes as you click", "INV_Misc_Gem_Variety_02")
+  section("Colour", true)
   switch("Match my class colour", "Debrief takes the colour of the class you're playing.", function() return DB.classTheme ~= false end, function(v) DB.classTheme = v end, true)
-  swatches("Or pick a colour", "When class colours are off.", {
+  swatches("Accent", "When class colours are off.", {
     { "gold", "Debrief gold", ACCENTS.gold }, { "class", "Your class colour", classCol }, { "frost", "Frost", ACCENTS.frost },
     { "fel", "Fel", ACCENTS.fel }, { "crimson", "Crimson", ACCENTS.crimson }, { "violet", "Void", ACCENTS.violet },
   }, function() return DB.accent or "gold" end, function(v) DB.accent = v; DB.classTheme = false end)
   segment("Card style", "Soft panels, see-through glass, or flat.", { { "panels", "Panels" }, { "glass", "Glass" }, { "flat", "Flat" } },
     function() return DB.cardStyle or "panels" end, function(v) DB.cardStyle = v end, true)
   switch("Colour-blind colours", "Blue for good, orange for bad.", function() return DB.colorblind == true end, function(v) DB.colorblind = v end, true)
-  panelEnd()
-  panel("Size and font", nil, "INV_Misc_Spyglass_02")
+  section("Size")
   pslider("Card size", nil, 0.7, 1.5, function() return DB.scale or 1 end, function(v) DB.scale = v end)
   pslider("Text size", nil, 0.85, 1.2, function() return DB.fontScale or 1 end, function(v) DB.fontScale = v end)
-  segment("Card width", nil, WIDTH_CHOICES, function() return DB.width or "normal" end, function(v) DB.width = v end)
+  choice("Width", nil, WIDTH_CHOICES, function() return DB.width or "normal" end, function(v) DB.width = v end)
   -- (the font: ‹ name › through Debrief's own, the game's, and every font your other addons share)
   do
     local base = { { "debrief", "Debrief" }, { "wow", "WoW" }, { "arial", "Arial Narrow" }, { "morpheus", "Morpheus headings" } }
     local function list() local l = {}; for _, x in ipairs(base) do l[#l + 1] = x end; local _, names = lsmFonts(); local seen = {}
       for _, n in ipairs(names) do if not seen[n] and n ~= "Friz Quadrata TT" and n ~= "Arial Narrow" and n ~= "Morpheus" then seen[n] = true; l[#l + 1] = { "lsm:" .. n, n } end end; return l end
     local cy = rowBase("Font", "Yours from other addons too.")
-    local nx = optButton(P, "›", 30, false, 28); nx:SetPoint("RIGHT", P, "TOPRIGHT", -LX, -cy)
-    local val = P:CreateFontString(nil, "OVERLAY"); setFont(val, "bold", 14); val:SetWidth(150); val:SetJustifyH("CENTER"); val:SetPoint("RIGHT", nx, "LEFT", -4, 0); val:SetTextColor(rgb(COL.text)); val:SetWordWrap(false)
-    local pv = optButton(P, "‹", 30, false, 28); pv:SetPoint("RIGHT", val, "LEFT", -4, 0)
+    local nx = txtBtn("›"); nx:SetPoint("RIGHT", P, "TOPRIGHT", -PX + 4, -cy)
+    local val = P:CreateFontString(nil, "OVERLAY"); setFont(val, "bold", 12.5); val:SetWidth(120); val:SetJustifyH("CENTER"); val:SetPoint("RIGHT", nx, "LEFT", 0, 0); val:SetTextColor(rgb(COL.text)); val:SetWordWrap(false)
+    local pv = txtBtn("‹"); pv:SetPoint("RIGHT", val, "LEFT", 0, 0)
     local function idx(l) for i, x in ipairs(l) do if x[1] == (DB.font or "debrief") then return i end end; return 1 end
     local function show() local l = list(); val:SetText(l[idx(l)][2]) end
     local function step(d) local l = list(); local i = ((idx(l) - 1 + d) % #l) + 1; DB.font = l[i][1]; applySettings(); show() end
@@ -1848,54 +1935,24 @@ local function buildOptions()
     refreshers[#refreshers + 1] = show; show()
   end
   pslider("Background", "How solid the card is.", 0.6, 1, function() return DB.alpha or 0.97 end, function(v) DB.alpha = v end)
-  panelEnd()
 
-  -- After a pull
-  page("after")
-  panel("When your recap arrives", nil, "INV_Letter_15")
-  segment("Show my recap as", "The card, one slim bar, or the big window.", { { "card", "Card" }, { "mini", "Mini bar" }, { "big", "Big window" } },
+  -- ---------- More: set once and forget ----------
+  page("more")
+  section("After a pull", true)
+  segment("Show it as", "The card, one slim bar, or the big window.", { { "card", "Card" }, { "mini", "Mini bar" }, { "big", "Big" } },
     function() return DB.mini and "mini" or (DB.bigDefault and "big" or "card") end, function(v) DB.mini = (v == "mini"); DB.bigDefault = (v == "big") end, true)
   switch("Open it by itself", "As soon as it arrives.", function() return DB.autoShow ~= false end, function(v) DB.autoShow = v end, true)
   switch("Sound", "A soft sound when it opens.", function() return DB.sound ~= false end, function(v) DB.sound = v end, true)
   switch("Only what went wrong", "Hide the lines you did right.", function() return DB.onlyBad == true end, function(v) DB.onlyBad = v end, true)
-  panelEnd()
-  panel("On your screen", nil, "INV_Misc_PocketWatch_01")
   switch("Hide during combat", "Back when the fight ends.", function() return DB.hideCombat ~= false end, function(v) DB.hideCombat = v end, true)
   segment("Close by itself", "Not while your mouse is on it.", { { 0, "Never" }, { 30, "30 s" }, { 60, "60 s" }, { 120, "2 min" } },
     function() return DB.autoClose or 0 end, function(v) DB.autoClose = v end, true)
   switch("Lock in place", "The card and bars can't be dragged.", function() return DB.lock == true end, function(v) DB.lock = v end, true)
-  panelEnd()
-
-  -- Big window and mini bar
-  page("views")
-  panel("Big window", "your whole night at once", "Achievement_General")
-  switch("Your numbers tonight", "A line of your damage or healing, pull by pull.", function() return DB.bigLine ~= false end, function(v) DB.bigLine = v end, true)
-  switch("Progress tonight", "How far each pull got, the closest one marked.", function() return DB.bigChart ~= false end, function(v) DB.bigChart = v end, true)
-  pslider("Window size", nil, 0.7, 1.3, function() return DB.bigScale or 1 end, function(v) DB.bigScale = v end)
-  panelEnd()
-  panel("Mini bar", "one slim line instead of the card", "INV_Misc_Note_01")
-  pslider("Bar size", nil, 0.7, 1.5, function() return DB.miniScale or 1 end, function(v) DB.miniScale = v end)
-  panelEnd()
-  buttons({ { "Open the big window", function() if #DB.pulls == 0 then SlashCmdList.DEBRIEF("demo") end; card:Hide(); big:Show(); bigRender() end, 190 },
-    { "Show the mini bar", function() if #DB.pulls == 0 then SlashCmdList.DEBRIEF("demo") end; card:Hide(); miniShow() end, 170 } })
-  note("Choose which one opens after a pull in After a pull. The Expand button on the card opens the big window any time.")
-
-  -- Raid: the Raid view tab
-  page("raid")
-  panel("Raid view", "the raid's biggest mistakes and who died", "Ability_Warrior_BattleShout")
+  section("Raid")
   switch("Raid view for everyone", "Off: only raid leads and assistants see it.", function() return DB.raidAlways ~= false end, function(v) DB.raidAlways = v end, true)
-  stepper("Raid mistakes", "The biggest ones, with names.", 1, 5, function() return DB.maxRaid or 3 end, function(v) DB.maxRaid = v end)
-  stepper("Deaths listed", "Who died first, and to what. 0 hides the list.", 0, 8, function() return DB.maxDied or 3 end, function(v) DB.maxDied = v end)
-  switch("Why we wiped", "The raid lead's word at the top of the card, and a line for you.", function() return (DB.show or {}).lead ~= false end, function(v) DB.show = DB.show or {}; DB.show.lead = v end)
-  stepper("Stop at death", "On a wipe, nothing after this death counts. 0 counts the whole pull.", 0, 8, function() return DB.deathCut or 0 end, function(v) DB.deathCut = v end)
-  stepper("Boss mechanics", "How each mechanic went, worst first. 0 hides them.", 0, 16, function() return DB.maxMech or 6 end, function(v) DB.maxMech = v end)
-  panelEnd()
-  panel("In the fight", "from your NSRT note", "Spell_Holy_AuraMastery")
-  switch("Glow my cooldowns", "Your NSRT spells glow on the Cooldown Manager when it's time.", function() return DB.glowCds == true end, function(v) DB.glowCds = v end, true)
-  panelEnd()
-  buttons({ { "Test the glow", function() Debrief_TestGlow() end, 150 } })
-  -- Goals
-  page("goals")
+  switch("Why we wiped", "The raid lead's word at the top of the card, and a line for you.", function() return S().lead ~= false end, function(v) S().lead = v end)
+  switch("Glow my NSRT cooldowns", "Your NSRT spells glow on the Cooldown Manager when it's time.", function() return DB.glowCds == true end, function(v) DB.glowCds = v end, true)
+  section("Goals")
   local function lastOf(role)
     for i = #DB.pulls, 1, -1 do local p = youIn(DB.pulls[i]); if p and ((p.role == "healer") == (role == "healer")) then return parseK(p.v) end end
   end
@@ -1905,54 +1962,39 @@ local function buildOptions()
       DB[key] = v
     end
   end
-  local fmtK = function(v) return v == 0 and "Off" or (v .. "k") end
-  panel("Your goal", "in thousands a second; Off hides it", "Ability_Hunter_MarkedForDeath")
+  local fmtK = function(v) return v == 0 and "off" or (v .. "k") end
   local g1, s1 = goalStep("goalDps", "dps")
-  stepper("Damage goal", "Your DPS target.", 0, 3000, g1, s1, fmtK, true, 10)
+  stepper("Damage goal", "Your DPS target, in thousands. The first + starts a little above your latest pull.", 0, 3000, g1, s1, fmtK, true, 10)
   local g2, s2 = goalStep("goalHps", "healer")
-  stepper("Healing goal", "Your HPS target.", 0, 3000, g2, s2, fmtK, true, 10)
-  panelEnd()
-  note("The first + starts a little above your latest pull. Your card gets a goal bar that turns green once you reach it, the mini bar a goal %, and the big window a Goal tile.")
-
-  -- PC app (only for whoever runs Debrief Companion)
-  page("app")
-  panel("After each boss pull", "for whoever runs Debrief Companion", "Spell_Holy_BorrowedTime")
-  switch("Ask \"See your recap?\"", "After each boss pull. Press Ctrl+V to open it.", function() return DB.autoBox ~= false end, function(v) DB.autoBox = v end, true)
-  switch("Small prompt, not the paste box", "Just the prompt, nothing to click.", function() return DB.prompt ~= false end, function(v) DB.prompt = v end, true)
+  stepper("Healing goal", "Your HPS target, in thousands.", 0, 3000, g2, s2, fmtK, true, 10)
+  section("Big window and mini bar")
+  switch("Your numbers tonight", "A line of your damage or healing, pull by pull.", function() return DB.bigLine ~= false end, function(v) DB.bigLine = v end, true)
+  switch("Progress tonight", "How far each pull got, the closest one marked.", function() return DB.bigChart ~= false end, function(v) DB.bigChart = v end, true)
+  pslider("Big window size", nil, 0.7, 1.3, function() return DB.bigScale or 1 end, function(v) DB.bigScale = v end)
+  pslider("Mini bar size", nil, 0.7, 1.5, function() return DB.miniScale or 1 end, function(v) DB.miniScale = v end)
+  section("Pasting a recap")
+  switch("Ask \"See your recap?\"", "After each boss pull, when the PC app copies it for you.", function() return DB.autoBox ~= false end, function(v) DB.autoBox = v end, true)
   switch("Ready for Ctrl+V", "Any other key lets go so you can move.", function() return DB.autoFocus ~= false end, function(v) DB.autoFocus = v end, true)
-  panelEnd()
-  panel("Your raid", nil, "Ability_Warrior_RallyingCry")
   switch("Send my recaps to the raid", "Raiders with Debrief get theirs by itself.", function() return DB.share ~= false end, function(v) DB.share = v end, true)
   switch("Combat log always on", "With Advanced Combat Logging, whenever Debrief is loaded.", function() return DB.autoLog ~= false end, function(v) DB.autoLog = v end, true)
-  panelEnd()
-
-  -- Saved pulls
-  page("pulls")
-  panel("Saved pulls", nil, "INV_Misc_Book_09")
+  section("Saved pulls")
   stepper("Keep", "Older pulls drop off as new ones come in.", 10, 100, function() return DB.keep or 30 end, function(v) DB.keep = v end, function(v) return v .. "" end, true, 5)
-  local pc = P:CreateFontString(nil, "OVERLAY"); setFont(pc, "body", 13.5); pc:SetPoint("TOPLEFT", LX, -(y + 6)); pc:SetTextColor(rgb(COL.muted))
+  local pc = P:CreateFontString(nil, "OVERLAY"); setFont(pc, "body", 12); pc:SetPoint("TOPLEFT", PX, -(y + 4)); pc:SetTextColor(rgb(COL.faint))
   refreshers[#refreshers + 1] = function() local n = #DB.pulls; pc:SetText(n == 0 and "No pulls saved yet." or (n .. (n == 1 and " pull saved." or " pulls saved."))) end
-  y = y + 30
-  panelEnd()
+  y = y + 20
   buttons({ { "Move card back", function() SlashCmdList.DEBRIEF("reset") end }, { "Clear saved pulls", function() SlashCmdList.DEBRIEF("clear"); Debrief_RefreshOptions() end } })
-
-  -- Help
-  page("help")
-  buttons({ { "Show the tutorial", function() opt:Hide(); Debrief_Tutorial() end, 180 }, { "Show a sample recap", function() SlashCmdList.DEBRIEF("demo") end, 180 } })
-  panel("Commands", "type them in chat", "INV_Misc_Note_02")
-  local HELP = {
-    { "/dmo", "these settings" }, { "/debrief", "show or hide your recap" }, { "/debrief big", "the big window" }, { "/debrief mini", "the mini bar on or off" },
-    { "/debrief paste", "paste a recap by hand" }, { "/debrief log", "combat logging on or off" }, { "/debrief glow", "test the cooldown glow" }, { "/debrief demo", "a sample recap" }, { "/debrief tutorial", "the tutorial again" },
-  }
-  for i, h in ipairs(HELP) do
-    if i > 1 then local ln = P:CreateTexture(nil, "ARTWORK"); ln:SetPoint("TOPLEFT", LX, -y); ln:SetPoint("TOPRIGHT", -LX, -y); ln:SetHeight(1); fill(ln, COL.line, 0.7) end
-    local c = P:CreateFontString(nil, "OVERLAY"); setFont(c, "bold", 14); c:SetPoint("TOPLEFT", LX, -(y + 10)); c:SetTextColor(rgb(COL.gold)); c:SetText(h[1])
-    local d = P:CreateFontString(nil, "OVERLAY"); setFont(d, "body", 14); d:SetPoint("TOPLEFT", LX + 170, -(y + 10)); d:SetTextColor(rgb(COL.soft)); d:SetText(h[2])
-    y = y + 36
+  section("Help")
+  buttons({ { "Tutorial", function() opt:Hide(); Debrief_Tutorial() end, 90 }, { "Sample recap", function() SlashCmdList.DEBRIEF("demo") end, 110 }, { "Test the glow", function() Debrief_TestGlow() end, 110 } })
+  local HELP = { { "/dmo", "these settings" }, { "/debrief", "show or hide your recap" }, { "/debrief big", "the big window" }, { "/debrief mini", "the mini bar on or off" },
+    { "/dp", "paste a recap" }, { "/debrief log", "combat logging on or off" }, { "/debrief demo", "a sample recap" } }
+  for _, h in ipairs(HELP) do
+    local c = P:CreateFontString(nil, "OVERLAY"); setFont(c, "bold", 12.5); c:SetPoint("TOPLEFT", PX, -(y + 4)); c:SetTextColor(rgb(COL.gold)); c:SetText(h[1])
+    local d = P:CreateFontString(nil, "OVERLAY"); setFont(d, "body", 12.5); d:SetPoint("TOPLEFT", PX + 110, -(y + 4)); d:SetTextColor(rgb(COL.soft)); d:SetText(h[2])
+    y = y + 20
   end
-  panelEnd()
+  page(nil)
 
-  showPage("layout")
+  showPage("card")
   Debrief_RefreshOptions()
 end
 function Debrief_ToggleOptions()

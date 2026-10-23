@@ -647,6 +647,8 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
       } catch (e) { coach = null; } finally { if (!had) CA.delete(b); if (W.setCut && was != null) W.setCut(was); }
     }
     m.coach = coach && RAIDS[0] ? { raid: RAIDS[0], you: coach.you } : coach;
+    // (the Report card's grade for this pull, for the card's "Report card grade" chip (Oct 22))
+    if (W.gradeBoss && b.id !== 990001) { try { const g = W.gradeBoss([rep]); if (g && g.letter) m.grade = { letter: g.letter, score: Math.round(g.overall), cats: (g.cats || []).map((c) => c.label + ' ' + c.letter).join(' · ') }; } catch (e) { /* (no grade) */ } }
     if (b.kill || b.id === 990001 || !nd) return m; // (a kill or a dummy always counts in full)
     m.cuts = [m]; for (let n = 1; n <= Math.min(8, nd); n++) { const x = buildOne(b, rep, same, W2, L, n); x.coach = coach && RAIDS[n] ? { raid: RAIDS[n], you: coach.you } : coach; m.cuts.push(x); }
     return m;
