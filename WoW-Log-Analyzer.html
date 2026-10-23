@@ -15316,6 +15316,7 @@ const PATCH_NOTES = [
   { d: '2026-10-23', h: [
     { t: 'A shorter debrief', d: 'Each pull now opens like a raid lead\'s debrief: what went well, what went wrong (click a line for its map and details) and the one thing for next pull. The extra drawers are gone; the timeline, raid cooldowns and burst windows sit in the open below the phases.' },
   ], n: [
+    'One fix everywhere: the Report card\'s Next pull for each raider is now the same line Debriefing\'s coach gives them (it could name a different mechanic before).',
     'A little Halloween spirit on the site until Nov 1 🎃',
     'The coach box is tidier: the thing to focus on next pull is said once, on the first card. Each Next time is one short instruction (open the card for the rest), cards carry at most one tag, and what went right is a short plain list.',
   ], f: [
@@ -36970,8 +36971,11 @@ function rcwRaider(c, F) {
   const tone = { S: 'An outstanding night', A: 'Strong night', B: 'Good night', C: 'A decent night with room to grow', D: 'A tough night', F: 'A rough night' }[L] || 'Your night';
   const issue = defs.length >= 2 ? (defs.length === dd.length ? (dd.length === 2 ? 'both of your deaths' : 'all ' + dd.length + ' of your deaths') : defs.length + ' of your ' + plural(dd.length, 'death')) + ' came with a defensive still ready' : worstM && worstM.n >= 3 ? esc(worstM.t) + ' caught you in ' + plural(worstM.pulls.size, 'pull') : low ? 'your ' + low.l.toLowerCase() + ' is where the points are' : '';
   const s2 = (top[0] ? 'Your ' + top[0].l.toLowerCase() + (/s$/.test(top[0].l) ? ' were #' : ' was #') + top[0].r + (top[0].grp ? ' of the ' + top[0].grp : ' in the raid') + (issue ? ', but ' + issue : '') : issue ? capS(issue) : 'Nothing big cost you points') + '.';
-  const oaR = oaPlayerFix(a.per.map((g) => g.r), nm); /* (the one answer (Oct 22)) */
-  const nf = (a.fixes || [])[0], next = oaR ? (oaR.kind === 'clean' ? esc(oaR.fix) : esc(dbfCap(oaR.label)) + ': ' + esc(oaR.fix)) : defs.length >= 2 ? 'when your health keeps dropping, press ' + esc(defN[0]) + '.' : worstM && worstM.fix ? esc(worstM.t) + ': ' + esc(dbfTip1(worstM.fix)) : nf && (nf.gain || 0) >= 0.5 ? esc(nf.t) + '. ' + esc(dbfTip1(nf.x)) : '';
+  /* (one fix everywhere (Oct 23, your ask "yea do that first"): the fix is the exact line Debriefing's night coach gives this raider,
+     coachSummary over the whole night; Their night said Axegrinder while Debriefing said healing cooldowns) */
+  let csP = null; try { csP = typeof coachSummary === 'function' ? coachSummary(F.reps, nm) : null; } catch (e) { csP = null; }
+  const oaR = (csP && csP.wrong && csP.wrong[0]) || oaPlayerFix(a.per.map((g) => g.r), nm); /* (the one answer (Oct 22)) */
+  const nf = (a.fixes || [])[0], next = csP && csP.focus ? esc(csP.focus) : oaR ? (oaR.kind === 'clean' ? esc(oaR.fix) : esc(dbfCap(oaR.label)) + ': ' + esc(oaR.fix)) : defs.length >= 2 ? 'when your health keeps dropping, press ' + esc(defN[0]) + '.' : worstM && worstM.fix ? esc(worstM.t) + ': ' + esc(dbfTip1(worstM.fix)) : nf && (nf.gain || 0) >= 0.5 ? esc(nf.t) + '. ' + esc(dbfTip1(nf.x)) : '';
   // ---- Homework, folded in (your call, Oct 22): the shared #1 first, then the to-do list's next two with "getting better / worse",
   // the smaller things folded, what they fixed and "Ready at the pull" as green ticks. Home's card reads this list (hwSave)
   const oaL = oaR && oaR.kind !== 'clean' ? String(oaR.label).toLowerCase().replace(/^dying (slowly )?to /, '') : '', hwA = hwItems(a), todo = hwA.filter((o) => !o.fixed && !(oaL && String(o.t).toLowerCase() === oaL));
