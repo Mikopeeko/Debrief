@@ -1746,6 +1746,7 @@ const PATCH_NOTES = [
     { t: 'The wipe is called for you', d: 'No more "stop at the 2nd death". Debrief now calls the wipe at the moment no raid has ever come back from: more people dead than any kill of that boss survived at that point (battle rezzes counted), the damage check missed, or half the raid dead. Everything before it counts, so the deaths and mistakes that lost the pull are graded. Tested on 760 kills: it never calls a wipe on a pull that was won.' },
     { t: 'A shorter debrief', d: 'Each pull now opens like a raid lead\'s debrief: what went well, what went wrong (click a line for its map and details) and the one thing for next pull. The extra drawers are gone; the timeline, raid cooldowns and burst windows sit in the open below the phases.' },
   ], n: [
+    'A death only says you had something ready if it would really have saved you: a Healthstone, potion, self-heal or defensive big enough to cover the hits that followed. The tip names the cheapest one and how much it heals ("Use your Healthstone when you drop under half: it heals about 239k"); if nothing would have, it says so and it is not on you.',
     'Deaths are one number everywhere: Debriefing, the Deaths panel and the Report card show the same count of deaths that counted, with mass wipes (many of us at once) as a small second number.',
     'The coach tells the story of a wipe: what started it and what finished it ("It started at 3:00: set 1\'s Spiteful Soulcoiler adds lived too long… Then Malevolent Resonance took five more by 4:18.").',
     'Healthstones and Defensives show how many times each raider used them; tap a name for how many pulls and each spell.',
@@ -9330,6 +9331,7 @@ function deathTag(r, d) { const rr = deathRep(r, d); if (!rr) return null; const
     : v.why === 'ready' ? 'Had ' + andList(ready) + ' ready and didn\'t press ' + (ready.length > 1 ? 'them' : 'it') + '.'
     : v.why === 'shared' ? (/mind controlled/.test(v.word) ? 'Mind controlled off the edge.' : (raidL ? 'Partly the raid\'s fault (' + deathMech(rr, raidL.mechanic) + ')' : 'Partly the raid\'s fault') + ', but they had ' + andList(ready) + ' ready.')
     : v.why === 'heal' ? 'Nobody healed them enough for ' + Math.round(v.gap.starved) + ' seconds while they were under half health' + (ready.length ? ', and they had ' + andList(ready) + ' ready.' : '.')
+    : v.why === 'nosave' ? 'Nothing they had would have saved them.'
     : v.why === 'nothing' ? 'Nothing left to press.'
     : v.why === 'fast' ? 'Too fast to react: ' + String(v.story || '').replace(/, too fast to react$/, '') + '.'
     : v.why === 'mass' ? d.mass + ' of us died to ' + ab + ' at once' + deathCause(rr, d) + '.'
@@ -23137,15 +23139,18 @@ function deathVerdict(r, d) {
   const late = after && own && !r.item.kill && r.deaths.slice().sort((a, b) => a.t - b.t).indexOf(d) < Math.max(2, Math.round(raidSizeOf(r) / 4));
   const end = !!r.item.kill && (r.duration || 0) - d.t <= 20 && !own;
   const huge = (d.hitPct || 0) >= 150, av = d.available || [];
-  const defs = (d.hitPct || 0) >= 500 ? [] : av.filter((a) => !DEATH_KIT.test(a) && !DEATH_RAIDCD.test(a) && (!huge || DEATH_IMM.test(a)));
-  const kit = d.reactable !== false && (d.hitPct || 0) < 500 ? av.filter((a) => DEATH_KIT.test(a)) : [], has = defs.length + kit.length > 0;
+  const defs0 = (d.hitPct || 0) >= 500 ? [] : av.filter((a) => !DEATH_KIT.test(a) && !DEATH_RAIDCD.test(a) && (!huge || DEATH_IMM.test(a)));
+  const kit0 = d.reactable !== false && (d.hitPct || 0) < 500 ? av.filter((a) => DEATH_KIT.test(a)) : [];
+  // (only what would actually have saved them (your rule, Oct 25), heals first: engine d.saves; a death read before it keeps the old lists)
+  const svOk = (a) => !d.saves || (d.saves[a] && d.saves[a].ok), svH = (a) => (d.saves && d.saves[a] && d.saves[a].heal ? 0 : 1);
+  const defs = defs0.filter(svOk).sort((a, b) => svH(a) - svH(b)), kit = kit0.filter(svOk), has = defs.length + kit.length > 0, nosave = !has && defs0.length + kit0.length > 0 && !!d.saves;
   // (a healing gap (your question, Oct 22: "is it the healers fault?"): 5 s+ under half health with little healing from others (d.gap), while
   // half the healers or more were alive, one within 40 yards, and no raid-wide damage then (under 4 of the pull's top damage seconds).
   // Half on them when they still had something ready; otherwise not on them. Their own mistake, a one-shot or the raid's mistake come first)
   const g = d.gap, gap = !!g && g.starved >= 5 && g.healers > 0 && g.alive >= Math.ceil(g.healers / 2) && (g.dist == null || g.dist <= 40) && g.busy < 4;
-  const why = after && !late ? 'wipe' : end ? 'end' : mass ? 'mass' : noCtrl ? 'shared' : own ? 'own' : fast ? 'fast' : raid ? (has && d.reactable ? 'shared' : 'raid') : gap ? 'heal' : has ? 'ready' : 'nothing';
+  const why = after && !late ? 'wipe' : end ? 'end' : mass ? 'mass' : noCtrl ? 'shared' : own ? 'own' : fast ? 'fast' : raid ? (has && d.reactable ? 'shared' : 'raid') : gap ? 'heal' : has ? 'ready' : nosave ? 'nosave' : 'nothing';
   const w = why === 'heal' ? (has ? 0.5 : 0) : { own: 1, ready: 1, nothing: 0.5, shared: 0.5 }[why] || 0, items = andList((defs.length ? defs : kit).slice(0, 2));
-  const word = { wipe: 'after the pull was lost', end: 'in the last seconds of the kill', mass: 'a mass death, ' + (d.mass || 0) + ' of us at once', own: 'their own mistake', fast: 'too fast to react', raid: 'the raid\'s mistake', ready: items + ' still ready', nothing: 'nothing left to press', heal: 'a healing gap: little healing for ' + Math.round(g ? g.starved : 0) + ' s' + (has ? ', with ' + items + ' ready' : ''),
+  const word = { wipe: 'after the pull was lost', end: 'in the last seconds of the kill', mass: 'a mass death, ' + (d.mass || 0) + ' of us at once', own: 'their own mistake', fast: 'too fast to react', raid: 'the raid\'s mistake', ready: items + ' still ready', nothing: 'nothing left to press', nosave: 'nothing they had would have saved them', heal: 'a healing gap: little healing for ' + Math.round(g ? g.starved : 0) + ' s' + (has ? ', with ' + items + ' ready' : ''),
     shared: noCtrl ? 'mind controlled off the edge (shared with the CC team)' : 'the raid\'s mistake' + (raidL ? ' (' + raidL.mechanic + ')' : '') + ', but ' + items + ((defs.length ? defs : kit).slice(0, 2).length > 1 ? ' were' : ' was') + ' ready' }[why];
   // (the story: the engine's, but an own death says what went wrong, like Gravebound's missed fragments)
   const rw = why === 'own' && !ownM.length ? oaRowWhy(r, d) : null;
@@ -23162,7 +23167,12 @@ function deathFix(r, d, v, ownM, rw, raidL) {
   if (v.why === 'own') { const lc = (s) => String(s || '').toLowerCase(), ms = (r.mistakes || []).filter((m) => m.player === d.player && m.mechanic !== 'Death' && m.t >= d.t - 10 && m.t <= d.t + 1.5);
     const m = ms.find((x) => lc(x.mechanic) === lc(k)) || ms.find((x) => ownM.some((l) => l.mechanic === x.mechanic && Math.abs(l.t - x.t) < 0.1)) || null;
     return (m && m.fix && dbfTip1(m.fix)) || (rw && oaFlip(rw.why)) || (d.ownAvoid && pv[0] && dbfTip1(pv[0])) || 'Stay out of ' + k + ': it\'s dodgeable.'; }
-  if (v.why === 'ready') return v.defs.length ? 'Press ' + v.defs[0] + ' when you drop under half health. It was ready.' : 'Use your ' + (v.kit[0] === 'Healthstone' ? 'Healthstone' : 'health potion') + ' when you sit low. You had ' + (d.lowFor ? Math.round(d.lowFor) + ' seconds' : 'time') + '.';
+  if (v.why === 'ready') { const kf = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k'), first = v.kit.length ? v.kit[0] : v.defs[0], sv = d.saves && d.saves[first];
+    const nm = first === 'a healing potion' ? 'health potion' : first, after = d.ability ? ' to survive the ' + d.ability + ' that followed' : ' to survive what followed';
+    if (sv && sv.amt) return (v.kit.length || sv.heal ? 'Use your ' + nm + ' when you drop under half: it heals about ' + kf(sv.amt) + ', enough' : 'Press ' + nm + ' when you drop under half: it takes about ' + kf(sv.amt) + ' off, enough') + after + '.';
+    if (sv && sv.imm) return 'Press ' + nm + ' when you drop under half: it stops the hits' + after.replace(' to survive', ', so you survive') + '.';
+    return v.defs.length && !v.kit.length ? 'Press ' + v.defs[0] + ' when you drop under half health. It was ready.' : 'Use your ' + (v.kit[0] === 'Healthstone' ? 'Healthstone' : 'health potion') + ' when you sit low. You had ' + (d.lowFor ? Math.round(d.lowFor) + ' seconds' : 'time') + '.'; }
+  if (v.why === 'nosave') return 'Nothing you had would have saved this.';
   if (v.why === 'heal') return 'Healers: top up anyone who sits under half health.' + (v.defs.length || v.kit.length ? ' You: ' + (v.defs.length ? 'press ' + v.defs[0] : 'use your ' + (v.kit[0] === 'Healthstone' ? 'Healthstone' : 'health potion')) + ' when you drop low.' : '');
   if (v.why === 'fast') return 'Nothing to fix on your side: ' + k + ' was too fast to react to.';
   if (v.why === 'mass') return 'Not on you: ' + k + ' killed ' + d.mass + ' of us at once. Fix what set it off as a raid.';

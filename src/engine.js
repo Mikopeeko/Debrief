@@ -6636,7 +6636,8 @@ function* analyzeSteps(item, text, opts) {
   }  r.hasPack = mech.packs.length > 0;
   r.packSources = mech.packs.flatMap((p) => p.sources).join('; ');
   yield; try { explainDeaths(r); } catch (e) { console.error(e); for (const d of r.deaths) { d.why = d.why || []; d.prevent = d.prevent || []; } } // never block the pull
-  try { deathHealGaps(r); } catch (e) { console.error(e); } // (healing gaps before deaths: extra, never block the pull)
+  try { deathHealGaps(r); } catch (e) { console.error(e); }
+  try { deathSaves(r); } catch (e) { console.error(e); } // (would what they had ready have saved them (Oct 25)) // (healing gaps before deaths: extra, never block the pull)
   insights(r);
   return r;
 }
@@ -6972,6 +6973,31 @@ function triageSaves(r) {
 // alive / healers = other healers alive / in the raid; dist = yards to the nearest alive healer (positions); busy = seconds that were the
 // pull's top-20% raid damage seconds (raid-wide damage: healers have to pick). Top guilds' survivors almost never sit 5 s+ starved
 // (99th percentile 5.5 s); on our Oct 21 night 1 of 81 deaths did (notes/Guides/Deaths - how to judge them.md).
+// Would what they had ready have saved them? (your rule, Oct 25: "if they had a healthstone/healthpot/some type of emergency self heal they
+// could have used to survive the mechanic"). From the first moment they were under half health with 1.5 s or more to go (time to press),
+// the hits that still came minus the healing that came is what they had to cover: a heal saves them if it's bigger than that; a defensive
+// if the share it takes off the hits that came is. Heals as measured in our Oct 21 logs (share of max health): Healthstone 25%, Demonic
+// Healthstone 31%, health potion 46%, Exhilaration 30%, Desperate Prayer 25%, Death Pact 50%, Mortal Coil 20%, Lay on Hands all of it.
+// Defensives: PERS_DR (Aspect of the Turtle takes about 30% off: on Coiled Altar our hunter took 1.36M through it, so it isn't an
+// immunity there); Ice Block, Divine Shield and Netherwalk stop the hits. Anything else isn't claimed. -> d.saves { name: { ok, amt } }, d.saveT
+const SAVE_HEAL = { healthstone: 0.25, 'demonic healthstone': 0.31, 'a healing potion': 0.46, exhilaration: 0.3, 'desperate prayer': 0.25, 'death pact': 0.5, 'mortal coil': 0.2,
+  'lay on hands': 1, 'crimson vial': 0.2, 'frenzied regeneration': 0.3, renewal: 0.3, 'bitter immunity': 0.2, 'enraged regeneration': 0.3, 'gift of the naaru': 0.2 };
+const SAVE_IMM = new Set(['ice block', 'divine shield', 'netherwalk']);
+function deathSaves(r) {
+  for (const d of r.deaths) { const av = d.available || [], mx = (r.pMax && r.pMax.get(d.guid)) || 0, l = (r.php && r.php.get(d.guid)) || []; d.saves = {}; d.saveT = null;
+    if (!av.length || !mx) continue;
+    let tp = null; for (const [t, fr] of l) { if (t < d.t - 15) continue; if (t > d.t - 1.5) break; if (fr < 0.5) { tp = t; break; } }
+    if (tp == null) { for (const a of av) d.saves[a] = { ok: false, amt: 0, fast: true }; continue; }
+    let h = mx; for (const [t, fr] of l) { if (t > tp) break; h = fr * mx; }
+    const rc = d.recap || [], dmg = rc.filter((e) => !e.heal && e.t >= tp + 0.3).reduce((a, e) => a + e.amount, 0), healIn = rc.filter((e) => e.heal && e.t >= tp && !/\(absorb\)$/.test(e.spell || '')).reduce((a, e) => a + e.amount, 0);
+    const need = Math.max(1, dmg - h - healIn); d.saveT = tp; d.saveNeed = need;
+    for (const a of av) { const k = a.toLowerCase(), hp = SAVE_HEAL[k], dr = PERS_DR.get(k);
+      if (hp != null) d.saves[a] = { ok: hp * mx > need, amt: Math.round(hp * mx), heal: true };
+      else if (SAVE_IMM.has(k)) d.saves[a] = { ok: true, amt: dmg, imm: true };
+      else if (dr && dr[0] === 'abs') d.saves[a] = { ok: 0.3 * mx > need, amt: Math.round(0.3 * mx) };
+      else if (dr && typeof dr[0] === 'number') d.saves[a] = { ok: (dr[1] ? 0.5 : 1) * dmg * dr[0] > need, amt: Math.round(dmg * dr[0]) };
+      else d.saves[a] = { ok: false, amt: 0, unknown: true }; } }
+}
 function deathHealGaps(r) {
   const heals = new Map(); for (const e of r.lowHL || []) { let l = heals.get(e[1]); if (!l) heals.set(e[1], l = []); l.push(e); }
   const healers = [...r.players.values()].filter((p) => p.role === 'healer' && p.name), deadAt = new Map();
