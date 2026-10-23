@@ -1747,6 +1747,7 @@ const PATCH_NOTES = [
     { t: 'The wipe is called for you', d: 'No more "stop at the 2nd death". Debrief now calls the wipe at the moment no raid has ever come back from: more people dead than any kill of that boss survived at that point (battle rezzes counted), the damage check missed, or half the raid dead. Everything before it counts, so the deaths and mistakes that lost the pull are graded. Tested on 760 kills: it never calls a wipe on a pull that was won.' },
     { t: 'A shorter debrief', d: 'Each pull now opens like a raid lead\'s debrief: what went well, what went wrong (click a line for its map and details) and the one thing for next pull. The extra drawers are gone; the timeline, raid cooldowns and burst windows sit in the open below the phases.' },
   ], n: [
+    'Mistakes lines now say if a mechanic is getting better or worse (across the night on All pulls, against the last pull on one pull), and a mechanic that wiped most of the raid says "caused the wipe" instead of counting deaths. Something that went wrong last pull and was done right this pull shows in Wins.',
     'Combat potions opens to a bar per person (tap a name for what they drank and when). Raid cooldowns is one plain line per big hit, and with your note loaded it becomes Note cooldowns: each planned cooldown, on time, late or missed.',
     'The coach box now says Wins and Mistakes, and a pull has two more graded lines: Combat potions (who skipped one, plus Power Infusion) and Raid cooldowns (how many big hits had one).',
     'The coach box lists every big mistake of the pull (smaller ones fold into one line), and Deaths, Avoidable damage, Healthstones and Defensives are now graded lines with a bar, like the phases below.',
@@ -11182,7 +11183,7 @@ function coachEnrich(list, reps, name) {
     if (!x.how && s) { const fx = reps.flatMap((r) => keptMistakes(r)).filter((m) => m.fix && (keys.includes(lc(m.mechanic)) || lc(s.title).includes(lc(m.mechanic)))).map((m) => cHtml(m.fix)).sort((a, b) => b.length - a.length)[0];
       x.how = fx && cHtml(fx) !== cHtml(x.fix) ? fx : (() => { const h = cHtml(s.how || ''), m = h.match(/^(?:.*?[.!?](?:\s|$)){1,2}/); return m ? m[0].trim() : h; })(); }
     // (how many deaths a raid mistake led to)
-    if (!name && (x.kind === 'raid' || x.kind === 'mech')) { const n = reps.reduce((t, r) => t + oaLed(r, keys, s && s.title), 0); if (n) x.led = n; }
+    if (!name && (x.kind === 'raid' || x.kind === 'mech')) { let n = 0, w = 0; for (const r of reps) { const k = oaLed(r, keys, s && s.title), sz = r.players ? r.players.size : 20; n += k; if (k >= Math.max(6, 0.4 * sz)) w++; } if (n) x.led = n; if (w) { x.wipes = w; x.wipe1 = reps.length === 1; } }
     // (the kind of error: once, again, every pull; on a night, getting better or still happening)
     if (night && x.pulls && x.pulls.length) { const L3 = last(3), L4 = last(4), inL3 = x.pulls.filter((q) => L3.includes(q)).length, inL4 = x.pulls.filter((q) => L4.includes(q)).length;
       x.trend = !inL3 && pn.length >= 6 ? 'better' : inL4 >= 2 ? 'still' : ''; x.again = x.n >= 3;
@@ -11199,6 +11200,13 @@ function coachEnrich(list, reps, name) {
     /* (the kills' baseline: how they do it, and ours against it) */ if (s) { const b = kbOf(it, s.id); if (b) { x.kb = b; const ours = reps.map((r) => pullSections(r).get(s.id)).filter(Boolean).map((y) => { const rows = y.s.rows.concat(...(y.s.groups || []).map((gg) => gg.rows || [])); return rows.length ? rows.filter((row) => row.some((c) => c && (c.bad || c.warn))).length / rows.length : 0; });
       const mine = ours.length ? Math.round(100 * ours.sort((p, q) => p - q)[Math.floor(ours.length / 2)]) : null; const rt = b.ok / b.k; x.kbLine = (rt >= 0.7 ? b.ok + ' of ' + b.k + ' top guilds got this fully right' : rt >= 0.4 ? 'About half of top guilds got this fully right (' + b.ok + ' of ' + b.k + ')' : 'Top guilds mess this up too: only ' + b.ok + ' of ' + b.k + ' got it fully right') +
         (mine != null && !name && b.med != null ? (b.med < 5 ? '. A top guild gets almost none of it wrong; we got ' + mine + '% of it wrong.' : '. A top guild gets about ' + b.med + '% of it wrong; we got ' + mine + '%.') : '.'); } }
+    /* (Oct 23, your ask: is it improving or getting worse? On a night, the first half of the pulls it came up in against the second;
+       on one pull, this pull against the last one that reached it. Only a real change gets a tag) */
+    if (s) { try { const sc = (st) => (st === 'bad' ? 2 : st === 'warn' ? 1 : st === 'ok' ? 0 : null);
+      if (night) { const L = reps.slice().sort((a, b) => a.item.pull - b.item.pull).map((r) => { const y = pullSections(r).get(s.id); return y ? sc(y.st) : null; }).filter((v) => v != null);
+        if (L.length >= 4) { const h = Math.floor(L.length / 2), a = L.slice(0, h).filter((v) => v > 0).length / h, b = L.slice(L.length - h).filter((v) => v > 0).length / h; if (b <= a - 0.3) x.tr = 'up'; else if (b >= a + 0.3) x.tr = 'down'; } }
+      else if (prev.length) { const cur = (() => { const y = pullSections(reps[0]).get(s.id); return y ? sc(y.st) : null; })(), lastR = prev.slice().sort((a, b) => b.item.pull - a.item.pull).find((r) => pullSections(r).get(s.id)), pv = lastR ? sc(pullSections(lastR).get(s.id).st) : null;
+        if (cur != null && pv != null) { if (cur < pv) x.tr = 'up1'; else if (cur > pv) x.tr = 'down1'; } } } catch (e) { /* (no tag) */ } }
     /* (for the opened card (Oct 22): who got it wrong, each pull's flag, and this mechanic's avoidable damage) */
     if (s) { try { const who = new Map(), pst = [];
       for (const r of reps) { const y = pullSections(r).get(s.id); pst.push({ n: r.item.pull, st: y ? y.st : 'na' }); if (!y) continue;
@@ -11230,7 +11238,7 @@ function coachTag(x, night, full) {
   if (!night && x.nth) t.push('<span class="cch-tag' + (x.nth >= 2 ? ' rep' : '') + '">' + (x.nth === 1 ? 'first time tonight' : dbfCap(ordN(x.nth)) + ' time tonight') + '</span>');
   if (x.wk) o.push(x.wk === 'better' ? [4, '<span class="cch-tag up">▲ better than last raid</span>'] : x.wk === 'worse' ? [0, '<span class="cch-tag rep">▼ worse than last raid</span>'] : x.wk === 'new' ? [6, '<span class="cch-tag">new since last raid</span>'] : [5, '<span class="cch-tag rep">also last raid</span>']); /* (week to week, Oct 22) */
   if (x.trend === 'better') o.push([4, '<span class="cch-tag up">▲ fine in the last 3 pulls</span>']); else if (x.trend === 'still') o.push([3, '<span class="cch-tag rep">still happening</span>']);
-  if (x.led) o.push([1, '<span class="cch-tag rep">led to ' + (x.led === 1 ? '1 death' : x.led + ' deaths') + '</span>']);
+  if (x.led) o.push([1, '<span class="cch-tag rep">' + (x.wipes ? 'caused ' + (x.wipes === 1 ? (x.wipe1 ? 'the wipe' : 'a wipe') : x.wipes + ' wipes') : 'led to ' + (x.led === 1 ? '1 death' : x.led + ' deaths')) + '</span>']);
   if (x.kb) { const r = x.kb.ok / x.kb.k; if (r >= 0.7) o.push([2, '<span class="cch-tag kb hi" title="' + esc(x.kb.ok + ' of ' + x.kb.k + ' top guilds got this right') + '">Top guilds get this right</span>']); else if (r <= 0.3) o.push([7, '<span class="cch-tag kb" title="' + esc('Only ' + x.kb.ok + ' of ' + x.kb.k + ' top guilds got this fully right') + '">Top guilds mess this up too</span>']); }
   o.sort((a, b) => a[0] - b[0]);
   return t.concat(o.slice(0, full ? o.length : Math.max(0, 2 - t.length)).map((y) => y[1])).join(' ');
@@ -11425,7 +11433,11 @@ function coachSummary(reps, name) {
   return oaCache(reps, 'cs:' + (name || ''), () => {
     const night = reps.length > 1, it = reps[reps.length - 1].item, kill = reps.find((r) => r.item.kill);
     let wrongAll = []; /* (every mistake, for the coach box's Went wrong; wrong stays the top 3 for the other tabs) */
-    const RD = coachRaid(reps), wrong = (wrongAll = coachEnrich(name ? coachMine(reps, name) : RD.list, reps, name)).slice(0, 3), right = coachRight(reps, name, RD.S2).slice(0, 2).map((t) => ({ t }));
+    const RD = coachRaid(reps), wrong = (wrongAll = coachEnrich(name ? coachMine(reps, name) : RD.list, reps, name)).slice(0, 3), right = (() => { const R0 = coachRight(reps, name, RD.S2).slice(0, 2).map((t) => ({ t }));
+      /* (Oct 23: on one pull, a mechanic done right after going wrong on the last pull that reached it is a win) */
+      if (reps.length !== 1 || name) return R0; try { const it0 = reps[0].item, prv = ((S.index && S.index.bosses) || []).filter((b) => b.id === it0.id && b.diffId === it0.diffId && b.pull < it0.pull && CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.players).sort((p, q) => q.item.pull - p.item.pull);
+        const fixed = []; for (const [id, y] of pullSections(reps[0])) { if (y.st !== 'ok' || id === 'deaths' || id === 'avoid') continue; const lastR = prv.find((r) => pullSections(r).get(id)); const py = lastR && pullSections(lastR).get(id); if (py && (py.st === 'bad' || py.st === 'warn')) fixed.push(String(y.s.title).replace(/\s*\(.*$/, '')); }
+        return fixed.length ? [{ t: lpAnd(fixed.slice(0, 3)) + (fixed.length === 1 ? ' was' : ' were') + ' done right this pull, after going wrong last pull.' }].concat(R0.filter((y) => !/ done right\.$/.test(y.t))).slice(0, 3) : R0; } catch (e) { return R0; } })();
     const who = name ? String(name).split('-')[0] : '', w0 = wrong[0];
     const at0 = dbfAt(pullShort(it)), res = kill ? 'Boss down on pull ' + kill.item.pull : night ? reps.length + ' pulls tonight' : 'We wiped ' + (/^(P\d|Int)/i.test(at0) ? 'in ' : 'at ') + at0;
     /* (the first domino in a few words, for the raid's headline on one pull: "set 4's adds were still alive") */
@@ -11514,7 +11526,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
      instruction (the rest inside the card), one tag at most ("led to N deaths"; the others move inside), no number badge) */
   const normF = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, ''), focusIsFix = !!(c.wrong.length && c.focus && normF(c.wrong[0].fix) === normF(c.focus));
   const shortFix = (t) => { t = String(t || ''); if (t.length <= 95) return t; const m = t.match(/^(.{12,110}?)(?::\s|;\s|\.\s)/); return m ? m[1].replace(/[,\s]+$/, '') + '.' : cClip(t, 100); };
-  const ledTag = (x) => (x.led ? '<span class="cch-tag rep">led to ' + (x.led === 1 ? '1 death' : x.led + ' deaths') + '</span>' : '');
+  const ledTag = (x) => (x.led ? '<span class="cch-tag rep">' + (x.wipes ? 'caused ' + (x.wipes === 1 ? (x.wipe1 ? 'the wipe' : 'a wipe') : x.wipes + ' wipes') : 'led to ' + (x.led === 1 ? '1 death' : x.led + ' deaths')) + '</span>' : '');
   const titleOf = (x) => esc(dbfCap(x.label)).replace(/^([^(]+?) \(([^)]+)\)$/, '$1 <span class="cch-pi">($2)</span>');
   const more = (x, i) => { const L = []; const tg = coachTag({ ...x, led: 0, kb: null }, c.night, true) /* (the top-guild tag is the Against top guilds row) */, fx = String(x.fix || '');
     if (fx && !BRIEF && (i === 0 && focusIsFix ? false : shortFix(fx) !== fx)) L.push('<div class="cch-mr"><span class="cch-ml">Next time</span><span>' + esc(fx) + '</span></div>');
@@ -11540,7 +11552,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
   const BRIEF = true; /* (the PC pop-up too, in its wide two-column window (Oct 23)) */
   const briefLine = (x, i) => { const mi = c.night ? '' : mapOf(x), /* (no map on All pulls: it lives on each pull (Oct 23)) */ kk = 'cchp-' + (o.key || 'x') + '-' + (x.sec || x.label), nm = esc(dbfCap(String(x.label).replace(/\s*\(.*$/, ''))), ins = (String(x.label).match(/\(([^)]+)\)\s*$/) || [])[1];
     const fx = String(x.fix || ''), nx = fx ? '<div class="cch-mr"><span class="cch-ml">Next time</span><span>' + esc(fx) + '</span></div>' : '';
-    return '<li class="cbr-w cbr-' + (x.sev === 'bad' ? 'bad' : 'warn') + '"' + (x.sec ? ' data-sec="' + esc(x.sec) + '"' : '') + '><details class="cch-pdx cbr-dx" data-k="' + esc(kk) + '"' + (S.openSecs.has(kk) ? ' open' : '') + '><summary><span class="cbr-dot"></span><span class="cbr-t"><b>' + nm + '</b>' + (ins ? ' <span class="cbr-i">' + esc(ins.toLowerCase()) + '</span>' : '') + ledTag(x) +
+    return '<li class="cbr-w cbr-' + (x.sev === 'bad' ? 'bad' : 'warn') + '"' + (x.sec ? ' data-sec="' + esc(x.sec) + '"' : '') + '><details class="cch-pdx cbr-dx" data-k="' + esc(kk) + '"' + (S.openSecs.has(kk) ? ' open' : '') + '><summary><span class="cbr-dot"></span><span class="cbr-t"><b>' + nm + '</b>' + (ins ? ' <span class="cbr-i">' + esc(ins.toLowerCase()) + '</span>' : '') + ledTag(x) + (x.tr ? '<span class="cch-tag ' + (/^up/.test(x.tr) ? 'up' : 'rep') + '">' + { up: '▲ improving', down: '▼ getting worse', up1: '▲ better than last pull', down1: '▼ worse than last pull' }[x.tr] + '</span>' : '') +
       (x.what ? '<span class="cbr-wh">' + esc(cClip(tidyLine(x.what), 110)) + '</span>' : '') + '</span><span class="cch-chev" aria-hidden="true">▸</span></summary><div class="cbr-body">' + nx + (mi ? '<span class="cbr-map"><span class="cch-pmap"' + mi + '></span></span>' + (x.mapPull ? '<p class="cbr-nomap">The map is from pull ' + x.mapPull + '.</p>' : '') : '') /* (no 'no map' line: no map is just no map (Oct 23)) */ + more(x, 1) + '</div></details></li>'; };
   const briefH = () => (c.right.length ? '<div class="cbr-h ok">Wins</div><ul class="cbr-l">' + c.right.slice(0, 3).map((x) => '<li class="cbr-ok">' + esc(x.t) + '</li>').join('') + '</ul>' : '') +
     (() => { const W = (c.wrongAll && c.wrongAll.length ? c.wrongAll : c.wrong), maj = W.filter((x) => x.sev === 'bad'), mn = W.filter((x) => x.sev !== 'bad'), lead = maj.concat(mn.slice(0, Math.max(0, 3 - maj.length))), rest = W.filter((x) => !lead.includes(x));
