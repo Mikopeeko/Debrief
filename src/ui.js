@@ -1735,6 +1735,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-23', h: [
+    { t: 'A shorter debrief', d: 'Each pull now opens like a raid lead\'s debrief: what went well, what went wrong (click a line for its map and details) and the one thing for next pull. The extra drawers are gone; the timeline, raid cooldowns and burst windows sit in the open below the phases.' },
   ], n: [
     'The coach box is tidier: the thing to focus on next pull is said once, on the first card. Each Next time is one short instruction (open the card for the rest), cards carry at most one tag, and what went right is a short plain list.',
   ], f: [
@@ -9896,6 +9897,20 @@ function oaLayout(v, el) {
     f.addEventListener('toggle', () => { if (f.open) S.openSecs.add(f.dataset.k); else S.openSecs.delete(f.dataset.k); if (f.open && S._drawMaps) { try { S._drawMaps(); } catch (e) { /* (maps draw when their line opens) */ } } }); }
   // (everything else in the one drawer at the bottom)
   const dr = v.querySelector('details.dbr-more'); if (!dr || dr.dataset.oa) return; dr.dataset.oa = '1';
+  /* (one pull, Oct 23 test (your go-ahead: "lets try going back in that direction"): no "More from this pull" drawer. What only it had stays
+     in the open under the phases: Against last pull (better, worse and the numbers), the pull at a glance, raid cooldowns, and burst windows
+     (folded). Dropped as said elsewhere: the fix cards (the coach's Went wrong), the survival kit (Healthstones and Defensives panels), damage
+     taken by source (Graphs), the written phase recap (the phase rows), Talk to (each line's Who), pace against your best (the Pace cards)
+     and Used this pull (Report card, Rotation)) */
+  if (!v.querySelector('.nmc')) { const out = document.createElement('div'); out.className = 'brf-keep';
+    const its = [...dr.querySelectorAll('.rc-it')], nums = its.find((x) => /^\s*The numbers against the last pull/i.test(x.textContent || '')), top = v.querySelector('.dbr-top'), up = top && top.querySelector('.dbr-up'), dn = top && top.querySelector('.dbr-dn');
+    if (up || dn || nums) { const p = document.createElement('div'); p.className = 'panel brf-last'; p.innerHTML = '<h3 class="nh"><span>Against last pull</span></h3>'; [up, dn, nums].forEach((n) => { if (n) p.appendChild(n); }); out.appendChild(p); }
+    v.querySelectorAll('.mcx-tl').forEach((n) => out.appendChild(n));
+    const rcd = [...v.querySelectorAll('details.secd')].find((d) => /^Raid cooldowns/.test(((d.querySelector('summary') || {}).textContent || '').trim())); if (rcd) out.appendChild(rcd);
+    const brw = v.querySelector('.panel.brw'); if (brw) { const f = document.createElement('details'); f.className = 'panel secd st-na brf-burst'; f.dataset.k = 'brf-burst'; if (S.openSecs.has('brf-burst')) f.open = true; f.innerHTML = '<summary><span class="sechd"><b>Burst windows</b></span><span class="sub">where the raid\'s damage went, and what was going on</span></summary>'; brw.querySelector('h3.nh') && brw.querySelector('h3.nh').remove(); f.appendChild(brw); out.appendChild(f);
+      f.addEventListener('toggle', () => { if (f.open) S.openSecs.add('brf-burst'); else S.openSecs.delete('brf-burst'); }); }
+    const dc = [...v.querySelectorAll('details.panel')].find((d) => /^Data check/.test(((d.querySelector('summary') || {}).textContent || '').trim())); if (dc) out.appendChild(dc);
+    dr.replaceWith(out); if (top) top.remove(); v.querySelectorAll('#rcTop, .rc-hp').forEach((n) => { if (!out.contains(n)) n.remove(); }); try { if (S._drawMaps) S._drawMaps(); } catch (e) { /* (maps draw when seen) */ } return; }
   const sm = dr.querySelector(':scope > summary'); let at = sm;
   const put = (n) => { if (!n || dr.contains(n) || n.contains(dr) || n === el || n.contains(el)) return; at.after(n); at = n; };
   put(v.querySelector('.dbr-top')); put(v.querySelector('#rcTop')); put(v.querySelector('.nmc > .lpv.dbf:not(.rc-more)')); put(v.querySelector('.rc-hp'));
@@ -10547,9 +10562,9 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
   const ledTag = (x) => (x.led ? '<span class="cch-tag rep">led to ' + (x.led === 1 ? '1 death' : x.led + ' deaths') + '</span>' : '');
   const titleOf = (x) => esc(dbfCap(x.label)).replace(/^([^(]+?) \(([^)]+)\)$/, '$1 <span class="cch-pi">($2)</span>');
   const more = (x, i) => { const L = []; const tg = coachTag({ ...x, led: 0, kb: null }, c.night, true) /* (the top-guild tag is the Against top guilds row) */, fx = String(x.fix || '');
-    if (fx && (i === 0 && focusIsFix ? false : shortFix(fx) !== fx)) L.push('<div class="cch-mr"><span class="cch-ml">Next time</span><span>' + esc(fx) + '</span></div>');
+    if (fx && !BRIEF && (i === 0 && focusIsFix ? false : shortFix(fx) !== fx)) L.push('<div class="cch-mr"><span class="cch-ml">Next time</span><span>' + esc(fx) + '</span></div>');
     if (tg) L.push('<div class="cch-mr"><span class="cch-ml">Also</span><span class="cch-also">' + tg + '</span></div>');
-    if (x.what) L.push('<div class="cch-mr"><span class="cch-ml">What happened</span><span>' + esc(x.what) + '</span></div>');
+    if (x.what && !BRIEF) L.push('<div class="cch-mr"><span class="cch-ml">What happened</span><span>' + esc(x.what) + '</span></div>');
     if (x.whoL && x.whoL.length && !c.name) L.push('<div class="cch-mr"><span class="cch-ml">Who</span><span class="cch-mw">' + x.whoL.map(([n, k]) => '<span class="cch-wc">' + pmName(n) + (c.night || k > 1 ? ' <i>×' + k + '</i>' : '') + '</span>').join('') + '</span></div>');
     if (c.night && x.pst && x.pst.length > 1) L.push('<div class="cch-mr"><span class="cch-ml">Pull by pull</span><span class="cch-pst">' + x.pst.map((q) => '<button type="button" class="cch-pq ' + (q.st === 'bad' ? 'bad' : q.st === 'warn' ? 'warn' : q.st === 'ok' ? 'ok' : 'na') + '" data-cchpull="' + q.n + '"' + (x.sec ? ' data-cchsec="' + esc(x.sec) + '"' : '') + ' title="' + esc('Pull ' + q.n + ': ' + ({ bad: 'went wrong', warn: 'some mistakes', ok: 'done right' }[q.st] || 'didn\'t come up') + '. Click to open it.') + '">' + q.n + '</button>').join('') + '</span></div>');
     if (howRest(x)) L.push('<div class="cch-mr"><span class="cch-ml">How</span><span>' + esc(cClip(howRest(x), 260)) + '</span></div>');
@@ -10563,6 +10578,18 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
       '<div class="cch-pt"><b>' + titleOf(x) + '</b> ' + ledTag(x) + '</div>' +
       '<div class="cch-fx"><span class="cch-nx' + (foc ? ' foc' : '') + '">' + (foc ? '🎯 Focus ' + (c.night ? 'next raid' : c.kill ? 'next week' : 'next pull') : 'Next time') + '</span><span>' + esc(foc ? x.fix : shortFix(x.fix)) + '</span></div></div><span class="cch-pmap"' + mi + '></span><span class="cch-chev" aria-hidden="true">▸</span></summary>' + m + '</details></li>'; };
   const focusSame = String(c.headline).includes(String(c.focus).replace(/\.$/, ''));
+  /* (Oct 23 test, your idea "the debrief tab had a section that went over briefly What went well, What went wrong … move back in that
+     direction"): short lines that REPLACE the cards (Oct 19 lesson: side by side, every problem showed twice). Went well, Went wrong
+     (the mechanic, its plain fix in grey, what happened under it; a click opens the rest in place), then one Next pull line. The PC
+     app's pop-up (key 'pop') keeps the cards until the in-game chat moves it over) */
+  const BRIEF = o.key !== 'pop';
+  const briefLine = (x, i) => { const mi = mapOf(x), kk = 'cchp-' + (o.key || 'x') + '-' + (x.sec || x.label), nm = esc(dbfCap(String(x.label).replace(/\s*\(.*$/, ''))), ins = (String(x.label).match(/\(([^)]+)\)\s*$/) || [])[1];
+    const fx = String(x.fix || ''), nx = fx && !(i === 0 && (focusIsFix || normF(fx) === normF(c.focus))) ? '<div class="cch-mr"><span class="cch-ml">Next time</span><span>' + esc(fx) + '</span></div>' : '';
+    return '<li class="cbr-w cbr-' + (x.sev === 'bad' ? 'bad' : 'warn') + '"' + (x.sec ? ' data-sec="' + esc(x.sec) + '"' : '') + '><details class="cch-pdx cbr-dx" data-k="' + esc(kk) + '"' + (S.openSecs.has(kk) ? ' open' : '') + '><summary><span class="cbr-dot"></span><span class="cbr-t"><b>' + nm + '</b>' + (ins ? ' <span class="cbr-i">' + esc(ins.toLowerCase()) + '</span>' : '') + ledTag(x) +
+      (x.what ? '<span class="cbr-wh">' + esc(cClip(x.what, 110)) + '</span>' : '') + '</span><span class="cch-chev" aria-hidden="true">▸</span></summary><div class="cbr-body">' + nx + (mi ? '<span class="cbr-map"><span class="cch-pmap"' + mi + '></span></span>' : '') + more(x, 1) + '</div></details></li>'; };
+  const briefH = () => (c.right.length ? '<div class="cbr-h ok">Went well</div><ul class="cbr-l">' + c.right.slice(0, 3).map((x) => '<li class="cbr-ok">' + esc(x.t) + '</li>').join('') + '</ul>' : '') +
+    (c.wrong.length ? '<div class="cbr-h bad">Went wrong</div><ul class="cbr-l">' + c.wrong.slice(0, 3).map(briefLine).join('') + '</ul>' : '') +
+    (c.focus && !focusSame ? '<div class="cbr-next"><span class="cbr-nk">🎯 ' + (c.night ? 'Next raid' : c.kill ? 'Next week' : 'Next pull') + '</span><span>' + esc(c.focus) + '</span></div>' : '');
   const D = c.deaths, A = c.avoid;
   // (a death chip opens that death's short summary under the chips (Oct 22: deaths live only here on a single pull))
   const dchip = (it, x) => '<span class="dch k-' + esc(it.k || 'n') + (x ? ' dch-x' : '') + (it.late ? ' dch-late' : '') + '"' + (it.dg ? ' data-ddg="' + esc(it.dg) + '" role="button" tabindex="0"' : it.dn ? ' data-ddn="' + esc(it.dn) + '" role="button" tabindex="0"' : '') + (x ? ' hidden' : '') + ' title="' + esc(it.word || '') + '">' + (it.t ? '<i>' + esc(it.t) + '</i>' : '') + (it.who ? '<b>' + esc(it.who) + '</b>' : '') + '<span>' + esc(it.ab) + (it.n > 1 ? ' ×' + it.n : '') + '</span></span>';
@@ -10571,13 +10598,13 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
   const ach = A ? (A.items && A.items.length ? A.items.map((it) => achip(it)).join('') + (A.rest && A.rest.length ? '<span class="ach more" role="button" tabindex="0" data-avmore>+' + A.rest.length + ' more</span>' + A.rest.map((it) => achip(it, 1)).join('') : A.more ? '<span class="ach more">+' + A.more + ' more</span>' : '') : '<span class="cch-none">' + esc(A.line) + '</span>') : '';
   const html = '<section class="cch cch2" aria-label="Coach"><div class="cch-hd"><span class="cch-k">' + esc(o.title || (c.name ? 'Your coach' : 'Coach')) + '</span>' + (pm ? '<span class="nm" style="color:' + pm.color + '">' + esc(c.name.split('-')[0]) + '</span>' : '') + '</div>' +
     '<p class="cch-h">' + esc(c.headline) + '</p>' +
-    (focusSame || focusIsFix ? '' : '<div class="cch-focus"><span class="cch-fk">🎯 Focus ' + (c.night ? 'next raid' : c.kill ? 'next week' : 'next pull') /* (the boss is dead: no next pull (Oct 22)) */ + '</span><span class="cch-fv">' + esc(c.focus) + '</span></div>') +
+    (BRIEF || focusSame || focusIsFix ? '' : '<div class="cch-focus"><span class="cch-fk">🎯 Focus ' + (c.night ? 'next raid' : c.kill ? 'next week' : 'next pull') /* (the boss is dead: no next pull (Oct 22)) */ + '</span><span class="cch-fv">' + esc(c.focus) + '</span></div>') +
     (c.week ? '<div class="cch-wk2"><span class="cch-wk2k">Since last raid</span><span>' + esc(c.week.replace(/^Since last raid /, '').replace(/^\(([^)]*)\): /, (m0, d) => d.charAt(0).toUpperCase() + d.slice(1) + ': ')) + '</span></div>' : '') /* (week to week, Oct 22) */ +
-    (c.wrong.length ? '<div class="cch-sh">What went wrong</div><ol class="cch-ps cch-no">' + c.wrong.map(prob).join('') + '</ol>' : '') +
-    (c.right.length ? '<div class="cch-good2">' + c.right.map((x) => '<p>✓ ' + esc(x.t) + '</p>').join('') + '</div>' : '') +
+    (BRIEF ? briefH() : c.wrong.length ? '<div class="cch-sh">What went wrong</div><ol class="cch-ps cch-no">' + c.wrong.map(prob).join('') + '</ol>' : '') +
+    (!BRIEF && c.right.length ? '<div class="cch-good2">' + c.right.map((x) => '<p>✓ ' + esc(x.t) + '</p>').join('') + '</div>' : '') +
     (D || A ? '<div class="cch-acct2' + (S.cblBy === 'm' ? ' cbl-on-m' : '') + '">' + (A && A.reps ? cblSwitch() : '') + (D ? '<details class="cch-ab cch-abx' + (D.bad ? ' warn' : '') + '" data-k="cch-ab-d"' + (S.openSecs && S.openSecs.has('cch-ab-d') ? ' open' : '') + '><summary class="cch-al">Deaths<span class="cch-abs">' + esc(coachAbSum(D, 'd')) + '</span></summary>' + (D.items && D.items.length ? cblBoth(coachBars(cblDeaths(D), (x) => x.n, (x) => x.body), A && A.reps ? coachBars(cblDeathsP(A.reps, A.who), (x) => x.n, (x) => x.body) : '') || '<div class="cch-chips">' + dch + '</div>' : '<div class="cch-chips">' + dch + '</div>') + '' + (D.nsum || []).map((x) => '<div class="dd-nsum" data-ddn="' + esc(x.key) + '" hidden>' + x.html + '</div>').join('') + (D.items && D.items.some((it) => it.dg || it.dn) ? '<div class="cch-ddbox" hidden></div><div class="cch-ddtip">Tap a death to see what happened.</div>' : '') + '</details>' : '') + (A ? '<details class="cch-ab cch-abx' + (A.bad ? ' warn' : '') + '" data-k="cch-ab-a"' + (S.openSecs && S.openSecs.has('cch-ab-a') ? ' open' : '') + '><summary class="cch-al">Avoidable damage<span class="cch-abs">' + esc(coachAbSum(A, 'a')) + '</span></summary>' + (A.bars && A.bars.length ? cblBoth(coachBars(A.bars, (x) => x.amt, (x) => { const pm = cblPm(x.reps || A.reps || []), list = x.pl instanceof Map ? [...x.pl.values()] : (x.pl || []); return cblMini(list.map((q) => ({ label: cblNm(q.p), p: pm.get(q.p), st: q.st, amt: q.amt, sub: x.secs ? q.v + ' s' : plural(q.v, 'hit') })), x.st ? cblFix(x.key, x.fix) : ''); }), A.reps ? coachBars(cblAvoidP(A), (x) => x.amt, (x) => x.body) : '') : '<div class="cch-chips">' + ach + '</div>') + '' + (A.items && A.items.some((it) => it.avk || it.avn) ? '<div class="cch-avbox" hidden></div><div class="cch-ddtip">Tap a bar to see what hit them.' + '</div>' : '') + '</details>' : '') + '</div>' : '') +
     (c.kit ? coachKitHtml(c.kit) : '') /* (Healthstones and potions, Defensives: a second row under Deaths and Avoidable damage (Oct 22)) */ +
-    (c.full ? '<details class="cch-more" data-k="' + k + '"' + (S.openSecs.has(k) ? ' open' : '') + '><summary>Read the full coaching</summary><div class="cch-full">' + c.full + '</div></details>' : '') + '</section>';
+    (!BRIEF && c.full ? '<details class="cch-more" data-k="' + k + '"' + (S.openSecs.has(k) ? ' open' : '') + '><summary>Read the full coaching</summary><div class="cch-full">' + c.full + '</div></details>' : '') + '</section>';
   return colorNames(iconSpells(html), PM).replace(/<span class="cch-pmap" data-mi="(\d+)"><\/span>/g, (m0, n) => '<span class="cch-pmap">' + (MAPS[+n] || '') + '</span>'); }
 // (the whole Debriefing tab for one pull, as the site draws it, for the PC app's recap pop-up (Oct 22): the pull opens here (the app's
 // hidden copy of the site) and the tab's HTML goes to the pop-up; only the pull on screen stays in the site's pulls)
