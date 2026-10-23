@@ -4061,6 +4061,10 @@ details.secd > summary .kbrank + .sst { margin-left: 0; }
 .cch2 .cch-good { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; } .cch2 .cch-gd { padding: 4px 10px; border-radius: 999px; font-size: 13px; background: rgba(95,211,95,.1); border: 1px solid rgba(95,211,95,.28); color: #a8eaa8; }
 .cch2 .cch-acct2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin: 0 0 6px; }
 .cch2 .cch-ab { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line2); } .cch2 .cch-ab.warn { border-color: rgba(232,162,58,.35); }
+/* the Deaths and Avoidable damage panels open and close (Oct 22) */
+.cch2 details.cch-abx { align-self: start; } .cch2 details.cch-abx > summary.cch-al { display: flex; align-items: center; flex-wrap: nowrap; gap: 10px; margin: 0; cursor: pointer; list-style: none; } .cch2 details.cch-abx > summary::-webkit-details-marker { display: none; }
+.cch2 details.cch-abx > summary::after { content: "▸"; margin-left: auto; color: var(--muted); transition: transform .15s; } .cch2 details.cch-abx[open] > summary::after { transform: rotate(90deg); } .cch2 details.cch-abx[open] > summary { margin-bottom: 8px; }
+.cch2 .cch-abs { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--text); opacity: .85; } .cch2 details.cch-abx:hover > summary .cch-abs { opacity: 1; }
 .cch2 .cch-al { display: block; font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
 .cch2 .cch-chips { display: flex; flex-wrap: wrap; gap: 6px; } .cch2 .cch-none { font-size: 13.5px; color: #a8eaa8; } .cch2 .cch-anote { flex-basis: 100%; margin-top: 4px; font-size: 12px; color: var(--muted); }
 .cch2 .dch, .cch2 .ach { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 8px; border-radius: 999px; font-size: 12.5px; background: rgba(255,255,255,.05); border: 1px solid var(--line2); }
@@ -23749,7 +23753,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
     (c.week ? '<div class="cch-wk2"><span class="cch-wk2k">Since last raid</span><span>' + esc(c.week.replace(/^Since last raid /, '').replace(/^\(([^)]*)\): /, (m0, d) => d.charAt(0).toUpperCase() + d.slice(1) + ': ')) + '</span></div>' : '') /* (week to week, Oct 22) */ +
     (c.wrong.length ? '<div class="cch-sh">What went wrong</div><ol class="cch-ps cch-no">' + c.wrong.map(prob).join('') + '</ol>' : '') +
     (c.right.length ? '<div class="cch-good">' + c.right.map((x) => '<span class="cch-gd">✓ ' + esc(x.t) + '</span>').join('') + '</div>' : '') +
-    (D || A ? '<div class="cch-acct2">' + (D ? '<div class="cch-ab' + (D.bad ? ' warn' : '') + '"><span class="cch-al">Deaths</span><div class="cch-chips">' + dch + '</div>' + (D.nsum || []).map((x) => '<div class="dd-nsum" data-ddn="' + esc(x.key) + '" hidden>' + x.html + '</div>').join('') + (D.items && D.items.some((it) => it.dg || it.dn) ? '<div class="cch-ddbox" hidden></div><div class="cch-ddtip">Tap a death to see what happened.</div>' : '') + '</div>' : '') + (A ? '<div class="cch-ab' + (A.bad ? ' warn' : '') + '"><span class="cch-al">Avoidable damage</span><div class="cch-chips">' + ach + '</div>' + (A.items && A.items.some((it) => it.avk || it.avn) ? '<div class="cch-avbox" hidden></div><div class="cch-ddtip">Tap one to see ' + (A.items.some((it) => it.avn) ? 'the night: who, which pulls, and the fix.' : 'what happened.') + '</div>' : '') + '</div>' : '') + '</div>' : '') +
+    (D || A ? '<div class="cch-acct2">' + (D ? '<details class="cch-ab cch-abx' + (D.bad ? ' warn' : '') + '" data-k="cch-ab-d"' + (S.openSecs && S.openSecs.has('cch-ab-d') ? ' open' : '') + '><summary class="cch-al">Deaths<span class="cch-abs">' + esc(coachAbSum(D, 'd')) + '</span></summary><div class="cch-chips">' + dch + '</div>' + (D.nsum || []).map((x) => '<div class="dd-nsum" data-ddn="' + esc(x.key) + '" hidden>' + x.html + '</div>').join('') + (D.items && D.items.some((it) => it.dg || it.dn) ? '<div class="cch-ddbox" hidden></div><div class="cch-ddtip">Tap a death to see what happened.</div>' : '') + '</details>' : '') + (A ? '<details class="cch-ab cch-abx' + (A.bad ? ' warn' : '') + '" data-k="cch-ab-a"' + (S.openSecs && S.openSecs.has('cch-ab-a') ? ' open' : '') + '><summary class="cch-al">Avoidable damage<span class="cch-abs">' + esc(coachAbSum(A, 'a')) + '</span></summary><div class="cch-chips">' + ach + '</div>' + (A.items && A.items.some((it) => it.avk || it.avn) ? '<div class="cch-avbox" hidden></div><div class="cch-ddtip">Tap one to see ' + (A.items.some((it) => it.avn) ? 'the night: who, which pulls, and the fix.' : 'what happened.') + '</div>' : '') + '</details>' : '') + '</div>' : '') +
     (c.full ? '<details class="cch-more" data-k="' + k + '"' + (S.openSecs.has(k) ? ' open' : '') + '><summary>Read the full coaching</summary><div class="cch-full">' + c.full + '</div></details>' : '') + '</section>';
   return colorNames(iconSpells(html), PM).replace(/<span class="cch-pmap" data-mi="(\d+)"><\/span>/g, (m0, n) => '<span class="cch-pmap">' + (MAPS[+n] || '') + '</span>'); }
 // (the whole Debriefing tab for one pull, as the site draws it, for the PC app's recap pop-up (Oct 22): the pull opens here (the app's
@@ -23808,9 +23812,19 @@ function coachGame(r, name) {
 // (a link to the Avoidable damage row when a single pull has none: go to the coach box's avoidable damage instead (Oct 22))
 document.addEventListener('click', (e) => { const a = e.target && e.target.closest ? e.target.closest('[data-dsec^="sec-avoid"],a[href^="#sec-avoid"],[data-sec^="sec-avoid"],[data-sec="avoid"]') : null; if (!a || document.querySelector('[id^="sec-avoid"]')) return;
   const box = document.querySelector('.cch-acct2 .cch-avbox') || document.querySelector('.cch-acct2'); if (!box) return; e.preventDefault(); e.stopPropagation(); (box.closest('.cch-ab') || box).scrollIntoView({ behavior: 'smooth', block: 'center' }); }, true);
+// (the coach box's Deaths and Avoidable damage panels, closed: one line, e.g. "99 deaths · 47 on the player · most to Venom Rupture" (Oct 22))
+function coachAbSum(X, k) { const it = X.items || [], n = it.length + (X.rest || []).length;
+  if (k === 'd') return X.n ? plural(X.n, 'death') + ' · ' + (X.onThem || 0) + ' on the player' + (it[0] && it[0].n ? ' · most to ' + it[0].ab : '') : 'nobody died';
+  return n ? (it[0] && it[0].k ? 'most from ' + it[0].k : '') + (n > 1 ? ' · ' + n + ' kinds' : '') : 'nothing worth flagging'; }
+document.addEventListener('toggle', (e) => { const d = e.target; if (d && d.matches && d.matches('details.cch-abx[data-k]') && S.openSecs) { if (d.open) S.openSecs.add(d.dataset.k); else S.openSecs.delete(d.dataset.k); } }, true);
+// (a chip opened by code or a jump (a pull button, "see it" links) opens its panel first, so the card can be seen; a link to the
+// avoidable damage opens that panel too (the Avoidable damage chat's catch, Oct 22))
+document.addEventListener('click', (e) => { const t = e.target && e.target.closest ? e.target : null; if (!t) return;
+  const ch = t.closest('.dch, .ach'), dp = ch && ch.closest('details.cch-abx'); if (dp && !dp.open) dp.open = true;
+  if (t.closest('[data-dsec^="sec-avoid"],a[href^="#sec-avoid"],[data-sec^="sec-avoid"]') && !document.querySelector('[id^="sec-avoid"]')) { const ap = document.querySelector('.cch-acct2 details.cch-abx[data-k="cch-ab-a"]'); if (ap) ap.open = true; } }, true);
 // (a link to the Deaths row when a single pull has none: go to the coach box's deaths instead (Oct 22))
 document.addEventListener('click', (e) => { const a = e.target && e.target.closest ? e.target.closest('[data-dsec^="sec-deaths"],a[href^="#sec-deaths"],[data-sec^="sec-deaths"]') : null; if (!a || document.querySelector('[id^="sec-deaths"]')) return;
-  const box = document.querySelector('.cch-acct2'); if (!box) return; e.preventDefault(); e.stopPropagation(); box.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, true);
+  const box = document.querySelector('.cch-acct2'); if (!box) return; e.preventDefault(); e.stopPropagation(); const dp = box.querySelector('details.cch-abx[data-k="cch-ab-d"]'); if (dp) dp.open = true; box.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, true);
 // (a death chip in the coach box: open its summary under the chips, or close it; "+N more" shows the rest (Oct 22))
 document.addEventListener('click', (e) => { const t = e.target && e.target.closest ? e.target : null; if (!t) return;
   const mo = t.closest('.dch[data-ddmore]'); if (mo) { mo.parentNode.querySelectorAll('.dch-x').forEach((x) => (x.hidden = false)); mo.remove(); return; }
@@ -24288,7 +24302,7 @@ function nightMechC(o) {
   const cntL = (l) => { const o2 = { major: 0, moderate: 0, minor: 0 }; for (const r of l) { const v = lvOf(r); if (v !== 'clean') o2[v]++; } return o2; };
   const lvTxt = (o2) => lvlText(o2);
   // ---- each phase ----
-  const phases = groups.map((g, i) => { const l = g.list.filter((r) => !isInfo(r) && judged(r).length); if (!l.length) return '';
+  const phases = groups.map((g, i) => { const l = g.list.filter((r) => !isInfo(r) && judged(r).length && r.x.id !== 'avoid' && r.x.id !== 'deaths'); /* (the coach box's panels have these (Oct 22)) */ if (!l.length) return '';
     const pr = l.filter((r) => lvOf(r) !== 'clean').sort((a, b) => ['major', 'moderate', 'minor'].indexOf(lvOf(a)) - ['major', 'moderate', 'minor'].indexOf(lvOf(b)) || factsOf(b).Wr - factsOf(a).Wr || a.ord - b.ord), ok = l.filter((r) => lvOf(r) === 'clean');
     const bigI = pr.findIndex((r) => judged(r).some((n) => stAt(r, n) !== 'ok' && mapIn(n, r.x.id))), pl = pr.slice(); void bigI; /* (a checklist keeps its order: failed first, then slips) */
     const lv = cntL(l), lvl = lv.major ? 'major' : lv.moderate ? 'moderate' : lv.minor ? 'minor' : 'clean', m = String(g.name).match(/^P(\d+)/);
@@ -24339,7 +24353,7 @@ function nightMechC(o) {
     if (pick.length && typeof gdzLearn === 'function') top += gdzLearn(boss, reps[0] ? reps[0].item.diffId : null, pick.map((r) => ({ id: r.x.id, title: r.title }))); /* (each card's part of the guide (Oct 21)) */
   } catch (e) { console.error(e); top = ''; }
   const hp = o.b0 && o.pulls ? nightHpChart(o.b0, o.pulls) : '';
-  return { html: (top ? '<section class="dbr-top">' + top + '</section>' : '') + '<div class="dbr-slot"></div>' + hp + head + (() => { try { return deathsLine(); } catch (e) { console.error(e); return ''; } })() + (phases || '<div class="panel"><p class="muted" style="margin:0">Mechanic checks for this boss aren\'t built yet.</p></div>'), MAPS };
+  return { html: (top ? '<section class="dbr-top">' + top + '</section>' : '') + '<div class="dbr-slot"></div>' + hp + head + '' /* (no Deaths row on All pulls: the coach box's Deaths panel has it, and the row did nothing (your call, Oct 22)) */ + (phases || '<div class="panel"><p class="muted" style="margin:0">Mechanic checks for this boss aren\'t built yet.</p></div>'), MAPS };
 }
 // (a tile, a chip or a dot: that pull's Mechanics at the mechanic)
 function bindNightMechC(pulls) {
