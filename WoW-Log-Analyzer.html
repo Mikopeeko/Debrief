@@ -17845,7 +17845,7 @@ function ndzTalOf(name, sid) { const T = NDZ_TALC[+sid]; if (!T) return null; co
 const NDZ_CDK = { 'Aura Mastery': ['dr', 8, 180], 'Spirit Link Totem': ['dr', 6, 180], 'Power Word: Barrier': ['dr', 10, 180], Darkness: ['dr', 8, 180], 'Anti-Magic Zone': ['dr', 8, 180],
   Zephyr: ['dr', 8, 120], 'Rallying Cry': ['dr', 10, 180], Tranquility: ['heal', 7, 180], 'Divine Hymn': ['heal', 8, 120], 'Vampiric Embrace': ['heal', 15, 120], 'Healing Tide Totem': ['heal', 10, 180],
   'Ultimate Penitence': ['heal', 6, 240], 'Dream Flight': ['heal', 15, 120], Revival: ['after', 0, 180], Restoral: ['after', 0, 180], Rewind: ['after', 5, 180] };
-function ndzCdPlan(B, pr) {
+function ndzCdPlanV1(B, pr) { /* (the Oct 22 plan, kept as the fallback; the power-matched one is ndzCdPlan in ndz-cdplan.js) */
   const boss = B.pick, SD = NDZ_CDSTART[boss] || {}, stD = SD[B.diff] ? B.diff : SD.Mythic ? 'Mythic' : SD.Heroic ? 'Heroic' : null, st = stD ? SD[stD] : null;
   const DG = (NDZ_TLDMG[boss] || {})[stD] || null, dg = DG ? DG.ph || DG : null;
   if (!st || !dg) return ndzCdPlanOld(B, pr); /* (no damage profile for this boss yet: the old way, from your pulls) */
@@ -17949,6 +17949,136 @@ if (location.hostname === 'localhost') window.__ndzScan = (soakRe) => { const r 
   const top = (o, n) => Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, n || 60).map(([k, v]) => k + ': ' + v);
   return { boss: r.item.boss, diff: r.item.diff, dur: Math.round(r.duration), comp: ps.map(tag).sort().join(', '), kick: top(kick, 40), util: top(util, 70), ext: top(ext, 25), disp: top(disp, 20), soak: top(soak, 60),
     hitMany: Object.entries(hitBy).filter(([, v]) => v.who >= 4 && v.who <= ps.length - 3).sort((a, b) => b[1].hits - a[1].hits).slice(0, 25).map(([k, v]) => k + ' (' + v.who + ' players, ' + v.hits + ' hits)') }; };
+// ---- Healing cooldown power (Oct 23, research: notes/Healing cooldowns research - Oct 23) ----
+// NDZ_CDPOW: what one press does. Measured in the 19 fastest Mythic Coiled Altar kills with the site's own engine (healing credited to
+// each press; damage cuts on the players inside them), rules from the spell tooltips (12.1). heal/move/hp in thousands; est = not measured yet.
+const NDZ_CDPOW = {"Spirit Link Totem":{"k":"move","r":0.1,"cov":1,"dur":6,"cd":180,"move":3822,"what":"cuts damage 10% and moves health from the healthy to the low"},"Aura Mastery":{"k":"cut","r":0.10227272727272727,"raw":true,"cov":1,"dur":8,"cd":180,"what":"raises Devotion Aura from 3% to 12% for 8 s"},"Anti-Magic Zone":{"k":"cut","r":0.15,"cov":0.8,"magic":true,"dur":6,"cd":180,"what":"cuts magic damage 15% for 6 s"},"Power Word: Barrier":{"k":"cut","r":0.2,"cov":0.7,"dur":10,"cd":180,"what":"cuts damage 20% inside it for 10 s"},"Darkness":{"k":"cut","r":0.15,"cov":0.7,"dur":8,"cd":180,"what":"15% of hits miss for 8 s"},"Zephyr":{"k":"cut","r":0.2,"cov":0.25,"dur":8,"cd":120,"what":"the Evoker and 4 near them take 20% less for 8 s"},"Rallying Cry":{"k":"hp","dur":10,"cd":180,"hp":2077,"what":"gives everyone 10% more health for 10 s"},"Rewind":{"k":"back","share":0.22499999999999998,"dur":1,"cd":180,"what":"heals back 30% of the last 5 s of damage"},"Tranquility":{"k":"heal","dur":6,"cd":180,"heal":3595,"what":"a big raid heal over 6 s"},"Revival":{"k":"heal","inst":true,"dur":1,"cd":180,"heal":928,"what":"an instant raid heal"},"Restoral":{"k":"heal","inst":true,"dur":1,"cd":180,"heal":849,"what":"an instant raid heal"},"Divine Hymn":{"k":"heal","dur":5,"cd":120,"heal":816,"what":"a raid heal over 5 s"},"Vampiric Embrace":{"k":"heal","dur":12,"cd":120,"heal":1102,"what":"heals the raid from its damage for 12 s"},"Invoke Yu'lon, the Jade Serpent":{"k":"heal","dur":25,"cd":120,"heal":890,"what":"extra heals for 25 s"},"Ascendance":{"k":"heal","dur":15,"cd":180,"heal":2044,"what":"stronger heals for 15 s"},"Ultimate Penitence":{"k":"heal","dur":6,"cd":240,"heal":700,"est":true,"what":"a raid heal over 6 s"},"Healing Tide Totem":{"k":"heal","dur":10,"cd":180,"heal":2000,"est":true,"what":"a raid heal over 10 s"},"Dream Flight":{"k":"heal","dur":15,"cd":120,"heal":1500,"est":true,"what":"a raid heal and heals over time"},"Holy Word: Salvation":{"k":"heal","inst":true,"dur":1,"cd":360,"heal":1200,"est":true,"what":"an instant raid heal"}};
+// NDZ_CDHAB: where top players press each one, per boss on Mythic (lorrgs, top 50 per spec): [phase, seconds into it, share of their logs]
+const NDZ_CDHAB = {"Nymrissa Wavecaller":{"Tranquility":[[1,48,0.78],[1,267,0.4]],"Rewind":[[1,51,0.46]],"Invoke Yu'lon, the Jade Serpent":[[1,39,0.54],[1,156,0.65],[1,279,0.5]],"Revival":[[1,51,0.5],[1,231,0.36],[1,273,0.34]],"Aura Mastery":[[1,48,0.32]],"Ultimate Penitence":[[1,48,0.32],[1,93,0.36]],"Divine Hymn":[[1,9,0.38],[1,45,0.34],[1,201,0.3]],"Vampiric Embrace":[[1,9,0.43],[1,132,0.41],[1,147,0.3],[1,258,0.46]],"Ascendance":[[1,42,0.66],[1,264,0.52]],"Spirit Link Totem":[[1,93,0.38]]},"Nek'zali the Soulcoiler":{"Tranquility":[[1,81,0.32]],"Rewind":[[1,78,0.8],[3,84,0.38]],"Invoke Yu'lon, the Jade Serpent":[[1,0,0.36],[1,30,0.32]],"Revival":[[1,36,0.3],[1,78,0.4],[3,54,0.34]],"Aura Mastery":[[1,78,0.41]],"Ultimate Penitence":[[1,36,0.44],[1,75,0.3]],"Divine Hymn":[[1,3,0.32]],"Vampiric Embrace":[[1,3,0.78]],"Ascendance":[[1,72,0.5]],"Spirit Link Totem":[[3,78,0.32]]},"Entombed Sentinels":{"Anti-Magic Zone":[[2,21,0.32]],"Tranquility":[[2,30,0.32]],"Rewind":[[2,24,0.66]],"Revival":[[2,24,0.32]],"Invoke Yu'lon, the Jade Serpent":[[1,15,0.57],[2,81,0.47]],"Aura Mastery":[[2,27,0.3]],"Ultimate Penitence":[[2,27,0.56]],"Divine Hymn":[[2,24,0.36]],"Vampiric Embrace":[[1,3,0.83],[2,72,0.63],[4,6,0.65]],"Spirit Link Totem":[[3,24,0.3]],"Ascendance":[[1,24,0.38],[2,21,0.36],[3,66,0.32]]},"Vashnik the Malignant":{"Anti-Magic Zone":[[1,273,0.39],[1,354,0.34]],"Darkness":[[1,357,0.45]],"Zephyr":[[1,357,0.3]],"Rewind":[[1,48,0.34]],"Invoke Yu'lon, the Jade Serpent":[[1,27,0.49]],"Revival":[[1,51,0.41]],"Aura Mastery":[[1,276,0.37]],"Ultimate Penitence":[[1,102,0.31]],"Divine Hymn":[[1,99,0.59],[1,222,0.45],[1,345,0.37]],"Vampiric Embrace":[[1,21,0.35],[1,129,0.3],[1,189,0.35],[1,270,0.3],[1,357,0.37]],"Ascendance":[[1,39,0.5],[1,213,0.4]],"Spirit Link Totem":[[1,105,0.48],[1,357,0.32]]},"The Lost Explorers":{"Anti-Magic Zone":[[3,15,0.3]],"Tranquility":[[1,33,0.7],[4,42,0.54]],"Rewind":[[1,48,0.62]],"Invoke Yu'lon, the Jade Serpent":[[1,27,0.57],[3,30,0.61],[5,33,0.39]],"Revival":[[1,45,0.44],[4,48,0.38]],"Ultimate Penitence":[[1,45,0.34]],"Vampiric Embrace":[[1,12,0.94],[3,12,0.75],[5,9,0.6]],"Ascendance":[[1,30,0.46],[4,39,0.38]]},"Sszorak":{"Anti-Magic Zone":[[1,69,0.33]],"Darkness":[[1,279,0.42]],"Tranquility":[[1,18,0.7],[1,204,0.66]],"Zephyr":[[1,201,0.33]],"Rewind":[[1,78,0.78],[1,282,0.66]],"Invoke Yu'lon, the Jade Serpent":[[1,6,0.36],[1,21,0.44],[1,144,0.52],[1,273,0.44]],"Revival":[[1,33,0.34],[1,75,0.34]],"Aura Mastery":[[1,78,0.7],[1,279,0.56]],"Ultimate Penitence":[[1,75,0.84],[1,330,0.66]],"Divine Hymn":[[1,72,0.62],[1,195,0.5],[1,324,0.54]],"Vampiric Embrace":[[1,3,0.81],[1,129,0.77],[1,255,0.7]],"Ascendance":[[1,69,0.5],[1,276,0.4]],"Spirit Link Totem":[[1,282,0.33]]},"The Twin Fangs":{"Anti-Magic Zone":[[1,120,0.45],[1,372,0.32]],"Darkness":[[1,63,0.35]],"Tranquility":[[1,21,0.39],[1,204,0.43]],"Rewind":[[1,48,0.36],[1,108,0.46],[1,360,0.34]],"Invoke Yu'lon, the Jade Serpent":[[1,33,0.69],[1,189,0.63],[1,342,0.51]],"Revival":[[1,69,0.44]],"Ultimate Penitence":[[1,102,0.58],[1,351,0.54]],"Divine Hymn":[[1,96,0.5],[1,249,0.46]],"Vampiric Embrace":[[1,6,0.85],[1,129,0.77],[1,255,0.68]],"Ascendance":[[1,36,0.86],[1,216,0.78]],"Spirit Link Totem":[[1,117,0.73],[1,366,0.63]]},"The Coiled Altar":{"Zephyr":[[2,6,0.3]],"Anti-Magic Zone":[[2,3,0.69],[2.5,36,0.32]],"Darkness":[[2,0,0.92]],"Tranquility":[[1,27,0.78],[2,39,0.36],[2,81,0.38],[3,48,0.32],[3,147,0.38]],"Rewind":[[1,111,0.3],[2,6,0.48],[3,45,0.58]],"Invoke Yu'lon, the Jade Serpent":[[1,18,0.48],[1,141,0.42],[2.5,21,0.3],[3,42,0.32],[3,168,0.32]],"Revival":[[1,66,0.59],[2,84,0.47],[3,48,0.33]],"Aura Mastery":[[1,96,0.5],[3,147,0.4]],"Ultimate Penitence":[[1,108,0.86],[3,48,0.48]],"Divine Hymn":[[1,42,0.52],[2,114,0.34],[2.5,27,0.38],[3,111,0.56]],"Vampiric Embrace":[[1,6,0.82],[2,18,0.33],[2.5,18,0.84],[3,99,0.67]],"Ascendance":[[1,60,0.34],[2,162,0.34]],"Spirit Link Totem":[[2,3,0.98],[2.5,36,0.7]],"Rallying Cry":[[2,3,0.43],[2.5,36,0.42]]},"Ula'tek":{"Anti-Magic Zone":[[1,213,0.74],[1,489,0.33],[1,549,0.33]],"Darkness":[[1,213,0.9],[1,549,0.57]],"Tranquility":[[1,108,0.9],[1,342,0.8],[1,540,0.6]],"Zephyr":[[1,132,0.36],[1,213,0.48],[1,339,0.6],[1,546,0.37]],"Rewind":[[1,45,0.46],[1,111,0.5],[1,348,0.86],[1,591,0.7]],"Invoke Yu'lon, the Jade Serpent":[[1,30,0.71],[1,198,0.8],[1,330,0.8],[1,462,0.67],[1,585,0.57]],"Revival":[[1,45,0.56],[1,234,0.34],[1,438,0.3]],"Aura Mastery":[[1,45,0.44],[1,339,0.68],[1,582,0.38]],"Divine Hymn":[[1,105,0.94],[1,327,0.56],[1,525,0.84]],"Vampiric Embrace":[[1,9,0.72],[1,144,0.86],[1,294,0.9],[1,447,0.6],[1,582,0.74]],"Spirit Link Totem":[[1,30,0.82],[1,213,0.92],[1,489,0.5],[1,546,0.38]],"Ascendance":[[1,102,0.7],[1,336,0.9],[1,522,0.82]],"Rallying Cry":[[1,129,0.55],[1,213,0.34],[1,339,0.58]]},"Kith'ix":{"Anti-Magic Zone":[[1,198,0.32]],"Darkness":[[1,198,0.5]],"Tranquility":[[1,15,0.59],[1,204,0.41]],"Zephyr":[[1,87,0.34],[1,195,0.44]],"Invoke Yu'lon, the Jade Serpent":[[1,60,0.47],[1,123,0.32],[1,180,0.47]],"Revival":[[1,42,0.59]],"Vampiric Embrace":[[1,3,0.78],[1,132,0.8],[1,258,0.65]],"Ascendance":[[1,12,0.69],[1,195,0.61]],"Spirit Link Totem":[[1,198,0.42]],"Rallying Cry":[[1,198,0.31]]}};
+// ---- Raid cooldown plan, power-matched (Oct 23, your asks: "The auto assign healing cooldown button needs better logic", "how much a
+// healing cooldown is capable of doing ... to get through tough moments is probably one of if not the most important", "Strength, Duration,
+// Cooldown, What it actually does, healing, mitigation, absorption etc"; your call: stack on the deadly moments when a 3rd use would cost one).
+// How it decides (notes/Guides/Healing cooldowns - how Debrief assigns them.md):
+// 1. The fight's raid damage second by second (the fastest kills, NDZ_TLDMG; your phase times when set). Healers handle the busy
+//    stretches up to about the fight's 94th-percentile second without cooldowns (measured on Coiled Altar: 2.5M a second); what goes
+//    over that is what cooldowns are for.
+// 2. What each cooldown is worth if pressed at a given second (NDZ_CDPOW, measured in top kills): a damage cut is its share of the
+//    damage in its window on the players it reaches, Rewind 30% of the last 5 s, a heal its measured amount, Rallying Cry 10% more health.
+// 3. The deadly moments: the stretches where what normal healing can't cover is largest (the big hits' own spikes included).
+// 4. One plan per cooldown, the strongest at the deadly moments first, judged on: the deadly damage it still covers, then the most uses
+//    that fit (never before it's back; +5 s across a phase change), then the most it covers in all. Cover past the need counts for nothing,
+//    and the same cooldown from two players never overlaps (a second Rallying Cry inside the first adds nothing).
+// 5. Top raids' habits (NDZ_CDHAB) only break ties. Every press gets a why with the numbers.
+const NDZ_MAGIC = { 'The Coiled Altar': 0.97 }; /* (share of the raid's damage that's magic: Anti-Magic Zone only cuts that; 0.85 when not measured) */
+const NDZ_NOSTACK = new Set(['Rallying Cry', 'Aura Mastery', 'Darkness', 'Anti-Magic Zone', 'Spirit Link Totem', 'Power Word: Barrier']);
+function ndzCdPlan(B, pr) {
+  const boss = B.pick, SD = NDZ_CDSTART[boss] || {}, stD = SD[B.diff] ? B.diff : SD.Mythic ? 'Mythic' : SD.Heroic ? 'Heroic' : null, st = stD ? SD[stD] : null;
+  const DG = (NDZ_TLDMG[boss] || {})[stD] || null, dg = DG ? DG.ph || DG : null;
+  if (!st || !dg || typeof NDZ_CDPOW !== 'object') return ndzCdPlanV1(B, pr);
+  // (phases end to end, your phase times when set; the damage each second, in thousands)
+  const PH = st.phs.map((p) => (Array.isArray(p) ? { ph: p[0], s: p[1], len: p[2] } : { ph: p.ph, s: p.start, len: p.len })).sort((a, b) => a.s - b.s);
+  { let s = 0; for (const p of PH) { p.len = (B.phl && +B.phl[p.ph]) || p.len; p.s = s; s += p.len; } }
+  const L = Math.ceil(Math.max(...PH.map((p) => p.s + p.len))), d = new Array(L + 1).fill(0);
+  for (const p of PH) { const bins = dg[p.ph] || dg[String(p.ph)] || []; for (let k = 0; k < p.len; k++) { const t = Math.floor(p.s + k); if (t <= L) d[t] = bins[Math.floor(k / 2)] || 0; } }
+  const phOf = new Array(L + 1).fill(0); PH.forEach((q, i) => { for (let t = Math.max(0, Math.floor(q.s)); t < Math.min(L + 1, q.s + q.len); t++) phOf[t] = i; });
+  const at = (T) => { const p = PH.filter((q) => q.s <= T + 0.01).pop() || PH[0]; return { ph: p.ph, t: Math.max(0, Math.round(T - p.s)) }; };
+  const mm = (T) => Math.floor(T / 60) + ':' + String(Math.round(T % 60)).padStart(2, '0'), lab = (T) => { const q = at(T); return (q.ph % 1 ? 'Int' : 'P' + q.ph) + ' ' + mm(q.t); };
+  const fm = (k) => (k >= 950 ? (k / 1000).toFixed(1) + 'M' : Math.round(k) + 'K');
+  // (what normal healing can't cover: 5 s smoothed damage over the fight's 94th-percentile second)
+  const dS = d.map((_, i) => { let s = 0, n = 0; for (let j = i - 2; j <= i + 2; j++) if (j >= 0 && j <= L) { s += d[j]; n++; } return n ? s / n : 0; });
+  const srt = dS.filter((v) => v > 0).sort((a, b) => a - b), CAP = srt.length ? srt[Math.floor(srt.length * 0.94)] : 0;
+  const need0 = dS.map((v) => Math.max(0, v - CAP));
+  // (the big hits' own spikes: the averaged curve smears them, since every kill lands them a few seconds apart)
+  for (const [ph, rel, v] of st.pk) { const p = PH.find((q) => q.ph === ph); if (!p || v <= CAP) continue; for (let t = Math.round(p.s + rel) - 1; t <= Math.round(p.s + rel) + 2; t++) if (t >= 0 && t <= L) need0[t] += v - CAP; }
+  const left = need0.slice();
+  const sumIn = (A, a, b, ph) => { let s = 0; for (let t = Math.max(0, Math.floor(a)); t < Math.min(L + 1, Math.ceil(b)); t++) if (ph == null || phOf[t] === ph) s += A[t]; return s; };
+  const MAG = NDZ_MAGIC[boss] || 0.85;
+  // (each cooldown's window around its press, and what it's worth there)
+  const win = (P, t) => P.k === 'back' ? [t - 5, t + 1] : P.inst ? [t - 4, t + 2] : P.k === 'heal' ? [t - 1, t + P.dur + 1] : [t, t + P.dur];
+  const worth = (P, t) => { const [a, b] = win(P, t), ph = phOf[Math.min(L, Math.max(0, t))], dm = sumIn(d, a, b, ph);
+    if (P.k === 'cut') return (P.raw ? P.r : P.r / (1 - P.r)) * dm * (P.cov || 1) * (P.magic ? MAG : 1);
+    if (P.k === 'move') return (P.r / (1 - P.r)) * dm * (P.cov || 1) + (P.move || 0);
+    if (P.k === 'back') return (P.share || 0.225) * sumIn(d, t - 5, t, ph);
+    if (P.k === 'hp') return P.hp || 0; return P.heal || 0; };
+  // (who has what: every healer and raid cooldown on the roster, with each healer's talent choice)
+  const ents = []; for (const g of NDZ_BUFFS) if (g[0] === 'Healer cooldowns' || g[0] === 'Raid cooldowns') for (const x of g[2]) if (x[0] !== 'Devotion Aura') ents.push(x);
+  const can = (p, x) => x[1].includes(p.cls) && (!x[2] || (p.specId ? x[2].includes(+p.specId) : p.role === 'healer' || x[2].length === 0));
+  const have = []; const add = (who, n, id) => { const P = NDZ_CDPOW[n]; if (!P) return; have.push({ who, n, id, P, cd: ndzCdBack(n) || P.cd }); };
+  for (const p of pr.players.values()) for (const x of ents) if (can(p, x)) add(p.name, x[0], x[3]);
+  for (const p of pr.players.values()) { const t = ndzTalOf(p.name, p.specId); if (!t) continue; const T = NDZ_TALC[+p.specId][1];
+    for (let i = have.length - 1; i >= 0; i--) if (have[i].who === p.name && T.some((x) => x[0] === have[i].n || (x[0] === 'Restoral' && have[i].n === 'Revival'))) have.splice(i, 1);
+    const id = (T.find((x) => x[0] === t.pick) || [])[1]; add(p.name, t.pick, id); }
+  if (!have.length) return null;
+  // (top raids' habit: the share of top players who press this one within 10 s of here, on Mythic)
+  const HB = (NDZ_CDHAB && NDZ_CDHAB[boss]) || {}, habit = (n, T) => { let b = 0; for (const [ph, rel, sh] of HB[n] || []) { const p = PH.find((q) => q.ph === ph); if (p && Math.abs(p.s + rel - T) <= 10) b = Math.max(b, sh); } return b; };
+  // (spacing: a holder's next press only once it's back, +15 s when a phase change sits between; the same cooldown from two players apart)
+  const placed = [], gapOk = (h, a, b) => { const x = Math.min(a, b), y = Math.max(a, b); return y - x >= h.cd + (phOf[Math.min(L, x)] !== phOf[Math.min(L, y)] ? 5 : 0); }; /* (5 s spare across a phase change: phases come from the fastest kills, and a slower raid's run longer) */
+  const free = (h, t) => placed.every((o) => (o.h !== h || gapOk(h, o.t, t)) && !(NDZ_NOSTACK.has(h.n) && o.h.n === h.n && Math.abs(o.t - t) < h.P.dur + 1));
+  const take = (h, t, v) => { const [a, b] = win(h.P, t), ph = phOf[Math.min(L, Math.max(0, t))]; const tot = sumIn(left, a, b, ph); if (tot <= 0) return 0; const c = Math.min(v, tot);
+    for (let x = Math.max(0, Math.floor(a)); x < Math.min(L + 1, Math.ceil(b)); x++) if (phOf[x] === ph) left[x] -= left[x] * c / tot; return c; };
+  // 3. the deadly moments: 10 s stretches where what normal healing can't cover is at least 40% of the worst one's
+  const mn = []; for (let t = 0; t + 10 <= L; t++) mn.push(sumIn(need0, t, t + 10)); const mnMax = Math.max(1, ...mn);
+  const deadly = new Array(L + 1).fill(false); mn.forEach((v, t) => { if (v >= 0.4 * mnMax && v > 600) for (let x = t; x < t + 10 && x <= L; x++) deadly[x] = true; });
+  const wins = []; for (let t = 0; t + 10 <= L; t++) wins.push(sumIn(d, t, t + 10)); const wmed = wins.slice().sort((x, y) => x - y)[Math.floor(wins.length / 2)] || 1;
+  // (what a press would still cover: in all, and of it inside the deadly moments)
+  const dcov = (h, t, v) => { const [a0, b0] = win(h.P, t), ph = phOf[Math.min(L, Math.max(0, t))]; let all = 0, dl = 0;
+    for (let x = Math.max(0, Math.floor(a0)); x < Math.min(L + 1, Math.ceil(b0)); x++) if (phOf[x] === ph) { all += left[x]; if (deadly[x]) dl += left[x]; }
+    const c = Math.min(v, all); return [all > 0 ? c * dl / all : 0, c]; };
+  // 4. one plan per cooldown, strongest at the deadly moments first: (1) the deadly damage it still covers, (2) the most uses that fit
+  //    (your rule: every use that's back), (3) the most it covers in all, on real damage only; top raids' habit as a small tie-break
+  const order = have.map((h) => { let m = 0; for (let t = 0; t <= L; t++) { const v = worth(h.P, t); if (v > 0) { const dc = dcov(h, t, v)[0]; if (dc > m) m = dc; } } return [h, m]; })
+    .sort((x, y) => y[1] - x[1] || y[0].cd - x[0].cd).map((x) => x[0]);
+  const phEnd = []; { let e = L + 1; for (let t = L; t >= 0; t--) { if (t < L && phOf[t + 1] !== phOf[t]) e = t + 1; phEnd[t] = e; } } /* (the first second of the next phase) */
+  // (the big hits, by the chart's own rule: a press 6 s before to 4 s after, or still running when it lands, in the same phase)
+  const bigs = st.pk.map(([ph, rel, v, hit]) => { const p = PH.find((q) => q.ph === ph); return p ? { T: Math.round(p.s + rel), v, hit } : null; }).filter(Boolean), bare = new Set(bigs);
+  const covers = (h, t, x) => phOf[Math.min(L, t)] === phOf[Math.min(L, x.T)] && t <= x.T + 4 && (t >= x.T - 6 || t + h.P.dur >= x.T);
+  const better = (p, q) => (p[2] !== q[2] ? (p[2] > q[2] ? p : q) : p[1] >= q[1] ? p : q); /* (the higher score; on a tie, more uses) */
+  for (const h of order) {
+    const S = new Array(L + 2).fill(null), wl = []; for (let t = 0; t <= L; t += 2) { const v = worth(h.P, t); if (v > 0) wl.push(v); } wl.sort((x, y) => x - y); const typ = wl.length ? wl[Math.floor(wl.length / 2)] : 0;
+    for (let t = 0; t <= L; t++) { if (!free(h, t)) continue; const v = worth(h.P, t); if (v <= 0) continue; const [a0, b0] = win(h.P, t), span = Math.max(6, b0 - a0), dm = sumIn(d, a0, a0 + span, phOf[t]);
+      if (dm < 0.4 * wmed * span / 10) continue; const [dc, c] = dcov(h, t, v); S[t] = [dc, (2 * dc + (c - dc) + 0.15 * v * dm / (wmed * span / 10) + 0.5 * typ + bigs.filter((x) => bare.has(x) && covers(h, t, x)).length * 0.5 * typ) * (1 + 0.25 * habit(h.n, t))]; } /* (deadly cover counts double; each use earns half a typical press, and so does each still-bare big hit it covers) */
+    const Z = [0, 0, 0, -1], f = new Array(L + 3).fill(Z), sp = new Array(L + 3).fill(Z), nxt = new Array(L + 3).fill(-1);
+    for (let t = L; t >= 0; t--) { const pe = phEnd[t]; let g = Z;
+      if (S[t]) { const a1 = t + h.cd, same = a1 < pe && a1 <= L ? sp[a1] : Z, b1 = Math.max(pe, t + h.cd + 5), later = b1 <= L ? f[b1] : Z, nx = better(same, later);
+        g = [S[t][0] + nx[0], nx[1] + 1, S[t][1] + nx[2], t]; nxt[t] = nx[3]; }
+      f[t] = better(g, f[t + 1] || Z); sp[t] = t + 1 < pe ? better(g, sp[t + 1] || Z) : g; } /* (f: best plan from t on; sp: best one whose first press is still in t's phase) */
+    for (let t = f[0][3]; t >= 0 && t <= L; t = nxt[t]) { if (!free(h, t)) break; const v = worth(h.P, t), dc = dcov(h, t, v)[0], c = take(h, t, v); placed.push({ h, t, v, c, round: dc > 0 ? 1 : 2 }); for (const x of bigs) if (covers(h, t, x)) bare.delete(x); } }
+  placed.sort((a, b) => a.t - b.t);
+  // (the moments: the heaviest 10 s stretches, for the why lines; and what's still short after every cooldown)
+  const mom = []; for (let t = 0; t + 10 <= L; t++) mom.push({ t, dm: sumIn(d, t, t + 10), nd: sumIn(need0, t, t + 10) }); mom.sort((a, b) => b.dm - a.dm);
+  const tops = []; for (const m of mom) { if (tops.length >= 12) break; if (!tops.some((x) => Math.abs(x.t - m.t) < 14)) tops.push(m); }
+  const ORD = ['worst', '2nd worst', '3rd worst', '4th worst', '5th worst', '6th worst'];
+  const hits = st.pk.map(([ph, rel, v, hit]) => { const p = PH.find((q) => q.ph === ph); return p ? { T: Math.round(p.s + rel), hit } : null; }).filter(Boolean);
+  const hitNear = (a, b) => (hits.filter((x) => x.T >= a - 2 && x.T <= b + 2).sort((x, y) => Math.abs(x.T - (a + b) / 2) - Math.abs(y.T - (a + b) / 2))[0] || null);
+  const momOf = (pl) => { const [a, b] = win(pl.h.P, pl.t); return tops.filter((m) => m.t < b + 2 && m.t + 10 > a - 2).sort((x, y) => y.dm - x.dm)[0] || null; };
+  const rows = [], uses = new Map(); for (const pl of placed) uses.set(pl.h, (uses.get(pl.h) || 0) + 1);
+  const fitsMax = (h) => { let n = 0, t = 0; while (t <= L - 5) { n++; t += h.cd; } return n; };
+  for (const pl of placed) { const h = pl.h, q = at(pl.t), m = momOf(pl), mi = m ? tops.indexOf(m) : -1, [a, b] = win(h.P, pl.t), hx = m ? hitNear(m.t, m.t + 10) : hitNear(a, b);
+    const with_ = m ? placed.filter((o) => o !== pl && momOf(o) === m) : [], tot = (m ? with_.reduce((s, o) => s + o.v, 0) : 0) + pl.v, hb = habit(h.n, pl.t);
+    let why = (hx ? hx.hit + ' (' + lab(hx.T) + ')' : lab(pl.t)) + ': ';
+    why += m ? 'about ' + fm(m.dm) + ' raid damage in 10 s in the fastest kills' + (mi >= 0 && mi < ORD.length ? ', the fight\'s ' + ORD[mi] + ' stretch' : '') + '. ' : 'heavy raid damage. ';
+    why += h.n + ' (' + h.P.what + ') is worth about ' + fm(pl.v) + ' here';
+    why += with_.length ? '; with ' + andL([...new Set(with_.map((o) => o.h.n + ' (' + o.h.who + ')'))]) + ', about ' + fm(tot) + ' together.' : '.';
+    if (hb >= 0.3) why += ' ' + Math.round(hb * 100) + '% of top players press it here.';
+    if (pl.round === 2 && !(m && m.nd > 0)) why += ' Back again: the heaviest damage left where it fits.';
+    const n = uses.get(h), mx = fitsMax(h); why += ' Pressed ' + (n >= mx ? (n === 1 ? 'once, all it fits' : n === 2 ? 'both times it fits' : 'all ' + n + ' times it fits') : n + ' of the ' + mx + ' times it could fit' + (placed.some((o) => o.h === h && o.round === 1) ? ', so it lands on the deadliest moments' : '')) + ' in a ' + mm(L) + ' kill.';
+    rows.push({ ph: q.ph, t: q.t, id: h.id || E.SPELLID.get(h.n.toLowerCase()) || ndzSpellIdOf(h.n) || null, text: h.n, who: h.who, top: true, val: Math.round(pl.v), why }); }
+  // (a moment still well short after every cooldown: said on its strongest press there)
+  for (const m of tops.filter((x) => x.nd > 0)) { const short = sumIn(left, m.t, m.t + 10); if (short < 0.25 * m.nd || short < 300) continue;
+    const here = placed.filter((pl) => momOf(pl) === m).sort((x, y) => y.v - x.v)[0], r = here && rows[placed.indexOf(here)];
+    if (r) r.why += ' Still about ' + fm(short) + ' short here after every cooldown: call Defensives.'; }
+  return rows.length ? { rows, n: 0, top: stD, cap: Math.round(CAP) } : null;
+}
+
+// (the plan's why for a cooldown on the Boss page chart, when Debrief's own plan for the same raiders has it there too: same player,
+// spell and phase, within 3 s; worked out once per note)
+let NDZ_WHYC = null;
+function ndzCdWhyOf(D, c) { if (!D || !D.noteId || S.page !== 'plan') return ''; const n = notesOf(D.boss).list.find((x) => x.id === D.noteId); if (!n) return '';
+  const key = D.boss + '|' + n.id + '|' + String(n.text).length + '|' + JSON.stringify(n.phl || null);
+  if (!NDZ_WHYC || NDZ_WHYC.key !== key) { let rows = []; try { const B = ndzBjB(D.boss, n), P = ndzCdPlan(Object.assign({}, B, { phl: n.phl || null }), B.pr); rows = (P && P.rows) || []; } catch (e) { rows = []; } NDZ_WHYC = { key, rows }; }
+  const ph = c.ph0 != null ? c.ph0 : c.ph, t = c.t0 != null ? c.t0 : c.t, nm = ndzSpellNm(+c.id) || c.text || '';
+  const r = NDZ_WHYC.rows.find((x) => String(x.who).toLowerCase() === String(c.who).toLowerCase() && x.text === nm && x.ph === ph && Math.abs(x.t - t) <= 3);
+  return r ? r.why : ''; }
 // ---- The Note builder for the other eight bosses (Oct 20, your OK: "Sszorak first, then the others in your order") ----
 // The rules: notes/Guides/Note builder - all bosses research.md. My own logic from the boss guides comes first; the three
 // fastest Mythic kills on Warcraft Logs were the check. Each boss has its pages (NDZ_BUILD), why its picks are made
@@ -18486,7 +18616,7 @@ function ndzTlData(r, u0, text, players) {
   const planM = !own && sd ? (() => { const m = new Map(); let s = 0; for (const p of sd.phs.slice().sort((a, b) => a.start - b.start)) { m.set(p.ph, s); s += phFit(p.ph); } return m; })() : null; /* (a plan: phases back to back from your phase times, else the fastest kills', so a cooldown is checked across phases too) */
   const gapOf = gapW(own || planM || new Map()), gapFast = gapW(own || new Map((sd ? sd.phs : []).map((p) => [p.ph, p.start]))); /* (not ready: your pull's phases, else the same phase only; Cover it: the fastest kills, the soonest it could be needed) */
   const byKey = new Map(); for (const c of cds) { const k = c.who.toLowerCase() + '|' + c.id; if (!byKey.has(k)) byKey.set(k, []); byKey.get(k).push(c); }
-  for (const l of byKey.values()) { const cd = ndzRech(l[0].id); if (!cd || l.length < 2) continue; l.sort((a, b) => a.ph - b.ph || a.t - b.t); for (let i = 1; i < l.length; i++) { const g = gapOf(l[i - 1], l[i]); if (g != null && g < cd * 0.85) l[i].late = { prev: l[i - 1], cd, short: cd - g }; else if (g != null && g < cd + 15 && l[i].ph !== l[i - 1].ph) l[i].tight = { prev: l[i - 1], cd, spare: Math.round(g - cd) }; } } /* (tight: back with under 15 s to spare across a phase change; inside one phase both times move together, so push speed can't break it) */
+  for (const l of byKey.values()) { const cd = ndzRech(l[0].id); if (!cd || l.length < 2) continue; l.sort((a, b) => a.ph - b.ph || a.t - b.t); for (let i = 1; i < l.length; i++) { const g = gapOf(l[i - 1], l[i]); if (g != null && g < cd * 0.85) l[i].late = { prev: l[i - 1], cd, short: cd - g }; else if (g != null && g < cd + 5 && l[i].ph !== l[i - 1].ph) l[i].tight = { prev: l[i - 1], cd, spare: Math.round(g - cd) }; } } /* (tight: back with under 5 s to spare across a phase change (was 15; Oct 23, the same as the planner: phases come from the fastest kills, and a slower raid's run longer); inside one phase both times move together) */
   const cover = (h) => { const near = cds.filter((c) => !c.late && c.ph === h.ph && c.t <= h.rel + 4 && (c.t >= h.rel - 6 || c.t + (c.dur || 0) >= h.rel)) /* (pressed near it, or still running when it lands, Oct 22) */; h.by = near.slice().sort((a, b) => ndzIsRaidCd(b.id) - ndzIsRaidCd(a.id) || a.t - b.t); return near.some((c) => ndzIsRaidCd(c.id)) ? 'green' : near.length ? 'amber' : 'red'; };
   for (const h of hits) { h.c = cover(h); h.rel0 = h.rel; }
   // (Cover it: a raid or healer cooldown someone on the roster brings and has ready 2 s before the hit; fewest jobs first)
@@ -19880,7 +20010,7 @@ function bjTlH(D) {
   const pack = (items, wOf) => { const ends = []; return items.map((it) => { const x = X(it.t), w = wOf(it); let r = ends.findIndex((e) => e <= x - 4); if (r < 0) { r = ends.length; ends.push(0); } ends[r] = x + w; return { ...it, x, r }; }); };
   const dwOf = (c) => (c.dur ? Math.round(Math.min(c.dur, len - c.t) * BTL_PX) : 0), cw = (c) => Math.max(dwOf(c), 18 + Math.round(String(c.who).length * 6) + 4); /* (the wider of icon + name and the real-time bar) */ /* (the tile is the cooldown's length; the name may run past it) */
   const CP = pack(cds.map((c) => ({ ...c })), cw), cRows = Math.max(1, ...CP.map((c) => c.r + 1)), ms1 = ms.filter((m, i) => !ms.slice(0, i).some((o) => o.label === m.label && Math.abs(o.rel - m.rel) < 6)) /* (one icon for repeats within 6 s) */, MP = ((P) => P.map((m) => ({ ...m, r: m.r % 2 })))(pack(ms1.map((m) => ({ ...m, t: m.rel })), () => 23)) /* (at most 2 rows) */, mRows = bon && MP.length ? Math.max(...MP.map((m) => m.r + 1)) : 0;
-  const HH = 30, MH = 24, CH = 28, AX = 18, top0 = HH + mRows * MH + (mRows ? 10 : 0), dTop = top0 + cRows * CH + (cRows ? 10 : 0), H = dTop + 210 + AX; /* (Oct 23: the names in their own band, 210 px of damage under them) */
+  const HH = 30, MH = 24, CH = 24, AX = 18, top0 = HH + mRows * MH + (mRows ? 6 : 0), dTop = top0 + cRows * CH + (cRows ? 6 : 0), H = dTop + 150 + AX; /* (Oct 23: the names in their own band, 150 px of damage under them; 210 was too tall, the user: "little bit too tall") */
   // (raid damage behind it all, one scale for the fight, green calm to red the worst of this phase)
   const dv = D.dmg && D.dmg[cur], dmax = D.dmg ? Math.max(1, ...Object.values(D.dmg).map((a) => Math.max(0, ...a))) : 1, sv = dv ? dv.map((v, i) => (dv[Math.max(0, i - 1)] + 2 * v + dv[Math.min(dv.length - 1, i + 1)]) / 4) : null;
   let bg = ''; if (sv && sv.length > 2) { const lo = Math.min(...sv), hi = Math.max(...sv), G = NDZ_DGC, cOf = (v) => { const t = Math.max(0, Math.min(1, (v - lo) / Math.max(1e-9, hi - lo))); let i = 0; while (i < G.length - 2 && t > G[i + 1][0]) i++; const [a, ca] = G[i], [b, cb] = G[i + 1], f = Math.max(0, Math.min(1, (t - a) / (b - a))); return 'rgb(' + ca.map((c, k) => Math.round(c + (cb[k] - c) * f)).join(',') + ')'; };
@@ -19897,7 +20027,7 @@ function bjTlH(D) {
       '<span class="btl-m" data-bmi="' + i + '" style="left:' + m.x + 'px;top:' + (HH + m.r * MH + 1) + 'px" data-tt="' + esc('<b>' + esc(m.label) + '</b> at ' + pT(m.rel) + (m.dur ? ' · lasts about ' + m.dur + ' s' : '') + (tip ? '<br>' + esc(tip) : '')) + '">' + (m.id ? spellIcon(m.id, m.label) : spIc(m.label)) + '</span>'; }).join('');
   const cdH = CP.map((c) => { const nm = ndzSpellNm(c.id) || 'Cooldown';
     return '<span class="btl-g" style="left:' + c.x + 'px;top:' + HH + 'px;height:' + (H - HH - AX) + 'px;--cc:' + col(c.who) + '"></span>' + /* (where it lands on the damage) */
-      '<span class="btl-c' + (dwOf(c) ? ' dur' : '') + (c.late ? ' late' : '') + '" style="left:' + c.x + 'px;width:' + cw(c) + 'px;top:' + (top0 + c.r * CH) + 'px;--cc:' + col(c.who) + '" data-tt="' + esc('<b>' + esc(nm) + '</b> · ' + esc(c.who) + '<br>' + (WH ? pT(c.t) : phN(cur) + ' ' + mmss(c.t)) + (c.dur ? ' · lasts ' + c.dur + ' s' : '') + (c.late ? '<br><span class="no">Not ready: ' + esc(ndzLateWhy(c)) + '</span>' : '')) + '">' + spellIcon(c.id, nm) + '<b>' + esc(c.who) + '</b>' + (dwOf(c) ? '<span class="btl-f" style="width:' + dwOf(c) + 'px"></span>' : '') + '</span>'; }).join('');
+      '<span class="btl-c' + (dwOf(c) ? ' dur' : '') + (c.late ? ' late' : '') + '" style="left:' + c.x + 'px;width:' + cw(c) + 'px;top:' + (top0 + c.r * CH) + 'px;--cc:' + col(c.who) + '" data-tt="' + esc('<b>' + esc(nm) + '</b> · ' + esc(c.who) + '<br>' + (WH ? pT(c.t) : phN(cur) + ' ' + mmss(c.t)) + (c.dur ? ' · lasts ' + c.dur + ' s' : '') + (c.late ? '<br><span class="no">Not ready: ' + esc(ndzLateWhy(c)) + '</span>' : '') + ((w) => (w ? '<br><span class="sub">' + esc(w) + '</span>' : ''))(ndzCdWhyOf(D, c))) + '">' + spellIcon(c.id, nm) + '<b>' + esc(c.who) + '</b>' + (dwOf(c) ? '<span class="btl-f" style="width:' + dwOf(c) + 'px"></span>' : '') + '</span>'; }).join('');
   const hb0 = H - AX - dTop, yOf = (v) => dTop + hb0 * (100 - 92 * v / dmax) / 100, fmK = (k) => (k >= 1000 ? +(k / 1000).toFixed(1) + 'M' : k + 'K');
   const stp = [250, 500, 1000, 2000, 5000].find((q) => dmax / q <= 4.5) || 5000, ticks = sv ? Array.from({ length: Math.floor(dmax / stp) }, (_, i) => (i + 1) * stp) : [];
   const gl = ticks.map((v) => '<span class="btl-gl" style="top:' + yOf(v).toFixed(1) + 'px"></span>').join(''), yl = ticks.map((v) => '<span style="top:' + yOf(v).toFixed(1) + 'px">' + fmK(v) + '/s</span>').join('');
