@@ -127,7 +127,20 @@ local function expect(what, got, want) print((got == want and "  ok   " or "  FA
 -- (a new pull: the boss is over, every glow from before has stopped, the fake clock starts again)
 local function newPull() PULL_ID = PULL_ID + 1; fire(ev, "ENCOUNTER_END"); ADVANCE(NOW + 30); expect("nothing left glowing before the pull", GLOWING(), "nothing"); heard(); NOW = 0; TIMERS = {} end
 local styles = { "cdmants", "cdmflash", "pandemic", "proc", "assist", "onebutton", "altglow", "pulse" }
-expect("new default: next to the mouse", DebriefGlowDB.where, "mouse")
+expect("new default: Cooldown Manager and the mouse", DebriefGlowDB.where, "both")
+print("-- both places: Aura Mastery counts down and glows on its Cooldown Manager icon and on its icon by the mouse")
+do
+  newPull(); pull(); at(15, "Aura Mastery in 5")
+  expect("the number on both", COUNT(), "Aura Mastery 5, your icon 5")
+  at(20, "0: both glow"); expect("the glow on both", GLOWING(), "Aura Mastery (cdmants, gold), your icon (cdmants, gold)")
+  expect("the mouse icon is above raid frames", rawget(DebriefGlowIcon, "_strata"), "FULLSCREEN_DIALOG")
+  press(31821); at(20.1, "pressed: both stop"); expect("nothing left", GLOWING(), "nothing")
+  print("  a spell that isn't on the bar shows only by the mouse")
+  CB.NSRT_REMINDER_SHOW("NSRT_REMINDER_SHOW", { spellID = 1022, dur = 2, expires = GetTime() + 2 }, nil); at(NOW + 2, "Blessing of Protection")
+  expect("only the mouse icon", GLOWING(), "your icon (cdmants, gold)")
+  ADVANCE(NOW + 9); fire(ev, "ENCOUNTER_END")
+end
+DebriefGlowDB.where = "mouse"
 print("-- the icon next to your mouse: NSRT counts down Aura Mastery; its icon follows the mouse with the number, then glows")
 do
   newPull(); pull(); at(15, "Aura Mastery in 5")

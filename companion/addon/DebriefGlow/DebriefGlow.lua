@@ -9,7 +9,7 @@ local DB
 local DEF = {
   enabled = true, style = "cdmants", colorName = "gold", r = 0.90, g = 0.71, b = 0.31, a = 1, thick = 3, pad = 1, speed = 1, scale = 1,
   lead = 0, hold = 8, stopOnPress = true, fallback = true, iconSize = 56,
-  where = "mouse", gameColors = true, timer = true, timerSize = 22, timerColor = "white", timerPos = "middle", timerTenths = false,
+  where = "both", gameColors = true, timer = true, timerSize = 22, timerColor = "white", timerPos = "middle", timerTenths = false,
   sound = "none", channel = "Master",
   tts = false, ttsText = "{spell}", ttsVoice = 0, ttsVolume = 100, ttsRate = 0, countdown = 0,
 }
@@ -280,10 +280,10 @@ local holder, icons, ipool, iconOrder = nil, {}, {}, 0
 local function where() return DB and DB.where or "mouse" end
 local function holderFrame()
   if holder then return holder end
-  holder = CreateFrame("Frame", "DebriefGlowIcon", UIParent); holder:SetFrameStrata("HIGH"); holder:SetSize(1, 1); holder:SetMovable(true); holder:SetClampedToScreen(true)
+  holder = CreateFrame("Frame", "DebriefGlowIcon", UIParent); holder:SetFrameStrata("FULLSCREEN_DIALOG"); holder:SetSize(1, 1); holder:SetMovable(true); holder:SetClampedToScreen(true)
   -- (next to your mouse: a little below and to the right of the pointer, so it never covers what you click)
   holder:SetScript("OnUpdate", function(self)
-    if where() ~= "mouse" or self.moving then return end
+    if (where() ~= "mouse" and where() ~= "both") or self.moving then return end
     local x, y = GetCursorPosition(); local s = UIParent:GetEffectiveScale(); if not s or s <= 0 then s = 1 end
     self:ClearAllPoints(); self:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x / s + (DB.mouseX or 22), y / s + (DB.mouseY or -22))
   end)
@@ -291,7 +291,7 @@ local function holderFrame()
 end
 local function placeHolder()
   local h = holderFrame()
-  if where() == "mouse" and not h.moving then return end
+  if (where() == "mouse" or where() == "both") and not h.moving then return end
   h:ClearAllPoints(); local p = DB.floatPos
   if p then h:SetPoint(p[1], UIParent, p[2], p[3], p[4]) else h:SetPoint("CENTER", UIParent, "CENTER", 0, 180) end
 end
@@ -330,13 +330,22 @@ local function targetFor(id)
   end
   return iconFor(id), true
 end
+-- (with "both": the Cooldown Manager icon when it's there, and always your icon by the mouse; else the one place)
+local function targets(id)
+  if where() ~= "both" then local it, own = targetFor(id); return it, own end
+  local bar = cdmItemFor(id)
+  if bar then return bar, false, iconFor(id) end
+  return iconFor(id), true
+end
 
 local function stop(id)
   local g = glows[id]; if not g then return end
   glows[id] = nil
   if g.timer then g.timer:Cancel(); g.timer = nil end
   quiet(g); g:Hide(); g:ClearAllPoints()
-  if g.own then g.own = nil; releaseIcon(id) end
+  local tw = g.twin; g.twin = nil
+  if tw then quiet(tw); tw:Hide(); tw:ClearAllPoints(); pool[#pool + 1] = tw end
+  if g.own or tw then g.own = nil; releaseIcon(id) end
   pool[#pool + 1] = g
 end
 -- ---- the countdown on the icon: NSRT's own timer (its reminder ends at info.expires), counting down on the spell ----
@@ -344,12 +353,15 @@ end
 local function stopTimer(id)
   local f = timers[id]; if not f then return end
   timers[id] = nil; f:SetScript("OnUpdate", nil); f:Hide(); f:ClearAllPoints(); tpool[#tpool + 1] = f
-  if f.own then f.own = nil; releaseIcon(id) end
+  local tw = f.twin; f.twin = nil
+  if tw then tw:Hide(); tw:ClearAllPoints(); tpool[#tpool + 1] = tw end
+  if f.own or tw then f.own = nil; releaseIcon(id) end
 end
 local function tick(f)
   local left = f.expires - GetTime()
   if left <= 0 then stopTimer(f.id); return end
-  f.text:SetText((DB.timerTenths and left < 3) and string.format("%.1f", left) or tostring(math.ceil(left)))
+  local t = (DB.timerTenths and left < 3) and string.format("%.1f", left) or tostring(math.ceil(left))
+  f.text:SetText(t); if f.twin then f.twin.text:SetText(t) end
 end
 local TIMER_COLORS = { white = { 1, 1, 1 }, gold = { 1, 0.82, 0 }, red = { 1, 0.25, 0.2 } }
 -- (the number's font, colour and place, from the settings)
@@ -366,12 +378,16 @@ end
 local function showTimer(id, expires, label)
   if not DB.timer then return end
   stopTimer(id)
-  local it, own = targetFor(id)
+  local it, own, second = targets(id)
   if not it then return end
-  local f = table.remove(tpool)
-  if not f then f = CreateFrame("Frame", nil, UIParent); f:SetFrameStrata("HIGH"); f.text = f:CreateFontString(nil, "OVERLAY") end
-  f:ClearAllPoints(); f:SetAllPoints(iconArt(it)); above(f, it, 20)
-  timerLook(f, id)
+  local function numberOn(on)
+    local f = table.remove(tpool)
+    if not f then f = CreateFrame("Frame", nil, UIParent); f:SetFrameStrata("HIGH"); f.text = f:CreateFontString(nil, "OVERLAY") end
+    f:SetScript("OnUpdate", nil); f:ClearAllPoints(); f:SetAllPoints(iconArt(on)); above(f, on, 20); timerLook(f, id); f:Show()
+    return f
+  end
+  local f = numberOn(it)
+  if second then f.twin = numberOn(second); f.twin.id, f.twin.expires = id, expires end
   f.id, f.expires, f.own = id, expires, own
   timers[id] = f; f:SetScript("OnUpdate", tick); f:Show(); tick(f)
 end
@@ -390,10 +406,11 @@ function place(g, it, id)
 end
 local function start(id, hold, label)
   stop(id)
-  local it, own = targetFor(id)
+  local it, own, second = targets(id)
   if not it then return false end
   local g = newGlow(); g.own = own
   place(g, it, id)
+  if second then g.twin = newGlow(); place(g.twin, second, id) end
   glows[id] = g
   g.timer = C_Timer.NewTimer(hold or DB.hold or 8, function() g.timer = nil; stop(id) end)
   return true
@@ -459,9 +476,10 @@ local function reminder(event, info)
   id = tonumber(id); if not id then return end
   DB.seen[id] = true -- (so it shows in the Your spells window)
   local wait = info.expires and not secret(info.expires) and (info.expires - GetTime()) or (tonumber(info.dur) or 8)
-  local it = where() == "bar" and cdmItemFor(id)
+  local it = where() == "bar" and cdmItemFor(id); local it2 = where() == "both" and cdmItemFor(id)
   diary(string.format("%s in %.1f s (%s): %s", spellName(id) or ("spell " .. id), wait, event == "NSRT_ALERT_WOULD_SHOW" and "timeline" or "pop-up",
     where() == "mouse" and "next to your mouse" or where() == "spot" and "at your spot" or
+    where() == "both" and (it2 and "on your Cooldown Manager and by your mouse" or "by your mouse (not on your Cooldown Manager)") or
     (it and "found on your Cooldown Manager" or (DB.fallback and "not on your Cooldown Manager, big icon" or "not on your Cooldown Manager"))))
   schedule(id, wait)
 end
@@ -504,7 +522,7 @@ function DebriefGlow_Test(quiet)
   playSound(); if DB.tts and not quiet then speak(ttsFor(31821, "Test")) end
   if not quiet then
     if not NSAPI then say("NSRT isn't loaded. The glows follow NSRT's reminders, so turn NSRT on too.") end
-    if where() ~= "bar" then say(where() == "mouse" and "your icon shows next to your mouse for 3 s. In a raid it shows your own NSRT spells, counting down with NSRT." or "your icon shows at your spot for 3 s.")
+    if where() ~= "bar" then say((where() == "mouse" or where() == "both") and "your icon shows next to your mouse for 3 s. In a raid it shows your own NSRT spells, counting down with NSRT." or "your icon shows at your spot for 3 s.")
     elseif #cdmItems() == 0 then say("no Cooldown Manager icons found. Turn on Blizzard's Cooldown Manager (Options > Gameplay Enhancements) and add your cooldowns to it.")
     else say("your Cooldown Manager icons glow for 3 s. In a raid only your own NSRT spells glow, when it's time to press them.") end
   end
@@ -925,7 +943,7 @@ local function buildOptions()
   page("glow")
   panel("Your glow", "NSRT says when, Debrief Glow shows it")
   switchRow("Glow my NSRT cooldowns", "Your own NSRT reminders with a spell count down and glow.", "enabled", preview)
-  pickRow("Where it shows", "Next to your mouse, on your Cooldown Manager, or a spot you choose.", "where", 260, function() return { { "mouse", "Next to my mouse" }, { "bar", "On my Cooldown Manager" }, { "spot", "A spot I choose" } } end, function() layoutIcons(); preview() end)
+  pickRow("Where it shows", "Next to your mouse, on your Cooldown Manager, or a spot you choose.", "where", 260, function() return { { "both", "Cooldown Manager and my mouse" }, { "mouse", "Next to my mouse" }, { "bar", "On my Cooldown Manager" }, { "spot", "A spot I choose" } } end, function() layoutIcons(); preview() end)
   stepRow("Icon size", "The icon next to your mouse or at your spot.", "iconSize", 24, 128, 4, function(v) return v .. " px" end, function() layoutIcons(); preview() end)
   pickRow("Look", "The game's own glows, placed the way Blizzard does. Pulse is ours.", "style", 300, function() return styleList() end, preview)
   do -- (colour dots, then Any colour for the colour picker)
@@ -1198,6 +1216,8 @@ ev:SetScript("OnEvent", function(_, e, a1, a2, a3)
       DB.cdmAnts = true
     end
     DB.ringOnBorder = nil
+    -- (0.6.2: on your Cooldown Manager and by your mouse became the default; next to the mouse alone moves to both once)
+    if not DB.bothOnce then if DB.where == "mouse" then DB.where = "both" end; DB.bothOnce = true end
     if DB.colorName == nil then DB.colorName = "gold" end
     registerSettings()
   elseif e == "ADDON_LOADED" or e == "PLAYER_LOGIN" then hookNSRT()
