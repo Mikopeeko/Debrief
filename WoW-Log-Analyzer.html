@@ -15322,7 +15322,7 @@ function myPageInTab(root, g) { const pg = root.querySelector('.home.prog'); if 
   let meCard = null; if (you || again) { meCard = el('panel my-you' + (you ? ' my-youa' : ''), 'div', '<div class="my-lab">You</div>'); if (you && you.style.getPropertyValue('--sart')) meCard.style.setProperty('--sart', you.style.getPropertyValue('--sart')); meCard.append(you || again); }
   flow.append(who); if (q1('#meLdBox')) flow.append(q1('#meLdBox')); /* (a character you just picked, still coming in) */ if (q1('#pgEmpty')) flow.append(q1('#pgEmpty')); if (q1('#pgRk')) flow.append(q1('#pgRk'));
   if (q1('#pgNow')) flow.append(q1('#pgNow')); /* (the boss you're on, right under your team) */
-  { const hwp = hwMyPanel(); if (hwp) flow.append(hwp); } /* (your to-do list from the Report card, under the boss you're on) */
+  /* (no to-do list card on Home (your call, Oct 23): it lives on the Report card) */
   // the whole raid at a glance
   const order = (E.PACKS || []).map((p) => p.encounter), cards = grid ? [...grid.querySelectorAll('.pc-card[data-boss]')] : [], byB = new Map(cards.map((c) => [c.dataset.boss, c]));
   const notP = new Set([...pg.querySelectorAll('.pc-open .pc-chip')].map((x) => x.textContent.trim())), list = order.filter((b) => byB.has(b) || notP.has(b));
@@ -15589,6 +15589,7 @@ const PATCH_NOTES = [
     { t: 'The wipe is called for you', d: 'No more "stop at the 2nd death". Debrief now calls the wipe at the moment no raid has ever come back from: more people dead than any kill of that boss survived at that point (battle rezzes counted), the damage check missed, or half the raid dead. Everything before it counts, so the deaths and mistakes that lost the pull are graded. Tested on 760 kills: it never calls a wipe on a pull that was won.' },
     { t: 'A shorter debrief', d: 'Each pull now opens like a raid lead\'s debrief: what went well, what went wrong (click a line for its map and details) and the one thing for next pull. The extra drawers are gone; the timeline, raid cooldowns and burst windows sit in the open below the phases.' },
   ], n: [
+    'Home: the to-do list card is gone from Home; your to-do list is on your Report card.',
     'The coach box is now "Your raid lead says…". On All pulls it lists what wiped you, each with what went wrong in it (no names), and on one pull it opens with the root cause.',
     'The Raid DPS, DTPS and HPS tiles say how far ahead or behind top kills you are, short: "1% below top kills (2.92M)".',
     'The pulls in the boss banner are now a line: each point is where the boss was when that pull ended, with the kill at the bottom. Click a point to open that pull.',
