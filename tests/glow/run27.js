@@ -49,6 +49,8 @@ function CANVAS() return CANVAS_CAT end
 PICKED = { 0.1, 0.8, 0.9 }
 ColorPickerFrame = { SetupColorPickerAndShow = function(self, info) self.info = info end, GetColorRGB = function() return PICKED[1], PICKED[2], PICKED[3] end }
 function IsPlayerSpell(id) return NAMES[id] ~= nil end
+-- (like the real NSRT: NSAPI.RegisterCallback passes its owner on, so CallbackHandler calls fn(owner, event, ...), with owner nil)
+NSAPI.RegisterCallback = function(target, event, fn, owner) CB[event] = function(...) fn(owner, ...) end end
 MOUSE = { 500, 300 }; function GetCursorPosition() return MOUSE[1], MOUSE[2] end
 COMBAT = false; HIDDEN = setmetatable({}, { __tostring = function() return "<secret>" end })
 function issecretvalue(x) return x == HIDDEN end

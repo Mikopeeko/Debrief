@@ -465,7 +465,13 @@ local function reminder(event, info)
     (it and "found on your Cooldown Manager" or (DB.fallback and "not on your Cooldown Manager, big icon" or "not on your Cooldown Manager"))))
   schedule(id, wait)
 end
-local function onReminder(event, info)
+-- (NSRT hands its owner (nil) on to CallbackHandler, so we're called as (nil, event, info, frame): find the event and the reminder)
+local function onReminder(...)
+  local event, info
+  for i = 1, select("#", ...) do
+    local v = select(i, ...)
+    if type(v) == "table" and not info then info = v elseif type(v) == "string" and not event then event = v end
+  end
   local ok, err = pcall(reminder, event, info)
   if not ok then diary("error: " .. tostring(err)) end
 end
