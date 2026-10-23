@@ -721,14 +721,16 @@ function buildOne(b, rep, same, W, L, cutN) {
     // Warlock made them or someone used one)
     const stoneOn = ps.some((q) => q.cls === 'WARLOCK' || (q.cons && q.cons.healthstone.length)), used = [];
     if (stones.length) used.push('Healthstone at ' + times(stones)); if (pots.length) used.push((used.length ? 'potion' : 'Health potion') + ' at ' + times(pots));
-    P.surv.push([used.length ? 'ok' : 'info', stones.length && stones[0].id ? String(stones[0].id) : pots.length && pots[0].id ? String(pots[0].id) : stoneOn ? 'inv_stone_04' : 'inv_alchemy_70_red',
+    P._st = stones.length > 0; P._pt = pots.length > 0; P._on = stoneOn; P.cons = [];
+    P.cons.push([used.length ? 'ok' : 'info', stones.length && stones[0].id ? String(stones[0].id) : pots.length && pots[0].id ? String(pots[0].id) : stoneOn ? 'inv_stone_04' : 'inv_alchemy_70_red',
       used.length ? used.join(', ') + (stoneOn && !stones.length ? '. No Healthstone.' : !pots.length ? '. No potion.' : '.') : stoneOn ? 'No Healthstone or potion used.' : 'No health potion used.']);
     const missed = (p.closeCalls || []).filter((c) => c.judged && !c.def && !c.stone && !c.pot && c.kitAvail && before(c.tl, T));
     if (missed.length) {
       // (name what was still ready: a Healthstone only when a Warlock made them or someone used one)
       const c = missed[0], hasStone = ps.some((q) => q.cls === 'WARLOCK' || (q.cons && q.cons.healthstone.length)) && !stones.some((u) => u.t < c.t - 2), hasPot = !pots.some((u) => u.t < c.t - 2);
       const kit = hasStone && hasPot ? 'a Healthstone and a potion' : hasStone ? 'a Healthstone' : 'a potion';
-      P.surv.push(['warn', hasStone ? 'inv_stone_04' : 'inv_alchemy_70_red', 'You dropped to ' + Math.round(c.low * 100) + '% at ' + mmss(c.tl) + ' and pressed nothing, with ' + kit + ' still ready.' + (missed.length > 1 ? ' It happened ' + (missed.length - 1) + ' more time' + (missed.length > 2 ? 's.' : '.') : '')]);
+      P._ms = true;
+      P.cons.push(['warn', hasStone ? 'inv_stone_04' : 'inv_alchemy_70_red', 'You dropped to ' + Math.round(c.low * 100) + '% at ' + mmss(c.tl) + ' and pressed nothing, with ' + kit + ' still ready.' + (missed.length > 1 ? ' It happened ' + (missed.length - 1) + ' more time' + (missed.length > 2 ? 's.' : '.') : '')]);
     }
     P.next = tips[0] || (P.slips.length && P.slips.every((s) => s[0] === 'ok') && !own.length ? 'Clean pull from you. Same again.' : '');
     // (the Detailed card (the user's ask, Oct 21: a bigger card that fits more): a second tip, and three small number tiles:
@@ -776,6 +778,10 @@ function buildOne(b, rep, same, W, L, cutN) {
   else if (b.kill && !D.length) raid.more = 'Nobody died.';
   // (how each mechanic went, one line each, from the fight audit: worst first)
   raid.mech = [];
+  // (Healthstones and health potions across the raid, for the card's chip (Oct 22): who used one, and who dropped low with one still ready)
+  { const n = players.length, st = players.filter((q) => q._st).length, pt = players.filter((q) => q._pt).length, ms = players.filter((q) => q._ms).map((q) => '@' + q.name), on = players.some((q) => q._on);
+    if (n) raid.cons = [[ms.length ? 'warn' : 'ok', on ? 'inv_stone_04' : 'inv_alchemy_70_red', (on ? 'Healthstones: ' + st + ' of ' + n + ' used' : 'No Healthstones this pull') + ', health potions: ' + pt + ' of ' + n + '.' +
+      (ms.length ? ' Dropped low with one still ready: ' + ms.slice(0, 4).join(', ') + (ms.length > 4 ? ' and ' + (ms.length - 4) + ' more' : '') + '.' : '')]]; }
   if (rep.module && !rep.module.error) {
     const full = rep.module.sections || [], secs = isFinite(T) ? cutModule(rep.module, T).sections : full;
     // (one table row as a short sentence: what (its first cell, and anyone named), when, then only the parts that went wrong:

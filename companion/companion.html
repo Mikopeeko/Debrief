@@ -711,7 +711,8 @@ RECAP.lines = (m) => {
     rec.push(['P', p.name, p.cls, p.spec, p.role, p.unit, p.v, p.d == null ? '' : p.d, p.vs || '', p.best || '', p.bp || '', p.rank || '', p.icon || '']);
     for (const s of p.slips) rec.push(['S', p.name, s[0], s[1] || '', s[2]]);
     for (const s of p.boss) rec.push(['B', p.name, s[0], s[1] || '', s[2]]);
-    for (const s of p.surv || []) rec.push(['U', p.name, s[0], s[1] || '', s[2]]); // (survival: defensives, Healthstone, potion)
+    for (const s of p.surv || []) rec.push(['U', p.name, s[0], s[1] || '', s[2]]); // (survival: defensives)
+    for (const s of p.cons || []) rec.push(['HP', p.name, s[0], s[1] || '', s[2]]); // (your Healthstone and health potion (Oct 22))
     if (p.next) rec.push(['N', p.name, p.next]);
     for (const x of p.tiles || []) rec.push(['T', p.name, x[0], x[1], x[2], x[3] || '']); // (the Detailed card's number tiles)
     if (p.next2) rec.push(['O', p.name, p.next2]); // (and its second next-pull tip)
@@ -720,6 +721,7 @@ RECAP.lines = (m) => {
   for (const r of m.raid.bad) rec.push(['R', r[0], r[1] || '', r[2], r[3]]);
   for (const d of m.raid.died) rec.push(['D', d[0], d[1], d[2], d[3] || '', d[4]]);
   for (const r of m.raid.mech || []) rec.push(['M', r[0], r[1] || '', r[2], r[3]]);
+  for (const r of m.raid.cons || []) rec.push(['RH', r[0], r[1] || '', r[2]]); // (the raid's Healthstones and potions (Oct 22))
   if (m.raid.more) rec.push(['X', m.raid.more]);
   if (m.raid.next) rec.push(['Q', m.raid.next]);
   if (m.raid.lead) rec.push(['L', m.raid.lead]); // (the raid lead's word after the pull: why we wiped)

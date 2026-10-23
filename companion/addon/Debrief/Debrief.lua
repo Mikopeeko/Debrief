@@ -64,7 +64,7 @@ local function decode(code)
   code = code:gsub("||", "|")
   if code:sub(1, 4) ~= "DBF1" then return nil, "That isn't a Debrief code. Copy it again from Debrief Companion." end
   if code:sub(-2) ~= "^Z" then return nil, "The code got cut off. Copy it again from Debrief Companion." end
-  local m, by = { players = {}, raid = { bad = {}, died = {}, mech = {}, tiles = {}, good = {}, fixes = {}, ghap = {}, gchg = {}, more = "", next = "", story = "", better = "", worse = "", ghead = "", gnext = "" } }, {}
+  local m, by = { players = {}, raid = { bad = {}, died = {}, mech = {}, cons = {}, tiles = {}, good = {}, fixes = {}, ghap = {}, gchg = {}, more = "", next = "", story = "", better = "", worse = "", ghead = "", gnext = "" } }, {}
   for _, r in ipairs(split(code, "^")) do
     local f = split(r, "~")
     -- (the wipe filter: K~versions~line is a line only some "stop at death" numbers have, e.g. K~012~R~... is in 0, 1 and 2)
@@ -88,7 +88,9 @@ local function decode(code)
       m.players[#m.players + 1] = p; by[p.name] = p
     elseif t == "S" and by[g(2)] then add(by[g(2)].slips, { g(3), g(4), g(5) })
     elseif t == "B" and by[g(2)] then add(by[g(2)].boss, { g(3), g(4), g(5) })
-    elseif t == "U" and by[g(2)] then add(by[g(2)].surv, { g(3), g(4), g(5) }) -- (survival: defensives, Healthstone, potion)
+    elseif t == "U" and by[g(2)] then add(by[g(2)].surv, { g(3), g(4), g(5) }) -- (survival: defensives)
+    elseif t == "HP" and by[g(2)] then local p = by[g(2)]; p.cons = p.cons or {}; add(p.cons, { g(3), g(4), g(5) }) -- (your Healthstone and potion)
+    elseif t == "RH" then add(m.raid.cons, { g(2), g(3), g(4) }) -- (the raid's Healthstones and potions)
     elseif t == "N" and by[g(2)] then local p = by[g(2)]; if K then p.nextK = p.nextK or {}; table.insert(p.nextK, { K, g(3) }) else p.next = g(3) end
     elseif t == "T" and by[g(2)] then add(by[g(2)].tiles, { g(3), g(4), g(5), g(6) }) -- (the Detailed card's number tiles)
     elseif t == "O" and by[g(2)] then local p = by[g(2)]; if K then p.next2K = p.next2K or {}; table.insert(p.next2K, { K, g(3) }) else p.next2 = g(3) end
@@ -518,12 +520,12 @@ local function cutView(m)
   end
   local function pick(def, kl) if kl then for _, x in ipairs(kl) do if x[1]:find(c, 1, true) then return x[2] end end; return "" end; return def end
   local v = { h = m.h, addonV = m.addonV, cutN = m.cutN, coach = (m.coachV and m.coachV[c] and (m.coachV[c].head or "") ~= "" and m.coachV[c]) or m.coach, grade = m.grade, players = {},
-    raid = { bad = keep(m.raid.bad, true), died = keep(m.raid.died), mech = keep(m.raid.mech, true), more = pick(m.raid.more, m.raid.moreK), next = pick(m.raid.next, m.raid.nextK),
+    raid = { bad = keep(m.raid.bad, true), died = keep(m.raid.died), mech = keep(m.raid.mech, true), cons = keep(m.raid.cons), more = pick(m.raid.more, m.raid.moreK), next = pick(m.raid.next, m.raid.nextK),
       tiles = keep(m.raid.tiles), story = pick(m.raid.story or "", m.raid.storyK), better = pick(m.raid.better or "", m.raid.betterK), worse = pick(m.raid.worse or "", m.raid.worseK), lead = pick(m.raid.lead or "", m.raid.leadK),
       good = keep(m.raid.good), fixes = keep(m.raid.fixes), ghap = keep(m.raid.ghap), gchg = keep(m.raid.gchg), ghead = pick(m.raid.ghead or "", m.raid.gheadK), gnext = pick(m.raid.gnext or "", m.raid.gnextK) } }
   for _, p in ipairs(m.players) do
     local q = {}; for k, x in pairs(p) do q[k] = x end
-    q.slips, q.boss, q.surv, q.next = keep(p.slips), keep(p.boss), keep(p.surv), pick(p.next, p.nextK)
+    q.slips, q.boss, q.surv, q.next, q.cons = keep(p.slips), keep(p.boss), keep(p.surv), pick(p.next, p.nextK), keep(p.cons)
     q.tiles, q.next2, q.lead = keep(p.tiles), pick(p.next2 or "", p.next2K), pick(p.lead or "", p.leadK)
     v.players[#v.players + 1] = q
   end
@@ -965,6 +967,7 @@ function render()
   if coachOn and view ~= "me" then
     coachBody()
     if SH.mechs and m.raid.mech and #m.raid.mech > 0 and (DB.maxMech or 6) > 0 then section("mech", "Boss mechanics", m.raid.mech, DB.maxMech or 6, function(r) y = row(y, r[1], r[2], r[4], r[3]) end) end
+    if SH.rcons ~= false and m.raid.cons and #m.raid.cons > 0 then section("rcons", "Healthstones and potions", m.raid.cons, 2, function(r) y = row(y, r[1], r[2], r[3]) end) end
   elseif glanceOn then
     glanceBody()
   elseif view == "me" and P then
@@ -1005,6 +1008,7 @@ function render()
       if DB.bossFirst then bos(); rot() else rot(); bos() end
       -- (survival: your defensives, Healthstone and health potion)
       if P.surv and #P.surv > 0 and SH.surv ~= false then section("surv", "Survival", UI.onlyBad(P.surv), 5, function(r) y = row(y, r[1], r[2], r[3]) end) end
+      if P.cons and #P.cons > 0 and SH.cons ~= false then section("cons", "Healthstone and potion", P.cons, 3, function(r) y = row(y, r[1], r[2], r[3]) end) end
       -- (the Detailed card: the raid's side right here, so nobody has to switch to the Raid view)
       if DB.detailed and not m.h.practice and not raidOk then
         summary()
@@ -1023,6 +1027,7 @@ function render()
     if m.raid.mech and #m.raid.mech > 0 and (DB.maxMech or 6) > 0 then
       section("mech", "Boss mechanics", m.raid.mech, DB.compact and math.min(3, DB.maxMech or 3) or (DB.maxMech or 6), function(r) y = row(y, r[1], r[2], r[4], r[3]) end)
     end
+    if SH.rcons ~= false and m.raid.cons and #m.raid.cons > 0 then section("rcons", "Healthstones and potions", m.raid.cons, 2, function(r) y = row(y, r[1], r[2], r[3]) end) end
     diedRow()
     if m.raid.next ~= "" and SH.next ~= false and not ((m.raid.lead or "") ~= "" and SH.lead ~= false) then y = UI.nextBox(y + 2, m.raid.next) end
   end
@@ -1674,7 +1679,7 @@ local function buildOptions()
   local fl = opt:CreateTexture(nil, "ARTWORK"); fl:SetPoint("BOTTOMLEFT", 1, FOOT); fl:SetPoint("BOTTOMRIGHT", -1, FOOT); fl:SetHeight(1); fill(fl, COL.line)
   local f1 = opt:CreateFontString(nil, "OVERLAY"); setFont(f1, "body", 11.5); f1:SetPoint("BOTTOMLEFT", 16, 10); f1:SetTextColor(rgb(COL.faint)); f1:SetText("Saves as you go")
   local f2 = opt:CreateFontString(nil, "OVERLAY"); setFont(f2, "body", 11.5); f2:SetPoint("BOTTOMRIGHT", -16, 10); f2:SetTextColor(rgb(COL.faint))
-  f2:SetText("/dmo  ·  Version " .. ((C_AddOns and C_AddOns.GetAddOnMetadata and C_AddOns.GetAddOnMetadata(ADDON, "Version")) or ""))
+  f2:SetText("/db  ·  Version " .. ((C_AddOns and C_AddOns.GetAddOnMetadata and C_AddOns.GetAddOnMetadata(ADDON, "Version")) or ""))
 
   -- ---------- the pieces every page is made of ----------
   local PX = 16
@@ -1875,6 +1880,7 @@ local function buildOptions()
     { "Deaths", function() return S().cdeaths ~= false end, function(v) S().cdeaths = v end },
     { "Avoidable damage", function() return S().cavoid ~= false end, function(v) S().cavoid = v end },
     { "Boss mechanics", function() return S().mechs == true end, function(v) S().mechs = v end, false, "How each mechanic went, worst first." },
+    { "Healthstones and potions", function() return S().rcons ~= false end, function(v) S().rcons = v end, false, "Who used a Healthstone or health potion, and who dropped low with one still ready." },
     { "Your last pulls", function() return S().chips ~= false end, function(v) S().chips = v end, false, "Your last pulls along the top. Click one to look at it again." },
   })
   section("Your view")
@@ -1882,7 +1888,8 @@ local function buildOptions()
     { "Your damage or healing", function() return S().tile ~= false end, function(v) S().tile = v end },
     { "Rotation tips", function() return S().rotation ~= false end, function(v) S().rotation = v end },
     { "Boss mistakes", function() return S().boss ~= false end, function(v) S().boss = v end },
-    { "Survival", function() return S().surv ~= false end, function(v) S().surv = v end, false, "Your defensives, Healthstone and health potion." },
+    { "Survival", function() return S().surv ~= false end, function(v) S().surv = v end, false, "Your defensives, and how many you used." },
+    { "Healthstone and potion", function() return S().cons ~= false end, function(v) S().cons = v end, false, "When you used your Healthstone and health potion, or that you didn't." },
     { "Next pull tip", function() return S().next ~= false end, function(v) S().next = v end },
   })
   section("Charts", false, true)
@@ -1985,7 +1992,7 @@ local function buildOptions()
   buttons({ { "Move card back", function() SlashCmdList.DEBRIEF("reset") end }, { "Clear saved pulls", function() SlashCmdList.DEBRIEF("clear"); Debrief_RefreshOptions() end } })
   section("Help")
   buttons({ { "Tutorial", function() opt:Hide(); Debrief_Tutorial() end, 90 }, { "Sample recap", function() SlashCmdList.DEBRIEF("demo") end, 110 }, { "Test the glow", function() Debrief_TestGlow() end, 110 } })
-  local HELP = { { "/dmo", "these settings" }, { "/debrief", "show or hide your recap" }, { "/debrief big", "the big window" }, { "/debrief mini", "the mini bar on or off" },
+  local HELP = { { "/db", "these settings (/dmo too)" }, { "/debrief", "show or hide your recap" }, { "/debrief big", "the big window" }, { "/debrief mini", "the mini bar on or off" },
     { "/dp", "paste a recap" }, { "/debrief log", "combat logging on or off" }, { "/debrief demo", "a sample recap" } }
   for _, h in ipairs(HELP) do
     local c = P:CreateFontString(nil, "OVERLAY"); setFont(c, "bold", 12.5); c:SetPoint("TOPLEFT", PX, -(y + 4)); c:SetTextColor(rgb(COL.gold)); c:SetText(h[1])
@@ -2068,7 +2075,7 @@ do
     { "Welcome to Debrief", "Your pull recap, right here in WoW, a few seconds after every boss pull: your numbers, your biggest slips, your boss mistakes and one thing to try next pull." },
     { "After a boss pull", "If you run Debrief Companion on your PC, this pops up after each boss pull: press Ctrl+V and your recap opens.\nEveryone else does nothing. Your recap opens by itself.", "prompt" },
     { "Your recap", "Me is your own pull. Raid view shows the raid's biggest mistakes and who died. Use the arrows to look at anyone, and Expand for the big window with the whole night.", "sample" },
-    { "Make it yours", "Type /dmo any time for the settings: Simple, Medium or Heavy, colours and sizes, the mini bar or the big window, and goals.", "settings" },
+    { "Make it yours", "Type /db any time for the settings: Simple, Medium or Heavy, colours and sizes, the mini bar or the big window, and goals.", "settings" },
   }
   local cur = 1
   local function done() DB.tutorialDone = true; tut:Hide() end
@@ -2134,7 +2141,7 @@ BINDING_NAME_DEBRIEF_TOGGLE = "Show or hide the recap card"
 -- (/dp: the paste box, for a recap you shared from the app's pop-up)
 SLASH_DEBRIEFPASTE1 = "/dp"; SLASH_DEBRIEFPASTE2 = "/dpaste"
 SlashCmdList.DEBRIEFPASTE = function() Debrief_OpenPaste() end
-SLASH_DEBRIEFMO1 = "/dmo"
+SLASH_DEBRIEFMO1 = "/db"; SLASH_DEBRIEFMO2 = "/dmo" -- (/db first (the user, Oct 22); /dmo still works)
 SlashCmdList.DEBRIEFMO = function() Debrief_ToggleOptions() end
 SLASH_DEBRIEF1 = "/debrief"
 SlashCmdList.DEBRIEF = function(msg)
@@ -2157,7 +2164,7 @@ SlashCmdList.DEBRIEF = function(msg)
   elseif msg == "test" then DB.testMode = not DB.testMode; say("test mode " .. (DB.testMode and "on: the box pops up after every fight and when you log in." or "off: the box only pops up after boss pulls."))
   elseif msg == "share" then DB.share = (DB.share == false); say("sharing your pastes with the group " .. (DB.share ~= false and "on." or "off."))
   elseif msg == "auto" then DB.autoBox = (DB.autoBox == false); say("paste box after each boss pull " .. (DB.autoBox ~= false and "on." or "off."))
-  elseif msg == "help" then say("/dmo or /debrief options: your settings. /debrief tutorial: the tutorial again. /debrief: show or hide the card. /debrief big: the big window. /debrief mini: the mini bar on or off. /debrief paste: paste a new pull. /debrief demo: a sample card. /debrief test: test mode on or off. /debrief log: combat logging on or off (or the button on the card, or a key in Keybindings > AddOns > Debrief). /debrief focus: paste box ready for Ctrl+V on or off. /debrief raid: Raid view on or off. /debrief share: send your pastes to the group on or off. /debrief auto: paste box after each pull on or off. /debrief reset: move the card back.")
+  elseif msg == "help" then say("/db (or /dmo, or /debrief options): your settings. /debrief tutorial: the tutorial again. /debrief: show or hide the card. /debrief big: the big window. /debrief mini: the mini bar on or off. /debrief paste: paste a new pull. /debrief demo: a sample card. /debrief test: test mode on or off. /debrief log: combat logging on or off (or the button on the card, or a key in Keybindings > AddOns > Debrief). /debrief focus: paste box ready for Ctrl+V on or off. /debrief raid: Raid view on or off. /debrief share: send your pastes to the group on or off. /debrief auto: paste box after each pull on or off. /debrief reset: move the card back.")
   else Debrief_Toggle() end
 end
 
@@ -2260,7 +2267,7 @@ function Debrief_TestGlow()
   local items, n = cdmItems(), 0
   for _, e in ipairs(items) do if glowStart(e.ids[1], 3) then n = n + 1 end end
   if n == 0 then say("no Cooldown Manager icons found. Turn on Blizzard's Cooldown Manager (Options > Gameplay Enhancements) and add your cooldowns to it.")
-  else say(n .. " Cooldown Manager icons glowing for 3 s. In a raid only your own NSRT spells glow, when it's time to press them" .. (DB.glowCds and "." or ". Turn it on in /dmo > Raid.")) end
+  else say(n .. " Cooldown Manager icons glowing for 3 s. In a raid only your own NSRT spells glow, when it's time to press them" .. (DB.glowCds and "." or ". Turn it on in /db > More.")) end
 end
 local gev = CreateFrame("Frame", "DebriefGlowEvents")
 gev:RegisterEvent("PLAYER_LOGIN"); gev:RegisterEvent("ADDON_LOADED"); gev:RegisterEvent("ENCOUNTER_END")
