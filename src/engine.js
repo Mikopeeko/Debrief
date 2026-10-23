@@ -5925,6 +5925,16 @@ const CD_HEALS = new Map([['tranquility', 'Tranquility'], ['divine hymn', 'Divin
   ['celestial conduit', 'Celestial Conduit'], ["yu'lon: soothing breath", "Invoke Yu'lon, the Jade Serpent"], ['healing tide totem: healing tide', 'Healing Tide Totem'],
   ['spirit link totem: spirit link', 'Spirit Link Totem'], ['rewind', 'Rewind'], ['dream flight', 'Dream Flight'], ['emerald communion', 'Emerald Communion'], ['vampiric embrace', 'Vampiric Embrace']]);
 // damage reduction cooldowns, by the buff on the players inside: [cooldown, reduction, magic damage only] (tooltips, patch 12.1)
+// Personal defensives' damage taken off (Oct 22, for the Defensives panel): buff name (lower case) -> [reduction, magic only]. Reduction 1 =
+// an immunity (no number); 'abs' = an absorb shield (its soak is logged exactly). Values from the spells' text (Midnight, about; check
+// against tooltips when tuning changes). Evasion, Spell Reflection and heals aren't here: they don't reduce damage taken.
+const PERS_DR = new Map([['barkskin', [0.2]], ['survival instincts', [0.5]], ['rage of the sleeper', [0.2]], ['icebound fortitude', [0.3]],
+  ['astral shift', [0.4]], ['unending resolve', [0.25]], ['fortifying brew', [0.2]], ['dampen harm', [0.3]], ['diffuse magic', [0.6, true]],
+  ['divine protection', [0.2]], ['ardent defender', [0.2]], ['guardian of ancient kings', [0.5]], ['shield wall', [0.4]], ['die by the sword', [0.3]],
+  ['obsidian scales', [0.3]], ['blur', [0.2]], ['feint', [0.4]], ['survival of the fittest', [0.3]], ['aspect of the turtle', [0.3]],
+  ['dispersion', [0.75]], ['stoneform', [0.1]], ['ice cold', [0.7]], ['zen meditation', [0.6]], ['stone bulwark totem', ['abs']],
+  ['anti-magic shell', ['abs']], ['dark pact', ['abs']], ['ice barrier', ['abs']], ['prismatic barrier', ['abs']], ['blazing barrier', ['abs']],
+  ['ice block', [1]], ['divine shield', [1]], ['cloak of shadows', [1, true]], ['netherwalk', [1]]]);
 const CD_DR = new Map([['power word: barrier', ['Power Word: Barrier', 0.20]], ['spirit link totem', ['Spirit Link Totem', 0.10]], ['anti-magic zone', ['Anti-Magic Zone', 0.15, true]]]);
 // (Darkness: each attack it makes someone avoid logs as an absorb by the Demon Hunter, so that one is exact; Rallying Cry
 // adds 10% maximum health for 10 seconds)
@@ -5998,6 +6008,9 @@ function* analyzeSteps(item, text, opts) {
   // a cooldown's entry: its caster's latest press (a heal from a press before the pull, or one the log missed, starts one)
   const cdPress = (g, cd, t, make) => { for (let i = r.cdUse.length - 1; i >= 0; i--) { const u = r.cdUse[i]; if (u.g === g && u.cd === cd && u.t <= t + 0.5) return u; }
     if (!make) return null; const u = { g, cd, t, end: null, heal: 0, over: 0, prev: 0, taken: 0, hp: 0, cov: new Set(), late: true }; r.cdUse.push(u); return u; };
+  const persOn = new Map(); r.defMit = []; /* (personal defensives up on a player: guid|buff -> its use (PERS_DR)) */
+  const persUse = (g, ln, nm, t) => { const u = { g, name: nm, t, end: null, prev: 0, taken: 0, abs: PERS_DR.get(ln)[0] === 'abs', imm: PERS_DR.get(ln)[0] === 1 }; r.defMit.push(u); persOn.set(g + '|' + ln, u); return u; };
+  const persCover = (dg, amt, magic) => { for (const [k, u] of persOn) { if (u.g !== dg) continue; const [red, mag] = PERS_DR.get(k.slice(k.indexOf('|') + 1)); if (u.abs || u.imm || (mag && !magic)) continue; u.prev += amt * red / (1 - red); u.taken += amt; } };
   const devOn = new Set(), drOn = new Map(); // (who has Devotion Aura up; who sits in a Barrier, Spirit Link or Anti-Magic Zone: guid|buff -> the caster)
   const pMax = new Map(); r.pMax = pMax; // (each player's maximum health, last seen: what a Rallying Cry adds 10% to)
   // a hit on a player from an enemy, after mitigation (absorbs included): what an Aura Mastery, a Barrier or a Spirit Link
@@ -6163,6 +6176,7 @@ function* analyzeSteps(item, text, opts) {
           if (!owner) hit(dg, t, spell, id);
           if (W(spell, id)) modEv.push({ k: 'dmg', t, dst: dg, spell, id, amt: base, raw: base + Math.max(0, num(f[s0 + 6])), src: sg, srcName: sn }); // (raw: the hit with what shields absorbed)
           if (r.cdUse.length && (parseInt(f[2], 16) & 0x40)) { const amt = base + Math.max(0, num(f[s0 + 6])), sch = swing ? 1 : parseInt(f[10], 16) || 1; if (amt > 0) cdCover(dg, t, amt, (sch & ~1) !== 0); }
+          if (persOn.size && (parseInt(f[2], 16) & 0x40)) { const amt = base + Math.max(0, num(f[s0 + 6])), sch = swing ? 1 : parseInt(f[10], 16) || 1; if (amt > 0) persCover(dg, amt, (sch & ~1) !== 0); } /* (personal defensives' share (Oct 22)) */
           recap(dg, { t, heal: false, amount: base, src: shortName(sg, sn), spell, id, hp });
         } else if (owner && (parseInt(f[6], 16) & 0x40)) { // (damage on enemies only: a mind-controlled player hitting a friendly pet isn't damage done)
           const p = P(owner, pet ? null : sn);
@@ -6229,6 +6243,7 @@ function* analyzeSteps(item, text, opts) {
         if (!ow) break;
         // (Darkness: an attack it made someone avoid, exact)
         if (isPlayer(dg) && String(f[sp + 1]).toLowerCase() === 'darkness') { const u = cdPress(ow, 'Darkness', t, true); u.prev += amt; u.taken += amt; u.cov.add(dg); }
+        { const u = PERS_DR.has(String(f[sp + 1]).toLowerCase()) && ow === dg ? r.defMit.slice().reverse().find((x) => x.g === dg && x.abs && x.name.toLowerCase() === String(f[sp + 1]).toLowerCase() && t - x.t <= 30) : null; if (u) u.prev += amt; } /* (a personal shield's soak, exact (Oct 22)) */
         const p = P(ow, isPlayer(absorber) ? f[a + 1] : null);
         p.healing += amt; p.absorbs += amt; addAb(p.healAb, f[sp + 1], id, amt, 0, false);
         if (isPlayer(dg) && phpNow(dg) < 0.5 && lowHL.length < 60000) lowHL.push([t, dg, ow, amt, 1, f[sp + 1]]); bump(r.healS, t, amt); bump(p.healS, t, amt);
@@ -6248,7 +6263,8 @@ function* analyzeSteps(item, text, opts) {
         if (!pl && owner && f[11] === 'BUFF' && PET_AURA.has(f[9].toLowerCase())) { const q = P(owner, null); if (!q.petAur) q.petAur = []; if (q.petAur.length < 4000) q.petAur.push([t, f[9], stacks, dg]); }
         if (pl && f[11] === 'BUFF' && ev === 'SPELL_AURA_APPLIED') { buffUp(P(dg, dn), num(f[8]), f[9], t, isPlayer(sg) && sg !== dg ? shortName(sg, sn) : '');
           // (a zone's buff comes from the zone itself, e.g. Anti-Magic Zone: credit the player who pressed it last)
-          const ln = f[9].toLowerCase(); if (ln === 'devotion aura') devOn.add(dg);
+          const ln = f[9].toLowerCase(); if (PERS_DR.has(ln) && (sg === dg || !isPlayer(sg) || owner === dg)) persUse(dg, ln, f[9], t); /* (a personal defensive went up (Oct 22)) */
+          if (ln === 'devotion aura') devOn.add(dg);
           else if (CD_DR.has(ln)) { let by = owner; if (!by) { for (let i = r.cdUse.length - 1; i >= 0 && t - r.cdUse[i].t <= 15; i--) if (r.cdUse[i].cd === CD_DR.get(ln)[0] && isPlayer(r.cdUse[i].g)) { by = r.cdUse[i].g; break; } } drOn.set(dg + '|' + ln, by || sg); }
           else if (ln === 'rallying cry' && (owner || isPlayer(sg))) { const u = cdPress(owner || sg, 'Rallying Cry', t, true); if (!u.cov.has(dg)) { u.cov.add(dg); u.hp += 0.1 * (pMax.get(dg) || 0); } } }
         // (crowd control a player, their pet or their totem landed on an enemy)
@@ -6265,7 +6281,8 @@ function* analyzeSteps(item, text, opts) {
         if (f.length >= 10 && W(f[9], f[8])) modEv.push({ k: 'aura', op: 'remove', t, dst: dg, spell: f[9], id: num(f[8]), stacks: 0, src: sg });
         if (f.length >= 10 && !isPlayer(dg) && BOSS_AURA_N.has(f[9].toLowerCase())) bossAura(r, f[9], t, false);
         if (f.length >= 12 && f[11] === 'BUFF' && isPlayer(dg)) { buffDown(P(dg, dn), num(f[8]), f[9], t); if (isStatBuf(f[9].toLowerCase())) statBuf(P(dg, dn), num(f[8]), f[9], t, 'r');
-          const ln = f[9].toLowerCase(); if (ln === 'devotion aura') devOn.delete(dg); else if (CD_DR.has(ln)) drOn.delete(dg + '|' + ln);
+          const ln = f[9].toLowerCase(); if (PERS_DR.has(ln)) { const u = persOn.get(dg + '|' + ln); if (u) { u.end = t; persOn.delete(dg + '|' + ln); } }
+          if (ln === 'devotion aura') devOn.delete(dg); else if (CD_DR.has(ln)) drOn.delete(dg + '|' + ln);
           else if (ln === 'aura mastery') { const u = cdPress(dg, 'Aura Mastery', t, false); if (u && t - u.t < 12) u.end = t; } }
         if (f.length >= 12 && f[11] === 'DEBUFF' && isPlayer(dg)) debuffDown(P(dg, dn), num(f[8]), f[9], t);
         else if (f.length >= 12 && f[11] === 'DEBUFF' && owner) { const q = P(owner, pet ? null : sn); if (!q.dotEv) q.dotEv = []; if (q.dotEv.length < 30000) q.dotEv.push([t, 0, f[9], dg]); }
@@ -6617,6 +6634,7 @@ function* analyzeSteps(item, text, opts) {
   }  r.hasPack = mech.packs.length > 0;
   r.packSources = mech.packs.flatMap((p) => p.sources).join('; ');
   yield; try { explainDeaths(r); } catch (e) { console.error(e); for (const d of r.deaths) { d.why = d.why || []; d.prevent = d.prevent || []; } } // never block the pull
+  try { deathHealGaps(r); } catch (e) { console.error(e); } // (healing gaps before deaths: extra, never block the pull)
   insights(r);
   return r;
 }
@@ -6869,7 +6887,7 @@ function survivability(r) {
     const died = r.deaths.filter((d) => d.guid === p.guid);
     const withAvail = died.filter((d) => d.available.some((a) => !/^(Healthstone|a healing potion)$/.test(a))).length;
     const defUse = p.defs.length ? p.defs.reduce((s, d) => s + Math.min(d.uses.length, d.possible), 0) / p.defs.reduce((s, d) => s + d.possible, 0) : 1;
-    p.survVerdict = withAvail ? 'Poor' : (died.length || defUse < 0.34) ? 'Okay' : 'Good';
+    p.survVerdict = withAvail ? 'Poor' : died.length ? 'Okay' : 'Good'; /* (not by uses of possible any more (Oct 22)) */
     p.defUse = defUse;
   }
   r.defUse = possible ? used / possible : 0;
@@ -6882,6 +6900,7 @@ function survivability(r) {
   // kitAvail: a Healthstone (when a Warlock is in the raid) or a health potion was still unused when it started.
   for (const p of r.players.values()) {
     const l = (r.php && r.php.get(p.guid)) || [], dts = r.deaths.filter((d) => d.guid === p.guid).map((d) => d.t), calls = [];
+    const own = p.role === 'healer' ? (r.lowHL || []).filter((e) => e[1] === p.guid && e[2] === p.guid) : [], mx = (r.pMax && r.pMax.get(p.guid)) || 0;
     // (a dip counts when it stays under 30% for at least a second or goes under 15%: a blip healers catch instantly
     // can't be reacted to; dips starting within 5 s of the last one are the same close call)
     let cur = null;
@@ -6896,8 +6915,14 @@ function survivability(r) {
       const stone = p.cons.healthstone.some((u) => u.t >= t0 - 2 && u.t <= t0 + 5), pot = p.cons.healpot.some((u) => u.t >= t0 - 2 && u.t <= t0 + 5);
       const under = lowTime(l, c.t, c.last + 0.5, 0.3), judged = under >= 5 || (c.low < 0.15 && lowTime(l, c.t, c.tl, 0.35) >= 2);
       const kitAvail = (stonesExist && !p.cons.healthstone.some((u) => u.t < c.t - 2)) || !p.cons.healpot.some((u) => u.t < c.t - 2);
-      return { t: c.t, tl: t0, low: c.low, def: defUsed, stone, pot, under, judged, kitAvail };
+      // (a healer who healed themself back up answered it too (defensives research, Oct 22: top healers answer 60% of their lows with
+      // a button and heal through the rest): their own heals on themselves while low came to 20%+ of their health)
+      const self = own.length > 0 && mx > 0 && own.reduce((a, e) => a + (e[0] >= c.t - 1 && e[0] <= c.last + 2 ? e[3] : 0), 0) >= 0.2 * mx;
+      return { t: c.t, tl: t0, low: c.low, def: defUsed, stone, pot, self, under, judged, kitAvail };
     });
+    // (the Survivability verdict: never by how many defensives they pressed (top players press about half they could); a long low
+    // with nothing pressed makes it Okay)
+    if (p.survVerdict === 'Good' && p.closeCalls.some((c) => c.judged && !c.def && !c.stone && !c.pot && !c.self)) p.survVerdict = 'Okay';
   }
 }
 
@@ -6939,6 +6964,31 @@ function triageSaves(r) {
 // Why each player died and what would have prevented it, in plain words (shown with each death in the Fight audit).
 // Built from the last 15 seconds before the death (10 until Oct 22: a slow slide often starts earlier): what hit them and how fast, how much healing came in, any
 // mechanic mistakes they made just before, the boss's avoidable spells, and what they still had ready.
+// Healing gaps before a death (your question, Oct 22: "is it the healers fault? Did this person genuinely not get any direct/enough direct
+// healing for a long period?"). In their last 15 s: starved = seconds under 50% health while healing from others (heals and absorbs) over
+// the 3 s before came to under 10% of their health; run = the longest of those stretches; heal = healing from others as % of their health;
+// alive / healers = other healers alive / in the raid; dist = yards to the nearest alive healer (positions); busy = seconds that were the
+// pull's top-20% raid damage seconds (raid-wide damage: healers have to pick). Top guilds' survivors almost never sit 5 s+ starved
+// (99th percentile 5.5 s); on our Oct 21 night 1 of 81 deaths did (notes/Guides/Deaths - how to judge them.md).
+function deathHealGaps(r) {
+  const heals = new Map(); for (const e of r.lowHL || []) { let l = heals.get(e[1]); if (!l) heals.set(e[1], l = []); l.push(e); }
+  const healers = [...r.players.values()].filter((p) => p.role === 'healer' && p.name), deadAt = new Map();
+  for (const d of r.deaths.slice().sort((a, b) => a.t - b.t)) if (!deadAt.has(d.guid)) deadAt.set(d.guid, d.t);
+  const ts = r.takenS || [], srt = ts.filter((v) => v > 0).sort((a, b) => a - b), p80 = srt[Math.floor(srt.length * 0.8)] || 0;
+  const posAt = (g, t) => { const u = r.positions && r.positions.get(g); if (!u) return null; let b = null; for (const q of u.pts) { if (q[0] > t + 2) break; b = q; } return b; };
+  for (const d of r.deaths) {
+    const mx = (r.pMax && r.pMax.get(d.guid)) || 0, l = (r.php && r.php.get(d.guid)) || []; if (!mx || !l.length) continue;
+    const hl = (heals.get(d.guid) || []).filter((e) => e[2] !== d.guid && e[0] > d.t - 18 && e[0] <= d.t);
+    const hpAt = (t) => { let v = 1; for (const [x, fr] of l) { if (x > t) break; v = fr; } return v; };
+    const inn = (a, b) => hl.reduce((n, e) => n + (e[0] > a && e[0] <= b ? e[3] : 0), 0);
+    let starved = 0, run = 0, best = 0;
+    for (let t = d.t - 15; t < d.t; t += 0.5) { if (hpAt(t) < 0.5 && inn(t - 3, t) < 0.1 * mx) { starved += 0.5; run += 0.5; best = Math.max(best, run); } else run = 0; }
+    const others = healers.filter((h) => h.guid !== d.guid), alive = others.filter((h) => !(deadAt.get(h.guid) < d.t - 0.5)), me = posAt(d.guid, d.t);
+    const ds = me ? alive.map((h) => { const q = posAt(h.guid, d.t); return q ? Math.hypot(q[1] - me[1], q[2] - me[2]) : null; }).filter((x) => x != null) : [];
+    let busy = 0; if (p80 > 0) for (let k = Math.max(0, Math.floor(d.t - 15)); k <= Math.floor(d.t); k++) if ((ts[k] || 0) >= p80) busy++;
+    d.gap = { starved, run: best, heal: Math.round(100 * inn(d.t - 15, d.t) / mx), alive: alive.length, healers: others.length, dist: ds.length ? Math.round(Math.min(...ds)) : null, busy };
+  }
+}
 function explainDeaths(r) {
   const pack = PACKS.find((p) => p.encounter === r.item.boss), rules = pack ? pack.rules : [];
   // (and every source in the boss's Avoidable damage panel, so a death to Noxious Ground or a Deluge circle reads as dodgeable too;

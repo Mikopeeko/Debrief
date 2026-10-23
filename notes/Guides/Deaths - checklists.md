@@ -21,6 +21,11 @@ Three checklists for judging deaths the same way every time. The research and th
 6. **Too fast?** From 50%+ health to dead in 2 s or less (tanks: from 90%+) → not on them, weight 0.
 7. **The raid's mistake** linked within 4 s (adds alive too long, missed soak, Eternal Nightfall cast)?
    → weight 0; but if they also sat at or under 35% for 2+ s with kit ready → *shared*, half.
+7b. **A healing gap?** (Oct 22, the user: "is it the healers fault?") In their last 15 s, 5 s or more under 50% health while
+   healing from others over each 3 s was under 10% of their health (`d.gap.starved`), AND half the healers or more alive, one
+   within 40 yards, AND no raid-wide damage (under 4 of the pull's top-20% damage seconds) → *heal*: half on them if something
+   was still ready (step 8), otherwise not on them. Blame the healers as a team, never one named healer. Top guilds' survivors
+   almost never sit 5 s+ like that; on Oct 21 one death did, and it was the player's own Axegrinder (step 5 wins).
 8. **Something still ready that would have helped?**
    - a personal defensive (section C) that was off cooldown → *ready*, weight 1;
    - a Healthstone or health potion **and** 2+ s at or under 35% first → *ready*, weight 1;

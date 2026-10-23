@@ -4075,6 +4075,15 @@ details.secd > summary .kbrank + .sst { margin-left: 0; }
 .cch2 .cch-p.cch-hasmap { grid-template-columns: 30px minmax(0, 1fr) 72px; }
 .cch2 .cch-good { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; } .cch2 .cch-gd { padding: 4px 10px; border-radius: 999px; font-size: 13px; background: rgba(95,211,95,.1); border: 1px solid rgba(95,211,95,.28); color: #a8eaa8; }
 .cch2 .cch-acct2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin: 0 0 6px; }
+.cch2 .ckt-dd { padding: 2px 4px; font-size: 12.5px; line-height: 1.65; color: var(--text); } .cch2 .ckt-dd b { font-weight: 600; }
+.cch2 .ckt-note { font-size: 12px; color: var(--muted); margin: 8px 0 0; line-height: 1.5; } .cch2 .ckt-note b { color: var(--text); font-weight: 600; }
+.cch2 .ckt-t { white-space: nowrap; } .ddv .ddv-s { color: var(--muted); font-size: 12px; }
+.ddv .ddv-tl { margin: 6px 0 2px; } .ddv .ddv-tlh { margin: 0 0 4px; font-size: 12.5px; color: var(--muted); } .ddv .ddv-tlh b { color: var(--text); } .ddv .ddv-ts { color: var(--muted); font-weight: 500; margin-right: 2px; }
+.ddv .ddv-am { font-weight: 600; margin-left: 4px; } .ddv .ddv-am.dn { color: #ff8f87; } .ddv .ddv-am.up { color: #7fd18b; } .cb-f i.ddv-lost { background: repeating-linear-gradient(135deg, rgba(229,83,75,.75) 0 3px, rgba(229,83,75,.4) 3px 6px); } .ddv .ddv-tlr .cb-f i.m { background: color-mix(in srgb, var(--c) 62%, transparent); } .ddv .ddv-tlr.ddv-up { box-shadow: inset 3px 0 0 #46a758; background: rgba(70,167,88,.08); } .ddv .ddv-tlr.ddv-dn { box-shadow: inset 3px 0 0 #e5534b; } .ddv .ddv-tlr.ddv-kill { box-shadow: inset 3px 0 0 #e5534b; background: rgba(229,83,75,.16); }
+.ddv .ddv-resbox { margin: 8px 0 2px; padding: 8px 10px; border-radius: 6px; background: rgba(229,83,75,.12); border-left: 3px solid #e5534b; font-size: 13px; line-height: 1.5; color: var(--text); }
+.ddv .ddv-hb, .ddv .ddv-hit { margin: 6px 0 2px; } .ddv .ddv-hbl { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin: 0 0 4px; } .ddv .ddv-hbr { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 4px 6px; }
+.ddv .ddv-hbi { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; min-width: 44px; } .ddv .ddv-hbb { display: block; width: 44px; height: 9px; border-radius: 3px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); overflow: hidden; } .ddv .ddv-hbb i { display: block; height: 100%; }
+.ddv .ddv-hbb i.ddh-hi { background: #46a758; } .ddv .ddv-hbb i.ddh-md { background: #e8a23a; } .ddv .ddv-hbb i.ddh-lo { background: #e5534b; } .ddv .ddv-hbi b { font-size: 12px; } .ddv .ddv-hbi em { font-style: normal; font-size: 12px; color: var(--muted); min-height: 14px; } .ddv .ddv-hba { color: var(--muted); font-size: 14px; line-height: 12px; } .cch2 .cch-acct3 > details.cch-abx { min-width: 0; } @media (max-width: 640px) { .cch2 .cch-acct3 { grid-template-columns: minmax(0, 1fr); } }.cch2 .ckt-tot { margin: 0 0 6px; font-size: 12.5px; color: var(--text); } .cch2 .ckt-none { margin: 2px 0 6px; font-size: 12.5px; color: var(--muted); }
 .cch2 .cch-ab { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line2); } .cch2 .cch-ab.warn { border-color: rgba(232,162,58,.35); }
 /* the Deaths and Avoidable damage panels open and close (Oct 22) */
 .cch2 details.cch-abx { align-self: start; } .cch2 details.cch-abx > summary.cch-al { display: flex; align-items: center; flex-wrap: nowrap; gap: 10px; margin: 0; cursor: pointer; list-style: none; } .cch2 details.cch-abx > summary::-webkit-details-marker { display: none; }
@@ -11627,6 +11636,16 @@ const CD_HEALS = new Map([['tranquility', 'Tranquility'], ['divine hymn', 'Divin
   ['celestial conduit', 'Celestial Conduit'], ["yu'lon: soothing breath", "Invoke Yu'lon, the Jade Serpent"], ['healing tide totem: healing tide', 'Healing Tide Totem'],
   ['spirit link totem: spirit link', 'Spirit Link Totem'], ['rewind', 'Rewind'], ['dream flight', 'Dream Flight'], ['emerald communion', 'Emerald Communion'], ['vampiric embrace', 'Vampiric Embrace']]);
 // damage reduction cooldowns, by the buff on the players inside: [cooldown, reduction, magic damage only] (tooltips, patch 12.1)
+// Personal defensives' damage taken off (Oct 22, for the Defensives panel): buff name (lower case) -> [reduction, magic only]. Reduction 1 =
+// an immunity (no number); 'abs' = an absorb shield (its soak is logged exactly). Values from the spells' text (Midnight, about; check
+// against tooltips when tuning changes). Evasion, Spell Reflection and heals aren't here: they don't reduce damage taken.
+const PERS_DR = new Map([['barkskin', [0.2]], ['survival instincts', [0.5]], ['rage of the sleeper', [0.2]], ['icebound fortitude', [0.3]],
+  ['astral shift', [0.4]], ['unending resolve', [0.25]], ['fortifying brew', [0.2]], ['dampen harm', [0.3]], ['diffuse magic', [0.6, true]],
+  ['divine protection', [0.2]], ['ardent defender', [0.2]], ['guardian of ancient kings', [0.5]], ['shield wall', [0.4]], ['die by the sword', [0.3]],
+  ['obsidian scales', [0.3]], ['blur', [0.2]], ['feint', [0.4]], ['survival of the fittest', [0.3]], ['aspect of the turtle', [0.3]],
+  ['dispersion', [0.75]], ['stoneform', [0.1]], ['ice cold', [0.7]], ['zen meditation', [0.6]], ['stone bulwark totem', ['abs']],
+  ['anti-magic shell', ['abs']], ['dark pact', ['abs']], ['ice barrier', ['abs']], ['prismatic barrier', ['abs']], ['blazing barrier', ['abs']],
+  ['ice block', [1]], ['divine shield', [1]], ['cloak of shadows', [1, true]], ['netherwalk', [1]]]);
 const CD_DR = new Map([['power word: barrier', ['Power Word: Barrier', 0.20]], ['spirit link totem', ['Spirit Link Totem', 0.10]], ['anti-magic zone', ['Anti-Magic Zone', 0.15, true]]]);
 // (Darkness: each attack it makes someone avoid logs as an absorb by the Demon Hunter, so that one is exact; Rallying Cry
 // adds 10% maximum health for 10 seconds)
@@ -11700,6 +11719,9 @@ function* analyzeSteps(item, text, opts) {
   // a cooldown's entry: its caster's latest press (a heal from a press before the pull, or one the log missed, starts one)
   const cdPress = (g, cd, t, make) => { for (let i = r.cdUse.length - 1; i >= 0; i--) { const u = r.cdUse[i]; if (u.g === g && u.cd === cd && u.t <= t + 0.5) return u; }
     if (!make) return null; const u = { g, cd, t, end: null, heal: 0, over: 0, prev: 0, taken: 0, hp: 0, cov: new Set(), late: true }; r.cdUse.push(u); return u; };
+  const persOn = new Map(); r.defMit = []; /* (personal defensives up on a player: guid|buff -> its use (PERS_DR)) */
+  const persUse = (g, ln, nm, t) => { const u = { g, name: nm, t, end: null, prev: 0, taken: 0, abs: PERS_DR.get(ln)[0] === 'abs', imm: PERS_DR.get(ln)[0] === 1 }; r.defMit.push(u); persOn.set(g + '|' + ln, u); return u; };
+  const persCover = (dg, amt, magic) => { for (const [k, u] of persOn) { if (u.g !== dg) continue; const [red, mag] = PERS_DR.get(k.slice(k.indexOf('|') + 1)); if (u.abs || u.imm || (mag && !magic)) continue; u.prev += amt * red / (1 - red); u.taken += amt; } };
   const devOn = new Set(), drOn = new Map(); // (who has Devotion Aura up; who sits in a Barrier, Spirit Link or Anti-Magic Zone: guid|buff -> the caster)
   const pMax = new Map(); r.pMax = pMax; // (each player's maximum health, last seen: what a Rallying Cry adds 10% to)
   // a hit on a player from an enemy, after mitigation (absorbs included): what an Aura Mastery, a Barrier or a Spirit Link
@@ -11865,6 +11887,7 @@ function* analyzeSteps(item, text, opts) {
           if (!owner) hit(dg, t, spell, id);
           if (W(spell, id)) modEv.push({ k: 'dmg', t, dst: dg, spell, id, amt: base, raw: base + Math.max(0, num(f[s0 + 6])), src: sg, srcName: sn }); // (raw: the hit with what shields absorbed)
           if (r.cdUse.length && (parseInt(f[2], 16) & 0x40)) { const amt = base + Math.max(0, num(f[s0 + 6])), sch = swing ? 1 : parseInt(f[10], 16) || 1; if (amt > 0) cdCover(dg, t, amt, (sch & ~1) !== 0); }
+          if (persOn.size && (parseInt(f[2], 16) & 0x40)) { const amt = base + Math.max(0, num(f[s0 + 6])), sch = swing ? 1 : parseInt(f[10], 16) || 1; if (amt > 0) persCover(dg, amt, (sch & ~1) !== 0); } /* (personal defensives' share (Oct 22)) */
           recap(dg, { t, heal: false, amount: base, src: shortName(sg, sn), spell, id, hp });
         } else if (owner && (parseInt(f[6], 16) & 0x40)) { // (damage on enemies only: a mind-controlled player hitting a friendly pet isn't damage done)
           const p = P(owner, pet ? null : sn);
@@ -11931,6 +11954,7 @@ function* analyzeSteps(item, text, opts) {
         if (!ow) break;
         // (Darkness: an attack it made someone avoid, exact)
         if (isPlayer(dg) && String(f[sp + 1]).toLowerCase() === 'darkness') { const u = cdPress(ow, 'Darkness', t, true); u.prev += amt; u.taken += amt; u.cov.add(dg); }
+        { const u = PERS_DR.has(String(f[sp + 1]).toLowerCase()) && ow === dg ? r.defMit.slice().reverse().find((x) => x.g === dg && x.abs && x.name.toLowerCase() === String(f[sp + 1]).toLowerCase() && t - x.t <= 30) : null; if (u) u.prev += amt; } /* (a personal shield's soak, exact (Oct 22)) */
         const p = P(ow, isPlayer(absorber) ? f[a + 1] : null);
         p.healing += amt; p.absorbs += amt; addAb(p.healAb, f[sp + 1], id, amt, 0, false);
         if (isPlayer(dg) && phpNow(dg) < 0.5 && lowHL.length < 60000) lowHL.push([t, dg, ow, amt, 1, f[sp + 1]]); bump(r.healS, t, amt); bump(p.healS, t, amt);
@@ -11950,7 +11974,8 @@ function* analyzeSteps(item, text, opts) {
         if (!pl && owner && f[11] === 'BUFF' && PET_AURA.has(f[9].toLowerCase())) { const q = P(owner, null); if (!q.petAur) q.petAur = []; if (q.petAur.length < 4000) q.petAur.push([t, f[9], stacks, dg]); }
         if (pl && f[11] === 'BUFF' && ev === 'SPELL_AURA_APPLIED') { buffUp(P(dg, dn), num(f[8]), f[9], t, isPlayer(sg) && sg !== dg ? shortName(sg, sn) : '');
           // (a zone's buff comes from the zone itself, e.g. Anti-Magic Zone: credit the player who pressed it last)
-          const ln = f[9].toLowerCase(); if (ln === 'devotion aura') devOn.add(dg);
+          const ln = f[9].toLowerCase(); if (PERS_DR.has(ln) && (sg === dg || !isPlayer(sg) || owner === dg)) persUse(dg, ln, f[9], t); /* (a personal defensive went up (Oct 22)) */
+          if (ln === 'devotion aura') devOn.add(dg);
           else if (CD_DR.has(ln)) { let by = owner; if (!by) { for (let i = r.cdUse.length - 1; i >= 0 && t - r.cdUse[i].t <= 15; i--) if (r.cdUse[i].cd === CD_DR.get(ln)[0] && isPlayer(r.cdUse[i].g)) { by = r.cdUse[i].g; break; } } drOn.set(dg + '|' + ln, by || sg); }
           else if (ln === 'rallying cry' && (owner || isPlayer(sg))) { const u = cdPress(owner || sg, 'Rallying Cry', t, true); if (!u.cov.has(dg)) { u.cov.add(dg); u.hp += 0.1 * (pMax.get(dg) || 0); } } }
         // (crowd control a player, their pet or their totem landed on an enemy)
@@ -11967,7 +11992,8 @@ function* analyzeSteps(item, text, opts) {
         if (f.length >= 10 && W(f[9], f[8])) modEv.push({ k: 'aura', op: 'remove', t, dst: dg, spell: f[9], id: num(f[8]), stacks: 0, src: sg });
         if (f.length >= 10 && !isPlayer(dg) && BOSS_AURA_N.has(f[9].toLowerCase())) bossAura(r, f[9], t, false);
         if (f.length >= 12 && f[11] === 'BUFF' && isPlayer(dg)) { buffDown(P(dg, dn), num(f[8]), f[9], t); if (isStatBuf(f[9].toLowerCase())) statBuf(P(dg, dn), num(f[8]), f[9], t, 'r');
-          const ln = f[9].toLowerCase(); if (ln === 'devotion aura') devOn.delete(dg); else if (CD_DR.has(ln)) drOn.delete(dg + '|' + ln);
+          const ln = f[9].toLowerCase(); if (PERS_DR.has(ln)) { const u = persOn.get(dg + '|' + ln); if (u) { u.end = t; persOn.delete(dg + '|' + ln); } }
+          if (ln === 'devotion aura') devOn.delete(dg); else if (CD_DR.has(ln)) drOn.delete(dg + '|' + ln);
           else if (ln === 'aura mastery') { const u = cdPress(dg, 'Aura Mastery', t, false); if (u && t - u.t < 12) u.end = t; } }
         if (f.length >= 12 && f[11] === 'DEBUFF' && isPlayer(dg)) debuffDown(P(dg, dn), num(f[8]), f[9], t);
         else if (f.length >= 12 && f[11] === 'DEBUFF' && owner) { const q = P(owner, pet ? null : sn); if (!q.dotEv) q.dotEv = []; if (q.dotEv.length < 30000) q.dotEv.push([t, 0, f[9], dg]); }
@@ -12319,6 +12345,7 @@ function* analyzeSteps(item, text, opts) {
   }  r.hasPack = mech.packs.length > 0;
   r.packSources = mech.packs.flatMap((p) => p.sources).join('; ');
   yield; try { explainDeaths(r); } catch (e) { console.error(e); for (const d of r.deaths) { d.why = d.why || []; d.prevent = d.prevent || []; } } // never block the pull
+  try { deathHealGaps(r); } catch (e) { console.error(e); } // (healing gaps before deaths: extra, never block the pull)
   insights(r);
   return r;
 }
@@ -12571,7 +12598,7 @@ function survivability(r) {
     const died = r.deaths.filter((d) => d.guid === p.guid);
     const withAvail = died.filter((d) => d.available.some((a) => !/^(Healthstone|a healing potion)$/.test(a))).length;
     const defUse = p.defs.length ? p.defs.reduce((s, d) => s + Math.min(d.uses.length, d.possible), 0) / p.defs.reduce((s, d) => s + d.possible, 0) : 1;
-    p.survVerdict = withAvail ? 'Poor' : (died.length || defUse < 0.34) ? 'Okay' : 'Good';
+    p.survVerdict = withAvail ? 'Poor' : died.length ? 'Okay' : 'Good'; /* (not by uses of possible any more (Oct 22)) */
     p.defUse = defUse;
   }
   r.defUse = possible ? used / possible : 0;
@@ -12584,6 +12611,7 @@ function survivability(r) {
   // kitAvail: a Healthstone (when a Warlock is in the raid) or a health potion was still unused when it started.
   for (const p of r.players.values()) {
     const l = (r.php && r.php.get(p.guid)) || [], dts = r.deaths.filter((d) => d.guid === p.guid).map((d) => d.t), calls = [];
+    const own = p.role === 'healer' ? (r.lowHL || []).filter((e) => e[1] === p.guid && e[2] === p.guid) : [], mx = (r.pMax && r.pMax.get(p.guid)) || 0;
     // (a dip counts when it stays under 30% for at least a second or goes under 15%: a blip healers catch instantly
     // can't be reacted to; dips starting within 5 s of the last one are the same close call)
     let cur = null;
@@ -12598,8 +12626,14 @@ function survivability(r) {
       const stone = p.cons.healthstone.some((u) => u.t >= t0 - 2 && u.t <= t0 + 5), pot = p.cons.healpot.some((u) => u.t >= t0 - 2 && u.t <= t0 + 5);
       const under = lowTime(l, c.t, c.last + 0.5, 0.3), judged = under >= 5 || (c.low < 0.15 && lowTime(l, c.t, c.tl, 0.35) >= 2);
       const kitAvail = (stonesExist && !p.cons.healthstone.some((u) => u.t < c.t - 2)) || !p.cons.healpot.some((u) => u.t < c.t - 2);
-      return { t: c.t, tl: t0, low: c.low, def: defUsed, stone, pot, under, judged, kitAvail };
+      // (a healer who healed themself back up answered it too (defensives research, Oct 22: top healers answer 60% of their lows with
+      // a button and heal through the rest): their own heals on themselves while low came to 20%+ of their health)
+      const self = own.length > 0 && mx > 0 && own.reduce((a, e) => a + (e[0] >= c.t - 1 && e[0] <= c.last + 2 ? e[3] : 0), 0) >= 0.2 * mx;
+      return { t: c.t, tl: t0, low: c.low, def: defUsed, stone, pot, self, under, judged, kitAvail };
     });
+    // (the Survivability verdict: never by how many defensives they pressed (top players press about half they could); a long low
+    // with nothing pressed makes it Okay)
+    if (p.survVerdict === 'Good' && p.closeCalls.some((c) => c.judged && !c.def && !c.stone && !c.pot && !c.self)) p.survVerdict = 'Okay';
   }
 }
 
@@ -12641,6 +12675,31 @@ function triageSaves(r) {
 // Why each player died and what would have prevented it, in plain words (shown with each death in the Fight audit).
 // Built from the last 15 seconds before the death (10 until Oct 22: a slow slide often starts earlier): what hit them and how fast, how much healing came in, any
 // mechanic mistakes they made just before, the boss's avoidable spells, and what they still had ready.
+// Healing gaps before a death (your question, Oct 22: "is it the healers fault? Did this person genuinely not get any direct/enough direct
+// healing for a long period?"). In their last 15 s: starved = seconds under 50% health while healing from others (heals and absorbs) over
+// the 3 s before came to under 10% of their health; run = the longest of those stretches; heal = healing from others as % of their health;
+// alive / healers = other healers alive / in the raid; dist = yards to the nearest alive healer (positions); busy = seconds that were the
+// pull's top-20% raid damage seconds (raid-wide damage: healers have to pick). Top guilds' survivors almost never sit 5 s+ starved
+// (99th percentile 5.5 s); on our Oct 21 night 1 of 81 deaths did (notes/Guides/Deaths - how to judge them.md).
+function deathHealGaps(r) {
+  const heals = new Map(); for (const e of r.lowHL || []) { let l = heals.get(e[1]); if (!l) heals.set(e[1], l = []); l.push(e); }
+  const healers = [...r.players.values()].filter((p) => p.role === 'healer' && p.name), deadAt = new Map();
+  for (const d of r.deaths.slice().sort((a, b) => a.t - b.t)) if (!deadAt.has(d.guid)) deadAt.set(d.guid, d.t);
+  const ts = r.takenS || [], srt = ts.filter((v) => v > 0).sort((a, b) => a - b), p80 = srt[Math.floor(srt.length * 0.8)] || 0;
+  const posAt = (g, t) => { const u = r.positions && r.positions.get(g); if (!u) return null; let b = null; for (const q of u.pts) { if (q[0] > t + 2) break; b = q; } return b; };
+  for (const d of r.deaths) {
+    const mx = (r.pMax && r.pMax.get(d.guid)) || 0, l = (r.php && r.php.get(d.guid)) || []; if (!mx || !l.length) continue;
+    const hl = (heals.get(d.guid) || []).filter((e) => e[2] !== d.guid && e[0] > d.t - 18 && e[0] <= d.t);
+    const hpAt = (t) => { let v = 1; for (const [x, fr] of l) { if (x > t) break; v = fr; } return v; };
+    const inn = (a, b) => hl.reduce((n, e) => n + (e[0] > a && e[0] <= b ? e[3] : 0), 0);
+    let starved = 0, run = 0, best = 0;
+    for (let t = d.t - 15; t < d.t; t += 0.5) { if (hpAt(t) < 0.5 && inn(t - 3, t) < 0.1 * mx) { starved += 0.5; run += 0.5; best = Math.max(best, run); } else run = 0; }
+    const others = healers.filter((h) => h.guid !== d.guid), alive = others.filter((h) => !(deadAt.get(h.guid) < d.t - 0.5)), me = posAt(d.guid, d.t);
+    const ds = me ? alive.map((h) => { const q = posAt(h.guid, d.t); return q ? Math.hypot(q[1] - me[1], q[2] - me[2]) : null; }).filter((x) => x != null) : [];
+    let busy = 0; if (p80 > 0) for (let k = Math.max(0, Math.floor(d.t - 15)); k <= Math.floor(d.t); k++) if ((ts[k] || 0) >= p80) busy++;
+    d.gap = { starved, run: best, heal: Math.round(100 * inn(d.t - 15, d.t) / mx), alive: alive.length, healers: others.length, dist: ds.length ? Math.round(Math.min(...ds)) : null, busy };
+  }
+}
 function explainDeaths(r) {
   const pack = PACKS.find((p) => p.encounter === r.item.boss), rules = pack ? pack.rules : [];
   // (and every source in the boss's Avoidable damage panel, so a death to Noxious Ground or a Deluge circle reads as dodgeable too;
@@ -15168,6 +15227,8 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-22', h: [
+    { t: 'Every death, step by step', d: 'Tap a death in the coach box to see the seconds before it as bars: each hit and each round of healing, with their health after it in green, amber or red. One line at the bottom says what killed them and how much health they had left.' },
+    { t: 'Healthstones, potions and defensives', d: 'Two new panels in the coach box show who used a Healthstone or health potion and who pressed a defensive, one bar per raider. Tap a name for each use, and about how much damage each defensive took off.' },
     { t: 'Who to talk to, at a glance', d: 'The coach box shows deaths and avoidable damage as bars like the Graphs tab: the biggest at the top, red when it was on the player. Tap a bar to see who, which pulls, and the fix, right under it.' },
     { t: 'Deaths and avoidable damage as bars', d: 'The coach box shows deaths and avoidable damage as bars like the Graphs tab: the biggest at the top, red when it was on the player. Tap a bar to see who, which pulls, and the fix, right under it.' },
     { t: 'What went wrong opens up', d: 'Each card under What went wrong in the coach box now folds. Click it for a bigger map, who got it wrong, every pull as a button that opens it, how the mechanic works, how top guilds do, and the avoidable damage that comes with it.' },
@@ -15191,6 +15252,8 @@ const PATCH_NOTES = [
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
     { t: 'Since last raid', d: 'All pulls now remembers each night and compares it with your last raid on the same boss: what you fixed, what got better or worse, and what\'s still going wrong. Pick a player to see their mistakes that also happened last raid.' },
   ], n: [
+    'Fairer survival grades: how many defensives someone pressed is never graded, a healer who heals themself back up counts as reacting, and tanks get full marks at 65% of their big cooldowns.',
+    'A death can now be partly the healers\' when someone sat under half health for 5 seconds or more with little healing coming in, and healers had a fair chance to help.',
     'In the coach box, open a player under Deaths or Avoidable damage to see a small bar graph: one bar for each death or mechanic, showing how much damage it was. Tap a death to see what happened.',
     'Spell icons now show on every page, not just Debriefing: Rotation, Plan, the boss guides and tooltips. Add rows like Spiteful Soulcoiler get the add\'s own icon, and a spell never shows two icons side by side.',
     'Every spell named on Debriefing now shows its icon, in sentences, titles, chips and tooltips, including raid cooldowns like Anti-Magic Zone in a pull where nobody pressed them.',
@@ -21977,12 +22040,13 @@ const deathMech = (r, name) => { const lc = (s) => String(s || '').toLowerCase()
 const deathKit = (a) => (a === 'a healing potion' ? 'a health potion' : a === 'Healthstone' ? 'a Healthstone' : a);
 // (the verdict as a pill and one plain sentence: k is bad (on them), warn (half) or na (not on them))
 function deathTag(r, d) { const rr = deathRep(r, d); if (!rr) return null; const v = deathVerdict(rr, d);
-  const k = { own: 'bad', ready: 'bad', shared: 'warn', nothing: 'warn' }[v.why] || 'na';
+  const k = v.why === 'heal' ? (v.on ? 'warn' : 'na') : { own: 'bad', ready: 'bad', shared: 'warn', nothing: 'warn' }[v.why] || 'na';
   const p = k === 'bad' ? 'On them' : k === 'warn' ? 'Half on them' : v.why === 'wipe' || v.why === 'end' ? 'Doesn\'t count' : 'Not on them';
   const ready = (v.defs.length ? v.defs : v.kit).slice(0, 2).map(deathKit), raidL = (d.links || []).find((l) => l.raid), ab = d.ability || d.killer || 'a hit';
   const h = v.why === 'own' ? capS(deathWhat(d, v)) + '.'
     : v.why === 'ready' ? 'Had ' + andList(ready) + ' ready and didn\'t press ' + (ready.length > 1 ? 'them' : 'it') + '.'
     : v.why === 'shared' ? (/mind controlled/.test(v.word) ? 'Mind controlled off the edge.' : (raidL ? 'Partly the raid\'s fault (' + deathMech(rr, raidL.mechanic) + ')' : 'Partly the raid\'s fault') + ', but they had ' + andList(ready) + ' ready.')
+    : v.why === 'heal' ? 'Nobody healed them enough for ' + Math.round(v.gap.starved) + ' seconds while they were under half health' + (ready.length ? ', and they had ' + andList(ready) + ' ready.' : '.')
     : v.why === 'nothing' ? 'Nothing left to press.'
     : v.why === 'fast' ? 'Too fast to react: ' + String(v.story || '').replace(/, too fast to react$/, '') + '.'
     : v.why === 'mass' ? d.mass + ' of us died to ' + ab + ' at once' + deathCause(rr, d) + '.'
@@ -22105,6 +22169,41 @@ document.addEventListener('keydown', (ev) => { if ((ev.key === 'Enter' || ev.key
 // there should be a spell icon"): hits and buttons here, boss spells in the sentences by iconSpells where the card is opened)
 const DEATH_DEF_ID = (() => { const m = new Map(); for (const l of Object.values(E.DEFENSIVES || {})) for (const x of l) if (!m.has(x[0])) m.set(x[0], x[1]); m.set('Healthstone', 6262); return m; })();
 const deathSp = (id, n) => { const sid = id || DEATH_DEF_ID.get(n) || sidOf(n) || 0; return '<span class="sp" data-sid="' + sid + '" data-sn="' + esc(n) + '">' + (sid ? spellIcon(sid, n) : '') + esc(n) + '</span>'; };
+// (a death as a simple progression (Oct 22, the user: "a bar progression of events leading to their death and a result of what caused it
+// ultimately", "the bar should represent their health bar", "make it MUCH more simple with the graph progression"): their last 10 s,
+// hits of one spell within 2 s as one row and all healing (absorbs too) between two hits as one row; tiny hits under 1% of their health
+// left out; the last 7 rows. Each bar is their health after the event, the chunk just lost shaded red; then one plain result box)
+function deathTimeline(d, rr) {
+  const kf = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? Math.round(n / 1e3) + 'k' : String(Math.round(n)));
+  const hl = (rr && rr.php && rr.php.get(d.guid)) || [], hpAt = (t) => { let v = null; for (const [x, fr] of hl) { if (x > t + 0.01) break; v = fr; } return v; };
+  const mxh = (rr && rr.pMax && rr.pMax.get(d.guid)) || 0;
+  let ws = d.t - 15; for (const [x, fr] of hl) { if (x >= d.t) break; if (x >= d.t - 15 && fr >= 0.9) ws = x; } ws = Math.min(ws, d.t - 5); /* (from the last moment they were healthy (90%+), 5 to 15 s back (Oct 22, the user: "1.1s isnt very long neither is 3.3 seconds")) */
+  const ev = (d.recap || []).filter((e) => e.t >= ws - 0.01 && e.t <= d.t + 0.05 && e.amount > 0 && (e.heal || !mxh || e.amount >= 0.01 * mxh)), L = [];
+  // (their health event by event: a hit sets it to what the log says it left them at, healing adds to it, so the steps always add up)
+  // (every event counts here, small ones too; a shield's soak (absorb) doesn't add health)
+  let hp = hpAt(ws); if (hp == null) hp = 1; const HA = new Map(), HB = new Map();
+  for (const e of (d.recap || []).filter((e) => e.t >= ws - 0.01 && e.t <= d.t + 0.05)) { HB.set(e, hp);
+    hp = e.heal ? (mxh && !/\(absorb\)$/.test(e.spell || '') ? Math.min(1, hp + e.amount / mxh) : hp) : e.hp >= 0 ? e.hp / 100 : mxh ? Math.max(0, hp - e.amount / mxh) : hp; HA.set(e, hp); }
+  for (const e of ev) { const heal = !!e.heal, k = heal ? '+' : '-' + (e.spell || 'Melee'), l = L[L.length - 1], hb = HB.get(e); hp = HA.get(e);
+    if (l && l.k === k && (heal || e.t - l.t1 <= 2)) { l.a += e.amount; l.n++; l.t1 = e.t; l.ha = hp; l.lb = hb; } else L.push({ k, heal, sp: heal ? 'Healing' : e.spell || 'Melee', id: heal ? 0 : e.id || 0, a: e.amount, n: 1, t0: e.t, t1: e.t, hb, ha: hp, lb: hb }); }
+  const all = L.filter((x) => !x.heal || x.a >= Math.max(1000, 0.02 * mxh)), kr = all.filter((x) => !x.heal).pop();
+  // (up to 8 rows: the killing hit and the 7 biggest moments, kept in time order, so the whole slide fits)
+  const keep = new Set([kr].concat(all.filter((x) => x !== kr).sort((a, b) => b.a - a.a).slice(0, kr ? 7 : 8)));
+  const rows = all.filter((x) => keep.has(x)); if (!rows.length) return '';
+  const lastHit = rows.filter((x) => !x.heal).pop(), secS = (v) => (v < 10 ? (Math.round(10 * v) / 10).toFixed(1) : String(Math.round(v)));
+  const html = rows.map((x) => { const after = x.ha, before = x.hb, dead = x === lastHit && d.t - x.t1 < 0.3, h = after == null ? 0 : after;
+    const lost = !x.heal && before != null && after != null ? Math.max(0, before - after) : 0, ago = d.t - x.t1;
+    const nm = '<span class="ddv-ts">' + (ago < 0.05 ? '0 s' : '−' + secS(ago) + ' s') + '</span> ' + (x.heal ? (x.n > 1 ? x.n + ' heals' : 'Heal') : '<span class="sp" data-ic="1" data-sid="' + (x.id || sidOf(x.sp) || 0) + '" data-sn="' + esc(x.sp) + '">' + esc(x.sp) + '</span>' + (x.n > 1 ? ' ×' + x.n : '')) /* (no icons here, the tooltip on hover (Oct 22, the user)) */ + ' <b class="ddv-am ' + (x.heal ? 'up' : 'dn') + '">' + (x.heal ? '+' : '−') + kf(x.a) + '</b>';
+    return cbRow({ tag: 'div', k: '', icon: '', name: nm, segs: dead ? [[100 * Math.max(0, before || 0), 'ddv-lost']] : [[Math.max(1, 100 * h), 'm'], [100 * lost, 'ddv-lost']],
+      pcol: dead || h < 0.35 ? '#e5534b' : h < 0.6 ? '#e8a23a' : '#46a758', v: dead ? 'dead' : Math.max(1, Math.round(100 * h)) + '%', sub: '', cls: ' cbl-mrow ddv-tlr ' + (x.heal ? 'ddv-up' : dead ? 'ddv-kill' : 'ddv-dn') }); }).join('');
+  // (the result, plainly: what killed them and how much health they had left; a one-shot from over half, a slide from already low, a healing gap)
+  const kill = (d.recap || []).filter((e) => !e.heal && e.amount > 0 && e.t <= d.t + 0.05).pop(), before = kill ? (lastHit && lastHit.t1 >= kill.t - 0.01 ? lastHit.lb : hpAt(kill.t - 0.01)) : null, g = d.gap;
+  const res = !kill ? '' : 'Killed by <span class="sp" data-ic="1" data-sid="' + (kill.id || sidOf(kill.spell || '') || 0) + '" data-sn="' + esc(kill.spell || 'Melee') + '"><b>' + esc(kill.spell || 'Melee') + '</b></span>: one ' + kf(kill.amount) + ' hit' + (before != null && mxh ? (before < 0.03 ? ' when they were almost dead (' + Math.max(1, Math.round(100 * before)) + '% health)' : ' while they had ' + kf(before * mxh) + ' health left (' + Math.round(100 * before) + '%)') : '') + '.' +
+    (before != null && before >= 0.5 ? ' Too big to survive without a defensive.' : before != null && before < 0.2 ? ' The hits before it did the real damage.' : '') +
+    (g && g.starved >= 5 ? ' Little healing came in for ' + Math.round(g.starved) + ' s while they were under half health.' : '');
+  const span = d.t - rows[0].t0;
+  return '<div class="ddv-tl"><p class="ddv-tlh"><b>' + esc(String(d.player).split('-')[0]) + '</b> died at ' + T(d.t) + ' · over ' + secS(Math.max(0.1, span)) + ' s</p><div class="cbl-mini">' + html + '</div>' + (res ? '<div class="ddv-resbox">' + res + '</div>' : '') + '</div>';
+}
 function deathBox(tg, d) { if (!tg) return ''; const v = tg.v, c = (p) => (p < 35 ? 'ddh-lo' : p < 60 ? 'ddh-md' : 'ddh-hi');
   const kf = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k'), rc = d.recap || [];
   const dmg = rc.filter((e) => !e.heal).reduce((n, e) => n + e.amount, 0), heal = rc.filter((e) => e.heal).reduce((n, e) => n + e.amount, 0);
@@ -22117,10 +22216,23 @@ function deathBox(tg, d) { if (!tg) return ''; const v = tg.v, c = (p) => (p < 3
   const readyH = ready.map((a) => (a === 'a healing potion' ? 'a health potion' : deathSp(0, a)));
   // (the sentence's own buttons get their icons too: "they had Unending Resolve ready")
   let head = esc(tg.h); for (const a of v.defs.concat(v.kit)) { if (a === 'a healing potion') continue; const e0 = esc(a); if (head.includes(e0)) head = head.split(e0).join(deathSp(0, a)); }
-  const path = (d.hpPath || []).length ? '<p class="ddv-3">Their health: ' + d.hpPath.map(([, q]) => '<b class="' + c(q) + '">' + q + '%</b>').join(' → ') + ' → <b class="ddh-lo">dead</b></p>' : '';
-  return '<div class="ddv ' + tg.k + '"><p class="ddv-1"><span class="ddp ' + tg.k + '">' + esc(tg.p) + '</span> ' + head + '</p>' + path +
-    (hits ? '<p class="ddv-3">What hit them: ' + hits + (dmg ? ' · ' + kf(dmg) + ' in all' + (mxh && dmg / mxh >= 1.2 ? ' (about ' + (Math.round(2 * dmg / mxh) / 2) + ' times their health)' : '') + ', with ' + kf(heal) + ' healing coming in' : '') + '.</p>' : '') +
-    (v.on && ready.length ? '<p class="ddv-3">They had ' + andList(readyH) + ' ready and didn\'t use ' + (ready.length > 1 ? 'them' : 'it') + '.</p>' : '') +
+  // (their health with its seconds (Oct 22: "knowing how many seconds this happened over is important"): from the last moment they were
+  // healthy (90%+, at most 15 s before), each big drop (15+ points, or under half) with the seconds since then, so a spike and a drain read apart)
+  // (the clock starts at the first hit after their last healthy moment (health only changes on hits and heals); then the first time under
+  // 75%, 50% and 25%, each with the seconds since that hit when it's half a second or more)
+  const hl = ((rr && rr.php && rr.php.get(d.guid)) || []).filter(([t]) => t >= d.t - 15 && t < d.t - 0.05), pts = [];
+  let h0 = -1; for (let i = 0; i < hl.length; i++) if (hl[i][1] >= 0.9) h0 = i;
+  const tS = h0 >= 0 ? (hl[h0 + 1] ? hl[h0 + 1][0] : d.t) : (hl[0] ? hl[0][0] : d.t), start = h0 >= 0 ? hl[h0] : hl[0];
+  if (start) { pts.push([tS - 0.001, Math.round(100 * start[1]), 1]); for (const th of [0.75, 0.5, 0.25]) { const x = hl.find(([t, fr]) => t >= tS - 0.01 && fr < th); if (x && x !== start && x[1] > 0.005 && Math.round(100 * start[1]) - Math.round(100 * x[1]) >= 5 && !pts.some((p) => p[0] === x[0])) pts.push([x[0], Math.round(100 * x[1])]); } }
+  pts.sort((a, b) => a[0] - b[0] || b[1] - a[1]);
+  const secS = (v) => (v < 1 ? Math.round(10 * v) / 10 : Math.round(v)), wS = secS(Math.max(0.1, d.t - tS));
+  // (a health bar per step (Oct 22: "like a health bar progression"): filled to their health, green / amber / red, empty at death)
+  const hbi = (q, lab, sx) => '<span class="ddv-hbi"><span class="ddv-hbb"><i class="' + c(q) + '" style="width:' + Math.max(0, Math.min(100, q)) + '%"></i></span><b class="' + c(q) + '">' + lab + '</b><em>' + sx + '</em></span>';
+  const path = pts.length ? '<div class="ddv-hb"><span class="ddv-hbl">Their health over ' + wS + ' s</span><div class="ddv-hbr">' + pts.map(([t, q, s0]) => hbi(q, q + '%', !s0 && t - tS >= 0.5 ? secS(t - tS) + ' s' : s0 ? 'start' : '')).join('<span class="ddv-hba" aria-hidden="true">›</span>') + '<span class="ddv-hba" aria-hidden="true">›</span>' + hbi(0, 'dead', wS + ' s') + '</div></div>'
+    : (d.hpPath || []).length ? '<p class="ddv-3">Their health: ' + d.hpPath.map(([, q]) => '<b class="' + c(q) + '">' + q + '%</b>').join(' → ') + ' → <b class="ddh-lo">dead</b></p>' : '';
+  void path; return '<div class="ddv ' + tg.k + '"><p class="ddv-1"><span class="ddp ' + tg.k + '">' + esc(tg.p) + '</span> ' + head + '</p>' + (deathTimeline(d, rr) || path) /* (events as a progression (Oct 22); the health bars if there are none) */ +
+    (false && top.length ? '<div class="ddv-hit"><span class="ddv-hbl">What hit them</span>' + cblMini(top.map((o) => ({ label: (o.k === 'Melee' ? 'Melee' : o.k) + (o.n > 1 ? ' ×' + o.n : ''), icon: o.k === 'Melee' ? '' : spellIcon(o.id || DEATH_DEF_ID.get(o.k) || sidOf(o.k) || 0, o.k), st: last && (last.spell || 'Melee') === o.k ? 'bad' : '', amt: o.a, vt: kf(o.a) })), '') + '</div>' : '') /* (a small bar graph, the killing blow in red (Oct 22)) */ +
+    (v.on && ready.length && !ready.some((a) => tg.h.includes(nm(a).replace(/^a /, ''))) /* (not when the headline already says it) */ ? '<p class="ddv-3">They had ' + andList(readyH) + ' ready and didn\'t use ' + (ready.length > 1 ? 'them' : 'it') + '.</p>' : '') +
     (tg.fix ? '<p class="ddv-2"><b>Next time:</b> ' + esc(tg.fix) + '</p>' : '') + '</div>'; }
 // (the death's fixes, the verdict's own line first, then the engine's other advice that agrees with it (deaths research, Oct 22))
 function deathFixes(r, d) { if (!(r.deaths || []).includes(d)) return (d.prevent || []).slice(0, 3); const v = deathVerdict(r, d), rest = /^(fast|mass|end|raid|wipe)$/.test(v.why) ? [] : (d.prevent || []).filter((x) => !/^No (clear )?mistake|^Too fast|^Not on you/i.test(x) && !(v.why === 'own' && /^(Use|Press) /.test(x)));
@@ -23661,6 +23773,75 @@ function coachDeaths(reps, name) {
   const note = !kept.length ? '' : (onThem ? onThem + ' of ' + plural(kept.length, 'death') + (name ? ' on you' : ' on the player') + ' (red: their own mistake or a slow death with something ready' + (kept.some((x) => x.v.on && x.v.w < 1) ? '; amber: half on them' : '') + ').' : (name ? 'None of these are on you.' : 'None of these are on the players.')) + (nAfter ? ' ' + nAfter + ' more after the wipe filter, not counted.' : '');
   return { line, list, n: kept.length, onThem, bad: onThem > 0, items, more, note, rest, nsum: nItems.map((x) => ({ key: x.dn, html: x.html })) };
 }
+// Healthstones, potions and defensives in the coach box (your asks, Oct 22: "add healthstone/healthpot usage here, and defensive usage";
+// "healthstones/healthpots: I just want to make sure people are using them. Defensives: same thing, ... maybe including how much damage
+// they mitigated on each use/in total"). Each panel answers "are people using them?": one bar per raider with how many (one pull) or in
+// how many pulls (All pulls); who never used one stands out (amber). The fair rules stay behind it (notes/Guides/Defensives and
+// healthstones - how to judge them.md): red only for a long low (5 s+ under 30%, or low then hit again; a tank under 15%) left
+// unanswered, twice or more (once is amber). Answered: a defensive, a Healthstone or potion, or a healer's own heals.
+const KIT_TOP_LOWS = 0.2; // (top guilds: drops under 30% per player per 5 minutes, the first 3 minutes of the 20 fastest kills (Oct 22))
+const KIT_RAIDCD = /^(Rallying Cry|Darkness|Anti-Magic Zone|Lay on Hands)$/;
+function coachKit(reps, name) {
+  const night = reps.length > 1, mine = name ? oaMine(reps, name) : null, P = new Map(); let calls = 0, mins = 0;
+  for (const r of reps) { const ct = cutT(r);
+    for (const p of r.players.values()) { if (!p.name || !p.role || !(p.cls || p.specName)) continue; if (mine && !mine.some((x) => x.r === r && x.p === p)) continue;
+      const dd = r.deaths.filter((d) => d.guid === p.guid), end = Math.min(r.duration, ct, dd.length ? Math.min(...dd.map((d) => d.t)) : Infinity); if (!(end >= 10)) continue;
+      mins += end / 60; const tank = p.role === 'tank', l = (r.php && r.php.get(p.guid)) || [], hpAt = (t) => { let v = null; for (const [x, fr] of l) { if (x > t) break; v = fr; } return v; };
+      const q = P.get(p.name) || { p, uses: [], lows: [], presses: [], pulls: 0, usePulls: 0, defPulls: 0, hasDef: false }; P.set(p.name, q); q.pulls++;
+      const u0 = q.uses.length; for (const [k, list] of [['Healthstone', p.cons.healthstone], ['Health potion', p.cons.healpot]]) for (const u of list || []) if (u.t <= end + 0.05) q.uses.push({ r, t: u.t, k, nm: u.name || k, id: u.id || 0, hp: hpAt(u.t - 0.1) });
+      if (q.uses.length > u0) q.usePulls++;
+      // (their own damage-reducing buttons: not self-heals, not raid cooldowns; with what each took off (engine r.defMit))
+      const own = (p.defs || []).filter((d) => d.kind !== 'heal' && !KIT_RAIDCD.test(d.name)).concat((p.minor || []).filter((d) => d.kind === 'dr')), d0 = q.presses.length;
+      if (((p.cls && E.DEFENSIVES[p.cls]) || []).some(([n, , , specs, base, kind]) => base && kind !== 'heal' && !KIT_RAIDCD.test(n) && (!specs || specs.includes(p.specId)))) q.hasDef = true;
+      for (const d of own) for (const u of d.uses || []) { if (u > end + 0.05) continue; const m = (r.defMit || []).find((x) => x.g === p.guid && x.name.toLowerCase() === d.name.toLowerCase() && Math.abs(x.t - u) < 2);
+        q.presses.push({ r, t: u, name: d.name, id: d.id || 0, prev: m ? m.prev : 0, imm: !!(m && m.imm), known: !!m }); }
+      if (q.presses.length > d0) q.defPulls++;
+      const defs = (p.defs || []).concat(p.minor || []);
+      for (const c of p.closeCalls || []) { if (c.t > end + 0.05) continue; calls++; if (c.judged === false || (tank && c.low >= 0.15)) continue;
+        const ans = !!(c.def || c.stone || c.pot || c.self), hit = (p.big || []).filter((h) => h.t >= c.t - 3 && h.t <= c.tl + 0.5).sort((a, b) => b.amt - a.amt)[0] || null;
+        const used = defs.map((d) => ({ d, u: d.uses.find((u) => u >= c.tl - 8 && u <= c.tl + 3) })).filter((x) => x.u != null);
+        // (had ready: a defensive they pressed at least once that pull, off cooldown at the low)
+        const ready = ans ? [] : (p.defs || []).filter((d) => d.kind !== 'heal' && d.uses.length && !d.uses.some((u) => u <= c.tl && u > c.tl - (d.cd || 0)));
+        q.lows.push({ r, c, ans, hit, used, kit: !ans && c.kitAvail !== false, ready }); } } }
+  const rows = [...P.values()];
+  return { night, n: reps.length, name: name || null, rows, rate: mins >= 10 ? 5 * calls / mins : null, mins };
+}
+function coachKitHtml(K) {
+  const night = K.night, you = !!K.name, pc = (v) => (v == null ? '' : Math.max(1, Math.round(100 * v)) + '%');
+  const kf = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k'), flag = (n) => (n >= 2 ? 'bad' : n === 1 ? 'warn' : '');
+  const pre = (x, t) => (night ? 'P' + x.r.item.pull + ' · ' : '') + T(t) + ' · ', nm = (p) => String(p.name).split('-')[0];
+  const cnt = (n, pulls, all) => (n ? (night ? n + ' of ' + all + ' pulls' : '×' + n) : 'none');
+  // Healthstones and potions: everyone; the bar is how many they used (one pull) or in how many pulls (All pulls). Never used one: amber,
+  // listed first; red when they sat low for long with one unused twice or more
+  const hs = K.rows.map((q) => { const miss = q.lows.filter((x) => x.kit), n = night ? q.usePulls : q.uses.length, st = miss.length ? flag(miss.length) : !q.uses.length ? 'warn' : '';
+    const M = miss.map((m) => ({ label: pre(m, m.c.tl) + 'sat low, none used', icon: m.hit ? spellIcon(m.hit.id, m.hit.spell) : '', st: 'bad', amt: Math.max(1, 100 - Math.round(100 * m.c.low)), vt: 'at ' + pc(m.c.low) }))
+      .concat(q.uses.map((u) => ({ label: pre(u, u.t) + u.nm, icon: spellIcon(u.id, u.nm), st: '', amt: u.hp != null ? Math.max(1, 100 - Math.round(100 * u.hp)) : 1, vt: u.hp != null ? 'at ' + pc(u.hp) : '—' })));
+    return { key: 'hs-' + q.p.name, label: nm(q.p), p: q.p, st, n, rank: st === 'bad' ? 0 : !q.uses.length ? 1 : 2, v: cnt(n, q.pulls, K.n), sub: miss.length ? plural(miss.length, 'low') : night && q.uses.length ? q.uses.length + ' in all' : '',
+      body: M.length ? cblMini(M, miss.length ? 'Use your Healthstone or health potion when you sit under 30%.' : '') : '<p class="ckt-none">' + (you ? 'You' : nm(q.p)) + ' didn\'t use a Healthstone or health potion' + (night ? ' all night' : ' this pull') + '. Fine if ' + (you ? 'you' : 'they') + ' never got low.</p>' }; })
+    .sort((a, b) => a.rank - b.rank || b.n - a.n || a.label.localeCompare(b.label));
+  const hsUsers = K.rows.filter((q) => q.uses.length).length, hsN = K.rows.reduce((a, q) => a + q.uses.length, 0), hsBad = hs.filter((x) => x.st === 'bad').length;
+  // Defensives: everyone whose spec has one (and anyone who pressed one); the bar is how many presses (one pull) or in how many pulls (All
+  // pulls), with the damage they took off in all; a drop-down bar per press with its share
+  const df = K.rows.filter((q) => q.hasDef || q.presses.length).map((q) => { const no = q.lows.filter((x) => !x.ans), n = night ? q.defPulls : q.presses.length, tot = q.presses.reduce((a, x) => a + x.prev, 0);
+    const st = no.length ? flag(no.length) : !q.presses.length ? 'warn' : '';
+    const M = q.presses.map((x) => ({ label: pre(x, x.t) + x.name, icon: spellIcon(x.id, x.name), st: '', amt: Math.max(1, x.prev), vt: x.prev >= 1000 ? 'about ' + kf(x.prev) : x.imm ? 'immune' : '—' }))
+      .concat(no.map((m) => ({ label: pre(m, m.c.tl) + 'sat low, nothing pressed', icon: m.hit ? spellIcon(m.hit.id, m.hit.spell) : '', st: 'bad', amt: 1, vt: 'at ' + pc(m.c.low) })));
+    const rd = no.flatMap((m) => m.ready)[0], fx = no.length ? (rd ? 'Press ' + rd.name + ' when you sit low' : 'Save a defensive for these moments') + (q.p.role === 'healer' ? ', or heal yourself first.' : '.') : '';
+    const head = q.presses.length ? '<p class="ckt-tot">' + q.presses.length + (q.presses.length === 1 ? ' press' : ' presses') + (tot >= 1000 ? ', about ' + kf(tot) + ' damage taken off in all' : '') + '.</p>' : '';
+    return { key: 'df-' + q.p.name, label: nm(q.p), p: q.p, st, n, tot, rank: st === 'bad' ? 0 : !q.presses.length ? 1 : 2, v: cnt(n, q.pulls, K.n), sub: tot >= 1000 ? kf(tot) + ' off' : '',
+      body: head + (M.length ? cblMini(M, fx) : '<p class="ckt-none">' + (you ? 'You' : nm(q.p)) + ' didn\'t press a defensive' + (night ? ' all night' : ' this pull') + '.</p>') }; })
+    .sort((a, b) => a.rank - b.rank || b.n - a.n || b.tot - a.tot);
+  const dfUsers = K.rows.filter((q) => (q.hasDef || q.presses.length) && q.presses.length).length, dfTot = df.reduce((a, x) => a + x.tot, 0);
+  const hsSum = you ? (hsN ? 'You used ' + plural(hsN, 'time') + (night ? ' in ' + plural(hs[0] ? hs[0].n : 0, 'pull') : '') : 'You didn\'t use one') : hsUsers + ' of ' + hs.length + ' used one' + (night ? ' at least once' : '') + ' · ' + hsN + ' in all' + (hsBad ? ' · ' + hsBad + ' sat low with one unused' : '');
+  const dfSum = you ? (df[0] && df[0].tot >= 1000 ? 'About ' + kf(df[0].tot) + ' damage taken off' : df[0] && df[0].n ? 'You pressed them' : 'You didn\'t press one') : dfUsers + ' of ' + df.length + ' pressed one' + (dfTot >= 1000 ? ' · about ' + kf(dfTot) + ' taken off' : '');
+  const rate = K.rate != null && K.rate >= 1.5 * KIT_TOP_LOWS ? '<p class="ckt-note"><b>' + (you ? 'You drop' : 'We drop') + ' under 30% about ' + K.rate.toFixed(1) + ' times per 5 minutes' + (you ? '' : ' each') + '; top guilds 0.2.</b> ' + (you ? 'Most of that is healing and damage taken as a raid.' : 'That\'s healing and damage taken as a raid, not one person.') + '</p>' : '';
+  const open = (k) => (S.openSecs && S.openSecs.has(k) ? ' open' : '');
+  const panel = (k, title, sum, warn, body, note) => '<details class="cch-ab cch-abx' + (warn ? ' warn' : '') + '" data-k="' + k + '"' + open(k) + '><summary class="cch-al"><span class="icw-no ckt-t">' + title + '</span><span class="cch-abs">' + esc(sum) + '</span></summary>' + body + note + '</details>';
+  return '<div class="cch-acct2 cch-acct3">' +
+    panel('cch-ab-hs', 'Healthstones and potions', hsSum, hsBad > 0, coachBars(hs, (x) => Math.max(x.n, x.st ? 0.5 : 0), (x) => x.body), '<p class="ckt-note">Amber: never used one (fine if they never got low). Red: sat low for long with one unused, twice or more. Tap a name to see when and how low.</p>') +
+    panel('cch-ab-df', 'Defensives', dfSum, df.some((x) => x.st === 'bad'), coachBars(df, (x) => Math.max(x.n, x.st ? 0.5 : 0), (x) => x.body), rate + '<p class="ckt-note">Damage taken off is about: worked out from what still got through while each was up (shields are exact). Amber: never pressed one. Red: sat low for long with nothing pressed, twice or more.</p>') +
+    '</div>';
+}
 function coachAvoid(reps, name) {
   const night = reps.length > 1, base = name ? oaBase(name) : '', S3 = new Map(); let any = false;
   for (const r of reps) { const x = pullSections(r).get('avoid'); if (!x) continue; any = true;
@@ -23768,13 +23949,13 @@ function coachSummary(reps, name) {
     let deaths = ''; if (name) { const L = []; for (const { r, p } of oaMine(reps, name)) for (const d of r.deaths.filter((q) => q.guid === p.guid).sort((a, b) => a.t - b.t)) { const v = deathVerdict(r, d), after = !v.counts; void dbfFast;
         L.push('<li>' + (night ? 'Pull ' + r.item.pull + ', ' : '') + T(d.t) + ': ' + esc(d.ability || d.killer || 'a hit') + ' · <span class="sub">' + (after ? 'after the wipe filter, doesn\'t count' : !v.on ? 'not on you: ' + v.word : v.why === 'nothing' ? 'counts half: nothing left to press' : 'counts: ' + v.word) + '</span></li>'); }
       deaths = L.length ? '<h5>Your deaths</h5><ul class="cch-ul">' + L.slice(0, 12).join('') + (L.length > 12 ? '<li class="sub">and ' + (L.length - 12) + ' more</li>' : '') + '</ul>' : ''; }
-    const DD = coachDeaths(reps, name), AV = coachAvoid(reps, name); if (!name && DD.list) deaths = '<h5>Deaths</h5>' + DD.list;
+    const DD = coachDeaths(reps, name), AV = coachAvoid(reps, name); let KT = null; try { KT = coachKit(reps, name); } catch (e) { KT = null; } if (!name && DD.list) deaths = '<h5>Deaths</h5>' + DD.list;
     const full = (whyFull ? '<h5>' + (night ? 'The night, as a raid lead would say it' : 'Why we wiped') + '</h5>' + whyFull : '') +
       (all.length ? '<h5>What to work on, in order</h5><ol class="cch-ol">' + all.map(item).join('') + '</ol>' : '') + deaths + (AV && AV.list ? '<h5>Avoidable damage</h5>' + AV.list : '') +
       (allR.length ? '<h5>What went right</h5><ul class="cch-ul">' + allR.map((t) => '<li>' + esc(t) + '</li>').join('') + '</ul>' : '');
     /* (week to week: tonight is remembered, and the raid's coach says what changed since the last raid on this boss) */
     let week = ''; if (night) { try { const wn = weekOf(reps); if (!name) week = weekLine(wn, weekPrev(it, wkWhen(reps[0].item))); weekSave(reps, wn); } catch (e) { week = ''; } }
-    return { headline: headline2, right, wrong, focus, full, name: name || null, night, kill: !!kill, deaths: DD, avoid: AV, week }; }); }
+    return { headline: headline2, right, wrong, focus, full, name: name || null, night, kill: !!kill, deaths: DD, avoid: AV, kit: KT, week }; }); }
 // (the short box, easier to read (your note, Oct 22: "make this more visually appealing/easier to read", "class color names when they
 // are mentioned"): the headline, then Focus as the big takeaway, the problems as numbered cards (what happened, Next time on its own
 // line, the map on the right), what went right as green chips, deaths and avoidable damage as small chips, and the full coaching folded.
@@ -23839,6 +24020,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
     (c.wrong.length ? '<div class="cch-sh">What went wrong</div><ol class="cch-ps cch-no">' + c.wrong.map(prob).join('') + '</ol>' : '') +
     (c.right.length ? '<div class="cch-good">' + c.right.map((x) => '<span class="cch-gd">✓ ' + esc(x.t) + '</span>').join('') + '</div>' : '') +
     (D || A ? '<div class="cch-acct2' + (S.cblBy === 'm' ? ' cbl-on-m' : '') + '">' + (A && A.reps ? cblSwitch() : '') + (D ? '<details class="cch-ab cch-abx' + (D.bad ? ' warn' : '') + '" data-k="cch-ab-d"' + (S.openSecs && S.openSecs.has('cch-ab-d') ? ' open' : '') + '><summary class="cch-al">Deaths<span class="cch-abs">' + esc(coachAbSum(D, 'd')) + '</span></summary>' + (D.items && D.items.length ? cblBoth(coachBars(cblDeaths(D), (x) => x.n, (x) => x.body), A && A.reps ? coachBars(cblDeathsP(A.reps, A.who), (x) => x.n, (x) => x.body) : '') || '<div class="cch-chips">' + dch + '</div>' : '<div class="cch-chips">' + dch + '</div>') + '' + (D.nsum || []).map((x) => '<div class="dd-nsum" data-ddn="' + esc(x.key) + '" hidden>' + x.html + '</div>').join('') + (D.items && D.items.some((it) => it.dg || it.dn) ? '<div class="cch-ddbox" hidden></div><div class="cch-ddtip">Tap a death to see what happened.</div>' : '') + '</details>' : '') + (A ? '<details class="cch-ab cch-abx' + (A.bad ? ' warn' : '') + '" data-k="cch-ab-a"' + (S.openSecs && S.openSecs.has('cch-ab-a') ? ' open' : '') + '><summary class="cch-al">Avoidable damage<span class="cch-abs">' + esc(coachAbSum(A, 'a')) + '</span></summary>' + (A.bars && A.bars.length ? cblBoth(coachBars(A.bars, (x) => x.amt, (x) => { const pm = cblPm(x.reps || A.reps || []), list = x.pl instanceof Map ? [...x.pl.values()] : (x.pl || []); return cblMini(list.map((q) => ({ label: cblNm(q.p), p: pm.get(q.p), st: q.st, amt: q.amt, sub: x.secs ? q.v + ' s' : plural(q.v, 'hit') })), x.st ? cblFix(x.key, x.fix) : ''); }), A.reps ? coachBars(cblAvoidP(A), (x) => x.amt, (x) => x.body) : '') : '<div class="cch-chips">' + ach + '</div>') + '' + (A.items && A.items.some((it) => it.avk || it.avn) ? '<div class="cch-avbox" hidden></div><div class="cch-ddtip">Tap a bar to see what hit them.' + '</div>' : '') + '</details>' : '') + '</div>' : '') +
+    (c.kit ? coachKitHtml(c.kit) : '') /* (Healthstones and potions, Defensives: a second row under Deaths and Avoidable damage (Oct 22)) */ +
     (c.full ? '<details class="cch-more" data-k="' + k + '"' + (S.openSecs.has(k) ? ' open' : '') + '><summary>Read the full coaching</summary><div class="cch-full">' + c.full + '</div></details>' : '') + '</section>';
   return colorNames(iconSpells(html), PM).replace(/<span class="cch-pmap" data-mi="(\d+)"><\/span>/g, (m0, n) => '<span class="cch-pmap">' + (MAPS[+n] || '') + '</span>'); }
 // (the whole Debriefing tab for one pull, as the site draws it, for the PC app's recap pop-up (Oct 22): the pull opens here (the app's
@@ -26341,8 +26523,8 @@ function survCats(reps) {
         add(kind === 'heal' ? C2.self : C2.def, p, n, spell(id, n), ts, kind === 'heal' ? healBy((x) => x === ln) : 0);
       }
       // close calls, by what answered each one
-      for (const c of (p.closeCalls || []).filter((c) => ok(c.tl))) { const k = c.def ? 'def' : c.stone ? 'stone' : c.pot ? 'pot' : 'none';
-        add(C2.calls, p, k, { def: 'Pressed a defensive', stone: 'Used a Healthstone', pot: 'Drank a health potion', none: '<span class="hotv">Nothing pressed</span>' }[k], [c.tl], 0); }
+      for (const c of (p.closeCalls || []).filter((c) => ok(c.tl))) { const k = c.def ? 'def' : c.stone ? 'stone' : c.pot ? 'pot' : c.self ? 'self' : 'none';
+        add(C2.calls, p, k, { def: 'Pressed a defensive', stone: 'Used a Healthstone', pot: 'Drank a health potion', self: 'Healed themself', none: '<span class="hotv">Nothing pressed</span>' }[k], [c.tl], 0); }
     }
   }
   return cats.filter((c) => c.key !== 'stone' || stones).map((c) => ({ ...c, rows: [...c.m.values()].sort((a, b) => b.n - a.n || b.heal - a.heal),
@@ -35593,9 +35775,13 @@ function deathVerdict(r, d) {
   const huge = (d.hitPct || 0) >= 150, av = d.available || [];
   const defs = (d.hitPct || 0) >= 500 ? [] : av.filter((a) => !DEATH_KIT.test(a) && !DEATH_RAIDCD.test(a) && (!huge || DEATH_IMM.test(a)));
   const kit = d.reactable !== false && (d.hitPct || 0) < 500 ? av.filter((a) => DEATH_KIT.test(a)) : [], has = defs.length + kit.length > 0;
-  const why = after && !late ? 'wipe' : end ? 'end' : mass ? 'mass' : noCtrl ? 'shared' : own ? 'own' : fast ? 'fast' : raid ? (has && d.reactable ? 'shared' : 'raid') : has ? 'ready' : 'nothing';
-  const w = { own: 1, ready: 1, nothing: 0.5, shared: 0.5 }[why] || 0, items = andList((defs.length ? defs : kit).slice(0, 2));
-  const word = { wipe: 'after the pull was lost', end: 'in the last seconds of the kill', mass: 'a mass death, ' + (d.mass || 0) + ' of us at once', own: 'their own mistake', fast: 'too fast to react', raid: 'the raid\'s mistake', ready: items + ' still ready', nothing: 'nothing left to press',
+  // (a healing gap (your question, Oct 22: "is it the healers fault?"): 5 s+ under half health with little healing from others (d.gap), while
+  // half the healers or more were alive, one within 40 yards, and no raid-wide damage then (under 4 of the pull's top damage seconds).
+  // Half on them when they still had something ready; otherwise not on them. Their own mistake, a one-shot or the raid's mistake come first)
+  const g = d.gap, gap = !!g && g.starved >= 5 && g.healers > 0 && g.alive >= Math.ceil(g.healers / 2) && (g.dist == null || g.dist <= 40) && g.busy < 4;
+  const why = after && !late ? 'wipe' : end ? 'end' : mass ? 'mass' : noCtrl ? 'shared' : own ? 'own' : fast ? 'fast' : raid ? (has && d.reactable ? 'shared' : 'raid') : gap ? 'heal' : has ? 'ready' : 'nothing';
+  const w = why === 'heal' ? (has ? 0.5 : 0) : { own: 1, ready: 1, nothing: 0.5, shared: 0.5 }[why] || 0, items = andList((defs.length ? defs : kit).slice(0, 2));
+  const word = { wipe: 'after the pull was lost', end: 'in the last seconds of the kill', mass: 'a mass death, ' + (d.mass || 0) + ' of us at once', own: 'their own mistake', fast: 'too fast to react', raid: 'the raid\'s mistake', ready: items + ' still ready', nothing: 'nothing left to press', heal: 'a healing gap: little healing for ' + Math.round(g ? g.starved : 0) + ' s' + (has ? ', with ' + items + ' ready' : ''),
     shared: noCtrl ? 'mind controlled off the edge (shared with the CC team)' : 'the raid\'s mistake' + (raidL ? ' (' + raidL.mechanic + ')' : '') + ', but ' + items + ((defs.length ? defs : kit).slice(0, 2).length > 1 ? ' were' : ' was') + ' ready' }[why];
   // (the story: the engine's, but an own death says what went wrong, like Gravebound's missed fragments)
   const rw = why === 'own' && !ownM.length ? oaRowWhy(r, d) : null;
@@ -35603,7 +35789,7 @@ function deathVerdict(r, d) {
   const story = why === 'own' && ownM.length ? 'right after a mistake on ' + ownM[0].mechanic : rw && rw.why ? (d.ability || rw.l) + ': ' + you(whyReason(rw.why))
     : why === 'own' && !d.ownAvoid ? (d.ability || 'a hit') + ', which you can dodge, finished you (' + String(d.story || '').replace(/, too fast to react$/, '') + ')'
     : noCtrl ? 'mind controlled off the edge by ' + ownL.find((l) => DEATH_NOCTRL.test(l.mechanic)).mechanic : d.story || '';
-  const v = { why, w, on: w > 0, counts: (!after || late) && why !== 'end', late, fast, own, raid, mass, defs, kit, word, story };
+  const v = { why, w, on: w > 0, counts: (!after || late) && why !== 'end', late, fast, own, raid, mass, defs, kit, word, story, gap: why === 'heal' ? g : null };
   d._dv = { ct, v }; v.fix = deathFix(r, d, v, ownM, rw, raidL); return v; }
 // (the one coaching line for a death, from its verdict: the fix of the mistake that killed them, never "press a defensive" for a death
 // that was their mistake, too fast or the raid's)
@@ -35613,6 +35799,7 @@ function deathFix(r, d, v, ownM, rw, raidL) {
     const m = ms.find((x) => lc(x.mechanic) === lc(k)) || ms.find((x) => ownM.some((l) => l.mechanic === x.mechanic && Math.abs(l.t - x.t) < 0.1)) || null;
     return (m && m.fix && dbfTip1(m.fix)) || (rw && oaFlip(rw.why)) || (d.ownAvoid && pv[0] && dbfTip1(pv[0])) || 'Stay out of ' + k + ': it\'s dodgeable.'; }
   if (v.why === 'ready') return v.defs.length ? 'Press ' + v.defs[0] + ' when you drop under half health. It was ready.' : 'Use your ' + (v.kit[0] === 'Healthstone' ? 'Healthstone' : 'health potion') + ' when you sit low. You had ' + (d.lowFor ? Math.round(d.lowFor) + ' seconds' : 'time') + '.';
+  if (v.why === 'heal') return 'Healers: top up anyone who sits under half health.' + (v.defs.length || v.kit.length ? ' You: ' + (v.defs.length ? 'press ' + v.defs[0] : 'use your ' + (v.kit[0] === 'Healthstone' ? 'Healthstone' : 'health potion')) + ' when you drop low.' : '');
   if (v.why === 'fast') return 'Nothing to fix on your side: ' + k + ' was too fast to react to.';
   if (v.why === 'mass') return 'Not on you: ' + k + ' killed ' + d.mass + ' of us at once. Fix what set it off as a raid.';
   if (v.why === 'raid') return 'Not on you: the raid\'s fault (' + (raidL ? raidL.mechanic : k) + ').';
@@ -35631,15 +35818,16 @@ function survivalOf0(r, p) {
   const end = Math.min(r.duration, ct, dd.length ? Math.min(...dd.map((d) => d.t)) : Infinity);
   // (a close call counts against them only when there was time to answer it (judged: 5+ seconds under 30%, or sitting low and then
   // hit again) and nothing was pressed; against the Healthstone and potion only when one was still unused (your rules, Oct 19))
-  const calls = (p.closeCalls || []).filter((c) => ok(c.t)), quiet = calls.filter((c) => c.judged !== false && !c.def && !c.stone && !c.pot), quietT = tank ? quiet.filter((c) => c.low < 0.15) : quiet, silent = quietT.length, silentKit = quietT.filter((c) => c.kitAvail !== false).length;
+  const calls = (p.closeCalls || []).filter((c) => ok(c.t)), quiet = calls.filter((c) => c.judged !== false && !c.def && !c.stone && !c.pot && !c.self), quietT = tank ? quiet.filter((c) => c.low < 0.15) : quiet, silent = quietT.length, silentKit = quietT.filter((c) => c.kitAvail !== false).length;
   // (deaths with something ready, by the site's one rule (deathVerdict): only ones that count, a defensive that could have saved them,
   // a Healthstone or potion only after 2+ s at or under 35%; never a mass death or a one-shot (deaths research, Oct 22))
   const vReady = dd.map((d) => deathVerdict(r, d)).filter((v) => v.counts && (v.why === 'ready' || v.why === 'shared'));
   const defReady = vReady.filter((v) => v.defs.length).length, kitReady = vReady.filter((v) => !v.defs.length && v.kit.length).length;
-  // a tank's big cooldowns: uses against possible uses while they were alive, up to the wipe filter
+  // a tank's big cooldowns: uses against possible uses while they were alive, up to the wipe filter; full marks at 65% (top tanks use 78%
+  // over a whole kill, so 80% marked down half of the best (defensives research, Oct 22))
   const cds = !tank || end < 60 ? [] : (p.defs || []).filter((d) => d.cd >= 60 && !TANK_CD_SKIP.has(d.name.toLowerCase())).map((d) => { const poss = 1 + Math.floor(end / d.cd); return { name: d.name, id: d.id, used: Math.min(poss, d.uses.filter((u) => u <= end).length), poss }; });
   const cdPoss = cds.reduce((s, d) => s + d.poss, 0), cdUsed = cds.reduce((s, d) => s + d.used, 0), cdUse = cdPoss ? cdUsed / cdPoss : null;
-  const def = tank ? Math.max(0, 100 - 50 * defReady - 10 * Math.min(4, silent) - (cdUse == null ? 0 : 45 * (1 - Math.min(1, cdUse / 0.8)))) : Math.max(0, 100 - 50 * defReady - 20 * silent);
+  const def = tank ? Math.max(0, 100 - 50 * defReady - 10 * Math.min(4, silent) - (cdUse == null ? 0 : 45 * (1 - Math.min(1, cdUse / 0.65)))) : Math.max(0, 100 - 50 * defReady - 20 * silent);
   const kit = tank ? Math.max(0, 100 - 50 * kitReady - 5 * Math.min(4, silentKit)) : Math.max(0, 100 - 50 * kitReady - 20 * silentKit);
   // (a player brought back with a battle res counts to the pull's end: a potion after the res is theirs too (scan, Oct 19: "Didn't
   // use a combat potion" next to "used a combat potion at 4:24"))
