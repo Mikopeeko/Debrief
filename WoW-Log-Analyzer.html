@@ -15281,6 +15281,7 @@ const PATCH_NOTES = [
     { t: 'Since last raid', d: 'All pulls now remembers each night and compares it with your last raid on the same boss: what you fixed, what got better or worse, and what\'s still going wrong. Pick a player to see their mistakes that also happened last raid.' },
   ], n: [
     'Breakdown: each phase is now one simple row: its name, a coloured dot, and a bar for every mechanic showing how often it was done right, worst first. Click a bar to jump straight to that mechanic.',
+    'Debrief in game: a slimmer card. Each thing is said once, Stop at death is one line, Survival is one section, your coach and next pull share one box, and rotation details show on hover. The PC pop-up matches the newest Debriefing.',
     'Spell icons sit on titles, rows and chips, not in the middle of sentences, so coaching lines read cleanly. The spell name still shows its tooltip when you hover it.',
     'Fairer survival grades: how many defensives someone pressed is never graded, a healer who heals themself back up counts as reacting, and tanks get full marks at 65% of their big cooldowns.',
     'A death can now be partly the healers\' when someone sat under half health for 5 seconds or more with little healing coming in, and healers had a fair chance to help.',
@@ -24115,7 +24116,7 @@ function coachGame(r, name) {
   out.deaths = !D ? null : { line: tx(D.line || ''), note: tx(D.note || ''), items: (D.items || []).concat(D.rest || []).slice(0, 10).map((it) => {
     let d = null; if (it.dg) { const [g, tt] = String(it.dg).split('@'); d = (r.deaths || []).find((y) => y.guid === g && y.t.toFixed(2) === tt); }
     // (why they died in one sentence, then what to do next time, like the site's death card; no health numbers (Oct 22))
-    let st = ''; try { const tg = d && deathTag(null, d); if (tg) { const v = deathVerdict(r, d), why = story(deathBox(tg, d), 900).split(' · ')[0]; st = cClip(why + (v && v.fix ? ' Next time: ' + v.fix : ''), 260); } } catch (e) { st = ''; }
+    let st = ''; try { const tg = d && deathTag(null, d); if (tg) { const v = deathVerdict(r, d), p0 = String(tg.p || ''), w0 = story(deathBox(tg, d), 900).split(' · ')[0], why = p0 && w0.startsWith(p0) ? w0.slice(p0.length).trim() : w0; /* (no badge, Oct 22) */ st = cClip(why + (v && v.fix ? ' Next time: ' + v.fix : ''), 260); } } catch (e) { st = ''; }
     return { t: it.t || '', who: it.who || '', cls: cls(it.who), ab: tx(it.ab || ''), k: it.k || 'n', word: tx(it.word || ''), id: d && d.abilityId ? String(d.abilityId) : sid(it.ab), story: st }; }) };
   out.avoid = !A ? null : { line: tx(A.line || ''), items: (A.items || []).concat(A.rest || []).slice(0, 8).map((it) => {
     let st = ''; if (it.avk) { try { const i = String(it.avk).lastIndexOf('|'), k = String(it.avk).slice(0, i), p = String(it.avk).slice(i + 1);
