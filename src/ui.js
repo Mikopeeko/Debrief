@@ -1711,9 +1711,8 @@ const PATCH_NOTES = [
     { t: 'Since last raid', d: 'All pulls now remembers each night and compares it with your last raid on the same boss: what you fixed, what got better or worse, and what\'s still going wrong. Pick a player to see their mistakes that also happened last raid.' },
   ], n: [
     'Debrief Companion: updates wait just 20 seconds after a pull.',
-    'Debrief Companion: updates wait just 30 seconds after a pull.',
     'Debrief Addon: your pulls are saved in game again. Debrief Companion saves each pull into the addon, so a /reload or login brings it in, no pasting. /recap opens your recap card.',
-    'Debrief Addon: the sample in the settings preview is a fresh Mythic pull, so every piece you switch on or off shows. Debrief Companion updates 45 seconds after a pull instead of 3 minutes.',
+    'Debrief Addon: the sample in the settings preview is a fresh Mythic pull, so every piece you switch on or off shows. Debrief Companion updates 20 seconds after a pull instead of 3 minutes.',
     'Debrief Companion: the recap pop-up shows every pull of the night along its top. Click one to see its coach box, or hover it for its coach line.',
     'Debrief Addon: the Raid view can show Defensives too: who pressed one, and who never did. Switch it on or off in /db, Card.',
     'Debrief Addon: it no longer keeps old pulls between sessions, since your recaps now pop up on your PC; a pull you send still shows until you log out.',
