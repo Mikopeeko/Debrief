@@ -1743,6 +1743,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-23', h: [
+    { t: 'Your numbers against top guilds', d: 'On the Coiled Altar, each pull now shows Raid DPS, DTPS (damage taken per second) and HPS next to what the 20 fastest kills did in the same phases, in green, amber or red.' },
     { t: 'The wipe is called for you', d: 'No more "stop at the 2nd death". Debrief now calls the wipe at the moment no raid has ever come back from: more people dead than any kill of that boss survived at that point (battle rezzes counted), the damage check missed, or half the raid dead. Everything before it counts, so the deaths and mistakes that lost the pull are graded. Tested on 760 kills: it never calls a wipe on a pull that was won.' },
     { t: 'A shorter debrief', d: 'Each pull now opens like a raid lead\'s debrief: what went well, what went wrong (click a line for its map and details) and the one thing for next pull. The extra drawers are gone; the timeline, raid cooldowns and burst windows sit in the open below the phases.' },
   ], n: [
@@ -9171,9 +9172,17 @@ function audit() {
         return { s, nB, nW, lc, lv: lvlOf(lc) }; });
       const nC = all.filter((x) => x.lv === 'clean').length, nM = all.filter((x) => x.lv === 'minor').length, nF = all.length - nC - nM;
       const num = (k, v, sub) => '<div class="dbr-n"><span class="dbr-k">' + k + '</span><span class="dbr-v">' + v + '</span><span class="dbr-s">' + sub + '</span></div>';
-      void res; void resSub; top += '<div class="dbr-4 dbr-3">' + num( /* (no Result tile: the banner and the coach say it (Oct 22)) */'Deaths', '<b>' + deathCount([r]).n + '</b>', (() => { const c = deathCount([r]); return c.first ? 'first at ' + T(c.first.t) + ' (' + esc(String(c.first.player).split('-')[0]) + ')' + (c.mass ? ' · ' + c.mass + ' in a mass wipe' : '') : c.mass ? c.mass + ' in a mass wipe' : 'nobody died'; })()) +
+      void res; void resSub; let RATE_T = ''; const top0 = top; top += '<div class="dbr-4 dbr-3 dbr-5">' + num( /* (no Result tile: the banner and the coach say it (Oct 22)) */'Deaths', '<b>' + deathCount([r]).n + '</b>', (() => { const c = deathCount([r]); return c.first ? 'first at ' + T(c.first.t) + ' (' + esc(String(c.first.player).split('-')[0]) + ')' + (c.mass ? ' · ' + c.mass + ' in a mass wipe' : '') : c.mass ? c.mass + ' in a mass wipe' : 'nobody died'; })()) +
         num('Mechanics', '<b class="' + (nC ? 'dbr-ok' : 'dbr-z') + '">' + nC + '</b><em> clean</em> <b class="' + (nM ? 'dbr-w' : 'dbr-z') + '">' + nM + '</b><em> with mistakes</em> <b class="' + (nF ? 'dbr-b' : 'dbr-z') + '">' + nF + '</b><em> failed</em>', 'of ' + plural(all.length, 'mechanic')) +
-        num('Raid damage', '<b>' + C(dmg / Math.max(1, endT)) + '</b>', 'a second' + (cut ? ', up to the wipe filter' : '') + dbdVsLast(r, dmg / Math.max(1, endT))) + (NJ ? dbnNum(NJ, num) : '') + '</div>';
+        (() => { /* (Oct 23, your ask: Raid DPS, DTPS and HPS scored against top guilds, phase by phase over what this pull reached) */
+          const sumA = (a) => { let t = 0; for (let i = 0; i < Math.min((a || []).length, Math.ceil(endT)); i++) t += a[i] || 0; return t / Math.max(1, endT); };
+          const our = { dps: dmg / Math.max(1, endT), dtps: sumA(r.takenS), hps: sumA(r.healS) }, B = RATE_BASE[it.boss + '|' + it.diffId];
+          const exp = (k) => { if (!B) return null; let w = 0, t = 0; for (const p of m.phases || []) { const s0 = Math.max(0, p.start), e0 = Math.min(p.end, endT), b = B.ph[p.name]; if (!b || e0 <= s0) continue; w += b[k] * (e0 - s0); t += e0 - s0; } return t ? w / t : null; };
+          const tile = (k, lab, hiGood) => { const v = our[k], x = exp(k); if (x == null) return num(lab, '<b>' + C(v) + '</b>', 'a second' + (cut ? ', up to the wipe filter' : ''));
+            const rt = v / x, cls = hiGood ? (rt >= 0.97 ? 'dbr-ok' : rt >= 0.85 ? 'dbr-w' : 'dbr-b') : (rt <= 1.05 ? 'dbr-ok' : rt <= 1.25 ? 'dbr-w' : 'dbr-b');
+            return num(lab, '<b class="' + cls + '">' + C(v) + '</b>', 'top guilds: ' + C(x) + ' · ' + Math.round(100 * rt) + '%'); };
+          return (RATE_T = tile('dps', 'Raid DPS', true) + tile('dtps', 'DTPS', false) + tile('hps', 'HPS', true)); })() + (NJ ? dbnNum(NJ, num) : '') + '</div>';
+      top = top0 + '<div class="dbr-4 dbr-3 dbr-5">' + num( /* (no Result tile: the banner and the coach say it (Oct 22)) */'Deaths', '<b>' + deathCount([r]).n + '</b>', (() => { const c = deathCount([r]); return c.first ? 'first at ' + T(c.first.t) + ' (' + esc(String(c.first.player).split('-')[0]) + ')' + (c.mass ? ' · ' + c.mass + ' in a mass wipe' : '') : c.mass ? c.mass + ' in a mass wipe' : 'nobody died'; })()) + RATE_T + '</div>'; /* (Deaths and the three rate tiles (Oct 23, your call: no Mechanics or Note jobs tiles)) */
       if (NJ) top = top.replace('<div class="dbr-4 dbr-3">', '<div class="dbr-4">'); /* (with a note: four tiles) */
       top = dbnBar(NJ, r) + top;
       { const lab = it.kill ? 'kill' : 'wipe at ' + pullShort(it) + (it.endPct != null ? ' (' + Math.round(100 - it.endPct) + '% of the fight done)' : '');
@@ -11493,6 +11502,8 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
   if (sec) { const k = sec.dataset.k; sec.open = true; S.openSecs.add(k); /* (the page may redraw as it opens: find it again) */ setTimeout(() => { const el = document.querySelector('details.secd[data-k="' + CSS.escape(k) + '"]'); if (el) { el.open = true; el.scrollIntoView({ block: 'start', behavior: 'smooth' }); } }, 120); } }, true);
 /* (a moment's line, shorter: asides in brackets longer than a few words come out, "(aim for 2 to 3, then none, into empty ground)" (Oct 23)) */
 const tidyLine = (t) => String(t || '').replace(/\s*\((?=[^)]{18,})[^)]*\)/g, '').replace(/\s+·\s+/g, ' · ').replace(/\s{2,}/g, ' ').trim();
+/* (the fastest Mythic kills' raid DPS, damage taken and healing per second, phase by phase (median of 20 kills), for the top tiles (Oct 23)) */
+const RATE_BASE = {"The Coiled Altar|16":{"n":20,"ph":{"P1 Zul'jan":{"dps":3074422,"dtps":1888496,"hps":2318918},"P2 Malacrass":{"dps":2373454,"dtps":1711251,"hps":2100256},"Intermission":{"dps":13560472,"dtps":1687817,"hps":2268511},"P3 Coiled Union":{"dps":3763004,"dtps":1574304,"hps":2032969}}}};
 function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' + (o.key || 'x'), PM = coachPm();
   const pm = c.name ? PM.get(oaBase(c.name)) : null;
   const MAPS = [], pmc = (() => { try { return new Map(players().map((p) => [p.name, p])); } catch (e) { return new Map(); } })();
