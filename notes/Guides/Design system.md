@@ -167,11 +167,19 @@ The style layer only normalises what the model pieces already do. Each tab's own
 
 ## 14. Spell icons (Oct 22)
 
-The user: "Any time a spell, or mechanic is listed there should be a corresponding icon."
-- Every spell or mechanic name on a page shows its icon in front of it: in sentences, row titles, chips, tooltips, the Rotation tab, Plan and the boss guides.
-- One icon per name. A name never shows two icons, and when its icon already sits right in front of it (Rotation's spell rows) it adds none. A name repeated in the same line keeps one icon.
+First rule: "Any time a spell, or mechanic is listed there should be a corresponding icon." Softened the same night: "I like them but not
+when they ruin sentence formatting."
+- **Icons on labels.** Where a name is a label, it leads with its icon: row and card titles, bar rows, chips, tiles, table cells, list
+  rows, drop-down headers, and a sentence that starts with the name.
+- **No icons inside sentences.** Where words come before the name on its line (coach lines, Next time, Why, death and hit stories,
+  guide text), the name is plain text. It keeps its hover tooltip and dotted underline, but has no picture. Example: "Hit by Axegrinder
+  10 times", not "Hit by [icon] Axegrinder 10 times".
+- One icon per name, and never two side by side. A name repeated in the same line keeps one icon.
 - One size: the site's 20px icon (16px inside tooltips and small print).
 - An add named in a row title (like "Spiteful Soulcoiler (Kick and kill)") shows the add's own icon, the one its map marker uses (ADD_LOOK).
 - Generic rows (Deaths, Avoidable damage, Pace, Phase changes) keep their fixed icons (NAMED_ICON).
-- How it works: spell names are tagged (mech(), linkBossText(), and linkGuideText() for guides and Plan), then iconizeSpells() adds any missing icon and removes doubles. refreshIcons() runs all three, so any page that redraws should call refreshIcons(). Mark a spot that must stay plain with class no-ic.
-- Checklist item 8: does every spell name you added show its icon, once?
+- How it works: spell names are tagged (mech(), linkBossText(), and linkGuideText() for guides and Plan). Then iconizeSpells() adds any
+  missing icon, removes doubles, and takes the icon off any name that has letters before it on its line (the line is the nearest parent
+  that isn't display:inline). refreshIcons() runs all of it, so any page that redraws should call refreshIcons(). Mark a spot that must
+  stay plain with class no-ic.
+- Checklist item 8: does each label show its icon once, and does every sentence read without pictures in it?

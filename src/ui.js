@@ -426,7 +426,17 @@ function iconizeSpells(root) {
   (root || document).querySelectorAll('.cch-pt > b:first-child:not([data-ic])').forEach((b) => { b.dataset.ic = '1'; if (b.querySelector('.icw, img, svg') || before(b)) return;
     const nm = b.textContent.replace(/\s*\(.*$/, '').trim(), L = ADD_LOOK[nm]; if (L) b.insertAdjacentHTML('afterbegin', spellIcon(L.sid, nm).replace('class="icw', 'class="icw inl')); });
   /* (no doubles: a name that carries its own icon, with another icon right before it, drops its own) */
-  (root || document).querySelectorAll('.sp[data-sid] > .icw:first-child').forEach((ic) => { if (before(ic.parentElement)) ic.remove(); }); }
+  (root || document).querySelectorAll('.sp[data-sid] > .icw:first-child').forEach((ic) => { if (before(ic.parentElement)) ic.remove(); });
+  /* (Oct 22, the user: "I like them but not when they ruin sentence formatting": a spell's icon stays where its name is a label, at the
+     start of its line (titles, bar rows, chips, tiles, list rows, a sentence that starts with it), and comes out where words come before
+     it on its line (inside a sentence). The name keeps its tag and hover tooltip. The line is the nearest parent that isn't display:inline) */
+  const lineOf = (el) => { let n = el.parentElement; while (n && n.parentElement && /^(inline|contents)$/.test(getComputedStyle(n).display)) n = n.parentElement; return n; };
+  const midLine = (el) => { const ln = lineOf(el); if (!ln) return false; const r = document.createRange(); r.setStart(ln, 0); r.setEndBefore(el); return /\p{L}/u.test(r.toString()); };
+  (root || document).querySelectorAll('.icw:not([data-icx])').forEach((ic) => { ic.dataset.icx = '1'; if (ic.closest('.no-ic, svg')) return;
+    const sp = ic.parentElement && ic.parentElement.matches('.sp[data-sid]') && ic.parentElement.firstElementChild === ic ? ic.parentElement : null;
+    let nx = ic.nextSibling; while (nx && nx.nodeType === 3 && !nx.nodeValue.trim()) nx = nx.nextSibling;
+    const name = sp || (nx && nx.nodeType === 1 && nx.matches('.sp[data-sid]') ? ic : null); /* (only a spell's icon: inside its name, or right before it) */
+    if (name && midLine(name)) ic.remove(); }); }
 // Spells named in plain text get the same tooltip as a spell shown with its icon, on every tab of a pull: boss abilities
 // (a rule's tip, a check's line, "fix first", a death's killing blow) and players' own spells (a fix like "Use Blessing of
 // Sacrifice more", "died with Divine Shield still ready", a coaching tip). Boss abilities: every one this boss's rules and
@@ -1750,6 +1760,7 @@ const PATCH_NOTES = [
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
     { t: 'Since last raid', d: 'All pulls now remembers each night and compares it with your last raid on the same boss: what you fixed, what got better or worse, and what\'s still going wrong. Pick a player to see their mistakes that also happened last raid.' },
   ], n: [
+    'Spell icons sit on titles, rows and chips, not in the middle of sentences, so coaching lines read cleanly. The spell name still shows its tooltip when you hover it.',
     'Fairer survival grades: how many defensives someone pressed is never graded, a healer who heals themself back up counts as reacting, and tanks get full marks at 65% of their big cooldowns.',
     'A death can now be partly the healers\' when someone sat under half health for 5 seconds or more with little healing coming in, and healers had a fair chance to help.',
     'In the coach box, open a player under Deaths or Avoidable damage to see a small bar graph: one bar for each death or mechanic, showing how much damage it was. Tap a death to see what happened.',
