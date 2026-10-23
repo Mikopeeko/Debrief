@@ -63,6 +63,7 @@ namespace Debrief {
       if (m == "ready") { ready = true; if (pending != null) Send(pending); }
       else if (m == "close") { SaveBounds(); Hide(); }
       else if (m == "open") main.ShowInFront();
+      else if (m.StartsWith("pull:")) main.PopupPull(m.Substring(5)); // (a pull chip: the main page loads that pull's coach box)
       else if (m.StartsWith("cut:")) main.PopupCut(m.Substring(4)); // (Stop at death changed: the main page rebuilds the coach box)
       else if (m.StartsWith("h:")) {
         // (the window fits the card, up to most of the screen, and stays centred where it was: over your character)

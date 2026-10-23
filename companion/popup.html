@@ -55,6 +55,17 @@ body { border: 1px solid var(--line2); border-radius: 10px; }
 .hint { color: var(--faint); font-size: 12px; margin-left: auto; text-align: right; }
 .empty { padding: 30px 16px; text-align: center; color: var(--muted); }
 .body.sitebody { padding: 10px 10px 4px; }
+/* tonight's pulls, one chip each: red for a wipe (with how much was left), green for a kill, a gold edge on the best */
+.pulls { display: flex; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line); overflow-x: auto; flex: none; scrollbar-width: thin; }
+.pulls::-webkit-scrollbar { height: 6px; } .pulls::-webkit-scrollbar-thumb { background: #2f3542; border-radius: 3px; }
+.pc { flex: none; padding: 3px 9px; border-radius: 5px; border: 1px solid transparent; background: #3a1d1d; color: var(--badT); font: 600 12px Barlow, sans-serif; cursor: pointer; white-space: nowrap; }
+.pc.k { background: #17301e; color: var(--goodT); }
+.pc.best { border-color: rgba(230,180,80,.7); }
+.pc.on { border-color: var(--text); color: var(--text); }
+.pc:hover { filter: brightness(1.25); }
+.pc.wait { opacity: .6; }
+.pb { flex: none; align-self: center; font: 700 10.5px Barlow, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); padding: 0 2px 0 6px; white-space: nowrap; }
+.pb:first-child { padding-left: 0; }
 /* Stop at death, over the coach box (the same filter as the website and the card) */
 .stp { display: flex; align-items: center; justify-content: space-between; background: var(--raised); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; margin: 0 0 4px; }
 .stp b { font: 700 13px Barlow, sans-serif; }
@@ -128,6 +139,7 @@ function render() {
     body += '<p class="cnt" style="margin-top:10px">The full coaching is on the website, in the Debriefing tab.</p>';
   } else body += '<p class="chd">' + esc(res) + ' · ' + esc(h.dur) + '</p><p class="cnt">No coaching for this pull.</p>';
   app.innerHTML = '<div class="top">' + LOGO + '<b>Debrief</b><span class="bt">' + esc(h.boss) + ' · ' + esc(h.diff) + ' · Pull ' + esc(h.pull) + '</span><span class="pill' + (h.kill ? ' k' : '') + '">' + esc(res) + '</span><button class="x" type="button" title="Close (it comes back after the next pull)" data-close="1">✕</button></div>' +
+    nightRow() +
     '<div class="body' + (D.pack && D.pack.html ? ' sitebody' : '') + '">' + body + '</div>' +
     '<div class="foot">' + (copied ? '<span class="btn done">Copied: in WoW, type /dp, then Ctrl+V</span>' : '') +
     '<button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">' + (copied ? '' : 'Closes when the next pull starts') + '</span></div>';
@@ -135,6 +147,14 @@ function render() {
   fit();
 }
 // (Stop at death: − n +, with a line saying what counts; only on a wipe with deaths)
+// (tonight's pulls on this boss: click one for its coach box; hover for its coach line)
+let loadingPull = null;
+function nightRow() {
+  const L = D.night || []; if (L.length < 2) return '';
+  const best = new Map(); for (const p of L) { const b = best.get(p.boss); if (p.left != null && (!b || p.left <= b.left)) best.set(p.boss, p); }
+  let lastBoss = null;
+  return '<div class="pulls" id="pullsRow">' + L.map((p) => (p.boss !== lastBoss ? '<span class="pb">' + esc(lastBoss = p.boss) + '</span>' : '') + '<span class="pc' + (p.kill ? ' k' : '') + (best.get(p.boss) === p ? ' best' : '') + (p.cur ? ' on' : '') + (loadingPull === p.sb ? ' wait' : '') + '" data-pull="' + p.sb + '" title="' + esc('Pull ' + p.pull + (p.h ? ': ' + p.h : '')) + '">Pull ' + p.pull + ' · ' + esc(p.txt) + '</span>').join('') + '</div>';
+}
 function stopRow() {
   if (D.cut == null || !(D.cutN > 0)) return '';
   const c = D.cut, n = D.cutN, ord = (k) => k + (k % 100 >= 11 && k % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[k % 10] || 'th'));
@@ -146,7 +166,8 @@ let waiting = false;
 function fit() { requestAnimationFrame(() => { const a = document.getElementById('app'), m = a.querySelector('.mini'), t = a.querySelector('.top'), b = a.querySelector('.body'), f = a.querySelector('.foot');
   const want = m ? m.offsetHeight + 2 : (t ? t.offsetHeight : 0) + (b ? b.scrollHeight : 0) + (f ? f.offsetHeight : 0) + 2; post('h:' + Math.ceil(want)); }); }
 document.addEventListener('click', (e) => {
-  const t = e.target.closest ? e.target.closest('[data-fold],[data-row],[data-close],[data-open],[data-big],[data-cut]') : null; if (!t) return;
+  const t = e.target.closest ? e.target.closest('[data-fold],[data-row],[data-close],[data-open],[data-big],[data-cut],[data-pull]') : null; if (!t) return;
+  if (t.dataset.pull) { if (t.classList.contains('on')) return; loadingPull = +t.dataset.pull; t.classList.add('wait'); t.textContent = t.textContent.replace(/ · .*/, ' · loading…'); post('pull:' + t.dataset.pull); return; }
   if (t.dataset.cut) { const v = Math.max(0, Math.min(8, (D.cut || 0) + (+t.dataset.cut))); if (v !== D.cut) { waiting = true; D.cut = v; render(); post('cut:' + v); } return; }
   if (t.dataset.big) { big = true; render(); return; }
   if (t.dataset.close) { post('close'); return; }
@@ -159,7 +180,8 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') post('clos
 function take(d) {
   if (!d) return;
   if (d.copied != null) { copied = !!d.copied; render(); return; }
-  waiting = false; D = d; copied = !!d.copiedAlready; big = !!d.full; for (const k of Object.keys(OPEN)) delete OPEN[k]; render();
+  waiting = false; loadingPull = null; D = d; copied = !!d.copiedAlready; big = !!d.full; for (const k of Object.keys(OPEN)) delete OPEN[k]; render();
+  const pr = document.getElementById('pullsRow'), on = pr && pr.querySelector('.pc.on'); if (on) pr.scrollLeft = Math.max(0, on.offsetLeft - pr.clientWidth + on.offsetWidth + 12);
   const b = document.querySelector('.body'); if (b) b.scrollTop = 0;
 }
 // ---------- Debriefing's own coach box ----------

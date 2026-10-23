@@ -1710,6 +1710,7 @@ const PATCH_NOTES = [
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
     { t: 'Since last raid', d: 'All pulls now remembers each night and compares it with your last raid on the same boss: what you fixed, what got better or worse, and what\'s still going wrong. Pick a player to see their mistakes that also happened last raid.' },
   ], n: [
+    'Debrief Companion: the recap pop-up shows every pull of the night along its top. Click one to see its coach box, or hover it for its coach line.',
     'Debrief Addon: the Raid view can show Defensives too: who pressed one, and who never did. Switch it on or off in /db, Card.',
     'Debrief Addon: it no longer keeps old pulls between sessions, since your recaps now pop up on your PC; a pull you send still shows until you log out.',
     'Debrief Addon: Healthstones and health potions are their own pieces you can show or hide: your own line, and one for the raid (who used one, and who dropped low with one still ready). /db opens the settings and /dbr your recap card (/dmo and /debrief still work).',

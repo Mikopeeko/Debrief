@@ -390,10 +390,37 @@ window.DBF_POPCUT = (n) => {
   const p = L.popLast; if (!p || !p.rep) return; n = Math.max(0, Math.min(8, +n || 0)); store.set('dbf-popcut', n);
   popShow(p.model, p.code, p.copied, packAt(p.rep, p.b, n), { cut: n, cutN: p.cutN, quiet: true });
 };
+// (tonight's pulls on this boss, for the pop-up's chip row: how far each got and its coach line, from the night line's memory)
+function popNight(cur) {
+  if (!L.name) return [];
+  const N = nightOf(L.name);
+  return L.items.filter((b) => b.endByte && b.id !== DUMMY).map((b) => { const e = N[b.startByte];
+    return { sb: b.startByte, pull: b.pull, kill: !!b.kill, boss: b.boss + ' · ' + (DIFFN[b.diffId] || b.diff || ''), left: b.kill ? 0 : e && e.l != null ? e.l : null, txt: b.kill ? 'Kill' : e && e.l != null ? Math.round(e.l) + '%' : 'Wipe', h: (e && e.h) || '', cur: b.startByte === cur }; });
+}
+// (a chip clicked in the pop-up: that pull's coach box, read from the log if it isn't yet; only the last few pulls stay in memory)
+window.DBF_POPPULL = async (sb) => {
+  const b = L.items.find((x) => x.startByte === +sb); if (!b) return;
+  const run = L.busy.then(async () => {
+    try {
+      const rep = await analyze(b); if (L.name && !nightOf(L.name)[b.startByte]) saveNight(b, rep, null); // (an earlier boss's pull: now its % and coach line are known)
+      const e = L.name && nightOf(L.name)[b.startByte];
+      const model = { h: { boss: b.boss, diff: DIFFN[b.diffId] || b.diff || '', pull: b.pull, kill: !!b.kill, pct: b.kill ? '' : e && e.l != null ? String(Math.round(e.l)) : '', dur: mmss(b.duration) },
+        players: [...rep.players.values()].map((p) => ({ name: p.name, cls: p.cls })) };
+      const cutN = b.kill ? 0 : Math.min(8, (rep.deaths || []).length), cut = cutN ? popCut() : null;
+      const pack = cut != null ? packAt(rep, b, cut) : (rep.item || (rep.item = b), W.coachPack(rep));
+      L.popLast = { model, code: '', copied: false, b, rep, cutN };
+      popShow(model, '', false, pack, { cut, cutN, quiet: true });
+      // (memory: keep the reads of the last four pulls and the one on screen; the rest keep only how far they got)
+      const keep = new Set(L.items.filter((x) => x.endByte).slice(-4).map((x) => x.startByte).concat([b.startByte]));
+      for (const [k, v] of L.reps) if (!keep.has(k) && v && v.rep) v.rep = null;
+    } catch (err) { console.error(err); }
+  });
+  L.busy = run.catch(() => {}); return run;
+};
 function popShow(model, code, copied, pack, cm) {
   if (!$('pop').checked || !model || !model.h) return;
   L.popUp = true;
-  const data = { h: model.h, coach: (model.coach && model.coach.raid) || null, cls: (model.players || []).map((p) => [String(p.name || '').split('-')[0], p.cls]), code, copiedAlready: !!copied, full: true, pack: pack || null, cut: cm ? cm.cut : null, cutN: cm ? cm.cutN : 0 };
+  const data = { h: model.h, coach: (model.coach && model.coach.raid) || null, cls: (model.players || []).map((p) => [String(p.name || '').split('-')[0], p.cls]), code, copiedAlready: !!copied, full: true, pack: pack || null, cut: cm ? cm.cut : null, cutN: cm ? cm.cutN : 0, night: popNight(L.popLast && L.popLast.b ? L.popLast.b.startByte : null) };
   j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: true, data, sound: $('snd').checked && !copied && !(cm && cm.quiet) }) }).catch(() => {});
 }
 function popHide() { if (!L.popUp) return; L.popUp = false; j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: false }) }).catch(() => {}); }
@@ -648,7 +675,7 @@ async function send(b, byHand) {
       const cutN = b.kill ? 0 : Math.min(8, (rep.deaths || []).length), cut = cutN ? popCut() : null;
       let pack = null; try { if (W.coachPack && b.id !== DUMMY) pack = cut != null ? packAt(rep, b, cut) : (rep.item || (rep.item = b), W.coachPack(rep)); } catch (e) { console.error(e); }
       L.popLast = { model, code, copied: ok, b, rep, cutN };
-      popShow(model, code, ok, pack, { cut, cutN });
+      popShow(model, code, ok, pack, { cut, cutN }); // (L.popLast is set first, so the chip row marks this pull)
       L.sent.add(b.startByte); renderPulls(); progress(null);
       stat(L.live ? 'Watching your combat log' : 'Sent pull ' + b.pull, L.live ? 'live' : ''); renderMain();
     } catch (e) { console.error(e); L.reading = null; progress(null); renderMain(); stat('Could not read pull ' + b.pull + ': ' + e.message, 'err'); }

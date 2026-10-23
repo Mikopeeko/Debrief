@@ -137,6 +137,11 @@ namespace Debrief {
     }
 
     // (the pop-up's Stop at death: the main page rebuilds the coach box at that setting and sends it back)
+    public void PopupPull(string sb) {
+      long v; if (!long.TryParse(sb, out v)) return;
+      if (InvokeRequired) { BeginInvoke(new Action(() => PopupPull(sb))); return; }
+      try { if (web.CoreWebView2 != null) web.CoreWebView2.ExecuteScriptAsync("window.DBF_POPPULL && window.DBF_POPPULL(" + v + ")"); } catch { }
+    }
     public void PopupCut(string n) {
       int v; if (!int.TryParse(n, out v)) return;
       if (InvokeRequired) { BeginInvoke(new Action(() => PopupCut(n))); return; }
