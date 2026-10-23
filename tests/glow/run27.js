@@ -49,6 +49,13 @@ function CANVAS() return CANVAS_CAT end
 PICKED = { 0.1, 0.8, 0.9 }
 ColorPickerFrame = { SetupColorPickerAndShow = function(self, info) self.info = info end, GetColorRGB = function() return PICKED[1], PICKED[2], PICKED[3] end }
 function IsPlayerSpell(id) return NAMES[id] ~= nil end
+COMBAT = false; HIDDEN = setmetatable({}, { __tostring = function() return "<secret>" end })
+function issecretvalue(x) return x == HIDDEN end
+function InCombatLockdown() return COMBAT end
+for _, list in ipairs({ ESS, UTIL }) do for _, f in ipairs(list) do
+  local real = f.GetSpellID(); f.GetSpellID = function() return COMBAT and HIDDEN or real end; f.GetBaseSpellID = f.GetSpellID
+  f.cooldownInfo = setmetatable({}, { __index = function(_, k) if k == "spellID" then return COMBAT and HIDDEN or real end end })
+end end
 C_Spell.GetSpellInfo = function(x) for id, n in pairs(NAMES) do if n == x then return { spellID = id, name = n } end end end
 NOTE_TEXT = ""
 NSAPI.GetReminderString = function(self) return NOTE_TEXT, "" end
@@ -121,6 +128,21 @@ local styles = { "cdmants", "cdmflash", "pandemic", "proc", "assist", "onebutton
 print("-- defaults: a gold ring on the icon's edge (Cooldown Manager ants), no sound, no voice")
 expect("default look", DebriefGlowDB.style, "cdmants"); expect("1 px out from the picture", DebriefGlowDB.pad, 1)
 newPull(); pull(); at(19.9, "just before Aura Mastery"); at(20, "Aura Mastery due"); press(31821); at(20.5, "pressed")
+
+print("-- in a raid pull the game hides the Cooldown Manager's spell IDs: the icons remembered from before still glow")
+DebriefGlow_Test(true); ADVANCE(NOW + 3.1); heard(); newPull()
+COMBAT = true; fire(ev, "ENCOUNTER_START", 3600, "The Coiled Altar"); pull()
+at(20, "Aura Mastery due, in combat")
+expect("glows on the Cooldown Manager icon, not a big icon", GLOWING():match("^Aura Mastery") ~= nil, true)
+press(31821); fire(ev, "ENCOUNTER_END"); COMBAT = false
+local L = DebriefGlowDB.log or {}; local found = false; for _, l in ipairs(L) do if l:find("Aura Mastery in 8.0 s %(pop%-up%): found on your Cooldown Manager") then found = true end end
+expect("the diary says what happened", found, true)
+SlashCmdList.DEBRIEFGLOW("why")
+print("-- an icon never seen out of combat can't be found in combat: big icon, and the diary says so")
+DebriefGlowDB.log = {}; local ds; for _, f in ipairs(ESS) do if f._label == "Divine Shield" then ds = f end end
+COMBAT = true; newPull(); CB.NSRT_REMINDER_SHOW("NSRT_REMINDER_SHOW", { spellID = 1022, dur = 3, expires = GetTime() + 3 }, nil); at(3, "Blessing of Protection (not on the bar)")
+local seenBig = false; for _, l in ipairs(DebriefGlowDB.log) do if l:find("Blessing of Protection in 3.0 s %(pop%-up%): not on your Cooldown Manager, big icon") then seenBig = true end end; expect("diary: not on your Cooldown Manager", seenBig, true)
+COMBAT = false; fire(ev, "ENCOUNTER_END")
 
 print("-- the countdown on the spell matches NSRT's (NSRT shows Aura Mastery 8 s early)")
 newPull(); pull(); at(12, "NSRT's countdown starts"); at(15.5, ""); at(19.2, ""); at(20, "0: the glow takes over")

@@ -28,6 +28,15 @@ local function spellOn(id) return not per(id).off end
 
 -- ---- the Cooldown Manager: every icon on screen and the spell IDs it stands for (base, current and override) ----
 local VIEWERS = { "EssentialCooldownViewer", "UtilityCooldownViewer" }
+-- (in combat the game hides these IDs from addons: each icon's spells are remembered while they can be read, and used in combat)
+local idCache = setmetatable({}, { __mode = "k" })
+-- (a small diary of what happened, kept in the saved settings, for when something doesn't work in a raid: /dglow why)
+local function diary(msg)
+  if not DB then return end
+  DB.log = DB.log or {}; local L = DB.log
+  L[#L + 1] = (date and date("%H:%M:%S") or "") .. "  " .. tostring(msg)
+  while #L > 60 do table.remove(L, 1) end
+end
 local function cdmItems()
   local out = {}
   for _, vn in ipairs(VIEWERS) do
@@ -42,6 +51,7 @@ local function cdmItems()
           end
           local ci = it.cooldownInfo
           if type(ci) == "table" then for _, k in ipairs({ "spellID", "overrideSpellID", "overrideTooltipSpellID" }) do local x = ci[k]; if x and not secret(x) then ids[#ids + 1] = x end end end
+          if #ids > 0 then idCache[it] = ids else ids = idCache[it] or ids end
           if #ids > 0 then out[#out + 1] = { frame = it, ids = ids } end
         end
       end
@@ -400,20 +410,29 @@ local function schedule(id, wait, label)
     -- (counts to the press moment like the number on the icon; with "start early", numbers after the glow starts are left out)
     for i = DB.countdown, 1, -1 do local t = wait - i; if t >= 0 and t < at - 0.05 then C_Timer.After(t, function() if DB.enabled and live() then speak(tostring(i)) end end) end end
   end
-  local function go() if live() then waiting[id] = nil; fire(id, label) end end
+  local function go() if live() then waiting[id] = nil; local ok, err = pcall(fire, id, label); if not ok then diary("error: " .. tostring(err)) end end end
   if at > 0.05 then C_Timer.After(at, go) else go() end
 end
 
 -- ---- NSRT: it says a reminder of yours is showing; its countdown ends at the moment to press ----
 local hooked = false
-local function onReminder(_, info)
-  if not (DB and DB.enabled) or type(info) ~= "table" then return end
+local function reminder(event, info)
+  if not (DB and DB.enabled) then diary("NSRT reminder while Debrief Glow is off"); return end
+  if type(info) ~= "table" then diary("NSRT sent a reminder without its details"); return end
   local id = info.spellID or info.spellid
-  if not id or secret(id) then return end
+  if not id then diary("NSRT reminder without a spell (text only): skipped"); return end
+  if secret(id) then diary("NSRT reminder's spell is hidden by the game: skipped"); return end
   id = tonumber(id); if not id then return end
   DB.seen[id] = true -- (so it shows in the Your spells window)
   local wait = info.expires and not secret(info.expires) and (info.expires - GetTime()) or (tonumber(info.dur) or 8)
+  local it = cdmItemFor(id)
+  diary(string.format("%s in %.1f s (%s): %s", spellName(id) or ("spell " .. id), wait, event == "NSRT_ALERT_WOULD_SHOW" and "timeline" or "pop-up",
+    it and "found on your Cooldown Manager" or (DB.fallback and "not on your Cooldown Manager, big icon" or "not on your Cooldown Manager")))
   schedule(id, wait)
+end
+local function onReminder(event, info)
+  local ok, err = pcall(reminder, event, info)
+  if not ok then diary("error: " .. tostring(err)) end
 end
 local function hookNSRT()
   if hooked or not (NSAPI and NSAPI.RegisterCallback) then return end
@@ -1077,6 +1096,10 @@ SlashCmdList.DEBRIEFGLOW = function(msg)
   msg = (msg or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
   if msg == "test" then DebriefGlow_Test()
   elseif msg == "spells" then DebriefGlow_Spells()
+  elseif msg == "why" then
+    local L = DB.log or {}
+    if #L == 0 then say("nothing in the diary yet. It fills in when NSRT sends you a reminder.") end
+    for i = math.max(1, #L - 9), #L do say(L[i]) end
   elseif msg == "size" then
     local items = cdmItems()
     if #items == 0 then say("no Cooldown Manager icons found.") end
@@ -1096,7 +1119,7 @@ SlashCmdList.DEBRIEFGLOW = function(msg)
 end
 
 local ev = CreateFrame("Frame", "DebriefGlowEvents")
-ev:RegisterEvent("ADDON_LOADED"); ev:RegisterEvent("PLAYER_LOGIN"); ev:RegisterEvent("ENCOUNTER_END")
+ev:RegisterEvent("ADDON_LOADED"); ev:RegisterEvent("PLAYER_LOGIN"); ev:RegisterEvent("ENCOUNTER_END"); ev:RegisterEvent("PLAYER_REGEN_DISABLED"); ev:RegisterEvent("ENCOUNTER_START")
 ev:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
 ev:SetScript("OnEvent", function(_, e, a1, a2, a3)
   if e == "ADDON_LOADED" and a1 == ADDON then
@@ -1120,6 +1143,13 @@ ev:SetScript("OnEvent", function(_, e, a1, a2, a3)
     registerSettings()
   elseif e == "ADDON_LOADED" or e == "PLAYER_LOGIN" then hookNSRT()
   elseif e == "UNIT_SPELLCAST_SUCCEEDED" then onCast(a3)
-  elseif e == "ENCOUNTER_END" then stopAll() end
+  elseif e == "ENCOUNTER_END" then stopAll(); diary("boss over")
+  elseif e == "ENCOUNTER_START" then diary("boss pull: " .. tostring(a2)); cdmItems()
+  elseif e == "PLAYER_REGEN_DISABLED" then cdmItems() end
+  -- (out of combat, look at the icons every few seconds so their spells are remembered for the next pull)
+  if e == "PLAYER_LOGIN" and C_Timer and C_Timer.NewTicker then
+    C_Timer.NewTicker(3, function() if not (InCombatLockdown and InCombatLockdown()) then cdmItems() end end)
+    diary("logged in; NSRT " .. ((NSAPI and NSAPI.RegisterCallback) and "found" or "not found"))
+  end
   if e == "PLAYER_LOGIN" then hookNSRT() end
 end)
