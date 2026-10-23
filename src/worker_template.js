@@ -200,6 +200,56 @@ const appHtml = (env) => { const k = (env.GITHUB_TOKEN ? 'r' : '') + (env.DISCOR
 // which broke the site in a browser with one; /api/events stays for pages and desktop apps still asking there)
 ROUTES['/api/fightlog'] = ROUTES['/api/events'];
 
+// Pace data for the Pulls tile's chart (Oct 23, the user's asks: other guilds' progress kept up to date as more guilds get it, pre-nerf
+// kills too). Every 10 minutes (the cron) one boss gets a small slice of work: once a day its kill rankings, every patch's (one page a
+// run, so Warcraft Logs is asked once a run at most), and the rest of the time a few new guilds' pulls from progstats.io, each kept as
+// its boss % pull by pull and the day each night started (well under 1 KB a guild). /api/pace hands a boss's list to the page, which
+// does the math and knows the nerf dates. A boss someone opens is added to the cron's list; the Coiled Altar starts on it.
+const PACE_SEED = ['3429:5'];
+const PACE_RANK_Q = `query($e:Int!,$d:Int!,$p:Int,$pt:Int){worldData{encounter(id:$e){fightRankings(difficulty:$d,metric:speed,page:$p,partition:$pt)}}}`;
+const PACE_PART_Q = `query($e:Int!){worldData{encounter(id:$e){zone{partitions{id}}}}}`;
+const PACE_LOG_Q = 'query L($t:Int!,$e:Int!,$d:Int!){logsForEncounter(teamId:$t,encounterId:$e,difficulty:$d){startTime fights(encounterId:$e,difficulty:$d){id startTime kill bossPct}} statsForEncounter(teamId:$t,encounterId:$e,difficulty:$d){pullCount}}';
+async function pacePS(query, variables) {
+  const r = await fetch('https://progstats.io/graphql', { method: 'POST', headers: { 'content-type': 'application/json', 'user-agent': 'Debrief (debriefme.io) raid pace chart' }, body: JSON.stringify({ query, variables }) });
+  if (!r.ok) throw new Error('progstats ' + r.status); const j = await r.json(); return j.data || {};
+}
+// (one guild: its pulls up to its first kill, if its record is complete (within 10% of the pull count progstats counts))
+function paceRec(g, l) {
+  const logs = (l.logsForEncounter || []).slice().sort((a, b) => (a.startTime < b.startTime ? -1 : 1)), st = l.statsForEncounter, v = [], n = [];
+  for (const lg of logs) { const dn = Math.floor(Date.parse(lg.startTime) / 864e5);
+    for (const x of (lg.fights || []).slice().sort((a, b) => (a.startTime || a.id) - (b.startTime || b.id))) {
+      if (!n.length || n[n.length - 1][1] !== dn) n.push([v.length, dn]);
+      v.push(x.kill ? 0 : Math.max(0.1, Math.round((x.bossPct || 0) * 10) / 10)); if (x.kill) break; }
+    if (v.length && v[v.length - 1] === 0) break; }
+  const pc = st && st.pullCount; if (!v.length || v[v.length - 1] !== 0 || !pc || v.length < 0.9 * pc || v.length > 1.1 * pc) return null;
+  return { g, v, n };
+}
+async function paceStep(env) {
+  const st = (await env.DEBRIEF_KV.get('pace-st', 'json')) || { b: {} }; for (const k of PACE_SEED) if (!st.b[k]) st.b[k] = {};
+  const keys = Object.keys(st.b); if (!keys.length) return; st.i = ((st.i || 0) + 1) % keys.length;
+  const key = keys[st.i], B = st.b[key], [e, d] = key.split(':').map(Number); B.seen = B.seen || []; B.todo = B.todo || [];
+  if (B.pg || !B.at || Date.now() - B.at > 864e5) { // (the rankings: one page a run)
+    if (!B.parts) { const z = await gql(env, PACE_PART_Q, { e }); const P = z && z.worldData && z.worldData.encounter && z.worldData.encounter.zone && z.worldData.encounter.zone.partitions; B.parts = (P || []).map((p) => p.id); if (!B.parts.length) B.parts = [0]; }
+    B.pg = B.pg || { i: 0, p: 1 }; const pt = B.parts[B.pg.i];
+    const r = await gql(env, PACE_RANK_Q, pt ? { e, d, p: B.pg.p, pt } : { e, d, p: B.pg.p }); let R = r && r.worldData && r.worldData.encounter && r.worldData.encounter.fightRankings;
+    if (typeof R === 'string') R = JSON.parse(R); R = R || {};
+    for (const t of R.rankings || []) { const g = t.guild && t.guild.id; if (g && !B.seen.includes(g) && !B.todo.includes(g)) B.todo.push(g); }
+    if (R.hasMorePages && B.pg.p < 40) B.pg.p++; else if (B.pg.i + 1 < B.parts.length) B.pg = { i: B.pg.i + 1, p: 1 }; else { delete B.pg; B.at = Date.now(); }
+  } else if (B.todo.length) { // (a few guilds a run, from progstats)
+    const raw = (await env.DEBRIEF_KV.get('pace-raw:' + key, 'json')) || []; let add = 0;
+    for (const g of B.todo.splice(0, 5)) { B.seen.push(g);
+      try { const rec = paceRec(g, await pacePS(PACE_LOG_Q, { t: g, e, d })); if (rec) { raw.push(rec); add++; } } catch (err) { console.warn('Pace:', g, err.message); } }
+    if (add) await env.DEBRIEF_KV.put('pace-raw:' + key, JSON.stringify(raw));
+  } else return { key, idle: true }; // (nothing to do for this boss till tomorrow's rankings)
+  await env.DEBRIEF_KV.put('pace-st', JSON.stringify(st));
+  return { key, pg: B.pg || null, at: B.at || null, todo: B.todo.length, seen: B.seen.length, parts: B.parts };
+}
+ROUTES['/api/pace'] = { age: 1800,
+  v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10); return e > 0 && e < 1e6 && [3, 4, 5].includes(d) ? { e, d } : null; },
+  run: async (env, v) => { const key = v.e + ':' + v.d, raw = await env.DEBRIEF_KV.get('pace-raw:' + key, 'json');
+    if (!raw) { const st = (await env.DEBRIEF_KV.get('pace-st', 'json')) || { b: {} }; if (!st.b[key] && Object.keys(st.b).length < 40) { st.b[key] = {}; await env.DEBRIEF_KV.put('pace-st', JSON.stringify(st)); } }
+    return { key, recs: raw || [] }; } };
+
 // The Discord bot ("Debrief", in the Debrief server). Needs the DISCORD_BOT_TOKEN secret (the bot's key, with the
 // Message Content intent on) and DEBRIEF_KV. Every 10 minutes (the cron):
 // - each new #bug-reports post becomes an issue on the project's GitHub (the same list Report a problem fills), gets the
@@ -1077,9 +1127,10 @@ async function planShare(req, env, url) {
 }
 
 export default {
-  async scheduled(ev, env, ctx) { ctx.waitUntil(Promise.allSettled([announcePatch(env), discordJobs(env, ev.scheduledTime || Date.now())]).then((r) => r.forEach((x) => { if (x.status === 'rejected') console.warn('Cron:', x.reason && x.reason.message); }))); },
+  async scheduled(ev, env, ctx) { ctx.waitUntil(Promise.allSettled([announcePatch(env), discordJobs(env, ev.scheduledTime || Date.now()), paceStep(env)]).then((r) => r.forEach((x) => { if (x.status === 'rejected') console.warn('Cron:', x.reason && x.reason.message); }))); },
   async fetch(req, env, ctx) {
     const url = new URL(req.url), route = ROUTES[url.pathname];
+    if (url.pathname === '/api/pacestep' && /-debrief./.test(url.hostname)) { try { return json(await paceStep(env)); } catch (e) { return json({ error: String(e && e.message || e) }, 500); } } /* (test copies only: one cron step on demand, to check the pace job (Oct 23)) */
     if (url.hostname === HOME_HOST && url.pathname === '/__move' && req.method === 'POST') return moveIn(req, env);
     if ((url.hostname === 'www.' + HOME_HOST || url.origin === OLD_SITE) && (req.method === 'GET' || req.method === 'HEAD') && !/^\/(?:api|wcl|auth)\//.test(url.pathname)) return moveHome(req, url);
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });

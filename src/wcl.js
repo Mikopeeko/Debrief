@@ -216,6 +216,9 @@ async function guildProg(creds, v) {
   return guildProgOf((q, vars) => gql(creds, q, vars), v);
 }
 
+// (other guilds' pulls on a boss for the pace chart, kept up to date by the site (Oct 23); the desktop app has the built-in snapshot only)
+async function paceRecs(v) { if (!HOSTED) return null; return api('/api/pace?e=' + v.e + '&d=' + v.d); }
+
 async function loadReport(creds, code, live) {
   let rep;
   if (HOSTED) rep = await api('/api/report?code=' + encodeURIComponent(code) + (live ? '&live=1' : '')); // (live: the site keeps it 20 seconds, not 2 minutes)
@@ -597,6 +600,6 @@ function* translateSteps(item, events) {
   return out;
 }
 
-root.WCL = { HOSTED, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
+root.WCL = { HOSTED, paceRecs, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);
