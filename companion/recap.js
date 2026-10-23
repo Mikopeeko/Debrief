@@ -712,7 +712,7 @@ function buildOne(b, rep, same, W, L, cutN) {
     // (survival: your defensives, Healthstone and health potion, and a close call you could have answered)
     const defs = (p.defs || []).filter((d) => d.possible > 0);
     if (defs.length) {
-      const usedN = defs.reduce((a, d) => a + Math.min(d.uses.length, d.possible), 0);
+      const usedN = defs.reduce((a, d) => a + Math.min(d.uses.length, d.possible), 0); P._dn = true; P._du = usedN > 0;
       P.surv.push([usedN === 0 && (rep.duration || 0) > 60 ? 'warn' : 'ok', defs[0].id ? String(defs[0].id) : '', shortTo('Defensives: ' + defs.map((d) => d.name + ' ' + Math.min(d.uses.length, d.possible) + ' of ' + d.possible).join(', ') + '.', 160)]);
     }
     const stones = (p.cons && p.cons.healthstone) || [], pots = (p.cons && p.cons.healpot) || [];
@@ -778,6 +778,10 @@ function buildOne(b, rep, same, W, L, cutN) {
   else if (b.kill && !D.length) raid.more = 'Nobody died.';
   // (how each mechanic went, one line each, from the fight audit: worst first)
   raid.mech = [];
+  // (defensives across the raid, for the card's chip (Oct 22): who pressed at least one, and who never did on a pull over a minute)
+  { const had = players.filter((q) => q._dn), used = had.filter((q) => q._du).length, never = (rep.duration || 0) > 60 ? had.filter((q) => !q._du).map((q) => '@' + q.name) : [];
+    if (had.length) raid.defs = [[never.length ? 'warn' : 'ok', 'spell_holy_divineshield', 'Defensives: ' + used + ' of ' + had.length + ' pressed at least one.' +
+      (never.length ? ' Never pressed one: ' + never.slice(0, 5).join(', ') + (never.length > 5 ? ' and ' + (never.length - 5) + ' more' : '') + '.' : '')]]; }
   // (Healthstones and health potions across the raid, for the card's chip (Oct 22): who used one, and who dropped low with one still ready)
   { const n = players.length, st = players.filter((q) => q._st).length, pt = players.filter((q) => q._pt).length, ms = players.filter((q) => q._ms).map((q) => '@' + q.name), on = players.some((q) => q._on);
     if (n) raid.cons = [[ms.length ? 'warn' : 'ok', on ? 'inv_stone_04' : 'inv_alchemy_70_red', (on ? 'Healthstones: ' + st + ' of ' + n + ' used' : 'No Healthstones this pull') + ', health potions: ' + pt + ' of ' + n + '.' +

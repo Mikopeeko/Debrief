@@ -64,7 +64,7 @@ local function decode(code)
   code = code:gsub("||", "|")
   if code:sub(1, 4) ~= "DBF1" then return nil, "That isn't a Debrief code. Copy it again from Debrief Companion." end
   if code:sub(-2) ~= "^Z" then return nil, "The code got cut off. Copy it again from Debrief Companion." end
-  local m, by = { players = {}, raid = { bad = {}, died = {}, mech = {}, cons = {}, tiles = {}, good = {}, fixes = {}, ghap = {}, gchg = {}, more = "", next = "", story = "", better = "", worse = "", ghead = "", gnext = "" } }, {}
+  local m, by = { players = {}, raid = { bad = {}, died = {}, mech = {}, cons = {}, defs = {}, tiles = {}, good = {}, fixes = {}, ghap = {}, gchg = {}, more = "", next = "", story = "", better = "", worse = "", ghead = "", gnext = "" } }, {}
   for _, r in ipairs(split(code, "^")) do
     local f = split(r, "~")
     -- (the wipe filter: K~versions~line is a line only some "stop at death" numbers have, e.g. K~012~R~... is in 0, 1 and 2)
@@ -91,6 +91,7 @@ local function decode(code)
     elseif t == "U" and by[g(2)] then add(by[g(2)].surv, { g(3), g(4), g(5) }) -- (survival: defensives)
     elseif t == "HP" and by[g(2)] then local p = by[g(2)]; p.cons = p.cons or {}; add(p.cons, { g(3), g(4), g(5) }) -- (your Healthstone and potion)
     elseif t == "RH" then add(m.raid.cons, { g(2), g(3), g(4) }) -- (the raid's Healthstones and potions)
+    elseif t == "RD" then add(m.raid.defs, { g(2), g(3), g(4) }) -- (the raid's defensives)
     elseif t == "N" and by[g(2)] then local p = by[g(2)]; if K then p.nextK = p.nextK or {}; table.insert(p.nextK, { K, g(3) }) else p.next = g(3) end
     elseif t == "T" and by[g(2)] then add(by[g(2)].tiles, { g(3), g(4), g(5), g(6) }) -- (the Detailed card's number tiles)
     elseif t == "O" and by[g(2)] then local p = by[g(2)]; if K then p.next2K = p.next2K or {}; table.insert(p.next2K, { K, g(3) }) else p.next2 = g(3) end
@@ -520,7 +521,7 @@ local function cutView(m)
   end
   local function pick(def, kl) if kl then for _, x in ipairs(kl) do if x[1]:find(c, 1, true) then return x[2] end end; return "" end; return def end
   local v = { h = m.h, addonV = m.addonV, cutN = m.cutN, coach = (m.coachV and m.coachV[c] and (m.coachV[c].head or "") ~= "" and m.coachV[c]) or m.coach, grade = m.grade, players = {},
-    raid = { bad = keep(m.raid.bad, true), died = keep(m.raid.died), mech = keep(m.raid.mech, true), cons = keep(m.raid.cons), more = pick(m.raid.more, m.raid.moreK), next = pick(m.raid.next, m.raid.nextK),
+    raid = { bad = keep(m.raid.bad, true), died = keep(m.raid.died), mech = keep(m.raid.mech, true), cons = keep(m.raid.cons), defs = keep(m.raid.defs), more = pick(m.raid.more, m.raid.moreK), next = pick(m.raid.next, m.raid.nextK),
       tiles = keep(m.raid.tiles), story = pick(m.raid.story or "", m.raid.storyK), better = pick(m.raid.better or "", m.raid.betterK), worse = pick(m.raid.worse or "", m.raid.worseK), lead = pick(m.raid.lead or "", m.raid.leadK),
       good = keep(m.raid.good), fixes = keep(m.raid.fixes), ghap = keep(m.raid.ghap), gchg = keep(m.raid.gchg), ghead = pick(m.raid.ghead or "", m.raid.gheadK), gnext = pick(m.raid.gnext or "", m.raid.gnextK) } }
   for _, p in ipairs(m.players) do
@@ -967,6 +968,7 @@ function render()
   if coachOn and view ~= "me" then
     coachBody()
     if SH.mechs and m.raid.mech and #m.raid.mech > 0 and (DB.maxMech or 6) > 0 then section("mech", "Boss mechanics", m.raid.mech, DB.maxMech or 6, function(r) y = row(y, r[1], r[2], r[4], r[3]) end) end
+    if SH.rdefs ~= false and m.raid.defs and #m.raid.defs > 0 then section("rdefs", "Defensives", m.raid.defs, 2, function(r) y = row(y, r[1], r[2], r[3]) end) end
     if SH.rcons ~= false and m.raid.cons and #m.raid.cons > 0 then section("rcons", "Healthstones and potions", m.raid.cons, 2, function(r) y = row(y, r[1], r[2], r[3]) end) end
   elseif glanceOn then
     glanceBody()
@@ -1027,6 +1029,7 @@ function render()
     if m.raid.mech and #m.raid.mech > 0 and (DB.maxMech or 6) > 0 then
       section("mech", "Boss mechanics", m.raid.mech, DB.compact and math.min(3, DB.maxMech or 3) or (DB.maxMech or 6), function(r) y = row(y, r[1], r[2], r[4], r[3]) end)
     end
+    if SH.rdefs ~= false and m.raid.defs and #m.raid.defs > 0 then section("rdefs", "Defensives", m.raid.defs, 2, function(r) y = row(y, r[1], r[2], r[3]) end) end
     if SH.rcons ~= false and m.raid.cons and #m.raid.cons > 0 then section("rcons", "Healthstones and potions", m.raid.cons, 2, function(r) y = row(y, r[1], r[2], r[3]) end) end
     diedRow()
     if m.raid.next ~= "" and SH.next ~= false and not ((m.raid.lead or "") ~= "" and SH.lead ~= false) then y = UI.nextBox(y + 2, m.raid.next) end
@@ -1880,6 +1883,7 @@ local function buildOptions()
     { "Deaths", function() return S().cdeaths ~= false end, function(v) S().cdeaths = v end },
     { "Avoidable damage", function() return S().cavoid ~= false end, function(v) S().cavoid = v end },
     { "Boss mechanics", function() return S().mechs == true end, function(v) S().mechs = v end, false, "How each mechanic went, worst first." },
+    { "Defensives", function() return S().rdefs ~= false end, function(v) S().rdefs = v end, false, "Who pressed a defensive, and who never did." },
     { "Healthstones and potions", function() return S().rcons ~= false end, function(v) S().rcons = v end, false, "Who used a Healthstone or health potion, and who dropped low with one still ready." },
     { "Your last pulls", function() return S().chips ~= false end, function(v) S().chips = v end, false, "Your last pulls along the top. Click one to look at it again." },
   })
