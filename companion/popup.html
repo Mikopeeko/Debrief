@@ -74,6 +74,7 @@ body { border: 1px solid var(--line2); border-radius: 10px; }
 .stpc button:hover { color: var(--gold); }
 .stpc em { font-style: normal; width: 32px; text-align: center; font: 700 13px Barlow, sans-serif; }
 .stpn { margin: 0 2px 10px; color: var(--faint); font-size: 12px; }
+.stp { margin: 0 0 10px; } .stpi { font: 400 12.5px Barlow, sans-serif; font-style: normal; color: var(--faint); margin-left: 8px; }
 /* the slim bar a pull opens with: one click for the whole card */
 body.isMini { border-color: rgba(230,180,80,.85); box-shadow: inset 0 0 0 1px rgba(230,180,80,.25); background: linear-gradient(90deg, rgba(230,180,80,.16), rgba(230,180,80,.04) 60%), var(--bg); }
 .mini { display: flex; align-items: center; gap: 12px; padding: 13px 12px 13px 16px; app-region: drag; -webkit-app-region: drag; cursor: move; animation: slideIn .45s cubic-bezier(.2,.8,.2,1) both; }
@@ -159,8 +160,9 @@ function nightRow() {
 function stopRow() {
   if (D.cut == null || !(D.cutN > 0)) return '';
   const c = D.cut, n = D.cutN, ord = (k) => k + (k % 100 >= 11 && k % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[k % 10] || 'th'));
-  const note = waiting ? 'Updating the coach…' : c === 0 ? 'The whole pull counts. Press + to stop counting at a death, so the wipe at the end isn\'t counted.' : c > n ? 'Fewer than ' + c + ' deaths, so the whole pull counts.' : 'Counted up to the ' + ord(c) + ' death. What came after isn\'t counted.';
-  return '<div class="stp"><b>Stop at death</b><span class="stpc"><button type="button" data-cut="-1">–</button><em>' + (c === 0 ? 'off' : c) + '</em><button type="button" data-cut="1">+</button></span></div><p class="stpn">' + note + '</p>';
+  // (one line (Oct 23): what it counts to beside the name, the explanation on hover)
+  const note = waiting ? 'updating the coach…' : c === 0 ? 'off, all of it counts' : c > n ? 'fewer deaths, so all of it counts' : 'counted to the ' + ord(c) + ' death';
+  return '<div class="stp" title="On a wipe, nothing after this death counts, so the mess at the end is not held against anyone. Press + or - to change it."><b>Stop at death <i class="stpi">' + note + '</i></b><span class="stpc"><button type="button" data-cut="-1">–</button><em>' + (c === 0 ? 'off' : c) + '</em><button type="button" data-cut="1">+</button></span></div>';
 }
 let waiting = false;
 // (the window grows to fit the card, up to most of the screen; the rest scrolls)
@@ -225,7 +227,10 @@ function hydrate(root) {
 }
 async function siteBox(host, pack) {
   const sh = host.shadowRoot || host.attachShadow({ mode: 'open' }), css = await siteCss();
-  sh.innerHTML = '<style>' + css + ':host{display:block;color:#ece8df;font:15px/1.5 Barlow,"Segoe UI",system-ui,sans-serif}.cch{margin:0!important}a{pointer-events:none;color:inherit;text-decoration:none}.cch-pmap,.cch-thumb,.wr-map,.avd-map{display:none!important}.cch-pq{pointer-events:none}.cch-acct2{grid-template-columns:1fr!important}.cch-hasmap{padding-right:inherit}</style>' + pack.html;
+  sh.innerHTML = '<style>' + css + ':host{display:block;color:#ece8df;font:15px/1.5 Barlow,"Segoe UI",system-ui,sans-serif}.cch{margin:0!important}a{pointer-events:none;color:inherit;text-decoration:none}.cch-pmap,.cch-thumb,.wr-map,.avd-map{display:none!important}.cch-pq{pointer-events:none}.cbr-nomap,.cbr-map{display:none!important}.cch-acct2{grid-template-columns:1fr!important}.pw2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:26px;align-items:start}.pw2>.pw-top{grid-column:1/-1}.pw-l,.pw-r{min-width:0}.pw-r>.cch-acct2{margin:0 0 10px}.pw-r>.cch-acct2:last-child{margin-bottom:0}.cch-hasmap{padding-right:inherit}</style>' + pack.html;
+  // (two columns in the wide window (Oct 23): headline across the top, the coach on the left, the bar panels on the right)
+  const sec = sh.querySelector('section.cch2'); if (sec && window.innerWidth >= 900 && !sec.classList.contains('pw2')) { const T = document.createElement('div'), L = document.createElement('div'), R = document.createElement('div'); T.className = 'pw-top'; L.className = 'pw-l'; R.className = 'pw-r';
+    [...sec.children].forEach((ch) => (ch.matches('.cch-hd, .cch-h') ? T : ch.matches('.cch-acct2') ? R : L).appendChild(ch)); sec.append(T, L, R); sec.classList.add('pw2'); }
   sh.querySelectorAll('details.cch-more').forEach((d) => { if (DEEP()) d.open = true; d.addEventListener('toggle', fit); });
   sh.querySelectorAll('details.cch-pdx').forEach((d, i) => { if (DEEP() && i === 0) d.open = true; d.addEventListener('toggle', fit); });
   sh.querySelectorAll('details.cch-abx').forEach((d) => { if (DEEP()) d.open = true; d.addEventListener('toggle', fit); }); /* (the Deaths and Avoidable damage panels, Oct 22) */

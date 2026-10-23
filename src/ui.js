@@ -1786,6 +1786,7 @@ const PATCH_NOTES = [
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
     { t: 'Since last raid', d: 'All pulls now remembers each night and compares it with your last raid on the same boss: what you fixed, what got better or worse, and what\'s still going wrong. Pick a player to see their mistakes that also happened last raid.' },
   ], n: [
+    'Debrief Companion: the night chart now shows boss health left like the website, with the kill at the bottom. The recap pop-up is twice as wide: the coach on the left, deaths, avoidable damage, Healthstones and defensives on the right.',
     'Debrief in game: when the focus is one of the What went wrong cards, that card says FOCUS NEXT PULL and the separate Focus box is gone, like the website.',
     'Breakdown: a mechanic that went wrong is now one plain line, with what happened and the flag in words. Open it for why, how many were done right, how you compare with top guilds, and one map at a time (the worst moment first; click another row for its map).',
     'Breakdown: each phase is now one simple row: its name, a coloured dot, and a bar for every mechanic showing how often it was done right, worst first. Click a bar to jump straight to that mechanic.',
@@ -11456,7 +11457,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
      direction"): short lines that REPLACE the cards (Oct 19 lesson: side by side, every problem showed twice). Went well, Went wrong
      (the mechanic, its plain fix in grey, what happened under it; a click opens the rest in place), then one Next pull line. The PC
      app's pop-up (key 'pop') keeps the cards until the in-game chat moves it over) */
-  const BRIEF = o.key !== 'pop';
+  const BRIEF = true; /* (the PC pop-up too, in its wide two-column window (Oct 23)) */
   const briefLine = (x, i) => { const mi = mapOf(x), kk = 'cchp-' + (o.key || 'x') + '-' + (x.sec || x.label), nm = esc(dbfCap(String(x.label).replace(/\s*\(.*$/, ''))), ins = (String(x.label).match(/\(([^)]+)\)\s*$/) || [])[1];
     const fx = String(x.fix || ''), nx = fx && !(i === 0 && (focusIsFix || normF(fx) === normF(c.focus))) ? '<div class="cch-mr"><span class="cch-ml">Next time</span><span>' + esc(fx) + '</span></div>' : '';
     return '<li class="cbr-w cbr-' + (x.sev === 'bad' ? 'bad' : 'warn') + '"' + (x.sec ? ' data-sec="' + esc(x.sec) + '"' : '') + '><details class="cch-pdx cbr-dx" data-k="' + esc(kk) + '"' + (S.openSecs.has(kk) ? ' open' : '') + '><summary><span class="cbr-dot"></span><span class="cbr-t"><b>' + nm + '</b>' + (ins ? ' <span class="cbr-i">' + esc(ins.toLowerCase()) + '</span>' : '') + ledTag(x) +

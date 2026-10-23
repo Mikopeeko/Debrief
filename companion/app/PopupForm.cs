@@ -51,7 +51,7 @@ namespace Debrief {
     // (a pull's recap, as JSON from the main window's page)
     public void ShowRecap(string json) {
       // (as wide as the card style picked in the addon: Detailed is the widest, and opens more; Oct 22)
-      var look = Wow.AddonLook(here); int w = Px(WidthOf(look[0]));
+      var look = Wow.AddonLook(here); int w = Math.Min(Px(WidthOf(look[0])), (int)(GameScreen().WorkingArea.Width * 0.94));
       if (json.StartsWith("{")) json = "{\"look\":\"" + look[1] + "\"," + json.Substring(1);
       pending = json;
       if (!placed) { placed = true; Bounds = SavedBounds(w, Px(70)); }
@@ -83,7 +83,8 @@ namespace Debrief {
       }
     }
 
-    static int WidthOf(string w) { return w == "narrow" ? 520 : w == "wide" ? 680 : w == "large" ? 780 : w == "xl" ? 900 : 580; }
+    // (twice as wide as before, two columns (Oct 23); the addon's Width picks a little more or less)
+    static int WidthOf(string w) { return w == "narrow" ? 1000 : w == "large" ? 1220 : w == "xl" ? 1280 : 1160; }
 
     protected override void OnMove(EventArgs e) { base.OnMove(e); if (placed && Visible) SaveBounds(); }
 
@@ -104,11 +105,14 @@ namespace Debrief {
       var r = new Rectangle(wa.Left + (wa.Width - w) / 2, wa.Top + wa.Height / 2 - h / 2, w, h); // (right over your character)
       try {
         var p = File.ReadAllText(BoundsFile).Split(',');
-        var s = new Rectangle(int.Parse(p[0]), int.Parse(p[1]), w, h);
+        // (kept by its centre, so a wider window still sits over your character; older saves had no width: 580)
+        int ow = p.Length > 2 ? int.Parse(p[2]) : Px(580);
+        var s = new Rectangle(int.Parse(p[0]) + ow / 2 - w / 2, int.Parse(p[1]), w, h);
+        s.X = Math.Max(wa.Left, Math.Min(s.X, wa.Right - w));
         foreach (var sc in Screen.AllScreens) if (sc.WorkingArea.IntersectsWith(new Rectangle(s.X + 20, s.Y + 5, Math.Max(1, w - 40), 30))) return s;
       } catch { }
       return r;
     }
-    void SaveBounds() { try { File.WriteAllText(BoundsFile, Left + "," + Top); } catch { } }
+    void SaveBounds() { try { File.WriteAllText(BoundsFile, Left + "," + Top + "," + Width); } catch { } }
   }
 }
