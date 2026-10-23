@@ -17,7 +17,7 @@ namespace Debrief {
           bool quiet = false;
           if (d.open && !d.enc) { int now = (int)DateTime.Now.TimeOfDay.TotalMilliseconds, gap = now - d.lastMs; if (gap < 0) gap += 86400000; quiet = gap > 15000 && gap < 3600000 * 6; }
           if ((d.enc || (d.open && !quiet)) && (DateTime.UtcNow - d.seen).TotalMinutes < 30) return true;
-          if ((DateTime.UtcNow - d.ended).TotalMinutes < 3) return true;
+          if ((DateTime.UtcNow - d.ended).TotalSeconds < 45) return true; // (45 s after a pull: its recap is long built by then (the user, Oct 22: "why not less"))
         }
       }
       return false;
