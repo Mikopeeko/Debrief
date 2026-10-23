@@ -583,6 +583,9 @@ function* translateSteps(item, events) {
       case 'dispel':
         add(e, 'SPELL_DISPEL,' + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + spell(e.extraAbilityGameID) + ',DEBUFF');
         break;
+      case 'resurrect': // (battle rezzes, for the wipe call (Oct 23))
+        add(e, 'SPELL_RESURRECT,' + src(e) + ',' + dst(e) + ',' + spell(ab));
+        break;
       case 'death': {
         add(e, 'UNIT_DIED,0000000000000000,nil,0x80000000,0x80000000,' + dst(e) + ',' + (e.feign ? 1 : 0)); // (Feign Death: Warcraft Logs marks it; the engine skips it (Oct 20: a hunter's 16 "deaths"))
         const a = actors.get(e.targetID), k = e.targetID + ':' + (e.targetInstance || 1);

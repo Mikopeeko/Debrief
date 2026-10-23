@@ -250,7 +250,7 @@ const PACKS = [
 const DIFF = { 1: 'Normal', 2: 'Heroic', 8: 'Mythic+', 14: 'Normal', 15: 'Heroic', 16: 'Mythic', 17: 'LFR', 23: 'Mythic' };
 const WANTED = new Set(['COMBATANT_INFO', 'SPELL_DAMAGE', 'SPELL_PERIODIC_DAMAGE', 'RANGE_DAMAGE', 'SWING_DAMAGE',
   'ENVIRONMENTAL_DAMAGE', 'SPELL_HEAL', 'SPELL_PERIODIC_HEAL', 'SPELL_ABSORBED', 'SPELL_HEAL_ABSORBED', 'SPELL_CAST_SUCCESS',
-  'SPELL_INTERRUPT', 'SPELL_DISPEL', 'SPELL_SUMMON', 'UNIT_DIED', 'SPELL_AURA_APPLIED', 'SPELL_AURA_APPLIED_DOSE', 'SPELL_AURA_REMOVED_DOSE', 'SPELL_AURA_REMOVED', 'SPELL_CAST_START',
+  'SPELL_INTERRUPT', 'SPELL_DISPEL', 'SPELL_SUMMON', 'UNIT_DIED', 'SPELL_RESURRECT', 'SPELL_AURA_APPLIED', 'SPELL_AURA_APPLIED_DOSE', 'SPELL_AURA_REMOVED_DOSE', 'SPELL_AURA_REMOVED', 'SPELL_CAST_START',
   'SPELL_ENERGIZE', 'SPELL_PERIODIC_ENERGIZE',
   // (Augmentation's share of other players' hits, and missed auto attacks for melee uptime, Oct 19)
   'SPELL_DAMAGE_SUPPORT', 'SPELL_PERIODIC_DAMAGE_SUPPORT', 'RANGE_DAMAGE_SUPPORT', 'SWING_DAMAGE_LANDED_SUPPORT', 'SWING_MISSED']);
@@ -6000,7 +6000,7 @@ async function analyzeAsync(item, text, opts, pause) {
 }
 function* analyzeSteps(item, text, opts) {
   const packs = (opts && opts.packs) || PACKS;
-  const r = { item, players: new Map(), deaths: [], mistakes: [], insights: [], interrupts: [],
+  const r = { item, players: new Map(), deaths: [], rezzes: [], mistakes: [], insights: [], interrupts: [],
     dmgS: [], healS: [], takenS: [], bossS: [], bossPct: null, duration: 0,
     takenAbS: [], // (takenAbS: per second, what hit the raid: { spell: [id, amount] }, for the Performance tab's big hits)
     dmgTS: [], enemyDied: new Map(), // (dmgTS: per second, the raid's damage by target name; enemyDied: guid -> when it died)
@@ -6111,6 +6111,8 @@ function* analyzeSteps(item, text, opts) {
 
     // (a player's summon: the pet is theirs, and its time and spell are kept for the spec checks, e.g. a Warlock's demons)
     if (ev === 'SPELL_SUMMON') { if (isPlayer(sg)) { pets.set(dg, sg); if (f.length > 9 && f[8] !== '0') { const q = P(sg, sn); if (!q.sumL) q.sumL = []; if (q.sumL.length < 6000) q.sumL.push([t, f[9], dg, dn]); } } continue; }
+    // (a battle rez or any resurrect on a player: back alive, for the wipe call (Oct 23))
+    if (ev === 'SPELL_RESURRECT') { if (isPlayer(dg)) r.rezzes.push({ t, guid: dg, by: sg, spell: f[9] || '' }); continue; }
     if (ev === 'UNIT_DIED') {
       if (!isPlayer(dg)) { const u = units.get(dg); if (u) u.samples.push([t | 0, 0]); if (!r.enemyDied.has(dg)) r.enemyDied.set(dg, t); if (mod) modEv.push({ k: 'die', t, guid: dg, name: dn }); continue; }
       if (f[8] === '1') continue;

@@ -1614,7 +1614,7 @@ function headerHtml(r, allMode) {
     const ds = keptDeaths(r).length;
     cls = it.kill ? 'good' : 'bad'; left = now; kick = [it.diff, raid];
     big = it.kill ? 'Kill' : now != null ? (usesPh ? 'Wipe in ' : 'Wipe at ') + (pg ? pg.label : now.toFixed(1) + '%') : 'Wipe';
-    stats = [['clock', it.wallMs ? wallClock(it.wallMs) : clock(it.startMs)], ['timer', T(r.duration)], ['users', plural(r.players.size, 'player')], ['skull', plural(ds, 'death') + (cutInfo(r) ? ' before the wipe filter' : '')]];
+    stats = [['clock', it.wallMs ? wallClock(it.wallMs) : clock(it.startMs)], ['timer', T(r.duration)], ['users', plural(r.players.size, 'player')], ['skull', plural(ds, 'death') + (cutInfo(r) ? ' before the wipe call' : '')]];
     const yet = !it.kill && now != null && everBest != null && now < everBest && (!bestO || now < bestO.v); // (further than every saved night too)
     // (a kill says how long it took tonight; "Boss down" only repeated the pill)
     const wipes = same.slice(0, Math.max(0, k)).filter((x) => !x.kill).length;
@@ -1743,8 +1743,12 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-23', h: [
+    { t: 'The wipe is called for you', d: 'No more "stop at the 2nd death". Debrief now calls the wipe at the moment no raid has ever come back from: more people dead than any kill of that boss survived at that point (battle rezzes counted), the damage check missed, or half the raid dead. Everything before it counts, so the deaths and mistakes that lost the pull are graded. Tested on 760 kills: it never calls a wipe on a pull that was won.' },
     { t: 'A shorter debrief', d: 'Each pull now opens like a raid lead\'s debrief: what went well, what went wrong (click a line for its map and details) and the one thing for next pull. The extra drawers are gone; the timeline, raid cooldowns and burst windows sit in the open below the phases.' },
   ], n: [
+    'Deaths are one number everywhere: Debriefing, the Deaths panel and the Report card show the same count of deaths that counted, with mass wipes (many of us at once) as a small second number.',
+    'The coach tells the story of a wipe: what started it and what finished it ("It started at 3:00: set 1\'s Spiteful Soulcoiler adds lived too long… Then Malevolent Resonance took five more by 4:18.").',
+    'Healthstones and Defensives show how many times each raider used them; tap a name for how many pulls and each spell.',
     'One fix everywhere: the Report card\'s Next pull for each raider is now the same line Debriefing\'s coach gives them (it could name a different mechanic before).',
     'A little Halloween spirit on the site until Nov 1 🎃',
     'The coach box is tidier: the thing to focus on next pull is said once, on the first card. Each Next time is one short instruction (open the card for the rest), cards carry at most one tag, and what went right is a short plain list.',
@@ -7553,9 +7557,62 @@ function assign(only, capture) { // (only: just the note, for the all-pulls NSRT
 // On a wipe, the audit stops at the Nth player death (typed in, saved on this PC; 0 or blank = off). Kills are always audited in full.
 // (new key: earlier test builds saved 4 under 'wla-death-cut'; the default is now 2)
 function deathCutN() { const v = store.get('wla-death-cut2'); return v == null || v === '' ? 2 : +v; }
-const CUT_WHY = 'Why filter? Once a pull is lost, players die one after another and mechanics stop being played on purpose. Everything after that point is noise. It piles up mistakes and blames people for a wipe that had already happened. Stopping the audit at the Nth death keeps the review on what actually caused the wipe. Kills are always audited in full. Raise the number if your raid often recovers from early deaths; 0 turns the filter off.';
+const CUT_WHY = 'Why filter? Once a pull is lost, players die one after another and mechanics stop being played on purpose. Everything after that point is noise. It piles up mistakes and blames people for a wipe that had already happened. Debrief calls the wipe at the moment no raid has ever come back from: more players dead than any kill of this boss survived at that point of the fight (after battle rezzes), the damage check missed, or half the raid dead. What caused it still counts; what came after isn\'t counted. Kills are always audited in full.';
+// ---------- the wipe call (Oct 23, the user's idea: "instead of having a wipe filter… create logic across my whole website that detects
+// when a wipe was occurring and filters all things beyond that out"; checked against their calls on the Oct 21 night: "these marks match
+// where I'd call each wipe"). notes/Guides/Wipe detection - how it works.md. On a wipe, the call is the first moment of:
+//  1. more players dead at once (deaths minus battle rezzes, per 20 players) than any kill of this boss survived at that point of the
+//     fight, after the raid's battle rez charges still up, plus a margin (WIPE_LINE: the 40 kills with the most deaths on Warcraft Logs
+//     per boss and difficulty; none of 760 kills would have been called). Not while the boss is at 10% or less (raids that close still
+//     win), and not past the median kill length, where the line is too thin;
+//  2. the damage check missed: a red Phase changes row, dated to the moment the phase ran past the longest any kill took;
+//  3. half the raid dead (the wipe's last stand).
+// Kills never get one. Everything up to and including the call counts (what caused the wipe); after it is the wipe.
+const WIPE_LINE = {
+  "Nymrissa Wavecaller|H": { s: [1.5, 3.3, 6.7, 7, 7, 9.2, 9.2, 9.2, 9.2], stop: 214, m: 1, k: 40 },
+  "Nymrissa Wavecaller|M": { s: [1.2, 1.2, 2.5, 3.3, 4.2, 4.2, 5, 5, 5.8, 6.7, 10, 10, 10], stop: 356, m: 1, k: 40 },
+  "Sszorak|H": { s: [3.8, 4.7, 4.8, 6.7, 7.6, 8.2, 10, 10, 10], stop: 211, m: 1, k: 40 },
+  "Sszorak|M": { s: [2, 2, 4, 4, 4, 5, 5, 5, 5, 13, 15, 16, 16, 16], stop: 364, m: 1, k: 40 },
+  "The Twin Fangs|H": { s: [0.8, 3.2, 3.2, 4.7, 6.4, 6.4, 7.3, 15.8, 15.8, 15.8, 15.8], stop: 284, m: 2, k: 40 },
+  "The Twin Fangs|M": { s: [0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 7, 18, 18, 18, 18], stop: 404, m: 1, k: 40 },
+  "The Coiled Altar|H": { s: [2.6, 2.6, 2.6, 2.6, 3.8, 3.8, 4, 4, 4.7, 4.7, 4.7, 4.7], stop: 307, m: 1, k: 40 },
+  "The Coiled Altar|M": { s: [2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 6, 12, 12, 12], stop: 617, m: 1, k: 40 },
+  "Entombed Sentinels|H": { s: [2.5, 2.5, 3.2, 3.2, 9.5, 13.3, 13.3, 13.3, 13.3], stop: 214, m: 1, k: 40 },
+  "Entombed Sentinels|M": { s: [2, 2, 2, 3, 3, 3, 3, 5, 7, 12, 12, 12, 12], stop: 342, m: 1, k: 40 },
+  "Vashnik the Malignant|H": { s: [1.1, 1.1, 2.4, 2.5, 2.5, 10, 10, 10], stop: 205, m: 1, k: 40 },
+  "Vashnik the Malignant|M": { s: [1, 2, 2, 4, 4, 4, 5, 5, 14, 15, 15, 15, 15], stop: 353, m: 1, k: 40 },
+  "Nek'zali the Soulcoiler|H": { s: [0.9, 1.1, 1.4, 1.4, 1.4, 9.1, 9.1, 9.1], stop: 209, m: 1, k: 40 },
+  "Nek'zali the Soulcoiler|M": { s: [0, 1, 3, 3, 3, 4, 4, 7, 7, 12, 12, 12, 12], stop: 344, m: 1, k: 40 },
+  "Ula'tek|H": { s: [0.9, 1.4, 2.5, 2.5, 2.5, 4.8, 4.8, 5, 5, 5, 5, 5, 7, 7, 7, 7, 7], stop: 454, m: 1, k: 40 },
+  "Ula'tek|M": { s: [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 4, 4, 5, 5, 7, 8, 8, 8], stop: 598, m: 1, k: 40 },
+  "The Lost Explorers|H": { s: [1.9, 5.3, 5.3, 6, 6, 6, 6, 6], stop: 192, m: 1, k: 40 },
+  "The Lost Explorers|M": { s: [0, 2, 2, 2, 2, 4, 6, 17, 17, 17, 17, 17], stop: 319, m: 1, k: 40 },
+  "Kith'ix|M": { s: [0.9, 0.9, 1.7, 2.7, 2.7, 2.7, 2.7, 4, 9, 9, 9, 9], stop: 304, m: 1, k: 40 }
+};
+const WIPE_WHY = { line: 'more dead than any kill survived', check: 'the damage check was missed', half: 'half the raid was dead' };
+function wipeLine(r) { const it = r && r.item; if (!it || it.kind !== 'boss') return null; const d = /mythic/i.test(it.diff || '') || it.diffId === 16 ? 'M' : /heroic/i.test(it.diff || '') || it.diffId === 15 ? 'H' : ''; return WIPE_LINE[it.boss + '|' + d] || null; }
+// -> { t, why, n (deaths up to it), who (whose death made the call, if one did) } | null (no call: the whole pull counts) | undefined (no line for this boss)
+function wipeAt(r) {
+  if (!r || !r.item || r.item.kill) return null; if (r._wipe && r._wipe.k === r.deaths.length) return r._wipe.v;
+  const L = wipeLine(r); if (!L) return undefined;
+  const n = raidSizeOf(r) || 20, ev = r.deaths.map((d) => [d.t, 1, d.guid, d]).concat((r.rezzes || []).map((z) => [z.t, -1, z.guid, null])).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const dead = new Set(), boss = (t) => { const s = r.bossS || []; return s.length ? s[Math.max(0, Math.min(s.length - 1, Math.floor(t)))] : null; };
+  let used = 0, call = null;
+  for (const [t, s, g, d] of ev) { if (s < 0) { if (dead.delete(g)) used++; continue; } dead.add(g);
+    const nd = dead.size, charges = Math.max(0, 1 + Math.floor(t / (5400 / n)) - used), lim = t <= L.stop - 30 ? L.s[Math.min(L.s.length - 1, Math.floor(t / 30))] + (L.m || 1) : Infinity, b = boss(t);
+    if ((nd - charges) * 20 / n > lim && !(b != null && b <= 10)) { call = { t, why: 'line', d }; break; }
+    if (nd >= Math.ceil(n / 2)) { call = { t, why: 'half', d }; break; } }
+  // (the damage check: "took 3:33 (… never past 2:56)" at its end → went late at end − 3:33 + 2:56)
+  const mss = (x) => { const m = /(\d+):(\d\d)/.exec(x || ''); return m ? 60 * +m[1] + +m[2] : null; };
+  for (const m of r.mistakes || []) { if (m.mechanic !== 'Phase changes' || m.severity !== 'High') continue; const det = String(m.detail || ''), took = mss((/took (\d+:\d\d)/.exec(det) || [])[1]), nev = mss((/never past (\d+:\d\d)/.exec(det) || [])[1]);
+    const at = took != null && nev != null && took > nev ? m.t - took + nev : m.t; if (!call || at < call.t) call = { t: at, why: 'check', d: null }; }
+  const v = call ? { t: call.t, why: call.why, auto: true, n: r.deaths.filter((x) => x.t <= call.t + 0.05).length, who: call.d ? call.d.player : '' } : null;
+  r._wipe = { k: r.deaths.length, v }; return v; }
+// (how a page names the cut: "when the wipe was called (more dead than any kill survived)", or the old "2nd death (Name)")
+const cutLbl = (c) => (c && c.auto ? 'when the wipe was called (' + WIPE_WHY[c.why] + ')' : c ? 'the ' + ordinal(c.n) + ' death (' + esc(c.who) + ')' : '');
 function cutInfo(r) {
   const n = deathCutN(); if (!n || !r || r.item.kill) return null;
+  const w = wipeAt(r); if (w !== undefined) return w; /* (the wipe call (Oct 23); a boss without a kill line yet keeps the old Nth death) */
   const ds = r.deaths.slice().sort((a, b) => a.t - b.t);
   return ds.length >= n ? { t: ds[n - 1].t, n, who: ds[n - 1].player } : null;
 }
@@ -7875,7 +7932,7 @@ function audit() {
   // a boss without its own mechanic checks yet: say so, so the short page doesn't look broken
   if (!(r.module && !r.module.error && r.module.sections && r.module.sections.length)) h += '<div class="nomod"><b>Mechanic checks for ' + esc(r.item.boss) + ' aren\'t built yet.</b> This pull shows deaths, defensives, potions and Healthstones, the raid cooldowns timeline and interrupts.</div>';
   // the wipe filter as one quiet line: where this pull's audit stops (the setting itself is on the tab bar, just above)
-  h += '<div class="cutbar' + (cut ? ' on' : '') + '"><span class="cutnow">' + (r.allPulls ? (deathCutN() ? 'Each wipe counts up to its <b>' + ordinal(deathCutN()) + ' death</b>, and a kill counts in full' : '<b>The wipe filter is off</b>, so every pull counts in full') : cut ? '<b>Counted up to ' + T(cut.t) + '</b>, the ' + ordinal(cut.n) + ' death (' + esc(cut.who) + '). ' + pl2(hidden + hiddenMk, 'result') + ' after it ' + (hidden + hiddenMk === 1 ? 'isn\'t' : 'aren\'t') + ' counted.'
+  h += '<div class="cutbar' + (cut ? ' on' : '') + '"><span class="cutnow">' + (r.allPulls ? (deathCutN() ? 'Each wipe counts up to <b>its wipe call</b>, and a kill counts in full' : '<b>The wipe filter is off</b>, so every pull counts in full') : cut ? '<b>Counted up to ' + T(cut.t) + '</b>, ' + cutLbl(cut) + '. ' + pl2(hidden + hiddenMk, 'result') + ' after it ' + (hidden + hiddenMk === 1 ? 'isn\'t' : 'aren\'t') + ' counted.'
       : r.item.kill ? '<b>Kill</b>, so the whole pull is checked' : deathCutN() ? 'Fewer than ' + deathCutN() + ' deaths, so the whole pull is checked' : 'The wipe filter is off, so the whole pull is checked') + '</span></div>';  // Highest-priority fixes first: problems, then some mistakes, then clean; within each, the most flagged rows first.
   // Interrupts (shown here instead of their own tab) are ranked the same way.
   const rank = { bad: 0, warn: 1, good: 2 };
@@ -8480,7 +8537,7 @@ function audit() {
         return { s, nB, nW, lc, lv: lvlOf(lc) }; });
       const nC = all.filter((x) => x.lv === 'clean').length, nM = all.filter((x) => x.lv === 'minor').length, nF = all.length - nC - nM;
       const num = (k, v, sub) => '<div class="dbr-n"><span class="dbr-k">' + k + '</span><span class="dbr-v">' + v + '</span><span class="dbr-s">' + sub + '</span></div>';
-      void res; void resSub; top += '<div class="dbr-4 dbr-3">' + num( /* (no Result tile: the banner and the coach say it (Oct 22)) */'Deaths', '<b>' + deaths.length + '</b>', deaths.length ? 'first at ' + T(deaths[0].t) + ' (' + esc(deaths[0].player) + ')' : 'nobody died') +
+      void res; void resSub; top += '<div class="dbr-4 dbr-3">' + num( /* (no Result tile: the banner and the coach say it (Oct 22)) */'Deaths', '<b>' + deathCount([r]).n + '</b>', (() => { const c = deathCount([r]); return c.first ? 'first at ' + T(c.first.t) + ' (' + esc(String(c.first.player).split('-')[0]) + ')' + (c.mass ? ' · ' + c.mass + ' in a mass wipe' : '') : c.mass ? c.mass + ' in a mass wipe' : 'nobody died'; })()) +
         num('Mechanics', '<b class="' + (nC ? 'dbr-ok' : 'dbr-z') + '">' + nC + '</b><em> clean</em> <b class="' + (nM ? 'dbr-w' : 'dbr-z') + '">' + nM + '</b><em> with mistakes</em> <b class="' + (nF ? 'dbr-b' : 'dbr-z') + '">' + nF + '</b><em> failed</em>', 'of ' + plural(all.length, 'mechanic')) +
         num('Raid damage', '<b>' + C(dmg / Math.max(1, endT)) + '</b>', 'a second' + (cut ? ', up to the wipe filter' : '') + dbdVsLast(r, dmg / Math.max(1, endT))) + (NJ ? dbnNum(NJ, num) : '') + '</div>';
       if (NJ) top = top.replace('<div class="dbr-4 dbr-3">', '<div class="dbr-4">'); /* (with a note: four tiles) */
@@ -9855,14 +9912,17 @@ function whyWiped(r) {
   const msNear = r.mistakes.filter((m) => m.mechanic !== 'Death' && m.t <= ct + 8.05); /* (a raid mistake logged a few seconds after the deaths it caused, like orbs colliding, counts even past the wipe filter (Oct 22)) */
   const raidM = (a, b, sev) => msNear.filter((m) => m.player === 'Raid' && sev.includes(m.severity) && m.t >= a && m.t <= b).sort((x, y) => x.t - y.t)[0] || null;
   const dmgM = ms.filter((m) => m.player === 'Raid' && WHY_DMG.test(m.detail || '')).sort((a, b) => a.t - b.t);
-  const fromM = (m, k) => ({ k: k || (WHY_DMG.test(m.detail || '') ? 'dmg' : 'mistake'), t: m.t, mech: m.mechanic, id: m.id, detail: m.detail, fix: m.fix, how: 'raid' }); /* (its own fix rides along (Oct 22)) */
+  /* (one name per mechanic (Oct 23): the line's own name, "Spiteful Soulcoiler", not its add's spell "Spiritcackle") */
+  const secNm = (m) => { const x = ((r.module && !r.module.error && r.module.sections) || []).find((q) => q.spell && q.spell[0] === m.id && q.spell[1] === m.mechanic); return (x && String(x.title || '').replace(/\s*\(.*$/, '')) || m.mechanic; };
+  const fromM = (m, k) => ({ k: k || (WHY_DMG.test(m.detail || '') ? 'dmg' : 'mistake'), t: m.t, mech: secNm(m), id: m.id, detail: m.detail, fix: m.fix, how: 'raid' }); /* (its own fix rides along (Oct 22)) */
   const rm = d0 ? raidM(d0.t - 20, d0.t + 1, ['High']) : ms.filter((m) => m.player === 'Raid' && m.severity === 'High').sort((a, b) => a.t - b.t)[0];
   /* (a raid mistake after the first death that killed more of us at once than had died before it: that's what lost the pull, not the lone
      death before it (Oct 22, Twin Fangs pull 29: one death at 4:55, then an unsoaked globule killed 17 at 5:08 and it said "Not sure what happened")) */
   const boomN = (m) => r.deaths.filter((x) => x.t >= m.t - 2 && x.t <= m.t + 5).length;
   const boom = d0 && !rm ? msNear.filter((m) => m.player === 'Raid' && m.severity === 'High' && m.t > d0.t + 1 && boomN(m) >= 4 && boomN(m) > all.filter((x) => x.t < m.t - 2).length).sort((a, b) => a.t - b.t)[0] || null : null;
-  let o;
-  if (rm) o = fromM(rm);
+  let o; const wc = cutInfo(r), chkM = wc && wc.auto && wc.why === 'check' && !all.length ? r.mistakes.filter((m) => m.mechanic === 'Phase changes' && m.severity === 'High').sort((a, b) => a.t - b.t)[0] : null;
+  if (chkM) { o = fromM(chkM, 'dmg'); o.t = wc.t; o.chk = true; }
+  else if (rm) o = fromM(rm);
   else if (boom) o = fromM(boom);
   else if (d0) {
     const wave = all.filter((x) => x.t >= d0.t && x.t - d0.t <= 5), p0 = r.players.get(d0.guid), w0 = why(d0);
@@ -9906,9 +9966,22 @@ function whySay(o, pm, nth) {
   const dead = new Set(all.filter((x) => x.t >= t0 - 2).map((x) => x.player)).size, everyone = dead >= (o.size || 20) - 2;
   const end = near.length >= 3 ? ' Losing ' + (WHY_NUM[near.length] || near.length) + ' at once is too much to come back from.' : !rest.length ? (everyone ? '' : ' We called it after that.') : everyone ? ' We never really recovered after that.' : ' We lost ' + rest.length + ' more after that and called it.';
   /* (the opener: "That one's on Dreadmarch.", or "Dreadmarch again, that's the third time tonight.") */
-  const on = (name) => (nth >= 2 ? name + ' again, that\'s the ' + ordN(nth) + ' time tonight.' : 'That one\'s on ' + name + '.');
+  const on = (name) => (nth >= 2 ? name + ' again, that\'s the ' + ordN(nth) + ' time tonight.' : 'We lost that one to ' + name + '.'); /* (not "That one's on X": an add's name read like blaming a person (Oct 23)) */
+  /* (an adds note said plainly, with who died: "Set 1's adds lived too long, and their Retaliatory Malice killed Volkovod at 3:00.") */
+  const addsSay = (x, t, nm) => { const m = String(x || '').match(/^(?:One|\d+) of us died to (.+?) while (set \d+'s adds|the adds) (?:were|was) alive\.?$/); if (!m) return null;
+    const ds = all.filter((q) => Math.abs(q.t - t) <= 2 && lc(q.ability) === lc(m[1])); return m[2].replace(/adds$/, (nm ? nm + ' ' : '') + 'adds') + ' lived too long, and their ' + esc(m[1]) + ' killed ' + (ds.length ? names(ds) : 'one of us') + '.'; };
+  /* (the rest of the story up to the wipe call: the hit that took the most of us after the first domino, "Then Malevolent Resonance took 5 more by 4:18.") */
+  const thenSay = (t, ab0) => { const after = all.filter((q) => q.t > t + 5), by = new Map(); for (const q of after) { const k = q.ability || q.killer || ''; if (!k || lc(k) === lc(ab0)) continue; by.set(k, (by.get(k) || []).concat(q)); }
+    const top = [...by].sort((a, b) => b[1].length - a[1].length)[0]; return top && top[1].length >= 2 ? ' Then ' + esc(top[0]) + ' took ' + (WHY_NUM[top[1].length] || top[1].length) + ' more by ' + T(top[1][top[1].length - 1].t) + '.' : ''; };
   const same = near.filter((x) => x !== d && d && d.ability && lc(x.ability) === lc(d.ability)), group = d ? [d].concat(same) : [];
-  if (o.how === 'raid') return { h: o.k === 'dmg' ? (nth >= 2 ? 'Short on damage again, that\'s the ' + ordN(nth) + ' time tonight.' : 'We just didn\'t have the damage for that one.') : on(mech(o.mech, o.id)), s: esc(whyAt(plain(o.detail), T(o.t))) + end };
+  if (o.how === 'raid') { const nmH = mech(o.mech, o.id), a = o.k === 'dmg' ? null : addsSay(plain(o.detail), o.t, nmH), d1 = all.find((q) => Math.abs(q.t - o.t) <= 2), th = o.k === 'dmg' ? '' : thenSay(o.t, d1 && d1.ability);
+    /* (a story when it was adds (Oct 23): "It started at 3:00: set 1's Spiteful Soulcoiler adds lived too long, and their Retaliatory Malice killed
+       Volkovod. Then Malevolent Resonance took five more by 4:18.") */
+    if (a) return { h: (nth >= 2 ? on(nmH) + ' ' : '') + 'It started at ' + T(o.t) + ':', s: a + (th || end) };
+    /* ("Malacrass took 3:33 (… never past 2:56), so he got …" → "Malacrass's phase ran past 2:56 at 4:44, longer than any kill took, so he got …") */
+    const tk = o.chk ? String(o.detail || '').match(/^(.+?) took (\d+:\d\d) \(.*?never past (\d+:\d\d)\)(.*?)\.?$/) : null;
+    if (tk) return { h: nth >= 2 ? 'Short on damage again, that\'s the ' + ordN(nth) + ' time tonight.' : 'We just didn\'t have the damage for that one.', s: esc(tk[1] + '\'s phase ran past ' + tk[3] + ' at ' + T(o.t) + ', longer than any kill took' + tk[4] + '.') };
+    return { h: o.k === 'dmg' ? (nth >= 2 ? 'Short on damage again, that\'s the ' + ordN(nth) + ' time tonight.' : 'We just didn\'t have the damage for that one.') : on(nmH), s: esc(whyAt(plain(o.detail), T(o.t))) + (th || end) }; }
   if (o.how === 'none') return { h: 'Not sure what happened on that one.', s: 'Nobody died, so I think we called it.' };
   if (o.how === 'own') { const r1 = o.why ? toYou(o.why) : '', you = group.length > 1 ? names(group) : who(d), sameL = lc(o.l) === lc(d.ability);
     /* ("hit by X" reads "you were hit by X, and it killed you", not "you hit by X and it got you" (Oct 22)) */
@@ -10520,7 +10593,7 @@ function coachDeaths(reps, name) {
   // (one pull: the deaths past the first 6 and the ones after the wipe filter, behind "+N more"; each opens its summary (Oct 22))
   const rest = night ? nItems.slice(5) : kept.slice(6).concat(L.filter((x) => x.after)).map((x) => ({ t: T(x.d.t), who: name ? '' : String(x.d.player).split('-')[0], ab: ab(x.d), k: x.after ? 'n' : x.v.on && x.v.w < 1 ? 'half' : x.v.on && x.why.k !== 'own' && x.why.k !== 'ready' ? 'on' : x.why.k, word: x.after ? 'after the wipe filter, not counted' : x.why.t, dg: x.d.guid + '@' + x.d.t.toFixed(2), late: !!x.after }));
   const note = !kept.length ? '' : (onThem ? onThem + ' of ' + plural(kept.length, 'death') + (name ? ' on you' : ' on the player') + ' (red: their own mistake or a slow death with something ready' + (kept.some((x) => x.v.on && x.v.w < 1) ? '; amber: half on them' : '') + ').' : (name ? 'None of these are on you.' : 'None of these are on the players.')) + (nAfter ? ' ' + nAfter + ' more after the wipe filter, not counted.' : '');
-  return { line, list, n: kept.length, mass: kept.filter((x) => x.v.why === 'mass').length, onThem, bad: onThem > 0, items, more, note, rest, nsum: nItems.map((x) => ({ key: x.dn, html: x.html })) };
+  return { line, list, you: !!name, n: kept.length, mass: kept.filter((x) => x.v.why === 'mass').length, onThem, bad: onThem > 0, items, more, note, rest, nsum: nItems.map((x) => ({ key: x.dn, html: x.html })) };
 }
 // Healthstones, potions and defensives in the coach box (your asks, Oct 22: "add healthstone/healthpot usage here, and defensive usage";
 // "healthstones/healthpots: I just want to make sure people are using them. Defensives: same thing, ... maybe including how much damage
@@ -10559,25 +10632,28 @@ function coachKitHtml(K) {
   const night = K.night, you = !!K.name, pc = (v) => (v == null ? '' : Math.max(1, Math.round(100 * v)) + '%');
   const kf = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k'), flag = (n) => (n >= 2 ? 'bad' : n === 1 ? 'warn' : '');
   const pre = (x, t) => (night ? 'P' + x.r.item.pull + ' · ' : '') + T(t) + ' · ', nm = (p) => String(p.name).split('-')[0];
-  const cnt = (n, pulls, all) => (n ? (night ? n + ' of ' + all + ' pulls' : '×' + n) : 'none');
+  const cnt = (n) => (n ? '×' + n : 'none'); /* (the total, on a pull or a night (Oct 23); "in N of M pulls" is in the drop-down) */
+  const inP = (k, all) => (night && k ? '<p class="ckt-tot">In ' + k + ' of ' + all + ' pulls.</p>' : '');
   // Healthstones and potions: everyone; the bar is how many they used (one pull) or in how many pulls (All pulls). Never used one: amber,
   // listed first; red when they sat low for long with one unused twice or more
-  const hs = K.rows.map((q) => { const miss = q.lows.filter((x) => x.kit), n = night ? q.usePulls : q.uses.length, st = miss.length ? flag(miss.length) : !q.uses.length ? 'warn' : '';
+  const hs = K.rows.map((q) => { const miss = q.lows.filter((x) => x.kit), n = q.uses.length, st = miss.length ? flag(miss.length) : !q.uses.length ? 'warn' : '';
     const M = miss.map((m) => ({ label: pre(m, m.c.tl) + 'sat low, none used', icon: m.hit ? spellIcon(m.hit.id, m.hit.spell) : '', st: 'bad', amt: Math.max(1, 100 - Math.round(100 * m.c.low)), vt: 'at ' + pc(m.c.low) }))
-      .concat(q.uses.map((u) => ({ label: pre(u, u.t) + u.nm, icon: spellIcon(u.id, u.nm), st: '', amt: u.hp != null ? Math.max(1, 100 - Math.round(100 * u.hp)) : 1, vt: u.hp != null ? 'at ' + pc(u.hp) : '—' })));
-    return { key: 'hs-' + q.p.name, label: nm(q.p), p: q.p, st, n, rank: st === 'bad' ? 0 : !q.uses.length ? 1 : 2, v: cnt(n, q.pulls, K.n), sub: miss.length ? plural(miss.length, 'low') : night && q.uses.length ? q.uses.length + ' in all' : '',
-      body: M.length ? cblMini(M, miss.length ? 'Use your Healthstone or health potion when you sit under 30%.' : '') : '<p class="ckt-none">' + (you ? 'You' : nm(q.p)) + ' didn\'t use a Healthstone or health potion' + (night ? ' all night' : ' this pull') + '. Fine if ' + (you ? 'you' : 'they') + ' never got low.</p>' }; })
+      .concat(night ? [...q.uses.reduce((m, u) => { const g = m.get(u.nm) || { nm: u.nm, id: u.id, n: 0, hp: [] }; g.n++; if (u.hp != null) g.hp.push(u.hp); return m.set(u.nm, g); }, new Map()).values()].map((g) => ({ label: g.nm + ' ×' + g.n, icon: spellIcon(g.id, g.nm), st: '', amt: g.n, vt: g.hp.length ? 'avg ' + pc(g.hp.reduce((a, v) => a + v, 0) / g.hp.length) : '' }))
+        : q.uses.map((u) => ({ label: pre(u, u.t) + u.nm, icon: spellIcon(u.id, u.nm), st: '', amt: u.hp != null ? Math.max(1, 100 - Math.round(100 * u.hp)) : 1, vt: u.hp != null ? 'at ' + pc(u.hp) : '—' })));
+    return { key: 'hs-' + q.p.name, label: nm(q.p), p: q.p, st, n, rank: st === 'bad' ? 0 : !q.uses.length ? 1 : 2, v: cnt(n), sub: miss.length ? plural(miss.length, 'low') : '',
+      body: M.length ? inP(q.usePulls, K.n) + cblMini(M, miss.length ? 'Use your Healthstone or health potion when you sit under 30%.' : '') : '<p class="ckt-none">' + (you ? 'You' : nm(q.p)) + ' didn\'t use a Healthstone or health potion' + (night ? ' all night' : ' this pull') + '. Fine if ' + (you ? 'you' : 'they') + ' never got low.</p>' }; })
     .sort((a, b) => a.rank - b.rank || b.n - a.n || a.label.localeCompare(b.label));
   const hsUsers = K.rows.filter((q) => q.uses.length).length, hsN = K.rows.reduce((a, q) => a + q.uses.length, 0), hsBad = hs.filter((x) => x.st === 'bad').length;
   // Defensives: everyone whose spec has one (and anyone who pressed one); the bar is how many presses (one pull) or in how many pulls (All
   // pulls), with the damage they took off in all; a drop-down bar per press with its share
-  const df = K.rows.filter((q) => q.hasDef || q.presses.length).map((q) => { const no = q.lows.filter((x) => !x.ans), n = night ? q.defPulls : q.presses.length, tot = q.presses.reduce((a, x) => a + x.prev, 0);
+  const df = K.rows.filter((q) => q.hasDef || q.presses.length).map((q) => { const no = q.lows.filter((x) => !x.ans), n = q.presses.length, tot = q.presses.reduce((a, x) => a + x.prev, 0);
     const st = no.length ? flag(no.length) : !q.presses.length ? 'warn' : '';
-    const M = q.presses.map((x) => ({ label: pre(x, x.t) + x.name, icon: spellIcon(x.id, x.name), st: '', amt: Math.max(1, x.prev), vt: x.prev >= 1000 ? 'about ' + kf(x.prev) : x.imm ? 'immune' : '—' }))
+    const M = (night ? [...q.presses.reduce((m, x) => { const g = m.get(x.name) || { name: x.name, id: x.id, n: 0, prev: 0, imm: false }; g.n++; g.prev += x.prev; g.imm = g.imm || x.imm; return m.set(x.name, g); }, new Map()).values()].map((g) => ({ label: g.name + ' ×' + g.n, icon: spellIcon(g.id, g.name), st: '', amt: Math.max(1, g.prev), vt: g.prev >= 1000 ? 'about ' + kf(g.prev) : g.imm ? 'immune' : '—' }))
+      : q.presses.map((x) => ({ label: pre(x, x.t) + x.name, icon: spellIcon(x.id, x.name), st: '', amt: Math.max(1, x.prev), vt: x.prev >= 1000 ? 'about ' + kf(x.prev) : x.imm ? 'immune' : '—' })))
       .concat(no.map((m) => ({ label: pre(m, m.c.tl) + 'sat low, nothing pressed', icon: m.hit ? spellIcon(m.hit.id, m.hit.spell) : '', st: 'bad', amt: 1, vt: 'at ' + pc(m.c.low) })));
     const rd = no.flatMap((m) => m.ready)[0], fx = no.length ? (rd ? 'Press ' + rd.name + ' when you sit low' : 'Save a defensive for these moments') + (q.p.role === 'healer' ? ', or heal yourself first.' : '.') : '';
-    const head = q.presses.length ? '<p class="ckt-tot">' + q.presses.length + (q.presses.length === 1 ? ' press' : ' presses') + (tot >= 1000 ? ', about ' + kf(tot) + ' damage taken off in all' : '') + '.</p>' : '';
-    return { key: 'df-' + q.p.name, label: nm(q.p), p: q.p, st, n, tot, rank: st === 'bad' ? 0 : !q.presses.length ? 1 : 2, v: cnt(n, q.pulls, K.n), sub: tot >= 1000 ? kf(tot) + ' off' : '',
+    const head = q.presses.length ? '<p class="ckt-tot">' + q.presses.length + (q.presses.length === 1 ? ' press' : ' presses') + (night ? ' in ' + q.defPulls + ' of ' + K.n + ' pulls' : '') + (tot >= 1000 ? ', about ' + kf(tot) + ' damage taken off in all' : '') + '.</p>' : '';
+    return { key: 'df-' + q.p.name, label: nm(q.p), p: q.p, st, n, tot, rank: st === 'bad' ? 0 : !q.presses.length ? 1 : 2, v: cnt(n), sub: tot >= 1000 ? kf(tot) + ' off' : '',
       body: head + (M.length ? cblMini(M, fx) : '<p class="ckt-none">' + (you ? 'You' : nm(q.p)) + ' didn\'t press a defensive' + (night ? ' all night' : ' this pull') + '.</p>') }; })
     .sort((a, b) => a.rank - b.rank || b.n - a.n || b.tot - a.tot);
   const dfUsers = K.rows.filter((q) => (q.hasDef || q.presses.length) && q.presses.length).length, dfTot = df.reduce((a, x) => a + x.tot, 0);
@@ -10686,7 +10762,7 @@ function coachSummary(reps, name) {
     const s1 = (t, n) => { const x = cHtml(t), m = x.match(new RegExp('^(?:.*?[.!?](?:\\s|$)){1,' + (n || 1) + '}')); return m ? m[0].trim() : x; };
     let talk = ''; if (!name && !kill) { try { const pmT = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !pmT.has(p.name)) pmT.set(p.name, p);
       if (!night) { const o = whyWiped(reps[0]); if (o) { const k = whyKey(o), prevR = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull < it.pull && CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.players);
-          const nth = k === '?' ? 1 : 1 + prevR.map((x) => whyWiped(x)).filter((y) => y && whyKey(y) === k).length, w = whySay(o, pmT, nth); talk = cHtml(w.h) + ' ' + s1(w.s); } }
+          const nth = k === '?' ? 1 : 1 + prevR.map((x) => whyWiped(x)).filter((y) => y && whyKey(y) === k).length, w = whySay(o, pmT, nth); talk = cHtml(w.h) + ' ' + s1(w.s, /^.*?\. Then /.test(cHtml(w.s)) ? 2 : 1); } }
       else { const hn = whyNight(reps, pmT), p = (hn.match(/<p>([\s\S]*?)<\/p>/) || [])[1]; if (p) talk = s1(p, 2); } } catch (e) { talk = ''; } }
     const headline2 = talk ? res + '. ' + talk : headline;
     const focus = w0 ? w0.fix : kill ? 'Same plan next week. Clean kills from here.' : 'Same plan. Execute it.';
@@ -10925,7 +11001,7 @@ function cblDeaths(D) { const all = (D.items || []).concat(D.rest || []), sev = 
     body: '<div class="cch-chips">' + o.list.map((it) => '<span class="dch k-' + esc(it.k || 'n') + (it.late ? ' dch-late' : '') + '" data-ddg="' + esc(it.dg) + '" role="button" tabindex="0" title="' + esc(it.word || '') + '">' + (it.t ? '<i>' + esc(it.t) + '</i>' : '') + (it.who ? '<b>' + esc(it.who) + '</b>' : '') + '<span>' + esc(it.ab) + '</span></span>').join('') + '</div>' })); }
 function coachAbSum(X, k) { const it = X.items || [], n = it.length + (X.rest || []).length;
   if (k === 'd') { const m = X.mass || 0, n0 = (X.n || 0) - m; /* (mass wipes apart (Oct 23): "179 deaths" read as unfiltered) */
-    return X.n ? (n0 ? plural(n0, 'death') : 'no deaths of their own') + ' · ' + (X.onThem || 0) + ' on the player' + (m ? ' · ' + m + ' in mass wipes' : '') + (!m && it[0] && it[0].n ? ' · most to ' + it[0].ab : '') : 'nobody died'; }
+    return X.n ? (n0 ? plural(n0, 'death') : 'no deaths of their own') + ' · ' + (X.onThem || 0) + (X.you ? ' on you' : ' on the player') + (m ? ' · ' + m + ' in mass wipes' : '') + (!m && it[0] && it[0].n ? ' · most to ' + it[0].ab : '') : 'nobody died'; }
   return n ? (it[0] && it[0].k ? 'most from ' + it[0].k : '') + (n > 1 ? ' · ' + n + ' kinds' : '') : 'nothing worth flagging'; }
 document.addEventListener('toggle', (e) => { const d = e.target; if (d && d.matches && d.matches('details.cch-abx[data-k]') && S.openSecs) { if (d.open) S.openSecs.add(d.dataset.k); else S.openSecs.delete(d.dataset.k); } }, true);
 // (a chip opened by code or a jump (a pull button, "see it" links) opens its panel first, so the card can be seen; a link to the
@@ -11442,11 +11518,11 @@ function nightMechC(o) {
   try {
     const reps = o.reps || [], pulls = o.pulls || [], kill = o.kill, bestP = o.bestP, onBoss = pulls.reduce((s, b) => s + (b.duration || 0), 0);
     const isMe = (d) => !one || d.player === one || String(d.player).split('-')[0] === one.split('-')[0];
-    const nD = reps.reduce((s, r) => s + r.deaths.filter(isMe).filter((d) => deathVerdict(r, d).counts).length, 0) /* (the site's one death rule, the same count as the coach's Deaths line: it said 105 here and 119 there (Oct 22)) */, nC = tot('clean'), nM = tot('minor'), nF = all.length - nC - nM;
+    const dC = deathCount(reps, one), nD = dC.n /* (one count everywhere (Oct 23): the coach's Deaths panel and the Report card show this same number) */, nC = tot('clean'), nM = tot('minor'), nF = all.length - nC - nM;
     const num = (k, v, sub) => '<div class="dbr-n"><span class="dbr-k">' + k + '</span><span class="dbr-v">' + v + '</span><span class="dbr-s">' + sub + '</span></div>';
     top += '<div class="dbr-4">' + num('Pulls', '<b>' + pulls.length + '</b>', durH(onBoss) + ' on the boss' + (reps.length < pulls.length ? ' · ' + reps.length + ' read' : '')) +
       (kill ? num('Kill', '<b class="dbr-ok">Pull ' + kill.pull + '</b>', kill.pull > 1 ? 'after ' + plural(kill.pull - 1, 'wipe') : 'first try') : num('Best pull', '<b>' + (bestP ? esc(pullShort(bestP)) : '—') + '</b>', bestP ? 'pull ' + bestP.pull + ' · ' + esc(pullLabel(bestP)) : 'no result yet')) +
-      num('Deaths', '<b>' + nD + '</b>', reps.length ? (nD / reps.length).toFixed(1) + ' a pull' + (one ? ', ' + esc(one.split('-')[0]) : '') : '') +
+      num('Deaths', '<b>' + nD + '</b>', esc(deathSub(dC, !!one))) +
       num('Mechanics', '<b class="' + (nC ? 'dbr-ok' : 'dbr-z') + '">' + nC + '</b><em> clean</em> <b class="' + (nM ? 'dbr-w' : 'dbr-z') + '">' + nM + '</b><em> with mistakes</em> <b class="' + (nF ? 'dbr-b' : 'dbr-z') + '">' + nF + '</b><em> failed</em>', 'of ' + plural(all.length, 'mechanic') + ', over ' + plural(N, 'pull')) + '</div>';
     // (the three to fix: failed first, then the ones wrong in the most pulls, then the boss's most important)
     const imp = IMPORTANCE[boss] || [], ix = (id) => (imp.indexOf(id) < 0 ? 99 : imp.indexOf(id)), rk = { major: 0, moderate: 0, minor: 1 };
@@ -22590,6 +22666,14 @@ function deathFix(r, d, v, ownM, rw, raidL) {
 // (a death's verdict when only the death is at hand (Debriefing's lines): from the pull it belongs to)
 const dvR = (d) => { const r0 = S.rep; if (r0 && r0.deaths && r0.deaths.includes(d)) return deathVerdict(r0, d); for (const x of CACHE.values()) if (x && x.deaths && x.deaths.includes(d)) return deathVerdict(x, d); return null; };
 // (a player's deaths over some pulls: all of them (the full count), the ones that count, the ones on them, and their weight in the grade)
+// (one death count everywhere (Oct 23, "numbers that agree"): n = deaths that count (deathVerdict) minus mass wipes (many of us at once, nobody's
+// own), on = of those, on the player; mass and after (the wipe call) are the small second numbers. The Debriefing tile, the coach's Deaths panel
+// and the Report card banner all show n)
+function deathCount(reps, who) { let n = 0, on = 0, mass = 0, after = 0, first = null;
+  for (const r of reps || []) for (const d of r.deaths || []) { if (who && oaBase(d.player) !== oaBase(who)) continue; const v = deathVerdict(r, d);
+    if (!v.counts) after++; else if (v.why === 'mass') mass++; else { n++; if (v.on) on++; if (!first || (reps.length === 1 && d.t < first.t)) first = d; } }
+  return { n, on, mass, after, first }; }
+const deathSub = (c, you) => [(c.n ? c.on + (you ? ' on you' : ' on the player') : ''), c.mass ? c.mass + ' in mass wipes' : '', !c.n && !c.mass ? 'nobody died' : ''].filter(Boolean).join(' · ');
 function deathsOf(reps, name) { const all = []; for (const r of reps) for (const d of r.deaths) if (d.player === name) all.push({ r, d, v: deathVerdict(r, d), pull: r.item.pull });
   const counted = all.filter((x) => x.v.counts); return { all, n: all.length, counted, on: counted.filter((x) => x.v.on), w: counted.reduce((s, x) => s + x.v.w, 0), wipe: all.length - counted.length }; }
 // (kept per pull and player, for as long as the wipe filter stays the same: the Report card asks for it more than once (Oct 21))
@@ -23380,7 +23464,7 @@ function rctCard(c, F, a, sm) {
 }
 // the night's result: VICTORY (or the best pull), the raid grade, the numbers that sum up the night
 function rctBanner(c, F) {
-  const data = c.data, raid = raidBlend(data.reduce((s, a) => s + a.score, 0) / data.length, F.rm), it = F.reps[0].item, kill = F.pulls.find((q) => q.it.kill), nr = nightResult(it), deaths = F.pulls.reduce((s, q) => s + q.kept.length, 0);
+  const data = c.data, raid = raidBlend(data.reduce((s, a) => s + a.score, 0) / data.length, F.rm), it = F.reps[0].item, kill = F.pulls.find((q) => q.it.kill), nr = nightResult(it), deaths = deathCount(F.reps).n; /* (one count everywhere (Oct 23)) */
   const potU = F.pulls.reduce((s, q) => s + q.used, 0), potE = F.pulls.reduce((s, q) => s + q.expect, 0), mist = F.mech.reduce((s, m) => s + m.tot, 0);
   const kpi = (l, v, st) => '<div><b class="' + (st || '') + '">' + v + '</b><small>' + l + '</small></div>';
   const trend = F.before.length && F.nowN ? '<div class="rct-tr"><span>Night grades on this boss</span>' + F.before.map((n) => '<span class="rcn-wk">' + esc(nightLabel(n.at)) + ' ' + gradeChip(letterOf(n.raid)) + '</span>').join('') + '<span class="rcn-wk now">Tonight ' + gradeChip(letterOf(F.nowN.raid)) + '</span>' + (F.mixed ? '' : rcnDelta(F.nowN.raid - F.last.raid)) + '</div>' : '';
@@ -23427,7 +23511,7 @@ function rcbFacts(c, F) {
   return (F._rcb = { rows, rk, rkRole }); }
 // the night: the boss's art, the result, the numbers, and the raid's grade as a ring
 function rcbBanner(c, F) {
-  const data = c.data, raid = raidBlend(data.reduce((s, a) => s + a.score, 0) / data.length, F.rm), it = F.reps[0].item, kill = F.pulls.find((q) => q.it.kill), nr = nightResult(it), deaths = F.pulls.reduce((s, q) => s + q.kept.length, 0);
+  const data = c.data, raid = raidBlend(data.reduce((s, a) => s + a.score, 0) / data.length, F.rm), it = F.reps[0].item, kill = F.pulls.find((q) => q.it.kill), nr = nightResult(it), deaths = deathCount(F.reps).n; /* (one count everywhere (Oct 23)) */
   const potU = F.pulls.reduce((s, q) => s + q.used, 0), potE = F.pulls.reduce((s, q) => s + q.expect, 0), mist = F.mech.reduce((s, m) => s + m.tot, 0), H = BOSS_HERO[it.boss];
   const kpi = (l, v, st) => '<div class="tile rcb-bt"><div class="l">' + l + '</div><div class="v' + (st ? ' ' + st : '') + '">' + v + '</div></div>'; // (tiles, design system round 2)
   const trend = F.before.length && F.nowN ? '<div class="rct-tr rcb-ntr"><span class="rcb-ntl">Night grades on this boss</span>' + F.before.map((n) => '<span class="rcn-wk">' + esc(nightLabel(n.at)) + ' ' + gradeChip(letterOf(n.raid)) + '</span>').join('') + '<span class="rcn-wk now">Tonight ' + gradeChip(letterOf(F.nowN.raid)) + '</span>' + (F.mixed ? '' : rcnDelta(F.nowN.raid - F.last.raid)) + '</div>' : '';
@@ -23780,8 +23864,8 @@ function player() {
   const v = isBoss && S.scope === 'all' ? 'night' : 'pull', key = it.id + ':' + it.diffId + ':' + pulls.length + ':' + deathCutN() + ':' + v + ':' + (v === 'pull' ? it.pull : '');
   // the wipe filter as one quiet line, as on Mechanics: where this pull (or every pull) stops counting
   const n = deathCutN(), cut = cutInfo(r);
-  const cutLine = '<div class="cutbar' + (cut && v === 'pull' ? ' on' : '') + '"><span class="cutnow">' + (v === 'night' ? (n ? 'Each wipe counts up to its <b>' + ordinal(n) + ' death</b>, and a kill counts in full' : '<b>The wipe filter is off</b>, so every pull counts in full')
-      : cut ? 'Grades count up to <b>' + T(cut.t) + '</b>, the ' + ordinal(cut.n) + ' death (' + esc(cut.who) + ')' : it.kill ? '<b>Kill</b>, so the whole pull counts' : n ? 'Fewer than ' + n + ' deaths, so the whole pull counts' : '<b>The wipe filter is off</b>, so the whole pull counts') + '</span></div>';
+  const cutLine = '<div class="cutbar' + (cut && v === 'pull' ? ' on' : '') + '"><span class="cutnow">' + (v === 'night' ? (n ? 'Each wipe counts up to <b>its wipe call</b>, and a kill counts in full' : '<b>The wipe filter is off</b>, so every pull counts in full')
+      : cut ? 'Grades count up to <b>' + T(cut.t) + '</b>, ' + cutLbl(cut) : it.kill ? '<b>Kill</b>, so the whole pull counts' : n ? 'Fewer than ' + n + ' deaths, so the whole pull counts' : '<b>The wipe filter is off</b>, so the whole pull counts') + '</span></div>';
   // (one pull or the whole night, switched on top of the page, next to the wipe filter's line)
   const sw = isBoss ? '<div class="seg plsw" role="tablist" aria-label="Pulls shown"><button data-v="all"' + (v === 'night' ? ' class="on"' : '') + '>All pulls<span class="n">' + pulls.length + '</span></button><button data-v="pull"' + (v === 'pull' ? ' class="on"' : '') + '>Pull #' + it.pull + '<span class="n">' + (it.kill ? 'kill' : 'wipe') + '</span></button></div>' : '';
   const cached = S.plData && S.plData.key === key ? S.plData : null;
@@ -24345,7 +24429,7 @@ function dbfPull(o) {
     if (!mt && !dt) return lead + ', nobody died.';
     if (!b.bad.length && !b.warn.length && b.ok.length && !dt) return lead + ', everything went right and nobody died.';
     if (!mt) return lead + ', ' + dt + '.';
-    return lead + ', ' + mt + (dt ? '. ' + dbfCap(dt) : ', and nobody died') + '.'; }).join(' ') + (() => { const c = cutInfo(r); return phs.length && c && c.t < r.duration - 5 ? ' After the ' + ordinal(c.n) + ' death, at ' + T(c.t) + ', the rest isn\'t counted.' : ''; })();
+    return lead + ', ' + mt + (dt ? '. ' + dbfCap(dt) : ', and nobody died') + '.'; }).join(' ') + (() => { const c = cutInfo(r); return phs.length && c && c.t < r.duration - 5 ? (c.auto ? ' The wipe was called at ' + T(c.t) + ' (' + WIPE_WHY[c.why] + '); the rest isn\'t counted.' : ' After the ' + ordinal(c.n) + ' death, at ' + T(c.t) + ', the rest isn\'t counted.') : ''; })();
   // ---- what went well ----
   const W1 = [];
   if (!it.kill && isBest) W1.push('This was our best pull so far.'); else if (!it.kill && delta != null && delta > 0) W1.push('We got further than last pull.');
@@ -24971,7 +25055,7 @@ function bhCutChip() { return '<span class="bh-cut" id="bhCut"></span>'; }
 // (the one header (Oct 22): the wipe filter behind a small button on the banner's first line, "Wipe filter: 2 deaths"; it
 // opens a box under it with the filter itself and its ? help. The box sits just under the banner (whose art is clipped),
 // is placed under the button when it opens, and stays open while you change the number.)
-function bhCutBtn() { const n = deathCutN(); return '<button class="bhp-cut' + (n ? '' : ' off') + '" type="button" id="bhCutB" aria-haspopup="true" aria-expanded="' + !!S.cutOpen + '" aria-controls="bhCutBox" title="' + (n ? 'On a wipe, nothing after the ' + ordinal(n) + ' death counts. A kill counts in full.' : 'Off: every pull counts in full') + '"><svg class="cs-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 4.5h11.5l-2.6 4 2.6 4H6"/></svg><span class="bhp-cl">Wipe filter: </span><b>' + (n ? plural(n, 'death') : 'off') + '</b></button>'; }
+function bhCutBtn() { const n = deathCutN(); return '<button class="bhp-cut' + (n ? '' : ' off') + '" type="button" id="bhCutB" aria-haspopup="true" aria-expanded="' + !!S.cutOpen + '" aria-controls="bhCutBox" title="' + (n ? 'On a wipe, nothing after the wipe call counts: the moment more were dead than any kill survived, the damage check was missed, or half the raid was dead. A kill counts in full.' : 'Off: every pull counts in full') + '"><svg class="cs-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 4.5h11.5l-2.6 4 2.6 4H6"/></svg><span class="bhp-cl">' + (n && S.rep && cutInfo(S.rep) ? 'Wipe called at ' : 'Wipe call: ') + '</span><b>' + (!n ? 'off' : S.rep && cutInfo(S.rep) ? T(cutInfo(S.rep).t) : 'on') + '</b></button>'; }
 const bhCutBox = () => '<div class="bhp-cw"><div class="bhp-cbox" id="bhCutBox"' + (S.cutOpen ? '' : ' hidden') + '><span class="bh-cut" id="bhCut"></span><div class="bh-cutpop" id="bhCutPop" hidden></div></div></div>';
 function bhCutPlace() { const box = $('#bhCutBox'), b = $('#bhCutB'); if (!box || !b) return; b.setAttribute('aria-expanded', String(!box.hidden)); if (box.hidden) return;
   const hb = box.parentNode.getBoundingClientRect(), r = b.getBoundingClientRect(); box.style.top = Math.round(r.bottom - hb.top + 8) + 'px'; box.style.right = Math.max(0, Math.round(hb.right - r.right)) + 'px'; }
@@ -24990,15 +25074,15 @@ let CUT_WHY_NODE = null;
   const el = $('#cutSide'); if (!el) return;
   CUT_NODE = el;
   // (its name and the ? on top, the number of deaths with − and + under it; the ? opens why)
-  el.innerHTML = '<span class="cs-top" title="On a wipe, everything after that death is left out of every tab. Kills are never cut. 0 = off."><svg class="cs-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 4.5h11.5l-2.6 4 2.6 4H6"/></svg><b>Wipe filter</b><button class="cutq" type="button" id="cutSideQ" aria-label="Why filter deaths?" aria-expanded="false">?</button></span>' +
-    '<span class="cs-row"><span class="cs-l">stop at</span><span class="cs-step"><button type="button" class="cs-b" data-d="-1" aria-label="One fewer death">−</button><input id="cutSideIn" type="number" min="0" max="40" step="1" value="' + (deathCutN() || '') + '" placeholder="off" title="Type a number, then press Enter"><button type="button" class="cs-b" data-d="1" aria-label="One more death">+</button></span><span class="cs-l">deaths</span></span>' +
+  el.innerHTML = '<span class="cs-top" title="On a wipe, everything after the wipe call is left out of every tab. Kills are never cut."><svg class="cs-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 4.5h11.5l-2.6 4 2.6 4H6"/></svg><b>Wipe filter</b><button class="cutq" type="button" id="cutSideQ" aria-label="Why filter deaths?" aria-expanded="false">?</button></span>' +
+    '<label class="cs-row cs-wsw"><input id="cutSideIn" type="checkbox"' + (deathCutN() ? ' checked' : '') + '><span class="cs-l">Stop at the wipe call (off shows everything)</span></label>' +
     '';
   CUT_WHY_NODE = document.createElement('div'); CUT_WHY_NODE.className = 'cutwhy2'; CUT_WHY_NODE.hidden = true; CUT_WHY_NODE.innerHTML = '<b>Why filter?</b> ' + esc(CUT_WHY.replace(/^Why filter\? /, ''));
   // (off: the control turns grey, so it's plain when nothing is being cut)
-  const inp = $('#cutSideIn'), go = () => { const n = Math.max(0, Math.min(40, Math.round(+inp.value || 0))); inp.value = n || ''; el.classList.toggle('off', !n); if (n === deathCutN()) return; store.set('wla-death-cut2', String(n)); if (S.rep) { renderMain(); refreshIcons(); } };
+  const inp = $('#cutSideIn'), go = () => { const n = inp.checked ? 2 : 0; /* (on or off (Oct 23): the wipe call decides where) */ el.classList.toggle('off', !n); if (n === deathCutN()) return; store.set('wla-death-cut2', String(n)); if (S.rep) { renderMain(); refreshIcons(); } };
   el.classList.toggle('off', !deathCutN());
   inp.onchange = go; inp.onkeydown = (e) => { if (e.key === 'Enter') go(); };
-  el.querySelectorAll('.cs-b').forEach((b) => (b.onclick = () => { inp.value = Math.max(0, Math.min(40, (+inp.value || 0) + +b.dataset.d)); go(); }));
+  /* (no − / + any more: the switch is the whole setting) */
   const whyShow = (on) => { const w = CUT_WHY_NODE, p = $('#bhCutPop'); w.hidden = !on; if (p) p.hidden = !on; $('#cutSideQ').setAttribute('aria-expanded', String(on)); };
   $('#cutSideQ').onclick = (e) => { e.stopPropagation(); whyShow(CUT_WHY_NODE.hidden); };
   document.addEventListener('click', (e) => { const w = CUT_WHY_NODE; if (w && !w.hidden && !el.contains(e.target) && !w.contains(e.target)) whyShow(false); }); // (a click elsewhere closes it)
