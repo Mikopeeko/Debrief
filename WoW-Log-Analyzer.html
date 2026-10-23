@@ -15530,6 +15530,7 @@ const PATCH_NOTES = [
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
     { t: 'Since last raid', d: 'All pulls now remembers each night and compares it with your last raid on the same boss: what you fixed, what got better or worse, and what\'s still going wrong. Pick a player to see their mistakes that also happened last raid.' },
   ], n: [
+    'Debrief in game: What went wrong lists every major mistake, like the website, with the smaller ones counted underneath.',
     'Debrief in game and the PC pop-up: the wipe is called for you, like the website. A wiped pull counts up to when it was lost, and one line on top says when and why.',
     'Debrief Companion: the night chart now shows boss health left like the website, with the kill at the bottom. The recap pop-up is twice as wide: the coach on the left, deaths, avoidable damage, Healthstones and defensives on the right.',
     'Debrief in game: when the focus is one of the What went wrong cards, that card says FOCUS NEXT PULL and the separate Focus box is gone, like the website.',
@@ -25492,7 +25493,10 @@ function coachGame(r, name) {
   const story = (h, n) => { const t = tx(String(h || '').replace(/<(div|p|li|br)[^>]*>/gi, ' · ').replace(/<svg[\s\S]*?<\/svg>/gi, '')).replace(/(\s*·\s*)+/g, ' · ').replace(/^ · | · $/g, ''); return t.length > n ? t.slice(0, n - 1).replace(/[\s,;:.·]+\S*$/, '') + '…' : t; };
   const D = c.deaths, A = c.avoid, out = { headline: tx(c.headline), focus: tx(c.focus), kill: !!c.kill, focusSame: String(c.headline).includes(String(c.focus).replace(/\.$/, '')) };
   // (with the card's How and Against top guilds, as the site's card shows them when opened (Oct 22))
-  out.wrong = (c.wrong || []).map((x) => ({ sev: x.sev === 'bad' ? 'bad' : 'warn', label: tx(dbfCap(x.label)), tag: tx(coachTag(x, false)), what: tx(x.what || ''), fix: tx(x.fix || ''), id: sid(x.cause || x.label), how: tx(cClip(howRest(x), 240)), kb: tx(x.kbLine || '') }));
+  // (like the website's Went wrong (Oct 23): every major mistake, minor ones only to make three, then "+N smaller ones"; tidied lines)
+  const WA = c.wrongAll && c.wrongAll.length ? c.wrongAll : (c.wrong || []), maj = WA.filter((x) => x.sev === 'bad'), lead = maj.concat(WA.filter((x) => x.sev !== 'bad').slice(0, Math.max(0, 3 - maj.length)));
+  out.more = WA.length - lead.length;
+  out.wrong = lead.map((x) => ({ sev: x.sev === 'bad' ? 'bad' : 'warn', label: tx(dbfCap(x.label)), tag: tx(coachTag(x, false)), what: tidyLine(tx(x.what || '')), fix: tidyLine(tx(x.fix || '')), id: sid(x.cause || x.label), how: tidyLine(tx(cClip(howRest(x), 240))), kb: tx(x.kbLine || '') }));
   out.right = (c.right || []).map((x) => ({ t: tx(x.t), id: sid(String(x.t).split(/ was | were |:/)[0]) }));
   const cls = (n) => { const p = [...r.players.values()].find((q) => q.name && String(q.name).split('-')[0] === n); return (p && p.cls) || ''; };
   out.deaths = !D ? null : { line: tx(D.line || ''), note: tx(D.note || ''), items: (D.items || []).concat(D.rest || []).slice(0, 10).map((it) => {
