@@ -2,7 +2,7 @@
 ## Title: Debrief
 ## Notes: Your pull recap in game, a few seconds after every boss pull.
 ## Author: Debrief
-## Version: 0.5.25
+## Version: 0.5.26
 ## SavedVariables: DebriefDB
 ## AddonCompartmentFunc: Debrief_OnAddonCompartmentClick
 ## Category: Combat

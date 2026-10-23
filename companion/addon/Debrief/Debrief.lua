@@ -346,7 +346,7 @@ local body = CreateFrame("Frame", nil, scroller); body:SetWidth(CW); body:SetHei
 scroller:EnableMouseWheel(true)
 scroller:SetScript("OnMouseWheel", function(self, d) local mx = math.max(0, (body:GetHeight() or 0) - (self:GetHeight() or 0)); self:SetVerticalScroll(math.min(mx, math.max(0, (self:GetVerticalScroll() or 0) - d * 48))) end)
 local foot = card:CreateFontString(nil, "OVERLAY"); setFont(foot, "body", 11.5); foot:SetTextColor(rgb(COL.faint)); foot:SetJustifyH("LEFT")
-foot:SetText("/debrief opens this again  ·  /debrief paste for a new pull")
+foot:SetText("/dbr opens this again  ·  /db settings")
 local footLine = card:CreateTexture(nil, "ARTWORK"); footLine:SetHeight(1); fill(footLine, COL.line)
 -- (combat logging on or off, at the right of the footer: green when it's on, red when it's off)
 local logBtn = CreateFrame("Button", nil, card); logBtn:SetSize(120, 20)
@@ -1037,7 +1037,7 @@ function render()
   local vh = math.max(10, math.min(y, room - TOPY - 42))
   scroller:SetSize(CW, vh)
   scroller:SetVerticalScroll(math.min((scroller:GetVerticalScroll() or 0), math.max(0, y - vh)))
-  foot:SetText(y > vh + 4 and "Scroll for more  ·  /debrief opens this again" or "/debrief opens this again  ·  /debrief paste for a new pull")
+  foot:SetText(y > vh + 4 and "Scroll for more  ·  /dbr opens this again" or "/dbr opens this again  ·  /db settings")
   footLine:ClearAllPoints(); footLine:SetPoint("TOPLEFT", card, "TOPLEFT", 1, -(TOPY + vh + 10)); footLine:SetPoint("TOPRIGHT", card, "TOPRIGHT", -1, -(TOPY + vh + 10))
   foot:ClearAllPoints(); foot:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -(TOPY + vh + 19)); foot:SetWidth(W - PAD * 2 - 130); foot:SetWordWrap(false)
   logBtn:ClearAllPoints(); logBtn:SetPoint("TOPRIGHT", card, "TOPRIGHT", -PAD, -(TOPY + vh + 15)); Debrief_LogButton()
@@ -1541,7 +1541,7 @@ local function receive(code, from)
   checkNewer(m, false)
   if addPull(m) then
     say("pull " .. m.h.pull .. " of " .. m.h.boss .. " is in, from " .. from .. ".")
-    if DB.autoShow ~= false then showCard() else say("type /debrief to see it.") end
+    if DB.autoShow ~= false then showCard() else say("type /dbr to see it.") end
   end
 end
 local function onAddonMessage(prefix, text, channel, from)
@@ -1992,7 +1992,7 @@ local function buildOptions()
   buttons({ { "Move card back", function() SlashCmdList.DEBRIEF("reset") end }, { "Clear saved pulls", function() SlashCmdList.DEBRIEF("clear"); Debrief_RefreshOptions() end } })
   section("Help")
   buttons({ { "Tutorial", function() opt:Hide(); Debrief_Tutorial() end, 90 }, { "Sample recap", function() SlashCmdList.DEBRIEF("demo") end, 110 }, { "Test the glow", function() Debrief_TestGlow() end, 110 } })
-  local HELP = { { "/db", "these settings (/dmo too)" }, { "/debrief", "show or hide your recap" }, { "/debrief big", "the big window" }, { "/debrief mini", "the mini bar on or off" },
+  local HELP = { { "/db", "these settings (/dmo too)" }, { "/dbr", "show or hide your recap (/debrief too)" }, { "/debrief big", "the big window" }, { "/debrief mini", "the mini bar on or off" },
     { "/dp", "paste a recap" }, { "/debrief log", "combat logging on or off" }, { "/debrief demo", "a sample recap" } }
   for _, h in ipairs(HELP) do
     local c = P:CreateFontString(nil, "OVERLAY"); setFont(c, "bold", 12.5); c:SetPoint("TOPLEFT", PX, -(y + 4)); c:SetTextColor(rgb(COL.gold)); c:SetText(h[1])
@@ -2143,7 +2143,7 @@ SLASH_DEBRIEFPASTE1 = "/dp"; SLASH_DEBRIEFPASTE2 = "/dpaste"
 SlashCmdList.DEBRIEFPASTE = function() Debrief_OpenPaste() end
 SLASH_DEBRIEFMO1 = "/db"; SLASH_DEBRIEFMO2 = "/dmo" -- (/db first (the user, Oct 22); /dmo still works)
 SlashCmdList.DEBRIEFMO = function() Debrief_ToggleOptions() end
-SLASH_DEBRIEF1 = "/debrief"
+SLASH_DEBRIEF1 = "/dbr"; SLASH_DEBRIEF2 = "/debrief" -- (/dbr first (the user, Oct 22); /debrief still works)
 SlashCmdList.DEBRIEF = function(msg)
   msg = (msg or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
   if msg == "options" or msg == "config" or msg == "settings" or msg == "o" then Debrief_ToggleOptions()

@@ -1710,7 +1710,7 @@ const PATCH_NOTES = [
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
     { t: 'Since last raid', d: 'All pulls now remembers each night and compares it with your last raid on the same boss: what you fixed, what got better or worse, and what\'s still going wrong. Pick a player to see their mistakes that also happened last raid.' },
   ], n: [
-    'Debrief Addon: Healthstones and health potions are their own pieces you can show or hide: your own line, and one for the raid (who used one, and who dropped low with one still ready). /db opens the settings now (/dmo still works).',
+    'Debrief Addon: Healthstones and health potions are their own pieces you can show or hide: your own line, and one for the raid (who used one, and who dropped low with one still ready). /db opens the settings and /dbr your recap card (/dmo and /debrief still work).',
     'Debrief Companion: the recap pop-up has Stop at death on top too, like the website and the card; the coach box changes with it, and your choice is kept.',
     'Debrief Companion: your recap opens by itself after each pull, the whole coach box straight away, without the small maps.',
     'Debrief Addon: Stop at death is now at the top of the recap card, and the coach box follows it like on the website: off counts the whole pull, 1 or more stops at that death.',
