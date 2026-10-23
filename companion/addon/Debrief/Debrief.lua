@@ -111,7 +111,7 @@ local function decode(code)
     -- (Debriefing's coach box, per wipe-filter version)
     elseif t == "CH" then for _, c in ipairs(coaches()) do c.head = g(2) end
     elseif t == "CF" then for _, c in ipairs(coaches()) do c.focus = g(2); c.focusSame = g(3) == "1"; c.kill = g(4) == "1" end
-    elseif t == "CW" then for _, c in ipairs(coaches()) do table.insert(c.wrong, { sev = g(2), id = g(3), label = g(4), tag = g(5), what = g(6), fix = g(7) }) end
+    elseif t == "CW" then for _, c in ipairs(coaches()) do table.insert(c.wrong, { sev = g(2), id = g(3), label = g(4), tag = g(5), what = g(6), fix = g(7), how = g(8), kb = g(9) }) end
     elseif t == "CR" then for _, c in ipairs(coaches()) do table.insert(c.right, { id = g(2), t = g(3) }) end
     elseif t == "CD" then for _, c in ipairs(coaches()) do table.insert(c.deaths, { t = g(2), who = g(3), cls = g(4), id = g(5), ab = g(6), k = g(7), story = g(8) }) end
     elseif t == "CN" then for _, c in ipairs(coaches()) do c.dnote = g(2) end
@@ -836,21 +836,37 @@ function render()
   end
   -- (a row in Deaths or Avoidable damage: click it for its short story under it)
   local STORY = CARD_STORY or {}; CARD_STORY = STORY
-  local function chipRow(key, parts, idv, story)
-    local x = 14
+  -- (cx, cw: a column of a two-column list; grid: the list moves y on and opens the stories itself)
+  local function chipRow(key, parts, idv, story, cx, cw, grid)
+    cx = cx or 0; cw = cw or CW
+    local x = 14 + cx
     for _, pt in ipairs(parts) do
       if pt.icon then icon(x, y + 4, 18, pt.icon); x = x + 24
       elseif pt.dot then local d = TEX("ARTWORK"); d:SetTexture(SLICE .. "dot"); d:SetPoint("TOPLEFT", x, -(y + 9)); d:SetSize(8, 8); d:SetVertexColor(rgb(pt.dot)); x = x + 15
-      else local f = FS(pt.bold and "bold" or "body", 13.5, pt.col or COL.soft); f:SetPoint("TOPLEFT", x, -(y + 5)); f:SetWordWrap(false); f:SetText(pt.t); x = x + f:GetStringWidth() + (pt.gap or 8) end
+      else local f = FS(pt.bold and "bold" or "body", 13.5, pt.col or COL.soft); f:SetPoint("TOPLEFT", x, -(y + 5)); f:SetWordWrap(false); f:SetText(pt.t)
+        local room = cx + cw - 8 - x; if f:GetStringWidth() > room then f:SetWidth(math.max(20, room)) end; x = x + math.min(f:GetStringWidth(), math.max(20, room)) + (pt.gap or 8) end
     end
     local open = STORY[key]
     if story and story ~= "" then
-      local b = BTN(); b:SetPoint("TOPLEFT", 0, -y); b:SetSize(CW, 26)
+      local b = BTN(); b:SetPoint("TOPLEFT", cx, -y); b:SetSize(cw, 26)
       b:SetScript("OnClick", function() STORY[key] = not STORY[key] or nil; render() end)
     end
+    if grid then return end
     y = y + 27
     if open and story and story ~= "" then
       local f = FS("body", 13, COL.muted); f:SetPoint("TOPLEFT", 38, -y); f:SetWidth(CW - 52); f:SetText(paint(story)); y = y + f:GetStringHeight() + 10
+    end
+  end
+  -- (a list of rows: one column, or on a wide card two, reading down the left column first; mk(item) gives parts, spell, story)
+  local function chipList(pre, list, mk)
+    if CW < 520 or #list < 4 then for i, it in ipairs(list) do local p, id, st = mk(it); chipRow(pre .. i, p, id, st) end; return end
+    local half, hw = math.ceil(#list / 2), math.floor(CW / 2)
+    for r = 1, half do
+      local y0 = y
+      for col = 0, 1 do local i = r + col * half; local it = list[i]; if it then local p, id, st = mk(it); chipRow(pre .. i, p, id, st, col * hw, col == 0 and hw or CW - hw, true) end end
+      y = y0 + 27
+      for col = 0, 1 do local i = r + col * half; local it = list[i]
+        if it and STORY[pre .. i] then local _, _, st = mk(it); if st and st ~= "" then local f = FS("body", 13, COL.muted); f:SetPoint("TOPLEFT", 38, -y); f:SetWidth(CW - 52); f:SetText(paint(st)); y = y + f:GetStringHeight() + 10 end end end
     end
   end
   -- (Debriefing's coach box, the Raid view)
@@ -875,21 +891,37 @@ function render()
         end
         local sev = x.sev == "bad" and COL.bad or COL.warn
         local tx, tw = 44, CW - 44 - 14
+        -- (like the site's card (Oct 22): closed it is the title, tags and Next time; a click opens What happened, How and Against
+        -- top guilds. Detailed opens the first one)
+        DB.coachOpen = DB.coachOpen or {}
+        local okey = "cw" .. i; local op = DB.coachOpen[okey]; if op == nil then op = DB.preset == "detailed" and i == 1 end
+        local more = {}
+        if (x.what or "") ~= "" then more[#more + 1] = { "WHAT HAPPENED", x.what } end
+        if (x.how or "") ~= "" then more[#more + 1] = { "HOW", x.how } end
+        if (x.kb or "") ~= "" then more[#more + 1] = { "AGAINST TOP GUILDS", x.kb } end
+        local LW = (op and #more > 0) and 136 or 76
         local lt = FS("bold", 14.5, COL.text); lt:SetWordWrap(false); lt:SetText(x.label)
         local pt; if (x.tag or "") ~= "" then pt = FS("bold", 11.5, x.sev == "bad" and COL.badT or COL.warn); pt:SetWordWrap(false); pt:SetText(x.tag) end
-        local wt; if (x.what or "") ~= "" then wt = FS("body", 13, COL.muted); wt:SetWidth(tw); wt:SetText(paint(x.what)) end
         local nk = FS("bold", 11.5, COL.gold); nk:SetText("NEXT TIME")
-        local fx = FS("body", 13.5, COL.soft); fx:SetWidth(tw - 76); fx:SetText(paint(x.fix))
-        local hh = 12 + 22 + (wt and (wt:GetStringHeight() + 6) or 0) + math.max(16, fx:GetStringHeight()) + 12
+        local fx = FS("body", 13.5, COL.soft); fx:SetWidth(tw - LW); fx:SetText(paint(x.fix))
+        local rows = {}
+        if op then for _, mr in ipairs(more) do local a = FS("bold", 11.5, COL.muted); a:SetText(mr[1]); local b2 = FS("body", 13, COL.muted); b2:SetWidth(tw - LW); b2:SetText(paint(mr[2])); rows[#rows + 1] = { a, b2 } end end
+        local hh = 12 + 22 + math.max(16, fx:GetStringHeight()) + 12
+        for _, rw in ipairs(rows) do hh = hh + math.max(16, rw[2]:GetStringHeight()) + 6 end
         box(y, hh, COL.raised, DB.cardStyle == "glass" and 0.55 or 1, COL.line, 1, sev)
+        if #more > 0 then
+          local bt = BTN(); bt:SetPoint("TOPLEFT", 0, -y); bt:SetSize(CW, hh); bt:SetScript("OnClick", function() DB.coachOpen[okey] = not op; render() end)
+          local ch = FS("bold", 14, COL.faint); ch:SetJustifyH("RIGHT"); ch:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - 14, -(y + 13)); ch:SetText(op and "–" or "+")
+          bt:SetScript("OnEnter", function() ch:SetTextColor(rgb(COL.gold)) end); bt:SetScript("OnLeave", function() ch:SetTextColor(rgb(COL.faint)) end)
+        end
         local d = TEX("ARTWORK"); d:SetTexture(SLICE .. "dot"); d:SetPoint("TOPLEFT", 12, -(y + 13)); d:SetSize(22, 22); d:SetVertexColor(rgb(sev)); d:SetAlpha(0.25)
         local nn = FS("bold", 12.5, sev); nn:SetPoint("CENTER", d, "CENTER", 0, 0); nn:SetText(tostring(i))
         local lx = tx; if (x.id or "") ~= "" then icon(tx, y + 12, 20, x.id); lx = tx + 26 end
-        lt:SetPoint("TOPLEFT", lx, -(y + 14)); lt:SetWidth(math.min(lt:GetStringWidth() + 2, tw - (lx - tx) - (pt and 110 or 0)))
+        lt:SetPoint("TOPLEFT", lx, -(y + 14)); lt:SetWidth(math.min(lt:GetStringWidth() + 2, tw - (lx - tx) - (pt and 110 or 0) - 20))
         if pt then pt:SetPoint("LEFT", lt, "RIGHT", 10, 0) end
         local yy = y + 12 + 22
-        if wt then wt:SetPoint("TOPLEFT", tx, -yy); yy = yy + wt:GetStringHeight() + 6 end
-        nk:SetPoint("TOPLEFT", tx, -(yy + 2)); fx:SetPoint("TOPLEFT", tx + 76, -yy)
+        nk:SetPoint("TOPLEFT", tx, -(yy + 2)); fx:SetPoint("TOPLEFT", tx + LW, -yy); yy = yy + math.max(16, fx:GetStringHeight()) + 6
+        for _, rw in ipairs(rows) do rw[1]:SetPoint("TOPLEFT", tx, -(yy + 2)); rw[2]:SetPoint("TOPLEFT", tx + LW, -yy); yy = yy + math.max(16, rw[2]:GetStringHeight()) + 6 end
         y = y + hh + 8
       end
       y = y + 4
@@ -904,9 +936,7 @@ function render()
       local y0 = y; local open = fold("cdeaths", "DEATHS", #c.deaths); y = y + 32
       if open then
         if #c.deaths == 0 then local f = FS("body", 13, COL.muted); f:SetPoint("TOPLEFT", 14, -y); f:SetWidth(CW - 28); f:SetText(paint(c.dline)); y = y + f:GetStringHeight() + 8 end
-        for i, d in ipairs(c.deaths) do
-          chipRow(m.h.pull .. "d" .. i, { { t = d.t, col = COL.faint, gap = 6 }, { dot = KCOL[d.k] or COL.faint }, { t = d.who, bold = true, col = UI.classHex(d.cls), gap = 8 }, { icon = d.id }, { t = d.ab } }, d.id, d.story)
-        end
+        chipList(m.h.pull .. "d", c.deaths, function(d) return { { t = d.t, col = COL.faint, gap = 6 }, { dot = KCOL[d.k] or COL.faint }, { t = d.who, bold = true, col = UI.classHex(d.cls), gap = 8 }, { icon = d.id }, { t = d.ab } }, d.id, d.story end)
         if (c.dnote or "") ~= "" then local f = FS("body", 12, COL.faint); f:SetPoint("TOPLEFT", 14, -(y + 2)); f:SetWidth(CW - 28); f:SetText(c.dnote); y = y + f:GetStringHeight() + 6 end
         if #c.deaths > 0 then local f = FS("body", 12, COL.faint); f:SetPoint("TOPLEFT", 14, -(y + 2)); f:SetText("Click a death to see what happened."); y = y + 18 end
         y = y + 4
@@ -918,9 +948,7 @@ function render()
       local y0 = y; local open = fold("cavoid", "AVOIDABLE DAMAGE", #c.avoid); y = y + 32
       if open then
         if #c.avoid == 0 then local f = FS("body", 13, COL.muted); f:SetPoint("TOPLEFT", 14, -y); f:SetWidth(CW - 28); f:SetText(paint(c.aline)); y = y + f:GetStringHeight() + 8 end
-        for i, a in ipairs(c.avoid) do
-          chipRow(m.h.pull .. "a" .. i, { { icon = a.id }, { t = a.k }, { t = a.who, bold = true, col = UI.classHex(a.cls), gap = 6 }, { t = a.n, col = a.bad and COL.badT or COL.warn } }, a.id, a.story)
-        end
+        chipList(m.h.pull .. "a", c.avoid, function(a) return { { icon = a.id }, { t = a.k }, { t = a.who, bold = true, col = UI.classHex(a.cls), gap = 6 }, { t = a.n, col = a.bad and COL.badT or COL.warn } }, a.id, a.story end)
         if #c.avoid > 0 then local f = FS("body", 12, COL.faint); f:SetPoint("TOPLEFT", 14, -(y + 2)); f:SetText("Click one to see what happened."); y = y + 18 end
         y = y + 4
       end

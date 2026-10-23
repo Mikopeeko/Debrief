@@ -766,7 +766,7 @@ RECAP.lines = (m) => {
   // CL / CV the plain lines when there are none, PC each player's own coach line and focus)
   if (m.coach && m.coach.raid) { const c = m.coach.raid;
     rec.push(['CH', c.headline]); rec.push(['CF', c.focus, c.focusSame ? 1 : '', c.kill ? 1 : '']);
-    for (const x of c.wrong || []) rec.push(['CW', x.sev, x.id || '', x.label, x.tag || '', x.what || '', x.fix || '']);
+    for (const x of c.wrong || []) rec.push(['CW', x.sev, x.id || '', x.label, x.tag || '', x.what || '', x.fix || '', x.how || '', x.kb || '']); // (How and Against top guilds, Oct 22)
     for (const x of c.right || []) rec.push(['CR', x.id || '', x.t]);
     if (c.deaths) { for (const x of c.deaths.items || []) rec.push(['CD', x.t, x.who, x.cls || '', x.id || '', x.ab, x.k || 'n', x.story || '']); if (c.deaths.note) rec.push(['CN', c.deaths.note]); if (!(c.deaths.items || []).length && c.deaths.line) rec.push(['CL', c.deaths.line]); }
     if (c.avoid) { for (const x of c.avoid.items || []) rec.push(['CA', x.id || '', x.k, x.who, x.cls || '', x.n || '', x.bad ? 1 : '', x.story || '']); if (!(c.avoid.items || []).length && c.avoid.line) rec.push(['CV', c.avoid.line]); }

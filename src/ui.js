@@ -1714,6 +1714,7 @@ const PATCH_NOTES = [
     { t: 'Since last raid', d: 'All pulls now remembers each night and compares it with your last raid on the same boss: what you fixed, what got better or worse, and what\'s still going wrong. Pick a player to see their mistakes that also happened last raid.' },
   ], n: [
     'Every spell named on Debriefing now shows its icon, in sentences, titles, chips and tooltips, including raid cooldowns like Anti-Magic Zone in a pull where nobody pressed them.',
+    'Debrief in game: on a wide card, Deaths and Avoidable damage sit in two columns. What went wrong cards open on click to What happened, How and Against top guilds, like the website. A death now says why it happened and what to do next time.',
     'Debrief in game: deaths with a Healthstone or health potion still unused (when there was time to press it) on your card and the raid card, each with a switch in /db. The PC pop-up now follows your card style: Detailed opens wider with more open.',
     'Debrief Companion 0.6.54: the Debriefing tab inside the app now has the folding What went wrong cards and the All pulls death and avoidable damage chips that open.',
     'Debrief Companion: updates wait just 20 seconds after a pull.',
@@ -9601,7 +9602,7 @@ function whySay(o, pm, nth) {
   if (o.how === 'own') { const r1 = o.why ? toYou(o.why) : '', you = group.length > 1 ? names(group) : who(d), sameL = lc(o.l) === lc(d.ability);
     /* ("hit by X" reads "you were hit by X, and it killed you", not "you hit by X and it got you" (Oct 22)) */
     const pas = /^(hit|caught|clipped|struck|knocked|pulled|feared|stunned|grabbed|targeted|marked|chained|tethered)\b/i.test(r1);
-    const did = r1 ? (/\bdied\b/.test(r1) ? you + ', you ' + r1 + at + '.' : (/^your\b/.test(r1) ? you + ', ' + r1 : you + ', you ' + (pas ? 'were ' : '') + r1) + (sameL ? (pas ? ', and it killed you' : ' and it got you') + at + '.' : ' and ' + ab(d) + ' got you' + at + '.'))
+    const did = r1 ? (/\bdied\b/.test(r1) ? you + ', you ' + (pas ? 'were ' : '') + r1 + at + '.' : (/^your\b/.test(r1) ? you + ', ' + r1 : you + ', you ' + (pas ? 'were ' : '') + r1) + (sameL ? (pas ? ', and it killed you' : ' and it got you') + at + '.' : ' and ' + ab(d) + ' got you' + at + '.'))
       : o.kick ? you + ', ' + ab(d) + ' got you' + at + ' because a cast got through our kicks.' : o.av ? you + ', ' + ab(d) + ' got you' + at + '. That one\'s dodgeable.' : you + ', ' + ab(d) + ' got you' + at + '.';
     const others = near.filter((x) => !group.includes(x)), also = others.length ? ' ' + dbfCap(names(others)) + ' went down right then too.' : '';
     const lost = group.length + others.length;
@@ -9636,7 +9637,7 @@ function whyShort(o, pm) {
   const cap = (s) => dbfCap(String(s));
   if (o.how === 'raid') return o.k === 'dmg' ? { label: 'Short on damage' + at, short: esc(cap(raidShort(o.detail || ''))) } : { label: 'Lost to ' + mech(o.mech, o.id) + at, short: esc(cap(raidShort(o.detail || ''))) };
   if (o.how === 'none') return { label: 'No clear cause', short: 'nobody died, so it was probably called' };
-  if (o.how === 'own') { const r1 = o.why ? reason3(o.why) : '', grp = names(same);
+  if (o.how === 'own') { const r1 = o.why ? reason3(o.why) : '', grp = names(same) + (/^(hit|caught|clipped|struck|knocked|pulled|feared|stunned|grabbed|targeted|marked|chained|tethered)\b/i.test(r1) ? (same.length > 1 ? ' were' : ' was') : ''); /* ("Larryg and Schooty were hit by", Oct 22) */
     return { label: 'Lost to ' + esc(o.l || (d && d.ability) || 'a death') + at, short: r1 && !/^died\b/.test(r1) ? grp + ' ' + esc(r1) : o.kick ? who(d) + ' died to ' + ab(d) + ' after a missed kick' : o.av ? grp + ' died to ' + ab(d) + ' (dodgeable)' : grp + ' died to ' + ab(d) }; }
   if (o.how === 'wave') return { label: 'Lost to raid damage' + at, short: near.length + ' died to ' + ab(d) + ' at once, no mistake found' };
   if (o.how === 'kit') return { label: 'Lost to a slow death' + at, short: who(d) + ' died to ' + ab(d) + ' with ' + esc(dbfKit(d)[0] || 'a defensive') + ' unused' };
@@ -10365,7 +10366,7 @@ function coachPack(r) {
     const html = coachBox(c, { key: 'pop', title: c.kill ? 'The kill, coached' : 'This pull, coached' }), dd = {}, av = {};
     for (const it of (c.deaths ? (c.deaths.items || []).concat(c.deaths.rest || []) : [])) {
       if (!it.dg) continue; const [g, tt] = String(it.dg).split('@'), d = (r.deaths || []).find((y) => y.guid === g && y.t.toFixed(2) === tt);
-      try { const tg = d && deathTag(null, d); if (tg) dd[it.dg] = '<div class="cch-ddh"><b>' + esc(String(d.player).split('-')[0]) + '</b> died at ' + T(d.t) + ' to ' + esc(d.ability || d.killer || 'a hit') + ' <span class="ddp ' + tg.k + '">' + esc(tg.p) + '</span></div>' + deathBox(tg, d); } catch (e) { /* (no summary for that one) */ }
+      try { const tg = d && deathTag(null, d); if (tg) dd[it.dg] = iconSpells(deathBox(tg, d)); /* (the site's card as it reads now: no name line, every spell's icon (Oct 22)) */ } catch (e) { /* (no summary for that one) */ }
     }
     for (const it of (c.avoid ? (c.avoid.items || []).concat(c.avoid.rest || []) : [])) {
       if (!it.avk) continue; const i = String(it.avk).lastIndexOf('|'), k = String(it.avk).slice(0, i), p = String(it.avk).slice(i + 1);
@@ -10382,17 +10383,19 @@ function coachGame(r, name) {
   const tx = (h) => cHtml(h).replace(/\s+/g, ' ').trim(), sid = (t) => { const k = String(t || '').toLowerCase().replace(/\s*\(.*\)\s*$/, '').trim(); const v = E.SPELLID && E.SPELLID.get(k); return v ? String(v) : ''; };
   const story = (h, n) => { const t = tx(String(h || '').replace(/<(div|p|li|br)[^>]*>/gi, ' · ').replace(/<svg[\s\S]*?<\/svg>/gi, '')).replace(/(\s*·\s*)+/g, ' · ').replace(/^ · | · $/g, ''); return t.length > n ? t.slice(0, n - 1).replace(/[\s,;:.·]+\S*$/, '') + '…' : t; };
   const D = c.deaths, A = c.avoid, out = { headline: tx(c.headline), focus: tx(c.focus), kill: !!c.kill, focusSame: String(c.headline).includes(String(c.focus).replace(/\.$/, '')) };
-  out.wrong = (c.wrong || []).map((x) => ({ sev: x.sev === 'bad' ? 'bad' : 'warn', label: tx(dbfCap(x.label)), tag: tx(coachTag(x, false)), what: tx(x.what || ''), fix: tx(x.fix || ''), id: sid(x.cause || x.label) }));
+  // (with the card's How and Against top guilds, as the site's card shows them when opened (Oct 22))
+  out.wrong = (c.wrong || []).map((x) => ({ sev: x.sev === 'bad' ? 'bad' : 'warn', label: tx(dbfCap(x.label)), tag: tx(coachTag(x, false)), what: tx(x.what || ''), fix: tx(x.fix || ''), id: sid(x.cause || x.label), how: tx(cClip(howRest(x), 240)), kb: tx(x.kbLine || '') }));
   out.right = (c.right || []).map((x) => ({ t: tx(x.t), id: sid(String(x.t).split(/ was | were |:/)[0]) }));
   const cls = (n) => { const p = [...r.players.values()].find((q) => q.name && String(q.name).split('-')[0] === n); return (p && p.cls) || ''; };
   out.deaths = !D ? null : { line: tx(D.line || ''), note: tx(D.note || ''), items: (D.items || []).concat(D.rest || []).slice(0, 10).map((it) => {
     let d = null; if (it.dg) { const [g, tt] = String(it.dg).split('@'); d = (r.deaths || []).find((y) => y.guid === g && y.t.toFixed(2) === tt); }
-    let st = ''; try { const tg = d && deathTag(null, d); st = tg ? story(deathBox(tg, d), 240) : ''; } catch (e) { st = ''; }
+    // (why they died in one sentence, then what to do next time, like the site's death card; no health numbers (Oct 22))
+    let st = ''; try { const tg = d && deathTag(null, d); if (tg) { const v = deathVerdict(r, d), why = story(deathBox(tg, d), 900).split(' · ')[0]; st = cClip(why + (v && v.fix ? ' Next time: ' + v.fix : ''), 260); } } catch (e) { st = ''; }
     return { t: it.t || '', who: it.who || '', cls: cls(it.who), ab: tx(it.ab || ''), k: it.k || 'n', word: tx(it.word || ''), id: d && d.abilityId ? String(d.abilityId) : sid(it.ab), story: st }; }) };
   out.avoid = !A ? null : { line: tx(A.line || ''), items: (A.items || []).concat(A.rest || []).slice(0, 8).map((it) => {
     let st = ''; if (it.avk) { try { const i = String(it.avk).lastIndexOf('|'), k = String(it.avk).slice(0, i), p = String(it.avk).slice(i + 1);
       const sc = cutModule(r.module, cutT(r)).m.sections.find((q) => q.id === 'avoid'), g = sc && (sc.groups || []).find((q) => q.title === k), j = g && (g.judge || []).find((q) => q.p === p);
-      if (j) st = story(avBox(r, g, j), 240); } catch (e) { st = ''; } }
+      if (j) st = cClip(story(avBox(r, g, j), 900).split(' · ').filter((x) => !/^(When:|No map)/.test(x)).slice(0, 2).join(' '), 240); } catch (e) { st = ''; } } /* (what happened and how much, Oct 22) */
     const w = String(it.who || ''), nm = w.split(' ')[0];
     return { k: tx(it.k), who: nm, cls: cls(nm), n: w.slice(nm.length).trim(), bad: !!it.bad, id: sid(it.k), story: st }; }) };
   return out;
