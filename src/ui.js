@@ -5556,7 +5556,7 @@ function planTabHtml() { const off = ASG_OFF(), on = S.page === 'plan' && S.tab 
   return '<button class="tab tab-plan' + (on ? ' on' : '') + (off ? ' tab-off' : '') + '" data-t="overview" role="tab" aria-selected="' + on + '"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + tabIco('overview') + 'Plan</button>'; }
 // (the page: like your team's page, the raid you came from stays one tab away)
 let PLAN_HIST = false;
-function planPage() { if (S.item) PROG_BACK = S.item; S.item = null; S.rep = null; S.tab = 'overview'; S.page = 'plan'; progLit(false);
+function planPage() { if (S.page !== 'plan') { S.planV = 'ros'; store.set(PLAN_VK, 'ros'); S.planOpen = false; S.planRosEd = null; } /* (coming into Plan: Rosters first, Oct 23) */ if (S.item) PROG_BACK = S.item; S.item = null; S.rep = null; S.tab = 'overview'; S.page = 'plan'; progLit(false);
   $('#list').innerHTML = ''; $('#bossHead').innerHTML = ''; $('#bossPick').innerHTML = ''; const y = S.planY; S.planY = null;
   $('#main').innerHTML = pgTabBar(null) + '<section id="view" class="plan-page"><div id="assignBox" class="assignbox"></div></section>';
   planAssign(); refreshIcons(); if (y != null) window.scrollTo({ top: y });
@@ -5568,15 +5568,16 @@ function planAssign() { const box = $('#assignBox'); if (!box) return; const bos
   if (S.noteDraft && !S.noteEdit) { ndzView(r); return; }
   const v = planV0(), seg = (k, l) => '<button type="button" data-planv="' + k + '" class="' + (v === k ? 'on' : '') + '" aria-pressed="' + (v === k) + '">' + l + '</button>';
   const R = planRoster(), nN = planBosses().reduce((s, b) => s + notesOf(b).list.filter((n) => !n.example).length, 0), nR = rostersGet().list.length;
-  const head = '<div class="panel plan-head"><div class="plan-ht"><h2>Plan</h2><span class="sub">Your raid\'s prep for every boss. It doesn\'t use your logs: Debriefing checks a note against your pulls.</span>' + planRosPickH() + '</div>' +
-    planStepsH(v, nN) + '</div>'; /* (three steps and a Next button instead of four tabs, Oct 23) */
+  const pIn = v !== 'ros' && !!R; /* (inside a roster: a slim header, Oct 23) */
+  const head = '<div class="panel plan-head' + (pIn ? ' plan-in' : '') + '"><div class="plan-ht"><h2>Plan</h2>' + (pIn ? '' : '<span class="sub">Your raid\'s prep for every boss. It doesn\'t use your logs: Debriefing checks a note against your pulls.</span>') + '</div>' +
+    planTrailH(v, nN) + '</div>'; /* (rosters first, then a trail inside a roster, Oct 23; the step cards (planStepsH) retired) */
   let body = '';
   if (v === 'night') body = pnH();
   else if (v === 'ros') body = planRosH();
   else if (v === 'notes') body = planNotesH();
   else { if (S.noteMade) { S.planOpen = true; const mb = S.noteMade.planBoss || S.noteMade.boss; if (mb && planBosses().includes(mb) && mb !== S.ndzPick) { S.ndzPick = mb; store.set(PLAN_BK, mb); return planAssign(); } }
     body = S.planOpen ? (S.noteMade ? noteMadeBox(S.noteMade) : '') + ndzPlanBoard(r, boss) : planOverH(); }
-  box.innerHTML = head + body;
+  box.innerHTML = v === 'ros' && !S.planRosEd ? '<div class="plq">' + body + '</div>' : head + body; /* (the landing is one question, Oct 23) */
   if ($('#nmCopy')) $('#nmCopy').onclick = () => { const m = S.noteMade, n = m && notesOf(m.planBoss || m.boss).list.find((x) => x.id === m.id); if (n) copyBtn($('#nmCopy'), n.text); };
   if ($('#nmOk')) $('#nmOk').onclick = () => { S.noteMade = null; planAssign(); };
   if (v === 'ros') planRosBind(); ndzTlBigSync(); /* (the big graph stays big across redraws) */ bjMerge(); /* (the Boss page: one banner) */ refreshIcons(); /* (spell icons on every redraw, Oct 22) */
@@ -5612,7 +5613,7 @@ function planPool() { const tm = ndzBTeams(), cur = S.planRosTeam || store.get(G
 const planCol = (sp, n) => (sp[n.toLowerCase()] || {}).color || 'inherit';
 function planChip(sp, n, extra) { const s = sp[n.toLowerCase()] || {}, t = '<b>' + esc(n) + '</b><br>' + esc(s.spec || (s.cls ? ndzClsName(s.cls) : 'Class not known yet'));
   return '<span class="plan-chip" style="--cc:' + (planCol(sp, n) === 'inherit' ? 'var(--gold)' : planCol(sp, n)) + '" tabindex="0" data-tt="' + esc(t) + '">' + esc(n) + (extra || '') + '</span>'; }
-function planRosCard(R, sp, inUse) { const inn = R.players.filter((p) => !p.bench), bench = R.players.filter((p) => p.bench), info = (p) => planInfo(sp, p);
+function planRosCard(R, sp, inUse, gold) { const inn = R.players.filter((p) => !p.bench), bench = R.players.filter((p) => p.bench), info = (p) => planInfo(sp, p);
   const rows = PLAN_GRP.map(([k, lab]) => { const l = inn.filter((p) => PLAN_ROLE(info(p)) === k).sort((a, b) => a.n.localeCompare(b.n)); return l.length ? '<div class="ndz-drg"><span class="ndz-drl">' + lab + ' · ' + l.length + '</span><span class="ndz-drn">' + l.map((p) => planChip(sp, p.n)).join('') + '</span></div>' : ''; }).join('') +
     (bench.length ? '<div class="ndz-drg plan-bench"><span class="ndz-drl">Bench · ' + bench.length + '</span><span class="ndz-drn">' + bench.map((p) => planChip(sp, p.n)).join('') + '</span></div>' : '');
   // (the banner: raider icons, the raid's make-up in class colours, role counts)
@@ -5624,18 +5625,24 @@ function planRosCard(R, sp, inUse) { const inn = R.players.filter((p) => !p.benc
   const strip = Object.entries(byC).sort((x, y) => y[1] - x[1]).map(([c, n]) => '<span style="flex:' + n + ';background:' + (((E.CLASSES[c] || [])[1]) || '#3a4152') + '" title="' + esc((c === '?' ? 'Class not set' : ndzClsName(c)) + ': ' + n) + '"></span>').join('');
   const cnt = (k) => inn.filter((p) => PLAN_ROLE(info(p)) === k).length, nT = cnt('tank'), nH = cnt('healer'), nD = inn.length - nT - nH;
   const pills = '<span class="plr-pill">' + plural(nT, 'Tank') + '</span><span class="plr-pill">' + plural(nH, 'Healer') + '</span><span class="plr-pill">' + nD + ' DPS</span>' + (bench.length ? '<span class="plr-pill dim">' + bench.length + ' on the bench</span>' : '');
-  const open = S.plRosOpen && S.plRosOpen[R.id];
+  const open = S.plRosOpen && S.plRosOpen[R.id], mo = S.plMenu === R.id; /* (Oct 23: calm card, details one click deeper, edit/delete in ⋯) */
   return '<details class="panel ndz-drost plan-ros plr' + (inUse ? ' on' : '') + '" data-plrid="' + esc(R.id) + '"' + (open ? ' open' : '') + '><summary class="plr-sum"><span class="plr-avs">' + av + '</span>' +
-    '<span class="plr-mid"><span class="plr-t"><b>' + esc(R.name) + '</b>' + (inUse ? '<span class="plr-use">✓ In use</span>' : '') + '</span><span class="plr-strip" aria-hidden="true">' + strip + '</span><span class="plr-pills">' + pills + '</span>' + planBringsH(inn.map((p) => ({ n: p.n, ...info(p) }))) + '</span>' +
-    '<span class="ndz-cb">' + (inUse ? '' : '<button class="btn sm primary" type="button" data-plruse="' + esc(R.id) + '">Use for new plans</button>') + '<button class="btn sm" type="button" data-plred="' + esc(R.id) + '">Edit</button><button class="btn sm" type="button" data-plrdel="' + esc(R.id) + '" aria-label="Delete ' + esc(R.name) + '">' + NOTE_TRASH + '</button></span><span class="plr-chev" aria-hidden="true">▾</span></summary>' +
-    '<div class="plr-body">' + (rows || '<p class="sub">Nobody on it yet.</p>') + '</div></details>'; }
+    '<span class="plr-mid"><span class="plr-t"><b>' + esc(R.name) + '</b></span><span class="sub">' + plural(inn.length, 'raider') + (bench.length ? ' · ' + bench.length + ' on the bench' : '') + (inUse ? ' · in use' : '') + '</span></span>' +
+    '<span class="ndz-cb"><button class="btn' + (gold ? ' primary' : '') + '" type="button" data-plrgo="' + esc(R.id) + '"' + (inn.length ? '' : ' disabled') + '>Plan tonight' + (gold ? ' →' : '') + '</button>' +
+    '<span class="plr-mnu' + (mo ? ' on' : '') + '"><button class="plr-dots" type="button" data-plmenu="' + esc(R.id) + '" aria-label="More for ' + esc(R.name) + '" aria-expanded="' + mo + '">⋯</button>' + (mo ? '<span class="plr-pop"><button type="button" data-plred="' + esc(R.id) + '">Edit raiders</button><button type="button" class="bad" data-plrdel="' + esc(R.id) + '">Delete</button></span>' : '') + '</span></span><span class="plr-chev" aria-hidden="true">▾</span></summary>' +
+    '<div class="plr-body"><div class="plr-det"><span class="plr-strip" aria-hidden="true">' + strip + '</span><span class="plr-pills">' + pills + '</span>' + planBringsH(inn.map((p) => ({ n: p.n, ...info(p) }))) + '</div>' + (rows || '<p class="sub">Nobody on it yet.</p>') + '</div></details>'; }
 // (a roster you open stays open; the buttons in its banner don't open or close it)
 document.addEventListener('toggle', (e) => { const d = e.target; if (!d || !d.classList || !d.classList.contains('plr') || !d.dataset.plrid) return; S.plRosOpen = S.plRosOpen || {}; S.plRosOpen[d.dataset.plrid] = d.open; }, true);
 document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('.plr-sum button')) e.preventDefault(); }, true);
 function planRosH() { const o = rostersGet(), sp = planSp(), cur = planRoster();
   if (S.planRosEd) return planRosEdH(sp);
-  return '<div class="plan-rhead"><div><b>Your rosters</b><span class="sub">Who\'s raiding, with a bench. The roster in use fills new plans and the note builder\'s "Who\'s raiding?" step.</span></div><button class="btn primary" type="button" data-plrnew="1">+ New roster</button></div>' +
-    (o.list.length ? o.list.map((R) => planRosCard(R, sp, cur && R.id === cur.id)).join('') + (cur ? '<div class="panel plan-next"><span>Next: plan with <b>' + esc(cur.name) + '</b> (' + plural(cur.players.filter((p) => !p.bench).length, 'raider') + ').</span><span class="plan-nb"><button class="btn primary" type="button" data-planv="night">Plan the night</button><button class="btn" type="button" data-planv="plans">Boss plans</button></span></div>' : '') : planRosEmptyH()); }
+  if (!o.list.length) return planRosEmptyH(); /* (Oct 23: one question, one gold button) */
+  let n = null; try { n = pnGet(); } catch (e) { n = null; } const nR = n && o.list.find((x) => x.id === n.rid), bs = planBosses(), st = nR ? bs.map((b) => ({ b, s: pnState(n, b) })) : [], done = st.filter((x) => x.s.k !== 'no'), fix = st.filter((x) => x.s.k === 'wn'), cont = nR && done.length;
+  const nN = bs.reduce((t, b) => t + notesOf(b).list.filter((x) => !x.example).length, 0), one = o.list.length === 1;
+  const strip = cont ? '<div class="panel plq-cont"><span class="plq-cm"><b>Continue tonight · ' + esc(nR.name) + '</b><span class="sub">' + esc(pnDay(n.date)) + ' · ' + (done.length - fix.length) + ' of ' + bs.length + ' bosses ready' + (fix.length ? ' · ' + fix.length + ' to fix' : '') + (done.length < bs.length ? ' · ' + (bs.length - done.length) + ' not planned' : '') + '</span><span class="plq-bar"><i style="width:' + Math.round(100 * (done.length - fix.length) / bs.length) + '%"></i></span></span><button class="btn primary" type="button" data-plcont="' + esc(nR.id) + '">Continue →</button></div>' : '';
+  return '<div class="plq-h"><h2>Who\'s raiding tonight?</h2><span class="sub">' + (cont ? 'Pick up tonight\'s plan, or start one with a roster.' : one ? esc(pnDay(n ? n.date : pnToday())) : 'Pick a roster to plan tonight.') + '</span></div>' + strip +
+    (cont ? '<div class="plq-sub">Your rosters</div>' : '') + o.list.map((R) => planRosCard(R, sp, cur && R.id === cur.id, !cont && (one || (cur && R.id === cur.id)))).join('') +
+    '<div class="pst-links plq-links"><button class="linkbtn" type="button" data-plrnew="1">+ New roster</button><span aria-hidden="true">·</span><button class="linkbtn" type="button" data-planv="notes">All notes' + (nN ? ' (' + nN + ')' : '') + '</button><span aria-hidden="true">·</span><button class="linkbtn" type="button" data-ndzwiz="1">Load a note you already have</button></div>'; }
 // (the roster editor: in, bench, or not on it; anyone from your pool, or typed in)
 function planRosEdH(sp) { const E0 = S.planRosEd, P = planPool(), on = E0.on, nIn = [...on.values()].filter((p) => !p.bench).length, nB = on.size - nIn;
   const info = (n) => planInfo(sp, on.get(n.toLowerCase()) || { n });
@@ -5707,7 +5714,7 @@ function planBossHead(pb, l, n) { const R = planRoster(), pk = E.PACKS.find((p) 
   const B = (attr, lab, cls) => '<button class="btn' + (cls ? ' ' + cls : '') + '" type="button" ' + attr + '>' + lab + '</button>', nb = 'data-ndzbuild="1" data-ndzbuildfix="1" data-ndzbuildboss="' + esc(pb) + '"';
   const nsel = l.length > 1 ? '<select class="plan-nsel" data-ndzpns="1" aria-label="Which plan">' + l.map((x) => '<option value="' + esc(x.id) + '"' + (n && x.id === n.id ? ' selected' : '') + '>' + esc(x.name) + '</option>').join('') + '</select>' : '';
   const rl = R ? 'Roster <b>' + esc(R.name) + '</b> · ' + plural(R.players.filter((p) => !p.bench).length, 'raider') + ' <a href="#" data-planv="ros">Change</a>' : 'No roster yet <a href="#" data-planv="ros">Make one</a>';
-  const acts = n ? '' : '<div class="plan-bha"><span class="plan-bhs">Build one step by step with the raiders who raid with your team, or paste one you already have.</span><span class="ndz-cb">' + B(nb, 'Build new note →', 'primary') + B('data-ndzwiz="1" data-ndzwizboss="' + esc(pb) + '"', '📋 Import note') + '</span></div>';
+  const acts = n ? '' : '<div class="plan-bha"><span class="plan-bhs">No plan for this boss yet. Build it step by step with tonight\'s raiders, or add the note your raid already uses.</span><span class="ndz-cb">' + B(nb, 'Build the plan →', 'primary') + B('data-ndzwiz="1" data-ndzwizboss="' + esc(pb) + '"', '📋 Add a note') + '</span></div>';
   return '<div class="plan-back"><button type="button" class="btn sm" data-planall="1">← All bosses</button></div><header class="fight bh plan-bh ' + (n ? 'best' : 'none') + (H ? ' hero' : '') + '">' + (H ? '<div class="bh-hero" aria-hidden="true"><img src="' + hero(H) + '" alt="" style="--hx:' + Math.max(0, 50 - H[1]) + '%" onerror="var h=this.closest(\'.fight\');if(h)h.classList.remove(\'hero\');this.parentNode.remove()"></div>' : '') + bossArt(pb) +
     '<div class="bh-t"><div class="bh-l1"><h2 class="bh-name">' + esc(pb) + '</h2>' + (nsel || '<span class="bh-big">' + (n ? '✓ ' + esc(n.name) : 'No plan yet') + '</span>') + (n ? '<button type="button" class="plan-bdel plan-bedit" data-ndzbuild="1" data-noteboss="' + esc(pb) + '" data-noteid="' + esc(n.id) + '" title="Edit this plan step by step">✏️ Edit</button>' : '') + (n ? '<button type="button" class="plan-bdel" data-plandel="' + esc(pb + '|' + n.id) + '" aria-label="Delete ' + esc(n.name) + '" title="Delete this note">' + NOTE_TRASH + '</button>' : '') + '</div>' +
     '<div class="bh-l2"><span class="bh-k">' + [diff, raid].filter(Boolean).map(esc).join('<i>·</i>') + '</span><span class="plan-rl">' + rl + '</span></div>' + acts + '</div></header>'; }
@@ -5715,18 +5722,22 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
   const y = window.scrollY; planAssign(); window.scrollTo({ top: y }); });
 // (Boss plans, first: every boss as a picture card with its saved notes to open; a boss with none says so and starts one)
 function planOverH() { const when = (t) => (t ? new Date(t).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ''), R0 = planRoster(), nN = planBosses().reduce((s, b) => s + notesOf(b).list.filter((n) => !n.example).length, 0);
+  let PO = null; try { PO = R0 ? pnGet() : null; } catch (e) { PO = null; } /* (the night's picks and plans, for each card's state) */
   const card = (b) => { const h = BOSS_HERO[b], l = notesOf(b).list.filter((n) => !n.example).sort((x, y) => (y.saved || 0) - (x.saved || 0));
     const row = (n) => { const ro = ndzNoteRoster(n) || [...new Set(noteNames(noteResolve(n.text)).map((x) => String(x).split('-')[0]))]; let hd = {}; try { hd = (E.parseNote(n.text) || {}).header || {}; } catch (e) { hd = {}; }
       return '<div class="plan-ovrw"><button type="button" class="plan-ovr" data-planopen="' + esc(b + '|' + n.id) + '"><span class="plan-ovrt"><b>' + esc(n.name) + '</b><span class="sub">' + (/heroic|15/i.test(String(hd.difficulty || '')) ? 'Heroic' : 'Mythic') + ' · ' + plural(ro.length, 'raider') + (n.saved ? ' · saved ' + esc(when(n.saved)) : '') + '</span></span><span class="plan-ovgo" aria-hidden="true">Open →</span></button><button type="button" class="plan-ovdel" data-plandel="' + esc(b + '|' + n.id) + '" aria-label="Delete ' + esc(n.name) + '" title="Delete this note">' + NOTE_TRASH + '</button></div>'; };
     const open = S.planExp === b; /* (a card shows its notes only once clicked (your call, Oct 21)) */
-    return '<div class="plan-ovc' + (l.length ? ' has' : '') + (open ? ' open' : '') + '"><button type="button" class="plan-ovh" data-planexp="' + esc(b) + '" aria-expanded="' + open + '">' + (h ? '<img src="https://wow.zamimg.com/uploads/guide/header/' + h[0] + '.jpg" alt="" loading="lazy" style="object-position:' + h[1] + '% 22%" onerror="this.remove()">' : '') +
-      '<span class="plan-ovn">' + esc(b) + '</span><span class="plan-ovs' + (l.length ? ' has' : '') + '">' + (l.length ? '✓ ' + plural(l.length, 'plan') : 'No plan yet') + '</span><span class="plan-ovch" aria-hidden="true">▾</span></button>' +
-      (!open ? '' : '<div class="plan-ovl">' + (l.length ? l.map(row).join('') : '<div class="plan-ov0"><span class="sub">No plan for ' + esc(b) + ' yet.</span><span class="ndz-cb"><button class="btn sm primary" type="button" data-ndzbuild="1" data-ndzbuildfix="1" data-ndzbuildboss="' + esc(b) + '">Build new note →</button><button class="btn sm" type="button" data-ndzwiz="1" data-ndzwizboss="' + esc(b) + '">📋 Import note</button></span></div>') + '</div>') + '</div>'; };
-  const hasSmp = planBosses().some((b) => notesOf(b).list.some((n) => /^smp/.test(n.id)));
-  const smp = typeof PLAN_PRACTICE === 'function' && PLAN_PRACTICE() ? (!nN ? '<div class="panel plan-sample"><span><b>This is a test copy.</b> <span class="sub">Fill it with sample notes and a roster to try it.</span></span><button class="btn sm primary" type="button" data-plansample="1">Add sample notes</button></div>'
-    : hasSmp ? '<div class="panel plan-sample"><span><b>This is a test copy with sample notes.</b> <span class="sub">Refresh them to get the newest sample.</span></span><button class="btn sm" type="button" data-plansample="refresh">Refresh the sample</button></div>' : '') :
+    const s0 = PO && PO.notes[b] ? pnState(PO, b) : null, s = s0 && s0.k !== 'no' ? s0 : null, sk = s ? s.k : l.length ? 'sv' : 'no', canMake = !!(PO && NDZ_BUILD[b] && (PO.on[b] || []).length);
+    const act = s ? 'data-ntboss="' + esc(b) + '"' : l.length === 1 ? 'data-planopen="' + esc(b + '|' + l[0].id) + '"' : !l.length ? 'data-planboss="' + esc(b) + '"' : /* (no plan: the boss page, where you add one, Oct 23) */ 'data-planexp="' + esc(b) + '" aria-expanded="' + open + '"', drop = !s && l.length > 1;
+    const lab = sk === 'ok' ? '✓ Ready' : sk === 'wn' ? '⚠ ' + s.t : sk === 'sv' ? plural(l.length, 'saved plan') : 'No plan yet';
+    return '<div class="plan-ovc' + (l.length ? ' has' : '') + (open && drop ? ' open' : '') + '"><button type="button" class="plan-ovh" ' + act + '>' + (h ? '<img src="https://wow.zamimg.com/uploads/guide/header/' + h[0] + '.jpg" alt="" loading="lazy" style="object-position:' + h[1] + '% 22%" onerror="this.remove()">' : '') +
+      '<span class="plan-ovn">' + esc(b) + '</span><span class="plan-ovs ' + (sk === 'ok' ? 'has' : sk) + '">' + esc(lab) + '</span>' + (drop ? '<span class="plan-ovch" aria-hidden="true">▾</span>' : '<span class="plan-ovch" aria-hidden="true">→</span>') + '</button>' +
+      (!open || !drop ? '' : '<div class="plan-ovl">' + (l.length ? l.map(row).join('') : '<div class="plan-ov0"><span class="sub">No plan for ' + esc(b) + ' yet.</span><span class="ndz-cb"><button class="btn sm primary" type="button" data-ndzbuild="1" data-ndzbuildfix="1" data-ndzbuildboss="' + esc(b) + '">Build the plan step by step →</button><button class="btn sm" type="button" data-ndzwiz="1" data-ndzwizboss="' + esc(b) + '">📋 Import a note</button></span></div>') + '</div>') + '</div>'; };
+  const hasSmp = planBosses().some((b) => notesOf(b).list.some((n) => /^smp/.test(n.id))) || rostersGet().list.some((R) => /^rsmp/.test(R.id)); /* (the sample roster counts too, Oct 23) */
+  const smp = typeof PLAN_PRACTICE === 'function' && PLAN_PRACTICE() ? (!nN ? '<div class="panel plan-sample"><span><b>This is a test copy.</b> <span class="sub">Add a sample roster to try it. Plans are yours to add.</span></span><button class="btn sm primary" type="button" data-plansample="1">Add a sample roster</button></div>'
+    : hasSmp ? '<div class="panel plan-sample"><span><b>This is a test copy with a sample roster.</b> <span class="sub">Refresh it to get the newest sample.</span></span><button class="btn sm" type="button" data-plansample="refresh">Refresh the sample</button></div>' : '') :
     hasSmp ? '<div class="panel plan-sample"><span><b>You\'re trying a sample raid.</b> <span class="sub">Its roster and plans are made up. Remove them when you\'re ready for your own.</span></span><button class="btn sm" type="button" data-plansample="remove">Remove the sample</button></div>' : ''; /* (on the website: the sample from Try it, and a way out) */
-  return smp + '<div class="plan-ovtop sub">Click a boss to see its plans.' + (R0 ? ' New plans start with your roster <b>' + esc(R0.name) + '</b> (' + plural(R0.players.filter((p) => !p.bench).length, 'raider') + '). <a href="#" data-planv="ros">Change</a>' : ' No roster yet. <a href="#" data-planv="ros">Make one</a>') + '</div>' +
+  return smp + (R0 ? '' : '<div class="plan-ovtop sub">No roster yet. <a href="#" data-planv="ros">Make one</a> and Debrief drafts every boss for you.</div>') +
     '<div class="plan-ov">' + planBosses().map(card).join('') + '</div>'; }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-planall]'); if (!b || S.page !== 'plan') return; S.planOpen = false; S.noteMade = null; planAssign(); window.scrollTo({ top: 0 }); });
 // (a boss card opens in place to show its plans, one at a time; clicking it again closes it)
@@ -5809,6 +5820,39 @@ function planBringsH(ps) { const G = (n) => ((NDZ_BUFFS.find((g) => g[0] === n) 
   { const u = G('Utility'), br = u.filter((x) => /battle res/i.test(x[0])), bl = u.filter((x) => /bloodlust/i.test(x[0])), mb = who(br), ml = who(bl);
     items.push(['br', mb.size, mb.size === 1 ? 'battle rez' : 'battle rezzes', [...mb.keys()], 2]); items.push(['bl', ml.size, 'Bloodlust', [...ml.keys()], 1]); }
   return '<span class="plr-brings">' + items.map(([k, n, lab, l, good]) => '<span class="plr-b ' + (!n ? 'none' : n >= good ? 'ok' : '') + '" tabindex="0" data-tt="' + esc('<b>' + n + ' ' + lab + '</b>' + (l.length ? '<br>' + l.map((x) => esc(x)).join('<br>') : '<br>Nobody on this roster.')) + '">' + (k === 'bl' ? (n ? '✓ Bloodlust' : 'No Bloodlust') : n + ' ' + lab) + '</span>').join('') + '</span>'; }
+
+// ---- Plan's trail (Oct 23): on the rosters page only the small links; inside a roster: Rosters › name › Who plays › Boss plans + Next ----
+function planTrailH(v, nN) { const links = '<div class="pst-links"><button class="linkbtn" type="button" data-planv="notes">All notes' + (nN ? ' (' + nN + ')' : '') + '</button><span aria-hidden="true">·</span><button class="linkbtn" type="button" data-ndzwiz="1">Load a note you already have</button></div>';
+  const R = planRoster(); if (v === 'ros' || !R) return links;
+  const bosses = planBosses(); let o = null; try { o = pnGet(); } catch (e) { o = null; }
+  const st = o ? bosses.map((b) => ({ b, s: pnState(o, b) })) : [], planned = st.filter((x) => x.s.k !== 'no'), fix = st.filter((x) => x.s.k === 'wn');
+  const it = (k, l) => '<button type="button" class="ptr-i' + (v === k ? ' on' : '') + '" data-planv="' + k + '"' + (v === k ? ' aria-current="page"' : '') + '>' + l + '</button>', sep = '<span class="ptr-s" aria-hidden="true">›</span>';
+  const next = v === 'night' ? (planned.length ? '<button class="btn primary" type="button" data-planv="plans">Next: Boss plans →</button>' : '<button class="btn primary" type="button" data-plall="1">✨ Plan the whole night →</button>')
+    : v === 'plans' && fix.length ? '<button class="btn primary" type="button" data-ntboss="' + esc(fix[0].b) + '">Fix ' + esc(fix[0].b) + ' →</button>'
+    : v === 'plans' && planned.length < bosses.length ? '<button class="btn" type="button" data-planv="night">Plan the other ' + (bosses.length - planned.length) + ' →</button>' : '';
+  return '<div class="ptr"><span class="ptr-path">' + it('ros', '‹ Rosters') + sep + '<b class="ptr-r">' + esc(R.name) + '</b>' + sep + it('night', 'Who plays') + sep + it('plans', 'Boss plans' + (o ? ' <span class="ptr-c">' + planned.length + '/' + bosses.length + '</span>' : '')) + '</span>' + (next ? '<span class="ptr-next">' + next + '</span>' : '') + '</div>'; }
+// (Plan with this roster: use it and go to Who plays)
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-plrgo]'); if (!b || S.page !== 'plan') return; e.preventDefault(); e.stopPropagation();
+  const o = rostersGet(); o.cur = b.dataset.plrgo; rostersSet(o); PLAN_RC = null; { const n = pnGet(); if (n.rid !== o.cur) { n.rid = o.cur; n.man = {}; n.on = pnPick(n, pnPeople(n)).on; pnSet(n); } } S.planV = 'night'; store.set(PLAN_VK, 'night'); S.planRosEd = null; S.noteMade = null; planAssign(); window.scrollTo({ top: 0 }); }, true);
+
+// (Make the plan: draft one boss from Who plays, like Plan the whole night does for all, then open it)
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-plmake]'); if (!b || S.page !== 'plan') return; e.preventDefault(); e.stopPropagation();
+  const boss = b.dataset.plmake, o = pnGet(), lab = pnDay(o.date); let d; try { d = pnDraftBoss(o, boss, o.on[boss] || []); } catch (x) { toast('Couldn\'t make it: ' + esc(x.message), 6000); return; }
+  const L = notesOf(boss), n = { id: 'n' + Date.now().toString(36), name: 'Night of ' + lab, text: d.text, saved: Date.now(), night: o.date, roster: (o.on[boss] || []).map((x) => String(x).split('-')[0]) };
+  L.list.push(n); notesSave(boss, L); o.notes[boss] = n.id; o.iss = o.iss || {}; o.st = o.st || {}; o.iss[boss] = d.iss; o.st[boss] = { jobs: d.jobs, cds: d.cds, kicks: d.kicks, on: (o.on[boss] || []).slice().sort().join('|') }; pnSet(o);
+  S.ndzPick = boss; store.set(PLAN_BK, boss); S.ndzPlanId = n.id; S.planV = 'plans'; store.set(PLAN_VK, 'plans'); S.planOpen = true; planAssign(); window.scrollTo({ top: 0 }); toastOk('Made the plan for ' + esc(boss) + ' from who plays.', 3500); }, true);
+
+// (the trail's Plan the whole night: draft every boss, then show Boss plans)
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-plall]'); if (!b || S.page !== 'plan') return; e.preventDefault(); b.disabled = true; b.textContent = 'Planning every boss…';
+  setTimeout(() => { let d = []; try { d = pnDraftAll() || []; } catch (x) { toast('Something went wrong: ' + esc(x.message), 6000); }
+    if (d.length) { S.planV = 'plans'; store.set(PLAN_VK, 'plans'); S.planOpen = false; toastOk('Planned ' + d.length + (d.length === 1 ? ' boss' : ' bosses') + '. Open one to look it over.', 4000); }
+    planAssign(); window.scrollTo({ top: 0 }); }, 30); });
+
+// (⋯ on a roster: Edit raiders / Delete; Continue tonight opens tonight's boss plans)
+document.addEventListener('click', (e) => { if (S.page !== 'plan' || !e.target.closest) return; const m = e.target.closest('[data-plmenu]');
+  if (m) { e.preventDefault(); S.plMenu = S.plMenu === m.dataset.plmenu ? null : m.dataset.plmenu; planAssign(); return; }
+  const c = e.target.closest('[data-plcont]'); if (c) { e.preventDefault(); const o = rostersGet(); o.cur = c.dataset.plcont; rostersSet(o); PLAN_RC = null; S.planV = 'plans'; store.set(PLAN_VK, 'plans'); S.planOpen = false; S.plMenu = null; planAssign(); window.scrollTo({ top: 0 }); return; }
+  if (S.plMenu && !e.target.closest('.plr-mnu')) { S.plMenu = null; planAssign(); } }, true);
 // (test copies only: sample notes and a roster, so a practice link with empty storage can be tried (Oct 21, "open the test copy
 // for me to try always"); the button shows on practice links and this PC's copies when you have no notes yet. Every sample
 // raider's class is known (the user: "classes should all be known"): the plans were built with the note builder from a real
@@ -5819,7 +5863,7 @@ const PLAN_SAMPLE_J = "{\"notes\":{\"Nek'zali the Soulcoiler\":[{\"name\":\"Myth
 // roster, and every sample raider's class (kept like raiders you added, so they're coloured everywhere))
 function planSampleLoad() { let J; try { J = JSON.parse(PLAN_SAMPLE_J); } catch (e) { return; } let k = 0;
   const ca = (J.notes['The Coiled Altar'] || [])[0]; if (ca) J.notes['The Coiled Altar'].push({ name: 'Alt night, Padflash in', text: ca.text.replace(/\bPreheat\b/g, 'Padflash'), roster: ca.roster ? ca.roster.map((n) => (n === 'Preheat' ? 'Padflash' : n)) : null });
-  for (const [b, l] of Object.entries(J.notes)) { const o = notesOf(b); for (const n of l) o.list.push({ id: 'smp' + Date.now().toString(36) + (k++), name: n.name, text: String(n.text).split('\n').map((ln) => { if (!/(^|;)\s*time:/i.test(ln) || /spellid:/i.test(ln)) return ln; const m = ln.match(/(?:^|;)text:([^;]*)/i), id = m ? ndzSpellIdOf(m[1]) : 0; return id ? ln.replace(/;text:/i, ';spellid:' + id + ';text:') : ln; }).join('\n'), saved: Date.now() - k * 3600000, ...(n.roster ? { roster: n.roster } : {}) }); notesSave(b, o); }
+  if (PLAN_PRACTICE()) J.notes = {}; /* (test copies: a roster only, no notes, Oct 23) */ for (const [b, l] of Object.entries(J.notes)) { const o = notesOf(b); for (const n of l) o.list.push({ id: 'smp' + Date.now().toString(36) + (k++), name: n.name, text: String(n.text).split('\n').map((ln) => { if (!/(^|;)\s*time:/i.test(ln) || /spellid:/i.test(ln)) return ln; const m = ln.match(/(?:^|;)text:([^;]*)/i), id = m ? ndzSpellIdOf(m[1]) : 0; return id ? ln.replace(/;text:/i, ';spellid:' + id + ';text:') : ln; }).join('\n'), saved: Date.now() - k * 3600000, ...(n.roster ? { roster: n.roster } : {}) }); notesSave(b, o); }
   const ro = rostersGet(); for (const R of J.rosters || []) { const x = { id: 'rsmp' + (k++), name: R.name, players: R.players, saved: Date.now() }; ro.list.push(x); if (!ro.cur) ro.cur = x.id; } rostersSet(ro);
   const ex = ndzExtra(); for (const R of J.rosters || []) for (const p of R.players) if (p.cls) ex[p.n.toLowerCase()] = { n: p.n, cls: p.cls, role: p.role }; for (const [n, x] of Object.entries(J.known || {})) ex[n.toLowerCase()] = { n, cls: x.cls, role: x.role }; store.set(NDZ_EXTRA, JSON.stringify(ex)); PLAN_RC = null; }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-plansample]'); if (!b) return;
@@ -6250,6 +6294,7 @@ const toastOk = (h, ms) => { const t = toast(h, ms); if (t) t.classList.add('ok'
 const NIGHT_K = 'wla-night';
 const pnToday = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 function pnGet() { let o = null; try { o = JSON.parse(store.get(NIGHT_K) || 'null'); } catch (e) { o = null; } const R = planRoster();
+  if (o && o.date && o.date < pnToday()) { o = { date: pnToday(), rid: o.rid, diff: o.diff }; pnSet(o); } /* (a past night rolls to today, Oct 23) */
   o = Object.assign({ date: pnToday(), rid: R ? R.id : null, diff: 'Mythic', on: {}, man: {}, notes: {}, iss: {}, st: {}, at: 0 }, o || {});
   if (!rostersGet().list.some((x) => x.id === o.rid)) o.rid = R ? R.id : null; return o; }
 const pnSet = (o) => { try { store.set(NIGHT_K, JSON.stringify(o)); } catch (e) { /* (this visit only) */ } };
@@ -6305,9 +6350,10 @@ function planEmptyH() { const L = planLastNote(), names = L ? planNoteNames(L.n)
     card('📋', L ? 'Or load another note' : 'Or load your note', 'Paste the Northern Sky Raid Tools note your raid already uses. Debriefing checks every pull against it, and its names can become your roster.', '<button class="btn" type="button" data-ndzwiz="1">Load a note</button>') + '</div>' +
     '<details class="pln0-how"><summary>How it works</summary><ol class="nt-steps"><li><b>Make a roster</b><span>Your raiders and who\'s on the bench.</span></li><li><b>Plan the whole night</b><span>Debrief picks who plays each boss and drafts every plan.</span></li><li><b>Copy into the game</b><span>Paste each plan into Northern Sky Raid Tools. Debriefing then checks the pulls against it.</span></li></ol></details>' +
     '<p class="pln0-try sub">New here? <button class="linkbtn" type="button" data-plansample="1" data-tt="' + esc('<b>Try it with a sample raid</b><br>Adds a made-up 20-player roster and sample plans so you can click around. Remove them any time.') + '">Try it with a sample raid ›</button></p></div>'; }
-function planRosEmptyH() { const L = planLastNote(), names = L ? planNoteNames(L.n) : [];
-  return '<div class="panel plan-empty pln0-re"><b>No roster yet</b><p class="sub">Make one from your team\'s core raiders with + New roster, or type the names yourself.' + (L && names.length ? ' Or start from the note you already loaded:' : ' Or load the note your raid uses, and make one from its names.') + '</p>' +
-    (L && names.length ? planNoteHave(L, names) : '<button class="btn" type="button" data-ndzwiz="1">Load a note</button>') + '</div>'; }
+function planRosEmptyH() { /* (brand new, Oct 23: one question, one gold button, the path as a hint) */
+  return '<div class="panel plq-hero"><h2>Who\'s on your raid team?</h2><p class="sub">Debrief plans every boss for your night: who plays, jobs, kicks and healing cooldowns.</p><button class="btn primary" type="button" data-plrnew="1">Make my roster →</button>' +
+    '<p class="sub plq-or">It starts with your Warcraft Logs team. Add or type names after.</p><div class="plq-how"><span>1 · Your team</span><span>2 · Who plays tonight</span><span>3 · Every boss\'s plan</span></div>' +
+    '<div class="pst-links plq-links"><button class="linkbtn" type="button" data-ndzwiz="1">Load a note you already have</button></div></div>'; }
 // (Make a roster from it: everyone the note names, nobody on the bench yet; it becomes the roster in use, then Rosters opens on it)
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-plnros]'); if (!b || S.page !== 'plan') return; e.preventDefault();
   const [boss, id] = planKey(b.dataset.plnros), n = notesOf(boss).list.find((x) => x.id === id), names = n ? planNoteNames(n) : []; if (!names.length) return;
@@ -6321,9 +6367,9 @@ function pnH() { const o = pnGet(), ps = pnPeople(o), bosses = planBosses(), RL 
   const size = (b) => pnSize(b, o.diff, ps.length), sit = (n, b) => !(o.on[b] || []).includes(n), core = ps.filter((p) => !p.bench), col = (p) => (E.CLASSES[p.cls] || [])[1] || 'inherit';
   const planned = bosses.filter((b) => pnState(o, b).k !== 'no'), sum = (k) => planned.reduce((s, b) => s + ((o.st[b] || {})[k] || 0), 0), todo = bosses.flatMap((b) => (o.iss[b] || []).map((t) => ({ b, t }))), changed = bosses.filter((b) => pnState(o, b).t === 'Roster changed');
   const head = '<div class="nt-head"><div class="nt-ht"><h2>' + esc(pnDay(o.date)) + '</h2><input type="date" class="nt-date" data-ntdate="1" value="' + esc(o.date) + '" aria-label="Raid night"></div>' +
-    '<label class="nt-pick"><span class="sub">Roster</span><select data-ntros="1">' + RL.map((R) => '<option value="' + esc(R.id) + '"' + (R.id === o.rid ? ' selected' : '') + '>' + esc(R.name) + ' · ' + R.players.length + '</option>').join('') + '</select></label>' +
+    /* (the roster is picked on the Rosters page and named in the trail, Oct 23) */
     '<span class="ndz-seg nt-diff">' + ['Mythic', 'Heroic'].map((d) => '<button type="button" data-ntdiff="' + d + '" class="' + (o.diff === d ? 'on' : '') + '">' + d + '</button>').join('') + '</span><span class="nt-sp"></span>' +
-    '<button class="btn sm primary" type="button" data-ntplan="1">✨ ' + (planned.length ? 'Plan the whole night again' : 'Plan the whole night') + '</button>' +
+    '<button class="btn sm" type="button" data-ntplan="1">' + (planned.length ? '↻ Plan again' : '✨ Plan the whole night') + '</button>' +
     (planned.length ? '<button class="btn sm" type="button" data-ntcopy="1" data-tt="' + esc('<b>Copy every boss for the game</b><br>All of tonight\'s plans as notes for Northern Sky Raid Tools. In game, paste them into the addon.') + '">Copy every boss for the game</button>' : '') + '</div>';
   const did = planned.length ? '<div class="nt-sum"><span class="nt-sumt">✨ ' + (planned.length === bosses.length ? 'All ' + bosses.length + ' planned' : planned.length + ' of ' + bosses.length + ' planned') + '</span>' +
     '<span class="nt-sumn"><b>' + sum('jobs') + '</b> jobs</span><span class="nt-sumn"><b>' + sum('cds') + '</b> cooldowns</span><span class="nt-sumn"><b>' + sum('kicks') + '</b> on kicks</span>' +
