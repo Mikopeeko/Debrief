@@ -1761,6 +1761,8 @@ const PATCH_NOTES = [
     { t: 'The wipe is called for you', d: 'No more "stop at the 2nd death". Debrief now calls the wipe at the moment no raid has ever come back from: more people dead than any kill of that boss survived at that point (battle rezzes counted), the damage check missed, or half the raid dead. Everything before it counts, so the deaths and mistakes that lost the pull are graded. Tested on 760 kills: it never calls a wipe on a pull that was won.' },
     { t: 'A shorter debrief', d: 'Each pull now opens like a raid lead\'s debrief: what went well, what went wrong (click a line for its map and details) and the one thing for next pull. The extra drawers are gone; the timeline, raid cooldowns and burst windows sit in the open below the phases.' },
   ], n: [
+    'Your raid lead says… is four cards: What wiped us, What we did well, What\'s getting worse and What\'s improving, compared with all your earlier nights on the boss (on one pull, with the last pull). Every mistake in detail sits folded underneath.',
+    'The Raid DPS, DTPS and HPS tiles now keep themselves up to date: the site reads kills from across the rankings every day, after the boss\'s last nerf, and compares you with the typical kill.',
     'Home: the to-do list card is gone from Home; your to-do list is on your Report card.',
     'The coach box is now "Your raid lead says…". On All pulls it lists what wiped you, each with what went wrong in it (no names), and on one pull it opens with the root cause.',
     'The Raid DPS, DTPS and HPS tiles say how far ahead or behind top kills you are, short: "1% below top kills (2.92M)".',
@@ -9299,10 +9301,10 @@ function audit() {
         num('Mechanics', '<b class="' + (nC ? 'dbr-ok' : 'dbr-z') + '">' + nC + '</b><em> clean</em> <b class="' + (nM ? 'dbr-w' : 'dbr-z') + '">' + nM + '</b><em> with mistakes</em> <b class="' + (nF ? 'dbr-b' : 'dbr-z') + '">' + nF + '</b><em> failed</em>', 'of ' + plural(all.length, 'mechanic')) +
         (() => { /* (Oct 23, your ask: Raid DPS, DTPS and HPS scored against top guilds, phase by phase over what this pull reached) */
           const sumA = (a) => { let t = 0; for (let i = 0; i < Math.min((a || []).length, Math.ceil(endT)); i++) t += a[i] || 0; return t / Math.max(1, endT); };
-          const our = { dps: dmg / Math.max(1, endT), dtps: sumA(r.takenS), hps: sumA(r.healS) }, B = RATE_BASE[it.boss + '|' + it.diffId];
+          const our = { dps: dmg / Math.max(1, endT), dtps: sumA(r.takenS), hps: sumA(r.healS) }, B = rateBase(r);
           const exp = (k) => { if (!B) return null; let w = 0, t = 0; for (const p of m.phases || []) { const s0 = Math.max(0, p.start), e0 = Math.min(p.end, endT), b = B.ph[p.name]; if (!b || e0 <= s0) continue; w += b[k] * (e0 - s0); t += e0 - s0; } return t ? w / t : null; };
           let RN = null; try { RN = rateNums(r); } catch (e) { RN = null; }
-          const tile = (k, lab, hiGood) => rateTile(num, lab, our[k], exp(k), RN && RN.per[k], hiGood, (B && B.n) || 20);
+          const tile = (k, lab, hiGood) => rateTile(num, lab, our[k], exp(k), RN && RN.per[k], hiGood, (B && B.n) || 20, B && B.live ? 'the typical kill' : '');
           return (RATE_T = tile('dps', 'Raid DPS', true) + tile('dtps', 'DTPS', false) + tile('hps', 'HPS', true)); })() + (NJ ? dbnNum(NJ, num) : '') + '</div>';
       const PS = (() => { try { const tn = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull < it.pull && CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.players).concat([r]); return paceTile(num, it, tn, it.pull, !!it.kill, ''); } catch (e) { return { tile: '', panel: '' }; } })();
       top = top0 + '<div class="dbr-4 dbr-3 dbr-5' + (PS.tile ? ' dbr-6' : '') + '">' + PS.tile + ((() => { try { return deathsTile(num, [r]); } catch (e) { return ''; } })() || num('Deaths', '<b>' + deathCount([r]).n + '</b>', '')) + RATE_T + '</div>'; /* (Deaths and the three rate tiles (Oct 23, your call: no Mechanics or Note jobs tiles)) */
@@ -11078,6 +11080,10 @@ function weekOf(reps) {
 function weekSave(reps, w0) { try { if (reps.length < 3 || !wkWhen(reps[0].item)) return; const w = w0 || weekOf(reps), L = wkAll().filter((x) => x.key !== w.key); L.push(w); L.sort((a, b) => a.date - b.date); store.set(WK_KEY, JSON.stringify(L.slice(-80))); } catch (e) { /* storage full or off */ } }
 // (the latest raid on this boss before this one: at least 12 hours earlier, so two reports of the same night don't count)
 const weekPrev = (it, date) => wkAll().filter((x) => x.boss === it.boss && x.diffId === it.diffId && x.date && x.date < date - 12 * 3600000).sort((a, b) => b.date - a.date)[0] || null;
+/* (all the earlier raids on this boss as one: each mechanic's pulls and wrong pulls added up; lbl names them for the coach's lines) */
+const weekPrevAll = (it, date) => { const L = wkAll().filter((x) => x.boss === it.boss && x.diffId === it.diffId && x.date && x.date < date - 12 * 3600000); if (!L.length) return null;
+  const mech = {}; for (const w of L) for (const [id, m] of Object.entries(w.mech || {})) { const o = mech[id] || (mech[id] = { t: m.t, j: 0, w: 0, who: {} }); o.j += m.j; o.w += m.w; }
+  const last = L.reduce((a, b) => (b.date > a.date ? b : a)); return { ...last, mech, n: L.length, pulls: L.reduce((s, w) => s + (w.pulls || 0), 0), lbl: L.length > 1 ? 'earlier nights' : null }; };
 const wkDate = (w) => { try { return new Date(w.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); } catch (e) { return 'last raid'; } };
 // (one mechanic, tonight against last raid: better, worse, again, new or fixed; null when one of the two didn't judge it in 2+ pulls)
 function wkCmp(now, prev) { if (!now || !prev || now.j < 2 || prev.j < 2) return null; const a = now.w / now.j, b = prev.w / prev.j;
@@ -11555,6 +11561,47 @@ function killCall(reps, w0) {
 function hcdNever(r, c) { if (!c || c.status !== 'missed') return false; const L = [...CACHE.values()].filter((x) => x && x.players && x.item && !x.allPulls && x.item.boss === r.item.boss && x.item.diffId === r.item.diffId); if (L.length < 3) return false;
   const ids = c.ids || [c.spellid], nm = String(c.spell || '').toLowerCase();
   return !L.some((x) => { const p = [...x.players.values()].find((q) => q.name === c.player); return p && (ids.some((i) => (p.castTimes.get(i) || []).length) || (nm && p.byName && (p.byName[nm] || []).length)); }); }
+/* (Oct 23, your layout for the raid lead's box: What wiped us, then What we did well, What's getting worse, What's improving, each a short
+   list like What wiped us. A night compares with the last raid on this boss when it's saved, else the first half of the night with the
+   second; one pull compares with the last pull that reached each mechanic. Returns { well, worse, better, cmp } or null) */
+/* (the size of a change in words, and a share as a plain "1 in 4" (Oct 23)) */
+const howMuch = (d) => { const a = Math.abs(d), w = d < 0 ? 'better' : 'worse'; return a >= 40 ? 'Much ' + w : a >= 20 ? dbfCap(w) : 'A bit ' + w; };
+const oneIn = (p) => { if (p >= 97) return 'almost every'; if (p <= 0) return 'no'; let best = [1, 2], e = 9; for (const m of [2, 3, 4, 5, 10]) for (let n = 1; n < m; n++) { const d = Math.abs(n / m - p / 100); if (d < e - 1e-9) { e = d; best = [n, m]; } } return (e > 0.03 ? 'about ' : '') + best[0] + ' in ' + best[1]; };
+function coachTrends(reps, right, wrongAll, WKN, WKP) {
+  if (!reps.length) return null; const night = reps.length > 1, P = reps.slice().sort((a, b) => a.item.pull - b.item.pull), sc = (st) => (st === 'bad' ? 2 : st === 'warn' ? 1 : st === 'ok' ? 0 : null);
+  const nmOf = (y) => String(shortT(y.s.title || '')).split(' (')[0], insOf = (y) => ((String(y.s.title || '').match(/\(([^)]+)\)\s*$/) || [])[1] || ''), lead = (y, t) => { const i = insOf(y); return i ? dbfCap(i) + ' · ' + t : dbfCap(t); }, bySec = new Map((wrongAll || []).filter((x) => x.sec).map((x) => [x.sec, x])), pc = (a, b) => Math.round(100 * a / Math.max(1, b));
+  const imp = IMPORTANCE[P[0].item.boss] || [], ix = (id) => (imp.indexOf(id) < 0 ? 99 : imp.indexOf(id));
+  const well = [], worse = [], better = []; let cmp = '';
+  const bestT = (right || []).map((x) => x.t).find((t) => /^Our best pull|^Further than last pull/.test(t || ''));
+  if (bestT) { const m = bestT.match(/^Our best pull(?: tonight)?:? (?:got to )?(.*?)\.?(?: We're getting closer\.)?$/) || bestT.match(/^(Further than last pull) \((.*)\)\.?$/);
+    if (m) well.push(m.length > 2 ? { nm: m[1], sub: m[2] } : { nm: 'Best pull', sub: dbfCap(m[1].replace(/\.$/, '')) }); }
+  if (night) {
+    const L = new Map(); for (const r of P) for (const [id, y] of pullSections(r)) { if (id === 'deaths' || id === 'avoid' || y.s.info) continue; const v = sc(y.st); if (v == null) continue; const o = L.get(id) || { nm: nmOf(y), ins: insOf(y), v: [] }; o.v.push(v); L.set(id, o); }
+    for (const [id, o] of L) { const ok = o.v.filter((v) => v === 0).length; if (o.v.length >= 3 && ok / o.v.length >= 0.8) well.push({ nm: o.nm, sub: 'done right in ' + ok + ' of ' + plural(o.v.length, 'pull'), k: ok / o.v.length + o.v.length / 1000 - ix(id) / 1e4, id }); }
+    const cost = (id) => { const x = bySec.get(id); return x && x.led ? ' · cost ' + plural(x.led, 'death') + ' tonight' : ''; }, still = (w, j) => (w / Math.max(1, j) >= 0.5 ? ' · still wrong in most pulls' : ''), ld = (id, t) => { const o = L.get(id); return o && o.ins ? dbfCap(o.ins) + ' · ' + t : dbfCap(t); };
+    if (WKP && WKN) { const WL = WKP.lbl || wkDate(WKP); cmp = WKP.n > 1 ? 'vs your ' + WKP.n + ' earlier nights' : 'since ' + WL;
+      for (const [id, m] of Object.entries(WKN.mech)) { const p = WKP.mech[id]; let kk = wkCmp(m, p); if (kk === 'again' && p) { const dd = m.w / m.j - p.w / p.j; if (Math.abs(dd) >= 0.1) kk = dd > 0 ? 'worse' : 'better'; } /* (10 points is a real change once nights are added up (Oct 23)) */ if (!kk || kk === 'again' || (kk === 'new' && (m.w < 2 || m.w / m.j < 0.15))) continue; const d = p ? pc(p.w, p.j) - pc(m.w, m.j) : -pc(m.w, m.j);
+        const up = kk === 'better' || kk === 'fixed', nowP = pc(m.w, m.j), wasP = p ? pc(p.w, p.j) : 0, it = { nm: m.t, tag: howMuch(nowP - wasP),
+          sub: ld(id, (nowP === 0 ? 'right every pull tonight' : 'now wrong ' + oneIn(nowP) + ' pulls') + ', was ' + (kk === 'new' ? 'never' : wasP === 0 ? 'never' : oneIn(wasP).replace(/^almost every$/, 'almost every pull'))) + (up ? (kk === 'fixed' ? '' : still(m.w, m.j)) : cost(id)), k: Math.abs(nowP - wasP), id };
+        (kk === 'worse' || kk === 'new' ? worse : better).push(it); } }
+    else { cmp = 'during the night';
+      for (const [id, o] of L) { if (o.v.length < 4) continue; const hf = Math.floor(o.v.length / 2), A = o.v.slice(0, hf).filter((v) => v > 0).length, Bn = o.v.slice(o.v.length - hf).filter((v) => v > 0).length, a = A / hf, b = Bn / hf;
+        if (Math.abs(b - a) < 0.3) continue; const it = { nm: o.nm, tag: howMuch(pc(Bn, hf) - pc(A, hf)), sub: ld(id, 'late in the night wrong ' + oneIn(pc(Bn, hf)) + ' pulls, early ' + oneIn(pc(A, hf)).replace(/^almost every$/, 'almost every pull')) + (b < a ? still(Bn, hf) : cost(id)), k: Math.abs(b - a), id }; (b > a ? worse : better).push(it); } }
+  } else {
+    cmp = 'than last pull'; const r = P[0], it0 = r.item, prv = ((S.index && S.index.bosses) || []).filter((b) => b.id === it0.id && b.diffId === it0.diffId && b.pull < it0.pull && CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.players).sort((p, q) => q.item.pull - p.item.pull);
+    const okL = []; for (const [id, y] of pullSections(r)) { if (id === 'deaths' || id === 'avoid' || y.s.info) continue; const cur = sc(y.st); if (cur == null) continue;
+      const lastR = prv.find((q) => { const z = pullSections(q).get(id); return z && sc(z.st) != null; }), pv = lastR ? sc(pullSections(lastR).get(id).st) : null, x = bySec.get(id), what = x && x.what ? cClip(tidyLine(x.what), 110) : '';
+      void what; if (cur === 0 && pv > 0) well.unshift({ nm: nmOf(y), sub: lead(y, 'done right, after going wrong on pull ' + lastR.item.pull), id, fixed: 1 });
+      else if (cur === 0) okL.push({ nm: nmOf(y), sub: lead(y, 'done right'), k: -ix(id), id });
+      else if (pv != null && cur > pv) worse.push({ nm: nmOf(y), sub: lead(y, pv === 0 ? 'went wrong this pull, right on pull ' + lastR.item.pull : 'more mistakes than pull ' + lastR.item.pull), k: cur - pv + (cur === 2 ? 0.5 : 0), id });
+      else if (pv != null && cur < pv) better.push({ nm: nmOf(y), sub: lead(y, cur === 1 ? 'only small mistakes now, down from pull ' + lastR.item.pull : 'fewer mistakes than pull ' + lastR.item.pull), k: pv - cur, id }); }
+    okL.sort((a, b) => b.k - a.k); for (const o of okL) if (well.length < 3) well.push(o);
+    const head = well.filter((x) => x.fixed), rest = well.filter((x) => !x.fixed); well.length = 0; well.push(...head, ...rest); }
+  const top = (L) => L.sort((a, b) => (b.k || 0) - (a.k || 0)).slice(0, 3);
+  const W3 = top(worse), B3 = top(better), seen = (x) => W3.some((w) => w.id === x.id) || B3.some((b) => b.id === x.id);
+  const wellOut = night ? [well[0] && !well[0].id ? well[0] : null].filter(Boolean).concat(top(well.filter((x) => x.id && !seen(x)))).slice(0, 3) : well.filter((x) => !x.id || !seen(x)).slice(0, 3);
+  return { well: wellOut, worse: W3, better: B3, cmp };
+}
 function coachSummary(reps, name) {
   reps = (reps || []).filter((r) => r && r.players && !r.allPulls); if (!reps.length) return null;
   return oaCache(reps, 'cs:' + (name || ''), () => {
@@ -11608,7 +11655,8 @@ function coachSummary(reps, name) {
       (allR.length ? '<h5>What went right</h5><ul class="cch-ul">' + allR.map((t) => '<li>' + esc(t) + '</li>').join('') + '</ul>' : '');
     /* (week to week: tonight is remembered, and the raid's coach says what changed since the last raid on this boss) */
     let week = ''; if (night) { try { const wn = weekOf(reps); if (!name) week = weekLine(wn, weekPrev(it, wkWhen(reps[0].item))); weekSave(reps, wn); } catch (e) { week = ''; } }
-    return { headline: headline2, wipes: WIPES, right, wrong, wrongAll, focus, full, name: name || null, night, kill: !!kill, deaths: DD, avoid: AV, kit: KT, week }; }); }
+    let TR = null; if (!name) { try { const wn = night ? weekOf(reps) : null; TR = coachTrends(reps, right, wrongAll, wn, night ? weekPrevAll(it, wkWhen(reps[0].item)) : null); } catch (e) { TR = null; } }
+    return { headline: headline2, wipes: WIPES, right, wrong, wrongAll, focus, full, name: name || null, night, kill: !!kill, deaths: DD, avoid: AV, kit: KT, week, trend: TR }; }); }
 // (the short box, easier to read (your note, Oct 22: "make this more visually appealing/easier to read", "class color names when they
 // are mentioned"): the headline, then Focus as the big takeaway, the problems as numbered cards (what happened, Next time on its own
 // line, the map on the right), what went right as green chips, deaths and avoidable damage as small chips, and the full coaching folded.
@@ -11658,7 +11706,23 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
 const tidyLine = (t) => String(t || '').replace(/\s*\((?=[^)]{18,})[^)]*\)/g, '').replace(/\s+·\s+/g, ' · ').replace(/\s{2,}/g, ' ').trim();
 /* (the fastest Mythic kills' raid DPS, damage taken and healing per second, phase by phase (median of 20 kills), for the top tiles (Oct 23)) */
 /* (Oct 23: a pull's Raid DPS, DTPS and HPS up to its wipe filter, and the top guilds' numbers over the phases it reached; All pulls adds the pulls up, time-weighted) */
-function rateNums(r) { const ct = cutT(r), endT = Math.max(1, Math.min(r.duration || 0, ct)), B = RATE_BASE[r.item.boss + '|' + r.item.diffId], sumA = (a) => { let t = 0; for (let i = 0; i < Math.min((a || []).length, Math.ceil(endT)); i++) t += a[i] || 0; return t; };
+/* (Oct 23, your ask: the tiles keep themselves up to date. The site's daily job reads every 4th kill down the rankings, phase by phase, from
+   Warcraft Logs' own totals; those count a little differently from our engine (damage taken about 17% higher), so each phase's numbers are
+   scaled by RATE_CAL, measured on 9 kills read both ways (ours / theirs). Only kills after the boss's last nerf count. The built-in
+   RATE_BASE (the 20 fastest kills) stays for the desktop app and until the site's sample has 15 kills) */
+const RATE_CAL = { 'The Coiled Altar|16': [[0.945, 1.071, 0.863], [0.930, 0.924, 0.811], [1.044, 1.063, 0.820], [0.887, 0.850, 0.826]] }, RATE_CAL_DEF = [0.94, 1, 0.83];
+const RATE_LIVE = new Map();
+function rateLive(it) { const key = it.boss + '|' + it.diffId, D = { 16: 5, 15: 4, 14: 3 }[it.diffId]; let L = RATE_LIVE.get(key);
+  if (L === undefined && D && WCL.rateRecs && it.id > 0) { RATE_LIVE.set(key, null); Promise.resolve(WCL.rateRecs({ e: it.id, d: D })).then((j) => { const since = PACE_NERF[key] ? Date.parse(PACE_NERF[key]) : 0;
+      const K = ((j && j.recs) || []).filter((x) => x && x.ph && x.ph.length && (!since || (x.at || 0) >= since)); if (K.length < 15) return;
+      const np = K.map((x) => x.ph.length).sort((a, b) => a - b)[K.length >> 1], KK = K.filter((x) => x.ph.length === np), cal = RATE_CAL[key] || [], med = (a) => { const s = a.filter((v) => v != null).sort((p, q) => p - q); return s[s.length >> 1]; };
+      const byIdx = []; for (let i = 0; i < np; i++) { const c = cal[i] || RATE_CAL_DEF, o = {}; ['dps', 'hps', 'dtps'].forEach((nm, j) => { o[nm + 'A'] = KK.map((x) => Math.round(x.ph[i][j] * c[j])); o[nm] = med(o[nm + 'A']); }); byIdx.push(o); }
+      RATE_LIVE.set(key, { n: KK.length, live: true, ph: {}, byIdx, dth: (RATE_BASE[key] || {}).dth }); if (S.tab === 'audit' && S.item && S.item.boss === it.boss && !document.querySelector('.pcx-tile.on')) select(S.item); }).catch(() => {}); L = null; }
+  return L || null; }
+/* (the comparison numbers for a pull: the live sample with our phase names filled in, else the built-in one) */
+function rateBase(r) { const key = r.item.boss + '|' + r.item.diffId, L = rateLive(r.item); if (!L) return RATE_BASE[key];
+  ((r.module && r.module.phases) || []).forEach((p, i) => { if (!L.ph[p.name] && L.byIdx[i]) L.ph[p.name] = L.byIdx[i]; }); return L; }
+function rateNums(r) { const ct = cutT(r), endT = Math.max(1, Math.min(r.duration || 0, ct)), B = rateBase(r), sumA = (a) => { let t = 0; for (let i = 0; i < Math.min((a || []).length, Math.ceil(endT)); i++) t += a[i] || 0; return t; };
   const exp = {}; if (B) for (const k of ['dps', 'dtps', 'hps']) { let w = 0, t = 0; for (const p of (r.module && r.module.phases) || []) { const s0 = Math.max(0, p.start), e0 = Math.min(p.end, endT), b = B.ph[p.name]; if (!b || e0 <= s0) continue; w += b[k] * (e0 - s0); t += e0 - s0; } exp[k] = t ? w / t : null; }
   const per = {}; if (B) for (const k of ['dps', 'dtps', 'hps']) { const n = B.n || 0, w = new Array(n).fill(0), t = new Array(n).fill(0); for (const p of (r.module && r.module.phases) || []) { const s0 = Math.max(0, p.start), e0 = Math.min(p.end, endT), b = B.ph[p.name]; if (!b || !b[k + 'A'] || e0 <= s0) continue; b[k + 'A'].forEach((v, i) => { if (v != null) { w[i] += v * (e0 - s0); t[i] += e0 - s0; } }); } per[k] = w.map((v, i) => (t[i] ? v / t[i] : null)); }
   return { t: endT, cut: isFinite(ct) && ct < (r.duration || 0), sum: { dps: sumA(r.dmgS), dtps: sumA(r.takenS), hps: sumA(r.healS) }, exp, per }; }
@@ -11678,8 +11742,8 @@ function deathsTile(num, reps) { const L = (reps || []).filter((r) => r && r.ite
 const parseOf = (v, list, hiGood) => { const L = (list || []).filter((x) => x != null); if (!L.length) return null; let b = 0; for (const x of L) b += (hiGood ? v > x : v < x) ? 1 : v === x ? 0.5 : 0; return Math.round(100 * b / L.length); };
 const parseCls = (p) => 'dbr-pq ' + (p >= 100 ? 'q-gold' : p >= 99 ? 'q-pink' : p >= 95 ? 'q-orange' : p >= 75 ? 'q-purple' : p >= 50 ? 'q-blue' : p >= 25 ? 'q-green' : 'q-grey');
 /* (one rate tile, single pull and All pulls alike: the number in its parse colour, then where it ranks and the top kills' middle) */
-function rateTile(num, lab, v, x, list, hiGood, n) { if (x == null) return num(lab, '<b>' + C(v) + '</b>', 'a second'); const p = parseOf(v, list, hiGood);
-  const d0 = Math.round(100 * (v / x - 1)), say = d0 === 0 ? 'Even with top kills' : hiGood ? Math.abs(d0) + '% ' + (d0 > 0 ? 'above' : 'below') + ' top kills' : Math.abs(d0) + '% ' + (d0 > 0 ? 'more' : 'less') + ' damage than top kills';
+function rateTile(num, lab, v, x, list, hiGood, n, who) { if (x == null) return num(lab, '<b>' + C(v) + '</b>', 'a second'); const p = parseOf(v, list, hiGood), W0 = who || 'top kills';
+  const d0 = Math.round(100 * (v / x - 1)), say = d0 === 0 ? 'Even with ' + W0 : hiGood ? Math.abs(d0) + '% ' + (d0 > 0 ? 'above' : 'below') + ' ' + W0 : Math.abs(d0) + '% ' + (d0 > 0 ? 'higher' : 'lower') + ' than ' + W0 /* (one line like the others (Oct 23)) */;
   return num(lab, '<b class="' + (p == null ? '' : parseCls(p)) + '">' + C(v) + '</b>', '<b class="' + (p == null ? '' : parseCls(p)) + '">' + say + '</b> (' + C(x) + ')'); }
 /* (Oct 23, your call: pulls on a boss across every night against how many pulls most guilds needed for the kill. progstats.io's typical
    pull count on Mythic (the middle half of its recorded kills), read Oct 23; Nymrissa and Kith'ix aren't listed there yet) */
@@ -11877,6 +11941,17 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
     (() => { const W = (c.wrongAll && c.wrongAll.length ? c.wrongAll : c.wrong), maj = W.filter((x) => x.sev === 'bad'), mn = W.filter((x) => x.sev !== 'bad'), lead = maj.concat(mn.slice(0, Math.max(0, 3 - maj.length))), rest = W.filter((x) => !lead.includes(x));
       return W.length ? '<div class="cbr-h bad">Mistakes</div><ul class="cbr-l">' + lead.map(briefLine).join('') + '</ul>' + (rest.length ? '<details class="cbr-more"><summary>+' + rest.length + ' smaller ' + (rest.length === 1 ? 'one' : 'ones') + ' · ' + esc(lpAnd(rest.slice(0, 3).map((x) => dbfCap(String(x.label).replace(/\s*\(.*$/, ''))))) + (rest.length > 3 ? '…' : '') + '</summary><ul class="cbr-l">' + rest.map((x, k) => briefLine(x, lead.length + k)).join('') + '</ul></details>' : '') : ''; })() +
     ''; /* (no Next pull box (Oct 23): each line's fix shows when it opens) */
+  /* (Oct 23, your layout: What we did well, What's getting worse, What's improving, each like What wiped us; an empty one doesn't show;
+     then every mistake in detail, folded closed, so nothing is lost and nothing is said twice up top) */
+  const trendH = () => { const T0 = c.trend, single = !c.night, sec = (cls, title, note, L, tag) => (L && L.length ? '<div class="cch-tsec ' + cls + '"><div class="cch-tsh">' + title + (note ? ' <span>· ' + esc(note) + '</span>' : '') + '</div><ul class="cch-wl cch-twl">' + L.map((x) => '<li><b>' + esc(dbfCap(x.nm)) + '</b>' + (x.tag ? '<span class="cch-tt">' + (tag || '') + esc(x.tag) + '</span>' : '') + (x.sub ? '<span class="cch-wy">' + esc(dbfCap(x.sub)) + '</span>' : '') + '</li>').join('') + '</ul></div>' : '');
+    const W = (c.wrongAll && c.wrongAll.length ? c.wrongAll : c.wrong);
+    /* (Oct 23, your layout: two side by side, two rows: What wiped us | What we did well, then getting worse | improving; one column on phones) */
+    const rcm = !c.night ? String(c.headline).match(/Root cause: (.*?\.)(?=\s|$)\s*([\s\S]*)$/) : null, wip1 = rcm ? '<div class="cch-tsec wip"><div class="cch-tsh">What wiped us</div><p class="cch-trc"><b>' + esc(rcm[1]) + '</b>' + (rcm[2] ? ' ' + esc(((t) => { const m = t.match(/^([^.]*?), you /); if (!m) return t; return (/ and |, /.test(m[1]) ? 'Players ' : 'Someone ') + t.slice(m[0].length).replace(/\byou were\b/g, 'they were').replace(/\byour\b/g, 'their').replace(/\byou\b/g, 'them'); })(rcm[2]) /* (no names in the grid (your rule, Oct 23)) */) : '') + '</p></div>' : '';
+    const wip = wip1 || (c.wipes && c.wipes.length ? '<div class="cch-tsec wip"><div class="cch-tsh">What wiped us</div><ul class="cch-wl">' + c.wipes.map((x) => '<li><b>' + esc(x.nm) + '</b><span class="cch-wn">' + plural(x.n, 'wipe') + '</span>' + (x.why ? '<span class="cch-wy">' + esc(x.why) + '</span>' : '') + '</li>').join('') + '</ul></div>' : '');
+    const none = (cls, title, note, msg) => '<div class="cch-tsec ' + cls + '"><div class="cch-tsh">' + title + (note ? ' <span>· ' + esc(note) + '</span>' : '') + '</div><p class="cch-tnone">' + msg + '</p></div>'; /* (an empty section says so: good news is news (Oct 23)) */
+    return '<div class="cch-tgrid">' + wip + sec('ok', 'What we did well', '', T0.well.filter((x) => !(c.wipes || []).some((w) => String(w.nm).toLowerCase() === String(x.nm).toLowerCase())) /* (what wiped us is never also "done well") */) + (T0.worse.length ? sec('bad', single ? 'Worse than last pull' : 'What\'s getting worse', single ? '' : T0.cmp, T0.worse, '') : none('bad', single ? 'Worse than last pull' : 'What\'s getting worse', single ? '' : T0.cmp, single ? 'Nothing got worse than last pull.' : 'Nothing got worse.')) +
+      (T0.better.length ? sec('up', single ? 'Better than last pull' : 'What\'s improving', single ? '' : T0.cmp, T0.better, '') : none('up', single ? 'Better than last pull' : 'What\'s improving', single ? '' : T0.cmp, single ? 'Nothing improved on last pull.' : 'Nothing clearly improved.')) + '</div>' +
+      (W.length ? '<details class="cbr-more cch-tall" data-k="cch-tall"' + (S.openSecs && S.openSecs.has('cch-tall') ? ' open' : '') + '><summary>Every mistake, in detail <span>· ' + W.length + '</span></summary><ul class="cbr-l">' + W.map(briefLine).join('') + '</ul></details>' : ''); };
   const D = c.deaths, A = c.avoid;
   // (a death chip opens that death's short summary under the chips (Oct 22: deaths live only here on a single pull))
   const dchip = (it, x) => '<span class="dch k-' + esc(it.k || 'n') + (x ? ' dch-x' : '') + (it.late ? ' dch-late' : '') + '"' + (it.dg ? ' data-ddg="' + esc(it.dg) + '" role="button" tabindex="0"' : it.dn ? ' data-ddn="' + esc(it.dn) + '" role="button" tabindex="0"' : '') + (x ? ' hidden' : '') + ' title="' + esc(it.word || '') + '">' + (it.t ? '<i>' + esc(it.t) + '</i>' : '') + (it.who ? '<b>' + esc(it.who) + '</b>' : '') + '<span>' + esc(it.ab) + (it.n > 1 ? ' ×' + it.n : '') + '</span></span>';
@@ -11884,12 +11959,14 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
   const achip = (it, x) => '<span class="ach' + (it.bad ? ' bad' : '') + (x ? ' ach-x' : '') + '"' + (it.avk ? ' data-avk="' + esc(it.avk) + '" role="button" tabindex="0"' : it.avn ? ' data-avn="' + esc(it.avn) + '" role="button" tabindex="0"' : '') + (x ? ' hidden' : '') + '><b>' + esc(it.k) + '</b>' + (it.who ? '<span>' + esc(it.who) + '</span>' : '') + '</span>';
   const ach = A ? (A.items && A.items.length ? A.items.map((it) => achip(it)).join('') + (A.rest && A.rest.length ? '<span class="ach more" role="button" tabindex="0" data-avmore>+' + A.rest.length + ' more</span>' + A.rest.map((it) => achip(it, 1)).join('') : A.more ? '<span class="ach more">+' + A.more + ' more</span>' : '') : '<span class="cch-none">' + esc(A.line) + '</span>') : '';
   const html = '<section class="cch cch2" aria-label="Coach"><div class="cch-hd"><span class="cch-k">' + esc(o.title || (c.name ? 'Your coach' : 'Coach')) + '</span>' + (pm ? '<span class="nm" style="color:' + pm.color + '">' + esc(c.name.split('-')[0]) + '</span>' : '') + '</div>' +
-    (c.wipes && c.wipes.length /* (the night's causes as a short list, each with what went wrong (Oct 23)) */
+    (c.trend && !c.night && /Root cause:/.test(String(c.headline)) ? '<p class="cch-h">' + esc(String(c.headline).replace(/\s*Root cause:[\s\S]*$/, '')) + '</p>' /* (the root cause sits in the grid (Oct 23)) */
+      : c.wipes && c.wipes.length && c.trend ? '<p class="cch-h">' + esc(String(c.headline).replace(/s*What wiped us:.*$/, '')) + '</p>' /* (the causes go in the grid's first cell (Oct 23)) */
+      : c.wipes && c.wipes.length /* (the night's causes as a short list, each with what went wrong (Oct 23)) */
       ? '<p class="cch-h">' + esc(String(c.headline).replace(/\s*What wiped us:.*$/, '')) + ' <b class="cch-rc">What wiped us:</b></p><ul class="cch-wl">' + c.wipes.map((x) => '<li><b>' + esc(x.nm) + '</b><span class="cch-wn">' + plural(x.n, 'wipe') + '</span>' + (x.why ? '<span class="cch-wy">' + esc(x.why) + '</span>' : '') + '</li>').join('') + '</ul>'
       : '<p class="cch-h">' + esc(c.headline).replace(/(Root cause: .*?\.)(?=\s|$)/, '<b class="cch-rc">$1</b>').replace(/What wiped us:/, '<b class="cch-rc">What wiped us:</b>') /* (the cause stands out (Oct 23)) */ + '</p>') +
     (BRIEF || focusSame || focusIsFix ? '' : '<div class="cch-focus"><span class="cch-fk">🎯 Focus ' + (c.night ? 'next raid' : c.kill ? 'next week' : 'next pull') /* (the boss is dead: no next pull (Oct 22)) */ + '</span><span class="cch-fv">' + esc(c.focus) + '</span></div>') +
-    (c.week ? '<div class="cch-wk2"><span class="cch-wk2k">Since last raid</span><span>' + esc(c.week.replace(/^Since last raid /, '').replace(/^\(([^)]*)\): /, (m0, d) => d.charAt(0).toUpperCase() + d.slice(1) + ': ')) + '</span></div>' : '') /* (week to week, Oct 22) */ +
-    (BRIEF ? briefH() : c.wrong.length ? '<div class="cch-sh">What went wrong</div><ol class="cch-ps cch-no">' + c.wrong.map(prob).join('') + '</ol>' : '') +
+    (c.trend ? '' : c.week ? '<div class="cch-wk2"><span class="cch-wk2k">Since last raid</span><span>' + esc(c.week.replace(/^Since last raid /, '').replace(/^\(([^)]*)\): /, (m0, d) => d.charAt(0).toUpperCase() + d.slice(1) + ': ')) + '</span></div>' : '') /* (week to week, Oct 22) */ +
+    (c.trend ? trendH() : BRIEF ? briefH() : c.wrong.length ? '<div class="cch-sh">What went wrong</div><ol class="cch-ps cch-no">' + c.wrong.map(prob).join('') + '</ol>' : '') +
     (!BRIEF && c.right.length ? '<div class="cch-good2">' + c.right.map((x) => '<p>✓ ' + esc(x.t) + '</p>').join('') + '</div>' : '') +
     (D || A ? '<div class="cch-acct2' + (S.cblBy === 'm' ? ' cbl-on-m' : '') + '">' + (A && A.reps ? cblSwitch() : '') + (D ? '<details class="cch-ab cch-abx' + (D.bad ? ' warn' : '') + '" data-k="cch-ab-d"' + (S.openSecs && S.openSecs.has('cch-ab-d') ? ' open' : '') + '><summary class="cch-al">Deaths<span class="cch-abs">' + esc(coachAbSum(D, 'd')) + '</span></summary>' + (D.items && D.items.length ? cblBoth(coachBars(cblDeaths(D), (x) => x.n, (x) => x.body), A && A.reps ? coachBars(cblDeathsP(A.reps, A.who), (x) => x.n, (x) => x.body) : '') || '<div class="cch-chips">' + dch + '</div>' : '<div class="cch-chips">' + dch + '</div>') + '' + (D.nsum || []).map((x) => '<div class="dd-nsum" data-ddn="' + esc(x.key) + '" hidden>' + x.html + '</div>').join('') + (D.items && D.items.some((it) => it.dg || it.dn) ? '<div class="cch-ddbox" hidden></div><div class="cch-ddtip">Tap a death to see what happened.</div>' : '') + '</details>' : '') + (A ? '<details class="cch-ab cch-abx' + (A.bad ? ' warn' : '') + '" data-k="cch-ab-a"' + (S.openSecs && S.openSecs.has('cch-ab-a') ? ' open' : '') + '><summary class="cch-al">Avoidable damage<span class="cch-abs">' + esc(coachAbSum(A, 'a')) + '</span></summary>' + (A.bars && A.bars.length ? cblBoth(coachBars(A.bars, (x) => x.amt, (x) => { const pm = cblPm(x.reps || A.reps || []), list = x.pl instanceof Map ? [...x.pl.values()] : (x.pl || []); return cblMini(list.map((q) => ({ label: cblNm(q.p), p: pm.get(q.p), st: q.st, amt: q.amt, sub: x.secs ? q.v + ' s' : plural(q.v, 'hit') })), x.st ? cblFix(x.key, x.fix) : ''); }), A.reps ? coachBars(cblAvoidP(A), (x) => x.amt, (x) => x.body) : '') : '<div class="cch-chips">' + ach + '</div>') + '' + (A.items && A.items.some((it) => it.avk || it.avn) ? '<div class="cch-avbox" hidden></div><div class="cch-ddtip">Tap a bar to see what hit them.' + '</div>' : '') + '</details>' : '') + '</div>' : '') +
     (c.kit ? coachKitHtml(c.kit).replace(/<\/div>$/, (() => { /* (Oct 23, your ask: combat potions, and Power Infusion inside it; Raid cooldowns joins as the sixth line) */
@@ -12591,7 +12668,7 @@ function nightMechC(o) {
       for (const r of reps) { if (!r || !r.item) continue; let q; try { q = rateNums(r); } catch (e) { continue; } tot.t += q.t; cutAny = cutAny || q.cut; for (const k of ['dps', 'dtps', 'hps']) { tot[k] += q.sum[k]; if (q.exp[k] != null) { ex[k][0] += q.exp[k] * q.t; ex[k][1] += q.t; }
         (q.per[k] || []).forEach((v, i) => { if (v == null) return; nK = q.per[k].length; pk[k][i] = (pk[k][i] || 0) + v * q.t; pt[k][i] = (pt[k][i] || 0) + q.t; }); } }
       if (!tot.t) return '';
-      const tile = (k, lab, hiGood) => rateTile(num, lab, tot[k] / tot.t, ex[k][1] ? ex[k][0] / ex[k][1] : null, pk[k].map((v, i) => (pt[k][i] ? v / pt[k][i] : null)), hiGood, nK);
+      const tile = (k, lab, hiGood) => rateTile(num, lab, tot[k] / tot.t, ex[k][1] ? ex[k][0] / ex[k][1] : null, pk[k].map((v, i) => (pt[k][i] ? v / pt[k][i] : null)), hiGood, nK, (() => { const b0 = reps[0] && reps[0].item ? rateBase(reps[0]) : null; return b0 && b0.live ? 'the typical kill' : ''; })());
       void cutAny; return tile('dps', 'Raid DPS', true) + tile('dtps', 'DTPS', false) + tile('hps', 'HPS', true); })();
     const nR = reps.length || 1, dSub = (nD / nR).toFixed(1).replace(/\.0$/, '') + ' a pull' + (dC.mass ? ' · ' + dC.mass + ' more after the wipe was called' : '');
     const it0P = pulls[0] || (reps[0] && reps[0].item), PTo = it0P ? paceTile(num, it0P, reps, kill ? kill.pull : pulls.length, !!kill, durH(onBoss) + ' tonight') : { tile: num('Pulls', '<b>' + pulls.length + '</b>', durH(onBoss) + ' on the boss'), panel: '' }, PT = PTo.tile, PACEP = PTo.panel;

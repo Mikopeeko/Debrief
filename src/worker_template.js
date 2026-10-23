@@ -233,17 +233,43 @@ async function paceStep(env) {
     B.pg = B.pg || { i: 0, p: 1 }; const pt = B.parts[B.pg.i];
     const r = await gql(env, PACE_RANK_Q, pt ? { e, d, p: B.pg.p, pt } : { e, d, p: B.pg.p }); let R = r && r.worldData && r.worldData.encounter && r.worldData.encounter.fightRankings;
     if (typeof R === 'string') R = JSON.parse(R); R = R || {};
-    for (const t of R.rankings || []) { const g = t.guild && t.guild.id; if (g && !B.seen.includes(g) && !B.todo.includes(g)) B.todo.push(g); }
+    if (B.pg.p === 1) B.rk = 0; if (B.pg.i === 0 && B.pg.p === 1) B.rtodo = []; B.rseen = B.rseen || []; B.rtodo = B.rtodo || [];
+    for (const t of R.rankings || []) { const g = t.guild && t.guild.id; if (g && !B.seen.includes(g) && !B.todo.includes(g)) B.todo.push(g);
+      /* (the rate tiles' sample: every 4th kill down the rankings, each patch's; a kill is read once) */
+      B.rk = (B.rk || 0) + 1; const c = t.report && t.report.code, f = t.report && t.report.fightID, id = c + ':' + f; if (B.pg.i === B.parts.length - 1 /* (the current patch only: an older one is all before the nerfs) */ && B.rk % 4 === 1 && c && f && !B.rseen.includes(id) && !B.rtodo.some((x) => x[0] === c && x[1] === f)) B.rtodo.push([c, f, t.startTime || (t.report && t.report.startTime) || 0]); }
     if (R.hasMorePages && B.pg.p < 40) B.pg.p++; else if (B.pg.i + 1 < B.parts.length) B.pg = { i: B.pg.i + 1, p: 1 }; else { delete B.pg; B.at = Date.now(); }
-  } else if (B.todo.length) { // (a few guilds a run, from progstats)
-    const raw = (await env.DEBRIEF_KV.get('pace-raw:' + key, 'json')) || []; let add = 0;
-    for (const g of B.todo.splice(0, 5)) { B.seen.push(g);
+  } else if (B.todo.length || (B.rtodo && B.rtodo.length)) { // (a few guilds a run, from progstats, and one kill's phase totals)
+    if (B.rtodo && B.rtodo.length) { const [c, f, at] = B.rtodo.shift(); B.rseen = B.rseen || []; B.rseen.push(c + ':' + f);
+      try { const o = await rateOfKill(env, c, f); if (o.kill && o.ph.length) { const rr = (await env.DEBRIEF_KV.get('rate-raw:' + key, 'json')) || []; rr.push({ c, f, at: o.at || at || 0, ph: o.ph.map((p) => [p.dps, p.hps, p.dtps, p.s, p.e]) }); await env.DEBRIEF_KV.put('rate-raw:' + key, JSON.stringify(rr)); } } catch (err) { console.warn('Rates:', c, f, err.message); } }
+    const raw = B.todo.length ? (await env.DEBRIEF_KV.get('pace-raw:' + key, 'json')) || [] : null; let add = 0;
+    for (const g of (raw ? B.todo.splice(0, 5) : [])) { B.seen.push(g);
       try { const rec = paceRec(g, await pacePS(PACE_LOG_Q, { t: g, e, d })); if (rec) { raw.push(rec); add++; } } catch (err) { console.warn('Pace:', g, err.message); } }
-    if (add) await env.DEBRIEF_KV.put('pace-raw:' + key, JSON.stringify(raw));
+    if (add && raw) await env.DEBRIEF_KV.put('pace-raw:' + key, JSON.stringify(raw));
   } else return { key, idle: true }; // (nothing to do for this boss till tomorrow's rankings)
   await env.DEBRIEF_KV.put('pace-st', JSON.stringify(st));
-  return { key, pg: B.pg || null, at: B.at || null, todo: B.todo.length, seen: B.seen.length, parts: B.parts };
+  return { key, pg: B.pg || null, at: B.at || null, todo: B.todo.length, seen: B.seen.length, parts: B.parts, rtodo: (B.rtodo || []).length, rseen: (B.rseen || []).length };
 }
+
+// Raid DPS, damage taken and healing a second for one kill, phase by phase, from Warcraft Logs' own totals (Oct 23, the user's ask: the
+// Raid DPS / DTPS / HPS tiles keep themselves up to date). Two requests a kill: the fight and its phase changes, then the three totals for
+// every phase in one go. The page matches the phases to its own and corrects for the small difference in how damage is counted.
+const RATE_FIGHT_Q = 'query($c:String!,$f:[Int]!){reportData{report(code:$c){startTime fights(fightIDs:$f){id startTime endTime kill encounterID phaseTransitions{id startTime}} phases{encounterID phases{id name isIntermission}}}}}';
+async function rateOfKill(env, code, fight) {
+  const d = await gql(env, RATE_FIGHT_Q, { c: code, f: [fight] }), rep = d && d.reportData && d.reportData.report, F = rep && rep.fights && rep.fights[0];
+  if (!F) throw new Error('no fight');
+  const P = ((rep.phases || []).find((x) => x.encounterID === F.encounterID) || {}).phases || [], nm = new Map(P.map((p) => [p.id, p]));
+  const tr = (F.phaseTransitions || []).slice().sort((a, b) => a.startTime - b.startTime), W = [];
+  if (!tr.length) W.push({ id: 0, s: F.startTime, e: F.endTime });
+  else tr.forEach((t, i) => W.push({ id: t.id, s: Math.max(F.startTime, t.startTime), e: i + 1 < tr.length ? tr[i + 1].startTime : F.endTime }));
+  const win = W.filter((w) => w.e - w.s >= 1000);
+  const q = 'query($c:String!){reportData{report(code:$c){' + win.map((w, i) => ['DamageDone', 'Healing', 'DamageTaken'].map((t, k) => 'a' + i + '_' + k + ':table(dataType:' + t + ',fightIDs:[' + fight + '],startTime:' + w.s + ',endTime:' + w.e + ')').join(' ')).join(' ') + '}}}';
+  const r = await gql(env, q, { c: code }), R = (r && r.reportData && r.reportData.report) || {};
+  const tot = (x) => { const j = typeof x === 'string' ? JSON.parse(x) : x; const D = (j && j.data) || {}; return (D.entries || []).reduce((s, e) => s + (e.total || 0), 0); };
+  return { code, fight, kill: !!F.kill, at: (rep.startTime || 0) + F.startTime, dur: (F.endTime - F.startTime) / 1000, ph: win.map((w, i) => { const sec = (w.e - w.s) / 1000, p = nm.get(w.id) || {};
+    return { id: w.id, name: p.name || '', inter: !!p.isIntermission, s: +((w.s - F.startTime) / 1000).toFixed(1), e: +((w.e - F.startTime) / 1000).toFixed(1), dps: Math.round(tot(R['a' + i + '_0']) / sec), hps: Math.round(tot(R['a' + i + '_1']) / sec), dtps: Math.round(tot(R['a' + i + '_2']) / sec) }; }) };
+}
+ROUTES['/api/rates'] = { age: 1800, v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10); return e > 0 && e < 1e6 && [3, 4, 5].includes(d) ? { e, d } : null; },
+  run: async (env, v) => ({ key: v.e + ':' + v.d, recs: (await env.DEBRIEF_KV.get('rate-raw:' + v.e + ':' + v.d, 'json')) || [] }) };
 ROUTES['/api/pace'] = { age: 1800,
   v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10); return e > 0 && e < 1e6 && [3, 4, 5].includes(d) ? { e, d } : null; },
   run: async (env, v) => { const key = v.e + ':' + v.d, raw = await env.DEBRIEF_KV.get('pace-raw:' + key, 'json');
@@ -1130,6 +1156,7 @@ export default {
   async scheduled(ev, env, ctx) { ctx.waitUntil(Promise.allSettled([announcePatch(env), discordJobs(env, ev.scheduledTime || Date.now()), paceStep(env)]).then((r) => r.forEach((x) => { if (x.status === 'rejected') console.warn('Cron:', x.reason && x.reason.message); }))); },
   async fetch(req, env, ctx) {
     const url = new URL(req.url), route = ROUTES[url.pathname];
+    if (url.pathname === '/api/ratetest' && /-debrief./.test(url.hostname)) { try { return json(await rateOfKill(env, url.searchParams.get('code'), parseInt(url.searchParams.get('fight'), 10))); } catch (e) { return json({ error: String(e && e.message || e) }, 500); } } /* (test copies only (Oct 23)) */
     if (url.pathname === '/api/pacestep' && /-debrief./.test(url.hostname)) { try { return json(await paceStep(env)); } catch (e) { return json({ error: String(e && e.message || e) }, 500); } } /* (test copies only: one cron step on demand, to check the pace job (Oct 23)) */
     if (url.hostname === HOME_HOST && url.pathname === '/__move' && req.method === 'POST') return moveIn(req, env);
     if ((url.hostname === 'www.' + HOME_HOST || url.origin === OLD_SITE) && (req.method === 'GET' || req.method === 'HEAD') && !/^\/(?:api|wcl|auth)\//.test(url.pathname)) return moveHome(req, url);
