@@ -120,6 +120,7 @@ local function decode(code)
     elseif t == "CV" then for _, c in ipairs(coaches()) do c.aline = g(2) end
     elseif t == "PC" and by[g(2)] then by[g(2)].coach = { head = g(3), focus = g(4) } -- (your own coach line and focus)
     elseif t == "C" then m.cutN = tonumber(g(2)) -- (the wipe filter: versions 0 to n)
+    elseif t == "WC" then m.wc = { at = g(2), txt = g(3) } -- (the wipe call: when and why; then version 1 is up to it (Oct 23))
     elseif t == "RG" then m.grade = { letter = g(2), score = g(3), cats = g(4) } -- (the Report card's grade for the pull)
     elseif t == "X" then if K then m.raid.moreK = m.raid.moreK or {}; table.insert(m.raid.moreK, { K, g(2) }) else m.raid.more = g(2) end
     elseif t == "Q" then if K then m.raid.nextK = m.raid.nextK or {}; table.insert(m.raid.nextK, { K, g(2) }) else m.raid.next = g(2) end
@@ -491,6 +492,16 @@ local function rowS(y, r)
   bt:SetScript("OnLeave", function() i:SetTextColor(rgb(COL.faint)); GameTooltip:Hide() end)
   return y2
 end
+-- (the Wipe call row (Oct 23): "Wipe call  called at 2:39: more dead than any kill survived  [On]"; a click turns it off or on)
+local function wipeRow(y, raw, redraw)
+  -- (always on, nothing to click (Oct 23): when the pull was lost and why)
+  local t = FS("bold", 13, COL.text); t:SetPoint("TOPLEFT", 12, -(y + 2)); t:SetText("Wipe called at " .. raw.wc.at)
+  local n2 = FS("body", 12.5, COL.faint); n2:SetPoint("LEFT", t, "RIGHT", 10, 0); n2:SetWordWrap(false); n2:SetWidth(math.max(40, CW - 24 - t:GetStringWidth() - 10))
+  n2:SetText(raw.wc.txt .. ". Nothing after it counts.")
+  local tb = BTN(); tb:SetPoint("TOPLEFT", 0, -(y - 2)); tb:SetSize(CW, 24)
+  tb:SetScript("OnEnter", function() GameTooltip:SetOwner(tb, "ANCHOR_TOP"); GameTooltip:SetText("The wipe call", 1, 1, 1); GameTooltip:AddLine("When a pull is lost (more dead than any kill survived, the damage check missed, or half the raid dead), nothing after it counts.", 0.8, 0.82, 0.86, true); GameTooltip:Show() end)
+  tb:SetScript("OnLeave", function() GameTooltip:Hide() end)
+end
 local function nextBox(y, text)
   local t = FS("body", 14, COL.text); t:SetWidth(CW - 32); t:SetText(names(text))
   local l = FS("bold", 11.5, COL.gold); l:SetText("NEXT PULL")
@@ -521,7 +532,9 @@ end
 local function ordN(n) local s = ({ "st", "nd", "rd" })[n % 10]; if n % 100 >= 11 and n % 100 <= 13 or not s then s = "th" end; return n .. s end
 local function cutIdx(m)
   local c = DB.deathCut or 0
-  if not m or not m.cutN or (m.h and m.h.kill) or c > m.cutN then return 0 end
+  if not m or not m.cutN or (m.h and m.h.kill) then return 0 end
+  if m.wc then return 1 end -- (the wipe call: always on (Oct 23))
+  if c > m.cutN then return 0 end
   return c
 end
 local SEVR = { dead = 0, bad = 0, warn = 1 }
@@ -534,7 +547,7 @@ local function cutView(m)
     return o
   end
   local function pick(def, kl) if kl then for _, x in ipairs(kl) do if x[1]:find(c, 1, true) then return x[2] end end; return "" end; return def end
-  local v = { h = m.h, addonV = m.addonV, cutN = m.cutN, coach = (m.coachV and m.coachV[c] and (m.coachV[c].head or "") ~= "" and m.coachV[c]) or m.coach, grade = m.grade, players = {},
+  local v = { h = m.h, addonV = m.addonV, cutN = m.cutN, wc = m.wc, coach = (m.coachV and m.coachV[c] and (m.coachV[c].head or "") ~= "" and m.coachV[c]) or m.coach, grade = m.grade, players = {},
     raid = { bad = keep(m.raid.bad, true), died = keep(m.raid.died), mech = keep(m.raid.mech, true), cons = keep(m.raid.cons), defs = keep(m.raid.defs), kitd = keep(m.raid.kitd), more = pick(m.raid.more, m.raid.moreK), next = pick(m.raid.next, m.raid.nextK),
       tiles = keep(m.raid.tiles), story = pick(m.raid.story or "", m.raid.storyK), better = pick(m.raid.better or "", m.raid.betterK), worse = pick(m.raid.worse or "", m.raid.worseK), lead = pick(m.raid.lead or "", m.raid.leadK),
       good = keep(m.raid.good), fixes = keep(m.raid.fixes), ghap = keep(m.raid.ghap), gchg = keep(m.raid.gchg), ghead = pick(m.raid.ghead or "", m.raid.gheadK), gnext = pick(m.raid.gnext or "", m.raid.gnextK) } }
@@ -600,7 +613,7 @@ local function cardGrade(y, gr)
   local c = FS("body", 12.5, COL.soft); c:SetPoint("TOPLEFT", 58, -(y + 25)); c:SetWidth(CW - 70); c:SetWordWrap(false); c:SetText(gr.cats or "")
   return y + h + 8
 end
-local UI = { rowS = rowS, cardCharts = cardCharts, cardGrade = cardGrade, parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, canRaid = canRaid, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded }
+local UI = { rowS = rowS, wipeRow = wipeRow, cardCharts = cardCharts, cardGrade = cardGrade, parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, canRaid = canRaid, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded }
 function render()
   local raw = DB.pulls[DB.cur]; local m = UI.cutView(raw); CUR = m
   if not m then return end
@@ -1005,7 +1018,7 @@ function render()
     return true
   end
   -- (the wipe filter on top of the card (Oct 22): it decides what everything under it counts, the coach box included)
-  if raw.cutN and not m.h.practice and SH.stopat ~= false then
+  if raw.cutN and not m.h.practice and (raw.wc or SH.stopat ~= false) then -- (the wipe call line always shows)
     local y0 = y; IND = 12; y = y + 10
     local function stepBtn(lbl, right, d)
       local bt = BTN(); bt:SetSize(22, 22); bt:SetPoint("TOPRIGHT", body, "TOPLEFT", right, -(y - 2))
@@ -1015,6 +1028,7 @@ function render()
       bt:SetScript("OnEnter", function() tx:SetTextColor(rgb(COL.gold)) end); bt:SetScript("OnLeave", function() tx:SetTextColor(rgb(COL.muted)) end)
     end
     local cut = UI.cutIdx(raw)
+    if raw.wc then UI.wipeRow(y, raw, function() wipe(EXPANDED); if Debrief_RefreshOptions then Debrief_RefreshOptions() end; render(); if big and big:IsShown() and bigRender then bigRender() end end) else
     local t = FS("bold", 13, COL.text); t:SetPoint("TOPLEFT", IND, -(y + 2)); t:SetText("Stop at death")
     stepBtn("+", CW - IND, 1)
     local v = FS("bold", 13, COL.text); v:SetJustifyH("CENTER"); v:SetWidth(28); v:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - IND - 23, -(y + 2)); v:SetText((DB.deathCut or 0) == 0 and "off" or (DB.deathCut .. ""))
@@ -1028,6 +1042,7 @@ function render()
     local tb = BTN(); tb:SetPoint("TOPLEFT", 0, -(y - 2)); tb:SetSize(math.max(60, CW - 96), 24)
     tb:SetScript("OnEnter", function() GameTooltip:SetOwner(tb, "ANCHOR_TOP"); GameTooltip:SetText("Stop at death", 1, 1, 1); GameTooltip:AddLine("On a wipe, nothing after this death counts, so the mess at the end isn't held against anyone. Press + or - to change it.", 0.8, 0.82, 0.86, true); GameTooltip:Show() end)
     tb:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    end
     y = y + 28
     panel(y0, y - y0); IND = 0; y = y + 10
   end
@@ -1947,7 +1962,6 @@ local function buildOptions()
   note("How much opens by itself. Click a piece below to show or hide it; the card beside this window changes as you click.")
   section("On the card")
   chips({
-    { "Stop at death", function() return S().stopat ~= false end, function(v) S().stopat = v end, false, "The wipe filter, on top: on a wipe, nothing after that death counts." },
     { "Coach box", function() return S().coach ~= false end, function(v) S().coach = v end, false, "Debriefing's coach: the headline, the focus and what went wrong." },
     { "What went right", function() return S().right ~= false end, function(v) S().right = v end },
     { "Deaths", function() return S().cdeaths ~= false end, function(v) S().cdeaths = v end },
@@ -1983,7 +1997,6 @@ local function buildOptions()
   stepper("Boss mistakes", "Your mistakes, avoidable damage, kicks and dispels.", 1, 7, function() return DB.maxBoss or 2 end, function(v) DB.maxBoss = v end)
   stepper("Deaths listed", "Who died first, and to what. 0 hides the list.", 0, 8, function() return DB.maxDied or 3 end, function(v) DB.maxDied = v end)
   stepper("Boss mechanics", "How many mechanic lines.", 0, 16, function() return DB.maxMech or 6 end, function(v) DB.maxMech = v end)
-  stepper("Stop at death", "On a wipe, nothing after this death counts. 0 counts the whole pull.", 0, 8, function() return DB.deathCut or 0 end, function(v) DB.deathCut = v end, function(v) return v == 0 and "off" or tostring(v) end, true)
   switch("Boss mistakes first", "Above your rotation tips.", function() return DB.bossFirst == true end, function(v) DB.bossFirst = v end)
 
   -- ---------- Look: colour, size and font ----------

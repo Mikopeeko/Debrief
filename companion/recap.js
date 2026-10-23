@@ -39,6 +39,9 @@ const deathIcon = (d) => d.abilityId === 1 || /^melee$/i.test(d.ability || '') ?
 // The wipe filter (the website's own): on a wipe, stop counting at the Nth death, since what comes after is the wipe, not
 // the plan. The card picks the number (Stop at − n +), so the recap is built once per number: 0 (off, the whole pull) to 8.
 const FOCUS = new WeakMap(); /* (each player's coach focus per pull: worked out once, shared by every wipe-filter version) */
+// (the website's wipe call (Oct 23): when the pull was lost, and why; null when it never was)
+const WHYW = { line: 'more dead than any kill survived', half: 'half the raid dead', check: 'the damage check was missed' };
+const wipeOf = (W, rep) => { try { if (W.setCut) W.setCut(2); const c = W.cutInfo ? W.cutInfo(rep) : null; return c && isFinite(c.t) ? { t: c.t, at: mmss(c.t), txt: c.why ? WHYW[c.why] || 'the pull was lost' : 'the ' + ord(c.n || 2) + ' death' } : null; } catch (e) { return null; } };
 const cutTime = (rep, n) => { const ds = (rep.deaths || []).slice().sort((a, b) => a.t - b.t); return n && ds.length >= n ? ds[n - 1].t : Infinity; };
 const before = (t, T) => t == null || t <= T + 0.05;
 // the module's results with everything after the cutoff removed (the website's cutModule): timed rows, sets, phases after it
@@ -643,20 +646,22 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
         for (const p of m.players) { if (Date.now() - t0 > 3000) break; try { const c = W.coachSummary ? W.coachSummary([rep], p.name) : null; if (c && c.headline) you[p.name] = [plain(c.headline), plain(c.focus || '')]; } catch (e) { /* (no line for them) */ } }
         coach = raid ? { raid, you } : null;
         // (the coach box per wipe-filter version, so Stop at changes it too (Oct 22); your own line stays at the site's filter)
-        if (coach && !b.kill && nd && W.setCut) for (let n = 0; n <= Math.min(8, nd); n++) { try { W.setCut(n); const r = W.coachGame(rep, null); if (r) RAIDS[n] = r; } catch (e) { /* (that version keeps the shared one) */ } }
+        if (coach && !b.kill && nd && W.setCut) for (let n = 0; n <= 1; n++) { try { W.setCut(n ? 2 : 0); const r = W.coachGame(rep, null); if (r) RAIDS[n] = r; } catch (e) { /* (that version keeps the shared one) */ } } /* (all of it, or up to the wipe call (Oct 23)) */
       } catch (e) { coach = null; } finally { if (!had) CA.delete(b); if (W.setCut && was != null) W.setCut(was); }
     }
     m.coach = coach && RAIDS[0] ? { raid: RAIDS[0], you: coach.you } : coach;
     // (the Report card's grade for this pull, for the card's "Report card grade" chip (Oct 22))
     if (W.gradeBoss && b.id !== 990001) { try { const g = W.gradeBoss([rep]); if (g && g.letter) m.grade = { letter: g.letter, score: Math.round(g.overall), cats: (g.cats || []).map((c) => c.label + ' ' + c.letter).join(' · ') }; } catch (e) { /* (no grade) */ } }
     if (b.kill || b.id === 990001 || !nd) return m; // (a kill or a dummy always counts in full)
-    m.cuts = [m]; for (let n = 1; n <= Math.min(8, nd); n++) { const x = buildOne(b, rep, same, W2, L, n); x.coach = coach && RAIDS[n] ? { raid: RAIDS[n], you: coach.you } : coach; m.cuts.push(x); }
+    // (two versions (Oct 23): the whole pull, and up to the website's wipe call; a pull never called lost has only the one)
+    const WC = wipeOf(W, rep); if (!WC) return m; m.wc = { at: WC.at, txt: WC.txt };
+    const x = buildOne(b, rep, same, W2, L, 1); x.coach = coach && RAIDS[1] ? { raid: RAIDS[1], you: coach.you } : coach; m.cuts = [m, x];
     return m;
   } finally { try { if (W.setCut && was != null) W.setCut(was); } catch (e) { /* fine */ } if (!had0) CA0.delete(b); }
 };
 function buildOne(b, rep, same, W, L, cutN) {
-  const T = cutTime(rep, cutN), t0 = Date.now();
-  try { if (W.setCut) W.setCut(cutN); } catch (e) { /* fine */ }
+  const T = cutN ? (wipeOf(W, rep) || { t: Infinity }).t : Infinity, t0 = Date.now(); /* (version 1: up to the wipe call (Oct 23)) */
+  try { if (W.setCut) W.setCut(cutN ? 2 : 0); } catch (e) { /* fine */ }
   const dv = (d) => { try { return W.deathVerdict ? W.deathVerdict(rep, d) : null; } catch (e) { return null; } };
   // (your own lines say "your", not "their" (Oct 22 audit): "Malevolent Resonance: Your ghost touched another ghost")
   const youTxt = (s) => String(s).replace(/\bTheir\b/g, 'Your').replace(/\btheir\b/g, 'your').replace(/\bthemselves\b/g, 'yourself').replace(/\b([Tt])hey (didn't|did|were|weren't|stood|got|moved|took|had|died|ran|left|stayed|missed|soaked|dropped)\b/g, (m0, t, v) => (t === 'T' ? 'You ' : 'you ') + v);
@@ -870,7 +875,7 @@ function buildOne(b, rep, same, W, L, cutN) {
   raid.tiles = []; raid.story = ''; raid.better = ''; raid.worse = '';
   if (b.id !== 990001) {
     const fails = raid.mech.filter((x) => x[0] === 'bad').length, slips = raid.mech.filter((x) => x[0] === 'warn').length, okN = raid.mech.length - fails - slips;
-    let dps = null; try { if (W.setCut) W.setCut(cutN); const A = W.dbfStats ? W.dbfStats(rep) : null; dps = A ? A.dps : null; } catch (e) { dps = null; }
+    let dps = null; try { if (W.setCut) W.setCut(cutN ? 2 : 0); const A = W.dbfStats ? W.dbfStats(rep) : null; dps = A ? A.dps : null; } catch (e) { dps = null; }
     const first = allDeaths[0];
     raid.tiles = [
       ['Result', b.kill ? 'Kill' : pr && pr.label ? String(pr.label).split(',')[0] /* (the first boss: "P3 · Zul'jan 44%"; The pull has the rest) */ : pct !== '' ? pct + '%' : 'Wipe', h.dur + (b.kill ? ' · kill' : ' · wipe'), b.kill ? 'ok' : ''],

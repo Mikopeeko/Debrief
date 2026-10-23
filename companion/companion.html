@@ -380,15 +380,20 @@ function addonFlags() { j('/addonflags', { method: 'POST', headers: { 'Content-T
 addonFlags();
 // (the pop-up over the game: this pull's recap, or hidden when the next pull starts)
 // (the pop-up's Stop at death: your last choice, or the website's own filter; the coach box is built at it)
-const popCut = () => { const v = store.get('dbf-popcut', null); if (v != null) return +v; try { return W && W.getCut ? (+W.getCut() || 0) : 0; } catch (e) { return 0; } };
+// (the pop-up's Wipe call, on or off (Oct 23); on unless you turned it off)
+const popCut = () => 1; /* (always on, nothing to adjust (Oct 23)) */
+const WC_WHY = { line: 'more dead than any kill survived', half: 'half the raid dead', check: 'the damage check was missed' };
+function wcOf(rep, b) { if (!rep || (b && b.kill)) return null; let was = null; try { was = W.getCut ? W.getCut() : null; } catch (e) { was = null; }
+  try { if (!rep.item) rep.item = b; if (W.setCut) W.setCut(2); const c = W.cutInfo ? W.cutInfo(rep) : null; return c && isFinite(c.t) ? { at: mmss(c.t), txt: c.why ? WC_WHY[c.why] || 'the pull was lost' : 'the ' + (c.n || 2) + ({ 1: 'st', 2: 'nd', 3: 'rd' }[c.n] || 'th') + ' death' } : null; }
+  catch (e) { return null; } finally { try { if (W.setCut && was != null) W.setCut(was); } catch (e) { /* fine */ } } }
 function packAt(rep, b, n) {
   let was = null; try { was = W.getCut ? W.getCut() : null; } catch (e) { was = null; }
-  try { if (W.setCut) W.setCut(n); if (!rep.item) rep.item = b; return W.coachPack(rep); } catch (e) { console.error(e); return null; }
+  try { if (W.setCut) W.setCut(n ? 2 : 0); if (!rep.item) rep.item = b; return W.coachPack(rep); } catch (e) { console.error(e); return null; }
   finally { try { if (W.setCut && was != null) W.setCut(was); } catch (e) { /* fine */ } }
 }
 window.DBF_POPCUT = (n) => {
-  const p = L.popLast; if (!p || !p.rep) return; n = Math.max(0, Math.min(8, +n || 0)); store.set('dbf-popcut', n);
-  popShow(p.model, p.code, p.copied, packAt(p.rep, p.b, n), { cut: n, cutN: p.cutN, quiet: true });
+  const p = L.popLast; if (!p || !p.rep) return; n = +n > 0 ? 1 : 0; store.set('dbf-popcut', n);
+  popShow(p.model, p.code, p.copied, packAt(p.rep, p.b, n), { cut: n, cutN: p.cutN, wc: p.wc, quiet: true });
 };
 // (tonight's pulls on this boss, for the pop-up's chip row: how far each got and its coach line, from the night line's memory)
 function popNight(cur) {
@@ -406,10 +411,10 @@ window.DBF_POPPULL = async (sb) => {
       const e = L.name && nightOf(L.name)[b.startByte];
       const model = { h: { boss: b.boss, diff: DIFFN[b.diffId] || b.diff || '', pull: b.pull, kill: !!b.kill, pct: b.kill ? '' : e && e.l != null ? String(Math.round(e.l)) : '', dur: mmss(b.duration) },
         players: [...rep.players.values()].map((p) => ({ name: p.name, cls: p.cls })) };
-      const cutN = b.kill ? 0 : Math.min(8, (rep.deaths || []).length), cut = cutN ? popCut() : null;
+      const wc = wcOf(rep, b), cutN = wc ? 1 : 0, cut = cutN ? popCut() : null; /* (Wipe call on or off (Oct 23)) */
       const pack = cut != null ? packAt(rep, b, cut) : (rep.item || (rep.item = b), W.coachPack(rep));
-      L.popLast = { model, code: '', copied: false, b, rep, cutN };
-      popShow(model, '', false, pack, { cut, cutN, quiet: true });
+      L.popLast = { model, code: '', copied: false, b, rep, cutN, wc };
+      popShow(model, '', false, pack, { cut, cutN, wc, quiet: true });
       // (memory: keep the reads of the last four pulls and the one on screen; the rest keep only how far they got)
       const keep = new Set(L.items.filter((x) => x.endByte).slice(-4).map((x) => x.startByte).concat([b.startByte]));
       for (const [k, v] of L.reps) if (!keep.has(k) && v && v.rep) v.rep = null;
@@ -420,7 +425,7 @@ window.DBF_POPPULL = async (sb) => {
 function popShow(model, code, copied, pack, cm) {
   if (!$('pop').checked || !model || !model.h) return;
   L.popUp = true;
-  const data = { h: model.h, coach: (model.coach && model.coach.raid) || null, cls: (model.players || []).map((p) => [String(p.name || '').split('-')[0], p.cls]), code, copiedAlready: !!copied, full: true, pack: pack || null, cut: cm ? cm.cut : null, cutN: cm ? cm.cutN : 0, night: popNight(L.popLast && L.popLast.b ? L.popLast.b.startByte : null) };
+  const data = { h: model.h, coach: (model.coach && model.coach.raid) || null, cls: (model.players || []).map((p) => [String(p.name || '').split('-')[0], p.cls]), code, copiedAlready: !!copied, full: true, pack: pack || null, cut: cm ? cm.cut : null, cutN: cm ? cm.cutN : 0, wc: cm ? cm.wc || null : null, night: popNight(L.popLast && L.popLast.b ? L.popLast.b.startByte : null) };
   j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: true, data, sound: $('snd').checked && !copied && !(cm && cm.quiet) }) }).catch(() => {});
 }
 function popHide() { if (!L.popUp) return; L.popUp = false; j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: false }) }).catch(() => {}); }
@@ -688,10 +693,10 @@ async function send(b, byHand) {
       const share = !!byHand, ok = share ? await clip(code) : false; $('copyAgain').hidden = !share || ok;
       L.reading = null; L.lastSent = { sb: b.startByte, ok: ok || !share, shared: share, at: Date.now() }; saveNight(b, rep, model.coach && model.coach.raid);
       // (Debriefing's own coach box, exactly as the tab draws it, for the pop-up)
-      const cutN = b.kill ? 0 : Math.min(8, (rep.deaths || []).length), cut = cutN ? popCut() : null;
+      const wc = model.wc || null, cutN = wc ? 1 : 0, cut = cutN ? popCut() : null; /* (Wipe call on or off (Oct 23)) */
       let pack = null; try { if (W.coachPack && b.id !== DUMMY) pack = cut != null ? packAt(rep, b, cut) : (rep.item || (rep.item = b), W.coachPack(rep)); } catch (e) { console.error(e); }
-      L.popLast = { model, code, copied: ok, b, rep, cutN };
-      popShow(model, code, ok, pack, { cut, cutN }); // (L.popLast is set first, so the chip row marks this pull)
+      L.popLast = { model, code, copied: ok, b, rep, cutN, wc };
+      popShow(model, code, ok, pack, { cut, cutN, wc }); // (L.popLast is set first, so the chip row marks this pull)
       L.sent.add(b.startByte); renderPulls(); progress(null);
       stat(L.live ? 'Watching your combat log' : 'Sent pull ' + b.pull, L.live ? 'live' : ''); renderMain();
     } catch (e) { console.error(e); L.reading = null; progress(null); renderMain(); stat('Could not read pull ' + b.pull + ': ' + e.message, 'err'); }
@@ -743,6 +748,7 @@ RECAP.encode = (m) => {
         vers.set(k, vers.get(k) + vi); cur = at; }); });
     rec = head.concat([['C', m.cuts.length - 1]], order.map((k) => (vers.get(k).length === lists.length ? line.get(k) : ['K', vers.get(k)].concat(line.get(k)))));
   }
+  if (m.wc) rec.push(['WC', m.wc.at, m.wc.txt]); // (the wipe call: when and why (Oct 23))
   if (m.grade) rec.push(['RG', m.grade.letter, m.grade.score, m.grade.cats]); // (the Report card grade, for the card's chip (Oct 22))
   if (RECAP.addonV) rec.push(['V', RECAP.addonV]); // (the addon version this app carries: an older addon then says /reload, or where to get the new one)
   rec.push(['Z']);
