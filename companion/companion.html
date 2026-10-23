@@ -668,6 +668,8 @@ async function send(b, byHand) {
       const code = RECAP.encode(model);
       $('codeOut').value = code; $('copyAgain').disabled = false;
       RECAP.lastModel = model; renderPreview(model);
+      // (every pull's code goes into the addon's folder too, so /reload in WoW brings it in as a saved pull (Oct 22))
+      if (b.id !== DUMMY) j('/addonpull', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: L.name + ':' + b.startByte, code }) }).catch(() => {});
       // (copied only when you ask: Send on a pull, or Copy every pull for my raid; otherwise your clipboard is left alone)
       const share = !!byHand, ok = share ? await clip(code) : false; $('copyAgain').hidden = !share || ok;
       L.reading = null; L.lastSent = { sb: b.startByte, ok: ok || !share, shared: share, at: Date.now() }; saveNight(b, rep, model.coach && model.coach.raid);

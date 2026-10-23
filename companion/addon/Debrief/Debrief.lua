@@ -347,7 +347,7 @@ local body = CreateFrame("Frame", nil, scroller); body:SetWidth(CW); body:SetHei
 scroller:EnableMouseWheel(true)
 scroller:SetScript("OnMouseWheel", function(self, d) local mx = math.max(0, (body:GetHeight() or 0) - (self:GetHeight() or 0)); self:SetVerticalScroll(math.min(mx, math.max(0, (self:GetVerticalScroll() or 0) - d * 48))) end)
 local foot = card:CreateFontString(nil, "OVERLAY"); setFont(foot, "body", 11.5); foot:SetTextColor(rgb(COL.faint)); foot:SetJustifyH("LEFT")
-foot:SetText("/dbr opens this again  ·  /db settings")
+foot:SetText("/recap opens this again  ·  /db settings")
 local footLine = card:CreateTexture(nil, "ARTWORK"); footLine:SetHeight(1); fill(footLine, COL.line)
 -- (combat logging on or off, at the right of the footer: green when it's on, red when it's off)
 local logBtn = CreateFrame("Button", nil, card); logBtn:SetSize(120, 20)
@@ -1040,7 +1040,7 @@ function render()
   local vh = math.max(10, math.min(y, room - TOPY - 42))
   scroller:SetSize(CW, vh)
   scroller:SetVerticalScroll(math.min((scroller:GetVerticalScroll() or 0), math.max(0, y - vh)))
-  foot:SetText(y > vh + 4 and "Scroll for more  ·  /dbr opens this again" or "/dbr opens this again  ·  /db settings")
+  foot:SetText(y > vh + 4 and "Scroll for more  ·  /recap opens this again" or "/recap opens this again  ·  /db settings")
   footLine:ClearAllPoints(); footLine:SetPoint("TOPLEFT", card, "TOPLEFT", 1, -(TOPY + vh + 10)); footLine:SetPoint("TOPRIGHT", card, "TOPRIGHT", -1, -(TOPY + vh + 10))
   foot:ClearAllPoints(); foot:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -(TOPY + vh + 19)); foot:SetWidth(W - PAD * 2 - 130); foot:SetWordWrap(false)
   logBtn:ClearAllPoints(); logBtn:SetPoint("TOPRIGHT", card, "TOPRIGHT", -PAD, -(TOPY + vh + 15)); Debrief_LogButton()
@@ -1544,7 +1544,7 @@ local function receive(code, from)
   checkNewer(m, false)
   if addPull(m) then
     say("pull " .. m.h.pull .. " of " .. m.h.boss .. " is in, from " .. from .. ".")
-    if DB.autoShow ~= false then showCard() else say("type /dbr to see it.") end
+    if DB.autoShow ~= false then showCard() else say("type /recap to see it.") end
   end
 end
 local function onAddonMessage(prefix, text, channel, from)
@@ -1988,9 +1988,15 @@ local function buildOptions()
   switch("Ready for Ctrl+V", "Any other key lets go so you can move.", function() return DB.autoFocus ~= false end, function(v) DB.autoFocus = v end, true)
   switch("Send my recaps to the raid", "Raiders with Debrief get theirs by itself.", function() return DB.share ~= false end, function(v) DB.share = v end, true)
   switch("Combat log always on", "With Advanced Combat Logging, whenever Debrief is loaded.", function() return DB.autoLog ~= false end, function(v) DB.autoLog = v end, true)
+  section("Saved pulls")
+  stepper("Keep my last pulls", "Older pulls drop off as new ones come in.", 10, 100, function() return DB.keep or 30 end, function(v) DB.keep = v end, function(v) return v .. "" end, true, 5)
+  local pc = P:CreateFontString(nil, "OVERLAY"); setFont(pc, "body", 12); pc:SetPoint("TOPLEFT", PX, -(y + 4)); pc:SetTextColor(rgb(COL.faint))
+  refreshers[#refreshers + 1] = function() local n = #DB.pulls; pc:SetText((n == 0 and "No pulls saved yet." or (n .. (n == 1 and " pull saved." or " pulls saved."))) .. " /reload brings in your newest from Debrief Companion.") end
+  y = y + 20
+  buttons({ { "Clear saved pulls", function() SlashCmdList.DEBRIEF("clear"); Debrief_RefreshOptions() end } })
   section("Help")
   buttons({ { "Tutorial", function() opt:Hide(); Debrief_Tutorial() end, 74 }, { "Sample recap", function() SlashCmdList.DEBRIEF("demo") end, 96 }, { "Test the glow", function() Debrief_TestGlow() end, 96 }, { "Move card back", function() SlashCmdList.DEBRIEF("reset") end, 108 } })
-  local HELP = { { "/db", "these settings (/dmo too)" }, { "/dbr", "show or hide your recap (/debrief too)" }, { "/debrief big", "the big window" }, { "/debrief mini", "the mini bar on or off" },
+  local HELP = { { "/db", "these settings (/dmo too)" }, { "/recap", "show or hide your recap (/dbr, /debrief too)" }, { "/debrief big", "the big window" }, { "/debrief mini", "the mini bar on or off" },
     { "/dp", "paste a recap" }, { "/debrief log", "combat logging on or off" }, { "/debrief demo", "a sample recap" } }
   for _, h in ipairs(HELP) do
     local c = P:CreateFontString(nil, "OVERLAY"); setFont(c, "bold", 12.5); c:SetPoint("TOPLEFT", PX, -(y + 4)); c:SetTextColor(rgb(COL.gold)); c:SetText(h[1])
@@ -2131,7 +2137,7 @@ function Debrief_Toggle()
   if DB and DB.mini and #DB.pulls > 0 and not card:IsShown() then if mini:IsShown() then mini:Hide() else miniShow() end; return end
   if card:IsShown() then card:Hide() elseif DB and DB.pulls and #DB.pulls > 0 then card:Show(); render()
   -- (nothing to show: with the PC app's pop-up, say where the recaps are; the paste box only opens with /dp (the user, Oct 22))
-  elseif DEBRIEF_HAS_APP then say("your recaps pop up from Debrief Companion on your PC. /dp pastes a pull you sent from there.")
+  elseif DEBRIEF_HAS_APP then say("no pulls here yet. After a boss pull, /reload brings it in from Debrief Companion (it also pops up on your PC).")
   else Debrief_OpenPaste() end
 end
 BINDING_HEADER_DEBRIEF = "Debrief"
@@ -2144,7 +2150,7 @@ SLASH_DEBRIEFPASTE1 = "/dp"; SLASH_DEBRIEFPASTE2 = "/dpaste"
 SlashCmdList.DEBRIEFPASTE = function() Debrief_OpenPaste() end
 SLASH_DEBRIEFMO1 = "/db"; SLASH_DEBRIEFMO2 = "/dmo" -- (/db first (the user, Oct 22); /dmo still works)
 SlashCmdList.DEBRIEFMO = function() Debrief_ToggleOptions() end
-SLASH_DEBRIEF1 = "/dbr"; SLASH_DEBRIEF2 = "/debrief" -- (/dbr first (the user, Oct 22); /debrief still works)
+SLASH_DEBRIEF1 = "/recap"; SLASH_DEBRIEF2 = "/dbr"; SLASH_DEBRIEF3 = "/debrief" -- (/recap first (the user, Oct 22); /dbr and /debrief still work)
 SlashCmdList.DEBRIEF = function(msg)
   msg = (msg or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
   if msg == "options" or msg == "config" or msg == "settings" or msg == "o" then Debrief_ToggleOptions()
@@ -2353,7 +2359,15 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
   elseif e == "ADDON_LOADED" and arg == ADDON then
     DebriefDB = DebriefDB or {}
     DB = DebriefDB
-    DB.pulls = {}; DB.cur = nil -- (no pulls kept between sessions (the user, Oct 22): your recaps live in the PC app's pop-up)
+    DB.pulls = DB.pulls or {}
+    -- (your pulls from Debrief Companion, saved into Pulls.lua as they happen: added here at login or /reload, no pasting (Oct 22))
+    if type(DEBRIEF_PULLS) == "table" then
+      local n0 = #DB.pulls
+      for _, c in ipairs(DEBRIEF_PULLS) do local m = decode(c); if m then addPull(m, true) end end
+      DEBRIEF_PULLS = nil
+      if #DB.pulls > 0 then DB.cur = #DB.pulls end
+      DB.fromApp = #DB.pulls - n0
+    end
     if DEBRIEF_HAS_APP then DB.hasApp = true end -- (Debrief Companion is on this PC: ask after every boss pull from the first one)
     if DB.raidAlways == nil then DB.raidAlways = true end
     DB.show = DB.show or {}
@@ -2378,7 +2392,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
       if SetBinding("CTRL-SHIFT-D", "DEBRIEF_PASTE") then SaveBindings(GetCurrentBindingSet()) end
       DB.keySet = true
     end
-    if DEBRIEF_POPUP ~= nil and not DEBRIEF_AUTOCOPY then say("ready. Your recap pops up on your PC after each boss pull. To share a pull with your raid: Send it from the app, then /dp here and Ctrl+V.")
+    if DEBRIEF_POPUP ~= nil and not DEBRIEF_AUTOCOPY then say("ready. Your recap pops up on your PC after each boss pull." .. ((DB.fromApp or 0) > 0 and (" " .. DB.fromApp .. " new pull" .. (DB.fromApp == 1 and "" or "s") .. " from Debrief Companion: /recap.") or " /reload brings your latest pulls in game: /recap."))
     elseif DB.hasApp or DB.pasted then say("ready. After each boss pull Debrief asks \"See your recap?\": press Ctrl+V." .. (DB.testMode and " Test mode is on: /debrief demo shows a sample card." or ""))
     else say("ready. Your recap opens by itself after boss pulls when someone in your group runs Debrief Companion. /debrief demo shows a sample.") end
   end

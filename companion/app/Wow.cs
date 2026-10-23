@@ -75,6 +75,31 @@ namespace Debrief {
       var r = FindRetail(here); if (r == null) return;
       var dst = Path.Combine(r, @"Interface\AddOns\Debrief"); if (Directory.Exists(dst)) WriteFlagFile(dst);
     }
+    // (the addon's saved pulls (Oct 22): the last 30 pulls' codes, kept beside the app and written into the addon's Pulls.lua, which
+    // WoW reads at login or /reload; the addon adds the ones it doesn't have yet)
+    static readonly object pullsLock = new object();
+    public static void SavePull(string here, string key, string code) {
+      if (string.IsNullOrEmpty(code) || !code.StartsWith("DBF1") || code.Contains("]====]")) return;
+      SavePullsFile(here, key, code);
+    }
+    // (after an addon install copies the folder over: the saved pulls go back into Pulls.lua)
+    public static void RewritePulls(string here) { SavePullsFile(here, null, null); }
+    static void SavePullsFile(string here, string key, string code) {
+      lock (pullsLock) {
+        var file = Path.Combine(here, "addon-pulls.txt"); var list = new List<string[]>();
+        try { foreach (var ln in File.ReadAllLines(file, Encoding.UTF8)) { var i = ln.IndexOf('\t'); if (i > 0) list.Add(new[] { ln.Substring(0, i), ln.Substring(i + 1) }); } } catch { }
+        if (key != null) {
+          list.RemoveAll(x => x[0] == key); list.Add(new[] { key, code }); while (list.Count > 30) list.RemoveAt(0);
+          try { File.WriteAllLines(file, list.Select(x => x[0] + "\t" + x[1]), new UTF8Encoding(false)); } catch { }
+        }
+        if (list.Count == 0) return;
+        var r = FindRetail(here); if (r == null) return; var dst = Path.Combine(r, @"Interface\AddOns\Debrief"); if (!Directory.Exists(dst)) return;
+        var sb = new StringBuilder("-- Written by Debrief Companion: your latest pulls, read when you log in or /reload.\r\nDEBRIEF_PULLS = {\r\n");
+        foreach (var x in list) sb.Append("[====[").Append(x[1]).Append("]====],\r\n");
+        sb.Append("}\r\n");
+        try { File.WriteAllText(Path.Combine(dst, "Pulls.lua"), sb.ToString(), new UTF8Encoding(false)); } catch { }
+      }
+    }
     public static string InstallAddon(string here) {
       var src = Path.Combine(here, "addon", "Debrief");
       if (!Directory.Exists(src)) return "";
@@ -90,7 +115,7 @@ namespace Debrief {
       Action flag = () => WriteFlagFile(dst);
       if (newer) { flag(); return "The Debrief addon (version " + have + ") is installed in " + dst; }
       try {
-        CopyDir(src, dst);
+        CopyDir(src, dst); RewritePulls(here); // (the saved pulls go back in after the folder is copied over)
         flag();
         return "Installed the Debrief addon (version " + v + ") in " + dst + ". If WoW is open, type /reload.";
       } catch (Exception e) { return "Couldn't install the addon in " + dst + " (" + e.Message + @"). Copy the folder addon\Debrief (next to this app) there yourself."; }
