@@ -1984,14 +1984,8 @@ local function buildOptions()
   switch("Ready for Ctrl+V", "Any other key lets go so you can move.", function() return DB.autoFocus ~= false end, function(v) DB.autoFocus = v end, true)
   switch("Send my recaps to the raid", "Raiders with Debrief get theirs by itself.", function() return DB.share ~= false end, function(v) DB.share = v end, true)
   switch("Combat log always on", "With Advanced Combat Logging, whenever Debrief is loaded.", function() return DB.autoLog ~= false end, function(v) DB.autoLog = v end, true)
-  section("Saved pulls")
-  stepper("Keep", "Older pulls drop off as new ones come in.", 10, 100, function() return DB.keep or 30 end, function(v) DB.keep = v end, function(v) return v .. "" end, true, 5)
-  local pc = P:CreateFontString(nil, "OVERLAY"); setFont(pc, "body", 12); pc:SetPoint("TOPLEFT", PX, -(y + 4)); pc:SetTextColor(rgb(COL.faint))
-  refreshers[#refreshers + 1] = function() local n = #DB.pulls; pc:SetText(n == 0 and "No pulls saved yet." or (n .. (n == 1 and " pull saved." or " pulls saved."))) end
-  y = y + 20
-  buttons({ { "Move card back", function() SlashCmdList.DEBRIEF("reset") end }, { "Clear saved pulls", function() SlashCmdList.DEBRIEF("clear"); Debrief_RefreshOptions() end } })
   section("Help")
-  buttons({ { "Tutorial", function() opt:Hide(); Debrief_Tutorial() end, 90 }, { "Sample recap", function() SlashCmdList.DEBRIEF("demo") end, 110 }, { "Test the glow", function() Debrief_TestGlow() end, 110 } })
+  buttons({ { "Tutorial", function() opt:Hide(); Debrief_Tutorial() end, 74 }, { "Sample recap", function() SlashCmdList.DEBRIEF("demo") end, 96 }, { "Test the glow", function() Debrief_TestGlow() end, 96 }, { "Move card back", function() SlashCmdList.DEBRIEF("reset") end, 108 } })
   local HELP = { { "/db", "these settings (/dmo too)" }, { "/dbr", "show or hide your recap (/debrief too)" }, { "/debrief big", "the big window" }, { "/debrief mini", "the mini bar on or off" },
     { "/dp", "paste a recap" }, { "/debrief log", "combat logging on or off" }, { "/debrief demo", "a sample recap" } }
   for _, h in ipairs(HELP) do
@@ -2352,7 +2346,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
   elseif e == "ADDON_LOADED" and arg == ADDON then
     DebriefDB = DebriefDB or {}
     DB = DebriefDB
-    DB.pulls = DB.pulls or {}
+    DB.pulls = {}; DB.cur = nil -- (no pulls kept between sessions (the user, Oct 22): your recaps live in the PC app's pop-up)
     if DEBRIEF_HAS_APP then DB.hasApp = true end -- (Debrief Companion is on this PC: ask after every boss pull from the first one)
     if DB.raidAlways == nil then DB.raidAlways = true end
     DB.show = DB.show or {}
