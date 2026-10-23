@@ -9987,10 +9987,6 @@ function oaLed(r, keys, title) { const lc = (x) => String(x || '').toLowerCase()
   for (const m of keptMistakes(r)) { if (m.player !== 'Raid' || m.severity === 'Low' || !(keys.includes(lc(m.mechanic)) || (tl && tl.includes(lc(m.mechanic))))) continue;
     for (const d of dd) if (d.t >= m.t - 0.5 && d.t <= m.t + 20 && !(d.links || []).some((l) => !l.raid)) seen.add(d.guid + '@' + d.t.toFixed(1)); }
   return seen.size; }
-function oaLedD(r, keys, title) { const lc = (x) => String(x || '').toLowerCase(), tl = lc(title), dd = keptDeaths(r), out = new Map();
-  for (const m of keptMistakes(r)) { if (m.player !== 'Raid' || m.severity === 'Low' || !(keys.includes(lc(m.mechanic)) || (tl && tl.includes(lc(m.mechanic))))) continue;
-    for (const d of dd) if (d.t >= m.t - 0.5 && d.t <= m.t + 20 && !(d.links || []).some((l) => !l.raid)) out.set(d.guid + '@' + d.t.toFixed(1), d); }
-  return [...out.values()]; }
 // (what happened, for a mechanic that writes no mistake line (like the orbs): its worst flagged row read out, "Deluge #3 at 4:12: 4, then 6
 // orbs (aim for 2 to 3, then none), too many in one frontal.")
 function oaRowWhat(reps, id, night) { let best = null;
@@ -10068,16 +10064,6 @@ function coachEnrich(list, reps, name) {
             const q = e.by.get(oaBase(p)) || { p, hits: 0, amt: 0, over: 0, pulls: 0 }; q.hits += n; q.amt += j.amt || 0; q.pulls++; if (died || n >= wA) q.over++; e.by.set(oaBase(p), q); }
           AV.set(k, e); } }
       x.avoidL = [...AV.values()].filter((e) => e.by.size).map((e) => ({ k: e.k, sid: e.sid, line: e.line, secs: e.secs, rows: [...e.by.values()].sort((a, b) => b.over - a.over || b.hits - a.hits).slice(0, 5) })); } catch (e) { /* (the card still opens without them) */ } }
-    /* (one pull (Oct 22): this pull and the ones before it tonight, each linked; the names the mistake lines give; who died right after it) */
-    try { if (!night && prev.length && x.kind !== 'rot') { const nm = lc(String(x.label).replace(/^Dying (slowly )?to /, ''));
-        const st = (r) => { if (s) { const y = pullSections(r).get(s.id); return y ? y.st : 'na'; }
-          if (x.kind === 'raid') { try { const o = whyWiped(r); return o && lc(whyKey(o)).includes(lc(x.cause || x.label)) ? 'bad' : 'ok'; } catch (e) { return 'na'; } }
-          return keptMistakes(r).some((m) => (!name || oaBase(m.player) === oaBase(name)) && lc(m.mechanic) === nm) || keptDeaths(r).some((d) => (!name || oaBase(d.player) === oaBase(name)) && lc(d.ability) === nm) ? 'bad' : 'ok'; };
-        x.pst = prev.concat(reps).sort((a, b) => a.item.pull - b.item.pull).map((r) => ({ n: r.item.pull, st: st(r), cur: r === reps[0] })); }
-      if (!name && (!x.whoL || !x.whoL.length)) { const who = new Map(); for (const r of reps) for (const m of keptMistakes(r)) { if (!m.player || m.player === 'Raid' || m.mechanic === 'Death' || !(keys.includes(lc(m.mechanic)) || (s && lc(s.title).includes(lc(m.mechanic))))) continue; const b = oaBase(m.player), w = who.get(b) || [m.player, 0]; w[1]++; who.set(b, w); }
-        x.whoL = [...who.values()].sort((a, b) => b[1] - a[1]).slice(0, 6); }
-      if (!name && (x.kind === 'raid' || x.kind === 'mech')) { const dd = new Map(); for (const r of reps) for (const d of oaLedD(r, keys, s && s.title)) { const b = oaBase(d.player), w = dd.get(b) || [d.player, 0]; w[1]++; dd.set(b, w); }
-        x.ledL = [...dd.values()].sort((a, b) => b[1] - a[1]).slice(0, 8); } } catch (e) { /* (the card still opens without them) */ }
     return x; })
     // (on a night, what's already fixed in the last pulls goes to the end)
     .sort((a, b) => (a.trend === 'better') - (b.trend === 'better'));
@@ -10263,8 +10249,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
   const more = (x) => { const L = [];
     if (x.what) L.push('<div class="cch-mr"><span class="cch-ml">What happened</span><span>' + esc(x.what) + '</span></div>');
     if (x.whoL && x.whoL.length && !c.name) L.push('<div class="cch-mr"><span class="cch-ml">Who</span><span class="cch-mw">' + x.whoL.map(([n, k]) => '<span class="cch-wc">' + pmName(n) + (c.night || k > 1 ? ' <i>×' + k + '</i>' : '') + '</span>').join('') + '</span></div>');
-    if (x.ledL && x.ledL.length) L.push('<div class="cch-mr"><span class="cch-ml">Died right after</span><span class="cch-mw">' + x.ledL.map(([n, k]) => '<span class="cch-wc">' + pmName(n) + (k > 1 ? ' <i>×' + k + '</i>' : '') + '</span>').join('') + '</span></div>');
-    if (x.pst && x.pst.length > 1) L.push('<div class="cch-mr"><span class="cch-ml">' + (c.night ? 'Pull by pull' : 'Tonight so far') + '</span><span class="cch-pst">' + x.pst.map((q) => '<button type="button" class="cch-pq ' + (q.st === 'bad' ? 'bad' : q.st === 'warn' ? 'warn' : q.st === 'ok' ? 'ok' : 'na') + (q.cur ? ' cur' : '') + '" data-cchpull="' + q.n + '"' + (x.sec ? ' data-cchsec="' + esc(x.sec) + '"' : '') + ' title="' + esc('Pull ' + q.n + ': ' + ({ bad: 'went wrong', warn: 'some mistakes', ok: 'done right' }[q.st] || 'didn\'t come up') + (q.cur ? ' (this pull).' : '. Click to open it.')) + '">' + q.n + '</button>').join('') + '</span></div>');
+    if (c.night && x.pst && x.pst.length > 1) L.push('<div class="cch-mr"><span class="cch-ml">Pull by pull</span><span class="cch-pst">' + x.pst.map((q) => '<button type="button" class="cch-pq ' + (q.st === 'bad' ? 'bad' : q.st === 'warn' ? 'warn' : q.st === 'ok' ? 'ok' : 'na') + '" data-cchpull="' + q.n + '"' + (x.sec ? ' data-cchsec="' + esc(x.sec) + '"' : '') + ' title="' + esc('Pull ' + q.n + ': ' + ({ bad: 'went wrong', warn: 'some mistakes', ok: 'done right' }[q.st] || 'didn\'t come up') + '. Click to open it.') + '">' + q.n + '</button>').join('') + '</span></div>');
     if (howRest(x)) L.push('<div class="cch-mr"><span class="cch-ml">How</span><span>' + esc(cClip(howRest(x), 260)) + '</span></div>');
     if (x.kbLine) L.push('<div class="cch-mr"><span class="cch-ml">Against top guilds</span><span>' + esc(x.kbLine) + '</span></div>');
     for (const a of x.avoidL || []) L.push('<div class="cch-mr cch-mav"><span class="cch-ml">Avoidable damage</span><span><b>' + esc(a.k) + '</b>' + (a.line != null && isFinite(a.line) ? ' <span class="sub">(top guilds: most raiders take ' + (a.secs ? a.line + ' s' : a.line) + ' or ' + (a.secs ? 'less' : 'fewer') + ')</span>' : '') +
