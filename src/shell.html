@@ -4064,6 +4064,17 @@ details.secd > summary .kbrank + .sst { margin-left: 0; }
 .cch2 .dch.k-own::before, .cch2 .dch.k-ready::before, .cch2 .dch.k-on::before { background: var(--bad); } .cch2 .dch.k-nothing::before, .cch2 .dch.k-half::before { background: var(--warn); }
 .cch2 .dch i { font-style: normal; color: var(--muted); } .cch2 .dch.more, .cch2 .ach.more { color: var(--muted); } .cch2 .dch.more::before { display: none; }
 .cch2 .ach.bad { border-color: rgba(229,83,75,.4); } .cch2 .ach span { color: var(--muted); }
+/* one chip shape for Deaths and Avoidable damage (Oct 22) */
+.cch2 .cch-chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px; }
+.cch2 .cch-chips > .cch-anote, .cch2 .cch-chips > .cch-none { grid-column: 1 / -1; }
+.cch2 .cch-chips > .dch, .cch2 .cch-chips > .ach { display: flex; align-items: center; gap: 6px; box-sizing: border-box; height: 34px; min-height: 34px; min-width: 0; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line2); background: rgba(255,255,255,.05); font-size: 12.5px; white-space: nowrap; overflow: hidden; }
+.cch2 .cch-chips > .dch > *, .cch2 .cch-chips > .ach > * { flex: none; }
+.cch2 .cch-chips > .dch > :last-child, .cch2 .cch-chips > .ach > :last-child { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.cch2 .cch-chips > .ach::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--faint, #6b7280); flex: none; }
+.cch2 .cch-chips > .ach.bad { border-color: var(--line2); } .cch2 .cch-chips > .ach.bad::before { background: var(--bad); }
+.cch2 .cch-chips > .dch.more, .cch2 .cch-chips > .ach.more { justify-content: center; } .cch2 .cch-chips > .ach.more::before { display: none; }
+.cch2 .cch-chips > .dch[hidden], .cch2 .cch-chips > .ach[hidden] { display: none !important; }
+@media (max-width: 600px) { .cch2 .cch-chips { grid-template-columns: 1fr; } }
 @media (max-width: 640px) { .cch2 { padding: 12px; } .cch2 .cch-h { font-size: 16px; } .cch2 .cch-fv { font-size: 15px; } .cch2 .cch-p { grid-template-columns: 26px minmax(0, 1fr); padding: 10px; gap: 10px; } .cch2 .cch-p.cch-hasmap { grid-template-columns: 26px minmax(0, 1fr) 56px; } .cch2 .cch-pmap .cch-thumb.wr-map, .cch2 .cch-pmap .cch-thumb.wr-map svg.zmap { width: 56px !important; height: 56px !important; } .cch2 .cch-acct2 { grid-template-columns: 1fr; } .cch2 .cch-fx { flex-direction: column; gap: 0; } }
 /* no zooming by itself (Oct 22): small maps stay their size on hover; a gold edge says they open big */
 @media (hover: hover) { .wr-map:hover { transform: none !important; box-shadow: none !important; border-color: var(--gold); z-index: auto; } }
