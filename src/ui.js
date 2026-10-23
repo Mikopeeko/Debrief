@@ -1775,6 +1775,7 @@ const PATCH_NOTES = [
     'The bosses are in the same order everywhere on the site.',
     'Long patch notes fold after six lines.',
   ], f: [
+    'Live now no longer disappears while your raid gets ready for the next boss: a live log stays live for 30 quiet minutes, not 10.',
     'Debrief Companion: after a training dummy, the app no longer thinks the fight is still going (it held up updates for half an hour).',
     'Your team\'s raid nights come in again: since Oct 21, adding a team or opening its page on the website found no new raid nights. Fixed, and the ones you missed come in the next time you open your team.',
     'Debrief Companion: clicking the newest pull on the night line now shows its Send button too.',
@@ -25733,7 +25734,7 @@ HIST.load().then(() => setTimeout(autoCheckAll, 4000));
 // that got something in the last 10 minutes is being logged live. Your team's page gets a "Live now" strip, and opens the
 // raid by itself if you're on that page when it's first seen; the Your teams button gets a red dot; any other page gets a
 // thin Follow live bar under the top bar (not over the raid itself or on the front page, and × hides it). All of it goes once the log goes quiet.
-const LIVE_NEW = 10 * 60e3;
+const LIVE_NEW = 30 * 60e3; // (30 minutes, not 10 (Oct 22, a raid night): a live log can sit quiet for 10+ minutes between trash and the first boss pull)
 function liveWho() {
   const P = mePair(); if (P) return P.t;
   const gl = groups(), chars = gl.filter((g) => g.kind === 'char'), teams = gl.filter((g) => g.kind !== 'char'), cur = gl.find((g) => g.gid === store.get(GROUP_CUR));
