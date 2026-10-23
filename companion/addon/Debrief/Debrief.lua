@@ -110,6 +110,7 @@ local function decode(code)
     elseif t == "V" then m.addonV = g(2) -- (the addon version the PC app that made this carries)
     -- (Debriefing's coach box, per wipe-filter version)
     elseif t == "CH" then for _, c in ipairs(coaches()) do c.head = g(2) end
+    elseif t == "CM" then for _, c in ipairs(coaches()) do c.more = tonumber(g(2)) end -- (smaller mistakes not listed)
     elseif t == "CF" then for _, c in ipairs(coaches()) do c.focus = g(2); c.focusSame = g(3) == "1"; c.kill = g(4) == "1" end
     elseif t == "CW" then for _, c in ipairs(coaches()) do table.insert(c.wrong, { sev = g(2), id = g(3), label = g(4), tag = g(5), what = g(6), fix = g(7), how = g(8), kb = g(9) }) end
     elseif t == "CR" then for _, c in ipairs(coaches()) do table.insert(c.right, { id = g(2), t = g(3) }) end
@@ -909,8 +910,8 @@ function render()
     local lab = FS("bold", 11.5, COL.gold); lab:SetPoint("TOPLEFT", 2, -y); lab:SetText(c.kill and "THE KILL, COACHED" or "THIS PULL, COACHED"); y = y + 19
     local hd = FS("head", 16.5, COL.text); hd:SetPoint("TOPLEFT", 2, -y); hd:SetWidth(CW - 4); hd:SetText(paint(c.head)); y = y + hd:GetStringHeight() + 12
     -- (like the website (Oct 23): the focus that is a card's fix lives on that card, labelled FOCUS NEXT PULL, with no separate box)
-    local focI; if not c.focusSame and (c.focus or "") ~= "" then local fk = c.focus:gsub("%.$", ""); for i, x in ipairs(c.wrong) do if i <= math.max(1, DB.maxRaid or 3) and ((x.fix or ""):gsub("%.$", "")) == fk then focI = i; break end end end
-    if not c.focusSame and (c.focus or "") ~= "" and not focI then
+    local focI; if false then local fk = c.focus:gsub("%.$", ""); for i, x in ipairs(c.wrong) do if i <= math.max(1, DB.maxRaid or 3) and ((x.fix or ""):gsub("%.$", "")) == fk then focI = i; break end end end
+    if false then -- (no Next pull box, like the website (Oct 23))
       local ft = FS("bold", 14, COL.text); ft:SetWidth(CW - 32); ft:SetText(paint(c.focus))
       local hh = 11 + 18 + ft:GetStringHeight() + 12
       box(y, hh, COL.gold, 0.08, COL.gold, 0.55)
@@ -919,7 +920,7 @@ function render()
     end
     if #c.wrong > 0 then
       local l = FS("bold", 11.5, COL.muted); l:SetPoint("TOPLEFT", 2, -y); l:SetText("WHAT WENT WRONG"); y = y + 20
-      local cap = math.max(1, DB.maxRaid or 3)
+      local cap = #c.wrong -- (every major mistake, like the website (Oct 23))
       for i, x in ipairs(c.wrong) do
         if i > cap then
           local mt = FS("body", 12.5, COL.faint); mt:SetPoint("TOPLEFT", 2, -(y + 1)); mt:SetText((#c.wrong - cap) .. " more in the full coaching on the website."); y = y + 20
@@ -960,6 +961,7 @@ function render()
         for _, rw in ipairs(rows) do rw[1]:SetPoint("TOPLEFT", tx, -(yy + 2)); rw[2]:SetPoint("TOPLEFT", tx + LW, -yy); yy = yy + math.max(16, rw[2]:GetStringHeight()) + 6 end
         y = y + hh + 8
       end
+      if (c.more or 0) > 0 then local mt = FS("body", 12.5, COL.faint); mt:SetPoint("TOPLEFT", 4, -(y - 2)); mt:SetText("+" .. c.more .. (c.more == 1 and " smaller one" or " smaller ones")); y = y + 18 end
       y = y + 4
     end
     for _, x in ipairs((DB.compact or SH.right == false) and {} or c.right) do
