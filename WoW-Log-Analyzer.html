@@ -37127,14 +37127,15 @@ function rcbSel(c, F) { const B = rcbFacts(c, F), me = meOf(); return B.rows.fin
 // (every death on the card, counted or not (your ask, Oct 21: "didn't I die a lot?"): how many times, in how many pulls, how many counted
 // and why, and that the rest came in the wipe)
 function rcbDeathLine(F, p, a) {
-  let all = 0, inP = 0, n = 0, kept = 0, late = 0;
+  let all = 0, inP = 0, n = 0, kept = 0, late = 0, auto = false;
   for (const r of F.reps) { const pp = [...r.players.values()].find((y) => y.name === p.name); if (!pp) continue; n++;
+    try { const ci = cutInfo(r); if (ci && ci.auto) auto = true; } catch (e) { /* (no wipe call) */ } /* (the wipe call (Oct 23): the line names it instead of "the 2nd death") */
     const mine = r.deaths.filter((d) => d.guid === pp.guid); if (!mine.length) continue; all += mine.length; inP++;
     try { const s = survivalOf(r, pp); kept += s.deaths - (s.lateOwn || 0); late += s.lateOwn || 0; } catch (e) { kept += keptDeaths(r).filter((d) => d.guid === pp.guid).length; } }
   const cnt = kept + late, rest = all - cnt, cut = deathCutN();
   const txt = !all ? 'No deaths in ' + (n === 1 ? 'the pull' : n === 2 ? 'either pull' : 'any of the ' + n + ' pulls') + '.'
     : 'Died ' + plural(all, 'time') + ' in ' + inP + ' of ' + plural(n, 'pull') + '. ' + (cnt ? (cnt === all ? (all === 1 ? 'It' : all === 2 ? 'Both' : 'All ' + all) + ' counted' : cnt + ' counted') + (late ? ': ' + kept + ' before the wipe filter, and ' + late + ' to something avoidable while the raid was still fighting' : '') + '.' : 'None counted.') +
-      (rest > 0 ? ' The other ' + rest + ' came in the wipe' + (cut ? ', after the raid\'s ' + ordinal(cut) + ' death' : '') + ', so they don\'t count.' : '');
+      (rest > 0 ? ' The other ' + rest + (auto ? ' came after the wipe was called' : ' came in the wipe' + (cut ? ', after the raid\'s ' + ordinal(cut) + ' death' : '')) + ', so they don\'t count.' : '');
   const pen = a && a.deathPen ? Math.round(a.deathPen) : 0; /* (and what they cost: a point each, up to 10) */
   return '<div class="rcb-ydl"><b>Deaths</b>' + esc(txt + (pen ? ' Each one that was on you took a point off your grade: −' + pen + '.' : '')) + '</div>';
 }
