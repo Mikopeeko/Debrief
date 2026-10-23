@@ -1777,6 +1777,7 @@ const PATCH_NOTES = [
     'The bosses are in the same order everywhere on the site.',
     'Long patch notes fold after six lines.',
   ], f: [
+    'The coach no longer leaves a stray letter behind a spell name, like "you stood in Noxious Ground s".',
     'Live now no longer disappears while your raid gets ready for the next boss: a live log stays live for 30 quiet minutes, not 10.',
     'Debrief Companion: after a training dummy, the app no longer thinks the fight is still going (it held up updates for half an hour).',
     'Your team\'s raid nights come in again: since Oct 21, adding a team or opening its page on the website found no new raid nights. Fixed, and the ones you missed come in the next time you open your team.',
@@ -9507,7 +9508,7 @@ function whySay(o, pm, nth) {
   const names = (l) => lpAnd([...new Set(l.map((d) => d.player))].map((p) => dbfWho(p, pm)));
   /* (a mechanic's own note, made plain: no bracketed asides or damage numbers, a semicolon becomes a full stop, "players" are "us", one or two short sentences) */
   const plain = (t) => { let x = String(t || '').trim(); for (let i = 0; i < 3; i++) x = x.replace(/\s*\([^()]*\)/g, '');
-    x = x.replace(/,? for [\d,.]+[kKmM]?( avoidable damage)?/g, '').replace(/;\s*(\w)/g, (m0, ch) => '. ' + ch.toUpperCase()).replace(/^1 player\b/, 'One player').replace(/\s+([.,:])/g, '$1');
+    x = x.replace(/,? for [\d,.]+(?:[kKmM]| s(?:econds?)?\b)?( avoidable damage)?/g, '') /* (a time too: "for 7 s" left a stray "s" (Oct 22)) */.replace(/;\s*(\w)/g, (m0, ch) => '. ' + ch.toUpperCase()).replace(/^1 player\b/, 'One player').replace(/\s+([.,:])/g, '$1');
     x = x.replace(/\b(\d+|One) players? (?=died|got|were|was|took|stood|reached)/g, (m0, n) => n + ' of us ').replace(/\bby only (\d+) players?\b/g, 'by only $1 of us').replace(/\bplayers gained\b/g, 'we gained').replace(/\bthe raid gained\b/g, 'we gained').replace(/\bThe raid\b/g, 'We').replace(/\bthe raid\b/g, 'us');
     const m = x.match(/^.*?[.!?](?=\s|$)/); if (!m) return x; const m2 = m[0].length < 70 ? x.slice(m[0].length).match(/^\s*.*?[.!?](?=\s|$)/) : null; return (m[0] + (m2 ? m2[0] : '')).trim(); };
   /* (what the player did, said to them: "didn't pick up their soul fragments" becomes "didn't pick up your soul fragments") */
@@ -10201,9 +10202,9 @@ function iconSpells(html) {
     if (seg.startsWith('<')) { const op = seg.match(/^<(span|a|abbr|b|i)\b/), cl = seg.match(/^<\/(span|a|abbr|b|i)>/);
       if (op && !/\/>$/.test(seg)) st.push(/class="(sp|nm|icw)\b/.test(seg)); else if (cl) st.pop(); return seg; }
     if (st.some(Boolean) || seg.length < 4) return seg;
-    b.rx.lastIndex = 0; seg = seg.replace(/([A-Z][\p{L}'’-]*(?: (?:of|the|on|in|to|a|[A-Z][\p{L}'’-]*))*?)s(?![\p{L}\p{N}])/gu, (m0, w) => { const ws = w.split(' '); for (let j = 0; j < ws.length; j++) { if (!/^[A-Z]/.test(ws[j])) continue; const w2 = ws.slice(j).join(' '), sid = b.names.get(w2.toLowerCase()); if (sid && w2.length > 3) return ws.slice(0, j).concat('').join(' ') + '\u0001' + sid + '\u0002' + w2 + '\u0003s'; } return m0; });
+    b.rx.lastIndex = 0; seg = seg.replace(/([A-Z][\p{L}'’-]*(?: (?:of|the|on|in|to|a|[A-Z][\p{L}'’-]*))*?)s(?![\p{L}\p{N}])/gu, (m0, w) => { const ws = w.split(' '); for (let j = 0; j < ws.length; j++) { if (!/^[A-Z]/.test(ws[j])) continue; const w2 = ws.slice(j).join(' '), sid = b.names.get(w2.toLowerCase()); if (sid && w2.length > 3) return ws.slice(0, j).concat('').join(' ') + '\u0001' + sid + '\u0002' + w2 + '\u0005s\u0003'; } return m0; }); /* (the plural s stays inside the spell's link: it read "Noxious Ground s" (Oct 22, from the in-game addon chat)) */
     seg = seg.split(/(\u0001\d+\u0002[^\u0003]*\u0003)/).map((p) => p[0] === '\u0001' ? p : p.replace(b.rx, (w) => { if (w[0] === w[0].toLowerCase()) return w; const sid = b.names.get(w.toLowerCase()); return sid ? '<span class="sp mt" data-sid="' + sid + '" data-sn="' + w + '">' + spellIcon(sid, w) + w + '</span>' : w; })).join('');
-    return seg.replace(/\u0001(\d+)\u0002([^\u0003]*)\u0003/g, (m0, sid, w) => '<span class="sp mt" data-sid="' + sid + '" data-sn="' + w + '">' + spellIcon(+sid, w) + w + '</span>');
+    return seg.replace(/\u0001(\d+)\u0002([^\u0003]*)\u0003/g, (m0, sid, w0) => { const [w, tail] = w0.split('\u0005'); return '<span class="sp mt" data-sid="' + sid + '" data-sn="' + w + '">' + spellIcon(+sid, w) + w + (tail || '') + '</span>'; });
   }).join('');
 }
 // (problem #1's How, minus the words Next time already says; nothing when it adds nothing)
