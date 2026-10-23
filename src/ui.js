@@ -9847,85 +9847,85 @@ const KILL_BASE = {
   'Nymrissa Wavecaller': { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
     orbs: { k: 20, ok: 20, med: 0 }, nyburst: { k: 20, ok: 4, med: 20 }, nyadds: { k: 20, ok: 11, med: 0 },
     nyscale: { k: 20, ok: 13, med: 0 }, nyjet: { k: 20, ok: 15, med: 0 }, nyrain: { k: 20, ok: 20, med: 0 },
-    nypop: { k: 12, ok: 0, med: 67 }, avoid: { k: 20, ok: 4, med: 18 } } },
+    nypop: { k: 12, ok: 0, med: 67 }, avoid: { k: 20, ok: 13, med: 0 } } },
     15: { from: '20 fastest Heroic kills, Oct 22', sec: {
     orbs: { k: 20, ok: 19, med: 0 }, nyadds: { k: 20, ok: 12, med: 0 }, nyrain: { k: 20, ok: 18, med: 0 },
-    avoid: { k: 20, ok: 10, med: 3 } } } },
+    avoid: { k: 20, ok: 20, med: 0 } } } },
   "Nek'zali the Soulcoiler": { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
     amani: { k: 20, ok: 20, med: 0 }, ignition: { k: 20, ok: 5, med: 37 }, depths: { k: 20, ok: 17, med: 0 },
     rend: { k: 20, ok: 12, med: 0 }, barrage: { k: 20, ok: 5, med: 71 }, ritual: { k: 20, ok: 20, med: 0 },
-    invoke: { k: 20, ok: 12, med: 0 }, avoid: { k: 20, ok: 6, med: 14 } } },
+    invoke: { k: 20, ok: 12, med: 0 }, avoid: { k: 20, ok: 18, med: 0 } } },
     15: { from: '20 fastest Heroic kills, Oct 22', sec: {
     amani: { k: 20, ok: 15, med: 0 }, ignition: { k: 20, ok: 0, med: 67 }, rend: { k: 20, ok: 10, med: 10 },
-    barrage: { k: 20, ok: 2, med: null }, ritual: { k: 20, ok: 19, med: 0 }, avoid: { k: 20, ok: 3, med: 19 } } } },
+    barrage: { k: 20, ok: 2, med: null }, ritual: { k: 20, ok: 19, med: 0 }, avoid: { k: 20, ok: 18, med: 0 } } } },
   'Entombed Sentinels': { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
     helix: { k: 20, ok: 19, med: 0 }, protovenom: { k: 20, ok: 5, med: 7 }, droplets: { k: 20, ok: 0, med: 7 },
     coag: { k: 20, ok: 10, med: 8 }, miasma: { k: 20, ok: 5, med: 33 }, blighted: { k: 20, ok: 0, med: 42 },
     marks: { k: 20, ok: 3, med: 55 }, balance: { k: 20, ok: 8, med: 33 }, tanks: { k: 20, ok: 20, med: 0 },
-    avoid: { k: 20, ok: 2, med: 23 } } },
+    avoid: { k: 20, ok: 12, med: 0 } } },
     15: { from: '20 fastest Heroic kills, Oct 22', sec: {
     helix: { k: 20, ok: 18, med: 0 }, droplets: { k: 20, ok: 0, med: 9 }, coag: { k: 20, ok: 20, med: 0 },
     miasma: { k: 20, ok: 17, med: 0 }, blighted: { k: 20, ok: 2, med: 50 }, marks: { k: 20, ok: 1, med: 67 },
-    balance: { k: 20, ok: 10, med: 25 }, tanks: { k: 20, ok: 20, med: 0 }, avoid: { k: 20, ok: 4, med: 23 } } } },
+    balance: { k: 20, ok: 10, med: 25 }, tanks: { k: 20, ok: 20, med: 0 }, avoid: { k: 20, ok: 19, med: 0 } } } },
   'The Lost Explorers': { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
     boxes: { k: 20, ok: 2, med: 9 }, united: { k: 16, ok: 15, med: 0 }, frostfire: { k: 16, ok: 2, med: 5 },
-    blink: { k: 20, ok: 20, med: 0 }, thud: { k: 20, ok: 6, med: 10 }, avoid: { k: 20, ok: 4, med: 26 },
+    blink: { k: 20, ok: 20, med: 0 }, thud: { k: 20, ok: 6, med: 10 }, avoid: { k: 20, ok: 15, med: 0 },
     kicks: { k: 20, ok: 16, med: 0 } } },
     15: { from: '20 fastest Heroic kills, Oct 22', sec: {
     boxes: { k: 20, ok: 8, med: 2 }, united: { k: 12, ok: 11, med: 0 }, blink: { k: 20, ok: 20, med: 0 },
-    thud: { k: 12, ok: 0, med: 20 }, avoid: { k: 15, ok: 1, med: 25 }, kicks: { k: 20, ok: 19, med: 0 } } } },
+    thud: { k: 12, ok: 0, med: 20 }, avoid: { k: 15, ok: 6, med: 9 }, kicks: { k: 20, ok: 19, med: 0 } } } },
   'Vashnik the Malignant': { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
     venoms: { k: 20, ok: 6, med: 25 }, totems: { k: 20, ok: 16, med: 0 }, froth: { k: 20, ok: 1, med: 11 },
     bile: { k: 20, ok: 17, med: 0 }, infect: { k: 20, ok: 0, med: 37 }, fangs: { k: 20, ok: 19, med: 0 },
-    avoid: { k: 20, ok: 2, med: 9 } } },
+    avoid: { k: 20, ok: 10, med: 1 } } },
     15: { from: '20 fastest Heroic kills, Oct 22', sec: {
     venoms: { k: 20, ok: 5, med: 67 }, froth: { k: 20, ok: 0, med: 89 }, bile: { k: 20, ok: 12, med: 0 },
-    infect: { k: 20, ok: 2, med: 30 }, fangs: { k: 20, ok: 20, med: 0 }, avoid: { k: 20, ok: 2, med: 8 } } } },
+    infect: { k: 20, ok: 2, med: 30 }, fangs: { k: 20, ok: 20, med: 0 }, avoid: { k: 20, ok: 17, med: 0 } } } },
   Sszorak: { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
     ravage: { k: 20, ok: 18, med: 0 }, mutilate: { k: 20, ok: 18, med: 0 }, tempest: { k: 20, ok: 0, med: 67 },
     cysts: { k: 20, ok: 19, med: 0 }, winds: { k: 20, ok: 15, med: 0 }, crosswinds: { k: 20, ok: 0, med: 13 },
-    fury: { k: 20, ok: 18, med: 0 }, virulence: { k: 20, ok: 0, med: 38 }, avoid: { k: 20, ok: 4, med: 9 } } },
+    fury: { k: 20, ok: 18, med: 0 }, virulence: { k: 20, ok: 0, med: 38 }, avoid: { k: 20, ok: 19, med: 0 } } },
     15: { from: '20 fastest Heroic kills, Oct 22', sec: {
     ravage: { k: 20, ok: 17, med: 0 }, mutilate: { k: 20, ok: 16, med: 0 }, tempest: { k: 20, ok: 0, med: 74 },
     cysts: { k: 20, ok: 20, med: 0 }, winds: { k: 20, ok: 16, med: 0 }, crosswinds: { k: 20, ok: 2, med: 10 },
-    avoid: { k: 19, ok: 18, med: 0 } } } },
+    avoid: { k: 19, ok: 19, med: 0 } } } },
   'The Twin Fangs': { 16: { from: '19 fastest Mythic kills, Oct 22', sec: {
     venom: { k: 19, ok: 2, med: 15 }, feast: { k: 19, ok: 10, med: 0 }, founts: { k: 19, ok: 19, med: 0 },
     soaks: { k: 19, ok: 2, med: 3 }, bulwark: { k: 19, ok: 2, med: 3 }, spit: { k: 19, ok: 2, med: 13 },
-    ichor: { k: 19, ok: 19, med: 0 }, stone: { k: 19, ok: 13, med: 0 }, avoid: { k: 19, ok: 0, med: 43 },
+    ichor: { k: 19, ok: 19, med: 0 }, stone: { k: 19, ok: 13, med: 0 }, avoid: { k: 19, ok: 15, med: 0 },
     kicks: { k: 19, ok: 18, med: 0 } } },
     15: { from: '20 fastest Heroic kills, Oct 22', sec: {
     venom: { k: 20, ok: 2, med: 10 }, feast: { k: 20, ok: 1, med: 25 }, soaks: { k: 20, ok: 13, med: 0 },
     spit: { k: 20, ok: 1, med: 25 }, ichor: { k: 20, ok: 19, med: 0 }, stone: { k: 20, ok: 18, med: 0 },
-    avoid: { k: 20, ok: 0, med: 29 } } } },
+    avoid: { k: 20, ok: 17, med: 0 } } } },
   'The Coiled Altar': { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
-    avoid: { k: 20, ok: 1, med: 10 }, dmghost: { k: 20, ok: 11, med: 0 }, addsets: { k: 20, ok: 12, med: 0 },
+    avoid: { k: 20, ok: 9, med: 2 }, dmghost: { k: 20, ok: 11, med: 0 }, addsets: { k: 20, ok: 12, med: 0 },
     gloom: { k: 20, ok: 2, med: 6 }, push: { k: 20, ok: 16, med: 0 }, orbs: { k: 20, ok: 2, med: 13 },
     tankfront: { k: 20, ok: 2, med: 11 }, soakq: { k: 20, ok: 3, med: 42 }, shield: { k: 20, ok: 17, med: 0 },
     inter: { k: 20, ok: 16, med: 0 }, vf: { k: 20, ok: 3, med: 33 } } },
     15: { from: '20 fastest Heroic kills, Oct 22', sec: {
-    avoid: { k: 20, ok: 5, med: 17 }, dmghost: { k: 20, ok: 16, med: 0 }, addsets: { k: 20, ok: 19, med: 0 },
+    avoid: { k: 20, ok: 12, med: 0 }, dmghost: { k: 20, ok: 16, med: 0 }, addsets: { k: 20, ok: 19, med: 0 },
     push: { k: 20, ok: 19, med: 0 }, orbs: { k: 20, ok: 13, med: 0 }, tankfront: { k: 19, ok: 13, med: 0 },
     soakq: { k: 20, ok: 20, med: 0 }, shield: { k: 20, ok: 20, med: 0 }, vf: { k: 19, ok: 2, med: 75 } } } },
   "Ula'tek": { 16: { from: '19 fastest Mythic kills, Oct 22', sec: {
     eggs: { k: 19, ok: 7, med: 2 }, coils: { k: 19, ok: 18, med: 0 }, waves: { k: 19, ok: 0, med: null },
     tank: { k: 19, ok: 18, med: 0 }, incub: { k: 19, ok: 19, med: 0 }, wretch: { k: 19, ok: 6, med: 25 },
     amps: { k: 19, ok: 19, med: 0 }, fangs: { k: 19, ok: 18, med: 0 }, doomscale: { k: 19, ok: 0, med: 25 },
-    bite: { k: 19, ok: 1, med: 8 }, shriek: { k: 19, ok: 18, med: 0 }, avoid: { k: 19, ok: 1, med: 20 },
+    bite: { k: 19, ok: 1, med: 8 }, shriek: { k: 19, ok: 18, med: 0 }, avoid: { k: 19, ok: 2, med: 6 },
     kicks: { k: 19, ok: 19, med: 0 } } },
     15: { from: '20 fastest Heroic kills, Oct 22', sec: {
     eggs: { k: 20, ok: 1, med: 10 }, coils: { k: 20, ok: 16, med: 0 }, waves: { k: 20, ok: 0, med: null },
     tank: { k: 20, ok: 18, med: 0 }, amps: { k: 20, ok: 20, med: 0 }, fangs: { k: 20, ok: 11, med: 0 },
-    doomscale: { k: 20, ok: 20, med: 0 }, bite: { k: 20, ok: 7, med: 20 }, avoid: { k: 20, ok: 1, med: 22 },
+    doomscale: { k: 20, ok: 20, med: 0 }, bite: { k: 20, ok: 7, med: 20 }, avoid: { k: 20, ok: 13, med: 0 },
     kicks: { k: 20, ok: 20, med: 0 } } } },
   "Kith'ix": { 16: { from: '19 fastest Mythic kills, Oct 22', sec: {
     kxadds: { k: 19, ok: 17, med: 0 }, kxbeetle: { k: 19, ok: 13, med: 0 }, kxext: { k: 19, ok: 0, med: null },
     kxfear: { k: 19, ok: 2, med: 40 }, kxtank: { k: 19, ok: 19, med: 0 }, kxgrasp: { k: 19, ok: 2, med: 11 },
-    kxgate: { k: 19, ok: 15, med: 0 }, avoid: { k: 19, ok: 1, med: 19 } } },
+    kxgate: { k: 19, ok: 15, med: 0 }, avoid: { k: 19, ok: 12, med: 0 } } },
     15: { from: '20 fastest Heroic kills, Oct 22', sec: {
     kxadds: { k: 20, ok: 19, med: 0 }, kxbeetle: { k: 20, ok: 5, med: 33 }, kxext: { k: 18, ok: 0, med: null },
     kxfear: { k: 20, ok: 3, med: 67 }, kxtank: { k: 20, ok: 18, med: 0 }, kxgrasp: { k: 20, ok: 5, med: 10 },
-    kxgate: { k: 20, ok: 20, med: 0 }, avoid: { k: 20, ok: 4, med: 13 } } } },
+    kxgate: { k: 20, ok: 20, med: 0 }, avoid: { k: 20, ok: 17, med: 0 } } } },
 };
 // (each kill's own share of a mechanic's moments that went wrong, lowest first: the same 20 fastest kills as KILL_BASE (Oct 22),
 // so a line can say where we stand among them. Avoidable damage is left out: its kill bars are AVOID_BASE)
