@@ -268,7 +268,7 @@ for _, f in ipairs(FRAMES) do if rawget(f, "whereText") and f._shown then R[f.id
 table.sort(order, function(a, b) return NAMES[a.id] < NAMES[b.id] end)
 for _, r in ipairs(order) do print(string.format("  %-24s %-26s glow %-5s style %-12s colour %-12s sound %-12s words %s", r.name:GetText(), r.where:GetText(), tostring(r.on:GetChecked()), CHOSEN(r.style), CHOSEN(r.color), CHOSEN(r.sound), r.words:GetText() == "" and "(" .. r.words.hint:GetText() .. ")" or r.words:GetText())) end
 expect("Divine Hymn (someone else's) not listed", R[64843], nil)
-expect("Divine Shield (on the bar) listed", R[642] ~= nil, true)
+expect("Divine Shield (on the bar, not assigned to you) not listed", R[642] == nil, true)
 print("  set: Avenging Wrath red + raid warning + \\"Wings now\\"; Aura Mastery the Cooldown Manager flash; Blessing of Protection the game proc; Blessing of Sacrifice off; Divine Toll any colour")
 CHOOSE(R[31884].color, "Red"); CHOOSE(R[31884].sound, "Raid warning")
 R[31884].words:SetText("Wings now"); R[31884].words:GetScript("OnEnterPressed")(R[31884].words)
@@ -308,6 +308,7 @@ expect("Avenging Wrath back to main", DebriefGlowDB.spells[31884], nil)
 newPull(); pull(); at(45, "Avenging Wrath: main look again"); press(31884)
 print("-- a custom icon (Edit Mode 150%, a higher strata, cooldown swipe at level 50): Blizzard's picture hidden, a skin draws its own 52 x 40 picture")
 do
+  local savedNote = NOTE_TEXT; NOTE_TEXT = "time:1;ph:1;tag:Flëxørçïst;spellid:642;"
   local ds; for _, f in ipairs(ESS) do if f._label == "Divine Shield" then ds = f end end
   local swipe = CreateFrame("Cooldown"); swipe.GetFrameLevel = function() return 50 end
   local skinF = CreateFrame("Frame"); skinF.GetEffectiveScale = function() return 1.5 end
@@ -347,6 +348,25 @@ do
   expect("ants in your colour", lp and lp._rgb and (lp._rgb[1] .. "," .. lp._rgb[2] .. "," .. lp._rgb[3]), "0.3,0.6,1")
   ADVANCE(NOW + 3.1); heard(); DebriefGlowDB.style = "pulse"; DebriefGlowDB.r, DebriefGlowDB.g, DebriefGlowDB.b = 0.90, 0.71, 0.31
   ds.GetEffectiveScale = nil; ds.GetFrameStrata = nil; ds.GetFrameLevel = nil; ds.GetChildren = nil; ds.GetRegions = nil; ds.Icon = nil; DebriefGlowDB.style = was
+  NOTE_TEXT = savedNote
+end
+print("-- only your assigned cooldowns: the test shows the spells your note gives you, not everything on your Cooldown Manager")
+do
+  local savedNote, savedWhere = NOTE_TEXT, DebriefGlowDB.where
+  NOTE_TEXT = NOTE; DebriefGlowDB.where = "bar"
+  newPull(); DebriefGlow_Test(true)
+  expect("test shows only your assigned spells (Sacrifice is turned off; Divine Shield and Divine Toll aren't assigned)", GLOWING(), "Aura Mastery (cdmflash, gold), Avenging Wrath (pulse, gold), your icon (proc, game colours)")
+  ADVANCE(NOW + 3.1); heard()
+  DebriefGlowDB.log = {}; newPull()
+  CB.NSRT_REMINDER_SHOW("NSRT_REMINDER_SHOW", { spellID = 1288635, IsAlert = true, dur = 1, expires = GetTime() + 1 }, nil); at(NOW + 1.1, "an NSRT boss alert")
+  expect("boss alerts don't show", GLOWING(), "nothing")
+  local said = false; for _, l in ipairs(DebriefGlowDB.log) do if l:find("boss alert") then said = true end end; expect("the diary says it skipped a boss alert", said, true)
+  print("  your icon has a thin square border")
+  DebriefGlowDB.where = "mouse"; newPull(); DebriefGlow_Test(true)
+  local ic; for _, f in ipairs(FRAMES) do if f._shown and rawget(f, "_label") == "your icon" then ic = f end end
+  expect("four border edges on your icon", ic and rawget(ic, "edge") and #rawget(ic, "edge"), 4)
+  ADVANCE(NOW + 3.1); heard()
+  NOTE_TEXT, DebriefGlowDB.where = savedNote, savedWhere
 end
 print("-- /dglow test skips a spell that's off")
 newPull(); DebriefGlow_Test(true); expect("Blessing of Sacrifice not in the test", GLOWING():find("Sacrifice") == nil, true); ADVANCE(NOW + 3.1); heard()

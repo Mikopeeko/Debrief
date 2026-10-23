@@ -299,7 +299,16 @@ local function layoutIcons()
   local s, list = DB.iconSize or 48, {}
   for _, f in pairs(icons) do list[#list + 1] = f end
   table.sort(list, function(a, b) return a.order < b.order end)
-  for i, f in ipairs(list) do f:SetSize(s, s); f:ClearAllPoints(); f:SetPoint("TOPLEFT", holder, "TOPLEFT", (i - 1) * (s + 6), 0) end
+  local ph = GetPhysicalScreenSize and select(2, GetPhysicalScreenSize())
+  for i, f in ipairs(list) do
+    f:SetSize(s, s); f:ClearAllPoints(); f:SetPoint("TOPLEFT", holder, "TOPLEFT", (i - 1) * (s + 6), 0)
+    local es = f:GetEffectiveScale(); local px = (ph and ph > 0 and es and es > 0) and (2 * 768 / ph / es) or 1.5
+    local e = f.edge
+    e[1]:ClearAllPoints(); e[1]:SetPoint("TOPLEFT"); e[1]:SetPoint("TOPRIGHT"); e[1]:SetHeight(px)
+    e[2]:ClearAllPoints(); e[2]:SetPoint("BOTTOMLEFT"); e[2]:SetPoint("BOTTOMRIGHT"); e[2]:SetHeight(px)
+    e[3]:ClearAllPoints(); e[3]:SetPoint("TOPLEFT"); e[3]:SetPoint("BOTTOMLEFT"); e[3]:SetWidth(px)
+    e[4]:ClearAllPoints(); e[4]:SetPoint("TOPRIGHT"); e[4]:SetPoint("BOTTOMRIGHT"); e[4]:SetWidth(px)
+  end
 end
 local function iconFor(id)
   local f = icons[id]
@@ -309,6 +318,7 @@ local function iconFor(id)
     if not f then
       f = CreateFrame("Frame", nil, holderFrame()); f:SetFrameLevel(holder:GetFrameLevel() + 2)
       f.tex = f:CreateTexture(nil, "ARTWORK"); f.tex:SetAllPoints(); f.tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+      f.edge = {}; for i = 1, 4 do local t = f:CreateTexture(nil, "OVERLAY"); t:SetColorTexture(0, 0, 0, 1); f.edge[i] = t end
       f._label = "your icon"
     end
     iconOrder = iconOrder + 1; f.order, f.id = iconOrder, id
@@ -470,6 +480,7 @@ local hooked = false
 local function reminder(event, info)
   if not (DB and DB.enabled) then diary("NSRT reminder while Debrief Glow is off"); return end
   if type(info) ~= "table" then diary("NSRT sent a reminder without its details"); return end
+  if info.IsAlert then diary("NSRT boss alert, not an assignment: skipped"); return end
   local id = info.spellID or info.spellid
   if not id then diary("NSRT reminder without a spell (text only): skipped"); return end
   if secret(id) then diary("NSRT reminder's spell is hidden by the game: skipped"); return end
@@ -510,18 +521,39 @@ local function onCast(id)
 end
 
 -- ---- test: every Cooldown Manager icon glows for 3 s with the sound and voice, so you can see your settings without a raid ----
+-- (the spells your NSRT note assigns to you: lines with a spell whose tag names you, your nickname or everyone, in note order)
+local function mySpells()
+  local out, seen = {}, {}
+  if not (NSAPI and NSAPI.GetReminderString) then return out end
+  local ok, a, b = pcall(NSAPI.GetReminderString, NSAPI)
+  if not ok then return out end
+  local me = UnitName("player")
+  local okN, nick = pcall(function() return NSAPI.GetName and NSAPI:GetName(me) end)
+  local names = { [me or "?"] = true, everyone = true }
+  if okN and type(nick) == "string" and not secret(nick) then names[nick] = true end
+  for _, s in ipairs({ a, b }) do
+    if type(s) == "string" and not secret(s) then
+      for line in s:gmatch("[^\r\n]+") do
+        local id, tag = tonumber(line:match("spellid:(%d+)")), line:match("tag:([^;]+)")
+        if id and tag and not seen[id] then
+          for w in tag:gmatch("%S+") do if names[w] then seen[id] = true; out[#out + 1] = id; break end end
+        end
+      end
+    end
+  end
+  return out
+end
 function DebriefGlow_Test(quiet)
   local n = 0
-  if where() == "bar" then
-    for _, e in ipairs(cdmItems()) do if spellOn(e.ids[1]) and start(e.ids[1], 3) then n = n + 1; showTimer(e.ids[1], GetTime() + 3) end end
-  else
-    local e = cdmItems()[1]; local id = e and e.ids[1] or 31821
-    if start(id, 3) then n = 1; showTimer(id, GetTime() + 3) end
-  end
+  -- (your assigned cooldowns from your NSRT note; with no note, one Cooldown Manager spell so you can still see the look)
+  local ids = mySpells()
+  if #ids == 0 then local e = cdmItems()[1]; ids = { e and e.ids[1] or 31821 } end
+  for i = 1, math.min(#ids, 4) do local id = ids[i]; if spellOn(id) and start(id, 3) then n = n + 1; showTimer(id, GetTime() + 3) end end
   if n == 0 and DB.fallback then start(31821, 3, "Test"); n = 1 end
   playSound(); if DB.tts and not quiet then speak(ttsFor(31821, "Test")) end
   if not quiet then
-    if not NSAPI then say("NSRT isn't loaded. The glows follow NSRT's reminders, so turn NSRT on too.") end
+    if not NSAPI then say("NSRT isn't loaded. The glows follow NSRT's reminders, so turn NSRT on too.")
+    elseif #mySpells() == 0 then say("your NSRT note has no spells assigned to you yet, so this shows one of your Cooldown Manager spells.") end
     if where() ~= "bar" then say((where() == "mouse" or where() == "both") and "your icon shows next to your mouse for 3 s. In a raid it shows your own NSRT spells, counting down with NSRT." or "your icon shows at your spot for 3 s.")
     elseif #cdmItems() == 0 then say("no Cooldown Manager icons found. Turn on Blizzard's Cooldown Manager (Options > Gameplay Enhancements) and add your cooldowns to it.")
     else say("your Cooldown Manager icons glow for 3 s. In a raid only your own NSRT spells glow, when it's time to press them.") end
@@ -680,7 +712,7 @@ do
   local W, H, IS = 280, 262, 44
   local LOOP_COUNT, LOOP_GLOW, LOOP_REST = 5, 3, 1.2
   local frame, cap, who, sub, icons, numF, glowG
-  local function dueId() if pv.spell then return pv.spell end; local e = cdmItems()[1]; return e and e.ids[1] or 31821 end
+  local function dueId() if pv.spell then return pv.spell end; local mine = mySpells(); if mine[1] then return mine[1] end; local e = cdmItems()[1]; return e and e.ids[1] or 31821 end
   local function sideIds(due)
     local out = {}
     for _, e in ipairs(cdmItems()) do if e.ids[1] ~= due and #out < 2 then out[#out + 1] = e.ids[1] end end
@@ -757,28 +789,12 @@ do
 end
 
 -- ---- the spells this player uses: from the NSRT note, the Cooldown Manager, reminders already had, and spells added by hand ----
-local function noteSpells()
-  local out = {}
-  if not (NSAPI and NSAPI.GetReminderString) then return out end
-  local ok, a, b = pcall(NSAPI.GetReminderString, NSAPI)
-  if not ok then return out end
-  local me = UnitName("player")
-  for _, s in ipairs({ a, b }) do
-    if type(s) == "string" and not secret(s) then
-      for line in s:gmatch("[^\r\n]+") do
-        local id = tonumber(line:match("spellid:(%d+)"))
-        if id and ((me and line:find(me, 1, true)) or (IsPlayerSpell and IsPlayerSpell(id))) then out[id] = true end
-      end
-    end
-  end
-  return out
-end
+local function noteSpells() local out = {}; for _, id in ipairs(mySpells()) do out[id] = true end; return out end
 local function spellList()
   local src, list = {}, {}
   local function add(id, where) if id and spellName(id) then src[id] = src[id] or where end end
-  for id in pairs(noteSpells()) do add(id, "In your NSRT note") end
-  for id in pairs(DB.seen) do add(id, "In your NSRT note") end
-  for _, e in ipairs(cdmItems()) do add(e.ids[1], "On your Cooldown Manager") end
+  for id in pairs(noteSpells()) do add(id, "Assigned to you") end
+  for id in pairs(DB.seen) do add(id, "Assigned to you") end
   for id in pairs(DB.spells) do add(id, "Added by you") end
   for id, where in pairs(src) do list[#list + 1] = { id = id, name = spellName(id), where = where } end
   table.sort(list, function(x, y) return x.name < y.name end)
@@ -1118,7 +1134,7 @@ do
     local track = bar:CreateTexture(nil, "BACKGROUND"); track:SetAllPoints(); rounded(track, "fill", 5, COL.line, 1)
     thumb = bar:CreateTexture(nil, "ARTWORK"); thumb:SetWidth(4); rounded(thumb, "fill", 5, COL.faint, 1)
     empty = txt(P, "body", 14, COL.muted); empty:SetPoint("TOP", scroll, "TOP", 0, -50); empty:SetWidth(560)
-    empty:SetText("No spells yet. Load your NSRT note, put your cooldowns on Blizzard's Cooldown Manager, or add a spell below.")
+    empty:SetText("No spells assigned to you yet. Load your NSRT note, or add a spell below.")
     local lbl = txt(P, "bold", 14); lbl:SetPoint("BOTTOMLEFT", L + 2, 22); lbl:SetText("Add a spell")
     addBox = inputBox(P, 240, 30); addBox.bg:SetPoint("LEFT", lbl, "RIGHT", 12, 0); addBox.hint:SetText("Its name or spell ID")
     local addB = button(P, "Add", 70, true, 30); addB:SetPoint("LEFT", addBox.bg, "RIGHT", 8, 0)
