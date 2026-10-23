@@ -5700,6 +5700,23 @@ header.fight.bh.bhx, header.fight.bh.bhx.hero { display: block; min-height: 0; p
   .rp-open, .fpx-link, .gs-just, .gdz-howto, .gdz-wrong, .spc-hwb, .spc-mtx, .spc-sltc, .spc-mo, .ndh-go { padding-top: 8px; padding-bottom: 8px; margin-top: -8px; margin-bottom: -8px; }
 }
 /* ===== end of round 3 ===== */
+/* Halloween (Oct 20 to 31, html.hw set by ui.js; off by itself on Nov 1): a pumpkin on the logo, and on the front page a cobweb, three slow bats
+   and one line. Frame only: never inside results. Bats rest still with reduced motion; one bat and a smaller web on phones */
+html.hw #brandHome { position: relative; }
+html.hw #brandHome::after { content: ''; position: absolute; left: 26px; bottom: -3px; width: 18px; height: 18px; background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 4.4C7.7 3 8.2 1.8 9.4 1.1' stroke='%235e7a3a' stroke-width='1.5' fill='none' stroke-linecap='round'/><ellipse cx='5.2' cy='9.8' rx='3.7' ry='4.6' fill='%23c96a26'/><ellipse cx='10.8' cy='9.8' rx='3.7' ry='4.6' fill='%23c96a26'/><ellipse cx='8' cy='9.8' rx='3.4' ry='4.9' fill='%23e08436'/><path d='M5.3 8.9 6.7 7.6 7.4 9ZM10.7 8.9 9.3 7.6 8.6 9ZM5.2 11.3Q8 13.4 10.8 11.3L9.9 12.1 9.1 11.5 8.2 12.1 7.3 11.5 6.5 12.1Z' fill='%23361a07'/></svg>") center / contain no-repeat; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); pointer-events: none; }
+.hw-deco { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.hw-web { position: absolute; top: 0; right: 0; width: 170px; height: 170px; color: rgba(235,230,215,.16); }
+.hw-web path { fill: none; stroke: currentColor; stroke-width: .9; } .hw-web .hw-sp { stroke: rgba(235,230,215,.3); fill: rgba(20,20,24,.9); stroke-width: .8; }
+.hw-bat { position: absolute; width: 46px; color: #08090c; animation: hwDrift 14s ease-in-out infinite alternate; }
+.hw-bat svg { display: block; width: 100%; fill: #07080b; stroke: rgba(235,230,215,.22); stroke-width: .5; transform-origin: 50% 40%; animation: hwFlap .5s ease-in-out infinite alternate; }
+.hw-bat.b1 { top: 7%; left: 30%; } .hw-bat.b2 { top: 15%; left: 44%; width: 34px; animation-duration: 18s; animation-delay: -6s; } .hw-bat.b3 { top: 4%; left: 52%; width: 28px; animation-duration: 22s; animation-delay: -11s; }
+.hw-bat.b2 svg { animation-duration: .42s; } .hw-bat.b3 svg { animation-duration: .6s; }
+@keyframes hwFlap { from { transform: scaleY(1); } to { transform: scaleY(.55); } }
+@keyframes hwDrift { 0% { transform: translate(0, 0); } 50% { transform: translate(-40px, 14px); } 100% { transform: translate(-80px, -6px); } }
+.hw-hi { display: block; margin: 12px 0 -6px; font: 600 14px var(--body); letter-spacing: .02em; color: #f3c969; }
+.fpx-hero .fpx-in { position: relative; z-index: 1; }
+@media (prefers-reduced-motion: reduce) { .hw-bat, .hw-bat svg { animation: none; } }
+@media (max-width: 760px) { .hw-web { width: 110px; height: 110px; } .hw-bat.b2, .hw-bat.b3 { display: none; } .hw-bat.b1 { top: 3%; left: 62%; width: 34px; } }
 /* the empty Plan page (Oct 22): a plain panel (the Plan header above is the main box), two way-in cards, the loaded note in a gold Focus-style row */
 .pln0 { display: flex; flex-direction: column; gap: 14px; padding: 18px 20px; }
 .pln0-k { font: 700 12px/1.3 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--gold); }
@@ -14060,6 +14077,14 @@ function linkGuideText(enc) {
       f.append(s.slice(at, m.index)); const sp = document.createElement('span'); sp.className = 'sp mt'; sp.dataset.sid = names.get(word.toLowerCase()); sp.dataset.sn = word; sp.textContent = word; f.append(sp); at = m.index + word.length; }
     if (at) { f.append(s.slice(at)); t.replaceWith(f); } } }
 
+// (Halloween, Oct 23, the user: "add some simple halloween themed stuff on my website": a pumpkin by the logo, a cobweb, three slow bats and a
+// Happy Halloween line on the front page; Oct 20 to 31 in Central time, so it switches itself off on Nov 1. ?hw=1 or ?hw=0 forces it. Frame only, never in results)
+const HW_ON = (() => { try { const q = new URLSearchParams(location.search).get('hw'); if (q === '1') return true; if (q === '0') return false;
+  const p = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', month: 'numeric', day: 'numeric' }).formatToParts(new Date()), g = (t) => +p.find((x) => x.type === t).value;
+  return g('month') === 10 && g('day') >= 20; } catch (e) { return false; } })();
+if (HW_ON) document.documentElement.classList.add('hw');
+const HW_DECO = '<div class="hw-deco" aria-hidden="true"><svg class="hw-web" viewBox="0 0 140 140" aria-hidden="true"><path d="M140 0L-10 0M140 0L-2.7 46.4M140 0L18.6 88.2M140 0L51.8 121.4M140 0L93.6 142.7M140 0L140 150M112 0Q116.2 3.8 113.4 8.7M113.4 8.7Q118.5 10.9 117.3 16.5M117.3 16.5Q123 17 123.5 22.7M123.5 22.7Q129.1 21.5 131.3 26.6M131.3 26.6Q136.2 23.8 140 28M84 0Q92.4 7.5 86.7 17.3M86.7 17.3Q97.1 21.9 94.7 32.9M94.7 32.9Q105.9 34.1 107.1 45.3M107.1 45.3Q118.1 42.9 122.7 53.3M122.7 53.3Q132.5 47.6 140 56M54 0Q67 11.6 58.2 26.6M58.2 26.6Q74.1 33.6 70.4 50.5M70.4 50.5Q87.7 52.3 89.5 69.6M89.5 69.6Q106.4 65.9 113.4 81.8M113.4 81.8Q128.4 73 140 86M22 0Q39.8 15.9 27.8 36.5M27.8 36.5Q49.6 46.1 44.5 69.4M44.5 69.4Q68.2 71.8 70.6 95.5M70.6 95.5Q93.9 90.4 103.5 112.2M103.5 112.2Q124.1 100.2 140 118"/><path class="hw-sp" d="M118 0V44"/><circle class="hw-sp" cx="118" cy="47" r="3.2"/></svg><span class="hw-bat b1"><svg viewBox="0 0 32 14"><path d="M16 4C15.2 2.4 14.8 1.6 14.4.8c.4 1.2.2 2-.4 2.6C11.8 1.8 8 1.6 4.6 3 7 3.4 7.6 5 7 6.4 5.2 5.2 2.8 5 0 6c2.6.6 4.6 2.2 5.4 4.4 1.6-1.6 4-1.8 5.8-.6C11.8 8.2 13.8 7.2 16 7.2s4.2 1 4.8 2.6c1.8-1.2 4.2-1 5.8.6.8-2.2 2.8-3.8 5.4-4.4-2.8-1-5.2-.8-7 .4-.6-1.4 0-3 2.4-3.4-3.4-1.4-7.2-1.2-9.4.4-.6-.6-.8-1.4-.4-2.6C17.2 1.6 16.8 2.4 16 4Z"/></svg></span><span class="hw-bat b2"><svg viewBox="0 0 32 14"><path d="M16 4C15.2 2.4 14.8 1.6 14.4.8c.4 1.2.2 2-.4 2.6C11.8 1.8 8 1.6 4.6 3 7 3.4 7.6 5 7 6.4 5.2 5.2 2.8 5 0 6c2.6.6 4.6 2.2 5.4 4.4 1.6-1.6 4-1.8 5.8-.6C11.8 8.2 13.8 7.2 16 7.2s4.2 1 4.8 2.6c1.8-1.2 4.2-1 5.8.6.8-2.2 2.8-3.8 5.4-4.4-2.8-1-5.2-.8-7 .4-.6-1.4 0-3 2.4-3.4-3.4-1.4-7.2-1.2-9.4.4-.6-.6-.8-1.4-.4-2.6C17.2 1.6 16.8 2.4 16 4Z"/></svg></span><span class="hw-bat b3"><svg viewBox="0 0 32 14"><path d="M16 4C15.2 2.4 14.8 1.6 14.4.8c.4 1.2.2 2-.4 2.6C11.8 1.8 8 1.6 4.6 3 7 3.4 7.6 5 7 6.4 5.2 5.2 2.8 5 0 6c2.6.6 4.6 2.2 5.4 4.4 1.6-1.6 4-1.8 5.8-.6C11.8 8.2 13.8 7.2 16 7.2s4.2 1 4.8 2.6c1.8-1.2 4.2-1 5.8.6.8-2.2 2.8-3.8 5.4-4.4-2.8-1-5.2-.8-7 .4-.6-1.4 0-3 2.4-3.4-3.4-1.4-7.2-1.2-9.4.4-.6-.6-.8-1.4-.4-2.6C17.2 1.6 16.8 2.4 16 4Z"/></svg></span></div>';
+
 // ---------- loading ----------
 $('#openBtn').onclick = () => $('#fileIn').click();
 $('#fileIn').onchange = (e) => e.target.files[0] && openFile(e.target.files[0]);
@@ -15291,6 +15316,7 @@ const PATCH_NOTES = [
   { d: '2026-10-23', h: [
     { t: 'A shorter debrief', d: 'Each pull now opens like a raid lead\'s debrief: what went well, what went wrong (click a line for its map and details) and the one thing for next pull. The extra drawers are gone; the timeline, raid cooldowns and burst windows sit in the open below the phases.' },
   ], n: [
+    'A little Halloween spirit on the site until Nov 1 🎃',
     'The coach box is tidier: the thing to focus on next pull is said once, on the first card. Each Next time is one short instruction (open the card for the rest), cards carry at most one tag, and what went right is a short plain list.',
   ], f: [
     'Death counts in the coach box no longer include mass wipes: when many of us die at once as the pull is lost, that counts as one raid moment, not a death for each player. The header says how many mass wipes there were, and they still show in grey in each player\'s list.',
@@ -39146,8 +39172,8 @@ function homeHosted() {
     (DISCORD_URL && store.get('wla-fpx-bar') !== 'off' ? '<div class="fpx-dbar" id="fpxBar"><div class="fpx-in">' + DISC_SVG +
       '<span class="fpx-dbl"><b>Debrief is in beta.</b> Join our Discord to get the patch notes first and tell us what to build next.</span><span class="fpx-dbs"><b>Debrief is in beta.</b> Help shape it.</span>' +
       '<a href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">Join the Discord ›</a></div><button type="button" id="fpxBarX" aria-label="Hide this">×</button></div>' : '') +
-    '<section class="fpx-hero" id="fpStart" style="--fpx-art:' + art('The Coiled Altar') + '"><div class="fpx-in fpx-hg">' +
-      '<div class="fpx-copy"><span class="fpx-badge"><b>Beta</b>Season two · all 10 raid bosses</span>' +
+    '<section class="fpx-hero" id="fpStart" style="--fpx-art:' + art('The Coiled Altar') + '">' + (HW_ON ? HW_DECO : '') + '<div class="fpx-in fpx-hg">' + /* (Halloween: the cobweb and bats, Oct 20 to 31) */
+      '<div class="fpx-copy"><span class="fpx-badge"><b>Beta</b>Season two · all 10 raid bosses</span>' + (HW_ON ? '<span class="hw-hi">🎃 Happy Halloween from Debrief</span>' : '') +
         '<h1>Every pull, <span>explained.</span></h1>' +
         '<p class="fpx-lead">Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
         '<div class="fpx-cta"><button class="btn primary gs-go" id="gsGo" type="button">' + (tg ? 'Welcome Back!' : 'Start now') + '</button>' + demoBtn('fpDemo') +

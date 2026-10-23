@@ -506,6 +506,14 @@ function linkGuideText(enc) {
       f.append(s.slice(at, m.index)); const sp = document.createElement('span'); sp.className = 'sp mt'; sp.dataset.sid = names.get(word.toLowerCase()); sp.dataset.sn = word; sp.textContent = word; f.append(sp); at = m.index + word.length; }
     if (at) { f.append(s.slice(at)); t.replaceWith(f); } } }
 
+// (Halloween, Oct 23, the user: "add some simple halloween themed stuff on my website": a pumpkin by the logo, a cobweb, three slow bats and a
+// Happy Halloween line on the front page; Oct 20 to 31 in Central time, so it switches itself off on Nov 1. ?hw=1 or ?hw=0 forces it. Frame only, never in results)
+const HW_ON = (() => { try { const q = new URLSearchParams(location.search).get('hw'); if (q === '1') return true; if (q === '0') return false;
+  const p = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', month: 'numeric', day: 'numeric' }).formatToParts(new Date()), g = (t) => +p.find((x) => x.type === t).value;
+  return g('month') === 10 && g('day') >= 20; } catch (e) { return false; } })();
+if (HW_ON) document.documentElement.classList.add('hw');
+const HW_DECO = '<div class="hw-deco" aria-hidden="true"><svg class="hw-web" viewBox="0 0 140 140" aria-hidden="true"><path d="M140 0L-10 0M140 0L-2.7 46.4M140 0L18.6 88.2M140 0L51.8 121.4M140 0L93.6 142.7M140 0L140 150M112 0Q116.2 3.8 113.4 8.7M113.4 8.7Q118.5 10.9 117.3 16.5M117.3 16.5Q123 17 123.5 22.7M123.5 22.7Q129.1 21.5 131.3 26.6M131.3 26.6Q136.2 23.8 140 28M84 0Q92.4 7.5 86.7 17.3M86.7 17.3Q97.1 21.9 94.7 32.9M94.7 32.9Q105.9 34.1 107.1 45.3M107.1 45.3Q118.1 42.9 122.7 53.3M122.7 53.3Q132.5 47.6 140 56M54 0Q67 11.6 58.2 26.6M58.2 26.6Q74.1 33.6 70.4 50.5M70.4 50.5Q87.7 52.3 89.5 69.6M89.5 69.6Q106.4 65.9 113.4 81.8M113.4 81.8Q128.4 73 140 86M22 0Q39.8 15.9 27.8 36.5M27.8 36.5Q49.6 46.1 44.5 69.4M44.5 69.4Q68.2 71.8 70.6 95.5M70.6 95.5Q93.9 90.4 103.5 112.2M103.5 112.2Q124.1 100.2 140 118"/><path class="hw-sp" d="M118 0V44"/><circle class="hw-sp" cx="118" cy="47" r="3.2"/></svg><span class="hw-bat b1"><svg viewBox="0 0 32 14"><path d="M16 4C15.2 2.4 14.8 1.6 14.4.8c.4 1.2.2 2-.4 2.6C11.8 1.8 8 1.6 4.6 3 7 3.4 7.6 5 7 6.4 5.2 5.2 2.8 5 0 6c2.6.6 4.6 2.2 5.4 4.4 1.6-1.6 4-1.8 5.8-.6C11.8 8.2 13.8 7.2 16 7.2s4.2 1 4.8 2.6c1.8-1.2 4.2-1 5.8.6.8-2.2 2.8-3.8 5.4-4.4-2.8-1-5.2-.8-7 .4-.6-1.4 0-3 2.4-3.4-3.4-1.4-7.2-1.2-9.4.4-.6-.6-.8-1.4-.4-2.6C17.2 1.6 16.8 2.4 16 4Z"/></svg></span><span class="hw-bat b2"><svg viewBox="0 0 32 14"><path d="M16 4C15.2 2.4 14.8 1.6 14.4.8c.4 1.2.2 2-.4 2.6C11.8 1.8 8 1.6 4.6 3 7 3.4 7.6 5 7 6.4 5.2 5.2 2.8 5 0 6c2.6.6 4.6 2.2 5.4 4.4 1.6-1.6 4-1.8 5.8-.6C11.8 8.2 13.8 7.2 16 7.2s4.2 1 4.8 2.6c1.8-1.2 4.2-1 5.8.6.8-2.2 2.8-3.8 5.4-4.4-2.8-1-5.2-.8-7 .4-.6-1.4 0-3 2.4-3.4-3.4-1.4-7.2-1.2-9.4.4-.6-.6-.8-1.4-.4-2.6C17.2 1.6 16.8 2.4 16 4Z"/></svg></span><span class="hw-bat b3"><svg viewBox="0 0 32 14"><path d="M16 4C15.2 2.4 14.8 1.6 14.4.8c.4 1.2.2 2-.4 2.6C11.8 1.8 8 1.6 4.6 3 7 3.4 7.6 5 7 6.4 5.2 5.2 2.8 5 0 6c2.6.6 4.6 2.2 5.4 4.4 1.6-1.6 4-1.8 5.8-.6C11.8 8.2 13.8 7.2 16 7.2s4.2 1 4.8 2.6c1.8-1.2 4.2-1 5.8.6.8-2.2 2.8-3.8 5.4-4.4-2.8-1-5.2-.8-7 .4-.6-1.4 0-3 2.4-3.4-3.4-1.4-7.2-1.2-9.4.4-.6-.6-.8-1.4-.4-2.6C17.2 1.6 16.8 2.4 16 4Z"/></svg></span></div>';
+
 // ---------- loading ----------
 $('#openBtn').onclick = () => $('#fileIn').click();
 $('#fileIn').onchange = (e) => e.target.files[0] && openFile(e.target.files[0]);
@@ -1737,6 +1745,7 @@ const PATCH_NOTES = [
   { d: '2026-10-23', h: [
     { t: 'A shorter debrief', d: 'Each pull now opens like a raid lead\'s debrief: what went well, what went wrong (click a line for its map and details) and the one thing for next pull. The extra drawers are gone; the timeline, raid cooldowns and burst windows sit in the open below the phases.' },
   ], n: [
+    'A little Halloween spirit on the site until Nov 1 🎃',
     'The coach box is tidier: the thing to focus on next pull is said once, on the first card. Each Next time is one short instruction (open the card for the rest), cards carry at most one tag, and what went right is a short plain list.',
   ], f: [
     'Death counts in the coach box no longer include mass wipes: when many of us die at once as the pull is lost, that counts as one raid moment, not a death for each player. The header says how many mass wipes there were, and they still show in grey in each player\'s list.',
@@ -25592,8 +25601,8 @@ function homeHosted() {
     (DISCORD_URL && store.get('wla-fpx-bar') !== 'off' ? '<div class="fpx-dbar" id="fpxBar"><div class="fpx-in">' + DISC_SVG +
       '<span class="fpx-dbl"><b>Debrief is in beta.</b> Join our Discord to get the patch notes first and tell us what to build next.</span><span class="fpx-dbs"><b>Debrief is in beta.</b> Help shape it.</span>' +
       '<a href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">Join the Discord ›</a></div><button type="button" id="fpxBarX" aria-label="Hide this">×</button></div>' : '') +
-    '<section class="fpx-hero" id="fpStart" style="--fpx-art:' + art('The Coiled Altar') + '"><div class="fpx-in fpx-hg">' +
-      '<div class="fpx-copy"><span class="fpx-badge"><b>Beta</b>Season two · all 10 raid bosses</span>' +
+    '<section class="fpx-hero" id="fpStart" style="--fpx-art:' + art('The Coiled Altar') + '">' + (HW_ON ? HW_DECO : '') + '<div class="fpx-in fpx-hg">' + /* (Halloween: the cobweb and bats, Oct 20 to 31) */
+      '<div class="fpx-copy"><span class="fpx-badge"><b>Beta</b>Season two · all 10 raid bosses</span>' + (HW_ON ? '<span class="hw-hi">🎃 Happy Halloween from Debrief</span>' : '') +
         '<h1>Every pull, <span>explained.</span></h1>' +
         '<p class="fpx-lead">Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
         '<div class="fpx-cta"><button class="btn primary gs-go" id="gsGo" type="button">' + (tg ? 'Welcome Back!' : 'Start now') + '</button>' + demoBtn('fpDemo') +
