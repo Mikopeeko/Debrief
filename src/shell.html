@@ -3925,6 +3925,38 @@ details.secd.mcx-tile[open] .mcx-alt { display: none; }
 #view details.phase.rw2-ph > summary { gap: 12px; } .rw2-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line2); flex: none; } .rw2-dot.bad { background: var(--bad); } .rw2-dot.warn { background: var(--warn); } .rw2-dot.ok { background: var(--good); }
 .rw2-st { margin-left: auto; font: 700 13.5px var(--body); } .rw2-st.bad { color: #ff8f87; } .rw2-st.warn { color: #f3c969; } .rw2-st.ok { color: #7ee08f; }
 @media (max-width: 640px) { #view details.secd.rw2 > summary, #view details.secd.dbr-line > summary:has(.rw2-pc) { grid-template-columns: minmax(0, 1fr) 54px 14px; } #view details.secd.rw2 > summary .npc, #view details.secd.dbr-line > summary .rw2-sq { grid-column: 1 / -1; } }
+/* coach box polish (Oct 23): lines line up (no stray icon on one name), a label beside the switch, a little more air */
+.cch2 .cbr-t .icw { display: none; }
+.cch2 .cbr-h { margin: 18px 0 6px; } .cch2 .cbr-h:first-of-type { margin-top: 14px; }
+.cch2 .cbr-dx > summary { padding: 10px 8px; border-radius: 8px; } .cch2 .cbr-dx > summary:hover { background: rgba(255,255,255,.03); }
+.cch2 .cbr-ok { padding: 4px 8px 4px 30px; } .cch2 .cbr-ok::before { left: 10px; }
+.cch2 .cbr-next { margin: 16px 0 18px; }
+.cch2 .cch-acct2 .cbl-sw { grid-column: 2; justify-self: end; }
+.cch2 .cch-acct2:has(> .cbl-sw)::before { content: 'The details'; grid-column: 1; align-self: center; font: 700 12px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+@media (max-width: 640px) { .cch2 .cch-acct2:has(> .cbl-sw)::before { display: none; } .cch2 .cch-acct2 .cbl-sw { grid-column: 1 / -1; justify-self: start; } }
+/* one template for every opened mechanic (Oct 23) */
+.u1-f { margin: 2px 0 10px; font-size: 15px; } .u1-f .bad { color: #ff8f87; font-weight: 700; } .u1-f .warn { color: #f3c969; font-weight: 700; }
+.u1-g { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; } .u1-g.nomap { grid-template-columns: minmax(0, 1fr); }
+.u1-ul { list-style: none; margin: 0; padding: 0; } .u1-r { display: grid; grid-template-columns: 10px 42px minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 7px 8px; border-radius: 8px; font-size: 14px; }
+.u1-r + .u1-r { border-top: 1px solid var(--line); } .u1-hm { cursor: pointer; } .u1-hm:hover { background: rgba(255,255,255,.04); } .u1-r.on { background: rgba(230,180,80,.08); box-shadow: inset 2px 0 0 var(--gold); }
+.u1-d { width: 8px; height: 8px; border-radius: 50%; background: var(--good); align-self: center; } .u1-r.warn .u1-d { background: var(--warn); } .u1-r.bad .u1-d { background: var(--bad); }
+.u1-t { color: var(--muted); font-variant-numeric: tabular-nums; } .u1-r.ok .u1-x { color: var(--muted); }
+.u1-ok { margin-top: 6px; } .u1-ok > summary { cursor: pointer; color: #8fd99a; font-size: 13.5px; padding: 4px 8px; list-style: none; } .u1-ok > summary::-webkit-details-marker { display: none; }
+.u1-m .wr-map, .u1-m .wr-map svg.zmap { width: 300px !important; height: 300px !important; display: block; } .u1-cap { display: block; margin-top: 6px; font-size: 13px; color: var(--muted); }
+@media (max-width: 760px) { .u1-g { grid-template-columns: minmax(0, 1fr); } .u1-m .wr-map, .u1-m .wr-map svg.zmap { width: 100% !important; height: auto !important; aspect-ratio: 1; } }
+/* more at a glance (Oct 23): no instruction on the rows, no coloured edges or tints, clean ones in one line */
+#view details.secd.rw2 > summary .rw2-i, #view details.secd.dbr-line > summary:has(.rw2-pc) .sim-i { display: none; }
+#view details.secd.rw2, #view details.secd.dbr-line:has(.rw2-pc) { border-left-color: var(--line) !important; background: var(--panel) !important; box-shadow: none !important; }
+#view details.secd.rw2::before, #view details.secd.dbr-line:has(.rw2-pc)::before { display: none !important; }
+#view details.phase.rw2-ph, #view details.phase.rw2-ph > summary, #view details.phase.phr-b, #view details.phase.phr-b > summary { background: var(--panel) !important; }
+.rw2-clean { padding: 10px 14px; font-size: 14px; color: #8fd99a; }
+/* All pulls opened: facts only (Oct 23) */
+.rw2-fl { margin: 2px 0 8px; font-size: 14.5px; } .rw2-wh { color: var(--muted); } .rw2-tr { color: var(--muted); }
+.rw2-kh { font: 700 12px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 10px 0 6px; }
+.rw2-ks { display: grid; gap: 6px; max-width: 760px; } .rw2-k { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 40px 64px; gap: 10px; align-items: center; padding: 4px 6px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+.rw2-k:hover { background: rgba(255,255,255,.04); } .rw2-kl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .rw2-kb { height: 8px; border-radius: 999px; background: rgba(255,255,255,.07); overflow: hidden; } .rw2-kb i { display: block; height: 100%; border-radius: 999px; background: var(--warn); } .rw2-kb i.bad { background: var(--bad); }
+.rw2-kn { font-weight: 700; text-align: right; } .rw2-kp { color: var(--muted); font-size: 13px; } .rw2-more { color: var(--muted); font-size: 13px; padding-left: 6px; }
+@media (max-width: 640px) { .rw2-k { grid-template-columns: minmax(0, 1fr) 40px; } .rw2-kb, .rw2-kp { display: none; } }
 /* a brief line with no map (Oct 23) */
 .cch2 .cbr-nomap { margin: 4px 0 10px; font-size: 13px; color: var(--muted); }
 /* the brief coach box (Oct 23 test): Went well, Went wrong (lines that open in place), Next pull */

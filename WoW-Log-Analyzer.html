@@ -3925,6 +3925,38 @@ details.secd.mcx-tile[open] .mcx-alt { display: none; }
 #view details.phase.rw2-ph > summary { gap: 12px; } .rw2-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line2); flex: none; } .rw2-dot.bad { background: var(--bad); } .rw2-dot.warn { background: var(--warn); } .rw2-dot.ok { background: var(--good); }
 .rw2-st { margin-left: auto; font: 700 13.5px var(--body); } .rw2-st.bad { color: #ff8f87; } .rw2-st.warn { color: #f3c969; } .rw2-st.ok { color: #7ee08f; }
 @media (max-width: 640px) { #view details.secd.rw2 > summary, #view details.secd.dbr-line > summary:has(.rw2-pc) { grid-template-columns: minmax(0, 1fr) 54px 14px; } #view details.secd.rw2 > summary .npc, #view details.secd.dbr-line > summary .rw2-sq { grid-column: 1 / -1; } }
+/* coach box polish (Oct 23): lines line up (no stray icon on one name), a label beside the switch, a little more air */
+.cch2 .cbr-t .icw { display: none; }
+.cch2 .cbr-h { margin: 18px 0 6px; } .cch2 .cbr-h:first-of-type { margin-top: 14px; }
+.cch2 .cbr-dx > summary { padding: 10px 8px; border-radius: 8px; } .cch2 .cbr-dx > summary:hover { background: rgba(255,255,255,.03); }
+.cch2 .cbr-ok { padding: 4px 8px 4px 30px; } .cch2 .cbr-ok::before { left: 10px; }
+.cch2 .cbr-next { margin: 16px 0 18px; }
+.cch2 .cch-acct2 .cbl-sw { grid-column: 2; justify-self: end; }
+.cch2 .cch-acct2:has(> .cbl-sw)::before { content: 'The details'; grid-column: 1; align-self: center; font: 700 12px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+@media (max-width: 640px) { .cch2 .cch-acct2:has(> .cbl-sw)::before { display: none; } .cch2 .cch-acct2 .cbl-sw { grid-column: 1 / -1; justify-self: start; } }
+/* one template for every opened mechanic (Oct 23) */
+.u1-f { margin: 2px 0 10px; font-size: 15px; } .u1-f .bad { color: #ff8f87; font-weight: 700; } .u1-f .warn { color: #f3c969; font-weight: 700; }
+.u1-g { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; } .u1-g.nomap { grid-template-columns: minmax(0, 1fr); }
+.u1-ul { list-style: none; margin: 0; padding: 0; } .u1-r { display: grid; grid-template-columns: 10px 42px minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 7px 8px; border-radius: 8px; font-size: 14px; }
+.u1-r + .u1-r { border-top: 1px solid var(--line); } .u1-hm { cursor: pointer; } .u1-hm:hover { background: rgba(255,255,255,.04); } .u1-r.on { background: rgba(230,180,80,.08); box-shadow: inset 2px 0 0 var(--gold); }
+.u1-d { width: 8px; height: 8px; border-radius: 50%; background: var(--good); align-self: center; } .u1-r.warn .u1-d { background: var(--warn); } .u1-r.bad .u1-d { background: var(--bad); }
+.u1-t { color: var(--muted); font-variant-numeric: tabular-nums; } .u1-r.ok .u1-x { color: var(--muted); }
+.u1-ok { margin-top: 6px; } .u1-ok > summary { cursor: pointer; color: #8fd99a; font-size: 13.5px; padding: 4px 8px; list-style: none; } .u1-ok > summary::-webkit-details-marker { display: none; }
+.u1-m .wr-map, .u1-m .wr-map svg.zmap { width: 300px !important; height: 300px !important; display: block; } .u1-cap { display: block; margin-top: 6px; font-size: 13px; color: var(--muted); }
+@media (max-width: 760px) { .u1-g { grid-template-columns: minmax(0, 1fr); } .u1-m .wr-map, .u1-m .wr-map svg.zmap { width: 100% !important; height: auto !important; aspect-ratio: 1; } }
+/* more at a glance (Oct 23): no instruction on the rows, no coloured edges or tints, clean ones in one line */
+#view details.secd.rw2 > summary .rw2-i, #view details.secd.dbr-line > summary:has(.rw2-pc) .sim-i { display: none; }
+#view details.secd.rw2, #view details.secd.dbr-line:has(.rw2-pc) { border-left-color: var(--line) !important; background: var(--panel) !important; box-shadow: none !important; }
+#view details.secd.rw2::before, #view details.secd.dbr-line:has(.rw2-pc)::before { display: none !important; }
+#view details.phase.rw2-ph, #view details.phase.rw2-ph > summary, #view details.phase.phr-b, #view details.phase.phr-b > summary { background: var(--panel) !important; }
+.rw2-clean { padding: 10px 14px; font-size: 14px; color: #8fd99a; }
+/* All pulls opened: facts only (Oct 23) */
+.rw2-fl { margin: 2px 0 8px; font-size: 14.5px; } .rw2-wh { color: var(--muted); } .rw2-tr { color: var(--muted); }
+.rw2-kh { font: 700 12px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 10px 0 6px; }
+.rw2-ks { display: grid; gap: 6px; max-width: 760px; } .rw2-k { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 40px 64px; gap: 10px; align-items: center; padding: 4px 6px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+.rw2-k:hover { background: rgba(255,255,255,.04); } .rw2-kl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .rw2-kb { height: 8px; border-radius: 999px; background: rgba(255,255,255,.07); overflow: hidden; } .rw2-kb i { display: block; height: 100%; border-radius: 999px; background: var(--warn); } .rw2-kb i.bad { background: var(--bad); }
+.rw2-kn { font-weight: 700; text-align: right; } .rw2-kp { color: var(--muted); font-size: 13px; } .rw2-more { color: var(--muted); font-size: 13px; padding-left: 6px; }
+@media (max-width: 640px) { .rw2-k { grid-template-columns: minmax(0, 1fr) 40px; } .rw2-kb, .rw2-kp { display: none; } }
 /* a brief line with no map (Oct 23) */
 .cch2 .cbr-nomap { margin: 4px 0 10px; font-size: 13px; color: var(--muted); }
 /* the brief coach box (Oct 23 test): Went well, Went wrong (lines that open in place), Next pull */
@@ -15416,6 +15448,10 @@ const PATCH_NOTES = [
     { t: 'The wipe is called for you', d: 'No more "stop at the 2nd death". Debrief now calls the wipe at the moment no raid has ever come back from: more people dead than any kill of that boss survived at that point (battle rezzes counted), the damage check missed, or half the raid dead. Everything before it counts, so the deaths and mistakes that lost the pull are graded. Tested on 760 kills: it never calls a wipe on a pull that was won.' },
     { t: 'A shorter debrief', d: 'Each pull now opens like a raid lead\'s debrief: what went well, what went wrong (click a line for its map and details) and the one thing for next pull. The extra drawers are gone; the timeline, raid cooldowns and burst windows sit in the open below the phases.' },
   ], n: [
+    'Breakdown is quicker to read: each phase lists its mechanics worst first, the ones done right all night fold into one line, and the extra colour is gone.',
+    'Every mechanic on a pull now opens the same way: how many were done right, each moment in one list (the ones that went wrong first) and the map of the worst one.',
+    'All pulls shows facts only when you open a mechanic: how often it went wrong and the mistakes grouped by kind. Click one to open the pull it happened in.',
+    'The coach box reads more like a person, says each thing once, and lines up neatly. Guide and Copy link buttons are gone from Debriefing.',
     'Breakdown, All pulls and single pulls: each mechanic is one line now, with one big number and a square for every pull (or every moment on one pull). Click the line for the details, or a square for that pull or moment. Each phase names its worst mechanic.',
     'Each death card ends with what you had that would have saved you (a Healthstone, potion, self-heal or defensive pressed when you first dropped under half). Mechanic mistakes keep their fix too; wipe mechanics and true one-shots list nothing.',
     'Death cards are shorter: Killed by, Cause, Why and Fix as short labels. When an earlier mistake led to the killing hit, the card says so (Cause: Soul Sever → Gravebound).',
@@ -22678,13 +22714,30 @@ function audit() {
     const simPc = allRows.length ? Math.round(100 * (allRows.length - nBad - nWarn) / allRows.length) : null;
     const simSq = simp ? '<span class="rw2-sq">' + allRows.slice(0, 40).map((row, k) => { const v = row.some((c) => c && c.bad) ? 'bad' : row.some((c) => c && c.warn) ? 'warn' : 'ok', tc = row.find((c) => c && c.t != null); return '<i class="npc-' + v + '" data-simsq="' + k + '" title="' + esc((tc ? T(tc.t) + ': ' : '') + ({ bad: 'went wrong', warn: 'a little off', ok: 'done right' }[v]) + '. Click for its map.') + '"></i>'; }).join('') + '</span>' : '';
     const simLn = simp && ti ? '<span class="mcx-ln sim-ln">' + (ti.txt ? (ti.tag ? '<span class="sim-t">' + esc(ti.tag) + '</span>' : '') + esc(ti.txt) : ti.html || '') + '</span>' : '';
-    const simLinks = simp ? '<div class="sim-links">' + (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '') + (typeof gdzHowTo === 'function' ? gdzHowTo(s.id, s.title) : '') + (dbdLinkOf(r, s.id) && s.id !== 'deaths' ? '<button type="button" class="btn sm" data-dblink="' + esc(dbdLinkOf(r, s.id)) + '">Copy link</button>' : '') + '</div>' : '';
+    const simLinks = simp ? '<div class="sim-links">' + (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '') + '</div>' : '';
     const simTiles = simp && allRows.length ? '<div class="sim-tiles"><div class="sim-tile"><span>Done right</span><b class="' + stc + '">' + (allRows.length - nBad - nWarn) + ' of ' + allRows.length + '</b></div>' + (s.id === 'avoid' || r.allPulls ? '' : (() => { const kb = kbChip(r.item, s.id, 100 * (nBad + nWarn) / allRows.length); return kb ? '<div class="sim-tile"><span>Against top guilds</span><b>' + kb.replace(/<[^>]+>/g, '') + '</b></div>' : ''; })()) + '</div>' : '';
+    /* (Oct 23, your ask "the way information is displayed in each one is very different … more cohesive", facts not coaching: every
+       mechanic opens the same way: one fact line, its moments as one list (time · what happened · flag; problems first, the rest folded),
+       and one map, the worst moment's; a moment with a map swaps it. Deaths, avoidable damage and amps keep their own pictures) */
+    const U1 = simp && !['amps', 'deaths', 'avoid'].includes(s.id);
+    const u1Body = () => { const sv = (row) => (row.some((c) => c && c.bad) ? 'bad' : row.some((c) => c && c.warn) ? 'warn' : 'ok');
+      const L = rows.filter(Array.isArray).map((row) => ({ row, g: null })).concat(...groups.map((g) => (g.rows || []).filter(Array.isArray).map((row) => ({ row, g })))).map((it, i) => { const c = it.row.find((q) => q && q.t != null), t = c ? c.t : it.g ? it.g.t : null;
+        let x = ''; try { x = cHtml(rowText(s, it.row)); } catch (e) { x = ''; } x = String(x).replace(/^\d+:\d\d\s*/, ''); if (it.g && it.g.title && !x.startsWith(it.g.title)) x = it.g.title + ' · ' + x;
+        return { ...it, i, t, st: sv(it.row), x, map: cRowMap(it.row) }; });
+      if (!L.length) return '<p class="u1-f">Nothing recorded for this one on this pull.</p>';
+      const by = (a, b) => (a.t == null ? 1e9 : a.t) - (b.t == null ? 1e9 : b.t), prob = L.filter((q) => q.st !== 'ok').sort((a, b) => (a.st === 'bad' ? 0 : 1) - (b.st === 'bad' ? 0 : 1) || by(a, b)), ok = L.filter((q) => q.st === 'ok').sort(by);
+      const sel = prob.find((q) => q.map) || L.find((q) => q.map), kb = allRows.length && !r.allPulls ? String(kbChip(r.item, s.id, 100 * (nBad + nWarn) / allRows.length) || '').replace(/<[^>]+>/g, '').trim() : '';
+      const li = (q) => '<li class="u1-r ' + q.st + (q === sel ? ' on' : '') + (q.map ? ' u1-hm' : '') + '"' + (q.map ? ' data-u1="' + q.i + '" role="button" tabindex="0"' : '') + '><span class="u1-d"></span><span class="u1-t">' + (q.t != null ? T(q.t) : '') + '</span><span class="u1-x">' + esc(cClip(q.x, 170)) + '</span></li>';
+      const maps = L.filter((q) => q.map && (q === sel || q.st !== 'ok')).slice(0, 12).concat(ok.filter((q) => q.map).slice(0, 8));
+      return '<p class="u1-f"><b>' + ok.length + ' of ' + L.length + '</b> done right' + (prob.length ? ' · <span class="' + (prob.some((q) => q.st === 'bad') ? 'bad' : 'warn') + '">' + prob.length + ' went wrong</span>' : '') + (kb ? ' · ' + esc(kb) : '') + '</p>' +
+        '<div class="u1-g' + (sel ? '' : ' nomap') + '"><div class="u1-l"><ul class="u1-ul">' + prob.map(li).join('') + '</ul>' + (ok.length ? (prob.length ? '<details class="u1-ok"><summary>' + ok.length + ' more done right</summary><ul class="u1-ul">' + ok.map(li).join('') + '</ul></details>' : '<ul class="u1-ul">' + ok.map(li).join('') + '</ul>') : '') + '</div>' +
+        (sel ? '<div class="u1-m">' + [...new Set(maps)].map((q) => '<div class="u1-mp" data-u1m="' + q.i + '"' + (q === sel ? '' : ' hidden') + '><span class="wr-map">' + miniMap(q.map, pmap) + '</span><span class="u1-cap">' + (q.t != null ? T(q.t) + ' · ' : '') + esc(cClip(q.x, 90)) + '</span></div>').join('') + '</div>' : '') + '</div>'; };
     const tiLn = ti && (ti.html || ti.tag || ti.more || ti.txt || ti.who) ? '<span class="mcx-ln">' + (ti.html || '') + (ti.tag ? '<span class="wr-tag">' + esc(ti.tag) + '</span>' : '') + (ti.more ? '<span class="wr-plus">+' + ti.more + ' more</span>' : '') + (ti.who || '') + (ti.txt ? '<span class="mcx-s">' + esc(ti.txt) + '</span>' : '') + '</span>' : '';
     let b = '<details class="panel secd st-' + stc + (ti && tile !== 'line' ? ' mcx-tile' : '') + (tile === 'line' ? ' dbr-line' : '') + '" id="sec-' + sid + '" data-k="' + sid + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + (tile === 'line' ? '' : ti && ti.map ? '<span class="wr-map mcx-map">' + ti.map + '</span>' : ti && ti.alt ? ti.alt : '') + (ti && tile !== 'line' ? '<span class="mcx-hd">' : '') + (simp ? simHead(secHead(s)) : secHead(s)) +
       (simp || s.info || !allRows.length || s.id === 'avoid' || r.allPulls ? '' : kbChip(r.item, s.id, 100 * (nBad + nWarn) / allRows.length)) /* (where we stand among the fastest kills (Oct 22, a test)) */ +
-      '<span class="sst ' + stc + '">' + (nBad || nWarn ? lvlText(lc, true) : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0Clean') + '</span>' + (ti ? (tile === 'line' ? '' : '</span>') + (simp ? '<span class="rw2-pc ' + stc + '">' + (simPc == null ? '—' : simPc + '%') + '</span>' + simSq : tiLn) : '') + dbnTag(jobs) + (simp ? '' : dbdDots(s.id, DD)) + '</summary><div class="secbody' + (simp ? ' sim-body' : '') + '">' + (simp ? simLn.replace('mcx-ln sim-ln', 'sim-ln rw2-what') : '') + (!simp && dbdLinkOf(r, s.id) && s.id !== 'deaths' ? '<div class="dbd-lk"><button type="button" class="btn sm" data-dblink="' + esc(dbdLinkOf(r, s.id)) + '">Copy link</button></div>' : '') + dbnBox(jobs) +
-      (simp ? '' : (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '') + (typeof gdzHowTo === 'function' ? gdzHowTo(s.id, s.title) : '')) /* (a link to this mechanic in the Boss guide, Oct 20) */ + synopsis(s, rows, groups) + simTiles; // (the old counts summary was dropped: the synopsis and the table cover it)
+      '<span class="sst ' + stc + '">' + (nBad || nWarn ? lvlText(lc, true) : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0Clean') + '</span>' + (ti ? (tile === 'line' ? '' : '</span>') + (simp ? '<span class="rw2-pc ' + stc + '">' + (simPc == null ? '—' : simPc + '%') + '</span>' + simSq : tiLn) : '') + dbnTag(jobs) + (simp ? '' : dbdDots(s.id, DD)) + '</summary><div class="secbody' + (simp ? ' sim-body' : '') + '">' + (simp && !U1 ? simLn.replace('mcx-ln sim-ln', 'sim-ln rw2-what') : '') + (!simp && dbdLinkOf(r, s.id) && s.id !== 'deaths' ? '<div class="dbd-lk"><button type="button" class="btn sm" data-dblink="' + esc(dbdLinkOf(r, s.id)) + '">Copy link</button></div>' : '') + dbnBox(jobs) +
+      (simp ? '' : (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '')) /* (no guide button on Debriefing, Oct 23) */ + (U1 ? u1Body() : synopsis(s, rows, groups) + simTiles); // (the old counts summary was dropped: the synopsis and the table cover it)
+    if (U1) return b + simLinks + '</div></details>';
     // grouped sections: one header row per set, then that set's rows
     // (column headings live inside each opened set's card, so the list of sets stays clean)
     // the bulky panels: a list on the left (one entry per soak, transition, frontal, shield or set) and the picked
@@ -22783,6 +22836,8 @@ function audit() {
     // problems first; then by how much the mechanic can hurt (IMPORTANCE: wipe-level first, minor last)
     const imp = IMPORTANCE[r.item.boss] || [], ix = (x) => { const i = imp.indexOf(x.s.id); return x.s.id === 'deaths' ? -1 : i < 0 ? 99 : i; };
     list.sort((a, b) => rank[a.s.verdict] - rank[b.s.verdict] || ix(a) - ix(b));
+    /* (worst first by its %, the more dangerous one first when two are within 3 points (Oct 23)) */
+    { const pc = (x) => { const a = x.rows.concat(...x.groups.map((g) => g.rows)); return a.length ? 100 * a.filter((row) => !isBadRow(row) && !isWarnRow(row)).length / a.length : 100; }; list.sort((a, b) => (Math.abs(pc(a) - pc(b)) > 3 ? pc(a) - pc(b) : 0)); }
     const p = phs[i], allR = list.flatMap((x) => x.rows.concat(...x.groups.map((g) => g.rows))), probs = allR.filter(isBadRow).length, better = allR.filter((row) => !isBadRow(row) && isWarnRow(row)).length;
     // a slim phase heading: name, its time span and one status line (no banner), in the same words as each section's
     // (a heading with only amber rows says so, not "clean")
@@ -24331,7 +24386,7 @@ function whyNight(reps, pm) {
   const gs = [...G.values()].filter((g) => g.k !== '?').sort((a, b) => b.l.length - a.l.length || Math.min(...a.l.map((o) => o.pull || 0)) - Math.min(...b.l.map((o) => o.pull || 0)));
   const top = gs.filter((g) => g.l.length >= 2).slice(0, 3), main = top.length ? top : gs.slice(0, 1), inTop = main.reduce((s, g) => s + g.l.length, 0);
   const small = gs.filter((g) => !main.includes(g) && g.l.length >= 2), unk = (G.get('?') || { l: [] }).l.length;
-  const head = main.length === 1 ? 'Okay, tonight mostly came down to one thing.' : 'Okay, tonight mostly came down to ' + WHY_NUM[main.length] + ' things.';
+  const head = main.length === 1 ? 'One thing cost us most tonight.' : dbfCap(WHY_NUM[main.length]) + ' things cost us most tonight.';
   const body = main.map((g, i) => { const t = say(g); return (i && i === main.length - 1 && main.length > 1 ? 'And ' + t : dbfCap(t)); }).join(' ');
   const tot = main.length > 1 && inTop < L.length ? ' Clean those up and that\'s ' + inTop + ' of our ' + L.length + ' wipes gone.' : '';
   const sm = small.length ? ' ' + dbfCap(lpAnd(small.map(name))) + ' got us ' + (small.every((g) => g.l.length === 2) ? 'twice each too.' : 'a few times too.') : '';
@@ -25045,7 +25100,7 @@ function coachSummary(reps, name) {
     let talk = ''; if (!name && !kill) { try { const pmT = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !pmT.has(p.name)) pmT.set(p.name, p);
       if (!night) { const o = whyWiped(reps[0]); if (o) { const k = whyKey(o), prevR = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull < it.pull && CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.players);
           const nth = k === '?' ? 1 : 1 + prevR.map((x) => whyWiped(x)).filter((y) => y && whyKey(y) === k).length, w = whySay(o, pmT, nth); talk = cHtml(w.h) + ' ' + s1(w.s, /^.*?\. Then /.test(cHtml(w.s)) ? 2 : 1); } }
-      else { const hn = whyNight(reps, pmT), p = (hn.match(/<p>([\s\S]*?)<\/p>/) || [])[1]; if (p) talk = s1(p, 2); } } catch (e) { talk = ''; } }
+      else { const hn = whyNight(reps, pmT), p = (hn.match(/<p>([\s\S]*?)<\/p>/) || [])[1]; if (p) { const q = p.replace(/^<b>[^<]*<\/b>\s*/, ''), m1 = q.match(/^(<b>[^<]+<\/b>) got us /); talk = m1 ? cHtml(m1[1]) + ' cost us the most.' : s1(q, 1); } /* (the headline names the big picture only: how often is in Went wrong and the fix in Next raid, so each says it once (Oct 23)) */ } } catch (e) { talk = ''; } }
     const headline2 = talk ? res + '. ' + talk : headline;
     const focus = w0 ? w0.fix : kill ? 'Same plan next week. Clean kills from here.' : 'Same plan. Execute it.';
     // (the full coaching: why we wiped in the raid lead's words, each problem with how to fix it, every death that counted, what went right)
@@ -25096,6 +25151,8 @@ document.addEventListener('click', (e) => { const q = e.target && e.target.close
 /* (simpler problem lines (Oct 23 test): one map at a time, the worst moment's first; click another row for its map) */
 document.addEventListener('click', (e) => { const q = e.target.closest && e.target.closest('[data-simsq]'); if (!q) return; e.preventDefault(); e.stopPropagation(); const d = q.closest('details.secd'); if (!d) return; d.open = true;
   setTimeout(() => { const rows = [...d.querySelectorAll('.sim-body tbody > tr:not(.maprow)')].filter((tr) => !tr.classList.contains('gsp2')), tr = rows[+q.dataset.simsq]; if (tr && tr.nextElementSibling && tr.nextElementSibling.classList.contains('maprow')) { tr.parentElement.querySelectorAll(':scope > tr.sim-on, :scope > tr.sim-sel').forEach((x) => x.classList.remove('sim-on', 'sim-sel')); tr.nextElementSibling.classList.add('sim-on'); tr.classList.add('sim-sel'); tr.scrollIntoView({ block: 'center', behavior: 'smooth' }); } }, 60); }, true);
+document.addEventListener('click', (e) => { const q = e.target.closest && e.target.closest('[data-u1]'); if (!q || e.target.closest('a, .sp')) return; const box = q.closest('.u1-g'); if (!box) return;
+  box.querySelectorAll('.u1-r.on').forEach((x) => x.classList.remove('on')); q.classList.add('on'); box.querySelectorAll('[data-u1m]').forEach((m) => { m.hidden = m.dataset.u1m !== q.dataset.u1; }); try { if (S._drawMaps) S._drawMaps(); } catch (er) { /* (it draws when seen) */ } }, false);
 function simMaps(d) { if (!d || !d.querySelector || d.querySelector('tr.maprow.sim-on')) return; const mrs = [...d.querySelectorAll('.sim-body tr.maprow')]; if (!mrs.length) return; const pv = (m) => (m.previousElementSibling && m.previousElementSibling.className) || '';
   const pick = mrs.find((m) => /\brbad\b/.test(pv(m))) || mrs.find((m) => /\brwarn\b/.test(pv(m))) || mrs[0]; pick.classList.add('sim-on'); if (pick.previousElementSibling) pick.previousElementSibling.classList.add('sim-sel'); }
 document.addEventListener('toggle', (e) => { const d = e.target; if (d && d.open && d.matches && d.matches('details.secd') && d.querySelector(':scope > .sim-body')) simMaps(d); }, true);
@@ -25128,7 +25185,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
     if (x.kbLine) L.push('<div class="cch-mr"><span class="cch-ml">Against top guilds</span><span>' + esc(x.kbLine) + '</span></div>');
     for (const a of x.avoidL || []) L.push('<div class="cch-mr cch-mav"><span class="cch-ml">Avoidable damage</span><span><b>' + esc(a.k) + '</b>' + (a.line != null && isFinite(a.line) ? ' <span class="sub">(top guilds: most raiders take ' + (a.secs ? a.line + ' s' : a.line) + ' or ' + (a.secs ? 'less' : 'fewer') + ')</span>' : '') +
       '<span class="cch-avr">' + a.rows.map((q) => '<span class="cch-av' + (q.over ? ' over' : '') + '">' + pmName(q.p) + ' <b>' + (a.secs ? q.hits + ' s in it' : plural(q.hits, 'hit')) + '</b>' + (c.night && q.pulls > 1 ? ' in ' + plural(q.pulls, 'pull') : '') + (q.amt ? ', ' + C(q.amt) + ' damage' : '') + (q.over ? ' · over the top-guild line' + (c.night ? ' in ' + plural(q.over, 'pull') : '') : '') + '</span>').join('') + '</span></span></div>');
-    if (x.guide) L.push('<div class="cch-pg">' + x.guide + '</div>');
+    /* (no guide button on Debriefing, Oct 23) */
     return L.length ? '<div class="cch-more2">' + L.join('') + '</div>' : ''; };
   const prob = (x, i) => { const mi = mapOf(x), kk = 'cchp-' + (o.key || 'x') + '-' + (x.sec || x.label), m = more(x, i), foc = i === 0 && focusIsFix;
     return '<li class="cch-p cch-pc cch-' + x.sev + (mi ? ' cch-hasmap' : '') + '"' + (x.sec ? ' data-sec="' + esc(x.sec) + '"' : '') + '><details class="cch-pdx cch-pdx2" data-k="' + esc(kk) + '"' + (S.openSecs.has(kk) ? ' open' : '') + '><summary><div class="cch-pb">' +
@@ -25732,6 +25789,26 @@ function nightMechC(o) {
   const nightKb = (r) => { if (r.x.id === 'avoid' || isInfo(r)) return ''; const sh = judged(r).map((n) => r.x.per.get(n)).filter((p) => p && p.nR).map((p) => (100 * ((p.nb || 0) + (p.nw || 0))) / p.nR).sort((a, b) => a - b);
     return sh.length ? kbChip({ boss, diffId: o.reps && o.reps[0] ? o.reps[0].item.diffId : null }, r.x.id, sh[Math.floor(sh.length / 2)]) : ''; };
   const mapAt = (r) => { for (const n of [worstOf(r)].concat(judged(r).filter((q) => stAt(r, q) !== 'ok').reverse())) { const mp = mapIn(n, r.x.id); if (mp) return { mp, n }; } return null; };
+  /* (Oct 23, your call: All pulls is facts and numbers, "not coaching style"; the map and the detail live on each pull) */
+  const rw2Names = (() => { const ns = [...pm.keys()].map((n) => String(n).split('-')[0]).filter((n) => n.length > 2).sort((a, b) => b.length - a.length).map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')); return ns.length ? new RegExp('(' + ns.join('|') + ')', 'g') : null; })();
+  const rw2Kind = (t) => { let k = String(t || '').replace(/<[^>]+>/g, ''); const sg = k.split(' · '); k = sg.length > 1 ? sg[sg.length - 1] : k;
+    k = k.replace(/\([^)]*\)/g, ''); if (rw2Names) k = k.replace(rw2Names, '§'); k = k.replace(/§(\s*(,|and)\s*§)+/g, '§').replace(/\b\d+\s+players\b/g, '§');
+    const dm = k.match(/^(.+?):\s*§\s+died\b/); if (dm) k = dm[1] + ' deaths'; else if (/^§\s+died\b/.test(k)) k = 'Deaths';
+    k = k.replace(/^§\s*:\s*/, '').replace(/\b\d+[:.]\d+\b/g, '').replace(/\d+(\.\d+)?\s*(s|%|yd|yards|M|K)?\b/g, '').replace(/#/g, '');
+    const gp = k.match(/^([^,:]{1,20}),\s+(.+)$/); if (gp && (!/\s/.test(gp[1].trim()) || gp[2].includes(':'))) k = gp[2]; /* (a set's or group's name in front: "Set, ...", "Dreadmarch, ...") */
+    const cp = k.match(/^([^:]{1,24}):\s+(.+)$/); if (cp && cp[1].trim().split(/\s+/).length <= 3) k = cp[2].trim().split(/\s+/).length > 1 ? cp[2] : cp[1].trim() + ' ' + cp[2];
+    k = k.replace(/\b(after|in)\s+s\b/g, 'late');
+    k = k.replace(/§/g, '').replace(/\s+([,.:])/g, '$1').replace(/\s+/g, ' ').trim().replace(/^[,:\s-]+|[,:\s-]+$/g, '');
+    if (!k || /(^|\s)(clean|done right)$/i.test(k)) return ''; return k.charAt(0).toUpperCase() + k.slice(1); };
+  const rw2Facts = (r, { ok, wN, kb, wh, F }) => { const J = judged(r), tot = J.length;
+    if (ok) return '<p class="rw2-fl">Done right in ' + (tot === 1 ? 'the one pull it came up in' : 'all ' + tot + ' pulls it came up in') + (kb ? ' · ' + esc(kb) : '') + '</p>';
+    const K = new Map(); for (const n of J) { const p = r.x.per.get(n); if (!p) continue; for (const l of p.lines || []) { const k = rw2Kind(l.txt); if (!k) continue; const e = K.get(k) || { k, c: 0, bad: 0, pulls: new Map() }; e.c++; if (l.st === 'bad') e.bad++; e.pulls.set(n, (e.pulls.get(n) || 0) + 1); K.set(k, e); } }
+    const ks = [...K.values()].sort((a, b) => b.c - a.c), top = ks.slice(0, 5), mx = top.length ? top[0].c : 1;
+    const bars = top.length ? '<div class="rw2-kh">Mistakes by kind</div><div class="rw2-ks">' + top.map((e) => { const wp = [...e.pulls].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0], pl = [...e.pulls.keys()].sort((a, b) => a - b);
+      return '<div class="rw2-k" data-npq="' + wp + '" role="button" tabindex="0" title="' + esc('Pulls ' + pl.join(', ') + '. Click to open pull ' + wp + '.') + '"><span class="rw2-kl">' + esc(e.k) + '</span><span class="rw2-kb"><i class="' + (e.bad * 2 >= e.c ? 'bad' : 'warn') + '" style="width:' + Math.max(6, Math.round(100 * e.c / mx)) + '%"></i></span><span class="rw2-kn">×' + e.c + '</span><span class="rw2-kp">' + plural(e.pulls.size, 'pull') + '</span></div>'; }).join('') + (ks.length > 5 ? '<div class="rw2-more">+' + (ks.length - 5) + ' other kinds</div>' : '') + '</div>' : '';
+    const h1 = J.slice(0, Math.ceil(tot / 2)), h2 = J.slice(Math.ceil(tot / 2)), wr = (l) => l.filter((n) => stAt(r, n) !== 'ok').length, a = wr(h1), b = wr(h2);
+    const trend = tot >= 6 && Math.abs(a / Math.max(1, h1.length) - b / Math.max(1, h2.length)) >= 0.3 ? '<p class="rw2-fl rw2-tr">Early pulls: wrong in ' + a + ' of ' + h1.length + ' · Late pulls: wrong in ' + b + ' of ' + h2.length + '</p>' : '';
+    return '<p class="rw2-fl">Wrong in ' + wN + ' of ' + tot + ' pulls' + (F && F.R ? ' · ' + F.Wr + ' of ' + F.R + ' moments wrong' : '') + (kb ? ' · ' + esc(kb) : '') + '</p>' + (wh ? '<p class="rw2-fl rw2-wh">Most often: ' + wh + '</p>' : '') + trend + bars; };
   const line = (r) => { const lv = lvOf(r), wN = judged(r).filter((n) => stAt(r, n) !== 'ok').length, worst = worstOf(r), F = factsOf(r), sid = 'nml-' + r.x.id, ok = lv === 'clean', M = ok ? null : mapAt(r);
     const who = new Map(); if (!one) for (const p of r.x.per.values()) for (const w of new Set(p.who || [])) who.set(w, (who.get(w) || 0) + 1);
     const faces = [...who].filter(([n]) => pm.has(n)).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([n]) => avatar(pm.get(n), true)).join('');
@@ -25743,12 +25820,10 @@ function nightMechC(o) {
       const tl = (k, v, raw) => v ? '<div class="rw2-t"><span>' + k + '</span><b>' + (raw ? v : esc(v)) + '</b></div>' : '';
       return '<details class="panel secd st-' + LC[lv] + ' dbr-line nml rw2" id="' + sid + '" data-k="' + sid + '" data-sec="sec-' + esc(r.x.id) + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + secHead({ title: shortT(r.title), spell: r.x.spell, icon: r.x.icon }).replace(/<b>([^<(]+?) \(([^<]+)\)<\/b>/, '<b>$1 <span class="rw2-i">($2)</span></b>') +
         '<span class="rw2-pc ' + LC[lv] + '">' + (pc == null ? '—' : pc + '%') + '</span>' + bars(r) + '</summary><div class="secbody">' +
-        '<div class="rw2-tiles">' + (ok ? tl('Done right', 'in all ' + plural(judged(r).length, 'pull') + ' it came up in') : tl('Went wrong', wt) + tl('Pulls', wN + ' of ' + judged(r).length) + tl('Worst', worst ? 'pull ' + worst : '') + tl('Most often', wh, true)) + tl('Against top guilds', kb) + '</div>' +
-        (M ? '<div class="nml-map"><span class="wr-map mcx-map">' + miniMap(M.mp, pm) + '</span><span class="sub">Pull ' + M.n + (byPull.get(M.n) ? ', ' + esc(res(byPull.get(M.n))) : '') + '</span></div>' : '') +
-        (typeof gdzHowTo === 'function' ? gdzHowTo(r.x.id, r.title, boss, o.reps && o.reps[0] ? o.reps[0].item.diffId : null) : '') + (r.body || '') + '</div></details>'; }
+        rw2Facts(r, { ok, wN, kb, wh, F, tl }) + '</div></details>'; }
     return '<details class="panel secd st-' + LC[lv] + ' dbr-line nml" id="' + sid + '" data-k="' + sid + '" data-sec="sec-' + esc(r.x.id) + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + secHead({ title: shortT(r.title), spell: r.x.spell, icon: r.x.icon }) + nightKb(r) + '<span class="sst ' + LC[lv] + '">' + LW[lv] + '</span>' +
       '<span class="mcx-ln">' + facts + '</span></summary><div class="secbody">' + (M ? '<div class="nml-map"><span class="wr-map mcx-map">' + miniMap(M.mp, pm) + '</span><span class="sub">Pull ' + M.n + (byPull.get(M.n) ? ', ' + esc(res(byPull.get(M.n))) : '') + '</span></div>' : '') +
-      '<div class="nml-f">' + facts + '</div>' + (typeof gdzHowTo === 'function' ? gdzHowTo(r.x.id, r.title, boss, o.reps && o.reps[0] ? o.reps[0].item.diffId : null) : '') + (r.body || '') + '</div></details>'; };
+      '<div class="nml-f">' + facts + '</div>' + (r.body || '') + '</div></details>'; };
   // (Deaths over the night (your call, Oct 21: "deaths should be accounted for on all pulls"): a bar per pull (deaths up to the
   // wipe filter), what killed people most, who died most, and each pull's first death with a › to that pull's Deaths)
   const deathsLine = () => { const reps = (o.reps || []).slice().sort((a, b) => a.item.pull - b.item.pull); if (!reps.length) return '';
@@ -25783,12 +25858,14 @@ function nightMechC(o) {
   const lvTxt = (o2) => lvlText(o2);
   // ---- each phase ----
   const phases = groups.map((g, i) => { const l = g.list.filter((r) => !isInfo(r) && judged(r).length && r.x.id !== 'avoid' && r.x.id !== 'deaths'); /* (the coach box's panels have these (Oct 22)) */ if (!l.length) return '';
-    const pr = l.filter((r) => lvOf(r) !== 'clean').sort((a, b) => ['major', 'moderate', 'minor'].indexOf(lvOf(a)) - ['major', 'moderate', 'minor'].indexOf(lvOf(b)) || factsOf(b).Wr - factsOf(a).Wr || a.ord - b.ord), ok = l.filter((r) => lvOf(r) === 'clean');
+    /* (Oct 23, your call "more at a glance": worst first by its %, the more dangerous one first when two are within 3 points) */
+    const pcOf = (r) => { const F = factsOf(r); return F.R ? 100 * (F.R - F.Wr) / F.R : 100; };
+    const pr = l.filter((r) => lvOf(r) !== 'clean').sort((a, b) => ['major', 'moderate', 'minor'].indexOf(lvOf(a)) - ['major', 'moderate', 'minor'].indexOf(lvOf(b)) || factsOf(b).Wr - factsOf(a).Wr || a.ord - b.ord).sort((a, b) => (Math.abs(pcOf(a) - pcOf(b)) > 3 ? pcOf(a) - pcOf(b) : 0)), ok = l.filter((r) => lvOf(r) === 'clean');
     const bigI = pr.findIndex((r) => judged(r).some((n) => stAt(r, n) !== 'ok' && mapIn(n, r.x.id))), pl = pr.slice(); void bigI; /* (a checklist keeps its order: failed first, then slips) */
     const lv = cntL(l), lvl = lv.major ? 'major' : lv.moderate ? 'moderate' : lv.minor ? 'minor' : 'clean', m = String(g.name).match(/^P(\d+)/);
-    void m; const wst = pl.length ? pl.slice().sort((a, b) => (lvOf(a) === 'major' ? 0 : 1) - (lvOf(b) === 'major' ? 0 : 1))[0] : null; void ring;
+    void m; const wst = pl.length ? pl[0] : null; void ring;
     return '<details class="phase mcx-ph rw2-ph" data-mst="' + lvl + '" open><summary><span class="rw2-dot ' + LC[lvl] + '"></span><b>' + esc(g.name) + '</b><span class="rw2-st ' + LC[lvl] + '">' + (wst ? 'Worst: ' + esc(shortT(wst.title).replace(/\s*\(.*$/, '')) : 'All done right') + '</span></summary>' +
-      '<div class="dbck">' + pl.map(line).join('') + ok.map(line).join('') + '</div></details>'; }).join('');
+      '<div class="dbck">' + pl.map(line).join('') + (ok.length ? '<div class="rw2-clean">✓ Clean all night: ' + esc(lpAnd(ok.map((r) => shortT(r.title).replace(/\s*\(.*$/, '')))) + '</div>' : '') + '</div></details>'; }).join('');
   // ---- the night at a glance: a lane per mechanic that went wrong, a dot per pull ----
   const all = groups.flatMap((g) => g.list).filter((r) => !isInfo(r) && judged(r).length), probs = all.filter((r) => lvOf(r) !== 'clean');
   const tot = (k) => all.filter((r) => lvOf(r) === k).length;
