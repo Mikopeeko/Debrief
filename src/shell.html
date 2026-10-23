@@ -1005,6 +1005,11 @@ button.nm-cell { cursor: pointer; } button.nm-cell:hover { outline: 2px solid va
 .avn-list { margin: 6px 0 4px; display: grid; gap: 4px; } .avn-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; } .avn-who { min-width: 96px; } .avn-tot { color: var(--muted); font-size: 13px; min-width: 70px; }
 .avn-ps { display: flex; flex-wrap: wrap; gap: 4px; } .avn-p, .dd-pgo { min-width: 26px; height: 22px; padding: 0 6px; border-radius: 6px; border: 1px solid var(--line2); background: rgba(255,255,255,.05); color: var(--text); font: inherit; font-size: 12px; cursor: pointer; }
 .avn-p.warn, .dd-pgo.warn { border-color: rgba(243,192,106,.55); color: #f3c06a; } .avn-p.bad, .dd-pgo.bad { border-color: rgba(255,107,98,.6); color: #ff8f87; } .avn-p:hover, .dd-pgo:hover { filter: brightness(1.2); } .avn-fine { color: var(--muted); font-size: 12px; align-self: center; }
+.cbl-list { display: grid; gap: 2px; margin-top: 6px; } .cbl > summary { list-style: none; } .cbl > summary::-webkit-details-marker { display: none; }
+.cbl-s .cb-in { gap: 6px; } .cbl-s .nm { font-weight: 600; } .cbl-c { color: var(--faint); transition: transform .15s; display: inline-block; } .cbl[open] > summary .cbl-c { transform: rotate(90deg); }
+.cbl[open] > summary .cb-b { box-shadow: 0 0 0 1px var(--line2); } .cbl-body { padding: 6px 0 10px 28px; } .cbl-body .cch-chips { margin: 0; } .cbl-body .ddv { margin: 6px 0 0; }
+.cbl-calm { margin: 6px 0 0; color: var(--muted); font-size: 12.5px; } .cbl-more > summary { list-style: none; cursor: pointer; color: var(--muted); font-size: 13px; padding: 6px 8px; } .cbl-more > summary::-webkit-details-marker { display: none; }
+@media (max-width: 600px) { .cbl-body { padding-left: 4px; } .cbl-s.pf-row.cb.pf-pr { grid-template-columns: 18px minmax(0, 1fr) 56px 22px; } .cbl-s .cb-s { display: none; } }
 .cch-avbox { margin-top: 10px; } .cch-avbox .ddv { margin: 0; } .cch-avbox:not([hidden]) + .cch-ddtip { display: none; }
 .cch-avbox .avd-map { margin: 8px 0 6px; max-width: 460px; } .cch-avbox .avd-map svg { width: 100%; height: auto; }
 .cch-ddbox { margin-top: 10px; } .cch-ddbox .ddv { margin: 0; } .cch-ddh { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 6px; font-size: 13px; color: var(--muted); } .cch-ddh b { color: var(--text); }

@@ -1005,6 +1005,11 @@ button.nm-cell { cursor: pointer; } button.nm-cell:hover { outline: 2px solid va
 .avn-list { margin: 6px 0 4px; display: grid; gap: 4px; } .avn-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; } .avn-who { min-width: 96px; } .avn-tot { color: var(--muted); font-size: 13px; min-width: 70px; }
 .avn-ps { display: flex; flex-wrap: wrap; gap: 4px; } .avn-p, .dd-pgo { min-width: 26px; height: 22px; padding: 0 6px; border-radius: 6px; border: 1px solid var(--line2); background: rgba(255,255,255,.05); color: var(--text); font: inherit; font-size: 12px; cursor: pointer; }
 .avn-p.warn, .dd-pgo.warn { border-color: rgba(243,192,106,.55); color: #f3c06a; } .avn-p.bad, .dd-pgo.bad { border-color: rgba(255,107,98,.6); color: #ff8f87; } .avn-p:hover, .dd-pgo:hover { filter: brightness(1.2); } .avn-fine { color: var(--muted); font-size: 12px; align-self: center; }
+.cbl-list { display: grid; gap: 2px; margin-top: 6px; } .cbl > summary { list-style: none; } .cbl > summary::-webkit-details-marker { display: none; }
+.cbl-s .cb-in { gap: 6px; } .cbl-s .nm { font-weight: 600; } .cbl-c { color: var(--faint); transition: transform .15s; display: inline-block; } .cbl[open] > summary .cbl-c { transform: rotate(90deg); }
+.cbl[open] > summary .cb-b { box-shadow: 0 0 0 1px var(--line2); } .cbl-body { padding: 6px 0 10px 28px; } .cbl-body .cch-chips { margin: 0; } .cbl-body .ddv { margin: 6px 0 0; }
+.cbl-calm { margin: 6px 0 0; color: var(--muted); font-size: 12.5px; } .cbl-more > summary { list-style: none; cursor: pointer; color: var(--muted); font-size: 13px; padding: 6px 8px; } .cbl-more > summary::-webkit-details-marker { display: none; }
+@media (max-width: 600px) { .cbl-body { padding-left: 4px; } .cbl-s.pf-row.cb.pf-pr { grid-template-columns: 18px minmax(0, 1fr) 56px 22px; } .cbl-s .cb-s { display: none; } }
 .cch-avbox { margin-top: 10px; } .cch-avbox .ddv { margin: 0; } .cch-avbox:not([hidden]) + .cch-ddtip { display: none; }
 .cch-avbox .avd-map { margin: 8px 0 6px; max-width: 460px; } .cch-avbox .avd-map svg { width: 100%; height: auto; }
 .cch-ddbox { margin-top: 10px; } .cch-ddbox .ddv { margin: 0; } .cch-ddh { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 6px; font-size: 13px; color: var(--muted); } .cch-ddh b { color: var(--text); }
@@ -15153,6 +15158,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-22', h: [
+    { t: 'Deaths and avoidable damage as bars', d: 'The coach box shows deaths and avoidable damage as bars like the Graphs tab: the biggest at the top, red when it was on the player. Tap a bar to see who, which pulls, and the fix, right under it.' },
     { t: 'What went wrong opens up', d: 'Each card under What went wrong in the coach box now folds. Click it for a bigger map, who got it wrong, every pull as a button that opens it, how the mechanic works, how top guilds do, and the avoidable damage that comes with it.' },
     { t: 'Sleek settings, and pick what your card shows', d: 'Debrief Addon\'s settings (/dmo) are three tidy tabs now: Card, Look and More. Click a piece on or off to choose what your recap shows, including two new charts (your numbers tonight, how far each pull got) and your Report card grade.' },
     { t: 'Your recap pops up by itself', d: 'After every boss pull, Debrief Companion shows a small "Your recap is ready" bar over the game. It never takes your mouse or keys. Click See recap for the coach card. Debrief no longer copies anything unless you ask, and puts back what you had copied.' },
@@ -22032,7 +22038,7 @@ document.addEventListener('click', (ev) => { const t = ev.target && ev.target.cl
   // (a pull number in a night card: open that pull, then that raider's card there)
   const pb = t.closest('.avn-p[data-avpull]'); if (pb) { ev.preventDefault(); const n = +pb.dataset.avpull, p = pb.dataset.avp, k = (pb.closest('.cch-avbox') || {}).dataset ? pb.closest('.cch-avbox').dataset.avn : '';
     const r = AV_NIGHT && AV_NIGHT.reps.find((q) => q.item.pull === n); if (!r) return; S.tab = 'audit'; S.scope = 'pull'; Promise.resolve(select(r.item)).then(() => { let i = 0; const go = () => { const c = document.querySelector('.ach[data-avk="' + CSS.escape(k + '|' + p) + '"]');
-      if (c) { if (!c.classList.contains('on')) c.click(); c.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; } if (++i < 30) setTimeout(go, 200); else { const a = document.querySelector('.cch-acct2'); if (a) a.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }; setTimeout(go, 200); }); return; }
+      if (c) { const bl = c.closest('details.cbl'); if (bl) bl.open = true; if (!c.classList.contains('on')) c.click(); c.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; } if (++i < 30) setTimeout(go, 200); else { const a = document.querySelector('.cch-acct2'); if (a) a.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }; setTimeout(go, 200); }); return; }
   const c = t.closest('.ach[data-avn]'); if (!c || !AV_NIGHT) return; const ab = c.closest('.cch-ab'), box = ab && ab.querySelector('.cch-avbox'); if (!box) return;
   const was = c.classList.contains('on'); ab.querySelectorAll('.ach.on').forEach((x) => x.classList.remove('on')); if (was) { box.hidden = true; box.innerHTML = ''; return; }
   const o = avNight(AV_NIGHT.reps, c.dataset.avn, AV_NIGHT.name); if (!o) return; c.classList.add('on'); box.dataset.avn = c.dataset.avn;
@@ -22073,7 +22079,7 @@ function avBox(r, g, j) {
 }
 document.addEventListener('click', (ev) => { const t = ev.target && ev.target.closest ? ev.target : null; if (!t) return;
   const mo = t.closest('.ach[data-avmore]'); if (mo) { mo.parentNode.querySelectorAll('.ach-x').forEach((x) => (x.hidden = false)); mo.remove(); return; }
-  const c = t.closest('.ach[data-avk]'); if (!c) return; const ab = c.closest('.cch-ab'), box = ab && ab.querySelector('.cch-avbox'); if (!box) return;
+  const c = t.closest('.ach[data-avk]'); if (!c) return; const ab = c.closest('.cch-ab'), cb = c.closest('.cbl-body'), box = (cb && cb.querySelector('.cch-avbox')) || (ab && ab.querySelector('.cch-avbox')); if (!box) return;
   const was = c.classList.contains('on'); ab.querySelectorAll('.ach.on').forEach((x) => x.classList.remove('on')); if (was) { box.hidden = true; box.innerHTML = ''; return; }
   const i = String(c.dataset.avk).lastIndexOf('|'), k = String(c.dataset.avk).slice(0, i), p = String(c.dataset.avk).slice(i + 1), r = S.rep; if (!r || !r.module || !r.module.sections) return;
   const s = cutModule(r.module, cutT(r)).m.sections.find((q) => q.id === 'avoid'), g = s && (s.groups || []).find((q) => q.title === k), j = g && (g.judge || []).find((q) => q.p === p); if (!j) return;
@@ -23667,7 +23673,22 @@ function coachAvoid(reps, name) {
   /* (a night: a chip per source opens the night's card for it (your bug, Oct 22: "these are not clickable on all pulls")) */
   else { AV_NIGHT = { reps, name: name || null }; const top1 = (s) => { const w = [...s.who].sort((a, b) => b[1] - a[1]); return w.length ? nm(w[0][0]) + ' ' + (s.secs ? w[0][1] + ' s' : plural(w[0][1], 'hit')) + (w.length > 1 ? ' +' + (w.length - 1) : '') : (name ? s.pulls.size + ' of ' + reps.length + ' pulls' : ''); };
     const ch = flagged.map((s) => ({ k: s.k, who: name ? s.pulls.size + ' of ' + reps.length + ' pulls' : top1(s), bad: s.bad > 0, avn: s.k })); items = ch.slice(0, 4); rest = ch.slice(4); more = 0; }
-  return { line, list, bad: flagged.some((s) => s.bad), items, more, rest };
+  /* (bars like the Graphs tab: every source, most damage first (Oct 22)) */
+  const bars = []; try {
+    if (!night) { const r = reps[0], x = pullSections(r).get('avoid');
+      for (const g of (x && x.s.groups) || []) { const rows = (g.rows || []).filter((row) => row[0] && row[0].p && !/tank/.test(row[0].sub || '') && (!name || oaBase(row[0].p) === base)); if (!rows.length) continue;
+        const fl = (row) => (row[1].bad || (row[3] && row[3].bad) ? 'bad' : row[1].warn ? 'warn' : ''), amt = rows.reduce((s, row) => s + ((row[2] && row[2].n) || 0), 0), n = rows.reduce((s, row) => s + (parseInt(row[1].txt, 10) || 0), 0);
+        const st = rows.some((row) => fl(row) === 'bad') ? 'bad' : rows.some((row) => fl(row) === 'warn') ? 'warn' : '';
+        const chips = rows.filter(fl).map((row) => { const v = parseInt(row[1].txt, 10) || 0; return { k: g.title, who: nm(row[0].p) + ' ' + (g.secs ? v + ' s' : plural(v, 'hit')), bad: fl(row) === 'bad', avk: g.title + '|' + row[0].p }; });
+        const calm = rows.filter((row) => !fl(row));
+        bars.push({ key: g.title, label: g.title, icon: spellIcon(g.spell ? g.spell[0] : 0, g.spell ? g.spell[1] : g.title), amt, st, v: C(amt), sub: g.secs ? n + ' s' : plural(n, 'hit'), chips, calm: calm.length ? plural(calm.length, 'more raider') + ' clipped, under the line: ' + calm.slice(0, 6).map((row) => nm(row[0].p)).join(', ') + (calm.length > 6 ? '…' : '') : '' }); } }
+    else { AV_NIGHT = { reps, name: name || null }; const S4 = new Map();
+      for (const r of reps) { const x = pullSections(r).get('avoid'); for (const g of (x && x.s.groups) || []) { let o = S4.get(g.title); if (!o) S4.set(g.title, o = { key: g.title, label: g.title, icon: spellIcon(g.spell ? g.spell[0] : 0, g.spell ? g.spell[1] : g.title), amt: 0, n: 0, st: '', secs: !!g.secs, pulls: new Set() });
+        for (const row of g.rows || []) { if (!row[0] || !row[0].p || /tank/.test(row[0].sub || '') || (name && oaBase(row[0].p) !== base)) continue; o.amt += (row[2] && row[2].n) || 0; o.n += parseInt(row[1].txt, 10) || 0; o.pulls.add(r.item.pull);
+          if (row[1].bad || (row[3] && row[3].bad)) o.st = 'bad'; else if (row[1].warn && o.st !== 'bad') o.st = 'warn'; } } }
+      for (const o of S4.values()) if (o.pulls.size) bars.push({ ...o, v: C(o.amt), sub: plural(o.pulls.size, 'pull'), night: true, reps, nm: name || null }); }
+    bars.sort((a, b) => ({ bad: 0, warn: 1, '': 2 }[a.st] - { bad: 0, warn: 1, '': 2 }[b.st]) || b.amt - a.amt); } catch (e) { console.error(e); }
+  return { line, list, bad: flagged.some((s) => s.bad), items, more, rest, bars };
 }
 // ---- The kill call (your note, Oct 22: "not very enthusiastic raid leading LOL"): what a raid lead says in voice when the boss
 // dies. Celebrate first, with what's true: a first kill or farm (this PC's saved pulls), Mythic or Heroic, how many pulls it took
@@ -23804,7 +23825,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
     (c.week ? '<div class="cch-wk2"><span class="cch-wk2k">Since last raid</span><span>' + esc(c.week.replace(/^Since last raid /, '').replace(/^\(([^)]*)\): /, (m0, d) => d.charAt(0).toUpperCase() + d.slice(1) + ': ')) + '</span></div>' : '') /* (week to week, Oct 22) */ +
     (c.wrong.length ? '<div class="cch-sh">What went wrong</div><ol class="cch-ps cch-no">' + c.wrong.map(prob).join('') + '</ol>' : '') +
     (c.right.length ? '<div class="cch-good">' + c.right.map((x) => '<span class="cch-gd">✓ ' + esc(x.t) + '</span>').join('') + '</div>' : '') +
-    (D || A ? '<div class="cch-acct2">' + (D ? '<details class="cch-ab cch-abx' + (D.bad ? ' warn' : '') + '" data-k="cch-ab-d"' + (S.openSecs && S.openSecs.has('cch-ab-d') ? ' open' : '') + '><summary class="cch-al">Deaths<span class="cch-abs">' + esc(coachAbSum(D, 'd')) + '</span></summary><div class="cch-chips">' + dch + '</div>' + (D.nsum || []).map((x) => '<div class="dd-nsum" data-ddn="' + esc(x.key) + '" hidden>' + x.html + '</div>').join('') + (D.items && D.items.some((it) => it.dg || it.dn) ? '<div class="cch-ddbox" hidden></div><div class="cch-ddtip">Tap a death to see what happened.</div>' : '') + '</details>' : '') + (A ? '<details class="cch-ab cch-abx' + (A.bad ? ' warn' : '') + '" data-k="cch-ab-a"' + (S.openSecs && S.openSecs.has('cch-ab-a') ? ' open' : '') + '><summary class="cch-al">Avoidable damage<span class="cch-abs">' + esc(coachAbSum(A, 'a')) + '</span></summary><div class="cch-chips">' + ach + '</div>' + (A.items && A.items.some((it) => it.avk || it.avn) ? '<div class="cch-avbox" hidden></div><div class="cch-ddtip">Tap one to see ' + (A.items.some((it) => it.avn) ? 'the night: who, which pulls, and the fix.' : 'what happened.') + '</div>' : '') + '</details>' : '') + '</div>' : '') +
+    (D || A ? '<div class="cch-acct2">' + (D ? '<details class="cch-ab cch-abx' + (D.bad ? ' warn' : '') + '" data-k="cch-ab-d"' + (S.openSecs && S.openSecs.has('cch-ab-d') ? ' open' : '') + '><summary class="cch-al">Deaths<span class="cch-abs">' + esc(coachAbSum(D, 'd')) + '</span></summary>' + (D.items && D.items.length ? coachBars(cblDeaths(D), (x) => x.n, (x) => x.body) || '<div class="cch-chips">' + dch + '</div>' : '<div class="cch-chips">' + dch + '</div>') + '' + (D.nsum || []).map((x) => '<div class="dd-nsum" data-ddn="' + esc(x.key) + '" hidden>' + x.html + '</div>').join('') + (D.items && D.items.some((it) => it.dg || it.dn) ? '<div class="cch-ddbox" hidden></div><div class="cch-ddtip">Tap a death to see what happened.</div>' : '') + '</details>' : '') + (A ? '<details class="cch-ab cch-abx' + (A.bad ? ' warn' : '') + '" data-k="cch-ab-a"' + (S.openSecs && S.openSecs.has('cch-ab-a') ? ' open' : '') + '><summary class="cch-al">Avoidable damage<span class="cch-abs">' + esc(coachAbSum(A, 'a')) + '</span></summary>' + (A.bars && A.bars.length ? coachBars(A.bars, (x) => x.amt, (x) => x.night ? ((AV_NIGHT = { reps: x.reps, name: x.nm }), (((avNight(x.reps, x.key, x.nm) || {}).html) || '')) : '<div class="cch-chips">' + x.chips.map((it) => achip(it)).join('') + '</div>' + (x.calm ? '<p class="cbl-calm">' + esc(x.calm) + '</p>' : '') + (x.chips.length ? '<div class="cch-avbox" hidden></div>' : '')) : '<div class="cch-chips">' + ach + '</div>') + '' + (A.items && A.items.some((it) => it.avk || it.avn) ? '<div class="cch-avbox" hidden></div><div class="cch-ddtip">Tap one to see ' + (A.items.some((it) => it.avn) ? 'the night: who, which pulls, and the fix.' : 'what happened.') + '</div>' : '') + '</details>' : '') + '</div>' : '') +
     (c.full ? '<details class="cch-more" data-k="' + k + '"' + (S.openSecs.has(k) ? ' open' : '') + '><summary>Read the full coaching</summary><div class="cch-full">' + c.full + '</div></details>' : '') + '</section>';
   return colorNames(iconSpells(html), PM).replace(/<span class="cch-pmap" data-mi="(\d+)"><\/span>/g, (m0, n) => '<span class="cch-pmap">' + (MAPS[+n] || '') + '</span>'); }
 // (the whole Debriefing tab for one pull, as the site draws it, for the PC app's recap pop-up (Oct 22): the pull opens here (the app's
@@ -23866,6 +23887,24 @@ function coachGame(r, name) {
 document.addEventListener('click', (e) => { const a = e.target && e.target.closest ? e.target.closest('[data-dsec^="sec-avoid"],a[href^="#sec-avoid"],[data-sec^="sec-avoid"],[data-sec="avoid"]') : null; if (!a || document.querySelector('[id^="sec-avoid"]')) return;
   const box = document.querySelector('.cch-acct2 .cch-avbox') || document.querySelector('.cch-acct2'); if (!box) return; e.preventDefault(); e.stopPropagation(); (box.closest('.cch-ab') || box).scrollIntoView({ behavior: 'smooth', block: 'center' }); }, true);
 // (the coach box's Deaths and Avoidable damage panels, closed: one line, e.g. "99 deaths · 47 on the player · most to Venom Rupture" (Oct 22))
+// ---- One bar list for the coach box's Deaths and Avoidable damage (Oct 22, your ask: "graphs like in the graphs tab, with clickable drop
+// downs"). Each row is the Graphs tab's bar (cbRow): its rank, a bar as long as its share of the biggest, coloured by the worst verdict (red on
+// them, amber half on them or a bit much, grey fine), the icon and name in the bar, the number at the end. Tapping it drops its details right
+// under it. The first 8 show, the rest behind "+N more". Shared (the Deaths chat's Healthstones and Defensives panels use it too): rows are
+// { key, label, st: 'bad'|'warn'|'', v (the number at the end), sub (small text after it), icon (html) or p (a player: avatar + class colour) },
+// val(row) sizes the bar against the biggest, body(row) is the drop-down's html.
+const CBL_COL = { bad: '#e5534b', warn: '#e8a23a', '': '#8b93a3' };
+function coachBars(rows, val, body) {
+  if (!rows || !rows.length) return ''; const mx = Math.max(1, ...rows.map(val));
+  const one = (x, i) => '<details class="cbl' + (x.st ? ' cbl-' + x.st : '') + '" data-cbl="' + esc(x.key) + '">' + cbRow({ tag: 'summary', k: i + 1, p: x.p || undefined, pname: x.p ? esc(x.label || x.p.name) : undefined, icon: x.icon || '', name: esc(x.label), segs: [[100 * val(x) / mx, 'm']], pcol: CBL_COL[x.st || ''], v: esc(x.v), sub: esc(x.sub || ''), end: '<span class="cbl-c" aria-hidden="true">▸</span>', cls: ' pf-pr cbl-s' }) +
+    '<div class="cbl-body">' + body(x) + '</div></details>';
+  return '<div class="cbl-list">' + rows.slice(0, 8).map(one).join('') + (rows.length > 8 ? '<details class="cbl-more"><summary>+' + (rows.length - 8) + ' more</summary>' + rows.slice(8).map((x, i) => one(x, i + 8)).join('') + '</details>' : '') + '</div>';
+}
+function cblDeaths(D) { const all = (D.items || []).concat(D.rest || []), sev = (k) => (/^(own|ready|on)$/.test(k) ? 'bad' : /^(half|nothing)$/.test(k) ? 'warn' : '');
+  if (all.some((it) => it.dn)) { const ns = new Map((D.nsum || []).map((x) => [x.key, x.html])); return all.filter((it) => it.dn).map((it) => ({ key: it.dn, label: it.ab, icon: spellIcon(0, it.ab), n: it.n || 1, st: sev(it.k), v: '×' + (it.n || 1), sub: '', body: ns.get(it.dn) || '' })); }
+  const by = new Map(); for (const it of all) { let o = by.get(it.ab); if (!o) by.set(it.ab, o = { key: it.ab, label: it.ab, icon: spellIcon(0, it.ab), n: 0, late: 0, st: '', list: [] }); if (it.late) o.late++; else o.n++; o.list.push(it); const s = sev(it.k); if (s === 'bad' || (s === 'warn' && o.st !== 'bad')) o.st = s; }
+  return [...by.values()].sort((a, b) => ({ bad: 0, warn: 1, '': 2 }[a.st] - { bad: 0, warn: 1, '': 2 }[b.st]) || b.n - a.n).map((o) => ({ ...o, n: Math.max(o.n, o.late ? 0.35 : 0), v: '×' + (o.n + o.late), sub: o.late ? o.late + ' late' : '',
+    body: '<div class="cch-chips">' + o.list.map((it) => '<span class="dch k-' + esc(it.k || 'n') + (it.late ? ' dch-late' : '') + '" data-ddg="' + esc(it.dg) + '" role="button" tabindex="0" title="' + esc(it.word || '') + '">' + (it.t ? '<i>' + esc(it.t) + '</i>' : '') + (it.who ? '<b>' + esc(it.who) + '</b>' : '') + '<span>' + esc(it.ab) + '</span></span>').join('') + '</div>' })); }
 function coachAbSum(X, k) { const it = X.items || [], n = it.length + (X.rest || []).length;
   if (k === 'd') return X.n ? plural(X.n, 'death') + ' · ' + (X.onThem || 0) + ' on the player' + (it[0] && it[0].n ? ' · most to ' + it[0].ab : '') : 'nobody died';
   return n ? (it[0] && it[0].k ? 'most from ' + it[0].k : '') + (n > 1 ? ' · ' + n + ' kinds' : '') : 'nothing worth flagging'; }
