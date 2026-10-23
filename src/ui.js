@@ -155,7 +155,7 @@ function svgIcon(id, name, big) {
     '<rect x="0.5" y="0.5" width="23" height="23" rx="4.5" fill="url(#icoShade)"/><g transform="translate(4 4) scale(.6667)" class="gl">' + G[glyph] + '</g></svg>';
 }
 // A mechanic name as text with the spell tooltip on hover (the ID comes from the log when only the name is known)
-function mech(name, id) { const n = String(name || ''); if (!n) return ''; const sid = id || sidOf(n); if (!sid) return esc(n); return '<span class="sp mt" data-sid="' + sid + '" data-sn="' + esc(n) + '">' + esc(n) + '</span>'; }
+function mech(name, id) { const n = String(name || ''); if (!n) return ''; const sid = id || sidOf(n); if (!sid) return esc(n); return '<span class="sp mt" data-sid="' + sid + '" data-sn="' + esc(n) + '">' + spellIcon(sid, n) + esc(n) + '</span>'; } /* (with its icon: every spell named on the site shows one (Oct 22)) */
 // A status on the right of a heading or bar, in the same words and marks on every tab: ✕ a problem, ! could be better, ✓ fine
 const hst = (st, txt) => '<span class="sst ' + st + '">' + (st === 'ok' ? '✓\u00a0' : '') + esc(txt === 'clean' ? 'Clean' : txt).replace(/\bmajor\b/gi, '<span class="lv-maj">MAJOR</span>') + '</span>'; // (the mark stays with its first word)
 // "all 3 done", but just "done" for one (never "all 1 done")
@@ -409,7 +409,7 @@ document.addEventListener('click', (e) => {
 function who(p, sub) {
   return '<span class="who">' + avatar(p) + '<span style="min-width:0"><div class="nm" style="color:' + p.color + '">' + esc(p.name) + '</div><div class="sub">' + esc(sub == null ? p.specName : sub) + '</div></span></span>';
 }
-function refreshIcons() { hydrateIcons(); linkBossText(); }
+function refreshIcons() { linkBossText(); hydrateIcons(); } /* (linking first: the names it links carry icons now) */
 // Spells named in plain text get the same tooltip as a spell shown with its icon, on every tab of a pull: boss abilities
 // (a rule's tip, a check's line, "fix first", a death's killing blow) and players' own spells (a fix like "Use Blessing of
 // Sacrifice more", "died with Divine Shield still ready", a coaching tip). Boss abilities: every one this boss's rules and
@@ -438,6 +438,8 @@ function bossRx(strict) {
   if (strict) { for (const p of r.players.values()) { for (const n of (p.buffs || new Map()).keys()) { const k = String(n).toLowerCase(), id = E.SPELLID.get(k); if (id && !mine.has(k) && okName(k, PLAYER_STOP)) mine.set(k, id); }
     const tr = TREE_DATA[p.specName]; if (tr) for (const x of Object.values(tr)) if (typeof x === 'string') for (const m of x.matchAll(/~(\d+)~[a-z0-9_]+~\d+~([^~;|]+)~/g)) { const k = m[2].toLowerCase(); if (!mine.has(k) && okName(k, PLAYER_STOP)) mine.set(k, +m[1]); } } }
   if (!mine.has('healthstone')) mine.set('healthstone', 6262);
+  for (const [id, n] of E.CD_NAMES || []) { const k = String(n).toLowerCase(); if (!mine.has(k) && okName(k, PLAYER_STOP)) mine.set(k, id); } /* (every raid cooldown has its icon, pressed this pull or not (Oct 22)) */
+  if (!mine.has('spirit link')) mine.set('spirit link', 98008);
   const names = new Map(strict ? [...mine, ...[...boss].filter(([k]) => !mine.has(k))] : [...boss, ...[...mine].filter(([k]) => !boss.has(k))]);
   const list = [...names.keys()].filter((n) => n.length >= 4).sort((a, b) => b.length - a.length).map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
   const v = list.length ? { rx: new RegExp('(?<![\\p{L}\\p{N}])(' + list.join('|') + ')(?![\\p{L}\\p{N}])', 'giu'), names } : null;
@@ -455,7 +457,7 @@ function linkBossText() {
     const s = t.nodeValue, f = document.createDocumentFragment(); let at = 0; b.rx.lastIndex = 0;
     for (let m; (m = b.rx.exec(s)); ) {
       const word = m[1]; if (word[0] === word[0].toLowerCase()) continue; // (only a name written with a capital)
-      f.append(s.slice(at, m.index)); const sp = document.createElement('span'); sp.className = 'sp mt'; sp.dataset.sid = b.names.get(word.toLowerCase()); sp.dataset.sn = word; sp.textContent = word; f.append(sp); at = m.index + word.length;
+      f.append(s.slice(at, m.index)); const sp = document.createElement('span'); sp.className = 'sp mt'; sp.dataset.sid = b.names.get(word.toLowerCase()); sp.dataset.sn = word; sp.innerHTML = spellIcon(+sp.dataset.sid, word) + esc(word); f.append(sp); at = m.index + word.length;
     }
     if (at) { f.append(s.slice(at)); t.replaceWith(f); }
   }
@@ -1711,6 +1713,7 @@ const PATCH_NOTES = [
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
     { t: 'Since last raid', d: 'All pulls now remembers each night and compares it with your last raid on the same boss: what you fixed, what got better or worse, and what\'s still going wrong. Pick a player to see their mistakes that also happened last raid.' },
   ], n: [
+    'Every spell named on Debriefing now shows its icon, in sentences, titles, chips and tooltips, including raid cooldowns like Anti-Magic Zone in a pull where nobody pressed them.',
     'Debrief in game: deaths with a Healthstone or health potion still unused (when there was time to press it) on your card and the raid card, each with a switch in /db. The PC pop-up now follows your card style: Detailed opens wider with more open.',
     'Debrief Companion 0.6.54: the Debriefing tab inside the app now has the folding What went wrong cards and the All pulls death and avoidable damage chips that open.',
     'Debrief Companion: updates wait just 20 seconds after a pull.',
@@ -1788,6 +1791,7 @@ const PATCH_NOTES = [
     'The bosses are in the same order everywhere on the site.',
     'Long patch notes fold after six lines.',
   ], f: [
+    'A mechanic that never came up in a pull (like the push or Guillotine on a wipe in the first 20 seconds) no longer shows as done right in a Whole fight box. It just isn\'t shown.',
     'Debrief Addon: /dbr no longer opens the paste box when there is nothing to show; it says your recaps are in the Debrief Companion pop-up.',
     'The coach no longer leaves a stray letter behind a spell name, like "you stood in Noxious Ground s".',
     'Live now no longer disappears while your raid gets ready for the next boss: a live log stays live for 30 quiet minutes, not 10.',
@@ -7658,6 +7662,10 @@ function audit() {
     per.forEach((p, i) => { if (p.rows.length || p.groups.length) buckets[i].push({ s, rows: p.rows, groups: p.groups }); });
     if (!per.some((p) => p.rows.length || p.groups.length)) whole.push({ s, rows: [], groups: [] });
   }
+  /* (one pull (Oct 22, your question "why is it there"): a mechanic that never came up (nothing recorded, like the push and the Guillotine on a 0:23 wipe)
+     isn't "done right": it isn't shown, so the Whole fight box no longer fills with empty checks. On a top kill every check has rows and sits in its phase) */
+  if (!r.allPulls) { const empty = (x) => !x.rows.length && !x.groups.length && !['deaths', 'avoid', 'kicks'].includes(x.s.id);
+    for (const b of buckets.concat([whole])) for (let i = b.length - 1; i >= 0; i--) if (empty(b[i])) b.splice(i, 1); }
   const firstAt = new Map(), dOk = (s) => r.allPulls || s.id !== 'deaths'; buckets.forEach((b, i) => b.forEach(({ s }) => { if (!firstAt.has(s.id) && dOk(s)) firstAt.set(s.id, i); })); whole.forEach(({ s }) => { if (!firstAt.has(s.id) && dOk(s)) firstAt.set(s.id, 'w'); });
   // One slim chip per mechanic: its status (red / amber / green) and problem count; click to open it.
   // (Mistakes by player was removed: every mistake is already on its mechanic's row.)
@@ -10685,7 +10693,7 @@ function mechAcross(reps) {
 // "Tank frontals on non-tanks" Sever's)
 // (a source known only by name gets its spell from the log, or from its own title)
 const srcTitle = (x) => { if (!x) return ''; const sp = x.spell, id = (sp && (sp[0] || sidOf(sp[1]))) || sidOf(x.title);
-  return id ? '<span class="sp mt" data-sid="' + id + '" data-sn="' + esc(sp && sp[1] ? sp[1] : x.title) + '">' + esc(x.title) + '</span>' : esc(x.title || ''); };
+  return id ? '<span class="sp mt" data-sid="' + id + '" data-sn="' + esc(sp && sp[1] ? sp[1] : x.title) + '">' + spellIcon(id, sp && sp[1] ? sp[1] : x.title) + esc(x.title) + '</span>' : esc(x.title || ''); };
 const HARM_COL = { High: '#e5534b', Medium: '#e8a23a', Low: '#8b93a3' };
 function avoidChart(reps, whoT) {
   const src = new Map();

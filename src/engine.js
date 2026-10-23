@@ -7130,7 +7130,7 @@ function coach(p, r, cut) {
   return tips.sort((a, b) => b.w - a.w).slice(0, 4);
 }
 
-const api = { MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CONSUMABLES, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
+const api = { MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
 root.ENGINE = api;
 if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
