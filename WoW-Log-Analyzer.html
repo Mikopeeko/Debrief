@@ -15333,6 +15333,7 @@ const PATCH_NOTES = [
     'The coach tells the story of a wipe: what started it and what finished it ("It started at 3:00: set 1\'s Spiteful Soulcoiler adds lived too long… Then Malevolent Resonance took five more by 4:18.").',
     'Healthstones and Defensives show how many times each raider used them; tap a name for how many pulls and each spell.',
     'One fix everywhere: the Report card\'s Next pull for each raider is now the same line Debriefing\'s coach gives them (it could name a different mechanic before).',
+    'Fairer Report card grades: healers lose points for an unused external only when someone died slowly enough to see it coming (a raider who lived never costs you), a death from your own mistake now says so plainly, and tanks\' big defensives get full marks at 65% of possible uses, like the rest of the site.',
     'A little Halloween spirit on the site until Nov 1 🎃',
     'The coach box is tidier: the thing to focus on next pull is said once, on the first card. Each Next time is one short instruction (open the card for the rest), cards carry at most one tag, and what went right is a short plain list.',
   ], f: [
@@ -36540,10 +36541,13 @@ function cardOf(r, p) {
   // ---- Staying alive: their own defensives and kit and the deaths that were on them (Oct 21) ----
   // (and a death with a defensive still ready (Oct 20, the top-raider pass: Survival read 100 next to 6 deaths). One-shots,
   // healthy to dead in under 1.5 s, never count: survivalOf leaves them out)
-  { const cnt = sv.dieList.filter((x) => x.w > 0), whyD = (x) => T(x.d.t) + ' to ' + (x.d.ability || x.d.killer || 'a hit') + (x.d.story ? ', ' + x.d.story : '') + (() => { const v = deathVerdict(r, x.d); return x.w < 1 ? ' (half: ' + v.word + ')' : v.why === 'own' ? ' (your own mistake)' : ' (' + v.word + ')'; })(); /* (the site's one rule (Oct 22)) */
+  // (wording that never contradicts itself (Oct 23, "could have stopped" next to "too fast to react"): an own-mistake death says so plainly
+  // and drops the speed story; the others keep their 15-second story and the verdict's word)
+  { const cnt = sv.dieList.filter((x) => x.w > 0), ownAll = cnt.length && cnt.every((x) => deathVerdict(r, x.d).why === 'own');
+    const whyD = (x) => { const v = deathVerdict(r, x.d), k = x.d.ability || x.d.killer || 'a hit'; return T(x.d.t) + ' to ' + k + (v.why === 'own' ? ': your own mistake' + (x.d.ownAvoid ? ' (it\'s dodgeable)' : '') : (x.d.story && !v.fast ? ', ' + x.d.story : '') + (x.w < 1 ? ' (counts half: ' + v.word + ')' : ' (' + v.word + ')')); }; /* (the site's one rule (Oct 22)) */
     add('alive', { k: 'died', label: 'Deaths', sc: sv.die, w: 80, num: sv.dieN, nt: 'sum', word: 'death',
-      html: cnt.length ? '<b>' + plural(cnt.length, 'death') + '</b> that counted: ' + esc(cnt.map(whyD).join(', ')) + (sv.deaths > cnt.length ? '<span class="sub"> · ' + (sv.deaths - cnt.length) + ' more not on you (too fast, or the raid\'s mistake)</span>' : '') : sv.deaths ? 'No deaths that counted<span class="sub"> · ' + plural(sv.deaths, 'death') + ' too fast or from the raid\'s mistake</span>' : 'Stayed alive',
-      fix: cnt.length ? { t: 'Stay alive', x: 'You died ' + (cnt.length === 1 ? 'once' : cnt.length + ' times') + ' in a way you could have stopped. ' + cnt.map((y) => capS(whyD(y)) + '.').join(' ') + (deathVerdict(r, cnt[0].d).fix ? ' Next time: ' + deathVerdict(r, cnt[0].d).fix : '') + ' A death costs the raid your damage or healing for the rest of the pull.' } : null }); }
+      html: cnt.length ? '<b>' + plural(cnt.length, 'death') + '</b> that counted: ' + esc(cnt.map(whyD).join(', ')) + (sv.deaths > cnt.length ? '<span class="sub"> · ' + (sv.deaths - cnt.length) + ' more not on you (too fast, a mass death, or the raid\'s mistake)</span>' : '') : sv.deaths ? 'No deaths that counted<span class="sub"> · ' + plural(sv.deaths, 'death') + ' too fast, a mass death or the raid\'s mistake</span>' : 'Stayed alive',
+      fix: cnt.length ? { t: ownAll ? 'Avoid what killed you' : 'Stay alive', x: (cnt.length === 1 ? 'One death was on you' : cnt.length + ' deaths were on you') + (ownAll ? ', from your own mistake' : '') + '. ' + cnt.map((y) => capS(whyD(y)) + '.').join(' ') + (deathVerdict(r, cnt[0].d).fix ? ' Next time: ' + deathVerdict(r, cnt[0].d).fix : '') + ' A death costs the raid your damage or healing for the rest of the pull.' } : null }); }
   add('alive', { k: 'dready', label: 'Died with a defensive still ready', sc: Math.max(0, 100 - 40 * sv.defReady), w: 35, num: sv.defReady, nt: 'sum', word: 'death',
     html: sv.defReady ? '<b>' + plural(sv.defReady, 'death') + '</b> with a defensive still ready' : 'No deaths with a defensive still ready',
     fix: sv.defReady ? { t: 'Press a defensive before you die', x: 'You died with a defensive still ready. When your health drops and keeps dropping, press it: that is what it\'s for.' } : null });
@@ -36554,8 +36558,8 @@ function cardOf(r, p) {
   add('alive', { k: 'kit', label: 'Healthstone and potion', sc: sv.kit, w: 15, html: (stonesHere ? 'Healthstones ' + sv.stones + ' · ' : '') + 'health potions ' + sv.hpots + (sv.kitReady ? '<span class="sub">, and one was still unused at a death</span>' : ''),
     fix: sv.kit < 85 ? { t: 'Use your ' + (stonesHere ? 'Healthstone and ' : '') + 'health potion', x: (sv.kitReady ? 'You sat low for a few seconds before dying, with one still unused.' : 'You stayed low with one unused.') + ' They\'re free healing: when you sit under 30%, use one before the next hit.' } : null });
   if (role === 'tank' && sv.cds.length) {
-    const sc = 100 * clamp01(sv.cdUsed / sv.cdPoss / 0.8), worst = sv.cds.slice().sort((a, b) => a.used / a.poss - b.used / b.poss)[0];
-    add('alive', { k: 'tcd', label: 'Big defensives', sc, w: 35, num: 100 * sv.cdUsed / sv.cdPoss, unit: '% of possible uses', html: 'Big defensives: <b>' + sv.cdUsed + ' of ' + sv.cdPoss + '</b> possible uses' + sv.cds.map((c) => rcSub(c.used / c.poss >= 0.8 ? 'ok' : c.used / c.poss >= 0.5 ? 'warn' : 'bad', spell(c.id, c.name) + ' ' + c.used + ' of ' + c.poss)).join(''),
+    const sc = 100 * clamp01(sv.cdUsed / sv.cdPoss / 0.65) /* (full marks at 65%, the shared survival rule's bar (Oct 23)) */, worst = sv.cds.slice().sort((a, b) => a.used / a.poss - b.used / b.poss)[0];
+    add('alive', { k: 'tcd', label: 'Big defensives', sc, w: 35, num: 100 * sv.cdUsed / sv.cdPoss, unit: '% of possible uses', html: 'Big defensives: <b>' + sv.cdUsed + ' of ' + sv.cdPoss + '</b> possible uses' + sv.cds.map((c) => rcSub(c.used / c.poss >= 0.65 ? 'ok' : c.used / c.poss >= 0.4 ? 'warn' : 'bad', spell(c.id, c.name) + ' ' + c.used + ' of ' + c.poss)).join(''),
       fix: sc < 85 ? { t: 'Use ' + worst.name + ' more often', x: 'You used ' + worst.name + ' ' + worst.used + ' of ' + worst.poss + ' possible times. Tanks should cycle their big defensives through the fight, not save them.' } : null });
   } else if (role !== 'tank') {
     const pressed = (p.defs || []).map((d) => [d, one(d.uses.filter((u) => u <= until)).length]).filter(([, n]) => n);
@@ -36579,15 +36583,17 @@ function cardOf(r, p) {
   const kd = keptDeaths(r), mass = (t) => kd.filter((x) => Math.abs(x.t - t) <= 3).length >= 3, myEnd = Math.min(until, ...kd.filter((x) => x.guid === p.guid).map((x) => x.t - 2));
   const danger = (() => { const l = []; for (const q of r.players.values()) { if (!q.name || q.guid === p.guid || !q.role) continue;
       for (const c of q.closeCalls || []) if (c.judged !== false && c.tl <= myEnd) l.push({ t: c.t, a: c.t - 6, b: c.tl + 3, who: q.name, txt: q.name + ' dropped to ' + Math.max(1, Math.round(100 * c.low)) + '% at ' + T(c.tl) });
-      for (const d of kd) if (d.guid === q.guid && d.react !== false && d.t <= myEnd && !mass(d.t)) l.push({ t: d.t - Math.min(d.window || 3, 8), a: d.t - 10, b: d.t, who: q.name, txt: q.name + ' died at ' + T(d.t) + (d.story ? ' (' + d.story.replace(/ \(.*$/, '') + ')' : ''), death: true }); }
+      // (a death is a moment only when an external could have been seen coming (Oct 23, your ask "review fair grading on external usage"):
+      // it counts by the site's death rule, it wasn't too fast or a mass death, and they sat at or under 35% for 2+ seconds first)
+      for (const d of kd) if (d.guid === q.guid && d.t <= myEnd && !mass(d.t) && (() => { const v = deathVerdict(r, d); return v.counts && !v.fast && v.why !== 'mass' && (d.lowFor || 0) >= 2; })()) l.push({ t: d.t - Math.min(d.window || 3, 8), a: d.t - 10, b: d.t, who: q.name, txt: q.name + ' died at ' + T(d.t) + (d.story ? ' (' + d.story.replace(/ \(.*$/, '') + ')' : ''), death: true }); }
     return l.sort((u, v) => u.t - v.t).filter((x, i, a) => !a.slice(0, i).some((y) => y.who === x.who && x.t - y.t < 8)); })();
   for (const [n, cd] of RC_EXT[p.specId] || []) {
     const all = one(p.byName.get(n.toLowerCase()) || []), ts = all.filter((t) => t <= until), poss = 1 + Math.floor(until / cd), judged = until >= 60;
-    const ready = (t) => !all.some((u) => u <= t && u > t - cd), need = danger.filter((x) => ready(x.a) || all.some((u) => u >= x.a && u <= x.b)), hit = need.filter((x) => all.some((u) => u >= x.a && u <= x.b)), miss = need.filter((x) => !hit.includes(x));
-    const chances = Math.min(need.length, poss), sc = !judged ? null : !chances ? 100 : Math.max(ts.length ? 50 : 30, Math.round(100 * Math.min(1, hit.length / chances)));
+    const ready = (t) => !all.some((u) => u <= t && u > t - cd), need = danger.filter((x) => ready(x.a) || all.some((u) => u >= x.a && u <= x.b)), hit = need.filter((x) => all.some((u) => u >= x.a && u <= x.b)), miss = need.filter((x) => !hit.includes(x) && x.death); /* (a close call they lived through earns credit when answered, but never costs points: they lived (Oct 23)) */
+    const chances = Math.min(hit.length + miss.length, poss), sc = !judged ? null : !chances ? 100 : Math.max(ts.length ? 50 : 30, Math.round(100 * Math.min(1, hit.length / chances)));
     const id = (p.castAb.get(n) || {}).id || sidOf(n);
     add('kit', { k: 'ext', label: n, sc, w: judged ? (chances ? 15 : 5) : 0, num: hit.length, den: chances || null, nt: 'frac', word: 'moments someone needed it',
-      html: spell(id, n) + ': ' + (!need.length ? (ts.length ? 'pressed at ' + ts.map(T).join(', ') : 'held') + '<span class="sub"> · nobody was in real danger while it was ready, so holding it was fine</span>' : '<b>' + hit.length + ' of ' + need.length + '</b> moments someone needed it' + (miss.length ? rcSub('warn', 'Ready while ' + miss.slice(0, 3).map((x) => x.txt).join(', ')) : '')),
+      html: spell(id, n) + ': ' + (!(hit.length + miss.length) ? (ts.length ? 'pressed at ' + ts.map(T).join(', ') : 'held') + '<span class="sub"> · nobody was in real danger while it was ready, so holding it was fine</span>' : '<b>' + hit.length + ' of ' + (hit.length + miss.length) + '</b> moments someone needed it' + (miss.length ? rcSub('warn', 'Ready while ' + miss.slice(0, 3).map((x) => x.txt).join(', ')) : '')),
       fix: judged && miss.length && sc < 90 ? { t: 'Save someone with ' + n, x: n + ' was ready while ' + andList(miss.slice(0, 3).map((x) => x.txt)) + '. Put it on whoever is sliding toward death or about to take a big hit: one well-timed external is a life, and a life keeps the pull going.' } : null });
   }
   const disp = new Set((p.dispL || []).filter((d) => d.t <= until).map((d) => String(d.on || '') + '|' + d.t.toFixed(1))).size;
