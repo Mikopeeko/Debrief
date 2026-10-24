@@ -35,6 +35,18 @@ in takes the jobs of whoever sits (same role first), saved as a plan for the new
 to date" says who took what (and any cooldown the newcomer can't press). A 20-player boss waits until it has 20 again, so a swap
 done in two taps loses nothing. A flexible boss carries from the original plan each time. One carried copy per original.
 
+## After the full pass (Oct 24, the user's "do 1 to 5")
+- **Tanks and healers:** each boss needs the tanks the fastest kills bring (usually 2) and at most one healer fewer than they
+  bring (`pnRoles` in ndz-night.js). Short shows on Tonight's row ("⚠ only 1 tank") and in things to fix ("Short of tanks on …").
+  A tank who sits hands their jobs only to a tank; otherwise the jobs stay empty and "Plans kept up to date" says so.
+- **Show me how** on a boss page runs Plan's own six tips (`PLAN_TIPS` in ndz-tonight.js): the old ones only ran with a log open,
+  so nothing happened on Plan, and they described buttons that are gone.
+- **Paste a note:** a note whose first line names its boss, with nothing to flag, goes straight to Ready to save.
+- **Someone out** (or taken off the team): the message has **✨ Fill them** (fills every boss that's now short).
+- **✨ Make it for me** with nothing to change says "Already up to date" (no Undo); **Cancel / Save on + New team** comes back to
+  Tonight.
+- Checked the ?plan link: it does open Plan on the practice link and for you on the site.
+
 ## The boss page
 - ← Tonight, the banner: the plan's name and **⇄ Other plans** (this boss's saved plans: open, delete, make a new one).
 - The ready check (ring, ticks) and the four buttons, the same names everywhere:
