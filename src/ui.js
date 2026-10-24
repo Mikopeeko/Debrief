@@ -1805,6 +1805,7 @@ const PATCH_NOTES = [
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
     'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
   ], f: [
+    'Debrief in game: the settings preview now shows every Rotation tips count from 1 to 8 (its sample pull only had 4), and How many says a pull with fewer shows all it has',
     'Debriefing, All pulls: the top box says What wiped us again (for a little while it said Big mistakes).',
     'Debrief in game: the Expand button on the card opens the big window again',
     'Debriefing, All pulls: a mistake kind that had a tank\'s name in it reads "someone\'s frontal", not "\'s frontal".',
