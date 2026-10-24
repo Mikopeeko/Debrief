@@ -109,7 +109,7 @@ local function decode(code)
     elseif t == "R" then add(m.raid.bad, { g(2), g(3), g(4), g(5) })
     elseif t == "D" then add(m.raid.died, { g(2), g(3), g(4), g(5), g(6) })
     elseif t == "M" then add(m.raid.mech, { g(2), g(3), g(4), g(5) }) -- (how each boss mechanic went)
-    elseif t == "V" then m.addonV = g(2) -- (the addon version the PC app that made this carries)
+    elseif t == "V" then m.addonV = g(2); m.appV = g(3) -- (the addon version the PC app that made this carries, and the app's own version)
     -- (Debriefing's coach box, per wipe-filter version)
     elseif t == "CH" then for _, c in ipairs(coaches()) do c.head = g(2) end
     elseif t == "CM" then for _, c in ipairs(coaches()) do c.more = tonumber(g(2)) end -- (smaller mistakes not listed)
@@ -1253,10 +1253,15 @@ end
 
 -- ---------- keeping pulls, showing the card ----------
 local function sameAs(a, b) return a.h.boss == b.h.boss and a.h.pull == b.h.pull and a.h.dur == b.h.dur end
+-- (which copy of the same pull is newer: the addon version its app carried, then the app's own version; a copy without them is oldest)
+local function verN(v) local a, b, c = tostring(v or ""):match("(%d+)%.(%d+)%.?(%d*)"); return a and (tonumber(a) * 1000000 + tonumber(b) * 1000 + (tonumber(c) or 0)) or 0 end
+local function newerCopy(m, q) local a, b = verN(m.addonV), verN(q.addonV); if a ~= b then return a > b end; return verN(m.appV) > verN(q.appV) end
 local function addPull(m, own)
   for i, q in ipairs(DB.pulls) do if sameAs(q, m) then
     -- (your own PC app's copy wins over one a guildmate's app sent first: theirs may be an older version, without the newest lines)
     if own and not q.own then m.t = q.t; m.own = true; DB.pulls[i] = m; DB.cur = i; wipe(EXPANDED); return false, true end
+    -- (your app saved it again after an update (Oct 24): the newer copy wins, in the same place, so old pulls get the new look)
+    if own and newerCopy(m, q) then m.t = q.t; m.own = true; DB.pulls[i] = m; DB.cur = i; wipe(EXPANDED); return false, true end
     DB.cur = i; return false
   end end
   m.own = own or nil

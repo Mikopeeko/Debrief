@@ -305,7 +305,7 @@ async function openLog(i) {
   await engineReady.catch((e) => stat(e.message, 'err'));
   L.ix = W.E.createIndexer();
   await scanMore(true);
-  if (L.live) { stat('Watching your combat log', 'live'); if (!L.waiting) waitLoop(); }
+  if (L.live) { stat('Watching your combat log', 'live'); if (!L.waiting) waitLoop(); if (L.fresh) resaveOld(); }
   else stat('Older log: not watching it', '');
   renderMain(); fillNight();
   try { const a = await j('/addon'); addonLine(a.msg); } catch (e) { /* older helper */ }
@@ -410,7 +410,7 @@ window.DBF_POPPULL = async (sb) => {
       const rep = await analyze(b); if (L.name && !nightOf(L.name)[b.startByte]) saveNight(b, rep, null); // (an earlier boss's pull: now its % and coach line are known)
       // (the full recap, as /recap draws it (Oct 24): the pull before it on this boss is read first, for "than last pull")
       const same = L.items.filter((x) => x.endByte && x.id === b.id && x.diffId === b.diffId), k = same.indexOf(b);
-      if (k > 0 && !L.reps.has(same[k - 1].startByte)) { try { await analyze(same[k - 1]); } catch (e) { /* skip */ } }
+      if (k > 0 && !(L.reps.get(same[k - 1].startByte) || {}).rep) { try { await analyze(same[k - 1]); } catch (e) { /* skip */ } }
       const model = RECAP.build(b, rep, same.slice(0, k + 1));
       const wc = model.wc || null, cutN = wc ? 1 : 0, cut = cutN ? popCut() : null;
       const pack = null; /* (the card replaces the website's box in the pop-up) */
@@ -677,6 +677,49 @@ function withSpecs(text, E) {
   return add.length ? add.join('\n') + '\n' + text : text;
 }
 
+// ---------- after an update: tonight's pulls in WoW, saved again the new way ----------
+// (the user, Oct 24: "make the app re-save tonight's pulls by itself after each update so old pulls get the new look": each pull in WoW
+// remembers which version saved it; one saved by an older version is read again quietly, one at a time, never during a pull, with no
+// pop-up and nothing copied; /reload in WoW then shows them the new way)
+const SAVED = store.get('dbf-saved-ver', {});
+function markSaved(key) {
+  if (!RECAP.appV) return; delete SAVED[key]; SAVED[key] = RECAP.appV;
+  const ks = Object.keys(SAVED); for (const k of ks.slice(0, Math.max(0, ks.length - 80))) delete SAVED[k];
+  store.set('dbf-saved-ver', SAVED);
+}
+async function resaveOld() {
+  if (resaveOld.on) return; resaveOld.on = true;
+  try {
+    if (!RECAP.appV) { try { const x = await j('/app-version'); RECAP.appV = x.version || ''; } catch (e) { return; } }
+    const name = L.name, v = RECAP.appV, list = L.items.filter((b) => b.endByte && b.id !== DUMMY).slice(-30).filter((b) => SAVED[name + ':' + b.startByte] !== v); /* (only the newest 30: WoW keeps 30) */
+    if (!v || !list.length) return;
+    const mine = new Set(), hasRep = (s) => !!(L.reps.get(s) || {}).rep; let n = 0, ok = 0;
+    for (const b of list) {
+      // (a pull is on: wait for it to end; a pull's own recap always goes first)
+      while (name === L.name && L.items.length && !L.items[L.items.length - 1].endByte) await new Promise((r) => setTimeout(r, 5000));
+      if (name !== L.name) return;
+      const key = name + ':' + b.startByte; n++;
+      if (SAVED[key] === v) { ok++; continue; } // (sent again by hand meanwhile)
+      L.busy = L.busy.then(async () => {
+        if (name !== L.name) return;
+        if (!L.reading) stat('Updating your saved pulls for WoW: ' + n + ' of ' + list.length + '…', 'busy');
+        const same = L.items.filter((x) => x.endByte && x.id === b.id && x.diffId === b.diffId), k = same.indexOf(b);
+        const pre = new Set([...L.reps.keys()].filter(hasRep));
+        if (k > 0) { try { await analyze(same[k - 1]); } catch (e) { /* skip */ } }
+        const rep = await analyze(b);
+        const code = RECAP.encode(RECAP.build(b, rep, same.slice(0, k + 1)));
+        await j('/addonpull', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key, code }) });
+        markSaved(key); ok++;
+        // (memory: of the reads this added, only this pull's stays, for the next pull on the same boss)
+        for (const s of L.reps.keys()) if (!pre.has(s) && hasRep(s)) mine.add(s);
+        for (const s of [...mine]) if (s !== b.startByte) { L.reps.get(s).rep = null; mine.delete(s); }
+      }).catch((e) => console.warn('re-save', e));
+      await L.busy;
+    }
+    if (name === L.name && !L.reading && ok) stat('Your saved pulls are up to date: type /reload in WoW', L.live ? 'live' : '');
+  } finally { resaveOld.on = false; }
+}
+
 // ---------- the recap: what goes to the game ----------
 const RECAP = window.DBF_RECAP = {};
 async function send(b, byHand) {
@@ -687,14 +730,14 @@ async function send(b, byHand) {
       await engineReady;
       // (the pull before it on the same boss, read first, so "vs last pull" works)
       const same = L.items.filter((x) => x.endByte && x.id === b.id && x.diffId === b.diffId), k = same.indexOf(b);
-      if (k > 0 && !L.reps.has(same[k - 1].startByte)) { try { await analyze(same[k - 1]); } catch (e) { /* skip */ } }
+      if (k > 0 && !(L.reps.get(same[k - 1].startByte) || {}).rep) { try { await analyze(same[k - 1]); } catch (e) { /* skip */ } }
       const rep = await analyze(b); progress(0.8);
       const model = RECAP.build(b, rep, same.slice(0, k + 1));
       const code = RECAP.encode(model);
       $('codeOut').value = code; $('copyAgain').disabled = false;
       RECAP.lastModel = model; renderPreview(model);
       // (every pull's code goes into the addon's folder too, so /reload in WoW brings it in as a saved pull (Oct 22))
-      if (b.id !== DUMMY) j('/addonpull', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: L.name + ':' + b.startByte, code }) }).catch(() => {});
+      if (b.id !== DUMMY) { j('/addonpull', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: L.name + ':' + b.startByte, code }) }).catch(() => {}); markSaved(L.name + ':' + b.startByte); }
       // (copied only when you ask: Send on a pull, or Copy every pull for my raid; otherwise your clipboard is left alone)
       const share = !!byHand, ok = share ? await clip(code) : false; $('copyAgain').hidden = !share || ok;
       L.reading = null; L.lastSent = { sb: b.startByte, ok: ok || !share, shared: share, at: Date.now() }; saveNight(b, rep, model.coach && model.coach.raid);
@@ -756,7 +799,7 @@ RECAP.encode = (m) => {
   }
   if (m.wc) rec.push(['WC', m.wc.at, m.wc.txt]); // (the wipe call: when and why (Oct 23))
   if (m.grade) rec.push(['RG', m.grade.letter, m.grade.score, m.grade.cats]); // (the Report card grade, for the card's chip (Oct 22))
-  if (RECAP.addonV) rec.push(['V', RECAP.addonV]); // (the addon version this app carries: an older addon then says /reload, or where to get the new one)
+  if (RECAP.addonV) rec.push(['V', RECAP.addonV, RECAP.appV || '']); /* (and the app version: a newer copy of the same pull wins in WoW (Oct 24)) */ // (the addon version this app carries: an older addon then says /reload, or where to get the new one)
   rec.push(['Z']);
   return rec.map((r) => r.map(clean).join('~')).join('^');
 };
@@ -885,7 +928,7 @@ RECAP.renderPreview = renderPreview;
 // recap builder lives below (filled in from the engine's results)
 RECAP.build = (b, rep, same) => window.DBF_BUILD(b, rep, same, W, L);
 
-j('/app-version').then((x) => { RECAP.addonV = x.addon || ''; }).catch(() => {});
+j('/app-version').then((x) => { RECAP.addonV = x.addon || ''; RECAP.appV = RECAP.appV || x.version || ''; }).catch(() => {});
 stat('Loading Debrief…', 'busy'); renderMain();
 engineReady.then(() => loadLogs()).catch((e) => stat(e.message, 'err'));
 })();

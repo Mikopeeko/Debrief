@@ -89,7 +89,8 @@ namespace Debrief {
         var file = Path.Combine(here, "addon-pulls.txt"); var list = new List<string[]>();
         try { foreach (var ln in File.ReadAllLines(file, Encoding.UTF8)) { var i = ln.IndexOf('\t'); if (i > 0) list.Add(new[] { ln.Substring(0, i), ln.Substring(i + 1) }); } } catch { }
         if (key != null) {
-          list.RemoveAll(x => x[0] == key); list.Add(new[] { key, code }); while (list.Count > 30) list.RemoveAt(0);
+          // (a pull saved again, say after an update, keeps its place; a new one goes last)
+          var at = list.FindIndex(x => x[0] == key); if (at >= 0) list[at] = new[] { key, code }; else list.Add(new[] { key, code }); while (list.Count > 30) list.RemoveAt(0);
           try { File.WriteAllLines(file, list.Select(x => x[0] + "\t" + x[1]), new UTF8Encoding(false)); } catch { }
         }
         if (list.Count == 0) return;
