@@ -1767,6 +1767,7 @@ const PATCH_NOTES = [
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
     'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
   ], f: [
+    'Graphs: with Healing + prevented on, a player\'s spell list now shows what their raid cooldowns and defensives prevented too, and spell lists on All pulls no longer squeeze their bars.',
     'Debriefing: Pulls to the kill now counts your guild\'s whole history from Warcraft Logs, first pull to first kill, on any device and on farm nights.',
   ] },
   { d: '2026-10-23', h: [
