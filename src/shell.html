@@ -5492,7 +5492,41 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .spc-chd > summary > .spc-chx { font: 500 13px var(--body); color: var(--muted); }
 .spc-chd > summary > .spc-cht { display: inline-flex; align-items: center; gap: 6px; padding: 4px 2px 4px 8px; border: 0; border-radius: 8px; font: 600 13px var(--body); color: var(--muted); }
 .spc-chd > summary > .spc-cht { margin-left: auto; } .spc-chd > summary > .spc-chx + .spc-cht { margin-left: 4px; } .spc-chd > summary:hover > .spc-cht { color: var(--text); } .spc-chv { font-style: normal; display: inline-block; transition: transform .15s; } .spc-chd[open] > summary .spc-chv { transform: rotate(90deg); }
-.spc-mrb { font-size: 12.5px; } .trg-x { font-size: 12px; } /* (the Saves tile's "your" tag was 11px) */
+.spc-mrb { font-size: 12.5px; }
+/* Rotation checklist (Oct 23, your pick: "more like WoWAnalyzer"): rule rows with a bar and the top players' line, What to fix, your numbers */
+.rck, .rck-fix, .rck-nums { margin: 16px 0 0; } .rck-h { margin: 0 0 10px; font: 600 18px var(--head); color: var(--text); } .rck-h .sub { margin-left: 8px; font: 400 13px var(--body); color: var(--muted); }
+.rck-lab { display: flex; align-items: center; gap: 8px; margin: 16px 0 8px; font: 700 12px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.rck-pl { padding: 1px 8px; border-radius: 999px; font: 600 12px var(--body); letter-spacing: 0; text-transform: none; } .rck-pl.ok { background: rgba(69,193,92,.12); color: #7ee08f; } .rck-pl.warn { background: rgba(232,162,58,.12); color: var(--warn); } .rck-pl.bad { background: rgba(229,83,75,.12); color: #ff8f87; }
+.rck-rs { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); overflow: hidden; }
+.rck-r + .rck-r { border-top: 1px solid var(--line); }
+.rck-r > summary { display: grid; grid-template-columns: 28px minmax(150px, 1.3fr) minmax(120px, 2fr) 104px; gap: 12px; align-items: center; padding: 10px 16px; cursor: pointer; list-style: none; }
+.rck-r > summary::-webkit-details-marker { display: none; } .rck-r > summary:hover { background: rgba(255,255,255,.025); } .rck-r[open] > summary { background: rgba(255,255,255,.03); }
+.rck-r .spc-ri img, .rck-r .spc-ri svg, .rck-t .spc-ri img, .rck-t .spc-ri svg { width: 24px; height: 24px; }
+.rck-n { min-width: 0; } .rck-n > b { display: block; font: 600 15px var(--body); color: var(--text); } .rck-n > span { display: block; font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rck-bar { position: relative; height: 10px; border-radius: 999px; background: rgba(255,255,255,.06); } .rck-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: #5b6170; }
+.rck-bar u { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; border-radius: 1px; background: #fff; opacity: .75; } .rck-nb { background: none; }
+.rck-r.ok .rck-bar i { background: var(--good); } .rck-r.warn .rck-bar i { background: var(--warn); } .rck-r.bad .rck-bar i { background: #e5534b; }
+.rck-v { text-align: right; } .rck-v b { display: block; font: 700 18px var(--head); color: var(--muted); } .rck-v small { display: block; font: 500 12px var(--body); color: var(--muted); }
+.rck-r.ok .rck-v b { color: #7ee08f; } .rck-r.warn .rck-v b { color: var(--warn); } .rck-r.bad .rck-v b { color: #ff8f87; }
+.rck-b { padding: 4px 16px 14px 56px; } .rck-b .spc-rs { margin: 0 0 6px; font-size: 14px; } .rck-tip { margin: 6px 0; font-size: 14px; color: var(--text); }
+.rck-cmp { display: grid; grid-template-columns: 1.15fr 1fr; gap: 20px; align-items: start; }
+.rck-fix { padding: 16px 20px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line2); border-left: 4px solid var(--gold); } .rck-fix .rck-h { color: var(--text); }
+.rck-lead { margin: 0 0 8px; font-size: 15px; line-height: 1.5; } .rck-focus { margin: 0 0 12px; padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(230,183,80,.35); background: linear-gradient(90deg, rgba(230,183,80,.16), rgba(230,183,80,.05)); font-size: 14px; }
+.rck-sgs { display: grid; gap: 8px; } .rck-sg { display: grid; grid-template-columns: 24px 1fr auto; gap: 12px; align-items: start; padding: 12px 14px; border-radius: 10px; background: rgba(255,255,255,.02); border: 1px solid var(--line2); border-left: 3px solid var(--warn); }
+.rck-sg.bad { border-left-color: #e5534b; } .rck-sg.gap { border-left-color: var(--line2); } .rck-sg img, .rck-sg svg { width: 24px; height: 24px; border-radius: 6px; }
+.rck-sgt b { font: 700 15px var(--body); } .rck-sgt p { margin: 4px 0 0; font-size: 14px; line-height: 1.45; color: var(--muted); } .rck-how { color: var(--text) !important; }
+.rck-f1 { margin-left: 6px; padding: 1px 8px; border-radius: 999px; font: 600 12px var(--body); background: rgba(232,162,58,.12); color: var(--warn); } .rck-f1.gap { background: rgba(255,255,255,.06); color: var(--muted); }
+.rck-vs { text-align: right; font: 700 16px var(--head); color: var(--warn); white-space: nowrap; } .rck-sg.bad .rck-vs { color: #ff8f87; } .rck-sg.gap .rck-vs { color: var(--muted); } .rck-vs small { display: block; font: 500 12px var(--body); color: var(--muted); }
+.rck-good { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; } .rck-good span { padding: 3px 9px; border-radius: 999px; font-size: 12.5px; background: rgba(95,211,95,.1); border: 1px solid rgba(95,211,95,.28); color: #a8eaa8; }
+.rck-more { margin-top: 10px; font-size: 14px; } .rck-more summary { cursor: pointer; color: var(--gold); font-weight: 600; }
+.rck-nums .rck-h { margin-top: 0; } .rck-ts { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+.rck-t { border-radius: 10px; background: var(--panel); border: 1px solid var(--line); } .rck-t[open] { grid-column: 1 / -1; }
+.rck-t > summary { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; cursor: pointer; list-style: none; } .rck-t > summary::-webkit-details-marker { display: none; }
+.rck-tl { display: flex; align-items: center; gap: 8px; font: 700 12px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); } .rck-t > summary > b { font: 700 24px var(--head); color: var(--text); } .rck-tx { font-size: 13px; color: var(--muted); }
+.rck-t .rck-b { padding: 0 16px 14px; }
+.rck-n .icw, .rck-sg .icw, .rck-good .icw, .rck-lead .icw, .rck-focus .icw, .rck-tx .icw, .rck-tl > span .icw, .rck-v .icw { display: none !important; } /* (one icon a row, the row's own: names in the text stay plain (your note, Oct 23: too many icons)) */
+@media (max-width: 860px) { .rck-cmp { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .rck-r > summary { grid-template-columns: 24px 1fr 84px; padding: 10px 12px; } .rck-r > summary > .rck-bar { grid-column: 2 / 4; grid-row: 2; } .rck-b { padding: 4px 12px 12px; } .rck-fix { padding: 14px 14px; } .rck-ts { grid-template-columns: 1fr 1fr; } } .trg-x { font-size: 12px; } /* (the Saves tile's "your" tag was 11px) */
 @media (max-width: 760px) { .spc-chd > summary > .spc-cht, .spc-chd > summary > .spc-chx + .spc-cht { order: 5; margin-left: auto; } .spc-chd > summary > .spc-chx { order: 6; } } /* (phone: Show stays on the title line, the count under it) */
 details.spc-tl > summary { position: relative; padding-right: 30px; } details.spc-tl > summary::after { content: '▾'; position: absolute; right: 12px; top: 10px; color: var(--faint); font-size: 13px; }
 details.spc-tl[open] > summary::after { content: '▴'; color: var(--gold); } details.spc-tl > summary:hover::after { color: var(--gold); }

@@ -1756,6 +1756,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-23', h: [
+    { t: 'Rotation as a checklist', d: 'The Rotation tab reads like a checklist now: every rule is one row with a bar, your number and a line for what top players do, green, yellow or red. Under it, What to fix lists your fixes with why and how, and your other numbers sit in tiles. Click any row for the full detail.' },
     { t: 'Your pace to the kill', d: 'On Debriefing, Pulls on this boss now counts every night and says when the kill should come at your pace. Tap it for a chart of every pull, the typical guild before and after the 12.1.5 nerfs, and where those nerfs landed. It updates itself as more guilds kill the boss.' },
     { t: 'Your numbers against top guilds', d: 'On the Coiled Altar, each pull now shows Raid DPS, DTPS (damage taken per second) and HPS next to what the 20 fastest kills did in the same phases, coloured like a Warcraft Logs parse (grey, green, blue, purple, orange) with a plain line saying where you stand.' },
     { t: 'The wipe is called for you', d: 'No more "stop at the 2nd death". Debrief now calls the wipe at the moment no raid has ever come back from: more people dead than any kill of that boss survived at that point (battle rezzes counted), the damage check missed, or half the raid dead. Everything before it counts, so the deaths and mistakes that lost the pull are graded. Tested on 760 kills: it never calls a wipe on a pull that was won.' },
@@ -18173,8 +18174,31 @@ function specPage(o) {
     : (o.talents && o.talents.length ? '<div class="spc-build"><div class="spc-bh"><span class="sub">Read from ' + (one ? 'this pull' : 'these pulls') + '</span><div class="spc-tals">' + o.talents.map((t) => '<span class="spc-t">' + spellIcon(0, (o.talIc || {})[t] || t) + esc(t) + '</span>').join('') + '</div></div></div>' : '');
   // (the page: the summary; your talents, open unless you fold them; the pull at a glance (one pull's cooldowns over time, or the night's pulls); the chapters;
   // the guides' credit)
-  let coach = ''; if (SPC_DRAW) try { coach = spcCoach({ checks, focus, good, TOPB, score, outR, topOut, UN, one, kill: !!it.kill, top: o.top, numV, LOWB, WT, reps: per.map((x) => x.r), name: P0.name }).replace(/\s*\((?:both|your) guides?[^)]*\)|\s*\([^)]*\b(?:Wowhead|Icy Veins)\b[^)]*\)/gi, ''); } catch (e) { coach = ''; }
-  return { score, checks, html: hero + coach + build + (glIn ? '' : glance) + body + '<p class="sub spc-src">' + esc(o.src || '') + '</p>' };
+  // (the checklist (your pick, Oct 23, "more like WoWAnalyzer"): every chapter's graded lines as rule rows, each with a bar, your number and a white
+  // line for the top players; a row opens in place to everything its tile showed (the sentence, How it's judged, the picture, the moments). A block's
+  // own details (burst cards, big moments) are a row of their own. Lines that aren't graded become number tiles. Nothing is dropped)
+  const t0 = (x) => String(x == null ? '' : x).replace(/<[^>]+>/g, '').trim(), ckW = (x) => { const m = t0(x).match(/^(\d+) wasted$|^All spent$/); return m ? (m[1] ? +m[1] : 0) : null; };
+  const ckShort = (c) => { const f = (String(c.sub || '').match(/^[^.!?]*[.!?]/) || [''])[0].trim(); return f.length <= 90 ? f : ''; };
+  const ckBar = (c) => { const tb = TOPB && TOPB[c.k] != null ? TOPB[c.k] : null, lo = cLow.test(c.k), a = cNum(c.v), b = tb != null ? cNum(tb) : null; let f = null, t = null;
+    if (a != null) { f = lo ? 100 - a : a; t = b != null ? (lo ? 100 - b : b) : null; }
+    else { const u = ckW(c.v), w = tb != null ? ckW(tb) : null; if (u != null) { const S0 = Math.max(u, w || 0, 1) * 2; f = 100 * (1 - u / S0); t = w != null ? 100 * (1 - w / S0) : null; } }
+    if (f == null) f = c.st === 'ok' ? 100 : c.st === 'warn' ? 60 : 30;
+    return '<span class="rck-bar"><i style="width:' + Math.max(2, Math.min(100, f)).toFixed(1) + '%"></i>' + (t != null ? '<u style="left:' + Math.max(0, Math.min(100, t)).toFixed(1) + '%"></u>' : '') + '</span>'; };
+  const ckTop = (c) => (TOPB && TOPB[c.k] != null && (one || TOPP.has(c.k)) ? t0(topCap(TOPB[c.k])) : '');
+  const ckBody = (c) => { const hw = spcHw(c.k, c.how); return '<div class="rck-b"><p class="spc-rs">' + esc(c.sub) + hw[0] + '</p>' + hw[1] + (c.tip && c.st !== 'ok' && c.st !== 'na' ? '<p class="rck-tip"><b>Next time:</b> ' + esc(c.tip) + '</p>' : '') + viz(c) + (c.mo && c.mo.length ? momT(c, 8) : '') + '</div>'; };
+  const ckRow = (c) => { const tb = ckTop(c); return '<details class="rck-r ' + c.st + '" id="spc-r-' + slug(c.k) + '"><summary>' + icB(c.ic) + '<span class="rck-n no-ic"><b>' + esc(c.label) + '</b>' + (ckShort(c) ? '<span>' + esc(ckShort(c)) + '</span>' : '') + '</span>' + ckBar(c) +
+    '<span class="rck-v"><b>' + c.v + '</b>' + (tb ? '<small>top ' + esc(tb) + '</small>' : '') + '</span></summary>' + ckBody(c) + '</details>'; };
+  const ckCh = []; for (const g of groups) { const n = g.ch || 'More'; let x = ckCh.find((y) => y.n === n); if (!x) ckCh.push(x = { n, l: [], det: [] }); x.l.push(...g.l.filter((c) => c.st !== 'na')); const inf = MERGE[g.t]; if (inf && inf.det) x.det.push([g.t, inf.det, inf.ic || (g.l[0] && g.l[0].ic) || g.t]); }
+  const ckLab = (x) => { const w = x.l.filter((c) => c.st === 'warn' || c.st === 'bad').length, b = x.l.some((c) => c.st === 'bad'); return '<div class="rck-lab">' + esc(x.n) + (x.l.length ? ' <span class="rck-pl ' + (b ? 'bad' : w ? 'warn' : 'ok') + '">' + (w ? w + ' to tidy' : 'all done right') + '</span>' : '') + '</div>'; };
+  const ckDet = ([t, hh, ic]) => '<details class="rck-r na rck-x"><summary>' + icB(ic) + '<span class="rck-n no-ic"><b>' + esc(t) + '</b><span>Open for the details</span></span><span class="rck-bar rck-nb"></span><span class="rck-v"><b>›</b></span></summary><div class="rck-b">' + hh + '</div></details>';
+  const checklist = '<section class="rck"><h3 class="rck-h">Checklist <span class="sub">green done right, yellow some mistakes, red failed. The white line is the top players.</span></h3>' +
+    ckCh.filter((x) => x.l.length || x.det.length).map((x) => ckLab(x) + '<div class="rck-rs">' + x.l.map(ckRow).join('') + x.det.map(ckDet).join('') + '</div>').join('') + '</section>';
+  const ckNa = checks.filter((c) => c.st === 'na');
+  const ckNums = ckNa.length ? '<section class="rck-nums"><h3 class="rck-h">Your numbers <span class="sub">not graded</span></h3><div class="rck-ts">' + ckNa.map((c) => '<details class="rck-t" id="spc-r-' + slug(c.k) + '"><summary><span class="rck-tl no-ic">' + icB(c.ic) + '<span>' + esc(c.label) + '</span></span><b>' + c.v + '</b>' + (ckShort(c) ? '<span class="rck-tx">' + esc(ckShort(c)) + '</span>' : '') + '</summary>' + ckBody(c) + '</details>').join('') + '</div></section>' : '';
+  chN = 0; const ckTail = (glance ? chSec(o.tl ? 'Your pull at a glance' : 'Pull by pull', glance, [], o.tl ? 'every button you pressed, over the pull' : 'every pull, side by side') : '') + (gx ? chSec('Gear and extras', gx, []) : '');
+  let fix = ''; if (SPC_DRAW) try { fix = spcCoach({ fix: true, checks, focus, good, TOPB, score, outR, topOut, UN, one, kill: !!it.kill, top: o.top, numV, LOWB, WT, reps: per.map((x) => x.r), name: P0.name }).replace(/\s*\((?:both|your) guides?[^)]*\)|\s*\([^)]*\b(?:Wowhead|Icy Veins)\b[^)]*\)/gi, ''); } catch (e) { fix = ''; }
+  let coach = ''; if (SPC_DRAW && false) try { coach = spcCoach({ checks, focus, good, TOPB, score, outR, topOut, UN, one, kill: !!it.kill, top: o.top, numV, LOWB, WT, reps: per.map((x) => x.r), name: P0.name }).replace(/\s*\((?:both|your) guides?[^)]*\)|\s*\([^)]*\b(?:Wowhead|Icy Veins)\b[^)]*\)/gi, ''); } catch (e) { coach = ''; }
+  return { score, checks, html: hero + build + checklist + (fix || ckNums ? '<div class="rck-cmp">' + fix + ckNums + '</div>' : '') + ckTail + '<p class="sub spc-src">' + esc(o.src || '') + '</p>' };
 }
 // (the coach's note (your call, Oct 22): right under the header, what went right and what went wrong the way a world-first raid leader
 // would say it, each problem with how to fix it, and one thing to focus on next pull. Short first, so it fits a phone screen; "Read the
@@ -18262,6 +18286,16 @@ function spcCoach(d) {
       (why ? '<p class="rcc-y"><b>Why:</b> ' + esc(why + cost) + '</p>' : '<p class="rcc-y"><b>What happened:</b> ' + esc(sent(first(c)) + cost) + '</p>') +
       (tipOf(c) ? '<p class="rcc-hw"><b>How:</b> ' + esc(howTo(tipX(c))) + '</p>' : '') + '</div>'; };
   const chip = ({ c, b }) => { const a = d.numV(c.v), t = d.numV(top[c.k]); return '<span class="rcc-chip" title="' + esc(sent(first(c))) + '">' + esc(c.label) + (b ? ' <i>' + esc(ofPct(txt(c.v), top[c.k]) + (a != null && a === t ? ', same as the top' : ', top ' + txt(top[c.k]))) + '</i>' : '') + '</span>'; };
+  // (the checklist layout (your pick, Oct 23): the coach folded into What to fix. Its opening line first, then each fix as one row with its icon, why,
+  // how and your number against the top players', the costliest first; what you did well as green chips under it. Nothing is said twice)
+  if (d.fix) { const sg = (x, i) => { const c = x.c, tv = top[c.k] != null ? txt(top[c.k]) : '', v0 = txt(c.v), w0 = whyOf(c, 1), why = w0 && !echo(w0, c) ? w0 : sent(first(c)), cost = c.cost >= 20000 ? ' It cost about ' + C(c.cost) + ' ' + UN + '.' : '';
+      return '<div class="rck-sg ' + (x.kd === 'gap' ? 'gap' : c.st === 'bad' ? 'bad' : 'warn') + '">' + spellIcon(0, c.ic) + '<div class="rck-sgt"><b class="no-ic">' + esc(c.label) + (i === 0 ? ' <span class="rck-f1">Fix first</span>' : x.kd === 'gap' ? ' <span class="rck-f1 gap">Polish</span>' : '') + '</b><p>' + esc(why + cost) + '</p>' +
+        (tipOf(c) ? '<p class="rck-how"><b>How:</b> ' + esc(howTo(tipX(c))) + '</p>' : '') + '</div>' + (v0 ? '<div class="rck-vs">' + esc(v0) + (tv ? '<small>top ' + esc(tv) + '</small>' : '') + '</div>' : '') + '</div>'; };
+    return '<section class="rck-fix"><h3 class="rck-h">What to fix</h3><p class="rck-lead"><b>' + esc(head) + '</b>' + esc(outL + close) + '</p>' +
+      (fT ? '<p class="rck-focus"><b>Focus next pull:</b> ' + esc(fT.replace(/\.$/, '')) + '. ' + esc(fS) + '</p>' : '') +
+      (wrong.length ? '<div class="rck-sgs">' + wrong.map(sg).join('') + '</div>' : '<p class="sub">Nothing to fix: every graded line is done right.</p>') +
+      (good.length ? '<div class="rck-good">' + good.slice(0, 4).map(({ c }) => '<span>✓ ' + esc(c.label) + ' ' + esc(txt(c.v)) + '</span>').join('') + '</div>' : '') +
+      (gearL ? '<details class="rck-more"><summary>More from your coach</summary>' + gearL + '</details>' : '') + '</section>'; }
   return '<section class="rcc"><div class="rcc-top"><div><div class="rcc-h"><span class="rcc-q" aria-hidden="true">“</span><h3>Your coach</h3><span class="sub">how to get better, from this ' + of + '</span></div>' +
     '<p class="rcc-lead"><b>' + esc(head) + '</b>' + esc(outL + close) + '</p></div>' + focusB + '</div>' +
     (wrong.length ? '<div class="rcc-cds">' + wrong.map(card).join('') + '</div>' : '') +
