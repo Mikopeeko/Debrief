@@ -11005,7 +11005,7 @@ function oaLayout(v, el) {
   if (!v.querySelector('.nmc')) { const out = document.createElement('div'); out.className = 'brf-keep';
     const its = [...dr.querySelectorAll('.rc-it')], nums = its.find((x) => /^\s*The numbers against the last pull/i.test(x.textContent || '')), top = v.querySelector('.dbr-top'), up = top && top.querySelector('.dbr-up'), dn = top && top.querySelector('.dbr-dn');
     if (up || dn || nums) { const p = document.createElement('div'); p.className = 'panel brf-last'; p.innerHTML = '<h3 class="nh"><span>Against last pull</span></h3>'; [up, dn, nums].forEach((n) => { if (n) p.appendChild(n); }); out.appendChild(p); }
-    v.querySelectorAll('.mcx-tl').forEach((n) => out.appendChild(n));
+    { const ot = v.querySelector('#oaTop'); v.querySelectorAll('.mcx-tl').forEach((tl) => (ot && ot.parentNode === v ? ot.after(tl) : out.appendChild(tl))); } /* (right under the raid lead box: the when of everything it said (your call, Oct 23)) */
     const rcd = [...v.querySelectorAll('details.secd')].find((d) => /^Raid cooldowns/.test(((d.querySelector('summary') || {}).textContent || '').trim())), kitG = v.querySelector('.cch2 .cch-acct3');
     /* (Oct 23, your idea: with a note loaded, this line follows the note's cooldown reminders (on time / late / missed, the note check's own rules);
        without one it stays the big hits and what covered them) */
@@ -11053,7 +11053,7 @@ function oaLayout(v, el) {
      Used tonight all repeat the raid lead box, the boss banner or the pace chart; the guide links don't belong here. What only it had stays
      under the phases: All pulls at a glance in the open, and The numbers folded) */
   if (v.querySelector('.nmc')) { const out = document.createElement('div'); out.className = 'brf-keep';
-    v.querySelectorAll('.mcx-tl').forEach((n) => out.appendChild(n));
+    { const ot = v.querySelector('#oaTop'); v.querySelectorAll('.mcx-tl').forEach((tl) => (ot && ot.parentNode === v ? ot.after(tl) : out.appendChild(tl))); } /* (right under the raid lead box: the when of everything it said (your call, Oct 23)) */
     out.querySelectorAll('.mcx-verdict, .mcx-lead').forEach((n) => n.remove()); try { rateCharts(v, out); } catch (e) { /* (no night charts) */ } try { oaMeters(v, out); } catch (e) { /* (no meters) */ } /* (the phase rows above already say what went wrong most; the score paragraph was jargon) */
     const nums =[...dr.querySelectorAll('.rc-it')].find((x) => /^\s*The numbers/i.test(x.textContent || ''));
     if (nums) { const f = document.createElement('details'); f.className = 'panel secd st-na brf-nums'; f.dataset.k = 'brf-nums'; if (S.openSecs.has('brf-nums')) f.open = true;
