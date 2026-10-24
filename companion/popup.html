@@ -137,6 +137,11 @@ body.isMini { border-color: rgba(230,180,80,.85); box-shadow: inset 0 0 0 1px rg
 .kdt { color: var(--faint); width: 32px; flex: none; } .kda { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .kpl { margin-left: auto; color: var(--faint); font-style: normal; font-weight: 700; }
 .kst { margin: 0 0 6px 40px; color: var(--muted); font-size: 13px; }
 .krdy { color: var(--warn); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.kwz { margin: 6px 0 4px; } .kwz-h { display: block; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 4px; }
+.kwz-w { border-top: 1px solid rgba(255,255,255,.06); padding: 7px 0 6px; } .kwz-t { display: flex; align-items: center; gap: 7px; } .kwz-t .kd { width: 7px; height: 7px; flex: none; }
+.kwz-t small { color: var(--muted); font-size: 12px; } .kwz-v { margin: 3px 0 0 14px; color: var(--muted); font-size: 12px; }
+.kwz-c { margin: 4px 0 0 14px; display: flex; flex-wrap: wrap; gap: 3px 14px; font-size: 12.5px; } .kwz-c .ok { color: #7ee08f; } .kwz-c .no { color: #ff8f87; }
+.kwz-s { margin: 5px 0 0 14px; display: flex; flex-wrap: wrap; gap: 3px; } .kwz-s .ic { width: 19px; height: 19px; }
 </style>
 </head>
 <body>
@@ -217,11 +222,19 @@ function cardView() {
     if (on('rotation')) {
       if (P.rot) {
         // (a drop-down, like the card (Oct 24): closed, the check against the top players; open, why, the squares, Next time, the moments, how it's judged)
+        // (one ramp or burst window (Oct 24): when, how it went, the numbers, the checks as ticks and crosses, the buttons in it or the 20 seconds before)
+        const WST = { ok: 'ok', g3: 'ok', warn: 'warn', g2: 'warn', g1: 'warn', bad: 'bad', no: 'bad', g0: 'bad' };
+        const winB = (w) => '<div class="kwz-w"><div class="kwz-t"><i class="kd" style="background:' + (FLC[WST[w.st]] || '#6c7381') + '"></i><b>' + esc(w.head) + '</b>' + (w.sub ? '<small>' + esc(w.sub) + '</small>' : '') + '</div>' +
+          (w.vals ? '<p class="kwz-v">' + esc(w.vals) + '</p>' : '') +
+          (w.chk.length ? '<p class="kwz-c">' + w.chk.map((q) => '<span class="' + (q[0] === 1 ? 'ok' : q[0] === 0 ? 'no' : '') + '">' + (q[0] === 1 ? '✓ ' : q[0] === 0 ? '✕ ' : '') + esc(q[1]) + '</span>').join('') + '</p>' : '') +
+          (w.meta ? '<p class="kwz-v">' + esc(w.meta) + '</p>' : '') +
+          (w.seq.length ? (w.pre ? '<p class="kwz-v">The 20 seconds before it, in order</p>' : '') + '<div class="kwz-s">' + w.seq.map((id) => icn(id)).join('') + '</div>' : '') + '</div>';
         const rr = (r, i) => { const k = 'r:rot' + i, o = isOn(k, deep && i === 0);
           return '<div class="krr kopen" data-cr="' + k + '"><i class="kd" style="background:' + (FLC[r[0]] || '#6c7381') + '"></i>' + icn(r[1]) +
           '<div class="krb"><div class="krt"><b>' + esc(r[2]) + '</b><span class="krv" style="color:' + (r[0] === 'bad' ? '#ff8f87' : r[0] === 'warn' ? '#e8a23a' : '#ece8df') + '">' + esc(r[3]) + (r[4] ? '<small>top ' + esc(r[4]) + '</small>' : '') + '</span><i class="kpl">' + (o ? '–' : '+') + '</i></div>' +
           (o ? (r[7] ? '<p class="kwhy">' + pt(r[7]) + '</p>' : '') + (r[6] ? '<div class="ksq">' + r[6].split('').map((q) => '<i style="background:' + (SQC[q] || '#6c7381') + '"></i>').join('') + '</div>' : '') + (r[5] ? '<p class="knx"><b>Next time:</b> ' + pt(r[5]) + '</p>' : '') +
-            (r[9] ? '<div class="kmo"><span>When it went wrong</span>' + String(r[9]).split(';').map((m) => '<p>• ' + pt(m) + '</p>').join('') + '</div>' : '') + (r[8] ? '<p class="khow">How it\'s judged: ' + pt(r[8]) + '</p>' : '') : '') + '</div></div>'; };
+            ((r[10] || []).length ? '<div class="kwz"><span class="kwz-h">Each window</span>' + r[10].map(winB).join('') + '</div>' : '') + /* (each ramp or burst window (Oct 24)) */
+            (r[9] && !(r[10] || []).length ? '<div class="kmo"><span>When it went wrong</span>' + String(r[9]).split(';').map((m) => '<p>• ' + pt(m) + '</p>').join('') + '</div>' : '') + (r[8] ? '<p class="khow">How it\'s judged: ' + pt(r[8]) + '</p>' : '') : '') + '</div></div>'; };
         const sc = P.rs && P.rs.score !== '' && P.rs.score != null ? ' <span class="ksc">· <b>' + esc(P.rs.score) + '</b>/100</span>' : '';
         L += sec('rot', 'Rotation' + sc, (P.rot.length ? lim('rot', P.rot, MX.maxSlips || 3, rr) : '<div class="kr"><i class="kd" style="background:#45c15c"></i><span class="ic"></span><span>Nothing to fix here.</span></div>') +
           (P.rs && (P.rs.good || []).length ? '<p class="kgood">Done right: ' + P.rs.good.map(esc).join(', ') + '.</p>' : ''));

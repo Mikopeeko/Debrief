@@ -833,7 +833,8 @@ RECAP.lines = (m) => {
   for (const p of m.players) {
     rec.push(['P', p.name, p.cls, p.spec, p.role, p.unit, p.v, p.d == null ? '' : p.d, p.vs || '', p.best || '', p.bp || '', p.rank || '', p.icon || '']);
     if (!(p.rot && p.rot.length)) for (const s of p.slips) rec.push(['S', p.name, s[0], s[1] || '', s[2]]); // (with checklist rows, the addon makes these itself)
-    if (p.rot) { rec.push(['RS', p.name, p.rs ? p.rs.score : '', p.rs ? p.rs.good.join(';') : '']); for (const r of p.rot) rec.push(['RT', p.name].concat(r)); } // (the Rotation tab's checklist (Oct 24))
+    if (p.rot) { rec.push(['RS', p.name, p.rs ? p.rs.score : '', p.rs ? p.rs.good.join(';') : '']); for (const r of p.rot) { rec.push(['RT', p.name].concat(r.slice(0, 10)));
+      /* (each ramp or burst window of that check, right after it (Oct 24)) */ for (const w of r[10] || []) rec.push(['RW', p.name, w.st, w.head, w.sub, w.vals, w.chk.map((q) => q[0] + ':' + String(q[1]).replace(/;/g, ',')).join(';'), w.seq.join(';'), w.pre ? 1 : '', w.meta]); } } // (the Rotation tab's checklist (Oct 24))
     for (const s of p.boss) rec.push(['B', p.name, s[0], s[1] || '', s[2]]);
     for (const s of p.surv || []) rec.push(['U', p.name, s[0], s[1] || '', s[2]]); // (survival: defensives)
     for (const s of p.cons || []) rec.push(['HP', p.name, s[0], s[1] || '', s[2]]); // (your Healthstone and health potion (Oct 22))

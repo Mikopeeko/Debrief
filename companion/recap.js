@@ -11,7 +11,7 @@ const plain = (h) => plain0(h).replace(/\s*\([^()]*(Wowhead|Icy Veins|Simulation
   .replace(/(^|[.!?]\s+)(Both guides|Wowhead|Icy Veins|SimulationCraft|SimC)( and (Icy Veins|Wowhead|SimulationCraft))?:\s*([a-z])?/g, (m, a, b, c, d, e) => a + (e ? e.toUpperCase() : ''))
   .replace(/\s+/g, ' ').trim();
 const ord = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
-const sentences = (s) => (plain(s).match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g) || []).map((x) => x.trim()).filter(Boolean);
+const sentences = (s) => (plain(s).match(/(?:[^.!?]|\.(?=\d))+[.!?]+(\s|$)|(?:[^.!?]|\.(?=\d))+$/g) || []).map((x) => x.trim()).filter(Boolean); /* (a dot inside a number, like 1.65M, isn't a sentence end (Oct 24)) */
 const shortTo = (s, n) => { s = plain(s); if (s.length <= n) return s; const cut = s.slice(0, n); const i = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf(', ')); return (i > 40 ? cut.slice(0, i) : cut.replace(/\s+\S*$/, '')) + (i > 40 && cut[i] === '.' ? '.' : '…'); };
 const SEV = { High: 3, Medium: 2, Low: 1 };
 const flagOf = (sev) => (SEV[sev] || 1) >= 3 ? 'bad' : 'warn';
@@ -710,8 +710,32 @@ function buildOne(b, rep, same, W, L, cutN) {
       const howOf = (c) => shortTo(sentences(plain(c.how || '')).filter((s) => !/\b(Wowhead|Icy Veins|guide|SimulationCraft|APL)\b/i.test(s)).slice(0, 2).join(' '), 240);
       const momOf = (c) => (c.bx || []).filter((q) => q.cls && q.cls !== 'ok' && q.tip).slice(0, 5).map((q) => shortTo(sentences(plain(q.tip).replace(/;/g, ','))[0] || plain(q.tip), 110)).join(';'); /* (each moment's first sentence) */
       P.rs = { score: x.score != null ? Math.round(x.score) : '', good: x.checks.filter((c) => c.st === 'ok' && c.isMain).slice(0, 4).map((c) => plain(c.label)) };
-      P.rot = focus.map((c) => [c.st, spellId(W, c.ic), plain(c.label), num(c.v), x.top && x.top[c.k] ? num(x.top[c.k]) : '', c.tip ? plain(c.tip) : '',
+      // (and the spec's ramp or burst windows even when they went fine (Oct 24): up to 2 more checks with window cards, after the fixes)
+      const WR0 = { bad: 0, warn: 1, ok: 2 }, extra = x.checks.filter((c) => !focus.includes(c) && c.st !== 'na' && !/^boss:/.test(c.k) && x.wins && x.wins[c.k])
+        .sort((a, c) => ((WR0[a.st] != null ? WR0[a.st] : 3) - (WR0[c.st] != null ? WR0[c.st] : 3)) || (c.cost || 0) - (a.cost || 0)).slice(0, 2), rotC = focus.concat(extra);
+      P.rs.good = P.rs.good.filter((g) => !extra.some((c) => plain(c.label) === g)); /* (a window row isn't said twice) */
+      P.rot = rotC.map((c) => [c.st, spellId(W, c.ic), plain(c.label), num(c.v), x.top && x.top[c.k] ? num(x.top[c.k]) : '', c.tip ? plain(c.tip) : '',
         (c.bx || []).length >= 2 ? c.bx.slice(0, 40).map((q) => (q.cls === 'ok' ? 'g' : q.cls === 'bad' ? 'b' : 'w')).join('') : '', why(c), howOf(c), momOf(c)]);
+      // (each ramp or burst window, from the Rotation tab's cards (Oct 24, the user: "classes with ramp windows/rotations with specific windows
+      // that have specific button presses should have that detail included"): the ones that went wrong first, four at most, then in time order)
+      let castL; const casts = () => { if (castL !== undefined) return castL; try { const c0 = W.castOf ? W.castOf(rep, p, 0, rep.duration || 1e9) : null; castL = c0 && c0.ab ? c0.ab.flatMap((a) => a.ts.map((u) => [u, a.name])).sort((u, v) => u[0] - v[0]) : null; } catch (e) { castL = null; } return castL; };
+      const WRANK = { bad: 0, no: 0, g0: 0, warn: 1, g1: 1, g2: 1, ok: 2, g3: 2 };
+      const winsOf = (c) => {
+        const h = x.wins && x.wins[c.k]; if (!h || typeof DOMParser === 'undefined') return [];
+        const d = new DOMParser().parseFromString('<div>' + h + '</div>', 'text/html'), tx = (e) => (e ? plain(e.textContent || '').replace(/\s+/g, ' ').trim() : '');
+        const out = [...d.querySelectorAll('.spc-w')].map((el) => {
+          const st = (el.className.match(/spc-w (\w+)/) || [])[1] || 'na', t = +el.getAttribute('data-mt') || 0, wh = el.querySelector('.spc-wh');
+          const vs = [...el.querySelectorAll('.spc-wv')].map(tx).filter((v) => v && !/^—/.test(v)), /* (no "— above your usual") */ wo = tx(el.querySelector('.spc-wo')).replace(/^Rest of the pull:\s*/i, 'rest of the pull ');
+          const chk = [...el.querySelectorAll('.spc-chk > span')].map((s) => [s.classList.contains('ok') ? 1 : s.classList.contains('no') ? 0 : 2, tx(s).replace(/^[✓✕]\s*/, '')]).filter((q) => q[1]).slice(0, 6);
+          let seq = [...el.querySelectorAll('.spc-wi > span')].map((s) => (s.getAttribute('title') || '').replace(/, \d+:\d\d$/, '')).filter(Boolean).slice(0, 12), pre = false;
+          // (a ramp card shows no buttons: the 20 seconds before it, the ramp itself)
+          if (!seq.length && p.role === 'healer' && !/^boss:/.test(c.k) && casts()) { seq = casts().filter(([u]) => u >= t - 20 && u <= t + 0.5).map(([, n]) => n).slice(-12); pre = seq.length > 0; }
+          return { st, t, head: tx(wh && wh.querySelector('b')), sub: tx(wh && wh.querySelector('.sub')), vals: [vs[0], wo].filter(Boolean).join(' · ') + (vs[1] ? ' · ' + vs[1] : ''), chk,
+            seq: seq.map((n) => spellId(W, n)).filter(Boolean), pre, meta: [...el.querySelectorAll('.spc-wm > span')].map(tx).filter(Boolean).join(' · ') };
+        }).filter((w) => w.head);
+        return out.sort((a, b) => (WRANK[a.st] != null ? WRANK[a.st] : 1) - (WRANK[b.st] != null ? WRANK[b.st] : 1) || a.t - b.t).slice(0, 4).sort((a, b) => a.t - b.t);
+      };
+      P.rot.forEach((r, i) => { try { r.push(winsOf(rotC[i])); } catch (e) { r.push([]); } });
       if (!focus.length) { const good = x.checks.filter((c) => c.st === 'ok').slice(0, 2); for (const c of good) P.slips.push(['ok', spellId(W, c.ic), shortTo(plain(c.label) + ': ' + plain(c.v).replace(/(\d+)\s*\/\s*(\d+)/, '$1 of $2') + '.', 120)]); }
     }
     // Boss mechanics: their own mistakes on this pull, then their death

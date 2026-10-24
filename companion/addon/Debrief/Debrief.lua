@@ -88,6 +88,8 @@ local function decode(code)
       m.players[#m.players + 1] = p; by[p.name] = p
     elseif t == "S" and by[g(2)] then add(by[g(2)].slips, { g(3), g(4), g(5) })
     elseif t == "RS" and by[g(2)] then by[g(2)].rs = { score = tonumber(g(3)), good = g(4) ~= "" and split(g(4), ";") or {} }; by[g(2)].rot = by[g(2)].rot or {} -- (your rotation score and what you did well (Oct 24))
+    elseif t == "RW" and by[g(2)] then local p = by[g(2)]; local r = p.rot and p.rot[#p.rot] -- (a ramp or burst window of the check just before it (Oct 24))
+      if r then r.win = r.win or {}; r.win[#r.win + 1] = { st = g(3), head = g(4), sub = g(5), vals = g(6), chk = g(7), seq = g(8), pre = g(9) == "1", meta = g(10) } end
     elseif t == "RT" and by[g(2)] then local p = by[g(2)]; p.rot = p.rot or {}; p.rot[#p.rot + 1] = { g(3), g(4), g(5), g(6), g(7), g(8), g(9), g(10), g(11), g(12) }; add(p.slips, { g(3), g(4), g(5) .. (g(6) ~= "" and (": " .. g(6)) or "") .. "." }) -- (a fix: flag, icon, name, yours, top, tip, squares, why)
     elseif t == "B" and by[g(2)] then add(by[g(2)].boss, { g(3), g(4), g(5) })
     elseif t == "U" and by[g(2)] then add(by[g(2)].surv, { g(3), g(4), g(5) }) -- (survival: defensives)
@@ -569,6 +571,31 @@ end
 local SQC = { g = "45c15c", w = "e8a23a", b = "e5534b" }
 -- (a drop-down (Oct 24): closed, the check and your number against the top players'; click it open for why it matters, a square per moment,
 -- Next time, how it's judged and the moments you slipped)
+-- (one ramp or burst window inside a check's drop-down (Oct 24): when it was and how it went, the checks as ticks and crosses, the numbers,
+-- the buttons pressed in it, or for a ramp, the 20 seconds before it)
+local WST = { ok = "ok", g3 = "ok", warn = "warn", g2 = "warn", g1 = "warn", bad = "bad", no = "bad", g0 = "bad" }
+local function winBlock(y, x0, w)
+  local wd = CW - IND - x0 - 4
+  local d = TEX("ARTWORK"); d:SetTexture(SLICE .. "dot"); d:SetPoint("TOPLEFT", x0, -(y + 5)); d:SetSize(7, 7); d:SetVertexColor(rgb(FLAG[WST[w.st] or ""] or COL.faint))
+  local h = FS("bold", 13, COL.text); h:SetPoint("TOPLEFT", x0 + 13, -y); h:SetWidth(wd - 13); h:SetText((w.head or "") .. (((w.sub or "") ~= "") and ("|cff" .. COL.faint .. "   " .. w.sub .. "|r") or ""))
+  local yy = y + h:GetStringHeight() + 3
+  local function ln(size, hex, text) local f = FS("body", size, hex); f:SetPoint("TOPLEFT", x0 + 13, -yy); f:SetWidth(wd - 13); f:SetText(text); yy = yy + f:GetStringHeight() + 3 end
+  if (w.vals or "") ~= "" then ln(12, COL.muted, w.vals) end
+  if (w.chk or "") ~= "" then
+    local parts = {}
+    for q in w.chk:gmatch("[^;]+") do local k, tx = q:match("^(%d):(.*)$")
+      if tx and tx ~= "" then parts[#parts + 1] = k == "1" and ("|TInterface\\RaidFrame\\ReadyCheck-Ready:12|t |cff" .. COL.goodT .. tx .. "|r") or k == "0" and ("|TInterface\\RaidFrame\\ReadyCheck-NotReady:12|t |cff" .. COL.badT .. tx .. "|r") or ("|cff" .. COL.soft .. tx .. "|r") end end
+    if #parts > 0 then ln(12.5, COL.soft, table.concat(parts, "     ")) end
+  end
+  if (w.meta or "") ~= "" then ln(11.5, COL.faint, w.meta) end
+  if (w.seq or "") ~= "" then
+    if w.pre then ln(11.5, COL.faint, "The 20 seconds before it, in order") end
+    local i, per = 0, math.max(4, math.floor((wd - 13) / 22))
+    for id in w.seq:gmatch("[^;]+") do icon(x0 + 13 + (i % per) * 22, yy + math.floor(i / per) * 22, 19, id); i = i + 1 end
+    yy = yy + math.ceil(i / per) * 22 + 2
+  end
+  return yy + 7
+end
 local function rotRow(y, r, open, toggle)
   local flag, ic, label, v, top, tip, strip, why, how, mo = r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10]
   local d = TEX("ARTWORK"); d:SetTexture(SLICE .. "dot"); d:SetPoint("TOPLEFT", IND, -(y + 6)); d:SetSize(8, 8); d:SetVertexColor(rgb(FLAG[flag] or COL.faint))
@@ -591,7 +618,8 @@ local function rotRow(y, r, open, toggle)
       yy = yy + 15
     end
     if (tip or "") ~= "" then line("body", 13, COL.soft, "|cff" .. COL.gold .. "Next time:|r " .. names(tip)) end
-    if (mo or "") ~= "" then line("bold", 11.5, COL.muted, "WHEN IT WENT WRONG"); for m in mo:gmatch("[^;]+") do line("body", 12.5, COL.soft, "•  " .. names(m)) end end
+    if r.win and #r.win > 0 then line("bold", 11.5, COL.muted, "EACH WINDOW"); yy = yy + 2; for _, wv in ipairs(r.win) do yy = winBlock(yy, x0, wv) end -- (the windows say it better than the moments (Oct 24))
+    elseif (mo or "") ~= "" then line("bold", 11.5, COL.muted, "WHEN IT WENT WRONG"); for m in mo:gmatch("[^;]+") do line("body", 12.5, COL.soft, "•  " .. names(m)) end end
     if (how or "") ~= "" then line("body", 12, COL.faint, "How it's judged: " .. names(how)) end
     yy = yy + 2
   end

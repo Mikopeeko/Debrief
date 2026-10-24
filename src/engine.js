@@ -6358,6 +6358,8 @@ function* analyzeSteps(item, text, opts) {
         const p = P(sg, sn);
         p.casts++;
         if (f[f.length - 1] === 'FAKE') { const fk = spell.toLowerCase(); let fl = p.fakeT.get(fk); if (!fl) p.fakeT.set(fk, fl = []); fl.push(t); }
+        /* (Tranquility's heal ticks are logged as casts named "Tranquility" (id 157982, 7 a channel, seen in a real log Oct 24): not presses, so one Tranquility no longer counts as 8) */
+        else if (+id === 157982) { const fk = spell.toLowerCase(); let fl = p.fakeT.get(fk); if (!fl) p.fakeT.set(fk, fl = []); fl.push(t); }
         // (who each cast was aimed at, for the spec checks: an ally, an enemy, or nobody (0); [time, spell, target guid])
         if (!p.castTg) p.castTg = []; if (p.castTg.length < 4000) p.castTg.push([t, spell, dg && dg !== '0000000000000000' ? dg : 0]);
         if (f.length >= 11 + ADV && f[11] === sg) { manaAt(p, f, 11, t, spell, id); resAt(p, f, 11, t);
