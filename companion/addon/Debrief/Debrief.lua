@@ -239,6 +239,8 @@ function Debrief_SetPreset(key)
   if Debrief_RefreshOptions then Debrief_RefreshOptions() end
   if card:IsShown() then render() end
 end
+-- (a quick fade in when the card opens (Oct 24))
+card:HookScript("OnShow", function(self) if UIFrameFadeIn then self:SetAlpha(0); UIFrameFadeIn(self, 0.14, 0, 1) end end)
 local close = closeButton(card)
 close:SetScript("OnClick", function() card:Hide() end)
 -- (the Detail button on the card: Simple, Medium, Heavy, one click each)
@@ -420,7 +422,9 @@ end
 local function BTN()
   used.btn = used.btn + 1
   local b = pool.btn[used.btn]
-  if not b then b = CreateFrame("Button", nil, body); pool.btn[used.btn] = b end
+  if not b then b = CreateFrame("Button", nil, body); pool.btn[used.btn] = b
+    -- (a soft highlight under your mouse on everything you can click (Oct 24))
+    local hl = b:CreateTexture(nil, "HIGHLIGHT"); hl:SetAllPoints(); hl:SetColorTexture(1, 1, 1, 0.045) end
   b:ClearAllPoints(); b:SetScript("OnClick", nil); b:SetScript("OnEnter", nil); b:SetScript("OnLeave", nil); b:Show()
   return b
 end
@@ -721,17 +725,22 @@ function render()
   for _, c in ipairs(chips) do c:SetShown(false) end
   local h = m.h
   bossT:SetText(h.boss .. "  ·  " .. h.diff)
-  -- chips: the newest ones, as many as fit across the card
-  local n = #DB.pulls
-  local first = math.max(1, n - #chips + 1)
-  if (DB.show or {}).chips ~= false then
+  -- chips: this boss and difficulty only (Oct 24: other bosses' pulls read as a second "Pull 1"), as many as fit, around the one on screen
+  local IX = {}; for k0, q0 in ipairs(DB.pulls) do if q0.h and q0.h.boss == h.boss and q0.h.diff == h.diff then IX[#IX + 1] = k0 end end
+  local pos = #IX; for i0, k0 in ipairs(IX) do if k0 == DB.cur then pos = i0 end end
+  local last = math.min(#IX, pos + 1)
+  local first = math.max(1, last - #chips + 1)
+  if (DB.show or {}).chips ~= false and #IX > 0 then
     local function chipW(q) local rt = UI.resultOf(q.h); chips[1].t:SetText("Pull " .. q.h.pull .. "  ·  " .. rt); return chips[1].t:GetStringWidth() + 20 end
-    local total = 0; for k = first, n do total = total + chipW(DB.pulls[k]) + 6 end
-    while first < n and total - 6 > CW do total = total - chipW(DB.pulls[first]) - 6; first = first + 1 end
+    local total = 0; for j = first, last do total = total + chipW(DB.pulls[IX[j]]) + 6 end
+    while first < pos and total - 6 > CW do total = total - chipW(DB.pulls[IX[first]]) - 6; first = first + 1 end
+    while last > pos and total - 6 > CW do total = total - chipW(DB.pulls[IX[last]]) - 6; last = last - 1 end
   end
+  local n = last
   for i = 1, #chips do
-    local b, k = chips[i], first + i - 1
-    local q = k <= n and DB.pulls[k] or nil
+    local b, j = chips[i], first + i - 1
+    local k = IX[j]
+    local q = j <= n and k and DB.pulls[k] or nil
     if q and (DB.show or {}).chips ~= false then
       local rt, rc, rb = UI.resultOf(q.h)
       b.t:SetText("Pull " .. q.h.pull .. "  ·  " .. rt)
@@ -774,7 +783,7 @@ function render()
   local P = UI.pickWho(m)
   local showWho = (view == "me" and P and #m.players > 1) and not glanceOn
   who:SetShown(showWho); prevB:SetShown(showWho); nextB:SetShown(showWho)
-  if P then who:SetWidth(math.max(80, CW - 190)); who:SetText("|cff" .. UI.classHex(P.cls) .. P.name .. "|r") end
+  if P then who:SetWidth(CW - 190); who:SetText("|cff" .. UI.classHex(P.cls) .. P.name .. "|r"); who:SetWidth(math.min(CW - 190, math.max(40, who:GetStringWidth() + 4))) end -- (the arrows sit right beside the name (Oct 24))
   local function step(dir)
     local idx = 1; for i, p in ipairs(m.players) do if p == P then idx = i end end
     idx = ((idx - 1 + dir) % #m.players) + 1; DB.who = m.players[idx].name; render()
@@ -1183,12 +1192,13 @@ function render()
       local l = FS("body", 12.5, COL.muted); l:SetPoint("TOPLEFT", 60, -(y + 11)); l:SetText(P.role == "healer" and "Your healing" or "Your damage")
       local v = FS("head", 28, COL.text); v:SetPoint("TOPLEFT", 60, -(y + 26)); v:SetText(P.v)
       local u = FS("bold", 12, COL.muted); u:SetPoint("BOTTOMLEFT", v, "BOTTOMRIGHT", 5, 4); u:SetText(P.unit)
-      local s = FS("body", 12.5, COL.faint); s:SetJustifyH("RIGHT"); s:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - 12, -(y + 11)); s:SetWidth(CW - 170); s:SetWordWrap(false)
+      local s = FS("body", 12.5, COL.faint); s:SetJustifyH("RIGHT"); s:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - 12, -(y + 11)); s:SetWidth(CW - 170); s:SetWordWrap(true) -- (every line shown, none cut off with "…" (Oct 24))
       local lines = {}
       if P.d and SH.vs ~= false then lines[#lines + 1] = (P.d >= 0 and ("|cff7ee08f+" .. P.d .. "%|r") or ("|cffff8f87" .. P.d .. "%|r")) .. " vs pull " .. P.vs end
       if SH.best ~= false then lines[#lines + 1] = (P.bt and ("|cff7ee08fYour best tonight|r" .. (P.best ~= "" and (" (was " .. P.best .. ", pull " .. P.bp .. ")") or "")) or P.best ~= "" and ("Best " .. P.best .. " (pull " .. P.bp .. ")") or "First pull read") end
       if P.rank ~= "" and SH.rank ~= false then lines[#lines + 1] = P.rank end
       s:SetText(table.concat(lines, "\n"))
+      local need = 11 + s:GetStringHeight() + 10; if need > th then local bump = need - th; th = need; panel(y, th) end
       -- (your goal: a thin bar along the bottom of the tile, gold until you reach it, then green)
       if goal > 0 then
         local pct = UI.parseK(P.v) / goal
