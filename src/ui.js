@@ -8616,7 +8616,7 @@ function dbnBar(NJ, r) {
   const a = NJ.a || {}, gone = a.unknownNames || [], nm = NJ.used ? NJ.used.name : 'Your note';
   return '<div class="dbn-bar"><span>' + emoIc('📜') + ' <b>' + esc(nm) + '</b><span class="sub">' + plural(((a.note && a.note.lines) || []).length + ((a.note && a.note.reminders) || []).length, 'line') + ' · checks ' + esc(NJ.checkedL) + '</span></span>' +
     (NDZ_ON() && !ASG_OFF() ? ndzPlanHere(NJ, r) : (gone.length ? '<span class="dbn-gone">' + plural(gone.length, 'name') + ' in the note ' + (gone.length === 1 ? 'isn\'t' : 'aren\'t') + ' in this pull: ' + esc(gone.slice(0, 5).join(', ')) + (gone.length > 5 ? '…' : '') + '</span>' : '')) +
-    (NDZ_ON() && !ASG_OFF() ? '<button type="button" class="btn sm" data-ndzsw="1">Swap players</button><button type="button" class="btn sm" data-ndzwiz="1">Load a note</button>' : '') + '<button type="button" class="btn sm" data-dbncopy="1">Copy for the game</button>' + (ASG_OFF() ? '' : '<button type="button" class="btn sm" data-dbnote="1">' + (NDZ_ON() ? 'Open the plan' : 'See the note') + '</button>') + '</div>'; }
+    '<button type="button" class="btn sm" data-dbncopy="1">Copy for the game</button>' + (ASG_OFF() ? '' : '<button type="button" class="btn sm" data-dbnote="1">' + (NDZ_ON() ? 'Open the plan' : 'See the note') + '</button>') + '</div>'; }
 // (Note jobs, the fifth number: the jobs that came up this pull, and how many were done)
 function dbnNum(NJ, num) { const j = NJ.secs.filter((o) => o.st !== 'na'), ok = j.filter((o) => o.st === 'ok').length, bad = j.filter((o) => o.st === 'bad').length, warn = j.length - ok - bad;
   return num('Note jobs', j.length ? '<b>' + ok + '</b><em> of ' + j.length + ' done</em>' : '<b>–</b>', j.length ? (bad || warn ? [bad ? bad + ' missed' : '', warn ? warn + ' with slips' : ''].filter(Boolean).join(' · ') : 'every job done') : 'none came up this pull').replace('class="dbr-n"', 'class="dbr-n dbn-n"'); }
@@ -10972,7 +10972,7 @@ function oaLayout(v, el) {
   const hd = el.querySelector('.cch-hd');
   if (hd && !hd.querySelector('.cch-acts')) { const acts = document.createElement('span'); acts.className = 'cch-acts';
     const cp = v.querySelector('.dbd-copy'); if (cp) { const box = cp.closest('.dbd-acts'); acts.appendChild(cp); if (box && !box.children.length) box.remove(); }
-    const nb = v.querySelector('.dbn-bar.dbn-none'); if (nb) { const bs = [...nb.querySelectorAll('button')]; if (bs.length) { bs.forEach((b) => { b.classList.add('sm'); acts.appendChild(b); }); nb.remove(); } }
+    const nb = v.querySelector('.dbn-bar.dbn-none'); if (nb) nb.remove(); /* (no Swap players or Load a note on Debriefing: the Plan tab handles notes (your call, Oct 23)) */
     if (acts.children.length) hd.appendChild(acts); }
   // (a loaded NSRT note's bar stays in view, right under the coach: which note, what it checks, Swap players)
   const nbar = v.querySelector('.dbn-bar:not(.dbn-none)'); if (nbar && nbar.previousElementSibling !== el) { el.after(nbar); nbar.classList.add('oa-note'); }
