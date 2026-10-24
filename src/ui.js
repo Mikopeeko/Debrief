@@ -1759,6 +1759,10 @@ const PATCH_NOTES = [
   { d: '2026-10-24', h: [
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
+    'Debriefing: click a mechanic\'s bar and it opens right inside the phase card: each moment on one line with ✓ or ✕, your note\'s job as small player chips, and the map beside it. Show everything brings back the full detail.',
+    'Debriefing: a mechanic that went wrong says what happened in one line under its bar, with the time and who.',
+    'Debriefing: when nothing changed since last pull, one short line instead of two empty boxes.',
+    'Debriefing: the orb carriers and mind control boxes from your note are shorter, with nothing left out.',
     'Debrief in game and the PC pop-up: click a rotation check to open it (why it matters, each moment, Next time), hover any spell icon for its tooltip, deaths say what was left unused, like a Healthstone or a defensive.',
     'Debrief Companion: the pop-up after each pull now shows the same card as /recap, your view and the raid view side by side, and it fits scaled screens like 4K. In game, your Rotation section shows your score, each fix next to the top players, a square for every moment, and what you did right.',
     'Graphs: Healing + prevented now counts Devotion Aura for the paladin whose aura it was, and each player\'s own versatility, armor and avoidance, so every bit of damage stopped counts once, for whoever stopped it.',
@@ -1770,6 +1774,7 @@ const PATCH_NOTES = [
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
     'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
   ], f: [
+    'Debriefing: What wiped us no longer lists every name when many died at once ("11 players were caught by Calcified Corpse"), and says "Someone was hit" for one player.',
     'Graphs: with Healing + prevented on, a player\'s spell list now shows what their raid cooldowns and defensives prevented too, and spell lists on All pulls no longer squeeze their bars.',
     'Debriefing: Pulls to the kill now counts your guild\'s whole history from Warcraft Logs, first pull to first kill, on any device and on farm nights.',
   ] },
@@ -8258,7 +8263,7 @@ function assign(only, capture) { // (only: just the note, for the all-pulls NSRT
         return '<tr class="' + cls + '"><td><b>Dreadmarch ' + d.n + '</b><div class="sub">' + T(d.s) + (d.len ? ' · ' + d.len.toFixed(1) + 's' : '') + '</div></td>' +
           '<td><span class="chips">' + d.mcd.map((n) => '<span class="chipn' + (d.died.includes(n) ? ' bad' : '') + '"' + (d.died.includes(n) ? ' title="died mind controlled"' : '') + '>' + nmC(n) + '</span>').join('') + '</span>' + (out.length ? '<div class="pdesc">Couldn\'t CC: ' + out.map((o) => esc(o.n) + ' (' + o.why + ')').join(', ') + '</div>' : '') + '</td>' +
           '<td>' + (cc || '<span class="sub">none</span>') + '</td><td class="cdr">' + (after ? hst('na', AFTER) : hst(d.st, d.txt)) + '</td></tr>' +
-          d.later.map((x) => '<tr class="rsub"><td></td><td colspan="3"><span class="sub">Later, ' + esc(x.n) + ' was mind controlled again for ' + x.len.toFixed(1) + 's' + (x.died ? ' and died' : '') + ', ' + (x.cc.length ? 'with CC from ' + x.cc.map((c) => esc(c.who) + ' (' + esc(c.spell) + ')').join(', ') : 'with no CC') + '. This is shown, not judged.</span></td></tr>').join('');
+          (d.later.length ? '<tr class="rsub"><td></td><td colspan="3"><span class="sub">Mind controlled again later (not judged): ' + d.later.map((x) => esc(x.n) + ' ' + x.len.toFixed(1) + 's' + (x.died ? ', died' : '') + ', ' + (x.cc.length ? 'CC from ' + x.cc.map((c) => esc(c.who) + ' (' + esc(c.spell) + ')').join(', ') : 'no CC')).join(' · ') + '</span></td></tr>' : ''); /* (one line, not one row each (Oct 24, your ask: simpler without losing anything)) */
       };
       // per player on the order: the Dreadmarches before the wipe filter that needed a CC while they could give one, and how many they CC'd
       const mPer = ord.map((n) => { const up = M.rows.filter((d) => kept(d.s) && d.mcd.length && d.len >= 2 && d.ccers.some((o) => o.n === n && !o.why)); return { n, up: up.length, did: up.filter((d) => d.cc.some((c) => c.who === n)).length }; }).filter((p) => p.up);
@@ -8451,10 +8456,10 @@ function assign(only, capture) { // (only: just the note, for the all-pulls NSRT
     const orbChip = (o, n) => { const g = gOf(o, n), judged = o.kind !== 'helper' && g.of > 0 && o.waves != null, zero = judged && g.n === 0, full = judged && g.n === g.of, part = judged && !zero && !full, green = o.kind === 'green';
       return '<span class="chipn' + (zero ? (green ? ' warn' : ' bad') : part ? (green ? '' : ' warn') : '') + '">' + who(n).replace(/^<span class="chipn">|<\/span>$/g, '') + '<b>' + (o.waves != null ? (g.of ? g.n + '/' + g.of : '—') : g.n) + '</b></span>'; };
     const others = (o) => {
-      if (o.kind === 'purple') return o.outside.size ? '<div class="sub" style="margin-bottom:3px">Took one without being assigned</div><span class="chips">' + [...o.outside].map(([n, x]) => '<span class="chipn warn">' + who(n).replace(/^<span class="chipn">|<\/span>$/g, '') + '<b>' + x.n + '</b></span>').join('') + '</span>' : '<span class="sub">nobody else took one</span>';
+      if (o.kind === 'purple') return o.outside.size ? '<span class="dbo-x">Also took one:</span><span class="chips">' + [...o.outside].map(([n, x]) => '<span class="chipn warn">' + who(n).replace(/^<span class="chipn">|<\/span>$/g, '') + '<b>' + x.n + '</b></span>').join('') + '</span>' : '<span class="dbo-x">Nobody else took one.</span>';
       if (o.kind === 'green') { const hp = helperOf(o), bk = hp ? hp.assigned.map((n) => [n, gOf(hp, n).n]).filter(([, c]) => c > 0) : [];
-        return '<div class="pdesc">' + [hp ? (bk.length ? 'Backups: ' + bk.map(([n, c]) => esc(n) + ' ' + c).join(', ') : 'No backups needed') : '', o.outside.size ? 'Also: ' + [...o.outside].map(([n, x]) => esc(n) + ' ' + x.n).join(', ') : ''].filter(Boolean).join('<br>') + '</div>'; }
-      return '<span class="sub">backups, not judged</span>';
+        return '<span class="dbo-x">' + [hp ? (bk.length ? 'Backups: ' + bk.map(([n, c]) => esc(n) + ' ' + c).join(', ') : 'No backups needed') : '', o.outside.size ? 'Also: ' + [...o.outside].map(([n, x]) => esc(n) + ' ' + x.n).join(', ') : ''].filter(Boolean).join(' · ') + '</span>'; }
+      return '<span class="dbo-x">Backups, not judged.</span>';
     };
     const oSts = shown.map(oSt).filter((x) => x !== 'na'), onb = oSts.filter((x) => x === 'bad').length, onw = oSts.filter((x) => x === 'warn').length;
     const oStAll = !oSts.length ? 'na' : onb ? 'bad' : onw ? 'warn' : 'ok', oTxtAll = onb ? onb + ' of ' + oSts.length + ' orb groups failed' : onw ? onw + ' of ' + oSts.length + ' orb groups not clean' : 'everyone took theirs';
@@ -8466,8 +8471,9 @@ function assign(only, capture) { // (only: just the note, for the all-pulls NSRT
       const st = oSt(o), purple = o.kind === 'purple', green = o.kind === 'green';
       addSec({ id: 'as-orbs-' + oi, ph: phOf(o.ph), ord: purple ? 2 : 3, tip: purple ? 'Mutagenic Venom' : green ? 'Volatile Venom' : '', icon: spellIcon(0, purple ? 'Mutagenic Venom' : 'Volatile Venom', true), title: purple ? 'Purple orbs' : green ? 'Green orbs' : esc(o.label),
         sub: esc(o.note || '') + ', with ' + plural(o.assigned.length, 'carrier'), st, txtHtml: st === 'bad' || st === 'warn' ? oTxt(o) : st === 'ok' ? 'everyone took theirs' : 'not judged', how: ORB_HOW[o.kind] || 'Backups, shown for reference and not judged.',
-        body: '<div class="scroll"><table class="tbl nsx otl"><colgroup><col style="width:17%"><col style="width:48%"><col style="width:35%"></colgroup><thead><tr><th>Orbs</th><th>Assigned (sets picked up)</th><th>Others</th></tr></thead><tbody>' +
-          '<tr class="' + (st === 'na' ? '' : 'r' + st) + '"><td><b>' + esc(o.label.replace(/^P\d\s*·\s*/, '')) + '</b><div class="sub">' + esc(o.note) + '</div></td><td><span class="chips">' + o.assigned.map((n) => orbChip(o, n)).join('') + '</span></td><td>' + others(o) + '</td></tr></tbody></table></div>' });
+        /* (Oct 24, your ask "simplified further, without removing information": the header already names the orbs and the sets, so the body is
+           one row: each carrier with the sets they picked up, then who else took one or the backups) */
+        body: '<div class="dbo-row' + (st === 'na' ? '' : ' r' + st) + '"><span class="chips">' + o.assigned.map((n) => orbChip(o, n)).join('') + '</span>' + others(o) + '</div>' });
     });
 
     // ---- the quiet rows: cooldown reminders, checks that didn't come up, names not in the pull, other note lines
@@ -9698,7 +9704,16 @@ function audit() {
       return { x, nm: String(x.s.title).replace(/\s*\(.*$/, ''), lv, pc: a.length ? Math.round(100 * (a.length - nb - nw) / a.length) : 100 }; })
     .sort((p, q) => ({ bad: 0, warn: 1, ok: 2 }[p.lv] - { bad: 0, warn: 1, ok: 2 }[q.lv]) || p.pc - q.pc);
   const phIco = (s) => { if (s.icon) return '<span class="icw">' + svgIcon(0, s.title) + '<img class="oi" data-icon="' + esc(s.icon) + '" alt=""></span>'; const generic = GENERIC_SEC.test(s.title), name = generic ? s.title : (s.spell && s.spell[1]) || s.title; return spellIcon(generic ? 0 : (s.spell && s.spell[0]) || sidOf(name), name); };
-  const phBars = (list) => '<span class="prw">' + phStat(list).map((q) => '<span class="prw-i" role="button" tabindex="0" data-phjump="' + esc(q.x.s.id) + '" title="' + esc(q.nm + ': ' + q.pc + '% done right. Click to open it.') + '">' + phIco(q.x.s) + '<span class="prw-l"><span class="prw-n">' + esc(q.nm) + '</span><span class="prw-t"><i class="' + q.lv + '" style="width:' + Math.max(3, q.pc) + '%"></i></span></span><span class="prw-p ' + q.lv + '">' + q.pc + '%</span></span>').join('') + '</span>';
+  /* (Oct 24, from the in-game addon's recap (your call: "do what's best"): a mechanic that went wrong says so in one plain line under its
+     bar, with who and when: "1 of 4 went wrong. Maridão at 0:58, Sindo at 1:48." Names in their class colour; clean ones stay a bar) */
+  const PMp = coachPm(), phSay = (q) => { if (q.lv === 'ok') return ''; const a = q.x.rows.concat(...q.x.groups.map((g) => g.rows)).filter(Array.isArray), w = a.filter((row) => isBadRow(row) || isWarnRow(row));
+    if (!w.length) return ''; const tOf = (row) => { const c = row.find((x) => x && x.t != null); return c ? c.t : null; };
+    const L = w.slice().sort((p, r) => (isBadRow(p) ? 0 : 1) - (isBadRow(r) ? 0 : 1) || (tOf(p) == null ? 1e9 : tOf(p)) - (tOf(r) == null ? 1e9 : tOf(r)));
+    /* (the worst moment in full, the way the addon says it: "Deluge #3 at 1:27: 5, then 5 orbs popped, too many in Tyralien's frontal") */
+    let one = ''; try { const m = String(rowText(q.x.s, L[0])).replace(/<[^>]+>/g, '').replace(/\s*\([^)]*\)/g, '').replace(/\s+·\s+/g, ', ').match(/^(?:(\d+:\d\d)\s+)?([^:]*?)(?::\s*(.*))?$/); if (m) one = (m[2] ? m[2] + (m[1] ? ' at ' + m[1] : '') : m[1] ? 'At ' + m[1] : '') + (m[3] ? ': ' + m[3] : ''); } catch (e) { one = ''; }
+    const head = a.length === 1 ? 'Went wrong' : w.length === a.length ? (a.length === 2 ? 'Both went wrong' : 'All ' + a.length + ' went wrong') : w.length + ' of ' + a.length + ' went wrong';
+    return '<span class="prw-s">' + colorNames(esc((one ? dbfCap(one.trim()) /* (no 'N of M went wrong' (your call, Oct 24): the bar says how many) */ : head) + (L.length > 1 ? ' (+' + (L.length - 1) + ' more)' : '') + (/[.!?)]$/.test(one) ? '' : '.')), PMp) + '</span>'; };
+  const phBars = (list, jobs) => '<span class="prw">' + phStat(list).map((q) => '<span class="prw-i" role="button" tabindex="0" data-phjump="' + esc(q.x.s.id) + '" title="' + esc(q.nm + ': ' + q.pc + '% done right. Click to open it.') + '">' + phIco(q.x.s) + '<span class="prw-l"><span class="prw-n">' + esc(q.nm) + '</span><span class="prw-t"><i class="' + q.lv + '" style="width:' + Math.max(3, q.pc) + '%"></i></span>' + phSay(q) + '</span><span class="prw-p ' + q.lv + '">' + q.pc + '%</span></span>').join('') + (jobs || []).map((o) => '<span class="prw-i prw-nj" role="button" tabindex="0" data-phjump="dbn-' + esc(o.id) + '">' + (o.icon || '') + '<span class="prw-l"><span class="prw-n">' + o.title + '<span class="prw-nt">' + emoIc('📜') + 'note</span></span><span class="prw-s ' + o.st + '">' + (o.txtHtml != null ? o.txtHtml : esc(o.txt || DBN_W[o.st] || '')) + '</span></span><span class="prw-p ' + o.st + '">' + ({ ok: '✓', warn: '!', bad: '✕' }[o.st] || '') + '</span></span>').join('') /* (a job only in your note gets a bar too (Oct 24, style A)) */ + '</span>';
   const phLine = (list) => { const st = phStat(list), bad = st.filter((q) => q.lv === 'bad'), warn = st.filter((q) => q.lv === 'warn'), ok = st.filter((q) => q.lv === 'ok'), nm = (q) => '<b>' + esc(q.nm) + '</b>', and = (l) => lpAnd(l.map((q) => esc(q.nm)));
     if (!bad.length && !warn.length) return '<span class="prwl">' + (st.length === 1 ? nm(st[0]) + ' was done right.' : 'All ' + st.length + ' mechanics were done right.') + '</span>';
     const top = bad[0] || warn[0], rest = bad.concat(warn).filter((q) => q !== top);
@@ -9720,12 +9735,12 @@ function audit() {
     // a slim phase heading: name, its time span and one status line (no banner), in the same words as each section's
     // (a heading with only amber rows says so, not "clean")
     h += '<details class="phase mcx-ph phr-' + PHROWS + '" data-mst="' + lvlOf(phLv(list)) + '" data-phk="ph-' + i + '"' + (S.openSecs.has('ph-' + i) ? ' open' : '') + '><summary><span class="phr-dot ' + LVL_CLS[lvlOf(phLv(list))] + '"></span><span class="phr-nm"><b>' + esc(!r.allPulls && /^deaths and avoidable damage$/i.test(p.name) ? (list.every((x) => x.s.id === 'kicks') ? 'Interrupts' : 'The rest') : p.name) + '</b>' + (isFinite(p.end) ? ' <span class="sub">' + T(p.start) + '–' + T(p.end) + '</span>' : p.sub ? ' <span class="sub">' + esc(p.sub) + '</span>' : '') + '</span>' +
-      (PHROWS === 'a' ? phLine(list) : phBars(list)) + '<span class="phr-chev">▸</span></summary>' + withOnly(phaseBody(list, i), i) + '</details>';
+      (PHROWS === 'a' ? phLine(list) : phBars(list, nOnly.get(i))) + '<span class="phr-chev">▸</span></summary>' + withOnly(phaseBody(list, i), i) + '</details>';
   });
   // (a single pull: deaths and avoidable damage live in the coach box (Oct 22, your call: "I think this can be removed from all bosses"), so the
   // Whole fight group holds only fight-long mechanics, and isn't drawn when none are left)
   const wholeV = r.allPulls ? whole : whole.filter((x) => x.s.id !== 'avoid' && x.s.id !== 'deaths');
-  if (wholeV.length || (nOnly.get('w') || []).length) h += '<details class="phase mcx-ph phr-' + PHROWS + '" data-mst="' + lvlOf(phLv(wholeV)) + '" data-phk="ph-w"' + (S.openSecs.has('ph-w') ? ' open' : '') + '><summary><span class="phr-dot ' + LVL_CLS[lvlOf(phLv(wholeV))] + '"></span><span class="phr-nm"><b>Whole fight</b> <span class="sub">' + (r.allPulls ? 'not tied to one phase' : 'not tied to one phase') + '</span></span>' + (PHROWS === 'a' ? phLine(wholeV) : phBars(wholeV)) + '<span class="phr-chev">▸</span></summary>' + withOnly(phaseBody(wholeV, 'w'), 'w') + '</details>';
+  if (wholeV.length || (nOnly.get('w') || []).length) h += '<details class="phase mcx-ph phr-' + PHROWS + '" data-mst="' + lvlOf(phLv(wholeV)) + '" data-phk="ph-w"' + (S.openSecs.has('ph-w') ? ' open' : '') + '><summary><span class="phr-dot ' + LVL_CLS[lvlOf(phLv(wholeV))] + '"></span><span class="phr-nm"><b>Whole fight</b> <span class="sub">' + (r.allPulls ? 'not tied to one phase' : 'not tied to one phase') + '</span></span>' + (PHROWS === 'a' ? phLine(wholeV) : phBars(wholeV, nOnly.get('w'))) + '<span class="phr-chev">▸</span></summary>' + withOnly(phaseBody(wholeV, 'w'), 'w') + '</details>';
   // (the switch (Oct 19): By mechanic is the page above; By player turns the note around, a card per raider with their jobs this pull)
   if (NJ) { const sw = '<div class="dbn-seg" role="group" aria-label="Show"><button type="button" data-dbv="mech"' + (S.dbView === 'player' ? '' : ' class="on"') + '>By mechanic</button><button type="button" data-dbv="player"' + (S.dbView === 'player' ? ' class="on"' : '') + '>By player</button><span class="sub">' + (S.dbView === 'player' ? 'each raider\'s jobs in your note, missed first' : 'your note\'s jobs sit on the mechanic they\'re about') + '</span></div>';
     h = h.slice(0, h0) + sw + (S.dbView === 'player' ? dbnPlayers(NJ, r, pmap) : h.slice(h0)); }
@@ -11431,7 +11446,7 @@ function oaLayout(v, el) {
       f.addEventListener('toggle', () => { if (f.open) S.openSecs.add('brf-burst'); else S.openSecs.delete('brf-burst'); }); }
     try { rateCharts(v, out); } catch (e) { /* (the charts stay where they were) */ } try { oaMeters(v, out); } catch (e) { /* (no meters) */ }
     const dc = [...v.querySelectorAll('details.panel')].find((d) => /^Data check/.test(((d.querySelector('summary') || {}).textContent || '').trim())); if (dc) out.appendChild(dc);
-    dr.replaceWith(out); if (top) top.remove(); v.querySelectorAll('#rcTop, .rc-hp').forEach((n) => { if (!out.contains(n)) n.remove(); }); try { if (S._drawMaps) S._drawMaps(); } catch (e) { /* (maps draw when seen) */ } return; }
+    dr.replaceWith(out); if (top) top.remove(); v.querySelectorAll('#rcTop, .rc-hp').forEach((n) => { if (!out.contains(n)) n.remove(); }); try { mxaInit(v); } catch (e) { console.error(e); } try { if (S._drawMaps) S._drawMaps(); } catch (e) { /* (maps draw when seen) */ } return; }
   /* (All pulls, Oct 23 (your ask: "the bottom half could still be tidied up more"): like one pull, no "More from all pulls" drawer. Its fix
      cards, better and worse, boss health every pull, the old went well / didn't / improving / worse lists, Before the next pull, Talk to and
      Used tonight all repeat the raid lead box, the boss banner or the pace chart; the guide links don't belong here. What only it had stays
@@ -12304,6 +12319,16 @@ function coachSummary(reps, name) {
 // are mentioned"): the headline, then Focus as the big takeaway, the problems as numbered cards (what happened, Next time on its own
 // line, the map on the right), what went right as green chips, deaths and avoidable damage as small chips, and the full coaching folded.
 // Every player name is in their class colour)
+/* (no names in What wiped us (your rule, Oct 23). Oct 24, from the in-game addon chat: a mass death read "Maposepos, Fics, … and Tering,
+   Calcified Corpse got you at 6:48." with every name, and "Kargaryen and Fourinches, your ghost …" slipped through; one player read
+   "Someone were hit". Now: "11 players were caught by Calcified Corpse at 6:48.", "2 players: their ghost …", "Someone was hit") */
+function wipNoNames(t) { t = String(t || '');
+  const cnt = (s) => s.split(/, | and /).filter(Boolean).reduce((n, x) => { const k = x.match(/^(\d+) (?:more|others?)$/); return n + (k ? +k[1] : 1); }, 0);
+  const fix = (s) => s.replace(/\byou were\b/g, 'they were').replace(/\byour\b/g, 'their').replace(/\byou\b/g, 'them');
+  const g = t.match(/^(.+?), ([^,]+?) got you( at \d+:\d\d)?\.?\s*$/); if (g && !/\b(you|your)\b/.test(g[1])) { const n = cnt(g[1]); return (n > 1 ? n + ' players were' : 'Someone was') + ' caught by ' + g[2] + (g[3] || '') + '.'; }
+  const m = t.match(/^([^.]*?), (you|your)\b\s*/); if (!m) return t; const n = cnt(m[1]), rest = t.slice(m[0].length);
+  if (m[2] === 'your') return (n > 1 ? n + ' players: their ' : 'Someone\'s ') + fix(rest);
+  return (n > 1 ? n + ' players ' : 'Someone ') + fix(n > 1 ? rest : rest.replace(/^were\b/, 'was').replace(/^are\b/, 'is').replace(/^have\b/, 'has')); }
 function coachPm() { const m = new Map(); for (const r of [S.rep].concat([...CACHE.values()])) if (r && r.players) for (const p of r.players.values()) if (p.name && p.color && !m.has(oaBase(p.name))) m.set(oaBase(p.name), p); return m; }
 function colorNames(html, pm) {
   const names = [...pm.values()].map((p) => String(p.name).split('-')[0]).filter((n) => n.length >= 3).sort((a, b) => b.length - a.length); if (!names.length) return html;
@@ -12342,8 +12367,47 @@ document.addEventListener('click', (e) => { const tr = e.target.closest && e.tar
   const tb = tr.parentElement; tb.querySelectorAll(':scope > tr.maprow.sim-on').forEach((x) => x.classList.remove('sim-on')); tb.querySelectorAll(':scope > tr.sim-sel').forEach((x) => x.classList.remove('sim-sel')); m.classList.add('sim-on'); tr.classList.add('sim-sel'); }, false);
 /* (phase rows (Oct 22 test): an open phase stays open between redraws; a bar opens its phase and jumps to that mechanic) */
 document.addEventListener('toggle', (e) => { const d = e.target; if (!d.matches || !d.matches('details.mcx-ph[data-phk]')) return; if (d.open) S.openSecs.add(d.dataset.phk); else S.openSecs.delete(d.dataset.phk); }, true);
+/* (Oct 24, your pick, style A of three mockups (notes/Debriefing dropdowns - Oct 24): the phase card stays as it is, and a click on a bar
+   opens that mechanic right under the bars, inside the same card: its moments one line each (✓ / ✕, the time, what happened, problems
+   first), your note's job as one line with its player chips, the map beside, then How it works and Show everything. No second list of
+   cards. Show everything brings back the full detail (the note's tables, the CC order, the line against the top guilds)) */
+S.mxaSel = S.mxaSel || {}; S.mxaAll = S.mxaAll || new Set();
+const mxaSecOf = (ph, id) => ph.querySelector('details.secd[data-k="' + CSS.escape(id) + '"]') || ph.querySelector('details.secd[data-k^="' + CSS.escape(id) + '-"]');
+function mxaOpen(ph, id) { const k = ph.dataset.phk; let pan = ph.querySelector(':scope > .mxa-p');
+  if (!pan) { pan = document.createElement('div'); pan.className = 'mxa-p'; ph.querySelector(':scope > summary').after(pan); }
+  const cur = pan.querySelector(':scope > details.secd'); if (cur && cur._mxaHome) { cur._mxaHome.replaceWith(cur); cur._mxaHome = null; }
+  pan.innerHTML = ''; pan.classList.remove('mxa-all'); ph.querySelectorAll('.prw-i.on').forEach((b) => b.classList.remove('on'));
+  const sec = id ? mxaSecOf(ph, id) : null;
+  if (!sec) { delete S.mxaSel[k]; S.openSecs.delete(k); if (ph.open) ph.open = false; return; }
+  S.mxaSel[k] = id; S.openSecs.add(k); /* (saved now: the page may redraw before the toggle event lands) */ if (!ph.open) ph.open = true;
+  const home = document.createComment('mxa'); sec.replaceWith(home); sec._mxaHome = home; if (!sec.open) sec.open = true;
+  const sm = sec.querySelector(':scope > summary'), ic = sm && sm.querySelector('.icw'), tb = sm && sm.querySelector('.sechd b'), st = sec.classList.contains('dbn-line') && sm ? sm.querySelector('.sst') : null;
+  const hd = document.createElement('div'); hd.className = 'mxa-h';
+  hd.innerHTML = (ic ? ic.outerHTML : '') + '<b>' + (tb ? tb.innerHTML : '') + '</b>' + (sec.classList.contains('dbn-line') ? '<span class="mxa-yn">' + emoIc('📜') + 'From your note</span>' : '') + (st ? '<span class="mxa-st ' + (st.className.match(/\b(ok|warn|bad|na)\b/) || ['', ''])[1] + '">' + st.innerHTML + '</span>' : '') + '<button type="button" class="mxa-x" data-mxax="1" aria-label="Close">✕ Close</button>';
+  pan.appendChild(hd); pan.appendChild(sec);
+  // (your note's job: one line ("Your note · Mind control CC: ✓ both mind controls CC'd") and its player chips; the rest under Show everything)
+  sec.querySelectorAll('.dbn-jh').forEach((j) => { if (!j.querySelector('.mxa-yn2')) j.insertAdjacentHTML('afterbegin', '<span class="mxa-yn2">Your note ·</span>'); });
+  sec.querySelectorAll('.pdesc').forEach((p) => { if (/\d+\/\d+/.test(p.textContent || '') && p.querySelector('.chips, .chipn')) p.classList.add('mxa-keep'); });
+  const ul = sec.querySelector('.u1-l'), box = sec.querySelector('.dbn-box'); if (ul && box && box.parentNode !== ul) ul.appendChild(box);
+  // (a short list of clean moments shows in the open; a long one stays folded)
+  sec.querySelectorAll('details.u1-ok').forEach((d) => { if (d.querySelectorAll('.u1-r').length <= 3) d.open = true; });
+  /* (nothing went wrong and more than 3 moments: one line, 'All 14 done right', the list a tap away) */ sec.querySelectorAll('.u1-l').forEach((l) => { const rows = l.querySelectorAll('.u1-r'); if (rows.length <= 3 || l.querySelector('.u1-r.bad, .u1-r.warn, details.mxa-allok')) return; const d = document.createElement('details'); d.className = 'u1-ok mxa-allok'; d.innerHTML = '<summary>✓ All ' + rows.length + ' done right</summary>'; l.querySelectorAll(':scope > ul.u1-ul, :scope > details.u1-ok').forEach((x) => { if (x.tagName === 'DETAILS') x.open = true; d.appendChild(x); }); l.insertBefore(d, l.firstChild); });
+  // (the footer: How it works and Show everything)
+  const how = sec.querySelector('details.howit'), ft = document.createElement('div'); ft.className = 'mxa-f'; if (how) ft.appendChild(how.cloneNode(true)); /* (a copy: the line keeps its own for next time) */
+  ft.insertAdjacentHTML('beforeend', '<button type="button" class="mxa-all-b" data-mxaall="1">Show everything</button>'); pan.appendChild(ft);
+  if (S.mxaAll.has(id)) { pan.classList.add('mxa-all'); ft.querySelector('.mxa-all-b').textContent = 'Show less'; }
+  const bar = ph.querySelector('.prw-i[data-phjump="' + CSS.escape(id) + '"]'); if (bar) bar.classList.add('on');
+  try { hydrateIcons(); } catch (e) { /* (icons load when seen) */ } try { if (S._drawMaps) S._drawMaps(); } catch (e) { /* (maps draw when seen) */ } }
+function mxaInit(v) { if (!v) return; v.querySelectorAll('details.phase.mcx-ph[data-phk]').forEach((ph) => { if (ph.classList.contains('mxa') || !ph.querySelector(':scope > summary .prw-i')) return;
+  ph.classList.add('mxa'); const k = ph.dataset.phk, first = ph.querySelector(':scope > summary .prw-i[data-phjump]');
+  if (ph.open || S.openSecs.has(k)) mxaOpen(ph, (S.mxaSel[k] && mxaSecOf(ph, S.mxaSel[k]) ? S.mxaSel[k] : '') || (first ? first.dataset.phjump : '')); }); }
+document.addEventListener('click', (e) => { const t = e.target; if (!t || !t.closest) return;
+  const x = t.closest('[data-mxax]'); if (x) { const ph = x.closest('details.phase.mxa'); if (ph) { e.preventDefault(); mxaOpen(ph, ''); } return; }
+  const a = t.closest('[data-mxaall]'); if (a) { const pan = a.closest('.mxa-p'), ph = a.closest('details.phase.mxa'); if (!pan || !ph) return; e.preventDefault(); const id = S.mxaSel[ph.dataset.phk], on = pan.classList.toggle('mxa-all'); if (on) S.mxaAll.add(id); else S.mxaAll.delete(id); a.textContent = on ? 'Show less' : 'Show everything'; try { if (S._drawMaps) S._drawMaps(); } catch (e2) { /* (maps draw when seen) */ } return; }
+  const sm = t.closest('details.phase.mxa > summary'); if (!sm || t.closest('[data-phjump]')) return; const ph = sm.parentNode; e.preventDefault();
+  if (ph.open) mxaOpen(ph, ''); else { const f = sm.querySelector('.prw-i[data-phjump]'); mxaOpen(ph, f ? f.dataset.phjump : ''); } }, true);
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-phjump]'); if (!b) return; e.preventDefault(); e.stopPropagation();
-  const ph = b.closest('details.mcx-ph'); if (!ph) return; ph.open = true; const sec = ph.querySelector('details.secd[data-k^="' + CSS.escape(b.dataset.phjump) + '-"]');
+  const ph = b.closest('details.mcx-ph'); if (!ph) return; if (ph.classList.contains('mxa')) { mxaOpen(ph, S.mxaSel[ph.dataset.phk] === b.dataset.phjump ? '' : b.dataset.phjump); const p = ph.querySelector(':scope > .mxa-p'); if (p && p.offsetHeight && p.getBoundingClientRect().top > innerHeight - 140) p.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); /* (on a phone the bars stack: bring the opened one into view) */ return; } ph.open = true; const sec = ph.querySelector('details.secd[data-k^="' + CSS.escape(b.dataset.phjump) + '-"]');
   if (sec) { const k = sec.dataset.k; sec.open = true; S.openSecs.add(k); /* (the page may redraw as it opens: find it again) */ setTimeout(() => { const el = document.querySelector('details.secd[data-k="' + CSS.escape(k) + '"]'); if (el) { el.open = true; el.scrollIntoView({ block: 'start', behavior: 'smooth' }); } }, 120); } }, true);
 /* (a moment's line, shorter: asides in brackets longer than a few words come out, "(aim for 2 to 3, then none, into empty ground)" (Oct 23)) */
 const tidyLine = (t) => String(t || '').replace(/\s*\((?=[^)]{18,})[^)]*\)/g, '').replace(/\s+·\s+/g, ' · ').replace(/\s{2,}/g, ' ').trim();
@@ -12634,13 +12698,13 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
   const trendH = () => { const T0 = c.trend, single = !c.night, sec = (cls, title, note, L, tag) => (L && L.length ? '<div class="cch-tsec ' + cls + '"><div class="cch-tsh">' + title + (note ? ' <span>· ' + esc(note) + '</span>' : '') + '</div><ul class="cch-wl cch-twl">' + L.map((x) => '<li><b>' + esc(dbfCap(x.nm)) + '</b>' + (x.tag ? '<span class="cch-tt">' + (tag || '') + esc(x.tag) + '</span>' : '') + (x.sub ? '<span class="cch-wy">' + esc(dbfCap(x.sub)) + '</span>' : '') + '</li>').join('') + '</ul></div>' : '');
     const W = (c.wrongAll && c.wrongAll.length ? c.wrongAll : c.wrong);
     /* (Oct 23, your layout: two side by side, two rows: What wiped us | What we did well, then getting worse | improving; one column on phones) */
-    const rcm = !c.night ? String(c.headline).match(/Root cause: (.*?\.)(?=\s|$)\s*([\s\S]*)$/) : null, wip1 = rcm ? '<div class="cch-tsec wip"><div class="cch-tsh">What wiped us</div><p class="cch-trc"><b>' + esc(rcm[1]) + '</b>' + (rcm[2] ? ' ' + esc(((t) => { const m = t.match(/^([^.]*?), you /); if (!m) return t; return (/ and |, /.test(m[1]) ? 'Players ' : 'Someone ') + t.slice(m[0].length).replace(/\byou were\b/g, 'they were').replace(/\byour\b/g, 'their').replace(/\byou\b/g, 'them'); })(rcm[2]) /* (no names in the grid (your rule, Oct 23)) */) : '') + '</p></div>' : '';
+    const rcm = !c.night ? String(c.headline).match(/Root cause: (.*?\.)(?=\s|$)\s*([\s\S]*)$/) : null, wip1 = rcm ? '<div class="cch-tsec wip"><div class="cch-tsh">What wiped us</div><p class="cch-trc"><b>' + esc(rcm[1]) + '</b>' + (rcm[2] ? ' ' + esc(wipNoNames(rcm[2]) /* (no names in the grid (your rule, Oct 23)) */) : '') + '</p></div>' : '';
     const meW = c.name ? (() => { const L = W.slice(0, 3).map((x) => ({ nm: String(x.label).replace(/<[^>]+>/g, '').replace(/\s*\(.*$/, ''), tag: x.wipes ? (x.wipes === 1 ? (x.wipe1 ? 'caused the wipe' : 'caused a wipe') : 'caused ' + x.wipes + ' wipes') : x.led ? 'led to ' + plural(x.led, 'death') : '', sub: x.what ? cClip(tidyLine(String(x.what).replace(/<[^>]+>/g, '')), 110) : '' }));
       return L.length ? sec('wip', 'What went wrong for you', '', L, '') : none('wip', 'What went wrong for you', '', 'Nothing went wrong for you.'); })() : '';
     const wip = c.name ? meW : wip1 || (c.wipes && c.wipes.length ? '<div class="cch-tsec wip"><div class="cch-tsh">What wiped us</div><ul class="cch-wl">' + c.wipes.map((x) => '<li><b>' + esc(x.nm) + '</b><span class="cch-wn">' + plural(x.n, 'wipe') + '</span>' + (x.why ? '<span class="cch-wy">' + esc(x.why) + '</span>' : '') + '</li>').join('') + '</ul></div>' : '');
     const none = (cls, title, note, msg) => '<div class="cch-tsec ' + cls + '"><div class="cch-tsh">' + title + (note ? ' <span>· ' + esc(note) + '</span>' : '') + '</div><p class="cch-tnone">' + msg + '</p></div>'; /* (an empty section says so: good news is news (Oct 23)) */
-    return '<div class="cch-tgrid">' + wip + (c.name && !T0.well.length ? none('ok', 'What you did well', '', 'Nothing stood out yet.') : '') + sec('ok', c.name ? 'What you did well' : 'What we did well', '', T0.well.filter((x) => !(c.wipes || []).some((w) => String(w.nm).toLowerCase() === String(x.nm).toLowerCase())) /* (what wiped us is never also "done well") */) + (T0.worse.length ? sec('bad', single ? 'Worse than last pull' : 'What\'s getting worse', single ? '' : T0.cmp, T0.worse, '') : none('bad', single ? 'Worse than last pull' : 'What\'s getting worse', single ? '' : T0.cmp, single ? 'Nothing got worse than last pull.' : 'Nothing got worse.')) +
-      (T0.better.length ? sec('up', single ? 'Better than last pull' : 'What\'s improving', single ? '' : T0.cmp, T0.better, '') : none('up', single ? 'Better than last pull' : 'What\'s improving', single ? '' : T0.cmp, single ? 'Nothing improved on last pull.' : 'Nothing clearly improved.')) + '</div>' +
+    return '<div class="cch-tgrid">' + wip + (c.name && !T0.well.length ? none('ok', 'What you did well', '', 'Nothing stood out yet.') : '') + sec('ok', c.name ? 'What you did well' : 'What we did well', '', T0.well.filter((x) => !(c.wipes || []).some((w) => String(w.nm).toLowerCase() === String(x.nm).toLowerCase())) /* (what wiped us is never also "done well") */) + (!T0.worse.length && !T0.better.length ? '<p class="cch-tsame">' + (single ? 'About the same as last pull: nothing got better or worse.' : 'Nothing clearly got better or worse.') + '</p>' /* (one line, not two empty boxes (Oct 24, from the addon's recap)) */ : T0.worse.length ? sec('bad', single ? 'Worse than last pull' : 'What\'s getting worse', single ? '' : T0.cmp, T0.worse, '') : none('bad', single ? 'Worse than last pull' : 'What\'s getting worse', single ? '' : T0.cmp, single ? 'Nothing got worse than last pull.' : 'Nothing got worse.')) +
+      (!T0.worse.length && !T0.better.length ? '' : T0.better.length ? sec('up', single ? 'Better than last pull' : 'What\'s improving', single ? '' : T0.cmp, T0.better, '') : none('up', single ? 'Better than last pull' : 'What\'s improving', single ? '' : T0.cmp, single ? 'Nothing improved on last pull.' : 'Nothing clearly improved.')) + '</div>' +
       (W.length ? '<details class="cbr-more cch-tall" data-k="cch-tall"' + (S.openSecs && S.openSecs.has('cch-tall') ? ' open' : '') + '><summary>Every mistake, in detail <span>· ' + W.length + '</span></summary><ul class="cbr-l">' + W.map(briefLine).join('') + '</ul></details>' : ''); };
   const D = c.deaths, A = c.avoid;
   // (a death chip opens that death's short summary under the chips (Oct 22: deaths live only here on a single pull))
