@@ -231,7 +231,11 @@ function paceRec(g, l) {
 }
 async function paceStep(env, maxK) {
   const st = (await env.DEBRIEF_KV.get('pace-st', 'json')) || { b: {} }; for (const k of PACE_SEED) if (!st.b[k]) st.b[k] = {};
-  const keys = Object.keys(st.b); if (!keys.length) return; st.i = ((st.i || 0) + 1) % keys.length;
+  const keys = Object.keys(st.b); if (!keys.length) return;
+  /* (the next boss that has work: one that's done for today is skipped, so the job never sits on it (Oct 23: it stuck on Kith'ix)) */
+  const busy = (b) => !!(b.pg || !b.at || Date.now() - b.at > 864e5 || (b.todo && b.todo.length) || (b.rtodo && b.rtodo.length));
+  let tries = 0; do { st.i = ((st.i || 0) + 1) % keys.length; tries++; } while (tries < keys.length && !busy(st.b[keys[st.i]]));
+  if (!busy(st.b[keys[st.i]])) { await env.DEBRIEF_KV.put('pace-st', JSON.stringify(st)); return { key: keys[st.i], idle: true }; }
   const key = keys[st.i], B = st.b[key], [e, d] = key.split(':').map(Number); B.seen = B.seen || []; B.todo = B.todo || [];
   if (B.pg || !B.at || Date.now() - B.at > 864e5) { // (the rankings: one page a run)
     if (!B.parts) { const z = await gql(env, PACE_PART_Q, { e }); const P = z && z.worldData && z.worldData.encounter && z.worldData.encounter.zone && z.worldData.encounter.zone.partitions; B.parts = (P || []).map((p) => p.id); if (!B.parts.length) B.parts = [0]; }
