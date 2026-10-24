@@ -531,6 +531,15 @@ async function runInbox(env) {
           const mine = o.replaceLast ? ((await dc(env, '/channels/' + ch + '/messages?limit=20').catch(() => [])) || []).find((m) => m.author && m.author.id === APP_ID) : null;
           if (mine) await dc(env, '/channels/' + ch + '/messages/' + mine.id, { method: 'PATCH', body });
           else { const m = await dc(env, '/channels/' + ch + '/messages', { method: 'POST', body }); if (all) await env.DEBRIEF_KV.put('everyone-at', String(Date.now())); if (c.type === 5 && m && m.id) await dc(env, '/channels/' + ch + '/messages/' + m.id + '/crosspost', { method: 'POST' }).catch(() => {}); }
+        } else if (o.op === 'beta-post' && text) {
+          // (a message in #beta-testers-only: its pictures come from KV (base64), and pingRole pings that role by name. Only that
+          // channel; the user asked for it, Oct 24)
+          const c = (await dc(env, '/guilds/' + GUILD + '/channels')).find((x) => x.name === 'beta-testers-only'); if (!c) continue;
+          let content = text.slice(0, 1900); const men = { parse: [] };
+          if (o.pingRole) { const role = ((await dc(env, '/guilds/' + GUILD + '/roles')) || []).find((r) => r.name === String(o.pingRole)); if (role) { content = '<@&' + role.id + '> ' + content; men.roles = [role.id]; } }
+          const keys = Array.isArray(o.images) ? o.images.slice(0, 6) : [];
+          await dcFiles(env, '/channels/' + c.id + '/messages', 'POST', { content, allowed_mentions: men, flags: 4 }, keys);
+          if (o.dropImages) for (const k of keys) await env.DEBRIEF_KV.delete(k).catch(() => {});
         } else if (o.op === 'allow-announce') {
           // (the user's OK, Oct 20: Claudette's own role may see, post, show cards and ping @everyone in #announcments; nothing else)
           const c = (await dc(env, '/guilds/' + GUILD + '/channels')).find((x) => x.name === 'announcments'); if (!c) continue;
