@@ -1597,6 +1597,15 @@ line.tl-t { stroke: #ece8df; stroke-width: 2.5; vector-effect: non-scaling-strok
 @media (max-width: 480px) { .pf-row.cb.gb-r3.gb-r5 { grid-template-columns: 18px minmax(0, 1fr) 72px 46px; } .gb-r5 .cb-r { grid-template-columns: 1fr; } .gb-r5 .cb-r span:nth-child(n+2) { display: none; } }
 .gb-tgl { display: inline-flex; align-items: center; gap: 8px; margin: 0 12px 10px 0; font: 700 12px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .gb-tgl select { font: 500 13px var(--body); letter-spacing: 0; text-transform: none; color: var(--text); background: var(--raised); border: 1px solid var(--line2); border-radius: 8px; padding: 5px 8px; max-width: 220px; }
+/* (Oct 23, layout A: one slim toolbar, item level and active beside the name, the parse in front of it) */
+.gb-tool { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 8px 10px; margin: 0 0 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; } .gb-tool:empty { display: none; }
+.gb-tool > * { margin: 0 !important; } .gb-tool > * + * { border-left: 1px solid var(--line2); padding-left: 10px; } .gb-tool .pfph { gap: 6px; }
+.gb-tool .gb-by { background: none; border: 0; padding: 0 0 0 10px; gap: 6px; } .gb-tool .gb-by:first-child { padding-left: 0; }
+.gb-tool .gb-by button { border: 1px solid var(--line2); border-radius: 999px; padding: 4px 12px; font-size: 13px; color: var(--muted); background: transparent; box-shadow: none; } .gb-tool .gb-by button:hover { color: var(--text); }
+.gb-tool .gb-by button.on { color: var(--gold); border-color: var(--gold); background: rgba(230,180,80,.12); }
+.gb-meta { margin-left: 6px; font-size: 12px; font-weight: 500; color: rgba(255,255,255,.7); text-shadow: 0 1px 2px rgba(0,0,0,.9); white-space: nowrap; }
+.gb-tb .cb-in .pf-nm .prs { order: -1; margin-right: 2px; }
+@media (max-width: 480px) { .gb-meta { display: none; } }
 .gb-pkg { margin-top: 4px; } .gb-pkg.n3 { grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); } /* (three in a row only when each has room for its names) */
 .gb-dr .gb-br { grid-template-columns: minmax(0, 190px) minmax(110px, 1fr) minmax(0, 38%); } .gb-dr .gb-bx { white-space: normal; line-height: 1.3; } /* (a long note wraps, so every bar keeps its room) */
 .gb-dmore { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
