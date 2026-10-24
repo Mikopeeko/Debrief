@@ -1618,6 +1618,35 @@ line.tl-t { stroke: #ece8df; stroke-width: 2.5; vector-effect: non-scaling-strok
 .gb-meta { margin-left: 6px; font-size: 12px; font-weight: 500; color: rgba(255,255,255,.7); text-shadow: 0 1px 2px rgba(0,0,0,.9); white-space: nowrap; }
 .gb-tb .cb-in .pf-nm .prs { order: -1; margin-right: 2px; }
 @media (max-width: 480px) { .gb-meta { display: none; } }
+/* (Oct 24: Graphs' Survival tab: the kit table, and each player's health over the pull with what they pressed or drank) */
+.gbsv-sc { overflow-x: auto; } .gbsv-tb { min-width: 640px; }
+.gbsv-g { display: grid; grid-template-columns: 22px minmax(130px, 1fr) repeat(7, minmax(58px, 76px)); align-items: center; gap: 0 6px; min-height: 36px; padding: 2px 8px; border-radius: 8px; font-variant-numeric: tabular-nums; }
+.gbsv-r > summary { list-style: none; cursor: pointer; } .gbsv-r > summary::-webkit-details-marker { display: none; }
+.gbsv-r > summary:hover, .gbsv-r[open] > summary { background: var(--raised); } .gbsv-r + .gbsv-r { border-top: 1px solid rgba(255,255,255,.04); }
+.gbsv-k { color: var(--faint); font-size: 12px; text-align: right; padding-right: 2px; }
+.gbsv-n { display: inline-flex; align-items: center; gap: 8px; min-width: 0; font-weight: 700; font-size: 14px; } .gbsv-n > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gbsv-c { text-align: right; font-weight: 700; font-size: 14px; color: var(--text); } .gbsv-c.z { color: var(--faint); font-weight: 500; }
+.gbsv-h { min-height: 32px; align-items: end; padding-bottom: 6px; border-bottom: 1px solid var(--line); border-radius: 0; margin-bottom: 2px; }
+.gbsv-h button { background: none; border: 0; padding: 0; cursor: pointer; font: 700 12px/1.2 var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); text-align: right; }
+.gbsv-h .gbsv-n button { text-align: left; } .gbsv-h button:hover { color: var(--text); } .gbsv-h button.on { color: var(--gold); }
+.gbsv-b { display: grid; gap: 3px; padding: 6px 8px 12px 36px; } .gbsv-lw { margin: 0; font-size: 13px; color: var(--muted); }
+.gbsv-lg { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.gbsv-lk { display: inline-flex; align-items: center; gap: 7px; background: none; border: 1px solid var(--line2); border-radius: 999px; padding: 4px 11px; font-size: 12px; color: var(--muted); cursor: pointer; }
+.gbsv-lk:hover { color: var(--text); } .gbsv-lk[aria-pressed="false"] { opacity: .45; } .gbsv-lk[aria-pressed="false"] .gbsv-m { visibility: hidden; }
+.gbsv-ln { display: grid; grid-template-columns: 170px minmax(0, 1fr); align-items: center; gap: 12px; min-height: 34px; } .gbsv-ln + .gbsv-ln { border-top: 1px solid rgba(255,255,255,.04); }
+.gbsv-tr { position: relative; display: block; height: 30px; background: rgba(255,255,255,.025); border-radius: 4px; overflow: hidden; }
+.gbsv-hp { position: absolute; inset: 0; width: 100%; height: 100%; } .gbsv-ha { opacity: .14; } .gbsv-hl { fill: none; stroke-width: 1.5; vector-effect: non-scaling-stroke; opacity: .9; }
+.gbsv-30 { stroke: rgba(229,83,75,.4); stroke-width: 1; stroke-dasharray: 3 4; vector-effect: non-scaling-stroke; }
+.gbsv-m { position: absolute; top: 50%; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; box-shadow: 0 0 0 1.5px rgba(0,0,0,.7); z-index: 1; }
+.gbsv-m.k-def { width: 6px; height: 14px; margin: -7px 0 0 0; border-radius: 3px; background: rgba(106,168,255,.8); } .gbsv-m.k-self { background: #45c15c; } .gbsv-m.k-stone { background: #2dd4bf; }
+.gbsv-m.k-hpot { background: #f48cba; } .gbsv-m.k-cpot { background: #c792ea; } .gbsv-m.k-low { top: auto; bottom: 1px; width: 12px; height: 4px; margin: 0 0 0 -6px; border-radius: 2px; background: #e5534b; box-shadow: none; }
+.gbsv-m.k-dead { width: auto; height: auto; margin: -9px 0 0 -5px; background: none; box-shadow: none; color: #fff; font: 700 14px/18px var(--body); text-shadow: 0 1px 3px #000; }
+.gbsv-gone { position: absolute; top: 0; bottom: 0; right: 0; background: repeating-linear-gradient(135deg, rgba(0,0,0,.4) 0 4px, transparent 4px 8px); }
+.gbsv-lk .gbsv-m { position: static; margin: 0; flex: none; } .gbsv-lk .gbsv-m.k-low { width: 12px; height: 4px; } .gbsv-lk .gbsv-m.k-dead { font-size: 13px; line-height: 1; }
+.gbsv-ax { min-height: 18px; } .gbsv-ax .gbsv-tr { height: 18px; background: none; overflow: visible; } .gbsv-t { position: absolute; top: 0; transform: translateX(-50%); font-size: 11px; color: var(--faint); white-space: nowrap; }
+.gbsv-tl.no-def .gbsv-tr .k-def, .gbsv-tl.no-self .gbsv-tr .k-self, .gbsv-tl.no-stone .gbsv-tr .k-stone, .gbsv-tl.no-hpot .gbsv-tr .k-hpot, .gbsv-tl.no-cpot .gbsv-tr .k-cpot, .gbsv-tl.no-low .gbsv-tr .k-low, .gbsv-tl.no-dead .gbsv-tr .k-dead { display: none; }
+.gbsv-more { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; align-items: start; } .gbsv-more .panel.gb-card { margin: 0; }
+@media (max-width: 640px) { .gbsv-ln { grid-template-columns: 92px minmax(0, 1fr); gap: 8px; } .gbsv-ln .gbsv-n { font-size: 12px; gap: 5px; } .gbsv-b { padding-left: 10px; } }
 .gb-pkg { margin-top: 4px; } .gb-pkg.n3 { grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); } /* (three in a row only when each has room for its names) */
 .gb-dr .gb-br { grid-template-columns: minmax(0, 190px) minmax(110px, 1fr) minmax(0, 38%); } .gb-dr .gb-bx { white-space: normal; line-height: 1.3; } /* (a long note wraps, so every bar keeps its room) */
 .gb-dmore { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
@@ -15863,6 +15892,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-24', h: [
+    { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
     'Debriefing and Plan: point at (or tap) any button or tile for a short tooltip saying what it does.',
     'Graphs: long by-spell lists end in a Show more that opens the rest right under them.',
@@ -28868,7 +28898,85 @@ function graphsBoard(r, end, NP) {
       // (who shielded whom: the raid's shields, by who cast them)
       const shG = ps.map((p) => ({ p, v: p.absorbs || 0 })).filter((x) => x.v > 0).sort((u, w) => w.v - u.v), shT = shG.reduce((v, x) => v + x.v, 0), shMx = shG.length ? shG[0].v : 1;
       H.set('mitsh', shG.length ? ch('Shields given', 'whole pull' + ALLP, cbHead('Total', 'Share', '', '', 'Player') + '<div class="gb-rows">' + shG.slice(0, 12).map((x, i) => cbRow({ tag: 'div', cls: ' nb', k: i + 1, p: x.p, segs: [[Math.max(1.5, 100 * x.v / shMx), 'm']], v: C(x.v), sub: pctS(x.v / Math.max(1, shT)) })).join('') + '</div>') : '');
-      const TB = [['dmg', 'Damage', ['dmg'], ['spells', 'tgt']], ['heal', 'Healing', ['heal'], ['oh']], ['taken', 'Damage taken', ['taken'], ['src']], ['mit', 'Mitigation', ['mit'], ['mitsrc', 'mitsh', 'mitcd', 'mitdef']], ['death', 'Deaths', ['death'], ['kick', 'disp']], ['cpm', 'Casts', ['cpm'], []], ['buff', 'Buffs', [], []]]
+      // (Oct 24, "sections for things warcraftlogs doesnt have": the Survival tab. What each player pressed or drank to stay alive, from the
+      // same counts as Debriefing (their class's defensives and self-heals, Healthstones, potions), each player's health over the pull with
+      // every one of them on it, and the times they dropped under 30% and lived. Plain counts and times, nothing graded)
+      const SV_K = [['def', 'Defensives'], ['self', 'Self-heals'], ['stone', 'Healthstones'], ['hpot', 'Health potions'], ['cpot', 'Combat potions'], ['heal', 'Healed by kit'], ['low', 'Under 30%']];
+      const svOne = (ts) => ts.slice().sort((a, b) => a - b).filter((t, i, a) => i === 0 || t - a[i - 1] > 2); /* (one press, even if the log has a cast per tick) */
+      const svOf = (p) => { const o = { p, def: new Map(), self: new Map(), stone: [], hpot: [], cpot: [], mpot: [], pre: 0, hStone: 0, hPot: 0, low: [], dead: [] };
+        for (const { rr, q, e, pull } of partsOf(p)) { const ok = (t) => t <= e + 0.05 && (night || inW(t)), sh = (q.selfH || []).filter((h) => ok(h.t)), healBy = (f) => sh.filter((h) => f(String(h.spell).toLowerCase())).reduce((v, h) => v + (h.amt || 0), 0);
+          const list = ((q.cls && E.DEFENSIVES[q.cls]) || []).filter(([n, , , sp]) => (!sp || sp.includes(q.specId)) && !SURV_RAID.has(n.toLowerCase())).map(([n, id, , , , kind]) => [n, id, kind || 'dr'])
+            .concat(((q.cls && E.SURV_MINOR[q.cls]) || []).filter(([, , sp]) => !sp || sp.includes(q.specId)).map(([n, id, , kind]) => [n, id, kind]));
+          for (const [n, id0, kind] of list) { const ln = n.toLowerCase(), ts = svOne(ln === 'lay on hands' ? sh.filter((h) => String(h.spell).toLowerCase() === ln).map((h) => h.t) : ((q.byName && q.byName.get(ln)) || []).filter(ok)); if (!ts.length) continue;
+            const m = kind === 'heal' ? o.self : o.def, x = m.get(n) || { name: n, id: ((q.castAb && q.castAb.get(n)) || {}).id || id0, u: [], heal: 0, off: 0 };
+            for (const t of ts) { const mt = (rr.defMit || []).find((y) => y.g === q.guid && String(y.name).toLowerCase() === ln && Math.abs(y.t - t) < 2), b = q.buffs && q.buffs.get(n), sp = b && b.sp.find(([a]) => Math.abs(a - t) < 1.5);
+              x.u.push({ t, pull, e: sp ? Math.min(sp[1] == null ? e : sp[1], e) : null, off: mt ? mt.prev : 0 }); if (mt) x.off += mt.prev; }
+            if (kind === 'heal') x.heal += healBy((y) => y === ln); m.set(n, x); }
+          const cs = q.cons || {}, put = (l, k) => { for (const u of (cs[k] || []).filter((u2) => ok(u2.t))) l.push({ t: u.t, pull, name: u.name, id: u.id }); };
+          put(o.stone, 'healthstone'); put(o.hpot, 'healpot'); put(o.cpot, 'combatpot'); put(o.mpot, 'manapot');
+          if ((night || W0 < 1) && prepotted(rr, q) && !(cs.combatpot || []).concat(cs.manapot || []).some((u) => u.t < 3)) o.pre++;
+          o.hStone += healBy((y) => y.includes('healthstone')); o.hPot += healBy((y) => E.potionKind(y) === 'healpot');
+          for (const c of (q.closeCalls || []).filter((c2) => ok(c2.tl))) o.low.push({ t: c.tl, pull, low: c.low }); }
+        if (!night) for (const d of deaths(p)) o.dead.push({ t: d.t, ab: d.ability });
+        const nn = (m) => [...m.values()].reduce((v, x) => v + x.u.length, 0); o.nDef = nn(o.def); o.nSelf = nn(o.self); o.hSelf = [...o.self.values()].reduce((v, x) => v + x.heal, 0); o.heal = o.hSelf + o.hStone + o.hPot; o.nC = o.cpot.length + o.mpot.length + o.pre; return o; };
+      const SV = ps.map(svOf), svN = { def: (o) => o.nDef, self: (o) => o.nSelf, stone: (o) => o.stone.length, hpot: (o) => o.hpot.length, cpot: (o) => o.nC, heal: (o) => o.heal, low: (o) => o.low.length };
+      const ROLE_O = { tank: 0, healer: 1 }, roleO = (p) => (ROLE_O[p.role] != null ? ROLE_O[p.role] : 2), svS = SV_K.some(([k]) => k === S.gbSvS) ? S.gbSvS : '';
+      const svL = SV.slice().sort((u, w) => (svS ? svN[svS](w) - svN[svS](u) : 0) || roleO(u.p) - roleO(w.p) || String(u.p.name).localeCompare(w.p.name)), svLane = SV.slice().sort((u, w) => roleO(u.p) - roleO(w.p) || String(u.p.name).localeCompare(w.p.name));
+      const svT = (k) => SV.reduce((v, o) => v + svN[k](o), 0), cnt1 = (l, w) => plural(l, w);
+      const svCell = (v, txt, tip) => '<span class="gbsv-c' + (v ? '' : ' z') + '"' + (v && tip ? gt(tip) : '') + '>' + (v ? txt : '—') + '</span>';
+      const svAt = (l) => { if (!night) return l.map((u) => T(u.t)).join(', '); const m = new Map(); for (const u of l) m.set(u.pull, (m.get(u.pull) || 0) + 1); return [...m].sort((x, y) => x[0] - y[0]).map(([pl, k]) => 'pull ' + pl + ' ×' + k).join(' · '); }; /* (All pulls: a count per pull, not every time) */
+      const svBody = (o) => { const out = [], mxOf = (m) => Math.max(1, ...[...m.values()].map((x) => x.u.length));
+        if (o.def.size) out.push('<p class="gb-bh">Defensives</p><div class="gb-bt">' + [...o.def.values()].sort((u, w) => w.u.length - u.u.length).map((x) => lRow(x.name, x.u.length / mxOf(o.def), x.u.length + '×', svAt(x.u) + (x.off ? ' · about ' + C(x.off) + ' taken off' : ''))).join('') + '</div>');
+        if (o.self.size) out.push('<p class="gb-bh">Self-heals</p><div class="gb-bt">' + [...o.self.values()].sort((u, w) => w.u.length - u.u.length).map((x) => lRow(x.name, x.u.length / mxOf(o.self), x.u.length + '×', svAt(x.u) + (x.heal ? ' · healed ' + C(x.heal) : ''))).join('') + '</div>');
+        const kit = [[o.stone, 'Healthstone', o.hStone], [o.hpot, 'Health potion', o.hPot], [o.cpot, 'Combat potion', 0], [o.mpot, 'Mana potion', 0]].filter(([l]) => l.length), pm = Math.max(1, o.pre, ...kit.map(([l]) => l.length));
+        if (kit.length || o.pre) out.push('<p class="gb-bh">Healthstones and potions</p><div class="gb-bt">' + (o.pre ? lRow('Potion before the pull', o.pre / pm, o.pre + '×', night ? plural(o.pre, 'pull') : 'before the pull') : '') + kit.map(([l, nm, h]) => lRow(l[0].name || nm, l.length / pm, l.length + '×', svAt(l) + (h ? ' · healed ' + C(h) : ''))).join('') + '</div>');
+        if (o.low.length) out.push('<p class="gb-bh">Under 30% and lived</p><p class="gbsv-lw">' + (night ? svAt(o.low) : o.low.map((u) => T(u.t) + ' (' + Math.round(100 * u.low) + '%)').join(' · ')) + '</p>');
+        return out.length ? out.join('') : '<p class="sub">Nothing used</p>'; };
+      const svRow = (o, i) => { const p = o.p, nm = p.name, lst = (m) => [...m.values()].sort((u, w) => w.u.length - u.u.length).map((x) => x.name + ' ×' + x.u.length);
+        return '<details class="gbsv-r"><summary class="gbsv-g"><span class="gbsv-k">' + (i + 1) + '</span><span class="gbsv-n">' + avatar(p, true) + '<span style="color:' + (p.color || 'var(--text)') + '">' + esc(nm) + '</span></span>' +
+          svCell(o.nDef, String(o.nDef), [nm, cnt1(o.nDef, 'defensive')].concat(lst(o.def))) + svCell(o.nSelf, String(o.nSelf), [nm, cnt1(o.nSelf, 'self-heal')].concat(lst(o.self), o.hSelf ? ['Healed ' + C(o.hSelf)] : [])) +
+          svCell(o.stone.length, String(o.stone.length), [nm, cnt1(o.stone.length, 'Healthstone'), svAt(o.stone)].concat(o.hStone ? ['Healed ' + C(o.hStone)] : [])) + svCell(o.hpot.length, String(o.hpot.length), [nm, cnt1(o.hpot.length, 'health potion'), svAt(o.hpot)].concat(o.hPot ? ['Healed ' + C(o.hPot)] : [])) +
+          svCell(o.nC, String(o.nC), [nm].concat(o.cpot.length ? [cnt1(o.cpot.length, 'combat potion') + ': ' + svAt(o.cpot)] : [], o.mpot.length ? [cnt1(o.mpot.length, 'mana potion') + ': ' + svAt(o.mpot)] : [], o.pre ? [(night ? cnt1(o.pre, 'pull') + ' with a potion' : 'One') + ' before the pull'] : [])) +
+          svCell(o.heal, C(o.heal), [nm, 'Healed by kit ' + C(o.heal)].concat(o.hSelf ? ['Self-heals ' + C(o.hSelf)] : [], o.hStone ? ['Healthstones ' + C(o.hStone)] : [], o.hPot ? ['Health potions ' + C(o.hPot)] : [])) +
+          svCell(o.low.length, String(o.low.length), [nm, 'Under 30% and lived: ' + o.low.length, svAt(o.low)]) + '</summary><div class="gbsv-b">' + svBody(o) + '</div></details>'; };
+      const svHead = '<div class="gbsv-g gbsv-h"><span class="gbsv-k">#</span><span class="gbsv-n"><button type="button" data-gsvs="" aria-pressed="' + !svS + '"' + (svS ? '' : ' class="on"') + '>Player</button></span>' + SV_K.map(([k, l]) => '<span class="gbsv-c"><button type="button" data-gsvs="' + k + '" aria-pressed="' + (svS === k) + '"' + (svS === k ? ' class="on"' : '') + '>' + esc(l) + '</button></span>').join('') + '</div>';
+      const svUsed = svT('def') + svT('self') + svT('stone') + svT('hpot') + svT('cpot');
+      H.set('surv', SV.length ? '<section class="panel pf-bars gb-card" data-k="surv"><div class="gb-hd"><span class="gb-lbl">Survival kit</span><span class="gb-big">' + svUsed + '<small>used</small></span><span class="gb-hs">' + [cnt1(svT('def'), 'defensive'), cnt1(svT('self'), 'self-heal'), cnt1(svT('stone'), 'Healthstone'), cnt1(svT('hpot'), 'health potion'), cnt1(svT('cpot'), 'combat potion'), C(svT('heal')) + ' healed by kit'].join(' · ') + '</span></div>' +
+        '<div class="gbsv-sc"><div class="gbsv-tb">' + svHead + svL.map(svRow).join('') + '</div></div></section>' : '');
+      // (each player's health over the pull, with what they pressed or drank on it: one pull only)
+      const svTl = (() => { if (night || !SV.length) return ''; const A = W0, B = Math.max(W0 + 1, W1), X = (t) => 100 * (t - A) / (B - A), inR = (t) => t >= A - 0.05 && t <= B + 0.05;
+        const lane = (o) => { const p = o.p, l = (r.php && r.php.get(p.guid)) || [], NB = 300, mins = new Array(NB).fill(null);
+          for (const [t, fr] of l) { if (t < A || t > B) continue; const j = Math.min(NB - 1, Math.floor(NB * (t - A) / (B - A))); mins[j] = mins[j] == null ? fr : Math.min(mins[j], fr); }
+          const dT = o.dead.length ? Math.min(...o.dead.map((d) => d.t)) : null, jD = dT != null && inR(dT) ? Math.floor(NB * (dT - A) / (B - A)) : NB - 1; let last = 1; const pts = [];
+          for (let j = 0; j <= Math.min(NB - 1, jD); j++) { if (mins[j] != null) last = mins[j]; pts.push(j === jD && dT != null && inR(dT) ? 0 : last); }
+          const xs = (j) => (1000 * j / (NB - 1)).toFixed(1), ys = (v) => (2 + 27 * (1 - Math.max(0, Math.min(1, v)))).toFixed(1), col = p.color || '#9aa0ac';
+          const line = pts.map((v, j) => (j ? 'L' : 'M') + xs(j) + ' ' + ys(v)).join(''), svg = '<svg class="gbsv-hp" viewBox="0 0 1000 30" preserveAspectRatio="none" aria-hidden="true"><line x1="0" x2="1000" y1="' + ys(0.3) + '" y2="' + ys(0.3) + '" class="gbsv-30"/>' +
+            (l.length ? '<path d="' + line + 'L' + xs(pts.length - 1) + ' 30L0 30Z" style="fill:' + col + '" class="gbsv-ha"/><path d="' + line + '" style="stroke:' + col + '" class="gbsv-hl"/>' : '') + '</svg>';
+          const mk = (k, t, t2, lines) => (inR(t) ? '<i class="gbsv-m k-' + k + '" style="left:' + X(t).toFixed(2) + '%' + (t2 != null && t2 > t + 0.5 ? ';width:' + Math.max(0.6, X(Math.min(t2, B)) - X(t)).toFixed(2) + '%' : '') + '"' + gt(lines) + '></i>' : ''), at = (t) => p.name + ' · ' + T(t), M = [];
+          for (const u of o.low) M.push(mk('low', u.t, null, ['Under 30%', at(u.t) + ' · ' + Math.round(100 * u.low) + '% at the lowest']));
+          for (const x of o.def.values()) for (const u of x.u) M.push(mk('def', u.t, u.e, [x.name, at(u.t)].concat(u.e ? [Math.round(u.e - u.t) + ' s up'] : [], u.off ? ['About ' + C(u.off) + ' taken off'] : [])));
+          for (const x of o.self.values()) for (const u of x.u) M.push(mk('self', u.t, null, [x.name, at(u.t)]));
+          for (const u of o.stone) M.push(mk('stone', u.t, null, [u.name || 'Healthstone', at(u.t)]));
+          for (const u of o.hpot) M.push(mk('hpot', u.t, null, [u.name || 'Health potion', at(u.t)]));
+          for (const u of o.cpot.concat(o.mpot)) M.push(mk('cpot', u.t, null, [u.name || 'Potion', at(u.t)]));
+          for (const d of o.dead) if (inR(d.t)) M.push('<i class="gbsv-gone" style="left:' + X(d.t).toFixed(2) + '%"></i><i class="gbsv-m k-dead" style="left:' + Math.min(98.8, X(d.t)).toFixed(2) + '%"' + gt(['Died', at(d.t)].concat(d.ab ? [d.ab] : [])) + '>✕</i>');
+          return '<div class="gbsv-ln"><span class="gbsv-n">' + avatar(p, true) + '<span style="color:' + col + '">' + esc(p.name) + '</span></span><span class="gbsv-tr">' + svg + M.join('') + '</span></div>'; };
+        const st = (B - A) > 420 ? 60 : 30, tk = []; for (let t = Math.ceil(A / st) * st; t <= B; t += st) tk.push('<span class="gbsv-t" style="left:' + X(t).toFixed(2) + '%">' + T(t) + '</span>');
+        const LG = [['def', 'Defensive'], ['self', 'Self-heal'], ['stone', 'Healthstone'], ['hpot', 'Health potion'], ['cpot', 'Combat or mana potion'], ['low', 'Under 30%'], ['dead', 'Died']];
+        return '<section class="panel pf-bars gb-card gbsv-tl" data-k="svtl"><div class="gb-hd"><span class="gb-lbl">Health over the pull</span><span class="gb-hs">' + (PH ? esc(PH.name || 'This phase') + ' · ' : '') + 'what they pressed or drank, and when</span></div>' +
+          '<div class="gbsv-lg nolk">' + LG.map(([k, l2]) => '<button type="button" class="gbsv-lk" data-svk="' + k + '" aria-pressed="true"><i class="gbsv-m k-' + k + '">' + (k === 'dead' ? '✕' : '') + '</i>' + esc(l2) + '</button>').join('') + '</div>' +
+          '<div class="gbsv-ln gbsv-ax"><span></span><span class="gbsv-tr">' + tk.join('') + '</span></div>' + svLane.map(lane).join('') + '</section>'; })();
+      H.set('svtl', svTl);
+      // (the raid's defensives, self-heals and potions, by spell)
+      const svAgg = (key) => { const m = new Map(); for (const o of SV) for (const x of o[key].values()) { const y = m.get(x.name) || { n: x.name, ic: x.name, k: 0, h: 0, off: 0, ws: new Set() }; y.k += x.u.length; y.h += x.heal; y.off += x.off; y.ws.add(o.p.name); m.set(x.name, y); } return [...m.values()]; };
+      const svDef = svAgg('def').map((y) => ({ n: y.n, ic: y.ic, v: y.k, more: [cnt1(y.ws.size, 'player') + ': ' + [...y.ws].join(', ')].concat(y.off ? ['About ' + C(y.off) + ' taken off'] : []) }));
+      const svSelf = svAgg('self').map((y) => ({ n: y.n, ic: y.ic, v: y.h || 0.001, more: [y.k + ' presses', cnt1(y.ws.size, 'player') + ': ' + [...y.ws].join(', ')] }));
+      const potM = new Map(), potAdd = (nm, k, h, w) => { const y = potM.get(nm) || { n: nm, ic: nm, v: 0, h: 0, ws: new Set() }; y.v += k; y.h += h; y.ws.add(w); potM.set(nm, y); };
+      for (const o of SV) { const nm = o.p.name; for (const u of o.stone) potAdd(u.name || 'Healthstone', 1, 0, nm); for (const u of o.hpot.concat(o.cpot, o.mpot)) potAdd(u.name || 'Potion', 1, 0, nm); if (o.pre) potAdd('Potion before the pull', o.pre, 0, nm); }
+      const svPot = [...potM.values()].map((y) => ({ n: y.n, ic: y.ic, v: y.v, more: [cnt1(y.ws.size, 'player') + ': ' + [...y.ws].join(', ')] }));
+      const svMore = [svDef.length ? ch('Defensives', 'times pressed' + ALLP, bars(svDef, (v) => String(v))) : '', svSelf.length ? ch('Self-heals', 'healing' + ALLP, bars(svSelf, (v) => (v < 1 ? '0' : C(v)))) : '', svPot.length ? ch('Healthstones and potions', 'times used' + ALLP, bars(svPot, (v) => String(v))) : ''].filter(Boolean);
+      H.set('svmore', svMore.length ? '<div class="gbsv-more">' + svMore.join('') + '</div>' : '');
+      const TB = [['dmg', 'Damage', ['dmg'], ['spells', 'tgt']], ['heal', 'Healing', ['heal'], ['oh']], ['taken', 'Damage taken', ['taken'], ['src']], ['mit', 'Mitigation', ['mit'], ['mitsrc', 'mitsh', 'mitcd', 'mitdef']], ['surv', 'Survival', ['surv', 'svtl', 'svmore'], []], ['death', 'Deaths', ['death'], ['kick', 'disp']], ['cpm', 'Casts', ['cpm'], []], ['buff', 'Buffs', [], []]]
         .map(([k, l, m, s]) => [k, l, k === 'buff' ? bf : m.map((x) => H.get(x) || '').join(''), s.map((x) => H.get(x) || '').join('')]).filter((x) => x[2]);
       let tb = S.gbTab || store.get('wla-gb-tab') || 'dmg'; if (!TB.some((x) => x[0] === tb)) tb = TB.length ? TB[0][0] : 'dmg'; const cur = TB.find((x) => x[0] === tb) || ['', '', '', ''];
       return '<div class="gb gb-tb"><div class="gb-tabrow"><div class="seg gb-tabs" role="tablist" aria-label="Graphs">' + TB.map(([k, l]) => '<button type="button" role="tab" data-gtab="' + k + '" aria-selected="' + (k === tb) + '"' + (k === tb ? ' class="on"' : '') + '>' + esc(l) + '</button>').join('') + '</div>' +
@@ -28905,6 +29013,8 @@ function graphsBoard(r, end, NP) {
     const gpc = e.target.closest && e.target.closest('.gb-podc[data-p]'); if (gpc) { const row = [...document.querySelectorAll('.gb-card[data-k="' + gpc.dataset.k + '"] .gb-row')].find((x) => x.dataset.p === gpc.dataset.p); if (row) { if (!row.classList.contains('on')) row.click(); row.scrollIntoView({ block: 'center', behavior: 'smooth' }); } return; } /* (a top-3 card opens that player's row) */
     const ghm = e.target.closest && e.target.closest('.gb-hm [data-ghm]'); if (ghm) { S.gbHm = ghm.dataset.ghm; store.set('wla-gb-hm', S.gbHm); const y0 = scrollY; renderMain(); window.scrollTo({ top: y0 }); return; } /* (Healing + prevented (Oct 23)) */
     const gby = e.target.closest && e.target.closest('.gb-by [data-gby]'); if (gby) { S.gbBy = gby.dataset.gby; store.set('wla-gb-by', S.gbBy); const y0 = scrollY; renderMain(); window.scrollTo({ top: y0 }); return; } /* (By player / By ability (Oct 23)) */
+    const svs = e.target.closest && e.target.closest('[data-gsvs]'); if (svs) { e.preventDefault(); S.gbSvS = svs.dataset.gsvs || null; const y0 = scrollY; renderMain(); window.scrollTo({ top: y0 }); return; } /* (Survival: sort the kit table (Oct 24)) */
+    const svk = e.target.closest && e.target.closest('[data-svk]'); if (svk) { const c = svk.closest('.gbsv-tl'); if (c) { const off = c.classList.toggle('no-' + svk.dataset.svk); svk.setAttribute('aria-pressed', String(!off)); } return; } /* (Survival: show or hide a kind of mark (Oct 24)) */
     const gtab = e.target.closest && e.target.closest('.gb-tabs [data-gtab]'); if (gtab) { S.gbTab = gtab.dataset.gtab; store.set('wla-gb-tab', S.gbTab); const y0 = scrollY; renderMain(); window.scrollTo({ top: y0 }); return; } /* (Graphs' tabs, Oct 23) */
     const sumt = e.target.closest && e.target.closest('.gb-sum [data-gp]'); if (sumt && GB_TABS) { S.gbTab = { dmg: 'dmg', heal: 'heal', death: 'death', src: 'taken', kick: 'death' }[sumt.dataset.gp] || 'dmg'; store.set('wla-gb-tab', S.gbTab); const y0 = scrollY; renderMain(); window.scrollTo({ top: y0 }); return; }
     if (sumt) { const b = document.querySelector('.gb-pkn [data-gp="' + sumt.dataset.gp + '"]'); if (b && !b.classList.contains('on')) b.click(); /* (a summary tile opens its graph) */

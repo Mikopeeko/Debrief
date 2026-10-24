@@ -1757,6 +1757,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-24', h: [
+    { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
     'Debriefing and Plan: point at (or tap) any button or tile for a short tooltip saying what it does.',
     'Graphs: long by-spell lists end in a Show more that opens the rest right under them.',
