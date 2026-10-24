@@ -538,6 +538,15 @@ async function runInbox(env) {
           let content = text.slice(0, 1900); const men = { parse: [] };
           if (o.pingRole) { const role = ((await dc(env, '/guilds/' + GUILD + '/roles')) || []).find((r) => r.name === String(o.pingRole)); if (role) { content = '<@&' + role.id + '> ' + content; men.roles = [role.id]; } }
           const keys = Array.isArray(o.images) ? o.images.slice(0, 6) : [];
+          // (forumPost: the channel is a forum (the user's call, Oct 24: one post per part of the website): open a post of that name
+          // with this as its first message; later jobs with thread: that name reply inside it)
+          if (o.forumPost) {
+            if (c.type !== 15) { console.warn('beta-testers-only is not a forum'); continue; }
+            const t = await dcFiles(env, '/channels/' + c.id + '/threads', 'POST', { name: String(o.forumPost).slice(0, 95), message: { content, allowed_mentions: men, flags: 4 } }, keys);
+            await env.DEBRIEF_KV.put('beta-thread-' + o.forumPost, t.id);
+            if (o.dropImages) for (const k of keys) await env.DEBRIEF_KV.delete(k).catch(() => {});
+            continue;
+          }
           // (thread: post inside the thread of that name (found in KV, or by name among the active ones); startThread: after posting,
           // open a thread of that name on this message, a "sub channel" for one part of the website)
           let target = c.id;
