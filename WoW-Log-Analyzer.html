@@ -15906,6 +15906,7 @@ const PATCH_NOTES = [
   { d: '2026-10-24', h: [
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
+    'Debrief in game and the PC pop-up: click a rotation check to open it (why it matters, each moment, Next time), hover any spell icon for its tooltip, deaths say what was left unused, like a Healthstone or a defensive.',
     'Debrief Companion: the pop-up after each pull now shows the same card as /recap, your view and the raid view side by side, and it fits scaled screens like 4K. In game, your Rotation section shows your score, each fix next to the top players, a square for every moment, and what you did right.',
     'Graphs: Healing + prevented now counts Devotion Aura for the paladin whose aura it was, and each player\'s own versatility, armor and avoidance, so every bit of damage stopped counts once, for whoever stopped it.',
     'Debriefing: the healing cooldowns from your note show once, in the Note cooldowns check, instead of again under Whole fight.',
@@ -26879,7 +26880,9 @@ function coachGame(r, name) {
   // the headline keeps its first sentences and ends with the hype line and one fix; no player names in the root cause)
   const T0 = c.trend || null, rcm = !c.night ? String(c.headline || '').match(/Root cause: (.*?\.)(?=\s|$)\s*([\s\S]*)$/) : null;
   if (T0 && rcm) { try { out.headline = tx(String(c.headline).replace(/\s*Root cause:[\s\S]*$/, '') + ' ' + coachHypeFix(c)); } catch (e) { /* (keeps the full headline) */ }
-    const noNm = (t) => { const m = t.match(/^([^.]*?), you /); if (!m) return t; return (/ and |, /.test(m[1]) ? 'Players ' : 'Someone ') + t.slice(m[0].length).replace(/\byou were\b/g, 'they were').replace(/\byour\b/g, 'their').replace(/\byou\b/g, 'them'); };
+    const noNm = (t) => { /* ("Maposepos, Fics … and Tering, Calcified Corpse got you at 6:48." reads "11 players were caught by Calcified Corpse at 6:48." (Oct 24)) */
+      const g = t.match(/^(.+), ([^,]+?) got you( at \d+:\d\d)?\.?\s*$/); if (g) { const n = g[1].split(/, | and /).filter(Boolean).length; return (n > 1 ? n + ' players were' : 'Someone was') + ' caught by ' + g[2] + (g[3] || '') + '.'; }
+      const m = t.match(/^([^.]*?), you /); if (!m) return t; const many = / and |, /.test(m[1]); return (many ? 'Players ' : 'Someone ') + t.slice(m[0].length).replace(/^were\b/, many ? 'were' : 'was').replace(/\byou were\b/g, 'they were').replace(/\byour\b/g, 'their').replace(/\byou\b/g, 'them'); }; /* ("Someone was hit", Oct 24) */
     out.root = { cause: tx(rcm[1]), rest: tx(noNm(rcm[2] || '')) }; }
   if (T0) { const it = (x) => ({ nm: tx(dbfCap(x.nm || '')), tag: tx(x.tag || ''), sub: tx(dbfCap(x.sub || '')) }), wnm = new Set((c.wipes || []).map((w) => String(w.nm).toLowerCase()));
     out.trend = { well: (T0.well || []).filter((x) => !wnm.has(String(x.nm).toLowerCase())).slice(0, 3).map(it), worse: (T0.worse || []).slice(0, 3).map(it), better: (T0.better || []).slice(0, 3).map(it) }; }
@@ -26889,8 +26892,9 @@ function coachGame(r, name) {
   out.deaths = !D ? null : { line: tx(D.line || ''), note: tx(D.note || ''), items: (D.items || []).concat(D.rest || []).slice(0, 10).map((it) => {
     let d = null; if (it.dg) { const [g, tt] = String(it.dg).split('@'); d = (r.deaths || []).find((y) => y.guid === g && y.t.toFixed(2) === tt); }
     // (why they died in one sentence, then what to do next time, like the site's death card; no health numbers (Oct 22))
-    let st = ''; try { const tg = d && deathTag(null, d); if (tg) { const v = deathVerdict(r, d), p0 = String(tg.p || ''), w0 = story(deathBox(tg, d), 900).split(' · ')[0], why = p0 && w0.startsWith(p0) ? w0.slice(p0.length).trim() : w0; /* (no badge, Oct 22) */ const why2 = String(why).replace(/[\s,;:·]+$/, '').replace(/([^.!?])$/, '$1.'); st = cClip(why2 + (v && v.fix ? ' Next time: ' + v.fix : ''), 260); /* (no stray comma before the full stop, Oct 24) */ } } catch (e) { st = ''; }
-    return { t: it.t || '', who: it.who || '', cls: cls(it.who), ab: tx(it.ab || ''), k: it.k || 'n', word: tx(it.word || ''), id: d && d.abilityId ? String(d.abilityId) : sid(it.ab), story: st }; }) };
+    let st = '', rdy = []; try { const tg = d && deathTag(null, d); if (tg) { const v = deathVerdict(r, d), p0 = String(tg.p || ''), w0 = story(deathBox(tg, d), 900).split(' · ')[0], why = p0 && w0.startsWith(p0) ? w0.slice(p0.length).trim() : w0; /* (no badge, Oct 22) */ const why2 = String(why).replace(/[\s,;:·]+\.$/, '.').replace(/[\s,;:·]+$/, '').replace(/([^.!?])$/, '$1.'); /* (what could have saved them (Oct 24): only a death that counts, with time to press it) */ rdy = v && v.counts && (v.why === 'ready' || v.why === 'shared') ? (v.defs || []).concat(v.kit || []).map((a) => (a === 'a healing potion' ? 'health potion' : a)).slice(0, 4) : [];
+      st = cClip(why2 + (rdy.length && !/\bready\b/i.test(why2) ? ' Could have used: ' + rdy.join(', ').replace(/, ([^,]*)$/, ' or $1') + '.' : '') + (v && v.fix ? ' Next time: ' + v.fix : ''), 320); /* (no stray comma before the full stop, Oct 24) */ } } catch (e) { st = ''; rdy = []; }
+    return { t: it.t || '', who: it.who || '', cls: cls(it.who), ab: tx(it.ab || ''), k: it.k || 'n', word: tx(it.word || ''), id: d && d.abilityId ? String(d.abilityId) : sid(it.ab), story: st, ready: rdy }; }) };
   out.avoid = !A ? null : { line: tx(A.line || ''), items: (A.items || []).concat(A.rest || []).slice(0, 8).map((it) => {
     let st = ''; if (it.avk) { try { const i = String(it.avk).lastIndexOf('|'), k = String(it.avk).slice(0, i), p = String(it.avk).slice(i + 1);
       const sc = cutModule(r.module, cutT(r)).m.sections.find((q) => q.id === 'avoid'), g = sc && (sc.groups || []).find((q) => q.title === k), j = g && (g.judge || []).find((q) => q.p === p);
