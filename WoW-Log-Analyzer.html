@@ -4276,7 +4276,7 @@ details.secd.mcx-tile[open] .mcx-alt { display: none; }
 #view .dbn-bar.dbn-one .dbn-vw.on { border-color: rgba(230,180,80,.6); color: var(--gold); }
 #view .dth-p .cutbar.dth-cut { margin: 0 0 12px; padding: 0 0 10px; border-bottom: 1px solid rgba(255,255,255,.06); }
 /* (Oct 24, your ask: numbers in the line's flag colour) */
-#view b.dbt-n { font-weight: 700; } #view b.dbt-n.bad { color: #ff8f87; } #view b.dbt-n.warn { color: #f3c969; } #view b.dbt-n.ok { color: #8fd99a; } #view b.dbt-n.n { color: var(--text); }
+#view b.dbt-n { font-weight: 600; } #view b.dbt-n.bad { color: #ff8f87; } #view b.dbt-n.warn { color: #f3c969; } #view b.dbt-n.ok { color: #8fd99a; } #view b.dbt-n.n { color: var(--text); }
 /* (Oct 24, Also went wrong in the top box) */
 #view .cch-tsec .cch-also-h { margin: 12px 0 4px; color: #ef6b62; }
 #view .cch-tsec ul.cch-also li { border-left-color: #ef6b62; }
@@ -4290,6 +4290,8 @@ details.secd.mcx-tile[open] .mcx-alt { display: none; }
 #view .phr-nm b { font-size: 18px !important; }
 /* (one size per line (Oct 24, "font/size issues"): a moment's grey note sits on the same line as the rest, so it is 14px like them, muted) */
 #view .u1-x .u1-n, #view .u1-x .u1-n .sp { font-size: 14px !important; }
+/* ("why is the colored text so much bigger" (Oct 24): same 14px, but bold read a size up; the coloured result is medium, its numbers semi-bold) */
+#view .u1-x .u1-o { font-weight: 500 !important; } #view .u1-x .u1-o .nm { font-weight: 600; }
 #view .rch-dmg .nm, #view .mxa-yn, #view .mxa-yn2 { font-size: 13px !important; }
 #view :is(.cbr-wh, .cgl-d, .cbl-ln, .cch-wy, .prw-s, .ckt-none, .ckt-tot, .cch-av, .pdesc, .u1-n, .cch-trc, .cch-mr, .prw-n, .cbr-t > b, details.cbr-more > summary, .cbl-sw button, .dbn-jh > b) :is(.nm, .sp, b, span) { font-size: inherit !important; }
 /* (Oct 24: Improving / Worsening tags on phase bars) */
@@ -4306,6 +4308,26 @@ details.secd.mcx-tile[open] .mcx-alt { display: none; }
 #view .rch-n, #view .rch-n .sp { font-size: 14px !important; font-weight: 600 !important; }
 #view .rch-dmg, #view .rch-dmg .nm { font-size: 14px !important; }
 #view .rch-m > p.cgl-d { font-size: 13px !important; color: var(--muted); }
+/* (Oct 24, your ask "make sure things are aligned, look nice, cohesive": every Debriefing block on one rhythm. Text starts 19px in from each
+   block's edge; 16px between blocks; 12px corners; one border grey; the two section titles alike; no icon at the start of a bar's sentence) */
+#view:has(> #oaTop) > .dbr-4, #view:has(> #oaTop) > #oaTop, #view:has(> #oaTop) > .mcx-tl2, #view:has(> #oaTop) > .dt-box, #view:has(> #oaTop) > .dbn-bar,
+#view:has(> #oaTop) > details.phase, #view:has(> #oaTop) > .brf-keep { margin-top: 0 !important; margin-bottom: 16px !important; }
+#view:has(> #oaTop) #oaTop > .cch { margin: 0 !important; }
+#view .cch.cch2 { padding-left: 15px; border-color: var(--line); border-left-color: var(--gold); }
+#view .dt-box { border-color: var(--line); padding: 16px 18px; }
+#view .dt-box > .cch-acct2 { margin: 0 !important; } #view .dt-box > .cch-acct2 + .cch-acct2 { margin-top: 10px !important; }
+#view .dt-box .cch-acct2:has(> .cbl-sw)::before { font: 600 18px var(--head) !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--text) !important; content: 'The details' !important; }
+#view .dbn-bar.dbn-one { padding: 8px 18px; }
+#view:has(> #oaTop) details.phase.mcx-ph { border-radius: 12px; padding: 0 18px 16px; }
+#view:has(> #oaTop) details.phase.mcx-ph > summary { margin: 0 -18px 16px; padding-left: 18px; }
+#view:has(> #oaTop) details.phase.mcx-ph:not([open]) > summary { border-radius: 12px; margin-bottom: 0; }
+#view:has(> #oaTop) .dbr-4 > .dbr-n { padding-left: 18px; padding-right: 18px; }
+#view .prw-s .icw { display: none !important; }
+#view .cch-tgrid .cti { display: inline-flex; width: 20px !important; height: 20px !important; margin-right: 7px; vertical-align: -5px; flex: none; }
+#view .cch-tgrid .cti img, #view .cch-tgrid .cti svg { width: 20px; height: 20px; }
+/* ("it's not bolding the spell names" (Oct 24): a spell name inside a title is as bold as the title; inside a sentence it is semi-bold, a key word) */
+#view :is(.cbr-wh, .cch-wy, .cch-trc, .prw-s, .cgl-d, .ckt-none, .ckt-tot, .cbl-ln, .cbl-fix, .u1-x, .u1-cap, .pdesc, .ckt-note) .sp { font-weight: 600; }
+#view b .sp, #view strong .sp, #view :is(.cgl-n, .ckt-t, .rch-n, .prw-n, .dbn-jh > b, .mxa-h > b) .sp { font-weight: inherit !important; }
 #view .pcx-w { margin: 6px 0 0; font-size: 13px; color: var(--muted, #aab); }
 #view ul.cch-wl { list-style: none; margin: 6px 0 12px; padding: 0; display: grid; gap: 6px; } #view ul.cch-wl li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 15px; line-height: 1.35; padding-left: 12px; border-left: 3px solid var(--gold, #e6b450); } #view ul.cch-wl li b { font-weight: 800; } #view ul.cch-wl .cch-wn { color: #ef6b62; font-weight: 700; font-size: 13px; } #view ul.cch-wl .cch-wy { flex-basis: 100%; color: var(--muted, #aab); font-size: 14px; }
 #view p.cch-h b.cch-rc { color: var(--gold, #e5b84b); font-weight: 800; } #view .dbr-dd { position: relative; display: block; height: 10px; margin: 4px 0 8px; border-radius: 5px; background: rgba(255,255,255,.1); } #view .dbr-dd i { position: absolute; top: 1px; width: 8px; height: 8px; box-shadow: 0 0 0 1.5px #15181f; border-radius: 50%; background: #e5534b; transform: translateX(-50%); } #view .dbr-dd i.ms { background: #6b7280; } #view .dbr-db { display: flex; align-items: flex-end; gap: 2px; height: 20px; margin: 2px 0 6px; } #view .dbr-db i { flex: 1; min-width: 2px; border-radius: 2px 2px 0 0; background: #e5534b; } #view .dbr-db i.z { background: rgba(255,255,255,.12); } @media (max-width: 760px) { #view .dbr-4.dbr-5.dbr-6 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } } @media (max-width: 520px) { #view .dbr-4.dbr-5.dbr-6 { grid-template-columns: minmax(0, 1fr) !important; } } @media (max-width: 760px) { #view .dbr-4.dbr-5 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } } @media (max-width: 520px) { #view .dbr-4.dbr-5 { grid-template-columns: minmax(0, 1fr) !important; } }
@@ -16005,6 +16027,7 @@ const PATCH_NOTES = [
   { d: '2026-10-24', h: [
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
+    'Debriefing: a polish pass. Every box lines up with the same spacing and corners, The details is titled like The pull at a glance, every title up top has its icon, and spell names are as bold as the words around them.',
     'Debriefing: The details (Innervate, potions, defensives and the rest) sit in their own box under The pull at a glance: what wiped us, then when, then the numbers.',
     'Debrief in game: rotation tips now come in order of what costs you the most, up to 8 of them, and the settings are tidier (Me, Raid view and Extras, a small grid for How many)',
     'Debrief Companion is now code-signed, so Windows knows it comes from us. While it is new, Windows may still ask once: click More info, then Run anyway',
@@ -16030,7 +16053,7 @@ const PATCH_NOTES = [
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
     'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
   ], f: [
-    'Debriefing: each line of a mechanic\'s moments uses one text size, the grey note at the end included.',
+    'Debriefing: each line of a mechanic\'s moments uses one text size, the grey note at the end included, and the coloured part no longer looks bigger than the rest.',
     'Debriefing: Innervate is no longer judged on timing (it just gives a healer mana), the right / wrong mark is text-sized, and those rows match the rows beside them.',
     'Debrief Companion: logs the Raider.IO app moved into its archive folder show up as older logs, and their pulls get the newest look after an update',
     'Debriefing: a frontal that popped too many orbs is listed under Coalesced Venom in Every mistake, not under the tanks\' Sever, and long lines no longer end in a stray bracket.',
@@ -25624,7 +25647,7 @@ function oaFill(reps) {
   const name = S.mechP && R.some((r) => [...r.players.values()].some((p) => oaBase(p.name) === oaBase(S.mechP))) ? S.mechP : null;
   const pm = new Map(); for (const r of R) for (const p of r.players.values()) if (p.name && !pm.has(p.name)) pm.set(p.name, p);
   const CS0 = coachSummary(R, name); v._cs = night ? null : CS0; el.innerHTML = coachBox(CS0, { key: night ? 'n' : 'p', title: 'Your raid lead says…' /* (one title with or without a player picked (Oct 23)) */ }); /* (Oct 23, your wording) */ /* (the coach on top (Oct 22): the page under it stays as it was) */ try { oaDeathsTile(v); } catch (e) { /* (Deaths stays in the grid) */ }
-  el.hidden = !el.innerHTML; try { oaLayout(v, el); } catch (e) { console.error(e); } try { prwTrend(v, v._cs); } catch (e) { /* (no tags) */ } try { dtMove(v); } catch (e) { /* (the checks stay in the box) */ } refreshIcons();
+  el.hidden = !el.innerHTML; try { oaLayout(v, el); } catch (e) { console.error(e); } try { prwTrend(v, v._cs); } catch (e) { /* (no tags) */ } try { dtMove(v); } catch (e) { /* (the checks stay in the box) */ } try { topIcons(v); } catch (e) { /* (no borrowed icons) */ } refreshIcons();
 }
 /* (Oct 24: a mechanic that changed since last pull carries ▲ Improving or ▼ Worsening on its phase bar) */
 function prwTrend(v, cs) { if (!v || !cs || !cs.trend) return; const T0 = cs.trend, lc = (s) => String(s || '').replace(/\s*\(.*$/, '').trim().toLowerCase(), bars = [...v.querySelectorAll('details.phase .prw-i')];
@@ -25640,6 +25663,13 @@ function prwTrend(v, cs) { if (!v || !cs || !cs.trend) return; const T0 = cs.tre
 function dtMove(v) { if (!v || v.querySelector('.nmc')) return; const el = v.querySelector('#oaTop'), tl = v.querySelector('.mcx-tl2'); if (!el || !tl || tl.parentNode !== v) return;
   const accts = [...el.querySelectorAll('.cch-acct2:not(.dth-w)')].filter((x) => !x.parentElement.closest('.cch-acct2')); let box = v.querySelector(':scope > .dt-box'); if (!accts.length && box) { if (box.previousElementSibling !== tl) tl.after(box); return; } if (!accts.length) return;
   if (!box) { box = document.createElement('section'); box.className = 'cch2 dt-box'; box.setAttribute('aria-label', 'The details'); } box.innerHTML = ''; accts.forEach((x) => box.appendChild(x)); /* (both groups: the switch with Innervate and Avoidable damage, then the kit rows) */ if (box.previousElementSibling !== tl) tl.after(box); }
+/* (Oct 24 polish: in What wiped us / What we did well every title has an icon, borrowed from its phase bar or check row; "Further than
+   last pull" gets a small green arrow) */
+function topIcons(v) { if (!v) return; const lc = (s) => String(s || '').replace(/\s+/g, ' ').trim().toLowerCase();
+  const from = (nm) => { const k = lc(nm); for (const b of v.querySelectorAll('.prw-i')) { const n = b.querySelector('.prw-n'); if (n && lc([...n.childNodes].filter((x) => !(x.classList && (x.classList.contains('prw-nt') || x.classList.contains('prw-tr')))).map((x) => x.textContent).join('')) === k) return b.querySelector('.icw'); }
+    for (const s of v.querySelectorAll('summary.cch-al')) { const n = s.querySelector('.cgl-n, .ckt-t'); if (n && lc(n.textContent) === k) return s.querySelector('.icw'); } return null; };
+  v.querySelectorAll('.cch-tgrid li').forEach((li) => { const b = li.querySelector(':scope > b'); if (!b || li.querySelector('.icw, .cti')) return; const nm = b.textContent, ic = from(nm);
+    if (ic) { const c = ic.cloneNode(true); c.classList.add('cti'); const im = c.querySelector('img'); if (im && im.getAttribute('src') && ic.classList.contains('has')) c.classList.add('has'); /* (a picture already loaded stays shown) */ b.prepend(c); } else if (/^(further than last pull|best pull)/i.test(lc(nm))) b.insertAdjacentHTML('afterbegin', '<span class="cti cti-up" aria-hidden="true"><svg viewBox="0 0 20 20"><rect width="20" height="20" rx="5" fill="rgba(69,193,92,.18)"/><path d="M10 4.5l5.2 6.2h-3.4v4.8H8.2v-4.8H4.8z" fill="#45c15c"/></svg></span>'); }); v.querySelectorAll('.cch-tgrid .cti img').forEach((i) => { if (!i.getAttribute('src')) i.removeAttribute('data-done'); }); try { hydrateIcons(); } catch (e) { /* (icons load when seen) */ } v.querySelectorAll('.cch-tgrid .cti img').forEach((i) => { const ok = () => { if (i.naturalWidth) i.parentElement.classList.add('has'); }; if (i.complete) ok(); else i.addEventListener('load', ok, { once: true }); }); /* (the picture shows once it loads, like every other icon) */ }
 function oaLayout(v, el) {
   if (!el.innerHTML) return;
   const tiles = v.querySelector('.dbr-4'); if (tiles && tiles.nextElementSibling !== el) { v.insertBefore(tiles, el); tiles.classList.add('oa-tiles'); }
@@ -25722,7 +25752,7 @@ function oaLayout(v, el) {
       f.addEventListener('toggle', () => { if (f.open) S.openSecs.add('brf-burst'); else S.openSecs.delete('brf-burst'); }); }
     try { rateCharts(v, out); } catch (e) { /* (the charts stay where they were) */ } try { oaMeters(v, out); } catch (e) { /* (no meters) */ }
     const dc = [...v.querySelectorAll('details.panel')].find((d) => /^Data check/.test(((d.querySelector('summary') || {}).textContent || '').trim())); if (dc) out.appendChild(dc);
-    dr.replaceWith(out); if (top) top.remove(); v.querySelectorAll('#rcTop, .rc-hp').forEach((n) => { if (!out.contains(n)) n.remove(); }); try { mxaInit(v); } catch (e) { console.error(e); } try { dbTint(v); } catch (e) { /* (plain colours) */ } try { prwTrend(v, v._cs); } catch (e) { /* (no tags) */ } try { dtMove(v); } catch (e) { /* (the checks stay in the box) */ } v.querySelectorAll('.cutbar:not(.on)').forEach((n) => n.remove()); /* (no wipe call: the header already says Kill or Wipe call: off (Oct 24)) */ try { if (S._drawMaps) S._drawMaps(); } catch (e) { /* (maps draw when seen) */ } return; }
+    dr.replaceWith(out); if (top) top.remove(); v.querySelectorAll('#rcTop, .rc-hp').forEach((n) => { if (!out.contains(n)) n.remove(); }); try { mxaInit(v); } catch (e) { console.error(e); } try { dbTint(v); } catch (e) { /* (plain colours) */ } try { prwTrend(v, v._cs); } catch (e) { /* (no tags) */ } try { dtMove(v); } catch (e) { /* (the checks stay in the box) */ } try { topIcons(v); } catch (e) { /* (no borrowed icons) */ } v.querySelectorAll('.cutbar:not(.on)').forEach((n) => n.remove()); /* (no wipe call: the header already says Kill or Wipe call: off (Oct 24)) */ try { if (S._drawMaps) S._drawMaps(); } catch (e) { /* (maps draw when seen) */ } return; }
   /* (All pulls, Oct 23 (your ask: "the bottom half could still be tidied up more"): like one pull, no "More from all pulls" drawer. Its fix
      cards, better and worse, boss health every pull, the old went well / didn't / improving / worse lists, Before the next pull, Talk to and
      Used tonight all repeat the raid lead box, the boss banner or the pace chart; the guide links don't belong here. What only it had stays
@@ -26626,7 +26656,7 @@ function colorNames(html, pm) {
   const names = [...pm.values()].map((p) => String(p.name).split('-')[0]).filter((n) => n.length >= 3).sort((a, b) => b.length - a.length); if (!names.length) return html;
   const re = new RegExp('(?<![\\p{L}\\p{N}])(' + names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')(?![\\p{L}\\p{N}])', 'giu');
   let inNm = 0; return html.split(/(<[^>]+>)/).map((seg) => { if (seg.startsWith('<')) { if (/^<span[^>]*class="nm/.test(seg)) inNm++; else if (inNm && seg === '</span>') inNm--; return seg; }
-    if (inNm || !seg) return seg; return seg.replace(re, (m0) => { const p = pm.get(m0.toLowerCase()); return p ? '<span class="nm" style="color:' + p.color + '">' + m0 + '</span>' : m0; }); }).join('');
+    if (inNm || !seg) return seg; return seg.replace(re, (m0) => { const p = pm.get(m0.toLowerCase()); return p ? '<span class="nm" style="color:' + p.color + '">' + String(p.name).split('-')[0] /* (their real spelling, Oct 24) */ + '</span>' : m0; }); }).join('');
 }
 // (every ability the coach names gets its icon: the ones already linked, and boss and class spells found in the text, written with a capital)
 function iconSpells(html) {

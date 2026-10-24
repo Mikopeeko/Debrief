@@ -4276,7 +4276,7 @@ details.secd.mcx-tile[open] .mcx-alt { display: none; }
 #view .dbn-bar.dbn-one .dbn-vw.on { border-color: rgba(230,180,80,.6); color: var(--gold); }
 #view .dth-p .cutbar.dth-cut { margin: 0 0 12px; padding: 0 0 10px; border-bottom: 1px solid rgba(255,255,255,.06); }
 /* (Oct 24, your ask: numbers in the line's flag colour) */
-#view b.dbt-n { font-weight: 700; } #view b.dbt-n.bad { color: #ff8f87; } #view b.dbt-n.warn { color: #f3c969; } #view b.dbt-n.ok { color: #8fd99a; } #view b.dbt-n.n { color: var(--text); }
+#view b.dbt-n { font-weight: 600; } #view b.dbt-n.bad { color: #ff8f87; } #view b.dbt-n.warn { color: #f3c969; } #view b.dbt-n.ok { color: #8fd99a; } #view b.dbt-n.n { color: var(--text); }
 /* (Oct 24, Also went wrong in the top box) */
 #view .cch-tsec .cch-also-h { margin: 12px 0 4px; color: #ef6b62; }
 #view .cch-tsec ul.cch-also li { border-left-color: #ef6b62; }
@@ -4290,6 +4290,8 @@ details.secd.mcx-tile[open] .mcx-alt { display: none; }
 #view .phr-nm b { font-size: 18px !important; }
 /* (one size per line (Oct 24, "font/size issues"): a moment's grey note sits on the same line as the rest, so it is 14px like them, muted) */
 #view .u1-x .u1-n, #view .u1-x .u1-n .sp { font-size: 14px !important; }
+/* ("why is the colored text so much bigger" (Oct 24): same 14px, but bold read a size up; the coloured result is medium, its numbers semi-bold) */
+#view .u1-x .u1-o { font-weight: 500 !important; } #view .u1-x .u1-o .nm { font-weight: 600; }
 #view .rch-dmg .nm, #view .mxa-yn, #view .mxa-yn2 { font-size: 13px !important; }
 #view :is(.cbr-wh, .cgl-d, .cbl-ln, .cch-wy, .prw-s, .ckt-none, .ckt-tot, .cch-av, .pdesc, .u1-n, .cch-trc, .cch-mr, .prw-n, .cbr-t > b, details.cbr-more > summary, .cbl-sw button, .dbn-jh > b) :is(.nm, .sp, b, span) { font-size: inherit !important; }
 /* (Oct 24: Improving / Worsening tags on phase bars) */
@@ -4306,6 +4308,26 @@ details.secd.mcx-tile[open] .mcx-alt { display: none; }
 #view .rch-n, #view .rch-n .sp { font-size: 14px !important; font-weight: 600 !important; }
 #view .rch-dmg, #view .rch-dmg .nm { font-size: 14px !important; }
 #view .rch-m > p.cgl-d { font-size: 13px !important; color: var(--muted); }
+/* (Oct 24, your ask "make sure things are aligned, look nice, cohesive": every Debriefing block on one rhythm. Text starts 19px in from each
+   block's edge; 16px between blocks; 12px corners; one border grey; the two section titles alike; no icon at the start of a bar's sentence) */
+#view:has(> #oaTop) > .dbr-4, #view:has(> #oaTop) > #oaTop, #view:has(> #oaTop) > .mcx-tl2, #view:has(> #oaTop) > .dt-box, #view:has(> #oaTop) > .dbn-bar,
+#view:has(> #oaTop) > details.phase, #view:has(> #oaTop) > .brf-keep { margin-top: 0 !important; margin-bottom: 16px !important; }
+#view:has(> #oaTop) #oaTop > .cch { margin: 0 !important; }
+#view .cch.cch2 { padding-left: 15px; border-color: var(--line); border-left-color: var(--gold); }
+#view .dt-box { border-color: var(--line); padding: 16px 18px; }
+#view .dt-box > .cch-acct2 { margin: 0 !important; } #view .dt-box > .cch-acct2 + .cch-acct2 { margin-top: 10px !important; }
+#view .dt-box .cch-acct2:has(> .cbl-sw)::before { font: 600 18px var(--head) !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--text) !important; content: 'The details' !important; }
+#view .dbn-bar.dbn-one { padding: 8px 18px; }
+#view:has(> #oaTop) details.phase.mcx-ph { border-radius: 12px; padding: 0 18px 16px; }
+#view:has(> #oaTop) details.phase.mcx-ph > summary { margin: 0 -18px 16px; padding-left: 18px; }
+#view:has(> #oaTop) details.phase.mcx-ph:not([open]) > summary { border-radius: 12px; margin-bottom: 0; }
+#view:has(> #oaTop) .dbr-4 > .dbr-n { padding-left: 18px; padding-right: 18px; }
+#view .prw-s .icw { display: none !important; }
+#view .cch-tgrid .cti { display: inline-flex; width: 20px !important; height: 20px !important; margin-right: 7px; vertical-align: -5px; flex: none; }
+#view .cch-tgrid .cti img, #view .cch-tgrid .cti svg { width: 20px; height: 20px; }
+/* ("it's not bolding the spell names" (Oct 24): a spell name inside a title is as bold as the title; inside a sentence it is semi-bold, a key word) */
+#view :is(.cbr-wh, .cch-wy, .cch-trc, .prw-s, .cgl-d, .ckt-none, .ckt-tot, .cbl-ln, .cbl-fix, .u1-x, .u1-cap, .pdesc, .ckt-note) .sp { font-weight: 600; }
+#view b .sp, #view strong .sp, #view :is(.cgl-n, .ckt-t, .rch-n, .prw-n, .dbn-jh > b, .mxa-h > b) .sp { font-weight: inherit !important; }
 #view .pcx-w { margin: 6px 0 0; font-size: 13px; color: var(--muted, #aab); }
 #view ul.cch-wl { list-style: none; margin: 6px 0 12px; padding: 0; display: grid; gap: 6px; } #view ul.cch-wl li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 15px; line-height: 1.35; padding-left: 12px; border-left: 3px solid var(--gold, #e6b450); } #view ul.cch-wl li b { font-weight: 800; } #view ul.cch-wl .cch-wn { color: #ef6b62; font-weight: 700; font-size: 13px; } #view ul.cch-wl .cch-wy { flex-basis: 100%; color: var(--muted, #aab); font-size: 14px; }
 #view p.cch-h b.cch-rc { color: var(--gold, #e5b84b); font-weight: 800; } #view .dbr-dd { position: relative; display: block; height: 10px; margin: 4px 0 8px; border-radius: 5px; background: rgba(255,255,255,.1); } #view .dbr-dd i { position: absolute; top: 1px; width: 8px; height: 8px; box-shadow: 0 0 0 1.5px #15181f; border-radius: 50%; background: #e5534b; transform: translateX(-50%); } #view .dbr-dd i.ms { background: #6b7280; } #view .dbr-db { display: flex; align-items: flex-end; gap: 2px; height: 20px; margin: 2px 0 6px; } #view .dbr-db i { flex: 1; min-width: 2px; border-radius: 2px 2px 0 0; background: #e5534b; } #view .dbr-db i.z { background: rgba(255,255,255,.12); } @media (max-width: 760px) { #view .dbr-4.dbr-5.dbr-6 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } } @media (max-width: 520px) { #view .dbr-4.dbr-5.dbr-6 { grid-template-columns: minmax(0, 1fr) !important; } } @media (max-width: 760px) { #view .dbr-4.dbr-5 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } } @media (max-width: 520px) { #view .dbr-4.dbr-5 { grid-template-columns: minmax(0, 1fr) !important; } }

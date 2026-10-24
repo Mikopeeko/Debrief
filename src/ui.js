@@ -1759,6 +1759,7 @@ const PATCH_NOTES = [
   { d: '2026-10-24', h: [
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
+    'Debriefing: a polish pass. Every box lines up with the same spacing and corners, The details is titled like The pull at a glance, every title up top has its icon, and spell names are as bold as the words around them.',
     'Debriefing: The details (Innervate, potions, defensives and the rest) sit in their own box under The pull at a glance: what wiped us, then when, then the numbers.',
     'Debrief in game: rotation tips now come in order of what costs you the most, up to 8 of them, and the settings are tidier (Me, Raid view and Extras, a small grid for How many)',
     'Debrief Companion is now code-signed, so Windows knows it comes from us. While it is new, Windows may still ask once: click More info, then Run anyway',
@@ -1784,7 +1785,7 @@ const PATCH_NOTES = [
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
     'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
   ], f: [
-    'Debriefing: each line of a mechanic\'s moments uses one text size, the grey note at the end included.',
+    'Debriefing: each line of a mechanic\'s moments uses one text size, the grey note at the end included, and the coloured part no longer looks bigger than the rest.',
     'Debriefing: Innervate is no longer judged on timing (it just gives a healer mana), the right / wrong mark is text-sized, and those rows match the rows beside them.',
     'Debrief Companion: logs the Raider.IO app moved into its archive folder show up as older logs, and their pulls get the newest look after an update',
     'Debriefing: a frontal that popped too many orbs is listed under Coalesced Venom in Every mistake, not under the tanks\' Sever, and long lines no longer end in a stray bracket.',
@@ -11378,7 +11379,7 @@ function oaFill(reps) {
   const name = S.mechP && R.some((r) => [...r.players.values()].some((p) => oaBase(p.name) === oaBase(S.mechP))) ? S.mechP : null;
   const pm = new Map(); for (const r of R) for (const p of r.players.values()) if (p.name && !pm.has(p.name)) pm.set(p.name, p);
   const CS0 = coachSummary(R, name); v._cs = night ? null : CS0; el.innerHTML = coachBox(CS0, { key: night ? 'n' : 'p', title: 'Your raid lead says…' /* (one title with or without a player picked (Oct 23)) */ }); /* (Oct 23, your wording) */ /* (the coach on top (Oct 22): the page under it stays as it was) */ try { oaDeathsTile(v); } catch (e) { /* (Deaths stays in the grid) */ }
-  el.hidden = !el.innerHTML; try { oaLayout(v, el); } catch (e) { console.error(e); } try { prwTrend(v, v._cs); } catch (e) { /* (no tags) */ } try { dtMove(v); } catch (e) { /* (the checks stay in the box) */ } refreshIcons();
+  el.hidden = !el.innerHTML; try { oaLayout(v, el); } catch (e) { console.error(e); } try { prwTrend(v, v._cs); } catch (e) { /* (no tags) */ } try { dtMove(v); } catch (e) { /* (the checks stay in the box) */ } try { topIcons(v); } catch (e) { /* (no borrowed icons) */ } refreshIcons();
 }
 /* (Oct 24: a mechanic that changed since last pull carries ▲ Improving or ▼ Worsening on its phase bar) */
 function prwTrend(v, cs) { if (!v || !cs || !cs.trend) return; const T0 = cs.trend, lc = (s) => String(s || '').replace(/\s*\(.*$/, '').trim().toLowerCase(), bars = [...v.querySelectorAll('details.phase .prw-i')];
@@ -11394,6 +11395,13 @@ function prwTrend(v, cs) { if (!v || !cs || !cs.trend) return; const T0 = cs.tre
 function dtMove(v) { if (!v || v.querySelector('.nmc')) return; const el = v.querySelector('#oaTop'), tl = v.querySelector('.mcx-tl2'); if (!el || !tl || tl.parentNode !== v) return;
   const accts = [...el.querySelectorAll('.cch-acct2:not(.dth-w)')].filter((x) => !x.parentElement.closest('.cch-acct2')); let box = v.querySelector(':scope > .dt-box'); if (!accts.length && box) { if (box.previousElementSibling !== tl) tl.after(box); return; } if (!accts.length) return;
   if (!box) { box = document.createElement('section'); box.className = 'cch2 dt-box'; box.setAttribute('aria-label', 'The details'); } box.innerHTML = ''; accts.forEach((x) => box.appendChild(x)); /* (both groups: the switch with Innervate and Avoidable damage, then the kit rows) */ if (box.previousElementSibling !== tl) tl.after(box); }
+/* (Oct 24 polish: in What wiped us / What we did well every title has an icon, borrowed from its phase bar or check row; "Further than
+   last pull" gets a small green arrow) */
+function topIcons(v) { if (!v) return; const lc = (s) => String(s || '').replace(/\s+/g, ' ').trim().toLowerCase();
+  const from = (nm) => { const k = lc(nm); for (const b of v.querySelectorAll('.prw-i')) { const n = b.querySelector('.prw-n'); if (n && lc([...n.childNodes].filter((x) => !(x.classList && (x.classList.contains('prw-nt') || x.classList.contains('prw-tr')))).map((x) => x.textContent).join('')) === k) return b.querySelector('.icw'); }
+    for (const s of v.querySelectorAll('summary.cch-al')) { const n = s.querySelector('.cgl-n, .ckt-t'); if (n && lc(n.textContent) === k) return s.querySelector('.icw'); } return null; };
+  v.querySelectorAll('.cch-tgrid li').forEach((li) => { const b = li.querySelector(':scope > b'); if (!b || li.querySelector('.icw, .cti')) return; const nm = b.textContent, ic = from(nm);
+    if (ic) { const c = ic.cloneNode(true); c.classList.add('cti'); const im = c.querySelector('img'); if (im && im.getAttribute('src') && ic.classList.contains('has')) c.classList.add('has'); /* (a picture already loaded stays shown) */ b.prepend(c); } else if (/^(further than last pull|best pull)/i.test(lc(nm))) b.insertAdjacentHTML('afterbegin', '<span class="cti cti-up" aria-hidden="true"><svg viewBox="0 0 20 20"><rect width="20" height="20" rx="5" fill="rgba(69,193,92,.18)"/><path d="M10 4.5l5.2 6.2h-3.4v4.8H8.2v-4.8H4.8z" fill="#45c15c"/></svg></span>'); }); v.querySelectorAll('.cch-tgrid .cti img').forEach((i) => { if (!i.getAttribute('src')) i.removeAttribute('data-done'); }); try { hydrateIcons(); } catch (e) { /* (icons load when seen) */ } v.querySelectorAll('.cch-tgrid .cti img').forEach((i) => { const ok = () => { if (i.naturalWidth) i.parentElement.classList.add('has'); }; if (i.complete) ok(); else i.addEventListener('load', ok, { once: true }); }); /* (the picture shows once it loads, like every other icon) */ }
 function oaLayout(v, el) {
   if (!el.innerHTML) return;
   const tiles = v.querySelector('.dbr-4'); if (tiles && tiles.nextElementSibling !== el) { v.insertBefore(tiles, el); tiles.classList.add('oa-tiles'); }
@@ -11476,7 +11484,7 @@ function oaLayout(v, el) {
       f.addEventListener('toggle', () => { if (f.open) S.openSecs.add('brf-burst'); else S.openSecs.delete('brf-burst'); }); }
     try { rateCharts(v, out); } catch (e) { /* (the charts stay where they were) */ } try { oaMeters(v, out); } catch (e) { /* (no meters) */ }
     const dc = [...v.querySelectorAll('details.panel')].find((d) => /^Data check/.test(((d.querySelector('summary') || {}).textContent || '').trim())); if (dc) out.appendChild(dc);
-    dr.replaceWith(out); if (top) top.remove(); v.querySelectorAll('#rcTop, .rc-hp').forEach((n) => { if (!out.contains(n)) n.remove(); }); try { mxaInit(v); } catch (e) { console.error(e); } try { dbTint(v); } catch (e) { /* (plain colours) */ } try { prwTrend(v, v._cs); } catch (e) { /* (no tags) */ } try { dtMove(v); } catch (e) { /* (the checks stay in the box) */ } v.querySelectorAll('.cutbar:not(.on)').forEach((n) => n.remove()); /* (no wipe call: the header already says Kill or Wipe call: off (Oct 24)) */ try { if (S._drawMaps) S._drawMaps(); } catch (e) { /* (maps draw when seen) */ } return; }
+    dr.replaceWith(out); if (top) top.remove(); v.querySelectorAll('#rcTop, .rc-hp').forEach((n) => { if (!out.contains(n)) n.remove(); }); try { mxaInit(v); } catch (e) { console.error(e); } try { dbTint(v); } catch (e) { /* (plain colours) */ } try { prwTrend(v, v._cs); } catch (e) { /* (no tags) */ } try { dtMove(v); } catch (e) { /* (the checks stay in the box) */ } try { topIcons(v); } catch (e) { /* (no borrowed icons) */ } v.querySelectorAll('.cutbar:not(.on)').forEach((n) => n.remove()); /* (no wipe call: the header already says Kill or Wipe call: off (Oct 24)) */ try { if (S._drawMaps) S._drawMaps(); } catch (e) { /* (maps draw when seen) */ } return; }
   /* (All pulls, Oct 23 (your ask: "the bottom half could still be tidied up more"): like one pull, no "More from all pulls" drawer. Its fix
      cards, better and worse, boss health every pull, the old went well / didn't / improving / worse lists, Before the next pull, Talk to and
      Used tonight all repeat the raid lead box, the boss banner or the pace chart; the guide links don't belong here. What only it had stays
@@ -12380,7 +12388,7 @@ function colorNames(html, pm) {
   const names = [...pm.values()].map((p) => String(p.name).split('-')[0]).filter((n) => n.length >= 3).sort((a, b) => b.length - a.length); if (!names.length) return html;
   const re = new RegExp('(?<![\\p{L}\\p{N}])(' + names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')(?![\\p{L}\\p{N}])', 'giu');
   let inNm = 0; return html.split(/(<[^>]+>)/).map((seg) => { if (seg.startsWith('<')) { if (/^<span[^>]*class="nm/.test(seg)) inNm++; else if (inNm && seg === '</span>') inNm--; return seg; }
-    if (inNm || !seg) return seg; return seg.replace(re, (m0) => { const p = pm.get(m0.toLowerCase()); return p ? '<span class="nm" style="color:' + p.color + '">' + m0 + '</span>' : m0; }); }).join('');
+    if (inNm || !seg) return seg; return seg.replace(re, (m0) => { const p = pm.get(m0.toLowerCase()); return p ? '<span class="nm" style="color:' + p.color + '">' + String(p.name).split('-')[0] /* (their real spelling, Oct 24) */ + '</span>' : m0; }); }).join('');
 }
 // (every ability the coach names gets its icon: the ones already linked, and boss and class spells found in the text, written with a capital)
 function iconSpells(html) {
