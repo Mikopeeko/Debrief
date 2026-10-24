@@ -221,11 +221,11 @@ PRESET_NAME = { glance = "Glance", simple = "Simple", medium = "Medium", heavy =
 local PRESETS = {
   simple = { compact = true, maxSlips = 1, maxBoss = 1, maxRaid = 1, maxDied = 0, maxMech = 3, width = "normal", show = { rank = false, best = false } },
   medium = { compact = false, maxSlips = 3, maxBoss = 4, maxRaid = 3, maxDied = 3, maxMech = 6, width = "normal", show = {} },
-  heavy = { compact = false, maxSlips = 5, maxBoss = 7, maxRaid = 5, maxDied = 6, maxMech = 12, width = "wide", show = {} },
+  heavy = { compact = false, maxSlips = 8, maxBoss = 7, maxRaid = 5, maxDied = 6, maxMech = 12, width = "wide", show = {} },
   -- (the default since Oct 22: the raid lead's quick read, the good and the bad, one view for everyone)
   glance = { compact = false, maxSlips = 3, maxBoss = 4, maxRaid = 3, maxDied = 3, maxMech = 6, width = "wide", glance = true, show = {} },
   -- (a larger card with number tiles, the raid's side on your own view, and two next-pull tips)
-  detailed = { compact = false, maxSlips = 4, maxBoss = 5, maxRaid = 5, maxDied = 3, maxMech = 12, width = "xl", detailed = true, show = {} },
+  detailed = { compact = false, maxSlips = 6, maxBoss = 5, maxRaid = 5, maxDied = 3, maxMech = 12, width = "xl", detailed = true, show = {} },
 }
 function Debrief_SetPreset(key)
   local p = PRESETS[key]; if not p or not DB then return end
@@ -1736,7 +1736,7 @@ local function buildOptions()
   clb:SetScript("OnClick", function() opt:Hide() end)
   clb:SetScript("OnEnter", function() clb.t:SetTextColor(rgb(COL.text)) end); clb:SetScript("OnLeave", function() clb.t:SetTextColor(rgb(COL.faint)) end)
   -- three tabs, plain words with the gold-to-green line under the open one
-  local MENU = { { "card", "Card" }, { "look", "Look" }, { "more", "More" } }
+  local MENU = { { "card", "What's on it" }, { "look", "Look" }, { "more", "More" } }
   local TAB_Y, PAGE_TOP, FOOT = 40, 74, 30
   local tline = opt:CreateTexture(nil, "ARTWORK"); tline:SetPoint("TOPLEFT", 1, -(TAB_Y + 28)); tline:SetPoint("TOPRIGHT", -1, -(TAB_Y + 28)); tline:SetHeight(1); fill(tline, COL.line)
   local pages, tabBtns, cur = {}, {}, "card"
@@ -1826,6 +1826,27 @@ local function buildOptions()
     local function go(d) local v = math.max(minV, math.min(maxV, get() + d)); if v ~= get() then set(v); if not keepPreset then custom() end; show(); applySettings() end end
     minus:SetScript("OnClick", function() go(-(step or 1)) end); plus:SetScript("OnClick", function() go(step or 1) end)
     refreshers[#refreshers + 1] = show; show()
+  end
+  -- (several counts side by side (Oct 24): two small boxes a row, each its name and – n +, the longer word on hover)
+  local function counts(items)
+    local colW = math.floor((OW - PX * 2 - 10) / 2)
+    for i, it in ipairs(items) do
+      local label, sub, minV, maxV, get, set = it[1], it[2], it[3], it[4], it[5], it[6]
+      local col = (i - 1) % 2; if col == 0 and i > 1 then y = y + 40 end
+      local box = CreateFrame("Frame", nil, P); box:SetSize(colW, 34); box:SetPoint("TOPLEFT", PX + col * (colW + 10), -y); skin(box, 6, COL.raised, 1, COL.line, 1)
+      local t = box:CreateFontString(nil, "OVERLAY"); setFont(t, "body", 13); t:SetPoint("LEFT", 10, 0); t:SetTextColor(rgb(COL.text)); t:SetText(label)
+      local plus = txtBtn("+"); plus:SetParent(box); plus:ClearAllPoints(); plus:SetPoint("RIGHT", box, "RIGHT", -4, 0)
+      local val = box:CreateFontString(nil, "OVERLAY"); setFont(val, "bold", 13); val:SetWidth(24); val:SetJustifyH("CENTER"); val:SetPoint("RIGHT", plus, "LEFT", 0, 0); val:SetTextColor(rgb(COL.text))
+      local minus = txtBtn("–"); minus:SetParent(box); minus:ClearAllPoints(); minus:SetPoint("RIGHT", val, "LEFT", 0, 0)
+      local function show() val:SetText(tostring(get())) end
+      local function go(d) local v = math.max(minV, math.min(maxV, get() + d)); if v ~= get() then set(v); custom(); show(); applySettings() end end
+      minus:SetScript("OnClick", function() go(-1) end); plus:SetScript("OnClick", function() go(1) end)
+      box:EnableMouse(true)
+      box:SetScript("OnEnter", function() GameTooltip:SetOwner(box, "ANCHOR_RIGHT"); GameTooltip:SetText(label, 1, 1, 1); GameTooltip:AddLine(sub .. " Up to " .. maxV .. ".", 0.75, 0.78, 0.82, true); GameTooltip:Show() end)
+      box:SetScript("OnLeave", function() GameTooltip:Hide() end)
+      refreshers[#refreshers + 1] = show; show()
+    end
+    y = y + 44; P.rowFirst = true
   end
   -- (a percentage slider: a thin gold-to-green line and its number)
   local function pslider(label, sub, minV, maxV, get, set)
@@ -1961,19 +1982,7 @@ local function buildOptions()
   section("Style", true)
   styles()
   note("How much opens by itself. Click a piece below to show or hide it; the card beside this window changes as you click.")
-  section("On the card")
-  chips({
-    { "Coach box", function() return S().coach ~= false end, function(v) S().coach = v end, false, "Debriefing's coach: the headline, the focus and what went wrong." },
-    { "What went right", function() return S().right ~= false end, function(v) S().right = v end },
-    { "Deaths", function() return S().cdeaths ~= false end, function(v) S().cdeaths = v end },
-    { "Avoidable damage", function() return S().cavoid ~= false end, function(v) S().cavoid = v end },
-    { "Boss mechanics", function() return S().mechs == true end, function(v) S().mechs = v end, false, "How each mechanic went, worst first." },
-    { "Defensives", function() return S().rdefs ~= false end, function(v) S().rdefs = v end, false, "Who pressed a defensive, and who never did." },
-    { "Healthstones and potions", function() return S().rcons ~= false end, function(v) S().rcons = v end, false, "Who used a Healthstone or health potion, and who dropped low with one still ready." },
-    { "Died with a stone or potion up", function() return S().rkitd ~= false end, function(v) S().rkitd = v end, false, "Who died with a Healthstone or health potion still unused, when there was time to press it." },
-    { "Your last pulls", function() return S().chips ~= false end, function(v) S().chips = v end, false, "Your last pulls along the top. Click one to look at it again." },
-  })
-  section("Your view")
+  section("Me")
   chips({
     { "Your damage or healing", function() return S().tile ~= false end, function(v) S().tile = v end },
     { "Rotation tips", function() return S().rotation ~= false end, function(v) S().rotation = v end },
@@ -1983,22 +1992,32 @@ local function buildOptions()
     { "Died with a stone or potion up", function() return S().kitd ~= false end, function(v) S().kitd = v end, false, "A death of yours with your Healthstone or health potion still unused, when there was time to press it." },
     { "Next pull tip", function() return S().next ~= false end, function(v) S().next = v end },
   })
-  section("Charts", false, true)
+  section("Raid view")
   chips({
+    { "Raid lead box", function() return S().coach ~= false end, function(v) S().coach = v end, false, "Your raid lead says: the headline, what wiped us and what went wrong." },
+    { "What went right", function() return S().right ~= false end, function(v) S().right = v end },
+    { "Deaths", function() return S().cdeaths ~= false end, function(v) S().cdeaths = v end },
+    { "Avoidable damage", function() return S().cavoid ~= false end, function(v) S().cavoid = v end },
+    { "Boss mechanics", function() return S().mechs == true end, function(v) S().mechs = v end, false, "How each mechanic went, worst first." },
+    { "Defensives", function() return S().rdefs ~= false end, function(v) S().rdefs = v end, false, "Who pressed a defensive, and who never did." },
+    { "Healthstones and potions", function() return S().rcons ~= false end, function(v) S().rcons = v end, false, "Who used a Healthstone or health potion, and who dropped low with one still ready." },
+    { "Died with a stone or potion up", function() return S().rkitd ~= false end, function(v) S().rkitd = v end, false, "Who died with a Healthstone or health potion still unused, when there was time to press it." },
+  })
+  section("Extras", false, true)
+  chips({
+    { "Your last pulls", function() return S().chips ~= false end, function(v) S().chips = v end, false, "Your last pulls along the top. Click one to look at it again." },
     { "Your numbers tonight", function() return S().chartLine == true end, function(v) S().chartLine = v end, true, "Your damage or healing, pull by pull, on this boss tonight." },
     { "How far each pull got", function() return S().chartNight == true end, function(v) S().chartNight = v end, true, "Every pull on this boss tonight, the best one marked." },
-  })
-  section("From the website", false, true)
-  chips({
     { "Report card grade", function() return S().grade == true end, function(v) S().grade = v end, true, "The pull's grade from the Report card, with mechanics, avoidable damage and survival." },
   })
   section("How many")
-  stepper("Mistakes", "The raid's biggest mistakes, with names.", 1, 5, function() return DB.maxRaid or 3 end, function(v) DB.maxRaid = v end)
-  stepper("Rotation tips", "Your biggest slips, worst first.", 1, 5, function() return DB.maxSlips or 3 end, function(v) DB.maxSlips = v end)
-  stepper("Boss mistakes", "Your mistakes, avoidable damage, kicks and dispels.", 1, 7, function() return DB.maxBoss or 2 end, function(v) DB.maxBoss = v end)
-  stepper("Deaths listed", "Who died first, and to what. 0 hides the list.", 0, 8, function() return DB.maxDied or 3 end, function(v) DB.maxDied = v end)
-  stepper("Boss mechanics", "How many mechanic lines.", 0, 16, function() return DB.maxMech or 6 end, function(v) DB.maxMech = v end)
-  switch("Boss mistakes first", "Above your rotation tips.", function() return DB.bossFirst == true end, function(v) DB.bossFirst = v end)
+  counts({
+    { "Rotation tips", "Your biggest fixes, the ones that cost you the most first.", 1, 8, function() return DB.maxSlips or 3 end, function(v) DB.maxSlips = v end },
+    { "Boss mistakes", "Your mistakes, avoidable damage, kicks and dispels.", 1, 7, function() return DB.maxBoss or 2 end, function(v) DB.maxBoss = v end },
+    { "Raid mistakes", "The raid's biggest mistakes, in the raid view.", 1, 5, function() return DB.maxRaid or 3 end, function(v) DB.maxRaid = v end },
+    { "Deaths listed", "Who died first, and to what. 0 hides the list.", 0, 8, function() return DB.maxDied or 3 end, function(v) DB.maxDied = v end },
+    { "Boss mechanics", "How many mechanic lines.", 0, 16, function() return DB.maxMech or 6 end, function(v) DB.maxMech = v end },
+  })
 
   -- ---------- Look: colour, size and font ----------
   page("look")
@@ -2012,7 +2031,7 @@ local function buildOptions()
   segment("Card style", "Soft panels, see-through glass, or flat.", { { "panels", "Panels" }, { "glass", "Glass" }, { "flat", "Flat" } },
     function() return DB.cardStyle or "panels" end, function(v) DB.cardStyle = v end, true)
   switch("Colour-blind colours", "Blue for good, orange for bad.", function() return DB.colorblind == true end, function(v) DB.colorblind = v end, true)
-  section("Size")
+  section("Size and text")
   pslider("Card size", nil, 0.7, 1.5, function() return DB.scale or 1 end, function(v) DB.scale = v end)
   pslider("Text size", nil, 0.85, 1.2, function() return DB.fontScale or 1 end, function(v) DB.fontScale = v end)
   choice("Width", nil, WIDTH_CHOICES, function() return DB.width or "normal" end, function(v) DB.width = v end)
@@ -2032,19 +2051,23 @@ local function buildOptions()
     refreshers[#refreshers + 1] = show; show()
   end
   pslider("Background", "How solid the card is.", 0.6, 1, function() return DB.alpha or 0.97 end, function(v) DB.alpha = v end)
+  section("Big window and mini bar")
+  segment("Open /recap as", "The card, one slim bar, or the big window.", { { "card", "Card" }, { "mini", "Mini bar" }, { "big", "Big" } },
+    function() return DB.mini and "mini" or (DB.bigDefault and "big" or "card") end, function(v) DB.mini = (v == "mini"); DB.bigDefault = (v == "big") end, true)
+  switch("Big window: your numbers", "A line of your damage or healing, pull by pull.", function() return DB.bigLine ~= false end, function(v) DB.bigLine = v end, true)
+  switch("Big window: progress", "How far each pull got, the closest one marked.", function() return DB.bigChart ~= false end, function(v) DB.bigChart = v end, true)
+  pslider("Big window size", nil, 0.7, 1.3, function() return DB.bigScale or 1 end, function(v) DB.bigScale = v end)
+  pslider("Mini bar size", nil, 0.7, 1.5, function() return DB.miniScale or 1 end, function(v) DB.miniScale = v end)
 
   -- ---------- More: set once and forget ----------
   page("more")
-  section("After a pull", true)
-  segment("Show it as", "The card, one slim bar, or the big window.", { { "card", "Card" }, { "mini", "Mini bar" }, { "big", "Big" } },
-    function() return DB.mini and "mini" or (DB.bigDefault and "big" or "card") end, function(v) DB.mini = (v == "mini"); DB.bigDefault = (v == "big") end, true)
-  switch("Open it by itself", "As soon as it arrives.", function() return DB.autoShow ~= false end, function(v) DB.autoShow = v end, true)
-  switch("Sound", "A soft sound when it opens.", function() return DB.sound ~= false end, function(v) DB.sound = v end, true)
-  switch("Only what went wrong", "Hide the lines you did right.", function() return DB.onlyBad == true end, function(v) DB.onlyBad = v end, true)
+  section("On screen", true)
   switch("Hide during combat", "Back when the fight ends.", function() return DB.hideCombat ~= false end, function(v) DB.hideCombat = v end, true)
   segment("Close by itself", "Not while your mouse is on it.", { { 0, "Never" }, { 30, "30 s" }, { 60, "60 s" }, { 120, "2 min" } },
     function() return DB.autoClose or 0 end, function(v) DB.autoClose = v end, true)
   switch("Lock in place", "The card and bars can't be dragged.", function() return DB.lock == true end, function(v) DB.lock = v end, true)
+  switch("Only what went wrong", "Hide the lines you did right.", function() return DB.onlyBad == true end, function(v) DB.onlyBad = v end, true)
+  switch("Boss mistakes first", "Above your rotation tips.", function() return DB.bossFirst == true end, function(v) DB.bossFirst = v end)
   section("Raid")
   switch("Raid view for everyone", "Off: only raid leads and assistants see it.", function() return DB.raidAlways ~= false end, function(v) DB.raidAlways = v end, true)
   switch("Why we wiped", "The raid lead's word at the top of the card, and a line for you.", function() return S().lead ~= false end, function(v) S().lead = v end)
@@ -2064,14 +2087,8 @@ local function buildOptions()
   stepper("Damage goal", "Your DPS target, in thousands. The first + starts a little above your latest pull.", 0, 3000, g1, s1, fmtK, true, 10)
   local g2, s2 = goalStep("goalHps", "healer")
   stepper("Healing goal", "Your HPS target, in thousands.", 0, 3000, g2, s2, fmtK, true, 10)
-  section("Big window and mini bar")
-  switch("Your numbers tonight", "A line of your damage or healing, pull by pull.", function() return DB.bigLine ~= false end, function(v) DB.bigLine = v end, true)
-  switch("Progress tonight", "How far each pull got, the closest one marked.", function() return DB.bigChart ~= false end, function(v) DB.bigChart = v end, true)
-  pslider("Big window size", nil, 0.7, 1.3, function() return DB.bigScale or 1 end, function(v) DB.bigScale = v end)
-  pslider("Mini bar size", nil, 0.7, 1.5, function() return DB.miniScale or 1 end, function(v) DB.miniScale = v end)
-  section("Combat log")
+  section("Keeping")
   switch("Combat log always on", "With Advanced Combat Logging, whenever Debrief is loaded.", function() return DB.autoLog ~= false end, function(v) DB.autoLog = v end, true)
-  section("Saved pulls")
   stepper("Keep my last pulls", "Older pulls drop off as new ones come in.", 10, 100, function() return DB.keep or 30 end, function(v) DB.keep = v end, function(v) return v .. "" end, true, 5)
   local pc = P:CreateFontString(nil, "OVERLAY"); setFont(pc, "body", 12); pc:SetPoint("TOPLEFT", PX, -(y + 4)); pc:SetTextColor(rgb(COL.faint))
   refreshers[#refreshers + 1] = function() local n = #DB.pulls; pc:SetText((n == 0 and "No pulls saved yet." or (n .. (n == 1 and " pull saved." or " pulls saved."))) .. " /reload brings in your newest from Debrief Companion.") end

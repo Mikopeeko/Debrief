@@ -701,7 +701,11 @@ function buildOne(b, rep, same, W, L, cutN) {
     let x = null; try { x = W.specRun(p.specName, [rep], p.name, true); } catch (e) { x = null; }
     const tips = [];
     if (x && x.checks) {
-      const focus = x.checks.filter((c) => c.st === 'bad' || c.st === 'warn').sort((a, c) => (c.cost || 0) - (a.cost || 0) || (a.st === 'bad' ? -1 : 0) + (c.st === 'bad' ? 1 : 0) || (c.share || 0) - (a.share || 0)).slice(0, 5); // (up to 5: the card shows 1 to 5, as each raider picks)
+      // (most important first (the user, Oct 24: "the most important ones first ... the ones that contribute to improving DPS/HPS"): what it
+      // cost in damage or healing next to the top players (the Rotation tab counts only 1% of your output or more), then the score points it
+      // lost (its weight, all of it when red, half when yellow), then red before yellow. Gear advice (stats) isn't a rotation fix, as on the tab)
+      const lostPts = (c) => (c.share || 0) * (c.st === 'bad' ? 1 : c.st === 'warn' ? 0.5 : 0);
+      const focus = x.checks.filter((c) => (c.st === 'bad' || c.st === 'warn') && !/^st:/.test(String(c.k || ''))).sort((a, c) => (c.cost || 0) - (a.cost || 0) || lostPts(c) - lostPts(a) || (c.st === 'bad') - (a.st === 'bad')).slice(0, 8); // (up to 8 (Oct 24): the card shows 1 to 8, as each raider picks)
       for (const c of focus) { P.slips.push([c.st, spellId(W, c.ic), slipLine(c)]); if (c.tip) tips.push(plain(c.tip)); }
       // (the Rotation tab's checklist, for the card (Oct 24): each fix with your number, the top players', a square per moment, the tip)
       const num = (v) => plain(v).replace(/(\d)\s*\/\s*(\d)/g, '$1/$2');
@@ -714,7 +718,7 @@ function buildOne(b, rep, same, W, L, cutN) {
       const WR0 = { bad: 0, warn: 1, ok: 2 }, extra = x.checks.filter((c) => !focus.includes(c) && c.st !== 'na' && !/^boss:/.test(c.k) && x.wins && x.wins[c.k])
         .sort((a, c) => ((WR0[a.st] != null ? WR0[a.st] : 3) - (WR0[c.st] != null ? WR0[c.st] : 3)) || (c.cost || 0) - (a.cost || 0)).slice(0, 2), rotC = focus.concat(extra);
       P.rs.good = P.rs.good.filter((g) => !extra.some((c) => plain(c.label) === g)); /* (a window row isn't said twice) */
-      P.rot = rotC.map((c) => [c.st, spellId(W, c.ic), plain(c.label), num(c.v), x.top && x.top[c.k] ? num(x.top[c.k]) : '', c.tip ? plain(c.tip) : '',
+      P.rot = rotC.map((c) => [c.st, spellId(W, c.ic) || (/casting|pace/i.test(c.label || '') ? 'spell_holy_borrowedtime' : p.specIcon || '') /* (no "?" for a check without a spell (Oct 24)) */, plain(c.label), num(c.v), x.top && x.top[c.k] ? num(x.top[c.k]) : '', c.tip ? plain(c.tip) : '',
         (c.bx || []).length >= 2 ? c.bx.slice(0, 40).map((q) => (q.cls === 'ok' ? 'g' : q.cls === 'bad' ? 'b' : 'w')).join('') : '', why(c), howOf(c), momOf(c)]);
       // (each ramp or burst window, from the Rotation tab's cards (Oct 24, the user: "classes with ramp windows/rotations with specific windows
       // that have specific button presses should have that detail included"): the ones that went wrong first, four at most, then in time order)

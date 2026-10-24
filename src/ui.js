@@ -1760,6 +1760,7 @@ const PATCH_NOTES = [
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
     'Debriefing: The details (Innervate, potions, defensives and the rest) sit in their own box under The pull at a glance: what wiped us, then when, then the numbers.',
+    'Debrief in game: rotation tips now come in order of what costs you the most, up to 8 of them, and the settings are tidier (Me, Raid view and Extras, a small grid for How many)',
     'Debrief Companion is now code-signed, so Windows knows it comes from us. While it is new, Windows may still ask once: click More info, then Run anyway',
     'Debrief in game: no more pasting or sharing. Your recap pops up on your PC, and /reload brings it into /recap. Pulls sent by other players are cleared, and Ctrl+Shift+D now shows or hides your card',
     'Debriefing: every big mistake shows up top under What wiped us, as "Also went wrong" (no names: "Missed by 4 players").',
