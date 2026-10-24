@@ -4283,11 +4283,13 @@ details.secd.mcx-tile[open] .mcx-alt { display: none; }
 /* (Oct 24, your ask "check the font sizes": every Debriefing text on the design list's sizes. Labels 12, secondary lines and small buttons 13,
    row titles 14, the raid lead's sentences 15, phase names 18) */
 #view .mcx-lt small, #view .prw-nt { font-size: 12px !important; }
-#view .cbl-sw button, #view .cch-av, #view .rch-t, #view .ckt-none, #view .ckt-tot, #view .cbl-calm, #view .dbn-gone, #view .mxa-x, #view .u1-n,
+#view .cbl-sw button, #view .cch-av, #view .rch-t, #view .ckt-none, #view .ckt-tot, #view .cbl-calm, #view .dbn-gone, #view .mxa-x,
 #view details.howit > summary, #view .mxa-all-b, #view .pdesc, #view .dbn-jh .sst, #view .cbr-wh, #view .cgl-d, #view .cbl-ln, #view .cch-wy, #view .prw-s, #view .dbo-x, #view .cch-tt { font-size: 13px !important; }
 #view .prw-n, #view .cgl-n, #view .cbr-t > b, #view .dbn-jh > b, #view details.cbr-more > summary { font-size: 14px !important; }
 #view .cch-trc, #view .cch-mr { font-size: 15px !important; }
 #view .phr-nm b { font-size: 18px !important; }
+/* (one size per line (Oct 24, "font/size issues"): a moment's grey note sits on the same line as the rest, so it is 14px like them, muted) */
+#view .u1-x .u1-n, #view .u1-x .u1-n .sp { font-size: 14px !important; }
 #view .rch-dmg .nm, #view .mxa-yn, #view .mxa-yn2 { font-size: 13px !important; }
 #view :is(.cbr-wh, .cgl-d, .cbl-ln, .cch-wy, .prw-s, .ckt-none, .ckt-tot, .cch-av, .pdesc, .u1-n, .cch-trc, .cch-mr, .prw-n, .cbr-t > b, details.cbr-more > summary, .cbl-sw button, .dbn-jh > b) :is(.nm, .sp, b, span) { font-size: inherit !important; }
 /* (Oct 24: Improving / Worsening tags on phase bars) */
