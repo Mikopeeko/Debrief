@@ -332,9 +332,22 @@ local pool = { fs = {}, tex = {}, rt = {}, btn = {}, tip = {} }
 local used = { fs = 0, tex = 0, rt = 0, btn = 0, tip = 0 }
 local EXPANDED = {} -- (lists opened with "Show N more", until the next pull)
 local IND = 0 -- (rows sit this far in, inside a section panel)
+-- (two columns when the card is long (Oct 24): the right column is its own frame with its own pieces; drawing switches to it at a section edge)
+local bodyL, poolL, usedL = body, pool, used
+local bodyR = CreateFrame("Frame", nil, body); bodyR:SetSize(10, 10); bodyR:SetPoint("TOPLEFT", body, "TOPLEFT", 0, 0); bodyR:Hide()
+local poolR, usedR = { fs = {}, tex = {}, rt = {}, btn = {}, tip = {} }, { fs = 0, tex = 0, rt = 0, btn = 0, tip = 0 }
+local function useCol(n) if n == 2 then body, pool, used = bodyR, poolR, usedR else body, pool, used = bodyL, poolL, usedL end end
+local function colFrame(on, cw, h)
+  bodyR:ClearAllPoints(); bodyR:SetPoint("TOPLEFT", bodyL, "TOPLEFT", cw + 16, 0); bodyR:SetWidth(cw)
+  if h then bodyR:SetHeight(math.max(10, h)) end; bodyR:SetShown(on)
+end
 local function resetPool()
-  used.fs, used.tex, used.rt, used.btn, used.ln, used.tip = 0, 0, 0, 0, 0, 0
-  for _, l in pairs(pool) do for _, o in ipairs(l) do o:Hide(); o:ClearAllPoints() end end
+  useCol(1)
+  for _, pu in ipairs({ { poolL, usedL }, { poolR, usedR } }) do
+    local p0, u0 = pu[1], pu[2]
+    u0.fs, u0.tex, u0.rt, u0.btn, u0.ln, u0.tip = 0, 0, 0, 0, 0, 0
+    for _, l in pairs(p0) do for _, o in ipairs(l) do o:Hide(); o:ClearAllPoints() end end
+  end
 end
 local function FS(kind, size, hex)
   used.fs = used.fs + 1
@@ -716,11 +729,16 @@ local function cardGrade(y, gr)
   local c = FS("body", 12.5, COL.soft); c:SetPoint("TOPLEFT", 58, -(y + 25)); c:SetWidth(CW - 70); c:SetWordWrap(false); c:SetText(gr.cats or "")
   return y + h + 8
 end
-local UI = { rotRow = rotRow, rotGood = rotGood, rowS = rowS, wipeRow = wipeRow, trendCards = trendCards, cardCharts = cardCharts, cardGrade = cardGrade, parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, canRaid = canRaid, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded }
-function render()
+local UI = { rotRow = rotRow, rotGood = rotGood, rowS = rowS, wipeRow = wipeRow, trendCards = trendCards, cardCharts = cardCharts, cardGrade = cardGrade, parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, canRaid = canRaid, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded, col = useCol, colFrame = colFrame, two = { cols = 1, brk = 0, n = 0, marks = {} } }
+local function renderOnce()
+  UI.col(1)
   local raw = DB.pulls[DB.cur]; local m = UI.cutView(raw); CUR = m
   if not m then return end
-  W = WIDTHS[DB.width or "normal"] or 400; CW = W - PAD * 2; card:SetWidth(W); body:SetWidth(CW); scroller:SetWidth(CW); bossT:SetWidth(W - 230)
+  local T = UI.two; T.n = 0; T.marks = {}; T.total = nil
+  -- (two columns side by side when the card is long (Oct 24): CW is one column's width, W the whole card's)
+  W = WIDTHS[DB.width or "normal"] or 400; CW = T.cwc or (W - PAD * 2)
+  if T.cols == 2 then W = CW * 2 + 16 + PAD * 2 elseif T.cwc then W = CW + PAD * 2 end
+  card:SetWidth(W); body:SetWidth(W - PAD * 2); scroller:SetWidth(W - PAD * 2); bossT:SetWidth(W - 230); UI.colFrame(T.cols == 2, CW)
   if detailBtn then detailBtn.t:SetText(PRESET_NAME[DB.preset] or "Custom"); detailBtn:SetWidth(detailBtn.t:GetStringWidth() + 18) end
   for _, c in ipairs(chips) do c:SetShown(false) end
   local h = m.h
@@ -733,8 +751,8 @@ function render()
   if (DB.show or {}).chips ~= false and #IX > 0 then
     local function chipW(q) local rt = UI.resultOf(q.h); chips[1].t:SetText("Pull " .. q.h.pull .. "  ·  " .. rt); return chips[1].t:GetStringWidth() + 20 end
     local total = 0; for j = first, last do total = total + chipW(DB.pulls[IX[j]]) + 6 end
-    while first < pos and total - 6 > CW do total = total - chipW(DB.pulls[IX[first]]) - 6; first = first + 1 end
-    while last > pos and total - 6 > CW do total = total - chipW(DB.pulls[IX[last]]) - 6; last = last - 1 end
+    while first < pos and total - 6 > W - PAD * 2 do total = total - chipW(DB.pulls[IX[first]]) - 6; first = first + 1 end
+    while last > pos and total - 6 > W - PAD * 2 do total = total - chipW(DB.pulls[IX[last]]) - 6; last = last - 1 end
   end
   local n = last
   for i = 1, #chips do
@@ -761,7 +779,7 @@ function render()
   if h.where ~= "" then meta[#meta + 1] = h.where end
   meta[#meta + 1] = h.deaths .. (h.deaths == "1" and " death" or " deaths")
   if DB.detailed and not DB.compact and view == "raid" and UI.canRaid() and #(m.raid.tiles or {}) > 0 then meta = { h.diff, "Pull " .. h.pull } end
-  metaT:SetWidth(CW); metaT:SetText(table.concat(meta, "   ·   "))
+  metaT:SetWidth(W - PAD * 2); metaT:SetText(table.concat(meta, "   ·   "))
   -- (tabs and the body sit lower when the pull chips show)
   local coachOn = m.coach and (m.coach.head or "") ~= "" and not m.h.practice and (DB.show or {}).coach ~= false -- (Debriefing's coach box on every style, with the Raid view and You tabs; the style decides how much is open (Oct 22))
   local glanceOn = DB.glance and (m.raid.ghead or "") ~= "" and not coachOn -- (the Glance card: one view, so no tabs; older pulls without it keep the tabs)
@@ -783,7 +801,7 @@ function render()
   local P = UI.pickWho(m)
   local showWho = (view == "me" and P and #m.players > 1) and not glanceOn
   who:SetShown(showWho); prevB:SetShown(showWho); nextB:SetShown(showWho)
-  if P then who:SetWidth(CW - 190); who:SetText("|cff" .. UI.classHex(P.cls) .. P.name .. "|r"); who:SetWidth(math.min(CW - 190, math.max(40, who:GetStringWidth() + 4))) end -- (the arrows sit right beside the name (Oct 24))
+  if P then who:SetWidth(W - PAD * 2 - 190); who:SetText("|cff" .. UI.classHex(P.cls) .. P.name .. "|r"); who:SetWidth(math.min(W - PAD * 2 - 190, math.max(40, who:GetStringWidth() + 4))) end -- (the arrows sit right beside the name (Oct 24))
   local function step(dir)
     local idx = 1; for i, p in ipairs(m.players) do if p == P then idx = i end end
     idx = ((idx - 1 + dir) % #m.players) + 1; DB.who = m.players[idx].name; render()
@@ -794,6 +812,11 @@ function render()
   UI.resetPool()
   local y = 2
   local SH = DB.show or {}
+  -- (a section edge (Oct 24): noted on every draw; on the two-column draw, the chosen one starts the right column)
+  local function brk()
+    T.n = T.n + 1; T.marks[T.n] = y
+    if T.cols == 2 and T.n == T.brk then T.lh = y; UI.col(2); y = 2 end
+  end
   -- a panel behind a section, in the chosen card style: Panels (soft boxes), Glass (see-through) or Flat (a line under)
   local function panel(y0, hh)
     if DB.cardStyle == "flat" then local l = TEX("ARTWORK"); l:SetPoint("TOPLEFT", 0, -(y0 + hh)); l:SetSize(CW, 1); fill(l, COL.line)
@@ -802,6 +825,7 @@ function render()
   -- a section: its heading folds it away (+ / -), and a "Show N more" line expands a long list
   local function section(key, title, list, limit, draw, empty, tail)
     if SH[key] == false then return end
+    brk()
     local folded = DB.collapsed and DB.collapsed[key]
     local y0 = y; IND = 12; y = y + 12
     y = head(y, title, key, folded)
@@ -823,11 +847,12 @@ function render()
   -- (the raid's survival in one section (Oct 22 audit): defensives, Healthstones and potions, deaths with one unused; each keeps its switch)
   local function survRaid()
     local L = {}
-    for _, k in ipairs({ { "rdefs", "defs" }, { "rcons", "cons" }, { "rkitd", "kitd" } }) do if SH[k[1]] ~= false then for _, r in ipairs(m.raid[k[2]] or {}) do L[#L + 1] = r end end end
+    for _, k in ipairs({ { "rdefs", "defs" }, { "rcons", "cons" } }) do --[[ (deaths with a stone unused are in Deaths now (Oct 24)) ]] if SH[k[1]] ~= false then for _, r in ipairs(m.raid[k[2]] or {}) do L[#L + 1] = r end end end
     if #L > 0 then section("rsurv", "Survival", L, 4, function(r) y = row(y, r[1], r[2], r[3]) end) end
   end
   local function diedRow()
     if DB.compact then return end
+    brk()
     local nd, show, cut = #m.raid.died, DB.maxDied or 3, UI.cutIdx(raw)
     local y0 = y; IND = 12; y = y + 12
     local t = FS("head", 15, COL.text); t:SetPoint("TOPLEFT", IND, -y); t:SetText("Who died")
@@ -886,6 +911,7 @@ function render()
   -- (the Debriefing tab's summary: the pull phase by phase, then Better and Worse than last pull, each a short paragraph)
   local function summary()
     if not DB.detailed or DB.compact or (m.raid.story or "") == "" or SH.story == false then return end
+    brk()
     local y0 = y; IND = 12; y = y + 12
     y = head(y, "The pull", "story", DB.collapsed and DB.collapsed.story)
     if not (DB.collapsed and DB.collapsed.story) then
@@ -1028,6 +1054,7 @@ function render()
     end
     local cardsOn = c.cards or c.root -- (the website's four cards (Oct 23); older pulls keep the list)
     if cardsOn then y = UI.trendCards(y, c, paint) end
+    if #c.wrong > 0 then brk() end
     if #c.wrong > 0 then
       local wOpen = true
       if cardsOn then local y0 = y; wOpen = fold("cwrong", "EVERY MISTAKE, IN DETAIL", #c.wrong + (c.more or 0)); y = y + 34; if not wOpen then y = y - 2 end
@@ -1038,6 +1065,7 @@ function render()
           local mt = FS("body", 12.5, COL.faint); mt:SetPoint("TOPLEFT", 2, -(y + 1)); mt:SetText((#c.wrong - cap) .. " more in the full coaching on the website."); y = y + 20
           break
         end
+        if i > 1 then brk() end -- (a long list of mistakes can carry on at the top of the right column)
         local sev = x.sev == "bad" and COL.bad or COL.warn
         local tx, tw = 44, CW - 44 - 14
         -- (like the site's card (Oct 22): closed it is the title, tags and Next time; a click opens What happened, How and Against
@@ -1083,6 +1111,7 @@ function render()
     y = y + 6
     -- deaths, folded until clicked
     if SH.cdeaths ~= false and (#c.deaths > 0 or (c.dline or "") ~= "") then
+      brk()
       local on = (c.dnote or ""):match("(%d+) of %d+ deaths? on the player"); local aft = (c.dnote or ""):match("(%d+) more after")
       local y0 = y; local open = fold("cdeaths", "DEATHS", #c.deaths, on and (on .. " on the player" .. (aft and ("  ·  " .. aft .. " not counted") or "")) or nil, "Red: on the player (their own mistake, or a slow death with something ready). Amber: half on them. Grey: not on them. Click a death for why."); y = y + 32
       if open then
@@ -1099,6 +1128,7 @@ function render()
     end
     -- avoidable damage, folded until clicked
     if SH.cavoid ~= false and (#c.avoid > 0 or (c.aline or "") ~= "") then
+      brk()
       local y0 = y; local open = fold("cavoid", "AVOIDABLE DAMAGE", #c.avoid, nil, "Damage you could have dodged, judged against top guilds. Click one for what happened."); y = y + 32
       if open then
         if #c.avoid == 0 then local f = FS("body", 13, COL.muted); f:SetPoint("TOPLEFT", 14, -y); f:SetWidth(CW - 28); f:SetText(paint(c.aline)); y = y + f:GetStringHeight() + 8 end
@@ -1222,7 +1252,6 @@ function render()
       do local L = {} -- (one Survival section (Oct 22 audit): defensives, Healthstone and potion, a death with one unused)
         if SH.surv ~= false then for _, r in ipairs(UI.onlyBad(P.surv or {})) do L[#L + 1] = r end end
         if SH.cons ~= false then for _, r in ipairs(P.cons or {}) do L[#L + 1] = r end end
-        if SH.kitd ~= false then for _, r in ipairs(P.kitd or {}) do L[#L + 1] = r end end
         if #L > 0 then section("surv", "Survival", L, 6, function(r) y = UI.rowS(y, r) end) end end
       -- (the Detailed card: the raid's side right here, so nobody has to switch to the Raid view)
       if DB.detailed and not m.h.practice and not raidOk then
@@ -1246,17 +1275,39 @@ function render()
     diedRow()
     if m.raid.next ~= "" and SH.next ~= false and not ((m.raid.lead or "") ~= "" and SH.lead ~= false) then y = UI.nextBox(y + 2, m.raid.next) end
   end
+  if T.cols == 2 then UI.colFrame(true, CW, y); UI.col(1); y = math.max(T.lh or 0, y) end
   body:SetHeight(math.max(10, y))
   -- (never taller than the screen: the rest scrolls, and the footer says so)
   local room = math.max(320, ((UIParent and UIParent.GetHeight and UIParent:GetHeight()) or 768) / math.max(0.5, (card.GetScale and card:GetScale()) or 1) - 60)
   local vh = math.max(10, math.min(y, room - TOPY - 42))
-  scroller:SetSize(CW, vh)
+  T.total, T.avail = y, room - TOPY - 42
+  scroller:SetSize(W - PAD * 2, vh)
   scroller:SetVerticalScroll(math.min((scroller:GetVerticalScroll() or 0), math.max(0, y - vh)))
   foot:SetText(y > vh + 4 and "Scroll for more  ·  /recap opens this again" or "/recap opens this again  ·  /db settings")
   footLine:ClearAllPoints(); footLine:SetPoint("TOPLEFT", card, "TOPLEFT", 1, -(TOPY + vh + 10)); footLine:SetPoint("TOPRIGHT", card, "TOPRIGHT", -1, -(TOPY + vh + 10))
   foot:ClearAllPoints(); foot:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -(TOPY + vh + 19)); foot:SetWidth(W - PAD * 2 - 130); foot:SetWordWrap(false)
   logBtn:ClearAllPoints(); logBtn:SetPoint("TOPRIGHT", card, "TOPRIGHT", -PAD, -(TOPY + vh + 15)); Debrief_LogButton()
   card:SetHeight(TOPY + vh + 42)
+end
+-- (the card in two columns when it's longer than the screen (Oct 24): drawn once as before; when it would scroll, drawn again with the
+-- right column starting at the section edge that leaves the two sides closest in height, like the big window's two columns)
+function render()
+  local T = UI.two
+  T.cols, T.brk, T.cwc = 1, 0, nil
+  renderOnce()
+  if DB.twoCol ~= false and T.total and T.total > T.avail + 4 then
+    local cw1 = (WIDTHS[DB.width or "normal"] or 400) - PAD * 2
+    local sw = ((UIParent and UIParent.GetWidth and UIParent:GetWidth()) or 1365) / math.max(0.5, (card.GetScale and card:GetScale()) or 1)
+    local cwc = math.min(cw1, 452, math.floor((sw - 60 - PAD * 2 - 16) / 2))
+    if cwc >= 330 then
+      if cwc < cw1 then T.cwc = cwc; renderOnce() end -- (measured again at a column's width)
+      local best, bh = 0, T.total or 0
+      for i, yb in ipairs(T.marks) do local hh = math.max(yb, (T.total or 0) - yb + 2); if yb > 60 and hh < bh then best, bh = i, hh end end
+      if best > 0 then T.cols, T.brk = 2, best; renderOnce()
+      elseif T.cwc then T.cwc = nil; renderOnce() end -- (nowhere to split: one column, as before)
+    end
+  end
+  if Debrief_FitPreview then Debrief_FitPreview() end
 end
 
 -- ---------- keeping pulls, showing the card ----------
@@ -1722,8 +1773,9 @@ local refreshers = {}
 local FONT_CHOICES = { { "debrief", "Debrief (website)" }, { "wow", "WoW default" }, { "arial", "Arial Narrow" }, { "morpheus", "Morpheus headings" } }
 local WIDTH_CHOICES = { { "narrow", "Narrow" }, { "normal", "Normal" }, { "wide", "Wide" }, { "large", "Large" }, { "xl", "Extra wide" } }
 function Debrief_FitPreview()
-  if not (opt and opt:IsShown() and card:IsShown()) then return end
-  local avail = ((UIParent and UIParent:GetWidth()) or 1600) - ((opt:GetRight() or 900) * (opt:GetEffectiveScale() or 1) / ((UIParent and UIParent:GetEffectiveScale()) or 1)) - 24
+  local host = (opt and opt:IsShown() and opt) or (DebriefTutorial and DebriefTutorial:IsShown() and DebriefTutorial) or nil -- (the settings, or the guided setup (Oct 24))
+  if not (host and card:IsShown()) then return end
+  local avail = ((UIParent and UIParent:GetWidth()) or 1600) - ((host:GetRight() or 900) * (host:GetEffectiveScale() or 1) / ((UIParent and UIParent:GetEffectiveScale()) or 1)) - 24
   local w = (card:GetWidth() or 400) * (DB.scale or 1)
   card:SetScale((w > avail and avail > 200) and math.max(0.55, (DB.scale or 1) * avail / w) or (DB.scale or 1))
 end
@@ -2052,7 +2104,6 @@ local function buildOptions()
     { "Boss mistakes", function() return S().boss ~= false end, function(v) S().boss = v end },
     { "Survival", function() return S().surv ~= false end, function(v) S().surv = v end, false, "Your defensives, and how many you used." },
     { "Healthstone and potion", function() return S().cons ~= false end, function(v) S().cons = v end, false, "When you used your Healthstone and health potion, or that you didn't." },
-    { "Died with one up", function() return S().kitd ~= false end, function(v) S().kitd = v end, false, "A death of yours with your Healthstone or health potion still unused, when there was time to press it." },
     { "Next pull tip", function() return S().next ~= false end, function(v) S().next = v end },
     { "Worse and better", function() return S().trend ~= false end, function(v) S().trend = v end, false, "Worse and better than last pull, under the raid lead box." },
   })
@@ -2065,7 +2116,6 @@ local function buildOptions()
     { "Boss mechanics", function() return S().mechs == true end, function(v) S().mechs = v end, false, "How each mechanic went, worst first." },
     { "Defensives", function() return S().rdefs ~= false end, function(v) S().rdefs = v end, false, "Who pressed a defensive, and who never did." },
     { "Healthstones", function() return S().rcons ~= false end, function(v) S().rcons = v end, false, "Who used a Healthstone or health potion, and who dropped low with one still ready." },
-    { "Died with one up", function() return S().rkitd ~= false end, function(v) S().rkitd = v end, false, "Who died with a Healthstone or health potion still unused, when there was time to press it." },
   })
   switch("Raid view for everyone", "Off: only raid leads and assistants see the Raid view.", function() return DB.raidAlways ~= false end, function(v) DB.raidAlways = v end, true)
   section("Extras")
@@ -2103,6 +2153,7 @@ local function buildOptions()
   pslider("Card size", nil, 0.7, 1.5, function() return DB.scale or 1 end, function(v) DB.scale = v end)
   pslider("Text size", nil, 0.85, 1.2, function() return DB.fontScale or 1 end, function(v) DB.fontScale = v end)
   choice("Width", nil, WIDTH_CHOICES, function() return DB.width or "normal" end, function(v) DB.width = v end)
+  switch("Two columns when it's long", "Taller than your screen: the card splits in two, side by side.", function() return DB.twoCol ~= false end, function(v) DB.twoCol = v end, true)
   -- (the font: ‹ name › through Debrief's own, the game's, and every font your other addons share)
   do
     local base = { { "debrief", "Debrief" }, { "wow", "WoW" }, { "arial", "Arial Narrow" }, { "morpheus", "Morpheus headings" } }
@@ -2158,7 +2209,7 @@ local function buildOptions()
   y = y + 20
   buttons({ { "Clear saved pulls", function() SlashCmdList.DEBRIEF("clear"); Debrief_RefreshOptions() end } })
   section("Help")
-  buttons({ { "Tutorial", function() opt:Hide(); Debrief_Tutorial() end, 74 }, { "Sample recap", function() SlashCmdList.DEBRIEF("demo") end, 96 }, { "Test the glow", function() Debrief_TestGlow() end, 96 }, { "Move card back", function() SlashCmdList.DEBRIEF("reset") end, 108 } })
+  buttons({ { "Guided setup", function() opt:Hide(); Debrief_Tutorial() end, 104 }, { "Sample recap", function() SlashCmdList.DEBRIEF("demo") end, 96 }, { "Test the glow", function() Debrief_TestGlow() end, 96 }, { "Move card back", function() SlashCmdList.DEBRIEF("reset") end, 108 } })
   local HELP = { { "/db", "these settings (/dmo too)" }, { "/recap", "show or hide your recap (/dbr, /debrief too)" }, { "/debrief big", "the big window" }, 
     { "/debrief log", "combat logging on or off" }, { "/debrief demo", "a sample recap" } }
   for _, h in ipairs(HELP) do
@@ -2203,6 +2254,7 @@ function Debrief_ToggleOptions()
   if not DB then return end
   if not opt then buildOptions() end
   if opt:IsShown() then opt:Hide(); Debrief_PreviewOff(); if card:IsShown() then if #DB.pulls > 0 then render() else card:Hide() end end; return end -- (your own pulls again)
+  if DebriefTutorial and DebriefTutorial:IsShown() then DebriefTutorial:Hide(); Debrief_PreviewOff() end
   Debrief_RefreshOptions(); opt:Show()
   -- (the card beside it, so every change shows at once: the built-in sample, every section filled (Oct 24))
   Debrief_PreviewOn()
@@ -2228,76 +2280,174 @@ local function registerSettings()
   local p = CreateFrame("Frame"); p:Hide()
   local t = p:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge"); t:SetPoint("TOPLEFT", 16, -16); t:SetText("Debrief")
   local d = p:CreateFontString(nil, "OVERLAY", "GameFontHighlight"); d:SetPoint("TOPLEFT", 16, -44); d:SetWidth(560); d:SetJustifyH("LEFT")
-  d:SetText("Your pull recap in game. Choose how much the card shows (Simple, Medium, Heavy, Detailed or your own mix), the font and sizes, and what happens after a pull.")
+  d:SetText("Your pull recap in game. Choose how much the card shows (Simple, Standard, Detailed or your own mix), the font and sizes, and what happens after a pull.")
   local b = CreateFrame("Button", nil, p, "UIPanelButtonTemplate"); b:SetSize(200, 26); b:SetPoint("TOPLEFT", 16, -80); b:SetText("Open Debrief settings")
   b:SetScript("OnClick", function() if SettingsPanel and SettingsPanel:IsShown() then HideUIPanel(SettingsPanel) end; if not (opt and opt:IsShown()) then Debrief_ToggleOptions() end end)
   local cat = Settings.RegisterCanvasLayoutCategory(p, "Debrief"); Settings.RegisterAddOnCategory(cat)
 end
 
--- ---------- the tutorial: four short steps the first time you log in (/debrief tutorial or Help shows it again) ----------
+-- ---------- the guided setup: the first time you log in (/debrief setup, or Help in the settings, shows it again) ----------
+-- (Oct 24, the user: "a guided setup of what type of information they want displayed, and how to find settings/use the addon": how it
+-- works, a style with the sample card beside it changing as you click, the pieces you want, and where things are)
 do
-  local TW = 500
-  local tut = CreateFrame("Frame", "DebriefTutorial", UIParent); tut:SetSize(TW, 300); tut:SetPoint("CENTER", 0, 60); tut:SetFrameStrata("DIALOG"); tut:SetClampedToScreen(true); tut:Hide()
+  local TW = 470
+  local tut = CreateFrame("Frame", "DebriefTutorial", UIParent); tut:SetSize(TW, 300); tut:SetPoint("CENTER", -250, 40); tut:SetFrameStrata("DIALOG"); tut:SetClampedToScreen(true); tut:Hide()
   skin(tut, 8, COL.bg, 0.98, COL.line2, 1, true)
   tut:SetMovable(true); tut:EnableMouse(true); tut:RegisterForDrag("LeftButton")
   tut:SetScript("OnDragStart", tut.StartMoving); tut:SetScript("OnDragStop", tut.StopMovingOrSizing)
   tinsert(UISpecialFrames, "DebriefTutorial")
-  local lg = tut:CreateTexture(nil, "ARTWORK"); lg:SetSize(22, 22); lg:SetPoint("TOPLEFT", 18, -15); lg:SetTexture(MEDIA .. "Media\\logo")
-  local tt = tut:CreateFontString(nil, "OVERLAY"); setFont(tt, "head", 19); tt:SetPoint("LEFT", lg, "RIGHT", 8, 0); tt:SetTextColor(rgb(COL.text)); tt:SetText("Debrief")
-  local stepT = tut:CreateFontString(nil, "OVERLAY"); setFont(stepT, "body", 13); stepT:SetPoint("LEFT", tt, "RIGHT", 10, -1); stepT:SetTextColor(rgb(COL.muted))
+  local lg = tut:CreateTexture(nil, "ARTWORK"); lg:SetSize(20, 20); lg:SetPoint("TOPLEFT", 18, -15); lg:SetTexture(MEDIA .. "Media\\logo")
+  local tt = tut:CreateFontString(nil, "OVERLAY"); setFont(tt, "head", 18); tt:SetPoint("LEFT", lg, "RIGHT", 8, 0); tt:SetTextColor(rgb(COL.text)); tt:SetText("Debrief")
+  local stepT = tut:CreateFontString(nil, "OVERLAY"); setFont(stepT, "body", 12.5); stepT:SetPoint("LEFT", tt, "RIGHT", 10, -1); stepT:SetTextColor(rgb(COL.muted))
   local cl = closeButton(tut); cl:SetPoint("TOPRIGHT", -10, -12)
   local hl = tut:CreateTexture(nil, "ARTWORK"); hl:SetPoint("TOPLEFT", 1, -50); hl:SetPoint("TOPRIGHT", -1, -50); hl:SetHeight(1); fill(hl, COL.line)
-  -- the step's number in a soft gold circle, its title and its words
-  local circ = tut:CreateTexture(nil, "ARTWORK"); circ:SetTexture(SLICE .. "dot"); circ:SetSize(44, 44); circ:SetPoint("TOPLEFT", 22, -72)
-  local num = tut:CreateFontString(nil, "OVERLAY"); setFont(num, "head", 22); num:SetPoint("CENTER", circ, "CENTER", 0, 0)
-  local title = tut:CreateFontString(nil, "OVERLAY"); setFont(title, "head", 22); title:SetPoint("TOPLEFT", 82, -70); title:SetWidth(TW - 104); title:SetJustifyH("LEFT"); title:SetTextColor(rgb(COL.text))
-  local body = tut:CreateFontString(nil, "OVERLAY"); setFont(body, "body", 14); body:SetPoint("TOPLEFT", 82, -100); body:SetWidth(TW - 104); body:SetJustifyH("LEFT"); body:SetJustifyV("TOP"); body:SetTextColor(rgb(COL.soft))
-  if body.SetSpacing then body:SetSpacing(3) end
-  -- step 2's picture: the prompt you'll see after a boss pull
-  local demoT = CreateFrame("Frame", nil, tut); demoT:SetSize(300, 50); skin(demoT, 8, COL.bg, 1, COL.gold, 0.55)
-  local dl = demoT:CreateTexture(nil, "ARTWORK"); dl:SetSize(20, 20); dl:SetPoint("LEFT", 12, 0); dl:SetTexture(MEDIA .. "Media\\logo")
-  local dt = demoT:CreateFontString(nil, "OVERLAY"); setFont(dt, "head", 16); dt:SetPoint("TOPLEFT", 38, -8); dt:SetTextColor(rgb(COL.text)); dt:SetText("See your recap?")
-  local ds = demoT:CreateFontString(nil, "OVERLAY"); setFont(ds, "body", 12); ds:SetPoint("TOPLEFT", 38, -28); ds:SetTextColor(rgb(COL.muted)); ds:SetText("Press Ctrl+V after the chime.")
-  local dk = CreateFrame("Frame", nil, demoT); dk:SetSize(60, 24); dk:SetPoint("RIGHT", -12, 0); skin(dk, 5, COL.gold, 1, COL.gold, 1)
-  dk.t = dk:CreateFontString(nil, "OVERLAY"); setFont(dk.t, "bold", 12.5); dk.t:SetPoint("CENTER", 0, 0); dk.t:SetTextColor(rgb("1b1406")); dk.t:SetText("Ctrl+V")
-  -- an extra button inside a step (Show me a sample, Open settings)
-  local extra = optButton(tut, "", 170, false)
-  -- the bottom: dots, Back, Next
+  local title = tut:CreateFontString(nil, "OVERLAY"); setFont(title, "head", 22); title:SetPoint("TOPLEFT", 22, -66); title:SetWidth(TW - 44); title:SetJustifyH("LEFT"); title:SetTextColor(rgb(COL.text))
+  local sub = tut:CreateFontString(nil, "OVERLAY"); setFont(sub, "body", 14); sub:SetPoint("TOPLEFT", 22, -98); sub:SetWidth(TW - 44); sub:SetJustifyH("LEFT"); sub:SetJustifyV("TOP"); sub:SetTextColor(rgb(COL.soft))
+  if sub.SetSpacing then sub:SetSpacing(3) end
+  local PW = TW - 44
+  -- (each step's own pieces in a frame under its words)
+  local panes = {}
+  local function pane(i) local f = CreateFrame("Frame", nil, tut); f:SetSize(PW, 10); f:Hide(); panes[i] = f; return f end
+  local function fsOn(f, kind, size, hex) local t = f:CreateFontString(nil, "OVERLAY"); setFont(t, kind, size); t:SetTextColor(rgb(hex)); t:SetJustifyH("LEFT"); return t end
+
+  -- step 1: how it works, three numbered lines
+  do local f = pane(1); local yy = 2
+    for i, line in ipairs({ "Debrief Companion, the app on your PC, reads your combat log.", "When a boss pull ends, your recap pops up on your PC.",
+      "Type |cffe6b450/reload|r in WoW to bring it in here. |cffe6b450/recap|r opens it any time." }) do
+      local c = f:CreateTexture(nil, "ARTWORK"); c:SetTexture(SLICE .. "dot"); c:SetSize(26, 26); c:SetPoint("TOPLEFT", 0, -yy); c:SetVertexColor(rgb("e6b450")); c:SetAlpha(0.16)
+      local n = fsOn(f, "head", 15, "e6b450"); n:SetPoint("CENTER", c, "CENTER", 0, 0); n:SetText(i)
+      local t = fsOn(f, "body", 14, COL.text); t:SetPoint("TOPLEFT", 38, -(yy + 4)); t:SetWidth(PW - 38); t:SetText(line)
+      yy = yy + math.max(26, t:GetStringHeight() + 8) + 10
+    end
+    f.h = yy
+  end
+
+  -- step 2: the three styles, each with what it shows; the sample card beside it changes as you click
+  local SDESC = { simple = "A quick look: the raid lead box, your number, your top fix and the next pull tip.",
+    standard = "Your fixes and survival, worse and better than last pull, the raid's deaths and mistakes, your last pulls.",
+    detailed = "Everything: up to 8 rotation tips with their windows, boss mechanics, the charts and the grade." }
+  local styleB = {}
+  local function paintStyles()
+    for k, b in pairs(styleB) do local on = DB and DB.preset == k
+      rounded(b.fillT, "fill", 6, on and "e6b450" or COL.raised, on and 0.12 or 1); rounded(b.lineT, "line", 6, on and "e6b450" or COL.line, 1); b.n:SetTextColor(rgb(on and "e6b450" or COL.text)) end
+  end
+  do local f = pane(2); local yy = 0
+    for _, k in ipairs({ "simple", "standard", "detailed" }) do
+      local b = CreateFrame("Button", nil, f); b:SetPoint("TOPLEFT", 0, -yy); b:SetWidth(PW)
+      b.fillT = b:CreateTexture(nil, "BACKGROUND"); b.fillT:SetAllPoints(); b.lineT = b:CreateTexture(nil, "BORDER"); b.lineT:SetAllPoints()
+      b.n = fsOn(b, "bold", 14.5, COL.text); b.n:SetPoint("TOPLEFT", 14, -10); b.n:SetText(PRESET_NAME[k] .. (k == "standard" and "   |cff7ee08fmost raiders|r" or ""))
+      b.d = fsOn(b, "body", 12.5, COL.muted); b.d:SetPoint("TOPLEFT", 14, -31); b.d:SetWidth(PW - 28); b.d:SetText(SDESC[k])
+      local h = 31 + b.d:GetStringHeight() + 11; b:SetHeight(h); yy = yy + h + 8
+      local hi = b:CreateTexture(nil, "HIGHLIGHT"); hi:SetAllPoints(); hi:SetColorTexture(1, 1, 1, 0.03)
+      b:SetScript("OnClick", function() Debrief_SetPreset(k); applySettings(); paintStyles() end)
+      styleB[k] = b
+    end
+    f.h = yy
+  end
+
+  -- step 3: what you want to see, as tick boxes; a change makes the style your own mix
+  local function S() DB.show = DB.show or {}; return DB.show end
+  local PICK = {
+    { "Rotation tips", "rotation" }, { "Boss mistakes", "boss" },
+    { "Survival", "surv", "Your defensives, and how many you used." }, { "Healthstone and potion", "cons", "When you used them, or that you didn't." },
+    { "Worse and better", "trend", "Worse and better than last pull." }, { "Next pull tip", "next" },
+    { "Deaths", "cdeaths", "Who died and why, in the Raid view." }, { "Avoidable damage", "cavoid", "Who stood in what, in the Raid view." },
+    { "Boss mechanics", "mechs", "How each mechanic went, worst first.", true }, { "Charts", "charts", "Your numbers and how far each pull got, tonight on this boss.", true },
+    { "Report card grade", "grade", "The pull's grade.", true }, { "Your last pulls", "chips", "Buttons for your other pulls on this boss." },
+  }
+  local function isOn(it) local sh = S(); if it[2] == "charts" then return sh.chartLine == true or sh.chartNight == true end; if it[4] then return sh[it[2]] == true end; return sh[it[2]] ~= false end
+  local ticks = {}
+  local function paintTicks() for _, b in ipairs(ticks) do local on = isOn(b.it); rounded(b.bx, "line", 3, on and "5fdc7a" or COL.line2, 1); b.ck:SetShown(on); b.t:SetTextColor(rgb(on and COL.text or COL.faint)) end end
+  do local f = pane(3); local colW = math.floor((PW - 12) / 2)
+    for i, it in ipairs(PICK) do
+      local col, rw = (i - 1) % 2, math.floor((i - 1) / 2)
+      local b = CreateFrame("Button", nil, f); b:SetSize(colW, 24); b:SetPoint("TOPLEFT", col * (colW + 12), -(rw * 28)); b.it = it
+      b.bx = b:CreateTexture(nil, "ARTWORK"); b.bx:SetSize(15, 15); b.bx:SetPoint("LEFT", 0, 0)
+      b.ck = b:CreateTexture(nil, "OVERLAY"); b.ck:SetSize(13, 13); b.ck:SetPoint("CENTER", b.bx, "CENTER", 0, 0); b.ck:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
+      b.t = fsOn(b, "body", 13.5, COL.text); b.t:SetPoint("LEFT", b.bx, "RIGHT", 9, 0); b.t:SetWidth(colW - 26); b.t:SetWordWrap(false); b.t:SetText(it[1])
+      b:SetScript("OnClick", function()
+        local v = not isOn(it); local sh = S()
+        if it[2] == "charts" then sh.chartLine = v; sh.chartNight = v else sh[it[2]] = v end
+        if v then DB.compact = false end -- (Simple's short card would hide what you just ticked)
+        DB.preset = nil; paintTicks(); paintStyles(); applySettings(); if Debrief_RefreshOptions then Debrief_RefreshOptions() end
+      end)
+      b:SetScript("OnEnter", function() b.t:SetTextColor(rgb("e6b450")); if it[3] then GameTooltip:SetOwner(b, "ANCHOR_TOP"); GameTooltip:SetText(it[1], 1, 1, 1); GameTooltip:AddLine(it[3], 0.75, 0.78, 0.82, true); GameTooltip:Show() end end)
+      b:SetScript("OnLeave", function() paintTicks(); GameTooltip:Hide() end)
+      ticks[#ticks + 1] = b
+    end
+    f.h = math.ceil(#PICK / 2) * 28 + 2
+  end
+
+  -- step 4: where things are
+  local openSet
+  do local f = pane(4); local yy = 0
+    for _, w in ipairs({ { "/recap", "Show or hide your recap." }, { "/db", "These settings: the style, what's on the card, colours and sizes." },
+      { "Me  ·  Raid view", "Your own pull, or the raid's biggest mistakes and who died." }, { "<  name  >", "Look at anyone else in the pull." },
+      { "Expand", "The whole night in a big window, with charts." }, { "+  and  –", "Open or fold any line for the details." },
+      { "Logging: On", "Bottom right of the card: green when your combat log is on. Click it to switch." } }) do
+      local k = fsOn(f, "bold", 13.5, "e6b450"); k:SetPoint("TOPLEFT", 0, -yy); k:SetText(w[1])
+      local d = fsOn(f, "body", 13.5, COL.soft); d:SetPoint("TOPLEFT", 128, -yy); d:SetWidth(PW - 128); d:SetText(w[2])
+      yy = yy + math.max(18, d:GetStringHeight()) + 9
+    end
+    local kb = fsOn(f, "body", 12.5, COL.faint); kb:SetPoint("TOPLEFT", 0, -(yy + 2)); kb:SetWidth(PW); kb:SetText("Want a key for it? Options > Keybindings > AddOns > Debrief.")
+    yy = yy + kb:GetStringHeight() + 14
+    openSet = optButton(f, "Open the settings", 150, false, 26); openSet:SetPoint("TOPLEFT", 0, -yy)
+    f.h = yy + 30
+  end
+
+  -- the bottom: dots, Skip, Back, Next
   local dots = {}
-  for i = 1, 4 do local d = tut:CreateTexture(nil, "ARTWORK"); d:SetTexture(SLICE .. "dot"); d:SetSize(8, 8); d:SetPoint("BOTTOMLEFT", 22 + (i - 1) * 14, 24); dots[i] = d end
-  local nextB = optButton(tut, "Next", 96, true); nextB:SetPoint("BOTTOMRIGHT", -18, 16)
+  for i = 1, 4 do local d = tut:CreateTexture(nil, "ARTWORK"); d:SetTexture(SLICE .. "dot"); d:SetSize(8, 8); d:SetPoint("BOTTOMLEFT", 22 + (i - 1) * 14, 25); dots[i] = d end
+  local skipB = CreateFrame("Button", nil, tut); skipB:SetSize(70, 22); skipB:SetPoint("BOTTOMLEFT", 82, 18)
+  skipB.t = fsOn(skipB, "bold", 12.5, COL.faint); skipB.t:SetPoint("LEFT", 0, 0); skipB.t:SetText("Skip setup")
+  skipB:SetScript("OnEnter", function() skipB.t:SetTextColor(rgb(COL.text)) end); skipB:SetScript("OnLeave", function() skipB.t:SetTextColor(rgb(COL.faint)) end)
+  local nextB = optButton(tut, "Next", 110, true); nextB:SetPoint("BOTTOMRIGHT", -18, 16)
   local backB = optButton(tut, "Back", 80, false); backB:SetPoint("RIGHT", nextB, "LEFT", -8, 0)
   local STEPS = {
-    { "Welcome to Debrief", "Your pull recap, right here in WoW, a few seconds after every boss pull: your numbers, your biggest slips, your boss mistakes and one thing to try next pull." },
-    { "After a boss pull", "Debrief Companion on your PC shows your recap over the game the moment the pull ends.\nTo see it in WoW too, type /reload, then /recap." },
-    { "Your recap", "Me is your own pull. Raid view shows the raid's biggest mistakes and who died. Use the arrows to look at anyone, and Expand for the big window with the whole night.", "sample" },
-    { "Make it yours", "Type /db any time for the settings: Simple, Medium or Heavy, colours and sizes, the mini bar or the big window, and goals.", "settings" },
+    { "Welcome to Debrief", "Your recap after every boss pull: what you did well, what to fix, and one thing to try next pull. Here's how it works." },
+    { "Pick a style", "How much the card shows. The sample pull beside this changes as you click." },
+    { "What do you want to see?", "Tick what matters to you. You can change any of it later with /db." },
+    { "Where things are", "Everything you need to find your way around." },
   }
+  -- (from step 2 on, the card sits to the right showing the built-in sample, every section filled, like the settings' preview)
+  local prevOn = false
+  local function preview(on)
+    if on and not prevOn then
+      prevOn = true; Debrief_PreviewOn(); mini:Hide(); big:Hide(); card:Show(); render()
+      card:ClearAllPoints(); card:SetPoint("TOPLEFT", tut, "TOPRIGHT", 16, 0); Debrief_FitPreview()
+    elseif not on and prevOn then
+      prevOn = false; Debrief_PreviewOff()
+      card:SetScale(DB.scale or 1); card:ClearAllPoints()
+      if DB.pos then card:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) else card:SetPoint("CENTER", 260, 60) end
+      card:Hide()
+    end
+  end
   local cur = 1
-  local function done() DB.tutorialDone = true; tut:Hide() end
   local function show(i)
     cur = i
-    local s = STEPS[i]
-    stepT:SetText("Step " .. i .. " of " .. #STEPS)
-    circ:SetVertexColor(rgb(COL.gold)); circ:SetAlpha(0.16); num:SetTextColor(rgb(COL.gold)); num:SetText(i)
-    title:SetText(s[1]); body:SetText(s[2])
-    local by = 100 + body:GetStringHeight() + 16
-    demoT:SetShown(s[3] == "prompt"); extra:SetShown(s[3] == "sample" or s[3] == "settings")
-    if s[3] == "prompt" then demoT:ClearAllPoints(); demoT:SetPoint("TOPLEFT", 82, -by); by = by + 50 + 16 end
-    if extra:IsShown() then
-      extra.t:SetText(s[3] == "sample" and "Show me a sample" or "Open the settings")
-      extra:ClearAllPoints(); extra:SetPoint("TOPLEFT", 82, -by); by = by + 28 + 16
-      extra:SetScript("OnClick", function() if s[3] == "sample" then SlashCmdList.DEBRIEF("demo") else done(); Debrief_ToggleOptions() end end)
-    end
-    for k, d in ipairs(dots) do d:SetVertexColor(rgb(k == i and COL.gold or COL.line2)) end
-    backB:SetShown(i > 1); nextB.t:SetText(i == #STEPS and "Done" or "Next")
-    tut:SetHeight(math.max(260, by + 56))
+    local st = STEPS[i]
+    stepT:SetText("Setup  ·  step " .. i .. " of " .. #STEPS)
+    title:SetText(st[1]); sub:SetText(st[2])
+    local by = 98 + sub:GetStringHeight() + 18
+    for k, f in pairs(panes) do f:SetShown(k == i) end
+    panes[i]:ClearAllPoints(); panes[i]:SetPoint("TOPLEFT", 22, -by); panes[i]:SetHeight(panes[i].h); by = by + panes[i].h + 8
+    if i == 2 then paintStyles() elseif i == 3 then paintTicks() end
+    for k, d in ipairs(dots) do d:SetVertexColor(rgb(k == i and "e6b450" or COL.line2)) end
+    backB:SetShown(i > 1); skipB:SetShown(i < #STEPS)
+    nextB.t:SetText(i == 1 and "Set it up" or i == #STEPS and "Done" or "Next")
+    tut:SetHeight(math.max(260, by + 60))
+    preview(i > 1)
   end
-  nextB:SetScript("OnClick", function() if cur >= #STEPS then done() else show(cur + 1) end end)
+  -- (closed any way: your own pulls and the card's own place again; said here too, not only in OnHide)
+  local wasCard = false -- (the card comes back after only if it was open before)
+  local function closed() if DB then DB.tutorialDone = true end; preview(false); if wasCard and DB and #DB.pulls > 0 and not (DebriefOptions and DebriefOptions:IsShown()) then card:Show(); render() end end
+  local function finish() closed(); tut:Hide() end
+  nextB:SetScript("OnClick", function() if cur >= #STEPS then finish(); say("all set. /recap shows your recap, /db changes the settings.") else show(cur + 1) end end)
   backB:SetScript("OnClick", function() if cur > 1 then show(cur - 1) end end)
-  cl:SetScript("OnClick", done)
-  tut:SetScript("OnHide", function() if DB then DB.tutorialDone = true end end)
-  function Debrief_Tutorial() if not DB then return end; show(1); tut:Show() end
+  skipB:SetScript("OnClick", finish); cl:SetScript("OnClick", finish)
+  openSet:SetScript("OnClick", function() finish(); Debrief_ToggleOptions() end)
+  tut:SetScript("OnHide", function() if prevOn then closed() elseif DB then DB.tutorialDone = true end end)
+  function Debrief_Tutorial() if not DB then return end; if DebriefOptions and DebriefOptions:IsShown() then DebriefOptions:Hide() end; wasCard = card:IsShown() and not prevOn; show(1); tut:Show() end
 end
 
 -- ---------- opening it: key, slash command ----------
@@ -2318,7 +2468,7 @@ SLASH_DEBRIEF1 = "/recap"; SLASH_DEBRIEF2 = "/dbr"; SLASH_DEBRIEF3 = "/debrief" 
 SlashCmdList.DEBRIEF = function(msg)
   msg = (msg or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
   if msg == "options" or msg == "config" or msg == "settings" or msg == "o" then Debrief_ToggleOptions()
-  elseif msg == "tutorial" or msg == "tour" then Debrief_Tutorial()
+  elseif msg == "setup" or msg == "tutorial" or msg == "tour" then Debrief_Tutorial()
   elseif msg == "big" or msg == "b" then Debrief_ToggleBig()
   elseif msg == "mini" then DB.mini = not DB.mini; if DB.mini then DB.bigDefault = false end; say("mini bar " .. (DB.mini and "on: one slim line after each pull, click it for the card." or "off: the card after each pull.")); if DB.mini and #DB.pulls > 0 then card:Hide(); miniShow() else mini:Hide() end
   elseif msg == "raid" then DB.raidAlways = not DB.raidAlways; say("Raid view " .. (DB.raidAlways and "always on." or "only when you lead or assist.")); if card:IsShown() then render() end
@@ -2330,7 +2480,7 @@ SlashCmdList.DEBRIEF = function(msg)
     if m then m.demo = true; addPull(m); showCard(); say("showing a sample Mythic Coiled Altar wipe (made-up names; Vexmira is the Holy Paladin). Use the arrows to see other players.") end
   elseif msg == "log" then Debrief_ToggleLog()
   elseif msg == "glow" then Debrief_TestGlow()
-  elseif msg == "help" then say("/db (or /dmo, or /debrief options): your settings. /debrief tutorial: the tutorial again. /debrief: show or hide the card. /debrief big: the big window. /debrief demo: a sample card. /debrief log: combat logging on or off (or the button on the card, or a key in Keybindings > AddOns > Debrief). /debrief raid: Raid view on or off. /debrief reset: move the card back.")
+  elseif msg == "help" then say("/db (or /dmo, or /debrief options): your settings. /debrief setup: the guided setup again. /debrief: show or hide the card. /debrief big: the big window. /debrief demo: a sample card. /debrief log: combat logging on or off (or the button on the card, or a key in Keybindings > AddOns > Debrief). /debrief raid: Raid view on or off. /debrief reset: move the card back.")
   else Debrief_Toggle() end
 end
 
@@ -2531,7 +2681,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     Debrief_ApplyStyle()
     -- (Advanced Combat Logging on from the start, so every log Debrief reads has positions and health; the combat log itself goes on in raids and at dummies)
     if DB.autoLog ~= false and GetCVar and SetCVar and GetCVar("advancedCombatLogging") ~= "1" then SetCVar("advancedCombatLogging", 1) end
-    -- (the first time: the tutorial, a few seconds after you're in the world)
+    -- (the first time: the guided setup, a few seconds after you're in the world)
     if not DB.tutorialDone and C_Timer then C_Timer.After(6, function() if not InCombatLockdown() and not DB.tutorialDone then Debrief_Tutorial() end end) end
     -- (a key to start with: Ctrl+Shift+D shows or hides your recap, if nothing else uses it; it opened the paste box until Oct 24.
     -- Change it in Options > Keybindings > AddOns)

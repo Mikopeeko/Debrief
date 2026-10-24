@@ -128,6 +128,7 @@ namespace Debrief {
         var max = new Dictionary<string, object>(); foreach (var k in new[] { "maxSlips", "maxBoss", "maxRaid", "maxDied", "maxMech" }) { var v = num(k); if (v != null) max[k] = int.Parse(v); }
         o["max"] = max;
         var ob = System.Text.RegularExpressions.Regex.Matches(s, @"^\[""onlyBad""\] = (true|false)", RX); o["onlyBad"] = ob.Count > 0 && ob[ob.Count - 1].Groups[1].Value == "true";
+        var tc = System.Text.RegularExpressions.Regex.Matches(s, @"^\[""twoCol""\] = (true|false)", RX); o["twoCol"] = !(tc.Count > 0 && tc[tc.Count - 1].Groups[1].Value == "false"); // (two columns when it's long (Oct 24))
         var show = new Dictionary<string, object>(); var si = s.LastIndexOf("[\"show\"] = {");
         if (si >= 0) { var se = s.IndexOf('}', si); var blk = se > si ? s.Substring(si, se - si) : "";
           foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(blk, @"\[""(\w+)""\] = (true|false)")) show[m.Groups[1].Value] = m.Groups[2].Value == "true"; }
