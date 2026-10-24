@@ -240,7 +240,7 @@ async function paceStep(env) {
     if (R.hasMorePages && B.pg.p < 40) B.pg.p++; else if (B.pg.i + 1 < B.parts.length) B.pg = { i: B.pg.i + 1, p: 1 }; else { delete B.pg; B.at = Date.now(); }
   } else if (B.todo.length || (B.rtodo && B.rtodo.length)) { // (a few guilds a run, from progstats, and one kill's phase totals)
     if (B.rtodo && B.rtodo.length) { const [c, f, at] = B.rtodo.shift(); B.rseen = B.rseen || []; B.rseen.push(c + ':' + f);
-      try { const o = await rateOfKill(env, c, f); if (o.kill && o.ph.length) { const rr = (await env.DEBRIEF_KV.get('rate-raw:' + key, 'json')) || []; rr.push({ c, f, at: o.at || at || 0, ph: o.ph.map((p) => [p.dps, p.hps, p.dtps, p.s, p.e]) }); await env.DEBRIEF_KV.put('rate-raw:' + key, JSON.stringify(rr)); } } catch (err) { console.warn('Rates:', c, f, err.message); } }
+      try { const o = await rateOfKill(env, c, f); if (o.kill && o.ph.length) { const rr = (await env.DEBRIEF_KV.get('rate-raw:' + key, 'json')) || []; rr.push({ c, f, at: o.at || at || 0, h: o.heal, ph: o.ph.map((p) => [p.dps, p.hps, p.dtps, p.s, p.e]) }); await env.DEBRIEF_KV.put('rate-raw:' + key, JSON.stringify(rr)); } } catch (err) { console.warn('Rates:', c, f, err.message); } }
     const raw = B.todo.length ? (await env.DEBRIEF_KV.get('pace-raw:' + key, 'json')) || [] : null; let add = 0;
     for (const g of (raw ? B.todo.splice(0, 5) : [])) { B.seen.push(g);
       try { const rec = paceRec(g, await pacePS(PACE_LOG_Q, { t: g, e, d })); if (rec) { raw.push(rec); add++; } } catch (err) { console.warn('Pace:', g, err.message); } }
@@ -262,10 +262,11 @@ async function rateOfKill(env, code, fight) {
   if (!tr.length) W.push({ id: 0, s: F.startTime, e: F.endTime });
   else tr.forEach((t, i) => W.push({ id: t.id, s: Math.max(F.startTime, t.startTime), e: i + 1 < tr.length ? tr[i + 1].startTime : F.endTime }));
   const win = W.filter((w) => w.e - w.s >= 1000);
-  const q = 'query($c:String!){reportData{report(code:$c){' + win.map((w, i) => ['DamageDone', 'Healing', 'DamageTaken'].map((t, k) => 'a' + i + '_' + k + ':table(dataType:' + t + ',fightIDs:[' + fight + '],startTime:' + w.s + ',endTime:' + w.e + ')').join(' ')).join(' ') + '}}}';
+  const q = 'query($c:String!){reportData{report(code:$c){' + win.map((w, i) => ['DamageDone', 'Healing', 'DamageTaken'].map((t, k) => 'a' + i + '_' + k + ':table(dataType:' + t + ',fightIDs:[' + fight + '],startTime:' + w.s + ',endTime:' + w.e + ')').join(' ')).join(' ') + ' pd:playerDetails(fightIDs:[' + fight + '])}}}';
   const r = await gql(env, q, { c: code }), R = (r && r.reportData && r.reportData.report) || {};
   const tot = (x) => { const j = typeof x === 'string' ? JSON.parse(x) : x; const D = (j && j.data) || {}; return (D.entries || []).reduce((s, e) => s + (e.total || 0), 0); };
-  return { code, fight, kill: !!F.kill, at: (rep.startTime || 0) + F.startTime, dur: (F.endTime - F.startTime) / 1000, ph: win.map((w, i) => { const sec = (w.e - w.s) / 1000, p = nm.get(w.id) || {};
+  const pdj = (() => { const x = R.pd; const j = typeof x === 'string' ? JSON.parse(x) : x; const d = (j && j.data && (j.data.playerDetails || j.data)) || {}; return d; })();
+  return { code, fight, kill: !!F.kill, heal: Array.isArray(pdj.healers) ? pdj.healers.length : null, at: (rep.startTime || 0) + F.startTime, dur: (F.endTime - F.startTime) / 1000, ph: win.map((w, i) => { const sec = (w.e - w.s) / 1000, p = nm.get(w.id) || {};
     return { id: w.id, name: p.name || '', inter: !!p.isIntermission, s: +((w.s - F.startTime) / 1000).toFixed(1), e: +((w.e - F.startTime) / 1000).toFixed(1), dps: Math.round(tot(R['a' + i + '_0']) / sec), hps: Math.round(tot(R['a' + i + '_1']) / sec), dtps: Math.round(tot(R['a' + i + '_2']) / sec) }; }) };
 }
 ROUTES['/api/rates'] = { age: 1800, v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10); return e > 0 && e < 1e6 && [3, 4, 5].includes(d) ? { e, d } : null; },
