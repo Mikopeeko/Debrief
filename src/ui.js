@@ -1792,6 +1792,7 @@ const PATCH_NOTES = [
     'Healthstones and Defensives show how many times each raider used them; tap a name for how many pulls and each spell.',
     'One fix everywhere: the Report card\'s Next pull for each raider is now the same line Debriefing\'s coach gives them (it could name a different mechanic before).',
     'Fairer Report card grades: healers lose points for an unused external only when someone died slowly enough to see it coming (a raider who lived never costs you), a death from your own mistake now says so plainly, and tanks\' big defensives get full marks at 65% of possible uses, like the rest of the site.',
+    'Report card\'s Their night tells the truth: "No boss mistakes" only shows when there were none, Next pull names the mechanic it\'s about, and a healer\'s saves read "Brought raiders back from under 30% health" instead of "saved from dying".',
     'A little Halloween spirit on the site until Nov 1 🎃',
     'The coach box is tidier: the thing to focus on next pull is said once, on the first card. Each Next time is one short instruction (open the card for the rest), cards carry at most one tag, and what went right is a short plain list.',
   ], f: [
@@ -24870,7 +24871,7 @@ function rcwRaider(c, F) {
   const W = top.slice(0, 2).map((y) => y.l + ' ' + Math.round(y.v) + ', #' + y.r + ' of ' + y.N + (y.grp ? ' ' + y.grp : ' in the raid'));
   if (p.role === 'healer') { const sv = new Map(); for (const g of a.per) for (const v of g.r.saves || []) { const hp = [...g.r.players.values()].find((q) => q.name === v.by); if (hp && hp.role === 'healer') sv.set(v.by, (sv.get(v.by) || 0) + 1); }
     const k = sv.get(nm) || 0, most = k && [...sv.values()].every((v) => v <= k); /* (your idea, Oct 20: saves, when they're a highlight) */
-    if (most || k >= 10) W.splice(Math.min(1, W.length), 0, 'Saved ' + plural(k, 'raider') + ' from dying' + (most ? ', the most in the raid' : '')); }
+    if (most || k >= 10) W.splice(Math.min(1, W.length), 0, 'Brought raiders back from under 30% health ' + plural(k, 'time') + (most ? ', the most of the healers' : '')); } /* (a save is a raider under 30% healed back over 50% and alive 6 s later, by the most healing: honest words (Oct 23)) */
   if (!pf.deaths) W.push('No deaths that counted in ' + plural(n, 'pull'));
   const cdG = [...cdm.values()].filter((o) => o.poss >= 3 && o.used / o.poss >= 0.85 && !RAID_CD_N.has(o.name.toLowerCase())).sort((u, v) => v.poss - u.poss)[0];
   if (cdG) W.push(esc(cdG.name) + ' pressed ' + o2(cdG.used, cdG.poss));
@@ -24892,7 +24893,8 @@ function rcwRaider(c, F) {
      coachSummary over the whole night; Their night said Axegrinder while Debriefing said healing cooldowns) */
   let csP = null; try { csP = typeof coachSummary === 'function' ? coachSummary(F.reps, nm) : null; } catch (e) { csP = null; }
   const oaR = (csP && csP.wrong && csP.wrong[0]) || oaPlayerFix(a.per.map((g) => g.r), nm); /* (the one answer (Oct 22)) */
-  const nf = (a.fixes || [])[0], next = csP && csP.focus ? esc(csP.focus) : oaR ? (oaR.kind === 'clean' ? esc(oaR.fix) : esc(dbfCap(oaR.label)) + ': ' + esc(oaR.fix)) : defs.length >= 2 ? 'when your health keeps dropping, press ' + esc(defN[0]) + '.' : worstM && worstM.fix ? esc(worstM.t) + ': ' + esc(dbfTip1(worstM.fix)) : nf && (nf.gain || 0) >= 0.5 ? esc(nf.t) + '. ' + esc(dbfTip1(nf.x)) : '';
+  /* (the mechanic's name leads the line when the advice doesn't say it (Oct 23: "Hold it near the marker for Soul Sever" read like a different mechanic)) */
+  const nf = (a.fixes || [])[0], next = csP && csP.focus ? (oaR && oaR.label && oaR.kind !== 'clean' && !String(csP.focus).toLowerCase().includes(String(oaR.label).toLowerCase()) ? '<b>' + esc(dbfCap(oaR.label)) + '</b>: ' : '') + esc(csP.focus) : oaR ? (oaR.kind === 'clean' ? esc(oaR.fix) : esc(dbfCap(oaR.label)) + ': ' + esc(oaR.fix)) : defs.length >= 2 ? 'when your health keeps dropping, press ' + esc(defN[0]) + '.' : worstM && worstM.fix ? esc(worstM.t) + ': ' + esc(dbfTip1(worstM.fix)) : nf && (nf.gain || 0) >= 0.5 ? esc(nf.t) + '. ' + esc(dbfTip1(nf.x)) : '';
   // ---- Homework, folded in (your call, Oct 22): the shared #1 first, then the to-do list's next two with "getting better / worse",
   // the smaller things folded, what they fixed and "Ready at the pull" as green ticks. Home's card reads this list (hwSave)
   const oaL = oaR && oaR.kind !== 'clean' ? String(oaR.label).toLowerCase().replace(/^dying (slowly )?to /, '') : '', hwA = hwItems(a), todo = hwA.filter((o) => !o.fixed && !(oaL && String(o.t).toLowerCase() === oaL));
@@ -24902,7 +24904,8 @@ function rcwRaider(c, F) {
   const todoL = (one ? ['<b>' + esc(one.t) + '</b> <span class="hwk-pill bad">Your one fix</span>'] : []).concat(hwTop.map(hwLine));
   if (todoL.length) X.splice(0, X.length, ...todoL);
   // (what they fixed and "Ready at the pull" as small green ticks under Went well, as Homework had them)
-  const ticks = hwFix.map((o) => '✓ ' + esc(o.t) + ' (fixed)').concat(a.mech != null && a.mech >= 95 && !hwA.some((o) => o.mech && !o.fixed) ? ['✓ No boss mistakes'] : [], a.prep != null && a.prep >= 95 ? ['✓ Ready at the pull'] : []);
+  /* ("No boss mistakes" only when there were none at all (Oct 23, your report: it showed next to Guillotine in 4 pulls)) */
+  const ticks = hwFix.map((o) => '✓ ' + esc(o.t) + ' (fixed)').concat(!mm.size ? ['✓ No boss mistakes'] : [], a.prep != null && a.prep >= 95 ? ['✓ Ready at the pull'] : []);
   { const me = meOf(); if (me && String(nm).split('-')[0].toLowerCase() === String(me.name).split('-')[0].toLowerCase()) hwSave(a, (one ? [one] : []).concat(hwTop), S.rep.item); }
   const more = hwRest.length ? '<details class="rcw-more"><summary>' + plural(hwRest.length, 'smaller thing') + ' to work on</summary>' + hwRest.map((o) => '<div class="hwk-m">' + hwIc(o, true) + '<span><b>' + esc(o.t) + '</b><span class="sub"> · ' + esc(hwWhen(o).replace(/^In /, 'in ')) + '</span></span>' + hwTr(o) + '<span class="hwk-pill ' + o.sev + '">' + esc(o.cat[0]) + '</span></div>').join('') + '</details>' : '';
   const li = (l) => '<ul>' + l.slice(0, 4).map((t) => '<li>' + capS(t) + '</li>').join('') + '</ul>';
