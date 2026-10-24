@@ -1250,8 +1250,9 @@ function buildTwinFangs(ev, r, h) {
         rows: s.aims.map((a) => {
           const ad = s.adds.find((x) => x.g === a.src);
           const result = !a.fired ? { txt: 'add died first, no spit' + (ad && ad.died != null ? ' (' + h.fmtT(ad.died) + ')' : '') }
-            : a.n >= 2 ? { txt: (a.hitTarget ? 'fired, hit the target' : 'fired, missed the target') + ' (spit ' + a.n + ': the add should have been dead)', bad: a.n >= 3, warn: true }
-            : { txt: a.hitTarget ? 'fired, hit the target' : 'fired, missed the target' };
+            /* (Oct 23, your note: "fired, hit the target" read as the target's fault; it's the add living too long. Being targeted can't be helped) */
+            : a.n >= 2 ? { txt: 'add still alive for spit ' + a.n + ', kill it before its second spit', bad: a.n >= 3, warn: true }
+            : { txt: a.hitTarget ? 'hit only its target' : 'hit nobody' };
           const t0 = a.t0 - 0.4, t1 = a.t1 + 0.6;
           const mp = spitMap(t0, t1, s.aims.filter((x) => x.t1 >= t0 && x.t0 <= t1), [a], a.byst.map((o) => [o.e.dst, o.e.t]), 'Corrosive Spit, set ' + (s.i + 1) + ', spawn ' + a.k + ' spit ' + a.n + ': ' + h.fmtT(a.t0) + ' to ' + h.fmtT(a.t1));
           mp.note = spitNote(a);
