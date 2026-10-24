@@ -305,10 +305,10 @@ async function curveStepFor(env, key, max) {
   return { key, have: have.length, last: next.c + ':' + next.f, n: (o.dps || []).length }; }
 /* (the 10-minute job: one boss a run, in turn, one kill at most: two requests every 10 minutes) */
 const CURVE_BOSSES = [3429, 3492, 3421, 3420, 3497, 3455, 3445, 3470, 3379, 3513];
-async function curveCron(env) { const st = (await env.DEBRIEF_KV.get('curve-st', 'json')) || { i: 0 };
-  for (let k = 0; k < CURVE_BOSSES.length; k++) { const e = CURVE_BOSSES[(st.i + k) % CURVE_BOSSES.length], r = await curveStepFor(env, e + ':5', 12);
-    if (!r.done) { st.i = (st.i + k + 1) % CURVE_BOSSES.length; await env.DEBRIEF_KV.put('curve-st', JSON.stringify(st)); return r; } }
-  return { idle: true }; }
+/* (Oct 24: light on Cloudflare's daily write limit (1,000 on this plan, shared with the whole site): every third run only, the boss chosen
+   by the clock (no bookkeeping write), at most one kill saved: about 48 writes a day at most) */
+async function curveCron(env) { const slot = Math.floor(Date.now() / 600000); if (slot % 3) return { idle: true };
+  const e = CURVE_BOSSES[Math.floor(slot / 3) % CURVE_BOSSES.length]; return curveStepFor(env, e + ':5', 12); }
 ROUTES['/api/curves'] = { age: 1800, v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10); return e > 0 && e < 1e6 && [3, 4, 5].includes(d) ? { e, d } : null; },
   run: async (env, v) => ({ key: v.e + ':' + v.d, recs: (await env.DEBRIEF_KV.get('curve-raw:' + v.e + ':' + v.d, 'json')) || [] }) };
 ROUTES['/api/rates'] = { age: 1800, v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10); return e > 0 && e < 1e6 && [3, 4, 5].includes(d) ? { e, d } : null; },
