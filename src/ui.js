@@ -1759,6 +1759,7 @@ const PATCH_NOTES = [
   { d: '2026-10-24', h: [
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
+    'Debriefing: The details (Innervate, potions, defensives and the rest) sit in their own box under The pull at a glance: what wiped us, then when, then the numbers.',
     'Debrief Companion is now code-signed, so Windows knows it comes from us. While it is new, Windows may still ask once: click More info, then Run anyway',
     'Debrief in game: no more pasting or sharing. Your recap pops up on your PC, and /reload brings it into /recap. Pulls sent by other players are cleared, and Ctrl+Shift+D now shows or hides your card',
     'Debriefing: every big mistake shows up top under What wiped us, as "Also went wrong" (no names: "Missed by 4 players").',
@@ -1782,6 +1783,7 @@ const PATCH_NOTES = [
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
     'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
   ], f: [
+    'Debriefing: Innervate is no longer judged on timing (it just gives a healer mana), the right / wrong mark is text-sized, and those rows match the rows beside them.',
     'Debrief Companion: logs the Raider.IO app moved into its archive folder show up as older logs, and their pulls get the newest look after an update',
     'Debriefing: a frontal that popped too many orbs is listed under Coalesced Venom in Every mistake, not under the tanks\' Sever, and long lines no longer end in a stray bracket.',
     'Debrief Companion: the after-update re-save also covers pulls from earlier logs of the night, since WoW sometimes starts a new log',
@@ -11374,7 +11376,7 @@ function oaFill(reps) {
   const name = S.mechP && R.some((r) => [...r.players.values()].some((p) => oaBase(p.name) === oaBase(S.mechP))) ? S.mechP : null;
   const pm = new Map(); for (const r of R) for (const p of r.players.values()) if (p.name && !pm.has(p.name)) pm.set(p.name, p);
   const CS0 = coachSummary(R, name); v._cs = night ? null : CS0; el.innerHTML = coachBox(CS0, { key: night ? 'n' : 'p', title: 'Your raid lead says…' /* (one title with or without a player picked (Oct 23)) */ }); /* (Oct 23, your wording) */ /* (the coach on top (Oct 22): the page under it stays as it was) */ try { oaDeathsTile(v); } catch (e) { /* (Deaths stays in the grid) */ }
-  el.hidden = !el.innerHTML; try { oaLayout(v, el); } catch (e) { console.error(e); } try { prwTrend(v, v._cs); } catch (e) { /* (no tags) */ } refreshIcons();
+  el.hidden = !el.innerHTML; try { oaLayout(v, el); } catch (e) { console.error(e); } try { prwTrend(v, v._cs); } catch (e) { /* (no tags) */ } try { dtMove(v); } catch (e) { /* (the checks stay in the box) */ } refreshIcons();
 }
 /* (Oct 24: a mechanic that changed since last pull carries ▲ Improving or ▼ Worsening on its phase bar) */
 function prwTrend(v, cs) { if (!v || !cs || !cs.trend) return; const T0 = cs.trend, lc = (s) => String(s || '').replace(/\s*\(.*$/, '').trim().toLowerCase(), bars = [...v.querySelectorAll('details.phase .prw-i')];
@@ -11385,6 +11387,11 @@ function prwTrend(v, cs) { if (!v || !cs || !cs.trend) return; const T0 = cs.tre
 // (the tab in four layers (your note, Oct 22: "full of info, which is great. However maybe a little overwhelming"): the numbers on top,
 // the coach (Copy for Discord and Load a note as small buttons in its corner, a small map on each problem), the mechanics with the clean
 // ones folded into one line, and everything else in one drawer at the bottom. Nothing removed, only moved)
+/* (Oct 24, your idea "swap the places of these two": on a pull the checks (The details) leave the raid lead's box and sit under The pull at a
+   glance in a panel of their own: what wiped us, then when it happened, then the numbers. The coach box is the coach talking; the checks are facts) */
+function dtMove(v) { if (!v || v.querySelector('.nmc')) return; const el = v.querySelector('#oaTop'), tl = v.querySelector('.mcx-tl2'); if (!el || !tl || tl.parentNode !== v) return;
+  const accts = [...el.querySelectorAll('.cch-acct2:not(.dth-w)')].filter((x) => !x.parentElement.closest('.cch-acct2')); let box = v.querySelector(':scope > .dt-box'); if (!accts.length && box) { if (box.previousElementSibling !== tl) tl.after(box); return; } if (!accts.length) return;
+  if (!box) { box = document.createElement('section'); box.className = 'cch2 dt-box'; box.setAttribute('aria-label', 'The details'); } box.innerHTML = ''; accts.forEach((x) => box.appendChild(x)); /* (both groups: the switch with Innervate and Avoidable damage, then the kit rows) */ if (box.previousElementSibling !== tl) tl.after(box); }
 function oaLayout(v, el) {
   if (!el.innerHTML) return;
   const tiles = v.querySelector('.dbr-4'); if (tiles && tiles.nextElementSibling !== el) { v.insertBefore(tiles, el); tiles.classList.add('oa-tiles'); }
@@ -11467,7 +11474,7 @@ function oaLayout(v, el) {
       f.addEventListener('toggle', () => { if (f.open) S.openSecs.add('brf-burst'); else S.openSecs.delete('brf-burst'); }); }
     try { rateCharts(v, out); } catch (e) { /* (the charts stay where they were) */ } try { oaMeters(v, out); } catch (e) { /* (no meters) */ }
     const dc = [...v.querySelectorAll('details.panel')].find((d) => /^Data check/.test(((d.querySelector('summary') || {}).textContent || '').trim())); if (dc) out.appendChild(dc);
-    dr.replaceWith(out); if (top) top.remove(); v.querySelectorAll('#rcTop, .rc-hp').forEach((n) => { if (!out.contains(n)) n.remove(); }); try { mxaInit(v); } catch (e) { console.error(e); } try { dbTint(v); } catch (e) { /* (plain colours) */ } try { prwTrend(v, v._cs); } catch (e) { /* (no tags) */ } v.querySelectorAll('.cutbar:not(.on)').forEach((n) => n.remove()); /* (no wipe call: the header already says Kill or Wipe call: off (Oct 24)) */ try { if (S._drawMaps) S._drawMaps(); } catch (e) { /* (maps draw when seen) */ } return; }
+    dr.replaceWith(out); if (top) top.remove(); v.querySelectorAll('#rcTop, .rc-hp').forEach((n) => { if (!out.contains(n)) n.remove(); }); try { mxaInit(v); } catch (e) { console.error(e); } try { dbTint(v); } catch (e) { /* (plain colours) */ } try { prwTrend(v, v._cs); } catch (e) { /* (no tags) */ } try { dtMove(v); } catch (e) { /* (the checks stay in the box) */ } v.querySelectorAll('.cutbar:not(.on)').forEach((n) => n.remove()); /* (no wipe call: the header already says Kill or Wipe call: off (Oct 24)) */ try { if (S._drawMaps) S._drawMaps(); } catch (e) { /* (maps draw when seen) */ } return; }
   /* (All pulls, Oct 23 (your ask: "the bottom half could still be tidied up more"): like one pull, no "More from all pulls" drawer. Its fix
      cards, better and worse, boss health every pull, the old went well / didn't / improving / worse lists, Before the next pull, Talk to and
      Used tonight all repeat the raid lead box, the boss banner or the pace chart; the guide links don't belong here. What only it had stays
@@ -12089,7 +12096,9 @@ function piInnRow(reps, name) { if (!reps || !reps.length) return '';
   rows.sort((a, b) => (a.pre === b.pre ? a.t - b.t : a.pre.localeCompare(b.pre, undefined, { numeric: true })));
   const got = base ? rows.filter((x) => !mine(x.from)) : [], ok = rows.filter((x) => mine(x.from) && x.st === 'ok').length;
   const g = poss ? Math.min(100, Math.round(100 * sc / poss)) : Math.round(100 * got.reduce((s, x) => s + (x.st === 'ok' ? 1 : x.st === 'warn' ? 0.5 : 0), 0) / Math.max(1, got.length));
-  const sum = poss ? (base ? 'You pressed ' + given + ' of ' + poss + ' · ' + ok + ' on time' : given + ' of ' + poss + ' pressed · ' + ok + ' on time') : 'You got ' + got.map((x) => x.sp).filter((v, i, a) => a.indexOf(v) === i).join(' and ') + ' ×' + got.length;
+  const mineR = rows.filter((x) => mine(x.from)), piR = mineR.filter((x) => x.sp === 'Power Infusion'), piOk = piR.filter((x) => x.st === 'ok').length, innBad = mineR.filter((x) => x.sp === 'Innervate' && x.st === 'bad').length; void ok;
+  const tail = (piR.length ? ' · ' + piOk + ' on time' : '') + (innBad ? ' · ' + innBad + ' wasted' : '');
+  const sum = poss ? (base ? 'You pressed ' + given + ' of ' + poss + tail : given + ' of ' + poss + ' pressed' + tail) : 'You got ' + got.map((x) => x.sp).filter((v, i, a) => a.indexOf(v) === i).join(' and ') + ' ×' + got.length;
   const nm = (p) => (p ? '<span class="nm" style="color:' + (p.color || 'inherit') + '">' + esc(String(p.name).split('-')[0]) + '</span>' : 'someone');
   const lab = { ok: 'Good', warn: 'Could be better', bad: 'Wrong' };
   const body = '<ul class="rch-l">' + rows.map((x) => '<li class="rch ' + x.st + '"><span class="rch-t">' + esc(x.pre) + T(x.t) + '</span><div class="rch-m"><div class="rch-top"><b class="rch-n">' + spellIcon(x.id, x.sp) + esc(x.sp) + '</b><span class="pi-ico" title="' + lab[x.st] + '">' + PI_ICON[x.st] + '</span><span class="rch-dmg">' + nm(x.from) + ' → ' + nm(x.to) + '</span></div>' /* (a mark beside each, right or not (your ask, Oct 23)) */ + (x.why ? '<p class="cgl-d">' + esc(x.why) + '</p>' : '') + '</div></li>').join('') + '</ul>' +

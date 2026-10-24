@@ -4294,6 +4294,16 @@ details.secd.mcx-tile[open] .mcx-alt { display: none; }
 #view .prw-tr { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 999px; font-size: 12px; font-weight: 700; line-height: 18px; vertical-align: 1px; }
 #view .prw-tr.dn { color: #ff8f87; background: rgba(229,83,75,.12); } #view .prw-tr.up { color: #4fd1c5; background: rgba(79,209,197,.12); }
 #view .cch-also-more { color: var(--muted); font-size: 13px; border-left-color: transparent !important; }
+/* (Oct 24: The details in their own panel under The pull at a glance) */
+#view .dt-box { border: 1px solid var(--line2); border-radius: 12px; background: var(--panel); padding: 14px 18px 12px; margin: 0 0 16px; }
+#view .dt-box > .cch-acct2 { margin-top: 0 !important; }
+/* (Oct 24, "why such a huge checkmark": the right / wrong mark beside each Power Infusion or Innervate is text-sized) */
+#view .rch-top .pi-ico, #view .rch-top .pi-ico svg { width: 14px; height: 14px; margin-top: 0; align-self: center; }
+/* ("check the font too" (Oct 24): the Power Infusion / Innervate and raid cooldown rows read like the note cooldown rows beside them: 14px, the spell name 600, the time muted) */
+#view .rch-t { font-size: 14px !important; color: var(--muted); font-variant-numeric: tabular-nums; }
+#view .rch-n, #view .rch-n .sp { font-size: 14px !important; font-weight: 600 !important; }
+#view .rch-dmg, #view .rch-dmg .nm { font-size: 14px !important; }
+#view .rch-m > p.cgl-d { font-size: 13px !important; color: var(--muted); }
 #view .pcx-w { margin: 6px 0 0; font-size: 13px; color: var(--muted, #aab); }
 #view ul.cch-wl { list-style: none; margin: 6px 0 12px; padding: 0; display: grid; gap: 6px; } #view ul.cch-wl li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 15px; line-height: 1.35; padding-left: 12px; border-left: 3px solid var(--gold, #e6b450); } #view ul.cch-wl li b { font-weight: 800; } #view ul.cch-wl .cch-wn { color: #ef6b62; font-weight: 700; font-size: 13px; } #view ul.cch-wl .cch-wy { flex-basis: 100%; color: var(--muted, #aab); font-size: 14px; }
 #view p.cch-h b.cch-rc { color: var(--gold, #e5b84b); font-weight: 800; } #view .dbr-dd { position: relative; display: block; height: 10px; margin: 4px 0 8px; border-radius: 5px; background: rgba(255,255,255,.1); } #view .dbr-dd i { position: absolute; top: 1px; width: 8px; height: 8px; box-shadow: 0 0 0 1.5px #15181f; border-radius: 50%; background: #e5534b; transform: translateX(-50%); } #view .dbr-dd i.ms { background: #6b7280; } #view .dbr-db { display: flex; align-items: flex-end; gap: 2px; height: 20px; margin: 2px 0 6px; } #view .dbr-db i { flex: 1; min-width: 2px; border-radius: 2px 2px 0 0; background: #e5534b; } #view .dbr-db i.z { background: rgba(255,255,255,.12); } @media (max-width: 760px) { #view .dbr-4.dbr-5.dbr-6 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } } @media (max-width: 520px) { #view .dbr-4.dbr-5.dbr-6 { grid-template-columns: minmax(0, 1fr) !important; } } @media (max-width: 760px) { #view .dbr-4.dbr-5 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } } @media (max-width: 520px) { #view .dbr-4.dbr-5 { grid-template-columns: minmax(0, 1fr) !important; } }
