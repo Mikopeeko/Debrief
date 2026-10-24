@@ -1562,6 +1562,7 @@ line.tl-t { stroke: #ece8df; stroke-width: 2.5; vector-effect: non-scaling-strok
 .pf-row.cb.gb-r3 { grid-template-columns: 20px minmax(0, 1fr) 72px 60px 44px; } .gb-r3 .cb-r { text-align: right; color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
 @media (max-width: 480px) { .pf-row.cb.gb-r3 { grid-template-columns: 18px minmax(0, 1fr) 62px 0 40px; } .pf-row.cb.gb-r3 .cb-s { display: none; } }
 .gb-bfd > summary { list-style: none; cursor: pointer; } .gb-bfd > summary::-webkit-details-marker { display: none; } .gb-bfd[open] > summary .cb-b { box-shadow: 0 0 0 1px var(--line2); } .gb-bfb { display: grid; gap: 3px; padding: 4px 0 10px 28px; }
+.gb-tb .pfph { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px; } .gb-tb .pfph button { border: 1px solid var(--line2); border-radius: 999px; background: transparent; color: var(--muted); padding: 4px 12px; font-size: 13px; cursor: pointer; } .gb-tb .pfph button:hover { color: var(--text); } .gb-tb .pfph button.on { color: var(--gold); border-color: var(--gold); background: rgba(230,180,80,.12); } /* (Oct 23: the phase switch as toggle pills) */
 .gb-pkg { margin-top: 4px; } .gb-pkg.n3 { grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); } /* (three in a row only when each has room for its names) */
 .gb-dr .gb-br { grid-template-columns: minmax(0, 190px) minmax(110px, 1fr) minmax(0, 38%); } .gb-dr .gb-bx { white-space: normal; line-height: 1.3; } /* (a long note wraps, so every bar keeps its room) */
 .gb-dmore { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
@@ -28060,7 +28061,7 @@ const utilHead = (cats) => { const t = (k) => (cats.find((c) => c.key === k) || 
 // clicking it opens that player's breakdown under it (their spells, the hits they took, their deaths, what they kicked or dispelled). The detailed
 // views (charts over time, resources, cooldowns, buffs) stay one click away under the board. One pull at a time; All pulls keeps its own view.
 let GB = null;
-async function graphsAll(r0) { const it = r0.item, tab0 = S.tab, still = () => S.tab === tab0 && S.scope === 'all' && S.rep === r0 && !S.pfOld;
+async function graphsAll(r0) { const it = r0.item, tab0 = S.tab, still = () => S.tab === tab0 && S.scope === 'all' && S.rep === r0 && (!S.pfOld || GB_TABS);
   view(loadCard('Reading the night', 'Reading the pulls…', 0)); const got = await bossReps(it, still, (n, of) => loadSet('#view', 'Reading the pulls… ' + n + ' of ' + of, of ? n / of : null)); if (!got || !still()) return;
   const NP = got.reps.map((rr) => ({ r: rr, end: Math.max(1, Math.min(rr.duration, cutT(rr))) })).sort((a, b) => a.r.item.pull - b.r.item.pull);
   view(NP.length > 1 ? graphsBoard(r0, 0, NP) : graphsBoard(NP[0].r, NP[0].end)); refreshIcons(); }
@@ -28085,12 +28086,13 @@ function nightPlayers(NP) {
 function graphsBoard(r, end, NP) {
   const night = !!(NP && NP.length > 1);
   if (night) end = NP.reduce((v, it) => v + Math.ceil(it.end), 0);
-  const ps = night ? nightPlayers(NP) : players().filter((p) => p.name && !/^Player-/.test(p.name)), dur = Math.max(1, end), E1 = Math.ceil(end);
-  const sumTo = (arr) => { let s = 0; for (let i = 0; i < Math.min(arr.length, E1); i++) s += arr[i] || 0; return s; };
+  const PHS = night || !GB_TABS ? [] : ((r.module && !r.module.error && r.module.phases) || []).filter((q) => q.start < end - 1), PH = S.perfPh ? PHS.find((q) => pfPhK(q) === S.perfPh) || null : null, W0 = PH ? PH.start : 0, W1 = PH ? Math.min(isFinite(PH.end) ? PH.end : end, end) : end; /* (a phase picked: every list counts just that window (Oct 23)) */
+  const ps = night ? nightPlayers(NP) : players().filter((p) => p.name && !/^Player-/.test(p.name)), dur = Math.max(1, W1 - W0), E1 = Math.ceil(end);
+  const sumTo = (arr) => { let s = 0; for (let i = Math.max(0, Math.floor(W0)); i < Math.min(arr.length, Math.ceil(W1)); i++) s += arr[i] || 0; return s; };
   // (what hit a player, up to the wipe filter: per spell, its damage, hits, biggest and the avoidable part)
-  const takenBy = (p) => { const m = new Map(); (p.takenAbS || []).slice(0, E1).forEach((o) => { if (o) for (const [n, v] of Object.entries(o)) { const x = m.get(n) || { name: n, id: v[0], total: 0, hits: 0, big: 0, av: 0 }; x.total += v[1] || 0; x.hits += v[2] || 0; x.big = Math.max(x.big, v[3] || 0); x.av += v[4] || 0; m.set(n, x); } }); return [...m.values()]; };
-  const deaths = (p) => (night ? p.__deaths : (r.deaths || []).filter((d) => d.guid === p.guid && d.t <= end + 0.05)), kicks = (p) => (night ? p.__kicks : (r.interrupts || []).filter((k) => k.guid === p.guid && k.t <= end + 0.05));
-  const disp = (p) => (night ? p.dispL : (p.dispL || []).filter((d) => d.t <= end + 0.05)), castC = new Map(), castsOf = (p) => { if (night) return p.__casts; if (!castC.has(p.name)) castC.set(p.name, castOf(r, p, 0, end)); return castC.get(p.name); };
+  const takenBy = (p) => { const m = new Map(); (p.takenAbS || []).slice(Math.floor(W0), Math.ceil(W1)).forEach((o) => { if (o) for (const [n, v] of Object.entries(o)) { const x = m.get(n) || { name: n, id: v[0], total: 0, hits: 0, big: 0, av: 0 }; x.total += v[1] || 0; x.hits += v[2] || 0; x.big = Math.max(x.big, v[3] || 0); x.av += v[4] || 0; m.set(n, x); } }); return [...m.values()]; };
+  const deaths = (p) => (night ? p.__deaths : (r.deaths || []).filter((d) => d.guid === p.guid && d.t >= W0 - 0.05 && d.t <= W1 + 0.05)), kicks = (p) => (night ? p.__kicks : (r.interrupts || []).filter((k) => k.guid === p.guid && k.t >= W0 - 0.05 && k.t <= W1 + 0.05));
+  const disp = (p) => (night ? p.dispL : (p.dispL || []).filter((d) => d.t >= W0 - 0.05 && d.t <= W1 + 0.05)), castC = new Map(), castsOf = (p) => { if (night) return p.__casts; if (!castC.has(p.name)) castC.set(p.name, castOf(r, p, W0, W1)); return castC.get(p.name); };
   const pDur = (p) => (night ? Math.max(1, p.__dur || dur) : dur), PL = (x) => (night && x.pull != null ? 'Pull ' + x.pull + ', ' : '');
   const CARDS = [
     { k: 'dmg', t: 'Damage done', ic: 'bars', rate: 'DPS', val: (p) => sumTo(p.dmgS || []) },
@@ -28103,33 +28105,34 @@ function graphsBoard(r, end, NP) {
   const fmtV = (q, v) => (q.count ? String(Math.round(v)) : q.cpm ? v.toFixed(1) : C(v));
   const card = (q) => { const rows = ps.map((p) => ({ p, v: q.val(p) })).filter((x) => x.v > 0).sort((a, b) => b.v - a.v); if (!rows.length) return '';
     const mx = rows[0].v, tot = rows.reduce((v, x) => v + x.v, 0);
-    const head = q.count ? tot + ' in all' : q.cpm ? 'raid average ' + (tot / rows.length).toFixed(1) : C(tot) + (q.rate ? ' · ' + C(tot / dur) + ' ' + q.rate : '');
+    const head = q.count ? tot + ' total' : q.cpm ? 'avg ' + (tot / rows.length).toFixed(1) : C(tot) + (q.rate ? ' · ' + C(tot / dur) + ' ' + q.rate : '');
     // (Oct 20, "consistent with the rest of the website": a panel with the site's header, and the site's bar rows (cbRow), as on Rotation and Report card)
     const hv = q.count ? 'Times' : q.cpm ? 'A minute' : 'Total', hs = q.rate ? (q.rate === 'a second' ? 'Per sec' : q.rate) : q.count || q.cpm ? '' : 'Share';
     return '<section class="panel pf-bars gb-card" data-k="' + q.k + '"><h3 class="nh"><span>' + esc(q.t) + '</span><small>' + esc(head) + '</small></h3>' + (GB_TABS ? cbHead(hv, hs, q.cpm ? ' ' : '%', ' gb-r3') : cbHead(hv, hs)) + '<div class="gb-rows">' + rows.map((x, i) => {
       const w = Math.max(1.5, 100 * x.v / mx), sh = tot > 0 ? 100 * x.v / tot : 0;
       const tip = { n: x.p.name, s: (x.p.specName || '') + (night ? ' · in ' + x.p.__pulls + ' of ' + NP.length + ' pulls' : ''), v: fmtV(q, x.v) + (q.count ? (x.v === 1 ? ' time' : ' times') : ''), r: q.rate ? C(x.v / pDur(x.p)) + ' ' + q.rate : '', sh: q.cpm ? '' : (sh >= 10 ? Math.round(sh) : sh.toFixed(1)) + '% of the raid', rk: '#' + (i + 1) + ' of ' + rows.length, t: q.t };
-      if (GB_TABS) return cbRow({ tag: 'div', cls: ' gb-row gb-r3', attrs: ' role="button" tabindex="0" aria-expanded="false" data-k="' + q.k + '" data-p="' + esc(x.p.name) + '" data-tip="' + esc(JSON.stringify(tip)) + '"', k: i + 1, p: x.p, segs: [[w, 'm']], v: fmtV(q, x.v),
-        sub: q.rate ? C(x.v / pDur(x.p)) : '', end: q.cpm ? '' : (sh >= 10 ? Math.round(sh) : sh.toFixed(1)) + '%' });
+      if (GB_TABS) { const prs = !night && !PH && (q.k === 'dmg' || q.k === 'heal') ? parsesFor(r, q.k) : null, fits = (q.k === 'heal') === (x.p.role === 'healer'), pr = prs && fits ? prs.get(x.p.name) : null, foc = S.mechP && S.mechP === x.p.name && GB.BD[q.k];
+        return cbRow({ tag: 'div', cls: ' gb-row gb-r3' + (foc ? ' on' : ''), chips: pr ? ' ' + prsChip(pr) : '', attrs: ' role="button" tabindex="0" aria-expanded="false" data-k="' + q.k + '" data-p="' + esc(x.p.name) + '" data-tip="' + esc(JSON.stringify(tip)) + '"', k: i + 1, p: x.p, segs: [[w, 'm']], v: fmtV(q, x.v),
+        sub: q.rate ? C(x.v / pDur(x.p)) : '', end: q.cpm ? '' : (sh >= 10 ? Math.round(sh) : sh.toFixed(1)) + '%' }).replace('aria-expanded="false"', foc ? 'aria-expanded="true"' : 'aria-expanded="false"') + (foc ? '<div class="gb-bd">' + GB.BD[q.k](x.p) + '</div>' : ''); }
       return cbRow({ tag: 'div', cls: ' gb-row', attrs: ' role="button" tabindex="0" aria-expanded="false" data-k="' + q.k + '" data-p="' + esc(x.p.name) + '" data-tip="' + esc(JSON.stringify(tip)) + '"', k: i + 1, p: x.p, segs: [[w, 'm']], v: fmtV(q, x.v),
         sub: q.rate ? C(x.v / pDur(x.p)) : q.cpm || q.count ? '' : (sh >= 10 ? Math.round(sh) : sh.toFixed(1)) + '%' }); }).join('') + '</div></section>'; };
   // (a player's breakdown, built when their bar is clicked)
   const abRows = (list, opt) => { const L = list.filter((y) => y.total > 0).sort((a, b) => b.total - a.total), tot = L.reduce((v, y) => v + y.total, 0); if (!L.length) return '<p class="sub">No data</p>';
     const mx = L[0].total; return '<div class="gb-bt">' + L.slice(0, 14).map((y) => '<div class="gb-br"><span class="gb-bn">' + spIc(String(y.name).replace(/^[^:]+: /, '')) + '<span>' + esc(y.name) + '</span></span><span class="gb-tr sm"><i class="gb-f" style="width:' + Math.max(1.5, 100 * y.total / mx).toFixed(1) + '%"></i><span class="gb-v">' + C(y.total) + '</span></span>' +
-      '<span class="gb-bx">' + Math.round(100 * y.total / tot) + '%' + (y.hits ? ' · ' + y.hits + (y.hits === 1 ? ' hit' : ' hits') : '') + (opt && opt.crit && y.hits ? ' · ' + Math.round(100 * (y.crits || 0) / y.hits) + '% crit' : '') + (opt && opt.over && y.total + (y.over || 0) > 0 ? ' · ' + Math.round(100 * (y.over || 0) / (y.total + (y.over || 0))) + '% overheal' : '') + (opt && opt.big && y.big ? ' · biggest ' + C(y.big) : '') + '</span></div>').join('') + (L.length > 14 ? '<p class="sub">and ' + (L.length - 14) + ' more</p>' : '') + '</div>'; };
+      '<span class="gb-bx">' + Math.round(100 * y.total / tot) + '%' + (y.hits ? ' · ' + y.hits.toLocaleString('en-US') + (y.hits === 1 ? ' hit' : ' hits') : '') + (opt && opt.crit && y.hits ? ' · ' + Math.round(100 * (y.crits || 0) / y.hits) + '% crit' : '') + (opt && opt.over && y.total + (y.over || 0) > 0 ? ' · ' + Math.round(100 * (y.over || 0) / (y.total + (y.over || 0))) + '% overheal' : '') + (opt && opt.big && y.big ? ' · biggest ' + C(y.big) : '') + '</span></div>').join('') + (L.length > 14 ? '<p class="sub">and ' + (L.length - 14) + ' more</p>' : '') + '</div>'; };
   const cnt = (l, key) => { const m = new Map(); for (const x of l) { const n = key(x); m.set(n, (m.get(n) || 0) + 1); } return [...m].sort((a, b) => b[1] - a[1]); };
   const gbFold = (list) => { if (!GB_TABS) return list; const m = new Map(); for (const y of list) { const nm = String(y.name), pet = nm.match(/^(.+?): /), k = pet ? pet[1] : nm.replace(/ Overload$/, ''); const o = m.get(k) || { name: k, id: pet ? 0 : y.id, total: 0, over: 0, hits: 0, crits: 0, big: 0 };
     o.total += y.total || 0; o.over += y.over || 0; o.hits += y.hits || 0; o.crits += y.crits || 0; o.big = Math.max(o.big, y.big || 0); m.set(k, o); } return [...m.values()]; }; /* (pets and Overloads folded in, Oct 23) */
   const BD = {
-    dmg: (p) => '<p class="gb-bh">Damage by spell' + (night ? ', all pulls' : '') + '</p>' + abRows(gbFold([...p.dmgAb.values()]), { crit: true }),
-    heal: (p) => '<p class="gb-bh">Healing by spell' + (night ? ', all pulls' : '') + '</p>' + abRows(gbFold([...p.healAb.values()]), { crit: true, over: true }),
+    dmg: (p) => '<p class="gb-bh">Damage by spell' + (night ? ', all pulls' : PH ? ' · whole pull' : '') + '</p>' + abRows(gbFold([...p.dmgAb.values()]), { crit: true }),
+    heal: (p) => '<p class="gb-bh">Healing by spell' + (night ? ', all pulls' : PH ? ' · whole pull' : '') + '</p>' + abRows(gbFold([...p.healAb.values()]), { crit: true, over: true }),
     taken: (p) => '<p class="gb-bh">Damage taken by source</p>' + abRows(takenBy(p), { big: true }),
     avoid: (p) => '<p class="gb-bh">Avoidable hits</p>' + abRows(takenBy(p).filter((x) => x.av > 0).map((x) => ({ ...x, total: x.av })), { big: true }),
-    death: (p) => '<div class="gb-bt">' + deaths(p).map((d) => '<div class="gb-br"><span class="gb-bn">' + spIc(d.ability || 'Melee') + '<span>' + PL(d) + T(d.t) + ': ' + esc(d.ability ? d.ability + (d.killer && d.killer !== 'Unknown' ? ' from ' + d.killer : '') : 'a melee hit from ' + (d.killer || 'an enemy')) + '</span></span></div>').join('') + '</div>',
+    death: (p) => '<div class="gb-bt">' + deaths(p).map((d) => '<div class="gb-br"><span class="gb-bn">' + spIc(d.ability || 'Melee') + '<span>' + PL(d) + T(d.t) + ' · ' + esc(d.ability ? d.ability + (d.killer && d.killer !== 'Unknown' ? ' · ' + d.killer : '') : 'Melee' + (d.killer ? ' · ' + d.killer : '')) + '</span></span></div>').join('') + '</div>',
     kick: (p) => { const l = kicks(p); return '<p class="gb-bh">Interrupted</p><div class="gb-bt">' + cnt(l, (k) => k.spell || 'a cast').map(([n, c]) => '<div class="gb-br"><span class="gb-bn">' + spIc(n) + '<span>' + esc(n) + '</span></span><span class="gb-bx">' + c + (c === 1 ? ' time' : ' times') + '</span></div>').join('') + '</div><p class="sub">With ' + esc(andL([...new Set(l.map((k) => k.by).filter(Boolean))])) + '.</p>'; },
     disp: (p) => { const l = disp(p); return '<p class="gb-bh">Dispelled</p><div class="gb-bt">' + cnt(l, (d) => d.aura || 'an effect').map(([n, c]) => '<div class="gb-br"><span class="gb-bn">' + spIc(n) + '<span>' + esc(n) + '</span></span><span class="gb-bx">' + c + (c === 1 ? ' time' : ' times') + '</span></div>').join('') + '</div>'; },
     cpm: (p) => { const c = castsOf(p); if (!c) return ''; const mins = Math.max(1, c.al) / 60, L = c.ab.map((a) => ({ name: a.name, total: a.ts.length })).sort((a, b) => b.total - a.total), mx = L.length ? L[0].total : 1;
-      return '<p class="gb-bh">' + c.n + ' casts · ' + T(c.al) + ' alive</p><div class="gb-bt">' + L.slice(0, 14).map((y) => '<div class="gb-br"><span class="gb-bn">' + spIc(y.name) + '<span>' + esc(y.name) + '</span></span><span class="gb-tr sm"><i class="gb-f" style="width:' + Math.max(1.5, 100 * y.total / mx).toFixed(1) + '%"></i><span class="gb-v">' + y.total + '</span></span><span class="gb-bx">' + (y.total / mins).toFixed(1) + ' a minute</span></div>').join('') + '</div>'; } };
+      return '<p class="gb-bh">' + c.n + ' casts · ' + T(c.al) + ' alive</p><div class="gb-bt">' + L.slice(0, 14).map((y) => '<div class="gb-br"><span class="gb-bn">' + spIc(y.name) + '<span>' + esc(y.name) + '</span></span><span class="gb-tr sm"><i class="gb-f" style="width:' + Math.max(1.5, 100 * y.total / mx).toFixed(1) + '%"></i><span class="gb-v">' + y.total + '</span></span><span class="gb-bx">' + (y.total / mins).toFixed(1) + '/min</span></div>').join('') + '</div>'; } };
   // (Oct 20, "try a": one drawer per player instead of the separate views. A click on any bar opens it under the name, with a tab per part,
   // all in the same look; the card clicked picks the first tab. GB_DRAWER = false brings back the one-breakdown version)
   const REPS = night ? NP.map((it) => it.r) : [r]; let cdC = null, auC = null;
@@ -28241,7 +28244,7 @@ function graphsBoard(r, end, NP) {
   const top5 = ps.map((p) => ({ p, v: sumD(p) })).sort((u, w) => w.v - u.v).slice(0, 5).filter((x) => x.v > 0);
   const bossN = new Set(night ? NP.flatMap((it) => [...bossNamesOf(it.r)]) : [...bossNamesOf(r)]), bossAdds = ps.map((p) => { let b = 0, o = 0; for (const [n, v] of p.dmgT || []) { if (bossN.has(n)) b += v; else o += v; } return { p, s: [b, o] }; });
   const spellTop = ps.flatMap((p) => [...(p.dmgAb || new Map()).values()].map((y) => ({ n: String(y.name), ic: String(y.name).replace(/^[^:]+: /, ''), who: p.name, col: p.color, v: y.total, more: [y.hits + (y.hits === 1 ? ' hit' : ' hits') + (y.hits ? ', ' + Math.round(100 * (y.crits || 0) / y.hits) + '% crit' : '')] })));
-  const takenSrc = (() => { const m = new Map(); for (const p of ps) (p.takenAbS || []).slice(0, E1).forEach((o) => { if (o) for (const [n, v] of Object.entries(o)) { const x = m.get(n) || { n, v: 0, hits: 0, big: 0, who: new Set() }; x.v += v[1] || 0; x.hits += v[2] || 0; x.big = Math.max(x.big, v[3] || 0); x.who.add(p.name); m.set(n, x); } }); return [...m.values()].map((x) => ({ n: x.n, v: x.v, more: [x.hits + ' hits on ' + x.who.size + (x.who.size === 1 ? ' player' : ' players'), 'biggest hit ' + C(x.big)] })); })();
+  const takenSrc = (() => { const m = new Map(); for (const p of ps) (p.takenAbS || []).slice(Math.floor(W0), Math.ceil(W1)).forEach((o) => { if (o) for (const [n, v] of Object.entries(o)) { const x = m.get(n) || { n, v: 0, hits: 0, big: 0, who: new Set() }; x.v += v[1] || 0; x.hits += v[2] || 0; x.big = Math.max(x.big, v[3] || 0); x.who.add(p.name); m.set(n, x); } }); return [...m.values()].map((x) => ({ n: x.n, v: x.v, more: [x.hits + ' hits on ' + x.who.size + (x.who.size === 1 ? ' player' : ' players'), 'biggest hit ' + C(x.big)] })); })();
   const healOver = ps.map((p) => ({ p, s: [p.healing || 0, p.overheal || 0] }));
   const ch = (t, sub, body, wide) => (body ? '<section class="panel pf-bars gb-card gb-ch' + (wide ? ' wide' : '') + '"><h3 class="nh"><span>' + esc(t) + '</span><small>' + esc(sub || '') + '</small></h3><div class="gb-cb">' + body + '</div></section>' : '');
   // (All pulls: damage and healing a second for each pull, side by side (a click opens the pull), and each pull's deaths on its own lane)
@@ -28263,10 +28266,10 @@ function graphsBoard(r, end, NP) {
     ['cast', 'Casting', 'How busy everyone was' + (night ? ', all pulls.' : '.'), byK.get('cpm') || '']].filter((x) => x[3]);
   // (Oct 20, "one graph at a time with them all listed at the top, but let people select up to 3 of them to view at a time": a button per
   // graph; the picked ones (Damage done the first time) side by side, a 4th pick drops the oldest. GB_PICK = false brings back the sections)
-  if (GB_PICK) { const GR = [['dmg', 'Damage done', byK.get('dmg')], ['tgt', 'Boss or adds', ch('Boss or adds', 'Boss · adds' + ALLP, stack(bossAdds, [{ n: 'Boss', col: '@cls' }, { n: 'Adds and others', col: '@cls', op: 0.35 }]))],
-      ['spells', 'Biggest damage spells', ch('Biggest damage spells', 'Top 12' + ALLP, bars(spellTop))], ['heal', 'Healing done', byK.get('heal')],
-      ['oh', 'Healing and overhealing', ch('Healing and overhealing', 'Healing · overhealing' + ALLP, stack(healOver, [{ n: 'Healing', col: '@cls' }, { n: 'Overhealing', col: '#5c6270' }]))],
-      ['taken', 'Damage taken', byK.get('taken')], ['src', 'Mechanic damage', ch('Mechanic damage', 'All players' + ALLP, bars(takenSrc))],
+  if (GB_PICK) { const GR = [['dmg', 'Damage done', byK.get('dmg')], ['tgt', 'Boss or adds', ch('Boss or adds', ALLP.replace(/^, /, '') + (PH ? 'whole pull' : ''), stack(bossAdds, [{ n: 'Boss', col: '@cls' }, { n: 'Adds and others', col: '@cls', op: 0.35 }]))],
+      ['spells', 'Biggest damage spells', ch('Biggest damage spells', 'Top 12' + ALLP + (PH ? ' · whole pull' : ''), bars(spellTop))], ['heal', 'Healing done', byK.get('heal')],
+      ['oh', 'Healing and overhealing', ch('Healing and overhealing', ALLP.replace(/^, /, '') + (PH ? 'whole pull' : ''), stack(healOver, [{ n: 'Healing', col: '@cls' }, { n: 'Overhealing', col: '#5c6270' }]))],
+      ['taken', 'Damage taken', byK.get('taken')], ['src', 'Mechanic damage', ch('Mechanic damage', ALLP.replace(/^, /, ''), bars(takenSrc))],
       ['death', 'Deaths', byK.get('death')], ['kick', 'Interrupts', byK.get('kick')], ['disp', 'Dispels', byK.get('disp')], ['cpm', 'Casts a minute', byK.get('cpm')]].filter((x) => x[2]);
     let pk = (S.gbPick || (() => { try { return JSON.parse(store.get('wla-gb-pick') || 'null'); } catch (x) { return null; } })() || ['dmg']) /* (your last picks, remembered on this browser) */.filter((k) => GR.some((x) => x[0] === k)); if (!pk.length && GR.length) pk = [GR[0][0]];
     // (Oct 22, "at the top of this, make a brief summary of the most important parts of the pull or all pulls": a row of the site's tiles,
@@ -28295,10 +28298,10 @@ function graphsBoard(r, end, NP) {
       const TB = [['dmg', 'Damage', ['dmg'], ['spells', 'tgt']], ['heal', 'Healing', ['heal'], ['oh']], ['taken', 'Damage taken', ['taken'], ['src']], ['death', 'Deaths', ['death'], ['kick', 'disp']], ['cpm', 'Casts', ['cpm'], []], ['buff', 'Buffs', [], []]]
         .map(([k, l, m, s]) => [k, l, k === 'buff' ? bf : m.map((x) => H.get(x) || '').join(''), s.map((x) => H.get(x) || '').join('')]).filter((x) => x[2]);
       let tb = S.gbTab || store.get('wla-gb-tab') || 'dmg'; if (!TB.some((x) => x[0] === tb)) tb = TB.length ? TB[0][0] : 'dmg'; const cur = TB.find((x) => x[0] === tb) || ['', '', '', ''];
-      return sum + '<div class="gb gb-tb"><div class="gb-tabrow"><div class="seg gb-tabs" role="tablist" aria-label="Graphs">' + TB.map(([k, l]) => '<button type="button" role="tab" data-gtab="' + k + '" aria-selected="' + (k === tb) + '"' + (k === tb ? ' class="on"' : '') + '>' + esc(l) + '</button>').join('') + '</div>' +
+      return '<div class="gb gb-tb"><div class="gb-tabrow"><div class="seg gb-tabs" role="tablist" aria-label="Graphs">' + TB.map(([k, l]) => '<button type="button" role="tab" data-gtab="' + k + '" aria-selected="' + (k === tb) + '"' + (k === tb ? ' class="on"' : '') + '>' + esc(l) + '</button>').join('') + '</div>' +
         '<span class="gb-cnt">' + (night ? 'All ' + NP.length + ' pulls, each up to its wipe filter' : end < r.duration - 0.5 ? 'Counted up to ' + T(end) + ', the wipe filter' : 'The whole pull') + '</span></div>' +
-        '<div class="gb-tl' + (cur[3] ? '' : ' solo') + '"><div class="gb-tmain">' + cur[2] + '</div>' + (cur[3] ? '<div class="gb-side">' + cur[3] + '</div>' : '') + '</div>' +
-        '<div class="gb-morev"><span class="sub">More views:</span>' + [['pi', 'Power Infusion'], ['dmg', 'Charts over time']].filter(([k]) => k !== 'pi' || !PI_OFF()).map(([k, l]) => '<button type="button" class="gb-pv btn sm" data-pv="' + k + '">' + esc(l) + ' ›</button>').join('') + '</div></div>'; }
+        (PHS.length > 1 ? phaseChips([...new Set(PHS.map(pfPhK))], PH ? S.perfPh : null) : '') + '<div class="gb-tl' + (cur[3] ? '' : ' solo') + '"><div class="gb-tmain">' + cur[2] + '</div>' + (cur[3] ? '<div class="gb-side">' + cur[3] + '</div>' : '') + '</div>' +
+        '</div>'; } /* (More views gone (your call, Oct 23): the tabs hold it all) */
     return sum + '<div class="gb"><nav class="gb-nav gb-pkn" aria-label="Graphs">' + GR.map(([id, t]) => '<button type="button" data-gp="' + id + '" aria-pressed="' + pk.includes(id) + '"' + (pk.includes(id) ? ' class="on"' : '') + '>' + esc(t) + '</button>').join('') +
       /* (design system, Oct 22: what's counted at the end of the picker row, and the how-to behind an ⓘ instead of a line of small print) */
       '<span class="gb-cnt">' + (night ? 'All ' + NP.length + ' pulls, each up to its wipe filter' : end < r.duration - 0.5 ? 'Counted up to ' + T(end) + ', the wipe filter' : 'The whole pull') + '<span class="ds-i" tabindex="0" role="note" aria-label="How it works" data-tt="Pick up to 3 graphs to see side by side. Hover any bar for its numbers, and click a player\'s bar for what made it up.">ⓘ</span></span></nav>' +
@@ -28325,6 +28328,7 @@ function graphsBoard(r, end, NP) {
     if (dt && GB && GB.drawer && dRow) { const p = GB.byName.get(dRow.dataset.p); if (!p) return; if (dt.id === 'pfAuraMore') S.auraMore = !S.auraMore; else dRow.dataset.dk = dt.dataset.dt; dr.innerHTML = GB.drawer(p, dRow.dataset.dk || dRow.dataset.k); refreshIcons(); return; }
     const gg = dr && e.target.closest('[data-gpgo]'); if (gg) { pfGo(gg.dataset.gpgo, gg.dataset.pgn); return; }
     const gp = e.target.closest && e.target.closest('.gb-pbar[data-gpull]'); if (gp && S.rep && S.index) { const it = S.rep.item, b = S.index.bosses.find((x) => x.id === it.id && x.diffId === it.diffId && String(x.pull) === gp.dataset.gpull); if (b) { S.scope = 'pull'; select(b); window.scrollTo({ top: 0 }); } return; }
+    const gph = e.target.closest && e.target.closest('.gb-tb .pfph button'); if (gph) { S.perfPh = gph.dataset.ph || null; const y0 = scrollY; renderMain(); window.scrollTo({ top: y0 }); return; } /* (Graphs' phase switch (Oct 23)) */
     const gtab = e.target.closest && e.target.closest('.gb-tabs [data-gtab]'); if (gtab) { S.gbTab = gtab.dataset.gtab; store.set('wla-gb-tab', S.gbTab); const y0 = scrollY; renderMain(); window.scrollTo({ top: y0 }); return; } /* (Graphs' tabs, Oct 23) */
     const sumt = e.target.closest && e.target.closest('.gb-sum [data-gp]'); if (sumt && GB_TABS) { S.gbTab = { dmg: 'dmg', heal: 'heal', death: 'death', src: 'taken', kick: 'death' }[sumt.dataset.gp] || 'dmg'; store.set('wla-gb-tab', S.gbTab); const y0 = scrollY; renderMain(); window.scrollTo({ top: y0 }); return; }
     if (sumt) { const b = document.querySelector('.gb-pkn [data-gp="' + sumt.dataset.gp + '"]'); if (b && !b.classList.contains('on')) b.click(); /* (a summary tile opens its graph) */
@@ -28348,10 +28352,10 @@ function perf() {
   const isBoss = r.item.kind === 'boss' && !r.item.run, nP = isBoss && S.index ? S.index.bosses.filter((b) => b.id === r.item.id && b.diffId === r.item.diffId).length : 0;
   const scopeSw = isBoss ? '<div class="seg plsw" role="tablist" aria-label="Pulls shown"><button data-v="all"' + (S.scope === 'all' ? ' class="on"' : '') + '>All pulls<span class="n">' + nP + '</span></button><button data-v="pull"' + (S.scope === 'all' ? '' : ' class="on"') + '>Pull #' + r.item.pull + '<span class="n">' + (r.item.kill ? 'kill' : 'wipe') + '</span></button></div>' : '';
   // (All pulls: the bar graphs too, over every pull of the boss, once they're read (your screenshot, Oct 19: All pulls, the default, still showed the old view))
-  if (isBoss && S.scope === 'all' && !rot && !S.pfOld) { graphsAll(r); return; }
+  if (isBoss && S.scope === 'all' && !rot && (!S.pfOld || GB_TABS)) { graphsAll(r); return; }
   if (isBoss && S.scope === 'all') { perfNight(r, kind, scopeSw); return; }
   // (Graphs opens on the bar graphs (your ask, Oct 19); the detailed views are one click away under them)
-  if (!rot && !S.pfOld) { view(graphsBoard(r, end)); refreshIcons(); return; }
+  if (!rot && (!S.pfOld || GB_TABS)) { view(graphsBoard(r, end)); refreshIcons(); return; } /* (the old detailed views are gone while the tabs are on (Oct 23)) */
   // the window: the whole pull or the picked phase, each up to the wipe filter
   const phs = ((r.module && !r.module.error && r.module.phases) || []).filter((q) => q.start < end - 1);
   const ph = S.perfPh ? phs.find((q) => pfPhK(q) === S.perfPh) || null : null;
@@ -28904,6 +28908,7 @@ const viewSw = (key, list, cur) => pfViewSw('<div class="seg pf-vsw" role="tabli
 function pfGo(k, n, quiet) {
   if (k === 'spec') { S.specSel = n; S.tab = 'rot'; if (!quiet) { renderMain(); window.scrollTo({ top: 0 }); } return; }
   if (PERF_OFF()) return; /* (Graphs is greyed out on the website) */
+  if (GB_TABS) { S.pfOld = false; S.tab = 'perf'; S.gbTab = { dmg: 'dmg', heal: 'heal', taken: 'taken', surv: 'taken', cast: 'cpm', res: 'cpm', cds: 'cpm', aura: 'buff', debuffs: 'buff', pi: 'buff', util: 'death' }[k] || 'dmg'; if (n) setOneP(n); if (!quiet) { renderMain(); window.scrollTo({ top: 0 }); } return; } /* (a "See it in" link opens Graphs' tab with that player open (Oct 23)) */
   const moved = S.tab !== 'perf'; S.tab = 'perf';
   S.perfKind = k === 'debuffs' ? 'aura' : k;
   if (k === 'spec') S.specSel = n; else if (k === 'cds') { S.cdView = 'use'; S.cdsSel = n; } else if (k === 'aura' || k === 'debuffs') { S.auraView = k === 'debuffs' ? 'debuffs' : 'buffs'; S.auraQ = ''; S.auraSel = n; } else if (k === 'surv') { S.survCat = 'def'; S.survSel = n; } else if (k === 'util') S.utilSel = n;
