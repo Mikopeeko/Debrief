@@ -18160,8 +18160,17 @@ function bossRot(o) {
 // procs are already counted on their own row), Mana from others (not your doing), Casting pace during a cooldown (no target, and
 // "Casting in" says it better), and Past the falloff point when it only says that's fine)
 const SPC_CUT = (c) => /^(Opener DPS|Mana from others)$/.test(String(c.label)) || /^(Procs wasted in |Casting pace during )/.test(String(c.label)) || (String(c.label) === 'Past the falloff point' && c.st === 'na');
+// (row icons (your ask, Oct 23): the rows every spec shares get one icon each, the same on every spec page, instead of the spec's main spell
+// on four to six rows of one page: a clock for Always be casting, a list for Rotation priority, and so on. Rows that had no icon at all
+// (Weapon oil, Stealth, Full mana, Holy Power wasted) get one)
+const SPC_CIC = [[/^Always be casting$/, 'rot:abc', 'inv_misc_pocketwatch_01'], [/^Cancelled casts$/, 'rot:cc', 'spell_holy_silence'], [/^Rotation priority$/, 'rot:apl', 'inv_misc_note_01'],
+  [/^Casts per minute/, 'rot:cpm', 'spell_holy_borrowedtime'], [/^Melee uptime$/, 'rot:mel', 'ability_meleedamage'], [/^Opener, step by step$/, 'rot:op', 'inv_misc_map_01'],
+  [/^Weapon oil/i, 'rot:oil', 'trade_alchemy_potiond4'], [/^Stealth at the pull$/, 'rot:st', 'ability_stealth'], [/^Full mana at the pull$/, 'rot:fm', 'spell_magic_managain'],
+  [/^Holy Power wasted$/, 'rot:hp', 'spell_holy_power'], [/^(Rage|Maelstrom|Fury|Runic Power|Astral Power|Focus|Energy|Insanity|Chi|Combo points|Lunar Power) wasted$|^Essence at full$/, 'rot:res', 'inv_misc_gem_variety_01']];
 function specPage(o) {
   for (const g of o.groups) g.l = g.l.filter((c) => !SPC_CUT(c));
+  if (!NAMED_ICON['rot:abc']) for (const [, k, ic] of SPC_CIC) NAMED_ICON[k] = ic;
+  for (const g of o.groups) for (const c of g.l) { const m = SPC_CIC.find(([re]) => re.test(String(c.label))); if (m) c.ic = m[1]; else if (/^Judgment while /.test(String(c.label))) c.ic = 'Judgment'; }
   // (Saves (your idea, Oct 20): on every healer's page, the same tile at the end of the Casting block, never graded)
   if (o.P0 && o.P0.role === 'healer') { let sv = null; try { sv = spcSaves(o); } catch (e) { sv = null; }
     if (sv) { o.groups.push({ t: 'Casting', l: [sv] }); o.VIZ = Object.assign({}, o.VIZ, { saves: () => sv.det });
