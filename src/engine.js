@@ -3716,7 +3716,7 @@ function buildCoiledAltar(ev, r, h) {
     const rmDead = rmDeaths.filter((d) => !rmUsed.has(d) && mine.some((a) => d.t >= a.t0 - 0.5 && (a.died == null || d.t <= a.died + 3))); rmDead.forEach((d) => rmUsed.add(d));
     if (rmDead.length) M(rmDead[0].t, 'Raid', 'spiritcackle', 'High', pl(rmDead.length, 'player') + ' died to Retaliatory Malice while set ' + (i + 1) + '\'s adds were alive (' + (mine.length && mine.every((a) => a.died == null) ? (mine.length > 1 ? 'neither add was killed' : 'the add wasn\'t killed') : 'they lived ' + mine.map((a) => a.died != null ? Math.round(a.died - a.t0) + ' s' : 'until the pull ended').join(' and ')) + ').', 'Kill both adds fast: on Mythic each one hits the raid with Retaliatory Malice every 3 seconds from the moment it spawns until it dies.');
     const row = [{ txt: 'Set ' + (i + 1) }, { t }, { txt: mine.map((a) => a.died != null ? 'died ' + h.fmtT(a.died) + ' (' + Math.round(a.died - a.t0) + 's)' : 'not killed').join(', ') || 'no adds seen', bad: mine.some((a) => a.died == null) },
-      { txt: String(kicks.length) }, { txt: (lateDm.length ? 'alive two sets later' : alive.length ? 'alive at the next set' : next == null ? 'last set' : 'dead in time') + (rmDead.length ? ', ' + pl(rmDead.length, 'death') + ' to Retaliatory Malice' : ''), bad: lateDm.length > 0 || rmDead.length > 0, warn: alive.length > 0 }];
+      { txt: String(kicks.length) }, { txt: (lateDm.length ? 'alive two sets later' : alive.length ? 'lived ' + Math.max(1, Math.round(Math.max(...alive.map((a) => (a.died != null ? a.died : r.duration) - next)))) + ' s too long' /* (how far off, so DPS see it (Oct 23)) */ : next == null ? 'last set' : 'dead in time') + (rmDead.length ? ', ' + pl(rmDead.length, 'death') + ' to Retaliatory Malice' : ''), bad: lateDm.length > 0 || rmDead.length > 0, warn: alive.length > 0 }];
     row.rm = { amt: rmAmt, dead: rmDead }; // (for the adds panel's Retaliatory Malice row)
     return row;
   });
@@ -4235,7 +4235,7 @@ function buildCoiledAltar(ev, r, h) {
       const res = coll ? { txt: 'orbs collided', sub: '+' + coll.gain + ' stacks at once: a purple touched other orbs', bad: true }
         : left ? { txt: 'orb left at the next Deluge', sub: 'it erupted on the raid', bad: true }
         : det.length ? { txt: 'Defilement detonation', sub: '+' + det[0].gain + ' stacks at once: orbs still on the ground', bad: true }
-        : fBad ? { txt: 'too many in one frontal', bad: true } : fWarn ? { txt: 'a little off the plan', warn: true } : { txt: 'clean' };
+        : fBad ? { txt: 'too many in ' + (() => { const f = fs.find((x) => x.bad), n = f && f.tankG ? pname(f.tankG) : null; return n ? String(n).split('-')[0] + '\'s frontal' : 'one frontal'; })() /* (whose frontal: the tank it was aimed at (Oct 23)) */, bad: true } : fWarn ? { txt: 'a little off the plan', warn: true } : { txt: 'clean' };
       // (one map: every cone of the Deluge, in the order it landed, each popping the orbs it held; it plays from just before
       // the first to just after the last, the orbs on the ground switching to each frontal's own as it comes)
       const fc = fs.filter((f) => f.cone), all = new Map(); for (const f of fs) for (const o of f.ground) if (!all.has(o.guid)) all.set(o.guid, o);
@@ -4266,9 +4266,12 @@ function buildCoiledAltar(ev, r, h) {
     if (mythic && at.length > 1 && spread > 12) M(t, 'Raid', 'dreadmarch', 'Low', 'Dreadmarch targets were ' + Math.round(spread) + ' yards apart instead of stacked on one marker.', 'If you are targeted, stack on the raid\'s Dreadmarch marker so the ghosts spawn in one clump the frontal can hit.');
     // ghosts spawn where their player stands a moment after the mind control breaks: one far from the clump means
     // someone moved (blink, gateway, port) before it spawned
+    let farWho = []; /* (Oct 23: whose ghost spawned far: the Dreadmarch target standing nearest to it a moment after the mind control) */
     if (mythic && gl.length > 2) { const cx = mid(gl.map((o) => o.x)), cy = mid(gl.map((o) => o.y)), far = gl.filter((o) => Math.hypot(o.x - cx, o.y - cy) > 15);
-      if (far.length) M(t + 6, 'Raid', 'dreadmarch', 'Low', pl(far.length, 'ghost') + ' spawned more than 15 yards from the clump after Dreadmarch.', 'After your mind control breaks, stand still until your ghost spawns, so all ghosts start together in front of the boss.'); }
-    dmRows.push([{ t }, { ps: tg.map(pname), none: 'not found' }, { txt: at.length > 1 ? Math.round(spread) + ' yd' : '—', bad: mythic && at.length > 1 && spread > 6 }, { txt: String(ghosts) },
+      farWho = far.map((o) => { const ii = inst.find((x) => x.guid === o.guid), sx = ii ? ii.pts[0][1] : o.x, sy = ii ? ii.pts[0][2] : o.y, near = h.snap(ii ? ii.t0 : t + 6).filter((p) => tg.includes(p.guid)); /* (where and when it spawned) */
+        const p = near.sort((a, b) => Math.hypot(a.x - sx, a.y - sy) - Math.hypot(b.x - sx, b.y - sy))[0]; return { o, n: p && Math.hypot(p.x - sx, p.y - sy) < 12 ? String(pname(p.guid)).split('-')[0] : null, d: Math.round(Math.hypot(o.x - cx, o.y - cy)) }; });
+      if (far.length) M(t + 6, 'Raid', 'dreadmarch', 'Low', (farWho.every((x) => x.n) ? farWho.map((x) => x.n + '\'s ghost spawned ' + x.d + ' yards').join(', ') + ' from the clump after Dreadmarch.' : pl(far.length, 'ghost') + ' spawned more than 15 yards from the clump after Dreadmarch.'), 'After your mind control breaks, stand still until your ghost spawns, so all ghosts start together in front of the boss.'); }
+    dmRows.push([{ t }, { ps: tg.map(pname), none: 'not found' }, { txt: at.length > 1 ? Math.round(spread) + ' yd' : '—', bad: mythic && at.length > 1 && spread > 6 }, farWho.length ? { txt: String(ghosts), warn: true, sub: farWho.map((x) => (x.n ? x.n + '\'s' : 'one') + ' ' + x.d + ' yd from the clump').join(', ') } : { txt: String(ghosts) },
       { map: { t: t + 4, from: t, hl: tg, hlLabel: 'Dreadmarch targets', title: 'Dreadmarch at ' + h.fmtT(t) + ': targets ringed, ghosts as they spawned' } }]);
   }
   if (dm.length) sections.push({ id: 'dmstack', title: 'Dreadmarch (Stacking)', place: 'Dreadmarch stacking and ghost spawns', spell: S('dreadmarch'),
