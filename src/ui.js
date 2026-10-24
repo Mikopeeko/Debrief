@@ -114,7 +114,7 @@ function loadOfficial(img, name) {
   const urls = OFFICIAL(name); let k = 0;
   img.onload = () => { if (img.naturalWidth) img.parentNode && img.parentNode.classList.add('has'); };
   img.onerror = () => { if (++k < urls.length) img.src = urls[k]; else img.remove(); };
-  img.src = urls[0];
+  img.src = urls[0]; if (img.complete && img.naturalWidth && img.parentNode) img.parentNode.classList.add('has'); /* (a picture already in the browser shows at once, no blank flash on a redraw (Oct 24)) */
 }
 function hydrateIcons() {
   document.querySelectorAll('img.oi:not([data-done])').forEach((img) => {
@@ -1105,6 +1105,13 @@ function loadSet(where, line, frac) {
 }
 // (a pull asked for twice at once, e.g. by the background reader and a click, is only read once)
 const INFLIGHT = new Map();
+/* (Oct 24, "the tags are gone again": the comparison with the last pull needs the pull just before this one read. The background reader goes
+   newest first and stops at the memory limit, so on an early pull that one could come late or never. Opening a pull now reads the one before it
+   straight away (when it isn't read yet), and the page redraws once when it's in) */
+function prevLoad(it) { if (!it || !S.index) return; const prev = (S.index.bosses || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull < it.pull).sort((a, b) => b.pull - a.pull)[0];
+  if (!prev || CACHE.has(prev) || prev._pl) return; prev._pl = 1;
+  (async () => { try { if (prev.wcl && WCL.isSaved && !(await WCL.isSaved(prev))) await WCL.loadEvents(S.wclCreds, prev, () => {}); await getRep(prev); } finally { prev._pl = 0; }
+    const v0 = document.querySelector('#view'); if (S.item === it && S.tab === 'audit' && S.rep && !S.rep.allPulls && v0 && v0._cs && v0._cs.trend && !v0._cs.trend.prvN) { const y = window.scrollY; renderMain(); window.scrollTo({ top: y }); } })().catch(() => { prev._pl = 0; }); }
 function getRep(item) {
   if (CACHE.has(item)) { const r = CACHE.get(item); CACHE.delete(item); CACHE.set(item, r); return Promise.resolve(r); } /* (to the back of the line: the memory limit lets go of the oldest first) */
   if (!INFLIGHT.has(item)) INFLIGHT.set(item, readRep(item).finally(() => INFLIGHT.delete(item)));
@@ -1792,6 +1799,8 @@ const PATCH_NOTES = [
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
     'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
   ], f: [
+    'Debriefing: the Improving / Worsening tags and Since last pull show on every pull: opening a pull reads the one before it first, with "Reading the last pull to compare…" for those few seconds.',
+    'Debriefing: icons sit on the middle of the words beside them, and they no longer blink out when the page redraws.',
     'The site no longer says "went wrong" anywhere: it names the mechanic, or says mistakes or failed.',
     'Debriefing: each line of a mechanic\'s moments uses one text size, the grey note at the end included, and the coloured part no longer looks bigger than the rest.',
     'Debriefing: Innervate is no longer judged on timing (it just gives a healer mana), the right / wrong mark is text-sized, and those rows match the rows beside them.',
@@ -11510,7 +11519,7 @@ function oaLayout(v, el) {
       f.addEventListener('toggle', () => { if (f.open) S.openSecs.add('brf-burst'); else S.openSecs.delete('brf-burst'); }); }
     try { rateCharts(v, out); } catch (e) { /* (the charts stay where they were) */ } try { oaMeters(v, out); } catch (e) { /* (no meters) */ }
     const dc = [...v.querySelectorAll('details.panel')].find((d) => /^Data check/.test(((d.querySelector('summary') || {}).textContent || '').trim())); if (dc) out.appendChild(dc);
-    dr.replaceWith(out); if (top) top.remove(); v.querySelectorAll('#rcTop, .rc-hp').forEach((n) => { if (!out.contains(n)) n.remove(); }); try { mxaInit(v); } catch (e) { console.error(e); } try { dbTint(v); } catch (e) { /* (plain colours) */ } try { prwTrend(v, v._cs); } catch (e) { /* (no tags) */ } try { dtMove(v); } catch (e) { /* (the checks stay in the box) */ } try { topIcons(v); } catch (e) { /* (no borrowed icons) */ } v.querySelectorAll('.cutbar:not(.on)').forEach((n) => n.remove()); /* (no wipe call: the header already says Kill or Wipe call: off (Oct 24)) */ try { if (S._drawMaps) S._drawMaps(); } catch (e) { /* (maps draw when seen) */ } return; }
+    dr.replaceWith(out); if (top) top.remove(); v.querySelectorAll('#rcTop, .rc-hp').forEach((n) => { if (!out.contains(n)) n.remove(); }); try { mxaInit(v); } catch (e) { console.error(e); } try { dbTint(v); } catch (e) { /* (plain colours) */ } try { prwTrend(v, v._cs); } catch (e) { /* (no tags) */ } try { dtMove(v); } catch (e) { /* (the checks stay in the box) */ } try { topIcons(v); } catch (e) { /* (no borrowed icons) */ } try { prevLoad(S.item); } catch (e) { /* (the comparison shows when it's read) */ } v.querySelectorAll('.cutbar:not(.on)').forEach((n) => n.remove()); /* (no wipe call: the header already says Kill or Wipe call: off (Oct 24)) */ try { if (S._drawMaps) S._drawMaps(); } catch (e) { /* (maps draw when seen) */ } return; }
   /* (All pulls, Oct 23 (your ask: "the bottom half could still be tidied up more"): like one pull, no "More from all pulls" drawer. Its fix
      cards, better and worse, boss health every pull, the old went well / didn't / improving / worse lists, Before the next pull, Talk to and
      Used tonight all repeat the raid lead box, the boss banner or the pace chart; the guide links don't belong here. What only it had stays
@@ -12465,6 +12474,7 @@ function mxaOpen(ph, id) { const k = ph.dataset.phk; let pan = ph.querySelector(
   const sm = sec.querySelector(':scope > summary'), ic = sm && sm.querySelector('.icw'), tb = sm && sm.querySelector('.sechd b'), st = sec.classList.contains('dbn-line') && sm ? sm.querySelector('.sst') : null;
   const hd = document.createElement('div'); hd.className = 'mxa-h';
   hd.innerHTML = (ic ? ic.outerHTML : '') + '<b>' + (tb ? tb.innerHTML : '') + '</b>' + (sec.classList.contains('dbn-line') ? '<span class="mxa-yn">' + emoIc('📜') + 'From your note</span>' : '') + (st ? '<span class="mxa-st ' + (st.className.match(/\b(ok|warn|bad|na)\b/) || ['', ''])[1] + '">' + st.innerHTML + '</span>' : '') + '<button type="button" class="mxa-x" data-mxax="1" aria-label="Close">✕ Close</button>';
+  hd.querySelectorAll('img.oi').forEach((i) => { if (!i.getAttribute('src')) i.removeAttribute('data-done'); }); /* (the header's copied icon loads its own picture) */
   pan.appendChild(hd); pan.appendChild(sec);
   // (your note's job: one line ("Your note · Mind control CC: ✓ both mind controls CC'd") and its player chips; the rest under Show everything)
   sec.querySelectorAll('.dbn-jh').forEach((j) => { if (!j.querySelector('.mxa-yn2')) j.insertAdjacentHTML('afterbegin', '<span class="mxa-yn2">Your note ·</span>'); });
@@ -12788,7 +12798,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
     const trTag = (t) => (t === 'dn' ? '<span class="cch-tag rep" data-tt="' + esc(single ? 'Worse than last pull' : 'Getting worse over the night') + '">▼ Worsening</span>' : t === 'up' ? '<span class="cch-tag up" data-tt="' + esc(single ? 'Better than last pull' : 'Getting better over the night') + '">▲ Improving</span>' : '');
     /* (Oct 24, your question "what happened to the worsening / improving / staying the same at the top?": one line under the two boxes lists every
        mechanic that changed since last pull as a tag, or says it's about the same; the tags also stay on the mechanics themselves) */
-    const sinceH = () => { if (!single || c.name || !T0 || !T0.prvN) return ''; const dn = new Map(), up = new Map(), add = (M, nm) => { const k = lcN(nm); if (k && !M.has(k)) M.set(k, String(nm).replace(/<[^>]+>/g, '').replace(/\s*\(.*$/, '').trim()); };
+    const sinceH = () => { if (!single || c.name || !T0) return ''; if (!T0.prvN) { const it0 = S.rep && S.rep.item; return it0 && ((S.index && S.index.bosses) || []).some((b) => b.id === it0.id && b.diffId === it0.diffId && b.pull < it0.pull) ? '<p class="cch-tsince"><span class="cch-tsl">Since last pull</span><span class="cch-tsame2">Reading the last pull to compare…</span></p>' : ''; } /* (while the last pull is read, say so: the tags aren't gone, they're on their way) */ const dn = new Map(), up = new Map(), add = (M, nm) => { const k = lcN(nm); if (k && !M.has(k)) M.set(k, String(nm).replace(/<[^>]+>/g, '').replace(/\s*\(.*$/, '').trim()); };
       (T0.worse || []).forEach((y) => add(dn, y.nm)); (T0.better || []).forEach((y) => add(up, y.nm)); (W || []).forEach((x) => { if (/^down/.test(x.tr || '')) add(dn, plainL(x)); else if (/^up/.test(x.tr || '')) add(up, plainL(x)); });
       (T0.well || []).forEach((y) => { if (/after a mistake on pull/i.test(y.sub || '')) add(up, y.nm); }); for (const k of dn.keys()) up.delete(k);
       const chips = [...dn.values()].map((n) => '<span class="cch-tag rep">▼ ' + esc(dbfCap(n)) + '</span>').join('') + [...up.values()].map((n) => '<span class="cch-tag up">▲ ' + esc(dbfCap(n)) + '</span>').join('');
