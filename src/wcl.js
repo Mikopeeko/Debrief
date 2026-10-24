@@ -524,7 +524,7 @@ function* translateSteps(item, events) {
       }
       case 'damage': {
         const amt = e.amount || 0, ok = e.overkill > 0 ? e.overkill : -1, abs = e.absorbed || 0, crit = e.hitType === 2 ? '1' : 'nil';
-        const suffix = [amt, amt + abs, ok, 1, 0, 0, abs, crit, 'nil', 'nil', 'ST'].join(',');
+        const suffix = [amt, e.unmitigatedAmount > 0 ? e.unmitigatedAmount : amt + abs, ok, 1, 0, 0, abs, crit, 'nil', 'nil', 'ST'].join(','); /* (the hit before mitigation, when Warcraft Logs has it: Graphs' Mitigation tab (Oct 23)) */
         // (a support line: the share of the supported player's hit that an Evoker's buff gave, sourced to the Evoker. Written the way the game
         // writes it, the hitter's damage with the buff's spell and the Evoker's GUID last, so the parser credits the Evoker and takes it off the hitter)
         if (e.subtractsFromSupportedActor && e.supportID != null) add(e, (e.tick ? 'SPELL_PERIODIC_DAMAGE_SUPPORT,' : 'SPELL_DAMAGE_SUPPORT,') + unit(e.supportID, e.supportInstance) + ',' + dst(e) + ',' + spell(ab) + ',' + adv(e, 2) + ',' + suffix + ',' + guid(e.sourceID, e.sourceInstance));
