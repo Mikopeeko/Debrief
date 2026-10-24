@@ -11582,8 +11582,12 @@ function rateCharts(v, out) { const r = S.rep; if (!r || r.allPulls || !r.durati
   const dps = pan(tl(/^\s*Raid DPS/)), dt = pan(tl(/^\s*DTPS/)), hp = pan(tl(/^\s*HPS/)), dur = Math.min(r.duration, cutT(r));
   const bf = (out || v).querySelector('details.brf-burst'), brw = bf && bf.querySelector('.panel.brw');
   if (dps && !dps.querySelector('.rta')) dps.insertAdjacentHTML('beforeend', rateArea(r.dmgS || [], dur, '#e6b450', 'Damage done', null, 'dmgS', refOf('dps'), true));
-  if (dps && brw && !dps.querySelector('.panel.brw')) { brw.classList.add('rta-brw'); dps.appendChild(brw); bf.remove();
-    /* (no markers: just the charts (your call, Oct 23)) */ }
+  /* (Oct 23, your call: Burst windows repeated the damage chart; its two new facts (damage into adds, our best 20 seconds) are one line under it) */
+  if (dps && brw && !dps.querySelector('.rta-bw')) { const tx = (q) => ((brw.querySelector(q) || {}).textContent || '').replace(/\s+/g, ' ').trim();
+    const ap = (tx('.brw-tiles').match(/into adds \((\d+)%\)/) || [])[1], an = [...brw.querySelectorAll('.brw-adds > *')].map((e) => e.textContent.replace(/\s+/g, ' ').trim()).filter((t) => !/^Adds$/i.test(t)).map((t) => t.replace(/\s+[\d.,]+[KMk].*$/, '')).filter(Boolean).slice(0, 2);
+    const cs = tx('.brw-cs'), tw = (cs.match(/(\d+:\d\d–\d+:\d\d)/) || [])[1], rt = (cs.match(/([\d.,]+[KMk]) damage a second/) || [])[1], tm = (cs.match(/([\d.]+) times our usual/) || [])[1];
+    const bits = []; if (ap != null) bits.push('Into adds: <b>' + ap + '%</b>' + (an.length ? ' (' + esc(an.join(', ')) + ')' : '')); if (tw) bits.push('Best 20 seconds: <b>' + esc(tw) + '</b>' + (rt ? ', ' + esc(rt) + ' a second' : '') + (tm ? ' (' + esc(tm) + '× our usual)' : ''));
+    if (bits.length) dps.insertAdjacentHTML('beforeend', '<p class="rta-bw">' + bits.join(' · ') + '</p>'); bf.remove(); }
   if (dt && !dt.querySelector('.rta')) dt.insertAdjacentHTML('beforeend', rateArea(r.takenS || [], dur, '#ef6b62', 'Damage taken', null, 'takenS', refOf('dtps'), false));
   if (hp && !hp.querySelector('.rta')) hp.insertAdjacentHTML('beforeend', rateArea(r.healS || [], dur, '#3fb950', 'Healing done', null, 'healS', refOf('hps'), true)); }
 function oaDeathsTile(v) { if (!v) return;
