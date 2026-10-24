@@ -6027,6 +6027,7 @@ function* analyzeSteps(item, text, opts) {
   const pMax = new Map(); r.pMax = pMax; // (each player's maximum health, last seen: what a Rallying Cry adds 10% to)
   // a hit on a player from an enemy, after mitigation (absorbs included): what an Aura Mastery, a Barrier or a Spirit Link
   // over them took off it (estimated from the reduction: the log only has what was left)
+  const amOn = (t) => { for (let i = r.cdUse.length - 1; i >= 0; i--) { const u = r.cdUse[i]; if (t - u.t > 30) break; if (u.cd === 'Aura Mastery' && t >= u.t && t <= (u.end != null ? u.end : u.t + 8) + 0.05) return true; } return false; }; /* (an Aura Mastery is up: Devotion Aura is 12% then) */
   const cdCover = (dg, t, amt, magic) => {
     for (let i = r.cdUse.length - 1; i >= 0; i--) { const u = r.cdUse[i]; if (t - u.t > 30) break;
       if (u.cd === 'Aura Mastery' && t >= u.t && t <= (u.end != null ? u.end : u.t + 8) + 0.05 && (dg === u.g || devOn.has(dg))) { u.prev += amt * AM_ADD; u.taken += amt; u.cov.add(dg); } }
@@ -6182,7 +6183,7 @@ function* analyzeSteps(item, text, opts) {
         if (hasAdv && f[adv] === dg) { const mx = num(f[adv + 3]); if (mx > 0 && isPlayer(dg)) pMax.set(dg, mx); if (mx > 0) { hp = num(f[adv + 2]) / mx * 100; seenHp(dg, dn, num(f[adv + 2]), mx, t); seenPhp(dg, num(f[adv + 2]), mx, t); } }
         if (isPlayer(dg)) {
           const p = P(dg, dn);
-          p.taken += base; addAb(p.takenAb, spell, id, base, 0, crit); bump(r.takenS, t, base); bump(p.takenS, t, base); { const raw = num(f[s0 + 1]), ab = Math.max(0, num(f[s0 + 6])); if (raw > 0) { bump(p.rawS, t, raw); bump(p.mitS, t, Math.max(0, raw - base - ab)); } if (ab > 0) bump(p.shS, t, ab); if (devOn.has(dg)) bump(p.devS, t, (base + ab) * 0.03 / 0.97); } /* (devS: what Devotion Aura's 3% took off, about) */ /* (Graphs' Mitigation tab (Oct 23)) */
+          p.taken += base; addAb(p.takenAb, spell, id, base, 0, crit); bump(r.takenS, t, base); bump(p.takenS, t, base); { const raw = num(f[s0 + 1]), ab = Math.max(0, num(f[s0 + 6])); if (raw > 0) { bump(p.rawS, t, raw); bump(p.mitS, t, Math.max(0, raw - base - ab)); } if (ab > 0) bump(p.shS, t, ab); if (devOn.has(dg)) bump(p.devS, t, (base + ab) * 0.03 / (amOn(t) ? 0.88 : 0.97)); } /* (devS: what Devotion Aura's 3% took off, about) */ /* (Graphs' Mitigation tab (Oct 23)) */
           if (base > 0) bumpAb(r.takenAbS, t, spell, id, base);
           const av = mech.damage(t, p.name, id, spell, base), raw = base + Math.max(0, num(f[s0 + 6])); p.avoidable += av;
           if (raw > 0) bumpTk(p.takenAbS, t, spell, id, base, av, raw);
