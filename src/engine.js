@@ -5947,6 +5947,8 @@ const PERS_DR = new Map([['barkskin', [0.2]], ['survival instincts', [0.5]], ['r
   ['dispersion', [0.75]], ['stoneform', [0.1]], ['ice cold', [0.7]], ['zen meditation', [0.6]], ['stone bulwark totem', ['abs']],
   ['anti-magic shell', ['abs']], ['dark pact', ['abs']], ['ice barrier', ['abs']], ['prismatic barrier', ['abs']], ['blazing barrier', ['abs']],
   ['ice block', [1]], ['divine shield', [1]], ['cloak of shadows', [1, true]], ['netherwalk', [1]]]);
+// externals and Zephyr, by the buff on the player it covers: [reduction, magic only, area damage only] (tooltips, about)
+const EXT_DR = new Map([['pain suppression', [0.4]], ['ironbark', [0.2]], ['blessing of sacrifice', [0.3]], ['zephyr', [0.2, false, true]]]);
 const CD_DR = new Map([['power word: barrier', ['Power Word: Barrier', 0.20]], ['spirit link totem', ['Spirit Link Totem', 0.10]], ['anti-magic zone', ['Anti-Magic Zone', 0.15, true]]]);
 // (Darkness: each attack it makes someone avoid logs as an absorb by the Demon Hunter, so that one is exact; Rallying Cry
 // adds 10% maximum health for 10 seconds)
@@ -6020,6 +6022,7 @@ function* analyzeSteps(item, text, opts) {
   // a cooldown's entry: its caster's latest press (a heal from a press before the pull, or one the log missed, starts one)
   const cdPress = (g, cd, t, make) => { for (let i = r.cdUse.length - 1; i >= 0; i--) { const u = r.cdUse[i]; if (u.g === g && u.cd === cd && u.t <= t + 0.5) return u; }
     if (!make) return null; const u = { g, cd, t, end: null, heal: 0, over: 0, prev: 0, taken: 0, hp: 0, cov: new Set(), late: true }; r.cdUse.push(u); return u; };
+  const extOn = new Map(); r.extMit = []; /* (externals and Zephyr up on a player: guid|buff -> the caster's use (EXT_DR)) */
   const persOn = new Map(); r.defMit = []; /* (personal defensives up on a player: guid|buff -> its use (PERS_DR)) */
   const persUse = (g, ln, nm, t) => { const u = { g, name: nm, t, end: null, prev: 0, taken: 0, abs: PERS_DR.get(ln)[0] === 'abs', imm: PERS_DR.get(ln)[0] === 1 }; r.defMit.push(u); persOn.set(g + '|' + ln, u); return u; };
   const persCover = (dg, amt, magic) => { for (const [k, u] of persOn) { if (u.g !== dg) continue; const [red, mag] = PERS_DR.get(k.slice(k.indexOf('|') + 1)); if (u.abs || u.imm || (mag && !magic)) continue; u.prev += amt * red / (1 - red); u.taken += amt; } };
@@ -6191,6 +6194,7 @@ function* analyzeSteps(item, text, opts) {
           if (!owner) hit(dg, t, spell, id);
           if (W(spell, id)) modEv.push({ k: 'dmg', t, dst: dg, spell, id, amt: base, raw: base + Math.max(0, num(f[s0 + 6])), src: sg, srcName: sn }); // (raw: the hit with what shields absorbed)
           if (r.cdUse.length && (parseInt(f[2], 16) & 0x40)) { const amt = base + Math.max(0, num(f[s0 + 6])), sch = swing ? 1 : parseInt(f[10], 16) || 1; if (amt > 0) cdCover(dg, t, amt, (sch & ~1) !== 0); }
+          if (extOn.size && (parseInt(f[2], 16) & 0x40)) { const amt = base + Math.max(0, num(f[s0 + 6])), sch = swing ? 1 : parseInt(f[10], 16) || 1; if (amt > 0) for (const [k, u] of extOn) { if (!k.startsWith(dg + '|')) continue; const [red, mag, aoe] = EXT_DR.get(k.slice(k.indexOf('|') + 1)); if ((mag && (sch & ~1) === 0) || (aoe && swing)) continue; u.prev += amt * red / (1 - red); u.taken += amt; } } /* (externals' and Zephyr's share (Oct 24)) */
           if (persOn.size && (parseInt(f[2], 16) & 0x40)) { const amt = base + Math.max(0, num(f[s0 + 6])), sch = swing ? 1 : parseInt(f[10], 16) || 1; if (amt > 0) persCover(dg, amt, (sch & ~1) !== 0); } /* (personal defensives' share (Oct 22)) */
           recap(dg, { t, heal: false, amount: base, src: shortName(sg, sn), spell, id, hp });
         } else if (owner && (parseInt(f[6], 16) & 0x40)) { // (damage on enemies only: a mind-controlled player hitting a friendly pet isn't damage done)
@@ -6280,6 +6284,7 @@ function* analyzeSteps(item, text, opts) {
         if (pl && f[11] === 'BUFF' && ev === 'SPELL_AURA_APPLIED') { buffUp(P(dg, dn), num(f[8]), f[9], t, isPlayer(sg) && sg !== dg ? shortName(sg, sn) : '');
           // (a zone's buff comes from the zone itself, e.g. Anti-Magic Zone: credit the player who pressed it last)
           const ln = f[9].toLowerCase(); if (PERS_DR.has(ln) && (sg === dg || !isPlayer(sg) || owner === dg)) persUse(dg, ln, f[9], t); /* (a personal defensive went up (Oct 22)) */
+          if (EXT_DR.has(ln) && isPlayer(sg) && (sg !== dg || ln === 'zephyr')) { let u = null; for (let i = r.extMit.length - 1; i >= 0 && t - r.extMit[i].t <= 12; i--) if (r.extMit[i].g === sg && r.extMit[i].name === f[9]) { u = r.extMit[i]; break; } if (!u) { u = { g: sg, name: f[9], t, prev: 0, taken: 0 }; r.extMit.push(u); } extOn.set(dg + '|' + ln, u); } /* (an external or Zephyr went up (Oct 24)) */
           if (ln === 'devotion aura') devOn.add(dg);
           else if (CD_DR.has(ln)) { let by = owner; if (!by) { for (let i = r.cdUse.length - 1; i >= 0 && t - r.cdUse[i].t <= 15; i--) if (r.cdUse[i].cd === CD_DR.get(ln)[0] && isPlayer(r.cdUse[i].g)) { by = r.cdUse[i].g; break; } } drOn.set(dg + '|' + ln, by || sg); }
           else if (ln === 'rallying cry' && (owner || isPlayer(sg))) { const u = cdPress(owner || sg, 'Rallying Cry', t, true); if (!u.cov.has(dg)) { u.cov.add(dg); u.hp += 0.1 * (pMax.get(dg) || 0); } } }
@@ -6298,6 +6303,7 @@ function* analyzeSteps(item, text, opts) {
         if (f.length >= 10 && !isPlayer(dg) && BOSS_AURA_N.has(f[9].toLowerCase())) bossAura(r, f[9], t, false);
         if (f.length >= 12 && f[11] === 'BUFF' && isPlayer(dg)) { buffDown(P(dg, dn), num(f[8]), f[9], t); if (isStatBuf(f[9].toLowerCase())) statBuf(P(dg, dn), num(f[8]), f[9], t, 'r');
           const ln = f[9].toLowerCase(); if (PERS_DR.has(ln)) { const u = persOn.get(dg + '|' + ln); if (u) { u.end = t; persOn.delete(dg + '|' + ln); } }
+          if (EXT_DR.has(ln)) extOn.delete(dg + '|' + ln);
           if (ln === 'devotion aura') devOn.delete(dg); else if (CD_DR.has(ln)) drOn.delete(dg + '|' + ln);
           else if (ln === 'aura mastery') { const u = cdPress(dg, 'Aura Mastery', t, false); if (u && t - u.t < 12) u.end = t; } }
         if (f.length >= 12 && f[11] === 'DEBUFF' && isPlayer(dg)) debuffDown(P(dg, dn), num(f[8]), f[9], t);
