@@ -11729,7 +11729,10 @@ function curveRef(r, k, phases, n) { const key = r.item.boss + '|' + r.item.diff
   const same = L.filter((x) => x.h === hn), K = (same.length >= 5 ? same : L).filter((x) => (x.ph || []).length >= phases.length), j = { dps: 0, hps: 1, dtps: 2 }[k], cal = RATE_CAL[key] || [];
   if (K.length < 3) return null; const out = [];
   for (let i = 0; i < n; i++) { const pi = phases.findIndex((p) => i >= p.start && i < p.end); if (pi < 0) { out.push(null); continue; } const into = i - phases[pi].start, c = (cal[pi] || RATE_CAL_DEF)[j];
-    let s = 0, m = 0; for (const x of K) { const ph = x.ph[pi], t = ph[0] + into; if (t > ph[1]) continue; const v = (x[k] || [])[Math.floor(t * 1000 / (x.step || 1000))]; if (v != null) { s += v; m++; } }
+    /* (Oct 24, your call: lined up by how far through the phase, stretched to fit, so the line has no gaps when a phase is longer or shorter
+       than theirs; the last phase of a wipe stays by seconds, since we never reached its end) */
+    const P0 = phases[pi], full = pi < phases.length - 1 || !!r.item.kill, frac = full ? into / Math.max(1, P0.end - P0.start) : null;
+    let s = 0, m = 0; for (const x of K) { const ph = x.ph[pi], t = frac != null ? ph[0] + frac * (ph[1] - ph[0]) : ph[0] + into; if (t > ph[1]) continue; const v = (x[k] || [])[Math.floor(t * 1000 / (x.step || 1000))]; if (v != null) { s += v; m++; } }
     out.push(m >= 2 ? s / m * c : null); }
   return { a: out, n: K.length }; }
 /* (Oct 23, your idea: at the very bottom, the top 5 in damage done, healing and damage taken, like the Graphs tab's meters, on one pull and
@@ -11769,7 +11772,7 @@ function rateCharts(v, out) { const r = S.rep; if (r && (r.allPulls || v.querySe
   if (hp && !hp.querySelector('.rta')) hp.insertAdjacentHTML('beforeend', rateArea(r.healS || [], dur, '#3fb950', 'Healing done', null, 'healS', refOf('hps'), true, curveRef(r, 'hps', (r.module && r.module.phases) || [], Math.ceil(dur)))); }
 function oaDeathsTile(v) { if (!v) return;
   { const dd = v.querySelector('.cch2 details.cch-dmove'), tl = [...v.querySelectorAll('.oa-tiles .dbr-n')].find((x) => /^\s*Deaths/.test(x.textContent || ''));
-    if (dd && tl && !tl.pcxP) { const p = document.createElement('div'); p.className = 'panel pcx-p dth-p'; p.hidden = true; dd.open = true; dd.classList.remove('cch-dmove'); p.appendChild(dd); tl.appendChild(p);
+    if (dd && tl && !tl.pcxP) { const p = document.createElement('div'); p.className = 'panel pcx-p dth-p'; p.hidden = true; dd.open = true; dd.classList.remove('cch-dmove'); /* (inside its own styled box with the By player / By mechanic switch, so one list shows at a time (Oct 24)) */ const wr = document.createElement('div'); wr.className = 'cch-acct2 dth-w' + (S.cblBy === 'm' ? ' cbl-on-m' : ''); wr.innerHTML = cblSwitch(); wr.appendChild(dd); p.appendChild(wr); tl.appendChild(p);
       tl.classList.add('pcx-tile'); tl.setAttribute('role', 'button'); tl.tabIndex = 0; tl.insertAdjacentHTML('beforeend', '<span class="pcx-open">Who and why ▾</span>');
       tl.addEventListener('click', (e) => { if (e.target.closest('.pcx-p')) return; const q = tl.querySelector('.pcx-p') || tl.pcxP; if (!q) return; tl.pcxP = q; if (q.previousElementSibling !== tl.parentNode) tl.parentNode.after(q); q.hidden = !q.hidden; tl.classList.toggle('on', !q.hidden); }); }
     else if (dd && !tl) { /* (the tiles may not be drawn yet: try again a few times, then leave Deaths in the grid) */ const n = (v._dthN || 0) + 1; v._dthN = n; if (n <= 8) setTimeout(() => oaDeathsTile(v), 400); else { v._dthN = 0; dd.classList.remove('cch-dmove'); } } else v._dthN = 0; } }
@@ -12542,7 +12545,7 @@ document.addEventListener('click', (ev) => { const r = ev.target && ev.target.cl
 const cblBoth = (byM, byP) => (byP ? '<div class="cbl-by cbl-p">' + byP + '</div><div class="cbl-by cbl-m">' + byM + '</div>' : byM);
 const cblSwitch = () => '<div class="cbl-sw" role="group" aria-label="Show"><button type="button" data-cblby="p"' + (S.cblBy === 'm' ? '' : ' class="on"') + '>By player</button><button type="button" data-cblby="m"' + (S.cblBy === 'm' ? ' class="on"' : '') + '>By mechanic</button></div>';
 document.addEventListener('click', (ev) => { const t = ev.target && ev.target.closest ? ev.target : null; if (!t) return;
-  const sw = t.closest('[data-cblby]'); if (sw) { S.cblBy = sw.dataset.cblby; const box = sw.closest('.cch-acct2'); if (box) { box.classList.toggle('cbl-on-m', S.cblBy === 'm'); box.querySelectorAll('[data-cblby]').forEach((b) => b.classList.toggle('on', b.dataset.cblby === S.cblBy)); } return; }
+  const sw = t.closest('[data-cblby]'); if (sw) { S.cblBy = sw.dataset.cblby; document.querySelectorAll('#view .cch-acct2').forEach((box) => { box.classList.toggle('cbl-on-m', S.cblBy === 'm'); box.querySelectorAll('[data-cblby]').forEach((b) => b.classList.toggle('on', b.dataset.cblby === S.cblBy)); }); return; } /* (every switch moves together: the grid's and the Deaths tile's) */
   /* (a death's pull button: open that pull, then that death's chip there) */
   const dj = t.closest('.avn-p[data-djp]'); if (dj) { ev.preventDefault(); const n = +dj.dataset.djp, g = dj.dataset.ddg, r = (CBL_REPS || []).find((q) => q.item.pull === n); if (!r) return; S.tab = 'audit'; S.scope = 'pull';
     Promise.resolve(select(r.item)).then(() => { let i = 0; const go = () => { const c = document.querySelector('.dch[data-ddg="' + CSS.escape(g) + '"]'); if (c) { const bl = c.closest('details.cbl'); if (bl) bl.open = true; if (!c.classList.contains('on')) c.click(); c.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; } if (++i < 30) setTimeout(go, 200); }; setTimeout(go, 200); }); } });
