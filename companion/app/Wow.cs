@@ -166,7 +166,8 @@ namespace Debrief {
     public static string FindLog(string here, string name) {
       if (name == null || !System.Text.RegularExpressions.Regex.IsMatch(name, @"^(Archive-)?WoWCombatLog[^\\/:*?""<>|]*\.txt$")) throw new Exception("Not a combat log.");
       var d = FindLogsDir(here); if (d == null) throw new Exception("No WoW Logs folder found.");
-      foreach (var p in new[] { Path.Combine(d, name), Path.Combine(d, "warcraftlogsarchive", name) }) if (File.Exists(p)) return p;
+      // (and the Raider.IO app's archive, where it moves finished logs (Oct 24: the night's raid log was moved there mid-afternoon))
+      foreach (var p in new[] { Path.Combine(d, name), Path.Combine(d, "warcraftlogsarchive", name), Path.Combine(d, "RaiderIOLogsArchive", name) }) if (File.Exists(p)) return p;
       throw new Exception("That combat log is gone.");
     }
 

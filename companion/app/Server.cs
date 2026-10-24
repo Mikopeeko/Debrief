@@ -91,6 +91,9 @@ namespace Debrief {
           try { foreach (var fi in new DirectoryInfo(d).GetFiles("WoWCombatLog*.txt")) files.Add(row(fi, false)); } catch { }
           var arc = Path.Combine(d, "warcraftlogsarchive");
           if (Directory.Exists(arc)) { try { foreach (var fi in new DirectoryInfo(arc).GetFiles("Archive-WoWCombatLog*.txt")) files.Add(row(fi, true)); } catch { } }
+          // (and the logs the Raider.IO app moved into its archive, as older logs (Oct 24))
+          var rio = Path.Combine(d, "RaiderIOLogsArchive");
+          if (Directory.Exists(rio)) { try { foreach (var fi in new DirectoryInfo(rio).GetFiles("WoWCombatLog*.txt")) if (!files.Any(x => (string)x["name"] == fi.Name)) files.Add(row(fi, true)); } catch { } }
           SendJson(res, new Dictionary<string, object> { { "dir", d }, { "files", files.OrderByDescending(x => (long)x["mtime"]).ToList() } });
         }
         else if (get && path == "/scan") {

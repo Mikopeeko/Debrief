@@ -699,7 +699,7 @@ async function resaveOld() {
     if (!RECAP.appV) { try { const x = await j('/app-version'); RECAP.appV = x.version || ''; } catch (e) { return; } }
     const v = RECAP.appV, cur = L.name; if (!v || !cur) return;
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms)), pullOn = () => L.items.length && !L.items[L.items.length - 1].endByte;
-    const logs = L.files.filter((f) => !f.old && f.name !== cur && Date.now() - f.mtime < 12 * 3600e3 && LOGDONE[f.name] !== v).map((f) => f.name).reverse();
+    const logs = L.files.filter((f) => f.name !== cur && Date.now() - f.mtime < 12 * 3600e3 && LOGDONE[f.name] !== v).map((f) => f.name).reverse(); /* (archived ones too, say by the Raider.IO app) */
     const all = [], ctx = new Map([[cur, L]]);
     for (const name of logs) {
       while (pullOn()) await sleep(5000);

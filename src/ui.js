@@ -1780,6 +1780,7 @@ const PATCH_NOTES = [
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
     'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
   ], f: [
+    'Debrief Companion: logs the Raider.IO app moved into its archive folder show up as older logs, and their pulls get the newest look after an update',
     'Debriefing: a frontal that popped too many orbs is listed under Coalesced Venom in Every mistake, not under the tanks\' Sever, and long lines no longer end in a stray bracket.',
     'Debrief Companion: the after-update re-save also covers pulls from earlier logs of the night, since WoW sometimes starts a new log',
     'Debriefing: What wiped us no longer lists every name when many died at once ("11 players were caught by Calcified Corpse"), and says "Someone was hit" for one player.',
