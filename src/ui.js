@@ -1758,6 +1758,7 @@ function openReport() {
 const PATCH_NOTES = [
   { d: '2026-10-24', h: [
   ], n: [
+    'Debriefing and Plan: point at (or tap) any button or tile for a short tooltip saying what it does.',
     'Graphs: long by-spell lists end in a Show more that opens the rest right under them.',
     'Pain Suppression, Ironbark, Blessing of Sacrifice and Zephyr now count on the Graphs Mitigation tab, for the player who cast them.',
     'The wipe call says why on every pull, with a small picture: how many were dead against the most any kill of that boss survived at that moment. A dead tank now counts as 2. On Normal and LFR the whole pull counts until half the raid is dead.',
@@ -6453,7 +6454,7 @@ function planStartH(pb, l) { const R0 = planRoster(), WO = pnGet(), on = WO.on[p
   const row = (x) => '<div class="plx-r' + (x.id === chId ? ' on' : '') + '"><span class="plx-n"><b title="' + esc(x.name) + '">' + esc(planNm(x)) + '</b><span class="sub">' + (x.id === chId ? '<span class="plan-inuse">In use</span> ' : '') + '<span class="plan-fitok">✓ Saved with these players</span>' + (x.saved ? ' · saved ' + esc(when(x.saved)) : '') + '</span></span><span class="ndz-cb"><button class="btn sm" type="button" data-planopen="' + esc(pb + '|' + x.id) + '">Use this plan</button>' + del(x) + '</span></div>';
   const few = (a) => esc(a.slice(0, 3).join(', ')) + (a.length > 3 ? ' +' + (a.length - 3) : '');
   const orow = (x) => { const d = dOf(x); return '<div class="plx-r' + (S.plOthHi === x.id ? ' on' : '') + '"><span class="plx-n"><b title="' + esc(x.name) + '">' + esc(planNm(x)) + '</b><span class="sub"><span class="plan-fitw">' + plural(Math.max(d.inn.length, d.out.length), 'player') + ' different</span>' + (d.out.length ? ' · sitting now: ' + few(d.out) : '') + (d.inn.length ? ' · not in it: ' + few(d.inn) : '') + (x.saved ? ' · saved ' + esc(when(x.saved)) : '') + '</span></span><span class="ndz-cb">' +
-    '<button class="btn sm" type="button" data-plcopyfor="' + esc(pb + '|' + x.id) + '" data-tt="' + esc('<b>Copy for these players</b><br>Makes a new plan for the players picked above. Each player who sits hands their jobs to whoever took their spot (same role first), and it says why for each swap. This plan stays as it is.') + '">Copy for these players</button>' +
+    '<button class="btn sm" type="button" data-plcopyfor="' + esc(pb + '|' + x.id) + '" data-tt="' + esc('<b>Copy for these players</b><br>Makes a copy of this plan for tonight\'s players. Anyone sitting out hands their jobs to whoever took their spot. Your original stays as it is.') + '">Copy for these players</button>' +
     '<button class="btn sm" type="button" data-pluse="' + esc(pb + '|' + x.id) + '" data-tt="' + esc('<b>Use its players</b><br>Changes who plays ' + pnShort(pb) + ' in Who plays to this plan\'s players, then opens it.') + '">Use its players</button>' + del(x) + '</span></div>'; };
   return planWhoH(pb) /* (who plays this boss, Oct 23) */ + '<div class="panel pls"><div class="pls-h"><h2>How do you want to build it?</h2><span class="sub">' + (n ? 'Pick one. You can change anything after.' : 'Pick who plays first, or build it and pick raiders as you go.') + '</span></div><div class="pls-g">' +
     (M.length ? opt('data-plusesaved="' + esc(pb) + '" aria-expanded="' + (S.plUseOpen === pb) + '"', '📂', 'Use a saved plan', ((x) => (x ? 'In use: ' + esc(planNm(x)) + '. ' : '') + plural(M.length, 'plan') + ' saved with these players.')(M.find((q) => q.id === chId)), true) : '') +
@@ -7064,7 +7065,7 @@ function pnH() { const o = pnGet(), ps = pnPeople(o), bosses = planBosses(), RL 
   const RR = rostersGet().list.find((x) => x.id === o.rid); /* (Oct 23: no date, no plan buttons here: this step is who plays) */
   const head = '<div class="nt-head"><div class="nt-ht"><h2>Who plays</h2><span class="sub">Untick anyone who\'s out tonight and any boss you\'re skipping · click or drag a block to swap.</span></div>' +
     /* (the roster is picked on the Rosters page and named in the trail, Oct 23) */
-    '<span class="ndz-seg nt-diff">' + ['Mythic', 'Heroic'].map((d) => '<button type="button" data-ntdiff="' + d + '" class="' + (o.diff === d ? 'on' : '') + '">' + d + '</button>').join('') + '</span><span class="nt-sp"></span>' + /* (bosses are ticked above their columns now, Oct 23) */ (ps.length > size(bosses[0]) ? '<button type="button" class="btn sm" data-ntrepick="1" data-tt="' + esc('<b>Suggest for me</b><br>Picks who plays every boss again the way the fastest kills do: their make-up, your core first, whoever sat out gets the next spot. It undoes your swaps and shows what changed and why.') + '">✨ Suggest for me</button>' /* (clearer name, Oct 23) */ : '') /* (Reset by the title, Oct 23) */ +
+    '<span class="ndz-seg nt-diff">' + ['Mythic', 'Heroic'].map((d) => '<button type="button" data-ntdiff="' + d + '" class="' + (o.diff === d ? 'on' : '') + '">' + d + '</button>').join('') + '</span><span class="nt-sp"></span>' + /* (bosses are ticked above their columns now, Oct 23) */ (ps.length > size(bosses[0]) ? '<button type="button" class="btn sm" data-ntrepick="1" data-tt="' + esc('<b>Suggest for me</b><br>Picks who plays each boss for you, like the fastest kills do, with your core first. It shows what changed and why.') + '">✨ Suggest for me</button>' /* (clearer name, Oct 23) */ : '') /* (Reset by the title, Oct 23) */ +
     '' + (false ? '<button class="btn sm" type="button" data-ntcopy="1" data-tt="' + esc('<b>Copy every boss for the game</b><br>All of tonight\'s plans as notes for Northern Sky Raid Tools. In game, paste them into the addon.') + '">Copy every boss for the game</button>' : '') + '</div>';
   const did = false ? '<div class="nt-sum"><span class="nt-sumt">✨ ' + (planned.length === bosses.length ? 'All ' + bosses.length + ' planned' : planned.length + ' of ' + bosses.length + ' planned') + '</span>' +
     '<span class="nt-sumn"><b>' + sum('jobs') + '</b> jobs</span><span class="nt-sumn"><b>' + sum('cds') + '</b> cooldowns</span><span class="nt-sumn"><b>' + sum('kicks') + '</b> on kicks</span>' +
@@ -19162,12 +19163,73 @@ const spcSumBar = (n, lg) => { const ks = ['g3', 'ok', 'g2', 'warn', 'g1', 'bad'
 const spcCountBx = (l) => { const n = {}; for (const b of l) n[b.cls] = (n[b.cls] || 0) + 1; return n; };
 // (a box's tooltip from its plain text: the time first, as its heading, and the rest under it)
 const spcTipTxt = (tip) => { const m = String(tip || '').match(/^(\d+:\d\d(?:–\d+:\d\d)?): ?(.*)$/); return m ? '<div class="tt-h">' + esc(m[1]) + '</div><div>' + esc(m[2].charAt(0).toUpperCase() + m[2].slice(1)) + '</div>' : '<div>' + esc(tip) + '</div>'; };
+/* (Oct 24, your ask: "put tooltips over things explaining them simply and clearly": every button and tile on Debriefing and Plan that has no
+   tooltip of its own gets a short, plain one from this list when you point at it or tap it. Add a row here for a new button) */
+const TIP_T = (t, d) => '<b>' + esc(t) + '</b><br>' + esc(d);
+const TIP_TXT = (el) => (el.textContent || '').replace(/\s+/g, ' ').trim();
+const TIP_CHECKS = { 'Power Infusion': 'Was Power Infusion given to a damage dealer during their big cooldown?', 'Innervate': 'Was Innervate given to a healer when they needed mana?',
+  'Power Infusion and Innervate': 'Was Power Infusion lined up with a big cooldown, and Innervate given to a healer?', 'Avoidable damage': 'Damage from things players can dodge, next to the fastest kills.',
+  'Healthstones and potions': 'Did players use a Healthstone or healing potion when they got low?', 'Defensives': 'Did players press a defensive before the big hits?',
+  'Combat potions': 'Did players drink a combat potion, and how much damage it added.', 'Note cooldowns': 'Healing cooldowns from your NSRT note: pressed on time?',
+  'Raid cooldowns': 'Were the big raid hits covered by a raid cooldown?', 'Deaths': 'Who died, what killed them, and whether it could have been avoided.' };
+const TIP_TILES = { 'pulls on this boss': ['Pulls on this boss', 'Your guild\'s pulls on this boss, from the first pull to the first kill. Click for the pace chart next to other guilds.'],
+  'deaths': ['Deaths', 'How many died this pull. Click to see who and why.'], 'raid dps': ['Raid DPS', 'The whole raid\'s damage a second, next to a typical top kill. Click for the chart.'],
+  'dtps': ['DTPS', 'Damage the raid took a second. Lower is better. Click for the chart.'], 'hps': ['HPS', 'The whole raid\'s healing a second. Click for the chart.'],
+  'note jobs': ['Note jobs', 'Jobs from your NSRT note that came up this pull, and how many were done.'] };
+const TIP_PLANV = { night: ['Who plays', 'Pick who plays each boss tonight.'], plans: ['Boss plans', 'Each boss\'s jobs: who soaks, kicks and uses cooldowns.'], game: ['Into the game', 'Copy your notes to paste into NSRT in game.'],
+  notes: ['All notes', 'Every note you have saved, for every boss.'], ros: ['Rosters', 'Your lists of raiders. Make or change one here.'] };
+const TIP_AUTO = [
+  ['.bhp-cut', (el) => el.classList.contains('off') ? TIP_T('Wipe call: off', 'Every pull counts to the very end. Click to turn it on.') : TIP_T('Wipe call', 'Once the pull is lost (too many dead), nothing after it counts against anyone. Click to change it.')],
+  ['.dbr-n', (el) => { const k = TIP_TXT(el.querySelector('.dbr-k') || el).toLowerCase(); const m = TIP_TILES[k]; return m ? TIP_T(m[0], m[1]) : ''; }],
+  ['summary.cch-al', (el) => { const n = TIP_TXT(el.querySelector('.cgl-n, .ckt-t') || el).replace(/\s*\d+%.*$/, '').trim(); const d = TIP_CHECKS[n] || Object.entries(TIP_CHECKS).find(([k]) => n.startsWith(k))?.[1]; return d ? TIP_T(n, d + ' The % is how much was done right. Click to see each one.') : ''; }],
+  ['[data-dbv="mech"], [data-cblby="m"], [data-bjview="mech"]', TIP_T('By mechanic', 'Group everything by boss mechanic.')],
+  ['[data-dbv="player"], [data-cblby="p"]', TIP_T('By player', 'Group everything by raider.')],
+  ['[data-bjview="flow"]', TIP_T('In fight order', 'List everything in the order it happened.')],
+  ['details.cbr-more > summary', TIP_T('Every mistake', 'Every mistake this pull, one line each: who, what and when.')],
+  ['details.phase > summary', (el) => /^Whole fight/.test(TIP_TXT(el)) ? TIP_T('Whole fight', 'Mechanics that happen all fight long. Click to open.') : TIP_T((TIP_TXT(el).match(/^P\d+ [^ ]+/) || ['This phase'])[0], 'Each mechanic in this part of the fight and how it went. Click to open.')],
+  ['.oam-go', TIP_T('See it on Graphs', 'Opens Graphs with every player\'s numbers over time.')],
+  ['[data-dbncopy], [data-plancopy], [data-plcopy], [data-ndzpcopy], #ndzCopy, #ndzNvCopy', TIP_T('Copy for the game', 'Copies this note so you can paste it into NSRT in game.')],
+  ['[data-dbnote]', (el) => /plan/i.test(TIP_TXT(el)) ? TIP_T('Open the plan', 'Opens this boss\'s plan on the Plan tab, where you can change it.') : TIP_T('See the note', 'Shows the whole NSRT note for this boss.')],
+  ['[data-ndzwiz]', () => S.tab === 'audit' ? TIP_T('Add NSRT note', 'Paste your NSRT note, and Debriefing checks everyone\'s jobs against it.') : TIP_T('Add a note you already have', 'Paste a note you made in NSRT, and it becomes this boss\'s plan.')],
+  ['[data-plusesaved]', TIP_T('Use a saved plan', 'Pick one of the plans you already made for this boss.')],
+  ['[data-plnew]', TIP_T('Make it for me', 'Debrief fills every job for you from tonight\'s players. You can change anything after.')],
+  ['[data-ndzbuild]', TIP_T('Build it step by step', 'Go through the fight one mechanic at a time and pick who does each job.')],
+  ['summary', (el) => /^Plans for other lineups/.test(TIP_TXT(el)) ? TIP_T('Plans for other lineups', 'Plans you made for a different group of players. Click to see them.') : ''],
+  ['.pl-go', TIP_T('See it', 'Jumps to where this is checked.')],
+  ['[data-plgameall]', TIP_T('Copy all', 'Copies every boss\'s note at once, to paste into NSRT in game.')],
+  ['[data-plandel]', TIP_T('Delete', 'Deletes this note.')],
+  ['[data-planopen]', TIP_T('Open', 'Opens this plan so you can see or change it.')],
+  ['[data-plrgo]', TIP_T('Plan tonight', 'Uses this roster tonight and plans who plays each boss.')],
+  ['[data-plred]', TIP_T('Edit', 'Change who is on this roster.')],
+  ['[data-plcont], [data-plnext]', TIP_T('Next step', 'Saves this and goes to the next step.')],
+  ['[data-plrnew]', TIP_T('New roster', 'Make a new list of your raiders.')],
+  ['[data-plrfrom="core"]', TIP_T('Your core raiders', 'Starts the roster with your core raiders.')],
+  ['[data-plrfrom="none"]', TIP_T('Nobody', 'Starts with an empty roster; add players yourself.')],
+  ['[data-plrwcl]', TIP_T('Your whole team', 'Starts the roster with everyone on your Warcraft Logs team.')],
+  ['[data-plansample]', (el) => /remove/i.test(TIP_TXT(el)) ? TIP_T('Remove the sample', 'Takes the made-up raid and its plans away.') : TIP_T('Sample raid', 'Adds a made-up 20-player raid so you can try things out. Remove it any time.')],
+  ['[data-planv]', (el) => { const m = TIP_PLANV[el.dataset.planv]; return m ? TIP_T(TIP_TXT(el).replace(/\s*\(?\d+(\/\d+)?\)?$/, '').replace(/^(Next: |← Back to )/, '') || m[0], m[1]) : ''; }],
+  ['[data-ntboss]', (el) => /^Fix$/.test(TIP_TXT(el)) ? TIP_T('Fix', 'Opens this boss so you can fill its open spots.') : TIP_T(TIP_TXT(el.querySelector('b') || el), 'Click to see and change who plays this boss.')],
+  ['[data-ntdiff]', (el) => TIP_T(TIP_TXT(el), 'Plan for ' + TIP_TXT(el) + ' difficulty.')],
+  ['[data-plango]', (el) => /^Pick or make/.test(TIP_TXT(el)) ? TIP_T('Pick or make a plan', 'Use a saved plan for this boss, or start a new one.') : TIP_T(TIP_TXT(el), 'Shows this boss\'s plan.')],
+  ['[data-pluse]', TIP_T('Use this one', 'Uses this plan for this boss tonight.')],
+  ['[data-planexp]', TIP_T('Close', 'Closes this.')],
+  ['[data-plwhyx]', TIP_T('Got it', 'Hides this message.')],
+  ['[data-plstop]', TIP_T('Stop', 'Stops placing. You can also press Esc.')],
+  ['[data-plview="grid"]', TIP_T('Grid', 'Shows the jobs in a table.')],
+  ['[data-plview]', TIP_T('Timeline', 'Shows the jobs along the fight\'s timeline.')],
+  ['[data-plnros]', TIP_T('Make a roster from it', 'Makes a roster from the players in this note.')],
+  ['[data-ntball]', TIP_T('All', 'Ticks every boss.')], ['[data-ntbonly]', TIP_T('Only this one', 'Ticks only this boss.')],
+];
+function tipAuto(t) { const top = t.closest && t.closest('#view'); if (!top) return null;
+  for (let n = t; n && n !== top; n = n.parentElement) for (const [sel, h] of TIP_AUTO) { if (!n.matches(sel)) continue; let x = ''; try { x = typeof h === 'function' ? h(n) : h; } catch (e) { x = ''; } if (!x) continue;
+    n.setAttribute('data-tt', x); n.removeAttribute('title'); return n; }
+  return null; }
 // (the tooltip itself: one for the page, shown on hover, focus or a tap of anything with data-tt, and kept on screen)
 function spcTipInit() {
   if (window._spcTip) return; window._spcTip = 1; const tip = document.createElement('div'); tip.className = 'spc-tt'; tip.hidden = true; tip.setAttribute('role', 'tooltip'); document.body.appendChild(tip); let cur = null;
   const show = (el) => { if (el === cur && !tip.hidden) return; const h = el.getAttribute('data-tt'); if (!h) return; cur = el; tip.innerHTML = h; tip.hidden = false; iconizeSpells(tip); hydrateIcons();
     const r = el.getBoundingClientRect(), w = tip.offsetWidth, hh = tip.offsetHeight; let x = r.left + r.width / 2 - w / 2, y = r.top - hh - 10; x = Math.max(8, Math.min(innerWidth - w - 8, x)); if (y < 8) y = r.bottom + 10; tip.style.left = Math.round(x) + 'px'; tip.style.top = Math.round(y) + 'px'; };
-  const hide = () => { tip.hidden = true; cur = null; }, at = (e) => (e.target && e.target.closest ? e.target.closest('[data-tt]') : null);
+  const hide = () => { tip.hidden = true; cur = null; }, at = (e) => (e.target && e.target.closest ? e.target.closest('[data-tt]') || tipAuto(e.target) : null);
   document.addEventListener('mouseover', (e) => { const el = at(e); if (el) show(el); else if (cur) hide(); });
   document.addEventListener('focusin', (e) => { const el = at(e); if (el) show(el); }); document.addEventListener('focusout', hide);
   document.addEventListener('touchstart', (e) => { const el = at(e); if (el) show(el); else hide(); }, { passive: true }); window.addEventListener('scroll', hide, { passive: true, capture: true });
