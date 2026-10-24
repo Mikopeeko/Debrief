@@ -1756,6 +1756,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-23', h: [
+    { t: 'Report card checklist', d: 'Pick a raider on the Report card and see every check they were graded on: ready to raid, mechanics, staying alive, toolkit and performance, each a plain pass or fail with its rule. The grade is now how many checks they passed.' },
     { t: 'Rotation as a checklist', d: 'The Rotation tab reads like a checklist now: every rule is one row with a bar, your number and a line for what top players do, green, yellow or red. Under it, What to fix lists your fixes with why and how, and your other numbers sit in tiles. Click any row for the full detail.' },
     { t: 'Your pace to the kill', d: 'On Debriefing, Pulls on this boss now counts every night and says when the kill should come at your pace. Tap it for a chart of every pull, the typical guild before and after the 12.1.5 nerfs, and where those nerfs landed. It updates itself as more guilds kill the boss.' },
     { t: 'Your numbers against top guilds', d: 'On the Coiled Altar, each pull now shows Raid DPS, DTPS (damage taken per second) and HPS next to what the 20 fastest kills did in the same phases, coloured like a Warcraft Logs parse (grey, green, blue, purple, orange) with a plain line saying where you stand.' },
@@ -24761,14 +24762,14 @@ const rcbRing = (v, px) => { const C = 2 * Math.PI * 34, L = letterOf(v); return
 // (each raider's numbers for the page: the six subjects, deaths, and their place in each)
 function rcbFacts(c, F) {
   if (F._rcb) return F._rcb;
-  const T = rctFacts(c, F), rows = c.data.map((a) => { const pf = F.pl.get(a.p.name); return { a, role: a.p.role || 'dps', score: a.score, mech: a.mech, play: a.play, surv: a.surv, prep: a.prep, pot: pf.expect ? 100 * pf.used / pf.expect : null, out: T.outR.get(a.p.name), deaths: pf.deaths }; });
+  const T = rctFacts(c, F), rows = c.data.map((a) => { const pf = F.pl.get(a.p.name), ck = rqcOf(c, F, a); return { a, role: a.p.role || 'dps', score: ck.pct != null ? ck.pct : a.score, /* (the checklist's share passed (Oct 23)) */ mech: a.mech, play: a.play, surv: a.surv, prep: a.prep, pot: pf.expect ? 100 * pf.used / pf.expect : null, out: T.outR.get(a.p.name), deaths: pf.deaths }; });
   const rankIn = (k, l) => { const m = new Map(), s0 = l.filter((x) => x[k] != null).sort((u, v) => v[k] - u[k]); s0.forEach((x) => m.set(x, s0.findIndex((y) => Math.round(y[k]) === Math.round(x[k])) + 1)); return { m, n: s0.length }; };
   const rk = {}; for (const k of ['score'].concat(RCB_SUBJ.map(([k]) => k))) rk[k] = rankIn(k, rows);
   const rkRole = {}; for (const r of ['tank', 'healer', 'dps']) rkRole[r] = rankIn('score', rows.filter((x) => x.role === r));
   return (F._rcb = { rows, rk, rkRole }); }
 // the night: the boss's art, the result, the numbers, and the raid's grade as a ring
 function rcbBanner(c, F) {
-  const data = c.data, raid = raidBlend(data.reduce((s, a) => s + a.score, 0) / data.length, F.rm), it = F.reps[0].item, kill = F.pulls.find((q) => q.it.kill), nr = nightResult(it), deaths = deathCount(F.reps).n; /* (one count everywhere (Oct 23)) */
+  const data = c.data, raid = raidBlend(data.reduce((s, a) => { const k = rqcOf(c, F, a).pct; return s + (k != null ? k : a.score); }, 0) / data.length, F.rm) /* (the raiders' checklists (Oct 23)) */, it = F.reps[0].item, kill = F.pulls.find((q) => q.it.kill), nr = nightResult(it), deaths = deathCount(F.reps).n; /* (one count everywhere (Oct 23)) */
   const potU = F.pulls.reduce((s, q) => s + q.used, 0), potE = F.pulls.reduce((s, q) => s + q.expect, 0), mist = F.mech.reduce((s, m) => s + m.tot, 0), H = BOSS_HERO[it.boss];
   const kpi = (l, v, st) => '<div class="tile rcb-bt"><div class="l">' + l + '</div><div class="v' + (st ? ' ' + st : '') + '">' + v + '</div></div>'; // (tiles, design system round 2)
   const trend = F.before.length && F.nowN ? '<div class="rct-tr rcb-ntr"><span class="rcb-ntl">Night grades on this boss</span>' + F.before.map((n) => '<span class="rcn-wk">' + esc(nightLabel(n.at)) + ' ' + gradeChip(letterOf(n.raid)) + '</span>').join('') + '<span class="rcn-wk now">Tonight ' + gradeChip(letterOf(F.nowN.raid)) + '</span>' + (F.mixed ? '' : rcnDelta(F.nowN.raid - F.last.raid)) + '</div>' : '';
@@ -25027,11 +25028,59 @@ function rccoRaider(c, F, a) {
   const full = rccoSec('Your grade, subject by subject', grade) + rccoSec('Every fix, biggest gain first', fixes) + rccoSec('Mechanics', mech) + rccoSec('Your deaths', deaths) + rccoSec('Big cooldowns', cds) + rccoSec('Potions', pot);
   return rccoBox({ k: 'Coach · ' + esc(nm) + '\'s night', cc: p.color, head, right, wrong: W, focus, full }); }
 function rccoPage(c, F) { const a = S.plSel && c.data.find((y) => y.p.name === S.plSel); return a ? rccoRaider(c, F, a) : rccoRaid(c, F); }
+// ---- The checklist (your ask, Oct 23: "more black and white ... a checklist of everything a raider needs to do to prepare, mechanical
+// execution, performance"): every line passes (✓), slips (!) or fails (✕) on a plain rule shown under it. The Report card's grade is the
+// share of checks passed (a slip counts half), so a raider can see exactly what they were scored on. Built from the night's own numbers.
+const RQC_SEC = [['prep', 'Ready to raid'], ['mech', 'Mechanics'], ['alive', 'Staying alive'], ['kit', 'Your toolkit'], ['perf', 'Performance']];
+function rqcOf(c, F, a) {
+  F._rqc = F._rqc || new Map(); if (F._rqc.has(a)) return F._rqc.get(a);
+  const p = a.p, nm = p.name, n = a.n, role = p.role || 'dps', pf = F.pl.get(nm) || {}, rows = { prep: [], mech: [], alive: [], kit: [], perf: [] };
+  const add = (sec, s, l, rule, v, tt) => rows[sec].push({ s, l, rule, v, tt: tt || '' });
+  // ready to raid: each buff at every pull, and the gear at the last pull
+  const xs = a.per.map((g) => g.x).filter(Boolean), cnt = (f) => xs.filter(f).length, pull = (k, of) => (k === of ? 'ok' : of - k <= Math.max(1, Math.floor(of / 10)) ? 'w' : 'bad');
+  if (xs.length) { for (const [l, f] of [['Flask', (x) => x.flask], ['Food', (x) => x.food], ['Weapon oil or stone', (x) => x.temp], ['Augment rune', (x) => x.rune]]) { const k = cnt(f); add('prep', pull(k, xs.length), l, 'every pull', k + ' of ' + xs.length); }
+    const x = xs[xs.length - 1], en = [...(x.ench ? x.ench.values() : [])], miss = en.filter((e) => !e).length, low = en.filter((e) => e && e.rank === 1).length;
+    if (en.length) add('prep', miss ? 'bad' : low ? 'w' : 'ok', 'Enchants', 'every slot, top rank', (en.length - miss) + ' of ' + en.length + (low ? ' (' + low + ' rank 1)' : ''));
+    add('prep', x.emptySockets ? 'bad' : 'ok', 'Gems', 'every socket filled', x.emptySockets ? plural(x.emptySockets, 'empty socket') : 'all');
+    if (x.ilvl) add('prep', x.lowIlvl ? 'w' : 'ok', 'Item level', 'no more than 5 under the raid', Math.round(x.ilvl) + (x.raidIlvl ? ' (raid ' + Math.round(x.raidIlvl) + ')' : '')); }
+  // mechanics: every mechanic the raid made mistakes on tonight, and how many pulls this raider got it wrong in
+  const mm = new Map(); for (const g of a.per) for (const m of keptMistakes(g.r)) if (m.player === nm && m.mechanic !== 'Death') { const s = mm.get(m.mechanic) || new Set(); s.add(g.r.item.pull); mm.set(m.mechanic, s); }
+  const names = [...new Set((Array.isArray(F.mech) ? F.mech.map((m) => m.n) : [...F.mech.keys()]).filter(Boolean).concat([...mm.keys()]))];
+  for (const k of names) { const s = mm.get(k), q = s ? s.size : 0; add('mech', !q ? 'ok' : q === 1 ? 'w' : 'bad', k, 'no mistakes', !q ? 'clean' : 'wrong in ' + plural(q, 'pull'), s ? 'Pulls ' + [...s].join(', ') : ''); }
+  // staying alive: the site's one death rule, then what they had ready, close calls and (tanks) big defensives
+  const DO = deathsOf(a.per.map((g) => g.r), nm), on = DO.on.length; let defR = 0, kitR = 0, silent = 0, cdU = 0, cdP = 0;
+  for (const g of a.per) { try { const sv = survivalOf(g.r, g.p); defR += sv.defReady || 0; kitR += sv.kitReady || 0; silent += sv.silent || 0; cdU += sv.cdUsed || 0; cdP += sv.cdPoss || 0; } catch (e) { /* (not graded) */ } }
+  add('alive', !on ? 'ok' : on <= Math.max(2, Math.floor(n / 8)) ? 'w' : 'bad', 'Deaths on you', 'none (too fast, mass deaths and the wipe don\'t count)', on + ' of ' + plural(DO.n, 'death'));
+  add('alive', !defR ? 'ok' : defR === 1 ? 'w' : 'bad', 'Defensive before dying', 'never die with one ready', defR ? plural(defR, 'time') : 'never');
+  add('alive', !kitR ? 'ok' : kitR === 1 ? 'w' : 'bad', 'Healthstone or health potion', 'used when you sat low', kitR ? plural(kitR, 'death') + ' with one unused' : 'yes');
+  add('alive', !silent ? 'ok' : silent <= 2 ? 'w' : 'bad', 'Close calls answered', 'press something when you sit low', silent ? plural(silent, 'time') + ' nothing pressed' : 'all');
+  if (role === 'tank' && cdP) { const f = cdU / cdP; add('alive', f >= 0.65 ? 'ok' : f >= 0.4 ? 'w' : 'bad', 'Big defensives', 'used 65% of the times you could', cdU + ' of ' + cdP); }
+  // your toolkit: potions, and an external for the deaths that could be seen coming
+  if (pf.expect) add('kit', pf.used >= pf.expect ? 'ok' : pf.used / pf.expect >= 0.7 ? 'w' : 'bad', role === 'healer' ? 'Combat or mana potion' : 'Combat potion', 'every pull with room for one', pf.used + ' of ' + pf.expect);
+  for (const [ext] of RC_EXT[p.specId] || []) { const k = a.per.filter((g) => (g.fixes || []).some((f) => /^(c\|)?ext\|/.test(f.key || '') && String(f.t).includes(ext))).length; add('kit', !k ? 'ok' : k === 1 ? 'w' : 'bad', ext, 'used when someone was dying slowly', k ? 'missed in ' + plural(k, 'pull') : 'yes'); }
+  // performance: damage or healing against your own role, Rotation, and your big cooldowns
+  const mates = c.data.filter((b) => (b.p.role || 'dps') === role && F.pl.get(b.p.name) && F.pl.get(b.p.name).out != null).sort((u, v) => F.pl.get(v.p.name).out - F.pl.get(u.p.name).out);
+  if (pf.out != null && mates.length) { const best = F.pl.get(mates[0].p.name).out, sh = best ? 100 * pf.out / best : 100, r = mates.indexOf(a) + 1, RN = { tank: 'tanks', healer: 'healers', dps: 'damage dealers' }[role];
+    add('perf', sh >= 85 ? 'ok' : sh >= 70 ? 'w' : 'bad', role === 'healer' ? 'Healing' : 'Damage', '85% of the best ' + RN.replace(/s$/, '') + ' tonight', '#' + r + ' of ' + mates.length + ' ' + RN + ' · ' + Math.round(sh) + '%'); }
+  const rot = a.rot != null ? a.rot : a.play; if (rot != null) add('perf', rot >= 80 ? 'ok' : rot >= 65 ? 'w' : 'bad', 'Rotation', '80 or more on the Rotation tab', String(Math.round(rot)));
+  { const k = a.per.filter((g) => (g.fixes || []).some((f) => /^(c\|)?cd\|/.test(f.key || ''))).length; add('perf', !k ? 'ok' : k < n / 2 ? 'w' : 'bad', 'Big cooldowns', 'pressed when they\'re back', k ? 'late in ' + k + ' of ' + plural(n, 'pull') : 'every pull'); }
+  const all = RQC_SEC.flatMap(([k]) => rows[k]), ok = all.filter((x) => x.s === 'ok').length, w = all.filter((x) => x.s === 'w').length;
+  const o = { rows, ok, w, total: all.length, pct: all.length ? 100 * (ok + 0.5 * w) / all.length : null };
+  F._rqc.set(a, o); return o; }
+// the picked raider's checklist, under the raid's report card
+function rqcCard(c, F) {
+  const x = rcbSel(c, F); if (!x) return ''; const a = x.a, p = a.p, o = rqcOf(c, F, a), B = rcbFacts(c, F), rkR = B.rkRole[x.role], RN = { tank: 'tanks', healer: 'healers', dps: 'damage dealers' };
+  const ic = { ok: '✓', w: '!', bad: '✕' }, row = (y) => '<div class="rqc-row"' + (y.tt ? ' data-tt="' + esc(y.tt) + '"' : '') + '><span class="rqc-i ' + y.s + '" aria-label="' + ({ ok: 'passed', w: 'slipped', bad: 'failed' }[y.s]) + '">' + ic[y.s] + '</span><span>' + esc(y.l) + '<small>' + esc(y.rule) + '</small></span><b>' + esc(y.v) + '</b></div>';
+  const sec = ([k, t]) => { const l = o.rows[k]; if (!l.length) return ''; return '<div class="rqc-sec"><h5><span>' + t + '</span><span>' + l.filter((y) => y.s === 'ok').length + ' of ' + l.length + '</span></h5>' + l.map(row).join('') + '</div>'; };
+  return '<section class="rqc" style="--cc:' + p.color + '"><div class="rqc-hd"><img src="' + whIcon(pIcon(p)) + '" alt="" style="box-shadow:0 0 0 2px ' + p.color + '" onerror="this.style.visibility=\'hidden\'"><div><div class="rcb-k">Checklist</div><b class="nm" style="color:' + p.color + '">' + esc(p.name) + '</b><div class="sub">' + esc(p.specName || '') + ' · ' + plural(a.n, 'pull') + ' · #' + B.rk.score.m.get(x) + ' of ' + B.rk.score.n + (rkR ? ' · #' + rkR.m.get(x) + ' of ' + rkR.n + ' ' + RN[x.role] : '') + '</div>' +
+    '<div class="rqc-btns">' + (a.last && a.last.x ? '<button type="button" class="btn sm" data-rqcgear="' + esc(p.name) + '">Gear and stats</button>' : '') + '<button type="button" class="btn sm" data-rctp="' + esc(p.name) + '">Every pull ›</button></div></div>' +
+    '<div class="rqc-sc">' + gradeChip(letterOf(o.pct)) + '<b>' + o.ok + ' of ' + o.total + '</b><span>checks passed' + (o.w ? ' · ' + o.w + ' slipped (count half)' : '') + '</span></div></div>' +
+    '<div class="rqc-grid">' + RQC_SEC.map(sec).join('') + '</div></section>'; }
 function rcnPage(c) {
   const F = rcnFacts(c), open = S.rctOpen && c.data.find((a) => a.p.name === S.rctOpen);
   const ovl = open ? '<div class="rct-ovl" data-rctx="1"><div class="panel rct-ovp" role="dialog" aria-label="' + esc(open.p.name) + '\'s night"><button type="button" class="rct-x" data-rctx="1" aria-label="Close">×</button>' + rcnPlayer(c, F, open, true) + '</div></div>' : '';
   // (mockup B (your pick, Oct 19): the night, the raid's report card, then the ranked roster with the picked raider's report card beside it)
-  return '<div class="rcn rct rcb">' + rcbBanner(c, F) /* (the coach box came off Oct 22: Debriefing coaches the night and each raider (your call)) */ + rcwNight(c, F) + rcbRaid(c, F) + rcwRaider(c, F) + '<div class="rcb-2">' + rcbTable(c, F) + rcbSide(c, F) + '</div>' + ovl + '</div>';
+  return '<div class="rcn rct rcb">' + rcbBanner(c, F) /* (the coach box came off Oct 22: Debriefing coaches the night and each raider (your call)) */ + rcwNight(c, F) + rcbRaid(c, F) + rqcCard(c, F) /* (the checklist (Oct 23)) */ + rcwRaider(c, F) + '<div class="rcb-2">' + rcbTable(c, F) + rcbSide(c, F) + '</div>' + ovl + '</div>';
 }
 function bindRcn(c) {
   const v = $('#plBody'), again = () => { const y = window.scrollY; player(); window.scrollTo({ top: y }); }; // (redrawn in place: the page stays where it was)
@@ -25040,6 +25089,7 @@ function bindRcn(c) {
   v.querySelectorAll('[data-rcnr]').forEach((b) => (b.onclick = () => { S.rcnRole = b.dataset.rcnr; again(); }));
   v.querySelectorAll('[data-rcbs]').forEach((b) => (b.onclick = () => { S.rcbSort = b.dataset.rcbs; again(); }));
   v.querySelectorAll('[data-rcbp]').forEach((b) => (b.onclick = () => { setOneP(b.dataset.rcbp); again(); }));
+  v.querySelectorAll('[data-rqcgear]').forEach((b) => (b.onclick = () => { S.rctOpen = b.dataset.rqcgear; S.rcnGear = b.dataset.rqcgear; again(); }));
   v.querySelectorAll('[data-rcngear]').forEach((b) => (b.onclick = () => { S.rcnGear = S.rcnGear === b.dataset.rcngear ? null : b.dataset.rcngear; again(); }));
   v.querySelectorAll('.rcco-more').forEach((d) => d.addEventListener('toggle', () => { S.rccoOpen = d.open; })); // (the full coaching stays open when the page redraws)
   // (Escape closes an open card)

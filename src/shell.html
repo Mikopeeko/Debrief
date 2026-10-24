@@ -5799,6 +5799,19 @@ button, .btn, a, summary, .tab, .pull, .my-chip, .rcb-tr, .dbr-fx, .spc-tl, .md-
 .hwk-m { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.05); font-size: 14px; } .hwk-m > span:nth-child(2) { flex: 1; min-width: 0; } .hwk-m b { font-weight: 600; }
 .hwk-ok { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; } .hwk-ok span { font-size: 13px; color: #7ee08f; background: var(--good-bg); padding: 3px 10px; border-radius: 20px; }
 .hwk-clean { margin: 0; color: #7ee08f; } .hwk-how { margin: 12px 0 0; font-size: 12px; }
+/* Report card checklist (Oct 23): every line passes, slips or fails on a plain rule */
+.rqc { margin: 0 0 16px; padding: 16px 20px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line2); border-left: 4px solid var(--gold); }
+.rqc-hd { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; } .rqc-hd > img { width: 44px; height: 44px; border-radius: 50%; } .rqc-hd .nm { font: 700 22px/1.1 var(--head); }
+.rqc-btns { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.rqc-sc { margin-left: auto; display: grid; grid-template-columns: auto auto; column-gap: 10px; align-items: center; text-align: right; } .rqc-sc b { font: 700 30px/1 var(--head); color: var(--text); } .rqc-sc > span:not(.grade) { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
+.rqc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.rqc-sec { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: rgba(255,255,255,.02); }
+.rqc-sec h5 { margin: 0 0 6px; display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.rqc-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid rgba(255,255,255,.04); font-size: 14px; }
+.rqc-sec h5 + .rqc-row { border-top: 0; } .rqc-row small { display: block; font-size: 12px; color: var(--muted); } .rqc-row b { font: 700 14px var(--head); text-align: right; }
+.rqc-i { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 800; color: #111; }
+.rqc-i.ok { background: var(--good); } .rqc-i.w { background: var(--warn); } .rqc-i.bad { background: var(--bad); color: #fff; }
+@media (max-width: 760px) { .rqc { padding: 14px; } .rqc-sc { margin-left: 0; text-align: left; } .rqc-grid { grid-template-columns: 1fr; } }
 /* Homework folded into the Report card (Oct 22): the smaller things, folded under Their night */
 .rcw-more { grid-column: 1 / -1; margin-top: -6px; } .rcw-more > summary { cursor: pointer; color: var(--muted); font-size: 14px; }
 .rcw-l .hwk-pill { margin-left: 4px; vertical-align: 1px; } .rcw-l .hwk-tr { margin-left: 2px; } .rcw-ok { margin-top: 8px; }
