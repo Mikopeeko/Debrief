@@ -1759,6 +1759,7 @@ const PATCH_NOTES = [
   { d: '2026-10-24', h: [
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
+    'Graphs: Healing + prevented now counts Devotion Aura for the paladin whose aura it was, and each player\'s own versatility, armor and avoidance, so every bit of damage stopped counts once, for whoever stopped it.',
     'Debriefing: the healing cooldowns from your note show once, in the Note cooldowns check, instead of again under Whole fight.',
     'Debriefing and Plan: point at (or tap) any button or tile for a short tooltip saying what it does.',
     'Graphs: long by-spell lists end in a Show more that opens the rest right under them.',
