@@ -1759,6 +1759,7 @@ const PATCH_NOTES = [
   { d: '2026-10-24', h: [
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
+    'Debriefing: the healing cooldowns from your note show once, in the Note cooldowns check, instead of again under Whole fight.',
     'Debriefing and Plan: point at (or tap) any button or tile for a short tooltip saying what it does.',
     'Graphs: long by-spell lists end in a Show more that opens the rest right under them.',
     'Pain Suppression, Ironbark, Blessing of Sacrifice and Zephyr now count on the Graphs Mitigation tab, for the player who cast them.',
@@ -8835,7 +8836,7 @@ const DBN_W = { ok: 'done', warn: 'some missed', bad: 'missed', na: 'not judged'
 const dbnWords = (t) => String(t || '').toLowerCase().replace(/<[^>]+>/g, ' ').split(/[^a-z']+/).filter((w) => w.length >= 4 && !/^(kick|kicks|team|teams|soak|soaks|cooldown|cooldowns|healing|from|note|your|assignments?|with|each|first|second|third|line|lines)$/.test(w));
 function dbnMatch(jobs, buckets, whole, only) {
   const secText = (x) => (x.s.title + ' ' + ((x.s.spell && x.s.spell[1]) || '') + ' ' + (x.s.tip || '') + ' ' + x.s.id).toLowerCase();
-  for (const o of jobs) { const k = o.ph === 'hcd' ? 'w' : o.ph, pool = (typeof k === 'number' ? buckets[k] || [] : whole).concat(typeof k === 'number' ? whole : buckets.flat());
+  for (const o of jobs) { if (o.ph === 'hcd') continue; /* (Oct 24, your call: the note's cooldown reminders are in the Note cooldowns check at the top, not again under Whole fight) */ const k = o.ph === 'hcd' ? 'w' : o.ph, pool = (typeof k === 'number' ? buckets[k] || [] : whole).concat(typeof k === 'number' ? whole : buckets.flat());
     const ws = dbnWords(o.tip || o.title), kick = /kick/i.test(plainOf(o.title)), x = (kick && pool.find((y) => y.s.id === 'kicks')) || pool.find((y) => ws.some((w) => secText(y).includes(w))); /* (a kick job goes on Interrupts, or on the mechanic its adds are in, like the Soulcoiler adds) */
     if (o.ph === 'hcd' && !/^Healing cooldowns/.test(o.title)) o.title = 'Healing cooldowns (' + o.title + ')'; /* (a reminder group is named by its phase: say what it is) */
     if (x && o.ph !== 'hcd') (x.jobs = x.jobs || []).push(o); else { if (!only.has(k)) only.set(k, []); only.get(k).push(o); } } }
