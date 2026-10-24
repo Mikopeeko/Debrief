@@ -1148,7 +1148,11 @@ button.dchip { cursor: pointer; } button.dchip:hover { filter: brightness(1.15);
 .nomod { margin: 0 0 14px; padding: 12px 14px; border-radius: 12px; border: 1px solid #2c3a52; background: rgba(106,168,255,.07); font-size: 14px; color: #c9d4e6; line-height: 1.5; } .nomod b { color: #e6eefc; }
 .nsp-names { margin: -4px 0 14px; padding: 8px 12px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line); font-size: 13px; color: #c9ced8; }
 .cutbar { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 14px; padding-top: 8px !important; padding-bottom: 8px !important; } .cutbar .cutset { margin: 0 !important; } .cutbar .cutnow { margin: 0 !important; font-size: 13px; color: #aeb5c2; }
-.cutbar .cutwhy { flex-basis: 100%; }.cdfold > summary { cursor: pointer; list-style: revert; } .cdfold > summary b { margin-right: 6px; }
+.cutbar .cutwhy { flex-basis: 100%; }
+/* (the wipe call picture: white dead count, blue dashed kill line, faded after the call (Oct 23)) */
+.wpic { display: block; flex: 0 0 auto; max-width: 100%; height: auto; } .wpic-d { fill: none; stroke: var(--text, #ece8df); stroke-width: 1.8; } .wpic-k { fill: none; stroke: var(--blue); stroke-width: 1.2; stroke-dasharray: 3 2; } .wpic-c { stroke: var(--blue); stroke-width: 1; } .wpic-ax { stroke: var(--line, #2a2f3c); stroke-width: 1; } .wpic-after { fill: #0f1117; opacity: .55; }
+.wpic-w { display: flex; flex-direction: column; gap: 3px; flex: 0 0 auto; max-width: 100%; } .wpic-key { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 5px; flex-wrap: wrap; } .wpic-key i { display: inline-block; width: 14px; height: 0; border-top: 2px solid var(--text, #ece8df); } .wpic-key i.wk-k { border-top: 2px dashed var(--blue); margin-left: 8px; }
+.bhp-cwhy { font-size: 13px; line-height: 1.45; margin: 0 0 10px; max-width: 300px; } .bhp-cwhy .wpic { margin-top: 6px; }.cdfold > summary { cursor: pointer; list-style: revert; } .cdfold > summary b { margin-right: 6px; }
 .noteempty { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 16px; } .noteempty b { margin-right: 6px; }
 /* written summary under each mechanic: one box, a short paragraph per verdict */
 /* (a Mechanics table's fine rows, folded under the others) */
@@ -15850,6 +15854,7 @@ function openReport() {
 const PATCH_NOTES = [
   { d: '2026-10-24', h: [
   ], n: [
+    'The wipe call says why on every pull, with a small picture: how many were dead against the most any kill of that boss survived at that moment. A dead tank now counts as 2. On Normal and LFR the whole pull counts until half the raid is dead.',
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
     'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
   ], f: [
@@ -22624,61 +22629,83 @@ function assign(only, capture) { // (only: just the note, for the all-pulls NSRT
 // On a wipe, the audit stops at the Nth player death (typed in, saved on this PC; 0 or blank = off). Kills are always audited in full.
 // (new key: earlier test builds saved 4 under 'wla-death-cut'; the default is now 2)
 function deathCutN() { const v = store.get('wla-death-cut2'); return v == null || v === '' ? 2 : +v; }
-const CUT_WHY = 'Why filter? Once a pull is lost, players die one after another and mechanics stop being played on purpose. Everything after that point is noise. It piles up mistakes and blames people for a wipe that had already happened. Debrief calls the wipe at the moment no raid has ever come back from: more players dead than any kill of this boss survived at that point of the fight (after battle rezzes), the damage check missed, or half the raid dead. What caused it still counts; what came after isn\'t counted. Kills are always audited in full.';
+const CUT_WHY = 'Why filter? Once a pull is lost, players die one after another and mechanics stop being played on purpose. Everything after that point is noise. It piles up mistakes and blames people for a wipe that had already happened. Debrief calls the wipe at the moment no raid has ever come back from: more players dead than any kill of this boss survived at that point of the fight (after battle rezzes; a dead tank counts as 2), the damage check missed, or half the raid dead. On Normal and LFR, only the last two. What caused it still counts; what came after isn\'t counted. Kills are always audited in full.';
 // ---------- the wipe call (Oct 23, the user's idea: "instead of having a wipe filter… create logic across my whole website that detects
 // when a wipe was occurring and filters all things beyond that out"; checked against their calls on the Oct 21 night: "these marks match
 // where I'd call each wipe"). notes/Guides/Wipe detection - how it works.md. On a wipe, the call is the first moment of:
-//  1. more players dead at once (deaths minus battle rezzes, per 20 players) than any kill of this boss survived at that point of the
+//  1. more players dead at once (deaths minus battle rezzes, per 20 players, a dead tank counting as 2 (Oct 23)) than any kill of this boss survived at that point of the
 //     fight, after the raid's battle rez charges still up (WIPE_LINE: the 40 kills with the most deaths on Warcraft Logs
 //     per boss and difficulty; no +1 cushion since Oct 23, the user: "5 deaths in a pull before a wipe is called is a lot": 15 of those
 //     800 deathiest kills would have been called, mostly late in the fight). Not while the boss is at 10% or less (raids that close still
 //     win), and not past the median kill length, where the line is too thin;
 //  2. the damage check missed: a red Phase changes row, dated to the moment the phase ran past the longest any kill took;
-//  3. half the raid dead (the wipe's last stand).
+//  3. half the raid dead (the wipe's last stand). Normal and LFR have no line (raids there win with many dead): only 2 and 3.
+// Tried and left out (Oct 23): judging by time into each phase instead of the clock (fewer early wrong calls on a few bosses, but
+// later calls on our Coiled Altar pulls, and only Warcraft Logs pulls know their phases) and a healer counting as 1.5 (worse).
 // Kills never get one. Everything up to and including the call counts (what caused the wipe); after it is the wipe.
 const WIPE_LINE = {
-  "Nymrissa Wavecaller|H": { s: [1.5, 3.3, 6.7, 7, 7, 9.2, 9.2, 9.2, 9.2], stop: 214, m: 0, k: 40 },
-  "Nymrissa Wavecaller|M": { s: [1.2, 1.2, 2.5, 3.3, 4.2, 4.2, 5, 5, 5.8, 6.7, 10, 10, 10], stop: 356, m: 0, k: 40 },
-  "Sszorak|H": { s: [3.8, 4.7, 4.8, 6.7, 7.6, 8.2, 10, 10, 10], stop: 211, m: 0, k: 40 },
-  "Sszorak|M": { s: [2, 2, 4, 4, 4, 5, 5, 5, 5, 13, 15, 16, 16, 16], stop: 364, m: 0, k: 40 },
+  "Nymrissa Wavecaller|H": { s: [2, 3.3, 6.7, 7, 7, 9.2, 9.2, 9.2, 9.2], stop: 214, m: 0, k: 40 },
+  "Nymrissa Wavecaller|M": { s: [1.8, 1.8, 2.6, 3.3, 4.2, 4.2, 5.8, 5.8, 6.7, 6.7, 10, 10, 10], stop: 356, m: 0, k: 40 },
+  "Sszorak|H": { s: [3.8, 4.7, 5.5, 6.7, 7.6, 9.1, 12.5, 12.5, 12.5], stop: 211, m: 0, k: 40 },
+  "Sszorak|M": { s: [2, 2, 4, 4, 4, 5, 5, 5, 5, 13, 15, 17, 17, 17], stop: 364, m: 0, k: 40 },
   "The Twin Fangs|H": { s: [0.8, 3.2, 3.2, 4.7, 6.4, 6.4, 7.3, 15.8, 15.8, 15.8, 15.8], stop: 284, m: 1, k: 40 },
-  "The Twin Fangs|M": { s: [0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 7, 18, 18, 18, 18], stop: 404, m: 0, k: 40 },
-  "The Coiled Altar|H": { s: [2.6, 2.6, 2.6, 2.6, 3.8, 3.8, 4, 4, 4.7, 4.7, 4.7, 4.7], stop: 307, m: 0, k: 40 },
-  "The Coiled Altar|M": { s: [2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 6, 12, 12, 12], stop: 617, m: 0, k: 40 },
+  "The Twin Fangs|M": { s: [0, 1, 1, 1, 1, 2, 3, 3, 3, 3, 7, 19, 19, 19, 19], stop: 404, m: 0, k: 40 },
+  "The Coiled Altar|H": { s: [2.6, 2.6, 2.6, 2.6, 3.8, 3.8, 4, 4.1, 4.7, 4.7, 4.7, 4.7], stop: 307, m: 0, k: 40 },
+  "The Coiled Altar|M": { s: [2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 5, 5, 5, 6, 12, 12, 12], stop: 617, m: 0, k: 40 },
   "Entombed Sentinels|H": { s: [2.5, 2.5, 3.2, 3.2, 9.5, 13.3, 13.3, 13.3, 13.3], stop: 214, m: 0, k: 40 },
-  "Entombed Sentinels|M": { s: [2, 2, 2, 3, 3, 3, 3, 5, 7, 12, 12, 12, 12], stop: 342, m: 0, k: 40 },
-  "Vashnik the Malignant|H": { s: [1.1, 1.1, 2.4, 2.5, 2.5, 10, 10, 10], stop: 205, m: 0, k: 40 },
+  "Entombed Sentinels|M": { s: [2, 2, 3, 3, 3, 3, 3, 5, 7, 12, 12, 12, 12], stop: 342, m: 0, k: 40 },
+  "Vashnik the Malignant|H": { s: [1.1, 1.1, 2.4, 3.3, 3.3, 10, 10, 10], stop: 205, m: 0, k: 40 },
   "Vashnik the Malignant|M": { s: [1, 2, 2, 4, 4, 4, 5, 5, 14, 15, 15, 15, 15], stop: 353, m: 0, k: 40 },
-  "Nek'zali the Soulcoiler|H": { s: [0.9, 1.1, 1.4, 1.4, 1.4, 9.1, 9.1, 9.1], stop: 209, m: 0, k: 40 },
+  "Nek'zali the Soulcoiler|H": { s: [1.5, 1.9, 1.9, 1.9, 2.5, 9.1, 9.1, 9.1], stop: 209, m: 0, k: 40 },
   "Nek'zali the Soulcoiler|M": { s: [0, 1, 3, 3, 3, 4, 4, 7, 7, 12, 12, 12, 12], stop: 344, m: 0, k: 40 },
-  "Ula'tek|H": { s: [0.9, 1.4, 2.5, 2.5, 2.5, 4.8, 4.8, 5, 5, 5, 5, 5, 7, 7, 7, 7, 7], stop: 454, m: 0, k: 40 },
-  "Ula'tek|M": { s: [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 4, 4, 5, 5, 7, 8, 8, 8], stop: 598, m: 0, k: 40 },
-  "The Lost Explorers|H": { s: [1.9, 5.3, 5.3, 6, 6, 6, 6, 6], stop: 192, m: 0, k: 40 },
-  "The Lost Explorers|M": { s: [0, 2, 2, 2, 2, 4, 6, 17, 17, 17, 17, 17], stop: 319, m: 0, k: 40 },
-  "Kith'ix|H": { s: [2.4, 3, 3, 7, 7.8, 11, 11, 11], stop: 205, m: 0, k: 40 },
-  "Kith'ix|M": { s: [0.9, 0.9, 1.7, 2.7, 2.7, 2.7, 2.7, 4, 9, 9, 9, 9], stop: 304, m: 0, k: 40 }
+  "Ula'tek|H": { s: [0.9, 2.1, 2.5, 2.5, 2.5, 4.8, 4.8, 5, 5, 5, 5, 5, 7, 7.1, 7.1, 7.1, 7.1], stop: 454, m: 0, k: 40 },
+  "Ula'tek|M": { s: [1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 3, 3, 4, 4, 6, 6, 8, 9, 9, 9], stop: 598, m: 0, k: 40 },
+  "The Lost Explorers|H": { s: [2.5, 5.3, 5.3, 8, 8, 8, 8, 8], stop: 192, m: 0, k: 40 },
+  "The Lost Explorers|M": { s: [0, 2, 2, 2, 2, 4, 6, 18, 18, 18, 18, 18], stop: 319, m: 0, k: 40 },
+  "Kith'ix|H": { s: [3.2, 4, 4, 7, 8.7, 12, 12, 12], stop: 205, m: 0, k: 40 },
+  "Kith'ix|M": { s: [1.6, 1.6, 1.7, 2.7, 2.7, 2.7, 2.7, 4.8, 10, 10, 10, 10], stop: 304, m: 0, k: 40 }
 };
 const WIPE_WHY = { line: 'more dead than any kill survived', check: 'the damage check was missed', half: 'half the raid was dead' };
-function wipeLine(r) { const it = r && r.item; if (!it || it.kind !== 'boss') return null; const d = /mythic/i.test(it.diff || '') || it.diffId === 16 ? 'M' : /heroic/i.test(it.diff || '') || it.diffId === 15 ? 'H' : ''; return WIPE_LINE[it.boss + '|' + d] || null; }
-// -> { t, why, n (deaths up to it), who (whose death made the call, if one did) } | null (no call: the whole pull counts) | undefined (no line for this boss)
+function wipeLine(r) { const it = r && r.item; if (!it || it.kind !== 'boss') return null; const d = /mythic/i.test(it.diff || '') || it.diffId === 16 ? 'M' : /heroic/i.test(it.diff || '') || it.diffId === 15 ? 'H' : '';
+  if (!d && (it.diffId === 14 || it.diffId === 17 || /normal|lfr|finder/i.test(it.diff || ''))) return WIPE_OPEN; /* (Normal and LFR: raids there win with many dead, so only half the raid dead or a missed damage check calls it (Oct 23)) */
+  return WIPE_LINE[it.boss + '|' + d] || null; }
+const WIPE_OPEN = { s: [Infinity], stop: Infinity, m: 0, open: true };
+// (battle rez charges up at t: 1 at the pull, +1 every 90/raid-size minutes, minus those used; the kill line at t, per 20 players)
+const wipeCharges = (t, n, used) => Math.max(0, 1 + Math.floor(t / (5400 / n)) - used);
+const wipeWeights = (r) => { const role = new Map([...(r.players || new Map()).values()].map((p) => [p.guid, p.role])); return (g) => (role.get(g) === 'tank' ? 2 : 1); }; /* (a dead tank counts as 2: losing one ends pulls sooner) */
+const wipeLim = (L, t) => (t <= L.stop - 30 ? L.s[Math.min(L.s.length - 1, Math.floor(t / 30))] + (L.m ?? 0) : Infinity);
+// -> { t, why, n (deaths up to it), who (whose death made the call, if one did), nd/ch/max (dead, battle rezzes up, the most any kill survived) } | null (no call: the whole pull counts) | undefined (no line for this boss)
 function wipeAt(r) {
   if (!r || !r.item || r.item.kill) return null; if (r._wipe && r._wipe.k === r.deaths.length) return r._wipe.v;
   const L = wipeLine(r); if (!L) return undefined;
   const n = raidSizeOf(r) || 20, ev = r.deaths.map((d) => [d.t, 1, d.guid, d]).concat((r.rezzes || []).map((z) => [z.t, -1, z.guid, null])).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-  const dead = new Set(), boss = (t) => { const s = r.bossS || []; return s.length ? s[Math.max(0, Math.min(s.length - 1, Math.floor(t)))] : null; };
+  const dead = new Set(), boss = (t) => { const s = r.bossS || []; return s.length ? s[Math.max(0, Math.min(s.length - 1, Math.floor(t)))] : null; }, wt = wipeWeights(r), wsum = () => { let x = 0; for (const g of dead) x += wt(g); return x; };
   let used = 0, call = null;
   for (const [t, s, g, d] of ev) { if (s < 0) { if (dead.delete(g)) used++; continue; } dead.add(g);
-    const nd = dead.size, charges = Math.max(0, 1 + Math.floor(t / (5400 / n)) - used), lim = t <= L.stop - 30 ? L.s[Math.min(L.s.length - 1, Math.floor(t / 30))] + (L.m ?? 0) : Infinity, b = boss(t);
-    if ((nd - charges) * 20 / n > lim && !(b != null && b <= 10)) { call = { t, why: 'line', d }; break; }
+    const nd = dead.size, w = wsum(), charges = wipeCharges(t, n, used), lim = wipeLim(L, t), b = boss(t);
+    if ((w - charges) * 20 / n > lim && !(b != null && b <= 10)) { call = { t, why: 'line', d, nd, tk: [...dead].filter((x) => wt(x) > 1).length, ch: charges, max: Math.floor((lim - (L.m ?? 0)) * n / 20 + 1e-9) }; break; }
     if (nd >= Math.ceil(n / 2)) { call = { t, why: 'half', d }; break; } }
   // (the damage check: "took 3:33 (… never past 2:56)" at its end → went late at end − 3:33 + 2:56)
   const mss = (x) => { const m = /(\d+):(\d\d)/.exec(x || ''); return m ? 60 * +m[1] + +m[2] : null; };
   for (const m of r.mistakes || []) { if (m.mechanic !== 'Phase changes' || m.severity !== 'High') continue; const det = String(m.detail || ''), took = mss((/took (\d+:\d\d)/.exec(det) || [])[1]), nev = mss((/never past (\d+:\d\d)/.exec(det) || [])[1]);
     const at = took != null && nev != null && took > nev ? m.t - took + nev : m.t; if (!call || at < call.t) call = { t: at, why: 'check', d: null }; }
-  const v = call ? { t: call.t, why: call.why, auto: true, n: r.deaths.filter((x) => x.t <= call.t + 0.05).length, who: call.d ? call.d.player : '' } : null;
+  const v = call ? { t: call.t, why: call.why, auto: true, n: r.deaths.filter((x) => x.t <= call.t + 0.05).length, who: call.d ? call.d.player : '', nd: call.nd, tk: call.tk, ch: call.ch, max: call.max } : null;
   r._wipe = { k: r.deaths.length, v }; return v; }
 // (how a page names the cut: "when the wipe was called (more dead than any kill survived)", or the old "2nd death (Name)")
-const cutLbl = (c) => (c && c.auto ? 'when the wipe was called (' + WIPE_WHY[c.why] + ')' : c ? 'the ' + ordinal(c.n) + ' death (' + esc(c.who) + ')' : '');
+const wipeSay = (c) => (c.why === 'line' && c.nd != null ? c.nd + ' dead' + (c.tk ? (c.tk > 1 ? ' (both tanks, each counts as 2)' : ' (a tank, who counts as 2)') : '') + (c.ch ? ' with ' + c.ch + (c.ch > 1 ? ' battle rezzes' : ' battle rez') + ' up' : '') + ', and no kill of this boss survived more than ' + c.max + ' at this point' : WIPE_WHY[c.why]);
+const cutLbl = (c) => (c && c.auto ? 'when the wipe was called: ' + wipeSay(c) : c ? 'the ' + ordinal(c.n) + ' death (' + esc(c.who) + ')' : '');
+// (the picture: this pull's dead count (white) against the most any kill survived at each moment, battle rezzes counted (blue, dashed);
+//  the wipe is called where white goes over blue; after it is faded. Only for a boss with a kill line.)
+function wipePic(r, c) { const L = wipeLine(r); if (!L || L.open || !c || !c.auto) return ''; const n = raidSizeOf(r) || 20, dur = Math.max(1, r.duration), W = 320, H = 56, P = 3;
+  const ev = r.deaths.map((d) => [d.t, 1, d.guid]).concat((r.rezzes || []).map((z) => [z.t, -1, z.guid])).sort((a, b) => a[0] - b[0] || a[1] - b[1]), dead = new Set(), pts = [[0, 0]]; let used = 0;
+  const wt = wipeWeights(r); for (const [t, s, g] of ev) { if (s < 0) { if (dead.delete(g)) used++; } else dead.add(g); let x = 0; for (const q of dead) x += wt(q); pts.push([t, x, used]); }
+  const allow = []; let u = 0, j = 0; for (let t = 0; t <= dur; t += 2) { while (j < pts.length && pts[j][0] <= t) { u = pts[j][2] || u; j++; } const l = wipeLim(L, t); allow.push([t, isFinite(l) ? Math.floor((l - (L.m ?? 0)) * n / 20 + 1e-9) + wipeCharges(t, n, u) : null]); }
+  const top = Math.max(4, Math.min(Math.ceil(n / 2), Math.max(...pts.map((p) => p[1]), ...allow.map((a) => a[1] || 0)) + 1)), X = (t) => (P + (W - 2 * P) * t / dur).toFixed(1), Y = (v) => (H - P - (H - 2 * P) * Math.min(v, top) / top).toFixed(1);
+  let dp = 'M' + X(0) + ' ' + Y(0); for (let i = 1; i < pts.length; i++) dp += ' H' + X(pts[i][0]) + ' V' + Y(pts[i][1]); dp += ' H' + X(dur);
+  let ap = '', on = false; for (const [t, v] of allow) { if (v == null) { on = false; continue; } ap += (on ? ' H' + X(t) + ' V' : ' M' + X(t) + ' ') + Y(v) + (on ? '' : ''); if (!on) ap = ap.replace(/ M([\d.]+) ([\d.]+)$/, ' M$1 $2'); on = true; }
+  const cx = X(c.t), tip = 'White: players dead (a tank counts as 2). Blue: the most dead any kill of this boss survived at that moment, plus battle rezzes still up. The wipe is called where white goes over blue (' + T(c.t) + ').';
+  return '<span class="wpic-w"><svg class="wpic" viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" role="img" aria-label="' + esc(tip) + '"><title>' + esc(tip) + '</title><rect x="' + cx + '" y="0" width="' + Math.max(0, W - cx) + '" height="' + H + '" class="wpic-after"/><path d="M' + P + ' ' + (H - P) + ' H' + (W - P) + '" class="wpic-ax"/>' + (ap ? '<path d="' + ap.trim() + '" class="wpic-k"/>' : '') + '<path d="' + dp + '" class="wpic-d"/><path d="M' + cx + ' 0 V' + H + '" class="wpic-c"/></svg>' +
+    '<span class="wpic-key"><i class="wk-d"></i>dead' + (r.deaths.some((d) => wt(d.guid) > 1) ? ' (a tank counts as 2)' : '') + ' <i class="wk-k"></i>most any kill survived, plus battle rezzes up</span></span>'; }
 function cutInfo(r) {
   const n = deathCutN(); if (!n || !r || r.item.kill) return null;
   const w = wipeAt(r); if (w !== undefined) return w; /* (the wipe call (Oct 23); a boss without a kill line yet keeps the old Nth death) */
@@ -23006,7 +23033,7 @@ function audit() {
   if (!(r.module && !r.module.error && r.module.sections && r.module.sections.length)) h += '<div class="nomod"><b>Mechanic checks for ' + esc(r.item.boss) + ' aren\'t built yet.</b> This pull shows deaths, defensives, potions and Healthstones, the raid cooldowns timeline and interrupts.</div>';
   // the wipe filter as one quiet line: where this pull's audit stops (the setting itself is on the tab bar, just above)
   h += '<div class="cutbar' + (cut ? ' on' : '') + '"><span class="cutnow">' + (r.allPulls ? (deathCutN() ? 'Each wipe counts up to <b>its wipe call</b>, and a kill counts in full' : '<b>The wipe filter is off</b>, so every pull counts in full') : cut ? '<b>Counted up to ' + T(cut.t) + '</b>, ' + cutLbl(cut) + '. Anything after it is left out.' /* (plain words (Oct 23 tidy): "85 results after it aren't counted" was jargon) */
-      : r.item.kill ? '<b>Kill</b>, so the whole pull is checked' : deathCutN() ? 'Fewer than ' + deathCutN() + ' deaths, so the whole pull is checked' : 'The wipe filter is off, so the whole pull is checked') + '</span></div>';  // Highest-priority fixes first: problems, then some mistakes, then clean; within each, the most flagged rows first.
+      : r.item.kill ? '<b>Kill</b>, so the whole pull is checked' : deathCutN() ? 'Fewer than ' + deathCutN() + ' deaths, so the whole pull is checked' : 'The wipe filter is off, so the whole pull is checked') + '</span>' + (r.allPulls ? '' : wipePic(r, cut)) + '</div>';  // Highest-priority fixes first: problems, then some mistakes, then clean; within each, the most flagged rows first.
   // Interrupts (shown here instead of their own tab) are ranked the same way.
   const rank = { bad: 0, warn: 1, good: 2 };
   const missedN = (r.kicks || []).reduce((s, k) => s + k.missed, 0);
@@ -23718,7 +23745,7 @@ function audit() {
     const wipe = cl.map((c, i) => { const last = i === cl.length - 1 && !r.item.kill, n = dts.filter((t) => t >= c.a && t <= c.b).length, z = last ? end : Math.max(c.b, c.a + 3);
       return '<div class="mcx-wipe' + (last ? ' end' : '') + '" style="left:' + X(c.a) + ';width:calc((100% - var(--lw)) * ' + ((z - c.a) / end).toFixed(4) + ')" title="' + esc(last ? 'The wipe started here: ' + n + ' deaths from ' + T(c.a) + '.' : n + ' deaths in ' + Math.max(1, Math.round(c.b - c.a)) + ' seconds, from ' + T(c.a) + '.') + '"><span>' + (last ? 'Wipe started' : n + ' deaths') + '</span></div>'; }).join('');
     const over = tp.filter(({ p }) => p.start > 0 && p.start < end).map(({ p }) => '<i class="mcx-pl" style="left:' + X(p.start) + '"></i>').join('') + ticks.map((t) => '<i class="mcx-tk" style="left:' + X(t) + '"></i>').join('') +
-      (cut && cut.t < end ? '<div class="mcx-cut" style="left:' + X(cut.t) + '" title="' + esc('The wipe filter: counted up to ' + T(cut.t) + ', the ' + ordinal(cut.n) + ' death. What comes after is not counted.') + '"><span>Counted to ' + T(cut.t) + '</span></div>' : '');
+      (cut && cut.t < end ? '<div class="mcx-cut" style="left:' + X(cut.t) + '" title="' + esc('Counted up to ' + T(cut.t) + ', ' + (cut.auto ? 'when the wipe was called: ' + wipeSay(cut) : 'the ' + ordinal(cut.n) + ' death') + '. What comes after is not counted.') + '"><span>Counted to ' + T(cut.t) + '</span></div>' : '');
     const axis = '<div class="mcx-ax2">' + [0].concat(ticks, [end]).map((t, i, l) => '<span class="' + (i === 0 ? 'a0' : i === l.length - 1 ? 'a1' : '') + '" style="left:' + X(t) + '">' + T(t) + '</span>').join('') + '</div>';
     return head + '<div class="mcx-lanes">' + band + rows + wipe + over + axis + '</div></div>'; });
   const refAt = h.length; let dbMore = ''; // (where the reference panels start: they're gathered into one card below)
@@ -39858,7 +39885,7 @@ function player() {
   // the wipe filter as one quiet line, as on Mechanics: where this pull (or every pull) stops counting
   const n = deathCutN(), cut = cutInfo(r);
   const cutLine = '<div class="cutbar' + (cut && v === 'pull' ? ' on' : '') + '"><span class="cutnow">' + (v === 'night' ? (n ? 'Each wipe counts up to <b>its wipe call</b>, and a kill counts in full' : '<b>The wipe filter is off</b>, so every pull counts in full')
-      : cut ? 'Grades count up to <b>' + T(cut.t) + '</b>, ' + cutLbl(cut) : it.kill ? '<b>Kill</b>, so the whole pull counts' : n ? 'Fewer than ' + n + ' deaths, so the whole pull counts' : '<b>The wipe filter is off</b>, so the whole pull counts') + '</span></div>';
+      : cut ? 'Grades count up to <b>' + T(cut.t) + '</b>, ' + cutLbl(cut) : it.kill ? '<b>Kill</b>, so the whole pull counts' : n ? 'Fewer than ' + n + ' deaths, so the whole pull counts' : '<b>The wipe filter is off</b>, so the whole pull counts') + '</span>' + (v === 'pull' ? wipePic(r, cut) : '') + '</div>';
   // (one pull or the whole night, switched on top of the page, next to the wipe filter's line)
   const sw = isBoss ? '<div class="seg plsw" role="tablist" aria-label="Pulls shown"><button data-v="all"' + (v === 'night' ? ' class="on"' : '') + '>All pulls<span class="n">' + pulls.length + '</span></button><button data-v="pull"' + (v === 'pull' ? ' class="on"' : '') + '>Pull #' + it.pull + '<span class="n">' + (it.kill ? 'kill' : 'wipe') + '</span></button></div>' : '';
   const cached = S.plData && S.plData.key === key ? S.plData : null;
@@ -41049,7 +41076,7 @@ function bhCutChip() { return '<span class="bh-cut" id="bhCut"></span>'; }
 // opens a box under it with the filter itself and its ? help. The box sits just under the banner (whose art is clipped),
 // is placed under the button when it opens, and stays open while you change the number.)
 function bhCutBtn() { const n = deathCutN(); return '<button class="bhp-cut' + (n ? '' : ' off') + '" type="button" id="bhCutB" aria-haspopup="true" aria-expanded="' + !!S.cutOpen + '" aria-controls="bhCutBox" title="' + (n ? 'On a wipe, nothing after the wipe call counts: the moment more were dead than any kill survived, the damage check was missed, or half the raid was dead. A kill counts in full.' : 'Off: every pull counts in full') + '"><svg class="cs-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 4.5h11.5l-2.6 4 2.6 4H6"/></svg><span class="bhp-cl">' + (n && S.rep && cutInfo(S.rep) ? 'Wipe called at ' : 'Wipe call: ') + '</span><b>' + (!n ? 'off' : S.rep && cutInfo(S.rep) ? T(cutInfo(S.rep).t) : 'on') + '</b></button>'; }
-const bhCutBox = () => '<div class="bhp-cw"><div class="bhp-cbox" id="bhCutBox"' + (S.cutOpen ? '' : ' hidden') + '><span class="bh-cut" id="bhCut"></span><div class="bh-cutpop" id="bhCutPop" hidden></div></div></div>';
+const bhCutBox = () => '<div class="bhp-cw"><div class="bhp-cbox" id="bhCutBox"' + (S.cutOpen ? '' : ' hidden') + '>' + (() => { const r = S.rep, c = r && !r.allPulls ? cutInfo(r) : null; return c && c.auto ? '<div class="bhp-cwhy"><b>Wipe called at ' + T(c.t) + '</b>: ' + esc(wipeSay(c)) + '.' + wipePic(r, c) + '</div>' : ''; })() + '<span class="bh-cut" id="bhCut"></span><div class="bh-cutpop" id="bhCutPop" hidden></div></div></div>';
 function bhCutPlace() { const box = $('#bhCutBox'), b = $('#bhCutB'); if (!box || !b) return; b.setAttribute('aria-expanded', String(!box.hidden)); if (box.hidden) return;
   const hb = box.parentNode.getBoundingClientRect(), r = b.getBoundingClientRect(); box.style.top = Math.round(r.bottom - hb.top + 8) + 'px'; box.style.right = Math.max(0, Math.round(hb.right - r.right)) + 'px'; }
 document.addEventListener('click', (e) => { const t = e.target, box = $('#bhCutBox'); if (!box || !t || !t.closest) return;

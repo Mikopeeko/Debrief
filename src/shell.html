@@ -1148,7 +1148,11 @@ button.dchip { cursor: pointer; } button.dchip:hover { filter: brightness(1.15);
 .nomod { margin: 0 0 14px; padding: 12px 14px; border-radius: 12px; border: 1px solid #2c3a52; background: rgba(106,168,255,.07); font-size: 14px; color: #c9d4e6; line-height: 1.5; } .nomod b { color: #e6eefc; }
 .nsp-names { margin: -4px 0 14px; padding: 8px 12px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line); font-size: 13px; color: #c9ced8; }
 .cutbar { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 14px; padding-top: 8px !important; padding-bottom: 8px !important; } .cutbar .cutset { margin: 0 !important; } .cutbar .cutnow { margin: 0 !important; font-size: 13px; color: #aeb5c2; }
-.cutbar .cutwhy { flex-basis: 100%; }.cdfold > summary { cursor: pointer; list-style: revert; } .cdfold > summary b { margin-right: 6px; }
+.cutbar .cutwhy { flex-basis: 100%; }
+/* (the wipe call picture: white dead count, blue dashed kill line, faded after the call (Oct 23)) */
+.wpic { display: block; flex: 0 0 auto; max-width: 100%; height: auto; } .wpic-d { fill: none; stroke: var(--text, #ece8df); stroke-width: 1.8; } .wpic-k { fill: none; stroke: var(--blue); stroke-width: 1.2; stroke-dasharray: 3 2; } .wpic-c { stroke: var(--blue); stroke-width: 1; } .wpic-ax { stroke: var(--line, #2a2f3c); stroke-width: 1; } .wpic-after { fill: #0f1117; opacity: .55; }
+.wpic-w { display: flex; flex-direction: column; gap: 3px; flex: 0 0 auto; max-width: 100%; } .wpic-key { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 5px; flex-wrap: wrap; } .wpic-key i { display: inline-block; width: 14px; height: 0; border-top: 2px solid var(--text, #ece8df); } .wpic-key i.wk-k { border-top: 2px dashed var(--blue); margin-left: 8px; }
+.bhp-cwhy { font-size: 13px; line-height: 1.45; margin: 0 0 10px; max-width: 300px; } .bhp-cwhy .wpic { margin-top: 6px; }.cdfold > summary { cursor: pointer; list-style: revert; } .cdfold > summary b { margin-right: 6px; }
 .noteempty { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 16px; } .noteempty b { margin-right: 6px; }
 /* written summary under each mechanic: one box, a short paragraph per verdict */
 /* (a Mechanics table's fine rows, folded under the others) */

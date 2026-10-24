@@ -46,3 +46,14 @@ per 30 s, a minute either side, never fewer than earlier.
 ## Scripts (scratchpad wipe/, copies in the shared notes deaths-audit/)
 gather.js, xev-route.js (research-only route on the practice alias "wiperes"), eval.js, mk-lines.js, wipe-fn.txt + wipe-call.js
 (the site change), wipe-test.js, ours.js / ourcalls.js / viz.js (the per-pull picture for the user).
+
+## Round 2 (Oct 23)
+The user: "Make it perfect, make it happen. Do whatever you can" after the list of improvements. Shipped:
+- **A dead tank counts as 2** (lines rebuilt with the same weight: `wipe/mk-lines2.js` from `lab2.js` WT=2,1). On the 800 kills: 14 wrong calls instead of 15; last night P10 and P19 were called sooner (P19 at the tank death, 3 deaths, instead of at 20).
+- **Normal and LFR:** no kill line (WIPE_OPEN): the whole pull counts until half the raid is dead or the damage check is missed.
+- **The why line and picture** (`wipeSay`, `wipePic`): "Counted up to 3:55, when the wipe was called: 3 dead, and no kill of this boss survived more than 2 at this point", and a 240×44 chart (white dead count, blue dashed kill line plus battle rezzes, faded after the call) on Breakdown/Debriefing, the player page and the header's wipe call box.
+Tested and left out:
+- **Time into each phase instead of the clock** (phase changes from Warcraft Logs for all 752 reports, `wipe/phgather.js` + `/api/xph` on the research alias). Early wrong calls fell from 9 to 4 of 800, but late ones rose and our Coiled Altar pulls got called later (P6 and P24 at 5 dead). It also only works for Warcraft Logs pulls. Not worth it on these bosses; re-test next tier.
+- **A healer counting as 1.5:** more wrong calls, no earlier calls.
+- **Boss health instead of time:** no boss health for the kills without ~800 heavy downloads; the damage check already catches a slow pull.
+- **Wipes as a second check:** the kills were picked for many deaths, so "9 of 10 pulls like this wiped" would be skewed.
