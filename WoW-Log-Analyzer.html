@@ -15684,6 +15684,7 @@ const PATCH_NOTES = [
     { t: 'The wipe is called for you', d: 'No more "stop at the 2nd death". Debrief now calls the wipe at the moment no raid has ever come back from: more people dead than any kill of that boss survived at that point (battle rezzes counted), the damage check missed, or half the raid dead. Everything before it counts, so the deaths and mistakes that lost the pull are graded. Tested on 760 kills: it never calls a wipe on a pull that was won.' },
     { t: 'A shorter debrief', d: 'Each pull now opens like a raid lead\'s debrief: what went well, what went wrong (click a line for its map and details) and the one thing for next pull. The extra drawers are gone; the timeline, raid cooldowns and burst windows sit in the open below the phases.' },
   ], n: [
+    'Rotation leaves out rows that told you nothing new: Opener DPS, Procs wasted in your burst window (the procs have their own row), Mana from others, Casting pace during Avenging Wrath, and Past the falloff point when it was fine.',
     'Report card: click a raider\'s name and their checklist opens right under it, with a bar on every check. A mistake opens a list of the pulls it happened in, one click to that pull. Externals like Blessing of Sacrifice are now a bonus: they add to your grade when you use them well and never take points away.',
     'Debriefing with a player picked now has the same four cards as the raid view, written for that player: what went wrong for you, what you did well, and what got worse or better than your last pull.',
     'The wipe is called one death sooner: as soon as more people are dead than any kill of that boss survived with (no extra cushion). On The Coiled Altar that is usually 4 deaths instead of 5. Kith\'ix Heroic now gets its own wipe call too.',
@@ -15720,6 +15721,7 @@ const PATCH_NOTES = [
     'A little Halloween spirit on the site until Nov 1 🎃',
     'The coach box is tidier: the thing to focus on next pull is said once, on the first card. Each Next time is one short instruction (open the card for the rest), cards carry at most one tag, and what went right is a short plain list.',
   ], f: [
+    'Holy Priest: Divine Hymn counted every tick of the channel as a press ("12 of a possible 13"). It counts one press per channel now.',
     'Debriefing: with a player picked, the bottom rows (Healthstones, Defensives, Combat potions, Raid cooldowns) show only that player, each with its icon and bar. On All pulls, Deaths is scored per pull instead of reading 0%.',
     'A note cooldown pressed too early now says to hold it for its reminder, instead of telling you to turn the reminder on.',
     'Debriefing maps: each thing that went wrong shows its own map again when it has one (the adds, Dreadmarch and the rest), on All pulls too with the pull it came from. When there is no map, the line says so.',
@@ -31063,7 +31065,7 @@ function hpalChecks(reps, name, one) {
     const acts = rows.flatMap((s) => s.act || []), dmg = rows.flatMap((s) => s.dmg || []), tr2 = rows.reduce((v, s) => v + (s.bvTr || []).reduce((w, y) => w + y, 0), 0), pl = rows.reduce((v, s) => v + (s.bvPil || []).reduce((w, y) => w + y, 0), 0);
     const nW = rows.reduce((v, s) => v + (s.bvTr || []).length, 0), allH = sum((s) => s.healTot), tot = tr2 + pl, dtW = rows.reduce((v, s) => v + (s.bw || []).filter((w) => w.dt).length, 0);
     if (acts.length) { const f = acts.reduce((v, y) => v + y, 0) / acts.length, d = dmg.length ? dmg.reduce((v, y) => v + y, 0) / dmg.length : null;
-      add(g3, f >= 0.75 ? 'ok' : f >= 0.5 ? 'warn' : 'bad', 'Beacon of Virtue', 'Your Beacon of Virtue windows', pct(f), 'You spent ' + pct(f) + ' of each window casting' + (d != null ? ', and the raid took ' + d.toFixed(1) + ' times its usual damage during them' : '') + '.' + (tot >= 1000 && nW ? ' They healed ' + C(tot) + ' through your Beacons, about ' + C(tot / nW) + ' each, ' + pct(tot / Math.max(1, allH)) + ' of your healing.' : '') , 'act',
+      add(g3, f >= 0.75 ? 'ok' : f >= 0.5 ? 'warn' : 'bad', 'Beacon of Virtue', 'Beacon of Virtue windows', pct(f), 'You spent ' + pct(f) + ' of each window casting' + (d != null ? ', and the raid took ' + d.toFixed(1) + ' times its usual damage during them' : '') + '.' + (tot >= 1000 && nW ? ' They healed ' + C(tot) + ' through your Beacons, about ' + C(tot / nW) + ' each, ' + pct(tot / Math.max(1, allH)) + ' of your healing.' : '') , 'act',
         'Each box is one Beacon of Virtue window. Hover it for what it healed, whether Divine Toll went in, how much of it you spent casting, and every spell you cast in it. The grade is how much of the 9 seconds you spent casting. 75% is good and all of it perfect, one step better with Divine Toll in it. Its healing is what your Beacons passed on to its targets during it' + (pl >= 1000 ? ', plus Pillars of Light\'s instant heal' : '') + '. The times listed are the windows under 75%.'); }
     const bwG = (w) => Math.min(3, (w.act >= 0.999 ? 3 : w.act >= 0.75 ? 2 : w.act >= 0.5 ? 1 : 0) + (w.dt || (roth && w.am) ? 1 : 0)), GN = ['Weak', 'Okay', 'Good', 'Perfect'], bws = rows.flatMap((s) => (s.bw || []).map((w) => ({ ...w, pull: s.pull })));
     if (bws.length) bwD = { bws, bwG, GN };
@@ -32017,7 +32019,7 @@ function bossRot(o) {
       for (const sp of big) hits.push({ pull: r.item.pull, a: sp.a, b: sp.b, x: sp.pk, top: sp.top, cd: mine.filter((u) => u.t >= sp.a - 6 && u.t <= sp.b).map((u) => u.cd) });
       for (const u of mine) cds.push({ pull: r.item.pull, t: u.t, cd: u.cd, inHit: spans.some((sp) => u.t >= sp.a - 6 && u.t <= sp.b) }); }
     if (hits.length && cds.length) { const g = { t: 'The boss\'s big hits', l: [] }; out.groups.push(g); const nIn = cds.filter((c) => c.inHit).length, f = nIn / cds.length, cov = hits.filter((h) => h.cd.length).length;
-      add(g, { st: f >= 0.5 ? 'ok' : f >= 0.3 || cds.length < 3 ? 'warn' : 'bad', ic: 'Aura Mastery', label: 'Cooldowns into the big hits', v: nIn + '<span>/' + cds.length + '</span>', k: 'boss:hits',
+      add(g, { st: f >= 0.5 ? 'ok' : f >= 0.3 || cds.length < 3 ? 'warn' : 'bad', ic: 'Aura Mastery', label: 'Cooldowns on big damage', v: nIn + '<span>/' + cds.length + '</span>', k: 'boss:hits',
         sub: (cds.length === 1 ? (nIn ? 'Your healing cooldown went out' : 'Your healing cooldown didn\'t go out') : nIn + ' of your ' + cds.length + ' healing cooldowns went out') + ' in the heaviest damage of the pull' + (one ? '' : 's') + '. The cards show the heaviest moments' + (one ? '' : ' of each pull') + ', and which of yours went out in each.',
         how: 'Your healing cooldowns are worth the most when the raid takes the most damage, so one sent into a quiet moment is one you don\'t have when it hurts. A big hit is one of the heaviest stretches of the pull: 6 seconds in the top 15% for damage the raid took, and at least 1.3 times the usual. A cooldown counts when you pressed it up to 6 seconds before one or during it. Half or more is good, about what the top healers manage. With only 1 or 2 cooldowns in a pull, it\'s never red. When your raid note sends one somewhere else, follow the note.',
         mo: cds.filter((c) => !c.inHit).map((c) => ({ pull: c.pull, a: c.t })), tip: f < 0.5 ? 'Save your healing cooldowns for the boss\'s big hits. Learn when they come and press yours as they land.' : '' });
@@ -32036,7 +32038,13 @@ function bossRot(o) {
     out.MERGE['Talents for this boss'] = { ic: (TB[0].take || TB[0].skip)[0], main: 'boss:tal0', lead: 'Your guides change a few talents for this boss. Here is each swap and whether you made it.' }; }
   return out;
 }
+// (the Rotation audit (Oct 23): rows that tell the player nothing they can act on, or repeat another row, are left off every spec page:
+// Opener DPS (always higher than the pull's average, so it reads as good whatever you did), "Procs wasted in <burst window>" (the same
+// procs are already counted on their own row), Mana from others (not your doing), Casting pace during a cooldown (no target, and
+// "Casting in" says it better), and Past the falloff point when it only says that's fine)
+const SPC_CUT = (c) => /^(Opener DPS|Mana from others)$/.test(String(c.label)) || /^(Procs wasted in |Casting pace during )/.test(String(c.label)) || (String(c.label) === 'Past the falloff point' && c.st === 'na');
 function specPage(o) {
+  for (const g of o.groups) g.l = g.l.filter((c) => !SPC_CUT(c));
   // (Saves (your idea, Oct 20): on every healer's page, the same tile at the end of the Casting block, never graded)
   if (o.P0 && o.P0.role === 'healer') { let sv = null; try { sv = spcSaves(o); } catch (e) { sv = null; }
     if (sv) { o.groups.push({ t: 'Casting', l: [sv] }); o.VIZ = Object.assign({}, o.VIZ, { saves: () => sv.det });
@@ -32193,11 +32201,11 @@ function specPage(o) {
     return '<span class="rck-bar"><i style="width:' + Math.max(2, Math.min(100, f)).toFixed(1) + '%"></i>' + (t != null ? '<u style="left:' + Math.max(0, Math.min(100, t)).toFixed(1) + '%"></u>' : '') + '</span>'; };
   const ckTop = (c) => (TOPB && TOPB[c.k] != null && (one || TOPP.has(c.k)) ? t0(topCap(TOPB[c.k])) : '');
   const ckBody = (c) => { const hw = spcHw(c.k, c.how); return '<div class="rck-b"><p class="spc-rs">' + esc(c.sub) + hw[0] + '</p>' + hw[1] + (c.tip && c.st !== 'ok' && c.st !== 'na' ? '<p class="rck-tip"><b>Next time:</b> ' + esc(c.tip) + '</p>' : '') + viz(c) + (c.mo && c.mo.length ? momT(c, 8) : '') + '</div>'; };
-  const ckRow = (c) => { const tb = ckTop(c); return '<details class="rck-r ' + c.st + '" id="spc-r-' + slug(c.k) + '"><summary>' + icB(c.ic) + '<span class="rck-n no-ic"><b>' + esc(c.label) + '</b>' + (ckShort(c) ? '<span>' + esc(ckShort(c)) + '</span>' : '') + '</span>' + ckBar(c) +
+  const ckRow = (c) => { const tb = ckTop(c); return '<details class="rck-r ' + c.st + '" id="spc-r-' + slug(c.k) + '"><summary>' + icB(c.ic) + '<span class="rck-n no-ic"><b>' + esc(c.label) + '</b></span>' /* (rows short: name, bar, number) */ + ckBar(c) +
     '<span class="rck-v"><b>' + c.v + '</b>' + (tb ? '<small>top ' + esc(tb) + '</small>' : '') + '</span></summary>' + ckBody(c) + '</details>'; };
   const ckCh = []; for (const g of groups) { const n = g.ch || 'More'; let x = ckCh.find((y) => y.n === n); if (!x) ckCh.push(x = { n, l: [], det: [] }); x.l.push(...g.l.filter((c) => c.st !== 'na')); const inf = MERGE[g.t]; if (inf && inf.det) x.det.push([g.t, inf.det, inf.ic || (g.l[0] && g.l[0].ic) || g.t]); }
   const ckLab = (x) => { const w = x.l.filter((c) => c.st === 'warn' || c.st === 'bad').length, b = x.l.some((c) => c.st === 'bad'); return '<div class="rck-lab">' + esc(x.n) + (x.l.length ? ' <span class="rck-pl ' + (b ? 'bad' : w ? 'warn' : 'ok') + '">' + (w ? w + ' to tidy' : 'all done right') + '</span>' : '') + '</div>'; };
-  const ckDet = ([t, hh, ic]) => '<details class="rck-r na rck-x"><summary>' + icB(ic) + '<span class="rck-n no-ic"><b>' + esc(t) + '</b><span>Charts and the full breakdown</span></span><span class="rck-bar rck-nb"></span><span class="rck-v"><b>›</b></span></summary><div class="rck-b">' + hh + '</div></details>';
+  const ckDet = ([t, hh, ic]) => '<details class="rck-r na rck-x"><summary>' + icB(ic) + '<span class="rck-n no-ic"><b>' + esc(t) + ' charts</b></span><span class="rck-bar rck-nb"></span><span class="rck-v"><b>›</b></span></summary><div class="rck-b">' + hh + '</div></details>';
   const checklist = '<section class="rck"><h3 class="rck-h">Checklist <span class="sub">Green is done right, yellow is some mistakes, red is failed. The white line is what top players do.</span></h3>' +
     ckCh.filter((x) => x.l.length || x.det.length).map((x) => ckLab(x) + '<div class="rck-rs">' + x.l.map(ckRow).join('') + x.det.map(ckDet).join('') + '</div>').join('') + '</section>';
   const ckNa = checks.filter((c) => c.st === 'na');
@@ -33901,7 +33909,7 @@ function genRun(spec, D, reps, name, one) {
     // (each spell pressed on cooldown and each big cooldown, against how often it could have been pressed)
     { const forced = castForced(r, p);
       // (one1: a spell the log shows more than once a press, like Secret Technique's clones, counts once)
-      for (const q of rot.concat(cds)) { const n = lc(q.n), nms = nmsOf(q), ab = c.ab.filter((y) => nms.includes(lc(y.name))), a = ab[0], ts = ab.flatMap((y) => y.ts.filter((t) => t <= t1)).sort((u, w) => u - w).filter((t, i, z) => !q.one1 || !i || t - z[i - 1] > 0.9);
+      for (const q of rot.concat(cds)) { const n = lc(q.n), nms = nmsOf(q), ab = c.ab.filter((y) => nms.includes(lc(y.name))), a = ab[0], ts = ab.flatMap((y) => y.ts.filter((t) => t <= t1)).sort((u, w) => u - w).filter((t, i, z) => !q.one1 || !i || t - z[i - 1] > 0.9).filter(function (t) { if (!q.chan) return true; if (this.k != null && t - this.k < q.chan) return false; this.k = t; return true; }, {});
         const ci = a && !q.fix ? cdInfo(a.id) : null; if (ci === undefined) wait++; const tc = (q.cdT || []).find(([tn]) => tal(tn)), tch = (q.chT || []).find(([tn]) => tal(tn));
         let cd = tc ? tc[1] : ci && ci.cd >= 4 ? ci.cd : q.cd, ch = Math.max(tch ? tch[1] : q.ch || 1, ci && !tch ? ci.ch || 1 : 1); if (q.h) cd /= hasteF; const ch0 = ch; if (ch === 1 && ts.some((t, i) => i && t - ts[i - 1] < 0.5 * cd)) ch = 2;
         if (ch === 1 && a && !q.noSeen) { const sc = seenCd(r, p, a.name, cd); if (sc) cd = sc; const mg = Math.min(Infinity, ...ts.slice(1).map((t, i) => t - ts[i])); if (mg >= 0.75 * cd && mg < cd) cd = mg; }
@@ -34324,7 +34332,7 @@ function genRun(spec, D, reps, name, one) {
   if (OPEN) { const l = rows.filter((s) => s.openSteps), N = l.length;
     if (N) { const f = l.reduce((v, s) => v + s.openF, 0) / N, okF = OPEN.ok || 0.85, warnF = OPEN.warn || 0.6, s0 = l[l.length - 1], SQ = s0.openSq, nS = s0.openSteps.length, hits = s0.openSteps.filter((o) => o.pts === 1).length;
       const nm1 = (o) => (o.st.any ? o.st.any.join(' or ') : o.st.n), miss = s0.openSteps.map((o, i) => [o, i]).filter(([o]) => o.pts < 1), say = ([o, i]) => 'step ' + (i + 1) + ', ' + nm1(o) + (o.t == null ? (o.ord ? ' (out of order)' : ' (not in your opener)') : ' (not before the pull)');
-      const which = 'the guide opener for ' + (heroN ? heroN + ' on ' : '') + ((SQ.tgt || 1) > 1 ? 'two or more bosses' : 'one boss') + ' (' + (SQ.src || 'your guides') + ')';
+      const which = 'the ' + (heroN ? heroN + ' ' : '') + 'opener' + ((SQ.tgt || 1) > 1 ? ' for two or more bosses' : '');
       add(gO, f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', OPEN.ic || D.ic, 'Opener, step by step', N === 1 ? hits + '<span>/' + nS + '</span>' : pct(f), N === 1 ? 'You followed ' + hits + ' of the ' + nS + ' steps of ' + which + ', in order.' + (miss.length ? ' Missed: ' + andL(miss.map(say)) + '.' : '') : 'Over your ' + N + ' pulls you followed ' + pct(f) + ' of the steps of your guide opener, in order.', 'open',
         (OPEN.why ? OPEN.why + ' ' : '') + 'Debrief matches your casts in the first ' + (OPEN.len || 15) + ' seconds against the guide opener, step by step and in order. Other casts in between are fine. A step meant for before the pull counts half when it comes after. ' + okP(okF));
       // (steps in a row that take any of the same buttons read once: "3 of A, B, C or D, in any order", not the same list three times)
@@ -35460,7 +35468,7 @@ const GEN_SPECS = {
     rot: [{ n: 'Holy Word: Serenity', cd: 60, chT: [['Miracle Worker', 2]], ok: 0.75, warn: 0.6, why: 'Your Holy Words are your strongest spells, and your other heals bring them back faster. Don\'t sit on full charges.' }, { n: 'Holy Word: Sanctify', cd: 60, chT: [['Miracle Worker', 2]], ok: 0.75, warn: 0.6, why: 'Holy Word: Sanctify, your group heal, as often as it\'s ready when healing is needed.' },
       { n: 'Prayer of Mending', cd: 12, h: true, ok: 0.8, warn: 0.6, why: 'Press Prayer of Mending on cooldown.' }, { n: 'Halo', cd: 60, ok: 0.8, warn: 0.6, why: 'Press Halo on cooldown, when healing is needed.' }],
     procs: [{ n: 'Surge of Light', use: ['Flash Heal', 'Prayer of Healing'], max: 2, why: 'Surge of Light makes your next Flash Heal (or, as Archon, Prayer of Healing) free and instant. Both guides: spend it before it caps at 2.' }, { n: 'Benediction', use: ['Benediction'], max: 2, okW: 0.2, warnW: 0.4, why: 'Wowhead: do not let Benediction cap at 2 stacks. Each one is a stronger Flash Heal with a Cosmic Ripple.' }],
-    cds: [{ n: 'Apotheosis', cd: 120, ok: 0.6, warn: 0.3, why: 'Use Apotheosis for heavy damage.' }, { n: 'Divine Hymn', info: true, cd: 180, cdT: [['Seraphic Crescendo', 120]], ok: 0.6, warn: 0.3, why: 'Use Divine Hymn when your raid note calls for it.' }],
+    cds: [{ n: 'Apotheosis', cd: 120, ok: 0.6, warn: 0.3, why: 'Use Apotheosis for heavy damage.' }, { n: 'Divine Hymn', info: true, chan: 8, cd: 180, cdT: [['Seraphic Crescendo', 120]], ok: 0.6, warn: 0.3, why: 'Use Divine Hymn when your raid note calls for it.' }],
     lead: { rot: 'Keep your Holy Words on cooldown. They are your most powerful spells.', procs: 'Spend Surge of Light and Benediction before they cap at 2.', cds: 'Your raid note decides the big cooldowns.', pre: 'A weapon oil, before every pull.' } },
   'Restoration Shaman': { ic: 'Riptide', top: 'Restoration Shamans',
     pre: [{ k: 'wsh', n: 'Water Shield', self: true, why: 'Both guides: keep Water Shield on yourself.', tip: 'Put Water Shield on before the pull.' },
@@ -36579,7 +36587,7 @@ SPEC_BOOK['Holy Paladin'] = {
       'Holy Shock and Judgment': [['Judgment while Holy Shock was full', 'Judgment pressed while Holy Shock was full']],
       'Holy Power': [['Eternal Flame over Light of Dawn', 'Holy Power spent on Eternal Flame'], ['Holy Power spent', 'Holy Power spent'], ['At 5 Holy Power', 'Time sitting at 5 Holy Power']],
       'Infusion of Light and Flash of Light': [['Divine Purpose', 'Divine Purpose procs wasted'], ['Infused Flash of Light on a Beacon', 'Infused Flash of Light on a Beacon'], ['Infusion of Light: Judgment', 'Infusions spent on Judgment']],
-      'Beacon of Virtue': [['Divine Toll inside Beacon of Virtue', 'Divine Toll inside Beacon of Virtue'], ['Your Beacon of Virtue windows', 'Time casting during Beacon of Virtue'], ['Divine Toll uses', 'Divine Toll uses']],
+      'Beacon of Virtue': [['Divine Toll inside Beacon of Virtue', 'Divine Toll inside Beacon of Virtue'], ['Beacon of Virtue windows', 'Time casting during Beacon of Virtue'], ['Divine Toll uses', 'Divine Toll uses']],
       Mana: [],
       'Avenging Wrath': [['Avenging Wrath uses', 'Avenging Wrath uses']],
       'Aura Mastery': [['Aura Mastery uses', 'Aura Mastery uses']],
