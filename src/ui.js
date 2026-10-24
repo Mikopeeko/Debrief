@@ -1764,6 +1764,7 @@ const PATCH_NOTES = [
     { t: 'The wipe is called for you', d: 'No more "stop at the 2nd death". Debrief now calls the wipe at the moment no raid has ever come back from: more people dead than any kill of that boss survived at that point (battle rezzes counted), the damage check missed, or half the raid dead. Everything before it counts, so the deaths and mistakes that lost the pull are graded. Tested on 760 kills: it never calls a wipe on a pull that was won.' },
     { t: 'A shorter debrief', d: 'Each pull now opens like a raid lead\'s debrief: what went well, what went wrong (click a line for its map and details) and the one thing for next pull. The extra drawers are gone; the timeline, raid cooldowns and burst windows sit in the open below the phases.' },
   ], n: [
+    'Graphs: pick a phase (or the whole pull), each player\'s parse sits on their bar, the player filter opens that player, and the old detail pages are gone: every link lands on the tabs.',
     'Debriefing: names in class colours and every moment coloured by how it went; Power Infusion and Innervate count for anyone who has the spell; Combat potions shows the potion your raid drank; Twin Fangs\' second Corrosive Spit now says the add lived too long instead of blaming the target.',
     'Rotation priority shows each slip as a picture: what you pressed, crossed out, an arrow to what was better, and how often.',
     'Healers: Cooldowns on big damage shows the pull as a strip, each big hit green when one of your cooldowns met it and red when none did.',
