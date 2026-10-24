@@ -2217,6 +2217,8 @@ function buildNymrissa(ev, r, h) {
   // everyone back, and anyone pushed into the water is bitten by the sharks (Wild Bite) ----
   { const pops = clusters(dmgId([NY.popHit]), 5).map((c) => c.t), wh = dmgId([NY.whirlHit]);
     const bite = ev.filter((e) => e.id === NY.bite && h.isPlayer(e.dst) && (e.k === 'dmg' || (e.k === 'aura' && e.op === 'apply'))).sort((a, b) => a.t - b.t);
+    /* (Mechanics audit, Oct 24: every top kill had a player or two clipped and living (sometimes the same one twice), so living is a note, a death red) */
+    const popN = new Map();
     const groups = pops.map((p, i) => {
       const t0 = Math.max(0, i ? pops[i - 1] + 15 : 0, p - 20), wi = new Map(), bi = new Map();
       for (const e of wh.filter((x) => x.t >= t0 && x.t <= p + 1)) if (!wi.has(e.dst)) wi.set(e.dst, e.t);
@@ -2225,7 +2227,8 @@ function buildNymrissa(ev, r, h) {
       const rows = who.map((g) => {
         const tw = wi.get(g), tb = bi.get(g), t1 = tw ?? tb, d = r.deaths.find((x) => x.guid === g && x.t >= t1 - 0.2 && x.t <= p + 15 && /whirlpool|wild bite|pop!/i.test(x.ability || ''));
         if (d) M(d.t, pname(g), tb != null ? 'Wild Bite' : 'Swirling Whirlpools', tb != null ? NY.bite : NY.whirlHit, 'High', 'Died to ' + d.ability + ' at Pop! ' + (i + 1) + '.', tb != null ? 'Stand where Pop!\'s knockback keeps you on land, and get out of the water at once.' : 'Find the one gap in the whirlpools and stand in it before they surge in.');
-        return [{ p: pname(g) }, { t: t1 }, { txt: [tw != null ? 'hit by a whirlpool' : '', tb != null ? 'knocked into the water' : ''].filter(Boolean).join(' and '), warn: !d }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }];
+        const nth = (popN.get(g) || 0) + 1; popN.set(g, nth);
+        return [{ p: pname(g) }, { t: t1 }, { txt: [tw != null ? 'hit by a whirlpool' : '', tb != null ? 'knocked into the water' : ''].filter(Boolean).join(' and '), dim: !d, sub: nth > 1 ? 'again (' + nth + ' times)' : '' }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }];
       }).sort((a, b) => a[1].t - b[1].t);
       // (the map: a red flash on each whirlpool hit, a blue one on each shark bite, everyone moving from 12 s before the pop)
       const rings = [...wi].map(([g, at]) => ({ guid: g, r: 2.2, color: '#ff3b3b', fill: 'rgba(255,59,59,.25)', label: '', t0: at, dur: 1.5, cn: 'Red flash', legend: 'hit by a whirlpool' }))
@@ -2338,8 +2341,9 @@ function buildKithix(ev, r, h) {
       const by = new Map(); for (const e of c.list) if (!by.has(e.dst)) by.set(e.dst, e);
       const no = [...by.values()].filter((e) => !upAt(emb, e.dst, e.t + 0.05) && e.amt > 0);
       const rows = no.map((e) => { const d = diedNear(e.dst, e.t, 2);
-        M(e.t, pname(e.dst), 'Extinguish', d ? 'High' : 'Medium', 'Took Extinguish without a Light\'s Embrace mote (' + fmtM(e.amt) + ')' + (d ? ', and died.' : '.'), 'Grab a Light\'s Embrace mote before Extinguish finishes casting. No mote left: use a defensive.');
-        return [{ p: pname(e.dst) }, { t: e.t }, { txt: 'no mote, took ' + fmtM(e.amt), bad: !!d, warn: !d }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }]; });
+        /* (Mechanics audit, Oct 24: every top kill had 1 to 4 players take it without a mote and live (a defensive does it), so living is a note) */
+        M(e.t, pname(e.dst), 'Extinguish', d ? 'High' : 'Low', 'Took Extinguish without a Light\'s Embrace mote (' + fmtM(e.amt) + ')' + (d ? ', and died.' : '.'), 'Grab a Light\'s Embrace mote before Extinguish finishes casting. No mote left: use a defensive.');
+        return [{ p: pname(e.dst) }, { t: e.t }, { txt: 'no mote, took ' + fmtM(e.amt), bad: !!d, dim: !d }, d ? { txt: 'died', bad: true } : { txt: 'lived', dim: true }]; });
       return { title: 'Extinguish ' + (i + 1) + ' (' + phOf(c.t) + ')', t: c.t, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[2].warn), sub: no.length ? pl(no.length, 'player') + ' without a mote' : 'everyone had a mote', rows };
     });
     if (groups.length) sections.push({ id: 'kxext', title: "Extinguish (Grab a mote)", place: "Extinguish: everyone holding Light's Embrace", spell: [KX.extinguish, 'Extinguish'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
@@ -2631,10 +2635,12 @@ function buildNekzali(ev, r, h) {
         if (along > 4 && along < d - 3 && off <= 5) inPath.push(p.guid); }
     }
     for (const g of inPath) M(c.t, pname(g), 'Possession Barrage', 'Low', 'Stood between Nek\'zali and the tank as Possession Barrage went out, so the spirits could burst on them early.', 'Stay behind the boss for Possession Barrage: nobody between Nek\'zali and the tank running out.');
-    return [{ p: tk ? pname(tk.dst) : '?' }, { t: c.t }, d != null ? { txt: Math.round(d) + ' yd from the boss', warn: close } : { txt: '—', dim: true }, { txt: who.size ? fmtM(tot / who.size) + ' each on average' : '—', sub: who.size ? pl(who.size, 'player') + ' hit' : '', dim: !who.size },
+    /* (Mechanics audit, Oct 24: 7 of 10 top kills had the tank closer than 25 yards (about 450k each instead of 250k) and still killed, so it's a note;
+       someone in the spirits' path stays yellow (no top kill had that)) */
+    return [{ p: tk ? pname(tk.dst) : '?' }, { t: c.t }, d != null ? { txt: Math.round(d) + ' yd from the boss', sub: close ? 'closer than 25 yards: more raid damage' : '' } : { txt: '—', dim: true }, { txt: who.size ? fmtM(tot / who.size) + ' each on average' : '—', sub: who.size ? pl(who.size, 'player') + ' hit' : '', dim: !who.size },
       inPath.length ? { txt: 'in the path: ' + inPath.map(pname).join(', '), warn: true } : { txt: d != null ? 'path clear' : '', dim: true }];
   });
-  if (pbRows.length) sections.push({ id: 'barrage', title: 'Possession Barrage (Tank steps away)', place: 'Possession Barrage (raid hit): tank far from the boss', spell: [NZ.barrage, 'Possession Barrage'], verdict: pbRows.some((x) => x[2].warn || x[4].warn) ? 'warn' : 'good',
+  if (pbRows.length) sections.push({ id: 'barrage', title: 'Possession Barrage (Tank steps away)', place: 'Possession Barrage (raid hit): tank far from the boss', spell: [NZ.barrage, 'Possession Barrage'], verdict: pbRows.some((x) => x[4].warn) ? 'warn' : 'good',
     summary: pl(pbRows.length, 'Possession Barrage') + '. It shows how far the tank stood from Nek\'zali when it went out, what it cost the raid, and anyone standing in the path of the spirits, between her and the tank.', cols: ['Tank', 'When', 'Distance', 'Raid damage', 'Path'], rows: pbRows });
 
   // ---- 6. the intermission: corpses coming back, the Hungering Pyre soaks, Soul Transfer, the Echoes of Jawae ----
@@ -4792,7 +4798,11 @@ function buildUlatek(ev, r, h) {
   const compass = (ux, uy) => ['east', 'north-east', 'north', 'north-west', 'west', 'south-west', 'south', 'south-east'][((Math.round(Math.atan2(uy, ux) / (Math.PI / 4)) % 8) + 8) % 8];
   // (each poison tick counts once, toward the latest hit on that player before it: a second wave on top restarts it)
   const tickOf = new Map(); for (const e of wvTicks) { const a = wvHits.filter((x) => x.dst === e.dst && x.t <= e.t + 0.2 && e.t - x.t <= 10.5).pop(); if (a) tickOf.set(a, (tickOf.get(a) || 0) + e.amt); }
+  /* (Mechanics audit, Oct 24: every top kill took 6 to 17 wave hits and lived (often the same player twice), so a hit a player survives is a note
+     (with how many times); a death is red. The damage itself still counts in Avoidable damage) */
+  const wvN = new Map();
   const waveRows = wvHits.map((a) => {
+    const nth = (wvN.get(a.dst) || 0) + 1; wvN.set(a.dst, nth);
     const me = posPts(a.t).find((p) => p.guid === a.dst);
     let src = null;
     if (me) for (const c of tailW) { if (a.t < c.t + 1 || a.t > c.t + 10) continue;
@@ -4807,10 +4817,10 @@ function buildUlatek(ev, r, h) {
     // of a kill isn't judged)
     if (died && r.item.kill && died.t >= dur - 20) return [{ t: a.t }, { ps: [pname(a.dst)] }, { txt: 'a wave in the last 20 s of the kill', dim: true }, { n: tickOf.get(a) || 0, sub: a.op === 'dose' ? 'a second wave on top' : '' }, { txt: 'died', dim: true, sub: 'the end of the kill' }];
     const from = src ? 'the tail\'s wave, heading ' + compass(src.ux, src.uy) : big ? (big.id === UL.waveBig[2] ? 'Ula\'tek\'s waves' : 'Ula\'tek and the tail\'s waves') : inc ? 'waves from ' + pname(inc.dst) + ' (Toxic Incubation)' : incT ? 'Toxic Incubation\'s waves' : 'not clear from the log';
-    return [{ t: a.t }, { ps: [pname(a.dst)], warn: true }, { txt: from }, { n: amt, sub: a.op === 'dose' ? 'a second wave on top' : '' }, { txt: died ? 'died' : '—', bad: !!died, dim: !died }];
+    return [{ t: a.t }, { ps: [pname(a.dst)], sub: nth > 1 ? 'hit ' + nth + ' times' : '' }, { txt: from }, { n: amt, sub: a.op === 'dose' ? 'a second wave on top' : '' }, { txt: died ? 'died' : '—', bad: !!died, dim: !died }];
   });
   const wvPl = new Set(wvHits.map((e) => e.dst)).size;
-  if (wvHits.length || tailW.length) sections.push({ id: 'waves', title: 'Caustic Waves (Dodge waves)', spell: S('caustic waves'), verdict: waveRows.some((x) => x[4].bad) ? 'bad' : waveRows.length ? 'warn' : 'good',
+  if (wvHits.length || tailW.length) sections.push({ id: 'waves', title: 'Caustic Waves (Dodge waves)', spell: S('caustic waves'), verdict: waveRows.some((x) => x[4].bad) ? 'bad' : 'good',
     summary: wvHits.length ? pl(wvHits.length, 'wave hit') + ' on ' + pl(wvPl, 'player') + (tailW.length ? ' (the tail surfaced ' + pl(tailW.length, 'time') + ')' : '') + '. Each row says which wave it was.' : 'Nobody was hit by Caustic Waves' + (tailW.length ? ' (the tail surfaced ' + pl(tailW.length, 'time') + ').' : '.'),
     cols: ['When', 'Hit', 'Which wave', 'Damage', 'Died'], rows: waveRows });
 
@@ -4933,7 +4943,7 @@ function buildUlatek(ev, r, h) {
     if (rv.length) M(rv[0].t, 'Raid', 'Revenge', UL.revenge, rvBad ? 'High' : 'Low', 'A Weakened Doomscale gained Revenge at ' + T(rv[0].t) + ' (another one died first: 100% more haste and damage)' + (rvBad ? ': ' + hurt + '.' : '.'),
       rvBad ? 'While a Doomscale has Revenge it casts twice as fast. Keep a kick ready for every Anguished Cry, keep its frontal off the raid, and kill the Doomscales together.' : 'Keep every Doomscale at the same health (call it out) and kill them together.');
     dsRows.push([{ t: set[0].t0 }, { txt: pl(set.length, 'Weakened Doomscale') }, { txt: ds.length ? 'killed ' + ds.map((t) => T(t)).join(', ') : 'not killed', dim: !ds.length },
-      { txt: rv.length ? 'Revenge' + (gap != null ? ' (' + Math.round(gap) + 's apart)' : '') : gap != null ? Math.round(gap) + 's apart' : '—', bad: rvBad, warn: rv.length > 0 && !rvBad, dim: !rv.length && gap == null,
+      { txt: rv.length ? 'Revenge' + (gap != null ? ' (' + Math.round(gap) + 's apart)' : '') : gap != null ? Math.round(gap) + 's apart' : '—', bad: rvBad, dim: !rvBad, /* (Mechanics audit, Oct 24: every top kill had Revenge with nothing getting through, so harmless Revenge is a note) */
         sub: rv.length ? (rvBad ? hurt : 'no Anguished Cry got through') : '' }]); });
   for (const x of rav) { M(x.t0, 'Raid', 'Ravenous Doomscale', UL.hatching, 'High', 'A Doomscale Egg hatched into a Ravenous Doomscale at ' + T(x.t0) + '.', 'Drop the small eggs into the cauldron first and the big Doomscale Egg last, before its timer runs out.');
     dsRows.push([{ t: x.t0 }, { txt: 'Ravenous Doomscale' }, { txt: 'a big egg hatched' }, { txt: 'a problem', bad: true }]); }

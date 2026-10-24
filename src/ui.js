@@ -1769,6 +1769,8 @@ const PATCH_NOTES = [
     { t: 'Debrief in game: a guided setup', d: 'The first time you log in, a short setup helps you pick a style and what your card shows, with a live preview beside it (/debrief setup opens it again). Long cards now split into two columns instead of running off the screen.' },
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
+    'Debriefing: the wipe is called the moment a wipe mechanic goes off (like a Guillotine with fewer than 5 under it, or a Serpent\'s Bite not fully soaked), and What wiped us names it. The deaths it caused still count. Every boss has its list, from mechanics no top guild\'s kill ever survived.',
+    'Fairer mechanic checks, measured on top guilds\' kills: living through Caustic Waves (Ula\'tek), Pop! (Nymrissa) or Extinguish without a mote (Kith\'ix) is a note, not a mistake, and so are a harmless Revenge on the Doomscales and a tank standing close for Possession Barrage. Dying to them still counts.',
     'Debrief in game: the Detailed card is always in two columns, the other styles split once they pass about two thirds of your screen (the PC pop-up too), and ticking a section in /db while on Simple now shows it',
     'Debrief in game: a death with a Healthstone or potion still unused now shows in Deaths, instead of a separate Died with one up line',
     'Debrief in game: a polish pass on the card (pull buttons for this boss only, tidier player arrows, no cut-off lines, hover highlights, a soft fade-in)',
@@ -1805,6 +1807,7 @@ const PATCH_NOTES = [
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
     'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
   ], f: [
+    'The Coiled Altar: wipes at the end of phase 1 and in phase 2 are called again (Zul\'jan sitting at 0% held the call back).',
     'Debrief in game: the settings preview now shows every Rotation tips count from 1 to 8 (its sample pull only had 4), and How many says a pull with fewer shows all it has',
     'Debriefing, All pulls: the top box says What wiped us again (for a little while it said Big mistakes).',
     'Debrief in game: the Expand button on the card opens the big window again',
@@ -8798,7 +8801,7 @@ const WIPE_LINE = {
   "Kith'ix|H": { s: [3.2, 4, 4, 7, 8.7, 12, 12, 12], stop: 205, m: 0, k: 40 },
   "Kith'ix|M": { s: [1.6, 1.6, 1.7, 2.7, 2.7, 2.7, 2.7, 4.8, 10, 10, 10, 10], stop: 304, m: 0, k: 40 }
 };
-const WIPE_WHY = { line: 'more dead than any kill survived', check: 'the damage check was missed', half: 'half the raid was dead' };
+const WIPE_WHY = { line: 'more dead than any kill survived', check: 'the damage check was missed', half: 'half the raid was dead', mech: 'a wipe mechanic went off' };
 function wipeLine(r) { const it = r && r.item; if (!it || it.kind !== 'boss') return null; const d = /mythic/i.test(it.diff || '') || it.diffId === 16 ? 'M' : /heroic/i.test(it.diff || '') || it.diffId === 15 ? 'H' : '';
   if (!d && (it.diffId === 14 || it.diffId === 17 || /normal|lfr|finder/i.test(it.diff || ''))) return WIPE_OPEN; /* (Normal and LFR: raids there win with many dead, so only half the raid dead or a missed damage check calls it (Oct 23)) */
   return WIPE_LINE[it.boss + '|' + d] || null; }
@@ -8808,24 +8811,61 @@ const wipeCharges = (t, n, used) => Math.max(0, 1 + Math.floor(t / (5400 / n)) -
 const wipeWeights = (r) => { const role = new Map([...(r.players || new Map()).values()].map((p) => [p.guid, p.role])); return (g) => (role.get(g) === 'tank' ? 2 : 1); }; /* (a dead tank counts as 2: losing one ends pulls sooner) */
 const wipeLim = (L, t) => (t <= L.stop - 30 ? L.s[Math.min(L.s.length - 1, Math.floor(t / 30))] + (L.m ?? 0) : Infinity);
 // -> { t, why, n (deaths up to it), who (whose death made the call, if one did), nd/ch/max (dead, battle rezzes up, the most any kill survived) } | null (no call: the whole pull counts) | undefined (no line for this boss)
+/* (Oct 24, your ask "incorporate mechanical failures into wipes": the mechanics that end a pull. Each line is one of:
+   m + x: a raid mistake the site already finds (its name, and a test on its words) that none of the 53 top kills read through the site ever had;
+   ids + k: k or more of us killed by that spell within 6 s, more than any of 40 kills of this boss ever lost to it at once (leaving out each
+   kill's last 15 s; a margin where one kill alone set the number). From the wipe research (40 kills and up to 41 other guilds' wipes per boss
+   and difficulty), checked leave-one-out: no kill would have been called. n: the mechanic's name on the page, s: what failed (no names).
+   Mythic and Heroic only (Normal and LFR raids win through much more). The guide: notes/Guides/Wipe mechanics - how it works.md) */
+const WIPE_MECH = {
+  'Nymrissa Wavecaller|M': [{ ids: [1313456], k: 2, n: 'Frost Orbs', s: 'a Frost Orb nobody touched exploded (Shatter)' }, { ids: [1271380], k: 9, n: 'Murloc sets', s: 'murlocs reached the bubble and the Berserkers hit the raid at the Pop' }],
+  'Nymrissa Wavecaller|H': [{ ids: [1271380], k: 7, n: 'Murloc sets', s: 'murlocs reached the bubble and the Berserkers hit the raid at the Pop' }],
+  'Sszorak|H': [{ ids: [1287205], k: 3, n: 'Viscous Cyst', s: 'cysts popped into the raid' }],
+  'The Twin Fangs|M': [{ ids: [1308386], k: 2, n: 'Visceral Burst', s: "Broodlings' Visceral Bursts weren't interrupted" }, { ids: [1290338], k: 2, n: 'Caustic Globules', s: 'a Caustic Globule exploded with nobody soaking it' }, { ids: [1292348, 1290480], k: 3, n: 'Eternal Venom', s: 'players went over the Eternal Venom limit' }, { ids: [1290662], k: 11, n: 'Ravenous Feast', s: "the Feast wasn't split by enough players" }],
+  'The Twin Fangs|H': [{ ids: [1290662], k: 5, n: 'Ravenous Feast', s: "the Feast wasn't split by enough players" }],
+  'The Coiled Altar|M': [{ m: '^guillotine$', x: 'soaked by only', n: 'Guillotine', s: 'a Guillotine had fewer than 5 under it, so Grim Execution hit everyone' }, { m: '^grim guillotine$', x: 'soaked by only', n: 'Grim Guillotine', s: 'a Grim Guillotine had fewer than 5 under it, so Grim Execution hit everyone' }, { ids: [1299301], k: 2, n: 'Guillotine', s: 'a Guillotine had fewer than 5 under it, so Grim Execution hit everyone' }, { m: '^eternal nightfall$', n: 'Eternal Nightfall', s: "the cast wasn't stopped in time" }, { ids: [1286918], k: 2, n: 'Eternal Nightfall', s: "the cast wasn't stopped in time" }, { m: '^venom rupture$', n: 'Coalesced Venom', s: 'a purple orb touched other orbs and set off Venom Ruptures' }, { ids: [1299838], k: 2, n: 'Coalesced Venom', s: 'orbs touched and set off Venom Ruptures' }],
+  'Entombed Sentinels|M': [{ ids: [1284452], k: 3, n: 'Toxic Droplets', s: 'a Toxic Droplet erupted on the raid' }],
+  'Vashnik the Malignant|M': [{ ids: [1282616], k: 2, n: 'Catalytic Bile', s: 'a Catalytic Bile landed with nobody under it' }, { ids: [1280189], k: 2, n: 'Malignant Burst', s: 'a Living Venom reached the middle' }, { ids: [1304459], k: 11, n: 'Malignant Totems', s: 'totems were left standing at Imbibe' }],
+  "Nek'zali the Soulcoiler|M": [{ m: '^vessel of awakening$', n: 'Restless Amani', s: 'three or more corpses came back as Amani at once' }, { ids: [1297630], k: 3, n: 'Restless Amani', s: 'corpses came back as Amani during the ritual' }],
+  "Ula'tek|M": [{ ids: [1318329], k: 2, n: "Serpent's Bite", s: "a Serpent's Bite wasn't fully soaked and became a Calcified Corpse" }, { ids: [1305775], k: 2, n: 'Dread Roar', s: 'the cauldron was reached too late' }, { ids: [1305650], k: 2, n: 'Wardens and Doomscales', s: "a Doomscale's Anguished Cry wasn't interrupted" }, { ids: [1286905], k: 2, n: 'Fury Unleashed', s: 'she reached Fury Unleashed (the end of the fight)' }],
+  "Ula'tek|H": [{ ids: [1301122], k: 2, n: "Mother's Wrath", s: "nobody was in Mother's Wrath's reach, so it hit everyone" }, { ids: [1305775], k: 2, n: 'Dread Roar', s: 'the cauldron was reached too late' }],
+  'The Lost Explorers|M': [{ ids: [1292780], k: 5, n: 'Final Ascension', s: "Mor'zahi reached full energy" }],
+  "Kith'ix|M": [{ m: '^eightfold eclipse$', n: 'Last Light', s: 'the eighth Eclipse went off' }, { ids: [1304424], k: 3, n: 'Extinguish', s: "too many didn't have a mote for Extinguish" }, { ids: [1303261], k: 2, n: 'Voidswarm', s: 'adds were still alive at the intermission (Dark Frenzy)' }],
+  "Kith'ix|H": [{ ids: [1303261], k: 2, n: 'Voidswarm', s: 'adds were still alive at the intermission (Dark Frenzy)' }]
+};
+// -> { t (when it went off), end (its last death: the deaths it caused count), n, s, kn (how many died in that burst) } | null: the first wipe mechanic in the pull
+function wipeMech(r) { const it = r && r.item; if (!it || it.kind !== 'boss') return null; const d = /mythic/i.test(it.diff || '') || it.diffId === 16 ? 'M' : /heroic/i.test(it.diff || '') || it.diffId === 15 ? 'H' : '';
+  const L = d && WIPE_MECH[it.boss + '|' + d]; if (!L) return null; let best = null;
+  for (const e of L) { let at = null, kn = 0;
+    if (e.m) { const re = new RegExp(e.m, 'i'), m = (r.mistakes || []).filter((x) => x.player === 'Raid' && x.severity === 'High' && re.test(x.mechanic || '') && (!e.x || new RegExp(e.x, 'i').test(x.detail || ''))).sort((a, b) => a.t - b.t)[0]; if (m) at = m.t; }
+    if (e.ids) { const ts = r.deaths.filter((x) => e.ids.includes(x.abilityId)).map((x) => x.t).sort((a, b) => a - b); for (let i = 0; i + e.k - 1 < ts.length; i++) if (ts[i + e.k - 1] - ts[i] <= 6) { if (at == null || ts[i] < at) { at = ts[i]; let j = i; while (j + 1 < ts.length && ts[j + 1] - ts[i] <= 6) j++; kn = j - i + 1; } break; } }
+    if (at != null && (!best || at < best.t)) best = { t: at, n: e.n, s: e.s }; }
+  if (best) { let end = best.t, kn = 0; for (const d of r.deaths.slice().sort((a, b) => a.t - b.t)) { if (d.t < best.t - 0.5) continue; if (d.t > (kn ? end + 3 : best.t + 6) || d.t > best.t + 12) break; end = Math.max(end, d.t); kn++; } best.end = end; best.kn = kn; }
+  return best; }
+/* (Oct 24, found in the wipe research: on The Coiled Altar the boss line follows Zul'jan, who drops to 0% when phase 1 ends and stays there
+   all through phase 2, so "the boss is at 10% or less" held back every call at the end of phase 1 and in phase 2 (pull 19 of Oct 21 was only
+   called by the damage check). For a boss listed here it only counts in the last phase) */
+const WIPE_LAST = { 'The Coiled Altar': /^P3/ };
 function wipeAt(r) {
   if (!r || !r.item || r.item.kill) return null; if (r._wipe && r._wipe.k === r.deaths.length) return r._wipe.v;
   const L = wipeLine(r); if (!L) return undefined;
   const n = raidSizeOf(r) || 20, ev = r.deaths.map((d) => [d.t, 1, d.guid, d]).concat((r.rezzes || []).map((z) => [z.t, -1, z.guid, null])).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-  const dead = new Set(), boss = (t) => { const s = r.bossS || []; return s.length ? s[Math.max(0, Math.min(s.length - 1, Math.floor(t)))] : null; }, wt = wipeWeights(r), wsum = () => { let x = 0; for (const g of dead) x += wt(g); return x; };
+  const dead = new Set(), boss = (t) => { const s = r.bossS || []; return s.length ? s[Math.max(0, Math.min(s.length - 1, Math.floor(t)))] : null; }, near = (t) => { const b = boss(t); if (b == null || b > 10) return false; const re = WIPE_LAST[r.item.boss]; if (!re) return true; const ph = ((r.module && !r.module.error && r.module.phases) || []).find((p) => t >= p.start && t <= p.end); return !!(ph && re.test(ph.name)); }, wt = wipeWeights(r), wsum = () => { let x = 0; for (const g of dead) x += wt(g); return x; };
   let used = 0, call = null;
   for (const [t, s, g, d] of ev) { if (s < 0) { if (dead.delete(g)) used++; continue; } dead.add(g);
     const nd = dead.size, w = wsum(), charges = wipeCharges(t, n, used), lim = wipeLim(L, t), b = boss(t);
-    if ((w - charges) * 20 / n > lim && !(b != null && b <= 10)) { call = { t, why: 'line', d, nd, tk: [...dead].filter((x) => wt(x) > 1).length, ch: charges, max: Math.floor((lim - (L.m ?? 0)) * n / 20 + 1e-9) }; break; }
+    if ((w - charges) * 20 / n > lim && !near(t)) { call = { t, why: 'line', d, nd, tk: [...dead].filter((x) => wt(x) > 1).length, ch: charges, max: Math.floor((lim - (L.m ?? 0)) * n / 20 + 1e-9) }; break; }
     if (nd >= Math.ceil(n / 2)) { call = { t, why: 'half', d }; break; } }
   // (the damage check: "took 3:33 (… never past 2:56)" at its end → went late at end − 3:33 + 2:56)
   const mss = (x) => { const m = /(\d+):(\d\d)/.exec(x || ''); return m ? 60 * +m[1] + +m[2] : null; };
   for (const m of r.mistakes || []) { if (m.mechanic !== 'Phase changes' || m.severity !== 'High') continue; const det = String(m.detail || ''), took = mss((/took (\d+:\d\d)/.exec(det) || [])[1]), nev = mss((/never past (\d+:\d\d)/.exec(det) || [])[1]);
     const at = took != null && nev != null && took > nev ? m.t - took + nev : m.t; if (!call || at < call.t) call = { t: at, why: 'check', d: null }; }
-  const v = call ? { t: call.t, why: call.why, auto: true, n: r.deaths.filter((x) => x.t <= call.t + 0.05).length, who: call.d ? call.d.player : '', nd: call.nd, tk: call.tk, ch: call.ch, max: call.max } : null;
+  /* (a wipe mechanic: called when it happens, if that's first (not while the boss is at 10% or less, like the other calls)) */
+  { const mc = wipeMech(r); if (mc && (!call || mc.t < call.t - 0.05) && !near(mc.t)) call = { t: mc.end, at: mc.t, why: 'mech', d: null, mn: mc.n, ms: mc.s, kn: mc.kn }; }
+  const v = call ? { t: call.t, why: call.why, auto: true, n: r.deaths.filter((x) => x.t <= call.t + 0.05).length, who: call.d ? call.d.player : '', nd: call.nd, tk: call.tk, ch: call.ch, max: call.max, at: call.at, mn: call.mn, ms: call.ms, kn: call.kn } : null;
   r._wipe = { k: r.deaths.length, v }; return v; }
 // (how a page names the cut: "when the wipe was called (more dead than any kill survived)", or the old "2nd death (Name)")
-const wipeSay = (c) => (c.why === 'line' && c.nd != null ? c.nd + ' dead' + (c.tk ? (c.tk > 1 ? ' (both tanks, each counts as 2)' : ' (a tank, who counts as 2)') : '') + (c.ch ? ' with ' + c.ch + (c.ch > 1 ? ' battle rezzes' : ' battle rez') + ' up' : '') + ', and no kill of this boss survived more than ' + c.max + ' at this point' : WIPE_WHY[c.why]);
+const wipeSay = (c) => (c.why === 'mech' && c.mn ? c.mn + ' at ' + T(c.at != null ? c.at : c.t) + ': ' + c.ms + (c.kn ? ', and ' + c.kn + ' died' : '') + '. No kill of this boss ever survived that' : c.why === 'line' && c.nd != null ? c.nd + ' dead' + (c.tk ? (c.tk > 1 ? ' (both tanks, each counts as 2)' : ' (a tank, who counts as 2)') : '') + (c.ch ? ' with ' + c.ch + (c.ch > 1 ? ' battle rezzes' : ' battle rez') + ' up' : '') + ', and no kill of this boss survived more than ' + c.max + ' at this point' : WIPE_WHY[c.why]);
 const cutLbl = (c) => (c && c.auto ? 'when the wipe was called: ' + wipeSay(c) : c ? 'the ' + ordinal(c.n) + ' death (' + esc(c.who) + ')' : '');
 // (the picture: this pull's dead count (white) against the most any kill survived at each moment, battle rezzes counted (blue, dashed);
 //  the wipe is called where white goes over blue; after it is faded. Only for a boss with a kill line.)
@@ -8836,7 +8876,7 @@ function wipePic(r, c) { const L = wipeLine(r); if (!L || L.open || !c || !c.aut
   const top = Math.max(4, Math.min(Math.ceil(n / 2), Math.max(...pts.map((p) => p[1]), ...allow.map((a) => a[1] || 0)) + 1)), X = (t) => (P + (W - 2 * P) * t / dur).toFixed(1), Y = (v) => (H - P - (H - 2 * P) * Math.min(v, top) / top).toFixed(1);
   let dp = 'M' + X(0) + ' ' + Y(0); for (let i = 1; i < pts.length; i++) dp += ' H' + X(pts[i][0]) + ' V' + Y(pts[i][1]); dp += ' H' + X(dur);
   let ap = '', on = false; for (const [t, v] of allow) { if (v == null) { on = false; continue; } ap += (on ? ' H' + X(t) + ' V' : ' M' + X(t) + ' ') + Y(v) + (on ? '' : ''); if (!on) ap = ap.replace(/ M([\d.]+) ([\d.]+)$/, ' M$1 $2'); on = true; }
-  const cx = X(c.t), tip = 'White: players dead (a tank counts as 2). Blue: the most dead any kill of this boss survived at that moment, plus battle rezzes still up. The wipe is called where white goes over blue (' + T(c.t) + ').';
+  const cx = X(c.t), tip = 'White: players dead (a tank counts as 2). Blue: the most dead any kill of this boss survived at that moment, plus battle rezzes still up. ' + (c.why === 'mech' ? 'The wipe was called at ' + T(c.t) + ', once the deaths from ' + c.mn + ' were in.' : 'The wipe is called where white goes over blue (' + T(c.t) + ').');
   return '<span class="wpic-w"><svg class="wpic" viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" role="img" aria-label="' + esc(tip) + '"><title>' + esc(tip) + '</title><rect x="' + cx + '" y="0" width="' + Math.max(0, W - cx) + '" height="' + H + '" class="wpic-after"/><path d="M' + P + ' ' + (H - P) + ' H' + (W - P) + '" class="wpic-ax"/>' + (ap ? '<path d="' + ap.trim() + '" class="wpic-k"/>' : '') + '<path d="' + dp + '" class="wpic-d"/><path d="M' + cx + ' 0 V' + H + '" class="wpic-c"/></svg>' +
     '<span class="wpic-key"><i class="wk-d"></i>dead' + (r.deaths.some((d) => wt(d.guid) > 1) ? ' (a tank counts as 2)' : '') + ' <i class="wk-k"></i>most any kill survived, plus battle rezzes up</span></span>'; }
 function cutInfo(r) {
@@ -11206,7 +11246,9 @@ function whyWiped(r) {
   const boomN = (m) => r.deaths.filter((x) => x.t >= m.t - 2 && x.t <= m.t + 5).length;
   const boom = d0 && !rm ? msNear.filter((m) => m.player === 'Raid' && m.severity === 'High' && m.t > d0.t + 1 && boomN(m) >= 4 && boomN(m) > all.filter((x) => x.t < m.t - 2).length).sort((a, b) => a.t - b.t)[0] || null : null;
   let o; const wc = cutInfo(r), chkM = wc && wc.auto && wc.why === 'check' && !all.length ? r.mistakes.filter((m) => m.mechanic === 'Phase changes' && m.severity === 'High').sort((a, b) => a.t - b.t)[0] : null;
-  if (chkM) { o = fromM(chkM, 'dmg'); o.t = wc.t; o.chk = true; }
+  const mcM = wc && wc.auto && wc.why === 'mech' ? msNear.filter((m) => m.player === 'Raid' && m.severity === 'High' && Math.abs(m.t - wc.at) <= 1).sort((a, b) => Math.abs(a.t - wc.at) - Math.abs(b.t - wc.at))[0] || null : null;
+  if (wc && wc.auto && wc.why === 'mech') { o = mcM ? fromM(mcM) : { k: 'mistake', t: wc.at, mech: wc.mn, detail: dbfCap(wc.ms) + '.', how: 'raid' }; o.t = wc.at != null ? wc.at : wc.t; o.wm = true; }
+  else if (chkM) { o = fromM(chkM, 'dmg'); o.t = wc.t; o.chk = true; }
   else if (rm) o = fromM(rm);
   else if (boom) o = fromM(boom);
   else if (d0) {
@@ -11724,17 +11766,17 @@ const KILL_BASE = {
   'Nymrissa Wavecaller': { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
     orbs: { k: 20, ok: 20, med: 0 }, nyburst: { k: 20, ok: 4, med: 20 }, nyadds: { k: 20, ok: 11, med: 0 },
     nyscale: { k: 20, ok: 13, med: 0 }, nyjet: { k: 20, ok: 15, med: 0 }, nyrain: { k: 20, ok: 20, med: 0 },
-    nypop: { k: 12, ok: 0, med: 67 }, avoid: { k: 20, ok: 13, med: 0 } } },
+    nypop: { k: 4, ok: 1, med: 33 }, avoid: { k: 20, ok: 13, med: 0 } } },
     15: { from: '20 fastest Heroic kills, Oct 22', sec: {
     orbs: { k: 20, ok: 19, med: 0 }, nyadds: { k: 20, ok: 12, med: 0 }, nyrain: { k: 20, ok: 18, med: 0 },
     avoid: { k: 20, ok: 20, med: 0 } } } },
   "Nek'zali the Soulcoiler": { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
     amani: { k: 20, ok: 20, med: 0 }, ignition: { k: 20, ok: 5, med: 37 }, depths: { k: 20, ok: 17, med: 0 },
-    rend: { k: 20, ok: 12, med: 0 }, barrage: { k: 20, ok: 5, med: 71 }, ritual: { k: 20, ok: 20, med: 0 },
+    rend: { k: 20, ok: 12, med: 0 }, barrage: { k: 10, ok: 10, med: 0 }, ritual: { k: 20, ok: 20, med: 0 },
     invoke: { k: 20, ok: 12, med: 0 }, avoid: { k: 20, ok: 18, med: 0 } } },
     15: { from: '20 fastest Heroic kills, Oct 22', sec: {
     amani: { k: 20, ok: 15, med: 0 }, ignition: { k: 20, ok: 0, med: 67 }, rend: { k: 20, ok: 10, med: 10 },
-    barrage: { k: 20, ok: 2, med: null }, ritual: { k: 20, ok: 19, med: 0 }, avoid: { k: 20, ok: 18, med: 0 } } } },
+    ritual: { k: 20, ok: 19, med: 0 }, avoid: { k: 20, ok: 18, med: 0 } } } },
   'Entombed Sentinels': { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
     helix: { k: 20, ok: 19, med: 0 }, protovenom: { k: 20, ok: 5, med: 7 }, droplets: { k: 20, ok: 0, med: 7 },
     coag: { k: 20, ok: 10, med: 8 }, miasma: { k: 20, ok: 5, med: 33 }, blighted: { k: 20, ok: 0, med: 42 },
@@ -11785,22 +11827,22 @@ const KILL_BASE = {
     push: { k: 20, ok: 19, med: 0 }, orbs: { k: 20, ok: 13, med: 0 }, tankfront: { k: 19, ok: 13, med: 0 },
     soakq: { k: 20, ok: 20, med: 0 }, shield: { k: 20, ok: 20, med: 0 }, vf: { k: 19, ok: 2, med: 75 } } } },
   "Ula'tek": { 16: { from: '19 fastest Mythic kills, Oct 22', sec: {
-    eggs: { k: 19, ok: 7, med: 2 }, coils: { k: 19, ok: 18, med: 0 }, waves: { k: 19, ok: 0, med: null },
+    eggs: { k: 19, ok: 7, med: 2 }, coils: { k: 19, ok: 18, med: 0 }, waves: { k: 5, ok: 2, med: 8 },
     tank: { k: 19, ok: 18, med: 0 }, incub: { k: 19, ok: 19, med: 0 }, wretch: { k: 19, ok: 6, med: 25 },
-    amps: { k: 19, ok: 19, med: 0 }, fangs: { k: 19, ok: 18, med: 0 }, doomscale: { k: 19, ok: 0, med: 25 },
+    amps: { k: 19, ok: 19, med: 0 }, fangs: { k: 19, ok: 18, med: 0 }, doomscale: { k: 5, ok: 5, med: 0 },
     bite: { k: 19, ok: 1, med: 8 }, shriek: { k: 19, ok: 18, med: 0 }, avoid: { k: 19, ok: 2, med: 6 },
     kicks: { k: 19, ok: 19, med: 0 } } },
     15: { from: '20 fastest Heroic kills, Oct 22', sec: {
-    eggs: { k: 20, ok: 1, med: 10 }, coils: { k: 20, ok: 16, med: 0 }, waves: { k: 20, ok: 0, med: null },
+    eggs: { k: 20, ok: 1, med: 10 }, coils: { k: 20, ok: 16, med: 0 },
     tank: { k: 20, ok: 18, med: 0 }, amps: { k: 20, ok: 20, med: 0 }, fangs: { k: 20, ok: 11, med: 0 },
     doomscale: { k: 20, ok: 20, med: 0 }, bite: { k: 20, ok: 7, med: 20 }, avoid: { k: 20, ok: 13, med: 0 },
     kicks: { k: 20, ok: 20, med: 0 } } } },
   "Kith'ix": { 16: { from: '19 fastest Mythic kills, Oct 22', sec: {
-    kxadds: { k: 19, ok: 17, med: 0 }, kxbeetle: { k: 19, ok: 13, med: 0 }, kxext: { k: 19, ok: 0, med: null },
+    kxadds: { k: 19, ok: 17, med: 0 }, kxbeetle: { k: 19, ok: 13, med: 0 }, kxext: { k: 5, ok: 3, med: 0 },
     kxfear: { k: 19, ok: 2, med: 40 }, kxtank: { k: 19, ok: 19, med: 0 }, kxgrasp: { k: 19, ok: 2, med: 11 },
     kxgate: { k: 19, ok: 15, med: 0 }, avoid: { k: 19, ok: 12, med: 0 } } },
     15: { from: '20 fastest Heroic kills, Oct 22', sec: {
-    kxadds: { k: 20, ok: 19, med: 0 }, kxbeetle: { k: 20, ok: 5, med: 33 }, kxext: { k: 18, ok: 0, med: null },
+    kxadds: { k: 20, ok: 19, med: 0 }, kxbeetle: { k: 20, ok: 5, med: 33 },
     kxfear: { k: 20, ok: 3, med: 67 }, kxtank: { k: 20, ok: 18, med: 0 }, kxgrasp: { k: 20, ok: 5, med: 10 },
     kxgate: { k: 20, ok: 20, med: 0 }, avoid: { k: 20, ok: 17, med: 0 } } } },
 };
@@ -11808,7 +11850,7 @@ const KILL_BASE = {
 // so a line can say where we stand among them. Avoidable damage is left out: its kill bars are AVOID_BASE)
 const KILL_DIST = {
   'Nymrissa Wavecaller': { 15: { orbs: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17], nyadds: [0,0,0,0,0,0,0,0,0,0,0,0,17,17,20,20,33,33,33,40], nyrain: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,25,25] },
-    16: { orbs: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], nyburst: [0,0,0,0,12,13,13,13,17,20,20,20,25,26,26,29,39,39,45,54], nyadds: [0,0,0,0,0,0,0,0,0,0,0,13,13,25,25,25,29,33,38,40], nyscale: [0,0,0,0,0,0,0,0,0,0,0,0,0,10,13,20,20,20,30,30], nyjet: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,11,11,11,44], nyrain: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], nypop: [50,50,50,50,50,67,67,67,67,71,75,75] } },
+    16: { orbs: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], nyburst: [0,0,0,0,12,13,13,13,17,20,20,20,25,26,26,29,39,39,45,54], nyadds: [0,0,0,0,0,0,0,0,0,0,0,13,13,25,25,25,29,33,38,40], nyscale: [0,0,0,0,0,0,0,0,0,0,0,0,0,10,13,20,20,20,30,30], nyjet: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,11,11,11,44], nyrain: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], nypop: [0,33,33,50] } },
   'Sszorak': { 15: { ravage: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17,17,17], mutilate: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17,17,17,33], tempest: [63,67,69,70,71,71,72,73,73,73,74,74,75,77,77,78,79,80,81,82], cysts: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], winds: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,20,20,20,20], crosswinds: [0,0,4,4,4,5,6,7,7,10,11,11,11,14,15,17,19,21,21,28] },
     16: { ravage: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,10], mutilate: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,20], tempest: [53,55,59,61,62,63,63,64,65,66,69,69,70,70,70,72,73,74,76,80], cysts: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8], winds: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,10,10,10,20], crosswinds: [4,7,9,9,9,9,11,11,11,13,13,13,13,16,17,17,20,21,22,23], fury: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17,20], virulence: [17,29,29,29,33,33,38,38,38,38,38,38,44,44,50,50,50,58,62,69] } },
   'The Twin Fangs': { 15: { venom: [0,0,4,4,4,4,6,7,10,10,10,11,12,13,14,17,22,24,27,29], feast: [0,13,13,13,13,13,25,25,25,25,25,38,38,38,50,50,50,50,50,50], soaks: [0,0,0,0,0,0,0,0,0,0,0,0,0,3,3,3,3,3,3,4], spit: [0,9,9,11,13,14,14,20,21,21,29,29,32,32,35,38,41,42,44,60], ichor: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,50], stone: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,11,11] },
@@ -11819,14 +11861,14 @@ const KILL_DIST = {
     16: { helix: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7], protovenom: [0,0,0,0,0,2,4,4,4,7,7,9,9,11,11,13,15,15,15,18], droplets: [3,4,4,5,5,5,6,6,6,6,7,8,8,8,9,9,9,10,10,13], coag: [0,0,0,0,0,0,0,0,0,0,17,17,17,17,17,17,17,17,20,20], miasma: [0,0,0,0,0,17,17,20,33,33,33,33,40,40,40,40,40,40,50,67], blighted: [8,8,25,33,33,33,33,42,42,42,42,50,50,50,50,50,58,58,58,67], marks: [0,0,0,25,25,25,25,25,40,50,60,60,60,63,67,67,67,75,83,86], balance: [0,0,0,0,0,0,0,0,33,33,33,33,33,33,33,33,67,67,67,67], tanks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] } },
   'Vashnik the Malignant': { 15: { venoms: [0,0,0,0,0,33,33,33,33,67,67,67,67,67,67,67,67,67,67,67], froth: [75,80,81,84,87,88,88,88,88,89,89,90,91,91,92,92,93,93,93,94], bile: [0,0,0,0,0,0,0,0,0,0,0,0,25,25,25,25,25,50,75,75], infect: [0,0,10,18,22,22,22,30,30,30,30,31,42,44,46,50,50,53,58,74], fangs: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
     16: { venoms: [0,0,0,0,0,0,8,13,13,25,25,33,38,38,38,38,38,50,50,50], totems: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,7,7,8], froth: [0,4,4,5,6,6,7,7,8,11,11,13,14,15,15,17,18,22,26,36], bile: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17,17,17], infect: [19,25,29,31,31,31,32,33,37,37,38,39,41,43,46,46,48,50,53,61], fangs: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10] } },
-  "Nek'zali the Soulcoiler": { 15: { amani: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,7,7,8,8], ignition: [25,33,40,40,50,50,50,50,67,67,67,67,67,67,75,75,75,75,78,90], rend: [0,0,0,0,0,0,0,0,0,0,20,20,20,20,30,30,40,40,50,60], barrage: [0,0,50,50,50,50,50,100,100,100,100,100,100,100,100,100,100,100,100,100], ritual: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,25] },
-    16: { amani: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], ignition: [0,0,0,0,0,25,25,33,33,33,40,40,43,50,50,50,60,60,67,78], depths: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,20,22,25], rend: [0,0,0,0,0,0,0,0,0,0,0,0,7,7,7,7,7,8,16,20], barrage: [0,0,0,0,0,25,50,50,50,67,75,75,75,75,75,100,100,100,100,100], ritual: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], invoke: [0,0,0,0,0,0,0,0,0,0,0,0,33,33,33,33,50,50,67,100] } },
-  "Ula'tek": { 15: { eggs: [0,2,5,6,7,7,8,9,9,9,11,12,12,13,13,13,13,14,15,15], coils: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,15,15,23], waves: [78,86,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100], tank: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,20,20], amps: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], fangs: [0,0,0,0,0,0,0,0,0,0,0,13,13,13,13,14,14,14,14,25], doomscale: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], bite: [0,0,0,0,0,0,0,20,20,20,20,20,20,20,20,33,33,33,33,33], kicks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
-    16: { eggs: [0,0,0,0,0,0,0,2,2,2,2,2,4,4,4,6,6,7,10], coils: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,13], waves: [71,75,79,80,88,90,92,100,100,100,100,100,100,100,100,100,100,100,100], tank: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17], incub: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], wretch: [0,0,0,0,0,0,25,25,25,25,33,33,33,33,33,50,67,75,100], amps: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], fangs: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14], doomscale: [17,25,25,25,25,25,25,25,25,25,25,25,33,33,33,33,40,50,67], bite: [0,5,5,5,5,6,6,6,7,8,9,9,11,11,15,15,20,20,33], shriek: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,25], kicks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] } },
+  "Nek'zali the Soulcoiler": { 15: { amani: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,7,7,8,8], ignition: [25,33,40,40,50,50,50,50,67,67,67,67,67,67,75,75,75,75,78,90], rend: [0,0,0,0,0,0,0,0,0,0,20,20,20,20,30,30,40,40,50,60], ritual: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,25] },
+    16: { amani: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], ignition: [0,0,0,0,0,25,25,33,33,33,40,40,43,50,50,50,60,60,67,78], depths: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,20,22,25], rend: [0,0,0,0,0,0,0,0,0,0,0,0,7,7,7,7,7,8,16,20], barrage: [0,0,0,0,0,0,0,0,0,0], ritual: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], invoke: [0,0,0,0,0,0,0,0,0,0,0,0,33,33,33,33,50,50,67,100] } },
+  "Ula'tek": { 15: { eggs: [0,2,5,6,7,7,8,9,9,9,11,12,12,13,13,13,13,14,15,15], coils: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,15,15,23], tank: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,20,20], amps: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], fangs: [0,0,0,0,0,0,0,0,0,0,0,13,13,13,13,14,14,14,14,25], doomscale: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], bite: [0,0,0,0,0,0,0,20,20,20,20,20,20,20,20,33,33,33,33,33], kicks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+    16: { eggs: [0,0,0,0,0,0,0,2,2,2,2,2,4,4,4,6,6,7,10], coils: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,13], waves: [0,0,8,18,50], tank: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17], incub: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], wretch: [0,0,0,0,0,0,25,25,25,25,33,33,33,33,33,50,67,75,100], amps: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], fangs: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14], doomscale: [0,0,0,0,0], bite: [0,5,5,5,5,6,6,6,7,8,9,9,11,11,15,15,20,20,33], shriek: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,25], kicks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] } },
   'The Lost Explorers': { 15: { boxes: [0,0,0,0,0,0,0,0,2,2,3,3,3,4,4,5,6,6,7,7], united: [0,0,0,0,0,0,0,0,0,0,0,50], blink: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], thud: [10,10,20,20,20,20,20,20,20,20,20,20], kicks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17] },
     16: { boxes: [0,0,3,6,6,6,6,8,8,9,9,10,10,12,13,15,17,19,20,27], united: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,33], frostfire: [0,0,5,5,5,5,5,5,5,10,10,10,15,15,15,15], blink: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], thud: [0,0,0,0,0,0,10,10,10,10,10,10,10,11,20,20,20,20,20,30], kicks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,8,8,15] } },
-  "Kith'ix": { 15: { kxadds: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,29], kxbeetle: [0,0,0,0,0,20,33,33,33,33,33,40,50,50,50,50,50,50,67,67], kxext: [100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100], kxfear: [0,0,0,33,33,33,33,50,50,67,67,67,80,83,83,83,83,83,100,100], kxtank: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,100,100], kxgrasp: [0,0,0,0,0,6,7,7,7,8,13,14,17,20,29,33,46,47,54,57], kxgate: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
-    16: { kxadds: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,10], kxbeetle: [0,0,0,0,0,0,0,0,0,0,0,0,0,14,14,25,29,33,50], kxext: [100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100], kxfear: [0,0,18,18,33,33,33,36,40,40,40,45,50,50,55,58,70,75,82], kxtank: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], kxgrasp: [0,0,4,4,4,9,9,10,11,11,14,15,17,17,19,24,25,29,33], kxgate: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,17,17,25] } },
+  "Kith'ix": { 15: { kxadds: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,29], kxbeetle: [0,0,0,0,0,20,33,33,33,33,33,40,50,50,50,50,50,50,67,67], kxfear: [0,0,0,33,33,33,33,50,50,67,67,67,80,83,83,83,83,83,100,100], kxtank: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,100,100], kxgrasp: [0,0,0,0,0,6,7,7,7,8,13,14,17,20,29,33,46,47,54,57], kxgate: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+    16: { kxadds: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,10], kxbeetle: [0,0,0,0,0,0,0,0,0,0,0,0,0,14,14,25,29,33,50], kxext: [0,0,0,25,33], kxfear: [0,0,18,18,33,33,33,36,40,40,40,45,50,50,55,58,70,75,82], kxtank: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], kxgrasp: [0,0,4,4,4,9,9,10,11,11,14,15,17,17,19,24,25,29,33], kxgate: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,17,17,25] } },
 };
 // (a mechanic line's place among the fastest kills (your call, Oct 22: "lets try it see how it pans out visually"): our share of its
 // moments that went wrong against each kill's; nothing when the kills weren't read for it)
