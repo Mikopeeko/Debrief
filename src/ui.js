@@ -6125,7 +6125,8 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
 // ---- Debriefing: the swap pop-up opens over it, and Open the plan opens that note ----
 function ndzOvl() { const v = $('#view'); if (!v) return; if (!$('#view #assignBox')) v.insertAdjacentHTML('beforeend', '<div id="assignBox" class="assignbox ndz-ovl"></div>'); assign(); }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.dbn-bar [data-dbnote]'); if (!b || !S.rep) return; const u = noteForRep(S.rep);
-  S.ndzPick = S.rep.item.boss; store.set(PLAN_BK, S.ndzPick); S.ndzPlanId = u ? u.id : null; S.planV = 'plans'; store.set(PLAN_VK, 'plans'); S.planOpen = true; }, true);
+  S.ndzPick = S.rep.item.boss; store.set(PLAN_BK, S.ndzPick); S.ndzPlanId = u ? u.id : null; S.planV = 'plans'; store.set(PLAN_VK, 'plans'); S.planOpen = true;
+  /* (Oct 24: open that note itself, like the Plan tab's own Open button, not the Plan front page) */ if (typeof planPage === 'function') { e.preventDefault(); e.stopImmediatePropagation(); const bk = S.ndzPick, id = S.ndzPlanId; planPage(); /* (entering resets to Who plays) */ S.ndzPick = bk; store.set(PLAN_BK, bk); S.ndzPlanId = id; S.planV = 'plans'; store.set(PLAN_VK, 'plans'); S.planOpen = true; planAssign(); window.scrollTo({ top: 0 }); } }, true); /* (the Plan tab first, then that note opened in it, like its own Open button) */
 // (the menu (☰) opens it too, so it works before any team or log is added; hidden while Plan is greyed out on the website)
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('#tbPlan'); if (!b) return; const p = $('#tbMenuPop'); if (p) p.hidden = true; if (ASG_OFF()) return; S.noteBuild = null; S.planOpen = false; planPage(); window.scrollTo(0, 0); });
 { const b = document.getElementById('tbPlan'); if (b && ASG_OFF()) b.hidden = true; }
@@ -11176,7 +11177,7 @@ function oaLayout(v, el) {
   const hd = el.querySelector('.cch-hd');
   if (hd && !hd.querySelector('.cch-acts')) { const acts = document.createElement('span'); acts.className = 'cch-acts';
     const cp = v.querySelector('.dbd-copy'); if (cp) { const box = cp.closest('.dbd-acts'); acts.appendChild(cp); if (box && !box.children.length) box.remove(); }
-    const nb = v.querySelector('.dbn-bar.dbn-none'); if (nb) nb.remove(); /* (no Swap players or Load a note on Debriefing: the Plan tab handles notes (your call, Oct 23)) */
+    const nb = v.querySelector('.dbn-bar.dbn-none'); if (nb) { const ld = nb.querySelector('[data-ndzwiz]'); if (ld) { ld.textContent = 'Add NSRT note'; ld.classList.add('sm'); ld.classList.remove('primary'); acts.appendChild(ld); } nb.remove(); } /* (no note yet: just Add NSRT note in the corner, the same paste window as the Plan tab (your call, Oct 24); no Swap players) */
     if (acts.children.length) hd.appendChild(acts); }
   // (a loaded NSRT note's bar stays in view, right under the coach: which note, what it checks, Swap players)
   const nbar = v.querySelector('.dbn-bar:not(.dbn-none)'); if (nbar && nbar.previousElementSibling !== el) { el.after(nbar); nbar.classList.add('oa-note'); }
