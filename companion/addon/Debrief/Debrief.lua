@@ -88,7 +88,7 @@ local function decode(code)
       m.players[#m.players + 1] = p; by[p.name] = p
     elseif t == "S" and by[g(2)] then add(by[g(2)].slips, { g(3), g(4), g(5) })
     elseif t == "RS" and by[g(2)] then by[g(2)].rs = { score = tonumber(g(3)), good = g(4) ~= "" and split(g(4), ";") or {} }; by[g(2)].rot = by[g(2)].rot or {} -- (your rotation score and what you did well (Oct 24))
-    elseif t == "RT" and by[g(2)] then local p = by[g(2)]; p.rot = p.rot or {}; p.rot[#p.rot + 1] = { g(3), g(4), g(5), g(6), g(7), g(8), g(9), g(10) }; add(p.slips, { g(3), g(4), g(5) .. (g(6) ~= "" and (": " .. g(6)) or "") .. "." }) -- (a fix: flag, icon, name, yours, top, tip, squares, why)
+    elseif t == "RT" and by[g(2)] then local p = by[g(2)]; p.rot = p.rot or {}; p.rot[#p.rot + 1] = { g(3), g(4), g(5), g(6), g(7), g(8), g(9), g(10), g(11), g(12) }; add(p.slips, { g(3), g(4), g(5) .. (g(6) ~= "" and (": " .. g(6)) or "") .. "." }) -- (a fix: flag, icon, name, yours, top, tip, squares, why)
     elseif t == "B" and by[g(2)] then add(by[g(2)].boss, { g(3), g(4), g(5) })
     elseif t == "U" and by[g(2)] then add(by[g(2)].surv, { g(3), g(4), g(5) }) -- (survival: defensives)
     elseif t == "HP" and by[g(2)] then local p = by[g(2)]; p.cons = p.cons or {}; add(p.cons, { g(3), g(4), g(5) }) -- (your Healthstone and potion)
@@ -119,7 +119,7 @@ local function decode(code)
     elseif t == "CF" then for _, c in ipairs(coaches()) do c.focus = g(2); c.focusSame = g(3) == "1"; c.kill = g(4) == "1" end
     elseif t == "CW" then for _, c in ipairs(coaches()) do table.insert(c.wrong, { sev = g(2), id = g(3), label = g(4), tag = g(5), what = g(6), fix = g(7), how = g(8), kb = g(9) }) end
     elseif t == "CR" then for _, c in ipairs(coaches()) do table.insert(c.right, { id = g(2), t = g(3) }) end
-    elseif t == "CD" then for _, c in ipairs(coaches()) do table.insert(c.deaths, { t = g(2), who = g(3), cls = g(4), id = g(5), ab = g(6), k = g(7), story = g(8) }) end
+    elseif t == "CD" then for _, c in ipairs(coaches()) do table.insert(c.deaths, { t = g(2), who = g(3), cls = g(4), id = g(5), ab = g(6), k = g(7), story = g(8), ready = g(9) }) end
     elseif t == "CN" then for _, c in ipairs(coaches()) do c.dnote = g(2) end
     elseif t == "CL" then for _, c in ipairs(coaches()) do c.dline = g(2) end
     elseif t == "CA" then for _, c in ipairs(coaches()) do table.insert(c.avoid, { id = g(2), k = g(3), who = g(4), cls = g(5), n = g(6), bad = g(7) == "1", story = g(8) }) end
@@ -372,12 +372,12 @@ logBtn:SetScript("OnEnter", function() GameTooltip:SetOwner(logBtn, "ANCHOR_TOP"
 logBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
 -- pooled pieces for the body (redrawn each time): text, plain textures, rounded textures
-local pool = { fs = {}, tex = {}, rt = {}, btn = {} }
-local used = { fs = 0, tex = 0, rt = 0, btn = 0 }
+local pool = { fs = {}, tex = {}, rt = {}, btn = {}, tip = {} }
+local used = { fs = 0, tex = 0, rt = 0, btn = 0, tip = 0 }
 local EXPANDED = {} -- (lists opened with "Show N more", until the next pull)
 local IND = 0 -- (rows sit this far in, inside a section panel)
 local function resetPool()
-  used.fs, used.tex, used.rt, used.btn, used.ln = 0, 0, 0, 0, 0
+  used.fs, used.tex, used.rt, used.btn, used.ln, used.tip = 0, 0, 0, 0, 0, 0
   for _, l in pairs(pool) do for _, o in ipairs(l) do o:Hide(); o:ClearAllPoints() end end
 end
 local function FS(kind, size, hex)
@@ -412,6 +412,19 @@ end
 local function icon(x, y, size, id, flag)
   local t = TEX("ARTWORK"); t:SetPoint("TOPLEFT", x, -y); t:SetSize(size, size); t:SetTexture(iconPath(id, flag))
   if id and id ~= "" then t:SetTexCoord(0.08, 0.92, 0.08, 0.92) else t:SetTexCoord(0, 1, 0, 1) end
+  -- (a spell or boss ability: WoW's own tooltip when you hover the icon (Oct 24); the click still reaches the row under it)
+  local sid = tonumber(id)
+  if sid and sid > 0 then
+    used.tip = used.tip + 1
+    local f = pool.tip[used.tip]
+    if not f then
+      f = CreateFrame("Frame", nil, body); pool.tip[used.tip] = f
+      if f.SetMouseClickEnabled then f:SetMouseClickEnabled(false); f:SetMouseMotionEnabled(true) else f:EnableMouse(true) end
+      f:SetScript("OnEnter", function(self) if self.sid and GameTooltip.SetSpellByID then GameTooltip:SetOwner(self, "ANCHOR_RIGHT"); GameTooltip:SetSpellByID(self.sid); GameTooltip:Show() end end)
+      f:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    end
+    f.sid = sid; f:ClearAllPoints(); f:SetPoint("TOPLEFT", x, -y); f:SetSize(size, size); f:SetFrameLevel((body:GetFrameLevel() or 1) + 8); f:Show()
+  end
   return t
 end
 local FLAG = { ok = COL.good, warn = COL.warn, bad = COL.bad, dead = COL.faint }
@@ -554,26 +567,35 @@ end
 -- (a Rotation fix, like the website's checklist (Oct 24): the check and your number against the top players' on one line, a square for
 -- each moment it happened (green right, orange not), then Next time; hover for why it matters)
 local SQC = { g = "45c15c", w = "e8a23a", b = "e5534b" }
-local function rotRow(y, r)
-  local flag, ic, label, v, top, tip, strip, why = r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8]
+-- (a drop-down (Oct 24): closed, the check and your number against the top players'; click it open for why it matters, a square per moment,
+-- Next time, how it's judged and the moments you slipped)
+local function rotRow(y, r, open, toggle)
+  local flag, ic, label, v, top, tip, strip, why, how, mo = r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10]
   local d = TEX("ARTWORK"); d:SetTexture(SLICE .. "dot"); d:SetPoint("TOPLEFT", IND, -(y + 6)); d:SetSize(8, 8); d:SetVertexColor(rgb(FLAG[flag] or COL.faint))
-  icon(IND + 16, y, 20, ic, flag)
   local x0 = IND + 46
-  local vt = FS("bold", 13.5, flag == "bad" and COL.badT or flag == "warn" and COL.warn or COL.text); vt:SetJustifyH("RIGHT"); vt:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - IND, -y)
+  local sg = FS("bold", 14, COL.faint); sg:SetJustifyH("RIGHT"); sg:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - IND, -y); sg:SetText(open and "–" or "+")
+  local vt = FS("bold", 13.5, flag == "bad" and COL.badT or flag == "warn" and COL.warn or COL.text); vt:SetJustifyH("RIGHT"); vt:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - IND - 18, -y)
   vt:SetText((v or "") .. (((top or "") ~= "") and ("|cff" .. COL.faint .. "  top " .. top .. "|r") or ""))
-  local lt = FS("bold", 13.5, COL.text); lt:SetPoint("TOPLEFT", x0, -y); lt:SetWidth(math.max(80, CW - IND - x0 - vt:GetStringWidth() - 12)); lt:SetText(label)
+  local lt = FS("bold", 13.5, COL.text); lt:SetPoint("TOPLEFT", x0, -y); lt:SetWidth(math.max(80, CW - IND - x0 - vt:GetStringWidth() - 30)); lt:SetText(label)
   local yy = y + math.max(18, lt:GetStringHeight()) + 3
-  if (strip or "") ~= "" then
-    for i = 1, #strip do local q = TEX("ARTWORK"); q:SetPoint("TOPLEFT", x0 + (i - 1) * 10, -(yy + 1)); q:SetSize(8, 8); fill(q, SQC[strip:sub(i, i)] or COL.faint) end
-    yy = yy + 14
+  local bt = BTN(); bt:SetPoint("TOPLEFT", 0, -y); bt:SetSize(CW, math.max(18, yy - y))
+  if toggle then bt:SetScript("OnClick", toggle) end
+  bt:SetScript("OnEnter", function() sg:SetTextColor(rgb(COL.gold)); lt:SetTextColor(rgb(COL.gold)) end); bt:SetScript("OnLeave", function() sg:SetTextColor(rgb(COL.faint)); lt:SetTextColor(rgb(COL.text)) end)
+  icon(IND + 16, y, 20, ic, flag) -- (after the row's button, so the icon's tooltip sits on top)
+  if open then
+    local w = CW - IND - x0 - 4
+    local function line(kind, size, hex, text) local f = FS(kind, size, hex); f:SetPoint("TOPLEFT", x0, -yy); f:SetWidth(w); f:SetText(text); yy = yy + f:GetStringHeight() + 4 end
+    if (why or "") ~= "" then line("body", 13, COL.soft, names(why)) end
+    if (strip or "") ~= "" then
+      for i = 1, #strip do local q = TEX("ARTWORK"); q:SetPoint("TOPLEFT", x0 + (i - 1) * 10, -(yy + 1)); q:SetSize(8, 8); fill(q, SQC[strip:sub(i, i)] or COL.faint) end
+      yy = yy + 15
+    end
+    if (tip or "") ~= "" then line("body", 13, COL.soft, "|cff" .. COL.gold .. "Next time:|r " .. names(tip)) end
+    if (mo or "") ~= "" then line("bold", 11.5, COL.muted, "WHEN IT WENT WRONG"); for m in mo:gmatch("[^;]+") do line("body", 12.5, COL.soft, "•  " .. names(m)) end end
+    if (how or "") ~= "" then line("body", 12, COL.faint, "How it's judged: " .. names(how)) end
+    yy = yy + 2
   end
-  if (tip or "") ~= "" then local tt = FS("body", 12.5, COL.soft); tt:SetPoint("TOPLEFT", x0, -yy); tt:SetWidth(CW - IND - x0 - 4); tt:SetText("|cff" .. COL.gold .. "Next time:|r " .. names(tip)); yy = yy + tt:GetStringHeight() + 2 end
-  if (why or "") ~= "" then
-    local bt = BTN(); bt:SetPoint("TOPLEFT", 0, -y); bt:SetSize(CW, math.max(18, yy - y))
-    bt:SetScript("OnEnter", function() GameTooltip:SetOwner(bt, "ANCHOR_TOP"); GameTooltip:SetText(label, 1, 1, 1, 1, true); GameTooltip:AddLine(names(why), 0.8, 0.82, 0.86, true); if (top or "") ~= "" then GameTooltip:AddLine("Top players: " .. top, 0.9, 0.71, 0.31, true) end; GameTooltip:Show() end)
-    bt:SetScript("OnLeave", function() GameTooltip:Hide() end)
-  end
-  return yy + 8
+  return yy + 6
 end
 -- (what you did well on your rotation, one green line under the fixes)
 local function rotGood(y, rs)
@@ -1058,7 +1080,10 @@ function render()
       local y0 = y; local open = fold("cdeaths", "DEATHS", #c.deaths, on and (on .. " on the player" .. (aft and ("  ·  " .. aft .. " not counted") or "")) or nil, "Red: on the player (their own mistake, or a slow death with something ready). Amber: half on them. Grey: not on them. Click a death for why."); y = y + 32
       if open then
         if #c.deaths == 0 then local f = FS("body", 13, COL.muted); f:SetPoint("TOPLEFT", 14, -y); f:SetWidth(CW - 28); f:SetText(paint(c.dline)); y = y + f:GetStringHeight() + 8 end
-        chipList(m.h.pull .. "d", c.deaths, function(d) return { { t = d.t, col = COL.faint, gap = 6 }, { dot = KCOL[d.k] or COL.faint }, { t = d.who, bold = true, col = UI.classHex(d.cls), gap = 8 }, { icon = d.id }, { t = d.ab } }, d.id, d.story end)
+        chipList(m.h.pull .. "d", c.deaths, function(d) local parts = { { t = d.t, col = COL.faint, gap = 6 }, { dot = KCOL[d.k] or COL.faint }, { t = d.who, bold = true, col = UI.classHex(d.cls), gap = 8 }, { icon = d.id }, { t = d.ab } }
+          -- (something that could have saved them, still unused (Oct 24): "Healthstone unused", or "3 unused")
+          if (d.ready or "") ~= "" then local n, one = 0, nil; for x in d.ready:gmatch("[^;]+") do n = n + 1; one = one or x end; parts[#parts + 1] = { t = one .. (n > 1 and (" +" .. (n - 1)) or "") .. " unused", col = COL.warn } end
+          return parts, d.id, d.story end)
         if (c.dnote or "") ~= "" and not on then local f = FS("body", 12, COL.faint); f:SetPoint("TOPLEFT", 14, -(y + 2)); f:SetWidth(CW - 28); f:SetText(c.dnote); y = y + f:GetStringHeight() + 6 end
         -- (no "click" hint line: each row has its + (Oct 22 audit))
         y = y + 4
@@ -1178,7 +1203,7 @@ function render()
     -- (the Detailed card: three small number tiles under yours: avoidable damage, kicks or dispels, your death)
     if DB.detailed and not DB.compact and P.tiles and #P.tiles > 0 then y = tilesRow(y, P.tiles) end
     if not DB.compact then
-      local rot = P.rot and function() section("rotation", "Rotation" .. ((P.rs and P.rs.score) and ("  ·  " .. P.rs.score .. "/100") or ""), P.rot, DB.maxSlips or 3, function(r) y = UI.rotRow(y, r) end, "Nothing to fix here.", function() y = UI.rotGood(y, P.rs) end) end
+      local rot = P.rot and function() section("rotation", "Rotation" .. ((P.rs and P.rs.score) and ("  ·  " .. P.rs.score .. "/100") or ""), P.rot, DB.maxSlips or 3, function(r) local k = "rt:" .. (r[3] or ""); local o = STORY[k]; if o == nil then o = DB.preset == "detailed" and r == P.rot[1] end; y = UI.rotRow(y, r, o, function() STORY[k] = not o; render() end) end, "Nothing to fix here.", function() y = UI.rotGood(y, P.rs) end) end
       or function() section("rotation", "Rotation", UI.onlyBad(P.slips), DB.maxSlips or 3, function(r) y = UI.rowS(y, r) end, #P.slips > 0 and "Nothing to fix here." or "No rotation checks for this spec yet.") end
       local bossL = P.boss
       if DB.detailed and P.tiles and #P.tiles > 0 then bossL = {}; for _, r in ipairs(P.boss) do if not ({ ability_rogue_sprint = true, ability_kick = true, spell_holy_dispelmagic = true })[r[2]] then bossL[#bossL + 1] = r end end end

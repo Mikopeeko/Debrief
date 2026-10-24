@@ -114,6 +114,13 @@ body.isMini { border-color: rgba(230,180,80,.85); box-shadow: inset 0 0 0 1px rg
 .krt { display: flex; gap: 10px; align-items: baseline; } .krt b { font-size: 13.5px; } .krv { margin-left: auto; font-weight: 700; font-size: 13.5px; white-space: nowrap; } .krv small { color: var(--faint); font-weight: 600; margin-left: 6px; }
 .ksq { display: flex; flex-wrap: wrap; gap: 2px; margin: 5px 0 2px; } .ksq i { width: 8px; height: 8px; display: block; }
 .knx { margin: 3px 0 0; font-size: 12.5px; color: var(--soft); } .knx b { color: var(--gold); }
+.kopen { cursor: pointer; } .kopen:hover .krt b { color: var(--gold); } .krt .kpl { margin-left: 4px; }
+.kwhy { margin: 4px 0 2px; font-size: 13px; color: var(--soft); } .khow { margin: 5px 0 0; font-size: 12px; color: var(--faint); }
+.kmo { margin: 6px 0 0; } .kmo span { display: block; color: var(--muted); font: 700 11px Barlow, sans-serif; letter-spacing: .04em; text-transform: uppercase; } .kmo p { margin: 2px 0; font-size: 12.5px; color: var(--soft); }
+/* a spell's tooltip on its icon (Oct 24) */
+#ktt { position: fixed; z-index: 50; max-width: 320px; background: #0f1218; border: 1px solid #3a4150; border-radius: 6px; padding: 8px 10px; font-size: 12.5px; line-height: 1.4; color: var(--soft); pointer-events: none; box-shadow: 0 8px 24px rgba(0,0,0,.6); white-space: pre-line; }
+#ktt b { display: block; color: #fff; font-size: 13.5px; margin-bottom: 3px; white-space: normal; }
+.ic[data-sid] { cursor: help; }
 .kgood { color: var(--goodT); font-size: 13px; margin: 6px 0 2px 4px; }
 .kcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; margin: 0 0 10px; }
 .kcard { background: var(--raised); border: 1px solid var(--line); border-top: 2px solid var(--line2); border-radius: 8px; padding: 9px 12px; font-size: 13px; color: var(--soft); }
@@ -129,6 +136,7 @@ body.isMini { border-color: rgba(230,180,80,.85); box-shadow: inset 0 0 0 1px rg
 .kdr { display: flex; align-items: center; gap: 7px; font-size: 13.5px; color: var(--soft); padding: 3px 0; } .kdr.has { cursor: pointer; } .kdr.has:hover { color: var(--text); }
 .kdt { color: var(--faint); width: 32px; flex: none; } .kda { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .kpl { margin-left: auto; color: var(--faint); font-style: normal; font-weight: 700; }
 .kst { margin: 0 0 6px 40px; color: var(--muted); font-size: 13px; }
+.krdy { color: var(--warn); font-size: 12px; font-weight: 600; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -147,12 +155,12 @@ let ICONS = {}; try { ICONS = JSON.parse(localStorage.getItem('dbf-icons') || '{
 function ic(id) {
   if (!id) return '';
   if (!/^\d+$/.test(String(id))) return '<span class="ic"><img src="https://wow.zamimg.com/images/wow/icons/medium/' + esc(String(id).toLowerCase()) + '.jpg" alt="" onerror="this.remove()"></span>'; /* (an icon's own name, e.g. inv_stone_04) */
-  const n = ICONS[id]; if (n) return '<span class="ic"><img src="https://wow.zamimg.com/images/wow/icons/medium/' + esc(n) + '.jpg" alt=""></span>';
+  const n = ICONS[id]; if (n) return '<span class="ic" data-sid="' + esc(id) + '"><img src="https://wow.zamimg.com/images/wow/icons/medium/' + esc(n) + '.jpg" alt=""></span>';
   fetch('https://nether.wowhead.com/tooltip/spell/' + encodeURIComponent(id) + '?dataEnv=1&locale=0').then((r) => r.json()).then((x) => {
     if (!x || !x.icon) return; ICONS[id] = x.icon; try { localStorage.setItem('dbf-icons', JSON.stringify(ICONS)); } catch (e) { /* fine */ }
     document.querySelectorAll('[data-ic="' + id + '"]').forEach((el) => { el.innerHTML = '<img src="https://wow.zamimg.com/images/wow/icons/medium/' + x.icon + '.jpg" alt="">'; });
   }).catch(() => {});
-  return '<span class="ic" data-ic="' + esc(id) + '"></span>';
+  return '<span class="ic" data-ic="' + esc(id) + '" data-sid="' + esc(id) + '"></span>';
 }
 let D = null; const OPEN = {};
 /* (Detailed or Heavy in the addon's settings: every section starts open) */ const DEEP = () => !!D && (D.look === 'detailed' || D.look === 'heavy' || (D.lk && (D.lk.preset === 'detailed' || D.lk.preset === 'heavy'))), isOpen = (k) => (OPEN[k] != null ? !!OPEN[k] : DEEP()); let copied = false, big = false;
@@ -208,9 +216,12 @@ function cardView() {
     // (rotation, like the Rotation tab's checklist: your score, each fix against the top players, a square per moment, Next time)
     if (on('rotation')) {
       if (P.rot) {
-        const rr = (r) => '<div class="krr" title="' + esc((r[7] || '') + (r[4] ? '\nTop players: ' + r[4] : '')) + '"><i class="kd" style="background:' + (FLC[r[0]] || '#6c7381') + '"></i>' + icn(r[1]) +
-          '<div class="krb"><div class="krt"><b>' + esc(r[2]) + '</b><span class="krv" style="color:' + (r[0] === 'bad' ? '#ff8f87' : r[0] === 'warn' ? '#e8a23a' : '#ece8df') + '">' + esc(r[3]) + (r[4] ? '<small>top ' + esc(r[4]) + '</small>' : '') + '</span></div>' +
-          (r[6] ? '<div class="ksq">' + r[6].split('').map((q) => '<i style="background:' + (SQC[q] || '#6c7381') + '"></i>').join('') + '</div>' : '') + (r[5] ? '<p class="knx"><b>Next time:</b> ' + pt(r[5]) + '</p>' : '') + '</div></div>';
+        // (a drop-down, like the card (Oct 24): closed, the check against the top players; open, why, the squares, Next time, the moments, how it's judged)
+        const rr = (r, i) => { const k = 'r:rot' + i, o = isOn(k, deep && i === 0);
+          return '<div class="krr kopen" data-cr="' + k + '"><i class="kd" style="background:' + (FLC[r[0]] || '#6c7381') + '"></i>' + icn(r[1]) +
+          '<div class="krb"><div class="krt"><b>' + esc(r[2]) + '</b><span class="krv" style="color:' + (r[0] === 'bad' ? '#ff8f87' : r[0] === 'warn' ? '#e8a23a' : '#ece8df') + '">' + esc(r[3]) + (r[4] ? '<small>top ' + esc(r[4]) + '</small>' : '') + '</span><i class="kpl">' + (o ? '–' : '+') + '</i></div>' +
+          (o ? (r[7] ? '<p class="kwhy">' + pt(r[7]) + '</p>' : '') + (r[6] ? '<div class="ksq">' + r[6].split('').map((q) => '<i style="background:' + (SQC[q] || '#6c7381') + '"></i>').join('') + '</div>' : '') + (r[5] ? '<p class="knx"><b>Next time:</b> ' + pt(r[5]) + '</p>' : '') +
+            (r[9] ? '<div class="kmo"><span>When it went wrong</span>' + String(r[9]).split(';').map((m) => '<p>• ' + pt(m) + '</p>').join('') + '</div>' : '') + (r[8] ? '<p class="khow">How it\'s judged: ' + pt(r[8]) + '</p>' : '') : '') + '</div></div>'; };
         const sc = P.rs && P.rs.score !== '' && P.rs.score != null ? ' <span class="ksc">· <b>' + esc(P.rs.score) + '</b>/100</span>' : '';
         L += sec('rot', 'Rotation' + sc, (P.rot.length ? lim('rot', P.rot, MX.maxSlips || 3, rr) : '<div class="kr"><i class="kd" style="background:#45c15c"></i><span class="ic"></span><span>Nothing to fix here.</span></div>') +
           (P.rs && (P.rs.good || []).length ? '<p class="kgood">Done right: ' + P.rs.good.map(esc).join(', ') + '.</p>' : ''));
@@ -241,7 +252,7 @@ function cardView() {
       const D0 = CO.deaths, A0 = CO.avoid;
       if (on('cdeaths') && D0 && ((D0.items || []).length || D0.line)) {
         const onP = String(D0.note || '').match(/(\d+) of \d+ deaths? on the player/), aft = String(D0.note || '').match(/(\d+) more after/);
-        const dr = (d, i) => { const k = 'r:d' + i, o = isOn(k, false); return '<div class="kdr' + (d.story ? ' has' : '') + '"' + (d.story ? ' data-cr="' + k + '"' : '') + '><span class="kdt">' + esc(d.t) + '</span><i class="kd" style="background:' + (KCOL[d.k] || '#6c7381') + '"></i>' + nmH(d.who) + icn(d.id) + '<span class="kda">' + esc(d.ab) + '</span>' + (d.story ? '<i class="kpl">' + (o ? '–' : '+') + '</i>' : '') + '</div>' + (o ? '<p class="kst">' + pt(d.story) + '</p>' : ''); };
+        const dr = (d, i) => { const k = 'r:d' + i, o = isOn(k, false); return '<div class="kdr' + (d.story ? ' has' : '') + '"' + (d.story ? ' data-cr="' + k + '"' : '') + '><span class="kdt">' + esc(d.t) + '</span><i class="kd" style="background:' + (KCOL[d.k] || '#6c7381') + '"></i>' + nmH(d.who) + icn(d.id) + '<span class="kda">' + esc(d.ab) + '</span>' + ((d.ready || []).length ? '<span class="krdy">' + esc(d.ready[0] + (d.ready.length > 1 ? ' +' + (d.ready.length - 1) : '')) + ' unused</span>' : '') + /* (what could have saved them (Oct 24)) */ (d.story ? '<i class="kpl">' + (o ? '–' : '+') + '</i>' : '') + '</div>' + (o ? '<p class="kst">' + pt(d.story) + '</p>' : ''); };
         Rt += sec('cd', 'Deaths <span class="ksc">· ' + (D0.items || []).length + (onP ? ' · ' + onP[1] + ' on the player' : '') + (aft ? ' · ' + aft[1] + ' not counted' : '') + '</span>', (D0.items || []).length ? (D0.items || []).map(dr).join('') : '<p class="kno">' + pt(D0.line) + '</p>', deep);
       }
       if (on('cavoid') && A0 && ((A0.items || []).length || A0.line)) {
@@ -321,7 +332,7 @@ document.addEventListener('click', (e) => {
   if (t.dataset.pull) { if (t.classList.contains('on')) return; loadingPull = +t.dataset.pull; t.classList.add('wait'); t.textContent = t.textContent.replace(/ · .*/, ' · loading…'); post('pull:' + t.dataset.pull); return; }
   if (t.dataset.tab) { VIEW = t.dataset.tab; render(); return; } /* (the card: Me or Raid view) */
   if (t.dataset.cf) { const k = t.dataset.cf, cur = OPEN[k] != null ? OPEN[k] : (k === 's:cw' || k === 's:cd' || k === 's:ca' ? DEEP() : true); OPEN[k] = !cur; render(); return; }
-  if (t.dataset.cr) { const k = t.dataset.cr; OPEN[k] = !(OPEN[k] != null ? OPEN[k] : (k === 'r:w0' && DEEP())); render(); return; }
+  if (t.dataset.cr) { const k = t.dataset.cr; OPEN[k] = !(OPEN[k] != null ? OPEN[k] : ((k === 'r:w0' || k === 'r:rot0') && DEEP())); render(); return; }
   if (t.dataset.cmore) { OPEN['m:' + t.dataset.cmore] = true; render(); return; }
   if (t.dataset.cutt) { const v = D.cut ? 0 : 1; waiting = true; D.cut = v; render(); post('cut:' + v); return; } /* (Wipe call on or off) */
   if (t.dataset.cut) { const v = Math.max(0, Math.min(8, (D.cut || 0) + (+t.dataset.cut))); if (v !== D.cut) { waiting = true; D.cut = v; render(); post('cut:' + v); } return; }
@@ -405,6 +416,19 @@ async function siteBox(host, pack) {
     chip.classList.add('on'); box.innerHTML = h; if (isD) chip.after(box); box.hidden = false; hydrate(box); fit(); /* (a death's card right under its chip, like the site) */
   });
 }
+// (hover a spell's icon: its name and what it does, as WoW's tooltip says it (Oct 24))
+const TTC = {};
+function ttText(h) { const d = document.createElement('div'); d.innerHTML = String(h || '').replace(/<br\s*\/?>/gi, '\n').replace(/<\/(tr|div|p)>/gi, '\n').replace(/<\/t[dh]>/gi, '   '); return d.textContent.replace(/\n{3,}/g, '\n\n').trim(); }
+function ttShow(el, ev) {
+  const id = el.dataset.sid; if (!id) return; let box = document.getElementById('ktt'); if (!box) { box = document.createElement('div'); box.id = 'ktt'; document.body.appendChild(box); }
+  const place = () => { const r = el.getBoundingClientRect(), bw = box.offsetWidth, bh = box.offsetHeight; let x = r.right + 8, y = r.top - 4; if (x + bw > window.innerWidth - 6) x = Math.max(6, r.left - bw - 8); if (y + bh > window.innerHeight - 6) y = Math.max(6, window.innerHeight - bh - 6); box.style.left = x + 'px'; box.style.top = y + 'px'; };
+  const fill = (t) => { if (box.dataset.for !== id) return; box.innerHTML = '<b>' + esc(t.name || '') + '</b>' + esc(t.text || '').slice(0, 600); box.hidden = false; place(); };
+  box.dataset.for = id; box.hidden = true;
+  if (TTC[id]) return fill(TTC[id]);
+  fetch('https://nether.wowhead.com/tooltip/spell/' + encodeURIComponent(id) + '?dataEnv=1&locale=0').then((r) => r.json()).then((x) => { if (!x) return; const t = { name: x.name || '', text: ttText(x.tooltip).replace(new RegExp('^' + reEsc(x.name || '') + '\\s*'), '') }; TTC[id] = t; fill(t); }).catch(() => {});
+}
+document.addEventListener('mouseover', (e) => { const el = e.target.closest ? e.target.closest('.ic[data-sid]') : null; if (el) ttShow(el, e); });
+document.addEventListener('mouseout', (e) => { const el = e.target.closest ? e.target.closest('.ic[data-sid]') : null; if (el && !(e.relatedTarget && el.contains(e.relatedTarget))) { const b = document.getElementById('ktt'); if (b) { b.hidden = true; b.dataset.for = ''; } } });
 window.DBF_SHOW = take; // (tests)
 if (wv) wv.addEventListener('message', (e) => take(e.data));
 post('ready');

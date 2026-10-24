@@ -800,7 +800,7 @@ RECAP.lines = (m) => {
     if (c.trend) rec.push(['CTE', 1]); // (the cards are on, even when all three lists are empty)
     for (const x of c.wrong || []) rec.push(['CW', x.sev, x.id || '', x.label, x.tag || '', x.what || '', x.fix || '', x.how || '', x.kb || '']); // (How and Against top guilds, Oct 22)
     for (const x of c.right || []) rec.push(['CR', x.id || '', x.t]);
-    if (c.deaths) { for (const x of c.deaths.items || []) rec.push(['CD', x.t, x.who, x.cls || '', x.id || '', x.ab, x.k || 'n', x.story || '']); if (c.deaths.note) rec.push(['CN', c.deaths.note]); if (!(c.deaths.items || []).length && c.deaths.line) rec.push(['CL', c.deaths.line]); }
+    if (c.deaths) { for (const x of c.deaths.items || []) rec.push(['CD', x.t, x.who, x.cls || '', x.id || '', x.ab, x.k || 'n', x.story || '', (x.ready || []).join(';')]); /* (what could have saved them (Oct 24)) */ if (c.deaths.note) rec.push(['CN', c.deaths.note]); if (!(c.deaths.items || []).length && c.deaths.line) rec.push(['CL', c.deaths.line]); }
     if (c.avoid) { for (const x of c.avoid.items || []) rec.push(['CA', x.id || '', x.k, x.who, x.cls || '', x.n || '', x.bad ? 1 : '', x.story || '']); if (!(c.avoid.items || []).length && c.avoid.line) rec.push(['CV', c.avoid.line]); }
     for (const [n, v] of Object.entries(m.coach.you || {})) { rec.push(['PC', n, v[0], v[1]]); if (v[2]) for (const [k, L] of [['x', v[2].worse], ['b', v[2].better]]) for (const x of L || []) rec.push(['PT', n, k, x[0], x[1] || '']); } }
   if (m.raid.story) rec.push(['Y', m.raid.story]);

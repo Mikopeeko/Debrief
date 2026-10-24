@@ -705,10 +705,13 @@ function buildOne(b, rep, same, W, L, cutN) {
       for (const c of focus) { P.slips.push([c.st, spellId(W, c.ic), slipLine(c)]); if (c.tip) tips.push(plain(c.tip)); }
       // (the Rotation tab's checklist, for the card (Oct 24): each fix with your number, the top players', a square per moment, the tip)
       const num = (v) => plain(v).replace(/(\d)\s*\/\s*(\d)/g, '$1/$2');
-      const why = (c) => shortTo(sentences(c.sub).filter((s) => !/\b(below|above|listed)\b/i.test(s) && !/^Debrief checked/.test(s)).slice(0, 2).join(' '), 170);
+      const why = (c) => shortTo(sentences(c.sub).filter((s) => !/\b(below|above|listed)\b/i.test(s) && !/^Debrief checked/.test(s) && !/^The (cards|bars|squares|picture|chart)\b/i.test(s)).slice(0, 3).join(' '), 300); /* (no pointers to the website's pictures, Oct 24) */
+      // (for the drop-down (Oct 24): how it's judged, and the moments that went wrong, a few)
+      const howOf = (c) => shortTo(sentences(plain(c.how || '')).filter((s) => !/\b(Wowhead|Icy Veins|guide|SimulationCraft|APL)\b/i.test(s)).slice(0, 2).join(' '), 240);
+      const momOf = (c) => (c.bx || []).filter((q) => q.cls && q.cls !== 'ok' && q.tip).slice(0, 5).map((q) => shortTo(sentences(plain(q.tip).replace(/;/g, ','))[0] || plain(q.tip), 110)).join(';'); /* (each moment's first sentence) */
       P.rs = { score: x.score != null ? Math.round(x.score) : '', good: x.checks.filter((c) => c.st === 'ok' && c.isMain).slice(0, 4).map((c) => plain(c.label)) };
       P.rot = focus.map((c) => [c.st, spellId(W, c.ic), plain(c.label), num(c.v), x.top && x.top[c.k] ? num(x.top[c.k]) : '', c.tip ? plain(c.tip) : '',
-        (c.bx || []).length >= 2 ? c.bx.slice(0, 40).map((q) => (q.cls === 'ok' ? 'g' : q.cls === 'bad' ? 'b' : 'w')).join('') : '', why(c)]);
+        (c.bx || []).length >= 2 ? c.bx.slice(0, 40).map((q) => (q.cls === 'ok' ? 'g' : q.cls === 'bad' ? 'b' : 'w')).join('') : '', why(c), howOf(c), momOf(c)]);
       if (!focus.length) { const good = x.checks.filter((c) => c.st === 'ok').slice(0, 2); for (const c of good) P.slips.push(['ok', spellId(W, c.ic), shortTo(plain(c.label) + ': ' + plain(c.v).replace(/(\d+)\s*\/\s*(\d+)/, '$1 of $2') + '.', 120)]); }
     }
     // Boss mechanics: their own mistakes on this pull, then their death
