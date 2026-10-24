@@ -15993,6 +15993,7 @@ const PATCH_NOTES = [
   { d: '2026-10-24', h: [
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
+    'Debrief in game: no more pasting or sharing. Your recap pops up on your PC, and /reload brings it into /recap. Pulls sent by other players are cleared, and Ctrl+Shift+D now shows or hides your card',
     'Debriefing: every big mistake shows up top under What wiped us, as "Also went wrong" (no names: "Missed by 4 players").',
     'Debriefing: a mechanic that changed since last pull says so with a small ▲ Improving or ▼ Worsening tag, up top or on its phase bar, in place of the Worse / Better boxes and the Every mistake list.',
     'Debriefing: numbers in sentences take the line\'s colour ("4 ghosts", "15 yards"), and the text sizes match across the page.',
@@ -16561,20 +16562,20 @@ function openInGame() {
       '<p class="igm-warn"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.2v.1" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><span>If Windows says <b>"Windows protected your PC"</b>, click <b>More info</b>, then <b>Run anyway</b>. The app is new and isn\'t signed yet.</span></p>' +
       '<p class="igm-ver">The app keeps itself and the addon up to date.</p>' +
       '<p class="igm-phone">On your phone? The downloads are for a Windows PC: open debriefme.io/?ingame there.</p></div>' +
-      '<div class="igm-art"><img src="' + U + 'shots/card.png" alt="A recap card in the game: the boss, your healing, your rotation slips, your boss mistakes and the next pull tip">' + igmToast() + '</div></header>' +
-    '<section class="igm-sec"><div class="igm-sh"><h2>Who needs what</h2><p>Everyone gets the addon. Only one person runs the PC app.</p></div><div class="igm-who">' +
-      '<div class="igm-wc"><div class="igm-wh">' + all + '<div><div class="igm-tag">Everyone in the raid</div><h3>The addon</h3></div></div>' +
-        '<p>Shows your recap after every boss pull. It opens by itself when the pull comes in, so there\'s nothing to press.</p>' +
+      '<div class="igm-art"><img src="' + U + 'shots/card.png" alt="A recap card in the game: the boss, your healing, your rotation slips, your boss mistakes and the next pull tip"></div></header>' +
+    '<section class="igm-sec"><div class="igm-sh"><h2>Who needs what</h2><p>Everyone who wants their recap runs the PC app. It puts the addon in too.</p></div><div class="igm-who">' +
+      '<div class="igm-wc"><div class="igm-wh">' + all + '<div><div class="igm-tag">In the game</div><h3>The addon</h3></div></div>' +
+        '<p>Shows your recaps in WoW. After a boss pull, type /reload, then /recap.</p>' +
         '<p class="igm-how">Unzip it into <code>World of Warcraft\\_retail_\\Interface\\AddOns</code>. Or take the Windows download, which puts it in for you.</p>' + btn(false, 'Debrief-addon.zip', 'Just the addon', 'About 0.2 MB') + '</div>' +
-      '<div class="igm-wc one"><div class="igm-wh">' + one + '<div><div class="igm-tag">One person in the raid</div><h3>The PC app</h3></div></div>' +
-        '<p>Reads the combat log after each boss pull and gets the recap ready. That person presses Ctrl+V in game, and the addon shares it with everyone.</p>' +
-        '<p class="igm-how">Pick someone who\'s there every raid night, like the raid leader. Run Debrief-Setup.exe: it puts in the addon too, starts with Windows and turns the combat log on for you in raids.</p>' + btn(true, 'Debrief-Setup.exe', 'Download for Windows', 'About 2.8 MB') + '</div>' +
+      '<div class="igm-wc one"><div class="igm-wh">' + one + '<div><div class="igm-tag">On your PC</div><h3>The PC app</h3></div></div>' +
+        '<p>Reads your combat log after each boss pull and shows your recap over the game a few seconds later. It also saves it for the addon.</p>' +
+        '<p class="igm-how">Run Debrief-Setup.exe: it puts in the addon too, starts with Windows and turns the combat log on for you in raids.</p>' + btn(true, 'Debrief-Setup.exe', 'Download for Windows', 'About 2.8 MB') + '</div>' +
     '</div></section>' +
     '<section class="igm-sec"><div class="igm-sh"><h2>After every boss pull</h2><p>Three steps, a few seconds.</p></div><ol class="igm-steps">' +
       '<li><i>1</i><b>The pull ends</b><span>Kill or wipe, the app reads it from the combat log.</span></li>' +
-      '<li><i>2</i><b>The app chimes and copies the recap</b><span>You hear a short chime on the PC with the app.</span></li>' +
-      '<li><i>3</i><b>Press Ctrl+V in WoW</b><span>When it asks "See your recap?", press Ctrl+V and your recap opens.</span>' + igmToast() + '</li></ol>' +
-      '<div class="igm-all"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor" opacity=".18"/><path d="m7.5 12.4 3 3 6-6.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Everyone else does nothing.</b> Their recap opens by itself.</span></div></section>' +
+      '<li><i>2</i><b>Your recap pops up over the game</b><span>A short chime, and the recap opens on your screen.</span></li>' +
+      '<li><i>3</i><b>In WoW, /reload, then /recap</b><span>The pull is in the addon too, with every pull from tonight.</span></li></ol>' +
+      '<div class="igm-all"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor" opacity=".18"/><path d="m7.5 12.4 3 3 6-6.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Nothing to copy or paste.</b> The app does it all.</span></div></section>' +
     '<section class="igm-sec"><div class="igm-sh"><h2>What it looks like</h2><p>The card, the raid view, the big window and the settings.</p></div><div class="igm-gal">' + IGM_SHOTS.map(shot).join('') + '</div></section>' +
     '<section class="igm-sec"><div class="igm-sh"><h2>Handy commands</h2><p>Type these in the chat box in WoW. Click one to copy it.</p></div><div class="igm-cmds">' +
       IGM_CMDS.map(([c, d]) => '<button type="button" class="igm-cmd" data-c="' + esc(c) + '"><code>' + esc(c) + '</code><span>' + esc(d) + '</span><em>Copy</em></button>').join('') + '</div></section>' +
