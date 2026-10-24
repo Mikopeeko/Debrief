@@ -1587,6 +1587,11 @@ line.tl-t { stroke: #ece8df; stroke-width: 2.5; vector-effect: non-scaling-strok
 .gb-tb .gb-tl .cb-in .pf-nm .nm { color: #fff; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,.9); }
 @media (max-width: 640px) { .gb-pod { grid-template-columns: minmax(0, 1fr); } .gb-podc { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; column-gap: 10px; } .gb-podc .gb-ps { grid-column: 2 / -1; } }
 @media (max-width: 480px) { .pf-row.cb.gb-r3 { grid-template-columns: 18px minmax(0, 1fr) 72px 46px; column-gap: 6px; } .pf-row.cb.gb-r3 .cb-v { font-size: 12.5px; } } /* (phone: Total and % get room) */
+/* (Oct 23: By player / By ability, and each buff's uptime as a strip over the pull, a faint line each minute) */
+.gb-tb .gb-by { margin: 0 0 10px; } .gb-tb .gb-by + .pfph { margin-top: 0; }
+.gb-strip { position: relative; display: block; height: 14px; border-radius: 4px; overflow: hidden; background: repeating-linear-gradient(90deg, transparent 0 calc(var(--tk) - 1px), rgba(255,255,255,.07) calc(var(--tk) - 1px) var(--tk)), rgba(255,255,255,.04); }
+.gb-strip i { position: absolute; top: 2px; bottom: 2px; border-radius: 3px; background: var(--c); opacity: .85; }
+.gb-axl { display: flex; justify-content: space-between; font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; } .gb-ax3 { margin-bottom: 2px; }
 .gb-pkg { margin-top: 4px; } .gb-pkg.n3 { grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); } /* (three in a row only when each has room for its names) */
 .gb-dr .gb-br { grid-template-columns: minmax(0, 190px) minmax(110px, 1fr) minmax(0, 38%); } .gb-dr .gb-bx { white-space: normal; line-height: 1.3; } /* (a long note wraps, so every bar keeps its room) */
 .gb-dmore { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
