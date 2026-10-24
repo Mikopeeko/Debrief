@@ -4253,9 +4253,9 @@ details.secd.mcx-tile[open] .mcx-alt { display: none; }
 #view .mxa-p:not(.mxa-all) .dbn-jh > b { font-weight: 600; }
 #view .mxa-p:not(.mxa-all) .pdesc.mxa-keep { font-size: 12.5px; color: var(--muted); }
 /* ("why so big" (Oct 24): the note's chips small in the opened view, no box around the row, the status as plain coloured words) */
-#view .mxa-p:not(.mxa-all) .chipn { height: auto; min-height: 0; padding: 1px 8px 1px 2px; font-size: 12.5px; gap: 5px; }
+#view .mxa-p:not(.mxa-all) .chipn { height: auto; min-height: 0; padding: 1px 8px 1px 2px; font-size: 13px; gap: 5px; }
 #view .mxa-p:not(.mxa-all) .chipn .av, #view .mxa-p:not(.mxa-all) .chipn .av img { width: 16px !important; height: 16px !important; }
-#view .mxa-p:not(.mxa-all) .chipn b { font-size: 12.5px; }
+#view .mxa-p:not(.mxa-all) .chipn b { font-size: 13px; }
 #view .mxa-p:not(.mxa-all) .dbo-row { padding: 0; background: none; border-left: 0; gap: 5px 6px; }
 #view .mxa-p:not(.mxa-all) .dbo-x { font-size: 12px; margin-left: 4px; }
 #view .mxa-p:not(.mxa-all) .dbn-jh .sst { background: none !important; border: 0 !important; padding: 0 !important; height: auto; font-size: 12.5px; }
@@ -4275,6 +4275,25 @@ details.secd.mcx-tile[open] .mcx-alt { display: none; }
 #view .dbn-bar.dbn-one .dbn-vw { margin-left: auto; }
 #view .dbn-bar.dbn-one .dbn-vw.on { border-color: rgba(230,180,80,.6); color: var(--gold); }
 #view .dth-p .cutbar.dth-cut { margin: 0 0 12px; padding: 0 0 10px; border-bottom: 1px solid rgba(255,255,255,.06); }
+/* (Oct 24, your ask: numbers in the line's flag colour) */
+#view b.dbt-n { font-weight: 700; } #view b.dbt-n.bad { color: #ff8f87; } #view b.dbt-n.warn { color: #f3c969; } #view b.dbt-n.ok { color: #8fd99a; } #view b.dbt-n.n { color: var(--text); }
+/* (Oct 24, Also went wrong in the top box) */
+#view .cch-tsec .cch-also-h { margin: 12px 0 4px; color: #ef6b62; }
+#view .cch-tsec ul.cch-also li { border-left-color: #ef6b62; }
+/* (Oct 24, your ask "check the font sizes": every Debriefing text on the design list's sizes. Labels 12, secondary lines and small buttons 13,
+   row titles 14, the raid lead's sentences 15, phase names 18) */
+#view .mcx-lt small, #view .prw-nt { font-size: 12px !important; }
+#view .cbl-sw button, #view .cch-av, #view .rch-t, #view .ckt-none, #view .ckt-tot, #view .cbl-calm, #view .dbn-gone, #view .mxa-x, #view .u1-n,
+#view details.howit > summary, #view .mxa-all-b, #view .pdesc, #view .dbn-jh .sst, #view .cbr-wh, #view .cgl-d, #view .cbl-ln, #view .cch-wy, #view .prw-s, #view .dbo-x, #view .cch-tt { font-size: 13px !important; }
+#view .prw-n, #view .cgl-n, #view .cbr-t > b, #view .dbn-jh > b, #view details.cbr-more > summary { font-size: 14px !important; }
+#view .cch-trc, #view .cch-mr { font-size: 15px !important; }
+#view .phr-nm b { font-size: 18px !important; }
+#view .rch-dmg .nm, #view .mxa-yn, #view .mxa-yn2 { font-size: 13px !important; }
+#view :is(.cbr-wh, .cgl-d, .cbl-ln, .cch-wy, .prw-s, .ckt-none, .ckt-tot, .cch-av, .pdesc, .u1-n, .cch-trc, .cch-mr, .prw-n, .cbr-t > b, details.cbr-more > summary, .cbl-sw button, .dbn-jh > b) :is(.nm, .sp, b, span) { font-size: inherit !important; }
+/* (Oct 24: Improving / Worsening tags on phase bars) */
+#view .prw-tr { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 999px; font-size: 12px; font-weight: 700; line-height: 18px; vertical-align: 1px; }
+#view .prw-tr.dn { color: #ff8f87; background: rgba(229,83,75,.12); } #view .prw-tr.up { color: #4fd1c5; background: rgba(79,209,197,.12); }
+#view .cch-also-more { color: var(--muted); font-size: 13px; border-left-color: transparent !important; }
 #view .pcx-w { margin: 6px 0 0; font-size: 13px; color: var(--muted, #aab); }
 #view ul.cch-wl { list-style: none; margin: 6px 0 12px; padding: 0; display: grid; gap: 6px; } #view ul.cch-wl li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 15px; line-height: 1.35; padding-left: 12px; border-left: 3px solid var(--gold, #e6b450); } #view ul.cch-wl li b { font-weight: 800; } #view ul.cch-wl .cch-wn { color: #ef6b62; font-weight: 700; font-size: 13px; } #view ul.cch-wl .cch-wy { flex-basis: 100%; color: var(--muted, #aab); font-size: 14px; }
 #view p.cch-h b.cch-rc { color: var(--gold, #e5b84b); font-weight: 800; } #view .dbr-dd { position: relative; display: block; height: 10px; margin: 4px 0 8px; border-radius: 5px; background: rgba(255,255,255,.1); } #view .dbr-dd i { position: absolute; top: 1px; width: 8px; height: 8px; box-shadow: 0 0 0 1.5px #15181f; border-radius: 50%; background: #e5534b; transform: translateX(-50%); } #view .dbr-dd i.ms { background: #6b7280; } #view .dbr-db { display: flex; align-items: flex-end; gap: 2px; height: 20px; margin: 2px 0 6px; } #view .dbr-db i { flex: 1; min-width: 2px; border-radius: 2px 2px 0 0; background: #e5534b; } #view .dbr-db i.z { background: rgba(255,255,255,.12); } @media (max-width: 760px) { #view .dbr-4.dbr-5.dbr-6 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } } @media (max-width: 520px) { #view .dbr-4.dbr-5.dbr-6 { grid-template-columns: minmax(0, 1fr) !important; } } @media (max-width: 760px) { #view .dbr-4.dbr-5 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } } @media (max-width: 520px) { #view .dbr-4.dbr-5 { grid-template-columns: minmax(0, 1fr) !important; } }
