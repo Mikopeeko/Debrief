@@ -1765,6 +1765,7 @@ const PATCH_NOTES = [
     { t: 'The wipe is called for you', d: 'No more "stop at the 2nd death". Debrief now calls the wipe at the moment no raid has ever come back from: more people dead than any kill of that boss survived at that point (battle rezzes counted), the damage check missed, or half the raid dead. Everything before it counts, so the deaths and mistakes that lost the pull are graded. Tested on 760 kills: it never calls a wipe on a pull that was won.' },
     { t: 'A shorter debrief', d: 'Each pull now opens like a raid lead\'s debrief: what went well, what went wrong (click a line for its map and details) and the one thing for next pull. The extra drawers are gone; the timeline, raid cooldowns and burst windows sit in the open below the phases.' },
   ], n: [
+    'Debriefing: the Raid DPS, DTPS and HPS charts now draw the top guilds\' line second by second next to yours, and the bottom of the tab shows every player\'s DPS, DTPS and HPS.',
     'Graphs got a bolder look (the top 3 as cards, big class-colour bars), a By player / By ability switch on Damage, Healing and Damage taken, and each buff\'s uptime as a timeline.',
     'Debriefing: tap Raid DPS, DTPS or HPS to see a chart of the pull against the top guilds\' average in each phase, red where you did worse and green where better. Combat potions now show about how much extra damage they gave.',
     'Debriefing: Healthstones and potions show how much they healed, Avoidable damage shows the total taken, and the numbers are coloured to match each bar.',
@@ -11044,7 +11045,7 @@ function oaLayout(v, el) {
     else if (rcd) out.appendChild(rcd);
     const brw = v.querySelector('.panel.brw'); if (brw) { const f = document.createElement('details'); f.className = 'panel secd st-na brf-burst'; f.dataset.k = 'brf-burst'; if (S.openSecs.has('brf-burst')) f.open = true; f.innerHTML = '<summary><span class="sechd"><b>Burst windows</b></span><span class="sub">where the raid\'s damage went, and what was going on</span></summary>'; brw.querySelector('h3.nh') && brw.querySelector('h3.nh').remove(); f.appendChild(brw); out.appendChild(f);
       f.addEventListener('toggle', () => { if (f.open) S.openSecs.add('brf-burst'); else S.openSecs.delete('brf-burst'); }); }
-    try { rateCharts(v, out); } catch (e) { /* (the charts stay where they were) */ }
+    try { rateCharts(v, out); } catch (e) { /* (the charts stay where they were) */ } try { oaMeters(v, out); } catch (e) { /* (no meters) */ }
     const dc = [...v.querySelectorAll('details.panel')].find((d) => /^Data check/.test(((d.querySelector('summary') || {}).textContent || '').trim())); if (dc) out.appendChild(dc);
     dr.replaceWith(out); if (top) top.remove(); v.querySelectorAll('#rcTop, .rc-hp').forEach((n) => { if (!out.contains(n)) n.remove(); }); try { if (S._drawMaps) S._drawMaps(); } catch (e) { /* (maps draw when seen) */ } return; }
   /* (All pulls, Oct 23 (your ask: "the bottom half could still be tidied up more"): like one pull, no "More from all pulls" drawer. Its fix
@@ -11053,7 +11054,7 @@ function oaLayout(v, el) {
      under the phases: All pulls at a glance in the open, and The numbers folded) */
   if (v.querySelector('.nmc')) { const out = document.createElement('div'); out.className = 'brf-keep';
     v.querySelectorAll('.mcx-tl').forEach((n) => out.appendChild(n));
-    out.querySelectorAll('.mcx-verdict, .mcx-lead').forEach((n) => n.remove()); try { rateCharts(v, out); } catch (e) { /* (no night charts) */ } /* (the phase rows above already say what went wrong most; the score paragraph was jargon) */
+    out.querySelectorAll('.mcx-verdict, .mcx-lead').forEach((n) => n.remove()); try { rateCharts(v, out); } catch (e) { /* (no night charts) */ } try { oaMeters(v, out); } catch (e) { /* (no meters) */ } /* (the phase rows above already say what went wrong most; the score paragraph was jargon) */
     const nums =[...dr.querySelectorAll('.rc-it')].find((x) => /^\s*The numbers/i.test(x.textContent || ''));
     if (nums) { const f = document.createElement('details'); f.className = 'panel secd st-na brf-nums'; f.dataset.k = 'brf-nums'; if (S.openSecs.has('brf-nums')) f.open = true;
       f.innerHTML = '<summary><span class="sechd"><b>The numbers</b></span><span class="sub">early in the night against later</span></summary>'; nums.querySelectorAll('h3.nh').forEach((h) => h.remove()); f.appendChild(nums);
@@ -11544,17 +11545,18 @@ function coachKit(reps, name) {
    unpressed 0. With a player picked: theirs, or the ones they got. No Priest or Druid with them: no row) */
 /* (Oct 23, your call: the over-time charts live in the tiles that already have the numbers: Raid DPS opens its ranks and the damage
    chart (what was Burst windows), DTPS the damage taken over the pull, HPS the healing. One pull only; the same filled style) */
-function rateArea(series, dur, col, lab, marks, key, ref, hiGood) { void marks;
+function rateArea(series, dur, col, lab, marks, key, ref, hiGood, refA) { void marks;
   /* (Oct 23, your ask "as readable as you can": a 9-second average so the shape shows, not every spike; each phase a band with its name and
      a chip that says how we did against the top kills there (green better, red worse); one dashed line for the top kills, named at its end) */
   const n = Math.max(2, Math.ceil(dur)), W = 720, H = 170, TOP = 34, sm = [];
   for (let i = 0; i < n; i++) { let s = 0, k = 0; for (let j = Math.max(0, i - 4); j <= Math.min(n - 1, i + 4); j++) { s += series[j] || 0; k++; } sm.push(s / k); }
-  const R = (ref || []).filter((q) => q.v), mx = Math.max(1, ...sm, ...R.map((q) => q.v)) * 1.05, x = (i) => (W * Math.max(0, Math.min(n - 1, i)) / (n - 1)).toFixed(1), y = (v) => (H - (H - TOP) * v / mx).toFixed(1);
+  const ra = refA && refA.a ? refA.a.map((_, i) => { let s2 = 0, k2 = 0; for (let j2 = Math.max(0, i - 4); j2 <= Math.min(refA.a.length - 1, i + 4); j2++) if (refA.a[j2] != null) { s2 += refA.a[j2]; k2++; } return k2 && refA.a[i] != null ? s2 / k2 : null; }) : null; /* (the top guilds' own line, smoothed like ours) */
+  const R = (ref || []).filter((q) => q.v), mx = Math.max(1, ...sm, ...R.map((q) => q.v), ...(ra || []).filter((v) => v != null)) * 1.05, x = (i) => (W * Math.max(0, Math.min(n - 1, i)) / (n - 1)).toFixed(1), y = (v) => (H - (H - TOP) * v / mx).toFixed(1);
   let g = '';
   R.forEach((q, k) => { const x0 = +x(q.s), x1 = +x(q.e); if (k % 2) g += '<rect x="' + x0 + '" y="0" width="' + (x1 - x0).toFixed(1) + '" height="' + H + '" class="rta-band"/>'; if (k) g += '<line x1="' + x0 + '" x2="' + x0 + '" y1="0" y2="' + H + '" class="rta-pl"/>'; });
   for (let m = 60; m < dur; m += 60) g += '<text x="' + x(m) + '" y="' + (H + 15) + '" class="rta-t">' + T(m) + '</text>';
   const d = 'M0 ' + H + ' ' + sm.map((v, i) => 'L' + x(i) + ' ' + y(v)).join(' ') + ' L' + W + ' ' + H + ' Z';
-  const rf = R.length ? '<path class="rta-rf" d="' + R.map((q, k) => (k ? 'L' : 'M') + x(q.s) + ' ' + y(q.v) + ' L' + x(q.e) + ' ' + y(q.v)).join(' ') + '"/>' : '';
+  const rf = ra ? '<path class="rta-rf rta-rf2" d="' + ra.map((v, i) => (v == null ? '' : ((i && ra[i - 1] != null ? 'L' : 'M') + x(i) + ' ' + y(v)))).join(' ') + '"/>' : R.length ? '<path class="rta-rf" d="' + R.map((q, k) => (k ? 'L' : 'M') + x(q.s) + ' ' + y(q.v) + ' L' + x(q.e) + ' ' + y(q.v)).join(' ') + '"/>' : '';
   /* (each phase: its name, and ours against the top kills there) */
   const chips = R.map((q) => { const s0 = Math.max(0, Math.floor(q.s)), e0 = Math.min(n - 1, Math.ceil(q.e)); let s = 0, k = 0; for (let i = s0; i <= e0; i++) { s += series[i] || 0; k++; } const ours = k ? s / k : 0, dd = Math.round(100 * (ours / q.v - 1)), good = hiGood ? dd >= 0 : dd <= 0;
     const w = (100 * (q.e - q.s) / (n - 1)).toFixed(2), l = (100 * q.s / (n - 1)).toFixed(2);
@@ -11562,12 +11564,12 @@ function rateArea(series, dur, col, lab, marks, key, ref, hiGood) { void marks;
   const lastR = R[R.length - 1];
   const pk = sm.indexOf(Math.max(...sm));
   return '<div class="rta" data-rk="' + esc(key || '') + '"><p class="rtb-h">' + esc(lab) + ' <span>· over the pull · peak ' + C(sm[pk]) + ' at ' + T(pk) + '</span></p>' +
-    '<div class="rta-w"><div class="rta-phs">' + chips + '</div><svg viewBox="0 0 ' + W + ' ' + (H + 20) + '" class="rta-s" preserveAspectRatio="none" data-rta="' + esc(JSON.stringify({ n, W, H, sm: sm.map((v) => Math.round(v)), mx: Math.round(mx), col, ref: R.map((q) => ({ s: Math.round(q.s), e: Math.round(q.e), v: Math.round(q.v) })) })) + '">' + g +
-    (R.length ? (() => { /* (Oct 23, style B: the gap between us and the top kills filled red where we did worse, green where better) */ const rAt = (i) => { const q = R.find((z) => i >= z.s && i <= z.e); return q ? q.v : null; }; let o = '';
+    '<div class="rta-w"><div class="rta-phs">' + chips + '</div><svg viewBox="0 0 ' + W + ' ' + (H + 20) + '" class="rta-s" preserveAspectRatio="none" data-rta="' + esc(JSON.stringify({ n, W, H, sm: sm.map((v) => Math.round(v)), mx: Math.round(mx), col, ref: R.map((q) => ({ s: Math.round(q.s), e: Math.round(q.e), v: Math.round(q.v) })), ra: ra ? ra.map((v) => (v == null ? null : Math.round(v))) : null })) + '">' + g +
+    (R.length ? (() => { /* (Oct 23, style B: the gap between us and the top kills filled red where we did worse, green where better) */ const rAt = (i) => { if (ra) return ra[i] != null ? ra[i] : null; const q = R.find((z) => i >= z.s && i <= z.e); return q ? q.v : null; }; let o = '';
       for (let i = 0; i < n - 1; i++) { const a = rAt(i), b = rAt(i + 1); if (a == null || b == null) continue; const worse = hiGood ? sm[i] < a : sm[i] > a; o += '<path d="M' + x(i) + ' ' + y(a) + ' L' + x(i) + ' ' + y(sm[i]) + ' L' + x(i + 1) + ' ' + y(sm[i + 1]) + ' L' + x(i + 1) + ' ' + y(b) + ' Z" class="' + (worse ? 'rta-gw' : 'rta-gb') + '"/>'; }
       return '<path d="' + d + '" fill="' + col + '" fill-opacity=".12"/>' + o; })() : '<path d="' + d + '" fill="' + col + '" fill-opacity=".75"/>') + '<path d="' + sm.map((v, i) => (i ? 'L' : 'M') + x(i) + ' ' + y(v)).join(' ') + '" class="rta-ln" stroke="' + col + '"/>' + rf +
-    R.map((q) => '<text x="' + (+x(q.e) - 6) + '" y="' + (+y(q.v) - 6) + '" class="rta-rl">Top guilds: ' + C(q.v) + '</text>').join('') /* (each phase's top-guild value on its line (your ask, Oct 23)) */ + (lastR ? '' : '') + '<line class="rta-hl" x1="0" x2="0" y1="0" y2="' + H + '" visibility="hidden"/></svg><div class="rta-tip" hidden></div></div>' +
-    (R.length ? '<p class="rta-key"><span><i class="rta-k1" style="background:' + col + '"></i>Us</span><span><i class="rta-k2"></i>Top guilds\' average in that phase</span><span><i class="rta-k1 rta-kw"></i>Worse than top guilds</span><span><i class="rta-k1 rta-kb"></i>Better</span></p>' : '') + '</div>'; }
+    (ra ? '' : R.map((q) => '<text x="' + (+x(q.e) - 6) + '" y="' + (+y(q.v) - 6) + '" class="rta-rl">Top guilds: ' + C(q.v) + '</text>').join('')) /* (each phase's top-guild value on its line (your ask, Oct 23)) */ + (lastR ? '' : '') + '<line class="rta-hl" x1="0" x2="0" y1="0" y2="' + H + '" visibility="hidden"/></svg><div class="rta-tip" hidden></div></div>' +
+    (R.length ? '<p class="rta-key"><span><i class="rta-k1" style="background:' + col + '"></i>Us</span><span><i class="rta-k2"></i>' + (ra ? 'Top guilds (average of ' + refA.n + ' kills)' : 'Top guilds\' average in that phase') + '</span><span><i class="rta-k1 rta-kw"></i>Worse than top guilds</span><span><i class="rta-k1 rta-kb"></i>Better</span></p>' : '') + '</div>'; }
 /* (the hover: the second under the pointer, its amount, and the three players with the most in those 5 seconds) */
 function rtaHover(e) { const s = e.target && e.target.closest ? e.target.closest('svg.rta-s') : null, pv = rtaHover.s;
   if (pv && pv !== s) { pv.querySelector('.rta-hl').setAttribute('visibility', 'hidden'); const tp = pv.parentNode.querySelector('.rta-tip'); if (tp) tp.hidden = true; rtaHover.s = null; }
@@ -11576,29 +11578,57 @@ function rtaHover(e) { const s = e.target && e.target.closest ? e.target.closest
   const hl = s.querySelector('.rta-hl'); hl.setAttribute('x1', gx); hl.setAttribute('x2', gx); hl.setAttribute('visibility', 'visible');
   const key = (s.closest('.rta') || {}).dataset ? s.closest('.rta').dataset.rk : '', r = S.rep; let top = [];
   if (r && key) top = [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name) && p[key]).map((p) => { let v = 0; for (let j = Math.max(0, i - 2); j <= i + 2; j++) v += p[key][j] || 0; return { p, v: v / 5 }; }).filter((x) => x.v > 0).sort((a, b) => b.v - a.v).slice(0, 3);
-  const tp = s.parentNode.querySelector('.rta-tip'); const rf = (D.ref || []).find((q) => i >= q.s && i <= q.e); tp.innerHTML = '<b>' + T(i) + '</b> · ' + C(D.sm[i]) + ' a second' + (rf ? '<div class="rta-tr">Top guilds: ' + C(rf.v) + '</div>' : '') + (top.length ? '<div class="rta-tt">' + top.map((x) => '<span><span class="nm" style="color:' + (x.p.color || 'inherit') + '">' + esc(String(x.p.name).split('-')[0]) + '</span> ' + C(x.v) + '</span>').join('') + '</div>' : '');
+  const tp = s.parentNode.querySelector('.rta-tip'); const rf = D.ra && D.ra[i] != null ? { v: D.ra[i] } : (D.ref || []).find((q) => i >= q.s && i <= q.e); tp.innerHTML = '<b>' + T(i) + '</b> · ' + C(D.sm[i]) + ' a second' + (rf ? '<div class="rta-tr">Top guilds: ' + C(rf.v) + '</div>' : '') + (top.length ? '<div class="rta-tt">' + top.map((x) => '<span><span class="nm" style="color:' + (x.p.color || 'inherit') + '">' + esc(String(x.p.name).split('-')[0]) + '</span> ' + C(x.v) + '</span>').join('') + '</div>' : '');
   tp.hidden = false; const w = tp.offsetWidth, lx = e.clientX - bx.left; tp.style.left = Math.max(0, Math.min(bx.width - w, lx + (lx > bx.width / 2 ? -w - 12 : 12))) + 'px'; }
 if (typeof document !== 'undefined') { document.addEventListener('pointermove', rtaHover); document.addEventListener('pointerdown', rtaHover); }
+/* (Oct 23, your ask: a two-line chart. The top kills' damage, healing and damage taken over the fight (Warcraft Logs' graphs, a point every
+   ~2.5 s), lined up phase by phase with ours: N seconds into our P2 is compared with N seconds into their P2; averaged over the kills with
+   our healer count when there are 5 or more; Warcraft Logs' counting corrected the same way as the tiles (RATE_CAL)) */
+const CURVE_LIVE = new Map();
+function curveRef(r, k, phases, n) { const key = r.item.boss + '|' + r.item.diffId, D = { 16: 5, 15: 4, 14: 3 }[r.item.diffId]; let L = CURVE_LIVE.get(key);
+  if (L === undefined && D && WCL.curveRecs && r.item.id > 0) { CURVE_LIVE.set(key, null); Promise.resolve(WCL.curveRecs({ e: r.item.id, d: D })).then((j) => { CURVE_LIVE.set(key, (j && j.recs) || []); if (S.tab === 'audit' && S.item && S.item.boss === r.item.boss && (j && j.recs || []).length) select(S.item); }).catch(() => {}); return null; }
+  if (!L || !L.length || !phases.length) return null; let hn = null; try { hn = healersOf(r); } catch (e) { hn = null; }
+  const same = L.filter((x) => x.h === hn), K = (same.length >= 5 ? same : L).filter((x) => (x.ph || []).length >= phases.length), j = { dps: 0, hps: 1, dtps: 2 }[k], cal = RATE_CAL[key] || [];
+  if (K.length < 3) return null; const out = [];
+  for (let i = 0; i < n; i++) { const pi = phases.findIndex((p) => i >= p.start && i < p.end); if (pi < 0) { out.push(null); continue; } const into = i - phases[pi].start, c = (cal[pi] || RATE_CAL_DEF)[j];
+    let s = 0, m = 0; for (const x of K) { const ph = x.ph[pi], t = ph[0] + into; if (t > ph[1]) continue; const v = (x[k] || [])[Math.floor(t * 1000 / (x.step || 1000))]; if (v != null) { s += v; m++; } }
+    out.push(m >= 2 ? s / m * c : null); }
+  return { a: out, n: K.length }; }
+/* (Oct 23, your idea: at the very bottom, the top 5 in damage done, healing and damage taken, like the Graphs tab's meters, on one pull and
+   on All pulls (added up over the night's pulls); "See everyone" opens that meter on Graphs) */
+function oaMeters(v, out) { if (!out || out.querySelector('.oam')) return; const r = S.rep; if (!r) return; const night = !!v.querySelector('.nmc');
+  const it = r.item || {}, R = night ? ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.players && !x.allPulls) : [r];
+  const tot = new Map(); let secs = 0;
+  for (const x of R) { const t = Math.max(1, Math.min(x.duration || 0, cutT(x))); secs += t; for (const p of x.players.values()) { if (!p.name || /^Player-/.test(p.name)) continue; const o = tot.get(p.name) || { p, dmg: 0, heal: 0, taken: 0 }; o.dmg += p.damage || 0; o.heal += (p.healing || 0) + (p.absorbs || 0); o.taken += p.taken || 0; tot.set(p.name, o); } }
+  const L = [...tot.values()]; if (!L.length) return;
+  /* (your note, Oct 23: "the style doesn't match": the same cards and rows as the Graphs tab (cbRow): rank, the name inside a class-coloured
+     bar, then the rate a second and the total) */
+  const col = (k, lab, gb, unit) => { const top = L.slice().sort((a, b) => b[k] - a[k]).filter((x) => x[k] > 0); if (!top.length) return ''; const mx = top[0][k], tt = top.reduce((s, x) => s + x[k], 0);
+    return '<section class="panel pf-bars gb-card oam-c" data-k="' + gb + '"><div class="gb-hd"><span class="gb-lbl">' + lab + ' · each player</span></div>' /* (the raid's numbers are in the tiles at the top (your note, Oct 23)) */ + (tt ? '' : '') + cbHead(unit, '', '', '') + '<div class="gb-rows">' +
+      top.map((x, i) => cbRow({ tag: 'div', cls: ' gb-row', attrs: '', k: i + 1, p: x.p, segs: [[Math.max(1.5, 100 * x[k] / mx), 'm']], v: C(x[k] / secs), sub: '' /* (no totals column (your call, Oct 23)) */ })).join('') + '</div><button type="button" class="oam-go" data-gb="' + gb + '">See it on Graphs ›</button></section>'; };
+  const d = document.createElement('div'); d.className = 'oam'; d.innerHTML = '<div class="oam-g">' + col('dmg', 'Raid DPS', 'dmg', 'DPS') + col('taken', 'DTPS', 'taken', 'DTPS') + col('heal', 'HPS', 'heal', 'HPS') + '</div>';
+  d.addEventListener('click', (e) => { const b = e.target.closest('.oam-go'); if (!b) return; S.tab = 'perf'; S.gbTab = b.dataset.gb; renderMain(); window.scrollTo({ top: 0 }); });
+  out.appendChild(d); }
 function rateCharts(v, out) { const r = S.rep; if (r && (r.allPulls || v.querySelector('.nmc'))) { /* (All pulls: the page still holds the last pull in S.rep) */ const it = r.item || (S.item || {}), R = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.players && !x.allPulls).sort((a, b) => a.item.pull - b.item.pull);
     const tiles = [...v.querySelectorAll('.oa-tiles .dbr-n')], pan = (re) => { const t = tiles.find((x) => re.test(x.textContent || '')); return t && (t.querySelector('.pcx-p') || t.pcxP); };
     /* (your call, Oct 23: All pulls is the night's average: each second averages every pull that lasted that long; the top guilds' line follows the furthest pull's phases) */
     const L = R.map((x) => ({ x, t: Math.max(1, Math.min(x.duration || 0, cutT(x))) })).filter((q) => q.t > 5), far = L.slice().sort((a, b) => b.t - a.t)[0]; if (!far) return; const n = Math.ceil(far.t);
     const avgOf = (key) => { const o = []; for (let i = 0; i < n; i++) { let s = 0, k = 0; for (const q of L) if (i < q.t) { s += (q.x[key] || [])[i] || 0; k++; } o.push(k >= 2 ? s / k : 0); } return o; };
     let B = null; try { B = rateBase(far.x); } catch (e) { B = null; } const refOf = (k) => (B && B.ph ? ((far.x.module && far.x.module.phases) || []).map((p) => ({ s: p.start, e: Math.min(p.end, far.t), name: p.name, v: B.ph[p.name] ? B.ph[p.name][k] : null })).filter((q) => q.v && q.e > q.s) : []);
-    [[/^\s*Raid DPS/, 'dmgS', 'dps', '#e6b450', 'Damage done', true], [/^\s*DTPS/, 'takenS', 'dtps', '#ef6b62', 'Damage taken', false], [/^\s*HPS/, 'healS', 'hps', '#3fb950', 'Healing done', true]].forEach(([re, key, k, col, lab, hg]) => { const p = pan(re); if (p && !p.querySelector('.rta')) p.insertAdjacentHTML('beforeend', rateArea(avgOf(key), n, col, lab + ', average of ' + L.length + ' pulls', null, '', refOf(k), hg)); }); return; }
+    [[/^\s*Raid DPS/, 'dmgS', 'dps', '#e6b450', 'Damage done', true], [/^\s*DTPS/, 'takenS', 'dtps', '#ef6b62', 'Damage taken', false], [/^\s*HPS/, 'healS', 'hps', '#3fb950', 'Healing done', true]].forEach(([re, key, k, col, lab, hg]) => { const p = pan(re); if (p && !p.querySelector('.rta')) p.insertAdjacentHTML('beforeend', rateArea(avgOf(key), n, col, lab + ', average of ' + L.length + ' pulls', null, '', refOf(k), hg, curveRef(far.x, k, (far.x.module && far.x.module.phases) || [], n))); }); return; }
   if (!r || r.allPulls || !r.duration || v.querySelector('.nmc')) return; let B = null; try { B = rateBase(r); } catch (e) { B = null; }
   const refOf = (k) => (B && B.ph ? ((r.module && r.module.phases) || []).map((p) => ({ s: p.start, e: Math.min(p.end, r.duration, cutT(r)), name: p.name, v: B.ph[p.name] ? B.ph[p.name][k] : null })).filter((q) => q.e > q.s).filter((q) => q.v) : []); const tiles = [...v.querySelectorAll('.oa-tiles .dbr-n')], tl = (re) => tiles.find((x) => re.test(x.textContent || '')), pan = (t) => t && (t.querySelector('.pcx-p') || t.pcxP);
   const dps = pan(tl(/^\s*Raid DPS/)), dt = pan(tl(/^\s*DTPS/)), hp = pan(tl(/^\s*HPS/)), dur = Math.min(r.duration, cutT(r));
   const bf = (out || v).querySelector('details.brf-burst'), brw = bf && bf.querySelector('.panel.brw');
-  if (dps && !dps.querySelector('.rta')) dps.insertAdjacentHTML('beforeend', rateArea(r.dmgS || [], dur, '#e6b450', 'Damage done', null, 'dmgS', refOf('dps'), true));
+  if (dps && !dps.querySelector('.rta')) dps.insertAdjacentHTML('beforeend', rateArea(r.dmgS || [], dur, '#e6b450', 'Damage done', null, 'dmgS', refOf('dps'), true, curveRef(r, 'dps', (r.module && r.module.phases) || [], Math.ceil(dur))));
   /* (Oct 23, your call: Burst windows repeated the damage chart; its two new facts (damage into adds, our best 20 seconds) are one line under it) */
   if (dps && brw && !dps.querySelector('.rta-bw')) { const tx = (q) => ((brw.querySelector(q) || {}).textContent || '').replace(/\s+/g, ' ').trim();
     const ap = (tx('.brw-tiles').match(/into adds \((\d+)%\)/) || [])[1], an = [...brw.querySelectorAll('.brw-adds > *')].map((e) => e.textContent.replace(/\s+/g, ' ').trim()).filter((t) => !/^Adds$/i.test(t)).map((t) => t.replace(/\s+[\d.,]+[KMk].*$/, '')).filter(Boolean).slice(0, 2);
     const cs = tx('.brw-cs'), tw = (cs.match(/(\d+:\d\d–\d+:\d\d)/) || [])[1], rt = (cs.match(/([\d.,]+[KMk]) damage a second/) || [])[1], tm = (cs.match(/([\d.]+) times our usual/) || [])[1];
     const bits = []; if (ap != null) bits.push('Into adds: <b>' + ap + '%</b>' + (an.length ? ' (' + esc(an.join(', ')) + ')' : '')); if (tw) bits.push('Best 20 seconds: <b>' + esc(tw) + '</b>' + (rt ? ', ' + esc(rt) + ' a second' : '') + (tm ? ' (' + esc(tm) + '× our usual)' : ''));
     if (bits.length) dps.insertAdjacentHTML('beforeend', '<p class="rta-bw">' + bits.join(' · ') + '</p>'); bf.remove(); }
-  if (dt && !dt.querySelector('.rta')) dt.insertAdjacentHTML('beforeend', rateArea(r.takenS || [], dur, '#ef6b62', 'Damage taken', null, 'takenS', refOf('dtps'), false));
-  if (hp && !hp.querySelector('.rta')) hp.insertAdjacentHTML('beforeend', rateArea(r.healS || [], dur, '#3fb950', 'Healing done', null, 'healS', refOf('hps'), true)); }
+  if (dt && !dt.querySelector('.rta')) dt.insertAdjacentHTML('beforeend', rateArea(r.takenS || [], dur, '#ef6b62', 'Damage taken', null, 'takenS', refOf('dtps'), false, curveRef(r, 'dtps', (r.module && r.module.phases) || [], Math.ceil(dur))));
+  if (hp && !hp.querySelector('.rta')) hp.insertAdjacentHTML('beforeend', rateArea(r.healS || [], dur, '#3fb950', 'Healing done', null, 'healS', refOf('hps'), true, curveRef(r, 'hps', (r.module && r.module.phases) || [], Math.ceil(dur)))); }
 function oaDeathsTile(v) { if (!v) return;
   { const dd = v.querySelector('.cch2 details.cch-dmove'), tl = [...v.querySelectorAll('.oa-tiles .dbr-n')].find((x) => /^\s*Deaths/.test(x.textContent || ''));
     if (dd && tl && !tl.pcxP) { const p = document.createElement('div'); p.className = 'panel pcx-p dth-p'; p.hidden = true; dd.open = true; dd.classList.remove('cch-dmove'); p.appendChild(dd); tl.appendChild(p);

@@ -279,6 +279,38 @@ async function rateOfKill(env, code, fight) {
   return { code, fight, kill: !!F.kill, heal: Array.isArray(pdj.healers) ? pdj.healers.length : null, at: (rep.startTime || 0) + F.startTime, dur: (F.endTime - F.startTime) / 1000, ph: win.map((w, i) => { const sec = (w.e - w.s) / 1000, p = nm.get(w.id) || {};
     return { id: w.id, name: p.name || '', inter: !!p.isIntermission, s: +((w.s - F.startTime) / 1000).toFixed(1), e: +((w.e - F.startTime) / 1000).toFixed(1), dps: Math.round(tot(R['a' + i + '_0']) / sec), hps: Math.round(tot(R['a' + i + '_1']) / sec), dtps: Math.round(tot(R['a' + i + '_2']) / sec) }; }) };
 }
+// (Oct 23, the user's ask: a two-line chart, ours against the top guilds' second by second. One kill's raid damage done, healing and
+// damage taken over the fight, from Warcraft Logs' graphs, summed over the players, plus its phases; kept in KV as curve-raw:e:d)
+async function curveOfKill(env, code, fight, raw, known) {
+  /* (a kill already in the rate list brings its phases and healer count, so only two requests: the fight's times and the three graphs) */
+  const o = known ? { kill: true, heal: known.h, at: known.at, dur: null, ph: (known.ph || []).map((p) => ({ s: p[3], e: p[4], name: '' })) } : await rateOfKill(env, code, fight); if (!o.kill) return { kill: false };
+  const d = await gql(env, RATE_FIGHT_Q, { c: code, f: [fight] }), F = d.reportData.report.fights[0];
+  const q = 'query($c:String!){reportData{report(code:$c){' + ['DamageDone', 'Healing', 'DamageTaken'].map((t, k) => 'g' + k + ':graph(dataType:' + t + ',fightIDs:[' + fight + '],startTime:' + F.startTime + ',endTime:' + F.endTime + ')').join(' ') + '}}}';
+  const r = await gql(env, q, { c: code }), R = (r && r.reportData && r.reportData.report) || {};
+  if (raw) return { o, g0: JSON.stringify(R.g0).slice(0, 3000) };
+  const sum = (x) => { const j = typeof x === 'string' ? JSON.parse(x) : x, S = ((j && j.data) || {}).series || [], step = (S[0] && S[0].pointInterval) || 1000, out = [];
+    for (const s of S) { if (/^total$/i.test(s.name || '') || s.type === 'Total') continue; (s.data || []).forEach((v, i) => { out[i] = (out[i] || 0) + (Array.isArray(v) ? v[1] : v || 0); }); }
+    return { step, v: out.map((v) => Math.round(v || 0)) }; }; /* (each point is already a rate a second, one every ~2.5 s) */
+  const a = sum(R.g0), b = sum(R.g1), c = sum(R.g2);
+  return { kill: true, c: code, f: fight, h: o.heal, at: o.at, dur: o.dur || (F.endTime - F.startTime) / 1000, ph: o.ph.map((p) => [p.s, p.e, p.name]), step: a.step, dps: a.v, hps: b.v, dtps: c.v };
+}
+async function curveStepFor(env, key, max) {
+  const rates = (await env.DEBRIEF_KV.get('rate-raw:' + key, 'json')) || [], have = (await env.DEBRIEF_KV.get('curve-raw:' + key, 'json')) || [], skip = (await env.DEBRIEF_KV.get('curve-skip:' + key, 'json')) || [], done = new Set(have.map((x) => x.c + ':' + x.f).concat(skip));
+  const oldest = have.length ? Math.min(...have.map((x) => x.at || 0)) : 0;
+  const next = rates.slice().sort((a, b) => (b.at || 0) - (a.at || 0)).find((x) => !done.has(x.c + ':' + x.f) && (have.length < max || (x.at || 0) > oldest));
+  if (!next) return { key, have: have.length, done: true };
+  const o = await curveOfKill(env, next.c, next.f, false, next);
+  if (o.kill && o.dps && o.dps.length) { have.push(o); if (have.length > max) { have.sort((a, b) => (b.at || 0) - (a.at || 0)); have.length = max; } await env.DEBRIEF_KV.put('curve-raw:' + key, JSON.stringify(have)); }
+  else { skip.push(next.c + ':' + next.f); await env.DEBRIEF_KV.put('curve-skip:' + key, JSON.stringify(skip)); }
+  return { key, have: have.length, last: next.c + ':' + next.f, n: (o.dps || []).length }; }
+/* (the 10-minute job: one boss a run, in turn, one kill at most: two requests every 10 minutes) */
+const CURVE_BOSSES = [3429, 3492, 3421, 3420, 3497, 3455, 3445, 3470, 3379, 3513];
+async function curveCron(env) { const st = (await env.DEBRIEF_KV.get('curve-st', 'json')) || { i: 0 };
+  for (let k = 0; k < CURVE_BOSSES.length; k++) { const e = CURVE_BOSSES[(st.i + k) % CURVE_BOSSES.length], r = await curveStepFor(env, e + ':5', 12);
+    if (!r.done) { st.i = (st.i + k + 1) % CURVE_BOSSES.length; await env.DEBRIEF_KV.put('curve-st', JSON.stringify(st)); return r; } }
+  return { idle: true }; }
+ROUTES['/api/curves'] = { age: 1800, v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10); return e > 0 && e < 1e6 && [3, 4, 5].includes(d) ? { e, d } : null; },
+  run: async (env, v) => ({ key: v.e + ':' + v.d, recs: (await env.DEBRIEF_KV.get('curve-raw:' + v.e + ':' + v.d, 'json')) || [] }) };
 ROUTES['/api/rates'] = { age: 1800, v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10); return e > 0 && e < 1e6 && [3, 4, 5].includes(d) ? { e, d } : null; },
   run: async (env, v) => ({ key: v.e + ':' + v.d, recs: (await env.DEBRIEF_KV.get('rate-raw:' + v.e + ':' + v.d, 'json')) || [] }) };
 ROUTES['/api/pace'] = { age: 1800,
@@ -1164,9 +1196,13 @@ async function planShare(req, env, url) {
 }
 
 export default {
-  async scheduled(ev, env, ctx) { ctx.waitUntil(Promise.allSettled([announcePatch(env), discordJobs(env, ev.scheduledTime || Date.now()), paceStep(env)]).then((r) => r.forEach((x) => { if (x.status === 'rejected') console.warn('Cron:', x.reason && x.reason.message); }))); },
+  async scheduled(ev, env, ctx) { ctx.waitUntil(Promise.allSettled([announcePatch(env), discordJobs(env, ev.scheduledTime || Date.now()), paceStep(env), curveCron(env)]).then((r) => r.forEach((x) => { if (x.status === 'rejected') console.warn('Cron:', x.reason && x.reason.message); }))); },
   async fetch(req, env, ctx) {
     const url = new URL(req.url), route = ROUTES[url.pathname];
+    /* (test copy only: read one kill's curves (raw=1 shows Warcraft Logs' answer), or step the gathering: the next kill not yet read from the
+       rate kills of that boss, with the same healer count first, up to 12 a boss) */
+    if (url.pathname === '/api/curvetest' && /-debrief./.test(url.hostname)) { try { return json(await curveOfKill(env, url.searchParams.get('code'), parseInt(url.searchParams.get('fight'), 10), url.searchParams.get('raw') === '1')); } catch (err) { return json({ error: err.message }); } }
+    if (url.pathname === '/api/curvestep' && /-debrief./.test(url.hostname)) { try { return json(await curveStepFor(env, url.searchParams.get('e') + ':' + url.searchParams.get('d'), parseInt(url.searchParams.get('n') || '12', 10))); } catch (err) { return json({ error: err.message }); } }
     if (url.pathname === '/api/ratetest' && /-debrief./.test(url.hostname)) { try { return json(await rateOfKill(env, url.searchParams.get('code'), parseInt(url.searchParams.get('fight'), 10))); } catch (e) { return json({ error: String(e && e.message || e) }, 500); } } /* (test copies only (Oct 23)) */
     if (url.pathname === '/api/pacestep' && /-debrief./.test(url.hostname)) { try { return json(await paceStep(env, 1)); } catch (e) { return json({ error: String(e && e.message || e) }, 500); } } /* (test copies only: one cron step on demand, to check the pace job (Oct 23)) */
     if (url.hostname === HOME_HOST && url.pathname === '/__move' && req.method === 'POST') return moveIn(req, env);
