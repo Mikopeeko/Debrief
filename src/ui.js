@@ -1758,6 +1758,7 @@ function openReport() {
 const PATCH_NOTES = [
   { d: '2026-10-24', h: [
   ], n: [
+    'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
     'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
   ], f: [
   ] },
@@ -27679,10 +27680,9 @@ function homeHosted() {
         '<div class="fpx-cta"><button class="btn primary gs-go" id="gsGo" type="button">' + (tg ? 'Welcome Back!' : 'Start now') + '</button>' + demoBtn('fpDemo') +
         '<p class="gs-cs">' + (tg ? 'Straight to ' + esc(gName(tg)) + '.' : 'Add your character and your team, one step at a time. It takes about a minute.') + '</p></div>' +
         '<div class="fp-msg fp-note" id="fpDemoMsg"></div>' +
-        '<ul class="fph-trust">' + ['Free', 'No account needed', 'Warcraft Logs or your own combat log', 'Your own log stays on your PC'].map((t) => '<li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>' + t + '</li>').join('') + '</ul>' +
-        '<button class="linkbtn gs-just" id="gsJust" type="button">Just open a log ›</button></div>' +
-      '<div class="fpx-shot">' + win('live') + '<div class="fpx-pin p1"><b>✓</b> Every mechanic checked</div><div class="fpx-pin p2"><b>!</b> What to fix first</div></div>' +
-    '</div></section>' +
+        '<p class="fp3-trust">Free · No account needed · Warcraft Logs or your own combat log</p></div>' + /* (one small line instead of four ticks; Just open a log is in the menu, Oct 24) */
+      '<div class="fpx-shot">' + fp3Shot() + '</div>' + /* (no floating tags: calmer, Oct 24) */
+    '</div></section>' + fp3Ways(art) + /* (Oct 24 refresh: today's look in the hero, then the three ways in) */
     '<section class="fpx-sec fpb fpx-bosses"><div class="fpx-in"><div class="fpx-rh"><div><div class="fp-k">Boss by boss</div><h2>Pick your boss</h2>' +
         '<p>All ten this season, each with its own checks, LFR to Mythic. Pick one to see what Debrief checks.</p></div>' +
         '<div class="fpx-arr"><button type="button" data-d="-1" aria-label="Back">‹</button><button type="button" data-d="1" aria-label="More bosses">›</button></div></div>' +
@@ -27691,16 +27691,11 @@ function homeHosted() {
     (DISCORD_URL ? '<section class="fpx-sec"><div class="fpx-in"><div class="fpx-dbig"><div class="fpx-dbi">' + DISC_SVG + '</div><div class="fpx-dbt"><div class="fp-k">Our Discord</div><h2>Help shape Debrief</h2>' +
       '<p>Get the patch notes the day they land, report a bug and hear when it\'s fixed, and tell us what to build next.</p></div>' +
       '<a class="fpx-dbgo" href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">' + DISC_SVG + 'Join the Discord</a></div></div></section>' : '') +
-    '<section class="fpx-sec"><div class="fpx-in fpx-night"><div><div class="fp-k">Between pulls</div><h2>From first wipe to the kill</h2>' +
-        '<p>After every pull, Debrief says what to fix first. Fix it, pull again, and watch the boss go lower each time.</p>' + demoBtn('fpDemo2') + '<div class="fp-msg fp-note" id="fpDemoMsg2"></div></div>' +
-      '<div class="fpx-chart"><h4><span>The Coiled Altar · Mythic</span><span>Example</span></h4>' +
-        bar(15, 29, 'P1 · 71%', 'Fix: Dreadmarch, stand still') + bar(16, 41, 'P1 · 59%', 'Fix: kick order, set 2') + bar(17, 48, 'P2 · 52%', 'Fix: save cooldowns for the shield') +
-        bar(18, 66, 'P2 · 34%', 'Fix: Grim Guillotine, 5 in the circle') + bar(19, 100, 'Kill', 'Clean. Well done.', true) + '</div></div></section>' +
-    '<section class="fpx-sec"><div class="fpx-in"><div class="fpx-sh"><div class="fp-k">What you get</div><h2>The whole night, made simple</h2></div>' +
-      row('mech', 'Debriefing', 'Every mechanic, done right or not', 'Each soak, kick and frontal gets a green, yellow or red flag, with the players and the time.', ['Who was missing from a soak', 'Who got clipped, and by what', 'A map of who stood where']) +
-      row('rot', 'Rotation', 'Your buttons, checked like a coach would', 'Plain sentences that say what to press instead, for every raid spec.', ['Cooldowns lined up with the fight', 'What each big button did'], true) +
-      row('assign', 'Your NSRT note', 'The plan, next to what happened', 'Bring your raid\'s NSRT note (the plan from Northern Sky Raid Tools) and see who did their job: kicks in order, soaks, crowd control.') +
-    '</div></section>' +
+    '<section class="fpx-sec"><div class="fpx-in"><div class="fpx-sh"><div class="fp-k">What you get</div><h2>The whole night, made simple</h2></div><div class="fp3-tiles">' +
+      [['audit', 'Debriefing', 'Every mechanic, done right or not', 'Each soak, kick and frontal gets a green, yellow or red flag, with the players, the time and a map of who stood where.'],
+       ['rot', 'Rotation', 'Your buttons, checked like a coach would', 'Plain sentences that say what to press instead, for every raid spec, with your cooldowns lined up with the fight.'],
+       ['overview', 'Your NSRT note', 'The plan, next to what happened', 'Bring your raid\'s Northern Sky Raid Tools note and see who did their job: kicks in order, soaks and crowd control.']]
+        .map(([k, kick, h, p]) => '<div class="fp3-tile"><span class="fp3-ti">' + tabIco(k) + '</span><div class="fp-k">' + kick + '</div><h3>' + h + '</h3><p>' + p + '</p></div>').join('') + '</div></div></section>' +
     '<section class="fpx-sec"><div class="fpx-in"><div class="fpx-end"><h2>Ready for raid night?</h2><p>Set up once, then every pull explains itself.</p><ol class="fph-steps">' +
       '<li><b>Add your team</b><span>Your character and your team\'s Warcraft Logs page. It takes about a minute.</span></li>' +
       '<li><b>Raid with logs on</b><span>Turn on Warcraft Logs live logging, or upload your log after the raid.</span></li>' +
@@ -27709,7 +27704,7 @@ function homeHosted() {
     '<div class="fpx-in">' + fphFoot() + '</div></div>';
   $('#gsGo').onclick = $('#gsGo2').onclick = () => { const g = homeTarget(); if (!g) { gsStart(); return; } store.set(GROUP_CUR, g.gid); progressPage(undefined, g.gid); window.scrollTo(0, 0); };
   // (one log or live log, nothing added: no character, no team, no setup; the menu's Open a report or log window)
-  $('#gsJust').onclick = nightDlg;
+  { const j = $('#gsJust'); if (j) j.onclick = nightDlg; }
   bindFphBosses();
   $('#fphPatch').onclick = openPatchNotes; $('#fphTour').onclick = () => startTour(0);
   document.body.classList.toggle('fph-past', !$('.fph-logo')); // (A + C has no big logo: the top bar's shows from the start)
@@ -27718,6 +27713,31 @@ function homeHosted() {
   { const rail = $('.fpx-rail'); document.querySelectorAll('.fpx-arr button').forEach((b) => { b.onclick = () => rail.scrollBy({ left: +b.dataset.d * Math.max(260, rail.clientWidth * 0.8), behavior: 'smooth' }); }); }
   HIST.load().then(groupsBackfill);
   bindFront(true);
+}
+// (the front page's example, Oct 24: what a pull looks like today, the boss banner with its boss-health line, and the short
+// coached debrief under it; made-up numbers, drawn the way the site draws them)
+function fp3Shot() {
+  const pr = [22, 31, 28, 41, 47, 45, 58, 66], Q = (p) => (p >= 60 ? '#2e8cff' : p >= 40 ? '#2ee62e' : p >= 20 ? '#f2f2f2' : '#9d9d9d');
+  const X = (i) => 14 + i * (272 / (pr.length - 1)), Y = (p) => 8 + p * 0.62, best = pr.indexOf(Math.max(...pr));
+  const svg = '<svg class="fp3-line" viewBox="0 0 300 62" aria-hidden="true"><line x1="6" x2="294" y1="' + Y(33).toFixed(1) + '" y2="' + Y(33).toFixed(1) + '" class="fp3-ph"/><text x="294" y="' + (Y(33) - 4).toFixed(1) + '" text-anchor="end" class="fp3-pt">P2</text>' +
+    '<polyline points="' + pr.map((p, i) => X(i).toFixed(1) + ',' + Y(p).toFixed(1)).join(' ') + '" class="fp3-pl"/>' +
+    pr.map((p, i) => '<circle cx="' + X(i).toFixed(1) + '" cy="' + Y(p).toFixed(1) + '" r="' + (i === pr.length - 1 ? 5 : 3.6) + '" fill="' + Q(p) + '"' + (i === pr.length - 1 ? ' class="fp3-sel"' : '') + '/>').join('') +
+    '<text x="' + X(best).toFixed(1) + '" y="' + (Y(pr[best]) - 9).toFixed(1) + '" text-anchor="middle" class="fp3-star">★</text></svg>';
+  const fl = (c, b, t) => '<div class="fp3-m ' + c + '"><b>' + b + '</b> ' + t + '</div>';
+  return '<div class="fp-win fp3-win"><div class="fp-chrome"><span class="fp-dots"><i></i><i></i><i></i></span><span>Debrief · The Coiled Altar · Mythic</span><span class="fp-ex">Example data</span></div>' +
+    '<div class="fp3-ban"><div class="fp3-bt"><b>The Coiled Altar</b><span class="fp3-pill">Wipe in P2 · 34%</span><span class="fp3-up">▲ Best pull yet</span></div>' + svg +
+      '<div class="fp3-ns">' + pr.map((p, i) => '<span' + (i === pr.length - 1 ? ' class="on"' : '') + '>' + (12 + i) + '</span>').join('') + '</div></div>' +
+    '<div class="fp3-coach"><div class="fp3-k">This pull, coached</div><p class="fp3-h">We wiped in P2 at 34%. <span>Root cause: Grim Guillotine soaks were short.</span></p>' +
+      '<div class="fp3-focus"><span>Focus next pull</span>Five in every Guillotine circle.</div></div></div>';
+}
+// (the three ways in, Oct 24: Debrief before raid (the boss guides), during it (the addon and app) and after it (your night))
+function fp3Ways(art) {
+  const card = (b, when, h, p, go) => '<div class="fp3-way" style="--fp3-art:' + art(b) + '"><span class="fp3-when">' + when + '</span><h3>' + h + '</h3><p>' + p + '</p>' + go + '</div>';
+  return '<section class="fpx-sec fp3-ways"><div class="fpx-in"><div class="fpx-sh"><div class="fp-k">Three ways in</div><h2>Before, during and after raid</h2></div><div class="fp3-wg">' +
+    card('The Twin Fangs', 'Before raid', 'Learn every boss', 'Guides for all ten bosses, Heroic and Mythic: maps that play each mechanic in order, and your job on each.', '<a class="fp3-go" href="?guides">Open the boss guides ›</a>') +
+    card("Ula'tek", 'During raid', 'A debrief after every pull, in game', 'The Debrief addon and app show what went wrong and what to fix, before the next pull starts.', '<a class="fp3-go" href="?ingame">Get the addon ›</a>') +
+    card('The Coiled Altar', 'After raid', 'Every pull, explained', 'Warcraft Logs or your own combat log: mechanics, deaths and your rotation, pull by pull.', '<button class="fp3-go linkbtn" id="fpDemo2" type="button">See a real raid night ›</button><div class="fp-msg fp-note" id="fpDemoMsg2"></div>') +
+    '</div></div></section>';
 }
 // (Welcome Back!'s page: the team you're on (picked with "Which one is you?", or the one you opened last), else your character)
 function homeTarget() {
