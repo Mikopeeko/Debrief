@@ -7049,6 +7049,14 @@ function buildTwinFangs(ev, r, h) {
       }) }] : [], rows: [] });
 
   // ---- 2. Eternal Venom stacks and the stack budget ----
+  /* (Oct 23, your idea: stack management matters, so each player's line says what gave them their stacks: what hit them in the same
+     second a stack went up. Stir the Depths and someone else's spit are the avoidable ones) */
+  const V_SRC = [['venomous emergence', 'adds spawning'], ['caustic globule', 'orb soaks'], ['tainted blood', 'Tainted Blood'], ['stir the depths', 'Stir the Depths'], ['corrosive spit', 'spit'], ['coiling ichor', 'Coiling Ichor'], ['sanguine storm', 'Sanguine Storm'], ['ravenous feast', 'Ravenous Feast']];
+  const vHits = ev.filter((e) => (e.k === 'dmg' || e.k === 'aura') && h.isPlayer(e.dst) && V_SRC.some(([n]) => L(e.spell) === n));
+  const vSrcOf = (g, l) => { const c = new Map(); let prev = 0;
+    for (const [t, st] of l) { if (st > prev) { const near = vHits.filter((e) => e.dst === g && e.t >= t - 1.2 && e.t <= t + 0.3).sort((a, b) => Math.abs(a.t - t) - Math.abs(b.t - t))[0];
+        const k = near ? V_SRC.find(([n]) => n === L(near.spell))[1] : 'other'; c.set(k, (c.get(k) || 0) + (st - prev)); } prev = st; }
+    return [...c].filter(([k]) => k !== 'other').sort((a, b) => b[1] - a[1]); };
   const vRows = [];
   for (const [g, l] of hist) {
     const peak = Math.max(...l.map((x) => x[1]));
@@ -7056,16 +7064,16 @@ function buildTwinFangs(ev, r, h) {
     const atDeath = d ? stackAt(g, d.t) : null;
     if (d && atDeath >= lethal) M(d.t, pname(g), 'eternal venom', 'High', 'Died with ' + atDeath + ' Eternal Venom stacks (lethal at ' + lethal + ' on ' + diff + ').', 'Avoid extra stacks (other players\' circles, Stir the Depths, extra soaks) so you never reach the lethal count.');
     const overAt = (l.find((x) => x[1] > budget) || [])[0];
-    vRows.push({ g, peak, atDeath, overAt });
+    vRows.push({ g, peak, atDeath, overAt, src: vSrcOf(g, l) });
   }
   vRows.sort((a, b) => b.peak - a.peak);
   const over = vRows.filter((x) => x.peak > budget);
   sections.push({ id: 'venom', title: 'Eternal Venom (Stay under the limit)', place: 'Eternal Venom (debuff) stacks', spell: S('eternal venom'),
     verdict: vRows.some((x) => (x.atDeath != null && x.atDeath >= lethal) || x.peak >= lethal - 1) ? 'bad' : over.length ? 'warn' : 'good',
     summary: pl(vRows.length, 'player') + ' got Eternal Venom, and ' + pl(over.length, 'player') + ' went over ' + budget + ' stacks, the safe limit. It\'s lethal at ' + lethal + ' on ' + diff + '.',
-    cols: ['Player', 'Highest stacks', 'Over the limit at', 'Stacks at death'],
+    cols: ['Player', 'Highest stacks', 'Over the limit at', 'Stacks at death', 'From'],
     // red: one stack from lethal (or died to it); amber: over the budget but still safe
-    rows: vRows.map((x) => [{ p: pname(x.g) }, { txt: String(x.peak), bad: x.peak >= lethal - 1, warn: x.peak > budget }, x.overAt != null ? { txt: h.fmtT(x.overAt), warn: true } : { txt: '—', dim: true }, x.atDeath != null ? { txt: String(x.atDeath), bad: x.atDeath >= lethal } : { txt: '—', dim: true }]) });
+    rows: vRows.map((x) => [{ p: pname(x.g) }, { txt: String(x.peak), bad: x.peak >= lethal - 1, warn: x.peak > budget }, x.overAt != null ? { txt: h.fmtT(x.overAt), warn: true } : { txt: '—', dim: true }, x.atDeath != null ? { txt: String(x.atDeath), bad: x.atDeath >= lethal } : { txt: '—', dim: true }, x.src.length ? { txt: 'gained from ' + x.src.map(([k, n]) => n + ' ' + k).join(', '), warn: x.peak > budget, s: 1 } : { txt: '—', dim: true }]) });
 
   // ---- 3. Ravenous Feast: three strikes, each needs 4+ soakers who aren't already Feasted ----
   const feasts = casts('ravenous feast');
@@ -23170,7 +23178,7 @@ function audit() {
       /* (Oct 23, your ask "class color character names and color code things": each moment is "where: what happened", the where in grey, the
          what in its colour (green right, amber some mistakes, red wrong), every name in its class colour) */
       const PMc = coachPm(), u1x = (q) => { const m = String(q.x).match(/^(.{2,80}?):\s(.+)$/), hd = m ? m[1] : '', tl = m ? m[2] : String(q.x);
-        return '<span class="u1-x">' + (hd ? '<span class="u1-h">' + esc(hd) + '</span>' : '') + '<span class="u1-o ' + q.st + '">' + colorNames(esc(cClip(dbfCap(tl.replace(/\s*\([^)]*\)/g, '')), 150)), PMc) + '</span>' + ((tl.match(/\(([^)]*)\)/g) || []).map((n) => '<span class="u1-n">' + colorNames(esc(n.slice(1, -1)), PMc) + '</span>').join('')) + '</span>'; };
+        return '<span class="u1-x">' + (hd ? '<span class="u1-h">' + colorNames(esc(hd), PMc) + '</span>' : '') + '<span class="u1-o ' + q.st + '">' + colorNames(esc(cClip(dbfCap(tl.replace(/\s*\([^)]*\)/g, '')), 150)), PMc) + '</span>' + ((tl.match(/\(([^)]*)\)/g) || []).map((n) => '<span class="u1-n">' + colorNames(esc(n.slice(1, -1)), PMc) + '</span>').join('')) + '</span>'; };
       const li = (q) => '<li class="u1-r ' + q.st + (q === sel ? ' on' : '') + (q.map ? ' u1-hm' : '') + '"' + (q.map ? ' data-u1="' + q.i + '" role="button" tabindex="0"' : '') + '><span class="u1-d"></span><span class="u1-t">' + (q.t != null ? T(q.t) : '') + '</span>' + u1x(q) + '</li>';
       const maps = L.filter((q) => q.map && (q === sel || q.st !== 'ok')).slice(0, 12).concat(ok.filter((q) => q.map).slice(0, 8));
       return '<p class="u1-f"><span class="u1-c"><b>' + ok.length + '</b> correct</span>' + (prob.length ? ' · <span class="u1-m2"><b>' + prob.length + '</b> ' + (prob.length === 1 ? 'mistake' : 'mistakes') + '</span>' : '') /* ("1 correct · 1 mistake", the same words everywhere (your ask, Oct 23)) */ + (kb ? ' · ' + esc(kb) : '') + '</p>' +

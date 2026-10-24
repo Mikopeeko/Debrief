@@ -921,6 +921,14 @@ function buildTwinFangs(ev, r, h) {
       }) }] : [], rows: [] });
 
   // ---- 2. Eternal Venom stacks and the stack budget ----
+  /* (Oct 23, your idea: stack management matters, so each player's line says what gave them their stacks: what hit them in the same
+     second a stack went up. Stir the Depths and someone else's spit are the avoidable ones) */
+  const V_SRC = [['venomous emergence', 'adds spawning'], ['caustic globule', 'orb soaks'], ['tainted blood', 'Tainted Blood'], ['stir the depths', 'Stir the Depths'], ['corrosive spit', 'spit'], ['coiling ichor', 'Coiling Ichor'], ['sanguine storm', 'Sanguine Storm'], ['ravenous feast', 'Ravenous Feast']];
+  const vHits = ev.filter((e) => (e.k === 'dmg' || e.k === 'aura') && h.isPlayer(e.dst) && V_SRC.some(([n]) => L(e.spell) === n));
+  const vSrcOf = (g, l) => { const c = new Map(); let prev = 0;
+    for (const [t, st] of l) { if (st > prev) { const near = vHits.filter((e) => e.dst === g && e.t >= t - 1.2 && e.t <= t + 0.3).sort((a, b) => Math.abs(a.t - t) - Math.abs(b.t - t))[0];
+        const k = near ? V_SRC.find(([n]) => n === L(near.spell))[1] : 'other'; c.set(k, (c.get(k) || 0) + (st - prev)); } prev = st; }
+    return [...c].filter(([k]) => k !== 'other').sort((a, b) => b[1] - a[1]); };
   const vRows = [];
   for (const [g, l] of hist) {
     const peak = Math.max(...l.map((x) => x[1]));
@@ -928,16 +936,16 @@ function buildTwinFangs(ev, r, h) {
     const atDeath = d ? stackAt(g, d.t) : null;
     if (d && atDeath >= lethal) M(d.t, pname(g), 'eternal venom', 'High', 'Died with ' + atDeath + ' Eternal Venom stacks (lethal at ' + lethal + ' on ' + diff + ').', 'Avoid extra stacks (other players\' circles, Stir the Depths, extra soaks) so you never reach the lethal count.');
     const overAt = (l.find((x) => x[1] > budget) || [])[0];
-    vRows.push({ g, peak, atDeath, overAt });
+    vRows.push({ g, peak, atDeath, overAt, src: vSrcOf(g, l) });
   }
   vRows.sort((a, b) => b.peak - a.peak);
   const over = vRows.filter((x) => x.peak > budget);
   sections.push({ id: 'venom', title: 'Eternal Venom (Stay under the limit)', place: 'Eternal Venom (debuff) stacks', spell: S('eternal venom'),
     verdict: vRows.some((x) => (x.atDeath != null && x.atDeath >= lethal) || x.peak >= lethal - 1) ? 'bad' : over.length ? 'warn' : 'good',
     summary: pl(vRows.length, 'player') + ' got Eternal Venom, and ' + pl(over.length, 'player') + ' went over ' + budget + ' stacks, the safe limit. It\'s lethal at ' + lethal + ' on ' + diff + '.',
-    cols: ['Player', 'Highest stacks', 'Over the limit at', 'Stacks at death'],
+    cols: ['Player', 'Highest stacks', 'Over the limit at', 'Stacks at death', 'From'],
     // red: one stack from lethal (or died to it); amber: over the budget but still safe
-    rows: vRows.map((x) => [{ p: pname(x.g) }, { txt: String(x.peak), bad: x.peak >= lethal - 1, warn: x.peak > budget }, x.overAt != null ? { txt: h.fmtT(x.overAt), warn: true } : { txt: '—', dim: true }, x.atDeath != null ? { txt: String(x.atDeath), bad: x.atDeath >= lethal } : { txt: '—', dim: true }]) });
+    rows: vRows.map((x) => [{ p: pname(x.g) }, { txt: String(x.peak), bad: x.peak >= lethal - 1, warn: x.peak > budget }, x.overAt != null ? { txt: h.fmtT(x.overAt), warn: true } : { txt: '—', dim: true }, x.atDeath != null ? { txt: String(x.atDeath), bad: x.atDeath >= lethal } : { txt: '—', dim: true }, x.src.length ? { txt: 'gained from ' + x.src.map(([k, n]) => n + ' ' + k).join(', '), warn: x.peak > budget, s: 1 } : { txt: '—', dim: true }]) });
 
   // ---- 3. Ravenous Feast: three strikes, each needs 4+ soakers who aren't already Feasted ----
   const feasts = casts('ravenous feast');
