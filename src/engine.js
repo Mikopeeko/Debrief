@@ -5906,7 +5906,7 @@ function newPlayer(guid) {
     casts: 0, interrupts: 0, dispels: 0, deaths: 0, active: 0, lastCast: -1,
     dmgAb: new Map(), healAb: new Map(), takenAb: new Map(), castAb: new Map(), castTimes: new Map(), byName: new Map(),
     // (per second over the pull, and damage by target name: the Performance tab's charts and boss / add split)
-    dmgS: [], healS: [], takenS: [], dmgT: new Map(), takenAbS: [], rawS: [], mitS: [], absS: [], devS: [], /* (rawS: hits before mitigation; mitS: what armor, versatility, avoidance and defensives took off; absS: shields (Oct 23)) */ // (takenAbS: per second, what hit them: { spell: [id, amount, hits, biggest, avoidable] })
+    dmgS: [], healS: [], takenS: [], dmgT: new Map(), takenAbS: [], rawS: [], mitS: [], shS: [], devS: [], /* (shS: shields soaked on them; absS below is damage they did into enemy shields) */ /* (rawS: hits before mitigation; mitS: what armor, versatility, avoidance and defensives took off; absS: shields (Oct 23)) */ // (takenAbS: per second, what hit them: { spell: [id, amount, hits, biggest, avoidable] })
     // (their eight biggest single hits taken, and what they dispelled)
     big: [], dispL: [], helpL: [],
     // (when they first hit each enemy, for switch speed; mana over the pull, from their casts (a real log only); healing that
@@ -6182,7 +6182,7 @@ function* analyzeSteps(item, text, opts) {
         if (hasAdv && f[adv] === dg) { const mx = num(f[adv + 3]); if (mx > 0 && isPlayer(dg)) pMax.set(dg, mx); if (mx > 0) { hp = num(f[adv + 2]) / mx * 100; seenHp(dg, dn, num(f[adv + 2]), mx, t); seenPhp(dg, num(f[adv + 2]), mx, t); } }
         if (isPlayer(dg)) {
           const p = P(dg, dn);
-          p.taken += base; addAb(p.takenAb, spell, id, base, 0, crit); bump(r.takenS, t, base); bump(p.takenS, t, base); { const raw = num(f[s0 + 1]), ab = Math.max(0, num(f[s0 + 6])); if (raw > 0) { bump(p.rawS, t, raw); bump(p.mitS, t, Math.max(0, raw - base - ab)); } if (ab > 0) bump(p.absS, t, ab); if (devOn.has(dg)) bump(p.devS, t, (base + ab) * 0.03 / 0.97); } /* (devS: what Devotion Aura's 3% took off, about) */ /* (Graphs' Mitigation tab (Oct 23)) */
+          p.taken += base; addAb(p.takenAb, spell, id, base, 0, crit); bump(r.takenS, t, base); bump(p.takenS, t, base); { const raw = num(f[s0 + 1]), ab = Math.max(0, num(f[s0 + 6])); if (raw > 0) { bump(p.rawS, t, raw); bump(p.mitS, t, Math.max(0, raw - base - ab)); } if (ab > 0) bump(p.shS, t, ab); if (devOn.has(dg)) bump(p.devS, t, (base + ab) * 0.03 / 0.97); } /* (devS: what Devotion Aura's 3% took off, about) */ /* (Graphs' Mitigation tab (Oct 23)) */
           if (base > 0) bumpAb(r.takenAbS, t, spell, id, base);
           const av = mech.damage(t, p.name, id, spell, base), raw = base + Math.max(0, num(f[s0 + 6])); p.avoidable += av;
           if (raw > 0) bumpTk(p.takenAbS, t, spell, id, base, av, raw);
@@ -6259,6 +6259,7 @@ function* analyzeSteps(item, text, opts) {
         if (isPlayer(dg) && String(f[sp + 1]).toLowerCase() === 'darkness') { const u = cdPress(ow, 'Darkness', t, true); u.prev += amt; u.taken += amt; u.cov.add(dg); }
         { const u = PERS_DR.has(String(f[sp + 1]).toLowerCase()) && ow === dg ? r.defMit.slice().reverse().find((x) => x.g === dg && x.abs && x.name.toLowerCase() === String(f[sp + 1]).toLowerCase() && t - x.t <= 30) : null; if (u) u.prev += amt; } /* (a personal shield's soak, exact (Oct 22)) */
         const p = P(ow, isPlayer(absorber) ? f[a + 1] : null);
+        if (isPlayer(dg)) { const tp = r.players.get(dg); if (tp) { const m = tp.shBy || (tp.shBy = new Map()); m.set(p.name || '', (m.get(p.name || '') || 0) + amt); } } /* (who shielded whom (Oct 23)) */
         p.healing += amt; p.absorbs += amt; addAb(p.healAb, f[sp + 1], id, amt, 0, false);
         if (isPlayer(dg) && phpNow(dg) < 0.5 && lowHL.length < 60000) lowHL.push([t, dg, ow, amt, 1, f[sp + 1]]); bump(r.healS, t, amt); bump(p.healS, t, amt);
         if (isPlayer(dg)) recap(dg, { t, heal: true, amount: amt, src: shortName(absorber, f[a + 1]), spell: f[sp + 1] + ' (absorb)', id, hp: -1 });
