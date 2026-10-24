@@ -1623,6 +1623,7 @@ line.tl-t { stroke: #ece8df; stroke-width: 2.5; vector-effect: non-scaling-strok
 @media (max-width: 640px) { .gb-bd.gb-dr { margin: 4px 0 10px; padding: 8px; } }
 .gb-bh { margin: 0 0 6px; font-size: 12px; color: var(--muted); }
 .gb-bt { display: grid; gap: 4px; }
+.gb-abmore summary { cursor: pointer; list-style: none; color: var(--gold); font-size: 13px; font-weight: 600; padding: 2px 0; } .gb-abmore summary::-webkit-details-marker { display: none; } .gb-abmore[open] summary { display: none; } /* (Graphs' by-spell lists: the rest open in place (Oct 24)) */
 .gb-br { display: grid; grid-template-columns: minmax(0, 190px) minmax(0, 1fr) auto; align-items: center; gap: 8px; font-size: 12px; }
 .gb-bn { display: flex; align-items: center; gap: 6px; min-width: 0; } .gb-bn > span:not(.sp):not(.icw) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gb-bn .icw, .gb-bn svg.ico, .gb-bn img.oi { width: 16px; height: 16px; flex: none; }
@@ -15862,6 +15863,7 @@ function openReport() {
 const PATCH_NOTES = [
   { d: '2026-10-24', h: [
   ], n: [
+    'Graphs: long by-spell lists end in a Show more that opens the rest right under them.',
     'Pain Suppression, Ironbark, Blessing of Sacrifice and Zephyr now count on the Graphs Mitigation tab, for the player who cast them.',
     'The wipe call says why on every pull, with a small picture: how many were dead against the most any kill of that boss survived at that moment. A dead tank now counts as 2. On Normal and LFR the whole pull counts until half the raid is dead.',
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
@@ -28614,8 +28616,9 @@ function graphsBoard(r, end, NP) {
         sub: q.rate ? C(x.v / pDur(x.p)) : q.cpm || q.count ? '' : (sh >= 10 ? Math.round(sh) : sh.toFixed(1)) + '%' }); }).join('') + '</div></section>'; };
   // (a player's breakdown, built when their bar is clicked)
   const abRows = (list, opt) => { const L = list.filter((y) => y.total > 0).sort((a, b) => b.total - a.total), tot = L.reduce((v, y) => v + y.total, 0); if (!L.length) return '<p class="sub">No data</p>';
-    const mx = L[0].total; return '<div class="gb-bt">' + L.slice(0, 14).map((y) => '<div class="gb-br"><span class="gb-bn">' + spIc(String(y.name).replace(/^[^:]+: /, '')) + '<span>' + esc(y.name) + '</span></span><span class="gb-tr sm"><i class="gb-f" style="width:' + Math.max(1.5, 100 * y.total / mx).toFixed(1) + '%"></i><span class="gb-v">' + C(y.total) + '</span></span>' +
-      '<span class="gb-bx">' + Math.round(100 * y.total / tot) + '%' + (y.hits ? ' · ' + y.hits.toLocaleString('en-US') + (y.hits === 1 ? ' hit' : ' hits') : '') + (opt && opt.crit && y.hits ? ' · ' + Math.round(100 * (y.crits || 0) / y.hits) + '% crit' : '') + (opt && opt.over && y.total + (y.over || 0) > 0 ? ' · ' + Math.round(100 * (y.over || 0) / (y.total + (y.over || 0))) + '% overheal' : '') + (opt && opt.big && y.big ? ' · biggest ' + C(y.big) : '') + '</span></div>').join('') + (L.length > 14 ? '<p class="sub">and ' + (L.length - 14) + ' more</p>' : '') + '</div>'; };
+    const mx = L[0].total, one = (y) => '<div class="gb-br"><span class="gb-bn">' + spIc(String(y.name).replace(/^[^:]+: /, '')) + '<span>' + esc(y.name) + '</span></span><span class="gb-tr sm"><i class="gb-f" style="width:' + Math.max(1.5, 100 * y.total / mx).toFixed(1) + '%"></i><span class="gb-v">' + C(y.total) + '</span></span>' +
+      '<span class="gb-bx">' + Math.round(100 * y.total / tot) + '%' + (y.hits ? ' · ' + y.hits.toLocaleString('en-US') + (y.hits === 1 ? ' hit' : ' hits') : '') + (opt && opt.crit && y.hits ? ' · ' + Math.round(100 * (y.crits || 0) / y.hits) + '% crit' : '') + (opt && opt.over && y.total + (y.over || 0) > 0 ? ' · ' + Math.round(100 * (y.over || 0) / (y.total + (y.over || 0))) + '% overheal' : '') + (opt && opt.big && y.big ? ' · biggest ' + C(y.big) : '') + '</span></div>';
+    return '<div class="gb-bt">' + L.slice(0, 14).map(one).join('') + (L.length > 14 ? '<details class="gb-abmore"><summary>Show ' + (L.length - 14) + ' more</summary><div class="gb-bt">' + L.slice(14).map(one).join('') + '</div></details>' : '') + '</div>'; }; /* (the rest open in place (Oct 24)) */
   const cnt = (l, key) => { const m = new Map(); for (const x of l) { const n = key(x); m.set(n, (m.get(n) || 0) + 1); } return [...m].sort((a, b) => b[1] - a[1]); };
   const gbFold = (list) => { if (!GB_TABS) return list; const m = new Map(); for (const y of list) { const nm = String(y.name), pet = nm.match(/^(.+?): /), k = pet ? pet[1] : nm.replace(/ Overload$/, ''); const o = m.get(k) || { name: k, id: pet ? 0 : y.id, total: 0, over: 0, hits: 0, crits: 0, big: 0 };
     o.total += y.total || 0; o.over += y.over || 0; o.hits += y.hits || 0; o.crits += y.crits || 0; o.big = Math.max(o.big, y.big || 0); m.set(k, o); } return [...m.values()]; }; /* (pets and Overloads folded in, Oct 23) */

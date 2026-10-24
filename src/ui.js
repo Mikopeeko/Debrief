@@ -1758,6 +1758,7 @@ function openReport() {
 const PATCH_NOTES = [
   { d: '2026-10-24', h: [
   ], n: [
+    'Graphs: long by-spell lists end in a Show more that opens the rest right under them.',
     'Pain Suppression, Ironbark, Blessing of Sacrifice and Zephyr now count on the Graphs Mitigation tab, for the player who cast them.',
     'The wipe call says why on every pull, with a small picture: how many were dead against the most any kill of that boss survived at that moment. A dead tank now counts as 2. On Normal and LFR the whole pull counts until half the raid is dead.',
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
