@@ -4266,6 +4266,15 @@ details.secd.mcx-tile[open] .mcx-alt { display: none; }
 #view .mxa-f details.howit[open] { flex-basis: 100%; }
 #view .mxa-all-b { background: none; border: 0; padding: 0; color: var(--muted); font: inherit; font-size: 12.5px; text-decoration: underline dotted; text-underline-offset: 3px; cursor: pointer; }
 #view .mxa-all-b:hover { color: var(--text); }
+/* (Oct 24: the note box as one line) */
+#view .dbn-bar.dbn-one { flex-wrap: wrap; gap: 6px 10px; padding: 8px 12px; }
+#view .dbn-bar.dbn-one > .dbn-t { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; cursor: help; }
+#view .dbn-bar.dbn-one .dbn-yn { color: var(--gold); font-weight: 600; font-size: 13px; }
+#view .dbn-bar.dbn-one .dbn-gone { padding: 2px 9px; font-size: 12.5px; }
+#view .dbn-bar.dbn-one .btn { margin-left: 0; }
+#view .dbn-bar.dbn-one .dbn-vw { margin-left: auto; }
+#view .dbn-bar.dbn-one .dbn-vw.on { border-color: rgba(230,180,80,.6); color: var(--gold); }
+#view .dth-p .cutbar.dth-cut { margin: 0 0 12px; padding: 0 0 10px; border-bottom: 1px solid rgba(255,255,255,.06); }
 #view .pcx-w { margin: 6px 0 0; font-size: 13px; color: var(--muted, #aab); }
 #view ul.cch-wl { list-style: none; margin: 6px 0 12px; padding: 0; display: grid; gap: 6px; } #view ul.cch-wl li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 15px; line-height: 1.35; padding-left: 12px; border-left: 3px solid var(--gold, #e6b450); } #view ul.cch-wl li b { font-weight: 800; } #view ul.cch-wl .cch-wn { color: #ef6b62; font-weight: 700; font-size: 13px; } #view ul.cch-wl .cch-wy { flex-basis: 100%; color: var(--muted, #aab); font-size: 14px; }
 #view p.cch-h b.cch-rc { color: var(--gold, #e5b84b); font-weight: 800; } #view .dbr-dd { position: relative; display: block; height: 10px; margin: 4px 0 8px; border-radius: 5px; background: rgba(255,255,255,.1); } #view .dbr-dd i { position: absolute; top: 1px; width: 8px; height: 8px; box-shadow: 0 0 0 1.5px #15181f; border-radius: 50%; background: #e5534b; transform: translateX(-50%); } #view .dbr-dd i.ms { background: #6b7280; } #view .dbr-db { display: flex; align-items: flex-end; gap: 2px; height: 20px; margin: 2px 0 6px; } #view .dbr-db i { flex: 1; min-width: 2px; border-radius: 2px 2px 0 0; background: #e5534b; } #view .dbr-db i.z { background: rgba(255,255,255,.12); } @media (max-width: 760px) { #view .dbr-4.dbr-5.dbr-6 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } } @media (max-width: 520px) { #view .dbr-4.dbr-5.dbr-6 { grid-template-columns: minmax(0, 1fr) !important; } } @media (max-width: 760px) { #view .dbr-4.dbr-5 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } } @media (max-width: 520px) { #view .dbr-4.dbr-5 { grid-template-columns: minmax(0, 1fr) !important; } }
@@ -10283,7 +10292,7 @@ function buildCoiledAltar(ev, r, h) {
     // with each frontal, so the count is shown, not judged)
     if (!mythic) return { txt: 'every orb on the ground', badAt: Infinity };
     if (s.n === 'sever') { const k = p1All.findIndex((t) => Math.abs(t - s.t) < 0.5), n = p1All.length, last = p2 != null && k === n - 1, second = p2 != null && k === n - 2;
-      return last ? { txt: 'none (hits empty ground)', max: 0, warnAt: 1, badAt: 3 } : second ? { txt: '2 to 3', warnAt: 5, badAt: 8 } : { txt: '5 to 6 (7 at most)', warnAt: 99, badAt: 8 }; }
+      return last ? { txt: 'none, into empty ground', max: 0, warnAt: 1, badAt: 3 } : second ? { txt: '2 to 3', warnAt: 5, badAt: 8 } : { txt: '5 to 6 (7 at most)', warnAt: 99, badAt: 8 }; }
     return p3Sev.indexOf(s) === 0 ? { txt: 'every purple (5 to 7)', badAt: 8 } : { txt: 'the purples left (7 at most)', badAt: 8 };
   };
   const sevRows = severs.map((s, i) => {
@@ -10294,7 +10303,7 @@ function buildCoiledAltar(ev, r, h) {
     const cyc = deluges.filter((d) => d <= s.t).length, nth = severs.filter((x) => x.t <= s.t && deluges.filter((d) => d <= x.t).length === cyc).length;
     const pf = planFor(s), plan = pf.txt;
     const bad = popped >= pf.badAt;
-    if (bad) M(s.t, 'Raid', s.n, 'Medium', S(s.n)[1] + ' popped about ' + popped + ' orbs at once (plan: ' + plan + ').', 'Each popped orb is a raid-wide stack. Aim for 5 to 6 per frontal and never more than 7.');
+    if (bad) mistakes.push({ t: s.t, player: 'Raid', mechanic: 'Coalesced Venom', id: 1282403, severity: 'Medium', detail: S(s.n)[1] + ' popped about ' + popped + ' orbs at once; the plan was ' + plan + '.', fix: 'Each popped orb is a raid-wide stack. Aim for 5 to 6 per frontal and never more than 7.' }); /* (an orb mistake, filed under Coalesced Venom, not the tanks' Sever (Oct 24)) */
     return [{ txt: '#' + (i + 1) }, { t: s.t }, { s: S(s.n) }, { txt: phaseAt(s.t) }, { txt: 'about ' + popped + ' orbs', bad }, { txt: plan || '—', dim: true }];
   });
   sections.splice(2, 0, { id: 'sever', title: 'Sever orb counts', spell: S('sever'), mythicOnly: false,
@@ -15963,6 +15972,7 @@ const PATCH_NOTES = [
   { d: '2026-10-24', h: [
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
+    'Debriefing: your note is one line above the phases (who\'s here, Each raider\'s jobs, Copy for the game, Open the plan), and the wipe call\'s explanation and chart open with the Deaths tile.',
     'Debriefing: click a mechanic\'s bar and it opens right inside the phase card: each moment on one line with ✓ or ✕, your note\'s job as small player chips, and the map beside it. Show everything brings back the full detail.',
     'Debriefing: a mechanic that went wrong says what happened in one line under its bar, with the time and who.',
     'Debriefing: when nothing changed since last pull, one short line instead of two empty boxes.',
@@ -15979,6 +15989,7 @@ const PATCH_NOTES = [
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
     'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
   ], f: [
+    'Debriefing: a frontal that popped too many orbs is listed under Coalesced Venom in Every mistake, not under the tanks\' Sever, and long lines no longer end in a stray bracket.',
     'Debriefing: What wiped us no longer lists every name when many died at once ("11 players were caught by Calcified Corpse"), and says "Someone was hit" for one player.',
     'Graphs: with Healing + prevented on, a player\'s spell list now shows what their raid cooldowns and defensives prevented too, and spell lists on All pulls no longer squeeze their bars.',
     'Debriefing: Pulls to the kill now counts your guild\'s whole history from Warcraft Logs, first pull to first kill, on any device and on farm nights.',
@@ -19864,7 +19875,7 @@ document.addEventListener('change', (e) => { const s = e.target.closest && e.tar
 // (Debriefing's note bar: who from the plan is here tonight, and who's missing)
 function ndzPlanHere(NJ, r) { const u = NJ && NJ.used; if (!u) return ''; const names = ndzNoteRoster(u) || [...new Set(noteNames(noteResolve(u.text)).map((x) => String(x).split('-')[0]))]; if (!names.length) return '';
   const here = new Set(ndzIn(r).map((p) => ndzPn(p).toLowerCase())), miss = names.filter((x) => !here.has(String(x).toLowerCase())), k = names.length - miss.length;
-  return '<span class="dbn-gone' + (miss.length ? '' : ' ndz-allhere') + '">' + k + ' of ' + plural(names.length, 'planned raider') + ' ' + (k === 1 ? 'is' : 'are') + ' here tonight' + (miss.length ? '. Missing: ' + esc(andL(miss.slice(0, 6))) + (miss.length > 6 ? ' and ' + (miss.length - 6) + ' more' : '') + '.' : '.') + '</span>'; }
+  return '<span class="dbn-gone' + (miss.length ? '' : ' ndz-allhere') + '">' + (miss.length ? k + ' of ' + names.length + ' here · missing ' + esc(andL(miss.slice(0, 6))) + (miss.length > 6 ? ' and ' + (miss.length - 6) + ' more' : '') : 'All ' + names.length + ' here') /* (fewer words (Oct 24)) */ + '</span>'; }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ndzpcopy]'); if (!b) return; const k = b.dataset.ndzpcopy, i = k.lastIndexOf('|'), n = notesOf(k.slice(0, i)).list.find((x) => x.id === k.slice(i + 1)); if (n) copyBtn(b, n.text); });
 // (Cover it: the suggested cooldown goes into the note, 2 s before the hit; Undo puts the note back as it was)
 const ndzNoteSet = (boss, id, text) => { const o = notesOf(boss), n = o.list.find((x) => x.id === id); if (!n) return false; if (S.page === 'plan' && !S.ndzPlNoHist && n.text !== text) { const H = ndzPlHist(boss, id); H.undo.push(n.text); if (H.undo.length > 60) H.undo.shift(); H.redo = []; } /* (the planner's Undo) */ n.text = text; notesSave(boss, o); for (const rep of CACHE.values()) if (rep.item.boss === boss) { try { applyNote(rep); } catch (x) { /* (checked on the next look) */ } } return true; };
@@ -23209,8 +23220,12 @@ const dbnOnly = (o) => '<details class="panel secd st-' + o.st + ' dbr-line dbn-
 function dbnBar(NJ, r) {
   if (!NJ) { if (ASG_OFF()) return ''; /* (Assignments greyed out: nowhere to add a note) */ const has = notesOf(r.item.boss).list.length; return '<div class="dbn-bar dbn-none"><span>' + emoIc('📜') + ' <b>' + (has ? 'None of your notes for ' + esc(r.item.boss) + ' fits this group' : 'No NSRT note for ' + esc(r.item.boss) + ' yet') + '</b><span class="sub">' + (has ? 'swap in who\'s here to make one for this group' : 'load the note you raided with, to check who did their job') + '</span></span>' + (has && NDZ_ON() && r.noteMiss ? '<button type="button" class="btn sm" data-ndzsw="1">Swap players</button>' : '') + (NDZ_ON() ? '<button type="button" class="btn sm' + (has ? '' : ' primary') + '" data-ndzwiz="1">Load a note</button>' : '<button type="button" class="btn sm" data-dbnote="1">' + (has ? 'Swap players' : 'Add your NSRT note') + '</button>') + (NDZ_ON() && NDZ_FILL[r.item.boss] ? '<button type="button" class="btn sm" data-ndz="1">Draft a note from these pulls</button>' : '') + '</div>'; }
   const a = NJ.a || {}, gone = a.unknownNames || [], nm = NJ.used ? NJ.used.name : 'Your note';
-  return '<div class="dbn-bar"><span>' + emoIc('📜') + ' <b>' + esc(nm) + '</b><span class="sub">' + plural(((a.note && a.note.lines) || []).length + ((a.note && a.note.reminders) || []).length, 'line') + ' · checks ' + esc(NJ.checkedL) + '</span></span>' +
+  /* (Oct 24, your OK for a test version: the note box is one line. What the note checks moved into the name's tooltip; the switch between
+     the mechanics and each raider's jobs sits here, so the page has one By player / By mechanic switch (the checks' one)) */
+  const nl = plural(((a.note && a.note.lines) || []).length + ((a.note && a.note.reminders) || []).length, 'line') + ' · checks ' + NJ.checkedL, pv = S.dbView === 'player';
+  return '<div class="dbn-bar dbn-one"><span class="dbn-t" data-tt="' + esc('<b>' + esc(nm) + '</b><br>' + esc(nl)) + '">' + emoIc('📜') + ' <span class="dbn-yn">Your note:</span> <b>' + esc(nm) + '</b></span>' +
     (NDZ_ON() && !ASG_OFF() ? ndzPlanHere(NJ, r) : (gone.length ? '<span class="dbn-gone">' + plural(gone.length, 'name') + ' in the note ' + (gone.length === 1 ? 'isn\'t' : 'aren\'t') + ' in this pull: ' + esc(gone.slice(0, 5).join(', ')) + (gone.length > 5 ? '…' : '') + '</span>' : '')) +
+    '<button type="button" class="btn sm dbn-vw' + (pv ? ' on' : '') + '" data-dbv="' + (pv ? 'mech' : 'player') + '" aria-pressed="' + pv + '" data-tt="' + esc(pv ? '<b>Back to the mechanics</b><br>Your note\'s jobs back on the mechanic they\'re about, phase by phase.' : '<b>Each raider\'s jobs</b><br>Your note\'s jobs listed per raider, missed first, in place of the phases.') + '">' + (pv ? '← Back to the mechanics' : 'Each raider\'s jobs') + '</button>' +
     '<button type="button" class="btn sm" data-dbncopy="1">Copy for the game</button>' + (ASG_OFF() ? '' : '<button type="button" class="btn sm" data-dbnote="1">' + (NDZ_ON() ? 'Open the plan' : 'See the note') + '</button>') + '</div>'; }
 // (Note jobs, the fifth number: the jobs that came up this pull, and how many were done)
 function dbnNum(NJ, num) { const j = NJ.secs.filter((o) => o.st !== 'na'), ok = j.filter((o) => o.st === 'ok').length, bad = j.filter((o) => o.st === 'bad').length, warn = j.length - ok - bad;
@@ -23948,7 +23963,7 @@ function audit() {
   if (wholeV.length || (nOnly.get('w') || []).length) h += '<details class="phase mcx-ph phr-' + PHROWS + '" data-mst="' + lvlOf(phLv(wholeV)) + '" data-phk="ph-w"' + (S.openSecs.has('ph-w') ? ' open' : '') + '><summary><span class="phr-dot ' + LVL_CLS[lvlOf(phLv(wholeV))] + '"></span><span class="phr-nm"><b>Whole fight</b> <span class="sub">' + (r.allPulls ? 'not tied to one phase' : 'not tied to one phase') + '</span></span>' + (PHROWS === 'a' ? phLine(wholeV) : phBars(wholeV, nOnly.get('w'))) + '<span class="phr-chev">▸</span></summary>' + withOnly(phaseBody(wholeV, 'w'), 'w') + '</details>';
   // (the switch (Oct 19): By mechanic is the page above; By player turns the note around, a card per raider with their jobs this pull)
   if (NJ) { const sw = '<div class="dbn-seg" role="group" aria-label="Show"><button type="button" data-dbv="mech"' + (S.dbView === 'player' ? '' : ' class="on"') + '>By mechanic</button><button type="button" data-dbv="player"' + (S.dbView === 'player' ? ' class="on"' : '') + '>By player</button><span class="sub">' + (S.dbView === 'player' ? 'each raider\'s jobs in your note, missed first' : 'your note\'s jobs sit on the mechanic they\'re about') + '</span></div>';
-    h = h.slice(0, h0) + sw + (S.dbView === 'player' ? dbnPlayers(NJ, r, pmap) : h.slice(h0)); }
+    h = h.slice(0, h0) + (S.dbView === 'player' ? dbnPlayers(NJ, r, pmap) : h.slice(h0)); void sw; /* (the switch is on the note line (Oct 24)) */ }
   // (the top of the page (Oct 19, layout B, refined): one card with a plain verdict, the pull as lanes (one per mechanic with a mistake,
   // Deaths first as skulls; the phases as bands across the top with lines down through the lanes, minute marks, the wipe filter's cut
   // greyed behind a red line), and the totals; a dot opens its exact moment)
@@ -25651,7 +25666,7 @@ function oaLayout(v, el) {
       f.addEventListener('toggle', () => { if (f.open) S.openSecs.add('brf-burst'); else S.openSecs.delete('brf-burst'); }); }
     try { rateCharts(v, out); } catch (e) { /* (the charts stay where they were) */ } try { oaMeters(v, out); } catch (e) { /* (no meters) */ }
     const dc = [...v.querySelectorAll('details.panel')].find((d) => /^Data check/.test(((d.querySelector('summary') || {}).textContent || '').trim())); if (dc) out.appendChild(dc);
-    dr.replaceWith(out); if (top) top.remove(); v.querySelectorAll('#rcTop, .rc-hp').forEach((n) => { if (!out.contains(n)) n.remove(); }); try { mxaInit(v); } catch (e) { console.error(e); } try { if (S._drawMaps) S._drawMaps(); } catch (e) { /* (maps draw when seen) */ } return; }
+    dr.replaceWith(out); if (top) top.remove(); v.querySelectorAll('#rcTop, .rc-hp').forEach((n) => { if (!out.contains(n)) n.remove(); }); try { mxaInit(v); } catch (e) { console.error(e); } v.querySelectorAll('.cutbar:not(.on)').forEach((n) => n.remove()); /* (no wipe call: the header already says Kill or Wipe call: off (Oct 24)) */ try { if (S._drawMaps) S._drawMaps(); } catch (e) { /* (maps draw when seen) */ } return; }
   /* (All pulls, Oct 23 (your ask: "the bottom half could still be tidied up more"): like one pull, no "More from all pulls" drawer. Its fix
      cards, better and worse, boss health every pull, the old went well / didn't / improving / worse lists, Before the next pull, Talk to and
      Used tonight all repeat the raid lead box, the boss banner or the pace chart; the guide links don't belong here. What only it had stays
@@ -26247,7 +26262,7 @@ function rateCharts(v, out) { const r = S.rep; if (r && (r.allPulls || v.querySe
   if (hp && !hp.querySelector('.rta')) hp.insertAdjacentHTML('beforeend', rateArea(r.healS || [], dur, '#3fb950', 'Healing done', null, 'healS', refOf('hps'), true, curveRef(r, 'hps', (r.module && r.module.phases) || [], Math.ceil(dur)))); }
 function oaDeathsTile(v) { if (!v) return;
   { const dd = v.querySelector('.cch2 details.cch-dmove'), tl = [...v.querySelectorAll('.oa-tiles .dbr-n')].find((x) => /^\s*Deaths/.test(x.textContent || ''));
-    if (dd && tl && !tl.pcxP) { const p = document.createElement('div'); p.className = 'panel pcx-p dth-p'; p.hidden = true; dd.open = true; dd.classList.remove('cch-dmove'); /* (inside its own styled box with the By player / By mechanic switch, so one list shows at a time (Oct 24)) */ const wr = document.createElement('div'); wr.className = 'cch-acct2 dth-w' + (S.cblBy === 'm' ? ' cbl-on-m' : ''); wr.innerHTML = cblSwitch(); wr.appendChild(dd); p.appendChild(wr); tl.appendChild(p);
+    if (dd && tl && !tl.pcxP) { const p = document.createElement('div'); p.className = 'panel pcx-p dth-p'; p.hidden = true; dd.open = true; dd.classList.remove('cch-dmove'); /* (inside its own styled box with the By player / By mechanic switch, so one list shows at a time (Oct 24)) */ const wr = document.createElement('div'); wr.className = 'cch-acct2 dth-w' + (S.cblBy === 'm' ? ' cbl-on-m' : ''); wr.innerHTML = cblSwitch(); wr.appendChild(dd); { const cb = v.querySelector('.cutbar.on'); if (cb) { cb.classList.add('dth-cut'); p.appendChild(cb); } } /* (the wipe call, with its little chart, opens with the deaths (Oct 24)) */ p.appendChild(wr); tl.appendChild(p);
       tl.classList.add('pcx-tile'); tl.setAttribute('role', 'button'); tl.tabIndex = 0; tl.insertAdjacentHTML('beforeend', '<span class="pcx-open">Who and why ▾</span>');
       tl.addEventListener('click', (e) => { if (e.target.closest('.pcx-p')) return; const q = tl.querySelector('.pcx-p') || tl.pcxP; if (!q) return; tl.pcxP = q; if (q.previousElementSibling !== tl.parentNode) tl.parentNode.after(q); q.hidden = !q.hidden; tl.classList.toggle('on', !q.hidden); }); }
     else if (dd && !tl) { /* (the tiles may not be drawn yet: try again a few times, then leave Deaths in the grid) */ const n = (v._dthN || 0) + 1; v._dthN = n; if (n <= 8) setTimeout(() => oaDeathsTile(v), 400); else { v._dthN = 0; dd.classList.remove('cch-dmove'); } } else v._dthN = 0; } }
@@ -26615,7 +26630,7 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
   const ph = b.closest('details.mcx-ph'); if (!ph) return; if (ph.classList.contains('mxa')) { mxaOpen(ph, S.mxaSel[ph.dataset.phk] === b.dataset.phjump ? '' : b.dataset.phjump); const p = ph.querySelector(':scope > .mxa-p'); if (p && p.offsetHeight && p.getBoundingClientRect().top > innerHeight - 140) p.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); /* (on a phone the bars stack: bring the opened one into view) */ return; } ph.open = true; const sec = ph.querySelector('details.secd[data-k^="' + CSS.escape(b.dataset.phjump) + '-"]');
   if (sec) { const k = sec.dataset.k; sec.open = true; S.openSecs.add(k); /* (the page may redraw as it opens: find it again) */ setTimeout(() => { const el = document.querySelector('details.secd[data-k="' + CSS.escape(k) + '"]'); if (el) { el.open = true; el.scrollIntoView({ block: 'start', behavior: 'smooth' }); } }, 120); } }, true);
 /* (a moment's line, shorter: asides in brackets longer than a few words come out, "(aim for 2 to 3, then none, into empty ground)" (Oct 23)) */
-const tidyLine = (t) => String(t || '').replace(/\s*\((?=[^)]{18,})[^)]*\)/g, '').replace(/\s+·\s+/g, ' · ').replace(/\s{2,}/g, ' ').trim();
+const tidyLine = (t) => { const s = String(t || ''); let o = '', d = 0, st = -1; for (let i = 0; i < s.length; i++) { const c = s[i]; if (c === '(') { if (d === 0) st = i; d++; continue; } if (c === ')' && d > 0) { d--; if (!d) { if (s.slice(st + 1, i).length >= 18) o = o.replace(/\s+$/, ''); else o += s.slice(st, i + 1); } continue; } if (!d) o += c; } if (d) o += s.slice(st); return o.replace(/\s+·\s+/g, ' · ').replace(/\s{2,}/g, ' ').trim(); }; /* (nested brackets too, Oct 24: "(plan: none (hits empty ground))" left a stray ")") */
 /* (the fastest Mythic kills' raid DPS, damage taken and healing per second, phase by phase (median of 20 kills), for the top tiles (Oct 23)) */
 /* (Oct 23: a pull's Raid DPS, DTPS and HPS up to its wipe filter, and the top guilds' numbers over the phases it reached; All pulls adds the pulls up, time-weighted) */
 /* (Oct 23, your ask: the tiles keep themselves up to date. The site's daily job reads every 4th kill down the rankings, phase by phase, from

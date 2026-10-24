@@ -3929,7 +3929,7 @@ function buildCoiledAltar(ev, r, h) {
     // with each frontal, so the count is shown, not judged)
     if (!mythic) return { txt: 'every orb on the ground', badAt: Infinity };
     if (s.n === 'sever') { const k = p1All.findIndex((t) => Math.abs(t - s.t) < 0.5), n = p1All.length, last = p2 != null && k === n - 1, second = p2 != null && k === n - 2;
-      return last ? { txt: 'none (hits empty ground)', max: 0, warnAt: 1, badAt: 3 } : second ? { txt: '2 to 3', warnAt: 5, badAt: 8 } : { txt: '5 to 6 (7 at most)', warnAt: 99, badAt: 8 }; }
+      return last ? { txt: 'none, into empty ground', max: 0, warnAt: 1, badAt: 3 } : second ? { txt: '2 to 3', warnAt: 5, badAt: 8 } : { txt: '5 to 6 (7 at most)', warnAt: 99, badAt: 8 }; }
     return p3Sev.indexOf(s) === 0 ? { txt: 'every purple (5 to 7)', badAt: 8 } : { txt: 'the purples left (7 at most)', badAt: 8 };
   };
   const sevRows = severs.map((s, i) => {
@@ -3940,7 +3940,7 @@ function buildCoiledAltar(ev, r, h) {
     const cyc = deluges.filter((d) => d <= s.t).length, nth = severs.filter((x) => x.t <= s.t && deluges.filter((d) => d <= x.t).length === cyc).length;
     const pf = planFor(s), plan = pf.txt;
     const bad = popped >= pf.badAt;
-    if (bad) M(s.t, 'Raid', s.n, 'Medium', S(s.n)[1] + ' popped about ' + popped + ' orbs at once (plan: ' + plan + ').', 'Each popped orb is a raid-wide stack. Aim for 5 to 6 per frontal and never more than 7.');
+    if (bad) mistakes.push({ t: s.t, player: 'Raid', mechanic: 'Coalesced Venom', id: 1282403, severity: 'Medium', detail: S(s.n)[1] + ' popped about ' + popped + ' orbs at once; the plan was ' + plan + '.', fix: 'Each popped orb is a raid-wide stack. Aim for 5 to 6 per frontal and never more than 7.' }); /* (an orb mistake, filed under Coalesced Venom, not the tanks' Sever (Oct 24)) */
     return [{ txt: '#' + (i + 1) }, { t: s.t }, { s: S(s.n) }, { txt: phaseAt(s.t) }, { txt: 'about ' + popped + ' orbs', bad }, { txt: plan || '—', dim: true }];
   });
   sections.splice(2, 0, { id: 'sever', title: 'Sever orb counts', spell: S('sever'), mythicOnly: false,
