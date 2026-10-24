@@ -538,7 +538,20 @@ async function runInbox(env) {
           let content = text.slice(0, 1900); const men = { parse: [] };
           if (o.pingRole) { const role = ((await dc(env, '/guilds/' + GUILD + '/roles')) || []).find((r) => r.name === String(o.pingRole)); if (role) { content = '<@&' + role.id + '> ' + content; men.roles = [role.id]; } }
           const keys = Array.isArray(o.images) ? o.images.slice(0, 6) : [];
-          await dcFiles(env, '/channels/' + c.id + '/messages', 'POST', { content, allowed_mentions: men, flags: 4 }, keys);
+          // (thread: post inside the thread of that name (found in KV, or by name among the active ones); startThread: after posting,
+          // open a thread of that name on this message, a "sub channel" for one part of the website)
+          let target = c.id;
+          if (o.thread) {
+            target = (await env.DEBRIEF_KV.get('beta-thread-' + o.thread)) || '';
+            if (!target) { const act = await dc(env, '/guilds/' + GUILD + '/threads/active').catch(() => ({ threads: [] })); const t = (act.threads || []).find((x) => x.parent_id === c.id && x.name === o.thread); target = t ? t.id : ''; }
+            if (!target) continue;
+            await dc(env, '/channels/' + target, { method: 'PATCH', body: { archived: false } }).catch(() => {});
+          }
+          const m = await dcFiles(env, '/channels/' + target + '/messages', 'POST', { content, allowed_mentions: men, flags: 4 }, keys);
+          if (o.startThread && m && m.id) {
+            const th = await dc(env, '/channels/' + c.id + '/messages/' + m.id + '/threads', { method: 'POST', body: { name: String(o.startThread).slice(0, 95), auto_archive_duration: 10080 } });
+            await env.DEBRIEF_KV.put('beta-thread-' + o.startThread, th.id);
+          }
           if (o.dropImages) for (const k of keys) await env.DEBRIEF_KV.delete(k).catch(() => {});
         } else if (o.op === 'allow-announce') {
           // (the user's OK, Oct 20: Claudette's own role may see, post, show cards and ping @everyone in #announcments; nothing else)
