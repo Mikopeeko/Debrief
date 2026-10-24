@@ -17,6 +17,18 @@ function New-Zip($srcDir, $zipPath, $prefix) {
   try { Get-ChildItem -LiteralPath $base -Recurse -File | ForEach-Object { [void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, $_.FullName, $prefix + $_.FullName.Substring($base.Length + 1).Replace('\', '/'), 'Optimal') } }
   finally { $z.Dispose() }
 }
+# (code signing with Microsoft Artifact Signing, only on a PC set up for it: DBF_SIGN_DLIB (the path to Azure.CodeSigning.Dlib.dll) and
+# DBF_SIGN_META (the path to metadata.json: endpoint, account and certificate profile, no secrets) as Windows environment variables; the
+# sign-in comes from Azure's own login on this PC, never from a file here. Without them, or without signtool, the build stays unsigned)
+function Sign-Files([string[]]$paths) {
+  $dlib = $env:DBF_SIGN_DLIB; $meta = $env:DBF_SIGN_META
+  if (-not $dlib -or -not $meta -or -not (Test-Path -LiteralPath $dlib) -or -not (Test-Path -LiteralPath $meta)) { return }
+  $st = $env:DBF_SIGNTOOL
+  if (-not $st) { $st = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" -ErrorAction SilentlyContinue | Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName }
+  if (-not $st) { Write-Warning 'Signing is set up but signtool.exe was not found: this build is unsigned.'; return }
+  & $st sign /fd SHA256 /tr 'http://timestamp.acs.microsoft.com' /td SHA256 /dlib $dlib /dmdf $meta @paths | Out-Host
+  if ($LASTEXITCODE -ne 0) { throw 'Signing failed.' }
+}
 $appV = (Get-Content (Join-Path $here 'version.txt') -Raw).Trim()
 $addV = ((Get-Content (Join-Path $here 'addon\Debrief\Debrief.toc')) -match '^## Version:' | Select-Object -First 1) -replace '^## Version:\s*', ''
 
@@ -26,10 +38,12 @@ $dotnet = Join-Path $env:ProgramFiles 'dotnet\dotnet.exe'
 $exeOut = Join-Path $work 'exe'
 & $dotnet build (Join-Path $here 'app\DebriefCompanion.csproj') -c Release -o $exeOut --nologo -v q | Out-Host
 if ($LASTEXITCODE -ne 0 -or -not (Test-Path (Join-Path $exeOut 'Debrief Companion.exe'))) { throw "The app didn't build." }
+Sign-Files @((Join-Path $exeOut 'Debrief Companion.exe')) # (before it is zipped, so the updater's app.zip carries the signed app)
 foreach ($f in 'Debrief Companion.exe', 'Debrief Companion.exe.config', 'Microsoft.Web.WebView2.Core.dll', 'Microsoft.Web.WebView2.WinForms.dll') { Copy-Item -LiteralPath (Join-Path $exeOut $f) -Destination $app }
 Copy-Item -LiteralPath (Join-Path $exeOut 'runtimes') -Destination (Join-Path $app 'runtimes') -Recurse
 # (companion.ps1 and Start Debrief.vbs now only start the app: they move copies from 0.5 and older over)
 foreach ($f in 'companion.ps1', 'companion.html', 'popup.html', 'recap.js', 'Start Debrief.vbs', 'debrief.ico', 'version.txt') { Copy-Item -LiteralPath (Join-Path $here $f) -Destination $app }
+Sign-Files @((Join-Path $app 'companion.ps1'), (Join-Path $app 'Start Debrief.vbs')) # (the two small starters, signed copies only)
 # (the engine: DBF_ENGINE names a clean, committed build; otherwise the one in this folder, which may hold unfinished work)
 $engine = if ($env:DBF_ENGINE) { $env:DBF_ENGINE } else { Join-Path $root 'WoW-Log-Analyzer.html' }
 Copy-Item -LiteralPath $engine -Destination (Join-Path $app 'Debrief.html')
@@ -47,6 +61,7 @@ New-Zip (Join-Path $here 'addon\Debrief') $addZip 'Debrief/'
 $pay = Join-Path $work 'payload'; New-Item -ItemType Directory -Force -Path $pay | Out-Null
 Copy-Item -LiteralPath $appZip -Destination $pay
 Copy-Item -LiteralPath (Join-Path $here 'install.ps1') -Destination $pay
+Sign-Files @((Join-Path $pay 'install.ps1'))
 Set-Content -LiteralPath (Join-Path $pay 'setup.cmd') -Value @('@echo off', 'echo %date% %time% start %~dp0> "%TEMP%\debrief-setup.log"', 'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%~dp0install.ps1" >> "%TEMP%\debrief-setup.log" 2>&1') -Encoding ASCII
 $exe = Join-Path $dist 'Debrief-Setup.exe'; if (Test-Path $exe) { Remove-Item $exe -Force }
 $sed = @"
@@ -95,6 +110,7 @@ SourceFiles0=$pay\
 $sedPath = Join-Path $work 'setup.sed'; Set-Content -LiteralPath $sedPath -Value $sed -Encoding ASCII
 $p = Start-Process -FilePath (Join-Path $env:WINDIR 'System32\iexpress.exe') -ArgumentList '/N', '/Q', $sedPath -Wait -PassThru
 if (-not (Test-Path $exe)) { throw "IExpress didn't make the installer (exit $($p.ExitCode))." }
+Sign-Files @($exe)
 Remove-Item -Recurse -Force $work
 # (the website serves these at debriefme.io/companion/: the download page, the installer, the addon and the updater's files)
 $site = Join-Path $root 'site-assets\companion'

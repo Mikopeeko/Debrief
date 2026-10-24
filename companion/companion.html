@@ -210,7 +210,6 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
       <div class="swrow">
         <label class="tg" for="pop" title="After each boss pull, a small bar floats over the game: click it for your recap. It never takes focus from WoW and closes when the next pull starts."><input type="checkbox" id="pop" checked>Pop-up recap</label>
         <label class="tg" for="snd" title="A short chime when your recap is ready."><input type="checkbox" id="snd" checked>Chime</label>
-        <button class="btn gold" id="copyAgain" type="button" hidden>Copy it again</button>
       </div>
       <div id="folderBox" hidden>
         <p class="empty">I couldn't find your WoW Logs folder. Paste where WoW is installed (for example <b>C:\Program Files (x86)\World of Warcraft</b>).</p>
@@ -224,8 +223,7 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
     <div><p class="k">Combat log</p><select id="logSel" aria-label="Combat log"></select><p class="note" id="logInfo"></p></div>
     <div id="pulls" hidden></div>
     <div><p class="k">Updates</p><button class="btn" id="upd" type="button" title="Looks for a newer Debrief on debriefme.io and installs it now.">Check for updates</button></div>
-    <p class="note">Close this window any time: Debrief keeps running in the background. Quit stops it. Raiders with the addon get their card from you automatically.</p>
-    <details class="code"><summary>The code that was copied</summary><textarea id="codeOut" readonly></textarea></details>
+    <p class="note">Close this window any time: Debrief keeps running in the background. Quit stops it.</p>
   </aside>
   <aside class="side" hidden><div id="preview"></div></aside>
 </div>
@@ -375,7 +373,7 @@ async function readText(b, quiet, name) {
 }
 function progress(f) { L.prog = f; renderRing(); }
 for (const [id, def] of [['pop', true], ['snd', true]]) { $(id).checked = store.get('dbf-sw-' + id, def); $(id).addEventListener('change', () => { store.set('dbf-sw-' + id, $(id).checked); if (id === 'pop') addonFlags(); }); }
-// (tells the addon: with the pop-up on and Copy every pull off, WoW doesn't ask "See your recap?" after a pull; WoW reads it at login or /reload)
+// (tells the addon the pop-up's switch; WoW reads it at login or /reload)
 function addonFlags() { j('/addonflags', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ popup: $('pop').checked, autocopy: false }) }).catch(() => {}); }
 addonFlags();
 // (the pop-up over the game: this pull's recap, or hidden when the next pull starts)
@@ -487,9 +485,8 @@ function renderRing() {
   if (on) { popHide(); return ring('on', 1, '<b>Pull ' + on.pull + '</b><span>on now</span>', 'A boss pull is on. Your recap is ready the moment it ends.'); }
   const s = L.lastSent, sb = s && L.items.find((b) => b.startByte === s.sb);
   if (sb && ((lastDone && s.sb === lastDone.startByte) || Date.now() - s.at < 90e3)) {
-    if (!s.ok) return ring('fail', 1, '<b>Not copied</b><span>press Copy it again</span>');
-    if (!s.shared) return ring('sent', 1, '<b>✓</b><span>' + (sb.kill ? 'Kill recap is up' : 'Recap is up') + '</span><em>' + ($('pop').checked ? 'in the pop-up' : 'click its dot to share') + '</em>', $('pop').checked ? 'Pull ' + sb.pull + "'s recap is in the pop-up over the game. Share it with your raid from there." : '');
-    return ring('sent', 1, '<b>✓</b><span>' + (sb.kill ? 'Kill sent to WoW' : 'Sent to WoW') + '</span><em>' + (lastDone && s.sb === lastDone.startByte ? '' : 'pull ' + sb.pull + ' · ') + 'press <kbd>Ctrl</kbd>+<kbd>V</kbd></em>', 'Pull ' + sb.pull + "'s recap is copied. In WoW, press Ctrl+V when it asks.");
+    /* (nothing is copied any more (Oct 24): the pop-up shows it, and WoW gets it at /reload) */
+    return ring('sent', 1, '<b>✓</b><span>' + (sb.kill ? 'Kill recap is up' : 'Recap is up') + '</span><em>' + ($('pop').checked ? 'in the pop-up' : 'in WoW after /reload') + '</em>', 'Pull ' + sb.pull + "'s recap is " + ($('pop').checked ? 'in the pop-up over the game. ' : 'saved. ') + 'In WoW, /reload brings it into /recap.');
   }
   const best = done.reduce((m, b) => { const e = N[b.startByte]; return e && e.l != null ? Math.max(m, 100 - e.l) : m; }, 0);
   if (!L.live) return ring('dim', best / 100, '<b>Older log</b><span>click a dot to send a pull</span>');
@@ -759,13 +756,11 @@ async function send(b, byHand) {
       const rep = await analyze(b); progress(0.8);
       const model = RECAP.build(b, rep, same.slice(0, k + 1));
       const code = RECAP.encode(model);
-      $('codeOut').value = code; $('copyAgain').disabled = false;
       RECAP.lastModel = model; renderPreview(model);
       // (every pull's code goes into the addon's folder too, so /reload in WoW brings it in as a saved pull (Oct 22))
       if (b.id !== DUMMY) { j('/addonpull', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: L.name + ':' + b.startByte, code }) }).catch(() => {}); markSaved(L.name + ':' + b.startByte); }
-      // (copied only when you ask: Send on a pull, or Copy every pull for my raid; otherwise your clipboard is left alone)
-      const share = !!byHand, ok = share ? await clip(code) : false; $('copyAgain').hidden = !share || ok;
-      L.reading = null; L.lastSent = { sb: b.startByte, ok: ok || !share, shared: share, at: Date.now() }; saveNight(b, rep, model.coach && model.coach.raid);
+      const ok = false; /* (nothing goes on your clipboard any more (Oct 24)) */
+      L.reading = null; L.lastSent = { sb: b.startByte, ok: true, shared: false, at: Date.now() }; saveNight(b, rep, model.coach && model.coach.raid);
       // (Debriefing's own coach box, exactly as the tab draws it, for the pop-up)
       const wc = model.wc || null, cutN = wc ? 1 : 0, cut = cutN ? popCut() : null; /* (Wipe call on or off (Oct 23)) */
       const pack = null; /* (the pop-up draws the /recap card from the model (Oct 24)) */
@@ -778,11 +773,6 @@ async function send(b, byHand) {
   L.busy = run.catch(() => {});
   return run;
 }
-async function clip(text) {
-  try { const x = await j('/clip', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, sound: $('snd').checked }) }); if (x.ok) return true; } catch (e) { /* try the browser */ }
-  try { await navigator.clipboard.writeText(text); return true; } catch (e) { return false; }
-}
-$('copyAgain').addEventListener('click', () => clip($('codeOut').value));
 // (closing this window keeps Debrief running in the background; Quit stops it)
 // (Check for updates: the app updates now, unless a pull is on; the window then reopens as the new version)
 $('upd').addEventListener('click', async () => {

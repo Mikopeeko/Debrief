@@ -1,6 +1,6 @@
 // Debrief Companion: the small PC app that feeds the Debrief addon in WoW.
 // It watches your combat log; when a boss pull ends, its window reads the pull with Debrief's own engine and puts a short
-// code on your clipboard with a sound. In game, Debrief asks "See your recap?": press Ctrl+V and your recap card shows.
+// recap over the game with a sound, and saves it for the addon: in WoW, /reload, then /recap (no copy-paste since Oct 24).
 // Nothing here touches the game: it only reads WoWCombatLog files, writes to the clipboard and puts the addon in.
 //
 // Starts:  Debrief Companion.exe             opens the window (a second start brings the running one to the front)
@@ -102,7 +102,7 @@ namespace Debrief {
 
       if (install) {
         var ok = addon.Contains("installed in") || addon.Contains("Installed the");
-        var msg = "Debrief is installed.\n\n" + addon + "\n\nIt starts with Windows by itself, quietly, and there's a Debrief icon on your desktop and in the Start menu. In WoW, type /reload if it was open.\nAfter each boss pull Debrief asks \"See your recap?\": press Ctrl+V.";
+        var msg = "Debrief is installed.\n\n" + addon + "\n\nIt starts with Windows by itself, quietly, and there's a Debrief icon on your desktop and in the Start menu. In WoW, type /reload if it was open.\nAfter each boss pull your recap pops up over the game. In WoW, /reload, then /recap.";
         if (Environment.GetEnvironmentVariable("DBF_SILENT") != null) Log(msg);
         else MessageBox.Show(msg, "Debrief", MessageBoxButtons.OK, ok ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
       }

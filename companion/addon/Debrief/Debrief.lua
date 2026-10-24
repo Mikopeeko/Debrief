@@ -1,9 +1,9 @@
 local detailBtn, PRESET_NAME, render -- (shared by parts below)
-local onShow, miniShow, autoLog, mini, big, bigRender, grabbed
+local onShow, miniShow, autoLog, mini, big, bigRender
 -- Debrief: your pull recap, in game.
--- Debrief Companion (the small app on your PC) reads your combat log when a boss pull ends and copies a short code.
--- Press your Debrief key (Ctrl+Shift+D unless you change it) or type /debrief paste, then Ctrl+V: the card shows.
--- The addon never reads files or combat data itself (Midnight blocks that in combat); it only shows what you paste.
+-- Debrief Companion (the small app on your PC) reads your combat log when a boss pull ends, shows the recap over the game and saves it
+-- into this addon's Pulls.lua, which WoW reads at login or /reload. Nothing is pasted or shared (Oct 24).
+-- The addon never reads files or combat data itself (Midnight blocks that in combat); it only shows what the app saved.
 
 local ADDON = ...
 local DB
@@ -194,64 +194,6 @@ local function closeButton(parent)
   b:SetScript("OnEnter", function() x:SetTextColor(rgb(COL.text)) end); b:SetScript("OnLeave", function() x:SetTextColor(rgb(COL.faint)) end)
   return b
 end
-
--- ---------- the paste box ----------
-local paste = CreateFrame("Frame", "DebriefPaste", UIParent)
-paste:SetSize(384, 140); paste:SetPoint("CENTER", 0, 150); paste:SetFrameStrata("DIALOG"); paste:Hide()
-skin(paste, 8, COL.bg, 0.98, COL.gold, 0.55, true)
-paste:SetMovable(true); paste:EnableMouse(true); paste:RegisterForDrag("LeftButton"); paste:SetClampedToScreen(true)
-paste:SetScript("OnDragStart", paste.StartMoving); paste:SetScript("OnDragStop", paste.StopMovingOrSizing)
-tinsert(UISpecialFrames, "DebriefPaste")
-local pLogo = paste:CreateTexture(nil, "ARTWORK"); pLogo:SetSize(20, 20); pLogo:SetPoint("TOPLEFT", 14, -12); pLogo:SetTexture(MEDIA .. "Media\\logo")
-local pTitle = paste:CreateFontString(nil, "OVERLAY"); setFont(pTitle, "head", 17); pTitle:SetPoint("LEFT", pLogo, "RIGHT", 7, 0); pTitle:SetTextColor(rgb(COL.text)); pTitle:SetText("Debrief")
-local pText = paste:CreateFontString(nil, "OVERLAY"); setFont(pText, "body", 13.5); pText:SetPoint("TOPLEFT", 14, -42); pText:SetWidth(356); pText:SetJustifyH("LEFT")
-pText:SetTextColor(rgb(COL.muted)); pText:SetText("Press |cffece8dfCtrl+V|r to paste your pull from Debrief Companion.")
-local ebBg = CreateFrame("Frame", nil, paste); ebBg:SetPoint("TOPLEFT", 14, -66); ebBg:SetPoint("TOPRIGHT", -14, -66); ebBg:SetHeight(34)
-skin(ebBg, 5, COL.raised, 1, COL.line2, 1)
-local eb = CreateFrame("EditBox", "DebriefPasteBox", ebBg)
-eb:SetPoint("TOPLEFT", 10, -2); eb:SetPoint("BOTTOMRIGHT", -10, 2); eb:SetAutoFocus(false); eb:SetMultiLine(false)
-eb:SetMaxLetters(0); if eb.SetMaxBytes then eb:SetMaxBytes(0) end
-setFont(eb, "body", 13); eb:SetTextColor(rgb(COL.text))
-eb:SetScript("OnEditFocusGained", function() rounded(ebBg.lineT, "line", 5, COL.gold, 0.9) end)
-eb:SetScript("OnEditFocusLost", function() rounded(ebBg.lineT, "line", 5, COL.line2, 1) end)
-local pMsg = paste:CreateFontString(nil, "OVERLAY"); setFont(pMsg, "body", 12); pMsg:SetPoint("TOPLEFT", 14, -110); pMsg:SetWidth(356); pMsg:SetJustifyH("LEFT"); pMsg:SetTextColor(rgb(COL.faint))
-pMsg:SetText("Nothing is typed into the game for you. The card opens as soon as you paste.")
-local pClose = closeButton(paste)
-pClose:SetScript("OnClick", function() paste:Hide() end)
-eb:SetScript("OnEscapePressed", function() paste:Hide() end)
-local PASTE_KEYS = { LCTRL = true, RCTRL = true, LMETA = true, RMETA = true, V = true }
-eb:SetScript("OnKeyDown", function(self, key) if grabbed and not PASTE_KEYS[key] then grabbed = false; self:ClearFocus() end end)
-
--- ---------- the after-pull prompt: "See your recap? Press Ctrl+V", with no paste box to look at ----------
--- (WoW never lets an addon read the clipboard, so a paste is the only way in: the box is still there, just hidden inside this prompt)
-local toast = CreateFrame("Button", "DebriefToast", UIParent)
-toast:SetSize(340, 56); toast:SetPoint("TOP", 0, -160); toast:SetFrameStrata("DIALOG"); toast:SetClampedToScreen(true); toast:Hide()
-skin(toast, 8, COL.bg, 0.97, COL.gold, 0.55, true)
-toast:SetMovable(true); toast:RegisterForDrag("LeftButton")
-toast:SetScript("OnDragStart", function() if not DB.lock then toast:StartMoving() end end)
-toast:SetScript("OnDragStop", function() toast:StopMovingOrSizing(); local p, _, rp, x, y = toast:GetPoint(); DB.toastPos = { p, rp, x, y } end)
-local tLogo = toast:CreateTexture(nil, "ARTWORK"); tLogo:SetSize(22, 22); tLogo:SetPoint("LEFT", 14, 0); tLogo:SetTexture(MEDIA .. "Media\\logo")
-local tTitle = toast:CreateFontString(nil, "OVERLAY"); setFont(tTitle, "head", 17); tTitle:SetPoint("TOPLEFT", 42, -10); tTitle:SetTextColor(rgb(COL.text)); tTitle:SetText("See your recap?")
-local tSub = toast:CreateFontString(nil, "OVERLAY"); setFont(tSub, "body", 12.5); tSub:SetPoint("TOPLEFT", 42, -31); tSub:SetWidth(214); tSub:SetJustifyH("LEFT"); tSub:SetWordWrap(false); tSub:SetTextColor(rgb(COL.muted))
-local tKey = CreateFrame("Frame", nil, toast); tKey:SetSize(62, 26); tKey:SetPoint("RIGHT", -38, 0); skin(tKey, 5, COL.raised, 1, COL.line2, 1)
-tKey.t = tKey:CreateFontString(nil, "OVERLAY"); setFont(tKey.t, "bold", 13); tKey.t:SetPoint("CENTER", 0, 0); tKey.t:SetTextColor(rgb(COL.text)); tKey.t:SetText("Ctrl+V")
-local tClose = closeButton(toast); tClose:ClearAllPoints(); tClose:SetPoint("RIGHT", -8, 0)
-local function toastSay(text, hex) tSub:SetTextColor(rgb(hex or COL.muted)); tSub:SetText(text) end
-local function toastReady(on) rounded(tKey.fillT, "fill", 5, on and COL.gold or COL.raised, 1); rounded(tKey.lineT, "line", 5, on and COL.gold or COL.line2, 1); tKey.t:SetTextColor(rgb(on and "1b1406" or COL.text)) end
--- (the box moves into the prompt, out of sight, or back into the paste window)
-local function boxIn(host)
-  eb:ClearAllPoints()
-  if host == toast then eb:SetParent(toast); eb:SetPoint("TOPLEFT", toast, "TOPLEFT", 0, 0); eb:SetSize(1, 1); eb:SetAlpha(0)
-  else eb:SetParent(ebBg); eb:SetPoint("TOPLEFT", 10, -2); eb:SetPoint("BOTTOMRIGHT", -10, 2); eb:SetAlpha(1) end
-end
-local function closeToast() toast:Hide() end
-toast:SetScript("OnHide", function() eb:ClearFocus(); boxIn(paste) end)
-tinsert(UISpecialFrames, "DebriefToast")
-tClose:SetScript("OnClick", closeToast)
--- (clicking the prompt gets it ready again after you moved or typed)
-toast:SetScript("OnClick", function() eb:SetText(""); eb:SetFocus(); grabbed = false; toastReady(true); toastSay("Press Ctrl+V now.") end)
-eb:SetScript("OnEditFocusLost", function() rounded(ebBg.lineT, "line", 5, COL.line2, 1); if toast:IsShown() then toastReady(false); toastSay("Click here, then Ctrl+V.") end end)
-eb:SetScript("OnEscapePressed", function() paste:Hide(); if toast:IsShown() then closeToast() end end)
 
 -- ---------- the card ----------
 local W, PAD, TOPY = 400, 14, 172
@@ -1325,7 +1267,6 @@ function Debrief_ApplyStyle()
   local cb = DB.colorblind
   FLAG.ok = cb and "4aa3ff" or COL.good; FLAG.bad = cb and "ff9f1a" or COL.bad; FLAG.warn = cb and "f2e35b" or COL.warn
   for _, b in pairs(tabs) do fill(b.u, COL.gold) end
-  rounded(paste.lineT, "line", 8, COL.gold, 0.55); rounded(toast.lineT, "line", 8, COL.gold, 0.55)
   rounded(card.fillT, "fill", 8, COL.bg, DB.cardStyle == "glass" and math.min(DB.alpha or 0.97, 0.8) or (DB.alpha or 0.97))
   if big then rounded(big.fillT, "fill", 8, COL.bg, DB.cardStyle == "glass" and 0.86 or 0.98) end
 end
@@ -1734,98 +1675,6 @@ local function checkNewer(m, mine)
   else say("a newer Debrief (" .. m.addonV .. ") is out. Get it at debriefme.io/companion.") end
 end
 
--- ---------- sharing with the raid: one person pastes, everyone with Debrief gets their card ----------
-local PREFIX = "DebriefR"
-if C_ChatInfo and C_ChatInfo.RegisterAddonMessagePrefix then C_ChatInfo.RegisterAddonMessagePrefix(PREFIX) end
-local function groupChannel()
-  if not IsInGroup() then return nil end
-  return IsInGroup(2) and "INSTANCE_CHAT" or "RAID" -- (as boss mods do: RAID also reaches a party)
-end
-local outQ = {}
-local sender = CreateFrame("Frame"); sender:Hide()
-local wait = 0
-sender:SetScript("OnUpdate", function(self, el)
-  wait = wait - el
-  if wait > 0 then return end
-  local m = outQ[1]
-  if not m then self:Hide(); return end
-  local res = C_ChatInfo.SendAddonMessage(PREFIX, m[1], m[2])
-  -- (about 3 parts a second, under the game's limit. Midnight blocks addon messages during a boss (code 11): those wait
-  -- for the fight to end. Throttled ones (3, 8, 9) wait a second and go again; anything else is dropped.)
-  if type(res) == "number" and res > 0 then
-    if res == 11 then wait = 3
-    elseif res == 3 or res == 8 or res == 9 then m[3] = (m[3] or 0) + 1; wait = 1; if m[3] > 30 then table.remove(outQ, 1) end
-    else table.remove(outQ, 1); wait = 0.34 end
-  elseif res == false then m[3] = (m[3] or 0) + 1; wait = 1.5; if m[3] > 30 then table.remove(outQ, 1) end
-  else table.remove(outQ, 1); wait = 0.34 end
-end)
-local function share(code)
-  if DB.share == false then return end
-  local ch = groupChannel(); if not ch then return end
-  local id, at, n, parts = string.format("%04x", math.random(0, 65535)), 1, 0, {}
-  while at <= #code do
-    local e = math.min(#code, at + 229)
-    -- (never cut a letter like ë in half)
-    while e < #code and e > at do local b = code:byte(e + 1); if b and b >= 128 and b < 192 then e = e - 1 else break end end
-    parts[#parts + 1] = code:sub(at, e); at = e + 1
-  end
-  n = #parts
-  for i, p in ipairs(parts) do outQ[#outQ + 1] = { id .. ":" .. i .. "/" .. n .. ":" .. p, ch } end
-  sender:Show()
-  say("sending this pull to your group (" .. n .. " parts, about " .. math.ceil(n * 0.34) .. " s). Raiders with Debrief get their card by itself.")
-end
-local inbox = {}
-local function receive(code, from)
-  local m = decode(code)
-  if not m then return end
-  checkNewer(m, false)
-  if addPull(m) then
-    say("pull " .. m.h.pull .. " of " .. m.h.boss .. " is in, from " .. from .. ".")
-    if DB.autoShow ~= false then showCard() else say("type /recap to see it.") end
-  end
-end
-local function onAddonMessage(prefix, text, channel, from)
-  if prefix ~= PREFIX or not text then return end
-  local short = from and from:match("^([^%-]+)") or from or "?"
-  if short == UnitName("player") then return end
-  local id, i, n, chunk = text:match("^(%x+):(%d+)/(%d+):(.*)$")
-  if not id then return end
-  i, n = tonumber(i), tonumber(n)
-  local key = (from or "?") .. id
-  local box = inbox[key]
-  if not box then box = { n = n, got = 0, parts = {} }; inbox[key] = box end
-  if not box.parts[i] then box.parts[i] = chunk; box.got = box.got + 1 end
-  if box.got >= box.n then inbox[key] = nil; receive(table.concat(box.parts), short) end
-end
-
--- ---------- import (your own paste) ----------
-local function import(text)
-  local m, err = decode(text)
-  if not m then
-    if toast:IsShown() then toastSay(err:match("^[^%.]+%.") or err, COL.badT) else pMsg:SetTextColor(rgb(COL.badT)); pMsg:SetText(err) end
-    return false
-  end
-  local new, swapped = addPull(m, true)
-  DB.pasted = true
-  checkNewer(m, true)
-  -- (pressed before the PC app had the new pull ready: that's the last one again, so wait for the chime and try again)
-  if not new and not swapped and toast:IsShown() and not DB.testMode then toastSay("That's the last pull. Wait for the chime.", COL.warn); return true end
-  paste:Hide(); if toast:IsShown() then closeToast() end
-  showCard()
-  say("pull " .. m.h.pull .. " of " .. m.h.boss .. " loaded.")
-  -- (someone else already sent this pull to the group: don't send it twice)
-  if new then share(text) end
-  return true
-end
-eb:SetScript("OnTextChanged", function(self, userInput)
-  local t = self:GetText()
-  if grabbed and userInput and t ~= "" and t:sub(1, 1) ~= "D" then grabbed = false; self:SetText(""); self:ClearFocus(); return end
-  if t and #t > 6 and t:find("%^Z%s*$") then
-    if import(t) then self:SetText("") end
-  end
-end)
-eb:SetScript("OnEnterPressed", function(self) local t = self:GetText(); if t ~= "" and import(t) then self:SetText("") end end)
-
 -- ---------- settings: the website's look (tabs with a gold underline, rows with a plain line each, slim controls) ----------
 -- /debrief options, the AddOns button by the minimap, or Options > AddOns > Debrief. Every change saves and shows at once.
 local opt
@@ -1840,7 +1689,7 @@ function Debrief_FitPreview()
 end
 local function applySettings()
   reapplyFonts()
-  card:SetScale(DB.scale or 1); paste:SetScale(DB.scale or 1); big:SetScale(DB.bigScale or 1); mini:SetScale(DB.miniScale or 1)
+  card:SetScale(DB.scale or 1); big:SetScale(DB.bigScale or 1); mini:SetScale(DB.miniScale or 1)
   Debrief_FitPreview()
   Debrief_ApplyStyle()
   if card:IsShown() then render() end
@@ -2220,10 +2069,7 @@ local function buildOptions()
   switch("Progress tonight", "How far each pull got, the closest one marked.", function() return DB.bigChart ~= false end, function(v) DB.bigChart = v end, true)
   pslider("Big window size", nil, 0.7, 1.3, function() return DB.bigScale or 1 end, function(v) DB.bigScale = v end)
   pslider("Mini bar size", nil, 0.7, 1.5, function() return DB.miniScale or 1 end, function(v) DB.miniScale = v end)
-  section("Pasting a recap")
-  switch("Ask \"See your recap?\"", "After each boss pull, when the PC app copies it for you.", function() return DB.autoBox ~= false end, function(v) DB.autoBox = v end, true)
-  switch("Ready for Ctrl+V", "Any other key lets go so you can move.", function() return DB.autoFocus ~= false end, function(v) DB.autoFocus = v end, true)
-  switch("Send my recaps to the raid", "Raiders with Debrief get theirs by itself.", function() return DB.share ~= false end, function(v) DB.share = v end, true)
+  section("Combat log")
   switch("Combat log always on", "With Advanced Combat Logging, whenever Debrief is loaded.", function() return DB.autoLog ~= false end, function(v) DB.autoLog = v end, true)
   section("Saved pulls")
   stepper("Keep my last pulls", "Older pulls drop off as new ones come in.", 10, 100, function() return DB.keep or 30 end, function(v) DB.keep = v end, function(v) return v .. "" end, true, 5)
@@ -2234,7 +2080,7 @@ local function buildOptions()
   section("Help")
   buttons({ { "Tutorial", function() opt:Hide(); Debrief_Tutorial() end, 74 }, { "Sample recap", function() SlashCmdList.DEBRIEF("demo") end, 96 }, { "Test the glow", function() Debrief_TestGlow() end, 96 }, { "Move card back", function() SlashCmdList.DEBRIEF("reset") end, 108 } })
   local HELP = { { "/db", "these settings (/dmo too)" }, { "/recap", "show or hide your recap (/dbr, /debrief too)" }, { "/debrief big", "the big window" }, { "/debrief mini", "the mini bar on or off" },
-    { "/dp", "paste a recap" }, { "/debrief log", "combat logging on or off" }, { "/debrief demo", "a sample recap" } }
+    { "/debrief log", "combat logging on or off" }, { "/debrief demo", "a sample recap" } }
   for _, h in ipairs(HELP) do
     local c = P:CreateFontString(nil, "OVERLAY"); setFont(c, "bold", 12.5); c:SetPoint("TOPLEFT", PX, -(y + 4)); c:SetTextColor(rgb(COL.gold)); c:SetText(h[1])
     local d = P:CreateFontString(nil, "OVERLAY"); setFont(d, "body", 12.5); d:SetPoint("TOPLEFT", PX + 110, -(y + 4)); d:SetTextColor(rgb(COL.soft)); d:SetText(h[2])
@@ -2314,7 +2160,7 @@ do
   local backB = optButton(tut, "Back", 80, false); backB:SetPoint("RIGHT", nextB, "LEFT", -8, 0)
   local STEPS = {
     { "Welcome to Debrief", "Your pull recap, right here in WoW, a few seconds after every boss pull: your numbers, your biggest slips, your boss mistakes and one thing to try next pull." },
-    { "After a boss pull", "If you run Debrief Companion on your PC, this pops up after each boss pull: press Ctrl+V and your recap opens.\nEveryone else does nothing. Your recap opens by itself.", "prompt" },
+    { "After a boss pull", "Debrief Companion on your PC shows your recap over the game the moment the pull ends.\nTo see it in WoW too, type /reload, then /recap." },
     { "Your recap", "Me is your own pull. Raid view shows the raid's biggest mistakes and who died. Use the arrows to look at anyone, and Expand for the big window with the whole night.", "sample" },
     { "Make it yours", "Type /db any time for the settings: Simple, Medium or Heavy, colours and sizes, the mini bar or the big window, and goals.", "settings" },
   }
@@ -2346,52 +2192,23 @@ do
 end
 
 -- ---------- opening it: key, slash command ----------
-grabbed = false
-function Debrief_OpenPaste(noFocus)
-  -- (after a pull: the small prompt, no paste box; /debrief paste and the key still open the full box)
-  if noFocus and DB and DB.prompt ~= false then
-    paste:Hide(); boxIn(toast); eb:SetText("")
-    tTitle:SetText(DB.testMode and "Test mode: see a recap?" or "See your recap?")
-    if DB.toastPos then toast:ClearAllPoints(); toast:SetPoint(DB.toastPos[1], UIParent, DB.toastPos[2], DB.toastPos[3], DB.toastPos[4]) end
-    toast:Show()
-    if DB.autoFocus == false then toastReady(false); toastSay("Click here, then Ctrl+V.")
-    else eb:SetFocus(); grabbed = true; toastReady(true); toastSay("Press Ctrl+V after the chime.") end
-    return
-  end
-  if toast:IsShown() then closeToast() end
-  pMsg:SetTextColor(rgb(COL.faint))
-  if DB and DB.testMode and noFocus then
-    pMsg:SetText("Test mode: click the box, then Ctrl+V. /debrief demo shows a sample. /debrief test turns this off.")
-  else
-    pMsg:SetText(noFocus and "Pull over: press Ctrl+V now. Any other key closes this so you can move." or "Nothing is typed into the game for you. The card opens as soon as you paste.")
-  end
-  eb:SetText(""); paste:Show()
-  -- (after a pull it comes up ready for Ctrl+V; any other key lets go at once, so you can move again)
-  if noFocus and DB and DB.autoFocus == false then eb:ClearFocus() else eb:SetFocus(); grabbed = noFocus and true or false end
-end
 function Debrief_Toggle()
   if big:IsShown() then big:Hide(); return end
   if DB and DB.mini and #DB.pulls > 0 and not card:IsShown() then if mini:IsShown() then mini:Hide() else miniShow() end; return end
   if card:IsShown() then card:Hide() elseif DB and DB.pulls and #DB.pulls > 0 then card:Show(); render()
-  -- (nothing to show: with the PC app's pop-up, say where the recaps are; the paste box only opens with /dp (the user, Oct 22))
-  elseif DEBRIEF_HAS_APP then say("no pulls here yet. After a boss pull, /reload brings it in from Debrief Companion (it also pops up on your PC).")
-  else Debrief_OpenPaste() end
+  -- (nothing to show: say where the recaps come from)
+  else say("no pulls here yet. After a boss pull, /reload brings it in from Debrief Companion (it also pops up on your PC).") end
 end
 BINDING_HEADER_DEBRIEF = "Debrief"
-BINDING_NAME_DEBRIEF_PASTE = "Paste a pull recap"
 BINDING_NAME_DEBRIEF_TOGGLE = "Show or hide the recap card"
 
 -- (/dmo, "Debrief me open": the settings, in three letters)
--- (/dp: the paste box, for a recap you shared from the app's pop-up)
-SLASH_DEBRIEFPASTE1 = "/dp"; SLASH_DEBRIEFPASTE2 = "/dpaste"
-SlashCmdList.DEBRIEFPASTE = function() Debrief_OpenPaste() end
 SLASH_DEBRIEFMO1 = "/db"; SLASH_DEBRIEFMO2 = "/dmo" -- (/db first (the user, Oct 22); /dmo still works)
 SlashCmdList.DEBRIEFMO = function() Debrief_ToggleOptions() end
 SLASH_DEBRIEF1 = "/recap"; SLASH_DEBRIEF2 = "/dbr"; SLASH_DEBRIEF3 = "/debrief" -- (/recap first (the user, Oct 22); /dbr and /debrief still work)
 SlashCmdList.DEBRIEF = function(msg)
   msg = (msg or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
   if msg == "options" or msg == "config" or msg == "settings" or msg == "o" then Debrief_ToggleOptions()
-  elseif msg == "paste" or msg == "p" then Debrief_OpenPaste()
   elseif msg == "tutorial" or msg == "tour" then Debrief_Tutorial()
   elseif msg == "big" or msg == "b" then Debrief_ToggleBig()
   elseif msg == "mini" then DB.mini = not DB.mini; if DB.mini then DB.bigDefault = false end; say("mini bar " .. (DB.mini and "on: one slim line after each pull, click it for the card." or "off: the card after each pull.")); if DB.mini and #DB.pulls > 0 then card:Hide(); miniShow() else mini:Hide() end
@@ -2399,16 +2216,12 @@ SlashCmdList.DEBRIEF = function(msg)
   elseif msg == "reset" then DB.pos = nil; card:ClearAllPoints(); card:SetPoint("CENTER", 260, 60); say("card moved back to the middle.")
   elseif msg == "clear" then DB.pulls = {}; DB.cur = nil; card:Hide(); big:Hide(); mini:Hide(); say("pulls cleared.")
   elseif msg == "demo" then
-    -- (the built-in sample pull: the card with no paste, not sent to the group)
+    -- (the built-in sample pull)
     local m = decode(SAMPLE)
-    if m then addPull(m); paste:Hide(); showCard(); say("showing a sample Mythic Coiled Altar wipe (made-up names). Use the arrows to see other players.") end
+    if m then m.demo = true; addPull(m); showCard(); say("showing a sample Mythic Coiled Altar wipe (made-up names). Use the arrows to see other players.") end
   elseif msg == "log" then Debrief_ToggleLog()
   elseif msg == "glow" then Debrief_TestGlow()
-  elseif msg == "focus" then DB.autoFocus = (DB.autoFocus == false); say("paste box ready for Ctrl+V after a pull " .. (DB.autoFocus ~= false and "on." or "off: click it first."))
-  elseif msg == "test" then DB.testMode = not DB.testMode; say("test mode " .. (DB.testMode and "on: the box pops up after every fight and when you log in." or "off: the box only pops up after boss pulls."))
-  elseif msg == "share" then DB.share = (DB.share == false); say("sharing your pastes with the group " .. (DB.share ~= false and "on." or "off."))
-  elseif msg == "auto" then DB.autoBox = (DB.autoBox == false); say("paste box after each boss pull " .. (DB.autoBox ~= false and "on." or "off."))
-  elseif msg == "help" then say("/db (or /dmo, or /debrief options): your settings. /debrief tutorial: the tutorial again. /debrief: show or hide the card. /debrief big: the big window. /debrief mini: the mini bar on or off. /debrief paste: paste a new pull. /debrief demo: a sample card. /debrief test: test mode on or off. /debrief log: combat logging on or off (or the button on the card, or a key in Keybindings > AddOns > Debrief). /debrief focus: paste box ready for Ctrl+V on or off. /debrief raid: Raid view on or off. /debrief share: send your pastes to the group on or off. /debrief auto: paste box after each pull on or off. /debrief reset: move the card back.")
+  elseif msg == "help" then say("/db (or /dmo, or /debrief options): your settings. /debrief tutorial: the tutorial again. /debrief: show or hide the card. /debrief big: the big window. /debrief mini: the mini bar on or off. /debrief demo: a sample card. /debrief log: combat logging on or off (or the button on the card, or a key in Keybindings > AddOns > Debrief). /debrief raid: Raid view on or off. /debrief reset: move the card back.")
   else Debrief_Toggle() end
 end
 
@@ -2523,7 +2336,7 @@ gev:SetScript("OnEvent", function(_, e, a1, a2, a3)
 end)
 
 local ev = CreateFrame("Frame")
-ev:RegisterEvent("ADDON_LOADED"); ev:RegisterEvent("PLAYER_LOGIN"); ev:RegisterEvent("CHAT_MSG_ADDON"); ev:RegisterEvent("PLAYER_REGEN_ENABLED"); ev:RegisterEvent("PLAYER_REGEN_DISABLED"); ev:RegisterEvent("ENCOUNTER_END"); ev:RegisterEvent("PLAYER_ENTERING_WORLD"); ev:RegisterEvent("ZONE_CHANGED_NEW_AREA"); ev:RegisterEvent("PLAYER_TARGET_CHANGED")
+ev:RegisterEvent("ADDON_LOADED"); ev:RegisterEvent("PLAYER_LOGIN"); ev:RegisterEvent("PLAYER_REGEN_ENABLED"); ev:RegisterEvent("PLAYER_REGEN_DISABLED"); ev:RegisterEvent("PLAYER_ENTERING_WORLD"); ev:RegisterEvent("ZONE_CHANGED_NEW_AREA"); ev:RegisterEvent("PLAYER_TARGET_CHANGED")
 -- (the combat log and Advanced Combat Logging stay on whenever Debrief is loaded, everywhere, so nobody has to type /combatlog.
 -- Debrief Companion reads the log. /debrief log or Settings > PC app turns this off.)
 local weLog, logPending, logSaid = false, false, false
@@ -2547,36 +2360,18 @@ autoLog = function()
     if not logSaid then logSaid = true; say("combat log and Advanced Combat Logging are on. Debrief keeps them on (/debrief log turns this off).") end
   end
 end
--- (test mode: the box also comes up after any fight and when you log in, so the whole thing can be tried on a training dummy)
 -- (a training dummy: any target named "... Dummy" that isn't a player)
-local onDummy = false
 local function isDummy(u) local n = UnitExists and UnitExists(u) and not UnitIsPlayer(u) and UnitName(u); return n and n:find("Dummy") ~= nil end
-local function testBox(delay)
-  if not (DB and DB.testMode and C_Timer) then return end
-  C_Timer.After(delay, function() if not InCombatLockdown() and not paste:IsShown() and not toast:IsShown() then Debrief_OpenPaste(true) end end)
-end
 ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
-  if e == "CHAT_MSG_ADDON" then
-    if DB then onAddonMessage(arg, a2, a3, a4) end
-  elseif e == "PLAYER_REGEN_DISABLED" then
+  if e == "PLAYER_REGEN_DISABLED" then
     Debrief_CombatStart()
-    onDummy = isDummy("target")
-    if toast:IsShown() then toast:Hide() end -- (a new pull: the prompt for the last one goes away)
   elseif e == "PLAYER_REGEN_ENABLED" then
     Debrief_CombatEnd()
     if pendingShow then pendingShow = false; showCard() end
-    testBox(1.5)
-    -- (a training dummy fight: whoever runs Debrief Companion gets the prompt too, a few seconds after the last hit)
-    if onDummy and DB and (DB.pasted or DB.hasApp) and DB.autoBox ~= false and not DB.testMode and not (DEBRIEF_POPUP ~= nil and not DEBRIEF_AUTOCOPY) and C_Timer then
-      onDummy = false
-      C_Timer.After(3, function() if not InCombatLockdown() and not paste:IsShown() and not toast:IsShown() then Debrief_OpenPaste(true) end end)
-    end
     if logPending then logPending = false; autoLog() end
   elseif e == "PLAYER_ENTERING_WORLD" then
-    if arg or a2 then testBox(4) end -- (on login or /reload, not every loading screen)
     if C_Timer then C_Timer.After(2, autoLog) end
   elseif e == "PLAYER_TARGET_CHANGED" then
-    if InCombatLockdown() and isDummy("target") then onDummy = true end
     -- (practising on a dummy: the combat log goes on, so Debrief Companion can read it)
     if isDummy("target") and DB and DB.autoLog ~= false and (DB.hasApp or DB.pasted) and LoggingCombat and not LoggingCombat() then
       if GetCVar and SetCVar and GetCVar("advancedCombatLogging") ~= "1" then SetCVar("advancedCombatLogging", 1) end
@@ -2584,21 +2379,15 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     end
   elseif e == "ZONE_CHANGED_NEW_AREA" then
     if C_Timer then C_Timer.After(2, autoLog) end
-  elseif e == "ENCOUNTER_END" then
-    -- (with the app's recap pop-up on, the PC shows the recap: no prompt here unless the app copies every pull (Oct 22))
-    if DEBRIEF_POPUP ~= nil and not DEBRIEF_AUTOCOPY and not DB.testMode then return end -- (nothing was copied: the app copies only when Copy every pull is on)
-    -- (for whoever runs Debrief Companion: the paste box comes up by itself a few seconds after a boss pull, ready for Ctrl+V.
-    -- Raid bosses only: the app makes no recap for a delve or dungeon boss, so asking there leaves nothing to paste (tester report #6))
-    local itype = GetInstanceInfo and select(2, GetInstanceInfo()); local raidBoss = itype == "raid" or a3 == 14 or a3 == 15 or a3 == 16 or a3 == 17
-    if DB and (DB.pasted or DB.hasApp or DB.testMode) and (raidBoss or DB.testMode) and DB.autoBox ~= false and C_Timer then
-      C_Timer.After(4, function() if not InCombatLockdown() and not paste:IsShown() and not toast:IsShown() then Debrief_OpenPaste(true) end end)
-    end
   elseif e == "ADDON_LOADED" and arg == ADDON then
     DebriefDB = DebriefDB or {}
     DB = DebriefDB
     DB.pulls = DB.pulls or {}
     if UnitName then local me = UnitName("player"); if me and me ~= "" and me ~= UNKNOWNOBJECT then DB.me = me end end -- (your character, so the PC pop-up opens on your card (Oct 24))
     -- (your pulls from Debrief Companion, saved into Pulls.lua as they happen: added here at login or /reload, no pasting (Oct 22))
+    -- (no more sharing (Oct 24): pulls a groupmate's addon sent before are cleared; your own and the sample stay)
+    for i = #DB.pulls, 1, -1 do local q = DB.pulls[i]; if not q.own and not q.demo then table.remove(DB.pulls, i) end end
+    if DB.cur and DB.cur > #DB.pulls then DB.cur = #DB.pulls > 0 and #DB.pulls or nil end
     if type(DEBRIEF_PULLS) == "table" then
       local n0 = #DB.pulls
       for _, c in ipairs(DEBRIEF_PULLS) do local m = decode(c); if m then addPull(m, true) end end
@@ -2606,18 +2395,17 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
       if #DB.pulls > 0 then DB.cur = #DB.pulls end
       DB.fromApp = #DB.pulls - n0
     end
-    if DEBRIEF_HAS_APP then DB.hasApp = true end -- (Debrief Companion is on this PC: ask after every boss pull from the first one)
+    if DEBRIEF_HAS_APP then DB.hasApp = true end -- (Debrief Companion is on this PC)
     if DB.raidAlways == nil then DB.raidAlways = true end
     DB.show = DB.show or {}
     if DB.detailed and DB.width == "large" and not DB.xlOnce then DB.width = "xl" end; DB.xlOnce = true
     if not DB.glanceDefault then DB.glanceDefault = true; DB.detailedDefault = true; if DB.preset == nil or DB.preset == "medium" or DB.preset == "detailed" then Debrief_SetPreset("glance") end end -- (Glance is the default since Oct 22)
     if not DB.detailedDefault then DB.detailedDefault = true; if DB.preset == nil or DB.preset == "medium" then Debrief_SetPreset("detailed") end end -- (the Detailed card is the default since Oct 21)
     registerSettings()
-    reapplyFonts(); card:SetScale(DB.scale or 1); paste:SetScale(DB.scale or 1); big:SetScale(DB.bigScale or 1); mini:SetScale(DB.miniScale or 1)
+    reapplyFonts(); card:SetScale(DB.scale or 1); big:SetScale(DB.bigScale or 1); mini:SetScale(DB.miniScale or 1)
     Debrief_ApplyStyle()
-    if DB.testMode == nil then DB.testMode = false end
     if not DB.diedBack then DB.maxDied = 3; DB.diedBack = true end -- (once: the Who died list is shown again; the filter is Stop at)
-    autoLog() -- (/debrief test turns it on: the box after every fight)
+    autoLog()
     if DB.pos then card:ClearAllPoints(); card:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) end
   elseif e == "PLAYER_LOGIN" then
     Debrief_ApplyStyle()
@@ -2625,13 +2413,14 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     if DB.autoLog ~= false and GetCVar and SetCVar and GetCVar("advancedCombatLogging") ~= "1" then SetCVar("advancedCombatLogging", 1) end
     -- (the first time: the tutorial, a few seconds after you're in the world)
     if not DB.tutorialDone and C_Timer then C_Timer.After(6, function() if not InCombatLockdown() and not DB.tutorialDone then Debrief_Tutorial() end end) end
-    -- (a key to start with: Ctrl+Shift+D opens the paste box, if nothing else uses it; change it in Options > Keybindings > AddOns)
-    if not DB.keySet and not InCombatLockdown() and GetBindingAction and GetBindingAction("CTRL-SHIFT-D") == "" then
-      if SetBinding("CTRL-SHIFT-D", "DEBRIEF_PASTE") then SaveBindings(GetCurrentBindingSet()) end
+    -- (a key to start with: Ctrl+Shift+D shows or hides your recap, if nothing else uses it; it opened the paste box until Oct 24.
+    -- Change it in Options > Keybindings > AddOns)
+    if not InCombatLockdown() and GetBindingAction and SetBinding then
+      local a0 = GetBindingAction("CTRL-SHIFT-D")
+      if a0 == "DEBRIEF_PASTE" or (a0 == "" and not DB.keySet) then if SetBinding("CTRL-SHIFT-D", "DEBRIEF_TOGGLE") then SaveBindings(GetCurrentBindingSet()) end end
       DB.keySet = true
     end
-    if DEBRIEF_POPUP ~= nil and not DEBRIEF_AUTOCOPY then say("ready. Your recap pops up on your PC after each boss pull." .. ((DB.fromApp or 0) > 0 and (" " .. DB.fromApp .. " new pull" .. (DB.fromApp == 1 and "" or "s") .. " from Debrief Companion: /recap.") or " /reload brings your latest pulls in game: /recap."))
-    elseif DB.hasApp or DB.pasted then say("ready. After each boss pull Debrief asks \"See your recap?\": press Ctrl+V." .. (DB.testMode and " Test mode is on: /debrief demo shows a sample card." or ""))
-    else say("ready. Your recap opens by itself after boss pulls when someone in your group runs Debrief Companion. /debrief demo shows a sample.") end
+    if DEBRIEF_HAS_APP or DB.hasApp then say("ready. Your recap pops up on your PC after each boss pull." .. ((DB.fromApp or 0) > 0 and (" " .. DB.fromApp .. " new pull" .. (DB.fromApp == 1 and "" or "s") .. " from Debrief Companion: /recap.") or " /reload brings your latest pulls in game: /recap."))
+    else say("ready. Your recaps come from Debrief Companion on your PC. /debrief demo shows a sample.") end
   end
 end)

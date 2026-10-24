@@ -1,8 +1,5 @@
 <Bindings>
-  <Binding name="DEBRIEF_PASTE" header="DEBRIEF" category="ADDONS">
-    Debrief_OpenPaste()
-  </Binding>
-  <Binding name="DEBRIEF_TOGGLE" category="ADDONS">
+  <Binding name="DEBRIEF_TOGGLE" header="DEBRIEF" category="ADDONS">
     Debrief_Toggle()
   </Binding>
   <Binding name="DEBRIEF_TOGGLELOG" category="ADDONS">

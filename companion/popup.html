@@ -286,7 +286,7 @@ function render() {
   document.body.classList.toggle('isMini', !big);
   if (!big) {
     const r0 = h.kill ? '<em class="k">Kill</em>' : '<em>Wipe' + (h.pct !== '' && h.pct != null ? ' ' + esc(h.pct) + '%' : '') + '</em>';
-    app.innerHTML = '<div class="mini">' + LOGO + '<div class="mt"><div class="m1">Your recap is ready</div><div class="m2">Pull ' + esc(h.pull) + ' · ' + r0 + ' · ' + esc(h.boss) + (D.copiedAlready ? ' · copied: type /dp in WoW, then Ctrl+V' : '') + '</div></div>' +
+    app.innerHTML = '<div class="mini">' + LOGO + '<div class="mt"><div class="m1">Your recap is ready</div><div class="m2">Pull ' + esc(h.pull) + ' · ' + r0 + ' · ' + esc(h.boss) + '' + '</div></div>' +
       '<button class="btn" type="button" data-big="1">See recap ›</button><button class="x" type="button" title="Close (it comes back after the next pull)" data-close="1">✕</button></div>';
     fit(); return;
   }
@@ -312,8 +312,8 @@ function render() {
   app.innerHTML = '<div class="top">' + LOGO + '<b>Debrief</b><span class="bt">' + esc(h.boss) + ' · ' + esc(h.diff) + ' · Pull ' + esc(h.pull) + '</span><span class="pill' + (h.kill ? ' k' : '') + '">' + esc(res) + '</span><button class="x" type="button" title="Close (it comes back after the next pull)" data-close="1">✕</button></div>' +
     nightRow() +
     '<div class="body' + (D.pack && D.pack.html ? ' sitebody' : '') + '">' + body + '</div>' +
-    '<div class="foot">' + (copied ? '<span class="btn done">Copied: in WoW, type /dp, then Ctrl+V</span>' : '') +
-    '<button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">' + (copied ? '' : 'Closes when the next pull starts') + '</span></div>';
+    '<div class="foot">' +
+    '<button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">Closes when the next pull starts · /reload in WoW for /recap</span></div>';
   if (D.pack && D.pack.html) siteBox(document.getElementById('site'), D.pack);
   { const pr1 = document.getElementById('pullsRow'), bd1 = document.querySelector('.body'); if (pr1 && sl0 != null) pr1.scrollLeft = sl0; if (bd1) bd1.scrollTop = st0; }
   fit();
