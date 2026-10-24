@@ -253,7 +253,14 @@ local bigBtn = CreateFrame("Button", nil, card); bigBtn:SetSize(64, 22); bigBtn:
 skin(bigBtn, 5, COL.raised, 1, COL.line2, 1)
 bigBtn.t = bigBtn:CreateFontString(nil, "OVERLAY"); setFont(bigBtn.t, "bold", 11.5); bigBtn.t:SetPoint("CENTER", 0, 0); bigBtn.t:SetTextColor(rgb(COL.muted)); bigBtn.t:SetText("Expand")
 bigBtn:SetWidth(bigBtn.t:GetStringWidth() + 18)
-bigBtn:SetScript("OnClick", function() card:Hide(); big:Show(); bigRender() end)
+-- (Oct 24, the user: "the expand button doesnt do anything": the card's drag strip could sit over it and take the click; the header's
+-- buttons now sit above it, and Expand closes the settings first and brings the big window to the front)
+bigBtn:SetScript("OnClick", function()
+  if DebriefOptions and DebriefOptions:IsShown() then Debrief_ToggleOptions() end
+  card:Hide(); big:Show(); big:Raise()
+  local ok, err = pcall(bigRender); if not ok then say("the big window couldn't open (" .. tostring(err):sub(1, 120) .. "). /debrief big tries again.") end
+end)
+for _, b0 in ipairs({ close, detailBtn, bigBtn }) do if b0 and b0.SetFrameLevel and top.GetFrameLevel then b0:SetFrameLevel(top:GetFrameLevel() + 3) end end
 bigBtn:SetScript("OnEnter", function() bigBtn.t:SetTextColor(rgb(COL.text)); GameTooltip:SetOwner(bigBtn, "ANCHOR_TOP"); GameTooltip:SetText("The big window: tonight's pulls, charts and everything at once"); GameTooltip:Show() end)
 bigBtn:SetScript("OnLeave", function() bigBtn.t:SetTextColor(rgb(COL.muted)); GameTooltip:Hide() end)
 local topLine = card:CreateTexture(nil, "ARTWORK"); topLine:SetPoint("TOPLEFT", 1, -40); topLine:SetPoint("TOPRIGHT", -1, -40); topLine:SetHeight(1); fill(topLine, COL.line)
