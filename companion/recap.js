@@ -636,6 +636,11 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
   let was = null; try { was = W.getCut ? W.getCut() : null; } catch (e) { was = null; }
   // (the pull sits in the site's pulls for the whole build, so every summary reads how far it got: "We wiped at Wipe" otherwise (Oct 22))
   const CA0 = W.CACHE, had0 = !CA0 || CA0.has(b); if (!had0) { if (!rep.item) rep.item = b; CA0.set(b, rep); }
+  // (the previous pull of this boss, lent to the website so "Worse / Better than last pull" can compare (Oct 23))
+  const S0 = W.S, idx0 = S0 ? S0.index : null, lent = [];
+  try { const pv = (same || []).filter((x) => x !== b && x.endByte && x.pull < b.pull).slice(-1);
+    for (const x of pv) { const v = L && L.reps && L.reps.get(x.startByte); if (v && v.rep && CA0 && !CA0.has(x)) { if (!v.rep.item) v.rep.item = x; CA0.set(x, v.rep); lent.push(x); } }
+    if (S0) S0.index = Object.assign({}, idx0 || {}, { bosses: ((idx0 && idx0.bosses) || []).concat(pv, [b]) }); } catch (e) { /* (no comparison then) */ }
   try {
     const m = buildOne(b, rep, same, W2, L, 0), nd = (rep.deaths || []).length;
     // (Debriefing's coach box for the card (the user's ask, Oct 22): at the site's own wipe filter, once, shared by every version)
@@ -643,7 +648,7 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
     if (W.coachGame && b.id !== 990001) {
       const CA = W.CACHE, had = !CA || CA.has(b); /* (the coach reads how far the pull got from the site's pulls: "We wiped at Wipe" without it (Oct 22)) */
       try { if (W.setCut && was != null) W.setCut(was); if (!rep.item) rep.item = b; if (!had) CA.set(b, rep); const raid = W.coachGame(rep, null), you = {}, t0 = Date.now();
-        for (const p of m.players) { if (Date.now() - t0 > 3000) break; try { const c = W.coachSummary ? W.coachSummary([rep], p.name) : null; if (c && c.headline) you[p.name] = [plain(c.headline), plain(c.focus || '')]; } catch (e) { /* (no line for them) */ } }
+        for (const p of m.players) { if (Date.now() - t0 > 3000) break; try { const c = W.coachSummary ? W.coachSummary([rep], p.name) : null; if (c && c.headline) you[p.name] = [plain(c.headline), plain(c.focus || ''), c.trend ? { worse: (c.trend.worse || []).slice(0, 2).map((x) => [plain(x.nm || ''), plain(x.tag || '')]), better: (c.trend.better || []).slice(0, 2).map((x) => [plain(x.nm || ''), plain(x.tag || '')]) } : null]; /* (and your worse/better than last pull (Oct 23)) */ } catch (e) { /* (no line for them) */ } }
         coach = raid ? { raid, you } : null;
         // (the coach box per wipe-filter version, so Stop at changes it too (Oct 22); your own line stays at the site's filter)
         if (coach && !b.kill && nd && W.setCut) for (let n = 0; n <= 1; n++) { try { W.setCut(n ? 2 : 0); const r = W.coachGame(rep, null); if (r) RAIDS[n] = r; } catch (e) { /* (that version keeps the shared one) */ } } /* (all of it, or up to the wipe call (Oct 23)) */
@@ -657,7 +662,7 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
     const WC = wipeOf(W, rep); if (!WC) return m; m.wc = { at: WC.at, txt: WC.txt };
     const x = buildOne(b, rep, same, W2, L, 1); x.coach = coach && RAIDS[1] ? { raid: RAIDS[1], you: coach.you } : coach; m.cuts = [m, x];
     return m;
-  } finally { try { if (W.setCut && was != null) W.setCut(was); } catch (e) { /* fine */ } if (!had0) CA0.delete(b); }
+  } finally { try { if (W.setCut && was != null) W.setCut(was); } catch (e) { /* fine */ } if (!had0) CA0.delete(b); for (const x of lent) CA0.delete(x); if (S0) S0.index = idx0; }
 };
 function buildOne(b, rep, same, W, L, cutN) {
   const T = cutN ? (wipeOf(W, rep) || { t: Infinity }).t : Infinity, t0 = Date.now(); /* (version 1: up to the wipe call (Oct 23)) */

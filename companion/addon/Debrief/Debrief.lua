@@ -111,6 +111,9 @@ local function decode(code)
     -- (Debriefing's coach box, per wipe-filter version)
     elseif t == "CH" then for _, c in ipairs(coaches()) do c.head = g(2) end
     elseif t == "CM" then for _, c in ipairs(coaches()) do c.more = tonumber(g(2)) end -- (smaller mistakes not listed)
+    elseif t == "CRC" then for _, c in ipairs(coaches()) do c.root = { cause = g(2), rest = g(3) } end -- (the raid lead's cards (Oct 23))
+    elseif t == "CTE" then for _, c in ipairs(coaches()) do c.cards = true end
+    elseif t == "CT" then for _, c in ipairs(coaches()) do c.tr = c.tr or { w = {}, x = {}, b = {} }; local L = c.tr[g(2)]; if L then L[#L + 1] = { nm = g(3), tag = g(4), sub = g(5) } end end
     elseif t == "CF" then for _, c in ipairs(coaches()) do c.focus = g(2); c.focusSame = g(3) == "1"; c.kill = g(4) == "1" end
     elseif t == "CW" then for _, c in ipairs(coaches()) do table.insert(c.wrong, { sev = g(2), id = g(3), label = g(4), tag = g(5), what = g(6), fix = g(7), how = g(8), kb = g(9) }) end
     elseif t == "CR" then for _, c in ipairs(coaches()) do table.insert(c.right, { id = g(2), t = g(3) }) end
@@ -120,6 +123,7 @@ local function decode(code)
     elseif t == "CA" then for _, c in ipairs(coaches()) do table.insert(c.avoid, { id = g(2), k = g(3), who = g(4), cls = g(5), n = g(6), bad = g(7) == "1", story = g(8) }) end
     elseif t == "CV" then for _, c in ipairs(coaches()) do c.aline = g(2) end
     elseif t == "PC" and by[g(2)] then by[g(2)].coach = { head = g(3), focus = g(4) } -- (your own coach line and focus)
+    elseif t == "PT" and by[g(2)] then local p = by[g(2)]; p.ctr = p.ctr or { x = {}, b = {} }; local L = p.ctr[g(3)]; if L then L[#L + 1] = { nm = g(4), tag = g(5) } end -- (your worse/better than last pull)
     elseif t == "C" then m.cutN = tonumber(g(2)) -- (the wipe filter: versions 0 to n)
     elseif t == "WC" then m.wc = { at = g(2), txt = g(3) } -- (the wipe call: when and why; then version 1 is up to it (Oct 23))
     elseif t == "RG" then m.grade = { letter = g(2), score = g(3), cats = g(4) } -- (the Report card's grade for the pull)
@@ -503,6 +507,48 @@ local function wipeRow(y, raw, redraw)
   tb:SetScript("OnEnter", function() GameTooltip:SetOwner(tb, "ANCHOR_TOP"); GameTooltip:SetText("The wipe call", 1, 1, 1); GameTooltip:AddLine("When a pull is lost (more dead than any kill survived, the damage check missed, or half the raid dead), nothing after it counts.", 0.8, 0.82, 0.86, true); GameTooltip:Show() end)
   tb:SetScript("OnLeave", function() GameTooltip:Hide() end)
 end
+-- (the raid lead's four cards (Oct 23), like the website: What wiped us, What we did well, Worse than last pull, Better than last pull;
+-- two by two on a wide card, one under the other on a narrow one; an empty card says so)
+local function trendCards(y, c, paint)
+  local tr = c.tr or { w = {}, x = {}, b = {} }
+  local cards = {}
+  if c.root then cards[#cards + 1] = { "WHAT WIPED US", COL.badT, nil, c.root } end
+  cards[#cards + 1] = { "WHAT WE DID WELL", COL.goodT, tr.w, nil, "Nothing stood out yet." }
+  cards[#cards + 1] = { "WORSE THAN LAST PULL", COL.warn, tr.x, nil, "Nothing got worse than last pull." }
+  cards[#cards + 1] = { "BETTER THAN LAST PULL", "5aa9ff", tr.b, nil, "Nothing improved on last pull." }
+  local two = CW >= 520
+  local cw = two and math.floor((CW - 10) / 2) or CW
+  local i, top = 1, y
+  while i <= #cards do
+    local rowH, made = 0, {}
+    for col = 0, two and 1 or 0 do
+      local cd = cards[i + col]
+      if cd then
+        local x0, w, yy, parts = col * (cw + 10), cw, 10, {}
+        local t = FS("bold", 11.5, cd[2]); t:SetText(cd[1]); parts[#parts + 1] = { t, 12, yy }; yy = yy + 18
+        if cd[4] then
+          local a = FS("bold", 13.5, COL.text); a:SetWidth(w - 24); a:SetText(paint(cd[4].cause)); parts[#parts + 1] = { a, 12, yy }; yy = yy + a:GetStringHeight() + 4
+          if (cd[4].rest or "") ~= "" then local b = FS("body", 12.5, COL.muted); b:SetWidth(w - 24); b:SetText(paint(cd[4].rest)); parts[#parts + 1] = { b, 12, yy }; yy = yy + b:GetStringHeight() + 4 end
+        elseif #cd[3] == 0 then
+          local e = FS("body", 12.5, COL.faint); e:SetWidth(w - 24); e:SetText(cd[5]); parts[#parts + 1] = { e, 12, yy }; yy = yy + e:GetStringHeight() + 4
+        else
+          for _, it in ipairs(cd[3]) do
+            local n = FS("bold", 13, COL.text); n:SetWidth(w - 24); n:SetText(paint(it.nm) .. ((it.tag or "") ~= "" and ("  |cff" .. cd[2] .. it.tag .. "|r") or "")); parts[#parts + 1] = { n, 12, yy }; yy = yy + n:GetStringHeight() + 2
+            if (it.sub or "") ~= "" then local s = FS("body", 12, COL.faint); s:SetWidth(w - 24); s:SetText(paint(it.sub)); parts[#parts + 1] = { s, 12, yy }; yy = yy + s:GetStringHeight() + 2 end
+            yy = yy + 4
+          end
+        end
+        made[#made + 1] = { x0, w, parts }; rowH = math.max(rowH, yy + 6)
+      end
+    end
+    for _, m0 in ipairs(made) do
+      local bg = RT("BACKGROUND"); bg:SetPoint("TOPLEFT", body, "TOPLEFT", m0[1], -top); bg:SetSize(m0[2], rowH); rounded(bg, "fill", 6, COL.raised, DB.cardStyle == "glass" and 0.55 or 1)
+      for _, pt in ipairs(m0[3]) do pt[1]:SetPoint("TOPLEFT", body, "TOPLEFT", m0[1] + pt[2], -(top + pt[3])) end
+    end
+    top = top + rowH + 10; i = i + (two and 2 or 1)
+  end
+  return top + 2
+end
 local function nextBox(y, text)
   local t = FS("body", 14, COL.text); t:SetWidth(CW - 32); t:SetText(names(text))
   local l = FS("bold", 11.5, COL.gold); l:SetText("NEXT PULL")
@@ -614,7 +660,7 @@ local function cardGrade(y, gr)
   local c = FS("body", 12.5, COL.soft); c:SetPoint("TOPLEFT", 58, -(y + 25)); c:SetWidth(CW - 70); c:SetWordWrap(false); c:SetText(gr.cats or "")
   return y + h + 8
 end
-local UI = { rowS = rowS, wipeRow = wipeRow, cardCharts = cardCharts, cardGrade = cardGrade, parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, canRaid = canRaid, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded }
+local UI = { rowS = rowS, wipeRow = wipeRow, trendCards = trendCards, cardCharts = cardCharts, cardGrade = cardGrade, parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, canRaid = canRaid, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded }
 function render()
   local raw = DB.pulls[DB.cur]; local m = UI.cutView(raw); CUR = m
   if not m then return end
@@ -907,7 +953,7 @@ function render()
   -- (Debriefing's coach box, the Raid view)
   local function coachBody()
     local c = m.coach
-    local lab = FS("bold", 11.5, COL.gold); lab:SetPoint("TOPLEFT", 2, -y); lab:SetText(c.kill and "THE KILL, COACHED" or "THIS PULL, COACHED"); y = y + 19
+    local lab = FS("bold", 11.5, COL.gold); lab:SetPoint("TOPLEFT", 2, -y); lab:SetText("YOUR RAID LEAD SAYS"); y = y + 19
     local hd = FS("head", 16.5, COL.text); hd:SetPoint("TOPLEFT", 2, -y); hd:SetWidth(CW - 4); hd:SetText(paint(c.head)); y = y + hd:GetStringHeight() + 12
     -- (like the website (Oct 23): the focus that is a card's fix lives on that card, labelled FOCUS NEXT PULL, with no separate box)
     local focI; if false then local fk = c.focus:gsub("%.$", ""); for i, x in ipairs(c.wrong) do if i <= math.max(1, DB.maxRaid or 3) and ((x.fix or ""):gsub("%.$", "")) == fk then focI = i; break end end end
@@ -918,10 +964,14 @@ function render()
       local l = FS("bold", 11.5, COL.gold); l:SetPoint("TOPLEFT", 16, -(y + 11)); l:SetText(c.kill and "FOCUS NEXT WEEK" or "FOCUS NEXT PULL")
       ft:SetPoint("TOPLEFT", 16, -(y + 29)); y = y + hh + 14
     end
+    local cardsOn = c.cards or c.root -- (the website's four cards (Oct 23); older pulls keep the list)
+    if cardsOn then y = UI.trendCards(y, c, paint) end
     if #c.wrong > 0 then
-      local l = FS("bold", 11.5, COL.muted); l:SetPoint("TOPLEFT", 2, -y); l:SetText("WHAT WENT WRONG"); y = y + 20
+      local wOpen = true
+      if cardsOn then local y0 = y; wOpen = fold("cwrong", "EVERY MISTAKE, IN DETAIL", #c.wrong + (c.more or 0)); y = y + 34; if not wOpen then y = y - 2 end
+      else local l = FS("bold", 11.5, COL.muted); l:SetPoint("TOPLEFT", 2, -y); l:SetText("WHAT WENT WRONG"); y = y + 20 end
       local cap = #c.wrong -- (every major mistake, like the website (Oct 23))
-      for i, x in ipairs(c.wrong) do
+      for i, x in ipairs(wOpen and c.wrong or {}) do
         if i > cap then
           local mt = FS("body", 12.5, COL.faint); mt:SetPoint("TOPLEFT", 2, -(y + 1)); mt:SetText((#c.wrong - cap) .. " more in the full coaching on the website."); y = y + 20
           break
@@ -961,10 +1011,10 @@ function render()
         for _, rw in ipairs(rows) do rw[1]:SetPoint("TOPLEFT", tx, -(yy + 2)); rw[2]:SetPoint("TOPLEFT", tx + LW, -yy); yy = yy + math.max(16, rw[2]:GetStringHeight()) + 6 end
         y = y + hh + 8
       end
-      if (c.more or 0) > 0 then local mt = FS("body", 12.5, COL.faint); mt:SetPoint("TOPLEFT", 4, -(y - 2)); mt:SetText("+" .. c.more .. (c.more == 1 and " smaller one" or " smaller ones")); y = y + 18 end
+      if wOpen and (c.more or 0) > 0 then local mt = FS("body", 12.5, COL.faint); mt:SetPoint("TOPLEFT", 4, -(y - 2)); mt:SetText("+" .. c.more .. (c.more == 1 and " smaller one" or " smaller ones")); y = y + 18 end
       y = y + 4
     end
-    for _, x in ipairs((DB.compact or SH.right == false) and {} or c.right) do
+    for _, x in ipairs((DB.compact or SH.right == false or c.cards or c.root) and {} or c.right) do -- (the What we did well card has these when the cards are on)
       local ok = TEX("ARTWORK"); ok:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready"); ok:SetPoint("TOPLEFT", 4, -(y + 2)); ok:SetSize(16, 16)
       local f = FS("body", 13.5, COL.goodT); f:SetPoint("TOPLEFT", 26, -(y + 1)); f:SetWidth(CW - 30); f:SetText(paint(x.t)); y = y + math.max(18, f:GetStringHeight()) + 7
     end
@@ -1013,10 +1063,18 @@ function render()
     local f; if #list > 0 then f = FS("bold", 14, COL.text); f:SetWidth(CW - 34); f:SetText(paint(table.concat(list, "\n"))) end
     local hh = 12 + 17 + t:GetStringHeight() + (f and (12 + 16 + f:GetStringHeight()) or 0) + 12
     box(y, hh, COL.gold, 0.07, COL.gold, 0.5, COL.gold)
-    local l = FS("bold", 11.5, COL.gold); l:SetPoint("TOPLEFT", 16, -(y + 11)); l:SetText("YOUR COACH")
+    local l = FS("bold", 11.5, COL.gold); l:SetPoint("TOPLEFT", 16, -(y + 11)); l:SetText("YOUR RAID LEAD SAYS")
     t:SetPoint("TOPLEFT", 16, -(y + 28))
     if f then local k = FS("bold", 11.5, COL.gold); k:SetPoint("TOPLEFT", 16, -(y + 28 + t:GetStringHeight() + 12)); k:SetText(m.coach and m.coach.kill and "NEXT WEEK" or "NEXT PULL"); f:SetPoint("TOPLEFT", 16, -(y + 28 + t:GetStringHeight() + 28)) end
     y = y + hh + 12; coachDrew = true
+    -- (your worse and better than last pull (Oct 23), like the website's cards for a player)
+    if P.ctr and (#P.ctr.x > 0 or #P.ctr.b > 0) then
+      for _, k in ipairs({ { "x", "Worse than last pull", COL.warn }, { "b", "Better than last pull", "5aa9ff" } }) do
+        if #P.ctr[k[1]] > 0 then local names = {}; for _, it in ipairs(P.ctr[k[1]]) do names[#names + 1] = it.nm .. ((it.tag or "") ~= "" and (" (" .. it.tag:lower() .. ")") or "") end
+          local f = FS("body", 13, COL.soft); f:SetPoint("TOPLEFT", 4, -y); f:SetWidth(CW - 8); f:SetText("|cff" .. k[3] .. k[2] .. ":|r " .. paint(table.concat(names, ", "))); y = y + f:GetStringHeight() + 6 end
+      end
+      y = y + 6
+    end
     return true
   end
   -- (the wipe filter on top of the card (Oct 22): it decides what everything under it counts, the coach box included)
