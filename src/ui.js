@@ -22762,22 +22762,30 @@ function cmpFindP(r, p, ps) {
     if (q) return cmpPair(r, p, r, q, avatar(q, true) + ' <span class="nm" style="color:' + q.color + '">' + esc(q.name) + '</span>' + again + '<small>' + esc(q.specName || '') + (heroQ(q) ? ', ' + esc(heroQ(q)) : '') + ', in this pull</small>', '', null, { ctl: again, sub: 'in this pull' }); }
   if (pk && pk.src === 'rank') { const w = pk.w;
     const vs = cmpIcon('trophy', 'var(--gold)') + ' <span class="nm" style="color:' + p.color + '">' + esc(w.name) + '</span>' + again + '<small>#' + w.rank + ' ' + esc(spn) + ' on this boss' + (w.hero ? ', ' + esc(w.hero) : '') + ', ' + esc(w.server + (w.region ? '-' + w.region : '')) + '</small>';
-    const TF = topFightFor(r, w);
-    if (TF === 'loading') return { vs, body: cmpTfLoad(w) };
-    if (TF.err) return { vs, body: cmpMsg(esc(TF.err)) };
+    const TF = topFightFor(r, w), wait = { name: esc(w.name), rank: '#' + w.rank, ctl: again, sub: esc(w.server + (w.region ? '-' + w.region : '')) };
+    if (TF === 'loading') return { vs, wait, body: cmpTfLoad(w) };
+    if (TF.err) return { vs, wait, body: cmpMsg(esc(TF.err)) };
     return cmpPair(r, p, TF.r, TF.q, vs, '', null, { ctl: again, rank: '#' + w.rank, sub: esc(w.server + (w.region ? '-' + w.region : '')) }); }
   const o = specRanksFor(r, p); if (o && !o.pages && !o.err) specRanksMore(r, o);
   // (Oct 20, "we forgot to do a design revamp on this page": the same face-off header as a comparison, you on the left with your number, an
   // empty "Pick a player" spot on the right, and the search box in the same panel)
+  const hA = cmpHeroOf(r, p);
+  const face = (seg, ctlA) => cmpWaitFace(r, p, seg, ctlA, { mark: '?', name: 'Pick a player', sub: 'Anyone who plays ' + esc(spn) + (hA ? ' with ' + esc(hA) : ''),
+    extra: '<div class="cmp-hsr"><input class="cmp-find cmp-srchq" id="cmpQ" type="search" placeholder="Type a name" value="' + esc(S.cmpQ || '') + '" aria-label="Search for a player" autocomplete="off" spellcheck="false">' +
+      '<div class="cmp-srchl" id="cmpQR">' + cmpFindRes(r, p, ps) + '</div></div>' });
+  return { vs: '<span class="sub">a player you search for</span>', body: '', face };
+}
+// (Oct 23, "this looks different from search for a player": every Compare page opens with the same face-off header, the tabs on top, you on
+// the left with your number. While the other side is loading or missing, its spot shows its name, rank and Change, with … for the number.
+// w: { name, mark ('…' or '?'), rank, ctl, sub, extra (anything under the two sides, like the search box) })
+function cmpWaitFace(r, p, seg, ctlA, w) {
   const k = cmpKind(p), hA = cmpHeroOf(r, p), me = cmpIsMe(p);
-  const face = (seg, ctlA) => '<div class="panel cmp-hps cmp-hpf" style="--artA:' + specArt(p) + ';--artB:' + specArt(p) + '"><div class="cmp-hseg">' + seg + '</div>' +
+  return '<div class="panel cmp-hps cmp-hpf" style="--artA:' + specArt(p) + ';--artB:' + specArt(p) + '"><div class="cmp-hseg">' + seg + '</div>' +
     '<div class="cmp-hpn" style="--c:' + p.color + '">' + (pIcon(p) ? '<img class="cmp-hpi" src="' + whIcon(pIcon(p)) + '" alt="" onerror="this.remove()">' : '') + '<div><span class="cmp-hpt"><span class="cmp-hpw">' + (me ? 'You' : esc(p.name)) + '</span>' + ctlA + '</span>' +
     (hA ? '<span class="cmp-hph">' + esc(hA) + '</span>' : '') + '<b class="cmp-hpv">' + C(cmpRate(r, p, k)) + '</b><span class="sub">' + (k === 'heal' ? 'healing' : 'damage') + ' a second</span></div></div>' +
     '<div class="cmp-hpm"><b>vs</b></div>' +
-    '<div class="cmp-hpn cmp-hpr cmp-hpe" style="--c:var(--gold)"><span class="cmp-hpi cmp-hpx">?</span><div><span class="cmp-hpw">Pick a player</span><span class="sub">Anyone who plays ' + esc(spn) + (hA ? ' with ' + esc(hA) : '') + '</span></div></div>' +
-    '<div class="cmp-hsr"><input class="cmp-find cmp-srchq" id="cmpQ" type="search" placeholder="Type a name" value="' + esc(S.cmpQ || '') + '" aria-label="Search for a player" autocomplete="off" spellcheck="false">' +
-    '<div class="cmp-srchl" id="cmpQR">' + cmpFindRes(r, p, ps) + '</div></div></div>';
-  return { vs: '<span class="sub">a player you search for</span>', body: '', face };
+    '<div class="cmp-hpn cmp-hpr cmp-hpe" style="--c:var(--gold)"><span class="cmp-hpi cmp-hpx">' + (w.mark || '…') + '</span><div><span class="cmp-hpt">' + (w.rank ? '<span class="cmp-hrk">' + w.rank + '</span>' : '') +
+    '<span class="cmp-hpw">' + w.name + '</span>' + (w.ctl || '') + '</span>' + (w.sub ? '<span class="sub">' + w.sub + '</span>' : '') + '</div></div>' + (w.extra || '') + '</div>';
 }
 // The page for two players of the same spec, each read from their own pull (a teammate: this pull for both; a top raider:
 // their own kill), so Search for a player and Top raiders of your spec are set up the exact same way (your call, Oct 19).
@@ -22929,18 +22937,18 @@ function cmpPair(r, p, rB, q, vs, lead, nmO, vb) {
 // The fastest way to see what changed between two tries on a prog night.
 function cmpSelf(r, p) {
   const others = ITEMS.filter((x) => x.kind === 'boss' && x.id === r.item.id && x.diffId === r.item.diffId && x.pull !== r.item.pull);
-  if (!others.length) return { vs: '<span class="sub">no other pull</span>', body: cmpMsg('This is the only pull on this boss here. Open a night with more pulls to compare them.') };
+  if (!others.length) return { vs: '<span class="sub">no other pull</span>', wait: { name: 'No other pull', sub: 'on this boss here' }, body: cmpMsg('This is the only pull on this boss here. Open a night with more pulls to compare them.') };
   const pick = others.find((x) => x.pull === S.cmpSelfP) || (!r.item.kill && others.find((x) => x.kill)) || others.filter((x) => x.pull < r.item.pull).pop() || others[0];
   const opts = '<select class="rot-sel" id="cmpSelfP" aria-label="Change the pull">' + others.map((x) => '<option value="' + x.pull + '"' + (x === pick ? ' selected' : '') + '>Pull ' + x.pull + (x.kill ? ' (kill)' : '') + '</option>').join('') + '</select>';
   const vs = avatar(p, true) + ' <span class="nm" style="color:' + p.color + '">Pull ' + pick.pull + (pick.kill ? ', the kill' : '') + '</span>' + opts;
-  const r2 = CACHE.get(pick);
+  const r2 = CACHE.get(pick), wait = { name: 'Pull ' + pick.pull + (pick.kill ? ' (kill)' : ''), ctl: opts };
   if (!r2) { const lk = 'self:' + ITEMS.indexOf(pick), first = !CMP_LD.has(lk), two = !!pick.wcl && (!first || !INFLIGHT.has(pick)); /* (already being read in the background: no steps to show) */
     const card = cmpLoad(lk, 'Opening pull ' + pick.pull, two ? 'Step 1 of 2: downloading pull ' + pick.pull + '…' : 'Reading pull ' + pick.pull + '…', two ? 0 : null);
     getRep(pick).then(() => { cmpLoadEnd(lk); if (S.tab === 'cmp' && S.cmpMode === 'self') cmp(); }).catch(() => cmpLoadEnd(lk));
     if (first && two) WCL.loadEvents(S.wclCreds, pick, (n) => cmpLoadSet(lk, 'Step 1 of 2: downloading pull ' + pick.pull + ', ' + n.toLocaleString('en-US') + ' events…', 0)).then(() => cmpLoadSet(lk, 'Step 2 of 2: reading pull ' + pick.pull + '…', 0.5), () => {});
-    return { vs, body: card }; }
+    return { vs, wait, body: card }; }
   const q = [...r2.players.values()].find((x) => x.name === p.name);
-  if (!q) return { vs, body: cmpMsg(esc(p.name) + ' isn\'t in pull ' + pick.pull + '.') };
+  if (!q) return { vs, wait, body: cmpMsg(esc(p.name) + ' isn\'t in pull ' + pick.pull + '.') };
   return cmpPair(r, p, r2, q, vs, '', { a: 'Pull ' + r.item.pull + (r.item.kill ? ' (kill)' : ''), b: 'Pull ' + pick.pull + (pick.kill ? ' (kill)' : '') }, { ctl: opts });
 }
 // (2) Top raiders of your spec: one of the 3 best on this boss with your spec and hero tree (of the top 8), their whole kill
@@ -22966,16 +22974,17 @@ function topFightFor(r, w) {
 const cmpTfLoad = (w) => cmpLoad('tf:' + w.code + ':' + w.fight, 'Loading ' + w.name + '\'s kill', 'Step 1 of 3: finding their report…', 0);
 function cmpTop(r, p) {
   const spn = p.specName || 'spec', vs0 = (sub) => cmpIcon('trophy', 'var(--gold)') + ' <span class="nm" style="color:var(--gold)">The top ' + esc(spn) + 's</span><small>' + sub + '</small>';
-  if (r.item.kind !== 'boss' || (!S.wclCreds && !WCL.HOSTED)) return { vs: vs0('on this boss'), body: cmpNeedWcl('The top raiders') };
+  const wait0 = { name: 'The top ' + esc(spn) + 's', sub: 'on this boss' };
+  if (r.item.kind !== 'boss' || (!S.wclCreds && !WCL.HOSTED)) return { vs: vs0('on this boss'), wait: wait0, body: cmpNeedWcl('The top raiders') };
   const k = cmpKind(p), TS = topSpecFor(r, p, k);
-  if (TS == null) return { vs: vs0('on this boss'), body: cmpMsg('There are no rankings for ' + esc(spn) + 's here.') };
-  if (TS === 'loading') return { vs: vs0('loading…'), body: cmpLoad('ts:' + r.item.id + '|' + r.item.diffId + '|' + spn + '|' + k, 'Finding the top ' + spn + 's', 'Looking up the rankings on this boss…', null) };
-  if (!TS.n) return { vs: vs0('on this boss'), body: cmpMsg(TS.err ? 'The rankings didn\'t load just now. Open the tab again in a minute.' : 'There are no ranked ' + esc(spn) + 's on this boss yet.') };
+  if (TS == null) return { vs: vs0('on this boss'), wait: wait0, body: cmpMsg('There are no rankings for ' + esc(spn) + 's here.') };
+  if (TS === 'loading') return { vs: vs0('loading…'), wait: wait0, body: cmpLoad('ts:' + r.item.id + '|' + r.item.diffId + '|' + spn + '|' + k, 'Finding the top ' + spn + 's', 'Looking up the rankings on this boss…', null) };
+  if (!TS.n) return { vs: vs0('on this boss'), wait: wait0, body: cmpMsg(TS.err ? 'The rankings didn\'t load just now. Open the tab again in a minute.' : 'There are no ranked ' + esc(spn) + 's on this boss yet.') };
   // (the 3 best on this player's hero tree, of the top 8, each one's tree read from the spells they cast; with none on it,
   // the 3 best of any tree, and a note saying so)
   const myHero = cmpHeroOf(r, p), all = (TS.per || []).filter((x) => x.who).map((x, i) => ({ ...x, rank: i + 1, hero: cmpHeroBy(p.specName, x.ab.map((t) => t.name)) }));
   const onTree = myHero ? all.filter((x) => x.hero === myHero) : [], treeMiss = !!(all.length && myHero && !onTree.length), pick3 = (onTree.length ? onTree : all).slice(0, 3);
-  if (!pick3.length) return { vs: vs0('on this boss'), body: cmpMsg('The rankings didn\'t load just now. Open the tab again in a minute.') };
+  if (!pick3.length) return { vs: vs0('on this boss'), wait: wait0, body: cmpMsg('The rankings didn\'t load just now. Open the tab again in a minute.') };
   // (Oct 20, "pick names in various ranges of performance, and ... averages of like top 5, top 50, top 200, top 500": the menu adds one player
   // around #50, #200 and #500 (on your hero tree when one is near), and Where you stand puts you next to each average, read from the rankings)
   const RK = specRanksFor(r, p); if (RK) { RK.want = Math.max(RK.want, 6); specRanksMore(r, RK); }
@@ -23016,8 +23025,9 @@ function cmpTop(r, p) {
   const treeNote = treeMiss ? '<div class="panel"><p class="cmp-hnote" style="margin:0">None of the top ' + all.length + ' ' + esc(spn) + 's on this boss play ' + esc(myHero) + ', so these are the best of any hero tree. Some spells only one side has.</p></div>' : '';
   if (avK) return cmpAvgTop(r, p, k, avK, avg(avK), rl, myHero, mine, pick, stand);
   const lead = (fk ? '' : treeNote) + stand, TF = topFightFor(r, w);
-  if (TF === 'loading') return { vs, body: lead + cmpTfLoad(w) };
-  if (TF.err) return { vs, body: lead + cmpMsg(esc(TF.err)) };
+  const wait = { name: esc(w.name), rank: '#' + x.rank, ctl: pick, sub: esc(w.server + (w.region ? '-' + w.region : '')) };
+  if (TF === 'loading') return { vs, wait, body: lead + cmpTfLoad(w) };
+  if (TF.err) return { vs, wait, body: lead + cmpMsg(esc(TF.err)) };
   return cmpPair(r, p, TF.r, TF.q, vs, lead, null, { ctl: pick, rank: '#' + x.rank, sub: esc(w.server + (w.region ? '-' + w.region : '')) });
 }
 // (Oct 20, "the average of the top 100, top 200, and top 500 players ... based on the parses, not the speed of the kill": you against the
@@ -23034,7 +23044,7 @@ function plabFor(w, m, done) {
 function cmpAvgTop(r, p, k, n, A, rl, myHero, mine, pick, lead) {
   const spn = p.specName || 'spec', U = k === 'heal' ? 'healing' : 'damage', nm = 'Top ' + n + ' average', GOLD = '#e6b450';
   const vs = cmpIcon('trophy', 'var(--gold)') + ' <span class="nm" style="color:var(--gold)">' + nm + '</span>' + pick + '<small>' + (A ? A.n + ' ' + esc(spn) + 's, ranked by ' + U + ' a second' : 'loading the rankings…') + '</small>';
-  if (!A) return { vs, body: lead + cmpLoad('rk:' + n, 'Reading the rankings', 'Finding the top ' + n + ' ' + spn + 's…', null) };
+  if (!A) return { vs, wait: { name: nm, ctl: pick }, body: lead + cmpLoad('rk:' + n, 'Reading the rankings', 'Finding the top ' + n + ' ' + spn + 's…', null) };
   const band = rl.filter((y) => y.rank <= n && y.code); band.forEach((y) => { if (y.hero === undefined) y.hero = cmpHeroTal(p.specName, y.tal); });
   const on = myHero ? band.filter((y) => y.hero === myHero) : [], pool = on.length >= 8 ? on : band, N = Math.min(8, pool.length);
   const picks = Array.from({ length: N }, (_, i) => pool[Math.floor((i + 0.5) * pool.length / N)]), m = k === 'heal' ? 'hps' : 'dps', lk = 'avg:' + n + ':' + spn;
@@ -23042,8 +23052,8 @@ function cmpAvgTop(r, p, k, n, A, rl, myHero, mine, pick, lead) {
   const step = () => { const done = got().filter((o) => o && o !== 'loading').length; if (done < N) return cmpLoadSet(lk, 'Read ' + done + ' of ' + N + ' players\' spells…', done / N); cmpLoadEnd(lk); if (S.tab === 'cmp' && S.rep === r) cmp(); };
   picks.forEach((w) => plabFor(w, m, step));
   const g = got(), ok = g.filter((o) => o && o !== 'loading' && !o.err);
-  if (g.some((o) => o === 'loading')) return { vs, body: lead + cmpLoad(lk, 'Reading the ' + nm.toLowerCase(), 'Reading ' + N + ' players\' spells, spread through the top ' + n + '…', 0) };
-  if (!ok.length) return { vs, body: lead + cmpMsg('Their spells didn\'t load just now. Open the tab again in a minute.') };
+  if (g.some((o) => o === 'loading')) return { vs, wait: { name: nm, ctl: pick }, body: lead + cmpLoad(lk, 'Reading the ' + nm.toLowerCase(), 'Reading ' + N + ' players\' spells, spread through the top ' + n + '…', 0) };
+  if (!ok.length) return { vs, wait: { name: nm, ctl: pick }, body: lead + cmpMsg('Their spells didn\'t load just now. Open the tab again in a minute.') };
   // (each spell: its share of each player's total and its casts a minute, averaged over the players read, 0 for one who didn't use it)
   const by = new Map();
   for (const o of ok) { const tot = o.ab.reduce((t, a) => t + (a.total || 0), 0) || 1, min = Math.max(1, o.dur) / 60;
@@ -23179,7 +23189,7 @@ function cmp() {
     : avatar(p, true) + ' <span class="nm" style="color:' + p.color + '">' + esc(p.name) + '</span>' + cmpSel('cmpMe', ps, p, null, 'Change') + '<small>' + esc(p.specName || '') + (cmpHeroOf(r, p) ? ', ' + esc(cmpHeroOf(r, p)) : '') + '</small>';
   const seg = '<div class="seg cmp-seg" id="cmpMode" role="tablist">' + CMP_MODES.map(([k, l]) => '<button type="button" data-m="' + k + '"' + (k === mode ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</div>';
   // (Oct 20, "I like A": once two players are side by side, the face-off is the header: the tabs on top, each name once with its Change)
-  const head = o.face ? o.face(seg, cmpSel('cmpMe', ps, p, null, 'Change')) : '<div class="panel cmp-head">' + seg +
+  const head = o.face ? o.face(seg, cmpSel('cmpMe', ps, p, null, 'Change')) : o.wait ? cmpWaitFace(r, p, seg, cmpSel('cmpMe', ps, p, null, 'Change'), o.wait) : '<div class="panel cmp-head">' + seg +
     '<h3 class="cmp-vh"><span class="cmp-who">' + who + '</span><span class="cmp-vs">vs</span><span class="cmp-who">' + o.vs + '</span></h3></div>';
   const ae = document.activeElement, qAt = ae && ae.id === 'cmpQ' ? ae.selectionStart : null;
   const scrollY0 = window.scrollY;
