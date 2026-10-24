@@ -5812,6 +5812,14 @@ button, .btn, a, summary, .tab, .pull, .my-chip, .rcb-tr, .dbr-fx, .spc-tl, .md-
 .rqc-sec h5 + .rqc-row { border-top: 0; } .rqc-row small { display: block; font-size: 12px; color: var(--muted); } .rqc-row b { font: 700 14px var(--head); text-align: right; }
 .rqc-i { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 800; color: #111; }
 .rqc-i.ok { background: var(--good); } .rqc-i.w { background: var(--warn); } .rqc-i.bad { background: var(--bad); color: #fff; }
+.rqc-row > span:nth-child(2) { display: grid; grid-template-columns: minmax(0, 1fr) 44px; column-gap: 8px; align-items: center; } .rqc-row > span:nth-child(2) > small, .rqc-nm { grid-column: 1 / -1; }
+.rqc-bar { grid-column: 1; height: 6px; border-radius: 4px; background: rgba(255,255,255,.07); margin: 4px 0 2px; } .rqc-bar i { display: block; height: 100%; border-radius: 4px; }
+.rqc-bar i.ok { background: var(--good); } .rqc-bar i.w { background: var(--warn); } .rqc-bar i.bad { background: var(--bad); }
+.rqc-pc { font-style: normal; font: 700 13px var(--head); text-align: right; } .rqc-pc.ok { color: var(--good); } .rqc-pc.w { color: var(--warn); } .rqc-pc.bad { color: var(--bad); }
+.rqc-under { margin: 6px 0 14px; } .rqc-under > .rqc, .rqc-under > .rcw-you { margin: 0 0 10px; text-align: left; }
+.rqc-dd > summary { list-style: none; cursor: pointer; } .rqc-dd > summary::-webkit-details-marker { display: none; } .rqc-dd > summary:hover { background: rgba(255,255,255,.03); border-radius: 6px; }
+.rqc-dv { font-style: normal; color: var(--muted); font-size: 12px; } .rqc-dd[open] .rqc-ar { display: inline-block; transform: rotate(180deg); }
+.rqc-pl { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 4px 0 8px 30px; } .rqc-pl .sub { font-size: 12px; margin-right: 2px; }
 @media (max-width: 760px) { .rqc { padding: 14px; } .rqc-sc { margin-left: 0; text-align: left; } .rqc-grid { grid-template-columns: 1fr; } }
 /* Homework folded into the Report card (Oct 22): the smaller things, folded under Their night */
 .rcw-more { grid-column: 1 / -1; margin-top: -6px; } .rcw-more > summary { cursor: pointer; color: var(--muted); font-size: 14px; }
@@ -15676,6 +15684,7 @@ const PATCH_NOTES = [
     { t: 'The wipe is called for you', d: 'No more "stop at the 2nd death". Debrief now calls the wipe at the moment no raid has ever come back from: more people dead than any kill of that boss survived at that point (battle rezzes counted), the damage check missed, or half the raid dead. Everything before it counts, so the deaths and mistakes that lost the pull are graded. Tested on 760 kills: it never calls a wipe on a pull that was won.' },
     { t: 'A shorter debrief', d: 'Each pull now opens like a raid lead\'s debrief: what went well, what went wrong (click a line for its map and details) and the one thing for next pull. The extra drawers are gone; the timeline, raid cooldowns and burst windows sit in the open below the phases.' },
   ], n: [
+    'Report card: click a raider\'s name and their checklist opens right under it, with a bar on every check. A mistake opens a list of the pulls it happened in, one click to that pull. Externals like Blessing of Sacrifice are now a bonus: they add to your grade when you use them well and never take points away.',
     'Debriefing with a player picked now has the same four cards as the raid view, written for that player: what went wrong for you, what you did well, and what got worse or better than your last pull.',
     'The wipe is called one death sooner: as soon as more people are dead than any kill of that boss survived with (no extra cushion). On The Coiled Altar that is usually 4 deaths instead of 5. Kith\'ix Heroic now gets its own wipe call too.',
     'Tap the Raid DPS, DTPS or HPS tile for bars of where you rank against the kills (top 10%, top 25%, typical, bottom 25%); on All pulls a coloured square shows how each pull ranked. The Deaths and Pulls tiles are down to just the number and the kill estimate.',
@@ -38384,7 +38393,8 @@ function plGrade(r, p, x, credit, rot) {
   if (pr) for (const o of pr.items) fixes.push({ key: 'p|' + o.t, t: capS(o.t), x: 'At the pull. Sort it before the next one.', gain: wt('prep') * o.n, go: 'prep' });
   // (a serious miss of the note's assignments, like an assigned external not given, comes first: it's a job for the raid)
   fixes.sort((a, b) => (b.crit ? 1 : 0) - (a.crit ? 1 : 0) || (b.gain || b.rank || 0) - (a.gain || a.rank || 0));
-  return { r, p, mech: mist, mist, asS, asg: asS, perf: play, play, rot: rs, surv, tool, prep, score, fixes, mistakes: own.length, x, until: card ? card.until : 0, wait: rot ? rot.wait || 0 : 0 };
+  return { r, p, mech: mist, mist, asS, asg: asS, perf: play, play, rot: rs, surv, tool, prep, score, fixes, mistakes: own.length, x, until: card ? card.until : 0, wait: rot ? rot.wait || 0 : 0,
+    ext: card && card.secs && card.secs.kit ? (card.secs.kit.checks || []).filter((c) => c.k === 'ext').map((c) => ({ l: c.label, hit: c.num || 0, ch: c.den || 0 })) : [] }; /* (each external's real chances this pull, for the checklist (Oct 23)) */
 }
 // every player over one pull or several: each grade and fix averaged over their pulls (by time alive), the trend through
 // the night, their best pull. Gear and buffs need their names looked up first.
@@ -38773,7 +38783,9 @@ function rcbTable(c, F) {
   const head = '<div class="rcb-tr rcb-th"><span>#</span><span>Raider</span>' + cols.map(([k, l]) => '<button type="button" data-rcbs="' + k + '"' + (sk === k ? ' class="on"' : '') + '>' + l + (sk === k ? ' ▾' : '') + '</button>').join('') + '<span>Deaths</span></div>';
   const rows = list.map((x, i) => { const p = x.a.p, L = letterOf(x.score), n = (sk === 'score' ? B.rk.score : B.rk[sk]).m.get(x) || i + 1;
     return '<button type="button" class="rcb-tr' + (sel === x ? ' sel' : '') + (me && me.name === p.name ? ' me' : '') + '" data-rcbp="' + esc(p.name) + '"><i class="rcb-rk' + (n <= 3 ? ' r' + n : '') + '">' + n + '</i><span class="rcb-who"><img src="' + whIcon(pIcon(p)) + '" alt="" style="box-shadow:0 0 0 1px ' + p.color + '" onerror="this.style.visibility=\'hidden\'"><span><b class="nm" style="color:' + p.color + '">' + esc(p.name) + '</b><small>' + esc(p.specName || '') + '</small></span></span>' +
-      '<span class="rcb-g">' + gradeChip(L) + Math.round(x.score) + '</span>' + RCB_SUBJ.map(([k]) => '<span>' + rcbV(x[k]) + '</span>').join('') + '<span class="rcb-d">' + (x.deaths ? x.deaths : '<em>none</em>') + '</span></button>'; }).join('');
+      '<span class="rcb-g">' + gradeChip(L) + Math.round(x.score) + '</span>' + RCB_SUBJ.map(([k]) => '<span>' + rcbV(x[k]) + '</span>').join('') + '<span class="rcb-d">' + (x.deaths ? x.deaths : '<em>none</em>') + '</span></button>' +
+      /* (the picked raider's checklist and their night open right under their row (Oct 23, your ask: "show under the name, not at the top")) */
+      (sel === x && S.rqcOpen !== null ? '<div class="rqc-under">' + rqcCard(c, F) + rcwRaider(c, F) + '</div>' : ''); }).join('');
   return '<section class="panel rcb-sec rcb-tbl"><div class="rcb-sh"><h3>Ranked roster</h3>' + rcbI('Ranked by ' + (sk === 'score' ? 'grade' : RCB_SUBJ.find(([k]) => k === sk)[1].toLowerCase()) + '. Click a column to rank by it, or a raider for their report card.') + roles + '</div>' + head + rows + '</section>'; }
 // (the raider on the card: the one you picked, else you, else the top of the raid)
 function rcbSel(c, F) { const B = rcbFacts(c, F), me = meOf(); return B.rows.find((x) => x.a.p.name === S.rcbSel) || (me && B.rows.find((x) => x.a.p.name === me.name)) || B.rows.slice().sort((u, v) => v.score - u.score)[0]; }
@@ -39012,43 +39024,54 @@ const RQC_SEC = [['prep', 'Ready to raid'], ['mech', 'Mechanics'], ['alive', 'St
 function rqcOf(c, F, a) {
   F._rqc = F._rqc || new Map(); if (F._rqc.has(a)) return F._rqc.get(a);
   const p = a.p, nm = p.name, n = a.n, role = p.role || 'dps', pf = F.pl.get(nm) || {}, rows = { prep: [], mech: [], alive: [], kit: [], perf: [] };
-  const add = (sec, s, l, rule, v, tt) => rows[sec].push({ s, l, rule, v, tt: tt || '' });
+  const add = (sec, s, l, rule, v, tt) => { const o = { s, l, rule, v, tt: tt || '' }; rows[sec].push(o); return o; }; /* (o.f: the share done right, drawn as a bar) */
   // ready to raid: each buff at every pull, and the gear at the last pull
   const xs = a.per.map((g) => g.x).filter(Boolean), cnt = (f) => xs.filter(f).length, pull = (k, of) => (k === of ? 'ok' : of - k <= Math.max(1, Math.floor(of / 10)) ? 'w' : 'bad');
-  if (xs.length) { for (const [l, f] of [['Flask', (x) => x.flask], ['Food', (x) => x.food], ['Weapon oil or stone', (x) => x.temp], ['Augment rune', (x) => x.rune]]) { const k = cnt(f); add('prep', pull(k, xs.length), l, 'every pull', k + ' of ' + xs.length); }
+  if (xs.length) { for (const [l, f] of [['Flask', (x) => x.flask], ['Food', (x) => x.food], ['Weapon oil or stone', (x) => x.temp], ['Augment rune', (x) => x.rune]]) { const k = cnt(f); add('prep', pull(k, xs.length), l, 'every pull', k + ' of ' + xs.length).f = k / xs.length; }
     const x = xs[xs.length - 1], en = [...(x.ench ? x.ench.values() : [])], miss = en.filter((e) => !e).length, low = en.filter((e) => e && e.rank === 1).length;
-    if (en.length) add('prep', miss ? 'bad' : low ? 'w' : 'ok', 'Enchants', 'every slot, top rank', (en.length - miss) + ' of ' + en.length + (low ? ' (' + low + ' rank 1)' : ''));
+    if (en.length) add('prep', miss ? 'bad' : low ? 'w' : 'ok', 'Enchants', 'every slot, top rank', (en.length - miss) + ' of ' + en.length + (low ? ' (' + low + ' rank 1)' : '')).f = (en.length - miss) / en.length;
     add('prep', x.emptySockets ? 'bad' : 'ok', 'Gems', 'every socket filled', x.emptySockets ? plural(x.emptySockets, 'empty socket') : 'all');
     if (x.ilvl) add('prep', x.lowIlvl ? 'w' : 'ok', 'Item level', 'no more than 5 under the raid', Math.round(x.ilvl) + (x.raidIlvl ? ' (raid ' + Math.round(x.raidIlvl) + ')' : '')); }
   // mechanics: every mechanic the raid made mistakes on tonight, and how many pulls this raider got it wrong in
   const mm = new Map(); for (const g of a.per) for (const m of keptMistakes(g.r)) if (m.player === nm && m.mechanic !== 'Death') { const s = mm.get(m.mechanic) || new Set(); s.add(g.r.item.pull); mm.set(m.mechanic, s); }
   const names = [...new Set((Array.isArray(F.mech) ? F.mech.map((m) => m.n) : [...F.mech.keys()]).filter(Boolean).concat([...mm.keys()]))];
-  for (const k of names) { const s = mm.get(k), q = s ? s.size : 0; add('mech', !q ? 'ok' : q === 1 ? 'w' : 'bad', k, 'no mistakes', !q ? 'clean' : 'wrong in ' + plural(q, 'pull'), s ? 'Pulls ' + [...s].join(', ') : ''); }
+  for (const k of names) { const s = mm.get(k), q = s ? s.size : 0; add('mech', !q ? 'ok' : q === 1 ? 'w' : 'bad', k, 'no mistakes', !q ? 'clean' : '').f = n ? (n - q) / n : 1; if (s) rows.mech[rows.mech.length - 1].pulls = [...s].sort((u, v) => u - v); }
   // staying alive: the site's one death rule, then what they had ready, close calls and (tanks) big defensives
   const DO = deathsOf(a.per.map((g) => g.r), nm), on = DO.on.length; let defR = 0, kitR = 0, silent = 0, cdU = 0, cdP = 0;
   for (const g of a.per) { try { const sv = survivalOf(g.r, g.p); defR += sv.defReady || 0; kitR += sv.kitReady || 0; silent += sv.silent || 0; cdU += sv.cdUsed || 0; cdP += sv.cdPoss || 0; } catch (e) { /* (not graded) */ } }
-  add('alive', !on ? 'ok' : on <= Math.max(2, Math.floor(n / 8)) ? 'w' : 'bad', 'Deaths on you', 'none (too fast, mass deaths and the wipe don\'t count)', on + ' of ' + plural(DO.n, 'death'));
-  add('alive', !defR ? 'ok' : defR === 1 ? 'w' : 'bad', 'Defensive before dying', 'never die with one ready', defR ? plural(defR, 'time') : 'never');
-  add('alive', !kitR ? 'ok' : kitR === 1 ? 'w' : 'bad', 'Healthstone or health potion', 'used when you sat low', kitR ? plural(kitR, 'death') + ' with one unused' : 'yes');
-  add('alive', !silent ? 'ok' : silent <= 2 ? 'w' : 'bad', 'Close calls answered', 'press something when you sit low', silent ? plural(silent, 'time') + ' nothing pressed' : 'all');
-  if (role === 'tank' && cdP) { const f = cdU / cdP; add('alive', f >= 0.65 ? 'ok' : f >= 0.4 ? 'w' : 'bad', 'Big defensives', 'used 65% of the times you could', cdU + ' of ' + cdP); }
+  // (the rule under each line is the goal, and the number beside it is what happened, from the same count as the flag (Oct 23: "why the exclamation point?"))
+  const onN = {}; for (const y of DO.on) onN[y.pull] = (onN[y.pull] ? onN[y.pull] + ', ' : '') + (y.d.ability || 'a hit'); const onP = [...new Set(DO.on.map((y) => y.pull))].sort((u, v) => u - v);
+  add('alive', !on ? 'ok' : on <= Math.max(2, Math.floor(n / 8)) ? 'w' : 'bad', 'Deaths on you', 'no deaths on you (too fast, mass deaths and the wipe don\'t count)', on ? on + ' of ' + DO.n : '0 of ' + plural(DO.n, 'death')).f = n ? (n - onP.length) / n : 1; if (onP.length) Object.assign(rows.alive[rows.alive.length - 1], { pulls: onP, pn: onN }); /* (what killed them shows on each pull button) */
+  add('alive', !defR ? 'ok' : defR === 1 ? 'w' : 'bad', 'Defensive before dying', 'never die with a defensive still ready', defR ? plural(defR, 'death') + ' with one ready' : 'none');
+  add('alive', !kitR ? 'ok' : kitR === 1 ? 'w' : 'bad', 'Healthstone or health potion', 'use one when you sit low', kitR ? plural(kitR, 'death') + ' with one unused' : 'none missed');
+  add('alive', !silent ? 'ok' : silent <= 2 ? 'w' : 'bad', 'Close calls answered', 'press something when you sit low', silent ? silent + ' with nothing pressed' : 'all answered');
+  if (role === 'tank' && cdP) { const f = cdU / cdP; add('alive', f >= 0.65 ? 'ok' : f >= 0.4 ? 'w' : 'bad', 'Big defensives', 'used 65% of the times you could', cdU + ' of ' + cdP).f = f; }
   // your toolkit: potions, and an external for the deaths that could be seen coming
-  if (pf.expect) add('kit', pf.used >= pf.expect ? 'ok' : pf.used / pf.expect >= 0.7 ? 'w' : 'bad', role === 'healer' ? 'Combat or mana potion' : 'Combat potion', 'every pull with room for one', pf.used + ' of ' + pf.expect);
-  for (const [ext] of RC_EXT[p.specId] || []) { const k = a.per.filter((g) => (g.fixes || []).some((f) => /^(c\|)?ext\|/.test(f.key || '') && String(f.t).includes(ext))).length; add('kit', !k ? 'ok' : k === 1 ? 'w' : 'bad', ext, 'used when someone was dying slowly', k ? 'missed in ' + plural(k, 'pull') : 'yes'); }
+  if (pf.expect) add('kit', pf.used >= pf.expect ? 'ok' : pf.used / pf.expect >= 0.7 ? 'w' : 'bad', role === 'healer' ? 'Combat or mana potion' : 'Combat potion', 'every pull with room for one', pf.used + ' of ' + pf.expect).f = Math.min(1, pf.used / pf.expect);
+  // (externals as a share of the real chances (Oct 23, "still being scored too heavily"): a chance is a slow death it could have stopped
+  // while it was ready, or a save it made. Green when it missed under a quarter of them or there were 2 or fewer; red only when it missed
+  // half or more (the three flags). A bonus check: it counts toward the grade only when passed)
+  for (const [ext] of RC_EXT[p.specId] || []) { let hit = 0, ch = 0; for (const g of a.per) for (const e of g.ext || []) if (e.l === ext) { hit += e.hit || 0; ch += e.ch || 0; }
+    const miss = Math.max(0, ch - hit), s = !miss || ch <= 2 || miss / ch < 0.25 ? 'ok' : miss / ch < 0.5 ? 'w' : 'bad';
+    add('kit', s, ext, 'use it on someone dying slowly while it\'s ready (a bonus: it only counts when you pass)', !ch ? 'not needed' : 'used ' + hit + ' of ' + ch); const xr = rows.kit[rows.kit.length - 1]; xr.bonus = true; xr.f = ch ? hit / ch : 1; }
   // performance: damage or healing against your own role, Rotation, and your big cooldowns
   const mates = c.data.filter((b) => (b.p.role || 'dps') === role && F.pl.get(b.p.name) && F.pl.get(b.p.name).out != null).sort((u, v) => F.pl.get(v.p.name).out - F.pl.get(u.p.name).out);
   if (pf.out != null && mates.length) { const best = F.pl.get(mates[0].p.name).out, sh = best ? 100 * pf.out / best : 100, r = mates.indexOf(a) + 1, RN = { tank: 'tanks', healer: 'healers', dps: 'damage dealers' }[role];
-    add('perf', sh >= 85 ? 'ok' : sh >= 70 ? 'w' : 'bad', role === 'healer' ? 'Healing' : 'Damage', '85% of the best ' + RN.replace(/s$/, '') + ' tonight', '#' + r + ' of ' + mates.length + ' ' + RN + ' · ' + Math.round(sh) + '%'); }
-  const rot = a.rot != null ? a.rot : a.play; if (rot != null) add('perf', rot >= 80 ? 'ok' : rot >= 65 ? 'w' : 'bad', 'Rotation', '80 or more on the Rotation tab', String(Math.round(rot)));
-  { const k = a.per.filter((g) => (g.fixes || []).some((f) => /^(c\|)?cd\|/.test(f.key || ''))).length; add('perf', !k ? 'ok' : k < n / 2 ? 'w' : 'bad', 'Big cooldowns', 'pressed when they\'re back', k ? 'late in ' + k + ' of ' + plural(n, 'pull') : 'every pull'); }
-  const all = RQC_SEC.flatMap(([k]) => rows[k]), ok = all.filter((x) => x.s === 'ok').length, w = all.filter((x) => x.s === 'w').length;
+    add('perf', sh >= 85 ? 'ok' : sh >= 70 ? 'w' : 'bad', role === 'healer' ? 'Healing' : 'Damage', '85% of the best ' + RN.replace(/s$/, '') + ' tonight', '#' + r + ' of ' + mates.length + ' ' + RN + ' · ' + Math.round(sh) + '%').f = Math.min(1, sh / 100); }
+  const rot = a.rot != null ? a.rot : a.play; if (rot != null) add('perf', rot >= 80 ? 'ok' : rot >= 65 ? 'w' : 'bad', 'Rotation', '80 or more on the Rotation tab', String(Math.round(rot))).f = Math.min(1, rot / 100);
+  { const k = a.per.filter((g) => (g.fixes || []).some((f) => /^(c\|)?cd\|/.test(f.key || ''))).length; add('perf', !k ? 'ok' : k < n / 2 ? 'w' : 'bad', 'Big cooldowns', 'pressed when they\'re back', k ? 'late in ' + k + ' of ' + plural(n, 'pull') : 'every pull').f = n ? (n - k) / n : 1; }
+  // (a bonus check (externals, Oct 23: "still being scored too heavily") only counts when passed: it can lift a grade, never sink it)
+  const all = RQC_SEC.flatMap(([k]) => rows[k]).filter((x) => !x.bonus || x.s === 'ok'), ok = all.filter((x) => x.s === 'ok').length, w = all.filter((x) => x.s === 'w').length;
   const o = { rows, ok, w, total: all.length, pct: all.length ? 100 * (ok + 0.5 * w) / all.length : null };
   F._rqc.set(a, o); return o; }
 // the picked raider's checklist, under the raid's report card
 function rqcCard(c, F) {
   const x = rcbSel(c, F); if (!x) return ''; const a = x.a, p = a.p, o = rqcOf(c, F, a), B = rcbFacts(c, F), rkR = B.rkRole[x.role], RN = { tank: 'tanks', healer: 'healers', dps: 'damage dealers' };
-  const ic = { ok: '✓', w: '!', bad: '✕' }, row = (y) => '<div class="rqc-row"' + (y.tt ? ' data-tt="' + esc(y.tt) + '"' : '') + '><span class="rqc-i ' + y.s + '" aria-label="' + ({ ok: 'passed', w: 'slipped', bad: 'failed' }[y.s]) + '">' + ic[y.s] + '</span><span>' + esc(y.l) + '<small>' + esc(y.rule) + '</small></span><b>' + esc(y.v) + '</b></div>';
-  const sec = ([k, t]) => { const l = o.rows[k]; if (!l.length) return ''; return '<div class="rqc-sec"><h5><span>' + t + '</span><span>' + l.filter((y) => y.s === 'ok').length + ' of ' + l.length + '</span></h5>' + l.map(row).join('') + '</div>'; };
+  const ic = { ok: '✓', w: '!', bad: '✕' }, inner = (y, dd) => '<span class="rqc-i ' + y.s + '" aria-label="' + ({ ok: 'passed', w: 'slipped', bad: 'failed' }[y.s]) + '">' + ic[y.s] + '</span><span><span class="rqc-nm">' + esc(y.l) + '</span>' + (y.f != null ? '<span class="rqc-bar"><i class="' + y.s + '" style="width:' + Math.max(2, Math.round(100 * y.f)) + '%"></i></span><em class="rqc-pc ' + y.s + '">' + Math.round(100 * y.f) + '%</em>' : '') + '<small>Goal: ' + esc(y.rule) + '</small></span><b>' + esc(y.v) + (dd ? (y.v ? ' ' : '') + '<i class="rqc-dv">' + (y.v ? '' : 'See pulls ') + '<span class="rqc-ar">▾</span></i>' : '') + '</b>';
+  // (a line with mistakes opens to the pulls they happened in; a pull opens on Debriefing with this raider picked (Oct 23, your idea))
+  const row = (y) => (y.pulls && y.pulls.length && y.s !== 'ok' ? '<details class="rqc-dd"><summary class="rqc-row">' + inner(y, true) + '</summary><div class="rqc-pl"><span class="sub">Open the pull:</span>' + y.pulls.map((n) => '<button type="button" class="btn sm" data-rqcpull="' + n + '" data-rqcp="' + esc(p.name) + '">Pull ' + n + (y.pn && y.pn[n] ? ' · ' + esc(y.pn[n]) : '') + ' ›</button>').join('') + '</div></details>'
+    : '<div class="rqc-row"' + (y.tt ? ' data-tt="' + esc(y.tt) + '"' : '') + '>' + inner(y) + '</div>');
+  const sec = ([k, t]) => { const l = o.rows[k]; if (!l.length) return ''; return '<div class="rqc-sec"><h5><span>' + t + '</span><span>' + l.filter((y) => y.s === 'ok').length + ' of ' + l.filter((y) => !y.bonus || y.s === 'ok').length + '</span></h5>' /* (a missed bonus isn't counted, same as the grade) */ + l.map(row).join('') + '</div>'; };
   return '<section class="rqc" style="--cc:' + p.color + '"><div class="rqc-hd"><img src="' + whIcon(pIcon(p)) + '" alt="" style="box-shadow:0 0 0 2px ' + p.color + '" onerror="this.style.visibility=\'hidden\'"><div><div class="rcb-k">Checklist</div><b class="nm" style="color:' + p.color + '">' + esc(p.name) + '</b><div class="sub">' + esc(p.specName || '') + ' · ' + plural(a.n, 'pull') + ' · #' + B.rk.score.m.get(x) + ' of ' + B.rk.score.n + (rkR ? ' · #' + rkR.m.get(x) + ' of ' + rkR.n + ' ' + RN[x.role] : '') + '</div>' +
     '<div class="rqc-btns">' + (a.last && a.last.x ? '<button type="button" class="btn sm" data-rqcgear="' + esc(p.name) + '">Gear and stats</button>' : '') + '<button type="button" class="btn sm" data-rctp="' + esc(p.name) + '">Every pull ›</button></div></div>' +
     '<div class="rqc-sc">' + gradeChip(letterOf(o.pct)) + '<b>' + o.ok + ' of ' + o.total + '</b><span>checks passed' + (o.w ? ' · ' + o.w + ' slipped (count half)' : '') + '</span></div></div>' +
@@ -39057,7 +39080,7 @@ function rcnPage(c) {
   const F = rcnFacts(c), open = S.rctOpen && c.data.find((a) => a.p.name === S.rctOpen);
   const ovl = open ? '<div class="rct-ovl" data-rctx="1"><div class="panel rct-ovp" role="dialog" aria-label="' + esc(open.p.name) + '\'s night"><button type="button" class="rct-x" data-rctx="1" aria-label="Close">×</button>' + rcnPlayer(c, F, open, true) + '</div></div>' : '';
   // (mockup B (your pick, Oct 19): the night, the raid's report card, then the ranked roster with the picked raider's report card beside it)
-  return '<div class="rcn rct rcb">' + rcbBanner(c, F) /* (the coach box came off Oct 22: Debriefing coaches the night and each raider (your call)) */ + rcwNight(c, F) + rcbRaid(c, F) + rqcCard(c, F) /* (the checklist (Oct 23)) */ + rcwRaider(c, F) + '<div class="rcb-2">' + rcbTable(c, F) + rcbSide(c, F) + '</div>' + ovl + '</div>';
+  return '<div class="rcn rct rcb">' + rcbBanner(c, F) /* (the coach box came off Oct 22: Debriefing coaches the night and each raider (your call)) */ + rcwNight(c, F) + rcbRaid(c, F) /* (the checklist and Their night open under the picked raider's row in the roster (Oct 23)) */ + '<div class="rcb-2">' + rcbTable(c, F) + rcbSide(c, F) + '</div>' + ovl + '</div>';
 }
 function bindRcn(c) {
   const v = $('#plBody'), again = () => { const y = window.scrollY; player(); window.scrollTo({ top: y }); }; // (redrawn in place: the page stays where it was)
@@ -39065,8 +39088,10 @@ function bindRcn(c) {
   v.querySelectorAll('[data-rctx]').forEach((b) => (b.onclick = (e) => { if (e.target !== b) return; S.rctOpen = null; S.rcnGear = null; again(); }));
   v.querySelectorAll('[data-rcnr]').forEach((b) => (b.onclick = () => { S.rcnRole = b.dataset.rcnr; again(); }));
   v.querySelectorAll('[data-rcbs]').forEach((b) => (b.onclick = () => { S.rcbSort = b.dataset.rcbs; again(); }));
-  v.querySelectorAll('[data-rcbp]').forEach((b) => (b.onclick = () => { setOneP(b.dataset.rcbp); again(); }));
+  v.querySelectorAll('[data-rcbp]').forEach((b) => (b.onclick = () => { const n = b.dataset.rcbp, open = b.classList.contains('sel') && S.rqcOpen !== null; S.rqcOpen = open ? null : n; setOneP(n); again(); })); /* (a second tap on the open row closes it) */
   v.querySelectorAll('[data-rqcgear]').forEach((b) => (b.onclick = () => { S.rctOpen = b.dataset.rqcgear; S.rcnGear = b.dataset.rqcgear; again(); }));
+  // (a pull from a checklist line opens that pull on Debriefing with the raider picked (Oct 23))
+  v.querySelectorAll('[data-rqcpull]').forEach((b) => (b.onclick = () => { const it0 = S.rep && S.rep.item, it = it0 && ITEMS.find((x) => x.kind === 'boss' && x.id === it0.id && x.diffId === it0.diffId && x.pull === +b.dataset.rqcpull); if (!it) return; setOneP(b.dataset.rqcp); S.tab = 'audit'; setScope('pull'); select(it); window.scrollTo(0, 0); }));
   v.querySelectorAll('[data-rcngear]').forEach((b) => (b.onclick = () => { S.rcnGear = S.rcnGear === b.dataset.rcngear ? null : b.dataset.rcngear; again(); }));
   v.querySelectorAll('.rcco-more').forEach((d) => d.addEventListener('toggle', () => { S.rccoOpen = d.open; })); // (the full coaching stays open when the page redraws)
   // (Escape closes an open card)

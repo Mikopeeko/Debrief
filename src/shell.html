@@ -5812,6 +5812,14 @@ button, .btn, a, summary, .tab, .pull, .my-chip, .rcb-tr, .dbr-fx, .spc-tl, .md-
 .rqc-sec h5 + .rqc-row { border-top: 0; } .rqc-row small { display: block; font-size: 12px; color: var(--muted); } .rqc-row b { font: 700 14px var(--head); text-align: right; }
 .rqc-i { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 800; color: #111; }
 .rqc-i.ok { background: var(--good); } .rqc-i.w { background: var(--warn); } .rqc-i.bad { background: var(--bad); color: #fff; }
+.rqc-row > span:nth-child(2) { display: grid; grid-template-columns: minmax(0, 1fr) 44px; column-gap: 8px; align-items: center; } .rqc-row > span:nth-child(2) > small, .rqc-nm { grid-column: 1 / -1; }
+.rqc-bar { grid-column: 1; height: 6px; border-radius: 4px; background: rgba(255,255,255,.07); margin: 4px 0 2px; } .rqc-bar i { display: block; height: 100%; border-radius: 4px; }
+.rqc-bar i.ok { background: var(--good); } .rqc-bar i.w { background: var(--warn); } .rqc-bar i.bad { background: var(--bad); }
+.rqc-pc { font-style: normal; font: 700 13px var(--head); text-align: right; } .rqc-pc.ok { color: var(--good); } .rqc-pc.w { color: var(--warn); } .rqc-pc.bad { color: var(--bad); }
+.rqc-under { margin: 6px 0 14px; } .rqc-under > .rqc, .rqc-under > .rcw-you { margin: 0 0 10px; text-align: left; }
+.rqc-dd > summary { list-style: none; cursor: pointer; } .rqc-dd > summary::-webkit-details-marker { display: none; } .rqc-dd > summary:hover { background: rgba(255,255,255,.03); border-radius: 6px; }
+.rqc-dv { font-style: normal; color: var(--muted); font-size: 12px; } .rqc-dd[open] .rqc-ar { display: inline-block; transform: rotate(180deg); }
+.rqc-pl { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 4px 0 8px 30px; } .rqc-pl .sub { font-size: 12px; margin-right: 2px; }
 @media (max-width: 760px) { .rqc { padding: 14px; } .rqc-sc { margin-left: 0; text-align: left; } .rqc-grid { grid-template-columns: 1fr; } }
 /* Homework folded into the Report card (Oct 22): the smaller things, folded under Their night */
 .rcw-more { grid-column: 1 / -1; margin-top: -6px; } .rcw-more > summary { cursor: pointer; color: var(--muted); font-size: 14px; }
