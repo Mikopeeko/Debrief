@@ -519,7 +519,7 @@ function* translateSteps(item, events) {
     switch (e.type) {
       case 'combatantinfo': {
         const ones = new Array(23).fill(1).join(',');
-        add(e, 'COMBATANT_INFO,' + guid(e.sourceID) + ',' + ones + ',' + (e.specID || 0) + ',[],(),[],[]');
+        add(e, 'COMBATANT_INFO,' + guid(e.sourceID) + ',' + ones + ',' + (e.specID || 0) + ',[],(),[],[' + (e.auras || []).filter((a) => a && a.ability).map((a) => guid(a.source != null ? a.source : e.sourceID) + ',' + a.ability + ',' + (a.stacks || 1)).join(',') + ']'); /* (the pull-start auras, e.g. Devotion Aura (Oct 23)) */
         break;
       }
       case 'damage': {

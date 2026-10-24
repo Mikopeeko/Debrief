@@ -5906,7 +5906,7 @@ function newPlayer(guid) {
     casts: 0, interrupts: 0, dispels: 0, deaths: 0, active: 0, lastCast: -1,
     dmgAb: new Map(), healAb: new Map(), takenAb: new Map(), castAb: new Map(), castTimes: new Map(), byName: new Map(),
     // (per second over the pull, and damage by target name: the Performance tab's charts and boss / add split)
-    dmgS: [], healS: [], takenS: [], dmgT: new Map(), takenAbS: [], rawS: [], mitS: [], absS: [], /* (rawS: hits before mitigation; mitS: what armor, versatility, avoidance and defensives took off; absS: shields (Oct 23)) */ // (takenAbS: per second, what hit them: { spell: [id, amount, hits, biggest, avoidable] })
+    dmgS: [], healS: [], takenS: [], dmgT: new Map(), takenAbS: [], rawS: [], mitS: [], absS: [], devS: [], /* (rawS: hits before mitigation; mitS: what armor, versatility, avoidance and defensives took off; absS: shields (Oct 23)) */ // (takenAbS: per second, what hit them: { spell: [id, amount, hits, biggest, avoidable] })
     // (their eight biggest single hits taken, and what they dispelled)
     big: [], dispL: [], helpL: [],
     // (when they first hit each enemy, for switch speed; mana over the pull, from their casts (a real log only); healing that
@@ -6112,7 +6112,7 @@ function* analyzeSteps(item, text, opts) {
     if (ev === 'COMBATANT_INFO') {
       if (f.length > 24) { let s = num(f[24]); if (!SPECS[s]) s = num(f[23]); if (SPECS[s]) P(f[0]).specId = s; }
       // gear, stats and buffs at the pull (for the Raid audit), in the shape Warcraft Logs gives them
-      try { const ci = parseCombatant(line, ts.body, f); if (ci && !r.combatantsRaw.some((x) => x.guid === ci.guid)) r.combatantsRaw.push(ci); } catch (e) { /* skip a line we can't read */ }
+      try { const ci = parseCombatant(line, ts.body, f); if (ci && !r.combatantsRaw.some((x) => x.guid === ci.guid)) r.combatantsRaw.push(ci); if (ci && (ci.auras || []).some((a) => +a.ability === 465)) devOn.add(ci.guid); /* (Devotion Aura up at the pull's start (Oct 23)) */ } catch (e) { /* skip a line we can't read */ }
       continue;
     }
     if (f.length < 8) continue;
@@ -6182,7 +6182,7 @@ function* analyzeSteps(item, text, opts) {
         if (hasAdv && f[adv] === dg) { const mx = num(f[adv + 3]); if (mx > 0 && isPlayer(dg)) pMax.set(dg, mx); if (mx > 0) { hp = num(f[adv + 2]) / mx * 100; seenHp(dg, dn, num(f[adv + 2]), mx, t); seenPhp(dg, num(f[adv + 2]), mx, t); } }
         if (isPlayer(dg)) {
           const p = P(dg, dn);
-          p.taken += base; addAb(p.takenAb, spell, id, base, 0, crit); bump(r.takenS, t, base); bump(p.takenS, t, base); { const raw = num(f[s0 + 1]), ab = Math.max(0, num(f[s0 + 6])); if (raw > 0) { bump(p.rawS, t, raw); bump(p.mitS, t, Math.max(0, raw - base - ab)); } if (ab > 0) bump(p.absS, t, ab); } /* (Graphs' Mitigation tab (Oct 23)) */
+          p.taken += base; addAb(p.takenAb, spell, id, base, 0, crit); bump(r.takenS, t, base); bump(p.takenS, t, base); { const raw = num(f[s0 + 1]), ab = Math.max(0, num(f[s0 + 6])); if (raw > 0) { bump(p.rawS, t, raw); bump(p.mitS, t, Math.max(0, raw - base - ab)); } if (ab > 0) bump(p.absS, t, ab); if (devOn.has(dg)) bump(p.devS, t, (base + ab) * 0.03 / 0.97); } /* (devS: what Devotion Aura's 3% took off, about) */ /* (Graphs' Mitigation tab (Oct 23)) */
           if (base > 0) bumpAb(r.takenAbS, t, spell, id, base);
           const av = mech.damage(t, p.name, id, spell, base), raw = base + Math.max(0, num(f[s0 + 6])); p.avoidable += av;
           if (raw > 0) bumpTk(p.takenAbS, t, spell, id, base, av, raw);
