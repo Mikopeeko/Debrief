@@ -15770,6 +15770,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-23', h: [
+    { t: 'A Mitigation tab on Graphs', d: 'How much damage each player didn\'t take, and where it went: shields, versatility, Devotion Aura, defensives, raid cooldowns, armor and the rest.' },
     { t: 'Report card checklist', d: 'Pick a raider on the Report card and see every check they were graded on: ready to raid, mechanics, staying alive, toolkit and performance, each a plain pass or fail with its rule. The grade is now how many checks they passed.' },
     { t: 'Rotation as a checklist', d: 'The Rotation tab reads like a checklist now: every rule is one row with a bar, your number and a line for what top players do, green, yellow or red. Under it, What to fix lists your fixes with why and how, and your other numbers sit in tiles. Click any row for the full detail.' },
     { t: 'Your pace to the kill', d: 'On Debriefing, Pulls on this boss now counts every night and says when the kill should come at your pace. Tap it for a chart of every pull, the typical guild before and after the 12.1.5 nerfs, and where those nerfs landed. It updates itself as more guilds kill the boss.' },
@@ -15777,6 +15778,7 @@ const PATCH_NOTES = [
     { t: 'The wipe is called for you', d: 'No more "stop at the 2nd death". Debrief now calls the wipe at the moment no raid has ever come back from: more people dead than any kill of that boss survived at that point (battle rezzes counted), the damage check missed, or half the raid dead. Everything before it counts, so the deaths and mistakes that lost the pull are graded. Tested on 760 kills: it never calls a wipe on a pull that was won.' },
     { t: 'A shorter debrief', d: 'Each pull now opens like a raid lead\'s debrief: what went well, what went wrong (click a line for its map and details) and the one thing for next pull. The extra drawers are gone; the timeline, raid cooldowns and burst windows sit in the open below the phases.' },
   ], n: [
+    'Graphs got a bolder look (the top 3 as cards, big class-colour bars), a By player / By ability switch on Damage, Healing and Damage taken, and each buff\'s uptime as a timeline.',
     'Debriefing: tap Raid DPS, DTPS or HPS to see a chart of the pull against the top guilds\' average in each phase, red where you did worse and green where better. Combat potions now show about how much extra damage they gave.',
     'Debriefing: Healthstones and potions show how much they healed, Avoidable damage shows the total taken, and the numbers are coloured to match each bar.',
     'Graphs: pick a phase (or the whole pull), each player\'s parse sits on their bar, the player filter opens that player, and the old detail pages are gone: every link lands on the tabs.',
