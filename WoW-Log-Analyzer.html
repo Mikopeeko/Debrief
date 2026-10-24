@@ -1555,6 +1555,13 @@ line.tl-t { stroke: #ece8df; stroke-width: 2.5; vector-effect: non-scaling-strok
 /* (design system round 2, Oct 22: each graph's title at section-title size, its figures muted 13px; More views are .btn.sm) */
 .gb-card.panel > h3.nh > span { font: 600 18px var(--head); } .gb-card.panel > h3.nh > small { font-size: 13px; color: var(--muted); }
 .gb-morev .gb-pv.btn.sm { border-radius: 8px; padding: 4px 10px; font-size: 13px; color: var(--text); }
+/* (Oct 23: Graphs as tabs like Warcraft Logs: one big list, its extras beside it; total, per second and % in their own columns) */
+.gb-tabrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 2px 0 12px; } .gb-tabrow .gb-tabs { margin: 0; }
+.gb-tl { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 14px; align-items: start; } .gb-tl.solo { grid-template-columns: minmax(0, 1fr); }
+.gb-side, .gb-tmain { display: grid; gap: 14px; min-width: 0; } .gb-tl .panel.gb-card { margin: 0; } @media (max-width: 900px) { .gb-tl { grid-template-columns: minmax(0, 1fr); } }
+.pf-row.cb.gb-r3 { grid-template-columns: 20px minmax(0, 1fr) 72px 60px 44px; } .gb-r3 .cb-r { text-align: right; color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+@media (max-width: 480px) { .pf-row.cb.gb-r3 { grid-template-columns: 18px minmax(0, 1fr) 62px 0 40px; } .pf-row.cb.gb-r3 .cb-s { display: none; } }
+.gb-bfd > summary { list-style: none; cursor: pointer; } .gb-bfd > summary::-webkit-details-marker { display: none; } .gb-bfd[open] > summary .cb-b { box-shadow: 0 0 0 1px var(--line2); } .gb-bfb { display: grid; gap: 3px; padding: 4px 0 10px 28px; }
 .gb-pkg { margin-top: 4px; } .gb-pkg.n3 { grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); } /* (three in a row only when each has room for its names) */
 .gb-dr .gb-br { grid-template-columns: minmax(0, 190px) minmax(110px, 1fr) minmax(0, 38%); } .gb-dr .gb-bx { white-space: normal; line-height: 1.3; } /* (a long note wraps, so every bar keeps its room) */
 .gb-dmore { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
@@ -15601,6 +15608,7 @@ const PI_OFF = () => false;
 const SPEC_OFF = () => false;
 // (Compare was greyed out on the website with "Coming soon" over it while each spec's playbook was built; on everywhere again Oct 19.
 // Set this to () => !!window.WLA_HOSTED to hide it on the website again)
+const GB_TABS = true; /* (Oct 23: Graphs as six tabs like Warcraft Logs, one big list each with its extras beside it; false brings back the pick-up-to-3 row) */
 const GB_PICK = true; /* (Oct 20: Graphs shows the graphs you pick, up to 3 at a time; false brings back every section at once) */
 const GB_DRAWER = true; /* (Oct 20 test: Graphs' bars open one drawer per player, plan option A; false brings back the one-breakdown board and its More views) */
 const CMP_GAP_VIEW = true; /* (Oct 20 test: Compare as "the gap" page, plan option A; false brings back the Oct 19 page) */
@@ -27997,9 +28005,11 @@ function graphsBoard(r, end, NP) {
     const head = q.count ? tot + ' in all' : q.cpm ? 'raid average ' + (tot / rows.length).toFixed(1) : C(tot) + (q.rate ? ' · ' + C(tot / dur) + ' ' + q.rate : '');
     // (Oct 20, "consistent with the rest of the website": a panel with the site's header, and the site's bar rows (cbRow), as on Rotation and Report card)
     const hv = q.count ? 'Times' : q.cpm ? 'A minute' : 'Total', hs = q.rate ? (q.rate === 'a second' ? 'Per sec' : q.rate) : q.count || q.cpm ? '' : 'Share';
-    return '<section class="panel pf-bars gb-card" data-k="' + q.k + '"><h3 class="nh"><span>' + esc(q.t) + '</span><small>' + esc(head) + '</small></h3>' + cbHead(hv, hs) + '<div class="gb-rows">' + rows.map((x, i) => {
+    return '<section class="panel pf-bars gb-card" data-k="' + q.k + '"><h3 class="nh"><span>' + esc(q.t) + '</span><small>' + esc(head) + '</small></h3>' + (GB_TABS ? cbHead(hv, hs, q.cpm ? ' ' : '%', ' gb-r3') : cbHead(hv, hs)) + '<div class="gb-rows">' + rows.map((x, i) => {
       const w = Math.max(1.5, 100 * x.v / mx), sh = tot > 0 ? 100 * x.v / tot : 0;
       const tip = { n: x.p.name, s: (x.p.specName || '') + (night ? ' · in ' + x.p.__pulls + ' of ' + NP.length + ' pulls' : ''), v: fmtV(q, x.v) + (q.count ? (x.v === 1 ? ' time' : ' times') : ''), r: q.rate ? C(x.v / pDur(x.p)) + ' ' + q.rate : '', sh: q.cpm ? '' : (sh >= 10 ? Math.round(sh) : sh.toFixed(1)) + '% of the raid', rk: '#' + (i + 1) + ' of ' + rows.length, t: q.t };
+      if (GB_TABS) return cbRow({ tag: 'div', cls: ' gb-row gb-r3', attrs: ' role="button" tabindex="0" aria-expanded="false" data-k="' + q.k + '" data-p="' + esc(x.p.name) + '" data-tip="' + esc(JSON.stringify(tip)) + '"', k: i + 1, p: x.p, segs: [[w, 'm']], v: fmtV(q, x.v),
+        sub: q.rate ? C(x.v / pDur(x.p)) : '', end: q.cpm ? '' : (sh >= 10 ? Math.round(sh) : sh.toFixed(1)) + '%' });
       return cbRow({ tag: 'div', cls: ' gb-row', attrs: ' role="button" tabindex="0" aria-expanded="false" data-k="' + q.k + '" data-p="' + esc(x.p.name) + '" data-tip="' + esc(JSON.stringify(tip)) + '"', k: i + 1, p: x.p, segs: [[w, 'm']], v: fmtV(q, x.v),
         sub: q.rate ? C(x.v / pDur(x.p)) : q.cpm || q.count ? '' : (sh >= 10 ? Math.round(sh) : sh.toFixed(1)) + '%' }); }).join('') + '</div></section>'; };
   // (a player's breakdown, built when their bar is clicked)
@@ -28007,9 +28017,11 @@ function graphsBoard(r, end, NP) {
     const mx = L[0].total; return '<div class="gb-bt">' + L.slice(0, 14).map((y) => '<div class="gb-br"><span class="gb-bn">' + spIc(String(y.name).replace(/^[^:]+: /, '')) + '<span>' + esc(y.name) + '</span></span><span class="gb-tr sm"><i class="gb-f" style="width:' + Math.max(1.5, 100 * y.total / mx).toFixed(1) + '%"></i><span class="gb-v">' + C(y.total) + '</span></span>' +
       '<span class="gb-bx">' + Math.round(100 * y.total / tot) + '%' + (y.hits ? ' · ' + y.hits + (y.hits === 1 ? ' hit' : ' hits') : '') + (opt && opt.crit && y.hits ? ' · ' + Math.round(100 * (y.crits || 0) / y.hits) + '% crit' : '') + (opt && opt.over && y.total + (y.over || 0) > 0 ? ' · ' + Math.round(100 * (y.over || 0) / (y.total + (y.over || 0))) + '% overheal' : '') + (opt && opt.big && y.big ? ' · biggest ' + C(y.big) : '') + '</span></div>').join('') + (L.length > 14 ? '<p class="sub">and ' + (L.length - 14) + ' more</p>' : '') + '</div>'; };
   const cnt = (l, key) => { const m = new Map(); for (const x of l) { const n = key(x); m.set(n, (m.get(n) || 0) + 1); } return [...m].sort((a, b) => b[1] - a[1]); };
+  const gbFold = (list) => { if (!GB_TABS) return list; const m = new Map(); for (const y of list) { const nm = String(y.name), pet = nm.match(/^(.+?): /), k = pet ? pet[1] : nm.replace(/ Overload$/, ''); const o = m.get(k) || { name: k, id: pet ? 0 : y.id, total: 0, over: 0, hits: 0, crits: 0, big: 0 };
+    o.total += y.total || 0; o.over += y.over || 0; o.hits += y.hits || 0; o.crits += y.crits || 0; o.big = Math.max(o.big, y.big || 0); m.set(k, o); } return [...m.values()]; }; /* (pets and Overloads folded in, Oct 23) */
   const BD = {
-    dmg: (p) => '<p class="gb-bh">Their damage by spell, over ' + (night ? 'all pulls' : 'the whole pull') + '.</p>' + abRows([...p.dmgAb.values()], { crit: true }),
-    heal: (p) => '<p class="gb-bh">Their healing by spell, over ' + (night ? 'all pulls' : 'the whole pull') + '.</p>' + abRows([...p.healAb.values()], { crit: true, over: true }),
+    dmg: (p) => '<p class="gb-bh">Their damage by spell, over ' + (night ? 'all pulls' : 'the whole pull') + '.</p>' + abRows(gbFold([...p.dmgAb.values()]), { crit: true }),
+    heal: (p) => '<p class="gb-bh">Their healing by spell, over ' + (night ? 'all pulls' : 'the whole pull') + '.</p>' + abRows(gbFold([...p.healAb.values()]), { crit: true, over: true }),
     taken: (p) => '<p class="gb-bh">What hit them.</p>' + abRows(takenBy(p), { big: true }),
     avoid: (p) => '<p class="gb-bh">The avoidable hits they took.</p>' + abRows(takenBy(p).filter((x) => x.av > 0).map((x) => ({ ...x, total: x.av })), { big: true }),
     death: (p) => '<div class="gb-bt">' + deaths(p).map((d) => '<div class="gb-br"><span class="gb-bn">' + spIc(d.ability || 'Melee') + '<span>' + PL(d) + T(d.t) + ': ' + esc(d.ability ? d.ability + (d.killer && d.killer !== 'Unknown' ? ' from ' + d.killer : '') : 'a melee hit from ' + (d.killer || 'an enemy')) + '</span></span></div>').join('') + '</div>',
@@ -28172,6 +28184,20 @@ function graphsBoard(r, end, NP) {
       tile('Deaths', String(dl.length), !dl.length ? 'nobody died' : night ? (most ? 'most: ' + nm(most) + ' (' + most.v + ')' : '') : 'first: ' + nm({ p: dl[0].who }) + ' at ' + T(dl[0].t) + (dl[0].ability ? ', ' + esc(dl[0].ability) : ''), 'death'),
       src ? tile('Hit the raid hardest', '<span class="gb-sumn">' + esc(src.n) + '</span>', C(src.v) + ', ' + pctS(src.v / Math.max(1, srcT)) + ' of all damage taken', 'src') : '',
       tile('Kicks and dispels', nK + ' <small>·</small> ' + nX, 'interrupts · dispels', 'kick')].join('') + '</div>';
+    if (GB_TABS) { const H = new Map(GR.map((x) => [x[0], x[2]]));
+      // Buffs: the raid's buffs by uptime, the most common first; tap one for each player's uptime of it
+      const bf = (() => { let rows = []; try { rows = auraRows(REPS, false).rows.filter((x) => !x.always).sort((a, b) => b.cov - a.cov || b.apps - a.apps).slice(0, 20); } catch (x) { rows = []; } if (!rows.length) return '';
+        const pc = (f) => (f > 0 && f < 0.01 ? '<1' : Math.round(100 * f)) + '%';
+        return '<section class="panel pf-bars gb-card" data-k="buff"><h3 class="nh"><span>Buffs</span><small>uptime on the players who had each one' + ALLP + '</small></h3>' + cbHead('Uptime', 'Players', '', '', 'Buff') + '<div class="gb-rows">' +
+          rows.map((x, i) => '<details class="gb-bfd">' + cbRow({ tag: 'summary', cls: ' nb', k: i + 1, color: '#6aa8ff', icon: spellIcon(x.id, x.name), name: esc(x.name), segs: [[Math.max(1.5, 100 * x.f), 'm']], v: pc(x.f), sub: String(x.who.length) }) +
+            '<div class="gb-bfb">' + x.who.map((w) => '<div class="gb-br"><span class="gb-bn">' + avatar(w.p, true) + '<span style="color:' + (w.p.color || 'var(--text)') + '">' + esc(w.p.name) + '</span></span><span class="gb-tr sm"><i class="gb-f" style="width:' + Math.max(1.5, 100 * w.f).toFixed(1) + '%;background:' + (w.p.color || '#6aa8ff') + '"></i><span class="gb-v">' + pc(w.f) + '</span></span><span class="gb-bx">' + (w.n === 1 ? 'once' : w.n + ' times') + '</span></div>').join('') + '</div></details>').join('') + '</div></section>'; })();
+      const TB = [['dmg', 'Damage', ['dmg'], ['spells', 'tgt']], ['heal', 'Healing', ['heal'], ['oh']], ['taken', 'Damage taken', ['taken'], ['src']], ['death', 'Deaths', ['death'], ['kick', 'disp']], ['cpm', 'Casts', ['cpm'], []], ['buff', 'Buffs', [], []]]
+        .map(([k, l, m, s]) => [k, l, k === 'buff' ? bf : m.map((x) => H.get(x) || '').join(''), s.map((x) => H.get(x) || '').join('')]).filter((x) => x[2]);
+      let tb = S.gbTab || store.get('wla-gb-tab') || 'dmg'; if (!TB.some((x) => x[0] === tb)) tb = TB.length ? TB[0][0] : 'dmg'; const cur = TB.find((x) => x[0] === tb) || ['', '', '', ''];
+      return sum + '<div class="gb gb-tb"><div class="gb-tabrow"><div class="seg gb-tabs" role="tablist" aria-label="Graphs">' + TB.map(([k, l]) => '<button type="button" role="tab" data-gtab="' + k + '" aria-selected="' + (k === tb) + '"' + (k === tb ? ' class="on"' : '') + '>' + esc(l) + '</button>').join('') + '</div>' +
+        '<span class="gb-cnt">' + (night ? 'All ' + NP.length + ' pulls, each up to its wipe filter' : end < r.duration - 0.5 ? 'Counted up to ' + T(end) + ', the wipe filter' : 'The whole pull') + '<span class="ds-i" tabindex="0" role="note" aria-label="How it works" data-tt="Hover any bar for its numbers, and click a player for what made it up.">ⓘ</span></span></div>' +
+        '<div class="gb-tl' + (cur[3] ? '' : ' solo') + '"><div class="gb-tmain">' + cur[2] + '</div>' + (cur[3] ? '<div class="gb-side">' + cur[3] + '</div>' : '') + '</div>' +
+        '<div class="gb-morev"><span class="sub">More views:</span>' + [['pi', 'Power Infusion'], ['dmg', 'Charts over time']].filter(([k]) => k !== 'pi' || !PI_OFF()).map(([k, l]) => '<button type="button" class="gb-pv btn sm" data-pv="' + k + '">' + esc(l) + ' ›</button>').join('') + '</div></div>'; }
     return sum + '<div class="gb"><nav class="gb-nav gb-pkn" aria-label="Graphs">' + GR.map(([id, t]) => '<button type="button" data-gp="' + id + '" aria-pressed="' + pk.includes(id) + '"' + (pk.includes(id) ? ' class="on"' : '') + '>' + esc(t) + '</button>').join('') +
       /* (design system, Oct 22: what's counted at the end of the picker row, and the how-to behind an ⓘ instead of a line of small print) */
       '<span class="gb-cnt">' + (night ? 'All ' + NP.length + ' pulls, each up to its wipe filter' : end < r.duration - 0.5 ? 'Counted up to ' + T(end) + ', the wipe filter' : 'The whole pull') + '<span class="ds-i" tabindex="0" role="note" aria-label="How it works" data-tt="Pick up to 3 graphs to see side by side. Hover any bar for its numbers, and click a player\'s bar for what made it up.">ⓘ</span></span></nav>' +
@@ -28198,7 +28224,9 @@ function graphsBoard(r, end, NP) {
     if (dt && GB && GB.drawer && dRow) { const p = GB.byName.get(dRow.dataset.p); if (!p) return; if (dt.id === 'pfAuraMore') S.auraMore = !S.auraMore; else dRow.dataset.dk = dt.dataset.dt; dr.innerHTML = GB.drawer(p, dRow.dataset.dk || dRow.dataset.k); refreshIcons(); return; }
     const gg = dr && e.target.closest('[data-gpgo]'); if (gg) { pfGo(gg.dataset.gpgo, gg.dataset.pgn); return; }
     const gp = e.target.closest && e.target.closest('.gb-pbar[data-gpull]'); if (gp && S.rep && S.index) { const it = S.rep.item, b = S.index.bosses.find((x) => x.id === it.id && x.diffId === it.diffId && String(x.pull) === gp.dataset.gpull); if (b) { S.scope = 'pull'; select(b); window.scrollTo({ top: 0 }); } return; }
-    const sumt = e.target.closest && e.target.closest('.gb-sum [data-gp]'); if (sumt) { const b = document.querySelector('.gb-pkn [data-gp="' + sumt.dataset.gp + '"]'); if (b && !b.classList.contains('on')) b.click(); /* (a summary tile opens its graph) */
+    const gtab = e.target.closest && e.target.closest('.gb-tabs [data-gtab]'); if (gtab) { S.gbTab = gtab.dataset.gtab; store.set('wla-gb-tab', S.gbTab); const y0 = scrollY; renderMain(); window.scrollTo({ top: y0 }); return; } /* (Graphs' tabs, Oct 23) */
+    const sumt = e.target.closest && e.target.closest('.gb-sum [data-gp]'); if (sumt && GB_TABS) { S.gbTab = { dmg: 'dmg', heal: 'heal', death: 'death', src: 'taken', kick: 'death' }[sumt.dataset.gp] || 'dmg'; store.set('wla-gb-tab', S.gbTab); const y0 = scrollY; renderMain(); window.scrollTo({ top: y0 }); return; }
+    if (sumt) { const b = document.querySelector('.gb-pkn [data-gp="' + sumt.dataset.gp + '"]'); if (b && !b.classList.contains('on')) b.click(); /* (a summary tile opens its graph) */
       setTimeout(() => { const g = document.querySelector('.gb-pkg [data-k="' + sumt.dataset.gp + '"]') || document.querySelector('.gb-pkg'); if (g) window.scrollTo({ top: g.getBoundingClientRect().top + scrollY - 80, behavior: 'smooth' }); }, 80); return; }
     const gpk = e.target.closest && e.target.closest('.gb-nav [data-gp]'); if (gpk) { const k = gpk.dataset.gp, shown = [...document.querySelectorAll('.gb-nav [data-gp].on')].map((b) => b.dataset.gp), cur = (S.gbPick || []).filter((x) => shown.includes(x)).concat(shown.filter((x) => !(S.gbPick || []).includes(x))); let l = cur.slice(); /* (in the order picked) */
       if (l.includes(k)) { if (l.length > 1) l = l.filter((x) => x !== k); } else { l.push(k); if (l.length > 3) l.shift(); } /* (up to 3; the oldest pick goes; the last one stays) */
