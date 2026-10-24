@@ -11751,7 +11751,7 @@ const parseCls = (p) => 'dbr-pq ' + (p >= 100 ? 'q-gold' : p >= 99 ? 'q-pink' : 
 /* (one rate tile, single pull and All pulls alike: the number in its parse colour, then where it ranks and the top kills' middle) */
 function rateTile(num, lab, v, x, list, hiGood, n, who) { if (x == null) return num(lab, '<b>' + C(v) + '</b>', 'a second'); const p = parseOf(v, list, hiGood), W0 = who || 'top kills';
   const d0 = Math.round(100 * (v / x - 1)), say = d0 === 0 ? 'Even with ' + W0 : hiGood ? Math.abs(d0) + '% ' + (d0 > 0 ? 'above' : 'below') + ' ' + W0 : Math.abs(d0) + '% ' + (d0 > 0 ? 'higher' : 'lower') + ' than ' + W0 /* (one line like the others (Oct 23)) */;
-  return num(lab, '<b class="' + (p == null ? '' : parseCls(p)) + '">' + C(v) + '</b>', '<b class="' + (p == null ? '' : parseCls(p)) + '">' + say + '</b> (' + C(x) + ')'); }
+  return num(lab, '<b class="' + (p == null ? '' : parseCls(p)) + '">' + C(v) + '</b>', '<b class="' + (p == null ? '' : parseCls(p)) + '">' + say + '</b> (' + C(x) + ')' + (n ? ' · ' + plural(n, 'kill') : '') /* (how many kills it's compared with (your ask, Oct 23)) */); }
 /* (Oct 23, your call: pulls on a boss across every night against how many pulls most guilds needed for the kill. progstats.io's typical
    pull count on Mythic (the middle half of its recorded kills), read Oct 23; Nymrissa and Kith'ix aren't listed there yet) */
 /* (Oct 23, your idea: our progress for our pull count against guilds at the same pull count. From progstats.io, 181 guilds that killed
