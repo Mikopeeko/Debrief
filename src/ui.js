@@ -1627,7 +1627,7 @@ function headerHtml(r, allMode) {
     const ds = keptDeaths(r).length;
     cls = it.kill ? 'good' : 'bad'; left = now; kick = [it.diff, raid];
     big = it.kill ? 'Kill' : now != null ? (usesPh ? 'Wipe in ' : 'Wipe at ') + (pg ? pg.label : now.toFixed(1) + '%') : 'Wipe';
-    stats = [['clock', it.wallMs ? wallClock(it.wallMs) : clock(it.startMs)], ['timer', T(r.duration)], ['users', plural(r.players.size, 'player')], ['skull', plural(ds, 'death') + (cutInfo(r) ? ' before the wipe call' : '')]];
+    stats = [['clock', it.wallMs ? wallClock(it.wallMs) : clock(it.startMs)], ['timer', 'Lasted ' + T(r.duration)] /* (easier to read (your note, Oct 23)) */, ['users', plural(r.players.size, 'player')], ['skull', plural(ds, 'death') + (cutInfo(r) ? ' before the wipe call' : '')]];
     const yet = !it.kill && now != null && everBest != null && now < everBest && (!bestO || now < bestO.v); // (further than every saved night too)
     // (a kill says how long it took tonight; "Boss down" only repeated the pill)
     const wipes = same.slice(0, Math.max(0, k)).filter((x) => !x.kill).length;
@@ -1657,12 +1657,12 @@ function headerHtml(r, allMode) {
   // phase bar and the All pulls tag are merged into it. A Mythic+ key keeps the banner below and its cards.)
   if (!isKey && !it.run) return '<header class="fight bh bhx ' + cls + (hero ? ' hero' : '') + (qcol ? ' q" style="--qc:' + qcol : '') + '">' + art + '<div class="bh-t">' +
     '<div class="bh-l1"><h2 class="bh-name">' + esc(it.boss) + '</h2><button class="bh-pickb" type="button" aria-haspopup="true" aria-expanded="false" hidden></button><span class="bh-big">' + pill + '</span>' + (side ? '<span class="bh-side">' + side + '</span>' : '') + bhCutBtn() + '</div>' +
-    '<div class="bh-l2"><span class="bhp-as" id="bhAll"></span>' + (allMode ? '' : scope) + '<span class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</span><span class="bh-s">' + stats.map(([ic, t]) => '<span>' + bhIc(ic) + esc(t) + '</span>').join('') + '</span>' + tmL + '</div></div>' +
+    '<div class="bh-l2"><span class="bhp-as" id="bhAll"></span>' + (allMode ? '' : scope) + '<span class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</span><span class="bh-s">' + stats.map(([ic, t]) => '<span' + (ic === 'timer' ? ' class="bh-dur" title="How long the pull lasted"' : '') + '>' + bhIc(ic) + esc(t) + '</span>').join('') + '</span>' + tmL + '</div></div>' +
     '<div class="bhp" id="bhPulls"></div></header>';
   return '<header class="fight bh ' + cls + (hero ? ' hero' : '') + (qcol ? ' q" style="--qc:' + qcol : '') + '">' + art + '<div class="bh-t">' +
     '<div class="bh-l1"><h2 class="bh-name">' + esc(it.boss) + '</h2><button class="bh-pickb" type="button" aria-haspopup="true" aria-expanded="false" hidden></button><span class="bh-big">' + pill + '</span>' + progBar(it, left, !allMode && !isKey && r ? (progressOf(r) || {}).phase : null, qcol) + tmL + '</div>' +
     '<div class="bh-l2">' + scope + '<span class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</span>' + (side ? '<span class="bh-side">' + side + '</span>' : '') +
-    '<span class="bh-s">' + stats.map(([ic, t]) => '<span>' + bhIc(ic) + esc(t) + '</span>').join('') + '</span>' + (isKey ? '' : bhCutChip()) + '</div></div></header>';
+    '<span class="bh-s">' + stats.map(([ic, t]) => '<span' + (ic === 'timer' ? ' class="bh-dur" title="How long the pull lasted"' : '') + '>' + bhIc(ic) + esc(t) + '</span>').join('') + '</span>' + (isKey ? '' : bhCutChip()) + '</div></div></header>';
 }
 // redraw the banner once more pulls are known (the background reader, or an all-pulls view that read every pull)
 function refreshHead() { const f = $('.fight.bh'); if (!f || !S.rep || !S.item) return; const a = isAllMode(); if (!a && S.rep === S.nightRep) return; f.outerHTML = headerHtml(a ? null : S.rep, a); renderList(); }
@@ -1764,6 +1764,7 @@ const PATCH_NOTES = [
     { t: 'The wipe is called for you', d: 'No more "stop at the 2nd death". Debrief now calls the wipe at the moment no raid has ever come back from: more people dead than any kill of that boss survived at that point (battle rezzes counted), the damage check missed, or half the raid dead. Everything before it counts, so the deaths and mistakes that lost the pull are graded. Tested on 760 kills: it never calls a wipe on a pull that was won.' },
     { t: 'A shorter debrief', d: 'Each pull now opens like a raid lead\'s debrief: what went well, what went wrong (click a line for its map and details) and the one thing for next pull. The extra drawers are gone; the timeline, raid cooldowns and burst windows sit in the open below the phases.' },
   ], n: [
+    'Debriefing: a new Power Infusion and Innervate row shows every press, who got it and whether it landed well. The Deaths tile at the top opens who died and why, and the banner shows how long the pull lasted in bold.',
     'Holy Paladin: a new check, Aura Mastery inside Beacon of Virtue. Both guides say never press Aura Mastery in raid without Beacon of Virtue up.',
     'Rotation: every row you open shows a picture of its number, like Pressed 9 and Not pressed 1, or Casting 75% and Not casting 25%.',
     'Debriefing is tidier: All pulls no longer hides a drawer of repeats at the bottom (the timeline of every pull sits in the open, the numbers fold), and a mechanic that improved but still goes wrong most pulls says "Better, not fixed yet".',
@@ -8678,7 +8679,7 @@ function dbdPhases(r) { const it = r.item; if (it.kill || it.kind === 'run') ret
 // (Copy for Discord: a short after-pull note, made when the page is drawn; the Next pull line is read from the page at the click)
 /* (Oct 23 click-through: a Deaths dot pointed at the old Deaths section; on one pull the deaths are the raid lead box's Deaths row, so it opens there) */
 document.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('a[href^="#sec-deaths-"]'); if (!a || document.querySelector(a.getAttribute('href'))) return;
-  const d = document.querySelector('#view details[data-k="cch-ab-d"]'); if (!d) return; e.preventDefault(); d.open = true; if (S.openSecs) S.openSecs.add('cch-ab-d'); d.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const d = document.querySelector('#view details[data-k="cch-ab-d"]'); if (!d) return; e.preventDefault(); d.open = true; { const q = d.closest('.pcx-p'); if (q && q.hidden) { const tl = [...document.querySelectorAll('#view .oa-tiles .dbr-n')].find((x) => x.pcxP === q || x.contains(q)); if (tl) tl.click(); else q.hidden = false; } } if (S.openSecs) S.openSecs.add('cch-ab-d'); d.scrollIntoView({ behavior: 'smooth', block: 'start' });
   d.classList.add('dbd-flash'); setTimeout(() => d.classList.remove('dbd-flash'), 1600); }, true);
 document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-dbdp], [data-dbcopy], [data-dblink]'); if (!t) return;
   if (t.dataset.dbdp) { e.preventDefault(); e.stopPropagation(); const r = S.rep; if (!r) return; const b = ((S.index && S.index.bosses) || []).find((x) => x.id === r.item.id && x.diffId === r.item.diffId && x.pull === +t.dataset.dbdp); if (!b || b === r.item) return;
@@ -10944,7 +10945,7 @@ function oaFill(reps) {
   const night = reps.length > 1 || !!(reps[0] && reps[0].allPulls), R = reps.filter((r) => r && r.players && !r.allPulls); if (!R.length) { el.innerHTML = ''; el.hidden = true; return; }
   const name = S.mechP && R.some((r) => [...r.players.values()].some((p) => oaBase(p.name) === oaBase(S.mechP))) ? S.mechP : null;
   const pm = new Map(); for (const r of R) for (const p of r.players.values()) if (p.name && !pm.has(p.name)) pm.set(p.name, p);
-  el.innerHTML = coachBox(coachSummary(R, name), { key: night ? 'n' : 'p', title: 'Your raid lead says…' /* (one title with or without a player picked (Oct 23)) */ }); /* (Oct 23, your wording) */ /* (the coach on top (Oct 22): the page under it stays as it was) */
+  el.innerHTML = coachBox(coachSummary(R, name), { key: night ? 'n' : 'p', title: 'Your raid lead says…' /* (one title with or without a player picked (Oct 23)) */ }); /* (Oct 23, your wording) */ /* (the coach on top (Oct 22): the page under it stays as it was) */ try { oaDeathsTile(v); } catch (e) { /* (Deaths stays in the grid) */ }
   el.hidden = !el.innerHTML; try { oaLayout(v, el); } catch (e) { console.error(e); } refreshIcons();
 }
 // (the tab in four layers (your note, Oct 22: "full of info, which is great. However maybe a little overwhelming"): the numbers on top,
@@ -10978,6 +10979,8 @@ function oaLayout(v, el) {
     f.innerHTML = '<summary><span class="cln-t">✓ ' + ok.length + ' done right</span><span class="sub">' + esc(ok.map(nm).filter(Boolean).join(', ')) + '</span></summary>';
     ok.forEach((d) => f.appendChild(d)); ck.appendChild(f);
     f.addEventListener('toggle', () => { if (f.open) S.openSecs.add(f.dataset.k); else S.openSecs.delete(f.dataset.k); if (f.open && S._drawMaps) { try { S._drawMaps(); } catch (e) { /* (maps draw when their line opens) */ } } }); }
+  /* (Oct 23, your idea: the death breakdown lives in the top Deaths tile: a tap opens it under the tiles, like the other tiles) */
+  oaDeathsTile(v);
   // (everything else in the one drawer at the bottom)
   const dr = v.querySelector('details.dbr-more'); if (!dr || dr.dataset.oa) return; dr.dataset.oa = '1';
   /* (one pull, Oct 23 test (your go-ahead: "lets try going back in that direction"): no "More from this pull" drawer. What only it had stays
@@ -11520,6 +11523,40 @@ function coachKit(reps, name) {
   const rows = [...P.values()];
   return { night, n: reps.length, name: name || null, rows, rate: mins >= 10 ? 5 * calls / mins : null, mins };
 }
+/* (Oct 23, your idea: Power Infusion and Innervate in one row where Deaths was. Power Infusion by your rules (piTier: lined up with the
+   target's cooldown is right; a Shadow Priest's never red). Innervate: on a healer is right, on anyone else it's wasted. The bar counts
+   every one they could have pressed (a 3-minute cooldown, so the pull's length / 3 min + 1): good 1, could be better a half, wrong or
+   unpressed 0. With a player picked: theirs, or the ones they got. No Priest or Druid with them: no row) */
+function oaDeathsTile(v) { if (!v) return;
+  { const dd = v.querySelector('.cch2 details.cch-dmove'), tl = [...v.querySelectorAll('.oa-tiles .dbr-n')].find((x) => /^\s*Deaths/.test(x.textContent || ''));
+    if (dd && tl && !tl.pcxP) { const p = document.createElement('div'); p.className = 'panel pcx-p dth-p'; p.hidden = true; dd.open = true; dd.classList.remove('cch-dmove'); p.appendChild(dd); tl.appendChild(p);
+      tl.classList.add('pcx-tile'); tl.setAttribute('role', 'button'); tl.tabIndex = 0; tl.insertAdjacentHTML('beforeend', '<span class="pcx-open">Who and why ▾</span>');
+      tl.addEventListener('click', (e) => { if (e.target.closest('.pcx-p')) return; const q = tl.querySelector('.pcx-p') || tl.pcxP; if (!q) return; tl.pcxP = q; if (q.previousElementSibling !== tl.parentNode) tl.parentNode.after(q); q.hidden = !q.hidden; tl.classList.toggle('on', !q.hidden); }); }
+    else if (dd && !tl) { /* (the tiles may not be drawn yet: try again a few times, then leave Deaths in the grid) */ const n = (v._dthN || 0) + 1; v._dthN = n; if (n <= 8) setTimeout(() => oaDeathsTile(v), 400); else { v._dthN = 0; dd.classList.remove('cch-dmove'); } } else v._dthN = 0; } }
+function piInnRow(reps, name) { if (!reps || !reps.length) return '';
+  const base = name ? oaBase(name) : null, mine = (p) => !!p && (!base || oaBase(p.name) === base), night = reps.length > 1, rows = []; let poss = 0, sc = 0, given = 0;
+  const hasInn = new Set(); for (const r of reps) for (const p of r.players.values()) if (p.cls === 'DRUID' && p.byName && (p.byName.get('innervate') || []).length) hasInn.add(p.name);
+  const hasPi = new Set(); if (!PI_OFF()) for (const r of reps) { try { for (const c of piPull(r).casts) if (c.pr) hasPi.add(c.pr.name); } catch (e) { /* (no Power Infusion read) */ } }
+  for (const r of reps) { const ct = cutT(r), pre = night ? 'P' + r.item.pull + ' · ' : '', ps = [...r.players.values()];
+    if (!PI_OFF()) { let P = null; try { P = piPull(r); } catch (e) { P = null; }
+      if (P) { for (const x of P.priests.values()) if (mine(x.p) && hasPi.has(x.p.name)) poss += x.poss; /* (only a priest who pressed it at least once: the talent may not be taken) */
+        for (const c of P.casts) { if (c.t > ct + 0.05 || !(mine(c.pr) || (base && mine(c.tg)))) continue; const st = piTier(c);
+          if (mine(c.pr)) { sc += st === 'ok' ? 1 : st === 'warn' ? 0.5 : 0; given++; }
+          rows.push({ t: c.t, pre, sp: 'Power Infusion', id: 10060, from: c.pr, to: c.tg, st, why: (c.tim && c.tim.txt) || '' }); } } }
+    for (const p of ps) { if (!hasInn.has(p.name)) continue; const u = (p.byName.get('innervate') || []).filter((t) => t <= ct + 0.05); if (mine(p) && (u.length || Math.min(r.duration, ct) >= 120)) poss += Math.floor(Math.min(r.duration, ct) / 180) + 1; /* (a pull over before 2 minutes doesn't expect one: nobody needs mana that early (Oct 23)) */
+      for (const t of u) { const q = ps.find((z) => ((z.buffs && z.buffs.get('Innervate')) || { sp: [] }).sp.some(([a]) => Math.abs(a - t) <= 1.5)); if (!(mine(p) || (base && mine(q)))) continue;
+        const st = !q ? 'warn' : q.role === 'healer' ? 'ok' : 'bad'; if (mine(p)) { sc += st === 'ok' ? 1 : st === 'warn' ? 0.5 : 0; given++; }
+        rows.push({ t, pre, sp: 'Innervate', id: 29166, from: p, to: q, st, why: !q ? 'Who got it isn\'t in the log.' : q.role === 'healer' ? 'On a healer: right.' : 'On ' + (q.specName || 'a non-healer') + ', who doesn\'t need mana: wasted.' }); } } }
+  if (!poss && !rows.length) return '';
+  rows.sort((a, b) => (a.pre === b.pre ? a.t - b.t : a.pre.localeCompare(b.pre, undefined, { numeric: true })));
+  const got = base ? rows.filter((x) => !mine(x.from)) : [], ok = rows.filter((x) => mine(x.from) && x.st === 'ok').length;
+  const g = poss ? Math.min(100, Math.round(100 * sc / poss)) : Math.round(100 * got.reduce((s, x) => s + (x.st === 'ok' ? 1 : x.st === 'warn' ? 0.5 : 0), 0) / Math.max(1, got.length));
+  const sum = poss ? (base ? 'You pressed ' + given + ' of ' + poss + ' · ' + ok + ' on time' : given + ' of ' + poss + ' pressed · ' + ok + ' on time') : 'You got ' + got.map((x) => x.sp).filter((v, i, a) => a.indexOf(v) === i).join(' and ') + ' ×' + got.length;
+  const nm = (p) => (p ? '<span class="nm" style="color:' + (p.color || 'inherit') + '">' + esc(String(p.name).split('-')[0]) + '</span>' : 'someone');
+  const lab = { ok: 'Good', warn: 'Could be better', bad: 'Wrong' };
+  const body = '<ul class="rch-l">' + rows.map((x) => '<li class="rch ' + x.st + '"><span class="rch-t">' + esc(x.pre) + T(x.t) + '</span><div class="rch-m"><div class="rch-top"><b class="rch-n">' + spellIcon(x.id, x.sp) + esc(x.sp) + '</b><span class="rch-dmg">' + nm(x.from) + ' → ' + nm(x.to) + '</span><span class="rch-st ' + x.st + '">' + lab[x.st] + '</span></div>' + (x.why ? '<p class="cgl-d">' + esc(x.why) + '</p>' : '') + '</div></li>').join('') + '</ul>' +
+    (poss > given ? '<p class="ckt-note">' + (poss - given) + ' more could have been pressed' + (night ? ' over these pulls' : ' this pull') + ' (each is back every 3 minutes).</p>' : '');
+  return '<details class="cch-ab cch-abx" data-k="cch-ab-pi"' + (S.openSecs && S.openSecs.has('cch-ab-pi') ? ' open' : '') + '><summary class="cch-al" data-g="' + g + '">Power Infusion and Innervate<span class="cch-abs">' + esc(sum) + '</span></summary>' + body + '</details>'; }
 function coachKitHtml(K) {
   const night = K.night, you = !!K.name, pc = (v) => (v == null ? '' : Math.max(1, Math.round(100 * v)) + '%');
   const kf = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k'), flag = (n) => (n >= 2 ? 'bad' : n === 1 ? 'warn' : '');
@@ -11754,7 +11791,7 @@ function coachSummary(reps, name) {
     /* (week to week: tonight is remembered, and the raid's coach says what changed since the last raid on this boss) */
     let week = ''; if (night) { try { const wn = weekOf(reps); if (!name) week = weekLine(wn, weekPrev(it, wkWhen(reps[0].item))); weekSave(reps, wn); } catch (e) { week = ''; } }
     let TR = null; if (name) TR = coachTrendsMe(reps, name, right, wrongAll); else { try { const wn = night ? weekOf(reps) : null; TR = coachTrends(reps, right, wrongAll, wn, night ? weekPrevAll(it, wkWhen(reps[0].item)) : null); } catch (e) { TR = null; } }
-    return { headline: headline2, wipes: WIPES, right, wrong, wrongAll, focus, full, name: name || null, night, kill: !!kill, deaths: DD, avoid: AV, kit: KT, week, trend: TR }; }); }
+    return { headline: headline2, wipes: WIPES, right, wrong, wrongAll, focus, full, name: name || null, night, kill: !!kill, deaths: DD, avoid: AV, kit: KT, week, trend: TR, reps }; }); }
 // (the short box, easier to read (your note, Oct 22: "make this more visually appealing/easier to read", "class color names when they
 // are mentioned"): the headline, then Focus as the big takeaway, the problems as numbered cards (what happened, Next time on its own
 // line, the map on the right), what went right as green chips, deaths and avoidable damage as small chips, and the full coaching folded.
@@ -12107,7 +12144,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
     (c.trend ? '' : c.week ? '<div class="cch-wk2"><span class="cch-wk2k">Since last raid</span><span>' + esc(c.week.replace(/^Since last raid /, '').replace(/^\(([^)]*)\): /, (m0, d) => d.charAt(0).toUpperCase() + d.slice(1) + ': ')) + '</span></div>' : '') /* (week to week, Oct 22) */ +
     (c.trend ? trendH() : BRIEF ? briefH() : c.wrong.length ? '<div class="cch-sh">What went wrong</div><ol class="cch-ps cch-no">' + c.wrong.map(prob).join('') + '</ol>' : '') +
     (!BRIEF && c.right.length ? '<div class="cch-good2">' + c.right.map((x) => '<p>✓ ' + esc(x.t) + '</p>').join('') + '</div>' : '') +
-    (D || A ? '<div class="cch-acct2' + (S.cblBy === 'm' ? ' cbl-on-m' : '') + '">' + (A && A.reps ? cblSwitch() : '') + (D ? '<details class="cch-ab cch-abx' + (D.bad ? ' warn' : '') + '" data-k="cch-ab-d"' + (S.openSecs && S.openSecs.has('cch-ab-d') ? ' open' : '') + '><summary class="cch-al">Deaths<span class="cch-abs">' + esc(coachAbSum(D, 'd')) + '</span></summary>' + (D.items && D.items.length ? cblBoth(coachBars(cblDeaths(D), (x) => x.n, (x) => x.body), A && A.reps ? coachBars(cblDeathsP(A.reps, A.who), (x) => x.n, (x) => x.body) : '') || '<div class="cch-chips">' + dch + '</div>' : '<div class="cch-chips">' + dch + '</div>') + '' + (D.nsum || []).map((x) => '<div class="dd-nsum" data-ddn="' + esc(x.key) + '" hidden>' + x.html + '</div>').join('') + (D.items && D.items.some((it) => it.dg || it.dn) ? '<div class="cch-ddbox" hidden></div><div class="cch-ddtip">Tap a death to see what happened.</div>' : '') + '</details>' : '') + (A ? '<details class="cch-ab cch-abx' + (A.bad ? ' warn' : '') + '" data-k="cch-ab-a"' + (S.openSecs && S.openSecs.has('cch-ab-a') ? ' open' : '') + '><summary class="cch-al">Avoidable damage<span class="cch-abs">' + esc(coachAbSum(A, 'a')) + '</span></summary>' + (A.bars && A.bars.length ? cblBoth(coachBars(A.bars, (x) => x.amt, (x) => { const pm = cblPm(x.reps || A.reps || []), list = x.pl instanceof Map ? [...x.pl.values()] : (x.pl || []); return cblMini(list.map((q) => ({ label: cblNm(q.p), p: pm.get(q.p), st: q.st, amt: q.amt, sub: x.secs ? q.v + ' s' : plural(q.v, 'hit') })), x.st ? cblFix(x.key, x.fix) : ''); }), A.reps ? coachBars(cblAvoidP(A), (x) => x.amt, (x) => x.body) : '') : '<div class="cch-chips">' + ach + '</div>') + '' + (A.items && A.items.some((it) => it.avk || it.avn) ? '<div class="cch-avbox" hidden></div><div class="cch-ddtip">Tap a bar to see what hit them.' + '</div>' : '') + '</details>' : '') + '</div>' : '') +
+    (D || A ? '<div class="cch-acct2' + (S.cblBy === 'm' ? ' cbl-on-m' : '') + '">' + (A && A.reps ? cblSwitch() : '') + (() => { try { return piInnRow(c.reps, c.name); } catch (e) { return ''; } })() + (D ? '<details class="cch-ab cch-abx cch-dmove' + (D.bad ? ' warn' : '') + '" data-k="cch-ab-d"' + (S.openSecs && S.openSecs.has('cch-ab-d') ? ' open' : '') + '><summary class="cch-al">Deaths<span class="cch-abs">' + esc(coachAbSum(D, 'd')) + '</span></summary>' + (D.items && D.items.length ? cblBoth(coachBars(cblDeaths(D), (x) => x.n, (x) => x.body), A && A.reps ? coachBars(cblDeathsP(A.reps, A.who), (x) => x.n, (x) => x.body) : '') || '<div class="cch-chips">' + dch + '</div>' : '<div class="cch-chips">' + dch + '</div>') + '' + (D.nsum || []).map((x) => '<div class="dd-nsum" data-ddn="' + esc(x.key) + '" hidden>' + x.html + '</div>').join('') + (D.items && D.items.some((it) => it.dg || it.dn) ? '<div class="cch-ddbox" hidden></div><div class="cch-ddtip">Tap a death to see what happened.</div>' : '') + '</details>' : '') + (A ? '<details class="cch-ab cch-abx' + (A.bad ? ' warn' : '') + '" data-k="cch-ab-a"' + (S.openSecs && S.openSecs.has('cch-ab-a') ? ' open' : '') + '><summary class="cch-al">Avoidable damage<span class="cch-abs">' + esc(coachAbSum(A, 'a')) + '</span></summary>' + (A.bars && A.bars.length ? cblBoth(coachBars(A.bars, (x) => x.amt, (x) => { const pm = cblPm(x.reps || A.reps || []), list = x.pl instanceof Map ? [...x.pl.values()] : (x.pl || []); return cblMini(list.map((q) => ({ label: cblNm(q.p), p: pm.get(q.p), st: q.st, amt: q.amt, sub: x.secs ? q.v + ' s' : plural(q.v, 'hit') })), x.st ? cblFix(x.key, x.fix) : ''); }), A.reps ? coachBars(cblAvoidP(A), (x) => x.amt, (x) => x.body) : '') : '<div class="cch-chips">' + ach + '</div>') + '' + (A.items && A.items.some((it) => it.avk || it.avn) ? '<div class="cch-avbox" hidden></div><div class="cch-ddtip">Tap a bar to see what hit them.' + '</div>' : '') + '</details>' : '') + '</div>' : '') +
     (c.kit ? coachKitHtml(c.kit).replace(/<\/div>$/, (() => { /* (Oct 23, your ask: combat potions, and Power Infusion inside it; Raid cooldowns joins as the sixth line) */
       const r0 = !c.night && S.rep && S.rep.players ? S.rep : null; if (!r0) return '</div>'; const ct = cutT(r0), ok = (t) => t == null || t <= ct + 0.05, ps = [...r0.players.values()].filter((p) => p && p.cons && p.name && (!c.name || oaBase(p.name) === oaBase(c.name))); if (!ps.length) return '</div>';
       const used = ps.filter((p) => (p.cons.combatpot || []).some((x) => ok(x.t)) || (p.role === 'healer' && (p.cons.manapot || []).some((x) => ok(x.t)))), none = ps.filter((p) => !used.includes(p));
@@ -12117,7 +12154,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
       const potsOf = (p) => (p.cons.combatpot || []).filter((x) => ok(x.t)).concat(p.role === 'healer' ? (p.cons.manapot || []).filter((x) => ok(x.t)) : []).sort((a, b) => a.t - b.t);
       const rows = ps.map((p) => { const L = potsOf(p); return { key: 'cp-' + p.name, label: String(p.name).split('-')[0], p, n: L.length, st: L.length ? '' : 'warn', v: L.length ? '×' + L.length : 'none', sub: '', L }; }).sort((a, b) => (a.n ? 1 : 0) - (b.n ? 1 : 0) || b.n - a.n || a.label.localeCompare(b.label));
       const body = coachBars(rows, (x) => Math.max(x.n, x.n ? 0 : 0.3), (x) => x.L.length ? x.L.map((q) => '<div class="cbl-ln">' + T(q.t) + ' · ' + spellIcon(q.id, q.name) + esc(q.name) + '</div>').join('') : '<div class="cbl-ln">No combat potion this pull.</div>') +
-        (c.name && !pi.length ? '' : '<p class="ckt-cp">Power Infusion: ' + (pi.length ? pi.map(([p, a]) => nmS(p) + ' ×' + a.n).join(', ') : 'nobody pressed it') + '.</p>');
+        '' /* (Power Infusion has its own row (Oct 23)) */; void pi; void nmS;
       const L1 = c.name ? potsOf(ps[0]) : null, cpSum = L1 ? (L1.length ? 'You used one at ' + L1.map((q) => T(q.t)).join(', ') : 'You didn\'t use one') : used.length + ' of ' + ps.length + ' used one';
       return '<details class="cch-ab cch-abx" data-k="cch-ab-cp"' + (S.openSecs && S.openSecs.has('cch-ab-cp') ? ' open' : '') + '><summary class="cch-al"' + (L1 ? ' data-g="' + (L1.length ? 100 : 0) + '"' : '') + '>Combat potions<span class="cch-abs">' + cpSum + '</span></summary>' + body + '</details><!--rcd-slot--></div>'; })()) : '') /* (Healthstones and potions, Defensives: a second row under Deaths and Avoidable damage (Oct 22)) */ +
     (!BRIEF && c.full ? '<details class="cch-more" data-k="' + k + '"' + (S.openSecs.has(k) ? ' open' : '') + '><summary>Read the full coaching</summary><div class="cch-full">' + c.full + '</div></details>' : '') + '</section>';
@@ -12125,7 +12162,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
       if (/^Deaths/i.test(lab)) { const dn = (D && D.you ? 1 : P0) * Math.max(1, (D && D.np) || 1); v = D ? 1 - Math.min(dn, D.onThem || 0) / dn : 1; } else if (/^Avoidable/i.test(lab)) { const w = A && A.who ? (A.who.size != null ? A.who.size : Object.keys(A.who).length) : ((A && A.items) || []).filter((it) => it.bad).length; v = 1 - Math.min(P0, w || 0) / P0; } else if (m) v = +m[1] / Math.max(1, +m[2]);
       if (v == null) return null; const pc = Math.round(100 * v), st = pc >= 100 ? 'ok' : pc >= 50 ? 'warn' : 'bad'; return { pc, st }; };
   const graded = (hh) => hh.replace(/<summary class="cch-al"(?: data-g="(\d+)")?>((?:(?!<span class="cch-abs">).)*?)<span class="cch-abs">([\s\S]*?)<\/span><\/summary>/g, (m0, dg, lab, sum) => { const nm = String(lab).replace(/<[^>]+>/g, '').trim(), g = dg != null ? { pc: +dg, st: +dg >= 100 ? 'ok' : +dg >= 50 ? 'warn' : 'bad' } : gl(nm, sum); if (!g) return m0;
-      const ic = /^Deaths/i.test(nm) ? 'inv_misc_bone_humanskull_01' : /^Avoidable/i.test(nm) ? 'ability_rogue_feint' : /^Healthstone/i.test(nm) ? 'inv_stone_04' : /^Defensive/i.test(nm) ? 'spell_holy_divineshield' : /^Combat/i.test(nm) ? 'inv_potion_93' : /^Raid cooldowns/i.test(nm) ? 'spell_holy_auramastery' : '';
+      const ic = /^Deaths/i.test(nm) ? 'inv_misc_bone_humanskull_01' : /^Avoidable/i.test(nm) ? 'ability_rogue_feint' : /^Healthstone/i.test(nm) ? 'inv_stone_04' : /^Defensive/i.test(nm) ? 'spell_holy_divineshield' : /^Combat/i.test(nm) ? 'inv_potion_93' : /^Raid cooldowns/i.test(nm) ? 'spell_holy_auramastery' : /^Power Infusion/i.test(nm) ? 'spell_holy_powerinfusion' : '';
       return '<summary class="cch-al cgl">' + (ic ? '<span class="icw cgl-i">' + svgIcon(0, nm) + '<img class="oi" data-icon="' + ic + '" alt=""></span>' : '<span></span>') + '<span class="cgl-n">' + esc(nm) + '</span><span class="cgl-b"><i class="' + g.st + '" style="width:' + Math.max(3, g.pc) + '%"></i></span><span class="cgl-p ' + g.st + '">' + g.pc + '%</span></summary><p class="cgl-d">' + sum + '</p>'; });
   return colorNames(iconSpells(graded(html)), PM).replace(/<span class="cch-pmap" data-mi="(\d+)"><\/span>/g, (m0, n) => '<span class="cch-pmap">' + (MAPS[+n] || '') + '</span>'); }
 // (the whole Debriefing tab for one pull, as the site draws it, for the PC app's recap pop-up (Oct 22): the pull opens here (the app's
