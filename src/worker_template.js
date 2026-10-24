@@ -534,7 +534,7 @@ async function runInbox(env) {
         } else if (o.op === 'beta-post' && text) {
           // (a message in #beta-testers-only: its pictures come from KV (base64), and pingRole pings that role by name. Only that
           // channel; the user asked for it, Oct 24)
-          const c = (await dc(env, '/guilds/' + GUILD + '/channels')).find((x) => x.name === 'beta-testers-only'); if (!c) continue;
+          const chName = o.channel === 'beta-testers-old' ? 'beta-testers-old' : 'beta-testers-only', c = (await dc(env, '/guilds/' + GUILD + '/channels')).find((x) => x.name === chName); if (!c) continue;
           let content = text.slice(0, 1900); const men = { parse: [] };
           if (o.pingRole) { const role = ((await dc(env, '/guilds/' + GUILD + '/roles')) || []).find((r) => r.name === String(o.pingRole)); if (role) { content = '<@&' + role.id + '> ' + content; men.roles = [role.id]; } }
           const keys = Array.isArray(o.images) ? o.images.slice(0, 6) : [];
