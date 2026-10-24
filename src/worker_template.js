@@ -531,6 +531,11 @@ async function runInbox(env) {
           const mine = o.replaceLast ? ((await dc(env, '/channels/' + ch + '/messages?limit=20').catch(() => [])) || []).find((m) => m.author && m.author.id === APP_ID) : null;
           if (mine) await dc(env, '/channels/' + ch + '/messages/' + mine.id, { method: 'PATCH', body });
           else { const m = await dc(env, '/channels/' + ch + '/messages', { method: 'POST', body }); if (all) await env.DEBRIEF_KV.put('everyone-at', String(Date.now())); if (c.type === 5 && m && m.id) await dc(env, '/channels/' + ch + '/messages/' + m.id + '/crosspost', { method: 'POST' }).catch(() => {}); }
+        } else if (o.op === 'beta-edit' && o.forumPost && text) {
+          // (the first message of a beta forum post Claudette made (its id is the post's id) gets new words)
+          const id = await env.DEBRIEF_KV.get('beta-thread-' + o.forumPost); if (!id) continue;
+          await dc(env, '/channels/' + id, { method: 'PATCH', body: { archived: false } }).catch(() => {});
+          await dc(env, '/channels/' + id + '/messages/' + id, { method: 'PATCH', body: { content: text.slice(0, 1900) } });
         } else if (o.op === 'beta-post' && text) {
           // (a message in #beta-testers-only: its pictures come from KV (base64), and pingRole pings that role by name. Only that
           // channel; the user asked for it, Oct 24)
