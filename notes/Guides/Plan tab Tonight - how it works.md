@@ -47,6 +47,18 @@ done in two taps loses nothing. A flexible boss carries from the original plan e
   Tonight.
 - Checked the ?plan link: it does open Plan on the practice link and for you on the site.
 
+## Heavy audit (Oct 24)
+Every boss on Mythic and Heroic end to end (make, open, every section, Review, Done, the note checked: boss line, names on the
+team, blocks closed), every Tonight control with page reloads, odd rosters (18, 30, no class, bench, 3, none), Back and Forward
+with real clicks, 1280 / 768 / 390 px, wording and speed: no page errors. Fixed:
+- **One note per players and difficulty** (notesSave and noteSaveText in ui.js, patched by apply-alt.js): a Heroic plan or
+  pasted note for the same players replaced the Mythic one (Nymrissa and Kith'ix, 25 on both).
+- Make it for me reuses a saved plan only for the same difficulty; its message says "these players" with Open on Tonight;
+  new Heroic plans are "… Heroic plan". Other plans lists only this difficulty's plans as matches.
+- **Each team keeps its own Who plays** (night.teams[rid]: lineups, own swaps, who's out), restored when you switch back.
+- Make the missing plans skips bosses with the wrong number playing; an empty team says so with the add row.
+- The roster editor's "Start from" row wraps on phones.
+
 ## The boss page
 - ← Tonight, the banner: the plan's name and **⇄ Other plans** (this boss's saved plans: open, delete, make a new one).
 - The ready check (ring, ticks) and the four buttons, the same names everywhere:
