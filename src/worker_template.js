@@ -205,7 +205,12 @@ ROUTES['/api/fightlog'] = ROUTES['/api/events'];
 // run, so Warcraft Logs is asked once a run at most), and the rest of the time a few new guilds' pulls from progstats.io, each kept as
 // its boss % pull by pull and the day each night started (well under 1 KB a guild). /api/pace hands a boss's list to the page, which
 // does the math and knows the nerf dates. A boss someone opens is added to the cron's list; the Coiled Altar starts on it.
-const PACE_SEED = ['3429:5'];
+/* (Oct 23, the user's ask: every boss set up the same way. All ten Mythic bosses are in the job. Samples are spread over the whole ranking,
+   sized from how many guilds killed each boss (progstats' counts): about 250 guilds for the pace chart and 50 kills for the tiles.
+   Nymrissa (3379) and Kith'ix (3513) aren't on progstats, so they get the tiles only) */
+const PACE_SEED = ['3429:5', '3492:5', '3421:5', '3420:5', '3497:5', '3455:5', '3445:5', '3470:5', '3379:5', '3513:5'];
+const PACE_KILLS = { 3492: 270, 3429: 629, 3421: 1331, 3420: 1528, 3497: 1907, 3455: 1632, 3445: 1726, 3470: 2003, 3379: 1500, 3513: 1000 }, PACE_NOPS = new Set([3379, 3513]);
+const paceStride = (e, want) => Math.max(1, Math.round((PACE_KILLS[e] || 600) / want));
 const PACE_RANK_Q = `query($e:Int!,$d:Int!,$p:Int,$pt:Int){worldData{encounter(id:$e){fightRankings(difficulty:$d,metric:speed,page:$p,partition:$pt)}}}`;
 const PACE_PART_Q = `query($e:Int!){worldData{encounter(id:$e){zone{partitions{id}}}}}`;
 const PACE_LOG_Q = 'query L($t:Int!,$e:Int!,$d:Int!){logsForEncounter(teamId:$t,encounterId:$e,difficulty:$d){startTime fights(encounterId:$e,difficulty:$d){id startTime kill bossPct}} statsForEncounter(teamId:$t,encounterId:$e,difficulty:$d){pullCount}}';
@@ -224,7 +229,7 @@ function paceRec(g, l) {
   const pc = st && st.pullCount; if (!v.length || v[v.length - 1] !== 0 || !pc || v.length < 0.9 * pc || v.length > 1.1 * pc) return null;
   return { g, v, n };
 }
-async function paceStep(env) {
+async function paceStep(env, maxK) {
   const st = (await env.DEBRIEF_KV.get('pace-st', 'json')) || { b: {} }; for (const k of PACE_SEED) if (!st.b[k]) st.b[k] = {};
   const keys = Object.keys(st.b); if (!keys.length) return; st.i = ((st.i || 0) + 1) % keys.length;
   const key = keys[st.i], B = st.b[key], [e, d] = key.split(':').map(Number); B.seen = B.seen || []; B.todo = B.todo || [];
@@ -234,15 +239,16 @@ async function paceStep(env) {
     const r = await gql(env, PACE_RANK_Q, pt ? { e, d, p: B.pg.p, pt } : { e, d, p: B.pg.p }); let R = r && r.worldData && r.worldData.encounter && r.worldData.encounter.fightRankings;
     if (typeof R === 'string') R = JSON.parse(R); R = R || {};
     if (B.pg.p === 1) B.rk = 0; if (B.pg.i === 0 && B.pg.p === 1) B.rtodo = []; B.rseen = B.rseen || []; B.rtodo = B.rtodo || [];
-    for (const t of R.rankings || []) { const g = t.guild && t.guild.id; if (g && !B.seen.includes(g) && !B.todo.includes(g)) B.todo.push(g);
+    const gS = e === 3429 ? 1 : paceStride(e, 250), rS = e === 3429 ? 4 : paceStride(e, 50); B.gk = B.pg.p === 1 && B.pg.i === 0 ? 0 : B.gk || 0;
+    for (const t of R.rankings || []) { const g = t.guild && t.guild.id; B.gk++; if (g && !PACE_NOPS.has(e) && B.gk % gS === 0 && !B.seen.includes(g) && !B.todo.includes(g)) B.todo.push(g);
       /* (the rate tiles' sample: every 4th kill down the rankings, each patch's; a kill is read once) */
-      B.rk = (B.rk || 0) + 1; const c = t.report && t.report.code, f = t.report && t.report.fightID, id = c + ':' + f; if (B.pg.i === B.parts.length - 1 /* (the current patch only: an older one is all before the nerfs) */ && B.rk % 4 === 1 && c && f && !B.rseen.includes(id) && !B.rtodo.some((x) => x[0] === c && x[1] === f)) B.rtodo.push([c, f, t.startTime || (t.report && t.report.startTime) || 0]); }
+      B.rk = (B.rk || 0) + 1; const c = t.report && t.report.code, f = t.report && t.report.fightID, id = c + ':' + f; if (B.pg.i === B.parts.length - 1 /* (the current patch only: an older one is all before the nerfs) */ && B.rk % rS === 1 % rS && c && f && !B.rseen.includes(id) && !B.rtodo.some((x) => x[0] === c && x[1] === f)) B.rtodo.push([c, f, t.startTime || (t.report && t.report.startTime) || 0]); }
     if (R.hasMorePages && B.pg.p < 40) B.pg.p++; else if (B.pg.i + 1 < B.parts.length) B.pg = { i: B.pg.i + 1, p: 1 }; else { delete B.pg; B.at = Date.now(); }
   } else if (B.todo.length || (B.rtodo && B.rtodo.length)) { // (a few guilds a run, from progstats, and one kill's phase totals)
-    if (B.rtodo && B.rtodo.length) { const [c, f, at] = B.rtodo.shift(); B.rseen = B.rseen || []; B.rseen.push(c + ':' + f);
+    for (let ki = 0; ki < (maxK || 2) && B.rtodo && B.rtodo.length; ki++) { const [c, f, at] = B.rtodo.shift(); /* (two kills a run) */ B.rseen = B.rseen || []; B.rseen.push(c + ':' + f);
       try { const o = await rateOfKill(env, c, f); if (o.kill && o.ph.length) { const rr = (await env.DEBRIEF_KV.get('rate-raw:' + key, 'json')) || []; rr.push({ c, f, at: o.at || at || 0, h: o.heal, ph: o.ph.map((p) => [p.dps, p.hps, p.dtps, p.s, p.e]) }); await env.DEBRIEF_KV.put('rate-raw:' + key, JSON.stringify(rr)); } } catch (err) { console.warn('Rates:', c, f, err.message); } }
     const raw = B.todo.length ? (await env.DEBRIEF_KV.get('pace-raw:' + key, 'json')) || [] : null; let add = 0;
-    for (const g of (raw ? B.todo.splice(0, 5) : [])) { B.seen.push(g);
+    for (const g of (raw ? B.todo.splice(0, 15) : [])) { B.seen.push(g); /* (15 guilds a run: progstats only) */
       try { const rec = paceRec(g, await pacePS(PACE_LOG_Q, { t: g, e, d })); if (rec) { raw.push(rec); add++; } } catch (err) { console.warn('Pace:', g, err.message); } }
     if (add && raw) await env.DEBRIEF_KV.put('pace-raw:' + key, JSON.stringify(raw));
   } else return { key, idle: true }; // (nothing to do for this boss till tomorrow's rankings)
@@ -1158,7 +1164,7 @@ export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url), route = ROUTES[url.pathname];
     if (url.pathname === '/api/ratetest' && /-debrief./.test(url.hostname)) { try { return json(await rateOfKill(env, url.searchParams.get('code'), parseInt(url.searchParams.get('fight'), 10))); } catch (e) { return json({ error: String(e && e.message || e) }, 500); } } /* (test copies only (Oct 23)) */
-    if (url.pathname === '/api/pacestep' && /-debrief./.test(url.hostname)) { try { return json(await paceStep(env)); } catch (e) { return json({ error: String(e && e.message || e) }, 500); } } /* (test copies only: one cron step on demand, to check the pace job (Oct 23)) */
+    if (url.pathname === '/api/pacestep' && /-debrief./.test(url.hostname)) { try { return json(await paceStep(env, 1)); } catch (e) { return json({ error: String(e && e.message || e) }, 500); } } /* (test copies only: one cron step on demand, to check the pace job (Oct 23)) */
     if (url.hostname === HOME_HOST && url.pathname === '/__move' && req.method === 'POST') return moveIn(req, env);
     if ((url.hostname === 'www.' + HOME_HOST || url.origin === OLD_SITE) && (req.method === 'GET' || req.method === 'HEAD') && !/^\/(?:api|wcl|auth)\//.test(url.pathname)) return moveHome(req, url);
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
