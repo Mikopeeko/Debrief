@@ -381,9 +381,10 @@ function cols2(b, chrome) {
     if (COLS === 2) g.style.width = Math.floor((g.clientWidth - 22) / 2) + 'px'; /* (measured at a column's width) */
     const top0 = L.getBoundingClientRect().top, total = L.getBoundingClientRect().height, kids = [...L.children];
     const above = g.getBoundingClientRect().top - b.getBoundingClientRect().top + b.scrollTop;
-    const cap = (screen.availHeight || 900) * 0.85 - chrome - above - 16;
+    /* (Detailed always (Oct 24, the user: "the detailed setup should always just be 2 columns"); the other styles past about two-thirds of the screen) */
+    const LKc = (D && D.lk) || {}, deep2 = (LKc.detailed || LKc.preset === 'detailed') && LKc.preset !== 'simple', cap = (screen.availHeight || 900) * 0.67 - chrome - above - 16;
     let best = -1, bh = total;
-    if (!(D && D.lk && D.lk.twoCol === false) && total > cap && (screen.availWidth || 1600) >= 900)
+    if (LKc.twoCol !== false && (deep2 ? total > 360 : total > cap) && (screen.availWidth || 1600) >= 900)
       for (let i = 1; i < kids.length; i++) { if (!kids[i].classList.contains('kc')) continue; const y = kids[i].getBoundingClientRect().top - top0, hh = Math.max(y, total - y); if (y > 60 && hh < bh) { best = i; bh = hh; } }
     g.style.width = '';
     if (best > 0) { const R = document.createElement('div'); R.className = 'kR'; for (const k of kids.slice(best)) R.appendChild(k); g.appendChild(R); g.classList.remove('one'); g.classList.add('two'); want = 2; }

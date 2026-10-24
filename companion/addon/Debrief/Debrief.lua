@@ -1280,7 +1280,7 @@ local function renderOnce()
   -- (never taller than the screen: the rest scrolls, and the footer says so)
   local room = math.max(320, ((UIParent and UIParent.GetHeight and UIParent:GetHeight()) or 768) / math.max(0.5, (card.GetScale and card:GetScale()) or 1) - 60)
   local vh = math.max(10, math.min(y, room - TOPY - 42))
-  T.total, T.avail = y, room - TOPY - 42
+  T.total, T.avail, T.room = y, room - TOPY - 42, room
   scroller:SetSize(W - PAD * 2, vh)
   scroller:SetVerticalScroll(math.min((scroller:GetVerticalScroll() or 0), math.max(0, y - vh)))
   foot:SetText(y > vh + 4 and "Scroll for more  ·  /recap opens this again" or "/recap opens this again  ·  /db settings")
@@ -1289,13 +1289,15 @@ local function renderOnce()
   logBtn:ClearAllPoints(); logBtn:SetPoint("TOPRIGHT", card, "TOPRIGHT", -PAD, -(TOPY + vh + 15)); Debrief_LogButton()
   card:SetHeight(TOPY + vh + 42)
 end
--- (the card in two columns when it's longer than the screen (Oct 24): drawn once as before; when it would scroll, drawn again with the
--- right column starting at the section edge that leaves the two sides closest in height, like the big window's two columns)
+-- (the card in two columns (Oct 24): drawn once as before; then drawn again with the right column starting at the section edge that
+-- leaves the two sides closest in height, like the big window's two columns. Detailed always (the user: "the detailed setup should always
+-- just be 2 columns"); the other styles once the card is taller than about two-thirds of the screen)
 function render()
   local T = UI.two
   T.cols, T.brk, T.cwc = 1, 0, nil
   renderOnce()
-  if DB.twoCol ~= false and T.total and T.total > T.avail + 4 then
+  local tall = T.total and ((DB.detailed and not DB.compact and T.total > 360) or (TOPY + T.total + 42 > (T.room or 768) * 0.67))
+  if DB.twoCol ~= false and tall then
     local cw1 = (WIDTHS[DB.width or "normal"] or 400) - PAD * 2
     local sw = ((UIParent and UIParent.GetWidth and UIParent:GetWidth()) or 1365) / math.max(0.5, (card.GetScale and card:GetScale()) or 1)
     local cwc = math.min(cw1, 452, math.floor((sw - 60 - PAD * 2 - 16) / 2))
@@ -1931,7 +1933,7 @@ local function buildOptions()
       local val = box:CreateFontString(nil, "OVERLAY"); setFont(val, "bold", 13); val:SetWidth(24); val:SetJustifyH("CENTER"); val:SetPoint("RIGHT", plus, "LEFT", 0, 0); val:SetTextColor(rgb(COL.text))
       local minus = txtBtn("–"); minus:SetParent(box); minus:ClearAllPoints(); minus:SetPoint("RIGHT", val, "LEFT", 0, 0)
       local function show() val:SetText(tostring(get())) end
-      local function go(d) local v = math.max(minV, math.min(maxV, get() + d)); if v ~= get() then set(v); custom(); show(); applySettings() end end
+      local function go(d) local v = math.max(minV, math.min(maxV, get() + d)); if v ~= get() then if v > get() then DB.compact = false end; set(v); custom(); show(); applySettings() end end
       minus:SetScript("OnClick", function() go(-1) end); plus:SetScript("OnClick", function() go(1) end)
       box:EnableMouse(true)
       box:SetScript("OnEnter", function() GameTooltip:SetOwner(box, "ANCHOR_RIGHT"); GameTooltip:SetText(label, 1, 1, 1); GameTooltip:AddLine(sub .. " Up to " .. maxV .. ".", 0.75, 0.78, 0.82, true); GameTooltip:Show() end)
@@ -2027,7 +2029,7 @@ local function buildOptions()
         rounded(b.fillT, "fill", 5, on and EM or COL.raised, on and 0.12 or 0.5); rounded(b.lineT, "line", 5, on and EM or COL.line, on and 0.6 or 1)
         b.t:SetTextColor(rgb(on and COL.text or COL.faint)); b.ck:SetShown(on)
       end
-      b:SetScript("OnClick", function() it[3](not it[2]()); if not it[4] then custom() end; show(); applySettings() end)
+      b:SetScript("OnClick", function() local v = not it[2](); it[3](v); if v then DB.compact = false end; if not it[4] then custom() end; show(); applySettings() end)
       if it[5] then b:SetScript("OnEnter", function() GameTooltip:SetOwner(b, "ANCHOR_TOP"); GameTooltip:SetText(it[1], 1, 1, 1); GameTooltip:AddLine(it[5], 0.75, 0.78, 0.82, true); GameTooltip:Show() end); b:SetScript("OnLeave", function() GameTooltip:Hide() end) end
       refreshers[#refreshers + 1] = show; show()
     end
@@ -2046,7 +2048,7 @@ local function buildOptions()
         local on = it[2]()
         rounded(b.bx, "line", 3, on and EM or COL.line2, 1); b.ck:SetShown(on); b.t:SetTextColor(rgb(on and COL.text or COL.faint))
       end
-      b:SetScript("OnClick", function() it[3](not it[2]()); if not it[4] then custom() end; show(); applySettings() end)
+      b:SetScript("OnClick", function() local v = not it[2](); it[3](v); if v then DB.compact = false end; if not it[4] then custom() end; show(); applySettings() end) -- (Simple's short card would hide what you just ticked (Oct 24))
       b:SetScript("OnEnter", function() b.t:SetTextColor(rgb(COL.gold)); if it[5] then GameTooltip:SetOwner(b, "ANCHOR_TOP"); GameTooltip:SetText(it[1], 1, 1, 1); GameTooltip:AddLine(it[5], 0.75, 0.78, 0.82, true); GameTooltip:Show() end end)
       b:SetScript("OnLeave", function() show(); GameTooltip:Hide() end)
       refreshers[#refreshers + 1] = show; show()
