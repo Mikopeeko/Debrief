@@ -309,6 +309,9 @@ const CURVE_BOSSES = [3429, 3492, 3421, 3420, 3497, 3455, 3445, 3470, 3379, 3513
    by the clock (no bookkeeping write), at most one kill saved: about 48 writes a day at most) */
 async function curveCron(env) { const slot = Math.floor(Date.now() / 600000); if (slot % 3) return { idle: true };
   const e = CURVE_BOSSES[Math.floor(slot / 3) % CURVE_BOSSES.length]; return curveStepFor(env, e + ':5', 12); }
+/* (the guild behind one top kill, for the chart's label (Oct 24)) */
+ROUTES['/api/kguild'] = { age: 86400, v: (p) => { const c = p.get('c') || ''; return /^[A-Za-z0-9]{8,24}$/.test(c) ? { c } : null; },
+  run: async (env, v) => { const d = await gql(env, 'query($c:String!){reportData{report(code:$c){guild{name server{name}} owner{name}}}}', { c: v.c }), R = (d && d.reportData && d.reportData.report) || {}; return { c: v.c, name: (R.guild && R.guild.name) || (R.owner && R.owner.name) || '' }; } };
 ROUTES['/api/curves'] = { age: 1800, v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10); return e > 0 && e < 1e6 && [3, 4, 5].includes(d) ? { e, d } : null; },
   run: async (env, v) => ({ key: v.e + ':' + v.d, recs: (await env.DEBRIEF_KV.get('curve-raw:' + v.e + ':' + v.d, 'json')) || [] }) };
 ROUTES['/api/rates'] = { age: 1800, v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10); return e > 0 && e < 1e6 && [3, 4, 5].includes(d) ? { e, d } : null; },

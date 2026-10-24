@@ -13694,6 +13694,7 @@ async function guildProg(creds, v) {
 
 // (other guilds' pulls on a boss for the pace chart, kept up to date by the site (Oct 23); the desktop app has the built-in snapshot only)
 async function paceRecs(v) { if (!HOSTED) return null; return api('/api/pace?e=' + v.e + '&d=' + v.d); }
+async function killGuild(code) { if (!HOSTED) return null; return api('/api/kguild?c=' + code); }
 async function curveRecs(v) { if (!HOSTED) return null; return api('/api/curves?e=' + v.e + '&d=' + v.d); } /* (the top kills' curves for the two-line charts (Oct 23)) */
 async function rateRecs(v) { if (!HOSTED) return null; return api('/api/rates?e=' + v.e + '&d=' + v.d); }
 
@@ -14078,7 +14079,7 @@ function* translateSteps(item, events) {
   return out;
 }
 
-root.WCL = { HOSTED, paceRecs, rateRecs, curveRecs, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
+root.WCL = { HOSTED, paceRecs, rateRecs, curveRecs, killGuild, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -25770,8 +25771,9 @@ function rateArea(series, dur, col, lab, marks, key, ref, hiGood, refA) { void m
   /* (Oct 23, your ask "as readable as you can": a 9-second average so the shape shows, not every spike; each phase a band with its name and
      a chip that says how we did against the top kills there (green better, red worse); one dashed line for the top kills, named at its end) */
   const n = Math.max(2, Math.ceil(dur)), W = 720, H = 170, TOP = 34, sm = [];
-  for (let i = 0; i < n; i++) { let s = 0, k = 0; for (let j = Math.max(0, i - 4); j <= Math.min(n - 1, i + 4); j++) { s += series[j] || 0; k++; } sm.push(s / k); }
-  const ra = refA && refA.a ? refA.a.map((_, i) => { let s2 = 0, k2 = 0; for (let j2 = Math.max(0, i - 4); j2 <= Math.min(refA.a.length - 1, i + 4); j2++) if (refA.a[j2] != null) { s2 += refA.a[j2]; k2++; } return k2 && refA.a[i] != null ? s2 / k2 : null; }) : null; /* (the top guilds' own line, smoothed like ours) */
+  /* (Oct 24: both lines smoothed the same: Warcraft Logs' graph is already averaged over a few seconds, so with a top kill ours takes a 15-second window and theirs none extra) */ const SW = refA && refA.a ? 7 : 4, RW = refA && refA.one ? 1 : 4;
+  for (let i = 0; i < n; i++) { let s = 0, k = 0; for (let j = Math.max(0, i - SW); j <= Math.min(n - 1, i + SW); j++) { s += series[j] || 0; k++; } sm.push(s / k); }
+  const ra = refA && refA.a ? refA.a.map((_, i) => { let s2 = 0, k2 = 0; for (let j2 = Math.max(0, i - RW); j2 <= Math.min(refA.a.length - 1, i + RW); j2++) if (refA.a[j2] != null) { s2 += refA.a[j2]; k2++; } return k2 && refA.a[i] != null ? s2 / k2 : null; }) : null; /* (the top guilds' own line, smoothed like ours) */
   const R = (ref || []).filter((q) => q.v), mx = Math.max(1, ...sm, ...R.map((q) => q.v), ...(ra || []).filter((v) => v != null)) * 1.05, x = (i) => (W * Math.max(0, Math.min(n - 1, i)) / (n - 1)).toFixed(1), y = (v) => (H - (H - TOP) * v / mx).toFixed(1);
   let g = '';
   R.forEach((q, k) => { const x0 = +x(q.s), x1 = +x(q.e); if (k % 2) g += '<rect x="' + x0 + '" y="0" width="' + (x1 - x0).toFixed(1) + '" height="' + H + '" class="rta-band"/>'; if (k) g += '<line x1="' + x0 + '" x2="' + x0 + '" y1="0" y2="' + H + '" class="rta-pl"/>'; });
@@ -25793,7 +25795,7 @@ function rateArea(series, dur, col, lab, marks, key, ref, hiGood, refA) { void m
       for (let i = 0; i < n - 1; i++) { const a = rAt(i), b = rAt(i + 1); if (a == null || b == null) continue; const worse = hiGood ? sm[i] < a : sm[i] > a; o += '<path d="M' + x(i) + ' ' + y(a) + ' L' + x(i) + ' ' + y(sm[i]) + ' L' + x(i + 1) + ' ' + y(sm[i + 1]) + ' L' + x(i + 1) + ' ' + y(b) + ' Z" class="' + (worse ? 'rta-gw' : 'rta-gb') + '"/>'; }
       return '<path d="' + d + '" fill="' + col + '" fill-opacity=".12"/>' + o; })() : '<path d="' + d + '" fill="' + col + '" fill-opacity=".75"/>') + '<path d="' + sm.map((v, i) => (i ? 'L' : 'M') + x(i) + ' ' + y(v)).join(' ') + '" class="rta-ln" stroke="' + col + '"/>' + rf +
     (ra ? '' : R.map((q) => '<text x="' + (+x(q.e) - 6) + '" y="' + (+y(q.v) - 6) + '" class="rta-rl">Top guilds: ' + C(q.v) + '</text>').join('')) /* (each phase's top-guild value on its line (your ask, Oct 23)) */ + (lastR ? '' : '') + '<line class="rta-hl" x1="0" x2="0" y1="0" y2="' + H + '" visibility="hidden"/></svg><div class="rta-tip" hidden></div></div>' +
-    (R.length ? '<p class="rta-key"><span><i class="rta-k1" style="background:' + col + ';color:' + col + '"></i>Us</span><span><i class="rta-k2"></i>' + (ra ? 'Top guilds (average of ' + refA.n + ' kills)' : 'Top guilds\' average in that phase') + '</span><span><i class="rta-k1 rta-kw"></i>Worse than top guilds</span><span><i class="rta-k1 rta-kb"></i>Better</span></p>' : '') + '</div>'; }
+    (R.length ? '<p class="rta-key"><span><i class="rta-k1" style="background:' + col + ';color:' + col + '"></i>Us</span><span><i class="rta-k2"></i>' + (ra ? (refA.one ? 'Typical top kill' + (refA.guild ? ': ' + esc(refA.guild) : '') + ' (the middle of ' + refA.n + ')' : 'Top guilds (average of ' + refA.n + ' kills)') : 'Top guilds\' average in that phase') + '</span><span><i class="rta-k1 rta-kw"></i>Worse than top guilds</span><span><i class="rta-k1 rta-kb"></i>Better</span></p>' : '') + '</div>'; }
 /* (the hover: the second under the pointer, its amount, and the three players with the most in those 5 seconds) */
 function rtaHover(e) { const s = e.target && e.target.closest ? e.target.closest('svg.rta-s') : null, pv = rtaHover.s;
   if (pv && pv !== s) { pv.querySelector('.rta-hl').setAttribute('visibility', 'hidden'); const tp = pv.parentNode.querySelector('.rta-tip'); if (tp) tp.hidden = true; rtaHover.s = null; }
@@ -25808,19 +25810,24 @@ if (typeof document !== 'undefined') { document.addEventListener('pointermove', 
 /* (Oct 23, your ask: a two-line chart. The top kills' damage, healing and damage taken over the fight (Warcraft Logs' graphs, a point every
    ~2.5 s), lined up phase by phase with ours: N seconds into our P2 is compared with N seconds into their P2; averaged over the kills with
    our healer count when there are 5 or more; Warcraft Logs' counting corrected the same way as the tiles (RATE_CAL)) */
-const CURVE_LIVE = new Map();
+const CURVE_LIVE = new Map(), KGUILD = new Map();
 function curveRef(r, k, phases, n) { const key = r.item.boss + '|' + r.item.diffId, D = { 16: 5, 15: 4, 14: 3 }[r.item.diffId]; let L = CURVE_LIVE.get(key);
   if (L === undefined && D && WCL.curveRecs && r.item.id > 0) { CURVE_LIVE.set(key, null); Promise.resolve(WCL.curveRecs({ e: r.item.id, d: D })).then((j) => { CURVE_LIVE.set(key, (j && j.recs) || []); if (S.tab === 'audit' && S.item && S.item.boss === r.item.boss && (j && j.recs || []).length) select(S.item); }).catch(() => {}); return null; }
   if (!L || !L.length || !phases.length) return null; let hn = null; try { hn = healersOf(r); } catch (e) { hn = null; }
   const same = L.filter((x) => x.h === hn), K = (same.length >= 5 ? same : L).filter((x) => (x.ph || []).length >= phases.length), j = { dps: 0, hps: 1, dtps: 2 }[k], cal = RATE_CAL[key] || [];
-  if (K.length < 3) return null; const out = [];
+  if (K.length < 3) return null; const per = K.map(() => []); const out = [];
   for (let i = 0; i < n; i++) { const pi = phases.findIndex((p) => i >= p.start && i < p.end); if (pi < 0) { out.push(null); continue; } const into = i - phases[pi].start, c = (cal[pi] || RATE_CAL_DEF)[j];
     /* (Oct 24, your call: lined up by how far through the phase, stretched to fit, so the line has no gaps when a phase is longer or shorter
        than theirs; the last phase of a wipe stays by seconds, since we never reached its end) */
     const P0 = phases[pi], full = pi < phases.length - 1 || !!r.item.kill, frac = full ? into / Math.max(1, P0.end - P0.start) : null;
-    let s = 0, m = 0; for (const x of K) { const ph = x.ph[pi], t = frac != null ? ph[0] + frac * (ph[1] - ph[0]) : ph[0] + into; if (t > ph[1]) continue; const v = (x[k] || [])[Math.floor(t * 1000 / (x.step || 1000))]; if (v != null) { s += v; m++; } }
+    let s = 0, m = 0; for (const [xi, x] of K.entries()) { const ph = x.ph[pi], t = frac != null ? ph[0] + frac * (ph[1] - ph[0]) : ph[0] + into; if (t > ph[1]) { per[xi][i] = null; continue; } const v = (x[k] || [])[Math.floor(t * 1000 / (x.step || 1000))]; per[xi][i] = v == null ? null : v * c; if (v != null) { s += v; m++; } }
     out.push(m >= 2 ? s / m * c : null); }
-  return { a: out, n: K.length }; }
+  /* (Oct 24, your call: one real kill, not the average, so its spikes show like ours: the kill in the middle by its average over our pull) */
+  const avgOf = (a) => { let s2 = 0, k2 = 0; a.forEach((v) => { if (v != null) { s2 += v; k2++; } }); return k2 ? s2 / k2 : 0; };
+  const order = K.map((x, xi) => ({ x, a: per[xi], v: avgOf(per[xi]) })).filter((q) => q.a.some((v) => v != null)).sort((p, q) => p.v - q.v), mid = order[Math.floor((order.length - 1) / 2)];
+  if (!mid) return { a: out, n: K.length }; const gk = mid.x.c; let gn = KGUILD.get(gk);
+  if (gn === undefined && WCL.killGuild) { KGUILD.set(gk, null); Promise.resolve(WCL.killGuild(gk)).then((j) => { KGUILD.set(gk, (j && j.name) || ''); if (S.tab === 'audit' && S.item) select(S.item); }).catch(() => {}); }
+  return { a: mid.a, n: K.length, one: true, guild: gn || '' }; }
 /* (Oct 23, your idea: at the very bottom, the top 5 in damage done, healing and damage taken, like the Graphs tab's meters, on one pull and
    on All pulls (added up over the night's pulls); "See everyone" opens that meter on Graphs) */
 function oaMeters(v, out) { if (!out || out.querySelector('.oam')) return; const r = S.rep; if (!r) return; const night = !!v.querySelector('.nmc');

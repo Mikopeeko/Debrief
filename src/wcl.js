@@ -218,6 +218,7 @@ async function guildProg(creds, v) {
 
 // (other guilds' pulls on a boss for the pace chart, kept up to date by the site (Oct 23); the desktop app has the built-in snapshot only)
 async function paceRecs(v) { if (!HOSTED) return null; return api('/api/pace?e=' + v.e + '&d=' + v.d); }
+async function killGuild(code) { if (!HOSTED) return null; return api('/api/kguild?c=' + code); }
 async function curveRecs(v) { if (!HOSTED) return null; return api('/api/curves?e=' + v.e + '&d=' + v.d); } /* (the top kills' curves for the two-line charts (Oct 23)) */
 async function rateRecs(v) { if (!HOSTED) return null; return api('/api/rates?e=' + v.e + '&d=' + v.d); }
 
@@ -602,6 +603,6 @@ function* translateSteps(item, events) {
   return out;
 }
 
-root.WCL = { HOSTED, paceRecs, rateRecs, curveRecs, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
+root.WCL = { HOSTED, paceRecs, rateRecs, curveRecs, killGuild, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);
