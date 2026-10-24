@@ -1759,6 +1759,7 @@ const PATCH_NOTES = [
   { d: '2026-10-24', h: [
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
+    'Debrief Companion: the pop-up after each pull now shows the same card as /recap, your view and the raid view side by side, and it fits scaled screens like 4K. In game, your Rotation section shows your score, each fix next to the top players, a square for every moment, and what you did right.',
     'Graphs: Healing + prevented now counts Devotion Aura for the paladin whose aura it was, and each player\'s own versatility, armor and avoidance, so every bit of damage stopped counts once, for whoever stopped it.',
     'Debriefing: the healing cooldowns from your note show once, in the Note cooldowns check, instead of again under Whole fight.',
     'Debriefing and Plan: point at (or tap) any button or tile for a short tooltip saying what it does.',
@@ -12739,7 +12740,7 @@ function coachGame(r, name) {
   out.deaths = !D ? null : { line: tx(D.line || ''), note: tx(D.note || ''), items: (D.items || []).concat(D.rest || []).slice(0, 10).map((it) => {
     let d = null; if (it.dg) { const [g, tt] = String(it.dg).split('@'); d = (r.deaths || []).find((y) => y.guid === g && y.t.toFixed(2) === tt); }
     // (why they died in one sentence, then what to do next time, like the site's death card; no health numbers (Oct 22))
-    let st = ''; try { const tg = d && deathTag(null, d); if (tg) { const v = deathVerdict(r, d), p0 = String(tg.p || ''), w0 = story(deathBox(tg, d), 900).split(' · ')[0], why = p0 && w0.startsWith(p0) ? w0.slice(p0.length).trim() : w0; /* (no badge, Oct 22) */ st = cClip(why + (v && v.fix ? ' Next time: ' + v.fix : ''), 260); } } catch (e) { st = ''; }
+    let st = ''; try { const tg = d && deathTag(null, d); if (tg) { const v = deathVerdict(r, d), p0 = String(tg.p || ''), w0 = story(deathBox(tg, d), 900).split(' · ')[0], why = p0 && w0.startsWith(p0) ? w0.slice(p0.length).trim() : w0; /* (no badge, Oct 22) */ const why2 = String(why).replace(/[\s,;:·]+$/, '').replace(/([^.!?])$/, '$1.'); st = cClip(why2 + (v && v.fix ? ' Next time: ' + v.fix : ''), 260); /* (no stray comma before the full stop, Oct 24) */ } } catch (e) { st = ''; }
     return { t: it.t || '', who: it.who || '', cls: cls(it.who), ab: tx(it.ab || ''), k: it.k || 'n', word: tx(it.word || ''), id: d && d.abilityId ? String(d.abilityId) : sid(it.ab), story: st }; }) };
   out.avoid = !A ? null : { line: tx(A.line || ''), items: (A.items || []).concat(A.rest || []).slice(0, 8).map((it) => {
     let st = ''; if (it.avk) { try { const i = String(it.avk).lastIndexOf('|'), k = String(it.avk).slice(0, i), p = String(it.avk).slice(i + 1);
@@ -18133,7 +18134,7 @@ function hpalChecks(reps, name, one) {
       tiles: [{ k: 'mk', l: 'Mana at the kill', v: kl2.length ? kl2[kl2.length - 1].mana : null, f: P1, b: 'lo' }], mana: one && rows[0] ? { pts: rows[0].mnL || [], end: rows[0].len } : null },
   ] };
   sumO.addFirst = ['Before the pull']; sumO.addAuto = ['Casting', 'Your priority', 'Beacon of Virtue', wingN, 'Your stats']; sumO.dropK = ['abc'];
-  return { score: pg.score, checks: pg.checks, talents, html: pg.html, wait, sum: sumO };
+  return { score: pg.score, checks: pg.checks, top: pg.top, talents, html: pg.html, wait, sum: sumO };
 }
 
 const s1 = (rows, k) => rows.reduce((v, s) => v + (s[k] || 0), 0);
@@ -19079,7 +19080,7 @@ function specPage(o) {
   chN = 0; const ckTail = (glance ? chSec(o.tl ? 'Your pull at a glance' : 'Pull by pull', glance, [], o.tl ? 'every button you pressed, over the pull' : 'every pull, side by side') : '') + '';
   let fix = ''; if (SPC_DRAW) try { fix = spcCoach({ fix: true, checks, focus, good, TOPB, score, outR, topOut, UN, one, kill: !!it.kill, top: o.top, numV, LOWB, WT, reps: per.map((x) => x.r), name: P0.name }).replace(/\s*\((?:both|your) guides?[^)]*\)|\s*\([^)]*\b(?:Wowhead|Icy Veins)\b[^)]*\)/gi, ''); } catch (e) { fix = ''; }
   let coach = ''; if (SPC_DRAW && false) try { coach = spcCoach({ checks, focus, good, TOPB, score, outR, topOut, UN, one, kill: !!it.kill, top: o.top, numV, LOWB, WT, reps: per.map((x) => x.r), name: P0.name }).replace(/\s*\((?:both|your) guides?[^)]*\)|\s*\([^)]*\b(?:Wowhead|Icy Veins)\b[^)]*\)/gi, ''); } catch (e) { coach = ''; }
-  return { score, checks, html: hero + build + checklist + (fix || ckNums ? '<div class="rck-cmp">' + fix + ckNums + '</div>' : '') + (gx ? '<section class="rck-gx"><h3 class="rck-h">Gear and extras <span class="sub">' + esc(SPC_CHS['Gear and extras'] || '') + '</span></h3>' + gx + '</section>' : '') + ckTail + '<p class="sub spc-src">' + esc(o.src || '') + '</p>' };
+  return { score, checks, top: TOPB ? Object.fromEntries(checks.filter((c) => ckTop(c)).map((c) => [c.k, ckTop(c)])) : null /* (for the in-game card (Oct 24)) */, html: hero + build + checklist + (fix || ckNums ? '<div class="rck-cmp">' + fix + ckNums + '</div>' : '') + (gx ? '<section class="rck-gx"><h3 class="rck-h">Gear and extras <span class="sub">' + esc(SPC_CHS['Gear and extras'] || '') + '</span></h3>' + gx + '</section>' : '') + ckTail + '<p class="sub spc-src">' + esc(o.src || '') + '</p>' };
 }
 // (the coach's note (your call, Oct 22): right under the header, what went right and what went wrong the way a world-first raid leader
 // would say it, each problem with how to fix it, and one thing to focus on next pull. Short first, so it fits a phone screen; "Read the
@@ -19885,7 +19886,7 @@ function rdruChecks(reps, name, one) {
   const pg = specPage({ per, rows, groups, one, P0, heroN, VIZ, TAL, keyN, talents, LAYOUT, LG, LANE, WT, MERGE, TOPB, TIPS: RDRU_TIPS, TOPP: new Set(['apl', 'mast', 'abc', 'lb', 'hots', 'sm', 'sms', 'ab', 'wg', 'tq', 'cv', 'mana', 'rr', 'rjb', 'rjo', 'wgd', 'lbe']), top: 'Restoration Druids', tl, tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use, or a time Lifebloom was down.', pullT,
     src: 'Built with help from the Wowhead, Icy Veins, Questionably Epic and WoWAnalyzer guides for Restoration Druid, and from what your talents do.', ringTip: 'Each check counts as much as it matters. Lifebloom and Swiftmend count three times as much as most, and Ironbark counts half. A clean check counts in full, and a minor one counts half.',
     secIc: { 'Your cooldowns over the pull': 'Tranquility', 'Pull by pull': 'Lifebloom' } });
-  return { score: pg.score, checks: pg.checks, talents, html: pg.html, wait: sum((s) => s.wait) };
+  return { score: pg.score, checks: pg.checks, top: pg.top, talents, html: pg.html, wait: sum((s) => s.wait) };
 }
 const andJ = (l) => { const x = l.filter(Boolean); return x.length ? ' (' + andL(x) + ')' : ''; };
 // (a spell's name as the game writes it, from the log's lower case: "rejuvenation (germination)" -> "Rejuvenation (Germination)")
@@ -20265,7 +20266,7 @@ function pevkChecks(reps, name, one) {
   if (SH.keys.pre.length) LAYOUT.unshift(['Start of the pull', [['Before the pull', SH.keys.pre]]]); if (SH.keys.stats.length) LAYOUT.push(['Stats', [['Your stats', SH.keys.stats]]]);
   const pg = specPage({ per, rows, groups, one, P0, heroN, tl, VIZ, LAYOUT, tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use.', TAL, keyN, talents, LG, LANE, WT, MERGE, TOPB, TIPS: PEVK_TIPS, TOPP: new Set(['abc', 'apl', 'ta', 'db', 'dbr', 'ess', 'ecu', 'mana']), top: 'Preservation Evokers', pullT,
     src: 'Built with help from the Wowhead, Icy Veins and WoWAnalyzer guides for Preservation Evoker, and from what your talents do.', ringTip: 'Each check counts as much as it matters. Temporal Anomaly, Dream Breath and Essence Burst count three times as much as most. A clean check counts in full, and a minor one counts half.', secIc: { 'Your pull at a glance': 'Stasis', 'Pull by pull': 'Echo' } });
-  return { score: pg.score, checks: pg.checks, talents, html: pg.html, wait: sum((s) => s.wait) };
+  return { score: pg.score, checks: pg.checks, top: pg.top, talents, html: pg.html, wait: sum((s) => s.wait) };
 }
 
 // one pull's cooldowns on its time line: Stasis from storing to release, Inner Flame, Merithra's Blessing and Essence Burst held as bars; Tip the Scales,
@@ -20515,7 +20516,7 @@ function pdemChecks(reps, name, one) {
   const tyX = rows.flatMap((s) => s.ty || []).map((q) => q.x).filter((v) => v != null), tyI = rows.reduce((v, s) => v + (s.tyIn || 0), 0), tyL = rows.reduce((v, s) => v + (s.tyInL || 0), 0), tyA = rows.reduce((v, s) => v + (s.allD || 0), 0), tyAL = rows.reduce((v, s) => v + (s.allL || 0), 0), burst = tyX.length ? { x: tyX.reduce((v, y) => v + y, 0) / tyX.length, n: tyX.length, name: 'Summon Demonic Tyrant', dps: tyL ? tyI / tyL : null, out: tyAL - tyL > 0 ? (tyA - tyI) / (tyAL - tyL) : null } : null;
   const pg = specPage({ per, rows, groups, one, P0, heroN, tl, VIZ, unitN: 'damage', LAYOUT, burst, tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use.', TAL, keyN, talents, LG, LANE, WT, MERGE, TOPB, TIPS: PDEM_TIPS, TOPP: new Set(['abc', 'apl', 'tyh', 'tyd', 'ssw', 'cd:summon demonic tyrant', 'cd:call dreadstalkers']), top: 'Demonology Warlocks', pullT,
     src: 'Built with help from the Wowhead, Icy Veins and WoWAnalyzer guides for Demonology Warlock, SimulationCraft\'s priority list (the one Raidbots sims with), and from what your talents do.', ringTip: 'Each check counts as much as it matters. Demonic Tyrant and Hand of Gul\'dan in it count three times as much as most. A clean check counts in full, and a minor one counts half.', secIc: { 'Your pull at a glance': 'Summon Demonic Tyrant', 'Pull by pull': 'Hand of Gul\'dan' } });
-  return { score: pg.score, checks: pg.checks, talents, html: pg.html, wait: 0 };
+  return { score: pg.score, checks: pg.checks, top: pg.top, talents, html: pg.html, wait: 0 };
 }
 
 // one pull on its time line: each Tyrant window as a bar; Call Dreadstalkers, the Grimoires, Doomguard, Hand of Gul'dan, Implosion (gold with 6 Wild Imps) and
@@ -21381,7 +21382,7 @@ function genRun(spec, D, reps, name, one) {
   let piH = '';
   if (/ Priest$/.test(spec) && D.piView !== false && !PI_OFF()) { const pv = piView(per.map((x) => x.r), one, name).html;
     if (!/no priest cast it/.test(pv)) piH = '<section class="spc-card spc-pi"><header class="spc-ch"><span class="spc-ri">' + spellIcon(10060, 'Power Infusion', true) + '</span><div><h3>Power Infusion</h3><span class="sub">The same as Graphs › Power Infusion, for you only.</span></div></header>' + pv + '</section>'; }
-  return { score: pg.score, checks: pg.checks, talents: [heroN].filter(Boolean), html: pg.html + piH, wait };
+  return { score: pg.score, checks: pg.checks, top: pg.top, talents: [heroN].filter(Boolean), html: pg.html + piH, wait };
 }
 // one pull on its time line: each cooldown and core spell as ticks, with the time it sat ready for a whole extra use in red; each damage over time and
 // mitigation buff as bars, its gaps showing

@@ -87,6 +87,8 @@ local function decode(code)
       local p = { name = g(2), cls = g(3), spec = g(4), role = g(5), unit = g(6), v = g(7), d = tonumber(g(8)), vs = g(9), best = g(10), bp = g(11), rank = g(12), icon = g(13), slips = {}, boss = {}, surv = {}, tiles = {}, next = "", next2 = "" }
       m.players[#m.players + 1] = p; by[p.name] = p
     elseif t == "S" and by[g(2)] then add(by[g(2)].slips, { g(3), g(4), g(5) })
+    elseif t == "RS" and by[g(2)] then by[g(2)].rs = { score = tonumber(g(3)), good = g(4) ~= "" and split(g(4), ";") or {} }; by[g(2)].rot = by[g(2)].rot or {} -- (your rotation score and what you did well (Oct 24))
+    elseif t == "RT" and by[g(2)] then local p = by[g(2)]; p.rot = p.rot or {}; p.rot[#p.rot + 1] = { g(3), g(4), g(5), g(6), g(7), g(8), g(9), g(10) }; add(p.slips, { g(3), g(4), g(5) .. (g(6) ~= "" and (": " .. g(6)) or "") .. "." }) -- (a fix: flag, icon, name, yours, top, tip, squares, why)
     elseif t == "B" and by[g(2)] then add(by[g(2)].boss, { g(3), g(4), g(5) })
     elseif t == "U" and by[g(2)] then add(by[g(2)].surv, { g(3), g(4), g(5) }) -- (survival: defensives)
     elseif t == "HP" and by[g(2)] then local p = by[g(2)]; p.cons = p.cons or {}; add(p.cons, { g(3), g(4), g(5) }) -- (your Healthstone and potion)
@@ -549,6 +551,36 @@ local function trendCards(y, c, paint)
   end
   return top + 2
 end
+-- (a Rotation fix, like the website's checklist (Oct 24): the check and your number against the top players' on one line, a square for
+-- each moment it happened (green right, orange not), then Next time; hover for why it matters)
+local SQC = { g = "45c15c", w = "e8a23a", b = "e5534b" }
+local function rotRow(y, r)
+  local flag, ic, label, v, top, tip, strip, why = r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8]
+  local d = TEX("ARTWORK"); d:SetTexture(SLICE .. "dot"); d:SetPoint("TOPLEFT", IND, -(y + 6)); d:SetSize(8, 8); d:SetVertexColor(rgb(FLAG[flag] or COL.faint))
+  icon(IND + 16, y, 20, ic, flag)
+  local x0 = IND + 46
+  local vt = FS("bold", 13.5, flag == "bad" and COL.badT or flag == "warn" and COL.warn or COL.text); vt:SetJustifyH("RIGHT"); vt:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - IND, -y)
+  vt:SetText((v or "") .. (((top or "") ~= "") and ("|cff" .. COL.faint .. "  top " .. top .. "|r") or ""))
+  local lt = FS("bold", 13.5, COL.text); lt:SetPoint("TOPLEFT", x0, -y); lt:SetWidth(math.max(80, CW - IND - x0 - vt:GetStringWidth() - 12)); lt:SetText(label)
+  local yy = y + math.max(18, lt:GetStringHeight()) + 3
+  if (strip or "") ~= "" then
+    for i = 1, #strip do local q = TEX("ARTWORK"); q:SetPoint("TOPLEFT", x0 + (i - 1) * 10, -(yy + 1)); q:SetSize(8, 8); fill(q, SQC[strip:sub(i, i)] or COL.faint) end
+    yy = yy + 14
+  end
+  if (tip or "") ~= "" then local tt = FS("body", 12.5, COL.soft); tt:SetPoint("TOPLEFT", x0, -yy); tt:SetWidth(CW - IND - x0 - 4); tt:SetText("|cff" .. COL.gold .. "Next time:|r " .. names(tip)); yy = yy + tt:GetStringHeight() + 2 end
+  if (why or "") ~= "" then
+    local bt = BTN(); bt:SetPoint("TOPLEFT", 0, -y); bt:SetSize(CW, math.max(18, yy - y))
+    bt:SetScript("OnEnter", function() GameTooltip:SetOwner(bt, "ANCHOR_TOP"); GameTooltip:SetText(label, 1, 1, 1, 1, true); GameTooltip:AddLine(names(why), 0.8, 0.82, 0.86, true); if (top or "") ~= "" then GameTooltip:AddLine("Top players: " .. top, 0.9, 0.71, 0.31, true) end; GameTooltip:Show() end)
+    bt:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  end
+  return yy + 8
+end
+-- (what you did well on your rotation, one green line under the fixes)
+local function rotGood(y, rs)
+  if not rs or not rs.good or #rs.good == 0 then return y end
+  local f = FS("body", 13, COL.goodT); f:SetPoint("TOPLEFT", IND + 4, -(y + 2)); f:SetWidth(CW - IND * 2 - 8); f:SetText("Done right: " .. table.concat(rs.good, ", ") .. ".")
+  return y + f:GetStringHeight() + 8
+end
 local function nextBox(y, text)
   local t = FS("body", 14, COL.text); t:SetWidth(CW - 32); t:SetText(names(text))
   local l = FS("bold", 11.5, COL.gold); l:SetText("NEXT PULL")
@@ -660,7 +692,7 @@ local function cardGrade(y, gr)
   local c = FS("body", 12.5, COL.soft); c:SetPoint("TOPLEFT", 58, -(y + 25)); c:SetWidth(CW - 70); c:SetWordWrap(false); c:SetText(gr.cats or "")
   return y + h + 8
 end
-local UI = { rowS = rowS, wipeRow = wipeRow, trendCards = trendCards, cardCharts = cardCharts, cardGrade = cardGrade, parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, canRaid = canRaid, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded }
+local UI = { rotRow = rotRow, rotGood = rotGood, rowS = rowS, wipeRow = wipeRow, trendCards = trendCards, cardCharts = cardCharts, cardGrade = cardGrade, parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, canRaid = canRaid, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded }
 function render()
   local raw = DB.pulls[DB.cur]; local m = UI.cutView(raw); CUR = m
   if not m then return end
@@ -739,7 +771,7 @@ function render()
     else box(y0, hh, COL.raised, DB.cardStyle == "glass" and 0.55 or 1, COL.line, 1) end
   end
   -- a section: its heading folds it away (+ / -), and a "Show N more" line expands a long list
-  local function section(key, title, list, limit, draw, empty)
+  local function section(key, title, list, limit, draw, empty, tail)
     if SH[key] == false then return end
     local folded = DB.collapsed and DB.collapsed[key]
     local y0 = y; IND = 12; y = y + 12
@@ -751,6 +783,7 @@ function render()
         for i = 1, n do draw(list[i]) end
         if #list > n then y = UI.moreLink(y, key, #list - n) end
       end
+      if tail then tail() end
     end
     y = y + 3
     panel(y0, y - y0)
@@ -1145,7 +1178,8 @@ function render()
     -- (the Detailed card: three small number tiles under yours: avoidable damage, kicks or dispels, your death)
     if DB.detailed and not DB.compact and P.tiles and #P.tiles > 0 then y = tilesRow(y, P.tiles) end
     if not DB.compact then
-      local rot = function() section("rotation", "Rotation", UI.onlyBad(P.slips), DB.maxSlips or 3, function(r) y = UI.rowS(y, r) end, #P.slips > 0 and "Nothing to fix here." or "No rotation checks for this spec yet.") end
+      local rot = P.rot and function() section("rotation", "Rotation" .. ((P.rs and P.rs.score) and ("  ·  " .. P.rs.score .. "/100") or ""), P.rot, DB.maxSlips or 3, function(r) y = UI.rotRow(y, r) end, "Nothing to fix here.", function() y = UI.rotGood(y, P.rs) end) end
+      or function() section("rotation", "Rotation", UI.onlyBad(P.slips), DB.maxSlips or 3, function(r) y = UI.rowS(y, r) end, #P.slips > 0 and "Nothing to fix here." or "No rotation checks for this spec yet.") end
       local bossL = P.boss
       if DB.detailed and P.tiles and #P.tiles > 0 then bossL = {}; for _, r in ipairs(P.boss) do if not ({ ability_rogue_sprint = true, ability_kick = true, spell_holy_dispelmagic = true })[r[2]] then bossL[#bossL + 1] = r end end end
       local bos = function() section("boss", "Boss mechanics", UI.onlyBad(bossL), DB.maxBoss or 2, function(r) y = UI.rowS(y, r) end, "No boss mistakes.") end
@@ -2505,6 +2539,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     DebriefDB = DebriefDB or {}
     DB = DebriefDB
     DB.pulls = DB.pulls or {}
+    if UnitName then local me = UnitName("player"); if me and me ~= "" and me ~= UNKNOWNOBJECT then DB.me = me end end -- (your character, so the PC pop-up opens on your card (Oct 24))
     -- (your pulls from Debrief Companion, saved into Pulls.lua as they happen: added here at login or /reload, no pasting (Oct 22))
     if type(DEBRIEF_PULLS) == "table" then
       local n0 = #DB.pulls

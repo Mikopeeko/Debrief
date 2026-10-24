@@ -703,6 +703,12 @@ function buildOne(b, rep, same, W, L, cutN) {
     if (x && x.checks) {
       const focus = x.checks.filter((c) => c.st === 'bad' || c.st === 'warn').sort((a, c) => (c.cost || 0) - (a.cost || 0) || (a.st === 'bad' ? -1 : 0) + (c.st === 'bad' ? 1 : 0) || (c.share || 0) - (a.share || 0)).slice(0, 5); // (up to 5: the card shows 1 to 5, as each raider picks)
       for (const c of focus) { P.slips.push([c.st, spellId(W, c.ic), slipLine(c)]); if (c.tip) tips.push(plain(c.tip)); }
+      // (the Rotation tab's checklist, for the card (Oct 24): each fix with your number, the top players', a square per moment, the tip)
+      const num = (v) => plain(v).replace(/(\d)\s*\/\s*(\d)/g, '$1/$2');
+      const why = (c) => shortTo(sentences(c.sub).filter((s) => !/\b(below|above|listed)\b/i.test(s) && !/^Debrief checked/.test(s)).slice(0, 2).join(' '), 170);
+      P.rs = { score: x.score != null ? Math.round(x.score) : '', good: x.checks.filter((c) => c.st === 'ok' && c.isMain).slice(0, 4).map((c) => plain(c.label)) };
+      P.rot = focus.map((c) => [c.st, spellId(W, c.ic), plain(c.label), num(c.v), x.top && x.top[c.k] ? num(x.top[c.k]) : '', c.tip ? plain(c.tip) : '',
+        (c.bx || []).length >= 2 ? c.bx.slice(0, 40).map((q) => (q.cls === 'ok' ? 'g' : q.cls === 'bad' ? 'b' : 'w')).join('') : '', why(c)]);
       if (!focus.length) { const good = x.checks.filter((c) => c.st === 'ok').slice(0, 2); for (const c of good) P.slips.push(['ok', spellId(W, c.ic), shortTo(plain(c.label) + ': ' + plain(c.v).replace(/(\d+)\s*\/\s*(\d+)/, '$1 of $2') + '.', 120)]); }
     }
     // Boss mechanics: their own mistakes on this pull, then their death

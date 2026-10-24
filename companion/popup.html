@@ -87,6 +87,48 @@ body.isMini { border-color: rgba(230,180,80,.85); box-shadow: inset 0 0 0 1px rg
 .mini .m2 em { font-style: normal; font-weight: 600; color: var(--badT); } .mini .m2 em.k { color: var(--goodT); }
 .mini .m2 { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mini .btn, .mini .x { app-region: no-drag; -webkit-app-region: no-drag; }
+/* the /recap card in the pop-up (Oct 24): the addon's look, two columns when the window is wide */
+.ktabs { display: flex; gap: 18px; border-bottom: 1px solid var(--line); margin: 2px 0 12px; font-weight: 600; color: var(--muted); }
+.ktabs span { padding: 4px 0 6px; cursor: pointer; } .ktabs span.on { color: var(--text); box-shadow: inset 0 -2px 0 var(--gold); } .ktabs em { font-style: normal; color: var(--faint); font-weight: 500; font-size: 12.5px; }
+.kgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 22px; align-items: start; }
+@media (min-width: 860px) { .kgrid { grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr); } .kgrid.one { grid-template-columns: minmax(0, 1fr); } }
+.kL, .kR { min-width: 0; }
+.kl { color: var(--gold); font: 700 11.5px/1 Barlow, sans-serif; letter-spacing: .05em; margin: 2px 0 7px; } .kl.mut { color: var(--muted); margin-top: 12px; }
+.khd { font: 600 16.5px/1.35 'Barlow Semi Condensed', Barlow, sans-serif; margin: 0 0 12px; }
+.kc { background: var(--raised); border: 1px solid var(--line); border-radius: 8px; margin: 0 0 10px; }
+.kh { display: flex; align-items: center; gap: 8px; padding: 9px 12px; cursor: pointer; user-select: none; } .kh b { font: 700 14.5px 'Barlow Semi Condensed', Barlow, sans-serif; } .kh i { margin-left: auto; color: var(--faint); font-style: normal; font-weight: 700; } .kh:hover b, .kh:hover i { color: var(--gold); }
+.kb { padding: 0 12px 8px; }
+.ksc { color: var(--muted); font: 600 12.5px Barlow, sans-serif; } .ksc b { color: var(--goodT); }
+.kr { display: grid; grid-template-columns: 10px 22px minmax(0, 1fr); gap: 0 9px; align-items: start; font-size: 13.5px; color: var(--soft); padding: 4px 0; }
+.kd { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; display: inline-block; flex: none; }
+.kmore { color: var(--muted); font-size: 12.5px; padding: 4px 0 2px 41px; cursor: pointer; } .kmore:hover { color: var(--gold); }
+.kmore0 { color: var(--faint); font-size: 12.5px; margin: 2px 0 6px 4px; }
+.knm { font-weight: 600; }
+.kyou { background: rgba(230,180,80,.07); border: 1px solid rgba(230,180,80,.5); border-radius: 8px; padding: 10px 14px; margin: 0 0 10px; }
+.kv { margin: 0 0 9px; color: var(--soft); font-size: 14px; } .ktips { margin: 0; padding-left: 20px; font-weight: 600; font-size: 14px; } .ktips li { margin: 2px 0; } .ktip1 { margin: 0; font-weight: 600; font-size: 14px; }
+.ktr { margin-top: 8px; font-size: 13px; color: var(--soft); } .ktr p { margin: 3px 0; }
+.ktiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 0 0 10px; }
+.kt { background: var(--raised); border: 1px solid var(--line); border-radius: 8px; padding: 8px 11px; } .kt small { display: block; color: var(--muted); font-size: 12px; } .kt b { display: block; font: 700 20px Barlow, sans-serif; } .kt b em { font-style: normal; font-size: 12px; color: var(--muted); } .kt i { font-style: normal; color: var(--faint); font-size: 12px; }
+.kt.w b { color: var(--warn); } .kt.b b { color: var(--badT); }
+.krr { display: grid; grid-template-columns: 10px 22px minmax(0, 1fr); gap: 0 9px; align-items: start; padding: 6px 0; border-top: 1px solid rgba(255,255,255,.04); } .krr:first-child { border-top: 0; }
+.krt { display: flex; gap: 10px; align-items: baseline; } .krt b { font-size: 13.5px; } .krv { margin-left: auto; font-weight: 700; font-size: 13.5px; white-space: nowrap; } .krv small { color: var(--faint); font-weight: 600; margin-left: 6px; }
+.ksq { display: flex; flex-wrap: wrap; gap: 2px; margin: 5px 0 2px; } .ksq i { width: 8px; height: 8px; display: block; }
+.knx { margin: 3px 0 0; font-size: 12.5px; color: var(--soft); } .knx b { color: var(--gold); }
+.kgood { color: var(--goodT); font-size: 13px; margin: 6px 0 2px 4px; }
+.kcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; margin: 0 0 10px; }
+.kcard { background: var(--raised); border: 1px solid var(--line); border-top: 2px solid var(--line2); border-radius: 8px; padding: 9px 12px; font-size: 13px; color: var(--soft); }
+.kcard.wip { border-top-color: #e8a23a; } .kcard.ok { border-top-color: #45c15c; } .kcard.bad { border-top-color: #e5534b; } .kcard.up { border-top-color: #5aa9ff; }
+.kct { font: 700 12.5px Barlow, sans-serif; margin-bottom: 6px; } .kcard.wip .kct { color: #e8a23a; } .kcard.ok .kct { color: var(--goodT); } .kcard.bad .kct { color: var(--badT); } .kcard.up .kct { color: #5aa9ff; }
+.kcard p { margin: 0; } .kci { margin: 0 0 6px; } .kci b { color: var(--text); } .kcs { display: block; color: var(--faint); font-size: 12px; } .kno { color: var(--faint); margin: 0; font-size: 13px; }
+.kw { display: flex; gap: 9px; border-left: 3px solid var(--warn); background: rgba(0,0,0,.12); border-radius: 6px; padding: 8px 10px 8px 8px; margin: 0 0 7px; } .kw.bad { border-left-color: var(--bad); } .kw[data-cr] { cursor: pointer; }
+.kwn { flex: 0 0 20px; height: 20px; border-radius: 50%; background: rgba(232,162,58,.22); color: var(--warn); font: 700 12px/20px Barlow, sans-serif; text-align: center; } .kw.bad .kwn { background: rgba(229,83,75,.22); color: var(--bad); }
+.kwb { flex: 1; min-width: 0; } .kwt { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; } .kwt b { font-size: 13.5px; } .kwt i { margin-left: auto; color: var(--faint); font-style: normal; font-weight: 700; }
+.kwg { font: 700 11.5px Barlow, sans-serif; color: var(--warn); } .kw.bad .kwg { color: var(--badT); }
+.kwr { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 8px; font-size: 13px; color: var(--soft); margin-top: 4px; } .kwr span:first-child { color: var(--gold); font: 700 11px/1.7 Barlow, sans-serif; letter-spacing: .04em; } .kwr.m span:first-child { color: var(--muted); }
+.kok { color: var(--goodT); font-size: 13.5px; margin: 4px 0; }
+.kdr { display: flex; align-items: center; gap: 7px; font-size: 13.5px; color: var(--soft); padding: 3px 0; } .kdr.has { cursor: pointer; } .kdr.has:hover { color: var(--text); }
+.kdt { color: var(--faint); width: 32px; flex: none; } .kda { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .kpl { margin-left: auto; color: var(--faint); font-style: normal; font-weight: 700; }
+.kst { margin: 0 0 6px 40px; color: var(--muted); font-size: 13px; }
 </style>
 </head>
 <body>
@@ -104,6 +146,7 @@ const post = (m) => { try { if (wv) wv.postMessage(m); else console.log('popup �
 let ICONS = {}; try { ICONS = JSON.parse(localStorage.getItem('dbf-icons') || '{}') || {}; } catch (e) { ICONS = {}; }
 function ic(id) {
   if (!id) return '';
+  if (!/^\d+$/.test(String(id))) return '<span class="ic"><img src="https://wow.zamimg.com/images/wow/icons/medium/' + esc(String(id).toLowerCase()) + '.jpg" alt="" onerror="this.remove()"></span>'; /* (an icon's own name, e.g. inv_stone_04) */
   const n = ICONS[id]; if (n) return '<span class="ic"><img src="https://wow.zamimg.com/images/wow/icons/medium/' + esc(n) + '.jpg" alt=""></span>';
   fetch('https://nether.wowhead.com/tooltip/spell/' + encodeURIComponent(id) + '?dataEnv=1&locale=0').then((r) => r.json()).then((x) => {
     if (!x || !x.icon) return; ICONS[id] = x.icon; try { localStorage.setItem('dbf-icons', JSON.stringify(ICONS)); } catch (e) { /* fine */ }
@@ -112,7 +155,107 @@ function ic(id) {
   return '<span class="ic" data-ic="' + esc(id) + '"></span>';
 }
 let D = null; const OPEN = {};
-/* (Detailed or Heavy in the addon's settings: every section starts open) */ const DEEP = () => !!D && (D.look === 'detailed' || D.look === 'heavy'), isOpen = (k) => (OPEN[k] != null ? !!OPEN[k] : DEEP()); let copied = false, big = false;
+/* (Detailed or Heavy in the addon's settings: every section starts open) */ const DEEP = () => !!D && (D.look === 'detailed' || D.look === 'heavy' || (D.lk && (D.lk.preset === 'detailed' || D.lk.preset === 'heavy'))), isOpen = (k) => (OPEN[k] != null ? !!OPEN[k] : DEEP()); let copied = false, big = false;
+// ---------- the /recap card, drawn in the pop-up (Oct 24, the user's pick: "the pop-up copies /recap") ----------
+// The same card the addon shows, from the same recap: your Me view and the Raid view, the sections and line counts you picked in /db,
+// two columns in the wide window. Data: D.card (the recap, up to the wipe call), D.lk (your /db settings and who you are).
+let VIEW = null;
+const FLC = { ok: '#45c15c', warn: '#e8a23a', bad: '#e5534b', dead: '#6c7381', info: '#6c7381', next: '#e6b450' };
+const SQC = { g: '#45c15c', w: '#e8a23a', b: '#e5534b' };
+const reEsc = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function cardView() {
+  const C = D.card, LK = D.lk || {}, SH = LK.show || {}, MX = LK.max || {}, deep = LK.preset === 'detailed' || LK.preset === 'heavy';
+  const on = (k, def) => (SH[k] == null ? def !== false : !!SH[k]);
+  const PL = C.players || [], short = (n) => String(n || '').split('-')[0];
+  const clsOf = new Map(); for (const p of PL) { clsOf.set(p.name, p.cls); clsOf.set(short(p.name), p.cls); }
+  const nmH = (n) => '<b class="knm" style="color:' + (CC[clsOf.get(n)] || '#ece8df') + '">' + esc(short(n)) + '</b>';
+  const nmRe = PL.length ? new RegExp('@?(' + [...new Set(PL.map((p) => short(p.name)).filter((n) => n.length > 2))].sort((a, b) => b.length - a.length).map(reEsc).join('|') + ')(?![\\p{L}\\p{N}])', 'gu') : null;
+  const pt = (s) => { const x = esc(s); return nmRe ? x.replace(nmRe, (m, n) => nmH(n)) : x; };
+  const icn = (id) => (id ? ic(id) : '<span class="ic"></span>');
+  const isOn = (k, def) => (OPEN[k] != null ? !!OPEN[k] : def);
+  const bad = (L) => (LK.onlyBad ? (L || []).filter((r) => r[0] !== 'ok' && r[0] !== 'info') : (L || []));
+  const row = (r) => '<div class="kr"><i class="kd" style="background:' + (FLC[r[0]] || '#6c7381') + '"></i>' + icn(r[1]) + '<span>' + pt(r[2]) + '</span></div>';
+  const rowT = (r) => '<div class="kr"><i class="kd" style="background:' + (FLC[r[0]] || '#6c7381') + '"></i>' + icn(r[1]) + '<span><b>' + esc(r[2]) + '</b> ' + pt(r[3] || '') + '</span></div>';
+  // (a section, as the card draws it: a title you can fold, then its lines, the first few and "Show N more")
+  const sec = (key, title, inner, def) => { const o = isOn('s:' + key, def !== false);
+    return '<div class="kc"><div class="kh" data-cf="s:' + key + '"><b>' + title + '</b><i>' + (o ? '–' : '+') + '</i></div>' + (o ? '<div class="kb">' + inner + '</div>' : '') + '</div>'; };
+  const lim = (key, L, n, draw) => { const all = OPEN['m:' + key], show = all ? L : L.slice(0, n); return show.map(draw).join('') + (L.length > show.length ? '<div class="kmore" data-cmore="' + key + '">Show ' + (L.length - show.length) + ' more</div>' : ''); };
+  const me = LK.me ? PL.find((p) => p.name === LK.me || short(p.name) === short(LK.me)) : null;
+  if (!VIEW || (VIEW === 'me' && !me)) VIEW = me ? 'me' : 'raid';
+  const R = C.raid || {}, CO = (C.coach && C.coach.raid) || null;
+  let L = '', Rt = '';
+  if (VIEW === 'me' && me) {
+    const P = me, you = C.coach && C.coach.you ? C.coach.you[P.name] : null;
+    // (your raid lead box: how your pull went, your fixes numbered, then worse and better than last pull)
+    if (on('next') || you) {
+      let verdict = you ? String(you[0] || '') : ''; const m1 = verdict.match(/^(.*?)\s*Your one fix:/); if (m1) verdict = m1[1];
+      if (verdict.indexOf(short(P.name) + ', ') === 0) verdict = verdict.slice(short(P.name).length + 2);
+      verdict = verdict.replace(/, and one thing to fix first/, '').replace(/, with one thing to sharpen/, ''); verdict = verdict.charAt(0).toUpperCase() + verdict.slice(1);
+      const first = (x) => String(x || '').split(/[.!?]\s/)[0].replace(/[.!?]$/, ''), tips = [];
+      for (const t of [you && you[1], P.next, deep ? P.next2 : '']) if (t && !tips.some((q) => first(q) === first(t))) tips.push(t);
+      const tr = you && you[2];
+      L += '<div class="kyou"><div class="kl">YOUR RAID LEAD SAYS</div>' + (verdict ? '<p class="kv">' + pt(verdict) + '</p>' : '') +
+        (tips.length ? '<div class="kl">' + (C.h && C.h.kill ? 'NEXT WEEK' : 'NEXT PULL') + '</div>' + (tips.length > 1 ? '<ol class="ktips">' + tips.map((t) => '<li>' + pt(t) + '</li>').join('') + '</ol>' : '<p class="ktip1">' + pt(tips[0]) + '</p>') : '') +
+        (tr && ((tr.worse || []).length || (tr.better || []).length) ? '<div class="ktr">' + ((tr.worse || []).length ? '<p><b style="color:#e8a23a">Worse than last pull:</b> ' + tr.worse.map((x) => esc(x[0]) + (x[1] ? ' (' + esc(String(x[1]).toLowerCase()) + ')' : '')).join(', ') + '</p>' : '') +
+          ((tr.better || []).length ? '<p><b style="color:#5aa9ff">Better than last pull:</b> ' + tr.better.map((x) => esc(x[0]) + (x[1] ? ' (' + esc(String(x[1]).toLowerCase()) + ')' : '')).join(', ') + '</p>' : '') + '</div>' : '') + '</div>';
+    }
+    // (your numbers: your damage or healing against last pull and your best, then the small tiles)
+    if (on('tile')) {
+      const d = P.d != null && P.d !== '' ? (P.d >= 0 ? '+' : '') + P.d + '% vs pull ' + esc(P.vs) : 'First pull read';
+      L += '<div class="ktiles"><div class="kt"><small>' + (P.role === 'healer' ? 'Your healing' : 'Your damage') + '</small><b>' + esc(P.v) + ' <em>' + esc(P.unit) + '</em></b><i>' + d + (P.best ? ' · best ' + esc(P.best) + (P.bp ? ' (pull ' + esc(P.bp) + ')' : '') : '') + (P.rank ? '<br>' + esc(P.rank) : '') + '</i></div>' +
+        (P.tiles || []).map((t) => '<div class="kt' + (t[3] === 'warn' ? ' w' : t[3] === 'bad' ? ' b' : '') + '"><small>' + esc(t[0]) + '</small><b>' + esc(t[1]) + '</b><i>' + esc(t[2] || '') + '</i></div>').join('') + '</div>';
+    }
+    // (rotation, like the Rotation tab's checklist: your score, each fix against the top players, a square per moment, Next time)
+    if (on('rotation')) {
+      if (P.rot) {
+        const rr = (r) => '<div class="krr" title="' + esc((r[7] || '') + (r[4] ? '\nTop players: ' + r[4] : '')) + '"><i class="kd" style="background:' + (FLC[r[0]] || '#6c7381') + '"></i>' + icn(r[1]) +
+          '<div class="krb"><div class="krt"><b>' + esc(r[2]) + '</b><span class="krv" style="color:' + (r[0] === 'bad' ? '#ff8f87' : r[0] === 'warn' ? '#e8a23a' : '#ece8df') + '">' + esc(r[3]) + (r[4] ? '<small>top ' + esc(r[4]) + '</small>' : '') + '</span></div>' +
+          (r[6] ? '<div class="ksq">' + r[6].split('').map((q) => '<i style="background:' + (SQC[q] || '#6c7381') + '"></i>').join('') + '</div>' : '') + (r[5] ? '<p class="knx"><b>Next time:</b> ' + pt(r[5]) + '</p>' : '') + '</div></div>';
+        const sc = P.rs && P.rs.score !== '' && P.rs.score != null ? ' <span class="ksc">· <b>' + esc(P.rs.score) + '</b>/100</span>' : '';
+        L += sec('rot', 'Rotation' + sc, (P.rot.length ? lim('rot', P.rot, MX.maxSlips || 3, rr) : '<div class="kr"><i class="kd" style="background:#45c15c"></i><span class="ic"></span><span>Nothing to fix here.</span></div>') +
+          (P.rs && (P.rs.good || []).length ? '<p class="kgood">Done right: ' + P.rs.good.map(esc).join(', ') + '.</p>' : ''));
+      } else if ((P.slips || []).length) L += sec('rot', 'Rotation', lim('rot', bad(P.slips), MX.maxSlips || 3, row));
+    }
+    if (on('boss') && (P.boss || []).length) Rt += sec('boss', 'Boss mechanics', lim('boss', bad(P.boss), MX.maxBoss != null ? MX.maxBoss : 4, row));
+    const sv = [].concat(on('surv') ? bad(P.surv) : [], on('cons') ? (P.cons || []) : [], on('kitd') ? (P.kitd || []) : []);
+    if (sv.length) Rt += sec('surv', 'Survival', lim('surv', sv, 6, row));
+  } else {
+    // (the raid view: your raid lead, the four cards, every mistake folded, then deaths, avoidable damage and survival)
+    if (CO && on('coach')) {
+      L += '<div class="kl">YOUR RAID LEAD SAYS</div><p class="khd">' + pt(CO.headline || '') + '</p>';
+      const tr = CO.trend, cards = [];
+      if (CO.root) cards.push(['wip', 'What wiped us', '<p><b>' + pt(CO.root.cause) + '</b> ' + pt(CO.root.rest || '') + '</p>']);
+      const items = (Lx, col, none) => (Lx && Lx.length ? Lx.map((x) => '<div class="kci"><b>' + pt(x.nm) + '</b>' + (x.tag ? ' <span style="color:' + col + '">' + esc(x.tag) + '</span>' : '') + (x.sub ? '<span class="kcs">' + pt(x.sub) + '</span>' : '') + '</div>').join('') : '<p class="kno">' + none + '</p>');
+      if (tr) { cards.push(['ok', 'What we did well', items(tr.well, '#7ee08f', 'Nothing stood out yet.')]); cards.push(['bad', 'Worse than last pull', items(tr.worse, '#e8a23a', 'Nothing got worse than last pull.')]); cards.push(['up', 'Better than last pull', items(tr.better, '#5aa9ff', 'Nothing improved on last pull.')]); }
+      if (cards.length) L += '<div class="kcards">' + cards.map((c) => '<div class="kcard ' + c[0] + '"><div class="kct">' + c[1] + '</div>' + c[2] + '</div>').join('') + '</div>';
+      const W = CO.wrong || [];
+      if (W.length) {
+        const wcard = (x, i) => { const k = 'w' + i, o = isOn('r:' + k, deep && i === 0), more = [['WHAT HAPPENED', x.what], ['HOW', x.how], ['AGAINST TOP GUILDS', x.kb]].filter((q) => q[1]);
+          return '<div class="kw ' + (x.sev === 'bad' ? 'bad' : '') + '"' + (more.length ? ' data-cr="r:' + k + '"' : '') + '><span class="kwn">' + (i + 1) + '</span><div class="kwb"><div class="kwt">' + icn(x.id) + '<b>' + esc(x.label) + '</b>' + (x.tag ? '<span class="kwg">' + esc(x.tag) + '</span>' : '') + (more.length ? '<i>' + (o ? '–' : '+') + '</i>' : '') + '</div>' +
+            (x.fix ? '<div class="kwr"><span>NEXT TIME</span><span>' + pt(x.fix) + '</span></div>' : '') + (o ? more.map((q) => '<div class="kwr m"><span>' + q[0] + '</span><span>' + pt(q[1]) + '</span></div>').join('') : '') + '</div></div>'; };
+        const body = W.map(wcard).join('') + (CO.more > 0 ? '<p class="kmore0">+' + CO.more + (CO.more === 1 ? ' smaller one' : ' smaller ones') + '</p>' : '');
+        L += tr || CO.root ? sec('cw', 'Every mistake, in detail <span class="ksc">· ' + (W.length + (CO.more || 0)) + '</span>', body, deep) : '<div class="kl mut">WHAT WENT WRONG</div>' + body;
+      }
+      if (!tr && !CO.root && on('right')) L += (CO.right || []).map((x) => '<p class="kok">✓ ' + pt(x.t) + '</p>').join('');
+      // (deaths and avoidable damage, each row opens its story)
+      const D0 = CO.deaths, A0 = CO.avoid;
+      if (on('cdeaths') && D0 && ((D0.items || []).length || D0.line)) {
+        const onP = String(D0.note || '').match(/(\d+) of \d+ deaths? on the player/), aft = String(D0.note || '').match(/(\d+) more after/);
+        const dr = (d, i) => { const k = 'r:d' + i, o = isOn(k, false); return '<div class="kdr' + (d.story ? ' has' : '') + '"' + (d.story ? ' data-cr="' + k + '"' : '') + '><span class="kdt">' + esc(d.t) + '</span><i class="kd" style="background:' + (KCOL[d.k] || '#6c7381') + '"></i>' + nmH(d.who) + icn(d.id) + '<span class="kda">' + esc(d.ab) + '</span>' + (d.story ? '<i class="kpl">' + (o ? '–' : '+') + '</i>' : '') + '</div>' + (o ? '<p class="kst">' + pt(d.story) + '</p>' : ''); };
+        Rt += sec('cd', 'Deaths <span class="ksc">· ' + (D0.items || []).length + (onP ? ' · ' + onP[1] + ' on the player' : '') + (aft ? ' · ' + aft[1] + ' not counted' : '') + '</span>', (D0.items || []).length ? (D0.items || []).map(dr).join('') : '<p class="kno">' + pt(D0.line) + '</p>', deep);
+      }
+      if (on('cavoid') && A0 && ((A0.items || []).length || A0.line)) {
+        const ar = (a, i) => { const k = 'r:a' + i, o = isOn(k, false); return '<div class="kdr' + (a.story ? ' has' : '') + '"' + (a.story ? ' data-cr="' + k + '"' : '') + '>' + icn(a.id) + '<span class="kda">' + esc(a.k) + '</span>' + nmH(a.who) + '<span style="color:' + (a.bad ? '#ff8f87' : '#e8a23a') + '">' + esc(a.n) + '</span>' + (a.story ? '<i class="kpl">' + (o ? '–' : '+') + '</i>' : '') + '</div>' + (o ? '<p class="kst">' + pt(a.story) + '</p>' : ''); };
+        Rt += sec('ca', 'Avoidable damage <span class="ksc">· ' + (A0.items || []).length + '</span>', (A0.items || []).length ? A0.items.map(ar).join('') : '<p class="kno">' + pt(A0.line) + '</p>', deep);
+      }
+    }
+    const sv = [].concat(on('rdefs') ? (R.defs || []) : [], on('rcons') ? (R.cons || []) : [], on('rkitd') ? (R.kitd || []) : []);
+    if (sv.length) Rt += sec('rsurv', 'Survival', lim('rsurv', sv, 4, row));
+    if (SH.mechs === true && (R.mech || []).length) Rt += sec('mech', 'Boss mechanics', lim('mech', R.mech, MX.maxMech != null ? MX.maxMech : 6, rowT));
+  }
+  const tabs = me ? '<div class="ktabs"><span data-tab="me" class="' + (VIEW === 'me' ? 'on' : '') + '">' + nmH(me.name) + ' <em>' + esc(me.spec || '') + '</em></span><span data-tab="raid" class="' + (VIEW === 'raid' ? 'on' : '') + '">Raid view</span></div>' : '';
+  return tabs + '<div class="kgrid' + (Rt ? '' : ' one') + '"><div class="kL">' + L + '</div>' + (Rt ? '<div class="kR">' + Rt + '</div>' : '') + '</div>';
+}
 function render() {
   const app = document.getElementById('app'); if (!D || !D.h) return;
   const h = D.h, c = D.coach, cls = new Map(D.cls || []);
@@ -126,7 +269,8 @@ function render() {
   const paint = (s) => { let x = esc(s); for (const [n, k] of cls) if (n.length > 2 && x.includes(n)) x = x.split(n).join('<b style="color:' + (CC[k] || '#ece8df') + ';font-weight:600">' + n + '</b>'); return x; };
   const res = h.kill ? 'Kill' : 'Wipe' + (h.pct !== '' && h.pct != null ? ' ' + h.pct + '%' : '');
   let body = '';
-  if (D.pack && D.pack.html) body = stopRow() + '<div id="site"></div>';
+  if (D.card) body = stopRow() + cardView(); /* (the /recap card (Oct 24)) */
+  else if (D.pack && D.pack.html) body = stopRow() + '<div id="site"></div>';
   else if (c && c.headline) {
     body += '<div class="cl">' + (c.kill ? 'THE KILL, COACHED' : 'THIS PULL, COACHED') + '</div><p class="chd">' + paint(c.headline) + '</p>';
     if (!c.focusSame && c.focus) body += '<div class="cfoc"><div>' + (c.kill ? 'FOCUS NEXT WEEK' : 'FOCUS NEXT PULL') + '</div><p>' + paint(c.focus) + '</p></div>';
@@ -140,12 +284,14 @@ function render() {
     if (c.avoid && (c.avoid.items || []).length) body += fold('a', 'AVOIDABLE DAMAGE', c.avoid.items, (a, i) => '<div class="cr' + (a.story ? ' has' : '') + '" data-row="a' + i + '">' + ic(a.id) + '<span class="ab">' + esc(a.k) + '</span><b style="color:' + (CC[a.cls] || '#ece8df') + '">' + esc(a.who) + '</b><span style="color:' + (a.bad ? '#ff8f87' : '#e8a23a') + '">' + esc(a.n) + '</span></div>', 'Click one to see what happened.');
     body += '<p class="cnt" style="margin-top:10px">The full coaching is on the website, in the Debriefing tab.</p>';
   } else body += '<p class="chd">' + esc(res) + ' · ' + esc(h.dur) + '</p><p class="cnt">No coaching for this pull.</p>';
+  const pr0 = document.getElementById('pullsRow'), sl0 = pr0 ? pr0.scrollLeft : null, bd0 = document.querySelector('.body'), st0 = bd0 ? bd0.scrollTop : 0; /* (a redraw keeps your place (Oct 24)) */
   app.innerHTML = '<div class="top">' + LOGO + '<b>Debrief</b><span class="bt">' + esc(h.boss) + ' · ' + esc(h.diff) + ' · Pull ' + esc(h.pull) + '</span><span class="pill' + (h.kill ? ' k' : '') + '">' + esc(res) + '</span><button class="x" type="button" title="Close (it comes back after the next pull)" data-close="1">✕</button></div>' +
     nightRow() +
     '<div class="body' + (D.pack && D.pack.html ? ' sitebody' : '') + '">' + body + '</div>' +
     '<div class="foot">' + (copied ? '<span class="btn done">Copied: in WoW, type /dp, then Ctrl+V</span>' : '') +
     '<button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">' + (copied ? '' : 'Closes when the next pull starts') + '</span></div>';
   if (D.pack && D.pack.html) siteBox(document.getElementById('site'), D.pack);
+  { const pr1 = document.getElementById('pullsRow'), bd1 = document.querySelector('.body'); if (pr1 && sl0 != null) pr1.scrollLeft = sl0; if (bd1) bd1.scrollTop = st0; }
   fit();
 }
 // (Stop at death: − n +, with a line saying what counts; only on a wipe with deaths)
@@ -171,8 +317,12 @@ let waiting = false;
 function fit() { requestAnimationFrame(() => { const a = document.getElementById('app'), m = a.querySelector('.mini'), t = a.querySelector('.top'), b = a.querySelector('.body'), f = a.querySelector('.foot');
   const want = m ? m.offsetHeight + 2 : (t ? t.offsetHeight : 0) + (b ? b.scrollHeight : 0) + (f ? f.offsetHeight : 0) + 2; post('h:' + Math.ceil(want)); }); }
 document.addEventListener('click', (e) => {
-  const t = e.target.closest ? e.target.closest('[data-fold],[data-row],[data-close],[data-open],[data-big],[data-cut],[data-cutt],[data-pull]') : null; if (!t) return;
+  const t = e.target.closest ? e.target.closest('[data-fold],[data-row],[data-close],[data-open],[data-big],[data-cut],[data-cutt],[data-pull],[data-tab],[data-cf],[data-cr],[data-cmore]') : null; if (!t) return;
   if (t.dataset.pull) { if (t.classList.contains('on')) return; loadingPull = +t.dataset.pull; t.classList.add('wait'); t.textContent = t.textContent.replace(/ · .*/, ' · loading…'); post('pull:' + t.dataset.pull); return; }
+  if (t.dataset.tab) { VIEW = t.dataset.tab; render(); return; } /* (the card: Me or Raid view) */
+  if (t.dataset.cf) { const k = t.dataset.cf, cur = OPEN[k] != null ? OPEN[k] : (k === 's:cw' || k === 's:cd' || k === 's:ca' ? DEEP() : true); OPEN[k] = !cur; render(); return; }
+  if (t.dataset.cr) { const k = t.dataset.cr; OPEN[k] = !(OPEN[k] != null ? OPEN[k] : (k === 'r:w0' && DEEP())); render(); return; }
+  if (t.dataset.cmore) { OPEN['m:' + t.dataset.cmore] = true; render(); return; }
   if (t.dataset.cutt) { const v = D.cut ? 0 : 1; waiting = true; D.cut = v; render(); post('cut:' + v); return; } /* (Wipe call on or off) */
   if (t.dataset.cut) { const v = Math.max(0, Math.min(8, (D.cut || 0) + (+t.dataset.cut))); if (v !== D.cut) { waiting = true; D.cut = v; render(); post('cut:' + v); } return; }
   if (t.dataset.big) { big = true; render(); return; }

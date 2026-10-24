@@ -51,10 +51,15 @@ namespace Debrief {
     // (a pull's recap, as JSON from the main window's page)
     public void ShowRecap(string json) {
       // (as wide as the card style picked in the addon: Detailed is the widest, and opens more; Oct 22)
-      var look = Wow.AddonLook(here); int w = Math.Min(Px(WidthOf(look[0])), (int)(GameScreen().WorkingArea.Width * 0.94));
-      if (json.StartsWith("{")) json = "{\"look\":\"" + look[1] + "\"," + json.Substring(1);
+      // (sized for the screen it opens on, not the app's: a 4K screen at 150% needs 1.5 times the pixels, or the recap comes out
+      // two-thirds size, one column and cut off (the user's screenshot, Oct 24))
+      var look = Wow.AddonLook(here); int bw = WidthOf(look[0]);
+      var probe = placed ? Bounds : SavedBounds(bw, 70);
+      int dpi = DpiAt(probe); var waP = Screen.FromRectangle(probe).WorkingArea;
+      int w = Math.Min((int)Math.Round(bw * dpi / 96.0), (int)(waP.Width * 0.94)), h0 = (int)Math.Round(70 * dpi / 96.0);
+      if (json.StartsWith("{")) { string lk = "{}"; try { lk = new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(Wow.AddonCard(here)); } catch { } json = "{\"look\":\"" + look[1] + "\",\"lk\":" + lk + "," + json.Substring(1); } // (and your /db card settings (Oct 24))
       pending = json;
-      if (!placed) { placed = true; Bounds = SavedBounds(w, Px(70)); }
+      if (!placed) { placed = true; Bounds = SavedBounds(w, h0); }
       else if (Width != w) { var wa = Screen.FromHandle(Handle).WorkingArea; int x = Left + Width / 2 - w / 2; SetBounds(Math.Max(wa.Left, Math.Min(x, wa.Right - w)), Top, w, Height); }
       if (!Visible) { Show(); SetWindowPos(Handle, (IntPtr)(-1) /* HWND_TOPMOST */, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010 | 0x0040 /* NOSIZE NOMOVE NOACTIVATE SHOWWINDOW */); }
       if (web.CoreWebView2 == null) { if (!starting) { starting = true; BeginInvoke(new Action(async () => await Start())); } }
@@ -91,7 +96,15 @@ namespace Debrief {
     // ---------- its spot, kept between pulls and starts (right over your character at first: the middle of WoW's screen) ----------
     [DllImport("user32.dll")] static extern bool SetWindowPos(IntPtr h, IntPtr after, int x, int y, int cx, int cy, uint flags);
     [DllImport("user32.dll")] static extern int GetDpiForWindow(IntPtr h);
-    int Dpi() { int dpi = 96; try { dpi = GetDpiForWindow(main.Handle); } catch { } return dpi < 96 ? 96 : dpi; }
+    // (the pop-up's own screen scaling once it has a window, the app's before that; DpiAt: the scaling of the screen a spot is on)
+    int Dpi() { int dpi = 96; try { dpi = GetDpiForWindow(IsHandleCreated ? Handle : main.Handle); } catch { } return dpi < 96 ? 96 : dpi; }
+    [StructLayout(LayoutKind.Sequential)] struct RECT { public int L, T, R, B; }
+    [DllImport("user32.dll")] static extern IntPtr MonitorFromRect(ref RECT r, uint flags);
+    [DllImport("shcore.dll")] static extern int GetDpiForMonitor(IntPtr mon, int type, out uint dx, out uint dy);
+    int DpiAt(Rectangle r) {
+      try { var rc = new RECT { L = r.Left, T = r.Top, R = r.Right, B = r.Bottom }; uint dx, dy; if (GetDpiForMonitor(MonitorFromRect(ref rc, 2 /* nearest */), 0 /* effective */, out dx, out dy) == 0 && dx >= 96) return (int)dx; } catch { }
+      return Dpi();
+    }
     int Px(int v) { return (int)Math.Round(v * Dpi() / 96.0); }
     string BoundsFile { get { return Path.Combine(here, "popup2.txt"); } }
     static Screen GameScreen() {

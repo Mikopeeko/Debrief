@@ -112,9 +112,33 @@ namespace Debrief {
         if (f == null || (f.FullName == lookFile && f.LastWriteTimeUtc == lookAt)) return look;
         var s = File.ReadAllText(f.FullName);
         Func<string, string> last = (k) => { var ms = System.Text.RegularExpressions.Regex.Matches(s, @"^\[""" + k + @"""\] = ""(\w+)""", System.Text.RegularExpressions.RegexOptions.Multiline); return ms.Count > 0 ? ms[ms.Count - 1].Groups[1].Value : ""; };
-        var w = last("width"); look = new[] { w == "" ? "normal" : w, last("preset") }; lookFile = f.FullName; lookAt = f.LastWriteTimeUtc;
+        var w = last("width"); look = new[] { w == "" ? "normal" : w, last("preset") }; lookFile = f.FullName; lookAt = f.LastWriteTimeUtc; svText = s;
       } catch { }
       return look;
+    }
+    // (the card settings from /db, for the pop-up to draw the same card as /recap (Oct 24): which sections are on, how many lines,
+    // the style, and who you are (the addon saves your character's name; else the character folder WoW wrote last))
+    static string svText = "";
+    public static Dictionary<string, object> AddonCard(string here) {
+      var look0 = AddonLook(here); var s = svText ?? ""; var o = new Dictionary<string, object> { { "width", look0[0] }, { "preset", look0[1] } };
+      try {
+        var RX = System.Text.RegularExpressions.RegexOptions.Multiline;
+        Func<string, string> num = (k) => { var ms = System.Text.RegularExpressions.Regex.Matches(s, @"^\[""" + k + @"""\] = (-?\d+)", RX); return ms.Count > 0 ? ms[ms.Count - 1].Groups[1].Value : null; };
+        var max = new Dictionary<string, object>(); foreach (var k in new[] { "maxSlips", "maxBoss", "maxRaid", "maxDied", "maxMech" }) { var v = num(k); if (v != null) max[k] = int.Parse(v); }
+        o["max"] = max;
+        var ob = System.Text.RegularExpressions.Regex.Matches(s, @"^\[""onlyBad""\] = (true|false)", RX); o["onlyBad"] = ob.Count > 0 && ob[ob.Count - 1].Groups[1].Value == "true";
+        var show = new Dictionary<string, object>(); var si = s.LastIndexOf("[\"show\"] = {");
+        if (si >= 0) { var se = s.IndexOf('}', si); var blk = se > si ? s.Substring(si, se - si) : "";
+          foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(blk, @"\[""(\w+)""\] = (true|false)")) show[m.Groups[1].Value] = m.Groups[2].Value == "true"; }
+        o["show"] = show;
+        var me = System.Text.RegularExpressions.Regex.Matches(s, @"^\[""me""\] = ""([^""]+)""", RX); string meN = me.Count > 0 ? me[me.Count - 1].Groups[1].Value : "";
+        if (meN == "") { var r = FindRetail(here); var acc = r == null ? null : Path.Combine(r, @"WTF\Account");
+          if (acc != null && Directory.Exists(acc)) { DateTime best = DateTime.MinValue;
+            foreach (var a in Directory.GetDirectories(acc)) foreach (var realm in Directory.GetDirectories(a)) { if (Path.GetFileName(realm) == "SavedVariables") continue;
+              foreach (var ch in Directory.GetDirectories(realm)) { var t = Directory.GetLastWriteTimeUtc(ch); if (t > best) { best = t; meN = Path.GetFileName(ch); } } } } }
+        o["me"] = meN;
+      } catch { }
+      return o;
     }
     public static string InstallAddon(string here) {
       var src = Path.Combine(here, "addon", "Debrief");
