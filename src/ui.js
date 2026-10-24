@@ -1761,6 +1761,7 @@ const PATCH_NOTES = [
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
     'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
   ], f: [
+    'Debriefing: Pulls to the kill now counts your guild\'s whole history from Warcraft Logs, first pull to first kill, on any device and on farm nights.',
   ] },
   { d: '2026-10-23', h: [
     { t: 'A Mitigation tab on Graphs', d: 'How much damage each player didn\'t take, and where it went: shields, versatility, Devotion Aura, defensives, raid cooldowns, armor and the rest.' },
@@ -12280,8 +12281,17 @@ if (typeof document !== 'undefined') { document.addEventListener('pointermove', 
 /* (the Pulls tile, on All pulls and on each pull (Oct 23, your asks): pulls on this boss across every night up to here, ranked against
    guilds at the same pull count, and a tap opens the pace chart. it0 = this night's item, reps = this night's pulls read so far,
    nT = pulls tonight up to here, kl = killed tonight, onT = time on the boss tonight) */
+/* (Oct 24, your call: the Pulls tile counts from the guild's first pull to its first kill, from Warcraft Logs (every report of that guild on
+   this boss), the same on any browser and on farm nights; the boss health of each pull draws the pace chart. A log with no guild keeps
+   the nights saved in this browser) */
+const GHIST = new Map();
+function guildHist(it0) { if (!it0 || !it0.gid || !WCL.guildProg) return null; const key = it0.gid + '|' + it0.id + '|' + it0.diffId + '|' + Math.floor((it0.wallMs || it0.startMs || 0) / 864e5); let G = GHIST.get(key);
+  if (G === undefined) { GHIST.set(key, null); Promise.resolve(WCL.guildProg(S.wclCreds, { g: it0.gid, e: it0.id, d: WCL_DIFF_OF[it0.diffId] || 5, t: it0.wallMs || it0.startMs || Date.now() } /* (the real date: startMs is the log's own clock) */)).then((o) => { GHIST.set(key, o && o.pl && o.pl.length ? o : false); if (o && o.pl && o.pl.length && S.tab === 'audit' && S.item) select(S.item); }).catch(() => GHIST.set(key, false)); return null; }
+  if (!G) return null; const by = new Map(); for (const [t, left] of G.pl) { const n = nightOf(t); if (!by.has(n)) by.set(n, []); by.get(n).push({ at: t, left, kill: left === 0 }); }
+  return { earlier: [...by].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([n, list]) => ({ n, label: nightLabel(list[0].at), list, kill: list.find((x) => x.kill) || null })), guild: true }; }
 function paceTile(num, it0, reps, nT, kl, onT) { let PANEL = ''; const tile = (() => {
       let H = { earlier: [] }; try { H = histFor(it0); } catch (e) { /* (no saved nights) */ }
+      { const GH = guildHist(it0); if (GH) { H = GH; nT = 0; kl = false; reps = []; } } /* (the guild's own history includes tonight) */
       let n = 0, killed = false; for (const x of H.earlier) { if (x.kill) { n += x.list.indexOf(x.kill) + 1; killed = true; break; } n += x.list.length; }
       if (!killed) { n += nT; killed = !!kl; }
       const nights = Math.min(H.earlier.length, H.earlier.findIndex((x) => x.kill) < 0 ? H.earlier.length : H.earlier.findIndex((x) => x.kill) + 1) + (H.earlier.some((x) => x.kill) ? 0 : 1);

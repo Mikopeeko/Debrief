@@ -85,7 +85,7 @@ async function gql(creds, query, variables) {
   return j.data;
 }
 
-const REPORT_Q = `query($code:String!){reportData{report(code:$code){title startTime endTime zone{name}
+const REPORT_Q = `query($code:String!){reportData{report(code:$code){title startTime endTime zone{name} guild{id name}
   fights{id encounterID name difficulty kill startTime endTime size keystoneLevel fightPercentage bossPercentage lastPhase lastPhaseIsIntermission friendlyPlayers}
   masterData{actors{id name type subType server petOwner gameID} abilities{gameID name type}}}}}`;
 const EVENTS_Q = `query($code:String!,$fid:[Int]!,$s:Float!,$e:Float!){reportData{report(code:$code){
@@ -159,21 +159,22 @@ async function topKillsOf(run, v) {
 // after the kill in the rankings (that kill may be a later, faster one), every pull of the boss on that difficulty, the
 // same pull logged by two members counted once (starts within 20 s), and a night as a day (a raid past midnight stays
 // one night: days start at 06:00 UTC). v: { g: guild, e, d, t: the ranked kill's report start (ms) }
-const GUILDPROG_Q = `query($g:Int!,$z:Int,$e:Int!,$d:Int!,$end:Float,$p:Int!){reportData{reports(guildID:$g,zoneID:$z,endTime:$end,limit:100,page:$p){has_more_pages data{startTime fights(encounterID:$e,difficulty:$d){kill startTime}}}}}`;
+const GUILDPROG_Q = `query($g:Int!,$z:Int,$e:Int!,$d:Int!,$end:Float,$p:Int!){reportData{reports(guildID:$g,zoneID:$z,endTime:$end,limit:100,page:$p){has_more_pages data{startTime fights(encounterID:$e,difficulty:$d){kill startTime fightPercentage}}}}}`;
 const ENCZONE_Q = `query($e:Int!){worldData{encounter(id:$e){zone{id}}}}`;
 async function guildProgOf(run, v) {
   const z = await run(ENCZONE_Q, { e: v.e }), zone = z && z.worldData && z.worldData.encounter && z.worldData.encounter.zone ? z.worldData.encounter.zone.id : null;
   const at = [];
   for (let p = 1; p <= 4; p++) {
     const d = await run(GUILDPROG_Q, { g: v.g, z: zone, e: v.e, d: v.d, end: v.t + 86400000, p }), R = d && d.reportData && d.reportData.reports; if (!R) break;
-    for (const rep of R.data || []) for (const f of rep.fights || []) at.push({ t: rep.startTime + f.startTime, kill: !!f.kill });
+    for (const rep of R.data || []) for (const f of rep.fights || []) at.push({ t: rep.startTime + f.startTime, kill: !!f.kill, left: f.fightPercentage != null ? f.fightPercentage : null });
     if (!R.has_more_pages) break;
   }
   at.sort((a, b) => a.t - b.t);
-  const pulls = []; for (const x of at) { const l = pulls[pulls.length - 1]; if (l && x.t - l.t < 20000) { l.kill = l.kill || x.kill; continue; } pulls.push({ ...x }); }
-  const k = pulls.findIndex((x) => x.kill); if (k < 0) return { pulls: pulls.length, nights: null, kill: null };
+  const pulls = []; for (const x of at) { const l = pulls[pulls.length - 1]; if (l && x.t - l.t < 20000) { l.kill = l.kill || x.kill; if (x.left != null && (l.left == null || x.left < l.left)) l.left = x.left; continue; } pulls.push({ ...x }); }
+  /* (each pull's boss health left, for the Debriefing pace chart (Oct 24)) */ const plOf = (L) => L.map((x) => [x.t, x.kill ? 0 : x.left == null ? null : Math.round(x.left * 10) / 10]);
+  const k = pulls.findIndex((x) => x.kill); if (k < 0) return { pulls: pulls.length, nights: null, kill: null, pl: plOf(pulls) };
   const days = new Set(pulls.slice(0, k + 1).map((x) => Math.floor((x.t - 21600000) / 86400000)));
-  return { pulls: k + 1, nights: days.size, kill: pulls[k].t, first: pulls[0].t };
+  return { pulls: k + 1, nights: days.size, kill: pulls[k].t, first: pulls[0].t, pl: plOf(pulls.slice(0, k + 1)) };
 }
 // One page (100) of a spec's rankings on a boss, slimmed for Compare's "Search for a player": who, where, their kill, and
 // their talents (only the numbers, so the page can tell their hero tree). v: { e, c, s, d, m, p }
@@ -237,7 +238,7 @@ async function loadReport(creds, code, live) {
     const diffId = WCL_DIFF[f.difficulty] || f.difficulty;
     const k = f.encounterID + ':' + diffId; pulls[k] = (pulls[k] || 0) + 1;
     return { kind: 'boss', id: f.encounterID, boss: f.name, diffId, diff: f.keystoneLevel ? '+' + f.keystoneLevel : ({ 14: 'Normal', 15: 'Heroic', 16: 'Mythic', 17: 'LFR', 8: 'Mythic+' }[diffId] || 'Difficulty ' + diffId),
-      size: f.size || 20, startMs: BASE + f.startTime, kill: !!f.kill, endPct: f.kill ? 0 : (f.fightPercentage != null ? f.fightPercentage : null), result: f.kill ? 'Kill' : 'Wipe', duration: (f.endTime - f.startTime) / 1000,
+      size: f.size || 20, gid: (rep.guild && rep.guild.id) || 0 /* (whose guild, for the Pulls tile's whole history (Oct 24)) */, startMs: BASE + f.startTime, kill: !!f.kill, endPct: f.kill ? 0 : (f.fightPercentage != null ? f.fightPercentage : null), result: f.kill ? 'Kill' : 'Wipe', duration: (f.endTime - f.startTime) / 1000,
       // (the phase it ended in, as the app names them: Warcraft Logs counts stages and intermissions apart, so its "phase 3"
       // is Stage Three, and that phase's boss health: the app's whole-encounter progress needs both)
       endPhase: f.kill || !f.lastPhase ? null : f.lastPhaseIsIntermission ? 'Intermission' : 'P' + f.lastPhase, endBoss: f.kill ? 0 : f.bossPercentage != null ? f.bossPercentage : null,

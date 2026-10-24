@@ -13561,7 +13561,7 @@ async function gql(creds, query, variables) {
   return j.data;
 }
 
-const REPORT_Q = `query($code:String!){reportData{report(code:$code){title startTime endTime zone{name}
+const REPORT_Q = `query($code:String!){reportData{report(code:$code){title startTime endTime zone{name} guild{id name}
   fights{id encounterID name difficulty kill startTime endTime size keystoneLevel fightPercentage bossPercentage lastPhase lastPhaseIsIntermission friendlyPlayers}
   masterData{actors{id name type subType server petOwner gameID} abilities{gameID name type}}}}}`;
 const EVENTS_Q = `query($code:String!,$fid:[Int]!,$s:Float!,$e:Float!){reportData{report(code:$code){
@@ -13635,21 +13635,22 @@ async function topKillsOf(run, v) {
 // after the kill in the rankings (that kill may be a later, faster one), every pull of the boss on that difficulty, the
 // same pull logged by two members counted once (starts within 20 s), and a night as a day (a raid past midnight stays
 // one night: days start at 06:00 UTC). v: { g: guild, e, d, t: the ranked kill's report start (ms) }
-const GUILDPROG_Q = `query($g:Int!,$z:Int,$e:Int!,$d:Int!,$end:Float,$p:Int!){reportData{reports(guildID:$g,zoneID:$z,endTime:$end,limit:100,page:$p){has_more_pages data{startTime fights(encounterID:$e,difficulty:$d){kill startTime}}}}}`;
+const GUILDPROG_Q = `query($g:Int!,$z:Int,$e:Int!,$d:Int!,$end:Float,$p:Int!){reportData{reports(guildID:$g,zoneID:$z,endTime:$end,limit:100,page:$p){has_more_pages data{startTime fights(encounterID:$e,difficulty:$d){kill startTime fightPercentage}}}}}`;
 const ENCZONE_Q = `query($e:Int!){worldData{encounter(id:$e){zone{id}}}}`;
 async function guildProgOf(run, v) {
   const z = await run(ENCZONE_Q, { e: v.e }), zone = z && z.worldData && z.worldData.encounter && z.worldData.encounter.zone ? z.worldData.encounter.zone.id : null;
   const at = [];
   for (let p = 1; p <= 4; p++) {
     const d = await run(GUILDPROG_Q, { g: v.g, z: zone, e: v.e, d: v.d, end: v.t + 86400000, p }), R = d && d.reportData && d.reportData.reports; if (!R) break;
-    for (const rep of R.data || []) for (const f of rep.fights || []) at.push({ t: rep.startTime + f.startTime, kill: !!f.kill });
+    for (const rep of R.data || []) for (const f of rep.fights || []) at.push({ t: rep.startTime + f.startTime, kill: !!f.kill, left: f.fightPercentage != null ? f.fightPercentage : null });
     if (!R.has_more_pages) break;
   }
   at.sort((a, b) => a.t - b.t);
-  const pulls = []; for (const x of at) { const l = pulls[pulls.length - 1]; if (l && x.t - l.t < 20000) { l.kill = l.kill || x.kill; continue; } pulls.push({ ...x }); }
-  const k = pulls.findIndex((x) => x.kill); if (k < 0) return { pulls: pulls.length, nights: null, kill: null };
+  const pulls = []; for (const x of at) { const l = pulls[pulls.length - 1]; if (l && x.t - l.t < 20000) { l.kill = l.kill || x.kill; if (x.left != null && (l.left == null || x.left < l.left)) l.left = x.left; continue; } pulls.push({ ...x }); }
+  /* (each pull's boss health left, for the Debriefing pace chart (Oct 24)) */ const plOf = (L) => L.map((x) => [x.t, x.kill ? 0 : x.left == null ? null : Math.round(x.left * 10) / 10]);
+  const k = pulls.findIndex((x) => x.kill); if (k < 0) return { pulls: pulls.length, nights: null, kill: null, pl: plOf(pulls) };
   const days = new Set(pulls.slice(0, k + 1).map((x) => Math.floor((x.t - 21600000) / 86400000)));
-  return { pulls: k + 1, nights: days.size, kill: pulls[k].t, first: pulls[0].t };
+  return { pulls: k + 1, nights: days.size, kill: pulls[k].t, first: pulls[0].t, pl: plOf(pulls.slice(0, k + 1)) };
 }
 // One page (100) of a spec's rankings on a boss, slimmed for Compare's "Search for a player": who, where, their kill, and
 // their talents (only the numbers, so the page can tell their hero tree). v: { e, c, s, d, m, p }
@@ -13713,7 +13714,7 @@ async function loadReport(creds, code, live) {
     const diffId = WCL_DIFF[f.difficulty] || f.difficulty;
     const k = f.encounterID + ':' + diffId; pulls[k] = (pulls[k] || 0) + 1;
     return { kind: 'boss', id: f.encounterID, boss: f.name, diffId, diff: f.keystoneLevel ? '+' + f.keystoneLevel : ({ 14: 'Normal', 15: 'Heroic', 16: 'Mythic', 17: 'LFR', 8: 'Mythic+' }[diffId] || 'Difficulty ' + diffId),
-      size: f.size || 20, startMs: BASE + f.startTime, kill: !!f.kill, endPct: f.kill ? 0 : (f.fightPercentage != null ? f.fightPercentage : null), result: f.kill ? 'Kill' : 'Wipe', duration: (f.endTime - f.startTime) / 1000,
+      size: f.size || 20, gid: (rep.guild && rep.guild.id) || 0 /* (whose guild, for the Pulls tile's whole history (Oct 24)) */, startMs: BASE + f.startTime, kill: !!f.kill, endPct: f.kill ? 0 : (f.fightPercentage != null ? f.fightPercentage : null), result: f.kill ? 'Kill' : 'Wipe', duration: (f.endTime - f.startTime) / 1000,
       // (the phase it ended in, as the app names them: Warcraft Logs counts stages and intermissions apart, so its "phase 3"
       // is Stage Three, and that phase's boss health: the app's whole-encounter progress needs both)
       endPhase: f.kill || !f.lastPhase ? null : f.lastPhaseIsIntermission ? 'Intermission' : 'P' + f.lastPhase, endBoss: f.kill ? 0 : f.bossPercentage != null ? f.bossPercentage : null,
@@ -15848,6 +15849,7 @@ const PATCH_NOTES = [
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
     'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
   ], f: [
+    'Debriefing: Pulls to the kill now counts your guild\'s whole history from Warcraft Logs, first pull to first kill, on any device and on farm nights.',
   ] },
   { d: '2026-10-23', h: [
     { t: 'A Mitigation tab on Graphs', d: 'How much damage each player didn\'t take, and where it went: shields, versatility, Devotion Aura, defensives, raid cooldowns, armor and the rest.' },
@@ -26367,8 +26369,17 @@ if (typeof document !== 'undefined') { document.addEventListener('pointermove', 
 /* (the Pulls tile, on All pulls and on each pull (Oct 23, your asks): pulls on this boss across every night up to here, ranked against
    guilds at the same pull count, and a tap opens the pace chart. it0 = this night's item, reps = this night's pulls read so far,
    nT = pulls tonight up to here, kl = killed tonight, onT = time on the boss tonight) */
+/* (Oct 24, your call: the Pulls tile counts from the guild's first pull to its first kill, from Warcraft Logs (every report of that guild on
+   this boss), the same on any browser and on farm nights; the boss health of each pull draws the pace chart. A log with no guild keeps
+   the nights saved in this browser) */
+const GHIST = new Map();
+function guildHist(it0) { if (!it0 || !it0.gid || !WCL.guildProg) return null; const key = it0.gid + '|' + it0.id + '|' + it0.diffId + '|' + Math.floor((it0.wallMs || it0.startMs || 0) / 864e5); let G = GHIST.get(key);
+  if (G === undefined) { GHIST.set(key, null); Promise.resolve(WCL.guildProg(S.wclCreds, { g: it0.gid, e: it0.id, d: WCL_DIFF_OF[it0.diffId] || 5, t: it0.wallMs || it0.startMs || Date.now() } /* (the real date: startMs is the log's own clock) */)).then((o) => { GHIST.set(key, o && o.pl && o.pl.length ? o : false); if (o && o.pl && o.pl.length && S.tab === 'audit' && S.item) select(S.item); }).catch(() => GHIST.set(key, false)); return null; }
+  if (!G) return null; const by = new Map(); for (const [t, left] of G.pl) { const n = nightOf(t); if (!by.has(n)) by.set(n, []); by.get(n).push({ at: t, left, kill: left === 0 }); }
+  return { earlier: [...by].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([n, list]) => ({ n, label: nightLabel(list[0].at), list, kill: list.find((x) => x.kill) || null })), guild: true }; }
 function paceTile(num, it0, reps, nT, kl, onT) { let PANEL = ''; const tile = (() => {
       let H = { earlier: [] }; try { H = histFor(it0); } catch (e) { /* (no saved nights) */ }
+      { const GH = guildHist(it0); if (GH) { H = GH; nT = 0; kl = false; reps = []; } } /* (the guild's own history includes tonight) */
       let n = 0, killed = false; for (const x of H.earlier) { if (x.kill) { n += x.list.indexOf(x.kill) + 1; killed = true; break; } n += x.list.length; }
       if (!killed) { n += nT; killed = !!kl; }
       const nights = Math.min(H.earlier.length, H.earlier.findIndex((x) => x.kill) < 0 ? H.earlier.length : H.earlier.findIndex((x) => x.kill) + 1) + (H.earlier.some((x) => x.kill) ? 0 : 1);
