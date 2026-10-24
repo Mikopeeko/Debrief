@@ -269,7 +269,7 @@ function secHead(s) {
 function spell(id, name, big) {
   if (!id && name) id = sidOf(name);
   const inner = spellIcon(id, name, big) + esc(name);
-  return id ? '<a class="sp" data-sid="' + id + '" data-sn="' + esc(name) + '" href="https://www.wowhead.com/spell=' + id + '" target="_blank" rel="noopener">' + inner + '</a>'
+  return id ? '<span class="sp" data-sid="' + id + '" data-sn="' + esc(name) + '">' + inner + '</span>' /* (no link to Wowhead (your rule: Debrief never sends people off the site); the hover card stays) */
     : '<span class="sp" data-sn="' + esc(name) + '">' + inner + '</span>';
 }
 
@@ -1803,6 +1803,7 @@ const PATCH_NOTES = [
     'A little Halloween spirit on the site until Nov 1 🎃',
     'The coach box is tidier: the thing to focus on next pull is said once, on the first card. Each Next time is one short instruction (open the card for the rest), cards carry at most one tag, and what went right is a short plain list.',
   ], f: [
+    'Debriefing: spell names keep their hover card but no longer open Wowhead, the Deaths dots on The pull at a glance open the deaths, clean mechanics look like the rest, and the Copy for Discord and Copy link buttons are gone.',
     'Holy Priest: Divine Hymn counted every tick of the channel as a press ("12 of a possible 13"). It counts one press per channel now.',
     'Debriefing: with a player picked, the bottom rows (Healthstones, Defensives, Combat potions, Raid cooldowns) show only that player, each with its icon and bar. On All pulls, Deaths is scored per pull instead of reading 0%.',
     'A note cooldown pressed too early now says to hold it for its reminder, instead of telling you to turn the reminder on.',
@@ -8673,6 +8674,10 @@ function dbdPhases(r) { const it = r.item; if (it.kill || it.kind === 'run') ret
       if (x.b == null) return '<span class="dbd-phr"><b>' + esc(x.n) + '</b> took ' + T(x.a) + ' <span class="sub">(the best pull ended in it)</span></span>';
       const d = x.a - x.b, c = Math.abs(d) < 3 ? '' : d > 0 ? 'warn' : 'ok'; return '<span class="dbd-phr"><b>' + esc(x.n) + '</b> took ' + T(x.a) + ' <span class="sub">(best ' + T(x.b) + ')</span> <span class="pill-s ' + c + '">' + say(d) + '</span></span>'; }).join('') + '</div>'; }
 // (Copy for Discord: a short after-pull note, made when the page is drawn; the Next pull line is read from the page at the click)
+/* (Oct 23 click-through: a Deaths dot pointed at the old Deaths section; on one pull the deaths are the raid lead box's Deaths row, so it opens there) */
+document.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('a[href^="#sec-deaths-"]'); if (!a || document.querySelector(a.getAttribute('href'))) return;
+  const d = document.querySelector('#view details[data-k="cch-ab-d"]'); if (!d) return; e.preventDefault(); d.open = true; if (S.openSecs) S.openSecs.add('cch-ab-d'); d.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  d.classList.add('dbd-flash'); setTimeout(() => d.classList.remove('dbd-flash'), 1600); }, true);
 document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-dbdp], [data-dbcopy], [data-dblink]'); if (!t) return;
   if (t.dataset.dbdp) { e.preventDefault(); e.stopPropagation(); const r = S.rep; if (!r) return; const b = ((S.index && S.index.bosses) || []).find((x) => x.id === r.item.id && x.diffId === r.item.diffId && x.pull === +t.dataset.dbdp); if (!b || b === r.item) return;
     S.scope = 'pull'; S.tab = 'audit'; S.pendingSec = 'sec-' + t.dataset.dbds; select(b); return; }
@@ -9207,7 +9212,7 @@ function audit() {
     const tiLn = ti && (ti.html || ti.tag || ti.more || ti.txt || ti.who) ? '<span class="mcx-ln">' + (ti.html || '') + (ti.tag ? '<span class="wr-tag">' + esc(ti.tag) + '</span>' : '') + (ti.more ? '<span class="wr-plus">+' + ti.more + ' more</span>' : '') + (ti.who || '') + (ti.txt ? '<span class="mcx-s">' + esc(ti.txt) + '</span>' : '') + '</span>' : '';
     let b = '<details class="panel secd st-' + stc + (ti && tile !== 'line' ? ' mcx-tile' : '') + (tile === 'line' ? ' dbr-line' : '') + '" id="sec-' + sid + '" data-k="' + sid + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + (tile === 'line' ? '' : ti && ti.map ? '<span class="wr-map mcx-map">' + ti.map + '</span>' : ti && ti.alt ? ti.alt : '') + (ti && tile !== 'line' ? '<span class="mcx-hd">' : '') + (simp ? simHead(secHead(s)) : secHead(s)) +
       (simp || s.info || !allRows.length || s.id === 'avoid' || r.allPulls ? '' : kbChip(r.item, s.id, 100 * (nBad + nWarn) / allRows.length)) /* (where we stand among the fastest kills (Oct 22, a test)) */ +
-      '<span class="sst ' + stc + '">' + (nBad || nWarn ? lvlText(lc, true) : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0Clean') + '</span>' + (ti ? (tile === 'line' ? '' : '</span>') + (simp ? '<span class="rw2-pc ' + stc + '">' + (simPc == null ? '—' : simPc + '%') + '</span>' + simSq : tiLn) : '') + dbnTag(jobs) + (simp ? '' : dbdDots(s.id, DD)) + '</summary><div class="secbody' + (simp ? ' sim-body' : '') + '">' + (simp && !U1 ? simLn.replace('mcx-ln sim-ln', 'sim-ln rw2-what') : '') + (!simp && dbdLinkOf(r, s.id) && s.id !== 'deaths' ? '<div class="dbd-lk"><button type="button" class="btn sm" data-dblink="' + esc(dbdLinkOf(r, s.id)) + '">Copy link</button></div>' : '') + dbnBox(jobs) +
+      '<span class="sst ' + stc + '">' + (nBad || nWarn ? lvlText(lc, true) : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0Clean') + '</span>' + (ti ? (tile === 'line' ? '' : '</span>') + (simp ? '<span class="rw2-pc ' + stc + '">' + (simPc == null ? '—' : simPc + '%') + '</span>' + simSq : tiLn) : '') + dbnTag(jobs) + (simp ? '' : dbdDots(s.id, DD)) + '</summary><div class="secbody' + (simp ? ' sim-body' : '') + '">' + (simp && !U1 ? simLn.replace('mcx-ln sim-ln', 'sim-ln rw2-what') : '') + '' /* (no Copy link buttons on Debriefing (Oct 23 click-through)) */ + dbnBox(jobs) +
       (simp ? '' : (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '')) /* (no guide button on Debriefing, Oct 23) */ + (U1 ? u1Body() : synopsis(s, rows, groups) + simTiles); // (the old counts summary was dropped: the synopsis and the table cover it)
     if (U1) return b + simLinks + '</div></details>';
     // grouped sections: one header row per set, then that set's rows
@@ -9278,7 +9283,7 @@ function audit() {
   // (Oct 19, the Debriefing rebuild (your pick: the whiteboard's top and a checklist under it): each phase is a checklist, one line per
   // mechanic, problems first, then the ones not judged, then the clean ones; a line opens in place to every row and map)
   const phaseBody = (list1, key) => { const list = r.allPulls ? list1 : list1.filter((x) => x.s.id !== 'deaths'), ok = list.filter(okSec), pr = list.filter((x) => !okSec(x) && !x.s.info), inf = list.filter((x) => !okSec(x) && x.s.info);
-    return '<div class="dbck">' + pr.map((x) => secBlock(x, key, 'line')).join('') + inf.map((x) => secBlock(x, key)).join('') + ok.map((x) => secBlock(x, key)).join('') + '</div>'; }; void bigFirst;
+    return '<div class="dbck">' + pr.map((x) => secBlock(x, key, 'line')).join('') + inf.map((x) => secBlock(x, key, 'line')).join('') + ok.map((x) => secBlock(x, key, 'line')).join('') /* (clean ones in the same row as the rest (your note, Oct 23: 'why does this look different')) */ + '</div>'; }; void bigFirst;
   // (a phase's banner (Oct 19, refined): a gold number, and a ring of how much of it was clean (green), could be better (amber) or had problems (red))
   const phNum = (n, i) => { const m = String(n).match(/^P(\d+)/); return '<span class="mcx-pn">' + (m ? m[1] : /^intermission/i.test(n) ? 'Int' : /^whole/i.test(n) ? 'All' : i != null ? i + 1 : '•') + '</span>'; };
   const phLv = (list) => list.filter((x) => !x.s.info).reduce((o, x) => { const a = x.rows.concat(...x.groups.map((g) => g.rows)), c = lvlCounts(x.s.id, a.filter(isBadRow).length, a.filter(isWarnRow).length, a.length); o.major += c.major; o.moderate += c.moderate; o.minor += c.minor; return o; }, { major: 0, moderate: 0, minor: 0 });
@@ -9356,7 +9361,7 @@ function audit() {
       { const lab = it.kill ? 'kill' : 'wipe at ' + pullShort(it) + (it.endPct != null ? ' (' + Math.round(100 - it.endPct) + '% of the fight done)' : '');
         const L = ['**Pull ' + it.pull + ' · ' + it.boss + ' ' + (it.diff || '') + ' · ' + lab + '**'];
         S.dbCopy = L; S.dbCopyD = deaths; }
-      top = '<div class="dbd-acts"><button type="button" class="btn sm dbd-copy" data-dbcopy="1">Copy for Discord</button></div>' + top;
+      /* (no Copy for Discord button (your call, Oct 23: "i dont want anything copied for discord")) */
       // (the three to fix: failed first, then slips; within each, the boss's most important first, then the most problems)
       const imp = IMPORTANCE[it.boss] || [], ix = (id) => (id === 'deaths' ? -1 : imp.indexOf(id) < 0 ? 99 : imp.indexOf(id)), rk = { major: 0, moderate: 0, minor: 1, clean: 9 };
       const pick0 = all.filter((x) => x.lv !== 'clean').sort((a, b) => rk[a.lv] - rk[b.lv] || (b.nB > 0) - (a.nB > 0) || ix(a.s.id) - ix(b.s.id) || (b.nB + b.nW) - (a.nB + a.nW)); /* (real misses before slips (Oct 21)) */
