@@ -8,7 +8,7 @@ Checked against the user's own calls on the Oct 21 Coiled Altar night: "these ma
 On a wipe (never on a kill), the wipe is called at the first moment of:
 1. **More dead than any kill survived.** Players dead at once (deaths minus battle rezzes, counted per 20 players), after the raid's
    battle rez charges still up (1 at the pull, +1 every 90/raid-size minutes: 4.5 min for 20), is more than the most any kill of this
-   boss and difficulty ever had dead at that point of the fight, plus a margin (1; Twin Fangs Heroic 2). Not while the boss is at 10%
+   boss and difficulty ever had dead at that point of the fight, with no cushion since Oct 23 (Twin Fangs Heroic +1). The user: "5 deaths in a pull before a wipe is called is a lot"; the old +1 cushion put Coiled Altar Mythic at 5. Without it: 15 of the 800 deathiest kills would have been called (mostly late), and last night (bcA9kw3mxHKzr4fR) 17 of 35 pulls get called earlier, mostly at 4 deaths. Tried and turned down: the 95th percentile of kills instead of the worst (barely moves Coiled Altar, calls some pulls at 2 deaths) and no battle rez credit (39 false alarms, some in the first 15% of a kill). Script: wipe/lab.js (Q, CH, M) and labours.js. Not while the boss is at 10%
    or less (raids that close still win: checked in the logs), and not past the median kill length (the line gets too thin there).
 2. **The damage check was missed.** A red "Phase changes" row (the boss's Pace line), dated to the moment the phase ran past the
    longest any kill took ("took 3:33 … never past 2:56" → late at end − 3:33 + 2:56). The user on pull 19: "no way we would have met
@@ -37,7 +37,7 @@ per 30 s, a minute either side, never fewer than earlier.
 
 ## Checklist (a new boss, a new tier, or a tuning patch)
 1. Gather slowly: `wipe/gather.js` (1 request / 10 s, pauses 20 min on any error; memory wcl-rate-limit-shared). Never faster.
-2. `node mk-lines.js > wipe-lines.txt` → prints each boss's leave-one-out false alarms. Every set must be 0; raise that set's margin
+2. `node mk-lines.js > wipe-lines.txt` → prints each boss's leave-one-out false alarms. Aim for 0 or 1 per set (margin 0); raise that set's margin
    (MARGIN) only if a false alarm isn't a "boss under 10%" last stand.
 3. Paste wipe-lines.txt into ui.js (`wipe-call.js` does it), run `wipe-test.js` on a real night, show the user a per-pull timeline
    with the marks before going live.

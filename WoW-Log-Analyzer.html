@@ -15652,6 +15652,7 @@ const PATCH_NOTES = [
     { t: 'The wipe is called for you', d: 'No more "stop at the 2nd death". Debrief now calls the wipe at the moment no raid has ever come back from: more people dead than any kill of that boss survived at that point (battle rezzes counted), the damage check missed, or half the raid dead. Everything before it counts, so the deaths and mistakes that lost the pull are graded. Tested on 760 kills: it never calls a wipe on a pull that was won.' },
     { t: 'A shorter debrief', d: 'Each pull now opens like a raid lead\'s debrief: what went well, what went wrong (click a line for its map and details) and the one thing for next pull. The extra drawers are gone; the timeline, raid cooldowns and burst windows sit in the open below the phases.' },
   ], n: [
+    'The wipe is called one death sooner: as soon as more people are dead than any kill of that boss survived with (no extra cushion). On The Coiled Altar that is usually 4 deaths instead of 5. Kith\'ix Heroic now gets its own wipe call too.',
     'Tap the Raid DPS, DTPS or HPS tile for bars of where you rank against the kills (top 10%, top 25%, typical, bottom 25%); on All pulls a coloured square shows how each pull ranked. The Deaths and Pulls tiles are down to just the number and the kill estimate.',
     'Your raid lead now sums up the night in a breath (best pull, what wiped you most, the best news, what to watch) and ends on a line that matches the pull, from "OUR BEST PULL YET!" to "Shake it off", plus the one thing to fix next.',
     'The Raid DPS, DTPS and HPS tiles compare you with kills that ran the same number of healers as you, once enough of them are in.',
@@ -22195,32 +22196,34 @@ const CUT_WHY = 'Why filter? Once a pull is lost, players die one after another 
 // when a wipe was occurring and filters all things beyond that out"; checked against their calls on the Oct 21 night: "these marks match
 // where I'd call each wipe"). notes/Guides/Wipe detection - how it works.md. On a wipe, the call is the first moment of:
 //  1. more players dead at once (deaths minus battle rezzes, per 20 players) than any kill of this boss survived at that point of the
-//     fight, after the raid's battle rez charges still up, plus a margin (WIPE_LINE: the 40 kills with the most deaths on Warcraft Logs
-//     per boss and difficulty; none of 760 kills would have been called). Not while the boss is at 10% or less (raids that close still
+//     fight, after the raid's battle rez charges still up (WIPE_LINE: the 40 kills with the most deaths on Warcraft Logs
+//     per boss and difficulty; no +1 cushion since Oct 23, the user: "5 deaths in a pull before a wipe is called is a lot": 15 of those
+//     800 deathiest kills would have been called, mostly late in the fight). Not while the boss is at 10% or less (raids that close still
 //     win), and not past the median kill length, where the line is too thin;
 //  2. the damage check missed: a red Phase changes row, dated to the moment the phase ran past the longest any kill took;
 //  3. half the raid dead (the wipe's last stand).
 // Kills never get one. Everything up to and including the call counts (what caused the wipe); after it is the wipe.
 const WIPE_LINE = {
-  "Nymrissa Wavecaller|H": { s: [1.5, 3.3, 6.7, 7, 7, 9.2, 9.2, 9.2, 9.2], stop: 214, m: 1, k: 40 },
-  "Nymrissa Wavecaller|M": { s: [1.2, 1.2, 2.5, 3.3, 4.2, 4.2, 5, 5, 5.8, 6.7, 10, 10, 10], stop: 356, m: 1, k: 40 },
-  "Sszorak|H": { s: [3.8, 4.7, 4.8, 6.7, 7.6, 8.2, 10, 10, 10], stop: 211, m: 1, k: 40 },
-  "Sszorak|M": { s: [2, 2, 4, 4, 4, 5, 5, 5, 5, 13, 15, 16, 16, 16], stop: 364, m: 1, k: 40 },
-  "The Twin Fangs|H": { s: [0.8, 3.2, 3.2, 4.7, 6.4, 6.4, 7.3, 15.8, 15.8, 15.8, 15.8], stop: 284, m: 2, k: 40 },
-  "The Twin Fangs|M": { s: [0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 7, 18, 18, 18, 18], stop: 404, m: 1, k: 40 },
-  "The Coiled Altar|H": { s: [2.6, 2.6, 2.6, 2.6, 3.8, 3.8, 4, 4, 4.7, 4.7, 4.7, 4.7], stop: 307, m: 1, k: 40 },
-  "The Coiled Altar|M": { s: [2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 6, 12, 12, 12], stop: 617, m: 1, k: 40 },
-  "Entombed Sentinels|H": { s: [2.5, 2.5, 3.2, 3.2, 9.5, 13.3, 13.3, 13.3, 13.3], stop: 214, m: 1, k: 40 },
-  "Entombed Sentinels|M": { s: [2, 2, 2, 3, 3, 3, 3, 5, 7, 12, 12, 12, 12], stop: 342, m: 1, k: 40 },
-  "Vashnik the Malignant|H": { s: [1.1, 1.1, 2.4, 2.5, 2.5, 10, 10, 10], stop: 205, m: 1, k: 40 },
-  "Vashnik the Malignant|M": { s: [1, 2, 2, 4, 4, 4, 5, 5, 14, 15, 15, 15, 15], stop: 353, m: 1, k: 40 },
-  "Nek'zali the Soulcoiler|H": { s: [0.9, 1.1, 1.4, 1.4, 1.4, 9.1, 9.1, 9.1], stop: 209, m: 1, k: 40 },
-  "Nek'zali the Soulcoiler|M": { s: [0, 1, 3, 3, 3, 4, 4, 7, 7, 12, 12, 12, 12], stop: 344, m: 1, k: 40 },
-  "Ula'tek|H": { s: [0.9, 1.4, 2.5, 2.5, 2.5, 4.8, 4.8, 5, 5, 5, 5, 5, 7, 7, 7, 7, 7], stop: 454, m: 1, k: 40 },
-  "Ula'tek|M": { s: [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 4, 4, 5, 5, 7, 8, 8, 8], stop: 598, m: 1, k: 40 },
-  "The Lost Explorers|H": { s: [1.9, 5.3, 5.3, 6, 6, 6, 6, 6], stop: 192, m: 1, k: 40 },
-  "The Lost Explorers|M": { s: [0, 2, 2, 2, 2, 4, 6, 17, 17, 17, 17, 17], stop: 319, m: 1, k: 40 },
-  "Kith'ix|M": { s: [0.9, 0.9, 1.7, 2.7, 2.7, 2.7, 2.7, 4, 9, 9, 9, 9], stop: 304, m: 1, k: 40 }
+  "Nymrissa Wavecaller|H": { s: [1.5, 3.3, 6.7, 7, 7, 9.2, 9.2, 9.2, 9.2], stop: 214, m: 0, k: 40 },
+  "Nymrissa Wavecaller|M": { s: [1.2, 1.2, 2.5, 3.3, 4.2, 4.2, 5, 5, 5.8, 6.7, 10, 10, 10], stop: 356, m: 0, k: 40 },
+  "Sszorak|H": { s: [3.8, 4.7, 4.8, 6.7, 7.6, 8.2, 10, 10, 10], stop: 211, m: 0, k: 40 },
+  "Sszorak|M": { s: [2, 2, 4, 4, 4, 5, 5, 5, 5, 13, 15, 16, 16, 16], stop: 364, m: 0, k: 40 },
+  "The Twin Fangs|H": { s: [0.8, 3.2, 3.2, 4.7, 6.4, 6.4, 7.3, 15.8, 15.8, 15.8, 15.8], stop: 284, m: 1, k: 40 },
+  "The Twin Fangs|M": { s: [0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 7, 18, 18, 18, 18], stop: 404, m: 0, k: 40 },
+  "The Coiled Altar|H": { s: [2.6, 2.6, 2.6, 2.6, 3.8, 3.8, 4, 4, 4.7, 4.7, 4.7, 4.7], stop: 307, m: 0, k: 40 },
+  "The Coiled Altar|M": { s: [2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 6, 12, 12, 12], stop: 617, m: 0, k: 40 },
+  "Entombed Sentinels|H": { s: [2.5, 2.5, 3.2, 3.2, 9.5, 13.3, 13.3, 13.3, 13.3], stop: 214, m: 0, k: 40 },
+  "Entombed Sentinels|M": { s: [2, 2, 2, 3, 3, 3, 3, 5, 7, 12, 12, 12, 12], stop: 342, m: 0, k: 40 },
+  "Vashnik the Malignant|H": { s: [1.1, 1.1, 2.4, 2.5, 2.5, 10, 10, 10], stop: 205, m: 0, k: 40 },
+  "Vashnik the Malignant|M": { s: [1, 2, 2, 4, 4, 4, 5, 5, 14, 15, 15, 15, 15], stop: 353, m: 0, k: 40 },
+  "Nek'zali the Soulcoiler|H": { s: [0.9, 1.1, 1.4, 1.4, 1.4, 9.1, 9.1, 9.1], stop: 209, m: 0, k: 40 },
+  "Nek'zali the Soulcoiler|M": { s: [0, 1, 3, 3, 3, 4, 4, 7, 7, 12, 12, 12, 12], stop: 344, m: 0, k: 40 },
+  "Ula'tek|H": { s: [0.9, 1.4, 2.5, 2.5, 2.5, 4.8, 4.8, 5, 5, 5, 5, 5, 7, 7, 7, 7, 7], stop: 454, m: 0, k: 40 },
+  "Ula'tek|M": { s: [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 4, 4, 5, 5, 7, 8, 8, 8], stop: 598, m: 0, k: 40 },
+  "The Lost Explorers|H": { s: [1.9, 5.3, 5.3, 6, 6, 6, 6, 6], stop: 192, m: 0, k: 40 },
+  "The Lost Explorers|M": { s: [0, 2, 2, 2, 2, 4, 6, 17, 17, 17, 17, 17], stop: 319, m: 0, k: 40 },
+  "Kith'ix|H": { s: [2.4, 3, 3, 7, 7.8, 11, 11, 11], stop: 205, m: 0, k: 40 },
+  "Kith'ix|M": { s: [0.9, 0.9, 1.7, 2.7, 2.7, 2.7, 2.7, 4, 9, 9, 9, 9], stop: 304, m: 0, k: 40 }
 };
 const WIPE_WHY = { line: 'more dead than any kill survived', check: 'the damage check was missed', half: 'half the raid was dead' };
 function wipeLine(r) { const it = r && r.item; if (!it || it.kind !== 'boss') return null; const d = /mythic/i.test(it.diff || '') || it.diffId === 16 ? 'M' : /heroic/i.test(it.diff || '') || it.diffId === 15 ? 'H' : ''; return WIPE_LINE[it.boss + '|' + d] || null; }
@@ -22232,7 +22235,7 @@ function wipeAt(r) {
   const dead = new Set(), boss = (t) => { const s = r.bossS || []; return s.length ? s[Math.max(0, Math.min(s.length - 1, Math.floor(t)))] : null; };
   let used = 0, call = null;
   for (const [t, s, g, d] of ev) { if (s < 0) { if (dead.delete(g)) used++; continue; } dead.add(g);
-    const nd = dead.size, charges = Math.max(0, 1 + Math.floor(t / (5400 / n)) - used), lim = t <= L.stop - 30 ? L.s[Math.min(L.s.length - 1, Math.floor(t / 30))] + (L.m || 1) : Infinity, b = boss(t);
+    const nd = dead.size, charges = Math.max(0, 1 + Math.floor(t / (5400 / n)) - used), lim = t <= L.stop - 30 ? L.s[Math.min(L.s.length - 1, Math.floor(t / 30))] + (L.m ?? 0) : Infinity, b = boss(t);
     if ((nd - charges) * 20 / n > lim && !(b != null && b <= 10)) { call = { t, why: 'line', d }; break; }
     if (nd >= Math.ceil(n / 2)) { call = { t, why: 'half', d }; break; } }
   // (the damage check: "took 3:33 (… never past 2:56)" at its end → went late at end − 3:33 + 2:56)
