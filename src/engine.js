@@ -5906,7 +5906,7 @@ function newPlayer(guid) {
     casts: 0, interrupts: 0, dispels: 0, deaths: 0, active: 0, lastCast: -1,
     dmgAb: new Map(), healAb: new Map(), takenAb: new Map(), castAb: new Map(), castTimes: new Map(), byName: new Map(),
     // (per second over the pull, and damage by target name: the Performance tab's charts and boss / add split)
-    dmgS: [], healS: [], takenS: [], dmgT: new Map(), takenAbS: [], rawS: [], mitS: [], shS: [], devS: [], /* (shS: shields soaked on them; absS below is damage they did into enemy shields) */ /* (rawS: hits before mitigation; mitS: what armor, versatility, avoidance and defensives took off; absS: shields (Oct 23)) */ // (takenAbS: per second, what hit them: { spell: [id, amount, hits, biggest, avoidable] })
+    dmgS: [], healS: [], takenS: [], dmgT: new Map(), takenAbS: [], rawS: [], mitS: [], shS: [], devS: [], devGS: [], cdRS: [], /* (devGS: what their Devotion Aura took off the raid; cdRS: what others' cooldowns and externals took off their hits) */ /* (shS: shields soaked on them; absS below is damage they did into enemy shields) */ /* (rawS: hits before mitigation; mitS: what armor, versatility, avoidance and defensives took off; absS: shields (Oct 23)) */ // (takenAbS: per second, what hit them: { spell: [id, amount, hits, biggest, avoidable] })
     // (their eight biggest single hits taken, and what they dispelled)
     big: [], dispL: [], helpL: [],
     // (when they first hit each enemy, for switch speed; mana over the pull, from their casts (a real log only); healing that
@@ -6026,15 +6026,16 @@ function* analyzeSteps(item, text, opts) {
   const persOn = new Map(); r.defMit = []; /* (personal defensives up on a player: guid|buff -> its use (PERS_DR)) */
   const persUse = (g, ln, nm, t) => { const u = { g, name: nm, t, end: null, prev: 0, taken: 0, abs: PERS_DR.get(ln)[0] === 'abs', imm: PERS_DR.get(ln)[0] === 1 }; r.defMit.push(u); persOn.set(g + '|' + ln, u); return u; };
   const persCover = (dg, amt, magic) => { for (const [k, u] of persOn) { if (u.g !== dg) continue; const [red, mag] = PERS_DR.get(k.slice(k.indexOf('|') + 1)); if (u.abs || u.imm || (mag && !magic)) continue; u.prev += amt * red / (1 - red); u.taken += amt; } };
-  const devOn = new Set(), drOn = new Map(); // (who has Devotion Aura up; who sits in a Barrier, Spirit Link or Anti-Magic Zone: guid|buff -> the caster)
+  const devOn = new Map(), drOn = new Map(); // (who has Devotion Aura up, and whose aura it is; who sits in a Barrier, Spirit Link or Anti-Magic Zone: guid|buff -> the caster)
   const pMax = new Map(); r.pMax = pMax; // (each player's maximum health, last seen: what a Rallying Cry adds 10% to)
   // a hit on a player from an enemy, after mitigation (absorbs included): what an Aura Mastery, a Barrier or a Spirit Link
   // over them took off it (estimated from the reduction: the log only has what was left)
   const amOn = (t) => { for (let i = r.cdUse.length - 1; i >= 0; i--) { const u = r.cdUse[i]; if (t - u.t > 30) break; if (u.cd === 'Aura Mastery' && t >= u.t && t <= (u.end != null ? u.end : u.t + 8) + 0.05) return true; } return false; }; /* (an Aura Mastery is up: Devotion Aura is 12% then) */
   const cdCover = (dg, t, amt, magic) => {
-    for (let i = r.cdUse.length - 1; i >= 0; i--) { const u = r.cdUse[i]; if (t - u.t > 30) break;
-      if (u.cd === 'Aura Mastery' && t >= u.t && t <= (u.end != null ? u.end : u.t + 8) + 0.05 && (dg === u.g || devOn.has(dg))) { u.prev += amt * AM_ADD; u.taken += amt; u.cov.add(dg); } }
-    for (const [ln, [cd, red, mag]] of CD_DR) { if (mag && !magic) continue; const by = drOn.get(dg + '|' + ln); if (!by) continue; const u = cdPress(by, cd, t, true); u.prev += amt * red / (1 - red); u.taken += amt; u.cov.add(dg); }
+    let rc = 0; for (let i = r.cdUse.length - 1; i >= 0; i--) { const u = r.cdUse[i]; if (t - u.t > 30) break;
+      if (u.cd === 'Aura Mastery' && t >= u.t && t <= (u.end != null ? u.end : u.t + 8) + 0.05 && (dg === u.g || devOn.has(dg))) { u.prev += amt * AM_ADD; rc += amt * AM_ADD; u.taken += amt; u.cov.add(dg); } }
+    for (const [ln, [cd, red, mag]] of CD_DR) { if (mag && !magic) continue; const by = drOn.get(dg + '|' + ln); if (!by) continue; const u = cdPress(by, cd, t, true); u.prev += amt * red / (1 - red); rc += amt * red / (1 - red); u.taken += amt; u.cov.add(dg); }
+    if (rc > 0) { const tp = r.players.get(dg); if (tp) bump(tp.cdRS || (tp.cdRS = []), t, rc); } /* (what others' cooldowns took off this player's hits (Oct 24)) */
   };
   const pets = new Map(), recaps = new Map(), mech = new Mech(item, packs);
   const hits = new Map(), stackEv = [], npcCasts = [], npcStart = new Map(), npcStarts = [];
@@ -6116,7 +6117,7 @@ function* analyzeSteps(item, text, opts) {
     if (ev === 'COMBATANT_INFO') {
       if (f.length > 24) { let s = num(f[24]); if (!SPECS[s]) s = num(f[23]); if (SPECS[s]) P(f[0]).specId = s; }
       // gear, stats and buffs at the pull (for the Raid audit), in the shape Warcraft Logs gives them
-      try { const ci = parseCombatant(line, ts.body, f); if (ci && !r.combatantsRaw.some((x) => x.guid === ci.guid)) r.combatantsRaw.push(ci); if (ci && (ci.auras || []).some((a) => +a.ability === 465)) devOn.add(ci.guid); /* (Devotion Aura up at the pull's start (Oct 23)) */ } catch (e) { /* skip a line we can't read */ }
+      try { const ci = parseCombatant(line, ts.body, f); if (ci && !r.combatantsRaw.some((x) => x.guid === ci.guid)) r.combatantsRaw.push(ci); { const da = ci && (ci.auras || []).find((a) => +a.ability === 465); if (da) devOn.set(ci.guid, da.source); } /* (Devotion Aura up at the pull's start (Oct 23)) */ } catch (e) { /* skip a line we can't read */ }
       continue;
     }
     if (f.length < 8) continue;
@@ -6186,7 +6187,7 @@ function* analyzeSteps(item, text, opts) {
         if (hasAdv && f[adv] === dg) { const mx = num(f[adv + 3]); if (mx > 0 && isPlayer(dg)) pMax.set(dg, mx); if (mx > 0) { hp = num(f[adv + 2]) / mx * 100; seenHp(dg, dn, num(f[adv + 2]), mx, t); seenPhp(dg, num(f[adv + 2]), mx, t); } }
         if (isPlayer(dg)) {
           const p = P(dg, dn);
-          p.taken += base; addAb(p.takenAb, spell, id, base, 0, crit); bump(r.takenS, t, base); bump(p.takenS, t, base); { const raw = num(f[s0 + 1]), ab = Math.max(0, num(f[s0 + 6])); if (raw > 0) { bump(p.rawS, t, raw); bump(p.mitS, t, Math.max(0, raw - base - ab)); } if (ab > 0) bump(p.shS, t, ab); if (devOn.has(dg)) bump(p.devS, t, (base + ab) * 0.03 / (amOn(t) ? 0.88 : 0.97)); } /* (devS: what Devotion Aura's 3% took off, about) */ /* (Graphs' Mitigation tab (Oct 23)) */
+          p.taken += base; addAb(p.takenAb, spell, id, base, 0, crit); bump(r.takenS, t, base); bump(p.takenS, t, base); { const raw = num(f[s0 + 1]), ab = Math.max(0, num(f[s0 + 6])); if (raw > 0) { bump(p.rawS, t, raw); bump(p.mitS, t, Math.max(0, raw - base - ab)); } if (ab > 0) bump(p.shS, t, ab); if (devOn.has(dg)) { const dv = (base + ab) * 0.03 / (amOn(t) ? 0.88 : 0.97), gq = r.players.get(devOn.get(dg)); bump(p.devS, t, dv); if (gq) bump(gq.devGS || (gq.devGS = []), t, dv); } } /* (devS: what Devotion Aura's 3% took off, about) */ /* (Graphs' Mitigation tab (Oct 23)) */
           if (base > 0) bumpAb(r.takenAbS, t, spell, id, base);
           const av = mech.damage(t, p.name, id, spell, base), raw = base + Math.max(0, num(f[s0 + 6])); p.avoidable += av;
           if (raw > 0) bumpTk(p.takenAbS, t, spell, id, base, av, raw);
@@ -6194,7 +6195,7 @@ function* analyzeSteps(item, text, opts) {
           if (!owner) hit(dg, t, spell, id);
           if (W(spell, id)) modEv.push({ k: 'dmg', t, dst: dg, spell, id, amt: base, raw: base + Math.max(0, num(f[s0 + 6])), src: sg, srcName: sn }); // (raw: the hit with what shields absorbed)
           if (r.cdUse.length && (parseInt(f[2], 16) & 0x40)) { const amt = base + Math.max(0, num(f[s0 + 6])), sch = swing ? 1 : parseInt(f[10], 16) || 1; if (amt > 0) cdCover(dg, t, amt, (sch & ~1) !== 0); }
-          if (extOn.size && (parseInt(f[2], 16) & 0x40)) { const amt = base + Math.max(0, num(f[s0 + 6])), sch = swing ? 1 : parseInt(f[10], 16) || 1; if (amt > 0) for (const [k, u] of extOn) { if (!k.startsWith(dg + '|')) continue; const [red, mag, aoe] = EXT_DR.get(k.slice(k.indexOf('|') + 1)); if ((mag && (sch & ~1) === 0) || (aoe && swing)) continue; u.prev += amt * red / (1 - red); u.taken += amt; } } /* (externals' and Zephyr's share (Oct 24)) */
+          if (extOn.size && (parseInt(f[2], 16) & 0x40)) { const amt = base + Math.max(0, num(f[s0 + 6])), sch = swing ? 1 : parseInt(f[10], 16) || 1; if (amt > 0) for (const [k, u] of extOn) { if (!k.startsWith(dg + '|')) continue; const [red, mag, aoe] = EXT_DR.get(k.slice(k.indexOf('|') + 1)); if ((mag && (sch & ~1) === 0) || (aoe && swing)) continue; u.prev += amt * red / (1 - red); u.taken += amt; bump(p.cdRS || (p.cdRS = []), t, amt * red / (1 - red)); } } /* (externals' and Zephyr's share (Oct 24)) */
           if (persOn.size && (parseInt(f[2], 16) & 0x40)) { const amt = base + Math.max(0, num(f[s0 + 6])), sch = swing ? 1 : parseInt(f[10], 16) || 1; if (amt > 0) persCover(dg, amt, (sch & ~1) !== 0); } /* (personal defensives' share (Oct 22)) */
           recap(dg, { t, heal: false, amount: base, src: shortName(sg, sn), spell, id, hp });
         } else if (owner && (parseInt(f[6], 16) & 0x40)) { // (damage on enemies only: a mind-controlled player hitting a friendly pet isn't damage done)
@@ -6285,7 +6286,7 @@ function* analyzeSteps(item, text, opts) {
           // (a zone's buff comes from the zone itself, e.g. Anti-Magic Zone: credit the player who pressed it last)
           const ln = f[9].toLowerCase(); if (PERS_DR.has(ln) && (sg === dg || !isPlayer(sg) || owner === dg)) persUse(dg, ln, f[9], t); /* (a personal defensive went up (Oct 22)) */
           if (EXT_DR.has(ln) && isPlayer(sg) && (sg !== dg || ln === 'zephyr')) { let u = null; for (let i = r.extMit.length - 1; i >= 0 && t - r.extMit[i].t <= 12; i--) if (r.extMit[i].g === sg && r.extMit[i].name === f[9]) { u = r.extMit[i]; break; } if (!u) { u = { g: sg, name: f[9], t, prev: 0, taken: 0 }; r.extMit.push(u); } extOn.set(dg + '|' + ln, u); } /* (an external or Zephyr went up (Oct 24)) */
-          if (ln === 'devotion aura') devOn.add(dg);
+          if (ln === 'devotion aura') devOn.set(dg, sg);
           else if (CD_DR.has(ln)) { let by = owner; if (!by) { for (let i = r.cdUse.length - 1; i >= 0 && t - r.cdUse[i].t <= 15; i--) if (r.cdUse[i].cd === CD_DR.get(ln)[0] && isPlayer(r.cdUse[i].g)) { by = r.cdUse[i].g; break; } } drOn.set(dg + '|' + ln, by || sg); }
           else if (ln === 'rallying cry' && (owner || isPlayer(sg))) { const u = cdPress(owner || sg, 'Rallying Cry', t, true); if (!u.cov.has(dg)) { u.cov.add(dg); u.hp += 0.1 * (pMax.get(dg) || 0); } } }
         // (crowd control a player, their pet or their totem landed on an enemy)
