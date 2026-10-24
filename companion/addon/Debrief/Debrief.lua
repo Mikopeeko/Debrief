@@ -1227,6 +1227,8 @@ local function sameAs(a, b) return a.h.boss == b.h.boss and a.h.pull == b.h.pull
 local function verN(v) local a, b, c = tostring(v or ""):match("(%d+)%.(%d+)%.?(%d*)"); return a and (tonumber(a) * 1000000 + tonumber(b) * 1000 + (tonumber(c) or 0)) or 0 end
 local function newerCopy(m, q) local a, b = verN(m.addonV), verN(q.addonV); if a ~= b then return a > b end; return verN(m.appV) > verN(q.appV) end
 local function addPull(m, own)
+  -- (only your latest practice pull is kept (Oct 24): a new one replaces the one before)
+  if m.h and m.h.diff == "Practice" then for i = #DB.pulls, 1, -1 do local q = DB.pulls[i]; if q.h and q.h.diff == "Practice" and not sameAs(q, m) then table.remove(DB.pulls, i) end end end
   for i, q in ipairs(DB.pulls) do if sameAs(q, m) then
     -- (your own PC app's copy wins over one a guildmate's app sent first: theirs may be an older version, without the newest lines)
     if own and not q.own then m.t = q.t; m.own = true; DB.pulls[i] = m; DB.cur = i; wipe(EXPANDED); return false, true end

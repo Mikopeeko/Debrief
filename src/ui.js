@@ -1760,6 +1760,7 @@ const PATCH_NOTES = [
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
     'Debriefing: a polish pass. Every box lines up with the same spacing and corners, The details is titled like The pull at a glance, every title up top has its icon, and spell names are as bold as the words around them.',
+    'Debrief Companion: the pop-up now looks exactly like /recap in game, and your latest training dummy pull goes into /recap too after a /reload',
     'Debriefing: The details (Innervate, potions, defensives and the rest) sit in their own box under The pull at a glance: what wiped us, then when, then the numbers.',
     'Debrief in game: rotation tips now come in order of what costs you the most, up to 8 of them, and the settings are tidier (Me, Raid view and Extras, a small grid for How many)',
     'Debrief Companion is now code-signed, so Windows knows it comes from us. While it is new, Windows may still ask once: click More info, then Run anyway',

@@ -89,7 +89,8 @@ namespace Debrief {
     }
 
     // (twice as wide as before, two columns (Oct 23); the addon's Width picks a little more or less)
-    static int WidthOf(string w) { return w == "narrow" ? 1000 : w == "large" ? 1220 : w == "xl" ? 1280 : 1160; }
+    // (one column like /recap since Oct 24: the addon's card widths (360, 400, 480, 560, 680), a little roomier)
+    static int WidthOf(string w) { return w == "narrow" ? 420 : w == "wide" ? 540 : w == "large" ? 620 : w == "xl" ? 740 : 460; }
 
     protected override void OnMove(EventArgs e) { base.OnMove(e); if (placed && Visible) SaveBounds(); }
 

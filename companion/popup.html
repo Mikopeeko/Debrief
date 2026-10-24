@@ -91,7 +91,18 @@ body.isMini { border-color: rgba(230,180,80,.85); box-shadow: inset 0 0 0 1px rg
 .ktabs { display: flex; gap: 18px; border-bottom: 1px solid var(--line); margin: 2px 0 12px; font-weight: 600; color: var(--muted); }
 .ktabs span { padding: 4px 0 6px; cursor: pointer; } .ktabs span.on { color: var(--text); box-shadow: inset 0 -2px 0 var(--gold); } .ktabs em { font-style: normal; color: var(--faint); font-weight: 500; font-size: 12.5px; }
 .kgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 22px; align-items: start; }
-@media (min-width: 860px) { .kgrid { grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr); } .kgrid.one { grid-template-columns: minmax(0, 1fr); } }
+/* (one column, like /recap (Oct 24)) */
+.khead { display: flex; align-items: flex-start; gap: 10px; margin: 2px 0 10px; } .khead .kbn { font: 700 26px 'Barlow Semi Condensed', Barlow, sans-serif; line-height: 1.1; }
+.khead .kmeta { color: var(--muted); font-weight: 600; font-size: 14px; margin-top: 4px; } .khead .kres { margin-left: auto; flex: none; font-weight: 700; font-size: 14px; padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(229,83,75,.6); background: rgba(229,83,75,.12); color: #ff8f87; }
+.khead .kres.k { border-color: rgba(69,193,92,.6); background: rgba(69,193,92,.12); color: #7ee08f; } .khead .kres.p { border-color: var(--line2); background: var(--raised); color: var(--muted); }
+.kpulls { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; } .kpulls span { font-weight: 700; font-size: 12.5px; padding: 5px 11px; border-radius: 5px; border: 1px solid transparent; background: rgba(229,83,75,.13); color: #ff8f87; cursor: pointer; }
+.kpulls span.k { background: rgba(69,193,92,.14); color: #7ee08f; } .kpulls span.on { border-color: var(--gold); } .kpulls span.wait { opacity: .6; }
+.ktabs .kwho { margin-left: auto; display: flex; align-items: center; gap: 10px; cursor: default; padding: 0 0 4px; } .ktabs .kwho button { border: 1px solid var(--line2); background: var(--raised); color: var(--muted); border-radius: 5px; width: 26px; height: 24px; cursor: pointer; font: 700 13px Barlow, sans-serif; }
+.ktabs .kwho button:hover { color: var(--gold); }
+.ktrl { font-size: 14px; color: var(--soft); margin: -2px 0 10px 2px; } .ktrl p { margin: 3px 0; }
+.kbig { display: flex; align-items: center; gap: 12px; background: var(--raised); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin: 0 0 8px; } .kbig .ic { width: 44px; height: 44px; border-radius: 6px; }
+.kbig small { display: block; color: var(--muted); font-size: 13px; font-weight: 600; } .kbig b { font: 700 30px 'Barlow Semi Condensed', Barlow, sans-serif; line-height: 1.05; } .kbig b em { font-style: normal; font-size: 13px; color: var(--muted); margin-left: 4px; }
+.kbig .kbr { margin-left: auto; text-align: right; color: var(--muted); font-size: 12.5px; align-self: flex-start; } .kbig .kbr .up { color: #7ee08f; } .kbig .kbr .dn { color: #ff8f87; }
 .kL, .kR { min-width: 0; }
 .kl { color: var(--gold); font: 700 11.5px/1 Barlow, sans-serif; letter-spacing: .05em; margin: 2px 0 7px; } .kl.mut { color: var(--muted); margin-top: 12px; }
 .khd { font: 600 16.5px/1.35 'Barlow Semi Condensed', Barlow, sans-serif; margin: 0 0 12px; }
@@ -172,7 +183,7 @@ let D = null; const OPEN = {};
 // ---------- the /recap card, drawn in the pop-up (Oct 24, the user's pick: "the pop-up copies /recap") ----------
 // The same card the addon shows, from the same recap: your Me view and the Raid view, the sections and line counts you picked in /db,
 // two columns in the wide window. Data: D.card (the recap, up to the wipe call), D.lk (your /db settings and who you are).
-let VIEW = null;
+let VIEW = null, WHO = null;
 const FLC = { ok: '#45c15c', warn: '#e8a23a', bad: '#e5534b', dead: '#6c7381', info: '#6c7381', next: '#e6b450' };
 const SQC = { g: '#45c15c', w: '#e8a23a', b: '#e5534b' };
 const reEsc = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -193,7 +204,10 @@ function cardView() {
   const sec = (key, title, inner, def) => { const o = isOn('s:' + key, def !== false);
     return '<div class="kc"><div class="kh" data-cf="s:' + key + '"><b>' + title + '</b><i>' + (o ? '–' : '+') + '</i></div>' + (o ? '<div class="kb">' + inner + '</div>' : '') + '</div>'; };
   const lim = (key, L, n, draw) => { const all = OPEN['m:' + key], show = all ? L : L.slice(0, n); return show.map(draw).join('') + (L.length > show.length ? '<div class="kmore" data-cmore="' + key + '">Show ' + (L.length - show.length) + ' more</div>' : ''); };
-  const me = LK.me ? PL.find((p) => p.name === LK.me || short(p.name) === short(LK.me)) : null;
+  /* (Me shows you, or anyone you step to with ‹ ›; without you in the pull, the first player, as /recap does (Oct 24)) */
+  const mine = LK.me ? PL.find((p) => p.name === LK.me || short(p.name) === short(LK.me)) : null;
+  if (WHO && !PL.some((p) => p.name === WHO)) WHO = null;
+  const me = WHO ? PL.find((p) => p.name === WHO) : mine || PL.find((p) => p.rot || (p.slips || []).length) || PL[0] || null;
   if (!VIEW || (VIEW === 'me' && !me)) VIEW = me ? 'me' : 'raid';
   const R = C.raid || {}, CO = (C.coach && C.coach.raid) || null;
   let L = '', Rt = '';
@@ -208,15 +222,17 @@ function cardView() {
       for (const t of [you && you[1], P.next, deep ? P.next2 : '']) if (t && !tips.some((q) => first(q) === first(t))) tips.push(t);
       const tr = you && you[2];
       L += '<div class="kyou"><div class="kl">YOUR RAID LEAD SAYS</div>' + (verdict ? '<p class="kv">' + pt(verdict) + '</p>' : '') +
-        (tips.length ? '<div class="kl">' + (C.h && C.h.kill ? 'NEXT WEEK' : 'NEXT PULL') + '</div>' + (tips.length > 1 ? '<ol class="ktips">' + tips.map((t) => '<li>' + pt(t) + '</li>').join('') + '</ol>' : '<p class="ktip1">' + pt(tips[0]) + '</p>') : '') +
-        (tr && ((tr.worse || []).length || (tr.better || []).length) ? '<div class="ktr">' + ((tr.worse || []).length ? '<p><b style="color:#e8a23a">Worse than last pull:</b> ' + tr.worse.map((x) => esc(x[0]) + (x[1] ? ' (' + esc(String(x[1]).toLowerCase()) + ')' : '')).join(', ') + '</p>' : '') +
-          ((tr.better || []).length ? '<p><b style="color:#5aa9ff">Better than last pull:</b> ' + tr.better.map((x) => esc(x[0]) + (x[1] ? ' (' + esc(String(x[1]).toLowerCase()) + ')' : '')).join(', ') + '</p>' : '') + '</div>' : '') + '</div>';
+        (tips.length ? '<div class="kl">' + (C.h && C.h.kill ? 'NEXT WEEK' : 'NEXT PULL') + '</div>' + (tips.length > 1 ? '<ol class="ktips">' + tips.map((t) => '<li>' + pt(t) + '</li>').join('') + '</ol>' : '<p class="ktip1">' + pt(tips[0]) + '</p>') : '') + '</div>' + /* (worse and better under the box, as /recap shows them) */
+        (tr && ((tr.worse || []).length || (tr.better || []).length) ? '<div class="ktrl">' + ((tr.worse || []).length ? '<p><b style="color:#e8a23a">Worse than last pull:</b> ' + tr.worse.map((x) => esc(x[0]) + (x[1] ? ' (' + esc(String(x[1]).toLowerCase()) + ')' : '')).join(', ') + '</p>' : '') +
+          ((tr.better || []).length ? '<p><b style="color:#5aa9ff">Better than last pull:</b> ' + tr.better.map((x) => esc(x[0]) + (x[1] ? ' (' + esc(String(x[1]).toLowerCase()) + ')' : '')).join(', ') + '</p>' : '') + '</div>' : '');
     }
     // (your numbers: your damage or healing against last pull and your best, then the small tiles)
     if (on('tile')) {
       const d = P.d != null && P.d !== '' ? (P.d >= 0 ? '+' : '') + P.d + '% vs pull ' + esc(P.vs) : 'First pull read';
-      L += '<div class="ktiles"><div class="kt"><small>' + (P.role === 'healer' ? 'Your healing' : 'Your damage') + '</small><b>' + esc(P.v) + ' <em>' + esc(P.unit) + '</em></b><i>' + d + (P.best ? ' · best ' + esc(P.best) + (P.bp ? ' (pull ' + esc(P.bp) + ')' : '') : '') + (P.rank ? '<br>' + esc(P.rank) : '') + '</i></div>' +
-        (P.tiles || []).map((t) => '<div class="kt' + (t[3] === 'warn' ? ' w' : t[3] === 'bad' ? ' b' : '') + '"><small>' + esc(t[0]) + '</small><b>' + esc(t[1]) + '</b><i>' + esc(t[2] || '') + '</i></div>').join('') + '</div>';
+      /* (your big number with your spec's icon, like /recap; against last pull and your best on the right) */
+      const dc = P.d != null && P.d !== '' ? (P.d >= 0 ? 'up' : 'dn') : '';
+      L += '<div class="kbig">' + (P.icon ? icn(P.icon) : '') + '<div><small>' + (P.role === 'healer' ? 'Your healing' : 'Your damage') + '</small><b>' + esc(P.v) + '<em>' + esc(P.unit) + '</em></b></div><div class="kbr">' + (dc ? '<span class="' + dc + '">' + d.replace(/ vs pull.*/, '') + '</span>' + d.replace(/^[^ ]+/, '') : d) + (P.best ? '<br>best ' + esc(P.best) + (P.bp ? ' (pull ' + esc(P.bp) + ')' : '') : '') + (P.rank ? '<br>' + esc(P.rank) : '') + '</div></div>' +
+        '<div class="ktiles">' + (P.tiles || []).map((t) => '<div class="kt' + (t[3] === 'warn' ? ' w' : t[3] === 'bad' ? ' b' : '') + '"><small>' + esc(t[0]) + '</small><b>' + esc(t[1]) + '</b><i>' + esc(t[2] || '') + '</i></div>').join('') + '</div>';
     }
     // (rotation, like the Rotation tab's checklist: your score, each fix against the top players, a square per moment, Next time)
     if (on('rotation')) {
@@ -277,8 +293,14 @@ function cardView() {
     if (sv.length) Rt += sec('rsurv', 'Survival', lim('rsurv', sv, 4, row));
     if (SH.mechs === true && (R.mech || []).length) Rt += sec('mech', 'Boss mechanics', lim('mech', R.mech, MX.maxMech != null ? MX.maxMech : 6, rowT));
   }
-  const tabs = me ? '<div class="ktabs"><span data-tab="me" class="' + (VIEW === 'me' ? 'on' : '') + '">' + nmH(me.name) + ' <em>' + esc(me.spec || '') + '</em></span><span data-tab="raid" class="' + (VIEW === 'raid' ? 'on' : '') + '">Raid view</span></div>' : '';
-  return tabs + '<div class="kgrid' + (Rt ? '' : ' one') + '"><div class="kL">' + L + '</div>' + (Rt ? '<div class="kR">' + Rt + '</div>' : '') + '</div>';
+  /* (the header, as /recap draws it: the boss big, its line, the result; this boss's pulls; Me | Raid view with ‹ name ›) */
+  const H = C.h || D.h || {}, prac = H.diff === 'Practice', res = prac ? 'Practice' : H.kill ? 'Kill' : 'Wipe' + (H.pct !== '' && H.pct != null ? ' · ' + H.pct + '%' : '');
+  const head = '<div class="khead"><div><div class="kbn">' + esc(H.boss) + '</div><div class="kmeta">' + [H.diff, 'Pull ' + H.pull, H.dur, H.where, H.deaths ? H.deaths + (H.deaths === 1 ? ' death' : ' deaths') : ''].filter(Boolean).map(esc).join(' · ') + '</div></div><span class="kres' + (prac ? ' p' : H.kill ? ' k' : '') + '">' + esc(res) + '</span></div>';
+  const bossKey = (H.boss || '') + ' · ' + (H.diff || ''), NP = (D.night || []).filter((p) => p.boss === bossKey);
+  const pulls = on('chips') && NP.length > 1 ? '<div class="kpulls">' + NP.map((p) => '<span class="' + (p.kill ? 'k' : '') + (p.cur ? ' on' : '') + (loadingPull === p.sb ? ' wait' : '') + '" data-pull="' + p.sb + '" title="' + esc('Pull ' + p.pull + (p.h ? ': ' + p.h : '')) + '">Pull ' + p.pull + ' · ' + esc(p.txt) + '</span>').join('') + '</div>' : '';
+  const who = VIEW === 'me' && me && PL.length > 1 ? '<span class="kwho"><button type="button" data-who="-1" title="The player before">‹</button>' + nmH(me.name) + '<button type="button" data-who="1" title="The next player">›</button></span>' : '';
+  const tabs = me ? '<div class="ktabs"><span data-tab="me" class="' + (VIEW === 'me' ? 'on' : '') + '">Me</span><span data-tab="raid" class="' + (VIEW === 'raid' ? 'on' : '') + '">Raid view</span>' + who + '</div>' : '';
+  return head + pulls + tabs + stopRow() + '<div class="kgrid one"><div class="kL">' + L + Rt + '</div></div>';
 }
 function render() {
   const app = document.getElementById('app'); if (!D || !D.h) return;
@@ -293,7 +315,7 @@ function render() {
   const paint = (s) => { let x = esc(s); for (const [n, k] of cls) if (n.length > 2 && x.includes(n)) x = x.split(n).join('<b style="color:' + (CC[k] || '#ece8df') + ';font-weight:600">' + n + '</b>'); return x; };
   const res = h.kill ? 'Kill' : 'Wipe' + (h.pct !== '' && h.pct != null ? ' ' + h.pct + '%' : '');
   let body = '';
-  if (D.card) body = stopRow() + cardView(); /* (the /recap card (Oct 24)) */
+  if (D.card) body = cardView(); /* (the /recap card (Oct 24): its own header, pulls and wipe call) */
   else if (D.pack && D.pack.html) body = stopRow() + '<div id="site"></div>';
   else if (c && c.headline) {
     body += '<div class="cl">' + (c.kill ? 'THE KILL, COACHED' : 'THIS PULL, COACHED') + '</div><p class="chd">' + paint(c.headline) + '</p>';
@@ -309,8 +331,8 @@ function render() {
     body += '<p class="cnt" style="margin-top:10px">The full coaching is on the website, in the Debriefing tab.</p>';
   } else body += '<p class="chd">' + esc(res) + ' · ' + esc(h.dur) + '</p><p class="cnt">No coaching for this pull.</p>';
   const pr0 = document.getElementById('pullsRow'), sl0 = pr0 ? pr0.scrollLeft : null, bd0 = document.querySelector('.body'), st0 = bd0 ? bd0.scrollTop : 0; /* (a redraw keeps your place (Oct 24)) */
-  app.innerHTML = '<div class="top">' + LOGO + '<b>Debrief</b><span class="bt">' + esc(h.boss) + ' · ' + esc(h.diff) + ' · Pull ' + esc(h.pull) + '</span><span class="pill' + (h.kill ? ' k' : '') + '">' + esc(res) + '</span><button class="x" type="button" title="Close (it comes back after the next pull)" data-close="1">✕</button></div>' +
-    nightRow() +
+  app.innerHTML = '<div class="top">' + LOGO + '<b>Debrief</b>' + (D.card ? '' : '<span class="bt">' + esc(h.boss) + ' · ' + esc(h.diff) + ' · Pull ' + esc(h.pull) + '</span><span class="pill' + (h.kill ? ' k' : '') + '">' + esc(res) + '</span>') + '<button class="x" type="button" title="Close (it comes back after the next pull)" data-close="1">✕</button></div>' +
+    (D.card ? '' : nightRow()) +
     '<div class="body' + (D.pack && D.pack.html ? ' sitebody' : '') + '">' + body + '</div>' +
     '<div class="foot">' +
     '<button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">Closes when the next pull starts · /reload in WoW for /recap</span></div>';
@@ -341,8 +363,9 @@ let waiting = false;
 function fit() { requestAnimationFrame(() => { const a = document.getElementById('app'), m = a.querySelector('.mini'), t = a.querySelector('.top'), b = a.querySelector('.body'), f = a.querySelector('.foot');
   const want = m ? m.offsetHeight + 2 : (t ? t.offsetHeight : 0) + (b ? b.scrollHeight : 0) + (f ? f.offsetHeight : 0) + 2; post('h:' + Math.ceil(want)); }); }
 document.addEventListener('click', (e) => {
-  const t = e.target.closest ? e.target.closest('[data-fold],[data-row],[data-close],[data-open],[data-big],[data-cut],[data-cutt],[data-pull],[data-tab],[data-cf],[data-cr],[data-cmore]') : null; if (!t) return;
-  if (t.dataset.pull) { if (t.classList.contains('on')) return; loadingPull = +t.dataset.pull; t.classList.add('wait'); t.textContent = t.textContent.replace(/ · .*/, ' · loading…'); post('pull:' + t.dataset.pull); return; }
+  const t = e.target.closest ? e.target.closest('[data-fold],[data-row],[data-close],[data-open],[data-big],[data-cut],[data-cutt],[data-pull],[data-tab],[data-cf],[data-cr],[data-cmore],[data-who]') : null; if (!t) return;
+  if (t.dataset.who) { const PL = (D.card && D.card.players) || []; if (!PL.length) return; const curN = document.querySelector('.kwho .knm'), cur = PL.findIndex((p) => p.name === WHO || (!WHO && curN && String(p.name).split('-')[0] === curN.textContent)); WHO = PL[((cur < 0 ? 0 : cur) + (+t.dataset.who) + PL.length) % PL.length].name; for (const k of Object.keys(OPEN)) if (/^r:rot|^m:rot|^s:rot/.test(k)) delete OPEN[k]; render(); return; }
+  if (t.dataset.pull) { if (t.classList.contains('on')) return; loadingPull = +t.dataset.pull; t.classList.add('wait'); t.textContent = t.textContent.replace(/ · .*/, ' · loading…'); post('pull:' + t.dataset.pull); return; } /* (a pull button, in the card's row or the old strip) */
   if (t.dataset.tab) { VIEW = t.dataset.tab; render(); return; } /* (the card: Me or Raid view) */
   if (t.dataset.cf) { const k = t.dataset.cf, cur = OPEN[k] != null ? OPEN[k] : (k === 's:cw' || k === 's:cd' || k === 's:ca' ? DEEP() : true); OPEN[k] = !cur; render(); return; }
   if (t.dataset.cr) { const k = t.dataset.cr; OPEN[k] = !(OPEN[k] != null ? OPEN[k] : ((k === 'r:w0' || k === 'r:rot0') && DEEP())); render(); return; }
@@ -360,7 +383,7 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') post('clos
 function take(d) {
   if (!d) return;
   if (d.copied != null) { copied = !!d.copied; render(); return; }
-  waiting = false; loadingPull = null; D = d; copied = !!d.copiedAlready; big = !!d.full; for (const k of Object.keys(OPEN)) delete OPEN[k]; render();
+  waiting = false; loadingPull = null; if (!D || !d.h || !D.h || d.h.boss !== D.h.boss) WHO = null; D = d; copied = !!d.copiedAlready; big = !!d.full; for (const k of Object.keys(OPEN)) delete OPEN[k]; render();
   const pr = document.getElementById('pullsRow'), on = pr && pr.querySelector('.pc.on'); if (on) pr.scrollLeft = Math.max(0, on.offsetLeft - pr.clientWidth + on.offsetWidth + 12);
   const b = document.querySelector('.body'); if (b) b.scrollTop = 0;
 }

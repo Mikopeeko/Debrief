@@ -759,6 +759,7 @@ async function send(b, byHand) {
       RECAP.lastModel = model; renderPreview(model);
       // (every pull's code goes into the addon's folder too, so /reload in WoW brings it in as a saved pull (Oct 22))
       if (b.id !== DUMMY) { j('/addonpull', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: L.name + ':' + b.startByte, code }) }).catch(() => {}); markSaved(L.name + ':' + b.startByte); }
+      else j('/addonpull', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'practice', code }) }).catch(() => {}); /* (your latest practice pull, one slot, so /recap shows it after /reload (Oct 24)) */
       const ok = false; /* (nothing goes on your clipboard any more (Oct 24)) */
       L.reading = null; L.lastSent = { sb: b.startByte, ok: true, shared: false, at: Date.now() }; saveNight(b, rep, model.coach && model.coach.raid);
       // (Debriefing's own coach box, exactly as the tab draws it, for the pop-up)
