@@ -1221,7 +1221,11 @@ async function planShare(req, env, url) {
 }
 
 export default {
-  async scheduled(ev, env, ctx) { ctx.waitUntil(Promise.allSettled([announcePatch(env), discordJobs(env, ev.scheduledTime || Date.now()), paceStep(env), curveCron(env)]).then((r) => r.forEach((x) => { if (x.status === 'rejected') console.warn('Cron:', x.reason && x.reason.message); }))); },
+  async scheduled(ev, env, ctx) { ctx.waitUntil((async () => {
+    // (a test write first: with the free daily limit used up, nothing that posts and then saves its place may run (Oct 24))
+    let kvOk = true; try { await env.DEBRIEF_KV.put('kv-probe', String(Date.now())); } catch (err) { kvOk = false; console.warn('KV can\'t be written to right now, skipping the Discord jobs:', err && err.message); }
+    return Promise.allSettled(kvOk ? [announcePatch(env), discordJobs(env, ev.scheduledTime || Date.now()), paceStep(env), curveCron(env)] : [paceStep(env), curveCron(env)]).then((r) => r.forEach((x) => { if (x.status === 'rejected') console.warn('Cron:', x.reason && x.reason.message); }));
+  })()); },
   async fetch(req, env, ctx) {
     const url = new URL(req.url), route = ROUTES[url.pathname];
     /* (test copy only: read one kill's curves (raw=1 shows Warcraft Logs' answer), or step the gathering: the next kill not yet read from the
