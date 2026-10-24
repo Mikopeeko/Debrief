@@ -7156,7 +7156,7 @@ function buildTwinFangs(ev, r, h) {
     verdict: bursts.length ? 'bad' : 'good',
     summary: (bursts.length ? 'Tainted Burst went off ' + pl(new Set(bursts.map((e) => Math.round(e.t))).size, 'time') + '.' : 'Every fount was absorbed, so there was no Tainted Burst.') +
       (clearAll.heal.length ? ' Heal absorbs cleared: ' + clearAll.heal.map(([g, a]) => pname(g) + ' ' + fmtM(a)).join(', ') + (clearAll.other ? ', everyone else ' + fmtM(clearAll.other) : '') + '.' : ''),
-    cols: ['After', 'When', 'Players who absorbed', 'Tainted Burst', 'Heal absorbs cleared'], rows: fRows,
+    cols: ['After', 'When', 'Absorbed', 'Tainted Burst', 'Heal absorbs cleared'], rows: fRows,
     // (the whole pull's totals per healer, under the table)
     ...(clearAll.heal.length ? { extra: { title: 'Heal absorbs cleared, whole pull', items: clearAll.heal.map(([g, a]) => ({ p: pname(g), n: fmtM(a) })) } } : {}) });
 
@@ -7245,7 +7245,7 @@ function buildTwinFangs(ev, r, h) {
   sections.push({ id: 'soaks', title: 'Caustic Globules (One soak each)', place: 'Caustic Globule (orb) soaks', spell: S('caustic globule'),
     verdict: globExplode.length || gSets.some(setBad) ? 'bad' : gSets.some(setWarn) ? 'warn' : 'good',
     summary: pl(globs.length, 'globule') + ' soaked over ' + pl(gSets.length, 'set') + (globExplode.length ? ', and ' + pl(globExplode.length, 'globule') + ' exploded on the raid unsoaked' : '') + '. The plan is one globule per player per set, with sets taken in turns (high-venom players sit one out), and no touching a globule while its Barbed Bulwark is up.',
-    cols: ['Soaker', 'When', 'Globules', 'Venom at a risky soak', 'Barbed Bulwark hits', 'Died', ''],
+    cols: ['Soaker', 'When', 'Globules', 'Risky soaks', 'Barbed Bulwark hits', 'Died', ''],
     groups: gSets.map((s, si) => {
       // globules nobody soaked that exploded on the raid, listed in the set they came from (the last set that spawned before it)
       const ex = globExplode.filter((c) => c.t >= s.t - 1 && (gSets[si + 1] == null || c.t < gSets[si + 1].t - 1));
@@ -7369,22 +7369,22 @@ function buildTwinFangs(ev, r, h) {
     // red: someone hit who wasn't targeted, or an add's 3rd spit; amber: an add's 2nd spit (it should have died)
     verdict: spitOthers.length || aims.some((a) => a.fired && a.n >= 3) ? 'bad' : aims.some(repeatSpit) ? 'warn' : 'good',
     summary: pl(spawnSets.length, 'add set') + ' fired ' + pl(aims.filter((a) => a.fired).length, 'spit') + ', and ' + pl(spitOthers.length, 'player') + (spitOthers.length === 1 ? ' was' : ' were') + ' hit by a spit that wasn\'t aimed at them.',
-    cols: ['Spit', 'Aimed', 'Target', 'Result', 'Hit without being targeted', ''],
+    cols: ['Spit', 'Aimed', 'Target', 'Result', 'Stood in it', ''], /* (short words (your note, Oct 23)) */
     groups: spawnSets.map((s) => {
       const fired = s.aims.filter((a) => a.fired).length, extra = s.aims.filter(repeatSpit).length, oth = s.aims.reduce((n, a) => n + a.byst.length, 0);
       const early = s.adds.filter((x) => !x.fired).length;
       return { title: 'Set ' + (s.i + 1), t: s.t, bad: oth > 0 || s.aims.some((a) => a.fired && a.n >= 3), warn: extra > 0,
-        sub: pl(s.adds.length, 'add') + ', ' + pl(fired, 'spit') + ' fired' + (extra ? ', ' + extra + ' from adds that should have been dead' : '') + (early ? ', ' + pl(early, 'add') + ' killed before it fired' : ', none killed before its first spit') + (oth ? ', ' + pl(oth, 'player') + ' hit without being targeted' : ''),
+        sub: pl(s.adds.length, 'add') + ', ' + pl(fired, 'spit') + ' fired' + (extra ? ', ' + extra + ' from adds that should have been dead' : '') + (early ? ', ' + pl(early, 'add') + ' killed before it fired' : ', none killed before its first spit') + (oth ? ', ' + pl(oth, 'player') + ' stood in it' : ''),
         rows: s.aims.map((a) => {
           const ad = s.adds.find((x) => x.g === a.src);
           const result = !a.fired ? { txt: 'add died first, no spit' + (ad && ad.died != null ? ' (' + h.fmtT(ad.died) + ')' : '') }
             /* (Oct 23, your note: "fired, hit the target" read as the target's fault; it's the add living too long. Being targeted can't be helped) */
-            : a.n >= 2 ? { txt: 'add still alive for spit ' + a.n + ', kill it before its second spit', bad: a.n >= 3, warn: true }
+            : a.n >= 2 ? { txt: 'add lived too long', bad: a.n >= 3, warn: true }
             : { txt: a.hitTarget ? 'hit only its target' : 'hit nobody' };
           const t0 = a.t0 - 0.4, t1 = a.t1 + 0.6;
           const mp = spitMap(t0, t1, s.aims.filter((x) => x.t1 >= t0 && x.t0 <= t1), [a], a.byst.map((o) => [o.e.dst, o.e.t]), 'Corrosive Spit, set ' + (s.i + 1) + ', spawn ' + a.k + ' spit ' + a.n + ': ' + h.fmtT(a.t0) + ' to ' + h.fmtT(a.t1));
           mp.note = spitNote(a);
-          return [{ txt: 'Spawn ' + a.k + ', spit ' + a.n }, { t: a.t0 }, { ps: [pname(a.g)] }, result, { ps: a.byst.map((o) => pname(o.e.dst)), none: 'nobody', bad: a.byst.length > 0 }, { map: mp }];
+          return [{ txt: 'Spawn ' + a.k + ', spit ' + a.n }, { t: a.t0 }, { ps: [pname(a.g)] }, result, { ps: a.byst.map((o) => pname(o.e.dst)), none: 'nobody', bad: a.byst.length > 0, suf: 'hit by ' + (pname(a.g) ? String(pname(a.g)).split('-')[0] + '\'s' : 'someone else\'s') + ' beam' /* (names first (your wording, Oct 23)) */ }, { map: mp }];
         }) };
     }), rows: [] });
   // ---- 7. Coiling Ichor: a circle around each target ----
@@ -7718,7 +7718,7 @@ function buildEntombedSentinels(ev, r, h) {
     const alive = before && (a.died == null || a.died > nextI.t0), dmg = contam.filter((e) => e.t >= a.t && e.t <= (a.died ?? dur) + 0.5 && !adds.some((b) => b !== a && b.t > a.t && e.t >= b.t && (b.died == null || e.t <= b.died))).reduce((s, e) => s + e.amt, 0);
     if (alive && !lastC) M(nextI.t0, 'Raid', 'Venom Coagulation', 'Medium', 'The Venom Coagulation was still alive when the intermission started. Its Contaminate pulses hit the raid during the pairing game.', 'Give the cycle\'s second Venom Coagulation priority so it dies before Vitriolic Stasis. Ranged on the red side can help.');
     return [{ txt: 'Add ' + (i + 1) + (before ? ' (before the intermission)' : '') }, { t: a.t }, a.died != null ? { txt: 'killed in ' + (a.died - a.t).toFixed(0) + ' s' } : { txt: 'not killed', warn: !lastC, dim: lastC }, { txt: fmtM(dmg) + ' on the raid' },
-      alive ? (lastC ? { txt: 'alive (the enrage is near, so it isn\'t judged)', dim: true } : { txt: 'still alive at the intermission', bad: true }) : before ? { txt: 'dead in time' } : { txt: '', dim: true }];
+      alive ? (lastC ? { txt: 'alive, not judged (enrage near)', dim: true } : { txt: 'still alive at the intermission', bad: true }) : before ? { txt: 'dead in time' } : { txt: '', dim: true }];
   });
   if (aRows.length) sections.push({ id: 'coag', title: 'Venom Coagulation (Kill before the intermission)', place: 'Venom Coagulation (add): killed in time', spell: [ES.coagCast, 'Venom Coagulation'],
     verdict: aRows.some((x) => x[4].bad) ? 'bad' : aRows.some((x) => x[2].warn) ? 'warn' : 'good',
@@ -7758,7 +7758,7 @@ function buildEntombedSentinels(ev, r, h) {
       const off = bbA.find((x) => x.op === 'remove' && x.dst === e.dst && x.t > e.t), dp = off && disp.find((x) => x.dst === e.dst && Math.abs(x.t - off.t) < 0.3), d = diedNear(e.dst, e.t, (off ? off.t - e.t : 20) + 0.5);
       const on = off ? off.t - e.t : null, slow = dp && on > 5, ran = off && !dp && !d;
       if (ran) M(off.t, pname(e.dst), 'Blighted Blood', 'Low', 'Blighted Blood wasn\'t dispelled and ran out, dropping a pool.', 'Healers dispel Blighted Blood as soon as it lands. If it does run out, drop the pool at the edge.');
-      return [{ p: pname(e.dst) }, { t: e.t }, on != null ? { txt: on.toFixed(1) + ' s', warn: slow } : { txt: '—', dim: true }, dp ? { p: dp.src } : { txt: d ? 'died with it' : ran ? 'not dispelled, so it dropped a pool' : '—', bad: !!d, warn: ran }];
+      return [{ p: pname(e.dst) }, { t: e.t }, on != null ? { txt: on.toFixed(1) + ' s', warn: slow } : { txt: '—', dim: true }, dp ? { p: dp.src } : { txt: d ? 'died with it' : ran ? 'not dispelled, left a pool' : '—', bad: !!d, warn: ran }];
     });
     return { title: 'Blighted Blood ' + (i + 1), t: s.t, bad: rows.some((x) => x[3].bad), warn: rows.some((x) => x[2].warn || x[3].warn), sub: pl(s.l.length, 'player') + ', ' + rows.filter((x) => x[3].p).length + ' dispelled', rows };
   });
@@ -8235,7 +8235,7 @@ function buildNymrissa(ev, r, h) {
     const rings = bs.flatMap((b) => b.who.map((g) => ({ guid: g, r: 1.8, ...mcol('Frost Orb', 0.3), label: '', t0: b.t, dur: 1.2, fx: 'burst', at: b.t, cn: 'Ice blue flash', legend: 'soaked an orb' })))
       .concat(bs.flatMap((b) => b.who.map((g) => { const q = posAt(g, b.t); return q ? { x: q.x, y: q.y, r: 1.6, ...mcol('Frost Orb', 0.45), label: '', t0: b.t, dur: 600, fx: 'puddle', cn: 'Ice blue dot', legend: 'where an orb was soaked' } : null; }).filter(Boolean)));
     const rows = who.map((o) => [{ p: pname(o.g) }, { t: o.t }, { txt: o.n ? pl(o.n, 'orb') : o.hits.length ? pl(o.hits.length, 'orb') : 'soaked', sub: o.imm ? 'with an immunity' : '' }, { txt: '' }]);
-    if (sh) rows.push([{ txt: 'Shattered', bad: true }, { t: shT }, { txt: 'an orb nobody touched blew up on the raid', bad: true }, { txt: '' }]);
+    if (sh) rows.push([{ txt: 'Shattered', bad: true }, { t: shT }, { txt: 'unsoaked orb hit the raid', bad: true }, { txt: '' }]);
     if (who.length) rows.unshift([{ txt: 'Whole set', sub: 'every soak, on one map', dim: true }, { t }, { txt: nOrbs ? pl(nOrbs, 'orb') + ' in all' : '', dim: true },
       { map: { t: last, hl: mk, hlLabel: 'marked (dropped the orbs)', good: who.map((o) => o.g), goodLabel: 'soaked', goodAt: who.map((o) => [o.g, o.t]), pendLabel: 'hasn\'t soaked yet', title: 'Frost Orbs set ' + (i + 1) + ' at ' + T(t), pts: h.snap(last), rings, frames: frames(t, last + 1) } }]);
     return { title: 'Set ' + (i + 1), t, bad: sh, warn: false, sub: sh ? 'an orb Shattered' : who.length ? (nOrbs ? pl(nOrbs, 'orb') + ' soaked by ' : '') + pl(who.length, 'player') + (mk.length ? ' (' + mk.length + ' marked)' : '') : cut ? 'the fight ended first' : 'nobody soaked', rows };
@@ -8815,7 +8815,7 @@ function buildNekzali(ev, r, h) {
     const rows = ignSt.map((s, i) => [{ txt: 'Soulcoil Ignition ' + (i + 1) }, { t: s }, { txt: ritT != null && s < ritT && ritT < s + 12 ? 'cut short' : '+25' }, { txt: energyAt(s + 13) != null ? 'energy ' + energyAt(s + 13) : '', dim: true }]);
     // (an Amani in the well is judged under Restless Amani: listed here, not flagged twice)
     for (const f of feeds) rows.push([{ txt: f.by ? 'An Amani reached the well' : f.died ? f.died.player + ' died in the well' : 'The well was fed' }, { t: f.t }, { txt: '+5' }, { txt: f.by ? 'see Restless Amani' : f.died ? 'dying in the well feeds it' : 'an add or a player in the water', dim: true }]);
-    if (p2T != null) { const e2 = energyAt(p2T + 15); rows.push([{ txt: 'P2 starts' }, { t: p2T }, { txt: e2 != null ? 'energy ' + e2 + ' soon after' : '—', dim: true }, { txt: 'Uncoiling, so it climbs on its own from here', dim: true }]); }
+    if (p2T != null) { const e2 = energyAt(p2T + 15); rows.push([{ txt: 'P2 starts' }, { t: p2T }, { txt: e2 != null ? 'energy ' + e2 + ' soon after' : '—', dim: true }, { txt: 'Uncoiling: climbs on its own now', dim: true }]); }
     const endE = energyAt(dur);
     if (enr) {
       const why = feeds.filter((f) => f.by).length;
@@ -9811,7 +9811,7 @@ function buildCoiledAltar(ev, r, h) {
   for (const m of mrEvents) for (const g of m.who) M(m.t, pname(g), 'malevolent resonance', 'High', 'Their ghost touched another ghost' + (m.who.size > 1 ? ' (with ' + [...m.who].filter((x) => x !== g).map(pname).join(', ') + ')' : '') + ', causing Malevolent Resonance.', 'Only you can see your ghost on Mythic. Hold it near the marker for Soul Sever and keep it away from other ghosts.');
   sections.push({ id: 'ghosts', title: 'Ghosts (Dreadmarch)', spell: S('dreadmarch'), mythicOnly: true,
     verdict: mrEvents.length ? 'bad' : 'good', summary: pl(dm.length, 'Dreadmarch cast') + ', ' + pl(mrEvents.length, 'ghost collision') + ' (Malevolent Resonance).',
-    cols: ['When', 'Players whose ghosts touched', 'Damage taken'], rows: mrEvents.map((m) => [{ t: m.t }, { ps: [...m.who].map(pname) }, { n: m.amt }]) });
+    cols: ['When', 'Ghosts touched', 'Damage taken'], rows: mrEvents.map((m) => [{ t: m.t }, { ps: [...m.who].map(pname) }, { n: m.amt }]) });
 
   // ---- 5. Spiritcackle adds and Gloombomb ----
   const sc = casts('spiritcackle');
@@ -9836,7 +9836,7 @@ function buildCoiledAltar(ev, r, h) {
     const rmDead = rmDeaths.filter((d) => !rmUsed.has(d) && mine.some((a) => d.t >= a.t0 - 0.5 && (a.died == null || d.t <= a.died + 3))); rmDead.forEach((d) => rmUsed.add(d));
     if (rmDead.length) M(rmDead[0].t, 'Raid', 'spiritcackle', 'High', pl(rmDead.length, 'player') + ' died to Retaliatory Malice while set ' + (i + 1) + '\'s adds were alive (' + (mine.length && mine.every((a) => a.died == null) ? (mine.length > 1 ? 'neither add was killed' : 'the add wasn\'t killed') : 'they lived ' + mine.map((a) => a.died != null ? Math.round(a.died - a.t0) + ' s' : 'until the pull ended').join(' and ')) + ').', 'Kill both adds fast: on Mythic each one hits the raid with Retaliatory Malice every 3 seconds from the moment it spawns until it dies.');
     const row = [{ txt: 'Set ' + (i + 1) }, { t }, { txt: mine.map((a) => a.died != null ? 'died ' + h.fmtT(a.died) + ' (' + Math.round(a.died - a.t0) + 's)' : 'not killed').join(', ') || 'no adds seen', bad: mine.some((a) => a.died == null) },
-      { txt: String(kicks.length) }, { txt: (lateDm.length ? 'alive two sets later' : alive.length ? 'alive when the next set spawned' : next == null ? 'last set of the phase' : 'dead in time') + (rmDead.length ? ', ' + pl(rmDead.length, 'death') + ' to Retaliatory Malice' : ''), bad: lateDm.length > 0 || rmDead.length > 0, warn: alive.length > 0 }];
+      { txt: String(kicks.length) }, { txt: (lateDm.length ? 'alive two sets later' : alive.length ? 'alive at the next set' : next == null ? 'last set' : 'dead in time') + (rmDead.length ? ', ' + pl(rmDead.length, 'death') + ' to Retaliatory Malice' : ''), bad: lateDm.length > 0 || rmDead.length > 0, warn: alive.length > 0 }];
     row.rm = { amt: rmAmt, dead: rmDead }; // (for the adds panel's Retaliatory Malice row)
     return row;
   });
@@ -9889,7 +9889,7 @@ function buildCoiledAltar(ev, r, h) {
   if (inter != null) sections.push({ id: 'inter', title: 'Intermission (Stop the fragments)', place: 'Intermission: blocking the Fragments', spell: S('soulbinding'),
     verdict: reclaim.length ? (mythic ? 'bad' : 'warn') : seRows.some((x) => x[2].warn || x[2].bad) ? 'warn' : 'good',
     summary: pl(rounds.length, 'soak round') + ', and ' + pl(reclaim.length, 'fragment') + ' reached Zul\'jan.',
-    cols: ['Soak round', 'Started', 'Raid peak (3 to 5; up to 10 with cooldowns)', 'Fragments to Zul\'jan'], rows: seRows });
+    cols: ['Soak round', 'Started', 'Raid peak', 'Fragments to Zul\'jan'], rows: seRows });
 
   // ---- 7. Venomfang dispels ----
   // only the boss's Venomfang (a 14s dispellable poison); a player ability shares the name and lasts 6s
@@ -10450,7 +10450,7 @@ function buildCoiledAltar(ev, r, h) {
     for (const r0 of (sGh ? sGh.rows : [])) items.push({ t: r0[0].t, row: [{ txt: 'Ghost collision', bad: true }, { t: r0[0].t }, { ps: r0[1].ps }, { txt: 'ghosts touched (Malevolent Resonance), ' + h.compact(r0[2].n) + ' damage', bad: true }, r0[3] || { txt: '' }] });
     for (const r0 of (sMc ? sMc.rows : [])) items.push({ t: r0[0].t, row: [{ txt: 'Mind control fall', bad: true }, { t: r0[0].t }, { p: r0[1].p }, { txt: 'died, ' + r0[3].txt, bad: true }, r0[4]] });
     // (Gravebound deaths (Oct 21): a player hit by Soul Sever or a Gloombomb who didn't pick up their soul fragments, up to 30 s after the last Dreadmarch)
-    { const lastDm = dm.length ? dm[dm.length - 1] + 30 : -1; for (const d of r.deaths || []) if (/^gravebound$/i.test(String(d.ability || '')) && d.t <= lastDm) items.push({ t: d.t, row: [{ txt: 'Gravebound death', bad: true }, { t: d.t }, { p: d.player }, { txt: 'died to Gravebound: didn\'t pick up their soul fragments', bad: true }, { txt: '' }] }); }
+    { const lastDm = dm.length ? dm[dm.length - 1] + 30 : -1; for (const d of r.deaths || []) if (/^gravebound$/i.test(String(d.ability || '')) && d.t <= lastDm) items.push({ t: d.t, row: [{ txt: 'Gravebound death', bad: true }, { t: d.t }, { p: d.player }, { txt: 'missed their soul fragments, died', bad: true }, { txt: '' }] }); }
     for (const r0 of (sSs ? sSs.rows : [])) items.push({ t: r0[0].t, row: [{ txt: 'Soul Sever' }, { t: r0[0].t }, { txt: r0[3].txt + ' of ' + r0[2].txt + ' ghosts removed' }, { txt: r0[4].txt + ' missed', dim: true }, r0[5]] }); /* (a missed ghost is walked back for the next frontal (Oct 21): not a mistake) */
     if (dm.length || items.length) {
       const groups = dm.map((t, i) => ({ title: 'Dreadmarch #' + (i + 1), t, from: t - 1, to: (dm[i + 1] ?? dur + 1) - 1, rows: [], tg: sDm && sDm.rows[i] ? sDm.rows[i][1].ps : [] }));
@@ -10524,7 +10524,7 @@ function buildCoiledAltar(ev, r, h) {
         const rows = shieldOf[i].map((x) => [{ txt: 'Soulcoiler ' + x.k + ' shield' }, { t: x.t }, { txt: '' }, { ...x.cell, txt: 'Spirit Shield ' + x.cell.txt + (!/^broken/.test(x.cell.txt) && left(x.k) != null ? ' (' + left(x.k) + ' of 2 stacks left)' : '') }, { txt: '' }]);
         // amber: clipped by someone else's Gloombomb (they had to collect souls); red if they died from it
         for (const e of gbClip.filter((e) => e.t >= g.t && e.t < (groups[i + 1] ? groups[i + 1].t : dur + 1))) { const dd = r.deaths.find((d) => d.guid === e.dst && d.t >= e.t && d.t <= e.t + 10);
-          rows.push([{ txt: 'Gloombomb clip', warn: true, bad: !!dd }, { t: e.t }, { p: pname(e.dst) }, { txt: 'clipped by someone else\'s Gloombomb' + (dd ? ', and died' : ''), warn: true, bad: !!dd },
+          rows.push([{ txt: 'Gloombomb clip', warn: true, bad: !!dd }, { t: e.t }, { p: pname(e.dst) }, { txt: 'hit by another Gloombomb' + (dd ? ', died' : ''), warn: true, bad: !!dd },
             { map: { t: e.t, gloom: true, hl: [e.dst], hlLabel: 'player clipped', title: 'Gloombomb at ' + h.fmtT(e.t) + ': ' + pname(e.dst) + ' was inside someone else\'s 15 yd circle' } }]); }
         const sh = shieldOf[i].map((x) => 'Soulcoiler ' + x.k + ' ' + (/^broken/.test(x.cell.txt) ? 'broken' : 'not broken'));
         return { title: g.title, t: g.t, rows, bad: rows.some(isBad), warn: rows.some((row) => row.some((c) => c.warn)), sub: sh.join(', ') || 'no adds seen' };
@@ -10800,7 +10800,7 @@ function buildUlatek(ev, r, h) {
       M(c.s, pname(c.g), 'Rancid Yolk', UL.yolk, diedW ? 'High' : tk ? 'Low' : 'Medium', 'Picked up an egg at ' + T(c.s) + ' with Rancid Yolk still on (its Noxious Shell does 200% more damage' + (tk ? ').' : '; enough to kill anyone but a tank, and the egg hatches a Viper when its carrier dies).'), 'Wait for Rancid Yolk to drop before picking up another egg, or leave that egg to someone else.');
       // (its map: where they picked it up, Rancid Yolk still on, and the seconds before)
       const yp = posPts(c.s).find((q) => q.guid === c.g), yr = eggRings(c.s - 4, c.s + 2).concat(yp ? [{ x: yp.x, y: yp.y, r: 1.3, t0: c.s - 0.1, dur: 4, label: '', color: eggC.color, fill: 'rgba(58,242,168,.7)', cn: 'Green dot', legend: 'where the egg was picked up' }] : []);
-      eggRows.push([{ t: c.s }, { p: pname(c.g) }, { txt: 'picked up an egg with Rancid Yolk still on' + (tk ? ' (tank)' : diedW ? ' and died with it' : ''), bad: diedW, warn: !diedW }, { txt: '—', dim: true },
+      eggRows.push([{ t: c.s }, { p: pname(c.g) }, { txt: 'took an egg with Rancid Yolk on' + (tk ? ' (tank)' : diedW ? ', died' : ''), bad: diedW, warn: !diedW }, { txt: '—', dim: true },
         { map: { t: c.s + 0.2, hl: [c.g], bad: diedW ? [c.g] : [], badLabel: 'died with it', warn: diedW ? [] : [c.g], warnLabel: 'picked it up with Rancid Yolk still on', title: pname(c.g) + ' picked up an egg at ' + T(c.s) + ' with Rancid Yolk still on', pts: posPts(c.s + 0.2), rings: yr,
           frames: h.frames ? h.frames(Math.max(0, c.s - 4), Math.min(dur, c.s + 2), 0.25, []) : undefined, focus: ctrOf(posPts(c.s + 0.2), [c.g], 14) || undefined } }]);
     }
@@ -11091,7 +11091,7 @@ function buildUlatek(ev, r, h) {
       // (Mythic: the Purge hits its holder for about 2 million, so every holder needs a big defensive or an external)
       if (mythic) for (const g of hold) { if (r.deaths.some((d) => d.guid === g && d.t < e.t - 0.2)) continue; const c = covered(g, e.t);
         if (!c) M(e.t, pname(g), 'Volatile Purge', UL.purge, 'Low', 'Took the Volatile Purge at ' + T(e.t) + ' with no defensive or external.', 'The Purge hits its holder for about 2 million. Use a big defensive or immunity for it, then personals and externals through the damage over time after it.');
-        rows.push([{ t: e.t }, { p: pname(g) }, { txt: c ? 'held a Volatile Purge with ' + String(c).replace(/\b\w/g, (x) => x.toUpperCase()).replace(/ (Of|The) /g, (m) => m.toLowerCase()) : 'held a Volatile Purge with no defensive', warn: !c, dim: !!c }, { txt: '' }]); }
+        rows.push([{ t: e.t }, { p: pname(g) }, { txt: c ? 'Volatile Purge with ' + String(c).replace(/\b\w/g, (x) => x.toUpperCase()).replace(/ (Of|The) /g, (m) => m.toLowerCase()) : 'Volatile Purge, no defensive', warn: !c, dim: !!c }, { txt: '' }]); }
       bursts.push({ t: e.t, hold, caught }); }
     // (one map for the whole cast (your note, Oct 18), on its own row above: every bite's 7-yard leech circle until it
     // cleared, a green check on each player from the moment they took the venom, then each holder's Volatile Purge
@@ -26496,7 +26496,7 @@ function rowText(s, row) {
     return /^\d[\d.,]*(?:, then \d[\d.,]*)*\s+\S+$/.test(v) && has(lv, ws[0]) /* ("4, then 6 orbs popped" too (Oct 22)) */ ? v + ' ' + ws.slice(1).join(' ') : col + ' ' + v; };
   const flat = (t) => String(t).replace(/\s*\(([^()]*)\)/g, ', $1');
   const bits = row.map((c, i) => ({ c, col: s.cols[i] || '' })).filter(({ c }) => (c.bad || c.warn) && c !== first && !c.map && !c.maps && !c.more)
-    .map(({ c, col }) => { const v = String(cellTxt(c)), plain = /^(result|rating|notes?|what happened)$/i.test(col); return v ? (col && !c.s && !plain ? label(col, v) : v) + (c.sub && !/^(result|rating)$/i.test(col) ? ' (' + flat(c.sub) + ')' : '') : ''; }).filter(Boolean);
+    .map(({ c, col }) => { const v = String(cellTxt(c)), plain = /^(result|rating|notes?|what happened)$/i.test(col); return v ? (c.suf ? v + ' ' + c.suf /* (a cell can put its words after the names: "Optt, Hobbz hit by someone else's beam" (Oct 23)) */ : col && !c.s && !plain ? label(col, v) : v) + (c.sub && !/^(result|rating)$/i.test(col) ? ' (' + flat(c.sub) + ')' : '') : ''; }).filter(Boolean);
   return ((t ? T(t.t) + ' ' : '') + (first ? cellTxt(first) : '')).trim() + (bits.length ? ': ' + bits.join(' · ') : '');
 }
 // every Fight audit mechanic across the pulls: per pull its status (up to the wipe filter), its problems as short lines,

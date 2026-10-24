@@ -12541,7 +12541,7 @@ function rowText(s, row) {
     return /^\d[\d.,]*(?:, then \d[\d.,]*)*\s+\S+$/.test(v) && has(lv, ws[0]) /* ("4, then 6 orbs popped" too (Oct 22)) */ ? v + ' ' + ws.slice(1).join(' ') : col + ' ' + v; };
   const flat = (t) => String(t).replace(/\s*\(([^()]*)\)/g, ', $1');
   const bits = row.map((c, i) => ({ c, col: s.cols[i] || '' })).filter(({ c }) => (c.bad || c.warn) && c !== first && !c.map && !c.maps && !c.more)
-    .map(({ c, col }) => { const v = String(cellTxt(c)), plain = /^(result|rating|notes?|what happened)$/i.test(col); return v ? (col && !c.s && !plain ? label(col, v) : v) + (c.sub && !/^(result|rating)$/i.test(col) ? ' (' + flat(c.sub) + ')' : '') : ''; }).filter(Boolean);
+    .map(({ c, col }) => { const v = String(cellTxt(c)), plain = /^(result|rating|notes?|what happened)$/i.test(col); return v ? (c.suf ? v + ' ' + c.suf /* (a cell can put its words after the names: "Optt, Hobbz hit by someone else's beam" (Oct 23)) */ : col && !c.s && !plain ? label(col, v) : v) + (c.sub && !/^(result|rating)$/i.test(col) ? ' (' + flat(c.sub) + ')' : '') : ''; }).filter(Boolean);
   return ((t ? T(t.t) + ' ' : '') + (first ? cellTxt(first) : '')).trim() + (bits.length ? ': ' + bits.join(' · ') : '');
 }
 // every Fight audit mechanic across the pulls: per pull its status (up to the wipe filter), its problems as short lines,
