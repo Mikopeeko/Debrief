@@ -15806,6 +15806,11 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
+  { d: '2026-10-24', h: [
+  ], n: [
+    'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
+  ], f: [
+  ] },
   { d: '2026-10-23', h: [
     { t: 'A Mitigation tab on Graphs', d: 'How much damage each player didn\'t take, and where it went: shields, versatility, Devotion Aura, defensives, raid cooldowns, armor and the rest.' },
     { t: 'Report card checklist', d: 'Pick a raider on the Report card and see every check they were graded on: ready to raid, mechanics, staying alive, toolkit and performance, each a plain pass or fail with its rule. The grade is now how many checks they passed.' },
@@ -15826,6 +15831,9 @@ const PATCH_NOTES = [
     'Healers: Cooldowns on big damage shows the pull as a strip, each big hit green when one of your cooldowns met it and red when none did.',
     'Gear and extras is tidier: tiles in groups, one short line each, a bar for each item\'s share, and one How we estimated for all stat items.',
     'Debriefing: a new Power Infusion and Innervate row shows every press, who got it and whether it landed well. The Deaths tile at the top opens who died and why, and the banner shows how long the pull lasted in bold.',
+    'Debrief in game: What went wrong lists every major mistake, like the website, with the smaller ones counted underneath.',
+    'Debrief Companion: the night chart now shows boss health left like the website, with the kill at the bottom. The recap pop-up is twice as wide: the coach on the left, deaths, avoidable damage, Healthstones and defensives on the right.',
+    'Debrief in game and the PC pop-up: the wipe is called for you, like the website. A wiped pull counts up to when it was lost, and one line on top says when and why.',
     'Holy Paladin: a new check, Aura Mastery inside Beacon of Virtue. Both guides say never press Aura Mastery in raid without Beacon of Virtue up.',
     'Rotation: every row you open shows a picture of its number, like Pressed 9 and Not pressed 1, or Casting 75% and Not casting 25%.',
     'Debriefing is tidier: All pulls no longer hides a drawer of repeats at the bottom (the timeline of every pull sits in the open, the numbers fold), and a mechanic that improved but still goes wrong most pulls says "Better, not fixed yet".',
@@ -15900,9 +15908,6 @@ const PATCH_NOTES = [
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
     { t: 'Since last raid', d: 'All pulls now remembers each night and compares it with your last raid on the same boss: what you fixed, what got better or worse, and what\'s still going wrong. Pick a player to see their mistakes that also happened last raid.' },
   ], n: [
-    'Debrief in game: What went wrong lists every major mistake, like the website, with the smaller ones counted underneath.',
-    'Debrief in game and the PC pop-up: the wipe is called for you, like the website. A wiped pull counts up to when it was lost, and one line on top says when and why.',
-    'Debrief Companion: the night chart now shows boss health left like the website, with the kill at the bottom. The recap pop-up is twice as wide: the coach on the left, deaths, avoidable damage, Healthstones and defensives on the right.',
     'Debrief in game: when the focus is one of the What went wrong cards, that card says FOCUS NEXT PULL and the separate Focus box is gone, like the website.',
     'Breakdown: a mechanic that went wrong is now one plain line, with what happened and the flag in words. Open it for why, how many were done right, how you compare with top guilds, and one map at a time (the worst moment first; click another row for its map).',
     'Breakdown: each phase is now one simple row: its name, a coloured dot, and a bar for every mechanic showing how often it was done right, worst first. Click a bar to jump straight to that mechanic.',
@@ -26381,6 +26386,14 @@ function coachGame(r, name) {
   // (like the website's Went wrong (Oct 23): every major mistake, minor ones only to make three, then "+N smaller ones"; tidied lines)
   const WA = c.wrongAll && c.wrongAll.length ? c.wrongAll : (c.wrong || []), maj = WA.filter((x) => x.sev === 'bad'), lead = maj.concat(WA.filter((x) => x.sev !== 'bad').slice(0, Math.max(0, 3 - maj.length)));
   out.more = WA.length - lead.length;
+  // (the four cards, as the website draws them on one pull (Oct 23): the root cause, what we did well, worse and better than last pull;
+  // the headline keeps its first sentences and ends with the hype line and one fix; no player names in the root cause)
+  const T0 = c.trend || null, rcm = !c.night ? String(c.headline || '').match(/Root cause: (.*?\.)(?=\s|$)\s*([\s\S]*)$/) : null;
+  if (T0 && rcm) { try { out.headline = tx(String(c.headline).replace(/\s*Root cause:[\s\S]*$/, '') + ' ' + coachHypeFix(c)); } catch (e) { /* (keeps the full headline) */ }
+    const noNm = (t) => { const m = t.match(/^([^.]*?), you /); if (!m) return t; return (/ and |, /.test(m[1]) ? 'Players ' : 'Someone ') + t.slice(m[0].length).replace(/\byou were\b/g, 'they were').replace(/\byour\b/g, 'their').replace(/\byou\b/g, 'them'); };
+    out.root = { cause: tx(rcm[1]), rest: tx(noNm(rcm[2] || '')) }; }
+  if (T0) { const it = (x) => ({ nm: tx(dbfCap(x.nm || '')), tag: tx(x.tag || ''), sub: tx(dbfCap(x.sub || '')) }), wnm = new Set((c.wipes || []).map((w) => String(w.nm).toLowerCase()));
+    out.trend = { well: (T0.well || []).filter((x) => !wnm.has(String(x.nm).toLowerCase())).slice(0, 3).map(it), worse: (T0.worse || []).slice(0, 3).map(it), better: (T0.better || []).slice(0, 3).map(it) }; }
   out.wrong = lead.map((x) => ({ sev: x.sev === 'bad' ? 'bad' : 'warn', label: tx(dbfCap(x.label)), tag: tx(coachTag(x, false)), what: tidyLine(tx(x.what || '')), fix: tidyLine(tx(x.fix || '')), id: sid(x.cause || x.label), how: tidyLine(tx(cClip(howRest(x), 240))), kb: tx(x.kbLine || '') }));
   out.right = (c.right || []).map((x) => ({ t: tx(x.t), id: sid(String(x.t).split(/ was | were |:/)[0]) }));
   const cls = (n) => { const p = [...r.players.values()].find((q) => q.name && String(q.name).split('-')[0] === n); return (p && p.cls) || ''; };
