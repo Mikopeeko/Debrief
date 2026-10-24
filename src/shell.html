@@ -5494,7 +5494,7 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .spc-chd > summary > .spc-cht { margin-left: auto; } .spc-chd > summary > .spc-chx + .spc-cht { margin-left: 4px; } .spc-chd > summary:hover > .spc-cht { color: var(--text); } .spc-chv { font-style: normal; display: inline-block; transition: transform .15s; } .spc-chd[open] > summary .spc-chv { transform: rotate(90deg); }
 .spc-mrb { font-size: 12.5px; }
 /* Rotation checklist (Oct 23, your pick: "more like WoWAnalyzer"): rule rows with a bar and the top players' line, What to fix, your numbers */
-.rck, .rck-fix, .rck-nums { margin: 16px 0 0; } .rck-h { margin: 0 0 10px; font: 600 18px var(--head); color: var(--text); } .rck-h .sub { margin-left: 8px; font: 400 13px var(--body); color: var(--muted); }
+.rck, .rck-fix, .rck-nums, .rck-gx { margin: 16px 0 0; } .rck-gx { margin-top: 24px; } .rck-h { margin: 0 0 10px; font: 600 18px var(--head); color: var(--text); } .rck-h .sub { margin-left: 8px; font: 400 13px var(--body); color: var(--muted); }
 .rck-lab { display: flex; align-items: center; gap: 8px; margin: 16px 0 8px; font: 700 12px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .rck-pl { padding: 1px 8px; border-radius: 999px; font: 600 12px var(--body); letter-spacing: 0; text-transform: none; } .rck-pl.ok { background: rgba(69,193,92,.12); color: #7ee08f; } .rck-pl.warn { background: rgba(232,162,58,.12); color: var(--warn); } .rck-pl.bad { background: rgba(229,83,75,.12); color: #ff8f87; }
 .rck-rs { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); overflow: hidden; }
@@ -5524,7 +5524,7 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .rck-t > summary { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; cursor: pointer; list-style: none; } .rck-t > summary::-webkit-details-marker { display: none; }
 .rck-tl { display: flex; align-items: center; gap: 8px; font: 700 12px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); } .rck-t > summary > b { font: 700 24px var(--head); color: var(--text); } .rck-tx { font-size: 13px; color: var(--muted); }
 .rck-t .rck-b { padding: 0 16px 14px; }
-.rck-n .icw, .rck-sg .icw, .rck-good .icw, .rck-lead .icw, .rck-focus .icw, .rck-tx .icw, .rck-tl > span .icw, .rck-v .icw { display: none !important; } /* (one icon a row, the row's own: names in the text stay plain (your note, Oct 23: too many icons)) */
+.rck-n .icw, .rck-sgt .icw, .rck-good .icw, .rck-lead .icw, .rck-focus .icw, .rck-tx .icw, .rck-tl > span .icw, .rck-v .icw { display: none !important; } /* (one icon a row, the row's own: names in the text stay plain (your note, Oct 23: too many icons)) */
 @media (max-width: 860px) { .rck-cmp { grid-template-columns: 1fr; } }
 @media (max-width: 640px) { .rck-r > summary { grid-template-columns: 24px 1fr 84px; padding: 10px 12px; } .rck-r > summary > .rck-bar { grid-column: 2 / 4; grid-row: 2; } .rck-b { padding: 4px 12px 12px; } .rck-fix { padding: 14px 14px; } .rck-ts { grid-template-columns: 1fr 1fr; } } .trg-x { font-size: 12px; } /* (the Saves tile's "your" tag was 11px) */
 @media (max-width: 760px) { .spc-chd > summary > .spc-cht, .spc-chd > summary > .spc-chx + .spc-cht { order: 5; margin-left: auto; } .spc-chd > summary > .spc-chx { order: 6; } } /* (phone: Show stays on the title line, the count under it) */
