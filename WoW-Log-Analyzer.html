@@ -4057,6 +4057,8 @@ details.secd.mcx-tile[open] .mcx-alt { display: none; }
 #view .rch-cds { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; align-items: center; } #view .rch-cd { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 6px; background: rgba(255,255,255,.05); font-size: 12px; }
 #view .rch-cd b { color: #d6dbe6; font-weight: 600; } #view .rch-cd i { font-style: normal; color: #8b93a7; } #view .rch-rdy { opacity: .7; border: 1px dashed rgba(255,255,255,.18); background: transparent; } #view .rch-rl { font-size: 11.5px; color: #8b93a7; font-weight: 700; margin-right: 2px; }
 #view .rch-cd .icw, #view .rch-cd img, #view .rch-top .icw, #view .rch-top img { width: 16px !important; height: 16px !important; min-width: 16px !important; margin: 0 !important; } #view .rch-cd .icw img { width: 100% !important; height: 100% !important; }
+/* (phones: with 16+ pulls only every fifth pull number shows under the All pulls timeline, so they don't run together (Oct 23)) */
+@media (max-width: 640px) { #view .mcx-ax2 > span:first-child:nth-last-child(n+16) ~ span:not(:nth-child(5n)) { visibility: hidden; } }
 #view .pcx-w { margin: 6px 0 0; font-size: 13px; color: var(--muted, #aab); }
 #view ul.cch-wl { list-style: none; margin: 6px 0 12px; padding: 0; display: grid; gap: 6px; } #view ul.cch-wl li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 15px; line-height: 1.35; padding-left: 12px; border-left: 3px solid var(--gold, #e6b450); } #view ul.cch-wl li b { font-weight: 800; } #view ul.cch-wl .cch-wn { color: #ef6b62; font-weight: 700; font-size: 13px; } #view ul.cch-wl .cch-wy { flex-basis: 100%; color: var(--muted, #aab); font-size: 14px; }
 #view p.cch-h b.cch-rc { color: var(--gold, #e5b84b); font-weight: 800; } #view .dbr-dd { position: relative; display: block; height: 10px; margin: 4px 0 8px; border-radius: 5px; background: rgba(255,255,255,.1); } #view .dbr-dd i { position: absolute; top: 1px; width: 8px; height: 8px; box-shadow: 0 0 0 1.5px #15181f; border-radius: 50%; background: #e5534b; transform: translateX(-50%); } #view .dbr-dd i.ms { background: #6b7280; } #view .dbr-db { display: flex; align-items: flex-end; gap: 2px; height: 20px; margin: 2px 0 6px; } #view .dbr-db i { flex: 1; min-width: 2px; border-radius: 2px 2px 0 0; background: #e5534b; } #view .dbr-db i.z { background: rgba(255,255,255,.12); } @media (max-width: 760px) { #view .dbr-4.dbr-5.dbr-6 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } } @media (max-width: 520px) { #view .dbr-4.dbr-5.dbr-6 { grid-template-columns: minmax(0, 1fr) !important; } } @media (max-width: 760px) { #view .dbr-4.dbr-5 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } } @media (max-width: 520px) { #view .dbr-4.dbr-5 { grid-template-columns: minmax(0, 1fr) !important; } }
@@ -15692,6 +15694,7 @@ const PATCH_NOTES = [
     { t: 'The wipe is called for you', d: 'No more "stop at the 2nd death". Debrief now calls the wipe at the moment no raid has ever come back from: more people dead than any kill of that boss survived at that point (battle rezzes counted), the damage check missed, or half the raid dead. Everything before it counts, so the deaths and mistakes that lost the pull are graded. Tested on 760 kills: it never calls a wipe on a pull that was won.' },
     { t: 'A shorter debrief', d: 'Each pull now opens like a raid lead\'s debrief: what went well, what went wrong (click a line for its map and details) and the one thing for next pull. The extra drawers are gone; the timeline, raid cooldowns and burst windows sit in the open below the phases.' },
   ], n: [
+    'Debriefing is tidier: All pulls no longer hides a drawer of repeats at the bottom (the timeline of every pull sits in the open, the numbers fold), and a mechanic that improved but still goes wrong most pulls says "Better, not fixed yet".',
     'Graphs looks like Warcraft Logs now: six tabs (Damage, Healing, Damage taken, Deaths, Casts, Buffs), one ranked list each with total, per second and %, and a click on a player shows their spells.',
     'Rotation leaves out rows that told you nothing new: Opener DPS, Procs wasted in your burst window (the procs have their own row), Mana from others, Casting pace during Avenging Wrath, and Past the falloff point when it was fine.',
     'Report card: click a raider\'s name and their checklist opens right under it, with a bar on every check. A mistake opens a list of the pulls it happened in, one click to that pull. Externals like Blessing of Sacrifice are now a bonus: they add to your grade when you use them well and never take points away.',
@@ -22641,7 +22644,7 @@ function audit() {
   // a boss without its own mechanic checks yet: say so, so the short page doesn't look broken
   if (!(r.module && !r.module.error && r.module.sections && r.module.sections.length)) h += '<div class="nomod"><b>Mechanic checks for ' + esc(r.item.boss) + ' aren\'t built yet.</b> This pull shows deaths, defensives, potions and Healthstones, the raid cooldowns timeline and interrupts.</div>';
   // the wipe filter as one quiet line: where this pull's audit stops (the setting itself is on the tab bar, just above)
-  h += '<div class="cutbar' + (cut ? ' on' : '') + '"><span class="cutnow">' + (r.allPulls ? (deathCutN() ? 'Each wipe counts up to <b>its wipe call</b>, and a kill counts in full' : '<b>The wipe filter is off</b>, so every pull counts in full') : cut ? '<b>Counted up to ' + T(cut.t) + '</b>, ' + cutLbl(cut) + '. ' + pl2(hidden + hiddenMk, 'result') + ' after it ' + (hidden + hiddenMk === 1 ? 'isn\'t' : 'aren\'t') + ' counted.'
+  h += '<div class="cutbar' + (cut ? ' on' : '') + '"><span class="cutnow">' + (r.allPulls ? (deathCutN() ? 'Each wipe counts up to <b>its wipe call</b>, and a kill counts in full' : '<b>The wipe filter is off</b>, so every pull counts in full') : cut ? '<b>Counted up to ' + T(cut.t) + '</b>, ' + cutLbl(cut) + '. Anything after it is left out.' /* (plain words (Oct 23 tidy): "85 results after it aren't counted" was jargon) */
       : r.item.kill ? '<b>Kill</b>, so the whole pull is checked' : deathCutN() ? 'Fewer than ' + deathCutN() + ' deaths, so the whole pull is checked' : 'The wipe filter is off, so the whole pull is checked') + '</span></div>';  // Highest-priority fixes first: problems, then some mistakes, then clean; within each, the most flagged rows first.
   // Interrupts (shown here instead of their own tab) are ranked the same way.
   const rank = { bad: 0, warn: 1, good: 2 };
@@ -24950,6 +24953,19 @@ function oaLayout(v, el) {
       f.addEventListener('toggle', () => { if (f.open) S.openSecs.add('brf-burst'); else S.openSecs.delete('brf-burst'); }); }
     const dc = [...v.querySelectorAll('details.panel')].find((d) => /^Data check/.test(((d.querySelector('summary') || {}).textContent || '').trim())); if (dc) out.appendChild(dc);
     dr.replaceWith(out); if (top) top.remove(); v.querySelectorAll('#rcTop, .rc-hp').forEach((n) => { if (!out.contains(n)) n.remove(); }); try { if (S._drawMaps) S._drawMaps(); } catch (e) { /* (maps draw when seen) */ } return; }
+  /* (All pulls, Oct 23 (your ask: "the bottom half could still be tidied up more"): like one pull, no "More from all pulls" drawer. Its fix
+     cards, better and worse, boss health every pull, the old went well / didn't / improving / worse lists, Before the next pull, Talk to and
+     Used tonight all repeat the raid lead box, the boss banner or the pace chart; the guide links don't belong here. What only it had stays
+     under the phases: All pulls at a glance in the open, and The numbers folded) */
+  if (v.querySelector('.nmc')) { const out = document.createElement('div'); out.className = 'brf-keep';
+    v.querySelectorAll('.mcx-tl').forEach((n) => out.appendChild(n));
+    out.querySelectorAll('.mcx-verdict, .mcx-lead').forEach((n) => n.remove()); /* (the phase rows above already say what went wrong most; the score paragraph was jargon) */
+    const nums =[...dr.querySelectorAll('.rc-it')].find((x) => /^\s*The numbers/i.test(x.textContent || ''));
+    if (nums) { const f = document.createElement('details'); f.className = 'panel secd st-na brf-nums'; f.dataset.k = 'brf-nums'; if (S.openSecs.has('brf-nums')) f.open = true;
+      f.innerHTML = '<summary><span class="sechd"><b>The numbers</b></span><span class="sub">early in the night against later</span></summary>'; nums.querySelectorAll('h3.nh').forEach((h) => h.remove()); f.appendChild(nums);
+      f.addEventListener('toggle', () => { if (f.open) S.openSecs.add('brf-nums'); else S.openSecs.delete('brf-nums'); }); out.appendChild(f); }
+    const dc = [...v.querySelectorAll('details.panel')].find((d) => /^Data check/.test(((d.querySelector('summary') || {}).textContent || '').trim())); if (dc) out.appendChild(dc);
+    dr.replaceWith(out); v.querySelectorAll('.dbr-top, #rcTop, .rc-hp').forEach((n) => { if (!out.contains(n)) n.remove(); }); try { if (S._drawMaps) S._drawMaps(); } catch (e) { /* (maps draw when seen) */ } return; }
   const sm = dr.querySelector(':scope > summary'); let at = sm;
   const put = (n) => { if (!n || dr.contains(n) || n.contains(dr) || n === el || n.contains(el)) return; at.after(n); at = n; };
   put(v.querySelector('.dbr-top')); put(v.querySelector('#rcTop')); put(v.querySelector('.nmc > .lpv.dbf:not(.rc-more)')); put(v.querySelector('.rc-hp'));
@@ -25600,6 +25616,8 @@ function coachTrends(reps, right, wrongAll, WKN, WKP) {
       else if (pv != null && cur < pv) better.push({ nm: nmOf(y), sub: lead(y, cur === 1 ? 'only small mistakes now, down from pull ' + lastR.item.pull : 'fewer mistakes than pull ' + lastR.item.pull), k: pv - cur, id }); }
     okL.sort((a, b) => b.k - a.k); for (const o of okL) if (well.length < 3) well.push(o);
     const head = well.filter((x) => x.fixed), rest = well.filter((x) => !x.fixed); well.length = 0; well.push(...head, ...rest); }
+  /* (Oct 23, your note: "Much better" then "still wrong in most pulls" read as two answers; the tag says it once) */
+  for (const x of better) if (/ · still wrong in most pulls$/.test(x.sub || '')) { x.sub = x.sub.replace(/ · still wrong in most pulls$/, ''); x.tag = 'Better, not fixed yet'; }
   const top = (L) => L.sort((a, b) => (b.k || 0) - (a.k || 0)).slice(0, 3);
   const W3 = top(worse), B3 = top(better), seen = (x) => W3.some((w) => w.id === x.id) || B3.some((b) => b.id === x.id);
   const wellOut = night ? [well[0] && !well[0].id ? well[0] : null].filter(Boolean).concat(top(well.filter((x) => x.id && !seen(x)))).slice(0, 3) : well.filter((x) => !x.id || !seen(x)).slice(0, 3);
