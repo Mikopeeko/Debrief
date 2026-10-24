@@ -6,7 +6,7 @@ Owner: the Plan chat. Pictures: `notes/One page plan - Oct 24/`.
 ## What the raid lead sees
 - A banner: the boss, "Build your plan · saves as you go", Close.
 - A chip bar that sticks to the top while you scroll: one chip per section (spell icon + name), then Raid cooldowns,
-  Defensives and Review. Tap a chip to jump to it. The chip you're reading is gold; a section with picks gets a green ✓.
+  Defensives and Review. Tap a chip to jump to it (Review opens the summary page). The chip you're reading is gold; a section with picks gets a green ✓.
   On the right: "N of M filled".
 - One section per mechanic, numbered ("1 · Spiteful Soulcoiler kicks"): the explanation, the tip, its own
   ✨ Suggest for me (one click, then "Suggest again" with Why these picks) and Clear, then the job blocks.
@@ -17,9 +17,20 @@ Owner: the Plan chat. Pictures: `notes/One page plan - Oct 24/`.
   The line under the title says where they came from ("You picked these yourself", "Placed the way top raids do it", or
   "These start from your last note").
 - Defensives: the personal defensives, Healthstone and potion, with ✨ Suggest for me.
-- Review (the last section): the plan written out, what's still open grouped by section ("Guillotine soaks: 6 to look at", tap
-  to jump), the note as it will be saved, Copy for Discord.
-- A bar along the bottom: a gold progress line, "Saved ✓", 📋 Copy for the game, Done.
+- A bar along the bottom: a gold progress line, "Saved ✓", and **Review your plan →**.
+
+## The summary page ("Your plan", the user's call Oct 24)
+Its own page after the assignments, not a section at the bottom.
+- Banner "Your plan" (boss · saved), Close. The name box ("Name this plan", changes save as you go).
+- "⚠ Still open in N sections" with one button per section ("Guillotine soaks: 6 to look at →") that goes back to it, or
+  "✓ Every job has someone".
+- One card per section, in the build page's order and numbers: who's in each job (class-coloured names, kick order numbers),
+  a status pill (✓ Done / "N to look at" / Not filled yet) and **✎ Change**, which goes back to the build page right at that
+  section with every pick kept. Empty sections are small dashed cards. Raid cooldowns list in fight order (two columns);
+  Defensives lists the Defensives / Healthstone / potion calls by hit and the externals.
+- The note as it will be saved, Copy for Discord.
+- Bottom bar: ← Back to editing, "Saved ✓", 📋 Copy for the game, Done.
+- The browser's Back from the summary goes to the build page (it's B.step = the review step in Plan's history).
 
 ## Saving
 - Nothing is saved until the first pick. Then it saves itself about a second after each change.
@@ -37,11 +48,15 @@ Owner: the Plan chat. Pictures: `notes/One page plan - Oct 24/`.
 
 ## Where it lives (code)
 - The scratchpad pieces joined by `apply-alt.js`: `ndz-builder.js` (ndzBuildView's one-page mode `ONE`, plbOneHead,
-  plbOneFoot, plbIssGroup, plbSaveNow / plbAutoSave, plbSpy; the per-hit picker ndzFreeH) and CSS steps marked
-  "plan one page builder / sections / polish / tick".
+  plbOneFoot, plbIssGroup, plbSaveNow / plbAutoSave, plbSpy; the summary page plbRevHead / plbRevFoot / plbRevCards and
+  the go() jump in the ONE buttons block; the per-hit picker ndzFreeH) and CSS steps marked
+  "plan one page builder / sections / polish / tick / review page". Don't name a class "empty": the site's .empty is a
+  full-screen empty state (it made the empty cards 80% of the screen tall once).
 - Off the Plan page (anywhere else the builder opens) it's still the old one-step-at-a-time view.
 
 ## Checked (Oct 24)
 Headless Edge on the practice link with the test roster: Suggest fills a section and ticks its chip, a cooldown pick saves a
 new plan, Done opens the plan (23 job names, the cooldown), Edit reopens the one page with the same picks; 390 px phone with
-no sideways scrolling.
+no sideways scrolling. Summary page: Review your plan → shows 8 cards with the right status, ✎ Change lands on its section
+(140 px from the top, under the chip bar) with picks kept, the Review chip opens it again, Back to editing, Done opens the
+plan; phone 390 px with no sideways scrolling.
