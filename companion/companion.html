@@ -361,11 +361,11 @@ async function waitNew(fresh) { // (no combat log yet, or only archived ones: ch
 }
 
 // ---------- reading one pull ----------
-async function readText(b, quiet) {
+async function readText(b, quiet, name) {
   const parts = []; let at = b.startByte, got = 0; const total = b.endByte - b.startByte;
   while (at < b.endByte) {
     const to = Math.min(b.endByte, at + 16 * 1048576);
-    const r = await fetch('/read?name=' + encodeURIComponent(L.name) + '&from=' + at + '&to=' + to);
+    const r = await fetch('/read?name=' + encodeURIComponent(name || L.name) + '&from=' + at + '&to=' + to);
     if (!r.ok) throw new Error('Could not read the log.');
     const buf = new Uint8Array(await r.arrayBuffer()); if (!buf.length) break;
     parts.push(buf); at += buf.length; got += buf.length; if (!quiet) progress(got / total * 0.5);
@@ -628,14 +628,17 @@ $('acts').addEventListener('click', (ev) => {
 });
 async function analyze(b) {
   if (L.reps.has(b.startByte) && L.reps.get(b.startByte).rep) return L.reps.get(b.startByte).rep;
-  const E = W.E, text = b.id === DUMMY ? withSpecs(await readText(b), E) : await readText(b);
+  const v = await readRep(b, L.name, false); L.reps.set(b.startByte, v); return v.rep;
+}
+// (one pull read from a log: the watched one, or an earlier one of tonight when pulls are saved again after an update)
+async function readRep(b, name, quiet) {
+  const E = W.E, text = b.id === DUMMY ? withSpecs(await readText(b, quiet, name), E) : await readText(b, quiet, name);
   await new Promise((r) => setTimeout(r, 30));
   const rep = E.analyze(b, text, { packs: (W.S && W.S.packs) || E.PACKS, overrides: {} });
   if (b.id === DUMMY) rep.combatantsRaw = []; else rememberSpecs(rep); // (no gear or stats on a dummy: WoW only writes them at a boss pull)
   if (rep.combatantsRaw && rep.combatantsRaw.length) rep.combatants = rep.combatantsRaw.filter((c) => rep.players.has(c.guid)).map((c) => ({ name: rep.players.get(c.guid).name, gear: c.gear, auras: c.auras, self: c.guid, stats: c.stats, talents: c.talents || [] }));
   const pr = W.progressOf ? W.progressOf(rep) : null;
-  L.reps.set(b.startByte, { rep, pct: b.kill ? 0 : pr && pr.left != null ? Math.round(pr.left) : null, prog: pr });
-  return rep;
+  return { rep, pct: b.kill ? 0 : pr && pr.left != null ? Math.round(pr.left) : null, prog: pr };
 }
 
 // ---------- training dummies: your spec from the buttons you pressed ----------
@@ -687,36 +690,58 @@ function markSaved(key) {
   const ks = Object.keys(SAVED); for (const k of ks.slice(0, Math.max(0, ks.length - 80))) delete SAVED[k];
   store.set('dbf-saved-ver', SAVED);
 }
+// (tonight's logs: the watched one, and any other WoW wrote in the last 12 hours, since WoW starts a new log at times, say after a relog.
+// An earlier log is scanned once per version; the newest 30 pulls of all of them are the ones WoW keeps)
+const LOGDONE = store.get('dbf-resaved-logs', {});
 async function resaveOld() {
   if (resaveOld.on) return; resaveOld.on = true;
   try {
     if (!RECAP.appV) { try { const x = await j('/app-version'); RECAP.appV = x.version || ''; } catch (e) { return; } }
-    const name = L.name, v = RECAP.appV, list = L.items.filter((b) => b.endByte && b.id !== DUMMY).slice(-30).filter((b) => SAVED[name + ':' + b.startByte] !== v); /* (only the newest 30: WoW keeps 30) */
-    if (!v || !list.length) return;
-    const mine = new Set(), hasRep = (s) => !!(L.reps.get(s) || {}).rep; let n = 0, ok = 0;
-    for (const b of list) {
+    const v = RECAP.appV, cur = L.name; if (!v || !cur) return;
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms)), pullOn = () => L.items.length && !L.items[L.items.length - 1].endByte;
+    const logs = L.files.filter((f) => !f.old && f.name !== cur && Date.now() - f.mtime < 12 * 3600e3 && LOGDONE[f.name] !== v).map((f) => f.name).reverse();
+    const all = [], ctx = new Map([[cur, L]]);
+    for (const name of logs) {
+      while (pullOn()) await sleep(5000);
+      if (cur !== L.name) return;
+      try {
+        const x = await j('/scan?name=' + encodeURIComponent(name) + '&from=0'), ix = W.E.createIndexer();
+        for (const it of x.items || []) ix.line(it.t, it.o, it.e);
+        const items = ix.peek().bosses.filter((b) => !b.skip && b.endByte && b.id !== DUMMY);
+        ctx.set(name, { name, reps: new Map(), items }); for (const b of items) all.push([name, b]);
+      } catch (e) { console.warn('re-save scan', name, e); }
+    }
+    for (const b of L.items.filter((b) => b.endByte && b.id !== DUMMY)) all.push([cur, b]);
+    const list = all.slice(-30).filter(([name, b]) => SAVED[name + ':' + b.startByte] !== v); /* (only the newest 30: WoW keeps 30) */
+    let n = 0, ok = 0; const mine = []; /* ([reads, start] of the pulls this read, so all but the last are let go) */
+    for (const [name, b] of list) {
       // (a pull is on: wait for it to end; a pull's own recap always goes first)
-      while (name === L.name && L.items.length && !L.items[L.items.length - 1].endByte) await new Promise((r) => setTimeout(r, 5000));
-      if (name !== L.name) return;
+      while (cur === L.name && pullOn()) await sleep(5000);
+      if (cur !== L.name) return;
       const key = name + ':' + b.startByte; n++;
       if (SAVED[key] === v) { ok++; continue; } // (sent again by hand meanwhile)
+      const C = ctx.get(name), here = name === cur;
       L.busy = L.busy.then(async () => {
-        if (name !== L.name) return;
+        if (cur !== L.name) return;
         if (!L.reading) stat('Updating your saved pulls for WoW: ' + n + ' of ' + list.length + '…', 'busy');
-        const same = L.items.filter((x) => x.endByte && x.id === b.id && x.diffId === b.diffId), k = same.indexOf(b);
-        const pre = new Set([...L.reps.keys()].filter(hasRep));
-        if (k > 0) { try { await analyze(same[k - 1]); } catch (e) { /* skip */ } }
-        const rep = await analyze(b);
-        const code = RECAP.encode(RECAP.build(b, rep, same.slice(0, k + 1)));
+        const pool = here ? L.items : C.items, same = pool.filter((x) => x.endByte && x.id === b.id && x.diffId === b.diffId), k = same.indexOf(b);
+        const get = async (q) => { if (here) return analyze(q); const o = C.reps.get(q.startByte); if (o && o.rep) return o.rep; const r = await readRep(q, name, true); C.reps.set(q.startByte, r); return r.rep; };
+        const pre = new Set([...C.reps.keys()].filter((s0) => (C.reps.get(s0) || {}).rep));
+        if (k > 0) { try { await get(same[k - 1]); } catch (e) { /* skip */ } }
+        const rep = await get(b);
+        const code = RECAP.encode(window.DBF_BUILD(b, rep, same.slice(0, k + 1), W, C));
         await j('/addonpull', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key, code }) });
         markSaved(key); ok++;
         // (memory: of the reads this added, only this pull's stays, for the next pull on the same boss)
-        for (const s of L.reps.keys()) if (!pre.has(s) && hasRep(s)) mine.add(s);
-        for (const s of [...mine]) if (s !== b.startByte) { L.reps.get(s).rep = null; mine.delete(s); }
+        for (const [s0, o] of C.reps) if (!pre.has(s0) && o && o.rep) mine.push([C.reps, s0]);
+        for (let i = mine.length - 1; i >= 0; i--) { const [m, s0] = mine[i]; if (m === C.reps && s0 === b.startByte) continue; const o = m.get(s0); if (o) o.rep = null; mine.splice(i, 1); }
       }).catch((e) => console.warn('re-save', e));
       await L.busy;
     }
-    if (name === L.name && !L.reading && ok) stat('Your saved pulls are up to date: type /reload in WoW', L.live ? 'live' : '');
+    for (const name of logs) { LOGDONE[name] = v; }
+    for (const k0 of Object.keys(LOGDONE).slice(0, Math.max(0, Object.keys(LOGDONE).length - 20))) delete LOGDONE[k0];
+    store.set('dbf-resaved-logs', LOGDONE);
+    if (cur === L.name && !L.reading && ok && list.length) stat('Your saved pulls are up to date: type /reload in WoW', L.live ? 'live' : '');
   } finally { resaveOld.on = false; }
 }
 
