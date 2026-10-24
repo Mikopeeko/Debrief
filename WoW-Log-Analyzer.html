@@ -15993,6 +15993,7 @@ const PATCH_NOTES = [
   { d: '2026-10-24', h: [
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
+    'Debrief Companion is now code-signed, so Windows knows it comes from us. While it is new, Windows may still ask once: click More info, then Run anyway',
     'Debrief in game: no more pasting or sharing. Your recap pops up on your PC, and /reload brings it into /recap. Pulls sent by other players are cleared, and Ctrl+Shift+D now shows or hides your card',
     'Debriefing: every big mistake shows up top under What wiped us, as "Also went wrong" (no names: "Missed by 4 players").',
     'Debriefing: a mechanic that changed since last pull says so with a small ▲ Improving or ▼ Worsening tag, up top or on its phase bar, in place of the Worse / Better boxes and the Every mistake list.',
@@ -16559,7 +16560,7 @@ function openInGame() {
       '<p class="igm-lead">A few seconds after every boss pull, your recap opens right in the game, and the whole raid gets theirs too.</p>' +
       '<ul class="igm-gets" aria-label="What you get">' + ['Your numbers', 'Your biggest slips', 'Your boss mistakes', 'Who died', 'One thing to try next pull'].map((x) => '<li>' + x + '</li>').join('') + '</ul>' +
       '<div class="igm-cta">' + btn(true, 'Debrief-Setup.exe', 'Download for Windows', 'About 2.8 MB · the PC app and the addon in one click') + btn(false, 'Debrief-addon.zip', 'Just the addon', 'About 0.2 MB') + '</div>' +
-      '<p class="igm-warn"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.2v.1" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><span>If Windows says <b>"Windows protected your PC"</b>, click <b>More info</b>, then <b>Run anyway</b>. The app is new and isn\'t signed yet.</span></p>' +
+      '<p class="igm-warn"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.2v.1" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><span>The app is signed. While it\'s new, Windows may still say <b>"Windows protected your PC"</b>: click <b>More info</b>, then <b>Run anyway</b>.</span></p>' +
       '<p class="igm-ver">The app keeps itself and the addon up to date.</p>' +
       '<p class="igm-phone">On your phone? The downloads are for a Windows PC: open debriefme.io/?ingame there.</p></div>' +
       '<div class="igm-art"><img src="' + U + 'shots/card.png" alt="A recap card in the game: the boss, your healing, your rotation slips, your boss mistakes and the next pull tip"></div></header>' +
