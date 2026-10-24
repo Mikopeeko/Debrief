@@ -822,7 +822,7 @@ RECAP.encode = (m) => {
 RECAP.lines = (m) => {
   const rec = [];
   for (const p of m.players) {
-    rec.push(['P', p.name, p.cls, p.spec, p.role, p.unit, p.v, p.d == null ? '' : p.d, p.vs || '', p.best || '', p.bp || '', p.rank || '', p.icon || '']);
+    rec.push(['P', p.name, p.cls, p.spec, p.role, p.unit, p.v, p.d == null ? '' : p.d, p.vs || '', p.best || '', p.bp || '', p.rank || '', p.icon || '', p.bt || '']); /* (bt: your best tonight (Oct 24)) */
     if (!(p.rot && p.rot.length)) for (const s of p.slips) rec.push(['S', p.name, s[0], s[1] || '', s[2]]); // (with checklist rows, the addon makes these itself)
     if (p.rot) { rec.push(['RS', p.name, p.rs ? p.rs.score : '', p.rs ? p.rs.good.join(';') : '']); for (const r of p.rot) { rec.push(['RT', p.name].concat(r.slice(0, 10)));
       /* (each ramp or burst window of that check, right after it (Oct 24)) */ for (const w of r[10] || []) rec.push(['RW', p.name, w.st, w.head, w.sub, w.vals, w.chk.map((q) => q[0] + ':' + String(q[1]).replace(/;/g, ',')).join(';'), w.seq.join(';'), w.pre ? 1 : '', w.meta]); } } // (the Rotation tab's checklist (Oct 24))
@@ -855,10 +855,10 @@ RECAP.lines = (m) => {
     rec.push(['CH', c.headline]); rec.push(['CF', c.focus, c.focusSame ? 1 : '', c.kill ? 1 : '']);
     if (c.more > 0) rec.push(['CM', c.more]); // (how many smaller mistakes aren't listed (Oct 23))
     // (the raid lead's cards (Oct 23): the root cause, then what we did well (w), worse (x) and better (b) than last pull)
-    if (c.root) rec.push(['CRC', c.root.cause, c.root.rest || '']);
+    if (c.root) rec.push(['CRC', c.root.cause, c.root.rest || '', c.root.tr || '']);
     if (c.trend) for (const [k, L] of [['w', c.trend.well], ['x', c.trend.worse], ['b', c.trend.better]]) for (const x of L || []) rec.push(['CT', k, x.nm, x.tag || '', x.sub || '']);
     if (c.trend) rec.push(['CTE', 1]); // (the cards are on, even when all three lists are empty)
-    for (const x of c.wrong || []) rec.push(['CW', x.sev, x.id || '', x.label, x.tag || '', x.what || '', x.fix || '', x.how || '', x.kb || '']); // (How and Against top guilds, Oct 22)
+    for (const x of c.wrong || []) rec.push(['CW', x.sev, x.id || '', x.label, x.tag || '', x.what || '', x.fix || '', x.how || '', x.kb || '', x.tr || '', x.wnn || '']); // (How and Against top guilds, Oct 22; the tag and the no-names line, Oct 24)
     for (const x of c.right || []) rec.push(['CR', x.id || '', x.t]);
     if (c.deaths) { for (const x of c.deaths.items || []) rec.push(['CD', x.t, x.who, x.cls || '', x.id || '', x.ab, x.k || 'n', x.story || '', (x.ready || []).join(';')]); /* (what could have saved them (Oct 24)) */ if (c.deaths.note) rec.push(['CN', c.deaths.note]); if (!(c.deaths.items || []).length && c.deaths.line) rec.push(['CL', c.deaths.line]); }
     if (c.avoid) { for (const x of c.avoid.items || []) rec.push(['CA', x.id || '', x.k, x.who, x.cls || '', x.n || '', x.bad ? 1 : '', x.story || '']); if (!(c.avoid.items || []).length && c.avoid.line) rec.push(['CV', c.avoid.line]); }

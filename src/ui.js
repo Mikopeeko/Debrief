@@ -1761,6 +1761,7 @@ const PATCH_NOTES = [
   { d: '2026-10-24', h: [
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
+    'Debrief in game: three clear styles (Simple, Standard, Detailed) that each show different things, Your best tonight on your number, practice pulls show just your rotation, and the raid lead box lists Other big mistakes like the website',
     'Debriefing: a Since last pull line under the two top boxes lists what got worse (▼) or better (▲), or says it\'s about the same. It fills in by itself once the last pull has loaded.',
     'Debriefing: when several of us died from different things, What wiped us says "Too many deaths", how many and when, and what started it, instead of blaming only the first death.',
     'The whole site now uses Barlow Condensed, the same font as a popular WoW UI setup.',
@@ -12895,12 +12896,21 @@ function coachGame(r, name) {
   const T0 = c.trend || null, rcm = !c.night ? String(c.headline || '').match(/Root cause: (.*?\.)(?=\s|$)\s*([\s\S]*)$/) : null;
   if (T0 && rcm) { try { out.headline = tx(String(c.headline).replace(/\s*Root cause:[\s\S]*$/, '') + ' ' + coachHypeFix(c)); } catch (e) { /* (keeps the full headline) */ }
     const noNm = (t) => { /* ("Maposepos, Fics … and Tering, Calcified Corpse got you at 6:48." reads "11 players were caught by Calcified Corpse at 6:48." (Oct 24)) */
-      const g = t.match(/^(.+), ([^,]+?) got you( at \d+:\d\d)?\.?\s*$/); if (g) { const n = g[1].split(/, | and /).filter(Boolean).length; return (n > 1 ? n + ' players were' : 'Someone was') + ' caught by ' + g[2] + (g[3] || '') + '.'; }
+      const g = t.match(/^(.+), ([^,]+?) got you( at \d+:\d\d)?\.?\s*$/); if (g) { const n = g[1].split(/, | and /).filter(Boolean).length;
+        /* ("A, B and C, causing Malevolent Resonance and it got you at 3:28." reads "3 players caused Malevolent Resonance, and it got them at 3:28." (Oct 24)) */
+        const cz = g[2].match(/^causing (.+?) and it$/); if (cz) return (n > 1 ? n + ' players caused ' : 'Someone caused ') + cz[1] + ', and it got ' + (n > 1 ? 'them' : 'them') + (g[3] || '') + '.';
+        if (/^[a-z]/.test(g[2])) return (n > 1 ? n + ' players: ' : 'Someone: ') + g[2] + ' got them' + (g[3] || '') + '.';
+        return (n > 1 ? n + ' players were' : 'Someone was') + ' caught by ' + g[2] + (g[3] || '') + '.'; }
       const m = t.match(/^([^.]*?), you /); if (!m) return t; const many = / and |, /.test(m[1]); return (many ? 'Players ' : 'Someone ') + t.slice(m[0].length).replace(/^were\b/, many ? 'were' : 'was').replace(/\byou were\b/g, 'they were').replace(/\byour\b/g, 'their').replace(/\byou\b/g, 'them'); }; /* ("Someone was hit", Oct 24) */
-    out.root = { cause: tx(rcm[1]), rest: tx(noNm(rcm[2] || '')) }; }
+    out.root = { cause: tx(rcm[1]), rest: tx(noNm(rcm[2] || '')) };
+    { const lc = (s0) => String(s0 || '').toLowerCase().replace(/\s*\(.*$/, ''), cz = out.root.cause.toLowerCase(), hit = (L) => (L || []).some((y) => lc(y.nm) && cz.includes(lc(y.nm))); out.root.tr = hit(T0.worse) ? 'dn' : hit(T0.better) ? 'up' : ''; } /* (Improving or Worsening, as the website tags it (Oct 24)) */ }
   if (T0) { const it = (x) => ({ nm: tx(dbfCap(x.nm || '')), tag: tx(x.tag || ''), sub: tx(dbfCap(x.sub || '')) }), wnm = new Set((c.wipes || []).map((w) => String(w.nm).toLowerCase()));
     out.trend = { well: (T0.well || []).filter((x) => !wnm.has(String(x.nm).toLowerCase())).slice(0, 3).map(it), worse: (T0.worse || []).slice(0, 3).map(it), better: (T0.better || []).slice(0, 3).map(it) }; }
-  out.wrong = lead.map((x) => ({ sev: x.sev === 'bad' ? 'bad' : 'warn', label: tx(dbfCap(x.label)), tag: tx(coachTag(x, false)), what: tidyLine(tx(x.what || '')), fix: tidyLine(tx(x.fix || '')), id: sid(x.cause || x.label), how: tidyLine(tx(cClip(howRest(x), 240))), kb: tx(x.kbLine || '') }));
+  /* (each mistake's Improving or Worsening tag, and its line with no names for "Also went wrong" (Oct 24), as the website's raid lead box) */
+  const PMw = typeof coachPm === 'function' ? coachPm() : null, lcW = (s0) => String(s0 || '').replace(/<[^>]+>/g, '').toLowerCase().replace(/\s*\(.*$/, '').trim(), inL = (L, nm) => (L || []).some((y) => lcW(y.nm) && lcW(y.nm) === lcW(nm));
+  const trOfW = (x) => (/^down/.test(x.tr || '') || (T0 && inL(T0.worse, x.label)) ? 'dn' : /^up/.test(x.tr || '') || (T0 && inL(T0.better, x.label)) ? 'up' : '');
+  const wnnOf = (x) => { let w = tidyLine(tx(x.what || '')); const l = tx(dbfCap(x.label)).replace(/\s*\(.*$/, ''); if (l && w.toLowerCase().startsWith(l.toLowerCase() + ' ')) w = w.slice(l.length + 1); try { if (typeof noNamesIn === 'function') w = noNamesIn(w, PMw); } catch (e) { /* (keeps it) */ } return tx(dbfCap(cClip(w, 110))); };
+  out.wrong = lead.map((x) => ({ sev: x.sev === 'bad' ? 'bad' : 'warn', label: tx(dbfCap(x.label)), tag: tx(coachTag(x, false)), what: tidyLine(tx(x.what || '')), fix: tidyLine(tx(x.fix || '')), id: sid(x.cause || x.label), how: tidyLine(tx(cClip(howRest(x), 240))), kb: tx(x.kbLine || ''), tr: trOfW(x), wnn: wnnOf(x) }));
   out.right = (c.right || []).map((x) => ({ t: tx(x.t), id: sid(String(x.t).split(/ was | were |:/)[0]) }));
   const cls = (n) => { const p = [...r.players.values()].find((q) => q.name && String(q.name).split('-')[0] === n); return (p && p.cls) || ''; };
   out.deaths = !D ? null : { line: tx(D.line || ''), note: tx(D.note || ''), items: (D.items || []).concat(D.rest || []).slice(0, 10).map((it) => {

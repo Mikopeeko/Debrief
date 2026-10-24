@@ -67,7 +67,7 @@ const at = (r) => (tOf(r) != null ? ' at ' + mmss(tOf(r)) : '');
 const allN = (n, noun) => (n === 2 ? 'Both ' + noun : 'All ' + n + ' ' + noun);
 // (more helpers for the other bosses: "Both sets" / "All 5 sets" / "The set", "2 of 5 sets went wrong. ", names with "and 3 more")
 const every = (n, noun, one) => (n === 1 ? one : allN(n, noun));
-const pre = (b, n, noun) => (n > 1 ? b + ' of ' + n + ' ' + noun + ' went wrong. ' : '');
+const pre = (b, n, noun) => (n > 1 ? b + ' of ' + n + ' ' + noun + ' failed. ' : '');
 const who = (l, n) => { const k = n || 3, x = [...new Set(l)].map((p) => '@' + p); return x.length > k ? x.slice(0, k).join(', ') + ' and ' + (x.length - k) + ' more' : andList(x); };
 const gt = (g) => (g.t != null ? ' at ' + mmss(g.t) : '');
 const lead1 = (t) => plain(String(t || '')).split(/\.\s|·/)[0].replace(/\.$/, '').trim();
@@ -87,21 +87,21 @@ const RECIPES = {
     const r = bad[0], sub = (r[2] && r[2].sub) || '', sv = [...sub.matchAll(/Sever (\d): (\d+)/g)].map((m) => 'Sever ' + m[1] + ' hit ' + m[2]);
     const plan = (sub.match(/plan: ([^·]+)/) || [])[1], why = /clean/i.test(ctxt(r[3])) ? '' : ctxt(r[3]);
     const planT = plan ? plan.replace(/\s*\(hits empty ground\)/, '').replace(/ each/, '').replace(/\s*\((\d+) at most\)/, ', $1 at most').trim() : '';
-    return (rows.length > 1 ? bad.length + ' of ' + rows.length + ' went wrong. ' : '') + ctxt(r[0]).replace('#', '') + at(r) + ': ' + (sv.length ? sv.join(', ') : ctxt(r[2])) + (why ? ', ' + why : '') + (planT ? ' (plan: ' + planT + ')' : '') + '.';
+    return (rows.length > 1 ? bad.length + ' of ' + rows.length + ' failed. ' : '') + ctxt(r[0]).replace('#', '') + at(r) + ': ' + (sv.length ? sv.join(', ') : ctxt(r[2])) + (why ? ', ' + why : '') + (planT ? ' (plan: ' + planT + ')' : '') + '.';
   },
   'Guillotine': ({ rows }) => {
     const it = rows.map((r) => ({ r, name: ((r[1] && r[1].sub) || 'soak').replace(' · ', ', '), n: parseInt(ctxt(r[2]), 10), need: parseInt(((r[2] && r[2].sub) || '').replace(/\D/g, ''), 10) || 5, bad: isHurt(r[2]), target: r[4] && r[4].p, died: (r[6] && r[6].ps) || [] }));
     const bad = it.filter((x) => x.bad || x.died.length);
     if (!bad.length) return it.length > 1 ? allN(it.length, 'soaks') + ' had 5 or more (' + it.map((x) => x.n).join(', ') + ').' : it.length ? 'Soaked with ' + it[0].n + '.' : null;
     const x = bad[0];
-    return (it.length > 1 ? bad.length + ' of ' + it.length + ' went wrong. ' : '') + capF(x.name) + at(x.r) + ': ' + x.n + ' in the circle (needs ' + x.need + ')' + (x.died.length ? ', ' + andList(x.died.map((n) => '@' + n)) + ' died' : '') + (x.target ? '. Target @' + x.target : '') + '.';
+    return (it.length > 1 ? bad.length + ' of ' + it.length + ' failed. ' : '') + capF(x.name) + at(x.r) + ': ' + x.n + ' in the circle (needs ' + x.need + ')' + (x.died.length ? ', ' + andList(x.died.map((n) => '@' + n)) + ' died' : '') + (x.target ? '. Target @' + x.target : '') + '.';
   },
   'Tank frontals': ({ rows }) => {
     if (!rows.length || !rows[0][2] || !rows[0][2].p) return null;
     const bad = rows.filter((r) => r.some(isHurt));
     if (!bad.length) return rows.length > 1 ? allN(rows.length, 'frontals') + ' taken right: a defensive on every stack 2.' : 'Taken right.';
     const line = (r) => '@' + (r[2].p || '?') + at(r) + ': ' + ctxt(r[3]) + ' with ' + (ctxt(r[4]) || 'nothing up') + (/died/i.test(ctxt(r[5])) ? ', died' : !/nothing/i.test(ctxt(r[4])) ? ' (plan: a defensive and two externals)' : '');
-    return bad.length + ' of ' + rows.length + ' went wrong. ' + bad.slice(0, 2).map(line).join('. ') + '.';
+    return bad.length + ' of ' + rows.length + ' failed. ' + bad.slice(0, 2).map(line).join('. ') + '.';
   },
   'Phase changes': ({ rows, flag, t, T, dur }) => {
     const ts = rows.map((r) => { const nm = ctxt(r[0]), tt = r[1] && r[1].t; if (!nm || tt == null) return ''; const ph = nm.split(/\s*→\s*/)[0], st = ctxt(r[3]).match(/^(\d+) Venom Rupture \(plan (\d+) to (\d+)\)/);
@@ -118,7 +118,7 @@ const RECIPES = {
     if (grave.length) p.push(grave.length + ' Gravebound ' + (grave.length === 1 ? 'death' : 'deaths') + ' (soul fragments not picked up)');
     if (missed) p.push(missed + (missed === 1 ? ' ghost' : ' ghosts') + ' missed by Soul Sever');
     const f = all.find((x) => x.r.some((c) => c && c.bad)), who = f ? (f.r[2] && f.r[2].ps ? andList(f.r[2].ps.map((n) => '@' + n)) + (/collision/i.test(ctxt(f.r[0])) ? "'s ghosts touched" : '') : f.r[2] && f.r[2].p ? '@' + f.r[2].p + (/Gravebound/.test(ctxt(f.r[0])) ? ' died to Gravebound' : ' ' + ctxt(f.r[3])) : ctxt(f.r[3])) : '';
-    return badG.length + ' of ' + gs.length + ' went wrong: ' + (p.length ? andList(p) : plain(badG[0].sub)) + '.' + (f ? ' First: ' + plain(f.g.title).replace('#', '') + at(f.r) + ', ' + who + '.' : '');
+    return badG.length + ' of ' + gs.length + ' failed: ' + (p.length ? andList(p) : plain(badG[0].sub)) + '.' + (f ? ' First: ' + plain(f.g.title).replace('#', '') + at(f.r) + ', ' + who + '.' : '');
   },
   'Soulcoiler adds': ({ gs }) => {
     if (!gs.length) return null;
@@ -129,7 +129,7 @@ const RECIPES = {
     if (thr.length) p.push(thr.length + (thr.length > 1 ? ' Wails' : ' Wail') + ' got through (first' + at(thr[0].r) + ')');
     if (malice) p.push(malice + (malice === 1 ? ' death' : ' deaths') + ' to Retaliatory Malice');
     if (alive.length) p.push(alive.length + (alive.length > 1 ? ' adds' : ' add') + ' still alive');
-    return bad.length + ' of ' + gs.length + ' sets went wrong: ' + (p.length ? andList(p) : plain(bad[0].sub)) + '.';
+    return bad.length + ' of ' + gs.length + ' sets failed: ' + (p.length ? andList(p) : plain(bad[0].sub)) + '.';
   },
   'Gloombombs': ({ gs }) => {
     if (!gs.length) return null;
@@ -140,7 +140,7 @@ const RECIPES = {
     if (unb.length) p.push(unb.length + (unb.length > 1 ? ' Spirit Shields' : ' Spirit Shield') + ' not broken');
     if (miss) p.push(miss + (miss > 1 ? ' bombs' : ' bomb') + ' off the adds');
     if (clips.length) p.push(andList([...new Set(clips.map((x) => '@' + ctxt(x.r[2])))]) + ' clipped by someone else\'s bomb (first' + at(clips[0].r) + ')');
-    return bad.length + ' of ' + gs.length + ' sets went wrong: ' + (p.length ? andList(p) : plain(bad[0].sub)) + '.';
+    return bad.length + ' of ' + gs.length + ' sets failed: ' + (p.length ? andList(p) : plain(bad[0].sub)) + '.';
   },
   'Eternal Nightfall': ({ rows }) => {
     if (!rows.length) return null;
@@ -267,7 +267,7 @@ const RECIPES = {
     const slow = maxOf(gs.map((g) => numIn(plain(g.sub), /slowest ([\d.]+) s/))), b = badOf(gs);
     if (!b.length) return every(gs.length, 'casts', 'The cast') + ' cleared in pairs' + (isFinite(slow) ? ' (slowest ' + slow + ' s)' : '') + '.';
     const g = worst(gs), r = (g.rows || []).find((x) => x.some(isHurt)), bits = r ? [isHurt(r[3]) ? 'took ' + ctxt(r[3]) : '', isHurt(r[4]) ? ctxt(r[4]) : '', isHurt(r[5]) ? ctxt(r[5]) : ''].filter(Boolean) : [];
-    return pre(b.length, gs.length, 'casts') + plain(g.title) + gt(g) + ': ' + (r && r[0].p ? '@' + r[0].p + (r[2] && r[2].p ? ' and @' + r[2].p : '') + ' ' + (bits.join(', ') || 'went wrong') : lead1(g.sub)) + '.';
+    return pre(b.length, gs.length, 'casts') + plain(g.title) + gt(g) + ': ' + (r && r[0].p ? '@' + r[0].p + (r[2] && r[2].p ? ' and @' + r[2].p : '') + ' ' + (bits.join(', ') || 'failed') : lead1(g.sub)) + '.';
   },
   'Toxic Droplets (Step on one each)': ({ gs }) => {
     if (!gs.length) return null;
@@ -326,7 +326,7 @@ const RECIPES = {
     if (!gs.length) return null;
     const all = rowsOf(gs), rup = all.filter((x) => /ruptur|exploded/i.test(ctxt(x.r[2])) || isHurt(x.r[2])), n = gs.reduce((a, g) => a + (numIn(plain(g.sub), /(\d+) boxes/) || 0), 0), spl = maxOf(all.map((x) => numIn(ctxt(x.r[3]), /(\d+) stacks?/))), b = badOf(gs);
     if (!b.length) return 'All ' + n + ' boxes popped in time' + (isFinite(spl) ? ' (most Splinters: ' + spl + ')' : '') + '.';
-    if (rup.length) return (rup.length > 1 ? rup.length + ' boxes went wrong. First: ' : '') + ctxt(rup[0].r[0]) + at(rup[0].r) + ' (' + plain(rup[0].g.title).replace(/^Boxes, /, '') + '): ' + ctxt(rup[0].r[2]) + '.';
+    if (rup.length) return (rup.length > 1 ? rup.length + ' boxes failed. First: ' : '') + ctxt(rup[0].r[0]) + at(rup[0].r) + ' (' + plain(rup[0].g.title).replace(/^Boxes, /, '') + '): ' + ctxt(rup[0].r[2]) + '.';
     const g = worst(gs); return plain(g.title).replace(/^Boxes, /, '') + gt(g) + ': ' + lead1(g.sub) + '.';
   },
   'United Defense (Keep the bosses apart)': ({ rows }) => {
@@ -339,7 +339,7 @@ const RECIPES = {
     if (!gs.length) return null;
     const all = pRows(gs), sl = maxOf(all.map((x) => numIn(ctxt(x.r[2]), /after ([\d.]+) s/))), bad = all.filter((x) => x.r.some(isHurt));
     if (!bad.length) return 'Everyone cleared ' + (gs.length === 1 ? 'the volley' : gs.length === 2 ? 'both volleys' : 'all ' + gs.length + ' volleys') + (isFinite(sl) ? ' (slowest ' + sl + ' s)' : '') + '.';
-    return (bad.length > 1 ? bad.length + ' players went wrong. First: ' : '') + '@' + bad[0].r[0].p + at(bad[0].r) + ': ' + (ctxt(bad[0].r.find(isHurt)) || 'went wrong') + '.';
+    return (bad.length > 1 ? bad.length + ' players made mistakes. First: ' : '') + '@' + bad[0].r[0].p + at(bad[0].r) + ': ' + (ctxt(bad[0].r.find(isHurt)) || 'failed') + '.';
   },
   'Blink Nova (Target runs out)': ({ rows }) => {
     if (!rows.length) return null;
@@ -420,7 +420,7 @@ const RECIPES = {
     if (isHurt(r[3])) p.push('hit @' + (((r[2] && r[2].ps) || [])[0] || '?') + ' with the debuff up');
     if (isHurt(r[4])) p.push('also hit ' + ctxt(r[4]));
     if (died(r[5]) || (r[5] && r[5].ps && r[5].ps.length)) p.push(ctxt(r[5]) + ' died');
-    return pre(bad.length, all.length, 'Ravages') + 'Ravage' + at(r) + ' ' + (p.join(', ') || 'went wrong') + '.';
+    return pre(bad.length, all.length, 'Ravages') + 'Ravage' + at(r) + ' ' + (p.join(', ') || 'failed') + '.';
   },
   'Mutilate (Soak in two groups)': ({ gs }) => {
     if (!gs.length) return null;
@@ -443,7 +443,7 @@ const RECIPES = {
     const bad = pRows(gs).filter((x) => x.r.some(isHurt)), n = pRows(gs).length;
     if (!bad.length) return 'Every cyst saved for a wind (' + n + ').';
     const dw = bad.filter((x) => /died with it/i.test(ctxt(x.r[2]))), early = bad.filter((x) => !dw.includes(x));
-    return [dw.length ? who(dw.map((x) => x.r[0].p), 2) + ' died with ' + (dw.length > 1 ? 'their cysts' : 'the cyst') + at(dw[0].r) : '', early.length ? '@' + early[0].r[0].p + "'s cyst " + (ctxt(early[0].r.find(isHurt)) || 'went wrong') + at(early[0].r) : ''].filter(Boolean).join('. ') + '.';
+    return [dw.length ? who(dw.map((x) => x.r[0].p), 2) + ' died with ' + (dw.length > 1 ? 'their cysts' : 'the cyst') + at(dw[0].r) : '', early.length ? '@' + early[0].r[0].p + "'s cyst " + (ctxt(early[0].r.find(isHurt)) || 'failed') + at(early[0].r) : ''].filter(Boolean).join('. ') + '.';
   },
   'Intermission (A cyst for each wind)': ({ gs }) => {
     if (!gs.length) return null;
@@ -696,7 +696,7 @@ function buildOne(b, rep, same, W, L, cutN) {
     const lastV = last != null ? H.get(last).get(p.name) : null;
     let best = null, bp = null; for (const n of prevPulls) { const x = H.get(n).get(p.name); if (x != null && (best == null || x > best)) { best = x; bp = n; } }
     const P = { name: p.name, cls: p.cls || '', spec: p.specName, role: p.role || 'dps', unit: p.role === 'healer' ? 'HPS' : 'DPS', v: kfmt(v),
-      d: lastV ? Math.round(100 * (v - lastV) / lastV) : null, vs: last != null ? last : '', best: best != null ? kfmt(best) : '', bp: bp != null ? bp : '', rank: rankIn(p), icon: p.specIcon || '', slips: [], boss: [], surv: [], tiles: [], next: '', next2: '' };
+      d: lastV ? Math.round(100 * (v - lastV) / lastV) : null, vs: last != null ? last : '', best: best != null ? kfmt(best) : '', bp: bp != null ? bp : '', bt: best != null && v >= best ? 1 : '' /* (your best tonight: this pull beat every earlier one (Oct 24)) */, rank: rankIn(p), icon: p.specIcon || '', slips: [], boss: [], surv: [], tiles: [], next: '', next2: '' };
     // Rotation: the three checks that cost the most (the website's "focus"), or what went right
     let x = null; try { x = W.specRun(p.specName, [rep], p.name, true); } catch (e) { x = null; }
     const tips = [];
@@ -795,6 +795,8 @@ function buildOne(b, rep, same, W, L, cutN) {
     P.tiles = [
       ['Avoidable damage', avo > 0 ? kfmt(avo) : '0', avo > 0 ? ord(avRank) + ' most of ' + ps.length : 'Nice dodging', avo > 0 && ps.length >= 6 && avRank <= 3 ? 'warn' : 'ok'],
       [heal ? 'Dispels' : 'Interrupts', String(mineK), 'raid: ' + raidK, 'ok']];
+    // (a practice pull is just your rotation (Oct 24): no rank against whoever hit the other dummies, no tiles, survival or boss lines)
+    if (b.id === 990001) { P.rank = ''; P.tiles = []; P.surv = []; P.cons = []; P.kitd = []; P.boss = []; }
     players.push(P);
   }
   players.sort((a, c) => (a.role === c.role ? 0 : a.role === 'tank' ? -1 : c.role === 'tank' ? 1 : a.role === 'healer' ? -1 : 1) || a.name.localeCompare(c.name));
@@ -820,7 +822,7 @@ function buildOne(b, rep, same, W, L, cutN) {
     const one = ws.length === 1 && withDmg && dmgOf(ws[0][0]) ? ', for ' + kfmt(dmgOf(ws[0][0])) : ''; /* ("Hit @Earthday 2 times, for 555k.") */
     const list = ws.length > 4 ? shown.join(', ') + ' and ' + (ws.length - 4) + ' more' : shown.length > 1 ? shown.slice(0, -1).join(', ') + ' and ' + shown[shown.length - 1] : shown[0];
     const times = same && ws[0][1] > 1 ? (ws.length > 1 ? ', ' + ws[0][1] + ' times each' : ' ' + ws[0][1] + ' times') : '';
-    const lead = g.hit ? 'Hit ' : 'Went wrong for '; // (not every mistake is a hit: a ghost too far from the clump, a missed soak)
+    const lead = g.hit ? 'Hit ' : 'Missed by '; // (not every mistake is a hit: a ghost too far from the clump, a missed soak)
     raid.bad.push([g.sev >= 3 ? 'bad' : 'warn', g.id ? String(g.id) : '', g.k, shortTo(lead + (ws.length > 4 ? ws.length + ' players' + times + ': ' + list : list + times + one) + '.' + fix, 230)]);
   }
   // (deaths that mattered: the first few, before the wipe was called)
@@ -893,10 +895,10 @@ function buildOne(b, rep, same, W, L, cutN) {
       if (badG.length) {
         // (sets: the first that went wrong, and what went wrong in it)
         const g = gs.find((x) => x.bad) || badG[0], r = (g.rows || []).find(rowBad);
-        t = (gs.length > 1 ? badG.length + ' of ' + gs.length + ' went wrong. ' : '') + plain(g.title) + (g.t != null ? ' at ' + mmss(g.t) : '') + ': ' + (r ? rowLine(r, sec.cols).replace(/^.*?: /, '') : plain(g.sub || 'went wrong.'));
+        t = (gs.length > 1 ? badG.length + ' of ' + gs.length + ' failed. ' : '') + plain(g.title) + (g.t != null ? ' at ' + mmss(g.t) : '') + ': ' + (r ? rowLine(r, sec.cols).replace(/^.*?: /, '') : plain(g.sub || 'failed.'));
       } else if (badR.length) {
         // (rows: the first that went wrong; two if there's room)
-        t = (rows.length > 1 ? badR.length + ' of ' + rows.length + ' went wrong. ' : '') + ((l) => (l.some((x) => /: /.test(x)) ? l.filter((x) => /: /.test(x)) : l))(badR.map((r) => rowLine(r, sec.cols))).slice(0, 2).join(' ') /* (rows that say what went wrong) */;
+        t = (rows.length > 1 ? badR.length + ' of ' + rows.length + ' failed. ' : '') + ((l) => (l.some((x) => /: /.test(x)) ? l.filter((x) => /: /.test(x)) : l))(badR.map((r) => rowLine(r, sec.cols))).slice(0, 2).join(' ') /* (rows that say what went wrong) */;
       } else if (flag !== 'ok') {
         t = sentences(sec.summary || '').filter((x) => !/^(It shows|For each|Each row|How it works)/i.test(x))[0] || 'Some mistakes.';
       } else {
@@ -908,7 +910,7 @@ function buildOne(b, rep, same, W, L, cutN) {
       const rc = RECIPES[plain(sec.title)] || RECIPES[plain(sec.title).replace(/\s*\(.*\)$/, '')];
       if (rc) { try { const x = rc({ sec, rows, gs, flag, t, mmss, cellTxt, rowLine, hurt, rowBad, T, dur: rep.duration || 0 }); if (x) t = x; } catch (e) { /* keep the generic line */ } }
       raid.mech.push([flag, sec.spell && sec.spell[0] ? String(sec.spell[0]) : '', plain(sec.title), shortTo(t.replace(/\s*\(see How it works\)/gi, '').replace(/\.\./g, '.').trim(), 230)]);
-    } catch (e) { raid.mech.push([sec.verdict === 'bad' ? 'bad' : sec.verdict === 'warn' ? 'warn' : 'ok', sec.spell && sec.spell[0] ? String(sec.spell[0]) : '', plain(sec.title || ''), { bad: 'Went wrong.', warn: 'Some mistakes.' }[sec.verdict] || 'Done right.']); } }
+    } catch (e) { raid.mech.push([sec.verdict === 'bad' ? 'bad' : sec.verdict === 'warn' ? 'warn' : 'ok', sec.spell && sec.spell[0] ? String(sec.spell[0]) : '', plain(sec.title || ''), { bad: 'Failed.', warn: 'Some mistakes.' }[sec.verdict] || 'Done right.']); } }
     const rank = { bad: 0, warn: 1, ok: 2 }; raid.mech.sort((a, c) => rank[a[0]] - rank[c[0]]); raid.mech = raid.mech.slice(0, 16); /* (every mechanic, and avoidable damage on top) */
   }
   raid.next = b.kill ? (top.length ? 'Kill! Next time: ' + (sentences(top[0].fix || '')[0] || 'clean up ' + top[0].k + '.') : 'Kill! Clean pull.') : (top.length && top[0].fix ? sentences(top[0].fix)[0] : 'Same plan, cleaner.');
@@ -969,14 +971,14 @@ function buildOne(b, rep, same, W, L, cutN) {
     const headN = Ld.length, fixTop = [], nx1 = first1(String(raid.next || '').replace(/^Kill! (Next time: )?/, '')); /* (on a kill too: "Kill! Next time: X" is X) */
     for (const g of top.filter((x) => x.fix && first1(x.fix) !== nx1).slice(0, 3)) {
       const ws = [...g.who.keys()].filter((n) => real.has(n)), who = !ws.length ? '' : ws.length === 1 ? '@' + nm(ws[0]) : ws.length + ' of us';
-      fixTop.push([g.sev >= 3 ? 'bad' : 'warn', g.k + (g.hit ? ' hit ' + (who || 'us') : who ? ' went wrong for ' + who : ' went wrong') + ': ' + low(first1(g.fix)) + '.']);
+      fixTop.push([g.sev >= 3 ? 'bad' : 'warn', g.k + (g.hit ? ' hit ' + (who || 'us') : who ? ' missed by ' + who : ' failed') + ': ' + low(first1(g.fix)) + '.']);
     }
     Ld.push(...fixTop.slice(0, 2).map((x) => x[1]));
     let nx = String(raid.next || '').replace(/^Kill! /, ''); if (nx.length > 70 && /: /.test(nx)) nx = nx.split(': ')[0] + (/^Next time$/i.test(nx.split(': ')[0]) ? ': ' + nx.split(': ')[1].split(': ')[0] : ''); /* (the short part: the Next pull box has the rest) */
     if (nx && !(b.kill && /^Clean pull/i.test(nx))) Ld.push(b.kill ? nx : 'Next pull: ' + low(nx).replace(/^./, (c) => c.toUpperCase()) + '.');
     raid.lead = Ld.filter(Boolean).join(' ').replace(/\.\./g, '.');
     // (the Glance card: the head, up to 3 good, up to 3 to fix, the next pull)
-    const cut1 = (t, n) => { let x = String(t).replace(/^\d+ of \d+ (sets )?went wrong[.:]\s*/i, '').replace(/^Done right\.\s*/, ''); x = (x.split(/(?<=[.!?])\s+(?=[A-Z0-9@"(])/)[0] || x).replace(/\.$/, '');
+    const cut1 = (t, n) => { let x = String(t).replace(/^\d+ of \d+ (sets )?(?:went wrong|failed)[.:]\s*/i, '').replace(/^Done right\.\s*/, ''); x = (x.split(/(?<=[.!?])\s+(?=[A-Z0-9@"(])/)[0] || x).replace(/\.$/, '');
       while (x.length > n && /, | \(/.test(x)) x = x.slice(0, Math.max(x.lastIndexOf(', '), x.lastIndexOf(' ('))); return x + '.'; };
     const fixOf = (name) => { const g = top.find((y) => y.k === name && y.fix); return g ? ': ' + low(first1(g.fix)) : ''; };
     const say = (name, text, n) => { const h = String(text).match(/^(\d+) hits? on (\d+) players?(?:, (\d+) deaths?)?/);
@@ -987,7 +989,7 @@ function buildOne(b, rep, same, W, L, cutN) {
     if (b.id !== 990001) { if (!d0g) good.push(b.kill ? 'Nobody died.' : 'Nobody died before the wipe.'); else if (!b.kill && d0g.t > 90) good.push('Nobody died until ' + mmss(d0g.t) + '.'); }
     for (const x of raid.mech.filter((y) => y[0] === 'ok' && !/Still in P1/.test(y[3]))) { if (good.length >= 3) break; good.push(base(x[2]) + ': ' + lc(cut1(x[3], 70))); }
     for (const x of raid.mech.filter((y) => y[0] === 'bad')) { if (fix.length >= 2) break; fix.push(['bad', say(base(x[2]), x[3], 90)]); }
-    for (const x of fixTop) { if (fix.length >= 3) break; if (!fix.some((y) => y[1].split(':')[0] === x[1].split(' hit ')[0].split(' went wrong')[0])) fix.push(x); }
+    for (const x of fixTop) { if (fix.length >= 3) break; if (!fix.some((y) => y[1].split(':')[0] === x[1].split(' hit ')[0].split(' missed by ')[0].split(' failed')[0])) fix.push(x); }
     for (const x of raid.mech.filter((y) => y[0] === 'warn')) { if (fix.length >= 3) break; fix.push(['warn', say(base(x[2]), x[3], 90)]); }
     raid.glance = { head: Ld.slice(0, headN).join(' ').replace(/\.\./g, '.'), good, fix, next: nx && !(b.kill && /^Clean pull/i.test(nx)) ? nx.replace(/^Next time: /, '').replace(/([^.!?])$/, '$1.') : '' };
     // (the bullet summary: what happened, then what to change next, one fix per problem, each said once)
@@ -999,7 +1001,7 @@ function buildOne(b, rep, same, W, L, cutN) {
     if (b.kill) hap.push(['ok', raid.glance.head]); else for (const x of sents(raid.glance.head)) hap.push([/^(It started|It fell apart|Then )/.test(x) ? 'bad' : 'info', x]);
     for (const x of good) hap.push(['ok', x]);
     const probs = raid.mech.filter((y) => y[0] === 'bad').slice(0, 2).concat(raid.mech.filter((y) => y[0] === 'warn').slice(0, 1));
-    const fact = (t) => { const p = sents(t), lead = /^\d+ (of \d+ )?[\w' ]*went wrong\.?$/.test(p[0] || '') ? p.shift() : ''; if (p[0]) p[0] = p[0].replace(/^First: /, ''); let x = p[0] || lead || String(t);
+    const fact = (t) => { const p = sents(t), lead = /^\d+ (of \d+ )?[\w' ]*(?:went wrong|failed)\.?$/.test(p[0] || '') ? p.shift() : ''; if (p[0]) p[0] = p[0].replace(/^First: /, ''); let x = p[0] || lead || String(t);
       while (x.length > 130 && /, |; | \(/.test(x)) x = x.slice(0, Math.max(x.lastIndexOf(', '), x.lastIndexOf('; '), x.lastIndexOf(' ('))); return lc(x.replace(/([^.!?)])$/, '$1.').replace(/\)$/, ').')); };
     for (const x of probs) { const h = String(x[3]).match(/^(\d+) hits? on (\d+) players?(?:, (\d+) deaths?)?/);
       const ft = h ? '' : fact(x[3]), same = !h && ft.toLowerCase().startsWith(base(x[2]).split(' ')[0].toLowerCase());
