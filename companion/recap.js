@@ -41,7 +41,7 @@ const deathIcon = (d) => d.abilityId === 1 || /^melee$/i.test(d.ability || '') ?
 const FOCUS = new WeakMap(); /* (each player's coach focus per pull: worked out once, shared by every wipe-filter version) */
 // (the website's wipe call (Oct 23): when the pull was lost, and why; null when it never was)
 const WHYW = { line: 'more dead than any kill survived', half: 'half the raid dead', check: 'the damage check was missed' };
-const wipeOf = (W, rep) => { try { if (W.setCut) W.setCut(2); const c = W.cutInfo ? W.cutInfo(rep) : null; return c && isFinite(c.t) ? { t: c.t, at: mmss(c.t), txt: c.why ? WHYW[c.why] || 'the pull was lost' : 'the ' + ord(c.n || 2) + ' death' } : null; } catch (e) { return null; } };
+const wipeOf = (W, rep) => { try { if (W.setCut) W.setCut(2); const c = W.cutInfo ? W.cutInfo(rep) : null; return c && isFinite(c.t) ? { t: c.t, at: mmss(c.t), txt: c.why === 'mech' && c.mn ? c.mn + ' at ' + mmss(c.at != null ? c.at : c.t) + ': ' + c.ms + (c.kn ? ', and ' + c.kn + ' died' : '') /* (a mechanic no kill ever survived (Oct 24, the site's 20cd586)) */ : c.why ? WHYW[c.why] || 'the pull was lost' : 'the ' + ord(c.n || 2) + ' death' } : null; } catch (e) { return null; } };
 const cutTime = (rep, n) => { const ds = (rep.deaths || []).slice().sort((a, b) => a.t - b.t); return n && ds.length >= n ? ds[n - 1].t : Infinity; };
 const before = (t, T) => t == null || t <= T + 0.05;
 // the module's results with everything after the cutoff removed (the website's cutModule): timed rows, sets, phases after it
@@ -701,12 +701,15 @@ function buildOne(b, rep, same, W, L, cutN) {
     let x = null; try { x = W.specRun(p.specName, [rep], p.name, true); } catch (e) { x = null; }
     const tips = [];
     if (x && x.checks) {
-      // (most important first (the user, Oct 24: "the most important ones first ... the ones that contribute to improving DPS/HPS"): what it
-      // cost in damage or healing next to the top players (the Rotation tab counts only 1% of your output or more), then the score points it
-      // lost (its weight, all of it when red, half when yellow), then red before yellow. Gear advice (stats) isn't a rotation fix, as on the tab)
+      // (worst first (the user, Oct 24: "Sections should always prioritize the worst mistakes first, including rotation"): red before yellow;
+      // inside each, the most important first ("the ones that contribute to improving DPS/HPS"): what it cost in damage or healing next to the
+      // top players (the Rotation tab counts only 1% of your output or more), then the score points it lost (its weight, all of it when red,
+      // half when yellow). Gear advice (stats) isn't a rotation fix, as on the tab)
       const lostPts = (c) => (c.share || 0) * (c.st === 'bad' ? 1 : c.st === 'warn' ? 0.5 : 0);
-      const focus = x.checks.filter((c) => (c.st === 'bad' || c.st === 'warn') && !/^st:/.test(String(c.k || ''))).sort((a, c) => (c.cost || 0) - (a.cost || 0) || lostPts(c) - lostPts(a) || (c.st === 'bad') - (a.st === 'bad')).slice(0, 8); // (up to 8 (Oct 24): the card shows 1 to 8, as each raider picks)
-      for (const c of focus) { P.slips.push([c.st, spellId(W, c.ic), slipLine(c)]); if (c.tip) tips.push(plain(c.tip)); }
+      const byCost = (a, c) => (c.cost || 0) - (a.cost || 0) || lostPts(c) - lostPts(a);
+      const focus = x.checks.filter((c) => (c.st === 'bad' || c.st === 'warn') && !/^st:/.test(String(c.k || ''))).sort((a, c) => (c.st === 'bad') - (a.st === 'bad') || byCost(a, c)).slice(0, 8); // (up to 8 (Oct 24): the card shows 1 to 8, as each raider picks)
+      for (const c of focus) P.slips.push([c.st, spellId(W, c.ic), slipLine(c)]);
+      for (const c of focus.slice().sort(byCost)) if (c.tip) tips.push(plain(c.tip)); /* (the Next pull tip: still the costliest fix) */
       // (the Rotation tab's checklist, for the card (Oct 24): each fix with your number, the top players', a square per moment, the tip)
       const num = (v) => plain(v).replace(/(\d)\s*\/\s*(\d)/g, '$1/$2');
       const why = (c) => shortTo(sentences(c.sub).filter((s) => !/\b(below|above|listed)\b/i.test(s) && !/^Debrief checked/.test(s) && !/^The (cards|bars|squares|picture|chart)\b/i.test(s)).slice(0, 3).join(' '), 300); /* (no pointers to the website's pictures, Oct 24) */
@@ -716,7 +719,7 @@ function buildOne(b, rep, same, W, L, cutN) {
       P.rs = { score: x.score != null ? Math.round(x.score) : '', good: x.checks.filter((c) => c.st === 'ok' && c.isMain).slice(0, 4).map((c) => plain(c.label)) };
       // (and the spec's ramp or burst windows even when they went fine (Oct 24): up to 2 more checks with window cards, after the fixes)
       const WR0 = { bad: 0, warn: 1, ok: 2 }, extra = x.checks.filter((c) => !focus.includes(c) && c.st !== 'na' && !/^boss:/.test(c.k) && x.wins && x.wins[c.k])
-        .sort((a, c) => ((WR0[a.st] != null ? WR0[a.st] : 3) - (WR0[c.st] != null ? WR0[c.st] : 3)) || (c.cost || 0) - (a.cost || 0)).slice(0, 2), rotC = focus.concat(extra);
+        .sort((a, c) => ((WR0[a.st] != null ? WR0[a.st] : 3) - (WR0[c.st] != null ? WR0[c.st] : 3)) || (c.cost || 0) - (a.cost || 0)).slice(0, 2), rotC = focus.concat(extra).sort((a, c) => (WR0[a.st] != null ? WR0[a.st] : 3) - (WR0[c.st] != null ? WR0[c.st] : 3)); /* (a window row with mistakes joins the fixes in its colour) */
       P.rs.good = P.rs.good.filter((g) => !extra.some((c) => plain(c.label) === g)); /* (a window row isn't said twice) */
       P.rot = rotC.map((c) => [c.st, spellId(W, c.ic) || (/casting|pace/i.test(c.label || '') ? 'spell_holy_borrowedtime' : p.specIcon || '') /* (no "?" for a check without a spell (Oct 24)) */, plain(c.label), num(c.v), x.top && x.top[c.k] ? num(x.top[c.k]) : '', c.tip ? plain(c.tip) : '',
         (c.bx || []).length >= 2 ? c.bx.slice(0, 40).map((q) => (q.cls === 'ok' ? 'g' : q.cls === 'bad' ? 'b' : 'w')).join('') : '', why(c), howOf(c), momOf(c)]);

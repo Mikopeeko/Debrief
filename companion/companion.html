@@ -382,7 +382,7 @@ addonFlags();
 const popCut = () => 1; /* (always on, nothing to adjust (Oct 23)) */
 const WC_WHY = { line: 'more dead than any kill survived', half: 'half the raid dead', check: 'the damage check was missed' };
 function wcOf(rep, b) { if (!rep || (b && b.kill)) return null; let was = null; try { was = W.getCut ? W.getCut() : null; } catch (e) { was = null; }
-  try { if (!rep.item) rep.item = b; if (W.setCut) W.setCut(2); const c = W.cutInfo ? W.cutInfo(rep) : null; return c && isFinite(c.t) ? { at: mmss(c.t), txt: c.why ? WC_WHY[c.why] || 'the pull was lost' : 'the ' + (c.n || 2) + ({ 1: 'st', 2: 'nd', 3: 'rd' }[c.n] || 'th') + ' death' } : null; }
+  try { if (!rep.item) rep.item = b; if (W.setCut) W.setCut(2); const c = W.cutInfo ? W.cutInfo(rep) : null; return c && isFinite(c.t) ? { at: mmss(c.t), txt: c.why === 'mech' && c.mn ? c.mn + ' at ' + mmss(c.at != null ? c.at : c.t) + ': ' + c.ms + (c.kn ? ', and ' + c.kn + ' died' : '') /* (a mechanic no kill ever survived (Oct 24)) */ : c.why ? WC_WHY[c.why] || 'the pull was lost' : 'the ' + (c.n || 2) + ({ 1: 'st', 2: 'nd', 3: 'rd' }[c.n] || 'th') + ' death' } : null; }
   catch (e) { return null; } finally { try { if (W.setCut && was != null) W.setCut(was); } catch (e) { /* fine */ } } }
 function packAt(rep, b, n) {
   let was = null; try { was = W.getCut ? W.getCut() : null; } catch (e) { was = null; }
@@ -398,7 +398,7 @@ function popNight(cur) {
   if (!L.name) return [];
   const N = nightOf(L.name);
   return L.items.filter((b) => b.endByte && b.id !== DUMMY).map((b) => { const e = N[b.startByte];
-    return { sb: b.startByte, pull: b.pull, kill: !!b.kill, boss: b.boss + ' · ' + (DIFFN[b.diffId] || b.diff || ''), left: b.kill ? 0 : e && e.l != null ? e.l : null, txt: b.kill ? 'Kill' : e && e.l != null ? Math.round(e.l) + '%' : 'Wipe', h: (e && e.h) || '', cur: b.startByte === cur }; });
+    return { sb: b.startByte, pull: b.pull, kill: !!b.kill, boss: b.boss + ' · ' + (DIFFN[b.diffId] || b.diff || ''), left: b.kill ? 0 : e && e.l != null ? e.l : null, txt: b.kill ? 'Kill' : e && e.l != null ? Math.round(e.l) + '%' : 'Wipe', h: (e && e.h) || '', v: (e && e.v) || null, cur: b.startByte === cur }; });
 }
 // (a chip clicked in the pop-up: that pull's coach box, read from the log if it isn't yet; only the last few pulls stay in memory)
 window.DBF_POPPULL = async (sb) => {
@@ -409,7 +409,7 @@ window.DBF_POPPULL = async (sb) => {
       // (the full recap, as /recap draws it (Oct 24): the pull before it on this boss is read first, for "than last pull")
       const same = L.items.filter((x) => x.endByte && x.id === b.id && x.diffId === b.diffId), k = same.indexOf(b);
       if (k > 0 && !(L.reps.get(same[k - 1].startByte) || {}).rep) { try { await analyze(same[k - 1]); } catch (e) { /* skip */ } }
-      const model = RECAP.build(b, rep, same.slice(0, k + 1));
+      const model = RECAP.build(b, rep, same.slice(0, k + 1)); nightVals(b, model);
       const wc = model.wc || null, cutN = wc ? 1 : 0, cut = cutN ? popCut() : null;
       const pack = null; /* (the card replaces the website's box in the pop-up) */
       L.popLast = { model, code: '', copied: false, b, rep, cutN, wc };
@@ -447,6 +447,8 @@ if (store.get('dbf-night-v', 0) !== 2) { for (const k of Object.keys(NIGHT)) del
 const hpOfE = (e) => { if (!e) return null; if (e.k) return 0; if (e.hp != null) return e.hp; const m = [...String(e.lb || '').matchAll(/(\d+(?:\.\d+)?)%/g)].map((x) => +x[1]); return m.length ? Math.min(...m) : e.l != null ? e.l : null; };
 const nightOf = (n) => (NIGHT[n] = NIGHT[n] || {});
 function keepNight() { const ks = Object.keys(NIGHT); for (const k of ks.slice(0, Math.max(0, ks.length - 4))) delete NIGHT[k]; store.set('dbf-night', NIGHT); }
+// (each player's number in a pull, for the pop-up's "Your healing/damage tonight" chart (Oct 24), as the card in WoW draws it)
+function nightVals(b, model) { try { const e = L.name && nightOf(L.name)[b.startByte]; if (!e || !model || !model.players) return; e.v = {}; for (const p of model.players) if (p.v) e.v[String(p.name || '').split('-')[0]] = p.v; keepNight(); } catch (err) { /* (the chart is a nice-to-have) */ } }
 function saveNight(b, rep, coach) {
   if (!rep || !L.name || b.id === DUMMY) return;
   if (!rep.item) rep.item = b;
@@ -726,7 +728,7 @@ async function resaveOld() {
         const pre = new Set([...C.reps.keys()].filter((s0) => (C.reps.get(s0) || {}).rep));
         if (k > 0) { try { await get(same[k - 1]); } catch (e) { /* skip */ } }
         const rep = await get(b);
-        const code = RECAP.encode(window.DBF_BUILD(b, rep, same.slice(0, k + 1), W, C));
+        const mdl = window.DBF_BUILD(b, rep, same.slice(0, k + 1), W, C); nightVals(b, mdl); const code = RECAP.encode(mdl);
         await j('/addonpull', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key, code }) });
         markSaved(key); ok++;
         // (memory: of the reads this added, only this pull's stays, for the next pull on the same boss)
@@ -761,7 +763,7 @@ async function send(b, byHand) {
       if (b.id !== DUMMY) { j('/addonpull', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: L.name + ':' + b.startByte, code }) }).catch(() => {}); markSaved(L.name + ':' + b.startByte); }
       else j('/addonpull', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'practice', code }) }).catch(() => {}); /* (your latest practice pull, one slot, so /recap shows it after /reload (Oct 24)) */
       const ok = false; /* (nothing goes on your clipboard any more (Oct 24)) */
-      L.reading = null; L.lastSent = { sb: b.startByte, ok: true, shared: false, at: Date.now() }; saveNight(b, rep, model.coach && model.coach.raid);
+      L.reading = null; L.lastSent = { sb: b.startByte, ok: true, shared: false, at: Date.now() }; saveNight(b, rep, model.coach && model.coach.raid); nightVals(b, model);
       // (Debriefing's own coach box, exactly as the tab draws it, for the pop-up)
       const wc = model.wc || null, cutN = wc ? 1 : 0, cut = cutN ? popCut() : null; /* (Wipe call on or off (Oct 23)) */
       const pack = null; /* (the pop-up draws the /recap card from the model (Oct 24)) */

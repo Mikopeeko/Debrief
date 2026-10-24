@@ -240,7 +240,7 @@ function Debrief_SetPreset(key)
   if card:IsShown() then render() end
 end
 -- (a quick fade in when the card opens (Oct 24))
-card:HookScript("OnShow", function(self) if UIFrameFadeIn then self:SetAlpha(0); UIFrameFadeIn(self, 0.14, 0, 1) end end)
+card:HookScript("OnShow", function(self) if Debrief_PreviewFix then Debrief_PreviewFix() end; if UIFrameFadeIn then self:SetAlpha(0); UIFrameFadeIn(self, 0.14, 0, 1) end end)
 local close = closeButton(card)
 close:SetScript("OnClick", function() card:Hide() end)
 -- (the Detail button on the card: Simple, Medium, Heavy, one click each)
@@ -487,11 +487,15 @@ end
 local function wipeRow(y, raw, redraw)
   -- (always on, nothing to click (Oct 23): when the pull was lost and why)
   local t = FS("bold", 13, COL.text); t:SetPoint("TOPLEFT", 12, -(y + 2)); t:SetText("Wipe called at " .. raw.wc.at)
-  local n2 = FS("body", 12.5, COL.faint); n2:SetPoint("LEFT", t, "RIGHT", 10, 0); n2:SetWordWrap(false); n2:SetWidth(math.max(40, CW - 24 - t:GetStringWidth() - 10))
-  n2:SetText(raw.wc.txt .. ". Nothing after it counts.")
-  local tb = BTN(); tb:SetPoint("TOPLEFT", 0, -(y - 2)); tb:SetSize(CW, 24)
-  tb:SetScript("OnEnter", function() GameTooltip:SetOwner(tb, "ANCHOR_TOP"); GameTooltip:SetText("The wipe call", 1, 1, 1); GameTooltip:AddLine("When a pull is lost (more dead than any kill survived, the damage check missed, or half the raid dead), nothing after it counts.", 0.8, 0.82, 0.86, true); GameTooltip:Show() end)
+  local n2 = FS("body", 12.5, COL.faint); n2:SetText(raw.wc.txt .. ". Nothing after it counts.")
+  -- (beside the title when it fits; a longer one, like a mechanic no kill survived (Oct 24), wraps under it and the row grows)
+  local room, extra = CW - 24 - t:GetStringWidth() - 10, 0
+  if n2:GetStringWidth() <= room then n2:SetPoint("LEFT", t, "RIGHT", 10, 0); n2:SetWordWrap(false); n2:SetWidth(math.max(40, room))
+  else n2:SetPoint("TOPLEFT", 12, -(y + 20)); n2:SetWidth(CW - 24); n2:SetWordWrap(true); extra = n2:GetStringHeight() end
+  local tb = BTN(); tb:SetPoint("TOPLEFT", 0, -(y - 2)); tb:SetSize(CW, 24 + extra)
+  tb:SetScript("OnEnter", function() GameTooltip:SetOwner(tb, "ANCHOR_TOP"); GameTooltip:SetText("The wipe call", 1, 1, 1); GameTooltip:AddLine("When a pull is lost (more dead than any kill survived, a mechanic no kill ever survived, the damage check missed, or half the raid dead), nothing after it counts.", 0.8, 0.82, 0.86, true); GameTooltip:Show() end)
   tb:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  return extra
 end
 -- (the raid lead's four cards (Oct 23), like the website: What wiped us, What we did well, Worse than last pull, Better than last pull;
 -- two by two on a wide card, one under the other on a narrow one; an empty card says so)
@@ -654,6 +658,16 @@ local function cutIdx(m)
   return c
 end
 local SEVR = { dead = 0, bad = 0, warn = 1 }
+-- (worst first in every list (Oct 24, the user: "Sections should always prioritize the worst mistakes first, including rotation"): red, then
+-- amber, then the rest, each keeping the order it came in (rotation: what it cost; deaths: when))
+local function worstFirst(list, rankOf)
+  if not list or #list < 2 then return list end
+  rankOf = rankOf or function(r) return SEVR[r[1]] or 2 end
+  local at = {}; for i, r in ipairs(list) do at[r] = i end
+  table.sort(list, function(a, b) local x, y = rankOf(a), rankOf(b); if x ~= y then return x < y end; return at[a] < at[b] end)
+  return list
+end
+local KRANK = { own = 0, ready = 0, on = 0, half = 1, nothing = 1 }
 local function cutView(m)
   if not m or not m.cutN then return m end
   local c = tostring(cutIdx(m))
@@ -667,9 +681,13 @@ local function cutView(m)
     raid = { bad = keep(m.raid.bad, true), died = keep(m.raid.died), mech = keep(m.raid.mech, true), cons = keep(m.raid.cons), defs = keep(m.raid.defs), kitd = keep(m.raid.kitd), more = pick(m.raid.more, m.raid.moreK), next = pick(m.raid.next, m.raid.nextK),
       tiles = keep(m.raid.tiles), story = pick(m.raid.story or "", m.raid.storyK), better = pick(m.raid.better or "", m.raid.betterK), worse = pick(m.raid.worse or "", m.raid.worseK), lead = pick(m.raid.lead or "", m.raid.leadK),
       good = keep(m.raid.good), fixes = keep(m.raid.fixes), ghap = keep(m.raid.ghap), gchg = keep(m.raid.gchg), ghead = pick(m.raid.ghead or "", m.raid.gheadK), gnext = pick(m.raid.gnext or "", m.raid.gnextK) } }
+  -- (the coach's lists, worst first: red mistakes, deaths on the player, avoidable damage in red)
+  local co = v.coach
+  if co then worstFirst(co.wrong, function(x) return x.sev == "bad" and 0 or 1 end); worstFirst(co.deaths, function(d) return KRANK[d.k] or 2 end); worstFirst(co.avoid, function(a) return a.bad and 0 or 1 end) end
   for _, p in ipairs(m.players) do
     local q = {}; for k, x in pairs(p) do q[k] = x end
-    q.slips, q.boss, q.surv, q.next, q.cons, q.kitd = keep(p.slips), keep(p.boss), keep(p.surv), pick(p.next, p.nextK), keep(p.cons), keep(p.kitd)
+    q.slips, q.boss, q.surv, q.next, q.cons, q.kitd = keep(p.slips, true), keep(p.boss, true), keep(p.surv, true), pick(p.next, p.nextK), keep(p.cons, true), keep(p.kitd)
+    if p.rot then local rc = {}; for i, r in ipairs(p.rot) do rc[i] = r end; q.rot = worstFirst(rc) end
     q.tiles, q.next2, q.lead = keep(p.tiles), pick(p.next2 or "", p.next2K), pick(p.lead or "", p.leadK)
     v.players[#v.players + 1] = q
   end
@@ -729,7 +747,7 @@ local function cardGrade(y, gr)
   local c = FS("body", 12.5, COL.soft); c:SetPoint("TOPLEFT", 58, -(y + 25)); c:SetWidth(CW - 70); c:SetWordWrap(false); c:SetText(gr.cats or "")
   return y + h + 8
 end
-local UI = { rotRow = rotRow, rotGood = rotGood, rowS = rowS, wipeRow = wipeRow, trendCards = trendCards, cardCharts = cardCharts, cardGrade = cardGrade, parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, canRaid = canRaid, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded, col = useCol, colFrame = colFrame, two = { cols = 1, brk = 0, n = 0, marks = {} } }
+local UI = { rotRow = rotRow, rotGood = rotGood, rowS = rowS, wipeRow = wipeRow, trendCards = trendCards, cardCharts = cardCharts, cardGrade = cardGrade, parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, canRaid = canRaid, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded, worst = worstFirst, col = useCol, colFrame = colFrame, two = { cols = 1, brk = 0, n = 0, marks = {} } }
 local function renderOnce()
   UI.col(1)
   local raw = DB.pulls[DB.cur]; local m = UI.cutView(raw); CUR = m
@@ -848,7 +866,7 @@ local function renderOnce()
   local function survRaid()
     local L = {}
     for _, k in ipairs({ { "rdefs", "defs" }, { "rcons", "cons" } }) do --[[ (deaths with a stone unused are in Deaths now (Oct 24)) ]] if SH[k[1]] ~= false then for _, r in ipairs(m.raid[k[2]] or {}) do L[#L + 1] = r end end end
-    if #L > 0 then section("rsurv", "Survival", L, 4, function(r) y = row(y, r[1], r[2], r[3]) end) end
+    if #L > 0 then UI.worst(L); section("rsurv", "Survival", L, 4, function(r) y = row(y, r[1], r[2], r[3]) end) end
   end
   local function diedRow()
     if DB.compact then return end
@@ -1183,7 +1201,7 @@ local function renderOnce()
       bt:SetScript("OnEnter", function() tx:SetTextColor(rgb(COL.gold)) end); bt:SetScript("OnLeave", function() tx:SetTextColor(rgb(COL.muted)) end)
     end
     local cut = UI.cutIdx(raw)
-    if raw.wc then UI.wipeRow(y, raw, function() wipe(EXPANDED); if Debrief_RefreshOptions then Debrief_RefreshOptions() end; render(); if big and big:IsShown() and bigRender then bigRender() end end) else
+    if raw.wc then y = y + (UI.wipeRow(y, raw, function() wipe(EXPANDED); if Debrief_RefreshOptions then Debrief_RefreshOptions() end; render(); if big and big:IsShown() and bigRender then bigRender() end end) or 0) else
     local t = FS("bold", 13, COL.text); t:SetPoint("TOPLEFT", IND, -(y + 2)); t:SetText("Stop at death")
     stepBtn("+", CW - IND, 1)
     local v = FS("bold", 13, COL.text); v:SetJustifyH("CENTER"); v:SetWidth(28); v:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - IND - 23, -(y + 2)); v:SetText((DB.deathCut or 0) == 0 and "off" or (DB.deathCut .. ""))
@@ -1252,7 +1270,7 @@ local function renderOnce()
       do local L = {} -- (one Survival section (Oct 22 audit): defensives, Healthstone and potion, a death with one unused)
         if SH.surv ~= false then for _, r in ipairs(UI.onlyBad(P.surv or {})) do L[#L + 1] = r end end
         if SH.cons ~= false then for _, r in ipairs(P.cons or {}) do L[#L + 1] = r end end
-        if #L > 0 then section("surv", "Survival", L, 6, function(r) y = UI.rowS(y, r) end) end end
+        if #L > 0 then UI.worst(L); section("surv", "Survival", L, 6, function(r) y = UI.rowS(y, r) end) end end
       -- (the Detailed card: the raid's side right here, so nobody has to switch to the Raid view)
       if DB.detailed and not m.h.practice and not raidOk then
         summary()
@@ -1752,6 +1770,7 @@ bigRender = function()
   bscroll:SetVerticalScroll(math.min((bscroll:GetVerticalScroll() or 0), math.max(0, hgt - (bh - 80))))
 end
 function Debrief_ToggleBig()
+  if Debrief_PreviewFix then Debrief_PreviewFix() end
   if not DB or #DB.pulls == 0 then say("no pulls yet. /debrief demo shows a sample."); return end
   if big:IsShown() then big:Hide() else big:Show(); bigRender() end
 end
@@ -2253,17 +2272,20 @@ function Debrief_PreviewOff()
   if not PREV_REAL or not DB then return end
   DB.pulls, DB.cur, DB.who = PREV_REAL.pulls, PREV_REAL.cur, PREV_REAL.who; PREV_REAL = nil; wipe(EXPANDED)
 end
+-- (a safety net (Oct 24, the user: "/recap isnt pulling up my saved puls its pulling up demo pulls"): the sample still in while neither
+-- the settings nor the setup is open gives your own pulls, and the card its own place, back)
+function Debrief_PreviewFix()
+  if not PREV_REAL or not DB then return end
+  if (opt and opt:IsShown()) or (DebriefTutorial and DebriefTutorial:IsShown()) then return end
+  Debrief_PreviewOff(); card:SetScale(DB.scale or 1); card:ClearAllPoints()
+  if DB.pos then card:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) else card:SetPoint("CENTER", 260, 60) end
+end
 function Debrief_ToggleOptions()
   if not DB then return end
   if not opt then buildOptions() end
   if opt:IsShown() then opt:Hide(); Debrief_PreviewOff(); if card:IsShown() then if #DB.pulls > 0 then render() else card:Hide() end end; return end -- (your own pulls again)
   if DebriefTutorial and DebriefTutorial:IsShown() then DebriefTutorial:Hide(); Debrief_PreviewOff() end
   Debrief_RefreshOptions(); opt:Show()
-  -- (the card beside it, so every change shows at once: the built-in sample, every section filled (Oct 24))
-  Debrief_PreviewOn()
-  -- (the preview: your recap card, attached to the right of this window, changing as you click; back in its own place when you close)
-  mini:Hide(); big:Hide(); card:Show(); render()
-  card:ClearAllPoints(); card:SetPoint("TOPLEFT", opt, "TOPRIGHT", 16, -26)
   if not opt.prev then
     opt.prev = opt:CreateFontString(nil, "OVERLAY"); setFont(opt.prev, "bold", 12.5); opt.prev:SetTextColor(rgb(COL.gold))
     opt.prev:SetText("PREVIEW  ·  changes as you click")
@@ -2273,6 +2295,12 @@ function Debrief_ToggleOptions()
       if DB.pos then card:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) else card:SetPoint("CENTER", 260, 60) end
     end)
   end
+  -- (the card beside it, so every change shows at once: the built-in sample, every section filled (Oct 24); the give-back hook above is
+  -- set first, so your own pulls come back however the settings close)
+  Debrief_PreviewOn()
+  -- (the preview: your recap card, attached to the right of this window, changing as you click; back in its own place when you close)
+  mini:Hide(); big:Hide(); card:Show(); pcall(render)
+  card:ClearAllPoints(); card:SetPoint("TOPLEFT", opt, "TOPRIGHT", 16, -26)
   opt.prev:ClearAllPoints(); opt.prev:SetPoint("BOTTOMLEFT", card, "TOPLEFT", 2, 7)
   Debrief_FitPreview()
 end
@@ -2455,6 +2483,7 @@ end
 
 -- ---------- opening it: key, slash command ----------
 function Debrief_Toggle()
+  Debrief_PreviewFix()
   if big:IsShown() then big:Hide(); return end
   if DB and DB.mini and #DB.pulls > 0 and not card:IsShown() then if mini:IsShown() then mini:Hide() else miniShow() end; return end
   if card:IsShown() then card:Hide() elseif DB and DB.pulls and #DB.pulls > 0 then card:Show(); render()

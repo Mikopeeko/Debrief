@@ -103,7 +103,9 @@ body.isMini { border-color: rgba(230,180,80,.85); box-shadow: inset 0 0 0 1px rg
 .kbig { display: flex; align-items: center; gap: 12px; background: var(--raised); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin: 0 0 8px; } .kbig .ic { width: 44px; height: 44px; border-radius: 6px; }
 .kbig small { display: block; color: var(--muted); font-size: 13px; font-weight: 600; } .kbig b { font: 700 30px 'Barlow Semi Condensed', Barlow, sans-serif; line-height: 1.05; } .kbig b em { font-style: normal; font-size: 13px; color: var(--muted); margin-left: 4px; }
 .kbig .kbr { margin-left: auto; text-align: right; color: var(--muted); font-size: 12.5px; align-self: flex-start; } .kbig .kbr .up { color: #7ee08f; } .kbig .kbr .dn { color: #ff8f87; }
-.kL, .kR { min-width: 0; } .kgrid.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } /* (two columns when it's long (Oct 24)) */
+.kL, .kR { min-width: 0; }
+.kgr { display: flex; gap: 14px; align-items: center; background: var(--raised); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; margin: 0 0 10px; } .kgr b { font: 700 30px 'Barlow Semi Condensed', Barlow, sans-serif; line-height: 1; min-width: 26px; } .kgr small, .kch small { display: block; color: var(--faint); font-weight: 700; font-size: 11px; letter-spacing: .04em; } .kgr span { color: var(--soft); font-size: 13px; }
+.kch { position: relative; background: var(--raised); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px 8px; margin: 0 0 10px; } .kch em { position: absolute; right: 12px; top: 8px; font-style: normal; color: #5fdc7a; font-weight: 700; font-size: 11.5px; } .kch svg { display: block; width: 100%; height: auto; margin-top: 6px; } .kch .kno { margin: 6px 0 0; } .kgrid.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } /* (two columns when it's long (Oct 24)) */
 .kl { color: var(--gold); font: 700 11.5px/1 Barlow, sans-serif; letter-spacing: .05em; margin: 2px 0 7px; } .kl.mut { color: var(--muted); margin-top: 12px; }
 .khd { font: 600 16.5px/1.35 'Barlow Semi Condensed', Barlow, sans-serif; margin: 0 0 12px; }
 .kc { background: var(--raised); border: 1px solid var(--line); border-radius: 8px; margin: 0 0 10px; }
@@ -205,6 +207,8 @@ function cardView() {
   // (a section, as the card draws it: a title you can fold, then its lines, the first few and "Show N more")
   const sec = (key, title, inner, def) => { const o = isOn('s:' + key, def !== false);
     return '<div class="kc"><div class="kh" data-cf="s:' + key + '"><b>' + title + '</b><i>' + (o ? '–' : '+') + '</i></div>' + (o ? '<div class="kb">' + inner + '</div>' : '') + '</div>'; };
+  /* (worst first in every list (Oct 24, the user: "Sections should always prioritize the worst mistakes first, including rotation"): red, then amber, then the rest, each in the order it came) */
+  const RK = { dead: 0, bad: 0, warn: 1 }, worst = (L0, rk) => (L0 || []).map((x, i) => [x, i]).sort((a, b) => ((rk ? rk(a[0]) : RK[a[0][0]] ?? 2) - (rk ? rk(b[0]) : RK[b[0][0]] ?? 2)) || a[1] - b[1]).map((q) => q[0]);
   const lim = (key, L, n, draw) => { const all = OPEN['m:' + key], show = all ? L : L.slice(0, n); return show.map(draw).join('') + (L.length > show.length ? '<div class="kmore" data-cmore="' + key + '">Show ' + (L.length - show.length) + ' more</div>' : ''); };
   /* (Me shows you, or anyone you step to with ‹ ›; without you in the pull, the first player, as /recap does (Oct 24)) */
   const mine = LK.me ? PL.find((p) => p.name === LK.me || short(p.name) === short(LK.me)) : null;
@@ -213,6 +217,26 @@ function cardView() {
   if (!VIEW || (VIEW === 'me' && !me)) VIEW = me ? 'me' : 'raid';
   const R = C.raid || {}, CO = (C.coach && C.coach.raid) || null;
   let L = '', Rt = '';
+  /* (the Report card grade and tonight's two charts, when ticked in /db, above the raid lead box as /recap draws them (Oct 24, the user:
+     "I should see the /recap window ... the ones i selected in the settings")) */
+  { const H0 = C.h || D.h || {};
+    if (H0.diff !== 'Practice') {
+      const GC = { S: '#ff8000', A: '#a335ee', B: '#0070dd', C: '#1eff00', D: '#ece8df', F: '#9d9d9d' };
+      if (SH.grade === true && C.grade && C.grade.letter) L += '<div class="kgr"><b style="color:' + (GC[String(C.grade.letter).charAt(0)] || '#ece8df') + '">' + esc(C.grade.letter) + '</b><div><small>REPORT CARD · ' + esc(C.grade.score || '') + '</small><span>' + esc(C.grade.cats || '') + '</span></div></div>';
+      const pk = (v) => { const m = String(v || '').replace(/,/g, '').match(/([\d.]+)\s*([kKmM]?)/); if (!m) return null; const n = +m[1]; return /m/i.test(m[2]) ? n * 1000 : /k/i.test(m[2]) ? n : n / 1000; };
+      const NPc = (D.night || []).filter((p) => p.boss === (H0.boss || '') + ' · ' + (H0.diff || ''));
+      const chart = (title, pts, fmt) => {
+        if (pts.length < 2) return '<div class="kch"><small>' + esc(title.toUpperCase()) + '</small><p class="kno">Shows once you have two pulls on this boss tonight.</p></div>';
+        let lo = Math.min(...pts.map((q) => q[1])), hi = Math.max(...pts.map((q) => q[1])), best = 0; if (hi === lo) hi = lo + 1;
+        pts.forEach((q, i) => { if (q[1] >= pts[best][1]) best = i; });
+        const Wd = 560, Hh = 56, x = (i) => (10 + i * (Wd - 20) / (pts.length - 1)).toFixed(1), y = (v) => (Hh - 6 - (Hh - 14) * (v - lo) / (hi - lo)).toFixed(1);
+        const mix = (i) => { const f = i / Math.max(1, pts.length - 1), a = [230, 180, 80], b = [95, 220, 122]; return 'rgb(' + a.map((c, j) => Math.round(c + (b[j] - c) * f)).join(',') + ')'; };
+        let g = ''; for (let i = 1; i < pts.length; i++) g += '<line x1="' + x(i - 1) + '" y1="' + y(pts[i - 1][1]) + '" x2="' + x(i) + '" y2="' + y(pts[i][1]) + '" stroke="' + mix(i) + '" stroke-width="2.2" stroke-linecap="round"/>';
+        g += pts.map((q, i) => '<circle cx="' + x(i) + '" cy="' + y(q[1]) + '" r="' + (q[2] ? 4.5 : 3) + '" fill="' + (q[2] ? '#5fdc7a' : mix(i)) + '"/>').join('');
+        return '<div class="kch"><small>' + esc(title.toUpperCase()) + '</small><em>Best: pull ' + esc(pts[best][0]) + ' · ' + esc(fmt(pts[best][1])) + '</em><svg viewBox="0 0 ' + Wd + ' ' + Hh + '">' + g + '</svg></div>'; };
+      if (SH.chartNight === true) L += chart('How far each pull got', NPc.map((p) => [p.pull, p.kill ? 100 : p.left != null ? 100 - p.left : null, p.cur]).filter((q) => q[1] != null), (v) => (v >= 100 ? 'kill' : Math.round(100 - v) + '% left'));
+      if (SH.chartLine === true && me) { const k = short(me.name); L += chart((me.role === 'healer' ? 'Your healing' : 'Your damage') + ' tonight', NPc.map((p) => [p.pull, p.v && p.v[k] ? pk(p.v[k]) : null, p.cur]).filter((q) => q[1] != null && q[1] > 0), (v) => (v >= 1000 ? (v / 1000).toFixed(2).replace(/0+$/, '').replace(/\.$/, '') + 'M' : Math.round(v) + 'k')); }
+    } }
   if (VIEW === 'me' && me) {
     const P = me, you = C.coach && C.coach.you ? C.coach.you[P.name] : null;
     // (your raid lead box: how your pull went, your fixes numbered, then worse and better than last pull)
@@ -254,13 +278,13 @@ function cardView() {
             ((r[10] || []).length ? '<div class="kwz"><span class="kwz-h">Each window</span>' + r[10].map(winB).join('') + '</div>' : '') + /* (each ramp or burst window (Oct 24)) */
             (r[9] && !(r[10] || []).length ? '<div class="kmo"><span>When it slipped</span>' + String(r[9]).split(';').map((m) => '<p>• ' + pt(m) + '</p>').join('') + '</div>' : '') + (r[8] ? '<p class="khow">How it\'s judged: ' + pt(r[8]) + '</p>' : '') : '') + '</div></div>'; };
         const sc = P.rs && P.rs.score !== '' && P.rs.score != null ? ' <span class="ksc">· <b>' + esc(P.rs.score) + '</b>/100</span>' : '';
-        L += sec('rot', 'Rotation' + sc, (P.rot.length ? lim('rot', P.rot, MX.maxSlips || 3, rr) : '<div class="kr"><i class="kd" style="background:#45c15c"></i><span class="ic"></span><span>Nothing to fix here.</span></div>') +
+        L += sec('rot', 'Rotation' + sc, (P.rot.length ? lim('rot', worst(P.rot), MX.maxSlips || 3, rr) : '<div class="kr"><i class="kd" style="background:#45c15c"></i><span class="ic"></span><span>Nothing to fix here.</span></div>') +
           (P.rs && (P.rs.good || []).length ? '<p class="kgood">Done right: ' + P.rs.good.map(esc).join(', ') + '.</p>' : ''));
-      } else if ((P.slips || []).length) L += sec('rot', 'Rotation', lim('rot', bad(P.slips), MX.maxSlips || 3, row));
+      } else if ((P.slips || []).length) L += sec('rot', 'Rotation', lim('rot', worst(bad(P.slips)), MX.maxSlips || 3, row));
     }
-    if (on('boss') && (P.boss || []).length) Rt += sec('boss', 'Boss mechanics', lim('boss', bad(P.boss), MX.maxBoss != null ? MX.maxBoss : 4, row));
+    if (on('boss') && (P.boss || []).length) Rt += sec('boss', 'Boss mechanics', lim('boss', worst(bad(P.boss)), MX.maxBoss != null ? MX.maxBoss : 4, row));
     const sv = [].concat(on('surv') ? bad(P.surv) : [], on('cons') ? (P.cons || []) : []); /* (a death with a stone unused is in your death line now (Oct 24)) */
-    if (sv.length) Rt += sec('surv', 'Survival', lim('surv', sv, 6, row));
+    if (sv.length) Rt += sec('surv', 'Survival', lim('surv', worst(sv), 6, row));
   } else {
     // (the raid view: your raid lead, the four cards, every mistake folded, then deaths, avoidable damage and survival)
     if (CO && on('coach')) {
@@ -275,7 +299,7 @@ function cardView() {
       const items = (Lx, col, none) => (Lx && Lx.length ? Lx.map((x) => '<div class="kci"><b>' + pt(x.nm) + '</b>' + (x.tag ? ' <span style="color:' + col + '">' + esc(x.tag) + '</span>' : '') + (x.sub ? '<span class="kcs">' + pt(x.sub) + '</span>' : '') + '</div>').join('') : '<p class="kno">' + none + '</p>');
       if (tr) cards.push(['ok', 'What we did well', (tr.well || []).length ? tr.well.map((x) => '<div class="kci"><b>' + pt(x.nm) + '</b>' + (x.tag ? ' <span style="color:#7ee08f">' + esc(x.tag) + '</span>' : '') + tagH(inL(tr.worse, x.nm) ? 'dn' : inL(tr.better, x.nm) ? 'up' : '') + (x.sub ? '<span class="kcs">' + pt(x.sub) + '</span>' : '') + '</div>').join('') : '<p class="kno">Nothing stood out yet.</p>']);
       if (cards.length) L += '<div class="kcards">' + cards.map((c) => '<div class="kcard ' + c[0] + '"><div class="kct">' + c[1] + '</div>' + c[2] + '</div>').join('') + '</div>';
-      const W = CO.wrong || [];
+      const W = worst(CO.wrong, (x) => (x.sev === 'bad' ? 0 : 1));
       if (W.length) {
         const wcard = (x, i) => { const k = 'w' + i, o = isOn('r:' + k, deep && i === 0), more = [['WHAT HAPPENED', x.what], ['HOW', x.how], ['AGAINST TOP GUILDS', x.kb]].filter((q) => q[1]);
           return '<div class="kw ' + (x.sev === 'bad' ? 'bad' : '') + '"' + (more.length ? ' data-cr="r:' + k + '"' : '') + '><span class="kwn">' + (i + 1) + '</span><div class="kwb"><div class="kwt">' + icn(x.id) + '<b>' + esc(x.label) + '</b>' + (x.tag ? '<span class="kwg">' + esc(x.tag) + '</span>' : '') + (more.length ? '<i>' + (o ? '–' : '+') + '</i>' : '') + '</div>' +
@@ -289,16 +313,16 @@ function cardView() {
       if (on('cdeaths') && D0 && ((D0.items || []).length || D0.line)) {
         const onP = String(D0.note || '').match(/(\d+) of \d+ deaths? on the player/), aft = String(D0.note || '').match(/(\d+) more after/);
         const dr = (d, i) => { const k = 'r:d' + i, o = isOn(k, false); return '<div class="kdr' + (d.story ? ' has' : '') + '"' + (d.story ? ' data-cr="' + k + '"' : '') + '><span class="kdt">' + esc(d.t) + '</span><i class="kd" style="background:' + (KCOL[d.k] || '#6c7381') + '"></i>' + nmH(d.who) + icn(d.id) + '<span class="kda">' + esc(d.ab) + '</span>' + ((d.ready || []).length ? '<span class="krdy">' + esc(d.ready[0] + (d.ready.length > 1 ? ' +' + (d.ready.length - 1) : '')) + ' unused</span>' : '') + /* (what could have saved them (Oct 24)) */ (d.story ? '<i class="kpl">' + (o ? '–' : '+') + '</i>' : '') + '</div>' + (o ? '<p class="kst">' + pt(d.story) + '</p>' : ''); };
-        Rt += sec('cd', 'Deaths <span class="ksc">· ' + (D0.items || []).length + (onP ? ' · ' + onP[1] + ' on the player' : '') + (aft ? ' · ' + aft[1] + ' not counted' : '') + '</span>', (D0.items || []).length ? (D0.items || []).map(dr).join('') : '<p class="kno">' + pt(D0.line) + '</p>', deep);
+        Rt += sec('cd', 'Deaths <span class="ksc">· ' + (D0.items || []).length + (onP ? ' · ' + onP[1] + ' on the player' : '') + (aft ? ' · ' + aft[1] + ' not counted' : '') + '</span>', (D0.items || []).length ? worst(D0.items, (d) => ({ own: 0, ready: 0, on: 0, half: 1, nothing: 1 })[d.k] ?? 2).map(dr).join('') : '<p class="kno">' + pt(D0.line) + '</p>', deep);
       }
       if (on('cavoid') && A0 && ((A0.items || []).length || A0.line)) {
         const ar = (a, i) => { const k = 'r:a' + i, o = isOn(k, false); return '<div class="kdr' + (a.story ? ' has' : '') + '"' + (a.story ? ' data-cr="' + k + '"' : '') + '>' + icn(a.id) + '<span class="kda">' + esc(a.k) + '</span>' + nmH(a.who) + '<span style="color:' + (a.bad ? '#ff8f87' : '#e8a23a') + '">' + esc(a.n) + '</span>' + (a.story ? '<i class="kpl">' + (o ? '–' : '+') + '</i>' : '') + '</div>' + (o ? '<p class="kst">' + pt(a.story) + '</p>' : ''); };
-        Rt += sec('ca', 'Avoidable damage <span class="ksc">· ' + (A0.items || []).length + '</span>', (A0.items || []).length ? A0.items.map(ar).join('') : '<p class="kno">' + pt(A0.line) + '</p>', deep);
+        Rt += sec('ca', 'Avoidable damage <span class="ksc">· ' + (A0.items || []).length + '</span>', (A0.items || []).length ? worst(A0.items, (a) => (a.bad ? 0 : 1)).map(ar).join('') : '<p class="kno">' + pt(A0.line) + '</p>', deep);
       }
     }
     const sv = [].concat(on('rdefs') ? (R.defs || []) : [], on('rcons') ? (R.cons || []) : []); /* (and in the raid's Deaths rows) */
-    if (sv.length) Rt += sec('rsurv', 'Survival', lim('rsurv', sv, 4, row));
-    if (SH.mechs === true && (R.mech || []).length) Rt += sec('mech', 'Boss mechanics', lim('mech', R.mech, MX.maxMech != null ? MX.maxMech : 6, rowT));
+    if (sv.length) Rt += sec('rsurv', 'Survival', lim('rsurv', worst(sv), 4, row));
+    if (SH.mechs === true && (R.mech || []).length) Rt += sec('mech', 'Boss mechanics', lim('mech', worst(R.mech), MX.maxMech != null ? MX.maxMech : 6, rowT));
   }
   /* (the header, as /recap draws it: the boss big, its line, the result; this boss's pulls; Me | Raid view with ‹ name ›) */
   const H = C.h || D.h || {}, prac = H.diff === 'Practice', res = prac ? 'Practice' : H.kill ? 'Kill' : 'Wipe' + (H.pct !== '' && H.pct != null ? ' · ' + H.pct + '%' : '');
@@ -359,7 +383,7 @@ function nightRow() {
 function stopRow() {
   if (D.cut == null || !(D.cutN > 0)) return '';
   // (the Wipe call (Oct 23): on, nothing after the pull was lost counts; off, all of it)
-  if (D.wc) return '<div class="stp" title="When a pull is lost (more dead than any kill survived, the damage check missed, or half the raid dead), nothing after it counts."><b>Wipe called at ' + esc(D.wc.at) + ' <i class="stpi">' + esc(D.wc.txt) + '. Nothing after it counts.</i></b></div>'; /* (always on, Oct 23) */
+  if (D.wc) return '<div class="stp" title="When a pull is lost (more dead than any kill survived, a mechanic no kill ever survived, the damage check missed, or half the raid dead), nothing after it counts."><b>Wipe called at ' + esc(D.wc.at) + ' <i class="stpi">' + esc(D.wc.txt) + '. Nothing after it counts.</i></b></div>'; /* (always on, Oct 23) */
   const c = D.cut, n = D.cutN, ord = (k) => k + (k % 100 >= 11 && k % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[k % 10] || 'th'));
   // (one line (Oct 23): what it counts to beside the name, the explanation on hover)
   const note = waiting ? 'updating the coach…' : c === 0 ? 'off, all of it counts' : c > n ? 'fewer deaths, so all of it counts' : 'counted to the ' + ord(c) + ' death';
