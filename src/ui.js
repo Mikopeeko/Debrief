@@ -1772,6 +1772,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-25', h: [
+    { t: 'The front page shows a pull being debriefed', d: 'The example window on the front page now plays a short loop instead of a still: the raid lead\'s verdict, three deaths filling in as bars, one death opening as a card, and the Rotation grade filling up. Built from the site\'s own pieces, so it\'s crisp and light; still if your system asks for less motion.' },
     { t: 'The site moves, and kills light up', d: 'Bars fill in, big numbers count up and the pull line draws itself the first time a page opens, quick and only once (off if your system asks for less motion). A kill lights the boss banner gold, the Kill mark on the pull line glows, and the first kill of a boss shimmers with the raid lead\'s call shown big.' },
     { t: 'Home, one screen', d: 'Home now reads like a briefing: your team and you on one strip, the boss you\'re on big with your raid nights beside its chart, and the ten bosses as one row. How far you got is a bar as well as a number, on the banner, on every boss and on every night.' },
     { t: 'Compare: the answer first', d: 'Your biggest fixes and Why the gap now sit right under the face-off, side by side, instead of hidden at the bottom. Your big moments show the opener and the first window with the rest folded, and the face-off glows in each player\'s class colour.' },
@@ -30216,3 +30217,23 @@ function dsMotion() { const H = document.documentElement; if (!window.matchMedia
     const step = (t) => { const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3); if (k < 1) { tn.nodeValue = fmt(end * e); requestAnimationFrame(step); } else tn.nodeValue = raw; };
     tn.nodeValue = fmt(0); requestAnimationFrame(step); }); }
 (function () { const f8 = dsBars; dsBars = function (root) { f8(root); try { dsMotion(); } catch (e) {} }; })();
+
+// ===== Design studio round 15 (Oct 25): the front page shows a pull being debriefed (the user's pick A). Replaces the example window's
+// coach box with a looping scene built from the site's card pieces; the chrome and the boss banner stay. Owner: the Design studio chat. =====
+function dsFrontDemo() { const win = document.querySelector('#main .home.fp .fpx-shot .fp3-win'); if (!win || win.dataset.dsDemo) return; const coach = win.querySelector('.fp3-coach'); if (!coach) return;
+  win.dataset.dsDemo = '1';
+  const N = [['Rowan', '#F48CBA', '2:41', '1.2M', 100], ['Maelis', '#3FC7EB', '2:43', '1.1M', 92], ['Torvin', '#AAD372', '2:47', '980k', 81]];
+  const scene = '<div class="ds-demo">' +
+    '<div class="ds-dbox"><span class="ds-dk">Your raid lead says…</span><p class="ds-dv">We wiped in P2 at 34%. Root cause: <b>Grim Guillotine</b> soaks were short, three deaths in six seconds.</p>' +
+    '<div class="ds-dd">' + N.map((n, i) => '<div class="ds-dr" style="--i:' + i + ';--c:' + n[1] + ';--p:' + n[4] + '"><span class="ds-dt">' + n[2] + '</span><b class="ds-dn">' + n[0] + '</b><span class="ds-db"><i></i></span><span class="ds-dx">' + n[3] + '</span></div>').join('') + '</div></div>' +
+    '<div class="ds-dlow"><div class="ds-dcard"><span class="ds-dk">Death · 2:41</span><b><em style="color:#F48CBA">Rowan</em> · Grim Guillotine</b><p>Stood 9 yards from soak 2 when the axe landed. Four were needed, three were there.</p><span class="ds-dpill">On the player</span></div>' +
+    '<div class="ds-dgrade"><span class="ds-dring"><span>88</span></span><div><b>Rotation · Holy Paladin</b><span>Beacon of Virtue sat ready 71 s · Divine Toll 5 of 7</span></div></div></div>' +
+    '<div class="ds-dfoot">Example pull · every piece is a real Debrief card</div></div>';
+  const host = document.createElement('div'); host.className = 'ds-dhost'; coach.replaceWith(host);
+  const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const play = () => { host.innerHTML = scene; if (still) host.classList.add('ds-dstill'); };
+  play(); if (still) return;
+  /* replay every 10.5 s, only while the page is open and the window is on screen */
+  let onScreen = true; if (window.IntersectionObserver) { new IntersectionObserver((es) => { onScreen = es.some((e) => e.isIntersecting); }).observe(host); }
+  setInterval(() => { if (!document.hidden && onScreen && document.body.contains(host)) play(); }, 10500); }
+(function () { const f9 = dsBars; dsBars = function (root) { f9(root); try { dsFrontDemo(); } catch (e) {} }; })();

@@ -6890,6 +6890,40 @@ html.is-kill header.fight.bh .bhp-b:last-of-type { box-shadow: 0 0 0 2px var(--g
 html.is-kill #oaTop .cch-h { font-size: 21px; line-height: 1.3; }
 html.is-first-kill #oaTop .cch-h { font-size: 24px; color: #f6dc9a; }
 html.is-kill #oaTop .cch-h .cch-hype { color: #f6dc9a; font-weight: 800; letter-spacing: .01em; } /* (the short shout inside the kill line, per the Debriefing chat) */
+/* ===== Design studio round 15 (Oct 25): the front page's example window shows a pull being debriefed (the user's pick A): the verdict, three deaths
+   as bars, a death card, the Rotation grade; a 10.5 s loop, still under prefers-reduced-motion. Owner: the Design studio chat. ===== */
+.fp3-win .ds-dhost { padding: 12px 14px 10px; }
+.ds-demo { display: flex; flex-direction: column; gap: 10px; }
+.ds-dk { display: block; font: 700 12px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--gold); margin-bottom: 4px; }
+.ds-dbox { padding: 10px 14px 12px; border: 1px solid rgba(230,180,80,.5); border-left: 4px solid var(--gold); border-radius: 12px; background: var(--panel); }
+.ds-dv { margin: 0; font: 600 16px/1.35 var(--body); color: var(--text); } .ds-dv b { color: #f6dc9a; }
+.ds-dd { display: grid; gap: 5px; margin-top: 10px; }
+.ds-dr { display: grid; grid-template-columns: 34px 64px minmax(0, 1fr) 40px; gap: 8px; align-items: center; font-size: 13px; }
+.ds-dt { color: var(--muted); } .ds-dn { color: var(--c); font-weight: 700; } .ds-dx { text-align: right; color: var(--muted); }
+.ds-db { height: 7px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; } .ds-db i { display: block; height: 100%; width: calc(var(--p) * 1%); background: var(--bad); transform-origin: left; }
+.ds-dlow { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 10px; min-height: 92px; }
+.ds-dcard, .ds-dgrade { padding: 10px 12px; border: 1px solid var(--line2); border-radius: 12px; background: var(--panel); min-width: 0; }
+.ds-dcard b { display: block; font-size: 14px; } .ds-dcard p { margin: 3px 0 0; font-size: 12.5px; color: #d6d1c6; line-height: 1.35; }
+.ds-dpill { display: inline-block; margin-top: 6px; padding: 1px 8px; border-radius: 999px; font: 700 12px var(--body); background: rgba(229,83,75,.16); color: #ff8f87; }
+.ds-dgrade { display: flex; align-items: center; gap: 10px; } .ds-dgrade b { display: block; font-size: 14px; } .ds-dgrade span:not(.ds-dring) { font-size: 12.5px; color: var(--muted); }
+.ds-dring { --g: 0; flex: none; width: 50px; height: 50px; border-radius: 50%; background: conic-gradient(var(--good) calc(var(--g) * 1%), rgba(255,255,255,.08) 0); display: grid; place-items: center; }
+.ds-dring > span { width: 38px; height: 38px; border-radius: 50%; background: #13161d; display: grid; place-items: center; font: 700 16px var(--head); color: var(--text); }
+.ds-dfoot { font-size: 12px; color: var(--faint); }
+@property --g { syntax: '<number>'; inherits: false; initial-value: 0; }
+/* the scene: each piece starts hidden and plays in on its cue; still, everything shows at once */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes ds-din { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @keyframes ds-dbar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @keyframes ds-dring { to { --g: 88; } }
+  .ds-demo:not(.x) .ds-dv { opacity: 0; animation: ds-din .6s ease-out .4s forwards; }
+  .ds-demo .ds-dr { opacity: 0; animation: ds-din .35s ease-out forwards; animation-delay: calc(2.4s + var(--i) * .3s); }
+  .ds-demo .ds-db i { transform: scaleX(0); animation: ds-dbar .6s cubic-bezier(.2,.7,.2,1) forwards; animation-delay: calc(2.6s + var(--i) * .3s); }
+  .ds-demo .ds-dcard { opacity: 0; animation: ds-din .5s ease-out 4.4s forwards; }
+  .ds-demo .ds-dgrade { opacity: 0; animation: ds-din .5s ease-out 5.4s forwards; }
+  .ds-demo .ds-dring { animation: ds-dring 1s ease-out 5.8s forwards; }
+}
+.ds-dstill .ds-dring { --g: 88; }
+@media (max-width: 760px) { .ds-dlow { grid-template-columns: minmax(0, 1fr); min-height: 0; } .ds-dr { grid-template-columns: 30px 56px minmax(0, 1fr) 36px; font-size: 12.5px; } }
 </style>
 
 
