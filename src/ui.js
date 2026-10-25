@@ -1772,6 +1772,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-25', h: [
+    { t: 'Report card: one card per raider', d: 'Open a raider in the ranked roster and everything about them is one card under their row: who they are, their grade and rank, the checklist on the left and Their night on the right, with their deaths, best tonight and room to grow. The side panel is gone and the roster has the full width.' },
     { t: 'Rotation, in three places', d: 'You and your fixes in one box on top (your score and numbers on the left, What to fix on the right). Under it, on a desktop, the checklist you work through on the left and your numbers (the healing or damage split, then gear as one quiet list) on the right. Phones keep one column.' },
     { t: 'Debriefing, laid out like a newspaper', d: 'Your raid lead\'s box is the one hero. Under it, on a desktop, the phases run down the left and the glance timeline and the details sit on the right; the sections are labels with a hairline instead of boxes, and the player tables fold under Raid numbers. The same on All pulls. Phones keep one column.' },
     { t: 'One way to show a number', d: 'The Report card and Rotation now speak the same language as Debriefing: a bar with one number at its end, a grade as one letter at the start of its bar. The ranked roster is one bar per raider, a raider\'s checklist shows the rows that need them and folds the rest, and Rotation\'s header is one row with the talent trees folded under it.' },
@@ -30118,3 +30119,17 @@ function dsRot() { const p = document.querySelector('#view .pf-inl.spc-v'); if (
   if (ck && !p.querySelector(':scope > .ds-rcols')) { const c = document.createElement('div'); c.className = 'ds-rcols'; ck.before(c); c.appendChild(ck); if (gx) c.appendChild(gx); }
   p.classList.add('ds-rot'); }
 (function () { const f1 = dsBars; dsBars = function (root) { f1(root); try { dsRot(); } catch (e) {} }; })();
+
+// ===== Design studio round 7 (Oct 25): Report card, one card under the row. Moves the opened raider's checklist and Their night into two columns
+// under their header, and the side panel's own facts (rank, deaths, room to grow, the Open button) into that card. Owner: the Design studio chat. =====
+function dsReport() { const v = document.getElementById('view'); if (!v) return; const two = v.querySelector('.rcb-2'); if (!two) return;
+  two.classList.add('ds-rc'); const under = two.querySelector('.rqc-under'); if (!under || under.querySelector(':scope > .ds-rcard')) return;
+  const rqc = under.querySelector(':scope > .rqc'), grid = rqc && rqc.querySelector(':scope > .rqc-grid'), you = under.querySelector(':scope > .rcw-you'), hd = rqc && rqc.querySelector('.rqc-hd');
+  const card = document.createElement('div'); card.className = 'ds-rcard'; const L = document.createElement('div'); L.className = 'ds-rl'; const R = document.createElement('div'); R.className = 'ds-rr'; card.append(L, R);
+  if (grid) L.appendChild(grid); if (you) R.appendChild(you);
+  const aside = two.querySelector(':scope > aside.rcb-yp');
+  if (aside) { const rk = aside.querySelector('.rcb-yprk'), dl = aside.querySelector('.rcb-ydl'), pn = aside.querySelector('.rcb-ypn'), op = aside.querySelector('.rcb-open');
+    if (rk) { rk.classList.add('ds-rank'); R.prepend(rk); } if (dl) R.appendChild(dl); if (pn) R.appendChild(pn);
+    if (op && hd) { const btns = hd.querySelector('.rqc-btns'); (btns || hd).appendChild(op); } }
+  (rqc || under.firstElementChild).after(card); }
+(function () { const f3 = dsBars; dsBars = function (root) { f3(root); try { dsReport(); } catch (e) {} }; })();

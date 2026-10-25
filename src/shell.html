@@ -6620,6 +6620,24 @@ section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-z[style*="--p"] svg { dis
 .pfv .rck-cat .rck-rs > .rck-r.rck-x { grid-column: 1 / -1; border: 0 !important; background: none !important; }
 .pfv .rck-cat .rck-rs > .rck-r.rck-x > summary { padding: 6px 4px !important; }
 .pfv .rck-cat .rck-rs > .rck-r.rck-x > summary .rck-n { color: var(--gold); font-weight: 600; }
+/* ===== Design studio round 7 (Oct 25): the Report card's opened raider is one card under their row, two columns inside (the checklist left, Their
+   night right); the side panel is folded into it and the roster takes the full width. Phones stack. Owner: the Design studio chat. ===== */
+.rcb-2.ds-rc { grid-template-columns: minmax(0, 1fr) !important; }
+.rcb-2.ds-rc > aside.rcb-yp { display: none !important; }
+.rcb-2.ds-rc .rqc-under { margin: 6px 0 14px; padding: 14px 18px 12px; border: 1px solid rgba(230,183,80,.45); border-left: 4px solid var(--gold); border-radius: 12px; background: var(--panel); }
+.rcb-2.ds-rc .rqc-under > .rqc { margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; }
+.rcb-2.ds-rc .rqc-under .rqc-hd { margin-bottom: 0; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.rcb-2.ds-rc .rqc-under .rqc-btns .rcb-open { width: auto; }
+.rcb-2.ds-rc .ds-rcard { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 0 20px; align-items: start; margin-top: 12px; }
+.rcb-2.ds-rc .ds-rcard .rqc-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 8px; }
+.rcb-2.ds-rc .ds-rcard .rqc-sec { border: 0; border-radius: 0; padding: 0 0 6px; background: none; }
+.rcb-2.ds-rc .ds-rcard .rcw-you { display: block !important; margin: 0 0 10px !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; }
+.rcb-2.ds-rc .ds-rcard .rcw-you > div { margin: 0 0 10px; }
+.rcb-2.ds-rc .ds-rcard .rcw-you .rcw-hd { display: none; } /* (the name and grade are in the card's header already) */
+.rcb-2.ds-rc .ds-rcard .ds-rank { text-align: left; margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+.rcb-2.ds-rc .ds-rcard .rcb-ydl { margin: 8px 0 0; }
+.rcb-2.ds-rc .ds-rcard .rcb-ypn { margin-top: 8px; }
+@media (max-width: 900px) { .rcb-2.ds-rc .ds-rcard { display: block; } }
 </style>
 
 
