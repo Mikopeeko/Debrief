@@ -518,7 +518,7 @@ async function runInbox(env) {
           if (th && th.parent_id === DRAFTS_FORUM) await dc(env, '/channels/' + o.thread, { method: 'DELETE' });
         } else if (o.op === 'draft' && text) {
           await featDraft(env, o); // (a #new-features post for the owner's OK, with Post it / Change it / Skip)
-        } else if (o.op === 'post' && text && ['raid-tips', 'kill-feed', 'announcments'].includes(o.channel)) {
+        } else if (o.op === 'post' && text && ['raid-tips', 'kill-feed', 'announcments', 'start-here'].includes(o.channel)) {
           // (a post in a Community channel, e.g. the weekly raid tip, or in #announcments; only those channels. With a title it's a
           // gold card (an embed: no link preview under it); replaceLast edits Claudette's newest post there instead of adding one;
           // everyone pings @everyone (#announcments only, when the user asked for it, and at most once a day so it's never
@@ -531,6 +531,11 @@ async function runInbox(env) {
           const mine = o.replaceLast ? ((await dc(env, '/channels/' + ch + '/messages?limit=20').catch(() => [])) || []).find((m) => m.author && m.author.id === APP_ID) : null;
           if (mine) await dc(env, '/channels/' + ch + '/messages/' + mine.id, { method: 'PATCH', body });
           else { const m = await dc(env, '/channels/' + ch + '/messages', { method: 'POST', body }); if (all) await env.DEBRIEF_KV.put('everyone-at', String(Date.now())); if (c.type === 5 && m && m.id) await dc(env, '/channels/' + ch + '/messages/' + m.id + '/crosspost', { method: 'POST' }).catch(() => {}); }
+        } else if (o.op === 'faq-post' && text) {
+          /* (a new pinned thread in #questions with the FAQ in it, under the "Getting started" tag) */
+          const fc = await dc(env, '/channels/' + FORUM_QS), tag = tagOf(fc.available_tags, 'Getting started');
+          const th = await dc(env, '/channels/' + FORUM_QS + '/threads', { method: 'POST', body: { name: 'FAQ: read this first', applied_tags: tag ? [tag] : [], message: { content: text, allowed_mentions: { parse: [] } } } });
+          if (th && th.id) await dc(env, '/channels/' + th.id, { method: 'PATCH', body: { flags: 2 } }).catch((err) => console.warn('FAQ pin:', err && err.message));
         } else if (o.op === 'edit-post' && /^\d{17,20}$/.test(String(o.channel || '')) && text) {
           /* (new words for one of Claudette's own messages: by its id, or the newest of hers in that channel that has o.find in it) */
           let mid = /^\d{17,20}$/.test(String(o.message || '')) ? String(o.message) : null;
