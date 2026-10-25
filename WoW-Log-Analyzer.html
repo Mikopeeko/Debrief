@@ -12544,6 +12544,7 @@ function* analyzeSteps(item, text, opts) {
   // quarter second keeping the lowest, for the survival check's close calls
   const php = new Map(); r.php = php;
   // (Tyr's Deliverance's buff (200654) on a player, by whose: their Holy Light, Flash of Light and Holy Shock heal that player 10% more (12.1.5))
+  const awOn = new Set(), AW_SKIP = /^(rune of |soulcoil|glistening|saved by the light|overflowing light|armory of light|greater judgment)/i; /* (Avenging Wrath up on a Holy Paladin: their heals' raw, effective and overheal, for its real extra) */
   const tyrOn = new Set(), TYR_UP = new Set(['holy light', 'flash of light', 'holy shock']);
   // (heals and absorbs landing on a player under half health: [t, target, healer, amount, 1 for an absorb, spell], for the healers' saves)
   const lowHL = []; r.lowHL = lowHL;
@@ -12693,6 +12694,7 @@ function* analyzeSteps(item, text, opts) {
           p.healing += eff; p.overheal += over; addAb(p.healAb, pet ? sn + ': ' + spell : spell, id, eff, over, crit); bump(r.healS, t, eff); bump(p.healS, t, eff);
           // (triage: the heal's advanced block is the target's, health after it; under half before it)
           if (s0 > 11 && f[11] === dg && eff > 0 && isPlayer(dg)) { const mx = num(f[14]); if (mx > 0 && (num(f[13]) - eff) / mx < 0.5) { p.lowHeal += eff; if (lowHL.length < 60000) lowHL.push([t, dg, owner, eff, 0, spell]); } }
+          if (!pet && awOn.has(owner) && !AW_SKIP.test(String(spell))) { if (!p.awEv) p.awEv = []; if (p.awEv.length < 8000) p.awEv.push([eff + over, eff, over > 0 ? 1 : 0, spell === 'Holy Shock' ? 1 : 0]); }
           if (!pet && tyrOn.size && TYR_UP.has(String(spell).toLowerCase()) && tyrOn.has(dg + '|' + owner)) { p.tyrX = (p.tyrX || 0) + eff * 0.1 / 1.1; p.tyrXn = (p.tyrXn || 0) + 1; p.tyrB = (p.tyrB || 0) + eff; }
           if (!pet && HEAL_TO.has(String(spell).toLowerCase())) { if (!p.hT) p.hT = new Map(); let l = p.hT.get(spell); if (!l) p.hT.set(spell, l = []); if (l.length < 12000) l.push([t, dg, eff, over, ev === 'SPELL_PERIODIC_HEAL' ? 1 : 0]); } // (the last: a HoT's tick)
           const ck = CD_HEALS.get((pet ? sn + ': ' + spell : spell).toLowerCase());
@@ -12730,6 +12732,7 @@ function* analyzeSteps(item, text, opts) {
         const p = P(ow, isPlayer(absorber) ? f[a + 1] : null);
         if (isPlayer(dg)) { const tp = r.players.get(dg); if (tp) { const m = tp.shBy || (tp.shBy = new Map()); m.set(p.name || '', (m.get(p.name || '') || 0) + amt); } } /* (who shielded whom (Oct 23)) */
         p.healing += amt; p.absorbs += amt; addAb(p.healAb, f[sp + 1], id, amt, 0, false);
+        if (awOn.has(ow) && String(f[sp + 1]) === 'Overflowing Light') p.awOL = (p.awOL || 0) + amt; /* (Overflowing Light soaked while Avenging Wrath was up) */
         if (isPlayer(dg) && phpNow(dg) < 0.5 && lowHL.length < 60000) lowHL.push([t, dg, ow, amt, 1, f[sp + 1]]); bump(r.healS, t, amt); bump(p.healS, t, amt);
         if (isPlayer(dg)) recap(dg, { t, heal: true, amount: amt, src: shortName(absorber, f[a + 1]), spell: f[sp + 1] + ' (absorb)', id, hp: -1 });
         break;
@@ -12737,6 +12740,7 @@ function* analyzeSteps(item, text, opts) {
       case 'SPELL_AURA_APPLIED': case 'SPELL_AURA_APPLIED_DOSE': {
         if (f.length < 12) break;
         if (num(f[8]) === 200654 && f[11] === 'BUFF') tyrOn.add(dg + '|' + sg);
+        if (f[11] === 'BUFF' && f[9] === 'Avenging Wrath' && dg === sg) awOn.add(dg);
         noteSchool(num(f[8]), f[10]); noteId(num(f[8]), f[9]);
         const stacks = ev === 'SPELL_AURA_APPLIED_DOSE' && f.length > 12 ? num(f[12]) : 1;
         const pl = isPlayer(dg);
@@ -12765,6 +12769,7 @@ function* analyzeSteps(item, text, opts) {
       }
       case 'SPELL_AURA_REMOVED':
         if (f.length >= 12 && num(f[8]) === 200654 && f[11] === 'BUFF') tyrOn.delete(dg + '|' + sg);
+        if (f.length >= 12 && f[11] === 'BUFF' && f[9] === 'Avenging Wrath') awOn.delete(dg);
         if (f.length >= 10 && W(f[9], f[8])) modEv.push({ k: 'aura', op: 'remove', t, dst: dg, spell: f[9], id: num(f[8]), stacks: 0, src: sg });
         if (f.length >= 10 && !isPlayer(dg) && BOSS_AURA_N.has(f[9].toLowerCase())) bossAura(r, f[9], t, false);
         if (f.length >= 12 && f[11] === 'BUFF' && isPlayer(dg)) { buffDown(P(dg, dn), num(f[8]), f[9], t); if (isStatBuf(f[9].toLowerCase())) statBuf(P(dg, dn), num(f[8]), f[9], t, 'r');
@@ -16146,6 +16151,7 @@ const PATCH_NOTES = [
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
     'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
   ], f: [
+    'Holy Paladin: Extra healing from Avenging Wrath was too high. It now counts heal by heal: no overhealing, no shields or trinkets it can\'t raise, plus the bigger Overflowing Light it gives Holy Shock.',
     'The Coiled Altar avoidable damage: dying to an axe or a venom tick is red only when it did half or more of what killed you, and a one-tick brush of Mutagenic Venom doesn\'t count. Top guilds\' kills now go red only for ghosts touched and frontals on non-tanks.',
     'The Coiled Altar: Gloombombs aren\'t judged on which add a melee or ranged player chose (raids mark different adds); missing the adds still is. A clip from someone else\'s bomb is minor unless Gravebound killed them, and a Soulcoiler alive a few seconds into the next set (up to 12 s, as top guilds) isn\'t flagged.',
     'The Twin Fangs: a Stone Breaker circle landing as the boss dies is no longer a missed circle, and a Corrosive Spit row names everyone it hit (it said "hit only its target" when others were hit too).',
@@ -32591,10 +32597,13 @@ function hpalChecks(reps, name, one) {
   // read from your heals over the pull, less what Avenging Wrath added to it. An estimate)
   { const awH = sum((s) => s.awH), awL = sum((s) => s.awL), allH = sum((s) => s.allH), allL = sum((s) => s.allL);
     if (awH && awL >= 5 && !crusader) { let hits = 0, crits = 0; for (const { p } of per) for (const a of p.healAb.values()) if (!/beacon|leech|overflowing light|glistening radiance|saved by the light/i.test(a.name)) { hits += a.hits || 0; crits += a.crits || 0; }
-      const cAll = hits ? crits / hits : 0.25, cO = Math.max(0, cAll - 0.2 * awL / Math.max(1, allL)), mult = 1.2 * (1 + cO + 0.2) / (1 + cO), gain = awH * (1 - 1 / mult), inS = awH / awL, outS = (allH - awH) / Math.max(1, allL - awL);
+      const cAll = hits ? crits / hits : 0.25, cO = Math.max(0, cAll - 0.2 * awL / Math.max(1, allL)), mult = 1.2 * (1 + cO + 0.2) / (1 + cO), awEv = per.flatMap(({ p }) => p.awEv || []),
+        awGain = (m) => awEv.reduce((v, [R, E, oh]) => v + (oh ? Math.max(0, E - Math.min(R / m, E)) : R - R / m), 0), awE = awEv.reduce((v, x) => v + x[1], 0),
+        hsEv = awEv.filter((x) => x[3]), hsO = hsEv.reduce((v, [R, E]) => v + (R - E), 0), hsO0 = hsEv.reduce((v, [R, E]) => v + Math.max(0, R / mult - E), 0), awOL = per.reduce((v, { p }) => v + (p.awOL || 0), 0), olX = hsO > 0 ? awOL * Math.max(0, hsO - hsO0) / hsO : 0,
+        gain = awEv.length ? awGain(mult) + olX : awH * (1 - 1 / mult) * 0.4, gH = awEv.length ? awGain(1.2) : 0, inS = awH / awL, outS = (allH - awH) / Math.max(1, allL - awL);
       const nAw = wins.length || sum((s) => (s.cdu && s.cdu[wingN.toLowerCase()] || {}).n) || 1;
-      add(g4, 'na', wingN, 'Extra healing from ' + wingN, C(gain / nAw) + (nAw > 1 ? '<span> each</span>' : ''), (nAw > 1 ? 'Each ' + wingN + ' added about ' + C(gain / nAw) + ' of extra healing, ' + C(gain) + ' over your ' + nAw + '.' : 'Your ' + wingN + ' added about ' + C(gain) + ' of extra healing.') + ' You healed ' + C(awH) + ' in all while it was up; the extra is the part its 20% healing and 20% crit added.', 'awh',
-        wingN + ' makes your healing 20% stronger and gives you 20% more critical strike chance while it lasts. This is about how much healing that added each time you pressed it, worked out from your own healing during it and your usual crit chance (' + pct(cO) + '). It\'s an estimate, because talents that change crits, like Awestruck, aren\'t counted. It isn\'t graded.'); } }
+      add(g4, 'na', wingN, 'Extra healing from ' + wingN, C(gain / nAw) + (nAw > 1 ? '<span> each</span>' : ''), (nAw > 1 ? 'Each ' + wingN + ' added about ' + C(gain / nAw) + ' of extra healing, ' + C(gain) + ' over your ' + nAw + '.' : 'Your ' + wingN + ' added about ' + C(gain) + ' of extra healing.') + (awEv.length ? ' Your heals it can raise did ' + C(awE) + ' while it was up: its 20% more healing added ' + C(gH) + ', its 20% crit about ' + C(Math.max(0, gain - gH - olX)) + (olX >= 1000 ? ', and the bigger Overflowing Light from Holy Shock\'s extra overhealing ' + C(olX) : '') + '. Overhealing doesn\'t count.' : ''), 'awh',
+        wingN + ' makes your healing 20% stronger and gives you 20% more critical strike chance while it lasts. This is about how much healing that added each time you pressed it, heal by heal: the heals it can raise, Beacon and Leech healing included (not trinkets or shields set by max health or spell power), and a heal that overhealed only counts what the target was missing. Overflowing Light counts the part that comes from the extra overhealing it gave Holy Shock. Your usual crit chance (' + pct(cO) + ') sets what its crit adds. It\'s an estimate, because talents that change crits, like Awestruck, aren\'t counted. It isn\'t graded.'); } }
   { const gU = grp('Cooldown uses'), cdUse = (n, ic, label, okF, warnF, how, info, more) => { const l = rows.map((s) => s.cdu && s.cdu[n]).filter(Boolean), u = l.reduce((v, y) => v + y.n, 0), poss = l.reduce((v, y) => v + y.poss, 0); if (!poss) return;
       const f = Math.min(1, u / poss), cap = l.reduce((v, y) => v + y.cap, 0); if (!info) for (const s of rows) if (s.cdu && s.cdu[n]) s.m['cd:' + n] = (s.cdu[n].capL || []).filter(([a, b]) => b - a >= s.cdu[n].cd);
       add(gU, info ? 'na' : f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', ic, label, u + '<span>/' + poss + '</span>', (u ? 'You pressed it ' + times(u) + ' out of a possible ' + poss + '.' : 'You never pressed it, out of a possible ' + poss + '.') + (cap >= 1 ? ' It sat ready for ' + durW(cap) + ' in all.' : '') + (more || ''), 'cd:' + n, how + (info ? '' : ' The times listed are when it sat ready long enough for one more use.')); };

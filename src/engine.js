@@ -6092,6 +6092,7 @@ function* analyzeSteps(item, text, opts) {
   // quarter second keeping the lowest, for the survival check's close calls
   const php = new Map(); r.php = php;
   // (Tyr's Deliverance's buff (200654) on a player, by whose: their Holy Light, Flash of Light and Holy Shock heal that player 10% more (12.1.5))
+  const awOn = new Set(), AW_SKIP = /^(rune of |soulcoil|glistening|saved by the light|overflowing light|armory of light|greater judgment)/i; /* (Avenging Wrath up on a Holy Paladin: their heals' raw, effective and overheal, for its real extra) */
   const tyrOn = new Set(), TYR_UP = new Set(['holy light', 'flash of light', 'holy shock']);
   // (heals and absorbs landing on a player under half health: [t, target, healer, amount, 1 for an absorb, spell], for the healers' saves)
   const lowHL = []; r.lowHL = lowHL;
@@ -6241,6 +6242,7 @@ function* analyzeSteps(item, text, opts) {
           p.healing += eff; p.overheal += over; addAb(p.healAb, pet ? sn + ': ' + spell : spell, id, eff, over, crit); bump(r.healS, t, eff); bump(p.healS, t, eff);
           // (triage: the heal's advanced block is the target's, health after it; under half before it)
           if (s0 > 11 && f[11] === dg && eff > 0 && isPlayer(dg)) { const mx = num(f[14]); if (mx > 0 && (num(f[13]) - eff) / mx < 0.5) { p.lowHeal += eff; if (lowHL.length < 60000) lowHL.push([t, dg, owner, eff, 0, spell]); } }
+          if (!pet && awOn.has(owner) && !AW_SKIP.test(String(spell))) { if (!p.awEv) p.awEv = []; if (p.awEv.length < 8000) p.awEv.push([eff + over, eff, over > 0 ? 1 : 0, spell === 'Holy Shock' ? 1 : 0]); }
           if (!pet && tyrOn.size && TYR_UP.has(String(spell).toLowerCase()) && tyrOn.has(dg + '|' + owner)) { p.tyrX = (p.tyrX || 0) + eff * 0.1 / 1.1; p.tyrXn = (p.tyrXn || 0) + 1; p.tyrB = (p.tyrB || 0) + eff; }
           if (!pet && HEAL_TO.has(String(spell).toLowerCase())) { if (!p.hT) p.hT = new Map(); let l = p.hT.get(spell); if (!l) p.hT.set(spell, l = []); if (l.length < 12000) l.push([t, dg, eff, over, ev === 'SPELL_PERIODIC_HEAL' ? 1 : 0]); } // (the last: a HoT's tick)
           const ck = CD_HEALS.get((pet ? sn + ': ' + spell : spell).toLowerCase());
@@ -6278,6 +6280,7 @@ function* analyzeSteps(item, text, opts) {
         const p = P(ow, isPlayer(absorber) ? f[a + 1] : null);
         if (isPlayer(dg)) { const tp = r.players.get(dg); if (tp) { const m = tp.shBy || (tp.shBy = new Map()); m.set(p.name || '', (m.get(p.name || '') || 0) + amt); } } /* (who shielded whom (Oct 23)) */
         p.healing += amt; p.absorbs += amt; addAb(p.healAb, f[sp + 1], id, amt, 0, false);
+        if (awOn.has(ow) && String(f[sp + 1]) === 'Overflowing Light') p.awOL = (p.awOL || 0) + amt; /* (Overflowing Light soaked while Avenging Wrath was up) */
         if (isPlayer(dg) && phpNow(dg) < 0.5 && lowHL.length < 60000) lowHL.push([t, dg, ow, amt, 1, f[sp + 1]]); bump(r.healS, t, amt); bump(p.healS, t, amt);
         if (isPlayer(dg)) recap(dg, { t, heal: true, amount: amt, src: shortName(absorber, f[a + 1]), spell: f[sp + 1] + ' (absorb)', id, hp: -1 });
         break;
@@ -6285,6 +6288,7 @@ function* analyzeSteps(item, text, opts) {
       case 'SPELL_AURA_APPLIED': case 'SPELL_AURA_APPLIED_DOSE': {
         if (f.length < 12) break;
         if (num(f[8]) === 200654 && f[11] === 'BUFF') tyrOn.add(dg + '|' + sg);
+        if (f[11] === 'BUFF' && f[9] === 'Avenging Wrath' && dg === sg) awOn.add(dg);
         noteSchool(num(f[8]), f[10]); noteId(num(f[8]), f[9]);
         const stacks = ev === 'SPELL_AURA_APPLIED_DOSE' && f.length > 12 ? num(f[12]) : 1;
         const pl = isPlayer(dg);
@@ -6313,6 +6317,7 @@ function* analyzeSteps(item, text, opts) {
       }
       case 'SPELL_AURA_REMOVED':
         if (f.length >= 12 && num(f[8]) === 200654 && f[11] === 'BUFF') tyrOn.delete(dg + '|' + sg);
+        if (f.length >= 12 && f[11] === 'BUFF' && f[9] === 'Avenging Wrath') awOn.delete(dg);
         if (f.length >= 10 && W(f[9], f[8])) modEv.push({ k: 'aura', op: 'remove', t, dst: dg, spell: f[9], id: num(f[8]), stacks: 0, src: sg });
         if (f.length >= 10 && !isPlayer(dg) && BOSS_AURA_N.has(f[9].toLowerCase())) bossAura(r, f[9], t, false);
         if (f.length >= 12 && f[11] === 'BUFF' && isPlayer(dg)) { buffDown(P(dg, dn), num(f[8]), f[9], t); if (isStatBuf(f[9].toLowerCase())) statBuf(P(dg, dn), num(f[8]), f[9], t, 'r');
