@@ -58,6 +58,7 @@ namespace Debrief {
       int dpi = DpiAt(probe); var waP = Screen.FromRectangle(probe).WorkingArea;
       int w = Math.Min((int)Math.Round(bw * dpi / 96.0), (int)(waP.Width * 0.94)), h0 = (int)Math.Round(70 * dpi / 96.0);
       oneW = w; if (cols == 2) w = Math.Min(w * 2, (int)(waP.Width * 0.94)); // (two columns when the card is long (Oct 24))
+      if (fixW > 0) w = Math.Min(fixW, (int)(waP.Width * 0.94)); // (the Whole night window keeps its width (Oct 24))
       if (json.StartsWith("{")) { string lk = "{}"; try { lk = new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(Wow.AddonCard(here)); } catch { } json = "{\"look\":\"" + look[1] + "\",\"lk\":" + lk + "," + json.Substring(1); } // (and your /db card settings (Oct 24))
       pending = json;
       if (!placed) { placed = true; Bounds = SavedBounds(w, h0); }
@@ -66,7 +67,7 @@ namespace Debrief {
       if (web.CoreWebView2 == null) { if (!starting) { starting = true; BeginInvoke(new Action(async () => await Start())); } }
       else if (ready) Send(json);
     }
-    int cols = 1, oneW = 0;
+    int cols = 1, oneW = 0, fixW = 0;
     void Send(string json) { try { web.CoreWebView2.PostWebMessageAsJson(json); } catch (Exception e) { Program.Log("popup send: " + e.Message); } }
 
     void OnMessage(object s, CoreWebView2WebMessageReceivedEventArgs e) {
@@ -78,8 +79,14 @@ namespace Debrief {
       else if (m.StartsWith("cut:")) main.PopupCut(m.Substring(4)); // (Stop at death changed: the main page rebuilds the coach box)
       else if (m.StartsWith("cols:")) {
         // (two columns when the card is long (Oct 24): twice as wide, still centred where it was; back to one when it fits)
-        cols = m == "cols:2" ? 2 : 1; if (oneW <= 0) return;
+        cols = m == "cols:2" ? 2 : 1; fixW = 0; if (oneW <= 0) return;
         var wa = Screen.FromHandle(Handle).WorkingArea; int w = cols == 2 ? Math.Min(oneW * 2, (int)(wa.Width * 0.94)) : oneW;
+        if (Width != w) { int x = Left + Width / 2 - w / 2; SetBounds(Math.Max(wa.Left, Math.Min(x, wa.Right - w)), Top, w, Height); }
+      }
+      else if (m.StartsWith("w:")) {
+        // (the Whole night window (Oct 24): the width the page asks for, like the big window in game; still centred where it was)
+        double cw; if (!double.TryParse(m.Substring(2), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out cw)) return;
+        var wa = Screen.FromHandle(Handle).WorkingArea; int w = Math.Min((int)Math.Round(cw * Dpi() / 96.0), (int)(wa.Width * 0.94)); fixW = w;
         if (Width != w) { int x = Left + Width / 2 - w / 2; SetBounds(Math.Max(wa.Left, Math.Min(x, wa.Right - w)), Top, w, Height); }
       }
       else if (m.StartsWith("h:")) {

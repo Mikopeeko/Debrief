@@ -398,7 +398,7 @@ function popNight(cur) {
   if (!L.name) return [];
   const N = nightOf(L.name);
   return L.items.filter((b) => b.endByte && b.id !== DUMMY).map((b) => { const e = N[b.startByte];
-    return { sb: b.startByte, pull: b.pull, kill: !!b.kill, boss: b.boss + ' · ' + (DIFFN[b.diffId] || b.diff || ''), left: b.kill ? 0 : e && e.l != null ? e.l : null, txt: b.kill ? 'Kill' : e && e.l != null ? Math.round(e.l) + '%' : 'Wipe', h: (e && e.h) || '', v: (e && e.v) || null, cur: b.startByte === cur }; });
+    return { sb: b.startByte, pull: b.pull, kill: !!b.kill, boss: b.boss + ' · ' + (DIFFN[b.diffId] || b.diff || ''), left: b.kill ? 0 : e && e.l != null ? e.l : null, txt: b.kill ? 'Kill' : e && e.l != null ? Math.round(e.l) + '%' : 'Wipe', h: (e && e.h) || '', v: (e && e.v) || null, dur: b.duration ? mmss(b.duration) : '', cur: b.startByte === cur }; });
 }
 // (a chip clicked in the pop-up: that pull's coach box, read from the log if it isn't yet; only the last few pulls stay in memory)
 window.DBF_POPPULL = async (sb) => {
