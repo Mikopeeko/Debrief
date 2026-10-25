@@ -127,7 +127,8 @@ Format: source — harm — measure — 9-in-10 kill line by time (t: value). Fr
 - **Sszorak** (10): Caustic Claws ~0–1; Caustic Residue (seconds).
 - **Nek'zali** (10): Latent Cultist (seconds) 0 → 3 s by 4:00; Anguished Echoes 0; Swirling Spirit 0.
 - **The Lost Explorers** (10): Aftershock (seconds) 0 → 3 s; Blast Wave — Dangerous.
-- **Ula'tek** (6): Caustic Waves, Fester Burst, Warden's Protection, Virulent Spit; Falling Debris and Noxious Splash Dangerous;
+- **Ula'tek** (19 kills since Oct 24, see section 7): Caustic Waves 0 → 1 from 8:00, Fester Burst 0, Desperate Thrash 0, Virulent Spit 0,
+  Falling Debris 0, Warden's Protection 0 → 2 from 4:00 (Minor). Was (6):
   Mephitic Thrash only when most of the raid dodged it (no kill hit).
 - **Kith'ix** (6): Nullshards 1 → 2; Twisted Appendage 0–1; Venom Roar, Voidscar 0.
 - **Nymrissa** (10): Lingering Frost 1 → 3 by 4:00; Water Jet 0; Swirling Whirlpools 0.
@@ -173,3 +174,30 @@ back to the Mythic one). Also:
 - A Minor source is amber at most; only a death to it is red.
 Heroic kills flagged yellow after (before): Vashnik 3 (20), Ula'tek 7 (17), Lost Explorers 9 (11), Coiled Altar 8 (6, frontals on
 non-tanks and 9+ s in pools), Nymrissa 0 (4), the rest 0-3. None failed. The Mythic night stays at 12 of 19.
+
+## 7. Ula'tek Mythic, rebuilt (Oct 24)
+The Debriefing chat's audit: Avoidable damage "failed" 5 of 6 top Mythic Ula'tek kills. Re-read with the 19 fastest Mythic kills
+(Oct 14-22, after the Oct 13 tuning; saved on the PC, no downloads) through the live engine in node.
+- **The bars were not the problem.** Rebuilt from 19 kills (was 3-5) they come out almost the same. Today's lines already made only one
+  raider who lived red in all 19 kills.
+- **A counting bug was.** Caustic Waves, Fester Burst and Desperate Thrash hit once and then poison you, ticking every second under
+  the same name (10, 12 and 6 s). The panel counts a new hit after a 1.5 s gap, and a fully absorbed tick (a shield) is dropped, so
+  the next tick looked like a new hit: poptart corndoG's Alexg showed 5 wave hits (red) for 3 waves. Fix: a source with `dot: <seconds>`
+  counts its hits, never its ticks (the module's damage events carry `tick`, from SPELL_PERIODIC_DAMAGE); a tick only starts a hit when
+  no hit came in the poison's time (the hit itself was absorbed). Only those three Ula'tek sources have `dot`, so the other nine bosses
+  come out exactly the same (checked on one top kill each). Warden's Protection is a pulse you get by standing near an egg, so it keeps
+  the gap rule.
+- **After the fix:** no raider who lived is red in any of the 19 kills (was 1); amber rows for waves 21 → 5, Fester Burst 12 → 3,
+  Desperate Thrash 2 → 0. Heroic (18 kills): no living raider red (was 1); its bars rebuilt the same, so AVOID_BASE_H is unchanged.
+- **What still flags top kills: deaths.** 28 deaths to these sources in 17 of 19 kills (23 to Caustic Waves, 3 Falling Debris,
+  1 Virulent Spit, 1 Fester Burst), bunched at three moments: stage 1 (1:00-2:45), about 8:06-8:15 (17 of 19 kills take waves
+  then) and the last 10 s of the kill. Nearly all are a wave hitting someone at 85-99% and killing them within 2 s, and the Deaths tab
+  calls 20 of 23 wave deaths "their own" (the waves did a quarter or more of their last 15 s). They stay red: dying to a wave is a mistake,
+  even for the world's best. So the section is green in 2 of 19 top kills and yellow ("Some mistakes", from deaths only) in 17.
+  A rule that would make most top kills clean (a death counts only when the source did half or more of the last 15 s: 15 of 19 clean)
+  hides plain "a wave hit me at 91% and I died" deaths, so it wasn't used.
+- **Virulent Spit:** the one red in a top kill is a death (one swirly, 64% to dead in 0.6 s); 12 of 19 kills have someone clipped who lives.
+- **The 0 bar:** a 0 line makes amber 2 hits and red 5 (twice amber, at least 3 more), never one hit. In the 19 kills nobody living reached
+  red on a 0-line source (most hits: Fester Burst 2, Spit 2, Desperate Thrash 1, Falling Debris 1).
+- Scripts (shared notes `ulatek-avoid/`): `ul.js` (engine on saved kills, no downloads), `ulbars.js` (bars + the site's own judging;
+  `--loo` leave one out, `--share=N`), `same.js` (other bosses unchanged), `patch_ul_avoid.js` (the change).

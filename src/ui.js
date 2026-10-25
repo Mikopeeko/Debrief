@@ -1825,6 +1825,7 @@ const PATCH_NOTES = [
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
     'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
   ], f: [
+    'Mythic Ula\'tek, Avoidable damage: a Caustic Waves, Fester Burst or Doomscale frontal hit counts once. Its poison ticking afterwards no longer adds extra hits when a shield soaks a tick (a top guild\'s raider showed 5 wave hits for 3 waves). The lines now come from 19 top guilds\' kills instead of 5. Dying to them still counts.',
     'Holy Paladin: Extra healing from Avenging Wrath was too high. It now counts heal by heal: no overhealing, no shields or trinkets it can\'t raise, plus the bigger Overflowing Light it gives Holy Shock.',
     'The Coiled Altar avoidable damage: dying to an axe or a venom tick is red only when it did half or more of what killed you, and a one-tick brush of Mutagenic Venom doesn\'t count. Top guilds\' kills now go red only for ghosts touched and frontals on non-tanks.',
     'The Coiled Altar: Gloombombs aren\'t judged on which add a melee or ranged player chose (raids mark different adds); missing the adds still is. A clip from someone else\'s bomb is minor unless Gravebound killed them, and a Soulcoiler alive a few seconds into the next set (up to 12 s, as top guilds) isn\'t flagged.',
