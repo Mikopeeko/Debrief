@@ -6556,6 +6556,53 @@ section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-z[style*="--p"] svg { dis
 #view.ds-two > .brf-keep { display: none; } #view.ds-two.ds-raid > .brf-keep { display: grid; }
 .ds-raidb { display: block; width: 100%; margin: 4px 0 18px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--muted); font: 500 14px var(--body); text-align: left; cursor: pointer; }
 .ds-raidb b { color: var(--text); font-weight: 700; } .ds-raidb span { color: var(--gold); margin-left: 6px; } .ds-raidb:hover { border-color: var(--line2); color: var(--text); }
+/* ===== Design studio round 5 (Oct 25): Rotation reorganised into three places. Top: you and your fixes in one box (the hero left, What to fix
+   right). Then the checklist on the left and your numbers (gear, the healing split) on the right. The glance and the credit at the bottom.
+   Phones keep one column in today's order. Owner: the Design studio chat. ===== */
+.pfv .pf-head { margin: 0 0 8px; font-size: 12.5px; color: var(--muted); }
+.pfv .spc-src { margin: 10px 0 0; text-align: left; opacity: .7; }
+@media (min-width: 901px) {
+  /* the top box: hero + fixes */
+  .pfv .ds-rtop { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.3fr); gap: 0 20px; align-items: start; margin: 0 0 16px; padding: 14px 18px; border: 1px solid var(--line2); border-left: 4px solid var(--gold); border-radius: 12px; background: var(--panel); overflow: hidden; }
+  .pfv .ds-rtop > .spc-hero, .pfv .ds-rtop > .spc-hero.spc-sf { margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; overflow: visible; }
+  .pfv .ds-rtop > .spc-hero::before, .pfv .ds-rtop > .spc-hero::after { display: none; }
+  .pfv .ds-rtop > .spc-hero > .spc-hl { flex: 1 1 100%; gap: 14px; }
+  .pfv .ds-rtop .spc-kts { grid-template-columns: 1fr; gap: 4px; max-width: none; margin-top: 8px; }
+  .pfv .ds-rtop .spc-kt { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'l v' 'x v'; align-items: center; column-gap: 12px; row-gap: 0; padding: 5px 10px; }
+  .pfv .ds-rtop .spc-ktl { grid-area: l; } .pfv .ds-rtop .spc-ktv { grid-area: v; justify-self: end; font-size: 18px; } .pfv .ds-rtop .spc-ktx { grid-area: x; }
+  .pfv .ds-rtop > .rck-fixtop { margin: 0 !important; }
+  .pfv .ds-rtop .rck-fix { padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; }
+  .pfv .ds-rtop .rck-fix .rck-h { margin: 0 0 6px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); }
+  .pfv .ds-rtop .rck-fix .rck-h .sub { font-size: 12px; letter-spacing: 0; text-transform: none; }
+  .pfv .ds-rtop .rck-fixtop .rck-sgs { grid-template-columns: 1fr !important; gap: 6px; }
+  .pfv .ds-rtop .rck-sg { padding: 8px 12px; }
+  /* the two columns */
+  .pfv .ds-rcols { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 0 18px; align-items: start; }
+  .pfv .ds-rcols > section { margin-top: 0 !important; }
+  .pfv .ds-rcols section.rck .rck-cats { grid-template-columns: minmax(0, 1fr) !important; gap: 8px; }
+  .pfv .ds-rcols section.rck .rck-cats > .rck-cat, .pfv .ds-rcols section.rck .rck-cats > .rck-cat[open] { display: block !important; grid-row: auto !important; grid-column: auto !important; }
+  .pfv .ds-rcols section.rck .rck-cats > .rck-cat[open] > summary { grid-row: auto !important; border: 0 !important; background: none !important; }
+  .pfv .ds-rcols section.rck .rck-cats > .rck-cat[open] { border-color: var(--gold); }
+  .pfv .ds-rcols section.rck .rck-cats > .rck-cat[open] > .rck-rs { grid-template-columns: 1fr 1fr !important; margin: 0 10px 10px !important; }
+  /* your numbers: the healing split first, then gear as one quiet list */
+  .pfv .ds-rcols section.rck-gx .rgx-pn { display: flex !important; flex-direction: column; gap: 8px !important; }
+  .pfv .ds-rcols section.rck-gx .rgx-pn > .rgx-src { order: -1; }
+  .pfv .ds-rcols section.rck-gx .rgx-pn > .rgx-gp { --gc: #9aa4b2 !important; background: none !important; border: 1px solid var(--line) !important; border-radius: 10px; padding: 6px 12px 2px !important; }
+  /* gear rows on two short lines (name and its note on the left, the number on the right, a hairline bar under) instead of four */
+  .pfv .ds-rcols .rgx-c { padding: 4px 0 !important; grid-template-columns: minmax(0, 1fr) auto !important; grid-template-areas: 'h v' 's v' 'b b' !important; row-gap: 0 !important; column-gap: 10px; align-items: center; }
+  .pfv .ds-rcols .rgx-c > .rgx-h { grid-area: h; } .pfv .ds-rcols .rgx-c > .rgx-v { grid-area: v; align-self: center; } .pfv .ds-rcols .rgx-c > .rgx-s { grid-area: s; font-size: 12px; } .pfv .ds-rcols .rgx-c > .rgx-b1 { grid-area: b; margin: 3px 0 1px 26px !important; }
+  .pfv .ds-rcols .rgx-ex > .rck-t > summary { padding: 4px 0 !important; row-gap: 0 !important; }
+}
+@media (max-width: 900px) { .pfv .ds-rtop, .pfv .ds-rcols { display: contents; } }
+/* inside an open checklist card: one signal a tile (the number's colour is the flag; a bar only where there is a share), the tiles
+   that need you first, titles without underlines, and the charts row as a quiet link line */
+.pfv .rck-cat .rck-rs > .rck-r.bad { order: 0; } .pfv .rck-cat .rck-rs > .rck-r.warn { order: 1; } .pfv .rck-cat .rck-rs > .rck-r.ok { order: 2; } .pfv .rck-cat .rck-rs > .rck-r.na { order: 3; }
+.pfv .rck-cat .rck-rs > .rck-r .rck-dots { display: none !important; }
+.pfv .rck-cat .rck-rs > .rck-r > summary > .rck-z:not([style*="--p"]) { display: none !important; }
+.pfv .rck-cat .rck-rs > .rck-r > summary > .rck-n .sp, .pfv .rck-cat .rck-rs > .rck-r > summary > .rck-n .mt { border-bottom: 0 !important; text-decoration: none !important; }
+.pfv .rck-cat .rck-rs > .rck-r.rck-x { grid-column: 1 / -1; border: 0 !important; background: none !important; }
+.pfv .rck-cat .rck-rs > .rck-r.rck-x > summary { padding: 6px 4px !important; }
+.pfv .rck-cat .rck-rs > .rck-r.rck-x > summary .rck-n { color: var(--gold); font-weight: 600; }
 </style>
 
 
@@ -16253,10 +16300,13 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-25', h: [
+    { t: 'Rotation, in three places', d: 'You and your fixes in one box on top (your score and numbers on the left, What to fix on the right). Under it, on a desktop, the checklist you work through on the left and your numbers (the healing or damage split, then gear as one quiet list) on the right. Phones keep one column.' },
     { t: 'Debriefing, laid out like a newspaper', d: 'Your raid lead\'s box is the one hero. Under it, on a desktop, the phases run down the left and the glance timeline and the details sit on the right; the sections are labels with a hairline instead of boxes, and the player tables fold under Raid numbers. The same on All pulls. Phones keep one column.' },
     { t: 'One way to show a number', d: 'The Report card and Rotation now speak the same language as Debriefing: a bar with one number at its end, a grade as one letter at the start of its bar. The ranked roster is one bar per raider, a raider\'s checklist shows the rows that need them and folds the rest, and Rotation\'s header is one row with the talent trees folded under it.' },
     { t: 'Your tier set, in numbers', d: 'Rotation shows how much your 2-piece and 4-piece added, with a Where it came from breakdown behind every number. On every spec.' },
     { t: 'Your trinkets, both of them', d: 'Gear and extras on Rotation now shows both of your trinkets, with what each one did (damage, healing or stats), or that one was never pressed.' },], n: [
+    'Rotation: inside an open checklist card, the tiles that need you come first; each tile is its number (coloured by how it went) with a bar where there is a share, no dots or ticks; titles without underlines; the charts row is a plain link.',
+    'Rotation: gear rows are two short lines (the item and its note, the number on the right) and the groups are one quiet grey, since those numbers are not graded.',
     'All pulls: each mechanic\'s trend is a thin line with only the misses marked and one number at the end; an Improving or Worsening tag shows only when the trend moved.',
     'Debriefing: What wiped us and What we did well are two labelled columns with their red and green line, not boxes inside the coach box.',
     'Report card: the six category numbers in the ranked roster are plain grey (they still sort); the grade bar carries the colour.',
@@ -49969,6 +50019,15 @@ function dsLayout() { const v = document.getElementById('view'); if (!v) return;
   const bk = v.querySelector(':scope > .brf-keep'); if (bk && !v.querySelector(':scope > .ds-raidb')) { const b = document.createElement('button'); b.type = 'button'; b.className = 'ds-raidb'; b.innerHTML = '<b>Raid numbers</b> · DPS, damage taken and healing, every player <span>\u25B8</span>'; bk.before(b); } }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.ds-raidb'); if (!b) return; const v = b.closest('#view'); if (!v) return; const on = v.classList.toggle('ds-raid'); const s = b.querySelector('span'); if (s) s.textContent = on ? '\u25BE' : '\u25B8'; });
 (function () { const f0 = dsBars; dsBars = function (root) { f0(root); try { dsLayout(); } catch (e) {} }; })();
+
+// ===== Design studio round 5 (Oct 25): Rotation reorganised. Wraps the Rotation page's own sections: the hero + What to fix into .ds-rtop, the
+// checklist + Gear and extras into .ds-rcols. Runs after dsBars on every redraw. Owner: the Design studio chat. =====
+function dsRot() { const p = document.querySelector('#view .pf-inl.spc-v'); if (!p) return;
+  const hero = p.querySelector(':scope > .spc-hero'), fix = p.querySelector(':scope > .rck-fixtop'), ck = p.querySelector(':scope > section.rck'), gx = p.querySelector(':scope > section.rck-gx');
+  if (hero && !p.querySelector(':scope > .ds-rtop')) { const t = document.createElement('div'); t.className = 'ds-rtop'; hero.before(t); t.appendChild(hero); if (fix) t.appendChild(fix); }
+  if (ck && !p.querySelector(':scope > .ds-rcols')) { const c = document.createElement('div'); c.className = 'ds-rcols'; ck.before(c); c.appendChild(ck); if (gx) c.appendChild(gx); }
+  p.classList.add('ds-rot'); }
+(function () { const f1 = dsBars; dsBars = function (root) { f1(root); try { dsRot(); } catch (e) {} }; })();
 
 </script>
 </body>

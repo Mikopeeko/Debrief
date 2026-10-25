@@ -1772,10 +1772,13 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-25', h: [
+    { t: 'Rotation, in three places', d: 'You and your fixes in one box on top (your score and numbers on the left, What to fix on the right). Under it, on a desktop, the checklist you work through on the left and your numbers (the healing or damage split, then gear as one quiet list) on the right. Phones keep one column.' },
     { t: 'Debriefing, laid out like a newspaper', d: 'Your raid lead\'s box is the one hero. Under it, on a desktop, the phases run down the left and the glance timeline and the details sit on the right; the sections are labels with a hairline instead of boxes, and the player tables fold under Raid numbers. The same on All pulls. Phones keep one column.' },
     { t: 'One way to show a number', d: 'The Report card and Rotation now speak the same language as Debriefing: a bar with one number at its end, a grade as one letter at the start of its bar. The ranked roster is one bar per raider, a raider\'s checklist shows the rows that need them and folds the rest, and Rotation\'s header is one row with the talent trees folded under it.' },
     { t: 'Your tier set, in numbers', d: 'Rotation shows how much your 2-piece and 4-piece added, with a Where it came from breakdown behind every number. On every spec.' },
     { t: 'Your trinkets, both of them', d: 'Gear and extras on Rotation now shows both of your trinkets, with what each one did (damage, healing or stats), or that one was never pressed.' },], n: [
+    'Rotation: inside an open checklist card, the tiles that need you come first; each tile is its number (coloured by how it went) with a bar where there is a share, no dots or ticks; titles without underlines; the charts row is a plain link.',
+    'Rotation: gear rows are two short lines (the item and its note, the number on the right) and the groups are one quiet grey, since those numbers are not graded.',
     'All pulls: each mechanic\'s trend is a thin line with only the misses marked and one number at the end; an Improving or Worsening tag shows only when the trend moved.',
     'Debriefing: What wiped us and What we did well are two labelled columns with their red and green line, not boxes inside the coach box.',
     'Report card: the six category numbers in the ranked roster are plain grey (they still sort); the grade bar carries the colour.',
@@ -30089,3 +30092,12 @@ function dsLayout() { const v = document.getElementById('view'); if (!v) return;
   const bk = v.querySelector(':scope > .brf-keep'); if (bk && !v.querySelector(':scope > .ds-raidb')) { const b = document.createElement('button'); b.type = 'button'; b.className = 'ds-raidb'; b.innerHTML = '<b>Raid numbers</b> · DPS, damage taken and healing, every player <span>\u25B8</span>'; bk.before(b); } }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.ds-raidb'); if (!b) return; const v = b.closest('#view'); if (!v) return; const on = v.classList.toggle('ds-raid'); const s = b.querySelector('span'); if (s) s.textContent = on ? '\u25BE' : '\u25B8'; });
 (function () { const f0 = dsBars; dsBars = function (root) { f0(root); try { dsLayout(); } catch (e) {} }; })();
+
+// ===== Design studio round 5 (Oct 25): Rotation reorganised. Wraps the Rotation page's own sections: the hero + What to fix into .ds-rtop, the
+// checklist + Gear and extras into .ds-rcols. Runs after dsBars on every redraw. Owner: the Design studio chat. =====
+function dsRot() { const p = document.querySelector('#view .pf-inl.spc-v'); if (!p) return;
+  const hero = p.querySelector(':scope > .spc-hero'), fix = p.querySelector(':scope > .rck-fixtop'), ck = p.querySelector(':scope > section.rck'), gx = p.querySelector(':scope > section.rck-gx');
+  if (hero && !p.querySelector(':scope > .ds-rtop')) { const t = document.createElement('div'); t.className = 'ds-rtop'; hero.before(t); t.appendChild(hero); if (fix) t.appendChild(fix); }
+  if (ck && !p.querySelector(':scope > .ds-rcols')) { const c = document.createElement('div'); c.className = 'ds-rcols'; ck.before(c); c.appendChild(ck); if (gx) c.appendChild(gx); }
+  p.classList.add('ds-rot'); }
+(function () { const f1 = dsBars; dsBars = function (root) { f1(root); try { dsRot(); } catch (e) {} }; })();
