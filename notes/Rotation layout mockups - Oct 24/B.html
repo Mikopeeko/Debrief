@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rotation layout B — The pull as a story</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Tokens copied from the site's :root (src/shell.html) */
+:root{
+  --bg:#0f1117; --panel:#171a22; --raised:#1e222c; --line:#2a2f3b; --line2:#353b49;
+  --text:#ece8df; --muted:#98a0ad; --faint:#6c7381;
+  --gold:#e6b450; --gold-ink:#1b1406;
+  --bad:#e5534b; --bad-bg:#3a1d1d; --warn:#e8a23a; --warn-bg:#3a2c16; --good:#45c15c; --good-bg:#17301e;
+  --r:10px; --head:'Barlow Semi Condensed','Arial Narrow',system-ui,sans-serif; --body:'Barlow','Segoe UI',system-ui,sans-serif;
+  --lw:156px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 var(--body)}
+h1,h2,h3{font-family:var(--head);margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px 48px}
+.sub{color:var(--muted);font-size:13px}
+
+/* mockup banner (not part of the design) */
+.mock{background:var(--raised);border-bottom:1px solid var(--line2);color:var(--muted);font-size:13px;text-align:center;padding:8px 16px}
+.mock b{color:var(--text);font-weight:600}
+
+/* page head */
+.head{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;padding:20px 0 16px}
+.head h1{font:700 22px/1.1 var(--head);margin-right:4px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--line2);white-space:nowrap}
+.dot{width:9px;height:9px;border-radius:50%;flex:none;display:inline-block}
+.g{background:var(--good)} .y{background:var(--warn)} .r{background:var(--bad)}
+
+/* label */
+.lbl{font:700 12px/1.2 var(--body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.lbl.gold{color:var(--gold)}
+
+/* MAIN BOX — same as Debriefing's coach box */
+.main{background:var(--panel);border:1px solid var(--line2);border-left:4px solid var(--gold);border-radius:12px;padding:16px 20px}
+.answer{font:600 18px/1.4 var(--body);margin:6px 0 14px;max-width:760px}
+.tiles{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:10px}
+.tiles.t3{grid-template-columns:repeat(3,1fr)}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.tile .l{font:700 12px/1.2 var(--body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.tile .v{font:700 28px/1.15 var(--head);font-variant-numeric:tabular-nums;margin-top:4px}
+.tile .s{color:var(--muted);font-size:13px}
+.tile .v.big{font-size:44px;line-height:1;color:#ff8000} /* score colour, like a parse */
+.vs{position:relative;height:4px;background:var(--line);border-radius:2px;margin:12px 0 22px}
+.vs i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--text)}
+.vs em{position:absolute;top:-4px;width:2px;height:12px;background:var(--gold)}
+.vs em span{position:absolute;top:14px;right:-2px;white-space:nowrap;font:400 12px var(--body);color:var(--muted)}
+.flags{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.flags .badge{align-self:flex-start}
+.badge{display:inline-flex;align-items:center;font:700 13px/1 var(--body);border-radius:999px;padding:5px 10px}
+.badge.ok{background:var(--good-bg);color:#7ee08f;box-shadow:inset 0 0 0 1px rgba(69,193,92,.5)}
+.badge.wn{background:var(--warn-bg);color:#f3c969;box-shadow:inset 0 0 0 1px rgba(232,162,58,.5)}
+.badge.no{background:var(--bad-bg);color:#ff8f87;box-shadow:inset 0 0 0 1px rgba(229,83,75,.5)}
+/* focus panel */
+.focus{margin-top:12px;border-radius:var(--r);border:1px solid rgba(230,180,80,.35);background:linear-gradient(90deg,rgba(230,183,80,.16),rgba(230,183,80,.05));padding:12px 14px}
+.focus .lbl{color:var(--gold);margin-bottom:4px}
+.focus p{margin:0;font-size:15px}
+
+/* section titles */
+.sh{display:flex;align-items:baseline;justify-content:space-between;gap:8px 12px;margin:28px 0 8px;flex-wrap:wrap}
+.sh h2{font:600 18px/1.2 var(--head)}
+
+/* plain panel + timeline */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.tlscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tl{position:relative;min-width:960px;padding-right:16px}
+.row{display:grid;grid-template-columns:var(--lw) 1fr;align-items:center;border-top:1px solid var(--line)}
+.row.first{border-top:0}
+.lab{position:sticky;left:0;z-index:5;background:var(--panel);padding:8px 10px 8px 16px;font-size:14px;line-height:1.25;height:100%;display:flex;flex-direction:column;justify-content:center;gap:2px;border-right:1px solid var(--line)}
+.lab b{font-weight:600;display:flex;align-items:center;gap:8px}
+.lab small{color:var(--muted);font-size:12px}
+.num{width:20px;height:20px;border-radius:50%;display:inline-grid;place-items:center;font:700 12px/1 var(--body);color:#0f1117;flex:none}
+.num.r{background:var(--bad)} .num.y{background:var(--warn)}
+.track{position:relative}
+.axis{height:28px}
+.axis .t{position:absolute;top:6px;transform:translateX(-50%);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.axis .t:first-child{transform:none}
+.dmg{height:96px}
+.bar{position:absolute;bottom:6px;width:3px;margin-left:-1.5px;background:var(--line2);border-radius:2px 2px 0 0}
+.bar.big{width:5px;margin-left:-2.5px;background:var(--text)}
+.bl{position:absolute;top:4px;transform:translateX(-50%);font:600 12px/1 var(--body);font-variant-numeric:tabular-nums;background:var(--raised);border:1px solid var(--line2);border-radius:999px;padding:3px 8px;white-space:nowrap;z-index:2}
+.bov{height:44px}
+.band{position:absolute;top:12px;bottom:12px;border-radius:6px;background:var(--raised);border:1px solid var(--line2)}
+.cds{height:62px}
+.ic{position:absolute;transform:translateX(-50%);width:34px;height:34px;border-radius:8px;border:2px solid var(--line2);background:#1d2129;overflow:hidden}
+.ic img{width:100%;height:100%;display:block}
+.cds .ic{top:14px}
+.ic.bad{border-color:var(--bad)}
+.ic.ok{border-color:var(--good)}
+.pin{position:absolute;top:-4px;right:-4px;z-index:6}
+.dt{height:42px}
+.dt .ic{top:8px;width:26px;height:26px;border-radius:6px}
+.dots{height:40px}
+.d{position:absolute;top:15px;width:10px;height:10px;margin-left:-5px;border-radius:50%}
+.dp .d{border-radius:2px;transform:rotate(45deg);width:11px;height:11px}
+.dp .d.big{width:15px;height:15px;top:13px;margin-left:-7.5px}
+.guides{position:absolute;top:0;bottom:0;left:var(--lw);right:16px;pointer-events:none;z-index:1}
+.guides i{position:absolute;top:0;bottom:0;border-left:1px dashed rgba(236,232,223,.14)}
+.play{position:absolute;top:0;bottom:0;width:0;border-left:1px solid rgba(236,232,223,.5);display:none;z-index:7}
+.play b{position:absolute;top:2px;left:6px;font:700 12px/1 var(--body);background:var(--text);color:var(--bg);border-radius:999px;padding:3px 8px}
+.row.hl{background:rgba(255,255,255,.03)} .row.hl .lab{background:#1b1f28}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;padding:10px 16px;color:var(--muted);font-size:13px;border-top:1px solid var(--line)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.swipe{display:none;color:var(--muted);font-size:13px;padding:10px 16px 0}
+
+/* CARDS — flag colour down the left edge */
+.cards{display:flex;flex-direction:column;gap:8px}
+.card{background:rgba(255,255,255,.02);border:1px solid var(--line2);border-left:3px solid var(--line2);border-radius:var(--r);padding:12px 14px;display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:start}
+.card.r{border-left-color:var(--bad)} .card.y{border-left-color:var(--warn)}
+.card .num{width:24px;height:24px;font-size:13px;margin-top:1px}
+.card h3{font:700 15px/1.3 var(--body);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card h3 img{width:20px;height:20px;border-radius:4px;border:1px solid #000;display:block}
+.card .meta{grid-column:2;font-size:13px;color:var(--muted)}
+.card .body{grid-column:2/4;font-size:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;margin-top:6px}
+.card .body .lbl{margin-bottom:2px}
+.card .body p{margin:0}
+.badge-col{align-self:start}
+
+/* chips: equal grid, 34px, dot first */
+.sg{margin-bottom:16px}
+.sg .lbl{margin-bottom:8px}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cx{display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--line2);font-size:12.5px;font-weight:500;min-width:0}
+.cx .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cx .vl{flex:none;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.cx .vl b{color:var(--text);font-weight:600}
+.cx:hover{border-color:var(--faint)}
+.cx.hide{display:none}
+.sg.empty{display:none}
+.tog{display:inline-flex;gap:6px}
+.tog button{font:500 12.5px/1 var(--body);color:var(--text);background:rgba(255,255,255,.05);border:1px solid var(--line2);border-radius:999px;padding:7px 12px;cursor:pointer}
+.tog button.on{background:rgba(230,180,80,.16);border-color:rgba(230,180,80,.5);color:var(--gold)}
+
+.foot{color:var(--muted);font-size:13px;margin-top:28px;text-align:center}
+
+@media (max-width:900px){
+  .tiles{grid-template-columns:1fr 1fr}
+  .tiles .tile:first-child{grid-column:1/3}
+  .tiles.t3{grid-template-columns:1fr}
+  .tiles.t3 .tile:first-child{grid-column:auto}
+  .chips{grid-template-columns:repeat(2,1fr)}
+  .card .body{grid-template-columns:1fr}
+}
+@media (max-width:520px){
+  :root{--lw:112px}
+  .main{padding:16px}
+  .head h1{font-size:22px}
+  .tiles{grid-template-columns:1fr 1fr}
+  .chips{grid-template-columns:1fr}
+  .swipe{display:block}
+  .lab{padding:8px 8px 8px 12px}
+  .card{grid-template-columns:auto 1fr}
+  .badge-col{grid-column:2;grid-row:3;margin-top:4px;justify-self:start}
+  .card .meta,.card .body{grid-column:1/3}
+}
+</style>
+</head>
+<body>
+
+<div class="mock"><b>Mockup B</b> — a picture of an idea, not the real page. Numbers are from pull 19; where a cooldown sits on the timeline (other than Aura Mastery at 1:35 and the six damage moments) is only for show.</div>
+
+<div class="wrap">
+
+  <div class="head">
+    <h1>Rotation</h1>
+    <span class="chip">Flëxørçïst · Holy Paladin</span>
+    <span class="chip">Pull 19</span>
+    <span class="chip">The Coiled Altar · Mythic</span>
+    <span class="chip">4:44</span>
+  </div>
+
+  <!-- MAIN BOX -->
+  <section class="main">
+    <div class="lbl gold">This pull, in short</div>
+    <div class="answer">A near-perfect pull. One cooldown pressed at the wrong moment, and two small habits, kept it from being flawless.</div>
+    <div class="tiles">
+      <div class="tile">
+        <div class="l">Score</div>
+        <div class="v big">97</div>
+        <div class="vs" aria-label="Your score 97, top Holy Paladins about 95"><i style="width:97%"></i><em style="left:95%"><span>Top players about 95</span></em></div>
+      </div>
+      <div class="tile">
+        <div class="l">Healing per second</div>
+        <div class="v">362.9K</div>
+        <div class="s">Casts a minute 48.5</div>
+      </div>
+      <div class="tile">
+        <div class="l">Your checks</div>
+        <div class="flags">
+          <span class="badge ok">16 done right</span>
+          <span class="badge wn">2 some mistakes</span>
+          <span class="badge no">1 failed</span>
+        </div>
+      </div>
+    </div>
+    <div class="focus">
+      <div class="lbl">Fix this first</div>
+      <p>Press Beacon of Virtue, then Aura Mastery. At 1:35 your Aura Mastery went out with no Beacon of Virtue up.</p>
+    </div>
+  </section>
+
+  <!-- TIMELINE -->
+  <div class="sh"><h2>Your pull, moment by moment</h2><span class="sub">Move your mouse across it · 0:00 to 4:44</span></div>
+  <section class="panel">
+    <div class="swipe">Swipe sideways to see the whole pull →</div>
+    <div class="tlscroll">
+      <div class="tl" id="tl">
+        <div class="guides" id="guides"></div>
+        <div class="play" id="play"><b id="playT">0:00</b></div>
+
+        <div class="row first"><div class="lab"></div><div class="track axis" id="axis"></div></div>
+
+        <div class="row" data-lane="dmg">
+          <div class="lab"><b>Damage taken</b><small>Biggest moments marked</small></div>
+          <div class="track dmg" id="dmg"></div>
+        </div>
+        <div class="row" data-lane="bov">
+          <div class="lab"><b>Beacon of Virtue</b><small>Up 84% of the pull</small></div>
+          <div class="track bov" id="bov"></div>
+        </div>
+        <div class="row" data-lane="cds">
+          <div class="lab"><b><span class="num r">1</span>Big cooldowns</b><small>Avenging Wrath, Aura Mastery</small></div>
+          <div class="track cds" id="cds"></div>
+        </div>
+        <div class="row" data-lane="dt">
+          <div class="lab"><b>Divine Toll</b><small>9 of 10, all in Beacon of Virtue</small></div>
+          <div class="track dt" id="dt"></div>
+        </div>
+        <div class="row" data-lane="inf">
+          <div class="lab"><b><span class="num y">2</span>Infused Flash of Light</b><small>19 of 39 on a Beacon</small></div>
+          <div class="track dots" id="inf"></div>
+        </div>
+        <div class="row dp" data-lane="dp">
+          <div class="lab"><b><span class="num y">3</span>Divine Purpose</b><small>4 wasted</small></div>
+          <div class="track dots" id="dp"></div>
+        </div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i class="dot g"></i>Done right</span>
+      <span><i class="dot y"></i>Missed chance</span>
+      <span><i class="dot r"></i>Failed</span>
+      <span>Dashed lines mark the six biggest damage moments</span>
+    </div>
+  </section>
+
+  <!-- FIXES -->
+  <div class="sh"><h2>What to fix, in order</h2><span class="sub">Numbers match the timeline</span></div>
+  <section class="cards">
+    <article class="card r" data-lane="cds">
+      <span class="num r">1</span>
+      <h3><img src="https://wow.zamimg.com/images/wow/icons/large/spell_holy_auramastery.jpg" alt="" onerror="this.remove()">Aura Mastery (Inside Beacon of Virtue)</h3>
+      <span class="badge no badge-col">Failed</span>
+      <div class="meta">At 1:35 · 0 of 1 inside Beacon of Virtue</div>
+      <div class="body">
+        <div><div class="lbl">What happened</div><p>You pressed Aura Mastery while Beacon of Virtue was down.</p></div>
+        <div><div class="lbl">Do this</div><p>Press Beacon of Virtue first, then Aura Mastery.</p></div>
+      </div>
+    </article>
+    <article class="card y" data-lane="inf">
+      <span class="num y">2</span>
+      <h3><img src="https://wow.zamimg.com/images/wow/icons/large/spell_holy_flashheal.jpg" alt="" onerror="this.remove()">Infused Flash of Light (On a Beacon)</h3>
+      <span class="badge wn badge-col">Some mistakes</span>
+      <div class="meta">19 of 39 (49%) · top players 57%</div>
+      <div class="body">
+        <div><div class="lbl">What happened</div><p>20 of your Infused Flash of Lights went to someone without a Beacon.</p></div>
+        <div><div class="lbl">Do this</div><p>Aim it at a Beacon target. Moment of Compassion gives it +50% there.</p></div>
+      </div>
+    </article>
+    <article class="card y" data-lane="dp">
+      <span class="num y">3</span>
+      <h3><img src="https://wow.zamimg.com/images/wow/icons/large/spell_holy_divinepurpose.jpg" alt="" onerror="this.remove()">Divine Purpose (Spend it before Divine Toll)</h3>
+      <span class="badge wn badge-col">Some mistakes</span>
+      <div class="meta">4 wasted · top players 2</div>
+      <div class="body">
+        <div><div class="lbl">What happened</div><p>2 of the 4 were lost when Divine Toll gave you a new one while you held one.</p></div>
+        <div><div class="lbl">Do this</div><p>Spend your Divine Purpose before you press Divine Toll.</p></div>
+      </div>
+    </article>
+  </section>
+
+  <!-- WENT WELL -->
+  <div class="sh"><h2>What went well</h2><span class="sub">Level with the top players or better</span></div>
+  <section class="tiles t3" id="wins">
+    <div class="tile"><div class="l">Holy Power wasted</div><div class="v">0%</div><div class="s">Top players waste 2%</div></div>
+    <div class="tile"><div class="l">Divine Toll</div><div class="v">9 of 9</div><div class="s">All inside Beacon of Virtue</div></div>
+    <div class="tile"><div class="l">Avenging Wrath</div><div class="v">3 of 3</div><div class="s">3.70M healing each</div></div>
+  </section>
+
+  <!-- CHECKLIST -->
+  <div class="sh"><h2>The full checklist</h2>
+    <div class="tog" role="group" aria-label="Filter checks">
+      <button class="on" data-f="all">All</button><button data-f="bad">Needs work</button>
+    </div>
+  </div>
+  <section class="panel" style="padding:14px 16px 2px" id="groups"></section>
+
+  <div class="foot">Mockup B · timeline first, fixes pinned to it, the checklist as chips.</div>
+</div>
+
+<script>
+(function(){
+  var TOTAL=284;
+  function pct(s){return (s/TOTAL*100).toFixed(3)+'%'}
+  function fmt(s){s=Math.max(0,Math.round(s));return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2)}
+  function $(id){return document.getElementById(id)}
+  function rng(seed){return function(){seed=(seed*1664525+1013904223)%4294967296;return seed/4294967296}}
+  var IC='https://wow.zamimg.com/images/wow/icons/large/';
+  function icon(name,cls,s,title){
+    var d=document.createElement('div');d.className='ic '+(cls||'');d.style.left=pct(s);d.title=title||'';
+    d.innerHTML='<img src="'+IC+name+'.jpg" alt="" onerror="this.remove()">';return d;
+  }
+
+  var ax=$('axis');
+  for(var s=0;s<=TOTAL;s+=30){var t=document.createElement('div');t.className='t';t.style.left=pct(s);t.textContent=fmt(s);ax.appendChild(t)}
+  var BIG=[26,46,61,91,102,158];
+  var g=$('guides');
+  BIG.forEach(function(s){var i=document.createElement('i');i.style.left=pct(s);g.appendChild(i)});
+
+  var dm=$('dmg'),r=rng(7);
+  for(var s=1;s<TOTAL;s+=2){
+    if(BIG.some(function(b){return Math.abs(b-s)<=1}))continue;
+    var b=document.createElement('div');b.className='bar';b.style.left=pct(s);
+    b.style.height=(12+r()*30)+'%';dm.appendChild(b);
+  }
+  BIG.forEach(function(s,i){
+    var b=document.createElement('div');b.className='bar big';b.style.left=pct(s);
+    b.style.height=(62+((i*37)%25))+'%';b.title='Big damage at '+fmt(s);dm.appendChild(b);
+    var l=document.createElement('div');l.className='bl';l.style.left=pct(s);l.textContent=fmt(s);dm.appendChild(l);
+  });
+
+  [[3,36],[42,72],[78,92],[110,142],[148,178],[186,216],[222,252],[258,284]].forEach(function(w){
+    var b=document.createElement('div');b.className='band';b.style.left=pct(w[0]);b.style.width=(((w[1]-w[0])/TOTAL)*100).toFixed(3)+'%';
+    b.title='Beacon of Virtue '+fmt(w[0])+' to '+fmt(w[1]);$('bov').appendChild(b);
+  });
+
+  var cds=$('cds');
+  [12,130,250].forEach(function(s){cds.appendChild(icon('spell_holy_avenginewrath','ok',s,'Avenging Wrath at '+fmt(s)+' · 3.70M healing'))});
+  var am=icon('spell_holy_auramastery','bad',95,'Aura Mastery at 1:35 · Beacon of Virtue was down');
+  am.style.overflow='visible';
+  var pin=document.createElement('span');pin.className='pin num r';pin.textContent='1';am.appendChild(pin);cds.appendChild(am);
+
+  [6,32,46,68,82,115,150,190,226].forEach(function(s){$('dt').appendChild(icon('inv_ability_paladin_divinetoll','ok',s,'Divine Toll at '+fmt(s)))});
+
+  var inf=$('inf'),r2=rng(31),ts=[];
+  for(var i=0;i<39;i++){ts.push(6+i*(TOTAL-14)/38+(r2()-.5)*3)}
+  var good={};while(Object.keys(good).length<19){good[Math.floor(r2()*39)]=1}
+  ts.forEach(function(s,i){var d=document.createElement('div');d.className='d '+(good[i]?'g':'y');d.style.left=pct(s);
+    d.title='Infused Flash of Light at '+fmt(s)+(good[i]?' · on a Beacon':' · not on a Beacon');inf.appendChild(d)});
+
+  var dp=$('dp');
+  [[14,'g'],[36,'g'],[58,'g'],[100,'y'],[121,'g'],[150.5,'y',1],[168,'g'],[190.5,'y',1],[205,'g'],[238,'y'],[262,'g'],[276,'g']].forEach(function(p){
+    var d=document.createElement('div');d.className='d '+p[1]+(p[2]?' big':'');d.style.left=pct(p[0]);
+    d.title=p[1]=='y'?('Divine Purpose lost at '+fmt(p[0])+(p[2]?' · replaced by Divine Toll':'')):'Divine Purpose used';dp.appendChild(d)});
+
+  var tl=$('tl'),play=$('play'),pt=$('playT');
+  function move(x){
+    var rect=g.getBoundingClientRect(),tr=tl.getBoundingClientRect();
+    var rel=(x-rect.left)/rect.width;
+    if(rel<0||rel>1){play.style.display='none';return}
+    play.style.display='block';play.style.left=(rect.left-tr.left+rel*rect.width)+'px';pt.textContent=fmt(rel*TOTAL);
+  }
+  tl.addEventListener('mousemove',function(e){move(e.clientX)});
+  tl.addEventListener('mouseleave',function(){play.style.display='none'});
+
+  document.querySelectorAll('.card').forEach(function(c){
+    var lane=c.getAttribute('data-lane');
+    function on(v){var row=document.querySelector('.row[data-lane="'+lane+'"]');if(row)row.classList.toggle('hl',v)}
+    c.addEventListener('mouseenter',function(){on(true)});
+    c.addEventListener('mouseleave',function(){on(false)});
+  });
+
+  var GROUPS=[
+   ['Keeping the casts flowing',[
+     ['Always be casting','75%','87%','g'],['Rotation priority','94%','94%','g'],['Holy Shock on cooldown','92%','94%','g'],
+     ['Casts a minute','48.5','','g'],['Mana at the end','44%','','g']]],
+   ['Light and Holy Power',[
+     ['Infusion of Light wasted','1','2','g'],['Infused Flash of Light on a Beacon','49%','57%','y'],
+     ['Holy Power wasted','0%','2%','g'],['Eternal Flame over Light of Dawn','78%','90%','g'],['Divine Purpose wasted','4','2','y']]],
+   ['Beacon and big cooldowns',[
+     ['Beacon of Virtue','84%','83%','g'],['Beacon of Virtue windows casting','99%','','g'],
+     ['Divine Toll','9 of 10','83%','g'],['Divine Toll inside Beacon of Virtue','9 of 9','','g'],
+     ['Avenging Wrath','3 of 3','80%','g'],['Avenging Wrath healing','3.70M each','','g'],
+     ['Aura Mastery inside Beacon of Virtue','0 of 1','','r'],['Cooldowns on big damage','1 of 1','','g']]],
+   ['Prepared and helping others',[
+     ['Weapon oil','Yes','','g'],['Stats','All fine','','g'],['Saves','10 raiders','most in raid','g']]]
+  ];
+  var root=$('groups');
+  GROUPS.forEach(function(gr){
+    var sec=document.createElement('div');sec.className='sg';
+    sec.innerHTML='<div class="lbl">'+gr[0]+'</div><div class="chips"></div>';
+    var box=sec.querySelector('.chips');
+    gr[1].forEach(function(c){
+      var el=document.createElement('div');el.className='cx '+(c[3]=='g'?'ok':'bad');
+      el.title=c[0]+': '+c[1]+(c[2]?' (top players '+c[2]+')':'');
+      el.innerHTML='<i class="dot '+c[3]+'"></i><span class="nm">'+c[0]+'</span><span class="vl"><b>'+c[1]+'</b>'+(c[2]?' · top '+c[2]:'')+'</span>';
+      box.appendChild(el);
+    });
+    root.appendChild(sec);
+  });
+  document.querySelectorAll('.tog button').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('.tog button').forEach(function(x){x.classList.toggle('on',x===b)});
+      var bad=b.getAttribute('data-f')=='bad';
+      document.querySelectorAll('.cx').forEach(function(c){c.classList.toggle('hide',bad&&c.classList.contains('ok'))});
+      document.querySelectorAll('.sg').forEach(function(s){s.classList.toggle('empty',!s.querySelector('.cx:not(.hide)'))});
+    });
+  });
+})();
+</script>
+</body>
+</html>
