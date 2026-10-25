@@ -82,7 +82,7 @@ local function decode(code)
       m.coach = m.coachV["0"] or m.coach; return o
     end
     if t == "H" then
-      m.h = { boss = g(2), diff = g(3), pull = g(4), kill = g(5) == "1", pct = g(6), dur = g(7), where = g(8), deaths = g(9) }
+      m.h = { boss = g(2), diff = g(3), pull = g(4), kill = g(5) == "1", pct = g(6), dur = g(7), where = g(8), deaths = g(9), dungeon = g(10) == "1" } -- (a dungeon boss: your Me view only (Oct 24))
     elseif t == "P" then
       local p = { name = g(2), cls = g(3), spec = g(4), role = g(5), unit = g(6), v = g(7), d = tonumber(g(8)), vs = g(9), best = g(10), bp = g(11), rank = g(12), icon = g(13), bt = g(14) == "1", slips = {}, boss = {}, surv = {}, tiles = {}, next = "", next2 = "" }
       m.players[#m.players + 1] = p; by[p.name] = p
@@ -622,9 +622,9 @@ local function rotGood(y, rs)
   local f = FS("body", 13, COL.goodT); f:SetPoint("TOPLEFT", IND + 4, -(y + 2)); f:SetWidth(CW - IND * 2 - 8); f:SetText("Done right: " .. table.concat(rs.good, ", ") .. ".")
   return y + f:GetStringHeight() + 8
 end
-local function nextBox(y, text)
+local function nextBox(y, text, label)
   local t = FS("body", 14, COL.text); t:SetWidth(CW - 32); t:SetText(names(text))
-  local l = FS("bold", 11.5, COL.gold); l:SetText("NEXT PULL")
+  local l = FS("bold", 11.5, COL.gold); l:SetText(label or "NEXT PULL") -- ("NEXT TIME" after a dungeon boss (Oct 24))
   local h = 11 + 17 + t:GetStringHeight() + 12
   box(y, h, COL.gold, 0.07, COL.gold, 0.5, COL.gold)
   l:SetPoint("TOPLEFT", 16, -(y + 11)); t:SetPoint("TOPLEFT", 16, -(y + 28))
@@ -808,7 +808,7 @@ local function renderOnce()
   tabLine:ClearAllPoints(); tabLine:SetPoint("TOPLEFT", card, "TOPLEFT", 1, -TOPY + 12); tabLine:SetPoint("TOPRIGHT", card, "TOPRIGHT", -1, -TOPY + 12)
   scroller:ClearAllPoints(); scroller:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -TOPY)
   -- tabs
-  local raidOk = UI.canRaid()
+  local raidOk = UI.canRaid() and not m.h.dungeon -- (a dungeon boss has no Raid view (Oct 24))
   tRaid:SetShown(raidOk and not glanceOn); tMe:SetShown(not glanceOn); tabLine:SetShown(not glanceOn)
   if not raidOk then view = "me" end
   for k, b in pairs(tabs) do
@@ -1272,14 +1272,14 @@ local function renderOnce()
         if SH.cons ~= false then for _, r in ipairs(P.cons or {}) do L[#L + 1] = r end end
         if #L > 0 then UI.worst(L); section("surv", "Survival", L, 6, function(r) y = UI.rowS(y, r) end) end end
       -- (the Detailed card: the raid's side right here, so nobody has to switch to the Raid view)
-      if DB.detailed and not m.h.practice and not raidOk then
+      if DB.detailed and not m.h.practice and not m.h.dungeon and not raidOk then
         summary()
         if #m.raid.bad > 0 then section("rbad", "The raid: top mistakes", m.raid.bad, DB.maxRaid or 3, function(r) y = row(y, r[1], r[2], r[4], r[3]) end) end
         if m.raid.mech and #m.raid.mech > 0 and (DB.maxMech or 6) > 0 then section("rmech", "The raid: boss mechanics", m.raid.mech, DB.maxMech or 6, function(r) y = row(y, r[1], r[2], r[4], r[3]) end) end
       end
     end
     if not m.h.practice and not (DB.detailed and raidOk) then diedRow() end -- (the death filter here too: a dummy has no deaths)
-    if P.next ~= "" and SH.next ~= false and not coachDrew then y = UI.nextBox(y + 2, (DB.detailed and (P.next2 or "") ~= "") and ("1. " .. P.next .. "\n2. " .. P.next2) or P.next) end
+    if P.next ~= "" and SH.next ~= false and not coachDrew then y = UI.nextBox(y + 2, (DB.detailed and (P.next2 or "") ~= "") and ("1. " .. P.next .. "\n2. " .. P.next2) or P.next, m.h.dungeon and "NEXT TIME" or nil) end
   else
     leadBox(nil)
     if (DB.detailed or DB.tiles) and not DB.compact and m.raid.tiles and #m.raid.tiles > 0 then y = tilesRow(y, m.raid.tiles) end
@@ -2669,8 +2669,8 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
       LoggingCombat(true); say("combat log is on for your practice. Hit the dummy, stop, and Debrief asks \"See your recap?\".")
     end
   elseif e == "ENCOUNTER_END" then
-    -- (a nudge after a raid boss (Oct 24): the recap is on your PC at once; WoW brings it in at /reload. Raid bosses only, as the app makes no recap for a dungeon boss)
-    local itype = GetInstanceInfo and select(2, GetInstanceInfo()); local raidBoss = itype == "raid" or a3 == 14 or a3 == 15 or a3 == 16 or a3 == 17
+    -- (a nudge after a boss (Oct 24): the recap is on your PC at once; WoW brings it in at /reload. Raid and dungeon bosses)
+    local itype = GetInstanceInfo and select(2, GetInstanceInfo()); local raidBoss = itype == "raid" or itype == "party" or a3 == 14 or a3 == 15 or a3 == 16 or a3 == 17 or a3 == 1 or a3 == 2 or a3 == 8 or a3 == 23 -- (and dungeon bosses since Oct 24)
     if DB and raidBoss and (DEBRIEF_HAS_APP or DB.hasApp) and DB.nudge ~= false and C_Timer then
       local boss = a2; C_Timer.After(6, function() say("your recap" .. ((boss and boss ~= "") and (" for " .. boss) or "") .. " is up on your PC. Type /reload to see it here too.") end)
     end

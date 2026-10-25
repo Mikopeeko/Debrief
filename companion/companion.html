@@ -258,7 +258,7 @@ const engineReady = new Promise((ok, no) => {
 
 // ---------- combat log: pulls ----------
 const L = { state: 'start', view: null, lastSent: null, reading: null, prog: null, fresh: true, files: [], name: null, size: 0, done: 0, ix: null, items: [], live: false, waiting: false, reps: new Map(), sent: new Set(), busy: Promise.resolve() };
-const DIFFN = { 0: 'Practice', 14: 'Normal', 15: 'Heroic', 16: 'Mythic', 17: 'LFR', 233: 'Mythic' };
+const DIFFN = { 0: 'Practice', 14: 'Normal', 15: 'Heroic', 16: 'Mythic', 17: 'LFR', 233: 'Mythic', 1: 'Normal', 2: 'Heroic', 8: 'Mythic+', 23: 'Mythic' }; /* (and dungeons (Oct 24)) */
 const DUMMY = 990001; // (a practice pull on a training dummy, made by the scanner)
 
 async function loadLogs() {
@@ -294,14 +294,14 @@ $('logSel').addEventListener('change', (e) => openLog(+e.target.value));
 
 async function openLog(i) {
   const f = L.files[i]; if (!f) return;
-  L.name = f.name; L.ix = W ? W.E.createIndexer() : null; L.items = []; L.ci = {}; L.done = 0; L.size = 0; L.reps.clear(); L.sent.clear();
+  L.name = f.name; L.ix = W ? W.E.createIndexer({ dungeons: true }) : null; /* (dungeon bosses too (Oct 24)) */ L.items = []; L.ci = {}; L.done = 0; L.size = 0; L.reps.clear(); L.sent.clear();
   L.live = !f.old && i === 0; // (the newest log is always watched: new pulls on it, or a newer log, are picked up by themselves)
   L.fresh = Date.now() - f.mtime < 12 * 3600e3; L.view = null; L.lastSent = null;
   $('logT').textContent = 'Log: ' + new Date(f.mtime).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + (L.live ? '' : ' (older)'); $('logT').title = f.name + ' · pick another log';
   $('pulls').innerHTML = '<p class="empty">Finding your boss pulls…</p>';
   stat('Reading your combat log…', 'busy');
   await engineReady.catch((e) => stat(e.message, 'err'));
-  L.ix = W.E.createIndexer();
+  L.ix = W.E.createIndexer({ dungeons: true });
   await scanMore(true);
   if (L.live) { stat('Watching your combat log', 'live'); if (!L.waiting) waitLoop(); if (L.fresh) resaveOld(); }
   else stat('Older log: not watching it', '');
@@ -454,7 +454,7 @@ function saveNight(b, rep, coach) {
   if (!rep.item) rep.item = b;
   let c = coach || null, pr = null;
   const CA = W && W.CACHE, had = !CA || CA.has(b); if (!had) CA.set(b, rep); // (the coach reads how far the pull got from the site's pulls)
-  try { if (!c && W.coachGame) c = W.coachGame(rep, null); } catch (e) { c = null; }
+  try { if (!c && W.coachGame && !b.dungeon) c = W.coachGame(rep, null); } catch (e) { c = null; }
   try { pr = W.progressOf ? W.progressOf(rep) : null; } catch (e) { pr = null; } finally { if (!had) CA.delete(b); }
   const h = (c && c.headline) || '', f = (c && c.focus) || '', both = h + ' ' + f;
   const nm = [...new Set([...rep.players.values()].map((p) => String(p.name || '').split('-')[0]).filter((n) => n && both.includes(n)))];
@@ -704,7 +704,7 @@ async function resaveOld() {
       while (pullOn()) await sleep(5000);
       if (cur !== L.name) return;
       try {
-        const x = await j('/scan?name=' + encodeURIComponent(name) + '&from=0'), ix = W.E.createIndexer();
+        const x = await j('/scan?name=' + encodeURIComponent(name) + '&from=0'), ix = W.E.createIndexer({ dungeons: true });
         for (const it of x.items || []) ix.line(it.t, it.o, it.e);
         const items = ix.peek().bosses.filter((b) => !b.skip && b.endByte && b.id !== DUMMY);
         ctx.set(name, { name, reps: new Map(), items }); for (const b of items) all.push([name, b]);
@@ -804,7 +804,7 @@ const clean = (s) => String(s == null ? '' : s).replace(/[\^~|\r\n]+/g, ' ').rep
 // (the wipe filter: ^C~n says the code holds versions 0 to n, one per "stop at death" number; ^K~versions~line is a line only
 // some of them have, e.g. K~012~R~... is in versions 0, 1 and 2. Lines in every version are written as they are)
 RECAP.encode = (m) => {
-  const body = (v) => RECAP.lines(v), head = [['DBF1'], ['H', m.h.boss, m.h.diff, m.h.pull, m.h.kill ? 1 : 0, m.h.pct, m.h.dur, m.h.where, m.h.deaths]];
+  const body = (v) => RECAP.lines(v), head = [['DBF1'], ['H', m.h.boss, m.h.diff, m.h.pull, m.h.kill ? 1 : 0, m.h.pct, m.h.dur, m.h.where, m.h.deaths, m.h.dungeon ? 1 : '']];
   let rec;
   if (!m.cuts || m.cuts.length < 2) rec = head.concat(body(m));
   else {

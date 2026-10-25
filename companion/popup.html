@@ -215,6 +215,7 @@ function cardView() {
   if (WHO && !PL.some((p) => p.name === WHO)) WHO = null;
   const me = WHO ? PL.find((p) => p.name === WHO) : mine || PL.find((p) => p.rot || (p.slips || []).length) || PL[0] || null;
   if (!VIEW || (VIEW === 'me' && !me)) VIEW = me ? 'me' : 'raid';
+  const DUN = !!(C.h && C.h.dungeon); if (DUN && me) VIEW = 'me'; /* (a dungeon boss: your Me view only (Oct 24)) */
   const R = C.raid || {}, CO = (C.coach && C.coach.raid) || null;
   let L = '', Rt = '';
   /* (the Report card grade and tonight's two charts, when ticked in /db, above the raid lead box as /recap draws them (Oct 24, the user:
@@ -247,8 +248,8 @@ function cardView() {
       const first = (x) => String(x || '').split(/[.!?]\s/)[0].replace(/[.!?]$/, ''), tips = [];
       for (const t of [you && you[1], P.next, deep ? P.next2 : '']) if (t && !tips.some((q) => first(q) === first(t))) tips.push(t);
       const tr = you && you[2];
-      L += '<div class="kyou"><div class="kl">YOUR RAID LEAD SAYS</div>' + (verdict ? '<p class="kv">' + pt(verdict) + '</p>' : '') +
-        (tips.length ? '<div class="kl">' + (C.h && C.h.kill ? 'NEXT WEEK' : 'NEXT PULL') + '</div>' + (tips.length > 1 ? '<ol class="ktips">' + tips.map((t) => '<li>' + pt(t) + '</li>').join('') + '</ol>' : '<p class="ktip1">' + pt(tips[0]) + '</p>') : '') + '</div>' + /* (worse and better under the box, as /recap shows them) */
+      L += '<div class="kyou">' + (DUN ? '' : '<div class="kl">YOUR RAID LEAD SAYS</div>') + (verdict ? '<p class="kv">' + pt(verdict) + '</p>' : '') +
+        (tips.length ? '<div class="kl">' + (DUN ? 'NEXT TIME' : C.h && C.h.kill ? 'NEXT WEEK' : 'NEXT PULL') + '</div>' + (tips.length > 1 ? '<ol class="ktips">' + tips.map((t) => '<li>' + pt(t) + '</li>').join('') + '</ol>' : '<p class="ktip1">' + pt(tips[0]) + '</p>') : '') + '</div>' + /* (worse and better under the box, as /recap shows them) */
         (tr && on('trend') && ((tr.worse || []).length || (tr.better || []).length) ? '<div class="ktrl">' + ((tr.worse || []).length ? '<p><b style="color:#e8a23a">Worse than last pull:</b> ' + tr.worse.map((x) => esc(x[0]) + (x[1] ? ' (' + esc(String(x[1]).toLowerCase()) + ')' : '')).join(', ') + '</p>' : '') +
           ((tr.better || []).length ? '<p><b style="color:#5aa9ff">Better than last pull:</b> ' + tr.better.map((x) => esc(x[0]) + (x[1] ? ' (' + esc(String(x[1]).toLowerCase()) + ')' : '')).join(', ') + '</p>' : '') + '</div>' : '');
     }
@@ -330,7 +331,7 @@ function cardView() {
   const bossKey = (H.boss || '') + ' · ' + (H.diff || ''), NP0 = (D.night || []).filter((p) => p.boss === bossKey), ci = Math.max(0, NP0.findIndex((p) => p.cur)), NP = NP0.slice(Math.max(0, Math.min(ci - 5, NP0.length - 7)), Math.max(0, Math.min(ci - 5, NP0.length - 7)) + 7); /* (seven at most, around this pull, as the card's row (Oct 24)) */
   const pulls = on('chips') && NP.length > 1 ? '<div class="kpulls">' + NP.map((p) => '<span class="' + (p.kill ? 'k' : '') + (p.cur ? ' on' : '') + (loadingPull === p.sb ? ' wait' : '') + '" data-pull="' + p.sb + '" title="' + esc('Pull ' + p.pull + (p.h ? ': ' + p.h : '')) + '">Pull ' + p.pull + ' · ' + esc(p.txt) + '</span>').join('') + '</div>' : '';
   const who = VIEW === 'me' && me && PL.length > 1 ? '<span class="kwho"><button type="button" data-who="-1" title="The player before">‹</button>' + nmH(me.name) + '<button type="button" data-who="1" title="The next player">›</button></span>' : '';
-  const tabs = me ? '<div class="ktabs"><span data-tab="me" class="' + (VIEW === 'me' ? 'on' : '') + '">Me</span><span data-tab="raid" class="' + (VIEW === 'raid' ? 'on' : '') + '">Raid view</span>' + who + '</div>' : '';
+  const tabs = me ? '<div class="ktabs"><span data-tab="me" class="' + (VIEW === 'me' ? 'on' : '') + '">Me</span>' + (DUN ? '' : '<span data-tab="raid" class="' + (VIEW === 'raid' ? 'on' : '') + '">Raid view</span>') + who + '</div>' : '';
   return head + pulls + tabs + stopRow() + '<div class="kgrid one"><div class="kL">' + L + Rt + '</div></div>';
 }
 function render() {

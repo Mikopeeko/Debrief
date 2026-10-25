@@ -2,7 +2,7 @@
 // Everything comes from Debrief's own engine and Rotation checks (the same words as the website), cut down to a card.
 (() => {
 'use strict';
-const DIFFN = { 0: 'Practice', 14: 'Normal', 15: 'Heroic', 16: 'Mythic', 17: 'LFR', 233: 'Mythic' };
+const DIFFN = { 0: 'Practice', 14: 'Normal', 15: 'Heroic', 16: 'Mythic', 17: 'LFR', 233: 'Mythic', 1: 'Normal', 2: 'Heroic', 8: 'Mythic+', 23: 'Mythic' }; /* (and dungeons (Oct 24)) */
 const mmss = (s) => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const kfmt = (v) => v >= 1e6 ? (v / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'm' : Math.round(v / 1000) + 'k';
 const plain0 = (h) => String(h == null ? '' : h).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&#39;|&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
@@ -645,7 +645,7 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
     const m = buildOne(b, rep, same, W2, L, 0), nd = (rep.deaths || []).length;
     // (Debriefing's coach box for the card (the user's ask, Oct 22): at the site's own wipe filter, once, shared by every version)
     let coach = null; const RAIDS = [];
-    if (W.coachGame && b.id !== 990001) {
+    if (W.coachGame && b.id !== 990001 && !b.dungeon) {
       const CA = W.CACHE, had = !CA || CA.has(b); /* (the coach reads how far the pull got from the site's pulls: "We wiped at Wipe" without it (Oct 22)) */
       try { if (W.setCut && was != null) W.setCut(was); if (!rep.item) rep.item = b; if (!had) CA.set(b, rep); const raid = W.coachGame(rep, null), you = {}, t0 = Date.now();
         for (const p of m.players) { if (Date.now() - t0 > 3000) break; try { const c = W.coachSummary ? W.coachSummary([rep], p.name) : null; if (c && c.headline) you[p.name] = [plain(c.headline), plain(c.focus || ''), c.trend ? { worse: (c.trend.worse || []).slice(0, 2).map((x) => [plain(x.nm || ''), plain(x.tag || '')]), better: (c.trend.better || []).slice(0, 2).map((x) => [plain(x.nm || ''), plain(x.tag || '')]) } : null]; /* (and your worse/better than last pull (Oct 23)) */ } catch (e) { /* (no line for them) */ } }
@@ -656,8 +656,8 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
     }
     m.coach = coach && RAIDS[0] ? { raid: RAIDS[0], you: coach.you } : coach;
     // (the Report card's grade for this pull, for the card's "Report card grade" chip (Oct 22))
-    if (W.gradeBoss && b.id !== 990001) { try { const g = W.gradeBoss([rep]); if (g && g.letter) m.grade = { letter: g.letter, score: Math.round(g.overall), cats: (g.cats || []).map((c) => c.label + ' ' + c.letter).join(' · ') }; } catch (e) { /* (no grade) */ } }
-    if (b.kill || b.id === 990001 || !nd) return m; // (a kill or a dummy always counts in full)
+    if (W.gradeBoss && b.id !== 990001 && !b.dungeon) { try { const g = W.gradeBoss([rep]); if (g && g.letter) m.grade = { letter: g.letter, score: Math.round(g.overall), cats: (g.cats || []).map((c) => c.label + ' ' + c.letter).join(' · ') }; } catch (e) { /* (no grade) */ } }
+    if (b.kill || b.id === 990001 || b.dungeon || !nd) return m; // (a kill, a dummy or a dungeon boss always counts in full)
     // (two versions (Oct 23): the whole pull, and up to the website's wipe call; a pull never called lost has only the one)
     const WC = wipeOf(W, rep); if (!WC) return m; m.wc = { at: WC.at, txt: WC.txt };
     const x = buildOne(b, rep, same, W2, L, 1); x.coach = coach && RAIDS[1] ? { raid: RAIDS[1], you: coach.you } : coach; m.cuts = [m, x];
@@ -675,8 +675,8 @@ function buildOne(b, rep, same, W, L, cutN) {
   const allDeaths = (rep.deaths || []).filter((d) => before(d.t, T) || (dv(d) && dv(d).late)).sort((a, c) => a.t - c.t), roleOf = new Map([...rep.players.values()].map((p) => [p.name, p.role]));
   // (deaths have their own lines; a tank's notes on hits tanks take on purpose aren't mistakes)
   const mist = [].concat(rep.mistakes || [], (rep.module && !rep.module.error && rep.module.mistakes) || []).filter((m) => m && m.mechanic !== 'Death' && !/only a note/i.test(m.detail || '') && !(m.tankJudged && roleOf.get(m.player) === 'tank') && before(m.t, T));
-  const h = { boss: b.boss, diff: DIFFN[b.diffId] || b.diff || '', pull: b.pull, kill: !!b.kill, pct, dur: mmss(b.duration || rep.duration),
-    where: b.kill || b.id === 990001 ? '' : pr && pr.phase ? String(pr.phase).replace(/^P(\d)$/, 'Phase $1') : '', deaths: (rep.deaths || []).length };
+  const h = { boss: b.boss, diff: b.dungeon && b.key ? 'Mythic+ ' + b.key : DIFFN[b.diffId] || b.diff || '', pull: b.pull, kill: !!b.kill, pct, dur: mmss(b.duration || rep.duration), dungeon: b.dungeon ? 1 : '',
+    where: b.kill || b.id === 990001 || b.dungeon ? '' : pr && pr.phase ? String(pr.phase).replace(/^P(\d)$/, 'Phase $1') : '', deaths: (rep.deaths || []).length };
 
   // ---- each player ----
   const key = L.name + '|' + b.id + '|' + b.diffId; if (!HIST.has(key)) HIST.set(key, new Map());
@@ -699,6 +699,7 @@ function buildOne(b, rep, same, W, L, cutN) {
       d: lastV ? Math.round(100 * (v - lastV) / lastV) : null, vs: last != null ? last : '', best: best != null ? kfmt(best) : '', bp: bp != null ? bp : '', bt: best != null && v >= best ? 1 : '' /* (your best tonight: this pull beat every earlier one (Oct 24)) */, rank: rankIn(p), icon: p.specIcon || '', slips: [], boss: [], surv: [], tiles: [], next: '', next2: '' };
     // Rotation: the three checks that cost the most (the website's "focus"), or what went right
     let x = null; try { x = W.specRun(p.specName, [rep], p.name, true); } catch (e) { x = null; }
+    if (b.dungeon && x && x.checks) x = Object.assign({}, x, { checks: x.checks.filter((c) => !/^Mana at the /i.test(String(c.label || ''))) }); /* (a key needs your mana after the boss (Oct 24)) */
     const tips = [];
     if (x && x.checks) {
       // (worst first (the user, Oct 24: "Sections should always prioritize the worst mistakes first, including rotation"): red before yellow;
@@ -721,7 +722,7 @@ function buildOne(b, rep, same, W, L, cutN) {
       const WR0 = { bad: 0, warn: 1, ok: 2 }, extra = x.checks.filter((c) => !focus.includes(c) && c.st !== 'na' && !/^boss:/.test(c.k) && x.wins && x.wins[c.k])
         .sort((a, c) => ((WR0[a.st] != null ? WR0[a.st] : 3) - (WR0[c.st] != null ? WR0[c.st] : 3)) || (c.cost || 0) - (a.cost || 0)).slice(0, 2), rotC = focus.concat(extra).sort((a, c) => (WR0[a.st] != null ? WR0[a.st] : 3) - (WR0[c.st] != null ? WR0[c.st] : 3)); /* (a window row with mistakes joins the fixes in its colour) */
       P.rs.good = P.rs.good.filter((g) => !extra.some((c) => plain(c.label) === g)); /* (a window row isn't said twice) */
-      P.rot = rotC.map((c) => [c.st, spellId(W, c.ic) || (/casting|pace/i.test(c.label || '') ? 'spell_holy_borrowedtime' : p.specIcon || '') /* (no "?" for a check without a spell (Oct 24)) */, plain(c.label), num(c.v), x.top && x.top[c.k] ? num(x.top[c.k]) : '', c.tip ? plain(c.tip) : '',
+      P.rot = rotC.map((c) => [c.st, spellId(W, c.ic) || (/casting|pace/i.test(c.label || '') ? 'spell_holy_borrowedtime' : p.specIcon || '') /* (no "?" for a check without a spell (Oct 24)) */, plain(c.label), num(c.v), !b.dungeon && x.top && x.top[c.k] ? num(x.top[c.k]) : '' /* (the top players' numbers come from raid kills: not for a dungeon boss) */, c.tip ? plain(c.tip) : '',
         (c.bx || []).length >= 2 ? c.bx.slice(0, 40).map((q) => (q.cls === 'ok' ? 'g' : q.cls === 'bad' ? 'b' : 'w')).join('') : '', why(c), howOf(c), momOf(c)]);
       // (each ramp or burst window, from the Rotation tab's cards (Oct 24, the user: "classes with ramp windows/rotations with specific windows
       // that have specific button presses should have that detail included"): the ones that went wrong first, four at most, then in time order)
@@ -797,9 +798,11 @@ function buildOne(b, rep, same, W, L, cutN) {
     const avRank = ps.filter((q) => (q.avoidable || 0) > avo).length + 1;
     P.tiles = [
       ['Avoidable damage', avo > 0 ? kfmt(avo) : '0', avo > 0 ? ord(avRank) + ' most of ' + ps.length : 'Nice dodging', avo > 0 && ps.length >= 6 && avRank <= 3 ? 'warn' : 'ok'],
-      [heal ? 'Dispels' : 'Interrupts', String(mineK), 'raid: ' + raidK, 'ok']];
+      [heal ? 'Dispels' : 'Interrupts', String(mineK), (b.dungeon ? 'group: ' : 'raid: ') + raidK, 'ok']];
     // (a practice pull is just your rotation (Oct 24): no rank against whoever hit the other dummies, no tiles, survival or boss lines)
     if (b.id === 990001) { P.rank = ''; P.tiles = []; P.surv = []; P.cons = []; P.kitd = []; P.boss = []; }
+    // (a dungeon boss (Oct 24): no avoidable damage judged (that needs the raid boss's list); kicks and dispels in their tile, not twice)
+    if (b.dungeon) { P.tiles = P.tiles.slice(1); P.boss = P.boss.filter((r) => !['ability_rogue_sprint', 'ability_kick', 'spell_holy_dispelmagic'].includes(r[1])); } /* (kicks and dispels are in the tile) */
     players.push(P);
   }
   players.sort((a, c) => (a.role === c.role ? 0 : a.role === 'tank' ? -1 : c.role === 'tank' ? 1 : a.role === 'healer' ? -1 : 1) || a.name.localeCompare(c.name));
@@ -920,7 +923,7 @@ function buildOne(b, rep, same, W, L, cutN) {
   // (the Debriefing tab's own words (the user's ask, Oct 21: the card should show what Debriefing shows): four raid numbers, the pull
   // phase by phase, the fix for next pull, and what's better and worse than last pull)
   raid.tiles = []; raid.story = ''; raid.better = ''; raid.worse = '';
-  if (b.id !== 990001) {
+  if (b.id !== 990001 && !b.dungeon) {
     const fails = raid.mech.filter((x) => x[0] === 'bad').length, slips = raid.mech.filter((x) => x[0] === 'warn').length, okN = raid.mech.length - fails - slips;
     let dps = null; try { if (W.setCut) W.setCut(cutN ? 2 : 0); const A = W.dbfStats ? W.dbfStats(rep) : null; dps = A ? A.dps : null; } catch (e) { dps = null; }
     const first = allDeaths[0];
@@ -955,9 +958,9 @@ function buildOne(b, rep, same, W, L, cutN) {
     const Ld = [], first1 = (s) => (sentences(s || '')[0] || '').trim(), nm = (n) => String(n).split('-')[0];
     const low = (s) => { const t = String(s || '').replace(/\.$/, ''), w = t.split(/\s+/)[0]; return names0.has(w) ? t : t.replace(/^./, (c) => c.toLowerCase()); };
     // (a kill opens with the raid lead's kill call from the site, without its "To tidy" line)
-    let KC = ''; if (b.kill && b.id !== 990001) { try { if (!rep.item) rep.item = b; const k = W.killCall ? W.killCall([rep], null) : null; KC = k && k.text ? plain(k.text).replace(/\s*To tidy[^.]*\.\s*$/, '').trim() : ''; } catch (e) { KC = ''; } }
+    let KC = ''; if (b.kill && b.id !== 990001 && !b.dungeon) { try { if (!rep.item) rep.item = b; const k = W.killCall ? W.killCall([rep], null) : null; KC = k && k.text ? plain(k.text).replace(/\s*To tidy[^.]*\.\s*$/, '').trim() : ''; } catch (e) { KC = ''; } }
     Ld.push(KC || first1(raid.story) || (b.kill ? 'Boss down on pull ' + b.pull + '. Nice work, everyone.' : 'We wiped' + (pr && pr.label ? ' at ' + String(pr.label).split(',')[0] : '') + '.'));
-    if (!b.kill && b.id !== 990001) {
+    if (!b.kill && b.id !== 990001 && !b.dungeon) {
       const ds = allDeaths, wave = (d) => ds.filter((x) => Math.abs(x.t - d.t) <= 5), d0 = ds[0];
       if (d0 && wave(d0).length >= 4) {
         const w = wave(d0), by = new Map(); for (const d of w) { const a = d.ability || 'something'; by.set(a, (by.get(a) || 0) + 1); }
@@ -989,7 +992,7 @@ function buildOne(b, rep, same, W, L, cutN) {
     const lc = (t) => (/^(Both|All|The|Slowest|Hit|No|Every|Taken|Soaked|Clean|Nobody|Everyone|Up|Target|Swapped)\b/.test(t) ? t.replace(/^./, (c) => c.toLowerCase()) : t), base = (t) => String(t).replace(/\s*\(.*\)$/, '');
     const good = [], fix = [], d0g = allDeaths[0];
     if (/best pull/i.test(Ld[0])) good.push('Our best pull so far.'); else if (/further than last pull/i.test(Ld[0])) good.push('We got further than last pull.');
-    if (b.id !== 990001) { if (!d0g) good.push(b.kill ? 'Nobody died.' : 'Nobody died before the wipe.'); else if (!b.kill && d0g.t > 90) good.push('Nobody died until ' + mmss(d0g.t) + '.'); }
+    if (b.id !== 990001 && !b.dungeon) { if (!d0g) good.push(b.kill ? 'Nobody died.' : 'Nobody died before the wipe.'); else if (!b.kill && d0g.t > 90) good.push('Nobody died until ' + mmss(d0g.t) + '.'); }
     for (const x of raid.mech.filter((y) => y[0] === 'ok' && !/Still in P1/.test(y[3]))) { if (good.length >= 3) break; good.push(base(x[2]) + ': ' + lc(cut1(x[3], 70))); }
     for (const x of raid.mech.filter((y) => y[0] === 'bad')) { if (fix.length >= 2) break; fix.push(['bad', say(base(x[2]), x[3], 90)]); }
     for (const x of fixTop) { if (fix.length >= 3) break; if (!fix.some((y) => y[1].split(':')[0] === x[1].split(' hit ')[0].split(' missed by ')[0].split(' failed')[0])) fix.push(x); }
@@ -1018,7 +1021,7 @@ function buildOne(b, rep, same, W, L, cutN) {
     if (!chg.length) chg.push(b.kill ? 'Same plan next time.' : 'Same plan, cleaner.');
     // (Debriefing's coach, when the site has it: its headline, what went right and wrong, its focus and fixes, the same #1 as the tab.
     // The lines above stay when it can't be read)
-    let CO = null; try { if (W.coachSummary && b.id !== 990001) { if (!rep.item) rep.item = b; CO = W.coachSummary([rep], null); } } catch (e) { CO = null; }
+    let CO = null; try { if (W.coachSummary && b.id !== 990001 && !b.dungeon) { if (!rep.item) rep.item = b; CO = W.coachSummary([rep], null); } } catch (e) { CO = null; }
     if (CO && (CO.wrong.length || CO.right.length)) {
       const h2 = [], c2 = [], seen2 = new Set(), head = plain(CO.headline), hl = head.toLowerCase();
       const nm2 = (x) => plain(x.label).replace(/\s*\(.*\)\s*$/, '').replace(/[.\s]+$/, ''), paren = (x) => (plain(x.label).match(/\(([^)]*)\)\s*$/) || ['', ''])[1].toLowerCase();
@@ -1045,7 +1048,7 @@ function buildOne(b, rep, same, W, L, cutN) {
     P.lead = (d ? (String(d[2]).match(/^You died at [\d:]+/) || ['You died'])[0] + '. ' : '') + (bits.length ? capF(andList(bits)) + ' below.' : d ? 'Nothing else to fix from you.' : 'Clean pull from you. Same again.');
     /* (each player's coach is worked out once, for the whole pull, and shared by every wipe-filter version; with a time limit, so a big raid never holds the recap up) */
     const fk = P.name; if (!FOCUS.has(rep)) FOCUS.set(rep, { m: new Map(), t: 0 }); const FC = FOCUS.get(rep);
-    if (!FC.m.has(fk) && W.coachSummary && b.id !== 990001 && FC.t < 2500) { const s0 = Date.now(); let pc = null; try { pc = W.coachSummary([rep], P.name); } catch (e) { pc = null; } FC.t += Date.now() - s0; FC.m.set(fk, pc && pc.wrong && pc.wrong.length && pc.focus ? plain(pc.focus).replace(/([^.!?])$/, '$1.') : ''); }
+    if (!FC.m.has(fk) && W.coachSummary && b.id !== 990001 && !b.dungeon && FC.t < 2500) { const s0 = Date.now(); let pc = null; try { pc = W.coachSummary([rep], P.name); } catch (e) { pc = null; } FC.t += Date.now() - s0; FC.m.set(fk, pc && pc.wrong && pc.wrong.length && pc.focus ? plain(pc.focus).replace(/([^.!?])$/, '$1.') : ''); }
     const pf = FC.m.get(fk);
     if (pf) P.lead = (d ? (String(d[2]).match(/^You died at [\d:]+/) || ['You died'])[0] + '. ' : '') + 'Focus next pull: ' + pf;
   }

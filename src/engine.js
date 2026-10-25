@@ -320,8 +320,10 @@ function unq(x) { return x.charCodeAt(0) === 34 && x.length > 1 ? x.slice(1, -1)
 // (a key is still followed, so the bosses inside it are recognized and skipped)
 const DUNGEON_DIFF = new Set([1, 2, 8, 23, 24, 150, 205, 208, 216, 236]);
 const isDungeon = (diffId, size) => DUNGEON_DIFF.has(diffId) || (size > 0 && size <= 5);
-function createIndexer() {
-  const bosses = [], runs = [], pulls = {};
+// (the in-game app asks for dungeon bosses too (Oct 24): Normal, Heroic, Mythic and keystone dungeons, each marked dungeon with its key level)
+const DUNGEON_BOSS = new Set([1, 2, 8, 23]);
+function createIndexer(opts) {
+  const bosses = [], runs = [], pulls = {}, withDungeons = !!(opts && opts.dungeons);
   let cur = null, run = null, lastMs = 0;
   return {
     line(text, start, end) {
@@ -335,8 +337,9 @@ function createIndexer() {
         const diffId = +f[2];
         cur = { kind: 'boss', id: +f[0], boss: f[1], diffId, diff: DIFF[diffId] || ('Difficulty ' + diffId), size: +f[3],
           startMs: ts.ms, wallMs: ts.off != null ? ts.ms - ts.off : undefined, startByte: start, endByte: 0, kill: false, result: 'In progress', duration: 0, pull: 1, run: null }; // (wallMs: the real time, as Warcraft Logs pulls have it)
-        if (run || isDungeon(diffId, +f[3])) cur.skip = true; // (a dungeon boss: followed to its end, never listed)
-        else { const k = cur.id + ':' + diffId; pulls[k] = (pulls[k] || 0) + 1; cur.pull = pulls[k]; bosses.push(cur); }
+        const dun = run || isDungeon(diffId, +f[3]);
+        if (dun && !(withDungeons && DUNGEON_BOSS.has(diffId))) cur.skip = true; // (a dungeon boss: followed to its end, never listed on the site)
+        else { if (dun) { cur.dungeon = true; if (run) cur.key = run.level; } const k = cur.id + ':' + diffId; pulls[k] = (pulls[k] || 0) + 1; cur.pull = pulls[k]; bosses.push(cur); }
       } else if (ev === 'ENCOUNTER_END' && cur && +f[0] === cur.id) {
         cur.kill = f[4] === '1'; cur.result = cur.kill ? 'Kill' : 'Wipe';
         cur.duration = num(f[5]) / 1000; cur.endByte = end; cur = null;

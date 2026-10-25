@@ -1766,9 +1766,11 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-24', h: [
+    { t: 'Debrief in game: dungeon bosses', d: 'Dungeon bosses get a recap too: after each boss in a dungeon or a key, your PC pop-up shows your own view (your number, rotation and survival), and /reload brings it into WoW.' },
     { t: 'Debrief in game: a guided setup', d: 'The first time you log in, a short setup helps you pick a style and what your card shows, with a live preview beside it (/debrief setup opens it again). Long cards now split into two columns instead of running off the screen.' },
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
+    'Debrief in game: a dungeon boss recap shows only your Me view, with a Next time tip and no raid-only checks',
     'Debrief in game: every section lists the worst first (red, then amber, then green, rotation too), the PC pop-up shows your report card grade and tonight charts when ticked in /db, the wipe line names a mechanic no kill ever survived, and /recap always shows your own pulls after the settings preview',
     'Debriefing, All pulls: What\'s getting worse and What\'s improving say it plainly, with real pull counts: "Soak with 5: mistakes in 2 of 18 pulls tonight (16 of 30 on Oct 15)."',
     'Debriefing: the wipe is called the moment a wipe mechanic goes off (like a Guillotine with fewer than 5 under it, or a Serpent\'s Bite not fully soaked), and What wiped us names it. The deaths it caused still count. Every boss has its list, from mechanics no top guild\'s kill ever survived.',
