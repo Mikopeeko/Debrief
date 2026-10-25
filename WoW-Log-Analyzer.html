@@ -6456,6 +6456,30 @@ header.fight.bh.bhx > .bgread[hidden] { display: none; }
 #view .dbr-4.oa-tiles .dbr-s b { font-size: 12.5px !important; font-weight: 600; }
 #view .dbr-4.oa-tiles > .dbr-n.pcx-tile.on { background: rgba(230,183,80,.08) !important; }
 @media (max-width: 760px) { #view .dbr-4.oa-tiles > .dbr-n { flex: 1 1 45%; grid-template-columns: minmax(0, 1fr); grid-template-areas: 'k' 'v' 's'; row-gap: 0; padding: 8px 12px !important; } #view .dbr-4.oa-tiles .dbr-k { padding-right: 80px; } }
+/* ===== Design studio round 2 (Oct 25): the front page's Discord asks as site panels (blurple only on the buttons), Rotation's hero tiles as rows on a
+   phone, one shape for every picker on Graphs. Owner: the Design studio chat. ===== */
+.fpx-dbar { background: var(--panel); color: var(--muted); border-bottom: 1px solid var(--line2); }
+.fpx-dbar .fpx-in { font-size: 13.5px; min-height: 38px; } .fpx-dbar .fpx-in b { color: var(--text); }
+.fpx-dbar svg { width: 18px; height: 18px; fill: #8b97ff; }
+.fpx-dbar a { padding: 2px 0; background: none; color: var(--gold); font: 600 13.5px var(--body); letter-spacing: 0; }
+#fpxBarX { color: var(--muted); } #fpxBarX:hover { background: var(--raised); color: var(--text); }
+.fpx-dbig { gap: 20px; padding: 24px 28px; border-radius: var(--ds-box, 12px); color: var(--text); border: 1px solid var(--line2); background: var(--panel); box-shadow: none; }
+.fpx-dbi { width: 56px; height: 56px; border-radius: 14px; background: #5865f2; box-shadow: none; } .fpx-dbi svg { width: 32px; height: 32px; fill: #fff; }
+.fpx-dbt .fp-k { color: var(--gold); } .fpx-dbt h2 { margin: 2px 0 4px; font-size: 26px; color: var(--text); } .fpx-dbt p { font-size: 15px; color: var(--muted); }
+.fpx-dbgo { padding: 10px 18px; border-radius: 8px; background: #5865f2; color: #fff; font-size: 15px; box-shadow: none; } .fpx-dbgo svg { width: 18px; height: 18px; fill: #fff; }
+/* Rotation, phone: the hero's number tiles are rows (label and note on the left, the number on the right) instead of narrow boxes. */
+@media (max-width: 760px) {
+  .spc-kts { grid-template-columns: 1fr; gap: 6px; max-width: none; }
+  .spc-kt { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'l v' 'x v'; align-items: center; column-gap: 12px; row-gap: 0; padding: 6px 12px; }
+  .spc-ktl { grid-area: l; } .spc-ktv { grid-area: v; justify-self: end; font-size: 20px; } .spc-ktx { grid-area: x; }
+}
+/* Graphs: the toolbar's pickers (By player / By ability, Healing, Phase) take the graph picker's shape: a raised tab with a gold line under the picked one. */
+.gb-tool { gap: 6px 14px; padding: 6px 8px; }
+.gb-tool .gb-by button, .gb-tb .gb-tool .pfph button { border: 0; border-radius: 8px; padding: 6px 12px; min-height: 32px; font: 500 13.5px var(--body); color: var(--muted); background: none; box-shadow: none; }
+.gb-tool .gb-by button:hover, .gb-tb .gb-tool .pfph button:hover { color: var(--text); background: rgba(255,255,255,.04); }
+.gb-tool .gb-by button.on, .gb-tb .gb-tool .pfph button.on { background: var(--raised); color: var(--text); box-shadow: inset 0 -2px 0 var(--gold); border: 0; }
+.gb-tool .gb-tgl { margin: 0; } .gb-tool .gb-tgl select { border-radius: 8px; min-height: 32px; }
+.gb-tabrow .seg.gb-tabs button { padding: 7px 13px; font-size: 14px; }
 </style>
 
 
@@ -16155,6 +16179,9 @@ const PATCH_NOTES = [
   { d: '2026-10-25', h: [
     { t: 'Your tier set, in numbers', d: 'Rotation shows how much your 2-piece and 4-piece added, with a Where it came from breakdown behind every number. On every spec.' },
     { t: 'Your trinkets, both of them', d: 'Gear and extras on Rotation now shows both of your trinkets, with what each one did (damage, healing or stats), or that one was never pressed.' },], n: [
+    'Front page: the beta strip and the Discord box are plain site panels like the cards around them; Discord\'s blue stays on its buttons.',
+    'Rotation on a phone: the Healing (or Damage) a second and Parse numbers in the header are rows (label and note on the left, the number on the right) instead of two narrow boxes.',
+    'Graphs: By player / By ability, Healing and the Phase buttons share the graph picker\'s shape, a raised tab with a gold line under the picked one.',
     'Debriefing: your raid lead\'s box is the first thing under the tabs. The five numbers (Pulls on this boss, Deaths, Raid DPS, DTPS, HPS) are one slim strip under it, each still opening its panel (Who and why, Ranks, Pace chart).',
     'On a phone the boss header is three short rows (the boss and its result; the pull pickers and the wipe filter; the facts as one quiet line), so every tab\'s answer shows up about a screen sooner.',
     'While the other pulls load, the Reading pulls note is a thin gold line along the bottom of the boss header, with the count at the end of its facts line, instead of a bubble floating over the page.',

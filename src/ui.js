@@ -1774,6 +1774,9 @@ const PATCH_NOTES = [
   { d: '2026-10-25', h: [
     { t: 'Your tier set, in numbers', d: 'Rotation shows how much your 2-piece and 4-piece added, with a Where it came from breakdown behind every number. On every spec.' },
     { t: 'Your trinkets, both of them', d: 'Gear and extras on Rotation now shows both of your trinkets, with what each one did (damage, healing or stats), or that one was never pressed.' },], n: [
+    'Front page: the beta strip and the Discord box are plain site panels like the cards around them; Discord\'s blue stays on its buttons.',
+    'Rotation on a phone: the Healing (or Damage) a second and Parse numbers in the header are rows (label and note on the left, the number on the right) instead of two narrow boxes.',
+    'Graphs: By player / By ability, Healing and the Phase buttons share the graph picker\'s shape, a raised tab with a gold line under the picked one.',
     'Debriefing: your raid lead\'s box is the first thing under the tabs. The five numbers (Pulls on this boss, Deaths, Raid DPS, DTPS, HPS) are one slim strip under it, each still opening its panel (Who and why, Ranks, Pace chart).',
     'On a phone the boss header is three short rows (the boss and its result; the pull pickers and the wipe filter; the facts as one quiet line), so every tab\'s answer shows up about a screen sooner.',
     'While the other pulls load, the Reading pulls note is a thin gold line along the bottom of the boss header, with the count at the end of its facts line, instead of a bubble floating over the page.',
