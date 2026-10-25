@@ -6480,6 +6480,46 @@ header.fight.bh.bhx > .bgread[hidden] { display: none; }
 .gb-tool .gb-by button.on, .gb-tb .gb-tool .pfph button.on { background: var(--raised); color: var(--text); box-shadow: inset 0 -2px 0 var(--gold); border: 0; }
 .gb-tool .gb-tgl { margin: 0; } .gb-tool .gb-tgl select { border-radius: 8px; min-height: 32px; }
 .gb-tabrow .seg.gb-tabs button { padding: 7px 13px; font-size: 14px; }
+/* ===== Design studio round 3 (Oct 25): one way to show a number (bars) on the Report card and Rotation. A "how much" is a bar with one number at
+   its end; a grade is one letter at the start of its bar; "was it right" is a flag colour. --p comes from dsBars (ui.js). Owner: the Design studio chat. ===== */
+/* Report card, the ranked roster: one bar per raider; the six category numbers are plain and quiet (the bar carries the grade) */
+.rcb-tr { grid-template-columns: 30px minmax(150px, 1.3fr) minmax(150px, 1.5fr) repeat(6, minmax(0, .55fr)) 48px; }
+.rcb-tr.ds-bar .rcb-g { position: relative; isolation: isolate; justify-content: space-between; height: 24px; padding: 0 8px 0 4px; border-radius: 6px; background: rgba(255,255,255,.05); overflow: hidden; font-size: 14px; }
+.rcb-tr.ds-bar .rcb-g::before { content: ''; position: absolute; z-index: -1; left: 0; top: 0; bottom: 0; width: var(--p, 0%); border-radius: 6px; background: var(--bc, #2e8cff); opacity: .38; }
+.rcb-tr.ds-bar .rcb-g .grade { min-width: 20px; height: 18px; padding: 0 4px; font-size: 12.5px; border-width: 1px; border-radius: 5px; background: rgba(0,0,0,.35); }
+.rcb-tr.ds-bar:has(.g-S) .rcb-g { --bc: #ff8000; } .rcb-tr.ds-bar:has(.g-A) .rcb-g { --bc: #b25ef5; } .rcb-tr.ds-bar:has(.g-B) .rcb-g { --bc: #2e8cff; }
+.rcb-tr.ds-bar:has(.g-C) .rcb-g { --bc: #2ee62e; } .rcb-tr.ds-bar:has(.g-D) .rcb-g { --bc: #c9cfdc; } .rcb-tr.ds-bar:has(.g-F) .rcb-g { --bc: var(--bad); }
+.rcb-tr .rcb-v { min-width: 0; height: auto; padding: 0; border-radius: 0; background: none; font: 500 13px var(--body); color: var(--muted) !important; }
+.rcb-tr.sel .rcb-v, .rcb-tr:hover .rcb-v { color: var(--text) !important; }
+@media (max-width: 760px) { .rcb-tr { min-width: 0; grid-template-columns: 24px minmax(0, 1fr) minmax(120px, 1fr) 40px; } .rcb-tr .rcb-v, .rcb-th > button { display: none; } .rcb-tbl { overflow: visible; } }
+/* Report card, a raider's checklist: the rows that need them stay; the clean rows fold under "N rows fine" */
+.rqc-sec:not(.ds-show) .rqc-row:has(.rqc-i.ok), .rqc-sec:not(.ds-show) .rqc-dd:has(.rqc-i.ok) { display: none; }
+.ds-fine { display: block; width: 100%; margin: 6px 0 0; padding: 6px 0 2px; border: 0; border-top: 1px solid rgba(255,255,255,.04); background: none; color: var(--gold); font: 600 13px var(--body); text-align: left; cursor: pointer; }
+.ds-fine:hover { color: #f3c969; }
+/* Rotation, the checklist rings: a title, its score and a bar under them (the ring is gone; one language with the Report card) */
+.rck-cat > summary { grid-template-columns: minmax(0, 1fr) auto 14px; grid-template-areas: 't n v' 'b b b'; gap: 6px 12px; padding: 10px 14px; }
+.rck-cat > summary .rck-ct { grid-area: t; } .rck-cat > summary .rck-cv { grid-area: v; }
+.rck-cat > summary .rck-cr { grid-area: n; width: auto; height: auto; } .rck-cat > summary .rck-cr svg { display: none; }
+.rck-cat > summary .rck-cr b { position: static; display: block; font: 700 20px/1 var(--head); }
+.rck-cat > summary::after { content: ''; grid-area: b; height: 6px; border-radius: 4px; background: linear-gradient(90deg, var(--bc, var(--good)) var(--p, 0%), rgba(255,255,255,.07) var(--p, 0%)); }
+.rck-cat:has(.rck-ct em.w) > summary { --bc: var(--warn); } .rck-cat:has(.rck-ct em.r) > summary { --bc: var(--bad); }
+/* (Rotation's own Oct 25 rules are more specific, so the same again with their weight: the score sits at the right, not against the title) */
+section.rck .rck-cat > summary, section.rck .rck-cat[open] > summary, section.rck .rck-ovw .rck-cats > .rck-cat[open] > summary { grid-template-columns: minmax(0, 1fr) auto 14px !important; grid-template-areas: 't n v' 'b b b'; gap: 6px 12px; }
+section.rck .rck-cat:not([open]) .rck-cr, section.rck .rck-ovw .rck-cats > .rck-cat[open] > summary .rck-cr { width: auto !important; height: auto !important; }
+section.rck .rck-cat:not([open]) .rck-cr b, section.rck .rck-ovw .rck-cats > .rck-cat[open] > summary .rck-cr b { font-size: 20px !important; }
+/* Rotation, the tiles inside an open card: the small share ring is a bar under the number (one language, no rings in tables or tiles) */
+section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-z[style*="--p"] { grid-column: 1 / -1; grid-row: 3; display: block; width: auto !important; min-width: 0; justify-self: stretch; align-self: end; margin: 0; height: 6px; border-radius: 4px; background: linear-gradient(90deg, var(--bc, var(--good)) var(--p), rgba(255,255,255,.07) var(--p)); }
+section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-z[style*="--p"] svg { display: none; }
+.rck-r.warn > summary > .rck-z { --bc: var(--warn); } .rck-r.bad > summary > .rck-z { --bc: var(--bad); }
+/* Rotation, the hero: one row with the answer in it; the talent trees fold under "Your talents" on every screen */
+.spc-hero, .spc-hero.spc-sf { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 24px; padding: 14px 18px; }
+.spc-hero > .spc-hl { flex: 1 1 520px; gap: 16px; }
+.spc-hero > .spc-hf.spc-tq { flex: 1 1 100%; }
+.spc-rw { width: 88px; height: 88px; } .spc-rc b { font-size: 26px; } .spc-rc span { font-size: 12px; margin-top: 1px; }
+.spc-tqd > summary { pointer-events: auto !important; cursor: pointer !important; padding: 4px 0; margin: 0; }
+.spc-tqd > summary::before { content: '\25B8  '; } .spc-tqd[open] > summary::before { content: '\25BE  '; }
+.spc-tq .spc-hft::after { content: none !important; }
+.spc-tqd[open] > summary { margin-bottom: 6px; }
 </style>
 
 

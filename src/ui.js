@@ -1772,8 +1772,11 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-25', h: [
+    { t: 'One way to show a number', d: 'The Report card and Rotation now speak the same language as Debriefing: a bar with one number at its end, a grade as one letter at the start of its bar. The ranked roster is one bar per raider, a raider\'s checklist shows the rows that need them and folds the rest, and Rotation\'s header is one row with the talent trees folded under it.' },
     { t: 'Your tier set, in numbers', d: 'Rotation shows how much your 2-piece and 4-piece added, with a Where it came from breakdown behind every number. On every spec.' },
     { t: 'Your trinkets, both of them', d: 'Gear and extras on Rotation now shows both of your trinkets, with what each one did (damage, healing or stats), or that one was never pressed.' },], n: [
+    'Report card: the six category numbers in the ranked roster are plain grey (they still sort); the grade bar carries the colour.',
+    'Rotation: the five checklist rings are a title, a score and a bar; inside an open one, each tile\'s small ring is a bar too.',
     'Rotation: Survival (Sentinel) checks Wildfire Bomb on a boss with your Sentinel\'s Mark, and Brewmaster shows how often you used Purifying Brew while tanking.',
     'Rotation: a tank\'s damage over time (Guardian Thrash and Moonfire, Blood Plague) counts only while you were tanking, like your active mitigation, so time away from the boss isn\'t held against you.',
     'Rotation: new checks from the class guides. Feral finishers at 5 combo points and Ferocious Bite with 50 Energy, Enhancement spells at 5 or more Maelstrom Weapon, Unholy Putrefy inside Dark Transformation, Destruction Shadowburn when the boss is under 20%, and Templar Hammer of Light right after every Wake of Ashes.',
@@ -30043,3 +30046,24 @@ if (WCL.HOSTED && !window.WLA_DESKTOP) {
 }
 /*GUIDES*/ // (the build puts src/guides.js here, inside this file's scope)
 })();
+
+// ===== Design studio round 3 (Oct 25): bars. Reads the scores other chats already draw and sets --p (and a fold) so the CSS can draw one bar language.
+// Owner: the Design studio chat. It never changes a number, only how it is shown. =====
+function dsBars(root) { root = root || document.getElementById('view'); if (!root) return;
+  const pct = (t) => { const m = String(t || '').match(/(\d{1,3})/); return m ? Math.max(0, Math.min(100, +m[1])) : null; };
+  // Report card: the ranked roster, one bar per raider (the grade letter at its start, the score at its end)
+  root.querySelectorAll('.rcb-tr:not(.rcb-th) .rcb-g').forEach((g) => { const tr = g.closest('.rcb-tr'), v = pct((g.textContent || '').replace(/^\s*[A-F]\s*/, '')); if (v == null || tr.dataset.dsP === String(v)) return; tr.dataset.dsP = String(v); tr.style.setProperty('--p', v + '%'); tr.classList.add('ds-bar'); });
+  // Report card: a raider's checklist shows the rows that need them; the clean rows fold under "N rows fine"
+  root.querySelectorAll('.rqc-sec').forEach((s) => { if (s.querySelector('.ds-fine')) return; const ok = [...s.querySelectorAll('.rqc-row')].filter((r) => r.querySelector('.rqc-i.ok')); if (!ok.length) return;
+    const all = ok.length === s.querySelectorAll('.rqc-row').length; const b = document.createElement('button'); b.type = 'button'; b.className = 'ds-fine'; b.dataset.n = ok.length; b.dataset.all = all ? '1' : ''; b.textContent = (all ? 'All ' + ok.length + ' fine' : ok.length + (ok.length === 1 ? ' row fine' : ' rows fine')) + ' \u25B8'; s.appendChild(b); });
+  // Rotation: the five ring cards are bars under their titles
+  root.querySelectorAll('.rck-cat > summary .rck-cr b').forEach((b) => { const sm = b.closest('summary'), v = pct(b.textContent); if (v == null || sm.dataset.dsP === String(v)) return; sm.dataset.dsP = String(v); sm.style.setProperty('--p', v + '%'); });
+  // Rotation: inside an open ring card, a tile's small share ring is a bar (its share read from the ring itself)
+  root.querySelectorAll('.rck-rs > .rck-r > summary .rck-z').forEach((z) => { if (z.dataset.dsP) return; const c = z.querySelectorAll('circle')[1]; if (!c) return; const d = String((c.style && c.style.strokeDasharray) || c.getAttribute('stroke-dasharray') || '').split(/[\s,]+/).filter(Boolean).map(Number); if (!(d[1] > 0)) return; const v = Math.round(100 * d[0] / d[1]); z.dataset.dsP = String(v); z.style.setProperty('--p', v + '%'); });
+  // Rotation: the talent trees start folded on every screen (the hero is one row with the answer in it)
+  root.querySelectorAll('details.spc-tqd').forEach((d) => { if (d.dataset.dsSeen) return; d.dataset.dsSeen = '1'; d.open = false; }); }
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.ds-fine'); if (!b) return; const s = b.closest('.rqc-sec'); if (!s) return; const on = s.classList.toggle('ds-show'); b.textContent = (on ? 'Hide the fine rows' : (b.dataset.all ? 'All ' + b.dataset.n + ' fine' : b.dataset.n + (b.dataset.n === '1' ? ' row fine' : ' rows fine'))) + (on ? ' \u25BE' : ' \u25B8'); });
+(function () { let t = 0; const go = () => { clearTimeout(t); t = setTimeout(() => { try { dsBars(); } catch (e) {} }, 80); };
+  /* (#view is drawn anew with each page, so the watcher sits on the body) */
+  const start = () => { if (!document.body) return false; new MutationObserver(go).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['open', 'class'] }); go(); return true; };
+  if (!start()) document.addEventListener('DOMContentLoaded', start); })();
