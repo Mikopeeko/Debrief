@@ -3206,7 +3206,7 @@ const HOW = {
   'The Coiled Altar': {
     orbs: 'Toxic Deluge spits venom orbs around the room, and every orb left out pulses raid damage. Players carry orbs into a line in front of the boss, and the tank\'s Sever destroys every orb in its cone. Each destroyed orb gives the whole raid one Venom Rupture stack, whatever its color. About 4 orbs per frontal: the two frontals split each Toxic Deluge\'s 8 orbs. Never 8 at once. Push Zul\'jan at 11 Venom Rupture stacks or fewer, under stacked raid cooldowns. On Mythic some orbs are purple. Only the assigned carriers move them, nothing may touch a purple\'s ring (a carried green may pass a carried purple), and a purple still out when the pools come is a wipe. In P3 the first frontal takes every purple at once. Greens can be left if needed, but purples never. Defilement of the Coiled Altar detonates whatever is on the ground.',
     soakq: 'Zul\'jan marks a player and drops an axe on them. Everyone inside the 9-yard circle splits the damage. On Mythic it needs at least 5 players (3 on Heroic and Normal), so over-send. In phase 1 the first soak is 5 to 8 players with personals, and the second is the immunities and both tanks. In phase 3 each axe needs at least 5, free of the debuff. The row shows who was in, what each had up, the target and the corner.',
-    tankfront: 'The boss frontals leave a debuff on the tank. In P1 the tanks taunt-swap so every Sever lands on a fresh tank. In P2 one tank takes every Soul Sever: a defensive on the first stack, a defensive plus two externals on the second, and the stacks drop before a third. Red: a tank died to it or took a third stack. Amber: a second stack without two externals, or a missed swap in P1.',
+    tankfront: 'The boss frontals leave a debuff on the tank. In P1 the tanks taunt-swap so every Sever lands on a fresh tank. In P2 one tank takes every Soul Sever: a defensive on the first stack, a big defensive and an external on the second, and the stacks drop before a third. Red: a tank died to it or took a third stack. Amber: a second stack with no external, immunity or second defensive, or a missed swap in P1.',
     shield: 'Every second set of adds is followed by Eternal Nightfall: Malacrass shields himself while casting it. This is the damage check of P2 and P3: assign cooldowns and pool damage for every shield. The cast can only be kicked once the shield is gone, so it takes two steps. Break the shield, then kick Malacrass before the 17s cast finishes. Give every shield a kicker and a backup. Broken shows how far into the cast the shield came off and how much time was left to kick.',
     dmghost: 'Dreadmarch mind controls a few players, who walk to the edge and jump off unless their absorb shield is broken in time. Targets stack on the raid\'s Dreadmarch marker and press a macro that cancels their own shields and speed buffs. Stuns and grips stop them walking. When the mind control breaks, stand still: your ghost spawns where you are a moment later, so the ghosts start in one clump. On Mythic only you can see your ghost (an interrupted Wail reveals them all briefly). Two ghosts touching hits both players hard (Malevolent Resonance). The boss tank aims Soul Sever to hit as many ghosts as possible; a ghost it misses is walked back for the next one, and staring at your ghost at the end of P2 makes it disappear at the transition. (Maps show ghosts where they spawned; the log has no later positions for them.)',
     addsets: 'Spiritcackle summons two Spiteful Soulcoilers that cast Wail of Terror, a raid-wide fear that must be interrupted. They jump after each kick and become immune to kicks at full energy. Kick as soon as the Gloombomb cast starts, so the add stays put for the Gloombomb overlap and there is time for the next kick. The melee add\'s second kick should be a melee player. Kill both adds before the next set spawns: on Mythic each add hits the raid with Retaliatory Malice every 3 seconds for as long as it lives. (Their Spirit Shields and the Gloombombs are in the Gloombombs panel.)',
@@ -3605,7 +3605,8 @@ function buildCoiledAltar(ev, r, h) {
     const c = { ...e, who, end: e.t, n: 1 }; clipped.push(c); clipBy.set(e.dst, c);
   }
   // (one brush is minor: carriers walk through the raid too; hit two times or more, it's a medium mistake)
-  for (const c of clipped) { M(c.t, pname(c.dst), 'mutagenic venom', c.n > 1 ? 'Medium' : 'Low', 'Stood within 6 yards of a purple orb carrier' + (c.who.length ? ' (' + c.who.join(', ') + ')' : '') + ': hit ' + (c.n > 1 ? c.n + ' times' : 'once') + ' for ' + Math.round(c.amt).toLocaleString('en-US') + '.', 'Purple carriers have right of way. Stay more than 6 yards from anyone carrying Mutagenic Venom (the purple circle on the map).'); mistakes[mistakes.length - 1].avoid = true; }
+  /* (Coiled Altar fix 7, Oct 24: one tick happened 93 times in 11 top kills; one tick is nothing, 2+ Low, 4+ Medium) */
+  for (const c of clipped.filter((x) => x.n >= 2)) { M(c.t, pname(c.dst), 'mutagenic venom', c.n >= 4 ? 'Medium' : 'Low', 'Stood within 6 yards of a purple orb carrier' + (c.who.length ? ' (' + c.who.join(', ') + ')' : '') + ': hit ' + (c.n > 1 ? c.n + ' times' : 'once') + ' for ' + Math.round(c.amt).toLocaleString('en-US') + '.', 'Purple carriers have right of way. Stay more than 6 yards from anyone carrying Mutagenic Venom (the purple circle on the map).'); mistakes[mistakes.length - 1].avoid = true; }
   // mass Venom Rupture: a player jumping 8+ stacks within 2s means a purple orb touched other orbs
   const vr = auras('venom rupture').filter((e) => h.isPlayer(e.dst)).sort((a, b) => a.t - b.t);
   const lastSt = new Map(), hist = new Map(), bursts = [];
@@ -3655,7 +3656,7 @@ function buildCoiledAltar(ev, r, h) {
       { txt: leftover.some((x) => x.t === end) ? 'orb left at next Deluge' : bursts.some((b) => b.t >= d && b.t < end) ? 'orbs collided' : 'clean', bad: leftover.some((x) => x.t === end) || bursts.some((b) => b.t >= d && b.t < end) }];
   });
   sections.push({ id: 'orbs', title: 'Orbs (Cleanup)', place: 'Orb cleanup', spell: S('virulent mutation'), mythicOnly: true,
-    verdict: bursts.length || leftover.length ? 'bad' : clipped.length ? 'warn' : 'good',
+    verdict: bursts.length || leftover.length ? 'bad' : 'good', /* (fix 7: purple-carrier clips are judged in Avoidable damage) */
     summary: [pl(deluges.length, 'Toxic Deluge cycle'), pl(carry.length, 'purple orb pickup'), pl(clipped.length, 'player') + ' clipped by carriers', pl(bursts.length, 'orb collision'), pl(leftover.length, 'orb') + ' left at a Deluge'].join(', ') +
       (p2 != null ? '. Venom Rupture after the P1 push: up to ' + pushMax + ' stacks' + (pushMax > 11 ? ' (the plan is 9 to 11)' : '') + '.' : '.'),
     cols: ['Cycle', 'Deluge', 'Purple pickups', 'Carriers', 'Clipped', 'Result'], rows: cycles,
@@ -3993,7 +3994,8 @@ function buildCoiledAltar(ev, r, h) {
 
   // ---- Tank frontals: who took each Sever / Soul Sever / Blighted Sever, on which stack, and with what up ----
   // The plan: in P1 the tanks swap every frontal (one stack each); in P2 one tank takes every Soul Sever, using a
-  // defensive on the first stack and a defensive plus two externals on the second (the stacks drop before a third).
+  // defensive on the first stack and a big defensive and an external on the second (the stacks drop before a third; one external is what top
+  // tanks use, Coiled Altar fix 6, Oct 24).
   const tfRows = [];
   for (const n of ['sever', 'soul sever', 'blighted sever']) for (const t0 of casts(n)) {
     // the frontal itself (when the cast lands), not the damage-over-time Soul Sever leaves on the tank
@@ -4002,13 +4004,13 @@ function buildCoiledAltar(ev, r, h) {
     const g = hit.dst, st = (auras(n).filter((e) => e.dst === g && (e.op === 'apply' || e.op === 'dose') && Math.abs(e.t - hit.t) < 1).map((e) => (e.op === 'apply' ? 1 : e.stacks || 1)).pop()) || 1;
     const exts = EXTERNAL.filter((x) => has(g, x, hit.t)), pers = PERSONAL.filter((x) => has(g, x, hit.t)).concat(IMMUNE.filter((x) => has(g, x, hit.t)));
     const died = r.deaths.find((d) => d.guid === g && d.t >= hit.t - 0.2 && d.t <= hit.t + 3);
-    const ph = phaseAt(hit.t), lowCover = st >= 2 && exts.length < 2;
+    const ph = phaseAt(hit.t), lowCover = st >= 2 && !exts.length && !IMMUNE.some((x) => has(g, x, hit.t)) && pers.length < 2; /* (covered: an external, an immunity, or two defensives (top kills, Oct 24)) */
     const bad = !!died || st >= 3, warn = !bad && ((ph === 'P1' && st >= 2) || lowCover || (!pers.length && !exts.length && st >= 2));
-    if (died) M(hit.t, pname(g), n, 'High', 'Died to ' + S(n)[1] + ' on stack ' + st + '.', st >= 2 ? 'On the second stack use a defensive plus two externals, or swap.' : 'Use a defensive for the frontal.');
+    if (died) M(hit.t, pname(g), n, 'High', 'Died to ' + S(n)[1] + ' on stack ' + st + '.', st >= 2 ? 'On the second stack, use a big defensive and get an external, or swap.' : 'Use a defensive for the frontal.');
     else if (st >= 3) M(hit.t, pname(g), n, 'High', 'Took ' + S(n)[1] + ' on stack ' + st + '.', 'Let the stacks drop (or swap) before a third frontal.');
-    else if (warn) M(hit.t, pname(g), n, 'Low', 'Took ' + S(n)[1] + ' on stack ' + st + (exts.length ? ' with ' + exts.length + ' external' + (exts.length === 1 ? '' : 's') : ' with no external') + (ph === 'P1' ? ' (P1 swaps every frontal)' : '') + '.', ph === 'P1' ? 'Taunt before each Sever so every frontal lands on a fresh tank.' : 'On the second stack, use a defensive and get two externals.');
+    else if (warn) M(hit.t, pname(g), n, 'Low', 'Took ' + S(n)[1] + ' on stack ' + st + (exts.length ? ' with ' + exts.length + ' external' + (exts.length === 1 ? '' : 's') : ' with no external') + (ph === 'P1' ? ' (P1 swaps every frontal)' : '') + '.', ph === 'P1' ? 'Taunt before each Sever so every frontal lands on a fresh tank.' : 'On the second stack, use a big defensive and get an external.');
     tfRows.push({ t: hit.t, row: [{ t: hit.t }, { s: S(n) }, { p: pname(g) }, { txt: 'stack ' + st, bad: st >= 3, warn: ph === 'P1' && st >= 2 },
-      { txt: [...new Set([...pers, ...exts])].map((x) => SHORT_CD[x] || x.replace(/\b\w/g, (c) => c.toUpperCase())).join(', ') || 'nothing up', sub: st >= 2 ? (exts.length >= 2 ? 'two externals: as planned' : 'plan: defensive + two externals') : '', warn: lowCover || (!pers.length && !exts.length && st >= 2), dim: st < 2 && !pers.length && !exts.length },
+      { txt: [...new Set([...pers, ...exts])].map((x) => SHORT_CD[x] || x.replace(/\b\w/g, (c) => c.toUpperCase())).join(', ') || 'nothing up', sub: st >= 2 ? (!lowCover ? 'covered' : 'plan: a big defensive and an external') : '', warn: lowCover || (!pers.length && !exts.length && st >= 2), dim: st < 2 && !pers.length && !exts.length },
       { txt: died ? 'died' : 'lived', bad: !!died }] });
   }
   if (tfRows.length) sections.push({ id: 'tankfront', title: 'Tank frontals (Defensives on stack 2)', place: 'Tank frontals: stacks and defensives', spell: S('soul sever'),
@@ -4253,15 +4255,16 @@ function buildCoiledAltar(ev, r, h) {
     let spread = 0; for (const a of at) for (const b of at) spread = Math.max(spread, Math.hypot(a.x - b.x, a.y - b.y));
     const gl = objs(t + 12, t).filter((o) => o.kind === 'ghost'), ghosts = gl.length;
     // (one marker spot plus movement and position sampling easily spans ~10 yd, so only a clear split counts)
-    if (mythic && at.length > 1 && spread > 12) M(t, 'Raid', 'dreadmarch', 'Low', 'Dreadmarch targets were ' + Math.round(spread) + ' yards apart instead of stacked on one marker.', 'If you are targeted, stack on the raid\'s Dreadmarch marker so the ghosts spawn in one clump the frontal can hit.');
+    /* (Coiled Altar fix 7, Oct 24: in every top kill; the spread and the ghosts stay on the row as facts) */
+    if (false) M(t, 'Raid', 'dreadmarch', 'Low', 'Dreadmarch targets were ' + Math.round(spread) + ' yards apart instead of stacked on one marker.', 'If you are targeted, stack on the raid\'s Dreadmarch marker so the ghosts spawn in one clump the frontal can hit.');
     // ghosts spawn where their player stands a moment after the mind control breaks: one far from the clump means
     // someone moved (blink, gateway, port) before it spawned
     let farWho = []; /* (Oct 23: whose ghost spawned far: the Dreadmarch target standing nearest to it a moment after the mind control) */
     if (mythic && gl.length > 2) { const cx = mid(gl.map((o) => o.x)), cy = mid(gl.map((o) => o.y)), far = gl.filter((o) => Math.hypot(o.x - cx, o.y - cy) > 15);
       farWho = far.map((o) => { const ii = inst.find((x) => x.guid === o.guid), sx = ii ? ii.pts[0][1] : o.x, sy = ii ? ii.pts[0][2] : o.y, near = h.snap(ii ? ii.t0 : t + 6).filter((p) => tg.includes(p.guid)); /* (where and when it spawned) */
         const p = near.sort((a, b) => Math.hypot(a.x - sx, a.y - sy) - Math.hypot(b.x - sx, b.y - sy))[0]; return { o, n: p && Math.hypot(p.x - sx, p.y - sy) < 12 ? String(pname(p.guid)).split('-')[0] : null, d: Math.round(Math.hypot(o.x - cx, o.y - cy)) }; });
-      if (far.length) M(t + 6, 'Raid', 'dreadmarch', 'Low', (farWho.every((x) => x.n) ? farWho.map((x) => x.n + '\'s ghost spawned ' + x.d + ' yards').join(', ') + ' from the clump after Dreadmarch.' : pl(far.length, 'ghost') + ' spawned more than 15 yards from the clump after Dreadmarch.'), 'After your mind control breaks, stand still until your ghost spawns, so all ghosts start together in front of the boss.'); }
-    dmRows.push([{ t }, { ps: tg.map(pname), none: 'not found' }, { txt: at.length > 1 ? Math.round(spread) + ' yd' : '—', bad: mythic && at.length > 1 && spread > 6 }, farWho.length ? { txt: String(ghosts), warn: true, sub: farWho.map((x) => (x.n ? x.n + '\'s' : 'one') + ' ' + x.d + ' yd from the clump').join(', ') } : { txt: String(ghosts) },
+      if (false) M(t + 6, 'Raid', 'dreadmarch', 'Low', (farWho.every((x) => x.n) ? farWho.map((x) => x.n + '\'s ghost spawned ' + x.d + ' yards').join(', ') + ' from the clump after Dreadmarch.' : pl(far.length, 'ghost') + ' spawned more than 15 yards from the clump after Dreadmarch.'), 'After your mind control breaks, stand still until your ghost spawns, so all ghosts start together in front of the boss.'); }
+    dmRows.push([{ t }, { ps: tg.map(pname), none: 'not found' }, { txt: at.length > 1 ? Math.round(spread) + ' yd' : '—' }, farWho.length ? { txt: String(ghosts), sub: farWho.map((x) => (x.n ? x.n + '\'s' : 'one') + ' ' + x.d + ' yd from the clump').join(', ') } : { txt: String(ghosts) },
       { map: { t: t + 4, from: t, hl: tg, hlLabel: 'Dreadmarch targets', title: 'Dreadmarch at ' + h.fmtT(t) + ': targets ringed, ghosts as they spawned' } }]);
   }
   if (dm.length) sections.push({ id: 'dmstack', title: 'Dreadmarch (Stacking)', place: 'Dreadmarch stacking and ghost spawns', spell: S('dreadmarch'),
@@ -4295,8 +4298,9 @@ function buildCoiledAltar(ev, r, h) {
       extraPts: out.map((g) => ({ guid: g.guid, name: g.name, x: g.pts[0][1], y: g.pts[0][2], kind: 'ghost' })),
       note: removed.length + ' of ' + out.length + ' ghosts removed' + (missed.length ? ', ' + missed.length + ' missed' : '') + (est ? ' (estimated from spawn spots; Blighted Sever hits on ghosts are not always logged)' : ''),
       title: S(f.n)[1] + ' at ' + h.fmtT(f.t) + ': ghosts at their spawn spots (green ring = removed, red X = missed)' };
-    if (mythic && missed.length && !est) MS(f.t, 'Raid', f.n, 'Low', missed.length + ' ghost' + (missed.length === 1 ? ' was' : 's were') + ' not in ' + S(f.n)[1] + ' and stayed alive.', 'Stare at your ghost so it stays put. If it was outside the frontal, walk it back to the stack spot for the next one.', map);
-    ssRows.push([{ t: f.t }, { s: S(f.n), sub: est ? 'estimate' : '' }, { txt: String(out.length) }, { txt: String(removed.length) }, { txt: String(missed.length), warn: missed.length > 0 && !est }, { map }]);
+    /* (Coiled Altar fix 7, Oct 24: 9 of 11 top kills; a missed ghost is walked back for the next frontal) */
+    if (false) MS(f.t, 'Raid', f.n, 'Low', missed.length + ' ghost' + (missed.length === 1 ? ' was' : 's were') + ' not in ' + S(f.n)[1] + ' and stayed alive.', 'Stare at your ghost so it stays put. If it was outside the frontal, walk it back to the stack spot for the next one.', map);
+    ssRows.push([{ t: f.t }, { s: S(f.n), sub: est ? 'estimate' : '' }, { txt: String(out.length) }, { txt: String(removed.length) }, { txt: String(missed.length) }, { map }]);
   }
   if (ssRows.length) sections.push({ id: 'soulsever', title: 'Soul Sever (Frontal)', place: 'Soul Sever: ghosts in the frontal', spell: S('soul sever'),
     verdict: ssRows.some((x) => x[4].bad) ? 'bad' : 'good',
