@@ -6162,7 +6162,7 @@ function* analyzeSteps(item, text, opts) {
     switch (ev) {
       // a watched spell that missed a player (immune, Turtle, Cloak...): they were still in it, e.g. a Guillotine soaker
       // a player's auto attack that missed an enemy still means they were in melee range (melee uptime)
-      case 'SWING_MISSED': { if (isPlayer(sg) && (parseInt(f[6], 16) & 0x40)) { const p = P(sg, sn); (p.swT || (p.swT = [])).push(t); } break; }
+      case 'SWING_MISSED': { if (isPlayer(sg) && (parseInt(f[6], 16) & 0x40)) { const p = P(sg, sn); (p.swT || (p.swT = [])).push(t); } else if (isPlayer(dg) && (parseInt(f[2], 16) & 0x40)) { const p = P(dg, dn); if (!p.hitIn) p.hitIn = []; if (p.hitIn.length < 20000) p.hitIn.push([t, 6603]); } break; }
       case 'SPELL_MISSED': case 'SPELL_PERIODIC_MISSED': {
         if (f.length >= 12 && isPlayer(dg) && W(f[9], f[8])) modEv.push({ k: 'miss', t, dst: dg, spell: f[9], id: num(f[8]), how: f[11], src: sg });
         break;
@@ -6203,6 +6203,7 @@ function* analyzeSteps(item, text, opts) {
         if (hasAdv && f[adv] === dg) { const mx = num(f[adv + 3]); if (mx > 0 && isPlayer(dg)) pMax.set(dg, mx); if (mx > 0) { hp = num(f[adv + 2]) / mx * 100; seenHp(dg, dn, num(f[adv + 2]), mx, t); seenPhp(dg, num(f[adv + 2]), mx, t); } }
         if (isPlayer(dg)) {
           const p = P(dg, dn);
+          if (ev !== 'SPELL_PERIODIC_DAMAGE' && (parseInt(f[2], 16) & 0x40)) { if (!p.hitIn) p.hitIn = []; if (p.hitIn.length < 20000) p.hitIn.push([t, id]); } /* (an enemy's direct hits on them, melee included: when a tank was tanking (Oct 25)) */
           p.taken += base; addAb(p.takenAb, spell, id, base, 0, crit); bump(r.takenS, t, base); bump(p.takenS, t, base); { const raw = num(f[s0 + 1]), ab = Math.max(0, num(f[s0 + 6])); if (raw > 0) { bump(p.rawS, t, raw); bump(p.mitS, t, Math.max(0, raw - base - ab)); } if (ab > 0) bump(p.shS, t, ab); if (devOn.has(dg)) { const dv = (base + ab) * 0.03 / (amOn(t) ? 0.88 : 0.97), gq = r.players.get(devOn.get(dg)); bump(p.devS, t, dv); if (gq) bump(gq.devGS || (gq.devGS = []), t, dv); } } /* (devS: what Devotion Aura's 3% took off, about) */ /* (Graphs' Mitigation tab (Oct 23)) */
           if (base > 0) bumpAb(r.takenAbS, t, spell, id, base);
           const av = mech.damage(t, p.name, id, spell, base), raw = base + Math.max(0, num(f[s0 + 6])); p.avoidable += av;
