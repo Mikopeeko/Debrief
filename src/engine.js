@@ -1264,7 +1264,7 @@ function buildTwinFangs(ev, r, h) {
           const result = !a.fired ? { txt: 'add died first, no spit' + (ad && ad.died != null ? ' (' + h.fmtT(ad.died) + ')' : '') }
             /* (Oct 23, your note: "fired, hit the target" read as the target's fault; it's the add living too long. Being targeted can't be helped) */
             : a.n >= 2 ? { txt: 'add lived too long', bad: a.n >= 3, warn: true }
-            : { txt: a.hitTarget ? 'hit only its target' : 'hit nobody' };
+            : { txt: ((by) => (a.hitTarget ? (by.length ? 'hit its target and ' + by.join(', ') : 'hit only its target') : by.length ? 'hit ' + by.join(', ') : 'hit nobody'))([...new Set(a.byst.map((o) => pname(o.e.dst)))]) }; /* (fix 11, Oct 24: it said "only its target" with others hit too) */
           const t0 = a.t0 - 0.4, t1 = a.t1 + 0.6;
           const mp = spitMap(t0, t1, s.aims.filter((x) => x.t1 >= t0 && x.t0 <= t1), [a], a.byst.map((o) => [o.e.dst, o.e.t]), 'Corrosive Spit, set ' + (s.i + 1) + ', spawn ' + a.k + ' spit ' + a.n + ': ' + h.fmtT(a.t0) + ' to ' + h.fmtT(a.t1));
           mp.note = spitNote(a);
@@ -1316,7 +1316,7 @@ function buildTwinFangs(ev, r, h) {
       const tank = sbTank.filter((e) => e.t >= c.t && e.t < nextT + 0.2 && e.t < c.t + 3);
       const raid = sbRaid.filter((e) => e.t >= c.t && e.t < c.t + 3);
       return { t: c.t, k, tank: [...new Set(tank.map((e) => e.dst))], raid: [...new Set(raid.map((e) => e.dst))], hitT: (tank[0] || raid[0] || { t: c.t + 1.5 }).t };
-    });
+    }).filter((x) => !(r.item.kill && x.hitT >= dur - 1)); /* (fix 10, Oct 24: a circle landing within a second of the kill, or after it, isn't judged) */
     const tankG = (rows.find((x) => x.tank.length) || { tank: [] }).tank[0] || (auraId(TF.sbDeb).find((e) => e.t >= set[0].t && e.t <= set[0].t + 10) || {}).dst;
     for (const x of rows) if (!x.tank.length && x.raid.length) {
       // (no map: the log can't place the circle itself, only where the tank and the raid stood, and a map of that alone would look like proof)
@@ -3719,7 +3719,8 @@ function buildCoiledAltar(ev, r, h) {
     const mine = adds.filter((a) => a.t0 >= t - 2 && a.t0 <= t + 15);
     // amber: still alive when the next set spawned (the plan wants them dead by then, but the shield comes first);
     // red: still alive when the set after that spawned (sets piling up)
-    const alive = next != null ? mine.filter((a) => a.died == null || a.died > next) : [];
+    /* (Coiled Altar fix 8, Oct 24: the 11 top kills had an add live up to 10.7 s into the next set, so up to 12 s isn't flagged) */
+    const alive = next != null ? mine.filter((a) => a.died == null || a.died > next + 12) : [];
     const next2 = sc[i + 2] != null && phaseAt(sc[i + 2]) === phaseAt(t) ? sc[i + 2] : null, lateDm = next2 != null ? mine.filter((a) => a.died == null || a.died > next2) : [];
     if (lateDm.length) M(next2, 'Raid', 'spiritcackle', 'High', lateDm.length + ' Spiteful Soulcoiler' + (lateDm.length > 1 ? 's were' : ' was') + ' still alive two sets later.', 'Break each Spirit Shield with two overlapping Gloombombs (melee targets on the melee add, ranged on the ranged add) and kill both adds before the next set.');
     else if (alive.length) M(next, 'Raid', 'spiritcackle', 'Low', alive.length + ' Spiteful Soulcoiler' + (alive.length > 1 ? 's were' : ' was') + ' still alive when the next set of adds spawned.', 'Kill both adds before the next set spawns. The shield comes first, but don\'t let sets pile up.');
@@ -3742,7 +3743,9 @@ function buildCoiledAltar(ev, r, h) {
     else if (e.op === 'remove') { const c = gbWin.filter((x) => x.g === e.dst && x.s <= e.t).pop(); if (c) c.e = e.t; }
   }
   const gbAt = (t) => gbWin.filter((c) => t >= c.s - 0.2 && t <= c.e + 0.3), clipAt = (t) => gbClip.filter((e) => Math.abs(e.t - t) <= 1.5).map((e) => e.dst);
-  for (const e of gbClip) M(e.t, pname(e.dst), 'gloombomb', 'Medium', 'Got clipped by someone else\'s Gloombomb, so they also had to collect souls.', 'Gloombomb targets move to the add or to the side. Everyone else stays out of the circles.');
+  /* (Coiled Altar fix 8, Oct 24: 6 of 11 top kills had 1 to 5 clips and nobody died: Low; Gravebound killing them is High) */
+  const gbGrave = (e) => r.deaths.find((d) => d.guid === e.dst && d.t >= e.t && d.t <= e.t + 16 && /^gravebound$/i.test(String(d.ability || '')));
+  for (const e of gbClip) M(e.t, pname(e.dst), 'gloombomb', gbGrave(e) ? 'High' : 'Low', 'Got clipped by someone else\'s Gloombomb, so they also had to collect souls.', 'Gloombomb targets move to the add or to the side. Everyone else stays out of the circles.');
   sections.push({ id: 'adds', title: 'Spiritcackle and Gloombombs (Adds)', place: 'Spiritcackle adds and Gloombombs', spell: S('spiritcackle'),
     verdict: setRows.some((r2) => r2[4].bad) ? 'bad' : gbClip.length ? 'warn' : 'good',
     summary: pl(sc.length, 'add set') + ', and ' + pl(gbClip.length, 'player') + ' clipped by a Gloombomb they weren\'t targeted by. The kicks on each add are under Interrupts below.',
@@ -4400,8 +4403,8 @@ function buildCoiledAltar(ev, r, h) {
         const left = (k) => { const a = setAdds[k - 1]; if (!a) return null; const n = ssEv.filter((e) => e.dst === a.g && e.op === 'rdose').length; return Math.max(0, 2 - n); };
         const rows = shieldOf[i].map((x) => [{ txt: 'Soulcoiler ' + x.k + ' shield' }, { t: x.t }, { txt: '' }, { ...x.cell, txt: 'Spirit Shield ' + x.cell.txt + (!/^broken/.test(x.cell.txt) && left(x.k) != null ? ' (' + left(x.k) + ' of 2 stacks left)' : '') }, { txt: '' }]);
         // amber: clipped by someone else's Gloombomb (they had to collect souls); red if they died from it
-        for (const e of gbClip.filter((e) => e.t >= g.t && e.t < (groups[i + 1] ? groups[i + 1].t : dur + 1))) { const dd = r.deaths.find((d) => d.guid === e.dst && d.t >= e.t && d.t <= e.t + 10);
-          rows.push([{ txt: 'Gloombomb clip', warn: true, bad: !!dd }, { t: e.t }, { p: pname(e.dst) }, { txt: 'hit by another Gloombomb' + (dd ? ', died' : ''), warn: true, bad: !!dd },
+        for (const e of gbClip.filter((e) => e.t >= g.t && e.t < (groups[i + 1] ? groups[i + 1].t : dur + 1))) { const dd = r.deaths.find((d) => d.guid === e.dst && d.t >= e.t && d.t <= e.t + 16 && /^gravebound$/i.test(String(d.ability || '')));
+          rows.push([{ txt: 'Gloombomb clip', bad: !!dd, dim: !dd }, { t: e.t }, { p: pname(e.dst) }, { txt: 'hit by another Gloombomb' + (dd ? ', died' : ''), bad: !!dd, dim: !dd },
             { map: { t: e.t, gloom: true, hl: [e.dst], hlLabel: 'player clipped', title: 'Gloombomb at ' + h.fmtT(e.t) + ': ' + pname(e.dst) + ' was inside someone else\'s 15 yd circle' } }]); }
         const sh = shieldOf[i].map((x) => 'Soulcoiler ' + x.k + ' ' + (/^broken/.test(x.cell.txt) ? 'broken' : 'not broken'));
         return { title: g.title, t: g.t, rows, bad: rows.some(isBad), warn: rows.some((row) => row.some((c) => c.warn)), sub: sh.join(', ') || 'no adds seen' };
@@ -4463,7 +4466,7 @@ function buildCoiledAltar(ev, r, h) {
           for (const x of res) {
             const role = roleOf(x.c), tg = x.a ? tag(x.a) : null;
             // melee belongs on the unmarked add (only judged when the raid marked one of this set's adds)
-            const wrongAdd = tg && tg.mine && role && mineAdds.some((a) => markerAt(r, a.g, te) > 0) && ((role === 'melee') === tg.mk);
+            const wrongAdd = false; /* (Coiled Altar fix 8, Oct 24: guilds mark different adds (2 of 11 top kills mark the melee one), so which add isn't judged; missing the adds is) */
             let what, bad = false, warn = false;
             if (!x.a) { what = x.d != null ? 'missed the adds (' + x.d + ' yd from the nearest)' + (endSet ? ', fine on the last set of the phase' : '') : 'no position logged'; bad = x.d != null && !endSet; if (bad) M(te, pname(x.c), 'gloombomb', 'Medium', 'Their Gloombomb didn\'t land on an add in set ' + (k + 1) + ' (' + x.d + ' yd from the nearest Soulcoiler), so it didn\'t take a Spirit Shield stack off.', 'Take your Gloombomb to your add before it explodes. Melee take theirs to the unmarked add and ranged to the marked one, overlapping with your partner.'); }
             else if (!tg.mine) { what = 'landed on ' + tg.label + ' (wasted)'; warn = true; M(te, pname(x.c), 'gloombomb', 'Low', 'Their Gloombomb in set ' + (k + 1) + ' landed on a leftover add from an earlier set instead of this set\'s.', 'Drop it on this set\'s adds. Kill leftovers before the next set.'); }
