@@ -5986,7 +5986,7 @@ function debuffDown(p, id, name, t) { const b = p.debuffs.get(name); if (!b) { p
 // one that ends and starts again at the same moment keeps its count)
 const STAT_BUFF_N = new Set(['soul fang alacrity', 'voracious heart of ula\'tek', 'devoured strength', 'empowering venom', 'devastating power', 'hex lord\'s doom', 'tidal insight',
   'freightrunner\'s flask', 'focus of ula\'tek', 'riftwalker\'s temptation', 'deepening temptation', 'akil\'zon\'s rite', 'jan\'alai\'s rite', 'halazzi\'s rite', 'nalorakk\'s rite',
-  'precision of the dragonhawk', 'genius insight', 'frenzied focus']);
+  'precision of the dragonhawk', 'genius insight', 'frenzied focus', 'seriously sharp seashell', '50-lb midnight salmon', 'tattered tortollan scroll', 'rotting voidfin', 'slick and slimy gralstone', 'brittle torga totem']);
 const isStatBuf = (n) => STAT_BUFF_N.has(n) || n.startsWith('venomcursed ');
 function statBuf(p, id, name, t, op, n) { if (!p.statB) p.statB = new Map(); let b = p.statB.get(id); if (!b) p.statB.set(id, b = { id, name, l: [], pv: 0 }); const l = b.l; if (l.length >= 4000) return;
   const z = l[l.length - 1], cur = z ? z[1] : 0; let v;
