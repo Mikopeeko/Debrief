@@ -44,6 +44,19 @@ browser (window.__wla.specRun) and read every row. Practice link: rotation-audit
 - Round 2 rule: use only guide pages with a 12.1.5 tag or date (skip older ones), spell tooltips at 12.1.5, and the SimC APL from the current
   branch. Mark any rule whose number came from an older patch, and update it.
 
+## Round 2 (Oct 24): order and merging, every spec (practice link rotation-round2; script scratchpad ck_merge.js)
+- **Most important first.** Sections now run Rotation, Cooldowns, Mitigation (tanks), Resources, This boss, Start of the pull, Stats.
+  Inside a section, cards are ordered by what they cost (c.cost, already measured against top players), then by worst flag, then by weight.
+- **One card per subject.** A spell's checks merge into one card: the worst (or its "uses" / "on cooldown") row on top, the rest as short
+  lines with their own bars underneath, and every row's details when the card opens. Examples: Beacon of Virtue + its windows, Divine Toll
+  uses + inside Beacon of Virtue, Avenging Wrath uses + casting in it, Ascendance windows + uses + Stormkeeper before Ascendance.
+  "Cooldowns on big damage" stays its own card (it shares Aura Mastery's icon but isn't about it).
+- **Result on the 18 specs of the Oct 21 night:** 335 rows became 290 cards, with no errors and no rows lost.
+  Preservation 34→28, Mistweaver 23→18, Augmentation 20→16, Elemental 23→19, Holy Paladin 25→21.
+- Holy Paladin accuracy: re-checked against the live spell text (Moment of Compassion 50%, Infusion of Light 10%, Beacon of Virtue 15 s,
+  Aurora → Divine Purpose, Divine Toll 1 min, Aura Mastery 3 min), all right. The new check, Aura Mastery inside Beacon of Virtue, follows
+  both guides.
+
 ## Left for round 2 (weekly limit; resumes after Oct 25 noon Central)
 - Read each spec's guides again (every dropdown, 12.1.5) against every rule and cooldown length, spec by spec, starting with the specs
   that have no top-player numbers at all (Protection Warrior, Demonology: their rows are graded on default thresholds).
