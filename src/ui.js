@@ -1770,6 +1770,7 @@ const PATCH_NOTES = [
     { t: 'Debrief in game: a guided setup', d: 'The first time you log in, a short setup helps you pick a style and what your card shows, with a live preview beside it (/debrief setup opens it again). Long cards now split into two columns instead of running off the screen.' },
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
+    'Boss guides, Coiled Altar Mythic: the tank taking a second Sever or Soul Sever stack needs a big defensive and one external, not two externals (what top tanks do).',
     'Mythic Ula\'tek, fairer checks measured on top guilds\' kills: a Volatile Purge without a defensive, picking up an egg with Rancid Yolk on, one or two players outside the Wretch\'s bubble, and a Falling Debris clip you live through are notes, not mistakes. Dying to them still counts.',
     'Boss guides, Coiled Altar Mythic: soaking an axe marks you for 100 seconds (120 in phase 3), not the rest of the fight, so the first axe\'s soakers are free again for the third. The second soak is at least five, not exactly five.',
     'Rotation puts the most important things first on every spec, and each spell\'s checks are one card now (its uses, its windows and the cooldowns that go with it), so the page is shorter.',
