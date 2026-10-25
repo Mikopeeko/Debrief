@@ -1,31 +1,28 @@
-DEBRIEF IN GAME (version 0.2)
-=============================
+DEBRIEF IN GAME
+===============
 
 What it does
-  After every boss pull, your recap shows in WoW: your damage or healing (against your last pull and your best),
-  your biggest rotation slips, your boss mistakes and one thing to try next pull. Raid leads also get a Raid view.
+  After every boss pull (raid or dungeon), your recap pops up on your PC by itself: what you did well, what to fix first,
+  and one thing to try next pull. Type /reload in WoW when it suits you, and the same recap is in the game on /recap.
+  Nothing to copy or paste: the app does it all.
 
-The person who logs the raid
+Setting it up (everyone who wants their recap)
   1. Double-click Debrief-Setup.exe. That's it.
-     It installs Debrief Companion (with a Debrief icon on your desktop), puts the Debrief addon into WoW,
-     and opens. If Windows says "Windows protected your PC": click More info, then Run anyway (it's new, so Windows
-     doesn't know it yet).
-  2. In WoW, type /reload if it was open. In a raid, the addon turns the combat log on by itself.
-  3. After each boss pull you hear a chime and the Debrief box pops up, ready: press Ctrl+V.
-     Your card shows, and the addon sends everyone else their card.
-  You can close the app's window: Debrief keeps running in the background. Quit (top right) stops it.
-  Next time, open it with the Debrief icon. It updates itself when there's a new version.
-
-Raiders
-  Just install the Debrief addon (from CurseForge, or the Debrief-addon zip into World of Warcraft\_retail_\Interface\AddOns).
-  Their card shows up by itself after each pull.
+     It installs Debrief Companion (with a Debrief icon on your desktop), puts the Debrief addon into WoW, and opens.
+  2. In WoW, type /reload if it was open. The first time, a short guided setup helps you pick what your card shows.
+     The addon keeps the combat log on for you (with Advanced Combat Logging).
+  3. Play as usual. After each boss pull, your recap pops up on your PC, over the game.
+     In WoW, type /reload when it suits you, then /recap.
+  You can close the app's window: Debrief keeps running in the background. Quit stops it.
+  It updates itself between pulls. When the addon was updated, the pop-up tells you to /reload.
 
 Handy commands in WoW
-  /debrief          show or hide the card
-  /debrief paste    open the paste box
-  /debrief demo     a sample card
-  /debrief log      combat log in raids on or off (on by default)
-  /debrief focus    paste box ready for Ctrl+V after a pull, on or off
-  /debrief test     test mode: the box after every fight, on or off
-  /debrief raid     Raid view on or off
-  /debrief reset    move the card back to the middle
+  /recap           show or hide your card
+  /db              your settings: the style, what the card shows, colours and sizes
+  /debrief big     the big window with every pull of the night
+  /debrief setup   the guided setup again
+  /debrief demo    a sample card
+  /debrief log     combat logging on or off
+  /debrief reset   move the card back to the middle
+
+Something off? Press Report a problem at the bottom of the Debrief Companion window.

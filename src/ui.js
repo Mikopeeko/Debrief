@@ -1837,6 +1837,7 @@ const PATCH_NOTES = [
     { t: 'Debrief in game: a guided setup', d: 'The first time you log in, a short setup helps you pick a style and what your card shows, with a live preview beside it (/debrief setup opens it again). Long cards now split into two columns instead of running off the screen.' },
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
+    'Debrief in game: a clearer first-time setup that checks the PC app and combat logging for you, and /db on one page with the four everyday switches on top and the rest in folds. The addon and the PC pop-up now use the website font and colours, and pull buttons are coloured by how far each pull got.',
     'Debrief Companion: the pop-up and card use the latest website checks, with fairer mechanics on six bosses and the new Rotation page',
     'Rotation no longer has the moment-by-moment graph or the chart; your fixes and the rings say it all.',
     'Boss guides, Coiled Altar Mythic: the tank taking a second Sever or Soul Sever stack needs a big defensive and one external, not two externals (what top tanks do).',
@@ -2435,11 +2436,9 @@ const IGM_SHOTS = [
   ['card-sizes.png', 'Card sizes', 'Make the card smaller or bigger.'],
   ['tutorial.png', 'First-time tutorial', 'Four short steps the first time you log in.'],
 ];
-const IGM_CMDS = [['/dmo', 'Opens the settings.'], ['/debrief', 'Shows or hides your card.'], ['/debrief big', 'Opens the big window with the whole night.'], ['/debrief demo', 'Shows a sample card, to try it before raid.'], ['/debrief tutorial', 'Plays the tutorial again.']];
+const IGM_CMDS = [['/recap', 'Shows or hides your card.'], ['/db', 'Opens the settings.'], ['/debrief big', 'Opens the big window with the whole night.'], ['/debrief demo', 'Shows a sample card, to try it before raid.'], ['/debrief setup', 'Opens the guided setup again.']];
 // (the site's own logo, the same as the top bar's; its colours are the lgf* gradients at the top of the page)
 const IGM_LOGO = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 2 57 11.5V30c0 15.5-11.3 26.6-25 32C18.3 56.6 7 45.5 7 30V11.5Z" fill="url(#lgfMetal)" stroke="#4a300a" stroke-width=".8"/><path d="M32 7 52.5 14.8V30c0 12.8-9.2 22-20.5 26.6C20.7 52 11.5 42.8 11.5 30V14.8Z" fill="url(#lgfMetalDk)"/><path d="M32 9.2 50.5 16.3V30c0 11.7-8.3 20.2-18.5 24.5C21.8 50.2 13.5 41.7 13.5 30V16.3Z" fill="url(#lgfEnamel)"/><path d="M32 9.2 50.5 16.3V23C40 20.5 24 20.5 13.5 23V16.3Z" fill="#fff" opacity=".07"/><path fill-rule="evenodd" transform="translate(0 1.2)" fill="#000" opacity=".55" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path fill-rule="evenodd" fill="url(#lgfMetal)" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path d="m29 32.4 2.7 2.7 5.6-6.1" fill="none" stroke="url(#lgfEmerald)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-// (the "See your recap?" prompt, drawn as it looks in the game)
-const igmToast = () => '<div class="igm-toast" aria-hidden="true">' + IGM_LOGO + '<span><b>See your recap?</b>Press Ctrl+V after the chime.</span><kbd>Ctrl+V</kbd></div>';
 let IGM_BACK = null;
 function openInGame() {
   if (S.page === 'pull' && S.item) IGM_BACK = { item: S.item, tab: S.tab, scope: S.scope };
@@ -28600,10 +28599,10 @@ function startTour(at) {
 const PAGE_TIPS = {
   // (the Debrief in game page's own tips (Oct 21: Help there started the whole tour))
   ingame: [
-    { sel: '#main .igm-cta', t: 'Get it', p: 'Download for Windows puts in the PC app and the addon in one go. Everyone else in the raid only needs the addon.' },
-    { sel: '#main .igm-who', t: 'Who needs what', p: 'Only one person runs the PC app, like the raid leader. Everyone else just has the addon, and their recap opens by itself.' },
-    { sel: '#main .igm-steps', t: 'After every pull', p: 'The app chimes, the person with it presses Ctrl+V in WoW, and the whole raid gets their recap.' },
-    { sel: '#main .igm-cmds', t: 'Handy commands', p: 'Type /dmo in game for the settings, or /debrief big for every pull of the night.' }],
+    { sel: '#main .igm-cta', t: 'Get it', p: 'Download for Windows puts in the PC app and the addon in one go.' },
+    { sel: '#main .igm-who', t: 'Who needs what', p: 'Everyone who wants their recap runs the PC app. It reads their own combat log and puts the addon in too.' },
+    { sel: '#main .igm-steps', t: 'After every pull', p: 'Your recap pops up on your PC by itself. Type /reload in WoW when it suits you, and /recap shows it there too.' },
+    { sel: '#main .igm-cmds', t: 'Handy commands', p: 'Type /recap for your card, /db for the settings, or /debrief big for every pull of the night.' }],
   live: [
     { sel: '#bhPulls .bhp-row, #list .film', t: 'Every pull of the night', p: 'Each bar is one pull: the higher it is, the further it got. Click one to see it. Its color shows how far it got too, and orange is a kill.' },
     { sel: '#view .lp-tiles', t: 'The pull at a glance', p: 'Green went right; yellow had some mistakes; red failed. The ▲ and ▼ arrows compare it with the last pull. Click a box for its details.' },
