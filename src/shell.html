@@ -6775,6 +6775,26 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-ra { gap: 6px; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-ra .btn.sm { padding: 5px 10px; font-size: 12.5px; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec .tn-pcol .nt-pr { flex-wrap: wrap; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec .tn-pcol .nt-prt { flex: 1 1 200px; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec .tn-pcol .nt-pra { flex: 1 1 100%; margin: 0 0 0 36px; } /* (the Swap in button under its sentence, lined up with it) */ }
+/* ===== Design studio round 12 (Oct 25): Plan's look: a calm Who plays table (quiet playing cells, hollow hatched sits), quiet boss-row buttons
+   with the status in colour on the row's edge, and the site's header strip on Tonight. Owner: the Design studio chat. ===== */
+/* the table: a playing cell is a quiet block tinted in the class colour with a class-colour edge; a sitting cell is hollow and hatched */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g .nt-tk.in { background: color-mix(in srgb, var(--cc) 34%, #12151c) !important; box-shadow: inset 3px 0 0 var(--cc); }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g .nt-tk.sug { background: color-mix(in srgb, var(--cc) 34%, #12151c) !important; box-shadow: inset 3px 0 0 var(--cc), 0 0 0 2px var(--gold) inset; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g .nt-tk.sit { background: repeating-linear-gradient(135deg, rgba(255,255,255,.085) 0 2px, transparent 2px 6px) !important; border: 1px solid rgba(255,255,255,.16) !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g .nt-tk.in:hover, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g .nt-tk.sug:hover { background: color-mix(in srgb, var(--cc) 55%, #12151c) !important; filter: none; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g .nt-tk.sit:hover { background: repeating-linear-gradient(135deg, rgba(255,255,255,.16) 0 2px, transparent 2px 6px) !important; border-color: rgba(255,255,255,.35) !important; filter: none; }
+/* the boss rows: the status in colour on the row's edge and in its pill (a dot first), the row's own buttons quiet */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row { box-shadow: inset 3px 0 0 transparent; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row:has(> .tn-s.ok) { box-shadow: inset 3px 0 0 #45c15c; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row:has(> .tn-s.w) { box-shadow: inset 3px 0 0 #e6b450; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-s::before { content: ''; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: currentColor; vertical-align: 1px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-s.no::before { opacity: .55; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row .tn-ra .btn.sm.primary { background: rgba(255,255,255,.04); border: 1px solid var(--line2); color: var(--text); box-shadow: none; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row .tn-ra .btn.sm.primary:hover { border-color: var(--gold); color: var(--gold); }
+/* Tonight opens with the site's header strip: a shield, the title, the switch and your teams, on one quiet panel */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-top { padding: 10px 14px; margin: 0 0 12px; border: 1px solid var(--line); border-bottom: 1px solid var(--line); border-radius: 12px; background: radial-gradient(560px 140px at 0% 0%, rgba(44,95,168,.32), transparent 62%), rgba(10,12,17,.35); }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-top h2 { display: inline-flex; align-items: center; gap: 10px; font-size: 24px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-top h2::before { content: ''; display: inline-block; width: 18px; height: 22px; background: linear-gradient(#5b93e0, #2f73c9); clip-path: polygon(0 0, 100% 0, 100% 45%, 50% 100%, 0 45%); filter: drop-shadow(0 4px 10px rgba(44,95,168,.55)); }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-top .tn-chip.on { box-shadow: 0 2px 10px rgba(230,180,80,.35); }
 </style>
 
 
