@@ -1772,6 +1772,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-25', h: [
+    { t: 'Home, one screen', d: 'Home now reads like a briefing: your team and you on one strip, the boss you\'re on big with your raid nights beside its chart, and the ten bosses as one row. How far you got is a bar as well as a number, on the banner, on every boss and on every night.' },
     { t: 'Compare: the answer first', d: 'Your biggest fixes and Why the gap now sit right under the face-off, side by side, instead of hidden at the bottom. Your big moments show the opener and the first window with the rest folded, and the face-off glows in each player\'s class colour.' },
     { t: 'Report card: one card per raider', d: 'Open a raider in the ranked roster and everything about them is one card under their row: who they are, their grade and rank, the checklist on the left and Their night on the right, with their deaths, best tonight and room to grow. The side panel is gone and the roster has the full width.' },
     { t: 'Rotation, in three places', d: 'You and your fixes in one box on top (your score and numbers on the left, What to fix on the right). Under it, on a desktop, the checklist you work through on the left and your numbers (the healing or damage split, then gear as one quiet list) on the right. Phones keep one column.' },
@@ -1779,6 +1780,7 @@ const PATCH_NOTES = [
     { t: 'One way to show a number', d: 'The Report card and Rotation now speak the same language as Debriefing: a bar with one number at its end, a grade as one letter at the start of its bar. The ranked roster is one bar per raider, a raider\'s checklist shows the rows that need them and folds the rest, and Rotation\'s header is one row with the talent trees folded under it.' },
     { t: 'Your tier set, in numbers', d: 'Rotation shows how much your 2-piece and 4-piece added, with a Where it came from breakdown behind every number. On every spec.' },
     { t: 'Your trinkets, both of them', d: 'Gear and extras on Rotation now shows both of your trinkets, with what each one did (damage, healing or stats), or that one was never pressed.' },], n: [
+    'Home: on a phone the banner\'s "Time on the boss" tile sits on one line under Pulls and Nights, and the ten bosses go five a row.',
     'Compare: Why the gap shows its two biggest reasons and folds the rest; on Your other pulls it leads the page.',
     'Report card: the night banner\'s five numbers are one slim strip with a smaller raid-grade ring, and the raid\'s six category tiles are a label with the letter, a bar with the score, and tonight\'s best, the same language as the roster.',
     'Rotation: Gear and extras is back in colour. Each group wears its own colour on a stripe, its label and total, its bars and a soft glow; the numbers stay white.',
@@ -30149,3 +30151,21 @@ function dsCompare() { const v = document.getElementById('view'); if (!v) return
   /* Why the gap: the first two reasons show, the rest fold */
   cmp.querySelectorAll('.cmp-gap .cmp-rcards').forEach((rc) => { if (rc.dataset.dsMore) return; rc.dataset.dsMore = '1'; fold([...rc.children].filter((c) => c.classList.contains('cmp-card')), 2, 'reasons'); }); }
 (function () { const f4 = dsBars; dsBars = function (root) { f4(root); try { dsCompare(); } catch (e) {} }; })();
+
+// ===== Design studio round 10 (Oct 25): Home as a briefing (mockup A). Re-homes Home's existing pieces: the team and You cards become
+// one header strip, the raid nights move beside the boss you're on, and the numbers already shown become bars. Runs after dsBars on every redraw. Owner: the Design studio chat. =====
+function dsHome() { const pg = document.querySelector('#main .home.prog .my-flow'); if (!pg) return;
+  const pct = (t) => { const m = (t || '').match(/(\d+)%/); return m ? m[1] : null; }, wrap = (cls, first, ...rest) => { const w = document.createElement('div'); w.className = cls; first.before(w); w.append(first, ...rest.filter(Boolean)); return w; };
+  /* the header strip: your team's row (name and its line, the Mythic tile, the four rankings and All rankings as one strip), then your row */
+  const who = pg.querySelector(':scope > .my-who'); if (who && !who.classList.contains('ds-hs')) { who.classList.add('ds-hs');
+    const team = who.querySelector('.my-team'); if (team) { const h1 = team.querySelector('.pg-tt > h1'), sum = team.querySelector('.pg-sum'); if (h1 && !h1.parentElement.classList.contains('ds-nm')) wrap('ds-nm', h1, sum);
+      const ch = team.querySelector('.pg-chips'); if (ch && !ch.querySelector('.ds-rk')) { const chs = ch.querySelector('.pg-chs'), bt = ch.querySelector('.pgc-t'); if (chs) { const w = document.createElement('span'); w.className = 'ds-rk'; chs.before(w); w.append(chs); if (bt) w.append(bt); } } }
+    const you = who.querySelector('.my-you.yu3'); if (you) { const bw = you.querySelector('.yu-x > .yu-bw'), yt = you.querySelector('.pg-ych > .yu-tiles'); if (bw && yt) yt.after(bw); } }
+  /* row one: the boss you're on, with the raid nights beside its chart */
+  const now = pg.querySelector('#pgNow'); if (now && !now.parentElement.classList.contains('ds-row1')) { const nights = pg.querySelector('#pgNights'); wrap('ds-row1' + (nights ? '' : ' one'), now, nights); }
+  /* the bars: how far the best pull got (a kill fills it), the boss in progress, each night's result in its own colour */
+  if (now) { const big = now.querySelector('.pnw-big'), t = big ? big.textContent : ''; now.style.setProperty('--p', pct(t) || (/Killed/.test(t) ? '100' : '0')); }
+  pg.querySelectorAll('.my-bc.prog').forEach((c) => { const tg = c.querySelector('.my-tag'); c.style.setProperty('--p', (tg && pct(tg.textContent)) || '0'); });
+  pg.querySelectorAll('#pgNights .pn-row').forEach((r) => { const v = r.querySelector('.pn-r'); if (!v) return; const k = r.classList.contains('pn-k');
+    r.style.setProperty('--p', k ? '100' : pct(v.textContent) || '0'); r.style.setProperty('--pc', k ? '#ff8000' : v.style.color || 'var(--muted)'); }); }
+(function () { const f5 = dsBars; dsBars = function (root) { f5(root); try { dsHome(); } catch (e) {} }; })();

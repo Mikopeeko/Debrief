@@ -6678,6 +6678,76 @@ section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-z[style*="--p"] svg { dis
 .cmp .cmp-hps > .cmp-hpn::before { content: ''; position: absolute; z-index: -1; inset: -40px -60px; pointer-events: none; background: radial-gradient(ellipse 55% 70% at 25% 55%, color-mix(in srgb, var(--c, #9aa4b2) 24%, transparent), transparent 72%); }
 .cmp .cmp-hps > .cmp-hpn.cmp-hpr::before { background: radial-gradient(ellipse 55% 70% at 75% 55%, color-mix(in srgb, var(--c, #9aa4b2) 24%, transparent), transparent 72%); }
 .cmp .cmp-hps > .cmp-hpbar { height: 12px; border-radius: 999px; overflow: hidden; box-shadow: 0 0 18px rgba(0,0,0,.35); }
+/* ===== Design studio round 10 (Oct 25): Home as a briefing (mockup A): one header strip for the team and you, the boss you're on big with the
+   raid nights beside it, the ten bosses as one row of cells, and "how far" bars. Owner: the Design studio chat. ===== */
+/* the header strip: one panel, your team's row then your row */
+.pg-intab .my-who.ds-hs { display: flex !important; flex-direction: column; gap: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: radial-gradient(560px 160px at 0% 0%, rgba(44,95,168,.3), transparent 62%), var(--panel); }
+.pg-intab .ds-hs .my-team, .pg-intab .ds-hs .my-you { display: flex !important; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 14px; min-height: 0; padding: 10px 16px; border: 0; border-radius: 0; background: none; box-shadow: none; }
+.pg-intab .ds-hs .my-you.yu3 { border-top: 1px solid var(--line); box-shadow: inset 3px 0 0 var(--cc, var(--gold)); background: linear-gradient(90deg, rgba(18,21,28,.86), rgba(18,21,28,.97) 55%), var(--sart, none) center 30% / cover no-repeat, #12151c; }
+.pg-intab .ds-hs .my-lab { flex: none; width: 66px; margin: 0; }
+.pg-intab .ds-hs .tm2 > .pg-ttl, .pg-intab .ds-hs .tm2 .pg-tt { display: contents; }
+.pg-intab .ds-hs .tm2 .pg-ttl > .ht-ban { transform: scale(1.1); transform-origin: center; margin: 0 4px 0 0; filter: drop-shadow(0 4px 12px rgba(44,95,168,.5)); }
+.pg-intab .ds-hs .ds-nm { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.pg-intab .ds-hs .tm2 .pg-tt h1 { font-size: 26px; line-height: 1; gap: 8px; } .pg-intab .ds-hs .tm2 .pg-editb { position: static; margin: 0; }
+.pg-intab .ds-hs .tm2 .pg-sum { display: block; margin: 0; font-size: 13px; }
+.pg-intab .ds-hs .tm2 .pg-chips { margin: 0; gap: 8px; align-items: stretch; flex: 1 1 auto; }
+.pg-intab .ds-hs .tm2 .pg-chips .pgc.gold { min-width: 0; padding: 5px 12px; } .pg-intab .ds-hs .tm2 .pg-chips .pgc.gold b { font-size: 22px; }
+.pg-intab .ds-hs .tm2 .ds-rk { display: flex; flex: 1 1 260px; min-width: 0; border: 1px solid var(--line); border-radius: 12px; background: rgba(10,12,17,.45); overflow: hidden; }
+.pg-intab .ds-hs .tm2 .ds-rk .pgc { flex: 1 1 0; min-width: 0; padding: 5px 12px; border: 0; border-right: 1px solid var(--line); border-radius: 0; background: none; }
+.pg-intab .ds-hs .tm2 .ds-rk .pgc b { font-size: 18px; } .pg-intab .ds-hs .tm2 .ds-rk .pgc-t { flex: 0 0 auto; padding: 5px 12px; border-right: 0; }
+.pg-intab .ds-hs .tm2 .pg-info { flex: 1 1 100%; margin: -2px 0 0 80px; font-size: 12px; }
+.pg-intab .ds-hs .my-team .pc-diffs { display: none; } /* (the copy above the boss cells is the one you use; this one still answers its clicks) */
+/* your row: banner, name with your spec under it, your four tiles as pills, the buttons at the end; the Add panel drops under the row */
+.pg-intab .ds-hs .yu2 .pg-you, .pg-intab .ds-hs .yu3 .yu-act { display: contents; }
+.pg-intab .ds-hs .pg-you > .ht-ban { transform: scale(1.1); transform-origin: center; margin: 0 4px 0 0; }
+.pg-intab .ds-hs .yu3 .pg-you > span:not(.ht-ban):not(.pg-ych) { gap: 1px; min-width: 0; }
+.pg-intab .ds-hs .yu3 .pg-you > span:not(.ht-ban):not(.pg-ych) b { font-size: 24px; line-height: 1; } .pg-intab .ds-hs .yu3 .yu-ln { font-size: 13px; }
+.pg-intab .ds-hs .yu3 .pg-ych { display: flex; flex-wrap: wrap; gap: 8px; } .pg-intab .ds-hs .yu3 .pg-ych > .yu-tiles, .pg-intab .ds-hs .yu3 .pg-ych > .yu-bw { display: contents; }
+.pg-intab .ds-hs .yu3 .pg-ych .yu-t, .pg-intab .ds-hs .yu3 .pg-ych .yu-bt { flex: none; flex-direction: row; align-items: baseline; gap: 6px; min-width: 0; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line); background: rgba(12,14,19,.72); box-shadow: none; }
+.pg-intab .ds-hs .yu3 .pg-ych .yu-t b, .pg-intab .ds-hs .yu3 .pg-ych .yu-bt b, .pg-intab .ds-hs .yu3 .pg-ych .yu-ach b { font-size: 20px; line-height: 1; }
+.pg-intab .ds-hs .yu3 .pg-ych .yu-t em, .pg-intab .ds-hs .yu3 .pg-ych .yu-bt em { font: 600 12px var(--body); font-style: normal; letter-spacing: 0; text-transform: none; color: var(--muted); order: 1; }
+.pg-intab .ds-hs .yu3 .pg-ych .yu-bt > span { display: none; } /* (the kill lines live on your character page) */
+.pg-intab .ds-hs .yu3 .yu-x:empty { display: none; }
+.pg-intab .ds-hs .yu3 .yu-btns { margin-left: auto; gap: 8px; } .pg-intab .ds-hs .yu3 .yu-btns .btn { padding: 7px 14px; }
+.pg-intab .ds-hs .yu3 .yu-panel, .pg-intab .ds-hs .yu3 .yu-alts { flex: 1 1 100%; margin: 0; }
+/* row one: the boss you're on big, the raid nights beside its chart (one column inside) */
+.pg-intab .ds-row1 { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 14px; align-items: stretch; }
+.pg-intab .ds-row1.one { grid-template-columns: minmax(0, 1fr); }
+.pg-intab .ds-row1 > #pgNow { margin: 0; min-height: 0; } .pg-intab .ds-row1 > #pgNights { margin: 0; display: flex; flex-direction: column; }
+.pg-intab .my-lay2 .ds-row1 #pgNights .pn-list { grid-template-columns: minmax(0, 1fr); }
+.pg-intab .ds-row1 .pn-row { padding: 8px 10px; } .pg-intab .ds-row1 .pn-th { width: 56px; height: 34px; } .pg-intab .ds-row1 .pn-more { margin-top: auto; align-self: flex-start; }
+.pg-intab .my-hist:empty { display: none; }
+.pg-intab #pgNow .pnw-big { display: flex; flex-direction: column; align-items: flex-end; min-width: 170px; }
+.pg-intab #pgNow .pnw-big::after { content: ''; order: 1; width: 100%; height: 6px; margin-top: 8px; border-radius: 999px; background: linear-gradient(90deg, currentColor calc(var(--p, 0) * 1%), rgba(255,255,255,.14) 0); box-shadow: 0 0 10px color-mix(in srgb, currentColor 40%, transparent); }
+.pg-intab #pgNow .pnw-big > span { order: 2; }
+.pg-intab #pgNow .pc-chart { max-height: 200px; }
+/* the raid: its title and the difficulty switch on one line, then ten cells in a row: number, name, result, pulls, a bar along the foot */
+.pg-intab .my-raid { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 14px; }
+.pg-intab .my-raid > .my-h { margin: 0; } .pg-intab .my-raid > .my-dsw { margin: 0; justify-self: end; } .pg-intab .my-raid .my-dsw button { flex: none; }
+.pg-intab .my-raid > .my-strip, .pg-intab .my-raid > .my-bxp { grid-column: 1 / -1; } .pg-intab .my-raid > .my-bxp { margin-top: 2px; }
+.my-bcs.my-strip { grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 6px; }
+.my-chip.my-bc { height: auto; min-height: 84px; justify-content: flex-start; padding: 7px 8px 12px; border-radius: 10px; }
+.my-chip.my-bc .my-bcbg { opacity: .6; } .my-chip.my-bc .my-bcsh { background: linear-gradient(0deg, rgba(10,12,17,.97) 38%, rgba(10,12,17,.3)); }
+.my-chip.my-bc .my-bn { position: static; width: auto; height: auto; display: block; margin: 0 0 2px; background: none !important; color: var(--muted) !important; font-size: 12px; }
+.my-chip.my-bc .my-bcb { padding: 0; gap: 2px; } .my-chip.my-bc b { font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.my-chip.my-bc .my-tag { padding: 0; border-radius: 0; background: none !important; color: var(--gold); font-size: 12px; } .my-chip.my-bc.prog .my-tag { color: var(--mc); } .my-chip.my-bc.lock .my-tag { color: var(--faint); font-weight: 500; }
+.my-chip.my-bc .my-bx { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.my-dtag { top: 6px; right: 6px; padding: 1px 5px; font-size: 12px; }
+.my-chip.my-bc::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; height: 4px; background: linear-gradient(90deg, #f0cf86, #e6b450); }
+.my-chip.my-bc.lock::after { display: none; }
+.my-chip.my-bc.prog::after { background: linear-gradient(90deg, var(--mc) calc(var(--p, 0) * 1%), rgba(255,255,255,.1) 0); box-shadow: 0 0 10px color-mix(in srgb, var(--mc) 50%, transparent); }
+/* raid nights: each night's result as a thin bar along the row's foot, in the result's colour */
+#pgNights .pn-row { position: relative; overflow: hidden; }
+#pgNights .pn-row::after { content: ''; position: absolute; left: 0; bottom: 0; height: 3px; width: calc(var(--p, 0) * 1%); background: var(--pc, var(--muted)); opacity: .9; }
+/* phones and narrow windows: the strip's rows wrap, the boss then the nights in one column, five cells a row */
+@media (max-width: 1000px) { .my-bcs.my-strip { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .pg-intab .my-lay2 > .my-who.ds-hs { display: flex !important; } .pg-intab .ds-hs .my-lab { width: auto; flex: 1 1 100%; margin-bottom: -4px; }
+  .pg-intab .ds-hs .tm2 .pg-info { margin-left: 0; } .pg-intab .ds-hs .tm2 .pg-chips { flex-basis: 100%; } .pg-intab .ds-hs .yu3 .yu-btns { margin-left: 0; flex-basis: 100%; }
+  .pg-intab .ds-row1 { grid-template-columns: minmax(0, 1fr); } .pg-intab .my-raid { grid-template-columns: minmax(0, 1fr); } .pg-intab .my-raid > .my-dsw { justify-self: stretch; } .pg-intab .my-raid .my-dsw button { flex: 1 1 0; }
+  .my-chip.my-bc { height: auto; min-height: 80px; padding: 6px 6px 11px; } .my-chip.my-bc b { font-size: 12.5px; } .my-dtag { display: none; }
+  .pnw-ti em { white-space: nowrap; } .pnw-ti { flex: 1 1 40%; } .pnw-ti:nth-child(3) { flex-basis: 100%; } .pg-intab #pgNow .pnw-big { min-width: 120px; } }
+/* phones: two cells a row with whole names (five a row cut them short) */
+@media (max-width: 560px) { .my-bcs.my-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; } .my-chip.my-bc { min-height: 0; padding: 7px 10px 12px; } .my-chip.my-bc b { font-size: 14px; } }
 </style>
 
 
@@ -16375,6 +16445,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-25', h: [
+    { t: 'Home, one screen', d: 'Home now reads like a briefing: your team and you on one strip, the boss you\'re on big with your raid nights beside its chart, and the ten bosses as one row. How far you got is a bar as well as a number, on the banner, on every boss and on every night.' },
     { t: 'Compare: the answer first', d: 'Your biggest fixes and Why the gap now sit right under the face-off, side by side, instead of hidden at the bottom. Your big moments show the opener and the first window with the rest folded, and the face-off glows in each player\'s class colour.' },
     { t: 'Report card: one card per raider', d: 'Open a raider in the ranked roster and everything about them is one card under their row: who they are, their grade and rank, the checklist on the left and Their night on the right, with their deaths, best tonight and room to grow. The side panel is gone and the roster has the full width.' },
     { t: 'Rotation, in three places', d: 'You and your fixes in one box on top (your score and numbers on the left, What to fix on the right). Under it, on a desktop, the checklist you work through on the left and your numbers (the healing or damage split, then gear as one quiet list) on the right. Phones keep one column.' },
@@ -16382,6 +16453,7 @@ const PATCH_NOTES = [
     { t: 'One way to show a number', d: 'The Report card and Rotation now speak the same language as Debriefing: a bar with one number at its end, a grade as one letter at the start of its bar. The ranked roster is one bar per raider, a raider\'s checklist shows the rows that need them and folds the rest, and Rotation\'s header is one row with the talent trees folded under it.' },
     { t: 'Your tier set, in numbers', d: 'Rotation shows how much your 2-piece and 4-piece added, with a Where it came from breakdown behind every number. On every spec.' },
     { t: 'Your trinkets, both of them', d: 'Gear and extras on Rotation now shows both of your trinkets, with what each one did (damage, healing or stats), or that one was never pressed.' },], n: [
+    'Home: on a phone the banner\'s "Time on the boss" tile sits on one line under Pulls and Nights, and the ten bosses go five a row.',
     'Compare: Why the gap shows its two biggest reasons and folds the rest; on Your other pulls it leads the page.',
     'Report card: the night banner\'s five numbers are one slim strip with a smaller raid-grade ring, and the raid\'s six category tiles are a label with the letter, a bar with the score, and tonight\'s best, the same language as the roster.',
     'Rotation: Gear and extras is back in colour. Each group wears its own colour on a stripe, its label and total, its bars and a soft glow; the numbers stay white.',
@@ -50151,6 +50223,24 @@ function dsCompare() { const v = document.getElementById('view'); if (!v) return
   /* Why the gap: the first two reasons show, the rest fold */
   cmp.querySelectorAll('.cmp-gap .cmp-rcards').forEach((rc) => { if (rc.dataset.dsMore) return; rc.dataset.dsMore = '1'; fold([...rc.children].filter((c) => c.classList.contains('cmp-card')), 2, 'reasons'); }); }
 (function () { const f4 = dsBars; dsBars = function (root) { f4(root); try { dsCompare(); } catch (e) {} }; })();
+
+// ===== Design studio round 10 (Oct 25): Home as a briefing (mockup A). Re-homes Home's existing pieces: the team and You cards become
+// one header strip, the raid nights move beside the boss you're on, and the numbers already shown become bars. Runs after dsBars on every redraw. Owner: the Design studio chat. =====
+function dsHome() { const pg = document.querySelector('#main .home.prog .my-flow'); if (!pg) return;
+  const pct = (t) => { const m = (t || '').match(/(\d+)%/); return m ? m[1] : null; }, wrap = (cls, first, ...rest) => { const w = document.createElement('div'); w.className = cls; first.before(w); w.append(first, ...rest.filter(Boolean)); return w; };
+  /* the header strip: your team's row (name and its line, the Mythic tile, the four rankings and All rankings as one strip), then your row */
+  const who = pg.querySelector(':scope > .my-who'); if (who && !who.classList.contains('ds-hs')) { who.classList.add('ds-hs');
+    const team = who.querySelector('.my-team'); if (team) { const h1 = team.querySelector('.pg-tt > h1'), sum = team.querySelector('.pg-sum'); if (h1 && !h1.parentElement.classList.contains('ds-nm')) wrap('ds-nm', h1, sum);
+      const ch = team.querySelector('.pg-chips'); if (ch && !ch.querySelector('.ds-rk')) { const chs = ch.querySelector('.pg-chs'), bt = ch.querySelector('.pgc-t'); if (chs) { const w = document.createElement('span'); w.className = 'ds-rk'; chs.before(w); w.append(chs); if (bt) w.append(bt); } } }
+    const you = who.querySelector('.my-you.yu3'); if (you) { const bw = you.querySelector('.yu-x > .yu-bw'), yt = you.querySelector('.pg-ych > .yu-tiles'); if (bw && yt) yt.after(bw); } }
+  /* row one: the boss you're on, with the raid nights beside its chart */
+  const now = pg.querySelector('#pgNow'); if (now && !now.parentElement.classList.contains('ds-row1')) { const nights = pg.querySelector('#pgNights'); wrap('ds-row1' + (nights ? '' : ' one'), now, nights); }
+  /* the bars: how far the best pull got (a kill fills it), the boss in progress, each night's result in its own colour */
+  if (now) { const big = now.querySelector('.pnw-big'), t = big ? big.textContent : ''; now.style.setProperty('--p', pct(t) || (/Killed/.test(t) ? '100' : '0')); }
+  pg.querySelectorAll('.my-bc.prog').forEach((c) => { const tg = c.querySelector('.my-tag'); c.style.setProperty('--p', (tg && pct(tg.textContent)) || '0'); });
+  pg.querySelectorAll('#pgNights .pn-row').forEach((r) => { const v = r.querySelector('.pn-r'); if (!v) return; const k = r.classList.contains('pn-k');
+    r.style.setProperty('--p', k ? '100' : pct(v.textContent) || '0'); r.style.setProperty('--pc', k ? '#ff8000' : v.style.color || 'var(--muted)'); }); }
+(function () { const f5 = dsBars; dsBars = function (root) { f5(root); try { dsHome(); } catch (e) {} }; })();
 
 </script>
 </body>
