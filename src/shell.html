@@ -6638,6 +6638,27 @@ section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-z[style*="--p"] svg { dis
 .rcb-2.ds-rc .ds-rcard .rcb-ydl { margin: 8px 0 0; }
 .rcb-2.ds-rc .ds-rcard .rcb-ypn { margin-top: 8px; }
 @media (max-width: 900px) { .rcb-2.ds-rc .ds-rcard { display: block; } }
+/* ===== Design studio round 8 (Oct 25): the Report card's top of page in the site's number language: the banner's five stats as one slim strip, a
+   smaller raid grade ring, and the category tiles as label + letter, a bar with the score at its end, tonight's best. Owner: the Design studio chat. ===== */
+.rcb-ban { grid-template-columns: minmax(0, 1fr) 120px; gap: 16px; padding: 18px 24px 16px; }
+.rcb-ban h2 { font-size: 34px; margin: 4px 0; }
+.rcb-banl > .sub { font-size: 13.5px; }
+.rcb-ban .rcb-bst { display: flex !important; flex-wrap: wrap; gap: 1px; margin-top: 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; background: rgba(255,255,255,.08); overflow: hidden; }
+.rcb-ban .rcb-bst .rcb-bt { flex: 1 1 150px; flex-direction: row; align-items: baseline; gap: 8px; padding: 6px 12px; border: 0; border-radius: 0; background: rgba(10,12,17,.72); }
+.rcb-ban .rcb-bst .rcb-bt .l { font-size: 12px; white-space: nowrap; }
+.rcb-ban .rcb-bst .rcb-bt .v { margin: 0; font-size: 18px; line-height: 1.2; }
+.rcb-banr .rcb-ring { width: 88px !important; height: 88px !important; }
+.rcb-banr .rcb-ring b { font-size: 26px !important; }
+.rcb-banr > .sub { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+/* the raid's report card: six tiles, each a label row with its letter, a bar with the score at its end, and tonight's best */
+.rcb-subs .rcb-st { display: grid !important; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'h h' 'bar s' 'best best'; align-items: center; column-gap: 8px; row-gap: 6px; padding: 10px 12px !important; }
+.rcb-subs .rcb-st .rcb-sth { grid-area: h; }
+.rcb-subs .rcb-st .rcb-sth .grade { min-width: 22px; height: 20px; padding: 0 5px; font-size: 13px; border-radius: 6px; border-width: 1px; }
+.rcb-subs .rcb-st > b { grid-area: s; font: 700 16px/1 var(--head); color: var(--text) !important; }
+.rcb-subs .rcb-st .rcb-bar { grid-area: bar; height: 8px; }
+.rcb-subs .rcb-st > .sub { grid-area: best; margin: 0; font-size: 12.5px; }
+@media (max-width: 760px) { .rcb-ban { grid-template-columns: 1fr; padding: 14px 16px; } .rcb-banr { flex-direction: row; justify-content: flex-start; gap: 10px; }
+  .rcb-ban .rcb-bst .rcb-bt { flex-basis: 100%; justify-content: space-between; padding: 5px 12px; } .rcb-ban .rcb-bst .rcb-bt .l { white-space: normal; } }
 </style>
 
 

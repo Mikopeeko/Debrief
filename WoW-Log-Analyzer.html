@@ -6638,6 +6638,27 @@ section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-z[style*="--p"] svg { dis
 .rcb-2.ds-rc .ds-rcard .rcb-ydl { margin: 8px 0 0; }
 .rcb-2.ds-rc .ds-rcard .rcb-ypn { margin-top: 8px; }
 @media (max-width: 900px) { .rcb-2.ds-rc .ds-rcard { display: block; } }
+/* ===== Design studio round 8 (Oct 25): the Report card's top of page in the site's number language: the banner's five stats as one slim strip, a
+   smaller raid grade ring, and the category tiles as label + letter, a bar with the score at its end, tonight's best. Owner: the Design studio chat. ===== */
+.rcb-ban { grid-template-columns: minmax(0, 1fr) 120px; gap: 16px; padding: 18px 24px 16px; }
+.rcb-ban h2 { font-size: 34px; margin: 4px 0; }
+.rcb-banl > .sub { font-size: 13.5px; }
+.rcb-ban .rcb-bst { display: flex !important; flex-wrap: wrap; gap: 1px; margin-top: 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; background: rgba(255,255,255,.08); overflow: hidden; }
+.rcb-ban .rcb-bst .rcb-bt { flex: 1 1 150px; flex-direction: row; align-items: baseline; gap: 8px; padding: 6px 12px; border: 0; border-radius: 0; background: rgba(10,12,17,.72); }
+.rcb-ban .rcb-bst .rcb-bt .l { font-size: 12px; white-space: nowrap; }
+.rcb-ban .rcb-bst .rcb-bt .v { margin: 0; font-size: 18px; line-height: 1.2; }
+.rcb-banr .rcb-ring { width: 88px !important; height: 88px !important; }
+.rcb-banr .rcb-ring b { font-size: 26px !important; }
+.rcb-banr > .sub { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+/* the raid's report card: six tiles, each a label row with its letter, a bar with the score at its end, and tonight's best */
+.rcb-subs .rcb-st { display: grid !important; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'h h' 'bar s' 'best best'; align-items: center; column-gap: 8px; row-gap: 6px; padding: 10px 12px !important; }
+.rcb-subs .rcb-st .rcb-sth { grid-area: h; }
+.rcb-subs .rcb-st .rcb-sth .grade { min-width: 22px; height: 20px; padding: 0 5px; font-size: 13px; border-radius: 6px; border-width: 1px; }
+.rcb-subs .rcb-st > b { grid-area: s; font: 700 16px/1 var(--head); color: var(--text) !important; }
+.rcb-subs .rcb-st .rcb-bar { grid-area: bar; height: 8px; }
+.rcb-subs .rcb-st > .sub { grid-area: best; margin: 0; font-size: 12.5px; }
+@media (max-width: 760px) { .rcb-ban { grid-template-columns: 1fr; padding: 14px 16px; } .rcb-banr { flex-direction: row; justify-content: flex-start; gap: 10px; }
+  .rcb-ban .rcb-bst .rcb-bt { flex-basis: 100%; justify-content: space-between; padding: 5px 12px; } .rcb-ban .rcb-bst .rcb-bt .l { white-space: normal; } }
 </style>
 
 
@@ -16341,6 +16362,7 @@ const PATCH_NOTES = [
     { t: 'One way to show a number', d: 'The Report card and Rotation now speak the same language as Debriefing: a bar with one number at its end, a grade as one letter at the start of its bar. The ranked roster is one bar per raider, a raider\'s checklist shows the rows that need them and folds the rest, and Rotation\'s header is one row with the talent trees folded under it.' },
     { t: 'Your tier set, in numbers', d: 'Rotation shows how much your 2-piece and 4-piece added, with a Where it came from breakdown behind every number. On every spec.' },
     { t: 'Your trinkets, both of them', d: 'Gear and extras on Rotation now shows both of your trinkets, with what each one did (damage, healing or stats), or that one was never pressed.' },], n: [
+    'Report card: the night banner\'s five numbers are one slim strip with a smaller raid-grade ring, and the raid\'s six category tiles are a label with the letter, a bar with the score, and tonight\'s best, the same language as the roster.',
     'Rotation: Gear and extras is back in colour. Each group wears its own colour on a stripe, its label and total, its bars and a soft glow; the numbers stay white.',
     'Rotation: inside a checklist card, a tile only opens when there is more inside (a list, a chart, the steps); the others show their one-line result right in the tile, with how it is judged on hover. The ones that open show a small arrow.',
     'Rotation: inside an open checklist card, the tiles that need you come first; each tile is its number (coloured by how it went) with a bar where there is a share, no dots or ticks; titles without underlines; the charts row is a plain link.',
