@@ -90,13 +90,16 @@ namespace Debrief {
       new Thread(() => { while (showMe.WaitOne()) form.ShowInFront(); }) { IsBackground = true, Name = "show" }.Start();
       // (updates while running, so nobody has to reopen the app: about once an hour, never during a boss or practice pull.
       // The new files go in, the new addon goes into WoW, then this copy hands over to the new one, its window as it was)
+      // (when it was busy with a pull, it tries again 3 minutes later instead of an hour, so an update lands in the first break between
+      // pulls (Oct 24, the user: "Do i always need to restart the companion app to get it to work?"))
       new Thread(() => {
         Thread.Sleep(TimeSpan.FromMinutes(10));
         while (true) {
+          string r = "";
           try {
-            if (Environment.GetEnvironmentVariable("DBF_NO_UPDATE") == null && UpdateNow().StartsWith("updating")) return;
+            if (Environment.GetEnvironmentVariable("DBF_NO_UPDATE") == null) { r = UpdateNow(); if (r.StartsWith("updating")) return; }
           } catch (Exception e) { Log("hourly update: " + e.Message); }
-          Thread.Sleep(TimeSpan.FromMinutes(60));
+          Thread.Sleep(TimeSpan.FromMinutes(r == "busy" ? 3 : 60));
         }
       }) { IsBackground = true, Name = "updates" }.Start();
 
