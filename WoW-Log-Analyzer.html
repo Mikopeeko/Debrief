@@ -5846,7 +5846,7 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .rck-t { border-radius: 10px; background: var(--panel); border: 1px solid var(--line); } .rck-t[open] { grid-column: 1 / -1; }
 .rck-t > summary { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; cursor: pointer; list-style: none; } .rck-t > summary::-webkit-details-marker { display: none; }
 .rck-tl { display: flex; align-items: center; gap: 8px; font: 700 12px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); } .rck-t > summary > b { font: 700 24px var(--head); color: var(--text); } .rck-tx { font-size: 13px; color: var(--muted); }
-.rck-t .rck-b { padding: 0 16px 14px; }
+.rck-t .rck-b { padding: 0 16px 14px; } .rck-tyr { margin-top: 24px; } .rck-tyrc { grid-column: span 2; } .rck-tyrc .rck-sb { margin: 6px 0 0; } .rck-tyrn { margin: 6px 2px 0; font-size: 13px; } .rck-tyr .spc-sbb i.g2, .rck-tyr .spc-sbl i.g2 { background: #e6c27a; }
 /* Rotation priority slips as pictures (Oct 23) */
 .rck-hits em { top: 2px; bottom: 2px; border-radius: 3px; border: 0 !important; } .rck-hits em.ok { background: var(--good) !important; } .rck-hits em.no { background: var(--bad) !important; }
 .slv-row { display: grid !important; grid-template-columns: minmax(0, auto) 1fr auto; gap: 6px 14px; align-items: center; padding: 10px 14px !important; }
@@ -12540,6 +12540,8 @@ function* analyzeSteps(item, text, opts) {
   // each player's health from advanced logging (damage and heals on them): guid -> [[t, fraction]], one sample per
   // quarter second keeping the lowest, for the survival check's close calls
   const php = new Map(); r.php = php;
+  // (Tyr's Deliverance's buff (200654) on a player, by whose: their Holy Light, Flash of Light and Holy Shock heal that player 10% more (12.1.5))
+  const tyrOn = new Set(), TYR_UP = new Set(['holy light', 'flash of light', 'holy shock']);
   // (heals and absorbs landing on a player under half health: [t, target, healer, amount, 1 for an absorb, spell], for the healers' saves)
   const lowHL = []; r.lowHL = lowHL;
   const phpNow = (g) => { const l = php.get(g); return l && l.length ? l[l.length - 1][1] : 1; };
@@ -12688,6 +12690,7 @@ function* analyzeSteps(item, text, opts) {
           p.healing += eff; p.overheal += over; addAb(p.healAb, pet ? sn + ': ' + spell : spell, id, eff, over, crit); bump(r.healS, t, eff); bump(p.healS, t, eff);
           // (triage: the heal's advanced block is the target's, health after it; under half before it)
           if (s0 > 11 && f[11] === dg && eff > 0 && isPlayer(dg)) { const mx = num(f[14]); if (mx > 0 && (num(f[13]) - eff) / mx < 0.5) { p.lowHeal += eff; if (lowHL.length < 60000) lowHL.push([t, dg, owner, eff, 0, spell]); } }
+          if (!pet && tyrOn.size && TYR_UP.has(String(spell).toLowerCase()) && tyrOn.has(dg + '|' + owner)) { p.tyrX = (p.tyrX || 0) + eff * 0.1 / 1.1; p.tyrXn = (p.tyrXn || 0) + 1; p.tyrB = (p.tyrB || 0) + eff; }
           if (!pet && HEAL_TO.has(String(spell).toLowerCase())) { if (!p.hT) p.hT = new Map(); let l = p.hT.get(spell); if (!l) p.hT.set(spell, l = []); if (l.length < 12000) l.push([t, dg, eff, over, ev === 'SPELL_PERIODIC_HEAL' ? 1 : 0]); } // (the last: a HoT's tick)
           const ck = CD_HEALS.get((pet ? sn + ': ' + spell : spell).toLowerCase());
           if (ck && (ck !== 'Celestial Conduit' || p.specId === 270)) { const u = cdPress(owner, ck, t, true); u.heal += eff; u.over += over; }
@@ -12730,6 +12733,7 @@ function* analyzeSteps(item, text, opts) {
       }
       case 'SPELL_AURA_APPLIED': case 'SPELL_AURA_APPLIED_DOSE': {
         if (f.length < 12) break;
+        if (num(f[8]) === 200654 && f[11] === 'BUFF') tyrOn.add(dg + '|' + sg);
         noteSchool(num(f[8]), f[10]); noteId(num(f[8]), f[9]);
         const stacks = ev === 'SPELL_AURA_APPLIED_DOSE' && f.length > 12 ? num(f[12]) : 1;
         const pl = isPlayer(dg);
@@ -12757,6 +12761,7 @@ function* analyzeSteps(item, text, opts) {
         break;
       }
       case 'SPELL_AURA_REMOVED':
+        if (f.length >= 12 && num(f[8]) === 200654 && f[11] === 'BUFF') tyrOn.delete(dg + '|' + sg);
         if (f.length >= 10 && W(f[9], f[8])) modEv.push({ k: 'aura', op: 'remove', t, dst: dg, spell: f[9], id: num(f[8]), stacks: 0, src: sg });
         if (f.length >= 10 && !isPlayer(dg) && BOSS_AURA_N.has(f[9].toLowerCase())) bossAura(r, f[9], t, false);
         if (f.length >= 12 && f[11] === 'BUFF' && isPlayer(dg)) { buffDown(P(dg, dn), num(f[8]), f[9], t); if (isStatBuf(f[9].toLowerCase())) statBuf(P(dg, dn), num(f[8]), f[9], t, 'r');
@@ -16079,6 +16084,7 @@ const PATCH_NOTES = [
     { t: 'Debrief in game: a guided setup', d: 'The first time you log in, a short setup helps you pick a style and what your card shows, with a live preview beside it (/debrief setup opens it again). Long cards now split into two columns instead of running off the screen.' },
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
+    'Holy Paladin: a Tyr\'s Deliverance tile at the bottom of Rotation shows what it healed: its own heals, plus the extra its buff gave your Holy Light, Flash of Light and Holy Shock on its targets.',
     'Debrief Companion: updates land in the first break between pulls, no restart needed',
     'Debrief Companion: the pop-up after a pull opens the same window as your /recap, the Whole night window when /db says so, with Card view to switch',
     'Debrief in game: a dungeon boss recap shows only your Me view, with a Next time tip and no raid-only checks',
@@ -33684,10 +33690,24 @@ function specPage(o) {
     ckCh.filter((x) => x.l.length || x.det.length).map((x) => ckLab(x) + '<div class="rck-rs">' + x.l.map(ckRow).join('') + x.det.map(ckDet).join('') + '</div>').join('') + '</section>';
   const ckNa = checks.filter((c) => c.st === 'na');
   const ckNums = ckNa.length ? '<section class="rck-nums"><h3 class="rck-h">Your numbers <span class="sub">not graded</span></h3><div class="rck-ts">' + ckNa.map((c) => '<details class="rck-t" id="spc-r-' + slug(c.k) + '"><summary><span class="rck-tl no-ic">' + icB(c.ic) + '<span>' + esc(c.label) + '</span></span><b>' + c.v + '</b>' + (ckShort(c) ? '<span class="rck-tx">' + esc(ckShort(c)) + '</span>' : '') + '</summary>' + ckBody(c) + '</details>').join('') + '</div></section>' : '';
+  // (Tyr's Deliverance (your ask, Oct 24): its own heals and what its buff added to your Holy Light, Flash of Light and Holy Shock on its targets
+  // (+10% for 12 seconds in 12.1.5; effective healing, no overhealing, absorbs don't get it), at the very bottom, only with it pressed or talented)
+  const tyrSec = (() => { if (P0.specName !== 'Holy Paladin') return ''; let dir0 = 0, bx = 0, bn = 0, bb = 0, cs = 0, hl = 0, du = 0;
+    for (const x of per) { const p = x.p, t1 = Math.max(1, x.t1 || x.r.duration || x.end || 1); du += t1; hl += p.healing || 0; bx += p.tyrX || 0; bn += p.tyrXn || 0; bb += p.tyrB || 0;
+      for (const a of (p.healAb || new Map()).values()) if (String(a.name) === "Tyr's Deliverance") dir0 += a.total || 0;
+      const pr = (p.byName.get("tyr's deliverance") || []).filter((t) => t <= t1).length, sb = ((p.buffs.get("Tyr's Deliverance") || {}).sp || []).filter(([a]) => a <= t1); let u = 0, last = -99; for (const [a, b] of sb) { if (a - last > 5) u++; last = b == null ? t1 : b; } cs += Math.max(pr, u); } /* (it can come by itself, not pressed: its uses are its 30-second runs on you) */
+    const tot = dir0 + bx; if (tot < 1000 || !hl) return ''; const pcT = (v) => { const q = 100 * v / hl; return q >= 10 ? Math.round(q) + '%' : q.toFixed(1) + '%'; };
+    const t2 = (ic, l, v, sub) => '<div class="rgx-c"><div class="rgx-h">' + ic + '<span>' + l + '</span></div><b class="rgx-v">' + v + '</b><span class="rgx-s">' + sub + '</span></div>';
+    const ic = spellIcon(200652, "Tyr's Deliverance");
+    // (one tile (your note, Oct 24: "merge all these together"): the total, then HPS, share and per use on one line, then its own heals against
+    // its buff as one bar inside the tile; how the buff is counted is the tile's hover tip)
+    return '<section class="rck-gx rck-tyr"><div class="rgx-g"><div class="rgx-c rck-tyrc" title="' + esc('The buff: your Holy Light, Flash of Light and Holy Shock heal its targets 10% more for 12 seconds. The extra 10% of what those heals did counts here, without overhealing (' + bn + ' boosted heals).') + '"><div class="rgx-h">' + ic + '<span>Tyr\'s Deliverance</span></div>' +
+      '<b class="rgx-v">' + C(tot) + '</b><span class="rgx-s">' + C(tot / Math.max(1, du)) + ' HPS · ' + pcT(tot) + ' of your healing' + (cs ? ' · ' + (cs === 1 ? '1 use' : cs + ' uses, ' + C(tot / cs) + ' each') : '') + '</span>' +
+      '<div class="spc-sb rck-sb"><div class="spc-sbb"><i class="ok" style="flex:' + Math.max(1, dir0) + '"></i><i class="g2" style="flex:' + Math.max(bx > 0 ? 1 : 0, bx) + '"></i></div><div class="spc-sbl"><span><i class="ok"></i>From the spell itself <b>' + C(dir0) + '</b></span><span><i class="g2"></i>Its buff on your heals <b>+' + C(bx) + '</b> <span class="sub">(10% of the ' + C(bb) + ' your Holy Shock, Flash of Light and Holy Light healed its targets)</span></span></div></div></div></div></section>'; })();
   chN = 0; const ckTail = (glance ? chSec(o.tl ? 'Your pull at a glance' : 'Pull by pull', glance, [], o.tl ? 'every button you pressed, over the pull' : 'every pull, side by side') : '') + '';
   let fix = ''; if (SPC_DRAW) try { fix = spcCoach({ fix: true, checks, focus, good, TOPB, score, outR, topOut, UN, one, kill: !!it.kill, top: o.top, numV, LOWB, WT, reps: per.map((x) => x.r), name: P0.name }).replace(/\s*\((?:both|your) guides?[^)]*\)|\s*\([^)]*\b(?:Wowhead|Icy Veins)\b[^)]*\)/gi, ''); } catch (e) { fix = ''; }
   let coach = ''; if (SPC_DRAW && false) try { coach = spcCoach({ checks, focus, good, TOPB, score, outR, topOut, UN, one, kill: !!it.kill, top: o.top, numV, LOWB, WT, reps: per.map((x) => x.r), name: P0.name }).replace(/\s*\((?:both|your) guides?[^)]*\)|\s*\([^)]*\b(?:Wowhead|Icy Veins)\b[^)]*\)/gi, ''); } catch (e) { coach = ''; }
-  return { score, checks, top: TOPB ? Object.fromEntries(checks.filter((c) => ckTop(c)).map((c) => [c.k, ckTop(c)])) : null /* (for the in-game card (Oct 24)) */, html: hero + build + checklist + (fix || ckNums ? '<div class="rck-cmp">' + fix + ckNums + '</div>' : '') + (gx ? '<section class="rck-gx"><h3 class="rck-h">Gear and extras <span class="sub">' + esc(SPC_CHS['Gear and extras'] || '') + '</span></h3>' + gx + '</section>' : '') + ckTail + '<p class="sub spc-src">' + esc(o.src || '') + '</p>', wins: VZW /* (the window cards, for the in-game card (Oct 24)) */ };
+  return { score, checks, top: TOPB ? Object.fromEntries(checks.filter((c) => ckTop(c)).map((c) => [c.k, ckTop(c)])) : null /* (for the in-game card (Oct 24)) */, html: hero + build + checklist + (fix || ckNums ? '<div class="rck-cmp">' + fix + ckNums + '</div>' : '') + (gx ? '<section class="rck-gx"><h3 class="rck-h">Gear and extras <span class="sub">' + esc(SPC_CHS['Gear and extras'] || '') + '</span></h3>' + gx + '</section>' : '') + ckTail + tyrSec + '<p class="sub spc-src">' + esc(o.src || '') + '</p>', wins: VZW /* (the window cards, for the in-game card (Oct 24)) */ };
 }
 // (the coach's note (your call, Oct 22): right under the header, what went right and what went wrong the way a world-first raid leader
 // would say it, each problem with how to fix it, and one thing to focus on next pull. Short first, so it fits a phone screen; "Read the
