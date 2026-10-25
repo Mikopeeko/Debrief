@@ -1772,9 +1772,11 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-25', h: [
+    { t: 'Debriefing, laid out like a newspaper', d: 'Your raid lead\'s box is the one hero. Under it, on a desktop, the phases run down the left and the glance timeline and the details sit on the right; the sections are labels with a hairline instead of boxes, and the player tables fold under Raid numbers. The same on All pulls. Phones keep one column.' },
     { t: 'One way to show a number', d: 'The Report card and Rotation now speak the same language as Debriefing: a bar with one number at its end, a grade as one letter at the start of its bar. The ranked roster is one bar per raider, a raider\'s checklist shows the rows that need them and folds the rest, and Rotation\'s header is one row with the talent trees folded under it.' },
     { t: 'Your tier set, in numbers', d: 'Rotation shows how much your 2-piece and 4-piece added, with a Where it came from breakdown behind every number. On every spec.' },
     { t: 'Your trinkets, both of them', d: 'Gear and extras on Rotation now shows both of your trinkets, with what each one did (damage, healing or stats), or that one was never pressed.' },], n: [
+    'Debriefing: What wiped us and What we did well are two labelled columns with their red and green line, not boxes inside the coach box.',
     'Report card: the six category numbers in the ranked roster are plain grey (they still sort); the grade bar carries the colour.',
     'Rotation: the five checklist rings are a title, a score and a bar; inside an open one, each tile\'s small ring is a bar too.',
     'Rotation: Survival (Sentinel) checks Wildfire Bomb on a boss with your Sentinel\'s Mark, and Brewmaster shows how often you used Purifying Brew while tanking.',
@@ -30067,3 +30069,22 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
   /* (#view is drawn anew with each page, so the watcher sits on the body) */
   const start = () => { if (!document.body) return false; new MutationObserver(go).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['open', 'class'] }); go(); return true; };
   if (!start()) document.addEventListener('DOMContentLoaded', start); })();
+
+// ===== Design studio round 4 (Oct 25): Debriefing, the newspaper layout. Wraps the page's own sections into two columns (left: the phases;
+// right: the glance timeline and the details) and adds the "Raid numbers" fold. Runs after dsBars on every redraw. Owner: the Design studio chat. =====
+function dsLayout() { const v = document.getElementById('view'); if (!v) return; const oa = v.querySelector(':scope > #oaTop');
+  if (!oa || oa.hidden) { v.classList.remove('ds-two'); return; }
+  v.classList.add('ds-two');
+  const lefts = [...v.querySelectorAll(':scope > details.phase.mcx-ph')], rights = [...v.querySelectorAll(':scope > .mcx-tl, :scope > section.cch2.dt-box')];
+  /* (All pulls keeps its phases and the player tables inside one wrapper (.nsa.sumv): the wrapper is the left column and the tables
+     step out of it to the full-width row under the columns, so both views look the same (your rule, Oct 25)) */
+  const sumv = v.querySelector(':scope > .nsa.sumv'); if (sumv) { const bk2 = sumv.querySelector(':scope > .brf-keep'); if (bk2) sumv.after(bk2); lefts.push(sumv); }
+  const L0 = v.querySelector(':scope > .ds-l'), hasLeft = lefts.length || (L0 && L0.children.length);
+  v.classList.toggle('ds-one', !hasLeft); /* (All pulls keeps its phases in its own wrapper: one column there, just quieter) */
+  if (hasLeft) { let R = v.querySelector(':scope > .ds-r'), L = L0;
+    if (!R) { R = document.createElement('div'); R.className = 'ds-r'; (rights[0] || lefts[0]).before(R); }
+    if (!L) { L = document.createElement('div'); L.className = 'ds-l'; R.after(L); }
+    rights.forEach((e) => R.appendChild(e)); lefts.forEach((e) => L.appendChild(e)); }
+  const bk = v.querySelector(':scope > .brf-keep'); if (bk && !v.querySelector(':scope > .ds-raidb')) { const b = document.createElement('button'); b.type = 'button'; b.className = 'ds-raidb'; b.innerHTML = '<b>Raid numbers</b> · DPS, damage taken and healing, every player <span>\u25B8</span>'; bk.before(b); } }
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.ds-raidb'); if (!b) return; const v = b.closest('#view'); if (!v) return; const on = v.classList.toggle('ds-raid'); const s = b.querySelector('span'); if (s) s.textContent = on ? '\u25BE' : '\u25B8'; });
+(function () { const f0 = dsBars; dsBars = function (root) { f0(root); try { dsLayout(); } catch (e) {} }; })();

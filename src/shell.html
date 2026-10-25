@@ -6520,6 +6520,32 @@ section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-z[style*="--p"] svg { dis
 .spc-tqd > summary::before { content: '\25B8  '; } .spc-tqd[open] > summary::before { content: '\25BE  '; }
 .spc-tq .spc-hft::after { content: none !important; }
 .spc-tqd[open] > summary { margin-bottom: 6px; }
+/* ===== Design studio round 4 (Oct 25): Debriefing in the newspaper layout (style A). One hero (the coach), then two columns on a desktop: the
+   phases left, the glance and the details right. Sections are labels with hairlines, not boxes. The player tables fold. Owner: the Design studio chat. ===== */
+@media (min-width: 901px) {
+  #view.ds-two { display: grid !important; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); grid-auto-flow: row dense; column-gap: 18px; row-gap: 0; align-items: start; }
+  #view.ds-two > * { grid-column: 1 / -1; min-width: 0; }
+  #view.ds-two > .ds-l { grid-column: 1; } #view.ds-two > .ds-r { grid-column: 2; }
+  #view.ds-two.ds-one { display: flex !important; flex-direction: column; align-items: stretch; }
+}
+#view.ds-two > .ds-l, #view.ds-two > .ds-r { min-width: 0; }
+@media (max-width: 900px) { #view.ds-two > .ds-l, #view.ds-two > .ds-r { display: contents; } }
+/* the sections as labels with hairlines */
+#view.ds-two details.phase.mcx-ph { margin: 0 0 18px !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; }
+#view.ds-two details.phase.mcx-ph > summary { margin: 0 0 10px !important; padding: 8px 0 9px 14px !important; border: 0 !important; border-bottom: 1px solid var(--line) !important; border-radius: 0 !important; background: none !important; }
+#view.ds-two details.phase.mcx-ph:not([open]) > summary { margin-bottom: 0 !important; }
+#view.ds-two details.phase.mcx-ph > summary::before { top: 9px; bottom: 9px; }
+@media (min-width: 901px) { #view.ds-two .ds-l .prw { grid-template-columns: minmax(0, 1fr) !important; } } /* (one column of mechanic rows in the narrower column, so names aren't cut) */
+#view.ds-two .dt-box { margin: 0 0 18px !important; padding: 0 0 6px !important; border: 0 !important; border-radius: 0 !important; background: none !important; }
+#view.ds-two .mcx-tl { margin: 0 0 14px !important; padding: 6px 0 12px !important; border: 0 !important; border-bottom: 1px solid var(--line) !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; }
+/* in the narrower right column the glance timeline's end labels ("Counted to", "Wipe started") sit left of their marks, inside the column */
+@media (min-width: 901px) { #view.ds-two .ds-r .mcx-tl { overflow: hidden; } #view.ds-two .ds-r .mcx-cut > span, #view.ds-two .ds-r .mcx-wipe.end > span { left: auto !important; right: 4px !important; transform: none !important; white-space: nowrap; text-align: right; } }
+/* the coach's two inner groups (What wiped us / What we did well) are labelled columns with a coloured top line, not boxes in a box */
+#view.ds-two .cch-tsec { border-width: 2px 0 0 !important; border-radius: 0 !important; background: none !important; padding: 10px 0 0 !important; }
+/* the player tables fold under one line */
+#view.ds-two > .brf-keep { display: none; } #view.ds-two.ds-raid > .brf-keep { display: grid; }
+.ds-raidb { display: block; width: 100%; margin: 4px 0 18px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--muted); font: 500 14px var(--body); text-align: left; cursor: pointer; }
+.ds-raidb b { color: var(--text); font-weight: 700; } .ds-raidb span { color: var(--gold); margin-left: 6px; } .ds-raidb:hover { border-color: var(--line2); color: var(--text); }
 </style>
 
 
