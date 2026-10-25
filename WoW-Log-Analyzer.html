@@ -6603,6 +6603,15 @@ section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-z[style*="--p"] svg { dis
 .pfv .rck-cat .rck-rs > .rck-r.rck-x { grid-column: 1 / -1; border: 0 !important; background: none !important; }
 .pfv .rck-cat .rck-rs > .rck-r.rck-x > summary { padding: 6px 4px !important; }
 .pfv .rck-cat .rck-rs > .rck-r.rck-x > summary .rck-n { color: var(--gold); font-weight: 600; }
+/* ===== Design studio round 6 (Oct 25): inside a checklist card, a flat tile shows its result sentence and has no drop-down (how it is judged is on
+   hover); a deep tile keeps its drop-down and shows a small arrow. Owner: the Design studio chat. ===== */
+.pfv details.rck-r[data-ds-kind="flat"] > summary { cursor: default; }
+.pfv details.rck-r[data-ds-kind="flat"] > summary:hover { background: none; }
+.pfv details.rck-r[data-ds-kind="flat"] > :not(summary) { display: none; }
+.pfv details.rck-r[data-ds-kind="flat"] > summary .ds-note { grid-column: 1 / -1; margin-top: 3px; font-size: 12.5px; line-height: 1.3; color: var(--muted); }
+.pfv details.rck-r[data-ds-kind="deep"] > summary { position: relative; padding-right: 22px !important; }
+.pfv details.rck-r[data-ds-kind="deep"] > summary::after { content: '\25B8'; position: absolute; right: 9px; bottom: 8px; font-size: 12px; color: var(--muted); }
+.pfv details.rck-r[data-ds-kind="deep"][open] > summary::after { content: '\25BE'; }
 </style>
 
 
@@ -16305,6 +16314,7 @@ const PATCH_NOTES = [
     { t: 'One way to show a number', d: 'The Report card and Rotation now speak the same language as Debriefing: a bar with one number at its end, a grade as one letter at the start of its bar. The ranked roster is one bar per raider, a raider\'s checklist shows the rows that need them and folds the rest, and Rotation\'s header is one row with the talent trees folded under it.' },
     { t: 'Your tier set, in numbers', d: 'Rotation shows how much your 2-piece and 4-piece added, with a Where it came from breakdown behind every number. On every spec.' },
     { t: 'Your trinkets, both of them', d: 'Gear and extras on Rotation now shows both of your trinkets, with what each one did (damage, healing or stats), or that one was never pressed.' },], n: [
+    'Rotation: inside a checklist card, a tile only opens when there is more inside (a list, a chart, the steps); the others show their one-line result right in the tile, with how it is judged on hover. The ones that open show a small arrow.',
     'Rotation: inside an open checklist card, the tiles that need you come first; each tile is its number (coloured by how it went) with a bar where there is a share, no dots or ticks; titles without underlines; the charts row is a plain link.',
     'Rotation: gear rows are two short lines (the item and its note, the number on the right) and the groups are one quiet grey, since those numbers are not graded.',
     'All pulls: each mechanic\'s trend is a thin line with only the misses marked and one number at the end; an Improving or Worsening tag shows only when the trend moved.',
@@ -50028,6 +50038,21 @@ function dsRot() { const p = document.querySelector('#view .pf-inl.spc-v'); if (
   if (ck && !p.querySelector(':scope > .ds-rcols')) { const c = document.createElement('div'); c.className = 'ds-rcols'; ck.before(c); c.appendChild(ck); if (gx) c.appendChild(gx); }
   p.classList.add('ds-rot'); }
 (function () { const f1 = dsBars; dsBars = function (root) { f1(root); try { dsRot(); } catch (e) {} }; })();
+
+// ===== Design studio round 6 (Oct 25): Rotation tiles: a drop-down only where there is something to drop down to. Owner: the Design studio chat. =====
+function dsRotTiles() { const p = document.querySelector('#view .pf-inl.spc-v'); if (!p) return;
+  const he = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  p.querySelectorAll('details.rck-r').forEach((t) => { if (t.dataset.dsKind || t.classList.contains('rck-x')) return;
+    const body = [...t.children].filter((c) => c.tagName !== 'SUMMARY'), text = body.map((c) => c.textContent.trim()).join('');
+    const parts = body.flatMap((c) => [...c.children]).map((c) => c.tagName + '.' + (c.className.toString().split(' ')[0] || ''));
+    const flat = !text || (parts.length > 0 && parts.every((k) => k === 'P.spc-rs' || k === 'P.spc-hwp'));
+    t.dataset.dsKind = flat ? 'flat' : 'deep'; if (!flat) return;
+    const sm = t.querySelector(':scope > summary'), rs = t.querySelector(':scope > * > p.spc-rs'), hw = t.querySelector(':scope > * > p.spc-hwp');
+    if (sm && rs && !sm.querySelector('.ds-note')) { const n = document.createElement('span'); n.className = 'ds-note'; n.textContent = rs.textContent.replace(/\s+/g, ' ').replace(/\s*How it.s judged\s*$/i, '').trim(); sm.appendChild(n); }
+    if (sm && hw && !sm.dataset.tt) sm.dataset.tt = '<b>How it is judged</b><br>' + he(hw.textContent.replace(/\s+/g, ' ').replace(/^How it.s judged\s*/i, '').trim());
+    if (t.open) t.open = false; }); }
+document.addEventListener('click', (e) => { const sm = e.target && e.target.closest && e.target.closest('details.rck-r[data-ds-kind="flat"] > summary'); if (sm) e.preventDefault(); }, true);
+(function () { const f2 = dsBars; dsBars = function (root) { f2(root); try { dsRotTiles(); } catch (e) {} }; })();
 
 </script>
 </body>
