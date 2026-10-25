@@ -6542,6 +6542,16 @@ section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-z[style*="--p"] svg { dis
 @media (min-width: 901px) { #view.ds-two .ds-r .mcx-tl { overflow: hidden; } #view.ds-two .ds-r .mcx-cut > span, #view.ds-two .ds-r .mcx-wipe.end > span { left: auto !important; right: 4px !important; transform: none !important; white-space: nowrap; text-align: right; } }
 /* the coach's two inner groups (What wiped us / What we did well) are labelled columns with a coloured top line, not boxes in a box */
 #view.ds-two .cch-tsec { border-width: 2px 0 0 !important; border-radius: 0 !important; background: none !important; padding: 10px 0 0 !important; }
+/* All pulls, the trend rows: a thin quiet line with only the red misses marked (the dot grid beside it already shows every pull), one number
+   at the end, and the "Early → late" sentence only when it is improving or worsening, as a small tag. One signal a row. */
+#view.ds-two .prw-tl .prw-sl { height: 20px; margin: 4px 0 0; }
+#view.ds-two .prw-sl .sl-line { stroke: rgba(236,232,223,.4); stroke-width: 1.25; }
+#view.ds-two .prw-sl .sl-ok, #view.ds-two .prw-sl .sl-warn { display: none; }
+#view.ds-two .prw-sl .sl-bad { r: 2.6; }
+#view.ds-two .prw-tl .prw-s { display: none; }
+#view.ds-two .prw-tl .prw-s.up, #view.ds-two .prw-tl .prw-s.dn { display: inline-block; align-self: flex-start; margin-top: 4px; padding: 0 7px; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 18px; }
+#view.ds-two .prw-tl .prw-s.up { color: #8fd99a; background: rgba(69,193,92,.12); } #view.ds-two .prw-tl .prw-s.dn { color: #ff8f87; background: rgba(229,83,75,.12); }
+#view.ds-two .prw-tl > .prw-p { margin-top: 0; align-self: center; }
 /* the player tables fold under one line */
 #view.ds-two > .brf-keep { display: none; } #view.ds-two.ds-raid > .brf-keep { display: grid; }
 .ds-raidb { display: block; width: 100%; margin: 4px 0 18px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--muted); font: 500 14px var(--body); text-align: left; cursor: pointer; }

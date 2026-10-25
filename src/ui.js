@@ -1776,6 +1776,7 @@ const PATCH_NOTES = [
     { t: 'One way to show a number', d: 'The Report card and Rotation now speak the same language as Debriefing: a bar with one number at its end, a grade as one letter at the start of its bar. The ranked roster is one bar per raider, a raider\'s checklist shows the rows that need them and folds the rest, and Rotation\'s header is one row with the talent trees folded under it.' },
     { t: 'Your tier set, in numbers', d: 'Rotation shows how much your 2-piece and 4-piece added, with a Where it came from breakdown behind every number. On every spec.' },
     { t: 'Your trinkets, both of them', d: 'Gear and extras on Rotation now shows both of your trinkets, with what each one did (damage, healing or stats), or that one was never pressed.' },], n: [
+    'All pulls: each mechanic\'s trend is a thin line with only the misses marked and one number at the end; an Improving or Worsening tag shows only when the trend moved.',
     'Debriefing: What wiped us and What we did well are two labelled columns with their red and green line, not boxes inside the coach box.',
     'Report card: the six category numbers in the ranked roster are plain grey (they still sort); the grade bar carries the colour.',
     'Rotation: the five checklist rings are a title, a score and a bar; inside an open one, each tile\'s small ring is a bar too.',
