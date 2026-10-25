@@ -104,23 +104,8 @@ body.isMini { border-color: rgba(230,180,80,.85); box-shadow: inset 0 0 0 1px rg
 .kbig small { display: block; color: var(--muted); font-size: 13px; font-weight: 600; } .kbig b { font: 700 30px 'Barlow Semi Condensed', Barlow, sans-serif; line-height: 1.05; } .kbig b em { font-style: normal; font-size: 13px; color: var(--muted); margin-left: 4px; }
 .kbig .kbr { margin-left: auto; text-align: right; color: var(--muted); font-size: 12.5px; align-self: flex-start; } .kbig .kbr .up { color: #7ee08f; } .kbig .kbr .dn { color: #ff8f87; }
 .kL, .kR { min-width: 0; }
-/* (the Whole night window (Oct 24), as the big window in game) */
-.tb { app-region: no-drag; -webkit-app-region: no-drag; margin-left: auto; background: var(--raised); border: 1px solid var(--line2); color: var(--muted); font: 700 11.5px Barlow, sans-serif; border-radius: 5px; padding: 3px 10px; cursor: pointer; flex: none; } .tb:hover { color: var(--text); }
-.bw { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 0 18px; align-items: start; }
-.bws { border-right: 1px solid var(--line); padding-right: 10px; }
-.bwsh { display: flex; justify-content: space-between; color: var(--muted); font: 700 11.5px Barlow, sans-serif; letter-spacing: .04em; margin: 0 4px 6px; } .bwsh i { font-style: normal; color: var(--faint); font-weight: 500; }
-.bwsb { font: 700 14px 'Barlow Semi Condensed', Barlow, sans-serif; margin: 10px 4px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .bwsb small { color: var(--faint); font: 600 12px Barlow, sans-serif; margin-left: 6px; }
-.bwsp { display: grid; grid-template-columns: 52px auto minmax(0, 1fr); align-items: center; gap: 6px; padding: 4px 6px; border-radius: 5px; cursor: pointer; color: var(--faint); font-size: 13px; } .bwsp:hover { color: var(--text); background: rgba(255,255,255,.03); } .bwsp.on { background: #2a2618; color: var(--text); box-shadow: inset 2px 0 0 var(--gold); } .bwsp.wait { opacity: .6; }
-.bwsp em { font-style: normal; font-weight: 700; font-size: 11.5px; padding: 1px 6px; border-radius: 4px; background: rgba(229,83,75,.13); color: var(--badT); justify-self: start; white-space: nowrap; } .bwsp em.k { background: rgba(69,193,92,.14); color: var(--goodT); } .bwsp small { text-align: right; color: var(--muted); font-size: 12px; }
-.bwh { display: flex; align-items: center; gap: 12px; } .bwh b { font: 700 26px 'Barlow Semi Condensed', Barlow, sans-serif; } .bwh .kres { margin-left: 0; } .bwh i { margin-left: auto; font-style: normal; color: var(--muted); font-size: 13px; }
-.bwmeta { color: var(--muted); font-size: 13.5px; margin: 4px 0 10px; }
-.bwg { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 18px; align-items: start; margin-top: 10px; }
-.bwt { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0 0 12px; } .bwt > div { background: var(--raised); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; min-width: 0; } .bwt small { display: block; color: var(--muted); font-size: 12.5px; } .bwt b { font: 700 24px 'Barlow Semi Condensed', Barlow, sans-serif; } .bwt b em { font-style: normal; font: 700 11.5px Barlow, sans-serif; color: var(--muted); margin-left: 4px; } .bwt i { display: block; font-style: normal; color: var(--faint); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bp { background: var(--raised); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px 8px; margin: 0 0 12px; } .bph { display: flex; align-items: baseline; gap: 8px; margin: 0 0 6px; } .bph b { font: 700 15px 'Barlow Semi Condensed', Barlow, sans-serif; } .bph i { margin-left: auto; font-style: normal; color: var(--faint); font-size: 12px; }
-.bp p.kst { margin: 4px 0 8px; } .bpw { display: grid; grid-template-columns: 60px minmax(0, 1fr); gap: 4px 8px; font-size: 13px; color: var(--soft); margin: 0 0 6px; } .bpw b { font-weight: 700; }
-.bpn { background: rgba(230,180,80,.07); border: 1px solid rgba(230,180,80,.5); border-left: 3px solid var(--gold); border-radius: 8px; padding: 10px 14px; margin: 0 0 12px; font-size: 14px; } .bpn small { display: block; color: var(--gold); font-weight: 700; font-size: 11.5px; letter-spacing: .05em; margin-bottom: 4px; }
-.bwd { display: grid; grid-template-columns: 40px 110px 22px minmax(0, 1fr); gap: 6px; align-items: center; font-size: 13.5px; padding: 3px 0; color: var(--muted); } .bwd > span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .bwd .knm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bwc { position: relative; } .bwc em { position: absolute; right: 0; top: -22px; font-style: normal; color: #5fdc7a; font-weight: 700; font-size: 11.5px; } .bwc svg { display: block; width: 100%; height: auto; }
+/* (the same type as the card in WoW (Oct 24, the user: "THEY ALL LOOK THE SAME"): Barlow Medium for text, SemiBold for bold, Semi Condensed Bold titles; the raid lead box's gold edge) */
+html, body { font-weight: 500; } .body b { font-weight: 600; } .kyou { border-left: 3px solid var(--gold); }
 .kgr { display: flex; gap: 14px; align-items: center; background: var(--raised); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; margin: 0 0 10px; } .kgr b { font: 700 30px 'Barlow Semi Condensed', Barlow, sans-serif; line-height: 1; min-width: 26px; } .kgr small, .kch small { display: block; color: var(--faint); font-weight: 700; font-size: 11px; letter-spacing: .04em; } .kgr span { color: var(--soft); font-size: 13px; }
 .kch { position: relative; background: var(--raised); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px 8px; margin: 0 0 10px; } .kch em { position: absolute; right: 12px; top: 8px; font-style: normal; color: #5fdc7a; font-weight: 700; font-size: 11.5px; } .kch svg { display: block; width: 100%; height: auto; margin-top: 6px; } .kch .kno { margin: 6px 0 0; } .kgrid.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } /* (two columns when it's long (Oct 24)) */
 .kl { color: var(--gold); font: 700 11.5px/1 Barlow, sans-serif; letter-spacing: .05em; margin: 2px 0 7px; } .kl.mut { color: var(--muted); margin-top: 12px; }
@@ -351,83 +336,6 @@ function cardView() {
   const tabs = me ? '<div class="ktabs"><span data-tab="me" class="' + (VIEW === 'me' ? 'on' : '') + '">Me</span>' + (DUN ? '' : '<span data-tab="raid" class="' + (VIEW === 'raid' ? 'on' : '') + '">Raid view</span>') + who + '</div>' : '';
   return head + pulls + tabs + stopRow() + '<div class="kgrid one"><div class="kL">' + L + Rt + '</div></div>';
 }
-// ---------- the big window ("Whole night"), drawn in the pop-up (Oct 24, the user: "post pull pop up still using the wrong recap screen":
-// their /recap opens the Whole night window, so the pop-up does too). Tonight's pulls down the side, the pull's header, Me or Raid view,
-// two columns as the addon's big window lays them out. "Card view" switches to the card, "Expand" back, as in game
-let BIGV = null; const wholeOn = () => !!(D && D.card) && (BIGV != null ? BIGV : !!(D.lk && D.lk.bigDefault));
-function wholeView() {
-  const C = D.card, LK = D.lk || {}, SH = LK.show || {}, MX = LK.max || {}, PL = C.players || [], short = (n) => String(n || '').split('-')[0];
-  const clsOf = new Map(); for (const p of PL) { clsOf.set(p.name, p.cls); clsOf.set(short(p.name), p.cls); }
-  const nmH = (n) => '<b class="knm" style="color:' + (CC[clsOf.get(n)] || '#ece8df') + '">' + esc(short(n)) + '</b>';
-  const nmRe = PL.length ? new RegExp('@?(' + [...new Set(PL.map((p) => short(p.name)).filter((n) => n.length > 2))].sort((a, b) => b.length - a.length).map(reEsc).join('|') + ')(?![\\p{L}\\p{N}])', 'gu') : null;
-  const pt = (s) => { const x = esc(s); return nmRe ? x.replace(nmRe, (m, n) => nmH(n)) : x; };
-  const icn = (id) => (id ? ic(id) : '<span class="ic"></span>');
-  const bad = (L0) => (LK.onlyBad ? (L0 || []).filter((r) => r[0] !== 'ok' && r[0] !== 'info') : (L0 || []));
-  const RK = { dead: 0, bad: 0, warn: 1 }, worst = (L0) => (L0 || []).map((x, i) => [x, i]).sort((a, b) => ((RK[a[0][0]] ?? 2) - (RK[b[0][0]] ?? 2)) || a[1] - b[1]).map((q) => q[0]);
-  const row = (r) => '<div class="kr"><i class="kd" style="background:' + (FLC[r[0]] || '#6c7381') + '"></i>' + icn(r[1]) + '<span>' + pt(r[2]) + '</span></div>';
-  const rowT = (r) => '<div class="kr"><i class="kd" style="background:' + (FLC[r[0]] || '#6c7381') + '"></i>' + icn(r[1]) + '<span><b>' + esc(r[2]) + '</b> ' + pt(r[3] || '') + '</span></div>';
-  const pan = (title, note, inner) => '<div class="bp"><div class="bph"><b>' + title + '</b>' + (note ? '<i>' + esc(note) + '</i>' : '') + '</div>' + inner + '</div>';
-  const pk = (v) => { const m = String(v || '').replace(/,/g, '').match(/([\d.]+)\s*([kKmM]?)/); if (!m) return null; const n = +m[1]; return /m/i.test(m[2]) ? n * 1000 : /k/i.test(m[2]) ? n : n / 1000; };
-  const chart = (pts, fmt) => {
-    if (pts.length < 2) return '<p class="kno">Shows once you have two pulls on this boss tonight.</p>';
-    let lo = Math.min(...pts.map((q) => q[1])), hi = Math.max(...pts.map((q) => q[1])), best = 0; if (hi === lo) hi = lo + 1;
-    pts.forEach((q, i) => { if (q[1] >= pts[best][1]) best = i; });
-    const Wd = 560, Hh = 110, x = (i) => (10 + i * (Wd - 20) / (pts.length - 1)).toFixed(1), y = (v) => (Hh - 8 - (Hh - 18) * (v - lo) / (hi - lo)).toFixed(1);
-    const mix = (i) => { const f = i / Math.max(1, pts.length - 1), a = [230, 180, 80], b = [95, 220, 122]; return 'rgb(' + a.map((c, j) => Math.round(c + (b[j] - c) * f)).join(',') + ')'; };
-    let g = ''; for (let i = 1; i < pts.length; i++) g += '<line x1="' + x(i - 1) + '" y1="' + y(pts[i - 1][1]) + '" x2="' + x(i) + '" y2="' + y(pts[i][1]) + '" stroke="' + mix(i) + '" stroke-width="2.2" stroke-linecap="round"/>';
-    g += pts.map((q, i) => '<circle cx="' + x(i) + '" cy="' + y(q[1]) + '" r="' + (q[2] ? 4.5 : 3) + '" fill="' + (q[2] ? '#5fdc7a' : mix(i)) + '"/>').join('');
-    return '<div class="bwc"><em>Best: pull ' + esc(pts[best][0]) + ' · ' + esc(fmt(pts[best][1])) + '</em><svg viewBox="0 0 ' + Wd + ' ' + Hh + '">' + g + '</svg></div>'; };
-  const H = C.h || D.h || {}, DUN = !!H.dungeon, prac = H.diff === 'Practice';
-  const mine = LK.me ? PL.find((p) => p.name === LK.me || short(p.name) === short(LK.me)) : null;
-  if (WHO && !PL.some((p) => p.name === WHO)) WHO = null;
-  const me = WHO ? PL.find((p) => p.name === WHO) : mine || PL.find((p) => p.rot || (p.slips || []).length) || PL[0] || null;
-  if (!VIEW || (VIEW === 'me' && !me) || (DUN && me)) VIEW = me ? 'me' : 'raid';
-  const R = C.raid || {}, NA = D.night || [], NP = NA.filter((p) => p.boss === (H.boss || '') + ' · ' + (H.diff || ''));
-  // (the side: tonight's pulls, newest first, grouped by boss)
-  let side = '<div class="bws"><div class="bwsh"><b>TONIGHT\'S PULLS</b><i>' + NA.length + '</i></div>', last = null;
-  for (const p of NA.slice().reverse()) {
-    if (p.boss !== last) { last = p.boss; const [bn, bd] = String(p.boss).split(' · '); side += '<div class="bwsb">' + esc(bn) + (bd ? '<small>' + esc(bd) + '</small>' : '') + '</div>'; }
-    side += '<div class="bwsp' + (p.cur ? ' on' : '') + (loadingPull === p.sb ? ' wait' : '') + '" data-pull="' + p.sb + '" title="' + esc('Pull ' + p.pull + (p.h ? ': ' + p.h : '')) + '"><span>Pull ' + esc(p.pull) + '</span><em class="' + (p.kill ? 'k' : '') + '">' + esc(p.txt) + '</em><small>' + esc(p.dur || '') + '</small></div>';
-  }
-  side += '</div>';
-  // (the pull's header: Pull N, the result, a closest-pull note; its facts; Me | Raid view with the arrows)
-  const ht = prac ? 'Practice' : H.kill ? 'Kill' : 'Wipe' + (H.pct !== '' && H.pct != null ? ' · ' + H.pct + '%' : '');
-  let minP = 101; for (const q of NP) if (!q.kill && q.left != null && q.left < minP) minP = q.left;
-  const note = H.kill ? 'A kill' : !prac && H.pct !== '' && H.pct != null && +H.pct <= minP ? 'Closest pull tonight' : '';
-  const meta = [H.dur, H.where, H.deaths != null && H.deaths !== '' ? H.deaths + (+H.deaths === 1 ? ' death' : ' deaths') : '', PL.length + ' players', NP.length + (NP.length === 1 ? ' pull' : ' pulls') + ' on this boss'].filter(Boolean);
-  const who = VIEW === 'me' && me && PL.length > 1 ? '<span class="kwho"><button type="button" data-who="-1" title="The player before">‹</button>' + nmH(me.name) + '<button type="button" data-who="1" title="The next player">›</button></span>' : '';
-  const tabs = me ? '<div class="ktabs"><span data-tab="me" class="' + (VIEW === 'me' ? 'on' : '') + '">Me</span>' + (DUN ? '' : '<span data-tab="raid" class="' + (VIEW === 'raid' ? 'on' : '') + '">Raid view</span>') + who + '</div>' : '';
-  let main = '<div class="bwh"><b>Pull ' + esc(H.pull) + '</b><span class="kres' + (prac ? ' p' : H.kill ? ' k' : '') + '">' + esc(ht) + '</span>' + (note ? '<i>' + note + '</i>' : '') + '</div><div class="bwmeta">' + meta.map(esc).join(' · ') + '</div>' + tabs + stopRow();
-  // (the two columns)
-  const nextBox = (t, lbl) => (t ? '<div class="bpn"><small>' + lbl + '</small>' + pt(t) + '</div>' : '');
-  const progress = () => (prac || DUN ? '' : pan('Progress tonight', 'how far each pull got', chart(NP.map((p) => [p.pull, p.kill ? 100 : p.left != null ? 100 - p.left : null, p.cur]).filter((q) => q[1] != null), (v) => (v >= 100 ? 'kill' : Math.round(100 - v) + '% left'))));
-  const died = () => ((MX.maxDied != null ? MX.maxDied : 3) > 0 && !prac ? pan('Who died', String(H.deaths != null ? H.deaths : ''), (R.died || []).length ? R.died.map((d) => '<div class="bwd"><span>' + esc(d[0]) + '</span>' + nmH(d[1]) + icn(d[3]) + '<span>' + esc(d[4] || '') + '</span></div>').join('') + (R.more ? '<p class="kno">' + pt(R.more) + '</p>' : '') : '<p class="kno">' + pt(R.more || 'Nobody died.') + '</p>') : '');
-  const list = (title, rows, none) => { const s = worst(bad(rows)); return pan(title, s.length ? s.length + (s.length === 1 ? ' line' : ' lines') : '', s.length ? s.map(row).join('') : '<div class="kr"><i class="kd" style="background:#45c15c"></i><span class="ic"></span><span>' + none + '</span></div>'); };
-  const raidList = (title, rows, n) => { const s = worst(rows || []); return pan(title, title === 'Boss mechanics' ? s.filter((r) => r[0] === 'ok').length + ' of ' + s.length + ' done right' : s.length + ' found', s.length ? s.slice(0, n).map(rowT).join('') : '<div class="kr"><i class="kd" style="background:#45c15c"></i><span class="ic"></span><span>Nothing big.</span></div>'); };
-  let Lc = '', Rc = '';
-  if (VIEW === 'me' && me) {
-    const P = me, d = P.d != null && P.d !== '' ? '<span style="color:' + (P.d >= 0 ? '#7ee08f' : '#ff8f87') + '">' + (P.d >= 0 ? '+' : '') + esc(P.d) + '%</span> vs pull ' + esc(P.vs) : 'First pull read';
-    const rk = String(P.rank || ''), place = rk.match(/^(\S+)/), rest = rk.match(/^\S+ (.+)$/);
-    Lc += '<div class="bwt"><div><small>' + (P.role === 'healer' ? 'Your healing' : 'Your damage') + '</small><b>' + esc(P.v) + '<em>' + esc(P.unit) + '</em></b><i>' + d + '</i></div>' +
-      '<div><small>Best tonight</small><b>' + esc(P.bt || !P.best ? P.v : P.best) + '</b><i>' + (P.bt || !P.bp ? 'this pull' : 'pull ' + esc(P.bp)) + '</i></div>' +
-      '<div><small>Place</small><b>' + esc(place ? place[1] : '–') + '</b><i>' + esc(rest ? rest[1] : '') + '</i></div></div>';
-    if (!prac && !DUN) { const k = short(P.name); Lc += pan((P.role === 'healer' ? 'Your healing' : 'Your damage') + ' tonight', NP.length + (NP.length === 1 ? ' pull' : ' pulls'), chart(NP.map((p) => [p.pull, p.v && p.v[k] ? pk(p.v[k]) : null, p.cur]).filter((q) => q[1] != null && q[1] > 0), (v) => (v >= 1000 ? (v / 1000).toFixed(2).replace(/0+$/, '').replace(/\.$/, '') + 'M' : Math.round(v) + 'k'))); }
-    const rot = list('Rotation', P.slips, 'Nothing to fix here.'), boss = (P.boss || []).length || !prac ? list('Boss mechanics', P.boss, 'No boss mistakes.') : '';
-    Lc += LK.bossFirst ? boss + rot : rot + boss;
-    if ((P.surv || []).length && SH.surv !== false) Lc += list('Survival', P.surv, '');
-    Lc += nextBox(P.next, DUN ? 'NEXT TIME' : 'NEXT PULL');
-    Rc += progress();
-    if (!DUN && !prac) { Rc += raidList(H.kill ? 'What to clean up' : 'Top mistakes', R.bad, 3); if ((R.mech || []).length) Rc += raidList('Boss mechanics', R.mech, 4); }
-    Rc += died();
-  } else {
-    if (R.story) Lc += pan('The pull', '', '<p class="kst">' + pt(R.story) + '</p>' + [[R.better, 'Better', '#7ee08f'], [R.worse, 'Worse', '#e8a23a']].filter((q) => q[0]).map((q) => '<div class="bpw"><b style="color:' + q[2] + '">' + q[1] + '</b><span>' + pt(q[0]) + '</span></div>').join(''));
-    Lc += raidList(H.kill ? 'What to clean up' : 'Top mistakes', R.bad, 99);
-    if ((R.mech || []).length) Lc += raidList('Boss mechanics', R.mech, MX.maxMech != null ? MX.maxMech : 6);
-    Lc += nextBox(R.next, 'NEXT PULL');
-    Rc += progress() + died();
-  }
-  return '<div class="bw">' + side + '<div>' + main + '<div class="bwg"><div>' + Lc + '</div><div>' + Rc + '</div></div></div></div>';
-}
 function render() {
   const app = document.getElementById('app'); if (!D || !D.h) return;
   const h = D.h, c = D.coach, cls = new Map(D.cls || []);
@@ -441,7 +349,7 @@ function render() {
   const paint = (s) => { let x = esc(s); for (const [n, k] of cls) if (n.length > 2 && x.includes(n)) x = x.split(n).join('<b style="color:' + (CC[k] || '#ece8df') + ';font-weight:600">' + n + '</b>'); return x; };
   const res = h.kill ? 'Kill' : 'Wipe' + (h.pct !== '' && h.pct != null ? ' ' + h.pct + '%' : '');
   let body = '';
-  if (D.card) body = wholeOn() ? wholeView() : cardView(); /* (the /recap card (Oct 24): its own header, pulls and wipe call; or the Whole night window, as /db's "/recap opens" says) */
+  if (D.card) body = cardView(); /* (the /recap card (Oct 24): its own header, pulls and wipe call; the one recap window, the same as in WoW) */
   else if (D.pack && D.pack.html) body = stopRow() + '<div id="site"></div>';
   else if (c && c.headline) {
     body += '<div class="cl">' + (c.kill ? 'THE KILL, COACHED' : 'THIS PULL, COACHED') + '</div><p class="chd">' + paint(c.headline) + '</p>';
@@ -457,7 +365,7 @@ function render() {
     body += '<p class="cnt" style="margin-top:10px">The full coaching is on the website, in the Debriefing tab.</p>';
   } else body += '<p class="chd">' + esc(res) + ' · ' + esc(h.dur) + '</p><p class="cnt">No coaching for this pull.</p>';
   const pr0 = document.getElementById('pullsRow'), sl0 = pr0 ? pr0.scrollLeft : null, bd0 = document.querySelector('.body'), st0 = bd0 ? bd0.scrollTop : 0; /* (a redraw keeps your place (Oct 24)) */
-  app.innerHTML = '<div class="top">' + LOGO + '<b>Debrief</b>' + (D.card ? (wholeOn() ? '<span class="bt">' + esc(h.boss) + ' · ' + esc(h.diff) + '</span>' : '') + '<button class="tb" type="button" data-bigv="1" title="' + (wholeOn() ? 'The card for this pull, as /recap shows it' : 'The whole night: tonight\'s pulls and charts') + '">' + (wholeOn() ? 'Card view' : 'Expand') + '</button>' : '<span class="bt">' + esc(h.boss) + ' · ' + esc(h.diff) + ' · Pull ' + esc(h.pull) + '</span><span class="pill' + (h.kill ? ' k' : '') + '">' + esc(res) + '</span>') + '<button class="x" type="button" title="Close (it comes back after the next pull)" data-close="1">✕</button></div>' +
+  app.innerHTML = '<div class="top">' + LOGO + '<b>Debrief</b>' + (D.card ? '' : '<span class="bt">' + esc(h.boss) + ' · ' + esc(h.diff) + ' · Pull ' + esc(h.pull) + '</span><span class="pill' + (h.kill ? ' k' : '') + '">' + esc(res) + '</span>') + '<button class="x" type="button" title="Close (it comes back after the next pull)" data-close="1">✕</button></div>' +
     (D.card ? '' : nightRow()) +
     '<div class="body' + (D.pack && D.pack.html ? ' sitebody' : '') + '">' + body + '</div>' +
     '<div class="foot">' +
@@ -487,13 +395,11 @@ function stopRow() {
 let waiting = false;
 // (the window grows to fit the card, up to most of the screen; the rest scrolls)
 function fit() { requestAnimationFrame(() => { const a = document.getElementById('app'), m = a.querySelector('.mini'), t = a.querySelector('.top'), b = a.querySelector('.body'), f = a.querySelector('.foot');
-  const whole = !!(b && b.querySelector('.bw'));
-  if (!m && b && !whole) cols2(b, (t ? t.offsetHeight : 0) + (f ? f.offsetHeight : 0));
-  if (whole) { WMODE = true; post('w:1100'); } else if (WMODE) { WMODE = false; post('cols:' + COLS); } /* (the Whole night window's width, then the card's again (Oct 24)) */
+  if (!m && b) cols2(b, (t ? t.offsetHeight : 0) + (f ? f.offsetHeight : 0));
   const want = m ? m.offsetHeight + 2 : (t ? t.offsetHeight : 0) + (b ? b.scrollHeight : 0) + (f ? f.offsetHeight : 0) + 2; post('h:' + Math.ceil(want)); }); }
 // (two columns when the card is long (Oct 24), like the card in WoW: measured at one column's width; when it's taller than the window can
 // grow (most of the screen), the sections from the one that best balances the two sides move to a right column and the window doubles)
-let COLS = 1, WMODE = false;
+let COLS = 1;
 function cols2(b, chrome) {
   const g = b.querySelector('.kgrid'), L = g && g.querySelector('.kL'); let want = 1;
   if (L) {
@@ -514,8 +420,7 @@ function cols2(b, chrome) {
 }
 window.addEventListener('resize', () => fit()); /* (the app widened or narrowed the window: measure again) */
 document.addEventListener('click', (e) => {
-  const t = e.target.closest ? e.target.closest('[data-fold],[data-row],[data-close],[data-open],[data-big],[data-cut],[data-cutt],[data-pull],[data-tab],[data-cf],[data-cr],[data-cmore],[data-who],[data-bigv]') : null; if (!t) return;
-  if (t.dataset.bigv) { BIGV = !wholeOn(); VIEW = null; render(); return; } /* (Card view / Expand, as in game (Oct 24)) */
+  const t = e.target.closest ? e.target.closest('[data-fold],[data-row],[data-close],[data-open],[data-big],[data-cut],[data-cutt],[data-pull],[data-tab],[data-cf],[data-cr],[data-cmore],[data-who]') : null; if (!t) return;
   if (t.dataset.who) { const PL = (D.card && D.card.players) || []; if (!PL.length) return; const curN = document.querySelector('.kwho .knm'), cur = PL.findIndex((p) => p.name === WHO || (!WHO && curN && String(p.name).split('-')[0] === curN.textContent)); WHO = PL[((cur < 0 ? 0 : cur) + (+t.dataset.who) + PL.length) % PL.length].name; for (const k of Object.keys(OPEN)) if (/^r:rot|^m:rot|^s:rot/.test(k)) delete OPEN[k]; render(); return; }
   if (t.dataset.pull) { if (t.classList.contains('on')) return; loadingPull = +t.dataset.pull; t.classList.add('wait'); t.textContent = t.textContent.replace(/ · .*/, ' · loading…'); post('pull:' + t.dataset.pull); return; } /* (a pull button, in the card's row or the old strip) */
   if (t.dataset.tab) { VIEW = t.dataset.tab; render(); return; } /* (the card: Me or Raid view) */

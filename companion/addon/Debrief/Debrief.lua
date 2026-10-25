@@ -1356,9 +1356,8 @@ local pendingShow = false
 local function showCard()
   -- (never pops up mid-fight: it waits until you're out of combat)
   if InCombatLockdown() then pendingShow = true; return end
-  -- (the way you chose: the mini bar, the big window, or the card)
+  -- (the card, always (Oct 24, the user: "there is no variation to the recap window"); Expand on it opens the big window)
   if DB.mini then card:Hide(); miniShow()
-  elseif DB.bigDefault then card:Hide(); big:Show(); bigRender()
   else card:Show(); render() end
   onShow()
   if DB.sound ~= false and SOUNDKIT and SOUNDKIT.IG_QUEST_LOG_OPEN then PlaySound(SOUNDKIT.IG_QUEST_LOG_OPEN) end
@@ -2192,10 +2191,9 @@ local function buildOptions()
     refreshers[#refreshers + 1] = show; show()
   end
   pslider("Background", "How solid the card is.", 0.6, 1, function() return DB.alpha or 0.97 end, function(v) DB.alpha = v end)
-  section("/recap opens")
-  segment("As", "The card for one pull, or the whole night in the big window with its charts.", { { "card", "Card" }, { "big", "Whole night" } },
-    function() return DB.bigDefault and "big" or "card" end, function(v) DB.mini = false; DB.bigDefault = (v == "big") end, true)
-  pslider("Whole-night window size", nil, 0.7, 1.3, function() return DB.bigScale or 1 end, function(v) DB.bigScale = v end)
+  -- (no "/recap opens: Card / Whole night" any more (Oct 24): the card is the one recap window; the big window is Expand on it)
+  section("Big window")
+  pslider("Size", "The big window you open with Expand on the card: tonight's pulls and charts.", 0.7, 1.3, function() return DB.bigScale or 1 end, function(v) DB.bigScale = v end)
 
   -- ---------- More: set once and forget ----------
   page("more")
@@ -2700,6 +2698,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     if not DB.glanceDefault then DB.glanceDefault = true; DB.detailedDefault = true; DB.threeStyles = true; if DB.preset == nil then Debrief_SetPreset("standard") end end -- (new players start on Standard (Oct 24))
     -- (five styles became three (Oct 24): Glance and Medium are Standard now, Heavy is Detailed; Simple and Detailed get their new sections)
     if not DB.noMini then DB.noMini = true; DB.mini = false end -- (the mini bar left the settings (Oct 24))
+    DB.bigDefault = nil -- (the card is the one recap window (Oct 24): nothing opens the big window by itself)
     if not DB.threeStyles then DB.threeStyles = true; local was = DB.preset
       if was == "glance" or was == "medium" then Debrief_SetPreset("standard") elseif was == "heavy" or was == "detailed" then Debrief_SetPreset("detailed") elseif was == "simple" then Debrief_SetPreset("simple") end end
     if not DB.detailedDefault then DB.detailedDefault = true; if DB.preset == nil or DB.preset == "medium" then Debrief_SetPreset("detailed") end end -- (the Detailed card is the default since Oct 21)
