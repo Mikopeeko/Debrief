@@ -17311,7 +17311,14 @@ function openIdea() {
   setTimeout(() => { const t = $('#idzText'); if (t) t.focus(); }, 60);
 }
 const progLit = (on) => { const b = $('#tbProgBtn'); if (b) b.classList.toggle('on', on); };
+/* (Oct 25, for the Design studio's "celebrate kills" look: <html> carries is-kill on a killed pull and is-first-kill on the team's first kill
+   of that boss and difficulty (the same test as killCall's "First Mythic kill"); the look itself is the Design studio's CSS) */
+function killFlags() { const R = document.documentElement, r = S.rep, it = r && !r.allPulls && r.item, kill = !!(it && it.kind === 'boss' && it.kill); let first = false;
+  if (kill) { try { const H = [...HIST.mem.values()].filter((v) => v.boss === it.boss && v.diffId === it.diffId), before = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull < (it.pull || 1) && b.kill);
+    first = !before.length && !H.some((v) => v.kill && v.at < (it.wallMs || Infinity) - 60000); } catch (e) { first = false; } }
+  R.classList.toggle('is-kill', kill); R.classList.toggle('is-first-kill', kill && first); }
 function renderMain() {
+  try { killFlags(); } catch (e) { /* (no flags) */ }
   { const oa = $('#oaTop'); if (oa) { oa.innerHTML = ''; oa.hidden = true; } } /* (the one-answer box, filled again by Debriefing) */
   if (S.tab === 'overview') { planPage(); return; } /* (Plan is its own page: it never reads the open raid (your call, Oct 21)) */
   progLit(false);
