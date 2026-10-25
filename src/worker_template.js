@@ -531,6 +531,15 @@ async function runInbox(env) {
           const mine = o.replaceLast ? ((await dc(env, '/channels/' + ch + '/messages?limit=20').catch(() => [])) || []).find((m) => m.author && m.author.id === APP_ID) : null;
           if (mine) await dc(env, '/channels/' + ch + '/messages/' + mine.id, { method: 'PATCH', body });
           else { const m = await dc(env, '/channels/' + ch + '/messages', { method: 'POST', body }); if (all) await env.DEBRIEF_KV.put('everyone-at', String(Date.now())); if (c.type === 5 && m && m.id) await dc(env, '/channels/' + ch + '/messages/' + m.id + '/crosspost', { method: 'POST' }).catch(() => {}); }
+        } else if (o.op === 'edit-post' && /^\d{17,20}$/.test(String(o.channel || '')) && text) {
+          /* (new words for one of Claudette's own messages: by its id, or the newest of hers in that channel that has o.find in it) */
+          let mid = /^\d{17,20}$/.test(String(o.message || '')) ? String(o.message) : null;
+          if (!mid && o.find) { const ms = (await dc(env, '/channels/' + o.channel + '/messages?limit=50').catch(() => [])) || []; const m = ms.find((x) => x.author && x.author.id === APP_ID && String(x.content || '').includes(o.find)); mid = m && m.id; }
+          if (!mid) continue;
+          await dc(env, '/channels/' + o.channel + '/messages/' + mid, { method: 'PATCH', body: { content: text.slice(0, 1990) } });
+        } else if (o.op === 'welcome-test') {
+          /* (sends the welcome DM to the owner only, to see how it looks and that DMs reach) */
+          await welcomeDm(env, OWNER);
         } else if (o.op === 'beta-edit' && o.forumPost && text) {
           // (the first message of a beta forum post Claudette made (its id is the post's id) gets new words)
           const id = await env.DEBRIEF_KV.get('beta-thread-' + o.forumPost); if (!id) continue;
@@ -1003,6 +1012,30 @@ async function previewPage(env, url) {
     '<meta property="og:url" content="' + a(url.toString()) + '"><meta property="og:image" content="' + SITE + '/og.png"><meta name="twitter:card" content="summary_large_image">' +
     '<meta name="theme-color" content="#e6b450"></head><body><a href="' + a(url.toString()) + '">' + a(title) + '</a></body></html>';
 }
+const WELCOME_DM = "Hey, welcome to **Debrief**! 👋 It reads your raid logs and tells you what went right, what went wrong, and what to fix next pull.\n\n• **Start here:** <#1561476332917882941>\n• **Questions:** <#1561477989919891588> (the FAQ is pinned first)\n• **Something broken?** <#1561538061366599782>\n• **Want to test new stuff?** Ask in #general-chat and you will be added to the beta.\n\nNo pressure, just have a look around. 💛\n— Claudia, Debrief's welcome committee 🧡";
+async function welcomeDm(env, uid) {
+  const ch = await dc(env, '/users/@me/channels', { method: 'POST', body: { recipient_id: uid } });
+  await dc(env, '/channels/' + ch.id + '/messages', { method: 'POST', body: { content: WELCOME_DM, allowed_mentions: { parse: [] } } });
+}
+/* (a short welcome DM for each new member, once. The first run only writes down who is already in, so nobody who joined before gets one.
+   Needs the "Server Members" switch on in the Discord developer page: without it the list answers 403 and this does nothing. Closed DMs are skipped.) */
+async function runWelcome(env) {
+  let st = await env.DEBRIEF_KV.get('dc-welcomed', 'json'); const first = !st || !Array.isArray(st.ids); if (first) st = { ids: [] };
+  const seen = new Set(st.ids), people = []; let after = '0';
+  for (let i = 0; i < 5; i++) {
+    const page = await dc(env, '/guilds/' + GUILD + '/members?limit=1000&after=' + after); if (!page || !page.length) break;
+    for (const m of page) if (m.user && !m.user.bot) people.push(m.user.id);
+    after = page[page.length - 1].user.id; if (page.length < 1000) break;
+  }
+  const fresh = people.filter((id) => !seen.has(id)); if (!fresh.length) return;
+  let sent = 0;
+  for (const id of fresh) {
+    if (!first && sent >= 5) break;
+    if (!first) { await welcomeDm(env, id).catch((err) => console.warn('Welcome DM not sent:', err && err.message)); sent++; }
+    seen.add(id);
+  }
+  await env.DEBRIEF_KV.put('dc-welcomed', JSON.stringify({ ids: [...seen] }));
+}
 async function discordJobs(env, now) {
   if (!env.DISCORD_BOT_TOKEN || !env.DEBRIEF_KV || !env.GITHUB_TOKEN) return;
   const all = await runBugs(env);
@@ -1014,6 +1047,7 @@ async function discordJobs(env, now) {
   await runQuestions(env, all).catch((err) => console.warn('Questions:', err && err.message));
   await runInbox(env).catch((err) => console.warn('Inbox:', err && err.message));
   await relink(env).catch((err) => console.warn('Relink:', err && err.message));
+  await runWelcome(env).catch((err) => console.warn('Welcome:', err && err.message));
   await runDigest(env, now, all);
 }
 // "Suggest an idea" (the site's form): a new post in #suggestions, under the area picked. Same limits as Report a problem.
