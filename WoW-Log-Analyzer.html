@@ -6818,7 +6818,13 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g .nt-tk.nt-dropok { outline: 2px solid var(--gold); outline-offset: 3px; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g tbody tr { height: 26px; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g td.c { height: 26px !important; padding: 0 !important; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g tbody tr:not(.grp) > td.c { background-image: linear-gradient(rgba(255,255,255,.05), rgba(255,255,255,.05)); background-size: 100% 1px; background-position: center; background-repeat: no-repeat; } /* (a hairline through each row, so the dots read as a row) */
-html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g tbody tr:not(.grp):hover > td.c { background-color: rgba(255,255,255,.035); }
+/* hover: the whole row lights up, the hovered boss's column lights up in gold, the cell where they cross brightest (your note, Oct 25) */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g tbody tr:not(.grp):hover > td.c { background-color: rgba(255,255,255,.16); }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g tbody tr:not(.grp):hover > td.pl { background: #262b36 !important; box-shadow: inset 3px 0 0 var(--gold); }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g .nt-colh { background-color: rgba(230,180,80,.13) !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g thead th.nt-colh, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g thead th.nt-colh .nt-bh { background-color: rgba(230,180,80,.22) !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g tbody tr:not(.grp):hover > td.c.nt-colh { background-color: rgba(230,180,80,.3) !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g tbody tr:not(.grp):hover .nt-tk { transform: scale(1.15); }
 @media (max-width: 760px) { html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g .nt-tk { width: 14px !important; height: 14px !important; font-size: 12px !important; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g tbody tr { height: 24px; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g td.c { height: 24px !important; } }
 /* side by side (your idea): the table narrow on the left, each boss column just its picture (the name on hover), the Bosses rows beside it */
 @media (min-width: 1200px) {
@@ -6826,11 +6832,13 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn { display: grid; grid-template-columns: minmax(0, 590px) minmax(0, 1fr); gap: 0 20px; align-items: start; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn > .tn-top { grid-column: 1 / -1; grid-row: 1; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn > .tn-sec.tn-team, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn > .tn-sec.tn-team > .tn-cols { display: contents; }
-  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-sec.tn-team > .tn-sh { grid-column: 1 / -1; grid-row: 2; margin-top: 14px; }
-  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-sec.tn-team > .tn-hint { grid-column: 1 / -1; grid-row: 3; }
-  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-cols > .tn-pcol { grid-column: 1 / -1; grid-row: 4; margin-bottom: 10px; }
+  /* (your note: the Who plays title, its buttons and the hint sit at the top of the roster column; the things to fix stay across the top) */
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-cols > .tn-pcol { grid-column: 1 / -1; grid-row: 2; margin: 14px 0 12px; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-sec.tn-team > .tn-sh { grid-column: 1; grid-row: 3; margin-top: 0; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-sec.tn-team > .tn-hint { grid-column: 1; grid-row: 4; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-cols > .tn-gcol { grid-column: 1; grid-row: 5; min-width: 0; }
-  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn > .tn-sec:not(.tn-team) { grid-column: 2; grid-row: 5; min-width: 0; margin-top: 0; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn > .tn-sec:not(.tn-team) { grid-column: 2; grid-row: 3 / span 3; min-width: 0; margin-top: 0; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-cols > .tn-pcol:empty { display: none; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-sec.tn-team > .tn-fold { grid-column: 1 / -1; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn > .tn-sec:not(.tn-team) > .tn-sh { margin-top: 0; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec .nt-g { width: auto !important; min-width: 0 !important; max-width: 100%; table-layout: fixed; }
