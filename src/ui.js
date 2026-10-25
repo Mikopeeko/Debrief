@@ -1823,6 +1823,7 @@ const PATCH_NOTES = [
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
     'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
   ], f: [
+    'The Coiled Altar avoidable damage: dying to an axe or a venom tick is red only when it did half or more of what killed you, and a one-tick brush of Mutagenic Venom doesn\'t count. Top guilds\' kills now go red only for ghosts touched and frontals on non-tanks.',
     'The Coiled Altar: Gloombombs aren\'t judged on which add a melee or ranged player chose (raids mark different adds); missing the adds still is. A clip from someone else\'s bomb is minor unless Gravebound killed them, and a Soulcoiler alive a few seconds into the next set (up to 12 s, as top guilds) isn\'t flagged.',
     'The Twin Fangs: a Stone Breaker circle landing as the boss dies is no longer a missed circle, and a Corrosive Spit row names everyone it hit (it said "hit only its target" when others were hit too).',
     'The Coiled Altar: the second Soul Sever stack is covered by an external, an immunity like Divine Shield, or two big defensives (top tanks use one external, not two).',

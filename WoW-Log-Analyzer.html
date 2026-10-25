@@ -6684,7 +6684,7 @@ const PACKS = [
 { encounter: 'The Coiled Altar', aliases: ['The Bargained Crown'], sources: ['raid strategy guides'], rules: [
   { type: 'interrupt', spellIds: [1286399], name: 'Wail of Terror', severity: 'High', tip: 'Kick the Spiteful Soulcoiler\'s Wail of Terror (a raid-wide fear). On Mythic, interrupting it also briefly reveals the hidden ghosts.' },
   // (damage spell 1285017 is a debuff that ticks fast while you stand in an axe: counted per touch, not per tick)
-  { type: 'avoidable', spellIds: [1283832, 1285017], name: 'Axegrinder', severity: 'Low', ticks: true, escalate: { touches: 5, severity: 'Medium' }, tip: 'Dodge the Axegrinder axes. When Zul\'jan throws them, anyone they fly into is knocked back; then they roll around the room at random for 3 minutes and hurt anyone they touch. Ranged: stay out of melee when you can. Melee: step into a puddle rather than an axe.' },
+  { type: 'avoidable', spellIds: [1283832, 1285017], name: 'Axegrinder', severity: 'Low', ticks: true, escalate: { touches: 12, severity: 'Medium' }, tip: 'Dodge the Axegrinder axes. When Zul\'jan throws them, anyone they fly into is knocked back; then they roll around the room at random for 3 minutes and hurt anyone they touch. Ranged: stay out of melee when you can. Melee: step into a puddle rather than an axe.' },
   // (the axe erupts 6 s after it lands, 40 yd around it (journal; Wowhead 1283623 / 1299396; 6.0 s in every drop of a real
   // Mythic kill). Inside: Widow's Kiss, or Death's Embrace for Grim Guillotine; outside: the small Widow's Touch / Death's Whisper)
   { type: 'avoidable', spellIds: [1283623, 1299396], name: "Widow's Kiss", severity: 'Medium', tip: 'Soak, then run at least 40 yards from where the axe landed. It erupts 6 seconds after it lands (Widow\'s Kiss, or Death\'s Embrace for Grim Guillotine).' },
@@ -9904,8 +9904,14 @@ function avoidPanel(ev, r, h, list) {
     const secs = src.secs != null ? !!src.secs : AV_SECS.test(src.label), L2 = avLim(r, src, secs), [wA, bA] = L2.lim(cut);
     const per = new Map();
     for (const e of hits) { let x = per.get(e.dst); if (!x) per.set(e.dst, x = { g: e.dst, touches: 0, ticks: 0, amt: 0, last: -9, ts: [], tk: [], tl: [] }); x.ticks++; x.tk.push(e.t); x.amt += e.amt; if (e.t - x.last > 1.5) { x.touches++; x.ts.push(e.t); x.tl.push({ t: e.t, e: e.t, n: 0, a: 0 }); } const tc = x.tl[x.tl.length - 1]; tc.e = e.t; tc.n++; tc.a += e.amt; x.last = e.t; }
+    // (a source that only counts a walk-in from minTicks ticks: a lone brush isn't one (Mutagenic Venom, fix 9))
+    if (src.minTicks > 1) for (const [g, x] of [...per]) { const tl = x.tl.filter((c) => c.n >= src.minTicks); if (!tl.length) { per.delete(g); continue; } x.tl = tl; x.ts = tl.map((c) => c.t); x.touches = tl.length; }
+    if (!per.size) return null;
     const val = (x) => (secs ? x.ticks : x.touches);
-    const diedT = new Map(r.deaths.filter((d) => d.t <= cut + 0.05 && src.n.includes(L(d.ability || ''))).map((d) => [d.guid, d.t])), died = new Set(diedT.keys());
+    // (a death to it is red when it did half or more of the damage in their last 15 s (the Deaths page's rule), they were already past the
+    // amber line, or it's Dangerous; an axe's last tick on someone the raid damage was killing is not on them (top kills, fix 9))
+    const own = (d) => { const rc = (d.recap || []).filter((e) => !e.heal), all = rc.reduce((s, e) => s + (e.amount || 0), 0), mine = rc.filter((e) => src.n.includes(L(e.spell || ''))).reduce((s, e) => s + (e.amount || 0), 0); return !all || mine >= all / 2; };
+    const diedT = new Map(r.deaths.filter((d) => { const x = per.get(d.guid); return d.t <= cut + 0.05 && src.n.includes(L(d.ability || '')) && (src.harm === 'High' || own(d) || (x && val(x) >= wA)); }).map((d) => [d.guid, d.t])), died = new Set(diedT.keys());
     const rows = [...per.values()].sort((a, b) => val(b) - val(a) || b.amt - a.amt).map((x) => {
       const v = val(x), tank = !src.tankJudged && h.role(x.g) === 'tank', dd = died.has(x.g), kept = tank && v >= tankKept(bA);
       const bad = dd || kept || (!tank && v >= bA), warn = !bad && !tank && v >= wA;
@@ -10275,7 +10281,7 @@ function buildCoiledAltar(ev, r, h) {
       { n: ['noxious ground'], label: 'Noxious Ground', harm: 'Medium', why: 'the poison pools under the snake statues, every second you stand in them', warnAt: 2, badAt: 5, fix: 'Stay out of the poison pools by the statues. When the second set fills the middle, cross it quickly.' },
       { n: ['axegrinder'], label: 'Axegrinder', id: S('axegrinder')[0], harm: 'Medium', why: 'damage and a knockback every half second in an axe', warnAt: 5, badAt: 8, tankOk: true },
       { n: ['gloombomb'], label: 'Gloombomb (not your own)', id: S('gloombomb')[0], harm: 'Medium', why: 'Gravebound: collect your soul fragments or die', warnAt: 1, badAt: 2, fix: 'Stay out of the Gloombomb circles on other players.', skip: (e) => gbT.some((a) => a.dst === e.dst && e.t - a.t >= 0 && e.t - a.t <= 10) },
-      { n: ['mutagenic venom'], label: 'Mutagenic Venom (near a purple carrier)', id: S('mutagenic venom')[0], harm: 'Medium', why: 'heavy damage from standing near a purple orb carrier', warnAt: 2, badAt: 5, fix: 'Give purple orb carriers room: they have right of way.', skip: (e) => carriersAt(e.t).some((c) => c.g === e.dst) },
+      { n: ['mutagenic venom'], label: 'Mutagenic Venom (near a purple carrier)', id: S('mutagenic venom')[0], harm: 'Medium', why: 'heavy damage from standing near a purple orb carrier', warnAt: 2, badAt: 5, minTicks: 2, fix: 'Give purple orb carriers room: they have right of way.', skip: (e) => carriersAt(e.t).some((c) => c.g === e.dst) },
       { n: ['defiled ground'], label: 'Defiled Ground', harm: 'Medium', why: 'P3 ground that absorbs healing every second', warnAt: 2, badAt: 5 },
       { n: ['volatile venom'], label: 'Volatile Venom (near a green carrier)', harm: 'Low', why: 'damage from standing near a green orb carrier', fix: 'Give green orb carriers 5 yards of room.', skip: (e) => carryingVV(e.dst, e.t) },
       { n: ['toxic deluge'], label: 'Toxic Deluge impacts', id: S('toxic deluge')[0], harm: 'Low', why: 'the 4-yard missile impacts', fix: 'Dodge the Toxic Deluge circles, most of all when you are low.' },
@@ -16146,6 +16152,7 @@ const PATCH_NOTES = [
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
     'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
   ], f: [
+    'The Coiled Altar avoidable damage: dying to an axe or a venom tick is red only when it did half or more of what killed you, and a one-tick brush of Mutagenic Venom doesn\'t count. Top guilds\' kills now go red only for ghosts touched and frontals on non-tanks.',
     'The Coiled Altar: Gloombombs aren\'t judged on which add a melee or ranged player chose (raids mark different adds); missing the adds still is. A clip from someone else\'s bomb is minor unless Gravebound killed them, and a Soulcoiler alive a few seconds into the next set (up to 12 s, as top guilds) isn\'t flagged.',
     'The Twin Fangs: a Stone Breaker circle landing as the boss dies is no longer a missed circle, and a Corrosive Spit row names everyone it hit (it said "hit only its target" when others were hit too).',
     'The Coiled Altar: the second Soul Sever stack is covered by an external, an immunity like Divine Shield, or two big defensives (top tanks use one external, not two).',
