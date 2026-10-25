@@ -193,7 +193,7 @@ const PACKS = [
 // match by name. The fight module covers the adds, totems, soaks, dispels and tank swaps.)
 { encounter: 'Vashnik the Malignant', sources: ['the encounter journal', 'raid strategy guides', 'real Mythic logs'], rules: [
   { type: 'raidFail', name: 'Malignant Burst', severity: 'High', tip: 'A living venom reached the Malignant Cavity. Kill or control every venom add before it gets to the middle. More than one usually wipes.' },
-  { type: 'raidFail', spellIds: [1282616], name: 'Catalytic Bile', severity: 'High', tip: 'A Catalytic Bile landed with nobody under it and hit the whole raid. Spread so every impact has someone within 6 yards.' },
+  { type: 'raidFail', spellIds: [1282616], name: 'Catalytic Bile', severity: 'Low', tip: 'A Catalytic Bile landed with nobody under it and hit the whole raid. Spread so every impact has someone within 6 yards.' },
   { type: 'avoidable', spellIds: [1295798], name: 'Plague Wave', severity: 'High', tip: 'Stay off the four lines (north, south, east and west) through every Plague Froth target as it ends.' },
   { type: 'avoidable', spellIds: [1286737], name: 'Umbral Ejection', severity: 'Medium', tip: 'Step out of the circles a Shrouded Venom leaves when it dies.' },
 ]},
@@ -1567,10 +1567,10 @@ function buildEntombedSentinels(ev, r, h) {
       // (two at once: two pickups within half a second that both did damage; an absorbed or immune one doesn't count)
       o.ts.sort((a, b) => a - b); const hurt = pk.filter((e) => e.dst === o.g && e.amt > 0).map((e) => e.t).sort((a, b) => a - b), dbl = hurt.some((x, k) => k && x - hurt[k - 1] <= 0.5);
       const d = diedNear(o.g, o.ts[0] ?? o.lvT, 6), tank = isTank(o.g);
-      if (dbl && !tank) M(hurt.find((x, k) => k && x - hurt[k - 1] <= 0.5), pname(o.g), 'Toxic Droplets', d ? 'High' : 'Medium', 'Stepped on two Toxic Droplets at once (375k each)' + (d ? ' and died' : '') + '.', 'Pick up one droplet at a time unless you have an immunity. Tanks can take extras.');
+      if (dbl && !tank) /* (Mechanics audit, Oct 24: top kills do this and win, so living through it is a note; a death stays red) */ M(hurt.find((x, k) => k && x - hurt[k - 1] <= 0.5), pname(o.g), 'Toxic Droplets', d ? 'High' : 'Low', 'Stepped on two Toxic Droplets at once (375k each)' + (d ? ' and died' : '') + '.', 'Pick up one droplet at a time unless you have an immunity. Tanks can take extras.');
       // (Living Venom hits are judged under Avoidable damage and flagged by the rule pack; here they're only shown, so
       // they aren't counted twice)
-      return [{ p: pname(o.g), sub: tank ? 'tank' : '' }, { t: o.ts[0] ?? o.lvT }, { txt: String(o.ts.length) + (o.imm ? ' (' + o.imm + ' immune)' : ''), warn: dbl && !tank }, o.lv ? { txt: pl(o.lv, 'hit'), sub: 'see Avoidable damage' } : { txt: '—', dim: true }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }, { txt: '' }];
+      return [{ p: pname(o.g), sub: tank ? 'tank' : '' }, { t: o.ts[0] ?? o.lvT }, { txt: String(o.ts.length) + (o.imm ? ' (' + o.imm + ' immune)' : ''), sub: dbl && !tank ? 'two at once' : '' }, o.lv ? { txt: pl(o.lv, 'hit'), sub: 'see Avoidable damage' } : { txt: '—', dim: true }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }, { txt: '' }];
     });
     // (an erupted droplet is flagged by the rule pack: Noxious Blast)
     const takers = [...per.values()].filter((o) => o.ts.length);
@@ -1620,7 +1620,8 @@ function buildEntombedSentinels(ev, r, h) {
     // (Oct 22, boss coverage: 4 of the 20 fastest Mythic kills soaked some with 6 and nobody died, and the last one before a kill is
     // often left. Now 6 or 7 is a slip, under 6 the mistake, and a soak in the last 20 s of a kill isn't judged)
     const endK = r.item.kill && (t1 ?? t) >= dur - 20;
-    const few = need && soak.length < need && !endK, veryFew = few && soak.length < need - 2;
+    /* (your soak rule (Oct 24): 1 or 2 missing is fine, 3 missing is yellow, 4 or more red; 7 of 8 top kills had a soak one or two short) */
+    const few = need && soak.length <= need - 3 && !endK, veryFew = few && soak.length <= need - 4;
     if (few) M(t1 ?? t, 'Raid', 'Unstable Miasma', veryFew ? 'High' : 'Medium', 'Unstable Miasma ' + (i + 1) + ' had ' + pl(soak.length, 'soaker') + ', but Mythic needs at least ' + need + ', so each soaker got more stacks and a bigger pool.', 'Get at least eight players into every Unstable Miasma, far back in a corner.');
     for (const d of died) M(d.t, d.player, 'Unstable Miasma', 'High', 'Died in the Unstable Miasma soak.', 'Soak at full health, with a defensive if you\'re low. More soakers means less damage each.');
     return [{ txt: 'Soak ' + (i + 1) }, { t: t1 ?? t }, tg ? { p: pname(tg) } : { txt: '—', dim: true }, { txt: String(soak.length) + (need ? ' (' + need + ' needed)' : ''), bad: !!veryFew, warn: !!few && !veryFew, dim: endK, sub: endK ? 'the end of the kill' + (soak.length ? ': ' + soak.map(pname).join(', ') : '') : soak.map(pname).join(', ') }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true },
@@ -1642,7 +1643,7 @@ function buildEntombedSentinels(ev, r, h) {
       const off = bbA.find((x) => x.op === 'remove' && x.dst === e.dst && x.t > e.t), dp = off && disp.find((x) => x.dst === e.dst && Math.abs(x.t - off.t) < 0.3), d = diedNear(e.dst, e.t, (off ? off.t - e.t : 20) + 0.5);
       const on = off ? off.t - e.t : null, slow = dp && on > 5, ran = off && !dp && !d;
       if (ran) M(off.t, pname(e.dst), 'Blighted Blood', 'Low', 'Blighted Blood wasn\'t dispelled and ran out, dropping a pool.', 'Healers dispel Blighted Blood as soon as it lands. If it does run out, drop the pool at the edge.');
-      return [{ p: pname(e.dst) }, { t: e.t }, on != null ? { txt: on.toFixed(1) + ' s', warn: slow } : { txt: '—', dim: true }, dp ? { p: dp.src } : { txt: d ? 'died with it' : ran ? 'not dispelled, left a pool' : '—', bad: !!d, warn: ran }];
+      return [{ p: pname(e.dst) }, { t: e.t }, /* (Mechanics audit, Oct 24: top kills do this and win, so living through it is a note; a death stays red) */ on != null ? { txt: on.toFixed(1) + ' s', dim: !slow } : { txt: '—', dim: true }, dp ? { p: dp.src } : { txt: d ? 'died with it' : ran ? 'not dispelled, left a pool' : '—', bad: !!d, dim: !d }];
     });
     return { title: 'Blighted Blood ' + (i + 1), t: s.t, bad: rows.some((x) => x[3].bad), warn: rows.some((x) => x[2].warn || x[3].warn), sub: pl(s.l.length, 'player') + ', ' + rows.filter((x) => x[3].p).length + ' dispelled', rows };
   });
@@ -1684,7 +1685,7 @@ function buildEntombedSentinels(ev, r, h) {
     const list = [...gain.values()].filter((o) => o.c === c); if (!list.length) return null;
     const rows = [];
     for (const o of list) { const main = o.acid >= o.blood ? 'acid' : 'blood', off = main === 'acid' ? o.blood : o.acid; _sides[c].set(pname(o.g), main === 'acid' ? 'Breath' : 'Blood');
-      if (off >= 5 && !isTank(o.g)) { rows.push([{ p: pname(o.g) }, { txt: main === 'acid' ? 'Breath (green)' : 'Blood (red)' }, { txt: off + ' stacks', bad: off >= 12, warn: off < 12 }]);
+      if (off >= 5 && !isTank(o.g)) { rows.push([{ p: pname(o.g) }, { txt: main === 'acid' ? 'Breath (green)' : 'Blood (red)' }, /* (Mechanics audit, Oct 24: top kills had 5 to 10; 20 of both kills, so 12+ is yellow and 16+ red) */ { txt: off + ' stacks', bad: off >= 16, warn: off >= 12 && off < 16, dim: off < 12 }]);
         M(ph.start + 1, pname(o.g), 'Mark of ' + (main === 'acid' ? 'Blood' : 'Acid'), off >= 12 ? 'Medium' : 'Low', 'Picked up ' + off + ' stacks of the other boss\'s Mark in cycle ' + (c + 1) + ', by standing in range of both bosses.', 'Stay within 40 yards of your own boss only. To hit both, cleave from the edge of range.'); } }
     const nB = [..._sides[c].values()].filter((v) => v === 'Breath').length;
     return { title: 'Cycle ' + (c + 1), t: ph.start + 0.02, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[2].warn), sub: nB + ' on the Breath (green), ' + (_sides[c].size - nB) + ' on the Blood (red)' + (rows.length ? ', ' + pl(rows.length, 'player') + ' in range of both' : ''),
@@ -1847,7 +1848,7 @@ function buildSszorak(ev, r, h) {
     for (const e of touch) { let o = by.get(e.dst); if (!o) by.set(e.dst, o = { g: e.dst, ts: [], last: -9 }); if (e.t - o.last > 2) o.ts.push(e.t); o.last = e.t; }
     const rows = [...by.values()].sort((a, b) => a.ts[0] - b.ts[0]).map((o) => {
       const d = r.deaths.find((x) => x.guid === o.g && x.t >= o.ts[0] && x.t <= o.ts[o.ts.length - 1] + 8 && /tempest/i.test(x.ability || ''));
-      const tk = isTank(o.g) && !d; return [{ p: pname(o.g), sub: isTank(o.g) ? 'tank' : '' }, { t: o.ts[0] }, { txt: pl(o.ts.length, 'touch').replace('touchs', 'touches'), warn: !tk && o.ts.length === 1 && !d, bad: !tk && o.ts.length >= 2, dim: tk, sub: '' }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }, { txt: '' }];
+      const tk = isTank(o.g) && !d; return [{ p: pname(o.g), sub: isTank(o.g) ? 'tank' : '' }, { t: o.ts[0] }, /* (Mechanics audit, Oct 24: top kills do this and win, so living through it is a note; a death stays red) */ { txt: pl(o.ts.length, 'touch').replace('touchs', 'touches'), dim: true, sub: '' }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }, { txt: '' }];
     });
     const hit = [...by.values()];
     const whole = [{ txt: 'Whole Tempest', sub: 'every touch, on one map', dim: true }, { t }, { txt: String(hit.reduce((n, o) => n + o.ts.length, 0)), dim: true }, { txt: '' },
@@ -1970,12 +1971,12 @@ function buildSszorak(ev, r, h) {
     // (an unmarked player launched or hit at the same moment: a flying player ran into them)
     const byst = players.filter((g) => !gm.includes(g)).map((g) => ({ g, hit: cwHits.filter((e) => e.dst === g && e.t >= knock - 0.3 && e.t <= knock + 5), q: gOf(g) })).filter((o) => o.hit.length || o.q);
     const drift = info.filter((o) => o.res === 'drift'), imm = info.filter((o) => o.res === 'none');
-    for (const o of drift) M(knock, pname(o.g), 'Raging Crosswinds', o.died ? 'High' : 'Medium', 'Drifted after Raging Crosswinds instead of colliding with another marked player' + (o.died ? ', and died.' : '.'), 'Point your arrow at another marked player so you collide in the air. Arrows at right angles work too.');
+    /* (Mechanics audit, Oct 24: top kills do this and win, so living through it is a note; a death stays red) */ for (const o of drift) M(knock, pname(o.g), 'Raging Crosswinds', o.died ? 'High' : 'Low', 'Drifted after Raging Crosswinds instead of colliding with another marked player' + (o.died ? ', and died.' : '.'), 'Point your arrow at another marked player so you collide in the air. Arrows at right angles work too.');
     for (const o of byst) M(knock, pname(o.g), 'Raging Crosswinds', 'Low', 'Hit by a player flying from Raging Crosswinds' + (o.hit.length ? ' (' + fmtM(o.hit.reduce((s, e) => s + (e.raw || e.amt), 0)) + ')' : '') + '.', 'Stay out of the marked players\' arrow lines until they land.');
     const aw = (o) => (SZ_CW[o.id] ? 'arrow ' + SZ_CW[o.id][1] : '');
     const rows = info.map((o) => [{ p: pname(o.g), sub: aw(o) }, { t: o.q ? o.q.t0 : knock }, o.mate ? { p: pname(o.mate.g), sub: aw(o.mate) } : { txt: '—', dim: true },
-      o.died ? { txt: o.res === 'drift' ? 'drifted, died' : 'died', bad: true } : o.res === 'pair' ? { txt: 'collided' } : o.res === 'drift' ? { txt: 'drifted ' + o.q.len.toFixed(1) + ' s', warn: true } : { txt: 'no launch', dim: true, sub: 'an immunity or a cancel' + (drift.length ? '. Someone in this set drifted' : '') }, { txt: '' }])
-      .concat(byst.map((o) => [{ p: pname(o.g) }, { t: knock }, { txt: 'not marked', dim: true }, diedNear(o.g, knock - 0.5, 6) ? { txt: 'hit by a flying player, died', bad: true } : { txt: 'hit by a flying player', warn: true }, { txt: '' }]));
+      o.died ? { txt: o.res === 'drift' ? 'drifted, died' : 'died', bad: true } : o.res === 'pair' ? { txt: 'collided' } : o.res === 'drift' ? { txt: 'drifted ' + o.q.len.toFixed(1) + ' s', dim: true } : { txt: 'no launch', dim: true, sub: 'an immunity or a cancel' + (drift.length ? '. Someone in this set drifted' : '') }, { txt: '' }])
+      .concat(byst.map((o) => [{ p: pname(o.g) }, { t: knock }, { txt: 'not marked', dim: true }, diedNear(o.g, knock - 0.5, 6) ? { txt: 'hit by a flying player, died', bad: true } : { txt: 'hit by a flying player', dim: true }, { txt: '' }]));
     const links = info.filter((o) => o.mate && o.g < o.mate.g).map((o) => ({ from: o.g, to: o.mate.g, t0: knock - 0.2, t1: knock + 2, color: '#2fd15a', legend: 'collided in the air' }));
     const whole = [{ txt: 'Whole cast', sub: 'every marked player, on one map', dim: true }, { t: knock }, { txt: '' }, { txt: '' },
       { map: { t: knock, pendLabel: 'marked, before the launch', good: info.filter((o) => o.res === 'pair').map((o) => o.g), goodLabel: 'collided', goodAt: info.filter((o) => o.res === 'pair').map((o) => [o.g, o.q.t0]),
@@ -2041,8 +2042,8 @@ function buildSszorak(ev, r, h) {
       const early = f.soak.map((g) => r.deaths.find((d) => d.guid === g && d.t > f.popT + 0.2 && d.t < f.popT + 4.8)).filter(Boolean);
       const rows = [...by.values()].map((o) => { const d = diedNear(o.g, o.t, 3);
         if (!o.amt) return [{ p: pname(o.g) }, { t: o.t }, { txt: 'no damage', dim: true, sub: 'an immunity' }, { txt: 'immune', dim: true }, { txt: '' }];
-        M(o.t, pname(o.g), 'Virulence', d ? 'High' : 'Medium', 'Clipped by a Virulence burst (' + fmtM(o.amt) + ')' + (d ? ', and died.' : '.'), 'Spread out right after every Serpent\'s Fury pop, away from everyone else\'s lines.');
-        return [{ p: pname(o.g) }, { t: o.t }, { txt: fmtM(o.amt), sub: o.n > 1 ? o.n + ' hits' : '' }, d ? { txt: 'clipped, died', bad: true } : { txt: 'clipped', warn: true }, { txt: '' }]; });
+        /* (Mechanics audit, Oct 24: top kills do this and win, so living through it is a note; a death stays red) */ M(o.t, pname(o.g), 'Virulence', d ? 'High' : 'Low', 'Clipped by a Virulence burst (' + fmtM(o.amt) + ')' + (d ? ', and died.' : '.'), 'Spread out right after every Serpent\'s Fury pop, away from everyone else\'s lines.');
+        return [{ p: pname(o.g) }, { t: o.t }, { txt: fmtM(o.amt), sub: o.n > 1 ? o.n + ' hits' : '' }, d ? { txt: 'clipped, died', bad: true } : { txt: 'clipped', dim: true }, { txt: '' }]; });
       const hurt = [...by.values()].filter((o) => o.amt > 0).length, tb = f.popT + 5;
       return { title: 'Fury ' + (k + 1) + ' pop', t: f.popT, bad: rows.some((q) => q[3].bad), warn: rows.some((q) => q[3].warn), sub: pl(f.soak.length, 'player') + ' with Virulence, ' + (hurt ? pl(hurt, 'player') + ' clipped' : 'nobody clipped') + (early.length ? '; ' + early.map((d) => d.player).join(', ') + ' died with it, so it burst early, in the stack' : ''),
         rows: [[{ txt: 'Whole burst', sub: 'everyone with Virulence', dim: true }, { t: tb }, { txt: '' }, { txt: '' }, { txt: '' }]].concat(rows) };
@@ -2557,11 +2558,11 @@ function buildNekzali(ev, r, h) {
     const by = new Map(); for (const e of echoHits.filter((e) => e.t >= s && e.t <= t1)) { let o = by.get(e.dst); if (!o) by.set(e.dst, o = { g: e.dst, t: e.t, n: 0, last: -9, amt: 0 }); if (e.t - o.last > 1) o.n++; o.last = e.t; o.amt += e.raw || e.amt; }
     const died = r.deaths.filter((d) => d.t >= s && d.t <= t1 && h.isPlayer(d.guid));
     if (burned.length) M(s, 'Raid', 'Soulcoil Ignition', 'Medium', pl(burned.length, 'player') + ' went into Soulcoil Ignition with Ritual Burn up' + (src.length ? ' (from ' + src.join(', ') + ')' : '') + ', so every Rite hit them harder.', 'Go into Ignition with no Ritual Burn, so let no Amani into the well in the minute before.');
-    for (const o of by.values()) { const d = died.find((x) => x.guid === o.g); if (isTank(o.g) && !d) continue; M(o.t, pname(o.g), 'Anguished Echoes', d || o.n >= 3 ? 'High' : 'Medium', 'Hit by ' + (o.n > 1 ? o.n + ' Anguished Echoes circles' : 'an Anguished Echoes circle') + ' during Soulcoil Ignition' + (d ? ', and died.' : '.'), 'Watch for the circles raining from the well during Ignition and step out before they land.'); }
+    for (const o of by.values()) { const d = died.find((x) => x.guid === o.g); if (isTank(o.g) && !d) continue; /* (Mechanics audit, Oct 24: top kills do this and win, so living through it is a note; a death stays red) */ M(o.t, pname(o.g), 'Anguished Echoes', d ? 'High' : o.n >= 3 ? 'Medium' : 'Low', 'Hit by ' + (o.n > 1 ? o.n + ' Anguished Echoes circles' : 'an Anguished Echoes circle') + ' during Soulcoil Ignition' + (d ? ', and died.' : '.'), 'Watch for the circles raining from the well during Ignition and step out before they land.'); }
     const e0 = energyAt(s - 0.1), e1 = energyAt(t1);
     const rows = [[{ txt: 'Going in' }, { t: s }, burnOn ? (burned.length ? { txt: pl(burned.length, 'player') + ' with Ritual Burn', warn: true, sub: src.length ? 'from ' + src.join(', ') : '' } : { txt: 'no Ritual Burn' }) : { txt: '—', dim: true },
       died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true }, { txt: e0 != null && e1 != null ? 'energy ' + e0 + ' to ' + e1 : '', dim: true }]]
-      .concat([...by.values()].map((o) => { const d = died.find((x) => x.guid === o.g); return [{ p: pname(o.g), sub: isTank(o.g) ? 'tank' : '' }, { t: o.t }, { txt: pl(o.n, 'circle hit'), warn: !d && o.n < 3 && !isTank(o.g), bad: (o.n >= 3 && !isTank(o.g)) || !!d, dim: isTank(o.g) && !d, sub: fmtM(o.amt) + (isTank(o.g) && !d ? ', a tank: only a note' : '') /* (Oct 22: a tank's hits stay a note, even 3 of them; a top kill showed red for it) */ }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }, { txt: '' }]; }));
+      .concat([...by.values()].map((o) => { const d = died.find((x) => x.guid === o.g); return [{ p: pname(o.g), sub: isTank(o.g) ? 'tank' : '' }, { t: o.t }, { txt: pl(o.n, 'circle hit'), warn: !d && o.n >= 3 && !isTank(o.g), bad: !!d, dim: !d && (o.n < 3 || isTank(o.g)), sub: fmtM(o.amt) + (isTank(o.g) && !d ? ', a tank: only a note' : '') /* (Oct 22: a tank's hits stay a note, even 3 of them; a top kill showed red for it) */ }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }, { txt: '' }]; }));
     return { title: 'Soulcoil Ignition ' + (i + 1) + (cut ? ' (cut short by the intermission)' : ''), t: s, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[2].warn), sub: (by.size ? pl(by.size, 'player') + ' hit by the circles' : 'nobody hit by the circles') + (burned.length ? ', ' + burned.length + ' with Ritual Burn' : ''), rows };
   });
   if (igGroups.length) sections.push({ id: 'ignition', title: 'Soulcoil Ignition (Dodge the circles)', place: 'Soulcoil Ignition (boss channel): no Ritual Burn, circles dodged', spell: [NZ.ignition, 'Soulcoil Ignition'], verdict: igGroups.some((g) => g.bad) ? 'bad' : igGroups.some((g) => g.warn) ? 'warn' : 'good',
@@ -2848,8 +2849,8 @@ function buildVashnik(ev, r, h) {
       for (const o of by.values()) { const me = posOf(o.g, o.t); if (!me) continue; let best = null; for (const x of f.ends) { if (x.g === o.g) continue; const p = posOf(x.g, x.t); if (!p) continue; const off = Math.min(Math.abs(p.x - me.x), Math.abs(p.y - me.y)); if (off < 4 && (!best || off < best.off)) best = { off, g: x.g }; } if (best) o.from = best.g; }
       const rows = [...by.values()].sort((a, b) => a.t - b.t).map((o) => {
         const d = diedNear(o.g, o.t, 1.5), soft = mythic && !d && o.n < 2;
-        if (!soft) M(o.t, pname(o.g), 'Plague Wave', d ? 'High' : 'Medium', 'Hit by a Plague Wave' + (o.from ? ' from ' + pname(o.from) + '\'s Plague Froth' : '') + ' (' + fmtM(o.amt) + ')' + (d ? ', and died.' : '.'), 'Stay off the four lines (north, south, east and west) through every Plague Froth target as it ends.');
-        return [{ p: pname(o.g), sub: f.who.includes(o.g) ? 'had Plague Froth too' : '' }, { t: o.t }, d ? { txt: 'died', bad: true } : { txt: 'hit for ' + fmtM(o.amt), warn: !soft, dim: soft, sub: '' }, o.from ? { p: pname(o.from) } : { txt: '—', dim: true }, { txt: '' }];
+        /* (Mechanics audit, Oct 24: top kills do this and win, so living through it is a note; a death stays red) */ if (!soft) M(o.t, pname(o.g), 'Plague Wave', d ? 'High' : 'Low', 'Hit by a Plague Wave' + (o.from ? ' from ' + pname(o.from) + '\'s Plague Froth' : '') + ' (' + fmtM(o.amt) + ')' + (d ? ', and died.' : '.'), 'Stay off the four lines (north, south, east and west) through every Plague Froth target as it ends.');
+        return [{ p: pname(o.g), sub: f.who.includes(o.g) ? 'had Plague Froth too' : '' }, { t: o.t }, d ? { txt: 'died', bad: true } : { txt: 'hit for ' + fmtM(o.amt), dim: true, sub: '' }, o.from ? { p: pname(o.from) } : { txt: '—', dim: true }, { txt: '' }];
       });
       const arrows = f.ends.flatMap((x) => [0, 90, 180, 270].map((a) => ({ g: x.g, ang: a * Math.PI / 180, len: 30, color: mcol('Plague Froth').color, t0: x.t - 1.5, t1: x.t + 1, fx: 'wave', at: x.t })));
       const whole = [{ txt: 'Whole cast', sub: 'the targets and their lines, on one map', dim: true }, { t: f.end }, { txt: '' }, { txt: '' },
@@ -2889,15 +2890,15 @@ function buildVashnik(ev, r, h) {
       for (const o of ex) {
         const with2 = o.rm != null ? ex.filter((q) => q !== o && q.rm != null && Math.abs(q.rm - o.rm) < 1.5) : [];
         const dead = o.rm != null ? r.deaths.filter((d) => d.t >= o.rm - 0.2 && d.t <= o.rm + 1.2 && /caustic explosion|exploding infection/i.test(d.ability || '')) : [];
-        if (with2.length && ex.indexOf(o) < ex.indexOf(with2[0])) M(o.rm, 'Raid', 'Exploding Infection', 'Medium', 'Two Exploding Infections were removed within ' + Math.abs(with2[0].rm - o.rm).toFixed(1) + ' s, which put two Caustic Explosions on the raid at once.', 'Dispel the fire infection one player at a time, once the raid is topped up.');
+        if (with2.length && ex.indexOf(o) < ex.indexOf(with2[0])) /* (Mechanics audit, Oct 24: top kills do this and win, so living through it is a note; a death stays red) */ M(o.rm, 'Raid', 'Exploding Infection', 'Low', 'Two Exploding Infections were removed within ' + Math.abs(with2[0].rm - o.rm).toFixed(1) + ' s, which put two Caustic Explosions on the raid at once.', 'Dispel the fire infection one player at a time, once the raid is topped up.');
         if (dead.length && ex.indexOf(o) === ex.findIndex((q) => q.rm != null && Math.abs(q.rm - o.rm) < 1.5)) M(o.rm, 'Raid', 'Caustic Explosion', 'High', pl(dead.length, 'player') + ' died to a Caustic Explosion as an Exploding Infection came off.', 'Hold the dispel until the raid is healed up, and never two at once.');
         rows.push([{ p: pname(o.g), sub: 'Exploding Infection' }, { t: o.rm ?? o.t }, o.rm == null ? { txt: 'still on', dim: true } : o.by ? { txt: 'dispelled after ' + (o.rm - o.t).toFixed(1) + ' s', sub: 'by ' + o.by.src } : { txt: 'came off after ' + (o.rm - o.t).toFixed(1) + ' s' },
-          dead.length ? { txt: dead.map((d) => d.player).join(', ') + ' died', bad: true } : with2.length ? { txt: 'with ' + with2.map((q) => pname(q.g)).join(', '), warn: true, sub: 'removed together' } : { txt: '—', dim: true }, { txt: '' }]);
+          dead.length ? { txt: dead.map((d) => d.player).join(', ') + ' died', bad: true } : with2.length ? { txt: 'with ' + with2.map((q) => pname(q.g)).join(', '), dim: true, sub: 'removed together' } : { txt: '—', dim: true }, { txt: '' }]);
       }
       const sg = c.list.filter((e) => e.id === VS.stygian).map((e) => e.dst), bh = burst.filter((e) => e.t >= c.t && e.t <= t1 && !sg.includes(e.dst));
       const by = new Map(); for (const e of bh) { const o = by.get(e.dst) || { g: e.dst, t: e.t, n: 0 }; o.n++; by.set(e.dst, o); }
-      for (const o of by.values()) { M(o.t, pname(o.g), 'Stygian Burst', 'Medium', 'Hit by ' + (o.n > 1 ? o.n + ' Stygian Bursts' : 'a Stygian Burst') + ' from a player with Stygian Infection.', 'Stay 6 yards away from players with Stygian Infection. They should spread too.');
-        rows.push([{ p: pname(o.g) }, { t: o.t }, { txt: 'hit by a Stygian Burst', warn: true, sub: o.n > 1 ? o.n + ' hits' : '' }, { txt: '—', dim: true }, { txt: '' }]); }
+      for (const o of by.values()) { M(o.t, pname(o.g), 'Stygian Burst', 'Low', 'Hit by ' + (o.n > 1 ? o.n + ' Stygian Bursts' : 'a Stygian Burst') + ' from a player with Stygian Infection.', 'Stay 6 yards away from players with Stygian Infection. They should spread too.');
+        rows.push([{ p: pname(o.g) }, { t: o.t }, { txt: 'hit by a Stygian Burst', dim: true, sub: o.n > 1 ? o.n + ' hits' : '' }, { txt: '—', dim: true }, { txt: '' }]); }
       if (sg.length) rows.push([{ txt: 'Stygian Infection', sub: sg.map(pname).join(', ') }, { t: c.t }, { txt: by.size ? '' : 'nobody else hit', dim: !by.size }, { txt: '' }, { txt: '' }]);
       rows.sort((a, b) => a[1].t - b[1].t);
       return { title: 'Adaptive Infection ' + (i + 1) + ' (' + cyName(cycOf(c.t)) + ')', t: c.t, bad: rows.some((x) => x[3].bad), warn: rows.some((x) => x[2].warn || x[3].warn), sub: [ex.length ? ex.length + ' Exploding' : '', sg.length ? sg.length + ' Stygian' : ''].filter(Boolean).join(' and ') + ' Infection' + (ex.length + sg.length === 1 ? '' : 's'), rows };

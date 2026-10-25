@@ -1770,6 +1770,8 @@ const PATCH_NOTES = [
     { t: 'Debrief in game: a guided setup', d: 'The first time you log in, a short setup helps you pick a style and what your card shows, with a live preview beside it (/debrief setup opens it again). Long cards now split into two columns instead of running off the screen.' },
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
+    'Fairer checks on Sszorak, Entombed Sentinels, Vashnik and Nek\'zali, measured on 67 top guilds\' kills: living through a Tempest, a Crosswinds drift, a Virulence clip, a second droplet, a slow Blighted Blood dispel, a Plague Froth line or one or two Ignition circles is a note, not a mistake. Dying to them still counts. A soak one or two short (Unstable Miasma) is fine; three short is a mistake.',
+    'Debriefing: two or more Malignant Totems still up at an Imbibe (Vashnik) calls the wipe, and What wiped us names it. No top guild\'s kill ever had two.',
     'Debrief: reminders when to /reload, a Report a problem button in the app, key levels on dungeon bosses, and the pop-up matches the card on every style',
     'Holy Paladin: a Tyr\'s Deliverance tile at the bottom of Rotation shows what it healed: its own heals, plus the extra its buff gave your Holy Light, Flash of Light and Holy Shock on its targets.',
     'Debrief Companion: updates land in the first break between pulls, no restart needed',
@@ -1815,6 +1817,7 @@ const PATCH_NOTES = [
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
     'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
   ], f: [
+    'The Coiled Altar from Warcraft Logs: a Spiteful Soulcoiler\'s last hit landing just after it died no longer counts as an add that never died (it said a Soulcoiler was still alive two sets later).',
     'Debrief: the recap opens the same way every time, on you, on the Me tab, the same width every pull, and it no longer pops back with the previous pull after combat',
     'Debrief: one recap window everywhere, the card, in the pop-up and in WoW; the /recap opens switch is gone and Expand on the card opens the big window',
     'Debriefing: the raid lead\'s Next pull / Next raid line no longer stops mid-sentence (it ended "in front …."); a long one stops at the end of the instruction.',
@@ -8828,7 +8831,8 @@ const wipeLim = (L, t) => (t <= L.stop - 30 ? L.s[Math.min(L.s.length - 1, Math.
    kill's last 15 s; a margin where one kill alone set the number). From the wipe research (40 kills and up to 41 other guilds' wipes per boss
    and difficulty), checked leave-one-out: no kill would have been called. n: the mechanic's name on the page, s: what failed (no names).
    Mythic and Heroic only (Normal and LFR raids win through much more). A line that needs 10 or more dead never comes before "half the raid
-   dead", so there are none (Oct 24: Vashnik's totems and Twin Fangs' Feast were taken out; the totems need a count of totems at Imbibe). The guide: notes/Guides/Wipe mechanics - how it works.md) */
+   dead", so there are none (Oct 24: Twin Fangs' Feast was taken out; Vashnik's totems are counted instead: two or more still up at an Imbibe
+   (the site's own High Malignance mistake), which none of 8 top Mythic kills ever had, and both guides call a wipe). The guide: notes/Guides/Wipe mechanics - how it works.md) */
 const WIPE_MECH = {
   'Nymrissa Wavecaller|M': [{ ids: [1313456], k: 2, n: 'Frost Orbs', s: 'a Frost Orb nobody touched exploded (Shatter)' }, { ids: [1271380], k: 9, n: 'Murloc sets', s: 'murlocs reached the bubble and the Berserkers hit the raid at the Pop' }],
   'Nymrissa Wavecaller|H': [{ ids: [1271380], k: 7, n: 'Murloc sets', s: 'murlocs reached the bubble and the Berserkers hit the raid at the Pop' }],
@@ -8837,7 +8841,7 @@ const WIPE_MECH = {
   'The Twin Fangs|H': [{ ids: [1290662], k: 5, n: 'Ravenous Feast', s: "the Feast wasn't split by enough players" }],
   'The Coiled Altar|M': [{ m: '^guillotine$', x: 'soaked by only', n: 'Guillotine', s: 'a Guillotine had fewer than 5 under it, so Grim Execution hit everyone' }, { m: '^grim guillotine$', x: 'soaked by only', n: 'Grim Guillotine', s: 'a Grim Guillotine had fewer than 5 under it, so Grim Execution hit everyone' }, { ids: [1299301], k: 2, n: 'Guillotine', s: 'a Guillotine had fewer than 5 under it, so Grim Execution hit everyone' }, { m: '^eternal nightfall$', n: 'Eternal Nightfall', s: "the cast wasn't stopped in time" }, { ids: [1286918], k: 2, n: 'Eternal Nightfall', s: "the cast wasn't stopped in time" }, { m: '^venom rupture$', n: 'Coalesced Venom', s: 'a purple orb touched other orbs and set off Venom Ruptures' }, { ids: [1299838], k: 2, n: 'Coalesced Venom', s: 'orbs touched and set off Venom Ruptures' }],
   'Entombed Sentinels|M': [{ ids: [1284452], k: 3, n: 'Toxic Droplets', s: 'a Toxic Droplet erupted on the raid' }],
-  'Vashnik the Malignant|M': [{ ids: [1282616], k: 2, n: 'Catalytic Bile', s: 'a Catalytic Bile landed with nobody under it' }, { ids: [1280189], k: 2, n: 'Malignant Burst', s: 'a Living Venom reached the middle' }],
+  'Vashnik the Malignant|M': [{ ids: [1282616], k: 2, n: 'Catalytic Bile', s: 'a Catalytic Bile landed with nobody under it' }, { ids: [1280189], k: 2, n: 'Malignant Burst', s: 'a Living Venom reached the middle' }, { m: '^malignance$', n: 'Malignant Totems', s: 'two or more totems were still up at Imbibe' }],
   "Nek'zali the Soulcoiler|M": [{ m: '^vessel of awakening$', n: 'Restless Amani', s: 'three or more corpses came back as Amani at once' }, { ids: [1297630], k: 3, n: 'Restless Amani', s: 'corpses came back as Amani during the ritual' }],
   "Ula'tek|M": [{ ids: [1318329], k: 2, n: "Serpent's Bite", s: "a Serpent's Bite wasn't fully soaked and became a Calcified Corpse" }, { ids: [1305775], k: 2, n: 'Dread Roar', s: 'the cauldron was reached too late' }, { ids: [1305650], k: 2, n: 'Wardens and Doomscales', s: "a Doomscale's Anguished Cry wasn't interrupted" }, { ids: [1286905], k: 2, n: 'Fury Unleashed', s: 'she reached Fury Unleashed (the end of the fight)' }],
   "Ula'tek|H": [{ ids: [1301122], k: 2, n: "Mother's Wrath", s: "nobody was in Mother's Wrath's reach, so it hit everyone" }, { ids: [1305775], k: 2, n: 'Dread Roar', s: 'the cauldron was reached too late' }],
@@ -11787,16 +11791,16 @@ const KILL_BASE = {
     rend: { k: 20, ok: 12, med: 0 }, barrage: { k: 10, ok: 10, med: 0 }, ritual: { k: 20, ok: 20, med: 0 },
     invoke: { k: 20, ok: 12, med: 0 }, avoid: { k: 20, ok: 18, med: 0 } } },
     15: { from: '20 fastest Heroic kills, Oct 22', sec: {
-    amani: { k: 20, ok: 15, med: 0 }, ignition: { k: 20, ok: 0, med: 67 }, rend: { k: 20, ok: 10, med: 10 },
+    barrage: { k: 8, ok: 7, med: 0 }, amani: { k: 20, ok: 15, med: 0 }, ignition: { k: 8, ok: 8, med: 0 }, rend: { k: 20, ok: 10, med: 10 },
     ritual: { k: 20, ok: 19, med: 0 }, avoid: { k: 20, ok: 18, med: 0 } } } },
   'Entombed Sentinels': { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
-    helix: { k: 20, ok: 19, med: 0 }, protovenom: { k: 20, ok: 5, med: 7 }, droplets: { k: 20, ok: 0, med: 7 },
-    coag: { k: 20, ok: 10, med: 8 }, miasma: { k: 20, ok: 5, med: 33 }, blighted: { k: 20, ok: 0, med: 42 },
-    marks: { k: 20, ok: 3, med: 55 }, balance: { k: 20, ok: 8, med: 33 }, tanks: { k: 20, ok: 20, med: 0 },
+    helix: { k: 20, ok: 19, med: 0 }, protovenom: { k: 20, ok: 5, med: 7 }, droplets: { k: 8, ok: 6, med: 0 },
+    coag: { k: 20, ok: 10, med: 8 }, miasma: { k: 8, ok: 7, med: 0 }, blighted: { k: 8, ok: 8, med: 0 },
+    marks: { k: 8, ok: 8, med: 0 }, balance: { k: 20, ok: 8, med: 33 }, tanks: { k: 20, ok: 20, med: 0 },
     avoid: { k: 20, ok: 12, med: 0 } } },
     15: { from: '20 fastest Heroic kills, Oct 22', sec: {
-    helix: { k: 20, ok: 18, med: 0 }, droplets: { k: 20, ok: 0, med: 9 }, coag: { k: 20, ok: 20, med: 0 },
-    miasma: { k: 20, ok: 17, med: 0 }, blighted: { k: 20, ok: 2, med: 50 }, marks: { k: 20, ok: 1, med: 67 },
+    helix: { k: 20, ok: 18, med: 0 }, droplets: { k: 8, ok: 6, med: 0 }, coag: { k: 20, ok: 20, med: 0 },
+    miasma: { k: 8, ok: 8, med: 0 }, blighted: { k: 8, ok: 8, med: 0 }, marks: { k: 8, ok: 8, med: 0 },
     balance: { k: 20, ok: 10, med: 25 }, tanks: { k: 20, ok: 20, med: 0 }, avoid: { k: 20, ok: 19, med: 0 } } } },
   'The Lost Explorers': { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
     boxes: { k: 20, ok: 2, med: 9 }, united: { k: 16, ok: 15, med: 0 }, frostfire: { k: 16, ok: 2, med: 5 },
@@ -11806,19 +11810,19 @@ const KILL_BASE = {
     boxes: { k: 20, ok: 8, med: 2 }, united: { k: 12, ok: 11, med: 0 }, blink: { k: 20, ok: 20, med: 0 },
     thud: { k: 12, ok: 0, med: 20 }, avoid: { k: 15, ok: 6, med: 9 }, kicks: { k: 20, ok: 19, med: 0 } } } },
   'Vashnik the Malignant': { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
-    venoms: { k: 20, ok: 6, med: 25 }, totems: { k: 20, ok: 16, med: 0 }, froth: { k: 20, ok: 1, med: 11 },
-    bile: { k: 20, ok: 17, med: 0 }, infect: { k: 20, ok: 0, med: 37 }, fangs: { k: 20, ok: 19, med: 0 },
+    venoms: { k: 20, ok: 6, med: 25 }, totems: { k: 8, ok: 7, med: 0 }, froth: { k: 8, ok: 4, med: 2 },
+    bile: { k: 20, ok: 17, med: 0 }, infect: { k: 8, ok: 8, med: 0 }, fangs: { k: 20, ok: 19, med: 0 },
     avoid: { k: 20, ok: 10, med: 1 } } },
     15: { from: '20 fastest Heroic kills, Oct 22', sec: {
-    venoms: { k: 20, ok: 5, med: 67 }, froth: { k: 20, ok: 0, med: 89 }, bile: { k: 20, ok: 12, med: 0 },
-    infect: { k: 20, ok: 2, med: 30 }, fangs: { k: 20, ok: 20, med: 0 }, avoid: { k: 20, ok: 17, med: 0 } } } },
+    venoms: { k: 20, ok: 5, med: 67 }, froth: { k: 8, ok: 8, med: 0 }, bile: { k: 20, ok: 12, med: 0 },
+    infect: { k: 8, ok: 8, med: 0 }, fangs: { k: 20, ok: 20, med: 0 }, avoid: { k: 20, ok: 17, med: 0 } } } },
   Sszorak: { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
-    ravage: { k: 20, ok: 18, med: 0 }, mutilate: { k: 20, ok: 18, med: 0 }, tempest: { k: 20, ok: 0, med: 67 },
-    cysts: { k: 20, ok: 19, med: 0 }, winds: { k: 20, ok: 15, med: 0 }, crosswinds: { k: 20, ok: 0, med: 13 },
-    fury: { k: 20, ok: 18, med: 0 }, virulence: { k: 20, ok: 0, med: 38 }, avoid: { k: 20, ok: 19, med: 0 } } },
+    ravage: { k: 20, ok: 18, med: 0 }, mutilate: { k: 20, ok: 18, med: 0 }, tempest: { k: 8, ok: 6, med: 0 },
+    cysts: { k: 20, ok: 19, med: 0 }, winds: { k: 20, ok: 15, med: 0 }, crosswinds: { k: 8, ok: 4, med: 2 },
+    fury: { k: 20, ok: 18, med: 0 }, virulence: { k: 8, ok: 8, med: 0 }, avoid: { k: 20, ok: 19, med: 0 } } },
     15: { from: '20 fastest Heroic kills, Oct 22', sec: {
-    ravage: { k: 20, ok: 17, med: 0 }, mutilate: { k: 20, ok: 16, med: 0 }, tempest: { k: 20, ok: 0, med: 74 },
-    cysts: { k: 20, ok: 20, med: 0 }, winds: { k: 20, ok: 16, med: 0 }, crosswinds: { k: 20, ok: 2, med: 10 },
+    ravage: { k: 20, ok: 17, med: 0 }, mutilate: { k: 20, ok: 16, med: 0 }, tempest: { k: 5, ok: 5, med: 0 },
+    cysts: { k: 20, ok: 20, med: 0 }, winds: { k: 20, ok: 16, med: 0 }, crosswinds: { k: 5, ok: 5, med: 0 },
     avoid: { k: 19, ok: 19, med: 0 } } } },
   'The Twin Fangs': { 16: { from: '19 fastest Mythic kills, Oct 22', sec: {
     venom: { k: 19, ok: 2, med: 15 }, feast: { k: 19, ok: 10, med: 0 }, founts: { k: 19, ok: 19, med: 0 },
@@ -11830,7 +11834,7 @@ const KILL_BASE = {
     spit: { k: 20, ok: 1, med: 25 }, ichor: { k: 20, ok: 19, med: 0 }, stone: { k: 20, ok: 18, med: 0 },
     avoid: { k: 20, ok: 17, med: 0 } } } },
   'The Coiled Altar': { 16: { from: '20 fastest Mythic kills, Oct 22', sec: {
-    avoid: { k: 20, ok: 9, med: 2 }, dmghost: { k: 20, ok: 11, med: 0 }, addsets: { k: 20, ok: 12, med: 0 },
+    avoid: { k: 20, ok: 9, med: 2 }, dmghost: { k: 20, ok: 11, med: 0 }, addsets: { k: 11, ok: 9, med: 0 },
     gloom: { k: 20, ok: 2, med: 6 }, push: { k: 20, ok: 16, med: 0 }, orbs: { k: 20, ok: 2, med: 13 },
     tankfront: { k: 20, ok: 2, med: 11 }, soakq: { k: 20, ok: 3, med: 42 }, shield: { k: 20, ok: 17, med: 0 },
     inter: { k: 20, ok: 16, med: 0 }, vf: { k: 20, ok: 3, med: 33 } } },
@@ -11845,9 +11849,9 @@ const KILL_BASE = {
     bite: { k: 19, ok: 1, med: 8 }, shriek: { k: 19, ok: 18, med: 0 }, avoid: { k: 19, ok: 2, med: 6 },
     kicks: { k: 19, ok: 19, med: 0 } } },
     15: { from: '20 fastest Heroic kills, Oct 22', sec: {
-    eggs: { k: 20, ok: 1, med: 10 }, coils: { k: 20, ok: 16, med: 0 },
+    waves: { k: 5, ok: 5, med: 0 }, eggs: { k: 20, ok: 1, med: 10 }, coils: { k: 20, ok: 16, med: 0 },
     tank: { k: 20, ok: 18, med: 0 }, amps: { k: 20, ok: 20, med: 0 }, fangs: { k: 20, ok: 11, med: 0 },
-    doomscale: { k: 20, ok: 20, med: 0 }, bite: { k: 20, ok: 7, med: 20 }, avoid: { k: 20, ok: 13, med: 0 },
+    doomscale: { k: 5, ok: 5, med: 0 }, bite: { k: 20, ok: 7, med: 20 }, avoid: { k: 20, ok: 13, med: 0 },
     kicks: { k: 20, ok: 20, med: 0 } } } },
   "Kith'ix": { 16: { from: '19 fastest Mythic kills, Oct 22', sec: {
     kxadds: { k: 19, ok: 17, med: 0 }, kxbeetle: { k: 19, ok: 13, med: 0 }, kxext: { k: 5, ok: 3, med: 0 },
@@ -11863,19 +11867,19 @@ const KILL_BASE = {
 const KILL_DIST = {
   'Nymrissa Wavecaller': { 15: { orbs: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17], nyadds: [0,0,0,0,0,0,0,0,0,0,0,0,17,17,20,20,33,33,33,40], nyrain: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,25,25] },
     16: { orbs: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], nyburst: [0,0,0,0,12,13,13,13,17,20,20,20,25,26,26,29,39,39,45,54], nyadds: [0,0,0,0,0,0,0,0,0,0,0,13,13,25,25,25,29,33,38,40], nyscale: [0,0,0,0,0,0,0,0,0,0,0,0,0,10,13,20,20,20,30,30], nyjet: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,11,11,11,44], nyrain: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], nypop: [0,33,33,50] } },
-  'Sszorak': { 15: { ravage: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17,17,17], mutilate: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17,17,17,33], tempest: [63,67,69,70,71,71,72,73,73,73,74,74,75,77,77,78,79,80,81,82], cysts: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], winds: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,20,20,20,20], crosswinds: [0,0,4,4,4,5,6,7,7,10,11,11,11,14,15,17,19,21,21,28] },
-    16: { ravage: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,10], mutilate: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,20], tempest: [53,55,59,61,62,63,63,64,65,66,69,69,70,70,70,72,73,74,76,80], cysts: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8], winds: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,10,10,10,20], crosswinds: [4,7,9,9,9,9,11,11,11,13,13,13,13,16,17,17,20,21,22,23], fury: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17,20], virulence: [17,29,29,29,33,33,38,38,38,38,38,38,44,44,50,50,50,58,62,69] } },
+  'Sszorak': { 15: { ravage: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17,17,17], mutilate: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17,17,17,33], tempest: [0,0,0,0,0], cysts: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], winds: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,20,20,20,20], crosswinds: [0,0,0,0,0] },
+    16: { ravage: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,10], mutilate: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,20], tempest: [0,0,0,0,0,0,3,4], cysts: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8], winds: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,10,10,10,20], crosswinds: [0,0,0,0,3,3,3,3], fury: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17,20], virulence: [0,0,0,0,0,0,0,0] } },
   'The Twin Fangs': { 15: { venom: [0,0,4,4,4,4,6,7,10,10,10,11,12,13,14,17,22,24,27,29], feast: [0,13,13,13,13,13,25,25,25,25,25,38,38,38,50,50,50,50,50,50], soaks: [0,0,0,0,0,0,0,0,0,0,0,0,0,3,3,3,3,3,3,4], spit: [0,9,9,11,13,14,14,20,21,21,29,29,32,32,35,38,41,42,44,60], ichor: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,50], stone: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,11,11] },
     16: { venom: [0,0,5,5,5,10,10,10,11,15,15,15,20,20,20,25,30,30,40], feast: [0,0,0,0,0,0,0,0,0,0,6,6,6,19,25,25,31,38,50], founts: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], soaks: [0,0,1,2,3,3,3,3,3,3,4,4,4,5,5,6,6,8,11], bulwark: [0,0,1,1,1,1,2,3,3,3,4,5,5,7,7,7,8,9,9], spit: [0,0,5,8,8,8,9,9,13,13,17,17,21,21,21,25,25,32,33], ichor: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], stone: [0,0,0,0,0,0,0,0,0,0,0,0,0,7,7,7,8,8,13], kicks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2] } },
   'The Coiled Altar': { 15: { dmghost: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,33,33,33,33], addsets: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17], push: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,33], orbs: [0,0,0,0,0,0,0,0,0,0,0,0,0,25,25,25,25,25,50,50], tankfront: [0,0,0,0,0,0,0,0,0,0,0,0,0,17,17,20,20,29,33], soakq: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], shield: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], vf: [0,0,25,50,56,60,63,63,63,75,75,80,80,88,89,90,100,100,100] },
-    16: { dmghost: [0,0,0,0,0,0,0,0,0,0,0,14,14,17,17,17,17,20,20,29], addsets: [0,0,0,0,0,0,0,0,0,0,0,0,2,2,2,3,4,4,5,7], gloom: [0,0,2,2,2,2,2,4,4,5,6,8,10,10,10,11,14,33,39,44], push: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,33,33,33,33], orbs: [0,0,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,25,29,29], tankfront: [0,0,7,7,7,8,8,8,8,8,14,14,14,14,15,15,15,21,21,21], soakq: [0,0,0,25,25,25,25,25,25,33,50,50,50,50,50,75,75,75,75,75], shield: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,25,25,25], inter: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14,17,17,17], vf: [0,0,0,17,17,17,17,33,33,33,33,50,50,50,50,50,67,67,83,100] } },
-  'Entombed Sentinels': { 15: { helix: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12,17], droplets: [2,2,3,6,6,7,7,8,8,9,9,10,10,11,11,11,14,15,16,16], coag: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], miasma: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,25,25,25], blighted: [0,0,17,25,25,33,33,33,50,50,50,50,50,50,50,50,75,75,83,83], marks: [0,33,33,33,33,50,50,60,67,67,67,75,75,80,80,80,83,83,89,100], balance: [0,0,0,0,0,0,0,0,0,0,50,50,50,50,50,50,50,50,100,100], tanks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
-    16: { helix: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7], protovenom: [0,0,0,0,0,2,4,4,4,7,7,9,9,11,11,13,15,15,15,18], droplets: [3,4,4,5,5,5,6,6,6,6,7,8,8,8,9,9,9,10,10,13], coag: [0,0,0,0,0,0,0,0,0,0,17,17,17,17,17,17,17,17,20,20], miasma: [0,0,0,0,0,17,17,20,33,33,33,33,40,40,40,40,40,40,50,67], blighted: [8,8,25,33,33,33,33,42,42,42,42,50,50,50,50,50,58,58,58,67], marks: [0,0,0,25,25,25,25,25,40,50,60,60,60,63,67,67,67,75,83,86], balance: [0,0,0,0,0,0,0,0,33,33,33,33,33,33,33,33,67,67,67,67], tanks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] } },
-  'Vashnik the Malignant': { 15: { venoms: [0,0,0,0,0,33,33,33,33,67,67,67,67,67,67,67,67,67,67,67], froth: [75,80,81,84,87,88,88,88,88,89,89,90,91,91,92,92,93,93,93,94], bile: [0,0,0,0,0,0,0,0,0,0,0,0,25,25,25,25,25,50,75,75], infect: [0,0,10,18,22,22,22,30,30,30,30,31,42,44,46,50,50,53,58,74], fangs: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
-    16: { venoms: [0,0,0,0,0,0,8,13,13,25,25,33,38,38,38,38,38,50,50,50], totems: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,7,7,8], froth: [0,4,4,5,6,6,7,7,8,11,11,13,14,15,15,17,18,22,26,36], bile: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17,17,17], infect: [19,25,29,31,31,31,32,33,37,37,38,39,41,43,46,46,48,50,53,61], fangs: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10] } },
-  "Nek'zali the Soulcoiler": { 15: { amani: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,7,7,8,8], ignition: [25,33,40,40,50,50,50,50,67,67,67,67,67,67,75,75,75,75,78,90], rend: [0,0,0,0,0,0,0,0,0,0,20,20,20,20,30,30,40,40,50,60], ritual: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,25] },
+    16: { dmghost: [0,0,0,0,0,0,0,0,0,0,0,14,14,17,17,17,17,20,20,29], addsets: [0,0,0,0,0,0,0,0,0,2,6], gloom: [0,0,2,2,2,2,2,4,4,5,6,8,10,10,10,11,14,33,39,44], push: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,33,33,33,33], orbs: [0,0,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,25,29,29], tankfront: [0,0,7,7,7,8,8,8,8,8,14,14,14,14,15,15,15,21,21,21], soakq: [0,0,0,25,25,25,25,25,25,33,50,50,50,50,50,75,75,75,75,75], shield: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,25,25,25], inter: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14,17,17,17], vf: [0,0,0,17,17,17,17,33,33,33,33,50,50,50,50,50,67,67,83,100] } },
+  'Entombed Sentinels': { 15: { helix: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12,17], droplets: [0,0,0,0,0,0,2,3], coag: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], miasma: [0,0,0,0,0,0,0,0], blighted: [0,0,0,0,0,0,0,0], marks: [0,0,0,0,0,0,0,0], balance: [0,0,0,0,0,0,0,0,0,0,50,50,50,50,50,50,50,50,100,100], tanks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+    16: { helix: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7], protovenom: [0,0,0,0,0,2,4,4,4,7,7,9,9,11,11,13,15,15,15,18], droplets: [0,0,0,0,0,0,1,2], coag: [0,0,0,0,0,0,0,0,0,0,17,17,17,17,17,17,17,17,20,20], miasma: [0,0,0,0,0,0,0,20], blighted: [0,0,0,0,0,0,0,0], marks: [0,0,0,0,0,0,0,0], balance: [0,0,0,0,0,0,0,0,33,33,33,33,33,33,33,33,67,67,67,67], tanks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] } },
+  'Vashnik the Malignant': { 15: { venoms: [0,0,0,0,0,33,33,33,33,67,67,67,67,67,67,67,67,67,67,67], froth: [0,0,0,0,0,0,0,0], bile: [0,0,0,0,0,0,0,0,0,0,0,0,25,25,25,25,25,50,75,75], infect: [0,0,0,0,0,0,0,0], fangs: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+    16: { venoms: [0,0,0,0,0,0,8,13,13,25,25,33,38,38,38,38,38,50,50,50], totems: [0,0,0,0,0,0,0,8], froth: [0,0,0,0,3,3,6,9], bile: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17,17,17], infect: [0,0,0,0,0,0,0,0], fangs: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10] } },
+  "Nek'zali the Soulcoiler": { 15: { barrage: [0,0,0,0,0,0,0,50], amani: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,7,7,8,8], ignition: [0,0,0,0,0,0,0,0], rend: [0,0,0,0,0,0,0,0,0,0,20,20,20,20,30,30,40,40,50,60], ritual: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,25] },
     16: { amani: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], ignition: [0,0,0,0,0,25,25,33,33,33,40,40,43,50,50,50,60,60,67,78], depths: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,20,22,25], rend: [0,0,0,0,0,0,0,0,0,0,0,0,7,7,7,7,7,8,16,20], barrage: [0,0,0,0,0,0,0,0,0,0], ritual: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], invoke: [0,0,0,0,0,0,0,0,0,0,0,0,33,33,33,33,50,50,67,100] } },
-  "Ula'tek": { 15: { eggs: [0,2,5,6,7,7,8,9,9,9,11,12,12,13,13,13,13,14,15,15], coils: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,15,15,23], tank: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,20,20], amps: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], fangs: [0,0,0,0,0,0,0,0,0,0,0,13,13,13,13,14,14,14,14,25], doomscale: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], bite: [0,0,0,0,0,0,0,20,20,20,20,20,20,20,20,33,33,33,33,33], kicks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+  "Ula'tek": { 15: { waves: [0,0,0,0,0], eggs: [0,2,5,6,7,7,8,9,9,9,11,12,12,13,13,13,13,14,15,15], coils: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,15,15,23], tank: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,20,20], amps: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], fangs: [0,0,0,0,0,0,0,0,0,0,0,13,13,13,13,14,14,14,14,25], doomscale: [0,0,0,0,0], bite: [0,0,0,0,0,0,0,20,20,20,20,20,20,20,20,33,33,33,33,33], kicks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
     16: { eggs: [0,0,0,0,0,0,0,2,2,2,2,2,4,4,4,6,6,7,10], coils: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,13], waves: [0,0,8,18,50], tank: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17], incub: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], wretch: [0,0,0,0,0,0,25,25,25,25,33,33,33,33,33,50,67,75,100], amps: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], fangs: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14], doomscale: [0,0,0,0,0], bite: [0,5,5,5,5,6,6,6,7,8,9,9,11,11,15,15,20,20,33], shriek: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,25], kicks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] } },
   'The Lost Explorers': { 15: { boxes: [0,0,0,0,0,0,0,0,2,2,3,3,3,4,4,5,6,6,7,7], united: [0,0,0,0,0,0,0,0,0,0,0,50], blink: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], thud: [10,10,20,20,20,20,20,20,20,20,20,20], kicks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,17] },
     16: { boxes: [0,0,3,6,6,6,6,8,8,9,9,10,10,12,13,15,17,19,20,27], united: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,33], frostfire: [0,0,5,5,5,5,5,5,5,10,10,10,15,15,15,15], blink: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], thud: [0,0,0,0,0,0,10,10,10,10,10,10,10,11,20,20,20,20,20,30], kicks: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,8,8,15] } },

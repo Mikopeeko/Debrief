@@ -477,26 +477,30 @@ function* translateSteps(item, events) {
   // Warcraft Logs numbers the copies of an add 1, 2, 3... and gives a new copy the number of one that has died, so two
   // adds can share a number (read on Nek'zali's Restless Amani). A number starts a new life with its first event over a
   // second after its death, so every add keeps a GUID of its own, as in a real log (a corpse brought back is a new life).
-  const life = new Map(), dead = new Map(); let curT = 0;
-  const lifeOf = (id, inst) => { const k = id + ':' + (inst || 1), d = dead.get(k); if (d != null && curT > d + 1000) { life.set(k, (life.get(k) || 0) + 1); dead.delete(k); } return life.get(k) || 0; };
-  const guid = (id, inst) => {
+  // (Oct 24, Coiled Altar fix 1: only what a living add does starts the new life: it's hit, healed, summoned or given an aura, or it casts. A Spiteful Soulcoiler's
+  // Retaliatory Malice landing a second after it died had made a fake add that "never died" in 3 of 11 top kills)
+  const life = new Map(), dead = new Map(); let curT = 0, curType = '';
+  const lifeOf = (id, inst, side) => { const k = id + ':' + (inst || 1), d = dead.get(k);
+    const alive = side === 'dst' ? /^(damage|heal|summon|applybuff|applydebuff|applybuffstack|applydebuffstack)$/.test(curType) : side === 'src' && (curType === 'cast' || curType === 'begincast');
+    if (d != null && curT > d + 1000 && alive) { life.set(k, (life.get(k) || 0) + 1); dead.delete(k); } return life.get(k) || 0; };
+  const guid = (id, inst, side) => {
     const a = actors.get(id);
     if (!a || id == null || id < 0) return '0000000000000000';
     if (a.type === 'Player') return 'Player-0-' + id;
     if (a.type === 'Pet') return 'Pet-0-0-0-0-' + (a.gameID || 0) + '-' + id;
-    return 'Creature-0-0-0-0-' + (a.gameID || 0) + '-' + id + '-' + ((inst || 1) + 1000 * lifeOf(id, inst));
+    return 'Creature-0-0-0-0-' + (a.gameID || 0) + '-' + id + '-' + ((inst || 1) + 1000 * lifeOf(id, inst, side));
   };
   const nm = (id) => { const a = actors.get(id); if (!a) return 'nil'; return q(a.type === 'Player' && a.server ? a.name + '-' + a.server : a.name); };
   const flags = (id) => { const a = actors.get(id); return !a ? '0x80000000' : a.type === 'Player' ? '0x512' : a.type === 'Pet' ? '0x1112' : '0xa48'; };
   const mark = (m) => (m > 0 && m <= 8 ? '0x' + (1 << (m - 1)).toString(16) : '0x0');
-  const unit = (id, inst, m) => guid(id, inst) + ',' + nm(id) + ',' + flags(id) + ',' + mark(m);
-  const src = (e) => unit(e.sourceID, e.sourceInstance, e.sourceMarker);
-  const dst = (e) => unit(e.targetID, e.targetInstance, e.targetMarker);
+  const unit = (id, inst, m, side) => guid(id, inst, side) + ',' + nm(id) + ',' + flags(id) + ',' + mark(m);
+  const src = (e) => unit(e.sourceID, e.sourceInstance, e.sourceMarker, 'src');
+  const dst = (e) => unit(e.targetID, e.targetInstance, e.targetMarker, 'dst');
   const spell = (id) => { const a = abil.get(id) || {}; return id + ',' + q(a.name || ('Spell ' + id)) + ',0x' + ((a.type | 0) || 1).toString(16); };
   // 19-field advanced block; resources belong to the source (resourceActor 1) or the target (2).
   const adv = (e, side) => {
     const has = e.hitPoints != null && (e.resourceActor === side || (!e.resourceActor && side === 2));
-    const who = side === 1 ? guid(e.sourceID, e.sourceInstance) : guid(e.targetID, e.targetInstance);
+    const who = side === 1 ? guid(e.sourceID, e.sourceInstance, 'src') : guid(e.targetID, e.targetInstance, 'dst');
     // written the way WoW writes them: positionX (north) = WCL y, positionY (west) = -WCL x
     const x = has && e.y != null ? (e.y / 100).toFixed(2) : '0', y = has && e.x != null ? (-e.x / 100).toFixed(2) : '0';
     const hp = has ? e.hitPoints : 0, mx = has ? (e.maxHitPoints || 0) : 0;
@@ -518,7 +522,7 @@ function* translateSteps(item, events) {
   let n = 0;
   for (const e of events) {
     if (!(++n & 4095)) yield;
-    const ab = e.abilityGameID; curT = e.timestamp;
+    const ab = e.abilityGameID; curT = e.timestamp; curType = e.type;
     switch (e.type) {
       case 'combatantinfo': {
         const ones = new Array(23).fill(1).join(',');
