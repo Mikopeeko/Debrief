@@ -6748,6 +6748,33 @@ section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-z[style*="--p"] svg { dis
   .pnw-ti em { white-space: nowrap; } .pnw-ti { flex: 1 1 40%; } .pnw-ti:nth-child(3) { flex-basis: 100%; } .pg-intab #pgNow .pnw-big { min-width: 120px; } }
 /* phones: two cells a row with whole names (five a row cut them short) */
 @media (max-width: 560px) { .my-bcs.my-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; } .my-chip.my-bc { min-height: 0; padding: 7px 10px 12px; } .my-chip.my-bc b { font-size: 14px; } }
+/* ===== Design studio round 11 (Oct 25): Plan's Tonight page polished: things to fix as one list of rows, the roster card as one line, a ready
+   bar on Bosses, tighter boss rows on a phone. Owner: the Design studio chat. ===== */
+/* "Your roster is ready": one line (title, the sentence, Got it at the end) */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.plw { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 12px; padding: 8px 14px; line-height: 1.3; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.plw > .plw-h { display: contents; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.plw > .plw-h > b { font-size: 14px; white-space: nowrap; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.plw > p.sub { order: 1; flex: 1 1 320px; min-width: 0; margin: 0; font-size: 13px; white-space: normal; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.plw > .plw-h > .btn { order: 2; margin-left: auto; }
+/* things to fix: one list of rows, the icon or count first, the sentence, the button at the end */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec .tn-pcol .nt-prl { grid-template-columns: minmax(0, 1fr) !important; gap: 4px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec .tn-pcol .nt-pr { padding: 5px 10px !important; gap: 10px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.025); }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec .tn-pcol .nt-pri { flex: none; width: 26px; display: grid; place-items: center; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec .tn-pcol .nt-prt { font-size: 13px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec .tn-pcol .nt-prb { font-size: 12px; padding: 0 6px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec .tn-pcol .nt-pra { flex: none; margin-left: auto; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec .tn-pcol .nt-probh { margin: 0 0 6px !important; }
+/* Bosses: "1 of 10 ready" as a bar along the header's foot as well */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec > .tn-sh.ds-ready { position: relative; padding-bottom: 8px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec > .tn-sh.ds-ready::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; border-radius: 2px; background: linear-gradient(90deg, #7ee08f calc(var(--p, 0) * 1%), rgba(255,255,255,.1) 0); }
+/* phones: the roster line wraps to two lines at most; boss rows tighter (smaller picture, small buttons on one line) */
+@media (max-width: 760px) {
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.plw > p.sub { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row { grid-template-columns: 56px minmax(0, 1fr) auto; gap: 4px 10px; padding: 6px; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-pic { height: 38px; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-bn b { font-size: 15px; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sits { font-size: 12px; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-ra { gap: 6px; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-ra .btn.sm { padding: 5px 10px; font-size: 12.5px; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec .tn-pcol .nt-pr { flex-wrap: wrap; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec .tn-pcol .nt-prt { flex: 1 1 200px; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec .tn-pcol .nt-pra { flex: 1 1 100%; margin: 0 0 0 36px; } /* (the Swap in button under its sentence, lined up with it) */ }
 </style>
 
 

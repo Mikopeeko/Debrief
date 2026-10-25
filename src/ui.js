@@ -1780,6 +1780,7 @@ const PATCH_NOTES = [
     { t: 'One way to show a number', d: 'The Report card and Rotation now speak the same language as Debriefing: a bar with one number at its end, a grade as one letter at the start of its bar. The ranked roster is one bar per raider, a raider\'s checklist shows the rows that need them and folds the rest, and Rotation\'s header is one row with the talent trees folded under it.' },
     { t: 'Your tier set, in numbers', d: 'Rotation shows how much your 2-piece and 4-piece added, with a Where it came from breakdown behind every number. On every spec.' },
     { t: 'Your trinkets, both of them', d: 'Gear and extras on Rotation now shows both of your trinkets, with what each one did (damage, healing or stats), or that one was never pressed.' },], n: [
+    'Plan: Tonight\'s things to fix are one list of rows (the sentence, then Swap in at the end), the roster card is one line, the Bosses header shows how many are ready as a bar, and the boss rows are tighter on a phone.',
     'Home: on a phone the banner\'s "Time on the boss" tile sits on one line under Pulls and Nights, and the ten bosses go five a row.',
     'Compare: Why the gap shows its two biggest reasons and folds the rest; on Your other pulls it leads the page.',
     'Report card: the night banner\'s five numbers are one slim strip with a smaller raid-grade ring, and the raid\'s six category tiles are a label with the letter, a bar with the score, and tonight\'s best, the same language as the roster.',
@@ -30169,3 +30170,10 @@ function dsHome() { const pg = document.querySelector('#main .home.prog .my-flow
   pg.querySelectorAll('#pgNights .pn-row').forEach((r) => { const v = r.querySelector('.pn-r'); if (!v) return; const k = r.classList.contains('pn-k');
     r.style.setProperty('--p', k ? '100' : pct(v.textContent) || '0'); r.style.setProperty('--pc', k ? '#ff8000' : v.style.color || 'var(--muted)'); }); }
 (function () { const f5 = dsBars; dsBars = function (root) { f5(root); try { dsHome(); } catch (e) {} }; })();
+
+// ===== Design studio round 11 (Oct 25): Plan, Tonight polished. Reads "N of M ready" on Tonight's Bosses header into --p for its ready bar.
+// Runs after dsBars on every redraw. Owner: the Design studio chat. =====
+function dsPlan() { const v = document.querySelector('#view.plan-page'); if (!v) return;
+  v.querySelectorAll('.tn-sec > .tn-sh').forEach((sh) => { const s = sh.querySelector('.sub'), m = s && s.textContent.match(/(\d+) of (\d+) ready/); if (!m) return;
+    sh.classList.add('ds-ready'); sh.style.setProperty('--p', String(Math.round(100 * +m[1] / Math.max(1, +m[2])))); }); }
+(function () { const f6 = dsBars; dsBars = function (root) { f6(root); try { dsPlan(); } catch (e) {} }; })();
