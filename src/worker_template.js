@@ -537,9 +537,9 @@ async function runInbox(env) {
           await dcFiles(env, '/channels/' + c.id + '/messages', 'POST', { content: text, allowed_mentions: { parse: [] }, flags: 4 }, o.images.slice(0, 6));
         } else if (o.op === 'faq-post' && text) {
           /* (a new pinned thread in #questions with the FAQ in it, under the "Getting started" tag) */
-          const fc = await dc(env, '/channels/' + FORUM_QS), tag = tagOf(fc.available_tags, 'Getting started');
-          const th = await dc(env, '/channels/' + FORUM_QS + '/threads', { method: 'POST', body: { name: 'FAQ: read this first', applied_tags: tag ? [tag] : [], message: { content: text, allowed_mentions: { parse: [] } } } });
-          if (th && th.id) await dc(env, '/channels/' + th.id, { method: 'PATCH', body: { flags: 2 } }).catch((err) => console.warn('FAQ pin:', err && err.message));
+          const fc = await dc(env, '/channels/' + FORUM_QS), want = Array.isArray(o.tags) && o.tags.length ? o.tags : ['Getting started'], tagIds = want.map((n) => tagOf(fc.available_tags, String(n))).filter(Boolean);
+          const th = await dc(env, '/channels/' + FORUM_QS + '/threads', { method: 'POST', body: { name: String(o.name || 'FAQ: read this first').slice(0, 95), applied_tags: tagIds, message: { content: text, allowed_mentions: { parse: [] } } } });
+          if (th && th.id && o.pin !== false) await dc(env, '/channels/' + th.id, { method: 'PATCH', body: { flags: 2 } }).catch((err) => console.warn('FAQ pin:', err && err.message));
         } else if (o.op === 'edit-post' && /^\d{17,20}$/.test(String(o.channel || '')) && text) {
           /* (new words for one of Claudette's own messages: by its id, or the newest of hers in that channel that has o.find in it) */
           let mid = /^\d{17,20}$/.test(String(o.message || '')) ? String(o.message) : null;
