@@ -769,7 +769,8 @@ local function renderOnce()
   local pos = #IX; for i0, k0 in ipairs(IX) do if k0 == DB.cur then pos = i0 end end
   local last = math.min(#IX, pos + 1)
   local first = math.max(1, last - #chips + 1)
-  if (DB.show or {}).chips ~= false and #IX > 0 then
+  local chipsOn = (DB.show or {}).chips ~= false and #IX > 1 -- (one pull of this boss: no row of one button, as in the pop-up (Oct 24))
+  if chipsOn then
     local function chipW(q) local rt = UI.resultOf(q.h); chips[1].t:SetText("Pull " .. q.h.pull .. "  ·  " .. rt); return chips[1].t:GetStringWidth() + 20 end
     local total = 0; for j = first, last do total = total + chipW(DB.pulls[IX[j]]) + 6 end
     while first < pos and total - 6 > W - PAD * 2 do total = total - chipW(DB.pulls[IX[first]]) - 6; first = first + 1 end
@@ -780,7 +781,7 @@ local function renderOnce()
     local b, j = chips[i], first + i - 1
     local k = IX[j]
     local q = j <= n and k and DB.pulls[k] or nil
-    if q and (DB.show or {}).chips ~= false then
+    if q and chipsOn then
       local rt, rc, rb = UI.resultOf(q.h)
       b.t:SetText("Pull " .. q.h.pull .. "  ·  " .. rt)
       UI.chipColors(b, rb, k == DB.cur and COL.gold or rb, rc)
@@ -805,7 +806,7 @@ local function renderOnce()
   local coachOn = m.coach and (m.coach.head or "") ~= "" and not m.h.practice and (DB.show or {}).coach ~= false -- (Debriefing's coach box on every style, with the Raid view and You tabs; the style decides how much is open (Oct 22))
   local glanceOn = DB.glance and (m.raid.ghead or "") ~= "" and not coachOn -- (the Glance card: one view, so no tabs; older pulls without it keep the tabs)
   -- (no "Raid view first" any more (Oct 24): the card opens on Me, like the pop-up; Raid view is one click)
-  TOPY = (((DB.show or {}).chips ~= false) and 180 or 150) - (glanceOn and 38 or 0)
+  TOPY = (chipsOn and 180 or 150) - (glanceOn and 38 or 0)
   tMe:ClearAllPoints(); tMe:SetPoint("TOPLEFT", card, "TOPLEFT", PAD - 10, -TOPY + 38); tRaid:ClearAllPoints(); tRaid:SetPoint("LEFT", tMe, "RIGHT", 0, 0)
   nextB:ClearAllPoints(); nextB:SetPoint("TOPRIGHT", card, "TOPRIGHT", -PAD, -TOPY + 36)
   tabLine:ClearAllPoints(); tabLine:SetPoint("TOPLEFT", card, "TOPLEFT", 1, -TOPY + 12); tabLine:SetPoint("TOPRIGHT", card, "TOPRIGHT", -1, -TOPY + 12)
@@ -1313,7 +1314,7 @@ end
 -- (the card in two columns (Oct 24): drawn once as before; then drawn again with the right column starting at the section edge that
 -- leaves the two sides closest in height, like the big window's two columns. Detailed always (the user: "the detailed setup should always
 -- just be 2 columns"); the other styles once the card is taller than about two-thirds of the screen)
-function render()
+local function renderAll()
   local T = UI.two
   T.cols, T.brk, T.cwc = 1, 0, nil
   renderOnce()
@@ -1333,6 +1334,8 @@ function render()
   end
   if Debrief_FitPreview then Debrief_FitPreview() end
 end
+-- (a problem while drawing is noted, not thrown (Oct 24): the card stays as it was)
+function render() local ok, err = pcall(renderAll); if not ok then Debrief_NoteError(err) end end
 
 -- ---------- keeping pulls, showing the card ----------
 local function sameAs(a, b) return a.h.boss == b.h.boss and a.h.pull == b.h.pull and a.h.dur == b.h.dur end
@@ -1803,7 +1806,11 @@ function Debrief_FitPreview()
   local w = (card:GetWidth() or 400) * (DB.scale or 1)
   card:SetScale((w > avail and avail > 200) and math.max(0.55, (DB.scale or 1) * avail / w) or (DB.scale or 1))
 end
+local optDirty = false -- (a /db change your PC pop-up sees only after a /reload (Oct 24))
 local function applySettings()
+  if (opt and opt:IsShown()) or (DebriefTutorial and DebriefTutorial:IsShown()) then
+    optDirty = true; if opt and opt.f1 then opt.f1:SetText("Saved  ·  /reload sends it to your PC pop-up") end
+  end
   reapplyFonts()
   card:SetScale(DB.scale or 1); big:SetScale(DB.bigScale or 1); mini:SetScale(DB.miniScale or 1)
   Debrief_FitPreview()
@@ -1882,7 +1889,7 @@ local function buildOptions()
   refreshers[#refreshers + 1] = function() showPage(cur) end
   -- the small print at the bottom
   local fl = opt:CreateTexture(nil, "ARTWORK"); fl:SetPoint("BOTTOMLEFT", 1, FOOT); fl:SetPoint("BOTTOMRIGHT", -1, FOOT); fl:SetHeight(1); fill(fl, COL.line)
-  local f1 = opt:CreateFontString(nil, "OVERLAY"); setFont(f1, "body", 11.5); f1:SetPoint("BOTTOMLEFT", 16, 10); f1:SetTextColor(rgb(COL.faint)); f1:SetText("Saves as you go")
+  local f1 = opt:CreateFontString(nil, "OVERLAY"); setFont(f1, "body", 11.5); f1:SetPoint("BOTTOMLEFT", 16, 10); f1:SetTextColor(rgb(COL.faint)); f1:SetText("Saves as you go"); opt.f1 = f1
   local f2 = opt:CreateFontString(nil, "OVERLAY"); setFont(f2, "body", 11.5); f2:SetPoint("BOTTOMRIGHT", -16, 10); f2:SetTextColor(rgb(COL.faint))
   f2:SetText("/db  ·  Version " .. ((C_AddOns and C_AddOns.GetAddOnMetadata and C_AddOns.GetAddOnMetadata(ADDON, "Version")) or ""))
 
@@ -2276,6 +2283,11 @@ function Debrief_PreviewOff()
 end
 -- (a safety net (Oct 24, the user: "/recap isnt pulling up my saved puls its pulling up demo pulls"): the sample still in while neither
 -- the settings nor the setup is open gives your own pulls, and the card its own place, back)
+function Debrief_SettingsClosed()
+  if not optDirty then return end
+  optDirty = false; if opt and opt.f1 then opt.f1:SetText("Saves as you go") end
+  say("saved. Your PC pop-up follows your changes after your next /reload.")
+end
 function Debrief_PreviewFix()
   if not PREV_REAL or not DB then return end
   if (opt and opt:IsShown()) or (DebriefTutorial and DebriefTutorial:IsShown()) then return end
@@ -2285,14 +2297,14 @@ end
 function Debrief_ToggleOptions()
   if not DB then return end
   if not opt then buildOptions() end
-  if opt:IsShown() then opt:Hide(); Debrief_PreviewOff(); if card:IsShown() then if #DB.pulls > 0 then render() else card:Hide() end end; return end -- (your own pulls again)
+  if opt:IsShown() then opt:Hide(); Debrief_PreviewOff(); Debrief_SettingsClosed(); if card:IsShown() then if #DB.pulls > 0 then render() else card:Hide() end end; return end -- (your own pulls again)
   if DebriefTutorial and DebriefTutorial:IsShown() then DebriefTutorial:Hide(); Debrief_PreviewOff() end
   Debrief_RefreshOptions(); opt:Show()
   if not opt.prev then
     opt.prev = opt:CreateFontString(nil, "OVERLAY"); setFont(opt.prev, "bold", 12.5); opt.prev:SetTextColor(rgb(COL.gold))
     opt.prev:SetText("PREVIEW  ·  changes as you click")
     opt:HookScript("OnHide", function()
-      Debrief_PreviewOff(); if card:IsShown() then if #DB.pulls > 0 then render() else card:Hide() end end -- (your own pulls again)
+      Debrief_PreviewOff(); Debrief_SettingsClosed(); if card:IsShown() then if #DB.pulls > 0 then render() else card:Hide() end end -- (your own pulls again)
       card:SetScale(DB.scale or 1); card:ClearAllPoints()
       if DB.pos then card:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) else card:SetPoint("CENTER", 260, 60) end
     end)
@@ -2475,7 +2487,7 @@ do
   local wasCard = false -- (the card comes back after only if it was open before)
   local function closed() if DB then DB.tutorialDone = true end; preview(false); if wasCard and DB and #DB.pulls > 0 and not (DebriefOptions and DebriefOptions:IsShown()) then card:Show(); render() end end
   local function finish() closed(); tut:Hide() end
-  nextB:SetScript("OnClick", function() if cur >= #STEPS then finish(); say("all set. /recap shows your recap, /db changes the settings.") else show(cur + 1) end end)
+  nextB:SetScript("OnClick", function() if cur >= #STEPS then local ch = optDirty; optDirty = false; finish(); say("all set. /recap shows your recap, /db changes the settings." .. (ch and " Type /reload so your PC pop-up uses your picks too." or "")) else show(cur + 1) end end)
   backB:SetScript("OnClick", function() if cur > 1 then show(cur - 1) end end)
   skipB:SetScript("OnClick", finish); cl:SetScript("OnClick", finish)
   openSet:SetScript("OnClick", function() finish(); Debrief_ToggleOptions() end)
@@ -2730,3 +2742,21 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     else say("ready. Your recaps come from Debrief Companion on your PC. /debrief demo shows a sample.") end
   end
 end)
+
+-- ---------- problems: noted for "Report a problem" in Debrief Companion, said once, never an error box (Oct 24) ----------
+-- (the last 10, the same one counted; WoW's save carries them to the app at /reload or logout. A problem while loading still shows)
+local saidProblem = false
+function Debrief_NoteError(err)
+  if not DB then return end
+  local m = tostring(err or "?"):gsub("^.-AddOns[/\\]Debrief[/\\]", ""):gsub("[\r\n]+", " "):sub(1, 300)
+  DB.errors = DB.errors or {}
+  local hit; for _, e in ipairs(DB.errors) do if e.m == m then hit = e end end
+  if hit then hit.n = (hit.n or 1) + 1; hit.t = (time and time()) or 0
+  else table.insert(DB.errors, { m = m, n = 1, t = (time and time()) or 0, v = MY_V }); while #DB.errors > 10 do table.remove(DB.errors, 1) end end
+  if not saidProblem then saidProblem = true; say("hit a problem and skipped it. It's noted: Report a problem in Debrief Companion sends it to us.") end
+end
+local function guard(f) return function(...) local ok, err = pcall(f, ...); if not ok then if DB then Debrief_NoteError(err) else error(err, 0) end end end end
+do local f = ev:GetScript("OnEvent"); if f then ev:SetScript("OnEvent", guard(f)) end end
+do local f = gev:GetScript("OnEvent"); if f then gev:SetScript("OnEvent", guard(f)) end end
+SlashCmdList.DEBRIEF = guard(SlashCmdList.DEBRIEF); SlashCmdList.DEBRIEFMO = guard(SlashCmdList.DEBRIEFMO)
+do local f = bigRender; bigRender = function() local ok, err = pcall(f); if not ok then Debrief_NoteError(err) end end end

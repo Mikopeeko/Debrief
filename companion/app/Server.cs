@@ -144,6 +144,8 @@ namespace Debrief {
         else if (get && path == "/app-version") SendJson(res, new Dictionary<string, object> { { "version", Program.Version }, { "addon", AddonVersion() } });
         else if (post && path == "/quit") { SendJson(res, new Dictionary<string, object> { { "ok", true } }); res.Close(); Quit?.Invoke(); }
         else if (post && path == "/archive") SendJson(res, Wow.ArchiveLogs(here)); // (the Archive old logs button)
+        else if (get && path == "/problems") SendJson(res, new Dictionary<string, object> { { "list", Report.Errors(here) } }); // (what the addon noted (Oct 24))
+        else if (post && path == "/report") SendJson(res, Report.Send(here, AddonVersion(), Json.Deserialize<Dictionary<string, object>>(Body(req)))); // (Report a problem (Oct 24))
         else if (post && path == "/addonpull") {
           // (each pull's code, for the addon's saved pulls: see Wow.SavePull)
           if (!(req.ContentType ?? "").StartsWith("application/json")) throw new Exception("Expected JSON.");

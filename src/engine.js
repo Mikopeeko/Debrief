@@ -337,9 +337,10 @@ function createIndexer(opts) {
         const diffId = +f[2];
         cur = { kind: 'boss', id: +f[0], boss: f[1], diffId, diff: DIFF[diffId] || ('Difficulty ' + diffId), size: +f[3],
           startMs: ts.ms, wallMs: ts.off != null ? ts.ms - ts.off : undefined, startByte: start, endByte: 0, kill: false, result: 'In progress', duration: 0, pull: 1, run: null }; // (wallMs: the real time, as Warcraft Logs pulls have it)
-        const dun = run || isDungeon(diffId, +f[3]);
+        // (for the app, only a dungeon difficulty counts as inside a key: a key left without its end line never makes a raid boss a dungeon boss)
+        const inKey = run && (!withDungeons || DUNGEON_DIFF.has(diffId)), dun = inKey || isDungeon(diffId, +f[3]);
         if (dun && !(withDungeons && DUNGEON_BOSS.has(diffId))) cur.skip = true; // (a dungeon boss: followed to its end, never listed on the site)
-        else { if (dun) { cur.dungeon = true; if (run) cur.key = run.level; } const k = cur.id + ':' + diffId; pulls[k] = (pulls[k] || 0) + 1; cur.pull = pulls[k]; bosses.push(cur); }
+        else { if (dun) { cur.dungeon = true; if (inKey && run.level > 0) cur.key = run.level; } const k = cur.id + ':' + diffId; pulls[k] = (pulls[k] || 0) + 1; cur.pull = pulls[k]; bosses.push(cur); }
       } else if (ev === 'ENCOUNTER_END' && cur && +f[0] === cur.id) {
         cur.kill = f[4] === '1'; cur.result = cur.kill ? 'Kill' : 'Wipe';
         cur.duration = num(f[5]) / 1000; cur.endByte = end; cur = null;

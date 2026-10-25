@@ -120,6 +120,15 @@ namespace Debrief {
     // (the card settings from /db, for the pop-up to draw the same card as /recap (Oct 24): which sections are on, how many lines,
     // the style, and who you are (the addon saves your character's name; else the character folder WoW wrote last))
     static string svText = "";
+    // (the addon in WoW is newer than WoW's last save of its settings (Oct 24): the game still runs the old one until a /reload)
+    static bool NeedsReload(string here) {
+      try {
+        var r = FindRetail(here); if (r == null || string.IsNullOrEmpty(lookFile) || !File.Exists(lookFile)) return false;
+        var a = Path.Combine(r, @"Interface\AddOns\Debrief\Debrief.lua"); if (!File.Exists(a)) return false;
+        return File.GetLastWriteTimeUtc(a) > File.GetLastWriteTimeUtc(lookFile).AddSeconds(5);
+      } catch { return false; }
+    }
+    public static string SvText(string here) { AddonLook(here); return svText ?? ""; } // (for Report: the problems the addon noted (Oct 24))
     public static Dictionary<string, object> AddonCard(string here) {
       var look0 = AddonLook(here); var s = svText ?? ""; var o = new Dictionary<string, object> { { "width", look0[0] }, { "preset", look0[1] } };
       try {
@@ -128,6 +137,7 @@ namespace Debrief {
         var max = new Dictionary<string, object>(); foreach (var k in new[] { "maxSlips", "maxBoss", "maxRaid", "maxDied", "maxMech" }) { var v = num(k); if (v != null) max[k] = int.Parse(v); }
         o["max"] = max;
         var ob = System.Text.RegularExpressions.Regex.Matches(s, @"^\[""onlyBad""\] = (true|false)", RX); o["onlyBad"] = ob.Count > 0 && ob[ob.Count - 1].Groups[1].Value == "true";
+        var cp = System.Text.RegularExpressions.Regex.Matches(s, @"^\[""compact""\] = (true|false)", RX); o["compact"] = cp.Count > 0 && cp[cp.Count - 1].Groups[1].Value == "true"; // (Simple's short card (Oct 24))
         var tc = System.Text.RegularExpressions.Regex.Matches(s, @"^\[""twoCol""\] = (true|false)", RX); o["twoCol"] = !(tc.Count > 0 && tc[tc.Count - 1].Groups[1].Value == "false"); // (two columns when it's long (Oct 24))
         var dt = System.Text.RegularExpressions.Regex.Matches(s, @"^\[""detailed""\] = (true|false)", RX); o["detailed"] = dt.Count > 0 && dt[dt.Count - 1].Groups[1].Value == "true";
         var bd = System.Text.RegularExpressions.Regex.Matches(s, @"^\[""bigDefault""\] = (true|false)", RX); o["bigDefault"] = bd.Count > 0 && bd[bd.Count - 1].Groups[1].Value == "true"; // (/recap opens the Whole night window: the pop-up does too (Oct 24)) // (Detailed, or your own mix made from it: always two columns)
@@ -141,6 +151,7 @@ namespace Debrief {
             foreach (var a in Directory.GetDirectories(acc)) foreach (var realm in Directory.GetDirectories(a)) { if (Path.GetFileName(realm) == "SavedVariables") continue;
               foreach (var ch in Directory.GetDirectories(realm)) { var t = Directory.GetLastWriteTimeUtc(ch); if (t > best) { best = t; meN = Path.GetFileName(ch); } } } } }
         o["me"] = meN;
+        o["reload"] = NeedsReload(here); // (the pop-up's "Type /reload" line (Oct 24))
       } catch { }
       return o;
     }

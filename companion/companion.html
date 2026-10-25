@@ -231,6 +231,7 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
 <footer class="foot">
   <button class="lnk" id="logT" type="button" title="Pick another combat log">Log: looking…</button>
   <button class="lnk archb" id="archB" type="button" title="Moves your old combat logs into the archive folder next to them, so the Logs folder starts clean. Nothing is deleted: they stay in the log list behind the gear.">Archive old logs</button>
+  <button class="lnk" id="repB" type="button" title="Tell us about a problem. Your words, the app and addon versions, and any problems the addon noted are sent. Nothing else.">Report a problem</button>
   <span id="addonT"></span>
   <button class="quit" id="quit" type="button" title="Stops Debrief Companion. Open it again with the Debrief icon on your desktop.">Quit</button>
 </footer>
@@ -276,6 +277,24 @@ function fillLogSel() {
   $('logSel').innerHTML = L.files.map((f, i) => '<option value="' + i + '" title="' + esc(f.name) + '">' + (i === 0 && !f.old ? 'Latest log' : 'Older log') + ' · ' + new Date(f.mtime).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' · ' + (f.size / 1048576).toFixed(0) + ' MB</option>').join('');
   const i = L.files.findIndex((f) => f.name === L.name); if (i >= 0) $('logSel').value = String(i);
 }
+// (Report a problem (Oct 24, release polish): a small box for your words; the app adds the versions and what the addon noted)
+(async () => { try { const x = await j('/problems'); const n = (x.list || []).length; if (n) $('repB').textContent = 'Report a problem (' + n + ' noted)'; } catch (e) { /* (an older helper) */ } })();
+$('repB').addEventListener('click', () => {
+  if (document.getElementById('repBox')) return;
+  const box = document.createElement('div'); box.id = 'repBox';
+  box.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(460px,92vw);background:#171a22;border:1px solid #353b49;border-radius:10px;padding:16px;z-index:50;box-shadow:0 12px 40px rgba(0,0,0,.6);color:#ece8df;font:500 14px Barlow,sans-serif';
+  box.innerHTML = '<b style="font:700 17px \'Barlow Semi Condensed\',Barlow,sans-serif">Report a problem</b><p style="color:#98a0ad;margin:6px 0 10px">What happened? Your words, the app and addon versions, and any problems the addon noted go to the Debrief team. Nothing else.</p>' +
+    '<textarea id="repT" rows="5" style="width:100%;box-sizing:border-box;background:#1e222c;color:#ece8df;border:1px solid #353b49;border-radius:6px;padding:8px;font:500 14px Barlow,sans-serif;resize:vertical"></textarea>' +
+    '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;align-items:center"><span id="repM" style="margin-right:auto;color:#98a0ad;font-size:13px"></span><button type="button" id="repC" class="lnk">Cancel</button><button type="button" id="repS" style="background:#e6b450;color:#1b1406;border:0;border-radius:6px;padding:6px 14px;font:700 13px Barlow,sans-serif;cursor:pointer">Send</button></div>';
+  document.body.appendChild(box); $('repT').focus();
+  $('repC').addEventListener('click', () => box.remove());
+  $('repS').addEventListener('click', async () => {
+    const t = $('repT').value.trim(); if (t.length < 10) { $('repM').textContent = 'Please say a little more.'; return; }
+    $('repS').disabled = true; $('repM').textContent = 'Sending…';
+    try { const r = await j('/report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: t }) }); if (r.error) throw new Error(r.error); $('repM').textContent = 'Sent. Thank you!'; setTimeout(() => box.remove(), 1600); }
+    catch (e) { $('repM').textContent = e.message || 'It could not be sent right now.'; $('repS').disabled = false; }
+  });
+});
 // (the Archive old logs button: the helper moves them into the archive folder; the log being followed stays open)
 $('archB').addEventListener('click', async () => {
   const b = $('archB'); b.disabled = true; b.textContent = 'Archiving…';

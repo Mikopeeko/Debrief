@@ -104,6 +104,8 @@ body.isMini { border-color: rgba(230,180,80,.85); box-shadow: inset 0 0 0 1px rg
 .kbig small { display: block; color: var(--muted); font-size: 13px; font-weight: 600; } .kbig b { font: 700 30px 'Barlow Semi Condensed', Barlow, sans-serif; line-height: 1.05; } .kbig b em { font-style: normal; font-size: 13px; color: var(--muted); margin-left: 4px; }
 .kbig .kbr { margin-left: auto; text-align: right; color: var(--muted); font-size: 12.5px; align-self: flex-start; } .kbig .kbr .up { color: #7ee08f; } .kbig .kbr .dn { color: #ff8f87; }
 .kL, .kR { min-width: 0; }
+.kdd { display: grid; grid-template-columns: 44px 124px 24px minmax(0, 1fr); gap: 0 6px; align-items: center; font-size: 13.5px; color: var(--muted); padding: 3px 0; } .kdd .knm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .kdd > span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } /* (Who died (Oct 24)) */
+.krl { background: rgba(230,180,80,.1); border: 1px solid rgba(230,180,80,.5); border-radius: 6px; padding: 6px 11px; margin: 0 0 10px; color: var(--gold); font-weight: 600; font-size: 13px; } .krl b { color: var(--text); } /* (Debrief was updated: /reload (Oct 24)) */
 /* (the same type as the card in WoW (Oct 24, the user: "THEY ALL LOOK THE SAME"): Barlow Medium for text, SemiBold for bold, Semi Condensed Bold titles; the raid lead box's gold edge) */
 html, body { font-weight: 500; } .body b { font-weight: 600; } .kyou { border-left: 3px solid var(--gold); }
 .kgr { display: flex; gap: 14px; align-items: center; background: var(--raised); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; margin: 0 0 10px; } .kgr b { font: 700 30px 'Barlow Semi Condensed', Barlow, sans-serif; line-height: 1; min-width: 26px; } .kgr small, .kch small { display: block; color: var(--faint); font-weight: 700; font-size: 11px; letter-spacing: .04em; } .kgr span { color: var(--soft); font-size: 13px; }
@@ -261,10 +263,10 @@ function cardView() {
       /* (your big number with your spec's icon, like /recap; against last pull and your best on the right) */
       const dc = P.d != null && P.d !== '' ? (P.d >= 0 ? 'up' : 'dn') : '';
       L += '<div class="kbig">' + (P.icon ? icn(P.icon) : '') + '<div><small>' + (P.role === 'healer' ? 'Your healing' : 'Your damage') + '</small><b>' + esc(P.v) + '<em>' + esc(P.unit) + '</em></b></div><div class="kbr">' + (!on('vs') ? '' : dc ? '<span class="' + dc + '">' + d.replace(/ vs pull.*/, '') + '</span>' + d.replace(/^[^ ]+/, '') : d) + (!on('best') ? '' : P.bt ? '<br><span class="up">Your best tonight</span>' + (P.best ? ' (was ' + esc(P.best) + ', pull ' + esc(P.bp) + ')' : '') : P.best ? '<br>best ' + esc(P.best) + (P.bp ? ' (pull ' + esc(P.bp) + ')' : '') : '') /* (your best tonight (Oct 24)) */ + (P.rank && on('rank') ? '<br>' + esc(P.rank) : '') + '</div></div>' +
-        /* (the small tiles come with Standard and Detailed, as in /recap (Oct 24)) */ '<div class="ktiles">' + (LK.preset === 'simple' ? [] : (P.tiles || [])).map((t) => '<div class="kt' + (t[3] === 'warn' ? ' w' : t[3] === 'bad' ? ' b' : '') + '"><small>' + esc(t[0]) + '</small><b>' + esc(t[1]) + '</b><i>' + esc(t[2] || '') + '</i></div>').join('') + '</div>';
+        /* (the small tiles come with Standard and Detailed, as in /recap (Oct 24)) */ '<div class="ktiles">' + (LK.compact || LK.preset === 'simple' ? [] : (P.tiles || [])).map((t) => '<div class="kt' + (t[3] === 'warn' ? ' w' : t[3] === 'bad' ? ' b' : '') + '"><small>' + esc(t[0]) + '</small><b>' + esc(t[1]) + '</b><i>' + esc(t[2] || '') + '</i></div>').join('') + '</div>';
     }
     // (rotation, like the Rotation tab's checklist: your score, each fix against the top players, a square per moment, Next time)
-    if (on('rotation')) {
+    if (on('rotation') && !LK.compact) { /* (Simple's short card has no rotation, boss or survival sections, as in WoW (Oct 24)) */
       if (P.rot) {
         // (a drop-down, like the card (Oct 24): closed, the check against the top players; open, why, the squares, Next time, the moments, how it's judged)
         // (one ramp or burst window (Oct 24): when, how it went, the numbers, the checks as ticks and crosses, the buttons in it or the 20 seconds before)
@@ -285,9 +287,16 @@ function cardView() {
           (P.rs && (P.rs.good || []).length ? '<p class="kgood">Done right: ' + P.rs.good.map(esc).join(', ') + '.</p>' : ''));
       } else if ((P.slips || []).length) L += sec('rot', 'Rotation', lim('rot', worst(bad(P.slips)), MX.maxSlips || 3, row));
     }
-    if (on('boss') && (P.boss || []).length) Rt += sec('boss', 'Boss mechanics', lim('boss', worst(bad(P.boss)), MX.maxBoss != null ? MX.maxBoss : 4, row));
-    const sv = [].concat(on('surv') ? bad(P.surv) : [], on('cons') ? (P.cons || []) : []); /* (a death with a stone unused is in your death line now (Oct 24)) */
+    if (on('boss') && !LK.compact && (P.boss || []).length) Rt += sec('boss', 'Boss mechanics', lim('boss', worst(bad(P.boss)), MX.maxBoss != null ? MX.maxBoss : 4, row));
+    const sv = LK.compact ? [] : [].concat(on('surv') ? bad(P.surv) : [], on('cons') ? (P.cons || []) : []); /* (a death with a stone unused is in your death line now (Oct 24)) */
     if (sv.length) Rt += sec('surv', 'Survival', lim('surv', worst(sv), 6, row));
+    /* (Who died, as the card in WoW shows it on your Me tab (Oct 24): not on Simple, not on Detailed (it's in the Raid view there), and after a dungeon boss) */
+    const H0d = C.h || {}, deepD = LK.detailed || LK.preset === 'detailed', nD = MX.maxDied != null ? MX.maxDied : 3;
+    if (!LK.compact && H0d.diff !== 'Practice' && (!deepD || DUN) && nD > 0) {
+      const died = R.died || [], shown = died.slice(0, nD), more = died.length - shown.length;
+      Rt += sec('died', 'Who died <span class="ksc">· ' + esc(H0d.deaths != null ? H0d.deaths : died.length) + (+H0d.deaths === 1 ? ' death' : ' deaths') + '</span>',
+        (died.length ? shown.map((d) => '<div class="kdd"><span>' + esc(d[0]) + '</span>' + nmH(d[1]) + icn(d[3]) + '<span>' + esc(d[4] || '') + '</span></div>').join('') + (more > 0 ? '<p class="kno">+' + more + ' more.</p>' : R.more ? '<p class="kno">' + pt(R.more) + '</p>' : '') : '<p class="kno">' + pt(R.more || 'Nobody died.') + '</p>'));
+    }
   } else {
     // (the raid view: your raid lead, the four cards, every mistake folded, then deaths, avoidable damage and survival)
     if (CO && on('coach')) {
@@ -334,7 +343,8 @@ function cardView() {
   const pulls = on('chips') && NP.length > 1 ? '<div class="kpulls">' + NP.map((p) => '<span class="' + (p.kill ? 'k' : '') + (p.cur ? ' on' : '') + (loadingPull === p.sb ? ' wait' : '') + '" data-pull="' + p.sb + '" title="' + esc('Pull ' + p.pull + (p.h ? ': ' + p.h : '')) + '">Pull ' + p.pull + ' · ' + esc(p.txt) + '</span>').join('') + '</div>' : '';
   const who = VIEW === 'me' && me && PL.length > 1 ? '<span class="kwho"><button type="button" data-who="-1" title="The player before">‹</button>' + nmH(me.name) + '<button type="button" data-who="1" title="The next player">›</button></span>' : '';
   const tabs = me ? '<div class="ktabs"><span data-tab="me" class="' + (VIEW === 'me' ? 'on' : '') + '">Me</span>' + (DUN ? '' : '<span data-tab="raid" class="' + (VIEW === 'raid' ? 'on' : '') + '">Raid view</span>') + who + '</div>' : '';
-  return head + pulls + tabs + stopRow() + '<div class="kgrid one"><div class="kL">' + L + Rt + '</div></div>';
+  const reloadLine = LK.reload ? '<div class="krl">Debrief was updated. Type <b>/reload</b> in WoW when you\'re ready.</div>' : ''; /* (goes by itself after the /reload (Oct 24)) */
+  return reloadLine + head + pulls + tabs + stopRow() + '<div class="kgrid one"><div class="kL">' + L + Rt + '</div></div>';
 }
 function render() {
   const app = document.getElementById('app'); if (!D || !D.h) return;

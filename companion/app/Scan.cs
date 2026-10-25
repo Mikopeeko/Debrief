@@ -62,6 +62,11 @@ namespace Debrief {
                 int lim = Math.Min(hn - 12, 64), dbl = -1;
                 for (int k = 0; k < lim; k++) {
                   if (head[k] == 32 && head[k + 1] == 32) { dbl = k; }
+                  // (a key starting or ending: CHALLENGE_MODE_START / _END, for the level of the dungeon bosses inside it (Oct 24))
+                  if (head[k] == 32 && head[k + 1] == 32 && head[k + 2] == 67 && head[k + 3] == 72 && head[k + 4] == 65 && head[k + 11] == 95 && hn > k + 18 && (head[k + 17] == 83 || head[k + 17] == 69)) {
+                    Item(sb, ref first, lineStart, abs + i + 1, Encoding.UTF8.GetString(head, 0, hn).TrimEnd('\r'));
+                    break;
+                  }
                   if (head[k] == 32 && head[k + 1] == 32 && head[k + 2] == 69 && head[k + 3] == 78 && head[k + 4] == 67 && head[k + 11] == 95) {
                     if (dm.open) Close(dm, sb, ref first);
                     dm.enc = head[k + 12] == 83; if (!dm.enc) dm.ended = DateTime.UtcNow; // (ENCOUNTER_START opens a boss pull, ENCOUNTER_END closes it)

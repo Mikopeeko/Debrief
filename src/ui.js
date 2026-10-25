@@ -1770,6 +1770,7 @@ const PATCH_NOTES = [
     { t: 'Debrief in game: a guided setup', d: 'The first time you log in, a short setup helps you pick a style and what your card shows, with a live preview beside it (/debrief setup opens it again). Long cards now split into two columns instead of running off the screen.' },
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
+    'Debrief: reminders when to /reload, a Report a problem button in the app, key levels on dungeon bosses, and the pop-up matches the card on every style',
     'Holy Paladin: a Tyr\'s Deliverance tile at the bottom of Rotation shows what it healed: its own heals, plus the extra its buff gave your Holy Light, Flash of Light and Holy Shock on its targets.',
     'Debrief Companion: updates land in the first break between pulls, no restart needed',
     'Debrief Companion: the pop-up after a pull opens the same window as your /recap, the Whole night window when /db says so, with Card view to switch',
