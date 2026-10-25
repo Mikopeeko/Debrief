@@ -531,6 +531,10 @@ async function runInbox(env) {
           const mine = o.replaceLast ? ((await dc(env, '/channels/' + ch + '/messages?limit=20').catch(() => [])) || []).find((m) => m.author && m.author.id === APP_ID) : null;
           if (mine) await dc(env, '/channels/' + ch + '/messages/' + mine.id, { method: 'PATCH', body });
           else { const m = await dc(env, '/channels/' + ch + '/messages', { method: 'POST', body }); if (all) await env.DEBRIEF_KV.put('everyone-at', String(Date.now())); if (c.type === 5 && m && m.id) await dc(env, '/channels/' + ch + '/messages/' + m.id + '/crosspost', { method: 'POST' }).catch(() => {}); }
+        } else if (o.op === 'post-pics' && o.channel === 'start-here' && Array.isArray(o.images) && o.images.length) {
+          /* (a message with pictures in #start-here: the pictures are KV keys holding base64; the words are optional) */
+          const c = (await dc(env, '/guilds/' + GUILD + '/channels')).find((x) => x.name === 'start-here'); if (!c) continue;
+          await dcFiles(env, '/channels/' + c.id + '/messages', 'POST', { content: text, allowed_mentions: { parse: [] }, flags: 4 }, o.images.slice(0, 6));
         } else if (o.op === 'faq-post' && text) {
           /* (a new pinned thread in #questions with the FAQ in it, under the "Getting started" tag) */
           const fc = await dc(env, '/channels/' + FORUM_QS), tag = tagOf(fc.available_tags, 'Getting started');
