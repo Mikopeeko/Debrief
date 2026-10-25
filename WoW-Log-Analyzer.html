@@ -6556,6 +6556,15 @@ section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-z[style*="--p"] svg { dis
 #view.ds-two > .brf-keep { display: none; } #view.ds-two.ds-raid > .brf-keep { display: grid; }
 .ds-raidb { display: block; width: 100%; margin: 4px 0 18px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--muted); font: 500 14px var(--body); text-align: left; cursor: pointer; }
 .ds-raidb b { color: var(--text); font-weight: 700; } .ds-raidb span { color: var(--gold); margin-left: 6px; } .ds-raidb:hover { border-color: var(--line2); color: var(--text); }
+/* ===== Design studio round 6 (Oct 25): inside a checklist card, a flat tile shows its result sentence and has no drop-down (how it is judged is on
+   hover); a deep tile keeps its drop-down and shows a small arrow. Owner: the Design studio chat. ===== */
+.pfv details.rck-r[data-ds-kind="flat"] > summary { cursor: default; }
+.pfv details.rck-r[data-ds-kind="flat"] > summary:hover { background: none; }
+.pfv details.rck-r[data-ds-kind="flat"] > :not(summary) { display: none; }
+.pfv details.rck-r[data-ds-kind="flat"] > summary .ds-note { grid-column: 1 / -1; margin-top: 3px; font-size: 12.5px; line-height: 1.3; color: var(--muted); }
+.pfv details.rck-r[data-ds-kind="deep"] > summary { position: relative; padding-right: 22px !important; }
+.pfv details.rck-r[data-ds-kind="deep"] > summary::after { content: '\25B8'; position: absolute; right: 9px; bottom: 8px; font-size: 12px; color: var(--muted); }
+.pfv details.rck-r[data-ds-kind="deep"][open] > summary::after { content: '\25BE'; }
 /* ===== Design studio round 5 (Oct 25): Rotation reorganised into three places. Top: you and your fixes in one box (the hero left, What to fix
    right). Then the checklist on the left and your numbers (gear, the healing split) on the right. The glance and the credit at the bottom.
    Phones keep one column in today's order. Owner: the Design studio chat. ===== */
@@ -6587,13 +6596,21 @@ section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-z[style*="--p"] svg { dis
   /* your numbers: the healing split first, then gear as one quiet list */
   .pfv .ds-rcols section.rck-gx .rgx-pn { display: flex !important; flex-direction: column; gap: 8px !important; }
   .pfv .ds-rcols section.rck-gx .rgx-pn > .rgx-src { order: -1; }
-  .pfv .ds-rcols section.rck-gx .rgx-pn > .rgx-gp { --gc: #9aa4b2 !important; background: none !important; border: 1px solid var(--line) !important; border-radius: 10px; padding: 6px 12px 2px !important; }
+  .pfv .ds-rcols section.rck-gx .rgx-pn > .rgx-gp { padding: 8px 12px 4px !important; border-radius: 10px; }
   /* gear rows on two short lines (name and its note on the left, the number on the right, a hairline bar under) instead of four */
   .pfv .ds-rcols .rgx-c { padding: 4px 0 !important; grid-template-columns: minmax(0, 1fr) auto !important; grid-template-areas: 'h v' 's v' 'b b' !important; row-gap: 0 !important; column-gap: 10px; align-items: center; }
   .pfv .ds-rcols .rgx-c > .rgx-h { grid-area: h; } .pfv .ds-rcols .rgx-c > .rgx-v { grid-area: v; align-self: center; } .pfv .ds-rcols .rgx-c > .rgx-s { grid-area: s; font-size: 12px; } .pfv .ds-rcols .rgx-c > .rgx-b1 { grid-area: b; margin: 3px 0 1px 26px !important; }
   .pfv .ds-rcols .rgx-ex > .rck-t > summary { padding: 4px 0 !important; row-gap: 0 !important; }
 }
 @media (max-width: 900px) { .pfv .ds-rtop, .pfv .ds-rcols { display: contents; } }
+/* Gear and extras in colour (your ask, Oct 25: "I kinda liked these sections being colored"): each group keeps its own colour (--gc, set by
+   Rotation) and wears it on a left stripe, its label and total, its bars, and a soft glow in the top corner; the numbers stay white. */
+.pfv section.rck-gx .rgx-pn > .rgx-gp { border: 1px solid color-mix(in srgb, var(--gc) 30%, var(--line)) !important; border-left: 3px solid var(--gc) !important; background: radial-gradient(ellipse 55% 90% at 100% 0%, color-mix(in srgb, var(--gc) 16%, transparent), transparent 70%), linear-gradient(180deg, color-mix(in srgb, var(--gc) 7%, transparent), color-mix(in srgb, var(--gc) 2%, transparent)) !important; }
+.pfv section.rck-gx .rgx-gp > .rgx-lab, .pfv section.rck-gx .rgx-gp > .rgx-lab .rgx-lx { color: var(--gc) !important; }
+.pfv section.rck-gx .rgx-gp .rgx-gd { background: var(--gc); box-shadow: 0 0 8px color-mix(in srgb, var(--gc) 70%, transparent); }
+.pfv section.rck-gx .rgx-gp .rgx-b1 i, .pfv section.rck-gx .rgx-gp .rck-bar i { background: var(--gc) !important; }
+.pfv section.rck-gx .rgx-gp .rgx-b1, .pfv section.rck-gx .rgx-gp .rck-bar { background: color-mix(in srgb, var(--gc) 14%, transparent) !important; }
+.pfv section.rck-gx .rgx-gp .rgx-c, .pfv section.rck-gx .rgx-gp .rgx-ex > .rck-t { border-bottom-color: color-mix(in srgb, var(--gc) 18%, var(--line)) !important; }
 /* inside an open checklist card: one signal a tile (the number's colour is the flag; a bar only where there is a share), the tiles
    that need you first, titles without underlines, and the charts row as a quiet link line */
 .pfv .rck-cat .rck-rs > .rck-r.bad { order: 0; } .pfv .rck-cat .rck-rs > .rck-r.warn { order: 1; } .pfv .rck-cat .rck-rs > .rck-r.ok { order: 2; } .pfv .rck-cat .rck-rs > .rck-r.na { order: 3; }
@@ -6603,15 +6620,6 @@ section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-z[style*="--p"] svg { dis
 .pfv .rck-cat .rck-rs > .rck-r.rck-x { grid-column: 1 / -1; border: 0 !important; background: none !important; }
 .pfv .rck-cat .rck-rs > .rck-r.rck-x > summary { padding: 6px 4px !important; }
 .pfv .rck-cat .rck-rs > .rck-r.rck-x > summary .rck-n { color: var(--gold); font-weight: 600; }
-/* ===== Design studio round 6 (Oct 25): inside a checklist card, a flat tile shows its result sentence and has no drop-down (how it is judged is on
-   hover); a deep tile keeps its drop-down and shows a small arrow. Owner: the Design studio chat. ===== */
-.pfv details.rck-r[data-ds-kind="flat"] > summary { cursor: default; }
-.pfv details.rck-r[data-ds-kind="flat"] > summary:hover { background: none; }
-.pfv details.rck-r[data-ds-kind="flat"] > :not(summary) { display: none; }
-.pfv details.rck-r[data-ds-kind="flat"] > summary .ds-note { grid-column: 1 / -1; margin-top: 3px; font-size: 12.5px; line-height: 1.3; color: var(--muted); }
-.pfv details.rck-r[data-ds-kind="deep"] > summary { position: relative; padding-right: 22px !important; }
-.pfv details.rck-r[data-ds-kind="deep"] > summary::after { content: '\25B8'; position: absolute; right: 9px; bottom: 8px; font-size: 12px; color: var(--muted); }
-.pfv details.rck-r[data-ds-kind="deep"][open] > summary::after { content: '\25BE'; }
 </style>
 
 
@@ -16314,6 +16322,7 @@ const PATCH_NOTES = [
     { t: 'One way to show a number', d: 'The Report card and Rotation now speak the same language as Debriefing: a bar with one number at its end, a grade as one letter at the start of its bar. The ranked roster is one bar per raider, a raider\'s checklist shows the rows that need them and folds the rest, and Rotation\'s header is one row with the talent trees folded under it.' },
     { t: 'Your tier set, in numbers', d: 'Rotation shows how much your 2-piece and 4-piece added, with a Where it came from breakdown behind every number. On every spec.' },
     { t: 'Your trinkets, both of them', d: 'Gear and extras on Rotation now shows both of your trinkets, with what each one did (damage, healing or stats), or that one was never pressed.' },], n: [
+    'Rotation: Gear and extras is back in colour. Each group wears its own colour on a stripe, its label and total, its bars and a soft glow; the numbers stay white.',
     'Rotation: inside a checklist card, a tile only opens when there is more inside (a list, a chart, the steps); the others show their one-line result right in the tile, with how it is judged on hover. The ones that open show a small arrow.',
     'Rotation: inside an open checklist card, the tiles that need you come first; each tile is its number (coloured by how it went) with a bar where there is a share, no dots or ticks; titles without underlines; the charts row is a plain link.',
     'Rotation: gear rows are two short lines (the item and its note, the number on the right) and the groups are one quiet grey, since those numbers are not graded.',
@@ -50030,15 +50039,6 @@ function dsLayout() { const v = document.getElementById('view'); if (!v) return;
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.ds-raidb'); if (!b) return; const v = b.closest('#view'); if (!v) return; const on = v.classList.toggle('ds-raid'); const s = b.querySelector('span'); if (s) s.textContent = on ? '\u25BE' : '\u25B8'; });
 (function () { const f0 = dsBars; dsBars = function (root) { f0(root); try { dsLayout(); } catch (e) {} }; })();
 
-// ===== Design studio round 5 (Oct 25): Rotation reorganised. Wraps the Rotation page's own sections: the hero + What to fix into .ds-rtop, the
-// checklist + Gear and extras into .ds-rcols. Runs after dsBars on every redraw. Owner: the Design studio chat. =====
-function dsRot() { const p = document.querySelector('#view .pf-inl.spc-v'); if (!p) return;
-  const hero = p.querySelector(':scope > .spc-hero'), fix = p.querySelector(':scope > .rck-fixtop'), ck = p.querySelector(':scope > section.rck'), gx = p.querySelector(':scope > section.rck-gx');
-  if (hero && !p.querySelector(':scope > .ds-rtop')) { const t = document.createElement('div'); t.className = 'ds-rtop'; hero.before(t); t.appendChild(hero); if (fix) t.appendChild(fix); }
-  if (ck && !p.querySelector(':scope > .ds-rcols')) { const c = document.createElement('div'); c.className = 'ds-rcols'; ck.before(c); c.appendChild(ck); if (gx) c.appendChild(gx); }
-  p.classList.add('ds-rot'); }
-(function () { const f1 = dsBars; dsBars = function (root) { f1(root); try { dsRot(); } catch (e) {} }; })();
-
 // ===== Design studio round 6 (Oct 25): Rotation tiles: a drop-down only where there is something to drop down to. Owner: the Design studio chat. =====
 function dsRotTiles() { const p = document.querySelector('#view .pf-inl.spc-v'); if (!p) return;
   const he = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -50053,6 +50053,15 @@ function dsRotTiles() { const p = document.querySelector('#view .pf-inl.spc-v');
     if (t.open) t.open = false; }); }
 document.addEventListener('click', (e) => { const sm = e.target && e.target.closest && e.target.closest('details.rck-r[data-ds-kind="flat"] > summary'); if (sm) e.preventDefault(); }, true);
 (function () { const f2 = dsBars; dsBars = function (root) { f2(root); try { dsRotTiles(); } catch (e) {} }; })();
+
+// ===== Design studio round 5 (Oct 25): Rotation reorganised. Wraps the Rotation page's own sections: the hero + What to fix into .ds-rtop, the
+// checklist + Gear and extras into .ds-rcols. Runs after dsBars on every redraw. Owner: the Design studio chat. =====
+function dsRot() { const p = document.querySelector('#view .pf-inl.spc-v'); if (!p) return;
+  const hero = p.querySelector(':scope > .spc-hero'), fix = p.querySelector(':scope > .rck-fixtop'), ck = p.querySelector(':scope > section.rck'), gx = p.querySelector(':scope > section.rck-gx');
+  if (hero && !p.querySelector(':scope > .ds-rtop')) { const t = document.createElement('div'); t.className = 'ds-rtop'; hero.before(t); t.appendChild(hero); if (fix) t.appendChild(fix); }
+  if (ck && !p.querySelector(':scope > .ds-rcols')) { const c = document.createElement('div'); c.className = 'ds-rcols'; ck.before(c); c.appendChild(ck); if (gx) c.appendChild(gx); }
+  p.classList.add('ds-rot'); }
+(function () { const f1 = dsBars; dsBars = function (root) { f1(root); try { dsRot(); } catch (e) {} }; })();
 
 </script>
 </body>

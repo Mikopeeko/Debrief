@@ -1777,6 +1777,7 @@ const PATCH_NOTES = [
     { t: 'One way to show a number', d: 'The Report card and Rotation now speak the same language as Debriefing: a bar with one number at its end, a grade as one letter at the start of its bar. The ranked roster is one bar per raider, a raider\'s checklist shows the rows that need them and folds the rest, and Rotation\'s header is one row with the talent trees folded under it.' },
     { t: 'Your tier set, in numbers', d: 'Rotation shows how much your 2-piece and 4-piece added, with a Where it came from breakdown behind every number. On every spec.' },
     { t: 'Your trinkets, both of them', d: 'Gear and extras on Rotation now shows both of your trinkets, with what each one did (damage, healing or stats), or that one was never pressed.' },], n: [
+    'Rotation: Gear and extras is back in colour. Each group wears its own colour on a stripe, its label and total, its bars and a soft glow; the numbers stay white.',
     'Rotation: inside a checklist card, a tile only opens when there is more inside (a list, a chart, the steps); the others show their one-line result right in the tile, with how it is judged on hover. The ones that open show a small arrow.',
     'Rotation: inside an open checklist card, the tiles that need you come first; each tile is its number (coloured by how it went) with a bar where there is a share, no dots or ticks; titles without underlines; the charts row is a plain link.',
     'Rotation: gear rows are two short lines (the item and its note, the number on the right) and the groups are one quiet grey, since those numbers are not graded.',
@@ -30094,15 +30095,6 @@ function dsLayout() { const v = document.getElementById('view'); if (!v) return;
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.ds-raidb'); if (!b) return; const v = b.closest('#view'); if (!v) return; const on = v.classList.toggle('ds-raid'); const s = b.querySelector('span'); if (s) s.textContent = on ? '\u25BE' : '\u25B8'; });
 (function () { const f0 = dsBars; dsBars = function (root) { f0(root); try { dsLayout(); } catch (e) {} }; })();
 
-// ===== Design studio round 5 (Oct 25): Rotation reorganised. Wraps the Rotation page's own sections: the hero + What to fix into .ds-rtop, the
-// checklist + Gear and extras into .ds-rcols. Runs after dsBars on every redraw. Owner: the Design studio chat. =====
-function dsRot() { const p = document.querySelector('#view .pf-inl.spc-v'); if (!p) return;
-  const hero = p.querySelector(':scope > .spc-hero'), fix = p.querySelector(':scope > .rck-fixtop'), ck = p.querySelector(':scope > section.rck'), gx = p.querySelector(':scope > section.rck-gx');
-  if (hero && !p.querySelector(':scope > .ds-rtop')) { const t = document.createElement('div'); t.className = 'ds-rtop'; hero.before(t); t.appendChild(hero); if (fix) t.appendChild(fix); }
-  if (ck && !p.querySelector(':scope > .ds-rcols')) { const c = document.createElement('div'); c.className = 'ds-rcols'; ck.before(c); c.appendChild(ck); if (gx) c.appendChild(gx); }
-  p.classList.add('ds-rot'); }
-(function () { const f1 = dsBars; dsBars = function (root) { f1(root); try { dsRot(); } catch (e) {} }; })();
-
 // ===== Design studio round 6 (Oct 25): Rotation tiles: a drop-down only where there is something to drop down to. Owner: the Design studio chat. =====
 function dsRotTiles() { const p = document.querySelector('#view .pf-inl.spc-v'); if (!p) return;
   const he = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -30117,3 +30109,12 @@ function dsRotTiles() { const p = document.querySelector('#view .pf-inl.spc-v');
     if (t.open) t.open = false; }); }
 document.addEventListener('click', (e) => { const sm = e.target && e.target.closest && e.target.closest('details.rck-r[data-ds-kind="flat"] > summary'); if (sm) e.preventDefault(); }, true);
 (function () { const f2 = dsBars; dsBars = function (root) { f2(root); try { dsRotTiles(); } catch (e) {} }; })();
+
+// ===== Design studio round 5 (Oct 25): Rotation reorganised. Wraps the Rotation page's own sections: the hero + What to fix into .ds-rtop, the
+// checklist + Gear and extras into .ds-rcols. Runs after dsBars on every redraw. Owner: the Design studio chat. =====
+function dsRot() { const p = document.querySelector('#view .pf-inl.spc-v'); if (!p) return;
+  const hero = p.querySelector(':scope > .spc-hero'), fix = p.querySelector(':scope > .rck-fixtop'), ck = p.querySelector(':scope > section.rck'), gx = p.querySelector(':scope > section.rck-gx');
+  if (hero && !p.querySelector(':scope > .ds-rtop')) { const t = document.createElement('div'); t.className = 'ds-rtop'; hero.before(t); t.appendChild(hero); if (fix) t.appendChild(fix); }
+  if (ck && !p.querySelector(':scope > .ds-rcols')) { const c = document.createElement('div'); c.className = 'ds-rcols'; ck.before(c); c.appendChild(ck); if (gx) c.appendChild(gx); }
+  p.classList.add('ds-rot'); }
+(function () { const f1 = dsBars; dsBars = function (root) { f1(root); try { dsRot(); } catch (e) {} }; })();
