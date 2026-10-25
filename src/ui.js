@@ -1822,6 +1822,7 @@ const PATCH_NOTES = [
     'Rotation: inside each ring, the rows follow your spec guide\'s order of importance, the same on every pull.',
     'Rotation: What to fix says each thing once, and on a phone your talents fold away so it starts right under your score.',
     'Rotation: every spec checks the same things before the pull: a weapon oil where the guides list one, and Power Word: Fortitude for both priests.',], f: [
+    'Every tab no longer shows its old layout for a moment while a pull loads (Debriefing could sit on it for seconds): the new layouts now land in the same instant the page draws.',
     'Rotation: Fire Mage\'s tier set card shows real numbers. It read NaN, and it counted every Pyroblast cast while Pyroclasm waited instead of the ones that used it.',
     'Rotation: stacking buffs like Maelstrom Weapon no longer lose count of their stacks four or five minutes into a long pull.',
     'Rotation on All pulls: the raider picker no longer shows a name the page isn\'t showing.',
@@ -30236,3 +30237,11 @@ function dsFrontDemo() { const win = document.querySelector('#main .home.fp .fpx
   let onScreen = true; if (window.IntersectionObserver) { new IntersectionObserver((es) => { onScreen = es.some((e) => e.isIntersecting); }).observe(host); }
   setInterval(() => { if (!document.hidden && onScreen && document.body.contains(host)) play(); }, 10500); }
 (function () { const f9 = dsBars; dsBars = function (root) { f9(root); try { dsFrontDemo(); } catch (e) {} }; })();
+
+// ===== Design studio round 16 (Oct 25): the passes run before paint. A watcher that runs every studio pass in the same tick as a render (a
+// MutationObserver fires before the browser paints), so a page never shows its un-styled layout first. Owner: the Design studio chat. =====
+(function () { let busy = false, mo = null;
+  const run = (recs) => { if (busy) return; if (!recs.some((r) => r.addedNodes && r.addedNodes.length)) return; busy = true;
+    try { dsBars(); } catch (e) {} finally { if (mo) mo.takeRecords(); busy = false; } };
+  const start = () => { if (!document.body) return false; mo = new MutationObserver(run); mo.observe(document.body, { childList: true, subtree: true }); return true; };
+  if (!start()) document.addEventListener('DOMContentLoaded', start, { once: true }); })();
