@@ -1768,6 +1768,9 @@ const PATCH_NOTES = [
   { d: '2026-10-25', h: [
     { t: 'Your tier set, in numbers', d: 'Rotation shows how much your 2-piece and 4-piece added, with a Where it came from breakdown behind every number. On every spec.' },
     { t: 'Your trinkets, both of them', d: 'Gear and extras on Rotation now shows both of your trinkets, with what each one did (damage, healing or stats), or that one was never pressed.' },], n: [
+    'Rotation: each ring opens to small tiles: a ring for a share, dots for mistakes, a check for the rest. Only one opens at a time, and each opens to just what helps.',
+    'Rotation: Prep now checks your combat potions on every spec.',
+    'Rotation: it is only about your own play now. Boss windows and boss talent swaps live on Debriefing and Guides.',
     'Rotation: each ring holds what belongs in it: procs and spell choices under Casting, the opener under Casting instead of Prep, and Demonology gets Prep and Stats rings like everyone else.',
     'Rotation: each burst-window card shows what you pressed on a time line, like the opener, with your key buffs as bars under it.',
     'Rotation: inside each ring, the rows follow your spec guide\'s order of importance, the same on every pull.',
@@ -5823,6 +5826,12 @@ function ndzTalBarH(ps) { const l = ps.filter((p) => NDZ_TALC[+p.sid]); if (!l.l
   const sum = l.map((p) => { const t = ndzTalOf(p.n, p.sid); return esc(p.n) + ': ' + esc(t ? t.pick : '?'); }).join(' · ');
   return '<details class="panel bj-talm"' + (S.bjTalOpen ? ' open' : '') + '><summary><b>Healer talents</b><span class="sub">' + sum + '</span><span class="bj-talm-ch" aria-hidden="true">▾</span></summary><div class="bj-talmb">' + ndzTalH(ps) + '</div></details>'; }
 document.addEventListener('toggle', (e) => { if (e.target && e.target.classList && e.target.classList.contains('bj-talm')) S.bjTalOpen = e.target.open; }, true);
+// (Rotation's checklist: one tile and one ring open at a time, and the one you opened stays in view (Oct 25, your note: "only one drop down open at a
+// time, its letting me open multiple and you get lost on the page"); a tile with nothing more to say doesn't open)
+document.addEventListener('toggle', (e) => { const d = e.target; if (!d || !d.open || !d.matches) return; const sel = d.matches('details.rck-r') ? 'details.rck-r[open]' : d.matches('details.rck-cat') ? 'details.rck-cat[open]' : null; if (!sel) return; let moved = false;
+  for (const x of document.querySelectorAll(sel)) if (x !== d && !x.contains(d) && !d.contains(x)) { x.open = false; moved = true; }
+  if (moved) requestAnimationFrame(() => { const r = d.getBoundingClientRect(); if (r.top < 70 || r.top > innerHeight - 120) window.scrollBy({ top: r.top - 90, behavior: 'smooth' }); }); }, true);
+document.addEventListener('click', (e) => { const sm = e.target && e.target.closest && e.target.closest('details.rck-nx > summary'); if (sm) e.preventDefault(); }, true);
 
 document.addEventListener('toggle', (e) => { if (e.target && e.target.classList && e.target.classList.contains('bj-kickd')) S.bjKickOpen = e.target.open; }, true); /* (Kicks stays open across redraws, Oct 23) */
 // ---- Share as image (Oct 20, your OK): the note as one picture for Discord, where text can't be class-colored. The boss art
@@ -17978,7 +17987,7 @@ const hpalApl = (ch) => ({ why: 'From WoWAnalyzer\'s Holy Paladin priority list.
 const HPAL_D = {
   pre: [{ k: 'bol', n: 'Beacon of Light', others: true, not: 'Beacon of Virtue', label: 'Beacon of Light on a player', okTxt: 'Your Beacon of Light was on another player when the boss was pulled.', noTxt: 'Your Beacon of Light was not on anyone when the boss was pulled.', why: 'Both guides: Beacon of Light and Beacon of Faith are a big part of your healing, so always have them out. Put them on squishy ranged players (Mages, Hunters, Boomkins), or a tank who needs it.', tip: 'Put Beacon of Light on a ranged player before the pull.' },
     { k: 'bof', n: 'Beacon of Faith', others: true, tal: 'Beacon of Faith', label: 'Beacon of Faith on a player', okTxt: 'Your Beacon of Faith was on another player when the boss was pulled.', noTxt: 'Your Beacon of Faith was not on anyone when the boss was pulled.', why: 'Both guides: always have Beacon of Faith out too, on a squishy ranged player or a tank who needs it.', tip: 'Put Beacon of Faith on a second ranged player before the pull.' },
-    { k: 'bself', n: 'Beacon of Light', names: ['Beacon of Light', 'Beacon of Faith', 'Beacon of Virtue'], notSelf: true, label: 'No Beacon on yourself', okTxt: 'None of your Beacons were on yourself.', noTxt: 'One of your Beacons was on yourself.', why: 'Wowhead: never put a Beacon on yourself. Light of the Martyr stops it from healing you while any of its absorb is left.', tip: 'Put your Beacons on other players, never on yourself.' },
+    { k: 'bself', n: 'Beacon of Light', names: ['Beacon of Light', 'Beacon of Faith', 'Beacon of Virtue'], notSelf: true, label: 'Beacons on others', okTxt: 'None of your Beacons were on yourself.', noTxt: 'One of your Beacons was on yourself.', why: 'Wowhead: never put a Beacon on yourself. Light of the Martyr stops it from healing you while any of its absorb is left.', tip: 'Put your Beacons on other players, never on yourself.' },
     { k: 'dev', n: 'Devotion Aura', label: 'Devotion Aura on', why: 'Both guides: Devotion Aura is your raid buff and the only aura worth using. Keep it on all the time.', tip: 'Turn Devotion Aura on before the pull.' },
     { k: 'wep', n: 'Weapon oil', ench: true, label: 'Weapon oil or rite on', okTxt: 'Your weapon had an oil (or your Lightsmith rite) on when the boss was pulled.', noTxt: 'Your weapon had no oil or rite on when the boss was pulled.', why: 'Wowhead: as Lightsmith, put Rite of Sanctification or Rite of Adjuration on your weapon. Otherwise, use a weapon oil.', tip: 'Put a weapon oil (or your Lightsmith rite) on before the pull.' }],
   stats: { low: 'versatility', close: ['haste', 'crit'], drOk: 'That is fine: both guides put Mastery first and set no stop point for any stat (Icy Veins: there is no Haste cap, though the other stats gain value once you have a lot of one).', order: [['mastery'], ['haste', 'crit'], ['versatility']], orderH: { 'Herald of the Sun': [['mastery'], ['haste', 'crit'], ['versatility']], Lightsmith: [['mastery'], ['crit', 'haste'], ['versatility']] },
@@ -18201,9 +18210,9 @@ function hpalChecks(reps, name, one) {
   let bwStrip = '', bwD = null; const groups = [], grp = (t) => { const g = { t, l: [] }; groups.push(g); return g; }, add = (g, st, ic, label, v, sub, k, how) => g.l.push({ st, ic, label, v, sub, k, how, mo: M(k) });
   const gA = grp('Your priority'), aplSl = aplAdd(rows, HPAL_A, add, gA, 'Holy Shock');
   const g1 = grp('On cooldown');
-  if (hs) add(g1, hs.f == null ? 'na' : hs.f >= 0.85 ? 'ok' : hs.f >= 0.75 ? 'warn' : 'bad', 'Holy Shock', 'Holy Shock', pct(hs.f), 'You cast it ' + hs.n + ' times out of a possible ' + hs.poss + '.' + (hs.cap >= 1 ? ' It sat at full charges for ' + Math.round(hs.cap) + ' seconds.' : ''), 'hs',
+  if (hs) add(g1, hs.f == null ? 'na' : hs.f >= 0.85 ? 'ok' : hs.f >= 0.75 ? 'warn' : 'bad', 'Holy Shock', 'Holy Shock on cooldown', pct(hs.f), 'You cast it ' + hs.n + ' times out of a possible ' + hs.poss + '.' + (hs.cap >= 1 ? ' It sat at full charges for ' + Math.round(hs.cap) + ' seconds.' : ''), 'hs',
     'Holy Shock has ' + (hs.ch > 1 ? hs.ch + ' charges' : 'one charge') + ' that refill every 6 seconds. Glorious Dawn and Imbued Infusions give some back, so presses they made possible count too. 85% or more is good. The times listed are when it sat at full charges for 2 seconds or more, when its recharge went to waste.');
-  if (bv) add(g1, bv.f == null ? 'na' : bv.f >= 0.75 ? 'ok' : bv.f >= 0.6 ? 'warn' : 'bad', 'Beacon of Virtue', 'Beacon of Virtue', pct(bv.f), 'You cast it ' + bv.n + ' times out of a possible ' + bv.poss + '.' + (bv.cap >= 1 ? ' It sat ready for ' + Math.round(bv.cap) + ' seconds.' : ''), 'bv',
+  if (bv) add(g1, bv.f == null ? 'na' : bv.f >= 0.75 ? 'ok' : bv.f >= 0.6 ? 'warn' : 'bad', 'Beacon of Virtue', 'Beacon of Virtue on cooldown', pct(bv.f), 'You cast it ' + bv.n + ' times out of a possible ' + bv.poss + '.' + (bv.cap >= 1 ? ' It sat ready for ' + Math.round(bv.cap) + ' seconds.' : ''), 'bv',
     'Use Beacon of Virtue close to on cooldown (every 15 seconds), as the damage goes out. It costs a lot of mana, so the guides keep it for when healing is needed. The top players use about 85% of theirs. 75% or more is good. The times listed are when it sat ready for 3 seconds or more.');
   const g2 = grp('Procs'), PHOW = {
     'Infusion of Light': 'Each proc holds ' + (ioPer > 1 ? '2 uses (Inflorescence of the Sunwell)' : 'one use') + '. Spend them on Flash of Light, or on Judgment when nobody needs healing. A use is wasted when it runs out, or when a new proc arrives while you still hold one' + (tier4 ? '. With your tier set, every Holy Light grants a proc, so a Holy Light cast while you still hold uses wastes them' : '') + '. The times listed are each waste.',
@@ -19157,7 +19166,7 @@ function bossRot(o) {
   const gOf = (r, p) => { for (const [g, y] of r.players) if (y === p) return g; return null; };
   const add = (g, c) => { g.l.push(c); out.keys.push(String(c.k).replace(/[^a-z0-9]+/gi, '-').toLowerCase()); };
   // (1) the boss's damage windows: your big cooldown and potion in each, and how hard you hit in it against the rest of the pull
-  let A = BOSS_AMP[boss] || LUST_AMP(boss);
+  let A = LUST_AMP(boss); /* (Rotation is your own play only: Bloodlust, never the boss's own windows (Oct 25)) */
   if (A && !isHeal) { const W = [];
     // (your note, Oct 19: "add burst phases appropriate for the boss again": when the boss's own window never came up in these pulls (wipes before
     // it, like Zul'jan's Ghastly Regeneration), your Bloodlust windows stand in, so the Cooldowns chapter always has its burst phase)
@@ -19167,7 +19176,7 @@ function bossRot(o) {
         const dIn = dmgIn(p, w.a, e), dAll = dmgIn(p, 0, t1), rest = Math.max(1, t1 - len); W.push({ pull: r.item.pull, a: w.a, e, cd, pot, dps: dIn / len, out: Math.max(0, dAll - dIn) / rest }); } } }
     if (W.length) { const g = { t: 'Big damage moments', l: [] }; out.groups.push(g); const withCd = W.filter((w) => w.cd != null), nCd = withCd.filter((w) => w.cd).length, nPot = W.filter((w) => w.pot).length, wsN = o.WSAY || 'your big cooldown';
       const f = withCd.length ? nCd / withCd.length : null, st = A.graded === false || isTank || f == null ? 'na' : f >= 0.66 ? 'ok' : f >= 0.5 ? 'warn' : 'bad', x = W.reduce((v, w) => v + w.dps, 0) / Math.max(1, W.reduce((v, w) => v + w.out, 0));
-      add(g, { st, ic: o.WIC || 'Bloodlust', label: (A.graded === false ? 'Cooldowns in ' : 'Your cooldown in ') + A.what, v: f == null ? W.length + '<span> ' + (W.length === 1 ? 'window' : 'windows') + '</span>' : nCd + '<span>/' + withCd.length + '</span>', k: 'boss:amp',
+      add(g, { st, ic: o.WIC || 'Bloodlust', label: (A.graded === false ? 'Cooldowns in ' : o.WIC ? o.WIC + ' in ' : 'Your cooldown in ') + A.what, v: f == null ? W.length + '<span> ' + (W.length === 1 ? 'window' : 'windows') + '</span>' : nCd + '<span>/' + withCd.length + '</span>', k: 'boss:amp',
         sub: (f == null ? '' : 'Your ' + wsN + ' was up in ' + nCd + ' of ' + withCd.length + ' ' + (A.win || A.what) + (withCd.length === 1 ? ' window' : ' windows') + '. ') + 'You drank a combat potion in ' + nPot + ' of ' + W.length + '. In ' + (W.length === 1 ? 'that window' : 'those windows') + ' you did ' + (x >= 1 ? x.toFixed(1) + ' times as much damage a second as' : Math.round(100 * x) + '% of your damage a second from') + ' the rest of the pull.',
         how: (A.how || 'The boss takes ' + A.amp + ' in these windows, so damage there is worth more.') + ' Your big cooldown counts when it was up for any part of the window. A potion counts when you drank it up to 30 seconds before or during it.' + (isTank ? ' Tanks aren\'t graded on this.' : ''),
         mo: W.map((w) => ({ pull: w.pull, a: w.a, b: w.e })), tip: st === 'warn' || st === 'bad' ? 'Line ' + wsN + ' up with ' + A.what + ': if it would come back just after, hold it a few seconds.' : '' });
@@ -19177,7 +19186,7 @@ function bossRot(o) {
         return '<div class="spc-w ' + s0 + '" role="button" tabindex="0" data-mt="' + w.a.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(w.a) + '–' + T(w.e) + '</b><span class="sub">' + Math.round(w.e - w.a) + ' seconds</span></div><div class="spc-wv">' + C(w.dps) + '<span> damage a second</span></div><div class="spc-wo">Rest of the pull: ' + C(w.out) + '</div><div class="spc-wc spc-chk">' +
           (w.cd == null ? '' : '<span class="' + (w.cd ? 'ok' : 'no') + '">' + (w.cd ? '✓ ' : '✕ ') + esc(wsN.charAt(0).toUpperCase() + wsN.slice(1)) + '</span>') + '<span class="' + (w.pot ? 'ok' : 'sub') + '">' + (w.pot ? '✓ Potion' : 'No potion') + '</span></div></div>'; }).join('') + '</div>' : ''); } }
   // (2) the boss's shield: big cooldowns pressed while it took almost no damage
-  const SHd = BOSS_SHIELD[boss], WN = (o.WNAMES || []).map(lc);
+  const SHd = null, WN = (o.WNAMES || []).map(lc);
   if (SHd && !isHeal && WN.length) { const bad = [];
     for (const x of per) { const { r, p, t1 } = x; for (const w of (r.bossAuras || []).filter((y) => y.n === SHd.aura)) { const e = w.e == null ? t1 : w.e; for (const n of WN) for (const t of p.byName.get(n) || []) if (t > w.a + 1 && t < e - 2) bad.push({ pull: r.item.pull, a: t, n }); } }
     const nW = per.reduce((v, x) => v + (x.r.bossAuras || []).filter((y) => y.n === SHd.aura && y.a < x.t1).length, 0);
@@ -19198,17 +19207,17 @@ function bossRot(o) {
       const own = (HEAL_CD_BY[P0.specName] || []).flatMap((n) => (p.byName.get(n.toLowerCase()) || []).filter((t, i, z) => t <= t1 && (!i || t - z[i - 1] > 10)).map((t) => ({ t, cd: n }))), mine = own.sort((u, w) => u.t - w.t);
       for (const sp of big) hits.push({ pull: r.item.pull, a: sp.a, b: sp.b, x: sp.pk, top: sp.top, cd: mine.filter((u) => u.t >= sp.a - 6 && u.t <= sp.b).map((u) => u.cd) });
       for (const u of mine) cds.push({ pull: r.item.pull, t: u.t, cd: u.cd, inHit: spans.some((sp) => u.t >= sp.a - 6 && u.t <= sp.b) }); }
-    if (hits.length && cds.length) { const g = { t: 'The boss\'s big hits', l: [] }; out.groups.push(g); const nIn = cds.filter((c) => c.inHit).length, f = nIn / cds.length, cov = hits.filter((h) => h.cd.length).length;
+    if (hits.length && cds.length) { const g = { t: 'Heavy damage', l: [] }; out.groups.push(g); const nIn = cds.filter((c) => c.inHit).length, f = nIn / cds.length, cov = hits.filter((h) => h.cd.length).length;
       add(g, { st: f >= 0.5 ? 'ok' : f >= 0.3 || cds.length < 3 ? 'warn' : 'bad', ic: 'Aura Mastery', label: 'Cooldowns on big damage', v: nIn + '<span>/' + cds.length + '</span>', k: 'boss:hits',
         sub: (cds.length === 1 ? (nIn ? 'Your healing cooldown went out' : 'Your healing cooldown didn\'t go out') : nIn + ' of your ' + cds.length + ' healing cooldowns went out') + ' in the heaviest damage of the pull' + (one ? '' : 's') + '. The cards show the heaviest moments' + (one ? '' : ' of each pull') + ', and which of yours went out in each.',
         how: 'Your healing cooldowns are worth the most when the raid takes the most damage, so one sent into a quiet moment is one you don\'t have when it hurts. A big hit is one of the heaviest stretches of the pull: 6 seconds in the top 15% for damage the raid took, and at least 1.3 times the usual. A cooldown counts when you pressed it up to 6 seconds before one or during it. Half or more is good, about what the top healers manage. With only 1 or 2 cooldowns in a pull, it\'s never red. When your raid note sends one somewhere else, follow the note.',
-        mo: cds.filter((c) => !c.inHit).map((c) => ({ pull: c.pull, a: c.t })), tip: f < 0.5 ? 'Save your healing cooldowns for the boss\'s big hits. Learn when they come and press yours as they land.' : '' });
-      out.MERGE['The boss\'s big hits'] = { ic: 'Aura Mastery', main: 'boss:hits', lead: 'Every boss has a few moments that hurt far more than the rest. Your healing cooldowns are worth the most there, sent in just before the damage lands.' };
+        mo: cds.filter((c) => !c.inHit).map((c) => ({ pull: c.pull, a: c.t })), tip: f < 0.5 ? 'Save your healing cooldowns for the heaviest damage, and press them just before it lands.' : '' });
+      out.MERGE['Heavy damage'] = { ic: 'Aura Mastery', main: 'boss:hits', lead: 'Every pull has a few moments that hurt far more than the rest. Your healing cooldowns are worth the most there, sent in just before the damage lands.' };
       out.WT['boss:hits'] = 2;
       out.VIZ['boss:hits'] = () => (one ? '<div class="spc-ws">' + hits.map((h) => '<div class="spc-w ' + (h.cd.length ? 'ok' : 'warn') + '" role="button" tabindex="0" data-mt="' + h.a.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(h.a) + '–' + T(h.b) + '</b><span class="sub">' + h.x.toFixed(1) + ' times the usual damage</span></div>' +
-        (h.top.length ? '<div class="spc-wo">Mostly ' + esc(andL(h.top)) + '</div>' : '') + '<div class="spc-wc spc-chk"><span class="' + (h.cd.length ? 'ok' : 'no') + '">' + (h.cd.length ? '✓ ' + esc(andL([...new Set(h.cd)])) : '✕ None of your cooldowns') + '</span></div></div>').join('') + '</div>' : ''); } }
+        '<div class="spc-wc spc-chk"><span class="' + (h.cd.length ? 'ok' : 'no') + '">' + (h.cd.length ? '✓ ' + esc(andL([...new Set(h.cd)])) : '✕ None of your cooldowns') + '</span></div></div>').join('') + '</div>' : ''); } }
   // (4) talents a guide changes for this boss
-  const TB = ((BOSS_TAL[P0.specName] || {})[boss] || []).filter((q) => !q.hero || q.hero === o.heroN);
+  const TB = [];
   const TAL = o.TAL; if (TB.length && TAL) { const g = { t: 'Talents for this boss', l: [] }; out.groups.push(g);
     for (const [i, q] of TB.entries()) { const miss = (q.take || []).filter((n) => !TAL.names.has(n)), keep = (q.skip || []).filter((n) => TAL.names.has(n)), n = miss.length + keep.length;
       add(g, { st: n ? 'warn' : 'ok', ic: (q.take || q.skip)[0], label: 'A guide\'s swap: ' + andL((q.take || []).concat((q.skip || []).map((s) => 'no ' + s))), v: n ? n + '<span> to change</span>' : 'Done', k: 'boss:tal' + i,
@@ -19247,6 +19256,19 @@ function specPage(o) {
       const toCd = cdCh ? B.groups.filter((g) => g.t !== 'Talents for this boss') : [], rest = B.groups.filter((g) => !toCd.includes(g));
       if (toCd.length) cdCh[1].push(...toCd.map(blk));
       if (rest.length) { const ch = ['This boss', rest.map(blk)], si = o.LAYOUT.findIndex(([n]) => n === 'Stats'); if (si >= 0) o.LAYOUT.splice(si, 0, ch); else o.LAYOUT.push(ch); } } } }
+  // (combat potions (Oct 25, your note: "combat potion usage should be included here, not healthstones/healthpots"): drunk against what the pull
+  // allowed, one before or at the pull and one more every 5 minutes; in Prep with your other consumables, the potion-timing line with it)
+  if (o.per && o.LAYOUT) { let used = 0, poss = 0, pre = 0, nm = null; const ts0 = [];
+    for (const x of o.per) { const p = x.p, t1 = Math.max(1, x.t1 || (x.r && x.r.duration) || 1), ts = COMBAT_POTS.flatMap((n) => (p.byName.get(n) || []).filter((t) => t <= t1)).sort((a, b) => a - b);
+      const b0 = [...p.buffs.values()].find((b) => COMBAT_POTS.includes(String(b.name).toLowerCase()) && b.sp.some(([a]) => a < 0.5)), pp = b0 && !ts.some((t) => t < 3) ? 1 : 0;
+      for (const b of p.buffs.values()) if (!nm && COMBAT_POTS.includes(String(b.name).toLowerCase())) nm = b.name; used += ts.length + pp; pre += pp; poss += 1 + Math.floor(t1 / 300); if (o.per.length === 1) ts0.push(...ts); }
+    const st = used >= poss ? 'ok' : used > 0 && used >= poss - 1 ? 'warn' : 'bad', one1 = o.per.length === 1;
+    const c = { st, ic: nm || "Light's Potential", label: 'Combat potions', v: used + '<span>/' + poss + '</span>', k: 'potn', mo: [],
+      sub: (used ? 'You drank ' + (used === 1 ? 'one combat potion' : used + ' combat potions') : 'You drank no combat potion') + ' out of a possible ' + poss + (one1 ? ' this pull' : ' over these pulls') + '.' + (pre ? (pre === 1 && one1 ? ' One was before the pull.' : ' ' + pre + ' were before the pull.') : '') + (one1 && ts0.length ? ' In the fight: ' + ts0.map((t) => T(t)).join(', ') + '.' : ''),
+      how: 'Combat potions share a 5-minute cooldown, so a pull allows one before or at the pull and one more every 5 minutes after. Healthstones and health potions aren\'t counted here. All of them is good, one short is a small mistake, none is a failed check.' };
+    if (st !== 'ok') c.tip = 'Drink a combat potion just before the pull, and another when it\'s back 5 minutes later, with your big cooldown.';
+    o.groups.push({ t: 'Potions', l: [c] }); let sp = o.LAYOUT.find(([n]) => n === 'Start of the pull'); if (!sp) o.LAYOUT.unshift(sp = ['Start of the pull', []]); sp[1].push(['Potions', ['potn', 'pot']]);
+    const pc = o.groups.flatMap((g) => g.l).find((x) => x.k === 'pot'); if (pc) pc.ic = c.ic; }
   // (the layout every spec shares: its checks in chapters (Rotation, Resources, Cooldowns), each chapter's blocks in the spec's own order, a check
   // named by its key. One the layout doesn't name stays in a block of its own group's name, at the end: nothing is ever dropped)
   if (o.LAYOUT) { const sl = (k) => String(k).replace(/[^a-z0-9]+/gi, '-').toLowerCase(), all = o.groups.flatMap((g) => g.l.map((c) => ({ c, t: g.t }))), used = new Set(), out = [];
@@ -19385,11 +19407,35 @@ function specPage(o) {
   // own details (burst cards, big moments) are a row of their own. Lines that aren't graded become number tiles. Nothing is dropped)
   const t0 = (x) => String(x == null ? '' : x).replace(/<[^>]+>/g, '').trim(), ckW = (x) => { const m = t0(x).match(/^(\d+) wasted$|^All spent$/); return m ? (m[1] ? +m[1] : 0) : null; };
   const ckSent = (t) => (String(t || '').match(/^[\s\S]*?[.!?](?=\s|$)/) || [''])[0].trim(), ckShort = (c) => { const f = ckSent(c.sub); return f.length <= 120 ? f : ''; };
-  const ckBar = (c) => { const tb = TOPB && TOPB[c.k] != null ? TOPB[c.k] : null, lo = cLow.test(c.k), a = cNum(c.v), b = tb != null ? cNum(tb) : null; let f = null, t = null;
-    if (a != null) { f = lo ? 100 - a : a; t = b != null ? (lo ? 100 - b : b) : null; }
-    else { const u = ckW(c.v), w = tb != null ? ckW(tb) : null; if (u != null) { const S0 = Math.max(u, w || 0, 1) * 2; f = 100 * (1 - u / S0); t = w != null ? 100 * (1 - w / S0) : null; } }
-    if (f == null) f = c.st === 'ok' ? 100 : c.st === 'warn' ? 60 : 30;
-    return '<span class="rck-bar"><i style="width:' + Math.max(2, Math.min(100, f)).toFixed(1) + '%"></i>' + (t != null ? '<u style="left:' + Math.max(0, Math.min(100, t)).toFixed(1) + '%"></u>' : '') + '</span>'; };
+  // (what a row's number means, for its bar: a share ("9/10", "62%"), procs wasted out of all you got, a count out of all your casts (from its
+  // sentence: "7 of your 76"), or an average against the top players. Lower-is-better lines (wasted, without, ran out, cancelled) turn round)
+  const ckShare = (c) => { const v = t0(c.v), tb = TOPB && TOPB[c.k] != null ? t0(TOPB[c.k]) : null, sub = t0(c.sub), lo = cLow.test(c.k) || c.k === 'cc' || /without|wasted|ran out|cancel/i.test(String(c.label)), num = (x) => { const m = String(x || '').match(/^(\d+(?:\.\d+)?)$/); return m ? +m[1] : null; };
+    let m; if ((m = v.match(/^(\d+)\s*\/\s*(\d+)/)) && +m[2]) return [100 * m[1] / m[2], tb != null && /%$/.test(tb) ? parseFloat(tb) : null];
+    if ((m = v.match(/^(\d+(?:\.\d+)?)%/))) { const p = +m[1], q = tb != null && /^\d+(\.\d+)?%/.test(tb) ? parseFloat(tb) : null; return [cLow.test(c.k) ? 100 - p : p, q == null ? null : cLow.test(c.k) ? 100 - q : q]; }
+    const w = ckW(v); if (w != null) { const n = (sub.match(/\b(?:got|had|pressed it) (\d+)\b/) || [])[1]; if (n && +n > 0) { const tw = tb != null ? ckW(tb) : null; return [100 * (n - w) / n, tw != null ? 100 * Math.max(0, n - tw) / n : null]; } return null; }
+    const a = num(v); if (a == null) return null; const tn = num(tb);
+    if ((m = sub.match(/\b(\d+) of (?:your |the |all )?(\d+)\b/)) && +m[1] === a && +m[2] > 0) return lo ? [100 * (1 - a / m[2]), tn != null ? 100 * (1 - tn / m[2]) : null] : [100 * a / m[2], tn != null ? 100 * tn / m[2] : null];
+    if (!lo && tn != null && tn > 0) { const S0 = Math.max(a, tn); return [100 * a / S0, 100 * tn / S0]; }
+    return null; };
+  // (each row's small picture, by what its number is (Oct 25, your notes: "i want the information, but in a visually easy to read way", "The more
+  // condensed the better", "Nice and sleek"): a share (a percent, or x of y) is a small ring of that number with a tick where the top players are, the
+  // same look as the rings above; a count of mistakes or of wasted procs is dots, yours filled and the top players' hollow; a status (All spent, Yes,
+  // a stat) is a ✓, ! or ✕. The colour is the flag, so the picture and the number always say the same thing)
+  const ckRing = (f, t, st) => { const C0 = 56.55, a = Math.max(0, Math.min(100, f)), col = st === 'ok' ? 'var(--good)' : st === 'warn' ? 'var(--warn)' : st === 'bad' ? 'var(--bad)' : 'var(--muted)';
+    let tk = ''; if (t != null) { const g = (Math.max(0, Math.min(100, t)) / 100) * 2 * Math.PI - Math.PI / 2; tk = '<line x1="' + (12 + 6 * Math.cos(g)).toFixed(2) + '" y1="' + (12 + 6 * Math.sin(g)).toFixed(2) + '" x2="' + (12 + 11.8 * Math.cos(g)).toFixed(2) + '" y2="' + (12 + 11.8 * Math.sin(g)).toFixed(2) + '" style="stroke:#fff;stroke-width:1.6;opacity:.8"/>'; }
+    return '<span class="rck-z"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" style="fill:none;stroke:rgba(255,255,255,.09);stroke-width:3.5"/>' + (a > 0 ? '<circle cx="12" cy="12" r="9" transform="rotate(-90 12 12)" style="fill:none;stroke:' + col + ';stroke-width:3.5;stroke-linecap:round;stroke-dasharray:' + Math.max(1.5, (a / 100) * C0).toFixed(2) + ' ' + C0 + '"/>' : '') + tk + '</svg></span>'; };
+  const ckIcon = (st) => '<span class="rck-z"><span class="rck-ic ' + (st === 'ok' || st === 'warn' || st === 'bad' ? st : 'na') + '">' + (st === 'ok' ? '✓' : st === 'warn' ? '!' : st === 'bad' ? '✕' : '·') + '</span></span>';
+  const ckBar = (c) => { const v0 = t0(c.v), tb = TOPB && TOPB[c.k] != null ? t0(TOPB[c.k]) : null, st = c.st;
+    if (v0 === '›') return '<span class="rck-z"></span>';
+    if (/^(pre:|st:)/.test(String(c.k)) || /^(Yes|No)$/.test(v0) || !/\d/.test(v0)) return ckIcon(st);
+    let m; const tp = tb != null && (m = tb.match(/^(\d+(?:\.\d+)?)%/)) ? +m[1] : null;
+    if ((m = v0.match(/^(\d+(?:\.\d+)?)%/))) return ckRing(+m[1], tp, st);
+    if ((m = v0.match(/^(\d+)\s*\/\s*(\d+)/)) && +m[2]) return ckRing(100 * m[1] / m[2], tp, st);
+    if ((m = v0.match(/^(\d+)( wasted)?$/))) { const n = +m[1], tm = tb == null ? null : /^All (spent|used)$/.test(tb) ? 0 : (tb.match(/^(\d+)( wasted)?$/) || [])[1], tn = tm == null ? 0 : +tm;
+      if (!n && !tn) return ckIcon(st); const nf = Math.min(n, 10), nh = Math.max(0, Math.min(tn, 10) - nf), cl = st === 'ok' || st === 'warn' || st === 'bad' ? st : 'na';
+      return '<span class="rck-z rck-dots" title="' + esc((n === 1 ? '1' : n) + ' yours' + (tm != null ? ', ' + tn + ' for the top players' : '')) + '">' + ('<i class="rck-d f ' + cl + '"></i>').repeat(nf) + '<i class="rck-d h"></i>'.repeat(nh) + (n > 10 ? '<span class="rck-dm">+</span>' : '') + '</span>'; }
+    const sh = ckShare(c); if (sh && sh[0] != null) return ckRing(sh[0], sh[1], st);
+    return ckIcon(st); };
   const ckTop = (c) => (TOPB && TOPB[c.k] != null && (one || TOPP.has(c.k)) ? t0(topCap(TOPB[c.k])) : '');
   // (a row with no picture of its own gets a split bar of its number (your note, Oct 23: pictures over sentences): "9/10 uses" is Pressed 9 and
   // Not pressed 1, "75% casting" is Casting 75% and Not casting 25%, an uptime is Up and Down. Green for the right part, grey or red for the rest)
@@ -19405,19 +19451,19 @@ function specPage(o) {
     while ((m = re.exec(vz))) { const a = +m[2], e = (m[3] || '').split(':'), b = e.length === 2 ? +e[0] * 60 + +e[1] : a + 6; bl.push([a, Math.max(a + 2, b), m[1] === 'ok' || m[1] === 'g3' ? 'ok' : 'no']); }
     if (!bl.length) return ''; const X = (t) => (100 * Math.min(1, Math.max(0, t / dur1))).toFixed(2);
     return '<div class="spc-ast rck-hits">' + bl.map(([a, b, k]) => '<em class="' + k + '" style="left:' + X(a) + '%;width:' + Math.max(0.8, X(b) - X(a)) + '%"></em>').join('') + '</div><div class="spc-asx"><span>0:00</span><span>' + T(dur1 / 2) + '</span><span>' + T(dur1) + '</span></div><p class="slv-lg no-ic"><span><i class="ok"></i>A cooldown met it</span><span><i class="no"></i>None did</span></p>'; };
-  const ckBody = (c) => { const hw = spcHw(c.k, c.how); return '<div class="rck-b"><p class="spc-rs">' + esc(c.sub) + hw[0] + '</p>' + hw[1] + (c.tip && c.st !== 'ok' && c.st !== 'na' ? '<p class="rck-tip"><b>Next time:</b> ' + esc(c.tip) + '</p>' : '') + (() => { const vz = viz(c) || ckSplit(c); if (/class="spc-w /.test(vz)) VZW[c.k] = vz; return ckHits(vz) + vz + (c.mo && c.mo.length && !/data-mt=/.test(vz) ? momT(c, 8) : ''); })() + '</div>'; };
-  const ckRow = (c) => { const tb = ckTop(c); return '<details class="rck-r ' + c.st + '" id="spc-r-' + slug(c.k) + '"><summary>' + icB(c.ic) + '<span class="rck-n no-ic"><b>' + esc(c.label) + '</b></span>' /* (rows short: name, bar, number) */ + ckBar(c) +
-    '<span class="rck-v"><b>' + c.v + '</b>' + (tb ? '<small>top ' + esc(tb) + '</small>' : '') + '</span></summary>' + ckBody(c) + '</details>'; };
+  const ckBody = (c) => { const hw = spcHw(c.k, c.how); return '<div class="rck-b"><p class="spc-rs">' + esc(c.sub) + hw[0] + '</p>' + hw[1] + (c.tip && c.st !== 'ok' && c.st !== 'na' ? '<p class="rck-tip"><b>Next time:</b> ' + esc(c.tip) + '</p>' : '') + (() => { const vz = viz(c); if (/class="spc-w /.test(vz)) VZW[c.k] = vz; return vz + (c.st !== 'ok' && c.mo && c.mo.length && !/data-mt=/.test(vz) ? momT(c, 8) : ''); /* (no split bar or strip, and the times only when there was a mistake (Oct 25)) */ })() + '</div>'; };
+  const ckRow = (c) => { const tb = ckTop(c); return '<details class="rck-r ' + c.st + (c.st === 'ok' && (/^pre:/.test(String(c.k)) || c.k === 'st:low') ? ' rck-nx' : '') + '" id="spc-r-' + slug(c.k) + '"><summary>' + icB(c.ic) + '<span class="rck-n no-ic"><b>' + esc(c.label) + '</b></span>' /* (rows short: name, bar, number) */ + ckBar(c) +
+    '<span class="rck-v"><b>' + c.v + (c.k === 'mana' && /^\d+%$/.test(t0(c.v)) ? '<span> left</span>' : '') + '</b>' + (tb ? '<small>top ' + esc(tb.replace(/^All spent$/, '0 wasted').replace(/^All used$/, 'none lost') + (c.k === 'mana' && /^\d+%$/.test(tb) ? ' left' : '')) + '</small>' : '') + '</span></summary>' + (c.st === 'ok' && (/^pre:/.test(String(c.k)) || c.k === 'st:low') ? '' : ckBody(c)) + '</details>'; };
   // (round 2 (your ask, Oct 24): the most important first and one card a subject. Sections run Rotation, Cooldowns, Resources, This boss, Start
   // of the pull, Stats; inside one, a spell's checks are one card (its main check on top, the rest as short lines under it, all of their details
   // when it opens), and the cards that cost the most come first, then the ones that aren't right, then the ones that count the most)
   const CH_ORD = ['Rotation', 'Cooldowns', 'Mitigation', 'Resources', 'This boss', 'Start of the pull', 'Stats'], ckChO = (n) => { const i = CH_ORD.indexOf(n); return i < 0 ? CH_ORD.length : i; };
   const stR = { bad: 3, warn: 2, ok: 1, na: 0 }, wOfC = (c) => ((o.WT || {})[c.k] || 1);
-  const ckMini = (c) => { const tb = ckTop(c); return '<span class="rck-mi ' + c.st + '"><span class="rck-min no-ic">' + esc(c.label) + '</span>' + ckBar(c) + '<span class="rck-miv"><b>' + c.v + '</b>' + (tb ? '<small>top ' + esc(tb) + '</small>' : '') + '</span></span>'; };
+  const ckMini = (c) => { const tb = ckTop(c); return '<span class="rck-mi ' + c.st + '"><span class="rck-min no-ic">' + esc(c.label) + '</span>' + ckBar(c) + '<span class="rck-miv"><b>' + c.v + '</b>' + (tb ? '<small>top ' + esc(tb.replace(/^All spent$/, '0 wasted').replace(/^All used$/, 'none lost')) + '</small>' : '') + '</span></span>'; };
   const ckGroups = (l) => { const gs = new Map(); for (const c of l) { const k = /^Cooldowns on big damage$/.test(String(c.label)) ? "lbl:" + c.label : String(c.ic || c.label).toLowerCase(); if (!gs.has(k)) gs.set(k, []); gs.get(k).push(c); }
     const card = (m) => { if (m.length === 1) return ckRow(m[0]); const main = m.slice().sort((a, b) => stR[b.st] - stR[a.st] || (/ uses$| on cooldown$/.test(String(b.label)) - / uses$| on cooldown$/.test(String(a.label))) || wOfC(b) - wOfC(a))[0], rest = m.filter((c) => c !== main), worst = m.reduce((v, c) => (stR[c.st] > stR[v] ? c.st : v), 'ok'), tb = ckTop(main);
       return '<details class="rck-r rck-mg ' + main.st + ' w-' + worst + '" id="spc-r-' + slug(main.k) + '"><summary>' + icB(main.ic) + '<span class="rck-n no-ic"><b>' + esc(main.label) + '</b></span>' + ckBar(main) + '<span class="rck-v"><b>' + main.v + '</b>' + (tb ? '<small>top ' + esc(tb) + '</small>' : '') + '</span>' +
-        '<span class="rck-mis">' + rest.map(ckMini).join('') + '</span></summary>' + m.map((c) => '<div class="rck-mgb" id="spc-r-' + slug(c.k) + (c === main ? '-d' : '') + '"><h5 class="no-ic">' + esc(c.label) + '</h5>' + ckBody(c) + '</div>').join('') + '</details>'; };
+        '<span class="rck-mis">' + rest.map(ckMini).join('') + '</span></summary>' + [main].concat(rest).map((c) => '<div class="rck-mgb" id="spc-r-' + slug(c.k) + (c === main ? '-d' : '') + '"><h5 class="no-ic">' + esc(c.label) + '</h5>' + ckBody(c) + '</div>').join('') /* (mainFirst (Oct 25)) */ + '</details>'; };
     // (in the guide's order (Oct 25): where the spec's guide first names the row's spell or subject; Always be casting and Rotation priority first and
     // Cancelled casts last on every page; rows the guide doesn't name after, the ones that count the most first)
     const IMPT = SPEC_IMP[(o.P0 && o.P0.specName) || ''] || '', IMPG = { abc: -2, apl: -1, mel: 9e6, cpm: 9e6 + 1, cc: 9e6 + 2 };
@@ -19445,7 +19491,7 @@ function specPage(o) {
     const cats = all.map((x) => ({ x, n: catN(x.n), sc: catScore(x.l), vs: catVsTop(x.l) })), rd = radar(cats.filter((c) => c.vs != null));
     const card = (c) => { const bad = c.x.l.filter((y) => y.st === 'bad').length, warn = c.x.l.filter((y) => y.st === 'warn').length, col = bad ? '#e5534b' : warn ? '#e8a23a' : '#45c15c';
       const said = bad ? '<em class="r">' + bad + ' failed</em>' + (warn ? ' · <em class="w">' + warn + ' to tidy</em>' : '') : warn ? '<em class="w">' + warn + ' to tidy</em>' : '<em class="g">all done right</em>';
-      const subj = [...new Set(c.x.l.map((y) => String(y.label).replace(/ (uses|on cooldown|windows|uptime|wasted)$/, '')))].slice(0, 3).join(', ');
+      const subj = [...new Set(c.x.l.slice().sort((u, w) => (u.st === 'bad' ? 0 : u.st === 'warn' ? 1 : 2) - (w.st === 'bad' ? 0 : w.st === 'warn' ? 1 : 2)).map((y) => String(y.label).replace(/ (uses|on cooldown|windows|uptime|wasted)$/, '')))].slice(0, 3).join(', '); /* (the ones that need you first (Oct 25)) */
       const k = 'rckcat-' + slug(c.x.n), open = S.openSecs && S.openSecs.has(k);
       return '<details class="rck-cat" data-k="' + k + '"' + (open ? ' open' : '') + '><summary><span class="rck-cr">' + ringSvg(c.sc == null ? 100 : c.sc, col) + '<b>' + (c.sc == null ? '–' : c.sc) + '</b></span><span class="rck-ct"><b>' + esc(c.n) + '</b><span>' + said + '<span class="no-ic"> · ' + esc(subj) + '</span></span></span><span class="rck-cv" aria-hidden="true">▸</span></summary><div class="rck-rs">' + ckGroups(c.x.l) + c.x.det.map(ckDet).join('') + '</div></details>'; };
     return '<div class="rck-ovw rck-norad"><div class="rck-cats">' + cats.map(card).join('') + '</div></div>'; };
@@ -20052,7 +20098,8 @@ function spcTipInit() {
 if (document.body) spcTipInit(); else document.addEventListener('DOMContentLoaded', spcTipInit);
 // (a box per cast; when every one is good, they fold away under the bar, a click to see them)
 const spcBoxes = (one, bx) => { if (!one || !bx.length) return ''; const h = '<div class="spc-bxs">' + bx.map((b) => '<button type="button" class="spc-bx ' + b.cls + '" data-mt="' + b.t.toFixed(2) + '" data-tt="' + esc(spcTipTxt(b.tip)) + '" aria-label="' + esc(b.tip) + '"></button>').join('') + '</div>';
-  return (bx.length >= 8 && bx.every((b) => b.cls === 'ok' || b.cls === 'g3')) || bx.length > 30 ? '<details class="spc-bxf"><summary>Show each one (' + bx.length + ')</summary>' + h + '</details>' : h; };
+  if (bx.length && bx.every((b) => b.cls === 'ok' || b.cls === 'g3')) return ''; /* (every one fine: no list (Oct 25)) */
+  return bx.length > 30 ? '<details class="spc-bxf"><summary>Show each one (' + bx.length + ')</summary>' + h + '</details>' : h; };
 // (a check's first sentence, and the second when both are short, for the cards at the top; what it cost is on the card already)
 const spcFirst = (t) => { const l = String(t || '').split(/(?<=[.!?])\s+(?=[A-Z0-9(])/).filter((x) => !/^That cost about /.test(x)); let o = l[0] || ''; if (l[1] && o.length + l[1].length <= 130) o += ' ' + l[1]; return o; };
 // (the mana table shows the top 8 spells; the rest a click away)
@@ -21007,7 +21054,7 @@ function pdemChecks(reps, name, one) {
   const sum = (f) => rows.reduce((v, s) => v + (f(s) || 0), 0), pct = (f) => Math.round(100 * f) + '%', mins = sum((s) => s.len) / 60, times = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times');
   const M = (k) => rows.flatMap((s) => ((s.m && s.m[k]) || []).map((x) => (Array.isArray(x) ? { pull: s.pull, a: x[0], b: x[1], g: x[2] } : { pull: s.pull, a: x }))).sort((u, w) => u.pull - w.pull || u.a - w.a);
   const groups = [], grp = (t) => { const g = { t, l: [] }; groups.push(g); return g; }, add = (g, st, ic, label, v, sub, k, how) => g.l.push({ st, ic, label, v, sub, k, how, mo: M(k) });
-  const each = (tot, n) => C(tot) + (n > 1 ? ' in all, ' + C(tot / n) + ' each' : ''), dmgS = (k) => sum((s) => s.dmgD && s.dmgD[k]);
+  const each = (tot, n) => C(tot) + (n > 1 ? ' in all, ' + C(tot / n) + ' each' : ''), dmgE = (tot, n) => C(tot) + ' damage' + (n > 1 ? ' in all, ' + C(tot / n) + ' each' : ''), dmgS = (k) => sum((s) => s.dmgD && s.dmgD[k]);
   const cdLine = (g, n, ic, label, okF, warnF, how, info, extra) => { const l = rows.map((s) => s.cdu && s.cdu[n]).filter(Boolean), u = l.reduce((v, y) => v + y.n, 0), poss = l.reduce((v, y) => v + y.poss, 0); if (!poss) return; const f = Math.min(1, u / poss), cap = l.reduce((v, y) => v + y.cap, 0);
     if (!info) for (const s of rows) if (s.cdu && s.cdu[n]) s.m['cd:' + n] = (s.cdu[n].capL || []).filter(([a, b]) => b - a >= s.cdu[n].cd);
     add(g, info ? 'na' : f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', ic, label, u + '<span>/' + poss + '</span>', (u ? 'You pressed it ' + times(u) + ' out of a possible ' + poss + '.' : 'You never pressed it, out of a possible ' + poss + '.') + (cap >= 1 ? ' It sat ready for ' + durW(cap) + ' in all.' : '') + (extra || ''), 'cd:' + n, how + ' The times listed are when it sat ready long enough for one more use.'); };
@@ -21049,10 +21096,10 @@ function pdemChecks(reps, name, one) {
     'Without a Demonic Core, Demonbolt is a long cast for its damage. The guides only cast it with one. One every 4 minutes is fine. The times listed are each one without.'); }
   // (Cooldowns)
   const gK = grp('Cooldowns');
-  cdLine(gK, 'call dreadstalkers', 'Call Dreadstalkers', 'Call Dreadstalkers uses', K.drOk, K.drW, 'Call Dreadstalkers is your strongest spender, so cast it whenever it\'s ready' + (diab && reign ? ', except in the 12 to 20 seconds before Tyrant, when you hold it so they\'re out for it' : '') + '. ' + Math.round(100 * K.drOk) + '% or more is good.', false, dmgS('dr') >= 1000 ? ' Your Dreadstalkers did ' + each(dmgS('dr'), sum((s) => (s.cdu['call dreadstalkers'] || {}).n)) + ' damage.' : '');
-  cdLine(gK, 'grimoire: imp lord', 'Grimoire: Imp Lord', 'Grimoire: Imp Lord uses', 0.8, 0.6, 'Grimoire: Imp Lord summons a strong imp for 20 seconds. Use it on cooldown, just before your Tyrant. 80% or more is good.', false, dmgS('il') >= 1000 ? ' Your Imp Lords did ' + each(dmgS('il'), sum((s) => (s.cdu['grimoire: imp lord'] || {}).n)) + ' damage.' : '');
-  cdLine(gK, 'grimoire: fel ravager', 'Grimoire: Fel Ravager', 'Grimoire: Fel Ravager uses', 0.8, 0.6, 'Grimoire: Fel Ravager summons a Fel Ravager that interrupts its target. Use it on cooldown, just before your Tyrant, unless your raid needs the interrupt. 80% or more is good.', false, dmgS('fr') >= 1000 ? ' Your Fel Ravagers did ' + each(dmgS('fr'), sum((s) => (s.cdu['grimoire: fel ravager'] || {}).n)) + ' damage.' : '');
-  cdLine(gK, 'summon doomguard', 'Summon Doomguard', 'Summon Doomguard uses', 0.8, 0.6, 'Summon Doomguard before your Tyrant, so your globals inside it stay free. 80% or more is good.', false, dmgS('dg') >= 1000 ? ' Your Doomguards did ' + each(dmgS('dg'), sum((s) => (s.cdu['summon doomguard'] || {}).n)) + ' damage.' : '');
+  cdLine(gK, 'call dreadstalkers', 'Call Dreadstalkers', 'Call Dreadstalkers on cooldown', K.drOk, K.drW, 'Call Dreadstalkers is your strongest spender, so cast it whenever it\'s ready' + (diab && reign ? ', except in the 12 to 20 seconds before Tyrant, when you hold it so they\'re out for it' : '') + '. ' + Math.round(100 * K.drOk) + '% or more is good.', false, dmgS('dr') >= 1000 ? ' Your Dreadstalkers did ' + dmgE(dmgS('dr'), sum((s) => (s.cdu['call dreadstalkers'] || {}).n)) + '.' : '');
+  cdLine(gK, 'grimoire: imp lord', 'Grimoire: Imp Lord', 'Grimoire: Imp Lord uses', 0.8, 0.6, 'Grimoire: Imp Lord summons a strong imp for 20 seconds. Use it on cooldown, just before your Tyrant. 80% or more is good.', false, dmgS('il') >= 1000 ? ' Your Imp Lords did ' + dmgE(dmgS('il'), sum((s) => (s.cdu['grimoire: imp lord'] || {}).n)) + '.' : '');
+  cdLine(gK, 'grimoire: fel ravager', 'Grimoire: Fel Ravager', 'Grimoire: Fel Ravager uses', 0.8, 0.6, 'Grimoire: Fel Ravager summons a Fel Ravager that interrupts its target. Use it on cooldown, just before your Tyrant, unless your raid needs the interrupt. 80% or more is good.', false, dmgS('fr') >= 1000 ? ' Your Fel Ravagers did ' + dmgE(dmgS('fr'), sum((s) => (s.cdu['grimoire: fel ravager'] || {}).n)) + '.' : '');
+  cdLine(gK, 'summon doomguard', 'Summon Doomguard', 'Summon Doomguard uses', 0.8, 0.6, 'Summon Doomguard before your Tyrant, so your globals inside it stay free. 80% or more is good.', false, dmgS('dg') >= 1000 ? ' Your Doomguards did ' + dmgE(dmgS('dg'), sum((s) => (s.cdu['summon doomguard'] || {}).n)) + '.' : '');
   cdLine(gK, 'power siphon', 'Power Siphon', 'Power Siphon uses', 0.75, 0.5, 'Power Siphon turns 2 Wild Imps into Demonic Cores. Cast it when you have 1 Demonic Core or none, and not just before your Tyrant, which wants the imps. 75% or more is good.');
   { const im = rows.flatMap((s) => s.imp || []); if (im.length && impT) { const k = im.filter((q) => q.n >= 6).length, av = im.reduce((v, q) => v + q.n, 0) / im.length;
     add(gK, 'na', 'Implosion', 'Wild Imps per Implosion', av.toFixed(1), 'Your ' + plural(im.length, 'Implosion') + ' threw ' + av.toFixed(1) + ' Wild Imps on average' + (k ? ', and ' + k + ' threw all 6.' : '.'), 'imp',
@@ -21647,7 +21694,7 @@ function genRun(spec, D, reps, name, one) {
   // (a cooldown's own healing, for a healer, or its own damage: in all, and each time)
   const ownT = (l, u) => { const hl = l.reduce((v, y) => v + (y.heal || 0), 0), dm = l.reduce((v, y) => v + (y.dmg || 0), 0), ea = (v) => (u > 1 ? ' in all, ' + C(v / u) + ' per cast' : '');
     return D.unitN === 'healing' && hl >= 1000 ? ' It healed for ' + C(hl) + ea(hl) + '.' : dm >= 1000 ? ' It did ' + C(dm) + ' damage' + ea(dm) + '.' : hl >= 1000 ? ' It healed for ' + C(hl) + ea(hl) + '.' : ''; };
-  const cdLine = (g, q, okF, warnF) => { const n = lc(q.n), l = rows.map((s) => s.cdu[n]).filter(Boolean), u = l.reduce((v, y) => v + y.n, 0), poss = l.reduce((v, y) => v + y.poss, 0); if (!poss) return; const f = Math.min(1, u / poss), cap = l.reduce((v, y) => v + y.cap, 0);
+  const cdLine = (g, q, okF, warnF) => { const n = lc(q.n), l = rows.map((s) => s.cdu[n]).filter(Boolean), u = l.reduce((v, y) => v + y.n, 0), poss = Math.max(u, l.reduce((v, y) => v + y.poss, 0)); if (!poss) return; const f = Math.min(1, u / poss), cap = l.reduce((v, y) => v + y.cap, 0);
     for (const s of rows) if (s.cdu[n]) s.m['cd:' + n] = (s.cdu[n].capL || []).filter(([a, b]) => b - a >= s.cdu[n].cd);
     add(g, q.info ? 'na' : f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', q.ic || q.n, q.label || q.n + (q.big ? ' uses' : ' on cooldown'), u + '<span>/' + poss + '</span>', (u ? 'You pressed it ' + times(u) + ' out of a possible ' + poss + '.' : 'You never pressed it, out of a possible ' + poss + '.') + (cap >= 1 ? ' It sat ready, unused, for ' + durW(cap) + ' in all.' : '') + ownT(l, u), 'cd:' + n,
       (q.why ? q.why + ' ' : '') + (q.info ? 'It isn\'t graded, because ' + (q.infoWhy || 'your raid note decides when it goes out') + '. The times listed are when it sat ready long enough for one more use.' : okP(okF) + ' The times listed are when it sat ready long enough for one more use.'));
@@ -21829,7 +21876,7 @@ function genRun(spec, D, reps, name, one) {
     const stC = D.abcInfo ? 'na' : bf >= okC ? 'ok' : bf >= warnC ? 'warn' : 'bad', howC = 'Every second of ' + WSAY + ' with nothing cast is burst you never get back. Plan your movement around it, and use instant spells or movement spells inside it. ' + (D.abcInfo ? 'Casting in it isn\'t graded for your spec: it waits on procs, so some time with nothing pressed is normal.' : 'Casting ' + Math.round(100 * okC) + '% or more of them is good.'),
       tipC = WIN.castTip || 'Keep casting all the way through ' + WSAY + '. Use instant spells or your movement spells if you must move.', wc = gW.l.find((c) => c.k === 'win'), RK = { na: 0, ok: 1, warn: 2, bad: 3 };
     if (wc) { wc.sub += ' You were casting for ' + pct(bf) + ' of ' + (winL.length === 1 ? 'it.' : 'them.'); wc.v += '<span> · ' + pct(bf) + ' casting</span>'; wc.how = (wc.how ? wc.how + ' ' : '') + howC; wc.castMerged = true;
-      if (RK[stC] > RK[wc.st]) { wc.st = stC; wc.tip = tipC; } else if (!wc.tip && stC !== 'ok' && stC !== 'na') wc.tip = tipC; }
+      if (RK[stC] > RK[wc.st]) { wc.st = stC; wc.tip = tipC; wc.v = pct(bf) + '<span> casting · ' + String(wc.v.replace(/<span> · \d+% casting<\/span>$/, '')).replace(/<[^>]+>/g, '').replace(/\s+/g, '') + ' windows</span>'; } else if (!wc.tip && stC !== 'ok' && stC !== 'na') wc.tip = tipC; }
     else { add(gW, stC, WIN.ic || WIN.n, 'Casting in ' + WSAY, pct(bf), 'You were casting for ' + pct(bf) + ' of your ' + WSAY + (winL.length === 1 ? ' window.' : ' windows.'), 'win:cast', howC + ' The times listed are the windows under ' + Math.round(100 * okC) + '%.');
       if (stC !== 'ok' && stC !== 'na') gW.l[gW.l.length - 1].tip = tipC; }
     if (WIN.dotsThrough && dots.length) { const okN = winL.filter((w) => !w.dotsShort.length).length, N = winL.length, f = okN / N;
