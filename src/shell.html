@@ -6856,6 +6856,40 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row { grid-template-columns: 64px minmax(0, 1fr) auto auto; grid-template-areas: 'pic name s ra' 'pic sits sits sits'; gap: 2px 10px; padding: 6px 10px 6px 6px; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-pic { grid-area: pic; height: 44px; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-bn { grid-area: name; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-s { grid-area: s; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra { grid-area: ra; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-sits { grid-area: sits; font-size: 12px; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-bn b { font-size: 15px; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-ra .btn.sm { padding: 5px 10px; font-size: 12.5px; } }
+/* ===== Design studio round 14 (Oct 25): motion that feels alive, used sparingly: bars fill from the left, the pull line draws itself, big numbers
+   fade in while they count up, kills light the banner. 300–900 ms, once on first view (html.ds-still stops replays), nothing moves
+   under prefers-reduced-motion, transforms only so nothing shifts. Owner: the Design studio chat. ===== */
+@property --p { syntax: '<number> | <percentage>'; inherits: true; initial-value: 0; } /* (the studio's bars set a number, Rotation's a percentage) */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes ds-fillin { from { transform: scaleX(0); } }
+  @keyframes ds-pfill { from { --p: 0; } }
+  @keyframes ds-numin { from { opacity: 0; transform: translateY(4px); } }
+  @keyframes ds-linein { from { stroke-opacity: .12; } }
+  @keyframes ds-dotin { from { opacity: .3; } }
+  @keyframes ds-pop { from { transform: scale(.5); opacity: 0; } 70% { transform: scale(1.15); } }
+  @keyframes ds-killglow { 0% { box-shadow: 0 0 0 0 rgba(230,180,80,0); } 35% { box-shadow: 0 0 0 2px rgba(230,180,80,.75), 0 0 70px rgba(230,180,80,.38); } 100% { box-shadow: 0 0 0 1px rgba(230,180,80,.45), 0 0 30px rgba(230,180,80,.16); } }
+  @keyframes ds-shimmer { from { background-position: 180% 0; } to { background-position: -80% 0; } }
+  .rtb-b > i, .cgl-b > i, .cb-f > i, .prw-t > i, .rta-ph, .ds-bar, .rcb-g .ds-bar, .tm-bar i.on, .rcb-st .rcb-bar > i, .ds-rl .rqc-bar > i { animation: ds-fillin .6s cubic-bezier(.2,.7,.2,1) both; transform-origin: left center; }
+  .ds-ptrans { transition: --p .75s cubic-bezier(.2,.7,.2,1); }
+  #view .dbr-v > b:first-child, #view .cb-v, #view .dbt-n, #view .cgl-c, #view .rqc-sc, #main .yu-t > b, #main .pnw-ti > b, #main .pgc > b { animation: ds-numin .5s ease-out both; display: inline-block; }
+  /* (the header: a fade, never a hide; the pull's own loading can freeze the page for seconds right after the header appears) */
+  header.fight.bh polyline.bhp-all-l { animation: ds-linein 1s ease-out both; }
+  header.fight.bh .bhp-b { animation: ds-dotin .7s ease-out .2s both; }
+  html.is-kill header.fight.bh { animation: ds-killglow 1.8s ease-out both; }
+  html.is-kill header.fight.bh .bhp-kl { animation: ds-dotin .8s ease-out .6s both; }
+  html.is-first-kill header.fight.bh::after { content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none; border-radius: inherit; background: linear-gradient(100deg, transparent 35%, rgba(246,220,154,.22) 50%, transparent 65%) no-repeat; background-size: 220% 100%; animation: ds-shimmer 1.6s ease-out .4s both; }
+  header.fight.bh.ds-hstill, header.fight.bh.ds-hstill .bhp-b, header.fight.bh.ds-hstill polyline.bhp-all-l, header.fight.bh.ds-hstill .bhp-kl, header.fight.bh.ds-hstill::after { animation: none !important; }
+  /* the same page redrawn within 3 s: nothing replays */
+  html.ds-still .ds-ptrans { transition: none; }
+  html.ds-still .rtb-b > i, .cgl-b > i, .cb-f > i, .prw-t > i, .rta-ph, .ds-bar, .rcb-g .ds-bar, .tm-bar i.on, .rcb-st .rcb-bar > i, .ds-rl .rqc-bar > i, html.ds-still header.fight.bh polyline.bhp-all-l, html.ds-still header.fight.bh .bhp-b, html.ds-still header.fight.bh, html.ds-still header.fight.bh .bhp-kl, html.ds-still header.fight.bh::after, html.ds-still #view .dbr-v > b:first-child, html.ds-still #view .cb-v, html.ds-still #view .dbt-n, html.ds-still #view .cgl-c, html.ds-still #view .rqc-sc, html.ds-still html.ds-still #main .yu-t > b, html.ds-still #main .pnw-ti > b, html.ds-still #main .pgc > b { animation: none !important; }
+}
+/* kills, with or without motion: the banner keeps a gold edge, the Kill label glows, the raid lead's kill line is big */
+html.is-kill header.fight.bh { position: relative; box-shadow: 0 0 0 1px rgba(230,180,80,.45), 0 0 30px rgba(230,180,80,.16); }
+html.is-kill header.fight.bh .bhp-kl { color: #f6dc9a; font-weight: 800; text-shadow: 0 0 12px rgba(230,180,80,.9); }
+html.is-kill header.fight.bh .bhp-b:last-of-type { box-shadow: 0 0 0 2px var(--gold), 0 0 14px rgba(230,180,80,.8); }
+html.is-kill #oaTop .cch-h { font-size: 21px; line-height: 1.3; }
+html.is-first-kill #oaTop .cch-h { font-size: 24px; color: #f6dc9a; }
+html.is-kill #oaTop .cch-h .cch-hype { color: #f6dc9a; font-weight: 800; letter-spacing: .01em; } /* (the short shout inside the kill line, per the Debriefing chat) */
 </style>
 
 

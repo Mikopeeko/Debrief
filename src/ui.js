@@ -1772,6 +1772,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-25', h: [
+    { t: 'The site moves, and kills light up', d: 'Bars fill in, big numbers count up and the pull line draws itself the first time a page opens, quick and only once (off if your system asks for less motion). A kill lights the boss banner gold, the Kill mark on the pull line glows, and the first kill of a boss shimmers with the raid lead\'s call shown big.' },
     { t: 'Home, one screen', d: 'Home now reads like a briefing: your team and you on one strip, the boss you\'re on big with your raid nights beside its chart, and the ten bosses as one row. How far you got is a bar as well as a number, on the banner, on every boss and on every night.' },
     { t: 'Compare: the answer first', d: 'Your biggest fixes and Why the gap now sit right under the face-off, side by side, instead of hidden at the bottom. Your big moments show the opener and the first window with the rest folded, and the face-off glows in each player\'s class colour.' },
     { t: 'Report card: one card per raider', d: 'Open a raider in the ranked roster and everything about them is one card under their row: who they are, their grade and rank, the checklist on the left and Their night on the right, with their deaths, best tonight and room to grow. The side panel is gone and the roster has the full width.' },
@@ -30191,3 +30192,27 @@ function dsPlan() { const v = document.querySelector('#view.plan-page'); if (!v)
 function dsPlanTips() { const v = document.querySelector('#view.plan-page'); if (v && /[?&]cells=check/.test(location.search)) v.classList.add('ds-check'); /* (practice compare only) */
   document.querySelectorAll('#view.plan-page .nt-g .nt-bh[aria-label]:not([data-tt])').forEach((b) => { const n = b.getAttribute('aria-label').replace(/^Open /, ''); if (n) b.setAttribute('data-tt', '<b>' + n.replace(/</g, '&lt;') + '</b>'); }); }
 (function () { const f7 = dsBars; dsBars = function (root) { f7(root); try { dsPlanTips(); } catch (e) {} }; })();
+
+// ===== Design studio round 14 (Oct 25): motion. The CSS does the moving; this pass only (1) stops replays when the same page
+// redraws within 3 s (html.ds-still) and (2) counts big numbers up from 0 while their fade-in hides the swap. Owner: the Design studio chat. =====
+function dsMotion() { const H = document.documentElement; if (!window.matchMedia || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  /* the page's fingerprint: where we are plus the numbers on it; a redraw with the same numbers within 3 s is a replay, a loading
+     redraw (numbers still changing) is not */
+  const M = dsMotion, now = Date.now(), key = location.search + '|' + [...document.querySelectorAll('#view .dbr-v > b:first-child, #main .my-bc .my-tag, #view .rqc-sc')].map((e) => e.textContent.trim()).join(',').slice(0, 400);
+  if (M.key === key && now - (M.at || 0) < 3000) { H.classList.add('ds-still'); clearTimeout(M.tm); M.tm = setTimeout(() => H.classList.remove('ds-still'), 1200); } else { H.classList.remove('ds-still'); M.key = key; }
+  M.at = now;
+  /* the boss header redraws on its own while a pull loads: its line and dots play once per set of pulls, not per redraw */
+  const hd = document.querySelector('header.fight.bh'), pl = hd && hd.querySelector('polyline.bhp-all-l'); if (hd) { const pts = pl ? pl.getAttribute('points') : ''; if (M.pts === pts && now - (M.ptsAt || 0) < 15000) hd.classList.add('ds-hstill'); else { M.pts = pts; M.ptsAt = now; } }
+  if (H.classList.contains('ds-still')) return;
+  M.seen = M.seen || new WeakSet();
+  /* bars drawn from --p (set by the studio's own passes a moment ago, in this same tick, so nothing has been painted yet): from 0 to their value */
+  document.querySelectorAll('#view [style*="--p"], #main [style*="--p"]').forEach((el) => { if (M.seen.has(el)) return; M.seen.add(el); const p = el.style.getPropertyValue('--p'); if (!p || parseFloat(p) <= 0) return;
+    el.style.setProperty('--p', '0'); void el.offsetWidth; el.classList.add('ds-ptrans'); el.style.setProperty('--p', p); });
+  document.querySelectorAll('#view .dbr-v > b:first-child, #view .cb-v, #view .dbt-n, #view .cgl-c, #view .rqc-sc, #main .yu-t > b, #main .pnw-ti > b, #main .pgc > b').forEach((el) => {
+    if (M.seen.has(el)) return; M.seen.add(el); const tn = [...el.childNodes].find((n) => n.nodeType === 3 && n.nodeValue.trim()); if (!tn) return;
+    const raw = tn.nodeValue, m = raw.trim().match(/^(\d[\d,]*)(\.\d+)?([%kKmM]?)$/); if (!m) return;
+    const commas = m[1].includes(','), dec = m[2] ? m[2].length - 1 : 0, end = parseFloat(m[1].replace(/,/g, '') + (m[2] || '')), suf = m[3] || ''; if (!(end > 0)) return;
+    const t0 = performance.now(), dur = 550, fmt = (x) => (commas ? Math.round(x).toLocaleString('en-US') : x.toFixed(dec)) + suf;
+    const step = (t) => { const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3); if (k < 1) { tn.nodeValue = fmt(end * e); requestAnimationFrame(step); } else tn.nodeValue = raw; };
+    tn.nodeValue = fmt(0); requestAnimationFrame(step); }); }
+(function () { const f8 = dsBars; dsBars = function (root) { f8(root); try { dsMotion(); } catch (e) {} }; })();
