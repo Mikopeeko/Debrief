@@ -19551,7 +19551,7 @@ function specPage(o) {
   for (const c of checks) { if (c.st !== 'na' || /^(saves|tyr)/.test(String(c.k))) continue; let tg = null, rg = null;
     for (const x of ckCh) { const y = x.l.find((u) => (c.k === 'cpm' ? u.k === 'abc' : String(u.ic || '').toLowerCase() === String(c.ic || '').toLowerCase() && u.ic)); if (y) { tg = y; rg = x; break; } }
     if (tg) { c.ic = tg.ic; c.joined = true; rg.l.push(c); } } /* (Oct 25) */
-  const checklist = '<section class="rck"><h3 class="rck-h">Your checklist <span class="sub">Tap a ring to open it.</span> <span class="ds-i" tabindex="0" role="note" data-tt="The small grey number under yours is the top players&#39; on this boss, and the white tick on a ring marks it. Green is done right, yellow is a few mistakes, red is failed.">ⓘ</span></h3>' +
+  const checklist = '<section class="rck"><h3 class="rck-h">Your checklist <span class="sub">Tap a row to open it.</span> <span class="ds-i" tabindex="0" role="note" data-tt="The small grey number under yours is the top players&#39; on this boss. Green is done right, yellow is a few mistakes, red is failed.">ⓘ</span></h3>' +
     ckCats() + '</section>';
   const ckNa = checks.filter((c) => c.st === 'na' && !c.joined);
   const ckNums = ckNa.length ? '<section class="rck-nums"><h3 class="rck-h">Your numbers <span class="sub">not graded</span></h3><div class="rck-ts">' + ckNa.map((c) => '<details class="rck-t" id="spc-r-' + slug(c.k) + '"><summary><span class="rck-tl no-ic">' + icB(c.ic) + '<span>' + esc(c.label) + '</span></span><b>' + c.v + '</b>' + (ckShort(c) ? '<span class="rck-tx">' + esc(ckShort(c)) + '</span>' : '') + '</summary>' + ckBody(c) + '</details>').join('') + '</div></section>' : '';
