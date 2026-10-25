@@ -6221,6 +6221,7 @@ function* analyzeSteps(item, text, opts) {
           p.damage += dealt;
           if (mod && mod.focus && mod.focus.has(dn)) modEv.push({ k: 'pdmg', t, src: owner, dst: dg, dn, amt: dealt }); addAb(p.dmgAb, pet ? sn + ': ' + spell : spell, id, dealt, 0, crit); bump(r.dmgS, t, dealt);
           bump(p.dmgS, t, dealt); if (dealt > 0) { p.dmgT.set(dn, (p.dmgT.get(dn) || 0) + dealt); bumpN(r.dmgTS, t, dn, dealt); bumpN(p.dmgTS, t, dn, dealt); if (!p.firstHit.has(dg)) p.firstHit.set(dg, t); }
+          if (!pet && (spell === 'Sigil of Flame' || spell === 'Immolation Aura' || spell === 'Sigil of Spite' || spell === 'Crash Lightning' || spell === 'Slam')) { if (!p.tierEv) p.tierEv = []; if (p.tierEv.length < 8000) p.tierEv.push([t, spell, dealt, dg, ev === 'SPELL_PERIODIC_DAMAGE' ? 1 : 0]); } /* (each hit of a spell a tier bonus changes hit by hit, for the tier set card (Oct 25)) */
           p.lastHit = [t, pet ? sn + ': ' + spell : spell, dg]; // (for a support line that follows it: see *_DAMAGE_SUPPORT)
           // (the hits the spec checks count one by one, e.g. Implosion's: one per Wild Imp on each target)
           // (with the amount; and every "(Erupt)" hit, like the plagues Unholy's Blightfall sets off, so a press can be credited with them)
@@ -6248,6 +6249,7 @@ function* analyzeSteps(item, text, opts) {
           p.healing += eff; p.overheal += over; addAb(p.healAb, pet ? sn + ': ' + spell : spell, id, eff, over, crit); bump(r.healS, t, eff); bump(p.healS, t, eff);
           // (triage: the heal's advanced block is the target's, health after it; under half before it)
           if (s0 > 11 && f[11] === dg && eff > 0 && isPlayer(dg)) { const mx = num(f[14]); if (mx > 0 && (num(f[13]) - eff) / mx < 0.5) { p.lowHeal += eff; if (lowHL.length < 60000) lowHL.push([t, dg, owner, eff, 0, spell]); } }
+          if (!pet && spell === 'Flash of Light') { if (!p.folEv) p.folEv = []; if (p.folEv.length < 3000) p.folEv.push([t, eff, over]); } /* (each Flash of Light, for the tier set card (Oct 25)) */
           if (!pet && awOn.has(owner) && !AW_SKIP.test(String(spell))) { if (!p.awEv) p.awEv = []; if (p.awEv.length < 8000) p.awEv.push([eff + over, eff, over > 0 ? 1 : 0, spell === 'Holy Shock' ? 1 : 0]); }
           if (!pet && tyrOn.size && TYR_UP.has(String(spell).toLowerCase()) && tyrOn.has(dg + '|' + owner)) { p.tyrX = (p.tyrX || 0) + eff * 0.1 / 1.1; p.tyrXn = (p.tyrXn || 0) + 1; p.tyrB = (p.tyrB || 0) + eff; }
           if (!pet && HEAL_TO.has(String(spell).toLowerCase())) { if (!p.hT) p.hT = new Map(); let l = p.hT.get(spell); if (!l) p.hT.set(spell, l = []); if (l.length < 12000) l.push([t, dg, eff, over, ev === 'SPELL_PERIODIC_HEAL' ? 1 : 0]); } // (the last: a HoT's tick)

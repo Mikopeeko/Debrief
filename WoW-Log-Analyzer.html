@@ -5123,7 +5123,7 @@ body.igm-lbon { overflow: hidden; }
 .spc-ost li::before { content: counter(ost); font: 700 12px var(--head); color: var(--faint); width: 12px; } .spc-ost li.ok { border-left-color: rgba(69,193,92,.8); } .spc-ost li.warn { border-left-color: rgba(230,180,80,.85); } .spc-ost li.no { border-left-color: rgba(229,83,75,.85); }
 .spc-ost li .icw { width: 20px; height: 20px; flex: none; margin: 0; border-radius: 4px; overflow: hidden; } .spc-ost li .icw img, .spc-ost li .icw svg { width: 100%; height: 100%; } .spc-ost li b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .spc-ost li span { margin-left: auto; white-space: nowrap; color: var(--muted); font-size: 12px; } .spc-ost li.ok span { color: #7ee08f; } .spc-ost li.warn span { color: #f3c969; } .spc-ost li.no span { color: #ff8f87; } .spc-osr { margin: 6px 0 0; font-size: 12px; }
 .spc-wm { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 7px; font-size: 12px; color: var(--muted); } .spc-wm b { color: var(--text); font-variant-numeric: tabular-nums; }
-.spc-wi { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 7px; } .spc-wi .icw { width: 18px; height: 18px; margin: 0; border-radius: 4px; overflow: hidden; } .spc-wi .icw img, .spc-wi .icw svg { width: 100%; height: 100%; } .spc-wn { margin-top: 4px; font-size: 12px; color: var(--faint); }
+.spc-wi { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 7px; } /* (a burst window's casts on the opener's strip, smaller (Oct 25)) */ .spc-wst { margin: 8px 0 2px; } .spc-wst .spc-oti, .spc-wst .spc-oti .icw { width: 20px; height: 20px; } .spc-wst .spc-otg { font-size: 12px; gap: 4px 10px; } .spc-wi .icw { width: 18px; height: 18px; margin: 0; border-radius: 4px; overflow: hidden; } .spc-wi .icw img, .spc-wi .icw svg { width: 100%; height: 100%; } .spc-wn { margin-top: 4px; font-size: 12px; color: var(--faint); }
 .spc-ast { position: relative; height: 26px; margin: 10px 0 0; border-radius: 4px; background: rgba(255,255,255,.035); overflow: hidden; } .spc-ast em { position: absolute; top: 0; bottom: 0; background: rgba(230,180,80,.13); border-left: 1px solid rgba(230,180,80,.45); border-right: 1px solid rgba(230,180,80,.45); }
 .spc-ast i { position: absolute; bottom: 4px; width: 2px; margin-left: -1px; height: 8px; border-radius: 2px; background: rgba(69,193,92,.55); } .spc-ast i.no { height: 18px; width: 3px; background: #e5534b; z-index: 1; }
 .spc-asx { display: flex; justify-content: space-between; font-size: 12px; color: var(--faint); margin-top: 2px; } .spc-asm { margin: 6px 0 4px; font-size: 13px; color: var(--muted); }
@@ -5794,7 +5794,7 @@ button.wnm-c:hover { outline: 2px solid var(--text); outline-offset: 1px; }
 .rgx-n { margin: 8px 2px 0; } /* Gear and extras polish (Oct 23) */ .rgx-lab { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; margin: 14px 2px 8px; font: 700 12px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); } .rgx-lab:first-child { margin-top: 4px; } .rgx-lx { font: 600 12.5px var(--body); letter-spacing: 0; text-transform: none; color: var(--text); } .rgx-hwa { letter-spacing: 0; text-transform: none; font-weight: 500; } .rgx-hwa p { max-width: 720px; } .rgx-b1 { display: block; height: 4px; margin: 2px 0 2px; border-radius: 999px; background: rgba(255,255,255,.06); overflow: hidden; } .rgx-b1 i { display: block; height: 100%; border-radius: 999px; background: #6fb7e8; } .rgx-c.rgx-stat .rgx-b1 i { background: #c99be8; } .rgx-c.rgx-sum .rgx-b1 i { background: var(--gold); } .rgx-c.rgx-boss .rgx-b1 i { background: #d9534f; } .rgx-c.rgx-add .rgx-b1 i { background: #8fd18a; } .rgx-c[title] { cursor: help; } .rgx-i { width: 18px; height: 18px; border-radius: 4px; flex: none; } .rgx-c.rgx-boss { border-left-color: #d9534f; } .rgx-c.rgx-add { border-left-color: #8fd18a; }
 @media (max-width: 760px) { .rgx-g { grid-template-columns: 1fr 1fr; } .spc-chs { display: none; } }
 /* Rotation, the A+B mockup (Oct 19): talents in the card, blocks without boxes */
-.spc-tq .spc-tqg { zoom: .7; } /* (the talent tree folds on a phone (Oct 25)) */ .spc-tqd > summary { list-style: none; cursor: default; margin-bottom: 6px; } .spc-tqd > summary::-webkit-details-marker { display: none; } .rck-tyrn { margin: 6px 0 0; }
+.spc-tq .spc-tqg { zoom: .7; } /* (the talent tree folds on a phone (Oct 25)) */ .spc-tqd > summary { list-style: none; cursor: default; margin-bottom: 6px; } .spc-tqd > summary::-webkit-details-marker { display: none; } .rck-tyrn { margin: 6px 0 0; } /* (the tier set card's breakdown: the card spans the row when it's open (Oct 25)) */ .rgx-tier:has(.rgx-tierd[open]) { grid-column: 1 / -1; } .rgx-tb { display: grid; gap: 3px; margin-top: 8px; max-width: 640px; } .rgx-th { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; font: 700 13px var(--body); color: var(--gold); } .rgx-tr { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; color: var(--muted); } .rgx-tr b, .rgx-th b { color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; } .rgx-tn { margin: 2px 0 4px; font-size: 12px; color: var(--faint); }
 @media (min-width: 641px) { .spc-tqd > summary { pointer-events: none; } }
 @media (max-width: 640px) { .spc-tqd > summary { cursor: pointer; padding: 6px 0; } .spc-tqd > summary::before { content: '\25B8  '; } .spc-tqd[open] > summary::before { content: '\25BE  '; } .spc-tq .spc-hft::after { content: none; } }
 /* the lower half as closed sections (Oct 22) */
@@ -12675,6 +12675,7 @@ function* analyzeSteps(item, text, opts) {
           p.damage += dealt;
           if (mod && mod.focus && mod.focus.has(dn)) modEv.push({ k: 'pdmg', t, src: owner, dst: dg, dn, amt: dealt }); addAb(p.dmgAb, pet ? sn + ': ' + spell : spell, id, dealt, 0, crit); bump(r.dmgS, t, dealt);
           bump(p.dmgS, t, dealt); if (dealt > 0) { p.dmgT.set(dn, (p.dmgT.get(dn) || 0) + dealt); bumpN(r.dmgTS, t, dn, dealt); bumpN(p.dmgTS, t, dn, dealt); if (!p.firstHit.has(dg)) p.firstHit.set(dg, t); }
+          if (!pet && (spell === 'Sigil of Flame' || spell === 'Immolation Aura' || spell === 'Sigil of Spite' || spell === 'Crash Lightning' || spell === 'Slam')) { if (!p.tierEv) p.tierEv = []; if (p.tierEv.length < 8000) p.tierEv.push([t, spell, dealt, dg, ev === 'SPELL_PERIODIC_DAMAGE' ? 1 : 0]); } /* (each hit of a spell a tier bonus changes hit by hit, for the tier set card (Oct 25)) */
           p.lastHit = [t, pet ? sn + ': ' + spell : spell, dg]; // (for a support line that follows it: see *_DAMAGE_SUPPORT)
           // (the hits the spec checks count one by one, e.g. Implosion's: one per Wild Imp on each target)
           // (with the amount; and every "(Erupt)" hit, like the plagues Unholy's Blightfall sets off, so a press can be credited with them)
@@ -12702,6 +12703,7 @@ function* analyzeSteps(item, text, opts) {
           p.healing += eff; p.overheal += over; addAb(p.healAb, pet ? sn + ': ' + spell : spell, id, eff, over, crit); bump(r.healS, t, eff); bump(p.healS, t, eff);
           // (triage: the heal's advanced block is the target's, health after it; under half before it)
           if (s0 > 11 && f[11] === dg && eff > 0 && isPlayer(dg)) { const mx = num(f[14]); if (mx > 0 && (num(f[13]) - eff) / mx < 0.5) { p.lowHeal += eff; if (lowHL.length < 60000) lowHL.push([t, dg, owner, eff, 0, spell]); } }
+          if (!pet && spell === 'Flash of Light') { if (!p.folEv) p.folEv = []; if (p.folEv.length < 3000) p.folEv.push([t, eff, over]); } /* (each Flash of Light, for the tier set card (Oct 25)) */
           if (!pet && awOn.has(owner) && !AW_SKIP.test(String(spell))) { if (!p.awEv) p.awEv = []; if (p.awEv.length < 8000) p.awEv.push([eff + over, eff, over > 0 ? 1 : 0, spell === 'Holy Shock' ? 1 : 0]); }
           if (!pet && tyrOn.size && TYR_UP.has(String(spell).toLowerCase()) && tyrOn.has(dg + '|' + owner)) { p.tyrX = (p.tyrX || 0) + eff * 0.1 / 1.1; p.tyrXn = (p.tyrXn || 0) + 1; p.tyrB = (p.tyrB || 0) + eff; }
           if (!pet && HEAL_TO.has(String(spell).toLowerCase())) { if (!p.hT) p.hT = new Map(); let l = p.hT.get(spell); if (!l) p.hT.set(spell, l = []); if (l.length < 12000) l.push([t, dg, eff, over, ev === 'SPELL_PERIODIC_HEAL' ? 1 : 0]); } // (the last: a HoT's tick)
@@ -16100,7 +16102,9 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-25', h: [
+    { t: 'Your tier set, in numbers', d: 'Rotation shows how much your 2-piece and 4-piece added, with a Where it came from breakdown behind every number. First up: Holy Paladin, Arms, Havoc, Balance, Vengeance and Enhancement.' },
     { t: 'Your trinkets, both of them', d: 'Gear and extras on Rotation now shows both of your trinkets, with what each one did (damage, healing or stats), or that one was never pressed.' },], n: [
+    'Rotation: each burst-window card shows what you pressed on a time line, like the opener, with your key buffs as bars under it.',
     'Rotation: inside each ring, the rows follow your spec guide\'s order of importance, the same on every pull.',
     'Rotation: What to fix says each thing once, and on a phone your talents fold away so it starts right under your score.',
     'Rotation: every spec checks the same things before the pull: a weapon oil where the guides list one, and Power Word: Fortitude for both priests.',], f: [
@@ -33987,6 +33991,68 @@ function statItemsPull(r, p, t1) {
   for (const o of out.values()) { o.up.sort((a, b) => a[0] - b[0]); let u = 0, e = -1; for (const [a, b] of o.up) { if (b <= e) continue; u += b - Math.max(a, e); e = b; } o.upF = u / t1; o.secAvg = o.sec / t1; o.priAvg = o.pri / t1; o.gn = o.secAvg / 5400 + (pri ? o.priAvg / pri : 0); }
   return out;
 }
+// (the tier set (Oct 25, your idea): what the Season 2 2-piece and 4-piece added, with where it came from. Who has which: the tier pieces worn
+// (each class's five, from Wowhead's item sets). What each bonus does: its 12.1.5 tooltip. Specs without a recipe yet show nothing)
+const TIER_IT = { 1: [271459, 271457, 271456, 271455, 271454], 2: [271468, 271466, 271465, 271464, 271463], 4: [271495, 271493, 271492, 271491, 271490], 8: [271513, 271511, 271510, 271509, 271508],
+  16: [271556, 271555, 271554, 271558, 271553], 32: [271477, 271475, 271474, 271473, 271472], 64: [271486, 271484, 271483, 271482, 271481], 128: [271567, 271565, 271564, 271563, 271562],
+  256: [271547, 271546, 271545, 271549, 271544], 512: [271522, 271520, 271519, 271518, 271517], 1024: [271531, 271529, 271528, 271527, 271526], 2048: [271540, 271538, 271537, 271536, 271535],
+  4096: [271504, 271502, 271501, 271500, 271499] }, TIER_ALL = new Set(Object.values(TIER_IT).flat());
+// (each part: sp + pct, spells made pct stronger; sp + share, the part of them the bonus made; burn, only a spell's ticks; inSoF, hits on targets in
+// your Sigil of Flame; stk, a stacking buff read at each cast of hit; ecl, Balance's Eclipse bonus)
+const TIER_FX = {
+  'Holy Paladin': { fn: 'hpal', t2: 'Infusion of Light makes Flash of Light heal an extra 100% and Greater Judgment absorb an extra 100%', t4: 'Judgment (20% of the time) and Holy Light (every time) give you Infusion of Light, 2 charges each', no: 'what your Beacons copied from the extra healing, and Holy Light\'s 50% higher mana cost' },
+  'Arms Warrior': { p2: [{ sp: ['Mortal Strike', 'Execute'], pct: 0.1 }], p4: [{ sp: ['Overpower'], pct: 0.15 }, { stk: 'Winding Up', hit: 'Slam', cast: 'slam', per: 0.2 }], t2: 'Mortal Strike and Execute hit 10% harder', t4: 'Overpower hits 15% harder, and each Mortal Strike and Overpower makes your next Slam 20% stronger, up to 5 times', no: 'Slam\'s splash (2-piece)' },
+  'Havoc Demon Hunter': { p2: [{ sp: ['Blade Dance', 'Death Sweep', 'Chaos Strike', 'Annihilation', 'Essence Break'], pct: 0.12 }], p4: [{ sp: ['Essence Break'], pct: 0.35, why: 'its hit' }], t2: 'Blade Dance, Chaos Strike and Essence Break hit 12% harder', t4: 'Essence Break\'s hit is 35% harder', no: 'Essence Break\'s 2 seconds longer window and its Cycle of Hatred (4-piece)' },
+  'Balance Druid': { p2: [{ sp: ['Starsurge'], pct: 0.2 }], p4: [{ ecl: 1 }], t2: 'Starsurge hits 20% harder', t4: 'your damage is up to 10% higher in an Eclipse: 10% at its start and end, 2% in the middle', no: 'Starfall\'s instant hit (2-piece)' },
+  'Vengeance Demon Hunter': { p2: [{ burn: 'Sigil of Flame', pct: 0.5 }], p4: [{ inSoF: ['Immolation Aura', 'Sigil of Spite'] }], t2: 'Sigil of Flame\'s burn does 50% more damage', t4: 'Immolation Aura and Sigil of Spite do double damage to targets in your Sigil of Flame', no: 'Soul Cleave keeping Sigil of Flame up longer (2-piece)' },
+  'Enhancement Shaman': { p2: [{ sp: ['Fire Nova'], share: 0.95, vb: 1, why: 'almost all of it: 3 every Voltaic Blaze, 3 times bigger on the main target; your Fire Nova talent adds about 1 in 11 (about 95%)' }], p4: [{ stk: 'Short Circuit', hit: 'Crash Lightning', cast: 'crash lightning', per: 0.08 }], t2: 'Voltaic Blaze sets off a Fire Nova every 2 seconds for 6 seconds, 200% stronger on its main target', t4: 'each Fire Nova brings Crash Lightning back 2 seconds sooner and makes the next one 8% stronger, up to 5 times', no: 'Crash Lightning\'s faster cooldown and its Unleashed echoes (4-piece)' } };
+// (Holy Paladin, one pull: the infused Flash of Lights and Judgments, and every Infusion with where it came from (2 charges a proc; 1 when it tops up
+// a single charge))
+const tierHpal = (x) => { const p = x.p, t1 = x.t1 || 1e9, b = p.buffs.get('Infusion of Light'), o = { fC: 0, fE: 0, f2: 0, fo: 0, jN: 0, jI: 0, gj: 0, g2: 0, go: 0, ch: { hs: 0, j: 0, hl: 0, dt: 0, x: 0 } }; if (!b) return o;
+  const ends = b.sp.map(([, z]) => z).filter((z) => z != null).concat(b.rd || []), near = (l, t, w) => l.some((u) => Math.abs(u - t) <= w), cast = (n) => (p.byName.get(n) || []).filter((t) => t <= t1);
+  const fT = cast('flash of light').filter((t) => near(ends, t, 0.35)); o.fC = fT.length;
+  for (const [t, E, O] of (p.folEv || []).filter((v) => v[0] <= t1)) { if (!fT.some((u) => Math.abs(u - t) <= 0.35)) continue; const R = E + O; o.fE += E; o.f2 += E - Math.min(R * 0.75, E); o.fo += Math.min(R * 0.75, E) - Math.min(R * 0.25, E); }
+  const jT = cast('judgment'), hlT = cast('holy light'), hsT = cast('holy shock'), dtT = cast('divine toll'); o.jN = jT.length; o.jI = jT.filter((t) => near(ends, t, 0.35)).length;
+  o.gj = (p.healAb && [...p.healAb.values()].filter((a) => a.name === 'Greater Judgment').reduce((v, a) => v + (a.total || 0), 0)) || 0;
+  const gI = o.jI ? o.gj * 3.5 * o.jI / (3.5 * o.jI + (o.jN - o.jI)) : 0; o.g2 = gI / 3.5; o.go = gI * 1.5 / 3.5;
+  const after = (l, u, w) => l.some((c) => u >= c - 0.05 && u <= c + w), src = (u) => (after(hlT, u, 0.4) ? 'hl' : after(jT, u, 0.4) ? 'j' : after(hsT, u, 0.4) ? 'hs' : after(dtT, u, 3) ? 'dt' : 'x');
+  for (const [a] of b.sp) if (a <= t1) o.ch[src(a)] += 2; for (const [u] of b.dose || []) if (u <= t1) o.ch[src(u)] += 1;
+  return o; };
+// (Balance: the 4-piece's bonus each second of each Eclipse, 10% at its start and end and 2% in the middle; your big cooldown starts a fresh one)
+const tierEcl = (x) => { const p = x.p, S1 = p.dmgS || [], seg = [], cut = ['Incarnation: Chosen of Elune', 'Celestial Alignment'].flatMap((n) => (p.buffs.get(n) || { sp: [] }).sp.map(([a]) => a));
+  for (const n of ['Eclipse (Lunar)', 'Eclipse (Solar)']) for (const [a, z0] of (p.buffs.get(n) || { sp: [] }).sp) { const z = z0 == null ? S1.length : z0; let a0 = a; for (const c of cut.filter((c) => c > a + 0.5 && c < z - 0.5).sort((u, w) => u - w)) { seg.push([a0, c]); a0 = c; } seg.push([a0, z]); }
+  let tot = 0, add = 0; for (let i = 0; i < S1.length; i++) { const t = i + 0.5; let b = 0; for (const [a, z] of seg) if (t >= a && t < z) b = Math.max(b, 0.02 + 0.08 * Math.abs(2 * (t - a) / Math.max(1, z - a) - 1)); if (b) { tot += S1[i] || 0; add += (S1[i] || 0) * b / (1 + b); } } return [tot, add]; };
+// (the hits the engine kept for the tier set; a buff's stacks at a moment; whether your Sigil of Flame was on a target at a moment)
+const tierEvs = (x, l) => (x.p.tierEv || []).filter((v) => v[0] <= (x.t1 || 1e9) && l.includes(v[1]));
+const tierStk = (b, c) => { if (!b) return 0; let a0 = null; for (const [a, z] of b.sp) if (a <= c + 0.02 && (z == null || z >= c - 0.3)) a0 = a; if (a0 == null) return 0; let n = 1; for (const [u, k] of b.dose || []) if (u >= a0 - 0.01 && u <= c - 0.01) n = k; return n; };
+const tierSoF = (x) => { const m = new Map(); for (const [t, k, n, g] of x.p.dotEv || []) { if (n !== 'Sigil of Flame') continue; const l = m.get(g) || []; m.set(g, l); const o = l.length && l[l.length - 1][1] == null; if (k !== 0 && !o) l.push([t, null]); else if (k === 0 && o) l[l.length - 1][1] = t; }
+  return (g, t) => (m.get(g) || []).some(([a, z]) => t >= a - 0.05 && t <= (z == null ? 1e9 : z + 0.05)); };
+// (one part of a bonus over one pull: tot, the spells' damage or healing; add, what the bonus made; c and d, the counts the breakdown shows)
+const tierPart = (x, q, pc, k, FX, m) => { const p = x.p, t1 = x.t1 || 1e9, o = { tot: 0, add: 0, c: 0, d: 0, ov: null };
+  if (q.ecl) { const [v, ad] = tierEcl(x); o.tot = v; o.add = ad; for (const a of m.values()) o.d += a.total || 0; return o; }
+  if (q.burn) { for (const v of tierEvs(x, [q.burn])) if (v[4]) o.tot += v[2]; o.add = o.tot * q.pct / (1 + q.pct); return o; }
+  if (q.inSoF) { const on = tierSoF(x); for (const [t, , v, g] of tierEvs(x, q.inSoF)) { o.tot += v; o.d++; if (on(g, t)) { o.add += v / 2; o.c++; } } return o; }
+  if (q.stk) { const b = p.buffs.get(q.stk), ev = tierEvs(x, [q.hit]).filter((v) => !v[4]); for (const c of (p.byName.get(q.cast) || []).filter((t) => t <= t1)) { const n = Math.min(5, tierStk(b, c)), v = ev.filter((u) => u[0] >= c - 0.05 && u[0] <= c + 0.4).reduce((w, u) => w + u[2], 0); o.tot += v; o.add += v * q.per * n / (1 + q.per * n); o.c++; o.d += n; } return o; }
+  for (const n of q.sp) { let v = 0; for (const a of m.values()) if (String(a.name).replace(/^[^:]+: /, '') === n) v += a.total || 0; let sh = q.share;
+    if (sh == null) { const oth = (pc === 2 ? (k >= 4 ? FX.p4 || [] : []) : FX.p2 || []).filter((w) => w.sp && w.pct && w.sp.includes(n)).reduce((w, u) => w + u.pct, 0); sh = q.pct / (1 + q.pct + oth); if (oth) o.ov = [n, oth]; } o.tot += v; o.add += v * sh; }
+  if (q.vb) o.c = (p.byName.get('voltaic blaze') || []).filter((t) => t <= t1).length; return o; };
+const spcTier = (per, UN) => { const p0 = per.length ? per[per.length - 1].p : null, FX = TIER_FX[p0 && p0.specName]; if (!FX) return null; const heal = UN === 'healing'; let n = 0, a2 = 0, a4 = 0; const rows = new Map(), H = { fC: 0, fE: 0, f2: 0, fo: 0, jN: 0, jI: 0, gj: 0, g2: 0, go: 0, ch: { hs: 0, j: 0, hl: 0, dt: 0, x: 0 } };
+  for (const x of per) { const cb = combOfR(x.r, x.p), k = ((cb && cb.gear) || []).filter((g) => g && TIER_ALL.has(g.id)).length; n = Math.max(n, k); if (k < 2) continue; const m = heal ? x.p.healAb : x.p.dmgAb; if (!m) continue;
+    if (FX.fn === 'hpal') { const o = tierHpal(x); for (const q of ['fC', 'fE', 'f2', 'fo', 'jN', 'jI', 'gj', 'g2', 'go']) H[q] += o[q]; for (const q in o.ch) H.ch[q] += o.ch[q]; continue; }
+    for (const [pc, l] of [[2, FX.p2 || []], [4, k >= 4 ? FX.p4 || [] : []]]) l.forEach((q, i) => { const key = pc + '|' + i, w = rows.get(key) || { pc, q, tot: 0, add: 0, c: 0, d: 0, ov: null }, o = tierPart(x, q, pc, k, FX, m); rows.set(key, w);
+      w.tot += o.tot; w.add += o.add; w.c += o.c; w.d += o.d; w.ov = w.ov || o.ov; }); }
+  if (n < 2) return null;
+  if (FX.fn === 'hpal') { const c = H.ch, all = c.hs + c.j + c.hl + c.dt + c.x, f4 = all ? (c.j + c.hl) / all : 0; a2 = H.f2 + H.g2; a4 = n >= 4 ? (H.fo + H.go) * f4 : 0; return { n, a2, a4, FX, H, f4, chAll: all }; }
+  for (const w of rows.values()) { if (w.pc === 2) a2 += w.add; else a4 += w.add; }
+  return { n, a2, a4: n >= 4 ? a4 : 0, FX, rows: [...rows.values()] }; };
+// (the breakdown rows of one part)
+const tierLines = (w, L, C) => { const q = w.q, P = (v) => Math.round(v * 100);
+  if (q.ecl) return L('Damage in an Eclipse' + (w.d ? ' (' + P(w.tot / w.d) + '% of yours)' : ''), C(w.tot)) + L('The bonus each second (10% → 2% → 10% over each Eclipse), ' + (w.tot > w.add ? (100 * w.add / (w.tot - w.add)).toFixed(1) : '0') + '% on average', C(w.add));
+  if (q.burn) return L(q.burn + '\'s burn', C(w.tot)) + L('A third of each tick (200% → 300% of attack power)', C(w.add));
+  if (q.inSoF) return L(q.inSoF.join(', '), C(w.tot)) + L('Half of each hit on a target in your Sigil of Flame (' + w.c + ' of ' + w.d + ' hits)', C(w.add));
+  if (q.stk) return L(q.hit + ' hits (' + w.c + ' casts)', C(w.tot)) + L(P(q.per) + '% for each ' + q.stk + ' stack at the cast, ' + (w.c ? (w.d / w.c).toFixed(1) : '0') + ' stacks on average', C(w.add));
+  const why = q.pct != null ? P(q.pct) + '% stronger' + (q.why ? ' (' + q.why + ')' : '') + ': ' + P(q.pct) + ' of every ' + (100 + P(q.pct)) + (w.ov ? '; ' + w.ov[0] + ' also has the ' + (w.pc === 2 ? '4' : '2') + '-piece\'s ' + P(w.ov[1]) + '%, so ' + P(q.pct) + ' of its ' + (100 + P(q.pct) + P(w.ov[1])) : '') : q.why;
+  return (q.vb ? L('Voltaic Blazes', w.c + ' (' + 3 * w.c + ' Fire Novas from the 2-piece)') : '') + L(q.sp.join(', '), C(w.tot)) + L(why, C(w.add)); };
 const spcExtras = (per, UN, one) => { const heal = UN === 'healing', ab = new Map(); let tot = 0, dur = 0, big = null;
   for (const x of per) { const p = x.p, m = heal ? p.healAb : p.dmgAb; dur += Math.max(1, x.r.duration || x.end || x.t1 || 1); if (!m) continue;
     for (const a of m.values()) { const k = a.name, w = ab.get(k) || { name: k, id: a.id, total: 0, hits: 0 }; w.total += a.total || 0; w.hits += a.hits || 0; ab.set(k, w); tot += a.total || 0;
@@ -34050,7 +34116,21 @@ const spcExtras = (per, UN, one) => { const heal = UN === 'healing', ab = new Ma
       : o.ti && o.ti[1] ? card(ic, esc(o.nm), o.use ? o.use + '<small>×</small>' : '<span class="sub">none</span>', pr || 'Never pressed' + (one ? ' this pull' : ''), 'rgx-trk' + (o.use ? '' : ' rgx-no'), '', null, o.use ? '' : esc('It does nothing until you press it. Its cooldown is ' + Math.round(o.ti[1] / 60 * 10) / 10 + ' minutes, so it fits about ' + Math.max(1, Math.floor(dur / Math.max(1, per.length) / o.ti[1]) + 1) + ' times a pull.'))
       : card(ic, esc(o.nm), '<span class="sub">–</span>', 'Nothing from it shows in the log' + (one ? ' this pull' : ''), 'rgx-trk rgx-no'); });
   const inT = (l, K) => l.filter((c, i) => TN.has(K[i])), outT = (l, K) => l.filter((c, i) => !TN.has(K[i]));
-  return grp('Damage', [bossC, addC]) + grp('Trinkets', inT(gearC, gK).concat(inT(stC, stK), tkC)) + grp('Gear effects', [gSum].concat(outT(gearC, gK))) + grp('Stat items', outT(stC, stK), stT > 0 ? ' <span class="rgx-lx">about ' + C(stT / dur) + ' ' + U + ' in all</span>' + howAll : howAll) + grp('Extras', [bigC, potC]) + split +
+  let TR = null; try { TR = spcTier(per, UN); } catch (e0) { TR = null; }
+  const tierC = TR ? (() => { const all = TR.a2 + TR.a4, f4 = TR.n >= 4, L = (a, b) => '<div class="rgx-tr"><span>' + esc(a) + '</span><b>' + b + '</b></div>', Hd = (t, v) => '<div class="rgx-th"><span>' + t + '</span><b>' + v + '</b></div>';
+    let body = Hd('2-piece', C(TR.a2)) + '<p class="rgx-tn">' + esc(TR.FX.t2) + '.</p>';
+    if (TR.H) { const H = TR.H, c = TR.H.ch;
+      body += L('Infused Flash of Lights', String(H.fC)) + L('Their healing', C(H.fE)) + L('The 2-piece\'s +100% (a quarter of each heal, overhealing left out)', C(H.f2)) +
+        L('Infused Judgments', H.jI + ' of ' + H.jN) + L('Greater Judgment absorbed', C(H.gj)) + L('The 2-piece\'s +100% on the infused ones', C(H.g2));
+      if (f4) body += Hd('4-piece', C(TR.a4)) + '<p class="rgx-tn">' + esc(TR.FX.t4) + '.</p>' + L('Infusion charges you got', String(TR.chAll)) + L('From Holy Shock', String(c.hs + c.dt)) + L('From Judgment (the 4-piece)', String(c.j)) + L('From Holy Light (the 4-piece)', String(c.hl)) + (c.x ? L('Other', String(c.x)) : '') +
+        L('The 4-piece\'s share of your Infusions', Math.round(100 * TR.f4) + '%') + L('Infusion\'s own +200% on Flash of Light (all charges)', C(H.fo)) + L('and its +150% on Greater Judgment', C(H.go)) + L('The 4-piece\'s share of that', C(TR.a4)) + '<p class="rgx-tn">The 2-piece\'s +100% on these charges is counted under the 2-piece.</p>'; }
+    else { const R = (pc) => TR.rows.filter((w) => w.pc === pc).map((w) => tierLines(w, L, C)).join('');
+      body += R(2); if (f4) body += Hd('4-piece', C(TR.a4)) + '<p class="rgx-tn">' + esc(TR.FX.t4) + '.</p>' + R(4); }
+    body += '<p class="rgx-tn">You wore ' + TR.n + ' tier pieces. ' + (heal ? 'Only healing that landed counts. ' : '') + (TR.FX.no ? 'Not counted: ' + esc(TR.FX.no) + '. ' : '') + 'Totals over ' + (one ? 'the pull' : 'these pulls') + '.</p>';
+    return '<div class="rgx-c rgx-tier"><div class="rgx-h"><img class="rgx-i" src="' + whIcon('inv_chest_plate_raidpaladin_s_01') + '" alt=""><span>Tier set (' + (f4 ? '4' : '2') + '-piece)</span></div><b class="rgx-v"><small>about </small>' + C(all / dur) + '<small> ' + U + '</small></b>' +
+      '<span class="rgx-b1"><i style="width:' + Math.max(2, Math.min(100, 100 * all / Math.max(1, tot))).toFixed(1) + '%"></i></span><span class="rgx-s">2-piece ' + C(TR.a2 / dur) + (f4 ? ' · 4-piece ' + C(TR.a4 / dur) : '') + ' · ' + pc(all) + '</span>' +
+      '<details class="rgx-hw rgx-tierd"><summary>Where it came from</summary><div class="rgx-tb">' + body + '</div></details></div>'; })() : '';
+  return grp('Damage', [bossC, addC]) + grp('Trinkets', inT(gearC, gK).concat(inT(stC, stK), tkC)) + grp('Tier set', [tierC]) + grp('Gear effects', [gSum].concat(outT(gearC, gK))) + grp('Stat items', outT(stC, stK), stT > 0 ? ' <span class="rgx-lx">about ' + C(stT / dur) + ' ' + U + ' in all</span>' + howAll : howAll) + grp('Extras', [bigC, potC]) + split +
     (gl.length || stL.length || tk.size ? '' : '<p class="sub rgx-n">No trinket, weapon or enchant effects did ' + W + ' or raised your stats that the log shows' + (one ? ' this pull' : '') + '.</p>'); };
 // (who a spec page's "Top players" marks come from, said in full)
 const topWho = (top, TOPB) => 'The middle of the ' + (TOPB && TOPB.n ? TOPB.n + ' ' : '') + top + ' who parsed 75 or higher in the fastest Mythic kills of this boss on Warcraft Logs';
@@ -35305,12 +35385,12 @@ const STAT_SH = { crit: 'Crit', haste: 'Haste', mastery: 'Mastery', versatility:
 const LUST_BUFFS = ['Bloodlust', 'Heroism', 'Time Warp', 'Primal Rage', 'Fury of the Aspects', 'Ancient Hysteria', 'Netherwinds', 'Feral Hide Drums', 'Timeless Drums', 'Harrier\'s Cry'];
 // The opener as a timeline: your casts as icons at their times over the first seconds (one cast before the pull at the far left, the pull marked),
 // a thin bar for each buff that matters under them, and their names below
-function openTlHtml(seq, bars, len) {
-  const L = len || 15, X = (t) => (t < 0 ? 1 : 7 + 92 * Math.min(1, t / L)), lanes = [];
-  const ic = (seq || []).map(([t, n]) => { const x = X(t); let ln = 0; while (lanes[ln] != null && x - lanes[ln] < 3.2) ln++; lanes[ln] = x; return '<span class="spc-oti" style="left:' + x.toFixed(2) + '%;top:' + (ln * 27) + 'px" title="' + esc(n + (t < 0 ? ', before the pull' : ', at ' + t.toFixed(1) + ' s')) + '">' + spIc(n) + '</span>'; }).join('');
-  const ticks = [0, 5, 10, 15, 20].filter((u) => u <= L).map((u) => '<i style="left:' + X(u).toFixed(2) + '%">' + (u ? u + 's' : 'Pull') + '</i>').join('');
+function openTlHtml(seq, bars, len, o) {
+  o = o || {}; const L = len || 15, X = (t) => (t < 0 ? 1 : 7 + 92 * Math.min(1, t / L)), lanes = [], gap = o.lane || 3.2, hg = o.hgt || 27;
+  const ic = (seq || []).map(([t, n]) => { const x = X(t); let ln = 0; while (lanes[ln] != null && x - lanes[ln] < gap) ln++; lanes[ln] = x; return '<span class="spc-oti" style="left:' + x.toFixed(2) + '%;top:' + (ln * hg) + 'px" title="' + esc(n + (o.off != null ? ', ' + T(o.off + t) : t < 0 ? ', before the pull' : ', at ' + t.toFixed(1) + ' s')) + '">' + spIc(n) + '</span>'; }).join('');
+  const tk = []; for (let u = 0; u <= L + 0.01; u += o.step || 5) tk.push(u); const ticks = (o.step ? tk : [0, 5, 10, 15, 20].filter((u) => u <= L)).map((u) => '<i style="left:' + X(u).toFixed(2) + '%">' + (u ? u + 's' : o.z || 'Pull') + '</i>').join('');
   const bl = (bars || []).filter((b) => b.sp && b.sp.length), br = bl.map((b) => '<div class="spc-otb">' + b.sp.map(([a, e]) => { const x0 = X(Math.max(-0.5, a)), x1 = X(Math.min(L, e == null ? L : e)); return x1 > x0 ? '<i style="left:' + x0.toFixed(2) + '%;width:' + (x1 - x0).toFixed(2) + '%;background:' + b.col + '"></i>' : ''; }).join('') + '</div>').join('');
-  return '<div class="spc-otl"><div class="spc-otc" style="height:' + (Math.max(1, lanes.length) * 27 + 2) + 'px"><b class="spc-otp" style="left:' + X(0).toFixed(2) + '%"></b>' + ic + '</div><div class="spc-otx">' + ticks + '</div>' + br +
+  return '<div class="spc-otl' + (o.cls ? ' ' + o.cls : '') + '"><div class="spc-otc" style="height:' + (Math.max(1, lanes.length) * hg + 2) + 'px"><b class="spc-otp" style="left:' + X(0).toFixed(2) + '%"></b>' + ic + '</div><div class="spc-otx">' + ticks + '</div>' + br +
     (bl.length ? '<div class="cmp-glegend spc-otg">' + bl.map((b) => '<span><i style="background:' + b.col + '"></i>' + esc(b.n) + '</span>').join('') + '</div>' : '') + '</div>';
 }
 function openStepsHtml(steps, src) {
@@ -35376,14 +35456,22 @@ function winDetail(x, w, o) {
   w.potIn = COMBAT_POTS.some((n) => (p.byName.get(n) || []).some((u) => u >= a - 30 && u <= e)); w.lustIn = LUST_BUFFS.some((n) => (p.buffs.get(n) || { sp: [] }).sp.some(([u, v]) => u < e && (v == null || v > a)));
   w.inside = c.ab.filter((y) => !nms.includes(lc(y.name)) && !COMBAT_POTS.includes(lc(y.name)) && !/flask|potion|healthstone/i.test(y.name)).flatMap((y) => y.ts.filter((u) => u >= a - 0.05 && u <= e).map((u) => [u, y.name])).sort((u, z) => u[0] - z[0]);
   w.wasted = (o.procsWt || []).flatMap(([n, ts]) => (ts || []).filter((u) => u >= a && u <= e).map(() => n));
+  w.stp = winStripData(w, p, o.names || [], (o.setup || []).map((q) => q.orBuf || q.n).concat((o.procsWt || []).map(([n]) => n)));
   return w;
 }
 // (a window card's extra marks, and its lower half: mana at the start, the share spent casting, and what you cast, in order and counted)
 function winTagsHtml(w) { const ck = (ok, t) => '<span class="' + (ok ? 'ok' : 'no') + '">' + (ok ? '✓ ' : '✕ ') + esc(t) + '</span>';
   return (w.setup || []).filter((q) => !q.info || q.ok).map((q) => ck(q.ok, q.lbl || q.n + (q.post ? ' with it' : ' before'))).join('') + (w.potIn ? ck(true, 'Potion') : '') + (w.lustIn ? '<span class="sub">Bloodlust</span>' : '') + (w.wasted && w.wasted.length ? ck(false, w.wasted.length + (w.wasted.length === 1 ? ' proc' : ' procs') + ' wasted') : ''); }
+function winStripData(w, p, nms, want) { const a = w.a != null ? w.a : w.t, L = Math.max(3, w.e - a), cols = ['#5aa9e6', '#e6b450', '#7ee08f'], lc = (n) => String(n).toLowerCase();
+  const own = (nms || []).find((n) => (p.byName.get(lc(n)) || []).some((u) => Math.abs(u - a) <= 0.6)) || null;
+  const bars = [...new Set((want || []).concat(LUST_BUFFS))].filter((n) => n && !(nms || []).includes(n) && p.buffs.has(n)).map((n) => ({ n, sp: p.buffs.get(n).sp.map(([u, z]) => [u - a, (z == null ? w.e : z) - a]).filter(([u, z]) => z > 0.3 && u < L - 0.3) }))
+    .filter((b) => b.sp.length).slice(0, 3).map((b, i) => ({ ...b, col: cols[i] }));
+  return { own, bars }; }
+function winStripHtml(w, d) { const a = w.a != null ? w.a : w.t, L = Math.max(3, w.e - a), seq = (d.own ? [[0, d.own]] : []).concat((w.inside || []).map(([u, n]) => [Math.max(0, u - a), n]));
+  return openTlHtml(seq, d.bars, L, { lane: 9.5, hgt: 23, step: L > 25 ? 10 : 5, z: '0s', off: a, cls: 'spc-wst' }); }
 function winLowerHtml(w) { const cnt = new Map(); for (const [, n] of w.inside || []) cnt.set(n, (cnt.get(n) || 0) + 1); const top = [...cnt].sort((u, v) => v[1] - u[1]).slice(0, 4);
   return '<div class="spc-wm">' + (w.manaA != null ? '<span>Mana at the start: <b>' + Math.round(100 * w.manaA) + '%</b></span>' : '') + (w.busyIn != null ? '<span>Casting <b>' + Math.round(100 * w.busyIn) + '%</b> of it</span>' : '') + '</div>' +
-    ((w.inside || []).length ? '<div class="spc-wi">' + w.inside.slice(0, 28).map(([u, n]) => '<span title="' + esc(n + ', ' + T(u)) + '">' + spIc(n) + '</span>').join('') + '</div><div class="spc-wn">' + top.map(([n, v]) => v + ' ' + esc(n)).join(' · ') + '</div>' : ''); }
+    ((w.inside || []).length ? (w.stp ? winStripHtml(w, w.stp) : '<div class="spc-wi">' + w.inside.slice(0, 28).map(([u, n]) => '<span title="' + esc(n + ', ' + T(u)) + '">' + spIc(n) + '</span>').join('') + '</div>') + '<div class="spc-wn">' + top.map(([n, v]) => v + ' ' + esc(n)).join(' · ') + '</div>' : ''); }
 // (the checks: before the pull, casts a minute and cancelled casts, and your stats. o: rows, per, D (pre, stats, lead), add, grp, heroN, spec, gC (the
 // group for the casting lines), on (a pre line's talent test). Returns the keys for the page's layout, its sections, weights and pictures)
 function sharedChecks(o) {
@@ -36120,7 +36208,7 @@ function genRun(spec, D, reps, name, one) {
   // (a window card's lower half: the resource you went in with, the share spent casting, and what you cast, in order and counted)
   function winMore(w) { const cnt = new Map(); for (const [, n] of w.inside || []) cnt.set(n, (cnt.get(n) || 0) + 1); const top = [...cnt].sort((u, v) => v[1] - u[1]).slice(0, 4);
     return '<div class="spc-wm">' + (w.manaA != null ? '<span>Mana at the start: <b>' + Math.round(100 * w.manaA) + '%</b></span>' : '') + (w.resA ? '<span>' + esc(res.nl || res.n) + ' at the start: <b>' + Math.round(w.resA[0]) + (w.resA[1] ? '/' + Math.round(w.resA[1]) : '') + '</b></span>' : '') + (w.busyIn != null ? '<span>Casting <b>' + Math.round(100 * w.busyIn) + '%</b> of it</span>' : '') + '</div>' +
-      ((w.inside || []).length ? '<div class="spc-wi">' + w.inside.slice(0, 28).map(([u, n]) => '<span title="' + esc(n + ', ' + T(u)) + '">' + spIc(n) + '</span>').join('') + '</div><div class="spc-wn">' + top.map(([n, v]) => v + ' ' + esc(n)).join(' · ') + '</div>' : ''); }
+      ((w.inside || []).length ? winStripHtml(w, w.stp || winStripData(w, per[per.length - 1].p, WIN.names || [WIN.n], (w.parts || []).map((q) => q.n).concat((OPEN && OPEN.bars) || []))) + '<div class="spc-wn">' + top.map(([n, v]) => v + ' ' + esc(n)).join(' · ') + '</div>' : ''); }
   const tl = one && per.length === 1 ? genTimeline(per[0], rows[0], { rot, cds, dots, ups, procs, win: WIN, pairs: pairL, dmgL: DMGL, ctx: (D.apl && D.apl.ctx) || [], res, ic: D.ic }) : '';
   const burst = winL.length && WIN ? (() => { const xs = winL.map((w) => w.x).filter((v) => v != null); const LB = Math.max(1, winL.reduce((v, w) => v + w.len, 0)); return xs.length ? { x: xs.reduce((v, y) => v + y, 0) / xs.length, n: xs.length, name: WSAY, dps: winL.reduce((v, w) => v + w.d, 0) / LB, out: winL.reduce((v, w) => v + (w.outR || 0) * w.len, 0) / LB } : null; })() : null;
   if (one && rows.length === 1) for (const g of groups) for (const c of g.l) { if (c.k === 'win' && winL.length) { c.cards = winL.map(winCard); c.cardsL = 'Each ' + WSAY + ', side by side'; } if (c.k === 'apl' && rows[0].apl && rows[0].apl.log) c.slips = aplGroups(rows[0].apl.log);
