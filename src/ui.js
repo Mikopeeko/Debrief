@@ -1780,6 +1780,7 @@ const PATCH_NOTES = [
     { t: 'One way to show a number', d: 'The Report card and Rotation now speak the same language as Debriefing: a bar with one number at its end, a grade as one letter at the start of its bar. The ranked roster is one bar per raider, a raider\'s checklist shows the rows that need them and folds the rest, and Rotation\'s header is one row with the talent trees folded under it.' },
     { t: 'Your tier set, in numbers', d: 'Rotation shows how much your 2-piece and 4-piece added, with a Where it came from breakdown behind every number. On every spec.' },
     { t: 'Your trinkets, both of them', d: 'Gear and extras on Rotation now shows both of your trinkets, with what each one did (damage, healing or stats), or that one was never pressed.' },], n: [
+    'Plan: the Who plays table is dot rows now, a dot in the class colour when someone plays, a red cross when they sit, with air between the rows, and on a wide screen the Who plays header, its buttons and things to fix run across the top with the table (each boss column just its numbered picture, the name on hover) and the Bosses rows side by side under them; the same taps and drags as before.',
     'Plan: the Who plays table is calmer (a playing cell is a quiet block in the class colour, a sitting cell is hollow and hatched so sits stand out), each boss row shows its status in colour on its edge with quiet buttons, and Tonight opens with the site\'s header strip.',
     'Plan: Tonight\'s things to fix are one list of rows (the sentence, then Swap in at the end), the roster card is one line, the Bosses header shows how many are ready as a bar, and the boss rows are tighter on a phone.',
     'Home: on a phone the banner\'s "Time on the boss" tile sits on one line under Pulls and Nights, and the ten bosses go five a row.',
@@ -30178,3 +30179,8 @@ function dsPlan() { const v = document.querySelector('#view.plan-page'); if (!v)
   v.querySelectorAll('.tn-sec > .tn-sh').forEach((sh) => { const s = sh.querySelector('.sub'), m = s && s.textContent.match(/(\d+) of (\d+) ready/); if (!m) return;
     sh.classList.add('ds-ready'); sh.style.setProperty('--p', String(Math.round(100 * +m[1] / Math.max(1, +m[2])))); }); }
 (function () { const f6 = dsBars; dsBars = function (root) { f6(root); try { dsPlan(); } catch (e) {} }; })();
+
+// ===== Design studio round 13 (Oct 25): Who plays, the boss name on hover (the picture headers lose their printed name beside the Bosses rows). Owner: the Design studio chat. =====
+function dsPlanTips() { const v = document.querySelector('#view.plan-page'); if (v && /[?&]cells=check/.test(location.search)) v.classList.add('ds-check'); /* (practice compare only) */
+  document.querySelectorAll('#view.plan-page .nt-g .nt-bh[aria-label]:not([data-tt])').forEach((b) => { const n = b.getAttribute('aria-label').replace(/^Open /, ''); if (n) b.setAttribute('data-tt', '<b>' + n.replace(/</g, '&lt;') + '</b>'); }); }
+(function () { const f7 = dsBars; dsBars = function (root) { f7(root); try { dsPlanTips(); } catch (e) {} }; })();
