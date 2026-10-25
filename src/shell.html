@@ -6659,6 +6659,25 @@ section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-z[style*="--p"] svg { dis
 .rcb-subs .rcb-st > .sub { grid-area: best; margin: 0; font-size: 12.5px; }
 @media (max-width: 760px) { .rcb-ban { grid-template-columns: 1fr; padding: 14px 16px; } .rcb-banr { flex-direction: row; justify-content: flex-start; gap: 10px; }
   .rcb-ban .rcb-bst .rcb-bt { flex-basis: 100%; justify-content: space-between; padding: 5px 12px; } .rcb-ban .rcb-bst .rcb-bt .l { white-space: normal; } }
+/* ===== Design studio round 9 (Oct 25): Compare, the answer first: the biggest fixes and Why the gap sit under the face-off, side by side; the big
+   moments show the opener and the first window, the rest fold. Owner: the Design studio chat. ===== */
+.cmp .ds-ctop { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin: 0 0 14px; align-items: start; }
+.cmp .ds-ctop.one { grid-template-columns: 1fr; }
+.cmp .ds-ctop { min-width: 0; }
+.cmp .ds-ctop > .panel { margin: 0 !important; width: auto !important; min-width: 0; max-width: 100%; box-sizing: border-box; }
+.cmp .ds-ctop > .cmp-fixs { border-top: 1px solid var(--line2); border-left: 4px solid var(--gold); }
+.cmp details.ds-cmore { margin: 0; border-top: 1px solid var(--line); }
+.cmp details.ds-cmore > summary { list-style: none; cursor: pointer; padding: 10px 0 6px; color: var(--gold); font: 600 14px var(--body); }
+.cmp details.ds-cmore > summary::-webkit-details-marker { display: none; }
+.cmp details.ds-cmore > summary::after { content: ' \25B8'; } .cmp details.ds-cmore[open] > summary::after { content: ' \25BE'; }
+.cmp .cmp-rcards > details.ds-cmore { grid-column: 1 / -1; border-top: 0; } .cmp .cmp-rcards > details.ds-cmore > .cmp-card { margin-top: 8px; }
+.cmp .cmp-wsp > details.ds-cmore { margin-top: 6px; }
+@media (max-width: 900px) { .cmp .ds-ctop { grid-template-columns: 1fr; } }
+/* the face-off: each side glows softly in its player's class colour (--c, set by Compare), the way the names already are */
+.cmp .cmp-hps > .cmp-hpn { position: relative; isolation: isolate; }
+.cmp .cmp-hps > .cmp-hpn::before { content: ''; position: absolute; z-index: -1; inset: -40px -60px; pointer-events: none; background: radial-gradient(ellipse 55% 70% at 25% 55%, color-mix(in srgb, var(--c, #9aa4b2) 24%, transparent), transparent 72%); }
+.cmp .cmp-hps > .cmp-hpn.cmp-hpr::before { background: radial-gradient(ellipse 55% 70% at 75% 55%, color-mix(in srgb, var(--c, #9aa4b2) 24%, transparent), transparent 72%); }
+.cmp .cmp-hps > .cmp-hpbar { height: 12px; border-radius: 999px; overflow: hidden; box-shadow: 0 0 18px rgba(0,0,0,.35); }
 </style>
 
 

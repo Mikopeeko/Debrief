@@ -1772,12 +1772,14 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-25', h: [
+    { t: 'Compare: the answer first', d: 'Your biggest fixes and Why the gap now sit right under the face-off, side by side, instead of hidden at the bottom. Your big moments show the opener and the first window with the rest folded, and the face-off glows in each player\'s class colour.' },
     { t: 'Report card: one card per raider', d: 'Open a raider in the ranked roster and everything about them is one card under their row: who they are, their grade and rank, the checklist on the left and Their night on the right, with their deaths, best tonight and room to grow. The side panel is gone and the roster has the full width.' },
     { t: 'Rotation, in three places', d: 'You and your fixes in one box on top (your score and numbers on the left, What to fix on the right). Under it, on a desktop, the checklist you work through on the left and your numbers (the healing or damage split, then gear as one quiet list) on the right. Phones keep one column.' },
     { t: 'Debriefing, laid out like a newspaper', d: 'Your raid lead\'s box is the one hero. Under it, on a desktop, the phases run down the left and the glance timeline and the details sit on the right; the sections are labels with a hairline instead of boxes, and the player tables fold under Raid numbers. The same on All pulls. Phones keep one column.' },
     { t: 'One way to show a number', d: 'The Report card and Rotation now speak the same language as Debriefing: a bar with one number at its end, a grade as one letter at the start of its bar. The ranked roster is one bar per raider, a raider\'s checklist shows the rows that need them and folds the rest, and Rotation\'s header is one row with the talent trees folded under it.' },
     { t: 'Your tier set, in numbers', d: 'Rotation shows how much your 2-piece and 4-piece added, with a Where it came from breakdown behind every number. On every spec.' },
     { t: 'Your trinkets, both of them', d: 'Gear and extras on Rotation now shows both of your trinkets, with what each one did (damage, healing or stats), or that one was never pressed.' },], n: [
+    'Compare: Why the gap shows its two biggest reasons and folds the rest; on Your other pulls it leads the page.',
     'Report card: the night banner\'s five numbers are one slim strip with a smaller raid-grade ring, and the raid\'s six category tiles are a label with the letter, a bar with the score, and tonight\'s best, the same language as the roster.',
     'Rotation: Gear and extras is back in colour. Each group wears its own colour on a stripe, its label and total, its bars and a soft glow; the numbers stay white.',
     'Rotation: inside a checklist card, a tile only opens when there is more inside (a list, a chart, the steps); the others show their one-line result right in the tile, with how it is judged on hover. The ones that open show a small arrow.',
@@ -30134,3 +30136,16 @@ function dsReport() { const v = document.getElementById('view'); if (!v) return;
     if (op && hd) { const btns = hd.querySelector('.rqc-btns'); (btns || hd).appendChild(op); } }
   (rqc || under.firstElementChild).after(card); }
 (function () { const f3 = dsBars; dsBars = function (root) { f3(root); try { dsReport(); } catch (e) {} }; })();
+
+// ===== Design studio round 9 (Oct 25): Compare, the answer first. Moves the biggest-fixes and Why-the-gap panels out of the fold to under the
+// face-off, and folds the big moments after the first two. Runs after dsBars on every redraw. Owner: the Design studio chat. =====
+function dsCompare() { const v = document.getElementById('view'); if (!v) return; const cmp = v.querySelector(':scope > .cmp'); if (!cmp) return;
+  const face = cmp.querySelector(':scope > .cmp-hps');
+  if (face && !cmp.querySelector(':scope > .ds-ctop')) { const fix = cmp.querySelector('.cmp-fold .cmp-fixs'), gap = cmp.querySelector('.cmp-fold .cmp-gap');
+    if (fix || gap) { const t = document.createElement('div'); t.className = 'ds-ctop' + (fix && gap ? '' : ' one'); if (fix) t.appendChild(fix); if (gap) t.appendChild(gap); face.after(t); } }
+  const fold = (items, keep, word) => { if (items.length <= keep + 1) return; const rest = items.slice(keep); const d = document.createElement('details'); d.className = 'ds-cmore'; const s = document.createElement('summary'); s.textContent = rest.length + ' more ' + word; d.appendChild(s); rest[0].before(d); rest.forEach((x) => d.appendChild(x)); };
+  /* the big moments: each window list shows its first pair, the rest fold */
+  cmp.querySelectorAll(':scope > .panel.cmp-story:not(.cmp-gap) .cmp-wsp').forEach((w) => { if (w.dataset.dsMore) return; w.dataset.dsMore = '1'; fold([...w.querySelectorAll(':scope > .cmp-wcr')], 1, 'windows'); });
+  /* Why the gap: the first two reasons show, the rest fold */
+  cmp.querySelectorAll('.cmp-gap .cmp-rcards').forEach((rc) => { if (rc.dataset.dsMore) return; rc.dataset.dsMore = '1'; fold([...rc.children].filter((c) => c.classList.contains('cmp-card')), 2, 'reasons'); }); }
+(function () { const f4 = dsBars; dsBars = function (root) { f4(root); try { dsCompare(); } catch (e) {} }; })();
