@@ -411,10 +411,11 @@ function cols2(b, chrome) {
     /* (Detailed always (Oct 24, the user: "the detailed setup should always just be 2 columns"); the other styles past about two-thirds of the screen) */
     const LKc = (D && D.lk) || {}, deep2 = (LKc.detailed || LKc.preset === 'detailed') && LKc.preset !== 'simple', cap = (screen.availHeight || 900) * 0.67 - chrome - above - 16;
     let best = -1, bh = total;
-    if (LKc.twoCol !== false && (deep2 ? total > 360 : total > cap) && (screen.availWidth || 1600) >= 900)
-      for (let i = 1; i < kids.length; i++) { if (!kids[i].classList.contains('kc')) continue; const y = kids[i].getBoundingClientRect().top - top0, hh = Math.max(y, total - y); if (y > 60 && hh < bh) { best = i; bh = hh; } }
+    /* (columns by style (Oct 24, the user: windows "keep switching"): Detailed, or a mix made from it, always two; the others always one) */
+    const two = LKc.twoCol !== false && deep2 && (screen.availWidth || 1600) >= 900; void cap;
+    if (two) for (let i = 1; i < kids.length; i++) { if (!kids[i].classList.contains('kc')) continue; const y = kids[i].getBoundingClientRect().top - top0, hh = Math.max(y, total - y); if (y > 60 && hh < bh) { best = i; bh = hh; } }
     g.style.width = '';
-    if (best > 0) { const R = document.createElement('div'); R.className = 'kR'; for (const k of kids.slice(best)) R.appendChild(k); g.appendChild(R); g.classList.remove('one'); g.classList.add('two'); want = 2; }
+    if (two) { if (best > 0) { const R = document.createElement('div'); R.className = 'kR'; for (const k of kids.slice(best)) R.appendChild(k); g.appendChild(R); } g.classList.remove('one'); g.classList.add('two'); want = 2; }
   }
   if (want !== COLS) { COLS = want; post('cols:' + want); }
 }
@@ -440,7 +441,7 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') post('clos
 function take(d) {
   if (!d) return;
   if (d.copied != null) { copied = !!d.copied; render(); return; }
-  waiting = false; loadingPull = null; if (!D || !d.h || !D.h || d.h.boss !== D.h.boss) WHO = null; D = d; copied = !!d.copiedAlready; big = !!d.full; for (const k of Object.keys(OPEN)) delete OPEN[k]; render();
+  waiting = false; loadingPull = null; WHO = null; VIEW = null; /* (each recap starts on you, on Me, like the card in WoW (Oct 24)) */ D = d; copied = !!d.copiedAlready; big = !!d.full; for (const k of Object.keys(OPEN)) delete OPEN[k]; render();
   const pr = document.getElementById('pullsRow'), on = pr && pr.querySelector('.pc.on'); if (on) pr.scrollLeft = Math.max(0, on.offsetLeft - pr.clientWidth + on.offsetWidth + 12);
   const b = document.querySelector('.body'); if (b) b.scrollTop = 0;
 }

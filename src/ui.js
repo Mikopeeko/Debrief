@@ -1813,6 +1813,7 @@ const PATCH_NOTES = [
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
     'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
   ], f: [
+    'Debrief: the recap opens the same way every time, on you, on the Me tab, the same width every pull, and it no longer pops back with the previous pull after combat',
     'Debrief: one recap window everywhere, the card, in the pop-up and in WoW; the /recap opens switch is gone and Expand on the card opens the big window',
     'Debriefing: the raid lead\'s Next pull / Next raid line no longer stops mid-sentence (it ended "in front …."); a long one stops at the end of the instruction.',
     'The Coiled Altar: wipes at the end of phase 1 and in phase 2 are called again (Zul\'jan sitting at 0% held the call back).',

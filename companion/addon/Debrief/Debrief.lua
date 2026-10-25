@@ -294,6 +294,9 @@ local function mkTab(key, label, x)
   b.key = key; tabs[key] = b
   return b
 end
+-- (each opening starts on you, on the Me tab (Oct 24, the user: windows "keep switching"): the arrows and the Raid view tab last until
+-- the card closes; not while the settings or the setup show the sample)
+card:HookScript("OnShow", function() if not (Debrief_PreviewReal and Debrief_PreviewReal()) then view = "me"; if DB then DB.who = nil end end end)
 local tMe = mkTab("me", "Me", PAD - 10)
 local tRaid = mkTab("raid", "Raid view", PAD - 10 + tMe:GetWidth())
 local who = card:CreateFontString(nil, "OVERLAY"); setFont(who, "bold", 13); who:SetJustifyH("RIGHT"); who:SetWordWrap(false)
@@ -801,7 +804,7 @@ local function renderOnce()
   -- (tabs and the body sit lower when the pull chips show)
   local coachOn = m.coach and (m.coach.head or "") ~= "" and not m.h.practice and (DB.show or {}).coach ~= false -- (Debriefing's coach box on every style, with the Raid view and You tabs; the style decides how much is open (Oct 22))
   local glanceOn = DB.glance and (m.raid.ghead or "") ~= "" and not coachOn -- (the Glance card: one view, so no tabs; older pulls without it keep the tabs)
-  if coachOn and not DB.viewPicked and UI.canRaid() then view = "raid" end -- (the coach box first, until you pick a tab yourself)
+  -- (no "Raid view first" any more (Oct 24): the card opens on Me, like the pop-up; Raid view is one click)
   TOPY = (((DB.show or {}).chips ~= false) and 180 or 150) - (glanceOn and 38 or 0)
   tMe:ClearAllPoints(); tMe:SetPoint("TOPLEFT", card, "TOPLEFT", PAD - 10, -TOPY + 38); tRaid:ClearAllPoints(); tRaid:SetPoint("LEFT", tMe, "RIGHT", 0, 0)
   nextB:ClearAllPoints(); nextB:SetPoint("TOPRIGHT", card, "TOPRIGHT", -PAD, -TOPY + 36)
@@ -1314,7 +1317,9 @@ function render()
   local T = UI.two
   T.cols, T.brk, T.cwc = 1, 0, nil
   renderOnce()
-  local tall = T.total and ((DB.detailed and not DB.compact and T.total > 360) or (TOPY + T.total + 42 > (T.room or 768) * 0.67))
+  -- (columns by style (Oct 24, the user: windows "keep switching"): Detailed, or a mix made from it, always two; the others always one;
+  -- so the card is the same width every pull)
+  local tall = T.total and DB.detailed and not DB.compact
   if DB.twoCol ~= false and tall then
     local cw1 = (WIDTHS[DB.width or "normal"] or 400) - PAD * 2
     local sw = ((UIParent and UIParent.GetWidth and UIParent:GetWidth()) or 1365) / math.max(0.5, (card.GetScale and card:GetScale()) or 1)
@@ -1323,8 +1328,7 @@ function render()
       if cwc < cw1 then T.cwc = cwc; renderOnce() end -- (measured again at a column's width)
       local best, bh = 0, T.total or 0
       for i, yb in ipairs(T.marks) do local hh = math.max(yb, (T.total or 0) - yb + 2); if yb > 60 and hh < bh then best, bh = i, hh end end
-      if best > 0 then T.cols, T.brk = 2, best; renderOnce()
-      elseif T.cwc then T.cwc = nil; renderOnce() end -- (nowhere to split: one column, as before)
+      T.cols, T.brk = 2, best; renderOnce() -- (nowhere to split: still two columns wide, everything on the left, so the width never changes)
     end
   end
   if Debrief_FitPreview then Debrief_FitPreview() end
@@ -1390,10 +1394,10 @@ function Debrief_CombatStart()
     if big and big:IsShown() then big:Hide(); hidBig = true end
   end
 end
+-- (what combat hid stays closed (Oct 24, the user: "no card popping back after combat"): it came back with the previous pull, while the
+-- PC pop-up showed the new one; /recap opens it again)
 function Debrief_CombatEnd()
-  if hidCard then hidCard = false; card:Show(); render() end
-  if hidMini then hidMini = false; mini:Show() end
-  if hidBig then hidBig = false; big:Show(); bigRender() end
+  hidCard, hidMini, hidBig = false, false, false
 end
 onShow = function()
   if (DB.autoClose or 0) > 0 and C_Timer then
@@ -2174,7 +2178,7 @@ local function buildOptions()
   pslider("Card size", nil, 0.7, 1.5, function() return DB.scale or 1 end, function(v) DB.scale = v end)
   pslider("Text size", nil, 0.85, 1.2, function() return DB.fontScale or 1 end, function(v) DB.fontScale = v end)
   choice("Width", nil, WIDTH_CHOICES, function() return DB.width or "normal" end, function(v) DB.width = v end)
-  switch("Two columns when it's long", "Taller than your screen: the card splits in two, side by side.", function() return DB.twoCol ~= false end, function(v) DB.twoCol = v end, true)
+  switch("Two columns with Detailed", "The Detailed card sits in two columns side by side, every pull. The other styles are one column.", function() return DB.twoCol ~= false end, function(v) DB.twoCol = v end, true)
   -- (the font: ‹ name › through Debrief's own, the game's, and every font your other addons share)
   do
     local base = { { "debrief", "Debrief" }, { "wow", "WoW" }, { "arial", "Arial Narrow" }, { "morpheus", "Morpheus headings" } }
@@ -2198,7 +2202,7 @@ local function buildOptions()
   -- ---------- More: set once and forget ----------
   page("more")
   section("On screen", true)
-  switch("Hide during combat", "Back when the fight ends.", function() return DB.hideCombat ~= false end, function(v) DB.hideCombat = v end, true)
+  switch("Hide during combat", "It stays closed after the fight: /recap opens it again.", function() return DB.hideCombat ~= false end, function(v) DB.hideCombat = v end, true)
   segment("Close by itself", "Not while your mouse is on it.", { { 0, "Never" }, { 30, "30 s" }, { 60, "60 s" }, { 120, "2 min" } },
     function() return DB.autoClose or 0 end, function(v) DB.autoClose = v end, true)
   switch("Lock in place", "The card and its window can't be dragged.", function() return DB.lock == true end, function(v) DB.lock = v end, true)
@@ -2698,6 +2702,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     if not DB.glanceDefault then DB.glanceDefault = true; DB.detailedDefault = true; DB.threeStyles = true; if DB.preset == nil then Debrief_SetPreset("standard") end end -- (new players start on Standard (Oct 24))
     -- (five styles became three (Oct 24): Glance and Medium are Standard now, Heavy is Detailed; Simple and Detailed get their new sections)
     if not DB.noMini then DB.noMini = true; DB.mini = false end -- (the mini bar left the settings (Oct 24))
+    DB.who = nil -- (every login and /reload starts on you (Oct 24))
     DB.bigDefault = nil -- (the card is the one recap window (Oct 24): nothing opens the big window by itself)
     if not DB.threeStyles then DB.threeStyles = true; local was = DB.preset
       if was == "glance" or was == "medium" then Debrief_SetPreset("standard") elseif was == "heavy" or was == "detailed" then Debrief_SetPreset("detailed") elseif was == "simple" then Debrief_SetPreset("simple") end end
