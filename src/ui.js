@@ -1770,6 +1770,7 @@ const PATCH_NOTES = [
     { t: 'Debrief in game: a guided setup', d: 'The first time you log in, a short setup helps you pick a style and what your card shows, with a live preview beside it (/debrief setup opens it again). Long cards now split into two columns instead of running off the screen.' },
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
+    'Boss guides, Coiled Altar Mythic: each Toxic Deluge has 8 orbs, so pop about 4 per frontal (never all 8), and keep popping right up to the push into phase 2 at 11 stacks or fewer, with raid cooldowns stacked. The orb maps now show 4 per frontal. (From 11 top Mythic kills since the Oct 13 tuning.)',
     'Fairer checks on Sszorak, Entombed Sentinels, Vashnik and Nek\'zali, measured on 67 top guilds\' kills: living through a Tempest, a Crosswinds drift, a Virulence clip, a second droplet, a slow Blighted Blood dispel, a Plague Froth line or one or two Ignition circles is a note, not a mistake. Dying to them still counts. A soak one or two short (Unstable Miasma) is fine; three short is a mistake.',
     'Debriefing: two or more Malignant Totems still up at an Imbibe (Vashnik) calls the wipe, and What wiped us names it. No top guild\'s kill ever had two.',
     'Debrief: reminders when to /reload, a Report a problem button in the app, key levels on dungeon bosses, and the pop-up matches the card on every style',
