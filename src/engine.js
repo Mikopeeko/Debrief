@@ -3204,8 +3204,8 @@ const HOW = {
     nyjet: 'Water Jet is a beam on the current tank that hits harder with every tick, so the tanks swap on every one. Aim it over the ice puddles the orbs leave: it clears them. Everyone else stays out of the beam.',
   },
   'The Coiled Altar': {
-    orbs: 'Toxic Deluge spits venom orbs around the room, and every orb left out pulses raid damage. Players carry orbs into a line in front of the boss, and the tank\'s Sever destroys every orb in its cone. Each destroyed orb gives the whole raid one Venom Rupture stack, whatever its color. Aim for 5 to 6 orbs per frontal and never more than 7. At the end of P1 the second-to-last frontal pops only 2 to 3 and the last one hits empty ground, because the orbs explode when Zul\'jan dies (aim for 9 to 11 stacks at the push, under stacked raid cooldowns). On Mythic some orbs are purple. Only the assigned carriers move them, nothing may touch a purple\'s ring (a carried green may pass a carried purple), and a purple still out when the pools come is a wipe. In P3 the first frontal takes every purple at once. Greens can be left if needed, but purples never. Defilement of the Coiled Altar detonates whatever is on the ground.',
-    soakq: 'Zul\'jan marks a player and drops an axe on them. Everyone inside the 9-yard circle splits the damage. On Mythic it needs at least 5 players (3 on Heroic and Normal), so over-send. Guillotine 1 takes 6 to 7: the players who will immune the 2nd plus tanky players with personals, with externals on the target. The 2nd is both tanks with personals, two immunities and Blessing of Protection on the target. Its immuners stand in the 1st too, because that debuff stops the 2nd from targeting them. In P3 Grim Guillotine 1 has its own spot, and 2 and 3 go together in another: Grim 2 is three immunities with Spellwarding and big externals on the target, Grim 3 is everyone without the debuff.',
+    orbs: 'Toxic Deluge spits venom orbs around the room, and every orb left out pulses raid damage. Players carry orbs into a line in front of the boss, and the tank\'s Sever destroys every orb in its cone. Each destroyed orb gives the whole raid one Venom Rupture stack, whatever its color. About 4 orbs per frontal: the two frontals split each Toxic Deluge\'s 8 orbs. Never 8 at once. Push Zul\'jan at 11 Venom Rupture stacks or fewer, under stacked raid cooldowns. On Mythic some orbs are purple. Only the assigned carriers move them, nothing may touch a purple\'s ring (a carried green may pass a carried purple), and a purple still out when the pools come is a wipe. In P3 the first frontal takes every purple at once. Greens can be left if needed, but purples never. Defilement of the Coiled Altar detonates whatever is on the ground.',
+    soakq: 'Zul\'jan marks a player and drops an axe on them. Everyone inside the 9-yard circle splits the damage. On Mythic it needs at least 5 players (3 on Heroic and Normal), so over-send. In phase 1 the first soak is 5 to 8 players with personals, and the second is the immunities and both tanks. In phase 3 each axe needs at least 5, free of the debuff. The row shows who was in, what each had up, the target and the corner.',
     tankfront: 'The boss frontals leave a debuff on the tank. In P1 the tanks taunt-swap so every Sever lands on a fresh tank. In P2 one tank takes every Soul Sever: a defensive on the first stack, a defensive plus two externals on the second, and the stacks drop before a third. Red: a tank died to it or took a third stack. Amber: a second stack without two externals, or a missed swap in P1.',
     shield: 'Every second set of adds is followed by Eternal Nightfall: Malacrass shields himself while casting it. This is the damage check of P2 and P3: assign cooldowns and pool damage for every shield. The cast can only be kicked once the shield is gone, so it takes two steps. Break the shield, then kick Malacrass before the 17s cast finishes. Give every shield a kicker and a backup. Broken shows how far into the cast the shield came off and how much time was left to kick.',
     dmghost: 'Dreadmarch mind controls a few players, who walk to the edge and jump off unless their absorb shield is broken in time. Targets stack on the raid\'s Dreadmarch marker and press a macro that cancels their own shields and speed buffs. Stuns and grips stop them walking. When the mind control breaks, stand still: your ghost spawns where you are a moment later, so the ghosts start in one clump. On Mythic only you can see your ghost (an interrupted Wail reveals them all briefly). Two ghosts touching hits both players hard (Malevolent Resonance). The boss tank aims Soul Sever to hit as many ghosts as possible; a ghost it misses is walked back for the next one, and staring at your ghost at the end of P2 makes it disappear at the transition. (Maps show ghosts where they spawned; the log has no later positions for them.)',
@@ -3214,7 +3214,7 @@ const HOW = {
     inter: 'Malacrass channels Soulbinding: Zul\'jan takes double damage, so use Bloodlust and burn him. Fragments of Malacrass rush toward Zul\'jan and heal him for about 10% if they reach him, which is close to a wipe. Players block them, but every block gives the whole raid a Spirit Erasure stack (more damage taken), so soak in rounds: 3 to 5 stacks, let them drop, repeat; near the end stack raid cooldowns in the middle and go up to 7 to 10. Spread soakers around the room, including the inner ring. Zul\'jan under 35% when it ends is on pace for the kill.',
     avoid: 'Every source of damage that positioning can avoid, most harmful first. Dangerous (red on any hit): tank frontals on non-tanks and ghosts touching. Harmful: the statue poison pools (Noxious Ground), Axegrinder axes, someone else\'s Gloombomb, standing near a purple orb carrier, and P3 Defiled Ground. Minor: standing near a green orb carrier and Toxic Deluge impacts. Pools count the seconds you stood in them, axes and the rest the times you walked into them, against the fastest kills by the same point of the fight: the second Fangs fills the middle, so a few seconds there is normal. Tanks aren\'t judged on Axegrinder. Raid-wide damage (orb pulses and ruptures, Dreadful Presence, Retaliatory Malice, the Guillotine burst) isn\'t avoidable and isn\'t listed.',
     vf: 'Zul\'jan\'s Venomfang puts a 14-second poison on random players. Dispel it quickly: any healer can take it. It\'s a small part of the raid\'s damage, and it doesn\'t kill on its own, so a slow dispel is a small slip, never a fail. Each row is one Venomfang: how long it stayed on and who dispelled it. Amber: on for more than 4 seconds or never dispelled.',
-    push: 'Phase changes are timed. In P1 hold damage, keep the last frontal on empty ground, then kill Zul\'jan in the middle after the last Toxic Deluge with Darkness, Anti-Magic Zone and Spirit Link stacked (aim for 9 to 11 stacks). Push Malacrass right after a Soul Sever clears the ghosts (watch the knockback at the edge), use Lust in the intermission, and in P3 kill Zul\'jan first, before the Defilement that follows the burn, with Malacrass at about 7 to 8%, then finish Malacrass before he enrages.',
+    push: 'Phase changes are timed. In P1 hold damage, then kill Zul\'jan in the middle after the last Toxic Deluge with Darkness, Anti-Magic Zone and Spirit Link stacked (aim for 9 to 11 stacks). Push Malacrass right after a Soul Sever clears the ghosts (watch the knockback at the edge), use Lust in the intermission, and in P3 kill Zul\'jan first, before the Defilement that follows the burn, with Malacrass at about 7 to 8%, then finish Malacrass before he enrages.',
   },
   'Entombed Sentinels': {
     helix: 'At 100 energy both bosses go to the middle and take 99% less damage (Vitriolic Stasis), and everyone gets Helical Toxins: four orbs over your head, some green. Touch exactly one other player so your green orbs make 4: 1 with 3, 2 with 2. On Mythic the counts hide after a few seconds, so the raid uses a system (who pings and jumps, who goes under the boss) and your debuff stacks are your green orbs. A wrong bump adds the two counts together instead of clearing. Anyone still holding it after 28 seconds takes Cultivated Burst (a huge hit, a long damage over time and a red pool), so a failed player goes to a far corner and stops bumping. The bosses heal during the game: calm, but not slow. Each player\'s count (the number by their name) isn\'t written in the log. It\'s read from the debuff\'s damage, about 15k a stack every 2 seconds, so a pair that solved it before the first tick has none. Amber: solved after a wrong bump. Red: didn\'t solve it (Cultivated Burst).',
@@ -3863,7 +3863,7 @@ function buildCoiledAltar(ev, r, h) {
     const lastDel = deluges.filter((t) => t <= pt).pop();
     const fangs = casts('fangs of the coiled altar').filter((t) => t < p2 - 1).length, p1Late = mythic && p2 > KT.p1[1] + 3, p1Bad = mythic && fangs >= 3;
     if (p1Bad || p1Late) MT(p2, p1Bad ? 'High' : 'Medium', 'Zul\'jan went down at ' + ms2(p2) + (p1Bad ? ', after the third Noxious Ground pools' : '') + ' (top guilds: ' + ms2(KT.p1[0]) + ' to ' + ms2(KT.p1[1]) + ').',
-      'Push Zul\'jan right after the second pools: hold the last frontal on empty ground, then burn him with cooldowns stacked.');
+      'Push Zul\'jan right after the second pools, at 11 Venom Rupture stacks or fewer: burn him with cooldowns stacked.');
     const st = stackAt(pt + 5), mx = st.length ? Math.max(...st) : 0;
     const cds = pcasts(RAID_CD).filter((e) => e.t >= pt - 8 && e.t <= pt + 12);
     const pots = healPots(pt - 5, pt + 20);
@@ -3931,16 +3931,15 @@ function buildCoiledAltar(ev, r, h) {
   const landAt = (n, t) => (ev.find((e) => e.k === 'cast' && L(e.spell) === n && e.t >= t && e.t <= t + 8) || { t }).t;
   // (a P1 Sever that would land after Zul'jan went down never happened)
   const severs = ['sever', 'blighted sever'].flatMap((n) => casts(n).map((t) => ({ t: landAt(n, t), n }))).filter((s) => !(s.n === 'sever' && zjDown != null && s.t >= zjDown - 0.2)).sort((a, b) => a.t - b.t);
-  // the plan for each frontal: 5 to 6 orbs (7 at most); in P1 the second-to-last pops 2 to 3 and the last hits
-  // nothing; in P3 the first takes every purple at once, later ones clear the purples
+  // the plan for each frontal (Oct 24, from 11 top Mythic kills after the Oct 13 tuning): each Toxic Deluge drops 8 orbs and its two frontals
+  // split them, about 4 each (never 8), right up to the push; in P3 the first takes every purple at once, later ones clear the purples
   // (P1 positions count every Sever cast, including a last one cut off by the push, so "second-to-last" stays right)
   const p1All = casts('sever').map((t) => landAt('sever', t)).sort((a, b) => a - b), p3Sev = severs.filter((s) => s.n === 'blighted sever');
   const planFor = (s) => {
     // (Heroic and Normal have no purple orbs and no count to aim for: the guides' plan is to clear every orb on the ground
     // with each frontal, so the count is shown, not judged)
     if (!mythic) return { txt: 'every orb on the ground', badAt: Infinity };
-    if (s.n === 'sever') { const k = p1All.findIndex((t) => Math.abs(t - s.t) < 0.5), n = p1All.length, last = p2 != null && k === n - 1, second = p2 != null && k === n - 2;
-      return last ? { txt: 'none, into empty ground', max: 0, warnAt: 1, badAt: 3 } : second ? { txt: '2 to 3', warnAt: 5, badAt: 8 } : { txt: '5 to 6 (7 at most)', warnAt: 99, badAt: 8 }; }
+    if (s.n === 'sever') return { txt: 'about 4 (never 8)', badAt: 8 };
     return p3Sev.indexOf(s) === 0 ? { txt: 'every purple (5 to 7)', badAt: 8 } : { txt: 'the purples left (7 at most)', badAt: 8 };
   };
   const sevRows = severs.map((s, i) => {
@@ -3951,7 +3950,7 @@ function buildCoiledAltar(ev, r, h) {
     const cyc = deluges.filter((d) => d <= s.t).length, nth = severs.filter((x) => x.t <= s.t && deluges.filter((d) => d <= x.t).length === cyc).length;
     const pf = planFor(s), plan = pf.txt;
     const bad = popped >= pf.badAt;
-    if (bad) mistakes.push({ t: s.t, player: 'Raid', mechanic: 'Coalesced Venom', id: 1282403, severity: 'Medium', detail: S(s.n)[1] + ' popped about ' + popped + ' orbs at once; the plan was ' + plan + '.', fix: 'Each popped orb is a raid-wide stack. Aim for 5 to 6 per frontal and never more than 7.' }); /* (an orb mistake, filed under Coalesced Venom, not the tanks' Sever (Oct 24)) */
+    if (bad) mistakes.push({ t: s.t, player: 'Raid', mechanic: 'Coalesced Venom', id: 1282403, severity: 'Medium', detail: S(s.n)[1] + ' popped about ' + popped + ' orbs at once; the plan was ' + plan + '.', fix: 'Each popped orb is a raid-wide stack. About 4 per frontal: the two frontals split each Toxic Deluge\'s 8 orbs. Never 8 at once.' }); /* (an orb mistake, filed under Coalesced Venom, not the tanks' Sever (Oct 24)) */
     return [{ txt: '#' + (i + 1) }, { t: s.t }, { s: S(s.n) }, { txt: phaseAt(s.t) }, { txt: 'about ' + popped + ' orbs', bad }, { txt: plan || '—', dim: true }];
   });
   sections.splice(2, 0, { id: 'sever', title: 'Sever orb counts', spell: S('sever'), mythicOnly: false,
@@ -4061,8 +4060,8 @@ function buildCoiledAltar(ev, r, h) {
   // from targeting them (a targeted immuner would leave the circle a player short).
   const SHORT = { 'divine shield': 'Bubble', 'blessing of protection': 'BoP', 'blessing of spellwarding': 'Spellwarding', 'aspect of the turtle': 'Turtle', 'cloak of shadows': 'Cloak', 'ice block': 'Ice Block', 'dispersion': 'Dispersion', 'anti-magic shell': 'AMS', 'netherwalk': 'Netherwalk',
     'blessing of sacrifice': 'Sacrifice', 'pain suppression': 'Pain Suppression', 'guardian spirit': 'Guardian Spirit', 'ironbark': 'Ironbark', 'life cocoon': 'Life Cocoon', 'time dilation': 'Time Dilation', 'zephyr': 'Zephyr', tank: 'Tank' };
-  const PLAN = { g1: '6 to 7 soakers: the 2nd soak\'s immuners plus tanky players with personals; externals on the target', g2: '5: both tanks with personals, 2 immunities, target gets Blessing of Protection',
-    gg1: 'its own spot; the 2nd soak\'s immuners join; externals on the target', gg2: 'the second spot: 3 immunities, big externals and Spellwarding on the target', gg3: 'same spot as Grim 2: everyone without the debuff (over-send, at least 5)' };
+  const PLAN = { g1: '5 to 8 players with personals', g2: 'the immunities and both tanks',
+    gg1: 'at least 5, free of the debuff', gg2: 'at least 5, free of the debuff', gg3: 'at least 5, free of the debuff (over-send)' };
   const zjPts = []; for (const g of zj) { const u = r.positions && r.positions.get(g); if (u) for (const p of u.pts) zjPts.push(p); }
   const mid = (a) => { const v = a.slice().sort((x, y) => x - y); return v.length ? v[v.length >> 1] : 0; };
   const center = { x: mid(zjPts.map((p) => p[1])), y: mid(zjPts.map((p) => p[2])) };
@@ -4107,39 +4106,19 @@ function buildCoiledAltar(ev, r, h) {
     const corner = cornerOf(all, hit); if (s.n === 'grim guillotine') corners[gi] = corner;
     // the target needs protection on every soak but the last Grim Guillotine (where the plan just over-sends)
     const needsProt = mythic && key !== 'gg3', tgtDied = tgt && s.died.includes(pname(tgt));
-    if (needsProt && tgt && !tag(tgt)) MS(s.t, pname(tgt), s.n, tgtDied ? 'High' : 'Low', 'Was the ' + S(s.n)[1] + ' target with no external or immunity' + (tgtDied ? ' and died' : '') + '.', 'The target gets an external (Blessing of Protection on the 2nd Guillotine, Spellwarding on Grim Guillotine 2).', map);
-    if (immunitySoak) for (const g of s.who) if (g !== tgt && !tag(g)) MS(s.t, pname(g), s.n, 'Low', 'Soaked the immunity ' + S(s.n)[1] + ' without an immunity or tank personal active.', 'This soak is planned for tanks and immunities only.', map);
-    if (mythic && key === 'g2') {
-      // (Oct 21, your note: a healer with an immunity up is one of the immunities, e.g. a Holy Paladin's Divine Shield)
-      for (const g of s.who) if (role(g) === 'healer' && g !== tgt && !IMMUNE.some((n) => has(g, n, hit))) MS(s.t, pname(g), s.n, 'Low', 'Healer in Guillotine 2 without an immunity: this soak is planned for the tanks and immunities only.', 'Healers stay out of the 2nd Guillotine unless they immune it (a Holy Paladin can with Divine Shield).', map);
-      const tanks = s.who.filter((g) => role(g) === 'tank').length;
-      if (tanks < 2) MS(s.t, 'Raid', s.n, 'Low', 'Only ' + tanks + ' tank' + (tanks === 1 ? '' : 's') + ' soaked Guillotine 2 (plan: both tanks, with a personal).', 'Both tanks go into the 2nd Guillotine with the immunities.', map);
-    }
-    if (mythic && key === 'gg2') {
-      const imm = s.who.filter((g) => g !== tgt && IMMUNE.some((n) => has(g, n, hit))).length;
-      if (imm < 3) MS(s.t, 'Raid', s.n, 'Low', 'Grim Guillotine 2 had ' + imm + ' personal immunit' + (imm === 1 ? 'y' : 'ies') + ' (plan: 3, plus Spellwarding on the target).', 'Three immunities go in, and the target gets Spellwarding or a big external.', map);
-    }
-    // the 2nd soak's immuners should have soaked the 1st too (its debuff stops them being targeted by the 2nd)
-    if (mythic && (key === 'g2' || key === 'gg2')) {
-      const first = (key === 'g2' ? p1g : grim)[0];
-      for (const g of s.who) if (g !== tgt && IMMUNE.some((n) => has(g, n, hit)) && first && !first.who.includes(g))
-        MS(s.t, pname(g), s.n, 'Low', 'Immuned ' + S(s.n)[1] + ' 2 without having soaked the 1st, so they could have been its target.', 'Players who immune the 2nd soak also stand in the 1st, because its debuff stops the 2nd from targeting them.', map);
-    }
+    /* (Coiled Altar fix 5, Oct 24: top guilds often give the target nothing and it lives; only a target who died unprotected is a mistake) */
+    if (needsProt && tgt && !tag(tgt) && tgtDied) MS(s.t, pname(tgt), s.n, 'High', 'Was the ' + S(s.n)[1] + ' target with no external or immunity and died.', 'The target gets an external (Blessing of Protection on the 2nd Guillotine, Spellwarding on Grim Guillotine 2).', map);
     // one row per drop: what the plan wanted, who was in the circle (and what they had up), target, corner, deaths
     // soakers as player chips with a short badge for what they had up (the plan per soak is in How it works)
     const kind = (g) => { const tg = tag(g); return tg ? [SHORT[tg.replace(/^(immune|external): /, '').split('/')[0]] || tg.replace(/^(immune|external): /, ''), /^immune/.test(tg) ? 'imm' : /^external/.test(tg) ? 'ext' : 'tank'] : personal(g, hit) ? ['Personal', 'pers'] : ['', '']; };
     qRows.push([{ t: s.t }, { s: S(s.n), sub: phaseAt(s.t) + (gi >= 0 ? ' · soak ' + (gi + 1) : '') }, { txt: String(s.who.length), sub: 'needs ' + need, bad: s.who.length < need },
       s.who.length ? { pt: s.who.map((g) => [pname(g), ...kind(g)]) } : { txt: '—', dim: true },
-      tgt ? { p: pname(tgt), sub: tag(tgt) ? kind(tgt)[0] : (needsProt ? 'no protection' : 'none needed'), bad: needsProt && !tag(tgt) && tgtDied, warn: needsProt && !tag(tgt) } : { txt: 'target not found', dim: true },
+      tgt ? { p: pname(tgt), sub: tag(tgt) ? kind(tgt)[0] : (needsProt ? 'no protection' : 'none needed'), bad: needsProt && !tag(tgt) && tgtDied } : { txt: 'target not found', dim: true },
       { txt: corner ? corner.split('-').map((w) => w[0].toUpperCase()).join('') : '—', dim: true }, // NW / NE / SW / SE
       { ps: s.died, none: '—', bad: s.died.length > 0 }, { map }]);
   }
-  // corners: Grim Guillotine 2 and 3 share the skull corner; Grim Guillotine 1 is in the purple corner
-  if (mythic && corners[1] && corners[2] && corners[1] !== corners[2]) MS(grim[2].t, 'Raid', 'grim guillotine', 'Low', 'Grim Guillotine 3 was soaked in the ' + corners[2] + ' corner, but Grim Guillotine 2 was in the ' + corners[1] + ' corner. The plan soaks 2 and 3 in the same spot.', 'Soak Grim Guillotine 2 and 3 in the same spot.', { t: grim[2].hit ?? grim[2].t + 3, hl: grim[2].who, title: 'Grim Guillotine 3 soak (soakers ringed)' });
-  if (mythic && corners[0] && corners[1] && corners[0] === corners[1]) MS(grim[1].t, 'Raid', 'grim guillotine', 'Low', 'Grim Guillotine 1 and 2 were both soaked in the ' + corners[0] + ' corner. The plan soaks 1 in its own spot and 2 and 3 together in another.', 'Move to the second spot after the first Grim Guillotine.', { t: grim[1].hit ?? grim[1].t + 3, hl: grim[1].who, title: 'Grim Guillotine 2 soak (soakers ringed)' });
   sections.push({ id: 'soakq', title: 'Guillotine (Soak with 5)', place: 'Guillotine (axe) soaks', spell: S('guillotine'),
-    verdict: soaks.some((s) => s.died.length || (s.who.length && s.who.length < need)) ? 'bad'
-      : soaks.some((s) => s.landed && s.who.length < need) || mistakes.some((x) => /Guillotine/.test(x.mechanic) && /external|immunit|tank|Healer|personal|corner/.test(x.detail)) ? 'warn' : 'good',
+    verdict: soaks.some((s) => s.died.length || (s.landed && s.who.length < need)) ? 'bad' : 'good',
     summary: pl(soaks.length, 'drop') + ' checked against the plan (see How it works). It shows the soakers in the ' + GUILLOTINE_R + '-yard circle (at least ' + need + '), what each had up (immunity, external or personal), the target\'s protection, and where it was soaked. The map shows the circle at the drop.',
     cols: ['When', 'Soak', 'In circle', 'Soakers', 'Target', 'Corner', 'Died', ''], rows: qRows });
 
@@ -4260,7 +4239,7 @@ function buildCoiledAltar(ev, r, h) {
     delete orbSec0.groups;
     orbSec0.title = 'Venom orbs (Into the frontals)'; orbSec0.place = 'Venom orbs into the frontals'; orbSec0.mythicOnly = false;
     orbSec0.cols = ['Deluge', 'When', 'Orbs popped', 'Result', ''];
-    orbSec0.fix = mythic ? 'Tanks, take turns and point each frontal at its own orbs: 5 to 6 per frontal (never 8), 2 to 3 on the second-to-last before the push, and the last one into empty ground.' : 'Tanks, point each frontal at the orbs on the ground so it clears them.';
+    orbSec0.fix = mythic ? 'Tanks, take turns and point each frontal at its own orbs: about 4 per frontal (the two frontals split each Toxic Deluge\'s 8), never 8 at once. Push Zul\'jan at 11 Venom Rupture stacks or fewer, under stacked raid cooldowns.' : 'Tanks, point each frontal at the orbs on the ground so it clears them.';
     orbSec0.summary = orbSec0.summary + ' Each Toxic Deluge is followed by its frontals, the tanks taking turns so each cone pops its own set of orbs. Each row shows how many orbs each frontal popped (each one is a Venom Rupture stack on everyone) against the plan, and its map plays every cone in order.';
   }
   // Dreadmarch: targets should pixel-stack on the nearest edge marker so ghost spawns are consistent
@@ -4691,10 +4670,10 @@ function buildUlatek(ev, r, h) {
     const yk = auraId(UL.yolk).filter((e) => h.isPlayer(e.dst)), yw = yk.filter((e) => e.op === 'apply').map((e) => ({ g: e.dst, s: e.t, e: (yk.find((x) => x.op === 'remove' && x.dst === e.dst && x.t >= e.t) || { t: e.t + 20 }).t }));
     // (an egg picked up with Rancid Yolk still on: its Noxious Shell does 200% more damage, which kills anyone but a tank)
     for (const c of carry) if (yw.some((y) => y.g === c.g && c.s > y.s + 0.2 && c.s < y.e)) { const tk = role(c.g) === 'tank', diedW = !tk && r.deaths.some((d) => d.guid === c.g && d.t >= c.s && d.t <= c.e + 0.6);
-      M(c.s, pname(c.g), 'Rancid Yolk', UL.yolk, diedW ? 'High' : tk ? 'Low' : 'Medium', 'Picked up an egg at ' + T(c.s) + ' with Rancid Yolk still on (its Noxious Shell does 200% more damage' + (tk ? ').' : '; enough to kill anyone but a tank, and the egg hatches a Viper when its carrier dies).'), 'Wait for Rancid Yolk to drop before picking up another egg, or leave that egg to someone else.');
+      M(c.s, pname(c.g), 'Rancid Yolk', UL.yolk, diedW ? 'High' : 'Low', 'Picked up an egg at ' + T(c.s) + ' with Rancid Yolk still on (its Noxious Shell does 200% more damage' + (tk ? ').' : '; enough to kill anyone but a tank, and the egg hatches a Viper when its carrier dies).'), 'Wait for Rancid Yolk to drop before picking up another egg, or leave that egg to someone else.');
       // (its map: where they picked it up, Rancid Yolk still on, and the seconds before)
       const yp = posPts(c.s).find((q) => q.guid === c.g), yr = eggRings(c.s - 4, c.s + 2).concat(yp ? [{ x: yp.x, y: yp.y, r: 1.3, t0: c.s - 0.1, dur: 4, label: '', color: eggC.color, fill: 'rgba(58,242,168,.7)', cn: 'Green dot', legend: 'where the egg was picked up' }] : []);
-      eggRows.push([{ t: c.s }, { p: pname(c.g) }, { txt: 'took an egg with Rancid Yolk on' + (tk ? ' (tank)' : diedW ? ', died' : ''), bad: diedW, warn: !diedW }, { txt: '—', dim: true },
+      eggRows.push([{ t: c.s }, { p: pname(c.g) }, /* (Mechanics audit, Oct 24: 1 to 3 a top kill, nobody died, so living is a note) */ { txt: 'took an egg with Rancid Yolk on' + (tk ? ' (tank)' : diedW ? ', died' : ''), bad: diedW, dim: !diedW }, { txt: '—', dim: true },
         { map: { t: c.s + 0.2, hl: [c.g], bad: diedW ? [c.g] : [], badLabel: 'died with it', warn: diedW ? [] : [c.g], warnLabel: 'picked it up with Rancid Yolk still on', title: pname(c.g) + ' picked up an egg at ' + T(c.s) + ' with Rancid Yolk still on', pts: posPts(c.s + 0.2), rings: yr,
           frames: h.frames ? h.frames(Math.max(0, c.s - 4), Math.min(dur, c.s + 2), 0.25, []) : undefined, focus: ctrOf(posPts(c.s + 0.2), [c.g], 14) || undefined } }]);
     }
@@ -4870,7 +4849,7 @@ function buildUlatek(ev, r, h) {
       const pick = bursts[0], mt = pick ? Math.max(0, pick.land - 0.3) : null, fr = pick && h.frames ? ((h.frames(mt, mt, 0.2, [x.g])[0] || { pts: [] }).pts) : [];
       const mapC = pick && fr.some((p) => p.guid === x.g) ? { map: { t: mt, bad: pick.out.filter((g) => role(g) !== 'tank'), badLabel: 'outside the bubble (hit)', hl: pick.out.filter((g) => role(g) === 'tank'), hlLabel: 'tank outside (not judged)',
         rings: [{ guid: x.g, r: 10, fx: 'safe', at: pick.land, label: '10 yd bubble', ...mcol('Fester Burst', 0.12), legend: 'the Wretch\'s bubble, 10 yd (inside is safe)' }], focus: ctrOf(fr, [x.g], 13), title: 'Fester Burst at ' + T(pick.land) + ': the Wretch\'s 10-yard bubble' + (pick.out.length ? ', ' + pl(pick.out.length, 'player') + ' outside' : ', everyone inside'), pts: fr } } : { txt: '', dim: true };
-      return [{ t: x.t0 }, { txt: x.died != null ? 'killed after ' + Math.round(x.died - x.t0) + 's' : 'still up', dim: x.died == null }, { txt: pl(ts.length, 'bubble'), warn: late, sub: late ? 'kill it before the third' : '' }, { ps: outside.map(pname), none: 'nobody outside', warn: outside.length > 0, sub: outT ? pl(outT, 'tank') + ' outside (not judged)' : '' }, mapC];
+      return [{ t: x.t0 }, { txt: x.died != null ? 'killed after ' + Math.round(x.died - x.t0) + 's' : 'still up', dim: x.died == null }, { txt: pl(ts.length, 'bubble'), warn: late, sub: late ? 'kill it before the third' : '' }, /* (Mechanics audit, Oct 24: 2 of 5 top kills had 1 or 2 outside and lived; 3 or more is the mistake) */ { ps: outside.map(pname), none: 'nobody outside', warn: outside.length >= 3, sub: outT ? pl(outT, 'tank') + ' outside (not judged)' : '' }, mapC];
     });
     if (wrRows.length) sections.push({ id: 'wretch', title: 'Blightscale Wretch (Bubble)', place: 'Blightscale Wretch (Stand in the bubble)', spell: S('fester burst'), mythicOnly: true, verdict: wrRows.some((x) => x.some((c) => c.warn)) ? 'warn' : 'good',
       summary: 'For each Wretch, it shows how long it lived, how many Fester Bursts it got off and who was outside the bubble.', cols: ['Spawned', 'Killed', 'Bubbles', 'Outside the bubble', ''], rows: wrRows });
@@ -4985,11 +4964,11 @@ function buildUlatek(ev, r, h) {
         title: 'Volatile Purge at ' + T(e.t) + ': each holder\'s burst (about 12 yards, measured from logs)', pts: posPts(pt), focus: ctrOf(posPts(pt), [...hold], 16) } };
       // (a Volatile Purge exploding on someone who wasn't holding one: not spread)
       for (const g of caught) { M(e.t, pname(g), 'Volatile Purge', UL.purge, 'Low', "Caught in someone else's Volatile Purge at " + T(e.t) + '.', 'Spread before the Purges explode, 5 seconds after a bite is cleared.');
-        rows.push([{ t: e.t }, { p: pname(g) }, { txt: "caught in someone else's Volatile Purge", warn: true }, pmap]); }
+        rows.push([{ t: e.t }, { p: pname(g) }, { txt: "caught in someone else's Volatile Purge", dim: true }, pmap]); } /* (Mechanics audit, Oct 24: 1 or 2 a top kill, all lived: a note) */
       // (Mythic: the Purge hits its holder for about 2 million, so every holder needs a big defensive or an external)
       if (mythic) for (const g of hold) { if (r.deaths.some((d) => d.guid === g && d.t < e.t - 0.2)) continue; const c = covered(g, e.t);
         if (!c) M(e.t, pname(g), 'Volatile Purge', UL.purge, 'Low', 'Took the Volatile Purge at ' + T(e.t) + ' with no defensive or external.', 'The Purge hits its holder for about 2 million. Use a big defensive or immunity for it, then personals and externals through the damage over time after it.');
-        rows.push([{ t: e.t }, { p: pname(g) }, { txt: c ? 'Volatile Purge with ' + String(c).replace(/\b\w/g, (x) => x.toUpperCase()).replace(/ (Of|The) /g, (m) => m.toLowerCase()) : 'Volatile Purge, no defensive', warn: !c, dim: !!c }, { txt: '' }]); }
+        rows.push([{ t: e.t }, { p: pname(g) }, { txt: c ? 'Volatile Purge with ' + String(c).replace(/\b\w/g, (x) => x.toUpperCase()).replace(/ (Of|The) /g, (m) => m.toLowerCase()) : 'Volatile Purge, no defensive', dim: true }, { txt: '' }]); }
       bursts.push({ t: e.t, hold, caught }); }
     // (one map for the whole cast (your note, Oct 18), on its own row above: every bite's 7-yard leech circle until it
     // cleared, a green check on each player from the moment they took the venom, then each holder's Volatile Purge
@@ -5035,7 +5014,8 @@ function buildUlatek(ev, r, h) {
     { n: ['caustic waves'], label: 'Caustic Waves', harm: 'Medium', why: 'the venom waves from Ula\'tek and her tail' },
     { n: ['fester burst'], label: 'Fester Burst', harm: 'Medium', why: 'more than 10 yards from the Blightscale Wretch when it bursts' },
     { n: ['virulent spit'], label: 'Virulent Spit', harm: 'Medium', why: 'the swirlies in Stage 2' },
-    { n: ['falling debris'], label: 'Falling Debris', harm: mythic ? 'High' : 'Medium', why: 'the brown circles during Rage of the Shackled' + (mythic ? ' (they kill anyone, tanks too)' : '') },
+    /* (Mechanics audit, Oct 24: 2 of 5 top Mythic kills had someone clipped by a circle's edge who lived, so a hit you live through isn't red; a death is) */
+    { n: ['falling debris'], label: 'Falling Debris', harm: 'Medium', why: 'the brown circles during Rage of the Shackled' + (mythic ? ' (a full hit kills anyone, tanks too)' : '') },
     { n: ["warden's protection"], label: "Warden's Protection", harm: 'Low', warnAt: 2, badAt: 5, why: 'standing on or next to an egg while its Doomscale Warden is alive' },
     // (Oct 21: the tail's Mephitic Thrash hits everyone within 35 yards as its 4 s cast ends (spell 1296301: a hit, a 10 s damage
     // over time and a knockback). Only that hit counts, not the ticks after it; tanks are judged loosely as usual)
