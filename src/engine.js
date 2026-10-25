@@ -6097,6 +6097,8 @@ function* analyzeSteps(item, text, opts) {
   // quarter second keeping the lowest, for the survival check's close calls
   const php = new Map(); r.php = php;
   // (Tyr's Deliverance's buff (200654) on a player, by whose: their Holy Light, Flash of Light and Holy Shock heal that player 10% more (12.1.5))
+  const TIER_EVN = new Set(['Sigil of Flame', 'Immolation Aura', 'Sigil of Spite', 'Crash Lightning', 'Slam', 'Icy Death Torrent', 'Fate Mirror', 'Necrotic Bolt', 'Withering Grasp', 'Lingering Shadow', 'Lightning Bolt', 'Chain Lightning', 'Lava Burst', 'Cobra Shot', 'Shield Slam', 'Revenge', 'Arcane Blast', 'Arcane Pulse', 'Prismatic Bolt', 'Rising Sun Kick', 'Spinning Crane Kick', 'Wildfire Bomb', 'Pyroblast', 'Flamestrike', 'Mangle']),
+    TIER_EVP = /^(Eviscerate|Black Powder|Backstab|Gloomblade|Shuriken Storm)/, TIER_EVPET = new Set(['Necrotic Bolt', 'Withering Grasp']); // (the hits a tier bonus changes one by one (Oct 25))
   const awOn = new Set(), AW_SKIP = /^(rune of |soulcoil|glistening|saved by the light|overflowing light|armory of light|greater judgment)/i; /* (Avenging Wrath up on a Holy Paladin: their heals' raw, effective and overheal, for its real extra) */
   const tyrOn = new Set(), TYR_UP = new Set(['holy light', 'flash of light', 'holy shock']);
   // (heals and absorbs landing on a player under half health: [t, target, healer, amount, 1 for an absorb, spell], for the healers' saves)
@@ -6178,7 +6180,7 @@ function* analyzeSteps(item, text, opts) {
         if (!isPlayer(sup)) break;
         const amt = Math.max(0, num(f[s0]) + num(f[s0 + 4]) + num(f[s0 + 5]) - Math.max(0, num(f[s0 + 2]))); if (!amt) break;
         const spell = swing ? 'Support' : f[9], id = swing ? 0 : num(f[8]), crit = f[s0 + 7] === '1';
-        const a = P(sup, null); a.damage += amt; addAb(a.dmgAb, spell, id, amt, 0, crit); bump(a.dmgS, t, amt); a.dmgT.set(dn, (a.dmgT.get(dn) || 0) + amt); bumpN(a.dmgTS, t, dn, amt);
+        const a = P(sup, null); a.damage += amt; addAb(a.dmgAb, spell, id, amt, 0, crit); if (spell === 'Fate Mirror') { if (!a.tierEv) a.tierEv = []; if (a.tierEv.length < 12000) a.tierEv.push([t, spell, amt, null, 0, crit ? 1 : 0]); } bump(a.dmgS, t, amt); a.dmgT.set(dn, (a.dmgT.get(dn) || 0) + amt); bumpN(a.dmgTS, t, dn, amt);
         // (by buff, and by whose hit it came through, for "damage through your buffs"; Breath of Eons' explosions one by one)
         (a.supAb || (a.supAb = new Map())).set(spell, (a.supAb.get(spell) || 0) + amt); if (hitter && hitter !== sup) { const hn = P(hitter, null).name || ''; if (hn) (a.supTo || (a.supTo = new Map())).set(hn, (a.supTo.get(hn) || 0) + amt); }
         if (DMG_EV.has(String(spell).toLowerCase())) { if (!a.dmgEv) a.dmgEv = []; if (a.dmgEv.length < 6000) a.dmgEv.push([t, spell, dg, amt]); }
@@ -6221,7 +6223,7 @@ function* analyzeSteps(item, text, opts) {
           p.damage += dealt;
           if (mod && mod.focus && mod.focus.has(dn)) modEv.push({ k: 'pdmg', t, src: owner, dst: dg, dn, amt: dealt }); addAb(p.dmgAb, pet ? sn + ': ' + spell : spell, id, dealt, 0, crit); bump(r.dmgS, t, dealt);
           bump(p.dmgS, t, dealt); if (dealt > 0) { p.dmgT.set(dn, (p.dmgT.get(dn) || 0) + dealt); bumpN(r.dmgTS, t, dn, dealt); bumpN(p.dmgTS, t, dn, dealt); if (!p.firstHit.has(dg)) p.firstHit.set(dg, t); }
-          if (!pet && (spell === 'Sigil of Flame' || spell === 'Immolation Aura' || spell === 'Sigil of Spite' || spell === 'Crash Lightning' || spell === 'Slam')) { if (!p.tierEv) p.tierEv = []; if (p.tierEv.length < 8000) p.tierEv.push([t, spell, dealt, dg, ev === 'SPELL_PERIODIC_DAMAGE' ? 1 : 0]); } /* (each hit of a spell a tier bonus changes hit by hit, for the tier set card (Oct 25)) */
+          if ((TIER_EVN.has(spell) || TIER_EVP.test(spell)) && (!pet || TIER_EVPET.has(spell))) { if (!p.tierEv) p.tierEv = []; if (p.tierEv.length < 12000) p.tierEv.push([t, spell, dealt, dg, ev === 'SPELL_PERIODIC_DAMAGE' ? 1 : 0, crit ? 1 : 0]); } /* (each hit of a spell a tier bonus changes hit by hit, for the tier set card (Oct 25)) */
           p.lastHit = [t, pet ? sn + ': ' + spell : spell, dg]; // (for a support line that follows it: see *_DAMAGE_SUPPORT)
           // (the hits the spec checks count one by one, e.g. Implosion's: one per Wild Imp on each target)
           // (with the amount; and every "(Erupt)" hit, like the plagues Unholy's Blightfall sets off, so a press can be credited with them)
@@ -6249,7 +6251,7 @@ function* analyzeSteps(item, text, opts) {
           p.healing += eff; p.overheal += over; addAb(p.healAb, pet ? sn + ': ' + spell : spell, id, eff, over, crit); bump(r.healS, t, eff); bump(p.healS, t, eff);
           // (triage: the heal's advanced block is the target's, health after it; under half before it)
           if (s0 > 11 && f[11] === dg && eff > 0 && isPlayer(dg)) { const mx = num(f[14]); if (mx > 0 && (num(f[13]) - eff) / mx < 0.5) { p.lowHeal += eff; if (lowHL.length < 60000) lowHL.push([t, dg, owner, eff, 0, spell]); } }
-          if (!pet && spell === 'Flash of Light') { if (!p.folEv) p.folEv = []; if (p.folEv.length < 3000) p.folEv.push([t, eff, over]); } /* (each Flash of Light, for the tier set card (Oct 25)) */
+          if (!pet && spell === 'Flash of Light') { if (!p.folEv) p.folEv = []; if (p.folEv.length < 3000) p.folEv.push([t, eff, over]); } if (!pet && spell === 'Living Flame') { if (!p.lfEv) p.lfEv = []; if (p.lfEv.length < 3000) p.lfEv.push([t, eff]); } if (!pet && ev === 'SPELL_PERIODIC_HEAL' && eff > 0) { if (!p.hotS) p.hotS = []; const i0 = Math.floor(t); if (i0 >= 0 && i0 < 7200) p.hotS[i0] = (p.hotS[i0] || 0) + eff; } /* (each Flash of Light, for the tier set card (Oct 25)) */
           if (!pet && awOn.has(owner) && !AW_SKIP.test(String(spell))) { if (!p.awEv) p.awEv = []; if (p.awEv.length < 8000) p.awEv.push([eff + over, eff, over > 0 ? 1 : 0, spell === 'Holy Shock' ? 1 : 0]); }
           if (!pet && tyrOn.size && TYR_UP.has(String(spell).toLowerCase()) && tyrOn.has(dg + '|' + owner)) { p.tyrX = (p.tyrX || 0) + eff * 0.1 / 1.1; p.tyrXn = (p.tyrXn || 0) + 1; p.tyrB = (p.tyrB || 0) + eff; }
           if (!pet && HEAL_TO.has(String(spell).toLowerCase())) { if (!p.hT) p.hT = new Map(); let l = p.hT.get(spell); if (!l) p.hT.set(spell, l = []); if (l.length < 12000) l.push([t, dg, eff, over, ev === 'SPELL_PERIODIC_HEAL' ? 1 : 0]); } // (the last: a HoT's tick)
@@ -6319,7 +6321,7 @@ function* analyzeSteps(item, text, opts) {
         if (!pl && owner && ev === 'SPELL_AURA_APPLIED' && f[11] === 'DEBUFF') { const q = P(owner, pet ? null : sn); if (!q.dotEv) q.dotEv = []; if (q.dotEv.length < 30000) q.dotEv.push([t, 1, f[9], dg]); }
         // (a buff's extra stack is a proc too, and its top stack: e.g. Infusion of Light at 2 with Inflorescence of the Sunwell)
         if (pl && f[11] === 'BUFF' && isStatBuf(f[9].toLowerCase())) statBuf(P(dg, dn), num(f[8]), f[9], t, ev === 'SPELL_AURA_APPLIED' ? 'a' : 'd', stacks);
-        if (pl && f[11] === 'BUFF' && ev === 'SPELL_AURA_APPLIED_DOSE') { const b = buffPre(P(dg, dn), num(f[8]), f[9]); if (b) { b.mx = Math.max(b.mx || 1, stacks); if (!b.dose) b.dose = []; if (b.dose.length < 600) b.dose.push([t, stacks]); } }
+        if (pl && f[11] === 'BUFF' && ev === 'SPELL_AURA_APPLIED_DOSE') { const b = buffPre(P(dg, dn), num(f[8]), f[9]); if (b) { b.mx = Math.max(b.mx || 1, stacks); if (!b.dose) b.dose = []; if (b.dose.length < 600) b.dose.push([t, stacks]); if (!b.dn) b.dn = []; if (b.dn.length < 3000) b.dn.push([t, stacks, 1]); } }
         if (pl && f[11] === 'DEBUFF') { const q = P(dg, dn); if (ev === 'SPELL_AURA_APPLIED') debuffUp(q, num(f[8]), f[9], t, sn && !isPlayer(sg) ? shortName(sg, sn) : ''); else { if (!q.debuffs.has(f[9])) debuffUp(q, num(f[8]), f[9], t, ''); const b = q.debuffs.get(f[9]); b.mx = Math.max(b.mx, stacks); } }
         break;
       }
@@ -6362,7 +6364,7 @@ function* analyzeSteps(item, text, opts) {
         if (f.length >= 13 && W(f[9], f[8])) modEv.push({ k: 'aura', op: 'rdose', t, dst: dg, spell: f[9], id: num(f[8]), stacks: num(f[12]), src: sg });
         if (f.length < 13 || !isPlayer(dg)) break;
         if (f[11] === 'BUFF' && isStatBuf(f[9].toLowerCase())) statBuf(P(dg, dn), num(f[8]), f[9], t, 'd', num(f[12]));
-        if (f[11] === 'BUFF') { const b = buffPre(P(dg, dn), num(f[8]), f[9]); if (b) { if (!b.rd) b.rd = []; if (b.rd.length < 600) b.rd.push(t); } } // (a stack spent)
+        if (f[11] === 'BUFF') { const b = buffPre(P(dg, dn), num(f[8]), f[9]); if (b) { if (!b.rd) b.rd = []; if (b.rd.length < 600) b.rd.push(t); if (!b.dn) b.dn = []; if (b.dn.length < 3000) b.dn.push([t, num(f[12]), -1]); } } // (a stack spent)
         const sr = mech.get('stacks', num(f[8]), f[9]);
         if (sr) stackEv.push({ t, guid: dg, rule: sr, stacks: num(f[12]), up: false, id: num(f[8]) });
         break;
