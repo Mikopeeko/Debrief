@@ -1195,9 +1195,15 @@ function bgFetch(item) {
     try { const v0 = document.querySelector('#view'); if (S.tab === 'audit' && S.item && b.id === S.item.id && b.diffId === S.item.diffId && b.pull < S.item.pull && S.rep && !S.rep.allPulls && v0 && v0._cs && v0._cs.trend && !v0._cs.trend.prvN && CACHE.has(b)) { const y = window.scrollY; renderMain(); window.scrollTo({ top: y }); } } catch (e) { /* (it shows on the next redraw) */ }
     if (tok !== BG_TOK) break; await new Promise((r) => setTimeout(r, 250)); } })().finally(() => { if (tok === BG_TOK) bgNote(0, 0); });
 }
-function bgNote(k, n) { let el = document.getElementById('bgRead');
-  if (!n) { if (el) el.hidden = true; return; }
-  if (!el) { el = document.createElement('div'); el.id = 'bgRead'; el.className = 'bgread'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+function bgNote(k, n) { let el = document.getElementById('bgRead'), t = document.getElementById('bgReadT');
+  if (!n) { if (el) el.hidden = true; if (t) t.hidden = true; return; }
+  if (!el) { el = document.createElement('div'); el.id = 'bgRead'; el.className = 'bgread'; el.setAttribute('role', 'status'); }
+  /* (Design studio, Oct 25: with a boss header on the page the note is a thin gold line along its bottom edge plus a count at the end of
+     its facts line, in the page's flow, so it never covers anything; without one it stays the small bubble, bottom left) */
+  const hd = document.querySelector('header.fight.bh.bhx'), l2 = hd && hd.querySelector('.bh-l2');
+  if (hd) { if (el.parentNode !== hd) hd.appendChild(el); el.hidden = false; el.style.setProperty('--p', Math.round(100 * k / n) + '%'); el.innerHTML = '<i></i>'; el.setAttribute('aria-label', 'Reading pulls, ' + k + ' of ' + n);
+    if (l2) { if (!t) { t = document.createElement('span'); t.id = 'bgReadT'; t.className = 'bgread-t'; } if (t.parentNode !== l2) l2.appendChild(t); t.hidden = false; t.textContent = 'Reading pulls · ' + k + ' of ' + n; } return; }
+  if (el.parentNode !== document.body) document.body.appendChild(el); if (t) t.hidden = true; el.style.removeProperty('--p'); el.removeAttribute('aria-label');
   el.hidden = false; el.innerHTML = '<i></i>Reading <span class="bgread-l">this boss\'s </span>pulls<span class="bgread-l"> in the background</span> · ' + k + ' of ' + n; }
 // The memory limit: a read pull takes ~25-30 MB, so the site keeps about 40 on a computer and 14 on a phone. Past that, the
 // pulls you looked at longest ago, on other bosses, are let go (they read again from this PC, without a new download).
@@ -1768,6 +1774,9 @@ const PATCH_NOTES = [
   { d: '2026-10-25', h: [
     { t: 'Your tier set, in numbers', d: 'Rotation shows how much your 2-piece and 4-piece added, with a Where it came from breakdown behind every number. On every spec.' },
     { t: 'Your trinkets, both of them', d: 'Gear and extras on Rotation now shows both of your trinkets, with what each one did (damage, healing or stats), or that one was never pressed.' },], n: [
+    'Debriefing: your raid lead\'s box is the first thing under the tabs. The five numbers (Pulls on this boss, Deaths, Raid DPS, DTPS, HPS) are one slim strip under it, each still opening its panel (Who and why, Ranks, Pace chart).',
+    'On a phone the boss header is three short rows (the boss and its result; the pull pickers and the wipe filter; the facts as one quiet line), so every tab\'s answer shows up about a screen sooner.',
+    'While the other pulls load, the Reading pulls note is a thin gold line along the bottom of the boss header, with the count at the end of its facts line, instead of a bubble floating over the page.',
     'Rotation: the rings sit in one row like a scoreboard. The open one stays in the row, outlined in gold, with its tiles in the same columns underneath.',
     'Rotation: each tile shows one number, the check that needs the most work. Its other parts open with it, each with its own number.',
     'Rotation: What to fix cards are shorter, show what each mistake cost, and open their tile when you click them. The top players\' score sits under yours.',

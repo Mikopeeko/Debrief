@@ -38,7 +38,8 @@ The page is mostly neutral: dark panels and warm white text. Colour always means
 
 ## 2. Type
 
-Two fonts: **Barlow Semi Condensed** (`--head`) for names and big numbers, **Barlow** (`--body`) for everything else.
+One font since Oct 24: **Barlow Condensed** (the user's WoW UI font) for both `--head` (names and big numbers) and `--body`
+(everything else). Canvas exports still use Barlow and Barlow Semi Condensed. Owner: the Design studio chat (since Oct 25).
 
 | Role | Size / weight | Colour | Example |
 |---|---|---|---|

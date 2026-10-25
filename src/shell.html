@@ -6413,6 +6413,49 @@ html.hw #brandHome::after { content: ''; position: absolute; left: 26px; bottom:
 @media (max-width: 760px) { .ds-i { width: 32px; height: 32px; } }
 /* quick fixes (Oct 22): Home's rank labels and its kill tiles' labels at 12px, and its tiles with tile corners */
 .pg-chips .pgc { font-size: 12px !important; font-weight: 700; } .yu-bt em { font-size: 12px !important; } .yu-t, .yu-bt { border-radius: var(--ds-card) !important; }
+/* ===== Design studio (Oct 25): the reading line, the phone header, the numbers strip. Owner: the Design studio chat. ===== */
+/* Win 3: inside a boss header the "Reading pulls" note is a 3px gold line along the bottom edge (#bgRead, --p = how far) and a small
+   count at the end of the header's facts line (#bgReadT). Elsewhere it stays the bubble. */
+header.fight.bh.bhx > .bgread { position: absolute; left: 0; right: 0; bottom: 0; top: auto; z-index: 3; display: block; height: 3px; padding: 0; border: 0; border-radius: 0; background: rgba(255,255,255,.08); font-size: 0; pointer-events: none; }
+header.fight.bh.bhx > .bgread i { position: absolute; left: 0; top: 0; bottom: 0; width: var(--p, 0%); border-radius: 0 2px 2px 0; background: var(--gold); animation: none; transition: width .5s ease; }
+header.fight.bh.bhx > .bgread[hidden] { display: none; }
+.bgread-t { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font: 600 12px/1.3 var(--body); color: #b4bac6; white-space: nowrap; text-shadow: none; }
+.bgread-t::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); animation: bgreadP 1.4s ease-in-out infinite; }
+.bgread-t[hidden] { display: none; }
+/* Win 2: on a phone the header's two rows become one wrapping row of parts in a fixed order: the boss and its result; the pull pickers and
+   the wipe filter; then the facts as one quiet line. Nothing is removed, the pills just lose their padding. */
+@media (max-width: 760px) {
+  header.fight.bh.bhx .bh-t { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+  header.fight.bh.bhx .bh-l1, header.fight.bh.bhx .bh-l2 { display: contents; }
+  header.fight.bh.bhx .bh-l1 h2.bh-name { order: 1; flex: 0 1 auto; margin: 0; font-size: 22px; }
+  header.fight.bh.bhx .bh-pickb { order: 1; }
+  header.fight.bh.bhx .bh-big { order: 2; padding: 4px 11px; font-size: 13px; }
+  header.fight.bh.bhx .bhp-as, header.fight.bh.bhx .bh-scope { order: 3; }
+  header.fight.bh.bhx .bhp-all span, header.fight.bh.bhx .bh-scope span { display: none; }
+  header.fight.bh.bhx .bhp-cut { order: 4; margin-left: auto; padding: 3px 10px; font-size: 12px; }
+  header.fight.bh.bhx .bh-side { order: 5; flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12.5px; }
+  header.fight.bh.bhx .bh-side .nc-res, header.fight.bh.bhx .bh-side > span { padding: 0 !important; border: 0; background: none !important; box-shadow: none !important; font: 600 12.5px/1.3 var(--body) !important; }
+  header.fight.bh.bhx .bh-k { order: 6; font-size: 12px; }
+  header.fight.bh.bhx .bh-s { order: 6; flex: 0 1 auto; margin: 0; gap: 2px 12px; font-size: 12.5px; color: #b4bac6; }
+  header.fight.bh.bhx .bh-s .bh-dur { font-size: 12.5px; font-weight: 600; }
+  header.fight.bh.bhx .bh-team { order: 7; }
+  header.fight.bh.bhx .bgread-t { order: 8; }
+}
+/* Win 1 (Debriefing): the answer first. The coach box (#oaTop) comes right under the tabs; the number tiles become one slim strip under it,
+   each still opening its panel (Who and why, Ranks, Pace chart). On a phone the strip is two across. */
+#view:has(> #oaTop:not([hidden])) { display: flex; flex-direction: column; }
+#view > #oaTop { order: -1; }
+#view .dbr-4.oa-tiles { display: flex !important; flex-wrap: wrap; gap: 1px; margin: 0 0 14px; padding: 0; border: 1px solid var(--line); border-radius: var(--ds-card); background: var(--line); overflow: hidden; }
+#view .dbr-4.oa-tiles > .dbr-n { flex: 1 1 160px; min-width: 0; position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: 'k k' 'v s'; column-gap: 10px; row-gap: 2px; align-items: baseline; padding: 8px 14px 9px !important; border: 0 !important; border-radius: 0 !important; background: var(--panel) !important; }
+#view .dbr-4.oa-tiles .dbr-k { grid-area: k; padding-right: 92px; }
+#view .dbr-4.oa-tiles .pcx-open { position: absolute; top: 8px; right: 12px; margin: 0; font-size: 12px; white-space: nowrap; }
+#view .dbr-4.oa-tiles .dbr-v { grid-area: v; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 6px; }
+#view .dbr-4.oa-tiles .dbr-v b { font-size: 20px !important; line-height: 1.1 !important; }
+#view .dbr-4.oa-tiles .dbr-n em { font-size: 12.5px; margin-right: 4px; }
+#view .dbr-4.oa-tiles .dbr-s { grid-area: s; min-width: 0; font-size: 12.5px; line-height: 1.25; }
+#view .dbr-4.oa-tiles .dbr-s b { font-size: 12.5px !important; font-weight: 600; }
+#view .dbr-4.oa-tiles > .dbr-n.pcx-tile.on { background: rgba(230,183,80,.08) !important; }
+@media (max-width: 760px) { #view .dbr-4.oa-tiles > .dbr-n { flex: 1 1 45%; grid-template-columns: minmax(0, 1fr); grid-template-areas: 'k' 'v' 's'; row-gap: 0; padding: 8px 12px !important; } #view .dbr-4.oa-tiles .dbr-k { padding-right: 80px; } }
 </style>
 
 
