@@ -66,25 +66,27 @@ Mythic first:
 - per spec, top players (Rotation's list).
 Heroic: the 20 fastest per boss are already saved.
 
-| Boss (Mythic) | 20 fastest saved | Mythic fights saved | Light (12 first kills) |
+### Done (Oct 26, 6:30 pm)
+| Boss (Mythic) | 20 fastest saved | Mythic fights saved | Light (12 first kills after the nerf) |
 |---|---|---|---|
-| Nymrissa Wavecaller | 20/20 | 37 | 0/12 |
-| Nek'zali the Soulcoiler | 20/20 | 35 | 0/12 |
-| Entombed Sentinels | 15/20 | 23 | 0/12 |
-| The Lost Explorers | 20/20 | 27 | 0/12 |
-| Vashnik the Malignant | 14/20 | 27 | 0/12 |
-| Sszorak | 14/20 | 26 | 0/12 |
-| The Twin Fangs | 19/20 | 23 | 0/12 |
-| The Coiled Altar | 19/20 | 61 | downloading now |
-| Ula'tek | 19/20 | 19 | 0/12 |
-| Kith'ix | 19/20 | 19 | 0/12 |
+| Nymrissa Wavecaller | 20/20 | 49 | 12/12 |
+| Nek'zali the Soulcoiler | 20/20 | 53 | 12/12 |
+| Entombed Sentinels | 20/20 | 58 | 12/12 |
+| The Lost Explorers | 20/20 | 52 | 12/12 (10 are their first kill after the Sep 10 change, since they killed it earlier) |
+| Vashnik the Malignant | 20/20 | 67 | 12/12 |
+| Sszorak | 20/20 | 59 | 12/12 (4 are their first kill after Sep 15) |
+| The Twin Fangs | 20/20 | 49 | 12/12 |
+| The Coiled Altar | 20/20 | 86 | 12/12 |
+| Ula'tek | 20/20 | 48 | 3 (all the world #300–1,000 guilds that have killed it) |
+| Kith'ix | 20/20 | 39 | 1 (the same) |
 
-- **In the library now:** 524 fights (41 GB): every boss, Heroic and Mythic, all after their nerfs, all complete. Also 1,056 reports,
-  61 nights and 45 ranking lists. 12 fights have no report saved yet (one request each).
-- **Rotation's top players:** 213 picked kills, 68 saved, 145 missing. Thinnest specs: Fire Mage, Outlaw Rogue, Feral, Survival, Protection Warrior.
-- **Download queue, in order:**
-  1. Coiled Altar Light (running);
-  2. the 21 missing fastest kills;
-  3. Rotation's 145 picks;
-  4. Light bands for the other 9 bosses (needs a finder per boss first: speed rankings pages, world ranks, first kills).
-- **How long:** about 9,000 pages at one every 4 s, about 10 hours spread over the evening. That stays under half the hour's points the whole time.
+- **In the library:** 787 fights (70 GB): every boss, Heroic and Mythic, all complete. Also 1,000+ reports, 61 nights and the ranking lists.
+  12 fights have no report saved yet (one request each).
+- **Rotation's top players:** 159 of the 160 picked kills are in. One report (TmvNr3wRH21GXLM8) is private or deleted on Warcraft Logs.
+- **How Light kills are picked** (tools/lightfind.js):
+  1. Guilds come from the speed rankings, middle of the list first, and are checked for world progress rank 300–1,000.
+  2. Each guild's first kill comes from /api/guildprog. If that was before the boss's last change, the kill used is their first kill
+     after the change (from their reports, oldest first).
+  3. Sszorak's "last change" for this is Sep 15 (the Tempest nerf): its Oct 13 change was only +5 s to reach 100 rage, rated
+     "no effect" in the Oct 22 patch review. index.js uses the same date.
+- **Still open:** the Rotation chat's other specs (only its 16 thin specs had picks), and Heroic Light bands if they're ever wanted.
