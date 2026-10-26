@@ -222,20 +222,20 @@ local bossT = top:CreateFontString(nil, "OVERLAY"); setFont(bossT, "body", 13); 
 PRESET_NAME = { simple = "Simple", standard = "Standard", detailed = "Detailed" }
 local PRESETS = {
   -- (a quick look: the raid lead box, your number, your top fix and the next pull tip; nothing else)
-  simple = { compact = true, maxSlips = 1, maxBoss = 1, maxRaid = 1, maxDied = 0, maxMech = 3, width = "normal",
+  simple = { compact = true, openSecs = true, maxSlips = 1, maxBoss = 1, maxRaid = 1, maxDied = 0, maxMech = 3, width = "normal",
     show = { rank = false, best = false, vs = false, trend = false, surv = false, cons = false, kitd = false, right = false, cdeaths = false, cavoid = false, mechs = false,
       rdefs = false, rcons = false, rkitd = false, chips = false, chartLine = false, chartNight = false, grade = false, story = false } },
   -- (most raiders: your fixes and survival with the small tiles, worse and better than last pull, the raid's deaths and mistakes, your last pulls)
-  standard = { compact = false, maxSlips = 3, maxBoss = 3, maxRaid = 3, maxDied = 3, maxMech = 6, width = "wide", tiles = true,
+  standard = { compact = false, openSecs = false, maxSlips = 3, maxBoss = 3, maxRaid = 3, maxDied = 3, maxMech = 6, width = "wide", tiles = true,
     show = { mechs = false, chartLine = false, chartNight = false, grade = false } },
   -- (everything: up to 8 rotation tips with their windows, two next pull tips, boss mechanics, the charts and the grade)
-  detailed = { compact = false, maxSlips = 8, maxBoss = 7, maxRaid = 5, maxDied = 6, maxMech = 12, width = "xl", tiles = true, detailed = true,
+  detailed = { compact = false, openSecs = true, maxSlips = 8, maxBoss = 7, maxRaid = 5, maxDied = 6, maxMech = 12, width = "xl", tiles = true, detailed = true,
     show = { mechs = true, chartLine = true, chartNight = true, grade = true } },
 }
 function Debrief_SetPreset(key)
   local p = PRESETS[key]; if not p or not DB then return end
   DB.compact, DB.maxSlips, DB.maxBoss, DB.maxRaid, DB.maxDied, DB.maxMech, DB.width = p.compact, p.maxSlips, p.maxBoss, p.maxRaid, p.maxDied, p.maxMech, p.width
-  DB.detailed = p.detailed or nil; DB.glance = nil; DB.tiles = p.tiles or nil
+  DB.detailed = p.detailed or nil; DB.glance = nil; DB.tiles = p.tiles or nil; DB.openSecs = p.openSecs
   DB.show = {}; for k, v in pairs(p.show) do DB.show[k] = v end
   DB.collapsed = nil; DB.coachOpen = nil; DB.preset = key
   if Debrief_RefreshOptions then Debrief_RefreshOptions() end
@@ -450,12 +450,12 @@ local function BTN()
   return b
 end
 -- a section label: small, uppercase, quiet; click it to fold the section away (or open it again)
-local function head(y, text, key, folded)
+local function head(y, text, key, folded, onClick)
   local t = FS("head", 15, COL.text); t:SetPoint("TOPLEFT", IND, -y); t:SetText(text)
   if key then
     local sign = FS("bold", 14, COL.faint); sign:SetJustifyH("RIGHT"); sign:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - IND, -(y - 1)); sign:SetText(folded and "+" or "–")
     local b = BTN(); b:SetPoint("TOPLEFT", 0, -(y - 8)); b:SetSize(CW, 30)
-    b:SetScript("OnClick", function() DB.collapsed = DB.collapsed or {}; DB.collapsed[key] = not DB.collapsed[key] or nil; render() end)
+    b:SetScript("OnClick", onClick or function() DB.collapsed = DB.collapsed or {}; DB.collapsed[key] = not DB.collapsed[key] or nil; render() end)
     b:SetScript("OnEnter", function() t:SetTextColor(rgb(COL.gold)); sign:SetTextColor(rgb(COL.gold)) end)
     b:SetScript("OnLeave", function() t:SetTextColor(rgb(COL.text)); sign:SetTextColor(rgb(COL.faint)) end)
   end
@@ -755,7 +755,10 @@ local function cardGrade(y, gr)
   local c = FS("body", 12.5, COL.soft); c:SetPoint("TOPLEFT", 58, -(y + 25)); c:SetWidth(CW - 70); c:SetWordWrap(false); c:SetText(gr.cats or "")
   return y + h + 8
 end
-local UI = { rotRow = rotRow, rotGood = rotGood, rowS = rowS, wipeRow = wipeRow, trendCards = trendCards, cardCharts = cardCharts, cardGrade = cardGrade, parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, canRaid = canRaid, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded, pullQ = pullQ, worst = worstFirst, col = useCol, colFrame = colFrame, two = { cols = 1, brk = 0, n = 0, marks = {} } }
+-- (Standard opens folded (Oct 25, the Design studio's round 3): these four start closed on each new pull, unless "Open the sections by
+-- default" is on; an empty one stays open, so its one green line shows)
+local SHUT = { rotation = true, boss = true, surv = true, died = true }
+local UI = { startsShut = function(key, n) return n > 0 and SHUT[key] and DB.openSecs == false end, rotRow = rotRow, rotGood = rotGood, rowS = rowS, wipeRow = wipeRow, trendCards = trendCards, cardCharts = cardCharts, cardGrade = cardGrade, parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, canRaid = canRaid, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded, pullQ = pullQ, worst = worstFirst, col = useCol, colFrame = colFrame, two = { cols = 1, brk = 0, n = 0, marks = {} } }
 local function renderOnce()
   UI.col(1)
   local raw = DB.pulls[DB.cur]; local m = UI.cutView(raw); CUR = m
@@ -768,6 +771,7 @@ local function renderOnce()
   if detailBtn then detailBtn.t:SetText(PRESET_NAME[DB.preset] or "Custom"); detailBtn:SetWidth(detailBtn.t:GetStringWidth() + 18) end
   for _, c in ipairs(chips) do c:SetShown(false) end
   local h = m.h
+  UI.rounded(card.lineT, "line", 8, h.kill and COL.gold or COL.line2, 1) -- (a kill: a gold edge (Oct 25, the Design studio's round 3))
   bossT:SetText(h.boss .. "  ·  " .. h.diff)
   -- chips: this boss and difficulty only (Oct 24: other bosses' pulls read as a second "Pull 1"), as many as fit, around the one on screen
   local IX = {}; for k0, q0 in ipairs(DB.pulls) do if q0.h and q0.h.boss == h.boss and q0.h.diff == h.diff then IX[#IX + 1] = k0 end end
@@ -853,9 +857,12 @@ local function renderOnce()
   local function section(key, title, list, limit, draw, empty, tail)
     if SH[key] == false then return end
     brk()
-    local folded = DB.collapsed and DB.collapsed[key]
+    -- (closed at first on Standard, the count in the title; a tap opens it for this pull (EXPANDED is cleared with each new pull))
+    local shut = UI.startsShut(key, #list)
+    local folded = (shut and not EXPANDED["o:" .. key]) or (not shut and DB.collapsed and DB.collapsed[key])
+    if shut and folded then title = title .. "  ·  " .. #list .. (key == "rotation" and (#list == 1 and " tip" or " tips") or "") end
     local y0 = y; IND = 12; y = y + 12
-    y = head(y, title, key, folded)
+    y = head(y, title, key, folded, shut and function() EXPANDED["o:" .. key] = not EXPANDED["o:" .. key] or nil; render() end or nil)
     if not folded then
       if #list == 0 then if empty then y = row(y, "ok", nil, empty) end
       else
@@ -884,6 +891,14 @@ local function renderOnce()
     local y0 = y; IND = 12; y = y + 12
     local t = FS("head", 15, COL.text); t:SetPoint("TOPLEFT", IND, -y); t:SetText("Who died")
     local c = FS("body", 12.5, COL.faint); c:SetPoint("BOTTOMLEFT", t, "BOTTOMRIGHT", 8, 1); c:SetText((DB.detailed and view == "raid" and #(m.raid.tiles or {}) > 0) and "" or (h.deaths .. (h.deaths == "1" and " death" or " deaths")))
+    -- (closed at first on Standard (Oct 25), like the other sections: a tap opens it for this pull)
+    local shut = UI.startsShut("died", nd); local open = not shut or EXPANDED["o:died"]
+    if shut then
+      local sign = FS("bold", 14, COL.faint); sign:SetJustifyH("RIGHT"); sign:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - IND, -(y - 1)); sign:SetText(open and "–" or "+")
+      local b = BTN(); b:SetPoint("TOPLEFT", 0, -(y - 8)); b:SetSize(CW, 30)
+      b:SetScript("OnClick", function() EXPANDED["o:died"] = not EXPANDED["o:died"] or nil; render() end)
+      b:SetScript("OnEnter", function() t:SetTextColor(rgb(COL.gold)); sign:SetTextColor(rgb(COL.gold)) end); b:SetScript("OnLeave", function() t:SetTextColor(rgb(COL.text)); sign:SetTextColor(rgb(COL.faint)) end)
+    end
     if false then
       local function stepBtn(lbl, right, d)
         local bt = BTN(); bt:SetSize(22, 22); bt:SetPoint("TOPRIGHT", body, "TOPLEFT", right, -(y - 3))
@@ -897,9 +912,10 @@ local function renderOnce()
       stepBtn("–", CW - IND - 52, -1)
       local l = FS("body", 12.5, COL.faint); l:SetJustifyH("RIGHT"); l:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - IND - 80, -(y + 2)); l:SetText("Stop at")
     elseif h.kill then
-      local l = FS("body", 12.5, COL.faint); l:SetJustifyH("RIGHT"); l:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - IND, -(y + 2)); l:SetText("Kill, so all of it counts")
+      local l = FS("body", 12.5, COL.faint); l:SetJustifyH("RIGHT"); l:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - IND - (shut and 22 or 0), -(y + 2)); l:SetText("Kill, so all of it counts")
     end
-    y = y + 26
+    y = y + (open and 26 or 18)
+    if open then
     if cut > 0 and SH.died ~= false then local n2 = FS("body", 12.5, COL.faint); n2:SetPoint("TOPLEFT", IND, -y); n2:SetWidth(CW - IND * 2); n2:SetText("Deaths after the " .. UI.ordN(cut) .. " aren't counted."); y = y + n2:GetStringHeight() + 6 end
     if SH.died ~= false and show > 0 then
       if nd == 0 then y = row(y, "ok", nil, m.raid.more ~= "" and m.raid.more or "Nobody died.")
@@ -916,6 +932,7 @@ local function renderOnce()
         local more = rest > 0 and ("+" .. rest .. " more.") or m.raid.more
         if more ~= "" then local mo = FS("body", 12.5, COL.faint); mo:SetPoint("TOPLEFT", IND, -(y - 2)); mo:SetText(more); y = y + 18 end
       end
+    end
     end
     y = y + 3
     panel(y0, y - y0)
@@ -1442,8 +1459,8 @@ miniShow = function()
   local P = pickWho(m)
   mT:SetText("Pull " .. m.h.pull)
   local rt, rc, rb = resultOf(m.h)
-  mChip.t:SetText(rt); mChip.t:SetTextColor(rgb(rc)); mChip:SetWidth(mChip.t:GetStringWidth() + 16)
-  rounded(mChip.fillT, "fill", 5, rb, 1); rounded(mChip.lineT, "line", 5, rb, 1)
+  mChip.t:SetText(rt); mChip.t:SetTextColor(rgb(pullQ(m.h))); mChip:SetWidth(mChip.t:GetStringWidth() + 16) -- (by how far the pull got (Oct 25))
+  rounded(mChip.fillT, "fill", 5, COL.raised, 1); rounded(mChip.lineT, "line", 5, COL.line2, 1)
   local parts = {}
   if P then
     local d = P.d and ((P.d >= 0 and ("  |cff7ee08f+" .. P.d .. "%|r") or ("  |cffff8f87" .. P.d .. "%|r"))) or ""
@@ -2171,6 +2188,7 @@ local function buildOptions()
       { "Report card grade", function() return S().grade == true end, function(v) S().grade = v end, true, "The pull's grade from the Report card, with mechanics, avoidable damage and survival." },
     })
     switch("Boss mistakes first", "Above your rotation tips.", function() return DB.bossFirst == true end, function(v) DB.bossFirst = v end)
+    switch("Open the sections by default", "Off: Rotation, Boss mechanics, Survival and Who died start closed on each pull, with their count; a tap opens one. Standard starts with it off.", function() return DB.openSecs ~= false end, function(v) DB.openSecs = v end, true)
     section("How many")
     counts({
       { "Rotation tips", "Your biggest fixes, the ones that cost you the most first.", 1, 8, function() return DB.maxSlips or 3 end, function(v) DB.maxSlips = v end },
@@ -2781,6 +2799,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     registerSettings()
     reapplyFonts(); card:SetScale(DB.scale or 1); big:SetScale(DB.bigScale or 1); mini:SetScale(DB.miniScale or 1)
     Debrief_ApplyStyle()
+    if DB.openSecs == nil then DB.openSecs = DB.preset ~= "standard" end -- (Standard opens folded since Oct 25)
     if not DB.diedBack then DB.maxDied = 3; DB.diedBack = true end -- (once: the Who died list is shown again; the filter is Stop at)
     autoLog()
     if DB.pos then card:ClearAllPoints(); card:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) end

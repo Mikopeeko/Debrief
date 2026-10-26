@@ -139,6 +139,7 @@ namespace Debrief {
         var ob = System.Text.RegularExpressions.Regex.Matches(s, @"^\[""onlyBad""\] = (true|false)", RX); o["onlyBad"] = ob.Count > 0 && ob[ob.Count - 1].Groups[1].Value == "true";
         var cp = System.Text.RegularExpressions.Regex.Matches(s, @"^\[""compact""\] = (true|false)", RX); o["compact"] = cp.Count > 0 && cp[cp.Count - 1].Groups[1].Value == "true"; // (Simple's short card (Oct 24))
         var tc = System.Text.RegularExpressions.Regex.Matches(s, @"^\[""twoCol""\] = (true|false)", RX); o["twoCol"] = !(tc.Count > 0 && tc[tc.Count - 1].Groups[1].Value == "false"); // (two columns when it's long (Oct 24))
+        var os = System.Text.RegularExpressions.Regex.Matches(s, @"^\[""openSecs""\] = (true|false)", RX); o["openSecs"] = !(os.Count > 0 && os[os.Count - 1].Groups[1].Value == "false"); // (Standard opens folded (Oct 25))
         var dt = System.Text.RegularExpressions.Regex.Matches(s, @"^\[""detailed""\] = (true|false)", RX); o["detailed"] = dt.Count > 0 && dt[dt.Count - 1].Groups[1].Value == "true";
         var bd = System.Text.RegularExpressions.Regex.Matches(s, @"^\[""bigDefault""\] = (true|false)", RX); o["bigDefault"] = bd.Count > 0 && bd[bd.Count - 1].Groups[1].Value == "true"; // (/recap opens the Whole night window: the pop-up does too (Oct 24)) // (Detailed, or your own mix made from it: always two columns)
         var show = new Dictionary<string, object>(); var si = s.LastIndexOf("[\"show\"] = {");
