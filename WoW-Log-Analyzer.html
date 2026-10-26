@@ -7364,6 +7364,22 @@ html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac +
 /* ===== Design studio round 43 (Oct 26): round 19 withdrawn: the last gear groups (Extras, Other gear) sit at the bottom of the gear column again, not in a
    second panel under the checklist. The gear column keeps its place from round 5. Owner: the Design studio chat. ===== */
 .pfv .ds-rcols > section.rck-gx { grid-column: 2; grid-row: 1; }
+/* ===== Design studio round 44 (Oct 26): the source box above the columns, the timeline tidied. Owner: the Design studio chat. ===== */
+/* the source box as a full-width strip between the glance strip and the columns */
+#view .pf-inl.spc-v > .rgx-src.ds-srcwide { display: block; margin: 0 0 18px !important; padding: 10px 14px 10px !important; background: var(--raised, rgba(255,255,255,.05)) !important; border: 1px solid rgba(255,255,255,.16) !important; border-radius: 10px !important; order: 0; }
+#view .pf-inl.spc-v > .rgx-src.ds-srcwide > .rgx-h { margin: 0 0 6px; }
+#view .pf-inl.spc-v > .rgx-src.ds-srcwide .rgx-bar { margin: 0 0 8px; }
+#view .pf-inl.spc-v > .rgx-src.ds-srcwide .rgx-lg { display: flex !important; flex-wrap: wrap; gap: 4px 18px; }
+#view .pf-inl.spc-v > .rgx-src.ds-srcwide .rgx-lg > span { display: inline-flex; align-items: center; gap: 6px; }
+#view .pf-inl.spc-v > .rgx-src.ds-srcwide .rgx-lg > span > u { display: inline-block; width: 3px; height: 18px; border-radius: 2px; margin: 0 2px 0 0; vertical-align: middle; }
+#view details.spc-chd.ds-glance { margin-bottom: 12px !important; }
+/* the timeline: no hint row, "More" as a small link top-right, the red legend item first */
+#view details.spc-chd.ds-glance .spc-card > header.spc-ch { display: flex; justify-content: flex-end; align-items: center; min-height: 0; padding: 0 0 4px; margin: 0; }
+#view details.spc-chd.ds-glance .spc-card > header.spc-ch > .spc-ri, #view details.spc-chd.ds-glance .spc-card > header.spc-ch h3 { display: none !important; }
+#view details.spc-chd.ds-glance .spc-card > header.spc-ch .sub { font-size: 0 !important; line-height: 0; }
+#view details.spc-chd.ds-glance .spc-card > header.spc-ch .sub > button, #view details.spc-chd.ds-glance .spc-card > header.spc-ch .sub > a { font-size: 12.5px !important; line-height: 1.4; }
+#view details.spc-chd.ds-glance .tl-lg { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+#view details.spc-chd.ds-glance .tl-lg > span:has(> i.red) { order: -1; }
 </style>
 
 
@@ -17244,6 +17260,7 @@ const PATCH_NOTES = [
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'Rotation: Where your healing (or damage) came from sits full width above the two columns, and the pull-at-a-glance timeline drops its hint row and lists the red "ready for a whole extra use" first in its legend.',
     'Rotation: Other gear and Extras sit at the bottom of the gear column again instead of in a second panel under the checklist.',
     'Rotation: one tile a spell. Rows about the same spell sit in its tile (Judgment while Holy Shock was full in Holy Shock, what you saved for Incarnation in Incarnation), each tile leads with the spell\'s own uses, and the numbers tiles join their spell.',
     'Healers: Cooldowns on big damage counts your presses against the most you could have pressed, says how many met heavy damage, and its cards are your presses only.',
@@ -51616,6 +51633,12 @@ function dsRotDedupe() { const NUMS = (s) => { const o = new Set(); (String(s ||
     const oneSentence = !/[.!?]\s+\S/.test(p.textContent.trim());
     if (extra === 0 || (valIn && extra <= 1 && oneSentence)) p.classList.add('ds-dup'); }); }
 (function () { const f19 = dsBars; dsBars = function (root) { f19(root); try { dsRotWords(); dsRotColour(); dsRotDedupe(); } catch (e) {} }; })();
+
+// ===== Design studio round 44 (Oct 26): the source box above the columns: "Where your healing came from" moves from the gear column to a full-width strip
+// under the pull-at-a-glance strip, once per page. Owner: the Design studio chat. =====
+function dsRotSrc() { const v = document.querySelector('#view .pf-inl.spc-v'); if (!v) return; const cols = v.querySelector(':scope > .ds-rcols'); if (!cols) return;
+  const src = v.querySelector('.ds-rcols .rck-gx .rgx-src'); if (!src || src.dataset.dsUp) return; src.dataset.dsUp = '1'; src.classList.add('ds-srcwide'); cols.before(src); }
+(function () { const f24 = dsBars; dsBars = function (root) { f24(root); try { dsRotSrc(); } catch (e) {} }; })();
 
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====

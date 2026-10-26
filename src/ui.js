@@ -1951,6 +1951,7 @@ const PATCH_NOTES = [
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'Rotation: Where your healing (or damage) came from sits full width above the two columns, and the pull-at-a-glance timeline drops its hint row and lists the red "ready for a whole extra use" first in its legend.',
     'Rotation: Other gear and Extras sit at the bottom of the gear column again instead of in a second panel under the checklist.',
     'Rotation: one tile a spell. Rows about the same spell sit in its tile (Judgment while Holy Shock was full in Holy Shock, what you saved for Incarnation in Incarnation), each tile leads with the spell\'s own uses, and the numbers tiles join their spell.',
     'Healers: Cooldowns on big damage counts your presses against the most you could have pressed, says how many met heavy damage, and its cards are your presses only.',
@@ -30924,6 +30925,12 @@ function dsRotDedupe() { const NUMS = (s) => { const o = new Set(); (String(s ||
     const oneSentence = !/[.!?]\s+\S/.test(p.textContent.trim());
     if (extra === 0 || (valIn && extra <= 1 && oneSentence)) p.classList.add('ds-dup'); }); }
 (function () { const f19 = dsBars; dsBars = function (root) { f19(root); try { dsRotWords(); dsRotColour(); dsRotDedupe(); } catch (e) {} }; })();
+
+// ===== Design studio round 44 (Oct 26): the source box above the columns: "Where your healing came from" moves from the gear column to a full-width strip
+// under the pull-at-a-glance strip, once per page. Owner: the Design studio chat. =====
+function dsRotSrc() { const v = document.querySelector('#view .pf-inl.spc-v'); if (!v) return; const cols = v.querySelector(':scope > .ds-rcols'); if (!cols) return;
+  const src = v.querySelector('.ds-rcols .rck-gx .rgx-src'); if (!src || src.dataset.dsUp) return; src.dataset.dsUp = '1'; src.classList.add('ds-srcwide'); cols.before(src); }
+(function () { const f24 = dsBars; dsBars = function (root) { f24(root); try { dsRotSrc(); } catch (e) {} }; })();
 
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
