@@ -1791,6 +1791,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-26', h: [
+    { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
@@ -30386,3 +30387,9 @@ function dsIconKeep() { const K = dsIconKeep.urls = dsIconKeep.urls || new Set()
     if (s && (K.has(s) || (i.complete && i.naturalWidth))) { i.parentElement.classList.add('has'); K.add(s); } }); }
 (function () { const f13 = dsBars; dsBars = function (root) { f13(root); try { dsIconKeep(); } catch (e) {} };
   document.addEventListener('load', (e) => { const i = e.target; if (i && i.tagName === 'IMG' && i.classList.contains('oi') && i.naturalWidth && i.getAttribute('src')) (dsIconKeep.urls = dsIconKeep.urls || new Set()).add(i.getAttribute('src')); }, true); })();
+
+// ===== Design studio round 23 (Oct 26): Graphs as a filter rail. Wraps the metric tabs and the tool row into one rail on the left of the
+// lists; the app keeps rendering into the same elements. Owner: the Design studio chat. =====
+function dsGraphs() { document.querySelectorAll('#view .gb.gb-tb').forEach((gb) => { if (gb.querySelector(':scope > .ds-grail')) return; const tabs = gb.querySelector(':scope > .gb-tabrow'), tool = gb.querySelector(':scope > .gb-tool'); if (!tabs) return;
+  const rail = document.createElement('div'); rail.className = 'ds-grail'; gb.insertBefore(rail, tabs); rail.appendChild(tabs); if (tool) rail.appendChild(tool); gb.classList.add('ds-gb'); }); }
+(function () { const f14 = dsBars; dsBars = function (root) { f14(root); try { dsGraphs(); } catch (e) {} }; })();
