@@ -1208,7 +1208,7 @@ local function renderOnce()
     y = y + hh + 12; coachDrew = true
     -- (your worse and better than last pull (Oct 23), like the website's cards for a player)
     if P.ctr and SH.trend ~= false and (#P.ctr.x > 0 or #P.ctr.b > 0) then
-      for _, k in ipairs({ { "x", "Worse than last pull", COL.warn }, { "b", "Better than last pull", "5aa9ff" } }) do
+      for _, k in ipairs({ { "x", "Worse than last pull", h.kill and COL.muted or COL.warn }, { "b", "Better than last pull", h.kill and COL.muted or "5aa9ff" } }) do -- (quiet on a kill: the gold edge is the loud thing (Oct 25))
         if #P.ctr[k[1]] > 0 then local names = {}; for _, it in ipairs(P.ctr[k[1]]) do names[#names + 1] = it.nm .. ((it.tag or "") ~= "" and (" (" .. it.tag:lower() .. ")") or "") end
           local f = FS("body", 13, COL.soft); f:SetPoint("TOPLEFT", 4, -y); f:SetWidth(CW - 8); f:SetText("|cff" .. k[3] .. k[2] .. ":|r " .. paint(table.concat(names, ", "))); y = y + f:GetStringHeight() + 6 end
       end

@@ -15,9 +15,9 @@ html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.
 body { border: 1px solid var(--line2); border-radius: 10px; }
 /* (a kill (Oct 25, the Design studio's round 3, like the site's boss banner): the edge goes gold with a glow for 1.8 s, then a 1px gold edge;
    the raid lead's first line a size up. Nothing moves under reduced motion) */
-body.is-kill { border-color: rgba(230,180,80,.85); box-shadow: inset 0 0 0 1px rgba(230,180,80,.45), inset 0 0 30px rgba(230,180,80,.16); }
+body.is-kill { border-color: #e6b450; box-shadow: inset 0 0 0 1px rgba(230,180,80,.6), inset 0 0 26px rgba(230,180,80,.14); } /* (settles to a full gold edge (the studio's check, Oct 25)) */
 body.is-kill.k-anim { animation: killGlow 1.8s ease-out both; }
-@keyframes killGlow { 0% { box-shadow: inset 0 0 0 2px rgba(230,180,80,.95), inset 0 0 70px rgba(230,180,80,.34); } 100% { box-shadow: inset 0 0 0 1px rgba(230,180,80,.45), inset 0 0 30px rgba(230,180,80,.16); } }
+@keyframes killGlow { 0% { box-shadow: inset 0 0 0 2px rgba(230,180,80,.95), inset 0 0 70px rgba(230,180,80,.34); } 100% { box-shadow: inset 0 0 0 1px rgba(230,180,80,.6), inset 0 0 26px rgba(230,180,80,.14); } }
 body.is-kill .kyou .kv { font-size: 17px; }
 @media (prefers-reduced-motion: reduce) { body.k-anim { animation: none !important; } .mini { animation: none !important; } }
 .wrap { display: flex; flex-direction: column; max-height: 100vh; }
@@ -265,8 +265,8 @@ function cardView() {
       const tr = you && you[2];
       L += '<div class="kyou">' + (DUN ? '' : '<div class="kl">YOUR RAID LEAD SAYS</div>') + (verdict ? '<p class="kv">' + pt(verdict) + '</p>' : '') +
         (tips.length ? '<div class="kl">' + (DUN ? 'NEXT TIME' : C.h && C.h.kill ? 'NEXT WEEK' : 'NEXT PULL') + '</div>' + (tips.length > 1 ? '<ol class="ktips">' + tips.map((t) => '<li>' + pt(t) + '</li>').join('') + '</ol>' : '<p class="ktip1">' + pt(tips[0]) + '</p>') : '') + '</div>' + /* (worse and better under the box, as /recap shows them) */
-        (tr && on('trend') && ((tr.worse || []).length || (tr.better || []).length) ? '<div class="ktrl">' + ((tr.worse || []).length ? '<p><b style="color:#e8a23a">Worse than last pull:</b> ' + tr.worse.map((x) => esc(x[0]) + (x[1] ? ' (' + esc(String(x[1]).toLowerCase()) + ')' : '')).join(', ') + '</p>' : '') +
-          ((tr.better || []).length ? '<p><b style="color:#5aa9ff">Better than last pull:</b> ' + tr.better.map((x) => esc(x[0]) + (x[1] ? ' (' + esc(String(x[1]).toLowerCase()) + ')' : '')).join(', ') + '</p>' : '') + '</div>' : '');
+        (tr && on('trend') && ((tr.worse || []).length || (tr.better || []).length) ? '<div class="ktrl">' + ((tr.worse || []).length ? '<p><b style="color:' + (C.h && C.h.kill ? 'var(--muted)' : '#e8a23a') + '">Worse than last pull:</b> ' + tr.worse.map((x) => esc(x[0]) + (x[1] ? ' (' + esc(String(x[1]).toLowerCase()) + ')' : '')).join(', ') + '</p>' : '') +
+          ((tr.better || []).length ? '<p><b style="color:' + (C.h && C.h.kill ? 'var(--muted)' : '#5aa9ff') + '">Better than last pull:</b> ' + tr.better.map((x) => esc(x[0]) + (x[1] ? ' (' + esc(String(x[1]).toLowerCase()) + ')' : '')).join(', ') + '</p>' : '') + '</div>' : '');
     }
     // (your numbers: your damage or healing against last pull and your best, then the small tiles)
     if (on('tile')) {
@@ -298,7 +298,11 @@ function cardView() {
           (P.rs && (P.rs.good || []).length ? '<p class="kgood">Done right: ' + P.rs.good.map(esc).join(', ') + '.</p>' : ''), undefined, P.rot.length, P.rot.length === 1 ? 'tip' : 'tips');
       } else if ((P.slips || []).length) L += sec('rot', 'Rotation', lim('rot', worst(bad(P.slips)), MX.maxSlips || 3, row), undefined, bad(P.slips).length, bad(P.slips).length === 1 ? 'tip' : 'tips');
     }
-    if (on('boss') && !LK.compact && (P.boss || []).length) Rt += sec('boss', 'Boss mechanics', lim('boss', worst(bad(P.boss)), MX.maxBoss != null ? MX.maxBoss : 4, row), undefined, bad(P.boss).length, '');
+    /* (what the tiles already show (avoidable damage, kicks, dispels) stays out of Boss mechanics when the tiles are on, as on the card, so both count the
+       same lines; nothing left says "No boss mistakes." like the card (the studio's check, Oct 25)) */
+    const TILE_IC = { ability_rogue_sprint: 1, ability_kick: 1, spell_holy_dispelmagic: 1 }, tilesOn = !LK.compact && LK.preset !== 'simple' && (P.tiles || []).length > 0;
+    const bossL = bad(tilesOn ? (P.boss || []).filter((r) => !TILE_IC[r[1]]) : (P.boss || []));
+    if (on('boss') && !LK.compact && ((P.boss || []).length || tilesOn)) Rt += sec('boss', 'Boss mechanics', bossL.length ? lim('boss', worst(bossL), MX.maxBoss != null ? MX.maxBoss : 4, row) : '<div class="kr"><i class="kd" style="background:#45c15c"></i><span class="ic"></span><span>No boss mistakes.</span></div>', undefined, bossL.length, '');
     const sv = LK.compact ? [] : [].concat(on('surv') ? bad(P.surv) : [], on('cons') ? (P.cons || []) : []); /* (a death with a stone unused is in your death line now (Oct 24)) */
     if (sv.length) Rt += sec('surv', 'Survival', lim('surv', worst(sv), 6, row), undefined, sv.length, '');
     /* (Who died, as the card in WoW shows it on your Me tab (Oct 24): not on Simple, not on Detailed (it's in the Raid view there), and after a dungeon boss) */
