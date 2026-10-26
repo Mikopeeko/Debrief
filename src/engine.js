@@ -187,7 +187,7 @@ const PACKS = [
   // (named apart from the Blood Venom debuff: rules also match by name, and every Miasma soaker takes that one)
   { type: 'avoidable', spellIds: [1284208], name: 'Blood pool', severity: 'Medium', difficulties: ['Heroic', 'Mythic'], tip: 'Get out of blood pools, and drop your own pool at the room edge or on an existing pool.' },
   // (Cultivated Burst, a Helical Toxins not solved, is flagged by the fight module with who and when)
-  { type: 'avoidable', spellIds: [1296962], name: 'Protovenom Eruption', severity: 'Medium', difficulties: ['Mythic'], tip: 'Only touch another player who also has Shifting Protovenom. Touching an unmarked player erupts and knocks you both back.' },
+  { type: 'avoidable', spellIds: [1296962], name: 'Protovenom Eruption', severity: 'Low', /* (fix 16, Oct 26: one Medium per player hit; top kills erupt and win) */ difficulties: ['Mythic'], tip: 'Only touch another player who also has Shifting Protovenom. Touching an unmarked player erupts and knocks you both back.' },
 ]},
 // (Vashnik: spell IDs checked against real Mythic pulls, 2026-10; Malignant Burst and Malignance weren't in them, so they
 // match by name. The fight module covers the adds, totems, soaks, dispels and tank swaps.)
@@ -1515,6 +1515,8 @@ function buildEntombedSentinels(ev, r, h) {
     const rm = pvA.filter((e) => e.op === 'remove' && e.t >= t && e.t < end);
     const er = []; for (const e of erupts.filter((x) => x.t >= t && x.t < end)) { const c = er.find((q) => Math.abs(q.t - e.t) < 0.3); if (c) { if (!c.who.includes(e.dst)) c.who.push(e.dst); } else er.push({ t: e.t, who: [e.dst] }); }
     const eruptOf = (g) => er.find((q) => q.who.includes(g));
+    /* (fix 16, Oct 26: a death within ~4 s of the eruption, or a fall after its knockback) */
+    const exDeath = (g, ex) => ex ? r.deaths.find((d) => d.guid === g && d.t >= ex.t - 0.2 && (d.t <= ex.t + 4 || (d.t <= ex.t + 8 && /fall/i.test(d.ability || '')))) : null;
     // partners: two circles gone at the same moment; when two pairs clear at once, the nearest one is the partner
     const offT = new Map(circles.map((g) => { const on = (ap.find((e) => e.dst === g) || {}).t; return [g, (rm.find((e) => e.dst === g && e.t >= on) || {}).t]; }));
     const mateOf = new Map(), left = circles.filter((g) => offT.get(g) != null).sort((a, b) => offT.get(a) - offT.get(b));
@@ -1529,12 +1531,12 @@ function buildEntombedSentinels(ev, r, h) {
       const n = pvTicks.filter((e) => e.dst === g && e.t >= on && e.t <= (off ?? end) + 0.1).length, ex = eruptOf(g), d = diedNear(g, on, (off ?? on + 20) - on + 2);
       const took = off != null ? off - on : null, slow = took != null && took > 8;
       return { g, on, off, mate, n, ex, d, took, row: [{ p: pname(g) }, { t: on }, mate ? { p: pname(mate) } : { txt: off != null ? 'no partner' : 'still on', warn: true }, took != null ? { txt: took.toFixed(1) + ' s', warn: slow } : { txt: '—', dim: true },
-        { txt: pl(n, 'pulse'), dim: !n }, ex ? { txt: 'erupted' + (ex.who.length > 1 ? ' with ' + ex.who.filter((q) => q !== g).map(pname).join(', ') : ''), bad: true } : d ? { txt: 'died', bad: true } : { txt: '—', dim: true }, { txt: '' }] };
+        { txt: pl(n, 'pulse'), dim: !n }, ex ? { txt: 'erupted' + (ex.who.length > 1 ? ' with ' + ex.who.filter((q) => q !== g).map(pname).join(', ') : '') + (exDeath(g, ex) ? ' and died' : ''), bad: !!exDeath(g, ex) } : d ? { txt: 'died', bad: true } : { txt: '—', dim: true }, { txt: '' }] };
     };
     const cr = circles.map(rowOf).sort((a, b) => a.on - b.on);
     // (players without a circle caught in an eruption: they ran into one, or one ran into them)
     const plain = [...new Set(er.flatMap((q) => q.who))].filter((g) => !circles.includes(g)).map((g) => { const ex = eruptOf(g);
-      return [{ p: pname(g), sub: 'no circle' }, { t: ex.t }, { txt: '—', dim: true }, { txt: '—', dim: true }, { txt: '—', dim: true }, { txt: 'touched by a circle', bad: true }, { txt: '' }]; });
+      return [{ p: pname(g), sub: 'no circle' }, { t: ex.t }, { txt: '—', dim: true }, { txt: '—', dim: true }, { txt: '—', dim: true }, exDeath(g, ex) ? { txt: 'caught in an eruption and died', bad: true } : { txt: 'caught in an eruption' }, { txt: '' }]; });
     // (eruption hits themselves are flagged by the rule pack, one per player hit)
     for (const x of cr) if (!x.ex && x.took > 8) M(x.off, pname(x.g), 'Shifting Protovenom', 'Low', 'Took ' + x.took.toFixed(1) + ' s to clear Shifting Protovenom (' + pl(x.n, 'pulse') + ' of 233k).', 'Find a partner with a circle right away. Cross to the other group if yours has none.');
     const last = Math.max(t + 8, ...cr.map((x) => x.off ?? t + 14)), tm = cr.length ? cr[0].on + 1 : t + 5;
@@ -1548,7 +1550,7 @@ function buildEntombedSentinels(ev, r, h) {
       .concat(cr.filter((x) => x.mate && x.off != null).map((x) => ({ guid: x.g, r: 4, color: '#ffffff', fill: 'rgba(255,255,255,.22)', label: '', t0: x.off, dur: 1.2, cn: 'White flash', legend: 'cleared with a partner' })))
       // (an eruption's blast is 10 yd, its published radius, around the circle player it came from)
       .concat(er.flatMap((q) => { const c = q.who.filter((g) => circles.includes(g)); return (c.length ? c : q.who.slice(0, 1)).map((g) => ({ guid: g, r: 10, ...mcol('Protovenom Eruption', 0.2), label: 'Eruption', t0: q.t - 0.1, dur: 1.6, fx: 'burst', at: q.t, legend: 'Protovenom Eruption (10 yd blast)' })); }));
-    const bad = er.length > 0 || cr.some((x) => x.d), warn = cr.some((x) => x.took > 8 || !x.mate);
+    const bad = er.some((q) => q.who.some((g) => exDeath(g, q))) || cr.some((x) => x.d), warn = cr.some((x) => x.took > 8 || !x.mate);
     return { title: 'Protovenom ' + (i + 1), t, bad, warn,
       sub: pl(circles.length, 'circle') + ', ' + (cr.filter((x) => x.mate).length) + ' cleared in pairs' + (cr.some((x) => x.took != null) ? ', slowest ' + Math.max(...cr.map((x) => x.took || 0)).toFixed(1) + ' s' : '') + (er.length ? ', ' + pl(er.length, 'eruption') : ''),
       rows: [[{ txt: 'Whole cast', sub: 'every circle, on one map', dim: true }, { t }, { txt: '' }, { txt: '' }, { txt: '' }, { txt: '' }, { map: { t: tm, hl: circles, hlLabel: 'had a circle', bad: [...new Set(er.flatMap((q) => q.who))], badLabel: 'in a Protovenom Eruption', title: 'Shifting Protovenom ' + (i + 1) + ' at ' + h.fmtT(tm), pts: h.snap(tm), rings: pvRings, frames: frames(tm - 2, last + 1) } }]].concat(cr.map((x) => x.row), plain) };
