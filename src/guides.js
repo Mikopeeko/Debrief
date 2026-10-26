@@ -5504,16 +5504,18 @@ function ppCardsCA(J, M, U, P) {
     k.boss('zj', 'Zul\'jan', 0, 0, 0).at(0, 't1', u1[0] * 5, u1[1] * 5).at(0, 't2', u2[0] * 6, u2[1] * 6);
     pur.forEach((q, i) => { const s = PS[i]; fix[s] = q.n; put.add(s); const sx = q.p[0] < 0 ? -1 : 1;
       k.obj('p' + i, 'porb', 0, q.p[0], q.p[1]).ring({ on: 'p' + i, r: 3.5, fx: 'debuff', t0: 0, dur: 99, color: PU, cn: 'Purple orb\'s ring', label: false }).at(0, s, q.p[0] + sx * 6, q.p[1] + (q.p[1] > 0 ? 2 : -2)); });
-    const GS = ['m1', 'm2', 'm3', 'm4', 'm5'], sides = [[-8, 0.6], [8, 0.6], [-4, 0.45], [4, 0.45]]; let si = 0;
-    O.green.forEach(([mk, n], i) => { const s = GS[i]; if (!s) return; fix[s] = n; put.add(s); let p = mk && mk !== 'side' && M[mk];
-      if (!p) { const [ox, f] = sides[si++ % 4], a = A.length ? A : pur; p = [dir(a)[0] * f + ox * Math.abs(u1[1]), dir(a)[1] * f + ox * Math.abs(u1[0])]; }
-      k.obj('g' + i, 'orb', 0, p[0], p[1]).at(0, s, p[0] + (p[0] <= 0 ? -3.5 : 3.5), p[1]); });
+    // (every set has four greens (your note, Oct 26: "The maps are missing the green orbs"): the note's green carriers on their marker or
+    // beside the frontal, and any green the note gives nobody still drawn, two with each frontal)
+    const GS = ['m1', 'm2', 'm3', 'm4', 'm5'], sides = [[-8, 0.6], [8, 0.6]], greens = O.green.slice(0, 4).concat(Array(Math.max(0, 4 - O.green.length)).fill(['', ''])); let si = 0;
+    greens.forEach(([mk, n], i) => { let p = mk && mk !== 'side' && M[mk];
+      if (!p) { const a = si < 2 ? A : Bq, L = a.length ? a : pur, d = dir(L), uu = si < 2 ? u1 : u2, [ox, f] = sides[si % 2]; si++; p = [d[0] * f + ox * Math.abs(uu[1]), d[1] * f + ox * Math.abs(uu[0])]; }
+      k.obj('g' + i, 'orb', 0, p[0], p[1]); if (!n) return; const s = GS[i]; fix[s] = n; put.add(s); k.at(0, s, p[0] + (p[0] <= 0 ? -3.5 : 3.5), p[1]); });
     const HS = ['h1', 'h2', 'h3', 'h4'], hp = [[-9, 10], [9, 10], [-12, -11], [12, -11]]; O.helpers.slice(0, 4).forEach((n, i) => { const s = HS[i]; fix[s] = n; put.add(s); k.at(0, s, hp[i][0] * (ns ? 1 : 0.4) + (ns ? 0 : hp[i][1]), hp[i][1] * (ns ? 1 : 0.4) + (ns ? 0 : hp[i][0])); });
     ppRest(k, put, ns ? [[-17, 0], [17, 0]] : [[0, 17], [0, -17]]);
     k.cone({ from: 'zj', to: 't1', at: 1.2, r: 35 }).cone({ from: 'zj', to: 't2', at: 1.2, r: 35 });
     const S = ppSeat(P, fix), PG = PS.slice(0, pur.length).concat(GS.slice(0, O.green.length)), lab = (d, t) => [{ rx: d[0] * 0.55 + (ns ? 22 : 0), ry: d[1] * 0.55 + (ns ? 0 : 22) }, t, R, '#fff', 0];
     cards.push({ id: 'orbs1', ph: 1, when: 'Every orb set', title: 'Toxic Deluge (Purples on their markers)', map: ppFreeze(k.done({ title: 'Toxic Deluge', focus: { x: 0, y: 0, r: 30 } }), 1, S, P, M, { hl: PG.concat(['t1', 't2']), named: PG, labels: [lab(d1, '1st frontal'), lab(d2, '2nd frontal')] }),
-      legend: [ppG('Purple carriers', PU, pur.map((q) => ppI(P, q.n, MKN(q.mk)))), ppG('Green carriers', GR, O.green.map(([mk, n]) => ppI(P, n, mk === 'side' ? 'Side' : MKN(mk)))), ppG('Helpers', GO, O.helpers.map((n) => ppI(P, n)), 'Move greens out of the purple carriers\' way.'),
+      legend: [ppG('Purple carriers', PU, pur.map((q) => ppI(P, q.n, MKN(q.mk)))), ppG('Green carriers', GR, O.green.map(([mk, n]) => ppI(P, n, mk === 'side' ? 'Side' : MKN(mk))), O.green.length ? '' : 'Not in the note: whoever is closest carries them.'), ppG('Helpers', GO, O.helpers.map((n) => ppI(P, n)), 'Move greens out of the purple carriers\' way.'),
         ppG('Tanks', BL, [], 'One takes the 1st frontal; the other taunts for the 2nd.')],
       foot: 'Two purples go with each frontal. Nothing may touch a purple ring.' }); }
   // Phase 1's two axes, on the raid lead's marker
@@ -5673,27 +5675,15 @@ function ppZip(files) {
   return new Blob([...parts, ...cen, new Uint8Array(e.buffer)], { type: 'application/zip' });
 }
 // ---- the Pictures window: the markers (drag them; pick one for each mechanic), then every picture with Copy and Download
+// (only what the window needs to work: the marker map's overlay and dragging, the mark pick's place, and which parts hide in the
+// one-picture view. Every look rule for these classes is the Design studio's, in shell.html (one owner per thing, Oct 26))
 function ppCss() {
   if (document.getElementById('pp-css')) return; const st = document.createElement('style'); st.id = 'pp-css';
-  st.textContent = '#ppWin .pp-win{width:min(1180px,96vw)}' +
-    '#ppWin .pp-mkbox{margin:10px 0 14px;padding:8px 12px;border:1px solid rgba(255,255,255,.16);border-radius:12px;background:var(--raised,#171b24)}#ppWin .pp-mkbox summary{cursor:pointer;font-weight:700}#ppWin .pp-mkbox summary .sub{font-weight:400;margin-left:6px}' +
-    '#ppWin .pp-mk{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;margin-top:10px;align-items:start}#ppWin .pp-mkmap{position:relative}#ppWin .pp-mkmap svg{width:100%!important;max-width:none!important;height:auto!important;aspect-ratio:1;display:block;border-radius:10px}' +
-    '#ppWin .pp-mkmap .zwrap{max-width:none!important}#ppWin .pp-mkmap .sub,#ppWin .pp-mkmap .zbar,#ppWin .pp-mkmap .zctl,#ppWin .pp-mkmap .zkey,#ppWin .pp-mkmap .znorth{display:none!important}' +
-    '#ppWin .pp-mklay{position:absolute;inset:0;pointer-events:none}#ppWin .pp-mkdot{position:absolute;transform:translate(-50%,-50%);width:36px;height:36px;padding:0;border:0;background:none;cursor:grab;pointer-events:auto;touch-action:none;display:grid;place-items:center}' +
-    '#ppWin .pp-mkdot.on{cursor:grabbing;filter:drop-shadow(0 0 6px rgba(255,255,255,.8))}#ppWin .pp-use{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:8px 0}#ppWin .pp-use select{min-width:150px}' +
-    '#ppWin .pp-mkpick{position:fixed;z-index:1001;display:flex;gap:4px;padding:6px;background:#1b1f29;border:1px solid #3a4150;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.5)}' +
-    '#ppWin .pp-mkpick button{width:34px;height:34px;padding:0;border:1px solid transparent;border-radius:8px;background:none;display:grid;place-items:center;cursor:pointer}#ppWin .pp-mkpick button:hover{background:rgba(255,255,255,.06)}#ppWin .pp-mkpick button.on{border-color:#e6b450;box-shadow:0 0 0 1px #e6b450}' +
-    '#ppWin .pp-mkbase{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}' +
-    '#ppWin .pp-all{display:flex;align-items:center;gap:10px;margin:6px 0 10px}#ppWin .pp-cards{display:grid;gap:18px}#ppWin .pp-card .pp-ph{font-weight:700;margin-bottom:2px}#ppWin .pp-act{display:flex;justify-content:flex-end;align-items:center;gap:8px}#ppWin .pp-msg{margin-right:auto}' +
-    '@media (max-width:760px){#ppWin .pp-mk{grid-template-columns:1fr}}' +
-    /* (the one-picture view and the Jobs cards' small pictures: the Design studio's mock (Oct 26); its own round restyles on top) */
+  st.textContent = '#ppWin .pp-mkmap{position:relative}#ppWin .pp-mkmap .zbar,#ppWin .pp-mkmap .zctl,#ppWin .pp-mkmap .zkey,#ppWin .pp-mkmap .znorth{display:none!important}' +
+    '#ppWin .pp-mklay{position:absolute;inset:0;pointer-events:none}#ppWin .pp-mkdot{position:absolute;transform:translate(-50%,-50%);pointer-events:auto;touch-action:none;cursor:grab}#ppWin .pp-mkdot.on{cursor:grabbing}' +
+    '#ppWin .pp-mkpick{position:fixed;z-index:1001}' +
     '#ppWin:not(.pp-one) .pp-nav{display:none}#ppWin.pp-one .pp-intro,#ppWin.pp-one .pp-all,#ppWin.pp-one .pp-mkbox,#ppWin.pp-one .ds-ppnav,#ppWin.pp-one .pp-card:not(.pp-cur),#ppWin.pp-one .pp-cur .pp-ph{display:none}' +
-    '#ppWin.pp-one .pp-win{width:min(1000px,100%)}#ppWin.pp-one .pp-card{border:0;background:none;padding:0}html body #ppWin.pp-one .pp-cards{grid-template-columns:minmax(0,1fr)!important}#ppWin .pp-nav{display:flex;align-items:center;gap:10px;margin:2px 0 10px;flex-wrap:wrap}#ppWin .pp-nav .sub{margin-right:auto}' +
-    /* (your call, Oct 26: "they should be in a horizontal row under the assignments") */
-    '.plb-rc>.pj-pics:not(:empty){display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.07)}.plb-rc>.pj-pics:empty{display:none}' +
-    '.pj-pic{display:block;width:100px;padding:0;margin:0;border:1px solid var(--line2,#353b49);border-radius:8px;background:#0b0d12;overflow:hidden;cursor:zoom-in;text-align:left;font:inherit;color:var(--text,#ece8df)}.pj-pic:hover{border-color:rgba(230,180,80,.6)}' +
-    '.pj-pic img{display:block;width:100px;height:100px;object-fit:cover;object-position:left center;background:#0b0d12}.pj-pic img:not([src]){visibility:hidden}.pj-pic small{display:block;padding:3px 6px 4px;font-size:12px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pj-pic small i{display:block;font-style:normal;font-size:11px;color:var(--muted,#a4abb8)}' +
-    '@media (max-width:640px){.pj-pic{width:calc(50% - 5px)}.pj-pic img{width:100%;height:auto;aspect-ratio:1}}';
+    '.pj-pic img:not([src]){visibility:hidden}';
   document.head.appendChild(st);
 }
 // (one note's pictures, worked out once: who's who, the jobs and the cards at the raid lead's markers; each drawn picture is kept with
