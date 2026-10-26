@@ -7686,6 +7686,14 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #ppWin.ds-quiet { visibility: hidden; pointer-events: none; }
 /* (the user: in the one-picture view, "remove the 'all 10 pictures' button") */
 html body #ppWin.pp-one .pp-nav [data-ppallv] { display: none !important; }
+/* ===== Design studio round 62 (Oct 26): one bare square thumbnail everywhere in the Jobs cards (the user's pick: the bare
+   square beside a numbered row). Owner: the Design studio chat. ===== */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pj-pic, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-rr > .pj-pic, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pj-pics > .pj-pic { width: 80px; height: 80px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pj-pic img, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-rr > .pj-pic img, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pj-pics > .pj-pic img { width: 80px; height: 80px; aspect-ratio: auto; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pj-pic small { display: none !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-rr:has(> .pj-pic) { grid-template-columns: minmax(0, 1fr) 80px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-rr > .pj-pic { grid-row: 1 / span 3; align-self: center; }
+@media (max-width: 640px) { html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pj-pics > .pj-pic { width: 80px; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pj-pics > .pj-pic img { width: 80px; height: 80px; aspect-ratio: auto; } }
 </style>
 
 
