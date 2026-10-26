@@ -1870,7 +1870,7 @@ const PATCH_NOTES = [
     { t: 'Debrief in game: a guided setup', d: 'The first time you log in, a short setup helps you pick a style and what your card shows, with a live preview beside it (/debrief setup opens it again). Long cards now split into two columns instead of running off the screen.' },
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
-    'Debrief in game: when a newer pull is on your PC, /recap now offers a Bring it in button, so you never have to type /reload (the chat reminder is off unless you switch it on). The Raid view is open to everyone, and Glow my NSRT cooldowns has been removed from Debrief.',
+    'Debrief in game: when a newer pull is on your PC, /recap now offers a Save this pull button, so you never have to type /reload (the chat reminder is off unless you switch it on). The Raid view is open to everyone, and Glow my NSRT cooldowns has been removed from Debrief.',
     'Debriefing reads more plainly: "2 in the circle" instead of "In circle 2", "damage prevented", "from 2 sources", "the wipe was called", yellow instead of amber, and names joined with "and".',
     'Debrief in game: Standard opens with Rotation, Boss mechanics, Survival and Who died closed, each with its count (tap one to open it; a switch in /db keeps them open). The PC pop-up slides in like the website, and a kill gets a gold edge. New pictures on the Debrief Addon page.',
     'Debrief in game: a clearer first-time setup that checks the PC app and combat logging for you, and /db on one page with the four everyday switches on top and the rest in folds. The addon and the PC pop-up now use the website font and colours, and pull buttons are coloured by how far each pull got.',
@@ -1928,6 +1928,7 @@ const PATCH_NOTES = [
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
     'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
   ], f: [
+    'Debrief in game: the button on the card now says Save this pull (Save these pulls when there are more).',
     'Debriefing appears once, finished, a few seconds after you open a pull (it says "Reading the pull…" meanwhile), instead of drawing itself over and over.',
     'Debriefing no longer redraws itself again and again while a pull loads (the flashing), and it keeps the player you picked.',
     'Opening a report link goes straight from the loading card to Debriefing, without flashing the "Paste a Warcraft Logs link" box.',
@@ -2503,7 +2504,7 @@ function openInGame() {
       '<div class="igm-art"><img src="' + U + 'shots/card.png" alt="A recap card in the game after a kill: the raid lead\'s words, your healing, your rotation, boss mechanics, survival and who died"></div></header>' +
     '<section class="igm-sec"><div class="igm-sh"><h2>Who needs what</h2><p>Everyone who wants their recap runs the PC app. It puts the addon in too.</p></div><div class="igm-who">' +
       '<div class="igm-wc"><div class="igm-wh">' + all + '<div><div class="igm-tag">In the game</div><h3>The addon</h3></div></div>' +
-        '<p>Shows your recaps in WoW: type /recap, and click Bring it in when a newer pull is on your PC.</p>' +
+        '<p>Shows your recaps in WoW: type /recap, and click Save this pull when the card offers it.</p>' +
         '<p class="igm-how">Unzip it into <code>World of Warcraft\\_retail_\\Interface\\AddOns</code>. Or take the Windows download, which puts it in for you.</p>' + btn(false, 'Debrief-addon.zip', 'Just the addon', 'About 0.4 MB') + '</div>' +
       '<div class="igm-wc one"><div class="igm-wh">' + one + '<div><div class="igm-tag">On your PC</div><h3>The PC app</h3></div></div>' +
         '<p>Reads your combat log after each boss pull and shows your recap over the game a few seconds later. It also saves it for the addon.</p>' +
@@ -2512,7 +2513,7 @@ function openInGame() {
     '<section class="igm-sec"><div class="igm-sh"><h2>After every boss pull</h2><p>Three steps, a few seconds.</p></div><ol class="igm-steps">' +
       '<li><i>1</i><b>The pull ends</b><span>Kill or wipe, the app reads it from the combat log.</span></li>' +
       '<li><i>2</i><b>Your recap pops up over the game</b><span>A short chime, and the recap opens on your screen.</span></li>' +
-      '<li><i>3</i><b>In WoW, type /recap</b><span>Click Bring it in on the card, and every pull from tonight is in the game too.</span></li></ol>' +
+      '<li><i>3</i><b>In WoW, type /recap</b><span>Click Save this pull on the card, and every pull from tonight is in the game too.</span></li></ol>' +
       '<div class="igm-all"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor" opacity=".18"/><path d="m7.5 12.4 3 3 6-6.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Nothing to copy or paste.</b> The app does it all.</span></div></section>' +
     '<section class="igm-sec"><div class="igm-sh"><h2>What it looks like</h2><p>The card, the raid view, the big window, the settings and the pop-up on your PC.</p></div><div class="igm-gal">' + IGM_SHOTS.map(shot).join('') + '</div></section>' +
     '<section class="igm-sec"><div class="igm-sh"><h2>Handy commands</h2><p>Type these in the chat box in WoW. Click one to copy it.</p></div><div class="igm-cmds">' +
@@ -28644,7 +28645,7 @@ const PAGE_TIPS = {
   ingame: [
     { sel: '#main .igm-cta', t: 'Get it', p: 'Download for Windows puts in the PC app and the addon in one go.' },
     { sel: '#main .igm-who', t: 'Who needs what', p: 'Everyone who wants their recap runs the PC app. It reads their own combat log and puts the addon in too.' },
-    { sel: '#main .igm-steps', t: 'After every pull', p: 'Your recap pops up on your PC by itself. In WoW, /recap shows it too: click Bring it in when the card offers it.' },
+    { sel: '#main .igm-steps', t: 'After every pull', p: 'Your recap pops up on your PC by itself. In WoW, /recap shows it too: click Save this pull when the card offers it.' },
     { sel: '#main .igm-cmds', t: 'Handy commands', p: 'Type /recap for your card, /db for the settings, or /debrief big for every pull of the night.' }],
   live: [
     { sel: '#bhPulls .bhp-row, #list .film', t: 'Every pull of the night', p: 'Each bar is one pull: the higher it is, the further it got. Click one to see it. Its color shows how far it got too, and orange is a kill.' },

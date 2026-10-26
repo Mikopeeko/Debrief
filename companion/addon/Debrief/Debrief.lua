@@ -2238,7 +2238,7 @@ local function buildOptions()
     segment("Close by itself", "Not while your mouse is on it.", { { 0, "Never" }, { 30, "30 s" }, { 60, "60 s" }, { 120, "2 min" } },
       function() return DB.autoClose or 0 end, function(v) DB.autoClose = v end, true)
     switch("Lock in place", "The card and its window can't be dragged.", function() return DB.lock == true end, function(v) DB.lock = v end, true)
-    switch("Remind me in chat", "A line in chat after each boss: your recap is on your PC, and /recap brings it in here. Off unless you switch it on.", function() return DB.nudge == true end, function(v) DB.nudge = v end, true)
+    switch("Remind me in chat", "A line in chat after each boss: your recap is on your PC, and /recap saves it here. Off unless you switch it on.", function() return DB.nudge == true end, function(v) DB.nudge = v end, true)
     switch("Combat log always on", "With Advanced Combat Logging, whenever Debrief is loaded.", function() return DB.autoLog ~= false end, function(v) DB.autoLog = v end, true)
   end)
   fold("goals", "Goals and saved pulls", "A damage or healing goal, and how many pulls to keep.", function()
@@ -2498,7 +2498,7 @@ do
 
   -- step 4: using it, what to type and what to click
   do local f = pane(4); local yy = 0
-    for _, w in ipairs({ { "/recap", "Shows or hides your card. When a newer pull is on your PC, it says so: click Bring it in." },
+    for _, w in ipairs({ { "/recap", "Shows or hides your card. When a newer pull isn't here yet, it says so: click Save this pull." },
       { "Me  ·  Raid view", "Your own pull, or the raid's biggest mistakes and who died." }, { "<  name  >", "Look at anyone in the pull." },
       { "Expand", "The whole night in a big window, with charts." }, { "+  and  –", "Open or fold any line for the details." }, { "/db", "These settings, any time." } }) do
       local k = fsOn(f, "bold", 13.5, "e6b450"); k:SetPoint("TOPLEFT", 0, -yy); k:SetText(w[1])
@@ -2562,27 +2562,28 @@ do
   function Debrief_Tutorial() if not DB then return end; if DebriefOptions and DebriefOptions:IsShown() then DebriefOptions:Hide() end; wasCard = card:IsShown() and not prevOn; show(1); tut:Show() end
 end
 
--- ---------- a newer pull on your PC: Bring it in (Oct 25) ----------
+-- ---------- a newer pull on your PC: Save this pull (Oct 25; called Bring it in, then Import into addon, at first) ----------
 -- (WoW reads the saved pulls only at login or /reload, so after a boss fight the newest recap is on the PC pop-up and not yet here. The
--- addon sees the fight end, so the card says so in a gold strip, and Bring it in does the reload on your own click (never by itself,
+-- addon sees the fight end, so the card says so in a gold strip, and Save this pull does the reload on your own click (never by itself,
 -- never in a fight); the card opens again after it with every new pull)
 local behindN, behindBoss = 0, nil
 local bring = CreateFrame("Frame", "DebriefBring", UIParent); bring:SetSize(400, 36); bring:SetFrameStrata("HIGH"); bring:SetClampedToScreen(true); bring:Hide()
 skin(bring, 7, "2a2212", 0.97, COL.gold, 0.85)
-bring.t = bring:CreateFontString(nil, "OVERLAY"); setFont(bring.t, "bold", 13); bring.t:SetPoint("LEFT", 12, 0); bring.t:SetPoint("RIGHT", -116, 0); bring.t:SetJustifyH("LEFT"); bring.t:SetWordWrap(false); bring.t:SetTextColor(rgb(COL.text))
-local bringB = CreateFrame("Button", nil, bring); bringB:SetSize(100, 26); bringB:SetPoint("RIGHT", -6, 0); skin(bringB, 5, COL.gold, 1, COL.gold, 1)
-bringB.t = bringB:CreateFontString(nil, "OVERLAY"); setFont(bringB.t, "bold", 13); bringB.t:SetPoint("CENTER", 0, 0); bringB.t:SetTextColor(rgb("1b1406")); bringB.t:SetText("Bring it in")
-bringB:SetScript("OnEnter", function() GameTooltip:SetOwner(bringB, "ANCHOR_TOP"); GameTooltip:SetText("Bring it in", 1, 1, 1); GameTooltip:AddLine("A quick reload, a few seconds: WoW reads your newest pulls, and your card opens again with them.", 0.75, 0.78, 0.82, true); GameTooltip:Show() end)
+bring.t = bring:CreateFontString(nil, "OVERLAY"); setFont(bring.t, "bold", 13); bring.t:SetPoint("LEFT", 12, 0); bring.t:SetPoint("RIGHT", -142, 0); bring.t:SetJustifyH("LEFT"); bring.t:SetWordWrap(false); bring.t:SetTextColor(rgb(COL.text))
+local bringB = CreateFrame("Button", nil, bring); bringB:SetSize(128, 26); bringB:SetPoint("RIGHT", -6, 0); skin(bringB, 5, COL.gold, 1, COL.gold, 1)
+bringB.t = bringB:CreateFontString(nil, "OVERLAY"); setFont(bringB.t, "bold", 13); bringB.t:SetPoint("CENTER", 0, 0); bringB.t:SetTextColor(rgb("1b1406")); bringB.t:SetText("Save this pull")
+bringB:SetScript("OnEnter", function() GameTooltip:SetOwner(bringB, "ANCHOR_TOP"); GameTooltip:SetText(bringB.t:GetText(), 1, 1, 1); GameTooltip:AddLine("A quick reload, a few seconds: WoW reads your newest pulls from Debrief Companion, and your card opens again with them.", 0.75, 0.78, 0.82, true); GameTooltip:Show() end)
 bringB:SetScript("OnLeave", function() GameTooltip:Hide() end)
 bringB:SetScript("OnClick", function()
-  if InCombatLockdown() then say("after the fight: then Bring it in."); return end
+  if InCombatLockdown() then say("after the fight: then Save this pull."); return end
   DB.openAfter = true
   if C_UI and C_UI.Reload then C_UI.Reload() elseif ReloadUI then ReloadUI() end
 end)
 -- (shown above the card while it's open, or on its own when there's no card yet)
 function Debrief_BringShow(alone)
   if behindN == 0 or not DB or not (DEBRIEF_HAS_APP or DB.hasApp) then bring:Hide(); return end
-  bring.t:SetText(behindN == 1 and ("Your newest pull" .. ((behindBoss and behindBoss ~= "") and (" on " .. behindBoss) or "") .. " is on your PC.") or (behindN .. " newer pulls are on your PC."))
+  bring.t:SetText(behindN == 1 and ("Your newest pull" .. ((behindBoss and behindBoss ~= "") and (" on " .. behindBoss) or "") .. " isn't in the addon yet.") or (behindN .. " newer pulls aren't in the addon yet."))
+  bringB.t:SetText(behindN == 1 and "Save this pull" or "Save these pulls")
   bring:ClearAllPoints(); bring.alone = nil
   if card:IsShown() then bring:SetParent(card); bring:SetFrameStrata("HIGH"); bring:SetPoint("BOTTOMLEFT", card, "TOPLEFT", 0, 6); bring:SetPoint("BOTTOMRIGHT", card, "TOPRIGHT", 0, 6); bring:Show()
   elseif alone then bring:SetParent(UIParent); bring:SetFrameStrata("HIGH"); bring:SetSize(400, 36); bring:SetPoint("CENTER", UIParent, "CENTER", 260, 160); bring.alone = true; bring:Show()
@@ -2601,7 +2602,7 @@ function Debrief_Toggle()
   -- (nothing to show: say where the recaps come from)
   elseif bring.alone and bring:IsShown() then bring:Hide(); bring.alone = nil
   elseif behindN > 0 then Debrief_BringShow(true)
-  else say("no pulls here yet. After a boss pull, your recap pops up on your PC, and /recap brings it in here.") end
+  else say("no pulls here yet. After a boss pull, your recap pops up on your PC, and /recap saves it here.") end
 end
 BINDING_HEADER_DEBRIEF = "Debrief"
 BINDING_NAME_DEBRIEF_TOGGLE = "Show or hide the recap card"
@@ -2672,9 +2673,9 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
   elseif e == "ENCOUNTER_END" then
     -- (a nudge after a boss (Oct 24): the recap is on your PC at once; WoW brings it in at /reload. Raid and dungeon bosses)
     local itype = GetInstanceInfo and select(2, GetInstanceInfo()); local raidBoss = itype == "raid" or itype == "party" or a3 == 14 or a3 == 15 or a3 == 16 or a3 == 17 or a3 == 1 or a3 == 2 or a3 == 8 or a3 == 23 -- (and dungeon bosses since Oct 24)
-    if DB and raidBoss and (DEBRIEF_HAS_APP or DB.hasApp) then Debrief_Behind(a2) end -- (Bring it in on the card (Oct 25))
+    if DB and raidBoss and (DEBRIEF_HAS_APP or DB.hasApp) then Debrief_Behind(a2) end -- (Save this pull on the card (Oct 25))
     if DB and raidBoss and (DEBRIEF_HAS_APP or DB.hasApp) and DB.nudge == true and C_Timer then -- (off unless you switch it on (Oct 25))
-      local boss = a2; C_Timer.After(6, function() say("your recap" .. ((boss and boss ~= "") and (" for " .. boss) or "") .. " is up on your PC. /recap and Bring it in shows it here too.") end)
+      local boss = a2; C_Timer.After(6, function() say("your recap" .. ((boss and boss ~= "") and (" for " .. boss) or "") .. " is up on your PC. /recap and Save this pull adds it here too.") end)
     end
   elseif e == "PLAYER_LOGOUT" then Debrief_PreviewOff() -- (never save the sample in place of your pulls)
   elseif e == "ZONE_CHANGED_NEW_AREA" then
@@ -2727,7 +2728,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
       if a0 == "DEBRIEF_PASTE" or (a0 == "" and not DB.keySet) then if SetBinding("CTRL-SHIFT-D", "DEBRIEF_TOGGLE") then SaveBindings(GetCurrentBindingSet()) end end
       DB.keySet = true
     end
-    if DB.openAfter then DB.openAfter = nil; if C_Timer and #DB.pulls > 0 then C_Timer.After(1, function() if not InCombatLockdown() then card:Show(); render() end end) end end -- (Bring it in: the card again (Oct 25))
+    if DB.openAfter then DB.openAfter = nil; if C_Timer and #DB.pulls > 0 then C_Timer.After(1, function() if not InCombatLockdown() then card:Show(); render() end end) end end -- (Save this pull: the card again (Oct 25))
     if DEBRIEF_HAS_APP or DB.hasApp then say("ready. Your recap pops up on your PC after each boss pull." .. ((DB.fromApp or 0) > 0 and (" " .. DB.fromApp .. " new pull" .. (DB.fromApp == 1 and "" or "s") .. " from Debrief Companion: /recap.") or " /recap shows them here too."))
     else say("ready. Your recaps come from Debrief Companion on your PC. /debrief demo shows a sample.") end
   end
