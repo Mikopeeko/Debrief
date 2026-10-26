@@ -5431,7 +5431,7 @@ function ppSeat(P, fix) { const S = { ...fix }, used = new Set(Object.values(fix
   return S; }
 // (one picture's map: a guide map frozen at T, the note's names on its spots, only the job players named, the raid lead's markers)
 // (the middle of a map's room in its own frame: The Coiled Altar has a room box; other bosses use their origin, Ula'tek's at y 1554)
-const PP_MKOUT = { 'The Twin Fangs': 0, 'Vashnik the Malignant': [4, 0] }; /* (yards a marker is drawn off its spot, so whoever stands on it doesn't hide it: out toward the room's edge north or south by default; a pair is a sideways nudge) */
+const PP_MKOUT = { 'The Twin Fangs': 0, 'Vashnik the Malignant': [4, 0], Sszorak: [4, 0] }; /* (yards a marker is drawn off its spot, so whoever stands on it doesn't hide it: out toward the room's edge north or south by default; a pair is a sideways nudge) */
 const ppMid = (mp) => (mp.room ? [(mp.room.x0 + mp.room.x1) / 2, (mp.room.y0 + mp.room.y1) / 2] : ((A) => [A.cx, A.cy])(GDZ_ORIGIN[mp.boss] || ARENAS[mp.boss] || { cx: 0, cy: 0 }));
 function ppFreeze(mp, T, S, P, M, o) {
   o = o || {}; const f = mp.frames.reduce((a, b) => (Math.abs(b.t - T) < Math.abs(a.t - T) ? b : a)), nm = (v) => (typeof v === 'string' ? v : v && v.name);
@@ -6040,6 +6040,64 @@ function ppCardsVA(J, M, U, P) {
       foot: 'Swap even on the lawn: the boss stays where the Froth targets need him.' }); }
   return cards;
 }
+// ===== Sszorak, Mythic (Oct 26, the same setup; Plan's Jobs cards in a447ffe), on the guide's maps of the room =====
+// (the note's jobs, in the lines Plan writes: "Group 1:" / "Group 2:" (the Mutilate soak groups), "Fury Bait:" / "Backup Bait:",
+// "Exit Cyst:" / "Backup Cyst:")
+function ppReadSZ(N, P) {
+  const isN = (w) => P.has(String(w).toLowerCase()), J = { groups: [[], []], bait: '', bait2: '', exit: '', exit2: '' };
+  for (const l of N.lines) { const lab = l.label.toLowerCase().trim(), who = l.words.filter(isN).map((w) => P.get(w.toLowerCase()).name); let m; if (!who.length) continue;
+    if ((m = /^group\s*(\d)/.exec(lab))) J.groups[+m[1] > 1 ? 1 : 0] = who; else if (/backup bait/.test(lab)) J.bait2 = who[0]; else if (/bait/.test(lab)) J.bait = who[0];
+    else if (/backup cyst/.test(lab)) J.exit2 = who[0]; else if (/exit cyst|cyst/.test(lab)) J.exit = who[0]; }
+  return J;
+}
+// (the two Mutilate groups on the guide's two sides: group 1 on the north group's spots with the first tank, group 2 on the south-east
+// one's with the other, by role)
+function szGroups(J, P, fix) { const f = { ...fix }, used = new Set(Object.values(f).filter((v) => typeof v === 'string')), taken = new Set(Object.keys(f)), R = { healer: 'h', melee: 'm', ranged: 'r' };
+  [[J.groups[0], SZ_L, 't1'], [J.groups[1], SZ_R, 't2']].forEach(([L, ids, T]) => { const left = L.filter((n) => !used.has(n)), put = (s, n) => { f[s] = n; taken.add(s); used.add(n); left.splice(left.indexOf(n), 1); };
+    for (const n of left.slice()) { const r = (P.get(n.toLowerCase()) || {}).role; if (r === 'tank') { if (!taken.has(T)) put(T, n); continue; } const s = ids.find((x) => x[0] === (R[r] || 'r') && !taken.has(x)); if (s) put(s, n); }
+    for (const n of left.slice()) { const s = ids.find((x) => !taken.has(x)); if (s) put(s, n); } });
+  return ppSeat(P, f); }
+const SZ_BOSS = { x: -26, y: 2, r: 30 }, SZ_MID = { x: -2, y: 8, r: 42 }; // (the tank combo at the entrance; the middle of the room)
+function ppCardsSZ(J, M, U, P) {
+  const cards = [], BL = '#5aa0ff', GO = '#e6b450', OR = '#ff8a5a', GN = '#8fe36a', Q = '#c9ced8', cdsOf = (L) => (L || []).map(([t, n, sp]) => ppI(P, n, t + ' ' + sp)), has = J.groups[0].length || J.groups[1].length;
+  // Apex Predator: Ravage aimed at the edge on the tank alone, Mutilate at the soak group (the guide's map at the Ravage)
+  { const S = szGroups(J, P, {}), nm = (v) => (typeof v === 'string' ? v : '');
+    cards.push({ id: 'combo', ph: 1, when: 'Every tank combo', title: 'Apex Predator (Ravage away, Mutilate at the raid)', map: ppFreeze(SZ_M.combo(false), 4.9, S, P, M, { hl: ['t1', 't2'], named: ['t1', 't2'], focus: SZ_BOSS }),
+      legend: [ppG('Tanks', BL, [nm(S.t1) && ppI(P, S.t1, 'Ravage, then out'), nm(S.t2) && ppI(P, S.t2, 'Taunts')], 'Point Ravage away from everyone and take it alone with a defensive; point Mutilate at the soak group. Each tank takes one of each.')],
+      foot: 'Taunt after the first Ravage and the first Mutilate.' }); }
+  // Mutilate: group 1 soaks the first, group 2 the second, one group each side of the boss (the guide's map at the first soak)
+  if (has) cards.push({ id: 'mut', ph: 1, when: 'Every tank combo', title: 'Mutilate (Your group soaks your turn)', map: ppFreeze(SZ_M.combo(false), 2.4, szGroups(J, P, {}), P, M, { focus: SZ_BOSS, hl: SZ_L, labels: [[SZ_L, 'Group 1 · 1st', OR, '#fff', 8], [SZ_R, 'Group 2 · 2nd', GO, '#1a1405', 8, true]] }),
+    legend: [ppG('Group 1: the first Mutilate', OR, J.groups[0].map((n) => ppI(P, n))), ppG('Group 2: the second Mutilate', GO, J.groups[1].map((n) => ppI(P, n)))],
+    foot: 'One group on each side of the boss; the groups take turns.' });
+  // Tempest: the tornadoes through the boss, the melee's pocket (the guide's map as one passes the boss)
+  cards.push({ id: 'tempest', ph: 1, when: 'Every Tempest', title: 'Tempest (Call the tornadoes)', map: ppFreeze(SZ_M.tempest(false), 2.6, szGroups(J, P, {}), P, M, { focus: SZ_MID }),
+    legend: [ppG('Everyone', '#9ad7ff', [], 'A tornado can kill in one touch: step off early, never greed. Leave the melee a big pocket.'), ppG('Call', GO, [], 'When they pass through the boss.')],
+    foot: 'Only a tank survives a tornado.' });
+  // Serpent's Fury: everyone in the stack on the bait right after the tank combo (the guide's map as the bait walks in)
+  { const fix = J.bait ? { r7: J.bait } : {};
+    cards.push({ id: 'fury', ph: 1, when: 'At 92 rage', title: 'Serpent\'s Fury (14 in the stack)', map: ppFreeze(SZ_M.fury(false), 4.4, szGroups(J, P, fix), P, M, { hl: J.bait ? ['r7'] : [], named: J.bait ? ['r7'] : [], tags: J.bait ? [['r7', 'Bait']] : [], focus: SZ_BOSS }),
+      legend: [ppG('Fury bait', '#ff5a5a', [J.bait && ppI(P, J.bait, 'Bait'), J.bait2 && ppI(P, J.bait2, 'Backup')], 'Walk in 1 second before the Surge bombs; never just before or after Dig In.'), ppG('Everyone', GO, [], 'All DPS, the off-tank and the mobile healers stack on the bait near the melee; then spread to your Virulence spot, half inside, half outside.')],
+      foot: '14 players inside resets his rage.' }); }
+  // Venomous Surge: each target drops their cyst at its marker, across from its wind tunnel (the guide's map as they walk)
+  cards.push({ id: 'surge', ph: 1, when: 'Every Surge', title: 'Venomous Surge (Drop the cyst at its marker)', map: ppFreeze(SZ_M.surge(false), 8, szGroups(J, P, {}), P, M, {}),
+    legend: [ppG('Surge targets', GN, [ppI(P, ppAny('Whoever gets a Surge'))], 'Drop it at your marker, across from its wind tunnel and away from the boss.'), ppG('Markers', GO, [], 'Read the winds on the pull and after each Dig In; the fourth marker is always the exit.')],
+    foot: 'Each cyst hits the raid when it lands, less the farther away.' });
+  // Raging Crosswinds: the marked pair up head on (the guide's map with the arrows out)
+  cards.push({ id: 'winds', ph: 1, when: 'Every Crosswinds', title: 'Raging Crosswinds (Pair up head on)', map: ppFreeze(SZ_M.crosswinds(false), 5, szGroups(J, P, {}), P, M, { focus: SZ_MID }),
+    legend: [ppG('Marked', '#c9e8ff', [ppI(P, ppAny('Whoever gets an arrow'))], 'Find someone whose arrow points at you and meet them; four directions on Mythic.'), ppG('Can\'t cancel it', GO, [], 'Priests and Paladins ping themselves so a partner lines up with them.')],
+    foot: 'An immunity or a movement ability cancels your own launch.' });
+  // Dig In: the raid in the middle, each wind pushing it into the cyst across from its tunnel (the guide's map at the first wind)
+  cards.push({ id: 'dig', ph: 1, when: 'Every Dig In', title: 'Dig In (Ride the winds to the cysts)', map: ppFreeze(SZ_M.digin(false), 6.2, szGroups(J, P, {}), P, M, {}),
+    legend: [ppG('Everyone', '#c9e8ff', [], 'Stack in the middle: each wind pushes you into the cyst across from its tunnel, and the pop throws you back.'), ppG('Raid cooldowns', '#9a7bff', cdsOf(J.dig))],
+    foot: 'He takes 30% more damage while he digs in.' });
+  // The exit cyst: after the third wind its popper pops the fourth cyst, throwing the raid back to the entrance
+  if (J.exit) { const k = gdzKit(SZ, 3), fix = { r7: J.exit }, put = new Set(['r7']), EX = SZ_CY[3]; szBoss(k, 0, SZ_C); SZ_CY.forEach(([x, y], i) => k.ring({ x, y, r: 4, fx: i === 3 ? 'soak' : 'puddle', t0: 0, at: 1.05, dur: 5, color: GN, fill: 'rgba(143,227,106,.35)', cn: 'Viscous Cyst', label: false }));
+    k.at(0, 'r7', EX[0] - 4, EX[1] - 1); if (J.exit2) { fix.r6 = J.exit2; put.add('r6'); k.at(0, 'r6', EX[0] - 7, EX[1] - 5); } k.at(0, GDZ_RAID.filter((s) => !put.has(s)), SZ_C[0], SZ_C[1] - 12, 8);
+    cards.push({ id: 'cyst', ph: 1, when: 'After each Dig In', title: 'Viscous Cyst (The exit popper)', map: ppFreeze(k.done({ title: 'Exit cyst', focus: { x: 0, y: 0, r: 62 } }), 1, szGroups(J, P, fix), P, M, { hl: Object.keys(fix), named: Object.keys(fix), tags: [['r7', 'Exit']].concat(J.exit2 ? [['r6', 'Backup']] : []), labels: [[{ rx: EX[0], ry: EX[1] + 7 }, 'Exit cyst', GN, '#0a1a06', 0]] }),
+      legend: [ppG('Exit cyst', GN, [ppI(P, J.exit, 'Pops it'), J.exit2 && ppI(P, J.exit2, 'Backup')], 'After the third wind, pop the fourth cyst to throw the raid back to the entrance.')],
+      foot: 'On the last Dig In don\'t pop it: it hits with enrage damage.' }); }
+  return cards;
+}
 // (the note's healing and raid cooldowns at a moment, for a picture's legend: NSRT reminder lines between two times of a phase)
 function ppCds(N, P, ph, t0, t1) { return N.reminders.filter((x) => x.ph === ph && x.time >= t0 && x.time <= t1 && x.spellid).flatMap((x) => x.tags.filter((w) => P.has(w.toLowerCase())).map((w) => [Math.floor(x.time / 60) + ':' + String(Math.round(x.time % 60)).padStart(2, '0'), P.get(w.toLowerCase()).name, (E.cdName && E.cdName(x.spellid)) || x.text || 'Cooldown'])); }
 const GDZ_PP = {
@@ -6148,6 +6206,18 @@ const GDZ_PP = {
     // (Plan's Jobs cards (d99d75e) and the pictures each shows, by its key, else by its title)
     mech: { imbibe: ['imbibe'], adds: ['adds'], bile: ['bile'], froth: ['froth'], disp: ['disp'], styg: ['styg'], tanks: ['tanks'], cds: [], def: [] },
     jobs: [[/imbibe/i, ['imbibe']], [/grip|add/i, ['adds']], [/bile/i, ['bile']], [/plague froth/i, ['froth']], [/exploding infection|dispel/i, ['disp']], [/stygian/i, ['styg']], [/dripping fangs/i, ['tanks']]] } },
+  Sszorak: { Mythic: {
+    // (the guide's cyst markers, each across from its wind tunnel: X, circle and triangle, and the diamond at the exit; the other four off
+    // to the sides for the raid lead to use)
+    marks: { cross: SZ_CY[0], circle: SZ_CY[1], triangle: SZ_CY[2], diamond: SZ_CY[3], star: [30, 38], moon: [-40, -32], skull: [44, -22], square: [-46, 12] },
+    stack: [0, 0],
+    uses: [],
+    room: { scene: (k) => { szBoss(k); }, focus: { x: 0, y: 0, r: 62 }, lim: 60, keep: [SZ] },
+    read(N, P) { const J = ppReadSZ(N, P); J.dig = ppCds(N, P, 1, 98, 126).concat(ppCds(N, P, 1, 225, 253)); return J; },
+    cards: ppCardsSZ,
+    // (Plan's Jobs cards (a447ffe) and the pictures each shows, by its key, else by its title)
+    mech: { combo: ['combo'], mut: ['mut'], tempest: ['tempest'], fury: ['fury'], surge: ['surge'], winds: ['winds'], dig: ['dig'], cyst: ['cyst'], cds: [], def: [] },
+    jobs: [[/apex predator/i, ['combo']], [/mutilate/i, ['mut']], [/tempest/i, ['tempest']], [/fury/i, ['fury']], [/surge/i, ['surge']], [/crosswinds/i, ['winds']], [/dig in/i, ['dig']], [/cyst/i, ['cyst']]] } },
 };
 const PP_PH = { 1: ['Phase 1', '#5aa0ff'], 1.9: ['Phase 1 ends', '#5aa0ff'], 2: ['Phase 2', '#b65cff'], 2.5: ['Intermission', '#e6b450'], 3: ['Phase 3', '#ff5a4f'] };
 
@@ -6259,7 +6329,7 @@ function ppOpen(r, u0, opt) {
   document.body.appendChild(box); document.body.classList.add('ndz-modal');
   const close = () => { box.remove(); if (!$('#ndzWiz') && !$('#ndzGuide') && !$('#ndzNoteView') && !$('#ndzShot')) document.body.classList.remove('ndz-modal'); };
   const head = '<div class="ndz-whead"><span class="sub">Pictures for Discord</span><button class="ndz-ex" type="button" data-ppx aria-label="Close">✕</button></div>';
-  if (!set.cf) { box.innerHTML = '<div class="ndz-wbox">' + head + '<h2>Pictures for Discord</h2><p class="sub">Pictures are ready on Mythic for every boss but Sszorak and Kith\'ix so far. The other bosses come next.</p></div>'; box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); }; return; }
+  if (!set.cf) { box.innerHTML = '<div class="ndz-wbox">' + head + '<h2>Pictures for Discord</h2><p class="sub">Pictures are ready on Mythic for every boss but Kith\'ix so far. The other bosses come next.</p></div>'; box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); }; return; }
   box.innerHTML = '<div class="ndz-wbox ndz-shotbox pp-win">' + head + '<h2 class="pp-h2"></h2>' +
     '<div class="pp-nav"><span class="sub pp-navt"></span><button class="btn sm" type="button" data-ppprev></button><button class="btn sm" type="button" data-ppnext></button><button class="btn sm" type="button" data-ppallv></button></div>' +
     '<p class="sub pp-intro">One picture for each mechanic your note gives jobs for, with everyone on their spot. Copy one and paste it in Discord (Ctrl+V), or download it.</p>' +
