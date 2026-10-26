@@ -1782,6 +1782,7 @@ const PATCH_NOTES = [
     { t: 'One way to show a number', d: 'The Report card and Rotation now speak the same language as Debriefing: a bar with one number at its end, a grade as one letter at the start of its bar. The ranked roster is one bar per raider, a raider\'s checklist shows the rows that need them and folds the rest, and Rotation\'s header is one row with the talent trees folded under it.' },
     { t: 'Your tier set, in numbers', d: 'Rotation shows how much your 2-piece and 4-piece added, with a Where it came from breakdown behind every number. On every spec.' },
     { t: 'Your trinkets, both of them', d: 'Gear and extras on Rotation now shows both of your trinkets, with what each one did (damage, healing or stats), or that one was never pressed.' },], n: [
+    'Rotation: the checklist reads like the gear column now. The five rings are slim rows in one panel (a small number on the right, a thin bar), the checks under an open ring are the same rows two across, and inside an open tile the bar, its legend and the cost share one line, then the Next time sentence, then Why, How it\'s judged and Show each one; the explaining sentence is the Why tip. Rotation priority\'s slips are the same slim rows.',
     'Plan: the Who plays table is dot rows now, a dot in the class colour when someone plays, a red cross when they sit, with air between the rows, and on a wide screen the Who plays header, its buttons and things to fix run across the top with the table (each boss column just its numbered picture, the name on hover) and the Bosses rows side by side under them; the same taps and drags as before.',
     'Plan: the Who plays table is calmer (a playing cell is a quiet block in the class colour, a sitting cell is hollow and hatched so sits stand out), each boss row shows its status in colour on its edge with quiet buttons, and Tonight opens with the site\'s header strip.',
     'Plan: Tonight\'s things to fix are one list of rows (the sentence, then Swap in at the end), the roster card is one line, the Bosses header shows how many are ready as a bar, and the boss rows are tighter on a phone.',
@@ -30245,3 +30246,22 @@ function dsFrontDemo() { const win = document.querySelector('#main .home.fp .fpx
     try { dsBars(); } catch (e) {} finally { if (mo) mo.takeRecords(); busy = false; } };
   const start = () => { if (!document.body) return false; mo = new MutationObserver(run); mo.observe(document.body, { childList: true, subtree: true }); return true; };
   if (!start()) document.addEventListener('DOMContentLoaded', start, { once: true }); })();
+
+// ===== Design studio round 17 (Oct 25): Rotation open tiles as slim rows. Re-homes the pieces inside an open tile's .rck-b: bar row, Next time, links.
+// Runs with the other passes, before paint. Owner: the Design studio chat. =====
+function dsRotSlim() { document.querySelectorAll('#view section.rck .rck-b:not(.ds-slim)').forEach((b) => { const rs = b.querySelector(':scope > p.spc-rs'); if (!rs) return;
+  b.classList.add('ds-slim');
+  const sb = b.querySelector(':scope > .spc-sb'), tip = b.querySelector(':scope > p.rck-tip'), hwb = rs.querySelector('button.spc-hwb'), hwp = b.querySelector(':scope > p.spc-hwp'), bxf = b.querySelector(':scope > details.spc-bxf');
+  /* the explaining sentence becomes a "Why" tip; its cost, if it says one, a chip at the end of the bar row */
+  const txt = [...rs.childNodes].filter((n) => n.nodeType === 3 || (n.nodeType === 1 && !n.classList.contains('spc-hwb'))).map((n) => n.textContent).join('').replace(/\s+/g, ' ').trim();
+  const m = txt.match(/cost about ([\d.,]+[KMB]?)\s*(?:healing|damage)?,?\s*((?:under|about|over) [\d.]+%) of yours/i);
+  const links = document.createElement('div'); links.className = 'ds-rlinks';
+  if (txt) { const why = document.createElement('span'); why.className = 'ds-i ds-why'; why.setAttribute('data-tt', txt.replace(/</g, '&lt;')); why.textContent = 'Why'; links.appendChild(why); }
+  if (hwb) links.appendChild(hwb);
+  const first = b.firstElementChild;
+  if (sb) { b.insertBefore(sb, first); if (m) { const c = document.createElement('span'); c.className = 'ds-cost'; c.textContent = 'cost ' + m[1] + ' · ' + m[2]; sb.appendChild(c); } }
+  if (tip) b.insertBefore(tip, sb ? sb.nextSibling : first);
+  /* the links and Show each one share one line; the shown ones wrap under it */
+  const bot = document.createElement('div'); bot.className = 'ds-rbot'; bot.appendChild(links); if (bxf) bot.appendChild(bxf); b.insertBefore(bot, hwp || null); if (hwp) b.appendChild(hwp);
+  rs.hidden = true; }); }
+(function () { const f10 = dsBars; dsBars = function (root) { f10(root); try { dsRotSlim(); } catch (e) {} }; })();
