@@ -17694,6 +17694,7 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'Boss guides, Ula\'tek: in phase one her tank and the melee now stand on the platform below her (they were drawn past its edge), Mother\'s Wrath knocks the tank back from that edge, the eggs land clear of the melee, and in phase three the Serpent\'s Bite soakers spread out on the broken platform with their waves aimed where nobody stands. The Coiled Altar: anyone a purple circle of Eternal Nightfall lands on steps out of it.',
     'A combat potion drunk before the pull now counts, on a night read from your PC too. Before, a pre-pull Potion of Recklessness was missed on the Report card.',
     'Combat potions: Liquid Luster and Alluring Nostrum (12.1) now count everywhere. Report card, Debriefing and Graphs missed them while Rotation counted them. Potions from a cauldron count the same as your own, a potion in a log from a game in another language counts, and on Rotation a mana potion counts as a potion use (they share the cooldown).',
     'Rotation on a phone: the top card ran off the right edge, the ring tiles squeezed into two tiny columns so their numbers spilled, and one table was wider than its box; all three fit the screen now.',
@@ -47033,7 +47034,12 @@ const GDZ_CA_M = {
     const L = 9, k = GDZ_CA_M.home2(gdzKit('The Coiled Altar', L));
     k.ring({ on: 'hm', r: 4, fx: 'zone', t0: 0.3, dur: 4.4, color: '#c45cff', cn: 'Veil of Twilight', legend: 'the shield: break it to stop the cast' }); k.cast('hm', 'Eternal Nightfall', 0.3, 4.8, 'stop');
     k.call(0.6, 4.4, 'Burst the shield', { on: 'hm', color: '#e07bff', ink: '#14061f' });
-    [['m5', 1], ['h2', -1], ['r4', 1], ['r6', -1]].forEach(([id, sd]) => { const p = k.posAt(id, 4.6); k.ring({ x: p[0], y: p[1], r: 4, fx: 'burst', t0: 4.6, at: 6.6, dur: 2.2, color: '#c45cff', cn: 'Purple circles', legend: 'dodge them' }); k.hold(4.8, id).at(6.2, id, p[0] + 6 * sd, p[1] - 3); });
+    const TG = [['m5', 1], ['h2', -1], ['r4', 1], ['r6', -1]], CIR = TG.map(([id]) => k.posAt(id, 4.6));
+    TG.forEach(([id, sd], i) => { const p = CIR[i]; k.ring({ x: p[0], y: p[1], r: 4, fx: 'burst', t0: 4.6, at: 6.6, dur: 2.2, color: '#c45cff', cn: 'Purple circles', legend: 'dodge them' }); k.hold(4.8, id).at(6.2, id, p[0] + 6 * sd, p[1] - 3); });
+    // (anyone else a circle lands near steps out of it too, away from its middle, never into another circle)
+    GDZ_RAID.filter((id) => !TG.some(([t]) => t === id)).forEach((id) => { const q = k.posAt(id, 4.6); if (!q) return; const c = CIR.find((p) => Math.hypot(q[0] - p[0], q[1] - p[1]) < 5.5); if (!c) return;
+      const d = Math.hypot(q[0] - c[0], q[1] - c[1]) || 1; for (const turn of [0, 40, -40, 80, -80]) { const a = Math.atan2(q[1] - c[1], q[0] - c[0]) + turn * Math.PI / 180, e = [c[0] + Math.cos(a) * 7, c[1] + Math.sin(a) * 7];
+        if (CIR.every((p) => Math.hypot(e[0] - p[0], e[1] - p[1]) >= 5.5)) { k.hold(5, id).at(6.2, id, e[0], e[1]); return; } } });
     k.step(0.3).step(4.8);
     k.pause(4.2, 'This shield has to break before the cast finishes. Everyone saves damage and cooldowns for it.', { on: 'hm', r: 8 });
     return k.done({ title: 'Eternal Nightfall: burst the shield', focus: { x: 14, y: 14, r: 24 } });
@@ -47661,8 +47667,9 @@ const UL_PL = { NW: [-14, 14], SW: [-14, -18], SE: [13, -18], NE: [16, 14] }, UL
 const UX = "Ula'tek", UX_B = [0, 46], UX_TAIL = [-41, 0], UX_SA = [-25, 8], UX_SB = [-25, -8];
 // home in phase one: her tank in front of her, melee round her south side, the off tank on the tail, healers and ranged further in
 const UX_MEL = ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7'];
-const UX_HOME = (() => { const H = { t1: [0, 39.5], t2: [-35, 2] };
-  [215, 237, 259, 281, 303, 325].forEach((a, i) => { const r = a * Math.PI / 180; H[UX_MEL[i]] = [UX_B[0] + Math.cos(r) * 9, UX_B[1] + Math.sin(r) * 9]; }); /* (nzAdd isn't defined yet when this runs) */ H.m7 = [6, 30];
+// (the stone ends about 34 yards north of the middle, 12 short of her (GDZ_FLOOR): her tank at its edge, the melee in two rows on the stone below her)
+const UX_HOME = (() => { const H = { t1: [0, 34], t2: [-35, 2] };
+  [[15.5, 240], [15.5, 260], [15.5, 280], [15.5, 300], [20, 250], [20, 270], [20, 290]].forEach(([d, a], i) => { const r = a * Math.PI / 180; H[UX_MEL[i]] = [UX_B[0] + Math.cos(r) * d, UX_B[1] + Math.sin(r) * d]; }); /* (nzAdd isn't defined yet when this runs) */
   [['h1', -13, 24], ['h2', 13, 24], ['h3', -4, 16], ['h4', 8, 14], ['r1', -24, 18], ['r2', 24, 18], ['r3', -18, 8], ['r4', 19, 6], ['r5', -8, 4], ['r6', 4, 2], ['r7', 30, 12]].forEach(([id, x, y]) => { H[id] = [x, y]; });
   return H; })();
 function uxHome(k, t, hold, skip) { Object.entries(UX_HOME).forEach(([id, q]) => { if (skip && skip.includes(id)) return; if (hold != null) k.hold(hold, id); k.at(t, id, q[0], q[1]); }); return k; }
@@ -47681,7 +47688,7 @@ const UX_M = {
   // carriers' rings touch)
   eggs(fail, d, o) {
     const myth = d !== 'h', L = fail ? 15 : 13, k = gdzKit(UX, L); if (o && o.rot) k.rot(o.rot); k.art(0, UL_FULL); uxBoss(k, 0); uxTail(k, 0); uxHome(k, 0);
-    k.cast('ul', 'Call of the Serpent', 0.2, 1.6); const T = 2.4, PICK = myth ? 6 : 3.4, O = { r3: [-3, -2], m1: [2, -3], r5: [-3, 2], r1: [2, 3], r2: [-2, 3], r6: [3, -2], m2: [-2, -3], r4: [3, 2] };
+    k.cast('ul', 'Call of the Serpent', 0.2, 1.6); const T = 2.4, PICK = myth ? 6 : 3.4, O = { r3: [-3, 4], m1: [0, 0], r5: [-3, 2], r1: [2, 3], r2: [-2, 3], r6: [3, -2], m2: [0, 0], r4: [3, 2] }; /* (the eggs by the melee land on their zone's spot, clear of the melee rows) */
     UX_CAR.forEach((id, i) => { const z = UX_ZONE[id], e = [z[0] + O[id][0], z[1] + O[id][1]]; k.ring({ x: e[0], y: e[1], r: 4, fx: 'burst', t0: 1.6, at: T, dur: 0.8, color: '#c8a36a', cn: 'Call of the Serpent', legend: 'an egg lands: 4 yards of damage where it hits' });
       if (myth) k.ring({ x: e[0], y: e[1], r: 2.4, fx: 'safe', t0: T, dur: PICK - 0.6 - T, color: '#e6e0c8', cn: 'Hardened', legend: 'Mythic: a shield on the egg; break it before anyone can pick it up' });
       const left = fail && !myth && id === 'r1'; if (left) { k.obj('eg' + i, 'egg', T, e[0], e[1]).show('eg' + i, T, 11.6); return; }
@@ -47744,10 +47751,10 @@ const UX_M = {
   // red circle in front of her). Her tank runs straight back in with a big defensive: each bite stacks Stone Venom and Hobbled (55% slower).
   // If her tank is out of reach, the bites go on everyone. Swap after each one (best when her waves cast starts). (fail: the tank stays out)
   wrath(fail, d, o) {
-    const L = 11, k = gdzKit(UX, L), RC = [0, 39]; if (o && o.rot) k.rot(o.rot); k.art(0, UL_FULL); uxBoss(k, 0); uxTail(k, 0); uxHome(k, 0);
+    const L = 11, k = gdzKit(UX, L), RC = [0, 33]; if (o && o.rot) k.rot(o.rot); k.art(0, UL_FULL); uxBoss(k, 0); uxTail(k, 0); uxHome(k, 0);
     k.cast('ul', 'Mother\'s Wrath', 0.2, 5.2); k.ring({ x: RC[0], y: RC[1], r: 5, fx: 'zone', t0: 0.8, dur: 7.6, color: '#ff4a4a', fill: 'rgba(255,60,60,.18)', cn: 'Mother\'s Wrath', legend: 'her reach: her tank must be inside when the bites start' });
-    k.hold(0.9, 't1').at(1.4, 't1', 0, 27); k.call(0.9, 2.4, 'Knocked back', { on: 't1', color: '#ff8a8a', ink: '#200a0a' });
-    if (!fail) { k.hold(2, 't1').at(4.8, 't1', 0.5, 39.5); k.call(3.6, 5.2, 'Big defensive', { on: 't1', color: '#5aa0ff', ink: '#fff' }); }
+    k.hold(0.9, 't1').at(1.4, 't1', 0, 21); k.call(0.9, 2.4, 'Knocked back', { on: 't1', color: '#ff8a8a', ink: '#200a0a' });
+    if (!fail) { k.hold(2, 't1').at(4.8, 't1', 0.5, 33.5); k.call(3.6, 5.2, 'Big defensive', { on: 't1', color: '#5aa0ff', ink: '#fff' }); }
     for (let i = 0; i < 5; i++) k.ring({ on: fail ? 'h1' : 't1', r: 2.6, fx: 'burst', t0: 5.2 + i * 0.6 - 0.2, at: 5.2 + i * 0.6, dur: 0.4, color: '#ff4a4a', cn: 'Bite', legend: 'a bite: Stone Venom and Hobbled' });
     if (fail) { gdzFailBlast(k, 5.4, 'Out of reach: the bites hit everyone', -16, 30, ['h1', 'r5'], 'Mother\'s Wrath'); k.step(0.2).step(0.9).step(5.2);
       k.pause(6, 'Her tank didn\'t get back into the red circle in time, so every bite went out to the whole raid instead.', { x: RC[0], y: RC[1], r: 8 });
@@ -47780,6 +47787,7 @@ const UX_M = {
   wretch(fail, d, o) {
     const L = 16, k = gdzKit(UX, L), WP = [-4, 26], IMG = [-46, 8]; if (o && o.rot) k.rot(o.rot); k.art(0, UL_FULL); uxBoss(k, 0); uxTail(k, 0); uxHome(k, 0);
     k.ring({ x: WP[0], y: WP[1], r: 7, fx: 'burst', t0: 0.2, at: 1, dur: 0.6, color: '#c8a36a', cn: 'Toxic Womb', legend: 'Toxic Womb: 7 yards of damage where the Wretch lands' });
+    Object.entries(UX_HOME).forEach(([id, q]) => { const d = Math.hypot(q[0] - WP[0], q[1] - WP[1]); if (d >= 8 || /^t/.test(id)) return; k.hold(0.2, id).at(0.9, id, WP[0] + (q[0] - WP[0]) / (d || 1) * 8.5, WP[1] + (q[1] - WP[1]) / (d || 1) * 8.5); }); /* (out of the landing, before it lands) */
     k.add('wr', 'Blightscale Wretch', 1, WP[0], WP[1]); k.add('im', 'Spectral Ula\'tek', 1.4, IMG[0], IMG[1]).show('im', 1.4, 7);
     const BEAM = nzAdd(IMG, Math.atan2(WP[1] - IMG[1], WP[0] - IMG[0]) * 180 / Math.PI, 5); k.hold(0.6, 't2').at(2.6, 't2', BEAM[0], BEAM[1]);
     k.link({ from: 'im', to: 't2', t0: 2.6, t1: 6.6, color: '#3af2a8', legend: 'Toxic Incubation: the off tank stands in the venom so the Wretch doesn\'t get it' });
@@ -47985,8 +47993,18 @@ Object.assign(UX_M, {
     else RED.forEach(([id, so], j) => { if (fail && j === 2) return; const c = k.posAt(id, 1.4); so.forEach((s, i) => { const g = gdzSpot(i + 1, so.length + 1, 4.4); k.hold(1.6, s).at(4, s, c[0] + g[0], c[1] + g[1]); }); });
     // (the purge: everyone who soaked spreads out; on Mythic each sends a wave out, so they walk toward the venom and aim it away from the raid)
     const PS = myth ? SO : RED.filter((_, j) => !(fail && j === 2)).flatMap(([id, so]) => so.concat(id));
+    // (where each soaker spreads to: the nearest open spot on the broken stone (GDZ_FLOOR) that keeps 5 or more yards from everyone else,
+    // the ones who didn't soak where they stand and the soakers already placed)
+    const FM = GDZ_FLOOR[UX] && GDZ_FLOOR[UX].art[UL_BROKEN], onS = (x, y) => !FM || [-1.6, 0, 1.6].every((dy) => (FM[Math.round(y + dy)] || []).some(([a, b]) => x - 1.6 >= a && x + 1.6 <= b));
+    const SPOT = {}, taken = GDZ_RAID.filter((id) => !PS.includes(id)).map((id) => k.posAt(id, TE)).filter(Boolean);
+    PS.forEach((s) => { const p = k.posAt(s, TE); let best = p, bs = -1; for (let dx = -11; dx <= 11; dx += 1.5) for (let dy = -11; dy <= 11; dy += 1.5) { const q = [p[0] + dx, p[1] + dy], w = Math.hypot(dx, dy); if (w > 11 || !onS(q[0], q[1])) continue;
+      const m = Math.min(99, ...taken.map((o) => Math.hypot(o[0] - q[0], o[1] - q[1]))), sc = Math.min(m, 7) - w * 0.05; if (sc > bs) { bs = sc; best = q; } } SPOT[s] = best; taken.push(best); });
+    // (each Mythic wave aimed down the clearest path: the way with nobody within its 25 yards' reach, outward from the middle when it's a tie)
+    const aim = (s, g) => { const o = GDZ_RAID.filter((id) => id !== s).map((id) => SPOT[id] || k.posAt(id, TE)).filter(Boolean), out = Math.atan2(g[1], g[0]); let best = out * 180 / Math.PI, bs = -1e9;
+      for (let a = 0; a < 360; a += 10) { const r = a * Math.PI / 180, u = [Math.cos(r), Math.sin(r)]; let m = 99; for (const q of o) { const dx = q[0] - g[0], dy = q[1] - g[1], al = dx * u[0] + dy * u[1]; if (al > -2 && al < 27) m = Math.min(m, Math.abs(dy * u[0] - dx * u[1])); }
+        const sc = Math.min(m, 8) + Math.cos(r - out) * 0.5; if (sc > bs) { bs = sc; best = a; } } return best; };
     PS.forEach((s, i) => { k.ring({ on: s, r: 2.2, fx: 'debuff', t0: TE, dur: 5, color: '#ff8a3b', cn: 'Volatile Purge', legend: 'Volatile Purge: it erupts in 5 seconds: spread out' });
-      const p = k.posAt(s, TE), a = Math.atan2(p[1], p[0]) * 180 / Math.PI + (myth ? (i - 1) * 28 : (i % 6) * 60), g = nzAdd(p, a, myth ? 8 : 6.5); k.hold(TE + 0.2, s).at(TE + 4.2, s, g[0], g[1]);
+      const g = SPOT[s], a = aim(s, g); k.hold(TE + 0.2, s).at(TE + 4.2, s, g[0], g[1]);
       k.ring({ on: s, r: 4, fx: 'burst', t0: TE + 4.7, at: TE + 5, dur: 0.6, color: '#ff8a3b', cn: 'Volatile Purge', legend: 'Volatile Purge erupting round the soaker' });
       if (myth) k.wave({ x: g[0], y: g[1], deg: a, v: 14, w: 5, d: 3, t0: TE + 5, t1: TE + 6.8, color: '#9be13a', legend: 'Mythic: a wave from each soaker: aimed away from the raid' }); });
     k.call(TE + 0.2, TE + 2.6, 'Spread!', { x: UL_PC[n][0], y: UL_PC[n][1] + 12, color: '#ff8a3b', ink: '#1a0a04' });
