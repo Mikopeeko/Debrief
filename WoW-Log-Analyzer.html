@@ -7657,6 +7657,23 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-rr > .plb-rn.plb-rsub { display: flex; flex-wrap: wrap; gap: 2px 14px; margin-top: 3px; padding-top: 3px; border-top: 1px dashed rgba(255,255,255,.07); }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-rr > .plb-rn.plb-rsub > .plb-rsg { display: inline-flex; align-items: center; gap: 6px; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-rr > .plb-rn.plb-rsub > .plb-rsg > .plb-rsl { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+/* ===== Design studio round 61 (Oct 26): the Pictures window looks that leave the Guides chat's ppCss (one owner per thing:
+   behaviour there, every look here). Owner: the Design studio chat. ===== */
+html body #ppWin .pp-cards { display: grid; gap: 14px; }
+html body #ppWin .pp-mk { display: grid; gap: 18px; align-items: start; }
+html body #ppWin .pp-mkbase { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+html body #ppWin .pp-mkpick { display: flex; gap: 4px; padding: 6px; background: #1b1f29; border: 1px solid #3a4150; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+html body #ppWin .pp-mkpick > button { width: 34px; height: 34px; padding: 0; border: 1px solid transparent; border-radius: 8px; background: none; display: grid; place-items: center; cursor: pointer; }
+html body #ppWin .pp-mkpick > button:hover, html body #ppWin .pp-mkpick > button:focus-visible { background: rgba(255,255,255,.06); outline: none; }
+html body #ppWin .pp-mkpick > button.on { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
+html body #ppWin.pp-one .pp-win { width: min(1000px, 100%); }
+html body #ppWin.pp-one .pp-card { border: 0; background: none; padding: 0; }
+html body #ppWin .pp-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 2px 0 12px; }
+html body #ppWin .pp-nav .pp-navt, html body #ppWin .pp-nav .sub { margin-right: auto; }
+html body #ppWin .pp-card .pp-ph { font-weight: 700; }
+html body #ppWin .pp-act { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+html body #ppWin .pp-msg { margin-right: auto; }
+@media (max-width: 760px) { html body #ppWin .pp-mk { grid-template-columns: 1fr; } }
 </style>
 
 
