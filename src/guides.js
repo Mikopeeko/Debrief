@@ -5652,6 +5652,31 @@ async function ppDraw(card, boss, diff) {
   return cv;
 }
 
+// (Copy all (your call, Oct 26: "on the 'all pictures' page just have a copy all but format it as one big pastable image"): every
+// picture on one sheet, in fight order under a band for each phase, two across at two thirds size, each with its number; three
+// across and smaller when the PNG would pass Discord's 8 MB paste limit (the Design studio's layout))
+async function ppSheet(set) {
+  const pics = await Promise.all(set.cards.map((cd) => set.pic(cd))), groups = [], PHN = { 1: ['PHASE 1', '#5aa0ff'], 2: ['PHASE 2', '#b65cff'], 2.5: ['INTERMISSION', '#e6b450'], 3: ['PHASE 3', '#ff5a4f'] };
+  set.cards.forEach((cd, i) => { const ph = cd.ph >= 3 ? 3 : cd.ph >= 2.5 ? 2.5 : cd.ph >= 2 ? 2 : 1; let G = groups[groups.length - 1]; if (!G || G.ph !== ph) groups.push(G = { ph, items: [] }); if (pics[i]) G.items.push({ i, cv: pics[i].cv }); });
+  const n = groups.reduce((a, G) => a + G.items.length, 0), rr = (g, x, y, w, h, r) => { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); };
+  const make = (cols, w) => { const h = Math.round(w * 675 / 1200), gap = 24, W = gap + cols * (w + gap), HEAD = 100, BAND = 40; let H = HEAD + gap;
+    for (const G of groups) H += BAND + 14 + Math.ceil(G.items.length / cols) * (h + gap);
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d'); g.fillStyle = '#12141b'; g.fillRect(0, 0, W, H);
+    g.font = '800 36px "Barlow Semi Condensed", sans-serif'; g.fillStyle = '#ece8df'; g.fillText(set.boss + ' · ' + set.diff, gap, 52);
+    g.font = '500 16px Barlow, sans-serif'; g.fillStyle = '#98a0ad'; g.fillText('Raid plan · ' + plural(n, 'picture') + ' · from your note', gap, 80);
+    g.font = '800 22px "Barlow Semi Condensed", sans-serif'; g.fillStyle = '#e6b450'; g.fillText('DEBRIEF', W - gap - g.measureText('DEBRIEF').width, 52); g.fillRect(gap, HEAD - 1, W - gap * 2, 1);
+    let y = HEAD + gap;
+    for (const G of groups) { const [nm, col] = PHN[G.ph]; g.fillStyle = '#171b24'; rr(g, gap, y, W - gap * 2, BAND, 10); g.fill(); g.strokeStyle = '#2a2f3b'; g.lineWidth = 1; g.stroke();
+      g.fillStyle = col; g.beginPath(); g.arc(gap + 20, y + BAND / 2, 5, 0, Math.PI * 2); g.fill(); g.font = '700 15px Barlow, sans-serif'; g.fillStyle = '#c9ced8'; g.fillText(nm, gap + 34, y + BAND / 2 + 5); y += BAND + 14;
+      G.items.forEach((it, k) => { const x = gap + (k % cols) * (w + gap), yy = y + Math.floor(k / cols) * (h + gap);
+        g.save(); rr(g, x, yy, w, h, 12); g.clip(); g.drawImage(it.cv, x, yy, w, h); g.restore(); g.strokeStyle = '#353b49'; rr(g, x + 0.5, yy + 0.5, w - 1, h - 1, 12); g.stroke();
+        g.fillStyle = '#e6b450'; g.beginPath(); g.arc(x + 22, yy + 22, 14, 0, Math.PI * 2); g.fill(); g.font = '800 15px Barlow, sans-serif'; g.fillStyle = '#1a1405'; const t = String(it.i + 1); g.fillText(t, x + 22 - g.measureText(t).width / 2, yy + 27); });
+      y += Math.ceil(G.items.length / cols) * (h + gap); }
+    return cv; };
+  const png = (cv) => new Promise((ok) => cv.toBlob(ok, 'image/png'));
+  let cv = make(2, 800), blob = await png(cv); if (blob && blob.size > 8e6) { cv = make(3, 600); blob = await png(cv); }
+  return { cv, blob, n };
+}
 // (Download all: a plain zip of the pictures, stored as they are (PNGs are already packed), names in fight order)
 const PP_CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
 function ppZip(files) {
@@ -5714,7 +5739,7 @@ function ppOpen(r, u0, opt) {
   box.innerHTML = '<div class="ndz-wbox ndz-shotbox pp-win">' + head + '<h2 class="pp-h2"></h2>' +
     '<div class="pp-nav"><span class="sub pp-navt"></span><button class="btn sm" type="button" data-ppprev></button><button class="btn sm" type="button" data-ppnext></button><button class="btn sm" type="button" data-ppallv></button></div>' +
     '<p class="sub pp-intro">One picture for each mechanic your note gives jobs for, with everyone on their spot. Copy one and paste it in Discord (Ctrl+V), or download it.</p>' +
-    '<div class="pp-all"><button class="btn sm" type="button" data-ppall disabled>Download all</button><span class="sub pp-allmsg">One zip with every picture, to drag into Discord.</span></div>' +
+    '<div class="pp-all"><button class="btn sm primary" type="button" data-ppcopyall disabled>Copy all</button><button class="btn sm" type="button" data-ppall disabled>Download all</button><span class="sub pp-allmsg">Copy all makes one picture of them all, ready to paste in Discord. Download all saves each one in a zip.</span></div>' +
     '<details class="pp-mkbox"><summary>Markers <span class="sub">Drag them to where your raid puts them, and pick where each mechanic happens</span></summary><div class="pp-mk"><div class="pp-mkmap"></div><div class="pp-mkuse"></div></div></details>' +
     '<div class="pp-cards"></div></div>';
   box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); };
@@ -5733,10 +5758,19 @@ function ppOpen(r, u0, opt) {
     box.querySelector('.pp-navt').textContent = 'Picture ' + (cur + 1) + ' of ' + n + ' · ' + boss + ', ' + diff + (opt.from ? ' · from the ' + opt.from + ' job' : '');
     const pv = box.querySelector('[data-ppprev]'), nx = box.querySelector('[data-ppnext]'); pv.textContent = cur > 0 ? '‹ ' + nm(cur - 1) : '‹'; pv.disabled = cur <= 0; nx.textContent = cur < n - 1 ? nm(cur + 1) + ' ›' : '›'; nx.disabled = cur >= n - 1;
     box.querySelector('[data-ppallv]').textContent = 'All ' + n + ' pictures'; host.querySelectorAll('.pp-card').forEach((el) => el.classList.toggle('pp-cur', +el.dataset.i === cur)); if (one) fill(cur, gen); };
-  const draw = async () => { const my = ++gen; all.disabled = true;
+  const copyAll = box.querySelector('[data-ppcopyall]');
+  // (Copy all: the sheet goes to the clipboard while it's drawn, so the click still counts as yours; a browser that wants the finished
+  // picture gets it once drawn, and one that won't copy pictures gets a Download link)
+  copyAll.onclick = () => { const m = box.querySelector('.pp-allmsg'); copyAll.disabled = true; m.textContent = 'Drawing one picture with all of them…';
+    const sheet = ppSheet(set), blob = sheet.then((s) => s.blob), dl = (s) => ' <a href="' + URL.createObjectURL(s.blob) + '" download="' + esc(('Debrief - ' + boss + ' - raid plan').replace(/[\\/:*?"<>|]+/g, '')) + '.png">Download it</a>';
+    let w; try { w = navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]); } catch (e) { w = Promise.reject(e); }
+    w.catch(() => blob.then((b) => navigator.clipboard.write([new ClipboardItem({ 'image/png': b })])))
+      .then(() => sheet.then((s) => { m.innerHTML = esc('✓ Copied one picture with all ' + s.n + '. Paste it in Discord.') + dl(s); }), () => sheet.then((s) => { m.innerHTML = esc('Your browser didn\'t allow copying it.') + dl(s); }, () => { m.textContent = 'Couldn\'t draw it.'; }))
+      .finally(() => { copyAll.disabled = false; }); };
+  const draw = async () => { const my = ++gen; all.disabled = true; copyAll.disabled = true;
     if (!set.cards.length) { host.innerHTML = '<p class="sub">This note has no jobs a picture can show yet (soaks, orb carriers, kick lines, crowd control).</p>'; return; }
     host.innerHTML = set.cards.map((cd, i) => '<div class="pp-card" data-i="' + i + '"><div class="pp-ph sub">' + esc(cd.title) + '</div><div class="pp-pic"><span class="sub">Drawing…</span></div><div class="pp-act"><span class="sub pp-msg"></span><button class="btn sm" type="button" data-ppdl>Download</button><button class="btn sm primary" type="button" data-ppcp>Copy</button></div></div>').join('');
-    show(); if (one) return; for (let i = 0; i < set.cards.length; i++) { await fill(i, my); if (my !== gen) return; } all.disabled = false; };
+    show(); if (one) return; for (let i = 0; i < set.cards.length; i++) { await fill(i, my); if (my !== gen) return; } all.disabled = false; copyAll.disabled = false; };
   box.querySelector('[data-ppprev]').onclick = () => { if (cur > 0) { cur--; show(); } };
   box.querySelector('[data-ppnext]').onclick = () => { if (cur < set.cards.length - 1) { cur++; show(); } };
   box.querySelector('[data-ppallv]').onclick = () => { one = false; box.classList.remove('pp-one'); draw(); };
