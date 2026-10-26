@@ -20,6 +20,8 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 15px/1.5 var(--body); }
 button, input, select { font: inherit; color: inherit; }
+select { color-scheme: dark; }
+select option, select optgroup { background: #1b1f29; color: var(--text); } /* (a dropdown's list: light text on a dark list, not pale text on white (Oct 26 report); pickers with their own option colours win) */
 a { color: inherit; }
 :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 4px; }
 .app { display: grid; grid-template-columns: 290px 1fr; height: 100vh; }
