@@ -5601,8 +5601,8 @@ const GDZ_PP = {
     cards: ppCardsCA,
     // (Plan's Jobs cards and the pictures each one shows: by the key Plan gives each card's picture row (its build parts), else by the
     // card's title, where the grim card is matched before the phase 1 axes)
-    mech: { kicks: ['kicks', 'bombs'], g: ['axe1', 'axe2'], g3: ['grim1', 'grim2', 'grim3'], orbs: ['orbs1', 'orbs3'], mc: ['dread'], curse: ['kicks'], cd: ['stack', 'inter'], cds: ['stack', 'inter'], def: [] },
-    jobs: [[/p3|grim/i, ['grim1', 'grim2', 'grim3']], [/guillotine/i, ['axe1', 'axe2']], [/kick/i, ['kicks', 'bombs']], [/purple orb/i, ['orbs1', 'orbs3']], [/dreadmarch|mind ?control/i, ['dread']], [/curse/i, ['kicks']], [/raid cooldown/i, ['stack', 'inter']]] } },
+    mech: { kicks: ['kicks', 'bombs'], g: ['axe1', 'axe2'], g3: ['grim1', 'grim2', 'grim3'], orbs: ['orbs1', 'orbs3'], mc: ['dread'], curse: ['kicks'], rupture: ['stack'], stops: ['inter'], cd: [], cds: [], def: [] },
+    jobs: [[/p3|grim/i, ['grim1', 'grim2', 'grim3']], [/guillotine/i, ['axe1', 'axe2']], [/kick/i, ['kicks', 'bombs']], [/purple orb/i, ['orbs1', 'orbs3']], [/dreadmarch|mind ?control/i, ['dread']], [/curse/i, ['kicks']], [/venom rupture/i, ['stack']], [/fragments of malacrass|stop them at your marker/i, ['inter']]] } },
 };
 const PP_PH = { 1: ['Phase 1', '#5aa0ff'], 1.9: ['Phase 1 ends', '#5aa0ff'], 2: ['Phase 2', '#b65cff'], 2.5: ['Intermission', '#e6b450'], 3: ['Phase 3', '#ff5a4f'] };
 
