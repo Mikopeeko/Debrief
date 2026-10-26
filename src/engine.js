@@ -136,7 +136,7 @@ const POTIONS = [
   // Midnight, healing, mana and other
   { n: 'Silvermoon Health Potion', k: 'healpot', id: [1234768] }, { n: 'Concentrated Silvermoon Health Potion', k: 'healpot', id: [1295247] }, // (12.1)
   { n: 'Refreshing Serum', k: 'healpot' }, { n: 'Amani Extract', k: 'healpot' }, { n: "Light's Preservation", k: 'healpot' },
-  { n: 'Lightfused Mana Potion', k: 'manapot', id: [1236648] }, { n: 'Potion of Devoured Dreams', k: 'manapot' },
+  { n: 'Lightfused Mana Potion', k: 'manapot', id: [1236648] }, { n: 'Potion of Devoured Dreams', k: 'manapot', id: [1239479] },
   { n: 'Void-Shrouded Tincture', k: 'utilpot' }, { n: 'Enlightenment Tonic', k: 'utilpot' }, { n: 'Potion of Liquid Undeath', k: 'utilpot' }, { n: 'Potion of Venomous Return', k: 'utilpot' },
   // The War Within, still usable
   { n: 'Tempered Potion', k: 'combatpot' }, { n: 'Frontline Potion', k: 'combatpot' }, { n: 'Potion of Unwavering Focus', k: 'combatpot' },
@@ -146,7 +146,7 @@ const POTIONS = [
 const CONSUMABLES = new Map(POTIONS.flatMap((q) => [[q.n.toLowerCase(), q.k], ['fleeting ' + q.n.toLowerCase(), q.k]])), POT_ID = new Map(POTIONS.flatMap((q) => (q.id || []).map((i) => [i, q])));
 const COMBAT_POT_NAMES = POTIONS.filter((q) => q.k === 'combatpot').flatMap((q) => [q.n.toLowerCase(), 'fleeting ' + q.n.toLowerCase()]);
 const MANA_POT_NAMES = POTIONS.filter((q) => q.k === 'manapot').flatMap((q) => [q.n.toLowerCase(), 'fleeting ' + q.n.toLowerCase()]); // (they share the combat potions' cooldown)
-const COMBAT_POT_IDS = POTIONS.filter((q) => q.k === 'combatpot').flatMap((q) => q.id || []);
+const COMBAT_POT_IDS = POTIONS.filter((q) => q.k === 'combatpot').flatMap((q) => q.id || []), MANA_POT_IDS = POTIONS.filter((q) => q.k === 'manapot').flatMap((q) => q.id || []);
 function potionKind(ln, id) {
   const q = id != null ? POT_ID.get(+id) : null; if (q) return q.k; // (a known spell ID is an extra match; the name below still counts any other)
   if (CONSUMABLES.has(ln)) return CONSUMABLES.get(ln);
@@ -7308,7 +7308,7 @@ function coach(p, r, cut) {
   return tips.sort((a, b) => b.w - a.w).slice(0, 4);
 }
 
-const api = { MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
+const api = { MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
 root.ENGINE = api;
 if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

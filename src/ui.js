@@ -1990,6 +1990,7 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'A combat potion drunk before the pull now counts, on a night read from your PC too. Before, a pre-pull Potion of Recklessness was missed on the Report card.',
     'Combat potions: Liquid Luster and Alluring Nostrum (12.1) now count everywhere. Report card, Debriefing and Graphs missed them while Rotation counted them. Potions from a cauldron count the same as your own, a potion in a log from a game in another language counts, and on Rotation a mana potion counts as a potion use (they share the cooldown).',
     'Rotation on a phone: the top card ran off the right edge, the ring tiles squeezed into two tiny columns so their numbers spilled, and one table was wider than its box; all three fit the screen now.',
     'Debriefing: the Since last pull tags (▼ Guillotine, ▲ Sever) had their mechanic icons half outside the pill; the icons sit inside now.',
@@ -25955,9 +25956,10 @@ function prepScore(x) {
 // A potion drunk before the pull: its buff is on the player when the pull starts (the combatant line lists their buffs).
 // Matched by spell ID against the combat and mana potions anyone drank in the log, so it needs no name lookups.
 function prepotted(r, p) {
-  const ids = new Set(); for (const q of r.players.values()) for (const u of q.cons.combatpot.concat(q.cons.manapot)) if (u.id) ids.add(u.id);
-  const c = (r.combatants || []).find((x) => x.name === p.name || (x.self && x.self === p.guid));
-  return !!(c && ids.size && c.auras.some((a) => ids.has(a.ability) || (a.id && ids.has(a.id))));
+  const ids = new Set([...(E.COMBAT_POT_IDS || []), ...(E.MANA_POT_IDS || [])]); /* (every known potion, not only the ones drunk this pull (Oct 26, issue 9: a pre-pull Potion of Recklessness on a pull where nobody drank another wasn't seen)) */
+  for (const q of r.players.values()) for (const u of q.cons.combatpot.concat(q.cons.manapot)) if (u.id) ids.add(u.id);
+  const nms = new Set(COMBAT_POTS.concat(MANA_POTS)), c = (r.combatants || []).find((x) => x.name === p.name || (x.self && x.self === p.guid));
+  return !!(c && c.auras.some((a) => ids.has(+a.ability) || (a.id && ids.has(+a.id)) || nms.has(String(a.name || '').toLowerCase()))); /* (+: a PC log gives the buff IDs as text) */
 }
 // Survival kit (one pull, up to the wipe filter): defensives 40, Healthstone and health potion 30, combat or mana potion 30.
 //  Defensives: 50 off for each death with a personal defensive ready, 20 for each judged close call (5+ s under 30%, or low then hit again) with
