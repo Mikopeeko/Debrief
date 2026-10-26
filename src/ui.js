@@ -1952,6 +1952,7 @@ const PATCH_NOTES = [
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'Debrief in game: your card and PC pop-up use the newest boss mechanics, potion and death rules from the website.',
     'On a phone: the dots on the pull at a glance are easier to tap, and the front page\'s footer links have room for a thumb.',
     'Debriefing, one pull: the pull at a glance runs the full width and the phase rows sit beside the details, so the left side is no longer half empty; Plan reads at 12 px everywhere (the roster tables, the builder, the note tool).',
     'A polish pass over the whole site: nothing you read is under 12 px any more (tags, labels, the timeline lanes, the Report card and Graphs headers), the tab bars on a phone fade at the edge to show they scroll, and the empty Plan page sits with a little more air.',
