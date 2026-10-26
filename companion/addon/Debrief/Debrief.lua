@@ -756,6 +756,7 @@ end
 -- default" is on; an empty one stays open, so its one green line shows)
 local SHUT = { rotation = true, boss = true, surv = true, died = true }
 local UI = { startsShut = function(key, n) return n > 0 and SHUT[key] and DB.openSecs == false end, rotRow = rotRow, rotGood = rotGood, rowS = rowS, wipeRow = wipeRow, trendCards = trendCards, cardCharts = cardCharts, cardGrade = cardGrade, parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded, pullQ = pullQ, worst = worstFirst, col = useCol, colFrame = colFrame, two = { cols = 1, brk = 0, n = 0, marks = {} } }
+UI.ring = { { tMe, tRaid }, { prevB, nextB }, { bigBtn } } -- (the setup's step 4 rings these on the sample card, numbered (Oct 26))
 local function renderOnce()
   UI.col(1)
   local raw = DB.pulls[DB.cur]; local m = UI.cutView(raw); CUR = m
@@ -2512,17 +2513,37 @@ do
     f.h = yy
   end
 
-  -- step 4: using it, what to type and what to click
+  -- step 4: using it (Oct 26, the user: "this makes no sense", then "a zoom/highlight of the window": what you type apart from what you
+  -- click, and the clicks numbered like the gold rings on the sample card beside it)
+  local function badge(parent, n) local b = CreateFrame("Frame", nil, parent); b:SetSize(16, 16); skin(b, 8, COL.gold, 1, COL.gold, 1)
+    local t = b:CreateFontString(nil, "OVERLAY"); setFont(t, "bold", 11); t:SetPoint("CENTER", 0, 0); t:SetTextColor(rgb("1b1406")); t:SetText(n); return b end
   do local f = pane(4); local yy = 0
-    for _, w in ipairs({ { "/recap", "Shows or hides your card. When a newer pull isn't here yet, it says so: click Save this pull." },
-      { "Me  ·  Raid view", "Your own pull, or the raid's biggest mistakes and who died." }, { "<  name  >", "Look at anyone in the pull." },
-      { "Expand", "The whole night in a big window, with charts." }, { "+  and  –", "Open or fold any line for the details." }, { "/db", "These settings, any time." } }) do
-      local k = fsOn(f, "bold", 13.5, "e6b450"); k:SetPoint("TOPLEFT", 0, -yy); k:SetText(w[1])
-      local d = fsOn(f, "body", 13.5, COL.soft); d:SetPoint("TOPLEFT", 128, -yy); d:SetWidth(PW - 128); d:SetText(w[2])
-      yy = yy + math.max(18, d:GetStringHeight()) + 9
+    for _, w in ipairs({ "TYPE IN CHAT", { "/recap", "Opens or closes your card." }, { "/db", "Your settings, any time." },
+      "ON THE CARD BESIDE THIS", { "Me  ·  Raid view", "Your own pull, or the whole raid's.", 1 }, { "The arrows", "See anyone else in the pull.", 2 },
+      { "Expand", "The whole night in a big window.", 3 } }) do
+      if type(w) == "string" then
+        if yy > 0 then yy = yy + 8 end
+        local l = fsOn(f, "bold", 11.5, COL.muted); l:SetPoint("TOPLEFT", 0, -yy); l:SetText(w); yy = yy + 21
+      else
+        local x = 0; if w[3] then badge(f, w[3]):SetPoint("TOPLEFT", 0, -yy); x = 22 end
+        local k = fsOn(f, "bold", 13.5, w[3] and COL.text or "e6b450"); k:SetPoint("TOPLEFT", x, -yy); k:SetText(w[1])
+        local d = fsOn(f, "body", 13.5, COL.soft); d:SetPoint("TOPLEFT", 134, -yy); d:SetWidth(PW - 134); d:SetText(w[2])
+        yy = yy + math.max(18, d:GetStringHeight()) + 9
+      end
     end
     f.h = yy
   end
+  -- (the rings: parented to the card, so they move and scale with it; only on step 4)
+  local rings = {}
+  for i, set in ipairs(UI.ring) do
+    local r = CreateFrame("Frame", nil, card); r:Hide()
+    r:SetPoint("TOPLEFT", set[1], "TOPLEFT", -4, 4); r:SetPoint("BOTTOMRIGHT", set[#set], "BOTTOMRIGHT", 4, -4)
+    skin(r, 6, COL.gold, 0.08, COL.gold, 1)
+    badge(r, i):SetPoint("CENTER", r, "TOPLEFT", 1, -1)
+    r:SetScript("OnUpdate", function(self) if not tut:IsShown() then self:Hide() end end) -- (never left on the real card, however the setup closed)
+    rings[i] = r
+  end
+  local function ringOn(on) for _, r in ipairs(rings) do r:SetFrameLevel(card:GetFrameLevel() + 30); r:SetShown(on) end end
 
   -- the bottom: dots, Skip, Back, Next
   local dots = {}
@@ -2536,7 +2557,7 @@ do
     { "Set it up", "Three things, and your recap shows up after every boss pull." },
     { "How much do you want to see?", "Pick one. The sample card beside this changes as you click. You can switch any time." },
     { "Make it yours", "The four things most people change. Everything else waits in /db under Customize." },
-    { "Using it", "After a boss pull, your recap pops up on your PC by itself. In WoW:" },
+    { "Using it", "After each boss pull, your recap pops up on your PC by itself. In WoW:" },
   }
   -- (from step 2 on, the card sits to the right showing the built-in sample, every section filled, like the settings' preview)
   local prevOn = false
@@ -2545,7 +2566,7 @@ do
       prevOn = true; Debrief_PreviewOn(); mini:Hide(); big:Hide(); card:Show(); render()
       card:ClearAllPoints(); card:SetPoint("TOPLEFT", tut, "TOPRIGHT", 16, 0); Debrief_FitPreview()
     elseif not on and prevOn then
-      prevOn = false; Debrief_PreviewOff()
+      prevOn = false; ringOn(false); Debrief_PreviewOff()
       card:SetScale(DB.scale or 1); card:ClearAllPoints()
       if DB.pos then card:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) else card:SetPoint("CENTER", 260, 60) end
       card:Hide()
@@ -2557,6 +2578,7 @@ do
     local st = STEPS[i]
     stepT:SetText("Step " .. i .. " of " .. #STEPS)
     preview(i > 1) -- (first, so step 1's checklist reads your own pulls, not the sample)
+    ringOn(i == 4)
     if i == 1 then paint1() elseif i == 2 then paintStyles() elseif i == 3 then for _, p in ipairs(paint3) do p() end end
     title:SetText(st[1]); sub:SetText(st[2])
     local by = 98 + sub:GetStringHeight() + 18
