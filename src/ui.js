@@ -1951,6 +1951,7 @@ const PATCH_NOTES = [
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'Debrief in game: the raid lead on your card and PC pop-up now talks like the website, with no capitals and the next step said as a sentence.',
     'Rotation, polished: a check\'s name wraps instead of running out of its box, the number and its top line stack neatly, the opener\'s steps run across the whole ring, window cards no longer spill their strip, a tall tile no longer stretches its neighbour into an empty box, and nothing on the page is under 12px.',
     'Shadow Priest: the top numbers were re-measured on 77 Shadow Priests from top kills with today\'s checks, so "top" on Rotation compares you with what they really do.',
     'Rotation: a check\'s sentence no longer repeats the number on its row (no more "You used it 3 of 4 possible times" under 3/4); it starts at what\'s new, like how long a cooldown waited. What to fix cards give the short version of each tip, and the checklist keeps the whole one.',
