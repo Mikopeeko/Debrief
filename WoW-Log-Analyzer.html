@@ -50642,11 +50642,14 @@ function dsMotion() { const H = document.documentElement; if (!window.matchMedia
      until that loop is gone; the boss header still plays once */
   const audit = /[?&]tab=audit(&|$)/.test(location.search) || !!document.querySelector('#view .ds-l'); H.classList.toggle('ds-nomotion', audit);
   const M = dsMotion, now = Date.now(), page = location.pathname + location.search, key = page + '|' + [...document.querySelectorAll('#view .dbr-v > b:first-child, #main .my-bc .my-tag, #view .rqc-sc')].map((e) => e.textContent.trim()).join(',').slice(0, 400);
-  const replay = (M.key === key && now - (M.at || 0) < 3000) || (M.page === page && now - (M.pageAt || 0) < 30000);
+  /* a play the raider never saw does not count: when the page is drawn again and everything that played is gone (a second-stage
+     draw replacing the first), it plays again on the new pieces */
+  const gone = !M.played || !M.played.length || M.played.every((el) => !document.contains(el));
+  const replay = !gone && ((M.key === key && now - (M.at || 0) < 3000) || (M.page === page && now - (M.pageAt || 0) < 30000));
   /* a small redraw right after the play (a progress line, a count) must not cut the play short: within 1.5 s of it nothing is
      marked still, it just isn't played again */
   if (replay) { if (now - (M.pageAt || 0) > 1500) { H.classList.add('ds-still'); clearTimeout(M.tm); M.tm = setTimeout(() => H.classList.remove('ds-still'), 1200); } M.at = now; return; }
-  H.classList.remove('ds-still'); M.key = key; M.page = page; M.pageAt = now;
+  H.classList.remove('ds-still'); M.key = key; M.page = page; M.pageAt = now; M.played = [];
   M.at = now;
   /* the boss header redraws on its own while a pull loads: its line and dots play once per set of pulls, not per redraw */
   const hd = document.querySelector('header.fight.bh'), pl = hd && hd.querySelector('polyline.bhp-all-l'); if (hd) { const pts = pl ? pl.getAttribute('points') : ''; if (M.pts === pts && now - (M.ptsAt || 0) < 15000) hd.classList.add('ds-hstill'); else { M.pts = pts; M.ptsAt = now; } }
@@ -50654,7 +50657,7 @@ function dsMotion() { const H = document.documentElement; if (!window.matchMedia
   M.seen = M.seen || new WeakSet();
   /* bars drawn from --p (set by the studio's own passes a moment ago, in this same tick, so nothing has been painted yet): from 0 to their value */
   document.querySelectorAll('#view [style*="--p"], #main [style*="--p"]').forEach((el) => { if (M.seen.has(el)) return; M.seen.add(el); const p = el.style.getPropertyValue('--p'); if (!p || parseFloat(p) <= 0) return;
-    el.style.setProperty('--p', '0'); void el.offsetWidth; el.classList.add('ds-ptrans'); el.style.setProperty('--p', p); });
+    el.style.setProperty('--p', '0'); void el.offsetWidth; el.classList.add('ds-ptrans'); el.style.setProperty('--p', p); M.played.push(el); });
   document.querySelectorAll('#view .dbr-v > b:first-child, #view .cb-v, #view .dbt-n, #view .cgl-c, #view .rqc-sc, #main .yu-t > b, #main .pnw-ti > b, #main .pgc > b').forEach((el) => {
     if (M.seen.has(el)) return; M.seen.add(el); const tn = [...el.childNodes].find((n) => n.nodeType === 3 && n.nodeValue.trim()); if (!tn) return;
     const raw = tn.nodeValue, m = raw.trim().match(/^(\d[\d,]*)(\.\d+)?([%kKmM]?)$/); if (!m) return;
@@ -50662,7 +50665,7 @@ function dsMotion() { const H = document.documentElement; if (!window.matchMedia
     /* the clock starts on the first frame, never from a frame time that predates a freeze (that printed negative numbers) */
     let t0 = null; const dur = 450, fmt = (x) => (commas ? Math.round(x).toLocaleString('en-US') : x.toFixed(dec)) + suf;
     const step = (t) => { if (t0 === null) t0 = t; const k = Math.max(0, Math.min(1, (t - t0) / dur)), e = 1 - Math.pow(1 - k, 3); if (k < 1) { tn.nodeValue = fmt(Math.max(0, end * e)); requestAnimationFrame(step); } else tn.nodeValue = raw; };
-    tn.nodeValue = fmt(0); requestAnimationFrame(step); }); }
+    tn.nodeValue = fmt(0); M.played.push(el); requestAnimationFrame(step); }); }
 (function () { const f8 = dsBars; dsBars = function (root) { f8(root); try { dsMotion(); } catch (e) {} }; })();
 
 // ===== Design studio round 17 (Oct 25): Rotation open tiles as slim rows. Re-homes the pieces inside an open tile's .rck-b: bar row, Next time, links.
