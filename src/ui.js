@@ -1834,6 +1834,8 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'Plan on a phone: the Who plays table scrolls sideways under a fixed name column instead of squeezing the boss pictures to slivers.',
+    'Plan: the What changed and why box with several lines (Swap all in, Pick who plays for me) lists them tidily under its title, with Got it at the end.',
     'The raid lead\'s lines say "after mistakes in 23 pulls" and "not fixed yet" instead of the old wording.',
   ] },
   { d: '2026-10-25', h: [
@@ -30269,13 +30271,6 @@ function dsHome() { const pg = document.querySelector('#main .home.prog .my-flow
     r.style.setProperty('--p', k ? '100' : pct(v.textContent) || '0'); r.style.setProperty('--pc', k ? '#ff8000' : v.style.color || 'var(--muted)'); }); }
 (function () { const f5 = dsBars; dsBars = function (root) { f5(root); try { dsHome(); } catch (e) {} }; })();
 
-// ===== Design studio round 11 (Oct 25): Plan, Tonight polished. Reads "N of M ready" on Tonight's Bosses header into --p for its ready bar.
-// Runs after dsBars on every redraw. Owner: the Design studio chat. =====
-function dsPlan() { const v = document.querySelector('#view.plan-page'); if (!v) return;
-  v.querySelectorAll('.tn-sec > .tn-sh').forEach((sh) => { const s = sh.querySelector('.sub'), m = s && s.textContent.match(/(\d+) of (\d+) ready/); if (!m) return;
-    sh.classList.add('ds-ready'); sh.style.setProperty('--p', String(Math.round(100 * +m[1] / Math.max(1, +m[2])))); }); }
-(function () { const f6 = dsBars; dsBars = function (root) { f6(root); try { dsPlan(); } catch (e) {} }; })();
-
 // ===== Design studio round 15 (Oct 25): the front page shows a pull being debriefed (the user's pick A). Replaces the example window's
 // coach box with a looping scene built from the site's card pieces; the chrome and the boss banner stay. Owner: the Design studio chat. =====
 function dsFrontDemo() { const win = document.querySelector('#main .home.fp .fpx-shot .fp3-win'); if (!win || win.dataset.dsDemo) return; const coach = win.querySelector('.fp3-coach'); if (!coach) return;
@@ -30303,6 +30298,13 @@ function dsFrontDemo() { const win = document.querySelector('#main .home.fp .fpx
     try { dsBars(); } catch (e) {} finally { if (mo) mo.takeRecords(); busy = false; } };
   const start = () => { if (!document.body) return false; mo = new MutationObserver(run); mo.observe(document.body, { childList: true, subtree: true }); return true; };
   if (!start()) document.addEventListener('DOMContentLoaded', start, { once: true }); })();
+
+// ===== Design studio round 11 (Oct 25): Plan, Tonight polished. Reads "N of M ready" on Tonight's Bosses header into --p for its ready bar.
+// Runs after dsBars on every redraw. Owner: the Design studio chat. =====
+function dsPlan() { const v = document.querySelector('#view.plan-page'); if (!v) return;
+  v.querySelectorAll('.tn-sec > .tn-sh').forEach((sh) => { const s = sh.querySelector('.sub'), m = s && s.textContent.match(/(\d+) of (\d+) ready/); if (!m) return;
+    sh.classList.add('ds-ready'); sh.style.setProperty('--p', String(Math.round(100 * +m[1] / Math.max(1, +m[2])))); }); }
+(function () { const f6 = dsBars; dsBars = function (root) { f6(root); try { dsPlan(); } catch (e) {} }; })();
 
 // ===== Design studio round 13 (Oct 25): Who plays, the boss name on hover (the picture headers lose their printed name beside the Bosses rows). Owner: the Design studio chat. =====
 function dsPlanTips() { const v = document.querySelector('#view.plan-page'); if (v && /[?&]cells=check/.test(location.search)) v.classList.add('ds-check'); /* (practice compare only) */
@@ -30442,3 +30444,21 @@ function dsGraphs() { document.querySelectorAll('#view .gb.gb-tb').forEach((gb) 
 // ===== Design studio round 24 (Oct 26): plan lists, the spell is its icon. Gives each cooldown icon in a boss plan's lists the spell's name as its tip. Owner: the Design studio chat. =====
 function dsPlanCd() { document.querySelectorAll('#view.plan-page .plb-one .plb-rc .plb-rr .plb-rn > .icw:not([data-tt])').forEach((ic) => { const nm = ic.nextElementSibling; if (!nm || !nm.classList.contains('plb-rsp')) return; const t = nm.textContent.trim(); if (!t) return; ic.setAttribute('data-tt', t.replace(/</g, '&lt;')); ic.setAttribute('aria-label', t); ic.setAttribute('role', 'img'); }); }
 (function () { const f15 = dsBars; dsBars = function (root) { f15(root); try { dsPlanCd(); } catch (e) {} }; })();
+
+// ===== Design studio round 25 (Oct 26): one Why and one How it's judged per Rotation tile. A sub-check's Why becomes the tip on its title and
+// its How text folds into the tile's How it's judged. Runs after dsRotSlim. Owner: the Design studio chat. =====
+function dsRotFlat() { document.querySelectorAll('#view section.rck details.rck-r.rck-mg:not(.ds-flat)').forEach((t) => { const blocks = [...t.querySelectorAll(':scope > .rck-mgb')]; if (blocks.length < 2) return; const main = blocks[0].querySelector(':scope > .rck-b'); if (!main || !main.classList.contains('ds-slim')) return; t.classList.add('ds-flat');
+  /* the tile's one How it's judged: the app's, or one of ours when the main check has none */
+  let mainHwp = main.querySelector(':scope > p.spc-hwp');
+  if (!mainHwp) { mainHwp = document.createElement('p'); mainHwp.className = 'spc-hwp ds-hwp'; mainHwp.hidden = true; main.appendChild(mainHwp);
+    let links = main.querySelector('.ds-rlinks'); if (!links) { const bot = document.createElement('div'); bot.className = 'ds-rbot'; links = document.createElement('div'); links.className = 'ds-rlinks'; bot.appendChild(links); main.insertBefore(bot, mainHwp); }
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'spc-hwb ds-hwb'; btn.textContent = 'How it\'s judged'; btn.setAttribute('aria-expanded', 'false');
+    btn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); mainHwp.hidden = !mainHwp.hidden; btn.setAttribute('aria-expanded', mainHwp.hidden ? 'false' : 'true'); }); links.appendChild(btn); }
+  blocks.slice(1).forEach((b) => { const h = b.querySelector(':scope > h5.rck-mgh'), body = b.querySelector(':scope > .rck-b'); if (!h || !body) return; const title = h.firstElementChild;
+    const why = body.querySelector('.ds-why'); if (why && title) { const tip = why.getAttribute('data-tt') || ''; if (tip) { title.setAttribute('data-tt', tip); title.classList.add('ds-tip'); } why.remove(); }
+    const btn = body.querySelector('button.spc-hwb'); if (btn) btn.remove();
+    const hwp = body.querySelector(':scope > p.spc-hwp'); if (hwp) { const w = document.createElement('span'); w.className = 'ds-subhw'; const nm = document.createElement('b'); nm.textContent = (title ? title.textContent.trim() : 'This check') + ': '; w.appendChild(nm); while (hwp.firstChild) w.appendChild(hwp.firstChild); hwp.remove(); mainHwp.appendChild(w); }
+    const links = body.querySelector('.ds-rlinks'); if (links && !links.children.length) links.remove(); const bot = body.querySelector(':scope > .ds-rbot'); if (bot && !bot.children.length) bot.remove(); });
+  /* the one How it's judged opens at the bottom of the tile, under the sub-check rows, so opening it pushes nothing around */
+  t.appendChild(mainHwp); }); }
+(function () { const f16 = dsBars; dsBars = function (root) { f16(root); try { dsRotFlat(); } catch (e) {} }; })();
