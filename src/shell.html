@@ -7496,6 +7496,60 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
   #view .mcx-dot::after { content: ''; position: absolute; inset: -8px; border-radius: 50%; }
   .fpx-in > a, .fpx .fpx-link, button#fphPatch, button#fphTour, button#fpDemo { padding-top: 8px; padding-bottom: 8px; margin-top: -8px; margin-bottom: -8px; display: inline-block; }
 }
+/* ===== Design studio round 53 (Oct 26): the Boss guides page in the shape of mock A: one sticky rail (pills in the site's shape), your job first, named keys on the
+   fight at a glance, cards in Summary, the right-way / mistake switch on the map, a slimmer hero. Owner: the Design studio chat. ===== */
+#view .gdz .ds-ghide { display: none !important; }
+/* the hero: no grey meta lines, facts in one row */
+#view .gdz header.gdz-hero p.gdz-src { display: none !important; }
+#view .gdz header.gdz-hero { min-height: 150px !important; }
+#view .gdz .gdz-facts { gap: 6px 18px !important; }
+/* the rail */
+#view .gdz .ds-grail { position: sticky; top: 0; z-index: 7; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 10px 0; margin: 12px 0 14px; background: rgba(15,17,23,.96); border-bottom: 1px solid var(--line); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+#view .gdz .ds-grail .gdz-seg { display: inline-flex !important; align-items: center; height: 28px; margin: 0 !important; padding: 0 3px 0 11px !important; gap: 1px; border-radius: 999px !important; border: 1px solid rgba(255,255,255,.14) !important; background: rgba(15,17,23,.78) !important; width: auto !important; box-shadow: none !important; }
+#view .gdz .ds-grail .gdz-seg > span:first-child { font: 700 12px var(--body) !important; letter-spacing: .07em; text-transform: uppercase; color: var(--muted) !important; margin: 0 9px 0 0 !important; padding: 0 9px 0 0 !important; border-right: 1px solid rgba(255,255,255,.12); line-height: 1; }
+#view .gdz .ds-grail .gdz-seg > button, #view .gdz .ds-grail nav.gdz-tabs > button { flex: none !important; height: 22px !important; line-height: 22px !important; padding: 0 10px !important; margin: 0 !important; border: 0 !important; border-radius: 999px !important; background: none !important; color: var(--muted) !important; font: 500 13px var(--body) !important; letter-spacing: 0 !important; box-shadow: none !important; white-space: nowrap; cursor: pointer; }
+#view .gdz .ds-grail .gdz-seg > button:hover, #view .gdz .ds-grail nav.gdz-tabs > button:hover { color: var(--text) !important; }
+#view .gdz .ds-grail .gdz-seg > button.on, #view .gdz .ds-grail nav.gdz-tabs > button.on { background: rgba(230,180,80,.2) !important; color: var(--gold) !important; font-weight: 600 !important; }
+#view .gdz .ds-grail nav.gdz-tabs { position: static !important; display: inline-flex !important; gap: 1px !important; padding: 0 !important; margin: 0 !important; width: auto !important; max-width: none !important; background: none !important; border: 0 !important; box-shadow: none !important; overflow: visible !important; }
+#view .gdz .ds-grail .ds-gsp { flex: 1 1 auto; }
+#view .gdz .ds-grail .gdz-watch { height: 28px !important; padding: 0 12px !important; margin: 0 !important; border-radius: 999px !important; background: rgba(230,180,80,.16) !important; border: 1px solid rgba(230,180,80,.45) !important; color: var(--gold) !important; font: 600 13px var(--body) !important; }
+/* your job + what wipes us above the glance */
+#view .gdz .ds-gcards { margin: 0 0 14px !important; }
+/* the keys under the phase bars */
+#view .gdz .ds-gkeys { display: grid; gap: 0 4px; margin: 10px 0 2px; }
+#view .gdz .ds-gk { min-width: 0; }
+#view .gdz .ds-gkb { display: block; width: 100%; text-align: left; background: none; border: 0; border-radius: 6px; padding: 3px 4px; margin: 0 0 2px; color: var(--muted); font: 500 12px var(--body); cursor: pointer; overflow: hidden; }
+#view .gdz .ds-gkb:hover { background: rgba(255,255,255,.05); color: var(--text); }
+#view .gdz .ds-gkb b { display: block; color: var(--text); font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#view .gdz .ds-gkb span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* cards in Summary */
+#view .gdz.ds-gsum article.gdz-m:not(.ds-open) .gdz-mt ol.gdz-steps > li:nth-child(n+4), #view .gdz.ds-gsum article.gdz-m:not(.ds-open) .gdz-mt .gdz-plan, #view .gdz.ds-gsum article.gdz-m:not(.ds-open) .gdz-mt .gdz-my, #view .gdz.ds-gsum article.gdz-m:not(.ds-open) .gdz-mt .gdz-wrong { display: none !important; }
+#view .gdz .ds-gmore { display: none; background: none; border: 0; padding: 2px 0; margin: 0 0 8px; color: var(--gold); font: 600 13px var(--body); cursor: pointer; text-align: left; }
+#view .gdz .ds-gmore::before { content: '\25B8  '; }
+#view .gdz.ds-gsum article.gdz-m:not(.ds-open) .ds-gmore { display: block; }
+/* the right-way / mistake switch on the map */
+#view .gdz .gdz-mapc { position: relative; }
+#view .gdz .gdz-mapc > .gdz-mode { position: absolute; top: 10px; left: 10px; z-index: 5; margin: 0 !important; padding: 2px !important; background: rgba(10,12,16,.92) !important; border: 1px solid rgba(255,255,255,.18) !important; }
+#view .gdz .gdz-mapc > .gdz-mode button { padding: 3px 10px !important; font: 600 12.5px var(--body) !important; }
+#view .gdz .gdz-mapc > .gdz-mode button[data-v="ok"].on { background: rgba(126,224,143,.18) !important; color: var(--good, #7ee08f) !important; box-shadow: inset 0 0 0 1px rgba(126,224,143,.5) !important; }
+#view .gdz .gdz-mapc > .gdz-mode button[data-v="bad"].on { background: rgba(255,143,135,.18) !important; color: var(--bad, #ff8f87) !important; box-shadow: inset 0 0 0 1px rgba(255,143,135,.5) !important; }
+@media (max-width: 640px) {
+  #view .gdz .ds-grail { gap: 6px 8px; padding: 8px 0; }
+  #view .gdz .ds-grail .gdz-seg { height: 26px; padding: 0 2px 0 9px !important; max-width: 100%; }
+  #view .gdz .ds-grail .gdz-seg.ds-gph { overflow-x: auto; scrollbar-width: none; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent); padding-right: 26px !important; }
+  #view .gdz .ds-grail .gdz-seg.ds-gph::-webkit-scrollbar { display: none; }
+  #view .gdz .ds-grail nav.gdz-tabs { flex: none; }
+  #view .gdz .ds-grail .gdz-seg > button, #view .gdz .ds-grail nav.gdz-tabs > button { height: 20px !important; line-height: 20px !important; padding: 0 8px !important; }
+  #view .gdz .ds-grail .gdz-seg > span:first-child { display: none; }
+  #view .gdz .ds-grail .ds-gsp { display: none; }
+  #view .gdz .ds-grail .gdz-watch { height: 26px !important; }
+  #view .gdz .ds-gkeys { grid-template-columns: 1fr !important; gap: 0; }
+  #view .gdz .ds-gk { padding: 6px 0; border-top: 1px solid rgba(255,255,255,.05); }
+  #view .gdz .ds-gk::before { content: attr(data-ph); display: block; font: 700 12px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 2px 4px; }
+  #view .gdz .ds-gkb { display: flex; gap: 6px; align-items: baseline; }
+  #view .gdz .ds-gkb b { white-space: normal; flex: none; }
+  #view .gdz .ds-gkb span { white-space: normal; }
+}
 </style>
 
 

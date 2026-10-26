@@ -7496,6 +7496,60 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
   #view .mcx-dot::after { content: ''; position: absolute; inset: -8px; border-radius: 50%; }
   .fpx-in > a, .fpx .fpx-link, button#fphPatch, button#fphTour, button#fpDemo { padding-top: 8px; padding-bottom: 8px; margin-top: -8px; margin-bottom: -8px; display: inline-block; }
 }
+/* ===== Design studio round 53 (Oct 26): the Boss guides page in the shape of mock A: one sticky rail (pills in the site's shape), your job first, named keys on the
+   fight at a glance, cards in Summary, the right-way / mistake switch on the map, a slimmer hero. Owner: the Design studio chat. ===== */
+#view .gdz .ds-ghide { display: none !important; }
+/* the hero: no grey meta lines, facts in one row */
+#view .gdz header.gdz-hero p.gdz-src { display: none !important; }
+#view .gdz header.gdz-hero { min-height: 150px !important; }
+#view .gdz .gdz-facts { gap: 6px 18px !important; }
+/* the rail */
+#view .gdz .ds-grail { position: sticky; top: 0; z-index: 7; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 10px 0; margin: 12px 0 14px; background: rgba(15,17,23,.96); border-bottom: 1px solid var(--line); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+#view .gdz .ds-grail .gdz-seg { display: inline-flex !important; align-items: center; height: 28px; margin: 0 !important; padding: 0 3px 0 11px !important; gap: 1px; border-radius: 999px !important; border: 1px solid rgba(255,255,255,.14) !important; background: rgba(15,17,23,.78) !important; width: auto !important; box-shadow: none !important; }
+#view .gdz .ds-grail .gdz-seg > span:first-child { font: 700 12px var(--body) !important; letter-spacing: .07em; text-transform: uppercase; color: var(--muted) !important; margin: 0 9px 0 0 !important; padding: 0 9px 0 0 !important; border-right: 1px solid rgba(255,255,255,.12); line-height: 1; }
+#view .gdz .ds-grail .gdz-seg > button, #view .gdz .ds-grail nav.gdz-tabs > button { flex: none !important; height: 22px !important; line-height: 22px !important; padding: 0 10px !important; margin: 0 !important; border: 0 !important; border-radius: 999px !important; background: none !important; color: var(--muted) !important; font: 500 13px var(--body) !important; letter-spacing: 0 !important; box-shadow: none !important; white-space: nowrap; cursor: pointer; }
+#view .gdz .ds-grail .gdz-seg > button:hover, #view .gdz .ds-grail nav.gdz-tabs > button:hover { color: var(--text) !important; }
+#view .gdz .ds-grail .gdz-seg > button.on, #view .gdz .ds-grail nav.gdz-tabs > button.on { background: rgba(230,180,80,.2) !important; color: var(--gold) !important; font-weight: 600 !important; }
+#view .gdz .ds-grail nav.gdz-tabs { position: static !important; display: inline-flex !important; gap: 1px !important; padding: 0 !important; margin: 0 !important; width: auto !important; max-width: none !important; background: none !important; border: 0 !important; box-shadow: none !important; overflow: visible !important; }
+#view .gdz .ds-grail .ds-gsp { flex: 1 1 auto; }
+#view .gdz .ds-grail .gdz-watch { height: 28px !important; padding: 0 12px !important; margin: 0 !important; border-radius: 999px !important; background: rgba(230,180,80,.16) !important; border: 1px solid rgba(230,180,80,.45) !important; color: var(--gold) !important; font: 600 13px var(--body) !important; }
+/* your job + what wipes us above the glance */
+#view .gdz .ds-gcards { margin: 0 0 14px !important; }
+/* the keys under the phase bars */
+#view .gdz .ds-gkeys { display: grid; gap: 0 4px; margin: 10px 0 2px; }
+#view .gdz .ds-gk { min-width: 0; }
+#view .gdz .ds-gkb { display: block; width: 100%; text-align: left; background: none; border: 0; border-radius: 6px; padding: 3px 4px; margin: 0 0 2px; color: var(--muted); font: 500 12px var(--body); cursor: pointer; overflow: hidden; }
+#view .gdz .ds-gkb:hover { background: rgba(255,255,255,.05); color: var(--text); }
+#view .gdz .ds-gkb b { display: block; color: var(--text); font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#view .gdz .ds-gkb span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* cards in Summary */
+#view .gdz.ds-gsum article.gdz-m:not(.ds-open) .gdz-mt ol.gdz-steps > li:nth-child(n+4), #view .gdz.ds-gsum article.gdz-m:not(.ds-open) .gdz-mt .gdz-plan, #view .gdz.ds-gsum article.gdz-m:not(.ds-open) .gdz-mt .gdz-my, #view .gdz.ds-gsum article.gdz-m:not(.ds-open) .gdz-mt .gdz-wrong { display: none !important; }
+#view .gdz .ds-gmore { display: none; background: none; border: 0; padding: 2px 0; margin: 0 0 8px; color: var(--gold); font: 600 13px var(--body); cursor: pointer; text-align: left; }
+#view .gdz .ds-gmore::before { content: '\25B8  '; }
+#view .gdz.ds-gsum article.gdz-m:not(.ds-open) .ds-gmore { display: block; }
+/* the right-way / mistake switch on the map */
+#view .gdz .gdz-mapc { position: relative; }
+#view .gdz .gdz-mapc > .gdz-mode { position: absolute; top: 10px; left: 10px; z-index: 5; margin: 0 !important; padding: 2px !important; background: rgba(10,12,16,.92) !important; border: 1px solid rgba(255,255,255,.18) !important; }
+#view .gdz .gdz-mapc > .gdz-mode button { padding: 3px 10px !important; font: 600 12.5px var(--body) !important; }
+#view .gdz .gdz-mapc > .gdz-mode button[data-v="ok"].on { background: rgba(126,224,143,.18) !important; color: var(--good, #7ee08f) !important; box-shadow: inset 0 0 0 1px rgba(126,224,143,.5) !important; }
+#view .gdz .gdz-mapc > .gdz-mode button[data-v="bad"].on { background: rgba(255,143,135,.18) !important; color: var(--bad, #ff8f87) !important; box-shadow: inset 0 0 0 1px rgba(255,143,135,.5) !important; }
+@media (max-width: 640px) {
+  #view .gdz .ds-grail { gap: 6px 8px; padding: 8px 0; }
+  #view .gdz .ds-grail .gdz-seg { height: 26px; padding: 0 2px 0 9px !important; max-width: 100%; }
+  #view .gdz .ds-grail .gdz-seg.ds-gph { overflow-x: auto; scrollbar-width: none; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent); padding-right: 26px !important; }
+  #view .gdz .ds-grail .gdz-seg.ds-gph::-webkit-scrollbar { display: none; }
+  #view .gdz .ds-grail nav.gdz-tabs { flex: none; }
+  #view .gdz .ds-grail .gdz-seg > button, #view .gdz .ds-grail nav.gdz-tabs > button { height: 20px !important; line-height: 20px !important; padding: 0 8px !important; }
+  #view .gdz .ds-grail .gdz-seg > span:first-child { display: none; }
+  #view .gdz .ds-grail .ds-gsp { display: none; }
+  #view .gdz .ds-grail .gdz-watch { height: 26px !important; }
+  #view .gdz .ds-gkeys { grid-template-columns: 1fr !important; gap: 0; }
+  #view .gdz .ds-gk { padding: 6px 0; border-top: 1px solid rgba(255,255,255,.05); }
+  #view .gdz .ds-gk::before { content: attr(data-ph); display: block; font: 700 12px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 2px 4px; }
+  #view .gdz .ds-gkb { display: flex; gap: 6px; align-items: baseline; }
+  #view .gdz .ds-gkb b { white-space: normal; flex: none; }
+  #view .gdz .ds-gkb span { white-space: normal; }
+}
 </style>
 
 
@@ -17418,6 +17472,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-26', h: [
+    { t: 'Boss guides, one rail', d: 'A guide now opens with one bar on top: pick your role, the phase, and Summary or Everything. Your job and What wipes us come first, the fight at a glance names the mechanics that matter in each phase (tap one to jump), and every card starts short: the map, one line, three steps, with Everything a tap away.' },
     { t: 'Plan: your raid night in one page', d: 'The Plan tab is out for everyone: bring in your team, and Debrief picks who plays each boss and plans every job, kick and healing cooldown the way the fastest kills do. Change anything, then copy it into the game for NSRT.' },
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
@@ -51913,6 +51968,67 @@ function dsRotTop() { const v = document.querySelector('#view .pf-inl.spc-v'); i
   const sec = v.querySelector('section.rck'), card = v.querySelector('.rck-fix .rck-sg[data-ck]');
   if (sec && card && !sec.dataset.dsAuto) { sec.dataset.dsAuto = '1'; if (![...sec.querySelectorAll('.rck-cat')].some((c) => c.open)) { const t = document.getElementById('spc-r-' + card.dataset.ck); const cat = t && t.closest('.rck-cat'); if (cat) cat.open = true; } } }
 (function () { const f21 = dsBars; dsBars = function (root) { f21(root); try { dsRotTop(); } catch (e) {} }; })();
+
+// ===== Design studio round 53 (Oct 26): the Boss guides page in the shape of mock A: one rail, your job first, named keys on the fight at a glance, cards
+// in Summary, the map switch on the map. Runs after every guides render. Owner: the Design studio chat. =====
+function dsGuides() {
+  const g = document.querySelector('#view .gdz'); if (!g || g.dataset.ds53) return; g.dataset.ds53 = '1';
+  const E = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const rbar = g.querySelector(':scope > .gdz-rbar'), hero = g.querySelector(':scope > header.gdz-hero'), tabs = g.querySelector(':scope > nav.gdz-tabs'), glance = g.querySelector(':scope > section.gdz-glance');
+  const cards = glance ? glance.querySelector(':scope > .gdz-cards') : null;
+  if (!rbar || !hero) return;
+  // 1. the rail
+  const rail = document.createElement('div'); rail.className = 'ds-grail';
+  const role = rbar.querySelector('.gdz-seg[data-k="role"]'), mode = rbar.querySelector('.gdz-seg[data-k="mode"]'), watch = rbar.querySelector('.gdz-watch');
+  if (role) rail.appendChild(role);
+  if (tabs) { const w = document.createElement('div'); w.className = 'gdz-seg ds-gph'; const lab = document.createElement('span'); lab.textContent = 'Phase'; w.appendChild(lab); w.appendChild(tabs); rail.appendChild(w); }
+  const sw = document.createElement('div'); sw.className = 'gdz-seg ds-gsw'; sw.innerHTML = '<button type="button" data-v="s">Summary</button><button type="button" data-v="e">Everything</button>';
+  let sumOn = true; try { sumOn = localStorage.getItem('ds-gsum') !== '0'; } catch (e) {}
+  const setSum = (on) => { g.classList.toggle('ds-gsum', on); sw.querySelector('[data-v="s"]').classList.toggle('on', on); sw.querySelector('[data-v="e"]').classList.toggle('on', !on); try { localStorage.setItem('ds-gsum', on ? '1' : '0'); } catch (e) {} };
+  sw.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => setSum(b.dataset.v === 's')));
+  rail.appendChild(sw); setSum(sumOn);
+  const sp = document.createElement('span'); sp.className = 'ds-gsp'; rail.appendChild(sp);
+  if (watch) rail.appendChild(watch);
+  if (mode) mode.hidden = true;
+  rbar.after(rail); rbar.classList.add('ds-ghide');
+  // 2. your job and what wipes us first
+  if (cards && glance) { glance.before(cards); cards.classList.add('ds-gcards'); }
+  // 3. named keys under the phase bars
+  const tl = glance ? glance.querySelector('.gdz-tl') : null;
+  if (tl) {
+    const bars = [...tl.querySelectorAll('.gdz-tlbar > .gdz-tlp')];
+    const secs = [...g.querySelectorAll(':scope > section.gdz-sec')];
+    const phSecs = secs.filter((s) => /^gdz-(p\d+|int)$/.test(s.id));
+    if (bars.length && bars.length === phSecs.length) {
+      const keys = document.createElement('div'); keys.className = 'ds-gkeys'; keys.style.gridTemplateColumns = bars.map((b) => b.style.width || '1fr').join(' ');
+      bars.forEach((b, i) => { const sec = phSecs[i]; const col = document.createElement('div'); col.className = 'ds-gk'; col.dataset.ph = b.textContent.trim();
+        const w = parseFloat(b.style.width) || 25, n = w < 10 ? 1 : w < 20 ? 2 : 3;
+        [...sec.querySelectorAll('article.gdz-m')].slice(0, n).forEach((a) => { const h = a.querySelector('.gdz-mt h4'); if (!h) return; const t = h.textContent.trim(), m = t.match(/^(.*?)\s*\((.*)\)\s*$/);
+          const k = document.createElement('button'); k.type = 'button'; k.className = 'ds-gkb'; k.innerHTML = '<b>' + E(m ? m[1] : t) + '</b>' + (m ? '<span>' + E(m[2]) + '</span>' : ''); k.title = 'Jump to ' + (m ? m[1] : t);
+          k.addEventListener('click', () => { const idx = secs.indexOf(sec), mid = a.dataset.mid || '', tb = tabs ? tabs.querySelector('button[data-i="' + idx + '"]') : null;
+            if (sec.hidden && tb) tb.click();
+            setTimeout(() => { const el = mid ? document.querySelector('#view .gdz-m[data-mid="' + mid + '"]') : null; if (!el) return; window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' }); el.classList.remove('gdz-flash'); void el.offsetWidth; el.classList.add('gdz-flash'); }, sec.hidden ? 220 : 10); });
+          col.appendChild(k); });
+        keys.appendChild(col); });
+      const after = tl.querySelector(':scope > .gdz-tlbd') || tl.querySelector(':scope > .gdz-tlbar'); if (after) after.after(keys);
+      tl.querySelectorAll(':scope > .gdz-tlrow, :scope > .gdz-tlev, :scope > .gdz-tlm, :scope > .gdz-tlc').forEach((e) => e.classList.add('ds-ghide'));
+    }
+  }
+  // 4. cards in Summary: the "Everything · …" line per card
+  g.querySelectorAll('article.gdz-m').forEach((a) => { if (a.querySelector('.ds-gmore')) return; const mt = a.querySelector('.gdz-mt'); if (!mt) return;
+    const steps = mt.querySelectorAll('ol.gdz-steps > li'), extra = Math.max(0, steps.length - 3), bits = [];
+    if (extra) bits.push(extra + ' more step' + (extra > 1 ? 's' : '')); if (mt.querySelector('.gdz-plan')) bits.push('the full plan'); if (mt.querySelector('.gdz-my')) bits.push('the Mythic note');
+    if (!bits.length) return; const b = document.createElement('button'); b.type = 'button'; b.className = 'ds-gmore'; b.textContent = 'Everything \u00b7 ' + bits.join(', ');
+    b.addEventListener('click', () => a.classList.add('ds-open')); const ol = mt.querySelector('ol.gdz-steps'); if (ol) ol.after(b); else mt.appendChild(b); });
+  // 6. the hero's meta lines: the source is in the foot already; the "Updated" line joins it
+  const foot = g.querySelector(':scope > p.gdz-foot'), upd = hero.querySelector('p.gdz-upd');
+  if (foot && upd && !/Updated for/.test(foot.textContent)) foot.appendChild(document.createTextNode(' ' + upd.textContent.trim()));
+}
+(function () {
+  try { if (typeof gdzView === 'function' && !gdzView.ds53) { const g0 = gdzView; gdzView = function () { const r = g0.apply(this, arguments); try { dsGuides(); } catch (e) {} return r; }; gdzView.ds53 = true; } } catch (e) {}
+  try { const f53 = dsBars; dsBars = function (root) { f53(root); try { dsGuides(); } catch (e) {} }; } catch (e) {}
+  try { dsGuides(); } catch (e) {}
+})();
 
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====

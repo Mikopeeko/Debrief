@@ -1948,6 +1948,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-26', h: [
+    { t: 'Boss guides, one rail', d: 'A guide now opens with one bar on top: pick your role, the phase, and Summary or Everything. Your job and What wipes us come first, the fight at a glance names the mechanics that matter in each phase (tap one to jump), and every card starts short: the map, one line, three steps, with Everything a tap away.' },
     { t: 'Plan: your raid night in one page', d: 'The Plan tab is out for everyone: bring in your team, and Debrief picks who plays each boss and plans every job, kick and healing cooldown the way the fastest kills do. Change anything, then copy it into the game for NSRT.' },
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
@@ -31044,6 +31045,67 @@ function dsRotTop() { const v = document.querySelector('#view .pf-inl.spc-v'); i
   const sec = v.querySelector('section.rck'), card = v.querySelector('.rck-fix .rck-sg[data-ck]');
   if (sec && card && !sec.dataset.dsAuto) { sec.dataset.dsAuto = '1'; if (![...sec.querySelectorAll('.rck-cat')].some((c) => c.open)) { const t = document.getElementById('spc-r-' + card.dataset.ck); const cat = t && t.closest('.rck-cat'); if (cat) cat.open = true; } } }
 (function () { const f21 = dsBars; dsBars = function (root) { f21(root); try { dsRotTop(); } catch (e) {} }; })();
+
+// ===== Design studio round 53 (Oct 26): the Boss guides page in the shape of mock A: one rail, your job first, named keys on the fight at a glance, cards
+// in Summary, the map switch on the map. Runs after every guides render. Owner: the Design studio chat. =====
+function dsGuides() {
+  const g = document.querySelector('#view .gdz'); if (!g || g.dataset.ds53) return; g.dataset.ds53 = '1';
+  const E = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const rbar = g.querySelector(':scope > .gdz-rbar'), hero = g.querySelector(':scope > header.gdz-hero'), tabs = g.querySelector(':scope > nav.gdz-tabs'), glance = g.querySelector(':scope > section.gdz-glance');
+  const cards = glance ? glance.querySelector(':scope > .gdz-cards') : null;
+  if (!rbar || !hero) return;
+  // 1. the rail
+  const rail = document.createElement('div'); rail.className = 'ds-grail';
+  const role = rbar.querySelector('.gdz-seg[data-k="role"]'), mode = rbar.querySelector('.gdz-seg[data-k="mode"]'), watch = rbar.querySelector('.gdz-watch');
+  if (role) rail.appendChild(role);
+  if (tabs) { const w = document.createElement('div'); w.className = 'gdz-seg ds-gph'; const lab = document.createElement('span'); lab.textContent = 'Phase'; w.appendChild(lab); w.appendChild(tabs); rail.appendChild(w); }
+  const sw = document.createElement('div'); sw.className = 'gdz-seg ds-gsw'; sw.innerHTML = '<button type="button" data-v="s">Summary</button><button type="button" data-v="e">Everything</button>';
+  let sumOn = true; try { sumOn = localStorage.getItem('ds-gsum') !== '0'; } catch (e) {}
+  const setSum = (on) => { g.classList.toggle('ds-gsum', on); sw.querySelector('[data-v="s"]').classList.toggle('on', on); sw.querySelector('[data-v="e"]').classList.toggle('on', !on); try { localStorage.setItem('ds-gsum', on ? '1' : '0'); } catch (e) {} };
+  sw.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => setSum(b.dataset.v === 's')));
+  rail.appendChild(sw); setSum(sumOn);
+  const sp = document.createElement('span'); sp.className = 'ds-gsp'; rail.appendChild(sp);
+  if (watch) rail.appendChild(watch);
+  if (mode) mode.hidden = true;
+  rbar.after(rail); rbar.classList.add('ds-ghide');
+  // 2. your job and what wipes us first
+  if (cards && glance) { glance.before(cards); cards.classList.add('ds-gcards'); }
+  // 3. named keys under the phase bars
+  const tl = glance ? glance.querySelector('.gdz-tl') : null;
+  if (tl) {
+    const bars = [...tl.querySelectorAll('.gdz-tlbar > .gdz-tlp')];
+    const secs = [...g.querySelectorAll(':scope > section.gdz-sec')];
+    const phSecs = secs.filter((s) => /^gdz-(p\d+|int)$/.test(s.id));
+    if (bars.length && bars.length === phSecs.length) {
+      const keys = document.createElement('div'); keys.className = 'ds-gkeys'; keys.style.gridTemplateColumns = bars.map((b) => b.style.width || '1fr').join(' ');
+      bars.forEach((b, i) => { const sec = phSecs[i]; const col = document.createElement('div'); col.className = 'ds-gk'; col.dataset.ph = b.textContent.trim();
+        const w = parseFloat(b.style.width) || 25, n = w < 10 ? 1 : w < 20 ? 2 : 3;
+        [...sec.querySelectorAll('article.gdz-m')].slice(0, n).forEach((a) => { const h = a.querySelector('.gdz-mt h4'); if (!h) return; const t = h.textContent.trim(), m = t.match(/^(.*?)\s*\((.*)\)\s*$/);
+          const k = document.createElement('button'); k.type = 'button'; k.className = 'ds-gkb'; k.innerHTML = '<b>' + E(m ? m[1] : t) + '</b>' + (m ? '<span>' + E(m[2]) + '</span>' : ''); k.title = 'Jump to ' + (m ? m[1] : t);
+          k.addEventListener('click', () => { const idx = secs.indexOf(sec), mid = a.dataset.mid || '', tb = tabs ? tabs.querySelector('button[data-i="' + idx + '"]') : null;
+            if (sec.hidden && tb) tb.click();
+            setTimeout(() => { const el = mid ? document.querySelector('#view .gdz-m[data-mid="' + mid + '"]') : null; if (!el) return; window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' }); el.classList.remove('gdz-flash'); void el.offsetWidth; el.classList.add('gdz-flash'); }, sec.hidden ? 220 : 10); });
+          col.appendChild(k); });
+        keys.appendChild(col); });
+      const after = tl.querySelector(':scope > .gdz-tlbd') || tl.querySelector(':scope > .gdz-tlbar'); if (after) after.after(keys);
+      tl.querySelectorAll(':scope > .gdz-tlrow, :scope > .gdz-tlev, :scope > .gdz-tlm, :scope > .gdz-tlc').forEach((e) => e.classList.add('ds-ghide'));
+    }
+  }
+  // 4. cards in Summary: the "Everything · …" line per card
+  g.querySelectorAll('article.gdz-m').forEach((a) => { if (a.querySelector('.ds-gmore')) return; const mt = a.querySelector('.gdz-mt'); if (!mt) return;
+    const steps = mt.querySelectorAll('ol.gdz-steps > li'), extra = Math.max(0, steps.length - 3), bits = [];
+    if (extra) bits.push(extra + ' more step' + (extra > 1 ? 's' : '')); if (mt.querySelector('.gdz-plan')) bits.push('the full plan'); if (mt.querySelector('.gdz-my')) bits.push('the Mythic note');
+    if (!bits.length) return; const b = document.createElement('button'); b.type = 'button'; b.className = 'ds-gmore'; b.textContent = 'Everything \u00b7 ' + bits.join(', ');
+    b.addEventListener('click', () => a.classList.add('ds-open')); const ol = mt.querySelector('ol.gdz-steps'); if (ol) ol.after(b); else mt.appendChild(b); });
+  // 6. the hero's meta lines: the source is in the foot already; the "Updated" line joins it
+  const foot = g.querySelector(':scope > p.gdz-foot'), upd = hero.querySelector('p.gdz-upd');
+  if (foot && upd && !/Updated for/.test(foot.textContent)) foot.appendChild(document.createTextNode(' ' + upd.textContent.trim()));
+}
+(function () {
+  try { if (typeof gdzView === 'function' && !gdzView.ds53) { const g0 = gdzView; gdzView = function () { const r = g0.apply(this, arguments); try { dsGuides(); } catch (e) {} return r; }; gdzView.ds53 = true; } } catch (e) {}
+  try { const f53 = dsBars; dsBars = function (root) { f53(root); try { dsGuides(); } catch (e) {} }; } catch (e) {}
+  try { dsGuides(); } catch (e) {}
+})();
 
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
