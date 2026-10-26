@@ -6278,6 +6278,9 @@ function* analyzeSteps(item, text, opts) {
         const absorber = f[a], id = num(f[sp]), amt = num(f[sp + 3]);
         noteSchool(id, f[sp + 2]);
         if (amt <= 0 || NOT_HEALING.has(id)) break;
+        /* (Oct 26, your ask "isolate damage done to the shields on coiled altar": each hit into Veil of Twilight (Eternal Nightfall's shield) and the
+           Dreadmarch shields on mind-controlled players: [shield id, time, who hit it, amount, whose shield]) */
+        if ((id === 1286912 || id === 1297445) && owner) (r.shieldHits || (r.shieldHits = [])).push([id, +t.toFixed(2), P(owner, pet ? null : sn).name, amt, dg]);
         // (a player's hit soaked by a boss's own shield, like Malacrass's Eternal Nightfall: still damage into the boss, for the damage checks)
         if (mod && mod.focus && mod.focus.has(dn) && owner) modEv.push({ k: 'pdmg', t, src: owner, dst: dg, dn, amt, abs: true });
         // (damage an enemy's shield soaked: the Performance tab's damage windows count it, like a Nightfall shield's)
@@ -6297,6 +6300,7 @@ function* analyzeSteps(item, text, opts) {
       }
       case 'SPELL_AURA_APPLIED': case 'SPELL_AURA_APPLIED_DOSE': {
         if (f.length < 12) break;
+        if (num(f[8]) === 1297445) (r.shieldAuras || (r.shieldAuras = [])).push([1297445, 1, +t.toFixed(2), dg]); /* (a Dreadmarch shield goes on (Oct 26)) */
         if (num(f[8]) === 200654 && f[11] === 'BUFF') tyrOn.add(dg + '|' + sg);
         if (f[11] === 'BUFF' && f[9] === 'Avenging Wrath' && dg === sg) awOn.add(dg);
         noteSchool(num(f[8]), f[10]); noteId(num(f[8]), f[9]);
@@ -6326,6 +6330,7 @@ function* analyzeSteps(item, text, opts) {
         break;
       }
       case 'SPELL_AURA_REMOVED':
+        if (f.length >= 10 && num(f[8]) === 1297445) (r.shieldAuras || (r.shieldAuras = [])).push([1297445, 0, +t.toFixed(2), dg]); /* (and comes off (Oct 26)) */
         if (f.length >= 12 && num(f[8]) === 200654 && f[11] === 'BUFF') tyrOn.delete(dg + '|' + sg);
         if (f.length >= 12 && f[11] === 'BUFF' && f[9] === 'Avenging Wrath') awOn.delete(dg);
         if (f.length >= 10 && W(f[9], f[8])) modEv.push({ k: 'aura', op: 'remove', t, dst: dg, spell: f[9], id: num(f[8]), stacks: 0, src: sg });

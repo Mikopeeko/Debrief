@@ -1033,7 +1033,15 @@ button.nm-cell { cursor: pointer; } button.nm-cell:hover { outline: 2px solid va
 .dsp { display: flex; flex-direction: column; gap: 6px; max-width: 640px; }
 .dsp-r { display: grid; grid-template-columns: 170px minmax(0, 1fr) 34px; gap: 10px; align-items: center; font-size: 14px; }
 .dsp-b { height: 14px; background: #12151c; border-radius: 4px; overflow: hidden; } .dsp-b i { display: block; height: 100%; background: #45c15c; opacity: .85; }
-.dsp-r b { text-align: right; font-variant-numeric: tabular-nums; }/* list-and-detail panels (Guillotine soaks, phase changes, tank frontals, Nightfall shields, Spiritcackle adds) */
+.dsp-r b { text-align: right; font-variant-numeric: tabular-nums; }
+/* shield damage (Oct 26): the dispel bars plus a share; chips in one shape, dot first */
+.shd { margin: 14px 0 4px; } .shd-h { font-weight: 600; margin: 0 0 8px; }
+.shd-cs { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin: 0 0 12px; max-width: 760px; }
+.shd-c { display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px; border-radius: 7px; background: #1b1f27; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shd-k { color: #8b919c; } .shd-d { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #6b7280; } .shd-d.ok { background: #45c15c; } .shd-d.warn { background: #e3a43a; } .shd-d.bad { background: #e05a4f; }
+.dsp-r.shd-r { grid-template-columns: 150px minmax(0, 1fr) 54px 36px; } .shd-p { text-align: right; color: #8b919c; font-size: 12px; font-variant-numeric: tabular-nums; }
+.shd-more { margin: 6px 0 0; } .shd-more > summary { cursor: pointer; color: #8b919c; font-size: 13px; margin: 0 0 6px; } .shd-f { margin: 8px 0 0; }
+@media (max-width: 640px) { .dsp-r.shd-r { grid-template-columns: 96px minmax(0, 1fr) 48px 32px; gap: 6px; } }/* list-and-detail panels (Guillotine soaks, phase changes, tank frontals, Nightfall shields, Spiritcackle adds) */
 .md { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 12px; align-items: start; margin-top: 4px; }
 .md-list { display: flex; flex-direction: column; gap: 4px; max-height: 520px; overflow-y: auto; }
 .md-i { display: flex; align-items: center; gap: 8px; text-align: left; background: none; border: 1px solid transparent; border-radius: 8px; padding: 8px 10px; color: inherit; font: inherit; font-size: 14px; cursor: pointer; }

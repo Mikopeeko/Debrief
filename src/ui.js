@@ -1952,6 +1952,7 @@ const PATCH_NOTES = [
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'The Coiled Altar: open Eternal Nightfall or Dreadmarch on Debriefing to see who put damage into the shields (Veil of Twilight and the mind-control shields), with how long each Veil took to break next to the top kills. On one pull or All pulls.',
     'Rotation says DPS and HPS instead of "a second" (overhealing, cooldown windows, Tyrant, Inner Flame, Tree of Life).',
     'Rotation: the Healing a second (or Damage a second) box leaves the top, since those numbers now live in the gear column, and the ✓ Done right chips sit under your talents, so the two top boxes end level.',
     'Rotation for healers: a Healing box in Gear and extras, like the damage dealers\' Boss and adds: your healing a second with your total and share of the raid\'s healing, and how much of what you cast overhealed.',
@@ -10135,7 +10136,7 @@ function audit() {
       (simp || s.info || !allRows.length || s.id === 'avoid' || r.allPulls ? '' : kbChip(r.item, s.id, 100 * (nBad + nWarn) / allRows.length)) /* (where we stand among the fastest kills (Oct 22, a test)) */ +
       '<span class="sst ' + stc + '">' + (nBad || nWarn ? lvlText(lc, true) : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0Clean') + '</span>' + (ti ? (tile === 'line' ? '' : '</span>') + (simp ? '<span class="rw2-pc ' + stc + '">' + (simPc == null ? '—' : simPc + '%') + '</span>' + simSq : tiLn) : '') + dbnTag(jobs) + (simp ? '' : dbdDots(s.id, DD)) + '</summary><div class="secbody' + (simp ? ' sim-body' : '') + '">' + (simp && !U1 ? simLn.replace('mcx-ln sim-ln', 'sim-ln rw2-what') : '') + '' /* (no Copy link buttons on Debriefing (Oct 23 click-through)) */ + dbnBox(jobs) +
       (simp ? '' : (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '')) /* (no guide button on Debriefing, Oct 23) */ + (U1 ? u1Body() : synopsis(s, rows, groups) + simTiles); // (the old counts summary was dropped: the synopsis and the table cover it)
-    if (U1) return b + simLinks + '</div></details>';
+    if (U1) return b + (SH_ID[s.id] && !r.allPulls ? shieldBlock([r], s.id) : '') + simLinks + '</div></details>';
     // grouped sections: one header row per set, then that set's rows
     // (column headings live inside each opened set's card, so the list of sets stays clean)
     // the bulky panels: a list on the left (one entry per soak, transition, frontal, shield or set) and the picked
@@ -11866,6 +11867,46 @@ function oaCache(reps, name, f) { const k = reps.map((r) => (r.item.id || r.item
     + '|p' + (reps.length === 1 && reps[0].item ? ((S.index && S.index.bosses) || []).filter((b) => b.id === reps[0].item.id && b.diffId === reps[0].item.diffId && b.pull < reps[0].item.pull && CACHE.has(b)).length : 0);
   const c = OA_C.get(k); if (c && c.reps.length === reps.length && c.reps.every((r, i) => r === reps[i])) return c.v;
   let v = null; try { v = f(); } catch (e) { console.error(e); v = null; } OA_C.set(k, { reps: reps.slice(), v }); if (OA_C.size > 200) OA_C.delete(OA_C.keys().next().value); return v; }
+/* (Oct 26, your ask "isolate damage done to the shields on coiled altar, mythic": who put damage into Veil of Twilight (Eternal Nightfall's
+   shield) and into the Dreadmarch shields on mind-controlled players, under each one's row on Debriefing, for one pull or the whole night.
+   Plain numbers; the break times sit next to the top kills' 10.6 to 13.9 s for Veil of Twilight) */
+const SH_ID = { shield: 1286912, dmghost: 1297445 };
+function shieldParts(r, kind) {
+  const id = SH_ID[kind], hits = (r.shieldHits || []).filter((h) => h[0] === id), ct = Math.min(cutT(r), r.duration || Infinity);
+  if (kind === 'shield') { const m = r.module && !r.module.error ? r.module._shields || [] : [];
+    return m.map((x) => { const to = x.brokeAt != null ? x.brokeAt : x.t + x.secs, by = new Map();
+      for (const h of hits) if (h[1] >= x.t - 0.5 && h[1] <= to + 0.5) by.set(h[2], (by.get(h[2]) || 0) + h[3]);
+      return { t: x.t, took: x.brokeAt != null ? x.brokeAt - x.t : null, done: x.done, by, late: x.t > ct + 0.05 }; }); }
+  /* (Dreadmarch: one shield per mind-controlled player, from its aura going on to coming off) */
+  const on = new Map(), out = [];
+  for (const a of r.shieldAuras || []) { if (a[0] !== id) continue; if (a[1]) { if (!on.has(a[3])) on.set(a[3], a[2]); } else if (on.has(a[3])) { out.push({ dst: a[3], t: on.get(a[3]), off: a[2] }); on.delete(a[3]); } }
+  for (const [d, t] of on) out.push({ dst: d, t, off: null });
+  return out.sort((a, b) => a.t - b.t).map((x) => { const by = new Map();
+    for (const h of hits) if (h[4] === x.dst && h[1] >= x.t - 0.5 && h[1] <= (x.off == null ? Infinity : x.off) + 0.5) by.set(h[2], (by.get(h[2]) || 0) + h[3]);
+    return { t: x.t, took: x.off != null ? x.off - x.t : null, by, late: x.t > ct + 0.05 }; });
+}
+function shieldBlock(reps, kind) {
+  /* (shields after the wipe call show, but their damage isn't counted: Debriefing counts up to the wipe call) */
+  const all = []; for (const r of reps) { let L = []; try { L = shieldParts(r, kind); } catch (er) { L = []; } for (const p of L) all.push({ ...p, pull: r.item.pull }); }
+  const parts = all.filter((p) => !p.late), late = all.length - parts.length;
+  const PL = new Map(); for (const r of reps) for (const p of r.players.values()) if (p && p.name && !PL.has(p.name)) PL.set(p.name, p); try { for (const p of players()) if (p && p.name) PL.set(p.name, p); } catch (er) { /* (names from the pulls) */ }
+  const nm = (n) => { const p = PL.get(n); return p && p.color ? who(p) : '<span class="who"><span class="nm">' + esc(String(n).split('-')[0]) + '</span></span>'; };
+  const by = new Map(); for (const p of parts) for (const [n, a] of p.by) if (n) by.set(n, (by.get(n) || 0) + a);
+  const tot = [...by.values()].reduce((x, a) => x + a, 0); if (!parts.length || !tot) return '';
+  const night = reps.length > 1, mythic = reps[0].item.diffId === 16, rows = [...by].sort((a, b) => b[1] - a[1]), mx = rows[0][1];
+  const M = (a) => (a >= 1e6 ? (a / 1e6).toFixed(1) + 'M' : Math.round(a / 1e3) + 'K');
+  const row = ([n, a]) => '<div class="dsp-r shd-r"><span>' + nm(n) + '</span><span class="dsp-b"><i style="width:' + (100 * a / mx).toFixed(1) + '%' + ((PL.get(n) || {}).color ? ';background:' + PL.get(n).color : '') + '"></i></span><b>' + M(a) + '</b><span class="shd-p">' + Math.round(100 * a / tot) + '%</span></div>';
+  const chip = (dot, k, v) => '<span class="shd-c">' + (dot ? '<i class="shd-d ' + dot + '"></i>' : '') + '<span class="shd-k">' + k + '</span>' + (v ? ' ' + v : '') + '</span>';
+  let chips = '';
+  if (kind === 'shield') chips = all.map((p, i) => p.late ? chip('na', night ? 'Pull ' + p.pull : ordinal(i + 1) + ' · ' + T(p.t), 'after the wipe call') : chip(p.took == null ? (p.done ? 'bad' : 'na') : (!mythic || p.took <= 13.9) ? 'ok' : 'warn', night ? 'Pull ' + p.pull : ordinal(i + 1) + ' · ' + T(p.t),
+    p.took != null ? 'broke in <b>' + p.took.toFixed(1) + ' s</b>' : p.done ? 'not broken' : 'pull ended first')).join('') + (mythic ? chip('', 'Top kills', '10.6–13.9 s') : '');
+  else { const tk = parts.map((p) => p.took).filter((x) => x != null).sort((a, b) => a - b), med = tk.length ? tk[Math.floor(tk.length / 2)] : null;
+    chips = chip('', plural(parts.length, 'shield'), '') + (tk.length ? chip('', 'Gone in', '<b>' + tk[0].toFixed(1) + '–' + tk[tk.length - 1].toFixed(1) + ' s</b>') + chip('', 'Typically', med.toFixed(1) + ' s') : ''); }
+  const top = rows.slice(0, 10), more = rows.slice(10);
+  return '<div class="shd"><div class="shd-h">' + (kind === 'shield' ? 'Damage into Veil of Twilight' : 'Damage into the Dreadmarch shields') + '</div><div class="shd-cs">' + chips + '</div><div class="dsp">' + top.map(row).join('') + '</div>' +
+    (more.length ? '<details class="shd-more"><summary>' + more.length + ' more</summary><div class="dsp">' + more.map(row).join('') + '</div></details>' : '') +
+    '<p class="sub shd-f">' + M(tot) + ' into ' + plural(parts.length, 'shield') + (night ? ' over ' + plural(new Set(parts.map((p) => p.pull)).size, 'pull') : ' this pull') + '.' + (late ? ' ' + plural(late, 'more shield') + ' after the wipe call ' + (late === 1 ? 'isn\'t' : 'aren\'t') + ' counted.' : '') + '</p></div>';
+}
 // (the raid's fix: the cause that wiped us most, and on All pulls only when it wiped us twice or more)
 // (nth: 1 = what wiped us second most, for a night where two things each wiped us several times (Oct 22: missed kicks wiped us 10 times
 // and fell out of the night's top three behind the globules' 10))
@@ -14020,10 +14061,10 @@ function nightMechC(o) {
       const tl = (k, v, raw) => v ? '<div class="rw2-t"><span>' + k + '</span><b>' + (raw ? v : esc(v)) + '</b></div>' : '';
       return '<details class="panel secd st-' + LC[lv] + ' dbr-line nml rw2" id="' + sid + '" data-k="' + sid + '" data-sec="sec-' + esc(r.x.id) + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + secHead({ title: shortT(r.title), spell: r.x.spell, icon: r.x.icon }).replace(/<b>([^<(]+?) \(([^<]+)\)<\/b>/, '<b>$1 <span class="rw2-i">($2)</span></b>') +
         '<span class="rw2-pc ' + LC[lv] + '">' + (pc == null ? '—' : pc + '%') + '</span>' + bars(r) + '</summary><div class="secbody">' +
-        rw2Facts(r, { ok, wN, kb, wh, F, tl }) + '</div></details>'; }
+        rw2Facts(r, { ok, wN, kb, wh, F, tl }) + (SH_ID[r.x.id] ? shieldBlock([...byPull.values()].filter((q) => q && q.players), r.x.id) : '') + '</div></details>'; }
     return '<details class="panel secd st-' + LC[lv] + ' dbr-line nml" id="' + sid + '" data-k="' + sid + '" data-sec="sec-' + esc(r.x.id) + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + secHead({ title: shortT(r.title), spell: r.x.spell, icon: r.x.icon }) + nightKb(r) + '<span class="sst ' + LC[lv] + '">' + LW[lv] + '</span>' +
       '<span class="mcx-ln">' + facts + '</span></summary><div class="secbody">' + (M ? '<div class="nml-map"><span class="wr-map mcx-map">' + miniMap(M.mp, pm) + '</span><span class="sub">Pull ' + M.n + (byPull.get(M.n) ? ', ' + esc(res(byPull.get(M.n))) : '') + '</span></div>' : '') +
-      '<div class="nml-f">' + facts + '</div>' + (r.body || '') + '</div></details>'; };
+      '<div class="nml-f">' + facts + '</div>' + (r.body || '') + (SH_ID[r.x.id] ? shieldBlock([...byPull.values()].filter((q) => q && q.players), r.x.id) : '') + '</div></details>'; };
   // (Deaths over the night (your call, Oct 21: "deaths should be accounted for on all pulls"): a bar per pull (deaths up to the
   // wipe filter), what killed people most, who died most, and each pull's first death with a › to that pull's Deaths)
   const deathsLine = () => { const reps = (o.reps || []).slice().sort((a, b) => a.item.pull - b.item.pull); if (!reps.length) return '';
