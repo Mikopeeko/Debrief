@@ -1951,6 +1951,7 @@ const PATCH_NOTES = [
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'Rotation\'s top: your three numbers sit in one row under your name (and no empty Parse box when there is no rank), the ring that holds your Fix first opens by itself, Your pull at a glance sits folded right under the top boxes instead of at the very bottom, and on a phone a card\'s How line is no longer cut off.',
     'Debrief in game: the raid lead on your card and PC pop-up now talks like the website, with no capitals and the next step said as a sentence.',
     'Rotation, polished: a check\'s name wraps instead of running out of its box, the number and its top line stack neatly, the opener\'s steps run across the whole ring, window cards no longer spill their strip, a tall tile no longer stretches its neighbour into an empty box, and nothing on the page is under 12px.',
     'Shadow Priest: the top numbers were re-measured on 77 Shadow Priests from top kills with today\'s checks, so "top" on Rotation compares you with what they really do.',
@@ -30866,6 +30867,16 @@ function dsRotDedupe() { const NUMS = (s) => { const o = new Set(); (String(s ||
     const oneSentence = !/[.!?]\s+\S/.test(p.textContent.trim());
     if (extra === 0 || (valIn && extra <= 1 && oneSentence)) p.classList.add('ds-dup'); }); }
 (function () { const f19 = dsBars; dsBars = function (root) { f19(root); try { dsRotWords(); dsRotColour(); dsRotDedupe(); } catch (e) {} }; })();
+
+// ===== Design studio round 32 (Oct 26): Rotation's top: a Parse tile with no rank is hidden, the Fix first ring opens by itself once per page,
+// the pull-at-a-glance strip moves up under the top boxes (folded). Owner: the Design studio chat. =====
+function dsRotTop() { const v = document.querySelector('#view .pf-inl.spc-v'); if (!v) return;
+  v.querySelectorAll('.spc-hero .spc-kt:not([data-ds-kt])').forEach((k) => { k.dataset.dsKt = '1'; if (/not ranked/i.test(k.textContent) && /^Parse/.test(((k.querySelector('.spc-ktl') || {}).textContent || '').trim())) k.classList.add('ds-hide'); });
+  const gl = v.querySelector(':scope > details.spc-chd[data-k="spcch-your-pull-at-a-glance"]'), cols = v.querySelector(':scope > .ds-rcols');
+  if (gl && cols && !gl.dataset.dsUp) { gl.dataset.dsUp = '1'; gl.open = false; gl.classList.add('ds-glance'); cols.before(gl); }
+  const sec = v.querySelector('section.rck'), card = v.querySelector('.rck-fix .rck-sg[data-ck]');
+  if (sec && card && !sec.dataset.dsAuto) { sec.dataset.dsAuto = '1'; if (![...sec.querySelectorAll('.rck-cat')].some((c) => c.open)) { const t = document.getElementById('spc-r-' + card.dataset.ck); const cat = t && t.closest('.rck-cat'); if (cat) cat.open = true; } } }
+(function () { const f21 = dsBars; dsBars = function (root) { f21(root); try { dsRotTop(); } catch (e) {} }; })();
 
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====

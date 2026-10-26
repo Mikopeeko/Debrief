@@ -7263,6 +7263,22 @@ html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac +
 /* tiles keep their own height: a tall one no longer stretches its neighbour into an empty box */
 .pfv .ds-rcols section.rck .rck-cat .rck-rs { align-items: start; }
 .pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r > summary { height: auto; }
+/* ===== Design studio round 32 (Oct 26): Rotation's top: the hero's numbers in one row under the name (no empty Parse box), the pull-at-a-glance strip
+   as a slim folded strip under the top boxes, a card's How line uncut on a phone. Owner: the Design studio chat. ===== */
+#view .spc-hero .spc-kt.ds-hide { display: none !important; }
+@media (min-width: 761px) {
+  /* the tiles live under the name inside .spc-hm: side by side there instead of stacked */
+  #view .spc-hero .spc-hm .spc-kts { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important; max-width: none !important; margin-top: 8px; gap: 8px; }
+  #view .spc-hero .spc-kt { padding: 6px 10px; gap: 1px; }
+  #view .spc-hero .spc-kt .spc-ktv { font-size: 18px; }
+}
+/* the glance strip: one slim folded row between the top boxes and the columns */
+#view .pf-inl.spc-v > details.spc-chd.ds-glance { margin: 12px 0 0; }
+#view .pf-inl.spc-v > details.spc-chd.ds-glance > summary.spc-chap { margin: 0; padding: 9px 14px; font-size: 13px; letter-spacing: 1px; cursor: pointer; }
+#view .pf-inl.spc-v > details.spc-chd.ds-glance > summary.spc-chap::before, #view .pf-inl.spc-v > details.spc-chd.ds-glance > summary.spc-chap > .spc-chn { display: none; }
+#view .pf-inl.spc-v > details.spc-chd.ds-glance > summary.spc-chap > .spc-chs { font: 400 12.5px var(--body); letter-spacing: 0; text-transform: none; color: var(--muted); text-shadow: none; }
+/* a card's How line is not cut off on a phone */
+@media (max-width: 760px) { #view .rck-sg .rck-how { display: block; -webkit-line-clamp: unset; overflow: visible; } }
 </style>
 
 
