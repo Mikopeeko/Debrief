@@ -17653,7 +17653,7 @@ const PATCH_NOTES = [
     { t: 'Plan: your raid night in one page', d: 'The Plan tab is out for everyone: bring in your team, and Debrief picks who plays each boss and plans every job, kick and healing cooldown the way the fastest kills do. Change anything, then copy it into the game for NSRT.' },
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
-    { t: 'Plan: a picture for every job', d: 'On The Coiled Altar, Ula\'tek, The Twin Fangs, Nymrissa, Nek\'zali, Entombed Sentinels and The Lost Explorers (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
+    { t: 'Plan: a picture for every job', d: 'On every boss but Sszorak and Kith\'ix (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
   ], n: [
     'Debrief in game: your card and PC pop-up use the newest boss mechanics, potion and death rules from the website.',
     'On a phone: the dots on the pull at a glance are easier to tap, and the front page\'s footer links have room for a thumb.',
@@ -51919,7 +51919,7 @@ function ppSeat(P, fix) { const S = { ...fix }, used = new Set(Object.values(fix
   return S; }
 // (one picture's map: a guide map frozen at T, the note's names on its spots, only the job players named, the raid lead's markers)
 // (the middle of a map's room in its own frame: The Coiled Altar has a room box; other bosses use their origin, Ula'tek's at y 1554)
-const PP_MKOUT = { 'The Twin Fangs': 0 };
+const PP_MKOUT = { 'The Twin Fangs': 0, 'Vashnik the Malignant': [4, 0] }; /* (yards a marker is drawn off its spot, so whoever stands on it doesn't hide it: out toward the room's edge north or south by default; a pair is a sideways nudge) */
 const ppMid = (mp) => (mp.room ? [(mp.room.x0 + mp.room.x1) / 2, (mp.room.y0 + mp.room.y1) / 2] : ((A) => [A.cx, A.cy])(GDZ_ORIGIN[mp.boss] || ARENAS[mp.boss] || { cx: 0, cy: 0 }));
 function ppFreeze(mp, T, S, P, M, o) {
   o = o || {}; const f = mp.frames.reduce((a, b) => (Math.abs(b.t - T) < Math.abs(a.t - T) ? b : a)), nm = (v) => (typeof v === 'string' ? v : v && v.name);
@@ -51932,7 +51932,7 @@ function ppFreeze(mp, T, S, P, M, o) {
     return c ? { t0: 0, t1: 1e9, text, x: c.x, y: below ? c.y - (dy == null ? 9 : dy) : c.y + (dy == null ? 5 : dy), color, ink: ink || '#fff' } : null; }).filter(Boolean);
   const cb = {}; for (const [g, l] of Object.entries(mp.cbars || {})) cb[g] = l.map((b) => ({ ...b, by: '' }));
   // (the raid lead's markers, drawn 4 yards further out than their spot so whoever stands on one doesn't hide it)
-  const wm = PP_MKS.filter((k) => M[k] && (!o.marks || o.marks.includes(k))).map((k) => ({ k, x: cx + M[k][0], y: cy + M[k][1] + (M[k][1] >= 0 ? 1 : -1) * (PP_MKOUT[mp.boss] == null ? 4 : PP_MKOUT[mp.boss]) }));
+  const mo = PP_MKOUT[mp.boss], wm = PP_MKS.filter((k) => M[k] && (!o.marks || o.marks.includes(k))).map((k) => ({ k, x: cx + M[k][0] + (Array.isArray(mo) ? mo[0] : 0), y: cy + M[k][1] + (Array.isArray(mo) ? mo[1] : (M[k][1] >= 0 ? 1 : -1) * (mo == null ? 4 : mo)) }));
   const out = { ...mp, frames: null, pts, t: T, ft: T, pauses: [], steps: [], callouts: calls, tags: (o.tags || []).map(([g, tx]) => [g, tx, null, null]), hl: Object.keys(S).filter((g) => (o.hl || []).includes(g)),
     good: [], goodAt: null, bad: [], badAt: null, cbars: cb, wmarks: wm, liveLeg: false, hlLabel: 'assigned in the note', playerLabel: 'Player (spec icon, class colour)' };
   if (o.focus) out.focus = out.fullAt = { x: cx + o.focus.x, y: cy + o.focus.y, r: o.focus.r }; /* (a guide map shown whole: the user wants the whole arena in each picture) */
@@ -52474,6 +52474,60 @@ function ppCardsLE(J, M, U, P) {
     foot: 'The bomb lands 10 seconds after it\'s cast: 10 yards.' });
   return cards;
 }
+// ===== Vashnik the Malignant, Mythic (Oct 26, the same setup; Plan's Jobs cards in d99d75e), on the guide's maps of the room =====
+// (the note's jobs, in the lines Plan writes: "Fire Add Grips:", "Banish:", "Shadow Add Grips:", "Dispel 1:" / "Dispel 2:" / "Backup
+// Dispel:" (Exploding Infection), "Bile:")
+function ppReadVA(N, P) {
+  const isN = (w) => P.has(String(w).toLowerCase()), J = { fire: [], banish: '', shadow: [], disp: [], bile: [] };
+  for (const l of N.lines) { const lab = l.label.toLowerCase().trim(), who = l.words.filter(isN).map((w) => P.get(w.toLowerCase()).name); let m; if (!who.length) continue;
+    if (/fire.*grip/.test(lab)) J.fire = who; else if (/shadow.*grip/.test(lab)) J.shadow = who; else if (/banish/.test(lab)) J.banish = who[0];
+    else if ((m = /dispel\s*(\d)/.exec(lab))) J.disp[+m[1] - 1] = who[0]; else if (/backup dispel/.test(lab)) J.disp[2] = who[0]; else if (/bile/.test(lab)) J.bile = who; }
+  return J;
+}
+const VA_VIEW = { x: 0, y: -34, r: 58 };
+// (who stands where at a moment of a guide map: the player spot nearest each place, for seating the note's names on the ones the map moves)
+function ppNearest(mp, T, spots) { const f = mp.frames.reduce((a, b) => (Math.abs(b.t - T) < Math.abs(a.t - T) ? b : a)), [cx, cy] = ppMid(mp), used = new Set();
+  return spots.map(([x, y]) => { let best = null, bd = 1e9; for (const p of f.pts) { if (p.kind !== 'player' || used.has(p.guid)) continue; const d = Math.hypot(p.x - cx - x, p.y - cy - y); if (d < bd) { bd = d; best = p.guid; } } if (best) used.add(best); return best; }); }
+function ppCardsVA(J, M, U, P) {
+  const cards = [], BL = '#5aa0ff', GO = '#e6b450', PU = '#b06bff', OR = '#ff8a3b', Q = '#c9ced8', cdsOf = (L) => (L || []).map(([t, n, sp]) => ppI(P, n, t + ' ' + sp));
+  // Imbibe: him held between the Shadow and Flame fountains, by the Shadow one, with the note's cooldowns (the guide's map as he drains)
+  cards.push({ id: 'imbibe', ph: 1, when: 'Every Imbibe', title: 'Imbibe (Hold him by Shadow and Flame)', map: ppFreeze(VA_M.imbibe(false, 'm'), 4.6, ppSeat(P, {}), P, M, { focus: VA_VIEW }),
+    legend: [ppG('Tank', BL, [], 'Hold him between the Shadow and Flame fountains every time, by the Shadow one; never Blood.'), ppG('Raid cooldowns', '#9a7bff', cdsOf(J.imbibe)), ppG('Imbibe 5', '#ffd23b', [], 'The biggest hit of the fight: Rallying Cry, Spirit Link, Aura Mastery, Anti-Magic Zone and personals.')],
+    foot: 'Two raid hits each time, stronger every time.' });
+  // The adds: the shadow venoms gripped together, the fire ones held apart (one banished), the note's grips named (the guide's map)
+  if (J.fire.length || J.shadow.length || J.banish) { const fix = {}, ids = [], tags = [], put = (s, n, t) => { if (!n) return; fix[s] = n; ids.push(s); tags.push([s, t]); };
+    put('m4', J.fire[0], 'Fire grip'); put('m3', J.fire[1], 'Fire grip'); put('m5', J.shadow[0], 'Shadow grip'); put('m6', J.shadow[1], 'Shadow grip'); put('r6', J.banish, 'Banish');
+    cards.push({ id: 'adds', ph: 1, when: 'Every Imbibe', title: 'Burning and Shrouded Venoms (Grip, banish, kill apart)', map: ppFreeze(VA_M.adds(false, 'm'), 3.4, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags, focus: VA_VIEW }),
+      legend: [ppG('Fire grips', OR, J.fire.map((n) => ppI(P, n, 'Burning Venoms'))), ppG('Banish', '#c084ff', [J.banish && ppI(P, J.banish, 'One fire add')]), ppG('Shadow grips', PU, J.shadow.map((n) => ppI(P, n, 'Shrouded Venoms'))),
+        ppG('Everyone', GO, [], 'Kill the fire adds 9 to 10 seconds apart. The last set: CC the fire adds and burn the boss before Imbibe 6.')],
+      foot: 'Any add left 60 seconds hardens: no more crowd control.' }); }
+  // Catalytic Bile: one player in every circle, spread round the room (the guide's map at the soak, the note's soakers on the circles)
+  { const mp = VA_M.catalyst(false, 'm'), BLS = [[27, -29], [47, -52], [14, -18], [22, -66], [-10, -24]], so = J.bile.length ? ppNearest(mp, 7.8, BLS) : [], fix = {}, ids = [];
+    J.bile.slice(0, so.length).forEach((n, i) => { if (so[i]) { fix[so[i]] = n; ids.push(so[i]); } });
+    cards.push({ id: 'bile', ph: 1, when: 'Every Catalyst', title: 'Catalytic Bile (One in every circle)', map: ppFreeze(mp, 7.8, ppSeat(P, fix), P, M, { hl: ids, named: ids, focus: VA_VIEW }),
+      legend: [ppG('Bile soakers', '#8fe36a', J.bile.map((n, i) => ppI(P, n, i < ids.length ? 'A circle' : 'Spare'))), ppG('Everyone else', GO, [], 'Spread round the room before the cast; walk off the boss to take yours.')],
+      foot: 'A circle with nobody in it hits the whole raid.' }); }
+  // Plague Froth: the first set's targets on the slanted marker line, the melee stacked under the boss between them (the guide's map)
+  cards.push({ id: 'froth', ph: 1, when: 'Every Froth', title: 'Plague Froth (Mow the lawn)', map: ppFreeze(VA_M.froth1(false), 6.6, ppSeat(P, {}), P, M, { focus: { x: -14, y: -46, r: 34 } }),
+    legend: [ppG('First set', '#c0ff7a', [ppI(P, ppAny('Froth targets'))], 'On the markers in a slanted line across the totems: melee on diamond and star, ranged on X, triangle and moon. Melee stack under the boss between them.'),
+      ppG('Second set', GO, [], 'Go where totems are left, as called: totems first, then don\'t hit the melee.')],
+    foot: 'One totem left at the next Imbibe is survivable; two is a wipe.' });
+  // Exploding Infection: the targets run out first, then the note's dispellers clear them one at a time (the guide's map)
+  if (J.disp.filter(Boolean).length) { const fix = {}, ids = [], tags = []; ['h1', 'h2', 'h4'].forEach((s, i) => { if (!J.disp[i]) return; fix[s] = J.disp[i]; ids.push(s); tags.push([s, i === 2 ? 'Backup' : 'Dispel ' + (i + 1)]); });
+    cards.push({ id: 'disp', ph: 1, when: 'Every Infection', title: 'Exploding Infection (Run out, then dispel)', map: ppFreeze(VA_M.infect(false, 'm'), 7, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags, focus: VA_VIEW }),
+      legend: [ppG('Dispels', '#7fd8ff', [J.disp[0] && ppI(P, J.disp[0], 'Dispel 1'), J.disp[1] && ppI(P, J.disp[1], 'Dispel 2'), J.disp[2] && ppI(P, J.disp[2], 'Backup')], 'One at a time, once the target is out.'), ppG('Targets', OR, [ppI(P, ppAny('Whoever gets it'))], 'Run out first.')],
+      foot: 'Every dispel blasts the raid, less the farther away. Never right before Imbibe 4 or 5.' }); }
+  // Stygian Infection: the target keeps walking away from the raid, leaving the circles behind (the guide's map)
+  cards.push({ id: 'styg', ph: 1, when: 'Every Stygian Infection', title: 'Stygian Infection (Move away from the raid)', map: ppFreeze(VA_M.infect(false, 'm'), 10.4, ppSeat(P, {}), P, M, { focus: VA_VIEW }),
+    legend: [ppG('Target', PU, [ppI(P, ppAny('Whoever gets it'))], 'Keep moving away from the raid while the healers clear the absorb: your circles stay behind you.')],
+    foot: 'A big heal absorb: healers, clear it fast.' });
+  // Dripping Fangs: the tanks swap after every cast (the guide's map)
+  { const S = ppSeat(P, {}), nm = (v) => (typeof v === 'string' ? v : '');
+    cards.push({ id: 'tanks', ph: 1, when: 'Every Dripping Fangs', title: 'Dripping Fangs (Tanks swap every cast)', map: ppFreeze(VA_M.fangs(false, 'm'), 3, S, P, M, { hl: ['t1', 't2'], named: ['t1', 't2'], focus: VA_VIEW }),
+      legend: [ppG('Tanks', BL, [nm(S.t1) && ppI(P, S.t1, 'Has Fangs'), nm(S.t2) && ppI(P, S.t2, 'Taunts')], 'Swap after every cast: it doubles the next physical hit.')],
+      foot: 'Swap even on the lawn: the boss stays where the Froth targets need him.' }); }
+  return cards;
+}
 // (the note's healing and raid cooldowns at a moment, for a picture's legend: NSRT reminder lines between two times of a phase)
 function ppCds(N, P, ph, t0, t1) { return N.reminders.filter((x) => x.ph === ph && x.time >= t0 && x.time <= t1 && x.spellid).flatMap((x) => x.tags.filter((w) => P.has(w.toLowerCase())).map((w) => [Math.floor(x.time / 60) + ':' + String(Math.round(x.time % 60)).padStart(2, '0'), P.get(w.toLowerCase()).name, (E.cdName && E.cdName(x.spellid)) || x.text || 'Cooldown'])); }
 const GDZ_PP = {
@@ -52570,6 +52624,18 @@ const GDZ_PP = {
     // (Plan's Jobs cards (7cc94b2) and the pictures each shows, by its key, else by its title)
     mech: { pos: ['pos'], fish: ['fish'], crates: ['crates'], kicks: ['kicks'], nova: ['nova'], shell: ['shell'], tanks: ['tanks'], volley: ['volley'], thud: ['thud'], bomb: ['bomb'], cds: [], def: [] },
     jobs: [[/united defense/i, ['pos']], [/fish/i, ['fish']], [/crate/i, ['crates']], [/icebound|kick/i, ['kicks']], [/blink nova/i, ['nova']], [/shell spin/i, ['shell']], [/shredding shards/i, ['tanks']], [/frostfire/i, ['volley']], [/mighty thud/i, ['thud']], [/explosive surprise/i, ['bomb']]] } },
+  'Vashnik the Malignant': { Mythic: {
+    // (the guide's Plague Froth markers on their slanted line (X, triangle and moon for ranged, diamond and star for melee), skull where
+    // his tank holds him for Imbibe, and circle and square off to the sides for the raid lead to use)
+    marks: { cross: VA_MK.cross, triangle: VA_MK.triangle, moon: VA_MK.moon, diamond: VA_MK.diamond, star: VA_MK.star, skull: VA_I, circle: [40, -10], square: [-40, -10] },
+    stack: [0, 0],
+    uses: [],
+    room: { scene: (k) => { vaBoss(k); }, focus: { x: 0, y: -26, r: 66 }, lim: 75, keep: [VA] },
+    read(N, P) { const J = ppReadVA(N, P); J.imbibe = [[18, 32], [102, 116], [186, 200], [270, 284], [354, 368]].flatMap(([a, b]) => ppCds(N, P, 1, a, b)); return J; },
+    cards: ppCardsVA,
+    // (Plan's Jobs cards (d99d75e) and the pictures each shows, by its key, else by its title)
+    mech: { imbibe: ['imbibe'], adds: ['adds'], bile: ['bile'], froth: ['froth'], disp: ['disp'], styg: ['styg'], tanks: ['tanks'], cds: [], def: [] },
+    jobs: [[/imbibe/i, ['imbibe']], [/grip|add/i, ['adds']], [/bile/i, ['bile']], [/plague froth/i, ['froth']], [/exploding infection|dispel/i, ['disp']], [/stygian/i, ['styg']], [/dripping fangs/i, ['tanks']]] } },
 };
 const PP_PH = { 1: ['Phase 1', '#5aa0ff'], 1.9: ['Phase 1 ends', '#5aa0ff'], 2: ['Phase 2', '#b65cff'], 2.5: ['Intermission', '#e6b450'], 3: ['Phase 3', '#ff5a4f'] };
 
@@ -52681,7 +52747,7 @@ function ppOpen(r, u0, opt) {
   document.body.appendChild(box); document.body.classList.add('ndz-modal');
   const close = () => { box.remove(); if (!$('#ndzWiz') && !$('#ndzGuide') && !$('#ndzNoteView') && !$('#ndzShot')) document.body.classList.remove('ndz-modal'); };
   const head = '<div class="ndz-whead"><span class="sub">Pictures for Discord</span><button class="ndz-ex" type="button" data-ppx aria-label="Close">✕</button></div>';
-  if (!set.cf) { box.innerHTML = '<div class="ndz-wbox">' + head + '<h2>Pictures for Discord</h2><p class="sub">Pictures are ready on Mythic for The Coiled Altar, Ula\'tek, The Twin Fangs, Nymrissa, Nek\'zali, Entombed Sentinels and The Lost Explorers so far. The other bosses come next.</p></div>'; box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); }; return; }
+  if (!set.cf) { box.innerHTML = '<div class="ndz-wbox">' + head + '<h2>Pictures for Discord</h2><p class="sub">Pictures are ready on Mythic for every boss but Sszorak and Kith\'ix so far. The other bosses come next.</p></div>'; box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); }; return; }
   box.innerHTML = '<div class="ndz-wbox ndz-shotbox pp-win">' + head + '<h2 class="pp-h2"></h2>' +
     '<div class="pp-nav"><span class="sub pp-navt"></span><button class="btn sm" type="button" data-ppprev></button><button class="btn sm" type="button" data-ppnext></button><button class="btn sm" type="button" data-ppallv></button></div>' +
     '<p class="sub pp-intro">One picture for each mechanic your note gives jobs for, with everyone on their spot. Copy one and paste it in Discord (Ctrl+V), or download it.</p>' +
