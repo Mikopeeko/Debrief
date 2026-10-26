@@ -17653,7 +17653,7 @@ const PATCH_NOTES = [
     { t: 'Plan: your raid night in one page', d: 'The Plan tab is out for everyone: bring in your team, and Debrief picks who plays each boss and plans every job, kick and healing cooldown the way the fastest kills do. Change anything, then copy it into the game for NSRT.' },
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
-    { t: 'Plan: a picture for every job', d: 'On The Coiled Altar, Ula\'tek and The Twin Fangs (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
+    { t: 'Plan: a picture for every job', d: 'On The Coiled Altar, Ula\'tek, The Twin Fangs and Nymrissa (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
   ], n: [
     'Debrief in game: your card and PC pop-up use the newest boss mechanics, potion and death rules from the website.',
     'On a phone: the dots on the pull at a glance are easier to tap, and the front page\'s footer links have room for a thumb.',
@@ -52183,6 +52183,52 @@ function ppCardsTF(J, M, U, P) {
     foot: 'Both bosses dive and come up on the next platform.' });
   return cards;
 }
+// ===== Nymrissa Wavecaller, Mythic (Oct 26, the same setup; Plan's Jobs cards in 23a0436). The raid plays in the island's south-west
+// quarter, the boss on the outside, as the guide's maps are =====
+// (the note's jobs, in the lines Plan writes: "Orb Soak 1:" to "Orb Soak 8:" (each Frost Orb set's crew), "Grips:", "Slows:")
+function ppReadNY(N, P) {
+  const isN = (w) => P.has(String(w).toLowerCase()), J = { soak: [], grips: [], slows: [] };
+  for (const l of N.lines) { const lab = l.label.toLowerCase(), who = l.words.filter(isN).map((w) => P.get(w.toLowerCase()).name); let m; if (!who.length) continue;
+    if ((m = /orb soak\s*(\d+)/.exec(lab))) J.soak[+m[1] - 1] = who; else if (/grip/.test(lab)) J.grips = who; else if (/slow/.test(lab)) J.slows = who; }
+  return J;
+}
+// (set numbers said short: 1, 3-5, 7)
+const ppRuns = (a) => { const out = []; for (let i = 0; i < a.length; i++) { let j = i; while (j + 1 < a.length && a[j + 1] === a[j] + 1) j++; out.push(j - i >= 2 ? a[i] + '-' + a[j] : j > i ? a[i] + ', ' + a[j] : String(a[i])); i = j; } return out.join(', '); };
+const NY_VIEW = { x: -12, y: -6, r: 44 };
+function ppCardsNY(J, M, U, P) {
+  const cards = [], BL = '#5aa0ff', GO = '#e6b450', IC = '#bfefff', Q = '#c9ced8', cdsOf = (L) => (L || []).map(([t, n, sp]) => ppI(P, n, t + ' ' + sp));
+  // Abyssal Rain: four raid hits, then damage over time (the guide's map as the hits land)
+  cards.push({ id: 'rain', ph: 1, when: 'Every loop', title: 'Abyssal Rain (Personal defensive)', map: ppFreeze(NY_M.rain(false, 'm'), 3, ppSeat(P, {}), P, M, { focus: NY_VIEW }),
+    legend: [ppG('Everyone', '#5ab8ff', [], 'A personal defensive or a potion on each cast: four raid hits, then 24 seconds of damage over time. She hits harder every time.'), ppG('When', GO, [], 'The start of each loop, then twice more: 0:08, 0:41, 1:25, then every 1:50.')],
+    foot: 'Each Abyssal Rain makes her deal 5% more damage for the rest of the fight.' });
+  // The murlocs: her walked to the big pack, the Frostscale gripped away, the squads and the slows on the other packs (the guide's map
+  // as the packs are stopped)
+  if (J.grips.length || J.slows.length) { const fix = {}, ids = [], tags = [], put = (s, n, t) => { if (!n) return; fix[s] = n; ids.push(s); tags.push([s, t]); };
+    put('t2', J.grips[0], 'Grip'); put('m7', J.grips[1], 'Grip'); put('r1', J.slows[0], 'Slow'); put('r5', J.slows[1], 'Slow');
+    cards.push({ id: 'adds', ph: 1, when: 'Every murloc set', title: 'Murlocs (Grip the Frostscale, slow the packs)', map: ppFreeze(NY_M.murlocs(false, 'm'), 9.2, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags, focus: { x: -12, y: 2, r: 60 } }),
+      legend: [ppG('Grips', '#c0394f', [J.grips[0] && ppI(P, J.grips[0], 'Frostscale away'), J.grips[1] && ppI(P, J.grips[1], 'Strays in')]), ppG('Slows', BL, J.slows.map((n) => ppI(P, n, 'Hold a pack'))),
+        ppG('Everyone', GO, [], 'Walk her to the biggest pack; kill the Frostscale first (its shield protects the others). Two ranged squads take the left and right packs, then the back.')],
+      foot: 'No murloc may reach the bubble: those that do pulse raid damage until they die.' }); }
+  // Water Jet: the line through her tank, swept over the ice (the guide's map mid-sweep)
+  { const S = ppSeat(P, {}), nm = (v) => (typeof v === 'string' ? v : '');
+    cards.push({ id: 'jet', ph: 1, when: 'Every 22 seconds', title: 'Water Jet (Tanks swap, aim at the ice)', map: ppFreeze(NY_M.jet(false, 'm'), 6, S, P, M, { hl: ['t1', 't2'], named: ['t1', 't2'], focus: NY_VIEW }),
+      legend: [ppG('Tanks', BL, [nm(S.t1) && ppI(P, S.t1, 'Aims it'), nm(S.t2) && ppI(P, S.t2, 'Taunts next')], 'Swap after every cast. Turn her so the line runs over the ice: on Mythic only the Jet clears it.'), ppG('Everyone', GO, [], 'The line crosses the whole island: step aside when it\'s called.')],
+      foot: 'The first Jet hits air (no ice yet); there\'s one more Jet than ice sets, so you can catch up.' }); }
+  // Frost Orbs: the nine orbs dropped in the lane a big step apart, the soak crew waiting beside it, one at a time
+  { const sets = J.soak.map((L, i) => [i + 1, L || []]).filter(([, L]) => L.length); if (sets.length) { const k = gdzKit(NY, 3), fix = {}, put = new Set(), crew = [];
+    nyBoss(k, 0); nyBubble(k, 0, 9); NY_ORB.forEach((p) => nyOrb(k, p, 0, 9)); sets.forEach(([, L]) => L.forEach((n) => { if (!crew.includes(n)) crew.push(n); }));
+    const ids = crew.map((n, i) => { const s = ppSlot(P, n, put); if (!s) return null; fix[s] = n; k.at(0, s, -38, 3 - i * 4.6); return s; /* (a column west of the lane, names one under another) */ }).filter(Boolean);
+    GDZ_RAID.filter((s) => !put.has(s)).forEach((s) => { put.add(s); const q = NY_HOME[s]; k.at(0, s, q[0], q[1]); });
+    const lane = nyL(13.5, 0);
+    cards.push({ id: 'orbs', ph: 1, when: 'Every orb set', title: 'Frost Orb (Soak one at a time)', map: ppFreeze(k.done({ title: 'Frost Orbs', focus: NY_VIEW }), 1, ppSeat(P, fix), P, M, { hl: ids, named: ids, focus: NY_VIEW, labels: [[{ rx: lane[0] + 4, ry: lane[1] - 13 }, 'Nine orbs', IC, '#06131c', 0]] }),
+      legend: [ppG('Soak crew', IC, crew.map((n) => ppI(P, n, 'Sets ' + ppRuns(sets.filter(([, L]) => L.includes(n)).map(([i]) => i))))), ppG('Orb droppers', Q, [ppI(P, ppAny('Whoever gets Chilling Frost'))], 'Drop all three on the inside, with a big step between each.')],
+      foot: 'Every soak hits the whole raid (Frost Burst): a pause between soaks. Tanks take the last two or three.' }); } }
+  // Swirling Whirlpools: everyone in the one gap before they reach the bubble, then the Pop (the guide's map as they close in)
+  cards.push({ id: 'pop', ph: 1.9, when: 'End of each loop', title: 'Swirling Whirlpools (Find the gap, then the Pop)', map: ppFreeze(NY_M.whirl(false, 'm'), 7, ppSeat(P, {}), P, M, { focus: { x: -10, y: -2, r: 58 } }),
+    legend: [ppG('Everyone', '#5ab8ff', [], 'Speed up and get into the one gap before the whirlpools reach the bubble.'), ppG('The Pop', GO, [], 'Cancel the knockback or take the gateway: never into the water.'), ppG('Raid cooldowns', '#9a7bff', cdsOf(J.pop))],
+    foot: 'After the third Pop (about 5:40) ignore the murlocs and burn her.' });
+  return cards;
+}
 // (the note's healing and raid cooldowns at a moment, for a picture's legend: NSRT reminder lines between two times of a phase)
 function ppCds(N, P, ph, t0, t1) { return N.reminders.filter((x) => x.ph === ph && x.time >= t0 && x.time <= t1 && x.spellid).flatMap((x) => x.tags.filter((w) => P.has(w.toLowerCase())).map((w) => [Math.floor(x.time / 60) + ':' + String(Math.round(x.time % 60)).padStart(2, '0'), P.get(w.toLowerCase()).name, (E.cdName && E.cdName(x.spellid)) || x.text || 'Cooldown'])); }
 const GDZ_PP = {
@@ -52235,6 +52281,17 @@ const GDZ_PP = {
     // (Plan's Jobs cards (b2e86a2) and the pictures each shows, by its key, else by its title)
     mech: { orbcc: ['orbcc'], globs: ['globs'], stone: ['stone'], kicks: ['kicks'], spawns: ['spawns'], ichor: ['ichor'], stir: ['stir'], feast: ['feast'], sub: ['sub'], cds: [], def: [] },
     jobs: [[/orb cc|crowd control/i, ['orbcc']], [/globule/i, ['globs']], [/stone breaker/i, ['stone']], [/kick|brood/i, ['kicks']], [/emergence|spawn/i, ['spawns']], [/ichor/i, ['ichor']], [/stir the depths/i, ['stir']], [/feast/i, ['feast']], [/submerge/i, ['sub']]] } },
+  'Nymrissa Wavecaller': { Mythic: {
+    // (the guide places no markers here: a plain ring round the bubble, 38 yards out at the compass points, for the raid lead to drag)
+    marks: { star: [0, 38], circle: [27, 27], diamond: [38, 0], triangle: [27, -27], moon: [0, -38], square: [-27, -27], cross: [-38, 0], skull: [-27, 27] },
+    stack: [0, 0],
+    uses: [],
+    room: { scene: (k) => { k.boss('ny', NY, 0, NY_BH[0], NY_BH[1]); }, focus: { x: 0, y: 0, r: 56 }, lim: 60, keep: [NY] },
+    read(N, P) { const J = ppReadNY(N, P); J.pop = ppCds(N, P, 1, 112, 128).concat(ppCds(N, P, 1, 222, 238), ppCds(N, P, 1, 332, 348)); return J; },
+    cards: ppCardsNY,
+    // (Plan's Jobs cards (23a0436) and the pictures each shows, by its key, else by its title)
+    mech: { rain: ['rain'], adds: ['adds'], jet: ['jet'], orbs: ['orbs'], pop: ['pop'], cds: [], def: [] },
+    jobs: [[/abyssal rain/i, ['rain']], [/murloc|grip/i, ['adds']], [/water jet/i, ['jet']], [/frost orb|orb soak/i, ['orbs']], [/whirlpool|pop/i, ['pop']]] } },
 };
 const PP_PH = { 1: ['Phase 1', '#5aa0ff'], 1.9: ['Phase 1 ends', '#5aa0ff'], 2: ['Phase 2', '#b65cff'], 2.5: ['Intermission', '#e6b450'], 3: ['Phase 3', '#ff5a4f'] };
 
@@ -52346,7 +52403,7 @@ function ppOpen(r, u0, opt) {
   document.body.appendChild(box); document.body.classList.add('ndz-modal');
   const close = () => { box.remove(); if (!$('#ndzWiz') && !$('#ndzGuide') && !$('#ndzNoteView') && !$('#ndzShot')) document.body.classList.remove('ndz-modal'); };
   const head = '<div class="ndz-whead"><span class="sub">Pictures for Discord</span><button class="ndz-ex" type="button" data-ppx aria-label="Close">✕</button></div>';
-  if (!set.cf) { box.innerHTML = '<div class="ndz-wbox">' + head + '<h2>Pictures for Discord</h2><p class="sub">Pictures are ready for The Coiled Altar, Ula\'tek and The Twin Fangs on Mythic so far. The other bosses come next.</p></div>'; box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); }; return; }
+  if (!set.cf) { box.innerHTML = '<div class="ndz-wbox">' + head + '<h2>Pictures for Discord</h2><p class="sub">Pictures are ready on Mythic for The Coiled Altar, Ula\'tek, The Twin Fangs and Nymrissa so far. The other bosses come next.</p></div>'; box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); }; return; }
   box.innerHTML = '<div class="ndz-wbox ndz-shotbox pp-win">' + head + '<h2 class="pp-h2"></h2>' +
     '<div class="pp-nav"><span class="sub pp-navt"></span><button class="btn sm" type="button" data-ppprev></button><button class="btn sm" type="button" data-ppnext></button><button class="btn sm" type="button" data-ppallv></button></div>' +
     '<p class="sub pp-intro">One picture for each mechanic your note gives jobs for, with everyone on their spot. Copy one and paste it in Discord (Ctrl+V), or download it.</p>' +
