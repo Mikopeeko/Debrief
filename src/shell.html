@@ -6891,6 +6891,7 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-spc:hover, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-spc:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--gold); transform: scale(1.12); }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-specs button { display: inline-flex; align-items: center; gap: 5px; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-specs button .icw, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-specs button img { width: 16px; height: 16px; border-radius: 4px; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plan-red .plan-eb[data-plrspec] img { width: 16px; height: 16px; border-radius: 4px; display: block; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-cols > .tn-pcol:empty { display: none; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-sec.tn-team > .tn-fold { grid-column: 1 / -1; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn > .tn-sec:not(.tn-team) > .tn-sh { margin-top: 0; }
@@ -7172,6 +7173,44 @@ html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac +
 #view section.rck p.spc-hwp .ds-subhw > b { color: var(--text); font-weight: 600; }
 #view section.rck details.rck-r.ds-flat > .rck-mgb:not(:first-child) > .rck-b.ds-slim:not(:has(> :not([hidden]))) { display: none; }
 #view section.rck details.rck-r.ds-flat > .rck-mgb:not(:first-child) > h5.rck-mgh { padding-bottom: 8px; }
+/* ===== Design studio round 27 (Oct 26): Rotation tiles unpacked: every tile open with its sentence and visual, no tile chevrons, one Summary /
+   Everything switch on the checklist's title (Everything: the reasons, the lists, the slip rows, the sub-checks' sentences).
+   Owner: the Design studio chat. ===== */
+/* tiles are rows, not dropdowns */
+#view section.rck .rck-cat .rck-rs > .rck-r > summary { cursor: default; }
+#view section.rck .rck-cat .rck-rs > .rck-r > summary:hover { background: none; }
+.pfv details.rck-r[data-ds-kind="deep"] > summary::after, #view section.rck .rck-cat .rck-rs > .rck-r > summary::after, #view section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-cv { display: none !important; }
+.pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r[open] { grid-column: auto; border-color: var(--line) !important; }
+.pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r.ds-wide { grid-column: 1 / -1 !important; }
+.pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r[open] > summary > .rck-n > b { color: var(--text); }
+/* a tile's icon box clips nothing: the fallback drawing fills the box like the picture does (it sat on the baseline, 8 px low) */
+#view section.rck .rck-cat .rck-rs > .rck-r > summary > .spc-ri { position: relative; }
+#view section.rck .rck-cat .rck-rs > .rck-r > summary > .spc-ri > .sp { display: block; height: 100%; line-height: 0; }
+#view section.rck .rck-cat .rck-rs > .rck-r > summary > .spc-ri .icw { display: block !important; position: absolute !important; inset: 0; margin: 0 !important; vertical-align: top; width: 100% !important; height: 100% !important; line-height: 0; }
+#view section.rck .rck-cat .rck-rs > .rck-r > summary > .spc-ri .icw > svg.ico, #view section.rck .rck-cat .rck-rs > .rck-r > summary > .spc-ri .icw > img.oi { display: block !important; position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
+#view section.rck .rck-mgb > h5.rck-mgh .icw, #view section.rck .rck-b .spc-sbl .icw, #view section.rck .rck-b .slv-row .icw { line-height: 0; vertical-align: middle; }
+#view section.rck .rck-mgb > h5.rck-mgh .icw > svg.ico, #view section.rck .rck-b .spc-sbl .icw > svg.ico, #view section.rck .rck-b .slv-row .icw > svg.ico { display: block; position: absolute; inset: 0; width: 100%; height: 100%; }
+/* the sentence is always there, the links row is not */
+#view section.rck .rck-b.ds-slim > p.spc-rs { display: block !important; margin: 0; font-size: 12.5px; line-height: 1.4; color: var(--muted); }
+#view section.rck .rck-b.ds-slim > p.spc-rs .sp { color: var(--text); }
+#view section.rck .rck-b.ds-slim > p.spc-rs.ds-dup { display: none !important; }
+/* a split bar's legend wraps inside a half-width tile instead of running off its edge */
+#view section.rck .rck-b.ds-slim > .spc-sb > .spc-sbl { flex: 1 1 auto; min-width: 0; flex-wrap: wrap; row-gap: 2px; }
+#view section.rck .rck-b.ds-slim > .spc-sb > .spc-sbb { flex-basis: 100%; }
+#view section.rck .rck-b.ds-slim > .ds-rbot > .ds-rlinks { display: none; }
+#view section.rck:not(.ds-all) .rck-b.ds-slim > .ds-rbot { display: none; }
+#view section.rck.ds-all .rck-b.ds-slim > .ds-rbot { display: block; }
+#view section.rck.ds-all .rck-b.ds-slim > .ds-rbot > details.spc-bxf > summary { display: none; }
+#view section.rck.ds-all .rck-b.ds-slim > .ds-rbot > details.spc-bxf > .spc-bxs { margin: 4px 0 0; }
+#view section.rck:not(.ds-all) .rck-b.ds-slim > .spc-slp { display: none; }
+#view section.rck:not(.ds-all) .rck-mgb:not(:first-of-type) > .rck-b { display: none; }
+#view section.rck .rck-cat .rck-rs > .rck-r > .rck-b, #view section.rck .rck-cat .rck-rs > .rck-r > .rck-mgb > .rck-b { padding-top: 4px; }
+/* the one switch, on the checklist's title */
+#view section.rck > h3.rck-h { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+#view section.rck > h3.rck-h .ds-sw { margin-left: auto; display: inline-flex; border: 1px solid var(--line2); border-radius: 8px; overflow: hidden; }
+#view section.rck > h3.rck-h .ds-sw > b { padding: 3px 10px; font: 500 12.5px var(--body); letter-spacing: 0; text-transform: none; color: var(--muted); cursor: pointer; }
+#view section.rck > h3.rck-h .ds-sw > b:hover { color: var(--text); }
+#view section.rck > h3.rck-h .ds-sw > b.on { background: rgba(255,255,255,.09); color: var(--text); font-weight: 600; }
 </style>
 
 

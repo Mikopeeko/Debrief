@@ -1837,6 +1837,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-26', h: [
+    { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
     'Rotation: an open tile has one Why and one How it\'s judged. A sub-check is a plain row now: hover its title for the why, and its judging rule sits inside the tile\'s How it\'s judged. Thirteen fewer buttons to open.',
@@ -30537,9 +30538,34 @@ function dsRotFlat() { document.querySelectorAll('#view section.rck details.rck-
   t.appendChild(mainHwp); }); }
 (function () { const f16 = dsBars; dsBars = function (root) { f16(root); try { dsRotFlat(); } catch (e) {} }; })();
 
+// ===== Design studio round 27 (Oct 26): Rotation tiles unpacked. Tiles stay open with their sentence and visual; one Summary / Everything switch on the
+// checklist's title shows or hides the reasons and the lists. Runs after dsRotFlat. Owner: the Design studio chat. =====
+/* the app's trim of a tile's windows list, done here because the app's own runs on a toggle event this round swallows for tiles */
+function dsWsTrim(root) { root.querySelectorAll('.spc-ws:not([data-trim])').forEach((ws) => { const cs = [...ws.children].filter((c) => c.classList.contains('spc-w')); ws.dataset.trim = '1'; if (cs.length <= 6) return;
+  const rk = (c) => (c.classList.contains('bad') ? 0 : c.classList.contains('warn') ? 1 : 2); cs.map((c, i) => [c, i]).sort((a, b) => rk(a[0]) - rk(b[0]) || a[1] - b[1]).forEach(([c], i) => { ws.appendChild(c); if (i >= 6) c.classList.add('spc-wx'); });
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'spc-wall'; b.textContent = 'Show all ' + cs.length; b.addEventListener('click', () => { const on = ws.classList.toggle('spc-wsall'); b.textContent = on ? 'Show fewer' : 'Show all ' + cs.length; }); ws.after(b); }); }
+function dsRotOpen() { const sec = document.querySelector('#view section.rck'); if (!sec) return; const want = (() => { try { return localStorage.getItem('ds-rot-all') === '1'; } catch (e) { return false; } })();
+  const all = sec.classList.contains('ds-all');
+  const sync = () => { const a = sec.classList.contains('ds-all');
+    sec.querySelectorAll('.rck-cats > .rck-cat .rck-rs > .rck-r').forEach((t) => { if (!t.open) t.open = true; dsWsTrim(t);
+      /* a tile whose title row already says its sentence (the app's short note) does not say it twice */
+      if (!t.dataset.dsDup) { t.dataset.dsDup = '1'; const mis = t.querySelector(':scope > summary .rck-mis, :scope > summary .ds-note'); const rs = t.querySelector(':scope > .rck-b > p.spc-rs, :scope > .rck-mgb:first-of-type > .rck-b > p.spc-rs'); const norm = (s) => (s || '').replace(/\s+/g, ' ').trim().toLowerCase(); if (mis && rs && norm(mis.textContent) && norm(rs.textContent).startsWith(norm(mis.textContent).slice(0, 40))) rs.classList.add('ds-dup'); }
+      if (t.querySelector('.spc-ast, .spc-slp, canvas, .rck-chart, .spc-ch')) t.classList.add('ds-wide');
+      t.querySelectorAll('details.spc-bxf').forEach((d) => { d.open = a; });
+      t.querySelectorAll('p.spc-hwp').forEach((p) => { p.hidden = !a; }); });
+    sec.querySelectorAll('h3.rck-h .ds-sw > b').forEach((b) => b.classList.toggle('on', (b.dataset.v === 'all') === a)); };
+  if (!sec.classList.contains('ds-unp')) { sec.classList.add('ds-unp'); if (want) sec.classList.add('ds-all');
+    const h = sec.querySelector(':scope > h3.rck-h');
+    if (h && !h.querySelector('.ds-sw')) { const sw = document.createElement('span'); sw.className = 'ds-sw'; sw.setAttribute('role', 'group'); sw.setAttribute('aria-label', 'How much to show');
+      sw.innerHTML = '<b data-v="sum">Summary</b><b data-v="all">Everything</b>';
+      sw.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); const b = e.target.closest('b'); if (!b) return; const a = b.dataset.v === 'all'; sec.classList.toggle('ds-all', a); sync(); try { localStorage.setItem('ds-rot-all', a ? '1' : '0'); } catch (x) {} });
+      h.appendChild(sw); } }
+  sync(); }
+(function () { const f18 = dsBars; dsBars = function (root) { f18(root); try { dsRotOpen(); } catch (e) {} };
+  /* tiles are out of the app's one-at-a-time accordion: their toggle never reaches it (and they cannot close) */
+  window.addEventListener('toggle', (e) => { const d = e.target; if (!d || !d.matches || !d.matches('#view section.rck .rck-rs > details.rck-r')) return; e.stopImmediatePropagation(); if (!d.open) d.open = true; else dsWsTrim(d); }, true); })();
+
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
 (function () { const f17 = dsBars; let last = 0, tm = 0, pendingRoot;
-  dsBars = function (root) { const now = performance.now(); if (now - last < 150) { pendingRoot = root; clearTimeout(tm); tm = setTimeout(() => { last = performance.now(); try { f17(pendingRoot); } catch (e) {} }, Math.max(16, 150 - (now - last))); return; } last = now; clearTimeout(tm); f17(root); };
-  /* (now: one run at once, past the limit, for a page that was just written (view), so it never paints in its old layout first (Oct 25, the Rotation chat)) */
-  dsBars.now = (root) => { last = performance.now(); clearTimeout(tm); f17(root); }; })();
+  dsBars = function (root) { const now = performance.now(); if (now - last < 150) { pendingRoot = root; clearTimeout(tm); tm = setTimeout(() => { last = performance.now(); try { f17(pendingRoot); } catch (e) {} }, Math.max(16, 150 - (now - last))); return; } last = now; clearTimeout(tm); f17(root); }; })();

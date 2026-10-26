@@ -6891,6 +6891,7 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-spc:hover, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-spc:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--gold); transform: scale(1.12); }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-specs button { display: inline-flex; align-items: center; gap: 5px; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-specs button .icw, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-specs button img { width: 16px; height: 16px; border-radius: 4px; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plan-red .plan-eb[data-plrspec] img { width: 16px; height: 16px; border-radius: 4px; display: block; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-cols > .tn-pcol:empty { display: none; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-sec.tn-team > .tn-fold { grid-column: 1 / -1; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn > .tn-sec:not(.tn-team) > .tn-sh { margin-top: 0; }
@@ -7172,6 +7173,44 @@ html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac +
 #view section.rck p.spc-hwp .ds-subhw > b { color: var(--text); font-weight: 600; }
 #view section.rck details.rck-r.ds-flat > .rck-mgb:not(:first-child) > .rck-b.ds-slim:not(:has(> :not([hidden]))) { display: none; }
 #view section.rck details.rck-r.ds-flat > .rck-mgb:not(:first-child) > h5.rck-mgh { padding-bottom: 8px; }
+/* ===== Design studio round 27 (Oct 26): Rotation tiles unpacked: every tile open with its sentence and visual, no tile chevrons, one Summary /
+   Everything switch on the checklist's title (Everything: the reasons, the lists, the slip rows, the sub-checks' sentences).
+   Owner: the Design studio chat. ===== */
+/* tiles are rows, not dropdowns */
+#view section.rck .rck-cat .rck-rs > .rck-r > summary { cursor: default; }
+#view section.rck .rck-cat .rck-rs > .rck-r > summary:hover { background: none; }
+.pfv details.rck-r[data-ds-kind="deep"] > summary::after, #view section.rck .rck-cat .rck-rs > .rck-r > summary::after, #view section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-cv { display: none !important; }
+.pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r[open] { grid-column: auto; border-color: var(--line) !important; }
+.pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r.ds-wide { grid-column: 1 / -1 !important; }
+.pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r[open] > summary > .rck-n > b { color: var(--text); }
+/* a tile's icon box clips nothing: the fallback drawing fills the box like the picture does (it sat on the baseline, 8 px low) */
+#view section.rck .rck-cat .rck-rs > .rck-r > summary > .spc-ri { position: relative; }
+#view section.rck .rck-cat .rck-rs > .rck-r > summary > .spc-ri > .sp { display: block; height: 100%; line-height: 0; }
+#view section.rck .rck-cat .rck-rs > .rck-r > summary > .spc-ri .icw { display: block !important; position: absolute !important; inset: 0; margin: 0 !important; vertical-align: top; width: 100% !important; height: 100% !important; line-height: 0; }
+#view section.rck .rck-cat .rck-rs > .rck-r > summary > .spc-ri .icw > svg.ico, #view section.rck .rck-cat .rck-rs > .rck-r > summary > .spc-ri .icw > img.oi { display: block !important; position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
+#view section.rck .rck-mgb > h5.rck-mgh .icw, #view section.rck .rck-b .spc-sbl .icw, #view section.rck .rck-b .slv-row .icw { line-height: 0; vertical-align: middle; }
+#view section.rck .rck-mgb > h5.rck-mgh .icw > svg.ico, #view section.rck .rck-b .spc-sbl .icw > svg.ico, #view section.rck .rck-b .slv-row .icw > svg.ico { display: block; position: absolute; inset: 0; width: 100%; height: 100%; }
+/* the sentence is always there, the links row is not */
+#view section.rck .rck-b.ds-slim > p.spc-rs { display: block !important; margin: 0; font-size: 12.5px; line-height: 1.4; color: var(--muted); }
+#view section.rck .rck-b.ds-slim > p.spc-rs .sp { color: var(--text); }
+#view section.rck .rck-b.ds-slim > p.spc-rs.ds-dup { display: none !important; }
+/* a split bar's legend wraps inside a half-width tile instead of running off its edge */
+#view section.rck .rck-b.ds-slim > .spc-sb > .spc-sbl { flex: 1 1 auto; min-width: 0; flex-wrap: wrap; row-gap: 2px; }
+#view section.rck .rck-b.ds-slim > .spc-sb > .spc-sbb { flex-basis: 100%; }
+#view section.rck .rck-b.ds-slim > .ds-rbot > .ds-rlinks { display: none; }
+#view section.rck:not(.ds-all) .rck-b.ds-slim > .ds-rbot { display: none; }
+#view section.rck.ds-all .rck-b.ds-slim > .ds-rbot { display: block; }
+#view section.rck.ds-all .rck-b.ds-slim > .ds-rbot > details.spc-bxf > summary { display: none; }
+#view section.rck.ds-all .rck-b.ds-slim > .ds-rbot > details.spc-bxf > .spc-bxs { margin: 4px 0 0; }
+#view section.rck:not(.ds-all) .rck-b.ds-slim > .spc-slp { display: none; }
+#view section.rck:not(.ds-all) .rck-mgb:not(:first-of-type) > .rck-b { display: none; }
+#view section.rck .rck-cat .rck-rs > .rck-r > .rck-b, #view section.rck .rck-cat .rck-rs > .rck-r > .rck-mgb > .rck-b { padding-top: 4px; }
+/* the one switch, on the checklist's title */
+#view section.rck > h3.rck-h { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+#view section.rck > h3.rck-h .ds-sw { margin-left: auto; display: inline-flex; border: 1px solid var(--line2); border-radius: 8px; overflow: hidden; }
+#view section.rck > h3.rck-h .ds-sw > b { padding: 3px 10px; font: 500 12.5px var(--body); letter-spacing: 0; text-transform: none; color: var(--muted); cursor: pointer; }
+#view section.rck > h3.rck-h .ds-sw > b:hover { color: var(--text); }
+#view section.rck > h3.rck-h .ds-sw > b.on { background: rgba(255,255,255,.09); color: var(--text); font-weight: 600; }
 </style>
 
 
@@ -16934,6 +16973,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-26', h: [
+    { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
     'Rotation: an open tile has one Why and one How it\'s judged. A sub-check is a plain row now: hover its title for the why, and its judging rule sits inside the tile\'s How it\'s judged. Thirteen fewer buttons to open.',
@@ -51033,12 +51073,37 @@ function dsRotFlat() { document.querySelectorAll('#view section.rck details.rck-
   t.appendChild(mainHwp); }); }
 (function () { const f16 = dsBars; dsBars = function (root) { f16(root); try { dsRotFlat(); } catch (e) {} }; })();
 
+// ===== Design studio round 27 (Oct 26): Rotation tiles unpacked. Tiles stay open with their sentence and visual; one Summary / Everything switch on the
+// checklist's title shows or hides the reasons and the lists. Runs after dsRotFlat. Owner: the Design studio chat. =====
+/* the app's trim of a tile's windows list, done here because the app's own runs on a toggle event this round swallows for tiles */
+function dsWsTrim(root) { root.querySelectorAll('.spc-ws:not([data-trim])').forEach((ws) => { const cs = [...ws.children].filter((c) => c.classList.contains('spc-w')); ws.dataset.trim = '1'; if (cs.length <= 6) return;
+  const rk = (c) => (c.classList.contains('bad') ? 0 : c.classList.contains('warn') ? 1 : 2); cs.map((c, i) => [c, i]).sort((a, b) => rk(a[0]) - rk(b[0]) || a[1] - b[1]).forEach(([c], i) => { ws.appendChild(c); if (i >= 6) c.classList.add('spc-wx'); });
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'spc-wall'; b.textContent = 'Show all ' + cs.length; b.addEventListener('click', () => { const on = ws.classList.toggle('spc-wsall'); b.textContent = on ? 'Show fewer' : 'Show all ' + cs.length; }); ws.after(b); }); }
+function dsRotOpen() { const sec = document.querySelector('#view section.rck'); if (!sec) return; const want = (() => { try { return localStorage.getItem('ds-rot-all') === '1'; } catch (e) { return false; } })();
+  const all = sec.classList.contains('ds-all');
+  const sync = () => { const a = sec.classList.contains('ds-all');
+    sec.querySelectorAll('.rck-cats > .rck-cat .rck-rs > .rck-r').forEach((t) => { if (!t.open) t.open = true; dsWsTrim(t);
+      /* a tile whose title row already says its sentence (the app's short note) does not say it twice */
+      if (!t.dataset.dsDup) { t.dataset.dsDup = '1'; const mis = t.querySelector(':scope > summary .rck-mis, :scope > summary .ds-note'); const rs = t.querySelector(':scope > .rck-b > p.spc-rs, :scope > .rck-mgb:first-of-type > .rck-b > p.spc-rs'); const norm = (s) => (s || '').replace(/\s+/g, ' ').trim().toLowerCase(); if (mis && rs && norm(mis.textContent) && norm(rs.textContent).startsWith(norm(mis.textContent).slice(0, 40))) rs.classList.add('ds-dup'); }
+      if (t.querySelector('.spc-ast, .spc-slp, canvas, .rck-chart, .spc-ch')) t.classList.add('ds-wide');
+      t.querySelectorAll('details.spc-bxf').forEach((d) => { d.open = a; });
+      t.querySelectorAll('p.spc-hwp').forEach((p) => { p.hidden = !a; }); });
+    sec.querySelectorAll('h3.rck-h .ds-sw > b').forEach((b) => b.classList.toggle('on', (b.dataset.v === 'all') === a)); };
+  if (!sec.classList.contains('ds-unp')) { sec.classList.add('ds-unp'); if (want) sec.classList.add('ds-all');
+    const h = sec.querySelector(':scope > h3.rck-h');
+    if (h && !h.querySelector('.ds-sw')) { const sw = document.createElement('span'); sw.className = 'ds-sw'; sw.setAttribute('role', 'group'); sw.setAttribute('aria-label', 'How much to show');
+      sw.innerHTML = '<b data-v="sum">Summary</b><b data-v="all">Everything</b>';
+      sw.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); const b = e.target.closest('b'); if (!b) return; const a = b.dataset.v === 'all'; sec.classList.toggle('ds-all', a); sync(); try { localStorage.setItem('ds-rot-all', a ? '1' : '0'); } catch (x) {} });
+      h.appendChild(sw); } }
+  sync(); }
+(function () { const f18 = dsBars; dsBars = function (root) { f18(root); try { dsRotOpen(); } catch (e) {} };
+  /* tiles are out of the app's one-at-a-time accordion: their toggle never reaches it (and they cannot close) */
+  window.addEventListener('toggle', (e) => { const d = e.target; if (!d || !d.matches || !d.matches('#view section.rck .rck-rs > details.rck-r')) return; e.stopImmediatePropagation(); if (!d.open) d.open = true; else dsWsTrim(d); }, true); })();
+
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
 (function () { const f17 = dsBars; let last = 0, tm = 0, pendingRoot;
-  dsBars = function (root) { const now = performance.now(); if (now - last < 150) { pendingRoot = root; clearTimeout(tm); tm = setTimeout(() => { last = performance.now(); try { f17(pendingRoot); } catch (e) {} }, Math.max(16, 150 - (now - last))); return; } last = now; clearTimeout(tm); f17(root); };
-  /* (now: one run at once, past the limit, for a page that was just written (view), so it never paints in its old layout first (Oct 25, the Rotation chat)) */
-  dsBars.now = (root) => { last = performance.now(); clearTimeout(tm); f17(root); }; })();
+  dsBars = function (root) { const now = performance.now(); if (now - last < 150) { pendingRoot = root; clearTimeout(tm); tm = setTimeout(() => { last = performance.now(); try { f17(pendingRoot); } catch (e) {} }, Math.max(16, 150 - (now - last))); return; } last = now; clearTimeout(tm); f17(root); }; })();
 
 </script>
 </body>
