@@ -20316,6 +20316,14 @@ function plbRevCards(B, pages, stT) { const ps = [...B.pr.players.values()], byN
   const exts = (B.exts || []).filter((x) => x.who).sort((a, b) => a.ph - b.ph || a.t - b.t);
   const dr = line('Defensives', 'def') + line('Healthstone', 'hs') + line('Health potion', 'pot') + exts.map((x) => row(plbT(x.ph, x.t), sp(x.id, 'External') + nm(x.who, 0) + (x.to ? '<span class="sub">on</span>' + nm(x.to, 0) : ''), 'plb-rt')).join('');
   out.push(card(pages.length + 2, stT[pages.length + 1][1], 'Defensives', dr ? 'ok' : 'none', dr, true, 'def'));
+  if ((B.boss || B.pick) === 'The Coiled Altar') { /* (the push and the intermission as their own cards, Oct 26) */
+    const ic = (nm0, fb) => { const id = typeof ndzSpellIdOf === 'function' ? ndzSpellIdOf(nm0) : 0; return id ? spellIcon(id, nm0) : spIc(fb); };
+    const at = (k) => out.findIndex((h) => h.includes('data-mech="' + k + '"')), put = (h, after) => { let i = at(after); if (i < 0) i = at('cds') - 1; out.splice(i < 0 ? out.length : i + 1, 0, h); };
+    const ru = cds.filter((c) => (c.ph === 1 && c.t >= 160 && c.t <= 200) || (c.ph === 2 && c.t <= 5));
+    put(card(pages.length + 1, ic('Venom Rupture', 'spell_nature_corrosivebreath'), 'Venom Rupture (Stack in the cooldowns)', ru.length ? 'ok' : 'none', ru.map((c) => { const w = String(c.who || '').split(/\s+/).filter(Boolean); return row(plbT(c.ph, c.t), sp(c.id, c.text || 'Cooldown') + (w.length ? w.map((x) => nm(x.split('-')[0], 0)).join('') : nobody), 'plb-rt'); }).join('') + row('Everyone', '<span class="sub">A defensive when the orbs blow up</span>'), 0, 'rupture'), 'orbs');
+    const nt = B.noteId ? (notesOf(B.boss || B.pick).list.find((x) => x.id === B.noteId) || {}).text : '', gh = []; for (const m of String(nt || '').matchAll(/^Soak Ghost at \{(\w+)\}:\s*(\S.*)$/gim)) gh.push([m[1], m[2].trim()]);
+    if (gh.length) put(card(0, ic('Fragments of Malacrass', 'spell_shadow_shadesofdarkness'), 'Fragments of Malacrass (Stop them at your marker)', 'ok', gh.map(([mk, w]) => row(esc(mk[0].toUpperCase() + mk.slice(1)), w.split(/\s+/).map((x) => nm(x.split('-')[0], 0)).join(''))).join(''), 0, 'stops').replace(/<button class="btn sm plb-rcx"[^>]*>✎ Edit<\/button>/, '<span class="plb-rcn sub" data-tt="' + esc('<b>From your note</b><br>Paste an updated note to change who stops where.') + '">from your note</span>'), 'curse'); }
+  { let k = 0; for (let i = 0; i < out.length; i++) out[i] = out[i].replace(/<b>\d+ · /, () => '<b>' + (++k) + ' · '); } /* (numbered in the order shown) */
   return '<div class="plb-rcg">' + out.join('') + '</div>'; }
 // (what's still open, one line per section: "Guillotine soaks: 6 to look at"; Oct 24)
 function plbIssGroup(B) { const by = new Map(); for (const x of ndzBuildIssues(B)) { const k = x.step; if (!by.has(k)) by.set(k, { step: k, n: 0, t: (B.pages[k - 1] || {}).title || '' }); by.get(k).n += /groups are short/.test(x.t) ? +(x.t.match(/(\d+) groups/) || [0, 1])[1] : 1; }
