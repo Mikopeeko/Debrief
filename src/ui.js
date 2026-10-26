@@ -11895,7 +11895,8 @@ function shieldBlock(reps, kind) {
   const PL = new Map(); for (const r of reps) for (const p of r.players.values()) if (p && p.name && !PL.has(p.name)) PL.set(p.name, p); try { for (const p of players()) if (p && p.name) PL.set(p.name, p); } catch (er) { /* (names from the pulls) */ }
   const nm = (n) => { const p = PL.get(n); return p && p.color ? who(p) : '<span class="who"><span class="nm">' + esc(String(n).split('-')[0]) + '</span></span>'; };
   const by = new Map(); for (const p of parts) for (const [n, a] of p.by) if (n) by.set(n, (by.get(n) || 0) + a);
-  const tot = [...by.values()].reduce((x, a) => x + a, 0); if (!parts.length || !tot) return '';
+  const tot = [...by.values()].reduce((x, a) => x + a, 0);
+  if (!parts.length || !tot) return reps.some((r) => r._stale && !r.shieldHits) ? '<p class="sub shd-f">The shield damage shows in a moment, once ' + (reps.length > 1 ? 'tonight\'s pulls are' : 'this pull is') + ' read again after the update.</p>' : ''; /* (an old saved reading has no shield hits yet (Oct 26)) */
   const night = reps.length > 1, mythic = reps[0].item.diffId === 16, rows = [...by].sort((a, b) => b[1] - a[1]), mx = rows[0][1];
   const M = (a) => (a >= 1e6 ? (a / 1e6).toFixed(1) + 'M' : Math.round(a / 1e3) + 'K');
   const row = ([n, a]) => '<div class="dsp-r shd-r"><span>' + nm(n) + '</span><span class="dsp-b"><i style="width:' + (100 * a / mx).toFixed(1) + '%' + ((PL.get(n) || {}).color ? ';background:' + PL.get(n).color : '') + '"></i></span><b>' + M(a) + '</b><span class="shd-p">' + Math.round(100 * a / tot) + '%</span></div>';
