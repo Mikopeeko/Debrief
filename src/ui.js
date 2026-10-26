@@ -30743,6 +30743,9 @@ function dsShort(sub, v) {
   if ((m = s.match(/^(\d+) of your (\d+) potions went out with (.+?)\.$/))) return (m[1] === m[2] ? (m[1] === '2' ? 'Both' : 'All') : m[1] + ' of ' + m[2]) + ' with ' + m[3].replace(/ or at the end of the kill$/, ' or the end of the kill') + '.';
   if ((m = s.match(/^Your potion went out with (.+?)\.$/))) return 'With ' + m[1].replace(/ or at the end of the kill$/, ' or the end of the kill') + '.';
   if ((m = s.match(/^(\d+) of the [\d,]+ casts you started with a cast bar did not finish, about (.+?) lost\.(?: Mostly (.+?)\.)?/))) return 'About ' + m[2] + ' lost' + (m[3] ? ': ' + m[3] + '.' : '.');
+  /* the waste tiles' sentences since Oct 26 (the Rotation chat's res_fix): the lost ones, the forgiven ones */
+  if ((m = s.match(/^([\d,]+) of the ([\d,]+) Holy Power you gained came while you were already at 5, so they were lost\. ([\d,]+) of them came from Divine Toll on 1 or 2 Holy Power, which is fine, so ([\d,]+) count against you\./))) return m[1] + ' of ' + m[2] + ' lost at 5; ' + m[3] + ' from Divine Toll (fine).';
+  if ((m = s.match(/^([\d,]+) of the ([\d,]+) (.+?) you gained came while you were already full, so they were lost\. ([\d,]+) of them .+?, which is fine, so ([\d,]+) count against you\./))) return m[1] + ' of ' + m[2] + ' ' + m[3] + ' gained at full; ' + m[4] + ' were fine.';
   if ((m = s.match(/^([\d,]+) of the ([\d,]+) (.+?) you (?:gained|made) came while you were (?:already )?full/))) return m[1] + ' of ' + m[2] + ' ' + m[3] + ' gained at full.';
   if ((m = s.match(/^You (?:cast|pressed) it (?:(?:\w+|[\d,]+) times?|twice|once) out of a possible [\d,]+\. It sat (?:ready|at full charges|ready at full charges)(?:, unused,)? for (.+?)(?: in all)?\.(.*)$/))) {
     let rest = m[2].trim().replace(/^It did (\S+) damage in all, (\S+) per cast\./, '$1 damage, $2 a cast.').replace(/^It healed for (\S+) in all, (\S+) (?:per|a) cast\./, '$1 healed, $2 a cast.').replace(/^Your (.+?) did (\S+) damage in all, (\S+) each\./, '$1: $2, $3 each.').replace(/^The Tyrant itself hit for (\S+) in all, (\S+) each\./, 'The Tyrant: $1, $2 each.').replace(/^Its shields absorbed (\S+) in all, (\S+) a cast\./, 'Shields: $1, $2 a cast.').replace(/^It went into (\d+) (.+?), worth about (\S+) of healing at your own average for each \w+\./, 'Into $1 $2, about $3 of healing.').replace(/^Your (\d+) (.+?) did about (\S+):.*$/, '$2: about $3.');
@@ -30790,7 +30793,8 @@ function dsRotWords() { const sec = document.querySelector('#view section.rck');
   for (const t of tiles) { t.dataset.dsW = '1'; const b = t.querySelector(':scope > .rck-b, :scope > .rck-mgb:first-of-type > .rck-b'); if (!b) continue;
     const rs = b.querySelector(':scope > p.spc-rs'); const v = t.querySelector(':scope > summary .rck-v');
     const note = t.querySelector(':scope > summary .ds-note'); /* (round 6 put a flat tile's sentence in its title row; it gets the short form too) */
-    if (rs && note && rs.classList.contains('ds-dup')) { const sh = dsShort(rs.textContent, v ? v.textContent : ''); if (sh) note.textContent = sh; else note.remove(); }
+    /* (Everything shows the full sentence and hides the note, since round 27's "says it twice" rule hid the sentence for good: the Rotation chat's report) */
+    if (rs && note && rs.classList.contains('ds-dup')) { const sh = dsShort(rs.textContent, v ? v.textContent : ''); rs.classList.add('ds-more'); note.classList.add('ds-sn'); if (sh) note.textContent = sh; else note.remove(); }
     else if (rs && !rs.classList.contains('ds-dup')) { const sh = dsShort(rs.textContent, v ? v.textContent : ''); rs.classList.add('ds-full');
       /* with nothing drawn under the title (no bar, strip, cards or list) the short line joins the title row, like a flat tile's note (the user:
          "this is another example of things that could be merged"); with a visual it stays its own line under it */
@@ -30805,7 +30809,7 @@ function dsRotWords() { const sec = document.querySelector('#view section.rck');
     if (/^Cooldowns on big damage/.test((t.querySelector(':scope > summary .rck-n') || {}).textContent || '')) t.classList.add('ds-cdbig'); }
   for (const c of cards) { c.dataset.dsW = '1'; c.querySelectorAll(':scope > .rck-sgt > p.rck-how').forEach((p) => dsTipWords(p)); } }
 /* the numbers in a sentence take the check's colour: wrapped in b.ds-n, the sentence marked data-ds-st from the nearest ok/warn/bad class */
-function dsRotColour() { const NUM = /\d+:\d\d|\d[\d,]*(?:\.\d+)?(?:%|K|M|×)?/g;
+function dsRotColour() { const NUM = /\d+:\d\d|\d+(?:,\d{3})*(?:\.\d+)?(?:%|K|M|×)?/g; /* (a comma after the number is not part of it) */
   document.querySelectorAll('#view section.rck .rck-b > p.rck-tip').forEach((tip) => { const rs = tip.nextElementSibling; if (rs && rs.matches('p.spc-rs')) rs.after(tip); });
   document.querySelectorAll('#view section.rck p.spc-rs:not([data-ds-st]), #view section.rck p.ds-short:not([data-ds-st]), #view section.rck summary > span.ds-note:not([data-ds-st])').forEach((p) => {
     let st = 'na', e = p.parentElement; while (e && !(e.tagName === 'SECTION' && e.classList.contains('rck'))) { const m = /(?:^|\s)(ok|warn|bad|na)(?:\s|$)/.exec(e.className || ''); if (m) { st = m[1]; break; } e = e.parentElement; }
@@ -30817,7 +30821,7 @@ function dsRotColour() { const NUM = /\d+:\d\d|\d[\d,]*(?:\.\d+)?(?:%|K|M|×)?/g
       if (i < s.length) frag.appendChild(document.createTextNode(s.slice(i))); t.parentNode.replaceChild(frag, t); }); }); }
 /* a short line that only restates the row is hidden: every number in it is in the title or the legend, or it is one sentence carrying the
    title's value with at most one other number ("4 of 4 Inner Flame windows had a Fire Breath in the 15 seconds before." under "4/4") */
-function dsRotDedupe() { const NUMS = (s) => { const o = new Set(); (String(s || '').match(/\d[\d,]*(?:\.\d+)?(?:%|K|M)?/g) || []).forEach((x) => o.add(x.replace(/,/g, ''))); return o; }; /* (units kept: "81 seconds" is not "81%") */
+function dsRotDedupe() { const NUMS = (s) => { const o = new Set(); (String(s || '').match(/\d+(?:,\d{3})*(?:\.\d+)?(?:%|K|M)?/g) || []).forEach((x) => o.add(x.replace(/,/g, ''))); return o; }; /* (units kept: "81 seconds" is not "81%") */
   document.querySelectorAll('#view section.rck details.rck-r p.ds-short:not([data-ds-dd]), #view section.rck details.rck-r > summary > span.ds-note:not([data-ds-dd])').forEach((p) => { p.dataset.dsDd = '1';
     const tile = p.closest('details.rck-r'); if (!tile) return; const sum = tile.querySelector(':scope > summary'); if (!sum) return;
     const title = (sum.querySelector('.rck-n') || sum).textContent + ' ' + ((sum.querySelector('.rck-v') || {}).textContent || '');
