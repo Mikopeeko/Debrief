@@ -1954,6 +1954,7 @@ const PATCH_NOTES = [
     'Rotation, polished: a check\'s name wraps instead of running out of its box, the number and its top line stack neatly, the opener\'s steps run across the whole ring, window cards no longer spill their strip, a tall tile no longer stretches its neighbour into an empty box, and nothing on the page is under 12px.',
     'Shadow Priest: the top numbers were re-measured on 77 Shadow Priests from top kills with today\'s checks, so "top" on Rotation compares you with what they really do.',
     'Rotation: a check\'s sentence no longer repeats the number on its row (no more "You used it 3 of 4 possible times" under 3/4); it starts at what\'s new, like how long a cooldown waited. What to fix cards give the short version of each tip, and the checklist keeps the whole one.',
+    'Your raid lead talks like a person now: "Axegrinder ended 6 of our wipes, more than anything else. The good news is Venomfang got a lot cleaner." instead of short labelled bits, and no more shouting in capitals.',
     'Rotation reads in a few words: every check says its fact in one short line (the full sentence waits under Everything), the numbers in it are in the check\'s colour (green done right, amber some mistakes, red failed), spell names are bolder, every Next time tip has a gold label and edge, and a line that only repeats the row\'s number is gone.',
     'Rotation: burst-window cards use the whole width of the checklist, two or three across; Cooldowns on big damage shows only the moments you covered (the rest under Everything).',
     'Rotation speaks plainer: every check is one short sentence ("92% of your 337 casts were the best button at that moment.", "You used it 10 of 15 possible times."), tips say "in its last 30%" and "right after" instead of game jargon, and Stat order lets its bars do the talking.',
@@ -11840,7 +11841,7 @@ function oaRaidFix(reps, nth) { return oaCache(reps, nth ? 'rf' + nth : '', () =
   const ab = (o.d && o.d.ability) || '', m = o.mech || o.l || ab, fx = (o.fix && o.k !== 'dmg' && dbfTip1(cHtml(o.fix))) || oaFlip(o.why) || dbfFixer(reps)(m, o.d && o.d.player); /* (the raid mistake's own fix first (Oct 22): pull 3's orbs collided got "a raid cooldown") */
   const fix = o.k === 'dmg' ? 'Line up our big cooldowns, potions and Bloodlust for the damage check.' : g.k === 'kit' ? 'If you\'re dropping, press a defensive, Healthstone or potion before it\'s too late.'
     : g.k === 'bleed' ? 'Healers, watch for people bleeding out and top them up.' : g.k === 'tank' ? 'Get an external or a tank swap ready there.'
-    : /^w:/.test(g.k) ? 'Put a raid cooldown on ' + (ab || 'that hit') + '.' : fx || (o.av ? 'That one\'s dodgeable: stay out of it.' : '');
+    : /^w:/.test(g.k) ? 'Put a raid cooldown on ' + (ab || 'that hit') + '.' : fx || (o.av ? 'Stay out of ' + (ab || m || 'it') + ', it can be dodged.' : ''); /* (Oct 26: it named nothing, "that one's dodgeable: stay out of it") */
   if (!fix) return null;
   const label = o.k === 'dmg' ? 'Short on damage' : g.k === 'kit' ? 'Slow deaths' : g.k === 'bleed' ? 'Healing' : g.k === 'tank' ? 'Tank deaths' : /^w:/.test(g.k) ? (ab || 'Raid damage') : m;
   return { kind: 'raid', label, n, of: reps.length, pulls: g.l.map((x) => x.pull), fix }; }); }
@@ -12732,7 +12733,7 @@ function killCall(reps, w0) {
     if (topS && topS[1] >= 2) sh.push(nm(topS[0]) + ' for ' + topS[1] + ' saves'); if (topD && (!topS || nm(topD.name) !== nm(topS[0]))) sh.push(nm(topD.name) + ' for top damage');
     if (sh.length) bits.push('Shout-out to ' + lpAnd(sh) + '.'); }
   // (then one line on what to tidy)
-  if (w0 && w0.label) bits.push('To tidy ' + (farm ? 'on farm' : 'for next week') + ': ' + dbfPlain(w0.label) + '.');
+  if (w0 && w0.label) bits.push((farm ? 'On farm' : 'Next week') + ', let\'s tidy up ' + dbfPlain(w0.label) + '.'); /* (Oct 26, "talks like a robot": said, not labelled) */
   return { text: bits.join(' '), farm, first: first === true, mythic };
 }
 // (a note's cooldown the player never pressed in any pull of this boss tonight: likely not talented, so a note problem, not a miss;
@@ -13215,23 +13216,28 @@ const RATE_BASE = {"The Coiled Altar|16":{"n":20,"ph":{"P1 Zul'jan":{"dps":30744
 function coachHypeFix(c) { const h = coachHype(c); if (c.kill || !c.focus) return h; let f = String(c.focus).trim().replace(/[.!]+$/, ''); /* (Oct 24, your screenshot: it ended "in front ….": the cut's s had lost their backslashes, so it never stopped at a comma and always added a
      period after the …; now it stops at the end of a clause (", so", ", then", "; ") and a cut line ends with … only) */
   if (f.length > 110) { const m = f.match(/^(.{20,110}?)(?:[;:.]\s|,\s(?:so|then|and|but)\s)/); f = m ? m[1] : f.slice(0, 107).replace(/\s+\S*$/, '') + '…'; }
-  return h + ' ' + (c.night ? 'Next raid: ' : 'Next pull: ') + f.charAt(0).toLowerCase() + f.slice(1) + (/…$/.test(f) ? '' : '.'); }
+  /* (Oct 26, "talks like a robot": said, not labelled; one sentence; an instruction follows "Next pull, ", a fact "One thing for next pull: ") */
+  { const s1 = f.split(/(?<=[.!?])\s+(?=[A-Z])/)[0].replace(/[.!]+$/, ''); if (s1.length >= 12) f = s1; }
+  const verb = /^(stay|dodge|soak|kick|interrupt|move|press|use|pop|spread|stack|line|put|get|pick|watch|run|help|keep|take|swap|save|go|stand|face|turn|kill|focus|heal|top|don't|do|make|hit|bait|clear|break|catch|collect|avoid|call|wait|step|drop|let|grab|bring|give|stop|start|check|follow|aim|switch|hold|leave|walk|try|cast|time|plan|split|dispel|cleanse|purge|taunt|tank|send|push|burn|slow|stun|root|knock|grip|assign|place|bring)\b/i.test(f);
+  const nx = c.night ? 'Next raid, let\'s focus on one thing: ' : verb ? 'Next pull, ' : 'One thing for next pull: ';
+  return (h ? h + ' ' : '') + nx + f.charAt(0).toLowerCase() + f.slice(1) + (/…$/.test(f) ? '' : '.'); }
 function coachHype(c) { const T0 = c.trend || {}, well = T0.well || [], better = T0.better || [], R = (c.right || []).map((x) => x.t || '');
-  if (c.kill) return 'BOSS DOWN! Great work, everyone.';
+  /* (Oct 26, your note "the debriefing coach talks like a robot": plain sentences, no shouting in capitals; on a night the line above already
+     says what got cleaner, so this is only the lift) */
+  if (c.kill) return 'Boss down! Great work, everyone.';
   if (c.night) { const B0 = well.find((x) => !x.id && /^Best pull$/.test(x.nm)), p3 = B0 && /^P3|^Intermission/i.test(B0.sub || '');
-    if (better.length >= 3) return 'SO MUCH BETTER than last time: ' + better.length + ' things are cleaner.' + (p3 ? ' And we\'re in P3, the kill is close.' : '');
-    if (p3) return 'We\'re in P3 now. The kill is close, let\'s finish it.';
-    if (better.length === 2) return 'Two things are cleaner than last time. That\'s real progress, keep it up.';
-    if (better.length) return dbfCap(better[0].nm) + ' is cleaner than last time. Keep stacking those.';
-    return 'Every pull we learn something. Same energy next raid.'; }
+    if (p3) return 'We\'re reaching P3 now, so the kill is close.';
+    if (better.length >= 3) return 'Lots of real progress tonight.';
+    if (better.length) return 'That\'s real progress.';
+    return 'Good work tonight, everyone.'; }
   const best = R.find((t) => /^Our best pull tonight/.test(t)), fx = well.filter((x) => x.fixed), fu = well.find((x) => /^Further than last pull$/.test(x.nm));
-  if (best) return 'OUR BEST PULL YET! ' + (/P3|Intermission/i.test(best) ? 'The kill is right there.' : 'That\'s the one to copy.');
+  if (best) return /P3|Intermission/i.test(best) ? 'Our best pull yet, and the kill is right there.' : 'Our best pull yet, so let\'s do that again.';
   const wr = T0.worse || []; /* (realistic: big praise only when nothing slipped; a mixed pull gets a mixed line (Oct 23)) */
-  if (fx.length >= 2 && !wr.length) return 'SO MUCH BETTER! ' + lpAnd(fx.slice(0, 2).map((x) => x.nm)) + ' were clean.';
-  if (fx.length && wr.length) return 'Good: ' + lpAnd(fx.slice(0, 2).map((x) => x.nm)) + (fx.length > 1 ? ' were' : ' was') + ' clean. But ' + wr[0].nm + ' slipped.';
+  if (fx.length >= 2 && !wr.length) return 'Much better: ' + lpAnd(fx.slice(0, 2).map((x) => x.nm)) + ' were done right this time.';
+  if (fx.length && wr.length) return lpAnd(fx.slice(0, 2).map((x) => x.nm)) + (fx.length > 1 ? ' were' : ' was') + ' done right this time, but ' + wr[0].nm + ' slipped.';
   if (fx.length) return 'Nice job fixing ' + lpAnd(fx.slice(0, 2).map((x) => x.nm)) + '.';
-  if (fu) return 'Further than last pull, keep pushing.';
-  return 'Shake it off. Next one\'s the one.'; }
+  if (fu) return 'We got further than last pull, so keep pushing.';
+  return 'Shake it off, the next one\'s the one.'; }
 function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' + (o.key || 'x'), PM = coachPm();
   const pm = c.name ? PM.get(oaBase(c.name)) : null;
   const MAPS = [], pmc = (() => { try { return new Map(players().map((p) => [p.name, p])); } catch (e) { return new Map(); } })();
@@ -13314,8 +13320,12 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
     (c.trend && !c.night && /Root cause:/.test(String(c.headline)) ? '<p class="cch-h">' + esc(String(c.headline).replace(/\s*Root cause:[\s\S]*$/, '')) + ' <span class="cch-hype">' + esc(coachHypeFix(c)) + '</span></p>' /* (the root cause sits in the grid (Oct 23)) */
       : c.wipes && c.wipes.length && c.trend ? '<p class="cch-h">' + (() => { /* (Oct 23, your note "raid lead awful quiet": the night in a breath, from the cards below: pulls and best, what wiped us most, the best news, what to watch) */
         const T0 = c.trend, B0 = (T0.well || []).find((x) => !x.id && /^Best pull$/.test(x.nm)), w = c.wipes[0], up = (T0.better || [])[0], dn = (T0.worse || [])[0], b = (t) => '<b>' + esc(t) + '</b>';
-        return esc(String(c.headline).replace(/\s*What wiped us:[\s\S]*$/, '').replace(/\.$/, '')) + (B0 ? ', best was ' + esc(B0.sub) : '') + '. ' + b(w.nm) + ' wiped us most (' + plural(w.n, 'time') + ').' +
-          (up ? ' Good news: ' + b(up.nm) + ' is ' + (/^Much/.test(up.tag || '') ? 'much ' : '') + 'cleaner.' : '') + (dn ? ' Watch ' + b(dn.nm) + ', it\'s slipping.' : '') + ' <span class="cch-hype">' + esc(coachHypeFix(c)) + '</span>'; })() + '</p>' /* (the causes go in the grid's first cell (Oct 23)) */
+        /* (Oct 26, your note "the debriefing coach talks like a robot": the same facts, said in full sentences) */
+        const bm = B0 ? /^(.*?)\s*\(pull (\d+)\)$/.exec(B0.sub || '') : null, more = Math.max(0, (T0.better || []).length - 1), much = up && /^Much/.test(up.tag || '');
+        return esc(String(c.headline).replace(/\s*What wiped us:[\s\S]*$/, '').replace(/\.$/, '')) + (B0 ? (bm ? ', and our best was pull ' + bm[2] + ', which got to ' + esc(bm[1]) : ', and our best got to ' + esc(B0.sub)) : '') + '. ' +
+          b(w.nm) + (w.n > 1 ? ' ended ' + w.n + ' of our wipes, more than anything else.' : ' ended one of our wipes.') +
+          (up ? ' The good news is ' + b(up.nm) + ' got ' + (much ? 'a lot ' : '') + 'cleaner' + (more ? ', along with ' + plural(more, 'other thing') : '') + '.' : '') +
+          (dn ? (up ? ' But ' : ' Keep an eye on ') + b(dn.nm) + (up ? ' is getting worse, so keep an eye on it.' : ', it\'s getting worse.') : '') + ' <span class="cch-hype">' + esc(coachHypeFix(c)) + '</span>'; })() + '</p>' /* (the causes go in the grid's first cell (Oct 23)) */
       : c.wipes && c.wipes.length /* (the night's causes as a short list, each with what went wrong (Oct 23)) */
       ? '<p class="cch-h">' + esc(String(c.headline).replace(/\s*What wiped us:.*$/, '')) + ' <b class="cch-rc">What wiped us:</b></p><ul class="cch-wl">' + c.wipes.map((x) => '<li><b>' + esc(x.nm) + '</b><span class="cch-wn">' + plural(x.n, 'wipe') + '</span>' + (x.why ? '<span class="cch-wy">' + esc(x.why) + '</span>' : '') + '</li>').join('') + '</ul>'
       : '<p class="cch-h">' + esc(c.headline).replace(/(Root cause: .*?\.)(?=\s|$)/, '<b class="cch-rc">$1</b>').replace(/What wiped us:/, '<b class="cch-rc">What wiped us:</b>') /* (the cause stands out (Oct 23)) */ + '</p>') +
