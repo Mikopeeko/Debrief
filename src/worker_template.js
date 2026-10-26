@@ -375,7 +375,7 @@ const AREAS = [['Assignments', /\b(nsrt|notes?|assignments?|assigned)\b/i], ['Ro
   ['Graphs', /\b(graphs?|charts?|meters?|dps|hps)\b/i], ['Teams', /\b(team|guild|rankings?|my page|character|roster|raid nights?)\b/i],
   ['Mechanics', /\b(soaks?|maps?|mechanics?|debriefing|wipe|deaths?|kicks?|interrupts?|avoidable|frontal|nymrissa|kith'?ix|ula'?tek|vashnik|nek'?zali|explorers|sszorak|guillotine|coiled altar|twin fangs|sentinels)\b/i]];
 const areasIn = (s) => AREAS.map(([a, re]) => [a, (s.match(new RegExp(re.source, 'gi')) || []).length]).filter(([, n]) => n).sort((x, y) => y[1] - x[1]).map(([a]) => a); // (most words first)
-async function runBugs(env) {
+async function runBugs(env, quick) {
   let st = await env.DEBRIEF_KV.get('dc-bugs', 'json'), dirty = false;
   const act = await dc(env, '/guilds/' + GUILD + '/threads/active'), all = act.threads || [];
   const posts = all.filter((t) => t.parent_id === FORUM_BUGS && !(t.flags & 2)); // (not the pinned how-to)
@@ -414,6 +414,7 @@ async function runBugs(env) {
     await say(env, t.id, idea ? 'Thanks for the idea! It\'s on our list now. Tap 👍 on it if you want it too, and we\'ll post here if we build it.' : 'Thanks, got it! This is on our list now, and we\'ll post here when it\'s fixed.' +
       (noPull ? '\nTo help us find it fast: which pull was it? Paste the Debrief or Warcraft Logs link, or say the boss and pull number. A screenshot helps too.' : ''));
   }
+  if (quick) { if (dirty) await env.DEBRIEF_KV.put('dc-bugs', JSON.stringify(st)); return all; } // (the one-minute run stops here: new posts only)
   // (closed on GitHub: Fixed, or Can't reproduce when it was closed as not planned)
   const still = [];
   for (const [tid, n] of st.open) {
@@ -1000,7 +1001,7 @@ async function reportCommand(env, i) {
   }
   const r = await createReport(env, { idea, text, files, who, by, how: shortcut ? 'with a right-click' : 'with /' + i.data.name, link });
   w.n++;
-  return (idea ? 'Thanks! 💡 The idea is here: <#' : 'Thanks! 🐛 The report is here: <#') + r.id + '>. Claudette copies it to the team\'s list within about 10 minutes' + (r.lost ? ' (a picture couldn\'t be copied, so add it in the post)' : '') + '.';
+  return (idea ? 'Thanks! 💡 The idea is here: <#' : 'Thanks! 🐛 The report is here: <#') + r.id + '>. Claudette copies it to the team\'s list within about a minute' + (r.lost ? ' (a picture couldn\'t be copied, so add it in the post)' : '') + '.';
 }
 // "@Claudette make a bug report for this" (the owner's ask, Oct 26): on each run the bot looks for messages that tag it from the owner or a moderator, in
 // channels and open posts with new messages. A reply is the message to report; in a post, that person's other messages in it come too, with the
@@ -1027,7 +1028,7 @@ async function mentionReport(env, c, m) {
   else return 'I couldn\'t tell which message you mean. Reply to it when you tag me. 💛';
   if (!text && !files.length) return 'That message has no words or picture to use. 💛';
   const r = await createReport(env, { idea, text, files, title, who, by, how: 'with @Claudette', link });
-  return 'Done! ' + (idea ? '💡 The idea is here: <#' : '🐛 The report is here: <#') + r.id + '>. I\'ll copy it to the team\'s list within about 10 minutes' + (r.lost ? ' (a picture couldn\'t be copied, so add it in the post)' : '') + '.';
+  return 'Done! ' + (idea ? '💡 The idea is here: <#' : '🐛 The report is here: <#') + r.id + '>. I\'ll copy it to the team\'s list within about a minute' + (r.lost ? ' (a picture couldn\'t be copied, so add it in the post)' : '') + '.';
 }
 async function runMentions(env, threads) {
   if (!env.DISCORD_BOT_TOKEN) return;
@@ -1408,9 +1409,87 @@ async function planShare(req, env, url) {
   return json({ ok: true });
 }
 
+// ---- The instant listener (Oct 26, the owner's ask: "the whole point of a bot is to make it quick").
+// Discord tells a bot about a new message only over a connection the bot keeps open (the "gateway"). A Worker can't keep one, so this small Durable
+// Object does: it holds the connection all day, hears every message, and answers a tag from the owner or a moderator in about a second. The
+// one-minute run pokes it each minute, so if the connection ever drops it is back within a minute, and the cursor-based tag check still
+// catches anything missed in between. Messages already handled are remembered in KV (dc-mentions), so nothing is filed twice.
+export class DiscordGateway {
+  constructor(state, env) { this.state = state; this.env = env; this.ws = null; this.up = false; this.connecting = false; this.seq = null; this.sid = null; this.resume = null; this.hb = null; this.acked = true; this.heard = 0; this.since = 0; this.noContent = false; this.log = []; }
+  note(s) { this.log = [...this.log.slice(-9), new Date().toISOString().slice(11, 19) + ' ' + s]; console.log('Gateway:', s); }
+  async fetch(req) {
+    const url = new URL(req.url);
+    if (!this.up && !this.connecting) await this.connect().catch((err) => this.note('connect failed: ' + (err && err.message)));
+    if (url.pathname === '/status') return new Response(JSON.stringify({ up: this.up, heard: this.heard, since: this.since, sid: !!this.sid, noContent: this.noContent, log: this.log }), { headers: { 'Content-Type': 'application/json' } });
+    if (url.pathname === '/tick') { await this.serial(async () => { await mentionTick(this.env).catch((err) => console.warn('Mentions:', err && err.message)); await runBugs(this.env, true).catch((err) => console.warn('Quick bug sync:', err && err.message)); }); return new Response('ticked'); }
+    return new Response(this.up ? 'up' : 'down');
+  }
+  serial(fn) { this.chain = (this.chain || Promise.resolve()).then(fn).catch((err) => console.warn('Gateway job:', err && err.message)); return this.chain; }
+  async connect() {
+    this.connecting = true;
+    try {
+      if (!this.sid) { const saved = await this.state.storage.get('s'); if (saved) { this.sid = saved.sid; this.resume = saved.resume; this.seq = saved.seq; } }
+      const base = this.sid && this.resume ? this.resume : 'https://gateway.discord.gg';
+      const r = await fetch(base.replace(/^wss:/, 'https:') + '/?v=10&encoding=json', { headers: { Upgrade: 'websocket' } });
+      const ws = r.webSocket; if (!ws) throw new Error('no websocket (' + r.status + ')');
+      ws.accept(); this.ws = ws; this.up = true; this.acked = true; this.since = Date.now();
+      ws.addEventListener('message', (ev) => { this.onFrame(ev.data).catch((err) => this.note('frame error: ' + (err && err.message))); });
+      ws.addEventListener('close', (ev) => this.onClose(ev && ev.code));
+      ws.addEventListener('error', () => this.onClose(0));
+      this.note('connected' + (this.sid ? ' (resuming)' : ''));
+    } finally { this.connecting = false; }
+  }
+  onClose(code) {
+    this.up = false; if (this.hb) { clearInterval(this.hb); this.hb = null; } this.ws = null; this.note('closed ' + code);
+    if (code === 4014 && !this.noContent) { this.noContent = true; this.note('message content not allowed: running without it'); }
+    if (code === 4004) this.note('the token was refused');
+    if ([4007, 4009].includes(code)) { this.sid = null; this.resume = null; }
+  }
+  send(o) { try { this.ws && this.ws.send(JSON.stringify(o)); } catch (e) { /* closed */ } }
+  async onFrame(raw) {
+    const f = JSON.parse(typeof raw === 'string' ? raw : new TextDecoder().decode(raw));
+    if (f.s != null) this.seq = f.s;
+    if (f.op === 10) { // HELLO: start the heartbeat, then log in (or pick the session back up)
+      const every = f.d.heartbeat_interval; if (this.hb) clearInterval(this.hb);
+      this.hb = setInterval(() => { if (!this.acked) { this.note('no heartbeat answer: reconnecting'); try { this.ws && this.ws.close(4000, 'zombie'); } catch (e) { /* closed */ } this.onClose(4000); return; } this.acked = false; this.send({ op: 1, d: this.seq }); }, every);
+      if (this.sid) this.send({ op: 6, d: { token: this.env.DISCORD_BOT_TOKEN, session_id: this.sid, seq: this.seq } });
+      else this.send({ op: 2, d: { token: this.env.DISCORD_BOT_TOKEN, intents: (1 << 9) | (this.noContent ? 0 : 1 << 15), properties: { os: 'linux', browser: 'debrief', device: 'debrief' } } });
+    } else if (f.op === 11) this.acked = true;
+    else if (f.op === 1) this.send({ op: 1, d: this.seq });
+    else if (f.op === 7) { try { this.ws && this.ws.close(4000, 'reconnect'); } catch (e) { /* closed */ } this.onClose(4000); }
+    else if (f.op === 9) { if (!f.d) { this.sid = null; this.resume = null; await this.state.storage.delete('s'); } try { this.ws && this.ws.close(4000, 'invalid'); } catch (e) { /* closed */ } this.onClose(4000); }
+    else if (f.op === 0) {
+      if (f.t === 'READY') { this.sid = f.d.session_id; this.resume = f.d.resume_gateway_url; await this.state.storage.put('s', { sid: this.sid, resume: this.resume, seq: this.seq }); this.note('ready'); }
+      else if (f.t === 'RESUMED') this.note('resumed');
+      else if (f.t === 'MESSAGE_CREATE') { this.heard++; await this.onMessage(f.d); }
+      if (f.s && f.s % 20 === 0) this.state.storage.put('s', { sid: this.sid, resume: this.resume, seq: this.seq }).catch(() => {});
+    }
+  }
+  async onMessage(d) {
+    const env = this.env;
+    if (!d || d.guild_id !== GUILD || !d.author || d.author.bot || !(d.mentions || []).some((u) => u.id === APP_ID)) return;
+    const st = (await env.DEBRIEF_KV.get('dc-mentions', 'json')) || { c: {}, done: [] };
+    if (st.done.includes(d.id)) return;
+    if (!(await isMod(env, d.author.id).catch(() => false))) return;
+    st.done.push(d.id); st.done = st.done.slice(-100); await env.DEBRIEF_KV.put('dc-mentions', JSON.stringify(st)); // (marked first, so the one-minute check never files it again)
+    const c = (await dc(env, '/channels/' + d.channel_id).catch(() => null)) || { id: d.channel_id };
+    let reply; try { reply = await mentionReport(env, c, d); } catch (err) { console.warn('Mention report:', err && err.message); reply = 'That report didn\'t go through. Please tag me again in a minute. 💛'; }
+    await dc(env, '/channels/' + d.channel_id + '/messages', { method: 'POST', body: { content: reply, message_reference: { message_id: d.id, fail_if_not_exists: false }, allowed_mentions: { parse: [] } } }).catch((err) => console.warn('Mention reply:', err && err.message));
+    this.serial(() => runBugs(env, true)); // (and the new post is copied to GitHub and gets its review post right away)
+  }
+}
+// (poked every minute: makes sure the listener is connected)
+async function tickGateway(env) { // (the one-minute run's work: the tag check and the quick bug sync, through the listener when there is one)
+  if (!env.GATEWAY || !env.DISCORD_BOT_TOKEN) { await mentionTick(env); await runBugs(env, true); return; }
+  const r = await env.GATEWAY.get(env.GATEWAY.idFromName('main')).fetch('https://gateway/tick'); await r.text();
+}
+async function pokeGateway(env) {
+  if (!env.GATEWAY || !env.DISCORD_BOT_TOKEN) return;
+  const r = await env.GATEWAY.get(env.GATEWAY.idFromName('main')).fetch('https://gateway/ping'); await r.text();
+}
 export default {
   async scheduled(ev, env, ctx) {
-    if (ev.cron === MENTION_CRON) { if (new Date(ev.scheduledTime || Date.now()).getUTCMinutes() % 10 !== 0) ctx.waitUntil(mentionTick(env).catch((err) => console.warn('Mentions:', err && err.message))); return; } /* (every tenth minute the ten-minute run does the tag check itself) */
+    if (ev.cron === MENTION_CRON) { const quickMinute = new Date(ev.scheduledTime || Date.now()).getUTCMinutes() % 10 !== 0; ctx.waitUntil((quickMinute ? tickGateway(env) : pokeGateway(env)).catch((err) => console.warn('One-minute run:', err && err.message))); return; } /* (every tenth minute the ten-minute run does all of it) */ /* (every tenth minute the ten-minute run does the tag check itself) */
     ctx.waitUntil((async () => {
     // (a test write first: with the free daily limit used up, nothing that posts and then saves its place may run (Oct 24))
     let kvOk = true; try { await env.DEBRIEF_KV.put('kv-probe', String(Date.now())); } catch (err) { kvOk = false; console.warn('KV can\'t be written to right now, skipping the Discord jobs:', err && err.message); }

@@ -22,6 +22,15 @@ routes = [
 [triggers]
 crons = ["*/10 * * * *", "* * * * *"] # (the second one: only the @Claudette tag check, every minute)
 
+# The instant listener for @Claudette tags (Oct 26): keeps Discord's connection open all day.
+[[durable_objects.bindings]]
+name = "GATEWAY"
+class_name = "DiscordGateway"
+
+[[migrations]]
+tag = "gateway-1"
+new_sqlite_classes = ["DiscordGateway"]
+
 [[kv_namespaces]]
 binding = "DEBRIEF_KV"
 id = "5f5a92a1ea294fb888dea9dc5d7a2aa8"
