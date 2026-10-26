@@ -31318,6 +31318,59 @@ function dsGuides() {
     });
   }
   var E = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  // ---- the assignments picture: the job cards as they read on the page, names and rows only, no maps (the user: "a 'copy all
+  // text' button … an image of just the second images assignments as they appear in the tab, with images removed")
+  var urlImg = function (src) { if (!src) return Promise.resolve(null); return fetch(src, { mode: 'cors' }).then(function (r) { return r.ok ? r.blob() : null; }).then(function (b) { return b ? loadImg(URL.createObjectURL(b)) : null; }).catch(function () { return null; }); };
+  var readCards = function () {
+    var txt = function (el) { return el ? el.textContent.replace(/\s+/g, ' ').trim() : ''; };
+    var names = function (host) { return [].slice.call(host.querySelectorAll('.nm')).map(function (nm) { var ac = nm.closest('.ndz-ac'), num = ac && ac.querySelector('i') ? txt(ac.querySelector('i')) : '', im = nm.querySelector('img'); return { name: txt(nm), color: nm.style.color || getComputedStyle(nm).color, icon: im ? im.getAttribute('src') : '', num: num }; }); };
+    return [].slice.call(document.querySelectorAll('#view .bj-jobs .plb-rc')).map(function (c) { var hd = c.querySelector('.plb-rch'), title = txt(hd && hd.querySelector('b')), st = txt(hd && hd.querySelector('.plb-rcs'));
+      var rows = [].slice.call(c.querySelectorAll('.plb-rr')).map(function (r) { var rl = r.querySelector('.plb-rl'), rn = r.querySelector('.plb-rn:not(.plb-rsub)'), sub = r.querySelector('.plb-rsub');
+        var subs = sub ? [].slice.call(sub.querySelectorAll('.plb-rsg')).map(function (g) { return { label: txt(g.querySelector('.plb-rsl')), names: names(g) }; }) : [];
+        var plain = rn && !rn.querySelector('.nm') ? txt(rn) : '';
+        return { label: txt(rl), names: rn ? names(rn) : [], plain: plain, subs: subs }; });
+      return { title: title, status: st, rows: rows }; }).filter(function (c) { return c.title && c.rows.length; });
+  };
+  function dsTextSheet() {
+    var cards = readCards(), head = document.querySelector('#view h2'), title = (head ? head.textContent.trim() : 'Raid plan');
+    var icons = {}; cards.forEach(function (c) { c.rows.forEach(function (r) { r.names.concat.apply(r.names, r.subs.map(function (s) { return s.names; })).forEach(function (n) { if (n.icon) icons[n.icon] = null; }); }); });
+    var keys = Object.keys(icons);
+    return Promise.all([Promise.all(keys.map(urlImg)), Promise.all(['800 40px ' + HF, '700 20px ' + HF, '700 15px ' + TF, '600 14px ' + TF, '500 14px ' + TF, '700 11px ' + TF].map(function (f) { return document.fonts && document.fonts.load ? document.fonts.load(f).catch(function () { return null; }) : null; }))]).then(function (res) {
+      keys.forEach(function (k, i) { icons[k] = res[0][i]; });
+      var M = 30, G = 24, CW = 800, W = M * 2 + CW * 2 + G, PADX = 18, LW = 190, cv = document.createElement('canvas'), g = cv.getContext('2d');
+      // (measure: each row is a label column and a names column that wraps; names are 18 px tall lines)
+      var layout = function (c) { var y = 56; c.rows.forEach(function (r) { r.lines = []; r.subLines = []; var line = [], w = 0, maxW = CW - PADX * 2 - LW - 12; g.font = '700 15px ' + TF;
+          if (r.plain) { g.font = '500 14px ' + TF; r.plainLines = wrap(g, r.plain, maxW, 4); } else r.names.forEach(function (n) { var iw = (n.num ? g.measureText(n.num + ' ').width : 0) + (n.icon ? 22 : 0) + g.measureText(n.name).width + 18; if (w + iw > maxW && line.length) { r.lines.push(line); line = []; w = 0; } line.push(n); w += iw; });
+          if (line.length) r.lines.push(line); var h = Math.max(1, r.plainLines ? r.plainLines.length : r.lines.length) * (r.plainLines ? 20 : 24);
+          r.subs.forEach(function (s) { h += 22; }); r.h = h + 10; y += r.h; }); c.h = y + 10; return c.h; };
+      var cols = [0, 0], placed = []; cards.forEach(function (c) { layout(c); var k = cols[0] <= cols[1] ? 0 : 1; placed.push({ c: c, col: k, y: cols[k] }); cols[k] += c.h + 16; });
+      var H = 118 + Math.max(cols[0], cols[1]) + 10; cv.width = W; cv.height = H; g = cv.getContext('2d');
+      g.fillStyle = '#12141b'; g.fillRect(0, 0, W, H);
+      g.font = '800 40px ' + HF; g.fillStyle = '#ece8df'; g.fillText(title, M, 56);
+      g.font = '600 14px ' + TF; g.fillStyle = '#98a0ad'; g.fillText('Assignments · ' + cards.length + ' jobs · from your note', M, 82);
+      g.font = '800 16px ' + HF; g.fillStyle = '#e6b450'; g.fillText('DEBRIEF', W - M - g.measureText('DEBRIEF').width, 56); g.fillRect(M, 100, W - 2 * M, 2);
+      placed.forEach(function (p) { var c = p.c, x = M + p.col * (CW + G), y = 118 + p.y;
+        g.fillStyle = '#171a22'; rrect(g, x, y, CW, c.h, 12); g.fill(); g.strokeStyle = '#353b49'; g.lineWidth = 1; rrect(g, x + .5, y + .5, CW - 1, c.h - 1, 12); g.stroke();
+        g.font = '700 20px ' + HF; g.fillStyle = '#ece8df'; g.fillText(fit(g, c.title, CW - PADX * 2 - 90), x + PADX, y + 34);
+        if (c.status) { g.font = '700 11px ' + TF; var ok = /done/i.test(c.status), sw = g.measureText(c.status).width + 18; g.fillStyle = ok ? 'rgba(69,193,92,.14)' : 'rgba(230,180,80,.14)'; rrect(g, x + CW - PADX - sw, y + 16, sw, 20, 10); g.fill(); g.fillStyle = ok ? '#7ee08f' : '#e6b450'; g.fillText(c.status, x + CW - PADX - sw + 9, y + 30); }
+        var ry = y + 56; c.rows.forEach(function (r, ri) { if (ri) { g.fillStyle = 'rgba(255,255,255,.06)'; g.fillRect(x + PADX, ry - 6, CW - PADX * 2, 1); }
+          g.font = '500 14px ' + TF; g.fillStyle = '#98a0ad'; g.fillText(fit(g, r.label, LW - 10), x + PADX, ry + 16);
+          var nx0 = x + PADX + LW, ny = ry + 16;
+          if (r.plainLines) { g.font = '500 14px ' + TF; g.fillStyle = '#98a0ad'; r.plainLines.forEach(function (ln, li) { g.fillText(ln, nx0, ny + li * 20); }); ny += r.plainLines.length * 20; }
+          r.lines.forEach(function (line, li) { var nx = nx0; line.forEach(function (n, ni) { if (n.num) { g.font = '500 13px ' + TF; g.fillStyle = '#6c7381'; g.fillText(n.num, nx, ny); nx += g.measureText(n.num + ' ').width; } var ic = n.icon && icons[n.icon]; if (ic) { g.save(); g.beginPath(); g.arc(nx + 8, ny - 5, 8, 0, Math.PI * 2); g.clip(); g.drawImage(ic, nx, ny - 13, 16, 16); g.restore(); nx += 22; } g.font = '700 15px ' + TF; g.fillStyle = n.color || '#ece8df'; g.fillText(n.name, nx, ny); nx += g.measureText(n.name).width; if (ni < line.length - 1) { g.fillStyle = '#4a5160'; g.fillText(' · ', nx, ny); nx += 18; } }); ny += 24; });
+          r.subs.forEach(function (s) { var sx = nx0; g.font = '700 11px ' + TF; g.fillStyle = '#98a0ad'; g.fillText(s.label.toUpperCase(), sx, ny - 1); sx += g.measureText(s.label.toUpperCase()).width + 8; s.names.forEach(function (n, ni) { var ic = n.icon && icons[n.icon]; if (ic) { g.save(); g.beginPath(); g.arc(sx + 8, ny - 5, 8, 0, Math.PI * 2); g.clip(); g.drawImage(ic, sx, ny - 13, 16, 16); g.restore(); sx += 22; } g.font = '700 15px ' + TF; g.fillStyle = n.color || '#ece8df'; g.fillText(n.name, sx, ny); sx += g.measureText(n.name).width + (ni < s.names.length - 1 ? 14 : 0); }); ny += 22; });
+          ry += r.h; }); });
+      return cv;
+    });
+  }
+  var copyText = function (msg) {
+    var head = document.querySelector('#view h2'), name = 'Debrief - ' + (head ? head.textContent.trim() : 'raid plan').replace(/[\\/:*?"<>|]+/g, '') + ' - assignments.png';
+    if (msg) msg.textContent = 'Making the picture…';
+    var blobP = dsTextSheet().then(function (cv) { return new Promise(function (ok) { cv.toBlob(ok, 'image/png'); }); });
+    var done = function (ok) { blobP.then(function (blob) { if (!msg) return; msg.innerHTML = (ok ? '✓ Copied one picture of the assignments. Paste it in Discord. ' : 'Your browser didn’t allow copying it. ') + '<a href="#" data-dssheetdl="' + E(name) + '">Download it</a>' + (ok ? '' : ' (' + Math.round(blob.size / 1024 / 102.4) / 10 + ' MB)'); var a = msg.querySelector('a[data-dssheetdl]'); if (a) a._blob = blob; }, function () { if (msg) msg.textContent = 'Couldn’t draw the picture.'; }); };
+    var write = null; try { write = navigator.clipboard && navigator.clipboard.write ? navigator.clipboard.write([new ClipboardItem({ 'image/png': blobP })]) : Promise.reject(new Error('no clipboard')); } catch (err) { write = Promise.reject(err); }
+    write.then(function () { done(true); }, function () { done(false); });
+  };
   // (the sheet from the open window, or from a window opened quietly for it: the Jobs section's own Copy all button, the
   // user's "put a copy all button at the top right of the mechanics preview section")
   var sheetBlob = function (only, sub) {
@@ -31339,7 +31392,9 @@ function dsGuides() {
     var t = e.target, dl = t.closest && t.closest('a[data-dssheetdl]');
     if (dl && dl._blob) { e.preventDefault(); var a = document.createElement('a'); a.href = URL.createObjectURL(dl._blob); a.download = dl.dataset.dssheetdl || 'Debrief raid plan.png'; a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000); return; }
     var jb = t.closest && t.closest('#view .bj-jobs [data-dssheet]');
-    if (jb) { e.preventDefault(); var box = jb.parentNode.querySelector('.ds-sheetmsg'); if (!box) { box = document.createElement('span'); box.className = 'sub ds-sheetmsg'; jb.after(box); } copySheet(box, 0); return; }
+    if (jb) { e.preventDefault(); var box = jb.parentNode.querySelector('.ds-sheetmsg'); if (!box) { box = document.createElement('span'); box.className = 'sub ds-sheetmsg'; jb.parentNode.appendChild(box); } copySheet(box, 0); return; }
+    var tb = t.closest && t.closest('#view .bj-jobs [data-dstext]');
+    if (tb) { e.preventDefault(); var box3 = tb.parentNode.querySelector('.ds-sheetmsg'); if (!box3) { box3 = document.createElement('span'); box3.className = 'sub ds-sheetmsg'; tb.parentNode.appendChild(box3); } copyText(box3); return; }
     var cb = t.closest && t.closest('#view .bj-jobs .plb-rc [data-dssheetcard]');
     if (cb) { e.preventDefault(); var card = cb.closest('.plb-rc'), hd = card.querySelector('.plb-rch'), titles = [].slice.call(card.querySelectorAll('.pj-pic small')).map(function (s) { var i = s.querySelector('i'); var a = (s.firstChild && s.firstChild.nodeType === 3 ? s.firstChild.textContent : s.textContent).trim(), b = i ? i.textContent.trim() : ''; return b ? a + ' (' + b + ')' : a; });
       var nm = (hd.querySelector('b') || {}).textContent || 'these jobs'; nm = String(nm).replace(/^\d+\s*·\s*/, '').trim();
@@ -31355,7 +31410,8 @@ function dsGuides() {
     // the same copy as the boss header's Copy for the game, Plan's handler and feedback, here beside the pictures)
     var src = document.querySelector('#view [data-ndzpcopy]');
     if (src && !hd.querySelector('[data-dsnote]')) { var nb = document.createElement('button'); nb.type = 'button'; nb.className = 'btn sm primary'; nb.setAttribute('data-ndzpcopy', src.getAttribute('data-ndzpcopy')); nb.setAttribute('data-dsnote', ''); nb.setAttribute('data-tt', '<b>Copy note for the game</b><br>Copies this plan’s NSRT note so you can paste it into the addon in game.'); nb.textContent = 'Copy note for the game'; hd.appendChild(nb); }
-    var b = document.createElement('button'); b.type = 'button'; b.className = 'btn sm primary'; b.setAttribute('data-dssheet', ''); b.setAttribute('data-tt', '<b>Copy all pictures</b><br>One picture of every step, ready to paste in Discord (Ctrl+V).'); b.textContent = 'Copy all pictures'; hd.appendChild(b); };
+    var tb = document.createElement('button'); tb.type = 'button'; tb.className = 'btn sm primary'; tb.setAttribute('data-dstext', ''); tb.setAttribute('data-tt', '<b>Copy all text</b><br>One picture of the job cards as they read here, names only, no maps, ready to paste in Discord (Ctrl+V).'); tb.textContent = 'Copy all text'; hd.appendChild(tb);
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'btn sm primary'; b.setAttribute('data-dssheet', ''); b.setAttribute('data-tt', '<b>Copy all images</b><br>One picture of every step, ready to paste in Discord (Ctrl+V).'); b.textContent = 'Copy all images'; hd.appendChild(b); };
   // (and one on each job card that has pictures: "copy these assignments", the user's words)
   var addCardBtns = function () { [].slice.call(document.querySelectorAll('#view .bj-jobs .plb-rc')).forEach(function (c) { var hd = c.querySelector('.plb-rch'); if (!hd || hd.querySelector('[data-dssheetcard]') || !c.querySelector('.pj-pic')) return;
     var b = document.createElement('button'); b.type = 'button'; b.className = 'btn sm primary'; b.setAttribute('data-dssheetcard', ''); b.setAttribute('data-tt', '<b>Copy these</b><br>One picture of just this job’s steps, ready to paste in Discord (Ctrl+V).'); b.textContent = 'Copy these'; var pill = hd.querySelector('.plb-rcs'); if (pill) hd.insertBefore(b, pill); else hd.appendChild(b); }); };
