@@ -1985,6 +1985,7 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'A Warcraft Logs report link always opens that raid now, on Debriefing when the link names no tab, even if you were last on Home.',
     'Debrief app: a boss pulled and reset within a few seconds no longer gets a recap or a pop-up.',
     'Rotation: healers see their Parse number again; the page kept "not ranked" when the healing rankings arrived after it was first drawn.',
     'Resources match Warcraft Logs: every "wasted" number now counts everything you lost, the same way Warcraft Logs and WoWAnalyzer do. When part of it is fine (like Divine Toll on 1 or 2 Holy Power), the sentence says how much, and only the rest sets the colour.',
@@ -30459,7 +30460,7 @@ const RQ = ((q) => { if (q.get('tab') === 'hw') q.set('tab', 'player'); return q
 // (the pull, its tab, one pull or the whole night, or the teams page) opens again; a reload of a pull address with no step
 // opens that pull like a shared link)
 const reloadSt = WCL.HOSTED && RNAV === 'reload' && history.state && history.state.nav ? history.state : null;
-const backAgain = WCL.HOSTED && !!RQ.get('report') && !RQ.get('tab') && RNAV !== 'reload' && (RNAV === 'back_forward' || RQ.get('report') === store.get('wla-last-report')); // (a link with its tab (Oct 21) always opens)
+const backAgain = WCL.HOSTED && !!RQ.get('report') && !RQ.get('tab') && RNAV === 'back_forward'; /* (a link that names a report always opens it, your own last one too (Oct 26)) */ // (a link with its tab (Oct 21) always opens)
 if (backAgain) try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
 const sharedLink = WCL.HOSTED && !!RQ.get('report') && !backAgain && !reloadSt;
 const nightLink = WCL.HOSTED && /^[A-Za-z0-9_-]{22}$/.test(RQ.get('night') || '') && !reloadSt; /* (a shared night's link (Oct 21)) */
@@ -30478,7 +30479,7 @@ if (WCL.HOSTED) {
   else if (qp.has('ingame')) setTimeout(openInGame, 0); /* (a ?ingame address opens the Debrief in game page) */
   else if (qp.has('guides') || qp.get('tab') === 'gdz') setTimeout(() => openGuides(qp.get('boss'), qp.get('d')), 0); /* (once the guides code below has loaded) */
   else if (nightLink) openShared(qp.get('night'), { pull: qp.has('pull') ? +qp.get('pull') : null, tab: qp.get('tab'), all: !!qp.get('all'), m: qp.get('m'), p: qp.get('p') }).catch((err) => { $('#main').innerHTML = '<div class="empty"><div class="drop"><h2>Couldn\'t open that shared night</h2><p class="muted">' + esc(err.message) + '</p></div></div>'; });
-  else if (sharedLink) { { const tb = qp.get('tab'); if (tb && (tb === 'live' || TABS.some(([k]) => k === tb))) S.tab = tb; if (tb || qp.get('all')) S.scope = qp.get('all') ? 'all' : 'pull'; navApplySel(S.tab, qp.get('p')); } /* (its tab, one pull or all, and its player (Oct 21)) */
+  else if (sharedLink) { { const tb = qp.get('tab'); if (tb && (tb === 'live' || TABS.some(([k]) => k === tb))) S.tab = tb; else if (!tb && !['audit', 'rot', 'perf', 'player', 'cmp'].includes(S.tab)) S.tab = 'audit'; /* (no tab named: Debriefing, unless the remembered tab is a raid tab, never Home (Oct 26)) */ if (tb || qp.get('all')) S.scope = qp.get('all') ? 'all' : 'pull'; navApplySel(S.tab, qp.get('p')); } /* (its tab, one pull or all, and its player (Oct 21)) */
     if (qp.get('m')) { S.tab = 'audit'; S.scope = 'pull'; S.pendingSec = 'sec-' + qp.get('m'); } /* (a link to one mechanic (Oct 20)) */
     if (qp.get('tab') === 'gdz') { setTimeout(() => openGuides(null, qp.get('d')), 0); } else /* (the first Guides links (Oct 20) open the guides page) */ $('#main').innerHTML = '<div class="empty">' + loadCard('Opening the report', 'Loading the report…', null, 'loadmsg') + '</div>'; openWcl({ code: qp.get('report'), fight: +qp.get('fight') || null }, null, false, !qp.get('fight')).catch((err) => hostedPanel(err.message)); }
   else home();
