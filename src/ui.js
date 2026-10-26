@@ -31049,11 +31049,13 @@ function dsRotTop() { const v = document.querySelector('#view .pf-inl.spc-v'); i
 // ===== Design studio round 53 (Oct 26): the Boss guides page in the shape of mock A: one rail, your job first, named keys on the fight at a glance, cards
 // in Summary, the map switch on the map. Runs after every guides render. Owner: the Design studio chat. =====
 function dsGuides() {
-  const g = document.querySelector('#view .gdz'); if (!g || g.dataset.ds53) return; g.dataset.ds53 = '1';
+  const g = document.querySelector('#view .gdz'); if (!g || g.dataset.ds53) return;
   const E = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const rbar = g.querySelector(':scope > .gdz-rbar'), hero = g.querySelector(':scope > header.gdz-hero'), tabs = g.querySelector(':scope > nav.gdz-tabs'), glance = g.querySelector(':scope > section.gdz-glance');
   const cards = glance ? glance.querySelector(':scope > .gdz-cards') : null;
-  if (!rbar || !hero) return;
+  // (gdzView writes the page with view(), which runs the look passes at once, and adds the rail's row right after: so the first
+  // run sees no .gdz-rbar and must leave the page unmarked for the deferred run)
+  if (!rbar || !hero) return; g.dataset.ds53 = '1';
   // 1. the rail
   const rail = document.createElement('div'); rail.className = 'ds-grail';
   const role = rbar.querySelector('.gdz-seg[data-k="role"]'), mode = rbar.querySelector('.gdz-seg[data-k="mode"]'), watch = rbar.querySelector('.gdz-watch');
@@ -31103,7 +31105,7 @@ function dsGuides() {
 }
 (function () {
   try { if (typeof gdzView === 'function' && !gdzView.ds53) { const g0 = gdzView; gdzView = function () { const r = g0.apply(this, arguments); try { dsGuides(); } catch (e) {} return r; }; gdzView.ds53 = true; } } catch (e) {}
-  try { const f53 = dsBars; dsBars = function (root) { f53(root); try { dsGuides(); } catch (e) {} }; } catch (e) {}
+  try { const f53 = dsBars; dsBars = function (root) { f53(root); try { dsGuides(); } catch (e) {} setTimeout(() => { try { dsGuides(); } catch (e) {} }, 0); }; } catch (e) {}
   try { dsGuides(); } catch (e) {}
 })();
 
