@@ -7628,9 +7628,17 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pj-pic small { display: block; padding: 3px 6px 4px; font-size: 12px; line-height: 1.2; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pj-pic small i { display: block; font-style: normal; font-size: 11px; color: var(--muted); }
 @media (max-width: 640px) {
-  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pj-pic { width: calc(50% - 5px); }
-  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pj-pic img { width: 100%; height: auto; aspect-ratio: 1; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pj-pics > .pj-pic { width: calc(50% - 5px); }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pj-pics > .pj-pic img { width: 100%; height: auto; aspect-ratio: 1; }
 }
+/* (the user: "if there's numbered mechanics, like an order, line the image up with the assignment next to it": a picture the
+   Guides chat's pass puts INTO a numbered row (.plb-rr > .pj-pic) sits at the row's right, 72 px, no caption: the row's label is
+   the caption) */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-rr:has(> .pj-pic) { display: grid !important; grid-template-columns: minmax(0, 1fr) 72px; column-gap: 12px; align-items: center; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-rr:has(> .pj-pic) > .plb-rl, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-rr:has(> .pj-pic) > .plb-rn { grid-column: 1; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-rr > .pj-pic { grid-column: 2; grid-row: 1 / span 3; width: 72px; justify-self: end; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-rr > .pj-pic img { width: 72px; height: 72px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-rr > .pj-pic small { display: none; }
 /* the one-picture view */
 html body #ppWin.pp-one .pp-cards { grid-template-columns: minmax(0, 1fr) !important; }
 html body #ppWin.pp-one .pp-card.pp-cur { border: 0; background: none; padding: 0; }
