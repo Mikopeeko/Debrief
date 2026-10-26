@@ -649,7 +649,8 @@ local function pickWho(m)
   if DB.who then for _, p in ipairs(m.players) do if p.name == DB.who then return p end end end
   local me = meName()
   for _, p in ipairs(m.players) do if p.name == me or p.name:match("^([^%-]+)") == me then return p end end
-  return m.players[1]
+  -- (you weren't in this pull: nobody, not the first player (Oct 25, the user: "always load the current logged in player when possible, if not,
+  -- load nothing"); the arrows still look at anyone)
 end
 
 -- (the wipe filter: on a wipe, stop counting at this death; 0 is off. A pull with fewer deaths than that counts in full)
@@ -826,10 +827,12 @@ local function renderOnce()
     b:SetScript("OnClick", function() view = k; DB.viewPicked = true; render() end)
   end
   local P = UI.pickWho(m)
-  local showWho = (view == "me" and P and #m.players > 1) and not glanceOn
+  local showWho = (view == "me" and #m.players > 1) and not glanceOn
   who:SetShown(showWho); prevB:SetShown(showWho); nextB:SetShown(showWho)
+  if not P then who:SetWidth(W - PAD * 2 - 190); who:SetText("|cff" .. COL.faint .. "Not in this pull|r"); who:SetWidth(math.min(W - PAD * 2 - 190, math.max(40, who:GetStringWidth() + 4))) end
   if P then who:SetWidth(W - PAD * 2 - 190); who:SetText("|cff" .. UI.classHex(P.cls) .. P.name .. "|r"); who:SetWidth(math.min(W - PAD * 2 - 190, math.max(40, who:GetStringWidth() + 4))) end -- (the arrows sit right beside the name (Oct 24))
   local function step(dir)
+    if not P then DB.who = (dir > 0 and m.players[1] or m.players[#m.players]).name; render(); return end
     local idx = 1; for i, p in ipairs(m.players) do if p == P then idx = i end end
     idx = ((idx - 1 + dir) % #m.players) + 1; DB.who = m.players[idx].name; render()
   end
@@ -1250,6 +1253,9 @@ local function renderOnce()
     survRaid()
   elseif glanceOn then
     glanceBody()
+  elseif view == "me" and not P then
+    -- (you weren't in this pull: say so, show nobody else (Oct 25))
+    local t = FS("body", 13.5, COL.muted); t:SetPoint("TOPLEFT", 0, -(y + 4)); t:SetWidth(CW); t:SetJustifyH("LEFT"); t:SetText("You weren't in this pull. Use the arrows to look at someone else, or open the Raid view."); y = y + t:GetStringHeight() + 14
   elseif view == "me" and P then
     if not (coachOn and youCoach(P)) then leadBox(P.lead) end
     -- the tile: your damage or healing, against your last pull and your best
@@ -1822,9 +1828,11 @@ function Debrief_FitPreview()
   card:SetScale((w > avail and avail > 200) and math.max(0.55, (DB.scale or 1) * avail / w) or (DB.scale or 1))
 end
 local optDirty = false -- (a /db change your PC pop-up sees only after a /reload (Oct 24))
+local unsent = false -- (changed this session, not on the pop-up yet: Send to my PC pop-up in /db (Oct 25))
+local function paintSend() if opt and opt.f1 then opt.f1:SetText(unsent and "Saved" or "Settings  ·  saves as you go") end; if opt and opt.sendB then opt.sendB:SetShown(unsent) end end
 local function applySettings()
   if (opt and opt:IsShown()) or (DebriefTutorial and DebriefTutorial:IsShown()) then
-    optDirty = true; if opt and opt.f1 then opt.f1:SetText("Saved  ·  /reload sends it to your PC pop-up") end
+    optDirty = true; unsent = true; paintSend()
   end
   reapplyFonts()
   card:SetScale(DB.scale or 1); big:SetScale(DB.bigScale or 1); mini:SetScale(DB.miniScale or 1)
@@ -1873,6 +1881,13 @@ local function buildOptions()
   clb.t = clb:CreateFontString(nil, "OVERLAY"); setFont(clb.t, "bold", 16); clb.t:SetPoint("CENTER", 0, 1); clb.t:SetText("×"); clb.t:SetTextColor(rgb(COL.faint))
   clb:SetScript("OnClick", function() opt:Hide() end)
   clb:SetScript("OnEnter", function() clb.t:SetTextColor(rgb(COL.text)) end); clb:SetScript("OnLeave", function() clb.t:SetTextColor(rgb(COL.faint)) end)
+  -- (after a change: Send to my PC pop-up. The pop-up reads your settings from WoW's saved file, which WoW writes at a reload or logout, so the
+  -- button does that quick reload on your click (never in a fight), and /db opens again after it (Oct 25))
+  local sendB = optButton(opt, "Send to my PC pop-up", 146, true, 24); sendB:SetPoint("TOPRIGHT", -40, -11); sendB:Hide(); opt.sendB = sendB
+  sendB:SetScript("OnEnter", function() GameTooltip:SetOwner(sendB, "ANCHOR_BOTTOM"); GameTooltip:SetText("Send to my PC pop-up", 1, 1, 1); GameTooltip:AddLine("A quick reload, a few seconds: WoW saves your settings where the PC pop-up reads them. This window opens again after it.", 0.75, 0.78, 0.82, true); GameTooltip:Show() end)
+  sendB:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  sendB:SetScript("OnClick", function() if InCombatLockdown() then say("after the fight: then Send to my PC pop-up."); return end; DB.reopenOpt = true; if C_UI and C_UI.Reload then C_UI.Reload() elseif ReloadUI then ReloadUI() end end)
+  refreshers[#refreshers + 1] = paintSend
   -- (one page that scrolls with the mouse wheel (Oct 25, the Design studio: no Card / Look / More tabs): the style on top, four
   -- everyday rows, and everything else in folds under Customize)
   local PAGE_TOP, FOOT = 46, 30
@@ -2312,8 +2327,8 @@ end
 -- the settings nor the setup is open gives your own pulls, and the card its own place, back)
 function Debrief_SettingsClosed()
   if not optDirty then return end
-  optDirty = false; if opt and opt.f1 then opt.f1:SetText("Settings  ·  saves as you go") end
-  say("saved. Your PC pop-up follows your changes after your next /reload.")
+  optDirty = false; paintSend()
+  say("saved. Your PC pop-up uses them after your next login, or now with Send to my PC pop-up in /db.")
 end
 function Debrief_PreviewFix()
   if not PREV_REAL or not DB then return end
@@ -2555,7 +2570,7 @@ do
   local wasCard = false -- (the card comes back after only if it was open before)
   local function closed() if DB then DB.tutorialDone = true end; preview(false); if wasCard and DB and #DB.pulls > 0 and not (DebriefOptions and DebriefOptions:IsShown()) then card:Show(); render() end end
   local function finish() closed(); tut:Hide() end
-  nextB:SetScript("OnClick", function() if cur >= #STEPS then local ch = optDirty; optDirty = false; finish(); say("all set. /recap shows your recap, /db changes the settings." .. (ch and " Type /reload so your PC pop-up uses your picks too." or "")) else show(cur + 1) end end)
+  nextB:SetScript("OnClick", function() if cur >= #STEPS then local ch = optDirty; optDirty = false; finish(); say("all set. /recap shows your recap, /db changes the settings." .. (ch and " Your PC pop-up uses your picks after your next login, or now with Send to my PC pop-up in /db." or "")) else show(cur + 1) end end)
   backB:SetScript("OnClick", function() if cur > 1 then show(cur - 1) end end)
   skipB:SetScript("OnClick", finish); cl:SetScript("OnClick", finish)
   tut:SetScript("OnHide", function() if prevOn then closed() elseif DB then DB.tutorialDone = true end end)
@@ -2728,6 +2743,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
       if a0 == "DEBRIEF_PASTE" or (a0 == "" and not DB.keySet) then if SetBinding("CTRL-SHIFT-D", "DEBRIEF_TOGGLE") then SaveBindings(GetCurrentBindingSet()) end end
       DB.keySet = true
     end
+    if DB.reopenOpt then DB.reopenOpt = nil; if C_Timer then C_Timer.After(1, function() if not InCombatLockdown() and not (DebriefOptions and DebriefOptions:IsShown()) then Debrief_ToggleOptions() end end) end end -- (Send to my PC pop-up: /db again (Oct 25))
     if DB.openAfter then DB.openAfter = nil; if C_Timer and #DB.pulls > 0 then C_Timer.After(1, function() if not InCombatLockdown() then card:Show(); render() end end) end end -- (Save this pull: the card again (Oct 25))
     if DEBRIEF_HAS_APP or DB.hasApp then say("ready. Your recap pops up on your PC after each boss pull." .. ((DB.fromApp or 0) > 0 and (" " .. DB.fromApp .. " new pull" .. (DB.fromApp == 1 and "" or "s") .. " from Debrief Companion: /recap.") or " /recap shows them here too."))
     else say("ready. Your recaps come from Debrief Companion on your PC. /debrief demo shows a sample.") end

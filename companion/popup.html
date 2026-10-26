@@ -225,12 +225,13 @@ function cardView() {
   /* (worst first in every list (Oct 24, the user: "Sections should always prioritize the worst mistakes first, including rotation"): red, then amber, then the rest, each in the order it came) */
   const RK = { dead: 0, bad: 0, warn: 1 }, worst = (L0, rk) => (L0 || []).map((x, i) => [x, i]).sort((a, b) => ((rk ? rk(a[0]) : RK[a[0][0]] ?? 2) - (rk ? rk(b[0]) : RK[b[0][0]] ?? 2)) || a[1] - b[1]).map((q) => q[0]);
   const lim = (key, L, n, draw) => { const all = OPEN['m:' + key], show = all ? L : L.slice(0, n); return show.map(draw).join('') + (L.length > show.length ? '<div class="kmore" data-cmore="' + key + '">Show ' + (L.length - show.length) + ' more</div>' : ''); };
-  /* (Me shows you, or anyone you step to with ‹ ›; without you in the pull, the first player, as /recap does (Oct 24)) */
+  /* (Me shows you, or anyone you step to with ‹ ›; without you in the pull, nobody (Oct 25, the user: "always load the current logged in player when
+     possible, if not, load nothing")): the Me tab says so) */
   const mine = LK.me ? PL.find((p) => p.name === LK.me || short(p.name) === short(LK.me)) : null;
   if (WHO && !PL.some((p) => p.name === WHO)) WHO = null;
-  const me = WHO ? PL.find((p) => p.name === WHO) : mine || PL.find((p) => p.rot || (p.slips || []).length) || PL[0] || null;
-  if (!VIEW || (VIEW === 'me' && !me)) VIEW = me ? 'me' : 'raid';
-  const DUN = !!(C.h && C.h.dungeon); if (DUN && me) VIEW = 'me'; /* (a dungeon boss: your Me view only (Oct 24)) */
+  const me = WHO ? PL.find((p) => p.name === WHO) || null : mine || null;
+  if (!VIEW) VIEW = 'me';
+  const DUN = !!(C.h && C.h.dungeon); if (DUN) VIEW = 'me'; /* (a dungeon boss: your Me view only (Oct 24)) */
   const R = C.raid || {}, CO = (C.coach && C.coach.raid) || null;
   let L = '', Rt = '';
   /* (the Report card grade and tonight's two charts, when ticked in /db, above the raid lead box as /recap draws them (Oct 24, the user:
@@ -312,6 +313,8 @@ function cardView() {
       Rt += sec('died', 'Who died <span class="ksc">· ' + esc(H0d.deaths != null ? H0d.deaths : died.length) + (+H0d.deaths === 1 ? ' death' : ' deaths') + '</span>',
         (died.length ? shown.map((d) => '<div class="kdd"><span>' + esc(d[0]) + '</span>' + nmH(d[1]) + icn(d[3]) + '<span>' + esc(d[4] || '') + '</span></div>').join('') + (more > 0 ? '<p class="kno">+' + more + ' more.</p>' : R.more ? '<p class="kno">' + pt(R.more) + '</p>' : '') : '<p class="kno">' + pt(R.more || 'Nobody died.') + '</p>'), undefined, died.length, null);
     }
+  } else if (VIEW === 'me') {
+    L += '<p class="kno">You weren\'t in this pull. Use ‹ › to look at someone else' + (DUN ? '.' : ', or open the Raid view.') + '</p>';
   } else {
     // (the raid view: your raid lead, the four cards, every mistake folded, then deaths, avoidable damage and survival)
     if (CO && on('coach')) {
@@ -356,8 +359,8 @@ function cardView() {
   const head = '<div class="khead"><div><div class="kbn">' + esc(H.boss) + '</div><div class="kmeta">' + [H.diff, 'Pull ' + H.pull, H.dur, H.where, H.deaths ? H.deaths + (H.deaths === 1 ? ' death' : ' deaths') : ''].filter(Boolean).map(esc).join(' · ') + '</div></div><span class="kres' + (prac ? ' p' : H.kill ? ' k' : '') + '">' + esc(res) + '</span></div>';
   const bossKey = (H.boss || '') + ' · ' + (H.diff || ''), NP0 = (D.night || []).filter((p) => p.boss === bossKey), ci = Math.max(0, NP0.findIndex((p) => p.cur)), NP = NP0.slice(Math.max(0, Math.min(ci - 5, NP0.length - 7)), Math.max(0, Math.min(ci - 5, NP0.length - 7)) + 7); /* (seven at most, around this pull, as the card's row (Oct 24)) */
   const pulls = on('chips') && NP.length > 1 ? '<div class="kpulls">' + NP.map((p) => '<span class="' + (p.cur ? 'on' : '') + (loadingPull === p.sb ? ' wait' : '') + '" style="color:' + (p.kill ? '#ff8000' : p.left != null ? ([[80, '#b25ef5'], [60, '#2e8cff'], [40, '#2ee62e'], [20, '#f2f2f2'], [0, '#9d9d9d']].find(([lo]) => 100 - Math.round(p.left) >= lo) || [0, '#9d9d9d'])[1] : 'var(--muted)') + '" data-pull="' + p.sb + '" title="' + esc('Pull ' + p.pull + (p.h ? ': ' + p.h : '')) + '">Pull ' + p.pull + ' · ' + esc(p.txt) + '</span>').join('') + '</div>' : '';
-  const who = VIEW === 'me' && me && PL.length > 1 ? '<span class="kwho"><button type="button" data-who="-1" title="The player before">‹</button>' + nmH(me.name) + '<button type="button" data-who="1" title="The next player">›</button></span>' : '';
-  const tabs = me ? '<div class="ktabs"><span data-tab="me" class="' + (VIEW === 'me' ? 'on' : '') + '">Me</span>' + (DUN ? '' : '<span data-tab="raid" class="' + (VIEW === 'raid' ? 'on' : '') + '">Raid view</span>') + who + '</div>' : '';
+  const who = VIEW === 'me' && PL.length > 1 ? '<span class="kwho"><button type="button" data-who="-1" title="The player before">‹</button>' + (me ? nmH(me.name) : '<b class="knm" style="color:var(--faint)">Not in this pull</b>') + '<button type="button" data-who="1" title="The next player">›</button></span>' : '';
+  const tabs = PL.length ? '<div class="ktabs"><span data-tab="me" class="' + (VIEW === 'me' ? 'on' : '') + '">Me</span>' + (DUN ? '' : '<span data-tab="raid" class="' + (VIEW === 'raid' ? 'on' : '') + '">Raid view</span>') + who + '</div>' : '';
   const reloadLine = LK.reload ? '<div class="krl">Debrief was updated. Type <b>/reload</b> in WoW when you\'re ready.</div>' : ''; /* (goes by itself after the /reload (Oct 24)) */
   return reloadLine + head + pulls + tabs + stopRow() + '<div class="kgrid one"><div class="kL">' + L + Rt + '</div></div>';
 }
@@ -447,7 +450,7 @@ function cols2(b, chrome) {
 window.addEventListener('resize', () => fit()); /* (the app widened or narrowed the window: measure again) */
 document.addEventListener('click', (e) => {
   const t = e.target.closest ? e.target.closest('[data-fold],[data-row],[data-close],[data-open],[data-big],[data-cut],[data-cutt],[data-pull],[data-tab],[data-cf],[data-cr],[data-cmore],[data-who]') : null; if (!t) return;
-  if (t.dataset.who) { const PL = (D.card && D.card.players) || []; if (!PL.length) return; const curN = document.querySelector('.kwho .knm'), cur = PL.findIndex((p) => p.name === WHO || (!WHO && curN && String(p.name).split('-')[0] === curN.textContent)); WHO = PL[((cur < 0 ? 0 : cur) + (+t.dataset.who) + PL.length) % PL.length].name; for (const k of Object.keys(OPEN)) if (/^r:rot|^m:rot|^s:rot/.test(k)) delete OPEN[k]; render(); return; }
+  if (t.dataset.who) { const PL = (D.card && D.card.players) || []; if (!PL.length) return; const curN = document.querySelector('.kwho .knm'), cur = PL.findIndex((p) => p.name === WHO || (!WHO && curN && String(p.name).split('-')[0] === curN.textContent)); WHO = PL[cur < 0 ? (+t.dataset.who > 0 ? 0 : PL.length - 1) : (cur + (+t.dataset.who) + PL.length) % PL.length].name; for (const k of Object.keys(OPEN)) if (/^r:rot|^m:rot|^s:rot/.test(k)) delete OPEN[k]; render(); return; }
   if (t.dataset.pull) { if (t.classList.contains('on')) return; loadingPull = +t.dataset.pull; t.classList.add('wait'); t.textContent = t.textContent.replace(/ · .*/, ' · loading…'); post('pull:' + t.dataset.pull); return; } /* (a pull button, in the card's row or the old strip) */
   if (t.dataset.tab) { VIEW = t.dataset.tab; render(); return; } /* (the card: Me or Raid view) */
   if (t.dataset.cf) { const k = t.dataset.cf, cur = OPEN[k] != null ? OPEN[k] : (k === 's:cw' || k === 's:cd' || k === 's:ca' ? DEEP() : true); OPEN[k] = !cur; render(); return; }

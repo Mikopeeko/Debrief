@@ -506,8 +506,8 @@ function renderRing() {
   if (on) { popHide(); return ring('on', 1, '<b>Pull ' + on.pull + '</b><span>on now</span>', 'A boss pull is on. Your recap is ready the moment it ends.'); }
   const s = L.lastSent, sb = s && L.items.find((b) => b.startByte === s.sb);
   if (sb && ((lastDone && s.sb === lastDone.startByte) || Date.now() - s.at < 90e3)) {
-    /* (nothing is copied any more (Oct 24): the pop-up shows it, and WoW gets it at /reload) */
-    return ring('sent', 1, '<b>✓</b><span>' + (sb.kill ? 'Kill recap is up' : 'Recap is up') + '</span><em>' + ($('pop').checked ? 'in the pop-up' : 'in WoW after /reload') + '</em>', 'Pull ' + sb.pull + "'s recap is " + ($('pop').checked ? 'in the pop-up over the game. ' : 'saved. ') + 'In WoW, /reload brings it into /recap.');
+    /* (nothing is copied any more (Oct 24): the pop-up shows it, and WoW gets it with Save this pull or at the next login) */
+    return ring('sent', 1, '<b>✓</b><span>' + (sb.kill ? 'Kill recap is up' : 'Recap is up') + '</span><em>' + ($('pop').checked ? 'in the pop-up' : 'in WoW on /recap') + '</em>', 'Pull ' + sb.pull + "'s recap is " + ($('pop').checked ? 'in the pop-up over the game. ' : 'saved. ') + 'In WoW, /reload brings it into /recap.');
   }
   const best = done.reduce((m, b) => { const e = N[b.startByte]; return e && e.l != null ? Math.max(m, 100 - e.l) : m; }, 0);
   if (!L.live) return ring('dim', best / 100, '<b>Older log</b><span>click a dot to send a pull</span>');
@@ -759,7 +759,7 @@ async function resaveOld() {
     for (const name of logs) { LOGDONE[name] = v; }
     for (const k0 of Object.keys(LOGDONE).slice(0, Math.max(0, Object.keys(LOGDONE).length - 20))) delete LOGDONE[k0];
     store.set('dbf-resaved-logs', LOGDONE);
-    if (cur === L.name && !L.reading && ok && list.length) stat('Your saved pulls are up to date: type /reload in WoW', L.live ? 'live' : '');
+    if (cur === L.name && !L.reading && ok && list.length) stat('Your saved pulls are up to date', L.live ? 'live' : ''); /* (no /reload: they come in with Save this pull on the card, or at the next login (Oct 25)) */
   } finally { resaveOld.on = false; }
 }
 
