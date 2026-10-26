@@ -2529,7 +2529,7 @@ function openPatchNotes() {
 // only links to them. The pictures are in site-assets/companion/shots.
 const IGM_URL = () => (WCL.HOSTED ? '/companion/' : 'https://debriefme.io/companion/');
 const IGM_SHOTS = [
-  ['big-window.jpg', 'Big window', 'Every pull of the night: your numbers pull by pull, how far each pull got, and what the raid needs to clean up. Press Expand on your card, or type /debrief big.'],
+  ['big-window.jpg', 'Big window', 'Every pull of the night: your numbers pull by pull, how far each pull got, and what the raid needs to clean up. Press Expand on your card.'],
   ['simple-medium-heavy.png', 'Simple, Standard or Detailed', 'Pick how much your card shows, from a quick read to everything. Standard opens with its sections closed: tap one to open it.'],
   ['raid-view.png', 'Raid view', 'The raid\'s biggest mistakes and who died. Use the arrows to look at anyone\'s pull.'],
   ['settings.png', 'Settings', 'Type /db: pick a style, the four everyday switches, and the rest in folds. Your card sits beside it and changes as you click.'],
@@ -2537,7 +2537,7 @@ const IGM_SHOTS = [
   ['card-sizes.png', 'On your PC', 'The same recap pops up over the game a few seconds after each boss pull.'],
   ['tutorial.png', 'First-time setup', 'Four short steps the first time you log in: it checks that everything works, then helps you pick what you see.'],
 ];
-const IGM_CMDS = [['/recap', 'Shows or hides your card.'], ['/db', 'Opens the settings.'], ['/debrief big', 'Opens the big window with the whole night.'], ['/debrief demo', 'Shows a sample card, to try it before raid.'], ['/debrief setup', 'Opens the guided setup again.']];
+const IGM_CMDS = [['/recap', 'Shows or hides your card.'], ['/db', 'Opens the settings.'], ['/debrief setup', 'Opens the guided setup again.']];
 // (the site's own logo, the same as the top bar's; its colours are the lgf* gradients at the top of the page)
 const IGM_LOGO = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 2 57 11.5V30c0 15.5-11.3 26.6-25 32C18.3 56.6 7 45.5 7 30V11.5Z" fill="url(#lgfMetal)" stroke="#4a300a" stroke-width=".8"/><path d="M32 7 52.5 14.8V30c0 12.8-9.2 22-20.5 26.6C20.7 52 11.5 42.8 11.5 30V14.8Z" fill="url(#lgfMetalDk)"/><path d="M32 9.2 50.5 16.3V30c0 11.7-8.3 20.2-18.5 24.5C21.8 50.2 13.5 41.7 13.5 30V16.3Z" fill="url(#lgfEnamel)"/><path d="M32 9.2 50.5 16.3V23C40 20.5 24 20.5 13.5 23V16.3Z" fill="#fff" opacity=".07"/><path fill-rule="evenodd" transform="translate(0 1.2)" fill="#000" opacity=".55" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path fill-rule="evenodd" fill="url(#lgfMetal)" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path d="m29 32.4 2.7 2.7 5.6-6.1" fill="none" stroke="url(#lgfEmerald)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 let IGM_BACK = null;
@@ -28760,7 +28760,7 @@ const PAGE_TIPS = {
     { sel: '#main .igm-cta', t: 'Get it', p: 'Download for Windows puts in the PC app and the addon in one go.' },
     { sel: '#main .igm-who', t: 'Who needs what', p: 'Everyone who wants their recap runs the PC app. It reads their own combat log and puts the addon in too.' },
     { sel: '#main .igm-steps', t: 'After every pull', p: 'Your recap pops up on your PC by itself. In WoW, /recap shows it too: click Save this pull when the card offers it.' },
-    { sel: '#main .igm-cmds', t: 'Handy commands', p: 'Type /recap for your card, /db for the settings, or /debrief big for every pull of the night.' }],
+    { sel: '#main .igm-cmds', t: 'Handy commands', p: 'Type /recap for your card, /db for the settings, or /debrief setup for the guided setup again.' }],
   live: [
     { sel: '#bhPulls .bhp-row, #list .film', t: 'Every pull of the night', p: 'Each bar is one pull: the higher it is, the further it got. Click one to see it. Its color shows how far it got too, and orange is a kill.' },
     { sel: '#view .lp-tiles', t: 'The pull at a glance', p: 'Green went right; yellow had some mistakes; red failed. The ▲ and ▼ arrows compare it with the last pull. Click a box for its details.' },

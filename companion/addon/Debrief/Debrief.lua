@@ -262,7 +262,7 @@ bigBtn:SetWidth(bigBtn.t:GetStringWidth() + 18)
 bigBtn:SetScript("OnClick", function()
   if DebriefOptions and DebriefOptions:IsShown() then Debrief_ToggleOptions() end
   card:Hide(); big:Show(); big:Raise()
-  local ok, err = pcall(bigRender); if not ok then say("the big window couldn't open (" .. tostring(err):sub(1, 120) .. "). /debrief big tries again.") end
+  local ok, err = pcall(bigRender); if not ok then say("the big window couldn't open (" .. tostring(err):sub(1, 120) .. "). Press Expand on the card to try again.") end
 end)
 for _, b0 in ipairs({ close, detailBtn, bigBtn }) do if b0 and b0.SetFrameLevel and top.GetFrameLevel then b0:SetFrameLevel(top:GetFrameLevel() + 3) end end
 bigBtn:SetScript("OnEnter", function() bigBtn.t:SetTextColor(rgb(COL.text)); GameTooltip:SetOwner(bigBtn, "ANCHOR_TOP"); GameTooltip:SetText("The big window: tonight's pulls, charts and everything at once"); GameTooltip:Show() end)
@@ -1800,7 +1800,7 @@ bigRender = function()
 end
 function Debrief_ToggleBig()
   if Debrief_PreviewFix then Debrief_PreviewFix() end
-  if not DB or #DB.pulls == 0 then say("no pulls yet. /debrief demo shows a sample."); return end
+  if not DB or #DB.pulls == 0 then say("no pulls yet. After a boss pull, your recap pops up on your PC."); return end
   if big:IsShown() then big:Hide() else big:Show(); bigRender() end
 end
 end
@@ -2284,8 +2284,7 @@ local function buildOptions()
     buttons({ { "Run the setup again", function() opt:Hide(); Debrief_Tutorial() end, 150 }, { "Sample recap", function() SlashCmdList.DEBRIEF("demo") end, 110 } })
     y = y - 6
     buttons({ { "Move card back", function() SlashCmdList.DEBRIEF("reset") end, 120 } })
-    local HELP = { { "/recap", "show or hide your recap (/dbr, /debrief too)" }, { "/db", "these settings (/dmo too)" }, { "/debrief big", "the big window" },
-      { "/debrief setup", "the guided setup again" }, { "/debrief log", "combat logging on or off" }, { "/debrief demo", "a sample recap" } }
+    local HELP = { { "/recap", "show or hide your card" }, { "/db", "these settings" }, { "/debrief setup", "the guided setup again" } }
     for _, h in ipairs(HELP) do
       local c = P:CreateFontString(nil, "OVERLAY"); setFont(c, "bold", 12.5); c:SetPoint("TOPLEFT", PX, -(y + 4)); c:SetTextColor(rgb(COL.gold)); c:SetText(h[1])
       local d = P:CreateFontString(nil, "OVERLAY"); setFont(d, "body", 12.5); d:SetPoint("TOPLEFT", PX + 104, -(y + 4)); d:SetTextColor(rgb(COL.soft)); d:SetText(h[2])
@@ -2625,13 +2624,13 @@ BINDING_HEADER_DEBRIEF = "Debrief"
 BINDING_NAME_DEBRIEF_TOGGLE = "Show or hide the recap card"
 
 -- (/dmo, "Debrief me open": the settings, in three letters)
-SLASH_DEBRIEFMO1 = "/db"; SLASH_DEBRIEFMO2 = "/dmo" -- (/db first (the user, Oct 22); /dmo still works)
+SLASH_DEBRIEFMO1 = "/db" -- (your settings; /dmo went on Oct 25: three commands, the user: "thats really all anyone needs")
 SlashCmdList.DEBRIEFMO = function() Debrief_ToggleOptions() end
-SLASH_DEBRIEF1 = "/recap"; SLASH_DEBRIEF2 = "/dbr"; SLASH_DEBRIEF3 = "/debrief" -- (/recap first (the user, Oct 22); /dbr and /debrief still work)
+SLASH_DEBRIEF1 = "/recap"; SLASH_DEBRIEF2 = "/debrief" -- (your card; /debrief setup the guided setup again. /dbr went on Oct 25)
 SlashCmdList.DEBRIEF = function(msg)
   msg = (msg or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
-  if msg == "options" or msg == "config" or msg == "settings" or msg == "o" then Debrief_ToggleOptions()
-  elseif msg == "setup" or msg == "tutorial" or msg == "tour" then Debrief_Tutorial()
+  if msg == "settings" then Debrief_ToggleOptions()
+  elseif msg == "setup" then Debrief_Tutorial()
   elseif msg == "big" or msg == "b" then Debrief_ToggleBig()
   elseif msg == "mini" then DB.mini = not DB.mini; if DB.mini then DB.bigDefault = false end; say("mini bar " .. (DB.mini and "on: one slim line after each pull, click it for the card." or "off: the card after each pull.")); if DB.mini and #DB.pulls > 0 then card:Hide(); miniShow() else mini:Hide() end
   elseif msg == "reset" then DB.pos = nil; card:ClearAllPoints(); card:SetPoint("CENTER", 260, 60); say("card moved back to the middle.")
@@ -2641,7 +2640,7 @@ SlashCmdList.DEBRIEF = function(msg)
     local m = decode(SAMPLE)
     if m then m.demo = true; addPull(m); showCard(); say("showing a sample Mythic Coiled Altar wipe (made-up names; Vexmira is the Holy Paladin). Use the arrows to see other players.") end
   elseif msg == "log" then Debrief_ToggleLog()
-  elseif msg == "help" then say("/db (or /dmo, or /debrief options): your settings. /debrief setup: the guided setup again. /debrief: show or hide the card. /debrief big: the big window. /debrief demo: a sample card. /debrief log: combat logging on or off (or the button on the card, or a key in Keybindings > AddOns > Debrief). /debrief reset: move the card back.")
+  elseif msg == "help" then say("/recap: show or hide your card. /db: your settings. /debrief setup: the guided setup again.")
   else Debrief_Toggle() end
 end
 
@@ -2657,7 +2656,7 @@ function Debrief_ToggleLog()
   local on = not LoggingCombat()
   LoggingCombat(on); DB.autoLog = on
   if on and GetCVar and SetCVar and GetCVar("advancedCombatLogging") ~= "1" then pcall(SetCVar, "advancedCombatLogging", 1) end
-  say(on and "combat logging is |cff7ee08fon|r, with Advanced Combat Logging. Debrief keeps it on." or "combat logging is |cffff8f87off|r. Press the button on the card, your key or /debrief log to turn it back on.")
+  say(on and "combat logging is |cff7ee08fon|r, with Advanced Combat Logging. Debrief keeps it on." or "combat logging is |cffff8f87off|r. Press Logging on the card to turn it back on.")
   if Debrief_LogButton then Debrief_LogButton() end
 end
 BINDING_NAME_DEBRIEF_TOGGLELOG = "Combat logging on or off"
@@ -2667,7 +2666,7 @@ autoLog = function()
   if GetCVar and SetCVar and GetCVar("advancedCombatLogging") ~= "1" then SetCVar("advancedCombatLogging", 1) end
   if not LoggingCombat() then
     LoggingCombat(true); weLog = true
-    if not logSaid then logSaid = true; say("combat log and Advanced Combat Logging are on. Debrief keeps them on (/debrief log turns this off).") end
+    if not logSaid then logSaid = true; say("combat log and Advanced Combat Logging are on. Debrief keeps them on (Logging on the card turns this off).") end
   end
 end
 -- (a training dummy: any target named "... Dummy" that isn't a player)
@@ -2748,7 +2747,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     if DB.reopenOpt then DB.reopenOpt = nil; if C_Timer then C_Timer.After(1, function() if not InCombatLockdown() and not (DebriefOptions and DebriefOptions:IsShown()) then Debrief_ToggleOptions() end end) end end -- (Send to my PC pop-up: /db again (Oct 25))
     if DB.openAfter then DB.openAfter = nil; if C_Timer and #DB.pulls > 0 then C_Timer.After(1, function() if not InCombatLockdown() then card:Show(); render() end end) end end -- (Save this pull: the card again (Oct 25))
     if DEBRIEF_HAS_APP or DB.hasApp then say("ready. Your recap pops up on your PC after each boss pull." .. ((DB.fromApp or 0) > 0 and (" " .. DB.fromApp .. " new pull" .. (DB.fromApp == 1 and "" or "s") .. " from Debrief Companion: /recap.") or " /recap shows them here too."))
-    else say("ready. Your recaps come from Debrief Companion on your PC. /debrief demo shows a sample.") end
+    else say("ready. Your recaps come from Debrief Companion on your PC.") end
   end
 end)
 
