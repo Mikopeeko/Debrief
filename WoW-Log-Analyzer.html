@@ -17653,7 +17653,7 @@ const PATCH_NOTES = [
     { t: 'Plan: your raid night in one page', d: 'The Plan tab is out for everyone: bring in your team, and Debrief picks who plays each boss and plans every job, kick and healing cooldown the way the fastest kills do. Change anything, then copy it into the game for NSRT.' },
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
-    { t: 'Plan: a picture for every job', d: 'On The Coiled Altar, Ula\'tek, The Twin Fangs and Nymrissa (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
+    { t: 'Plan: a picture for every job', d: 'On The Coiled Altar, Ula\'tek, The Twin Fangs, Nymrissa and Nek\'zali (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
   ], n: [
     'Debrief in game: your card and PC pop-up use the newest boss mechanics, potion and death rules from the website.',
     'On a phone: the dots on the pull at a glance are easier to tap, and the front page\'s footer links have room for a thumb.',
@@ -52259,6 +52259,62 @@ function ppCardsNY(J, M, U, P) {
     foot: 'After the third Pop (about 5:40) ignore the murlocs and burn her.' });
   return cards;
 }
+// ===== Nek'zali the Soulcoiler, Mythic (Oct 26, the same setup; Plan's Jobs cards in 173240d), on the guide's maps of the room =====
+// (the note's jobs, in the lines Plan writes: "Group 1:" / "Group 2:" (the well teams, in kick order), "Pyre Soak:" / "Don't Soak:",
+// "Dispel 1:" / "Dispel 2:" / "Backup Dispel:" (Essence Rend), "Grips:")
+function ppReadNZ(N, P) {
+  const isN = (w) => P.has(String(w).toLowerCase()), J = { well: [[], []], soak: [], out: [], disp: [], grips: [] };
+  for (const l of N.lines) { const lab = l.label.toLowerCase(), who = l.words.filter(isN).map((w) => P.get(w.toLowerCase()).name); let m; if (!who.length) continue;
+    if ((m = /^group\s*(\d)/.exec(lab))) J.well[+m[1] > 1 ? 1 : 0] = who; else if (/don.?t soak/.test(lab)) J.out = who; else if (/pyre soak/.test(lab)) J.soak = who;
+    else if ((m = /dispel\s*(\d)/.exec(lab))) J.disp[+m[1] - 1] = who[0]; else if (/backup dispel/.test(lab)) J.disp[2] = who[0]; else if (/grip/.test(lab)) J.grips = who; }
+  return J;
+}
+const NZ_VIEW = { x: 0, y: -4, r: 50 };
+function ppCardsNZ(J, M, U, P) {
+  const cards = [], BL = '#5aa0ff', GO = '#e6b450', PU = '#c084ff', OR = '#ff8a3b', Q = '#c9ced8', cdsOf = (L) => (L || []).map(([t, n, sp]) => ppI(P, n, t + ' ' + sp));
+  // Soulcoil Ignition: five raid hits, spirits flying out of the well (the guide's map as they land)
+  cards.push({ id: 'ign', ph: 1, when: 'Three times', title: 'Soulcoil Ignition (Cooldowns, dodge the spirits)', map: ppFreeze(NZ_M.ignite(false), 5.2, ppSeat(P, {}), P, M, { focus: NZ_VIEW }),
+    legend: [ppG('Raid cooldowns', '#9a7bff', cdsOf(J.ign)), ppG('Everyone', PU, [], 'She stirs the well: five raid hits. Step away from the spirits that fly out of it (a big hit and a knockback).')],
+    foot: 'Each Ignition gives her 25 energy.' });
+  // Possession Barrage: the tank holding her runs out, the raid behind her (the guide's map as the tank gets there)
+  { const S = ppSeat(P, {}), nm = (v) => (typeof v === 'string' ? v : '');
+    cards.push({ id: 'barrage', ph: 1, when: 'Every Barrage', title: 'Possession Barrage (Raid behind, tank runs out)', map: ppFreeze(NZ_M.barrage(false), 4.6, S, P, M, { hl: ['t1'], named: ['t1', 't2'], focus: NZ_VIEW }),
+      legend: [ppG('Tanks', BL, [nm(S.t1) && ppI(P, S.t1, 'Runs out'), nm(S.t2) && ppI(P, S.t2, 'Takes her')], 'The tank holding her runs 30 to 40 yards straight out; swap around 7 to 9 stacks.'), ppG('Everyone', GO, [], 'Stand behind her, never between her and the running tank.')],
+      foot: 'The echoes burst where they land: the farther they fly, the less they hit.' }); }
+  // The well teams: each group down the well in turn, kicking the Drowned Echo's curse in its order (the guide's map with the group in)
+  J.well.forEach((L, g) => { if (!L.length) return; const SQ = g ? NZ_SQB : NZ_SQA, fix = {}; L.slice(0, SQ.length).forEach((n, i) => { fix[SQ[i]] = n; }); const ids = SQ.filter((s) => fix[s]);
+    cards.push({ id: 'well' + (g + 1), ph: 1, when: g ? 'Second well' : 'First well', title: 'Grasping Depths (Group ' + (g + 1) + ' goes down)', map: ppFreeze(NZ_M.depths(false, g ? { b: true } : {}), 6, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags: ids.map((s, i) => [s, String(i + 1)]), focus: NZ_VIEW }),
+      legend: [ppG('Group ' + (g + 1) + ': down the well, kick in order', PU, L.map((n, i) => ppI(P, n, 'Kick ' + (i + 1))), 'Kill the Drowned Echo; kick its curse late (2 melee kicks, or 3 others).'), ppG('Group ' + (g ? 1 : 2), Q, (J.well[g ? 0 : 1] || []).map((n) => ppI(P, n)), 'Stays up top this time: the teams take turns.')],
+      foot: 'Dodge the circles and lasers down there. Nobody goes down twice in a row (Soul Exhaustion).' }); });
+  // The Amani: the boss dragged to the glowing coffins, casters breaking the shields, the grips pulling strays in (the guide's map at the adds)
+  if (J.grips.length) { const fix = {}, ids = []; J.grips.slice(0, 2).forEach((n, i) => { const s = ['m7', 'r7'][i]; fix[s] = n; ids.push(s); });
+    cards.push({ id: 'grip', ph: 1, when: 'Every Amani set', title: 'Restless Amani (Drag her to the coffins)', map: ppFreeze(NZ_M.amani(false), 9.2, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags: ids.map((s) => [s, 'Grip']), focus: NZ_VIEW }),
+      legend: [ppG('Grips', '#c0394f', J.grips.map((n) => ppI(P, n, 'Strays in'))), ppG('Everyone', GO, [], 'Her tank drags her to the biggest glowing coffin group; casters break the shields with magic damage; the raid cleaves the Amani.')],
+      foot: 'Each Amani that reaches the well gives her energy and hits the raid.' }); }
+  // Essence Rend: the targets walk to the edge behind the raid and are dispelled there (the guide's map at the dispels)
+  if (J.disp.filter(Boolean).length) { const fix = {}, ids = [], tags = []; ['h1', 'h3', 'h4'].forEach((s, i) => { if (!J.disp[i]) return; fix[s] = J.disp[i]; ids.push(s); tags.push([s, i === 2 ? 'Backup' : 'Dispel ' + (i + 1)]); });
+    cards.push({ id: 'rend', ph: 1, when: 'Every Rend', title: 'Essence Rend (Dispel at the edge)', map: ppFreeze(NZ_M.rend(false), 6.6, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags, focus: NZ_VIEW }),
+      legend: [ppG('Dispels', '#7fd8ff', [J.disp[0] && ppI(P, J.disp[0], 'Dispel 1'), J.disp[1] && ppI(P, J.disp[1], 'Dispel 2'), J.disp[2] && ppI(P, J.disp[2], 'Backup')], 'Only once the target reaches the edge.'), ppG('Rend targets', Q, [ppI(P, ppAny('Whoever gets Rend'))], 'Run to the edge of the room, behind the raid.')],
+      foot: 'Each dispel leaves a Latent Cultist puddle for the rest of the fight: keep them out of the middle.' }); }
+  // Echoes of Jawae: the raid on each Echo at its doorway, west first, out of its front as Soul Transfer lands (the guide's map)
+  cards.push({ id: 'echo', ph: 1.5, when: 'Intermission', title: 'Echoes of Jawae (One at a time, dodge late)', map: ppFreeze(NZ_M.echoes(false), 11.2, ppSeat(P, {}), P, M, { focus: { x: -20, y: -2, r: 38 } }), /* (framed on the west doorway, where the first Echo is) */
+    legend: [ppG('Everyone', PU, [], 'Hit her while she moves to the well, then the Echoes one at a time: the west door first, then the east. Soul Transfer goes off at the end of its cast: keep hitting, dodge late.'), ppG('Raid cooldowns', '#9a7bff', cdsOf(J.echo))],
+    foot: 'One 2-minute cooldown here; hold the second and Bloodlust for phase 2.' });
+  // Hungering Pyre: the soakers dead centre on the Echo's tank, everyone else spread out and burning the bodies the Pyre missed
+  if (J.soak.length || J.out.length) { const o = NZ_PY[0], E = o.E, th = o.th, b = th + 180, T = nzAdd(E, th, 5.5), k = gdzKit(NZ, 3), fix = {}, put = new Set();
+    k.boss('nz', NZ, 0, NZ_IB[0], NZ_IB[1]).add('ej', 'Echo of Jawae', 0, E[0], E[1]); k.ring({ x: T[0], y: T[1], r: 10, fx: 'soak', t0: 0, at: 1.05, dur: 5, color: OR, cn: 'Hungering Pyre', label: false });
+    const si = ppClump(k, P, fix, put, J.soak, T, 5.5), oi = J.out.map((n, i) => { const s = ppSlot(P, n, put); if (!s) return null; fix[s] = n; const q = nzAdd(T, b + (i - (J.out.length - 1) / 2) * 22, 20); k.at(0, s, q[0], q[1]); return s; }).filter(Boolean);
+    GDZ_RAID.filter((s) => !put.has(s)).forEach((s) => { put.add(s); k.at(0, s, T[0], T[1]); });
+    [[th + 80, 12.5], [th - 40, 12.5], [th + 150, 13]].forEach(([a, r]) => { const q = nzAdd(T, a, r); k.ring({ x: q[0], y: q[1], r: 1.8, fx: 'puddle', t0: 0, dur: 9, color: '#9aa0ac', fill: 'rgba(150,155,165,.5)', cn: 'Body', label: false }); });
+    cards.push({ id: 'pyre', ph: 1.5, when: 'Every Pyre', title: 'Hungering Pyre (Dead centre on the Echo\'s tank)', map: ppFreeze(k.done({ title: 'Hungering Pyre', focus: NZ_VIEW }), 1, ppSeat(P, fix), P, M, { hl: si.concat(oi), focus: NZ_VIEW, labels: [[si, 'Soak', OR, '#1a0a00', 8]] }),
+      legend: [ppG('Pyre soak: dead centre', OR, J.soak.map((n) => ppI(P, n))), ppG('Don\'t soak: spread out', Q, J.out.map((n) => ppI(P, n)), 'Burn the bodies the Pyre missed with your Slithering Flame.')],
+      foot: 'The hit is smaller than the circle: stand in the middle. A body left at the edge comes back as an empowered Amani.' }); }
+  // Phase 2: Bloodlust and cooldowns as she comes back, the cultist circles' dash paths (the guide's map)
+  cards.push({ id: 'p2', ph: 2, when: 'Phase 2', title: 'Invoke (Bloodlust, race to 100 energy)', map: ppFreeze(NZ_M.invoke(false, 'm'), 3.4, ppSeat(P, {}), P, M, { focus: NZ_VIEW }),
+    legend: [ppG('Everyone', GO, [], 'Bloodlust and cooldowns as she comes back; kill her before 100 energy. Stop casting as Invoke lands, or you\'re silenced for 3 seconds.'), ppG('Raid cooldowns', '#9a7bff', cdsOf(J.p2))],
+    foot: 'Each cultist circle dashes to a new spot on Invoke: stay out of their paths.' });
+  return cards;
+}
 // (the note's healing and raid cooldowns at a moment, for a picture's legend: NSRT reminder lines between two times of a phase)
 function ppCds(N, P, ph, t0, t1) { return N.reminders.filter((x) => x.ph === ph && x.time >= t0 && x.time <= t1 && x.spellid).flatMap((x) => x.tags.filter((w) => P.has(w.toLowerCase())).map((w) => [Math.floor(x.time / 60) + ':' + String(Math.round(x.time % 60)).padStart(2, '0'), P.get(w.toLowerCase()).name, (E.cdName && E.cdName(x.spellid)) || x.text || 'Cooldown'])); }
 const GDZ_PP = {
@@ -52322,6 +52378,17 @@ const GDZ_PP = {
     // (Plan's Jobs cards (23a0436) and the pictures each shows, by its key, else by its title)
     mech: { rain: ['rain'], adds: ['adds'], jet: ['jet'], orbs: ['orbs'], pop: ['pop'], cds: [], def: [] },
     jobs: [[/abyssal rain/i, ['rain']], [/murloc|grip/i, ['adds']], [/water jet/i, ['jet']], [/frost orb|orb soak/i, ['orbs']], [/whirlpool|pop/i, ['pop']]] } },
+  "Nek'zali the Soulcoiler": { Mythic: {
+    // (the guide places no markers here: a plain ring round the well, 38 yards out at the compass points, for the raid lead to drag)
+    marks: { star: [0, 38], circle: [27, 27], diamond: [38, 0], triangle: [27, -27], moon: [0, -38], square: [-27, -27], cross: [-38, 0], skull: [-27, 27] },
+    stack: [0, 0],
+    uses: [],
+    room: { scene: (k) => { k.boss('nz', NZ, 0, NZ_B[0], NZ_B[1]); }, focus: { x: 0, y: -4, r: 54 }, lim: 50, keep: [NZ] },
+    read(N, P) { const J = ppReadNZ(N, P); J.ign = ppCds(N, P, 1, 0, 8).concat(ppCds(N, P, 1, 70, 82), ppCds(N, P, 1, 142, 152)); J.echo = ppCds(N, P, 1.5, 0, 999); J.p2 = ppCds(N, P, 2, 0, 999); return J; },
+    cards: ppCardsNZ,
+    // (Plan's Jobs cards (173240d) and the pictures each shows, by its key, else by its title)
+    mech: { ign: ['ign'], barrage: ['barrage'], well: ['well1', 'well2'], grip: ['grip'], rend: ['rend'], echo: ['echo'], pyre: ['pyre'], p2: ['p2'], cds: [], def: [] },
+    jobs: [[/ignition/i, ['ign']], [/barrage/i, ['barrage']], [/well/i, ['well1', 'well2']], [/amani|grip/i, ['grip']], [/essence rend|dispel/i, ['rend']], [/echoes of jawae/i, ['echo']], [/pyre/i, ['pyre']], [/phase 2|invoke/i, ['p2']]] } },
 };
 const PP_PH = { 1: ['Phase 1', '#5aa0ff'], 1.9: ['Phase 1 ends', '#5aa0ff'], 2: ['Phase 2', '#b65cff'], 2.5: ['Intermission', '#e6b450'], 3: ['Phase 3', '#ff5a4f'] };
 
@@ -52433,7 +52500,7 @@ function ppOpen(r, u0, opt) {
   document.body.appendChild(box); document.body.classList.add('ndz-modal');
   const close = () => { box.remove(); if (!$('#ndzWiz') && !$('#ndzGuide') && !$('#ndzNoteView') && !$('#ndzShot')) document.body.classList.remove('ndz-modal'); };
   const head = '<div class="ndz-whead"><span class="sub">Pictures for Discord</span><button class="ndz-ex" type="button" data-ppx aria-label="Close">✕</button></div>';
-  if (!set.cf) { box.innerHTML = '<div class="ndz-wbox">' + head + '<h2>Pictures for Discord</h2><p class="sub">Pictures are ready on Mythic for The Coiled Altar, Ula\'tek, The Twin Fangs and Nymrissa so far. The other bosses come next.</p></div>'; box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); }; return; }
+  if (!set.cf) { box.innerHTML = '<div class="ndz-wbox">' + head + '<h2>Pictures for Discord</h2><p class="sub">Pictures are ready on Mythic for The Coiled Altar, Ula\'tek, The Twin Fangs, Nymrissa and Nek\'zali so far. The other bosses come next.</p></div>'; box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); }; return; }
   box.innerHTML = '<div class="ndz-wbox ndz-shotbox pp-win">' + head + '<h2 class="pp-h2"></h2>' +
     '<div class="pp-nav"><span class="sub pp-navt"></span><button class="btn sm" type="button" data-ppprev></button><button class="btn sm" type="button" data-ppnext></button><button class="btn sm" type="button" data-ppallv></button></div>' +
     '<p class="sub pp-intro">One picture for each mechanic your note gives jobs for, with everyone on their spot. Copy one and paste it in Discord (Ctrl+V), or download it.</p>' +
