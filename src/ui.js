@@ -30814,7 +30814,9 @@ function dsShort(sub, v) {
   if (/^You were in Eclipse \d+%/.test(s) || /^You stood in your Consecration/.test(s)) return '';
   if (/^(.+?) was (?:on the boss|up) \d+% of the time you were (?:alive|tanking)\.$/.test(s)) return '';
   if (/^You never pressed Judgment while Holy Shock was full\./.test(s)) return '';
-  if (/^You had \d+% left at the kill\./.test(s) || /^You used nearly all of it, which is the goal\./.test(s)) return '';
+  /* the merged Mana tile (Oct 26): the value says how much was left; what follows (advice, when there is any) is the short line */
+  if ((m = s.match(/^You had \d+% left at the kill\.\s*([\s\S]*)$/))) { const r = m[1].replace(/^You used nearly all of it, which is the goal\.\s*/, '').trim(); return r ? cap(first(r)) : ''; }
+  if (/^You used nearly all of it, which is the goal\./.test(s)) return '';
   if (/^Each .+? used [\d.]+ on average\./.test(s) || /^On average you had [\d.]+ .+? out at once\./.test(s) || /^Your Tyrant empowered \d+ demons at its most, on average\./.test(s) || /^On average you went into .+? with [\d,]+ .+? out of [\d,]+\./.test(s)) return '';
   if (/^Every one of your \d+ refreshes came in the last 30%/.test(s)) return '';
   if (/^Every one of (?:the|your) [\d,]+ .+? (?:had|finished|came|was|were)/.test(s) && /^0(?![\d.,:%])/.test(v0)) return '';
