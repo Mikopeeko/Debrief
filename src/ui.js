@@ -1784,6 +1784,11 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
+  { d: '2026-10-26', h: [
+  ], n: [
+    'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
+  ], f: [
+  ] },
   { d: '2026-10-25', h: [
     { t: 'Debriefing, slim and in place', d: 'A mechanic\'s details open under the row you click, with a small map you can zoom with the wheel or its + and − (⤢ opens it big). The mechanic rows, the details and the coach\'s rows share one slim shape with the gear column on Rotation.' },
     { t: 'The front page shows a pull being debriefed', d: 'The example window on the front page now plays a short loop instead of a still: the raid lead\'s verdict, three deaths filling in as bars, one death opening as a card, and the Rotation grade filling up. Built from the site\'s own pieces, so it\'s crisp and light; still if your system asks for less motion.' },
@@ -30261,23 +30266,27 @@ function dsMotion() { const H = document.documentElement; if (!window.matchMedia
      numbers within 3 s) */
   /* the loading screen is not the page: its draw must not use up the page's one play */
   if (!document.querySelector('#view [style*="--p"], #main [style*="--p"], #view .dbr-v, #view .rqc-sc, #main .my-bc')) return;
-  /* Debriefing redraws its whole page about once a second while it reads pulls (each inside a ~1 s freeze): no content motion there
-     until that loop is gone; the boss header still plays once */
-  const audit = /[?&]tab=audit(&|$)/.test(location.search) || !!document.querySelector('#view .ds-l'); H.classList.toggle('ds-nomotion', audit);
   const M = dsMotion, now = Date.now(), page = location.pathname + location.search, key = page + '|' + [...document.querySelectorAll('#view .dbr-v > b:first-child, #main .my-bc .my-tag, #view .rqc-sc')].map((e) => e.textContent.trim()).join(',').slice(0, 400);
+  /* Debriefing draws behind a placeholder (html.dbr-holding, the Debriefing chat's one-draw hold) until its numbers are in: those
+     draws neither play nor count; the play happens when the class comes off (the watcher below calls back in), and a later full
+     redraw of a held page (the previous pull's comparison arriving late) stays still */
+  if (H.classList.contains('dbr-holding')) { M.heldPage = page; return; }
   /* a play the raider never saw does not count: when the page is drawn again and everything that played is gone (a second-stage
-     draw replacing the first), it plays again on the new pieces */
-  const gone = !M.played || !M.played.length || M.played.every((el) => !document.contains(el));
+     draw replacing the first), it plays again on the new pieces; not on a held page, whose first draw is the one they see */
+  const gone = M.heldPage !== page && (!M.played || !M.played.length || M.played.every((el) => !document.contains(el)));
   const replay = !gone && ((M.key === key && now - (M.at || 0) < 3000) || (M.page === page && now - (M.pageAt || 0) < 30000));
   /* a small redraw right after the play (a progress line, a count) must not cut the play short: within 1.5 s of it nothing is
      marked still, it just isn't played again */
-  if (replay) { if (now - (M.pageAt || 0) > 1500) { H.classList.add('ds-still'); clearTimeout(M.tm); M.tm = setTimeout(() => H.classList.remove('ds-still'), 1200); } M.at = now; return; }
+  M.seen = M.seen || new WeakSet();
+  /* only a redraw that brings new numbers or bars can replay anything; a redraw that adds a line somewhere else cannot, so it is
+     never marked still (that mark used to stick when small redraws kept coming) */
+  const pieces = [...document.querySelectorAll('#view .dbr-v > b:first-child, #view .cb-v, #view .dbt-n, #view .cgl-c, #view .rqc-sc, #main .yu-t > b, #main .pnw-ti > b, #main .pgc > b, #main .my-bc .my-tag, #view [style*="--p"], #main [style*="--p"], .rtb-b > i, .cgl-b > i, .cb-f > i, .prw-t > i, .rta-ph, .ds-bar, .rcb-g .ds-bar, .tm-bar i.on, .rcb-st .rcb-bar > i, .ds-rl .rqc-bar > i')];
+  /* the boss header redraws on its own while a pull loads (and keeps redrawing after): its line and dots play once per page */
+  const hd = document.querySelector('header.fight.bh'); if (hd) { if (M.hdrPage === page && now - (M.hdrAt || 0) < 15000) hd.classList.add('ds-hstill'); else if (!replay) { M.hdrPage = page; M.hdrAt = now; hd.classList.remove('ds-hstill'); } }
+  /* on a redraw of a page that already played, every new piece is drawn still (ds-done) and the pieces still playing are left alone */
+  if (replay) { pieces.forEach((el) => { if (!M.seen.has(el)) { M.seen.add(el); el.classList.add('ds-done'); } }); M.at = now; return; }
   H.classList.remove('ds-still'); M.key = key; M.page = page; M.pageAt = now; M.played = [];
   M.at = now;
-  /* the boss header redraws on its own while a pull loads: its line and dots play once per set of pulls, not per redraw */
-  const hd = document.querySelector('header.fight.bh'), pl = hd && hd.querySelector('polyline.bhp-all-l'); if (hd) { const pts = pl ? pl.getAttribute('points') : ''; if (M.pts === pts && now - (M.ptsAt || 0) < 15000) hd.classList.add('ds-hstill'); else { M.pts = pts; M.ptsAt = now; } }
-  if (H.classList.contains('ds-still') || audit) return;
-  M.seen = M.seen || new WeakSet();
   /* bars drawn from --p (set by the studio's own passes a moment ago, in this same tick, so nothing has been painted yet): from 0 to their value */
   document.querySelectorAll('#view [style*="--p"], #main [style*="--p"]').forEach((el) => { if (M.seen.has(el)) return; M.seen.add(el); const p = el.style.getPropertyValue('--p'); if (!p || parseFloat(p) <= 0) return;
     el.style.setProperty('--p', '0'); void el.offsetWidth; el.classList.add('ds-ptrans'); el.style.setProperty('--p', p); M.played.push(el); });
@@ -30289,7 +30298,10 @@ function dsMotion() { const H = document.documentElement; if (!window.matchMedia
     let t0 = null; const dur = 450, fmt = (x) => (commas ? Math.round(x).toLocaleString('en-US') : x.toFixed(dec)) + suf;
     const step = (t) => { if (t0 === null) t0 = t; const k = Math.max(0, Math.min(1, (t - t0) / dur)), e = 1 - Math.pow(1 - k, 3); if (k < 1) { tn.nodeValue = fmt(Math.max(0, end * e)); requestAnimationFrame(step); } else tn.nodeValue = raw; };
     tn.nodeValue = fmt(0); M.played.push(el); requestAnimationFrame(step); }); }
-(function () { const f8 = dsBars; dsBars = function (root) { f8(root); try { dsMotion(); } catch (e) {} }; })();
+(function () { const f8 = dsBars; dsBars = function (root) { f8(root); try { dsMotion(); } catch (e) {} };
+  /* the hold coming off is the moment Debriefing is first seen: play then */
+  const H = document.documentElement; let held = H.classList.contains('dbr-holding');
+  new MutationObserver(() => { const now = H.classList.contains('dbr-holding'); if (held && !now) { try { dsMotion(); } catch (e) {} } held = now; }).observe(H, { attributes: true, attributeFilter: ['class'] }); })();
 
 // ===== Design studio round 17 (Oct 25): Rotation open tiles as slim rows. Re-homes the pieces inside an open tile's .rck-b: bar row, Next time, links.
 // Runs with the other passes, before paint. Owner: the Design studio chat. =====
