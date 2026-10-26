@@ -3803,6 +3803,7 @@ body.bh-off .tabbar .tb-id { display: inline-flex; }
 .grade.g-na { color: var(--faint); background: none; border-color: var(--line2); }
 .rk-d { display: flex; flex-direction: column; gap: 12px; margin-top: -6px; padding: 14px 16px 16px; background: var(--raised); border: 1px solid var(--gold); border-top: 0; border-radius: 0 0 12px 12px; animation: rcIn .18s ease-out; }
 @keyframes rcIn { from { opacity: 0; transform: translateY(-4px); } }
+.rk-nh { padding: 2px 14px; } /* (a healer's "Not enough healing" fact (Oct 26)) */
 .rk-work { padding: 12px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
 .rk-wh { margin-bottom: 4px; font: 600 15px var(--head); color: #f3f5f9; } .rk-wh .sub { margin-left: 6px; font: 400 13px var(--body); }
 .rk-w { display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid rgba(53, 59, 73, .55); } .rk-wh + .rk-w { border-top: 0; }
@@ -6143,7 +6144,7 @@ button, .btn, a, summary, .tab, .pull, .my-chip, .rcb-tr, .dbr-fx, .spc-tl, .md-
 .rqc-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid rgba(255,255,255,.04); font-size: 14px; }
 .rqc-sec h5 + .rqc-row { border-top: 0; } .rqc-row small { display: block; font-size: 12px; color: var(--muted); } .rqc-row b { font: 700 14px var(--head); text-align: right; }
 .rqc-i { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 800; color: #111; }
-.rqc-i.ok { background: var(--good); } .rqc-i.w { background: var(--warn); } .rqc-i.bad { background: var(--bad); color: #fff; }
+.rqc-i.ok { background: var(--good); } .rqc-i.w { background: var(--warn); } .rqc-i.bad { background: var(--bad); color: #fff; } .rqc-i.na { background: var(--line2, #3a4050); color: var(--muted); } /* (a fact row, never graded (Oct 26)) */
 .rqc-row > span:nth-child(2) { display: grid; grid-template-columns: minmax(0, 1fr) 44px; column-gap: 8px; align-items: center; } .rqc-row > span:nth-child(2) > small, .rqc-nm { grid-column: 1 / -1; }
 .rqc-bar { grid-column: 1; height: 6px; border-radius: 4px; background: rgba(255,255,255,.07); margin: 4px 0 2px; } .rqc-bar i { display: block; height: 100%; border-radius: 4px; }
 .rqc-bar i.ok { background: var(--good); } .rqc-bar i.w { background: var(--warn); } .rqc-bar i.bad { background: var(--bad); }

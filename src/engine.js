@@ -7046,7 +7046,8 @@ function triageSaves(r) {
 // healing for a long period?"). In their last 15 s: starved = seconds under 50% health while healing from others (heals and absorbs) over
 // the 3 s before came to under 10% of their health; run = the longest of those stretches; heal = healing from others as % of their health;
 // alive / healers = other healers alive / in the raid; dist = yards to the nearest alive healer (positions); busy = seconds that were the
-// pull's top-20% raid damage seconds (raid-wide damage: healers have to pick). Top guilds' survivors almost never sit 5 s+ starved
+// pull's top-20% raid damage seconds (raid-wide damage: healers have to pick); run40 = the longest stretch under 40% with that little healing
+// ("Not enough healing", Oct 26: top Coiled Altar survivors sat that way 3.5 s at most in 99 of 100 low stretches). Top guilds' survivors almost never sit 5 s+ starved
 // (99th percentile 5.5 s); on our Oct 21 night 1 of 81 deaths did (notes/Guides/Deaths - how to judge them.md).
 // Would what they had ready have saved them? (your rule, Oct 25: "if they had a healthstone/healthpot/some type of emergency self heal they
 // could have used to survive the mechanic"). From the first moment they were under half health with 1.5 s or more to go (time to press),
@@ -7084,12 +7085,12 @@ function deathHealGaps(r) {
     const hl = (heals.get(d.guid) || []).filter((e) => e[2] !== d.guid && e[0] > d.t - 18 && e[0] <= d.t);
     const hpAt = (t) => { let v = 1; for (const [x, fr] of l) { if (x > t) break; v = fr; } return v; };
     const inn = (a, b) => hl.reduce((n, e) => n + (e[0] > a && e[0] <= b ? e[3] : 0), 0);
-    let starved = 0, run = 0, best = 0;
-    for (let t = d.t - 15; t < d.t; t += 0.5) { if (hpAt(t) < 0.5 && inn(t - 3, t) < 0.1 * mx) { starved += 0.5; run += 0.5; best = Math.max(best, run); } else run = 0; }
+    let starved = 0, run = 0, best = 0, r40 = 0, b40 = 0;
+    for (let t = d.t - 15; t < d.t; t += 0.5) { const lowH = inn(t - 3, t) < 0.1 * mx; if (hpAt(t) < 0.5 && lowH) { starved += 0.5; run += 0.5; best = Math.max(best, run); } else run = 0; if (hpAt(t) < 0.4 && lowH) { r40 += 0.5; b40 = Math.max(b40, r40); } else r40 = 0; }
     const others = healers.filter((h) => h.guid !== d.guid), alive = others.filter((h) => !(deadAt.get(h.guid) < d.t - 0.5)), me = posAt(d.guid, d.t);
     const ds = me ? alive.map((h) => { const q = posAt(h.guid, d.t); return q ? Math.hypot(q[1] - me[1], q[2] - me[2]) : null; }).filter((x) => x != null) : [];
     let busy = 0; if (p80 > 0) for (let k = Math.max(0, Math.floor(d.t - 15)); k <= Math.floor(d.t); k++) if ((ts[k] || 0) >= p80) busy++;
-    d.gap = { starved, run: best, heal: Math.round(100 * inn(d.t - 15, d.t) / mx), alive: alive.length, healers: others.length, dist: ds.length ? Math.round(Math.min(...ds)) : null, busy };
+    d.gap = { starved, run: best, run40: b40, heal: Math.round(100 * inn(d.t - 15, d.t) / mx), alive: alive.length, healers: others.length, dist: ds.length ? Math.round(Math.min(...ds)) : null, busy };
   }
 }
 function explainDeaths(r) {

@@ -21,6 +21,13 @@ Three checklists for judging deaths the same way every time. The research and th
 6. **Too fast?** From 50%+ health to dead in 2 s or less (tanks: from 90%+) → not on them, weight 0.
 7. **The raid's mistake** linked within 4 s (adds alive too long, missed soak, Eternal Nightfall cast)?
    → weight 0; but if they also sat at or under 35% for 2+ s with kit ready → *shared*, half.
+7a. **Not enough healing?** (Oct 26, the user: "the player did what they could but healers simply did not heal them enough") All of:
+   no avoidable damage (under 10% of their last 15 s), no defensive, Healthstone or self-heal of theirs left unused (pressed, or none
+   ready; a health potion isn't counted, we can't see who carries one), and 4 s or more in a row under 40% health while healing from
+   others over each 3 s was under 10% of their health (`d.gap.run40`), with half the healers or more alive and one within 40 yards.
+   Top Coiled Altar kills: survivors sat like that 3.5 s at most in 99 of 100 low stretches (2,161 stretches, 19 kills), and no top
+   kill death qualifies. → *noheal*, not on them: the healing team's, or the healer a note line puts on them ("Holypal: Tankone").
+   Healer Report cards show it as a fact, never graded. Oct 22 + Oct 21 Coiled Altar and a Twin Fangs night: 1 death of 495 counted.
 7b. **A healing gap?** (Oct 22, the user: "is it the healers fault?") In their last 15 s, 5 s or more under 50% health while
    healing from others over each 3 s was under 10% of their health (`d.gap.starved`), AND half the healers or more alive, one
    within 40 yards, AND no raid-wide damage (under 4 of the pull's top-20% damage seconds) → *heal*: half on them if something

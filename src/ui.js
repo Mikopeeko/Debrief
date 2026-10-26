@@ -1952,6 +1952,7 @@ const PATCH_NOTES = [
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'A new death reason, Not enough healing: when someone did their part (no avoidable damage, nothing of theirs left unused) but sat under 40% health with little healing coming in for longer than top raids ever allow, the death isn\'t put on them. Healers see it on their Report card as a fact, never graded.',
     'Debriefing: the Coiled Altar shield-damage bars read like the site\'s other charts, one slim row a raider with a thin bar under the name, and the Venomfang dispel rows match them.',
     'The Coiled Altar: open Eternal Nightfall or Dreadmarch on Debriefing to see who put damage into the shields (Veil of Twilight and the mind-control shields), with how long each Veil took to break next to the top kills. On one pull or All pulls.',
     'Rotation says DPS and HPS instead of "a second" (overhealing, cooldown windows, Tyrant, Inner Flame, Tree of Life).',
@@ -10574,6 +10575,7 @@ function deathTag(r, d) { const rr = deathRep(r, d); if (!rr) return null; const
     : v.why === 'shared' ? (/mind controlled/.test(v.word) ? 'Mind controlled off the edge.' : (raidL ? 'Partly the raid\'s fault (' + deathMech(rr, raidL.mechanic) + ')' : 'Partly the raid\'s fault') + ', but they had ' + andList(ready) + ' ready.')
     : v.why === 'heal' ? 'Nobody healed them enough for ' + Math.round(v.gap.starved) + ' seconds while they were under half health' + (ready.length ? ', and they had ' + andList(ready) + ' ready.' : '.')
     : v.why === 'nosave' ? 'Nothing they had would have saved them.'
+    : v.why === 'noheal' ? 'Not enough healing: they did their part, but little healing came in for ' + deathSecs(v.gap.run40) + ' s while they were under 40%' + (v.healer ? ' (' + v.healer + ' was on them in the note)' : '') + '.'
     : v.why === 'nothing' ? 'Nothing left to press.'
     : v.why === 'fast' ? 'Too fast to react: ' + String(v.story || '').replace(/, too fast to react$/, '') + '.'
     : v.why === 'mass' ? d.mass + ' of us died to ' + ab + ' at once' + deathCause(rr, d) + '.'
@@ -13508,7 +13510,7 @@ function coachGame(r, name) {
     let d = null; if (it.dg) { const [g, tt] = String(it.dg).split('@'); d = (r.deaths || []).find((y) => y.guid === g && y.t.toFixed(2) === tt); }
     // (why they died in one sentence, then what to do next time, like the site's death card; no health numbers (Oct 22))
     let st = '', rdy = []; try { const tg = d && deathTag(null, d); if (tg) { const v = deathVerdict(r, d), p0 = String(tg.p || ''), w0 = story(deathBox(tg, d), 900).split(' · ')[0], why = p0 && w0.startsWith(p0) ? w0.slice(p0.length).trim() : w0; /* (no badge, Oct 22) */ const why2 = String(why).replace(/[\s,;:·]+\.$/, '.').replace(/[\s,;:·]+$/, '').replace(/([^.!?])$/, '$1.'); /* (what could have saved them (Oct 24): only a death that counts, with time to press it) */ rdy = v && v.counts && (v.why === 'ready' || v.why === 'shared') ? (v.defs || []).concat(v.kit || []).map((a) => (a === 'a healing potion' ? 'health potion' : a)).slice(0, 4) : [];
-      st = cClip(why2 + (rdy.length && !/\bready\b/i.test(why2) ? ' Could have used: ' + rdy.join(', ').replace(/, ([^,]*)$/, ' or $1') + '.' : '') + (v && v.fix ? ' Next time: ' + v.fix : ''), 320); /* (no stray comma before the full stop, Oct 24) */ } } catch (e) { st = ''; rdy = []; }
+      st = cClip(why2 + (rdy.length && !/\bready\b/i.test(why2) ? ' Could have used: ' + rdy.join(', ').replace(/, ([^,]*)$/, ' or $1') + '.' : '') + (v && v.fix ? (v.why === 'noheal' ? ' ' : ' Next time: ') + v.fix : ''), 320); /* (no stray comma before the full stop, Oct 24) */ } } catch (e) { st = ''; rdy = []; }
     return { t: it.t || '', who: it.who || '', cls: cls(it.who), ab: tx(it.ab || ''), k: it.k || 'n', word: tx(it.word || ''), id: d && d.abilityId ? String(d.abilityId) : sid(it.ab), story: st, ready: rdy }; }) };
   out.avoid = !A ? null : { line: tx(A.line || ''), items: (A.items || []).concat(A.rest || []).slice(0, 8).map((it) => {
     let st = ''; if (it.avk) { try { const i = String(it.avk).lastIndexOf('|'), k = String(it.avk).slice(0, i), p = String(it.avk).slice(i + 1);
@@ -26026,9 +26028,14 @@ function deathVerdict(r, d) {
   // half the healers or more were alive, one within 40 yards, and no raid-wide damage then (under 4 of the pull's top damage seconds).
   // Half on them when they still had something ready; otherwise not on them. Their own mistake, a one-shot or the raid's mistake come first)
   const g = d.gap, gap = !!g && g.starved >= 5 && g.healers > 0 && g.alive >= Math.ceil(g.healers / 2) && (g.dist == null || g.dist <= 40) && g.busy < 4;
-  const why = after && !late ? 'wipe' : end ? 'end' : mass ? 'mass' : noCtrl ? 'shared' : own ? 'own' : fast ? 'fast' : raid ? (has && d.reactable ? 'shared' : 'raid') : gap ? 'heal' : has ? 'ready' : nosave ? 'nosave' : 'nothing';
+  // (Not enough healing (Oct 26, the user: "the player did what they could but healers simply did not heal them enough"): no avoidable
+  // damage, no defensive, Healthstone or self-heal of theirs left unused (they pressed it, or none was ready), and 4 s or more under 40% health with under 10% of it healed
+  // by others over each 3 s, longer than top kills' survivors ever sat (3.5 s, 99 in 100). Not on them; it's the healing team's, or the
+  // healer the note put on them)
+  const noheal = !!g && (g.run40 || 0) >= 4 && (d.avoidPct || 0) < 10 && !d.ownAvoid && !defs0.length && !kit0.some((k) => k !== 'a healing potion') /* (a health potion isn't counted: we can't see who carries one) */ && g.healers > 0 && g.alive >= Math.ceil(g.healers / 2) && (g.dist == null || g.dist <= 40);
+  const why = after && !late ? 'wipe' : end ? 'end' : mass ? 'mass' : noCtrl ? 'shared' : own ? 'own' : fast ? 'fast' : raid ? (has && d.reactable ? 'shared' : 'raid') : noheal ? 'noheal' : gap ? 'heal' : has ? 'ready' : nosave ? 'nosave' : 'nothing';
   const w = why === 'heal' ? (has ? 0.5 : 0) : { own: 1, ready: 1, nothing: 0.5, shared: 0.5 }[why] || 0, items = andList((defs.length ? defs : kit).slice(0, 2));
-  const word = { wipe: 'after the pull was lost', end: 'in the last seconds of the kill', mass: 'a mass death, ' + (d.mass || 0) + ' of us at once', own: 'their own mistake', fast: 'too fast to react', raid: 'the raid\'s mistake', ready: items + ' still ready', nothing: 'nothing left to press', nosave: 'nothing they had would have saved them', heal: 'a healing gap: little healing for ' + Math.round(g ? g.starved : 0) + ' s' + (has ? ', with ' + items + ' ready' : ''),
+  const word = { noheal: 'not enough healing', wipe: 'after the pull was lost', end: 'in the last seconds of the kill', mass: 'a mass death, ' + (d.mass || 0) + ' of us at once', own: 'their own mistake', fast: 'too fast to react', raid: 'the raid\'s mistake', ready: items + ' still ready', nothing: 'nothing left to press', nosave: 'nothing they had would have saved them', heal: 'a healing gap: little healing for ' + Math.round(g ? g.starved : 0) + ' s' + (has ? ', with ' + items + ' ready' : ''),
     shared: noCtrl ? 'mind controlled off the edge (shared with the CC team)' : 'the raid\'s mistake' + (raidL ? ' (' + raidL.mechanic + ')' : '') + ', but ' + items + ((defs.length ? defs : kit).slice(0, 2).length > 1 ? ' were' : ' was') + ' ready' }[why];
   // (the story: the engine's, but an own death says what went wrong, like Gravebound's missed fragments)
   const rw = why === 'own' && !ownM.length ? oaRowWhy(r, d) : null;
@@ -26037,8 +26044,16 @@ function deathVerdict(r, d) {
     : why === 'own' && !d.ownAvoid ? (d.ability || 'a hit') + ', which you can dodge, finished you (' + String(d.story || '').replace(/, too fast to react$/, '') + ')'
     : noCtrl ? 'mind controlled off the edge by ' + ownL.find((l) => DEATH_NOCTRL.test(l.mechanic)).mechanic : d.story || '';
   const c0 = why === 'own' && ownM.length && lc(ownM[0].mechanic) !== ab ? ownM[0] : null;
-  const v = { cause: c0 ? { mech: c0.mechanic, t: c0.t } : null, why, w, on: w > 0, counts: (!after || late) && why !== 'end', late, fast, own, raid, mass, defs, kit, word, story, gap: why === 'heal' ? g : null };
+  const v = { cause: c0 ? { mech: c0.mechanic, t: c0.t } : null, why, w, on: w > 0, counts: (!after || late) && why !== 'end', late, fast, own, raid, mass, defs, kit, word, story, gap: why === 'heal' || why === 'noheal' ? g : null, healer: why === 'noheal' ? deathHealerOf(r, d) : null };
   d._dv = { ct, v }; v.fix = deathFix(r, d, v, ownM, rw, raidL); return v; }
+// (the healer the pull's note put on this player, if any: a note line without a {spell} or {time} tag that names them and exactly one of the
+//  raid's healers, like "Holypal: Tankone Tanktwo". "Not enough healing" then goes to that healer rather than the healing team)
+const deathSecs = (x) => (x % 1 ? x.toFixed(1) : String(x)); /* (5.5 s stays 5.5) */
+function deathHealerOf(r, d) { let pick = null; try { pick = noteForRep(r); } catch (e) { return null; } if (!pick || !pick.text) return null;
+  const base = (n) => String(n || '').split('-')[0].toLowerCase(), me = base(d.player), hs = [...r.players.values()].filter((p) => p.role === 'healer' && p.name && p.guid !== d.guid).map((p) => p.name);
+  const has = (line, n) => new RegExp('(^|[^\\p{L}])' + base(n).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^\\p{L}])', 'iu').test(line);
+  for (const line of String(pick.text).split('\n')) { if (/\{(spell|time):/i.test(line) || !has(line, me)) continue; const hh = hs.filter((h) => has(line, h)); if (hh.length === 1) return hh[0].split('-')[0]; }
+  return null; }
 // (the one coaching line for a death, from its verdict: the fix of the mistake that killed them, never "press a defensive" for a death
 // that was their mistake, too fast or the raid's)
 function deathFix(r, d, v, ownM, rw, raidL) {
@@ -26052,6 +26067,7 @@ function deathFix(r, d, v, ownM, rw, raidL) {
     if (sv && sv.imm) return 'Press ' + nm + ' when you drop under half: it stops the hits' + after.replace(' to survive', ', so you survive') + '.';
     return v.defs.length && !v.kit.length ? 'Press ' + v.defs[0] + ' when you drop under half health. It was ready.' : 'Use your ' + (v.kit[0] === 'Healthstone' ? 'Healthstone' : 'health potion') + ' when you sit low. You had ' + (d.lowFor ? Math.round(d.lowFor) + ' seconds' : 'time') + '.'; }
   if (v.why === 'nosave') return 'Nothing you had would have saved this.';
+  if (v.why === 'noheal') return 'You did your part. Little healing came in for ' + deathSecs(v.gap.run40) + ' s while you were under 40%.';
   if (v.why === 'heal') return 'Healers: top up anyone who sits under half health.' + (v.defs.length || v.kit.length ? ' You: ' + (v.defs.length ? 'press ' + v.defs[0] : 'use your ' + (v.kit[0] === 'Healthstone' ? 'Healthstone' : 'health potion')) + ' when you drop low.' : '');
   if (v.why === 'fast') return 'Nothing to fix on your side: ' + k + ' was too fast to react to.';
   if (v.why === 'mass') return 'Not on you: ' + k + ' killed ' + d.mass + ' of us at once. Fix what set it off as a raid.';
@@ -26369,14 +26385,17 @@ function reportCard(reps, night) {
       '<span class="rk-o">' + rcG(x.overall) + '</span>' +
       '<span class="rk-ms">' + RC_SEC.map(([k, l]) => '<span class="rk-m" title="' + esc(l) + (x.secs[k] != null ? ': ' + Math.round(x.secs[k]) + '/100' : '') + '"><i>' + esc(l.split(' ')[0] === 'Using' ? 'Toolkit' : l.split(' ')[0] === 'Pressing' ? 'Buttons' : 'Alive') + '</i>' + rcG(x.secs[k]) + '</span>').join('') + (night ? '<span class="rk-m rk-mt" title="Their later pulls against the first"><i>Trend</i>' + (x.trend != null ? plTr(x.trend) : '<span class="dl lv">—</span>') + '</span>' : '') + '</span>' +
       '<span class="rk-f">' + (f && f.gain >= 1 ? '<b>' + esc(f.t) + '</b>' + (night && f.n > 1 ? '<span class="sub"> · ' + f.n + ' of ' + x.n + ' pulls</span>' : '') + (night ? rcFt(f) : '') : '<span class="ok-t">✓ Nothing big to fix</span>') + '</span>' +
-      '<span class="rk-c" aria-hidden="true">▸</span></button>' + (on ? rcDetail(x, night) : ''); };
+      '<span class="rk-c" aria-hidden="true">▸</span></button>' + (on ? rcDetail(x, night, reps) : ''); };
   return '<div class="rk">' + tiles + '<div class="rk-bar"><span class="rk-hint">' + (night ? 'Each grade covers the pulls they were in, by their time alive. ▲▼ compares their later pulls with the first.' : 'This pull, up to the wipe filter') + ' Most to gain comes first.</span>' + roleChips(has, 'all') + '</div>' +
     '<div class="rk-list">' + rows.map(row).join('') + '</div>' +
     '<p class="sub rk-how">Graded on how each player played their own character: casting, big cooldowns, their defensives and their kit. Deaths, interrupts and the boss\'s mechanics are on Debriefing. S is 95 or more, A 88, B 78, C 65, D 50.</p></div>';
 }
 // a player's card: what to work on first (with what each fix is worth), then the three grades and their checks
-function rcDetail(x, night) {
+function rcDetail(x, night, reps) {
   const fx = x.fixes.filter((f) => f.gain >= 1).slice(0, 3);
+  // (healers: the raid's "Not enough healing" deaths as a fact, never graded (Oct 26); the ones the note put on them are named)
+  const nh = x.role === 'healer' && reps ? (() => { let n = 0, mine = 0; const me = String(x.p.name || '').split('-')[0].toLowerCase(); for (const r of reps) for (const d of r.deaths || []) { const v = deathVerdict(r, d); if (!v.counts || v.why !== 'noheal') continue; n++; if (v.healer && v.healer.toLowerCase() === me) mine++; }
+    return n ? '<div class="rk-nh">' + ckLine('na', 'Not enough healing: ' + plural(n, 'raid death') + (night && x.n > 1 ? ' over these pulls' : ' this pull') + (mine ? ', ' + mine + ' on a player the note gave you' : ', on the healing team') + '. Not graded.') + '</div>' : ''; })() : '';
   const work = '<div class="rk-work"><div class="rk-wh">' + (fx.length ? 'Work on these first <span class="sub">biggest gain first' + (night ? ', over ' + plural(x.n, 'pull') : '') + '</span>' : 'Nothing big to work on') + '</div>' +
     (fx.length ? fx.map((f, i) => '<div class="rk-w"><span class="rk-wn">' + (i + 1) + '</span><div><b>' + esc(f.t) + '</b> <span class="rk-gain" title="About how much fixing it would add to the overall grade">+' + Math.max(1, Math.round(f.gain)) + ' points</span>' + (night && f.n > 1 ? ' <span class="sub">· in ' + f.n + ' of ' + x.n + ' pulls</span>' : '') + (night ? rcFt(f) : '') + '<div class="rk-wx">' + esc(f.x) + '</div></div></div>').join('')
       : '<div class="rk-wx">' + ckLine('ok', 'Every check went well' + (night ? ' over these pulls' : ' this pull') + '.') + '</div>') + '</div>';
@@ -26390,7 +26409,7 @@ function rcDetail(x, night) {
   const secs = '<div class="rk-secs">' + RC_SEC.map(([k, l, ic]) => { const cks = night && x.n > 1 ? x.checks[k] : x.last.secs[k].checks;
     return '<section class="rk-s"><header>' + plIco(ic) + '<b>' + esc(l) + '</b>' + rcG(x.secs[k]) + '<span class="sub">' + (x.secs[k] != null ? Math.round(x.secs[k]) + '/100' : 'not graded') + '</span>' + (night && x.secTr && x.secTr[k] != null ? plTr(x.secTr[k]) : '') + '</header>' + (cks.length ? cks.map(lineOf).join('') : ckLine('na', 'Nothing to check here.')) + '</section>'; }).join('') + '</div>';
   const go = pfGoRow(x.p.name, [[x.role === 'healer' ? 'heal' : 'dmg', x.role === 'healer' ? 'Healing' : 'Damage']].concat(SPEC_CHECKS[x.p.specName] ? [['spec', 'Rotation']] : [], [['cast', 'Casts'], ['res', 'Resources'], ['cds', 'Cooldowns'], ['surv', 'Survivability'], ['util', 'Utility']]));
-  return '<div class="rk-d">' + work + secs + go + '</div>';
+  return '<div class="rk-d">' + work + nh + secs + go + '</div>';
 }
 function bindReportCard() {
   $$('.rk-r[data-rc]').forEach((b) => (b.onclick = () => { S.rcSel = S.rcSel === b.dataset.rc ? null : b.dataset.rc; perf(); const el = document.querySelector('.rk-r.on'); if (el && el.getBoundingClientRect().top < 60) el.scrollIntoView({ block: 'start' }); }));
@@ -27217,18 +27236,21 @@ function rqcOf(c, F, a) {
     add('perf', sh >= 85 ? 'ok' : sh >= 70 ? 'w' : 'bad', role === 'healer' ? 'Healing' : 'Damage', '85% of the best ' + RN.replace(/s$/, '') + ' tonight', '#' + r + ' of ' + mates.length + ' ' + RN + ' · ' + Math.round(sh) + '%').f = Math.min(1, sh / 100); }
   const rot = a.rot != null ? a.rot : a.play; if (rot != null) add('perf', rot >= 80 ? 'ok' : rot >= 65 ? 'w' : 'bad', 'Rotation', '80 or more on the Rotation tab', String(Math.round(rot))).f = Math.min(1, rot / 100);
   { const k = a.per.filter((g) => (g.fixes || []).some((f) => /^(c\|)?cd\|/.test(f.key || ''))).length; add('perf', !k ? 'ok' : k < n / 2 ? 'w' : 'bad', 'Big cooldowns', 'pressed when they\'re back', k ? 'late in ' + k + ' of ' + plural(n, 'pull') : 'every pull').f = n ? (n - k) / n : 1; }
+  // (healers: the raid's "Not enough healing" deaths (Oct 26), a fact row that is never graded; the ones a note line gave this healer are named)
+  if (role === 'healer') { let k = 0, mine = 0; const me = String(nm).split('-')[0].toLowerCase(); for (const g of a.per) for (const d of g.r.deaths || []) { const v = deathVerdict(g.r, d); if (!v.counts || v.why !== 'noheal') continue; k++; if (v.healer && v.healer.toLowerCase() === me) mine++; }
+    if (k) add('perf', 'na', 'Not enough healing', 'raid deaths where the player did their part but little healing came in (a fact, not graded)', plural(k, 'death') + (mine ? ', ' + mine + ' on a player the note gave you' : ', the healing team\'s')); }
   // (a bonus check (externals, Oct 23: "still being scored too heavily") only counts when passed: it can lift a grade, never sink it)
-  const all = RQC_SEC.flatMap(([k]) => rows[k]).filter((x) => !x.bonus || x.s === 'ok'), ok = all.filter((x) => x.s === 'ok').length, w = all.filter((x) => x.s === 'w').length;
+  const all = RQC_SEC.flatMap(([k]) => rows[k]).filter((x) => x.s !== 'na' && (!x.bonus || x.s === 'ok')), ok = all.filter((x) => x.s === 'ok').length, w = all.filter((x) => x.s === 'w').length;
   const o = { rows, ok, w, total: all.length, pct: all.length ? 100 * (ok + 0.5 * w) / all.length : null };
   F._rqc.set(a, o); return o; }
 // the picked raider's checklist, under the raid's report card
 function rqcCard(c, F) {
   const x = rcbSel(c, F); if (!x) return ''; const a = x.a, p = a.p, o = rqcOf(c, F, a), B = rcbFacts(c, F), rkR = B.rkRole[x.role], RN = { tank: 'tanks', healer: 'healers', dps: 'damage dealers' };
-  const ic = { ok: '✓', w: '!', bad: '✕' }, inner = (y, dd) => '<span class="rqc-i ' + y.s + '" aria-label="' + ({ ok: 'passed', w: 'slipped', bad: 'failed' }[y.s]) + '">' + ic[y.s] + '</span><span><span class="rqc-nm">' + esc(y.l) + '</span>' + (y.f != null ? '<span class="rqc-bar"><i class="' + y.s + '" style="width:' + Math.max(2, Math.round(100 * y.f)) + '%"></i></span><em class="rqc-pc ' + y.s + '">' + Math.round(100 * y.f) + '%</em>' : '') + '<small>Goal: ' + esc(y.rule) + '</small></span><b>' + esc(y.v) + (dd ? (y.v ? ' ' : '') + '<i class="rqc-dv">' + (y.v ? '' : 'See pulls ') + '<span class="rqc-ar">▾</span></i>' : '') + '</b>';
+  const ic = { ok: '✓', w: '!', bad: '✕', na: '–' }, inner = (y, dd) => '<span class="rqc-i ' + y.s + '" aria-label="' + ({ ok: 'passed', w: 'slipped', bad: 'failed', na: 'not graded' }[y.s]) + '">' + ic[y.s] + '</span><span><span class="rqc-nm">' + esc(y.l) + '</span>' + (y.f != null ? '<span class="rqc-bar"><i class="' + y.s + '" style="width:' + Math.max(2, Math.round(100 * y.f)) + '%"></i></span><em class="rqc-pc ' + y.s + '">' + Math.round(100 * y.f) + '%</em>' : '') + '<small>Goal: ' + esc(y.rule) + '</small></span><b>' + esc(y.v) + (dd ? (y.v ? ' ' : '') + '<i class="rqc-dv">' + (y.v ? '' : 'See pulls ') + '<span class="rqc-ar">▾</span></i>' : '') + '</b>';
   // (a line with mistakes opens to the pulls they happened in; a pull opens on Debriefing with this raider picked (Oct 23, your idea))
   const row = (y) => (y.pulls && y.pulls.length && y.s !== 'ok' ? '<details class="rqc-dd"><summary class="rqc-row">' + inner(y, true) + '</summary><div class="rqc-pl"><span class="sub">Open the pull:</span>' + y.pulls.map((n) => '<button type="button" class="btn sm" data-rqcpull="' + n + '" data-rqcp="' + esc(p.name) + '">Pull ' + n + (y.pn && y.pn[n] ? ' · ' + esc(y.pn[n]) : '') + ' ›</button>').join('') + '</div></details>'
     : '<div class="rqc-row"' + (y.tt ? ' data-tt="' + esc(y.tt) + '"' : '') + '>' + inner(y) + '</div>');
-  const sec = ([k, t]) => { const l = o.rows[k]; if (!l.length) return ''; return '<div class="rqc-sec"><h5><span>' + t + '</span><span>' + l.filter((y) => y.s === 'ok').length + ' of ' + l.filter((y) => !y.bonus || y.s === 'ok').length + '</span></h5>' /* (a missed bonus isn't counted, same as the grade) */ + l.map(row).join('') + '</div>'; };
+  const sec = ([k, t]) => { const l = o.rows[k]; if (!l.length) return ''; return '<div class="rqc-sec"><h5><span>' + t + '</span><span>' + l.filter((y) => y.s === 'ok').length + ' of ' + l.filter((y) => y.s !== 'na' && (!y.bonus || y.s === 'ok')).length + '</span></h5>' /* (a missed bonus isn't counted, same as the grade) */ + l.map(row).join('') + '</div>'; };
   return '<section class="rqc" style="--cc:' + p.color + '"><div class="rqc-hd"><img src="' + whIcon(pIcon(p)) + '" alt="" style="box-shadow:0 0 0 2px ' + p.color + '" onerror="this.style.visibility=\'hidden\'"><div><div class="rcb-k">Checklist</div><b class="nm" style="color:' + p.color + '">' + esc(p.name) + '</b><div class="sub">' + esc(p.specName || '') + ' · ' + plural(a.n, 'pull') + ' · #' + B.rk.score.m.get(x) + ' of ' + B.rk.score.n + (rkR ? ' · #' + rkR.m.get(x) + ' of ' + rkR.n + ' ' + RN[x.role] : '') + '</div>' +
     '<div class="rqc-btns">' + (a.last && a.last.x ? '<button type="button" class="btn sm" data-rqcgear="' + esc(p.name) + '">Gear and stats</button>' : '') + '<button type="button" class="btn sm" data-rctp="' + esc(p.name) + '">Every pull ›</button></div></div>' +
     '<div class="rqc-sc">' + gradeChip(letterOf(o.pct)) + '<b>' + o.ok + ' of ' + o.total + '</b><span>checks passed' + (o.w ? ' · ' + o.w + ' slipped (count half)' : '') + '</span></div></div>' +
