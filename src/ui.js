@@ -1985,6 +1985,7 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'The Twin Fangs avoidable damage: Sanguine Storm and Stir the Depths water are judged against top guilds\' kills (a few hits each is normal there), so a clean pull comes out green.',
     'A Warcraft Logs report link always opens that raid now, on Debriefing when the link names no tab, even if you were last on Home.',
     'Debrief app: a boss pulled and reset within a few seconds no longer gets a recap or a pop-up.',
     'Rotation: healers see their Parse number again; the page kept "not ranked" when the healing rankings arrived after it was first drawn.',
