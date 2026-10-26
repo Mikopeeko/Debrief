@@ -51847,7 +51847,9 @@ const GDZ_PP = {
     uses: [['axe', 'Phase 1 axes', 'moon'], ['stack', 'Venom Rupture stack', ''], ['dread', 'Dreadmarch stack', 'circle'], ['grim1', 'Phase 3 axe 1', 'circle'], ['grim2', 'Phase 3 axes 2 and 3', 'circle']],
     read(N, P) { const J = ppReadCA(N, P); J.rupture = ppCds(N, P, 1, 160, 200).concat(ppCds(N, P, 2, 0, 5)); J.interCds = ppCds(N, P, 2.5, 0, 40); return J; },
     cards: ppCardsCA,
-    // (Plan's Jobs cards, by title, and the pictures each one shows; the grim card is matched before the phase 1 axes)
+    // (Plan's Jobs cards and the pictures each one shows: by the key Plan gives each card's picture row (its build parts), else by the
+    // card's title, where the grim card is matched before the phase 1 axes)
+    mech: { kicks: ['kicks', 'bombs'], g: ['axe1', 'axe2'], g3: ['grim1', 'grim2', 'grim3'], orbs: ['orbs1', 'orbs3'], mc: ['dread'], curse: ['kicks'], cds: ['stack', 'inter'], def: [] },
     jobs: [[/p3|grim/i, ['grim1', 'grim2', 'grim3']], [/guillotine/i, ['axe1', 'axe2']], [/kick/i, ['kicks', 'bombs']], [/purple orb/i, ['orbs1', 'orbs3']], [/dreadmarch|mind ?control/i, ['dread']], [/curse/i, ['kicks']], [/raid cooldown/i, ['stack', 'inter']]] } },
 };
 const PP_PH = { 1: ['Phase 1', '#5aa0ff'], 1.9: ['Phase 1 ends', '#5aa0ff'], 2: ['Phase 2', '#b65cff'], 2.5: ['Intermission', '#e6b450'], 3: ['Phase 3', '#ff5a4f'] };
@@ -51936,11 +51938,11 @@ function ppCss() {
     /* (the one-picture view and the Jobs cards' small pictures: the Design studio's mock (Oct 26); its own round restyles on top) */
     '#ppWin:not(.pp-one) .pp-nav{display:none}#ppWin.pp-one .pp-intro,#ppWin.pp-one .pp-all,#ppWin.pp-one .pp-mkbox,#ppWin.pp-one .ds-ppnav,#ppWin.pp-one .pp-card:not(.pp-cur),#ppWin.pp-one .pp-cur .pp-ph{display:none}' +
     '#ppWin.pp-one .pp-win{width:min(1000px,100%)}#ppWin.pp-one .pp-card{border:0;background:none;padding:0}html body #ppWin.pp-one .pp-cards{grid-template-columns:minmax(0,1fr)!important}#ppWin .pp-nav{display:flex;align-items:center;gap:10px;margin:2px 0 10px;flex-wrap:wrap}#ppWin .pp-nav .sub{margin-right:auto}' +
-    '.plb-rc.pj-has{display:grid;grid-template-columns:minmax(0,1fr) 92px;column-gap:14px;align-items:start}.plb-rc.pj-has.pj-3{grid-template-columns:minmax(0,1fr) 194px}.plb-rc.pj-has>.plb-rch{grid-column:1/-1}.plb-rc.pj-has>:not(.plb-rch):not(.pj-pics){grid-column:1}' +
-    '.plb-rc.pj-has>.pj-pics{grid-column:2;grid-row:2/span 20;display:grid;gap:10px;align-content:start;padding-top:2px}.plb-rc.pj-has.pj-3>.pj-pics{grid-template-columns:92px 92px}' +
-    '.pj-pic{display:block;width:92px;padding:0;border:1px solid var(--line2,#353b49);border-radius:8px;background:#0b0d12;overflow:hidden;cursor:zoom-in;text-align:left;font:inherit;color:var(--text,#ece8df)}.pj-pic:hover{border-color:rgba(230,180,80,.6)}' +
-    '.pj-pic img{display:block;width:92px;height:92px;object-fit:cover;object-position:left center;background:#0b0d12}.pj-pic img:not([src]){visibility:hidden}.pj-pic small{display:block;padding:3px 6px 4px;font-size:12px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pj-pic small i{display:block;font-style:normal;font-size:11px;color:var(--muted,#a4abb8)}' +
-    '@media (max-width:640px){.plb-rc.pj-has,.plb-rc.pj-has.pj-3{grid-template-columns:minmax(0,1fr)}.plb-rc.pj-has>.pj-pics{grid-column:1;grid-row:auto;grid-auto-flow:column;grid-auto-columns:92px;grid-template-columns:none;overflow-x:auto;padding:6px 0 2px}}';
+    /* (your call, Oct 26: "they should be in a horizontal row under the assignments") */
+    '.plb-rc>.pj-pics:not(:empty){display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.07)}.plb-rc>.pj-pics:empty{display:none}' +
+    '.pj-pic{display:block;width:100px;padding:0;margin:0;border:1px solid var(--line2,#353b49);border-radius:8px;background:#0b0d12;overflow:hidden;cursor:zoom-in;text-align:left;font:inherit;color:var(--text,#ece8df)}.pj-pic:hover{border-color:rgba(230,180,80,.6)}' +
+    '.pj-pic img{display:block;width:100px;height:100px;object-fit:cover;object-position:left center;background:#0b0d12}.pj-pic img:not([src]){visibility:hidden}.pj-pic small{display:block;padding:3px 6px 4px;font-size:12px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pj-pic small i{display:block;font-style:normal;font-size:11px;color:var(--muted,#a4abb8)}' +
+    '@media (max-width:640px){.pj-pic{width:calc(50% - 5px)}.pj-pic img{width:100%;height:auto;aspect-ratio:1}}';
   document.head.appendChild(st);
 }
 // (one note's pictures, worked out once: who's who, the jobs and the cards at the raid lead's markers; each drawn picture is kept with
@@ -51960,7 +51962,7 @@ function ppSet(r, u0) {
 // (a picture's name and its short instruction, from "Guillotine 1 (Soak on Moon)")
 const ppSplit = (t) => { const m = /^(.*?)\s*\((.*)\)\s*$/.exec(t); return m ? [m[1], m[2]] : [t, '']; };
 // (the raid lead moved a marker: the Jobs cards' small pictures are drawn again from the new spots)
-const ppStale = () => document.querySelectorAll('.plb-rc[data-pj]').forEach((el) => { const p = el.querySelector('.pj-pics'); if (p) p.remove(); el.classList.remove('pj-has', 'pj-3'); delete el.dataset.pj; });
+const ppStale = () => document.querySelectorAll('.plb-rc[data-pj]').forEach((el) => { const p = el.querySelector(':scope > .pj-pics'); if (p) { if (p.dataset.mech) p.innerHTML = ''; else p.remove(); } el.classList.remove('pj-has', 'pj-3'); delete el.dataset.pj; }); /* (Plan's own empty row stays, emptied) */
 // The window: every picture with Copy and Download, Download all and the Markers editor; or, from a Jobs card's small picture, one
 // picture big (pp-one) with the ones before and after it and a way to all of them (Design studio's mock, Oct 26)
 function ppOpen(r, u0, opt) {
@@ -52027,19 +52029,22 @@ function ppOpen(r, u0, opt) {
   box.querySelector('.pp-mkbox').addEventListener('toggle', (e) => { if (e.target.open) mkDraw(); });
   draw();
 }
-// (the Jobs cards on a boss's plan page: each card whose jobs have pictures gets them small (a square crop of the map, the name and
-// the short instruction under it), drawn when the card scrolls near; a tap opens that picture big. Plan's cards are untouched apart
-// from the classes pj-has / pj-3 and the last child div.pj-pics, which Plan leaves alone (Design studio's mock, Oct 26))
+// (the Jobs cards on a boss's plan page: each card whose jobs have pictures gets them small, in a row under its assignments (a square
+// crop of the map, the name and the short instruction under it), drawn when the card scrolls near; a tap opens that picture big.
+// Plan leaves an empty last child div.pj-pics[data-mech] in each card for them; until it does, the row is added here. Plan's cards are
+// untouched apart from that row and the class pj-has (Design studio's mock, Oct 26; your call: "a horizontal row under the assignments"))
 let PP_IO = null;
 function ppJobs() {
   const els = document.querySelectorAll('.bj-jobs .plb-rc:not([data-pj])'); if (!els.length) return;
   els.forEach((el) => { el.dataset.pj = '1'; const ch = el.querySelector('[data-noteboss][data-noteid]'), t = ((el.querySelector('.plb-rch b') || {}).textContent || '').replace(/^\s*\d+\s*·\s*/, '').trim(); if (!ch || !t) return;
     const note = ch.dataset.noteboss + '|' + ch.dataset.noteid, c = ndzDcNote(note); if (!c) return; const set = ppSet(c.r, c.u0); if (!set.cf || !set.cf.C.jobs) return;
-    const m = set.cf.C.jobs.find(([re]) => re.test(t)), ids = m ? m[1].filter((id) => set.cards.some((cd) => cd.id === id)) : []; if (!ids.length) return;
-    ppCss(); el.classList.add('pj-has'); if (ids.length >= 3) el.classList.add('pj-3');
-    el.insertAdjacentHTML('beforeend', '<div class="pj-pics">' + ids.map((id) => { const cd = set.cards.find((x) => x.id === id), [nm, ins] = ppSplit(cd.title);
-      return '<button type="button" class="pj-pic" data-pj="' + id + '" data-note="' + esc(note) + '" data-job="' + esc(t) + '" aria-label="' + esc(cd.title + ': open it big') + '"><img alt=""><small>' + esc(nm) + (ins ? '<i>' + esc(ins) + '</i>' : '') + '</small></button>'; }).join('') + '</div>');
-    const pics = el.lastElementChild; pics._set = set;
+    // (which pictures: by Plan's key for the card when it gives one, else by the card's title)
+    let pics = el.querySelector(':scope > .pj-pics'); const mech = pics && pics.dataset.mech, byKey = mech && set.cf.C.mech && set.cf.C.mech[mech], m = !byKey && set.cf.C.jobs.find(([re]) => re.test(t));
+    const ids = (byKey || (m ? m[1] : [])).filter((id) => set.cards.some((cd) => cd.id === id)); if (!ids.length) return;
+    ppCss(); el.classList.add('pj-has'); if (!pics) { el.insertAdjacentHTML('beforeend', '<div class="pj-pics"></div>'); pics = el.lastElementChild; }
+    pics.innerHTML = ids.map((id) => { const cd = set.cards.find((x) => x.id === id), [nm, ins] = ppSplit(cd.title);
+      return '<button type="button" class="pj-pic" data-pj="' + id + '" data-note="' + esc(note) + '" data-job="' + esc(t) + '" aria-label="' + esc(cd.title + ': open it big') + '"><img alt=""><small>' + esc(nm) + (ins ? '<i>' + esc(ins) + '</i>' : '') + '</small></button>'; }).join('');
+    pics._set = set;
     if (!window.IntersectionObserver) { ppThumbs(pics); return; }
     (PP_IO = PP_IO || new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { PP_IO.unobserve(e.target); ppThumbs(e.target); } }), { rootMargin: '300px' })).observe(pics); });
 }
