@@ -1954,7 +1954,7 @@ const PATCH_NOTES = [
     'Rotation, polished: a check\'s name wraps instead of running out of its box, the number and its top line stack neatly, the opener\'s steps run across the whole ring, window cards no longer spill their strip, a tall tile no longer stretches its neighbour into an empty box, and nothing on the page is under 12px.',
     'Shadow Priest: the top numbers were re-measured on 77 Shadow Priests from top kills with today\'s checks, so "top" on Rotation compares you with what they really do.',
     'Rotation: a check\'s sentence no longer repeats the number on its row (no more "You used it 3 of 4 possible times" under 3/4); it starts at what\'s new, like how long a cooldown waited. What to fix cards give the short version of each tip, and the checklist keeps the whole one.',
-    'Your raid lead talks like a person now: "Axegrinder ended 6 of our wipes, more than anything else. The good news is Venomfang got a lot cleaner." instead of short labelled bits, and no more shouting in capitals.',
+    'Your raid lead talks like a person now: "Axegrinder wiped us 6 times, more than anything else. The good news is Venomfang got a lot cleaner." instead of short labelled bits, and no more shouting in capitals.',
     'Rotation reads in a few words: every check says its fact in one short line (the full sentence waits under Everything), the numbers in it are in the check\'s colour (green done right, amber some mistakes, red failed), spell names are bolder, every Next time tip has a gold label and edge, and a line that only repeats the row\'s number is gone.',
     'Rotation: burst-window cards use the whole width of the checklist, two or three across; Cooldowns on big damage shows only the moments you covered (the rest under Everything).',
     'Rotation speaks plainer: every check is one short sentence ("92% of your 337 casts were the best button at that moment.", "You used it 10 of 15 possible times."), tips say "in its last 30%" and "right after" instead of game jargon, and Stat order lets its bars do the talking.',
@@ -13323,7 +13323,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
         /* (Oct 26, your note "the debriefing coach talks like a robot": the same facts, said in full sentences) */
         const bm = B0 ? /^(.*?)\s*\(pull (\d+)\)$/.exec(B0.sub || '') : null, more = Math.max(0, (T0.better || []).length - 1), much = up && /^Much/.test(up.tag || '');
         return esc(String(c.headline).replace(/\s*What wiped us:[\s\S]*$/, '').replace(/\.$/, '')) + (B0 ? (bm ? ', and our best was pull ' + bm[2] + ', which got to ' + esc(bm[1]) : ', and our best got to ' + esc(B0.sub)) : '') + '. ' +
-          b(w.nm) + (w.n > 1 ? ' ended ' + w.n + ' of our wipes, more than anything else.' : ' ended one of our wipes.') +
+          b(w.nm) + (w.n > 1 ? ' wiped us ' + w.n + ' times, more than anything else.' : ' wiped us once.') +
           (up ? ' The good news is ' + b(up.nm) + ' got ' + (much ? 'a lot ' : '') + 'cleaner' + (more ? ', along with ' + plural(more, 'other thing') : '') + '.' : '') +
           (dn ? (up ? ' But ' : ' Keep an eye on ') + b(dn.nm) + (up ? ' is getting worse, so keep an eye on it.' : ', it\'s getting worse.') : '') + ' <span class="cch-hype">' + esc(coachHypeFix(c)) + '</span>'; })() + '</p>' /* (the causes go in the grid's first cell (Oct 23)) */
       : c.wipes && c.wipes.length /* (the night's causes as a short list, each with what went wrong (Oct 23)) */
