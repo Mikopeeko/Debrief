@@ -5429,11 +5429,12 @@ const ppKey = (b, d) => 'wla-pp|' + b + '|' + d;
 // (the raid lead's markers for a boss: { marks: { cross: [x, y], … }, uses: { axe: 'moon', … } }, over the boss's starting ones)
 // (base: 'guide', the strategy's spots, or 'raid', the raid's own from its pulls; the raid lead's moves and picks go on top)
 function ppConf(b, d) { const C = GDZ_PP[b] && GDZ_PP[b][d]; if (!C) return null; let s = {}; try { s = JSON.parse(store.get(ppKey(b, d)) || '{}') || {}; } catch (e) { s = {}; }
+  if (C.mver && s.mver !== C.mver) delete s.marks; /* (spots saved before the boss's markers changed: the new ones show, the mechanic picks stay) */
   const base = s.base === 'raid' && C.raid ? 'raid' : 'guide', B = base === 'raid' ? C.raid : { marks: C.marks, stack: C.stack, uses: Object.fromEntries(C.uses.map(([id, , def]) => [id, def])) };
   const marks = { _stack: B.stack }; for (const k of PP_MKS) marks[k] = (s.marks && s.marks[k]) || B.marks[k] || null;
   const uses = {}; for (const [id] of C.uses) uses[id] = s.uses && id in s.uses ? s.uses[id] : B.uses[id];
   return { C, base, marks, uses, saved: !!(s.marks || s.uses) }; }
-const ppSave = (b, d, v) => store.set(ppKey(b, d), JSON.stringify(v));
+const ppSave = (b, d, v) => { const C = GDZ_PP[b] && GDZ_PP[b][d]; store.set(ppKey(b, d), JSON.stringify(C && C.mver ? { ...v, mver: C.mver } : v)); };
 // (a stand-in for whoever the fight picks: a grey dot with a question mark)
 const ppAny = (label) => ({ name: label, color: '#c9ced8', specIcon: 'inv_misc_questionmark', any: true });
 // (who each name is: class colour, spec icon and role, from the pull, else from Plan's saved specs)
@@ -5696,6 +5697,7 @@ function ppReadTF(N, P) {
   return J;
 }
 const TF_VIEW = { x: 50, y: -26, r: 38 }; // (the south-east platform with both bosses off its tip)
+const TF_ROOM = { x: 0, y: 12, r: 84 }; // (the whole room: all three platforms round the pool and the bosses off the north tip, for the markers)
 function ppCardsTF(J, M, U, P) {
   const cards = [], GR = '#9ff26d', R = '#ff8a8a', BL = '#5aa0ff', GO = '#e6b450', OR = '#ff9b5a', Q = '#c9ced8';
   const tf2 = () => { const w = tfKit(3, 2); tfBosses(w); return w; }, home = (w, put) => GDZ_RAID.filter((s) => !put.has(s)).forEach((s) => { put.add(s); const q = TF_HOME[s]; w.at(0, s, q[0], q[1]); });
@@ -6017,13 +6019,14 @@ const GDZ_PP = {
     mech: { eggs: ['eggs'], coils: ['coils'], kicks: ['kicksL', 'kicksR'], trans: ['trans'], bite: ['bite'], tanks: ['beam', 'grips'] },
     jobs: [[/egg/i, ['eggs']], [/coils team|spectral coils/i, ['coils']], [/kick/i, ['kicksL', 'kicksR']], [/transition|soak group/i, ['trans']], [/serpent'?s bite/i, ['bite']], [/tank|grip/i, ['beam', 'grips']]] } },
   'The Twin Fangs': { Mythic: {
-    // (the guide's six ground markers lined up on the Broodlings each side, a step in from the rim: diamond and star at left and right 3,
-    // moon and triangle at 1, circle and square at 2; skull and cross at the tip's two slots. On the south-east platform, as the pictures are)
-    marks: (() => { const P = tfT(2).P, at = (sl, f) => { const p = TF_SLOT[sl]; return P(tfIn([p[0] * (f || 0.75), p[1] * 0.96 - 2], 2)).map((v) => Math.round(v)); };
-      return { diamond: at('L3'), star: at('R3'), moon: at('L1'), triangle: at('R1'), circle: at('L2'), square: at('R2'), skull: at('FL', 1), cross: at('FR', 1) }; })(),
+    // (one marker on each of the three platforms the raid moves between, where it stands through that platform's two sets: about 49 yards
+    // out from the pool's middle, on the platform's centre line, the same on all three platforms in six top kills (Oct 26). Star on the
+    // north platform where the fight starts, circle south-east and diamond south-west, in the order four of the six took them)
+    marks: (() => { const at = (p) => tfT(p).P([0, 49]).map((v) => Math.round(v)); return { star: at(0), circle: at(2), diamond: at(1) }; })(),
+    mver: 2, /* (markers a raid lead saved before the three-platform spots are set aside once) */
     stack: [0, 0],
     uses: [],
-    room: { scene: (k) => { const P = tfT(2).P, v = P(TF_VX), i = P(TF_IT); k.boss('vx', 'Vexhul', 0, v[0], v[1]).boss('it', 'Ithraz', 0, i[0], i[1]); }, focus: TF_VIEW, lim: 90, keep: ['Vexhul', 'Ithraz'] },
+    room: { scene: (k) => { k.boss('vx', 'Vexhul', 0, TF_VX[0], TF_VX[1]).boss('it', 'Ithraz', 0, TF_IT[0], TF_IT[1]); }, focus: TF_ROOM, full: TF_ROOM, lim: 90, keep: ['Vexhul', 'Ithraz'] },
     read(N, P) { return ppReadTF(N, P); },
     cards: ppCardsTF,
     // (Plan's Jobs cards (b2e86a2) and the pictures each shows, by its key, else by its title)
@@ -6262,7 +6265,7 @@ function ppOpen(r, u0, opt) {
   // (the raid lead changed a marker: the note's pictures are worked out again, here and on the Jobs cards)
   const redo = () => { set = ppSet(r, u0); ppStale(); draw(); };
   // (the marker editor: the room with the markers on it; drag one and every picture redraws; pick a marker for each mechanic)
-  const mkDraw = () => { const c = ppConf(boss, diff), mhost = box.querySelector('.pp-mkmap'), k = gdzKit(boss, 1); c.C.room.scene(k); const mp = k.done({ title: '', focus: c.C.room.focus });
+  const mkDraw = () => { const c = ppConf(boss, diff), mhost = box.querySelector('.pp-mkmap'), k = gdzKit(boss, 1); c.C.room.scene(k); const mp = k.done({ title: '', focus: c.C.room.focus, full: c.C.room.full });
     mhost.innerHTML = miniMap({ ...mp, wmarks: [], callouts: [], liveLeg: false }, new Map()) + '<div class="pp-mklay"></div>';
     const sv = mhost.querySelector('svg.zmap'), lay = mhost.querySelector('.pp-mklay'); if (!sv) return; const vb = sv.viewBox.baseVal, [x0, y0] = (sv.dataset.o || '0,0').split(',').map(Number), yd = +sv.dataset.yd || 1, [cx, cy] = ppMid(mp);
     const toPx = ([rx, ry]) => { const R = sv.getBoundingClientRect(), L = lay.getBoundingClientRect(); return [((cx + rx - x0) * yd - vb.x) / vb.width * R.width + R.left - L.left, ((-(cy + ry) - y0) * yd - vb.y) / vb.height * R.height + R.top - L.top]; };
@@ -6309,7 +6312,7 @@ let PP_IO = null;
 // again when a mark moves or swaps, since the spots are part of its key)
 const PP_MKPIC = new Map();
 function ppMarksPic(boss, diff) { const c = ppConf(boss, diff); if (!c) return Promise.resolve(null); const key = boss + '|' + diff + '|' + JSON.stringify(c.marks);
-  if (!PP_MKPIC.has(key)) PP_MKPIC.set(key, (async () => { const k = gdzKit(boss, 1); c.C.room.scene(k); const mp = k.done({ title: '', focus: c.C.room.focus }), fz = ppFreeze(mp, 0, {}, new Map(), {}, {});
+  if (!PP_MKPIC.has(key)) PP_MKPIC.set(key, (async () => { const k = gdzKit(boss, 1); c.C.room.scene(k); const mp = k.done({ title: '', focus: c.C.room.focus, full: c.C.room.full }), fz = ppFreeze(mp, 0, {}, new Map(), {}, {});
     const [cx, cy] = ppMid(mp); fz.out.wmarks = PP_MKS.filter((m) => c.marks[m]).map((m) => ({ k: m, x: cx + c.marks[m][0], y: cy + c.marks[m][1] })); fz.keep = c.C.room.keep;
     const map = await ppMapImg(fz); if (!map) return null; const W = 600, M0 = 16, cv = document.createElement('canvas'); cv.width = cv.height = W; const g = cv.getContext('2d'); g.fillStyle = '#12141b'; g.fillRect(0, 0, W, W);
     g.save(); g.beginPath(); g.roundRect ? g.roundRect(M0, M0, W - 2 * M0, W - 2 * M0, 12) : g.rect(M0, M0, W - 2 * M0, W - 2 * M0); g.clip(); g.drawImage(map, M0, M0, W - 2 * M0, W - 2 * M0); g.restore(); return cv.toDataURL('image/png'); })().catch((e) => { console.warn('Picture plan:', e); return null; }));
