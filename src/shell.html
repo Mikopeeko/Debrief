@@ -7074,6 +7074,9 @@ html.is-kill #oaTop .cch-h .cch-hype { color: #f6dc9a; font-weight: 800; letter-
 #view .mcx-th { font-size: 15px; font-weight: 700; }
 #view .dt-box .cch-acct2:has(> .cbl-sw)::before { font: 700 15px var(--head) !important; }
 #view .ds-raidb b { font-size: 14px; }
+/* (Oct 25: Debriefing is drawn out of sight until its live numbers are in, then shown once; the Design studio styles the message) */
+html.dbr-holding #main > * { visibility: hidden; }
+html.dbr-holding #main::before { content: 'Reading the pull\2026'; display: block; text-align: center; padding: 80px 16px; color: #9a9ca3; font-size: 15px; }
 </style>
 
 
