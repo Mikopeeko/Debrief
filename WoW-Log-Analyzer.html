@@ -8411,11 +8411,11 @@ function buildTwinFangs(ev, r, h) {
   vRows.sort((a, b) => b.peak - a.peak);
   const over = vRows.filter((x) => x.peak > budget);
   sections.push({ id: 'venom', title: 'Eternal Venom (Stay under the limit)', place: 'Eternal Venom (debuff) stacks', spell: S('eternal venom'),
-    verdict: vRows.some((x) => (x.atDeath != null && x.atDeath >= lethal) || x.peak >= lethal - 1) ? 'bad' : over.length ? 'warn' : 'good',
+    verdict: vRows.some((x) => x.atDeath != null && x.atDeath >= lethal) ? 'bad' : over.length || vRows.some((x) => x.peak >= lethal - 1) ? 'warn' : 'good', /* (fix 12, Oct 26: 9 stacks was red on 5 of 10 top kills) */
     summary: pl(vRows.length, 'player') + ' got Eternal Venom, and ' + pl(over.length, 'player') + ' went over ' + budget + ' stacks, the safe limit. It\'s lethal at ' + lethal + ' on ' + diff + '.',
     cols: ['Player', 'Highest stacks', 'Over the limit at', 'Stacks at death', 'From'],
-    // red: one stack from lethal (or died to it); amber: over the budget but still safe
-    rows: vRows.map((x) => [{ p: pname(x.g) }, { txt: String(x.peak), bad: x.peak >= lethal - 1, warn: x.peak > budget }, x.overAt != null ? { txt: h.fmtT(x.overAt), warn: true } : { txt: '—', dim: true }, x.atDeath != null ? { txt: String(x.atDeath), bad: x.atDeath >= lethal } : { txt: '—', dim: true }, x.src.length ? { txt: 'gained from ' + x.src.map(([k, n]) => n + ' ' + k).join(', '), warn: x.peak > budget, s: 1 } : { txt: '—', dim: true }]) });
+    // red: died at the lethal count; amber: over the budget, or one stack from lethal
+    rows: vRows.map((x) => [{ p: pname(x.g) }, { txt: String(x.peak), warn: x.peak > budget || x.peak >= lethal - 1 }, x.overAt != null ? { txt: h.fmtT(x.overAt), warn: true } : { txt: '—', dim: true }, x.atDeath != null ? { txt: String(x.atDeath), bad: x.atDeath >= lethal } : { txt: '—', dim: true }, x.src.length ? { txt: 'gained from ' + x.src.map(([k, n]) => n + ' ' + k).join(', '), warn: x.peak > budget, s: 1 } : { txt: '—', dim: true }]) });
 
   // ---- 3. Ravenous Feast: three strikes, each needs 4+ soakers who aren't already Feasted ----
   const feasts = casts('ravenous feast');
@@ -8542,8 +8542,8 @@ function buildTwinFangs(ev, r, h) {
   for (const b of bars) {
     if (b.ranOut) M(b.t1 ?? b.t + 10, 'Raid', 'barbed bulwark', 'High', 'Nobody broke a Caustic Globule\'s Barbed Bulwark. It ran out after ' + (b.up != null ? b.up.toFixed(0) : '10') + ' seconds, and the globule exploded on the raid, giving everyone 1 more Eternal Venom stack.', 'Every globule needs a stun, fear or other crowd control as it lands. Assign one per globule, with a backup.');
     // (a late break is the raid's: whoever finally broke it did the job, the log can't tell who was meant to)
-    else if (b.late) M(b.t1, 'Raid', 'barbed bulwark', 'Medium', 'A Caustic Globule\'s Barbed Bulwark took ' + b.up.toFixed(1) + ' seconds to break (' + b.by.spell + '), leaving little time to soak it before it explodes.', 'Break each barrier right as the globules land. They explode about 10 seconds after.');
-    for (const [p, o] of b.into) M(o.t, pname(p), 'barbed bulwark', o.died ? 'High' : 'Medium', 'Ran into a Caustic Globule while its Barbed Bulwark was still up: ' + (o.amt > 0 ? 'hit for ' + fmtN(o.amt) + ' and ' : '') + 'knocked back' + (o.died ? ', and died' : '') + '.', 'Wait for the barrier to break before going in to soak.',
+    else if (b.late) M(b.t1, 'Raid', 'barbed bulwark', 'Low', 'A Caustic Globule\'s Barbed Bulwark took ' + b.up.toFixed(1) + ' seconds to break (' + b.by.spell + '), leaving little time to soak it before it explodes.', 'Break each barrier right as the globules land. They explode about 10 seconds after.');
+    for (const [p, o] of b.into) M(o.t, pname(p), 'barbed bulwark', o.died ? 'High' : 'Low', 'Ran into a Caustic Globule while its Barbed Bulwark was still up: ' + (o.amt > 0 ? 'hit for ' + fmtN(o.amt) + ' and ' : '') + 'knocked back' + (o.died ? ', and died' : '') + '.', 'Wait for the barrier to break before going in to soak.',
       { t: o.t, good: [], goodLabel: '', bad: [p], badLabel: 'ran into a live barrier', title: 'Barbed Bulwark at ' + h.fmtT(o.t), pts: h.snap(o.t), frames: h.frames(Math.max(0, o.t - 3), Math.min(dur, o.t + 1.5), 0.25) });
   }
   const bBad = (b) => b.ranOut || [...b.into.values()].some((o) => o.died), bWarn = (b) => b.late || b.into.size > 0;
@@ -8588,10 +8588,10 @@ function buildTwinFangs(ev, r, h) {
   }
   // (sets on Wolfthorn's Mythic pulls had 15 globules for 20 players, so many soak two sets in a row: that's shown, and
   // flagged only at high venom)
-  // red: a death, or an extra globule taken at high venom; amber: a Barbed Bulwark hit, or a second set in a row at high
-  // venom (an extra globule at low venom is only shown)
-  const setBad = (s) => s.died.length > 0 || [...s.by.values()].some((o) => o.n > 1 && o.hiStacks >= budget);
-  const setWarn = (s) => s.bul.size > 0 || s.backHi.length > 0;
+  // red: a death; amber: an extra globule taken at high venom, a Barbed Bulwark hit, or a second set in a row at high venom
+  // (an extra globule at low venom is only shown) (fix 13, Oct 26: an extra at high venom was red on 3 of 10 top kills, one death among them)
+  const setBad = (s) => s.died.length > 0;
+  const setWarn = (s) => s.bul.size > 0 || s.backHi.length > 0 || [...s.by.values()].some((o) => o.n > 1 && o.hiStacks >= budget);
   sections.push({ id: 'soaks', title: 'Caustic Globules (One soak each)', place: 'Caustic Globule (orb) soaks', spell: S('caustic globule'),
     verdict: globExplode.length || gSets.some(setBad) ? 'bad' : gSets.some(setWarn) ? 'warn' : 'good',
     summary: pl(globs.length, 'globule') + ' soaked over ' + pl(gSets.length, 'set') + (globExplode.length ? ', and ' + pl(globExplode.length, 'globule') + ' exploded on the raid unsoaked' : '') + '. The plan is one globule per player per set, with sets taken in turns (high-venom players sit one out), and no touching a globule while its Barbed Bulwark is up.',
@@ -8615,7 +8615,7 @@ function buildTwinFangs(ev, r, h) {
         })()].concat(ex.map((c) => [{ txt: 'Exploded unsoaked', bad: true }, { t: c.t }, { txt: '—', dim: true }, { txt: c.who.size + ' players hit, +1 Eternal Venom each', bad: true }, { txt: '—', dim: true }, { txt: '—', dim: true }, { txt: '' }])).concat(who.map((g) => {
           const o = s.by.get(g), b = s.bul.get(g), d = s.died.find((x) => x.guid === g), t = (o || b).t;
           const bad = (o && o.n > 1) || b || d, risky = o && o.n > 1 && o.hiStacks >= budget, again = o && s.backHi.includes(g);
-          return [{ p: pname(g) }, { t }, { txt: String(o ? o.n : 0), warn: !!risky }, o && o.n > 1 ? { txt: pl(o.hiStacks, 'stack') + ', extra globule', bad: risky } : again ? { txt: pl(o.backSt, 'stack') + ', second set in a row', warn: true } : { txt: '—', dim: true }, b ? { txt: String(b.n), warn: true } : { txt: '—', dim: true }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true },
+          return [{ p: pname(g) }, { t }, { txt: String(o ? o.n : 0), warn: !!risky }, o && o.n > 1 ? { txt: pl(o.hiStacks, 'stack') + ', extra globule', bad: !!(risky && d), warn: !!risky } : again ? { txt: pl(o.backSt, 'stack') + ', second set in a row', warn: true } : { txt: '—', dim: true }, b ? { txt: String(b.n), warn: true } : { txt: '—', dim: true }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true },
             { txt: '' }];
         })) };
     }), rows: [] });
@@ -8692,7 +8692,7 @@ function buildTwinFangs(ev, r, h) {
   });
   for (const o of spitOthers) {
     const a = aims.find((w) => w.byst.includes(o)), setAims = aims.filter((w) => w.t0 <= o.e.t + 0.6 && w.t1 >= (a ? a.t0 : o.e.t - 5));
-    M(o.e.t, pname(o.e.dst), 'corrosive spit', 'Medium', 'Hit by a Corrosive Spit aimed at ' + (o.target ? pname(o.target) : 'someone else') + ' (' + fmtN(o.e.amt) + ' damage).', 'Stay out of the line from a Spawn of Vexhul through its marked target. It keeps going past them.',
+    M(o.e.t, pname(o.e.dst), 'corrosive spit', diedNear(o.e.dst, o.e.t, 3) ? 'High' : 'Low', 'Hit by a Corrosive Spit aimed at ' + (o.target ? pname(o.target) : 'someone else') + ' (' + fmtN(o.e.amt) + ' damage).', 'Stay out of the line from a Spawn of Vexhul through its marked target. It keeps going past them.',
       spitMap((a ? a.t0 : o.e.t - 5) - 0.4, o.e.t + 0.6, setAims, a ? [a] : [], [[o.e.dst, o.e.t]], 'Corrosive Spit at ' + h.fmtT(o.e.t) + ': ' + pname(o.e.dst) + ' in the line'));
   }
   const repeatSpit = (a) => a.fired && a.n >= 2; // the add lived long enough for another spit
@@ -8715,15 +8715,17 @@ function buildTwinFangs(ev, r, h) {
     }
     return 'Hit by this spit (from the log): ' + (hit.length ? hit.join(', ') : 'nobody') + '.' + (a.byst.length ? '' : ' Nobody else was hit.') + near;
   };
+  /* (fix 12, Oct 26: one bystander turned the panel red on 6 of 10 top kills with nobody dying; the extra stack already shows under Eternal Venom) */
+  const spitDead = (o) => !!diedNear(o.e.dst, o.e.t, 3);
   sections.push({ id: 'spit', title: 'Corrosive Spit (Stay out of others\' lines)', place: 'Corrosive Spit (add attack): standing in the line', spell: S('corrosive spit'),
-    // red: someone hit who wasn't targeted, or an add's 3rd spit; amber: an add's 2nd spit (it should have died)
-    verdict: spitOthers.length || aims.some((a) => a.fired && a.n >= 3) ? 'bad' : aims.some(repeatSpit) ? 'warn' : 'good',
+    // red: a bystander who died, or an add's 3rd spit; amber: a bystander hit, or an add's 2nd spit (it should have died)
+    verdict: spitOthers.some(spitDead) || aims.some((a) => a.fired && a.n >= 3) ? 'bad' : spitOthers.length || aims.some(repeatSpit) ? 'warn' : 'good',
     summary: pl(spawnSets.length, 'add set') + ' fired ' + pl(aims.filter((a) => a.fired).length, 'spit') + ', and ' + pl(spitOthers.length, 'player') + (spitOthers.length === 1 ? ' was' : ' were') + ' hit by a spit that wasn\'t aimed at them.',
     cols: ['Spit', 'Aimed', 'Target', 'Result', 'Stood in it', ''], /* (short words (your note, Oct 23)) */
     groups: spawnSets.map((s) => {
       const fired = s.aims.filter((a) => a.fired).length, extra = s.aims.filter(repeatSpit).length, oth = s.aims.reduce((n, a) => n + a.byst.length, 0);
       const early = s.adds.filter((x) => !x.fired).length;
-      return { title: 'Set ' + (s.i + 1), t: s.t, bad: oth > 0 || s.aims.some((a) => a.fired && a.n >= 3), warn: extra > 0,
+      return { title: 'Set ' + (s.i + 1), t: s.t, bad: s.aims.some((a) => a.byst.some(spitDead) || (a.fired && a.n >= 3)), warn: extra > 0 || oth > 0,
         sub: pl(s.adds.length, 'add') + ', ' + pl(fired, 'spit') + ' fired' + (extra ? ', ' + extra + ' from adds that should have been dead' : '') + (early ? ', ' + pl(early, 'add') + ' killed before it fired' : ', none killed before its first spit') + (oth ? ', ' + pl(oth, 'player') + ' stood in it' : ''),
         rows: s.aims.map((a) => {
           const ad = s.adds.find((x) => x.g === a.src);
@@ -8734,7 +8736,7 @@ function buildTwinFangs(ev, r, h) {
           const t0 = a.t0 - 0.4, t1 = a.t1 + 0.6;
           const mp = spitMap(t0, t1, s.aims.filter((x) => x.t1 >= t0 && x.t0 <= t1), [a], a.byst.map((o) => [o.e.dst, o.e.t]), 'Corrosive Spit, set ' + (s.i + 1) + ', spawn ' + a.k + ' spit ' + a.n + ': ' + h.fmtT(a.t0) + ' to ' + h.fmtT(a.t1));
           mp.note = spitNote(a);
-          return [{ txt: 'Spawn ' + a.k + ', spit ' + a.n }, { t: a.t0 }, { ps: [pname(a.g)] }, result, { ps: a.byst.map((o) => pname(o.e.dst)), none: 'nobody', bad: a.byst.length > 0, suf: 'hit by ' + (pname(a.g) ? String(pname(a.g)).split('-')[0] + '\'s' : 'someone else\'s') + ' beam' /* (names first (your wording, Oct 23)) */ }, { map: mp }];
+          return [{ txt: 'Spawn ' + a.k + ', spit ' + a.n }, { t: a.t0 }, { ps: [pname(a.g)] }, result, { ps: a.byst.map((o) => pname(o.e.dst)), none: 'nobody', bad: a.byst.some(spitDead), warn: a.byst.length > 0, suf: 'hit by ' + (pname(a.g) ? String(pname(a.g)).split('-')[0] + '\'s' : 'someone else\'s') + ' beam' /* (names first (your wording, Oct 23)) */ }, { map: mp }];
         }) };
     }), rows: [] });
   // ---- 7. Coiling Ichor: a circle around each target ----
