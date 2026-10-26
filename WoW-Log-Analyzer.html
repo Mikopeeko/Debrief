@@ -17297,6 +17297,7 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'Rotation: healers see their Parse number again; the page kept "not ranked" when the healing rankings arrived after it was first drawn.',
     'Resources match Warcraft Logs: every "wasted" number now counts everything you lost, the same way Warcraft Logs and WoWAnalyzer do. When part of it is fine (like Divine Toll on 1 or 2 Holy Power), the sentence says how much, and only the rest sets the colour.',
     'Shadow Priest: Insanity spending was counted 100 times too high, and the Shadow Word: Madness at 50 Insanity rule always passed. Both are fixed, so the Insanity numbers and the priority check are right.',
     'Devourer Demon Hunter: the Fury that Void Metamorphosis drains now counts as spent, so the Fury chart and waste are right.',
@@ -37185,7 +37186,8 @@ const GEN_MEMO = new Map();
 /* (what else the checks' html reads (the Rotation chat's list): the What to fix cards switch, open and closed parts, the Power Infusion view, a phone screen) */
 const genState = () => { const sig = (v) => { try { return JSON.stringify(v instanceof Set ? [...v] : v instanceof Map ? [...v] : v) || ''; } catch (e) { return '?'; } };
   let pi = ''; try { pi = String(PI_OFF()); } catch (e) { pi = ''; } let ph = ''; try { ph = String(matchMedia('(max-width: 640px)').matches); } catch (e) { ph = ''; }
-  return [typeof SPC_DRAW !== 'undefined' ? String(SPC_DRAW) : '', sig(S.spcHwOpen), sig(S.spcMtAll), sig(S.openSecs), sig(S.specTree), pi, ph].join('~'); };
+  let pz = ''; try { pz = [...PARSES].filter(([, v]) => v instanceof Map).map(([k]) => k).join(','); } catch (e) { pz = ''; } /* (which parses have arrived: a kept page is drawn again when one does (Oct 26)) */
+  return [typeof SPC_DRAW !== 'undefined' ? String(SPC_DRAW) : '', sig(S.spcHwOpen), sig(S.spcMtAll), sig(S.openSecs), sig(S.specTree), pi, ph, pz].join('~'); };
 const genKeep = (v) => !(v && v.wait);
 function genRun(spec, D, reps, name, one) { let k = null; try { k = spec + '|' + name + '|' + String(one) + '|' + deathCutN() + '|' + reps.map(repId).join(',') + '|' + genState(); } catch (e) { k = null; }
   if (k && GEN_MEMO.has(k)) return GEN_MEMO.get(k); const v = genRun0(spec, D, reps, name, one); if (k && genKeep(v)) { if (GEN_MEMO.size > 600) GEN_MEMO.clear(); GEN_MEMO.set(k, v); } return v; }
