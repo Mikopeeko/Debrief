@@ -389,7 +389,7 @@ async function runBugs(env) {
     st.t[t.id] = 0; dirty = true;
     const m = await dc(env, '/channels/' + t.id + '/messages/' + t.id).catch(() => null), text = (m && m.content) || '';
     const files = ((m && m.attachments) || []).map((a) => a.url), tagNames = (t.applied_tags || []).map((id) => (ftags.find((x) => x.id === id) || {}).name).filter(Boolean);
-    const areas = areasIn(t.name + ' ' + text), who = m && m.author ? (idea && m.author.bot ? 'the website form' : (m.author.global_name || m.author.username)) : 'someone';
+    const areas = areasIn(t.name + ' ' + text), who = (m && m.author && m.author.bot && (/Reported by \*\*(.+?)\*\* \(<@\d{17,20}>\)/.exec(text) || [])[1]) || (m && m.author ? (idea && m.author.bot ? 'the website form' : (m.author.global_name || m.author.username)) : 'someone');
     const body = text.replace(/@/g, '@​').split(/\r?\n/).map((l) => '> ' + l).join('\n') + '\n\n**From:** ' + who.replace(/@/g, '@​') + ' on Discord' +
       (tagNames.length ? '\n**Tags:** ' + tagNames.join(', ') : '') + (files.length ? '\n**Pictures:**\n' + files.map((u) => '- ' + u).join('\n') : '') +
       '\n\nhttps://discord.com/channels/' + GUILD + '/' + t.id + '\n\n_Copied from ' + (idea ? '#suggestions' : '#bug-reports') + ' by Claudette (the Debrief bot). Closing this issue tells the post it\'s ' + (idea ? 'built, or not planned' : 'fixed') + '._';
@@ -426,7 +426,7 @@ async function runBugs(env) {
     await dc(env, '/channels/' + tid, { method: 'PATCH', body: { archived: false, applied_tags: [...keep].slice(0, 5) } }).catch(() => {});
     // (the user's rule, Oct 20: the reporter is tagged on their own #bug-reports post, the owner in the #bug-review post,
     // and both posts are closed 4 hours later)
-    const first = await dc(env, '/channels/' + tid + '/messages/' + tid).catch(() => null), uid = first && first.author && !first.author.bot && first.author.id !== OWNER ? first.author.id : null;
+    const first = await dc(env, '/channels/' + tid + '/messages/' + tid).catch(() => null), uid = first && first.author ? (first.author.bot ? (((/Reported by \*\*.+?\*\* \(<@(\d{17,20})>\)/.exec(first.content || '') || [])[1]) || null) : first.author.id) : null; if (uid === OWNER) uid = null;
     await dc(env, '/channels/' + tid + '/messages', { method: 'POST', body: { content: (uid ? '<@' + uid + '> ' : '') + (idea ? (nope ? 'Thanks for the idea! We\'re not going to build this one right now, but we read every one.' : 'We built it! 🎉 It\'s in the latest update. Thanks for the idea. See what changed: <' + SITE + '/?patchnotes>') : nope ? 'We couldn\'t make this happen on our side, so we\'re closing it for now. If it happens again, reply here with the pull link and we\'ll look again.'
       : 'Fixed! It\'s in the latest update. Thanks for reporting it. See what changed: <' + SITE + '/?patchnotes>'), allowed_mentions: { parse: [], users: uid ? [uid] : [] } } }).catch(() => {});
     if (!idea) st.fixed = [...(st.fixed || []), [tid, Date.now(), nope ? 0 : 1]].slice(-50);
@@ -787,6 +787,13 @@ async function discordClick(req, env, ctx) {
     })());
     return json({ type: 5 });
   }
+  if (i.type === 2 && i.data && ['bug', 'idea', 'Report as bug', 'Suggest as idea'].includes(i.data.name)) { // (a report: /bug, /idea, or the right-click shortcuts on a message; answered "thinking…" at once, only the reporter sees the answer)
+    ctx.waitUntil((async () => {
+      let msg; try { msg = await reportCommand(env, i); } catch (err) { msg = 'That report didn\'t go through. Please try again in a minute.'; console.warn('Report:', err && err.message); }
+      await fetch('https://discord.com/api/v10/webhooks/' + APP_ID + '/' + i.token + '/messages/@original', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: msg, allowed_mentions: { parse: [] } }) });
+    })());
+    return json({ type: 5, data: { flags: 64 } });
+  }
   if (i.type === 3 && i.data && /^fp:/.test(i.data.custom_id || '')) { // (a #new-features draft's buttons)
     const who = ((i.member && i.member.user) || i.user || {}).id; if (who !== OWNER) return reply('Only the owner can answer drafts.', true);
     const act = i.data.custom_id.slice(3), thread = i.channel_id;
@@ -930,13 +937,56 @@ async function relink(env) {
 // (one post per boss per guild, counted from sign-up, so farm kills don't repeat). KV killfeed: [{id, name, by, seen, done}].
 const APP_ID = '1562104625094467614';
 const KILLS_Q = 'query($code:String!){reportData{report(code:$code){code title fights{id encounterID name difficulty kill startTime endTime}}}}';
+const reportSeen = new Map(); // (who reported lately: three an hour each, so one person can't flood the forums)
+const REPORT_CMDS = [
+  { name: 'bug', type: 1, description: 'Report a bug to the Debrief team', options: [
+    { type: 3, name: 'text', description: 'What happened? Say the boss and pull if you can', required: true, max_length: 1500 },
+    { type: 11, name: 'screenshot', description: 'A picture of it (optional)', required: false }] },
+  { name: 'idea', type: 1, description: 'Suggest an idea for Debrief', options: [
+    { type: 3, name: 'text', description: 'What would you like Debrief to do?', required: true, max_length: 1500 },
+    { type: 11, name: 'screenshot', description: 'A picture (optional)', required: false }] },
+  { name: 'Report as bug', type: 3 }, { name: 'Suggest as idea', type: 3 }];
+async function reportCommand(env, i) {
+  const user = (i.member && i.member.user) || i.user || {}, shortcut = i.data.type === 3, idea = i.data.name === 'idea' || i.data.name === 'Suggest as idea';
+  const now = Date.now(); let w = reportSeen.get(user.id); if (!w || now - w.t > 3600000) { w = { t: now, n: 0 }; reportSeen.set(user.id, w); if (reportSeen.size > 500) reportSeen.clear(); }
+  if (user.id !== OWNER && w.n >= 3) return 'You\'ve sent a few already. Please try again in a little while. 💛';
+  let text = '', files = [], from = '';
+  if (shortcut) {
+    const m = (((i.data.resolved || {}).messages) || {})[i.data.target_id] || {};
+    text = String(m.content || '').trim(); files = (m.attachments || []).filter((a) => /^image\//.test(a.content_type || '')).slice(0, 4);
+    if (!text && !files.length) return 'That message has no words or picture to use. Try one with some text.';
+    if (m.author && m.author.id !== user.id) from = '\n\n*The message above is from ' + String(m.author.global_name || m.author.username || 'someone').replace(/[@*_`~|]/g, '') + '.*';
+    if (!text) text = 'See the picture.';
+  } else {
+    const o = {}; for (const x of i.data.options || []) o[x.name] = x.value;
+    text = String(o.text || '').trim(); const a = o.screenshot && (((i.data.resolved || {}).attachments) || {})[o.screenshot]; if (a) files = [a];
+    if (text.length < 10) return 'Please say a little more, so we can find it.';
+  }
+  text = text.replace(/@(everyone|here)/g, '@\u200b$1').slice(0, 1500);
+  const name = String(user.global_name || user.username || 'someone').replace(/[@*_`~|]/g, '').slice(0, 40);
+  const forumId = idea ? FORUM_IDEAS : FORUM_BUGS, forum = await dc(env, '/channels/' + forumId), tags = forum.available_tags || [];
+  const tag = tagOf(tags, 'Website') || (tags[0] && tags[0].id), first = text.split(/\r?\n/)[0].replace(/\s+/g, ' ').trim() || 'See the picture.';
+  const content = text + from + '\n\n*Reported by **' + name + '** (<@' + user.id + '>) with ' + (shortcut ? 'a right-click' : '/' + i.data.name) + '.' + (idea ? ' React with 👍 if you want it too.' : '') + '*';
+  const body = { name: first.length > 90 ? first.slice(0, 89) + '…' : first, applied_tags: tag ? [tag] : [], message: { content: content.slice(0, 1990), allowed_mentions: { parse: [] } } };
+  const got = []; for (const a of files) { try { const r = await fetch(a.url); if (r.ok) { const buf = await r.arrayBuffer(); if (buf.byteLength < 8e6) got.push({ name: String(a.filename || 'picture.png').replace(/[^\w.\-]/g, '_'), type: a.content_type || 'image/png', buf }); } } catch (e) { /* a picture that won't download is skipped */ } }
+  let t;
+  if (got.length) {
+    const fd = new FormData(); body.message.attachments = got.map((g, k) => ({ id: k, filename: g.name }));
+    got.forEach((g, k) => fd.append('files[' + k + ']', new Blob([g.buf], { type: g.type }), g.name)); fd.append('payload_json', JSON.stringify(body));
+    const r = await fetch('https://discord.com/api/v10/channels/' + forumId + '/threads', { method: 'POST', body: fd, headers: { Authorization: 'Bot ' + env.DISCORD_BOT_TOKEN, 'User-Agent': 'DiscordBot (' + SITE + ', 1)' } });
+    if (!r.ok) throw new Error('Discord answered ' + r.status + ' on the report post: ' + (await r.text().catch(() => '')).slice(0, 150));
+    t = await r.json();
+  } else t = await dc(env, '/channels/' + forumId + '/threads', { method: 'POST', body });
+  w.n++;
+  return (idea ? 'Thanks for the idea! 💡' : 'Thanks, got it! 🐛') + ' It\'s here: <#' + t.id + '>. Claudette copies it to the team\'s list within about 10 minutes' + (got.length < files.length ? ' (one picture couldn\'t be copied, so add it in the post)' : '') + '.';
+}
 async function ensureCommands(env) {
-  if ((await env.DEBRIEF_KV.get('dc-cmds')) === 'v1') return;
-  await dc(env, '/applications/' + APP_ID + '/guilds/' + GUILD + '/commands', { method: 'PUT', body: [{ name: 'killfeed', description: 'Post your guild\'s Mythic kills in #kill-feed', options: [
+  if ((await env.DEBRIEF_KV.get('dc-cmds')) === 'v2') return;
+  await dc(env, '/applications/' + APP_ID + '/guilds/' + GUILD + '/commands', { method: 'PUT', body: [...REPORT_CMDS, { name: 'killfeed', description: 'Post your guild\'s Mythic kills in #kill-feed', options: [
     { type: 1, name: 'add', description: 'Add your guild', options: [{ type: 3, name: 'guild', description: 'Your guild\'s Warcraft Logs link (warcraftlogs.com/guild/...)', required: true }] },
     { type: 1, name: 'remove', description: 'Stop posting a guild', options: [{ type: 3, name: 'guild', description: 'The guild\'s Warcraft Logs link or name', required: true }] },
     { type: 1, name: 'list', description: 'Show the guilds in the kill feed' }] }] });
-  await env.DEBRIEF_KV.put('dc-cmds', 'v1');
+  await env.DEBRIEF_KV.put('dc-cmds', 'v2');
 }
 // (a Warcraft Logs guild link: /guild/id/123 or /guild/us/server-slug/Guild%20Name)
 async function guildFrom(env, s) {
