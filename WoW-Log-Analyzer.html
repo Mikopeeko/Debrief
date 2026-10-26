@@ -50589,7 +50589,7 @@ function dsRotBalance() { const rc = document.querySelector('#view .ds-rcols'); 
   let side = rc.querySelector(':scope > section.rck-gx.ds-gxl'); const wide = getComputedStyle(rc).display === 'grid';
   if (!wide) { if (side) { [...side.querySelector('.rgx-pn').children].forEach((g) => pn.appendChild(g)); side.remove(); gx.removeAttribute('data-ds-bal'); } return; }
   if (gx.dataset.dsBal) return; if (!ck.offsetHeight || !gx.offsetHeight) return; gx.dataset.dsBal = '1';
-  const gps = [...pn.querySelectorAll(':scope > .rgx-gp')]; let left = ck.offsetHeight, right = gx.offsetHeight; const moved = [];
+  const gps = [...pn.querySelectorAll(':scope > .rgx-gp:not(.rgx-gpx)')]; if (gps.length < 2) return; let left = ck.offsetHeight, right = gx.offsetHeight; const moved = [];
   while (gps.length > 1) { const g = gps[gps.length - 1], h = g.offsetHeight + 8; if (Math.abs((right - h) - (left + h)) >= Math.abs(right - left)) break; moved.unshift(g); gps.pop(); right -= h; left += h; }
   if (!moved.length) return; side = document.createElement('section'); side.className = 'rck-gx ds-gxl'; const p = document.createElement('div'); p.className = 'rgx-pn'; moved.forEach((g) => p.appendChild(g)); side.appendChild(p); ck.after(side); }
 (function () { const f11 = dsBars; dsBars = function (root) { f11(root); try { dsRotBalance(); } catch (e) {} }; let t = 0; addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => { try { dsRotBalance(); } catch (e) {} }, 150); }); })();
