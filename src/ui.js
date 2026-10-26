@@ -31254,7 +31254,9 @@ function dsGuides() {
   function dsSheet(win, only, sub) {
     var cards = [].slice.call(win.querySelectorAll('.pp-card')).map(function (c) { var ph = c.querySelector('.pp-ph'), im = c.querySelector('img'); var L = null; try { L = c.dataset.legend ? JSON.parse(c.dataset.legend) : null; } catch (e) { L = null; }
       return { t: ph ? ph.textContent.trim() : '', when: c.dataset.when || '', src: im ? im.src : '', ph: phKey(c), legend: L, i: +c.dataset.i || 0 }; }).filter(function (c) { return c.src && (!only || only.indexOf(c.t) >= 0); });
-    var head = win.querySelector('.pp-win > h2'), title = head ? head.textContent.trim() : 'Raid plan', people = jobsOf(cards);
+    // (the "Your jobs" block is off: the user, "you can remove this from the card, they can see their assignments in the plan";
+    // jobsOf stays for the day it's wanted back)
+    var head = win.querySelector('.pp-win > h2'), title = head ? head.textContent.trim() : 'Raid plan', people = [];
     var line2 = sub ? sub + ' · ' + cards.length + (cards.length === 1 ? ' step' : ' steps') + ' · from your note' : 'Raid plan · ' + cards.length + ' steps in fight order · from your note';
     return Promise.all([
       Promise.all(cards.map(function (c) { return loadImg(c.src); })),
