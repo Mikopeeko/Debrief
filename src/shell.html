@@ -7697,6 +7697,9 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .plb-rch > [data-dssheetcard] { order: 3; margin-left: 0; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .plb-rch > [data-dssheetcard] + .plb-rcs { margin-left: auto; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .plb-rch > .plb-rcs, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .plb-rch > .btn.sm, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs > .ndz-dph > .btn.sm { box-sizing: border-box; height: 26px; min-height: 0; padding: 0 11px; display: inline-flex; align-items: center; gap: 5px; font-size: 12px; line-height: 1; border-radius: 13px; white-space: nowrap; }
+/* ===== Design studio round 65 (Oct 26): Copy image on the Cooldowns timeline (the button and its result line). Owner: the Design studio chat. ===== */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl > .ndz-cth > [data-dstl] { margin-left: 8px; box-sizing: border-box; height: 26px; min-height: 0; padding: 0 11px; display: inline-flex; align-items: center; font-size: 12px; line-height: 1; border-radius: 13px; white-space: nowrap; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl > .ndz-cth > .ds-sheetmsg { flex: 1 1 100%; text-align: right; font-size: 12px; margin: 0; }
 /* ===== Design studio round 60 (Oct 26): Copy all in the Jobs header (the user: "put a copy all button at the top right of the
    mechanics preview section") and the window opened quietly for it. Owner: the Design studio chat. ===== */
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs > .ndz-dph { align-items: center; flex-wrap: wrap; }
@@ -7710,15 +7713,20 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #ppWin.ds-quiet { visibility: hidden; pointer-events: none; }
 /* (the user: in the one-picture view, "remove the 'all 10 pictures' button") */
 html body #ppWin.pp-one .pp-nav [data-ppallv] { display: none !important; }
-/* ===== Design studio round 65 (Oct 26): Copy image on the Cooldowns timeline (the button and its result line). Owner: the Design studio chat. ===== */
-html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl > .ndz-cth > [data-dstl] { margin-left: 8px; box-sizing: border-box; height: 26px; min-height: 0; padding: 0 11px; display: inline-flex; align-items: center; font-size: 12px; line-height: 1; border-radius: 13px; white-space: nowrap; }
-html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl > .ndz-cth > .ds-sheetmsg { flex: 1 1 100%; text-align: right; font-size: 12px; margin: 0; }
 /* ===== Design studio round 66 (Oct 26): the marker dots on the Raid markers card. Owner: the Design studio chat. ===== */
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-marks .plb-mk { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; color: var(--text); }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-marks .plb-mk > i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; background: var(--mk, var(--muted)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.28), 0 0 0 2px rgba(0,0,0,.25); flex: none; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-marks .plb-rr > .plb-rn { display: flex; align-items: center; min-height: 20px; }
 /* (the card's pin is bare text, so the title was the first element and fell into the 28 px icon slot: it is the title again) */
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-marks > .plb-rch > b { width: auto !important; height: auto !important; flex: 1 1 auto !important; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 0; }
+/* (the user: "there should be a map showing their locations": the Guides chat's marker map (button.pj-pic[data-pj="marks"]) sits
+   beside the rows as a 180 px map, big enough to read the eight marks) */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-marks:has(.pj-pic[data-pj="marks"]) { display: grid !important; grid-template-columns: minmax(0, 1fr) 180px; column-gap: 16px; align-items: start; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-marks:has(.pj-pic[data-pj="marks"]) > .plb-rch { grid-column: 1 / -1; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-marks:has(.pj-pic[data-pj="marks"]) > .plb-rr { grid-column: 1; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-marks:has(.pj-pic[data-pj="marks"]) > .pj-pics { grid-column: 2; grid-row: 2 / span 30; display: block !important; margin: 0 !important; padding: 0 !important; border: 0 !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-marks .pj-pic[data-pj="marks"], html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-marks .pj-pic[data-pj="marks"] img { width: 180px; height: 180px; }
+@media (max-width: 640px) { html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-marks:has(.pj-pic[data-pj="marks"]) { grid-template-columns: minmax(0, 1fr); } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-marks:has(.pj-pic[data-pj="marks"]) > .pj-pics { grid-column: 1; grid-row: auto; margin-top: 10px !important; } }
 </style>
 
 
