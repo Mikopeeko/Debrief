@@ -51542,6 +51542,17 @@ function dsRotTips() { const esc = (s) => String(s).replace(/&/g, '&amp;').repla
   document.addEventListener('click', (e) => { const c = e.target && e.target.closest && e.target.closest('#view .rck-fix .rck-sg[data-ck]'); if (!c) return;
     setTimeout(() => { const t = document.getElementById('spc-r-' + c.dataset.ck); if (!t) return; t.classList.remove('ds-flash'); void t.offsetWidth; t.classList.add('ds-flash'); setTimeout(() => t.classList.remove('ds-flash'), 1600); }, 350); }, true); })();
 
+// ===== Design studio round 37 (Oct 26): a spell's tiles sit together: inside a ring, a later tile with the same spell icon as an earlier one moves up behind
+// it; the first keeps the app's place. Owner: the Design studio chat. =====
+function dsRotGroup() { document.querySelectorAll('#view section.rck .rck-cat .rck-rs:not([data-ds-grp])').forEach((rs) => { rs.dataset.dsGrp = '1';
+    const tiles = [...rs.children].filter((t) => t.matches('details.rck-r')); if (tiles.length < 3) return;
+    const sid = (t) => { const ic = t.querySelector(':scope > summary .spc-ri [data-sid], :scope > summary [data-sid]'); return ic ? ic.getAttribute('data-sid') : ''; };
+    const last = new Map(); /* spell -> the last tile of its group so far */
+    for (const t of tiles) { const s = sid(t); if (!s) continue;
+      if (last.has(s)) { const after = last.get(s); if (after.nextElementSibling !== t) after.after(t); }
+      last.set(s, t); } }); }
+(function () { const f23 = dsBars; dsBars = function (root) { f23(root); try { dsRotGroup(); } catch (e) {} }; })();
+
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
 (function () { const f17 = dsBars; let last = 0, tm = 0, pendingRoot;
