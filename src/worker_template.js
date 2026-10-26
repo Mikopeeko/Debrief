@@ -939,15 +939,17 @@ const APP_ID = '1562104625094467614';
 const KILLS_Q = 'query($code:String!){reportData{report(code:$code){code title fights{id encounterID name difficulty kill startTime endTime}}}}';
 const reportSeen = new Map(); // (who reported lately: three an hour each, so one person can't flood the forums)
 const REPORT_CMDS = [
-  { name: 'bug', type: 1, description: 'Report a bug to the Debrief team', options: [
+  { name: 'bug', type: 1, default_member_permissions: '8192', description: 'Report a bug to the Debrief team', options: [
     { type: 3, name: 'text', description: 'What happened? Say the boss and pull if you can', required: true, max_length: 1500 },
     { type: 11, name: 'screenshot', description: 'A picture of it (optional)', required: false }] },
-  { name: 'idea', type: 1, description: 'Suggest an idea for Debrief', options: [
+  { name: 'idea', type: 1, default_member_permissions: '8192', description: 'Suggest an idea for Debrief', options: [
     { type: 3, name: 'text', description: 'What would you like Debrief to do?', required: true, max_length: 1500 },
     { type: 11, name: 'screenshot', description: 'A picture (optional)', required: false }] },
-  { name: 'Report as bug', type: 3 }, { name: 'Suggest as idea', type: 3 }];
+  { name: 'Report as bug', type: 3, default_member_permissions: '8192' }, { name: 'Suggest as idea', type: 3, default_member_permissions: '8192' }];
 async function reportCommand(env, i) {
   const user = (i.member && i.member.user) || i.user || {}, shortcut = i.data.type === 3, idea = i.data.name === 'idea' || i.data.name === 'Suggest as idea';
+  const perms = BigInt((i.member && i.member.permissions) || 0); // (moderators have Manage Messages (8192); administrators have everything (8))
+  if (user.id !== OWNER && !(perms & 8192n) && !(perms & 8n)) return 'Only the owner and moderators can make reports this way. To report something, post in #bug-reports or #suggestions. 💛';
   const now = Date.now(); let w = reportSeen.get(user.id); if (!w || now - w.t > 3600000) { w = { t: now, n: 0 }; reportSeen.set(user.id, w); if (reportSeen.size > 500) reportSeen.clear(); }
   if (user.id !== OWNER && w.n >= 3) return 'You\'ve sent a few already. Please try again in a little while. 💛';
   let text = '', files = [], from = '';
@@ -981,12 +983,12 @@ async function reportCommand(env, i) {
   return (idea ? 'Thanks for the idea! 💡' : 'Thanks, got it! 🐛') + ' It\'s here: <#' + t.id + '>. Claudette copies it to the team\'s list within about 10 minutes' + (got.length < files.length ? ' (one picture couldn\'t be copied, so add it in the post)' : '') + '.';
 }
 async function ensureCommands(env) {
-  if ((await env.DEBRIEF_KV.get('dc-cmds')) === 'v2') return;
+  if ((await env.DEBRIEF_KV.get('dc-cmds')) === 'v3') return;
   await dc(env, '/applications/' + APP_ID + '/guilds/' + GUILD + '/commands', { method: 'PUT', body: [...REPORT_CMDS, { name: 'killfeed', description: 'Post your guild\'s Mythic kills in #kill-feed', options: [
     { type: 1, name: 'add', description: 'Add your guild', options: [{ type: 3, name: 'guild', description: 'Your guild\'s Warcraft Logs link (warcraftlogs.com/guild/...)', required: true }] },
     { type: 1, name: 'remove', description: 'Stop posting a guild', options: [{ type: 3, name: 'guild', description: 'The guild\'s Warcraft Logs link or name', required: true }] },
     { type: 1, name: 'list', description: 'Show the guilds in the kill feed' }] }] });
-  await env.DEBRIEF_KV.put('dc-cmds', 'v2');
+  await env.DEBRIEF_KV.put('dc-cmds', 'v3');
 }
 // (a Warcraft Logs guild link: /guild/id/123 or /guild/us/server-slug/Guild%20Name)
 async function guildFrom(env, s) {
