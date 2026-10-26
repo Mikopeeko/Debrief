@@ -5554,7 +5554,9 @@ function ppCardsCA(J, M, U, P) {
   // Phase 2 Gloombombs (no names in a note: two random ranged and two random melee; ranged bombs to the marked add)
   { const mp = GDZ_CA_M.bombs(), ar = mp.frames[0].pts.find((p) => p.guid === 'ar'), am = mp.frames[0].pts.find((p) => p.guid === 'am');
     cards.push({ id: 'bombs', ph: 2, when: 'Every add set', title: 'Gloombomb (Two bombs on each add)', map: ppFreeze(mp, 5.5, ppSeat(P, { r1: ppAny('Ranged bomb'), r2: ppAny('Ranged bomb'), m1: ppAny('Melee bomb'), m2: ppAny('Melee bomb') }), P, M, { hl: ['r1', 'r2', 'm1', 'm2'], labels: [[{ x: ar.x, y: ar.y }, 'Ranged bombs · marked add', GR, '#06140a', 9], [{ x: am.x, y: am.y }, 'Melee bombs · unmarked add', BL, '#fff', 9]] }),
-      legend: [ppG('Gloombomb (random each set)', '#da3df2', [ppI(P, ppAny('2 ranged players'), 'Marked add'), ppI(P, ppAny('2 melee players'), 'Unmarked add')], 'Stand on opposite sides of your add, so the two blasts overlap on it and on nobody else.')],
+      // (no rows of names: the bombs land on random players each set, so nobody can be put in the note; plain lines say who instead)
+      legend: [ppG('Ranged: bomb the marked add', GR, [], 'Two random ranged players each set.'), ppG('Melee: bomb the unmarked add', BL, [], 'Two random melee players each set.'),
+        ppG('Stand on opposite sides of your add', '#da3df2', [], 'The two blasts overlap on the add and on nobody else.')],
       foot: 'Each add\'s shield needs two bombs. Kick the add as soon as the Gloombomb cast shows, so it stands still.' }); }
   // Intermission: the note's first fragment stops, each on their marker; everyone else on Zul'jan for Bloodlust
   if (J.inter.length) { const k = gdzKit('The Coiled Altar', 3), fix = {}, put = new Set(['t1', 't2']), SL = ['r1', 'r2', 'r3', 'r4', 'r5', 'r6'];
