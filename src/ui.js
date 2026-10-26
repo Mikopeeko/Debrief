@@ -1952,6 +1952,7 @@ const PATCH_NOTES = [
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'Debriefing: the Coiled Altar shield-damage bars read like the site\'s other charts, one slim row a raider with a thin bar under the name, and the Venomfang dispel rows match them.',
     'The Coiled Altar: open Eternal Nightfall or Dreadmarch on Debriefing to see who put damage into the shields (Veil of Twilight and the mind-control shields), with how long each Veil took to break next to the top kills. On one pull or All pulls.',
     'Rotation says DPS and HPS instead of "a second" (overhealing, cooldown windows, Tyrant, Inner Flame, Tree of Life).',
     'Rotation: the Healing a second (or Damage a second) box leaves the top, since those numbers now live in the gear column, and the ✓ Done right chips sit under your talents, so the two top boxes end level.',

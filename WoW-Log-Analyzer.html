@@ -7394,6 +7394,30 @@ html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac +
 #view .rck-gx .rgx-src .rgx-lg > span > u { display: inline-block; width: 3px; height: 18px; border-radius: 2px; margin: 0 5px 0 0; vertical-align: middle; }
 /* a card's How line is not cut off on a phone */
 @media (max-width: 760px) { #view .rck-sg .rck-how { display: block; -webkit-line-clamp: unset; overflow: visible; } }
+/* ===== Design studio round 46 (Oct 26): the shield bars in the site's chart language: slim rows (18px avatar, class-colour name with the spec in grey, a 3px bar under the name,
+   number and share right), chips in the site's shape, a small label for the title. Owner: the Design studio chat. ===== */
+#view .shd { margin: 12px 0 4px; }
+#view .shd > .shd-h { margin: 0 0 8px; font: 700 12px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+#view .shd > .shd-h .sp { text-transform: none; letter-spacing: 0; font-size: 12.5px; }
+#view .shd-cs { display: flex !important; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; max-width: none; }
+#view .shd-c { flex: 0 0 auto; width: auto; height: 34px; padding: 0 12px; border-radius: 8px; background: var(--raised, rgba(255,255,255,.05)); border: 1px solid rgba(255,255,255,.08); font-size: 12.5px; }
+#view .shd-c > b { font-weight: 600; }
+/* one slim row a raider: avatar | name + 3px bar | number | share */
+#view .dsp .dsp-r, #view .dsp-r.shd-r { display: grid; grid-template-columns: 22px minmax(0, 1fr) 60px 40px !important; gap: 0 10px; align-items: center; min-height: 32px; padding: 3px 0; font-size: 13px; }
+#view .dsp-r > span:first-child { display: contents; }
+#view .dsp-r .who { display: contents; }
+#view .dsp-r .who > .av { grid-column: 1; width: 18px; height: 18px; border-width: 1.5px; }
+#view .dsp-r .who > span { grid-column: 2; display: flex; align-items: baseline; gap: 8px; min-width: 0; white-space: nowrap; }
+#view .dsp-r .who .nm { font-weight: 600; font-size: 13px; }
+#view .dsp-r .who .sub { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+#view .dsp-r .dsp-b { grid-column: 2; grid-row: 2; height: 3px; border-radius: 2px; background: rgba(255,255,255,.08); overflow: hidden; margin: 3px 0 0; }
+#view .dsp-r .dsp-b > i { display: block; height: 100%; border-radius: 2px; }
+#view .dsp-r > b { grid-column: 3; grid-row: 1 / span 2; font-size: 14px; font-weight: 600; text-align: right; }
+#view .dsp-r > .shd-p { grid-column: 4; grid-row: 1 / span 2; font-size: 12px; text-align: right; color: var(--muted); }
+#view .dsp-r:not(.shd-r) > b { grid-column: 3 / span 2; }
+#view .shd-more > summary { font-size: 12.5px; color: var(--gold); opacity: .8; margin: 4px 0 6px; }
+#view .shd-f { margin: 8px 0 0; font-size: 12.5px; color: var(--muted); }
+@media (max-width: 640px) { #view .dsp .dsp-r, #view .dsp-r.shd-r { grid-template-columns: 20px minmax(0, 1fr) 54px 36px !important; gap: 0 8px; } #view .dsp-r .who .sub { display: none; } }
 </style>
 
 
@@ -17280,6 +17304,7 @@ const PATCH_NOTES = [
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'Debriefing: the Coiled Altar shield-damage bars read like the site\'s other charts, one slim row a raider with a thin bar under the name, and the Venomfang dispel rows match them.',
     'The Coiled Altar: open Eternal Nightfall or Dreadmarch on Debriefing to see who put damage into the shields (Veil of Twilight and the mind-control shields), with how long each Veil took to break next to the top kills. On one pull or All pulls.',
     'Rotation says DPS and HPS instead of "a second" (overhealing, cooldown windows, Tyrant, Inner Flame, Tree of Life).',
     'Rotation: the Healing a second (or Damage a second) box leaves the top, since those numbers now live in the gear column, and the ✓ Done right chips sit under your talents, so the two top boxes end level.',
