@@ -5669,19 +5669,22 @@ async function ppSheet(set) {
   const pics = await Promise.all(set.cards.map((cd) => set.pic(cd))), groups = [], PHN = { 1: ['PHASE 1', '#5aa0ff'], 2: ['PHASE 2', '#b65cff'], 2.5: ['INTERMISSION', '#e6b450'], 3: ['PHASE 3', '#ff5a4f'] };
   set.cards.forEach((cd, i) => { const ph = cd.ph >= 3 ? 3 : cd.ph >= 2.5 ? 2.5 : cd.ph >= 2 ? 2 : 1; let G = groups[groups.length - 1]; if (!G || G.ph !== ph) groups.push(G = { ph, items: [] }); if (pics[i]) G.items.push({ i, cv: pics[i].cv, title: cd.title }); });
   const n = groups.reduce((a, G) => a + G.items.length, 0), rr = (g, x, y, w, h, r) => { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); };
-  const make = (cols, w) => { const h = Math.round(w * 675 / 1200), side = 30, cg = 24, rg = 18, BAND = 36, HEAD = 96, DIV = 42, W = side * 2 + cols * w + (cols - 1) * cg; let H = HEAD + 6;
+  // (headers that stand out (your call, Oct 26: "maybe make the headers more noticeable"): a bigger title over a gold rule, each phase a
+  // tinted bar with its colour down the left edge, each step a band with a solid gold number and its title in the heading font)
+  const make = (cols, w) => { const h = Math.round(w * 675 / 1200), side = 30, cg = 24, rg = 22, BAND = 46, HEAD = 104, DIV = 56, W = side * 2 + cols * w + (cols - 1) * cg; let H = HEAD + 6;
     for (const G of groups) H += DIV + Math.ceil(G.items.length / cols) * (BAND + h + rg);
     const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d'); g.fillStyle = '#12141b'; g.fillRect(0, 0, W, H);
     const fit = (t, mw) => { if (g.measureText(t).width <= mw) return t; let s = t; while (s.length > 1 && g.measureText(s + '…').width > mw) s = s.slice(0, -1); return s + '…'; };
-    g.font = '800 34px "Barlow Semi Condensed", sans-serif'; g.fillStyle = '#ece8df'; g.fillText(set.boss + ' · ' + set.diff, side, 50);
-    g.font = '500 13px Barlow, sans-serif'; g.fillStyle = '#98a0ad'; g.fillText('Raid plan · ' + plural(n, 'step') + ' in fight order · from your note', side, 74);
-    g.font = '800 22px "Barlow Semi Condensed", sans-serif'; g.fillStyle = '#e6b450'; g.fillText('DEBRIEF', W - side - g.measureText('DEBRIEF').width, 50); g.fillRect(side, HEAD - 10, W - side * 2, 1);
+    g.font = '800 40px "Barlow Semi Condensed", sans-serif'; g.fillStyle = '#ece8df'; g.fillText(set.boss + ' · ' + set.diff, side, 54);
+    g.font = '500 13px Barlow, sans-serif'; g.fillStyle = '#98a0ad'; g.fillText('Raid plan · ' + plural(n, 'step') + ' in fight order · from your note', side, 80);
+    g.font = '800 24px "Barlow Semi Condensed", sans-serif'; g.fillStyle = '#e6b450'; g.fillText('DEBRIEF', W - side - g.measureText('DEBRIEF').width, 54); g.fillRect(side, HEAD - 12, W - side * 2, 2);
     let y = HEAD;
-    for (const G of groups) { const [nm, col] = PHN[G.ph]; g.fillStyle = col; g.beginPath(); g.arc(side + 5, y + 20, 5, 0, Math.PI * 2); g.fill();
-      g.font = '700 13px Barlow, sans-serif'; g.fillStyle = '#c9ced8'; g.fillText(nm, side + 18, y + 25); g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(side, y + DIV - 8, W - side * 2, 1); y += DIV;
+    for (const G of groups) { const [nm, col] = PHN[G.ph]; g.fillStyle = col + '22'; rr(g, side, y, W - side * 2, 40, 8); g.fill(); g.fillStyle = col; g.fillRect(side, y, 4, 40);
+      g.beginPath(); g.arc(side + 20, y + 20, 5, 0, Math.PI * 2); g.fill(); g.font = '700 17px "Barlow Semi Condensed", sans-serif'; g.fillStyle = '#ffffff'; g.fillText(nm, side + 34, y + 26); y += DIV;
       G.items.forEach((it, k) => { const x = side + (k % cols) * (w + cg), yy = y + Math.floor(k / cols) * (BAND + h + rg), t = String(it.i + 1);
-        g.fillStyle = '#e6b450'; rr(g, x, yy + 6, 26, 22, 6); g.fill(); g.font = '800 13px Barlow, sans-serif'; g.fillStyle = '#1a1405'; g.fillText(t, x + 13 - g.measureText(t).width / 2, yy + 22);
-        g.font = '700 15px Barlow, sans-serif'; g.fillStyle = '#ece8df'; g.fillText(fit(it.title, w - 36), x + 36, yy + 23);
+        g.fillStyle = 'rgba(255,255,255,.05)'; rr(g, x, yy, w, BAND - 6, 8); g.fill();
+        g.fillStyle = '#e6b450'; rr(g, x + 7, yy + 7, 30, 26, 13); g.fill(); g.font = '800 15px Barlow, sans-serif'; g.fillStyle = '#1a1405'; g.fillText(t, x + 22 - g.measureText(t).width / 2, yy + 25);
+        g.font = '700 22px "Barlow Semi Condensed", sans-serif'; g.fillStyle = '#ece8df'; g.fillText(fit(it.title, w - 60), x + 48, yy + 28);
         g.save(); rr(g, x, yy + BAND, w, h, 10); g.clip(); g.drawImage(it.cv, x, yy + BAND, w, h); g.restore(); g.strokeStyle = '#353b49'; g.lineWidth = 1; rr(g, x + 0.5, yy + BAND + 0.5, w - 1, h - 1, 10); g.stroke(); });
       y += Math.ceil(G.items.length / cols) * (BAND + h + rg); }
     return cv; };
