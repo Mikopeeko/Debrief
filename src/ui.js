@@ -1844,6 +1844,7 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'Rotation no longer flashes its old layout for a moment when you open it: the page now appears straight in its new look.',
     'Tab clicks are lighter: the page\'s look passes ran about 65 times per click, once for every icon that loaded; they run once per frame now.',
     'Saved pulls stay saved through site updates; only a change to the checks themselves reads them again. Rotation\'s What to fix cards always show after visiting Debriefing first.',
     'Switching tabs is much quicker: Rotation and Debriefing no longer work everything out again on each click (Rotation about twice as fast, Debriefing about two and a half times).',
@@ -2702,7 +2703,7 @@ function renderMain() {
   refreshIcons(); S.page = 'pull'; navNote();
   if (S.tab === 'audit' && S.noteSwap && S.noteSwap.from === 'audit' && NDZ_ON()) ndzOvl(); /* (the swap pop-up stays open over Debriefing) */
 }
-const view = (h) => { $('#view').innerHTML = h; };
+const view = (h) => { $('#view').innerHTML = h; try { if (typeof dsBars === 'function') (dsBars.now || dsBars)(); } catch (e) { /* (the studio passes are extra) */ } }; /* (the studio passes, in the same tick as the page write and past their 150 ms limit, so a page never paints in its old layout first (Oct 25)) */
 // ---------- No guide names on the page (your call, Oct 19: "remove the guide names from the pages and keep the text neutral") ----------
 // The checks are researched from written guides and simulations, but the page never names them: "both guides", "a guide" (or
 // "one guide" and "another guide" when two are in the same text), "the simulations". It's done as text appears on the page, so
@@ -30539,4 +30540,6 @@ function dsRotFlat() { document.querySelectorAll('#view section.rck details.rck-
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
 (function () { const f17 = dsBars; let last = 0, tm = 0, pendingRoot;
-  dsBars = function (root) { const now = performance.now(); if (now - last < 150) { pendingRoot = root; clearTimeout(tm); tm = setTimeout(() => { last = performance.now(); try { f17(pendingRoot); } catch (e) {} }, Math.max(16, 150 - (now - last))); return; } last = now; clearTimeout(tm); f17(root); }; })();
+  dsBars = function (root) { const now = performance.now(); if (now - last < 150) { pendingRoot = root; clearTimeout(tm); tm = setTimeout(() => { last = performance.now(); try { f17(pendingRoot); } catch (e) {} }, Math.max(16, 150 - (now - last))); return; } last = now; clearTimeout(tm); f17(root); };
+  /* (now: one run at once, past the limit, for a page that was just written (view), so it never paints in its old layout first (Oct 25, the Rotation chat)) */
+  dsBars.now = (root) => { last = performance.now(); clearTimeout(tm); f17(root); }; })();
