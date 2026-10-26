@@ -10268,10 +10268,13 @@ function buildVashnik(ev, r, h) {
       const list = [...born.values()].filter((a) => cycOf(a.t) === k).sort((a, b) => a.t - b.t), burning = list.filter((a) => a.kind === 'burning'), shr = list.filter((a) => a.kind === 'shrouded');
       const end = k < imb.length ? imb[k] : dur, rows = [];
       burning.forEach((a, j) => {
-        const together = a.died != null && burning.some((b) => b !== a && b.died != null && Math.abs(b.died - a.died) < 3);
+        const pair = a.died != null ? burning.find((b) => b !== a && b.died != null && Math.abs(b.died - a.died) < 3) : null, together = !!pair;
+        /* (fix 15, Oct 26: top kills overlap two now and then and win, so two together is a note; players dying to Caustic Surge right after is red) */
+        const sDead = pair ? r.deaths.filter((d) => d.t >= Math.min(a.died, pair.died) - 0.2 && d.t <= Math.max(a.died, pair.died) + 3 && /caustic surge/i.test(d.ability || '')) : [];
         const old = (a.died ?? Math.min(dur, end)) - a.t > 60 || hard.some((e) => e.dst === a.g);
-        if (together && burning.indexOf(a) < burning.findIndex((b) => b !== a && b.died != null && Math.abs(b.died - a.died) < 3)) M(a.died, 'Raid', 'Burning Venom', 'Medium', 'Two Burning Venoms died within 3 seconds. Their Caustic Surges hit the raid together.', 'Kill the fire adds one at a time (crowd control or banish the others), never together.');
-        rows.push([{ txt: 'Burning Venom ' + (j + 1) }, { t: a.t }, a.died != null ? { txt: 'killed after ' + Math.round(a.died - a.t) + ' s', warn: old } : { txt: 'alive', dim: a.t > dur - 60, warn: !r.item.kill && old }, together ? { txt: 'died with another', warn: true, sub: 'two Caustic Surges at once' } : old ? { txt: 'hardened (over 60 s)', warn: true } : { txt: '—', dim: true }, { txt: '' }]);
+        if (together && burning.indexOf(a) < burning.indexOf(pair) && sDead.length) M(Math.max(a.died, pair.died), 'Raid', 'Caustic Surge', 'High', pl(sDead.length, 'player') + ' died to Caustic Surge after two Burning Venoms died together.', 'Kill the fire adds one at a time (crowd control or banish the others), never together.');
+        if (together && burning.indexOf(a) < burning.indexOf(pair)) M(a.died, 'Raid', 'Burning Venom', 'Low', 'Two Burning Venoms died within 3 seconds. Their Caustic Surges hit the raid together.', 'Kill the fire adds one at a time (crowd control or banish the others), never together.');
+        rows.push([{ txt: 'Burning Venom ' + (j + 1) }, { t: a.t }, a.died != null ? { txt: 'killed after ' + Math.round(a.died - a.t) + ' s', warn: old } : { txt: 'alive', dim: a.t > dur - 60, warn: !r.item.kill && old }, together ? (sDead.length ? { txt: 'died with another', bad: true, sub: pl(sDead.length, 'player') + ' died to Caustic Surge' } : { txt: 'died with another', dim: true, sub: 'two Caustic Surges at once' }) : old ? { txt: 'hardened (over 60 s)', warn: true } : { txt: '—', dim: true }, { txt: '' }]);
       });
       if (shr.length) {
         const last = shr.every((a) => a.died != null) ? Math.max(...shr.map((a) => a.died)) : null, old = shr.filter((a) => (a.died ?? Math.min(dur, end)) - a.t > 60);
@@ -10279,7 +10282,7 @@ function buildVashnik(ev, r, h) {
       }
       const bb = bursts.filter((b) => cycOf(b.t) === k);
       if (bb.length) rows.push([{ txt: 'Malignant Burst' }, { t: bb[0].t }, { txt: pl(bb.length, 'venom') + ' reached the middle', bad: true }, { txt: '—', dim: true }, { txt: '' }]);
-      return { title: cyName(k) + ' adds', t: list[0].t, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[2].warn || x[3].warn), sub: pl(burning.length, 'Burning Venom') + (shr.length ? ', ' + pl(shr.length, 'Shrouded Venom') : '') + (bb.length ? ', ' + pl(bb.length, 'Malignant Burst') : ''), rows };
+      return { title: cyName(k) + ' adds', t: list[0].t, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[2].warn || x[3].warn), sub: pl(burning.length, 'Burning Venom') + (shr.length ? ', ' + pl(shr.length, 'Shrouded Venom') : '') + (bb.length ? ', ' + pl(bb.length, 'Malignant Burst') : ''), rows };
     }).filter((g) => g.rows.length);
     if (groups.length) sections.push({ id: 'venoms', title: 'Living Venoms (Kill one at a time)', place: 'Living Venoms (adds): killed one at a time', spell: [VS.surge, 'Caustic Surge'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
       summary: 'These are the adds from each Imbibe. It shows each Burning Venom\'s time alive and whether two died together, how long the Shrouded Venoms lived, and any venom that reached the middle.' + (surgeT.length ? ' ' + pl(surgeT.length, 'Caustic Surge') + ' this pull.' : ''), cols: ['Add', 'Spawned', 'Result', 'Notes', ''], groups, rows: [] });
