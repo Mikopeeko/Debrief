@@ -1782,6 +1782,7 @@ const PATCH_NOTES = [
     { t: 'One way to show a number', d: 'The Report card and Rotation now speak the same language as Debriefing: a bar with one number at its end, a grade as one letter at the start of its bar. The ranked roster is one bar per raider, a raider\'s checklist shows the rows that need them and folds the rest, and Rotation\'s header is one row with the talent trees folded under it.' },
     { t: 'Your tier set, in numbers', d: 'Rotation shows how much your 2-piece and 4-piece added, with a Where it came from breakdown behind every number. On every spec.' },
     { t: 'Your trinkets, both of them', d: 'Gear and extras on Rotation now shows both of your trinkets, with what each one did (damage, healing or stats), or that one was never pressed.' },], n: [
+    'Rotation: the gear groups split across both columns (the last ones sit under the checklist), so the page has no empty half.',
     'Rotation: the checklist reads like the gear column now. The five rings are slim rows in one panel (a small number on the right, a thin bar), the checks under an open ring are the same rows two across, and inside an open tile the bar, its legend and the cost share one line, then the Next time sentence, then Why, How it\'s judged and Show each one; the explaining sentence is the Why tip. Rotation priority\'s slips are the same slim rows.',
     'Plan: the Who plays table is dot rows now, a dot in the class colour when someone plays, a red cross when they sit, with air between the rows, and on a wide screen the Who plays header, its buttons and things to fix run across the top with the table (each boss column just its numbered picture, the name on hover) and the Bosses rows side by side under them; the same taps and drags as before.',
     'Plan: the Who plays table is calmer (a playing cell is a quiet block in the class colour, a sitting cell is hollow and hatched so sits stand out), each boss row shows its status in colour on its edge with quiet buttons, and Tonight opens with the site\'s header strip.',
@@ -30265,3 +30266,14 @@ function dsRotSlim() { document.querySelectorAll('#view section.rck .rck-b:not(.
   const bot = document.createElement('div'); bot.className = 'ds-rbot'; bot.appendChild(links); if (bxf) bot.appendChild(bxf); b.insertBefore(bot, hwp || null); if (hwp) b.appendChild(hwp);
   rs.hidden = true; }); }
 (function () { const f10 = dsBars; dsBars = function (root) { f10(root); try { dsRotSlim(); } catch (e) {} }; })();
+
+// ===== Design studio round 19 (Oct 25): Rotation columns balance. Moves the last gear groups under the checklist while that evens the two columns;
+// one-column screens get them back. Runs with the other passes and on resize. Owner: the Design studio chat. =====
+function dsRotBalance() { const rc = document.querySelector('#view .ds-rcols'); if (!rc) return; const ck = rc.querySelector(':scope > section.rck'), gx = rc.querySelector(':scope > section.rck-gx:not(.ds-gxl)'); if (!ck || !gx) return; const pn = gx.querySelector(':scope > .rgx-pn'); if (!pn) return;
+  let side = rc.querySelector(':scope > section.rck-gx.ds-gxl'); const wide = getComputedStyle(rc).display === 'grid';
+  if (!wide) { if (side) { [...side.querySelector('.rgx-pn').children].forEach((g) => pn.appendChild(g)); side.remove(); gx.removeAttribute('data-ds-bal'); } return; }
+  if (gx.dataset.dsBal) return; if (!ck.offsetHeight || !gx.offsetHeight) return; gx.dataset.dsBal = '1';
+  const gps = [...pn.querySelectorAll(':scope > .rgx-gp')]; let left = ck.offsetHeight, right = gx.offsetHeight; const moved = [];
+  while (gps.length > 1) { const g = gps[gps.length - 1], h = g.offsetHeight + 8; if (Math.abs((right - h) - (left + h)) >= Math.abs(right - left)) break; moved.unshift(g); gps.pop(); right -= h; left += h; }
+  if (!moved.length) return; side = document.createElement('section'); side.className = 'rck-gx ds-gxl'; const p = document.createElement('div'); p.className = 'rgx-pn'; moved.forEach((g) => p.appendChild(g)); side.appendChild(p); ck.after(side); }
+(function () { const f11 = dsBars; dsBars = function (root) { f11(root); try { dsRotBalance(); } catch (e) {} }; let t = 0; addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => { try { dsRotBalance(); } catch (e) {} }, 150); }); })();

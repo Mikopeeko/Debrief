@@ -6986,6 +6986,11 @@ html.is-kill #oaTop .cch-h .cch-hype { color: #f6dc9a; font-weight: 800; letter-
 .pfv .ds-rcols details.rck-r[data-ds-kind="deep"] > summary::after { right: 0; bottom: auto; top: 9px; }
 .pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r > .rck-b { margin: 0 0 6px; }
 @media (max-width: 640px) { .pfv .ds-rcols section.rck .rck-cats { padding: 2px 10px; } .pfv .ds-rcols section.rck .rck-cats > .rck-cat[open] > .rck-rs { grid-template-columns: 1fr !important; padding: 2px 10px; } .pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r:nth-child(2) { border-top: 1px solid var(--line) !important; } }
+/* ===== Design studio round 19 (Oct 25): Rotation's two columns balance: the last gear groups sit in a second panel under the checklist (dsRotBalance),
+   the gear column spans both rows. Owner: the Design studio chat. ===== */
+.pfv .ds-rcols > section.rck { grid-column: 1; grid-row: 1; }
+.pfv .ds-rcols > section.rck-gx.ds-gxl { grid-column: 1; grid-row: 2; margin-top: 16px !important; }
+.pfv .ds-rcols > section.rck-gx:not(.ds-gxl) { grid-column: 2; grid-row: 1 / span 2; }
 </style>
 
 
