@@ -31,7 +31,17 @@ Edit files in src/, run `python build.py` inside src/, refresh the browser tab o
   `npx wrangler deploy` from the project root (Node is at `C:\Program Files\nodejs`; Wrangler is signed in). `wrangler.toml` has `keep_vars = true`.
 - The Warcraft Logs key lives only in Cloudflare: WCL_CLIENT_ID (a variable) and WCL_CLIENT_SECRET (a secret), set by the user on the
   Worker's settings page. Never ask for, type or repeat the secret.
-- After each round: build, commit, push, and deploy, so the site always matches GitHub.
+- ONE BUILD, THE USER PUSHES IT (the user, Oct 26: "moving forward i want all changes compiled into one build, and then i decide when
+  you push that build"). Every chat: build, run the checks, commit, and push to GitHub, then STOP. Never `wrangler deploy`, never
+  `wrangler versions deploy`, never release a Companion or addon build, and never ask the user to put a single change live ("deploy
+  just this?"), including Worker-only or bot changes. Show your own work on a practice link (`npx wrangler versions upload
+  --preview-alias <name>`). Only the Main chat makes and pushes the build:
+  1. On the user's "make the build", it builds the newest main once from a fresh clone, uploads it as one Worker version with
+     `--preview-alias next`, tests every tab on desktop and phone, and gives the user that link plus a plain list of what's in it
+     (commits since the live one).
+  2. On the user's "push it" in the Main chat, it publishes that exact tested version: `npx wrangler versions deploy <version-id>@100% -y`.
+     No rebuild. If the app or addon changed, the In-game addon chat releases them from the same commit.
+  A bug that breaks the live site is the only exception, and it needs the user's OK first.
 - Patch notes live only on the site (the menu's Patch notes page; no Discord posts written by hand). With each round a raider
   would notice, add to `PATCH_NOTES` in src/ui.js under today's date (or a new date at the top): a big new thing raiders will
   love goes in h as a New features card ({ t: short title, d: one or two sentences }); smaller changes are a plain line in
