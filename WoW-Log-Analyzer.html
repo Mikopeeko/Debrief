@@ -9620,11 +9620,11 @@ function buildNymrissa(ev, r, h) {
         const inRain = dead.filter((d) => rainOn(d.guid, d.t)).length;
         if (dead.length) M(b.t, 'Raid', 'Frost Burst', NY.burst, 'High', pl(dead.length, 'player') + ' died to Frost Burst' + (tog ? ', with two orbs soaked close together' : '') + (inRain ? ' while Abyssal Rain was ticking.' : '.'), 'Space the orbs out, a second or more apart, so the healers can top the raid up between bursts while Abyssal Rain ticks.');
         return [b.who.length === 1 ? { p: pname(b.who[0]), sub: b.k > 1 ? b.k + ' orbs at once' : '' } : { txt: b.who.length ? b.who.map(pname).join(', ') : 'an orb', sub: b.k > 1 ? b.k + ' orbs at once' : '' }, { t: b.t },
-          b.k > 1 ? { txt: 'at the same moment as another', warn: many } : gp == null ? { txt: 'first soak', dim: true } : { txt: gp.toFixed(1) + ' s after the last one', warn: tog && many, sub: tog && !many ? 'close, but fine once in a while' : '' },
+          b.k > 1 ? { txt: 'at the same moment as another', sub: many ? 'back to back' : '' } : gp == null ? { txt: 'first soak', dim: true } : { txt: gp.toFixed(1) + ' s after the last one', sub: tog ? (many ? 'back to back' : 'close, but fine once in a while') : '' }, /* (fix 18, Oct 26: back to back is a note, not yellow) */
           dead.length ? { txt: dead.length === 1 && b.who.length === 1 && b.who[0] === dead[0].guid ? 'died' : dead.map((d) => d.player).join(', ') + ' died', bad: true, sub: inRain ? 'with Abyssal Rain ticking' : '' } : { txt: '—', dim: true }];
       });
       if (many) M(bs[0].t, 'Raid', 'Frost Burst', NY.burst, 'Low', 'In orb set ' + (i + 1) + ', ' + close + ' of ' + n + ' soaks came within a second of another: the raid took Frost Bursts back to back.', 'Space the orbs out, a second or more apart.');
-      return { title: 'Set ' + (i + 1), t, bad: rows.some((x) => x[3].bad), warn: many, sub: pl(n, 'soak') + (close ? ', ' + close + ' close to another' + (many ? ' (too many)' : '') : ', one at a time'), rows };
+      return { title: 'Set ' + (i + 1), t, bad: rows.some((x) => x[3].bad), warn: false, sub: pl(n, 'soak') + (close ? ', ' + close + ' close to another' + (many ? ' (too many)' : '') : ', one at a time'), rows };
     }).filter(Boolean);
     if (bGroups.length) sections.push({ id: 'nyburst', title: 'Frost Burst (Soak one at a time)', place: 'Frost Burst: orbs soaked one at a time', spell: [NY.burst, 'Frost Burst'], verdict: bGroups.some((g) => g.bad) ? 'bad' : bGroups.some((g) => g.warn) ? 'warn' : 'good',
       summary: 'Every orb soaked sets off Frost Burst on the whole raid, and Abyssal Rain is ticking for almost all of them, so space the soaks out. It shows each soak and the time since the one before. Top raids have about a quarter of their soaks within a second of another, so a set only counts as a mistake when more than a third of its soaks were that close, or someone died.', cols: ['Soaker', 'When', 'Since the last soak', 'Died'], groups: bGroups, rows: [] }); }
@@ -9648,10 +9648,15 @@ function buildNymrissa(ev, r, h) {
     const addGroups = mSets.map((s) => {
       const rows = [], deadR = s.runners.filter((u) => u.died != null), lastR = Math.max(s.t, ...deadR.map((u) => u.died));
       if (deadR.length) rows.push([{ txt: pl(s.runners.length, 'Shorerunner'), sub: 'the small murlocs' }, { t: lastR }, deadR.length === s.runners.length ? { txt: 'all dead ' + Math.round(lastR - s.t) + ' s after they came' } : { txt: deadR.length + ' of ' + s.runners.length + ' killed', dim: true }, { txt: '' }]);
-      if (s.reached.length) {
-        const popped = s.pop != null && s.pop <= dur;
-        M(popped ? s.pop : s.t + 30, 'Raid', 'Alluring Bubble', NY.bubble, popped ? 'High' : 'Medium', pl(s.reached.length, 'murloc') + ' from set ' + (s.i + 1) + ' reached the bubble' + (popped ? ' and came out as a Berserker when it popped.' : '.'), 'Kill every murloc before it reaches the bubble: Frostscales first, then cleave the Shorerunners down, with stuns and slows on the ones that slip past.');
-        rows.push([{ txt: 'Reached the bubble' }, { t: popped ? s.pop : dur }, { txt: pl(s.reached.length, 'murloc') + ' got there', bad: popped, warn: !popped }, { txt: popped ? 'the bubble popped at ' + T(s.pop) : 'the pull ended before it popped', dim: true }]);
+      const popped = s.reached.length > 0 && s.pop != null && s.pop <= dur;
+      /* (fix 18, Oct 26: 1-2 Berserkers that killed nobody is a slip (top kills let one or two through and win); 3 or more, or a death to their
+         pulses, is the mistake) */
+      const nB = s.bers.length || s.reached.length, tideDead = popped ? diedTo(/pulsing tides/i, s.pop, Math.max(s.pop + 10, ...s.bers.map((b) => b.died ?? dur)) + 3) : [], serious = nB >= 3 || tideDead.length > 0;
+      if (s.reached.length && !popped && r.item.kill) rows.push([{ txt: 'Still up at the kill', dim: true }, { t: dur }, { txt: pl(s.reached.length, 'murloc') + ' still alive when Nymrissa died', dim: true }, { txt: '' }]); /* (fix 18: not a mistake on a kill) */
+      else if (s.reached.length && !popped) rows.push([{ txt: 'Reached the bubble', dim: true }, { t: dur }, { txt: pl(s.reached.length, 'murloc') + ' got there', dim: true }, { txt: 'the pull ended before it popped', dim: true }]);
+      if (popped) {
+        M(s.pop, 'Raid', 'Alluring Bubble', NY.bubble, serious ? 'High' : 'Medium', pl(s.reached.length, 'murloc') + ' from set ' + (s.i + 1) + ' reached the bubble' + (popped ? ' and came out as a Berserker when it popped.' : '.'), 'Kill every murloc before it reaches the bubble: Frostscales first, then cleave the Shorerunners down, with stuns and slows on the ones that slip past.');
+        rows.push([{ txt: 'Reached the bubble' }, { t: s.pop }, { txt: pl(s.reached.length, 'murloc') + ' got there', bad: serious, warn: !serious }, { txt: 'the bubble popped at ' + T(s.pop), dim: true }]);
       }
       if (s.up.length) rows.push([{ txt: 'Still up at the end', dim: true }, { t: dur }, { txt: pl(s.up.length, 'murloc') + ' still alive when the pull ended', dim: true }, { txt: '' }]);
       // (the Berserkers from one pop on one row: when the last one died, the raid pulses and any deaths)
@@ -9663,7 +9668,7 @@ function buildNymrissa(ev, r, h) {
           dead.length ? { txt: (dead.length > 4 ? pl(dead.length, 'player') : dead.map((d) => d.player).join(', ')) + ' died', bad: true } : { txt: 'pulsed the raid ' + pl(np, 'time'), dim: true }]);
       }
       return { title: 'Set ' + (s.i + 1), t: s.t, bad: rows.some((x) => x.some((c) => c.bad)), warn: rows.some((x) => x.some((c) => c.warn)),
-        sub: s.reached.length ? pl(s.reached.length, 'murloc') + ' reached the bubble' : s.up.length ? 'the pull ended first' : 'all dead in ' + Math.round(lastR - s.t) + ' s', rows };
+        sub: popped ? pl(s.reached.length, 'murloc') + ' reached the bubble' : s.reached.length || s.up.length ? (r.item.kill ? 'still up at the kill' : 'the pull ended first') : 'all dead in ' + Math.round(lastR - s.t) + ' s', rows };
     });
     if (addGroups.length) sections.push({ id: 'nyadds', title: 'Murloc sets (Kill them before the bubble)', place: 'Murlocs: all dead before they reach the bubble', spell: [NY.bubble, 'Alluring Bubble'], verdict: addGroups.some((g) => g.bad) ? 'bad' : addGroups.some((g) => g.warn) ? 'warn' : 'good',
       summary: pl(addGroups.length, 'set') + ' of murlocs. Any murloc that reaches the bubble comes out as a Bubblefin Berserker when it pops, and the Berserker pulses the whole raid. It shows when each set was dead, any murlocs that got through, and how fast a Berserker died.', cols: ['Murlocs', 'When', 'Result', 'Notes'], groups: addGroups, rows: [] });
