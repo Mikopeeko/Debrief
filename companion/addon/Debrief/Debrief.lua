@@ -2515,8 +2515,8 @@ do
 
   -- step 4: using it (Oct 26, the user: "this makes no sense", then "a zoom/highlight of the window": what you type apart from what you
   -- click, and the clicks numbered like the gold rings on the sample card beside it)
-  local function badge(parent, n) local b = CreateFrame("Frame", nil, parent); b:SetSize(16, 16); skin(b, 8, COL.gold, 1, COL.gold, 1)
-    local t = b:CreateFontString(nil, "OVERLAY"); setFont(t, "bold", 11); t:SetPoint("CENTER", 0, 0); t:SetTextColor(rgb("1b1406")); t:SetText(n); return b end
+  local function badge(parent, n) local b = CreateFrame("Frame", nil, parent); b:SetSize(18, 18); skin(b, 9, COL.gold, 1, COL.gold, 1) -- (18 with a 12 numeral: the Design studio, Oct 26)
+    local t = b:CreateFontString(nil, "OVERLAY"); setFont(t, "bold", 12); t:SetPoint("CENTER", 0, 0); t:SetTextColor(rgb("1b1406")); t:SetText(n); return b end
   do local f = pane(4); local yy = 0
     for _, w in ipairs({ "TYPE IN CHAT", { "/recap", "Opens or closes your card." }, { "/db", "Your settings, any time." },
       "ON THE CARD BESIDE THIS", { "Me  ·  Raid view", "Your own pull, or the whole raid's.", 1 }, { "The arrows", "See anyone else in the pull.", 2 },
@@ -2525,7 +2525,7 @@ do
         if yy > 0 then yy = yy + 8 end
         local l = fsOn(f, "bold", 12, COL.muted); l:SetPoint("TOPLEFT", 0, -yy); l:SetText(w); yy = yy + 21 -- (12: nothing anyone must read is under 12, the Design studio, Oct 26)
       else
-        local x = 0; if w[3] then badge(f, w[3]):SetPoint("TOPLEFT", 0, -yy); x = 22 end
+        local x = 0; if w[3] then badge(f, w[3]):SetPoint("TOPLEFT", 0, -(yy - 1)); x = 25 end
         local k = fsOn(f, "bold", 13.5, w[3] and COL.text or "e6b450"); k:SetPoint("TOPLEFT", x, -yy); k:SetText(w[1])
         local d = fsOn(f, "body", 13.5, COL.soft); d:SetPoint("TOPLEFT", 134, -yy); d:SetWidth(PW - 134); d:SetText(w[2])
         yy = yy + math.max(18, d:GetStringHeight()) + 9
