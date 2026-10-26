@@ -1826,6 +1826,7 @@ const PATCH_NOTES = [
     'Rotation: inside each ring, the rows follow your spec guide\'s order of importance, the same on every pull.',
     'Rotation: What to fix says each thing once, and on a phone your talents fold away so it starts right under your score.',
     'Rotation: every spec checks the same things before the pull: a weapon oil where the guides list one, and Power Word: Fortitude for both priests.',], f: [
+    'Spell icons no longer flash while Debriefing is still reading a pull: a picture the browser already has shows at once on every redraw.',
     'The bars and numbers that move in when a page loads now play once, when the page is really there, and finish; they no longer stall, restart or cut short, and Debriefing keeps still while it is still reading pulls.',
     'The big numbers no longer flash nonsense (like −1337 pulls) for a moment after you click a pull while the page is busy.',
     'Every tab no longer shows its old layout for a moment while a pull loads (Debriefing could sit on it for seconds): the new layouts now land in the same instant the page draws.',
@@ -30314,7 +30315,8 @@ function dsDock() { document.querySelectorAll('#view details.phase').forEach((ph
   d.addEventListener('click', (e) => { if (!e.target.closest('button, a, summary, input, select, textarea, label')) e.preventDefault(); });
   on.after(d);
   const dx = prw.getBoundingClientRect().left - sum.getBoundingClientRect().left - (parseFloat(getComputedStyle(sum).paddingLeft) || 0); if (dx > 40) { d.style.marginLeft = (-dx) + 'px'; d.style.width = 'calc(100% + ' + dx + 'px)'; }
-  on.scrollIntoView({ block: 'nearest' }); }); }
+  /* the app has just started scrolling to the box's old place below the list: stop that and keep the row where the eye is */
+  window.scrollTo({ top: window.scrollY, left: window.scrollX, behavior: 'instant' }); on.scrollIntoView({ block: 'nearest', behavior: 'instant' }); }); }
 function dsMapZoom() { document.querySelectorAll('#view .secd .u1-m .wr-map:not([data-ds-zoom])').forEach((wm) => { const svg = wm.querySelector('svg.zmap'); if (!svg) return; wm.dataset.dsZoom = '1';
   const here = () => wm.contains(svg) && wm.closest('.u1-m');
   const base = () => (svg.dataset.dsBase || (svg.dataset.dsBase = svg.getAttribute('viewBox') || '')).split(/[\s,]+/).map(Number);
@@ -30334,3 +30336,14 @@ function dsMapZoom() { document.querySelectorAll('#view .secd .u1-m .wr-map:not(
   const later = () => setTimeout(() => { try { dsDock(); dsMapZoom(); } catch (x) {} }, 0);
   document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('#view .prw-i, #view .mxa-p, #view .mcx-dot, #view [data-phjump]')) later(); }, true);
   document.addEventListener('toggle', (e) => { const t = e.target; if (t && t.matches && t.matches('#view details.secd, #view details.phase')) later(); }, true); })();
+
+// ===== Design studio round 22 (Oct 25): icons that have loaded once show at once. A page rebuilt while it loads
+// makes new icon images each time; the ones the browser already has are marked shown before paint, so nothing flashes. Owner: the Design studio chat. =====
+function dsIconKeep() { const K = dsIconKeep.urls = dsIconKeep.urls || new Set(), S = dsIconKeep.bySid = dsIconKeep.bySid || new Map();
+  document.querySelectorAll('.icw.has > img.oi[src], .av.has > img.oi[src]').forEach((i) => { const s = i.getAttribute('src'); K.add(s); const id = i.getAttribute('data-sid'); if (id) S.set(id, s); });
+  document.querySelectorAll('.icw:not(.has) > img.oi, .av:not(.has) > img.oi').forEach((i) => { let s = i.getAttribute('src');
+    /* a rebuilt icon has no picture yet (the app assigns it a moment later): give it the one it had, so the browser paints it at once */
+    if (!s) { const id = i.getAttribute('data-sid'); if (id && S.has(id)) { s = S.get(id); i.setAttribute('src', s); } }
+    if (s && (K.has(s) || (i.complete && i.naturalWidth))) { i.parentElement.classList.add('has'); K.add(s); } }); }
+(function () { const f13 = dsBars; dsBars = function (root) { f13(root); try { dsIconKeep(); } catch (e) {} };
+  document.addEventListener('load', (e) => { const i = e.target; if (i && i.tagName === 'IMG' && i.classList.contains('oi') && i.naturalWidth && i.getAttribute('src')) (dsIconKeep.urls = dsIconKeep.urls || new Set()).add(i.getAttribute('src')); }, true); })();
