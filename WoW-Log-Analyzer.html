@@ -7711,8 +7711,8 @@ const PACKS = [
 // (Ula'tek: spell IDs checked against real Heroic and Mythic pulls, 2026-10; the fight module covers the rest)
 { encounter: "Ula'tek", sources: ['the encounter journal', 'raid strategy guides', 'real Heroic and Mythic logs'], rules: [
   { type: 'avoidable', spellIds: [1292403], name: 'Caustic Waves', severity: 'Medium', tip: "Dodge the venom waves from Ula'tek and her tail. On Stage 1 she lifts a wing first to show the side." },
-  { type: 'raidFail', spellIds: [1299206], name: 'Rattler Slam', severity: 'High', tip: 'Nobody was in reach of the tail (Gore Rattle), so it slammed the raid. Keep a tank on the tail at all times.' },
-  { type: 'raidFail', spellIds: [1301007], name: 'Unchecked Rage', severity: 'High', tip: "Nobody was in melee of Ula'tek, so she hit the raid. Keep her tanked through swaps and when she resurfaces." },
+  { type: 'raidFail', spellIds: [1299206], name: 'Rattler Slam', severity: 'Medium', diedSeverity: 'High', tip: 'Nobody was in reach of the tail (Gore Rattle), so it slammed the raid. Keep a tank on the tail at all times.' },
+  { type: 'raidFail', spellIds: [1301007], name: 'Unchecked Rage', severity: 'Medium', diedSeverity: 'High', tip: "Nobody was in melee of Ula'tek, so she hit the raid. Keep her tanked through swaps and when she resurfaces." },
   { type: 'raidFail', spellIds: [1290991], name: 'Malice', severity: 'High', tip: "A Doomscale Warden's Malice went off on the raid. Interrupt it the moment it starts." },
   { type: 'interrupt', spellIds: [1290779], name: 'Malice', severity: 'High', tip: "Interrupt the Doomscale Warden's Malice." },
   { type: 'interrupt', spellIds: [1305650], name: 'Anguished Cry', severity: 'High', tip: "Interrupt the Weakened Doomscale's Anguished Cry." },
@@ -13402,7 +13402,7 @@ class Mech {
     const out = this.raid.slice();
     for (const c of this.casts) if (!c.kicked) out.push({ t: c.t, player: 'Raid', mechanic: c.r.name, id: c.id, severity: c.r.severity, kick: true, detail: c.caster + ' got ' + c.r.name + ' off. Nobody interrupted it.', fix: c.r.tip });
     // pos: positional mistakes, which get a map of that moment (see analyze)
-    for (const list of this.fails.values()) for (const f of list) out.push({ t: f.t, player: 'Raid', mechanic: f.r.name, id: f.id, severity: f.r.severity, pos: true,
+    for (const list of this.fails.values()) for (const f of list) out.push({ t: f.t, player: 'Raid', mechanic: f.r.name, id: f.id, severity: f.r.severity, pos: true, diedSeverity: f.r.diedSeverity || null,
       detail: f.r.name + ' went off and hit ' + f.hit.size + (f.hit.size === 1 ? ' player' : ' players') + ' for ' + Math.round(f.dmg).toLocaleString('en-US') + '.', fix: f.r.tip });
     for (const a of this.avoid.values()) out.push({ t: a.t, player: a.p, mechanic: a.r.name, id: a.id, severity: a.r.escalate && a.touches >= a.r.escalate.touches ? a.r.escalate.severity : a.r.severity, dmg: a.dmg, pos: true,
       avoidRule: true, touches: a.touches, ruleIds: a.r.spellIds || [], tankJudged: !!a.r.tankJudged, // (for going easier on tanks, after roles are known)
@@ -13973,6 +13973,8 @@ function* analyzeSteps(item, text, opts) {
 
   yield; survivability(r); triageSaves(r);
   yield; r.mistakes = mech.build();
+  /* (a raid hit whose rule has diedSeverity: worse when someone died to that hit within ~3 s (Oct 26, Ula'tek's Rattler Slam and Unchecked Rage)) */
+  for (const m of r.mistakes) { if (!m.diedSeverity) continue; const nm = String(m.mechanic).toLowerCase(); if (r.deaths.some((d) => d.t >= m.t - 0.2 && d.t <= m.t + 3 && String(d.ability || '').toLowerCase() === nm)) m.severity = m.diedSeverity; delete m.diedSeverity; }
   // avoidable damage tanks are expected to take (their job puts them in it)
   { const tankOf = new Set([...r.players.values()].filter((p) => p.role === 'tank').map((p) => p.name)); r.mistakes = r.mistakes.filter((m) => !(TANK_OK.has(m.mechanic) && tankOf.has(m.player)));
     // (going easier on tanks for standing in bad stuff (your note, Oct 18): they often take these hits on purpose, holding
