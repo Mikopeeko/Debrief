@@ -52714,41 +52714,76 @@ function dsGuides() {
   });
 })();
 
-// ===== Design studio round 60 (Oct 26): the Copy all sheet, drawn by the studio: one picture of every step, two across under tinted phase bars,
-// copied inside the click. Owner: the Design studio chat. =====
+// ===== Design studio round 60 (Oct 26): the Copy all sheet, drawn by the studio: one picture of every step (header, Your jobs, phase bars, steps two
+// across), copied inside the click. Owner: the Design studio chat. =====
 (function () {
   if (typeof document === 'undefined') return;
   var PHN = { '1': ['PHASE 1', '#4ea3ff'], '2': ['PHASE 2', '#c77dff'], '3': ['PHASE 3', '#ff6b6b'], '4': ['PHASE 4', '#45c15c'], 'int': ['INTERMISSION', '#e6b450'] };
+  var HF = '"Barlow Semi Condensed", "Barlow Condensed", "Arial Narrow", sans-serif', TF = 'Barlow, "Segoe UI", sans-serif';
   var phKey = function (c) { var p = String(c.dataset.ph || '').toLowerCase().trim(); if (!p) return ''; if (/int/.test(p)) return 'int'; var n = parseFloat(p); if (!isFinite(n)) return p; return n % 1 ? 'int' : String(n); };
   var loadImg = function (src) { return new Promise(function (ok) { if (!src) return ok(null); var i = new Image(); i.onload = function () { ok(i); }; i.onerror = function () { ok(null); }; i.src = src; }); };
+  var iconImg = function (name) { if (!name) return Promise.resolve(null); return fetch('https://wow.zamimg.com/images/wow/icons/medium/' + name + '.jpg', { mode: 'cors' }).then(function (r) { return r.ok ? r.blob() : null; }).then(function (b) { return b ? loadImg(URL.createObjectURL(b)) : null; }).catch(function () { return null; }); };
   var rrect = function (g, x, y, w, h, r) { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); };
+  var fit = function (g, t, w) { t = String(t || ''); if (g.measureText(t).width <= w) return t; while (t.length > 1 && g.measureText(t + '…').width > w) t = t.slice(0, -1); return t + '…'; };
+  var wrap = function (g, t, w, max) { var out = [], line = ''; String(t || '').split(' ').forEach(function (wd) { var tr = line ? line + ' ' + wd : wd; if (g.measureText(tr).width > w && line) { out.push(line); line = wd; } else line = tr; }); if (line) out.push(line); if (out.length > max) { out = out.slice(0, max); out[max - 1] = fit(g, out[max - 1] + ' …', w); } return out; };
+  var shortT = function (t) { var m = String(t || '').match(/^(.*?)\s*\(/); return (m ? m[1] : String(t || '')).trim(); };
+  var jobsOf = function (cards) {
+    // (every raider once: name, class colour, spec icon, and one short line per card they appear in)
+    var who = {}, order = [];
+    cards.forEach(function (c) { var L = c.legend; if (!L || !L.length) return; var ct = shortT(c.t);
+      L.forEach(function (G) { var gt = shortT(G.title || ''); (G.items || []).forEach(function (it) { if (!it || !it.name || it.any) return; var k = String(it.name).toLowerCase();
+        if (!who[k]) { who[k] = { name: it.name, color: it.color || '#ece8df', icon: it.specIcon || '', jobs: [] }; order.push(k); }
+        var j = ct + (gt ? ' · ' + gt.toLowerCase() : '') + (it.job ? ' (' + it.job + ')' : ''); if (who[k].jobs.indexOf(j) < 0) who[k].jobs.push(j); }); }); });
+    return order.sort(function (a, b) { return a.localeCompare(b); }).map(function (k) { return who[k]; });
+  };
   function dsSheet(win) {
-    var cards = [].slice.call(win.querySelectorAll('.pp-card')).map(function (c) { var ph = c.querySelector('.pp-ph'), im = c.querySelector('img'); return { t: ph ? ph.textContent.trim() : '', src: im ? im.src : '', ph: phKey(c) }; }).filter(function (c) { return c.src; });
-    var head = win.querySelector('.pp-win > h2'), title = head ? head.textContent.trim() : 'Raid plan';
+    var cards = [].slice.call(win.querySelectorAll('.pp-card')).map(function (c) { var ph = c.querySelector('.pp-ph'), im = c.querySelector('img'); var L = null; try { L = c.dataset.legend ? JSON.parse(c.dataset.legend) : null; } catch (e) { L = null; }
+      return { t: ph ? ph.textContent.trim() : '', when: c.dataset.when || '', src: im ? im.src : '', ph: phKey(c), legend: L }; }).filter(function (c) { return c.src; });
+    var head = win.querySelector('.pp-win > h2'), title = head ? head.textContent.trim() : 'Raid plan', people = jobsOf(cards);
     return Promise.all([
       Promise.all(cards.map(function (c) { return loadImg(c.src); })),
-      Promise.all(['800 40px "Barlow Semi Condensed"', '700 22px "Barlow Semi Condensed"', '700 17px "Barlow Semi Condensed"', '800 15px "Barlow Semi Condensed"', '600 14px Barlow'].map(function (f) { return document.fonts && document.fonts.load ? document.fonts.load(f).catch(function () { return null; }) : null; }))
+      Promise.all(people.map(function (p) { return iconImg(p.icon); })),
+      Promise.all(['800 40px ' + HF, '700 22px ' + HF, '700 18px ' + HF, '700 17px ' + HF, '800 15px ' + HF, '600 14px ' + TF, '500 14px ' + TF, '700 13px ' + TF].map(function (f) { return document.fonts && document.fonts.load ? document.fonts.load(f).catch(function () { return null; }) : null; }))
     ]).then(function (res) {
-      var imgs = res[0], M = 30, G = 24, PW = 800, PH = 450, W = M * 2 + PW * 2 + G, SB = 46, PB = 40, RG = 22;
-      var groups = []; cards.forEach(function (c, i) { var g = groups[groups.length - 1]; if (!g || g.p !== c.ph) { g = { p: c.ph, items: [] }; groups.push(g); } g.items.push({ c: c, i: i }); });
-      var withPh = groups.some(function (g) { return g.p; });
-      var H = 118; groups.forEach(function (g) { H += (withPh ? PB + 16 : 10) + Math.ceil(g.items.length / 2) * (SB + PH + RG); }); H += 10;
-      var cv = document.createElement('canvas'); cv.width = W; cv.height = H; var g = cv.getContext('2d');
+      var imgs = res[0], icons = res[1], M = 30, G = 24, PW = 800, PH = 450, W = M * 2 + PW * 2 + G, SB = 46, PB = 40, RG = 22;
+      var cv = document.createElement('canvas'), g = cv.getContext('2d');
+      // (the jobs block is measured first: three columns, each raider a name line and up to two job lines)
+      var COLS = 3, CG = 20, CW = (W - 2 * M - (COLS - 1) * CG) / COLS, cells = [], jobsH = 0;
+      if (people.length) { g.font = '500 14px ' + TF; people.forEach(function (p) { cells.push({ p: p, lines: wrap(g, p.jobs.join('  ·  '), CW - 34, 2) }); });
+        var rows = Math.ceil(cells.length / COLS); for (var r = 0; r < rows; r++) { var mx = 1; for (var c = 0; c < COLS; c++) { var cell = cells[r * COLS + c]; if (cell) mx = Math.max(mx, cell.lines.length); } var rh = 26 + mx * 18 + 10; for (var c2 = 0; c2 < COLS; c2++) { var cell2 = cells[r * COLS + c2]; if (cell2) cell2.rh = rh; } jobsH += rh; }
+        jobsH += 44 + 16; }
+      var groups = []; cards.forEach(function (c, i) { var gg = groups[groups.length - 1]; if (!gg || gg.p !== c.ph) { gg = { p: c.ph, items: [] }; groups.push(gg); } gg.items.push({ c: c, i: i }); });
+      var withPh = groups.some(function (gg) { return gg.p; });
+      var H = 118 + jobsH; groups.forEach(function (gg) { H += (withPh ? PB + 16 : 10) + Math.ceil(gg.items.length / 2) * (SB + PH + RG); }); H += 10;
+      cv.width = W; cv.height = H; g = cv.getContext('2d');
       g.fillStyle = '#12141b'; g.fillRect(0, 0, W, H);
-      g.font = '800 40px "Barlow Semi Condensed", "Arial Narrow", sans-serif'; g.fillStyle = '#ece8df'; g.fillText(title, M, 56);
-      g.font = '600 14px Barlow, sans-serif'; g.fillStyle = '#98a0ad'; g.fillText('Raid plan · ' + cards.length + ' steps in fight order · from your note', M, 82);
-      g.font = '800 16px "Barlow Semi Condensed", "Arial Narrow", sans-serif'; g.fillStyle = '#e6b450'; g.fillText('DEBRIEF', W - M - g.measureText('DEBRIEF').width, 56);
+      g.font = '800 40px ' + HF; g.fillStyle = '#ece8df'; g.fillText(title, M, 56);
+      g.font = '600 14px ' + TF; g.fillStyle = '#98a0ad'; g.fillText('Raid plan · ' + cards.length + ' steps in fight order · from your note', M, 82);
+      g.font = '800 16px ' + HF; g.fillStyle = '#e6b450'; g.fillText('DEBRIEF', W - M - g.measureText('DEBRIEF').width, 56);
       g.fillRect(M, 100, W - 2 * M, 2);
       var y = 118;
+      if (people.length) {
+        y += 8; g.font = '700 13px ' + TF; g.fillStyle = '#98a0ad'; g.fillText('YOUR JOBS', M, y + 14); g.font = '500 14px ' + TF; g.fillText('find your name: every job you have tonight, in fight order', M + 92, y + 14); y += 36;
+        var rowY = y, rows2 = Math.ceil(cells.length / COLS);
+        for (var r2 = 0; r2 < rows2; r2++) { var rh2 = (cells[r2 * COLS] || {}).rh || 54;
+          for (var c3 = 0; c3 < COLS; c3++) { var cell3 = cells[r2 * COLS + c3]; if (!cell3) continue; var x3 = M + c3 * (CW + CG), ic = icons[cells.indexOf(cell3)];
+            g.fillStyle = 'rgba(255,255,255,.035)'; rrect(g, x3, rowY, CW, rh2 - 6, 8); g.fill();
+            if (ic) { g.save(); g.beginPath(); g.arc(x3 + 21, rowY + 17, 11, 0, Math.PI * 2); g.clip(); g.drawImage(ic, x3 + 10, rowY + 6, 22, 22); g.restore(); }
+            g.font = '700 18px ' + HF; g.fillStyle = cell3.p.color; g.fillText(fit(g, cell3.p.name, CW - 48), x3 + 38, rowY + 23);
+            g.font = '500 14px ' + TF; g.fillStyle = '#c9ced8'; cell3.lines.forEach(function (ln, li) { g.fillText(ln, x3 + 12, rowY + 44 + li * 18); }); }
+          rowY += rh2; }
+        y = rowY + 16; g.fillStyle = '#2a2f3b'; g.fillRect(M, y - 8, W - 2 * M, 1); }
       groups.forEach(function (grp) {
         if (withPh) { y += 16; var ph = PHN[grp.p] || [String(grp.p).toUpperCase(), '#98a0ad'];
           g.fillStyle = ph[1] + '22'; rrect(g, M, y, W - 2 * M, PB, 8); g.fill(); g.fillStyle = ph[1]; g.fillRect(M, y, 4, PB); g.beginPath(); g.arc(M + 22, y + PB / 2, 5, 0, Math.PI * 2); g.fill();
-          g.font = '700 17px "Barlow Semi Condensed", "Arial Narrow", sans-serif'; g.fillStyle = '#ece8df'; g.fillText(ph[0], M + 36, y + PB / 2 + 6); y += PB; } else y += 10;
+          g.font = '700 17px ' + HF; g.fillStyle = '#ece8df'; g.fillText(ph[0], M + 36, y + PB / 2 + 6); y += PB; } else y += 10;
         grp.items.forEach(function (it, k) { var col = k % 2, x = M + col * (PW + G), yy = y + Math.floor(k / 2) * (SB + PH + RG);
           g.fillStyle = 'rgba(255,255,255,.05)'; rrect(g, x, yy + 6, PW, SB - 6, 8); g.fill();
           g.fillStyle = '#e6b450'; rrect(g, x + 10, yy + 13, 30, 26, 13); g.fill();
-          g.font = '800 15px "Barlow Semi Condensed", "Arial Narrow", sans-serif'; g.fillStyle = '#1b1300'; var num = String(it.i + 1); g.fillText(num, x + 25 - g.measureText(num).width / 2, yy + 31);
-          g.font = '700 22px "Barlow Semi Condensed", "Arial Narrow", sans-serif'; g.fillStyle = '#ece8df'; var t = it.c.t; while (t.length > 2 && g.measureText(t).width > PW - 60) t = t.slice(0, -2); if (t !== it.c.t) t += '…'; g.fillText(t, x + 50, yy + 33);
+          g.font = '800 15px ' + HF; g.fillStyle = '#1b1300'; var num = String(it.i + 1); g.fillText(num, x + 25 - g.measureText(num).width / 2, yy + 31);
+          g.font = '700 22px ' + HF; g.fillStyle = '#ece8df'; var when = it.c.when ? '  ·  ' + it.c.when : '', tw = 0; if (when) { g.font = '600 15px ' + TF; tw = g.measureText(when).width; g.font = '700 22px ' + HF; }
+          var t = fit(g, it.c.t, PW - 60 - tw); g.fillText(t, x + 50, yy + 33);
+          if (when) { g.font = '600 15px ' + TF; g.fillStyle = '#98a0ad'; g.fillText(when, x + 50 + g.measureText(t).width + (g.font = '700 22px ' + HF, 0), yy + 32); }
           var py = yy + SB; g.save(); rrect(g, x, py, PW, PH, 10); g.clip(); g.fillStyle = '#0b0d12'; g.fillRect(x, py, PW, PH); if (imgs[it.i]) g.drawImage(imgs[it.i], x, py, PW, PH); g.restore();
           g.strokeStyle = '#353b49'; g.lineWidth = 1; rrect(g, x + .5, py + .5, PW - 1, PH - 1, 10); g.stroke(); });
         y += Math.ceil(grp.items.length / 2) * (SB + PH + RG);
@@ -52765,7 +52800,7 @@ function dsGuides() {
     var n = win.querySelectorAll('.pp-card img[src]').length, head = win.querySelector('.pp-win > h2'), name = 'Debrief - ' + (head ? head.textContent.trim() : 'raid plan').replace(/[\\/:*?"<>|]+/g, '') + ' - raid plan.png';
     if (msg) msg.textContent = 'Making the picture…';
     var blobP = dsSheet(win).then(function (cv) { return new Promise(function (ok) { cv.toBlob(ok, 'image/png'); }); });
-    var done = function (ok) { blobP.then(function (blob) { if (!msg) return; msg.innerHTML = (ok ? '✓ Copied one picture with all ' + n + '. Paste it in Discord. ' : 'Your browser didn’t allow copying it. ') + '<a href="#" data-dssheetdl="' + E(name) + '">Download it</a>' + (ok ? '' : ' (' + Math.round(blob.size / 1024 / 102.4) / 10 + ' MB)'); var a = msg.querySelector('a[data-dssheetdl]'); if (a) a._blob = blob; }); };
+    var done = function (ok) { blobP.then(function (blob) { if (!msg) return; msg.innerHTML = (ok ? '✓ Copied one picture with all ' + n + '. Paste it in Discord. ' : 'Your browser didn’t allow copying it. ') + '<a href="#" data-dssheetdl="' + E(name) + '">Download it</a>' + (ok ? '' : ' (' + Math.round(blob.size / 1024 / 102.4) / 10 + ' MB)'); var a = msg.querySelector('a[data-dssheetdl]'); if (a) a._blob = blob; }, function () { if (msg) msg.textContent = 'Couldn’t draw the picture.'; }); };
     var write = null; try { write = navigator.clipboard && navigator.clipboard.write ? navigator.clipboard.write([new ClipboardItem({ 'image/png': blobP })]) : Promise.reject(new Error('no clipboard')); } catch (err) { write = Promise.reject(err); }
     write.then(function () { done(true); }, function () { done(false); });
   }, true);
