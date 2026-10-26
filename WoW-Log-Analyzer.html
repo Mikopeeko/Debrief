@@ -26163,7 +26163,7 @@ function deathBox(tg, d) { if (!tg) return ''; const v = tg.v, c = (p) => (p < 3
     (false && top.length ? '<div class="ddv-hit"><span class="ddv-hbl">What hit them</span>' + cblMini(top.map((o) => ({ label: (o.k === 'Melee' ? 'Melee' : o.k) + (o.n > 1 ? ' ×' + o.n : ''), icon: o.k === 'Melee' ? '' : spellIcon(o.id || DEATH_DEF_ID.get(o.k) || sidOf(o.k) || 0, o.k), st: last && (last.spell || 'Melee') === o.k ? 'bad' : '', amt: o.a, vt: kf(o.a) })), '') + '</div>' : '') /* (a small bar graph, the killing blow in red (Oct 22)) */ +
     /* (what they had that would have saved them (engine d.saves: pressed when they first dropped under half, it covers the hits that came),
        on every death but a wipe mechanic or a true one-shot (Oct 23); a mechanic mistake keeps its Fix too) */
-    (() => { const sv = /^(wipe|end|mass|fast)$/.test(v.why) ? [] : Object.entries(d.saves || {}).filter(([, x]) => x.ok).sort((p, q) => (q[1].heal ? 1 : 0) - (p[1].heal ? 1 : 0)).map(([a]) => a);
+    (() => { const sv = /^(wipe|end|mass|fast|noheal)$/.test(v.why) /* (Not enough healing: a health potion we can't see in their bags doesn't undo it (Oct 26)) */ ? [] : Object.entries(d.saves || {}).filter(([, x]) => x.ok).sort((p, q) => (q[1].heal ? 1 : 0) - (p[1].heal ? 1 : 0)).map(([a]) => a);
       const only = sv.length && /^(ready|shared|nothing|nosave)$/.test(v.why);
       return (sv.length ? '<p class="ddv-2"><b>Could have saved them:</b> ' + sv.slice(0, 3).map((a) => (a === 'a healing potion' ? 'Health potion' : deathSp(0, a))).join(' · ') + '</p>' : '') +
         (!only && tg.fix ? '<p class="ddv-2"><b>Fix:</b> ' + esc(String(tg.fix).replace(/\.$/, '')) + '</p>' : ''); })() + '</div>'; }
