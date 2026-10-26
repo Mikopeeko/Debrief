@@ -7710,6 +7710,9 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #ppWin.ds-quiet { visibility: hidden; pointer-events: none; }
 /* (the user: in the one-picture view, "remove the 'all 10 pictures' button") */
 html body #ppWin.pp-one .pp-nav [data-ppallv] { display: none !important; }
+/* ===== Design studio round 65 (Oct 26): Copy image on the Cooldowns timeline (the button and its result line). Owner: the Design studio chat. ===== */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl > .ndz-cth > [data-dstl] { margin-left: 8px; box-sizing: border-box; height: 26px; min-height: 0; padding: 0 11px; display: inline-flex; align-items: center; font-size: 12px; line-height: 1; border-radius: 13px; white-space: nowrap; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl > .ndz-cth > .ds-sheetmsg { flex: 1 1 100%; text-align: right; font-size: 12px; margin: 0; }
 </style>
 
 
@@ -52843,7 +52846,8 @@ function dsGuides() {
         var subs = sub ? [].slice.call(sub.querySelectorAll('.plb-rsg')).map(function (g) { return { label: txt(g.querySelector('.plb-rsl')), names: names(g) }; }) : [];
         var plain = rn && !rn.querySelector('.nm') ? txt(rn) : '';
         return { label: txt(rl), names: rn ? names(rn) : [], plain: plain, subs: subs }; });
-      return { title: title, status: st, rows: rows }; }).filter(function (c) { return c.title && c.rows.length; });
+      var mech = (c.querySelector('.pj-pics[data-mech]') || {}).dataset; mech = mech ? mech.mech : '';
+      return { title: title, status: st, rows: rows, mech: mech }; }).filter(function (c) { return c.title && c.rows.length && !/^(cds?|def)$/.test(c.mech) && !/^\d+\s*·\s*(Raid cooldowns|Defensives)$/i.test(c.title); }); /* (never the Raid cooldowns list or Defensives: the user retired both from Jobs; the Cooldowns section above has them) */
   };
   function dsTextSheet() {
     var cards = readCards(), head = document.querySelector('#view h2'), title = (head ? head.textContent.trim() : 'Raid plan');
@@ -52930,6 +52934,84 @@ function dsGuides() {
   var addCardBtns = function () { [].slice.call(document.querySelectorAll('#view .bj-jobs .plb-rc')).forEach(function (c) { var hd = c.querySelector('.plb-rch'); if (!hd || hd.querySelector('[data-dssheetcard]') || !c.querySelector('.pj-pic')) return;
     var b = document.createElement('button'); b.type = 'button'; b.className = 'btn sm primary'; b.setAttribute('data-dssheetcard', ''); b.setAttribute('data-tt', '<b>Copy these</b><br>One picture of just this job’s steps, ready to paste in Discord (Ctrl+V).'); b.textContent = 'Copy these'; var pill = hd.querySelector('.plb-rcs'); if (pill) hd.insertBefore(b, pill); else hd.appendChild(b); }); };
   var tm = 0; new MutationObserver(function () { if (!tm) tm = requestAnimationFrame(function () { tm = 0; addBtn(); addCardBtns(); }); }).observe(document.documentElement, { childList: true, subtree: true }); addBtn(); addCardBtns();
+})();
+
+// ===== Design studio round 65 (Oct 26): Copy image on the Cooldowns timeline: the whole-fight timeline drawn again on a canvas from the page,
+// copied inside the click. Owner: the Design studio chat. =====
+(function () {
+  if (typeof document === 'undefined') return;
+  var HF = '"Barlow Semi Condensed", "Barlow Condensed", "Arial Narrow", sans-serif', TF = 'Barlow, "Segoe UI", sans-serif';
+  var E = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var loadImg = function (src) { return new Promise(function (ok) { if (!src) return ok(null); var i = new Image(); i.onload = function () { ok(i); }; i.onerror = function () { ok(null); }; i.src = src; }); };
+  var urlImg = function (src) { if (!src) return Promise.resolve(null); return fetch(src, { mode: 'cors' }).then(function (r) { return r.ok ? r.blob() : null; }).then(function (b) { return b ? loadImg(URL.createObjectURL(b)) : null; }).catch(function () { return null; }); };
+  var rr = function (g, x, y, w, h, r) { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, Math.min(r, w / 2, h / 2)); else g.rect(x, y, w, h); };
+  var alpha = function (c) { var m = String(c || '').match(/rgba?\(([^)]+)\)/); if (!m) return c && c !== 'transparent' ? 1 : 0; var p = m[1].split(',').map(parseFloat); return p.length > 3 ? p[3] : 1; };
+  var px = function (v) { return parseFloat(v) || 0; };
+  // (a colour the canvas understands: Chrome hands back color(srgb r g b / a) for some borders)
+  var col = function (c) { var m = String(c || '').match(/^color\(srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+))?\)/); if (!m) return c; return 'rgba(' + Math.round(m[1] * 255) + ',' + Math.round(m[2] * 255) + ',' + Math.round(m[3] * 255) + ',' + (m[4] == null ? 1 : m[4]) + ')'; };
+  function dsTimeline() {
+    var pan = document.querySelector('#view .ndz-dtl'), root = pan && pan.querySelector('.btl-sc .btl'); if (!root) return Promise.reject(new Error('no timeline'));
+    var R = root.getBoundingClientRect(), W = Math.round(R.width), H = Math.round(R.height), Y0 = 96, boss = (document.querySelector('#view h2') || {}).textContent || '', sub = (pan.querySelector('.ndz-cth > .sub') || {}).textContent || '';
+    var on = pan.querySelector('.ndz-cth .ndz-ctt button.on'), view = on ? on.textContent.replace(/\s+/g, ' ').trim() : 'Whole fight';
+    // (painting order: the page's z-index, then DOM order, so the phase chips and names sit above the curve and the lines)
+    var els = [].slice.call(root.querySelectorAll('*')).filter(function (e) { return !(e instanceof SVGElement) || e.tagName === 'svg'; }).map(function (e, i) { var z = parseInt(getComputedStyle(e).zIndex, 10); return { e: e, i: i, z: isNaN(z) ? 0 : z }; }).sort(function (a, b) { return a.z - b.z || a.i - b.i; }).map(function (o) { return o.e; });
+    var srcs = {}; els.forEach(function (e) { if (e.tagName === 'IMG' && e.getAttribute('src') && e.complete && e.naturalWidth) srcs[e.getAttribute('src')] = null; });
+    var keys = Object.keys(srcs);
+    return Promise.all([Promise.all(keys.map(urlImg)), document.fonts && document.fonts.load ? document.fonts.load('800 34px ' + HF).catch(function () { return null; }) : null]).then(function (res) {
+      keys.forEach(function (k, i) { srcs[k] = res[0][i]; });
+      var cv = document.createElement('canvas'); cv.width = W; cv.height = H + Y0 + 14; var g = cv.getContext('2d');
+      g.fillStyle = '#12141b'; g.fillRect(0, 0, cv.width, cv.height);
+      g.font = '800 34px ' + HF; g.fillStyle = '#ece8df'; g.fillText(boss.trim() + ' · Cooldowns', 22, 46);
+      g.font = '600 14px ' + TF; g.fillStyle = '#98a0ad'; g.fillText(view + (sub ? ' · ' + sub.trim() : '') + ' · from your note', 22, 70);
+      g.font = '800 16px ' + HF; g.fillStyle = '#e6b450'; g.fillText('DEBRIEF', W - 22 - g.measureText('DEBRIEF').width, 46);
+      g.fillStyle = '#e6b450'; g.fillRect(22, 82, W - 44, 2);
+      var panBg = getComputedStyle(pan).backgroundColor; if (alpha(panBg)) { g.fillStyle = panBg; g.fillRect(0, Y0 - 6, W, H + 12); }
+      els.forEach(function (e) {
+        var cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden') return;
+        var b = e.getBoundingClientRect(); if (!b.width && !b.height) return;
+        var x = b.left - R.left, y = b.top - R.top + Y0, w = b.width, h = b.height, rad = px(cs.borderTopLeftRadius);
+        g.globalAlpha = Math.max(0, Math.min(1, parseFloat(cs.opacity) || 1));
+        if (e.tagName === 'svg') { if (!e.classList.contains('btl-dmg')) return; // (the damage curve: its path and gradient)
+          var vb = (e.getAttribute('viewBox') || '0 0 ' + w + ' ' + h).split(/[\s,]+/).map(parseFloat), sx = w / (vb[2] || w), sy = h / (vb[3] || h);
+          [].slice.call(e.querySelectorAll('path, polygon')).forEach(function (p) { var d = p.getAttribute('d') || ('M' + (p.getAttribute('points') || '').trim().replace(/\s+/g, ' L') + 'Z'); if (!d) return;
+            var fill = p.getAttribute('fill') || getComputedStyle(p).fill, m = String(fill).match(/url\(["']?#([^"')]+)/), style = fill;
+            if (m) { var lg = e.querySelector('#' + m[1]); if (lg && lg.tagName === 'linearGradient') { var gb = lg.getAttribute('gradientUnits') === 'userSpaceOnUse'; var x1 = px(lg.getAttribute('x1')), y1 = px(lg.getAttribute('y1')), x2 = px(lg.getAttribute('x2')), y2 = px(lg.getAttribute('y2')); if (!lg.hasAttribute('y2')) y2 = 1; var pct = function (v, a) { return /%/.test(String(a)) ? v / 100 : v; }; var X1 = gb ? x1 * sx : pct(x1, lg.getAttribute('x1')) * w, Y1 = gb ? y1 * sy : pct(y1, lg.getAttribute('y1')) * h, X2 = gb ? x2 * sx : pct(x2, lg.getAttribute('x2')) * w, Y2 = gb ? y2 * sy : pct(y2, lg.getAttribute('y2')) * h; var gr = g.createLinearGradient(x + X1, y + Y1, x + X2, y + Y2); [].slice.call(lg.querySelectorAll('stop')).forEach(function (s) { var o = s.getAttribute('offset') || '0', so = getComputedStyle(s); var col = so.stopColor || s.getAttribute('stop-color') || '#fff', op = so.stopOpacity != null ? parseFloat(so.stopOpacity) : parseFloat(s.getAttribute('stop-opacity') || 1); var mm = String(col).match(/rgba?\(([^)]+)\)/); if (mm && op < 1) { var pp = mm[1].split(',').map(parseFloat); col = 'rgba(' + pp[0] + ',' + pp[1] + ',' + pp[2] + ',' + (op * (pp.length > 3 ? pp[3] : 1)) + ')'; } try { gr.addColorStop(Math.min(1, Math.max(0, /%/.test(o) ? parseFloat(o) / 100 : parseFloat(o))), col); } catch (err) {} }); style = gr; } else style = '#c9893a'; }
+            g.save(); g.translate(x, y); g.scale(sx, sy); try { g.fillStyle = style; g.fill(new Path2D(d)); } catch (err) {} g.restore(); });
+          return; }
+        if (e.tagName === 'IMG') { var im = srcs[e.getAttribute('src')]; if (im) { g.save(); rr(g, x, y, w, h, rad); g.clip(); g.drawImage(im, x, y, w, h); g.restore(); } return; }
+        var bg = col(cs.backgroundColor); if (alpha(bg) > 0 && w > 0 && h > 0) { if (cs.transform && cs.transform !== 'none' && Math.abs(w - h) < 2 && w < 30) { var s = w / Math.SQRT2, cx = x + w / 2, cy = y + h / 2; g.save(); g.translate(cx, cy); g.rotate(Math.PI / 4); g.fillStyle = bg; rr(g, -s / 2, -s / 2, s, s, 2); g.fill(); g.restore(); } else { g.fillStyle = bg; rr(g, x, y, w, h, rad); g.fill(); } }
+        if (/repeating-linear-gradient/.test(cs.backgroundImage)) { g.save(); rr(g, x, y, w, h, rad); g.clip(); g.fillStyle = 'rgba(255,255,255,.05)'; g.fillRect(x, y, w, h); g.strokeStyle = 'rgba(255,255,255,.14)'; g.lineWidth = 1; for (var k = -h; k < w + h; k += 8) { g.beginPath(); g.moveTo(x + k, y + h); g.lineTo(x + k + h, y); g.stroke(); } g.restore(); }
+        // (borders: a box with all four sides is stroked once; a line that is only a top or a left border (gridlines, the
+        // vertical lines under hits and cooldowns, phase dividers) is drawn as that one line)
+        var bT = px(cs.borderTopWidth), bL = px(cs.borderLeftWidth), bB = px(cs.borderBottomWidth), bR = px(cs.borderRightWidth);
+        if (bT && bL && bB && bR && alpha(col(cs.borderTopColor)) > 0 && w > 0 && h > 0) { g.strokeStyle = col(cs.borderTopColor); g.lineWidth = bT; rr(g, x + bT / 2, y + bT / 2, w - bT, h - bT, rad); g.stroke(); }
+        else { if (bT && alpha(col(cs.borderTopColor)) > 0 && w > 0) { g.strokeStyle = col(cs.borderTopColor); g.lineWidth = bT; g.beginPath(); g.moveTo(x, y + bT / 2); g.lineTo(x + w, y + bT / 2); g.stroke(); }
+          if (bL && alpha(col(cs.borderLeftColor)) > 0 && h > 0) { g.strokeStyle = col(cs.borderLeftColor); g.lineWidth = bL; g.beginPath(); g.moveTo(x + bL / 2, y); g.lineTo(x + bL / 2, y + h); g.stroke(); }
+          if (bB && alpha(col(cs.borderBottomColor)) > 0 && w > 0) { g.strokeStyle = col(cs.borderBottomColor); g.lineWidth = bB; g.beginPath(); g.moveTo(x, y + h - bB / 2); g.lineTo(x + w, y + h - bB / 2); g.stroke(); }
+          if (bR && alpha(col(cs.borderRightColor)) > 0 && h > 0) { g.strokeStyle = col(cs.borderRightColor); g.lineWidth = bR; g.beginPath(); g.moveTo(x + w - bR / 2, y); g.lineTo(x + w - bR / 2, y + h); g.stroke(); } }
+        if (e.children.length === 0) { var t = e.textContent.replace(/\s+/g, ' ').trim(); if (t) { g.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + (cs.fontFamily || TF); g.fillStyle = col(cs.color); var tw = g.measureText(t).width, fsz = px(cs.fontSize), tx = x + px(cs.paddingLeft), ta = cs.textAlign; if (ta === 'center') tx = x + w / 2 - tw / 2; else if (ta === 'right' || ta === 'end') tx = x + w - px(cs.paddingRight) - tw; g.fillText(t, tx, y + h / 2 + fsz * 0.36); } }
+        g.globalAlpha = 1;
+      });
+      return cv;
+    });
+  }
+  var copyTl = function (msg) {
+    var head = document.querySelector('#view h2'), name = 'Debrief - ' + (head ? head.textContent.trim() : 'raid plan').replace(/[\\/:*?"<>|]+/g, '') + ' - cooldowns.png';
+    if (msg) msg.textContent = 'Making the picture…';
+    var blobP = dsTimeline().then(function (cv) { return new Promise(function (ok) { cv.toBlob(ok, 'image/png'); }); });
+    var done = function (ok) { blobP.then(function (blob) { if (!msg) return; msg.innerHTML = (ok ? '✓ Copied the whole timeline as one picture. Paste it in Discord. ' : 'Your browser didn’t allow copying it. ') + '<a href="#" data-dssheetdl="' + E(name) + '">Download it</a>' + (ok ? '' : ' (' + Math.round(blob.size / 1024 / 102.4) / 10 + ' MB)'); var a = msg.querySelector('a[data-dssheetdl]'); if (a) a._blob = blob; }, function () { if (msg) msg.textContent = 'Couldn’t draw the picture.'; }); };
+    var write = null; try { write = navigator.clipboard && navigator.clipboard.write ? navigator.clipboard.write([new ClipboardItem({ 'image/png': blobP })]) : Promise.reject(new Error('no clipboard')); } catch (err) { write = Promise.reject(err); }
+    write.then(function () { done(true); }, function () { done(false); });
+  };
+  document.addEventListener('click', function (e) {
+    var t = e.target, dl = t.closest && t.closest('.ndz-dtl a[data-dssheetdl]');
+    if (dl && dl._blob) { e.preventDefault(); var a = document.createElement('a'); a.href = URL.createObjectURL(dl._blob); a.download = dl.dataset.dssheetdl || 'Debrief cooldowns.png'; a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000); return; }
+    var b = t.closest && t.closest('#view .ndz-dtl [data-dstl]'); if (!b) return; e.preventDefault();
+    var hd = b.parentNode, box = hd.querySelector('.ds-sheetmsg'); if (!box) { box = document.createElement('span'); box.className = 'sub ds-sheetmsg'; hd.appendChild(box); } copyTl(box);
+  }, true);
+  var addBtn = function () { var hd = document.querySelector('#view .ndz-dtl > .ndz-cth'); if (!hd || hd.querySelector('[data-dstl]') || !document.querySelector('#view .ndz-dtl .btl-sc .btl')) return;
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'btn sm primary'; b.setAttribute('data-dstl', ''); b.setAttribute('data-tt', '<b>Copy image</b><br>The whole timeline, start to finish, as one picture to paste in Discord (Ctrl+V).'); b.textContent = 'Copy image'; hd.appendChild(b); };
+  var tm = 0; new MutationObserver(function () { if (!tm) tm = requestAnimationFrame(function () { tm = 0; addBtn(); }); }).observe(document.documentElement, { childList: true, subtree: true }); addBtn();
 })();
 
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
