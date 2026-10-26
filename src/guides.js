@@ -5431,6 +5431,7 @@ function ppSeat(P, fix) { const S = { ...fix }, used = new Set(Object.values(fix
   return S; }
 // (one picture's map: a guide map frozen at T, the note's names on its spots, only the job players named, the raid lead's markers)
 // (the middle of a map's room in its own frame: The Coiled Altar has a room box; other bosses use their origin, Ula'tek's at y 1554)
+const PP_MKOUT = { 'The Twin Fangs': 0 };
 const ppMid = (mp) => (mp.room ? [(mp.room.x0 + mp.room.x1) / 2, (mp.room.y0 + mp.room.y1) / 2] : ((A) => [A.cx, A.cy])(GDZ_ORIGIN[mp.boss] || ARENAS[mp.boss] || { cx: 0, cy: 0 }));
 function ppFreeze(mp, T, S, P, M, o) {
   o = o || {}; const f = mp.frames.reduce((a, b) => (Math.abs(b.t - T) < Math.abs(a.t - T) ? b : a)), nm = (v) => (typeof v === 'string' ? v : v && v.name);
@@ -5443,7 +5444,7 @@ function ppFreeze(mp, T, S, P, M, o) {
     return c ? { t0: 0, t1: 1e9, text, x: c.x, y: below ? c.y - (dy == null ? 9 : dy) : c.y + (dy == null ? 5 : dy), color, ink: ink || '#fff' } : null; }).filter(Boolean);
   const cb = {}; for (const [g, l] of Object.entries(mp.cbars || {})) cb[g] = l.map((b) => ({ ...b, by: '' }));
   // (the raid lead's markers, drawn 4 yards further out than their spot so whoever stands on one doesn't hide it)
-  const wm = PP_MKS.filter((k) => M[k] && (!o.marks || o.marks.includes(k))).map((k) => ({ k, x: cx + M[k][0], y: cy + M[k][1] + (M[k][1] >= 0 ? 4 : -4) }));
+  const wm = PP_MKS.filter((k) => M[k] && (!o.marks || o.marks.includes(k))).map((k) => ({ k, x: cx + M[k][0], y: cy + M[k][1] + (M[k][1] >= 0 ? 1 : -1) * (PP_MKOUT[mp.boss] == null ? 4 : PP_MKOUT[mp.boss]) }));
   const out = { ...mp, frames: null, pts, t: T, ft: T, pauses: [], steps: [], callouts: calls, tags: (o.tags || []).map(([g, tx]) => [g, tx, null, null]), hl: Object.keys(S).filter((g) => (o.hl || []).includes(g)),
     good: [], goodAt: null, bad: [], badAt: null, cbars: cb, wmarks: wm, liveLeg: false, hlLabel: 'assigned in the note', playerLabel: 'Player (spec icon, class colour)' };
   if (o.focus) out.focus = out.fullAt = { x: cx + o.focus.x, y: cy + o.focus.y, r: o.focus.r }; /* (a guide map shown whole: the user wants the whole arena in each picture) */
@@ -5696,6 +5697,77 @@ function ppCardsUL(J, M, U, P) {
       foot: 'Melee follow her to the next quarter; healers and ranged go one further.' }); }
   return cards;
 }
+// ===== The Twin Fangs, Mythic (Oct 26, the same setup again; Plan's Jobs cards in b2e86a2). Every picture is on the south-east platform,
+// as the guide's cards are (the room picture cuts off the north tip); the sets repeat on every platform =====
+// (the note's jobs, in the lines Plan writes: "Left:" / "Right:" / "Center:" (Ravenous Feast groups), "Front Melee:", "Left Melee:",
+// "Right Melee:", "Left Range:", "Right Range:", "Backup Kicker:" (Broodling kick areas), "Odd set Orbs:" / "Even set Orbs:" (globule CC))
+function ppReadTF(N, P) {
+  const isN = (w) => P.has(String(w).toLowerCase()), J = { feast: { left: [], right: [], center: [] }, kicks: { front: [], lm: [], rm: [], lr: [], rr: [], backup: [] }, cc: [[], []] };
+  for (const l of N.lines) {
+    const lab = l.label.toLowerCase().trim(), who = l.words.filter(isN).map((w) => P.get(w.toLowerCase()).name); let m; if (!who.length) continue;
+    if ((m = /^(left|right|center|centre)$/.exec(lab))) J.feast[m[1] === 'centre' ? 'center' : m[1]] = who;
+    else if ((m = /^(front|left|right)\s+(melee|range)/.exec(lab))) J.kicks[m[1] === 'front' ? 'front' : m[1][0] + (m[2] === 'melee' ? 'm' : 'r')] = who;
+    else if (/backup/.test(lab)) J.kicks.backup = who; else if (/\bodd\b/.test(lab)) J.cc[0] = who; else if (/\beven\b/.test(lab)) J.cc[1] = who;
+  }
+  return J;
+}
+const TF_VIEW = { x: 50, y: -26, r: 38 }; // (the south-east platform with both bosses off its tip)
+function ppCardsTF(J, M, U, P) {
+  const cards = [], GR = '#9ff26d', R = '#ff8a8a', BL = '#5aa0ff', GO = '#e6b450', OR = '#ff9b5a', Q = '#c9ced8', cdsOf = (L) => (L || []).map(([t, n, sp]) => ppI(P, n, t + ' ' + sp));
+  const tf2 = () => { const w = tfKit(3, 2); tfBosses(w); return w; }, home = (w, put) => GDZ_RAID.filter((s) => !put.has(s)).forEach((s) => { put.add(s); const q = TF_HOME[s]; w.at(0, s, q[0], q[1]); });
+  // Caustic Deluge and Blood Torrent: every globule shielded; this set's crowd control group breaks the shields (the guide's map at the CC)
+  if (J.cc[0].length || J.cc[1].length) { const fix = {}, put = new Set(), ids = J.cc[0].map((n) => { const s = ppSlot(P, n, put); if (s) fix[s] = n; return s; }).filter(Boolean);
+    cards.push({ id: 'orbcc', ph: 1, when: 'Every set', title: 'Caustic Globule (Crowd control the shields)', map: ppFreeze(TF_M.beams(false, 'm', { p: 2 }), 5.9, ppSeat(P, fix), P, M, { hl: ids, focus: TF_VIEW }),
+      legend: [ppG('Odd sets: the 1st, 3rd and 5th', '#7fd8ff', J.cc[0].map((n) => ppI(P, n))), ppG('Even sets: the 2nd, 4th and 6th', BL, J.cc[1].map((n) => ppI(P, n)))],
+      foot: 'Blood Torrent shields every globule: your set\'s stuns and slows break the shields, then low stacks soak. Wait for the orbs near you to land.' }); }
+  // Caustic Globules: low stacks soak (the guide's map with the soakers on the globules)
+  cards.push({ id: 'globs', ph: 1, when: 'Every set', title: 'Caustic Globule (Low stacks soak)', map: ppFreeze(TF_M.beams(false, 'm', { p: 2 }), 8.7, ppSeat(P, {}), P, M, { focus: TF_VIEW }),
+    legend: [ppG('Platform 2', GR, [], '3 stacks or fewer soak, 4 or more wait.'), ppG('Platform 3', GR, [], '6 or fewer soak, 7 or more wait. 8 is the cap: a Spit on 9 kills.'), ppG('On 9', R, [], 'With a Spit coming, die in the middle so your orbs are easy to soak.')],
+    foot: 'Each globule explodes on the raid 10 seconds after it lands. Aim for about one stack per orb set.' });
+  // Stone Breaker: Ithraz's tank in each slam, in order (the guide's map as the spots light up)
+  { const S = ppSeat(P, {}), nm = (v) => (typeof v === 'string' ? v : '');
+    cards.push({ id: 'stone', ph: 1, when: 'Every set', title: 'Stone Breaker (Tank stands in each slam)', map: ppFreeze(TF_M.slams(false, 'm', { p: 2 }), 3.6, S, P, M, { hl: ['t2'], named: ['t1', 't2'], focus: TF_VIEW }),
+      legend: [ppG('Ithraz\'s tank', GO, [nm(S.t2) && ppI(P, S.t2, 'Slams 1, 2, 3')], 'Step into each slam in the order it appeared.'), ppG('Both tanks', BL, [nm(S.t1) && ppI(P, S.t1, 'Vexhul'), nm(S.t2) && ppI(P, S.t2, 'Ithraz')], 'Swap after each set. Both beams hit at once (Blood Torrent): a big defensive or an external.')],
+      foot: 'A missed slam hits the whole raid and knocks everyone back.' }); }
+  // Rouse the Brood: a Broodling in every slot; each area's kickers in a line by their own Broodlings, in their order
+  { const K = J.kicks; if (['front', 'lm', 'rm', 'lr', 'rr'].some((x) => K[x].length)) { const w = tf2(), fix = {}, put = new Set(), tags = [], hl = [];
+    Object.values(TF_SLOT).forEach((p, i) => w.add('bl' + i, 'Broodling', 0, p[0], p[1]));
+    const A = [['front', [-3, 70], [1, 0]], ['lm', [-19, 68], [0.25, -1]], ['lr', [-24, 47], [0.25, 1]], ['rm', [19, 68], [-0.25, -1]], ['rr', [26, 47], [-0.25, 1]], ['backup', [0, 52], [1, 0]]];
+    A.forEach(([key, c, d]) => (K[key] || []).forEach((n, i) => { const s = ppSlot(P, n, put); if (!s) return; fix[s] = n; hl.push(s); tags.push([s, key === 'backup' ? 'Backup' : String(i + 1)]); w.at(0, s, c[0] + d[0] * i * 4.5, c[1] + d[1] * i * 4.5); }));
+    home(w, put);
+    cards.push({ id: 'kicks', ph: 1, when: 'Every set', title: 'Rouse the Brood (Kick the Broodlings in your area)', map: ppFreeze(w.done({ title: 'Rouse the Brood', focus: { x: 0, y: 56, r: 30 } }), 1, ppSeat(P, fix), P, M, { hl, named: hl, tags, focus: TF_VIEW }),
+      legend: [['front', 'Front: the tip'], ['lm', 'Left melee: left 3 and 4'], ['rm', 'Right melee: right 3 and 4'], ['lr', 'Left range: left 1 and 2'], ['rr', 'Right range: right 1 and 2'], ['backup', 'Backup']].filter(([key]) => K[key].length)
+        .map(([key, t]) => ppG(t, key === 'backup' ? Q : key === 'front' ? GO : key[0] === 'l' ? BL : OR, K[key].map((n, i) => ppI(P, n, key === 'backup' ? 'Covers a miss' : 'Kick ' + (i + 1))))),
+      foot: 'Kick every Broodling in your area, in your order. Left and right as you face the bosses.' }); } }
+  // Venomous Emergence: everyone on the three Spawns at the pool's edge (the guide's map as the Spits land)
+  cards.push({ id: 'spawns', ph: 1, when: 'Every set', title: 'Venomous Emergence (Everyone on the Spawns)', map: ppFreeze(TF_M.emergence(false, 'm', { p: 2 }), 5, ppSeat(P, {}), P, M, { focus: TF_VIEW }),
+    legend: [ppG('Everyone', GR, [], 'Swap to the three Spawns of Vexhul at the pool\'s edge, most melee too; kill them before their second Spit.'), ppG('Spit targets', Q, [ppI(P, ppAny('Whoever gets a Spit'))], 'Move once, then stand still.')],
+    foot: 'The Spawns add a stack to everyone, and each Spit another to its target.' });
+  // Coiling Ichor: the targets' puddles packed at the outer edge (the guide's map once they're down)
+  cards.push({ id: 'ichor', ph: 1, when: 'Every set', title: 'Coiling Ichor (Out to the edge)', map: ppFreeze(TF_M.ichor(false, 'm', { p: 2 }), 8.7, ppSeat(P, {}), P, M, { focus: TF_VIEW }),
+    legend: [ppG('Ichor targets', '#ff6a5a', [ppI(P, ppAny('Whoever gets Ichor'))], 'Walk to the outer edge and pack the puddles tight together; don\'t clog the inside.'), ppG('Your defensive', BL, [], 'Time it to cover the last ticks, when the circle is smallest.')],
+    foot: 'The puddles stay for the rest of the platform.' });
+  // Stir the Depths: the waves rolling in from behind, everyone in a gap (the guide's map mid-set)
+  cards.push({ id: 'stir', ph: 1, when: 'Every set', title: 'Stir the Depths (Step into the gaps)', map: ppFreeze(TF_M.waves(false, 'm', { p: 2 }), 6.2, ppSeat(P, {}), P, M, { focus: TF_VIEW }),
+    legend: [ppG('Everyone', GR, [], 'Waves roll in from behind in sets: step sideways into a gap before each set reaches you.'), ppG('Tanks', BL, [], 'Look back and call which side they come from.')],
+    foot: 'Each wave that hits you is another venom stack.' });
+  // Ravenous Feast: the three groups at their Tainted Blood orbs (right, left, front), the Feast in the middle: right takes the 1st hit,
+  // left the 2nd, the centre group the 3rd (the guide's order, from the top kills)
+  { const F = J.feast; if (F.left.length || F.right.length || F.center.length) { const w = tf2(), fix = {}, put = new Set(), lab = [], hl = [], C = [4, 56], OB = [[24, 40], [-24, 40], [4, 72]];
+    w.ring({ x: C[0], y: C[1], r: 9, fx: 'soak', t0: 0, at: 1.05, dur: 5, color: R, cn: 'Ravenous Feast', label: false });
+    OB.forEach(([x, y]) => w.ring({ x, y, r: 5, fx: 'soak', t0: 0, at: 1.05, dur: 5, color: '#d0303a', cn: 'Tainted Blood', label: false }));
+    [[F.right, OB[0], 'Right 1st', R], [F.left, OB[1], 'Left 2nd', BL, true], [F.center, OB[2], 'Center 3rd', GO]].forEach(([L, c, t, col, below]) => { const ids = L.map((n) => { const s = ppSlot(P, n, put); if (s) fix[s] = n; return s; }).filter(Boolean);
+      ids.forEach((s, i) => { const q = gdzSpot(i, ids.length, 4.2); w.at(0, s, c[0] + q[0], c[1] + q[1]); }); hl.push(...ids); if (ids.length) lab.push([ids, t, col, col === GO ? '#1a1405' : '#fff', 7, !!below]); });
+    home(w, put);
+    cards.push({ id: 'feast', ph: 1, when: 'Every set', title: 'Ravenous Feast (Three groups, one hit each)', map: ppFreeze(w.done({ title: 'Ravenous Feast', focus: { x: 0, y: 50, r: 30 } }), 1, ppSeat(P, fix), P, M, { hl, labels: lab, focus: TF_VIEW }),
+      legend: [ppG('Right: the 1st hit, then the right orb', R, F.right.map((n) => ppI(P, n))), ppG('Left: the 2nd hit, then the left orb', BL, F.left.map((n) => ppI(P, n))), ppG('Center: the 3rd hit, then the front orb', GO, F.center.map((n) => ppI(P, n)))],
+      foot: 'Each hit knocks its group toward its Tainted Blood orb: 6 or more soak each one, or the raid wipes. Nobody takes two hits.' }); } }
+  // Submerge: let the beam turn away, then follow it the long way round to the next platform (the guide's map, the whole room)
+  cards.push({ id: 'sub', ph: 2.5, when: 'Each Submerge', title: 'Submerge (Dodge with the beam)', map: ppFreeze(TF_M.submerge(false, 'm', { p: 1 }), 9.8, ppSeat(P, {}), P, M, {}),
+    legend: [ppG('Everyone', GR, [], 'Watch the orbs circling Vexhul: let the beam turn away, then follow it the long way round. A puddle beats a wave.'), ppG('Raid cooldowns', '#9a7bff', cdsOf(J.sub)), ppG('Moving', BL, [], 'Mobile players walk; the rest take the Warlock gateway after the waves pass it.')],
+    foot: 'Both bosses dive and come up on the next platform.' });
+  return cards;
+}
 // (the note's healing and raid cooldowns at a moment, for a picture's legend: NSRT reminder lines between two times of a phase)
 function ppCds(N, P, ph, t0, t1) { return N.reminders.filter((x) => x.ph === ph && x.time >= t0 && x.time <= t1 && x.spellid).flatMap((x) => x.tags.filter((w) => P.has(w.toLowerCase())).map((w) => [Math.floor(x.time / 60) + ':' + String(Math.round(x.time % 60)).padStart(2, '0'), P.get(w.toLowerCase()).name, (E.cdName && E.cdName(x.spellid)) || x.text || 'Cooldown'])); }
 const GDZ_PP = {
@@ -5735,6 +5807,19 @@ const GDZ_PP = {
     // (Plan's Jobs cards (2caefe9) and the pictures each shows, by its key, else by its title)
     mech: { eggs: ['eggs'], coils: ['coils'], fester: ['fester'], heart: ['heart'], kicks: ['kicksL', 'kicksR'], trans: ['trans'], bite: ['bite'], prey: ['prey'], tanks: ['beam', 'grips'], cds: [], def: [] },
     jobs: [[/egg/i, ['eggs']], [/coils team|spectral coils/i, ['coils']], [/fester/i, ['fester']], [/rage of the shackled|heart/i, ['heart']], [/kick/i, ['kicksL', 'kicksR']], [/transition|soak group/i, ['trans']], [/serpent'?s bite/i, ['bite']], [/circling prey/i, ['prey']], [/tank|grip/i, ['beam', 'grips']]] } },
+  'The Twin Fangs': { Mythic: {
+    // (the guide's six ground markers lined up on the Broodlings each side, a step in from the rim: diamond and star at left and right 3,
+    // moon and triangle at 1, circle and square at 2; skull and cross at the tip's two slots. On the south-east platform, as the pictures are)
+    marks: (() => { const P = tfT(2).P, at = (sl, f) => { const p = TF_SLOT[sl]; return P(tfIn([p[0] * (f || 0.75), p[1] * 0.96 - 2], 2)).map((v) => Math.round(v)); };
+      return { diamond: at('L3'), star: at('R3'), moon: at('L1'), triangle: at('R1'), circle: at('L2'), square: at('R2'), skull: at('FL', 1), cross: at('FR', 1) }; })(),
+    stack: [0, 0],
+    uses: [],
+    room: { scene: (k) => { const P = tfT(2).P, v = P(TF_VX), i = P(TF_IT); k.boss('vx', 'Vexhul', 0, v[0], v[1]).boss('it', 'Ithraz', 0, i[0], i[1]); }, focus: TF_VIEW, lim: 90, keep: ['Vexhul', 'Ithraz'] },
+    read(N, P) { const J = ppReadTF(N, P); J.sub = ppCds(N, P, 1, 136, 163).concat(ppCds(N, P, 1, 291, 318)); return J; },
+    cards: ppCardsTF,
+    // (Plan's Jobs cards (b2e86a2) and the pictures each shows, by its key, else by its title)
+    mech: { orbcc: ['orbcc'], globs: ['globs'], stone: ['stone'], kicks: ['kicks'], spawns: ['spawns'], ichor: ['ichor'], stir: ['stir'], feast: ['feast'], sub: ['sub'], cds: [], def: [] },
+    jobs: [[/orb cc|crowd control/i, ['orbcc']], [/globule/i, ['globs']], [/stone breaker/i, ['stone']], [/kick|brood/i, ['kicks']], [/emergence|spawn/i, ['spawns']], [/ichor/i, ['ichor']], [/stir the depths/i, ['stir']], [/feast/i, ['feast']], [/submerge/i, ['sub']]] } },
 };
 const PP_PH = { 1: ['Phase 1', '#5aa0ff'], 1.9: ['Phase 1 ends', '#5aa0ff'], 2: ['Phase 2', '#b65cff'], 2.5: ['Intermission', '#e6b450'], 3: ['Phase 3', '#ff5a4f'] };
 
@@ -5846,7 +5931,7 @@ function ppOpen(r, u0, opt) {
   document.body.appendChild(box); document.body.classList.add('ndz-modal');
   const close = () => { box.remove(); if (!$('#ndzWiz') && !$('#ndzGuide') && !$('#ndzNoteView') && !$('#ndzShot')) document.body.classList.remove('ndz-modal'); };
   const head = '<div class="ndz-whead"><span class="sub">Pictures for Discord</span><button class="ndz-ex" type="button" data-ppx aria-label="Close">✕</button></div>';
-  if (!set.cf) { box.innerHTML = '<div class="ndz-wbox">' + head + '<h2>Pictures for Discord</h2><p class="sub">Pictures are ready for The Coiled Altar and Ula\'tek on Mythic so far. The other bosses come next.</p></div>'; box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); }; return; }
+  if (!set.cf) { box.innerHTML = '<div class="ndz-wbox">' + head + '<h2>Pictures for Discord</h2><p class="sub">Pictures are ready for The Coiled Altar, Ula\'tek and The Twin Fangs on Mythic so far. The other bosses come next.</p></div>'; box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); }; return; }
   box.innerHTML = '<div class="ndz-wbox ndz-shotbox pp-win">' + head + '<h2 class="pp-h2"></h2>' +
     '<div class="pp-nav"><span class="sub pp-navt"></span><button class="btn sm" type="button" data-ppprev></button><button class="btn sm" type="button" data-ppnext></button><button class="btn sm" type="button" data-ppallv></button></div>' +
     '<p class="sub pp-intro">One picture for each mechanic your note gives jobs for, with everyone on their spot. Copy one and paste it in Discord (Ctrl+V), or download it.</p>' +
