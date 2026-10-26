@@ -320,17 +320,6 @@ scroller:SetScript("OnMouseWheel", function(self, d) local mx = math.max(0, (bod
 local foot = card:CreateFontString(nil, "OVERLAY"); setFont(foot, "body", 11.5); foot:SetTextColor(rgb(COL.faint)); foot:SetJustifyH("LEFT")
 foot:SetText("/recap opens this again  ·  /db settings")
 local footLine = card:CreateTexture(nil, "ARTWORK"); footLine:SetHeight(1); fill(footLine, COL.line)
--- (combat logging on or off, at the right of the footer: green when it's on, red when it's off)
-local logBtn = CreateFrame("Button", nil, card); logBtn:SetSize(120, 20)
-logBtn.t = logBtn:CreateFontString(nil, "OVERLAY"); setFont(logBtn.t, "bold", 11.5); logBtn.t:SetPoint("RIGHT", 0, 0); logBtn.t:SetJustifyH("RIGHT")
-function Debrief_LogButton()
-  local on = LoggingCombat and LoggingCombat()
-  logBtn.t:SetText(on and "|cff7ee08fLogging: On|r" or "|cffff8f87Logging: Off|r")
-  logBtn:SetWidth(math.max(60, logBtn.t:GetStringWidth() + 4))
-end
-logBtn:SetScript("OnClick", function() Debrief_ToggleLog() end)
-logBtn:SetScript("OnEnter", function() GameTooltip:SetOwner(logBtn, "ANCHOR_TOP"); GameTooltip:SetText("Combat logging, with Advanced Combat Logging. Click to turn it on or off. You can also set a key: Options > Keybindings > AddOns > Debrief."); GameTooltip:Show() end)
-logBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
 -- pooled pieces for the body (redrawn each time): text, plain textures, rounded textures
 local pool = { fs = {}, tex = {}, rt = {}, btn = {}, tip = {} }
@@ -1332,8 +1321,7 @@ local function renderOnce()
   scroller:SetVerticalScroll(math.min((scroller:GetVerticalScroll() or 0), math.max(0, y - vh)))
   foot:SetText(y > vh + 4 and "Scroll for more  ·  /recap opens this again" or "/recap opens this again  ·  /db settings")
   footLine:ClearAllPoints(); footLine:SetPoint("TOPLEFT", card, "TOPLEFT", 1, -(TOPY + vh + 10)); footLine:SetPoint("TOPRIGHT", card, "TOPRIGHT", -1, -(TOPY + vh + 10))
-  foot:ClearAllPoints(); foot:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -(TOPY + vh + 19)); foot:SetWidth(W - PAD * 2 - 130); foot:SetWordWrap(false)
-  logBtn:ClearAllPoints(); logBtn:SetPoint("TOPRIGHT", card, "TOPRIGHT", -PAD, -(TOPY + vh + 15)); Debrief_LogButton()
+  foot:ClearAllPoints(); foot:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -(TOPY + vh + 19)); foot:SetWidth(W - PAD * 2); foot:SetWordWrap(false)
   card:SetHeight(TOPY + vh + 42)
 end
 -- (the card in two columns (Oct 24): drawn once as before; then drawn again with the right column starting at the section edge that
@@ -2252,12 +2240,11 @@ local function buildOptions()
     -- (no "/recap opens: Card / Whole night" any more (Oct 24): the card is the one recap window; the big window is Expand on it)
     pslider("Big window size", "The big window you open with Expand on the card: tonight's pulls and charts.", 0.7, 1.3, function() return DB.bigScale or 1 end, function(v) DB.bigScale = v end)
   end)
-  fold("when", "When it shows", "Close by itself, lock in place, the chat reminder, combat log.", function()
+  fold("when", "When it shows", "Close by itself, lock in place, the chat reminder.", function()
     segment("Close by itself", "Not while your mouse is on it.", { { 0, "Never" }, { 30, "30 s" }, { 60, "60 s" }, { 120, "2 min" } },
       function() return DB.autoClose or 0 end, function(v) DB.autoClose = v end, true)
     switch("Lock in place", "The card and its window can't be dragged.", function() return DB.lock == true end, function(v) DB.lock = v end, true)
     switch("Remind me in chat", "A line in chat after each boss: your recap is on your PC, and /recap saves it here. Off unless you switch it on.", function() return DB.nudge == true end, function(v) DB.nudge = v end, true)
-    switch("Combat log always on", "With Advanced Combat Logging, whenever Debrief is loaded.", function() return DB.autoLog ~= false end, function(v) DB.autoLog = v end, true)
   end)
   fold("goals", "Goals and saved pulls", "A damage or healing goal, and how many pulls to keep.", function()
     local function lastOf(role)
@@ -2417,8 +2404,7 @@ do
       return true, w and ("It's working. Your last pull came in " .. w .. ".") or "It's on this PC. Your first recap comes after a boss pull."
     end,
     function()
-      if DB and DB.autoLog == false then return false, "Off. Debrief can keep it on for you, with Advanced Combat Logging." end
-      return true, "Debrief keeps it on for you, with Advanced Combat Logging."
+      return true, "Debrief turns it on for you, with Advanced Combat Logging." -- (always: no switch since Oct 26)
     end,
   }
   local paint1
@@ -2430,10 +2416,6 @@ do
       r.num = fsOn(r, "head", 13, COL.muted); r.num:SetPoint("CENTER", r.c, "CENTER", 0, 0); r.num:SetText(i)
       r.n = fsOn(r, "bold", 14, COL.text); r.n:SetPoint("TOPLEFT", 46, -10); r.n:SetText(name)
       r.d = fsOn(r, "body", 12.5, COL.muted); r.d:SetPoint("TOPLEFT", 46, -29); r.d:SetWidth(PW - 58)
-      if i == 3 then -- (switched off in /db: one click puts it back on)
-        r.on = optButton(r, "Turn on", 74, false, 22); r.on:SetPoint("TOPRIGHT", -10, -12)
-        r.on:SetScript("OnClick", function() DB.autoLog = true; autoLog(); paint1(); if Debrief_RefreshOptions then Debrief_RefreshOptions() end end)
-      end
       checkRows[i] = r; yy = yy + 66
     end
     f.h = yy
@@ -2661,34 +2643,23 @@ SlashCmdList.DEBRIEF = function(msg)
     -- (the built-in sample pull)
     local m = decode(SAMPLE)
     if m then m.demo = true; addPull(m); showCard(); say("showing a sample Mythic Coiled Altar wipe (made-up names; Vexmira is the Holy Paladin). Use the arrows to see other players.") end
-  elseif msg == "log" then Debrief_ToggleLog()
   elseif msg == "help" then say("/recap: show or hide your card. /db: your settings. /debrief setup: the guided setup again.")
   else Debrief_Toggle() end
 end
 
 local ev = CreateFrame("Frame")
-ev:RegisterEvent("ADDON_LOADED"); ev:RegisterEvent("PLAYER_LOGIN"); ev:RegisterEvent("PLAYER_LOGOUT"); ev:RegisterEvent("PLAYER_REGEN_ENABLED"); ev:RegisterEvent("PLAYER_REGEN_DISABLED"); ev:RegisterEvent("ENCOUNTER_END"); ev:RegisterEvent("PLAYER_ENTERING_WORLD"); ev:RegisterEvent("ZONE_CHANGED_NEW_AREA"); ev:RegisterEvent("PLAYER_TARGET_CHANGED")
--- (the combat log and Advanced Combat Logging stay on whenever Debrief is loaded, everywhere, so nobody has to type /combatlog.
--- Debrief Companion reads the log. /debrief log or Settings > PC app turns this off.)
+ev:RegisterEvent("ADDON_LOADED"); ev:RegisterEvent("PLAYER_LOGIN"); ev:RegisterEvent("PLAYER_LOGOUT"); ev:RegisterEvent("PLAYER_REGEN_ENABLED"); ev:RegisterEvent("PLAYER_REGEN_DISABLED"); ev:RegisterEvent("ENCOUNTER_END"); ev:RegisterEvent("PLAYER_ENTERING_WORLD"); ev:RegisterEvent("ZONE_CHANGED_NEW_AREA"); ev:RegisterEvent("PLAYER_TARGET_CHANGED"); ev:RegisterEvent("READY_CHECK")
+-- (the combat log and Advanced Combat Logging are always on while Debrief is loaded, everywhere, so nobody has to type /combatlog;
+-- Debrief Companion reads the log. Never a switch (Oct 26, the user: "combatlogging should not be a toggle"): turned on at login, on every
+-- zone change, after every fight and at every ready check, so it's on again even if something else turned it off)
 local weLog, logPending, logSaid = false, false, false
--- (one press: the button on the card, the key from Options > Keybindings > AddOns > Debrief, or /debrief log. On also turns
--- Advanced Combat Logging on, and Debrief keeps it on; off stays off until it's pressed again)
-function Debrief_ToggleLog()
-  if not LoggingCombat or not DB then return end
-  local on = not LoggingCombat()
-  LoggingCombat(on); DB.autoLog = on
-  if on and GetCVar and SetCVar and GetCVar("advancedCombatLogging") ~= "1" then pcall(SetCVar, "advancedCombatLogging", 1) end
-  say(on and "combat logging is |cff7ee08fon|r, with Advanced Combat Logging. Debrief keeps it on." or "combat logging is |cffff8f87off|r. Press Logging on the card to turn it back on.")
-  if Debrief_LogButton then Debrief_LogButton() end
-end
-BINDING_NAME_DEBRIEF_TOGGLELOG = "Combat logging on or off"
 autoLog = function()
-  if not DB or DB.autoLog == false or not LoggingCombat then return end
+  if not DB or not LoggingCombat then return end
   if InCombatLockdown() then logPending = true; return end
   if GetCVar and SetCVar and GetCVar("advancedCombatLogging") ~= "1" then SetCVar("advancedCombatLogging", 1) end
   if not LoggingCombat() then
     LoggingCombat(true); weLog = true
-    if not logSaid then logSaid = true; say("combat log and Advanced Combat Logging are on. Debrief keeps them on (Logging on the card turns this off).") end
+    if not logSaid then logSaid = true; say("combat logging and Advanced Combat Logging are on. Debrief keeps them on for you.") end
   end
 end
 -- (a training dummy: any target named "... Dummy" that isn't a player)
@@ -2699,12 +2670,13 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
   elseif e == "PLAYER_REGEN_ENABLED" then
     Debrief_CombatEnd()
     if pendingShow then pendingShow = false; showCard() end
-    if logPending then logPending = false; autoLog() end
+    logPending = false; autoLog() -- (after every fight, in case anything turned it off)
   elseif e == "PLAYER_ENTERING_WORLD" then
     if C_Timer then C_Timer.After(2, autoLog) end
+  elseif e == "READY_CHECK" then autoLog() -- (just before a pull)
   elseif e == "PLAYER_TARGET_CHANGED" then
     -- (practising on a dummy: the combat log goes on, so Debrief Companion can read it)
-    if isDummy("target") and DB and DB.autoLog ~= false and DB.hasApp and LoggingCombat and not LoggingCombat() then
+    if isDummy("target") and DB and DB.hasApp and LoggingCombat and not LoggingCombat() then
       if GetCVar and SetCVar and GetCVar("advancedCombatLogging") ~= "1" then SetCVar("advancedCombatLogging", 1) end
       LoggingCombat(true); say("combat log is on for your practice. Hit the dummy, stop, and Debrief asks \"See your recap?\".")
     end
@@ -2735,7 +2707,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
       DB.fromApp = #DB.pulls - n0
     end
     if DEBRIEF_HAS_APP then DB.hasApp = true end -- (Debrief Companion is on this PC)
-    DB.raidAlways = nil; DB.glowCds = nil -- (no leads-only Raid view and no cooldown glow any more (Oct 25))
+    DB.raidAlways = nil; DB.glowCds = nil; DB.autoLog = nil -- (no leads-only Raid view and no cooldown glow any more (Oct 25); combat logging has no off switch (Oct 26))
     DB.show = DB.show or {}
     if DB.detailed and DB.width == "large" and not DB.xlOnce then DB.width = "xl" end; DB.xlOnce = true
     if not DB.glanceDefault then DB.glanceDefault = true; DB.detailedDefault = true; DB.threeStyles = true; if DB.preset == nil then Debrief_SetPreset("standard") end end -- (new players start on Standard (Oct 24))
@@ -2755,8 +2727,8 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
     if DB.pos then card:ClearAllPoints(); card:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) end
   elseif e == "PLAYER_LOGIN" then
     Debrief_ApplyStyle()
-    -- (Advanced Combat Logging on from the start, so every log Debrief reads has positions and health; the combat log itself goes on in raids and at dummies)
-    if DB.autoLog ~= false and GetCVar and SetCVar and GetCVar("advancedCombatLogging") ~= "1" then SetCVar("advancedCombatLogging", 1) end
+    -- (Advanced Combat Logging on from the start, so every log Debrief reads has positions and health; the combat log itself goes on everywhere)
+    if GetCVar and SetCVar and GetCVar("advancedCombatLogging") ~= "1" then SetCVar("advancedCombatLogging", 1) end
     -- (the first time: the guided setup, a few seconds after you're in the world)
     if not DB.tutorialDone and C_Timer then C_Timer.After(6, function() if not InCombatLockdown() and not DB.tutorialDone then Debrief_Tutorial() end end) end
     -- (a key to start with: Ctrl+Shift+D shows or hides your recap, if nothing else uses it; it opened the paste box until Oct 24.

@@ -272,7 +272,7 @@ async function loadLogs() {
   if (x.error === 'nodir') { $('folderBox').hidden = false; $('pulls').innerHTML = ''; stat('No WoW Logs folder found', 'err'); L.state = 'nodir'; renderMain(); return; }
   $('folderBox').hidden = true; L.state = 'ok';
   L.files = x.files || [];
-  if (!L.files.length) { $('pulls').innerHTML = '<p class="empty">No combat log yet. In WoW, type <kbd>/combatlog</kbd> (or turn on Advanced Combat Logging and log your raid). Pulls show up here as they end.</p>'; stat('Waiting for a combat log', 'busy'); L.state = 'nolog'; renderMain(); waitNew(); return; }
+  if (!L.files.length) { $('pulls').innerHTML = '<p class="empty">No combat log yet. Log in to WoW: the Debrief addon turns combat logging on for you. Pulls show up here as they end.</p>'; stat('Waiting for a combat log', 'busy'); L.state = 'nolog'; renderMain(); waitNew(); return; }
   fillLogSel();
   if (L.files[0].old) waitNew(true); // (only archived logs: watch for WoW's next fresh one)
   await openLog(0);
