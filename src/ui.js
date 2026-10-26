@@ -31341,7 +31341,11 @@ function dsGuides() {
   }, true);
   // (the button in the Jobs section's header, once the cards have pictures; re-added after every Plan render)
   var addBtn = function () { var hd = document.querySelector('#view .bj-jobs > .ndz-dph'); if (!hd || hd.querySelector('[data-dssheet]')) return; if (!document.querySelector('#view .bj-jobs .pj-pic')) return;
-    var b = document.createElement('button'); b.type = 'button'; b.className = 'btn sm primary'; b.setAttribute('data-dssheet', ''); b.setAttribute('data-tt', '<b>Copy all pictures</b><br>One picture of every step, ready to paste in Discord (Ctrl+V).'); b.textContent = 'Copy all'; hd.appendChild(b); };
+    // (the user: "there needs to be a clear button press somewhere, that copies the brand new properly structured NSRT note":
+    // the same copy as the boss header's Copy for the game, Plan's handler and feedback, here beside the pictures)
+    var src = document.querySelector('#view [data-ndzpcopy]');
+    if (src && !hd.querySelector('[data-dsnote]')) { var nb = document.createElement('button'); nb.type = 'button'; nb.className = 'btn sm primary'; nb.setAttribute('data-ndzpcopy', src.getAttribute('data-ndzpcopy')); nb.setAttribute('data-dsnote', ''); nb.setAttribute('data-tt', '<b>Copy note for the game</b><br>Copies this plan’s NSRT note so you can paste it into the addon in game.'); nb.textContent = 'Copy note for the game'; hd.appendChild(nb); }
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'btn sm primary'; b.setAttribute('data-dssheet', ''); b.setAttribute('data-tt', '<b>Copy all pictures</b><br>One picture of every step, ready to paste in Discord (Ctrl+V).'); b.textContent = 'Copy all pictures'; hd.appendChild(b); };
   // (and one on each job card that has pictures: "copy these assignments", the user's words)
   var addCardBtns = function () { [].slice.call(document.querySelectorAll('#view .bj-jobs .plb-rc')).forEach(function (c) { var hd = c.querySelector('.plb-rch'); if (!hd || hd.querySelector('[data-dssheetcard]') || !c.querySelector('.pj-pic')) return;
     var b = document.createElement('button'); b.type = 'button'; b.className = 'btn sm primary'; b.setAttribute('data-dssheetcard', ''); b.setAttribute('data-tt', '<b>Copy these</b><br>One picture of just this job’s steps, ready to paste in Discord (Ctrl+V).'); b.textContent = 'Copy these'; var pill = hd.querySelector('.plb-rcs'); if (pill) hd.insertBefore(b, pill); else hd.appendChild(b); }); };
