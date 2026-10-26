@@ -7244,6 +7244,25 @@ html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac +
 /* big-damage moments: in Summary only the ones a cooldown covered */
 #view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.warn, #view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.bad, #view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-wall { display: none; }
 #view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.ok.spc-wx { display: block; }
+/* ===== Design studio round 31 (Oct 26): Rotation polish: nothing under 12px, a name that wraps instead of overflowing, the number and its top line
+   stacked, the opener tile across the ring, window cards that clip their strip, tiles that keep their own height. Owner: the Design
+   studio chat. ===== */
+#view section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-v > small, #view section.rck .rck-cat summary .rck-v small, #view section.rck .rck-mgh .rck-v small, #view section.rck .rck-miv small { font-size: 12px !important; }
+/* the name may take a second line; the value stacks its number over its top line and never takes more than half the row */
+#view section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-n { min-width: 0; }
+#view section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-n > b { white-space: normal; overflow-wrap: anywhere; line-height: 1.2; }
+#view section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-v { display: grid; justify-items: end; align-content: center; row-gap: 1px; max-width: 50%; text-align: right; }
+#view section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-v > small { margin-left: 0; white-space: nowrap; }
+#view section.rck .rck-mgb > h5.rck-mgh > .rck-n, #view section.rck .rck-mgb > h5.rck-mgh > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+/* the opener tile spans the ring; its list stays inside its box */
+.pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r:has(.spc-ost) { grid-column: 1 / -1 !important; }
+#view section.rck .spc-ost, #view section.rck .spc-otl, #view section.rck .spc-otc, #view section.rck .spc-otx { max-width: 100%; min-width: 0; box-sizing: border-box; }
+/* a window card clips its strip at the rounded edge instead of spilling */
+#view section.rck .spc-ws > .spc-w { min-width: 0; overflow: hidden; }
+#view section.rck .spc-ws > .spc-w .spc-otl.spc-wst, #view section.rck .spc-ws > .spc-w .spc-otc { max-width: 100%; }
+/* tiles keep their own height: a tall one no longer stretches its neighbour into an empty box */
+.pfv .ds-rcols section.rck .rck-cat .rck-rs { align-items: start; }
+.pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r > summary { height: auto; }
 </style>
 
 
