@@ -1951,6 +1951,7 @@ const PATCH_NOTES = [
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'Debrief in game: combat logging and Advanced Combat Logging are always on now. The addon turns them on for you, so there is no switch to forget.',
     'Rotation: melee and tanks see "Always be pressing" instead of "Always be casting", since they press buttons rather than cast. Same check, same marks.',
     'Rotation: the Holy Power, Mana and other "charts" rows are called "in numbers", since that is what they hold, and the checklist no longer says to tap a row.',
     'Rotation: inside a ring the thin bars under the checks are gone (the number in its colour says it; the five ring rows keep their bars), hover a check\'s name to read how it is judged, and a What to fix card lights up the row it jumps to.',
