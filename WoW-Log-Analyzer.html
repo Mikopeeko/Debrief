@@ -17653,7 +17653,7 @@ const PATCH_NOTES = [
     { t: 'Plan: your raid night in one page', d: 'The Plan tab is out for everyone: bring in your team, and Debrief picks who plays each boss and plans every job, kick and healing cooldown the way the fastest kills do. Change anything, then copy it into the game for NSRT.' },
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
-    { t: 'Plan: a picture for every job', d: 'On The Coiled Altar, Ula\'tek, The Twin Fangs, Nymrissa, Nek\'zali and Entombed Sentinels (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
+    { t: 'Plan: a picture for every job', d: 'On The Coiled Altar, Ula\'tek, The Twin Fangs, Nymrissa, Nek\'zali, Entombed Sentinels and The Lost Explorers (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
   ], n: [
     'Debrief in game: your card and PC pop-up use the newest boss mechanics, potion and death rules from the website.',
     'On a phone: the dots on the pull at a glance are easier to tap, and the front page\'s footer links have room for a thumb.',
@@ -52417,6 +52417,63 @@ function ppCardsSE(J, M, U, P) {
     foot: 'Keep the bosses\' health even before it: the weaker one heals up to the other.' });
   return cards;
 }
+// ===== The Lost Explorers, Mythic (Oct 26, the same setup; Plan's Jobs cards in 7cc94b2), on the guide's maps of the room =====
+// (the note's jobs, in the lines Plan writes: "Fish:" / "Backup Fish:", "Crates 1:" / "Crates 2:" (the breaker pairs), "Iku Kicks:" (in order))
+function ppReadLE(N, P) {
+  const isN = (w) => P.has(String(w).toLowerCase()), J = { fish: '', fish2: '', crates: [[], []], kicks: [] };
+  for (const l of N.lines) { const lab = l.label.toLowerCase().trim(), who = l.words.filter(isN).map((w) => P.get(w.toLowerCase()).name); let m; if (!who.length) continue;
+    if (/backup fish/.test(lab)) J.fish2 = who[0]; else if (/^fish/.test(lab)) J.fish = who[0]; else if ((m = /crates?\s*(\d)/.exec(lab))) J.crates[+m[1] > 1 ? 1 : 0] = who; else if (/kick/.test(lab)) J.kicks = who; }
+  return J;
+}
+const LE_VIEW = { x: 0, y: -2, r: 42 }; // (the fight's middle: the bosses on Gebbo's circle and the raid round them)
+function ppCardsLE(J, M, U, P) {
+  const cards = [], BL = '#5aa0ff', GO = '#e6b450', PU = '#c084ff', Q = '#c9ced8';
+  // United Defense: two bosses tanked together trailing Gebbo, the third 30+ yards behind (the guide's map)
+  cards.push({ id: 'pos', ph: 1, when: 'All fight', title: 'United Defense (Two together, one apart)', map: ppFreeze(LE_M.pair(false), 3, ppSeat(P, {}), P, M, { focus: LE_VIEW }),
+    legend: [ppG('Tanks', BL, [], 'Two bosses tanked together trail Gebbo as he walks his circle; the third stays 30 yards or more behind them.'), ppG('Ranged', GO, [], 'Stand where you can hit all three.')],
+    foot: 'Kill them around the same time; if one must enrage, let it be Gebbo.' });
+  // The fish: the note's carrier feeds it at about 95 energy (the guide's map)
+  if (J.fish) { const fix = { r7: J.fish }, ids = ['r7']; if (J.fish2) { fix.r6 = J.fish2; ids.push('r6'); }
+    cards.push({ id: 'fish', ph: 1, when: 'At 95 energy', title: 'Disgusting Fish (Feed it at 95)', map: ppFreeze(LE_M.fish(false), 2.6, ppSeat(P, fix), P, M, { focus: LE_VIEW, hl: ids, named: ids, tags: [['r7', 'Fish']].concat(J.fish2 ? [['r6', 'Backup']] : []) }),
+      legend: [ppG('Fish', PU, [ppI(P, J.fish, 'Carries it'), J.fish2 && ppI(P, J.fish2, 'Backup')], 'Feed it to a boss at about 95 Mor\'zahi energy: each boss can eat only once.'), ppG('Order', GO, [], 'Iku, then Nama, then Gebbo (last: with gear you may skip his).')],
+      foot: 'Not a crate breaker: the carrier must be free when the fish shows up.' }); }
+  // Crates: the first pair breaks two at a time, then waits (the guide's map as they reach their crates)
+  if (J.crates[0].length || J.crates[1].length) { const fix = {}, ids = ['r4', 'r1'].filter((s, i) => J.crates[0][i] && (fix[s] = J.crates[0][i]));
+    cards.push({ id: 'crates', ph: 1, when: 'Every crate set', title: 'Throw Junk (Break the crates in pairs)', map: ppFreeze(LE_M.crates(false, 'm'), 4.4, ppSeat(P, fix), P, M, { focus: LE_VIEW, hl: ids, named: ids, tags: ids.map((s) => [s, 'Pair 1']) }),
+      legend: [ppG('Pair 1', '#d7a35a', J.crates[0].map((n) => ppI(P, n))), ppG('Pair 2', '#a8743a', J.crates[1].map((n) => ppI(P, n)), 'The next two crates, once the first bleed is over.')],
+      foot: 'Every break bleeds the whole raid: two at a time, then wait. Melee, watch your feet.' }); }
+  // Icebound Flames: the note's kickers on Iku in order (the guide's map at the first kick)
+  if (J.kicks.length) { const fix = {}, S = ['t1', 'm1', 'm2'], ids = []; J.kicks.slice(0, 3).forEach((n, i) => { fix[S[i]] = n; ids.push(S[i]); });
+    cards.push({ id: 'kicks', ph: 1, when: 'Every Icebound Flames', title: 'Icebound Flames (Kick Iku in order)', map: ppFreeze(LE_M.kicks(false), 1.8, ppSeat(P, fix), P, M, { focus: LE_VIEW, hl: ids, named: ids, tags: ids.map((s, i) => [s, 'Kick ' + (i + 1)]) }),
+      legend: [ppG('Iku kicks', '#7fd8ff', J.kicks.map((n, i) => ppI(P, n, 'Kick ' + (i + 1))), 'Every cast needs a kick, in this order.')],
+      foot: 'A missed kick: dispel the player it lands on.' }); }
+  // Blink Nova: the marked player steps out in front of the raid toward the edge (the guide's map)
+  cards.push({ id: 'nova', ph: 1, when: 'Every Blink Nova', title: 'Blink Nova (Take it to the edge)', map: ppFreeze(LE_M.blink(false), 5, ppSeat(P, {}), P, M, { focus: LE_VIEW }),
+    legend: [ppG('Marked player', '#b48cff', [ppI(P, ppAny('Whoever is marked'))], 'Step out in front of the raid toward the edge: the hit falls off with distance. Stay in the cleave.')],
+    foot: 'Iku teleports to the marked player and bursts there.' });
+  // Shell Spin: melee bait the shells outward (the guide's map)
+  cards.push({ id: 'shell', ph: 1, when: 'Every Shell Spin', title: 'Shell Spin (Melee bait outward)', map: ppFreeze(LE_M.shell(false), 3.2, ppSeat(P, {}), P, M, { focus: LE_VIEW }),
+    legend: [ppG('Melee', GO, [], 'Bait the shells toward the outside of the room, away from the ranged, then step out of the line.')],
+    foot: 'A shell that hits you stuns you for 4 seconds.' });
+  // Shredding Shards: the tanks swap right after (the guide's map)
+  { const S = ppSeat(P, {}), nm = (v) => (typeof v === 'string' ? v : '');
+    cards.push({ id: 'tanks', ph: 1, when: 'Every Shredding Shards', title: 'Shredding Shards (Tanks swap right after)', map: ppFreeze(LE_M.swap(false), 2.2, S, P, M, { focus: LE_VIEW, hl: ['t1', 't2'], named: ['t1', 't2'] }),
+      legend: [ppG('Tanks', BL, [nm(S.t1) && ppI(P, S.t1, 'Has the Shards'), nm(S.t2) && ppI(P, S.t2, 'Taunts')], 'Swap right after each Shredding Shards: above about 25 stacks Nama\'s hits kill a tank.')],
+      foot: 'Gebbo can\'t be tanked: he walks a circle counter-clockwise.' }); }
+  // Frostfire Volley: fire on one side, frost on the other, at the edges (the guide's map as they drop)
+  cards.push({ id: 'volley', ph: 1, when: 'Every Frostfire Volley', title: 'Frostfire Volley (Fire one side, frost the other)', map: ppFreeze(LE_M.frostfire(false), 3.6, ppSeat(P, {}), P, M, { focus: LE_VIEW }),
+    legend: [ppG('Ranged', '#ff8a3b', [], 'Drop fire on one side, at the edge.'), ppG('Melee', '#7fd8ff', [], 'Drop frost on the other side, at the edge.'), ppG('Clearing', GO, [], 'Walk into the opposite patch to clear it, a few at a time; never while you still have your own. A personal here.')],
+    foot: 'Each patch stays until the other element puts it out.' });
+  // Mighty Thud: the three landings lined up, everyone at the bottom of each (the guide's map at the first)
+  cards.push({ id: 'thud', ph: 1, when: 'Every Mighty Thud', title: 'Mighty Thud (Line up, stand at the bottom)', map: ppFreeze(LE_M.thud(false), 3, ppSeat(P, {}), P, M, { focus: LE_VIEW }),
+    legend: [ppG('Everyone', GO, [], 'Line the three soaks up and stand at the bottom of each, so the knockback carries you into the next.'), ppG('Overlaps', '#ff8a5a', [], 'No crate breaks or Blink Nova during the soaks; a raid cooldown if they line up.')],
+    foot: 'Each landing is split between everyone within 6 yards.' });
+  // Explosive Surprise: the bomb carried to the edge across from the one mushroom (the guide's map)
+  cards.push({ id: 'bomb', ph: 1, when: 'Every Explosive Surprise', title: 'Explosive Surprise (Bomb across from the mushroom)', map: ppFreeze(LE_M.bomb(false, 'm'), 6.6, ppSeat(P, {}), P, M, { focus: LE_VIEW }),
+    legend: [ppG('Bomb carrier', '#ff8a3b', [ppI(P, ppAny('Whoever gets the bomb'))], 'Carry it to the edge across from the mushroom, between the bosses.'), ppG('Everyone', '#7ee36a', [], 'Only one mushroom on Mythic: bait it first, then jump on it as the wave reaches it. No crates broken during it.')],
+    foot: 'The bomb lands 10 seconds after it\'s cast: 10 yards.' });
+  return cards;
+}
 // (the note's healing and raid cooldowns at a moment, for a picture's legend: NSRT reminder lines between two times of a phase)
 function ppCds(N, P, ph, t0, t1) { return N.reminders.filter((x) => x.ph === ph && x.time >= t0 && x.time <= t1 && x.spellid).flatMap((x) => x.tags.filter((w) => P.has(w.toLowerCase())).map((w) => [Math.floor(x.time / 60) + ':' + String(Math.round(x.time % 60)).padStart(2, '0'), P.get(w.toLowerCase()).name, (E.cdName && E.cdName(x.spellid)) || x.text || 'Cooldown'])); }
 const GDZ_PP = {
@@ -52502,6 +52559,17 @@ const GDZ_PP = {
     // (Plan's Jobs cards (02300fa) and the pictures each shows, by its key, else by its title)
     mech: { sides: ['sides'], add: ['add'], drops: ['drops'], miasma: ['miasma'], proto: ['proto'], disp: ['disp'], combo: ['combo'], helix: ['helix'], cds: [], def: [] },
     jobs: [[/last set/i, ['combo']], [/blood and breath|sides/i, ['sides']], [/coagulation/i, ['add']], [/droplet/i, ['drops']], [/miasma/i, ['miasma']], [/protovenom/i, ['proto']], [/blighted blood|dispel/i, ['disp']], [/helical/i, ['helix']]] } },
+  'The Lost Explorers': { Mythic: {
+    // (the guide places no markers here: a plain ring round the middle, 38 yards out at the compass points, for the raid lead to drag)
+    marks: { star: [0, 38], circle: [27, 27], diamond: [38, 0], triangle: [27, -27], moon: [0, -38], square: [-27, -27], cross: [-38, 0], skull: [-27, 27] },
+    stack: [0, 0],
+    uses: [],
+    room: { scene: (k) => { const G = leG(-80), I = nzU(-89, 33), N = nzU(-160, 31); k.boss('ge', 'Trader Gebbo', 0, G[0], G[1]).boss('ik', 'Scrollsage Iku', 0, I[0], I[1]).boss('na', 'First Mate Nama', 0, N[0], N[1]); }, focus: { x: 0, y: 0, r: 56 }, lim: 50, keep: ['Trader Gebbo', 'Scrollsage Iku', 'First Mate Nama'] },
+    read(N, P) { return ppReadLE(N, P); },
+    cards: ppCardsLE,
+    // (Plan's Jobs cards (7cc94b2) and the pictures each shows, by its key, else by its title)
+    mech: { pos: ['pos'], fish: ['fish'], crates: ['crates'], kicks: ['kicks'], nova: ['nova'], shell: ['shell'], tanks: ['tanks'], volley: ['volley'], thud: ['thud'], bomb: ['bomb'], cds: [], def: [] },
+    jobs: [[/united defense/i, ['pos']], [/fish/i, ['fish']], [/crate/i, ['crates']], [/icebound|kick/i, ['kicks']], [/blink nova/i, ['nova']], [/shell spin/i, ['shell']], [/shredding shards/i, ['tanks']], [/frostfire/i, ['volley']], [/mighty thud/i, ['thud']], [/explosive surprise/i, ['bomb']]] } },
 };
 const PP_PH = { 1: ['Phase 1', '#5aa0ff'], 1.9: ['Phase 1 ends', '#5aa0ff'], 2: ['Phase 2', '#b65cff'], 2.5: ['Intermission', '#e6b450'], 3: ['Phase 3', '#ff5a4f'] };
 
@@ -52613,7 +52681,7 @@ function ppOpen(r, u0, opt) {
   document.body.appendChild(box); document.body.classList.add('ndz-modal');
   const close = () => { box.remove(); if (!$('#ndzWiz') && !$('#ndzGuide') && !$('#ndzNoteView') && !$('#ndzShot')) document.body.classList.remove('ndz-modal'); };
   const head = '<div class="ndz-whead"><span class="sub">Pictures for Discord</span><button class="ndz-ex" type="button" data-ppx aria-label="Close">✕</button></div>';
-  if (!set.cf) { box.innerHTML = '<div class="ndz-wbox">' + head + '<h2>Pictures for Discord</h2><p class="sub">Pictures are ready on Mythic for The Coiled Altar, Ula\'tek, The Twin Fangs, Nymrissa, Nek\'zali and Entombed Sentinels so far. The other bosses come next.</p></div>'; box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); }; return; }
+  if (!set.cf) { box.innerHTML = '<div class="ndz-wbox">' + head + '<h2>Pictures for Discord</h2><p class="sub">Pictures are ready on Mythic for The Coiled Altar, Ula\'tek, The Twin Fangs, Nymrissa, Nek\'zali, Entombed Sentinels and The Lost Explorers so far. The other bosses come next.</p></div>'; box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); }; return; }
   box.innerHTML = '<div class="ndz-wbox ndz-shotbox pp-win">' + head + '<h2 class="pp-h2"></h2>' +
     '<div class="pp-nav"><span class="sub pp-navt"></span><button class="btn sm" type="button" data-ppprev></button><button class="btn sm" type="button" data-ppnext></button><button class="btn sm" type="button" data-ppallv></button></div>' +
     '<p class="sub pp-intro">One picture for each mechanic your note gives jobs for, with everyone on their spot. Copy one and paste it in Discord (Ctrl+V), or download it.</p>' +
