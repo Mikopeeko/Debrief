@@ -5522,7 +5522,7 @@ function ppCardsCA(J, M, U, P) {
   // The end of phase 1: Zul'jan dies and every orb blows up; the raid stacks in the cooldowns the note puts there
   { const st = spot('stack', [5, -11]), k = gdzKit('The Coiled Altar', 3), put = new Set(['t1', 't2']); k.boss('zj', 'Zul\'jan', 0, 0, 0).at(0, 't1', 0, -3).at(0, 't2', 3, 2);
     k.at(0, GDZ_RAID.filter((s) => !put.has(s)), st[0], st[1], 7).ring({ x: st[0], y: st[1], r: 9, fx: 'zone', t0: 0, dur: 99, color: '#9a7bff', cn: 'Raid cooldowns', label: false });
-    cards.push({ ph: 1.9, when: 'Phase 1 ends', title: 'Venom Rupture (Stack in the cooldowns)', map: ppFreeze(k.done({ title: 'Venom Rupture', focus: { x: 0, y: 0, r: 30 } }), 1, ppSeat(P, {}), P, M, { labels: [[{ rx: st[0], ry: st[1] + 9 }, 'Stack in the cooldowns', '#9a7bff', '#fff', 0]] }),
+    cards.push({ ph: 1.9, when: 'The push', title: 'Venom Rupture (Stack in the cooldowns)', map: ppFreeze(k.done({ title: 'Venom Rupture', focus: { x: 0, y: 0, r: 30 } }), 1, ppSeat(P, {}), P, M, { labels: [[{ rx: st[0], ry: st[1] + 9 }, 'Stack in the cooldowns', '#9a7bff', '#fff', 0]] }),
       legend: [ppG('Raid cooldowns', '#9a7bff', (J.rupture || []).map(([t, n, sp]) => ppI(P, n, t + ' ' + sp)), (J.rupture || []).length ? '' : 'Your note\'s cooldowns for the push go here.'), ppG('Everyone', GO, [], 'A defensive when the orbs blow up.')],
       foot: 'Zul\'jan dies by the pools: every orb blows up, so the whole raid stacks inside the cooldowns.' }); }
   // Phase 2, Dreadmarch: the mind controls are stacked on the raid lead's marker; the note's crowd-control order frees them
@@ -5558,7 +5558,7 @@ function ppCardsCA(J, M, U, P) {
     J.inter.forEach(([mk, n], i) => { const p = M[mk]; if (!p || !SL[i]) return; const s = SL[i]; fix[s] = n; put.add(s); k.at(0, s, p[0], p[1]); const m = Math.hypot(p[0], p[1]) || 1, f = [p[0] + p[0] / m * 9, p[1] + p[1] / m * 9];
       k.add('f' + i, 'Fragment of Malacrass', 0, f[0], f[1]).link({ from: 'f' + i, to: s, t0: 0, t1: 99, color: '#c49bff', dash: true }); });
     k.at(0, GDZ_RAID.filter((s) => !put.has(s)), 0, -1, 7); const G = Object.keys(fix);
-    cards.push({ ph: 2.5, when: 'Intermission', title: 'Fragments of Malacrass (Stop them at your marker)', map: ppFreeze(k.done({ title: 'Intermission', focus: { x: 0, y: 0, r: 30 } }), 1, ppSeat(P, fix), P, M, { hl: G, named: G, marks: J.inter.map((q) => q[0]), labels: [[{ rx: 0, ry: 9 }, 'Bloodlust on Zul\'jan', '#ff7a5c', '#fff', 0]] }),
+    cards.push({ ph: 2.5, when: 'First stops', title: 'Fragments of Malacrass (Stop them at your marker)', map: ppFreeze(k.done({ title: 'Intermission', focus: { x: 0, y: 0, r: 30 } }), 1, ppSeat(P, fix), P, M, { hl: G, named: G, marks: J.inter.map((q) => q[0]), labels: [[{ rx: 0, ry: 9 }, 'Bloodlust on Zul\'jan', '#ff7a5c', '#fff', 0]] }),
       legend: [ppG('First stops, on their markers', PU, J.inter.map(([mk, n]) => ppI(P, n, MKN(mk)))), ppG('Raid cooldowns', '#9a7bff', (J.interCds || []).map(([t, n, sp]) => ppI(P, n, t + ' ' + sp)))],
       foot: 'Every stop hits the whole raid, so stop a few at a time, then the big turn under the raid cooldowns.' }); }
   // Phase 3 orbs: the note's purple carriers build the diamond in the middle (the guide's shape; your Oct 21 pull dropped them there too)
@@ -5619,31 +5619,46 @@ async function ppDraw(card, boss, diff) {
   const M0 = 18, MS = H - M0 * 2, map = await ppMapImg(card.map); g.save(); g.beginPath(); g.roundRect ? g.roundRect(M0, M0, MS, MS, 12) : g.rect(M0, M0, MS, MS); g.clip(); g.fillStyle = '#0b0d12'; g.fillRect(M0, M0, MS, MS); if (map) g.drawImage(map, M0, M0, MS, MS); g.restore();
   const X0 = M0 * 2 + MS + 6, CW = W - X0 - 24, fit = (t, w) => { if (g.measureText(t).width <= w) return t; let s = t; while (s.length > 1 && g.measureText(s + '…').width > w) s = s.slice(0, -1); return s + '…'; };
   const wrap = (t, w) => { const out = []; let line = ''; for (const wd of String(t).split(' ')) { const tr = line ? line + ' ' + wd : wd; if (g.measureText(tr).width > w && line) { out.push(line); line = wd; } else line = tr; } if (line) out.push(line); return out; };
-  // (the phase chip: the site's quiet pill with the phase's colour dot, then when)
-  const [phN, phC] = PP_PH[card.ph] || ['', '#888']; g.font = '700 13px Barlow, sans-serif'; const chip = phN.toUpperCase() + (card.when ? '  ·  ' + card.when : ''), cw = g.measureText(chip).width + 34;
-  g.fillStyle = '#1b1f29'; g.strokeStyle = '#3a4150'; g.lineWidth = 1; g.beginPath(); g.roundRect ? g.roundRect(X0, 26, cw, 26, 13) : g.rect(X0, 26, cw, 26); g.fill(); g.stroke();
-  g.fillStyle = phC; g.beginPath(); g.arc(X0 + 14, 39, 4.5, 0, Math.PI * 2); g.fill(); g.fillStyle = '#c9ced8'; g.fillText(chip, X0 + 25, 44);
-  g.font = '800 28px "Barlow Semi Condensed", sans-serif'; g.fillStyle = '#ece8df'; let y = 86; for (const l of wrap(card.title, CW).slice(0, 2)) { g.fillText(l, X0, y); y += 32; }
-  g.font = '500 13px Barlow, sans-serif'; g.fillStyle = '#7d8594'; g.fillText(fit(boss + ' · ' + diff, CW), X0, y - 6); y += 14;
-  // (the legend: each group's title with its colour, a line under it, then its players in two columns (one when a job is long))
   const icons = new Map(); await Promise.all(card.legend.flatMap((G) => G.items).map(async (it) => { if (it.specIcon && !icons.has(it.specIcon)) icons.set(it.specIcon, await ppImg(await ppData('https://wow.zamimg.com/images/wow/icons/medium/' + it.specIcon + '.jpg'))); }));
   const MKI = new Map(); await Promise.all(PP_MKS.map(async (k) => MKI.set(GDZ_WM[k][1].replace(' (X)', ''), await ppMarkImg(k))));
-  const FOOT = H - 46;
-  for (const G of card.legend) { if (y > FOOT - 30) break; g.fillStyle = G.color; g.beginPath(); g.roundRect ? g.roundRect(X0, y - 11, 11, 11, 3) : g.rect(X0, y - 11, 11, 11); g.fill();
-    g.font = '700 16px Barlow, sans-serif'; g.fillStyle = '#ece8df'; g.fillText(fit(G.title, CW - 18), X0 + 18, y); y += 8;
-    if (G.sub) { g.font = '500 13px Barlow, sans-serif'; g.fillStyle = '#98a0ad'; for (const l of wrap(G.sub, CW).slice(0, 2)) { y += 17; g.fillText(l, X0, y); } }
-    const one = G.items.some((it) => it.job && it.job.length > 10) || G.items.length <= 2 && G.items.some((it) => it.any), cols = one ? 1 : 2, colW = (CW - (cols - 1) * 14) / cols; y += 10;
-    G.items.forEach((it, i) => { const c = i % cols, x = X0 + c * (colW + 14), yy = y + Math.floor(i / cols) * 26; if (yy > FOOT - 6) return;
-      const ic = icons.get(it.specIcon); if (ic) { g.save(); g.beginPath(); g.arc(x + 10, yy + 9, 10, 0, Math.PI * 2); g.clip(); g.drawImage(ic, x, yy - 1, 20, 20); g.restore(); }
-      const mi = it.job && MKI.get(it.job), jw = it.job ? (mi ? 18 : (g.font = '700 12px Barlow, sans-serif', g.measureText(it.job).width + 6)) : 0;
-      g.font = (it.any ? 'italic ' : '') + '700 15px Barlow, sans-serif'; g.fillStyle = it.color; g.fillText(fit(it.name, colW - 28 - jw), x + 26, yy + 14);
-      if (it.job) { if (mi) g.drawImage(mi, x + colW - 17, yy + 1, 16, 16); else { g.font = '700 12px Barlow, sans-serif'; g.fillStyle = '#f3d48a'; g.fillText(it.job, x + colW - g.measureText(it.job).width, yy + 14); } } });
-    y += Math.ceil(G.items.length / cols) * 26 + 14; }
-  g.fillStyle = '#2a2f3b'; g.fillRect(X0, FOOT, CW, 1); g.font = '500 13px Barlow, sans-serif'; g.fillStyle = '#98a0ad'; wrap(card.foot || '', CW - 80).slice(0, 2).forEach((l, i) => g.fillText(l, X0, FOOT + 19 + i * 16));
-  g.font = '800 15px "Barlow Semi Condensed", sans-serif'; g.fillStyle = '#e6b450'; g.fillText('DEBRIEF', W - 24 - g.measureText('DEBRIEF').width, H - 18);
+  // (the right side at a scale: the phase chip (the site's quiet pill with the phase's colour dot), the title, then the legend: each
+  // group's title with its colour, then its players in two columns (one when a job is long). Discord shows a pasted picture about
+  // 550 px wide, so the type is as big as the space allows: a dry run at each size, the biggest that fits is drawn (Design studio, Oct 26))
+  const FOOT = H - 58, side = (s, draw) => { const F = (px) => Math.round(px * s), D = (fn) => { if (draw) fn(); }; let lost = 0;
+    const [phN, phC] = PP_PH[card.ph] || ['', '#888']; g.font = '700 ' + F(12) + 'px Barlow, sans-serif'; const chip = phN.toUpperCase() + (card.when ? '  ·  ' + card.when : ''), ch = F(20), cw = g.measureText(chip).width + F(28);
+    D(() => { g.fillStyle = '#1b1f29'; g.strokeStyle = '#3a4150'; g.lineWidth = 1; g.beginPath(); g.roundRect ? g.roundRect(X0, 24, cw, ch, ch / 2) : g.rect(X0, 24, cw, ch); g.fill(); g.stroke();
+      g.fillStyle = phC; g.beginPath(); g.arc(X0 + F(11), 24 + ch / 2, F(4), 0, Math.PI * 2); g.fill(); g.fillStyle = '#c9ced8'; g.fillText(chip, X0 + F(20), 24 + ch / 2 + F(4.3)); });
+    let y = 24 + ch + F(30); g.font = '800 ' + F(25) + 'px "Barlow Semi Condensed", sans-serif'; g.fillStyle = '#ece8df';
+    for (const l of wrap(card.title, CW).slice(0, 2)) { D(() => g.fillText(l, X0, y)); y += F(28); }
+    g.font = '500 ' + F(11) + 'px Barlow, sans-serif'; g.fillStyle = '#7d8594'; D(() => g.fillText(fit(boss + ' · ' + diff, CW), X0, y - F(8))); y += F(10);
+    for (const G of card.legend) { y += F(6); D(() => { g.fillStyle = G.color; g.beginPath(); g.roundRect ? g.roundRect(X0, y - F(10), F(10), F(10), 3) : g.rect(X0, y - F(10), F(10), F(10)); g.fill(); });
+      g.font = '700 ' + F(15) + 'px Barlow, sans-serif'; g.fillStyle = '#ece8df'; D(() => g.fillText(fit(G.title, CW - F(16)), X0 + F(16), y)); y += F(4);
+      if (G.sub) { g.font = '500 ' + F(12) + 'px Barlow, sans-serif'; g.fillStyle = '#98a0ad'; for (const l of wrap(G.sub, CW).slice(0, 2)) { y += F(15); D(() => g.fillText(l, X0, y)); } }
+      const one = G.items.some((it) => it.job && it.job.length > 10) || G.items.length <= 2 && G.items.some((it) => it.any), cols = one ? 1 : 2, colW = (CW - (cols - 1) * 14) / cols, rh = F(25), ic0 = F(19); y += F(9);
+      G.items.forEach((it, i) => { const x = X0 + (i % cols) * (colW + 14), yy = y + Math.floor(i / cols) * rh; if (yy + rh > FOOT) { lost++; return; } if (!draw) return;
+        const ic = icons.get(it.specIcon); if (ic) { g.save(); g.beginPath(); g.arc(x + ic0 / 2, yy + ic0 / 2, ic0 / 2, 0, Math.PI * 2); g.clip(); g.drawImage(ic, x, yy, ic0, ic0); g.restore(); }
+        const mi = it.job && MKI.get(it.job), jw = it.job ? (mi ? F(16) + 2 : (g.font = '700 ' + F(11.5) + 'px Barlow, sans-serif', g.measureText(it.job).width + 6)) : 0;
+        g.font = (it.any ? 'italic ' : '') + '700 ' + F(15) + 'px Barlow, sans-serif'; g.fillStyle = it.color; g.fillText(fit(it.name, colW - ic0 - 8 - jw), x + ic0 + 6, yy + ic0 * 0.78);
+        if (it.job) { if (mi) g.drawImage(mi, x + colW - F(16), yy + (ic0 - F(16)) / 2, F(16), F(16)); else { g.font = '700 ' + F(11.5) + 'px Barlow, sans-serif'; g.fillStyle = '#f3d48a'; g.fillText(it.job, x + colW - g.measureText(it.job).width, yy + ic0 * 0.76); } } });
+      y += Math.ceil(G.items.length / cols) * rh + F(8); }
+    if (draw) { g.fillStyle = '#2a2f3b'; g.fillRect(X0, FOOT, CW, 1); g.font = '500 ' + F(12) + 'px Barlow, sans-serif'; g.fillStyle = '#98a0ad'; wrap(card.foot || '', CW - 90).slice(0, 2).forEach((l, i) => g.fillText(l, X0, FOOT + F(16) + i * F(16)));
+      g.font = '800 ' + F(14) + 'px "Barlow Semi Condensed", sans-serif'; g.fillStyle = '#e6b450'; g.fillText('DEBRIEF', W - 24 - g.measureText('DEBRIEF').width, H - 14); }
+    return { y, lost }; };
+  const s = [1.35, 1.25, 1.15, 1.05, 1].find((v) => { const r = side(v, false); return !r.lost && r.y <= FOOT + 4; }) || 1; side(s, true); cv._scale = s;
   return cv;
 }
 
+// (Download all: a plain zip of the pictures, stored as they are (PNGs are already packed), names in fight order)
+const PP_CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function ppZip(files) {
+  const enc = new TextEncoder(), parts = [], cen = []; let off = 0;
+  for (const f of files) { const nm = enc.encode(f.name), d = f.data; let c = 0xffffffff; for (let i = 0; i < d.length; i++) c = PP_CRC[(c ^ d[i]) & 255] ^ (c >>> 8); c = (c ^ 0xffffffff) >>> 0;
+    const h = new DataView(new ArrayBuffer(30)); h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint32(14, c, true); h.setUint32(18, d.length, true); h.setUint32(22, d.length, true); h.setUint16(26, nm.length, true);
+    const z = new DataView(new ArrayBuffer(46)); z.setUint32(0, 0x02014b50, true); z.setUint16(4, 20, true); z.setUint16(6, 20, true); z.setUint16(8, 0x0800, true); z.setUint32(16, c, true); z.setUint32(20, d.length, true); z.setUint32(24, d.length, true); z.setUint16(28, nm.length, true); z.setUint32(42, off, true);
+    parts.push(new Uint8Array(h.buffer), nm, d); cen.push(new Uint8Array(z.buffer), nm); off += 30 + nm.length + d.length; }
+  const cs = cen.reduce((a, b) => a + b.length, 0), e = new DataView(new ArrayBuffer(22)); e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, cs, true); e.setUint32(16, off, true);
+  return new Blob([...parts, ...cen, new Uint8Array(e.buffer)], { type: 'application/zip' });
+}
 // ---- the Pictures window: the markers (drag them; pick one for each mechanic), then every picture with Copy and Download
 function ppCss() {
   if (document.getElementById('pp-css')) return; const st = document.createElement('style'); st.id = 'pp-css';
@@ -5653,7 +5668,7 @@ function ppCss() {
     '#ppWin .pp-mkmap .zwrap{max-width:none!important}#ppWin .pp-mkmap .sub,#ppWin .pp-mkmap .zbar,#ppWin .pp-mkmap .zctl,#ppWin .pp-mkmap .zkey,#ppWin .pp-mkmap .znorth{display:none!important}' +
     '#ppWin .pp-mklay{position:absolute;inset:0;pointer-events:none}#ppWin .pp-mkdot{position:absolute;transform:translate(-50%,-50%);width:36px;height:36px;padding:0;border:0;background:none;cursor:grab;pointer-events:auto;touch-action:none;display:grid;place-items:center}' +
     '#ppWin .pp-mkdot.on{cursor:grabbing;filter:drop-shadow(0 0 6px rgba(255,255,255,.8))}#ppWin .pp-use{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:8px 0}#ppWin .pp-use select{min-width:150px}' +
-    '#ppWin .pp-cards{display:grid;gap:18px}#ppWin .pp-card .pp-ph{font-weight:700;margin-bottom:2px}#ppWin .pp-act{display:flex;justify-content:flex-end;align-items:center;gap:8px}#ppWin .pp-msg{margin-right:auto}' +
+    '#ppWin .pp-all{display:flex;align-items:center;gap:10px;margin:6px 0 10px}#ppWin .pp-cards{display:grid;gap:18px}#ppWin .pp-card .pp-ph{font-weight:700;margin-bottom:2px}#ppWin .pp-act{display:flex;justify-content:flex-end;align-items:center;gap:8px}#ppWin .pp-msg{margin-right:auto}' +
     '@media (max-width:760px){#ppWin .pp-mk{grid-template-columns:1fr}}';
   document.head.appendChild(st);
 }
@@ -5664,21 +5679,27 @@ function ppOpen(r, u0) {
   let box = $('#ppWin'); if (box) box.remove(); box = document.createElement('div'); box.id = 'ppWin'; box.className = 'ndz-wiz ndz-nv'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', 'Pictures for Discord');
   document.body.appendChild(box); document.body.classList.add('ndz-modal');
   const close = () => { box.remove(); if (!$('#ndzWiz') && !$('#ndzGuide') && !$('#ndzNoteView') && !$('#ndzShot')) document.body.classList.remove('ndz-modal'); };
-  const head = '<div class="ndz-whead"><span class="sub">Pictures for Discord · ' + esc(boss || '') + '</span><button class="ndz-ex" type="button" data-ppx aria-label="Close">✕</button></div>';
+  const head = '<div class="ndz-whead"><span class="sub">Pictures for Discord</span><button class="ndz-ex" type="button" data-ppx aria-label="Close">✕</button></div>';
   const cf = boss && ppConf(boss, diff);
   if (!cf) { box.innerHTML = '<div class="ndz-wbox">' + head + '<h2>Pictures for Discord</h2><p class="sub">Pictures are ready for The Coiled Altar on Mythic so far. The other bosses come next.</p></div>'; box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); }; return; }
   const names = ndzNoteRoster(u0) || [...new Set(noteNames(noteResolve(u0.text)).map((x) => String(x).split('-')[0]))].concat(ndzIn(r).map(ndzPn)), P = ppWho(r, [...new Set(names)]), J = cf.C.read(N, P);
-  box.innerHTML = '<div class="ndz-wbox ndz-shotbox pp-win">' + head + '<h2>Pictures for Discord</h2><p class="sub">One picture for each mechanic your note gives jobs for, with everyone on their spot. Copy one and paste it in Discord (Ctrl+V), or download it.</p>' +
+  box.innerHTML = '<div class="ndz-wbox ndz-shotbox pp-win">' + head + '<h2>' + esc(boss + ' · ' + diff) + '</h2><p class="sub">One picture for each mechanic your note gives jobs for, with everyone on their spot. Copy one and paste it in Discord (Ctrl+V), or download it.</p>' +
+    '<div class="pp-all"><button class="btn sm" type="button" data-ppall disabled>Download all</button><span class="sub pp-allmsg">One zip with every picture, to drag into Discord.</span></div>' +
     '<details class="pp-mkbox"><summary>Markers <span class="sub">Drag them to where your raid puts them, and pick where each mechanic happens</span></summary><div class="pp-mk"><div class="pp-mkmap"></div><div class="pp-mkuse"></div></div></details>' +
     '<div class="pp-cards"><p class="sub">Drawing the pictures…</p></div></div>';
   box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); };
-  let gen = 0;
-  const draw = async () => { const my = ++gen, c = ppConf(boss, diff), cards = c.C.cards(J, c.marks, c.uses, P), host = box.querySelector('.pp-cards');
+  let gen = 0, done = [];
+  const all = box.querySelector('[data-ppall]'); all.onclick = async () => { const m = box.querySelector('.pp-allmsg'); all.disabled = true; m.textContent = 'Packing the pictures…';
+    try { const files = await Promise.all(done.filter(Boolean).map(({ cv, file }) => new Promise((ok) => cv.toBlob((b) => b.arrayBuffer().then((a) => ok({ name: file, data: new Uint8Array(a) }))))));
+      const a = document.createElement('a'); a.href = URL.createObjectURL(ppZip(files)); a.download = ('Debrief - ' + boss + ' - pictures').replace(/[\\/:*?"<>|]+/g, '') + '.zip'; a.click(); m.textContent = '✓ Saved ' + plural(files.length, 'picture') + ' in one zip.'; }
+    catch (e) { m.textContent = 'Couldn\'t pack them: use each picture\'s Download.'; } all.disabled = false; };
+  const draw = async () => { const my = ++gen, c = ppConf(boss, diff), cards = c.C.cards(J, c.marks, c.uses, P), host = box.querySelector('.pp-cards'); done = []; all.disabled = true;
     if (!cards.length) { host.innerHTML = '<p class="sub">This note has no jobs a picture can show yet (soaks, orb carriers, kick lines, crowd control).</p>'; return; }
     host.innerHTML = cards.map((cd, i) => '<div class="pp-card" data-i="' + i + '"><div class="pp-ph sub">' + esc(cd.title) + '</div><div class="pp-pic"><span class="sub">Drawing…</span></div><div class="pp-act"><span class="sub pp-msg"></span><button class="btn sm" type="button" data-ppdl>Download</button><button class="btn sm primary" type="button" data-ppcp>Copy</button></div></div>').join('');
     for (const [i, cd] of cards.entries()) { let cv; try { cv = await ppDraw(cd, boss, diff); } catch (e) { cv = null; console.warn('Picture plan:', e); } if (my !== gen) return;
       const el = host.querySelector('.pp-card[data-i="' + i + '"]'); if (!el) continue; if (!cv) { el.querySelector('.pp-pic').innerHTML = '<span class="sub">Couldn\'t draw this one.</span>'; continue; }
       const url = cv.toDataURL('image/png'), file = ('Debrief - ' + boss + ' - ' + cd.title).replace(/[\\/:*?"<>|]+/g, '') + '.png';
+      done[i] = { cv, file: ((i < 9 ? '0' : '') + (i + 1) + ' ' + cd.title).replace(/[\\/:*?"<>|]+/g, '') + '.png' }; if (i === cards.length - 1) all.disabled = false; /* (in fight order in the zip) */
       el.querySelector('.pp-pic').innerHTML = '<img class="ndz-shotimg" alt="' + esc(cd.title) + '" src="' + url + '">';
       el.querySelector('[data-ppdl]').onclick = () => { const a = document.createElement('a'); a.href = url; a.download = file; a.click(); };
       el.querySelector('[data-ppcp]').onclick = () => cv.toBlob(async (b) => { const m = el.querySelector('.pp-msg'); try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': b })]); m.textContent = '✓ Copied. Paste it in Discord.'; } catch (e) { m.textContent = 'Your browser didn\'t allow it: use Download.'; } }); } };
@@ -5690,7 +5711,7 @@ function ppOpen(r, u0) {
     const toYd = (px, py) => { const R = sv.getBoundingClientRect(); const X = vb.x + (px - R.left) / R.width * vb.width, Y = vb.y + (py - R.top) / R.height * vb.height; return [Math.round((X / yd + x0 - cx) * 2) / 2, Math.round((-(Y / yd + y0) - cy) * 2) / 2]; };
     lay.innerHTML = PP_MKS.filter((m) => c.marks[m]).map((m) => '<button type="button" class="pp-mkdot" data-mk="' + m + '" title="' + esc(GDZ_WM[m][1]) + ': drag to move" aria-label="' + esc(GDZ_WM[m][1]) + '"><svg viewBox="-11 -11 22 22" width="26" height="26">' + gdzMarkSvg(m, 0, 0) + '</svg></button>').join('');
     const place = () => lay.querySelectorAll('.pp-mkdot').forEach((b) => { const [px, py] = toPx(ppConf(boss, diff).marks[b.dataset.mk]); b.style.left = px + 'px'; b.style.top = py + 'px'; });
-    requestAnimationFrame(place);
+    requestAnimationFrame(place); if (host._ro) host._ro.disconnect(); if (window.ResizeObserver) (host._ro = new ResizeObserver(() => place())).observe(host); /* (the dots follow the map when the window or phone turns) */
     lay.querySelectorAll('.pp-mkdot').forEach((b) => { b.onpointerdown = (e) => { e.preventDefault(); b.setPointerCapture(e.pointerId); b.classList.add('on');
       const move = (ev) => { const L = lay.getBoundingClientRect(); b.style.left = (ev.clientX - L.left) + 'px'; b.style.top = (ev.clientY - L.top) + 'px'; };
       const up = (ev) => { b.onpointermove = b.onpointerup = null; b.classList.remove('on'); const q = toYd(ev.clientX, ev.clientY), lim = 44; q[0] = Math.max(-lim, Math.min(lim, q[0])); q[1] = Math.max(-lim, Math.min(lim, q[1]));
