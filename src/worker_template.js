@@ -1499,6 +1499,31 @@ async function pokeGateway(env) {
   if (!env.GATEWAY || !env.DISCORD_BOT_TOKEN) return;
   const r = await env.GATEWAY.get(env.GATEWAY.idFromName('main')).fetch('https://gateway/ping'); await r.text();
 }
+// ---- The site key's real Warcraft Logs allowance (Oct 26, the Manager's ask: "what is the key's hourly limit?"). Points per hour, points spent, time to the reset: three numbers, nothing else.
+// ?probe=1 also prices one download page: it reads the points, downloads one page of a fixed minute of a fixed public kill (the same query a real download uses), and reads them again.
+// Kept cheap and safe: a few calls a minute per visitor (kept per server instance), the probe at most once every ten minutes and never when the key is past 80% of its hour; no keys or tokens are ever in the answer.
+const RL_HITS = new Map(); let RL_PROBE_AT = 0;
+const RL_Q = '{ rateLimitData { limitPerHour pointsSpentThisHour pointsResetIn } }';
+const RL_PROBE = { code: 'xw649bM3KCvFtDqn', fight: 49, s: 28809370, e: 28809370 + 60000 }; // (a Mythic Coiled Altar kill; its first minute is far more than one 10,000-event page)
+async function rateLimitRoute(req, env, url) {
+  if (req.method !== 'GET') return json({ error: 'Use a plain GET.' }, 405);
+  const ip = req.headers.get('CF-Connecting-IP') || 'x', now = Date.now();
+  const hits = (RL_HITS.get(ip) || []).filter((t) => now - t < 60000);
+  if (hits.length >= 6) return json({ error: 'A few calls a minute, please. Try again in a moment.' }, 429);
+  hits.push(now); RL_HITS.set(ip, hits); if (RL_HITS.size > 500) RL_HITS.clear();
+  const read = async () => { const d = await gql(env, RL_Q), r = (d && d.rateLimitData) || {}; const left = typeof r.limitPerHour === 'number' && typeof r.pointsSpentThisHour === 'number' ? Math.round((r.limitPerHour - r.pointsSpentThisHour) * 100) / 100 : null;
+    return { limitPerHour: r.limitPerHour, pointsSpentThisHour: r.pointsSpentThisHour, pointsLeft: left, pointsResetIn: r.pointsResetIn }; };
+  try {
+    const a = await read();
+    if (url.searchParams.get('probe') !== '1') return json({ ...a, at: new Date(now).toISOString() });
+    if (now - RL_PROBE_AT < 600000) return json({ ...a, at: new Date(now).toISOString(), probe: 'skipped: one probe every ten minutes' });
+    if (!(a.limitPerHour > 0) || a.pointsSpentThisHour > a.limitPerHour * 0.8) return json({ ...a, at: new Date(now).toISOString(), probe: 'skipped: the key is too close to its limit' });
+    RL_PROBE_AT = now;
+    const txt = await gqlText(env, EVENTS_Q, { code: RL_PROBE.code, fid: [RL_PROBE.fight], s: RL_PROBE.s, e: RL_PROBE.e });
+    const b = await read();
+    return json({ before: a, after: b, costOfOnePage: Math.round((b.pointsSpentThisHour - a.pointsSpentThisHour) * 100) / 100, pageBytes: txt.length, at: new Date(now).toISOString(), note: 'other visitors\' downloads in those seconds add to the cost; run it again on a quiet minute to be sure' });
+  } catch (err) { const m = String((err && err.message) || err); return json({ error: m }, /rate limiting/.test(m) ? 429 : 502); }
+}
 // ---- The Discord bot lives in its own Worker, "debrief-discord" (Oct 26: Cloudflare gives no practice links to a Worker that implements a Durable Object, so the listener can't sit in the website's Worker).
 // Nothing is copied or typed: the bot's keys are handed over inside Cloudflare. The website's Worker exports BotKeys; the bot Worker is bound to it (SITE) and asks for them (only a Worker bound to it can call it).
 let KEYS = null, KEYS_AT = 0;
@@ -1538,6 +1563,7 @@ export default {
     if (url.pathname === '/api/gwstatus' && env.BOT) return env.BOT.fetch(req); /* (is the instant listener connected: counts and its last few events) */
     if (url.hostname === HOME_HOST && url.pathname === '/__move' && req.method === 'POST') return moveIn(req, env);
     if ((url.hostname === 'www.' + HOME_HOST || url.origin === OLD_SITE) && (req.method === 'GET' || req.method === 'HEAD') && !/^\/(?:api|wcl|auth)\//.test(url.pathname)) return moveHome(req, url);
+    if (url.pathname === '/api/ratelimit') return rateLimitRoute(req, env, url); /* (the site key's real allowance, Oct 26) */
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
     if (url.pathname === '/api/discord') return req.method !== 'POST' ? json({ error: 'Discord only.' }, 405) : env.BOT ? env.BOT.fetch(req) : discordClick(req, env, ctx); /* (Discord's address stays debriefme.io: the Discord helper's Worker answers) */
     if ((url.pathname === '/api/night' && !url.searchParams.has('code')) || url.pathname === '/api/night/part') return night(req, env, url); /* (a ?code= read is a raid night's pulls for a team import, not a shared night, Oct 22) */
