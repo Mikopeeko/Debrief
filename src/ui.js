@@ -1111,7 +1111,7 @@ const INFLIGHT = new Map();
 function prevLoad(it) { if (!it || !S.index) return; const prev = (S.index.bosses || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull < it.pull).sort((a, b) => b.pull - a.pull)[0];
   if (!prev || CACHE.has(prev) || prev._pl) return; prev._pl = 1;
   (async () => { try { if (prev.wcl && WCL.isSaved && !(await WCL.isSaved(prev))) await WCL.loadEvents(S.wclCreds, prev, () => {}); await getRep(prev); } finally { prev._pl = 0; }
-    const v0 = document.querySelector('#view'); if (S.item === it && S.tab === 'audit' && S.rep && !S.rep.allPulls && v0 && v0._cs && v0._cs.trend && !v0._cs.trend.prvN) liveRedraw(); })().catch(() => { prev._pl = 0; }); }
+    const v0 = document.querySelector('#view'); if (S.item === it && S.tab === 'audit' && S.rep && !S.rep.allPulls && v0 && v0._cs && v0._cs.trend && !v0._cs.trend.prvN) prevArrived(); })().catch(() => { prev._pl = 0; }); }
 function getRep(item) {
   if (CACHE.has(item)) { const r = CACHE.get(item); CACHE.delete(item); CACHE.set(item, r); return Promise.resolve(r); } /* (to the back of the line: the memory limit lets go of the oldest first) */
   if (!INFLIGHT.has(item)) INFLIGHT.set(item, readRep(item).finally(() => INFLIGHT.delete(item)));
@@ -1157,6 +1157,8 @@ async function readRep(item) {
 let LIVE_T = 0, LIVE_0 = 0;
 const livePending = (noPrev) => { try { return [CURVE_LIVE, KGUILD, RATE_LIVE, PACE_LIVE, GHIST].some((M) => [...M.values()].some((v) => v === null)) || (!noPrev && S.index && (S.index.bosses || []).some((b) => b._pl)); } catch (e) { return false; } };
 const holding = () => document.documentElement.classList.contains('dbr-holding');
+/* (the previous pull arriving after the page showed refills only the coach box (Since last pull, the tags); behind the hold it's one more hidden draw) */
+function prevArrived() { if (holding()) { liveRedraw(); return; } try { if (S.tab === 'audit' && S.rep && !S.rep.allPulls) oaFill([S.rep]); } catch (e) { liveRedraw(); } }
 function liveRedraw() { clearTimeout(LIVE_T); if (!LIVE_0) LIVE_0 = Date.now(); LIVE_T = setTimeout(() => { LIVE_T = 0; if (S.tab !== 'audit' || !S.item || !S.rep || document.querySelector('#main .ld')) { LIVE_0 = 0; return; }
   if (!holding() && (document.querySelector('.pcx-tile.on') || livePending()) && Date.now() - LIVE_0 < 10000) { liveRedraw(); return; } /* (wait for the rest, at most 10 s; behind the hold card it draws at once, which starts the next read) */
   LIVE_0 = 0; const y = window.scrollY; renderMain(); window.scrollTo({ top: y }); }, holding() ? 60 : 700); }
@@ -1205,7 +1207,7 @@ function bgFetch(item) {
     if (tok !== BG_TOK || S.index !== idx) break;
     try { await getRep(b); } catch (e) { /* skip a pull that fails */ }
     /* (Oct 24: the comparison with the last pull needs that pull read; when it arrives, the page redraws once so Since last pull and the tags show) */
-    try { const v0 = document.querySelector('#view'); if (S.tab === 'audit' && S.item && b.id === S.item.id && b.diffId === S.item.diffId && b.pull < S.item.pull && S.rep && !S.rep.allPulls && v0 && v0._cs && v0._cs.trend && !v0._cs.trend.prvN && CACHE.has(b)) liveRedraw(); } catch (e) { /* (it shows on the next redraw) */ }
+    try { const v0 = document.querySelector('#view'); if (S.tab === 'audit' && S.item && b.id === S.item.id && b.diffId === S.item.diffId && b.pull < S.item.pull && S.rep && !S.rep.allPulls && v0 && v0._cs && v0._cs.trend && !v0._cs.trend.prvN && CACHE.has(b)) prevArrived(); } catch (e) { /* (it shows on the next redraw) */ }
     if (tok !== BG_TOK) break; await new Promise((r) => setTimeout(r, 250)); } })().finally(() => { if (tok === BG_TOK) bgNote(0, 0); });
 }
 function bgNote(k, n) { let el = document.getElementById('bgRead'), t = document.getElementById('bgReadT');
@@ -1632,7 +1634,11 @@ function pullTeam(r, it) {
   r._team = { n: HIST.mem.size, d: it.diffId, v: out }; return out;
 }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-team]'); if (b) { e.preventDefault(); progressPage(undefined, b.dataset.team); window.scrollTo(0, 0); } });
-function headerHtml(r, allMode) {
+/* (Oct 25: the header carries a fingerprint of its own markup, so refreshHead rebuilds it only when what it shows changed (it was re-created every
+   few seconds while background pulls loaded, replaying the Design studio's line draw)) */
+const hhKey = (s) => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+function headerHtml(r, allMode) { const h = headerHtml0(r, allMode); return typeof h === 'string' ? h.replace('<header ', '<header data-hh="' + hhKey(h) + '" ') : h; }
+function headerHtml0(r, allMode) {
   const it = S.item, same = S.index && S.index.bosses ? S.index.bosses.filter((b) => b.id === it.id && b.diffId === it.diffId) : [], isKey = it.kind === 'run';
   let cls, kick, big, stats, side = '', left = null;
   // earlier nights on this boss, from the pulls saved on this PC
@@ -1693,7 +1699,7 @@ function headerHtml(r, allMode) {
     '<span class="bh-s">' + stats.map(([ic, t]) => '<span' + (ic === 'timer' ? ' class="bh-dur" title="How long the pull lasted"' : '') + '>' + bhIc(ic) + esc(t) + '</span>').join('') + '</span>' + (isKey ? '' : bhCutChip()) + '</div></div></header>';
 }
 // redraw the banner once more pulls are known (the background reader, or an all-pulls view that read every pull)
-function refreshHead() { const f = $('.fight.bh'); if (!f || !S.rep || !S.item) return; const a = isAllMode(); if (!a && S.rep === S.nightRep) return; f.outerHTML = headerHtml(a ? null : S.rep, a); renderList(); }
+function refreshHead() { const f = $('.fight.bh'); if (!f || !S.rep || !S.item) return; const a = isAllMode(); if (!a && S.rep === S.nightRep) return; const nh = headerHtml(a ? null : S.rep, a), k = (String(nh).match(/data-hh="([^"]+)"/) || [])[1]; if (k && f.dataset.hh === k) return; f.outerHTML = nh; renderList(); }
 const setHeadRes = refreshHead;
 // (the top bar's Progress button is lit while the Progress page is up)
 // (Graphs is on everywhere since Oct 18, now that it's plain numbers and charts (your call). Set this back to
