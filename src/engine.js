@@ -4248,7 +4248,7 @@ function buildCoiledAltar(ev, r, h) {
       const tanks = [...new Set(fs.map((f) => f.tankG).filter(Boolean))], last = fs[fs.length - 1];
       const map = fc.length ? { map: { t: last.s.t, from: d, cones: fc.map((f) => ({ ...f.cone, hit: f.hit.map((o) => o.guid) })), segs: fs.map((f) => ({ until: f.s.t + 1, objs: f.ground })),
         hl: tanks, hlLabel: tanks.length > 1 ? 'Tanks the frontals hit' : 'Tank the frontal hit', hitOrbs: fc.flatMap((f) => f.hit.map((o) => o.guid)), extraPts: [...all.values()],
-        note: fs.map((f) => '+' + f.popped).join(', then ') + ' Venom Rupture stacks (raid at up to ' + raidMax + ')',
+        note: fs.map((f) => '+' + f.popped).join(', then ') + ' Venom Rupture stacks (the raid peaked at ' + raidMax + ')',
         title: 'Deluge #' + (i + 1) + ': ' + fs.map((f, k) => S(f.s.n)[1] + (many ? ' ' + (k + 1) : '') + ' at ' + h.fmtT(f.s.t) + ' popped ' + f.popped).join(', ') + (many ? ' (the cones in order; yellow rings: orbs inside)' : ' (yellow rings: orbs inside)') } } : { txt: '' };
       return [{ txt: 'Deluge #' + (i + 1), sub: who }, { t: d }, cnt, res, map];
     });
@@ -4341,7 +4341,7 @@ function buildCoiledAltar(ev, r, h) {
     for (const r0 of (sGh ? sGh.rows : [])) items.push({ t: r0[0].t, row: [{ txt: 'Ghost collision', bad: true }, { t: r0[0].t }, { ps: r0[1].ps }, { txt: 'ghosts touched (Malevolent Resonance), ' + h.compact(r0[2].n) + ' damage', bad: true }, r0[3] || { txt: '' }] });
     for (const r0 of (sMc ? sMc.rows : [])) items.push({ t: r0[0].t, row: [{ txt: 'Mind control fall', bad: true }, { t: r0[0].t }, { p: r0[1].p }, { txt: 'died, ' + r0[3].txt, bad: true }, r0[4]] });
     // (Gravebound deaths (Oct 21): a player hit by Soul Sever or a Gloombomb who didn't pick up their soul fragments, up to 30 s after the last Dreadmarch)
-    { const lastDm = dm.length ? dm[dm.length - 1] + 30 : -1; for (const d of r.deaths || []) if (/^gravebound$/i.test(String(d.ability || '')) && d.t <= lastDm) items.push({ t: d.t, row: [{ txt: 'Gravebound death', bad: true }, { t: d.t }, { p: d.player }, { txt: 'missed their soul fragments, died', bad: true }, { txt: '' }] }); }
+    { const lastDm = dm.length ? dm[dm.length - 1] + 30 : -1; for (const d of r.deaths || []) if (/^gravebound$/i.test(String(d.ability || '')) && d.t <= lastDm) items.push({ t: d.t, row: [{ txt: 'Gravebound death', bad: true }, { t: d.t }, { p: d.player }, { txt: 'missed their soul fragments and died', bad: true }, { txt: '' }] }); }
     for (const r0 of (sSs ? sSs.rows : [])) items.push({ t: r0[0].t, row: [{ txt: 'Soul Sever' }, { t: r0[0].t }, { txt: r0[3].txt + ' of ' + r0[2].txt + ' ghosts removed' }, { txt: r0[4].txt + ' missed', dim: true }, r0[5]] }); /* (a missed ghost is walked back for the next frontal (Oct 21): not a mistake) */
     if (dm.length || items.length) {
       const groups = dm.map((t, i) => ({ title: 'Dreadmarch #' + (i + 1), t, from: t - 1, to: (dm[i + 1] ?? dur + 1) - 1, rows: [], tg: sDm && sDm.rows[i] ? sDm.rows[i][1].ps : [] }));
