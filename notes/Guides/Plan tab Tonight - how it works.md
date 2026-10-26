@@ -131,3 +131,24 @@ raiders on 25-player bosses (and tanks counted as jobless), a new team landing o
 - Checked as a brand-new visitor (empty storage, practice link): no other team's names, the setup opens, 20 typed names → Set
   classes → 10 Ready plans, a box tap, a boss page, 390 px with nothing past the edge; and the owner's full checks (all bosses H+M,
   drag, specs) with no page errors.
+
+## Raid nights and fixes on the rows (Oct 26, the user: "Build B, the two-week strip, and bake the fixes into the raider and boss rows")
+Mockups by the Design studio (A a month calendar 6/10, B the strip 8–9/10, C the fixes on the rows); the user picked B + C.
+- **Each night keeps its own setup** (team, Mythic/Heroic, who's out, who sits each boss, which bosses). The night on screen lives in
+  `wla-night` as before, so every Who plays control works unchanged; the others wait in `wla-nights` ({ sel, d: { date: night } }),
+  with that night's skipped bosses. Boss plans stay saved by who's in them: two nights with the same players share a plan.
+- **The strip** (`pnWeekH`): this week and next, 14 days, ‹ › for other weeks. Raid nights are lit from the weekdays the team raids
+  in its saved pulls (2+ nights on a weekday, `pnRaidDays`); set-up nights show "N of M ready" (green all, gold some, grey none),
+  raid nights not set up are dashed "not set up". Tap any day = plan it: a new night starts from the last one on the same weekday (else
+  the night on screen), with nobody out and short bosses refilled (`pnFresh` + `pnRefill`). **+ Add a night** (any date) and **Set up
+  next week** (this week's set-up nights, plus raid weekdays, copied 7 days on; who's out clear). **Remove this night** in the top row.
+- **Opens on** tonight if it's set up or a raid weekday, else the next one in two weeks (`pnNightOpen`, once a visit; the setup from
+  before nights becomes that night). The title is the night ("Tonight" or "Tuesday, Oct 27"), and "Who plays on Tuesday".
+- **Fixes on the rows (no yellow box on Tonight):** a raider with no class gets "⚠ no class yet · Set class" on their row and the
+  count in Who plays' header (Set classes); a missing buff is a tag on its boss row ("⚠ no Fortitude · Swap in Optt", a button), or
+  once over the bosses when it's every boss ("⚠ Nobody brings X"); ✨ Fill the open spots and ✨ Swap all in sit there too. Sits stay
+  flagged in the Sits column; tank/healer/size problems stay the row's status.
+- **One button a boss:** Plan it › (opens ✨ Make it for me / ✎ Build it myself in place), Open › when ready; Copy for the game lives
+  on the boss page.
+Checked on the practice link: switching nights (who's out per night), next week, add/remove a night, Plan it, a Swap in tag, the
+no-class tags, all bosses Mythic and Heroic Ready, a new visitor, specs, phone (two rows of seven, short badges): no page errors.
