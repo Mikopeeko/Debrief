@@ -1951,8 +1951,8 @@ const PATCH_NOTES = [
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
-    'Rotation: every check says its fact in a few words (the full sentence waits under Everything), spell names are in your class colour, numbers are bold, and each Next time line is marked in gold.',
-    'Rotation in colour: the numbers in every check\'s sentence are in the check\'s colour (green done right, amber some mistakes, red failed), spell names are bolder, and every Next time tip has a gold label and a gold edge so it stands out.',
+    'Rotation reads in a few words: every check says its fact in one short line (the full sentence waits under Everything), the numbers in it are in the check\'s colour (green done right, amber some mistakes, red failed), spell names are bolder, every Next time tip has a gold label and edge, and a line that only repeats the row\'s number is gone.',
+    'Rotation: burst-window cards use the whole width of the checklist, two or three across; Cooldowns on big damage shows only the moments you covered (the rest under Everything).',
     'Rotation speaks plainer: every check is one short sentence ("92% of your 337 casts were the best button at that moment.", "You used it 10 of 15 possible times."), tips say "in its last 30%" and "right after" instead of game jargon, and Stat order lets its bars do the talking.',
     'Opening a raid night is much faster: pulls are read several at a time in the background, so the page stays smooth and a hidden tab no longer slows it down. A night that isn\'t read yet opens on its kill or latest pull in seconds while the rest read, and a note tells you when All pulls is ready.',
     'After a Debrief update, pulls you\'ve opened before still show at once and are read again behind the scenes, instead of the whole night loading again.',
@@ -30504,22 +30504,6 @@ function dsFrontDemo() { const win = document.querySelector('#main .home.fp .fpx
   setInterval(() => { if (!document.hidden && onScreen && document.body.contains(host)) play(); }, 10500); }
 (function () { const f9 = dsBars; dsBars = function (root) { f9(root); try { dsFrontDemo(); } catch (e) {} }; })();
 
-// ===== Design studio round 28 (Oct 26): colour in Rotation's sentences. The numbers in a check's sentence are wrapped (b.ds-n) and the
-// sentence carries the check's status (data-ds-st) so the style can colour them. Idempotent, text nodes only. Owner: the Design studio chat. =====
-function dsRotColour() { const NUM = /\d+:\d\d|\d[\d,]*(?:\.\d+)?(?:%|K|M)?/g;
-  /* the tip reads after the sentence it answers (a tile with a split bar had it the other way round) */
-  document.querySelectorAll('#view section.rck .rck-b > p.rck-tip').forEach((tip) => { const rs = tip.nextElementSibling; if (rs && rs.matches('p.spc-rs')) rs.after(tip); });
-  /* the sentence lives in p.spc-rs, or in the title row's span.ds-note on a flat tile (round 6) */
-  document.querySelectorAll('#view section.rck p.spc-rs:not([data-ds-st]), #view section.rck summary > span.ds-note:not([data-ds-st])').forEach((p) => {
-    let st = 'na', e = p.parentElement; while (e && !(e.tagName === 'SECTION' && e.classList.contains('rck'))) { const m = /(?:^|\s)(ok|warn|bad|na)(?:\s|$)/.exec(e.className || ''); if (m) { st = m[1]; break; } e = e.parentElement; }
-    p.dataset.dsSt = st;
-    const walk = document.createTreeWalker(p, NodeFilter.SHOW_TEXT, { acceptNode: (n) => (n.parentElement.closest('.sp, b, a, button, .ds-n, .spc-hwb, .spc-hwp') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) });
-    const nodes = []; let n; while ((n = walk.nextNode())) if (NUM.test(n.nodeValue)) nodes.push(n); NUM.lastIndex = 0;
-    nodes.forEach((t) => { const s = t.nodeValue, frag = document.createDocumentFragment(); let i = 0, m; NUM.lastIndex = 0;
-      while ((m = NUM.exec(s))) { if (m.index > i) frag.appendChild(document.createTextNode(s.slice(i, m.index))); const b = document.createElement('b'); b.className = 'ds-n'; b.textContent = m[0]; frag.appendChild(b); i = m.index + m[0].length; }
-      if (i < s.length) frag.appendChild(document.createTextNode(s.slice(i))); t.parentNode.replaceChild(frag, t); }); }); }
-(function () { const f19 = dsBars; dsBars = function (root) { f19(root); try { dsRotColour(); } catch (e) {} }; })();
-
 // ===== Design studio round 11 (Oct 25): Plan, Tonight polished. Reads "N of M ready" on Tonight's Bosses header into --p for its ready bar.
 // Runs after dsBars on every redraw. Owner: the Design studio chat. =====
 function dsPlan() { const v = document.querySelector('#view.plan-page'); if (!v) return;
@@ -30721,8 +30705,9 @@ function dsRotOpen() { const sec = document.querySelector('#view section.rck'); 
   /* tiles are out of the app's one-at-a-time accordion: their toggle never reaches it (and they cannot close) */
   window.addEventListener('toggle', (e) => { const d = e.target; if (!d || !d.matches || !d.matches('#view section.rck .rck-rs > details.rck-r')) return; e.stopImmediatePropagation(); if (!d.open) d.open = true; else dsWsTrim(d); }, true); })();
 
-// ===== Design studio round 28 (Oct 26): Rotation tiles in a few words, in colour. One short fact line a tile (dsShort), spell names in the
-// class colour, numbers bold, Next time in gold. Runs after dsRotOpen. Owner: the Design studio chat. =====
+// ===== Design studio round 30 (Oct 26): Rotation's rows, one look. One short fact line a tile (dsShort), the numbers in the check's
+// colour, spell names semi-bold, Next time in gold, no line that only restates the row, window cards across the ring, big-damage
+// moments only where a cooldown went out. Runs after dsRotOpen (round 27). Owner: the Design studio chat. =====
 function dsShort(sub, v) {
   let s = String(sub || '').replace(/\s+/g, ' ').trim(); if (!s) return ''; const v0 = String(v || '').trim(); let m;
   const cap = (x) => (x ? x.charAt(0).toUpperCase() + x.slice(1) : x);
@@ -30797,42 +30782,52 @@ function dsShort(sub, v) {
   if ((m = s.match(/^Each (.+?) added about (\S+) of extra healing, (\S+) over your (\d+)\./))) return 'About ' + m[2] + ' extra healing each, ' + m[3] + ' over your ' + m[4] + '.';
   return cap(clause(first(s)).replace(/^(\d+) of your (\d+) /, '$1 of $2 ').replace(/^All (\d+) of your /, 'All $1 ').replace(/^Both of your /, 'Both '));
 }
-/* the words that get colour: every spell name the page knows (its icons' data-sn), the stats and resources, and any capitalised name
-   inside a sentence (the app's sentences are lower-case apart from names); numbers (with their unit, time or K/M/%) go bold */
-const DS_STOPW = new Set(['Debrief', 'Next', 'Your', 'Yours', 'You', 'Most', 'Mostly', 'Missed', 'Inside', 'In', 'Of', 'The', 'Every', 'All', 'Both', 'None', 'One', 'Each', 'On', 'Save', 'Guides', 'A', 'An', 'It', 'Its', 'Sat', 'At', 'Not', 'Used', 'Gave', 'Longest', 'Past', 'Above', 'Ran', 'Full', 'Never', 'Average', 'Stored', 'Into', 'About', 'Step', 'DPS', 'HPS', 'How', 'Fix', 'Small', 'With', 'They', 'That', 'This', 'There', 'These', 'Those', 'When', 'While', 'Where', 'Because', 'But', 'And', 'Or', 'So', 'If', 'Then', 'Press', 'Drink', 'Spend', 'Put', 'Keep', 'Use', 'Cast', 'Hold', 'Save', 'Line', 'Start', 'Open', 'Time', 'Half', 'More', 'Less', 'Only', 'Right', 'Left', 'Pull', 'Kill', 'Mythic', 'Heroic']);
-function dsNameRe() { const set = new Set(['Bloodlust', 'Haste', 'Mastery', 'Critical Strike', 'Versatility', 'Crit', 'Vers', 'Holy Power', 'Maelstrom', 'Astral Power', 'Soul Shards', 'Soul Shard', 'Essence', 'Focus', 'Fury', 'Echoes', 'Echo', 'Demonic Cores', 'Demonic Core', 'Soul Fragments', 'Arcane Charges', 'Runic Power', 'Insanity', 'Chi', 'Mana']);
-  document.querySelectorAll('#view [data-sn]').forEach((e) => { const n = e.dataset.sn; if (n && n.length > 2) set.add(n); });
-  const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); const names = [...set].sort((a, b) => b.length - a.length).map(esc).join('|');
-  return { known: new RegExp("(?<![\\p{L}'’])(?:" + names + ")(?:'s|s|es)?(?![\\p{L}])", 'gu'), caps: /(?<![\p{L}'’])[A-Z][\p{L}\p{M}'’!]*:?(?:(?: of the| of| the)? [A-Z][\p{L}\p{M}'’!]*:?)*(?![\p{L}])/gu }; }
-const DS_NUM = /(?<![\w.,:])\d[\d,]*(?:\.\d+)?(?:[KM%×]|:\d\d)?(?: (?:seconds?|minutes?|s\b))?(?![\w])/g;
-function dsMark(el, RE) { if (!el || el.dataset.dsM) return; el.dataset.dsM = '1';
-  const walk = (n) => { if (n.nodeType === 3) return [n]; if (n.nodeType !== 1 || n.matches('.sp, b, .ds-sp, .ds-n, button, a, .icw')) return []; return [...n.childNodes].flatMap(walk); };
-  for (const tn of walk(el)) { const t = tn.nodeValue; if (!t || !/[\p{L}\d]/u.test(t)) continue; const marks = [];
-    let m; RE.known.lastIndex = 0; while ((m = RE.known.exec(t))) marks.push([m.index, m.index + m[0].length, 'ds-sp']);
-    RE.caps.lastIndex = 0; while ((m = RE.caps.exec(t))) { const w = m[0], i = m.index, before = t.slice(0, i); const start = !before.trim() || /[.!?:;]\s*$/.test(before) || /^(?:[-–•]\s*)$/.test(before.trim());
-      if (DS_STOPW.has(w.split(/[ :]/)[0]) || (start && !w.includes(' ') && !/[A-Z]\p{L}+ [A-Z]/u.test(w))) continue; if (marks.some(([a, b]) => i < b && i + w.length > a)) continue; marks.push([i, i + w.length, 'ds-sp']); }
-    DS_NUM.lastIndex = 0; while ((m = DS_NUM.exec(t))) { const i = m.index, e = i + m[0].length; if (marks.some(([a, b]) => i < b && e > a)) continue; marks.push([i, e, 'ds-n']); }
-    if (!marks.length) continue; marks.sort((a, b) => a[0] - b[0]); const frag = document.createDocumentFragment(); let at = 0;
-    for (const [a, b, cls] of marks) { if (a > at) frag.appendChild(document.createTextNode(t.slice(at, a))); const s = document.createElement('span'); s.className = cls; s.textContent = t.slice(a, b); frag.appendChild(s); at = b; }
-    if (at < t.length) frag.appendChild(document.createTextNode(t.slice(at))); tn.replaceWith(frag); } }
 const DS_TIPS = [[/^Drink a combat potion just before the pull, and another when it's back 5 minutes later, with your big cooldown\.$/, "One just before the pull, another with your big cooldown when it's back."]];
 function dsTipWords(p) { for (const tn of [...p.childNodes].filter((n) => n.nodeType === 3)) { const t = tn.nodeValue.trim(); for (const [re, to] of DS_TIPS) if (re.test(t)) tn.nodeValue = tn.nodeValue.replace(t, to); } }
+/* the short line a tile: from the app's sentence, keyed to the Rotation chat's templates (short.js); the full sentence stays for Everything */
 function dsRotWords() { const sec = document.querySelector('#view section.rck'); if (!sec) return;
   const tiles = [...sec.querySelectorAll('.rck-rs > details.rck-r:not([data-ds-w])')], cards = [...document.querySelectorAll('#view .rck-fix .rck-sg:not([data-ds-w])')]; if (!tiles.length && !cards.length) return;
-  const hero = document.querySelector('#view .spc-hero'); const cc = hero ? getComputedStyle(hero).getPropertyValue('--cc').trim() : ''; const view = document.getElementById('view'); if (view) view.style.setProperty('--ds-cc', cc || 'var(--gold)');
-  const RE = dsNameRe();
   for (const t of tiles) { t.dataset.dsW = '1'; const b = t.querySelector(':scope > .rck-b, :scope > .rck-mgb:first-of-type > .rck-b'); if (!b) continue;
     const rs = b.querySelector(':scope > p.spc-rs'); const v = t.querySelector(':scope > summary .rck-v');
     const note = t.querySelector(':scope > summary .ds-note'); /* (round 6 put a flat tile's sentence in its title row; it gets the short form too) */
-    if (rs && note && rs.classList.contains('ds-dup')) { const sh = dsShort(rs.textContent, v ? v.textContent : ''); if (sh) { note.textContent = sh; dsMark(note, RE); } else note.remove(); dsMark(rs, RE); }
-    else if (rs && !rs.classList.contains('ds-dup')) { const sh = dsShort(rs.textContent, v ? v.textContent : ''); rs.classList.add('ds-full'); if (sh) { const p = document.createElement('p'); p.className = 'ds-short'; p.textContent = sh; b.prepend(p); dsMark(p, RE); } dsMark(rs, RE); }
-    else if (note) dsMark(note, RE);
-    b.querySelectorAll(':scope > p.rck-tip').forEach((p) => { dsTipWords(p); dsMark(p, RE); });
-    t.querySelectorAll('.rck-mgb:not(:first-of-type) p.spc-rs, .rck-mgb:not(:first-of-type) p.rck-tip').forEach((p) => dsMark(p, RE));
+    if (rs && note && rs.classList.contains('ds-dup')) { const sh = dsShort(rs.textContent, v ? v.textContent : ''); if (sh) note.textContent = sh; else note.remove(); }
+    else if (rs && !rs.classList.contains('ds-dup')) { const sh = dsShort(rs.textContent, v ? v.textContent : ''); rs.classList.add('ds-full');
+      /* with nothing drawn under the title (no bar, strip, cards or list) the short line joins the title row, like a flat tile's note (the user:
+         "this is another example of things that could be merged"); with a visual it stays its own line under it */
+      if (sh) { const viz = b.querySelector('.spc-sb, .spc-ast, .spc-ws, .spc-cpl, .spc-slp, .spc-pr, .hm-ut, .spc-facts, canvas, .rck-chart, .spc-ch'); const sm = t.querySelector(':scope > summary');
+        if (!viz && sm && !sm.querySelector('.ds-note')) { const n = document.createElement('span'); n.className = 'ds-note ds-sn'; n.textContent = sh; sm.appendChild(n); }
+        else { const p = document.createElement('p'); p.className = 'ds-short'; p.textContent = sh; b.prepend(p); } } }
+    b.querySelectorAll(':scope > p.rck-tip').forEach((p) => dsTipWords(p));
     /* a split bar's legend whose items are long (a name, a reason and a number each) goes one item a line instead of breaking inside an item */
-    t.querySelectorAll('.spc-sb > .spc-sbl').forEach((lg) => { const w = lg.clientWidth || t.clientWidth; if (w && [...lg.children].some((c) => c.scrollWidth > 0.62 * w)) lg.classList.add('ds-stack'); }); }
-  for (const c of cards) { c.dataset.dsW = '1'; c.querySelectorAll(':scope > .rck-sgt > p').forEach((p) => { if (p.classList.contains('rck-how')) dsTipWords(p); dsMark(p, RE); }); } }
-(function () { const f19 = dsBars; dsBars = function (root) { f19(root); try { dsRotWords(); } catch (e) {} }; })();
+    t.querySelectorAll('.spc-sb > .spc-sbl').forEach((lg) => { const w = lg.clientWidth || t.clientWidth; if (w && [...lg.children].some((c) => c.scrollWidth > 0.62 * w)) lg.classList.add('ds-stack'); });
+    /* window cards (burst windows, big-damage moments) need the whole ring: the tile spans it and the cards sit two or three across */
+    const ws = t.querySelector('.spc-ws'); if (ws && ws.children.length >= 2) t.classList.add('ds-wide', 'ds-cards');
+    if (/^Cooldowns on big damage/.test((t.querySelector(':scope > summary .rck-n') || {}).textContent || '')) t.classList.add('ds-cdbig'); }
+  for (const c of cards) { c.dataset.dsW = '1'; c.querySelectorAll(':scope > .rck-sgt > p.rck-how').forEach((p) => dsTipWords(p)); } }
+/* the numbers in a sentence take the check's colour: wrapped in b.ds-n, the sentence marked data-ds-st from the nearest ok/warn/bad class */
+function dsRotColour() { const NUM = /\d+:\d\d|\d[\d,]*(?:\.\d+)?(?:%|K|M|×)?/g;
+  document.querySelectorAll('#view section.rck .rck-b > p.rck-tip').forEach((tip) => { const rs = tip.nextElementSibling; if (rs && rs.matches('p.spc-rs')) rs.after(tip); });
+  document.querySelectorAll('#view section.rck p.spc-rs:not([data-ds-st]), #view section.rck p.ds-short:not([data-ds-st]), #view section.rck summary > span.ds-note:not([data-ds-st])').forEach((p) => {
+    let st = 'na', e = p.parentElement; while (e && !(e.tagName === 'SECTION' && e.classList.contains('rck'))) { const m = /(?:^|\s)(ok|warn|bad|na)(?:\s|$)/.exec(e.className || ''); if (m) { st = m[1]; break; } e = e.parentElement; }
+    p.dataset.dsSt = st;
+    const walk = document.createTreeWalker(p, NodeFilter.SHOW_TEXT, { acceptNode: (n) => (n.parentElement.closest('.sp, b, a, button, .ds-n, .spc-hwb, .spc-hwp') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) });
+    const nodes = []; let n; while ((n = walk.nextNode())) if (NUM.test(n.nodeValue)) nodes.push(n); NUM.lastIndex = 0;
+    nodes.forEach((t) => { const s = t.nodeValue, frag = document.createDocumentFragment(); let i = 0, m; NUM.lastIndex = 0;
+      while ((m = NUM.exec(s))) { if (m.index > i) frag.appendChild(document.createTextNode(s.slice(i, m.index))); const b = document.createElement('b'); b.className = 'ds-n'; b.textContent = m[0]; frag.appendChild(b); i = m.index + m[0].length; }
+      if (i < s.length) frag.appendChild(document.createTextNode(s.slice(i))); t.parentNode.replaceChild(frag, t); }); }); }
+/* a short line that only restates the row is hidden: every number in it is in the title or the legend, or it is one sentence carrying the
+   title's value with at most one other number ("4 of 4 Inner Flame windows had a Fire Breath in the 15 seconds before." under "4/4") */
+function dsRotDedupe() { const NUMS = (s) => { const o = new Set(); (String(s || '').match(/\d[\d,]*(?:\.\d+)?(?:%|K|M)?/g) || []).forEach((x) => o.add(x.replace(/,/g, ''))); return o; }; /* (units kept: "81 seconds" is not "81%") */
+  document.querySelectorAll('#view section.rck details.rck-r p.ds-short:not([data-ds-dd]), #view section.rck details.rck-r > summary > span.ds-note:not([data-ds-dd])').forEach((p) => { p.dataset.dsDd = '1';
+    const tile = p.closest('details.rck-r'); if (!tile) return; const sum = tile.querySelector(':scope > summary'); if (!sum) return;
+    const title = (sum.querySelector('.rck-n') || sum).textContent + ' ' + ((sum.querySelector('.rck-v') || {}).textContent || '');
+    const box = tile.querySelector(':scope > .rck-b, :scope > .rck-mgb:first-of-type > .rck-b'); const legends = box ? [...box.querySelectorAll(':scope > .spc-sb > .spc-sbl')] : [];
+    const pool = NUMS(title + ' ' + legends.map((l) => l.textContent).join(' ')), val = NUMS((sum.querySelector('.rck-v > b') || {}).textContent || ''); if (!pool.size) return;
+    const mine = NUMS(p.textContent); if (!mine.size) return; let extra = 0; mine.forEach((x) => { if (!pool.has(x)) extra++; });
+    let valIn = val.size > 0; val.forEach((x) => { if (!mine.has(x)) valIn = false; });
+    const oneSentence = !/[.!?]\s+\S/.test(p.textContent.trim());
+    if (extra === 0 || (valIn && extra <= 1 && oneSentence)) p.classList.add('ds-dup'); }); }
+(function () { const f19 = dsBars; dsBars = function (root) { f19(root); try { dsRotWords(); dsRotColour(); dsRotDedupe(); } catch (e) {} }; })();
 
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
