@@ -51687,10 +51687,12 @@ const PP_MKS = ['star', 'circle', 'diamond', 'triangle', 'moon', 'square', 'cros
 const PP_ON = () => !window.WLA_HOSTED || /-debrief\./.test(location.hostname) || gdzOwner();
 const ppKey = (b, d) => 'wla-pp|' + b + '|' + d;
 // (the raid lead's markers for a boss: { marks: { cross: [x, y], … }, uses: { axe: 'moon', … } }, over the boss's starting ones)
+// (base: 'guide', the strategy's spots, or 'raid', the raid's own from its pulls; the raid lead's moves and picks go on top)
 function ppConf(b, d) { const C = GDZ_PP[b] && GDZ_PP[b][d]; if (!C) return null; let s = {}; try { s = JSON.parse(store.get(ppKey(b, d)) || '{}') || {}; } catch (e) { s = {}; }
-  const marks = {}; for (const k of PP_MKS) marks[k] = (s.marks && s.marks[k]) || C.marks[k] || null;
-  const uses = {}; for (const [id, , def] of C.uses) uses[id] = s.uses && id in s.uses ? s.uses[id] : def;
-  return { C, marks, uses, saved: !!(s.marks || s.uses) }; }
+  const base = s.base === 'raid' && C.raid ? 'raid' : 'guide', B = base === 'raid' ? C.raid : { marks: C.marks, stack: C.stack, uses: Object.fromEntries(C.uses.map(([id, , def]) => [id, def])) };
+  const marks = { _stack: B.stack }; for (const k of PP_MKS) marks[k] = (s.marks && s.marks[k]) || B.marks[k] || null;
+  const uses = {}; for (const [id] of C.uses) uses[id] = s.uses && id in s.uses ? s.uses[id] : B.uses[id];
+  return { C, base, marks, uses, saved: !!(s.marks || s.uses) }; }
 const ppSave = (b, d, v) => store.set(ppKey(b, d), JSON.stringify(v));
 // (a stand-in for whoever the fight picks: a grey dot with a question mark)
 const ppAny = (label) => ({ name: label, color: '#c9ced8', specIcon: 'inv_misc_questionmark', any: true });
@@ -51798,7 +51800,7 @@ function ppCardsCA(J, M, U, P) {
       legend: [ppG('Soak (' + A.soak.length + ' + the target)', R, A.soak.map((n) => ppI(P, n))), ppG('On the axe target', GO, [A.ext && ppI(P, A.ext, 'External'), A.zeph && ppI(P, A.zeph, 'Zephyr')]), ppG('Axe target', Q, [ppI(P, ppAny('Whoever gets the axe'))], 'Walks to the soak spot.')],
       foot: 'Soakers walk 40 yards out after it lands: the spot erupts.' }); });
   // The end of phase 1: Zul'jan dies and every orb blows up; the raid stacks in the cooldowns the note puts there
-  { const st = spot('stack', [5, -11]), k = gdzKit('The Coiled Altar', 3), put = new Set(['t1', 't2']); k.boss('zj', 'Zul\'jan', 0, 0, 0).at(0, 't1', 0, -3).at(0, 't2', 3, 2);
+  { const st = spot('stack', M._stack || [5, -11]), k = gdzKit('The Coiled Altar', 3), put = new Set(['t1', 't2']); k.boss('zj', 'Zul\'jan', 0, 0, 0).at(0, 't1', 0, -3).at(0, 't2', 3, 2);
     k.at(0, GDZ_RAID.filter((s) => !put.has(s)), st[0], st[1], 7).ring({ x: st[0], y: st[1], r: 9, fx: 'zone', t0: 0, dur: 99, color: '#9a7bff', cn: 'Raid cooldowns', label: false });
     cards.push({ id: 'stack', ph: 1.9, when: 'The push', title: 'Venom Rupture (Stack in the cooldowns)', map: ppFreeze(k.done({ title: 'Venom Rupture', focus: { x: 0, y: 0, r: 30 } }), 1, ppSeat(P, {}), P, M, { labels: [[{ rx: st[0], ry: st[1] + 9 }, 'Stack in the cooldowns', '#9a7bff', '#fff', 0]] }),
       legend: [ppG('Raid cooldowns', '#9a7bff', (J.rupture || []).map(([t, n, sp]) => ppI(P, n, t + ' ' + sp)), (J.rupture || []).length ? '' : 'Your note\'s cooldowns for the push go here.'), ppG('Everyone', GO, [], 'A defensive when the orbs blow up.')],
@@ -51856,17 +51858,24 @@ function ppCardsCA(J, M, U, P) {
 function ppCds(N, P, ph, t0, t1) { return N.reminders.filter((x) => x.ph === ph && x.time >= t0 && x.time <= t1 && x.spellid).flatMap((x) => x.tags.filter((w) => P.has(w.toLowerCase())).map((w) => [Math.floor(x.time / 60) + ':' + String(Math.round(x.time % 60)).padStart(2, '0'), P.get(w.toLowerCase()).name, (E.cdName && E.cdName(x.spellid)) || x.text || 'Cooldown'])); }
 const GDZ_PP = {
   'The Coiled Altar': { Mythic: {
-    // (the starting spots, in yards from the room's middle (x east, y north): yours, read from your own pulls on Oct 21 and 22:
-    // where each purple carrier dropped their orb (cross, triangle, square, diamond) and the greens (star, skull), where you
-    // soaked phase 1's axes (moon), and where you stacked Dreadmarch and soaked phase 3's axes (circle))
-    marks: { cross: [-5, 30], triangle: [5, 29], square: [-4, -31], diamond: [7, -32], star: [2, 16], skull: [-2, -23], moon: [-37, 37], circle: [25, -35] },
-    // (where each mechanic happens: a marker the raid lead picks, or '' for the spot shown)
-    uses: [['axe', 'Phase 1 axes', 'moon'], ['stack', 'Venom Rupture stack', ''], ['dread', 'Dreadmarch stack', 'circle'], ['grim1', 'Phase 3 axe 1', 'circle'], ['grim2', 'Phase 3 axes 2 and 3', 'circle']],
+    // (the starting spots, in yards from the room's middle (x east, y north): the guide's strategy (your call, Oct 26: "the markers should
+    // be at the default locations based on the strategy"): the X on the entrance wall, moon and skull in its corners, star and square in the
+    // far corners, diamond on the far wall, the circle on a side wall (the guide's maps, turned to the room), the triangle on the other)
+    marks: { cross: [0, -37], moon: [35, -35], skull: [-35, -35], star: [35, 35], square: [-35, 35], diamond: [-13, 37], circle: [-37, 19], triangle: [37, 19] },
+    stack: [-14, -8],
+    // (where each mechanic happens: a marker the raid lead picks, or '' for the spot shown; the guide: phase 1's axes at the moon,
+    // Dreadmarch on the square, phase 3's first axe at the star and the next two at the square)
+    uses: [['axe', 'Phase 1 axes', 'moon'], ['stack', 'Venom Rupture stack', ''], ['dread', 'Dreadmarch stack', 'square'], ['grim1', 'Phase 3 axe 1', 'star'], ['grim2', 'Phase 3 axes 2 and 3', 'square']],
+    // (your raid's own spots, one click away: read from your pulls on Oct 21 and 22: where each purple carrier dropped their orb
+    // (cross, triangle, square, diamond) and the greens (star, skull), where you soaked phase 1's axes (moon), and where you stacked
+    // Dreadmarch and soaked phase 3's axes (circle))
+    raid: { marks: { cross: [-5, 30], triangle: [5, 29], square: [-4, -31], diamond: [7, -32], star: [2, 16], skull: [-2, -23], moon: [-37, 37], circle: [25, -35] }, stack: [5, -11],
+      uses: { axe: 'moon', stack: '', dread: 'circle', grim1: 'circle', grim2: 'circle' } },
     read(N, P) { const J = ppReadCA(N, P); J.rupture = ppCds(N, P, 1, 160, 200).concat(ppCds(N, P, 2, 0, 5)); J.interCds = ppCds(N, P, 2.5, 0, 40); return J; },
     cards: ppCardsCA,
     // (Plan's Jobs cards and the pictures each one shows: by the key Plan gives each card's picture row (its build parts), else by the
     // card's title, where the grim card is matched before the phase 1 axes)
-    mech: { kicks: ['kicks', 'bombs'], g: ['axe1', 'axe2'], g3: ['grim1', 'grim2', 'grim3'], orbs: ['orbs1', 'orbs3'], mc: ['dread'], curse: ['kicks'], cds: ['stack', 'inter'], def: [] },
+    mech: { kicks: ['kicks', 'bombs'], g: ['axe1', 'axe2'], g3: ['grim1', 'grim2', 'grim3'], orbs: ['orbs1', 'orbs3'], mc: ['dread'], curse: ['kicks'], cd: ['stack', 'inter'], cds: ['stack', 'inter'], def: [] },
     jobs: [[/p3|grim/i, ['grim1', 'grim2', 'grim3']], [/guillotine/i, ['axe1', 'axe2']], [/kick/i, ['kicks', 'bombs']], [/purple orb/i, ['orbs1', 'orbs3']], [/dreadmarch|mind ?control/i, ['dread']], [/curse/i, ['kicks']], [/raid cooldown/i, ['stack', 'inter']]] } },
 };
 const PP_PH = { 1: ['Phase 1', '#5aa0ff'], 1.9: ['Phase 1 ends', '#5aa0ff'], 2: ['Phase 2', '#b65cff'], 2.5: ['Intermission', '#e6b450'], 3: ['Phase 3', '#ff5a4f'] };
@@ -51975,6 +51984,9 @@ function ppCss() {
     '#ppWin .pp-mkmap .zwrap{max-width:none!important}#ppWin .pp-mkmap .sub,#ppWin .pp-mkmap .zbar,#ppWin .pp-mkmap .zctl,#ppWin .pp-mkmap .zkey,#ppWin .pp-mkmap .znorth{display:none!important}' +
     '#ppWin .pp-mklay{position:absolute;inset:0;pointer-events:none}#ppWin .pp-mkdot{position:absolute;transform:translate(-50%,-50%);width:36px;height:36px;padding:0;border:0;background:none;cursor:grab;pointer-events:auto;touch-action:none;display:grid;place-items:center}' +
     '#ppWin .pp-mkdot.on{cursor:grabbing;filter:drop-shadow(0 0 6px rgba(255,255,255,.8))}#ppWin .pp-use{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:8px 0}#ppWin .pp-use select{min-width:150px}' +
+    '#ppWin .pp-mkpick{position:fixed;z-index:1001;display:flex;gap:4px;padding:6px;background:#1b1f29;border:1px solid #3a4150;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.5)}' +
+    '#ppWin .pp-mkpick button{width:34px;height:34px;padding:0;border:1px solid transparent;border-radius:8px;background:none;display:grid;place-items:center;cursor:pointer}#ppWin .pp-mkpick button:hover{background:rgba(255,255,255,.06)}#ppWin .pp-mkpick button.on{border-color:#e6b450;box-shadow:0 0 0 1px #e6b450}' +
+    '#ppWin .pp-mkbase{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}' +
     '#ppWin .pp-all{display:flex;align-items:center;gap:10px;margin:6px 0 10px}#ppWin .pp-cards{display:grid;gap:18px}#ppWin .pp-card .pp-ph{font-weight:700;margin-bottom:2px}#ppWin .pp-act{display:flex;justify-content:flex-end;align-items:center;gap:8px}#ppWin .pp-msg{margin-right:auto}' +
     '@media (max-width:760px){#ppWin .pp-mk{grid-template-columns:1fr}}' +
     /* (the one-picture view and the Jobs cards' small pictures: the Design studio's mock (Oct 26); its own round restyles on top) */
@@ -52018,7 +52030,7 @@ function ppOpen(r, u0, opt) {
     '<div class="pp-nav"><span class="sub pp-navt"></span><button class="btn sm" type="button" data-ppprev></button><button class="btn sm" type="button" data-ppnext></button><button class="btn sm" type="button" data-ppallv></button></div>' +
     '<p class="sub pp-intro">One picture for each mechanic your note gives jobs for, with everyone on their spot. Copy one and paste it in Discord (Ctrl+V), or download it.</p>' +
     '<div class="pp-all"><button class="btn sm primary" type="button" data-ppcopyall disabled>Copy all</button><button class="btn sm" type="button" data-ppall disabled>Download all</button><span class="sub pp-allmsg">Copy all makes one picture of them all, ready to paste in Discord. Download all saves each one in a zip.</span></div>' +
-    '<details class="pp-mkbox"><summary>Markers <span class="sub">Drag them to where your raid puts them, and pick where each mechanic happens</span></summary><div class="pp-mk"><div class="pp-mkmap"></div><div class="pp-mkuse"></div></div></details>' +
+    '<details class="pp-mkbox"><summary>Markers <span class="sub">Drag a marker to move it, right-click it to change the mark, and pick where each mechanic happens</span></summary><div class="pp-mk"><div class="pp-mkmap"></div><div class="pp-mkuse"></div></div></details>' +
     '<div class="pp-cards"></div></div>';
   box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); };
   let gen = 0, cur = Math.max(0, set.cards.findIndex((cd) => cd.id === opt.one));
@@ -52064,19 +52076,35 @@ function ppOpen(r, u0, opt) {
     const sv = mhost.querySelector('svg.zmap'), lay = mhost.querySelector('.pp-mklay'); if (!sv) return; const vb = sv.viewBox.baseVal, [x0, y0] = (sv.dataset.o || '0,0').split(',').map(Number), yd = +sv.dataset.yd || 1, cx = (mp.room.x0 + mp.room.x1) / 2, cy = (mp.room.y0 + mp.room.y1) / 2;
     const toPx = ([rx, ry]) => { const R = sv.getBoundingClientRect(), L = lay.getBoundingClientRect(); return [((cx + rx - x0) * yd - vb.x) / vb.width * R.width + R.left - L.left, ((-(cy + ry) - y0) * yd - vb.y) / vb.height * R.height + R.top - L.top]; };
     const toYd = (px, py) => { const R = sv.getBoundingClientRect(); const X = vb.x + (px - R.left) / R.width * vb.width, Y = vb.y + (py - R.top) / R.height * vb.height; return [Math.round((X / yd + x0 - cx) * 2) / 2, Math.round((-(Y / yd + y0) - cy) * 2) / 2]; };
-    lay.innerHTML = PP_MKS.filter((m) => c.marks[m]).map((m) => '<button type="button" class="pp-mkdot" data-mk="' + m + '" title="' + esc(GDZ_WM[m][1]) + ': drag to move" aria-label="' + esc(GDZ_WM[m][1]) + '"><svg viewBox="-11 -11 22 22" width="26" height="26">' + gdzMarkSvg(m, 0, 0) + '</svg></button>').join('');
+    const dot = (m) => '<svg viewBox="-11 -11 22 22" width="26" height="26">' + gdzMarkSvg(m, 0, 0) + '</svg>', keep = (cc) => ppSave(boss, diff, { base: cc.base, marks: cc.marks, uses: cc.uses });
+    lay.innerHTML = PP_MKS.filter((m) => c.marks[m]).map((m) => '<button type="button" class="pp-mkdot" data-mk="' + m + '" title="' + esc(GDZ_WM[m][1]) + ': drag to move, right-click to change the mark" aria-label="' + esc(GDZ_WM[m][1]) + '">' + dot(m) + '</button>').join('');
     const place = () => lay.querySelectorAll('.pp-mkdot').forEach((b) => { const [px, py] = toPx(ppConf(boss, diff).marks[b.dataset.mk]); b.style.left = px + 'px'; b.style.top = py + 'px'; });
     requestAnimationFrame(place); if (mhost._ro) mhost._ro.disconnect(); if (window.ResizeObserver) (mhost._ro = new ResizeObserver(() => place())).observe(mhost); /* (the dots follow the map when the window or phone turns) */
-    lay.querySelectorAll('.pp-mkdot').forEach((b) => { b.onpointerdown = (e) => { e.preventDefault(); b.setPointerCapture(e.pointerId); b.classList.add('on');
-      const move = (ev) => { const L = lay.getBoundingClientRect(); b.style.left = (ev.clientX - L.left) + 'px'; b.style.top = (ev.clientY - L.top) + 'px'; };
-      const up = (ev) => { b.onpointermove = b.onpointerup = null; b.classList.remove('on'); const q = toYd(ev.clientX, ev.clientY), lim = 44; q[0] = Math.max(-lim, Math.min(lim, q[0])); q[1] = Math.max(-lim, Math.min(lim, q[1]));
-        const cc = ppConf(boss, diff); cc.marks[b.dataset.mk] = q; ppSave(boss, diff, { marks: cc.marks, uses: cc.uses }); place(); box.querySelector('[data-ppreset]').disabled = false; redo(); };
-      b.onpointermove = move; b.onpointerup = up; }; });
+    // (right-click a marker (hold it on a phone): the eight marks in a row, this one lit; picking another swaps the two marks, so no mark
+    // shows twice and nothing else moves, and a mechanic set on either mark stays on its spot (your call, Oct 26: "right clicking them lets
+    // you change which mark it is"))
+    const pick = (b) => { box.querySelectorAll('.pp-mkpick').forEach((x) => x.remove()); const a = b.dataset.mk, R = b.getBoundingClientRect();
+      box.insertAdjacentHTML('beforeend', '<div class="pp-mkpick" role="menu" aria-label="Change this mark">' + PP_MKS.map((m) => '<button type="button" role="menuitem" data-mk="' + m + '"' + (m === a ? ' class="on"' : '') + ' title="' + esc(GDZ_WM[m][1]) + '" aria-label="' + esc(GDZ_WM[m][1]) + '">' + dot(m) + '</button>').join('') + '</div>');
+      const pk = box.lastElementChild; pk.style.left = Math.max(8, Math.min(innerWidth - 320, R.left + R.width / 2 - 150)) + 'px'; pk.style.top = (R.bottom + 6 + 50 > innerHeight ? R.top - 50 : R.bottom + 6) + 'px';
+      pk.onclick = (e) => { e.stopPropagation(); const q = e.target.closest('[data-mk]'); pk.remove(); if (!q || q.dataset.mk === a) return; const t = q.dataset.mk, cc = ppConf(boss, diff), pa = cc.marks[a];
+        cc.marks[a] = cc.marks[t]; cc.marks[t] = pa; for (const u of Object.keys(cc.uses)) cc.uses[u] = cc.uses[u] === a ? t : cc.uses[u] === t ? a : cc.uses[u];
+        keep(cc); mkDraw(); redo(); };
+      setTimeout(() => document.addEventListener('pointerdown', function off(e) { if (!pk.contains(e.target)) { pk.remove(); document.removeEventListener('pointerdown', off, true); } }, true)); };
+    lay.querySelectorAll('.pp-mkdot').forEach((b) => { b.oncontextmenu = (e) => { e.preventDefault(); pick(b); };
+      b.onpointerdown = (e) => { if (e.button === 2) return; e.preventDefault(); b.setPointerCapture(e.pointerId); b.classList.add('on'); const x0p = e.clientX, y0p = e.clientY; let moved = false, held = false;
+        const hold = e.pointerType === 'touch' ? setTimeout(() => { held = true; b.classList.remove('on'); pick(b); }, 550) : 0;
+        const move = (ev) => { if (held) return; if (!moved && Math.hypot(ev.clientX - x0p, ev.clientY - y0p) < 6) return; moved = true; clearTimeout(hold); const L = lay.getBoundingClientRect(); b.style.left = (ev.clientX - L.left) + 'px'; b.style.top = (ev.clientY - L.top) + 'px'; };
+        const up = (ev) => { clearTimeout(hold); b.onpointermove = b.onpointerup = null; b.classList.remove('on'); if (held || !moved) return; const q = toYd(ev.clientX, ev.clientY), lim = 44; q[0] = Math.max(-lim, Math.min(lim, q[0])); q[1] = Math.max(-lim, Math.min(lim, q[1]));
+          const cc = ppConf(boss, diff); cc.marks[b.dataset.mk] = q; keep(cc); place(); redo(); mkDraw(); };
+        b.onpointermove = move; b.onpointerup = up; }; });
     const uses = box.querySelector('.pp-mkuse'), opt0 = (v) => '<option value=""' + (v ? '' : ' selected') + '>The spot shown (no marker)</option>' + PP_MKS.map((m) => '<option value="' + m + '"' + (v === m ? ' selected' : '') + '>' + esc(GDZ_WM[m][1]) + '</option>').join('');
     uses.innerHTML = '<div class="sub">Where each mechanic happens</div>' + c.C.uses.map(([id, label]) => '<label class="pp-use"><span>' + esc(label) + '</span><select data-use="' + id + '">' + opt0(c.uses[id]) + '</select></label>').join('') +
-      '<button class="btn sm" type="button" data-ppreset' + (c.saved ? '' : ' disabled') + '>Back to your raid\'s spots</button><p class="sub">Started from where your raid stood in your own pulls. Saved in this browser.</p>';
-    uses.querySelectorAll('select[data-use]').forEach((s) => { s.onchange = () => { const cc = ppConf(boss, diff); cc.uses[s.dataset.use] = s.value; ppSave(boss, diff, { marks: cc.marks, uses: cc.uses }); uses.querySelector('[data-ppreset]').disabled = false; redo(); }; });
-    uses.querySelector('[data-ppreset]').onclick = () => { store.set(ppKey(boss, diff), '{}'); mkDraw(); redo(); }; };
+      '<div class="pp-mkbase"><button class="btn sm" type="button" data-ppreset' + (c.base === 'guide' && !c.saved ? ' disabled' : '') + '>Back to the guide\'s spots</button>' +
+      (c.C.raid ? '<button class="btn sm" type="button" data-ppraid' + (c.base === 'raid' && !c.saved ? ' disabled' : '') + '>Use your raid\'s spots</button>' : '') + '</div>' +
+      '<p class="sub">' + (c.base === 'raid' ? 'Started from where your raid stood in your own pulls.' : 'Started from the guide\'s spots.') + ' Drag a marker to move it; right-click it (hold it on a phone) to change which mark it is. Saved in this browser.</p>';
+    uses.querySelectorAll('select[data-use]').forEach((s) => { s.onchange = () => { const cc = ppConf(boss, diff); cc.uses[s.dataset.use] = s.value; keep(cc); mkDraw(); redo(); }; });
+    uses.querySelector('[data-ppreset]').onclick = () => { ppSave(boss, diff, { base: 'guide' }); mkDraw(); redo(); };
+    const rb = uses.querySelector('[data-ppraid]'); if (rb) rb.onclick = () => { ppSave(boss, diff, { base: 'raid' }); mkDraw(); redo(); }; };
   box.querySelector('.pp-mkbox').addEventListener('toggle', (e) => { if (e.target.open) mkDraw(); });
   draw();
 }
@@ -52095,18 +52123,24 @@ function ppJobs() {
     ppCss(); el.classList.add('pj-has'); if (!pics) { el.insertAdjacentHTML('beforeend', '<div class="pj-pics"></div>'); pics = el.lastElementChild; }
     pics.innerHTML = ids.map((id) => { const cd = set.cards.find((x) => x.id === id), [nm, ins] = ppSplit(cd.title);
       return '<button type="button" class="pj-pic" data-pj="' + id + '" data-note="' + esc(note) + '" data-job="' + esc(t) + '" aria-label="' + esc(cd.title + ': open it big') + '"><img alt=""><small>' + esc(nm) + (ins ? '<i>' + esc(ins) + '</i>' : '') + '</small></button>'; }).join('');
-    pics._set = set;
-    if (!window.IntersectionObserver) { ppThumbs(pics); return; }
-    (PP_IO = PP_IO || new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { PP_IO.unobserve(e.target); ppThumbs(e.target); } }), { rootMargin: '300px' })).observe(pics); });
+    // (a numbered picture sits beside its own numbered job (your call: "If there's numbered mechanics, like an order, line the image up
+    // with the assignment next to it"): Guillotine 1 by the "Guillotine 1" row, Grim Guillotine 1 by "P3 Guillotine 1"; the rest stay
+    // in the row under the jobs)
+    const num = (s) => { const k = String(s).toLowerCase().replace(/\b(p\d|grim)\b/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim(); return /\d$/.test(k) ? k : null; };
+    const rows = [...el.querySelectorAll('.plb-rr')].filter((r) => r.querySelector('.plb-rl') && !/external|zephyr/i.test(r.querySelector('.plb-rl').textContent));
+    pics._btns = [...pics.querySelectorAll('.pj-pic')]; pics._set = set;
+    for (const b of pics._btns) { const k = num(ppSplit(set.cards.find((x) => x.id === b.dataset.pj).title)[0]), r = k && rows.find((q) => num(q.querySelector('.plb-rl').textContent) === k); if (r) r.appendChild(b); }
+    el._pics = pics; if (!window.IntersectionObserver) { ppThumbs(pics); return; } /* (the card is watched, not its row, which is hidden when every picture went beside its job) */
+    (PP_IO = PP_IO || new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { PP_IO.unobserve(e.target); ppThumbs(e.target._pics); } }), { rootMargin: '300px' })).observe(el); });
 }
-async function ppThumbs(pics) { const set = pics._set; for (const b of pics.querySelectorAll('.pj-pic')) { const cd = set.cards.find((x) => x.id === b.dataset.pj), p = cd && await set.pic(cd), im = b.querySelector('img'); if (p && im && im.isConnected) im.src = p.url; } }
+async function ppThumbs(pics) { const set = pics._set; for (const b of pics._btns || pics.querySelectorAll('.pj-pic')) { const cd = set.cards.find((x) => x.id === b.dataset.pj), p = cd && await set.pic(cd), im = b.querySelector('img'); if (p && im && im.isConnected) im.src = p.url; } }
 // (a Pictures button beside every Copy for Discord button Plan shows, and beside the plan header's Copy for the game, opening the
 // same note's pictures; and the Jobs cards' small pictures)
 if (typeof document !== 'undefined') {
   const ppAdd = () => { if (!PP_ON()) return; document.querySelectorAll('[data-ndzdc],[data-ndzpcopy]').forEach((b) => { if (b.nextElementSibling && b.nextElementSibling.hasAttribute('data-ppnote')) return;
     b.insertAdjacentHTML('afterend', '<button class="btn' + (b.dataset.ndzpcopy ? '' : ' sm') + ' pp-btn" type="button" data-ppnote="' + esc(b.dataset.ndzdc || b.dataset.ndzpcopy) + '" data-tt="' + esc('<b>Pictures for Discord</b><br>One picture for each mechanic, with everyone on their spot.') + '">🖼 Pictures</button>'); });
     try { ppJobs(); } catch (e) { console.warn('Picture plan:', e); } };
-  let ppT = 0; new MutationObserver(() => { if (!ppT) ppT = requestAnimationFrame(() => { ppT = 0; ppAdd(); }); }).observe(document.documentElement, { childList: true, subtree: true }); /* (once a frame at most) */
+  let ppT = 0; new MutationObserver(() => { if (!ppT) ppT = setTimeout(() => { ppT = 0; ppAdd(); }, 60); }).observe(document.documentElement, { childList: true, subtree: true }); /* (a few times a second at most; a timer, not a frame, so a tab that isn't painting still fills) */
   document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ppnote]'); if (!b) return; e.preventDefault(); const c = ndzDcNote(b.dataset.ppnote); if (c) ppOpen(c.r, c.u0); });
   document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.pj-pic'); if (!b) return; e.preventDefault(); const c = ndzDcNote(b.dataset.note); if (c) ppOpen(c.r, c.u0, { one: b.dataset.pj, from: b.dataset.job }); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#ppWin')) { $('#ppWin').remove(); if (!$('#ndzWiz') && !$('#ndzGuide') && !$('#ndzNoteView') && !$('#ndzShot')) document.body.classList.remove('ndz-modal'); } });
