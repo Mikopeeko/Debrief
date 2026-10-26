@@ -1051,6 +1051,12 @@ async function runMentions(env, threads) {
   }
   st.done = st.done.slice(-100); if (dirty || firstRun) await env.DEBRIEF_KV.put('dc-mentions', JSON.stringify(st));
 }
+// (the one-minute run: only the tag check. Cloudflare's shortest schedule is one minute, so a reply comes within about a minute)
+const MENTION_CRON = '* * * * *';
+async function mentionTick(env) {
+  const act = await dc(env, '/guilds/' + GUILD + '/threads/active').catch(() => ({ threads: [] }));
+  await runMentions(env, (act && act.threads) || []);
+}
 async function ensureCommands(env) {
   if ((await env.DEBRIEF_KV.get('dc-cmds')) === 'v3') return;
   await dc(env, '/applications/' + APP_ID + '/guilds/' + GUILD + '/commands', { method: 'PUT', body: [...REPORT_CMDS, { name: 'killfeed', description: 'Post your guild\'s Mythic kills in #kill-feed', options: [
@@ -1403,7 +1409,9 @@ async function planShare(req, env, url) {
 }
 
 export default {
-  async scheduled(ev, env, ctx) { ctx.waitUntil((async () => {
+  async scheduled(ev, env, ctx) {
+    if (ev.cron === MENTION_CRON) { if (new Date(ev.scheduledTime || Date.now()).getUTCMinutes() % 10 !== 0) ctx.waitUntil(mentionTick(env).catch((err) => console.warn('Mentions:', err && err.message))); return; } /* (every tenth minute the ten-minute run does the tag check itself) */
+    ctx.waitUntil((async () => {
     // (a test write first: with the free daily limit used up, nothing that posts and then saves its place may run (Oct 24))
     let kvOk = true; try { await env.DEBRIEF_KV.put('kv-probe', String(Date.now())); } catch (err) { kvOk = false; console.warn('KV can\'t be written to right now, skipping the Discord jobs:', err && err.message); }
     return Promise.allSettled(kvOk ? [announcePatch(env), discordJobs(env, ev.scheduledTime || Date.now()), paceStep(env), curveCron(env)] : [paceStep(env), curveCron(env)]).then((r) => r.forEach((x) => { if (x.status === 'rejected') console.warn('Cron:', x.reason && x.reason.message); }));

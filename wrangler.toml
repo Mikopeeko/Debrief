@@ -20,7 +20,7 @@ routes = [
 # Patch notes to Discord: every 10 minutes the Worker checks for a new Patch notes day and posts it to #patch-notes
 # (needs the DISCORD_PATCH_WEBHOOK secret, set in Cloudflare). DEBRIEF_KV remembers the last day announced.
 [triggers]
-crons = ["*/10 * * * *"]
+crons = ["*/10 * * * *", "* * * * *"] # (the second one: only the @Claudette tag check, every minute)
 
 [[kv_namespaces]]
 binding = "DEBRIEF_KV"
