@@ -6915,6 +6915,9 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
   header.fight.bh.ds-hstill, header.fight.bh.ds-hstill .bhp-b, header.fight.bh.ds-hstill polyline.bhp-all-l, header.fight.bh.ds-hstill .bhp-kl, header.fight.bh.ds-hstill::after { animation: none !important; }
   /* the same page redrawn within 3 s: nothing replays */
   html.ds-still .ds-ptrans { transition: none; }
+  /* Debriefing: no content motion while the page redraws itself in a loop (the header keeps its one play) */
+  html.ds-nomotion .ds-ptrans { transition: none; }
+  html.ds-nomotion .rtb-b > i, .cgl-b > i, .cb-f > i, .prw-t > i, .rta-ph, .ds-bar, .rcb-g .ds-bar, .tm-bar i.on, .rcb-st .rcb-bar > i, .ds-rl .rqc-bar > i, html.ds-nomotion #view .dbr-v > b:first-child, html.ds-nomotion #view .cb-v, html.ds-nomotion #view .dbt-n, html.ds-nomotion #view .cgl-c, html.ds-nomotion #view .rqc-sc { animation: none; }
   html.ds-still .rtb-b > i, .cgl-b > i, .cb-f > i, .prw-t > i, .rta-ph, .ds-bar, .rcb-g .ds-bar, .tm-bar i.on, .rcb-st .rcb-bar > i, .ds-rl .rqc-bar > i, html.ds-still header.fight.bh polyline.bhp-all-l, html.ds-still header.fight.bh .bhp-b, html.ds-still header.fight.bh, html.ds-still header.fight.bh .bhp-kl, html.ds-still header.fight.bh::after, html.ds-still #view .dbr-v > b:first-child, html.ds-still #view .cb-v, html.ds-still #view .dbt-n, html.ds-still #view .cgl-c, html.ds-still #view .rqc-sc, html.ds-still html.ds-still #main .yu-t > b, html.ds-still #main .pnw-ti > b, html.ds-still #main .pgc > b { animation: none !important; }
 }
 /* kills, with or without motion: the banner keeps a gold edge, the Kill label glows, the raid lead's kill line is big */

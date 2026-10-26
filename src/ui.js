@@ -1826,6 +1826,7 @@ const PATCH_NOTES = [
     'Rotation: inside each ring, the rows follow your spec guide\'s order of importance, the same on every pull.',
     'Rotation: What to fix says each thing once, and on a phone your talents fold away so it starts right under your score.',
     'Rotation: every spec checks the same things before the pull: a weapon oil where the guides list one, and Power Word: Fortitude for both priests.',], f: [
+    'The bars and numbers that move in when a page loads now play once, when the page is really there, and finish; they no longer stall, restart or cut short, and Debriefing keeps still while it is still reading pulls.',
     'The big numbers no longer flash nonsense (like −1337 pulls) for a moment after you click a pull while the page is busy.',
     'Every tab no longer shows its old layout for a moment while a pull loads (Debriefing could sit on it for seconds): the new layouts now land in the same instant the page draws.',
     'Rotation: Fire Mage\'s tier set card shows real numbers. It read NaN, and it counted every Pyroblast cast while Pyroclasm waited instead of the ones that used it.',
@@ -30234,12 +30235,24 @@ function dsFrontDemo() { const win = document.querySelector('#main .home.fp .fpx
 function dsMotion() { const H = document.documentElement; if (!window.matchMedia || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   /* the page's fingerprint: where we are plus the numbers on it; a redraw with the same numbers within 3 s is a replay, a loading
      redraw (numbers still changing) is not */
-  const M = dsMotion, now = Date.now(), key = location.search + '|' + [...document.querySelectorAll('#view .dbr-v > b:first-child, #main .my-bc .my-tag, #view .rqc-sc')].map((e) => e.textContent.trim()).join(',').slice(0, 400);
-  if (M.key === key && now - (M.at || 0) < 3000) { H.classList.add('ds-still'); clearTimeout(M.tm); M.tm = setTimeout(() => H.classList.remove('ds-still'), 1200); } else { H.classList.remove('ds-still'); M.key = key; }
+  /* motion plays once per page, on its first draw: Debriefing redraws the whole page about once a second while it reads a pull, each
+     redraw inside a ~1 s freeze, so every later redraw of the same page within 30 s is drawn still (so is a redraw with the same
+     numbers within 3 s) */
+  /* the loading screen is not the page: its draw must not use up the page's one play */
+  if (!document.querySelector('#view [style*="--p"], #main [style*="--p"], #view .dbr-v, #view .rqc-sc, #main .my-bc')) return;
+  /* Debriefing redraws its whole page about once a second while it reads pulls (each inside a ~1 s freeze): no content motion there
+     until that loop is gone; the boss header still plays once */
+  const audit = /[?&]tab=audit(&|$)/.test(location.search) || !!document.querySelector('#view .ds-l'); H.classList.toggle('ds-nomotion', audit);
+  const M = dsMotion, now = Date.now(), page = location.pathname + location.search, key = page + '|' + [...document.querySelectorAll('#view .dbr-v > b:first-child, #main .my-bc .my-tag, #view .rqc-sc')].map((e) => e.textContent.trim()).join(',').slice(0, 400);
+  const replay = (M.key === key && now - (M.at || 0) < 3000) || (M.page === page && now - (M.pageAt || 0) < 30000);
+  /* a small redraw right after the play (a progress line, a count) must not cut the play short: within 1.5 s of it nothing is
+     marked still, it just isn't played again */
+  if (replay) { if (now - (M.pageAt || 0) > 1500) { H.classList.add('ds-still'); clearTimeout(M.tm); M.tm = setTimeout(() => H.classList.remove('ds-still'), 1200); } M.at = now; return; }
+  H.classList.remove('ds-still'); M.key = key; M.page = page; M.pageAt = now;
   M.at = now;
   /* the boss header redraws on its own while a pull loads: its line and dots play once per set of pulls, not per redraw */
   const hd = document.querySelector('header.fight.bh'), pl = hd && hd.querySelector('polyline.bhp-all-l'); if (hd) { const pts = pl ? pl.getAttribute('points') : ''; if (M.pts === pts && now - (M.ptsAt || 0) < 15000) hd.classList.add('ds-hstill'); else { M.pts = pts; M.ptsAt = now; } }
-  if (H.classList.contains('ds-still')) return;
+  if (H.classList.contains('ds-still') || audit) return;
   M.seen = M.seen || new WeakSet();
   /* bars drawn from --p (set by the studio's own passes a moment ago, in this same tick, so nothing has been painted yet): from 0 to their value */
   document.querySelectorAll('#view [style*="--p"], #main [style*="--p"]').forEach((el) => { if (M.seen.has(el)) return; M.seen.add(el); const p = el.style.getPropertyValue('--p'); if (!p || parseFloat(p) <= 0) return;
@@ -30249,7 +30262,7 @@ function dsMotion() { const H = document.documentElement; if (!window.matchMedia
     const raw = tn.nodeValue, m = raw.trim().match(/^(\d[\d,]*)(\.\d+)?([%kKmM]?)$/); if (!m) return;
     const commas = m[1].includes(','), dec = m[2] ? m[2].length - 1 : 0, end = parseFloat(m[1].replace(/,/g, '') + (m[2] || '')), suf = m[3] || ''; if (!(end > 0)) return;
     /* the clock starts on the first frame, never from a frame time that predates a freeze (that printed negative numbers) */
-    let t0 = null; const dur = 550, fmt = (x) => (commas ? Math.round(x).toLocaleString('en-US') : x.toFixed(dec)) + suf;
+    let t0 = null; const dur = 450, fmt = (x) => (commas ? Math.round(x).toLocaleString('en-US') : x.toFixed(dec)) + suf;
     const step = (t) => { if (t0 === null) t0 = t; const k = Math.max(0, Math.min(1, (t - t0) / dur)), e = 1 - Math.pow(1 - k, 3); if (k < 1) { tn.nodeValue = fmt(Math.max(0, end * e)); requestAnimationFrame(step); } else tn.nodeValue = raw; };
     tn.nodeValue = fmt(0); requestAnimationFrame(step); }); }
 (function () { const f8 = dsBars; dsBars = function (root) { f8(root); try { dsMotion(); } catch (e) {} }; })();
