@@ -7674,6 +7674,18 @@ html body #ppWin .pp-card .pp-ph { font-weight: 700; }
 html body #ppWin .pp-act { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
 html body #ppWin .pp-msg { margin-right: auto; }
 @media (max-width: 760px) { html body #ppWin .pp-mk { grid-template-columns: 1fr; } }
+/* ===== Design studio round 60 (Oct 26): Copy all in the Jobs header (the user: "put a copy all button at the top right of the
+   mechanics preview section") and the window opened quietly for it. Owner: the Design studio chat. ===== */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs > .ndz-dph { align-items: center; flex-wrap: wrap; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs > .ndz-dph > .sub { margin-left: auto; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs > .ndz-dph > [data-dssheet] { margin-left: 10px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs > .ndz-dph > .ds-sheetmsg { flex: 1 1 100%; text-align: right; font-size: 12px; margin-top: 2px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .plb-rch > [data-dssheetcard] { margin-left: auto; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .plb-rch > [data-dssheetcard] + .plb-rcs { margin-left: 8px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .ds-sheetmsg { display: block; text-align: right; font-size: 12px; margin: -4px 0 6px; }
+html body #ppWin.ds-quiet { visibility: hidden; pointer-events: none; }
+/* (the user: in the one-picture view, "remove the 'all 10 pictures' button") */
+html body #ppWin.pp-one .pp-nav [data-ppallv] { display: none !important; }
 </style>
 
 
@@ -52727,10 +52739,11 @@ function dsGuides() {
         var j = ct + (gt ? ' · ' + gt.toLowerCase() : '') + (it.job ? ' (' + it.job + ')' : ''); if (who[k].jobs.indexOf(j) < 0) who[k].jobs.push(j); }); }); });
     return order.sort(function (a, b) { return a.localeCompare(b); }).map(function (k) { return who[k]; });
   };
-  function dsSheet(win) {
+  function dsSheet(win, only, sub) {
     var cards = [].slice.call(win.querySelectorAll('.pp-card')).map(function (c) { var ph = c.querySelector('.pp-ph'), im = c.querySelector('img'); var L = null; try { L = c.dataset.legend ? JSON.parse(c.dataset.legend) : null; } catch (e) { L = null; }
-      return { t: ph ? ph.textContent.trim() : '', when: c.dataset.when || '', src: im ? im.src : '', ph: phKey(c), legend: L }; }).filter(function (c) { return c.src; });
+      return { t: ph ? ph.textContent.trim() : '', when: c.dataset.when || '', src: im ? im.src : '', ph: phKey(c), legend: L, i: +c.dataset.i || 0 }; }).filter(function (c) { return c.src && (!only || only.indexOf(c.t) >= 0); });
     var head = win.querySelector('.pp-win > h2'), title = head ? head.textContent.trim() : 'Raid plan', people = jobsOf(cards);
+    var line2 = sub ? sub + ' · ' + cards.length + (cards.length === 1 ? ' step' : ' steps') + ' · from your note' : 'Raid plan · ' + cards.length + ' steps in fight order · from your note';
     return Promise.all([
       Promise.all(cards.map(function (c) { return loadImg(c.src); })),
       Promise.all(people.map(function (p) { return iconImg(p.icon); })),
@@ -52749,7 +52762,7 @@ function dsGuides() {
       cv.width = W; cv.height = H; g = cv.getContext('2d');
       g.fillStyle = '#12141b'; g.fillRect(0, 0, W, H);
       g.font = '800 40px ' + HF; g.fillStyle = '#ece8df'; g.fillText(title, M, 56);
-      g.font = '600 14px ' + TF; g.fillStyle = '#98a0ad'; g.fillText('Raid plan · ' + cards.length + ' steps in fight order · from your note', M, 82);
+      g.font = '600 14px ' + TF; g.fillStyle = '#98a0ad'; g.fillText(line2, M, 82);
       g.font = '800 16px ' + HF; g.fillStyle = '#e6b450'; g.fillText('DEBRIEF', W - M - g.measureText('DEBRIEF').width, 56);
       g.fillRect(M, 100, W - 2 * M, 2);
       var y = 118;
@@ -52771,10 +52784,10 @@ function dsGuides() {
         grp.items.forEach(function (it, k) { var col = k % 2, x = M + col * (PW + G), yy = y + Math.floor(k / 2) * (SB + PH + RG);
           g.fillStyle = 'rgba(255,255,255,.05)'; rrect(g, x, yy + 6, PW, SB - 6, 8); g.fill();
           g.fillStyle = '#e6b450'; rrect(g, x + 10, yy + 13, 30, 26, 13); g.fill();
-          g.font = '800 15px ' + HF; g.fillStyle = '#1b1300'; var num = String(it.i + 1); g.fillText(num, x + 25 - g.measureText(num).width / 2, yy + 31);
-          g.font = '700 22px ' + HF; g.fillStyle = '#ece8df'; var when = it.c.when ? '  ·  ' + it.c.when : '', tw = 0; if (when) { g.font = '600 15px ' + TF; tw = g.measureText(when).width; g.font = '700 22px ' + HF; }
-          var t = fit(g, it.c.t, PW - 60 - tw); g.fillText(t, x + 50, yy + 33);
-          if (when) { g.font = '600 15px ' + TF; g.fillStyle = '#98a0ad'; g.fillText(when, x + 50 + g.measureText(t).width + (g.font = '700 22px ' + HF, 0), yy + 32); }
+          g.font = '800 15px ' + HF; g.fillStyle = '#1b1300'; var num = String((only ? it.c.i : it.i) + 1); g.fillText(num, x + 25 - g.measureText(num).width / 2, yy + 31);
+          var when = it.c.when ? '  ·  ' + it.c.when : '', tw = 0; if (when) { g.font = '600 15px ' + TF; tw = g.measureText(when).width; }
+          g.font = '700 22px ' + HF; g.fillStyle = '#ece8df'; var t = fit(g, it.c.t, PW - 60 - tw), tww = g.measureText(t).width; g.fillText(t, x + 50, yy + 33);
+          if (when) { g.font = '600 15px ' + TF; g.fillStyle = '#98a0ad'; g.fillText(when, x + 50 + tww, yy + 32); }
           var py = yy + SB; g.save(); rrect(g, x, py, PW, PH, 10); g.clip(); g.fillStyle = '#0b0d12'; g.fillRect(x, py, PW, PH); if (imgs[it.i]) g.drawImage(imgs[it.i], x, py, PW, PH); g.restore();
           g.strokeStyle = '#353b49'; g.lineWidth = 1; rrect(g, x + .5, py + .5, PW - 1, PH - 1, 10); g.stroke(); });
         y += Math.ceil(grp.items.length / 2) * (SB + PH + RG);
@@ -52783,18 +52796,44 @@ function dsGuides() {
     });
   }
   var E = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
-  document.addEventListener('click', function (e) {
-    var t = e.target, b = t.closest && t.closest('#ppWin [data-ppcopyall]');
-    if (!b) { var dl = t.closest && t.closest('#ppWin a[data-dssheetdl]'); if (dl && dl._blob) { e.preventDefault(); var a = document.createElement('a'); a.href = URL.createObjectURL(dl._blob); a.download = dl.dataset.dssheetdl || 'Debrief raid plan.png'; a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000); } return; }
-    e.preventDefault(); e.stopImmediatePropagation();
-    var win = document.getElementById('ppWin'), msg = win && win.querySelector('.pp-allmsg'); if (!win) return;
-    var n = win.querySelectorAll('.pp-card img[src]').length, head = win.querySelector('.pp-win > h2'), name = 'Debrief - ' + (head ? head.textContent.trim() : 'raid plan').replace(/[\\/:*?"<>|]+/g, '') + ' - raid plan.png';
+  // (the sheet from the open window, or from a window opened quietly for it: the Jobs section's own Copy all button, the
+  // user's "put a copy all button at the top right of the mechanics preview section")
+  var sheetBlob = function (only, sub) {
+    var win = document.getElementById('ppWin'), opened = false;
+    if (!win) { var pb = document.querySelector('[data-ppnote]'); if (!pb) return Promise.reject(new Error('no pictures')); pb.click(); win = document.getElementById('ppWin'); if (!win) return Promise.reject(new Error('no window')); win.classList.add('ds-quiet'); opened = true; }
+    var ready = new Promise(function (ok, no) { var t0 = Date.now(); (function poll() { var w = document.getElementById('ppWin'); if (!w) return no(new Error('closed')); var b = w.querySelector('[data-ppcopyall]'), n = w.querySelectorAll('.pp-card').length, d = w.querySelectorAll('.pp-card img[src]').length; if (n && d >= n && (!b || !b.disabled)) return ok(w); if (Date.now() - t0 > 40000) return no(new Error('slow')); setTimeout(poll, 250); })(); });
+    var close = function () { if (!opened) return; var w = document.getElementById('ppWin'); var x = w && w.querySelector('[data-ppx]'); if (x) x.click(); else if (w) w.remove(); };
+    return ready.then(function (w) { return dsSheet(w, only, sub).then(function (cv) { return new Promise(function (ok) { cv.toBlob(ok, 'image/png'); }); }); }).then(function (b) { close(); return b; }, function (err) { close(); throw err; });
+  };
+  var copySheet = function (msg, n, only, sub) {
+    var head = document.querySelector('#ppWin .pp-win > h2') || document.querySelector('#view h2'), name = 'Debrief - ' + (head ? head.textContent.trim() : 'raid plan').replace(/[\\/:*?"<>|]+/g, '') + (sub ? ' - ' + sub.replace(/[\\/:*?"<>|]+/g, '') : ' - raid plan') + '.png';
     if (msg) msg.textContent = 'Making the picture…';
-    var blobP = dsSheet(win).then(function (cv) { return new Promise(function (ok) { cv.toBlob(ok, 'image/png'); }); });
-    var done = function (ok) { blobP.then(function (blob) { if (!msg) return; msg.innerHTML = (ok ? '✓ Copied one picture with all ' + n + '. Paste it in Discord. ' : 'Your browser didn’t allow copying it. ') + '<a href="#" data-dssheetdl="' + E(name) + '">Download it</a>' + (ok ? '' : ' (' + Math.round(blob.size / 1024 / 102.4) / 10 + ' MB)'); var a = msg.querySelector('a[data-dssheetdl]'); if (a) a._blob = blob; }, function () { if (msg) msg.textContent = 'Couldn’t draw the picture.'; }); };
+    var blobP = sheetBlob(only, sub);
+    var done = function (ok) { blobP.then(function (blob) { if (!msg) return; var k = n || (only ? only.length : 0); msg.innerHTML = (ok ? '✓ Copied one picture with ' + (sub ? 'these ' + k + (k === 1 ? ' step' : ' steps') : 'all ' + (k || 'the') + ' steps') + '. Paste it in Discord. ' : 'Your browser didn’t allow copying it. ') + '<a href="#" data-dssheetdl="' + E(name) + '">Download it</a>' + (ok ? '' : ' (' + Math.round(blob.size / 1024 / 102.4) / 10 + ' MB)'); var a = msg.querySelector('a[data-dssheetdl]'); if (a) a._blob = blob; }, function () { if (msg) msg.textContent = 'Couldn’t draw the picture.'; }); };
     var write = null; try { write = navigator.clipboard && navigator.clipboard.write ? navigator.clipboard.write([new ClipboardItem({ 'image/png': blobP })]) : Promise.reject(new Error('no clipboard')); } catch (err) { write = Promise.reject(err); }
     write.then(function () { done(true); }, function () { done(false); });
+  };
+  document.addEventListener('click', function (e) {
+    var t = e.target, dl = t.closest && t.closest('a[data-dssheetdl]');
+    if (dl && dl._blob) { e.preventDefault(); var a = document.createElement('a'); a.href = URL.createObjectURL(dl._blob); a.download = dl.dataset.dssheetdl || 'Debrief raid plan.png'; a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000); return; }
+    var jb = t.closest && t.closest('#view .bj-jobs [data-dssheet]');
+    if (jb) { e.preventDefault(); var box = jb.parentNode.querySelector('.ds-sheetmsg'); if (!box) { box = document.createElement('span'); box.className = 'sub ds-sheetmsg'; jb.after(box); } copySheet(box, 0); return; }
+    var cb = t.closest && t.closest('#view .bj-jobs .plb-rc [data-dssheetcard]');
+    if (cb) { e.preventDefault(); var card = cb.closest('.plb-rc'), hd = card.querySelector('.plb-rch'), titles = [].slice.call(card.querySelectorAll('.pj-pic small')).map(function (s) { var i = s.querySelector('i'); var a = (s.firstChild && s.firstChild.nodeType === 3 ? s.firstChild.textContent : s.textContent).trim(), b = i ? i.textContent.trim() : ''; return b ? a + ' (' + b + ')' : a; });
+      var nm = (hd.querySelector('b') || {}).textContent || 'these jobs'; nm = String(nm).replace(/^\d+\s*·\s*/, '').trim();
+      var box2 = card.querySelector('.ds-sheetmsg'); if (!box2) { box2 = document.createElement('span'); box2.className = 'sub ds-sheetmsg'; hd.after(box2); } copySheet(box2, 0, titles, nm); return; }
+    var b = t.closest && t.closest('#ppWin [data-ppcopyall]'); if (!b) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    var win = document.getElementById('ppWin'); if (!win) return;
+    copySheet(win.querySelector('.pp-allmsg'), win.querySelectorAll('.pp-card img[src]').length);
   }, true);
+  // (the button in the Jobs section's header, once the cards have pictures; re-added after every Plan render)
+  var addBtn = function () { var hd = document.querySelector('#view .bj-jobs > .ndz-dph'); if (!hd || hd.querySelector('[data-dssheet]')) return; if (!document.querySelector('#view .bj-jobs .pj-pic')) return;
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'btn sm primary'; b.setAttribute('data-dssheet', ''); b.setAttribute('data-tt', '<b>Copy all pictures</b><br>One picture of every step, ready to paste in Discord (Ctrl+V).'); b.textContent = '🖼 Copy all'; hd.appendChild(b); };
+  // (and one on each job card that has pictures: "copy these assignments", the user's words)
+  var addCardBtns = function () { [].slice.call(document.querySelectorAll('#view .bj-jobs .plb-rc')).forEach(function (c) { var hd = c.querySelector('.plb-rch'); if (!hd || hd.querySelector('[data-dssheetcard]') || !c.querySelector('.pj-pic')) return;
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'btn sm'; b.setAttribute('data-dssheetcard', ''); b.setAttribute('data-tt', '<b>Copy these</b><br>One picture of just this job’s steps, ready to paste in Discord (Ctrl+V).'); b.textContent = '🖼 Copy these'; var pill = hd.querySelector('.plb-rcs'); if (pill) hd.insertBefore(b, pill); else hd.appendChild(b); }); };
+  var tm = 0; new MutationObserver(function () { if (!tm) tm = requestAnimationFrame(function () { tm = 0; addBtn(); addCardBtns(); }); }).observe(document.documentElement, { childList: true, subtree: true }); addBtn(); addCardBtns();
 })();
 
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
