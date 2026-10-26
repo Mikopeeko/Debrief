@@ -1830,6 +1830,7 @@ const PATCH_NOTES = [
   { d: '2026-10-26', h: [
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'Rotation: an open tile has one Why and one How it\'s judged. A sub-check is a plain row now: hover its title for the why, and its judging rule sits inside the tile\'s How it\'s judged. Thirteen fewer buttons to open.',
     'Pulls you\'ve opened are saved on your PC: a reload shows them in about 2 seconds, without reading the log again. When Debrief\'s rules change, each pull is read once more so nothing is out of date.',
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
