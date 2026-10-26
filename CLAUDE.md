@@ -29,6 +29,11 @@ Edit files in src/, run `python build.py` inside src/, refresh the browser tab o
 - Sign in with Warcraft Logs: the WCL client "Debrief sign-in" must list https://debriefme.io/auth/wcl/callback as a redirect URL.
 - Build with `src/build.ps1` (PowerShell, no Python or Node needed; writes the app and `online/worker.js`), then upload with
   `npx wrangler deploy` from the project root (Node is at `C:\Program Files\nodejs`; Wrangler is signed in). `wrangler.toml` has `keep_vars = true`.
+- The Discord bot is its own Worker, "debrief-discord" (wrangler.bot.toml; src/build.ps1 also writes online/bot.js). It holds the
+  @Claudette listener (a Durable Object), the one-minute tag check and bug sync, and the reminders. Bot-only changes go out with
+  `npx wrangler deploy -c wrangler.bot.toml` from a clean copy of main (the user OK'd bot-only deploys on Oct 26). The website
+  Worker keeps patch notes, feature drafts and the pace jobs, and hands the bot its keys (BotKeys). No Durable Object in the site
+  Worker, ever: it kills practice links.
 - The Warcraft Logs key lives only in Cloudflare: WCL_CLIENT_ID (a variable) and WCL_CLIENT_SECRET (a secret), set by the user on the
   Worker's settings page. Never ask for, type or repeat the secret.
 - ONE BUILD, THE USER PUSHES IT (the user, Oct 26: "moving forward i want all changes compiled into one build, and then i decide when
