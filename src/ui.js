@@ -30568,4 +30568,7 @@ function dsRotOpen() { const sec = document.querySelector('#view section.rck'); 
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
 (function () { const f17 = dsBars; let last = 0, tm = 0, pendingRoot;
-  dsBars = function (root) { const now = performance.now(); if (now - last < 150) { pendingRoot = root; clearTimeout(tm); tm = setTimeout(() => { last = performance.now(); try { f17(pendingRoot); } catch (e) {} }, Math.max(16, 150 - (now - last))); return; } last = now; clearTimeout(tm); f17(root); }; })();
+  dsBars = function (root) { const now = performance.now(); if (now - last < 150) { pendingRoot = root; clearTimeout(tm); tm = setTimeout(() => { last = performance.now(); try { f17(pendingRoot); } catch (e) {} }, Math.max(16, 150 - (now - last))); return; } last = now; clearTimeout(tm); f17(root); };
+  /* the Rotation chat's hook (2367e9d): view() calls this right after it writes a page, so a page never paints in its old layout
+     because it landed inside the 150 ms; it runs the whole chain at once and resets the clock */
+  dsBars.now = (root) => { last = performance.now(); clearTimeout(tm); f17(root); }; })();
