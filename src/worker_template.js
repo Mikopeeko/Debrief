@@ -1516,6 +1516,15 @@ async function pokeGateway(env) {
 const RL_HITS = new Map(); let RL_PROBE_AT = 0;
 const RL_Q = '{ rateLimitData { limitPerHour pointsSpentThisHour pointsResetIn } }';
 const RL_PROBE = { code: 'xw649bM3KCvFtDqn', fight: 49, s: 28809370, e: 28809370 + 60000 }; // (a Mythic Coiled Altar kill; its first minute is far more than one 10,000-event page)
+// Plan's pictures (Oct 26) draw the boss's room into a picture you can copy. The room renders come from RaidPlan's CDN, which doesn't let
+// a page copy its pictures, so this fetches only those map files (one fixed folder, a plain file name) and keeps them a week.
+async function roomArt(url, ctx) {
+  const f = url.pathname.slice('/api/art/'.length); if (!/^[\w.-]{1,80}\.(?:jpg|png|webp)$/.test(f)) return new Response('Not a room picture.', { status: 400 });
+  const cache = caches.default, key = new Request('https://art.debriefme.io/' + f), hit = await cache.match(key); if (hit) return hit;
+  const r = await fetch('https://cdn.raidplan.io/raid/wow.venomabyss/map/' + f); if (!r.ok) return new Response('No such room picture.', { status: 404 });
+  const out = new Response(r.body, { headers: { 'content-type': r.headers.get('content-type') || 'image/jpeg', 'cache-control': 'public, max-age=604800' } });
+  ctx.waitUntil(cache.put(key, out.clone())); return out;
+}
 async function rateLimitRoute(req, env, url) {
   if (req.method !== 'GET') return json({ error: 'Use a plain GET.' }, 405);
   const ip = req.headers.get('CF-Connecting-IP') || 'x', now = Date.now();
@@ -1575,6 +1584,7 @@ export default {
     if (url.hostname === HOME_HOST && url.pathname === '/__move' && req.method === 'POST') return moveIn(req, env);
     if ((url.hostname === 'www.' + HOME_HOST || url.origin === OLD_SITE) && (req.method === 'GET' || req.method === 'HEAD') && !/^\/(?:api|wcl|auth)\//.test(url.pathname)) return moveHome(req, url);
     if (url.pathname === '/api/ratelimit') return rateLimitRoute(req, env, url); /* (the site key's real allowance, Oct 26) */
+    if (url.pathname.startsWith('/api/art/')) return roomArt(url, ctx); /* (a boss room's picture for Plan's pictures, Oct 26) */
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
     if (url.pathname === '/api/discord') return req.method !== 'POST' ? json({ error: 'Discord only.' }, 405) : env.BOT ? env.BOT.fetch(req) : discordClick(req, env, ctx); /* (Discord's address stays debriefme.io: the Discord helper's Worker answers) */
     if ((url.pathname === '/api/night' && !url.searchParams.has('code')) || url.pathname === '/api/night/part') return night(req, env, url); /* (a ?code= read is a raid night's pulls for a team import, not a shared night, Oct 22) */
