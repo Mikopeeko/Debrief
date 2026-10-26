@@ -2523,7 +2523,7 @@ do
       { "Expand", "The whole night in a big window.", 3 } }) do
       if type(w) == "string" then
         if yy > 0 then yy = yy + 8 end
-        local l = fsOn(f, "bold", 11.5, COL.muted); l:SetPoint("TOPLEFT", 0, -yy); l:SetText(w); yy = yy + 21
+        local l = fsOn(f, "bold", 12, COL.muted); l:SetPoint("TOPLEFT", 0, -yy); l:SetText(w); yy = yy + 21 -- (12: nothing anyone must read is under 12, the Design studio, Oct 26)
       else
         local x = 0; if w[3] then badge(f, w[3]):SetPoint("TOPLEFT", 0, -yy); x = 22 end
         local k = fsOn(f, "bold", 13.5, w[3] and COL.text or "e6b450"); k:SetPoint("TOPLEFT", x, -yy); k:SetText(w[1])
