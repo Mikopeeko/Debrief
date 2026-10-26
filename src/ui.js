@@ -430,13 +430,17 @@ function iconizeSpells(root) {
   /* (Oct 22, the user: "I like them but not when they ruin sentence formatting": a spell's icon stays where its name is a label, at the
      start of its line (titles, bar rows, chips, tiles, list rows, a sentence that starts with it), and comes out where words come before
      it on its line (inside a sentence). The name keeps its tag and hover tooltip. The line is the nearest parent that isn't display:inline) */
-  const lineOf = (el) => { let n = el.parentElement; while (n && n.parentElement && /^(inline|contents)$/.test(getComputedStyle(n).display)) n = n.parentElement; return n; };
+  const dsp = new Map(), disp = (n) => { if (!dsp.has(n)) dsp.set(n, getComputedStyle(n).display); return dsp.get(n); };
+  const lineOf = (el) => { let n = el.parentElement; while (n && n.parentElement && /^(inline|contents)$/.test(disp(n))) n = n.parentElement; return n; };
   const midLine = (el) => { const ln = lineOf(el); if (!ln) return false; const r = document.createRange(); r.setStart(ln, 0); r.setEndBefore(el); return /\p{L}/u.test(r.toString()); };
-  (root || document).querySelectorAll('.icw:not([data-icx])').forEach((ic) => { ic.dataset.icx = '1'; if (ic.closest('.no-ic, svg')) return;
+  /* (Oct 25, tab lag: all the reading first, then the changes, so the browser works out the layout once instead of once per icon) */
+  const all = [...(root || document).querySelectorAll('.icw:not([data-icx])')], drop = [];
+  for (const ic of all) { if (ic.closest('.no-ic, svg')) continue;
     const sp = ic.parentElement && ic.parentElement.matches('.sp[data-sid]') && ic.parentElement.firstElementChild === ic ? ic.parentElement : null;
     let nx = ic.nextSibling; while (nx && nx.nodeType === 3 && !nx.nodeValue.trim()) nx = nx.nextSibling;
     const name = sp || (nx && nx.nodeType === 1 && nx.matches('.sp[data-sid]') ? ic : null); /* (only a spell's icon: inside its name, or right before it) */
-    if (name && midLine(name)) ic.remove(); }); }
+    if (name && midLine(name)) drop.push(ic); }
+  for (const ic of all) ic.dataset.icx = '1'; for (const ic of drop) ic.remove(); }
 // Spells named in plain text get the same tooltip as a spell shown with its icon, on every tab of a pull: boss abilities
 // (a rule's tip, a check's line, "fix first", a death's killing blow) and players' own spells (a fix like "Use Blessing of
 // Sacrifice more", "died with Divine Shield still ready", a coaching tip). Boss abilities: every one this boss's rules and
@@ -1835,6 +1839,7 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'Switching tabs is much quicker: Rotation and Debriefing no longer work everything out again on each click (Rotation about twice as fast, Debriefing about two and a half times).',
     'Plan on a phone: the Who plays table scrolls sideways under a fixed name column instead of squeezing the boss pictures to slivers.',
     'Plan: the What changed and why box with several lines (Swap all in, Pick who plays for me) lists them tidily under its title, with Got it at the end.',
     'The raid lead\'s lines say "after mistakes in 23 pulls" and "not fixed yet" instead of the old wording.',
@@ -21601,7 +21606,13 @@ const TANK_SPECS = /^(Protection Warrior|Protection Paladin|Guardian Druid|Brewm
 function tankWins(r, p, t1) { const TK = tankHitIds(r), tk = []; for (const u of (p.hitIn || []).filter(([x, id]) => x <= t1 && TK.has(id)).map(([x]) => x).sort((x, y) => x - y)) { const a = Math.max(0, u - 1.5), z = Math.min(t1, u + 4.5); if (tk.length && a <= tk[tk.length - 1][1]) tk[tk.length - 1][1] = Math.max(tk[tk.length - 1][1], z); else tk.push([a, z]); } return tk; }
 function tankHitIds(r) { if (TKW.has(r)) return TKW.get(r); const n = new Map(); for (const p of r.players.values()) { const tk = TANK_SPECS.test(p.specName || ''); for (const [, id] of p.hitIn || []) { const c = n.get(id) || [0, 0]; c[0]++; if (tk) c[1]++; n.set(id, c); } }
   const o = new Set([6603]); for (const [id, [a, b]] of n) if (b >= 3 && b >= 0.75 * a) o.add(id); TKW.set(r, o); return o; }
-function genRun(spec, D, reps, name, one) {
+/* (Oct 25, tab lag: a spec's checks for a player over some pulls never change for the same pulls, so they're worked out once and reused on
+   every tab click (they were redone each time: 0.9 to 1.6 s on Rotation and Debriefing)) */
+const REP_ID = new WeakMap(); let REP_N = 0; const repId = (r) => { if (!REP_ID.has(r)) REP_ID.set(r, ++REP_N); return REP_ID.get(r); };
+const GEN_MEMO = new Map();
+function genRun(spec, D, reps, name, one) { let k = null; try { k = spec + '|' + name + '|' + String(one) + '|' + deathCutN() + '|' + reps.map(repId).join(','); } catch (e) { k = null; }
+  if (k && GEN_MEMO.has(k)) return GEN_MEMO.get(k); const v = genRun0(spec, D, reps, name, one); if (k) { if (GEN_MEMO.size > 600) GEN_MEMO.clear(); GEN_MEMO.set(k, v); } return v; }
+function genRun0(spec, D, reps, name, one) {
   const per = [];
   for (const r of reps) { const p = [...r.players.values()].find((y) => y.name === name); if (!p) continue; const C0 = perfContext(r), x0 = C0.per.get(name), end = C0.end, t1 = x0 ? Math.min(x0.until, end) : end; if (t1 < 20) continue;
     per.push({ r, p, end, t1, c: multiOf(castOf(r, p, 0, end), D.multi) }); }
@@ -23537,6 +23548,9 @@ function genTuned(spec, D) { const t = GEN_TUNE[spec]; if (!t) return D; const l
   if (t.abc) E.k.abc = t.abc; if (drop.has('res')) E.res = null; else if (D.res && t.res) E.res = { ...D.res, ok: t.res[0], warn: t.res[1] }; if (drop.has('mana')) E.mana = false; if (t.mana) E.manaK = t.mana; return E; }
 
 const SPEC_CHECKS = { 'Holy Paladin': hpalChecks, 'Restoration Druid': rdruChecks, 'Preservation Evoker': pevkChecks, 'Demonology Warlock': pdemChecks };
+/* (Oct 25, tab lag: the hand-written specs' checks are kept per pulls, player and setting too, like genRun) */
+for (const k of Object.keys(SPEC_CHECKS)) { const f = SPEC_CHECKS[k]; SPEC_CHECKS[k] = (reps, name, one) => { let key = null; try { key = 'h:' + k + '|' + name + '|' + String(one) + '|' + deathCutN() + '|' + reps.map(repId).join(','); } catch (e) { key = null; }
+  if (key && GEN_MEMO.has(key)) return GEN_MEMO.get(key); const v = f(reps, name, one); if (key) { if (GEN_MEMO.size > 600) GEN_MEMO.clear(); GEN_MEMO.set(key, v); } return v; }; }
 // (and the Casts view judges the same spells each spec presses on cooldown)
 for (const [k, D] of Object.entries(GEN_SPECS)) { SPEC_CHECKS[k] = genChecks(k, D); const T = genTuned(k, D); if (!SPEC_EFF[k]) SPEC_EFF[k] = Object.fromEntries((T.rot || []).flatMap((q) => (q.names || [q.n]).map((n) => [n.toLowerCase(), {}]))); }
 // The view: a bar per player whose spec has checks (how many of them are in good shape), their checks under their name
@@ -25362,7 +25376,9 @@ const RCD_CD = { Tranquility: 180, Revival: 180, Restoral: 180, 'Divine Hymn': 1
 // (each healer's own raid cooldown, counted as theirs even if never pressed this pull)
 const RCD_SPEC = { 'Restoration Druid': ['Tranquility'], 'Holy Priest': ['Divine Hymn'], 'Mistweaver Monk': ['Revival'], 'Preservation Evoker': ['Rewind'], 'Restoration Shaman': ['Spirit Link Totem'], 'Holy Paladin': ['Aura Mastery'], 'Discipline Priest': ['Power Word: Barrier'] };
 const LUSTS = ['bloodlust', 'heroism', 'time warp', 'fury of the aspects', 'primal rage', "harrier's cry"];
-function rcdData(r) {
+const RCD_MEMO = new WeakMap();
+function rcdData(r) { const k = cutT(r); const m = RCD_MEMO.get(r); if (m && m.k === k) return m.v; const v = rcdData0(r); RCD_MEMO.set(r, { k, v }); return v; }
+function rcdData0(r) {
   const dur = r.duration, ct = Math.min(dur, cutT(r)), ts = r.takenS || [];
   const byG = new Map([...r.players.values()].map((p) => [p.guid, p])), named = (p) => p && p.name && !/^Player-/.test(p.name);
   // the raid cooldowns pressed, each as long as it lasted (the same list the Healing tab's cooldown panel uses)
