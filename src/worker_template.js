@@ -554,10 +554,11 @@ async function runInbox(env) {
           const id = await env.DEBRIEF_KV.get('beta-thread-' + o.forumPost); if (!id) continue;
           await dc(env, '/channels/' + id, { method: 'PATCH', body: { archived: false } }).catch(() => {});
           await dc(env, '/channels/' + id + '/messages/' + id, { method: 'PATCH', body: { content: text.slice(0, 1900) } });
-        } else if (o.op === 'beta-post' && text) {
+        } else if ((o.op === 'beta-post' || o.op === 'how-post') && text) {
+          const how = o.op === 'how-post', tk = how ? 'how-thread-' : 'beta-thread-'; /* (how-post: the public #how-it-works forum, its own thread keys, o.lock locks the post) */
           // (a message in #beta-testers-only: its pictures come from KV (base64), and pingRole pings that role by name. Only that
           // channel; the user asked for it, Oct 24)
-          const chName = o.channel === 'beta-testers-old' ? 'beta-testers-old' : 'beta-testers-only', c = (await dc(env, '/guilds/' + GUILD + '/channels')).find((x) => x.name === chName); if (!c) continue;
+          const chName = how ? 'how-it-works' : o.channel === 'beta-testers-old' ? 'beta-testers-old' : 'beta-testers-only', c = (await dc(env, '/guilds/' + GUILD + '/channels')).find((x) => x.name === chName); if (!c) continue;
           let content = text.slice(0, 1900); const men = { parse: [] };
           if (o.pingRole) { const role = ((await dc(env, '/guilds/' + GUILD + '/roles')) || []).find((r) => r.name === String(o.pingRole)); if (role) { content = '<@&' + role.id + '> ' + content; men.roles = [role.id]; } }
           const keys = Array.isArray(o.images) ? o.images.slice(0, 6) : [];
@@ -566,7 +567,8 @@ async function runInbox(env) {
           if (o.forumPost) {
             if (c.type !== 15) { console.warn('beta-testers-only is not a forum'); continue; }
             const t = await dcFiles(env, '/channels/' + c.id + '/threads', 'POST', { name: String(o.forumPost).slice(0, 95), message: { content, allowed_mentions: men, flags: 4 } }, keys);
-            await env.DEBRIEF_KV.put('beta-thread-' + o.forumPost, t.id);
+            await env.DEBRIEF_KV.put(tk + o.forumPost, t.id);
+            if (o.lock && t && t.id) await dc(env, '/channels/' + t.id, { method: 'PATCH', body: { locked: true } }).catch((err) => console.warn('Lock:', err && err.message));
             if (o.dropImages) for (const k of keys) await env.DEBRIEF_KV.delete(k).catch(() => {});
             continue;
           }
@@ -574,15 +576,16 @@ async function runInbox(env) {
           // open a thread of that name on this message, a "sub channel" for one part of the website)
           let target = c.id;
           if (o.thread) {
-            target = (await env.DEBRIEF_KV.get('beta-thread-' + o.thread)) || '';
+            target = (await env.DEBRIEF_KV.get(tk + o.thread)) || '';
             if (!target) { const act = await dc(env, '/guilds/' + GUILD + '/threads/active').catch(() => ({ threads: [] })); const t = (act.threads || []).find((x) => x.parent_id === c.id && x.name === o.thread); target = t ? t.id : ''; }
             if (!target) continue;
             await dc(env, '/channels/' + target, { method: 'PATCH', body: { archived: false } }).catch(() => {});
           }
           const m = await dcFiles(env, '/channels/' + target + '/messages', 'POST', { content, allowed_mentions: men, flags: 4 }, keys);
+          if (o.lock && o.thread && target) await dc(env, '/channels/' + target, { method: 'PATCH', body: { locked: true } }).catch((err) => console.warn('Lock:', err && err.message));
           if (o.startThread && m && m.id) {
             const th = await dc(env, '/channels/' + c.id + '/messages/' + m.id + '/threads', { method: 'POST', body: { name: String(o.startThread).slice(0, 95), auto_archive_duration: 10080 } });
-            await env.DEBRIEF_KV.put('beta-thread-' + o.startThread, th.id);
+            await env.DEBRIEF_KV.put(tk + o.startThread, th.id);
           }
           if (o.dropImages) for (const k of keys) await env.DEBRIEF_KV.delete(k).catch(() => {});
         } else if (o.op === 'allow-announce') {
