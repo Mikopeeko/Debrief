@@ -7280,6 +7280,11 @@ html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac +
 #view .pf-inl.spc-v > details.spc-chd.ds-glance > summary.spc-chap { margin: 0; padding: 9px 14px; font-size: 13px; letter-spacing: 1px; cursor: pointer; }
 #view .pf-inl.spc-v > details.spc-chd.ds-glance > summary.spc-chap::before, #view .pf-inl.spc-v > details.spc-chd.ds-glance > summary.spc-chap > .spc-chn { display: none; }
 #view .pf-inl.spc-v > details.spc-chd.ds-glance > summary.spc-chap > .spc-chs { font: 400 12.5px var(--body); letter-spacing: 0; text-transform: none; color: var(--muted); text-shadow: none; }
+/* the checklist's panel reads like the strip above it: raised, with a clear edge (the user: "maybe this box should have something similar") */
+#view .pfv .ds-rcols section.rck .rck-cats, #view section.rck > .rck-cats { background: var(--raised, rgba(255,255,255,.05)) !important; border: 1px solid rgba(255,255,255,.16) !important; border-radius: 10px !important; }
+/* "Where your healing came from": the same raised panel, and the legend's colour is a thin tag on the icon instead of a second marker */
+#view .rck-gx .rgx-src { background: var(--raised, rgba(255,255,255,.05)) !important; border: 1px solid rgba(255,255,255,.16) !important; border-radius: 10px !important; }
+#view .rck-gx .rgx-src .rgx-lg > span > u { display: inline-block; width: 3px; height: 18px; border-radius: 2px; margin: 0 5px 0 0; vertical-align: middle; }
 /* a card's How line is not cut off on a phone */
 @media (max-width: 760px) { #view .rck-sg .rck-how { display: block; -webkit-line-clamp: unset; overflow: visible; } }
 </style>
