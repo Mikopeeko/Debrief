@@ -16193,8 +16193,39 @@ function getRep(item) {
 let AN_Q = Promise.resolve();
 const anPause = () => new Promise((r) => setTimeout(r, 0));
 const analyzeSoft = (item, text, opts) => { const run = AN_Q.then(() => E.analyzeAsync(item, text, opts, anPause)); AN_Q = run.catch(() => {}); return run; };
+/* (Oct 25, your ask "everytime i reload the page it reloads the entire log": a finished reading is kept on this PC, so a reload opens the pull
+   at once instead of reading the log again. A new version of Debrief (new rules) reads each pull once more; the 120 newest are kept) */
+const RD = (() => { let dbp = null, ver = null;
+  const open = () => dbp || (dbp = new Promise((res) => { try { const q = indexedDB.open('wla-reads', 1); q.onupgradeneeded = () => q.result.createObjectStore('reps'); q.onsuccess = () => res(q.result); q.onerror = () => res(null); } catch (e) { res(null); } }));
+  const hash = (s) => { let h = 5381; for (let i = 0; i < s.length; i += 7) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36) + s.length.toString(36); };
+  const version = () => ver || (ver = hash([...document.scripts].map((x) => x.text || '').join('|')));
+  const keyOf = (item) => { const w = item.wcl; const base = w ? 'w:' + w.code + ':' + w.fight : item.shr ? 's:' + (item.shr.id || item.shr) + ':' + item.n : 'f:' + (item.startMs || 0) + ':' + item.boss + ':' + item.pull;
+    let o = ''; try { o = JSON.stringify([overrides(), (S.packs || []).length]); } catch (e) { o = ''; } return base + '|' + item.diffId + '|' + version() + '|' + hash(o); };
+  const tx = async (mode, fn) => { const d = await open(); if (!d) return null; return new Promise((res) => { try { const t = d.transaction('reps', mode), st = t.objectStore('reps'); const out = fn(st); t.oncomplete = () => res(out && out.result !== undefined ? out.result : out); t.onerror = () => res(null); t.onabort = () => res(null); } catch (e) { res(null); } }); };
+  // a reading with its live parts worked out (they're functions, which can't be saved)
+  const strip = (o, seen = new WeakMap()) => { if (typeof o === 'function') return undefined; if (!o || typeof o !== 'object') return o; if (seen.has(o)) return seen.get(o);
+    if (o instanceof Map) { const m = new Map(); seen.set(o, m); for (const [k, v] of o) m.set(k, strip(v, seen)); return m; } if (o instanceof Set) { const s2 = new Set(); seen.set(o, s2); for (const v of o) s2.add(strip(v, seen)); return s2; }
+    if (Array.isArray(o)) { const a = []; seen.set(o, a); for (const x of o) a.push(strip(x, seen)); return a; } if (o instanceof Date || ArrayBuffer.isView(o)) return o;
+    const c = {}; seen.set(o, c); for (const k of Object.keys(o)) { const v = strip(o[k], seen); if (v !== undefined) c[k] = v; } return c; };
+  const bake = (rep) => { const ct = Math.min(cutT(rep), rep.duration || Infinity);
+    const bakeJudge = (g) => { for (const j of g.judge || []) { if (typeof j.mk !== 'function') continue; const tl = (j.tl || []).filter((x) => x.t <= ct + 0.05); if (!tl.length) continue;
+      const worst = tl.slice().sort((a, b) => (j.dt != null ? Math.abs(a.t - j.dt) - Math.abs(b.t - j.dt) : b.a - a.a))[0]; try { j._mkAt = worst.t; j._mkMap = j.mk(worst.t); } catch (e) { /* (no map) */ } } };
+    for (const s of (rep.module && !rep.module.error && rep.module.sections) || []) for (const g of s.groups || []) {
+      if (typeof g.lim === 'function') { try { g._lim = g.lim(ct); } catch (e) { /* (the full-pull limits) */ } }
+      bakeJudge(g); if (typeof g.recut === 'function' && isFinite(ct)) { try { const c = g.recut(ct); g._rc = { t: ct, c: c || null }; if (c) bakeJudge(c); } catch (e) { /* (no re-cut) */ } } } };
+  const revive = (rep) => { for (const s of (rep.module && !rep.module.error && rep.module.sections) || []) for (const g of s.groups || []) {
+    const live = (x) => { for (const j of x.judge || []) if (j._mkAt != null) j.mk = (t) => (Math.abs(t - j._mkAt) < 0.01 ? j._mkMap : null); };
+    live(g); if (g._lim) g.lim = () => g._lim; if (g._rc) { if (g._rc.c) live(g._rc.c); g.recut = (t) => (Math.abs(t - g._rc.t) < 0.05 ? g._rc.c : g); } } return rep; };
+  return {
+    async get(item) { try { const v = await tx('readonly', (st) => st.get(keyOf(item))); return v && v.rep ? revive(v.rep) : null; } catch (e) { return null; } },
+    put(item, rep) { const go = async () => { try { bake(rep); const v = { at: Date.now(), rep: strip(rep) }; v.rep.item = null; await tx('readwrite', (st) => st.put(v, keyOf(item)));
+        const keys = await tx('readonly', (st) => st.getAllKeys()); if (keys && keys.length > 120) { const ats = []; for (const k of keys) { const x = await tx('readonly', (st) => st.get(k)); ats.push([k, (x && x.at) || 0]); } ats.sort((a, b) => a[1] - b[1]); await tx('readwrite', (st) => { for (const [k] of ats.slice(0, keys.length - 120)) st.delete(k); }); } } catch (e) { /* (not saved: it reads again next time) */ } };
+      (window.requestIdleCallback || ((f) => setTimeout(f, 1500)))(() => go(), { timeout: 8000 }); } }; })();
 async function readRep(item) {
   if (CACHE.has(item)) return CACHE.get(item);
+  { const saved = await RD.get(item); if (saved) { saved.item = item;
+      if (item.wcl) for (const a of item.wcl.abilities.values()) { const k = String(a.name || '').toLowerCase(); if (k && a.gameID > 1 && !E.SPELLID.has(k)) E.SPELLID.set(k, a.gameID); }
+      saved._saved = true; applyNote(saved); ndzSpecSave(saved); CACHE.set(item, saved); cacheTrim(); histSave(saved); return saved; } }
   let text;
   if (item.wcl) {
     const st = () => document.getElementById('loadmsg');
@@ -16220,6 +16251,7 @@ async function readRep(item) {
   ndzSpecSave(rep); /* (Plan with a roster: each raider's class, spec and role, remembered) */
   CACHE.set(item, rep); cacheTrim();
   histSave(rep);
+  RD.put(item, rep); /* (kept on this PC for the next reload) */
   return rep;
 }
 /* (Oct 25, the Design studio's report "the graphics are flashing while the page loads": live numbers arriving one by one (pace, rate tiles, top
@@ -16234,9 +16266,14 @@ function liveRedraw() { clearTimeout(LIVE_T); if (!LIVE_0) LIVE_0 = Date.now(); 
   if (!holding() && (document.querySelector('.pcx-tile.on') || livePending()) && Date.now() - LIVE_0 < 10000) { liveRedraw(); return; } /* (wait for the rest, at most 10 s; behind the hold card it draws at once, which starts the next read) */
   LIVE_0 = 0; const y = window.scrollY; renderMain(); window.scrollTo({ top: y }); }, holding() ? 60 : 700); }
 /* (the hold: Debriefing is drawn out of sight until its live numbers are in, then shown once (4 s at most)) */
+/* (Oct 25: the live numbers are remembered on this PC for 6 hours, so a reload doesn't wait for them again) */
+let LIVE_RESTORED = false;
+const liveMaps = () => ({ CURVE_LIVE, KGUILD, RATE_LIVE, PACE_LIVE, GHIST });
+function liveRestore() { if (LIVE_RESTORED) return; LIVE_RESTORED = true; try { const o = JSON.parse(localStorage.getItem('wla-live') || 'null'); if (!o || Date.now() - o.at > 6 * 3600e3) return; const M = liveMaps(); for (const [n, ent] of Object.entries(o.d || {})) { const m = M[n]; if (m) for (const [k, v] of ent) if (!m.has(k) && v != null) m.set(k, v); } } catch (e) { /* (fetched again) */ } }
+function liveSave() { try { const M = liveMaps(), d = {}; for (const [n, m] of Object.entries(M)) d[n] = [...m].filter(([, v]) => v != null); const s = JSON.stringify({ at: Date.now(), d }); if (s.length < 3e6) localStorage.setItem('wla-live', s); } catch (e) { /* (not remembered) */ } }
 let HOLD_T = 0, HOLD_0 = 0;
-function holdStart() { clearTimeout(HOLD_T); const R0 = document.documentElement; if (S.tab !== 'audit') { R0.classList.remove('dbr-holding'); return; } R0.classList.add('dbr-holding'); HOLD_0 = Date.now(); HOLD_T = setTimeout(holdCheck, 400); }
-function holdCheck() { if (!holding()) return; if (S.tab === 'audit' && Date.now() - HOLD_0 < 4000 && (LIVE_T || livePending(true))) { HOLD_T = setTimeout(holdCheck, 250); return; } /* (4 s at most; the previous pull isn't waited for (it can take much longer): its comparison says it's reading) */ document.documentElement.classList.remove('dbr-holding'); }
+function holdStart() { clearTimeout(HOLD_T); try { liveRestore(); } catch (e) { /* (fetched again) */ } const R0 = document.documentElement; if (S.tab !== 'audit') { R0.classList.remove('dbr-holding'); return; } R0.classList.add('dbr-holding'); HOLD_0 = Date.now(); HOLD_T = setTimeout(holdCheck, 400); }
+function holdCheck() { if (!holding()) return; if (S.tab === 'audit' && Date.now() - HOLD_0 < 4000 && (LIVE_T || livePending(true))) { HOLD_T = setTimeout(holdCheck, 250); return; } /* (4 s at most; the previous pull isn't waited for (it can take much longer): its comparison says it's reading) */ document.documentElement.classList.remove('dbr-holding'); try { liveSave(); } catch (e) { /* (not remembered) */ } }
 async function select(item) {
   if (S.tab === 'overview') S.tab = 'audit'; /* (opening a pull leaves the Plan page) */
   S.miss = 0; syncUrl(item);
@@ -16864,9 +16901,11 @@ const PATCH_NOTES = [
   { d: '2026-10-26', h: [
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'Pulls you\'ve opened are saved on your PC: a reload shows them in about 2 seconds, without reading the log again. When Debrief\'s rules change, each pull is read once more so nothing is out of date.',
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'The raid lead\'s lines say "after mistakes in 23 pulls" and "not fixed yet" instead of the old wording.',
   ] },
   { d: '2026-10-25', h: [
     { t: 'Debriefing, slim and in place', d: 'A mechanic\'s details open under the row you click, with a small map you can zoom with the wheel or its + and − (⤢ opens it big). The mechanic rows, the details and the coach\'s rows share one slim shape with the gear column on Rotation.' },
@@ -17131,7 +17170,7 @@ const PATCH_NOTES = [
     { t: 'Your coach on Debriefing', d: 'Every pull and every night now opens with a coach right under the boss banner: what went right, what went wrong and how to fix it, and one thing to focus on next pull. Pick yourself at the top right and it coaches you. Read the full coaching opens the long version.' },
     { t: 'Why we wiped', d: 'Every wipe on Debriefing now says in one line what lost it, like "Lost to Dreadmarch at 3:07: Boltzzx didn\'t pick up their soul fragments", and All pulls shows what wiped us most. Click more for the raid lead\'s take.' },
     { t: 'Learn the fight from your mistakes', d: 'Every mechanic in Debriefing links to its part of the boss guide: under the Fix cards, and inside each mechanic. One click from "Dreadmarch: failed" to how Dreadmarch works.' },
-    { t: 'Since last raid', d: 'All pulls now remembers each night and compares it with your last raid on the same boss: what you fixed, what got better or worse, and what\'s still going wrong. Pick a player to see their mistakes that also happened last raid.' },
+    { t: 'Since last raid', d: 'All pulls now remembers each night and compares it with your last raid on the same boss: what you fixed, what got better or worse, and what\'s not fixed yet. Pick a player to see their mistakes that also happened last raid.' },
   ], n: [
     'Debrief in game: when the focus is one of the What went wrong cards, that card says FOCUS NEXT PULL and the separate Focus box is gone, like the website.',
     'Breakdown: a mechanic that went wrong is now one plain line, with what happened and the flag in words. Open it for why, how many were done right, how you compare with top guilds, and one map at a time (the worst moment first; click another row for its map).',
@@ -26967,7 +27006,7 @@ function weekLine(nowW, prev) { if (!prev) return '';
   const G = { fixed: [], better: [], worse: [], again: [], new: [] };
   for (const [id, m] of Object.entries(nowW.mech)) { const k = wkCmp(m, prev.mech[id]); if (k) G[k].push(m.t); }
   const two = (l) => (l.length > 2 ? l.slice(0, 2).join(', ') + ' and ' + (l.length - 2) + ' more' : lpAnd(l));
-  const parts = [G.fixed.length ? 'fixed ' + two(G.fixed) : '', G.better.length ? 'better at ' + two(G.better) : '', G.worse.length ? 'worse at ' + two(G.worse) : '', G.again.length ? 'still going wrong: ' + two(G.again) : '', G.new.length ? 'new: ' + two(G.new) : ''].filter(Boolean);
+  const parts = [G.fixed.length ? 'fixed ' + two(G.fixed) : '', G.better.length ? 'better at ' + two(G.better) : '', G.worse.length ? 'worse at ' + two(G.worse) : '', G.again.length ? 'not fixed yet: ' + two(G.again) : '', G.new.length ? 'new: ' + two(G.new) : ''].filter(Boolean);
   if (!parts.length) return ''; return 'Since last raid (' + wkDate(prev) + ', ' + plural(prev.pulls, 'pull') + '): ' + parts.join('; ') + '.'; }
 // (what went right)
 function coachRight(reps, name, S2) {
@@ -27567,7 +27606,7 @@ function killCall(reps, w0) {
   // (what clinched it: a mechanic that kept going wrong tonight and was clean on the kill)
   try { const ks = pullSections(kill), earlier = before.filter((b) => CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.module); let best = null;
     for (const [id, x] of ks) { if (id === 'deaths' || id === 'avoid' || x.st !== 'ok' || x.s.info) continue; const nb = earlier.filter((r) => { const y = pullSections(r).get(id); return y && (y.st === 'bad' || y.st === 'warn'); }).length; if (nb >= 2 && (!best || nb > best.n)) best = { n: nb, t: dbfPlain(x.s.title) }; }
-    if (best && !farm) bits.push(best.t + ' was clean this time, after going wrong in ' + plural(best.n, 'pull') + ' tonight.'); } catch (e) { /* (no clincher) */ }
+    if (best && !farm) bits.push(best.t + ' was clean this time, after mistakes in ' + plural(best.n, 'pull') + ' tonight.'); } catch (e) { /* (no clincher) */ }
   // (deaths)
   const dN = (kill.deaths || []).length; if (!dN) bits.push('Nobody died.'); else if (dN <= 2 && !farm) bits.push('Only ' + plural(dN, 'death') + '.');
   // (shout-outs that are earned)
@@ -27652,7 +27691,7 @@ function coachSummary(reps, name) {
       /* (Oct 23: on one pull, a mechanic done right after going wrong on the last pull that reached it is a win) */
       if (reps.length !== 1 || name) return R0; try { const it0 = reps[0].item, prv = ((S.index && S.index.bosses) || []).filter((b) => b.id === it0.id && b.diffId === it0.diffId && b.pull < it0.pull && CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.players).sort((p, q) => q.item.pull - p.item.pull);
         const fixed = []; for (const [id, y] of pullSections(reps[0])) { if (y.st !== 'ok' || id === 'deaths' || id === 'avoid') continue; const lastR = prv.find((r) => pullSections(r).get(id)); const py = lastR && pullSections(lastR).get(id); if (py && (py.st === 'bad' || py.st === 'warn')) fixed.push(String(y.s.title).replace(/\s*\(.*$/, '')); }
-        return fixed.length ? [{ t: lpAnd(fixed.slice(0, 3)) + (fixed.length === 1 ? ' was' : ' were') + ' done right this pull, after going wrong last pull.' }].concat(R0.filter((y) => !/ done right\.$/.test(y.t))).slice(0, 3) : R0; } catch (e) { return R0; } })();
+        return fixed.length ? [{ t: lpAnd(fixed.slice(0, 3)) + (fixed.length === 1 ? ' was' : ' were') + ' done right this pull, after a mistake last pull.' }].concat(R0.filter((y) => !/ done right\.$/.test(y.t))).slice(0, 3) : R0; } catch (e) { return R0; } })();
     const who = name ? String(name).split('-')[0] : '', w0 = wrong[0];
     const at0 = dbfAt(pullShort(it)), res = kill ? 'Boss down on pull ' + kill.item.pull : night ? reps.length + ' pulls tonight' : 'We wiped ' + (/^(P\d|Int)/i.test(at0) ? 'in ' : 'at ') + at0;
     /* (the first domino in a few words, for the raid's headline on one pull: "set 4's adds were still alive") */
@@ -29198,8 +29237,8 @@ async function night(part) {
   const wrongS = one ? oneWrong : !db ? [] : db.fix.map((x) => ({ sev: x.sev, html: x.title + (x.sub ? '. <span class="sub">' + x.sub + '</span>' : '.') })).concat(db.worse.map((x) => ({ sev: 'warn', html: '<b>Getting worse:</b> ' + x })));
   const rightS = one ? [].concat(oneD.length && !oneD.some((x) => x.died) ? ['<b>Alive at the end of every pull</b> they were in'] : [], cleanM.length ? ['<b>Clean every pull:</b> ' + esc(cleanM.join(', '))] : [], cleanA.length ? ['<b>Assignments done every pull:</b> ' + esc(cleanA.join(', '))] : []) : [].concat(kill ? ['<b>Killed on pull ' + kill.pull + '</b>' + (kill.pull > 1 ? ' after ' + plural(kill.pull - 1, 'wipe') : '')] : [], db ? db.better.map((x) => '<b>Getting better:</b> ' + x) : [],
     cleanM.length ? ['<b>Clean every pull:</b> ' + esc(cleanM.join(', '))] : [], cleanA.length ? ['<b>Assignments done every pull:</b> ' + esc(cleanA.join(', '))] : []);
-  const fix = one ? wrongRight(wrongS, rightS, { sub: 'for ' + esc(one) + ', in the ' + plural(oneD.length, 'pull') + ' they were in', none: 'Nothing kept going wrong for ' + esc(one) + '.' }) : !db ? '' : wrongRight(wrongS, rightS, { max: 6, sub: (reps.length < pulls.length ? 'from ' + reps.length + ' of ' + pulls.length + ' pulls downloaded' : 'across all ' + plural(reps.length, 'pull')) + ', each up to the wipe filter',
-    none: 'Nothing kept going wrong.', noneRight: 'Nothing was clean every pull yet.', moreWhere: 'in Mechanics and Assignments below' });
+  const fix = one ? wrongRight(wrongS, rightS, { sub: 'for ' + esc(one) + ', in the ' + plural(oneD.length, 'pull') + ' they were in', none: 'No repeated mistakes for ' + esc(one) + '.' }) : !db ? '' : wrongRight(wrongS, rightS, { max: 6, sub: (reps.length < pulls.length ? 'from ' + reps.length + ' of ' + pulls.length + ' pulls downloaded' : 'across all ' + plural(reps.length, 'pull')) + ', each up to the wipe filter',
+    none: 'No repeated mistakes.', noneRight: 'Nothing was clean every pull yet.', moreWhere: 'in Mechanics and Assignments below' });
   // each group's report card in the same framed card as the overall one: the grade and score on the left, a tile per part
   const secHead = (id, title, sub) => '<div class="sum-h" id="' + id + '"><h2>' + title + '</h2>' + (sub ? '<span class="sub">' + sub + '</span>' : '') + '</div>';
   const rcCard = (g, what, tiles, title) => '<div class="panel nc-rc2 sum-rc"><div class="rc-all" title="Grades go S, A, B, C, D and F, and each pull counts up to the wipe filter">' + gradeChip(g.letter, true) + '<div><div class="pt-l">' + (title || 'Report card') + '</div><div class="rc-sc">' + Math.round(g.overall) + '<span> / 100</span></div><div class="sub">' + what + '</div></div></div>' +
@@ -29231,8 +29270,8 @@ async function night(part) {
     return '<div class="panel nc-rc2 sum-grade"><div class="rc-all" title="Grades go S, A, B, C, D and F, and each pull counts up to the wipe filter">' + gradeChip(letterOf(overall), true) + '<div><div class="pt-l">The night\'s grade</div><div class="rc-sc">' + Math.round(overall) + '<span> / 100</span></div><div class="sub">' +
       (ga ? 'mechanics 60%, assignments 40%' : 'boss mechanics, avoidable damage, survival and interrupts') + ' · ' + plural(reps.length, 'pull') + ', each up to the wipe filter</div></div></div>' +
       '<div class="pts rc-cats" style="--n:' + tiles.length + '">' + tiles.join('') + '</div></div>'; })();
-  const fixSplit = one ? wrongRight(wrongS, rightS, { split: true, sub: 'for ' + esc(one) + ', in the ' + plural(oneD.length, 'pull') + ' they were in', none: 'Nothing kept going wrong for ' + esc(one) + '.' })
-    : !db ? '' : wrongRight(wrongS, rightS, { split: true, sub: (reps.length < pulls.length ? 'from ' + reps.length + ' of ' + pulls.length + ' pulls downloaded' : 'across all ' + plural(reps.length, 'pull')) + ', each up to the wipe filter', none: 'Nothing kept going wrong.' });
+  const fixSplit = one ? wrongRight(wrongS, rightS, { split: true, sub: 'for ' + esc(one) + ', in the ' + plural(oneD.length, 'pull') + ' they were in', none: 'No repeated mistakes for ' + esc(one) + '.' })
+    : !db ? '' : wrongRight(wrongS, rightS, { split: true, sub: (reps.length < pulls.length ? 'from ' + reps.length + ' of ' + pulls.length + ' pulls downloaded' : 'across all ' + plural(reps.length, 'pull')) + ', each up to the wipe filter', none: 'No repeated mistakes.' });
   const legend = '<p class="muted" style="font-size:13px">In each row, each small square is a pull. Green is clean, yellow had some mistakes, red failed, and grey means it didn\'t come up or came after the wipe filter. Click one to open that pull.</p>';
   // (Recap: the report cards, how far the night got and what kept going wrong; Mechanics and Assignments: their rows across
   // the pulls, with their report card on top)
@@ -29648,7 +29687,7 @@ async function progress(all) {
   const agg = new Map();
   ok.forEach((x, i) => { for (const m of keptMistakes(x)) { if (m.mechanic === 'Death') continue; let a = agg.get(m.mechanic); if (!a) agg.set(m.mechanic, a = { name: m.mechanic, id: m.id, pulls: new Set(), n: 0, who: new Map() }); a.pulls.add(i); a.n++; if (m.player !== 'Raid') a.who.set(m.player, (a.who.get(m.player) || 0) + 1); } });
   const rec = [...agg.values()].sort((a, b) => b.pulls.size - a.pulls.size || b.n - a.n).slice(0, 10);
-  h += '<div class="meters"><div class="panel"><h3>What keeps going wrong <small>mechanics by how many pulls they hit</small></h3>' + (rec.length ? rec.map((a) =>
+  h += '<div class="meters"><div class="panel"><h3>Repeated mistakes <small>mechanics by how many pulls they hit</small></h3>' + (rec.length ? rec.map((a) =>
     '<div class="drow"><div style="flex:1;min-width:0"><div class="line1"><span>' + spell(a.id, a.name) + '</span><span class="val">' + a.pulls.size + ' of ' + ok.length + ' pulls</span></div><div class="bar"><div style="width:' + (100 * a.pulls.size / ok.length) + '%;background:var(--warn)"></div></div>' +
     '<div class="sub">' + (a.who.size ? 'Most often: ' + esc([...a.who].sort((x, y) => y[1] - x[1]).slice(0, 4).map(([n, c]) => n + ' ×' + c).join(', ')) : 'Raid-wide') + '</div></div></div>').join('') : '<p class="muted">No mechanic mistakes recorded across these pulls' + (ok[0] && !ok[0].hasPack ? ' (this boss has no rules yet)' : '') + '.</p>') + '</div>';
   // players across pulls
@@ -42734,7 +42773,7 @@ function dbfNight(o) {
     const k1 = H1.reduce((t, x) => t + x.missK, 0), k2 = H2.reduce((t, x) => t + x.missK, 0); if (big(k1, k2)) (tr(k1, k2, true) ? U : Dn).push((k2 < k1 ? 'Fewer' : 'More') + ' casts are getting through our kicks: ' + nz(k2) + ' in the last ' + h + ' pulls, ' + (k2 < k1 ? 'down' : 'up') + ' from ' + nz(k1) + ' in the first ' + h + '.');
   }
   const short = n < 6 ? 'Not enough pulls yet to say what\'s changing.' : '';
-  const four = (nx) => '<div class="dbf-4">' + dbfCardP('ok', 'What went well', W1, null, 'Nothing was done right all night yet.') + dbfCardP('bad', 'What didn\'t go well', W2, null, 'Nothing kept going wrong. Keep it up.', nx) + '<i class="dbf-br"></i>' +
+  const four = (nx) => '<div class="dbf-4">' + dbfCardP('ok', 'What went well', W1, null, 'Nothing was done right all night yet.') + dbfCardP('bad', 'What didn\'t go well', W2, null, 'No repeated mistakes. Keep it up.', nx) + '<i class="dbf-br"></i>' +
     dbfCardP('up', 'What\'s improving', U, null, short || 'Nothing is clearly improving yet.') + dbfCardP('down', 'What\'s getting worse', Dn, null, short || 'Nothing is clearly getting worse.') + '</div>';
   const WHYN = whyNight(rs, pm); /* (Why we wiped over the night, your call Oct 21) */
   return { top: '<div class="panel dbf-short"><div class="dbf-k">All pulls</div>' + WHYN + '<p>' + s1 + s2 + '</p>' + (arc ? '<p>' + arc + '</p>' : '') + (focus ? '<p><b>Next time:</b> ' + esc(focus) + '</p>' : '') + '</div>' + bars + nums, lists: four(''),
