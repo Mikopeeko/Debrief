@@ -7136,6 +7136,16 @@ html.is-kill #oaTop .cch-h .cch-hype { color: #f6dc9a; font-weight: 800; letter-
   #view .gb.gb-tb.ds-gb .gb-tl { grid-template-columns: minmax(0, 1fr); }
   #view .gb.gb-tb.ds-gb .gb-tl .pf-row.cb { grid-template-columns: 20px minmax(0, 1fr) 64px 0 44px !important; } #view .gb.gb-tb.ds-gb .gb-tl .pf-row.cb.gb-r3 .cb-s { display: none; }
 }
+/* ===== Design studio round 24 (Oct 26): in a boss plan's lists the spell is its icon (the name is the tip) and a raider is a spec icon plus the name
+   in class colour, not a block; the builder keeps its blocks for dragging. Owner: the Design studio chat. ===== */
+html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .plb-rn > .plb-rsp { display: none; }
+html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .plb-rn > .icw { width: 22px !important; height: 22px !important; min-width: 22px; margin: 0 4px 0 0; border-radius: 5px; cursor: help; vertical-align: middle; }
+html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .plb-rn > .icw img, html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .plb-rn > .icw svg { width: 22px; height: 22px; }
+html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .plb-rn { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac > .nm.pk { display: inline-flex !important; align-items: center; gap: 5px; width: auto !important; height: auto !important; padding: 0 !important; background: none !important; border: 0 !important; box-shadow: none !important; filter: none !important; color: var(--cc) !important; font: 600 13.5px var(--body); text-shadow: none; }
+html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac > .nm.pk:hover { background: none !important; filter: brightness(1.15); }
+html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac > .nm.pk img { width: 16px !important; height: 16px !important; border-radius: 4px; margin: 0 !important; }
+html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac + .ndz-ac::before { content: '·'; color: var(--faint); margin: 0 2px 0 0; }
 </style>
 
 
@@ -50856,6 +50866,10 @@ function dsIconKeep() { const K = dsIconKeep.urls = dsIconKeep.urls || new Set()
 function dsGraphs() { document.querySelectorAll('#view .gb.gb-tb').forEach((gb) => { if (gb.querySelector(':scope > .ds-grail')) return; const tabs = gb.querySelector(':scope > .gb-tabrow'), tool = gb.querySelector(':scope > .gb-tool'); if (!tabs) return;
   const rail = document.createElement('div'); rail.className = 'ds-grail'; gb.insertBefore(rail, tabs); rail.appendChild(tabs); if (tool) rail.appendChild(tool); gb.classList.add('ds-gb'); }); }
 (function () { const f14 = dsBars; dsBars = function (root) { f14(root); try { dsGraphs(); } catch (e) {} }; })();
+
+// ===== Design studio round 24 (Oct 26): plan lists, the spell is its icon. Gives each cooldown icon in a boss plan's lists the spell's name as its tip. Owner: the Design studio chat. =====
+function dsPlanCd() { document.querySelectorAll('#view.plan-page .plb-one .plb-rc .plb-rr .plb-rn > .icw:not([data-tt])').forEach((ic) => { const nm = ic.nextElementSibling; if (!nm || !nm.classList.contains('plb-rsp')) return; const t = nm.textContent.trim(); if (!t) return; ic.setAttribute('data-tt', t.replace(/</g, '&lt;')); ic.setAttribute('aria-label', t); ic.setAttribute('role', 'img'); }); }
+(function () { const f15 = dsBars; dsBars = function (root) { f15(root); try { dsPlanCd(); } catch (e) {} }; })();
 
 </script>
 </body>

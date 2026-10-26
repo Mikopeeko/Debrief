@@ -30396,3 +30396,7 @@ function dsIconKeep() { const K = dsIconKeep.urls = dsIconKeep.urls || new Set()
 function dsGraphs() { document.querySelectorAll('#view .gb.gb-tb').forEach((gb) => { if (gb.querySelector(':scope > .ds-grail')) return; const tabs = gb.querySelector(':scope > .gb-tabrow'), tool = gb.querySelector(':scope > .gb-tool'); if (!tabs) return;
   const rail = document.createElement('div'); rail.className = 'ds-grail'; gb.insertBefore(rail, tabs); rail.appendChild(tabs); if (tool) rail.appendChild(tool); gb.classList.add('ds-gb'); }); }
 (function () { const f14 = dsBars; dsBars = function (root) { f14(root); try { dsGraphs(); } catch (e) {} }; })();
+
+// ===== Design studio round 24 (Oct 26): plan lists, the spell is its icon. Gives each cooldown icon in a boss plan's lists the spell's name as its tip. Owner: the Design studio chat. =====
+function dsPlanCd() { document.querySelectorAll('#view.plan-page .plb-one .plb-rc .plb-rr .plb-rn > .icw:not([data-tt])').forEach((ic) => { const nm = ic.nextElementSibling; if (!nm || !nm.classList.contains('plb-rsp')) return; const t = nm.textContent.trim(); if (!t) return; ic.setAttribute('data-tt', t.replace(/</g, '&lt;')); ic.setAttribute('aria-label', t); ic.setAttribute('role', 'img'); }); }
+(function () { const f15 = dsBars; dsBars = function (root) { f15(root); try { dsPlanCd(); } catch (e) {} }; })();
