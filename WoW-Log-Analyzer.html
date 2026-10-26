@@ -6798,6 +6798,18 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-
 }
 .ds-dstill .ds-dring { --g: 88; }
 @media (max-width: 760px) { .ds-dlow { grid-template-columns: minmax(0, 1fr); min-height: 0; } .ds-dr { grid-template-columns: 30px 56px minmax(0, 1fr) 36px; font-size: 12.5px; } }
+/* ===== Design studio round 28 (Oct 26): colour in Rotation's sentences. Numbers in the check's colour (green done right, amber some
+   mistakes, red failed), spell names semi-bold; Next time (and a What to fix card's How) with the coach box's gold label, a gold edge
+   and white text. Owner: the Design studio chat. ===== */
+#view section.rck p.spc-rs .ds-n, #view section.rck summary > .ds-note .ds-n { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+#view section.rck p.spc-rs[data-ds-st="ok"] .ds-n, #view section.rck summary > .ds-note[data-ds-st="ok"] .ds-n { color: #7ee08f; }
+#view section.rck p.spc-rs[data-ds-st="warn"] .ds-n, #view section.rck summary > .ds-note[data-ds-st="warn"] .ds-n { color: #f3c969; }
+#view section.rck p.spc-rs[data-ds-st="bad"] .ds-n, #view section.rck summary > .ds-note[data-ds-st="bad"] .ds-n { color: #ff8f87; }
+#view section.rck p.spc-rs .sp.mt, #view section.rck summary > .ds-note .sp.mt { font-weight: 600; color: var(--text); }
+/* the tip is Debrief talking to you: gold label, gold edge, white words */
+#view section.rck .rck-b.ds-slim > p.rck-tip, #view section.rck .rck-b > p.rck-tip, #view .spc-tld > p.spc-tip, #view .rck-fix .rck-sgt > p.rck-how { position: relative; margin: 6px 0 2px; padding: 3px 0 3px 10px; border-left: 2px solid var(--gold); border-radius: 0 6px 6px 0; background: linear-gradient(90deg, rgba(230,180,80,.09), rgba(230,180,80,0) 70%); color: var(--text); font-size: 13.5px; line-height: 1.45; }
+#view section.rck .rck-b.ds-slim > p.rck-tip > b:first-child, #view section.rck .rck-b > p.rck-tip > b:first-child, #view .spc-tld > p.spc-tip > b:first-child, #view .rck-fix .rck-sgt > p.rck-how > b:first-child { margin-right: 6px; font: 700 12px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--gold); }
+#view .rck-fix .rck-sgt > p.rck-how { margin-top: 6px; }
 /* ===== Design studio round 11 (Oct 25): Plan's Tonight page polished: things to fix as one list of rows, the roster card as one line, a ready
    bar on Bosses, tighter boss rows on a phone. Owner: the Design studio chat. ===== */
 /* "Your roster is ready": one line (title, the sentence, Got it at the end) */
@@ -7181,7 +7193,10 @@ html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac +
 #view section.rck .rck-cat .rck-rs > .rck-r > summary:hover { background: none; }
 .pfv details.rck-r[data-ds-kind="deep"] > summary::after, #view section.rck .rck-cat .rck-rs > .rck-r > summary::after, #view section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-cv { display: none !important; }
 .pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r[open] { grid-column: auto; border-color: var(--line) !important; }
-.pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r.ds-wide { grid-column: 1 / -1 !important; }
+.pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r.ds-wide, .pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r.rck-x { grid-column: 1 / -1 !important; }
+#view section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-v.ds-hide { display: none; }
+.pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r.rck-x > summary { padding: 8px 0 4px !important; }
+.pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r.rck-x > .rck-b { padding: 0 0 8px; }
 .pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r[open] > summary > .rck-n > b { color: var(--text); }
 /* a tile's icon box clips nothing: the fallback drawing fills the box like the picture does (it sat on the baseline, 8 px low) */
 #view section.rck .rck-cat .rck-rs > .rck-r > summary > .spc-ri { position: relative; }
@@ -7211,18 +7226,21 @@ html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac +
 #view section.rck > h3.rck-h .ds-sw > b { padding: 3px 10px; font: 500 12.5px var(--body); letter-spacing: 0; text-transform: none; color: var(--muted); cursor: pointer; }
 #view section.rck > h3.rck-h .ds-sw > b:hover { color: var(--text); }
 #view section.rck > h3.rck-h .ds-sw > b.on { background: rgba(255,255,255,.09); color: var(--text); font-weight: 600; }
-/* ===== Design studio round 28 (Oct 26): colour in Rotation's sentences. Numbers in the check's colour (green done right, amber some
-   mistakes, red failed), spell names semi-bold; Next time (and a What to fix card's How) with the coach box's gold label, a gold edge
-   and white text. Owner: the Design studio chat. ===== */
-#view section.rck p.spc-rs .ds-n, #view section.rck summary > .ds-note .ds-n { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
-#view section.rck p.spc-rs[data-ds-st="ok"] .ds-n, #view section.rck summary > .ds-note[data-ds-st="ok"] .ds-n { color: #7ee08f; }
-#view section.rck p.spc-rs[data-ds-st="warn"] .ds-n, #view section.rck summary > .ds-note[data-ds-st="warn"] .ds-n { color: #f3c969; }
-#view section.rck p.spc-rs[data-ds-st="bad"] .ds-n, #view section.rck summary > .ds-note[data-ds-st="bad"] .ds-n { color: #ff8f87; }
-#view section.rck p.spc-rs .sp.mt, #view section.rck summary > .ds-note .sp.mt { font-weight: 600; color: var(--text); }
-/* the tip is Debrief talking to you: gold label, gold edge, white words */
-#view section.rck .rck-b.ds-slim > p.rck-tip, #view section.rck .rck-b > p.rck-tip, #view .spc-tld > p.spc-tip, #view .rck-fix .rck-sgt > p.rck-how { position: relative; margin: 6px 0 2px; padding: 3px 0 3px 10px; border-left: 2px solid var(--gold); border-radius: 0 6px 6px 0; background: linear-gradient(90deg, rgba(230,180,80,.09), rgba(230,180,80,0) 70%); color: var(--text); font-size: 13.5px; line-height: 1.45; }
-#view section.rck .rck-b.ds-slim > p.rck-tip > b:first-child, #view section.rck .rck-b > p.rck-tip > b:first-child, #view .spc-tld > p.spc-tip > b:first-child, #view .rck-fix .rck-sgt > p.rck-how > b:first-child { margin-right: 6px; font: 700 12px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--gold); }
-#view .rck-fix .rck-sgt > p.rck-how { margin-top: 6px; }
+/* ===== Design studio round 28 (Oct 26): Rotation tiles in a few words, in colour: one short fact line a tile in Summary (the full sentence under Everything),
+   spell names in the class colour, numbers bold, Next time with a gold label and rule. Owner: the Design studio chat. ===== */
+#view .ds-sp { color: var(--ds-cc, var(--gold)); font-weight: 600; }
+#view .ds-n { color: var(--text); font-weight: 600; }
+#view section.rck .rck-b.ds-slim > p.ds-short { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--muted); }
+#view section.rck:not(.ds-all) .rck-b.ds-slim > p.spc-rs.ds-full { display: none !important; }
+#view section.rck.ds-all .rck-b.ds-slim > p.ds-short { display: none; }
+#view section.rck .rck-b.ds-slim > p.rck-tip { margin: 4px 0 2px; padding: 1px 0 1px 9px; border-left: 2px solid var(--gold); color: var(--text); font-size: 12.5px; line-height: 1.45; }
+#view section.rck .rck-b.ds-slim > p.ds-short + p.rck-tip { margin-top: 5px; }
+#view section.rck p.rck-tip > b { color: var(--gold); font-weight: 700; }
+#view section.rck p.rck-tip .sp, #view section.rck p.rck-tip .sp.mt { color: var(--ds-cc, var(--gold)); font-weight: 600; }
+#view .rck-fix .rck-sg .rck-how > b, #view .rck-fix .rck-sg .rck-how > b:first-child { color: var(--gold); }
+#view .rck-fix .rck-sg p .sp { color: var(--ds-cc, var(--gold)); font-weight: 600; }
+#view section.rck .spc-sb > .spc-sbl.ds-stack > span { flex: 0 0 100%; flex-wrap: nowrap; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+#view section.rck .spc-sb > .spc-sbl.ds-stack > span > .sp { white-space: nowrap; }
 </style>
 
 
@@ -17099,6 +17117,7 @@ const PATCH_NOTES = [
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'Rotation: every check says its fact in a few words (the full sentence waits under Everything), spell names are in your class colour, numbers are bold, and each Next time line is marked in gold.',
     'Rotation in colour: the numbers in every check\'s sentence are in the check\'s colour (green done right, amber some mistakes, red failed), spell names are bolder, and every Next time tip has a gold label and a gold edge so it stands out.',
     'Rotation speaks plainer: every check is one short sentence ("92% of your 337 casts were the best button at that moment.", "You used it 10 of 15 possible times."), tips say "in its last 30%" and "right after" instead of game jargon, and Stat order lets its bars do the talking.',
     'Opening a raid night is much faster: pulls are read several at a time in the background, so the page stays smooth and a hidden tab no longer slows it down. A night that isn\'t read yet opens on its kill or latest pull in seconds while the rest read, and a note tells you when All pulls is ready.',
@@ -51036,6 +51055,22 @@ function dsFrontDemo() { const win = document.querySelector('#main .home.fp .fpx
   setInterval(() => { if (!document.hidden && onScreen && document.body.contains(host)) play(); }, 10500); }
 (function () { const f9 = dsBars; dsBars = function (root) { f9(root); try { dsFrontDemo(); } catch (e) {} }; })();
 
+// ===== Design studio round 28 (Oct 26): colour in Rotation's sentences. The numbers in a check's sentence are wrapped (b.ds-n) and the
+// sentence carries the check's status (data-ds-st) so the style can colour them. Idempotent, text nodes only. Owner: the Design studio chat. =====
+function dsRotColour() { const NUM = /\d+:\d\d|\d[\d,]*(?:\.\d+)?(?:%|K|M)?/g;
+  /* the tip reads after the sentence it answers (a tile with a split bar had it the other way round) */
+  document.querySelectorAll('#view section.rck .rck-b > p.rck-tip').forEach((tip) => { const rs = tip.nextElementSibling; if (rs && rs.matches('p.spc-rs')) rs.after(tip); });
+  /* the sentence lives in p.spc-rs, or in the title row's span.ds-note on a flat tile (round 6) */
+  document.querySelectorAll('#view section.rck p.spc-rs:not([data-ds-st]), #view section.rck summary > span.ds-note:not([data-ds-st])').forEach((p) => {
+    let st = 'na', e = p.parentElement; while (e && !(e.tagName === 'SECTION' && e.classList.contains('rck'))) { const m = /(?:^|\s)(ok|warn|bad|na)(?:\s|$)/.exec(e.className || ''); if (m) { st = m[1]; break; } e = e.parentElement; }
+    p.dataset.dsSt = st;
+    const walk = document.createTreeWalker(p, NodeFilter.SHOW_TEXT, { acceptNode: (n) => (n.parentElement.closest('.sp, b, a, button, .ds-n, .spc-hwb, .spc-hwp') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) });
+    const nodes = []; let n; while ((n = walk.nextNode())) if (NUM.test(n.nodeValue)) nodes.push(n); NUM.lastIndex = 0;
+    nodes.forEach((t) => { const s = t.nodeValue, frag = document.createDocumentFragment(); let i = 0, m; NUM.lastIndex = 0;
+      while ((m = NUM.exec(s))) { if (m.index > i) frag.appendChild(document.createTextNode(s.slice(i, m.index))); const b = document.createElement('b'); b.className = 'ds-n'; b.textContent = m[0]; frag.appendChild(b); i = m.index + m[0].length; }
+      if (i < s.length) frag.appendChild(document.createTextNode(s.slice(i))); t.parentNode.replaceChild(frag, t); }); }); }
+(function () { const f19 = dsBars; dsBars = function (root) { f19(root); try { dsRotColour(); } catch (e) {} }; })();
+
 // ===== Design studio round 11 (Oct 25): Plan, Tonight polished. Reads "N of M ready" on Tonight's Bosses header into --p for its ready bar.
 // Runs after dsBars on every redraw. Owner: the Design studio chat. =====
 function dsPlan() { const v = document.querySelector('#view.plan-page'); if (!v) return;
@@ -51220,7 +51255,9 @@ function dsRotOpen() { const sec = document.querySelector('#view section.rck'); 
     sec.querySelectorAll('.rck-cats > .rck-cat .rck-rs > .rck-r').forEach((t) => { if (!t.open) t.open = true; dsWsTrim(t);
       /* a tile whose title row already says its sentence (the app's short note) does not say it twice */
       if (!t.dataset.dsDup) { t.dataset.dsDup = '1'; const mis = t.querySelector(':scope > summary .rck-mis, :scope > summary .ds-note'); const rs = t.querySelector(':scope > .rck-b > p.spc-rs, :scope > .rck-mgb:first-of-type > .rck-b > p.spc-rs'); const norm = (s) => (s || '').replace(/\s+/g, ' ').trim().toLowerCase(); if (mis && rs && norm(mis.textContent) && norm(rs.textContent).startsWith(norm(mis.textContent).slice(0, 40))) rs.classList.add('ds-dup'); }
-      if (t.querySelector('.spc-ast, .spc-slp, canvas, .rck-chart, .spc-ch')) t.classList.add('ds-wide');
+      /* a tile with a strip, a chart panel or a facts block spans the ring: that content was laid out for the full width */
+      if (t.classList.contains('rck-x') || t.querySelector('.spc-ast, .spc-slp, .spc-pr, .hm-ut, .spc-facts, canvas, .rck-chart, .spc-ch')) t.classList.add('ds-wide');
+      const v = t.querySelector(':scope > summary > .rck-v'); if (v && /^[\s›»>]*$/.test(v.textContent)) v.classList.add('ds-hide');
       t.querySelectorAll('details.spc-bxf').forEach((d) => { d.open = a; });
       t.querySelectorAll('p.spc-hwp').forEach((p) => { p.hidden = !a; }); });
     sec.querySelectorAll('h3.rck-h .ds-sw > b').forEach((b) => b.classList.toggle('on', (b.dataset.v === 'all') === a)); };
@@ -51235,21 +51272,118 @@ function dsRotOpen() { const sec = document.querySelector('#view section.rck'); 
   /* tiles are out of the app's one-at-a-time accordion: their toggle never reaches it (and they cannot close) */
   window.addEventListener('toggle', (e) => { const d = e.target; if (!d || !d.matches || !d.matches('#view section.rck .rck-rs > details.rck-r')) return; e.stopImmediatePropagation(); if (!d.open) d.open = true; else dsWsTrim(d); }, true); })();
 
-// ===== Design studio round 28 (Oct 26): colour in Rotation's sentences. The numbers in a check's sentence are wrapped (b.ds-n) and the
-// sentence carries the check's status (data-ds-st) so the style can colour them. Idempotent, text nodes only. Owner: the Design studio chat. =====
-function dsRotColour() { const NUM = /\d+:\d\d|\d[\d,]*(?:\.\d+)?(?:%|K|M)?/g;
-  /* the tip reads after the sentence it answers (a tile with a split bar had it the other way round) */
-  document.querySelectorAll('#view section.rck .rck-b > p.rck-tip').forEach((tip) => { const rs = tip.nextElementSibling; if (rs && rs.matches('p.spc-rs')) rs.after(tip); });
-  /* the sentence lives in p.spc-rs, or in the title row's span.ds-note on a flat tile (round 6) */
-  document.querySelectorAll('#view section.rck p.spc-rs:not([data-ds-st]), #view section.rck summary > span.ds-note:not([data-ds-st])').forEach((p) => {
-    let st = 'na', e = p.parentElement; while (e && !(e.tagName === 'SECTION' && e.classList.contains('rck'))) { const m = /(?:^|\s)(ok|warn|bad|na)(?:\s|$)/.exec(e.className || ''); if (m) { st = m[1]; break; } e = e.parentElement; }
-    p.dataset.dsSt = st;
-    const walk = document.createTreeWalker(p, NodeFilter.SHOW_TEXT, { acceptNode: (n) => (n.parentElement.closest('.sp, b, a, button, .ds-n, .spc-hwb, .spc-hwp') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) });
-    const nodes = []; let n; while ((n = walk.nextNode())) if (NUM.test(n.nodeValue)) nodes.push(n); NUM.lastIndex = 0;
-    nodes.forEach((t) => { const s = t.nodeValue, frag = document.createDocumentFragment(); let i = 0, m; NUM.lastIndex = 0;
-      while ((m = NUM.exec(s))) { if (m.index > i) frag.appendChild(document.createTextNode(s.slice(i, m.index))); const b = document.createElement('b'); b.className = 'ds-n'; b.textContent = m[0]; frag.appendChild(b); i = m.index + m[0].length; }
-      if (i < s.length) frag.appendChild(document.createTextNode(s.slice(i))); t.parentNode.replaceChild(frag, t); }); }); }
-(function () { const f19 = dsBars; dsBars = function (root) { f19(root); try { dsRotColour(); } catch (e) {} }; })();
+// ===== Design studio round 28 (Oct 26): Rotation tiles in a few words, in colour. One short fact line a tile (dsShort), spell names in the
+// class colour, numbers bold, Next time in gold. Runs after dsRotOpen. Owner: the Design studio chat. =====
+function dsShort(sub, v) {
+  let s = String(sub || '').replace(/\s+/g, ' ').trim(); if (!s) return ''; const v0 = String(v || '').trim(); let m;
+  const cap = (x) => (x ? x.charAt(0).toUpperCase() + x.slice(1) : x);
+  const first = (x) => { const k = String(x || '').trim().match(/^[\s\S]*?[.!?](?=\s+[A-Z0-9"(]|$)/); return k ? k[0] : String(x || '').trim(); };
+  const clause = (x) => { const k = x.match(/^(.{20,}?)(?:, (?:where|because|which|so) [^.]*)\.$/); return k ? k[1] + '.' : x; };
+  const one = (n) => (n === 'One' ? '1' : n);
+  const tails = (t) => t.replace(/None (?:were )?wasted\./, 'none wasted.').replace(/None ran out\./, 'none ran out.').replace(/(\d+|One) (?:were|was) replaced by a new one(?: before you used (?:it|them))?\./, (x, n) => one(n) + ' replaced.').replace(/(\d+|One) (?:were|was) lost by pressing (.+?) while you still had one\./, (x, n, w) => one(n) + ' lost to ' + w + '.').replace(/(\d+|One) ran out unused\./, (x, n) => one(n) + ' ran out.').replace(/(\d+) were lost to (.+?) cast while you still held some\./, '$1 lost to $2.').replace(/(\d+) were lost to a new one while you were full \((\d+) stacks\)\./, '$1 lost at $2 stacks.').replace(/They healed for (\S+) in all, (\S+) a cast[^.]*\./, '$1 healed, $2 a cast.').trim().replace(/\. (?=[a-z0-9])/g, ', ');
+  s = s.replace(/ ?Next to the top players, that cost about (?:[^.]|\.\d)*\./, '').replace(/ ?It cost about [^(]*\([^)]*of yours\)\./, '').replace(/ ?The cards show the heaviest moments, and which of yours went out in each\./, '').replace(/ ?Your most common slips are below\./, '').replace(/ ?Save (?:it|Flash of Light) for (?:a proc|an Infusion)\./, '').trim();
+  /* the plain-words sentences (the Rotation chat, 09c8e22) */
+  if (/^You finished all [\d,]+ casts you started\./.test(s)) return '';
+  if ((m = s.match(/^(\d+) of the [\d,]+ casts you started didn't finish, about (.+?) lost\.(?: Mostly (.+?)\.)?/))) return 'About ' + m[2] + ' lost' + (m[3] ? ': ' + m[3] + '.' : '.');
+  if ((m = s.match(/^You (?:cast|used) it \d+ of \d+ possible times?\.(?: It (waited unused|sat full) for (.+?)\.)?(.*)$/))) { let rest = m[3].trim().replace(/^It did (\S+) damage \((\S+) each\)\./, '$1 damage, $2 each.').replace(/^It did (\S+) damage\./, '$1 damage.').replace(/^It healed (\S+) \((\S+) each\)\./, '$1 healed, $2 each.').replace(/^It healed (\S+)\./, '$1 healed.').replace(/^Your (.+?) did (\S+) damage in all, (\S+) each\./, '$1: $2, $3 each.').replace(/^The Tyrant itself hit for (\S+) in all, (\S+) each\./, 'The Tyrant: $1, $2 each.').replace(/^Its shields absorbed (\S+) in all, (\S+) a cast\./, 'Shields: $1, $2 a cast.').replace(/^It went into (\d+) (.+?), worth about (\S+) of healing at your own average for each \w+\./, 'Into $1 $2, about $3 of healing.').replace(/^Your (\d+) (.+?) did about (\S+):.*$/, '$2: about $3.');
+    rest = first(rest); const w = m[1] ? (m[1] === 'sat full' ? 'Sat full ' : 'Waited unused ') + m[2] + '.' : ''; return (w + (rest ? ' ' + rest : '')).trim(); }
+  if ((m = s.match(/^You never used it \((\d+) possible\)\./))) return 'Never used; ' + m[1] + ' possible.';
+  if ((m = s.match(/^You were casting \d+% of the time\.(?: Your longest gap was (.+?), at (pull \d+, )?([\d:]+)(, while moving)?\.)?$/))) return m[1] ? 'Longest gap ' + m[1] + ' at ' + (m[2] || '') + m[3] + (m[4] ? ', while moving.' : '.') : '';
+  if ((m = s.match(/^You cast [\d.]+ times a minute\. Most: (.+)\.$/))) return 'Most: ' + m[1].replace(/ and /g, ', ') + '.';
+  if ((m = s.match(/^You were hitting the boss \d+% of the time\.(?: Of the (.+?) off it, (.+?) (?:was|were) only you, and (.+?) came from mechanics(?: \(.*?\))?\.)?/))) return m[1] ? cap(m[1]) + ' off it: ' + m[2] + ' you, ' + m[3] + ' mechanics.' : '';
+  if ((m = s.match(/^\d+% of your ([\d,]+) casts were the best button at that moment\./))) return m[1] + ' casts checked.';
+  if ((m = s.match(/^You drank no combat potion \(\d+ possible\)\./))) return 'None this pull.';
+  if ((m = s.match(/^You drank \d+ of \d+ possible combat potions?\.(?: (?:One was|(\d+) were) before the pull\.)?(?: In (?:its|their) 30 seconds you did ([\d.]+) times your usual (healing|damage)\.)?$/))) { const pre = /before the pull/.test(s) ? (m[1] ? m[1] + ' before the pull' : 'One before the pull') : ''; const eff = m[2] ? m[2] + '× your usual ' + m[3] + ' while up' : ''; return pre || eff ? cap(pre + (eff ? (pre ? '; ' : '') + eff : '')) + '.' : ''; }
+  if ((m = s.match(/(\d+|One) Light of Dawns? could have been (.+?)(?: \((?:(\d+|all) in|in) Beacon of Virtue, where[^)]*\))?\./))) return m[1] + ' Light of Dawn' + (m[1] === 'One' ? '' : 's') + ' could have been ' + m[2] + (m[3] ? ' (' + m[3] + ' in Beacon of Virtue)' : /\(in Beacon of Virtue/.test(s) ? ' (in Beacon of Virtue)' : '') + '.';
+  /* casting and uptime: the value says it */
+  if (/^Every one of the [\d,]+ casts you started with a cast bar finished\./.test(s)) return '';
+  if (/^None of the [\d,]+ .+? you gained was lost\./.test(s)) return '';
+  if (/^You were casting for \d+% of your .+? windows\.$/.test(s)) return '';
+  if (/^You were in Eclipse \d+%/.test(s) || /^You stood in your Consecration/.test(s)) return '';
+  if (/^(.+?) was (?:on the boss|up) \d+% of the time you were (?:alive|tanking)\.$/.test(s)) return '';
+  if (/^You never pressed Judgment while Holy Shock was full\./.test(s)) return '';
+  if (/^You had \d+% left at the kill\./.test(s) || /^You used nearly all of it, which is the goal\./.test(s)) return '';
+  if (/^Each .+? used [\d.]+ on average\./.test(s) || /^On average you had [\d.]+ .+? out at once\./.test(s) || /^Your Tyrant empowered \d+ demons at its most, on average\./.test(s) || /^On average you went into .+? with [\d,]+ .+? out of [\d,]+\./.test(s)) return '';
+  if (/^Every one of your \d+ refreshes came in the last 30%/.test(s)) return '';
+  if (/^Every one of (?:the|your) [\d,]+ .+? (?:had|finished|came|was|were)/.test(s) && /^0(?![\d.,:%])/.test(v0)) return '';
+  if ((m = s.match(/^(\d+) of your (\d+) potions went out with (.+?)\.$/))) return (m[1] === m[2] ? (m[1] === '2' ? 'Both' : 'All') : m[1] + ' of ' + m[2]) + ' with ' + m[3].replace(/ or at the end of the kill$/, ' or the end of the kill') + '.';
+  if ((m = s.match(/^Your potion went out with (.+?)\.$/))) return 'With ' + m[1].replace(/ or at the end of the kill$/, ' or the end of the kill') + '.';
+  if ((m = s.match(/^(\d+) of the [\d,]+ casts you started with a cast bar did not finish, about (.+?) lost\.(?: Mostly (.+?)\.)?/))) return 'About ' + m[2] + ' lost' + (m[3] ? ': ' + m[3] + '.' : '.');
+  if ((m = s.match(/^([\d,]+) of the ([\d,]+) (.+?) you (?:gained|made) came while you were (?:already )?full/))) return m[1] + ' of ' + m[2] + ' ' + m[3] + ' gained at full.';
+  if ((m = s.match(/^You (?:cast|pressed) it (?:(?:\w+|[\d,]+) times?|twice|once) out of a possible [\d,]+\. It sat (?:ready|at full charges|ready at full charges)(?:, unused,)? for (.+?)(?: in all)?\.(.*)$/))) {
+    let rest = m[2].trim().replace(/^It did (\S+) damage in all, (\S+) per cast\./, '$1 damage, $2 a cast.').replace(/^It healed for (\S+) in all, (\S+) (?:per|a) cast\./, '$1 healed, $2 a cast.').replace(/^Your (.+?) did (\S+) damage in all, (\S+) each\./, '$1: $2, $3 each.').replace(/^The Tyrant itself hit for (\S+) in all, (\S+) each\./, 'The Tyrant: $1, $2 each.').replace(/^Its shields absorbed (\S+) in all, (\S+) a cast\./, 'Shields: $1, $2 a cast.').replace(/^It went into (\d+) (.+?), worth about (\S+) of healing at your own average for each \w+\./, 'Into $1 $2, about $3 of healing.').replace(/^Your (\d+) (.+?) did about (\S+):.*$/, '$2: about $3.');
+    rest = first(rest); return 'Sat ready ' + m[1] + '.' + (rest ? ' ' + rest : ''); }
+  if ((m = s.match(/^You never pressed it, out of a possible ([\d,]+)\./))) return 'Never pressed; ' + m[1] + ' possible.';
+  if ((m = s.match(/^You got (\d+) procs(?:, (\d+) charges in all)?(?:, and used (.+?))?\.(.*)$/))) { const t = tails(m[4].trim()); return m[1] + ' procs' + (m[2] ? ' (' + m[2] + ' charges)' : '') + (m[3] ? ': ' + m[3].replace(/ and /g, ', ') : '') + (t ? (m[3] ? '; ' : ', ') + t : '.'); }
+  if ((m = s.match(/^You had (\d+) (?:uses|.+?), and (?:used|spent) (.+?)\.(.*)$/))) { const t = tails(m[3].trim()); if (/^\d+$/.test(m[2])) { const h = m[2] === m[1] ? 'All ' + m[1] + ' used' : m[2] + ' of ' + m[1] + ' used'; const t2 = t.replace(/^none ran out[.,] ?/, ''); return h + (t2 ? '; ' + t2 : '.'); } return m[1] + ' procs: ' + m[2].replace(/ and /g, ', ') + (t ? '; ' + t : '.'); }
+  if ((m = s.match(/^(\d+) of your (\d+) (.+?) windows were done right\. Inside them you did (\S+) (DPS|HPS), against (\S+) the rest of the pull\.(.*)$/))) { let x = m[4] + ' ' + m[5] + ' inside, ' + m[6] + ' outside.'; const r = m[7]; let k; if ((k = r.match(/(.+?) wasn't in (\d+) of them\./))) x += ' ' + k[1].trim() + ' missing in ' + k[2] + '.'; if ((k = r.match(/In all, it sat ready for (.+?) before you went in\./))) x += ' Sat ready ' + k[1] + ' before going in.'; return x; }
+  if ((m = s.match(/^Your (?:your )?(.+?) was up in (\d+) of (\d+) Bloodlust windows?\. You drank a combat potion in (\d+) of (\d+)\. In (?:that|those) windows? you did (?:([\d.]+) times as much damage a second as|(\d+)% of your damage a second from) the rest of the pull\./))) return cap(m[1]) + ' up in ' + m[2] + ' of ' + m[3] + ', potion in ' + m[4] + ' of ' + m[5] + '; ' + (m[6] ? m[6] + '× your usual damage.' : m[7] + '% of your usual damage.');
+  if ((m = s.match(/^You cast ([\d.]+) (.+?) in each (.+?) window, on average\. You (?:did|healed) \S+(?: damage)? in (?:them|its windows), (?:or )?(\S+) a second, against (\S+) a second outside them\./))) return m[1] + ' ' + m[2] + ' a window; ' + m[4] + ' a second inside, ' + m[5] + ' outside.';
+  if ((m = s.match(/^You cast [\d,]+ spells in .+? alive, [\d.]+ a minute\. Most: (.+?) a minute\./))) return 'Most: ' + m[1].replace(/ and /g, ', ') + ' a minute.';
+  if ((m = s.match(/^You were casting for \d+% of the time you were alive\.(?: Your longest stretch with nothing pressed was (.+?), at ([\d:]+)(, while you were moving)?\.)?$/))) return m[1] ? 'Longest gap ' + m[1] + ' at ' + m[2] + (m[3] ? ', while moving.' : '.') : '';
+  if ((m = s.match(/^You were hitting the boss \d+% of the time it was up and you were alive\.(?: Of the (.+?) off it, (.+?) came from mechanics \(.*?\), and (.+?) were only you\.)?/))) return m[1] ? cap(m[1]) + ' off it: ' + m[2] + ' from mechanics, ' + m[3] + ' you.' : '';
+  if ((m = s.match(/^Debrief checked ([\d,]+) of your casts against your priority list/))) return m[1] + ' casts checked against your priority list.';
+  if ((m = s.match(/^You followed (\d+) of the (\d+) steps of the (.+?) opener(?: for two or more bosses)?, in order\.(?: Missed: (.+))?$/))) { if (!m[4]) return m[3] + ' opener, every step in order.'; const it = m[4].replace(/\.$/, '').split(/(?:^|, | and )step \d+, /).filter(Boolean); return 'Missed: ' + it.slice(0, 2).join(', ') + (it.length > 2 ? ' and ' + (it.length - 2) + ' more' : '') + '.'; }
+  if ((m = s.match(/^You drank (no combat potion|one combat potion|\d+ combat potions) out of a possible \d+ (this pull|over these pulls)\.(?: (?:One was|(\d+) were) before the pull\.)?(?: In the fight: ([\d:, ]+)\.)?(?: In (?:its|their) 30 seconds you (healed|did) \S+ a second, ([\d.]+) times the rest of the pull\.)?/))) {
+    if (/^no /.test(m[1])) return m[2] === 'this pull' ? 'None this pull.' : 'None.'; const pre = /before the pull/.test(s) ? (m[3] ? m[3] + ' before the pull' : 'one before the pull') : ''; const when = [pre, m[4] ? 'at ' + m[4].trim() : ''].filter(Boolean).join(', '); const eff = m[6] ? m[6] + '× your usual ' + (m[5] === 'healed' ? 'healing' : 'damage') + ' while up' : ''; return cap(when + (eff ? (when ? '; ' : '') + eff : '')) + '.'; }
+  if ((m = s.match(/^Yours: (.+?)\. Your guides: (.+?)\.(?: (.+))?$/))) { const A = (x) => x.replace(/Critical Strike/g, 'Crit').replace(/Versatility/g, 'Vers'); return m[3] ? A(m[3]) : 'Guides: ' + A(m[2]).replace(/, then /g, ' › ') + '.'; }
+  if ((m = s.match(/^You have ([\d,]+) Haste and ([\d,]+) Critical Strike, \d+% apart\./))) return 'Haste ' + m[1] + ', Crit ' + m[2] + '.';
+  if ((m = s.match(/^\w+ \([\d,]+\) is past ([\d,]+) \(the first falloff point\)/))) return 'Past the ' + m[1] + ' falloff point.';
+  if ((m = s.match(/^You have [\d,]+ \w+ rating\. A guide's goal is ([\d,]+) .*?\. The top (\d+) .+? have ([\d,]+ to [\d,]+)\./))) return 'Guides want ' + m[1] + '; the top ' + m[2] + ' have ' + m[3] + '.';
+  if ((m = s.match(/^Your \w+ \([\d,]+\) is higher than your (\w+) \(([\d,]+)\)\./))) return 'Above your ' + m[1] + ' (' + m[2] + ').';
+  if (/^You didn't have .+? on when the boss was pulled\./.test(s)) return 'Not up at the pull.';
+  if (/^None of your .+? were on the raid when the boss was pulled\./.test(s)) return 'None on the raid at the pull.';
+  if ((m = s.match(/^You ran out at (.+?)\./))) return 'Ran out at ' + m[1] + '.';
+  if ((m = s.match(/^You sat at full Essence for about (.+?), about (\d+) Essence that never came/))) return 'Full for about ' + m[1] + '; about ' + m[2] + ' never came.';
+  if ((m = s.match(/^(\d+) of ([\d,]+) were wasted, (\d+) of them from (.+?), which is fine\.(?: The other (\d+) could have been spent\.)?/))) return m[5] ? m[5] + ' could have been spent; ' + m[3] + ' from ' + m[4] + ' are fine.' : 'All from ' + m[4] + ', which is fine.';
+  if ((m = s.match(/and (\d+) (.+?)s\. .*?The other (\d+) could have been ([^,.]+?)(?:, (\d+) during ([^,.]+?))?(?:, where[^.]*)?\./))) return m[3] + ' of ' + m[1] + ' ' + m[2] + 's could have been ' + m[4] + (m[5] ? ', ' + m[5] + ' in ' + m[6] : '') + '.';
+  if ((m = s.match(/^(.+?) \(.+?\) had it, and it gave them (.+?) of a bar of mana\./))) return 'Gave ' + m[1] + ' ' + m[2] + ' of a mana bar.';
+  if ((m = s.match(/^You built \d+ ramps \(.*?\), ([\d.]+) Echoes each on average\./))) return m[1] + ' Echoes a ramp, on average.';
+  if ((m = s.match(/Of the ones used, (.+)\.$/))) return 'Used: ' + m[1].replace(/ went to /g, ' ').replace(/ and /g, ', ') + '.';
+  if ((m = s.match(/^You cast (.+?) (\d+) times in (.+?) of (.+?), [\d.]+ times a minute\./))) return m[2] + ' casts in ' + m[3] + ' of ' + m[4] + '.';
+  if ((m = s.match(/They healed (\S+) through your Beacons, about (\S+) each, (\d+%) of your healing\./))) return m[1] + ' through your Beacons, ' + m[2] + ' each, ' + m[3] + ' of your healing.';
+  if ((m = s.match(/^(\d+) of your (\d+) refreshes came before the last 30% \(the pandemic window\), throwing away about (.+?) of damage over time\./))) return m[1] + ' of ' + m[2] + ' refreshed early, about ' + m[3] + ' of damage over time lost.';
+  if ((m = s.match(/^All (\d+) of your Stases were filled with strong spells\. What it stored healed about (\S+) in all, (\S+) a Stasis/))) return 'All ' + m[1] + ' filled with strong spells; about ' + m[2] + ' healed, ' + m[3] + ' a Stasis.';
+  if ((m = s.match(/^(\d+) of the (\d+) Echoes you used went into (.+?)\. (\d+) into (.+?) and (\d+) into (.+?), which the guides avoid\./))) return m[1] + ' of ' + m[2] + ' into ' + m[3] + '; ' + m[4] + ' into ' + m[5] + ', ' + m[6] + ' into ' + m[7] + '.';
+  if ((m = s.match(/^Each (.+?) added about (\S+) of extra healing, (\S+) over your (\d+)\./))) return 'About ' + m[2] + ' extra healing each, ' + m[3] + ' over your ' + m[4] + '.';
+  return cap(clause(first(s)).replace(/^(\d+) of your (\d+) /, '$1 of $2 ').replace(/^All (\d+) of your /, 'All $1 ').replace(/^Both of your /, 'Both '));
+}
+/* the words that get colour: every spell name the page knows (its icons' data-sn), the stats and resources, and any capitalised name
+   inside a sentence (the app's sentences are lower-case apart from names); numbers (with their unit, time or K/M/%) go bold */
+const DS_STOPW = new Set(['Debrief', 'Next', 'Your', 'Yours', 'You', 'Most', 'Mostly', 'Missed', 'Inside', 'In', 'Of', 'The', 'Every', 'All', 'Both', 'None', 'One', 'Each', 'On', 'Save', 'Guides', 'A', 'An', 'It', 'Its', 'Sat', 'At', 'Not', 'Used', 'Gave', 'Longest', 'Past', 'Above', 'Ran', 'Full', 'Never', 'Average', 'Stored', 'Into', 'About', 'Step', 'DPS', 'HPS', 'How', 'Fix', 'Small', 'With', 'They', 'That', 'This', 'There', 'These', 'Those', 'When', 'While', 'Where', 'Because', 'But', 'And', 'Or', 'So', 'If', 'Then', 'Press', 'Drink', 'Spend', 'Put', 'Keep', 'Use', 'Cast', 'Hold', 'Save', 'Line', 'Start', 'Open', 'Time', 'Half', 'More', 'Less', 'Only', 'Right', 'Left', 'Pull', 'Kill', 'Mythic', 'Heroic']);
+function dsNameRe() { const set = new Set(['Bloodlust', 'Haste', 'Mastery', 'Critical Strike', 'Versatility', 'Crit', 'Vers', 'Holy Power', 'Maelstrom', 'Astral Power', 'Soul Shards', 'Soul Shard', 'Essence', 'Focus', 'Fury', 'Echoes', 'Echo', 'Demonic Cores', 'Demonic Core', 'Soul Fragments', 'Arcane Charges', 'Runic Power', 'Insanity', 'Chi', 'Mana']);
+  document.querySelectorAll('#view [data-sn]').forEach((e) => { const n = e.dataset.sn; if (n && n.length > 2) set.add(n); });
+  const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); const names = [...set].sort((a, b) => b.length - a.length).map(esc).join('|');
+  return { known: new RegExp("(?<![\\p{L}'’])(?:" + names + ")(?:'s|s|es)?(?![\\p{L}])", 'gu'), caps: /(?<![\p{L}'’])[A-Z][\p{L}\p{M}'’!]*:?(?:(?: of the| of| the)? [A-Z][\p{L}\p{M}'’!]*:?)*(?![\p{L}])/gu }; }
+const DS_NUM = /(?<![\w.,:])\d[\d,]*(?:\.\d+)?(?:[KM%×]|:\d\d)?(?: (?:seconds?|minutes?|s\b))?(?![\w])/g;
+function dsMark(el, RE) { if (!el || el.dataset.dsM) return; el.dataset.dsM = '1';
+  const walk = (n) => { if (n.nodeType === 3) return [n]; if (n.nodeType !== 1 || n.matches('.sp, b, .ds-sp, .ds-n, button, a, .icw')) return []; return [...n.childNodes].flatMap(walk); };
+  for (const tn of walk(el)) { const t = tn.nodeValue; if (!t || !/[\p{L}\d]/u.test(t)) continue; const marks = [];
+    let m; RE.known.lastIndex = 0; while ((m = RE.known.exec(t))) marks.push([m.index, m.index + m[0].length, 'ds-sp']);
+    RE.caps.lastIndex = 0; while ((m = RE.caps.exec(t))) { const w = m[0], i = m.index, before = t.slice(0, i); const start = !before.trim() || /[.!?:;]\s*$/.test(before) || /^(?:[-–•]\s*)$/.test(before.trim());
+      if (DS_STOPW.has(w.split(/[ :]/)[0]) || (start && !w.includes(' ') && !/[A-Z]\p{L}+ [A-Z]/u.test(w))) continue; if (marks.some(([a, b]) => i < b && i + w.length > a)) continue; marks.push([i, i + w.length, 'ds-sp']); }
+    DS_NUM.lastIndex = 0; while ((m = DS_NUM.exec(t))) { const i = m.index, e = i + m[0].length; if (marks.some(([a, b]) => i < b && e > a)) continue; marks.push([i, e, 'ds-n']); }
+    if (!marks.length) continue; marks.sort((a, b) => a[0] - b[0]); const frag = document.createDocumentFragment(); let at = 0;
+    for (const [a, b, cls] of marks) { if (a > at) frag.appendChild(document.createTextNode(t.slice(at, a))); const s = document.createElement('span'); s.className = cls; s.textContent = t.slice(a, b); frag.appendChild(s); at = b; }
+    if (at < t.length) frag.appendChild(document.createTextNode(t.slice(at))); tn.replaceWith(frag); } }
+const DS_TIPS = [[/^Drink a combat potion just before the pull, and another when it's back 5 minutes later, with your big cooldown\.$/, "One just before the pull, another with your big cooldown when it's back."]];
+function dsTipWords(p) { for (const tn of [...p.childNodes].filter((n) => n.nodeType === 3)) { const t = tn.nodeValue.trim(); for (const [re, to] of DS_TIPS) if (re.test(t)) tn.nodeValue = tn.nodeValue.replace(t, to); } }
+function dsRotWords() { const sec = document.querySelector('#view section.rck'); if (!sec) return;
+  const tiles = [...sec.querySelectorAll('.rck-rs > details.rck-r:not([data-ds-w])')], cards = [...document.querySelectorAll('#view .rck-fix .rck-sg:not([data-ds-w])')]; if (!tiles.length && !cards.length) return;
+  const hero = document.querySelector('#view .spc-hero'); const cc = hero ? getComputedStyle(hero).getPropertyValue('--cc').trim() : ''; const view = document.getElementById('view'); if (view) view.style.setProperty('--ds-cc', cc || 'var(--gold)');
+  const RE = dsNameRe();
+  for (const t of tiles) { t.dataset.dsW = '1'; const b = t.querySelector(':scope > .rck-b, :scope > .rck-mgb:first-of-type > .rck-b'); if (!b) continue;
+    const rs = b.querySelector(':scope > p.spc-rs'); const v = t.querySelector(':scope > summary .rck-v');
+    const note = t.querySelector(':scope > summary .ds-note'); /* (round 6 put a flat tile's sentence in its title row; it gets the short form too) */
+    if (rs && note && rs.classList.contains('ds-dup')) { const sh = dsShort(rs.textContent, v ? v.textContent : ''); if (sh) { note.textContent = sh; dsMark(note, RE); } else note.remove(); dsMark(rs, RE); }
+    else if (rs && !rs.classList.contains('ds-dup')) { const sh = dsShort(rs.textContent, v ? v.textContent : ''); rs.classList.add('ds-full'); if (sh) { const p = document.createElement('p'); p.className = 'ds-short'; p.textContent = sh; b.prepend(p); dsMark(p, RE); } dsMark(rs, RE); }
+    else if (note) dsMark(note, RE);
+    b.querySelectorAll(':scope > p.rck-tip').forEach((p) => { dsTipWords(p); dsMark(p, RE); });
+    t.querySelectorAll('.rck-mgb:not(:first-of-type) p.spc-rs, .rck-mgb:not(:first-of-type) p.rck-tip').forEach((p) => dsMark(p, RE));
+    /* a split bar's legend whose items are long (a name, a reason and a number each) goes one item a line instead of breaking inside an item */
+    t.querySelectorAll('.spc-sb > .spc-sbl').forEach((lg) => { const w = lg.clientWidth || t.clientWidth; if (w && [...lg.children].some((c) => c.scrollWidth > 0.62 * w)) lg.classList.add('ds-stack'); }); }
+  for (const c of cards) { c.dataset.dsW = '1'; c.querySelectorAll(':scope > .rck-sgt > p').forEach((p) => { if (p.classList.contains('rck-how')) dsTipWords(p); dsMark(p, RE); }); } }
+(function () { const f19 = dsBars; dsBars = function (root) { f19(root); try { dsRotWords(); } catch (e) {} }; })();
 
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
