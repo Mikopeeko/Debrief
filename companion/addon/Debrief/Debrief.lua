@@ -642,10 +642,6 @@ local function chipColors(b, fillHex, lineHex, textHex)
   rounded(b.fillT, "fill", 5, fillHex, 1); rounded(b.lineT, "line", 5, lineHex, 1); b.t:SetTextColor(rgb(textHex))
 end
 
-local function canRaid()
-  if DB.raidAlways then return true end
-  return not IsInGroup() or UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")
-end
 local function meName()
   local n = UnitName("player"); return n
 end
@@ -758,7 +754,7 @@ end
 -- (Standard opens folded (Oct 25, the Design studio's round 3): these four start closed on each new pull, unless "Open the sections by
 -- default" is on; an empty one stays open, so its one green line shows)
 local SHUT = { rotation = true, boss = true, surv = true, died = true }
-local UI = { startsShut = function(key, n) return n > 0 and SHUT[key] and DB.openSecs == false end, rotRow = rotRow, rotGood = rotGood, rowS = rowS, wipeRow = wipeRow, trendCards = trendCards, cardCharts = cardCharts, cardGrade = cardGrade, parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, canRaid = canRaid, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded, pullQ = pullQ, worst = worstFirst, col = useCol, colFrame = colFrame, two = { cols = 1, brk = 0, n = 0, marks = {} } }
+local UI = { startsShut = function(key, n) return n > 0 and SHUT[key] and DB.openSecs == false end, rotRow = rotRow, rotGood = rotGood, rowS = rowS, wipeRow = wipeRow, trendCards = trendCards, cardCharts = cardCharts, cardGrade = cardGrade, parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded, pullQ = pullQ, worst = worstFirst, col = useCol, colFrame = colFrame, two = { cols = 1, brk = 0, n = 0, marks = {} } }
 local function renderOnce()
   UI.col(1)
   local raw = DB.pulls[DB.cur]; local m = UI.cutView(raw); CUR = m
@@ -809,7 +805,7 @@ local function renderOnce()
   local meta = { h.diff, "Pull " .. h.pull, h.dur }
   if h.where ~= "" then meta[#meta + 1] = h.where end
   meta[#meta + 1] = h.deaths .. (h.deaths == "1" and " death" or " deaths")
-  if DB.detailed and not DB.compact and view == "raid" and UI.canRaid() and #(m.raid.tiles or {}) > 0 then meta = { h.diff, "Pull " .. h.pull } end
+  if DB.detailed and not DB.compact and view == "raid" and #(m.raid.tiles or {}) > 0 then meta = { h.diff, "Pull " .. h.pull } end
   metaT:SetWidth(W - PAD * 2); metaT:SetText(table.concat(meta, "   ·   "))
   -- (tabs and the body sit lower when the pull chips show)
   local coachOn = m.coach and (m.coach.head or "") ~= "" and not m.h.practice and (DB.show or {}).coach ~= false -- (Debriefing's coach box on every style, with the Raid view and You tabs; the style decides how much is open (Oct 22))
@@ -821,7 +817,7 @@ local function renderOnce()
   tabLine:ClearAllPoints(); tabLine:SetPoint("TOPLEFT", card, "TOPLEFT", 1, -TOPY + 12); tabLine:SetPoint("TOPRIGHT", card, "TOPRIGHT", -1, -TOPY + 12)
   scroller:ClearAllPoints(); scroller:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -TOPY)
   -- tabs
-  local raidOk = UI.canRaid() and not m.h.dungeon -- (a dungeon boss has no Raid view (Oct 24))
+  local raidOk = not m.h.dungeon -- (the Raid view is everyone's, no raid sharing (Oct 25); a dungeon boss has none (Oct 24))
   tRaid:SetShown(raidOk and not glanceOn); tMe:SetShown(not glanceOn); tabLine:SetShown(not glanceOn)
   if not raidOk then view = "me" end
   for k, b in pairs(tabs) do
@@ -1357,7 +1353,7 @@ local function renderAll()
   if Debrief_FitPreview then Debrief_FitPreview() end
 end
 -- (a problem while drawing is noted, not thrown (Oct 24): the card stays as it was)
-function render() local ok, err = pcall(renderAll); if not ok then Debrief_NoteError(err) end end
+function render() local ok, err = pcall(renderAll); if not ok then Debrief_NoteError(err) end; if Debrief_BringShow then Debrief_BringShow() end end
 
 -- ---------- keeping pulls, showing the card ----------
 local function sameAs(a, b) return a.h.boss == b.h.boss and a.h.pull == b.h.pull and a.h.dur == b.h.dur end
@@ -1368,8 +1364,6 @@ local function addPull(m, own)
   -- (only your latest practice pull is kept (Oct 24): a new one replaces the one before)
   if m.h and m.h.diff == "Practice" then for i = #DB.pulls, 1, -1 do local q = DB.pulls[i]; if q.h and q.h.diff == "Practice" and not sameAs(q, m) then table.remove(DB.pulls, i) end end end
   for i, q in ipairs(DB.pulls) do if sameAs(q, m) then
-    -- (your own PC app's copy wins over one a guildmate's app sent first: theirs may be an older version, without the newest lines)
-    if own and not q.own then m.t = q.t; m.own = true; DB.pulls[i] = m; DB.cur = i; wipe(EXPANDED); return false, true end
     -- (your app saved it again after an update (Oct 24): the newer copy wins, in the same place, so old pulls get the new look)
     if own and newerCopy(m, q) then m.t = q.t; m.own = true; DB.pulls[i] = m; DB.cur = i; wipe(EXPANDED); return false, true end
     DB.cur = i; return false
@@ -1665,13 +1659,12 @@ bigRender = function()
   -- tabs: Me, Raid view; on Me, arrows to look at anyone
   local P = pickWho(m)
   local tx = -10
-  for _, k in ipairs(canRaid() and { { "me", "Me" }, { "raid", "Raid view" } } or { { "me", "Me" } }) do
+  for _, k in ipairs({ { "me", "Me" }, { "raid", "Raid view" } }) do
     local b = bBTN(bm); local tt = bFS(bm, "bold", 14, bView == k[1] and COL.text or COL.muted); tt:SetText(k[2])
     b:SetSize(tt:GetStringWidth() + 20, 28); b:SetPoint("TOPLEFT", tx, -y); tt:SetPoint("CENTER", b, "CENTER", 0, 1); tx = tx + tt:GetStringWidth() + 20
     if bView == k[1] then local u = bTEX(bm); u:SetPoint("BOTTOMLEFT", b, "BOTTOMLEFT", 8, 0); u:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -8, 0); u:SetHeight(2); fill(u, COL.gold) end
     b:SetScript("OnClick", function() bView = k[1]; bigRender() end)
   end
-  if bView == "raid" and not canRaid() then bView = "me" end
   if bView == "me" and P and #m.players > 1 then
     local who = bFS(bm, "bold", 13.5, classHex(P.cls)); who:SetJustifyH("RIGHT"); who:SetText(P.name); who:SetPoint("TOPRIGHT", bm, "TOPLEFT", MW - 32, -(y + 6))
     local function arrow(lbl, dx, dir)
@@ -1869,7 +1862,7 @@ local function buildOptions()
   opt:SetMovable(true); opt:EnableMouse(true); opt:RegisterForDrag("LeftButton")
   opt:SetScript("OnDragStart", opt.StartMoving); opt:SetScript("OnDragStop", opt.StopMovingOrSizing)
   tinsert(UISpecialFrames, "DebriefOptions")
-  -- (a soft green glow from the logo's corner, like the Companion's window)
+  -- (a soft gold glow from the logo's corner)
   local glow = opt:CreateTexture(nil, "BACKGROUND", nil, -5); glow:SetPoint("TOPLEFT", 1, -1); glow:SetPoint("TOPRIGHT", -1, -1); glow:SetHeight(80)
   if glow.SetGradient and CreateColor then glow:SetColorTexture(1, 1, 1, 1); glow:SetGradient("HORIZONTAL", CreateColor(0.9, 0.7, 0.31, 0.10), CreateColor(0.9, 0.7, 0.31, 0.0)) else glow:SetColorTexture(0, 0, 0, 0) end
   -- the header: the logo, Debrief, "Settings · saves as you go" (it says when to /reload after a change), and a plain ×
@@ -2198,7 +2191,7 @@ local function buildOptions()
     })
     note("Up to this many. A pull with fewer shows all it has.")
   end)
-  fold("raid", "Raid view", "The raid lead box, deaths, avoidable damage, defensives and more, and who can open it.", function()
+  fold("raid", "Raid view", "The raid lead box, deaths, avoidable damage, defensives and more.", function()
     checks({
       { "Raid lead box", function() return S().coach ~= false end, function(v) S().coach = v; S().lead = v end, false, "Your raid lead says: the headline, what wiped us and the other big mistakes." },
       { "What went right", function() return S().right ~= false end, function(v) S().right = v end },
@@ -2208,8 +2201,6 @@ local function buildOptions()
       { "Defensives", function() return S().rdefs ~= false end, function(v) S().rdefs = v end, false, "Who pressed a defensive, and who never did." },
       { "Healthstones", function() return S().rcons ~= false end, function(v) S().rcons = v end, false, "Who used a Healthstone or health potion, and who dropped low with one still ready." },
     })
-    segment("Who can open it", "Raid leads and assistants can always open it.", { { true, "Everyone" }, { false, "Leads and assistants" } },
-      function() return DB.raidAlways ~= false end, function(v) DB.raidAlways = v end, true)
     P.rowFirst = true; y = y + 6
     counts({ { "Raid mistakes", "The raid's biggest mistakes, in the Raid view.", 1, 5, function() return DB.maxRaid or 3 end, function(v) DB.maxRaid = v end } })
   end)
@@ -2243,13 +2234,12 @@ local function buildOptions()
     -- (no "/recap opens: Card / Whole night" any more (Oct 24): the card is the one recap window; the big window is Expand on it)
     pslider("Big window size", "The big window you open with Expand on the card: tonight's pulls and charts.", 0.7, 1.3, function() return DB.bigScale or 1 end, function(v) DB.bigScale = v end)
   end)
-  fold("when", "When it shows", "Close by itself, lock in place, the /reload reminder, combat log, NSRT glow.", function()
+  fold("when", "When it shows", "Close by itself, lock in place, the chat reminder, combat log.", function()
     segment("Close by itself", "Not while your mouse is on it.", { { 0, "Never" }, { 30, "30 s" }, { 60, "60 s" }, { 120, "2 min" } },
       function() return DB.autoClose or 0 end, function(v) DB.autoClose = v end, true)
     switch("Lock in place", "The card and its window can't be dragged.", function() return DB.lock == true end, function(v) DB.lock = v end, true)
-    switch("Remind me to /reload", "A line in chat after each raid boss: your recap is on your PC, /reload brings it in here.", function() return DB.nudge ~= false end, function(v) DB.nudge = v end, true)
+    switch("Remind me in chat", "A line in chat after each boss: your recap is on your PC, and /recap brings it in here. Off unless you switch it on.", function() return DB.nudge == true end, function(v) DB.nudge = v end, true)
     switch("Combat log always on", "With Advanced Combat Logging, whenever Debrief is loaded.", function() return DB.autoLog ~= false end, function(v) DB.autoLog = v end, true)
-    switch("Glow my NSRT cooldowns", "Your NSRT spells glow on the Cooldown Manager when it's time.", function() return DB.glowCds == true end, function(v) DB.glowCds = v end, true)
   end)
   fold("goals", "Goals and saved pulls", "A damage or healing goal, and how many pulls to keep.", function()
     local function lastOf(role)
@@ -2269,14 +2259,14 @@ local function buildOptions()
     stepper("Healing goal", "Your HPS target, in thousands.", 0, 3000, g2, s2, fmtK, true, 10)
     stepper("Keep my last", "Older pulls drop off as new ones come in.", 10, 100, function() return DB.keep or 30 end, function(v) DB.keep = v end, function(v) return v .. "" end, true, 5)
     local pc = P:CreateFontString(nil, "OVERLAY"); setFont(pc, "body", 12); pc:SetPoint("TOPLEFT", PX, -(y + 4)); pc:SetWidth(OW - PX * 2); pc:SetJustifyH("LEFT"); pc:SetTextColor(rgb(COL.faint))
-    refreshers[#refreshers + 1] = function() local R = Debrief_PreviewReal and Debrief_PreviewReal(); local n = #((R and R.pulls) or DB.pulls); pc:SetText((n == 0 and "No pulls saved yet." or (n .. (n == 1 and " pull saved." or " pulls saved."))) .. " /reload brings in your newest from Debrief Companion.") end
+    refreshers[#refreshers + 1] = function() local R = Debrief_PreviewReal and Debrief_PreviewReal(); local n = #((R and R.pulls) or DB.pulls); pc:SetText(n == 0 and "No pulls saved yet." or (n .. (n == 1 and " pull saved." or " pulls saved."))) end
     y = y + 22
     buttons({ { "Clear saved pulls", function() SlashCmdList.DEBRIEF("clear"); Debrief_RefreshOptions() end } })
   end)
-  fold("help", "Help", "The setup again, a sample recap, test the glow, move the card back, the commands.", function()
+  fold("help", "Help", "The setup again, a sample recap, move the card back, the commands.", function()
     buttons({ { "Run the setup again", function() opt:Hide(); Debrief_Tutorial() end, 150 }, { "Sample recap", function() SlashCmdList.DEBRIEF("demo") end, 110 } })
     y = y - 6
-    buttons({ { "Test the glow", function() Debrief_TestGlow() end, 110 }, { "Move card back", function() SlashCmdList.DEBRIEF("reset") end, 120 } })
+    buttons({ { "Move card back", function() SlashCmdList.DEBRIEF("reset") end, 120 } })
     local HELP = { { "/recap", "show or hide your recap (/dbr, /debrief too)" }, { "/db", "these settings (/dmo too)" }, { "/debrief big", "the big window" },
       { "/debrief setup", "the guided setup again" }, { "/debrief log", "combat logging on or off" }, { "/debrief demo", "a sample recap" } }
     for _, h in ipairs(HELP) do
@@ -2508,7 +2498,7 @@ do
 
   -- step 4: using it, what to type and what to click
   do local f = pane(4); local yy = 0
-    for _, w in ipairs({ { "/reload", "Brings your newest pulls in here. A chat line reminds you after each raid boss." }, { "/recap", "Shows or hides your card." },
+    for _, w in ipairs({ { "/recap", "Shows or hides your card. When a newer pull is on your PC, it says so: click Bring it in." },
       { "Me  ·  Raid view", "Your own pull, or the raid's biggest mistakes and who died." }, { "<  name  >", "Look at anyone in the pull." },
       { "Expand", "The whole night in a big window, with charts." }, { "+  and  –", "Open or fold any line for the details." }, { "/db", "These settings, any time." } }) do
       local k = fsOn(f, "bold", 13.5, "e6b450"); k:SetPoint("TOPLEFT", 0, -yy); k:SetText(w[1])
@@ -2572,6 +2562,36 @@ do
   function Debrief_Tutorial() if not DB then return end; if DebriefOptions and DebriefOptions:IsShown() then DebriefOptions:Hide() end; wasCard = card:IsShown() and not prevOn; show(1); tut:Show() end
 end
 
+-- ---------- a newer pull on your PC: Bring it in (Oct 25) ----------
+-- (WoW reads the saved pulls only at login or /reload, so after a boss fight the newest recap is on the PC pop-up and not yet here. The
+-- addon sees the fight end, so the card says so in a gold strip, and Bring it in does the reload on your own click (never by itself,
+-- never in a fight); the card opens again after it with every new pull)
+local behindN, behindBoss = 0, nil
+local bring = CreateFrame("Frame", "DebriefBring", UIParent); bring:SetSize(400, 36); bring:SetFrameStrata("HIGH"); bring:SetClampedToScreen(true); bring:Hide()
+skin(bring, 7, "2a2212", 0.97, COL.gold, 0.85)
+bring.t = bring:CreateFontString(nil, "OVERLAY"); setFont(bring.t, "bold", 13); bring.t:SetPoint("LEFT", 12, 0); bring.t:SetPoint("RIGHT", -116, 0); bring.t:SetJustifyH("LEFT"); bring.t:SetWordWrap(false); bring.t:SetTextColor(rgb(COL.text))
+local bringB = CreateFrame("Button", nil, bring); bringB:SetSize(100, 26); bringB:SetPoint("RIGHT", -6, 0); skin(bringB, 5, COL.gold, 1, COL.gold, 1)
+bringB.t = bringB:CreateFontString(nil, "OVERLAY"); setFont(bringB.t, "bold", 13); bringB.t:SetPoint("CENTER", 0, 0); bringB.t:SetTextColor(rgb("1b1406")); bringB.t:SetText("Bring it in")
+bringB:SetScript("OnEnter", function() GameTooltip:SetOwner(bringB, "ANCHOR_TOP"); GameTooltip:SetText("Bring it in", 1, 1, 1); GameTooltip:AddLine("A quick reload, a few seconds: WoW reads your newest pulls, and your card opens again with them.", 0.75, 0.78, 0.82, true); GameTooltip:Show() end)
+bringB:SetScript("OnLeave", function() GameTooltip:Hide() end)
+bringB:SetScript("OnClick", function()
+  if InCombatLockdown() then say("after the fight: then Bring it in."); return end
+  DB.openAfter = true
+  if C_UI and C_UI.Reload then C_UI.Reload() elseif ReloadUI then ReloadUI() end
+end)
+-- (shown above the card while it's open, or on its own when there's no card yet)
+function Debrief_BringShow(alone)
+  if behindN == 0 or not DB or not (DEBRIEF_HAS_APP or DB.hasApp) then bring:Hide(); return end
+  bring.t:SetText(behindN == 1 and ("Your newest pull" .. ((behindBoss and behindBoss ~= "") and (" on " .. behindBoss) or "") .. " is on your PC.") or (behindN .. " newer pulls are on your PC."))
+  bring:ClearAllPoints(); bring.alone = nil
+  if card:IsShown() then bring:SetParent(card); bring:SetFrameStrata("HIGH"); bring:SetPoint("BOTTOMLEFT", card, "TOPLEFT", 0, 6); bring:SetPoint("BOTTOMRIGHT", card, "TOPRIGHT", 0, 6); bring:Show()
+  elseif alone then bring:SetParent(UIParent); bring:SetFrameStrata("HIGH"); bring:SetSize(400, 36); bring:SetPoint("CENTER", UIParent, "CENTER", 260, 160); bring.alone = true; bring:Show()
+  else bring:Hide() end
+end
+-- (a boss fight ended: its recap is on the PC now, not yet here)
+function Debrief_Behind(boss) behindN = behindN + 1; behindBoss = boss; Debrief_BringShow() end
+function Debrief_BringIsShown() return bring:IsShown(), behindN end -- (for tests)
+
 -- ---------- opening it: key, slash command ----------
 function Debrief_Toggle()
   Debrief_PreviewFix()
@@ -2579,7 +2599,9 @@ function Debrief_Toggle()
   if DB and DB.mini and #DB.pulls > 0 and not card:IsShown() then if mini:IsShown() then mini:Hide() else miniShow() end; return end
   if card:IsShown() then card:Hide() elseif DB and DB.pulls and #DB.pulls > 0 then card:Show(); render()
   -- (nothing to show: say where the recaps come from)
-  else say("no pulls here yet. After a boss pull, /reload brings it in from Debrief Companion (it also pops up on your PC).") end
+  elseif bring.alone and bring:IsShown() then bring:Hide(); bring.alone = nil
+  elseif behindN > 0 then Debrief_BringShow(true)
+  else say("no pulls here yet. After a boss pull, your recap pops up on your PC, and /recap brings it in here.") end
 end
 BINDING_HEADER_DEBRIEF = "Debrief"
 BINDING_NAME_DEBRIEF_TOGGLE = "Show or hide the recap card"
@@ -2594,7 +2616,6 @@ SlashCmdList.DEBRIEF = function(msg)
   elseif msg == "setup" or msg == "tutorial" or msg == "tour" then Debrief_Tutorial()
   elseif msg == "big" or msg == "b" then Debrief_ToggleBig()
   elseif msg == "mini" then DB.mini = not DB.mini; if DB.mini then DB.bigDefault = false end; say("mini bar " .. (DB.mini and "on: one slim line after each pull, click it for the card." or "off: the card after each pull.")); if DB.mini and #DB.pulls > 0 then card:Hide(); miniShow() else mini:Hide() end
-  elseif msg == "raid" then DB.raidAlways = not DB.raidAlways; say("Raid view " .. (DB.raidAlways and "always on." or "only when you lead or assist.")); if card:IsShown() then render() end
   elseif msg == "reset" then DB.pos = nil; card:ClearAllPoints(); card:SetPoint("CENTER", 260, 60); say("card moved back to the middle.")
   elseif msg == "clear" then if PREV_REAL then PREV_REAL.pulls = {}; PREV_REAL.cur = nil else DB.pulls = {}; DB.cur = nil end; card:Hide(); big:Hide(); mini:Hide(); say("pulls cleared.")
   elseif msg == "demo" then
@@ -2602,120 +2623,9 @@ SlashCmdList.DEBRIEF = function(msg)
     local m = decode(SAMPLE)
     if m then m.demo = true; addPull(m); showCard(); say("showing a sample Mythic Coiled Altar wipe (made-up names; Vexmira is the Holy Paladin). Use the arrows to see other players.") end
   elseif msg == "log" then Debrief_ToggleLog()
-  elseif msg == "glow" then Debrief_TestGlow()
-  elseif msg == "help" then say("/db (or /dmo, or /debrief options): your settings. /debrief setup: the guided setup again. /debrief: show or hide the card. /debrief big: the big window. /debrief demo: a sample card. /debrief log: combat logging on or off (or the button on the card, or a key in Keybindings > AddOns > Debrief). /debrief raid: Raid view on or off. /debrief reset: move the card back.")
+  elseif msg == "help" then say("/db (or /dmo, or /debrief options): your settings. /debrief setup: the guided setup again. /debrief: show or hide the card. /debrief big: the big window. /debrief demo: a sample card. /debrief log: combat logging on or off (or the button on the card, or a key in Keybindings > AddOns > Debrief). /debrief reset: move the card back.")
   else Debrief_Toggle() end
 end
-
--- ---- Glow my cooldowns (the user's ask, Oct 22: "read the NSRT note and glow my cooldown manager icons when i need to use
--- them in raid combat"). Opt-in: /dmo > Raid. When NSRT shows one of YOUR reminders that has a spell, that spell's icon on
--- Blizzard's Cooldown Manager glows at the moment NSRT counts down to, until you press it or 8 s pass. The timing is NSRT's own
--- (its NSRT_REMINDER_SHOW callback), so phases and times match its pop-ups exactly; NSRT only fires it for reminders tagged to you.
--- Debrief only draws its own glow frame on top of the icon: the Cooldown Manager isn't a protected frame, and no combat data is read.
-local CDM_VIEWERS = { "EssentialCooldownViewer", "UtilityCooldownViewer" }
-local glows, glowPool, nsrtHooked = {}, {}, false
-local function secret(x) return issecretvalue and issecretvalue(x) end
-local function spellName(id) local n = C_Spell and C_Spell.GetSpellName and C_Spell.GetSpellName(id); if n and not secret(n) then return n end end
--- (every Cooldown Manager icon on screen, with the spell IDs it stands for: base, current and override)
-local function cdmItems()
-  local out = {}
-  for _, vn in ipairs(CDM_VIEWERS) do
-    local v = _G[vn]
-    if v and v.GetItemFrames then
-      local ok, items = pcall(v.GetItemFrames, v)
-      if ok and type(items) == "table" then
-        for _, it in ipairs(items) do
-          local ids = {}
-          for _, fn in ipairs({ "GetSpellID", "GetBaseSpellID" }) do
-            if it[fn] then local ok2, x = pcall(it[fn], it); if ok2 and x and not secret(x) then ids[#ids + 1] = x end end
-          end
-          local ci = it.cooldownInfo
-          if type(ci) == "table" then for _, k in ipairs({ "spellID", "overrideSpellID", "overrideTooltipSpellID" }) do local x = ci[k]; if x and not secret(x) then ids[#ids + 1] = x end end end
-          if #ids > 0 then out[#out + 1] = { frame = it, ids = ids } end
-        end
-      end
-    end
-  end
-  return out
-end
-local function cdmItemFor(spellID)
-  local name = spellName(spellID)
-  for _, e in ipairs(cdmItems()) do
-    for _, x in ipairs(e.ids) do if x == spellID or (name and spellName(x) == name) then return e.frame end end
-  end
-end
--- (the glow: four gold edges and a soft halo, pulsing; one frame per spell, reused)
-local function newGlow()
-  local g = table.remove(glowPool)
-  if g then return g end
-  g = CreateFrame("Frame", nil, UIParent); g:SetFrameStrata("HIGH")
-  local r, gg, b = rgb(COL.gold)
-  g.halo = g:CreateTexture(nil, "BACKGROUND"); g.halo:SetTexture(SLICE .. "shadow"); g.halo:SetPoint("TOPLEFT", -12, 12); g.halo:SetPoint("BOTTOMRIGHT", 12, -12); g.halo:SetVertexColor(r, gg, b, 0.9)
-  local function edge(p1, p2, w, h) local t = g:CreateTexture(nil, "OVERLAY"); t:SetColorTexture(r, gg, b, 1); t:SetPoint(p1); t:SetPoint(p2); if w then t:SetWidth(w) else t:SetHeight(h) end end
-  edge("TOPLEFT", "TOPRIGHT", nil, 3); edge("BOTTOMLEFT", "BOTTOMRIGHT", nil, 3); edge("TOPLEFT", "BOTTOMLEFT", 3); edge("TOPRIGHT", "BOTTOMRIGHT", 3)
-  g.ag = g:CreateAnimationGroup(); g.ag:SetLooping("BOUNCE")
-  local a = g.ag:CreateAnimation("Alpha"); a:SetFromAlpha(1); a:SetToAlpha(0.35); a:SetDuration(0.45)
-  return g
-end
-local function glowStop(id)
-  local g = glows[id]; if not g then return end
-  glows[id] = nil
-  if g.timer then g.timer:Cancel(); g.timer = nil end
-  g.ag:Stop(); g:Hide(); g:ClearAllPoints()
-  glowPool[#glowPool + 1] = g
-end
-local function glowStopAll() for id in pairs(glows) do glowStop(id) end end
-local function glowStart(id, hold)
-  local it = cdmItemFor(id)
-  if not it then return false end
-  glowStop(id)
-  local g = newGlow()
-  g:SetPoint("TOPLEFT", it, "TOPLEFT", -2, 2); g:SetPoint("BOTTOMRIGHT", it, "BOTTOMRIGHT", 2, -2)
-  g:SetFrameLevel((it.GetFrameLevel and it:GetFrameLevel() or 1) + 10); g:Show(); g.ag:Play()
-  glows[id] = g
-  g.timer = C_Timer.NewTimer(hold or 8, function() g.timer = nil; glowStop(id) end)
-  return true
-end
--- (NSRT says a reminder of yours is showing: glow its spell when its countdown ends, the moment to press it)
-local function onReminder(_, info)
-  if not (DB and DB.glowCds) or type(info) ~= "table" then return end
-  if C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("DebriefGlow") then return end -- (Debrief Glow does it, with its own look: never two glows)
-  local id = info.spellID or info.spellid
-  if not id or secret(id) then return end
-  id = tonumber(id); if not id then return end
-  local wait = info.expires and not secret(info.expires) and (info.expires - GetTime()) or (tonumber(info.dur) or 8)
-  if wait > 0.05 then C_Timer.After(wait, function() if DB.glowCds then glowStart(id) end end) else glowStart(id) end
-end
-local function hookNSRT()
-  if nsrtHooked or not (NSAPI and NSAPI.RegisterCallback) then return end
-  nsrtHooked = true
-  pcall(NSAPI.RegisterCallback, "DebriefGlow", "NSRT_REMINDER_SHOW", onReminder)
-  pcall(NSAPI.RegisterCallback, "DebriefGlow", "NSRT_ALERT_WOULD_SHOW", onReminder) -- (NSRT's reminders shown on Blizzard's timeline instead)
-  pcall(NSAPI.RegisterCallback, "DebriefGlow", "NSRT_HIDE_REMINDERS", glowStopAll)
-end
--- (pressing the spell clears its glow)
-local function onCast(id)
-  if not id or secret(id) or not next(glows) then return end
-  if glows[id] then glowStop(id) return end
-  local n = spellName(id)
-  if n then for g in pairs(glows) do if spellName(g) == n then glowStop(g) end end end
-end
--- (/debrief glow, or Test the glow in /dmo: every Cooldown Manager icon glows for 3 s, so you can see it without a raid)
-function Debrief_TestGlow()
-  if not NSAPI then say("NSRT isn't loaded. The glow follows NSRT's reminders, so it needs NSRT on.") end
-  local items, n = cdmItems(), 0
-  for _, e in ipairs(items) do if glowStart(e.ids[1], 3) then n = n + 1 end end
-  if n == 0 then say("no Cooldown Manager icons found. Turn on Blizzard's Cooldown Manager (Options > Gameplay Enhancements) and add your cooldowns to it.")
-  else say(n .. " Cooldown Manager icons glowing for 3 s. In a raid only your own NSRT spells glow, when it's time to press them" .. (DB.glowCds and "." or ". Turn it on in /db > More.")) end
-end
-local gev = CreateFrame("Frame", "DebriefGlowEvents")
-gev:RegisterEvent("PLAYER_LOGIN"); gev:RegisterEvent("ADDON_LOADED"); gev:RegisterEvent("ENCOUNTER_END")
-gev:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
-gev:SetScript("OnEvent", function(_, e, a1, a2, a3)
-  if e == "UNIT_SPELLCAST_SUCCEEDED" then onCast(a3)
-  elseif e == "ENCOUNTER_END" then glowStopAll()
-  else hookNSRT() end
-end)
 
 local ev = CreateFrame("Frame")
 ev:RegisterEvent("ADDON_LOADED"); ev:RegisterEvent("PLAYER_LOGIN"); ev:RegisterEvent("PLAYER_LOGOUT"); ev:RegisterEvent("PLAYER_REGEN_ENABLED"); ev:RegisterEvent("PLAYER_REGEN_DISABLED"); ev:RegisterEvent("ENCOUNTER_END"); ev:RegisterEvent("PLAYER_ENTERING_WORLD"); ev:RegisterEvent("ZONE_CHANGED_NEW_AREA"); ev:RegisterEvent("PLAYER_TARGET_CHANGED")
@@ -2762,8 +2672,9 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
   elseif e == "ENCOUNTER_END" then
     -- (a nudge after a boss (Oct 24): the recap is on your PC at once; WoW brings it in at /reload. Raid and dungeon bosses)
     local itype = GetInstanceInfo and select(2, GetInstanceInfo()); local raidBoss = itype == "raid" or itype == "party" or a3 == 14 or a3 == 15 or a3 == 16 or a3 == 17 or a3 == 1 or a3 == 2 or a3 == 8 or a3 == 23 -- (and dungeon bosses since Oct 24)
-    if DB and raidBoss and (DEBRIEF_HAS_APP or DB.hasApp) and DB.nudge ~= false and C_Timer then
-      local boss = a2; C_Timer.After(6, function() say("your recap" .. ((boss and boss ~= "") and (" for " .. boss) or "") .. " is up on your PC. Type /reload to see it here too.") end)
+    if DB and raidBoss and (DEBRIEF_HAS_APP or DB.hasApp) then Debrief_Behind(a2) end -- (Bring it in on the card (Oct 25))
+    if DB and raidBoss and (DEBRIEF_HAS_APP or DB.hasApp) and DB.nudge == true and C_Timer then -- (off unless you switch it on (Oct 25))
+      local boss = a2; C_Timer.After(6, function() say("your recap" .. ((boss and boss ~= "") and (" for " .. boss) or "") .. " is up on your PC. /recap and Bring it in shows it here too.") end)
     end
   elseif e == "PLAYER_LOGOUT" then Debrief_PreviewOff() -- (never save the sample in place of your pulls)
   elseif e == "ZONE_CHANGED_NEW_AREA" then
@@ -2785,7 +2696,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
       DB.fromApp = #DB.pulls - n0
     end
     if DEBRIEF_HAS_APP then DB.hasApp = true end -- (Debrief Companion is on this PC)
-    if DB.raidAlways == nil then DB.raidAlways = true end
+    DB.raidAlways = nil; DB.glowCds = nil -- (no leads-only Raid view and no cooldown glow any more (Oct 25))
     DB.show = DB.show or {}
     if DB.detailed and DB.width == "large" and not DB.xlOnce then DB.width = "xl" end; DB.xlOnce = true
     if not DB.glanceDefault then DB.glanceDefault = true; DB.detailedDefault = true; DB.threeStyles = true; if DB.preset == nil then Debrief_SetPreset("standard") end end -- (new players start on Standard (Oct 24))
@@ -2816,7 +2727,8 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
       if a0 == "DEBRIEF_PASTE" or (a0 == "" and not DB.keySet) then if SetBinding("CTRL-SHIFT-D", "DEBRIEF_TOGGLE") then SaveBindings(GetCurrentBindingSet()) end end
       DB.keySet = true
     end
-    if DEBRIEF_HAS_APP or DB.hasApp then say("ready. Your recap pops up on your PC after each boss pull." .. ((DB.fromApp or 0) > 0 and (" " .. DB.fromApp .. " new pull" .. (DB.fromApp == 1 and "" or "s") .. " from Debrief Companion: /recap.") or " /reload brings your latest pulls in game: /recap."))
+    if DB.openAfter then DB.openAfter = nil; if C_Timer and #DB.pulls > 0 then C_Timer.After(1, function() if not InCombatLockdown() then card:Show(); render() end end) end end -- (Bring it in: the card again (Oct 25))
+    if DEBRIEF_HAS_APP or DB.hasApp then say("ready. Your recap pops up on your PC after each boss pull." .. ((DB.fromApp or 0) > 0 and (" " .. DB.fromApp .. " new pull" .. (DB.fromApp == 1 and "" or "s") .. " from Debrief Companion: /recap.") or " /recap shows them here too."))
     else say("ready. Your recaps come from Debrief Companion on your PC. /debrief demo shows a sample.") end
   end
 end)
@@ -2835,6 +2747,5 @@ function Debrief_NoteError(err)
 end
 local function guard(f) return function(...) local ok, err = pcall(f, ...); if not ok then if DB then Debrief_NoteError(err) else error(err, 0) end end end end
 do local f = ev:GetScript("OnEvent"); if f then ev:SetScript("OnEvent", guard(f)) end end
-do local f = gev:GetScript("OnEvent"); if f then gev:SetScript("OnEvent", guard(f)) end end
 SlashCmdList.DEBRIEF = guard(SlashCmdList.DEBRIEF); SlashCmdList.DEBRIEFMO = guard(SlashCmdList.DEBRIEFMO)
 do local f = bigRender; bigRender = function() local ok, err = pcall(f); if not ok then Debrief_NoteError(err) end end end

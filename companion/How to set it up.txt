@@ -3,7 +3,7 @@ DEBRIEF IN GAME
 
 What it does
   After every boss pull (raid or dungeon), your recap pops up on your PC by itself: what you did well, what to fix first,
-  and one thing to try next pull. Type /reload in WoW when it suits you, and the same recap is in the game on /recap.
+  and one thing to try next pull. In WoW, /recap shows the same recap: click Bring it in when the card offers it.
   Nothing to copy or paste: the app does it all.
 
 Setting it up (everyone who wants their recap)
@@ -12,7 +12,7 @@ Setting it up (everyone who wants their recap)
   2. In WoW, type /reload if it was open. The first time, a short guided setup helps you pick what your card shows.
      The addon keeps the combat log on for you (with Advanced Combat Logging).
   3. Play as usual. After each boss pull, your recap pops up on your PC, over the game.
-     In WoW, type /reload when it suits you, then /recap.
+     In WoW, type /recap, and click Bring it in when the card says a newer pull is on your PC.
   You can close the app's window: Debrief keeps running in the background. Quit stops it.
   It updates itself between pulls. When the addon was updated, the pop-up tells you to /reload.
 
