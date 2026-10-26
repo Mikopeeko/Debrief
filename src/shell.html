@@ -7211,6 +7211,18 @@ html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac +
 #view section.rck > h3.rck-h .ds-sw > b { padding: 3px 10px; font: 500 12.5px var(--body); letter-spacing: 0; text-transform: none; color: var(--muted); cursor: pointer; }
 #view section.rck > h3.rck-h .ds-sw > b:hover { color: var(--text); }
 #view section.rck > h3.rck-h .ds-sw > b.on { background: rgba(255,255,255,.09); color: var(--text); font-weight: 600; }
+/* ===== Design studio round 28 (Oct 26): colour in Rotation's sentences. Numbers in the check's colour (green done right, amber some
+   mistakes, red failed), spell names semi-bold; Next time (and a What to fix card's How) with the coach box's gold label, a gold edge
+   and white text. Owner: the Design studio chat. ===== */
+#view section.rck p.spc-rs .ds-n, #view section.rck summary > .ds-note .ds-n { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+#view section.rck p.spc-rs[data-ds-st="ok"] .ds-n, #view section.rck summary > .ds-note[data-ds-st="ok"] .ds-n { color: #7ee08f; }
+#view section.rck p.spc-rs[data-ds-st="warn"] .ds-n, #view section.rck summary > .ds-note[data-ds-st="warn"] .ds-n { color: #f3c969; }
+#view section.rck p.spc-rs[data-ds-st="bad"] .ds-n, #view section.rck summary > .ds-note[data-ds-st="bad"] .ds-n { color: #ff8f87; }
+#view section.rck p.spc-rs .sp.mt, #view section.rck summary > .ds-note .sp.mt { font-weight: 600; color: var(--text); }
+/* the tip is Debrief talking to you: gold label, gold edge, white words */
+#view section.rck .rck-b.ds-slim > p.rck-tip, #view section.rck .rck-b > p.rck-tip, #view .spc-tld > p.spc-tip, #view .rck-fix .rck-sgt > p.rck-how { position: relative; margin: 6px 0 2px; padding: 3px 0 3px 10px; border-left: 2px solid var(--gold); border-radius: 0 6px 6px 0; background: linear-gradient(90deg, rgba(230,180,80,.09), rgba(230,180,80,0) 70%); color: var(--text); font-size: 13.5px; line-height: 1.45; }
+#view section.rck .rck-b.ds-slim > p.rck-tip > b:first-child, #view section.rck .rck-b > p.rck-tip > b:first-child, #view .spc-tld > p.spc-tip > b:first-child, #view .rck-fix .rck-sgt > p.rck-how > b:first-child { margin-right: 6px; font: 700 12px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--gold); }
+#view .rck-fix .rck-sgt > p.rck-how { margin-top: 6px; }
 </style>
 
 

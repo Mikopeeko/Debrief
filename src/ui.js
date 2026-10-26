@@ -1951,6 +1951,7 @@ const PATCH_NOTES = [
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'Rotation in colour: the numbers in every check\'s sentence are in the check\'s colour (green done right, amber some mistakes, red failed), spell names are bolder, and every Next time tip has a gold label and a gold edge so it stands out.',
     'Rotation speaks plainer: every check is one short sentence ("92% of your 337 casts were the best button at that moment.", "You used it 10 of 15 possible times."), tips say "in its last 30%" and "right after" instead of game jargon, and Stat order lets its bars do the talking.',
     'Opening a raid night is much faster: pulls are read several at a time in the background, so the page stays smooth and a hidden tab no longer slows it down. A night that isn\'t read yet opens on its kill or latest pull in seconds while the rest read, and a note tells you when All pulls is ready.',
     'After a Debrief update, pulls you\'ve opened before still show at once and are read again behind the scenes, instead of the whole night loading again.',
@@ -30686,6 +30687,22 @@ function dsRotOpen() { const sec = document.querySelector('#view section.rck'); 
 (function () { const f18 = dsBars; dsBars = function (root) { f18(root); try { dsRotOpen(); } catch (e) {} };
   /* tiles are out of the app's one-at-a-time accordion: their toggle never reaches it (and they cannot close) */
   window.addEventListener('toggle', (e) => { const d = e.target; if (!d || !d.matches || !d.matches('#view section.rck .rck-rs > details.rck-r')) return; e.stopImmediatePropagation(); if (!d.open) d.open = true; else dsWsTrim(d); }, true); })();
+
+// ===== Design studio round 28 (Oct 26): colour in Rotation's sentences. The numbers in a check's sentence are wrapped (b.ds-n) and the
+// sentence carries the check's status (data-ds-st) so the style can colour them. Idempotent, text nodes only. Owner: the Design studio chat. =====
+function dsRotColour() { const NUM = /\d+:\d\d|\d[\d,]*(?:\.\d+)?(?:%|K|M)?/g;
+  /* the tip reads after the sentence it answers (a tile with a split bar had it the other way round) */
+  document.querySelectorAll('#view section.rck .rck-b > p.rck-tip').forEach((tip) => { const rs = tip.nextElementSibling; if (rs && rs.matches('p.spc-rs')) rs.after(tip); });
+  /* the sentence lives in p.spc-rs, or in the title row's span.ds-note on a flat tile (round 6) */
+  document.querySelectorAll('#view section.rck p.spc-rs:not([data-ds-st]), #view section.rck summary > span.ds-note:not([data-ds-st])').forEach((p) => {
+    let st = 'na', e = p.parentElement; while (e && !(e.tagName === 'SECTION' && e.classList.contains('rck'))) { const m = /(?:^|\s)(ok|warn|bad|na)(?:\s|$)/.exec(e.className || ''); if (m) { st = m[1]; break; } e = e.parentElement; }
+    p.dataset.dsSt = st;
+    const walk = document.createTreeWalker(p, NodeFilter.SHOW_TEXT, { acceptNode: (n) => (n.parentElement.closest('.sp, b, a, button, .ds-n, .spc-hwb, .spc-hwp') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) });
+    const nodes = []; let n; while ((n = walk.nextNode())) if (NUM.test(n.nodeValue)) nodes.push(n); NUM.lastIndex = 0;
+    nodes.forEach((t) => { const s = t.nodeValue, frag = document.createDocumentFragment(); let i = 0, m; NUM.lastIndex = 0;
+      while ((m = NUM.exec(s))) { if (m.index > i) frag.appendChild(document.createTextNode(s.slice(i, m.index))); const b = document.createElement('b'); b.className = 'ds-n'; b.textContent = m[0]; frag.appendChild(b); i = m.index + m[0].length; }
+      if (i < s.length) frag.appendChild(document.createTextNode(s.slice(i))); t.parentNode.replaceChild(frag, t); }); }); }
+(function () { const f19 = dsBars; dsBars = function (root) { f19(root); try { dsRotColour(); } catch (e) {} }; })();
 
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
