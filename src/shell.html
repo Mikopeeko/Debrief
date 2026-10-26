@@ -7313,36 +7313,6 @@ html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac +
 #view section.rck .rck-r.rck-xm.ok .rck-xin .spc-f.fx-w > b { color: #7ee08f; }
 #view section.rck .rck-r.rck-xm.warn .rck-xin .spc-f.fx-w > b, #view section.rck .rck-r.rck-xm .rck-xin .spc-f.fx-w.warn > b { color: #f3c969; }
 #view section.rck .rck-r.rck-xm.bad .rck-xin .spc-f.fx-w > b, #view section.rck .rck-r.rck-xm .rck-xin .spc-f.fx-w.bad > b { color: #ff8f87; }
-/* ===== Design studio round 30 (Oct 26): Rotation's rows, one look: one short fact line a tile in Summary (the full sentence under Everything), numbers in the
-   check's colour, spell names semi-bold, Next time with a gold label and edge, window cards across the ring, big-damage moments only
-   where a cooldown went out. Owner: the Design studio chat. ===== */
-/* the short line, and the full sentence under Everything */
-#view section.rck .rck-b.ds-slim > p.ds-short { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--muted); }
-#view section.rck:not(.ds-all) .rck-b.ds-slim > p.spc-rs.ds-full { display: none !important; }
-#view section.rck.ds-all .rck-b.ds-slim > p.ds-short, #view section.rck.ds-all summary > span.ds-note.ds-sn { display: none; }
-#view section.rck .rck-rs > .rck-r > summary > span.ds-note.ds-sn { grid-column: 1 / -1; margin-top: 3px; font-size: 12.5px; line-height: 1.3; color: var(--muted); }
-#view section.rck.ds-all .rck-b.ds-slim > p.spc-rs.ds-dup.ds-more, #view section.rck.ds-all .rck-mgb > .rck-b > p.spc-rs.ds-dup.ds-more { display: block !important; }
-#view section.rck .rck-b.ds-slim > p.ds-short.ds-dup, #view section.rck summary > span.ds-note.ds-dup { display: none !important; }
-/* numbers in the check's colour, spell names semi-bold */
-#view section.rck p.spc-rs .ds-n, #view section.rck p.ds-short .ds-n, #view section.rck summary > .ds-note .ds-n { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
-#view section.rck p[data-ds-st="ok"] .ds-n, #view section.rck summary > .ds-note[data-ds-st="ok"] .ds-n { color: #7ee08f; }
-#view section.rck p[data-ds-st="warn"] .ds-n, #view section.rck summary > .ds-note[data-ds-st="warn"] .ds-n { color: #f3c969; }
-#view section.rck p[data-ds-st="bad"] .ds-n, #view section.rck summary > .ds-note[data-ds-st="bad"] .ds-n { color: #ff8f87; }
-#view section.rck p.spc-rs .sp.mt, #view section.rck p.ds-short .sp.mt, #view section.rck summary > .ds-note .sp.mt { font-weight: 600; color: var(--text); }
-/* the tip is Debrief talking to you: gold label, gold edge, white words */
-#view section.rck .rck-b.ds-slim > p.rck-tip, #view section.rck .rck-b > p.rck-tip, #view .spc-tld > p.spc-tip, #view .rck-fix .rck-sgt > p.rck-how { position: relative; margin: 6px 0 2px; padding: 3px 0 3px 10px; border-left: 2px solid var(--gold); border-radius: 0 6px 6px 0; background: linear-gradient(90deg, rgba(230,180,80,.09), rgba(230,180,80,0) 70%); color: var(--text); font-size: 13.5px; line-height: 1.45; }
-#view section.rck .rck-b.ds-slim > p.rck-tip > b:first-child, #view section.rck .rck-b > p.rck-tip > b:first-child, #view .spc-tld > p.spc-tip > b:first-child, #view .rck-fix .rck-sgt > p.rck-how > b:first-child { margin-right: 6px; font: 700 12px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--gold); }
-#view section.rck .rck-b.ds-slim > p.ds-short + p.rck-tip { margin-top: 5px; }
-#view .rck-fix .rck-sgt > p.rck-how { margin-top: 6px; }
-/* a long legend, one item a line */
-#view section.rck .spc-sb > .spc-sbl.ds-stack > span { flex: 0 0 100%; flex-wrap: nowrap; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-#view section.rck .spc-sb > .spc-sbl.ds-stack > span > .sp { white-space: nowrap; }
-/* window cards: the tile spans the ring and the cards flow across it */
-.pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r.ds-cards { grid-column: 1 / -1 !important; }
-#view section.rck .rck-r.ds-cards .rck-b > .spc-ws, #view section.rck .rck-r.ds-cards .rck-b .spc-ws { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important; gap: 8px; }
-/* big-damage moments: in Summary only the ones a cooldown covered */
-#view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.warn, #view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.bad, #view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-wall { display: none; }
-#view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.ok.spc-wx { display: block; }
 /* ===== Design studio round 41 (Oct 26): compact chips: the ✓ chips under What to fix keep one shape but take only the width of their words and flow
    left, no dead space, no clipping. Owner: the Design studio chat. ===== */
 #view .rck-fix .rck-good { display: flex !important; flex-wrap: wrap; gap: 8px; grid-template-columns: none; }
@@ -7386,6 +7356,36 @@ html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac +
 #view .spc-hero > .ds-done > .ds-lab { display: block; margin: 0 0 8px; font: 700 12px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 #view .spc-hero > .ds-done > .rck-good { display: flex !important; flex-wrap: wrap; gap: 8px; margin: 0; }
 #view .spc-hero > .ds-done > .rck-good > span { flex: 0 0 auto; width: auto; min-width: 0; max-width: 100%; height: 34px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* ===== Design studio round 30 (Oct 26): Rotation's rows, one look: one short fact line a tile in Summary (the full sentence under Everything), numbers in the
+   check's colour, spell names semi-bold, Next time with a gold label and edge, window cards across the ring, big-damage moments only
+   where a cooldown went out. Owner: the Design studio chat. ===== */
+/* the short line, and the full sentence under Everything */
+#view section.rck .rck-b.ds-slim > p.ds-short { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--muted); }
+#view section.rck:not(.ds-all) .rck-b.ds-slim > p.spc-rs.ds-full { display: none !important; }
+#view section.rck.ds-all .rck-b.ds-slim > p.ds-short, #view section.rck.ds-all summary > span.ds-note.ds-sn { display: none; }
+#view section.rck .rck-rs > .rck-r > summary > span.ds-note.ds-sn { grid-column: 1 / -1; margin-top: 3px; font-size: 12.5px; line-height: 1.3; color: var(--muted); }
+#view section.rck.ds-all .rck-b.ds-slim > p.spc-rs.ds-dup.ds-more, #view section.rck.ds-all .rck-mgb > .rck-b > p.spc-rs.ds-dup.ds-more { display: block !important; }
+#view section.rck .rck-b.ds-slim > p.ds-short.ds-dup, #view section.rck summary > span.ds-note.ds-dup { display: none !important; }
+/* numbers in the check's colour, spell names semi-bold */
+#view section.rck p.spc-rs .ds-n, #view section.rck p.ds-short .ds-n, #view section.rck summary > .ds-note .ds-n { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+#view section.rck p[data-ds-st="ok"] .ds-n, #view section.rck summary > .ds-note[data-ds-st="ok"] .ds-n { color: #7ee08f; }
+#view section.rck p[data-ds-st="warn"] .ds-n, #view section.rck summary > .ds-note[data-ds-st="warn"] .ds-n { color: #f3c969; }
+#view section.rck p[data-ds-st="bad"] .ds-n, #view section.rck summary > .ds-note[data-ds-st="bad"] .ds-n { color: #ff8f87; }
+#view section.rck p.spc-rs .sp.mt, #view section.rck p.ds-short .sp.mt, #view section.rck summary > .ds-note .sp.mt { font-weight: 600; color: var(--text); }
+/* the tip is Debrief talking to you: gold label, gold edge, white words */
+#view section.rck .rck-b.ds-slim > p.rck-tip, #view section.rck .rck-b > p.rck-tip, #view .spc-tld > p.spc-tip, #view .rck-fix .rck-sgt > p.rck-how { position: relative; margin: 6px 0 2px; padding: 3px 0 3px 10px; border-left: 2px solid var(--gold); border-radius: 0 6px 6px 0; background: linear-gradient(90deg, rgba(230,180,80,.09), rgba(230,180,80,0) 70%); color: var(--text); font-size: 13.5px; line-height: 1.45; }
+#view section.rck .rck-b.ds-slim > p.rck-tip > b:first-child, #view section.rck .rck-b > p.rck-tip > b:first-child, #view .spc-tld > p.spc-tip > b:first-child, #view .rck-fix .rck-sgt > p.rck-how > b:first-child { margin-right: 6px; font: 700 12px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--gold); }
+#view section.rck .rck-b.ds-slim > p.ds-short + p.rck-tip { margin-top: 5px; }
+#view .rck-fix .rck-sgt > p.rck-how { margin-top: 6px; }
+/* a long legend, one item a line */
+#view section.rck .spc-sb > .spc-sbl.ds-stack > span { flex: 0 0 100%; flex-wrap: nowrap; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+#view section.rck .spc-sb > .spc-sbl.ds-stack > span > .sp { white-space: nowrap; }
+/* window cards: the tile spans the ring and the cards flow across it */
+.pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r.ds-cards { grid-column: 1 / -1 !important; }
+#view section.rck .rck-r.ds-cards .rck-b > .spc-ws, #view section.rck .rck-r.ds-cards .rck-b .spc-ws { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important; gap: 8px; }
+/* big-damage moments: in Summary only the ones a cooldown covered */
+#view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.warn, #view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.bad, #view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-wall { display: none; }
+#view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.ok.spc-wx { display: block; }
 </style>
 
 

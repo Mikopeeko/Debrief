@@ -30804,6 +30804,18 @@ function dsRotGroup() { document.querySelectorAll('#view section.rck .rck-cat .r
       last.set(s, t); } }); }
 (function () { const f23 = dsBars; dsBars = function (root) { f23(root); try { dsRotGroup(); } catch (e) {} }; })();
 
+// ===== Design studio round 44 (Oct 26): the source box above the columns: "Where your healing came from" moves from the gear column to a full-width strip
+// under the pull-at-a-glance strip, once per page. Owner: the Design studio chat. =====
+function dsRotSrc() { const v = document.querySelector('#view .pf-inl.spc-v'); if (!v) return; const cols = v.querySelector(':scope > .ds-rcols'); if (!cols) return;
+  const src = v.querySelector('.ds-rcols .rck-gx .rgx-src'); if (!src || src.dataset.dsUp) return; src.dataset.dsUp = '1'; src.classList.add('ds-srcwide'); cols.before(src); }
+(function () { const f24 = dsBars; dsBars = function (root) { f24(root); try { dsRotSrc(); } catch (e) {} }; })();
+
+// ===== Design studio round 45 (Oct 26): the hero without the HPS/DPS box, the chips in its space. Owner: the Design studio chat. =====
+function dsRotHero() { const v = document.querySelector('#view .pf-inl.spc-v'); if (!v) return; const hero = v.querySelector('.spc-hero'); if (!hero) return;
+  hero.querySelectorAll('.spc-kt:not([data-ds-ht])').forEach((k) => { k.dataset.dsHt = '1'; const l = ((k.querySelector('.spc-ktl') || {}).textContent || '').trim(); if (/^(Healing|Damage) a second/.test(l)) k.classList.add('ds-hide'); });
+  const good = v.querySelector('.rck-fix .rck-good'); if (good && !good.dataset.dsUp) { good.dataset.dsUp = '1'; const box = document.createElement('div'); box.className = 'ds-done'; const lab = document.createElement('span'); lab.className = 'ds-lab'; lab.textContent = 'Done right'; box.appendChild(lab); box.appendChild(good); hero.appendChild(box); } }
+(function () { const f25 = dsBars; dsBars = function (root) { f25(root); try { dsRotHero(); } catch (e) {} }; })();
+
 // ===== Design studio round 30 (Oct 26): Rotation's rows, one look. One short fact line a tile (dsShort), the numbers in the check's
 // colour, spell names semi-bold, Next time in gold, no line that only restates the row, window cards across the ring, big-damage
 // moments only where a cooldown went out. Runs after dsRotOpen (round 27). Owner: the Design studio chat. =====
@@ -30856,13 +30868,13 @@ function dsShort(sub, v) {
   if ((m = s.match(/^You had (\d+) (?:uses|.+?), and (?:used|spent) (.+?)\.(.*)$/))) { const t = tails(m[3].trim()); if (/^\d+$/.test(m[2])) { const h = m[2] === m[1] ? 'All ' + m[1] + ' used' : m[2] + ' of ' + m[1] + ' used'; const t2 = t.replace(/^none ran out[.,] ?/, ''); return h + (t2 ? '; ' + t2 : '.'); } return m[1] + ' procs: ' + m[2].replace(/ and /g, ', ') + (t ? '; ' + t : '.'); }
   if ((m = s.match(/^(\d+) of your (\d+) (.+?) windows were done right\. Inside them you did (\S+) (DPS|HPS), against (\S+) the rest of the pull\.(.*)$/))) { let x = m[4] + ' ' + m[5] + ' inside, ' + m[6] + ' outside.'; const r = m[7]; let k; if ((k = r.match(/(.+?) wasn't in (\d+) of them\./))) x += ' ' + k[1].trim() + ' missing in ' + k[2] + '.'; if ((k = r.match(/In all, it sat ready for (.+?) before you went in\./))) x += ' Sat ready ' + k[1] + ' before going in.'; return x; }
   if ((m = s.match(/^Your (?:your )?(.+?) was up in (\d+) of (\d+) Bloodlust windows?\. You drank a combat potion in (\d+) of (\d+)\. In (?:that|those) windows? you did (?:([\d.]+) times as much damage a second as|(\d+)% of your damage a second from) the rest of the pull\./))) return cap(m[1]) + ' up in ' + m[2] + ' of ' + m[3] + ', potion in ' + m[4] + ' of ' + m[5] + '; ' + (m[6] ? m[6] + '× your usual damage.' : m[7] + '% of your usual damage.');
-  if ((m = s.match(/^You cast ([\d.]+) (.+?) in each (.+?) window, on average\. You (?:did|healed) \S+(?: damage)? in (?:them|its windows), (?:or )?(\S+) a second, against (\S+) a second outside them\./))) return m[1] + ' ' + m[2] + ' a window; ' + m[4] + ' a second inside, ' + m[5] + ' outside.';
+  if ((m = s.match(/^You cast ([\d.]+) (.+?) in each (.+?) window, on average\. You (?:did|healed) \S+(?: damage)? in (?:them|its windows), (?:or )?(\S+) (a second|HPS|DPS), against (\S+) (?:a second|HPS|DPS) outside them\./))) return m[1] + ' ' + m[2] + ' a window; ' + m[4] + ' ' + m[5] + ' inside, ' + m[6] + ' outside.';
   if ((m = s.match(/^You cast [\d,]+ spells in .+? alive, [\d.]+ a minute\. Most: (.+?) a minute\./))) return 'Most: ' + m[1].replace(/ and /g, ', ') + ' a minute.';
   if ((m = s.match(/^You were (?:casting|pressing buttons) for \d+% of the time you were alive\.(?: Your longest stretch with nothing pressed was (.+?), at ([\d:]+)(, while you were moving)?\.)?$/))) return m[1] ? 'Longest gap ' + m[1] + ' at ' + m[2] + (m[3] ? ', while moving.' : '.') : '';
   if ((m = s.match(/^You were hitting the boss \d+% of the time it was up and you were alive\.(?: Of the (.+?) off it, (.+?) came from mechanics \(.*?\), and (.+?) were only you\.)?/))) return m[1] ? cap(m[1]) + ' off it: ' + m[2] + ' from mechanics, ' + m[3] + ' you.' : '';
   if ((m = s.match(/^Debrief checked ([\d,]+) of your casts against your priority list/))) return m[1] + ' casts checked against your priority list.';
   if ((m = s.match(/^You followed (\d+) of the (\d+) steps of the (.+?) opener(?: for two or more bosses)?, in order\.(?: Missed: (.+))?$/))) { if (!m[4]) return m[3] + ' opener, every step in order.'; const it = m[4].replace(/\.$/, '').split(/(?:^|, | and )step \d+, /).filter(Boolean); return 'Missed: ' + it.slice(0, 2).join(', ') + (it.length > 2 ? ' and ' + (it.length - 2) + ' more' : '') + '.'; }
-  if ((m = s.match(/^You drank (no combat potion|one combat potion|\d+ combat potions) out of a possible \d+ (this pull|over these pulls)\.(?: (?:One was|(\d+) were) before the pull\.)?(?: In the fight: ([\d:, ]+)\.)?(?: In (?:its|their) 30 seconds you (healed|did) \S+ a second, ([\d.]+) times the rest of the pull\.)?/))) {
+  if ((m = s.match(/^You drank (no combat potion|one combat potion|\d+ combat potions) out of a possible \d+ (this pull|over these pulls)\.(?: (?:One was|(\d+) were) before the pull\.)?(?: In the fight: ([\d:, ]+)\.)?(?: In (?:its|their) 30 seconds you (healed|did) \S+ (?:a second|HPS|DPS), ([\d.]+) times the rest of the pull\.)?/))) {
     if (/^no /.test(m[1])) return m[2] === 'this pull' ? 'None this pull.' : 'None.'; const pre = /before the pull/.test(s) ? (m[3] ? m[3] + ' before the pull' : 'one before the pull') : ''; const when = [pre, m[4] ? 'at ' + m[4].trim() : ''].filter(Boolean).join(', '); const eff = m[6] ? m[6] + '× your usual ' + (m[5] === 'healed' ? 'healing' : 'damage') + ' while up' : ''; return cap(when + (eff ? (when ? '; ' : '') + eff : '')) + '.'; }
   if ((m = s.match(/^Yours: (.+?)\. Your guides: (.+?)\.(?: (.+))?$/))) { const A = (x) => x.replace(/Critical Strike/g, 'Crit').replace(/Versatility/g, 'Vers'); return m[3] ? A(m[3]) : 'Guides: ' + A(m[2]).replace(/, then /g, ' › ') + '.'; }
   if ((m = s.match(/^You have ([\d,]+) Haste and ([\d,]+) Critical Strike, \d+% apart\./))) return 'Haste ' + m[1] + ', Crit ' + m[2] + '.';
@@ -30933,18 +30945,6 @@ function dsRotDedupe() { const NUMS = (s) => { const o = new Set(); (String(s ||
     const oneSentence = !/[.!?]\s+\S/.test(p.textContent.trim());
     if (extra === 0 || (valIn && extra <= 1 && oneSentence)) p.classList.add('ds-dup'); }); }
 (function () { const f19 = dsBars; dsBars = function (root) { f19(root); try { dsRotWords(); dsRotColour(); dsRotDedupe(); } catch (e) {} }; })();
-
-// ===== Design studio round 44 (Oct 26): the source box above the columns: "Where your healing came from" moves from the gear column to a full-width strip
-// under the pull-at-a-glance strip, once per page. Owner: the Design studio chat. =====
-function dsRotSrc() { const v = document.querySelector('#view .pf-inl.spc-v'); if (!v) return; const cols = v.querySelector(':scope > .ds-rcols'); if (!cols) return;
-  const src = v.querySelector('.ds-rcols .rck-gx .rgx-src'); if (!src || src.dataset.dsUp) return; src.dataset.dsUp = '1'; src.classList.add('ds-srcwide'); cols.before(src); }
-(function () { const f24 = dsBars; dsBars = function (root) { f24(root); try { dsRotSrc(); } catch (e) {} }; })();
-
-// ===== Design studio round 45 (Oct 26): the hero without the HPS/DPS box, the chips in its space. Owner: the Design studio chat. =====
-function dsRotHero() { const v = document.querySelector('#view .pf-inl.spc-v'); if (!v) return; const hero = v.querySelector('.spc-hero'); if (!hero) return;
-  hero.querySelectorAll('.spc-kt:not([data-ds-ht])').forEach((k) => { k.dataset.dsHt = '1'; const l = ((k.querySelector('.spc-ktl') || {}).textContent || '').trim(); if (/^(Healing|Damage) a second/.test(l)) k.classList.add('ds-hide'); });
-  const good = v.querySelector('.rck-fix .rck-good'); if (good && !good.dataset.dsUp) { good.dataset.dsUp = '1'; const box = document.createElement('div'); box.className = 'ds-done'; const lab = document.createElement('span'); lab.className = 'ds-lab'; lab.textContent = 'Done right'; box.appendChild(lab); box.appendChild(good); hero.appendChild(box); } }
-(function () { const f25 = dsBars; dsBars = function (root) { f25(root); try { dsRotHero(); } catch (e) {} }; })();
 
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
