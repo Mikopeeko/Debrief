@@ -51891,7 +51891,8 @@ gdzUnlock();
 // a Pictures button opens one picture per mechanic the note gives jobs for: the boss's whole room, the note's players on their
 // spots (names in class colour, spec icons; a random target is a grey ?) and the raid lead's own markers, which they drag to where
 // they stand and pick for each mechanic. Each picture is a fixed 1200 x 675 image (Discord shows 16:9 cleanly) with Copy and
-// Download. The maps are the guide's own (gdzKit, GDZ_CA_M), frozen at their key moment. Open to everyone since Oct 26; built per boss and
+// Download. The maps are the guide's own (gdzKit, GDZ_CA_M), frozen at their key moment. Only jobs the note assigns (players, places,
+// raid markers) get a picture; mechanics nobody is assigned to stay in the Boss guides (your call, Oct 26). Open to everyone since Oct 26; built per boss and
 // difficulty in GDZ_PP, The Coiled Altar Mythic first. Plan's code is untouched: the buttons are added beside its own.
 const PP_MKS = ['star', 'circle', 'diamond', 'triangle', 'moon', 'square', 'cross', 'skull'];
 const PP_ON = () => true; /* (open to everyone (your call, Oct 26: "push this live please"); put the owner check back here to hide it again) */
@@ -52015,12 +52016,6 @@ function ppCardsCA(J, M, U, P) {
     cards.push({ id: 'axe' + (i + 1), ph: 1, when: 'Axe ' + (i + 1), title: 'Guillotine ' + (i + 1) + ' (Soak ' + where('axe') + ')', map: ppFreeze(x.mp, x.T, x.S, P, M, { hl: x.G.concat(x.jobs.map((q) => q[0])), named: x.jobs.map((q) => q[0]), tags: x.jobs, labels: [[x.G, 'Axe ' + (i + 1) + ' soak', R, '#fff', 7]] }),
       legend: [ppG('Soak (' + A.soak.length + ' + the target)', R, A.soak.map((n) => ppI(P, n))), ppG('On the axe target', GO, [A.ext && ppI(P, A.ext, 'External'), A.zeph && ppI(P, A.zeph, 'Zephyr')]), ppG('Axe target', Q, [ppI(P, ppAny('Whoever gets the axe'))], 'Walks to the soak spot.')],
       foot: 'Soakers walk 40 yards out after it lands: the spot erupts.' }); });
-  // The end of phase 1: Zul'jan dies and every orb blows up; the raid stacks in the cooldowns the note puts there
-  { const st = spot('stack', M._stack || [5, -11]), k = gdzKit('The Coiled Altar', 3), put = new Set(['t1', 't2']); k.boss('zj', 'Zul\'jan', 0, 0, 0).at(0, 't1', 0, -3).at(0, 't2', 3, 2);
-    k.at(0, GDZ_RAID.filter((s) => !put.has(s)), st[0], st[1], 7).ring({ x: st[0], y: st[1], r: 9, fx: 'zone', t0: 0, dur: 99, color: '#9a7bff', cn: 'Raid cooldowns', label: false });
-    cards.push({ id: 'stack', ph: 1.9, when: 'The push', title: 'Venom Rupture (Stack in the cooldowns)', map: ppFreeze(k.done({ title: 'Venom Rupture', focus: { x: 0, y: 0, r: 30 } }), 1, ppSeat(P, {}), P, M, { labels: [[{ rx: st[0], ry: st[1] + 9 }, 'Stack in the cooldowns', '#9a7bff', '#fff', 0]] }),
-      legend: [ppG('Raid cooldowns', '#9a7bff', (J.rupture || []).map(([t, n, sp]) => ppI(P, n, t + ' ' + sp)), (J.rupture || []).length ? '' : 'Your note\'s cooldowns for the push go here.'), ppG('Everyone', GO, [], 'A defensive when the orbs blow up.')],
-      foot: 'Zul\'jan dies by the pools: every orb blows up, so the whole raid stacks inside the cooldowns.' }); }
   // Phase 2, Dreadmarch: the mind controls are stacked on the raid lead's marker; the note's crowd-control order frees them
   if (J.cc.filter(Boolean).length) { const st = spot('dread', [25, -35]), k = gdzKit('The Coiled Altar', 3), m = Math.hypot(st[0], st[1]) || 1, toM = [-st[0] / m, -st[1] / m], fix = {}, put = new Set();
     const bx = [st[0] + toM[0] * 16, st[1] + toM[1] * 16]; k.boss('hm', 'Malacrass', 0, bx[0], bx[1]);
@@ -52043,13 +52038,6 @@ function ppCardsCA(J, M, U, P) {
       legend: [ppG('Kick line 1: the unmarked add', BL, (L[0] || []).map((n, i) => ppI(P, n, 'Kick ' + (i + 1)))), ppG('Kick line 2: the marked add', GR, (L[1] || []).map((n, i) => ppI(P, n, 'Kick ' + (i + 1)))),
         ppG('Curse of Tongues', '#8788EE', [J.curse.unmarked && ppI(P, J.curse.unmarked, 'Unmarked add'), J.curse.marked && ppI(P, J.curse.marked, 'Marked add')])],
       foot: 'The next kicker takes the next cast, even after the add teleports.' }); }
-  // Phase 2 Gloombombs (no names in a note: two random ranged and two random melee; ranged bombs to the marked add)
-  { const mp = GDZ_CA_M.bombs(), ar = mp.frames[0].pts.find((p) => p.guid === 'ar'), am = mp.frames[0].pts.find((p) => p.guid === 'am');
-    cards.push({ id: 'bombs', ph: 2, when: 'Every add set', title: 'Gloombomb (Two bombs on each add)', map: ppFreeze(mp, 5.5, ppSeat(P, { r1: ppAny('Ranged bomb'), r2: ppAny('Ranged bomb'), m1: ppAny('Melee bomb'), m2: ppAny('Melee bomb') }), P, M, { hl: ['r1', 'r2', 'm1', 'm2'], labels: [[{ x: ar.x, y: ar.y }, 'Ranged bombs · marked add', GR, '#06140a', 9], [{ x: am.x, y: am.y }, 'Melee bombs · unmarked add', BL, '#fff', 9]] }),
-      // (no rows of names: the bombs land on random players each set, so nobody can be put in the note; plain lines say who instead)
-      legend: [ppG('Ranged: bomb the marked add', GR, [], 'Two random ranged players each set.'), ppG('Melee: bomb the unmarked add', BL, [], 'Two random melee players each set.'),
-        ppG('Stand on opposite sides of your add', '#da3df2', [], 'The two blasts overlap on the add and on nobody else.')],
-      foot: 'Each add\'s shield needs two bombs. Kick the add as soon as the Gloombomb cast shows, so it stands still.' }); }
   // Intermission: the note's first fragment stops, each on their marker; everyone else on Zul'jan for Bloodlust
   if (J.inter.length) { const k = gdzKit('The Coiled Altar', 3), fix = {}, put = new Set(['t1', 't2']), SL = ['r1', 'r2', 'r3', 'r4', 'r5', 'r6'];
     k.boss('zj', 'Zul\'jan', 0, 0, 0).at(0, 't1', -2, 3).at(0, 't2', 2, 3);
@@ -52108,7 +52096,6 @@ const UL_WHOLE = { x: 0, y: 0, r: 47 }, UL_WHOLE3 = { x: 0, y: 2, r: 47 };
 function ppCardsUL(J, M, U, P) {
   const cards = [], spot = (u, def) => (U[u] && M[U[u]]) || def, MKN = (k) => (GDZ_WM[k] || [0, ''])[1].replace(' (X)', ''), R = '#f24824', GO = '#e6b450', TE = '#24f2cb', BL = '#5aa0ff', GR = '#2fd15a', Q = '#c9ced8';
   const rest = (k, put, c, sp) => { const left = GDZ_RAID.filter((s) => !put.has(s)); if (left.length) k.at(0, left, c[0], c[1], sp || 6); left.forEach((s) => put.add(s)); };
-  const cdsOf = (L, pre) => (L || []).map(([t, n, sp]) => ppI(P, n, (pre || '') + t + ' ' + sp));
   // Call of the Serpent: each carrier on the egg in their zone (the guide's map just after the pickup), the two shield breakers named
   if (J.eggs.length) { const fix = ulZones(J.eggs, P), SH = ['h3', 'h4']; J.shields.slice(0, 2).forEach((n, i) => { fix[SH[i]] = n; }); const car = UX_CAR.filter((s) => fix[s]), sh = SH.filter((s) => fix[s]);
     cards.push({ id: 'eggs', ph: 1, when: 'Every egg set', title: 'Call of the Serpent (Carry the egg in your zone)', map: ppFreeze(UX_M.eggs(false, 'm'), 8.4, ppSeat(P, fix), P, M, { hl: car.concat(sh), named: car.concat(sh), tags: sh.map((s) => [s, 'Shields']), focus: UL_WHOLE }),
@@ -52127,21 +52114,6 @@ function ppCardsUL(J, M, U, P) {
     cards.push({ id: 'coils', ph: 1, when: 'Each tail', title: 'Spectral Coils (Team 1 first, then Team 2)', map: ppFreeze(k.done({ title: 'Spectral Coils', focus: UL_WHOLE }), 1, ppSeat(P, fix), P, M, { hl: g1.concat(g2), focus: UL_WHOLE, labels: [[g1, 'Team 1', TE, '#05201a', 7], [g2, 'Team 2', '#7fd8ff', '#06131c', 7, true]] }),
       legend: [ppG('Team 1: the coil facing the tail', TE, J.teams[0].map((n) => ppI(P, n))), ppG('Team 2: the other coil', '#7fd8ff', J.teams[1].map((n) => ppI(P, n)))],
       foot: 'The coil on your right as you face the tail goes first. Soul Constrictor stops you helping with the next one; carried eggs break in the soak.' }); }
-  // Fester Burst: everyone in the Wretch's 10 yards, the first one by the tail's first soak, the second in the middle north; her tank on her
-  { const W1 = spot('fester1', [-24, 6]), W2 = spot('fester2', [-2, 26]), k = gdzKit(UX, 3), fix = {}, put = new Set(['t1']); k.art(0, UL_FULL); uxBoss(k, 0); uxTail(k, 0); k.at(0, 't1', 0, 39.5);
-    k.add('wr', '1st Wretch', 0, W1[0], W1[1]).ring({ x: W1[0], y: W1[1], r: 10, fx: 'soak', t0: 0, at: 1.05, dur: 5, color: '#ffd23b', cn: 'Fester Burst', label: false });
-    k.add('wr2', '2nd Wretch', 0, W2[0], W2[1]).ring({ x: W2[0], y: W2[1], r: 10, fx: 'zone', t0: 0, dur: 9, color: '#ffd23b', fill: 'rgba(255,210,59,.1)', cn: 'Fester Burst', label: false });
-    if (J.beam) { fix.t2 = J.beam; } put.add('t2'); k.at(0, 't2', W1[0] + 2.5, W1[1] - 2.5); rest(k, put, W1, 7);
-    cards.push({ id: 'fester', ph: 1, when: 'Every burst', title: 'Fester Burst (Everyone in the Wretch\'s bubble)', map: ppFreeze(k.done({ title: 'Fester Burst', focus: UL_WHOLE }), 1, ppSeat(P, fix), P, M, { focus: UL_WHOLE, hl: J.beam ? ['t2'] : [], named: J.beam ? ['t2'] : [] }),
-      legend: [ppG('Everyone inside its 10 yards', '#d8f22f', [], 'Egg carriers too. Bursts at 0:36 and 1:10 (1st Wretch), 1:44 and 2:19 (2nd).'), ppG('On the Wretch', GO, [J.beam && ppI(P, J.beam, 'Off tank')])],
-      foot: 'Kill each Wretch before its third burst. The second one bursts faster: be there early.' }); }
-  // Rage of the Shackled: everyone on the heart (she's on the west edge by then), the note's raid cooldowns for both burns
-  { const A1 = J.heart1 || [], A2 = J.heart2 || [], k = gdzKit(UX, 3); k.art(0, UL_FULL); uxBoss(k, 0, [-46, 0]); k.add('ht', 'Venomous Heart', 0, -41.5, 0);
-    k.at(0, ['t1', 't2', 'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7'], -34, 0, 5).at(0, ['h1', 'h2', 'h3', 'h4'], -21, 7, 4).at(0, ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7'], -22, -5, 6.5);
-    [[-26, 16], [-12, -6], [-34, -15]].forEach((p) => k.ring({ x: p[0], y: p[1], r: 7, fx: 'burst', t0: 0, at: 1.05, dur: 4, color: '#c8a36a', cn: 'Falling Debris', label: false }));
-    cards.push({ id: 'heart', ph: 1.9, when: 'Both burns', title: 'Rage of the Shackled (Everyone on the heart)', map: ppFreeze(k.done({ title: 'Rage of the Shackled', focus: UL_WHOLE }), 1, ppSeat(P, {}), P, M, { focus: UL_WHOLE }),
-      legend: [ppG('Raid cooldowns, burn 1 (2:25)', '#9a7bff', cdsOf(A1, 'P1 ')), ppG('Raid cooldowns, burn 2 (4:55)', '#9a7bff', cdsOf(A2, 'P2 ')), ppG('Everyone', GO, [], 'On the heart for 20 seconds; step out of the brown debris circles.')],
-      foot: 'She\'s on the west or east edge by then (it changes): the same on the other side. The heart takes double damage: potions here.' }); }
   // Phase 2: each ledge's kick line on its Doomscale Warden (the left ledge is the west one, the right the east, as the raid faces her)
   J.kicks.slice(0, 2).forEach((L, side) => { const sx = side ? 1 : -1, X = (p) => [p[0] * sx, p[1]], W = X([80, 56]), k = gdzKit(UX, 3), fix = {}, put = new Set(); k.art(0, UL_FULL);
     k.add('wd', 'Doomscale Warden', 0, W[0], W[1]); [[76, 60], [86, 64], [82, 52]].forEach((p, i) => { const q = X(p); k.obj('ne' + i, 'egg', 0, q[0], q[1]); });
@@ -52178,11 +52150,6 @@ function ppCardsUL(J, M, U, P) {
     cards.push({ id: 'grips', ph: 3, when: 'Every clutch set', title: 'Slithering Clutch (Grip them in)', map: ppFreeze(UX_M.clutches(false, 'm'), 6, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags: ids.map((s) => [s, 'Grip']), focus: UL_WHOLE3 }),
       legend: [ppG('Clutch grips', '#c0394f', J.grips.map((n) => ppI(P, n, 'Grip')), 'Grip each clutch in before it reaches the venom, the far one first; then pull them all onto the raid to cleave.')],
       foot: 'A clutch that reaches the venom hatches a Blightscale Shrieker: kick its Vicious Echoes.' }); }
-  // Circling Prey: everyone one quarter counter-clockwise before she smashes hers (the guide's map once everyone has moved)
-  { const A = J.prey || [];
-    cards.push({ id: 'prey', ph: 3, when: 'Every smash', title: 'Circling Prey (One platform counter-clockwise)', map: ppFreeze(UX_M.prey(false, 'm'), 7, ppSeat(P, {}), P, M, { focus: UL_WHOLE3 }),
-      legend: [ppG('Everyone', GO, [], 'Move one quarter counter-clockwise before she smashes hers (phase 3 at 1:03, 1:55 and 2:55).'), ppG('Raid cooldowns at the smashes', '#9a7bff', cdsOf(A, 'P3 ')), ppG('Your own', BL, [], 'A personal defensive for the 2nd and 3rd smash.')],
-      foot: 'Melee follow her to the next quarter; healers and ranged go one further.' }); }
   return cards;
 }
 // ===== The Twin Fangs, Mythic (Oct 26, the same setup again; Plan's Jobs cards in b2e86a2). Every picture is on the south-east platform,
@@ -52201,22 +52168,13 @@ function ppReadTF(N, P) {
 }
 const TF_VIEW = { x: 50, y: -26, r: 38 }; // (the south-east platform with both bosses off its tip)
 function ppCardsTF(J, M, U, P) {
-  const cards = [], GR = '#9ff26d', R = '#ff8a8a', BL = '#5aa0ff', GO = '#e6b450', OR = '#ff9b5a', Q = '#c9ced8', cdsOf = (L) => (L || []).map(([t, n, sp]) => ppI(P, n, t + ' ' + sp));
+  const cards = [], GR = '#9ff26d', R = '#ff8a8a', BL = '#5aa0ff', GO = '#e6b450', OR = '#ff9b5a', Q = '#c9ced8';
   const tf2 = () => { const w = tfKit(3, 2); tfBosses(w); return w; }, home = (w, put) => GDZ_RAID.filter((s) => !put.has(s)).forEach((s) => { put.add(s); const q = TF_HOME[s]; w.at(0, s, q[0], q[1]); });
   // Caustic Deluge and Blood Torrent: every globule shielded; this set's crowd control group breaks the shields (the guide's map at the CC)
   if (J.cc[0].length || J.cc[1].length) { const fix = {}, put = new Set(), ids = J.cc[0].map((n) => { const s = ppSlot(P, n, put); if (s) fix[s] = n; return s; }).filter(Boolean);
     cards.push({ id: 'orbcc', ph: 1, when: 'Every set', title: 'Caustic Globule (Crowd control the shields)', map: ppFreeze(TF_M.beams(false, 'm', { p: 2 }), 5.9, ppSeat(P, fix), P, M, { hl: ids, focus: TF_VIEW }),
       legend: [ppG('Odd sets: the 1st, 3rd and 5th', '#7fd8ff', J.cc[0].map((n) => ppI(P, n))), ppG('Even sets: the 2nd, 4th and 6th', BL, J.cc[1].map((n) => ppI(P, n)))],
       foot: 'Blood Torrent shields every globule: your set\'s stuns and slows break the shields, then low stacks soak. Wait for the orbs near you to land.' }); }
-  // Caustic Globules: low stacks soak (the guide's map with the soakers on the globules)
-  cards.push({ id: 'globs', ph: 1, when: 'Every set', title: 'Caustic Globule (Low stacks soak)', map: ppFreeze(TF_M.beams(false, 'm', { p: 2 }), 8.7, ppSeat(P, {}), P, M, { focus: TF_VIEW }),
-    legend: [ppG('Platform 2', GR, [], '3 stacks or fewer soak, 4 or more wait.'), ppG('Platform 3', GR, [], '6 or fewer soak, 7 or more wait. 8 is the cap: a Spit on 9 kills.'), ppG('On 9', R, [], 'With a Spit coming, die in the middle so your orbs are easy to soak.')],
-    foot: 'Each globule explodes on the raid 10 seconds after it lands. Aim for about one stack per orb set.' });
-  // Stone Breaker: Ithraz's tank in each slam, in order (the guide's map as the spots light up)
-  { const S = ppSeat(P, {}), nm = (v) => (typeof v === 'string' ? v : '');
-    cards.push({ id: 'stone', ph: 1, when: 'Every set', title: 'Stone Breaker (Tank stands in each slam)', map: ppFreeze(TF_M.slams(false, 'm', { p: 2 }), 3.6, S, P, M, { hl: ['t2'], named: ['t1', 't2'], focus: TF_VIEW }),
-      legend: [ppG('Ithraz\'s tank', GO, [nm(S.t2) && ppI(P, S.t2, 'Slams 1, 2, 3')], 'Step into each slam in the order it appeared.'), ppG('Both tanks', BL, [nm(S.t1) && ppI(P, S.t1, 'Vexhul'), nm(S.t2) && ppI(P, S.t2, 'Ithraz')], 'Swap after each set. Both beams hit at once (Blood Torrent): a big defensive or an external.')],
-      foot: 'A missed slam hits the whole raid and knocks everyone back.' }); }
   // Rouse the Brood: a Broodling in every slot; each area's kickers in a line by their own Broodlings, in their order
   { const K = J.kicks; if (['front', 'lm', 'rm', 'lr', 'rr'].some((x) => K[x].length)) { const w = tf2(), fix = {}, put = new Set(), tags = [], hl = [];
     Object.values(TF_SLOT).forEach((p, i) => w.add('bl' + i, 'Broodling', 0, p[0], p[1]));
@@ -52227,18 +52185,6 @@ function ppCardsTF(J, M, U, P) {
       legend: [['front', 'Front: the tip'], ['lm', 'Left melee: left 3 and 4'], ['rm', 'Right melee: right 3 and 4'], ['lr', 'Left range: left 1 and 2'], ['rr', 'Right range: right 1 and 2'], ['backup', 'Backup']].filter(([key]) => K[key].length)
         .map(([key, t]) => ppG(t, key === 'backup' ? Q : key === 'front' ? GO : key[0] === 'l' ? BL : OR, K[key].map((n, i) => ppI(P, n, key === 'backup' ? 'Covers a miss' : 'Kick ' + (i + 1))))),
       foot: 'Kick every Broodling in your area, in your order. Left and right as you face the bosses.' }); } }
-  // Venomous Emergence: everyone on the three Spawns at the pool's edge (the guide's map as the Spits land)
-  cards.push({ id: 'spawns', ph: 1, when: 'Every set', title: 'Venomous Emergence (Everyone on the Spawns)', map: ppFreeze(TF_M.emergence(false, 'm', { p: 2 }), 5, ppSeat(P, {}), P, M, { focus: TF_VIEW }),
-    legend: [ppG('Everyone', GR, [], 'Swap to the three Spawns of Vexhul at the pool\'s edge, most melee too; kill them before their second Spit.'), ppG('Spit targets', Q, [ppI(P, ppAny('Whoever gets a Spit'))], 'Move once, then stand still.')],
-    foot: 'The Spawns add a stack to everyone, and each Spit another to its target.' });
-  // Coiling Ichor: the targets' puddles packed at the outer edge (the guide's map once they're down)
-  cards.push({ id: 'ichor', ph: 1, when: 'Every set', title: 'Coiling Ichor (Out to the edge)', map: ppFreeze(TF_M.ichor(false, 'm', { p: 2 }), 8.7, ppSeat(P, {}), P, M, { focus: TF_VIEW }),
-    legend: [ppG('Ichor targets', '#ff6a5a', [ppI(P, ppAny('Whoever gets Ichor'))], 'Walk to the outer edge and pack the puddles tight together; don\'t clog the inside.'), ppG('Your defensive', BL, [], 'Time it to cover the last ticks, when the circle is smallest.')],
-    foot: 'The puddles stay for the rest of the platform.' });
-  // Stir the Depths: the waves rolling in from behind, everyone in a gap (the guide's map mid-set)
-  cards.push({ id: 'stir', ph: 1, when: 'Every set', title: 'Stir the Depths (Step into the gaps)', map: ppFreeze(TF_M.waves(false, 'm', { p: 2 }), 6.2, ppSeat(P, {}), P, M, { focus: TF_VIEW }),
-    legend: [ppG('Everyone', GR, [], 'Waves roll in from behind in sets: step sideways into a gap before each set reaches you.'), ppG('Tanks', BL, [], 'Look back and call which side they come from.')],
-    foot: 'Each wave that hits you is another venom stack.' });
   // Ravenous Feast: the three groups at their Tainted Blood orbs (right, left, front), the Feast in the middle: right takes the 1st hit,
   // left the 2nd, the centre group the 3rd (the guide's order, from the top kills)
   { const F = J.feast; if (F.left.length || F.right.length || F.center.length) { const w = tf2(), fix = {}, put = new Set(), lab = [], hl = [], C = [4, 56], OB = [[24, 40], [-24, 40], [4, 72]];
@@ -52250,10 +52196,6 @@ function ppCardsTF(J, M, U, P) {
     cards.push({ id: 'feast', ph: 1, when: 'Every set', title: 'Ravenous Feast (Three groups, one hit each)', map: ppFreeze(w.done({ title: 'Ravenous Feast', focus: { x: 0, y: 50, r: 30 } }), 1, ppSeat(P, fix), P, M, { hl, labels: lab, focus: TF_VIEW }),
       legend: [ppG('Right: the 1st hit, then the right orb', R, F.right.map((n) => ppI(P, n))), ppG('Left: the 2nd hit, then the left orb', BL, F.left.map((n) => ppI(P, n))), ppG('Center: the 3rd hit, then the front orb', GO, F.center.map((n) => ppI(P, n)))],
       foot: 'Each hit knocks its group toward its Tainted Blood orb: 6 or more soak each one, or the raid wipes. Nobody takes two hits.' }); } }
-  // Submerge: let the beam turn away, then follow it the long way round to the next platform (the guide's map, the whole room)
-  cards.push({ id: 'sub', ph: 2.5, when: 'Each Submerge', title: 'Submerge (Dodge with the beam)', map: ppFreeze(TF_M.submerge(false, 'm', { p: 1 }), 9.8, ppSeat(P, {}), P, M, {}),
-    legend: [ppG('Everyone', GR, [], 'Watch the orbs circling Vexhul: let the beam turn away, then follow it the long way round. A puddle beats a wave.'), ppG('Raid cooldowns', '#9a7bff', cdsOf(J.sub)), ppG('Moving', BL, [], 'Mobile players walk; the rest take the Warlock gateway after the waves pass it.')],
-    foot: 'Both bosses dive and come up on the next platform.' });
   return cards;
 }
 // ===== Nymrissa Wavecaller, Mythic (Oct 26, the same setup; Plan's Jobs cards in 23a0436). The raid plays in the island's south-west
@@ -52269,11 +52211,7 @@ function ppReadNY(N, P) {
 const ppRuns = (a) => { const out = []; for (let i = 0; i < a.length; i++) { let j = i; while (j + 1 < a.length && a[j + 1] === a[j] + 1) j++; out.push(j - i >= 2 ? a[i] + '-' + a[j] : j > i ? a[i] + ', ' + a[j] : String(a[i])); i = j; } return out.join(', '); };
 const NY_VIEW = { x: -12, y: -6, r: 44 };
 function ppCardsNY(J, M, U, P) {
-  const cards = [], BL = '#5aa0ff', GO = '#e6b450', IC = '#bfefff', Q = '#c9ced8', cdsOf = (L) => (L || []).map(([t, n, sp]) => ppI(P, n, t + ' ' + sp));
-  // Abyssal Rain: four raid hits, then damage over time (the guide's map as the hits land)
-  cards.push({ id: 'rain', ph: 1, when: 'Every loop', title: 'Abyssal Rain (Personal defensive)', map: ppFreeze(NY_M.rain(false, 'm'), 3, ppSeat(P, {}), P, M, { focus: NY_VIEW }),
-    legend: [ppG('Everyone', '#5ab8ff', [], 'A personal defensive or a potion on each cast: four raid hits, then 24 seconds of damage over time. She hits harder every time.'), ppG('When', GO, [], 'The start of each loop, then twice more: 0:08, 0:41, 1:25, then every 1:50.')],
-    foot: 'Each Abyssal Rain makes her deal 5% more damage for the rest of the fight.' });
+  const cards = [], BL = '#5aa0ff', GO = '#e6b450', IC = '#bfefff', Q = '#c9ced8';
   // The murlocs: her walked to the big pack, the Frostscale gripped away, the squads and the slows on the other packs (the guide's map
   // as the packs are stopped)
   if (J.grips.length || J.slows.length) { const fix = {}, ids = [], tags = [], put = (s, n, t) => { if (!n) return; fix[s] = n; ids.push(s); tags.push([s, t]); };
@@ -52282,11 +52220,6 @@ function ppCardsNY(J, M, U, P) {
       legend: [ppG('Grips', '#c0394f', [J.grips[0] && ppI(P, J.grips[0], 'Frostscale away'), J.grips[1] && ppI(P, J.grips[1], 'Strays in')]), ppG('Slows', BL, J.slows.map((n) => ppI(P, n, 'Hold a pack'))),
         ppG('Everyone', GO, [], 'Walk her to the biggest pack; kill the Frostscale first (its shield protects the others). Two ranged squads take the left and right packs, then the back.')],
       foot: 'No murloc may reach the bubble: those that do pulse raid damage until they die.' }); }
-  // Water Jet: the line through her tank, swept over the ice (the guide's map mid-sweep)
-  { const S = ppSeat(P, {}), nm = (v) => (typeof v === 'string' ? v : '');
-    cards.push({ id: 'jet', ph: 1, when: 'Every 22 seconds', title: 'Water Jet (Tanks swap, aim at the ice)', map: ppFreeze(NY_M.jet(false, 'm'), 6, S, P, M, { hl: ['t1', 't2'], named: ['t1', 't2'], focus: NY_VIEW }),
-      legend: [ppG('Tanks', BL, [nm(S.t1) && ppI(P, S.t1, 'Aims it'), nm(S.t2) && ppI(P, S.t2, 'Taunts next')], 'Swap after every cast. Turn her so the line runs over the ice: on Mythic only the Jet clears it.'), ppG('Everyone', GO, [], 'The line crosses the whole island: step aside when it\'s called.')],
-      foot: 'The first Jet hits air (no ice yet); there\'s one more Jet than ice sets, so you can catch up.' }); }
   // Frost Orbs: the nine orbs dropped in the lane a big step apart, the soak crew waiting beside it, one at a time
   { const sets = J.soak.map((L, i) => [i + 1, L || []]).filter(([, L]) => L.length); if (sets.length) { const k = gdzKit(NY, 3), fix = {}, put = new Set(), crew = [];
     nyBoss(k, 0); nyBubble(k, 0, 9); NY_ORB.forEach((p) => nyOrb(k, p, 0, 9)); sets.forEach(([, L]) => L.forEach((n) => { if (!crew.includes(n)) crew.push(n); }));
@@ -52296,10 +52229,6 @@ function ppCardsNY(J, M, U, P) {
     cards.push({ id: 'orbs', ph: 1, when: 'Every orb set', title: 'Frost Orb (Soak one at a time)', map: ppFreeze(k.done({ title: 'Frost Orbs', focus: NY_VIEW }), 1, ppSeat(P, fix), P, M, { hl: ids, named: ids, focus: NY_VIEW, labels: [[{ rx: lane[0] + 4, ry: lane[1] - 13 }, 'Nine orbs', IC, '#06131c', 0]] }),
       legend: [ppG('Soak crew', IC, crew.map((n) => ppI(P, n, 'Sets ' + ppRuns(sets.filter(([, L]) => L.includes(n)).map(([i]) => i))))), ppG('Orb droppers', Q, [ppI(P, ppAny('Whoever gets Chilling Frost'))], 'Drop all three on the inside, with a big step between each.')],
       foot: 'Every soak hits the whole raid (Frost Burst): a pause between soaks. Tanks take the last two or three.' }); } }
-  // Swirling Whirlpools: everyone in the one gap before they reach the bubble, then the Pop (the guide's map as they close in)
-  cards.push({ id: 'pop', ph: 1.9, when: 'End of each loop', title: 'Swirling Whirlpools (Find the gap, then the Pop)', map: ppFreeze(NY_M.whirl(false, 'm'), 7, ppSeat(P, {}), P, M, { focus: { x: -10, y: -2, r: 58 } }),
-    legend: [ppG('Everyone', '#5ab8ff', [], 'Speed up and get into the one gap before the whirlpools reach the bubble.'), ppG('The Pop', GO, [], 'Cancel the knockback or take the gateway: never into the water.'), ppG('Raid cooldowns', '#9a7bff', cdsOf(J.pop))],
-    foot: 'After the third Pop (about 5:40) ignore the murlocs and burn her.' });
   return cards;
 }
 // ===== Nek'zali the Soulcoiler, Mythic (Oct 26, the same setup; Plan's Jobs cards in 173240d), on the guide's maps of the room =====
@@ -52314,16 +52243,7 @@ function ppReadNZ(N, P) {
 }
 const NZ_VIEW = { x: 0, y: -4, r: 50 };
 function ppCardsNZ(J, M, U, P) {
-  const cards = [], BL = '#5aa0ff', GO = '#e6b450', PU = '#c084ff', OR = '#ff8a3b', Q = '#c9ced8', cdsOf = (L) => (L || []).map(([t, n, sp]) => ppI(P, n, t + ' ' + sp));
-  // Soulcoil Ignition: five raid hits, spirits flying out of the well (the guide's map as they land)
-  cards.push({ id: 'ign', ph: 1, when: 'Three times', title: 'Soulcoil Ignition (Cooldowns, dodge the spirits)', map: ppFreeze(NZ_M.ignite(false), 5.2, ppSeat(P, {}), P, M, { focus: NZ_VIEW }),
-    legend: [ppG('Raid cooldowns', '#9a7bff', cdsOf(J.ign)), ppG('Everyone', PU, [], 'She stirs the well: five raid hits. Step away from the spirits that fly out of it (a big hit and a knockback).')],
-    foot: 'Each Ignition gives her 25 energy.' });
-  // Possession Barrage: the tank holding her runs out, the raid behind her (the guide's map as the tank gets there)
-  { const S = ppSeat(P, {}), nm = (v) => (typeof v === 'string' ? v : '');
-    cards.push({ id: 'barrage', ph: 1, when: 'Every Barrage', title: 'Possession Barrage (Raid behind, tank runs out)', map: ppFreeze(NZ_M.barrage(false), 4.6, S, P, M, { hl: ['t1'], named: ['t1', 't2'], focus: NZ_VIEW }),
-      legend: [ppG('Tanks', BL, [nm(S.t1) && ppI(P, S.t1, 'Runs out'), nm(S.t2) && ppI(P, S.t2, 'Takes her')], 'The tank holding her runs 30 to 40 yards straight out; swap around 7 to 9 stacks.'), ppG('Everyone', GO, [], 'Stand behind her, never between her and the running tank.')],
-      foot: 'The echoes burst where they land: the farther they fly, the less they hit.' }); }
+  const cards = [], BL = '#5aa0ff', GO = '#e6b450', PU = '#c084ff', OR = '#ff8a3b', Q = '#c9ced8';
   // The well teams: each group down the well in turn, kicking the Drowned Echo's curse in its order (the guide's map with the group in)
   J.well.forEach((L, g) => { if (!L.length) return; const SQ = g ? NZ_SQB : NZ_SQA, fix = {}; L.slice(0, SQ.length).forEach((n, i) => { fix[SQ[i]] = n; }); const ids = SQ.filter((s) => fix[s]);
     cards.push({ id: 'well' + (g + 1), ph: 1, when: g ? 'Second well' : 'First well', title: 'Grasping Depths (Group ' + (g + 1) + ' goes down)', map: ppFreeze(NZ_M.depths(false, g ? { b: true } : {}), 6, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags: ids.map((s, i) => [s, String(i + 1)]), focus: NZ_VIEW }),
@@ -52339,10 +52259,6 @@ function ppCardsNZ(J, M, U, P) {
     cards.push({ id: 'rend', ph: 1, when: 'Every Rend', title: 'Essence Rend (Dispel at the edge)', map: ppFreeze(NZ_M.rend(false), 6.6, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags, focus: NZ_VIEW }),
       legend: [ppG('Dispels', '#7fd8ff', [J.disp[0] && ppI(P, J.disp[0], 'Dispel 1'), J.disp[1] && ppI(P, J.disp[1], 'Dispel 2'), J.disp[2] && ppI(P, J.disp[2], 'Backup')], 'Only once the target reaches the edge.'), ppG('Rend targets', Q, [ppI(P, ppAny('Whoever gets Rend'))], 'Run to the edge of the room, behind the raid.')],
       foot: 'Each dispel leaves a Latent Cultist puddle for the rest of the fight: keep them out of the middle.' }); }
-  // Echoes of Jawae: the raid on each Echo at its doorway, west first, out of its front as Soul Transfer lands (the guide's map)
-  cards.push({ id: 'echo', ph: 1.5, when: 'Intermission', title: 'Echoes of Jawae (One at a time, dodge late)', map: ppFreeze(NZ_M.echoes(false), 11.2, ppSeat(P, {}), P, M, { focus: { x: -20, y: -2, r: 38 } }), /* (framed on the west doorway, where the first Echo is) */
-    legend: [ppG('Everyone', PU, [], 'Hit her while she moves to the well, then the Echoes one at a time: the west door first, then the east. Soul Transfer goes off at the end of its cast: keep hitting, dodge late.'), ppG('Raid cooldowns', '#9a7bff', cdsOf(J.echo))],
-    foot: 'One 2-minute cooldown here; hold the second and Bloodlust for phase 2.' });
   // Hungering Pyre: the soakers dead centre on the Echo's tank, everyone else spread out and burning the bodies the Pyre missed
   if (J.soak.length || J.out.length) { const o = NZ_PY[0], E = o.E, th = o.th, b = th + 180, T = nzAdd(E, th, 5.5), k = gdzKit(NZ, 3), fix = {}, put = new Set();
     k.boss('nz', NZ, 0, NZ_IB[0], NZ_IB[1]).add('ej', 'Echo of Jawae', 0, E[0], E[1]); k.ring({ x: T[0], y: T[1], r: 10, fx: 'soak', t0: 0, at: 1.05, dur: 5, color: OR, cn: 'Hungering Pyre', label: false });
@@ -52352,10 +52268,6 @@ function ppCardsNZ(J, M, U, P) {
     cards.push({ id: 'pyre', ph: 1.5, when: 'Every Pyre', title: 'Hungering Pyre (Dead centre on the Echo\'s tank)', map: ppFreeze(k.done({ title: 'Hungering Pyre', focus: NZ_VIEW }), 1, ppSeat(P, fix), P, M, { hl: si.concat(oi), focus: NZ_VIEW, labels: [[si, 'Soak', OR, '#1a0a00', 8]] }),
       legend: [ppG('Pyre soak: dead centre', OR, J.soak.map((n) => ppI(P, n))), ppG('Don\'t soak: spread out', Q, J.out.map((n) => ppI(P, n)), 'Burn the bodies the Pyre missed with your Slithering Flame.')],
       foot: 'The hit is smaller than the circle: stand in the middle. A body left at the edge comes back as an empowered Amani.' }); }
-  // Phase 2: Bloodlust and cooldowns as she comes back, the cultist circles' dash paths (the guide's map)
-  cards.push({ id: 'p2', ph: 2, when: 'Phase 2', title: 'Invoke (Bloodlust, race to 100 energy)', map: ppFreeze(NZ_M.invoke(false, 'm'), 3.4, ppSeat(P, {}), P, M, { focus: NZ_VIEW }),
-    legend: [ppG('Everyone', GO, [], 'Bloodlust and cooldowns as she comes back; kill her before 100 energy. Stop casting as Invoke lands, or you\'re silenced for 3 seconds.'), ppG('Raid cooldowns', '#9a7bff', cdsOf(J.p2))],
-    foot: 'Each cultist circle dashes to a new spot on Invoke: stay out of their paths.' });
   return cards;
 }
 // ===== Entombed Sentinels, Mythic (Oct 26, the same setup; Plan's Jobs cards in 02300fa), on the guide's whole-platform maps: Blood of
@@ -52377,15 +52289,11 @@ function seHalves(J, P, fix) { const f = { ...fix }, used = new Set(Object.value
     for (const n of left.slice()) { const s = ids.find((x) => !taken.has(x)); if (s) put(s, n); } });
   return ppSeat(P, f); }
 function ppCardsSE(J, M, U, P) {
-  const cards = [], RD = '#ff5a5a', GN = '#6dff8e', GO = '#e6b450', BL = '#5aa0ff', OR = '#ff9628', Q = '#c9ced8', cdsOf = (L) => (L || []).map(([t, n, sp]) => ppI(P, n, t + ' ' + sp)), half = (n) => (J.blood.includes(n) ? 'Blood' : J.breath.includes(n) ? 'Breath' : '');
+  const cards = [], RD = '#ff5a5a', GN = '#6dff8e', GO = '#e6b450', BL = '#5aa0ff', OR = '#ff9628', Q = '#c9ced8', half = (n) => (J.blood.includes(n) ? 'Blood' : J.breath.includes(n) ? 'Breath' : '');
   // The two halves: each with its own boss, the bosses 40+ yards apart (the guide's map with both Marks showing)
   if (J.blood.length || J.breath.length) cards.push({ id: 'sides', ph: 1, when: 'All fight', title: 'Mark of Blood and Acid (Stay with your boss)', map: ppFreeze(SE_M.split(false), 3, seHalves(J, P, {}), P, M, { hl: [], labels: [[SE_RED, 'Blood half', RD, '#fff', 8], [SE_GREEN, 'Breath half', GN, '#06140a', 8]] }),
     legend: [ppG('Blood half: the red boss', RD, J.blood.map((n) => ppI(P, n))), ppG('Breath half: the green boss', GN, J.breath.map((n) => ppI(P, n)))],
     foot: 'Keep the bosses 40 yards or more apart: 20 of each Mark at once kills. The halves swap bosses after every intermission.' });
-  // Venom Coagulation: the green ranged bait it away from the tank, Breath tanked on its far side, every ranged on it (the guide's map)
-  cards.push({ id: 'add', ph: 1, when: 'Each add', title: 'Venom Coagulation (Bait it away, kill it fast)', map: ppFreeze(SE_M.coag(false), 5.6, seHalves(J, P, {}), P, M, {}),
-    legend: [ppG('Breath half\'s ranged', GN, [], 'Stack far from the tank\'s new puddle, so the add lands where melee can cleave it.'), ppG('Breath\'s tank', BL, [], 'Takes Breath to the far side of the add.'), ppG('Everyone', GO, [], 'Priority damage: the second add must die before the intermission.')],
-    foot: 'The add pulses raid damage for as long as it lives.' });
   // Toxic Droplets: the note's soakers on the droplets with a defensive, the tanks taking most (the guide's map as they step on)
   if (J.drops.length) { const fix = {}, tanks = J.drops.filter((n) => (P.get(n.toLowerCase()) || {}).role === 'tank'), rest = J.drops.filter((n) => !tanks.includes(n)), ids = [];
     tanks.slice(0, 2).forEach((n, i) => { fix[['t1', 't2'][i]] = n; ids.push(['t1', 't2'][i]); }); rest.slice(0, 3).forEach((n, i) => { const s = ['r1', 'r4', 'h3'][i]; fix[s] = n; ids.push(s); });
@@ -52397,24 +52305,12 @@ function ppCardsSE(J, M, U, P) {
     cards.push({ id: 'miasma', ph: 1, when: 'Each Miasma', title: 'Unstable Miasma (8 or more soak it)', map: ppFreeze(SE_M.miasma(false, 'm'), 9.4, seHalves(J, P, fix), P, M, { hl: ids, labels: [[ids, 'Miasma soak', RD, '#fff', 8]] }),
       legend: [ppG('Miasma soakers', RD, J.miasma.map((n) => ppI(P, n))), ppG('After', GO, [], 'Line up along the wall to drop the Clinging Murk puddles out of the way.')],
       foot: 'It hurts: stack defensives on it (Anti-Magic Zone, Spirit Link).' }); }
-  // Shifting Protovenom: everyone spread, each circle meets another circle (the guide's map as the pairs meet)
-  cards.push({ id: 'proto', ph: 1, when: 'Twice a round', title: 'Shifting Protovenom (Circle meets circle)', map: ppFreeze(SE_M.proto(false), 5.6, seHalves(J, P, {}), P, M, {}),
-    legend: [ppG('Everyone', OR, [], 'Spread out before it. With a circle: count to two, then walk to another circle. Without one: step out of the way.'), ppG('Circle targets', Q, [ppI(P, ppAny('Whoever gets a circle'))], 'Never walk into a player without a circle.')],
-    foot: 'About four circles on each side, two sets a round.' });
   // Blighted Blood: the note's dispellers on their side, dispelling at once (the halves' map)
   if (J.disp.filter(Boolean).length) { const fix = {}, ids = [], tags = []; const free = { Blood: ['h3', 'h4'], Breath: ['h1', 'h2'] };
     J.disp.forEach((n, i) => { if (!n) return; const side = half(n) || 'Blood', s = (free[side] || []).shift() || ['h1', 'h2', 'h3', 'h4'].find((x) => !fix[x]); if (!s) return; fix[s] = n; ids.push(s); tags.push([s, i === 2 ? 'Backup' : 'Dispel ' + (i + 1)]); });
     cards.push({ id: 'disp', ph: 1, when: 'Every Blighted Blood', title: 'Blighted Blood (Dispel at once)', map: ppFreeze(SE_M.split(false), 3, seHalves(J, P, fix), P, M, { hl: ids, named: ids, tags }),
       legend: [ppG('Dispels', '#7fd8ff', [J.disp[0] && ppI(P, J.disp[0], 'Dispel 1'), J.disp[1] && ppI(P, J.disp[1], 'Dispel 2'), J.disp[2] && ppI(P, J.disp[2], 'Backup')], 'Dispel the moment it lands.')],
       foot: 'One that runs out drops a puddle.' }); }
-  // The last droplet set before the intermission: the second add, the droplets and the second Protovenom at once (the guide's hard map)
-  cards.push({ id: 'combo', ph: 1, when: 'Before each intermission', title: 'Toxic Droplets, last set (Immunities and cooldowns)', map: ppFreeze(SE_M.proto(false, 'm', { hard: true }), 4.6, seHalves(J, P, {}), P, M, {}),
-    legend: [ppG('Everyone', GO, [], 'The second add, the droplets and the second Protovenom land together: kill the add fast.'), ppG('Immunities', '#7fd8ff', [], 'Bubble, Turtle or Cloak take the droplets; without them, raid cooldowns.'), ppG('Raid cooldowns', '#9a7bff', cdsOf(J.combo))],
-    foot: 'The hardest moment of each round.' });
-  // Helical Toxins: the bosses pulled together, 2s under a boss, 1s ping in place, 3s find a pinger (the guide's map as the numbers show)
-  cards.push({ id: 'helix', ph: 1.5, when: 'Each intermission', title: 'Helical Toxins (Make 4)', map: ppFreeze(SE_M.helix(false, 'm'), 7, seHalves(J, P, {}), P, M, {}),
-    legend: [ppG('2s', GO, [], 'Run under the boss and pair there.'), ppG('1s', GN, [], 'Jump in place and ping yourself.'), ppG('3s', '#7fd8ff', [], 'Run round and find a jumping pinger.'), ppG('After', RD, [], 'The tank leaving Blood drops the middle of its big puddle in a gap among the old blood.')],
-    foot: 'Keep the bosses\' health even before it: the weaker one heals up to the other.' });
   return cards;
 }
 // ===== The Lost Explorers, Mythic (Oct 26, the same setup; Plan's Jobs cards in 7cc94b2), on the guide's maps of the room =====
@@ -52428,10 +52324,6 @@ function ppReadLE(N, P) {
 const LE_VIEW = { x: 0, y: -2, r: 42 }; // (the fight's middle: the bosses on Gebbo's circle and the raid round them)
 function ppCardsLE(J, M, U, P) {
   const cards = [], BL = '#5aa0ff', GO = '#e6b450', PU = '#c084ff', Q = '#c9ced8';
-  // United Defense: two bosses tanked together trailing Gebbo, the third 30+ yards behind (the guide's map)
-  cards.push({ id: 'pos', ph: 1, when: 'All fight', title: 'United Defense (Two together, one apart)', map: ppFreeze(LE_M.pair(false), 3, ppSeat(P, {}), P, M, { focus: LE_VIEW }),
-    legend: [ppG('Tanks', BL, [], 'Two bosses tanked together trail Gebbo as he walks his circle; the third stays 30 yards or more behind them.'), ppG('Ranged', GO, [], 'Stand where you can hit all three.')],
-    foot: 'Kill them around the same time; if one must enrage, let it be Gebbo.' });
   // The fish: the note's carrier feeds it at about 95 energy (the guide's map)
   if (J.fish) { const fix = { r7: J.fish }, ids = ['r7']; if (J.fish2) { fix.r6 = J.fish2; ids.push('r6'); }
     cards.push({ id: 'fish', ph: 1, when: 'At 95 energy', title: 'Disgusting Fish (Feed it at 95)', map: ppFreeze(LE_M.fish(false), 2.6, ppSeat(P, fix), P, M, { focus: LE_VIEW, hl: ids, named: ids, tags: [['r7', 'Fish']].concat(J.fish2 ? [['r6', 'Backup']] : []) }),
@@ -52447,31 +52339,6 @@ function ppCardsLE(J, M, U, P) {
     cards.push({ id: 'kicks', ph: 1, when: 'Every Icebound Flames', title: 'Icebound Flames (Kick Iku in order)', map: ppFreeze(LE_M.kicks(false), 1.8, ppSeat(P, fix), P, M, { focus: LE_VIEW, hl: ids, named: ids, tags: ids.map((s, i) => [s, 'Kick ' + (i + 1)]) }),
       legend: [ppG('Iku kicks', '#7fd8ff', J.kicks.map((n, i) => ppI(P, n, 'Kick ' + (i + 1))), 'Every cast needs a kick, in this order.')],
       foot: 'A missed kick: dispel the player it lands on.' }); }
-  // Blink Nova: the marked player steps out in front of the raid toward the edge (the guide's map)
-  cards.push({ id: 'nova', ph: 1, when: 'Every Blink Nova', title: 'Blink Nova (Take it to the edge)', map: ppFreeze(LE_M.blink(false), 5, ppSeat(P, {}), P, M, { focus: LE_VIEW }),
-    legend: [ppG('Marked player', '#b48cff', [ppI(P, ppAny('Whoever is marked'))], 'Step out in front of the raid toward the edge: the hit falls off with distance. Stay in the cleave.')],
-    foot: 'Iku teleports to the marked player and bursts there.' });
-  // Shell Spin: melee bait the shells outward (the guide's map)
-  cards.push({ id: 'shell', ph: 1, when: 'Every Shell Spin', title: 'Shell Spin (Melee bait outward)', map: ppFreeze(LE_M.shell(false), 3.2, ppSeat(P, {}), P, M, { focus: LE_VIEW }),
-    legend: [ppG('Melee', GO, [], 'Bait the shells toward the outside of the room, away from the ranged, then step out of the line.')],
-    foot: 'A shell that hits you stuns you for 4 seconds.' });
-  // Shredding Shards: the tanks swap right after (the guide's map)
-  { const S = ppSeat(P, {}), nm = (v) => (typeof v === 'string' ? v : '');
-    cards.push({ id: 'tanks', ph: 1, when: 'Every Shredding Shards', title: 'Shredding Shards (Tanks swap right after)', map: ppFreeze(LE_M.swap(false), 2.2, S, P, M, { focus: LE_VIEW, hl: ['t1', 't2'], named: ['t1', 't2'] }),
-      legend: [ppG('Tanks', BL, [nm(S.t1) && ppI(P, S.t1, 'Has the Shards'), nm(S.t2) && ppI(P, S.t2, 'Taunts')], 'Swap right after each Shredding Shards: above about 25 stacks Nama\'s hits kill a tank.')],
-      foot: 'Gebbo can\'t be tanked: he walks a circle counter-clockwise.' }); }
-  // Frostfire Volley: fire on one side, frost on the other, at the edges (the guide's map as they drop)
-  cards.push({ id: 'volley', ph: 1, when: 'Every Frostfire Volley', title: 'Frostfire Volley (Fire one side, frost the other)', map: ppFreeze(LE_M.frostfire(false), 3.6, ppSeat(P, {}), P, M, { focus: LE_VIEW }),
-    legend: [ppG('Ranged', '#ff8a3b', [], 'Drop fire on one side, at the edge.'), ppG('Melee', '#7fd8ff', [], 'Drop frost on the other side, at the edge.'), ppG('Clearing', GO, [], 'Walk into the opposite patch to clear it, a few at a time; never while you still have your own. A personal here.')],
-    foot: 'Each patch stays until the other element puts it out.' });
-  // Mighty Thud: the three landings lined up, everyone at the bottom of each (the guide's map at the first)
-  cards.push({ id: 'thud', ph: 1, when: 'Every Mighty Thud', title: 'Mighty Thud (Line up, stand at the bottom)', map: ppFreeze(LE_M.thud(false), 3, ppSeat(P, {}), P, M, { focus: LE_VIEW }),
-    legend: [ppG('Everyone', GO, [], 'Line the three soaks up and stand at the bottom of each, so the knockback carries you into the next.'), ppG('Overlaps', '#ff8a5a', [], 'No crate breaks or Blink Nova during the soaks; a raid cooldown if they line up.')],
-    foot: 'Each landing is split between everyone within 6 yards.' });
-  // Explosive Surprise: the bomb carried to the edge across from the one mushroom (the guide's map)
-  cards.push({ id: 'bomb', ph: 1, when: 'Every Explosive Surprise', title: 'Explosive Surprise (Bomb across from the mushroom)', map: ppFreeze(LE_M.bomb(false, 'm'), 6.6, ppSeat(P, {}), P, M, { focus: LE_VIEW }),
-    legend: [ppG('Bomb carrier', '#ff8a3b', [ppI(P, ppAny('Whoever gets the bomb'))], 'Carry it to the edge across from the mushroom, between the bosses.'), ppG('Everyone', '#7ee36a', [], 'Only one mushroom on Mythic: bait it first, then jump on it as the wave reaches it. No crates broken during it.')],
-    foot: 'The bomb lands 10 seconds after it\'s cast: 10 yards.' });
   return cards;
 }
 // ===== Vashnik the Malignant, Mythic (Oct 26, the same setup; Plan's Jobs cards in d99d75e), on the guide's maps of the room =====
@@ -52489,11 +52356,7 @@ const VA_VIEW = { x: 0, y: -34, r: 58 };
 function ppNearest(mp, T, spots) { const f = mp.frames.reduce((a, b) => (Math.abs(b.t - T) < Math.abs(a.t - T) ? b : a)), [cx, cy] = ppMid(mp), used = new Set();
   return spots.map(([x, y]) => { let best = null, bd = 1e9; for (const p of f.pts) { if (p.kind !== 'player' || used.has(p.guid)) continue; const d = Math.hypot(p.x - cx - x, p.y - cy - y); if (d < bd) { bd = d; best = p.guid; } } if (best) used.add(best); return best; }); }
 function ppCardsVA(J, M, U, P) {
-  const cards = [], BL = '#5aa0ff', GO = '#e6b450', PU = '#b06bff', OR = '#ff8a3b', Q = '#c9ced8', cdsOf = (L) => (L || []).map(([t, n, sp]) => ppI(P, n, t + ' ' + sp));
-  // Imbibe: him held between the Shadow and Flame fountains, by the Shadow one, with the note's cooldowns (the guide's map as he drains)
-  cards.push({ id: 'imbibe', ph: 1, when: 'Every Imbibe', title: 'Imbibe (Hold him by Shadow and Flame)', map: ppFreeze(VA_M.imbibe(false, 'm'), 4.6, ppSeat(P, {}), P, M, { focus: VA_VIEW }),
-    legend: [ppG('Tank', BL, [], 'Hold him between the Shadow and Flame fountains every time, by the Shadow one; never Blood.'), ppG('Raid cooldowns', '#9a7bff', cdsOf(J.imbibe)), ppG('Imbibe 5', '#ffd23b', [], 'The biggest hit of the fight: Rallying Cry, Spirit Link, Aura Mastery, Anti-Magic Zone and personals.')],
-    foot: 'Two raid hits each time, stronger every time.' });
+  const cards = [], BL = '#5aa0ff', GO = '#e6b450', PU = '#b06bff', OR = '#ff8a3b', Q = '#c9ced8';
   // The adds: the shadow venoms gripped together, the fire ones held apart (one banished), the note's grips named (the guide's map)
   if (J.fire.length || J.shadow.length || J.banish) { const fix = {}, ids = [], tags = [], put = (s, n, t) => { if (!n) return; fix[s] = n; ids.push(s); tags.push([s, t]); };
     put('m4', J.fire[0], 'Fire grip'); put('m3', J.fire[1], 'Fire grip'); put('m5', J.shadow[0], 'Shadow grip'); put('m6', J.shadow[1], 'Shadow grip'); put('r6', J.banish, 'Banish');
@@ -52507,25 +52370,11 @@ function ppCardsVA(J, M, U, P) {
     cards.push({ id: 'bile', ph: 1, when: 'Every Catalyst', title: 'Catalytic Bile (One in every circle)', map: ppFreeze(mp, 7.8, ppSeat(P, fix), P, M, { hl: ids, named: ids, focus: VA_VIEW }),
       legend: [ppG('Bile soakers', '#8fe36a', J.bile.map((n, i) => ppI(P, n, i < ids.length ? 'A circle' : 'Spare'))), ppG('Everyone else', GO, [], 'Spread round the room before the cast; walk off the boss to take yours.')],
       foot: 'A circle with nobody in it hits the whole raid.' }); }
-  // Plague Froth: the first set's targets on the slanted marker line, the melee stacked under the boss between them (the guide's map)
-  cards.push({ id: 'froth', ph: 1, when: 'Every Froth', title: 'Plague Froth (Mow the lawn)', map: ppFreeze(VA_M.froth1(false), 6.6, ppSeat(P, {}), P, M, { focus: { x: -14, y: -46, r: 34 } }),
-    legend: [ppG('First set', '#c0ff7a', [ppI(P, ppAny('Froth targets'))], 'On the markers in a slanted line across the totems: melee on diamond and star, ranged on X, triangle and moon. Melee stack under the boss between them.'),
-      ppG('Second set', GO, [], 'Go where totems are left, as called: totems first, then don\'t hit the melee.')],
-    foot: 'One totem left at the next Imbibe is survivable; two is a wipe.' });
   // Exploding Infection: the targets run out first, then the note's dispellers clear them one at a time (the guide's map)
   if (J.disp.filter(Boolean).length) { const fix = {}, ids = [], tags = []; ['h1', 'h2', 'h4'].forEach((s, i) => { if (!J.disp[i]) return; fix[s] = J.disp[i]; ids.push(s); tags.push([s, i === 2 ? 'Backup' : 'Dispel ' + (i + 1)]); });
     cards.push({ id: 'disp', ph: 1, when: 'Every Infection', title: 'Exploding Infection (Run out, then dispel)', map: ppFreeze(VA_M.infect(false, 'm'), 7, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags, focus: VA_VIEW }),
       legend: [ppG('Dispels', '#7fd8ff', [J.disp[0] && ppI(P, J.disp[0], 'Dispel 1'), J.disp[1] && ppI(P, J.disp[1], 'Dispel 2'), J.disp[2] && ppI(P, J.disp[2], 'Backup')], 'One at a time, once the target is out.'), ppG('Targets', OR, [ppI(P, ppAny('Whoever gets it'))], 'Run out first.')],
       foot: 'Every dispel blasts the raid, less the farther away. Never right before Imbibe 4 or 5.' }); }
-  // Stygian Infection: the target keeps walking away from the raid, leaving the circles behind (the guide's map)
-  cards.push({ id: 'styg', ph: 1, when: 'Every Stygian Infection', title: 'Stygian Infection (Move away from the raid)', map: ppFreeze(VA_M.infect(false, 'm'), 10.4, ppSeat(P, {}), P, M, { focus: VA_VIEW }),
-    legend: [ppG('Target', PU, [ppI(P, ppAny('Whoever gets it'))], 'Keep moving away from the raid while the healers clear the absorb: your circles stay behind you.')],
-    foot: 'A big heal absorb: healers, clear it fast.' });
-  // Dripping Fangs: the tanks swap after every cast (the guide's map)
-  { const S = ppSeat(P, {}), nm = (v) => (typeof v === 'string' ? v : '');
-    cards.push({ id: 'tanks', ph: 1, when: 'Every Dripping Fangs', title: 'Dripping Fangs (Tanks swap every cast)', map: ppFreeze(VA_M.fangs(false, 'm'), 3, S, P, M, { hl: ['t1', 't2'], named: ['t1', 't2'], focus: VA_VIEW }),
-      legend: [ppG('Tanks', BL, [nm(S.t1) && ppI(P, S.t1, 'Has Fangs'), nm(S.t2) && ppI(P, S.t2, 'Taunts')], 'Swap after every cast: it doubles the next physical hit.')],
-      foot: 'Swap even on the lawn: the boss stays where the Froth targets need him.' }); }
   return cards;
 }
 // ===== Sszorak, Mythic (Oct 26, the same setup; Plan's Jobs cards in a447ffe), on the guide's maps of the room =====
@@ -52545,39 +52394,18 @@ function szGroups(J, P, fix) { const f = { ...fix }, used = new Set(Object.value
     for (const n of left.slice()) { const r = (P.get(n.toLowerCase()) || {}).role; if (r === 'tank') { if (!taken.has(T)) put(T, n); continue; } const s = ids.find((x) => x[0] === (R[r] || 'r') && !taken.has(x)); if (s) put(s, n); }
     for (const n of left.slice()) { const s = ids.find((x) => !taken.has(x)); if (s) put(s, n); } });
   return ppSeat(P, f); }
-const SZ_BOSS = { x: -26, y: 2, r: 30 }, SZ_MID = { x: -2, y: 8, r: 42 }; // (the tank combo at the entrance; the middle of the room)
+const SZ_BOSS = { x: -26, y: 2, r: 30 }; // (the tank combo at the entrance)
 function ppCardsSZ(J, M, U, P) {
-  const cards = [], BL = '#5aa0ff', GO = '#e6b450', OR = '#ff8a5a', GN = '#8fe36a', Q = '#c9ced8', cdsOf = (L) => (L || []).map(([t, n, sp]) => ppI(P, n, t + ' ' + sp)), has = J.groups[0].length || J.groups[1].length;
-  // Apex Predator: Ravage aimed at the edge on the tank alone, Mutilate at the soak group (the guide's map at the Ravage)
-  { const S = szGroups(J, P, {}), nm = (v) => (typeof v === 'string' ? v : '');
-    cards.push({ id: 'combo', ph: 1, when: 'Every tank combo', title: 'Apex Predator (Ravage away, Mutilate at the raid)', map: ppFreeze(SZ_M.combo(false), 4.9, S, P, M, { hl: ['t1', 't2'], named: ['t1', 't2'], focus: SZ_BOSS }),
-      legend: [ppG('Tanks', BL, [nm(S.t1) && ppI(P, S.t1, 'Ravage, then out'), nm(S.t2) && ppI(P, S.t2, 'Taunts')], 'Point Ravage away from everyone and take it alone with a defensive; point Mutilate at the soak group. Each tank takes one of each.')],
-      foot: 'Taunt after the first Ravage and the first Mutilate.' }); }
+  const cards = [], BL = '#5aa0ff', GO = '#e6b450', OR = '#ff8a5a', GN = '#8fe36a', Q = '#c9ced8', has = J.groups[0].length || J.groups[1].length;
   // Mutilate: group 1 soaks the first, group 2 the second, one group each side of the boss (the guide's map at the first soak)
   if (has) cards.push({ id: 'mut', ph: 1, when: 'Every tank combo', title: 'Mutilate (Your group soaks your turn)', map: ppFreeze(SZ_M.combo(false), 2.4, szGroups(J, P, {}), P, M, { focus: SZ_BOSS, hl: SZ_L, labels: [[SZ_L, 'Group 1 · 1st', OR, '#fff', 8], [SZ_R, 'Group 2 · 2nd', GO, '#1a1405', 8, true]] }),
     legend: [ppG('Group 1: the first Mutilate', OR, J.groups[0].map((n) => ppI(P, n))), ppG('Group 2: the second Mutilate', GO, J.groups[1].map((n) => ppI(P, n)))],
     foot: 'One group on each side of the boss; the groups take turns.' });
-  // Tempest: the tornadoes through the boss, the melee's pocket (the guide's map as one passes the boss)
-  cards.push({ id: 'tempest', ph: 1, when: 'Every Tempest', title: 'Tempest (Call the tornadoes)', map: ppFreeze(SZ_M.tempest(false), 2.6, szGroups(J, P, {}), P, M, { focus: SZ_MID }),
-    legend: [ppG('Everyone', '#9ad7ff', [], 'A tornado can kill in one touch: step off early, never greed. Leave the melee a big pocket.'), ppG('Call', GO, [], 'When they pass through the boss.')],
-    foot: 'Only a tank survives a tornado.' });
   // Serpent's Fury: everyone in the stack on the bait right after the tank combo (the guide's map as the bait walks in)
   { const fix = J.bait ? { r7: J.bait } : {};
     cards.push({ id: 'fury', ph: 1, when: 'At 92 rage', title: 'Serpent\'s Fury (14 in the stack)', map: ppFreeze(SZ_M.fury(false), 4.4, szGroups(J, P, fix), P, M, { hl: J.bait ? ['r7'] : [], named: J.bait ? ['r7'] : [], tags: J.bait ? [['r7', 'Bait']] : [], focus: SZ_BOSS }),
       legend: [ppG('Fury bait', '#ff5a5a', [J.bait && ppI(P, J.bait, 'Bait'), J.bait2 && ppI(P, J.bait2, 'Backup')], 'Walk in 1 second before the Surge bombs; never just before or after Dig In.'), ppG('Everyone', GO, [], 'All DPS, the off-tank and the mobile healers stack on the bait near the melee; then spread to your Virulence spot, half inside, half outside.')],
       foot: '14 players inside resets his rage.' }); }
-  // Venomous Surge: each target drops their cyst at its marker, across from its wind tunnel (the guide's map as they walk)
-  cards.push({ id: 'surge', ph: 1, when: 'Every Surge', title: 'Venomous Surge (Drop the cyst at its marker)', map: ppFreeze(SZ_M.surge(false), 8, szGroups(J, P, {}), P, M, {}),
-    legend: [ppG('Surge targets', GN, [ppI(P, ppAny('Whoever gets a Surge'))], 'Drop it at your marker, across from its wind tunnel and away from the boss.'), ppG('Markers', GO, [], 'Read the winds on the pull and after each Dig In; the fourth marker is always the exit.')],
-    foot: 'Each cyst hits the raid when it lands, less the farther away.' });
-  // Raging Crosswinds: the marked pair up head on (the guide's map with the arrows out)
-  cards.push({ id: 'winds', ph: 1, when: 'Every Crosswinds', title: 'Raging Crosswinds (Pair up head on)', map: ppFreeze(SZ_M.crosswinds(false), 5, szGroups(J, P, {}), P, M, { focus: SZ_MID }),
-    legend: [ppG('Marked', '#c9e8ff', [ppI(P, ppAny('Whoever gets an arrow'))], 'Find someone whose arrow points at you and meet them; four directions on Mythic.'), ppG('Can\'t cancel it', GO, [], 'Priests and Paladins ping themselves so a partner lines up with them.')],
-    foot: 'An immunity or a movement ability cancels your own launch.' });
-  // Dig In: the raid in the middle, each wind pushing it into the cyst across from its tunnel (the guide's map at the first wind)
-  cards.push({ id: 'dig', ph: 1, when: 'Every Dig In', title: 'Dig In (Ride the winds to the cysts)', map: ppFreeze(SZ_M.digin(false), 6.2, szGroups(J, P, {}), P, M, {}),
-    legend: [ppG('Everyone', '#c9e8ff', [], 'Stack in the middle: each wind pushes you into the cyst across from its tunnel, and the pop throws you back.'), ppG('Raid cooldowns', '#9a7bff', cdsOf(J.dig))],
-    foot: 'He takes 30% more damage while he digs in.' });
   // The exit cyst: after the third wind its popper pops the fourth cyst, throwing the raid back to the entrance
   if (J.exit) { const k = gdzKit(SZ, 3), fix = { r7: J.exit }, put = new Set(['r7']), EX = SZ_CY[3]; szBoss(k, 0, SZ_C); SZ_CY.forEach(([x, y], i) => k.ring({ x, y, r: 4, fx: i === 3 ? 'soak' : 'puddle', t0: 0, at: 1.05, dur: 5, color: GN, fill: 'rgba(143,227,106,.35)', cn: 'Viscous Cyst', label: false }));
     k.at(0, 'r7', EX[0] - 4, EX[1] - 1); if (J.exit2) { fix.r6 = J.exit2; put.add('r6'); k.at(0, 'r6', EX[0] - 7, EX[1] - 5); } k.at(0, GDZ_RAID.filter((s) => !put.has(s)), SZ_C[0], SZ_C[1] - 12, 8);
@@ -52597,31 +52425,19 @@ function ppReadKX(N, P) {
   return J;
 }
 function ppCardsKX(J, M, U, P) {
-  const cards = [], BL = '#5aa0ff', GO = '#e6b450', PU = '#b06bff', VO = '#9b6bff', Q = '#c9ced8', cdsOf = (L) => (L || []).map(([t, n, sp]) => ppI(P, n, t + ' ' + sp));
-  // Voidswarm: the Hulk taunted onto the Voidweaver nearest moon, the adds kept out of his 25 yards (the guide's map)
-  cards.push({ id: 'adds', ph: 1, when: 'Every Voidswarm', title: 'Voidswarm (Adds away from him)', map: ppFreeze(KX_M.adds(false, 'm'), 6.8, ppSeat(P, {}), P, M, {}),
-    legend: [ppG('Off tank', BL, [], 'Takes the Hulk onto the Voidweaver closest to moon and faces it away.'), ppG('Everyone', GO, [], 'Kill the Voidweavers first; every add dead before the intermission. Keep the adds out of his 25 yards: they take 75% less damage there.')],
-    foot: 'The yellow ring is his 25 yards.' });
+  const cards = [], BL = '#5aa0ff', GO = '#e6b450', PU = '#b06bff', VO = '#9b6bff', Q = '#c9ced8';
   // The beetles: gripped onto the Hulk or a Voidweaver one at a time, slowed, nobody in the middle (the guide's map as the eggs come)
   if (J.grips.length || J.slows.length) { const fix = {}, ids = [], tags = [], put = (s, n, t) => { if (!n) return; fix[s] = n; ids.push(s); tags.push([s, t]); };
     put('m7', J.grips[0], 'Grip'); put('r7', J.grips[1], 'Grip'); put('r1', J.slows[0], 'Slow'); put('r2', J.slows[1], 'Slow');
     cards.push({ id: 'beetles', ph: 1, when: 'Every Voidswarm', title: 'Bomber Beetles (Grip them into the cleave)', map: ppFreeze(KX_M.adds(false, 'm'), 10, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags }),
       legend: [ppG('Beetle grips', '#c0394f', J.grips.map((n) => ppI(P, n, 'Onto the adds'))), ppG('Beetle slows', BL, J.slows.map((n) => ppI(P, n, 'Hold them'))), ppG('Everyone', GO, [], 'One at a time, so their eggs land in the cleave. Nobody in the middle: touching a beetle sets it off.')],
       foot: 'Grip each onto the Hulk or a Voidweaver.' }); }
-  // Extinguish: everyone over a light mote before the hit lands (the guide's map as they walk on)
-  cards.push({ id: 'ext', ph: 1, when: 'Every Extinguish', title: 'Extinguish (Grab a light mote)', map: ppFreeze(KX_M.extinguish(false, 'm'), 7, ppSeat(P, {}), P, M, {}),
-    legend: [ppG('Everyone', '#ffd76a', [], 'Run over a Light\'s Embrace mote before the hit lands; no mote, a personal.'), ppG('Motes', GO, [], 'They appear by the Hulk, so walk it to the raid\'s Voidweaver.')],
-    foot: 'Liadrin throws the motes as he starts the cast.' });
   // Unspeakable Horrors: the feared run to their marker (healers skull, melee star, ranged X), the note's dispeller for each (the guide's map)
   { const fix = {}, ids = [], tags = []; [['healer', 'h1', 'Skull'], ['melee', 'h2', 'Star'], ['ranged', 'h4', 'X']].forEach(([g, s, t]) => { const n = J.fear[g]; if (!n) return; fix[s] = n; ids.push(s); tags.push([s, 'Dispels ' + t]); });
     cards.push({ id: 'fear', ph: 1, when: 'Every Horrors', title: 'Unspeakable Horrors (Run to your marker)', map: ppFreeze(KX_M.fear(false, 'm'), 5.8, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags }),
       legend: [ppG('Feared players', PU, [ppI(P, ppAny('Whoever gets a fear'))], 'You have 6 seconds to reach your marker: healers skull, melee star, ranged X.'),
         ppG('Dispels', '#7fd8ff', [J.fear.healer && ppI(P, J.fear.healer, 'Skull'), J.fear.melee && ppI(P, J.fear.melee, 'Star'), J.fear.ranged && ppI(P, J.fear.ranged, 'X')], 'The healer first, then one at a time.')],
       foot: 'Dispelled in place, nobody else gets feared.' }); }
-  // Dark Devastation: his tank drops each at its number (1 and 2 together, 3 out past moon, 4 and 5 together, 6 out past triangle)
-  cards.push({ id: 'dev', ph: 1, when: 'Every Devastation', title: 'Dark Devastation (Drop it at its number)', map: ppFreeze(KX_M.devastation(false, 'm', { n: 0 }), 4.2, ppSeat(P, {}), P, M, { hl: ['t1'], named: ['t1'], focus: { x: 0, y: 12, r: 48 }, labels: KX_D.map((p, i) => [{ rx: p[0] + 5, ry: p[1] + 4 }, String(i + 1), VO, '#fff', 0]) }),
-    legend: [ppG('His tank', BL, [ppI(P, ppSeat(P, {}).t1 || ppAny('His tank'), 'Drops them')], 'Each leaves a Voidscar: 1 and 2 together, 3 just outside the bubble as the intermission starts, 4 and 5 together, 6 in the second intermission.'), ppG('Tanks', GO, [], 'Swap after every cast.')],
-    foot: 'A 15-yard hit round the tank: a defensive each time.' });
   // The Voidscars: two ranged per scar take turns soaking its fragments (moon in the first intermission, triangle in the second), a backup each
   if (J.scar[0].length || J.scar[1].length) { const k = gdzKit(KX, 3), fix = {}, put = new Set(), S1 = M.moon || KX_MK.moon, S2 = M.triangle || KX_MK.triangle; kxLia(k, 0); kxBoss(k, 0, KX_IB); kxBulwark(k, 0, 9); kxDark(k, 0, 9);
     [S1, S2].forEach((p) => k.ring({ x: p[0], y: p[1], r: 6, fx: 'soak', t0: 0, at: 1.05, dur: 5, color: '#c084ff', cn: 'Voidscar soak', label: false })); kxScar(k, KX_D[2], 0, 9); kxScar(k, KX_D[5], 0, 9);
@@ -52630,14 +52446,6 @@ function ppCardsKX(J, M, U, P) {
     cards.push({ id: 'scar', ph: 1.5, when: 'Each intermission', title: 'Eclipse Fragments (Soak your scar\'s)', map: ppFreeze(k.done({ title: 'Voidscars', focus: { x: -2, y: 4, r: 46 } }), 1, ppSeat(P, fix), P, M, { hl: a.concat(b, c), named: a.concat(b, c), tags: a.map((x) => [x, '1']).concat(b.map((x) => [x, '2'])) }),
       legend: [ppG('Scar 1: moon, the first intermission', '#c084ff', J.scar[0].map((n) => ppI(P, n))), ppG('Scar 2: triangle, the second', '#c084ff', J.scar[1].map((n) => ppI(P, n))), ppG('Backup', Q, J.scarB.map((n) => ppI(P, n)), 'Take turns: no solo soaks (6-yard splash).')],
       foot: 'Soak each fragment before it reaches Liadrin.' }); }
-  // Suffocating Darkness: everyone inside Liadrin's bubble, the fragments flying to her, the note's intermission cooldowns (the guide's map)
-  cards.push({ id: 'int', ph: 1.5, when: 'Each intermission', title: 'Suffocating Darkness (Inside the bubble)', map: ppFreeze(KX_M.fragments(false, 'm'), 8, ppSeat(P, {}), P, M, {}),
-    legend: [ppG('Everyone', '#ffd76a', [], 'Stay inside Liadrin\'s bubble and catch the fragments flying to her. Abyssal Grasp: a potion or a Healthstone to break it within 8 seconds.'), ppG('Raid cooldowns', '#9a7bff', cdsOf(J.int))],
-    foot: 'Outside the bubble you\'re pacified and take heavy damage.' });
-  // Last Light: Bloodlust and the push, each role's Null Gate spot, Negation run through the gates (the guide's map)
-  cards.push({ id: 'p2', ph: 3, when: 'Phase 2', title: 'Last Light (Gates at your spot)', map: ppFreeze(KX_M.negation(false, 'm'), 5.4, ppSeat(P, {}), P, M, {}),
-    legend: [ppG('Push', GO, [], 'Bloodlust on the pull and push to 25% before the third beetle set (about 4:15): skip the third intermission.'), ppG('Gates', '#7a3dff', [], 'Drop yours at your role\'s spot: melee beside the boss, ranged on the far side, healers their own spot.'), ppG('Raid cooldowns', '#9a7bff', cdsOf(J.p2))],
-    foot: 'Nullify: 3 stacks kill, dodge the shards.' });
   return cards;
 }
 // (the note's healing and raid cooldowns at a moment, for a picture's legend: NSRT reminder lines between two times of a phase)
@@ -52651,20 +52459,20 @@ const GDZ_PP = {
     stack: [-14, -8],
     // (where each mechanic happens: a marker the raid lead picks, or '' for the spot shown; the guide: phase 1's axes at the moon,
     // Dreadmarch on the square, phase 3's first axe at the star and the next two at the square)
-    uses: [['axe', 'Phase 1 axes', 'moon'], ['stack', 'Venom Rupture stack', ''], ['dread', 'Dreadmarch stack', 'square'], ['grim1', 'Phase 3 axe 1', 'star'], ['grim2', 'Phase 3 axes 2 and 3', 'square']],
+    uses: [['axe', 'Phase 1 axes', 'moon'], ['dread', 'Dreadmarch stack', 'square'], ['grim1', 'Phase 3 axe 1', 'star'], ['grim2', 'Phase 3 axes 2 and 3', 'square']],
     // (your raid's own spots, one click away: read from your pulls on Oct 21 and 22: where each purple carrier dropped their orb
     // (cross, triangle, square, diamond) and the greens (star, skull), where you soaked phase 1's axes (moon), and where you stacked
     // Dreadmarch and soaked phase 3's axes (circle))
     raid: { marks: { cross: [-5, 30], triangle: [5, 29], square: [-4, -31], diamond: [7, -32], star: [2, 16], skull: [-2, -23], moon: [-37, 37], circle: [25, -35] }, stack: [5, -11],
-      uses: { axe: 'moon', stack: '', dread: 'circle', grim1: 'circle', grim2: 'circle' } },
+      uses: { axe: 'moon', dread: 'circle', grim1: 'circle', grim2: 'circle' } },
     // (the Markers map: the room with the boss in it, its framing, how far out a marker can be dragged, the names it keeps)
     room: { scene: (k) => k.boss('zj', 'Zul\'jan', 0, 0, 0), focus: { x: 0, y: 0, r: 30 }, lim: 44, keep: ['Zul\'jan'] },
-    read(N, P) { const J = ppReadCA(N, P); J.rupture = ppCds(N, P, 1, 160, 200).concat(ppCds(N, P, 2, 0, 5)); J.interCds = ppCds(N, P, 2.5, 0, 40); return J; },
+    read(N, P) { const J = ppReadCA(N, P); J.interCds = ppCds(N, P, 2.5, 0, 40); return J; },
     cards: ppCardsCA,
     // (Plan's Jobs cards and the pictures each one shows: by the key Plan gives each card's picture row (its build parts), else by the
     // card's title, where the grim card is matched before the phase 1 axes)
-    mech: { kicks: ['kicks', 'bombs'], g: ['axe1', 'axe2'], g3: ['grim1', 'grim2', 'grim3'], orbs: ['orbs1', 'orbs3'], mc: ['dread'], curse: ['kicks'], rupture: ['stack'], stops: ['inter'], cd: [], cds: [], def: [] },
-    jobs: [[/p3|grim/i, ['grim1', 'grim2', 'grim3']], [/guillotine/i, ['axe1', 'axe2']], [/kick/i, ['kicks', 'bombs']], [/purple orb/i, ['orbs1', 'orbs3']], [/dreadmarch|mind ?control/i, ['dread']], [/curse/i, ['kicks']], [/venom rupture/i, ['stack']], [/fragments of malacrass|stop them at your marker/i, ['inter']]] } },
+    mech: { kicks: ['kicks'], g: ['axe1', 'axe2'], g3: ['grim1', 'grim2', 'grim3'], orbs: ['orbs1', 'orbs3'], mc: ['dread'], curse: ['kicks'], stops: ['inter'] },
+    jobs: [[/p3|grim/i, ['grim1', 'grim2', 'grim3']], [/guillotine/i, ['axe1', 'axe2']], [/kick/i, ['kicks']], [/purple orb/i, ['orbs1', 'orbs3']], [/dreadmarch|mind ?control/i, ['dread']], [/curse/i, ['kicks']], [/fragments of malacrass|stop them at your marker/i, ['inter']]] } },
   "Ula'tek": { Mythic: {
     // (the guide's octagon about 42 yards out (notes/Guides/Bosses/8 Ula'tek.md, "P1 setup"): star north-north-west, circle north-north-east,
     // skull east-north-east, moon east-south-east, diamond south-south-east, triangle south-south-west, square west-south-west, cross west-north-west)
@@ -52672,13 +52480,13 @@ const GDZ_PP = {
     stack: [0, 0],
     // (where each mechanic happens: the Wretch's bubbles where the guide has them (by the tail's first soak, then the middle north), the
     // intermission's first coil where the caller marks it, and its end toward the diamond, on the inside)
-    uses: [['fester1', 'First Wretch bubble', ''], ['fester2', 'Second Wretch bubble', ''], ['int1', 'First intermission coil', ''], ['intend', 'Intermission end spot', 'diamond']],
+    uses: [['int1', 'First intermission coil', ''], ['intend', 'Intermission end spot', 'diamond']],
     room: { scene: (k) => { k.art(0, UL_FULL); uxBoss(k, 0); }, focus: { x: 0, y: 0, r: 54 }, lim: 52, keep: [UX] },
-    read(N, P) { const J = ppReadUL(N, P); J.heart1 = ppCds(N, P, 1, 135, 175); J.heart2 = ppCds(N, P, 2, 108, 145); J.prey = ppCds(N, P, 3, 55, 72).concat(ppCds(N, P, 3, 107, 124), ppCds(N, P, 3, 167, 184)); return J; },
+    read(N, P) { return ppReadUL(N, P); },
     cards: ppCardsUL,
     // (Plan's Jobs cards (2caefe9) and the pictures each shows, by its key, else by its title)
-    mech: { eggs: ['eggs'], coils: ['coils'], fester: ['fester'], heart: ['heart'], kicks: ['kicksL', 'kicksR'], trans: ['trans'], bite: ['bite'], prey: ['prey'], tanks: ['beam', 'grips'], cds: [], def: [] },
-    jobs: [[/egg/i, ['eggs']], [/coils team|spectral coils/i, ['coils']], [/fester/i, ['fester']], [/rage of the shackled|heart/i, ['heart']], [/kick/i, ['kicksL', 'kicksR']], [/transition|soak group/i, ['trans']], [/serpent'?s bite/i, ['bite']], [/circling prey/i, ['prey']], [/tank|grip/i, ['beam', 'grips']]] } },
+    mech: { eggs: ['eggs'], coils: ['coils'], kicks: ['kicksL', 'kicksR'], trans: ['trans'], bite: ['bite'], tanks: ['beam', 'grips'] },
+    jobs: [[/egg/i, ['eggs']], [/coils team|spectral coils/i, ['coils']], [/kick/i, ['kicksL', 'kicksR']], [/transition|soak group/i, ['trans']], [/serpent'?s bite/i, ['bite']], [/tank|grip/i, ['beam', 'grips']]] } },
   'The Twin Fangs': { Mythic: {
     // (the guide's six ground markers lined up on the Broodlings each side, a step in from the rim: diamond and star at left and right 3,
     // moon and triangle at 1, circle and square at 2; skull and cross at the tip's two slots. On the south-east platform, as the pictures are)
@@ -52687,44 +52495,44 @@ const GDZ_PP = {
     stack: [0, 0],
     uses: [],
     room: { scene: (k) => { const P = tfT(2).P, v = P(TF_VX), i = P(TF_IT); k.boss('vx', 'Vexhul', 0, v[0], v[1]).boss('it', 'Ithraz', 0, i[0], i[1]); }, focus: TF_VIEW, lim: 90, keep: ['Vexhul', 'Ithraz'] },
-    read(N, P) { const J = ppReadTF(N, P); J.sub = ppCds(N, P, 1, 136, 163).concat(ppCds(N, P, 1, 291, 318)); return J; },
+    read(N, P) { return ppReadTF(N, P); },
     cards: ppCardsTF,
     // (Plan's Jobs cards (b2e86a2) and the pictures each shows, by its key, else by its title)
-    mech: { orbcc: ['orbcc'], globs: ['globs'], stone: ['stone'], kicks: ['kicks'], spawns: ['spawns'], ichor: ['ichor'], stir: ['stir'], feast: ['feast'], sub: ['sub'], cds: [], def: [] },
-    jobs: [[/orb cc|crowd control/i, ['orbcc']], [/globule/i, ['globs']], [/stone breaker/i, ['stone']], [/kick|brood/i, ['kicks']], [/emergence|spawn/i, ['spawns']], [/ichor/i, ['ichor']], [/stir the depths/i, ['stir']], [/feast/i, ['feast']], [/submerge/i, ['sub']]] } },
+    mech: { orbcc: ['orbcc'], kicks: ['kicks'], feast: ['feast'] },
+    jobs: [[/orb cc|crowd control/i, ['orbcc']], [/kick|brood/i, ['kicks']], [/feast/i, ['feast']]] } },
   'Nymrissa Wavecaller': { Mythic: {
     // (the guide places no markers here: a plain ring round the bubble, 38 yards out at the compass points, for the raid lead to drag)
     marks: { star: [0, 38], circle: [27, 27], diamond: [38, 0], triangle: [27, -27], moon: [0, -38], square: [-27, -27], cross: [-38, 0], skull: [-27, 27] },
     stack: [0, 0],
     uses: [],
     room: { scene: (k) => { k.boss('ny', NY, 0, NY_BH[0], NY_BH[1]); }, focus: { x: 0, y: 0, r: 56 }, lim: 60, keep: [NY] },
-    read(N, P) { const J = ppReadNY(N, P); J.pop = ppCds(N, P, 1, 112, 128).concat(ppCds(N, P, 1, 222, 238), ppCds(N, P, 1, 332, 348)); return J; },
+    read(N, P) { return ppReadNY(N, P); },
     cards: ppCardsNY,
     // (Plan's Jobs cards (23a0436) and the pictures each shows, by its key, else by its title)
-    mech: { rain: ['rain'], adds: ['adds'], jet: ['jet'], orbs: ['orbs'], pop: ['pop'], cds: [], def: [] },
-    jobs: [[/abyssal rain/i, ['rain']], [/murloc|grip/i, ['adds']], [/water jet/i, ['jet']], [/frost orb|orb soak/i, ['orbs']], [/whirlpool|pop/i, ['pop']]] } },
+    mech: { adds: ['adds'], orbs: ['orbs'] },
+    jobs: [[/murloc|grip/i, ['adds']], [/frost orb|orb soak/i, ['orbs']]] } },
   "Nek'zali the Soulcoiler": { Mythic: {
     // (the guide places no markers here: a plain ring round the well, 38 yards out at the compass points, for the raid lead to drag)
     marks: { star: [0, 38], circle: [27, 27], diamond: [38, 0], triangle: [27, -27], moon: [0, -38], square: [-27, -27], cross: [-38, 0], skull: [-27, 27] },
     stack: [0, 0],
     uses: [],
     room: { scene: (k) => { k.boss('nz', NZ, 0, NZ_B[0], NZ_B[1]); }, focus: { x: 0, y: -4, r: 54 }, lim: 50, keep: [NZ] },
-    read(N, P) { const J = ppReadNZ(N, P); J.ign = ppCds(N, P, 1, 0, 8).concat(ppCds(N, P, 1, 70, 82), ppCds(N, P, 1, 142, 152)); J.echo = ppCds(N, P, 1.5, 0, 999); J.p2 = ppCds(N, P, 2, 0, 999); return J; },
+    read(N, P) { return ppReadNZ(N, P); },
     cards: ppCardsNZ,
     // (Plan's Jobs cards (173240d) and the pictures each shows, by its key, else by its title)
-    mech: { ign: ['ign'], barrage: ['barrage'], well: ['well1', 'well2'], grip: ['grip'], rend: ['rend'], echo: ['echo'], pyre: ['pyre'], p2: ['p2'], cds: [], def: [] },
-    jobs: [[/ignition/i, ['ign']], [/barrage/i, ['barrage']], [/well/i, ['well1', 'well2']], [/amani|grip/i, ['grip']], [/essence rend|dispel/i, ['rend']], [/echoes of jawae/i, ['echo']], [/pyre/i, ['pyre']], [/phase 2|invoke/i, ['p2']]] } },
+    mech: { well: ['well1', 'well2'], grip: ['grip'], rend: ['rend'], pyre: ['pyre'] },
+    jobs: [[/well/i, ['well1', 'well2']], [/amani|grip/i, ['grip']], [/essence rend|dispel/i, ['rend']], [/pyre/i, ['pyre']]] } },
   'Entombed Sentinels': { Mythic: {
     // (the guide places no markers here: a plain ring round the middle, 36 yards out at the compass points, for the raid lead to drag)
     marks: { star: [0, 36], circle: [25, 25], diamond: [36, 0], triangle: [25, -25], moon: [0, -36], square: [-25, -25], cross: [-36, 0], skull: [-25, 25] },
     stack: [0, 0],
     uses: [],
     room: { scene: (k) => { seBosses(k); }, focus: { x: 0, y: -3, r: 57 }, lim: 50, keep: ['Breath of Ula\'tek', 'Blood of Ula\'tek'] },
-    read(N, P) { const J = ppReadSE(N, P); J.combo = ppCds(N, P, 1, 118, 146).concat(ppCds(N, P, 1, 224, 256), ppCds(N, P, 1, 334, 362)); return J; },
+    read(N, P) { return ppReadSE(N, P); },
     cards: ppCardsSE,
     // (Plan's Jobs cards (02300fa) and the pictures each shows, by its key, else by its title)
-    mech: { sides: ['sides'], add: ['add'], drops: ['drops'], miasma: ['miasma'], proto: ['proto'], disp: ['disp'], combo: ['combo'], helix: ['helix'], cds: [], def: [] },
-    jobs: [[/last set/i, ['combo']], [/blood and breath|sides/i, ['sides']], [/coagulation/i, ['add']], [/droplet/i, ['drops']], [/miasma/i, ['miasma']], [/protovenom/i, ['proto']], [/blighted blood|dispel/i, ['disp']], [/helical/i, ['helix']]] } },
+    mech: { sides: ['sides'], drops: ['drops'], miasma: ['miasma'], disp: ['disp'] },
+    jobs: [[/last set/i, []], [/blood and breath|sides/i, ['sides']], [/droplet/i, ['drops']], [/miasma/i, ['miasma']], [/blighted blood|dispel/i, ['disp']]] } },
   'The Lost Explorers': { Mythic: {
     // (the guide places no markers here: a plain ring round the middle, 38 yards out at the compass points, for the raid lead to drag)
     marks: { star: [0, 38], circle: [27, 27], diamond: [38, 0], triangle: [27, -27], moon: [0, -38], square: [-27, -27], cross: [-38, 0], skull: [-27, 27] },
@@ -52734,8 +52542,8 @@ const GDZ_PP = {
     read(N, P) { return ppReadLE(N, P); },
     cards: ppCardsLE,
     // (Plan's Jobs cards (7cc94b2) and the pictures each shows, by its key, else by its title)
-    mech: { pos: ['pos'], fish: ['fish'], crates: ['crates'], kicks: ['kicks'], nova: ['nova'], shell: ['shell'], tanks: ['tanks'], volley: ['volley'], thud: ['thud'], bomb: ['bomb'], cds: [], def: [] },
-    jobs: [[/united defense/i, ['pos']], [/fish/i, ['fish']], [/crate/i, ['crates']], [/icebound|kick/i, ['kicks']], [/blink nova/i, ['nova']], [/shell spin/i, ['shell']], [/shredding shards/i, ['tanks']], [/frostfire/i, ['volley']], [/mighty thud/i, ['thud']], [/explosive surprise/i, ['bomb']]] } },
+    mech: { fish: ['fish'], crates: ['crates'], kicks: ['kicks'] },
+    jobs: [[/fish/i, ['fish']], [/crate/i, ['crates']], [/icebound|kick/i, ['kicks']]] } },
   'Vashnik the Malignant': { Mythic: {
     // (the guide's Plague Froth markers on their slanted line (X, triangle and moon for ranged, diamond and star for melee), skull where
     // his tank holds him for Imbibe, and circle and square off to the sides for the raid lead to use)
@@ -52743,11 +52551,11 @@ const GDZ_PP = {
     stack: [0, 0],
     uses: [],
     room: { scene: (k) => { vaBoss(k); }, focus: { x: 0, y: -26, r: 66 }, lim: 75, keep: [VA] },
-    read(N, P) { const J = ppReadVA(N, P); J.imbibe = [[18, 32], [102, 116], [186, 200], [270, 284], [354, 368]].flatMap(([a, b]) => ppCds(N, P, 1, a, b)); return J; },
+    read(N, P) { return ppReadVA(N, P); },
     cards: ppCardsVA,
     // (Plan's Jobs cards (d99d75e) and the pictures each shows, by its key, else by its title)
-    mech: { imbibe: ['imbibe'], adds: ['adds'], bile: ['bile'], froth: ['froth'], disp: ['disp'], styg: ['styg'], tanks: ['tanks'], cds: [], def: [] },
-    jobs: [[/imbibe/i, ['imbibe']], [/grip|add/i, ['adds']], [/bile/i, ['bile']], [/plague froth/i, ['froth']], [/exploding infection|dispel/i, ['disp']], [/stygian/i, ['styg']], [/dripping fangs/i, ['tanks']]] } },
+    mech: { adds: ['adds'], bile: ['bile'], disp: ['disp'] },
+    jobs: [[/grip|add/i, ['adds']], [/bile/i, ['bile']], [/exploding infection|dispel/i, ['disp']]] } },
   Sszorak: { Mythic: {
     // (the guide's cyst markers, each across from its wind tunnel: X, circle and triangle, and the diamond at the exit; the other four off
     // to the sides for the raid lead to use)
@@ -52755,11 +52563,11 @@ const GDZ_PP = {
     stack: [0, 0],
     uses: [],
     room: { scene: (k) => { szBoss(k); }, focus: { x: 0, y: 0, r: 62 }, lim: 60, keep: [SZ] },
-    read(N, P) { const J = ppReadSZ(N, P); J.dig = ppCds(N, P, 1, 98, 126).concat(ppCds(N, P, 1, 225, 253)); return J; },
+    read(N, P) { return ppReadSZ(N, P); },
     cards: ppCardsSZ,
     // (Plan's Jobs cards (a447ffe) and the pictures each shows, by its key, else by its title)
-    mech: { combo: ['combo'], mut: ['mut'], tempest: ['tempest'], fury: ['fury'], surge: ['surge'], winds: ['winds'], dig: ['dig'], cyst: ['cyst'], cds: [], def: [] },
-    jobs: [[/apex predator/i, ['combo']], [/mutilate/i, ['mut']], [/tempest/i, ['tempest']], [/fury/i, ['fury']], [/surge/i, ['surge']], [/crosswinds/i, ['winds']], [/dig in/i, ['dig']], [/cyst/i, ['cyst']]] } },
+    mech: { mut: ['mut'], fury: ['fury'], cyst: ['cyst'] },
+    jobs: [[/mutilate/i, ['mut']], [/fury/i, ['fury']], [/cyst/i, ['cyst']]] } },
   "Kith'ix": { Mythic: {
     // (the guide's markers: the soak spots just inside the barrier (circle for the tanks, moon and triangle for the scar pairs) and the
     // fear spots (skull for healers, star for melee, X for ranged); diamond and square off to the side for the raid lead to use)
@@ -52767,11 +52575,11 @@ const GDZ_PP = {
     stack: [0, 0],
     uses: [],
     room: { scene: (k) => { kxBoss(k); kxLia(k, 0); }, focus: { x: -2, y: 4, r: 50 }, lim: 55, keep: [KX, 'Lady Liadrin'] },
-    read(N, P) { const J = ppReadKX(N, P); J.int = ppCds(N, P, 1.5, 0, 999).concat(ppCds(N, P, 2.5, 0, 999)); J.p2 = ppCds(N, P, 3, 0, 999).concat(ppCds(N, P, 4, 0, 999)); return J; },
+    read(N, P) { return ppReadKX(N, P); },
     cards: ppCardsKX,
     // (Plan's Jobs cards (a564306) and the pictures each shows, by its key, else by its title)
-    mech: { adds: ['adds'], beetles: ['beetles'], ext: ['ext'], fear: ['fear'], dev: ['dev'], scar: ['scar'], int: ['int'], p2: ['p2'], cds: [], def: [] },
-    jobs: [[/voidswarm/i, ['adds']], [/beetle/i, ['beetles']], [/extinguish/i, ['ext']], [/fear|horrors/i, ['fear']], [/devastation/i, ['dev']], [/scar/i, ['scar']], [/darkness|bubble/i, ['int']], [/last light|phase 2/i, ['p2']]] } },
+    mech: { beetles: ['beetles'], fear: ['fear'], scar: ['scar'] },
+    jobs: [[/beetle/i, ['beetles']], [/fear|horrors/i, ['fear']], [/scar/i, ['scar']]] } },
 };
 const PP_PH = { 1: ['Phase 1', '#5aa0ff'], 1.9: ['Phase 1 ends', '#5aa0ff'], 2: ['Phase 2', '#b65cff'], 2.5: ['Intermission', '#e6b450'], 3: ['Phase 3', '#ff5a4f'] };
 
@@ -52987,7 +52795,7 @@ function ppJobs() {
     const ch = el.querySelector('[data-noteboss][data-noteid]') || (el.closest('.bj-jobs') || document).querySelector('[data-noteboss][data-noteid]'), t = ((el.querySelector('.plb-rch b') || {}).textContent || '').replace(/^\s*\d+\s*·\s*/, '').trim(); if (!ch || !t) return;
     const note = ch.dataset.noteboss + '|' + ch.dataset.noteid, c = ndzDcNote(note); if (!c) return; const set = ppSet(c.r, c.u0); if (!set.cf || !set.cf.C.jobs) return;
     // (which pictures: by Plan's key for the card when it gives one, else by the card's title)
-    let pics = el.querySelector(':scope > .pj-pics'); const mech = pics && pics.dataset.mech, byKey = mech && set.cf.C.mech && set.cf.C.mech[mech], m = !byKey && set.cf.C.jobs.find(([re]) => re.test(t));
+    let pics = el.querySelector(':scope > .pj-pics'); const mech = pics && pics.dataset.mech, byKey = mech && set.cf.C.mech && set.cf.C.mech[mech], m = !mech && set.cf.C.jobs.find(([re]) => re.test(t)); /* (a card with Plan's key shows only that key's pictures, never one its title happens to name) */
     const ids = (byKey || (m ? m[1] : [])).filter((id) => set.cards.some((cd) => cd.id === id)); if (!ids.length) return;
     ppCss(); el.classList.add('pj-has'); if (!pics) { el.insertAdjacentHTML('beforeend', '<div class="pj-pics"></div>'); pics = el.lastElementChild; }
     pics.innerHTML = ids.map((id) => { const cd = set.cards.find((x) => x.id === id), [nm, ins] = ppSplit(cd.title);
