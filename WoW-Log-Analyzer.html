@@ -17211,6 +17211,7 @@ const PATCH_NOTES = [
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'Rotation: melee and tanks see "Always be pressing" instead of "Always be casting", since they press buttons rather than cast. Same check, same marks.',
     'Rotation: the Holy Power, Mana and other "charts" rows are called "in numbers", since that is what they hold, and the checklist no longer says to tap a row.',
     'Rotation: inside a ring the thin bars under the checks are gone (the number in its colour says it; the five ring rows keep their bars), hover a check\'s name to read how it is judged, and a What to fix card lights up the row it jumps to.',
     'Rotation is less cluttered: the "top" numbers are gone from the checklist, the score and your healing or damage a second. The colours still come from what top players do, and the What to fix cards keep their target.',
@@ -34853,7 +34854,7 @@ const SPC_CUT = (c) => /^(Opener DPS|Mana from others)$/.test(String(c.label)) |
 // (row icons (your ask, Oct 23): the rows every spec shares get one icon each, the same on every spec page, instead of the spec's main spell
 // on four to six rows of one page: a clock for Always be casting, a list for Rotation priority, and so on. Rows that had no icon at all
 // (Weapon oil, Stealth, Full mana, Holy Power wasted) get one)
-const SPC_CIC = [[/^Always be casting$/, 'rot:abc', 'inv_misc_pocketwatch_01'], [/^Cancelled casts$/, 'rot:cc', 'spell_holy_silence'], [/^Rotation priority$/, 'rot:apl', 'inv_misc_note_01'],
+const SPC_CIC = [[/^Always be (?:casting|pressing)$/, 'rot:abc', 'inv_misc_pocketwatch_01'], [/^Cancelled casts$/, 'rot:cc', 'spell_holy_silence'], [/^Rotation priority$/, 'rot:apl', 'inv_misc_note_01'],
   [/^Casts per minute/, 'rot:cpm', 'spell_holy_borrowedtime'], [/^Melee uptime$/, 'rot:mel', 'ability_meleedamage'], [/^Opener, step by step$/, 'rot:op', 'inv_misc_map_01'],
   [/^Weapon oil/i, 'rot:oil', 'trade_alchemy_potiond4'], [/^Stealth at the pull$/, 'rot:st', 'ability_stealth'], [/^Full mana at the pull$/, 'rot:fm', 'spell_magic_managain'],
   [/^Holy Power wasted$/, 'rot:hp', 'spell_holy_power'], [/^(Rage|Maelstrom|Fury|Runic Power|Astral Power|Focus|Energy|Insanity|Chi|Combo points|Lunar Power) wasted$|^Essence at full$/, 'rot:res', 'inv_misc_gem_variety_01']];
@@ -35065,7 +35066,7 @@ function specPage(o) {
     const m = v.match(/^(\d+)\s*\/\s*(\d+)/), p = v.match(/^(\d+(?:\.\d+)?)%/);
     if (m && +m[2] > 0) { a = +m[1]; b = Math.max(0, +m[2] - a); [la, lb] = /uses$|on cooldown$/.test(L) ? ['Pressed', 'Not pressed'] : ['Done right', 'Missed']; }
     else if (p) { const x = Math.max(0, Math.min(100, +p[1])); fmt = (y) => Math.round(y) + '%';
-      if (lo) { a = 100 - x; b = x; [la, lb] = ['Used', 'Wasted']; } else { a = x; b = 100 - x; [la, lb] = /^Always be casting|casting/i.test(L) ? ['Casting', 'Not casting'] : /uptime|buff$|^Time in /i.test(L) ? ['Up', 'Down'] : ['Done right', 'Missed']; } }
+      if (lo) { a = 100 - x; b = x; [la, lb] = ['Used', 'Wasted']; } else { a = x; b = 100 - x; [la, lb] = /^Always be pressing/i.test(L) ? ['Pressing', 'Not pressing'] : /^Always be casting|casting/i.test(L) ? ['Casting', 'Not casting'] : /uptime|buff$|^Time in /i.test(L) ? ['Up', 'Down'] : ['Done right', 'Missed']; } }
     else return '';
     if (!(a + b > 0)) return ''; const cb = c.st === 'ok' ? 'g0' : c.st === 'warn' ? 'warn' : 'bad';
     return '<div class="spc-sb rck-sb"><div class="spc-sbb">' + (a ? '<i class="ok" style="flex:' + a + '"></i>' : '') + (b ? '<i class="' + cb + '" style="flex:' + b + '"></i>' : '') + '</div><div class="spc-sbl"><span><i class="ok"></i>' + la + ' <b>' + fmt(a) + '</b></span>' + (b ? '<span><i class="' + cb + '"></i>' + lb + ' <b>' + fmt(b) + '</b></span>' : '') + '</div></div>'; };
@@ -37394,7 +37395,8 @@ function genRun0(spec, D, reps, name, one) {
   const gC = grp('Casting');
   { const al = sum((s) => (s.abcAl >= 10 ? s.abcAl : 0)), busy = sum((s) => (s.abcAl >= 10 ? s.abcBusy : 0));
     if (al >= 10) { const f = busy / al, gp = rows.flatMap((s) => (s.abcTop ? [{ ...s.abcTop, pull: s.pull }] : [])).sort((a, b) => b.len - a.len)[0];
-      add(gC, D.abcInfo ? 'na' : f >= K.abc[0] ? 'ok' : f >= K.abc[1] ? 'warn' : 'bad', D.ic, 'Always be casting', pct(f), 'You were casting ' + pct(f) + ' of the time.' + (gp ? ' Your longest gap was ' + Math.round(gp.len) + ' seconds, at ' + (one ? '' : 'pull ' + gp.pull + ', ') + T(gp.t) + (gp.mv ? ', while moving.' : '.') : ''), 'abc',
+      const mel = per.some(({ p: pm }) => NDZ_MELEE.has(+pm.specId) || pm.role === 'tank'); /* (melee and tanks press, they don't cast (Oct 26)) */
+      add(gC, D.abcInfo ? 'na' : f >= K.abc[0] ? 'ok' : f >= K.abc[1] ? 'warn' : 'bad', D.ic, mel ? 'Always be pressing' : 'Always be casting', pct(f), (mel ? 'You were pressing buttons ' : 'You were casting ') + pct(f) + ' of the time.' + (gp ? ' Your longest gap was ' + Math.round(gp.len) + ' seconds, at ' + (one ? '' : 'pull ' + gp.pull + ', ') + T(gp.t) + (gp.mv ? ', while moving.' : '.') : ''), 'abc',
         'This is the share of your time alive that you spent casting or on a global cooldown. ' + (D.abcWhy ? D.abcWhy + ' ' : '') + (D.abcInfo ? '' : okP(K.abc[0]) + ' ') + 'Time spent dead, or while the whole raid waits, isn\'t counted. The times listed are the stretches of 4 seconds or more with nothing pressed.');
       if (!D.abcInfo && f < K.abc[0]) gC.l[gC.l.length - 1].tip = D.abcTip || 'Press something every global cooldown. When you have to move, use an instant spell instead of stopping.'; } }
   // (melee uptime: only the time when you alone were off the boss is graded, 10% or less of the time is good and over 20% is red (top Mythic kills: 5% to 9%); the time
