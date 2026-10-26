@@ -7353,6 +7353,19 @@ html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac +
 #view .rck-fix .rck-good { display: flex !important; flex-wrap: wrap; gap: 8px; grid-template-columns: none; }
 #view .rck-fix .rck-good > span { flex: 0 0 auto; width: auto; min-width: 0; max-width: 100%; overflow: visible; text-overflow: clip; }
 @media (max-width: 560px) { #view .rck-fix .rck-good > span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; } }
+/* ===== Design studio round 42 (Oct 26): in-numbers inside a spell's card, big-damage presses all shown. Owner: the Design studio chat. ===== */
+#view section.rck .rck-r > .rck-mgb.rck-xin { padding: 2px 0 0 !important; }
+#view section.rck .rck-r > .rck-mgb.rck-xin > .spc-facts, #view section.rck .rck-r > .rck-mgb.rck-xin > .rck-b > .spc-facts { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0 12px 10px; }
+#view section.rck .rck-mgb.rck-xin .spc-f { flex: 0 0 auto; display: inline-flex; align-items: baseline; gap: 5px; padding: 0; background: none; border: 0; border-radius: 0; }
+#view section.rck .rck-mgb.rck-xin .spc-f > b { display: inline; font: 600 15px var(--head); color: var(--text); background: none; -webkit-text-fill-color: currentColor; }
+#view section.rck .rck-mgb.rck-xin .spc-f > span { font-size: 12.5px; color: var(--muted); }
+#view section.rck .rck-mgb.rck-xin .spc-f.warn > b { color: #f3c969; }
+#view section.rck .rck-mgb.rck-xin .spc-f.bad > b { color: #ff8f87; }
+#view section.rck .rck-mgb.rck-xin > .spc-pr, #view section.rck .rck-mgb.rck-xin > .rck-b > .spc-pr, #view section.rck .rck-mgb.rck-xin > p, #view section.rck .rck-mgb.rck-xin > .rck-b > p { margin-left: 12px; margin-right: 12px; }
+/* a big-damage tile's amber cards are presses outside heavy damage: shown under Summary too (the app's 6-then-Show-all trim stays) */
+#view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.warn:not(.spc-wx), #view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.bad:not(.spc-wx) { display: block; }
+#view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-wall { display: inline-block; }
+#view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.ok.spc-wx { display: none; }
 </style>
 
 
