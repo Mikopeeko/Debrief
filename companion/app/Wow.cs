@@ -75,7 +75,7 @@ namespace Debrief {
       var r = FindRetail(here); if (r == null) return;
       var dst = Path.Combine(r, @"Interface\AddOns\Debrief"); if (Directory.Exists(dst)) WriteFlagFile(dst);
     }
-    // (the addon's saved pulls (Oct 22): the last 30 pulls' codes, kept beside the app and written into the addon's Pulls.lua, which
+    // (the addon's saved pulls (Oct 22): the last 60 pulls' codes (30 until Oct 25, when a long night could outrun it), kept beside the app and written into the addon's Pulls.lua, which
     // WoW reads at login or /reload; the addon adds the ones it doesn't have yet)
     static readonly object pullsLock = new object();
     public static void SavePull(string here, string key, string code) {
@@ -90,7 +90,7 @@ namespace Debrief {
         try { foreach (var ln in File.ReadAllLines(file, Encoding.UTF8)) { var i = ln.IndexOf('\t'); if (i > 0) list.Add(new[] { ln.Substring(0, i), ln.Substring(i + 1) }); } } catch { }
         if (key != null) {
           // (a pull saved again, say after an update, keeps its place; a new one goes last)
-          var at = list.FindIndex(x => x[0] == key); if (at >= 0) list[at] = new[] { key, code }; else list.Add(new[] { key, code }); while (list.Count > 30) list.RemoveAt(0);
+          var at = list.FindIndex(x => x[0] == key); if (at >= 0) list[at] = new[] { key, code }; else list.Add(new[] { key, code }); while (list.Count > 60) list.RemoveAt(0);
           try { File.WriteAllLines(file, list.Select(x => x[0] + "\t" + x[1]), new UTF8Encoding(false)); } catch { }
         }
         if (list.Count == 0) return;

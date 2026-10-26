@@ -1871,6 +1871,7 @@ const PATCH_NOTES = [
     { t: 'Debrief in game: a guided setup', d: 'The first time you log in, a short setup helps you pick a style and what your card shows, with a live preview beside it (/debrief setup opens it again). Long cards now split into two columns instead of running off the screen.' },
     { t: 'A Survival tab on Graphs', d: 'Every player\'s defensives, self-heals, Healthstones and potions in one table, and their health over the pull with each one marked on it.' },
   ], n: [
+    'Debrief in game: your latest 60 pulls are kept for the in-game card (was 30), so even a long night arrives in full when you save or log in.',
     'Debrief in game: when a newer pull is on your PC, /recap now offers a Save this pull button, so you never have to type /reload (the chat reminder is off unless you switch it on). The Raid view is open to everyone, and Glow my NSRT cooldowns has been removed from Debrief.',
     'Debriefing reads more plainly: "2 in the circle" instead of "In circle 2", "damage prevented", "from 2 sources", "the wipe was called", yellow instead of amber, and names joined with "and".',
     'Debrief in game: Standard opens with Rotation, Boss mechanics, Survival and Who died closed, each with its count (tap one to open it; a switch in /db keeps them open). The PC pop-up slides in like the website, and a kill gets a gold edge. New pictures on the Debrief Addon page.',

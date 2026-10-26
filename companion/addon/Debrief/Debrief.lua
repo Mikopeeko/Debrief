@@ -1371,7 +1371,7 @@ local function addPull(m, own)
   m.own = own or nil
   m.t = m.t or (time and time()) or 0
   DB.pulls[#DB.pulls + 1] = m
-  while #DB.pulls > (DB.keep or 30) do table.remove(DB.pulls, 1) end
+  while #DB.pulls > (DB.keep or 60) do table.remove(DB.pulls, 1) end -- (60 unless you pick another number (30 until Oct 25))
   DB.cur = #DB.pulls; DB.who = nil; wipe(EXPANDED); scroller:SetVerticalScroll(0)
   return true
 end
@@ -2257,7 +2257,7 @@ local function buildOptions()
     stepper("Damage goal", "Your DPS target, in thousands. The first + starts a little above your latest pull.", 0, 3000, g1, s1, fmtK, true, 10)
     local g2, s2 = goalStep("goalHps", "healer")
     stepper("Healing goal", "Your HPS target, in thousands.", 0, 3000, g2, s2, fmtK, true, 10)
-    stepper("Keep my last", "Older pulls drop off as new ones come in.", 10, 100, function() return DB.keep or 30 end, function(v) DB.keep = v end, function(v) return v .. "" end, true, 5)
+    stepper("Keep my last", "Older pulls drop off as new ones come in.", 10, 100, function() return DB.keep or 60 end, function(v) DB.keep = v end, function(v) return v .. "" end, true, 5)
     local pc = P:CreateFontString(nil, "OVERLAY"); setFont(pc, "body", 12); pc:SetPoint("TOPLEFT", PX, -(y + 4)); pc:SetWidth(OW - PX * 2); pc:SetJustifyH("LEFT"); pc:SetTextColor(rgb(COL.faint))
     refreshers[#refreshers + 1] = function() local R = Debrief_PreviewReal and Debrief_PreviewReal(); local n = #((R and R.pulls) or DB.pulls); pc:SetText(n == 0 and "No pulls saved yet." or (n .. (n == 1 and " pull saved." or " pulls saved."))) end
     y = y + 22
