@@ -7647,11 +7647,10 @@ html body #ppWin.pp-one .pp-nav { display: flex; flex-wrap: wrap; align-items: c
 html body #ppWin.pp-one .pp-nav .pp-navt { margin-right: auto; font-size: 12px; color: var(--muted); }
 html body #ppWin.pp-one .pp-nav button { display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border: 1px solid var(--line2); border-radius: 14px; background: rgba(255,255,255,.03); color: var(--text); font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
 html body #ppWin.pp-one .pp-nav button:hover { border-color: rgba(230,180,80,.6); background: rgba(230,180,80,.06); }
-/* Download all on the heading's line */
-html body #ppWin .pp-win > h2 { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; }
-html body #ppWin .pp-all { display: inline-flex; align-items: center; gap: 10px; margin: 0 0 0 auto; font-size: 12px; }
+/* the Copy all / Download all row under the intro: one tidy row, the message 12 px */
+html body #ppWin .pp-all { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 0 0 12px; }
 html body #ppWin .pp-all .pp-allmsg { font-size: 12px; }
-@media (max-width: 640px) { html body #ppWin .pp-all { margin-left: 0; width: 100%; } html body #ppWin .pp-all .pp-allmsg { display: none; } }
+@media (max-width: 640px) { html body #ppWin .pp-all .pp-allmsg { flex: 1 1 100%; } }
 </style>
 
 
