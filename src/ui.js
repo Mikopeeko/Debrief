@@ -1993,6 +1993,7 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'Plan, a job\'s picture opened big: going to the next picture with ‹ or › now names that picture\'s own job under the heading (it kept naming the job you opened it from).',
     'Boss guides, Ula\'tek: in phase one her tank and the melee now stand on the platform below her (they were drawn past its edge), Mother\'s Wrath knocks the tank back from that edge, the eggs land clear of the melee, and in phase three the Serpent\'s Bite soakers spread out on the broken platform with their waves aimed where nobody stands. The Coiled Altar: anyone a purple circle of Eternal Nightfall lands on steps out of it.',
     'A combat potion drunk before the pull now counts, on a night read from your PC too. Before, a pre-pull Potion of Recklessness was missed on the Report card.',
     'Combat potions: Liquid Luster and Alluring Nostrum (12.1) now count everywhere. Report card, Debriefing and Graphs missed them while Rotation counted them. Potions from a cauldron count the same as your own, a potion in a log from a game in another language counts, and on Rotation a mana potion counts as a potion use (they share the cooldown).',

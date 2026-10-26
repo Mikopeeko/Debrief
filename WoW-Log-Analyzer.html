@@ -17694,6 +17694,7 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'Plan, a job\'s picture opened big: going to the next picture with ‹ or › now names that picture\'s own job under the heading (it kept naming the job you opened it from).',
     'Boss guides, Ula\'tek: in phase one her tank and the melee now stand on the platform below her (they were drawn past its edge), Mother\'s Wrath knocks the tank back from that edge, the eggs land clear of the melee, and in phase three the Serpent\'s Bite soakers spread out on the broken platform with their waves aimed where nobody stands. The Coiled Altar: anyone a purple circle of Eternal Nightfall lands on steps out of it.',
     'A combat potion drunk before the pull now counts, on a night read from your PC too. Before, a pre-pull Potion of Recklessness was missed on the Report card.',
     'Combat potions: Liquid Luster and Alluring Nostrum (12.1) now count everywhere. Report card, Debriefing and Graphs missed them while Rotation counted them. Potions from a cauldron count the same as your own, a potion in a log from a game in another language counts, and on Rotation a mana potion counts as a potion use (they share the cooldown).',
@@ -52731,9 +52732,11 @@ function ppOpen(r, u0, opt) {
     el.querySelector('[data-ppdl]').onclick = () => { const a = document.createElement('a'); a.href = p.url; a.download = file; a.click(); };
     el.querySelector('[data-ppcp]').onclick = () => p.cv.toBlob(async (b) => { const m = el.querySelector('.pp-msg'); try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': b })]); m.textContent = '✓ Copied. Paste it in Discord.'; } catch (e) { m.textContent = 'Your browser didn\'t allow it: use Download.'; } }); };
   // (the heading, the one-picture line and its buttons, and which card is showing)
-  const show = () => { const n = set.cards.length, cd = set.cards[cur], nm = (i) => ppSplit(set.cards[i].title)[0];
+  // (the job a picture belongs to: the Jobs card its small button sits on, for this note)
+  const jobOf = (cd) => { const b = cd && [...document.querySelectorAll('.pj-pic')].find((x) => x.dataset.pj === cd.id && x.dataset.note === opt.note); return b ? b.dataset.job : ''; };
+  const show = () => { const n = set.cards.length, cd = set.cards[cur], nm = (i) => ppSplit(set.cards[i].title)[0], job = opt.from ? jobOf(cd) : '';
     box.querySelector('.pp-h2').textContent = one && cd ? cd.title : boss + ' · ' + diff;
-    box.querySelector('.pp-navt').textContent = 'Picture ' + (cur + 1) + ' of ' + n + ' · ' + boss + ', ' + diff + (opt.from ? ' · from the ' + opt.from + ' job' : '');
+    box.querySelector('.pp-navt').textContent = 'Picture ' + (cur + 1) + ' of ' + n + ' · ' + boss + ', ' + diff + (job ? ' · from the ' + job + ' job' : '');
     const pv = box.querySelector('[data-ppprev]'), nx = box.querySelector('[data-ppnext]'); pv.textContent = cur > 0 ? '‹ ' + nm(cur - 1) : '‹'; pv.disabled = cur <= 0; nx.textContent = cur < n - 1 ? nm(cur + 1) + ' ›' : '›'; nx.disabled = cur >= n - 1;
     box.querySelector('[data-ppallv]').textContent = 'All ' + n + ' pictures'; host.querySelectorAll('.pp-card').forEach((el) => el.classList.toggle('pp-cur', +el.dataset.i === cur)); if (one) fill(cur, gen); };
   // (Copy all is the Design studio's (your call, Oct 26: "I want your version of the copy all"): its handler makes the one big picture from
@@ -52841,7 +52844,7 @@ if (typeof document !== 'undefined') {
     try { ppJobs(); } catch (e) { console.warn('Picture plan:', e); } };
   let ppT = 0; new MutationObserver(() => { if (!ppT) ppT = setTimeout(() => { ppT = 0; ppAdd(); }, 60); }).observe(document.documentElement, { childList: true, subtree: true }); /* (a few times a second at most; a timer, not a frame, so a tab that isn't painting still fills) */
   document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ppnote]'); if (!b) return; e.preventDefault(); const c = ndzDcNote(b.dataset.ppnote); if (c) ppOpen(c.r, c.u0); });
-  document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.pj-pic'); if (!b) return; e.preventDefault(); const c = ndzDcNote(b.dataset.note); if (c) ppOpen(c.r, c.u0, b.dataset.pj === 'marks' ? { marks: true } : { one: b.dataset.pj, from: b.dataset.job }); });
+  document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.pj-pic'); if (!b) return; e.preventDefault(); const c = ndzDcNote(b.dataset.note); if (c) ppOpen(c.r, c.u0, b.dataset.pj === 'marks' ? { marks: true } : { one: b.dataset.pj, from: b.dataset.job, note: b.dataset.note }); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#ppWin')) { $('#ppWin').remove(); if (!$('#ndzWiz') && !$('#ndzGuide') && !$('#ndzNoteView') && !$('#ndzShot')) document.body.classList.remove('ndz-modal'); } });
 }
  // (the build puts src/guides.js here, inside this file's scope)

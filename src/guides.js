@@ -6238,9 +6238,11 @@ function ppOpen(r, u0, opt) {
     el.querySelector('[data-ppdl]').onclick = () => { const a = document.createElement('a'); a.href = p.url; a.download = file; a.click(); };
     el.querySelector('[data-ppcp]').onclick = () => p.cv.toBlob(async (b) => { const m = el.querySelector('.pp-msg'); try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': b })]); m.textContent = '✓ Copied. Paste it in Discord.'; } catch (e) { m.textContent = 'Your browser didn\'t allow it: use Download.'; } }); };
   // (the heading, the one-picture line and its buttons, and which card is showing)
-  const show = () => { const n = set.cards.length, cd = set.cards[cur], nm = (i) => ppSplit(set.cards[i].title)[0];
+  // (the job a picture belongs to: the Jobs card its small button sits on, for this note)
+  const jobOf = (cd) => { const b = cd && [...document.querySelectorAll('.pj-pic')].find((x) => x.dataset.pj === cd.id && x.dataset.note === opt.note); return b ? b.dataset.job : ''; };
+  const show = () => { const n = set.cards.length, cd = set.cards[cur], nm = (i) => ppSplit(set.cards[i].title)[0], job = opt.from ? jobOf(cd) : '';
     box.querySelector('.pp-h2').textContent = one && cd ? cd.title : boss + ' · ' + diff;
-    box.querySelector('.pp-navt').textContent = 'Picture ' + (cur + 1) + ' of ' + n + ' · ' + boss + ', ' + diff + (opt.from ? ' · from the ' + opt.from + ' job' : '');
+    box.querySelector('.pp-navt').textContent = 'Picture ' + (cur + 1) + ' of ' + n + ' · ' + boss + ', ' + diff + (job ? ' · from the ' + job + ' job' : '');
     const pv = box.querySelector('[data-ppprev]'), nx = box.querySelector('[data-ppnext]'); pv.textContent = cur > 0 ? '‹ ' + nm(cur - 1) : '‹'; pv.disabled = cur <= 0; nx.textContent = cur < n - 1 ? nm(cur + 1) + ' ›' : '›'; nx.disabled = cur >= n - 1;
     box.querySelector('[data-ppallv]').textContent = 'All ' + n + ' pictures'; host.querySelectorAll('.pp-card').forEach((el) => el.classList.toggle('pp-cur', +el.dataset.i === cur)); if (one) fill(cur, gen); };
   // (Copy all is the Design studio's (your call, Oct 26: "I want your version of the copy all"): its handler makes the one big picture from
@@ -6348,6 +6350,6 @@ if (typeof document !== 'undefined') {
     try { ppJobs(); } catch (e) { console.warn('Picture plan:', e); } };
   let ppT = 0; new MutationObserver(() => { if (!ppT) ppT = setTimeout(() => { ppT = 0; ppAdd(); }, 60); }).observe(document.documentElement, { childList: true, subtree: true }); /* (a few times a second at most; a timer, not a frame, so a tab that isn't painting still fills) */
   document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ppnote]'); if (!b) return; e.preventDefault(); const c = ndzDcNote(b.dataset.ppnote); if (c) ppOpen(c.r, c.u0); });
-  document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.pj-pic'); if (!b) return; e.preventDefault(); const c = ndzDcNote(b.dataset.note); if (c) ppOpen(c.r, c.u0, b.dataset.pj === 'marks' ? { marks: true } : { one: b.dataset.pj, from: b.dataset.job }); });
+  document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.pj-pic'); if (!b) return; e.preventDefault(); const c = ndzDcNote(b.dataset.note); if (c) ppOpen(c.r, c.u0, b.dataset.pj === 'marks' ? { marks: true } : { one: b.dataset.pj, from: b.dataset.job, note: b.dataset.note }); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#ppWin')) { $('#ppWin').remove(); if (!$('#ndzWiz') && !$('#ndzGuide') && !$('#ndzNoteView') && !$('#ndzShot')) document.body.classList.remove('ndz-modal'); } });
 }
