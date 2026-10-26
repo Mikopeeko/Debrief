@@ -6886,8 +6886,15 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
   /* the Who plays title, its buttons and the hint run across the whole top; the roster and Bosses start level under them (Oct 26) */
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-sec.tn-team > .tn-sh { grid-column: 1 / -1; grid-row: 3; margin-top: 0; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-sec.tn-team > .tn-hint { grid-column: 1 / -1; grid-row: 4; }
-  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-cols > .tn-gcol { grid-column: 1; grid-row: 5; min-width: 0; }
-  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn > .tn-sec:not(.tn-team) { grid-column: 2; grid-row: 5; min-width: 0; margin-top: 0; }
+  /* Edit team's add row sits under the title and hint, across both columns, not above the title (Oct 26, from the Plan chat's test) */
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-sec.tn-team > .tn-add, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-cols > .tn-add { grid-column: 1 / -1; grid-row: 5; margin: 0 0 10px; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-cols > .tn-gcol { grid-column: 1; grid-row: 6; min-width: 0; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn > .tn-sec:not(.tn-team) { grid-column: 2; grid-row: 6; min-width: 0; margin-top: 0; }
+  /* a raider's spec icon in Edit team is a button (tap: next spec): a pointer and a ring so it is found */
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-spc { cursor: pointer; border-radius: 4px; transition: box-shadow .12s, transform .12s; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-spc:hover, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-spc:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--gold); transform: scale(1.12); }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-specs button { display: inline-flex; align-items: center; gap: 5px; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-specs button .icw, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-specs button img { width: 16px; height: 16px; border-radius: 4px; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-cols > .tn-pcol:empty { display: none; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-sec.tn-team > .tn-fold { grid-column: 1 / -1; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn > .tn-sec:not(.tn-team) > .tn-sh { margin-top: 0; }

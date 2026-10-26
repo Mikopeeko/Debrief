@@ -1841,6 +1841,7 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'Tab clicks are lighter: the page\'s look passes ran about 65 times per click, once for every icon that loaded; they run once per frame now.',
     'Saved pulls stay saved through site updates; only a change to the checks themselves reads them again. Rotation\'s What to fix cards always show after visiting Debriefing first.',
     'Switching tabs is much quicker: Rotation and Debriefing no longer work everything out again on each click (Rotation about twice as fast, Debriefing about two and a half times).',
     'Plan on a phone: the Who plays table scrolls sideways under a fixed name column instead of squeezing the boss pictures to slivers.',
@@ -30317,14 +30318,6 @@ function dsFrontDemo() { const win = document.querySelector('#main .home.fp .fpx
   setInterval(() => { if (!document.hidden && onScreen && document.body.contains(host)) play(); }, 10500); }
 (function () { const f9 = dsBars; dsBars = function (root) { f9(root); try { dsFrontDemo(); } catch (e) {} }; })();
 
-// ===== Design studio round 16 (Oct 25): the passes run before paint. A watcher that runs every studio pass in the same tick as a render (a
-// MutationObserver fires before the browser paints), so a page never shows its un-styled layout first. Owner: the Design studio chat. =====
-(function () { let busy = false, mo = null;
-  const run = (recs) => { if (busy) return; if (!recs.some((r) => r.addedNodes && r.addedNodes.length)) return; busy = true;
-    try { dsBars(); } catch (e) {} finally { if (mo) mo.takeRecords(); busy = false; } };
-  const start = () => { if (!document.body) return false; mo = new MutationObserver(run); mo.observe(document.body, { childList: true, subtree: true }); return true; };
-  if (!start()) document.addEventListener('DOMContentLoaded', start, { once: true }); })();
-
 // ===== Design studio round 11 (Oct 25): Plan, Tonight polished. Reads "N of M ready" on Tonight's Bosses header into --p for its ready bar.
 // Runs after dsBars on every redraw. Owner: the Design studio chat. =====
 function dsPlan() { const v = document.querySelector('#view.plan-page'); if (!v) return;
@@ -30345,32 +30338,25 @@ function dsMotion() { const H = document.documentElement; if (!window.matchMedia
   /* motion plays once per page, on its first draw: Debriefing redraws the whole page about once a second while it reads a pull, each
      redraw inside a ~1 s freeze, so every later redraw of the same page within 30 s is drawn still (so is a redraw with the same
      numbers within 3 s) */
-  /* the loading screen is not the page: its draw must not use up the page's one play */
-  if (!document.querySelector('#view [style*="--p"], #main [style*="--p"], #view .dbr-v, #view .rqc-sc, #main .my-bc')) return;
-  const M = dsMotion, now = Date.now(), page = location.pathname + location.search, key = page + '|' + [...document.querySelectorAll('#view .dbr-v > b:first-child, #main .my-bc .my-tag, #view .rqc-sc')].map((e) => e.textContent.trim()).join(',').slice(0, 400);
-  /* Debriefing draws behind a placeholder (html.dbr-holding, the Debriefing chat's one-draw hold) until its numbers are in: those
-     draws neither play nor count; the play happens when the class comes off (the watcher below calls back in), and a later full
-     redraw of a held page (the previous pull's comparison arriving late) stays still */
-  if (H.classList.contains('dbr-holding')) { M.heldPage = page; return; }
+  /* behind the Debriefing hold nothing plays and nothing is counted: out at once, before any lookup (this runs on every draw) */
+  if (H.classList.contains('dbr-holding')) { M.heldPage = location.pathname + location.search; return; }
+  const M = dsMotion, now = Date.now(), page = location.pathname + location.search; M.seen = M.seen || new WeakSet();
   /* a play the raider never saw does not count: when the page is drawn again and everything that played is gone (a second-stage
      draw replacing the first), it plays again on the new pieces; not on a held page, whose first draw is the one they see */
   const gone = M.heldPage !== page && (!M.played || !M.played.length || M.played.every((el) => !document.contains(el)));
-  const replay = !gone && ((M.key === key && now - (M.at || 0) < 3000) || (M.page === page && now - (M.pageAt || 0) < 30000));
-  /* a small redraw right after the play (a progress line, a count) must not cut the play short: within 1.5 s of it nothing is
-     marked still, it just isn't played again */
-  M.seen = M.seen || new WeakSet();
-  /* only a redraw that brings new numbers or bars can replay anything; a redraw that adds a line somewhere else cannot, so it is
-     never marked still (that mark used to stick when small redraws kept coming) */
-  const pieces = [...document.querySelectorAll('#view .dbr-v > b:first-child, #view .cb-v, #view .dbt-n, #view .cgl-c, #view .rqc-sc, #main .yu-t > b, #main .pnw-ti > b, #main .pgc > b, #main .my-bc .my-tag, #view [style*="--p"], #main [style*="--p"], .rtb-b > i, .cgl-b > i, .cb-f > i, .prw-t > i, .rta-ph, .ds-bar, .rcb-g .ds-bar, .tm-bar i.on, .rcb-st .rcb-bar > i, .ds-rl .rqc-bar > i')];
-  /* the boss header redraws on its own while a pull loads (and keeps redrawing after): its line and dots play once per page */
-  const hd = document.querySelector('header.fight.bh'); if (hd) { if (M.hdrPage === page && now - (M.hdrAt || 0) < 15000) hd.classList.add('ds-hstill'); else if (!replay) { M.hdrPage = page; M.hdrAt = now; hd.classList.remove('ds-hstill'); } }
-  /* on a redraw of a page that already played, every new piece is drawn still (ds-done) and the pieces still playing are left alone */
-  if (replay) { pieces.forEach((el) => { if (!M.seen.has(el)) { M.seen.add(el); el.classList.add('ds-done'); } }); M.at = now; return; }
-  H.classList.remove('ds-still'); M.key = key; M.page = page; M.pageAt = now; M.played = [];
+  /* a page that already played: the cheapest path out (this runs on every draw, dozens of times a minute on Debriefing). The boss
+     header keeps its one play per page; a piece added now simply starts its own small entrance, which is right for a number that
+     just changed */
+  if (!gone && M.page === page && now - (M.pageAt || 0) < 30000) { const hd = document.querySelector('header.fight.bh'); if (hd && M.hdrPage === page && now - (M.hdrAt || 0) < 15000) hd.classList.add('ds-hstill'); M.at = now; return; }
+  /* the loading screen is not the page: its draw must not use up the page's one play */
+  if (!document.querySelector('#view [style*="--p"], #main [style*="--p"], #view .dbr-v, #view .rqc-sc, #main .my-bc')) return;
+  const hd = document.querySelector('header.fight.bh'); if (hd) { M.hdrPage = page; M.hdrAt = now; hd.classList.remove('ds-hstill'); }
+  H.classList.remove('ds-still'); M.page = page; M.pageAt = now; M.played = [];
   M.at = now;
   /* bars drawn from --p (set by the studio's own passes a moment ago, in this same tick, so nothing has been painted yet): from 0 to their value */
-  document.querySelectorAll('#view [style*="--p"], #main [style*="--p"]').forEach((el) => { if (M.seen.has(el)) return; M.seen.add(el); const p = el.style.getPropertyValue('--p'); if (!p || parseFloat(p) <= 0) return;
-    el.style.setProperty('--p', '0'); void el.offsetWidth; el.classList.add('ds-ptrans'); el.style.setProperty('--p', p); M.played.push(el); });
+  /* all the bars go to 0 first, one layout read, then all get their value (one reflow, not one per bar) */
+  const bars = []; document.querySelectorAll('#view [style*="--p"], #main [style*="--p"]').forEach((el) => { if (M.seen.has(el)) return; M.seen.add(el); const p = el.style.getPropertyValue('--p'); if (!p || parseFloat(p) <= 0) return; bars.push([el, p]); el.style.setProperty('--p', '0'); });
+  if (bars.length) { void document.body.offsetWidth; bars.forEach(([el, p]) => { el.classList.add('ds-ptrans'); el.style.setProperty('--p', p); M.played.push(el); }); }
   document.querySelectorAll('#view .dbr-v > b:first-child, #view .cb-v, #view .dbt-n, #view .cgl-c, #view .rqc-sc, #main .yu-t > b, #main .pnw-ti > b, #main .pgc > b').forEach((el) => {
     if (M.seen.has(el)) return; M.seen.add(el); const tn = [...el.childNodes].find((n) => n.nodeType === 3 && n.nodeValue.trim()); if (!tn) return;
     const raw = tn.nodeValue, m = raw.trim().match(/^(\d[\d,]*)(\.\d+)?([%kKmM]?)$/); if (!m) return;
@@ -30383,6 +30369,21 @@ function dsMotion() { const H = document.documentElement; if (!window.matchMedia
   /* the hold coming off is the moment Debriefing is first seen: play then */
   const H = document.documentElement; let held = H.classList.contains('dbr-holding');
   new MutationObserver(() => { const now = H.classList.contains('dbr-holding'); if (held && !now) { try { dsMotion(); } catch (e) {} } held = now; }).observe(H, { attributes: true, attributeFilter: ['class'] }); })();
+
+// ===== Design studio round 16 (Oct 25): the passes run before paint. A watcher that runs every studio pass in the same tick as a render (a
+// MutationObserver fires before the browser paints), so a page never shows its un-styled layout first. Owner: the Design studio chat. =====
+(function () { let busy = false, mo = null, framed = false, dirty = false;
+  /* an added node that matters: an element that is not an icon swap (the icon loader puts an <img> inside every .icw and .av as
+     pictures arrive, dozens of times after a draw) */
+  const matters = (recs) => recs.some((r) => r.addedNodes && [...r.addedNodes].some((n) => n.nodeType === 1 && !(n.tagName === 'IMG' || n.tagName === 'SVG' || (n.closest && n.closest('.icw, .av')))));
+  const go = () => { busy = true; try { dsBars(); } catch (e) {} finally { if (mo) mo.takeRecords(); busy = false; } };
+  /* the first batch of a frame runs at once (before paint); later batches in the same frame fold into one run at the next frame */
+  const run = (recs) => { if (busy || !matters(recs)) return; if (framed) { dirty = true; return; } framed = true; go();
+    /* after the first run, later changes fold into one run every 200 ms at most (a page that keeps patching itself is not redrawn
+       by the eye any faster than that) */
+    setTimeout(() => { framed = false; if (dirty) { dirty = false; run([{ addedNodes: [document.body] }]); } }, 200); };
+  const start = () => { if (!document.body) return false; mo = new MutationObserver(run); mo.observe(document.body, { childList: true, subtree: true }); return true; };
+  if (!start()) document.addEventListener('DOMContentLoaded', start, { once: true }); })();
 
 // ===== Design studio round 17 (Oct 25): Rotation open tiles as slim rows. Re-homes the pieces inside an open tile's .rck-b: bar row, Next time, links.
 // Runs with the other passes, before paint. Owner: the Design studio chat. =====
@@ -30488,3 +30489,8 @@ function dsRotFlat() { document.querySelectorAll('#view section.rck details.rck-
   /* the one How it's judged opens at the bottom of the tile, under the sub-check rows, so opening it pushes nothing around */
   t.appendChild(mainHwp); }); }
 (function () { const f16 = dsBars; dsBars = function (root) { f16(root); try { dsRotFlat(); } catch (e) {} }; })();
+
+// ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
+// then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
+(function () { const f17 = dsBars; let last = 0, tm = 0, pendingRoot;
+  dsBars = function (root) { const now = performance.now(); if (now - last < 150) { pendingRoot = root; clearTimeout(tm); tm = setTimeout(() => { last = performance.now(); try { f17(pendingRoot); } catch (e) {} }, Math.max(16, 150 - (now - last))); return; } last = now; clearTimeout(tm); f17(root); }; })();
