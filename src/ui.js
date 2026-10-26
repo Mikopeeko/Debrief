@@ -1951,6 +1951,7 @@ const PATCH_NOTES = [
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'Rotation: the Healing a second (or Damage a second) box leaves the top, since those numbers now live in the gear column, and the ✓ Done right chips sit under your talents, so the two top boxes end level.',
     'Rotation for healers: a Healing box in Gear and extras, like the damage dealers\' Boss and adds: your healing a second with your total and share of the raid\'s healing, and how much of what you cast overhealed.',
     'Rotation: Where your healing (or damage) came from sits full width above the two columns, and the pull-at-a-glance timeline drops its hint row and lists the red "ready for a whole extra use" first in its legend.',
     'Rotation: Other gear and Extras sit at the bottom of the gear column again instead of in a second panel under the checklist.',
@@ -30937,6 +30938,12 @@ function dsRotDedupe() { const NUMS = (s) => { const o = new Set(); (String(s ||
 function dsRotSrc() { const v = document.querySelector('#view .pf-inl.spc-v'); if (!v) return; const cols = v.querySelector(':scope > .ds-rcols'); if (!cols) return;
   const src = v.querySelector('.ds-rcols .rck-gx .rgx-src'); if (!src || src.dataset.dsUp) return; src.dataset.dsUp = '1'; src.classList.add('ds-srcwide'); cols.before(src); }
 (function () { const f24 = dsBars; dsBars = function (root) { f24(root); try { dsRotSrc(); } catch (e) {} }; })();
+
+// ===== Design studio round 45 (Oct 26): the hero without the HPS/DPS box, the chips in its space. Owner: the Design studio chat. =====
+function dsRotHero() { const v = document.querySelector('#view .pf-inl.spc-v'); if (!v) return; const hero = v.querySelector('.spc-hero'); if (!hero) return;
+  hero.querySelectorAll('.spc-kt:not([data-ds-ht])').forEach((k) => { k.dataset.dsHt = '1'; const l = ((k.querySelector('.spc-ktl') || {}).textContent || '').trim(); if (/^(Healing|Damage) a second/.test(l)) k.classList.add('ds-hide'); });
+  const good = v.querySelector('.rck-fix .rck-good'); if (good && !good.dataset.dsUp) { good.dataset.dsUp = '1'; const box = document.createElement('div'); box.className = 'ds-done'; const lab = document.createElement('span'); lab.className = 'ds-lab'; lab.textContent = 'Done right'; box.appendChild(lab); box.appendChild(good); hero.appendChild(box); } }
+(function () { const f25 = dsBars; dsBars = function (root) { f25(root); try { dsRotHero(); } catch (e) {} }; })();
 
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
