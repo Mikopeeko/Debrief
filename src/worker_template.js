@@ -426,7 +426,7 @@ async function runBugs(env) {
     await dc(env, '/channels/' + tid, { method: 'PATCH', body: { archived: false, applied_tags: [...keep].slice(0, 5) } }).catch(() => {});
     // (the user's rule, Oct 20: the reporter is tagged on their own #bug-reports post, the owner in the #bug-review post,
     // and both posts are closed 4 hours later)
-    const first = await dc(env, '/channels/' + tid + '/messages/' + tid).catch(() => null), uid = first && first.author ? (first.author.bot ? (((/Reported by \*\*.+?\*\* \(<@(\d{17,20})>\)/.exec(first.content || '') || [])[1]) || null) : first.author.id) : null; if (uid === OWNER) uid = null;
+    const first = await dc(env, '/channels/' + tid + '/messages/' + tid).catch(() => null), uid = ((id) => (id === OWNER ? null : id))(first && first.author ? (first.author.bot ? (((/Reported by \*\*.+?\*\* \(<@(\d{17,20})>\)/.exec(first.content || '') || [])[1]) || null) : first.author.id) : null);
     await dc(env, '/channels/' + tid + '/messages', { method: 'POST', body: { content: (uid ? '<@' + uid + '> ' : '') + (idea ? (nope ? 'Thanks for the idea! We\'re not going to build this one right now, but we read every one.' : 'We built it! 🎉 It\'s in the latest update. Thanks for the idea. See what changed: <' + SITE + '/?patchnotes>') : nope ? 'We couldn\'t make this happen on our side, so we\'re closing it for now. If it happens again, reply here with the pull link and we\'ll look again.'
       : 'Fixed! It\'s in the latest update. Thanks for reporting it. See what changed: <' + SITE + '/?patchnotes>'), allowed_mentions: { parse: [], users: uid ? [uid] : [] } } }).catch(() => {});
     if (!idea) st.fixed = [...(st.fixed || []), [tid, Date.now(), nope ? 0 : 1]].slice(-50);
