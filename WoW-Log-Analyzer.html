@@ -23867,6 +23867,7 @@ function planJobCardsH(pb, n) { let B; try { B = ndzBjB(pb, n); } catch (e) { re
   const pages = B.pages || [], stT = pages.map((pg) => [pg.title, ndzPgIconId(pg) ? spellIcon(ndzPgIconId(pg), pg.icon) : spIc(pg.icon)]).concat([['Raid cooldowns', spellIcon(98008, 'Spirit Link Totem')], ['Defensives', spellIcon(6262, 'Healthstone')]]);
   let h = ''; try { B.noCdsCard = true; B.noDefCard = true; h = plbRevCards(B, pages, stT); } /* (no Raid cooldowns card on the boss page, Oct 26) */ catch (e) { return ndzBjH(pb, n); }
   h = h.split('data-bgo="').join('data-ndzbuild="1" data-noteboss="' + esc(pb) + '" data-noteid="' + esc(n.id) + '" data-plbgo="');
+  h = h.replace(/<\/div>$/, () => planMarksCardH(pb, B.diff || 'Mythic', n.id, (h.match(/class="plb-rc[ "]/g) || []).length + 1) + '</div>'); /* (the raid markers card, Oct 26) */
   return '<div class="panel ndz-dpan bj-jobs plj plb-one"><div class="ndz-dph"><b>Jobs</b><span class="sub">✎ Edit opens that part of the plan</span></div>' + h + '</div>'; }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-plbgo]'); if (!b || S.page !== 'plan') return; S.plbGoTo = +b.dataset.plbgo; }, true); /* (before the Edit opens: which section to land on) */
 
@@ -23905,6 +23906,17 @@ function tnPopBody(p, back) { const role = (sid) => ({ tank: 'tank', healer: 'he
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.tn-sppop [data-tnpopcls]'); if (!b) { if (e.target.closest && e.target.closest('.tn-sppop [data-ntout]')) setTimeout(() => { tnSpecPopX(); S.tnSpecFor = null; }, 0); return; } e.preventDefault(); e.stopPropagation();
   const d = b.closest('.tn-sppop'), p = Object.assign({}, S.tnPopP || {}, { cls: b.dataset.tnpopcls || null }); d.innerHTML = tnPopBody(p, !!p.cls); d.setAttribute('aria-label', p.n + (p.cls ? ': which spec?' : ': which class?'));
   const r = d.getBoundingClientRect(), vh = document.documentElement.clientHeight; if (r.bottom > vh - 8) d.style.top = Math.max(8, vh - 8 - r.height) + 'px'; const f = d.querySelector('[data-tnspecto], [data-tnpopcls]'); if (f) f.focus({ preventScroll: true }); }, true);
+
+// (the Raid markers card (Oct 26): where each mechanic happens and whose spots they are, from the picture plan's settings; ✎ Edit opens the
+// Pictures window on its Markers map, where the raid lead drags them; only for bosses that have picture plans)
+function planMarksCardH(boss, diff, noteId, num) { if (typeof ppConf !== 'function' || typeof GDZ_WM === 'undefined') return ''; let c = null; try { c = ppConf(boss, diff); } catch (e) { c = null; } if (!c) return '';
+  const mk = (m) => (m && GDZ_WM[m] ? '<span class="plb-mk" style="--mk:' + GDZ_WM[m][0] + '"><i aria-hidden="true"></i>' + esc(GDZ_WM[m][1]) + '</span>' : '<span class="sub">the spot shown</span>');
+  const row = (l, b) => '<div class="plb-rr"><span class="plb-rl">' + l + '</span><span class="plb-rn">' + b + '</span></div>';
+  const rows = c.C.uses.map(([id, name]) => row(esc(name), mk(c.uses[id]))).join('') + row('Spots', '<span class="sub">' + (c.base === 'raid' ? 'your raid\'s own, from its pulls' : 'the guide\'s') + (c.saved ? ', with your changes' : '') + '</span>');
+  return '<div class="plb-rc plb-marks"><div class="plb-rch">' + emoIc('📍') + '<b>' + num + ' · Raid markers</b><span class="plb-rcs ok">' + (c.saved ? '✓ Yours' : '✓ Set') + '</span><button class="btn sm plb-rcx" type="button" data-ppmarks="' + esc(boss + '|' + noteId) + '" data-tt="' + esc('<b>Edit the raid markers</b><br>Drag a marker to where your raid puts it, change a mark, and pick where each mechanic happens. Every picture follows.') + '">✎ Edit</button></div><div class="plb-rrs">' + rows + '</div></div>'; }
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ppmarks]'); if (!b || S.page !== 'plan') return; e.preventDefault(); e.stopPropagation(); if (typeof ndzDcNote !== 'function' || typeof ppOpen !== 'function') return;
+  let x = null; try { x = ndzDcNote(b.dataset.ppmarks); } catch (er) { x = null; } if (!x) { toast('Open the plan first, then edit its markers.', 3000); return; } ppOpen(x.r, x.u0);
+  setTimeout(() => { const d = document.querySelector('#ppWin .pp-mkbox'); if (d) { d.open = true; d.scrollIntoView({ block: 'start' }); } }, 60); }, true); /* (straight to the Markers map) */
 // ---- Raid nights (Oct 26, the user: "Build B, the two-week strip, and bake the fixes into the raider and boss rows"). Each night
 // (a date) keeps its own setup: team, difficulty, who's out, who sits each boss, the bosses it does. The night on screen lives in
 // NIGHT_K as before, so every Who plays control works unchanged; the other nights wait in wla-nights. Boss plans stay saved by who's
