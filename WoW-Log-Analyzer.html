@@ -17653,7 +17653,7 @@ const PATCH_NOTES = [
     { t: 'Plan: your raid night in one page', d: 'The Plan tab is out for everyone: bring in your team, and Debrief picks who plays each boss and plans every job, kick and healing cooldown the way the fastest kills do. Change anything, then copy it into the game for NSRT.' },
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
-    { t: 'Plan: a picture for every job', d: 'On The Coiled Altar (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
+    { t: 'Plan: a picture for every job', d: 'On The Coiled Altar and Ula\'tek (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
   ], n: [
     'Debrief in game: your card and PC pop-up use the newest boss mechanics, potion and death rules from the website.',
     'On a phone: the dots on the pull at a glance are easier to tap, and the front page\'s footer links have room for a thumb.',
@@ -51811,7 +51811,7 @@ const ppAny = (label) => ({ name: label, color: '#c9ced8', specIcon: 'inv_misc_q
 // (who each name is: class colour, spec icon and role, from the pull, else from Plan's saved specs)
 function ppWho(r, names) { const sp = ndzSpecs(), here = new Map((r ? ndzIn(r) : []).map((p) => [ndzPn(p).toLowerCase(), p])), P = new Map();
   for (const n of names) { const p = here.get(n.toLowerCase()), s = sp[n.toLowerCase()] || {}, cls = p ? p.cls : s.cls, sid = +(p ? p.specId : s.sid) || 0, role = p ? p.role : s.role;
-    P.set(n.toLowerCase(), { name: n, color: [p && p.color, s.color, (E.CLASSES[cls] || [])[1]].find((c) => c && c !== 'inherit') || '#ddd', specIcon: NDZ_SPECIC[sid] || (cls ? 'classicon_' + String(cls).toLowerCase() : 'inv_misc_questionmark'),
+    P.set(n.toLowerCase(), { name: n, cls, color: [p && p.color, s.color, (E.CLASSES[cls] || [])[1]].find((c) => c && c !== 'inherit') || '#ddd', specIcon: NDZ_SPECIC[sid] || (cls ? 'classicon_' + String(cls).toLowerCase() : 'inv_misc_questionmark'),
       role: role === 'tank' ? 'tank' : role === 'healer' ? 'healer' : sid && NDZ_MELEE.has(sid) ? 'melee' : 'ranged' }); }
   return P; }
 // (who stands in which of the guide's spots: the jobs first, then everyone else by role, so a healer takes a healer's spot)
@@ -51820,11 +51820,13 @@ function ppSeat(P, fix) { const S = { ...fix }, used = new Set(Object.values(fix
   for (const s of free) if (!(s in S) && left.length) S[s] = left.shift();
   return S; }
 // (one picture's map: a guide map frozen at T, the note's names on its spots, only the job players named, the raid lead's markers)
+// (the middle of a map's room in its own frame: The Coiled Altar has a room box; other bosses use their origin, Ula'tek's at y 1554)
+const ppMid = (mp) => (mp.room ? [(mp.room.x0 + mp.room.x1) / 2, (mp.room.y0 + mp.room.y1) / 2] : ((A) => [A.cx, A.cy])(GDZ_ORIGIN[mp.boss] || ARENAS[mp.boss] || { cx: 0, cy: 0 }));
 function ppFreeze(mp, T, S, P, M, o) {
   o = o || {}; const f = mp.frames.reduce((a, b) => (Math.abs(b.t - T) < Math.abs(a.t - T) ? b : a)), nm = (v) => (typeof v === 'string' ? v : v && v.name);
   const pts = f.pts.map((p) => (p.kind === 'player' && S[p.guid] ? { ...p, name: nm(S[p.guid]) } : p));
   const pm = new Map(); for (const v of Object.values(S)) { const x = typeof v === 'string' ? P.get(v.toLowerCase()) : v; if (x) pm.set(x.name, x); }
-  const cx = mp.room ? (mp.room.x0 + mp.room.x1) / 2 : 0, cy = mp.room ? (mp.room.y0 + mp.room.y1) / 2 : 0;
+  const [cx, cy] = ppMid(mp);
   const at = (ids, low) => { const q = pts.filter((p) => ids.includes(p.guid)); return q.length ? { x: q.reduce((a, p) => a + p.x, 0) / q.length, y: (low ? Math.min : Math.max)(...q.map((p) => p.y)) } : null; };
   // (a label sits over its group, or under it (below) when the group is by the top wall; or on a spot in yards from the room's middle)
   const calls = (o.labels || []).map(([ids, text, color, ink, dy, below]) => { const c = Array.isArray(ids) ? at(ids, below) : ids.rx != null ? { x: cx + ids.rx, y: cy + ids.ry } : ids;
@@ -51834,6 +51836,7 @@ function ppFreeze(mp, T, S, P, M, o) {
   const wm = PP_MKS.filter((k) => M[k] && (!o.marks || o.marks.includes(k))).map((k) => ({ k, x: cx + M[k][0], y: cy + M[k][1] + (M[k][1] >= 0 ? 4 : -4) }));
   const out = { ...mp, frames: null, pts, t: T, ft: T, pauses: [], steps: [], callouts: calls, tags: (o.tags || []).map(([g, tx]) => [g, tx, null, null]), hl: Object.keys(S).filter((g) => (o.hl || []).includes(g)),
     good: [], goodAt: null, bad: [], badAt: null, cbars: cb, wmarks: wm, liveLeg: false, hlLabel: 'assigned in the note', playerLabel: 'Player (spec icon, class colour)' };
+  if (o.focus) out.focus = out.fullAt = { x: cx + o.focus.x, y: cy + o.focus.y, r: o.focus.r }; /* (a guide map shown whole: the user wants the whole arena in each picture) */
   return { out, pm, keep: (o.named || []).map((g) => nm(S[g])).filter(Boolean) };
 }
 const ppG = (title, color, items, sub) => ({ title, color, items: items.filter(Boolean), sub });
@@ -51970,6 +51973,119 @@ function ppCardsCA(J, M, U, P) {
       foot: 'These axes are magic: big externals on the target. Soakers walk 40 yards out after it lands.' }); });
   return cards;
 }
+// ===== Ula'tek, Mythic (Oct 26, the user: "Exact same setup" as The Coiled Altar; Plan's Jobs cards in 2caefe9) =====
+// (the note's jobs, in the lines Plan writes: "Egg Carriers:", "Egg Shields:", "Team 1:" / "Team 2:" (Spectral Coils), the intstart kick lines
+// (left ledge, then right), the transitionStart groups (intermission soaks 1 to 3), "Bite Melee:" / "Bite Ranged:" / "Bite Healers:",
+// "Incubation Beam:", "Clutch Grips:", "Freedom:")
+function ppReadUL(N, P) {
+  const isN = (w) => P.has(String(w).toLowerCase()), J = { eggs: [], shields: [], teams: [[], []], kicks: [], trans: [], bite: { melee: [], ranged: [], healers: [] }, beam: '', grips: [], freedom: [] };
+  let blk = '';
+  for (const l of N.lines) {
+    const lab = l.label.toLowerCase(), who = l.words.filter(isN).map((w) => P.get(w.toLowerCase()).name), w0 = (l.words[0] || '').toLowerCase(); let m;
+    if (w0 === 'intstart' || w0 === 'transitionstart') { blk = w0; continue; } if (w0 === 'intend' || w0 === 'transitionend') { blk = ''; continue; }
+    if (blk) { if (who.length) (blk === 'intstart' ? J.kicks : J.trans).push(who); continue; }
+    if (!who.length) continue;
+    if (/egg carriers?/.test(lab)) J.eggs = who; else if (/egg shields?/.test(lab)) J.shields = who;
+    else if ((m = /^team\s*(\d)/.exec(lab))) J.teams[+m[1] - 1 ? 1 : 0] = who;
+    else if ((m = /bite\s*(melee|ranged|healers?)/.exec(lab))) J.bite[m[1].startsWith('heal') ? 'healers' : m[1]] = who;
+    else if (/incubation|beam/.test(lab)) J.beam = who[0]; else if (/grip/.test(lab)) J.grips = who; else if (/freedom/.test(lab)) J.freedom = who;
+  }
+  return J;
+}
+// (a free spot of the guide's 20 for a name, by role, so a healer stands as a healer; put: the spots taken)
+function ppSlot(P, n, put) { const r = (P.get(String(n).toLowerCase()) || {}).role, pre = { tank: 't', healer: 'h', melee: 'm', ranged: 'r' }[r] || 'r';
+  const s = GDZ_RAID.find((x) => x[0] === pre && !put.has(x)) || GDZ_RAID.find((x) => !put.has(x)); if (s) put.add(s); return s; }
+// (a group of names in a clump round a spot: their guide spots, in order)
+function ppClump(k, P, fix, put, names, c, sp) { const ids = names.map((n) => { const s = ppSlot(P, n, put); if (s) fix[s] = n; return s; }).filter(Boolean);
+  ids.forEach((s, i) => { const q = gdzSpot(i, ids.length, sp || 5); k.at(0, s, c[0] + q[0], c[1] + q[1]); }); return ids; }
+// (the eight egg zones, as the raid sees them facing her: Mages take the far ones, melee the two by her, then the rest in the note's order)
+const UL_ZN = { r3: 'Far left', m1: 'Left, by her', r5: 'Left, inside', r1: 'Back left', r2: 'Back right', r6: 'Right, inside', m2: 'Right, by her', r4: 'Far right' };
+function ulZones(names, P) { const fix = {}, left = names.slice(0, 8), who = (n) => P.get(n.toLowerCase()) || {}, take = (s, n) => { fix[s] = n; left.splice(left.indexOf(n), 1); };
+  for (const s of ['r3', 'r4']) { const n = left.find((x) => /mage/i.test(who(x).cls || '')); if (n) take(s, n); }
+  for (const s of ['m1', 'm2']) { const n = left.find((x) => who(x).role === 'melee'); if (n) take(s, n); }
+  for (const s of ['r5', 'r6', 'r1', 'r2', 'm1', 'm2', 'r3', 'r4']) if (!fix[s] && left.length) take(s, left[0]);
+  return fix; }
+const UL_WHOLE = { x: 0, y: 0, r: 47 }, UL_WHOLE3 = { x: 0, y: 2, r: 47 };
+function ppCardsUL(J, M, U, P) {
+  const cards = [], spot = (u, def) => (U[u] && M[U[u]]) || def, MKN = (k) => (GDZ_WM[k] || [0, ''])[1].replace(' (X)', ''), R = '#f24824', GO = '#e6b450', TE = '#24f2cb', BL = '#5aa0ff', GR = '#2fd15a', Q = '#c9ced8';
+  const rest = (k, put, c, sp) => { const left = GDZ_RAID.filter((s) => !put.has(s)); if (left.length) k.at(0, left, c[0], c[1], sp || 6); left.forEach((s) => put.add(s)); };
+  const cdsOf = (L, pre) => (L || []).map(([t, n, sp]) => ppI(P, n, (pre || '') + t + ' ' + sp));
+  // Call of the Serpent: each carrier on the egg in their zone (the guide's map just after the pickup), the two shield breakers named
+  if (J.eggs.length) { const fix = ulZones(J.eggs, P), SH = ['h3', 'h4']; J.shields.slice(0, 2).forEach((n, i) => { fix[SH[i]] = n; }); const car = UX_CAR.filter((s) => fix[s]), sh = SH.filter((s) => fix[s]);
+    cards.push({ id: 'eggs', ph: 1, when: 'Every egg set', title: 'Call of the Serpent (Carry the egg in your zone)', map: ppFreeze(UX_M.eggs(false, 'm'), 8.4, ppSeat(P, fix), P, M, { hl: car.concat(sh), named: car.concat(sh), tags: sh.map((s) => [s, 'Shields']), focus: UL_WHOLE }),
+      legend: [ppG('Egg carriers: your zone', '#3af2a8', car.map((s) => ppI(P, fix[s], UL_ZN[s]))), ppG('Egg shields', '#e6e0c8', sh.map((s) => ppI(P, fix[s], 'Break shells')), 'Break each egg\'s shield first, so its carrier can pick it up.')],
+      foot: 'Zones turn with her: when she moves at 1:17, so do they. Never let your 3-yard ring touch another carrier\'s.' }); }
+  // Toxic Incubation: the off tank in the spectral image's beam, its waves aimed off the platform (the guide's map at the beam)
+  if (J.beam) { const fix = { t2: J.beam };
+    cards.push({ id: 'beam', ph: 1, when: 'Each Wretch', title: 'Toxic Incubation (Off tank in the beam)', map: ppFreeze(UX_M.wretch(false, 'm'), 4.2, ppSeat(P, fix), P, M, { hl: ['t2'], named: ['t2'], focus: UL_WHOLE }),
+      legend: [ppG('In the beam', '#3af2a8', [ppI(P, J.beam, 'Off tank')], 'Stand in the spectral venom so the Wretch never gets it; aim its waves off the platform, away from the eggs.'), ppG('Blessing of Freedom', BL, J.freedom.map((n) => ppI(P, n, 'On her tank')), 'On her tank after Mother\'s Wrath (Hobbled).')],
+      foot: 'The spectral Ula\'tek rises at the platform\'s edge as the Wretch lands, at 0:07 and 1:16.' }); }
+  // Spectral Coils: team one in the soak facing the tail (the right one), team two by the other; her tank stays on her
+  if (J.teams[0].length || J.teams[1].length) { const k = gdzKit(UX, 3), fix = {}, put = new Set(); k.art(0, UL_FULL); uxBoss(k, 0); uxTail(k, 0);
+    const A = [UX_SA[0], UX_SA[1] + 2], B = [UX_SB[0], UX_SB[1] - 2], g1 = ppClump(k, P, fix, put, J.teams[0], A, 5.4), g2 = ppClump(k, P, fix, put, J.teams[1], B, 5.4);
+    [[UX_SA, 'Team 1 first'], [UX_SB, 'Team 2 second']].forEach(([p]) => k.ring({ x: p[0], y: p[1], r: 10, fx: 'soak', t0: 0, at: 1.05, dur: 5, color: TE, cn: 'Spectral Coils', label: false }));
+    const T = GDZ_RAID.find((s) => s[0] === 't' && !put.has(s)); if (T) { put.add(T); k.at(0, T, 0, 39.5); } rest(k, put, [6, 18]);
+    cards.push({ id: 'coils', ph: 1, when: 'Each tail', title: 'Spectral Coils (Team 1 first, then Team 2)', map: ppFreeze(k.done({ title: 'Spectral Coils', focus: UL_WHOLE }), 1, ppSeat(P, fix), P, M, { hl: g1.concat(g2), focus: UL_WHOLE, labels: [[g1, 'Team 1', TE, '#05201a', 7], [g2, 'Team 2', '#7fd8ff', '#06131c', 7, true]] }),
+      legend: [ppG('Team 1: the coil facing the tail', TE, J.teams[0].map((n) => ppI(P, n))), ppG('Team 2: the other coil', '#7fd8ff', J.teams[1].map((n) => ppI(P, n)))],
+      foot: 'The coil on your right as you face the tail goes first. Soul Constrictor stops you helping with the next one; carried eggs break in the soak.' }); }
+  // Fester Burst: everyone in the Wretch's 10 yards, the first one by the tail's first soak, the second in the middle north; her tank on her
+  { const W1 = spot('fester1', [-24, 6]), W2 = spot('fester2', [-2, 26]), k = gdzKit(UX, 3), fix = {}, put = new Set(['t1']); k.art(0, UL_FULL); uxBoss(k, 0); uxTail(k, 0); k.at(0, 't1', 0, 39.5);
+    k.add('wr', '1st Wretch', 0, W1[0], W1[1]).ring({ x: W1[0], y: W1[1], r: 10, fx: 'soak', t0: 0, at: 1.05, dur: 5, color: '#ffd23b', cn: 'Fester Burst', label: false });
+    k.add('wr2', '2nd Wretch', 0, W2[0], W2[1]).ring({ x: W2[0], y: W2[1], r: 10, fx: 'zone', t0: 0, dur: 9, color: '#ffd23b', fill: 'rgba(255,210,59,.1)', cn: 'Fester Burst', label: false });
+    if (J.beam) { fix.t2 = J.beam; } put.add('t2'); k.at(0, 't2', W1[0] + 2.5, W1[1] - 2.5); rest(k, put, W1, 7);
+    cards.push({ id: 'fester', ph: 1, when: 'Every burst', title: 'Fester Burst (Everyone in the Wretch\'s bubble)', map: ppFreeze(k.done({ title: 'Fester Burst', focus: UL_WHOLE }), 1, ppSeat(P, fix), P, M, { focus: UL_WHOLE, hl: J.beam ? ['t2'] : [], named: J.beam ? ['t2'] : [] }),
+      legend: [ppG('Everyone inside its 10 yards', '#d8f22f', [], 'Egg carriers too. Bursts at 0:36 and 1:10 (1st Wretch), 1:44 and 2:19 (2nd).'), ppG('On the Wretch', GO, [J.beam && ppI(P, J.beam, 'Off tank')])],
+      foot: 'Kill each Wretch before its third burst. The second one bursts faster: be there early.' }); }
+  // Rage of the Shackled: everyone on the heart (she's on the west edge by then), the note's raid cooldowns for both burns
+  { const A1 = J.heart1 || [], A2 = J.heart2 || [], k = gdzKit(UX, 3); k.art(0, UL_FULL); uxBoss(k, 0, [-46, 0]); k.add('ht', 'Venomous Heart', 0, -41.5, 0);
+    k.at(0, ['t1', 't2', 'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7'], -34, 0, 5).at(0, ['h1', 'h2', 'h3', 'h4'], -21, 7, 4).at(0, ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7'], -22, -5, 6.5);
+    [[-26, 16], [-12, -6], [-34, -15]].forEach((p) => k.ring({ x: p[0], y: p[1], r: 7, fx: 'burst', t0: 0, at: 1.05, dur: 4, color: '#c8a36a', cn: 'Falling Debris', label: false }));
+    cards.push({ id: 'heart', ph: 1.9, when: 'Both burns', title: 'Rage of the Shackled (Everyone on the heart)', map: ppFreeze(k.done({ title: 'Rage of the Shackled', focus: UL_WHOLE }), 1, ppSeat(P, {}), P, M, { focus: UL_WHOLE }),
+      legend: [ppG('Raid cooldowns, burn 1 (2:25)', '#9a7bff', cdsOf(A1, 'P1 ')), ppG('Raid cooldowns, burn 2 (4:55)', '#9a7bff', cdsOf(A2, 'P2 ')), ppG('Everyone', GO, [], 'On the heart for 20 seconds; step out of the brown debris circles.')],
+      foot: 'She\'s on the west or east edge by then (it changes): the same on the other side. The heart takes double damage: potions here.' }); }
+  // Phase 2: each ledge's kick line on its Doomscale Warden (the left ledge is the west one, the right the east, as the raid faces her)
+  J.kicks.slice(0, 2).forEach((L, side) => { const sx = side ? 1 : -1, X = (p) => [p[0] * sx, p[1]], W = X([80, 56]), k = gdzKit(UX, 3), fix = {}, put = new Set(); k.art(0, UL_FULL);
+    k.add('wd', 'Doomscale Warden', 0, W[0], W[1]); [[76, 60], [86, 64], [82, 52]].forEach((p, i) => { const q = X(p); k.obj('ne' + i, 'egg', 0, q[0], q[1]); });
+    const ids = L.slice(0, 4).map((n, i) => { const s = ppSlot(P, n, put); if (!s) return null; fix[s] = n; k.at(0, s, W[0] + 7 * sx, W[1] + 4 - i * 4.5); return s; /* (a column on the ledge's outer side, where its floor is, kick 1 at the top) */ }).filter(Boolean);
+    const others = [[90, 42], [97, 46], [100, 52], [92, 36], [100, 38], [96, 58]].map(X); GDZ_RAID.filter((s) => !put.has(s)).slice(0, others.length).forEach((s, i) => { put.add(s); k.at(0, s, others[i][0], others[i][1]); });
+    GDZ_RAID.filter((s) => !put.has(s)).forEach((s, i) => { put.add(s); k.at(0, s, -sx * 20 + (i % 4) * 3, -30 - Math.floor(i / 4) * 3); }); /* (the other half, off on the far ledge) */
+    const nm = side ? 'Right' : 'Left';
+    cards.push({ id: side ? 'kicksR' : 'kicksL', ph: 2, when: nm + ' ledge', title: 'Malice (' + nm + ' team kicks in order)', map: ppFreeze(k.done({ title: 'Malice', focus: { x: W[0] + 10 * sx, y: 40, r: 30 } }), 1, ppSeat(P, fix), P, M, { focus: { x: W[0] + 10 * sx, y: 40, r: 30 }, hl: ids, named: ids, tags: ids.map((s, i) => [s, 'Kick ' + (i + 1)]) }),
+      legend: [ppG(nm + ' team: kick Malice in order', GR, L.map((n, i) => ppI(P, n, 'Kick ' + (i + 1))), 'Then the Weakened Doomscale\'s Anguished Cry, in the same order.')],
+      foot: 'The ' + nm.toLowerCase() + ' ledge, as you face her. Cleave the gestating eggs first, and keep out of their 7 yards while the Warden lives.' }); });
+  // Intermission: eight coils round the room, one after another (clockwise from the first); group 1 takes 1, 4 and 7, group 2 takes 2, 5 and 8,
+  // group 3 takes 3 and 6; each group stands at its first. Then end toward the raid lead's marker, on the inside
+  if (J.trans.length) { const k = gdzKit(UX, 3), fix = {}, put = new Set(); k.art(0, UL_FULL); const C3 = [BL, GR, GO], GRP = [0, 1, 2, 0, 1, 2, 0, 1];
+    const f1 = spot('int1', null), a0 = f1 ? Math.atan2(f1[1], f1[0]) * 180 / Math.PI : 90, S = (n) => nzAdd([0, 0], a0 - n * 45, 24), E2 = spot('intend', [15, -35]), ea = Math.atan2(E2[1], E2[0]), EP = [Math.cos(ea) * 12, Math.sin(ea) * 12];
+    GRP.forEach((g, n) => { const p = S(n); k.ring({ x: p[0], y: p[1], r: 8, fx: 'soak', t0: 0, at: 1.05, dur: 5, color: C3[g], cn: 'Spectral Coils', label: false }); });
+    const G = J.trans.slice(0, 3).map((L, g) => ppClump(k, P, fix, put, L, S(g), 4.6)); rest(k, put, [0, 0], 5);
+    k.ring({ x: EP[0], y: EP[1], r: 5, fx: 'zone', t0: 0, dur: 9, color: '#7fd8ff', fill: 'rgba(127,216,255,.06)', cn: 'The end spot', label: false });
+    const lab = GRP.map((g, n) => { const p = S(n), o = nzAdd([0, 0], a0 - n * 45, 33); return [{ rx: o[0], ry: o[1] }, String(n + 1), C3[g], g === 1 ? '#06140a' : g === 2 ? '#1a1405' : '#fff', 0]; });
+    const nums = (g) => GRP.map((x, n) => (x === g ? n + 1 : 0)).filter(Boolean), list = (a) => (a.length > 2 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a.join(' and '));
+    cards.push({ id: 'trans', ph: 2.5, when: 'Intermission', title: 'Spectral Coils (Three groups take turns)', map: ppFreeze(k.done({ title: 'Intermission', focus: UL_WHOLE }), 1, ppSeat(P, fix), P, M, { focus: UL_WHOLE, hl: G.flat(), labels: lab.concat([[{ rx: EP[0], ry: EP[1] - 7 }, 'End', '#7fd8ff', '#06131c', 0]]) }),
+      legend: G.map((ids, g) => ppG('Group ' + (g + 1) + ': soaks ' + list(nums(g)), C3[g], J.trans[g].map((n) => ppI(P, n)))),
+      foot: 'The caller marks the first coil; each group takes its own from there. Then end ' + (U.intend ? 'toward ' + MKN(U.intend) : 'here') + ', on the inside: the platform breaks into four.' }); }
+  // Serpent's Bite: each group on its own target's red circle (melee on her quarter, healers and ranged on the next one counter-clockwise)
+  if (J.bite.melee.length || J.bite.ranged.length || J.bite.healers.length) { const k = gdzKit(UX, 3), fix = {}, put = new Set(); k.art(0, UL_BROKEN); uxB3(k, 0, 'NE');
+    const TG = [['melee', 'Melee target', [20, 18], 'm7'], ['healers', 'Healer target', [-10, 20], 'h4'], ['ranged', 'Ranged target', [-30, 28], 'r7']], lab = [];
+    TG.forEach(([g, nm, c, s]) => { put.add(s); fix[s] = ppAny(nm); k.at(0, s, c[0], c[1]); k.ring({ on: s, r: 7, fx: 'soak', t0: 0, at: 1.05, dur: 5, color: R, cn: 'Serpent\'s Bite', label: false });
+      const ids = J.bite[g].map((n) => { const q = ppSlot(P, n, put); if (q) fix[q] = n; return q; }).filter(Boolean); ids.forEach((q, i) => { const d = gdzSpot(i + 1, ids.length + 1, 4.2); k.at(0, q, c[0] + d[0], c[1] + d[1]); }); lab.push([ids.concat(s), nm.replace(' target', ''), R, '#fff', 7, g === 'healers']); });
+    const T = GDZ_RAID.filter((s) => s[0] === 't' && !put.has(s)); T.forEach((s, i) => { put.add(s); k.at(0, s, 26 + i * 3, 22 - i * 3); }); rest(k, put, [10, 4], 6);
+    cards.push({ id: 'bite', ph: 3, when: 'Every bite', title: 'Serpent\'s Bite (Soak your group\'s red circle)', map: ppFreeze(k.done({ title: 'Serpent\'s Bite', focus: UL_WHOLE3, art: UL_BROKEN }), 1, ppSeat(P, fix), P, M, { focus: UL_WHOLE3, hl: lab.flatMap((x) => x[0]), labels: lab }),
+      legend: [ppG('Melee bite', R, J.bite.melee.map((n) => ppI(P, n))), ppG('Ranged bite', R, J.bite.ranged.map((n) => ppI(P, n))), ppG('Healer bite', R, J.bite.healers.map((n) => ppI(P, n))), ppG('Bite targets', Q, [ppI(P, ppAny('Whoever gets a bite'))], 'Stay still so your soakers can reach you.')],
+      foot: 'Soakers take a big hit as the circle ends: a big defensive. Then spread, each sending your wave away from the raid.' }); }
+  // Slithering Clutches: the two grippers pull each clutch in before it reaches the venom (the guide's map at the grips)
+  if (J.grips.length) { const fix = { t1: J.grips[0] }; if (J.grips[1]) fix.t2 = J.grips[1]; const ids = Object.keys(fix);
+    cards.push({ id: 'grips', ph: 3, when: 'Every clutch set', title: 'Slithering Clutch (Grip them in)', map: ppFreeze(UX_M.clutches(false, 'm'), 6, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags: ids.map((s) => [s, 'Grip']), focus: UL_WHOLE3 }),
+      legend: [ppG('Clutch grips', '#c0394f', J.grips.map((n) => ppI(P, n, 'Grip')), 'Grip each clutch in before it reaches the venom, the far one first; then pull them all onto the raid to cleave.')],
+      foot: 'A clutch that reaches the venom hatches a Blightscale Shrieker: kick its Vicious Echoes.' }); }
+  // Circling Prey: everyone one quarter counter-clockwise before she smashes hers (the guide's map once everyone has moved)
+  { const A = J.prey || [];
+    cards.push({ id: 'prey', ph: 3, when: 'Every smash', title: 'Circling Prey (One platform counter-clockwise)', map: ppFreeze(UX_M.prey(false, 'm'), 7, ppSeat(P, {}), P, M, { focus: UL_WHOLE3 }),
+      legend: [ppG('Everyone', GO, [], 'Move one quarter counter-clockwise before she smashes hers (phase 3 at 1:03, 1:55 and 2:55).'), ppG('Raid cooldowns at the smashes', '#9a7bff', cdsOf(A, 'P3 ')), ppG('Your own', BL, [], 'A personal defensive for the 2nd and 3rd smash.')],
+      foot: 'Melee follow her to the next quarter; healers and ranged go one further.' }); }
+  return cards;
+}
 // (the note's healing and raid cooldowns at a moment, for a picture's legend: NSRT reminder lines between two times of a phase)
 function ppCds(N, P, ph, t0, t1) { return N.reminders.filter((x) => x.ph === ph && x.time >= t0 && x.time <= t1 && x.spellid).flatMap((x) => x.tags.filter((w) => P.has(w.toLowerCase())).map((w) => [Math.floor(x.time / 60) + ':' + String(Math.round(x.time % 60)).padStart(2, '0'), P.get(w.toLowerCase()).name, (E.cdName && E.cdName(x.spellid)) || x.text || 'Cooldown'])); }
 const GDZ_PP = {
@@ -51987,12 +52103,28 @@ const GDZ_PP = {
     // Dreadmarch and soaked phase 3's axes (circle))
     raid: { marks: { cross: [-5, 30], triangle: [5, 29], square: [-4, -31], diamond: [7, -32], star: [2, 16], skull: [-2, -23], moon: [-37, 37], circle: [25, -35] }, stack: [5, -11],
       uses: { axe: 'moon', stack: '', dread: 'circle', grim1: 'circle', grim2: 'circle' } },
+    // (the Markers map: the room with the boss in it, its framing, how far out a marker can be dragged, the names it keeps)
+    room: { scene: (k) => k.boss('zj', 'Zul\'jan', 0, 0, 0), focus: { x: 0, y: 0, r: 30 }, lim: 44, keep: ['Zul\'jan'] },
     read(N, P) { const J = ppReadCA(N, P); J.rupture = ppCds(N, P, 1, 160, 200).concat(ppCds(N, P, 2, 0, 5)); J.interCds = ppCds(N, P, 2.5, 0, 40); return J; },
     cards: ppCardsCA,
     // (Plan's Jobs cards and the pictures each one shows: by the key Plan gives each card's picture row (its build parts), else by the
     // card's title, where the grim card is matched before the phase 1 axes)
     mech: { kicks: ['kicks', 'bombs'], g: ['axe1', 'axe2'], g3: ['grim1', 'grim2', 'grim3'], orbs: ['orbs1', 'orbs3'], mc: ['dread'], curse: ['kicks'], rupture: ['stack'], stops: ['inter'], cd: [], cds: [], def: [] },
     jobs: [[/p3|grim/i, ['grim1', 'grim2', 'grim3']], [/guillotine/i, ['axe1', 'axe2']], [/kick/i, ['kicks', 'bombs']], [/purple orb/i, ['orbs1', 'orbs3']], [/dreadmarch|mind ?control/i, ['dread']], [/curse/i, ['kicks']], [/venom rupture/i, ['stack']], [/fragments of malacrass|stop them at your marker/i, ['inter']]] } },
+  "Ula'tek": { Mythic: {
+    // (the guide's octagon about 42 yards out (notes/Guides/Bosses/8 Ula'tek.md, "P1 setup"): star north-north-west, circle north-north-east,
+    // skull east-north-east, moon east-south-east, diamond south-south-east, triangle south-south-west, square west-south-west, cross west-north-west)
+    marks: { star: [-15, 35], circle: [15, 35], skull: [35, 15], moon: [35, -15], diamond: [15, -35], triangle: [-15, -35], square: [-35, -15], cross: [-35, 15] },
+    stack: [0, 0],
+    // (where each mechanic happens: the Wretch's bubbles where the guide has them (by the tail's first soak, then the middle north), the
+    // intermission's first coil where the caller marks it, and its end toward the diamond, on the inside)
+    uses: [['fester1', 'First Wretch bubble', ''], ['fester2', 'Second Wretch bubble', ''], ['int1', 'First intermission coil', ''], ['intend', 'Intermission end spot', 'diamond']],
+    room: { scene: (k) => { k.art(0, UL_FULL); uxBoss(k, 0); }, focus: { x: 0, y: 0, r: 54 }, lim: 52, keep: [UX] },
+    read(N, P) { const J = ppReadUL(N, P); J.heart1 = ppCds(N, P, 1, 135, 175); J.heart2 = ppCds(N, P, 2, 108, 145); J.prey = ppCds(N, P, 3, 55, 72).concat(ppCds(N, P, 3, 107, 124), ppCds(N, P, 3, 167, 184)); return J; },
+    cards: ppCardsUL,
+    // (Plan's Jobs cards (2caefe9) and the pictures each shows, by its key, else by its title)
+    mech: { eggs: ['eggs'], coils: ['coils'], fester: ['fester'], heart: ['heart'], kicks: ['kicksL', 'kicksR'], trans: ['trans'], bite: ['bite'], prey: ['prey'], tanks: ['beam', 'grips'], cds: [], def: [] },
+    jobs: [[/egg/i, ['eggs']], [/coils team|spectral coils/i, ['coils']], [/fester/i, ['fester']], [/rage of the shackled|heart/i, ['heart']], [/kick/i, ['kicksL', 'kicksR']], [/transition|soak group/i, ['trans']], [/serpent'?s bite/i, ['bite']], [/circling prey/i, ['prey']], [/tank|grip/i, ['beam', 'grips']]] } },
 };
 const PP_PH = { 1: ['Phase 1', '#5aa0ff'], 1.9: ['Phase 1 ends', '#5aa0ff'], 2: ['Phase 2', '#b65cff'], 2.5: ['Intermission', '#e6b450'], 3: ['Phase 3', '#ff5a4f'] };
 
@@ -52104,7 +52236,7 @@ function ppOpen(r, u0, opt) {
   document.body.appendChild(box); document.body.classList.add('ndz-modal');
   const close = () => { box.remove(); if (!$('#ndzWiz') && !$('#ndzGuide') && !$('#ndzNoteView') && !$('#ndzShot')) document.body.classList.remove('ndz-modal'); };
   const head = '<div class="ndz-whead"><span class="sub">Pictures for Discord</span><button class="ndz-ex" type="button" data-ppx aria-label="Close">✕</button></div>';
-  if (!set.cf) { box.innerHTML = '<div class="ndz-wbox">' + head + '<h2>Pictures for Discord</h2><p class="sub">Pictures are ready for The Coiled Altar on Mythic so far. The other bosses come next.</p></div>'; box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); }; return; }
+  if (!set.cf) { box.innerHTML = '<div class="ndz-wbox">' + head + '<h2>Pictures for Discord</h2><p class="sub">Pictures are ready for The Coiled Altar and Ula\'tek on Mythic so far. The other bosses come next.</p></div>'; box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); }; return; }
   box.innerHTML = '<div class="ndz-wbox ndz-shotbox pp-win">' + head + '<h2 class="pp-h2"></h2>' +
     '<div class="pp-nav"><span class="sub pp-navt"></span><button class="btn sm" type="button" data-ppprev></button><button class="btn sm" type="button" data-ppnext></button><button class="btn sm" type="button" data-ppallv></button></div>' +
     '<p class="sub pp-intro">One picture for each mechanic your note gives jobs for, with everyone on their spot. Copy one and paste it in Discord (Ctrl+V), or download it.</p>' +
@@ -52144,9 +52276,9 @@ function ppOpen(r, u0, opt) {
   // (the raid lead changed a marker: the note's pictures are worked out again, here and on the Jobs cards)
   const redo = () => { set = ppSet(r, u0); ppStale(); draw(); };
   // (the marker editor: the room with the markers on it; drag one and every picture redraws; pick a marker for each mechanic)
-  const mkDraw = () => { const c = ppConf(boss, diff), mhost = box.querySelector('.pp-mkmap'), k = gdzKit(boss, 1); k.boss('zj', 'Zul\'jan', 0, 0, 0); const mp = k.done({ title: '', focus: { x: 0, y: 0, r: 30 } });
+  const mkDraw = () => { const c = ppConf(boss, diff), mhost = box.querySelector('.pp-mkmap'), k = gdzKit(boss, 1); c.C.room.scene(k); const mp = k.done({ title: '', focus: c.C.room.focus });
     mhost.innerHTML = miniMap({ ...mp, wmarks: [], callouts: [], liveLeg: false }, new Map()) + '<div class="pp-mklay"></div>';
-    const sv = mhost.querySelector('svg.zmap'), lay = mhost.querySelector('.pp-mklay'); if (!sv) return; const vb = sv.viewBox.baseVal, [x0, y0] = (sv.dataset.o || '0,0').split(',').map(Number), yd = +sv.dataset.yd || 1, cx = (mp.room.x0 + mp.room.x1) / 2, cy = (mp.room.y0 + mp.room.y1) / 2;
+    const sv = mhost.querySelector('svg.zmap'), lay = mhost.querySelector('.pp-mklay'); if (!sv) return; const vb = sv.viewBox.baseVal, [x0, y0] = (sv.dataset.o || '0,0').split(',').map(Number), yd = +sv.dataset.yd || 1, [cx, cy] = ppMid(mp);
     const toPx = ([rx, ry]) => { const R = sv.getBoundingClientRect(), L = lay.getBoundingClientRect(); return [((cx + rx - x0) * yd - vb.x) / vb.width * R.width + R.left - L.left, ((-(cy + ry) - y0) * yd - vb.y) / vb.height * R.height + R.top - L.top]; };
     const toYd = (px, py) => { const R = sv.getBoundingClientRect(); const X = vb.x + (px - R.left) / R.width * vb.width, Y = vb.y + (py - R.top) / R.height * vb.height; return [Math.round((X / yd + x0 - cx) * 2) / 2, Math.round((-(Y / yd + y0) - cy) * 2) / 2]; };
     const dot = (m) => '<svg viewBox="-11 -11 22 22" width="26" height="26">' + gdzMarkSvg(m, 0, 0) + '</svg>', keep = (cc) => ppSave(boss, diff, { base: cc.base, marks: cc.marks, uses: cc.uses });
@@ -52167,7 +52299,7 @@ function ppOpen(r, u0, opt) {
       b.onpointerdown = (e) => { if (e.button === 2) return; e.preventDefault(); b.setPointerCapture(e.pointerId); b.classList.add('on'); const x0p = e.clientX, y0p = e.clientY; let moved = false, held = false;
         const hold = e.pointerType === 'touch' ? setTimeout(() => { held = true; b.classList.remove('on'); pick(b); }, 550) : 0;
         const move = (ev) => { if (held) return; if (!moved && Math.hypot(ev.clientX - x0p, ev.clientY - y0p) < 6) return; moved = true; clearTimeout(hold); const L = lay.getBoundingClientRect(); b.style.left = (ev.clientX - L.left) + 'px'; b.style.top = (ev.clientY - L.top) + 'px'; };
-        const up = (ev) => { clearTimeout(hold); b.onpointermove = b.onpointerup = null; b.classList.remove('on'); if (held || !moved) return; const q = toYd(ev.clientX, ev.clientY), lim = 44; q[0] = Math.max(-lim, Math.min(lim, q[0])); q[1] = Math.max(-lim, Math.min(lim, q[1]));
+        const up = (ev) => { clearTimeout(hold); b.onpointermove = b.onpointerup = null; b.classList.remove('on'); if (held || !moved) return; const q = toYd(ev.clientX, ev.clientY), lim = c.C.room.lim; q[0] = Math.max(-lim, Math.min(lim, q[0])); q[1] = Math.max(-lim, Math.min(lim, q[1]));
           const cc = ppConf(boss, diff); cc.marks[b.dataset.mk] = q; keep(cc); place(); redo(); mkDraw(); };
         b.onpointermove = move; b.onpointerup = up; }; });
     const uses = box.querySelector('.pp-mkuse'), opt0 = (v) => '<option value=""' + (v ? '' : ' selected') + '>The spot shown (no marker)</option>' + PP_MKS.map((m) => '<option value="' + m + '"' + (v === m ? ' selected' : '') + '>' + esc(GDZ_WM[m][1]) + '</option>').join('');
@@ -52191,8 +52323,8 @@ let PP_IO = null;
 // again when a mark moves or swaps, since the spots are part of its key)
 const PP_MKPIC = new Map();
 function ppMarksPic(boss, diff) { const c = ppConf(boss, diff); if (!c) return Promise.resolve(null); const key = boss + '|' + diff + '|' + JSON.stringify(c.marks);
-  if (!PP_MKPIC.has(key)) PP_MKPIC.set(key, (async () => { const k = gdzKit(boss, 1); k.boss('zj', 'Zul\'jan', 0, 0, 0); const mp = k.done({ title: '', focus: { x: 0, y: 0, r: 30 } }), fz = ppFreeze(mp, 0, {}, new Map(), {}, {});
-    const cx = (mp.room.x0 + mp.room.x1) / 2, cy = (mp.room.y0 + mp.room.y1) / 2; fz.out.wmarks = PP_MKS.filter((m) => c.marks[m]).map((m) => ({ k: m, x: cx + c.marks[m][0], y: cy + c.marks[m][1] })); fz.keep = ['Zul\'jan'];
+  if (!PP_MKPIC.has(key)) PP_MKPIC.set(key, (async () => { const k = gdzKit(boss, 1); c.C.room.scene(k); const mp = k.done({ title: '', focus: c.C.room.focus }), fz = ppFreeze(mp, 0, {}, new Map(), {}, {});
+    const [cx, cy] = ppMid(mp); fz.out.wmarks = PP_MKS.filter((m) => c.marks[m]).map((m) => ({ k: m, x: cx + c.marks[m][0], y: cy + c.marks[m][1] })); fz.keep = c.C.room.keep;
     const map = await ppMapImg(fz); if (!map) return null; const W = 600, M0 = 16, cv = document.createElement('canvas'); cv.width = cv.height = W; const g = cv.getContext('2d'); g.fillStyle = '#12141b'; g.fillRect(0, 0, W, W);
     g.save(); g.beginPath(); g.roundRect ? g.roundRect(M0, M0, W - 2 * M0, W - 2 * M0, 12) : g.rect(M0, M0, W - 2 * M0, W - 2 * M0); g.clip(); g.drawImage(map, M0, M0, W - 2 * M0, W - 2 * M0); g.restore(); return cv.toDataURL('image/png'); })().catch((e) => { console.warn('Picture plan:', e); return null; }));
   if (PP_MKPIC.size > 6) PP_MKPIC.delete(PP_MKPIC.keys().next().value); return PP_MKPIC.get(key); }
@@ -52205,7 +52337,7 @@ function ppJobs() {
       let mh = el.querySelector(':scope > .pj-pics'); if (!mh) { el.insertAdjacentHTML('beforeend', '<div class="pj-pics" data-mech="marks"></div>'); mh = el.lastElementChild; }
       ppCss(); el.classList.add('pj-has'); mh.innerHTML = '<button type="button" class="pj-pic" data-pj="marks" data-note="' + esc(mb.dataset.ppmarks) + '" data-job="Raid markers" aria-label="Raid markers: open the Markers map"><img alt=""><small>Raid markers<i>' + (st.cf.base === 'raid' ? 'your raid\'s spots' : 'guide\'s spots') + '</i></small></button>';
       ppMarksPic(st.boss, st.diff).then((u) => { const im = mh.querySelector('img'); if (u && im && im.isConnected) im.src = u; }); return; }
-    const ch = el.querySelector('[data-noteboss][data-noteid]'), t = ((el.querySelector('.plb-rch b') || {}).textContent || '').replace(/^\s*\d+\s*·\s*/, '').trim(); if (!ch || !t) return;
+    const ch = el.querySelector('[data-noteboss][data-noteid]') || (el.closest('.bj-jobs') || document).querySelector('[data-noteboss][data-noteid]'), t = ((el.querySelector('.plb-rch b') || {}).textContent || '').replace(/^\s*\d+\s*·\s*/, '').trim(); if (!ch || !t) return;
     const note = ch.dataset.noteboss + '|' + ch.dataset.noteid, c = ndzDcNote(note); if (!c) return; const set = ppSet(c.r, c.u0); if (!set.cf || !set.cf.C.jobs) return;
     // (which pictures: by Plan's key for the card when it gives one, else by the card's title)
     let pics = el.querySelector(':scope > .pj-pics'); const mech = pics && pics.dataset.mech, byKey = mech && set.cf.C.mech && set.cf.C.mech[mech], m = !byKey && set.cf.C.jobs.find(([re]) => re.test(t));
