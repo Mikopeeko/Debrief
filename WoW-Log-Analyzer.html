@@ -16225,7 +16225,9 @@ const analyzeSoft = (item, text, opts) => { const run = AN_Q.then(() => E.analyz
 const RD = (() => { let dbp = null, ver = null;
   const open = () => dbp || (dbp = new Promise((res) => { try { const q = indexedDB.open('wla-reads', 1); q.onupgradeneeded = () => q.result.createObjectStore('reps'); q.onsuccess = () => res(q.result); q.onerror = () => res(null); } catch (e) { res(null); } }));
   const hash = (s) => { let h = 5381; for (let i = 0; i < s.length; i += 7) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36) + s.length.toString(36); };
-  const version = () => ver || (ver = hash([...document.scripts].map((x) => x.text || '').join('|')));
+  /* (Oct 25, your note "its re-reading the pulls everytime i refresh": only the rules count (the engine and the log translator, the big scripts that
+     aren't the page itself), so updates to wording or looks keep the saved readings) */
+  const version = () => ver || (ver = hash([...document.scripts].map((x) => x.text || '').filter((t) => t.trimStart().startsWith('(function (root)')).join('|')));
   const keyOf = (item) => { const w = item.wcl; const base = w ? 'w:' + w.code + ':' + w.fight : item.shr ? 's:' + (item.shr.id || item.shr) + ':' + item.n : 'f:' + (item.startMs || 0) + ':' + item.boss + ':' + item.pull;
     let o = ''; try { o = JSON.stringify([overrides(), (S.packs || []).length]); } catch (e) { o = ''; } return base + '|' + item.diffId + '|' + version() + '|' + hash(o); };
   const tx = async (mode, fn) => { const d = await open(); if (!d) return null; return new Promise((res) => { try { const t = d.transaction('reps', mode), st = t.objectStore('reps'); const out = fn(st); t.oncomplete = () => res(out && out.result !== undefined ? out.result : out); t.onerror = () => res(null); t.onabort = () => res(null); } catch (e) { res(null); } }); };
@@ -16245,7 +16247,7 @@ const RD = (() => { let dbp = null, ver = null;
     live(g); if (g._lim) g.lim = () => g._lim; if (g._rc) { if (g._rc.c) live(g._rc.c); g.recut = (t) => (Math.abs(t - g._rc.t) < 0.05 ? g._rc.c : g); } } return rep; };
   return {
     async get(item) { try { const v = await tx('readonly', (st) => st.get(keyOf(item))); return v && v.rep ? revive(v.rep) : null; } catch (e) { return null; } },
-    put(item, rep) { const go = async () => { try { bake(rep); const v = { at: Date.now(), rep: strip(rep) }; v.rep.item = null; await tx('readwrite', (st) => st.put(v, keyOf(item)));
+    put(item, rep) { const go = async () => { try { bake(rep); const v = { at: Date.now(), rep: strip(rep) }; v.rep.item = null; for (const k of Object.keys(v.rep)) if (k.startsWith('_')) delete v.rep[k]; /* (the page's own notes are redone) */ await tx('readwrite', (st) => st.put(v, keyOf(item)));
         const keys = await tx('readonly', (st) => st.getAllKeys()); if (keys && keys.length > 120) { const ats = []; for (const k of keys) { const x = await tx('readonly', (st) => st.get(k)); ats.push([k, (x && x.at) || 0]); } ats.sort((a, b) => a[1] - b[1]); await tx('readwrite', (st) => { for (const [k] of ats.slice(0, keys.length - 120)) st.delete(k); }); } } catch (e) { /* (not saved: it reads again next time) */ } };
       (window.requestIdleCallback || ((f) => setTimeout(f, 1500)))(() => go(), { timeout: 8000 }); } }; })();
 async function readRep(item) {
@@ -16933,6 +16935,7 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'Saved pulls stay saved through site updates; only a change to the checks themselves reads them again. Rotation\'s What to fix cards always show after visiting Debriefing first.',
     'Switching tabs is much quicker: Rotation and Debriefing no longer work everything out again on each click (Rotation about twice as fast, Debriefing about two and a half times).',
     'Plan on a phone: the Who plays table scrolls sideways under a fixed name column instead of squeezing the boss pictures to slivers.',
     'Plan: the What changed and why box with several lines (Swap all in, Pick who plays for me) lists them tidily under its title, with Got it at the end.',
@@ -36704,8 +36707,13 @@ function tankHitIds(r) { if (TKW.has(r)) return TKW.get(r); const n = new Map();
    every tab click (they were redone each time: 0.9 to 1.6 s on Rotation and Debriefing)) */
 const REP_ID = new WeakMap(); let REP_N = 0; const repId = (r) => { if (!REP_ID.has(r)) REP_ID.set(r, ++REP_N); return REP_ID.get(r); };
 const GEN_MEMO = new Map();
-function genRun(spec, D, reps, name, one) { let k = null; try { k = spec + '|' + name + '|' + String(one) + '|' + deathCutN() + '|' + reps.map(repId).join(','); } catch (e) { k = null; }
-  if (k && GEN_MEMO.has(k)) return GEN_MEMO.get(k); const v = genRun0(spec, D, reps, name, one); if (k) { if (GEN_MEMO.size > 600) GEN_MEMO.clear(); GEN_MEMO.set(k, v); } return v; }
+/* (what else the checks' html reads (the Rotation chat's list): the What to fix cards switch, open and closed parts, the Power Infusion view, a phone screen) */
+const genState = () => { const sig = (v) => { try { return JSON.stringify(v instanceof Set ? [...v] : v instanceof Map ? [...v] : v) || ''; } catch (e) { return '?'; } };
+  let pi = ''; try { pi = String(PI_OFF()); } catch (e) { pi = ''; } let ph = ''; try { ph = String(matchMedia('(max-width: 640px)').matches); } catch (e) { ph = ''; }
+  return [typeof SPC_DRAW !== 'undefined' ? String(SPC_DRAW) : '', sig(S.spcHwOpen), sig(S.spcMtAll), sig(S.openSecs), sig(S.specTree), pi, ph].join('~'); };
+const genKeep = (v) => !(v && v.wait);
+function genRun(spec, D, reps, name, one) { let k = null; try { k = spec + '|' + name + '|' + String(one) + '|' + deathCutN() + '|' + reps.map(repId).join(',') + '|' + genState(); } catch (e) { k = null; }
+  if (k && GEN_MEMO.has(k)) return GEN_MEMO.get(k); const v = genRun0(spec, D, reps, name, one); if (k && genKeep(v)) { if (GEN_MEMO.size > 600) GEN_MEMO.clear(); GEN_MEMO.set(k, v); } return v; }
 function genRun0(spec, D, reps, name, one) {
   const per = [];
   for (const r of reps) { const p = [...r.players.values()].find((y) => y.name === name); if (!p) continue; const C0 = perfContext(r), x0 = C0.per.get(name), end = C0.end, t1 = x0 ? Math.min(x0.until, end) : end; if (t1 < 20) continue;
@@ -38643,8 +38651,8 @@ function genTuned(spec, D) { const t = GEN_TUNE[spec]; if (!t) return D; const l
 
 const SPEC_CHECKS = { 'Holy Paladin': hpalChecks, 'Restoration Druid': rdruChecks, 'Preservation Evoker': pevkChecks, 'Demonology Warlock': pdemChecks };
 /* (Oct 25, tab lag: the hand-written specs' checks are kept per pulls, player and setting too, like genRun) */
-for (const k of Object.keys(SPEC_CHECKS)) { const f = SPEC_CHECKS[k]; SPEC_CHECKS[k] = (reps, name, one) => { let key = null; try { key = 'h:' + k + '|' + name + '|' + String(one) + '|' + deathCutN() + '|' + reps.map(repId).join(','); } catch (e) { key = null; }
-  if (key && GEN_MEMO.has(key)) return GEN_MEMO.get(key); const v = f(reps, name, one); if (key) { if (GEN_MEMO.size > 600) GEN_MEMO.clear(); GEN_MEMO.set(key, v); } return v; }; }
+for (const k of Object.keys(SPEC_CHECKS)) { const f = SPEC_CHECKS[k]; SPEC_CHECKS[k] = (reps, name, one) => { let key = null; try { key = 'h:' + k + '|' + name + '|' + String(one) + '|' + deathCutN() + '|' + reps.map(repId).join(',') + '|' + genState(); } catch (e) { key = null; }
+  if (key && GEN_MEMO.has(key)) return GEN_MEMO.get(key); const v = f(reps, name, one); if (key && genKeep(v)) { if (GEN_MEMO.size > 600) GEN_MEMO.clear(); GEN_MEMO.set(key, v); } return v; }; }
 // (and the Casts view judges the same spells each spec presses on cooldown)
 for (const [k, D] of Object.entries(GEN_SPECS)) { SPEC_CHECKS[k] = genChecks(k, D); const T = genTuned(k, D); if (!SPEC_EFF[k]) SPEC_EFF[k] = Object.fromEntries((T.rot || []).flatMap((q) => (q.names || [q.n]).map((n) => [n.toLowerCase(), {}]))); }
 // The view: a bar per player whose spec has checks (how many of them are in good shape), their checks under their name
