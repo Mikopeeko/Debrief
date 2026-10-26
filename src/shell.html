@@ -7315,6 +7315,13 @@ html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac +
 @keyframes ds-flash { 0% { box-shadow: 0 0 0 2px var(--gold), 0 0 26px rgba(230,180,80,.45); } 100% { box-shadow: 0 0 0 0 rgba(230,180,80,0), 0 0 0 rgba(230,180,80,0); } }
 .pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r.ds-flash { animation: ds-flash 1.5s ease-out 1; }
 @media (prefers-reduced-motion: reduce) { .pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r.ds-flash { animation: none; box-shadow: 0 0 0 2px var(--gold); } }
+/* ===== Design studio round 36 (Oct 26): one chip shape: the ✓ chips under What to fix share one grid of equal 34px cells; a window card's chips share one
+   22px height. Owner: the Design studio chat. ===== */
+#view .rck-fix .rck-good { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+#view .rck-fix .rck-good > span { display: flex; align-items: center; gap: 8px; height: 34px; box-sizing: border-box; margin: 0; padding: 0 12px; border-radius: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 560px) { #view .rck-fix .rck-good { grid-template-columns: 1fr; } }
+#view .spc-w .spc-chk > span { display: inline-flex; align-items: center; gap: 5px; height: 22px; box-sizing: border-box; padding: 0 8px; vertical-align: middle; }
+#view .spc-w .spc-chk > span > .sp .icw { vertical-align: middle; }
 </style>
 
 
