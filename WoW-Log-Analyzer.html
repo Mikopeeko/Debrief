@@ -7551,6 +7551,19 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
   #view .gdz .ds-gkb b { white-space: normal; flex: none; }
   #view .gdz .ds-gkb span { white-space: normal; }
 }
+/* ===== Design studio round 54 (Oct 26): the plan-by-raid-night build audited: no double "No plan" on a boss row (the status line carries a dot, the one
+   button does the rest); the strip's title in the heading font. Owner: the Design studio chat. ===== */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row:has(> .tn-ra > .tn-go) > .tn-s { display: none !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row .tn-bn > small::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--faint, #6b7280); margin-right: 6px; vertical-align: 1px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row:has(> .tn-s.ok) .tn-bn > small::before, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row:has(> .tn-ra > .tn-go:not(.primary)) .tn-bn > small::before { background: var(--good, #7ee08f); }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pn-wh > b { font: 700 18px var(--head); letter-spacing: .01em; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pn-day.today::after { font: 700 12px var(--body); letter-spacing: .06em; text-transform: uppercase; }
+/* a phone: seven cells a row leave ~45px each, so the badge keeps its word ("none", "6/10") instead of "no…" */
+@media (max-width: 760px) {
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pn-day { padding: 4px 3px !important; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pn-bd { padding: 0 4px !important; letter-spacing: 0; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pn-day b { font-size: 12.5px; }
+}
 </style>
 
 
