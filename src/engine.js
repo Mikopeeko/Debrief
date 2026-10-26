@@ -3002,21 +3002,22 @@ function buildLostExplorers(ev, r, h) {
     const boxes = [...born.values()].filter((b) => b.died != null || b.rupt != null).sort((a, b) => (a.rupt ?? a.died) - (b.rupt ?? b.died));
     const stackAt = (t) => { let mx = 0; for (const e of spl) { if (e.t < t - 0.2) continue; if (e.t > t + 0.8) break; mx = Math.max(mx, e.stacks || 1); } return mx; };
     const rupDead = deadBy(/relic rupture/i, 0, dur), splDead = deadBy(/splinters/i, 0, dur);
-    for (const b of boxes.filter((x) => x.rupt != null)) { const d = rupDead.filter((x) => x.t >= b.rupt - 0.2 && x.t <= b.rupt + 3);
-      M(b.rupt, 'Raid', 'Relic Rupture', 'High', 'A box was left until it glowed and ruptured on the raid' + (d.length ? ': ' + pl(d.length, 'player') + ' died.' : '.'), 'Pop every box before it glows green (a dedicated popper, on a steady rhythm).'); }
+    /* (fix 17, Oct 26: the first rupture in a pull is a note, later ones a slip, one that kills is the mistake) */
+    const rupInfo = new Map(); boxes.filter((x) => x.rupt != null).forEach((b, k) => { const d = rupDead.filter((x) => x.t >= b.rupt - 0.2 && x.t <= b.rupt + 3); rupInfo.set(b, { k, d });
+      M(b.rupt, 'Raid', 'Relic Rupture', d.length ? 'High' : k === 0 ? 'Low' : 'Medium', 'A box was left until it glowed and ruptured on the raid' + (d.length ? ': ' + pl(d.length, 'player') + ' died.' : k ? ' (rupture ' + (k + 1) + ' this pull).' : '.'), 'Pop every box before it glows green (a dedicated popper, on a steady rhythm).'); });
     const groups = phases.map((p) => {
       const list = boxes.filter((b) => { const t = b.rupt ?? b.died; return t >= p.start - 0.5 && t < p.end - 0.5 || (p === phases[phases.length - 1] && t >= p.start - 0.5); });
       if (!list.length) return null;
       const rows = list.map((b, j) => {
         const popped = b.rupt == null && b.died != null, st = popped && mythic ? stackAt(b.died) : 0, d = popped ? splDead.filter((x) => x.t >= b.died && x.t <= b.died + 6) : [];
-        if (st >= 4) M(b.died, 'Raid', 'Splinters', d.length ? 'High' : 'Medium', 'A box was popped with the raid going to ' + st + ' Splinters stacks' + (d.length ? ': ' + d.map((x) => x.player).join(', ') + ' died to the bleed.' : '.'), 'Pop on a rhythm: two stacks, let them drop, two more.');
-        return [{ txt: 'Box ' + (j + 1) }, { t: b.rupt ?? b.died }, b.rupt != null ? { txt: 'ruptured', bad: true, sub: 'left until it glowed' } : { txt: b.t != null && Math.round(b.died - b.t) <= 0 ? 'popped at once' : b.t != null ? 'popped after ' + Math.max(0, Math.round(b.died - b.t)) + ' s' : 'popped' },
-          mythic && popped ? (d.length ? { txt: st + ' stacks of Splinters', bad: true, sub: d.map((x) => x.player).join(', ') + ' died' } : { txt: st ? st + (st > 1 ? ' stacks' : ' stack') + ' of Splinters' : '—', warn: st >= 4, dim: !st }) : { txt: '—', dim: true }, { txt: '' }];
+        if (st >= 6 || (st && d.length)) M(b.died, 'Raid', 'Splinters', d.length ? 'High' : 'Medium', 'A box was popped with the raid going to ' + st + ' Splinters stacks' + (d.length ? ': ' + d.map((x) => x.player).join(', ') + ' died to the bleed.' : '.'), 'Pop at a steady rhythm, and let the stacks drop before the raid goes past 5.'); /* (fix 17, Oct 26: top guilds keep the raid at 5 or fewer) */
+        return [{ txt: 'Box ' + (j + 1) }, { t: b.rupt ?? b.died }, b.rupt != null ? ((ri) => ri && ri.d.length ? { txt: 'ruptured', bad: true, sub: pl(ri.d.length, 'player') + ' died' } : ri && ri.k ? { txt: 'ruptured', warn: true, sub: 'left until it glowed' } : { txt: 'ruptured', sub: 'left until it glowed' })(rupInfo.get(b)) : { txt: b.t != null && Math.round(b.died - b.t) <= 0 ? 'popped at once' : b.t != null ? 'popped after ' + Math.max(0, Math.round(b.died - b.t)) + ' s' : 'popped' },
+          mythic && popped ? (d.length ? { txt: st + ' stacks of Splinters', bad: true, sub: d.map((x) => x.player).join(', ') + ' died' } : { txt: st ? st + (st > 1 ? ' stacks' : ' stack') + ' of Splinters' : '—', warn: st >= 6, dim: !st }) : { txt: '—', dim: true }, { txt: '' }];
       });
-      return { title: 'Boxes, ' + p.name, t: list[0].rupt ?? list[0].died, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[3].warn), sub: pl(list.length, 'box') .replace('boxs', 'boxes') + (list.some((b) => b.rupt != null) ? ', ' + list.filter((b) => b.rupt != null).length + ' ruptured' : ', none ruptured'), rows };
+      return { title: 'Boxes, ' + p.name, t: list[0].rupt ?? list[0].died, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[2].warn || x[3].warn), sub: pl(list.length, 'box') .replace('boxs', 'boxes') + (list.some((b) => b.rupt != null) ? ', ' + list.filter((b) => b.rupt != null).length + ' ruptured' : ', none ruptured'), rows };
     }).filter(Boolean);
     if (groups.length) sections.push({ id: 'boxes', title: 'Boxes (Pop early)', place: 'Boxes: popped before they glow', spell: [LE.rupture, 'Relic Rupture'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
-      summary: pl(boxes.length, 'box').replace('boxs', 'boxes') + '. It shows whether each one was popped or left to rupture' + (mythic ? ', and the raid\'s Splinters stacks right after each pop (two at a time is the rhythm).' : '.'), cols: ['Box', 'When', 'Result', mythic ? 'Splinters' : '', ''], groups, rows: [] });
+      summary: pl(boxes.length, 'box').replace('boxs', 'boxes') + '. It shows whether each one was popped or left to rupture' + (mythic ? ', and the raid\'s Splinters stacks right after each pop. Top guilds keep the raid at 5 Splinters stacks or fewer.' : '.'), cols: ['Box', 'When', 'Result', mythic ? 'Splinters' : '', ''], groups, rows: [] });
   }
 
   // ---- 2. United Defense: all three explorers within 30 yards of each other (99% less damage taken) ----
