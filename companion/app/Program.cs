@@ -61,14 +61,7 @@ namespace Debrief {
       Log("start " + Version + (StartQuiet ? " (quiet)" : "") + (install ? " (install)" : ""));
       Setup.StopOldApp();
 
-      // (--updated: just updated, so no second check; a mislabelled download can never loop)
-      if (!install && !Has(args, "--updated") && Environment.GetEnvironmentVariable("DBF_NO_UPDATE") == null && Updater.Run(Here)) {
-        // (start the new version, with the same window choice, and stop this one)
-        one.ReleaseMutex(); one.Dispose(); showMe.Dispose();
-        var exe = Process.GetCurrentProcess().MainModule.FileName;
-        Process.Start(new ProcessStartInfo(exe, string.Join(" ", args.Concat(new[] { "--updated" }).Select(a => "\"" + a + "\""))) { UseShellExecute = false, WorkingDirectory = Here });
-        return;
-      }
+      // (no update at start any more (Oct 25): the app only checks, and asks; see the updates thread below)
 
       Setup.MoveShortcuts(Here);
       string addon;
@@ -88,24 +81,20 @@ namespace Debrief {
         return;
       }
       new Thread(() => { while (showMe.WaitOne()) form.ShowInFront(); }) { IsBackground = true, Name = "show" }.Start();
-      // (updates while running, so nobody has to reopen the app: about once an hour, never during a boss or practice pull.
-      // The new files go in, the new addon goes into WoW, then this copy hands over to the new one, its window as it was)
-      // (when it was busy with a pull, it tries again 3 minutes later instead of an hour, so an update lands in the first break between
-      // pulls (Oct 24, the user: "Do i always need to restart the companion app to get it to work?"))
+      // (updates ask first (Oct 25, the user: "auto updating could break the addon in game. Its better for the user to choose when to update"):
+      // it checks 20 seconds after it starts, then hourly; a newer version shows the window's gold bar (Update now, Later) and a note by
+      // the clock once. Only Update now installs, never during a pull)
       new Thread(() => {
-        Thread.Sleep(TimeSpan.FromMinutes(10));
+        Thread.Sleep(TimeSpan.FromSeconds(20));
         while (true) {
-          string r = "";
-          try {
-            if (Environment.GetEnvironmentVariable("DBF_NO_UPDATE") == null) { r = UpdateNow(); if (r.StartsWith("updating")) return; }
-          } catch (Exception e) { Log("hourly update: " + e.Message); }
-          Thread.Sleep(TimeSpan.FromMinutes(r == "busy" ? 3 : 60));
+          try { if (Environment.GetEnvironmentVariable("DBF_NO_UPDATE") == null) CheckUpdate(); } catch (Exception e) { Log("update check: " + e.Message); }
+          Thread.Sleep(TimeSpan.FromMinutes(60));
         }
       }) { IsBackground = true, Name = "updates" }.Start();
 
       if (install) {
         var ok = addon.Contains("installed in") || addon.Contains("Installed the");
-        var msg = "Debrief is installed.\n\n" + addon + "\n\nIt starts with Windows by itself, quietly, and there's a Debrief icon on your desktop and in the Start menu. In WoW, type /reload if it was open.\nAfter each boss pull your recap pops up over the game. In WoW, /reload, then /recap.";
+        var msg = "Debrief is installed.\n\n" + addon + "\n\nIt starts with Windows by itself, quietly, and there's a Debrief icon on your desktop and in the Start menu. In WoW, type /reload if it was open.\nAfter each boss pull your recap pops up over the game, and /recap shows it in WoW.";
         if (Environment.GetEnvironmentVariable("DBF_SILENT") != null) Log(msg);
         else MessageBox.Show(msg, "Debrief", MessageBoxButtons.OK, ok ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
       }
@@ -114,6 +103,14 @@ namespace Debrief {
       server.Stop();
       Log("quit");
       GC.KeepAlive(one);
+    }
+
+    // (a newer version waiting for Update now, and the note by the clock once per version (Oct 25))
+    public static string Available; static string told;
+    public static string CheckUpdate() {
+      var v = Updater.Check(); Available = v;
+      if (v != null && v != told) { told = v; try { Form.UpdateReady(v); } catch { } }
+      return v;
     }
 
     // Updates now unless a boss or practice pull is on: the new files and addon go in, then this copy hands over to the new one.

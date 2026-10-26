@@ -25,6 +25,21 @@ namespace Debrief {
       try { return new Version(a) > new Version(b); } catch { return false; }
     }
 
+    // (only looks (Oct 25: the user chooses when to update): the newer version on debriefme.io, or null; nothing is downloaded)
+    public static string Check() {
+      LastSeen = null;
+      try {
+        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+        string text;
+        var test = Environment.GetEnvironmentVariable("DBF_LATEST"); // (a test address: only a copy on this PC)
+        if (test != null && !test.StartsWith("http://localhost:")) test = null;
+        using (var wc = new TimedClient(6000)) text = wc.DownloadString(test ?? Latest);
+        var m = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(text);
+        var ver = m.ContainsKey("version") ? Convert.ToString(m["version"]) : null; LastSeen = ver;
+        return !string.IsNullOrEmpty(ver) && Newer(ver, Program.Version) ? ver : null;
+      } catch (Exception e) { Program.Log("update check: " + e.Message); return null; }
+    }
+
     public static bool Run(string here) {
       LastSeen = null;
       try {

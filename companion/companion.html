@@ -43,6 +43,9 @@ button, input, select { font: inherit; color: inherit; }
 .btn:hover { border-color: var(--faint); }
 .btn.gold { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
 .btn.gold:hover { background: #efc265; }
+/* (an update is ready (Oct 25): the gold bar under the header, Update now or Later) */
+.updbar { display: flex; align-items: center; gap: 10px; margin: 0 16px 6px; padding: 10px 12px 10px 14px; border: 1px solid rgba(230,180,80,.55); border-radius: 8px; background: rgba(230,180,80,.08); }
+.updbar[hidden] { display: none; } .updbar div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; } .updbar b { color: var(--gold); font: 700 15px var(--body); } .updbar span { color: var(--muted); font: 500 13px var(--body); } .updbar .btn { padding: 6px 13px; font-size: 13.5px; }
 .btn.em { background: linear-gradient(90deg, var(--em-d), var(--em)); color: var(--em-ink); border-color: var(--em); }
 .btn:disabled { opacity: .45; cursor: default; }
 a.btn { text-decoration: none; display: inline-flex; align-items: center; }
@@ -190,6 +193,7 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
   <a class="btn gold" id="web" href="https://debriefme.io/?pc" target="_blank" rel="noopener" title="Opens debriefme.io in your browser. It follows this PC's combat log, so every pull shows up there as it ends.">Open on the website</a>
   <button class="btn ib" id="gear" type="button" aria-expanded="false" aria-controls="more" title="Settings: your combat log, every pull, updates">⚙</button>
 </header>
+<div class="updbar" id="updbar" hidden><div><b id="updT">Debrief is ready to update</b><span>Update when you aren't raiding. Afterwards, type /reload in WoW.</span></div><button class="btn gold" id="updGo" type="button">Update now</button><button class="btn" id="updLater" type="button">Later</button></div>
 
 <div class="stage">
   <main class="main">
@@ -222,7 +226,7 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
     <h2>Settings <button class="btn ib" id="moreX" type="button" aria-label="Close settings">✕</button></h2>
     <div><p class="k">Combat log</p><select id="logSel" aria-label="Combat log"></select><p class="note" id="logInfo"></p></div>
     <div id="pulls" hidden></div>
-    <div><p class="k">Updates</p><button class="btn" id="upd" type="button" title="Looks for a newer Debrief on debriefme.io and installs it now.">Check for updates</button></div>
+    <div><p class="k">Updates</p><button class="btn" id="upd" type="button" title="Looks for a newer Debrief on debriefme.io. You choose when to install it.">Check for updates</button></div>
     <p class="note">Close this window any time: Debrief keeps running in the background. Quit stops it.</p>
   </aside>
   <aside class="side" hidden><div id="preview"></div></aside>
@@ -796,15 +800,27 @@ async function send(b, byHand) {
   return run;
 }
 // (closing this window keeps Debrief running in the background; Quit stops it)
-// (Check for updates: the app updates now, unless a pull is on; the window then reopens as the new version)
+// (updates ask first (Oct 25, the user: "its better for the user to choose when to update so it doesnt break"): a gold bar, Update now or Later.
+// Nothing updates by itself; Later hides it until a newer version or the next start)
+let UPD_LATER = '', UPD_V = '';
+const updShow = (v) => { UPD_V = v || ''; const bar = $('updbar'); if (!v || v === UPD_LATER) { bar.hidden = true; return; } $('updT').textContent = 'Debrief ' + v + ' is ready'; bar.hidden = false; };
+const updPoll = () => j('/update-info').then((x) => updShow(x.available || '')).catch(() => {});
+updPoll(); setInterval(updPoll, 60000);
+$('updLater').addEventListener('click', () => { UPD_LATER = UPD_V; $('updbar').hidden = true; });
+$('updGo').addEventListener('click', async () => {
+  const b = $('updGo'); b.disabled = true; b.textContent = 'Updating…';
+  let r = ''; try { r = (await j('/update', { method: 'POST' })).result || ''; } catch (e) { r = 'offline'; }
+  if (r.startsWith('updating')) { stat('Updating to ' + (r.split(':')[1] || '') + '. Debrief reopens in a moment.', 'busy'); return; }
+  b.disabled = false; b.textContent = 'Update now';
+  stat(r === 'busy' ? 'A pull is on. Update a minute after it ends.' : r.startsWith('current') ? 'You have the newest version.' : "Couldn't reach debriefme.io. Try again later.", '');
+});
+// (Check for updates: only looks; a newer version shows the gold bar)
 $('upd').addEventListener('click', async () => {
   const b = $('upd'); b.disabled = true; b.textContent = 'Checking…';
-  let r = ''; try { r = (await j('/update', { method: 'POST' })).result || ''; } catch (e) { r = 'offline'; }
-  const v = r.split(':')[1] || '';
-  const say = r.startsWith('updating') ? 'Updating to ' + v + '. Debrief reopens in a moment.' : r.startsWith('current') ? 'You have the newest version (' + v + ').' :
-    r === 'busy' ? 'A pull is on. Try again a minute after it ends.' : "Couldn't reach debriefme.io. Try again later.";
-  stat(say, r.startsWith('updating') ? 'busy' : r.startsWith('current') ? 'live' : '');
-  b.textContent = r.startsWith('updating') ? 'Updating…' : 'Check for updates'; b.disabled = r.startsWith('updating');
+  let x = {}; try { x = await j('/update-check', { method: 'POST' }); } catch (e) { x = {}; }
+  if (x.available) { UPD_LATER = ''; updShow(x.available); stat('Debrief ' + x.available + ' is ready: press Update now when it suits you.', ''); }
+  else stat(x.online ? 'You have the newest version (' + (x.current || '') + ').' : "Couldn't reach debriefme.io. Try again later.", x.online ? 'live' : '');
+  b.disabled = false; b.textContent = 'Check for updates';
 });
 $('quit').addEventListener('click', async () => {
   L.live = false;

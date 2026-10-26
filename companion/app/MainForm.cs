@@ -149,6 +149,15 @@ namespace Debrief {
     }
 
     // (no clipboard: nothing is copied or pasted since Oct 24; the copy code left on Oct 25)
+    // (an update is ready (Oct 25): a note by the clock, once per version; clicking it opens the window, where Update now is)
+    bool balloonHooked;
+    public void UpdateReady(string v) {
+      Action a = () => {
+        if (!balloonHooked) { balloonHooked = true; tray.BalloonTipClicked += (s, e) => ShowInFront(); }
+        tray.ShowBalloonTip(8000, "Debrief " + v + " is ready", "Update when it suits you, not mid-raid: open Debrief and press Update now.", ToolTipIcon.None);
+      };
+      try { if (InvokeRequired) BeginInvoke(a); else a(); } catch { }
+    }
 
     // ---------- the window's size and place, kept between starts ----------
     // (sizes are in screen pixels: 1100 wide means 1100 at 100% scaling, 1650 at 150%)
