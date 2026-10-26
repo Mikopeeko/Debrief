@@ -7228,30 +7228,6 @@ html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac +
 /* tiles keep their own height: a tall one no longer stretches its neighbour into an empty box */
 .pfv .ds-rcols section.rck .rck-cat .rck-rs { align-items: start; }
 .pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r > summary { height: auto; }
-/* ===== Design studio round 32 (Oct 26): Rotation's top: the hero's numbers in one row under the name (no empty Parse box), the pull-at-a-glance strip
-   as a slim folded strip under the top boxes, a card's How line uncut on a phone. Owner: the Design studio chat. ===== */
-#view .spc-hero .spc-kt.ds-hide { display: none !important; }
-@media (min-width: 761px) {
-  /* the tiles live under the name inside .spc-hm: side by side there instead of stacked */
-  #view .spc-hero .spc-hm .spc-kts { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important; max-width: none !important; margin-top: 8px; gap: 8px; }
-  #view .spc-hero .spc-kt { padding: 6px 10px; gap: 1px; }
-  #view .spc-hero .spc-kt .spc-ktv { font-size: 18px; }
-}
-/* the glance strip: one slim folded row between the top boxes and the columns */
-#view .pf-inl.spc-v > details.spc-chd.ds-glance { margin: 14px 0 18px !important; border: 1px solid rgba(255,255,255,.16); border-radius: 10px; background: var(--raised, rgba(255,255,255,.05)); }
-#view .pf-inl.spc-v > details.spc-chd.ds-glance + .ds-rcols { margin-top: 0; }
-#view .pf-inl.spc-v > details.spc-chd.ds-glance:not([open]) > summary.spc-chap:hover { background: rgba(255,255,255,.04); border-radius: 10px; }
-#view .pf-inl.spc-v > details.spc-chd.ds-glance > summary.spc-chap > .spc-cht { margin-left: auto; color: var(--gold); font: 600 12.5px var(--body); letter-spacing: 0; text-transform: none; }
-#view .pf-inl.spc-v > details.spc-chd.ds-glance > summary.spc-chap { margin: 0; padding: 9px 14px; font-size: 13px; letter-spacing: 1px; cursor: pointer; }
-#view .pf-inl.spc-v > details.spc-chd.ds-glance > summary.spc-chap::before, #view .pf-inl.spc-v > details.spc-chd.ds-glance > summary.spc-chap > .spc-chn { display: none; }
-#view .pf-inl.spc-v > details.spc-chd.ds-glance > summary.spc-chap > .spc-chs { font: 400 12.5px var(--body); letter-spacing: 0; text-transform: none; color: var(--muted); text-shadow: none; }
-/* the checklist's panel reads like the strip above it: raised, with a clear edge (the user: "maybe this box should have something similar") */
-#view .pfv .ds-rcols section.rck .rck-cats, #view section.rck > .rck-cats { background: var(--raised, rgba(255,255,255,.05)) !important; border: 1px solid rgba(255,255,255,.16) !important; border-radius: 10px !important; }
-/* "Where your healing came from": the same raised panel, and the legend's colour is a thin tag on the icon instead of a second marker */
-#view .rck-gx .rgx-src { background: var(--raised, rgba(255,255,255,.05)) !important; border: 1px solid rgba(255,255,255,.16) !important; border-radius: 10px !important; }
-#view .rck-gx .rgx-src .rgx-lg > span > u { display: inline-block; width: 3px; height: 18px; border-radius: 2px; margin: 0 5px 0 0; vertical-align: middle; }
-/* a card's How line is not cut off on a phone */
-@media (max-width: 760px) { #view .rck-sg .rck-how { display: block; -webkit-line-clamp: unset; overflow: visible; } }
 /* ===== Design studio round 33 (Oct 26): a ring inset that clips nothing: the inset shows its tiles whole (no overflow clipping of their edges) and the two columns
    are capped so a tile is never wider than its column. Owner: the Design studio chat. ===== */
 .pfv .ds-rcols section.rck .rck-cat .rck-rs { overflow: visible !important; }
@@ -7386,6 +7362,30 @@ html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac +
 /* big-damage moments: in Summary only the ones a cooldown covered */
 #view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.warn, #view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.bad, #view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-wall { display: none; }
 #view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.ok.spc-wx { display: block; }
+/* ===== Design studio round 32 (Oct 26): Rotation's top: the hero's numbers in one row under the name (no empty Parse box), the pull-at-a-glance strip
+   as a slim folded strip under the top boxes, a card's How line uncut on a phone. Owner: the Design studio chat. ===== */
+#view .spc-hero .spc-kt.ds-hide { display: none !important; }
+@media (min-width: 761px) {
+  /* the tiles live under the name inside .spc-hm: side by side there instead of stacked */
+  #view .spc-hero .spc-hm .spc-kts { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important; max-width: none !important; margin-top: 8px; gap: 8px; }
+  #view .spc-hero .spc-kt { padding: 6px 10px; gap: 1px; }
+  #view .spc-hero .spc-kt .spc-ktv { font-size: 18px; }
+}
+/* the glance strip: one slim folded row between the top boxes and the columns */
+#view .pf-inl.spc-v > details.spc-chd.ds-glance { margin: 14px 0 18px !important; border: 1px solid rgba(255,255,255,.16); border-radius: 10px; background: var(--raised, rgba(255,255,255,.05)); }
+#view .pf-inl.spc-v > details.spc-chd.ds-glance + .ds-rcols { margin-top: 0; }
+#view .pf-inl.spc-v > details.spc-chd.ds-glance:not([open]) > summary.spc-chap:hover { background: rgba(255,255,255,.04); border-radius: 10px; }
+#view .pf-inl.spc-v > details.spc-chd.ds-glance > summary.spc-chap > .spc-cht { margin-left: auto; color: var(--gold); font: 600 12.5px var(--body); letter-spacing: 0; text-transform: none; }
+#view .pf-inl.spc-v > details.spc-chd.ds-glance > summary.spc-chap { margin: 0; padding: 9px 14px; font-size: 13px; letter-spacing: 1px; cursor: pointer; }
+#view .pf-inl.spc-v > details.spc-chd.ds-glance > summary.spc-chap::before, #view .pf-inl.spc-v > details.spc-chd.ds-glance > summary.spc-chap > .spc-chn { display: none; }
+#view .pf-inl.spc-v > details.spc-chd.ds-glance > summary.spc-chap > .spc-chs { font: 400 12.5px var(--body); letter-spacing: 0; text-transform: none; color: var(--muted); text-shadow: none; }
+/* the checklist's panel reads like the strip above it: raised, with a clear edge (the user: "maybe this box should have something similar") */
+#view .pfv .ds-rcols section.rck .rck-cats, #view section.rck > .rck-cats { background: var(--raised, rgba(255,255,255,.05)) !important; border: 1px solid rgba(255,255,255,.16) !important; border-radius: 10px !important; }
+/* "Where your healing came from": the same raised panel, and the legend's colour is a thin tag on the icon instead of a second marker */
+#view .rck-gx .rgx-src { background: var(--raised, rgba(255,255,255,.05)) !important; border: 1px solid rgba(255,255,255,.16) !important; border-radius: 10px !important; }
+#view .rck-gx .rgx-src .rgx-lg > span > u { display: inline-block; width: 3px; height: 18px; border-radius: 2px; margin: 0 5px 0 0; vertical-align: middle; }
+/* a card's How line is not cut off on a phone */
+@media (max-width: 760px) { #view .rck-sg .rck-how { display: block; -webkit-line-clamp: unset; overflow: visible; } }
 </style>
 
 
@@ -51487,16 +51487,6 @@ function dsRotOpen() { const sec = document.querySelector('#view section.rck'); 
   /* tiles are out of the app's one-at-a-time accordion: their toggle never reaches it (and they cannot close) */
   window.addEventListener('toggle', (e) => { const d = e.target; if (!d || !d.matches || !d.matches('#view section.rck .rck-rs > details.rck-r')) return; e.stopImmediatePropagation(); if (!d.open) d.open = true; else dsWsTrim(d); }, true); })();
 
-// ===== Design studio round 32 (Oct 26): Rotation's top: a Parse tile with no rank is hidden, the Fix first ring opens by itself once per page,
-// the pull-at-a-glance strip moves up under the top boxes (folded). Owner: the Design studio chat. =====
-function dsRotTop() { const v = document.querySelector('#view .pf-inl.spc-v'); if (!v) return;
-  v.querySelectorAll('.spc-hero .spc-kt:not([data-ds-kt])').forEach((k) => { k.dataset.dsKt = '1'; if (/not ranked/i.test(k.textContent) && /^Parse/.test(((k.querySelector('.spc-ktl') || {}).textContent || '').trim())) k.classList.add('ds-hide'); });
-  const gl = v.querySelector(':scope > details.spc-chd[data-k="spcch-your-pull-at-a-glance"]'), cols = v.querySelector(':scope > .ds-rcols');
-  if (gl && cols && !gl.dataset.dsUp) { gl.dataset.dsUp = '1'; gl.open = false; gl.classList.add('ds-glance'); cols.before(gl); }
-  const sec = v.querySelector('section.rck'), card = v.querySelector('.rck-fix .rck-sg[data-ck]');
-  if (sec && card && !sec.dataset.dsAuto) { sec.dataset.dsAuto = '1'; if (![...sec.querySelectorAll('.rck-cat')].some((c) => c.open)) { const t = document.getElementById('spc-r-' + card.dataset.ck); const cat = t && t.closest('.rck-cat'); if (cat) cat.open = true; } } }
-(function () { const f21 = dsBars; dsBars = function (root) { f21(root); try { dsRotTop(); } catch (e) {} }; })();
-
 // ===== Design studio round 35 (Oct 26): a rule on hover, a flash on arrival: every tile's name carries its "How it's judged" as the tooltip; a What to fix card
 // flashes the tile it jumps to. Owner: the Design studio chat. =====
 function dsRotTips() { const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -51659,6 +51649,16 @@ function dsRotDedupe() { const NUMS = (s) => { const o = new Set(); (String(s ||
     const oneSentence = !/[.!?]\s+\S/.test(p.textContent.trim());
     if (extra === 0 || (valIn && extra <= 1 && oneSentence)) p.classList.add('ds-dup'); }); }
 (function () { const f19 = dsBars; dsBars = function (root) { f19(root); try { dsRotWords(); dsRotColour(); dsRotDedupe(); } catch (e) {} }; })();
+
+// ===== Design studio round 32 (Oct 26): Rotation's top: a Parse tile with no rank is hidden, the Fix first ring opens by itself once per page,
+// the pull-at-a-glance strip moves up under the top boxes (folded). Owner: the Design studio chat. =====
+function dsRotTop() { const v = document.querySelector('#view .pf-inl.spc-v'); if (!v) return;
+  /* (the Parse tile stays even when it says "not ranked": the user, Oct 26, "the dps have one healers should too") */
+  const gl = v.querySelector(':scope > details.spc-chd[data-k="spcch-your-pull-at-a-glance"]'), cols = v.querySelector(':scope > .ds-rcols');
+  if (gl && cols && !gl.dataset.dsUp) { gl.dataset.dsUp = '1'; gl.open = false; gl.classList.add('ds-glance'); cols.before(gl); }
+  const sec = v.querySelector('section.rck'), card = v.querySelector('.rck-fix .rck-sg[data-ck]');
+  if (sec && card && !sec.dataset.dsAuto) { sec.dataset.dsAuto = '1'; if (![...sec.querySelectorAll('.rck-cat')].some((c) => c.open)) { const t = document.getElementById('spc-r-' + card.dataset.ck); const cat = t && t.closest('.rck-cat'); if (cat) cat.open = true; } } }
+(function () { const f21 = dsBars; dsBars = function (root) { f21(root); try { dsRotTop(); } catch (e) {} }; })();
 
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====

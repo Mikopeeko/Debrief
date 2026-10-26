@@ -30773,16 +30773,6 @@ function dsRotOpen() { const sec = document.querySelector('#view section.rck'); 
   /* tiles are out of the app's one-at-a-time accordion: their toggle never reaches it (and they cannot close) */
   window.addEventListener('toggle', (e) => { const d = e.target; if (!d || !d.matches || !d.matches('#view section.rck .rck-rs > details.rck-r')) return; e.stopImmediatePropagation(); if (!d.open) d.open = true; else dsWsTrim(d); }, true); })();
 
-// ===== Design studio round 32 (Oct 26): Rotation's top: a Parse tile with no rank is hidden, the Fix first ring opens by itself once per page,
-// the pull-at-a-glance strip moves up under the top boxes (folded). Owner: the Design studio chat. =====
-function dsRotTop() { const v = document.querySelector('#view .pf-inl.spc-v'); if (!v) return;
-  v.querySelectorAll('.spc-hero .spc-kt:not([data-ds-kt])').forEach((k) => { k.dataset.dsKt = '1'; if (/not ranked/i.test(k.textContent) && /^Parse/.test(((k.querySelector('.spc-ktl') || {}).textContent || '').trim())) k.classList.add('ds-hide'); });
-  const gl = v.querySelector(':scope > details.spc-chd[data-k="spcch-your-pull-at-a-glance"]'), cols = v.querySelector(':scope > .ds-rcols');
-  if (gl && cols && !gl.dataset.dsUp) { gl.dataset.dsUp = '1'; gl.open = false; gl.classList.add('ds-glance'); cols.before(gl); }
-  const sec = v.querySelector('section.rck'), card = v.querySelector('.rck-fix .rck-sg[data-ck]');
-  if (sec && card && !sec.dataset.dsAuto) { sec.dataset.dsAuto = '1'; if (![...sec.querySelectorAll('.rck-cat')].some((c) => c.open)) { const t = document.getElementById('spc-r-' + card.dataset.ck); const cat = t && t.closest('.rck-cat'); if (cat) cat.open = true; } } }
-(function () { const f21 = dsBars; dsBars = function (root) { f21(root); try { dsRotTop(); } catch (e) {} }; })();
-
 // ===== Design studio round 35 (Oct 26): a rule on hover, a flash on arrival: every tile's name carries its "How it's judged" as the tooltip; a What to fix card
 // flashes the tile it jumps to. Owner: the Design studio chat. =====
 function dsRotTips() { const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -30945,6 +30935,16 @@ function dsRotDedupe() { const NUMS = (s) => { const o = new Set(); (String(s ||
     const oneSentence = !/[.!?]\s+\S/.test(p.textContent.trim());
     if (extra === 0 || (valIn && extra <= 1 && oneSentence)) p.classList.add('ds-dup'); }); }
 (function () { const f19 = dsBars; dsBars = function (root) { f19(root); try { dsRotWords(); dsRotColour(); dsRotDedupe(); } catch (e) {} }; })();
+
+// ===== Design studio round 32 (Oct 26): Rotation's top: a Parse tile with no rank is hidden, the Fix first ring opens by itself once per page,
+// the pull-at-a-glance strip moves up under the top boxes (folded). Owner: the Design studio chat. =====
+function dsRotTop() { const v = document.querySelector('#view .pf-inl.spc-v'); if (!v) return;
+  /* (the Parse tile stays even when it says "not ranked": the user, Oct 26, "the dps have one healers should too") */
+  const gl = v.querySelector(':scope > details.spc-chd[data-k="spcch-your-pull-at-a-glance"]'), cols = v.querySelector(':scope > .ds-rcols');
+  if (gl && cols && !gl.dataset.dsUp) { gl.dataset.dsUp = '1'; gl.open = false; gl.classList.add('ds-glance'); cols.before(gl); }
+  const sec = v.querySelector('section.rck'), card = v.querySelector('.rck-fix .rck-sg[data-ck]');
+  if (sec && card && !sec.dataset.dsAuto) { sec.dataset.dsAuto = '1'; if (![...sec.querySelectorAll('.rck-cat')].some((c) => c.open)) { const t = document.getElementById('spc-r-' + card.dataset.ck); const cat = t && t.closest('.rck-cat'); if (cat) cat.open = true; } } }
+(function () { const f21 = dsBars; dsBars = function (root) { f21(root); try { dsRotTop(); } catch (e) {} }; })();
 
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
