@@ -20310,7 +20310,7 @@ function plbRevCards(B, pages, stT) { const ps = [...B.pr.players.values()], byN
     return card(s0, stT[i][1], pg.title, !has ? 'none' : open.has(s0) ? 'warn' : 'ok', has ? rows : '', 0, pg.key); });
   const sp = (id, t) => spellIcon(id, ndzSpellNm(id) || t) + '<span class="plb-rsp">' + esc(ndzSpellNm(id) || t) + '</span>';
   const cds = (B.cds || []).slice().sort((a, b) => a.ph - b.ph || a.t - b.t);
-  out.push(card(pages.length + 1, stT[pages.length][1], 'Raid cooldowns', cds.length ? 'ok' : 'none', cds.map((c) => { const w = String(c.who || '').split(/\s+/).filter(Boolean); return row(plbT(c.ph, c.t), sp(c.id, c.text || 'Cooldown') + (w.length ? w.map((x) => nm(x.split('-')[0], 0)).join('') : nobody), 'plb-rt'); }).join(''), 2, 'cds'));
+  if (!B.noCdsCard) /* (not on the boss page: the Cooldowns section is right above, Oct 26) */ out.push(card(pages.length + 1, stT[pages.length][1], 'Raid cooldowns', cds.length ? 'ok' : 'none', cds.map((c) => { const w = String(c.who || '').split(/\s+/).filter(Boolean); return row(plbT(c.ph, c.t), sp(c.id, c.text || 'Cooldown') + (w.length ? w.map((x) => nm(x.split('-')[0], 0)).join('') : nobody), 'plb-rt'); }).join(''), 2, 'cds'));
   const calls = Object.entries(B.calls || {}).filter(([, c]) => c && (c.def || c.hs || c.pot)).map(([k, c]) => { const [ph, rel] = k.split('|').map(Number); return { ph, rel, c }; }).sort((a, b) => a.ph - b.ph || a.rel - b.rel);
   const line = (lab, f) => { const xs = calls.filter((x) => x.c[f]); return xs.length ? row(lab, xs.map((x) => '<span class="plb-rhit">' + plbT(x.ph, x.rel) + (x.c.hit ? ' · ' + esc(x.c.hit) : '') + '</span>').join('')) : ''; };
   const exts = (B.exts || []).filter((x) => x.who).sort((a, b) => a.ph - b.ph || a.t - b.t);
@@ -23862,7 +23862,7 @@ function planWhoLineH(pb) { const o = pnGet(), lc = (s) => String(s).toLowerCase
 function planJobCardsH(pb, n) { let B; try { B = ndzBjB(pb, n); } catch (e) { return ndzBjH(pb, n); }
   try { if (!B.calls && B.noteId && typeof ndzPersFromNote === 'function') ndzPersFromNote(B); } catch (e) { /* (no defensives card then) */ }
   const pages = B.pages || [], stT = pages.map((pg) => [pg.title, ndzPgIconId(pg) ? spellIcon(ndzPgIconId(pg), pg.icon) : spIc(pg.icon)]).concat([['Raid cooldowns', spellIcon(98008, 'Spirit Link Totem')], ['Defensives', spellIcon(6262, 'Healthstone')]]);
-  let h = ''; try { h = plbRevCards(B, pages, stT); } catch (e) { return ndzBjH(pb, n); }
+  let h = ''; try { B.noCdsCard = true; h = plbRevCards(B, pages, stT); } /* (no Raid cooldowns card on the boss page, Oct 26) */ catch (e) { return ndzBjH(pb, n); }
   h = h.split('data-bgo="').join('data-ndzbuild="1" data-noteboss="' + esc(pb) + '" data-noteid="' + esc(n.id) + '" data-plbgo="');
   return '<div class="panel ndz-dpan bj-jobs plj plb-one"><div class="ndz-dph"><b>Jobs</b><span class="sub">✎ Edit opens that part of the plan</span></div>' + h + '</div>'; }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-plbgo]'); if (!b || S.page !== 'plan') return; S.plbGoTo = +b.dataset.plbgo; }, true); /* (before the Edit opens: which section to land on) */
