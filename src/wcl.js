@@ -258,7 +258,7 @@ const TEAM_INFO_Q = `query($id:Int,$name:String,$srv:String,$reg:String){guildDa
 const TEAM_REPORTS_Q = `query($id:Int!,$page:Int!){reportData{reports(guildID:$id,limit:100,page:$page){last_page data{code title startTime endTime zone{id name} guildTag{name}}}}}`;
 const NIGHT_Q = `query($code:String!){reportData{report(code:$code){title startTime endTime
   fights(killType:Encounters){id encounterID name difficulty kill startTime endTime size fightPercentage bossPercentage lastPhase lastPhaseIsIntermission friendlyPlayers}
-  masterData{actors(type:"Player"){id name subType server}}}}}`;
+  masterData{actors(type:"Player"){id name subType server icon}}}}}`;
 const DEATHS_Q = `query($code:String!,$s:Float!,$e:Float!){reportData{report(code:$code){events(startTime:$s,endTime:$e,dataType:Deaths,limit:10000){data nextPageTimestamp}}}}`;
 const DIFF_NAME = { 14: 'Normal', 15: 'Heroic', 16: 'Mythic', 17: 'LFR' };
 function parseTeamLink(s) {
@@ -350,15 +350,15 @@ async function charReports(creds, id, since) {
   return out;
 }
 // one night's boss pulls: { at (wall-clock ms), boss, id, diffId, diff, dur, kill, endPct, endBoss, endPhase, players, deaths, first, fight }
-async function nightPulls(creds, code) {
-  const rep = HOSTED ? await api('/api/night?code=' + enc(code)) : ((d) => d && d.reportData && d.reportData.report)(await gql(creds, NIGHT_Q, { code }));
+async function nightPulls(creds, code, lite) { /* (lite: players only, no deaths, Oct 25) */
+  const rep = HOSTED ? await api('/api/night?code=' + enc(code) + '&sp=1') : ((d) => d && d.reportData && d.reportData.report)(await gql(creds, NIGHT_Q, { code }));
   if (!rep) throw new Error('Report ' + code + ' was not found or is private.');
   const names = new Map((rep.masterData.actors || []).map((a) => [a.id, a.name]));
   const fights = (rep.fights || []).filter((f) => f.encounterID > 0 && DIFF_NAME[WCL_DIFF[f.difficulty]]);
   if (!fights.length) return { title: rep.title, pulls: [] };
   // (deaths for the whole report in one go, then split by fight: players only, in order)
   const s0 = Math.min(...fights.map((f) => f.startTime)), e0 = Math.max(...fights.map((f) => f.endTime)), deaths = [];
-  for (let s = s0; s != null && s < e0;) { const ev = HOSTED ? evOf(await api('/api/deaths?code=' + enc(code) + '&s=' + s + '&e=' + e0)) : (await gql(creds, DEATHS_Q, { code, s, e: e0 })).reportData.report.events; for (const e of ev.data || []) if (e.type === 'death') deaths.push(e); s = ev.nextPageTimestamp; }
+  for (let s = lite ? null : s0; s != null && s < e0;) { const ev = HOSTED ? evOf(await api('/api/deaths?code=' + enc(code) + '&s=' + s + '&e=' + e0)) : (await gql(creds, DEATHS_Q, { code, s, e: e0 })).reportData.report.events; for (const e of ev.data || []) if (e.type === 'death') deaths.push(e); s = ev.nextPageTimestamp; }
   const pulls = fights.map((f) => {
     const mine = new Set(f.friendlyPlayers || []), dd = deaths.filter((e) => e.fight === f.id && mine.has(e.targetID)).sort((a, b) => a.timestamp - b.timestamp), diffId = WCL_DIFF[f.difficulty];
     return { fight: f.id, at: rep.startTime + f.startTime, boss: f.name, id: f.encounterID, diffId, diff: DIFF_NAME[diffId], dur: (f.endTime - f.startTime) / 1000, kill: !!f.kill,
@@ -367,7 +367,7 @@ async function nightPulls(creds, code) {
       players: [...mine].map((i) => names.get(i)).filter(Boolean), deaths: dd.length, first: dd.length ? names.get(dd[0].targetID) || null : null };
   });
   // (each player's class, as the game's token like PALADIN or DEATHKNIGHT, and server: for "Which one is you?" on a team)
-  const who = {}; for (const a of rep.masterData.actors || []) if (a.name) who[a.name] = [a.subType ? String(a.subType).toUpperCase().replace(/\s+/g, '') : null, a.server || null];
+  const who = {}; for (const a of rep.masterData.actors || []) if (a.name) who[a.name] = [a.subType ? String(a.subType).toUpperCase().replace(/\s+/g, '') : null, a.server || null, /-/.test(a.icon || '') ? String(a.icon).split('-').slice(1).join('-') : null]; /* (and their spec, Oct 25) */
   return { title: rep.title, pulls, who };
 }
 
