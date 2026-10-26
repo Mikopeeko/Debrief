@@ -1090,9 +1090,9 @@ const DANCERS = [
     '<ellipse cx="37" cy="31" rx="9.5" ry="7" fill="#5bb586"/><ellipse cx="34" cy="29" rx="2.2" ry="2.8" fill="#f3d34a"/><ellipse cx="41" cy="29" rx="2.2" ry="2.8" fill="#f3d34a"/><rect x="33.6" y="27.2" width=".9" height="3.6" rx=".4" fill="#14231a"/><rect x="40.6" y="27.2" width=".9" height="3.6" rx=".4" fill="#14231a"/>' +
     '<path class="ld-tg" d="M29 34l-6 2.4M29 34l-5.6-1.6" stroke="#e0465a" stroke-width="1.5" stroke-linecap="round"/>'],
 ];
-const LOAD_TIPS = ['Click any pull\'s bar at the top to jump to it.', 'Click a player\'s name anywhere to open their page.', 'Hover a spell\'s name to see what it does.',
-  'The wipe filter stops counting after a set number of deaths, so the end of a wipe doesn\'t pile up mistakes.', 'Paste your NSRT note on Assignments, and soaks, kicks, orbs and cooldowns get checked on every pull.',
-  'Debriefing explains the pull in a few sentences: what went well, what didn\'t, and what changed since the last pull.', 'Pick All pulls beside the pull bars to see how the night went, with how far each pull got.', 'Report card gives everyone one grade from their mechanics, their Rotation, and how they stayed alive.'];
+const LOAD_TIPS = ['Click any pull\'s dot on the line at the top to jump to it.', 'Click a player\'s name anywhere to open their page.', 'Hover a spell\'s name to see what it does.',
+  'Deaths and mistakes count until the wipe is called. Everything after that is the wipe, not on you.', 'Click a mechanic\'s row on Debriefing to open its details, with a small map of what happened.',
+  'Debriefing explains the pull in a few sentences: what went well, what didn\'t, and what changed since the last pull.', 'Pick All pulls at the top to see how the night went, with how far each pull got.', 'Report card gives everyone one grade from their mechanics, their Rotation, and how they stayed alive.'];
 let LD_LAST = -1;
 function loadCard(title, line, frac, id) {
   let k = Math.floor(Math.random() * DANCERS.length); if (k === LD_LAST) k = (k + 1) % DANCERS.length; LD_LAST = k;
@@ -1117,7 +1117,7 @@ const INFLIGHT = new Map();
    straight away (when it isn't read yet), and the page redraws once when it's in) */
 function prevLoad(it) { if (!it || !S.index) return; const prev = (S.index.bosses || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull < it.pull).sort((a, b) => b.pull - a.pull)[0];
   if (!prev || CACHE.has(prev) || prev._pl) return; prev._pl = 1;
-  (async () => { try { if (prev.wcl && WCL.isSaved && !(await WCL.isSaved(prev))) await WCL.loadEvents(S.wclCreds, prev, () => {}); await getRep(prev); } finally { prev._pl = 0; }
+  (async () => { try { if (prev.wcl && !RW.on() && WCL.isSaved && !(await WCL.isSaved(prev))) await WCL.loadEvents(S.wclCreds, prev, () => {}); await getRep(prev); } finally { prev._pl = 0; }
     const v0 = document.querySelector('#view'); if (S.item === it && S.tab === 'audit' && S.rep && !S.rep.allPulls && v0 && v0._cs && v0._cs.trend && !v0._cs.trend.prvN) prevArrived(); })().catch(() => { prev._pl = 0; }); }
 function getRep(item) {
   if (CACHE.has(item)) { const r = CACHE.get(item); CACHE.delete(item); CACHE.set(item, r); return Promise.resolve(r); } /* (to the back of the line: the memory limit lets go of the oldest first) */
@@ -1131,39 +1131,148 @@ const anPause = () => new Promise((r) => setTimeout(r, 0));
 const analyzeSoft = (item, text, opts) => { const run = AN_Q.then(() => E.analyzeAsync(item, text, opts, anPause)); AN_Q = run.catch(() => {}); return run; };
 /* (Oct 25, your ask "everytime i reload the page it reloads the entire log": a finished reading is kept on this PC, so a reload opens the pull
    at once instead of reading the log again. A new version of Debrief (new rules) reads each pull once more; the 120 newest are kept) */
+/* (Oct 25 night: a reading's live parts worked out, as plain functions with nothing from outside, so the reading workers (RW) run the very same code) */
+function rdStrip(o, seen) { seen = seen || new WeakMap(); if (typeof o === 'function') return undefined; if (!o || typeof o !== 'object') return o; if (seen.has(o)) return seen.get(o);
+  if (o instanceof Map) { const m = new Map(); seen.set(o, m); for (const [k, v] of o) m.set(k, rdStrip(v, seen)); return m; } if (o instanceof Set) { const s2 = new Set(); seen.set(o, s2); for (const v of o) s2.add(rdStrip(v, seen)); return s2; }
+  if (Array.isArray(o)) { const a = []; seen.set(o, a); for (const x of o) a.push(rdStrip(x, seen)); return a; } if (o instanceof Date || ArrayBuffer.isView(o)) return o;
+  const c = {}; seen.set(o, c); for (const k of Object.keys(o)) { const v = rdStrip(o[k], seen); if (v !== undefined) c[k] = v; } return c; }
+function rdBake(rep, ct) {
+  const bakeJudge = (g) => { for (const j of g.judge || []) { if (typeof j.mk !== 'function') continue; const tl = (j.tl || []).filter((x) => x.t <= ct + 0.05); if (!tl.length) continue;
+    const worst = tl.slice().sort((a, b) => (j.dt != null ? Math.abs(a.t - j.dt) - Math.abs(b.t - j.dt) : b.a - a.a))[0]; try { j._mkAt = worst.t; j._mkMap = j.mk(worst.t); } catch (e) { /* (no map) */ } } };
+  for (const s of (rep.module && !rep.module.error && rep.module.sections) || []) for (const g of s.groups || []) {
+    if (typeof g.lim === 'function') { try { g._lim = g.lim(ct); } catch (e) { /* (the full-pull limits) */ } }
+    bakeJudge(g); if (typeof g.recut === 'function' && isFinite(ct)) { try { const c = g.recut(ct); g._rc = { t: ct, c: c || null }; if (c) bakeJudge(c); } catch (e) { /* (no re-cut) */ } } } }
+/* (Oct 25 night: the saved readings' database. Version 2 adds 'at', when each reading was saved, so keeping the newest 120 reads only that
+   small list; before, it loaded every saved reading on every save once a PC had more than 120) */
+function rdOpen() { return new Promise((res) => { try { const q = indexedDB.open('wla-reads', 2);
+  q.onupgradeneeded = () => { const d = q.result; if (!d.objectStoreNames.contains('reps')) d.createObjectStore('reps'); if (!d.objectStoreNames.contains('at')) d.createObjectStore('at'); };
+  q.onsuccess = () => { const d = q.result; d.onversionchange = () => d.close(); res(d); }; q.onerror = () => res(null); q.onblocked = () => res(null); } catch (e) { res(null); } }); }
+function rdTrim(d, keep) { return new Promise((res) => { try { const t = d.transaction(['reps', 'at'], 'readwrite'), R0 = t.objectStore('reps'), A = t.objectStore('at'), qk = R0.getAllKeys(), ak = A.getAllKeys(), av = A.getAll();
+  t.oncomplete = () => res(true); t.onerror = t.onabort = () => res(false);
+  av.onsuccess = () => { const keys = qk.result || []; if (keys.length <= keep) return; const at = new Map((ak.result || []).map((k, i) => [k, av.result[i] || 0]));
+    for (const [k] of keys.map((k) => [k, at.get(k) || 0]).sort((a, b) => a[1] - b[1]).slice(0, keys.length - keep)) { R0.delete(k); A.delete(k); } }; } catch (e) { res(false); } }); }
+function rdSave(d, key, v, keep) { return new Promise((res) => { try { const t = d.transaction(['reps', 'at'], 'readwrite'); t.objectStore('reps').put(v, key); t.objectStore('at').put(v.at, key);
+  t.oncomplete = () => res(rdTrim(d, keep)); t.onerror = t.onabort = () => res(false); } catch (e) { res(false); } }); }
 const RD = (() => { let dbp = null, ver = null;
-  const open = () => dbp || (dbp = new Promise((res) => { try { const q = indexedDB.open('wla-reads', 1); q.onupgradeneeded = () => q.result.createObjectStore('reps'); q.onsuccess = () => res(q.result); q.onerror = () => res(null); } catch (e) { res(null); } }));
+  const open = () => dbp || (dbp = rdOpen());
   const hash = (s) => { let h = 5381; for (let i = 0; i < s.length; i += 7) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36) + s.length.toString(36); };
   /* (Oct 25, your note "its re-reading the pulls everytime i refresh": only the rules count (the engine and the log translator, the big scripts that
      aren't the page itself), so updates to wording or looks keep the saved readings) */
-  const version = () => ver || (ver = hash([...document.scripts].map((x) => x.text || '').filter((t) => t.trimStart().startsWith('(function (root)')).join('|')));
-  const keyOf = (item) => { const w = item.wcl; const base = w ? 'w:' + w.code + ':' + w.fight : item.shr ? 's:' + (item.shr.id || item.shr) + ':' + item.n : 'f:' + (item.startMs || 0) + ':' + item.boss + ':' + item.pull;
-    let o = ''; try { o = JSON.stringify([overrides(), (S.packs || []).length]); } catch (e) { o = ''; } return base + '|' + item.diffId + '|' + version() + '|' + hash(o); };
+  const hashAll = (s) => { let h = 5381, g = 52711; for (let i = 0; i < s.length; i++) { const c = s.charCodeAt(i); h = ((h << 5) + h + c) | 0; g = ((g << 5) + g + c) | 0; } return (h >>> 0).toString(36) + (g >>> 0).toString(36) + s.length.toString(36); };
+  /* (every character (Oct 25 night): a sample of every 7th missed a change that kept the length) */
+  const version = () => ver || (ver = hashAll([...document.scripts].map((x) => x.text || '').filter((t) => t.trimStart().startsWith('(function (root)')).join('|')));
+  const keyOf = (item, old) => { const w = item.wcl; const base = w ? 'w:' + w.code + ':' + w.fight : item.shr ? 's:' + (item.shr.id || item.shr) + ':' + item.n : 'f:' + (item.startMs || 0) + ':' + item.boss + ':' + item.pull;
+    let o = ''; try { o = JSON.stringify([overrides(), (S.packs || []).length]); } catch (e) { o = ''; } return base + '|' + item.diffId + (old ? '|' + version() : '') + '|' + hash(o); };
   const tx = async (mode, fn) => { const d = await open(); if (!d) return null; return new Promise((res) => { try { const t = d.transaction('reps', mode), st = t.objectStore('reps'); const out = fn(st); t.oncomplete = () => res(out && out.result !== undefined ? out.result : out); t.onerror = () => res(null); t.onabort = () => res(null); } catch (e) { res(null); } }); };
   // a reading with its live parts worked out (they're functions, which can't be saved)
-  const strip = (o, seen = new WeakMap()) => { if (typeof o === 'function') return undefined; if (!o || typeof o !== 'object') return o; if (seen.has(o)) return seen.get(o);
-    if (o instanceof Map) { const m = new Map(); seen.set(o, m); for (const [k, v] of o) m.set(k, strip(v, seen)); return m; } if (o instanceof Set) { const s2 = new Set(); seen.set(o, s2); for (const v of o) s2.add(strip(v, seen)); return s2; }
-    if (Array.isArray(o)) { const a = []; seen.set(o, a); for (const x of o) a.push(strip(x, seen)); return a; } if (o instanceof Date || ArrayBuffer.isView(o)) return o;
-    const c = {}; seen.set(o, c); for (const k of Object.keys(o)) { const v = strip(o[k], seen); if (v !== undefined) c[k] = v; } return c; };
-  const bake = (rep) => { const ct = Math.min(cutT(rep), rep.duration || Infinity);
-    const bakeJudge = (g) => { for (const j of g.judge || []) { if (typeof j.mk !== 'function') continue; const tl = (j.tl || []).filter((x) => x.t <= ct + 0.05); if (!tl.length) continue;
-      const worst = tl.slice().sort((a, b) => (j.dt != null ? Math.abs(a.t - j.dt) - Math.abs(b.t - j.dt) : b.a - a.a))[0]; try { j._mkAt = worst.t; j._mkMap = j.mk(worst.t); } catch (e) { /* (no map) */ } } };
-    for (const s of (rep.module && !rep.module.error && rep.module.sections) || []) for (const g of s.groups || []) {
-      if (typeof g.lim === 'function') { try { g._lim = g.lim(ct); } catch (e) { /* (the full-pull limits) */ } }
-      bakeJudge(g); if (typeof g.recut === 'function' && isFinite(ct)) { try { const c = g.recut(ct); g._rc = { t: ct, c: c || null }; if (c) bakeJudge(c); } catch (e) { /* (no re-cut) */ } } } };
+  const strip = (o) => rdStrip(o), cutOf = (rep) => Math.min(cutT(rep), rep.duration || Infinity), bake = (rep) => rdBake(rep, cutOf(rep));
   const revive = (rep) => { for (const s of (rep.module && !rep.module.error && rep.module.sections) || []) for (const g of s.groups || []) {
     const live = (x) => { for (const j of x.judge || []) if (j._mkAt != null) j.mk = (t) => (Math.abs(t - j._mkAt) < 0.01 ? j._mkMap : null); };
     live(g); if (g._lim) g.lim = () => g._lim; if (g._rc) { if (g._rc.c) live(g._rc.c); g.recut = (t) => (Math.abs(t - g._rc.t) < 0.05 ? g._rc.c : g); } } return rep; };
   return {
-    async get(item) { try { const v = await tx('readonly', (st) => st.get(keyOf(item))); return v && v.rep ? revive(v.rep) : null; } catch (e) { return null; } },
-    put(item, rep) { const go = async () => { try { bake(rep); const v = { at: Date.now(), rep: strip(rep) }; v.rep.item = null; for (const k of Object.keys(v.rep)) if (k.startsWith('_')) delete v.rep[k]; /* (the page's own notes are redone) */ await tx('readwrite', (st) => st.put(v, keyOf(item)));
-        const keys = await tx('readonly', (st) => st.getAllKeys()); if (keys && keys.length > 120) { const ats = []; for (const k of keys) { const x = await tx('readonly', (st) => st.get(k)); ats.push([k, (x && x.at) || 0]); } ats.sort((a, b) => a[1] - b[1]); await tx('readwrite', (st) => { for (const [k] of ats.slice(0, keys.length - 120)) st.delete(k); }); } } catch (e) { /* (not saved: it reads again next time) */ } };
+    /* (Oct 25 night: a reading saved before an update to the checks still opens (marked stale) and is read again in the background; one saved
+       under the old key (with the version in it) is used when it's from this very version) */
+    async get(item) { try { let v = await tx('readonly', (st) => st.get(keyOf(item))); if (!v) { v = await tx('readonly', (st) => st.get(keyOf(item, true))); if (v) v.ver = version(); }
+      if (!v || !v.rep) return null; const rep = revive(v.rep); if (v.ver !== version()) rep._stale = true; return rep; } catch (e) { return null; } },
+    revive, ct: cutOf, key: (item) => keyOf(item), ver: () => version(),
+    async has(item) { const d = await open(); if (!d) return false; const n = async (k) => new Promise((res) => { try { const q = d.transaction('reps').objectStore('reps').count(k); q.onsuccess = () => res(q.result > 0); q.onerror = () => res(false); } catch (e) { res(false); } }); return (await n(keyOf(item))) || n(keyOf(item, true)); },
+    put(item, rep) { const go = async () => { try { bake(rep); const v = { at: Date.now(), ver: version(), rep: strip(rep) }; v.rep.item = null; for (const k of Object.keys(v.rep)) if (k.startsWith('_')) delete v.rep[k]; /* (the page's own notes are redone) */ const d = await open(); if (d) await rdSave(d, keyOf(item), v, 120); } catch (e) { /* (not saved: it reads again next time) */ } };
       (window.requestIdleCallback || ((f) => setTimeout(f, 1500)))(() => go(), { timeout: 8000 }); } }; })();
+/* (Oct 25 night, your note "this screen just took 2 minutes to load": the pulls of a Warcraft Logs night are read by background workers, up to 4
+   at once (3 with 8 cores, 2 on a computer with little memory, 1 on a phone; they all share the tab's memory). Each downloads its pull, writes the log lines and reads them on its own core, so
+   the page never pauses for it and a hidden tab doesn't slow it down (the page's own reading pauses every 30 ms, and a hidden tab stretches
+   each pause to a second). A worker hands back the reading the way a saved one comes back (cut at the wipe call). Anything unusual (no
+   workers, a script that can't start, a cut at a different time than the page's) reads on the page as before) */
+function rwMain() {
+  /* (runs inside a reading worker: E, WCL, cutT, rdStrip, rdBake and DCN are the worker's own) */
+  self.onmessage = async (ev) => { const m = ev.data; DCN = m.dcn; self.NDZ_JOBS = () => !!m.jobs; let stage = 'load';
+    try {
+      const item = m.item; let last = 0; const tm = {}; let t0 = Date.now(); const lap = (k) => { const t = Date.now(); tm[k] = t - t0; t0 = t; };
+      let events = await WCL.loadEvents(null, item, (n) => { const now = Date.now(); if (now - last > 200) { last = now; self.postMessage({ id: m.id, n }); } });
+      lap('load'); stage = 'read';
+      for (const a of item.wcl.abilities.values()) { const k = String(a.name || '').toLowerCase(); if (k && a.gameID > 1 && !E.SPELLID.has(k)) E.SPELLID.set(k, a.gameID); }
+      const nEv = events.length, comb = events.filter((e) => e.type === 'combatantinfo').map((e) => ({ name: (item.wcl.actors.get(e.sourceID) || {}).name, gear: e.gear || [], auras: e.auras || [], self: e.sourceID, talents: e.talentTree || [],
+        stats: { strength: e.strength, agility: e.agility, intellect: e.intellect, stamina: e.stamina, crit: Math.max(e.critMelee || 0, e.critRanged || 0, e.critSpell || 0), haste: Math.max(e.hasteMelee || 0, e.hasteRanged || 0, e.hasteSpell || 0),
+          mastery: e.mastery, versatility: e.versatilityDamageDone, leech: e.leech, avoidance: e.avoidance, speed: e.speed, armor: e.armor } }));
+      let text = WCL.translate(item, events); events = null; lap('write'); /* (the events go before the checks run: a long pull's are a few hundred MB) */
+      const rep = E.analyze(item, text, m.opts); text = null; lap('read'); rep.combatants = comb;
+      const ct = Math.min(cutT(rep), rep.duration || Infinity); rdBake(rep, ct); lap('cut');
+      rep.item = null; const out = rdStrip(rep); for (const k of Object.keys(out)) if (k.startsWith('_')) delete out[k]; lap('copy');
+      if (m.saveOnly) { const d = m.key ? await (self.RD_DB || (self.RD_DB = rdOpen())) : null; const ok = d ? await rdSave(d, m.key, { at: Date.now(), ver: m.ver, rep: out }, 120) : false; self.postMessage({ id: m.id, saved: !!ok }); return; } /* (a re-read after an update: saved, nothing handed back) */
+      self.postMessage({ id: m.id, rep: out, ct, tm }); lap('send');
+      /* (and keeps it on this PC, so the page doesn't copy it again) */ if (m.key) { const d = await (self.RD_DB || (self.RD_DB = rdOpen())); if (d) await rdSave(d, m.key, { at: Date.now(), ver: m.ver, rep: out }, 120); lap('save'); if (m.dbg) self.postMessage({ id: -1, tm, pull: item.pull, ev: nEv }); }
+    } catch (e) { self.postMessage({ id: m.id, err: String((e && e.message) || e), load: stage === 'load', down: !!(e && e.down) }); }
+  };
+}
+const RW = (() => { let url = null, bad = false, seq = 0, idle = 0; const pool = [], jobs = new Map(), wait = [];
+  const size = () => { try { if (matchMedia('(pointer: coarse)').matches) return 1; const c = navigator.hardwareConcurrency || 4, m = navigator.deviceMemory || 8; return m < 8 ? Math.max(1, Math.min(2, c - 1)) : c >= 12 ? 4 : c >= 8 ? 3 : Math.max(1, Math.min(2, c - 2)); } catch (e) { return 2; } }; /* (each takes a few hundred MB while it reads a long pull) */
+  const on = () => !bad && !!WCL.HOSTED && typeof Worker === 'function' && typeof Blob === 'function' && typeof URL.createObjectURL === 'function';
+  const src = () => { const sc = [...document.scripts].map((x) => x.text || ''), lib = sc.filter((t) => t.trimStart().startsWith('(function (root)')), ui = sc.find((t) => t.includes('\nfunction cutInfo(r) {'));
+    if (lib.length !== 2 || !ui) throw new Error('the scripts weren\'t found');
+    const grab = (a, b) => { const i = ui.indexOf(a), j = i < 0 ? -1 : ui.indexOf(b, i + a.length); if (j < 0) throw new Error('missing ' + a.trim()); return ui.slice(i, j); };
+    let base = location.origin; try { if (window.WLA_API) base = new URL(window.WLA_API, location.href).href.replace(/\/$/, ''); } catch (e) { /* (the site itself) */ }
+    return 'self.window = self; self.WLA_HOSTED = true; self.WLA_API = ' + JSON.stringify(base) + ';\n' + lib.join('\n;\n') + '\n;(function () {\n\'use strict\';\nconst E = self.ENGINE, WCL = self.WCL, T = E.fmtT; let DCN = 2; const deathCutN = () => DCN;\n' +
+      grab('\nconst raidSizeOf =', '\n') + '\n' + grab('\nconst WIPE_LINE = {', '\nconst keptDeaths') + '\n' + [rdStrip, rdBake, rdOpen, rdTrim, rdSave].map((f) => f.toString()).join('\n') + '\n(' + rwMain.toString() + ')();\n})();\n'; };
+  const fail = (w, why) => { bad = true; console.warn('Reading workers are off, the page reads pulls itself:', why); const i = pool.indexOf(w); if (i >= 0) pool.splice(i, 1); try { w.terminate(); } catch (e) { /* (gone) */ }
+    for (const [id, j] of jobs) if (j.w === w) { jobs.delete(id); j.done({ fb: true }); } for (const j of wait.splice(0)) j.done({ fb: true }); };
+  const spawn = () => { const w = new Worker(url); w.onmessage = (ev) => { const m = ev.data; if (m.id === -1) { console.debug('reading worker, pull ' + m.pull + ' (' + m.ev + ' events):', JSON.stringify(m.tm)); return; } const j = jobs.get(m.id); if (!j) return; if (m.n != null) { try { if (j.on) j.on(m.n); } catch (e) { /* (no note) */ } return; }
+      jobs.delete(m.id); w.busy = 0; w.n = (w.n || 0) + 1; if (w.n >= 6) { const i = pool.indexOf(w); if (i >= 0) pool.splice(i, 1); setTimeout(() => w.terminate(), 5000); } /* (after 6 pulls a fresh one takes over: its memory is handed back; the 5 s lets it finish saving) */ j.done(m); next(); };
+    w.onerror = (e) => { e.preventDefault(); fail(w, (e && e.message) || 'the worker stopped'); }; w.busy = 0; pool.push(w); return w; };
+  const next = () => { clearTimeout(idle);
+    while (wait.length) { let w = pool.find((x) => !x.busy); if (!w && pool.length < size()) w = spawn(); if (!w) break; const j = wait.shift(); w.busy = j.id; j.w = w; jobs.set(j.id, j);
+      try { w.postMessage(j.msg); } catch (e) { jobs.delete(j.id); w.busy = 0; j.done({ fb: true }); } }
+    if (!jobs.size && !wait.length) idle = setTimeout(() => { if (jobs.size || wait.length) return; for (const w of pool.splice(0)) w.terminate(); }, 90000); }; /* (let go when idle, to free their memory) */
+  // (one pull: { rep, ct } from a worker; null when the page should read it itself; a download that fails throws, as on the page)
+  const read = (item, onN, saveOnly) => new Promise((res, rej) => { if (!on()) { res(null); return; }
+    if (!url) { try { url = URL.createObjectURL(new Blob([src()], { type: 'text/javascript' })); } catch (e) { bad = true; console.warn('Reading workers are off:', e && e.message); res(null); return; } }
+    const it = {}; for (const k of Object.keys(item)) { const v = item[k]; if (typeof v !== 'function' && !k.startsWith('_')) it[k] = v; }
+    let jb = false; try { jb = !!(window.NDZ_JOBS && window.NDZ_JOBS()); } catch (e) { jb = false; }
+    let key = null, ver = null; try { key = RD.key(item); ver = RD.ver(); } catch (e) { key = null; } /* (where the worker saves it) */
+    let dbg = false; try { dbg = localStorage.getItem('wla-rw-debug') === '1'; } catch (e) { dbg = false; }
+    const id = ++seq, msg = { id, item: it, opts: { packs: S.packs, overrides: overrides() }, dcn: deathCutN(), jobs: jb, key, ver, dbg, saveOnly: !!saveOnly };
+    wait.push({ id, msg, on: onN, done: (m) => { if (m.rep || m.saved) res(m); else if (m.load) { const e = new Error(m.err); e.down = m.down; e.load = true; rej(e); } else { if (m.err) console.warn('A reading worker couldn\'t read ' + item.boss + ' pull ' + item.pull + ', the page reads it:', m.err); res(null); } } });
+    next(); });
+  return { on, size, read }; })();
+/* (a pull read by a worker: the same last steps as a pull read on the page) */
+async function rwRead(item) {
+  if (!item.wcl || !RW.on()) return null;
+  const st = () => document.getElementById('loadmsg');
+  const m = await RW.read(item, (n) => { if (S.item === item && st()) st().textContent = 'Downloading ' + item.boss + ' pull ' + item.pull + ' from Warcraft Logs: ' + n.toLocaleString('en-US') + ' events…'; });
+  if (!m) return null;
+  const rep = RD.revive(m.rep); rep.item = item;
+  { const ct = RD.ct(rep); if (ct !== m.ct && !(Math.abs(ct - m.ct) <= 0.01)) { console.warn('A reading worker cut ' + item.boss + ' pull ' + item.pull + ' at ' + m.ct + ' s, the page at ' + ct + ' s: the page reads it'); return null; } }
+  for (const a of item.wcl.abilities.values()) { const k = String(a.name || '').toLowerCase(); if (k && a.gameID > 1 && !E.SPELLID.has(k)) E.SPELLID.set(k, a.gameID); }
+  applyNote(rep); ndzSpecSave(rep); CACHE.set(item, rep); cacheTrim(); histSave(rep); /* (the worker saved it) */
+  return rep;
+}
+/* (Oct 25 night: after an update to the checks a saved reading still opens at once; the pull is read again behind it (the one on screen first,
+   as many at once as there are workers) and the page redraws once when this boss's pulls are in) */
+const RF = { q: [], run: 0, did: new Set() };
+function rfQueue(item) { if (RF.q.includes(item)) return; if (S.item === item) RF.q.unshift(item); else RF.q.push(item); setTimeout(rfGo, 0); }
+/* (a re-read after an update: true once the new reading is saved) */
+async function rfRead(item) { if (item.wcl && RW.on() && !item._rdSkip) { const m = await RW.read(item, null, true); if (m && m.saved) return true; } return !!(await readFresh(item)); }
+let RF_T = 0;
+function rfGo() { if (!RF.run && (document.querySelector('#main .ld') || holding() || Date.now() - RF_T < 1500)) { if (document.querySelector('#main .ld') || holding()) RF_T = Date.now(); setTimeout(rfGo, 500); return; } /* (once the page is up: they wait until it has been shown for a moment) */
+  const cap = RW.on() ? Math.min(2, RW.size()) : 1; /* (2 at a time: the page is in use) */
+  while (RF.run < cap && RF.q.length) { const it = RF.q.shift(); RF.run++;
+    (async () => { try { const old = CACHE.get(it); if (!(await rfRead(it))) return; RF.did.add(it);
+        if (old && CACHE.get(it) === old && S.rep !== old && S.realRep !== old) CACHE.delete(it); /* (the old reading is let go; the next look loads the new one) */
+        if (old) for (let i = PL_MEMO.length - 1; i >= 0; i--) if (PL_MEMO[i].reps.includes(old)) PL_MEMO.splice(i, 1); }
+      catch (e) { /* (the saved reading stays) */ } finally { RF.run--; if (RF.q.length) rfGo(); else if (!RF.run) rfDone(); } })(); } }
+function rfDone() { const did = [...RF.did], it = S.item; RF.did.clear(); if (!it || !did.includes(it) || !S.rep || S.rep.allPulls || S.scope === 'all') return; /* (All pulls shows the new readings on the next click: loading them all again at once would double the memory) */
+  const old = CACHE.get(it); CACHE.delete(it); getRep(it).then((r) => { if (S.item !== it) return; if (S.realRep === old) S.realRep = r; if (S.rep === old) S.rep = r; rfDraw(0); }).catch(() => { /* (it shows on the next click) */ }); }
+function rfDraw(k) { if (!S.rep || !TAB_ORDER.includes(S.tab)) return;
+  if (document.querySelector('#main .ld') || holding() || document.querySelector('.pcx-tile.on')) { if (k < 40) setTimeout(() => rfDraw(k + 1), 500); return; }
+  const y = window.scrollY; try { renderMain(); } catch (e) { console.warn(e); } window.scrollTo({ top: y }); }
 async function readRep(item) {
   if (CACHE.has(item)) return CACHE.get(item);
-  { const saved = await RD.get(item); if (saved) { saved.item = item;
+  { const saved = item._rdSkip ? null : await RD.get(item); if (saved) { saved.item = item;
       if (item.wcl) for (const a of item.wcl.abilities.values()) { const k = String(a.name || '').toLowerCase(); if (k && a.gameID > 1 && !E.SPELLID.has(k)) E.SPELLID.set(k, a.gameID); }
-      saved._saved = true; applyNote(saved); ndzSpecSave(saved); CACHE.set(item, saved); cacheTrim(); histSave(saved); return saved; } }
+      saved._saved = true; applyNote(saved); ndzSpecSave(saved); CACHE.set(item, saved); cacheTrim(); histSave(saved); if (saved._stale) rfQueue(item); return saved; } }
+  return readFresh(item);
+}
+async function readFresh(item) {
+  { const got = await rwRead(item); if (got) return got; }
   let text;
   if (item.wcl) {
     const st = () => document.getElementById('loadmsg');
@@ -1228,7 +1337,7 @@ async function select(item) {
   if (S.item !== item) return;
   try { S.rep = rep; }
   catch (err) { $('#main').innerHTML = '<div class="empty"><p class="muted">Couldn\'t analyze this pull: ' + esc(err.message) + '</p></div>'; console.error(err); return; }
-  holdStart(); renderMain();
+  holdStart(); try { renderMain(); } catch (e) { if (!rep._stale || item._rdSkip) throw e; console.warn('A saved reading from before the update didn\'t fit, reading the pull again:', e); item._rdSkip = 1; CACHE.delete(item); return select(item); }
   bgFetch(item); // (the next pull, then the rest of this boss's pulls, download in the background)
 }
 // Warcraft Logs reports: once a pull is up, this boss's other pulls in the report download quietly, the next pull first,
@@ -1246,15 +1355,17 @@ function bgFetch(item) {
   // (then each one is read too (your OK, Oct 20: "load in the background and stay loaded"), one at a time in short steps, so
   // Report card, Homework and All pulls open at once; it stops at the memory limit, and a small note shows how far it is)
   let k = 0; const n = list.length; bgNote(0, 0);
-  (async () => { for (const b of list) { if (tok !== BG_TOK || S.index !== idx) return;
+  (async () => { const lane = async () => { while (list.length) { const b = list.shift(); if (tok !== BG_TOK || S.index !== idx) return;
     while (document.querySelector('#main .ld') && tok === BG_TOK) await new Promise((r) => setTimeout(r, 1500));
     if (tok !== BG_TOK || [...CACHE.keys()].filter((x) => x.id === item.id && x.diffId === item.diffId).length >= cacheCap()) break; k++; /* (other bosses' pulls make room: see cacheTrim) */ if (CACHE.has(b)) continue; bgNote(k, n);
-    try { if (!(await WCL.isSaved(b))) { let pages = 0; await WCL.loadEvents(S.wclCreds, b, () => pages++); await new Promise((r) => setTimeout(r, Math.max(1500, pages * 700))); } } catch (e) { if (tok === BG_TOK) BG_KEY = null; break; }
+    let was = true; try { if (RW.on()) was = await WCL.isSaved(b); else if (!(await WCL.isSaved(b))) { let pages = 0; await WCL.loadEvents(S.wclCreds, b, () => pages++); await new Promise((r) => setTimeout(r, Math.max(1500, pages * 700))); } } catch (e) { if (tok === BG_TOK) BG_KEY = null; break; }
     if (tok !== BG_TOK || S.index !== idx) break;
-    try { await getRep(b); } catch (e) { /* skip a pull that fails */ }
+    try { await getRep(b); } catch (e) { if (e && e.load) { if (tok === BG_TOK) BG_KEY = null; break; } /* skip a pull that fails */ }
+    if (!was) await new Promise((r) => setTimeout(r, 3000)); /* (a download in a worker: two lanes, each pausing twice as long, the same pace as before) */
     /* (Oct 24: the comparison with the last pull needs that pull read; when it arrives, the page redraws once so Since last pull and the tags show) */
     try { const v0 = document.querySelector('#view'); if (S.tab === 'audit' && S.item && b.id === S.item.id && b.diffId === S.item.diffId && b.pull < S.item.pull && S.rep && !S.rep.allPulls && v0 && v0._cs && v0._cs.trend && !v0._cs.trend.prvN && CACHE.has(b)) prevArrived(); } catch (e) { /* (it shows on the next redraw) */ }
-    if (tok !== BG_TOK) break; await new Promise((r) => setTimeout(r, 250)); } })().finally(() => { if (tok === BG_TOK) bgNote(0, 0); });
+    if (tok !== BG_TOK) break; await new Promise((r) => setTimeout(r, 250)); } }; await Promise.all(Array.from({ length: RW.on() ? 2 : 1 }, lane));
+    if (tok === BG_TOK && NIGHT_WAIT === key && idx.bosses.filter((b) => b.id === item.id && b.diffId === item.diffId).every((b) => CACHE.has(b)) && S.item && S.item.wcl && S.item.wcl.code + '|' + S.item.id + '|' + S.item.diffId === NIGHT_WAIT) { NIGHT_WAIT = null; if (S.scope !== 'all') toast('<span><b>All pulls is ready</b> Every pull of ' + esc(item.boss) + ' tonight is read.</span>', 6000); } })().finally(() => { if (tok === BG_TOK) bgNote(0, 0); });
 }
 function bgNote(k, n) { let el = document.getElementById('bgRead'), t = document.getElementById('bgReadT');
   if (!n) { if (el) el.hidden = true; if (t) t.hidden = true; return; }
@@ -1841,12 +1952,15 @@ const PATCH_NOTES = [
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
     'Rotation speaks plainer: every check is one short sentence ("92% of your 337 casts were the best button at that moment.", "You used it 10 of 15 possible times."), tips say "in its last 30%" and "right after" instead of game jargon, and Stat order lets its bars do the talking.',
+    'Opening a raid night is much faster: pulls are read several at a time in the background, so the page stays smooth and a hidden tab no longer slows it down. A night that isn\'t read yet opens on its kill or latest pull in seconds while the rest read, and a note tells you when All pulls is ready.',
+    'After a Debrief update, pulls you\'ve opened before still show at once and are read again behind the scenes, instead of the whole night loading again.',
     'Rotation: an open tile has one Why and one How it\'s judged. A sub-check is a plain row now: hover its title for the why, and its judging rule sits inside the tile\'s How it\'s judged. Thirteen fewer buttons to open.',
     'Pulls you\'ve opened are saved on your PC: a reload shows them in about 2 seconds, without reading the log again. When Debrief\'s rules change, each pull is read once more so nothing is out of date.',
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
     'Rotation no longer flashes its old layout for a moment when you open it: the page now appears straight in its new look.',
+    'The loading screen\'s tips match the page again (the wipe call, the pull line at the top).',
     'Tab clicks are lighter: the page\'s look passes ran about 65 times per click, once for every icon that loaded; they run once per frame now.',
     'Saved pulls stay saved through site updates; only a change to the checks themselves reads them again. Rotation\'s What to fix cards always show after visiting Debriefing first.',
     'Switching tabs is much quicker: Rotation and Debriefing no longer work everything out again on each click (Rotation about twice as fast, Debriefing about two and a half times).',
@@ -11449,7 +11563,7 @@ async function bossReps(it, still, onCount, all) {
     const got = new Array(pulls.length), pending = pulls.map((b, i) => i); let done = 0, gone = false;
     const worker = async () => { while (pending.length && !gone) { const i = pending.shift(); try { got[i] = await getRep(pulls[i]); } catch (e) { /* skip a pull that fails */ }
       if (!still()) { gone = true; return; } done++; if (onCount) onCount(done, pulls.length); } };
-    await Promise.all([worker(), worker(), worker()]); if (gone || !still()) return null;
+    await Promise.all(Array.from({ length: RW.on() ? Math.max(3, RW.size()) : 3 }, worker)); if (gone || !still()) return null;
     return { reps: got.filter(Boolean), skipped: 0, pulls };
   }
   for (const b of pulls) {
@@ -28026,8 +28140,14 @@ async function openWcl(link, creds, live, fresh) {
     if (still && !live && !wasLive) toast('<span><b>Live</b> This report is still being logged, so new pulls show up here as they end.</span>', 9000);
   }
   if (fresh && !follow) { S.tab = 'live'; S.scope = 'all'; } // (a raid being logged now stays on its newest pull)
+  /* (Oct 25 night, your note "this screen just took 2 minutes to load": a night that isn't read yet opens on this pull, and the rest of the
+     boss's pulls read in the background (the thin line under the boss header); All pulls is ready when they're in) */
+  if (fresh && !follow && pick && pick.wcl) { const mine = rep.bosses.filter((b) => b.id === pick.id && b.diffId === pick.diffId); let ready = true;
+    for (const b of mine) if (!CACHE.has(b) && !(await RD.has(b))) { ready = false; break; }
+    if (!ready && mine.length > 2) { S.scope = 'pull'; NIGHT_WAIT = pick.wcl.code + '|' + pick.id + '|' + pick.diffId; } }
   select(pick);
 }
+let NIGHT_WAIT = null; /* (the night whose pulls are reading in the background after opening on one pull) */
 // ---------- live logging ----------
 // While the raid live-logs to Warcraft Logs, re-read the report every 15 seconds (your call, Oct 19: a wipe shows up soon after it ends) and add pulls as they finish. A pull
 // counts as finished once its end time stops changing between two checks, so a half-uploaded pull is never
