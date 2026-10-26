@@ -5932,7 +5932,7 @@ function newPlayer(guid) {
     res: new Map(), starts: [],
     // (the Resources view: every power they gained, { t, ty, spell, id, amt, over } (over: what came while they were already
     // full), and every power a cast cost them, { t, ty, spell, id, amt }; ty is the log's power type, 0 for mana)
-    gainL: [], spendL: [],
+    gainL: [], spendL: [], drainL: [],
     // (casts Warcraft Logs marks as not pressed, procs: lowercase name -> times, for the Casts view's presses)
     fakeT: new Map(),
     cons: { healthstone: [], healpot: [], combatpot: [], manapot: [], utilpot: [] } };
@@ -6343,6 +6343,10 @@ function* analyzeSteps(item, text, opts) {
       case 'SPELL_ENERGIZE': case 'SPELL_PERIODIC_ENERGIZE': {
         if (f.length < 14 || !isPlayer(dg)) break;
         const n = f.length, amt = num(f[n - 4]), over = Math.max(0, num(f[n - 3])), ty = String(f[n - 2]);
+        // (a negative one is power taken away, like Devourer's Fury draining inside Void Metamorphosis: kept as a drain, in whole points like a gain (Oct 26))
+        // (no reading kept from it: it's from after, and the drain as Void Metamorphosis starts logs -1000 when only what was left went, so the
+        // pages count a drain down to what was there)
+        if (amt < 0 && /^\d+$/.test(ty)) { const pd = P(dg, dn); if (!pd.drainL) pd.drainL = []; if (pd.drainL.length < 8000) pd.drainL.push({ t, ty, spell: f[9], id: num(f[8]), amt: -amt }); break; }
         if (!(amt > 0) || !/^\d+$/.test(ty)) break;
         // (rd: the event's own block read that power too, right after the gain; Warcraft Logs only reads a player's main
         // power there, so a gain of Holy Power or combo points has no reading of its own)
