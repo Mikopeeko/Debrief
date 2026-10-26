@@ -2577,15 +2577,13 @@ function openInGame() {
       '<li><i>3</i><b>In WoW, type /recap</b><span>Click Save this pull on the card, and every pull from tonight is in the game too.</span></li></ol>' +
       '<div class="igm-all"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor" opacity=".18"/><path d="m7.5 12.4 3 3 6-6.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Nothing to do by hand.</b> The app does it all.</span></div></section>' +
     '<section class="igm-sec"><div class="igm-sh"><h2>What it looks like</h2><p>The card, the raid view, the big window, the settings and the pop-up on your PC.</p></div><div class="igm-gal">' + IGM_SHOTS.map(shot).join('') + '</div></section>' +
-    '<section class="igm-sec"><div class="igm-sh"><h2>Handy commands</h2><p>Type these in the chat box in WoW. Click one to copy it.</p></div><div class="igm-cmds">' +
-      IGM_CMDS.map(([c, d]) => '<button type="button" class="igm-cmd" data-c="' + esc(c) + '"><code>' + esc(c) + '</code><span>' + esc(d) + '</span><em>Copy</em></button>').join('') + '</div></section>' +
+    '<section class="igm-sec"><div class="igm-sh"><h2>Handy commands</h2><p>Type these in the chat box in WoW.</p></div><div class="igm-cmds">' +
+      IGM_CMDS.map(([c, d]) => '<div class="igm-cmd"><code>' + esc(c) + '</code><span>' + esc(d) + '</span></div>').join('') + '</div></section>' +
     '<p class="igm-foot">The addon is new. ' + (REPORT_ON() ? 'Found something off? <a href="#" class="rp-open">Report a problem</a> and it goes on our list.' : 'Found something off? Tell us on our Discord.') + '</p>' +
   '</div></section>';
   const root = $('#main .igm');
   const bk = root.querySelector('.igm-back'); if (bk) bk.onclick = () => { const g = IGM_BACK; IGM_BACK = null; S.tab = g.tab || 'audit'; S.scope = g.scope || 'pull'; select(g.item); };
   root.querySelectorAll('.igm-shot').forEach((b) => (b.onclick = () => igmLightbox(+b.dataset.i)));
-  root.querySelectorAll('.igm-cmd').forEach((b) => (b.onclick = () => { const em = b.querySelector('em'), ok = () => { b.classList.add('ok'); em.textContent = 'Copied'; setTimeout(() => { b.classList.remove('ok'); em.textContent = 'Copy'; }, 1400); };
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(b.dataset.c).then(ok, () => {}); }));
   // (the version numbers, from the same file the app updates itself from)
   fetch(U + 'latest.json', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((j) => { const v = root.querySelector('.igm-ver');
     if (v && j && j.version) v.textContent = 'App ' + j.version + (j.addon ? ' and addon ' + j.addon : '') + '. The app keeps itself and the addon up to date.'; }).catch(() => {});

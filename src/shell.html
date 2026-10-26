@@ -4886,14 +4886,10 @@ details.secd > summary .kbrank + .sst { margin-left: 0; }
 .igm-shot.feat .igm-cap b { font-size: 24px; }
 .igm-shot.feat .igm-cap span { font-size: 15px; }
 .igm-cmds { display: flex; flex-direction: column; border-radius: var(--r); background: var(--panel); border: 1px solid var(--line); overflow: hidden; }
-.igm-cmd { display: flex; align-items: center; gap: 16px; min-width: 0; padding: 12px 18px; border: 0; border-radius: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.igm-cmd { display: flex; align-items: center; gap: 16px; min-width: 0; padding: 12px 18px; color: var(--text); }
 .igm-cmd + .igm-cmd { border-top: 1px solid var(--line); }
-.igm-cmd:hover { background: rgba(255,255,255,.025); }
 .igm-cmd code { flex: none; min-width: 170px; padding: 4px 10px; border-radius: 6px; background: var(--raised); border: 1px solid var(--line2); color: var(--gold); font: 600 14px ui-monospace, Consolas, monospace; }
 .igm-cmd > span { flex: 1; min-width: 0; font-size: 15px; }
-.igm-cmd em { flex: none; color: var(--faint); font-size: 12.5px; font-style: normal; font-weight: 600; }
-.igm-cmd:hover em { color: var(--gold); }
-.igm-cmd.ok { background: rgba(69,193,92,.07); } .igm-cmd.ok em { color: var(--good); }
 .igm-foot { margin: -12px 0 0; padding-top: 16px; border-top: 1px solid var(--line); color: var(--faint); font-size: 13px; }
 .igm-foot a { color: var(--gold); }
 .igm-lb { position: fixed; inset: 0; z-index: 9100; display: flex; align-items: center; justify-content: center; gap: 16px; padding: 24px; background: rgba(6,8,12,.93); backdrop-filter: blur(4px); animation: igmFade .15s ease-out; }
@@ -4927,7 +4923,7 @@ body.igm-lbon { overflow: hidden; }
   .igm-btn { width: 100%; }
   .igm-phone { display: block; margin: 10px 0 0; color: var(--muted); font-size: 13.5px; }
   .igm-gal { gap: 10px; } .igm-thumb { padding: 6px; } .igm-cap { padding: 9px 11px 11px; } .igm-cap span { display: none; } .igm-shot.feat .igm-cap span { display: block; font-size: 14px; } .igm-shot.feat .igm-cap b { font-size: 20px; }
-  .igm-cmd { flex-wrap: wrap; gap: 6px; padding: 11px 14px; } .igm-cmd code { min-width: 0; } .igm-cmd > span { flex-basis: 100%; font-size: 14px; } .igm-cmd em { display: none; }
+  .igm-cmd { flex-wrap: wrap; gap: 6px; padding: 11px 14px; } .igm-cmd code { min-width: 0; } .igm-cmd > span { flex-basis: 100%; font-size: 14px; }
   .igm-lb { flex-direction: column; padding: 60px 10px 84px; } .igm-lb figure { max-width: 100%; } .igm-lb img { max-height: calc(100vh - 230px); }
   .igm-lbn { position: absolute; bottom: 20px; } .igm-lbn.prev { left: calc(50% - 62px); } .igm-lbn.next { right: calc(50% - 62px); }
 }
