@@ -1990,6 +1990,7 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'Combat potions: Liquid Luster and Alluring Nostrum (12.1) now count everywhere. Report card, Debriefing and Graphs missed them while Rotation counted them. Potions from a cauldron count the same as your own, a potion in a log from a game in another language counts, and on Rotation a mana potion counts as a potion use (they share the cooldown).',
     'Rotation on a phone: the top card ran off the right edge, the ring tiles squeezed into two tiny columns so their numbers spilled, and one table was wider than its box; all three fit the screen now.',
     'Debriefing: the Since last pull tags (▼ Guillotine, ▲ Sever) had their mechanic icons half outside the pill; the icons sit inside now.',
     'Debriefing: the box that opens under a mechanic row sat in a dark panel with no padding, its text and bars touching the edge; it sits on the page again.',
@@ -19714,18 +19715,18 @@ function specPage(o) {
   // (combat potions (Oct 25, your note: "combat potion usage should be included here, not healthstones/healthpots"): drunk against what the pull
   // allowed, one before or at the pull and one more every 5 minutes; in Prep with your other consumables, the potion-timing line with it)
   if (o.per && o.LAYOUT) { let used = 0, poss = 0, pre = 0, nm = null, pin = 0, pinT = 0, pout = 0, poutT = 0; const ts0 = [], hl0 = o.P0 && o.P0.role === 'healer';
-    for (const x of o.per) { const p = x.p, t1 = Math.max(1, x.t1 || (x.r && x.r.duration) || 1), ts = COMBAT_POTS.flatMap((n) => (p.byName.get(n) || []).filter((t) => t <= t1)).sort((a, b) => a - b);
-      const b0 = [...p.buffs.values()].find((b) => COMBAT_POTS.includes(String(b.name).toLowerCase()) && b.sp.some(([a]) => a < 0.5)), pp = b0 && !ts.some((t) => t < 3) ? 1 : 0;
+    for (const x of o.per) { const p = x.p, t1 = Math.max(1, x.t1 || (x.r && x.r.duration) || 1), tsC = COMBAT_POTS.flatMap((n) => (p.byName.get(n) || []).filter((t) => t <= t1)).sort((a, b) => a - b), ts = tsC.concat(MANA_POTS.flatMap((n) => (p.byName.get(n) || []).filter((t) => t <= t1))).sort((a, b) => a - b);
+      const b0 = [...p.buffs.values()].find((b) => (COMBAT_POTS.includes(String(b.name).toLowerCase()) || (E.COMBAT_POT_IDS || []).includes(+b.id)) && b.sp.some(([a]) => a < 0.5)), pp = b0 && !ts.some((t) => t < 3) ? 1 : 0;
       /* (each potion's 30 seconds against the rest of the pull: the potion window, here with the potions (Oct 25)) */
       const S1 = (hl0 ? p.healS : p.dmgS) || [], N1 = Math.min(S1.length, Math.ceil(t1)), inS = new Set(); let all1 = 0; for (let i = 0; i < N1; i++) all1 += S1[i] || 0;
-      for (const a of (pp ? [0] : []).concat(ts)) for (let i = Math.max(0, Math.floor(a)); i < Math.min(N1, Math.floor(a) + 30); i++) inS.add(i);
+      for (const a of (pp ? [0] : []).concat(tsC)) for (let i = Math.max(0, Math.floor(a)); i < Math.min(N1, Math.floor(a) + 30); i++) inS.add(i);
       let w0 = 0; for (const i of inS) w0 += S1[i] || 0; pin += w0; pinT += inS.size; pout += all1 - w0; poutT += Math.max(0, N1 - inS.size);
       for (const b of p.buffs.values()) if (!nm && COMBAT_POTS.includes(String(b.name).toLowerCase())) nm = b.name; used += ts.length + pp; pre += pp; poss += 1 + Math.floor(t1 / 300); if (o.per.length === 1) ts0.push(...ts); }
     const st = used >= poss ? 'ok' : used > 0 && used >= poss - 1 ? 'warn' : 'bad', one1 = o.per.length === 1;
     const c = { st, ic: nm || "Light's Potential", label: 'Combat potions', v: used + '<span>/' + poss + '</span>', k: 'potn', mo: [],
       sub: (used ? 'You drank ' + used + ' of ' + poss + ' possible combat ' + (poss === 1 ? 'potion' : 'potions') + '.' : 'You drank no combat potion (' + poss + ' possible).') + (pre ? (pre === 1 && one1 ? ' One was before the pull.' : ' ' + pre + ' were before the pull.') : '') + (pinT >= 5 && poutT >= 10 && pout > 0 ? ' In ' + (used === 1 ? 'its' : 'their') + ' 30 seconds you did ' + (pin / pinT / (pout / poutT)).toFixed(1) + ' times your usual ' + (hl0 ? 'healing' : 'damage') + '.' : ''),
-      how: 'Combat potions share a 5-minute cooldown, so a pull allows one before or at the pull and one more every 5 minutes after. Healthstones and health potions aren\'t counted here. All of them is good, one short is a small mistake, none is a failed check.' };
-    if (st !== 'ok') c.tip = 'Drink a combat potion just before the pull, and another when it\'s back 5 minutes later, with your big cooldown.';
+      how: 'Combat potions share a 5-minute cooldown, so a pull allows one before or at the pull and one more every 5 minutes after. Mana potions share that cooldown, so they count too. Healthstones and health potions aren\'t counted here. A potion from a cauldron counts the same as your own. The log doesn\'t say a potion\'s rank, so every rank counts the same. All of them is good, one short is a small mistake, none is a failed check.' };
+    if (st !== 'ok') c.tip = 'One just before the pull, another with your big cooldown when it\'s back.';
     o.groups.push({ t: 'Potions', l: [c] }); let sp = o.LAYOUT.find(([n]) => n === 'Start of the pull'); if (!sp) o.LAYOUT.unshift(sp = ['Start of the pull', []]); sp[1].push(['Potions', ['potn', 'pot']]);
     const pc = o.groups.flatMap((g) => g.l).find((x) => x.k === 'pot'); if (pc) pc.ic = c.ic; }
   // (the layout every spec shares: its checks in chapters (Rotation, Resources, Cooldowns), each chapter's blocks in the spec's own order, a check
@@ -25825,8 +25826,7 @@ function abilities(kind) {
 // ---------- raid audit: enchants, flasks and combat potions ----------
 // Midnight consumable and enchant lists (patch 12.1).
 const FLASKS = ['flask of thalassian resistance', 'flask of the blood knights', 'flask of the magisters', 'flask of the shattered sun'];
-const COMBAT_POTS = ["light's potential", 'draught of rampant abandon', 'potion of recklessness', 'potion of zealotry', 'alluring nostrum', 'liquid luster',
-  'tempered potion', 'frontline potion', 'potion of unwavering focus']; // last three: The War Within, still usable
+const COMBAT_POTS = (E.COMBAT_POT_NAMES || []).slice(), MANA_POTS = (E.MANA_POT_NAMES || []).slice(); // (the engine's one potion list, E.POTIONS (Oct 26): cauldron potions and every rank cast the same spell)
 // Enchantable slots in Midnight (cloak and bracer enchants were removed); gear array index = equipment slot
 const ENCHANT_SLOTS = [[0, 'Head'], [2, 'Shoulders'], [4, 'Chest'], [6, 'Legs'], [7, 'Feet'], [10, 'Ring 1'], [11, 'Ring 2'], [15, 'Weapon']];
 // Midnight enchants by enchant ID (from the game's SpellItemEnchantment table, build 12.1.5): [name, rank (1 or 2; 0 = class imbue),

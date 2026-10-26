@@ -125,17 +125,30 @@ const SELF_HEAL = new Set([...Object.values(DEFENSIVES).flat().filter((d) => d[5
 // Potions by name (the spell name logged when drinking matches the item name).
 // Midnight list from the Midnight alchemy recipe tables; The War Within potions are still usable.
 // Anything else with "potion" in its name falls back to a guess from the name.
-const CONSUMABLES = new Map([
-  // Midnight
-  ['silvermoon health potion', 'healpot'], ['refreshing serum', 'healpot'], ['amani extract', 'healpot'], ["light's preservation", 'healpot'],
-  ["light's potential", 'combatpot'], ['potion of zealotry', 'combatpot'], ['draught of rampant abandon', 'combatpot'], ['potion of recklessness', 'combatpot'],
-  ['lightfused mana potion', 'manapot'], ['potion of devoured dreams', 'manapot'],
-  ['void-shrouded tincture', 'utilpot'], ['enlightenment tonic', 'utilpot'],
-  // The War Within
-  ['algari healing potion', 'healpot'], ["cavedweller's delight", 'healpot'], ['invigorating healing potion', 'healpot'],
-  ['tempered potion', 'combatpot'], ['frontline potion', 'combatpot'], ['potion of unwavering focus', 'combatpot'], ['algari mana potion', 'manapot'],
-]);
-function potionKind(ln) {
+// Potions: one list for the engine and every page (Oct 26). n: the spell's name in the log, k: the kind, id: spell IDs seen in real logs (matched first).
+// A cauldron's Fleeting potions and every quality rank cast the same spell with the same name as the potion itself (107 saved top kills: Light's Potential
+// is 1236616 for all 669 players who drank one), so one entry covers them all. The log can't tell a potion's rank: its strength comes from the item's level.
+const POTIONS = [
+  // Midnight, combat
+  { n: "Light's Potential", k: 'combatpot', id: [1236616] }, { n: 'Potion of Recklessness', k: 'combatpot', id: [1236994] },
+  { n: 'Draught of Rampant Abandon', k: 'combatpot', id: [1236998] }, { n: 'Potion of Zealotry', k: 'combatpot' },
+  { n: 'Liquid Luster', k: 'combatpot', id: [1295132] }, { n: 'Alluring Nostrum', k: 'combatpot' }, // (12.1)
+  // Midnight, healing, mana and other
+  { n: 'Silvermoon Health Potion', k: 'healpot', id: [1234768] }, { n: 'Concentrated Silvermoon Health Potion', k: 'healpot', id: [1295247] }, // (12.1)
+  { n: 'Refreshing Serum', k: 'healpot' }, { n: 'Amani Extract', k: 'healpot' }, { n: "Light's Preservation", k: 'healpot' },
+  { n: 'Lightfused Mana Potion', k: 'manapot', id: [1236648] }, { n: 'Potion of Devoured Dreams', k: 'manapot' },
+  { n: 'Void-Shrouded Tincture', k: 'utilpot' }, { n: 'Enlightenment Tonic', k: 'utilpot' }, { n: 'Potion of Liquid Undeath', k: 'utilpot' }, { n: 'Potion of Venomous Return', k: 'utilpot' },
+  // The War Within, still usable
+  { n: 'Tempered Potion', k: 'combatpot' }, { n: 'Frontline Potion', k: 'combatpot' }, { n: 'Potion of Unwavering Focus', k: 'combatpot' },
+  { n: 'Algari Healing Potion', k: 'healpot' }, { n: "Cavedweller's Delight", k: 'healpot' }, { n: 'Invigorating Healing Potion', k: 'healpot', id: [1238009] }, { n: 'Algari Mana Potion', k: 'manapot' },
+];
+// (a cauldron's potion by its own name too: Fleeting <potion>; the user: cauldron potions have a similar name of their own)
+const CONSUMABLES = new Map(POTIONS.flatMap((q) => [[q.n.toLowerCase(), q.k], ['fleeting ' + q.n.toLowerCase(), q.k]])), POT_ID = new Map(POTIONS.flatMap((q) => (q.id || []).map((i) => [i, q])));
+const COMBAT_POT_NAMES = POTIONS.filter((q) => q.k === 'combatpot').flatMap((q) => [q.n.toLowerCase(), 'fleeting ' + q.n.toLowerCase()]);
+const MANA_POT_NAMES = POTIONS.filter((q) => q.k === 'manapot').flatMap((q) => [q.n.toLowerCase(), 'fleeting ' + q.n.toLowerCase()]); // (they share the combat potions' cooldown)
+const COMBAT_POT_IDS = POTIONS.filter((q) => q.k === 'combatpot').flatMap((q) => q.id || []);
+function potionKind(ln, id) {
+  const q = id != null ? POT_ID.get(+id) : null; if (q) return q.k; // (a known spell ID is an extra match; the name below still counts any other)
   if (CONSUMABLES.has(ln)) return CONSUMABLES.get(ln);
   if (!ln.includes('potion')) return null;
   return ln.includes('mana') ? 'manapot' : /heal|restor|rejuven|vital|mend/.test(ln) ? 'healpot' : 'combatpot';
@@ -6433,13 +6446,14 @@ function* analyzeSteps(item, text, opts) {
         let tl = p.castTimes.get(id); if (!tl) p.castTimes.set(id, tl = []); tl.push(t);
         const ln = spell.toLowerCase();
         let bl = p.byName.get(ln); if (!bl) p.byName.set(ln, bl = []); bl.push(t);
+        { const pq = POT_ID.get(+id), pn = pq && pq.n.toLowerCase(); if (pn && pn !== ln) { let bq = p.byName.get(pn); if (!bq) p.byName.set(pn, bq = []); bq.push(t); } } /* (a potion under its English name too (Oct 26)) */
         if (HELP_CAST.has(ln)) p.helpL.push({ t, spell, id, on: isPlayer(dg) && dg !== sg ? dn : '', g: isPlayer(dg) ? dg : '' }); // (g: who it was on, themselves included)
         // (a major healing cooldown: a new entry, unless it's the next tick of a channel; Celestial Conduit only for Mistweaver)
         if (CD_PRESS.has(ln) && (ln !== 'celestial conduit' || p.specId === 270)) { const cd = CD_PRESS.get(ln), last = cdPress(sg, cd, t, false);
           if (!last || t - last.t > 12) r.cdUse.push({ g: sg, cd, id, t, end: null, heal: 0, over: 0, prev: 0, taken: 0, hp: 0, cov: new Set() }); else if (!last.id) last.id = id; }
         // (a warlock's Create Healthstone or Soulwell makes them; it isn't using one)
         if (ln.includes('healthstone')) { if (!/^create /.test(ln) && !p.cons.healthstone.some((x) => Math.abs(x.t - t) < 2)) p.cons.healthstone.push({ t, name: spell, id }); }
-        else { const k = potionKind(ln); if (k) p.cons[k].push({ t, name: spell, id }); }
+        else { const k = potionKind(ln, id); if (k) p.cons[k].push({ t, name: spell, id }); }
         if (p.lastCast >= 0) p.active += Math.min(t - p.lastCast, 2.5);
         p.lastCast = t;
         break;
@@ -7294,7 +7308,7 @@ function coach(p, r, cut) {
   return tips.sort((a, b) => b.w - a.w).slice(0, 4);
 }
 
-const api = { MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
+const api = { MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
 root.ENGINE = api;
 if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
