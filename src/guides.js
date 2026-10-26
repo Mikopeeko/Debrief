@@ -5431,7 +5431,7 @@ function ppSeat(P, fix) { const S = { ...fix }, used = new Set(Object.values(fix
   return S; }
 // (one picture's map: a guide map frozen at T, the note's names on its spots, only the job players named, the raid lead's markers)
 // (the middle of a map's room in its own frame: The Coiled Altar has a room box; other bosses use their origin, Ula'tek's at y 1554)
-const PP_MKOUT = { 'The Twin Fangs': 0, 'Vashnik the Malignant': [4, 0], Sszorak: [4, 0] }; /* (yards a marker is drawn off its spot, so whoever stands on it doesn't hide it: out toward the room's edge north or south by default; a pair is a sideways nudge) */
+const PP_MKOUT = { 'The Twin Fangs': 0, 'Vashnik the Malignant': [4, 0], Sszorak: [4, 0], "Kith'ix": [3, 0] }; /* (yards a marker is drawn off its spot, so whoever stands on it doesn't hide it: out toward the room's edge north or south by default; a pair is a sideways nudge) */
 const ppMid = (mp) => (mp.room ? [(mp.room.x0 + mp.room.x1) / 2, (mp.room.y0 + mp.room.y1) / 2] : ((A) => [A.cx, A.cy])(GDZ_ORIGIN[mp.boss] || ARENAS[mp.boss] || { cx: 0, cy: 0 }));
 function ppFreeze(mp, T, S, P, M, o) {
   o = o || {}; const f = mp.frames.reduce((a, b) => (Math.abs(b.t - T) < Math.abs(a.t - T) ? b : a)), nm = (v) => (typeof v === 'string' ? v : v && v.name);
@@ -6098,6 +6098,60 @@ function ppCardsSZ(J, M, U, P) {
       foot: 'On the last Dig In don\'t pop it: it hits with enrage damage.' }); }
   return cards;
 }
+// ===== Kith'ix, Mythic (Oct 26, the same setup; Plan's Jobs cards in a564306), on the guide's maps of the room =====
+// (the note's jobs, in the lines Plan writes: "Beetle Grips:" / "Beetle Slows:", "Scar 1:" / "Scar 2:" / "Scar Backup:" (the Voidscar
+// soak pairs), "Healer Marker:" / "Melee Marker:" / "Ranged Marker:" (who dispels the fears at each marker))
+function ppReadKX(N, P) {
+  const isN = (w) => P.has(String(w).toLowerCase()), J = { grips: [], slows: [], scar: [[], []], scarB: [], fear: {} };
+  for (const l of N.lines) { const lab = l.label.toLowerCase().trim(), who = l.words.filter(isN).map((w) => P.get(w.toLowerCase()).name); let m; if (!who.length) continue;
+    if (/beetle grip|grip/.test(lab)) J.grips = who; else if (/slow/.test(lab)) J.slows = who; else if (/scar backup|backup/.test(lab)) J.scarB = who; else if ((m = /scar\s*(\d)/.exec(lab))) J.scar[+m[1] > 1 ? 1 : 0] = who;
+    else if ((m = /(healer|melee|ranged) marker/.exec(lab))) J.fear[m[1]] = who[0]; }
+  return J;
+}
+function ppCardsKX(J, M, U, P) {
+  const cards = [], BL = '#5aa0ff', GO = '#e6b450', PU = '#b06bff', VO = '#9b6bff', Q = '#c9ced8', cdsOf = (L) => (L || []).map(([t, n, sp]) => ppI(P, n, t + ' ' + sp));
+  // Voidswarm: the Hulk taunted onto the Voidweaver nearest moon, the adds kept out of his 25 yards (the guide's map)
+  cards.push({ id: 'adds', ph: 1, when: 'Every Voidswarm', title: 'Voidswarm (Adds away from him)', map: ppFreeze(KX_M.adds(false, 'm'), 6.8, ppSeat(P, {}), P, M, {}),
+    legend: [ppG('Off tank', BL, [], 'Takes the Hulk onto the Voidweaver closest to moon and faces it away.'), ppG('Everyone', GO, [], 'Kill the Voidweavers first; every add dead before the intermission. Keep the adds out of his 25 yards: they take 75% less damage there.')],
+    foot: 'The yellow ring is his 25 yards.' });
+  // The beetles: gripped onto the Hulk or a Voidweaver one at a time, slowed, nobody in the middle (the guide's map as the eggs come)
+  if (J.grips.length || J.slows.length) { const fix = {}, ids = [], tags = [], put = (s, n, t) => { if (!n) return; fix[s] = n; ids.push(s); tags.push([s, t]); };
+    put('m7', J.grips[0], 'Grip'); put('r7', J.grips[1], 'Grip'); put('r1', J.slows[0], 'Slow'); put('r2', J.slows[1], 'Slow');
+    cards.push({ id: 'beetles', ph: 1, when: 'Every Voidswarm', title: 'Bomber Beetles (Grip them into the cleave)', map: ppFreeze(KX_M.adds(false, 'm'), 10, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags }),
+      legend: [ppG('Beetle grips', '#c0394f', J.grips.map((n) => ppI(P, n, 'Onto the adds'))), ppG('Beetle slows', BL, J.slows.map((n) => ppI(P, n, 'Hold them'))), ppG('Everyone', GO, [], 'One at a time, so their eggs land in the cleave. Nobody in the middle: touching a beetle sets it off.')],
+      foot: 'Grip each onto the Hulk or a Voidweaver.' }); }
+  // Extinguish: everyone over a light mote before the hit lands (the guide's map as they walk on)
+  cards.push({ id: 'ext', ph: 1, when: 'Every Extinguish', title: 'Extinguish (Grab a light mote)', map: ppFreeze(KX_M.extinguish(false, 'm'), 7, ppSeat(P, {}), P, M, {}),
+    legend: [ppG('Everyone', '#ffd76a', [], 'Run over a Light\'s Embrace mote before the hit lands; no mote, a personal.'), ppG('Motes', GO, [], 'They appear by the Hulk, so walk it to the raid\'s Voidweaver.')],
+    foot: 'Liadrin throws the motes as he starts the cast.' });
+  // Unspeakable Horrors: the feared run to their marker (healers skull, melee star, ranged X), the note's dispeller for each (the guide's map)
+  { const fix = {}, ids = [], tags = []; [['healer', 'h1', 'Skull'], ['melee', 'h2', 'Star'], ['ranged', 'h4', 'X']].forEach(([g, s, t]) => { const n = J.fear[g]; if (!n) return; fix[s] = n; ids.push(s); tags.push([s, 'Dispels ' + t]); });
+    cards.push({ id: 'fear', ph: 1, when: 'Every Horrors', title: 'Unspeakable Horrors (Run to your marker)', map: ppFreeze(KX_M.fear(false, 'm'), 5.8, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags }),
+      legend: [ppG('Feared players', PU, [ppI(P, ppAny('Whoever gets a fear'))], 'You have 6 seconds to reach your marker: healers skull, melee star, ranged X.'),
+        ppG('Dispels', '#7fd8ff', [J.fear.healer && ppI(P, J.fear.healer, 'Skull'), J.fear.melee && ppI(P, J.fear.melee, 'Star'), J.fear.ranged && ppI(P, J.fear.ranged, 'X')], 'The healer first, then one at a time.')],
+      foot: 'Dispelled in place, nobody else gets feared.' }); }
+  // Dark Devastation: his tank drops each at its number (1 and 2 together, 3 out past moon, 4 and 5 together, 6 out past triangle)
+  cards.push({ id: 'dev', ph: 1, when: 'Every Devastation', title: 'Dark Devastation (Drop it at its number)', map: ppFreeze(KX_M.devastation(false, 'm', { n: 0 }), 4.2, ppSeat(P, {}), P, M, { hl: ['t1'], named: ['t1'], focus: { x: 0, y: 12, r: 48 }, labels: KX_D.map((p, i) => [{ rx: p[0] + 5, ry: p[1] + 4 }, String(i + 1), VO, '#fff', 0]) }),
+    legend: [ppG('His tank', BL, [ppI(P, ppSeat(P, {}).t1 || ppAny('His tank'), 'Drops them')], 'Each leaves a Voidscar: 1 and 2 together, 3 just outside the bubble as the intermission starts, 4 and 5 together, 6 in the second intermission.'), ppG('Tanks', GO, [], 'Swap after every cast.')],
+    foot: 'A 15-yard hit round the tank: a defensive each time.' });
+  // The Voidscars: two ranged per scar take turns soaking its fragments (moon in the first intermission, triangle in the second), a backup each
+  if (J.scar[0].length || J.scar[1].length) { const k = gdzKit(KX, 3), fix = {}, put = new Set(), S1 = M.moon || KX_MK.moon, S2 = M.triangle || KX_MK.triangle; kxLia(k, 0); kxBoss(k, 0, KX_IB); kxBulwark(k, 0, 9); kxDark(k, 0, 9);
+    [S1, S2].forEach((p) => k.ring({ x: p[0], y: p[1], r: 6, fx: 'soak', t0: 0, at: 1.05, dur: 5, color: '#c084ff', cn: 'Voidscar soak', label: false })); kxScar(k, KX_D[2], 0, 9); kxScar(k, KX_D[5], 0, 9);
+    const a = ppClump(k, P, fix, put, J.scar[0], S1, 2.6), b = ppClump(k, P, fix, put, J.scar[1], S2, 2.6), c = ppClump(k, P, fix, put, J.scarB, [0, -8], 3);
+    GDZ_RAID.filter((s) => !put.has(s)).forEach((s) => { put.add(s); const q = KX_INT[s] || [0, -4]; k.at(0, s, q[0], q[1]); });
+    cards.push({ id: 'scar', ph: 1.5, when: 'Each intermission', title: 'Eclipse Fragments (Soak your scar\'s)', map: ppFreeze(k.done({ title: 'Voidscars', focus: { x: -2, y: 4, r: 46 } }), 1, ppSeat(P, fix), P, M, { hl: a.concat(b, c), named: a.concat(b, c), tags: a.map((x) => [x, '1']).concat(b.map((x) => [x, '2'])) }),
+      legend: [ppG('Scar 1: moon, the first intermission', '#c084ff', J.scar[0].map((n) => ppI(P, n))), ppG('Scar 2: triangle, the second', '#c084ff', J.scar[1].map((n) => ppI(P, n))), ppG('Backup', Q, J.scarB.map((n) => ppI(P, n)), 'Take turns: no solo soaks (6-yard splash).')],
+      foot: 'Soak each fragment before it reaches Liadrin.' }); }
+  // Suffocating Darkness: everyone inside Liadrin's bubble, the fragments flying to her, the note's intermission cooldowns (the guide's map)
+  cards.push({ id: 'int', ph: 1.5, when: 'Each intermission', title: 'Suffocating Darkness (Inside the bubble)', map: ppFreeze(KX_M.fragments(false, 'm'), 8, ppSeat(P, {}), P, M, {}),
+    legend: [ppG('Everyone', '#ffd76a', [], 'Stay inside Liadrin\'s bubble and catch the fragments flying to her. Abyssal Grasp: a potion or a Healthstone to break it within 8 seconds.'), ppG('Raid cooldowns', '#9a7bff', cdsOf(J.int))],
+    foot: 'Outside the bubble you\'re pacified and take heavy damage.' });
+  // Last Light: Bloodlust and the push, each role's Null Gate spot, Negation run through the gates (the guide's map)
+  cards.push({ id: 'p2', ph: 3, when: 'Phase 2', title: 'Last Light (Gates at your spot)', map: ppFreeze(KX_M.negation(false, 'm'), 5.4, ppSeat(P, {}), P, M, {}),
+    legend: [ppG('Push', GO, [], 'Bloodlust on the pull and push to 25% before the third beetle set (about 4:15): skip the third intermission.'), ppG('Gates', '#7a3dff', [], 'Drop yours at your role\'s spot: melee beside the boss, ranged on the far side, healers their own spot.'), ppG('Raid cooldowns', '#9a7bff', cdsOf(J.p2))],
+    foot: 'Nullify: 3 stacks kill, dodge the shards.' });
+  return cards;
+}
 // (the note's healing and raid cooldowns at a moment, for a picture's legend: NSRT reminder lines between two times of a phase)
 function ppCds(N, P, ph, t0, t1) { return N.reminders.filter((x) => x.ph === ph && x.time >= t0 && x.time <= t1 && x.spellid).flatMap((x) => x.tags.filter((w) => P.has(w.toLowerCase())).map((w) => [Math.floor(x.time / 60) + ':' + String(Math.round(x.time % 60)).padStart(2, '0'), P.get(w.toLowerCase()).name, (E.cdName && E.cdName(x.spellid)) || x.text || 'Cooldown'])); }
 const GDZ_PP = {
@@ -6218,6 +6272,18 @@ const GDZ_PP = {
     // (Plan's Jobs cards (a447ffe) and the pictures each shows, by its key, else by its title)
     mech: { combo: ['combo'], mut: ['mut'], tempest: ['tempest'], fury: ['fury'], surge: ['surge'], winds: ['winds'], dig: ['dig'], cyst: ['cyst'], cds: [], def: [] },
     jobs: [[/apex predator/i, ['combo']], [/mutilate/i, ['mut']], [/tempest/i, ['tempest']], [/fury/i, ['fury']], [/surge/i, ['surge']], [/crosswinds/i, ['winds']], [/dig in/i, ['dig']], [/cyst/i, ['cyst']]] } },
+  "Kith'ix": { Mythic: {
+    // (the guide's markers: the soak spots just inside the barrier (circle for the tanks, moon and triangle for the scar pairs) and the
+    // fear spots (skull for healers, star for melee, X for ranged); diamond and square off to the side for the raid lead to use)
+    marks: { moon: KX_MK.moon, circle: KX_MK.circle, triangle: KX_MK.triangle, skull: [-32, 36], star: [28, 40], cross: [-44, -24], diamond: [36, -26], square: [-10, -40] },
+    stack: [0, 0],
+    uses: [],
+    room: { scene: (k) => { kxBoss(k); kxLia(k, 0); }, focus: { x: -2, y: 4, r: 50 }, lim: 55, keep: [KX, 'Lady Liadrin'] },
+    read(N, P) { const J = ppReadKX(N, P); J.int = ppCds(N, P, 1.5, 0, 999).concat(ppCds(N, P, 2.5, 0, 999)); J.p2 = ppCds(N, P, 3, 0, 999).concat(ppCds(N, P, 4, 0, 999)); return J; },
+    cards: ppCardsKX,
+    // (Plan's Jobs cards (a564306) and the pictures each shows, by its key, else by its title)
+    mech: { adds: ['adds'], beetles: ['beetles'], ext: ['ext'], fear: ['fear'], dev: ['dev'], scar: ['scar'], int: ['int'], p2: ['p2'], cds: [], def: [] },
+    jobs: [[/voidswarm/i, ['adds']], [/beetle/i, ['beetles']], [/extinguish/i, ['ext']], [/fear|horrors/i, ['fear']], [/devastation/i, ['dev']], [/scar/i, ['scar']], [/darkness|bubble/i, ['int']], [/last light|phase 2/i, ['p2']]] } },
 };
 const PP_PH = { 1: ['Phase 1', '#5aa0ff'], 1.9: ['Phase 1 ends', '#5aa0ff'], 2: ['Phase 2', '#b65cff'], 2.5: ['Intermission', '#e6b450'], 3: ['Phase 3', '#ff5a4f'] };
 
@@ -6329,7 +6395,7 @@ function ppOpen(r, u0, opt) {
   document.body.appendChild(box); document.body.classList.add('ndz-modal');
   const close = () => { box.remove(); if (!$('#ndzWiz') && !$('#ndzGuide') && !$('#ndzNoteView') && !$('#ndzShot')) document.body.classList.remove('ndz-modal'); };
   const head = '<div class="ndz-whead"><span class="sub">Pictures for Discord</span><button class="ndz-ex" type="button" data-ppx aria-label="Close">✕</button></div>';
-  if (!set.cf) { box.innerHTML = '<div class="ndz-wbox">' + head + '<h2>Pictures for Discord</h2><p class="sub">Pictures are ready on Mythic for every boss but Kith\'ix so far. The other bosses come next.</p></div>'; box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); }; return; }
+  if (!set.cf) { box.innerHTML = '<div class="ndz-wbox">' + head + '<h2>Pictures for Discord</h2><p class="sub">Pictures are ready on Mythic for every boss. The other bosses come next.</p></div>'; box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); }; return; }
   box.innerHTML = '<div class="ndz-wbox ndz-shotbox pp-win">' + head + '<h2 class="pp-h2"></h2>' +
     '<div class="pp-nav"><span class="sub pp-navt"></span><button class="btn sm" type="button" data-ppprev></button><button class="btn sm" type="button" data-ppnext></button><button class="btn sm" type="button" data-ppallv></button></div>' +
     '<p class="sub pp-intro">One picture for each mechanic your note gives jobs for, with everyone on their spot. Copy one and paste it in Discord (Ctrl+V), or download it.</p>' +
