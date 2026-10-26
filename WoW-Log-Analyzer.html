@@ -7431,6 +7431,13 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 /* ===== Design studio round 48 (Oct 26): the docked mechanic box stays invisible (no dark panel with zero padding under Each pull: the rows-style
    panel rule painted it back). Owner: the Design studio chat. ===== */
 #view .mxa-p > details.secd.secd.rw2, #view .mxa-p > details.secd.secd.dbr-line:has(.rw2-pc) { background: none !important; border-color: transparent !important; box-shadow: none !important; }
+/* ===== Design studio round 49 (Oct 26): tags that hold a mechanic icon (Since last pull: ▼ Guillotine) are 22px pills with a 16px icon,
+   arrow, icon and name centred and 4px apart, so the icon sits inside the pill. Owner: the Design studio chat. ===== */
+#view .cch-tag:has(.icw), #view .cch-tsince .cch-tag { display: inline-flex; align-items: center; gap: 4px; height: 22px; line-height: 22px !important; padding: 0 9px 0 7px !important; vertical-align: middle; }
+#view .cch-tag .sp.mt, #view .cch-tag .sp { display: inline-flex; align-items: center; gap: 4px; }
+#view .cch-tag .sp .icw { width: 16px; height: 16px; margin-right: 0; vertical-align: 0 !important; border-radius: 3px; overflow: hidden; }
+#view .cch-tag .sp .icw img.oi { width: 16px; height: 16px; border-radius: 3px; }
+#view .cch-tsince { gap: 6px 8px; align-items: center; }
 </style>
 
 
@@ -17376,6 +17383,7 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'Debriefing: the Since last pull tags (▼ Guillotine, ▲ Sever) had their mechanic icons half outside the pill; the icons sit inside now.',
     'Debriefing: the box that opens under a mechanic row sat in a dark panel with no padding, its text and bars touching the edge; it sits on the page again.',
     'The Twin Fangs avoidable damage: Sanguine Storm and Stir the Depths water are judged against top guilds\' kills (a few hits each is normal there), so a clean pull comes out green.',
     'A Warcraft Logs report link always opens that raid now, on Debriefing when the link names no tab, even if you were last on Home.',
