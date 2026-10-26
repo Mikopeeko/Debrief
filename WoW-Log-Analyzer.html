@@ -52159,6 +52159,7 @@ function ppOpen(r, u0, opt) {
     uses.querySelector('[data-ppreset]').onclick = () => { ppSave(boss, diff, { base: 'guide' }); mkDraw(); redo(); };
     const rb = uses.querySelector('[data-ppraid]'); if (rb) rb.onclick = () => { ppSave(boss, diff, { base: 'raid' }); mkDraw(); redo(); }; };
   box.querySelector('.pp-mkbox').addEventListener('toggle', (e) => { if (e.target.open) mkDraw(); });
+  if (opt.marks) { const d = box.querySelector('.pp-mkbox'); d.open = true; setTimeout(() => d.scrollIntoView({ block: 'start' }), 60); } /* (straight to the Markers map: the Raid markers card) */
   draw();
 }
 // (the Jobs cards on a boss's plan page: each card whose jobs have pictures gets them small, in a row under its assignments (a square
@@ -52166,9 +52167,25 @@ function ppOpen(r, u0, opt) {
 // Plan leaves an empty last child div.pj-pics[data-mech] in each card for them; until it does, the row is added here. Plan's cards are
 // untouched apart from that row and the class pj-has (Design studio's mock, Oct 26; your call: "a horizontal row under the assignments"))
 let PP_IO = null;
+// (the Raid markers card's small picture: the room with the marks on their spots now and no players, the Markers map as a still; drawn
+// again when a mark moves or swaps, since the spots are part of its key)
+const PP_MKPIC = new Map();
+function ppMarksPic(boss, diff) { const c = ppConf(boss, diff); if (!c) return Promise.resolve(null); const key = boss + '|' + diff + '|' + JSON.stringify(c.marks);
+  if (!PP_MKPIC.has(key)) PP_MKPIC.set(key, (async () => { const k = gdzKit(boss, 1); k.boss('zj', 'Zul\'jan', 0, 0, 0); const mp = k.done({ title: '', focus: { x: 0, y: 0, r: 30 } }), fz = ppFreeze(mp, 0, {}, new Map(), {}, {});
+    const cx = (mp.room.x0 + mp.room.x1) / 2, cy = (mp.room.y0 + mp.room.y1) / 2; fz.out.wmarks = PP_MKS.filter((m) => c.marks[m]).map((m) => ({ k: m, x: cx + c.marks[m][0], y: cy + c.marks[m][1] })); fz.keep = ['Zul\'jan'];
+    const map = await ppMapImg(fz); if (!map) return null; const W = 600, M0 = 16, cv = document.createElement('canvas'); cv.width = cv.height = W; const g = cv.getContext('2d'); g.fillStyle = '#12141b'; g.fillRect(0, 0, W, W);
+    g.save(); g.beginPath(); g.roundRect ? g.roundRect(M0, M0, W - 2 * M0, W - 2 * M0, 12) : g.rect(M0, M0, W - 2 * M0, W - 2 * M0); g.clip(); g.drawImage(map, M0, M0, W - 2 * M0, W - 2 * M0); g.restore(); return cv.toDataURL('image/png'); })().catch((e) => { console.warn('Picture plan:', e); return null; }));
+  if (PP_MKPIC.size > 6) PP_MKPIC.delete(PP_MKPIC.keys().next().value); return PP_MKPIC.get(key); }
 function ppJobs() {
   const els = document.querySelectorAll('.bj-jobs .plb-rc:not([data-pj])'); if (!els.length) return;
-  els.forEach((el) => { el.dataset.pj = '1'; const ch = el.querySelector('[data-noteboss][data-noteid]'), t = ((el.querySelector('.plb-rch b') || {}).textContent || '').replace(/^\s*\d+\s*·\s*/, '').trim(); if (!ch || !t) return;
+  els.forEach((el) => { el.dataset.pj = '1';
+    // (the Raid markers card: one picture of the marks, in Plan's empty div.pj-pics[data-mech="marks"] (added here until it's there); a tap
+    // opens the Pictures window on its Markers map, like the card's ✎ Edit)
+    const mb = el.querySelector('[data-ppmarks]'); if (mb) { const c0 = ndzDcNote(mb.dataset.ppmarks), st = c0 && ppSet(c0.r, c0.u0); if (!st || !st.cf) return;
+      let mh = el.querySelector(':scope > .pj-pics'); if (!mh) { el.insertAdjacentHTML('beforeend', '<div class="pj-pics" data-mech="marks"></div>'); mh = el.lastElementChild; }
+      ppCss(); el.classList.add('pj-has'); mh.innerHTML = '<button type="button" class="pj-pic" data-pj="marks" data-note="' + esc(mb.dataset.ppmarks) + '" data-job="Raid markers" aria-label="Raid markers: open the Markers map"><img alt=""><small>Raid markers<i>' + (st.cf.base === 'raid' ? 'your raid\'s spots' : 'guide\'s spots') + '</i></small></button>';
+      ppMarksPic(st.boss, st.diff).then((u) => { const im = mh.querySelector('img'); if (u && im && im.isConnected) im.src = u; }); return; }
+    const ch = el.querySelector('[data-noteboss][data-noteid]'), t = ((el.querySelector('.plb-rch b') || {}).textContent || '').replace(/^\s*\d+\s*·\s*/, '').trim(); if (!ch || !t) return;
     const note = ch.dataset.noteboss + '|' + ch.dataset.noteid, c = ndzDcNote(note); if (!c) return; const set = ppSet(c.r, c.u0); if (!set.cf || !set.cf.C.jobs) return;
     // (which pictures: by Plan's key for the card when it gives one, else by the card's title)
     let pics = el.querySelector(':scope > .pj-pics'); const mech = pics && pics.dataset.mech, byKey = mech && set.cf.C.mech && set.cf.C.mech[mech], m = !byKey && set.cf.C.jobs.find(([re]) => re.test(t));
@@ -52195,7 +52212,7 @@ if (typeof document !== 'undefined') {
     try { ppJobs(); } catch (e) { console.warn('Picture plan:', e); } };
   let ppT = 0; new MutationObserver(() => { if (!ppT) ppT = setTimeout(() => { ppT = 0; ppAdd(); }, 60); }).observe(document.documentElement, { childList: true, subtree: true }); /* (a few times a second at most; a timer, not a frame, so a tab that isn't painting still fills) */
   document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ppnote]'); if (!b) return; e.preventDefault(); const c = ndzDcNote(b.dataset.ppnote); if (c) ppOpen(c.r, c.u0); });
-  document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.pj-pic'); if (!b) return; e.preventDefault(); const c = ndzDcNote(b.dataset.note); if (c) ppOpen(c.r, c.u0, { one: b.dataset.pj, from: b.dataset.job }); });
+  document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.pj-pic'); if (!b) return; e.preventDefault(); const c = ndzDcNote(b.dataset.note); if (c) ppOpen(c.r, c.u0, b.dataset.pj === 'marks' ? { marks: true } : { one: b.dataset.pj, from: b.dataset.job }); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#ppWin')) { $('#ppWin').remove(); if (!$('#ndzWiz') && !$('#ndzGuide') && !$('#ndzNoteView') && !$('#ndzShot')) document.body.classList.remove('ndz-modal'); } });
 }
  // (the build puts src/guides.js here, inside this file's scope)
