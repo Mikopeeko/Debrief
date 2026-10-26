@@ -1,0 +1,9 @@
+Hey, welcome to **Debrief**! 👋 It reads your raid logs and tells you what went right, what went wrong, and what to fix next pull.
+
+• **Start here:** <#1561476332917882941>
+• **Questions:** <#1561477989919891588> (the FAQ is pinned first)
+• **Something broken?** <#1561538061366599782>
+• **Want to test new stuff?** Ask in #general-chat and you will be added to the beta.
+
+No pressure, just have a look around. 💛
+— Claudia, Debrief's welcome committee 🧡

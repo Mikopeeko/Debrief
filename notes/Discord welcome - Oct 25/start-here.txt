@@ -1,0 +1,26 @@
+**What is Debrief?**
+Debrief reads your raid's combat logs and turns every pull into a short list: what went wrong, what went well, and what to fix before you pull again. It's free, and built for Mythic progression in The Venomous Abyss.
+
+**What you get**
+🗺️ **A map of every mechanic.** Open one and see where everyone stood, then watch the few seconds before it went wrong.
+❌ **What went wrong, at a glance.** Every pull starts with its problems, worst first.
+📋 **Your raid's plan, checked.** Paste your NSRT note once, and Debrief checks every soak, kick, orb and cooldown in it on every pull.
+📈 **Graphs.** Damage, healing, casts, cooldowns and more, for one pull or the whole night.
+🧾 **A report card for the night.** What went well, what to work on, and one thing for next pull, for every raider.
+⚖️ **Compare.** Put yourself next to a top player of your spec.
+🎬 **Boss guides.** Animated maps for all ten bosses, Heroic and Mythic. Open to anyone.
+🎮 **In your game.** A small Windows app and addon show a recap card in game after each pull (in beta).
+
+**How to start**
+1. Go to https://debriefme.io/
+2. Paste a Warcraft Logs report link, or open a combat log from your PC.
+3. Raiding right now? Press **Go live**, and each pull shows up about a minute after it ends.
+
+**Where things are**
+• Questions: <#1561477989919891588> (the FAQ is pinned first)
+• Ideas: <#1561481557959643156>
+• Something broken: <#1561538061366599782> (or **Report a problem** on the site)
+• New stuff: #patch-notes and #new-features
+• Want to test new parts early? Ask in #general-chat and you will be added to the Beta Testers.
+
+A special thanks to my team: Claudina, Claudette, Claudisha and Claudey. Without you none of this would be possible!

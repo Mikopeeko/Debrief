@@ -1,0 +1,29 @@
+**How do I open my raid?**
+On the site, paste a Warcraft Logs report link. You can also open a combat log from your PC (WoWCombatLog.txt), or drop it anywhere on the page.
+
+**Can I use it during raid?**
+Yes. If someone in your raid live logs to Warcraft Logs, press **Go live** on the site. Each pull shows up about a minute after it ends.
+
+**Why are there no maps?**
+Maps need player positions, which come from Advanced Combat Logging. Whoever logs should turn it on in game (Options, Network, Advanced Combat Logging).
+
+**What's an NSRT note, and where do I get it?**
+It's your raid's plan from Northern Sky Raid Tools: who soaks, who kicks, and who presses which cooldown. Your raid leader shares it. On the site, choose **Have a note?** and paste it, and Debrief checks your pulls against it.
+
+**Is my note shared with anyone?**
+No. Your NSRT notes and settings stay in your own browser.
+
+**Which bosses does it cover?**
+Pull reviews cover all eight bosses of The Venomous Abyss, and the boss guides cover all ten, on Heroic and Mythic. It is built for Mythic. Heroic and Normal pulls work too, though a few checks are Mythic only.
+
+**What is on the Rotation tab?**
+How each player played their own spec: what to work on first, what they did well, and how each spell was used compared with top players.
+
+**Is there an in-game addon?**
+Yes, in beta. A small Windows app reads your log after each pull and a recap card opens in game. Ask in #general-chat to join the beta and get it.
+
+**Does it work on my phone?**
+Yes, every page works on a phone.
+
+**Something looks wrong. What do I do?**
+Use **Report a problem** in the site's menu, or post in <#1561538061366599782> with a link to the pull.
