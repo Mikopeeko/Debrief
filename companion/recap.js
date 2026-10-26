@@ -981,7 +981,11 @@ function buildOne(b, rep, same, W, L, cutN) {
     }
     Ld.push(...fixTop.slice(0, 2).map((x) => x[1]));
     let nx = String(raid.next || '').replace(/^Kill! /, ''); if (nx.length > 70 && /: /.test(nx)) nx = nx.split(': ')[0] + (/^Next time$/i.test(nx.split(': ')[0]) ? ': ' + nx.split(': ')[1].split(': ')[0] : ''); /* (the short part: the Next pull box has the rest) */
-    if (nx && !(b.kill && /^Clean pull/i.test(nx))) Ld.push(b.kill ? nx : 'Next pull: ' + low(nx).replace(/^./, (c) => c.toUpperCase()) + '.');
+    /* (Oct 26, like Debriefing's coach (the user: "talks like a robot"): said, not labelled, one sentence; an instruction follows "Next pull, ",
+       a fact "One thing for next pull: ") */
+    if (nx && !b.kill) { const s1 = nx.split(/(?<=[.!?])\s+(?=[A-Z])/)[0].replace(/[.!]+$/, ''); if (s1.length >= 12) nx = s1; }
+    const nxVerb = /^(stay|dodge|soak|kick|interrupt|move|press|use|pop|spread|stack|line|put|get|pick|watch|run|help|keep|take|swap|save|go|stand|face|turn|kill|focus|heal|top|don't|do|make|hit|bait|clear|break|catch|collect|avoid|call|wait|step|drop|let|grab|bring|give|stop|start|check|follow|aim|switch|hold|leave|walk|try|cast|time|plan|split|dispel|cleanse|purge|taunt|tank|send|push|burn|slow|stun|root|knock|grip|assign|place)\b/i.test(nx);
+    if (nx && !(b.kill && /^Clean pull/i.test(nx))) Ld.push(b.kill ? nx : (nxVerb ? 'Next pull, ' : 'One thing for next pull: ') + low(nx) + '.');
     raid.lead = Ld.filter(Boolean).join(' ').replace(/\.\./g, '.');
     // (the Glance card: the head, up to 3 good, up to 3 to fix, the next pull)
     const cut1 = (t, n) => { let x = String(t).replace(/^\d+ of \d+ (sets )?(?:went wrong|failed)[.:]\s*/i, '').replace(/^Done right\.\s*/, ''); x = (x.split(/(?<=[.!?])\s+(?=[A-Z0-9@"(])/)[0] || x).replace(/\.$/, '');
