@@ -118,3 +118,16 @@ swap carrying the jobs, sizes (25 on Nymrissa and Kith'ix, 20 elsewhere, Heroic 
   rotate the healer sits, and top kills bring fewer melee than ranged (`pnFairOf`).
 Test-run list (Oct 25) still open: Ready over half-filled jobs (Vashnik grips), big hits with no cooldown on some bosses, jobless
 raiders on 25-player bosses (and tanks counted as jobless), a new team landing on the old Who plays page, Esc on the paste window.
+
+## Out for everyone (Oct 26, the user: "Put all tabs live on my website")
+- `ASG_OFF = () => false` (the old owner-only rule is in its comment). Everything that branched on it now shows for everyone:
+  the Plan tab and menu item, ?plan, Debriefing's "Open the plan" / note bar, the shared-plan link.
+- A visitor starts empty (no team, no notes; the sample notes button only exists on practice links and localhost).
+- **No team yet:** the gold button is "Add my Warcraft Logs team →" (the Start now setup); "type the names instead" opens the roster
+  editor, and Save comes back to Tonight. With a team, it's "Make my roster →" as before (the roster makes itself from the team).
+- **Set classes:** pasted names have no class, so things to fix leads with "N raiders have no class yet" and **Set classes**; when
+  half or more have none, the buff and role rows wait (they'd all be guesses). It walks one raider at a time: class swatches, then
+  that class's specs, then the next; Skip and Done. A raider's "?" icon on the table opens it on them.
+- Checked as a brand-new visitor (empty storage, practice link): no other team's names, the setup opens, 20 typed names → Set
+  classes → 10 Ready plans, a box tap, a boss page, 390 px with nothing past the edge; and the owner's full checks (all bosses H+M,
+  drag, specs) with no page errors.
