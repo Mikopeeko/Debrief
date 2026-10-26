@@ -7440,6 +7440,38 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 #view .cch-tag .sp .icw { width: 16px; height: 16px; margin-right: 0; vertical-align: 0 !important; border-radius: 3px; overflow: hidden; }
 #view .cch-tag .sp .icw img.oi { width: 16px; height: 16px; border-radius: 3px; }
 #view .cch-tsince { gap: 6px 8px; align-items: center; }
+/* ===== Design studio round 50 (Oct 26): the whole-site polish audit, first fixes: Rotation fits a phone (the hero wraps, one ring tile per row, the wide
+   table scrolls in its box), nothing anyone reads is under 12px, the tab bars on a phone fade at the edge, the empty Plan page gets air.
+   Owner: the Design studio chat. ===== */
+/* 1–3: Rotation on a phone */
+@media (max-width: 640px) {
+  #view .spc-hero > .spc-hl, #view .spc-hl { flex-wrap: wrap !important; }
+  #view .spc-hl > .spc-hm { flex: 1 1 100% !important; min-width: 0 !important; }
+  #view .rot-hn, #view .rot-hn h3 { white-space: normal !important; overflow-wrap: anywhere; }
+  #view section.rck .rck-cat .rck-rs { grid-template-columns: minmax(0, 1fr) !important; }
+  #view .spc-str { grid-template-columns: 84px minmax(0, 1fr) 44px !important; gap: 8px !important; }
+  #view table.trg-l { display: block; overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
+}
+/* 4: reading text at 12px (chart and map axes keep their size) */
+#view .prw-i .prw-tr, #view .cch-tag, #view .cch-twl li > b .cch-tag, #view .cch-twl li .cch-tag, #view details.phase > summary .prw-i .prw-n > .prw-tr, #view .prw-i .prw-n .prw-tr { font-size: 12px !important; }
+#view .rch-st, #view .rch-rl { font-size: 12px !important; }
+#view .mcx-tl2 .mcx-bar, #view .mcx-tl2 .mcx-lt small, #view .nmc-tl .mcx-lt small { font-size: 12px !important; }
+#view .mxa-p details.secd > summary .sst { font-size: 12px !important; }
+.pfv .ds-rcols section.rck .rck-cats > .rck-cat > summary .rck-cv, #view section.rck .rck-cat > summary .rck-cv { font-size: 12px !important; }
+#view .gb.gb-tb.ds-gb .gb-tl .pf-row.cb.cb-h, #view .gb.gb-tb.ds-gb .ds-grail .gb-tgl, #view .gb-tgl, #view .gb-tgl > span, #view .cb-h .cb-hn { font-size: 12px !important; }
+.gbsv-t { font-size: 12px !important; }
+.fpx-badge b { font-size: 12px !important; }
+.fp3-pt { font-size: 12px !important; } .fp3-star { font-size: 12px !important; }
+#view .gdz-tlbd > .gdz-tlbn, .gdz-tlbn { font-size: 12px !important; }
+/* 5: the tab bars on a phone fade at the right edge, so a raider sees there is more to the right */
+@media (max-width: 1099px) {
+  .tabbar .tabs { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); padding-right: 40px; }
+  #view nav.gdz-pick { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); padding-right: 40px; scrollbar-width: none; }
+  #view nav.gdz-pick::-webkit-scrollbar { display: none; }
+}
+/* 6: the empty Plan page breathes */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plq > .panel.plq-hero:first-child { margin-top: 28px; }
+@media (min-width: 900px) { html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plq > .panel.plq-hero:first-child { margin-top: 56px; } }
 </style>
 
 
@@ -17352,6 +17384,7 @@ const PATCH_NOTES = [
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'A polish pass over the whole site: nothing you read is under 12 px any more (tags, labels, the timeline lanes, the Report card and Graphs headers), the tab bars on a phone fade at the edge to show they scroll, and the empty Plan page sits with a little more air.',
     'Fairer Mythic checks on Twin Fangs, Sszorak, Vashnik, Entombed Sentinels, The Lost Explorers, Nymrissa and Ula\'tek: things top guilds do and still kill the boss are a note or yellow now, and red is kept for what kills someone or wipes the raid (checked against the fastest kills).',
     'A new death reason, Not enough healing: when someone did their part (no avoidable damage, nothing of theirs left unused) but sat under 40% health with little healing coming in for longer than top raids ever allow, the death isn\'t put on them. Healers see it on their Report card as a fact, never graded.',
     'Debriefing: the Coiled Altar shield-damage bars read like the site\'s other charts, one slim row a raider with a thin bar under the name, and the Venomfang dispel rows match them.',
@@ -17387,6 +17420,7 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'Rotation on a phone: the top card ran off the right edge, the ring tiles squeezed into two tiny columns so their numbers spilled, and one table was wider than its box; all three fit the screen now.',
     'Debriefing: the Since last pull tags (▼ Guillotine, ▲ Sever) had their mechanic icons half outside the pill; the icons sit inside now.',
     'Debriefing: the box that opens under a mechanic row sat in a dark panel with no padding, its text and bars touching the edge; it sits on the page again.',
     'The Twin Fangs avoidable damage: Sanguine Storm and Stir the Depths water are judged against top guilds\' kills (a few hits each is normal there), so a clean pull comes out green.',

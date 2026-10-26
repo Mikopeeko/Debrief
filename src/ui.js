@@ -1952,6 +1952,7 @@ const PATCH_NOTES = [
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'A polish pass over the whole site: nothing you read is under 12 px any more (tags, labels, the timeline lanes, the Report card and Graphs headers), the tab bars on a phone fade at the edge to show they scroll, and the empty Plan page sits with a little more air.',
     'Fairer Mythic checks on Twin Fangs, Sszorak, Vashnik, Entombed Sentinels, The Lost Explorers, Nymrissa and Ula\'tek: things top guilds do and still kill the boss are a note or yellow now, and red is kept for what kills someone or wipes the raid (checked against the fastest kills).',
     'A new death reason, Not enough healing: when someone did their part (no avoidable damage, nothing of theirs left unused) but sat under 40% health with little healing coming in for longer than top raids ever allow, the death isn\'t put on them. Healers see it on their Report card as a fact, never graded.',
     'Debriefing: the Coiled Altar shield-damage bars read like the site\'s other charts, one slim row a raider with a thin bar under the name, and the Venomfang dispel rows match them.',
@@ -1987,6 +1988,7 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'Rotation on a phone: the top card ran off the right edge, the ring tiles squeezed into two tiny columns so their numbers spilled, and one table was wider than its box; all three fit the screen now.',
     'Debriefing: the Since last pull tags (▼ Guillotine, ▲ Sever) had their mechanic icons half outside the pill; the icons sit inside now.',
     'Debriefing: the box that opens under a mechanic row sat in a dark panel with no padding, its text and bars touching the edge; it sits on the page again.',
     'The Twin Fangs avoidable damage: Sanguine Storm and Stir the Depths water are judged against top guilds\' kills (a few hits each is normal there), so a clean pull comes out green.',
