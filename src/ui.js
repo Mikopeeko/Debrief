@@ -1951,6 +1951,7 @@ const PATCH_NOTES = [
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'Rotation: Other gear and Extras sit at the bottom of the gear column again instead of in a second panel under the checklist.',
     'Rotation: one tile a spell. Rows about the same spell sit in its tile (Judgment while Holy Shock was full in Holy Shock, what you saved for Incarnation in Incarnation), each tile leads with the spell\'s own uses, and the numbers tiles join their spell.',
     'Healers: Cooldowns on big damage counts your presses against the most you could have pressed, says how many met heavy damage, and its cards are your presses only.',
     'Rotation for healers: Mana at the kill now sits inside Mana in numbers, one tile with how much you had left and where it went, and a new From others bar shows the mana other players gave you (Innervate, Source of Magic, Symbol of Hope, Mana Tide) and who gave it.',
@@ -30658,17 +30659,6 @@ function dsRotSlim() { document.querySelectorAll('#view section.rck .rck-b:not(.
   const bot = document.createElement('div'); bot.className = 'ds-rbot'; bot.appendChild(links); if (bxf) bot.appendChild(bxf); b.insertBefore(bot, hwp || null); if (hwp) b.appendChild(hwp);
   rs.hidden = true; }); }
 (function () { const f10 = dsBars; dsBars = function (root) { f10(root); try { dsRotSlim(); } catch (e) {} }; })();
-
-// ===== Design studio round 19 (Oct 25): Rotation columns balance. Moves the last gear groups under the checklist while that evens the two columns;
-// one-column screens get them back. Runs with the other passes and on resize. Owner: the Design studio chat. =====
-function dsRotBalance() { const rc = document.querySelector('#view .ds-rcols'); if (!rc) return; const ck = rc.querySelector(':scope > section.rck'), gx = rc.querySelector(':scope > section.rck-gx:not(.ds-gxl)'); if (!ck || !gx) return; const pn = gx.querySelector(':scope > .rgx-pn'); if (!pn) return;
-  let side = rc.querySelector(':scope > section.rck-gx.ds-gxl'); const wide = getComputedStyle(rc).display === 'grid';
-  if (!wide) { if (side) { [...side.querySelector('.rgx-pn').children].forEach((g) => pn.appendChild(g)); side.remove(); gx.removeAttribute('data-ds-bal'); } return; }
-  if (gx.dataset.dsBal) return; if (!ck.offsetHeight || !gx.offsetHeight) return; gx.dataset.dsBal = '1';
-  const gps = [...pn.querySelectorAll(':scope > .rgx-gp:not(.rgx-gpx)')]; if (gps.length < 2) return; let left = ck.offsetHeight, right = gx.offsetHeight; const moved = [];
-  while (gps.length > 1) { const g = gps[gps.length - 1], h = g.offsetHeight + 8; if (Math.abs((right - h) - (left + h)) >= Math.abs(right - left)) break; moved.unshift(g); gps.pop(); right -= h; left += h; }
-  if (!moved.length) return; side = document.createElement('section'); side.className = 'rck-gx ds-gxl'; const p = document.createElement('div'); p.className = 'rgx-pn'; moved.forEach((g) => p.appendChild(g)); side.appendChild(p); ck.after(side); }
-(function () { const f11 = dsBars; dsBars = function (root) { f11(root); try { dsRotBalance(); } catch (e) {} }; let t = 0; addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => { try { dsRotBalance(); } catch (e) {} }, 150); }); })();
 
 // ===== Design studio round 21 (Oct 25): Debriefing details under their row, map previews that zoom. dsDock() docks the app's
 // open detail box (div.mxa-p) under its row; dsMapZoom() gives the inline map wheel and button zoom and drag. Owner: the Design studio chat. =====
