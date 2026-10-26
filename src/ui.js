@@ -4595,7 +4595,7 @@ function ndzBuildView(r) {
     if ($('#plbCopy')) $('#plbCopy').onclick = async () => { plbSaveNow(B, r); const ok = await copyText(ndzBuildText(B)); toastOk(ok ? 'Copied for the game. In game: NSRT, Shared Notes, then Import.' : 'Couldn\'t copy: open the plan and use Copy for the game there.', 6000); };
     if ($('#ndzBName')) $('#ndzBName').addEventListener('input', () => plbAutoSave(B, r)); /* (renaming saves too) */
     plbAutoSave(B, r); plbSpy();
-    if (S.plbGoTo) { const g = S.plbGoTo; S.plbGoTo = null; if (B.step === total - 1 && g !== total - 1) { B.step = 1; redraw(); } setTimeout(() => { const el = document.getElementById('plbsec-' + g); if (el) el.scrollIntoView({ block: 'start' }); }, 60); } /* (✎ Change on the boss page lands on its section, Oct 24) */ }
+    if (S.plbGoTo) { const g = S.plbGoTo; S.plbGoTo = null; if (B.step === total - 1 && g !== total - 1) { B.step = 1; redraw(); } setTimeout(() => { const el = document.getElementById('plbsec-' + g); if (el) el.scrollIntoView({ block: 'start' }); }, 60); } /* (✎ Edit on the boss page lands on its section, Oct 24) */ }
 }
 
 // (the one page's top: the boss banner, a guide bar with every step (✓ once it has picks) and how many are filled; Oct 24)
@@ -4608,7 +4608,7 @@ function plbOneFoot(B, pages) { const M = pages.length + 2, n = plbFilled(B, pag
   return '<div class="ndz-wfoot plb-ofoot"><span class="plb-prog" aria-hidden="true"><i style="width:' + Math.round(100 * n / M) + '%"></i></span><span class="sub" id="plbSaved">' + (B._savedAt ? 'Saved ✓' : B.noteId ? 'Saves as you go' : 'Saves once you pick someone') + '</span>' +
     '<span class="plb-oact"><button class="btn primary" type="button" id="plbRev">Review your plan →</button></span></div>'; }
 // (the review page: its banner, the bottom bar (Back to editing, Copy for the game, Done), and one card per section with ✎ Change; Oct 24)
-function plbRevHead(B, top0) { return top0('Your plan', 'Everything you picked, section by section. Press ✎ Change on any section to go back to it.').replace(/ · Step \d+ of \d+/, ' · ' + (B.noteId ? 'saved' : 'review')).replace('>Cancel</button>', '>Close</button>'); }
+function plbRevHead(B, top0) { return top0('Your plan', 'Everything you picked, section by section. Press ✎ Edit on any section to go back to it.').replace(/ · Step \d+ of \d+/, ' · ' + (B.noteId ? 'saved' : 'review')).replace('>Cancel</button>', '>Close</button>'); }
 function plbRevFoot(B) { return '<div class="ndz-wfoot plb-ofoot plb-rfoot"><span class="plb-oact"><button class="btn" type="button" id="plbBackEd">← Back to editing</button></span><span class="sub" id="plbSaved">' + (B._savedAt ? 'Saved ✓' : B.noteId ? 'Saves as you go' : 'Nothing picked yet') + '</span>' +
   '<span class="plb-oact"><button class="btn" type="button" id="plbCopy">📋 Copy for the game</button><button class="btn primary" type="button" id="plbDone">Done</button></span></div>'; }
 const plbT = (ph, t) => (ph % 1 ? 'Int ' : 'P' + ph + ' ') + Math.floor(t / 60) + ':' + String(Math.round(t % 60)).padStart(2, '0');
@@ -4618,7 +4618,7 @@ function plbRevCards(B, pages, stT) { const ps = [...B.pr.players.values()], byN
   const row = (l, body, cls, sub) => '<div class="plb-rr"><span class="plb-rl' + (cls ? ' ' + cls : '') + '">' + l + '</span><span class="plb-rn">' + body + '</span>' + (sub ? '<span class="plb-rn plb-rsub">' + sub + '</span>' : '') + '</div>'; /* (a numbered group's side jobs as a second line, Oct 26) */
   const issT = (s0) => { const L = (B.pages && s0 <= B.pages.length ? ndzBuildIssues(B) : []).filter((x) => x.step === s0).map((x) => String(x.t).replace(/^[^:]*: /, '').replace(/ has (\d+) of (\d+)$/, ' has $1; it needs $2')); return L.length ? '<b>To look at</b><br>' + L.map(esc).join('<br>') + '<br>Tap to change it.' : ''; };
   const pill = (s0, state) => { const txt = ({ ok: '✓ Done', warn: esc(open.get(s0) || 'Open jobs'), none: 'Not filled yet' })[state]; if (state === 'ok') return '<span class="plb-rcs ok">' + txt + '</span>'; const tip = state === 'warn' ? issT(s0) : '<b>Not filled yet</b><br>Nobody has these jobs. Tap to fill them.'; return '<button type="button" class="plb-rcs ' + state + '" data-bgo="' + s0 + '"' + (tip ? ' data-tt="' + esc(tip) + '"' : '') + '>' + txt + '</button>'; }; /* (it says what to look at and opens that part, Oct 26) */
-  const card = (s0, ic, title, state, rows, wide, key) => '<div class="plb-rc' + (state === 'none' ? ' plb-rc0' : '') + (wide ? ' wide' + (wide === 2 ? ' cols' : '') : '') + '"><div class="plb-rch">' + ic + '<b>' + s0 + ' · ' + esc(title) + '</b>' + pill(s0, state) + '<button class="btn sm plb-rcx" type="button" data-bgo="' + s0 + '">✎ Change</button></div>' + (rows ? '<div class="plb-rrs">' + rows + '</div>' : '') + (key ? '<div class="pj-pics" data-mech="' + esc(key) + '"></div>' : '') + '</div>'; /* (the raid plan pictures' empty host, Oct 26) */
+  const card = (s0, ic, title, state, rows, wide, key) => '<div class="plb-rc' + (state === 'none' ? ' plb-rc0' : '') + (wide ? ' wide' + (wide === 2 ? ' cols' : '') : '') + '"><div class="plb-rch">' + ic + '<b>' + s0 + ' · ' + esc(title) + '</b>' + pill(s0, state) + '<button class="btn sm plb-rcx" type="button" data-bgo="' + s0 + '">✎ Edit</button></div>' + (rows ? '<div class="plb-rrs">' + rows + '</div>' : '') + (key ? '<div class="pj-pics" data-mech="' + esc(key) + '"></div>' : '') + '</div>'; /* (the raid plan pictures' empty host, Oct 26) */
   const out = pages.map((pg, i) => { const s0 = i + 1, has = plbHas(B, pages, i);
     const labs = pg.slots.map((sl) => sl.label), baseOf = (l) => labs.find((m) => m !== l && l.endsWith(' ' + m) && /\d$/.test(m) && /^[A-Za-z]+$/.test(l.slice(0, l.length - m.length - 1)) && !/^P$/i.test(l.slice(0, l.length - m.length - 1))); /* ("External Guillotine 1" belongs to "Guillotine 1", Oct 26) */
     const namesOf = (sl) => { const n = (B.sel[pg.key + '|' + sl.label] || {}).n || [], ord = (sl.block === 'int' || sl.kick || sl.order) && n.length > 1; return n.length ? n.map((x, j) => nm(x, ord ? j + 1 : 0)).join('') : nobody; };
@@ -6617,7 +6617,7 @@ function planBossHead(pb, l, n) { const R = planRoster(), pk = E.PACKS.find((p) 
   const B = (attr, lab, cls) => '<button class="btn' + (cls ? ' ' + cls : '') + '" type="button" ' + attr + '>' + lab + '</button>', nb = 'data-ndzbuild="1" data-ndzbuildfix="1" data-ndzbuildboss="' + esc(pb) + '"';
   const fitL = (x) => { const m = planMiss(x); return m.length ? m.length + ' not on ' + (R ? R.name : 'the roster') : 'fits'; }; /* (each plan says how it fits the roster, Oct 23) */
   const nsel = false && (l.length > 1 || (l.length && !n)) ? /* (the list below instead, Oct 23) */ '<select class="plan-nsel" data-ndzpns="1" aria-label="Which plan">' + (n ? '' : '<option value="" selected disabled>Pick a saved plan…</option>') + l.map((x) => '<option value="' + esc(x.id) + '"' + (n && x.id === n.id ? ' selected' : '') + '>' + esc(x.name) + ' · ' + esc(fitL(x)) + '</option>').join('') + '</select>' : '';
-  const rl = R ? 'Roster <b>' + esc(R.name) + '</b> · ' + plural(R.players.filter((p) => !p.bench).length, 'raider') + ' <a href="#" data-planv="ros">Change</a>' : 'No roster yet <a href="#" data-planv="ros">Make one</a>';
+  const rl = R ? 'Roster <b>' + esc(R.name) + '</b> · ' + plural(R.players.filter((p) => !p.bench).length, 'raider') + ' <a href="#" data-planv="ros">Edit</a>' : 'No roster yet <a href="#" data-planv="ros">Make one</a>';
   const WO = pnGet(), wd = n ? planDiff(n, WO.on[pb] || []) : { inn: [], out: [] }; /* (Oct 23: this plan vs Who plays) */
   const warnW = n && (wd.inn.length || wd.out.length) ? '<div class="plan-bha plan-bwarn"><span class="plan-bhs">⚠ This plan\'s players differ from Who plays.' + (wd.inn.length ? ' Playing but not in it: ' + esc(andL(wd.inn)) + '.' : '') + (wd.out.length ? ' In it but sitting: ' + esc(andL(wd.out)) + '.' : '') + '</span><span class="ndz-cb">' + B('data-pluse="' + esc(pb + '|' + n.id) + '"', 'Use this plan\'s players', '') + (NDZ_BUILD[pb] && R ? B('data-plnew="' + esc(pb) + '"', '✨ Make a new one from Who plays', 'primary') : '') + '</span></div>' : '';
   const nm = n ? planMiss(n) : [], warn = warnW ? warnW : nm.length ? '<div class="plan-bha plan-bwarn"><span class="plan-bhs">⚠ ' + (nm.length === 1 ? '1 player in this plan isn\'t' : nm.length + ' in this plan aren\'t') + ' on ' + esc(R ? R.name : 'the roster') + ': ' + esc(andL(nm)) + '. Make a new plan from ' + esc(R ? R.name : 'the roster') + ', or edit this one to swap them.</span><span class="ndz-cb">' + (NDZ_BUILD[pb] && R ? B('data-plnew="' + esc(pb) + '"', '✨ Make a new one', 'primary') : '') + B('data-ndzbuild="1" data-noteboss="' + esc(pb) + '" data-noteid="' + esc(n.id) + '"', '✏️ Edit step by step') + '</span></div>' : ''; /* (close, not a full fit, Oct 23) */
@@ -6923,7 +6923,7 @@ function planWhoH(pb) { const o = pnGet(), nm = (x) => String((x && x.n) || x ||
   const inn = ps.filter((p) => on.has(p.n.toLowerCase())), sits = ps.filter((p) => !p.bench && !on.has(p.n.toLowerCase())), K = ['tank', 'healer', 'melee', 'ranged'];
   const G = [['tank', 'Tanks'], ['healer', 'Healers'], ['melee', 'Melee'], ['ranged', 'Ranged']].concat(inn.some((p) => !K.includes(p.kind)) ? [['?', 'Others']] : []);
   const row = ([k, lab]) => { const l = inn.filter((p) => (k === '?' ? !K.includes(p.kind) : p.kind === k)); return l.length ? '<div class="pwho-r"><span class="pwho-l">' + lab + ' <b>' + l.length + '</b></span><span class="pwho-c">' + l.map((p) => planChip(sp, p.n)).join('') + '</span></div>' : ''; };
-  return '<div class="panel pwho"><div class="pwho-h"><h3>Who plays ' + esc(pnShort(pb)) + '</h3><span class="sub">' + (inn.length ? plural(inn.length, 'raider') + (sits.length ? ' · sitting out: ' + sits.map((p) => esc(p.n)).join(', ') : '') : 'Nobody is picked for this boss yet.') + '</span><button type="button" class="linkbtn" data-planv="night">Change who plays</button></div>' + G.map(row).join('') + '</div>'; }
+  return '<div class="panel pwho"><div class="pwho-h"><h3>Who plays ' + esc(pnShort(pb)) + '</h3><span class="sub">' + (inn.length ? plural(inn.length, 'raider') + (sits.length ? ' · sitting out: ' + sits.map((p) => esc(p.n)).join(', ') : '') : 'Nobody is picked for this boss yet.') + '</span><button type="button" class="linkbtn" data-planv="night">Edit who plays</button></div>' + G.map(row).join('') + '</div>'; }
 
 // (a plan fits a boss when its players are exactly who's picked for that boss in Who plays)
 function planFits(x, boss) { let o = null; try { o = pnGet(); } catch (e) { return true; } const d = planDiff(x, o.on[boss] || []); return !d.inn.length && !d.out.length; }
@@ -8035,7 +8035,7 @@ function ndzBtlPackCap(items, X, cw) { const CAP = 3, ends = []; let icEnd = -1e
 // ---- Tonight: the Plan tab's home (your call, Oct 24: "B", fewer doors). Every boss on one row: who sits, its status and one
 // main button (✨ Make it for me, Fix or Open) with 🎮 Copy; Who plays' things to fix on top; the big who-plays grid one button
 // away. A boss opens its page; ← Tonight comes back. The boss page has four buttons (✎ Edit plan, ✨ Make it for me,
-// 📋 Paste a note, 🎮 Copy for the game) and its jobs as cards with ✎ Change: one editor, the build page ----
+// 📋 Paste a note, 🎮 Copy for the game) and its jobs as cards with ✎ Edit: one editor, the build page ----
 function planTonightH() { if (!rostersGet().list.length) return pnH(); /* (no roster yet: the empty page, as before) */
   const o = pnGet(), ps = pnPeople(o), bosses = planBosses(), R = planRoster();
   if (!o.on || !bosses.every((b) => Array.isArray(o.on[b]))) { const pk = pnPick(o, ps); o.on = Object.assign({}, pk.on, o.on); pnSet(o); }
@@ -8113,10 +8113,10 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
 const PLAN_TIPS = [
   { sel: '#view .plan-bh', t: 'This boss', p: 'The plan in use. ⇄ Other plans opens this boss\'s other saved plans: use one, delete one, or start fresh.' },
   { sel: '#view .bj-act', t: 'Four buttons', p: '✎ Edit plan changes anyone. ✨ Make it for me fills it again for the same raiders. 📋 Paste a note loads your NSRT note. 🎮 Copy for the game copies it for NSRT in game.' },
-  { sel: '#view .tn-who', t: 'Who plays', p: 'Who plays this boss and who sits. ✎ Change opens the table to swap anyone.' },
+  { sel: '#view .tn-who', t: 'Who plays', p: 'Who plays this boss and who sits. ✎ Edit opens the table to swap anyone.' },
   { sel: '#view .bj-tabs', t: 'Raid buffs', p: 'Every buff, cooldown, external and kick these raiders bring. Open one to see who brings it.' },
   { sel: '#ndzTl', t: 'Cooldowns', p: 'Every raid cooldown on the fight\'s timeline. The diamonds are the big hits: a red one has no cooldown on it.' },
-  { sel: '#view .plj', t: 'Jobs', p: 'Who does each job. ✎ Change opens that part of the plan to edit it.' }];
+  { sel: '#view .plj', t: 'Jobs', p: 'Who does each job. ✎ Edit opens that part of the plan.' }];
 function planTipsRun() { if (typeof tipVis !== 'function' || typeof runTips !== 'function') return; const st = PLAN_TIPS.filter((s) => tipVis(s.sel)); if (st.length) runTips('plan', st); }
 // (1 · Your team, its clicks: a team chip, + New team, Edit team on and off, bench, × off the team (Undo), add a raider, rename)
 document.addEventListener('input', (e) => { if (e.target && e.target.id === 'tnAddName') S.tnAddName = e.target.value; });
@@ -8165,14 +8165,14 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
 // (the boss page's Who plays: one line, ✎ Change opens the grid)
 function planWhoLineH(pb) { const o = pnGet(), lc = (s) => String(s).toLowerCase(), on = new Set((o.on[pb] || []).map(lc)), away = new Set((o.away || []).map(lc)), ps = pnPeople(o);
   const inn = ps.filter((p) => on.has(lc(p.n))), sits = ps.filter((p) => !p.bench && !on.has(lc(p.n)) && !away.has(lc(p.n)));
-  return '<div class="panel tn-who"><b>Who plays</b><span>' + plural(inn.length, 'raider') + '</span>' + (sits.length ? '<span class="sub">sitting: ' + sits.map((p) => esc(p.n)).join(', ') + '</span>' : '') + '<span class="tn-sp"></span><button type="button" class="btn sm" data-planv="night">✎ Change</button></div>'; }
-// (the boss page's jobs: the summary cards (read only), each with ✎ Change into the build page at that section)
+  return '<div class="panel tn-who"><b>Who plays</b><span>' + plural(inn.length, 'raider') + '</span>' + (sits.length ? '<span class="sub">sitting: ' + sits.map((p) => esc(p.n)).join(', ') + '</span>' : '') + '<span class="tn-sp"></span><button type="button" class="btn sm" data-planv="night">✎ Edit</button></div>'; }
+// (the boss page's jobs: the summary cards (read only), each with ✎ Edit into the build page at that section)
 function planJobCardsH(pb, n) { let B; try { B = ndzBjB(pb, n); } catch (e) { return ndzBjH(pb, n); }
   try { if (!B.calls && B.noteId && typeof ndzPersFromNote === 'function') ndzPersFromNote(B); } catch (e) { /* (no defensives card then) */ }
   const pages = B.pages || [], stT = pages.map((pg) => [pg.title, ndzPgIconId(pg) ? spellIcon(ndzPgIconId(pg), pg.icon) : spIc(pg.icon)]).concat([['Raid cooldowns', spellIcon(98008, 'Spirit Link Totem')], ['Defensives', spellIcon(6262, 'Healthstone')]]);
   let h = ''; try { h = plbRevCards(B, pages, stT); } catch (e) { return ndzBjH(pb, n); }
   h = h.split('data-bgo="').join('data-ndzbuild="1" data-noteboss="' + esc(pb) + '" data-noteid="' + esc(n.id) + '" data-plbgo="');
-  return '<div class="panel ndz-dpan bj-jobs plj plb-one"><div class="ndz-dph"><b>Jobs</b><span class="sub">✎ Change opens that part of the plan</span></div>' + h + '</div>'; }
+  return '<div class="panel ndz-dpan bj-jobs plj plb-one"><div class="ndz-dph"><b>Jobs</b><span class="sub">✎ Edit opens that part of the plan</span></div>' + h + '</div>'; }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-plbgo]'); if (!b || S.page !== 'plan') return; S.plbGoTo = +b.dataset.plbgo; }, true); /* (before the Edit opens: which section to land on) */
 
 // (swaps keep the plan, your pick Oct 24: a boss whose players changed gets its plan carried over, whoever came in taking the
