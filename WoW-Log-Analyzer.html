@@ -51896,10 +51896,11 @@ function ppOpen(r, u0) {
   box.querySelector('.pp-mkbox').addEventListener('toggle', (e) => { if (e.target.open) mkDraw(); });
   draw();
 }
-// (a Pictures button beside every Copy for Discord button Plan shows, opening the same note's pictures)
+// (a Pictures button beside every Copy for Discord button Plan shows, and beside the plan header's Copy for the game, opening the
+// same note's pictures)
 if (typeof document !== 'undefined') {
-  const ppAdd = () => { if (!PP_ON()) return; document.querySelectorAll('[data-ndzdc]').forEach((b) => { if (b.nextElementSibling && b.nextElementSibling.hasAttribute('data-ppnote')) return;
-    b.insertAdjacentHTML('afterend', '<button class="btn sm pp-btn" type="button" data-ppnote="' + esc(b.dataset.ndzdc) + '" data-tt="' + esc('<b>Pictures</b><br>One picture for each mechanic, with everyone on their spot, ready for Discord.') + '">🖼 Pictures</button>'); }); };
+  const ppAdd = () => { if (!PP_ON()) return; document.querySelectorAll('[data-ndzdc],[data-ndzpcopy]').forEach((b) => { if (b.nextElementSibling && b.nextElementSibling.hasAttribute('data-ppnote')) return;
+    b.insertAdjacentHTML('afterend', '<button class="btn' + (b.dataset.ndzpcopy ? '' : ' sm') + ' pp-btn" type="button" data-ppnote="' + esc(b.dataset.ndzdc || b.dataset.ndzpcopy) + '" data-tt="' + esc('<b>Pictures for Discord</b><br>One picture for each mechanic, with everyone on their spot.') + '">🖼 Pictures</button>'); }); };
   let ppT = 0; new MutationObserver(() => { if (!ppT) ppT = requestAnimationFrame(() => { ppT = 0; ppAdd(); }); }).observe(document.documentElement, { childList: true, subtree: true }); /* (once a frame at most) */
   document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ppnote]'); if (!b) return; e.preventDefault(); const c = ndzDcNote(b.dataset.ppnote); if (c) ppOpen(c.r, c.u0); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#ppWin')) { $('#ppWin').remove(); if (!$('#ndzWiz') && !$('#ndzGuide') && !$('#ndzNoteView') && !$('#ndzShot')) document.body.classList.remove('ndz-modal'); } });
