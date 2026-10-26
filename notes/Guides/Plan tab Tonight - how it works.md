@@ -152,3 +152,7 @@ Mockups by the Design studio (A a month calendar 6/10, B the strip 8–9/10, C t
   on the boss page.
 Checked on the practice link: switching nights (who's out per night), next week, add/remove a night, Plan it, a Swap in tag, the
 no-class tags, all bosses Mythic and Heroic Ready, a new visitor, specs, phone (two rows of seven, short badges): no page errors.
+- **Change spec (Oct 26, the user: "the way you change their spec isnt clear… 'swap spec'", then "put the spec picker by the down
+  arrow not at the top"):** every name block has a ▾ (`.tn-spv`); it (or the spec icon) opens a small pop-up right under it
+  (`tnSpecPop`, fixed, flips above near the bottom) with the class's specs and their role, the current one lit; a pick saves and moves
+  them to their section; Escape, a tap elsewhere or a scroll closes it. The hint line starts "Tap the ▾ on a name to change their spec".
