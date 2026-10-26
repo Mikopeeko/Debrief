@@ -265,6 +265,9 @@ const engineReady = new Promise((ok, no) => {
 const L = { state: 'start', view: null, lastSent: null, reading: null, prog: null, fresh: true, files: [], name: null, size: 0, done: 0, ix: null, items: [], live: false, waiting: false, reps: new Map(), sent: new Set(), busy: Promise.resolve() };
 const DIFFN = { 0: 'Practice', 14: 'Normal', 15: 'Heroic', 16: 'Mythic', 17: 'LFR', 233: 'Mythic', 1: 'Normal', 2: 'Heroic', 8: 'Mythic+', 23: 'Mythic' }; /* (and dungeons (Oct 24)) */
 const DUMMY = 990001; // (a practice pull on a training dummy, made by the scanner)
+// (a boss pulled and reset in a few seconds: a wipe under 10 s gets no recap (Oct 26, the user: "skip pulls that reset in a few seconds";
+// an 11 ms reset said "We wiped at Wipe."). Kills, pulls still going, pulls with no end line and dummy practice always count)
+const resetPull = (b) => !!b.endByte && b.result === 'Wipe' && b.duration < 10 && b.id !== DUMMY;
 
 async function loadLogs() {
   let x;
@@ -338,7 +341,7 @@ async function scanMore(first) {
   const before = new Set(L.items.filter((b) => b.endByte).map((b) => b.startByte));
   for (const it of x.items) L.ix.line(it.t, it.o, it.e);
   L.done = x.done; L.size = x.size; L.dummy = !!x.dummy; if (x.ci) L.ci = x.ci;
-  L.items = L.ix.peek().bosses.filter((b) => !b.skip);
+  L.items = L.ix.peek().bosses.filter((b) => !b.skip && !resetPull(b));
   renderPulls();
   return first ? [] : L.items.filter((b) => b.endByte && !before.has(b.startByte));
 }
@@ -729,7 +732,7 @@ async function resaveOld() {
       try {
         const x = await j('/scan?name=' + encodeURIComponent(name) + '&from=0'), ix = W.E.createIndexer({ dungeons: true });
         for (const it of x.items || []) ix.line(it.t, it.o, it.e);
-        const items = ix.peek().bosses.filter((b) => !b.skip && b.endByte && b.id !== DUMMY);
+        const items = ix.peek().bosses.filter((b) => !b.skip && b.endByte && b.id !== DUMMY && !resetPull(b));
         ctx.set(name, { name, reps: new Map(), items }); for (const b of items) all.push([name, b]);
       } catch (e) { console.warn('re-save scan', name, e); }
     }
