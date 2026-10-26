@@ -7287,6 +7287,11 @@ html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac +
 #view .rck-gx .rgx-src .rgx-lg > span > u { display: inline-block; width: 3px; height: 18px; border-radius: 2px; margin: 0 5px 0 0; vertical-align: middle; }
 /* a card's How line is not cut off on a phone */
 @media (max-width: 760px) { #view .rck-sg .rck-how { display: block; -webkit-line-clamp: unset; overflow: visible; } }
+/* ===== Design studio round 33 (Oct 26): a ring inset that clips nothing: the inset shows its tiles whole (no overflow clipping of their edges) and the two columns
+   are capped so a tile is never wider than its column. Owner: the Design studio chat. ===== */
+.pfv .ds-rcols section.rck .rck-cat .rck-rs { overflow: visible !important; }
+@media (min-width: 641px) { .pfv .ds-rcols section.rck .rck-cat .rck-rs { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
+.pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r { min-width: 0; max-width: 100%; box-sizing: border-box; }
 </style>
 
 
