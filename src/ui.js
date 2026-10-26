@@ -1982,6 +1982,7 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'Debrief app: a boss pulled and reset within a few seconds no longer gets a recap or a pop-up.',
     'Rotation: healers see their Parse number again; the page kept "not ranked" when the healing rankings arrived after it was first drawn.',
     'Resources match Warcraft Logs: every "wasted" number now counts everything you lost, the same way Warcraft Logs and WoWAnalyzer do. When part of it is fine (like Divine Toll on 1 or 2 Holy Power), the sentence says how much, and only the rest sets the colour.',
     'Shadow Priest: Insanity spending was counted 100 times too high, and the Shadow Word: Madness at 50 Insanity rule always passed. Both are fixed, so the Insanity numbers and the priority check are right.',
