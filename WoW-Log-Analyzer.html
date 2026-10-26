@@ -7348,6 +7348,11 @@ html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac +
 /* big-damage moments: in Summary only the ones a cooldown covered */
 #view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.warn, #view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.bad, #view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-wall { display: none; }
 #view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.ok.spc-wx { display: block; }
+/* ===== Design studio round 41 (Oct 26): compact chips: the ✓ chips under What to fix keep one shape but take only the width of their words and flow
+   left, no dead space, no clipping. Owner: the Design studio chat. ===== */
+#view .rck-fix .rck-good { display: flex !important; flex-wrap: wrap; gap: 8px; grid-template-columns: none; }
+#view .rck-fix .rck-good > span { flex: 0 0 auto; width: auto; min-width: 0; max-width: 100%; overflow: visible; text-overflow: clip; }
+@media (max-width: 560px) { #view .rck-fix .rck-good > span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; } }
 </style>
 
 
