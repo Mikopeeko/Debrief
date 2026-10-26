@@ -105,8 +105,11 @@ swap carrying the jobs, sizes (25 on Nymrissa and Kith'ix, 20 elsewhere, Heroic 
   only, when Plan opens (`planSpecBackfill`), and a roster made from it takes those specs (`planRosterSpecs`). So the table's Tanks /
   Healers / Melee / Ranged sections fill, and jobs and cooldowns go by spec. Code: apply-spec.js (wcl.js night query + teamImportRun),
   ndzBSp's `memOf`.
-- **Pick a spec:** + Add a raider shows the picked class's specs (role follows the spec). In ✎ Edit team a raider's spec icon is a
-  button: each tap moves them to their class's next spec (tank, healer, damage order) and says so.
+- **Pick a spec** (the user: "specs should be automatically imported, with the option to swap if needed for the roster"): + Add a
+  raider shows the picked class's specs (role follows the spec). On the table (no ✎ Edit team needed) a raider's spec icon is a
+  button: each tap moves them to their class's next spec (tank, healer, damage order) and says so; tapping the name still marks them
+  out. The full roster editor (📋 Paste a list or get them from Warcraft Logs) has the same spec button on each raider and a Spec
+  choice in Add a raider; a spec picked there wins over a log's when saved (spSet).
 - **The first lineup brings every buff:** `pnPick` puts in anyone who brings a missing raid buff, debuff, Bloodlust or battle rez,
   in place of whoever in the same role has the least claim (bench first, then fewest sits), never another buff's only bringer.
   A fresh night has nothing to Swap in, and Pick who plays for me says "brings Power Word: Fortitude, and nobody else playing does".
