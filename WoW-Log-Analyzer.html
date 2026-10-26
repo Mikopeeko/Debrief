@@ -7585,6 +7585,44 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra > .btn > .tn-pdesc { display: none !important; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra > .btn[data-plnew], html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra > .btn[data-ndzbuild] { padding: 12px 14px !important; }
 @media (max-width: 640px) { html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row:has(> .tn-ra > [data-plnew]) > .tn-ra { grid-template-columns: 1fr; } }
+/* ===== Design studio round 57 (Oct 26): the Pictures for Discord window: pictures two to a row in raised numbered cards (tap one to see it
+   big), jump chips, a 400 px marker map with the picks beside it, no play bar in the marker map, the box fits a phone.
+   Owner: the Design studio chat. ===== */
+html body #ppWin .pp-win { width: min(1180px, 100%); padding: 18px 22px 20px; }
+html body #ppWin .ndz-whead .sub { font-size: 12px; }
+html body #ppWin > .pp-win > h2 { margin: 2px 0 4px; font-size: 22px; }
+html body #ppWin > .pp-win > h2 + p.sub { margin: 0 0 12px; max-width: 72ch; }
+/* the Markers box */
+html body #ppWin .pp-mkbox { margin: 8px 0 14px; padding: 6px 14px 8px; border: 1px solid var(--line2); border-radius: 12px; background: var(--raised); }
+html body #ppWin .pp-mkbox[open] { padding-bottom: 14px; }
+html body #ppWin .pp-mkbox > summary { display: flex; align-items: baseline; gap: 8px; padding: 4px 0; list-style: none; font: 700 15px var(--head); cursor: pointer; }
+html body #ppWin .pp-mkbox > summary::-webkit-details-marker { display: none; }
+html body #ppWin .pp-mkbox > summary::before { content: '\25B8'; flex: none; font-size: 12px; color: var(--muted); transition: transform .15s; }
+html body #ppWin .pp-mkbox[open] > summary::before { transform: rotate(90deg); }
+html body #ppWin .pp-mkbox > summary .sub { margin-left: 0; font-family: inherit; font-size: 12px; font-weight: 400; line-height: 1.4; }
+html body #ppWin .pp-mk { grid-template-columns: 400px minmax(0, 1fr); gap: 18px; margin-top: 8px; }
+html body #ppWin .pp-mkmap .zscale, html body #ppWin .pp-mkmap .zanim, html body #ppWin .pp-mkmap .zbox > .sub { display: none !important; }
+html body #ppWin .pp-mkuse { display: grid; gap: 6px; align-content: start; }
+html body #ppWin .pp-mkuse > .sub:first-child { margin: 2px 0; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+html body #ppWin .pp-use { display: grid; grid-template-columns: minmax(0, 1fr) 200px; align-items: center; gap: 10px; margin: 0; padding: 5px 6px 5px 10px; border: 1px solid var(--line2); border-radius: 8px; background: rgba(255,255,255,.02); font-size: 13px; }
+html body #ppWin .pp-use select { min-width: 0; width: 100%; }
+html body #ppWin .pp-mkuse > [data-ppreset] { justify-self: start; margin-top: 6px; }
+html body #ppWin .pp-mkuse > p.sub { margin: 2px 0 0; font-size: 12px; }
+/* the pictures */
+html body #ppWin .ds-ppnav { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+html body #ppWin .ds-ppnav > button { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px 0 5px; border: 1px solid var(--line2); border-radius: 13px; background: rgba(255,255,255,.03); color: var(--text); font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+html body #ppWin .ds-ppnav > button:hover { border-color: rgba(230,180,80,.6); background: rgba(230,180,80,.06); }
+html body #ppWin .ds-ppnav > button > i, html body #ppWin .pp-card .pp-ph::before { flex: none; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: rgba(230,180,80,.14); color: var(--gold); font: 700 11px/18px var(--head); font-style: normal; text-align: center; }
+html body #ppWin .pp-cards { grid-template-columns: 1fr 1fr; gap: 14px; counter-reset: pp; }
+html body #ppWin .pp-card { min-width: 0; padding: 10px 12px; border: 1px solid var(--line2); border-radius: 12px; background: var(--raised); }
+html body #ppWin .pp-card.ds-big { grid-column: 1 / -1; }
+html body #ppWin .pp-card .pp-ph { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 13px; font-weight: 700; color: var(--text); }
+html body #ppWin .pp-card .pp-ph::before { counter-increment: pp; content: counter(pp); }
+html body #ppWin .pp-pic { cursor: zoom-in; } html body #ppWin .pp-card.ds-big .pp-pic { cursor: zoom-out; }
+html body #ppWin .pp-pic .ndz-shotimg { margin: 0; border-radius: 8px; }
+html body #ppWin .pp-act { margin-top: 8px; } html body #ppWin .pp-msg { font-size: 12px; }
+@media (max-width: 999px) { html body #ppWin .pp-cards { grid-template-columns: 1fr; } html body #ppWin .pp-mk { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { html body #ppWin .pp-win { padding: 14px 14px 16px; } html body #ppWin .pp-use { grid-template-columns: 1fr; gap: 4px; } html body #ppWin .pp-mkbox > summary { flex-wrap: wrap; } }
 </style>
 
 
@@ -52471,6 +52509,31 @@ function dsGuides() {
   try { if (typeof gdzView === 'function' && !gdzView.ds53) { const g0 = gdzView; gdzView = function () { const r = g0.apply(this, arguments); try { dsGuides(); } catch (e) {} return r; }; gdzView.ds53 = true; } } catch (e) {}
   try { const f53 = dsBars; dsBars = function (root) { f53(root); try { dsGuides(); } catch (e) {} setTimeout(() => { try { dsGuides(); } catch (e) {} }, 0); }; } catch (e) {}
   try { dsGuides(); } catch (e) {}
+})();
+
+// ===== Design studio round 57 (Oct 26): the Pictures for Discord window: jump chips above the pictures and a tap to see one big.
+// Runs after the 🖼 Pictures button opens the window. Owner: the Design studio chat. =====
+(function () {
+  if (typeof document === 'undefined') return;
+  const E = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const chips = (win) => {
+    const host = win.querySelector('.pp-cards'); if (!host) return;
+    const cards = [...host.querySelectorAll('.pp-card')]; let n = win.querySelector('.ds-ppnav');
+    if (cards.length < 2) { if (n) n.remove(); return; }
+    if (!n) { n = document.createElement('div'); n.className = 'ds-ppnav'; host.before(n); }
+    const titles = cards.map((c) => ((c.querySelector('.pp-ph') || {}).textContent || '').trim()), key = titles.join('|');
+    if (n.dataset.key === key) return; n.dataset.key = key;
+    n.innerHTML = titles.map((t, i) => { const m = t.match(/^(.*?)\s*\(/); return '<button type="button" data-dsjump="' + i + '" title="' + E(t) + '"><i>' + (i + 1) + '</i>' + E(m ? m[1] : t) + '</button>'; }).join('');
+  };
+  document.addEventListener('click', (e) => {
+    const t = e.target, j = t.closest && t.closest('#ppWin [data-dsjump]');
+    if (j) { const c = document.querySelectorAll('#ppWin .pp-card')[+j.dataset.dsjump]; if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    const p = t.closest && t.closest('#ppWin .pp-card .pp-pic');
+    if (p && p.querySelector('img')) { const c = p.closest('.pp-card'), on = c.classList.toggle('ds-big'); if (on) setTimeout(() => c.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30); return; }
+    if (!(t.closest && t.closest('[data-ppnote]'))) return;
+    setTimeout(() => { const win = document.getElementById('ppWin'); if (!win || win.dataset.ds57) return; win.dataset.ds57 = '1';
+      const host = win.querySelector('.pp-cards'); if (!host) return; new MutationObserver(() => chips(win)).observe(host, { childList: true }); chips(win); }, 60);
+  });
 })();
 
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,

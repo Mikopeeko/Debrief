@@ -31199,6 +31199,31 @@ function dsGuides() {
   try { dsGuides(); } catch (e) {}
 })();
 
+// ===== Design studio round 57 (Oct 26): the Pictures for Discord window: jump chips above the pictures and a tap to see one big.
+// Runs after the 🖼 Pictures button opens the window. Owner: the Design studio chat. =====
+(function () {
+  if (typeof document === 'undefined') return;
+  const E = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const chips = (win) => {
+    const host = win.querySelector('.pp-cards'); if (!host) return;
+    const cards = [...host.querySelectorAll('.pp-card')]; let n = win.querySelector('.ds-ppnav');
+    if (cards.length < 2) { if (n) n.remove(); return; }
+    if (!n) { n = document.createElement('div'); n.className = 'ds-ppnav'; host.before(n); }
+    const titles = cards.map((c) => ((c.querySelector('.pp-ph') || {}).textContent || '').trim()), key = titles.join('|');
+    if (n.dataset.key === key) return; n.dataset.key = key;
+    n.innerHTML = titles.map((t, i) => { const m = t.match(/^(.*?)\s*\(/); return '<button type="button" data-dsjump="' + i + '" title="' + E(t) + '"><i>' + (i + 1) + '</i>' + E(m ? m[1] : t) + '</button>'; }).join('');
+  };
+  document.addEventListener('click', (e) => {
+    const t = e.target, j = t.closest && t.closest('#ppWin [data-dsjump]');
+    if (j) { const c = document.querySelectorAll('#ppWin .pp-card')[+j.dataset.dsjump]; if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    const p = t.closest && t.closest('#ppWin .pp-card .pp-pic');
+    if (p && p.querySelector('img')) { const c = p.closest('.pp-card'), on = c.classList.toggle('ds-big'); if (on) setTimeout(() => c.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30); return; }
+    if (!(t.closest && t.closest('[data-ppnote]'))) return;
+    setTimeout(() => { const win = document.getElementById('ppWin'); if (!win || win.dataset.ds57) return; win.dataset.ds57 = '1';
+      const host = win.querySelector('.pp-cards'); if (!host) return; new MutationObserver(() => chips(win)).observe(host, { childList: true }); chips(win); }, 60);
+  });
+})();
+
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
 (function () { const f17 = dsBars; let last = 0, tm = 0, pendingRoot;
