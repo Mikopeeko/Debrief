@@ -4,7 +4,7 @@ DEBRIEF IN GAME
 What it does
   After every boss pull (raid or dungeon), your recap pops up on your PC by itself: what you did well, what to fix first,
   and one thing to try next pull. In WoW, /recap shows the same recap: click Save this pull when the card offers it.
-  Nothing to copy or paste: the app does it all.
+  Nothing to do by hand: the app does it all.
 
 Setting it up (everyone who wants their recap)
   1. Double-click Debrief-Setup.exe. That's it.

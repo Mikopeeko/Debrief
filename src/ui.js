@@ -1969,6 +1969,7 @@ const PATCH_NOTES = [
     'A calmer front page: the example shows what a pull looks like today, and the boss guides and the in-game addon each have their own card.',
     'Debrief in game and the PC pop-up: Your raid lead says, like the website. Four cards: what wiped us, what we did well, and what got worse or better than last pull, with every mistake folded underneath.',
   ], f: [
+    'Debrief Companion: the window no longer mentions copying or Ctrl+V. Your recap simply pops up over the game after each boss pull.',
     'Debrief in game: the button on the card now says Save this pull (Save these pulls when there are more).',
     'Debriefing appears once, finished, a few seconds after you open a pull (it says "Reading the pull…" meanwhile), instead of drawing itself over and over.',
     'Debriefing no longer redraws itself again and again while a pull loads (the flashing), and it keeps the player you picked.',
@@ -2555,7 +2556,7 @@ function openInGame() {
       '<li><i>1</i><b>The pull ends</b><span>Kill or wipe, the app reads it from the combat log.</span></li>' +
       '<li><i>2</i><b>Your recap pops up over the game</b><span>A short chime, and the recap opens on your screen.</span></li>' +
       '<li><i>3</i><b>In WoW, type /recap</b><span>Click Save this pull on the card, and every pull from tonight is in the game too.</span></li></ol>' +
-      '<div class="igm-all"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor" opacity=".18"/><path d="m7.5 12.4 3 3 6-6.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Nothing to copy or paste.</b> The app does it all.</span></div></section>' +
+      '<div class="igm-all"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor" opacity=".18"/><path d="m7.5 12.4 3 3 6-6.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Nothing to do by hand.</b> The app does it all.</span></div></section>' +
     '<section class="igm-sec"><div class="igm-sh"><h2>What it looks like</h2><p>The card, the raid view, the big window, the settings and the pop-up on your PC.</p></div><div class="igm-gal">' + IGM_SHOTS.map(shot).join('') + '</div></section>' +
     '<section class="igm-sec"><div class="igm-sh"><h2>Handy commands</h2><p>Type these in the chat box in WoW. Click one to copy it.</p></div><div class="igm-cmds">' +
       IGM_CMDS.map(([c, d]) => '<button type="button" class="igm-cmd" data-c="' + esc(c) + '"><code>' + esc(c) + '</code><span>' + esc(d) + '</span><em>Copy</em></button>').join('') + '</div></section>' +

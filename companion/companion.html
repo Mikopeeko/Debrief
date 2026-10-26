@@ -203,7 +203,7 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
     </div>
     <div class="mid">
       <p class="k" id="bossK">Tonight</p>
-      <p class="ht" id="headT">After each boss pull, Debrief copies your recap and chimes. In WoW, press <kbd>Ctrl</kbd>+<kbd>V</kbd>.</p>
+      <p class="ht" id="headT">After each boss pull, your recap pops up over the game with a chime.</p>
       <p class="fc" id="focT" hidden></p>
       <div class="acts" id="acts" hidden></div>
       <svg class="night" id="night" aria-label="How far each pull got tonight"></svg>
@@ -212,7 +212,7 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
         <label class="tg" for="snd" title="A short chime when your recap is ready."><input type="checkbox" id="snd" checked>Chime</label>
       </div>
       <div id="folderBox" hidden>
-        <p class="empty">I couldn't find your WoW Logs folder. Paste where WoW is installed (for example <b>C:\Program Files (x86)\World of Warcraft</b>).</p>
+        <p class="empty">I couldn't find your WoW Logs folder. Type where WoW is installed (for example <b>C:\Program Files (x86)\World of Warcraft</b>).</p>
         <div class="folder"><input id="folderIn" placeholder="C:\Program Files (x86)\World of Warcraft"><button class="btn gold" id="folderGo" type="button">Use this folder</button></div>
       </div>
     </div>
@@ -528,14 +528,14 @@ function renderTop() {
   const g = curGroup();
   if (!g) {
     $('bossK').textContent = L.name ? 'No boss pulls in this log yet' : 'Tonight';
-    $('headT').innerHTML = 'After each boss pull, Debrief copies your recap and chimes. In WoW, press <kbd>Ctrl</kbd>+<kbd>V</kbd>.';
+    $('headT').textContent = 'After each boss pull, your recap pops up over the game with a chime.';
     $('focT').hidden = true; $('acts').hidden = true; return;
   }
   const done = g.list.filter((b) => b.endByte), n = done.length;
   $('bossK').innerHTML = '<span class="bn">' + esc(g.dummy ? 'Training dummy' : g.boss) + '</span>' + (g.dummy ? '' : ' · <span style="color:' + (DIFFC[g.diff] || 'var(--muted)') + '">' + esc(g.diff) + '</span>') +
     ' · ' + n + ' pull' + (n === 1 ? '' : 's') + (L.fresh ? ' tonight' : ' in this log');
   const view = L.view != null ? done.find((b) => b.startByte === L.view) : null, b = view || done[n - 1];
-  if (!b) { $('headT').textContent = 'Your first pull is on. Your recap is copied the moment it ends.'; $('focT').hidden = true; $('acts').hidden = true; return; }
+  if (!b) { $('headT').textContent = 'Your first pull is on. Your recap pops up the moment it ends.'; $('focT').hidden = true; $('acts').hidden = true; return; }
   const e = nightOf(L.name)[b.startByte], pv = view ? '<span class="pv">Pull ' + b.pull + ':</span> ' : '';
   if (e && e.h) $('headT').innerHTML = pv + paint(e.h, e);
   else $('headT').innerHTML = pv + esc((view ? '' : 'Pull ' + b.pull + ': ') + (b.kill ? 'kill in ' : 'wipe after ') + mmss(b.duration) + (e && e.lb && !b.kill ? ', ' + e.lb : '') + '.') +

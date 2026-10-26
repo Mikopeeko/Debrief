@@ -148,27 +148,7 @@ namespace Debrief {
       try { if (web.CoreWebView2 != null) web.CoreWebView2.ExecuteScriptAsync("window.DBF_POPCUT && window.DBF_POPCUT(" + v + ")"); } catch { }
     }
 
-    // ---------- the clipboard (it wants this window's own thread) ----------
-    // (what you had copied comes back a couple of minutes later, unless you copied something else since: Debrief never
-    // keeps your clipboard (a tester's ask, Oct 22))
-    public bool CopyText(string text) { return CopyText(text, true); }
-    public bool CopyText(string text, bool giveBack) {
-      if (string.IsNullOrEmpty(text)) return false;
-      bool ok = false;
-      Action a = () => {
-        string old = null; try { if (Clipboard.ContainsText()) old = Clipboard.GetText(); } catch { }
-        for (int i = 0; i < 10 && !ok; i++) {
-          try { Clipboard.SetDataObject(text, true, 5, 60); ok = true; } catch { System.Threading.Thread.Sleep(80); }
-        }
-        if (ok && giveBack && !string.IsNullOrEmpty(old) && old != text) {
-          var t = new Timer { Interval = 150000 };
-          t.Tick += (x, y) => { t.Stop(); t.Dispose(); try { if (Clipboard.ContainsText() && Clipboard.GetText() == text) Clipboard.SetDataObject(old, true, 5, 60); } catch { } };
-          t.Start();
-        }
-      };
-      try { if (InvokeRequired) Invoke(a); else a(); } catch (Exception e) { Program.Log("clipboard: " + e.Message); }
-      return ok;
-    }
+    // (no clipboard: nothing is copied or pasted since Oct 24; the copy code left on Oct 25)
 
     // ---------- the window's size and place, kept between starts ----------
     // (sizes are in screen pixels: 1100 wide means 1100 at 100% scaling, 1650 at 150%)

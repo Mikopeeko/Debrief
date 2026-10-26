@@ -160,7 +160,7 @@ namespace Debrief {
       var src = Path.Combine(here, "addon", "Debrief");
       if (!Directory.Exists(src)) return "";
       var r = FindRetail(here);
-      if (r == null) return @"Couldn't find WoW to install the addon. Copy the folder addon\Debrief (next to this app) into World of Warcraft\_retail_\Interface\AddOns yourself, or paste your WoW folder in the Companion window.";
+      if (r == null) return @"Couldn't find WoW to install the addon. Put the folder addon\Debrief (next to this app) into World of Warcraft\_retail_\Interface\AddOns yourself, or paste your WoW folder in the Companion window.";
       var dst = Path.Combine(r, @"Interface\AddOns\Debrief");
       var v = TocVersion(Path.Combine(src, "Debrief.toc"));
       var have = TocVersion(Path.Combine(dst, "Debrief.toc"));

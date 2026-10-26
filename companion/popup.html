@@ -194,7 +194,7 @@ function ic(id) {
   return '<span class="ic" data-ic="' + esc(id) + '" data-sid="' + esc(id) + '"></span>';
 }
 let D = null; const OPEN = {};
-/* (Detailed or Heavy in the addon's settings: every section starts open) */ const DEEP = () => !!D && (D.look === 'detailed' || D.look === 'heavy' || (D.lk && (D.lk.preset === 'detailed' || D.lk.preset === 'heavy'))), isOpen = (k) => (OPEN[k] != null ? !!OPEN[k] : DEEP()); let copied = false, big = false;
+/* (Detailed or Heavy in the addon's settings: every section starts open) */ const DEEP = () => !!D && (D.look === 'detailed' || D.look === 'heavy' || (D.lk && (D.lk.preset === 'detailed' || D.lk.preset === 'heavy'))), isOpen = (k) => (OPEN[k] != null ? !!OPEN[k] : DEEP()); let big = false;
 // ---------- the /recap card, drawn in the pop-up (Oct 24, the user's pick: "the pop-up copies /recap") ----------
 // The same card the addon shows, from the same recap: your Me view and the Raid view, the sections and line counts you picked in /db,
 // two columns in the wide window. Data: D.card (the recap, up to the wipe call), D.lk (your /db settings and who you are).
@@ -465,9 +465,8 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') post('clos
 // (the app sends each pull's recap, and whether Share worked)
 function take(d) {
   if (!d) return;
-  if (d.copied != null) { copied = !!d.copied; render(); return; }
   const fromChip = loadingPull != null; /* (a pull button brought it: no motion) */
-  waiting = false; loadingPull = null; WHO = null; VIEW = null; /* (each recap starts on you, on Me, like the card in WoW (Oct 24)) */ D = d; copied = !!d.copiedAlready; big = !!d.full; for (const k of Object.keys(OPEN)) delete OPEN[k]; render();
+  waiting = false; loadingPull = null; WHO = null; VIEW = null; /* (each recap starts on you, on Me, like the card in WoW (Oct 24)) */ D = d; big = !!d.full; for (const k of Object.keys(OPEN)) delete OPEN[k]; render();
   const pr = document.getElementById('pullsRow'), on = pr && pr.querySelector('.pc.on'); if (on) pr.scrollLeft = Math.max(0, on.offsetLeft - pr.clientWidth + on.offsetWidth + 12);
   const b = document.querySelector('.body'); if (b) b.scrollTop = 0;
   if (big && !fromChip) motion();

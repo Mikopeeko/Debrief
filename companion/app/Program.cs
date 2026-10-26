@@ -1,7 +1,7 @@
 // Debrief Companion: the small PC app that feeds the Debrief addon in WoW.
 // It watches your combat log; when a boss pull ends, its window reads the pull with Debrief's own engine and puts a short
 // recap over the game with a sound, and saves it for the addon: in WoW, /reload, then /recap (no copy-paste since Oct 24).
-// Nothing here touches the game: it only reads WoWCombatLog files, writes to the clipboard and puts the addon in.
+// Nothing here touches the game: it only reads WoWCombatLog files and puts the addon in (and your pulls into it).
 //
 // Starts:  Debrief Companion.exe             opens the window (a second start brings the running one to the front)
 //          Debrief Companion.exe --quiet     starts by the clock without opening the window (the Start with Windows shortcut)
@@ -80,7 +80,7 @@ namespace Debrief {
       Application.EnableVisualStyles();
       Application.SetCompatibleTextRenderingDefault(false);
       var form = new MainForm(Here, port); Form = form;
-      var server = new Server(Here, port) { SetClipboard = form.CopyText, Quit = form.QuitApp, Popup = form.Popup };
+      var server = new Server(Here, port) { Quit = form.QuitApp, Popup = form.Popup };
       var up = false;
       for (int i = 0; i < 8 && !(up = server.Start()); i++) { Thread.Sleep(750); if (i == 2) Setup.StopOldApp(); }
       if (!up) {

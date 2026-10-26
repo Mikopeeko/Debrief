@@ -97,10 +97,6 @@ namespace Debrief {
         int top = Math.Min(Top + Height / 2 - px / 2, wa.Bottom - px - 8);
         SetBounds(Left, Math.Max(wa.Top, top), Width, px);
       }
-      else if (m.StartsWith("share:")) {
-        var ok = main.CopyText(m.Substring(6), true);
-        Send("{\"copied\":" + (ok ? "true" : "false") + "}");
-      }
     }
 
     // (twice as wide as before, two columns (Oct 23); the addon's Width picks a little more or less)

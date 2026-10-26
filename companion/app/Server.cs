@@ -17,7 +17,6 @@ namespace Debrief {
     readonly string here;
     readonly HttpListener listener = new HttpListener();
     readonly object scanLock = new object();
-    public Func<string, bool> SetClipboard; // (the window copies: the clipboard wants the window's own thread)
     public Action<string, bool> Popup; // (the recap pop-up over the game)
     public Action Quit;
     static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
@@ -130,14 +129,6 @@ namespace Debrief {
             Thread.Sleep(700);
           }
           SendJson(res, outp);
-        }
-        else if (post && path == "/clip") {
-          if (!(req.ContentType ?? "").StartsWith("application/json")) throw new Exception("Expected JSON.");
-          var body = Json.Deserialize<Dictionary<string, object>>(Body(req));
-          var text = body.ContainsKey("text") ? Convert.ToString(body["text"]) : "";
-          var ok = SetClipboard != null && SetClipboard(text);
-          if (body.ContainsKey("sound") && body["sound"] is bool b && b) Chime();
-          SendJson(res, new Dictionary<string, object> { { "ok", ok } });
         }
         else if (get && path == "/addon") SendJson(res, new Dictionary<string, object> { { "msg", Wow.InstallAddon(here) } });
         else if (post && path == "/update") SendJson(res, new Dictionary<string, object> { { "result", Program.UpdateNow() } }); // (the Check for updates button)
