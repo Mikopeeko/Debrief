@@ -1951,6 +1951,7 @@ const PATCH_NOTES = [
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'Rotation for healers: a Healing box in Gear and extras, like the damage dealers\' Boss and adds: your healing a second with your total and share of the raid\'s healing, and how much of what you cast overhealed.',
     'Rotation: Where your healing (or damage) came from sits full width above the two columns, and the pull-at-a-glance timeline drops its hint row and lists the red "ready for a whole extra use" first in its legend.',
     'Rotation: Other gear and Extras sit at the bottom of the gear column again instead of in a second panel under the checklist.',
     'Rotation: one tile a spell. Rows about the same spell sit in its tile (Judgment while Holy Shock was full in Holy Shock, what you saved for Incarnation in Incarnation), each tile leads with the spell\'s own uses, and the numbers tiles join their spell.',
@@ -20308,6 +20309,11 @@ const spcExtras = (per, UN, one) => { const heal = UN === 'healing', ab = new Ma
   const topA = [...adds].sort((a, b) => b[1] - a[1]).slice(0, 3);
   const bossC = dT >= 1000 ? card('<img class="rgx-i" src="' + whIcon('inv_misc_head_dragon_01') + '" alt="">', 'Boss damage', ps(bD / dur), C(bD) + ' · ' + pc2(1 - aF), 'rgx-boss', '', 1 - aF) : '';
   const addC = dT >= 1000 && aD >= dT * 0.01 ? card('<img class="rgx-i" src="' + whIcon('inv_misc_monsterhorn_03') + '" alt="">', 'Add damage', ps(aD / dur), C(aD) + ' · ' + pc2(aF) + (rF != null ? ' · raid ' + pc2(rF) : ''), 'rgx-add', '', aF, topA.length ? esc(topA.map(([n, v]) => n + ' ' + C(v)).join(', ')) : '') : '';
+  // (healers: their healing and overhealing in the same place and shape (Oct 26, the user: "i think healers should get one showing HPS and overhealing");
+  // numbers only, overhealing never graded)
+  let hH = 0, hS = 0, hO = 0, hR = 0; if (heal) for (const x of per) { hH += x.p.healing || 0; hO += x.p.overheal || 0; hS += (x.p.healS || []).reduce((v, y) => v + (y || 0), 0); for (const q of x.r.players.values()) hR += q.healing || 0; }
+  const healC = heal && hH >= 1000 ? card('<img class="rgx-i" src="' + whIcon('spell_holy_flashheal') + '" alt="">', 'Healing done', ps(hS / dur), C(hH) + (hR > 0 ? ' · ' + pc2(hH / hR) + ' of the raid\'s' : ''), 'rgx-heal', '', hR > 0 ? hH / hR : null) : '';
+  const overC = heal && hH >= 1000 ? card('<img class="rgx-i" src="' + whIcon('spell_holy_renew') + '" alt="">', 'Overhealing', pc2(hO / Math.max(1, hH + hO)), C(hO) + ' · ' + C(hO / dur) + ' a second', 'rgx-over', '', hO / Math.max(1, hH + hO)) : '';
   // (a card's own number, to sort the gear list by what each item gave (Oct 25))
   const gV = (h) => { const m = String(h || '').match(/<b class="rgx-v">([\s\S]*?)<\/b>/); if (!m) return -1; const n = m[1].replace(/<[^>]+>/g, ' ').match(/([\d.]+)\s*([KM]?)/); return n ? +n[1] * (n[2] === 'M' ? 1e6 : n[2] === 'K' ? 1e3 : 1) : -1; };
   const gearSort = (l) => l.filter(Boolean).map((h, i) => [h, /[DH]PS/.test(h) ? gV(h) : -1, i]).sort((a, b) => b[1] - a[1] || a[2] - b[2]).map((x) => x[0]);
@@ -20345,7 +20351,7 @@ const spcExtras = (per, UN, one) => { const heal = UN === 'healing', ab = new Ma
     const mxG = Math.max(1, ...trk.concat(tset, oth).map((x) => (/[DH]PS/.test(x) ? gV(x) : 0)));
     const rel = (x) => { const v = /[DH]PS/.test(x) ? gV(x) : 0; return v > 0 ? x.replace(/<span class="rgx-b1"><i style="width:[\d.]+%"><\/i><\/span>/, '<span class="rgx-b1"><i style="width:' + Math.max(3, 100 * v / mxG).toFixed(1) + '%"></i></span>') : x; };
     const gsum = (l) => { const v = l.reduce((a, x) => a + (/[DH]PS/.test(x) ? Math.max(0, gV(x)) : 0), 0); return v > 0 ? '<span class="rgx-gt">' + C(v) + ' ' + U + '</span>' : ''; };
-    return grp('Boss and adds', [bossC, addC], '', '#e88f6f') + grp('Trinkets', trk.map(rel), gsum(trk), '#e6c27a') + grp('Tier set and enchants', tset.map(rel), gsum(tset), '#c99be8') + grp('Other gear', oth.map(rel), gsum(oth), '#6fb7e8'); })() + '<!--rgx-ex-->' + split + '</div>' +
+    return grp('Boss and adds', [bossC, addC], '', '#e88f6f') + grp('Healing', [healC, overC], '', '#7fd18b').replace('<div class="rgx-gp"', '<div class="rgx-gp rgx-gheal"') + grp('Trinkets', trk.map(rel), gsum(trk), '#e6c27a') + grp('Tier set and enchants', tset.map(rel), gsum(tset), '#c99be8') + grp('Other gear', oth.map(rel), gsum(oth), '#6fb7e8'); })() + '<!--rgx-ex-->' + split + '</div>' +
     (gl.length || stL.length || tk.size ? '' : '<p class="sub rgx-n">No trinket, weapon or enchant effects did ' + W + ' or raised your stats that the log shows' + (one ? ' this pull' : '') + '.</p>'); };
 // (who a spec page's "Top players" marks come from, said in full)
 const topWho = (top, TOPB) => 'The middle of the ' + (TOPB && TOPB.n ? TOPB.n + ' ' : '') + top + ' who parsed 75 or higher in the fastest Mythic kills of this boss on Warcraft Logs';
