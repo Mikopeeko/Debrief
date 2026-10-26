@@ -937,7 +937,8 @@ async function relink(env) {
 // (one post per boss per guild, counted from sign-up, so farm kills don't repeat). KV killfeed: [{id, name, by, seen, done}].
 const APP_ID = '1562104625094467614';
 const KILLS_Q = 'query($code:String!){reportData{report(code:$code){code title fights{id encounterID name difficulty kill startTime endTime}}}}';
-const reportSeen = new Map(); // (who reported lately: three an hour each, so one person can't flood the forums)
+const reportSeen = new Map(); // (who made reports lately: a limit so a slip can't flood the forums)
+const REPORT_PERMS = 8192n | 8n; // (Manage Messages: moderators; Administrator: everything)
 const REPORT_CMDS = [
   { name: 'bug', type: 1, default_member_permissions: '8192', description: 'Report a bug to the Debrief team', options: [
     { type: 3, name: 'text', description: 'What happened? Say the boss and pull if you can', required: true, max_length: 1500 },
@@ -946,31 +947,28 @@ const REPORT_CMDS = [
     { type: 3, name: 'text', description: 'What would you like Debrief to do?', required: true, max_length: 1500 },
     { type: 11, name: 'screenshot', description: 'A picture (optional)', required: false }] },
   { name: 'Report as bug', type: 3, default_member_permissions: '8192' }, { name: 'Suggest as idea', type: 3, default_member_permissions: '8192' }];
-async function reportCommand(env, i) {
-  const user = (i.member && i.member.user) || i.user || {}, shortcut = i.data.type === 3, idea = i.data.name === 'idea' || i.data.name === 'Suggest as idea';
-  const perms = BigInt((i.member && i.member.permissions) || 0); // (moderators have Manage Messages (8192); administrators have everything (8))
-  if (user.id !== OWNER && !(perms & 8192n) && !(perms & 8n)) return 'Only the owner and moderators can make reports this way. To report something, post in #bug-reports or #suggestions. 💛';
-  const now = Date.now(); let w = reportSeen.get(user.id); if (!w || now - w.t > 3600000) { w = { t: now, n: 0 }; reportSeen.set(user.id, w); if (reportSeen.size > 500) reportSeen.clear(); }
-  if (user.id !== OWNER && w.n >= 3) return 'You\'ve sent a few already. Please try again in a little while. 💛';
-  let text = '', files = [], from = '';
-  if (shortcut) {
-    const m = (((i.data.resolved || {}).messages) || {})[i.data.target_id] || {};
-    text = String(m.content || '').trim(); files = (m.attachments || []).filter((a) => /^image\//.test(a.content_type || '')).slice(0, 4);
-    if (!text && !files.length) return 'That message has no words or picture to use. Try one with some text.';
-    if (m.author && m.author.id !== user.id) from = '\n\n*The message above is from ' + String(m.author.global_name || m.author.username || 'someone').replace(/[@*_`~|]/g, '') + '.*';
-    if (!text) text = 'See the picture.';
-  } else {
-    const o = {}; for (const x of i.data.options || []) o[x.name] = x.value;
-    text = String(o.text || '').trim(); const a = o.screenshot && (((i.data.resolved || {}).attachments) || {})[o.screenshot]; if (a) files = [a];
-    if (text.length < 10) return 'Please say a little more, so we can find it.';
-  }
-  text = text.replace(/@(everyone|here)/g, '@\u200b$1').slice(0, 1500);
-  const name = String(user.global_name || user.username || 'someone').replace(/[@*_`~|]/g, '').slice(0, 40);
-  const forumId = idea ? FORUM_IDEAS : FORUM_BUGS, forum = await dc(env, '/channels/' + forumId), tags = forum.available_tags || [];
-  const tag = tagOf(tags, 'Website') || (tags[0] && tags[0].id), first = text.split(/\r?\n/)[0].replace(/\s+/g, ' ').trim() || 'See the picture.';
-  const content = text + from + '\n\n*Reported by **' + name + '** (<@' + user.id + '>) with ' + (shortcut ? 'a right-click' : '/' + i.data.name) + '.' + (idea ? ' React with 👍 if you want it too.' : '') + '*';
+const cleanName = (n) => String(n || 'someone').replace(/[@*_`~|<>]/g, '').trim().slice(0, 40) || 'someone';
+const imgOf = (a) => /^image\//.test(a.content_type || '') || /\.(png|jpe?g|gif|webp)$/i.test(a.filename || '');
+const snowAtMs = (ms) => String((BigInt(ms) - 1420070400000n) << 22n);
+const byId = (a, b) => (BigInt(a.id) < BigInt(b.id) ? -1 : BigInt(a.id) > BigInt(b.id) ? 1 : 0);
+// (the owner, or anyone whose roles give Manage Messages or Administrator)
+async function isMod(env, uid) {
+  if (uid === OWNER) return true;
+  const mem = await dc(env, '/guilds/' + GUILD + '/members/' + uid).catch(() => null); if (!mem) return false;
+  const roles = (await dc(env, '/guilds/' + GUILD + '/roles').catch(() => [])) || []; let p = 0n;
+  for (const r of roles) if (r.id === GUILD || (mem.roles || []).includes(r.id)) p |= BigInt(r.permissions || 0);
+  return !!(p & REPORT_PERMS);
+}
+// A new post in #bug-reports or #suggestions, written by Claudette with the reporter's name and id at the bottom. The bot's usual run then
+// copies it to GitHub, opens the owner's review post and thanks the reporter. Pictures are copied into the post.
+async function createReport(env, o) {
+  const forumId = o.idea ? FORUM_IDEAS : FORUM_BUGS, forum = await dc(env, '/channels/' + forumId), tags = forum.available_tags || [];
+  const tag = tagOf(tags, 'Website') || (tags[0] && tags[0].id);
+  const text = String(o.text || '').replace(/@(everyone|here)/g, '@​$1').trim().slice(0, 1500), first = String(o.title || text.split(/\r?\n/)[0] || '').replace(/\s+/g, ' ').trim() || 'See the picture.';
+  const filed = o.by && o.by !== o.who.name ? ', filed by ' + o.by : '';
+  const content = (text || 'See the picture.') + '\n\n*Reported by **' + o.who.name + '** (<@' + o.who.id + '>)' + filed + ' ' + o.how + '.' + (o.idea ? ' React with 👍 if you want it too.' : '') + '*' + (o.link ? '\nOriginal: <' + o.link + '>' : '');
   const body = { name: first.length > 90 ? first.slice(0, 89) + '…' : first, applied_tags: tag ? [tag] : [], message: { content: content.slice(0, 1990), allowed_mentions: { parse: [] } } };
-  const got = []; for (const a of files) { try { const r = await fetch(a.url); if (r.ok) { const buf = await r.arrayBuffer(); if (buf.byteLength < 8e6) got.push({ name: String(a.filename || 'picture.png').replace(/[^\w.\-]/g, '_'), type: a.content_type || 'image/png', buf }); } } catch (e) { /* a picture that won't download is skipped */ } }
+  const got = []; for (const a of o.files || []) { try { const r = await fetch(a.url); if (r.ok) { const buf = await r.arrayBuffer(); if (buf.byteLength < 8e6) got.push({ name: String(a.filename || 'picture.png').replace(/[^\w.\-]/g, '_'), type: a.content_type || 'image/png', buf }); } } catch (e) { /* a picture that won't download is skipped */ } }
   let t;
   if (got.length) {
     const fd = new FormData(); body.message.attachments = got.map((g, k) => ({ id: k, filename: g.name }));
@@ -979,8 +977,79 @@ async function reportCommand(env, i) {
     if (!r.ok) throw new Error('Discord answered ' + r.status + ' on the report post: ' + (await r.text().catch(() => '')).slice(0, 150));
     t = await r.json();
   } else t = await dc(env, '/channels/' + forumId + '/threads', { method: 'POST', body });
+  return { id: t.id, lost: (o.files || []).length - got.length };
+}
+// /bug, /idea and the right-click shortcuts (owner and moderators only: Discord hides them from everyone else and this checks again)
+async function reportCommand(env, i) {
+  const user = (i.member && i.member.user) || i.user || {}, shortcut = i.data.type === 3, idea = i.data.name === 'idea' || i.data.name === 'Suggest as idea';
+  const perms = BigInt((i.member && i.member.permissions) || 0);
+  if (user.id !== OWNER && !(perms & REPORT_PERMS)) return 'Only the owner and moderators can make reports this way. To report something, post in #bug-reports or #suggestions. 💛';
+  const now = Date.now(); let w = reportSeen.get(user.id); if (!w || now - w.t > 3600000) { w = { t: now, n: 0 }; reportSeen.set(user.id, w); if (reportSeen.size > 500) reportSeen.clear(); }
+  if (w.n >= 30) return 'That\'s a lot of reports in an hour. Please try again in a little while. 💛';
+  const by = cleanName(user.global_name || user.username); let text = '', files = [], who = { id: user.id, name: by }, link = '';
+  if (shortcut) {
+    const m = (((i.data.resolved || {}).messages) || {})[i.data.target_id] || {};
+    text = String(m.content || '').trim(); files = (m.attachments || []).filter(imgOf).slice(0, 4);
+    if (!text && !files.length) return 'That message has no words or picture to use. Try one with some text.';
+    if (m.author && !m.author.bot) who = { id: m.author.id, name: cleanName(m.author.global_name || m.author.username) }; // (the person who wrote it is the reporter: they hear when it's fixed)
+    link = 'https://discord.com/channels/' + GUILD + '/' + i.channel_id + '/' + i.data.target_id;
+  } else {
+    const o = {}; for (const x of i.data.options || []) o[x.name] = x.value;
+    text = String(o.text || '').trim(); const a = o.screenshot && (((i.data.resolved || {}).attachments) || {})[o.screenshot]; if (a) files = [a];
+    if (text.length < 10) return 'Please say a little more, so we can find it.';
+  }
+  const r = await createReport(env, { idea, text, files, who, by, how: shortcut ? 'with a right-click' : 'with /' + i.data.name, link });
   w.n++;
-  return (idea ? 'Thanks for the idea! 💡' : 'Thanks, got it! 🐛') + ' It\'s here: <#' + t.id + '>. Claudette copies it to the team\'s list within about 10 minutes' + (got.length < files.length ? ' (one picture couldn\'t be copied, so add it in the post)' : '') + '.';
+  return (idea ? 'Thanks! 💡 The idea is here: <#' : 'Thanks! 🐛 The report is here: <#') + r.id + '>. Claudette copies it to the team\'s list within about 10 minutes' + (r.lost ? ' (a picture couldn\'t be copied, so add it in the post)' : '') + '.';
+}
+// "@Claudette make a bug report for this" (the owner's ask, Oct 26): on each run the bot looks for messages that tag it from the owner or a moderator, in
+// channels and open posts with new messages. A reply is the message to report; in a post, that person's other messages in it come too, with the
+// post's title if it's theirs. Says bug or idea; the report is filed in the right forum and the bot answers under the tag.
+async function mentionReport(env, c, m) {
+  const words = String(m.content || '').replace(/<@!?\d+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const wantsBug = /\b(bug|bugs|broken|problem|issue|report)\b/i.test(words), wantsIdea = /\b(idea|ideas|suggest|suggestion|feature|request)\b/i.test(words);
+  if (!wantsBug && !wantsIdea) return 'I\'m not sure if you want a bug report or an idea. Say "bug" or "idea" and tag me again. 💛';
+  const idea = wantsIdea && !/\b(bug|bugs|broken|problem|issue)\b/i.test(words);
+  let src = m.referenced_message && m.referenced_message.id ? m.referenced_message : null;
+  if (!src) src = (((await dc(env, '/channels/' + c.id + '/messages?limit=5&before=' + m.id).catch(() => [])) || []).find((x) => x.author && !x.author.bot && x.author.id !== m.author.id)) || null;
+  const by = cleanName(m.author.global_name || m.author.username); let text = '', files = [], who = { id: m.author.id, name: by }, title = '', link = '';
+  if (src && src.author && !src.author.bot) {
+    who = { id: src.author.id, name: cleanName(src.author.global_name || src.author.username) };
+    let mine = [src];
+    if (c.thread_metadata) {
+      const same = (((await dc(env, '/channels/' + c.id + '/messages?limit=100').catch(() => [])) || [])).filter((x) => x.author && x.author.id === src.author.id && BigInt(x.id) < BigInt(m.id)).sort(byId).slice(0, 6);
+      if (same.length) mine = same;
+      if (mine.some((x) => x.id === c.id)) title = c.name; // (the post's own title, when the post is theirs)
+    }
+    text = mine.map((x) => String(x.content || '').trim()).filter(Boolean).join('\n\n'); files = mine.flatMap((x) => x.attachments || []).filter(imgOf).slice(0, 4);
+    link = 'https://discord.com/channels/' + GUILD + '/' + c.id + '/' + src.id;
+  } else if (words.length > 25) text = words;
+  else return 'I couldn\'t tell which message you mean. Reply to it when you tag me. 💛';
+  if (!text && !files.length) return 'That message has no words or picture to use. 💛';
+  const r = await createReport(env, { idea, text, files, title, who, by, how: 'with @Claudette', link });
+  return 'Done! ' + (idea ? '💡 The idea is here: <#' : '🐛 The report is here: <#') + r.id + '>. I\'ll copy it to the team\'s list within about 10 minutes' + (r.lost ? ' (a picture couldn\'t be copied, so add it in the post)' : '') + '.';
+}
+async function runMentions(env, threads) {
+  if (!env.DISCORD_BOT_TOKEN) return;
+  let st = await env.DEBRIEF_KV.get('dc-mentions', 'json'), dirty = false; const firstRun = !st; if (!st) st = { c: {}, done: [] };
+  const chans = ((await dc(env, '/guilds/' + GUILD + '/channels').catch(() => [])) || []).filter((c) => c.type === 0 || c.type === 5);
+  const targets = [...chans, ...(threads || [])].filter((c) => c.last_message_id), back = snowAtMs(Date.now() - 3 * 36e5); let handled = 0;
+  for (const c of targets) {
+    let cur = st.c[c.id];
+    if (!cur) cur = firstRun ? back : (c.thread_metadata ? c.id : snowAtMs(Date.now() - 36e5)); // (a post that's new: everything after its first message; a channel not seen before: the last hour; the very first run: the last 3 hours)
+    if (BigInt(c.last_message_id) <= BigInt(cur)) { if (st.c[c.id] !== cur) { st.c[c.id] = cur; dirty = true; } continue; }
+    const msgs = (((await dc(env, '/channels/' + c.id + '/messages?limit=50&after=' + cur).catch(() => null)) || [])).sort(byId); let top = cur;
+    for (const m of msgs) {
+      if (BigInt(m.id) > BigInt(top)) top = m.id;
+      if (!m.author || m.author.bot || !(m.mentions || []).some((u) => u.id === APP_ID) || st.done.includes(m.id) || handled >= 6) continue;
+      if (!(await isMod(env, m.author.id).catch(() => false))) continue;
+      handled++; st.done.push(m.id); let reply;
+      try { reply = await mentionReport(env, c, m); } catch (err) { console.warn('Mention report:', err && err.message); reply = 'That report didn\'t go through. Please tag me again in a minute. 💛'; }
+      await dc(env, '/channels/' + c.id + '/messages', { method: 'POST', body: { content: reply, message_reference: { message_id: m.id, fail_if_not_exists: false }, allowed_mentions: { parse: [] } } }).catch((err) => console.warn('Mention reply:', err && err.message));
+    }
+    st.c[c.id] = top; dirty = true;
+  }
+  st.done = st.done.slice(-100); if (dirty || firstRun) await env.DEBRIEF_KV.put('dc-mentions', JSON.stringify(st));
 }
 async function ensureCommands(env) {
   if ((await env.DEBRIEF_KV.get('dc-cmds')) === 'v3') return;
@@ -1104,6 +1173,7 @@ async function discordJobs(env, now) {
   if (!env.DISCORD_BOT_TOKEN || !env.DEBRIEF_KV || !env.GITHUB_TOKEN) return;
   const all = await runBugs(env);
   await runReplies(env, all).catch((err) => console.warn('Replies:', err && err.message));
+  await runMentions(env, all).catch((err) => console.warn('Mentions:', err && err.message));
   await sweepDone(env, all).catch((err) => console.warn('Sweep:', err && err.message));
   await ensureCommands(env).catch((err) => console.warn('Commands:', err && err.message));
   await runKillFeed(env, now).catch((err) => console.warn('Kill feed:', err && err.message));
