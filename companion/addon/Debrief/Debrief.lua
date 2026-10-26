@@ -1671,12 +1671,12 @@ bigRender = function()
     if bView == k[1] then local u = bTEX(bm); u:SetPoint("BOTTOMLEFT", b, "BOTTOMLEFT", 8, 0); u:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -8, 0); u:SetHeight(2); fill(u, COL.gold) end
     b:SetScript("OnClick", function() bView = k[1]; bigRender() end)
   end
-  if bView == "me" and P and #m.players > 1 then
-    local who = bFS(bm, "bold", 13.5, classHex(P.cls)); who:SetJustifyH("RIGHT"); who:SetText(P.name); who:SetPoint("TOPRIGHT", bm, "TOPLEFT", MW - 32, -(y + 6))
+  if bView == "me" and #m.players > 1 then
+    local who = bFS(bm, "bold", 13.5, P and classHex(P.cls) or COL.faint); who:SetJustifyH("RIGHT"); who:SetText(P and P.name or "Not in this pull"); who:SetPoint("TOPRIGHT", bm, "TOPLEFT", MW - 32, -(y + 6))
     local function arrow(lbl, dx, dir)
       local b = bBTN(bm); b:SetSize(22, 22); local bg = bRT(bm, "BORDER"); bg:SetAllPoints(b); rounded(bg, "fill", 5, COL.raised, 1)
       local at = bFS(bm, "bold", 11, COL.muted); at:SetText(lbl); at:SetPoint("CENTER", b, "CENTER", 0, 0)
-      b:SetScript("OnClick", function() local idx = 1; for ii, p in ipairs(m.players) do if p == P then idx = ii end end; idx = ((idx - 1 + dir) % #m.players) + 1; DB.who = m.players[idx].name; bigRender() end)
+      b:SetScript("OnClick", function() if not P then DB.who = (dir > 0 and m.players[1] or m.players[#m.players]).name; bigRender(); return end; local idx = 1; for ii, p in ipairs(m.players) do if p == P then idx = ii end end; idx = ((idx - 1 + dir) % #m.players) + 1; DB.who = m.players[idx].name; bigRender() end)
       return b
     end
     local nx = arrow(">", 0, 1); nx:SetPoint("TOPRIGHT", bm, "TOPLEFT", MW, -(y + 2))
@@ -1687,7 +1687,9 @@ bigRender = function()
 
   local yl, yr = y, y
   local XL, XR = 0, COLW + 18
-  if bView == "me" and P then
+  if bView == "me" and not P then -- (you weren't in this pull: say so, nobody else in your place (Oct 25))
+    local t = bFS(bm, "body", 14, COL.muted); t:SetPoint("TOPLEFT", XL, -(yl + 4)); t:SetWidth(MW); t:SetText("You weren't in this pull. Use the arrows to look at someone else, or open the Raid view."); yl = yl + t:GetStringHeight() + 14; yr = yl
+  elseif bView == "me" and P then
     -- left column: three tiles, the line of your numbers, rotation, boss mechanics, next pull
     local tw = (COLW - 20) / 3
     local tiles = {
@@ -2596,7 +2598,7 @@ bringB:SetScript("OnClick", function()
 end)
 -- (shown above the card while it's open, or on its own when there's no card yet)
 function Debrief_BringShow(alone)
-  if behindN == 0 or not DB or not (DEBRIEF_HAS_APP or DB.hasApp) then bring:Hide(); return end
+  if behindN == 0 or not DB or not (DEBRIEF_HAS_APP or DB.hasApp) or (Debrief_PreviewReal and Debrief_PreviewReal()) then bring:Hide(); return end -- (not over the sample card in /db or the setup)
   bring.t:SetText(behindN == 1 and ("Your newest pull" .. ((behindBoss and behindBoss ~= "") and (" on " .. behindBoss) or "") .. " isn't in the addon yet.") or (behindN .. " newer pulls aren't in the addon yet."))
   bringB.t:SetText(behindN == 1 and "Save this pull" or "Save these pulls")
   bring:ClearAllPoints(); bring.alone = nil

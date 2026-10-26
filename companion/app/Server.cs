@@ -134,6 +134,7 @@ namespace Debrief {
         else if (post && path == "/update") SendJson(res, new Dictionary<string, object> { { "result", Program.UpdateNow() } }); // (Update now: installs, never during a pull)
         else if (get && path == "/update-info") SendJson(res, new Dictionary<string, object> { { "available", Program.Available ?? "" }, { "current", Program.Version } }); // (the window's gold bar (Oct 25))
         else if (post && path == "/update-check") SendJson(res, new Dictionary<string, object> { { "available", Program.CheckUpdate() ?? "" }, { "current", Program.Version }, { "online", Updater.LastSeen != null } }); // (Check for updates: only looks (Oct 25))
+        else if (get && path == "/version") Send(res, System.Text.Encoding.UTF8.GetBytes(Program.Version), "text/plain; charset=utf-8"); // (the website's new-version check, every 2 seconds in the window (Oct 25))
         else if (get && path == "/app-version") SendJson(res, new Dictionary<string, object> { { "version", Program.Version }, { "addon", AddonVersion() } });
         else if (post && path == "/quit") { SendJson(res, new Dictionary<string, object> { { "ok", true } }); res.Close(); Quit?.Invoke(); }
         else if (post && path == "/archive") SendJson(res, Wow.ArchiveLogs(here)); // (the Archive old logs button)
