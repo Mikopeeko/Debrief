@@ -5403,10 +5403,10 @@ gdzUnlock();
 // a Pictures button opens one picture per mechanic the note gives jobs for: the boss's whole room, the note's players on their
 // spots (names in class colour, spec icons; a random target is a grey ?) and the raid lead's own markers, which they drag to where
 // they stand and pick for each mechanic. Each picture is a fixed 1200 x 675 image (Discord shows 16:9 cleanly) with Copy and
-// Download. The maps are the guide's own (gdzKit, GDZ_CA_M), frozen at their key moment. Only you see it for now; built per boss and
+// Download. The maps are the guide's own (gdzKit, GDZ_CA_M), frozen at their key moment. Open to everyone since Oct 26; built per boss and
 // difficulty in GDZ_PP, The Coiled Altar Mythic first. Plan's code is untouched: the buttons are added beside its own.
 const PP_MKS = ['star', 'circle', 'diamond', 'triangle', 'moon', 'square', 'cross', 'skull'];
-const PP_ON = () => !window.WLA_HOSTED || /-debrief\./.test(location.hostname) || gdzOwner();
+const PP_ON = () => true; /* (open to everyone (your call, Oct 26: "push this live please"); put the owner check back here to hide it again) */
 const ppKey = (b, d) => 'wla-pp|' + b + '|' + d;
 // (the raid lead's markers for a boss: { marks: { cross: [x, y], … }, uses: { axe: 'moon', … } }, over the boss's starting ones)
 // (base: 'guide', the strategy's spots, or 'raid', the raid's own from its pulls; the raid lead's moves and picks go on top)

@@ -17600,6 +17600,7 @@ const PATCH_NOTES = [
     { t: 'Plan: your raid night in one page', d: 'The Plan tab is out for everyone: bring in your team, and Debrief picks who plays each boss and plans every job, kick and healing cooldown the way the fastest kills do. Change anything, then copy it into the game for NSRT.' },
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
+    { t: 'Plan: a picture for every job', d: 'On The Coiled Altar (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
   ], n: [
     'Debrief in game: your card and PC pop-up use the newest boss mechanics, potion and death rules from the website.',
     'On a phone: the dots on the pull at a glance are easier to tap, and the front page\'s footer links have room for a thumb.',
@@ -51698,10 +51699,10 @@ gdzUnlock();
 // a Pictures button opens one picture per mechanic the note gives jobs for: the boss's whole room, the note's players on their
 // spots (names in class colour, spec icons; a random target is a grey ?) and the raid lead's own markers, which they drag to where
 // they stand and pick for each mechanic. Each picture is a fixed 1200 x 675 image (Discord shows 16:9 cleanly) with Copy and
-// Download. The maps are the guide's own (gdzKit, GDZ_CA_M), frozen at their key moment. Only you see it for now; built per boss and
+// Download. The maps are the guide's own (gdzKit, GDZ_CA_M), frozen at their key moment. Open to everyone since Oct 26; built per boss and
 // difficulty in GDZ_PP, The Coiled Altar Mythic first. Plan's code is untouched: the buttons are added beside its own.
 const PP_MKS = ['star', 'circle', 'diamond', 'triangle', 'moon', 'square', 'cross', 'skull'];
-const PP_ON = () => !window.WLA_HOSTED || /-debrief\./.test(location.hostname) || gdzOwner();
+const PP_ON = () => true; /* (open to everyone (your call, Oct 26: "push this live please"); put the owner check back here to hide it again) */
 const ppKey = (b, d) => 'wla-pp|' + b + '|' + d;
 // (the raid lead's markers for a boss: { marks: { cross: [x, y], … }, uses: { axe: 'moon', … } }, over the boss's starting ones)
 // (base: 'guide', the strategy's spots, or 'raid', the raid's own from its pulls; the raid lead's moves and picks go on top)
