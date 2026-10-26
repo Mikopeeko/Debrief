@@ -1177,6 +1177,16 @@ async function runWelcome(env) {
   }
   await env.DEBRIEF_KV.put('dc-welcomed', JSON.stringify({ ids: [...seen] }));
 }
+// "Remind me later" (Oct 26): KV dc-remind is a list of { at: ms, text }. Each ten-minute run posts the ones that are due in #moderator-only, tagging the owner, and drops them
+// (a post that fails is tried again on the next run). Add one with: npx wrangler kv key put dc-remind --path <file> (a list; read it first and add to it).
+async function runReminders(env, now) {
+  const list = await env.DEBRIEF_KV.get('dc-remind', 'json'); if (!Array.isArray(list) || !list.length) return;
+  const ok = list.filter((r) => r && r.text), due = ok.filter((r) => Number(r.at) <= now).slice(0, 5); if (!due.length) return;
+  const mod = ((await dc(env, '/guilds/' + GUILD + '/channels')).find((c) => c.name === 'moderator-only') || {}).id; if (!mod) return;
+  const sent = [];
+  for (const r of due) { try { await dc(env, '/channels/' + mod + '/messages', { method: 'POST', body: { content: '<@' + OWNER + '> ⏰ ' + String(r.text).slice(0, 1500), allowed_mentions: { parse: [], users: [OWNER] } } }); sent.push(r); } catch (err) { console.warn('Reminder:', err && err.message); } }
+  const left = ok.filter((r) => !sent.includes(r)); if (left.length) await env.DEBRIEF_KV.put('dc-remind', JSON.stringify(left)); else await env.DEBRIEF_KV.delete('dc-remind');
+}
 async function discordJobs(env, now) {
   if (!env.DISCORD_BOT_TOKEN || !env.DEBRIEF_KV || !env.GITHUB_TOKEN) return;
   const all = await runBugs(env);
@@ -1187,6 +1197,7 @@ async function discordJobs(env, now) {
   await runKillFeed(env, now).catch((err) => console.warn('Kill feed:', err && err.message));
   await runQuestions(env, all).catch((err) => console.warn('Questions:', err && err.message));
   await runInbox(env).catch((err) => console.warn('Inbox:', err && err.message));
+  await runReminders(env, now).catch((err) => console.warn('Reminders:', err && err.message));
   await relink(env).catch((err) => console.warn('Relink:', err && err.message));
   await runWelcome(env).catch((err) => console.warn('Welcome:', err && err.message));
   await runDigest(env, now, all);
