@@ -7214,36 +7214,6 @@ html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac +
 #view section.rck > h3.rck-h .ds-sw > b { padding: 3px 10px; font: 500 12.5px var(--body); letter-spacing: 0; text-transform: none; color: var(--muted); cursor: pointer; }
 #view section.rck > h3.rck-h .ds-sw > b:hover { color: var(--text); }
 #view section.rck > h3.rck-h .ds-sw > b.on { background: rgba(255,255,255,.09); color: var(--text); font-weight: 600; }
-/* ===== Design studio round 30 (Oct 26): Rotation's rows, one look: one short fact line a tile in Summary (the full sentence under Everything), numbers in the
-   check's colour, spell names semi-bold, Next time with a gold label and edge, window cards across the ring, big-damage moments only
-   where a cooldown went out. Owner: the Design studio chat. ===== */
-/* the short line, and the full sentence under Everything */
-#view section.rck .rck-b.ds-slim > p.ds-short { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--muted); }
-#view section.rck:not(.ds-all) .rck-b.ds-slim > p.spc-rs.ds-full { display: none !important; }
-#view section.rck.ds-all .rck-b.ds-slim > p.ds-short, #view section.rck.ds-all summary > span.ds-note.ds-sn { display: none; }
-#view section.rck .rck-rs > .rck-r > summary > span.ds-note.ds-sn { grid-column: 1 / -1; margin-top: 3px; font-size: 12.5px; line-height: 1.3; color: var(--muted); }
-#view section.rck.ds-all .rck-b.ds-slim > p.spc-rs.ds-dup.ds-more, #view section.rck.ds-all .rck-mgb > .rck-b > p.spc-rs.ds-dup.ds-more { display: block !important; }
-#view section.rck .rck-b.ds-slim > p.ds-short.ds-dup, #view section.rck summary > span.ds-note.ds-dup { display: none !important; }
-/* numbers in the check's colour, spell names semi-bold */
-#view section.rck p.spc-rs .ds-n, #view section.rck p.ds-short .ds-n, #view section.rck summary > .ds-note .ds-n { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
-#view section.rck p[data-ds-st="ok"] .ds-n, #view section.rck summary > .ds-note[data-ds-st="ok"] .ds-n { color: #7ee08f; }
-#view section.rck p[data-ds-st="warn"] .ds-n, #view section.rck summary > .ds-note[data-ds-st="warn"] .ds-n { color: #f3c969; }
-#view section.rck p[data-ds-st="bad"] .ds-n, #view section.rck summary > .ds-note[data-ds-st="bad"] .ds-n { color: #ff8f87; }
-#view section.rck p.spc-rs .sp.mt, #view section.rck p.ds-short .sp.mt, #view section.rck summary > .ds-note .sp.mt { font-weight: 600; color: var(--text); }
-/* the tip is Debrief talking to you: gold label, gold edge, white words */
-#view section.rck .rck-b.ds-slim > p.rck-tip, #view section.rck .rck-b > p.rck-tip, #view .spc-tld > p.spc-tip, #view .rck-fix .rck-sgt > p.rck-how { position: relative; margin: 6px 0 2px; padding: 3px 0 3px 10px; border-left: 2px solid var(--gold); border-radius: 0 6px 6px 0; background: linear-gradient(90deg, rgba(230,180,80,.09), rgba(230,180,80,0) 70%); color: var(--text); font-size: 13.5px; line-height: 1.45; }
-#view section.rck .rck-b.ds-slim > p.rck-tip > b:first-child, #view section.rck .rck-b > p.rck-tip > b:first-child, #view .spc-tld > p.spc-tip > b:first-child, #view .rck-fix .rck-sgt > p.rck-how > b:first-child { margin-right: 6px; font: 700 12px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--gold); }
-#view section.rck .rck-b.ds-slim > p.ds-short + p.rck-tip { margin-top: 5px; }
-#view .rck-fix .rck-sgt > p.rck-how { margin-top: 6px; }
-/* a long legend, one item a line */
-#view section.rck .spc-sb > .spc-sbl.ds-stack > span { flex: 0 0 100%; flex-wrap: nowrap; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-#view section.rck .spc-sb > .spc-sbl.ds-stack > span > .sp { white-space: nowrap; }
-/* window cards: the tile spans the ring and the cards flow across it */
-.pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r.ds-cards { grid-column: 1 / -1 !important; }
-#view section.rck .rck-r.ds-cards .rck-b > .spc-ws, #view section.rck .rck-r.ds-cards .rck-b .spc-ws { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important; gap: 8px; }
-/* big-damage moments: in Summary only the ones a cooldown covered */
-#view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.warn, #view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.bad, #view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-wall { display: none; }
-#view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.ok.spc-wx { display: block; }
 /* ===== Design studio round 31 (Oct 26): Rotation polish: nothing under 12px, a name that wraps instead of overflowing, the number and its top line
    stacked, the opener tile across the ring, window cards that clip their strip, tiles that keep their own height. Owner: the Design
    studio chat. ===== */
@@ -7331,6 +7301,43 @@ html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac +
 #view section.rck .spc-sbl > span > i, #view section.rck .slv-lg > span > i { flex: 0 0 auto; }
 .pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-v { max-width: none !important; }
 .pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-v > b { white-space: nowrap; }
+/* ===== Design studio round 30 (Oct 26): Rotation's rows, one look: one short fact line a tile in Summary (the full sentence under Everything), numbers in the
+   check's colour, spell names semi-bold, Next time with a gold label and edge, window cards across the ring, big-damage moments only
+   where a cooldown went out. Owner: the Design studio chat. ===== */
+/* the short line, and the full sentence under Everything */
+#view section.rck .rck-b.ds-slim > p.ds-short { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--muted); }
+#view section.rck:not(.ds-all) .rck-b.ds-slim > p.spc-rs.ds-full { display: none !important; }
+#view section.rck.ds-all .rck-b.ds-slim > p.ds-short, #view section.rck.ds-all summary > span.ds-note.ds-sn { display: none; }
+#view section.rck .rck-rs > .rck-r > summary > span.ds-note.ds-sn { grid-column: 1 / -1; margin-top: 3px; font-size: 12.5px; line-height: 1.3; color: var(--muted); }
+#view section.rck.ds-all .rck-b.ds-slim > p.spc-rs.ds-dup.ds-more, #view section.rck.ds-all .rck-mgb > .rck-b > p.spc-rs.ds-dup.ds-more { display: block !important; }
+#view section.rck .rck-b.ds-slim > p.ds-short.ds-dup, #view section.rck summary > span.ds-note.ds-dup { display: none !important; }
+/* numbers in the check's colour, spell names semi-bold */
+#view section.rck p.spc-rs .ds-n, #view section.rck p.ds-short .ds-n, #view section.rck summary > .ds-note .ds-n { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+#view section.rck p[data-ds-st="ok"] .ds-n, #view section.rck summary > .ds-note[data-ds-st="ok"] .ds-n { color: #7ee08f; }
+#view section.rck p[data-ds-st="warn"] .ds-n, #view section.rck summary > .ds-note[data-ds-st="warn"] .ds-n { color: #f3c969; }
+#view section.rck p[data-ds-st="bad"] .ds-n, #view section.rck summary > .ds-note[data-ds-st="bad"] .ds-n { color: #ff8f87; }
+#view section.rck p.spc-rs .sp.mt, #view section.rck p.ds-short .sp.mt, #view section.rck summary > .ds-note .sp.mt { font-weight: 600; color: var(--text); }
+/* the tip is Debrief talking to you: gold label, gold edge, white words */
+#view section.rck .rck-b.ds-slim > p.rck-tip, #view section.rck .rck-b > p.rck-tip, #view .spc-tld > p.spc-tip, #view .rck-fix .rck-sgt > p.rck-how { position: relative; margin: 6px 0 2px; padding: 3px 0 3px 10px; border-left: 2px solid var(--gold); border-radius: 0 6px 6px 0; background: linear-gradient(90deg, rgba(230,180,80,.09), rgba(230,180,80,0) 70%); color: var(--text); font-size: 13.5px; line-height: 1.45; }
+#view section.rck .rck-b.ds-slim > p.rck-tip > b:first-child, #view section.rck .rck-b > p.rck-tip > b:first-child, #view .spc-tld > p.spc-tip > b:first-child, #view .rck-fix .rck-sgt > p.rck-how > b:first-child { margin-right: 6px; font: 700 12px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--gold); }
+#view section.rck .rck-b.ds-slim > p.ds-short + p.rck-tip { margin-top: 5px; }
+#view .rck-fix .rck-sgt > p.rck-how { margin-top: 6px; }
+/* a long legend, one item a line */
+#view section.rck .spc-sb > .spc-sbl.ds-stack > span { flex: 0 0 100%; flex-wrap: nowrap; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+#view section.rck .spc-sb > .spc-sbl.ds-stack > span > .sp { white-space: nowrap; }
+/* window cards: the tile spans the ring and the cards flow across it */
+.pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r.ds-cards { grid-column: 1 / -1 !important; }
+#view section.rck .rck-r.ds-cards .rck-b > .spc-ws, #view section.rck .rck-r.ds-cards .rck-b .spc-ws { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important; gap: 8px; }
+/* big-damage moments: in Summary only the ones a cooldown covered */
+#view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.warn, #view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.bad, #view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-wall { display: none; }
+#view section.rck:not(.ds-all) .rck-r.ds-cdbig .spc-ws > .spc-w.ok.spc-wx { display: block; }
+/* ===== Design studio round 39 (Oct 26): even air inside a ring: a body with nothing visible takes no room, the inset sits 8px under the ring's bar with even
+   padding, the columns are as far apart as the inset's own padding. Owner: the Design studio chat. ===== */
+/* (#view in front: round 18's rules on this inset are !important at seven classes deep) */
+#view .pfv .ds-rcols section.rck .rck-cats > .rck-cat > .rck-rs, #view .pfv .ds-rcols section.rck .rck-cats > .rck-cat[open] > .rck-rs, #view.pfv .ds-rcols section.rck .rck-cats > .rck-cat[open] > .rck-rs { margin: 8px 10px 10px !important; padding: 10px 12px !important; gap: 10px 12px !important; }
+#view section.rck:not(.ds-all) .rck-cat .rck-rs > .rck-r .rck-b:not(:has(> :not([hidden]):not(.ds-dup):not(.spc-hwp):not(.ds-full):not(.ds-rbot))) { padding: 0 !important; }
+#view section.rck.ds-all .rck-cat .rck-rs > .rck-r .rck-b:not(:has(> :not([hidden]):not(.ds-dup):not(.spc-hwp))) { padding: 0 !important; }
+.pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r > .rck-mgb:not(:first-of-type) > h5.rck-mgh { padding-top: 8px !important; padding-bottom: 8px !important; }
 </style>
 
 

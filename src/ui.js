@@ -30748,6 +30748,37 @@ function dsRotOpen() { const sec = document.querySelector('#view section.rck'); 
   /* tiles are out of the app's one-at-a-time accordion: their toggle never reaches it (and they cannot close) */
   window.addEventListener('toggle', (e) => { const d = e.target; if (!d || !d.matches || !d.matches('#view section.rck .rck-rs > details.rck-r')) return; e.stopImmediatePropagation(); if (!d.open) d.open = true; else dsWsTrim(d); }, true); })();
 
+// ===== Design studio round 32 (Oct 26): Rotation's top: a Parse tile with no rank is hidden, the Fix first ring opens by itself once per page,
+// the pull-at-a-glance strip moves up under the top boxes (folded). Owner: the Design studio chat. =====
+function dsRotTop() { const v = document.querySelector('#view .pf-inl.spc-v'); if (!v) return;
+  v.querySelectorAll('.spc-hero .spc-kt:not([data-ds-kt])').forEach((k) => { k.dataset.dsKt = '1'; if (/not ranked/i.test(k.textContent) && /^Parse/.test(((k.querySelector('.spc-ktl') || {}).textContent || '').trim())) k.classList.add('ds-hide'); });
+  const gl = v.querySelector(':scope > details.spc-chd[data-k="spcch-your-pull-at-a-glance"]'), cols = v.querySelector(':scope > .ds-rcols');
+  if (gl && cols && !gl.dataset.dsUp) { gl.dataset.dsUp = '1'; gl.open = false; gl.classList.add('ds-glance'); cols.before(gl); }
+  const sec = v.querySelector('section.rck'), card = v.querySelector('.rck-fix .rck-sg[data-ck]');
+  if (sec && card && !sec.dataset.dsAuto) { sec.dataset.dsAuto = '1'; if (![...sec.querySelectorAll('.rck-cat')].some((c) => c.open)) { const t = document.getElementById('spc-r-' + card.dataset.ck); const cat = t && t.closest('.rck-cat'); if (cat) cat.open = true; } } }
+(function () { const f21 = dsBars; dsBars = function (root) { f21(root); try { dsRotTop(); } catch (e) {} }; })();
+
+// ===== Design studio round 35 (Oct 26): a rule on hover, a flash on arrival: every tile's name carries its "How it's judged" as the tooltip; a What to fix card
+// flashes the tile it jumps to. Owner: the Design studio chat. =====
+function dsRotTips() { const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  document.querySelectorAll('#view section.rck details.rck-r:not([data-ds-tip])').forEach((t) => { t.dataset.dsTip = '1'; const sm = t.querySelector(':scope > summary'); if (!sm) return;
+    if (!sm.hasAttribute('data-tt')) { const hw = t.querySelector('p.spc-hwp'); const txt = hw ? hw.textContent.replace(/\s+/g, ' ').trim() : ''; if (txt) sm.setAttribute('data-tt', '<b>How it is judged</b><br>' + esc(txt)); }
+    if (sm.hasAttribute('data-tt')) t.classList.add('ds-hastip'); }); }
+(function () { const f22 = dsBars; dsBars = function (root) { f22(root); try { dsRotTips(); } catch (e) {} };
+  document.addEventListener('click', (e) => { const c = e.target && e.target.closest && e.target.closest('#view .rck-fix .rck-sg[data-ck]'); if (!c) return;
+    setTimeout(() => { const t = document.getElementById('spc-r-' + c.dataset.ck); if (!t) return; t.classList.remove('ds-flash'); void t.offsetWidth; t.classList.add('ds-flash'); setTimeout(() => t.classList.remove('ds-flash'), 1600); }, 350); }, true); })();
+
+// ===== Design studio round 37 (Oct 26): a spell's tiles sit together: inside a ring, a later tile with the same spell icon as an earlier one moves up behind
+// it; the first keeps the app's place. Owner: the Design studio chat. =====
+function dsRotGroup() { document.querySelectorAll('#view section.rck .rck-cat .rck-rs:not([data-ds-grp])').forEach((rs) => { rs.dataset.dsGrp = '1';
+    const tiles = [...rs.children].filter((t) => t.matches('details.rck-r')); if (tiles.length < 3) return;
+    const sid = (t) => { const ic = t.querySelector(':scope > summary .spc-ri [data-sid], :scope > summary [data-sid]'); return ic ? ic.getAttribute('data-sid') : ''; };
+    const last = new Map(); /* spell -> the last tile of its group so far */
+    for (const t of tiles) { const s = sid(t); if (!s) continue;
+      if (last.has(s)) { const after = last.get(s); if (after.nextElementSibling !== t) after.after(t); }
+      last.set(s, t); } }); }
+(function () { const f23 = dsBars; dsBars = function (root) { f23(root); try { dsRotGroup(); } catch (e) {} }; })();
+
 // ===== Design studio round 30 (Oct 26): Rotation's rows, one look. One short fact line a tile (dsShort), the numbers in the check's
 // colour, spell names semi-bold, Next time in gold, no line that only restates the row, window cards across the ring, big-damage
 // moments only where a cooldown went out. Runs after dsRotOpen (round 27). Owner: the Design studio chat. =====
@@ -30765,7 +30796,7 @@ function dsShort(sub, v) {
   if ((m = s.match(/^You (?:cast|used) it \d+ of \d+ possible times?\.(?: It (waited unused|sat full) for (.+?)\.)?(.*)$/))) { let rest = m[3].trim().replace(/^It did (\S+) damage \((\S+) each\)\./, '$1 damage, $2 each.').replace(/^It did (\S+) damage\./, '$1 damage.').replace(/^It healed (\S+) \((\S+) each\)\./, '$1 healed, $2 each.').replace(/^It healed (\S+)\./, '$1 healed.').replace(/^Your (.+?) did (\S+) damage in all, (\S+) each\./, '$1: $2, $3 each.').replace(/^The Tyrant itself hit for (\S+) in all, (\S+) each\./, 'The Tyrant: $1, $2 each.').replace(/^Its shields absorbed (\S+) in all, (\S+) a cast\./, 'Shields: $1, $2 a cast.').replace(/^It went into (\d+) (.+?), worth about (\S+) of healing at your own average for each \w+\./, 'Into $1 $2, about $3 of healing.').replace(/^Your (\d+) (.+?) did about (\S+):.*$/, '$2: about $3.');
     rest = first(rest); const w = m[1] ? (m[1] === 'sat full' ? 'Sat full ' : 'Waited unused ') + m[2] + '.' : ''; return (w + (rest ? ' ' + rest : '')).trim(); }
   if ((m = s.match(/^You never used it \((\d+) possible\)\./))) return 'Never used; ' + m[1] + ' possible.';
-  if ((m = s.match(/^You were casting \d+% of the time\.(?: Your longest gap was (.+?), at (pull \d+, )?([\d:]+)(, while moving)?\.)?$/))) return m[1] ? 'Longest gap ' + m[1] + ' at ' + (m[2] || '') + m[3] + (m[4] ? ', while moving.' : '.') : '';
+  if ((m = s.match(/^You were (?:casting|pressing buttons) \d+% of the time\.(?: Your longest gap was (.+?), at (pull \d+, )?([\d:]+)(, while moving)?\.)?$/))) return m[1] ? 'Longest gap ' + m[1] + ' at ' + (m[2] || '') + m[3] + (m[4] ? ', while moving.' : '.') : '';
   if ((m = s.match(/^You cast [\d.]+ times a minute\. Most: (.+)\.$/))) return 'Most: ' + m[1].replace(/ and /g, ', ') + '.';
   if ((m = s.match(/^You were hitting the boss \d+% of the time\.(?: Of the (.+?) off it, (.+?) (?:was|were) only you, and (.+?) came from mechanics(?: \(.*?\))?\.)?/))) return m[1] ? cap(m[1]) + ' off it: ' + m[2] + ' you, ' + m[3] + ' mechanics.' : '';
   if ((m = s.match(/^\d+% of your ([\d,]+) casts were the best button at that moment\./))) return m[1] + ' casts checked.';
@@ -30800,7 +30831,7 @@ function dsShort(sub, v) {
   if ((m = s.match(/^Your (?:your )?(.+?) was up in (\d+) of (\d+) Bloodlust windows?\. You drank a combat potion in (\d+) of (\d+)\. In (?:that|those) windows? you did (?:([\d.]+) times as much damage a second as|(\d+)% of your damage a second from) the rest of the pull\./))) return cap(m[1]) + ' up in ' + m[2] + ' of ' + m[3] + ', potion in ' + m[4] + ' of ' + m[5] + '; ' + (m[6] ? m[6] + '× your usual damage.' : m[7] + '% of your usual damage.');
   if ((m = s.match(/^You cast ([\d.]+) (.+?) in each (.+?) window, on average\. You (?:did|healed) \S+(?: damage)? in (?:them|its windows), (?:or )?(\S+) a second, against (\S+) a second outside them\./))) return m[1] + ' ' + m[2] + ' a window; ' + m[4] + ' a second inside, ' + m[5] + ' outside.';
   if ((m = s.match(/^You cast [\d,]+ spells in .+? alive, [\d.]+ a minute\. Most: (.+?) a minute\./))) return 'Most: ' + m[1].replace(/ and /g, ', ') + ' a minute.';
-  if ((m = s.match(/^You were casting for \d+% of the time you were alive\.(?: Your longest stretch with nothing pressed was (.+?), at ([\d:]+)(, while you were moving)?\.)?$/))) return m[1] ? 'Longest gap ' + m[1] + ' at ' + m[2] + (m[3] ? ', while moving.' : '.') : '';
+  if ((m = s.match(/^You were (?:casting|pressing buttons) for \d+% of the time you were alive\.(?: Your longest stretch with nothing pressed was (.+?), at ([\d:]+)(, while you were moving)?\.)?$/))) return m[1] ? 'Longest gap ' + m[1] + ' at ' + m[2] + (m[3] ? ', while moving.' : '.') : '';
   if ((m = s.match(/^You were hitting the boss \d+% of the time it was up and you were alive\.(?: Of the (.+?) off it, (.+?) came from mechanics \(.*?\), and (.+?) were only you\.)?/))) return m[1] ? cap(m[1]) + ' off it: ' + m[2] + ' from mechanics, ' + m[3] + ' you.' : '';
   if ((m = s.match(/^Debrief checked ([\d,]+) of your casts against your priority list/))) return m[1] + ' casts checked against your priority list.';
   if ((m = s.match(/^You followed (\d+) of the (\d+) steps of the (.+?) opener(?: for two or more bosses)?, in order\.(?: Missed: (.+))?$/))) { if (!m[4]) return m[3] + ' opener, every step in order.'; const it = m[4].replace(/\.$/, '').split(/(?:^|, | and )step \d+, /).filter(Boolean); return 'Missed: ' + it.slice(0, 2).join(', ') + (it.length > 2 ? ' and ' + (it.length - 2) + ' more' : '') + '.'; }
@@ -30875,37 +30906,6 @@ function dsRotDedupe() { const NUMS = (s) => { const o = new Set(); (String(s ||
     const oneSentence = !/[.!?]\s+\S/.test(p.textContent.trim());
     if (extra === 0 || (valIn && extra <= 1 && oneSentence)) p.classList.add('ds-dup'); }); }
 (function () { const f19 = dsBars; dsBars = function (root) { f19(root); try { dsRotWords(); dsRotColour(); dsRotDedupe(); } catch (e) {} }; })();
-
-// ===== Design studio round 32 (Oct 26): Rotation's top: a Parse tile with no rank is hidden, the Fix first ring opens by itself once per page,
-// the pull-at-a-glance strip moves up under the top boxes (folded). Owner: the Design studio chat. =====
-function dsRotTop() { const v = document.querySelector('#view .pf-inl.spc-v'); if (!v) return;
-  v.querySelectorAll('.spc-hero .spc-kt:not([data-ds-kt])').forEach((k) => { k.dataset.dsKt = '1'; if (/not ranked/i.test(k.textContent) && /^Parse/.test(((k.querySelector('.spc-ktl') || {}).textContent || '').trim())) k.classList.add('ds-hide'); });
-  const gl = v.querySelector(':scope > details.spc-chd[data-k="spcch-your-pull-at-a-glance"]'), cols = v.querySelector(':scope > .ds-rcols');
-  if (gl && cols && !gl.dataset.dsUp) { gl.dataset.dsUp = '1'; gl.open = false; gl.classList.add('ds-glance'); cols.before(gl); }
-  const sec = v.querySelector('section.rck'), card = v.querySelector('.rck-fix .rck-sg[data-ck]');
-  if (sec && card && !sec.dataset.dsAuto) { sec.dataset.dsAuto = '1'; if (![...sec.querySelectorAll('.rck-cat')].some((c) => c.open)) { const t = document.getElementById('spc-r-' + card.dataset.ck); const cat = t && t.closest('.rck-cat'); if (cat) cat.open = true; } } }
-(function () { const f21 = dsBars; dsBars = function (root) { f21(root); try { dsRotTop(); } catch (e) {} }; })();
-
-// ===== Design studio round 35 (Oct 26): a rule on hover, a flash on arrival: every tile's name carries its "How it's judged" as the tooltip; a What to fix card
-// flashes the tile it jumps to. Owner: the Design studio chat. =====
-function dsRotTips() { const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  document.querySelectorAll('#view section.rck details.rck-r:not([data-ds-tip])').forEach((t) => { t.dataset.dsTip = '1'; const sm = t.querySelector(':scope > summary'); if (!sm) return;
-    if (!sm.hasAttribute('data-tt')) { const hw = t.querySelector('p.spc-hwp'); const txt = hw ? hw.textContent.replace(/\s+/g, ' ').trim() : ''; if (txt) sm.setAttribute('data-tt', '<b>How it is judged</b><br>' + esc(txt)); }
-    if (sm.hasAttribute('data-tt')) t.classList.add('ds-hastip'); }); }
-(function () { const f22 = dsBars; dsBars = function (root) { f22(root); try { dsRotTips(); } catch (e) {} };
-  document.addEventListener('click', (e) => { const c = e.target && e.target.closest && e.target.closest('#view .rck-fix .rck-sg[data-ck]'); if (!c) return;
-    setTimeout(() => { const t = document.getElementById('spc-r-' + c.dataset.ck); if (!t) return; t.classList.remove('ds-flash'); void t.offsetWidth; t.classList.add('ds-flash'); setTimeout(() => t.classList.remove('ds-flash'), 1600); }, 350); }, true); })();
-
-// ===== Design studio round 37 (Oct 26): a spell's tiles sit together: inside a ring, a later tile with the same spell icon as an earlier one moves up behind
-// it; the first keeps the app's place. Owner: the Design studio chat. =====
-function dsRotGroup() { document.querySelectorAll('#view section.rck .rck-cat .rck-rs:not([data-ds-grp])').forEach((rs) => { rs.dataset.dsGrp = '1';
-    const tiles = [...rs.children].filter((t) => t.matches('details.rck-r')); if (tiles.length < 3) return;
-    const sid = (t) => { const ic = t.querySelector(':scope > summary .spc-ri [data-sid], :scope > summary [data-sid]'); return ic ? ic.getAttribute('data-sid') : ''; };
-    const last = new Map(); /* spell -> the last tile of its group so far */
-    for (const t of tiles) { const s = sid(t); if (!s) continue;
-      if (last.has(s)) { const after = last.get(s); if (after.nextElementSibling !== t) after.after(t); }
-      last.set(s, t); } }); }
-(function () { const f23 = dsBars; dsBars = function (root) { f23(root); try { dsRotGroup(); } catch (e) {} }; })();
 
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
