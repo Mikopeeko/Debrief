@@ -1421,7 +1421,7 @@ export class DiscordGateway {
     const url = new URL(req.url);
     if (!this.up && !this.connecting) await this.connect().catch((err) => this.note('connect failed: ' + (err && err.message)));
     if (url.pathname === '/status') return new Response(JSON.stringify({ up: this.up, heard: this.heard, since: this.since, sid: !!this.sid, noContent: this.noContent, log: this.log }), { headers: { 'Content-Type': 'application/json' } });
-    if (url.pathname === '/tick') { await this.serial(async () => { await mentionTick(this.env).catch((err) => console.warn('Mentions:', err && err.message)); await runBugs(this.env, true).catch((err) => console.warn('Quick bug sync:', err && err.message)); }); return new Response('ticked'); }
+    if (url.pathname === '/tick') { await this.serial(async () => { await mentionTick(this.env).catch((err) => console.warn('Mentions:', err && err.message)); const open = await runBugs(this.env, true).catch((err) => { console.warn('Quick bug sync:', err && err.message); return null; }); await joinThreads(this.env, open || []).catch((err) => console.warn('Join threads:', err && err.message)); }); return new Response('ticked'); }
     return new Response(this.up ? 'up' : 'down');
   }
   serial(fn) { this.chain = (this.chain || Promise.resolve()).then(fn).catch((err) => console.warn('Gateway job:', err && err.message)); return this.chain; }
@@ -1453,7 +1453,7 @@ export class DiscordGateway {
       const every = f.d.heartbeat_interval; if (this.hb) clearInterval(this.hb);
       this.hb = setInterval(() => { if (!this.acked) { this.note('no heartbeat answer: reconnecting'); try { this.ws && this.ws.close(4000, 'zombie'); } catch (e) { /* closed */ } this.onClose(4000); return; } this.acked = false; this.send({ op: 1, d: this.seq }); }, every);
       if (this.sid) this.send({ op: 6, d: { token: this.env.DISCORD_BOT_TOKEN, session_id: this.sid, seq: this.seq } });
-      else this.send({ op: 2, d: { token: this.env.DISCORD_BOT_TOKEN, intents: (1 << 9) | (this.noContent ? 0 : 1 << 15), properties: { os: 'linux', browser: 'debrief', device: 'debrief' } } });
+      else this.send({ op: 2, d: { token: this.env.DISCORD_BOT_TOKEN, intents: 1 | (1 << 9) | (this.noContent ? 0 : 1 << 15), properties: { os: 'linux', browser: 'debrief', device: 'debrief' } } });
     } else if (f.op === 11) this.acked = true;
     else if (f.op === 1) this.send({ op: 1, d: this.seq });
     else if (f.op === 7) { try { this.ws && this.ws.close(4000, 'reconnect'); } catch (e) { /* closed */ } this.onClose(4000); }
@@ -1467,10 +1467,12 @@ export class DiscordGateway {
   }
   async onMessage(d) {
     const env = this.env;
-    if (!d || d.guild_id !== GUILD || !d.author || d.author.bot || !(d.mentions || []).some((u) => u.id === APP_ID)) return;
+    if (d && d.author && !d.author.bot && /<@!?\d+>/.test(String(d.content || '')) && d.content.includes(APP_ID)) this.note('tag seen from ' + d.author.id + ' (mentions list ' + (d.mentions || []).length + ', guild ' + (d.guild_id === GUILD) + ')');
+    if (!d || d.guild_id !== GUILD || !d.author || d.author.bot || !((d.mentions || []).some((u) => u.id === APP_ID) || String(d.content || '').includes('<@' + APP_ID + '>'))) return;
     const st = (await env.DEBRIEF_KV.get('dc-mentions', 'json')) || { c: {}, done: [] };
-    if (st.done.includes(d.id)) return;
-    if (!(await isMod(env, d.author.id).catch(() => false))) return;
+    if (st.done.includes(d.id)) { this.note('already handled ' + d.id); return; }
+    if (!(await isMod(env, d.author.id).catch(() => false))) { this.note('not a moderator: ' + d.author.id); return; }
+    this.note('filing for ' + d.id);
     st.done.push(d.id); st.done = st.done.slice(-100); await env.DEBRIEF_KV.put('dc-mentions', JSON.stringify(st)); // (marked first, so the one-minute check never files it again)
     const c = (await dc(env, '/channels/' + d.channel_id).catch(() => null)) || { id: d.channel_id };
     let reply; try { reply = await mentionReport(env, c, d); } catch (err) { console.warn('Mention report:', err && err.message); reply = 'That report didn\'t go through. Please tag me again in a minute. 💛'; }
@@ -1479,6 +1481,13 @@ export class DiscordGateway {
   }
 }
 // (poked every minute: makes sure the listener is connected)
+// (Discord sends a bot the messages of a thread only once it is a member of it: join each open thread once, up to 20 a minute)
+async function joinThreads(env, threads) {
+  const now = new Set((threads || []).map((t) => t.id)); if (!now.size) return;
+  let joined = (await env.DEBRIEF_KV.get('dc-joined', 'json')) || []; const have = new Set(joined); let n = 0, dirty = false;
+  for (const t of threads) { if (have.has(t.id) || n >= 20) continue; n++; try { await dc(env, '/channels/' + t.id + '/thread-members/@me', { method: 'PUT' }); have.add(t.id); dirty = true; } catch (err) { console.warn('Join', t.id, err && err.message); if (/ 403 | 404 | 10003/.test(String(err && err.message))) { have.add(t.id); dirty = true; } } }
+  const keep = [...have].filter((id) => now.has(id)); if (dirty || keep.length !== joined.length) await env.DEBRIEF_KV.put('dc-joined', JSON.stringify(keep.slice(-600)));
+}
 async function tickGateway(env) { // (the one-minute run's work: the tag check and the quick bug sync, through the listener when there is one)
   if (!env.GATEWAY || !env.DISCORD_BOT_TOKEN) { await mentionTick(env); await runBugs(env, true); return; }
   const r = await env.GATEWAY.get(env.GATEWAY.idFromName('main')).fetch('https://gateway/tick'); await r.text();
@@ -1503,6 +1512,7 @@ export default {
     if (url.pathname === '/api/curvestep' && /-debrief./.test(url.hostname)) { try { return json(await curveStepFor(env, url.searchParams.get('e') + ':' + url.searchParams.get('d'), parseInt(url.searchParams.get('n') || '12', 10))); } catch (err) { return json({ error: err.message }); } }
     if (url.pathname === '/api/ratetest' && /-debrief./.test(url.hostname)) { try { return json(await rateOfKill(env, url.searchParams.get('code'), parseInt(url.searchParams.get('fight'), 10))); } catch (e) { return json({ error: String(e && e.message || e) }, 500); } } /* (test copies only (Oct 23)) */
     if (url.pathname === '/api/pacestep' && /-debrief./.test(url.hostname)) { try { return json(await paceStep(env, 1)); } catch (e) { return json({ error: String(e && e.message || e) }, 500); } } /* (test copies only: one cron step on demand, to check the pace job (Oct 23)) */
+    if (url.pathname === '/api/gwstatus' && env.GATEWAY) return env.GATEWAY.get(env.GATEWAY.idFromName('main')).fetch('https://gateway/status'); /* (is the instant listener connected: counts and its last few events) */
     if (url.hostname === HOME_HOST && url.pathname === '/__move' && req.method === 'POST') return moveIn(req, env);
     if ((url.hostname === 'www.' + HOME_HOST || url.origin === OLD_SITE) && (req.method === 'GET' || req.method === 'HEAD') && !/^\/(?:api|wcl|auth)\//.test(url.pathname)) return moveHome(req, url);
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
