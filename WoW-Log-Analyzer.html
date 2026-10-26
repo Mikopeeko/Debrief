@@ -7567,24 +7567,6 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pn-bd { padding: 0 4px !important; letter-spacing: 0; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pn-day b { font-size: 12.5px; }
 }
-/* ===== Design studio round 56 (Oct 26): the no-class tag as a short "⚠ Set class" under the nameplate, inside the name column, never over the dot grid. Owner: the Design studio chat. ===== */
-html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page td.pl { white-space: normal !important; vertical-align: top; }
-html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page td.pl > .tn-rtag { display: inline-flex !important; align-items: center; gap: 4px; font-size: 0 !important; height: 20px !important; min-height: 0 !important; padding: 0 7px !important; margin: 3px 0 0 !important; max-width: 100%; position: relative; z-index: 2; }
-html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page td.pl > .tn-rtag::before { content: '\26A0'; font-size: 12px; line-height: 1; }
-html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page td.pl > .tn-rtag > b { font-size: 12px !important; }
-/* ===== Design studio round 55 (Oct 26): after Plan it, the two ways in as big choice cards (title + one line each, Make it for me gold-tinted), full width under
-   the boss row, one column on a phone. Owner: the Design studio chat. ===== */
-html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row:has(> .tn-ra > [data-plnew]) > .tn-s { display: none !important; }
-html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row:has(> .tn-ra > [data-plnew]) > .tn-ra { grid-area: auto !important; grid-column: 1 / -1 !important; display: grid !important; grid-template-columns: 1fr 1fr; gap: 10px; margin: 8px 0 2px; width: 100%; }
-html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra > .btn[data-plnew], html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra > .btn[data-ndzbuild] { display: block; height: auto !important; min-height: 0 !important; padding: 10px 12px !important; border-radius: 10px !important; text-align: left; white-space: normal; font: 700 15px var(--head) !important; line-height: 1.2 !important; }
-html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra > .btn[data-plnew] { background: rgba(230,180,80,.1) !important; border: 1px solid rgba(230,180,80,.45) !important; color: var(--gold) !important; }
-html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra > .btn[data-ndzbuild] { background: rgba(255,255,255,.03) !important; border: 1px solid var(--line2) !important; color: var(--text) !important; }
-html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra > .btn[data-plnew]:hover, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra > .btn[data-ndzbuild]:hover { border-color: rgba(230,180,80,.6) !important; background: rgba(230,180,80,.08) !important; }
-/* (the user, on seeing the lines under the titles: "a little busy, maybe put the extra description into a tooltip instead": the
-   Plan chat's small.tn-pdesc is hidden; the words belong in each button's tip) */
-html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra > .btn > .tn-pdesc { display: none !important; }
-html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra > .btn[data-plnew], html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra > .btn[data-ndzbuild] { padding: 12px 14px !important; }
-@media (max-width: 640px) { html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row:has(> .tn-ra > [data-plnew]) > .tn-ra { grid-template-columns: 1fr; } }
 /* ===== Design studio round 57 (Oct 26): the Pictures for Discord window: pictures two to a row in raised numbered cards (tap one to see it
    big), jump chips, a 400 px marker map with the picks beside it, no play bar in the marker map, the box fits a phone.
    Owner: the Design studio chat. ===== */
@@ -7623,6 +7605,18 @@ html body #ppWin .pp-pic .ndz-shotimg { margin: 0; border-radius: 8px; }
 html body #ppWin .pp-act { margin-top: 8px; } html body #ppWin .pp-msg { font-size: 12px; }
 @media (max-width: 999px) { html body #ppWin .pp-cards { grid-template-columns: 1fr; } html body #ppWin .pp-mk { grid-template-columns: 1fr; } }
 @media (max-width: 640px) { html body #ppWin .pp-win { padding: 14px 14px 16px; } html body #ppWin .pp-use { grid-template-columns: 1fr; gap: 4px; } html body #ppWin .pp-mkbox > summary { flex-wrap: wrap; } }
+/* ===== Design studio round 55 (Oct 26): after Plan it, the two ways in as big choice cards (title + one line each, Make it for me gold-tinted), full width under
+   the boss row, one column on a phone. Owner: the Design studio chat. ===== */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row:has(> .tn-ra > [data-plnew]) > .tn-s { display: none !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row:has(> .tn-ra > [data-plnew]) > .tn-ra { grid-area: auto !important; grid-column: 1 / -1 !important; display: grid !important; grid-template-columns: 1fr 1fr; gap: 10px; margin: 8px 0 2px; width: 100%; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra > .btn[data-plnew], html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra > .btn[data-ndzbuild] { display: block; height: auto !important; min-height: 0 !important; padding: 10px 12px !important; border-radius: 10px !important; text-align: left; white-space: normal; font: 700 15px var(--head) !important; line-height: 1.2 !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra > .btn[data-plnew] { background: rgba(230,180,80,.1) !important; border: 1px solid rgba(230,180,80,.45) !important; color: var(--gold) !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra > .btn[data-ndzbuild] { background: rgba(255,255,255,.03) !important; border: 1px solid var(--line2) !important; color: var(--text) !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra > .btn[data-plnew]:hover, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra > .btn[data-ndzbuild]:hover { border-color: rgba(230,180,80,.6) !important; background: rgba(230,180,80,.08) !important; }
+/* (the user: "a little busy, maybe put the extra description into a tooltip instead": the Plan chat moved the words into each
+   button's tip (8dc6a07), so nothing is hidden here any more) */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra > .btn[data-plnew], html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra > .btn[data-ndzbuild] { padding: 12px 14px !important; }
+@media (max-width: 640px) { html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row:has(> .tn-ra > [data-plnew]) > .tn-ra { grid-template-columns: 1fr; } }
 </style>
 
 
