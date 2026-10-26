@@ -1772,6 +1772,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-25', h: [
+    { t: 'Debriefing, slim and in place', d: 'A mechanic\'s details open under the row you click, with a small map you can zoom with the wheel or its + and − (⤢ opens it big). The mechanic rows, the details and the coach\'s rows share one slim shape with the gear column on Rotation.' },
     { t: 'The front page shows a pull being debriefed', d: 'The example window on the front page now plays a short loop instead of a still: the raid lead\'s verdict, three deaths filling in as bars, one death opening as a card, and the Rotation grade filling up. Built from the site\'s own pieces, so it\'s crisp and light; still if your system asks for less motion.' },
     { t: 'The site moves, and kills light up', d: 'Bars fill in, big numbers count up and the pull line draws itself the first time a page opens, quick and only once (off if your system asks for less motion). A kill lights the boss banner gold, the Kill mark on the pull line glows, and the first kill of a boss shimmers with the raid lead\'s call shown big.' },
     { t: 'Home, one screen', d: 'Home now reads like a briefing: your team and you on one strip, the boss you\'re on big with your raid nights beside its chart, and the ten bosses as one row. How far you got is a bar as well as a number, on the banner, on every boss and on every night.' },
@@ -1782,6 +1783,7 @@ const PATCH_NOTES = [
     { t: 'One way to show a number', d: 'The Report card and Rotation now speak the same language as Debriefing: a bar with one number at its end, a grade as one letter at the start of its bar. The ranked roster is one bar per raider, a raider\'s checklist shows the rows that need them and folds the rest, and Rotation\'s header is one row with the talent trees folded under it.' },
     { t: 'Your tier set, in numbers', d: 'Rotation shows how much your 2-piece and 4-piece added, with a Where it came from breakdown behind every number. On every spec.' },
     { t: 'Your trinkets, both of them', d: 'Gear and extras on Rotation now shows both of your trinkets, with what each one did (damage, healing or stats), or that one was never pressed.' },], n: [
+    'Debriefing: one text scale for the page (titles 15, names 14, numbers 14, small lines 12), small Improving/Worsening tags, and a moment\'s sentence in plain text with colour only on the name and the numbers; on All pulls a mechanic\'s trend line sits beside its name.',
     'Rotation: the gear groups split across both columns (the last ones sit under the checklist), so the page has no empty half.',
     'Rotation: the checklist reads like the gear column now. The five rings are slim rows in one panel (a small number on the right, a thin bar), the checks under an open ring are the same rows two across, and inside an open tile the bar, its legend and the cost share one line, then the Next time sentence, then Why, How it\'s judged and Show each one; the explaining sentence is the Why tip. Rotation priority\'s slips are the same slim rows.',
     'Plan: the Who plays table is dot rows now, a dot in the class colour when someone plays, a red cross when they sit, with air between the rows, and on a wide screen the Who plays header, its buttons and things to fix run across the top with the table (each boss column just its numbered picture, the name on hover) and the Bosses rows side by side under them; the same taps and drags as before.',
@@ -1824,6 +1826,7 @@ const PATCH_NOTES = [
     'Rotation: inside each ring, the rows follow your spec guide\'s order of importance, the same on every pull.',
     'Rotation: What to fix says each thing once, and on a phone your talents fold away so it starts right under your score.',
     'Rotation: every spec checks the same things before the pull: a weapon oil where the guides list one, and Power Word: Fortitude for both priests.',], f: [
+    'The big numbers no longer flash nonsense (like −1337 pulls) for a moment after you click a pull while the page is busy.',
     'Every tab no longer shows its old layout for a moment while a pull loads (Debriefing could sit on it for seconds): the new layouts now land in the same instant the page draws.',
     'Rotation: Fire Mage\'s tier set card shows real numbers. It read NaN, and it counted every Pyroblast cast while Pyroclasm waited instead of the ones that used it.',
     'Rotation: stacking buffs like Maelstrom Weapon no longer lose count of their stacks four or five minutes into a long pull.',
@@ -30198,30 +30201,6 @@ function dsPlanTips() { const v = document.querySelector('#view.plan-page'); if 
   document.querySelectorAll('#view.plan-page .nt-g .nt-bh[aria-label]:not([data-tt])').forEach((b) => { const n = b.getAttribute('aria-label').replace(/^Open /, ''); if (n) b.setAttribute('data-tt', '<b>' + n.replace(/</g, '&lt;') + '</b>'); }); }
 (function () { const f7 = dsBars; dsBars = function (root) { f7(root); try { dsPlanTips(); } catch (e) {} }; })();
 
-// ===== Design studio round 14 (Oct 25): motion. The CSS does the moving; this pass only (1) stops replays when the same page
-// redraws within 3 s (html.ds-still) and (2) counts big numbers up from 0 while their fade-in hides the swap. Owner: the Design studio chat. =====
-function dsMotion() { const H = document.documentElement; if (!window.matchMedia || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  /* the page's fingerprint: where we are plus the numbers on it; a redraw with the same numbers within 3 s is a replay, a loading
-     redraw (numbers still changing) is not */
-  const M = dsMotion, now = Date.now(), key = location.search + '|' + [...document.querySelectorAll('#view .dbr-v > b:first-child, #main .my-bc .my-tag, #view .rqc-sc')].map((e) => e.textContent.trim()).join(',').slice(0, 400);
-  if (M.key === key && now - (M.at || 0) < 3000) { H.classList.add('ds-still'); clearTimeout(M.tm); M.tm = setTimeout(() => H.classList.remove('ds-still'), 1200); } else { H.classList.remove('ds-still'); M.key = key; }
-  M.at = now;
-  /* the boss header redraws on its own while a pull loads: its line and dots play once per set of pulls, not per redraw */
-  const hd = document.querySelector('header.fight.bh'), pl = hd && hd.querySelector('polyline.bhp-all-l'); if (hd) { const pts = pl ? pl.getAttribute('points') : ''; if (M.pts === pts && now - (M.ptsAt || 0) < 15000) hd.classList.add('ds-hstill'); else { M.pts = pts; M.ptsAt = now; } }
-  if (H.classList.contains('ds-still')) return;
-  M.seen = M.seen || new WeakSet();
-  /* bars drawn from --p (set by the studio's own passes a moment ago, in this same tick, so nothing has been painted yet): from 0 to their value */
-  document.querySelectorAll('#view [style*="--p"], #main [style*="--p"]').forEach((el) => { if (M.seen.has(el)) return; M.seen.add(el); const p = el.style.getPropertyValue('--p'); if (!p || parseFloat(p) <= 0) return;
-    el.style.setProperty('--p', '0'); void el.offsetWidth; el.classList.add('ds-ptrans'); el.style.setProperty('--p', p); });
-  document.querySelectorAll('#view .dbr-v > b:first-child, #view .cb-v, #view .dbt-n, #view .cgl-c, #view .rqc-sc, #main .yu-t > b, #main .pnw-ti > b, #main .pgc > b').forEach((el) => {
-    if (M.seen.has(el)) return; M.seen.add(el); const tn = [...el.childNodes].find((n) => n.nodeType === 3 && n.nodeValue.trim()); if (!tn) return;
-    const raw = tn.nodeValue, m = raw.trim().match(/^(\d[\d,]*)(\.\d+)?([%kKmM]?)$/); if (!m) return;
-    const commas = m[1].includes(','), dec = m[2] ? m[2].length - 1 : 0, end = parseFloat(m[1].replace(/,/g, '') + (m[2] || '')), suf = m[3] || ''; if (!(end > 0)) return;
-    const t0 = performance.now(), dur = 550, fmt = (x) => (commas ? Math.round(x).toLocaleString('en-US') : x.toFixed(dec)) + suf;
-    const step = (t) => { const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3); if (k < 1) { tn.nodeValue = fmt(end * e); requestAnimationFrame(step); } else tn.nodeValue = raw; };
-    tn.nodeValue = fmt(0); requestAnimationFrame(step); }); }
-(function () { const f8 = dsBars; dsBars = function (root) { f8(root); try { dsMotion(); } catch (e) {} }; })();
-
 // ===== Design studio round 15 (Oct 25): the front page shows a pull being debriefed (the user's pick A). Replaces the example window's
 // coach box with a looping scene built from the site's card pieces; the chrome and the boss banner stay. Owner: the Design studio chat. =====
 function dsFrontDemo() { const win = document.querySelector('#main .home.fp .fpx-shot .fp3-win'); if (!win || win.dataset.dsDemo) return; const coach = win.querySelector('.fp3-coach'); if (!coach) return;
@@ -30249,6 +30228,31 @@ function dsFrontDemo() { const win = document.querySelector('#main .home.fp .fpx
     try { dsBars(); } catch (e) {} finally { if (mo) mo.takeRecords(); busy = false; } };
   const start = () => { if (!document.body) return false; mo = new MutationObserver(run); mo.observe(document.body, { childList: true, subtree: true }); return true; };
   if (!start()) document.addEventListener('DOMContentLoaded', start, { once: true }); })();
+
+// ===== Design studio round 14 (Oct 25): motion. The CSS does the moving; this pass only (1) stops replays when the same page
+// redraws within 3 s (html.ds-still) and (2) counts big numbers up from 0 while their fade-in hides the swap. Owner: the Design studio chat. =====
+function dsMotion() { const H = document.documentElement; if (!window.matchMedia || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  /* the page's fingerprint: where we are plus the numbers on it; a redraw with the same numbers within 3 s is a replay, a loading
+     redraw (numbers still changing) is not */
+  const M = dsMotion, now = Date.now(), key = location.search + '|' + [...document.querySelectorAll('#view .dbr-v > b:first-child, #main .my-bc .my-tag, #view .rqc-sc')].map((e) => e.textContent.trim()).join(',').slice(0, 400);
+  if (M.key === key && now - (M.at || 0) < 3000) { H.classList.add('ds-still'); clearTimeout(M.tm); M.tm = setTimeout(() => H.classList.remove('ds-still'), 1200); } else { H.classList.remove('ds-still'); M.key = key; }
+  M.at = now;
+  /* the boss header redraws on its own while a pull loads: its line and dots play once per set of pulls, not per redraw */
+  const hd = document.querySelector('header.fight.bh'), pl = hd && hd.querySelector('polyline.bhp-all-l'); if (hd) { const pts = pl ? pl.getAttribute('points') : ''; if (M.pts === pts && now - (M.ptsAt || 0) < 15000) hd.classList.add('ds-hstill'); else { M.pts = pts; M.ptsAt = now; } }
+  if (H.classList.contains('ds-still')) return;
+  M.seen = M.seen || new WeakSet();
+  /* bars drawn from --p (set by the studio's own passes a moment ago, in this same tick, so nothing has been painted yet): from 0 to their value */
+  document.querySelectorAll('#view [style*="--p"], #main [style*="--p"]').forEach((el) => { if (M.seen.has(el)) return; M.seen.add(el); const p = el.style.getPropertyValue('--p'); if (!p || parseFloat(p) <= 0) return;
+    el.style.setProperty('--p', '0'); void el.offsetWidth; el.classList.add('ds-ptrans'); el.style.setProperty('--p', p); });
+  document.querySelectorAll('#view .dbr-v > b:first-child, #view .cb-v, #view .dbt-n, #view .cgl-c, #view .rqc-sc, #main .yu-t > b, #main .pnw-ti > b, #main .pgc > b').forEach((el) => {
+    if (M.seen.has(el)) return; M.seen.add(el); const tn = [...el.childNodes].find((n) => n.nodeType === 3 && n.nodeValue.trim()); if (!tn) return;
+    const raw = tn.nodeValue, m = raw.trim().match(/^(\d[\d,]*)(\.\d+)?([%kKmM]?)$/); if (!m) return;
+    const commas = m[1].includes(','), dec = m[2] ? m[2].length - 1 : 0, end = parseFloat(m[1].replace(/,/g, '') + (m[2] || '')), suf = m[3] || ''; if (!(end > 0)) return;
+    /* the clock starts on the first frame, never from a frame time that predates a freeze (that printed negative numbers) */
+    let t0 = null; const dur = 550, fmt = (x) => (commas ? Math.round(x).toLocaleString('en-US') : x.toFixed(dec)) + suf;
+    const step = (t) => { if (t0 === null) t0 = t; const k = Math.max(0, Math.min(1, (t - t0) / dur)), e = 1 - Math.pow(1 - k, 3); if (k < 1) { tn.nodeValue = fmt(Math.max(0, end * e)); requestAnimationFrame(step); } else tn.nodeValue = raw; };
+    tn.nodeValue = fmt(0); requestAnimationFrame(step); }); }
+(function () { const f8 = dsBars; dsBars = function (root) { f8(root); try { dsMotion(); } catch (e) {} }; })();
 
 // ===== Design studio round 17 (Oct 25): Rotation open tiles as slim rows. Re-homes the pieces inside an open tile's .rck-b: bar row, Next time, links.
 // Runs with the other passes, before paint. Owner: the Design studio chat. =====
@@ -30279,3 +30283,38 @@ function dsRotBalance() { const rc = document.querySelector('#view .ds-rcols'); 
   while (gps.length > 1) { const g = gps[gps.length - 1], h = g.offsetHeight + 8; if (Math.abs((right - h) - (left + h)) >= Math.abs(right - left)) break; moved.unshift(g); gps.pop(); right -= h; left += h; }
   if (!moved.length) return; side = document.createElement('section'); side.className = 'rck-gx ds-gxl'; const p = document.createElement('div'); p.className = 'rgx-pn'; moved.forEach((g) => p.appendChild(g)); side.appendChild(p); ck.after(side); }
 (function () { const f11 = dsBars; dsBars = function (root) { f11(root); try { dsRotBalance(); } catch (e) {} }; let t = 0; addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => { try { dsRotBalance(); } catch (e) {} }, 150); }); })();
+
+// ===== Design studio round 21 (Oct 25): Debriefing details under their row, map previews that zoom. dsDock() docks the app's
+// open detail box (div.mxa-p) under its row; dsMapZoom() gives the inline map wheel and button zoom and drag. Owner: the Design studio chat. =====
+function dsDock() { document.querySelectorAll('#view details.phase').forEach((ph) => { const sum = ph.querySelector(':scope > summary'); if (!sum) return; const prw = sum.querySelector('.prw'); if (!prw) return;
+  const box = ph.querySelector('.mxa-p'); const on = sum.querySelector('.prw-i.on'); const live = !!(box && box.children.length && on && ph.classList.contains('mxa'));
+  /* a docked box goes home when it empties or its row is no longer the open one */
+  prw.querySelectorAll(':scope > .ds-dock').forEach((d) => { const b = d.querySelector(':scope > .mxa-p'), row = d.previousElementSibling; if (live && b === box && row === on) return;
+    if (b) { const m = ph.querySelector(':scope > i.ds-dockph'); if (m) m.replaceWith(b); else ph.appendChild(b); } d.remove(); });
+  if (!live || box.closest('.ds-dock')) return;
+  if (box.parentElement === ph) { const m = document.createElement('i'); m.className = 'ds-dockph'; m.hidden = true; box.replaceWith(m); }
+  const d = document.createElement('div'); d.className = 'ds-dock'; d.appendChild(box);
+  /* inside a summary a plain click would fold the phase; buttons, links and the panel's own titles keep their jobs */
+  d.addEventListener('click', (e) => { if (!e.target.closest('button, a, summary, input, select, textarea, label')) e.preventDefault(); });
+  on.after(d);
+  const dx = prw.getBoundingClientRect().left - sum.getBoundingClientRect().left - (parseFloat(getComputedStyle(sum).paddingLeft) || 0); if (dx > 40) { d.style.marginLeft = (-dx) + 'px'; d.style.width = 'calc(100% + ' + dx + 'px)'; }
+  on.scrollIntoView({ block: 'nearest' }); }); }
+function dsMapZoom() { document.querySelectorAll('#view .secd .u1-m .wr-map:not([data-ds-zoom])').forEach((wm) => { const svg = wm.querySelector('svg.zmap'); if (!svg) return; wm.dataset.dsZoom = '1';
+  const here = () => wm.contains(svg) && wm.closest('.u1-m');
+  const base = () => (svg.dataset.dsBase || (svg.dataset.dsBase = svg.getAttribute('viewBox') || '')).split(/[\s,]+/).map(Number);
+  const get = () => (svg.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number);
+  const set = (x, y, w) => { const b = base(); if (b.length < 4 || !(b[2] > 0)) return; w = Math.min(b[2], Math.max(b[2] / 6, w)); const h = w * b[3] / b[2]; x = Math.min(b[0] + b[2] - w, Math.max(b[0], x)); y = Math.min(b[1] + b[3] - h, Math.max(b[1], y)); svg.setAttribute('viewBox', x + ' ' + y + ' ' + w + ' ' + h); wm.classList.toggle('ds-zoomed', w < b[2] - 0.5); };
+  const zoom = (f, px, py) => { if (!here()) return; const v = get(); if (v.length < 4) return; const r = svg.getBoundingClientRect(); const kx = px == null ? 0.5 : (px - r.left) / r.width, ky = py == null ? 0.5 : (py - r.top) / r.height; const cx = v[0] + kx * v[2], cy = v[1] + ky * v[3]; const w = v[2] / f, h = v[3] / f; set(cx - kx * w, cy - ky * h, w); };
+  svg.addEventListener('wheel', (e) => { if (!here()) return; e.preventDefault(); zoom(e.deltaY < 0 ? 1.2 : 1 / 1.2, e.clientX, e.clientY); }, { passive: false });
+  const zi = wm.querySelector('.zin'), zo = wm.querySelector('.zout');
+  if (zi) zi.addEventListener('click', (e) => { if (!here()) return; e.preventDefault(); e.stopImmediatePropagation(); zoom(1.3); }, true);
+  if (zo) zo.addEventListener('click', (e) => { if (!here()) return; e.preventDefault(); e.stopImmediatePropagation(); zoom(1 / 1.3); }, true);
+  svg.addEventListener('dblclick', (e) => { if (!here()) return; e.preventDefault(); const b = base(); if (b.length >= 4) set(b[0], b[1], b[2]); });
+  let drag = null;
+  svg.addEventListener('pointerdown', (e) => { if (!here() || !wm.classList.contains('ds-zoomed')) return; drag = { x: e.clientX, y: e.clientY, v: get() }; try { svg.setPointerCapture(e.pointerId); } catch (x) {} e.preventDefault(); });
+  svg.addEventListener('pointermove', (e) => { if (!drag) return; const r = svg.getBoundingClientRect(), v = drag.v; set(v[0] - (e.clientX - drag.x) * v[2] / r.width, v[1] - (e.clientY - drag.y) * v[3] / r.height, v[2]); });
+  svg.addEventListener('pointerup', () => { drag = null; }); svg.addEventListener('pointercancel', () => { drag = null; }); }); }
+(function () { const f12 = dsBars; dsBars = function (root) { f12(root); try { dsDock(); } catch (e) {} try { dsMapZoom(); } catch (e) {} };
+  const later = () => setTimeout(() => { try { dsDock(); dsMapZoom(); } catch (x) {} }, 0);
+  document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('#view .prw-i, #view .mxa-p, #view .mcx-dot, #view [data-phjump]')) later(); }, true);
+  document.addEventListener('toggle', (e) => { const t = e.target; if (t && t.matches && t.matches('#view details.secd, #view details.phase')) later(); }, true); })();
