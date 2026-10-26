@@ -98,3 +98,52 @@ The user asked whether the addon could work in game without Debrief Companion ("
   - What does open after combat is the secret values (meters, health): that's what the /dump test checks.
 - Not possible or not safe: reading the combat log file from inside WoW; pulling recaps from the website into the game (addons can't go online); anything that presses keys for you, such as auto-typing /reload (that's how accounts get banned).
 
+
+## Plan: picture raid plans with the assignments on the map (Oct 26)
+The user: "for plan, finding a way to make picture raid plans, showing the assignments when applicable. similar to how they would manually build it on raidstrats.gg"
+- For each boss, a picture of the room per phase or mechanic, with the raid's real names (class colours, spec icons) placed where
+  the plan puts them: soak groups, add/kick teams, tank spots, healer and cooldown spots. It's built from the Plan's NSRT note
+  automatically, not dragged in by hand.
+- Main chat's take (8.5/10): most pieces already exist. The Boss guides chat has room maps and mechanic positions for all 10 bosses;
+  Plan has the note's jobs and groups and already makes a "Copy for Discord" picture. Joining them gives leads what raidstrats.gg
+  makes them draw by hand, in one click. Watch for crowding (20 names on one map): label groups, not every dot, with names in
+  a legend beside the map. Never link raidstrats.gg ([[raidstrats-library]]); it's only for picturing positions.
+- Owners: Plan (assignments → spots), Boss guides (the maps), Design studio (the look). Start with one boss as a mockup
+  (Coiled Altar Mythic: Dreadmarch stack spot, soak groups), then all 10.
+- **Oct 26: paused, then back on the same day.** The user: "it actually looks good, lets continue with it"; "the whole boss arena…
+  in each image"; "Make sure all the mechanics that are neccesary are accounted for".
+  - The Coiled Altar Mythic mockup is built from the user's real note. It has a checklist of every mechanic and 10 pictures, with the
+    raid's own marker spots read from their Oct 21 and 22 pulls.
+  - It's on the practice link https://pictureplan-debrief.james-m-nemecek.workers.dev/?pictureplan only, not on main.
+  - Everything is in notes/Picture plan mockup - Oct 26/.
+  - **BUILT, version 1 (5433161, Oct 26, only the user sees it, not deployed).**
+    - A 🖼 Pictures button sits next to every Copy for Discord in Plan. It shows one 1200×675 picture per mechanic, filled from the
+      note, with Copy and Download.
+    - Markers: the raid lead drags them and picks one per mechanic.
+    - Coiled Altar Mythic only so far. Practice link: https://pictures-debrief.james-m-nemecek.workers.dev
+  - Where it lives (the user, Oct 26): "So these wouldnt actually be for the boss strat page, just the plan page". It goes on
+    Plan's Copy for Discord preview and fills itself from the Plan tab's jobs.
+  - **OPEN TO EVERYONE (d13e632, Oct 26, the user: "push this live please"), live with the next build.** The pictures sit in
+    Plan's Jobs cards (numbered ones beside their row); the markers start on the guide's spots, drag to move, right-click to
+    change which mark; Copy all is the Design studio's one big sheet. Next: the other 9 bosses.
+
+## Boss guides: your own roster on the maps (Oct 26)
+The user: "Enhance the boss strategy page, to change the player icons to a selected roster, so the players can see in real time how
+they would position for the fight."
+- What changes:
+  - A roster picker on the Boss guides page swaps the role tokens (Tank 1, Melee 3…) for your raid's real players: names in class
+    colour, spec icons.
+  - Every card map and the whole-fight video play with your raid in them.
+  - Your own character gets the gold ring, so you can follow yourself through the fight.
+- How each player gets a spot:
+  - If the Plan tab has jobs for that boss (soakers, orb carriers, kick lines…), players take those spots.
+  - Otherwise they fill by role: healers take healer spots, and so on.
+  - Random targets (an axe target, mind controls, bombs) stay grey question marks.
+- Not the same as the picture plan above. That one goes on the Plan page only, as pictures to post. This is the guide page
+  itself, for players learning the fight.
+- Boss guides' take (9/10): high value for little work.
+  - The picture-plan mockup already does the hard part: player to spot by job or role, names and spec icons on the guide maps.
+  - Rosters already exist (Plan's rosters and team import).
+  - Recommendation: start from the roster Debrief already knows (Home's team or Plan's roster for tonight), with a "Use my raid"
+    switch that remembers its setting.
+- Owners: Boss guides (the maps and the seating), Plan (rosters and jobs), Design studio (the picker's look).
