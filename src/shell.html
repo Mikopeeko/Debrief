@@ -7490,6 +7490,12 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
   #view.ds-two:not(:has(.ds-l .nmc)) > .ds-raidb { order: 4; }
   #view.ds-two:not(:has(.ds-l .nmc)) > .brf-keep { order: 5; }
 }
+/* ===== Design studio round 52 (Oct 26): the whole-site polish audit, phone round: bigger taps for the timeline dots and the front page's footer links.
+   Owner: the Design studio chat. ===== */
+@media (max-width: 640px) {
+  #view .mcx-dot::after { content: ''; position: absolute; inset: -8px; border-radius: 50%; }
+  .fpx-in > a, .fpx .fpx-link, button#fphPatch, button#fphTour, button#fpDemo { padding-top: 8px; padding-bottom: 8px; margin-top: -8px; margin-bottom: -8px; display: inline-block; }
+}
 </style>
 
 
