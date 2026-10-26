@@ -8190,10 +8190,10 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
 
 // (the spec picker by the ▾ the user tapped (Oct 26): a small pop-up under it with the class's specs, the current one lit)
 function tnSpecPopX() { document.querySelectorAll('.tn-sppop').forEach((x) => x.remove()); }
-function tnSpecPop(btn, p) { tnSpecPopX(); const r = btn.getBoundingClientRect(), d = document.createElement('div'); d.className = 'tn-sppop'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', p.n + (p.cls ? ': which spec?' : ': which class?'));
+function tnSpecPop(btn, p) { tnSpecPopX(); S.tnPopAt = Date.now(); S.tnPopY = window.scrollY; const r = btn.getBoundingClientRect(), d = document.createElement('div'); d.className = 'tn-sppop'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', p.n + (p.cls ? ': which spec?' : ': which class?'));
   S.tnPopP = p; d.innerHTML = tnPopBody(p, false);
   document.body.appendChild(d); const w = d.offsetWidth, vw = document.documentElement.clientWidth; const h = d.offsetHeight, vh = document.documentElement.clientHeight, below = r.bottom + 4 + h <= vh - 8; d.style.top = (below ? r.bottom + 4 : Math.max(8, r.top - h - 4)) + 'px'; d.style.left = Math.max(8, Math.min(r.left - 8, vw - w - 8)) + 'px'; const f = d.querySelector('button.on') || d.querySelector('button'); if (f) f.focus({ preventScroll: true }); } /* (fixed under the ▾, above it near the bottom; a scroll closes it) */
-window.addEventListener('scroll', () => { if (document.querySelector('.tn-sppop')) { tnSpecPopX(); S.tnSpecFor = null; } }, true);
+window.addEventListener('scroll', (e) => { if (!document.querySelector('.tn-sppop') || Date.now() - (S.tnPopAt || 0) < 500) return; if (e.target !== document && e.target !== document.documentElement) return; if (Math.abs(window.scrollY - (S.tnPopY || 0)) < 12) return; /* (only the page scrolling, not the table sliding) */ tnSpecPopX(); S.tnSpecFor = null; }, true); /* (not on the tap's own nudge, Oct 26) */
 document.addEventListener('click', (e) => { if (!document.querySelector('.tn-sppop') || !e.target.closest) return; if (e.target.closest('.tn-sppop, [data-tnspc]')) return; tnSpecPopX(); S.tnSpecFor = null; }, true);
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.querySelector('.tn-sppop')) { tnSpecPopX(); S.tnSpecFor = null; } });
 
