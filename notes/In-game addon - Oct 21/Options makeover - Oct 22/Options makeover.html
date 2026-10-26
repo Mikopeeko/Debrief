@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Options makeover</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0d12;--win:#12151c;--panel:#171a22;--raised:#1e222c;--line:#262b36;--line2:#353b49;--text:#ece8df;--muted:#98a0ad;--faint:#6c7381;--gold:#e6b450;--em:#5fdc7a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 Barlow,system-ui,sans-serif;padding:26px}
+h1{font:700 24px 'Barlow Semi Condensed',Barlow;margin:0 0 4px}.sub{color:#9aa1ad;margin:0 0 20px;max-width:1200px}
+.row3{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}.cap{color:var(--muted);font:600 13px Barlow;margin:0 0 8px}.cap b{color:var(--gold)}
+.win{width:470px;background:var(--win);border:1px solid var(--line2);border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.55);overflow:hidden}
+.hd{display:flex;align-items:center;gap:10px;padding:14px 16px 0}.hd svg{width:22px;height:24px}.hd b{font:700 17px 'Barlow Semi Condensed'}.hd .x{margin-left:auto;color:var(--faint);font-size:14px}
+.tabs{display:flex;gap:4px;margin:12px 16px 0;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:4px}
+.tabs span{flex:1;text-align:center;padding:7px 0;border-radius:6px;font:600 13.5px Barlow;color:var(--muted)}.tabs span.on{background:var(--raised);color:var(--text);box-shadow:inset 0 -2px 0 var(--gold)}
+.body{padding:14px 16px 16px}
+.k{font:700 11px/1 Barlow;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin:4px 0 9px}.k.mut{color:var(--muted);margin-top:16px}
+.seg{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:3px;gap:3px}.seg span{flex:1;text-align:center;padding:6px 0;border-radius:6px;font:600 12.5px Barlow;color:var(--muted)}.seg span.on{background:#2a2518;color:var(--gold);box-shadow:inset 0 0 0 1px rgba(230,180,80,.45)}
+.hint{color:var(--faint);font-size:12px;margin:6px 2px 0}
+.list{background:var(--panel);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.it{display:flex;align-items:center;gap:10px;padding:8px 12px;border-top:1px solid var(--line)}.it:first-child{border-top:0}
+.it .ic{width:22px;height:22px;border-radius:5px;background:#262b36;display:grid;place-items:center;font-size:12px;color:var(--muted);flex:none}
+.it .t{flex:1;min-width:0}.it .t b{display:block;font:600 13.5px Barlow}.it .t small{display:block;color:var(--faint);font-size:12px}
+.tag{font:700 10.5px Barlow;letter-spacing:.04em;color:#0f2416;background:var(--em);border-radius:4px;padding:2px 6px;margin-left:6px;vertical-align:1px}
+.tg{width:34px;height:19px;border-radius:10px;background:#2a2f3b;position:relative;flex:none}.tg:after{content:'';position:absolute;top:3px;left:3px;width:13px;height:13px;border-radius:50%;background:#6c7381}.tg.on{background:var(--gold)}.tg.on:after{left:18px;background:#1b1406}
+.num{display:flex;align-items:center;gap:6px;font:700 13px Barlow}.num i{font-style:normal;width:20px;height:20px;border-radius:5px;background:var(--raised);display:grid;place-items:center;color:var(--muted);font-size:12px}
+.grp{font:700 10.5px Barlow;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);padding:9px 12px 3px;background:#151820;border-top:1px solid var(--line)}
+.sw{display:flex;gap:8px}.sw i{width:22px;height:22px;border-radius:50%;display:block;box-shadow:0 0 0 2px var(--win)}.sw i.on{box-shadow:0 0 0 2px var(--win),0 0 0 4px var(--gold)}
+.sl{display:flex;align-items:center;gap:10px;width:170px}.sl div{flex:1;height:4px;border-radius:2px;background:var(--line2);position:relative}.sl div:before{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--w);background:var(--gold);border-radius:2px}.sl div:after{content:'';position:absolute;top:-5px;left:calc(var(--w) - 7px);width:14px;height:14px;border-radius:50%;background:#ece8df}.sl span{font:700 12px Barlow;color:var(--muted);width:36px;text-align:right}
+.pick{display:flex;align-items:center;gap:6px;font:700 13px Barlow}.pick i{font-style:normal;color:var(--muted)}
+.foot{display:flex;justify-content:space-between;color:var(--faint);font-size:12px;padding:10px 16px;border-top:1px solid var(--line)}
+.prev{width:300px;background:var(--panel);border:1px solid var(--line2);border-radius:10px;padding:12px;margin-top:10px}
+.mini-chart{height:46px;margin:4px 0 2px}
+</style></head><body>
+<h1>Debrief Addon options, simplified: mockup</h1>
+<p class="sub">Nine tabs become three. <b style="color:#e6b450">Card</b> picks a style and lists every piece the card can show, each with one switch, including new charts and pieces from the website. <b style="color:#e6b450">Look</b> is colour, size and font. <b style="color:#e6b450">More</b> is everything you set once. Same Debrief look: dark panels, gold for what's on.</p>
+<div class="row3">
+ <div><p class="cap"><b>Card</b> · what your recap shows</p><div class="win">
+  <div class="hd"><svg viewBox="0 0 64 64"><path d="M32 2 57 11.5V30c0 15.5-11.3 26.6-25 32C18.3 56.6 7 45.5 7 30V11.5Z" fill="#d9a441"/><path d="M32 9 50 16V30c0 11.7-8 20-18 24.5C22 50 14 41.7 14 30V16Z" fill="#161a25"/><path d="m26 32 4 4 8-8" fill="none" stroke="#5fdc7a" stroke-width="4" stroke-linecap="round"/></svg><b>Debrief</b><span class="x">✕</span></div>
+  <div class="tabs"><span class="on">Card</span><span>Look</span><span>More</span></div>
+  <div class="body">
+   <div class="k">Style</div>
+   <div class="seg"><span>Simple</span><span class="on">Glance</span><span>Medium</span><span>Heavy</span><span>Detailed</span></div>
+   <p class="hint">How much opens by itself. Switch pieces on or off below.</p>
+   <div class="k mut">What your card shows</div>
+   <div class="list">
+    <div class="it"><span class="ic">⏱</span><div class="t"><b>Stop at death</b><small>The wipe filter, on top</small></div><span class="tg on"></span></div>
+    <div class="it"><span class="ic">🎯</span><div class="t"><b>The coach box</b><small>Headline, focus, what went wrong</small></div><span class="tg on"></span></div>
+    <div class="it"><span class="ic">✓</span><div class="t"><b>What went right</b></div><span class="tg on"></span></div>
+    <div class="it"><span class="ic">☠</span><div class="t"><b>Deaths</b><small>Click one for what happened</small></div><span class="tg on"></span></div>
+    <div class="it"><span class="ic">⚠</span><div class="t"><b>Avoidable damage</b></div><span class="tg on"></span></div>
+    <div class="grp">Your own view</div>
+    <div class="it"><span class="ic">▲</span><div class="t"><b>Your damage or healing</b><small>Against last pull and your best</small></div><span class="tg on"></span></div>
+    <div class="it"><span class="ic">⟳</span><div class="t"><b>Rotation tips</b></div><span class="num"><i>–</i>3<i>+</i></span></div>
+    <div class="it"><span class="ic">🛡</span><div class="t"><b>Survival</b><small>Defensives, Healthstone, potion</small></div><span class="tg"></span></div>
+    <div class="grp">Charts <span class="tag">NEW</span></div>
+    <div class="it"><span class="ic">📈</span><div class="t"><b>Your numbers tonight</b><small>Your damage or healing, pull by pull</small></div><span class="tg on"></span></div>
+    <div class="it"><span class="ic">📊</span><div class="t"><b>How far each pull got</b><small>The night line, best pull marked</small></div><span class="tg"></span></div>
+    <div class="grp">From the website <span class="tag">NEW</span></div>
+    <div class="it"><span class="ic">A</span><div class="t"><b>Report card grade</b><small>Your grade for the night, like a parse</small></div><span class="tg"></span></div>
+    <div class="it"><span class="ic">⚙</span><div class="t"><b>Boss mechanics</b><small>How each mechanic went, worst first</small></div><span class="tg"></span></div>
+    <div class="it"><span class="ic">⏲</span><div class="t"><b>Timing against top kills</b><small>Pushes and phases vs the fastest kills</small></div><span class="tg"></span></div>
+   </div>
+  </div>
+  <div class="foot"><span>Saves as you go</span><span>/dmo opens this</span></div>
+ </div></div>
+
+ <div><p class="cap"><b>Look</b> · colour, size, font</p><div class="win">
+  <div class="hd"><svg viewBox="0 0 64 64"><path d="M32 2 57 11.5V30c0 15.5-11.3 26.6-25 32C18.3 56.6 7 45.5 7 30V11.5Z" fill="#d9a441"/><path d="M32 9 50 16V30c0 11.7-8 20-18 24.5C22 50 14 41.7 14 30V16Z" fill="#161a25"/><path d="m26 32 4 4 8-8" fill="none" stroke="#5fdc7a" stroke-width="4" stroke-linecap="round"/></svg><b>Debrief</b><span class="x">✕</span></div>
+  <div class="tabs"><span>Card</span><span class="on">Look</span><span>More</span></div>
+  <div class="body">
+   <div class="k">Colour</div>
+   <div class="list">
+    <div class="it"><div class="t"><b>Accent</b><small>Tabs, switches, the Focus box</small></div><span class="sw"><i class="on" style="background:#e6b450"></i><i style="background:#F48CBA"></i><i style="background:#5aa9ff"></i><i style="background:#5fdc7a"></i><i style="background:#e5534b"></i><i style="background:#b07cff"></i></span></div>
+    <div class="it"><div class="t"><b>Card style</b></div><div class="seg" style="width:190px"><span class="on">Panels</span><span>Glass</span><span>Flat</span></div></div>
+    <div class="it"><div class="t"><b>Colour-blind colours</b><small>Blue for good, orange for bad</small></div><span class="tg"></span></div>
+   </div>
+   <div class="k mut">Size</div>
+   <div class="list">
+    <div class="it"><div class="t"><b>Card size</b></div><div class="sl"><div style="--w:40%"></div><span>100%</span></div></div>
+    <div class="it"><div class="t"><b>Text size</b></div><div class="sl"><div style="--w:45%"></div><span>100%</span></div></div>
+    <div class="it"><div class="t"><b>Width</b></div><div class="seg" style="width:190px"><span>Narrow</span><span class="on">Normal</span><span>Wide</span></div></div>
+    <div class="it"><div class="t"><b>Font</b><small>Yours from other addons too</small></div><span class="pick"><i>‹</i>Debrief<i>›</i></span></div>
+    <div class="it"><div class="t"><b>Background</b><small>How solid the card is</small></div><div class="sl"><div style="--w:92%"></div><span>97%</span></div></div>
+   </div>
+   <p class="hint">The card next to this window changes as you click.</p>
+  </div>
+  <div class="foot"><span>Saves as you go</span><span>/dmo opens this</span></div>
+ </div></div>
+
+ <div><p class="cap"><b>More</b> · set once and forget</p><div class="win">
+  <div class="hd"><svg viewBox="0 0 64 64"><path d="M32 2 57 11.5V30c0 15.5-11.3 26.6-25 32C18.3 56.6 7 45.5 7 30V11.5Z" fill="#d9a441"/><path d="M32 9 50 16V30c0 11.7-8 20-18 24.5C22 50 14 41.7 14 30V16Z" fill="#161a25"/><path d="m26 32 4 4 8-8" fill="none" stroke="#5fdc7a" stroke-width="4" stroke-linecap="round"/></svg><b>Debrief</b><span class="x">✕</span></div>
+  <div class="tabs"><span>Card</span><span>Look</span><span class="on">More</span></div>
+  <div class="body">
+   <div class="k">After a pull</div>
+   <div class="list">
+    <div class="it"><div class="t"><b>Open the card by itself</b></div><span class="tg on"></span></div>
+    <div class="it"><div class="t"><b>Sound</b></div><span class="tg on"></span></div>
+    <div class="it"><div class="t"><b>Hide during combat</b></div><span class="tg on"></span></div>
+    <div class="it"><div class="t"><b>Lock in place</b></div><span class="tg"></span></div>
+   </div>
+   <div class="k mut">Raid</div>
+   <div class="list">
+    <div class="it"><div class="t"><b>Raid view for everyone</b><small>Off: only leads and assistants</small></div><span class="tg on"></span></div>
+    <div class="it"><div class="t"><b>Glow my NSRT cooldowns</b></div><span class="tg"></span></div>
+    <div class="it"><div class="t"><b>Damage or healing goal</b></div><span class="num"><i>–</i>off<i>+</i></span></div>
+   </div>
+   <div class="k mut">Other</div>
+   <div class="list">
+    <div class="it"><div class="t"><b>Combat log always on</b></div><span class="tg on"></span></div>
+    <div class="it"><div class="t"><b>Keep my last pulls</b></div><span class="num"><i>–</i>30<i>+</i></span></div>
+    <div class="it"><div class="t"><b>Help and commands</b><small>/debrief, /dmo, the tour, a sample card</small></div><span class="pick"><i>›</i></span></div>
+   </div>
+  </div>
+  <div class="foot"><span>Saves as you go</span><span>/dmo opens this</span></div>
+ </div></div>
+</div>
+</body></html>

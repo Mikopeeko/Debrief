@@ -68,3 +68,33 @@ The user: "The user of the website can toggle how strict the raid lead is/the ru
       - The same tag on the Report card banner and the Avoidable damage header.
       - Clicking it scrolls to the header switch and flashes it.
     - **Full spec:** the Design studio's look/strict/mock.js (window.__strictMock('A')).
+
+## Debrief Lite: a recap without the PC app (Oct 25)
+**Parked until after the Debrief 1.0 release** (the user, Oct 25: "Keep Debrief Lite parked until after the 1.0 release. Fixes only until then.").
+The user asked whether the addon could work in game without Debrief Companion ("unconventional methods are fine, just no bans"). It can, as a smaller recap, using only what Blizzard lets addons read in Midnight. Nothing risks a ban. Parked for later (the user: "add it to a list of things to consider at a later time").
+- Could show, fairly sure:
+  - Your rotation, from your own button presses (Midnight hides other players' casts, not yours): your gaps between casts, big cooldowns used and how often, held cooldowns, your opener. Another addon, Midnight Sensei, already grades rotations this way in raids.
+  - Defensives, Healthstone and potion: pressed or not, and when.
+  - The pull itself (boss, difficulty, kill or wipe, length) from Blizzard's encounter events.
+  - Your own death (Blizzard's death recap: the last 5 hits).
+  - Your numbers pull by pull tonight, saved by the addon.
+- Also possible if one test passes: Blizzard's built-in damage meter (C_DamageMeter). It is hidden during the fight, and reports disagree on whether it opens up after the pull. If it does: your damage or healing and your place, avoidable damage by spell, interrupts, dispels, and who died, when and to what.
+  - The test, right after a boss pull, in WoW chat: /dump C_DamageMeter.GetCombatSessionFromType(1, 0). Numbers mean yes; "secret" or nothing means no.
+- Only the PC app can do:
+  - the raid lead box, What wiped us and the wipe call
+  - mechanic checks against top guilds
+  - rotation checks that need buffs or other players' health (addons can't read buffs any more)
+  - the grade and the full coach
+- My take: 6/10 as a feature on its own, 8/10 as a free first taste ("Get the full recap with Debrief Companion") that lets new raiders try Debrief without installing anything.
+- TESTED Oct 25 by the user, right after a pull (/dump C_DamageMeter.GetCombatSessionFromType(1, 0)):
+  - It returned real numbers. The fight lasted 147 s, and each player had their class, name, total damage, damage per second, death recap ID and death time. The user's own Druid "Trëèflêx" did 26.3M damage at 179k per second.
+  - The "Expired" session (2, 0) was empty at that moment.
+  - So the meter half works: read the Current session when the boss fight ends (ENCOUNTER_END / out of combat), before the next pull resets it.
+  - Still to check: that it was a boss fight; Mythic+ keys (stricter "challenge mode" rules); Mythic raid. With this, the take goes to 8/10.
+- Checked Oct 25 (the user asked: "most restrictions happen in combat"): reading the combat log is shut for addons all the time, not only in combat.
+  - Live events (COMBAT_LOG_EVENT_UNFILTERED) error when an addon registers for them.
+  - The game's stored log, the one the Combat Log chat tab reads, can only be read through C_CombatLogSecure, which is marked SecureOnly (Blizzard's own code only).
+  - Its chat lines come wrapped in protected |K text that addons can show but not read.
+  - What does open after combat is the secret values (meters, health): that's what the /dump test checks.
+- Not possible or not safe: reading the combat log file from inside WoW; pulling recaps from the website into the game (addons can't go online); anything that presses keys for you, such as auto-typing /reload (that's how accounts get banned).
+

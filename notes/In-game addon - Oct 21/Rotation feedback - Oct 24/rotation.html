@@ -1,0 +1,46 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Rotation on the card</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0d12;--card:#171a22;--raised:#1e222c;--line:#2a2f3b;--gold:#f48cba;--text:#ece8df;--soft:#d6d1c6;--muted:#98a0ad;--faint:#6c7381;--good:#45c15c;--goodT:#7ee08f;--bad:#e5534b;--badT:#ff8f87;--warn:#e8a23a}
+body{margin:0;background:var(--bg);font:15px/1.45 Barlow,system-ui,sans-serif;color:var(--text);padding:22px;display:flex;gap:26px;align-items:flex-start}
+.card{width:640px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 18px 18px;box-shadow:0 14px 40px rgba(0,0,0,.5)}
+.hd{display:flex;align-items:center;gap:10px;margin-bottom:10px}.hd b{font:700 18px Barlow;color:#f48cba}.hd .m{color:var(--muted);font-size:13.5px}
+.panel{background:var(--raised);border:1px solid var(--line);border-radius:8px;padding:10px 14px 8px}
+.ph{display:flex;font:700 15px Barlow;margin-bottom:8px}.ph .sc{margin-left:8px;color:var(--muted);font-weight:600}.ph .sc b{color:var(--goodT)}.ph i{margin-left:auto;color:var(--faint);font-style:normal}
+.r{display:grid;grid-template-columns:12px 24px 1fr auto;gap:0 10px;padding:6px 0;border-top:1px solid rgba(255,255,255,.04)}.r:first-of-type{border-top:0}
+.dot{width:8px;height:8px;border-radius:50%;margin-top:6px}.ic{width:20px;height:20px;border-radius:3px;background:#2a2f3a;border:1px solid #000}
+.n{font-weight:700;font-size:13.5px}.v{font-weight:700;font-size:13.5px;text-align:right;white-space:nowrap}.v small{color:var(--faint);font-weight:600;margin-left:6px}
+.sq{grid-column:3/5;display:flex;gap:2px;margin:4px 0 2px}.sq i{width:8px;height:8px}.g{background:var(--good)}.w{background:var(--warn)}
+.tip{grid-column:3/5;font-size:12.5px;color:var(--soft)}.tip b{color:var(--gold)}
+.more{color:var(--muted);font-size:12.5px;margin:4px 0 6px 46px}.ok{color:var(--goodT);font-size:13px;margin:4px 0 4px 4px}
+.tt{position:relative;width:330px;background:#0f1218;border:1px solid #3a4150;border-radius:6px;padding:8px 10px;font-size:13px;color:var(--soft);margin:-2px 0 6px 46px}.tt b{color:#fff;display:block}.tt span{color:#e6b450;display:block;margin-top:4px}
+.notes{width:330px}.notes h3{font:700 15px Barlow;margin:0 0 6px;color:#e6b450}.notes ul{margin:0 0 14px;padding-left:18px;color:var(--soft);font-size:14px}.notes li{margin:5px 0}
+</style></head><body>
+<div class="card">
+ <div class="hd"><b>Flëxørçïst</b><span class="m">Holy Paladin · Pull 35</span></div>
+ <div class="panel">
+  <div class="ph">Rotation <span class="sc">· <b>87</b>/100</span><i>–</i></div>
+  <div class="r"><i class="dot" style="background:var(--bad)"></i><span class="ic"></span><span class="n">Aura Mastery inside Beacon of Virtue</span><span class="v" style="color:var(--badT)">0/1</span></div>
+  <div class="r"><i class="dot" style="background:var(--warn)"></i><span class="ic"></span><span class="n">Always be casting</span><span class="v" style="color:var(--warn)">75%<small>top 87%</small></span>
+   <span class="tip"><b>Next time:</b> Press something every global cooldown. When you have to move, use an instant spell instead of stopping.</span></div>
+  <div class="r"><i class="dot" style="background:var(--warn)"></i><span class="ic"></span><span class="n">Eternal Flame over Light of Dawn</span><span class="v" style="color:var(--warn)">69%<small>top 90%</small></span>
+   <span class="sq"><i class="w"></i><i class="w"></i><i class="g"></i><i class="g"></i><i class="w"></i><i class="g"></i><i class="w"></i><i class="w"></i><i class="g"></i><i class="g"></i><i class="w"></i><i class="w"></i><i class="w"></i><i class="g"></i><i class="g"></i><i class="g"></i><i class="w"></i><i class="w"></i><i class="g"></i><i class="g"></i><i class="w"></i><i class="w"></i><i class="w"></i><i class="g"></i><i class="w"></i><i class="w"></i><i class="g"></i><i class="g"></i><i class="w"></i><i class="w"></i><i class="g"></i><i class="g"></i><i class="g"></i><i class="g"></i><i class="g"></i><i class="g"></i><i class="g"></i><i class="g"></i><i class="g"></i><i class="g"></i></span>
+   <span class="tip"><b>Next time:</b> Spend Holy Power on Eternal Flame, and save Light of Dawn for when Eternal Flame would mostly overheal.</span></div>
+  <div class="r"><i class="dot" style="background:var(--warn)"></i><span class="ic"></span><span class="n">Infused Flash of Light on a Beacon</span><span class="v" style="color:var(--warn)">12/25<small>top 57%</small></span>
+   <span class="sq"><i class="g"></i><i class="w"></i><i class="g"></i><i class="w"></i><i class="g"></i><i class="g"></i><i class="g"></i><i class="w"></i><i class="g"></i><i class="g"></i><i class="g"></i><i class="w"></i><i class="w"></i><i class="w"></i><i class="w"></i><i class="g"></i><i class="w"></i><i class="g"></i><i class="w"></i><i class="g"></i><i class="w"></i><i class="w"></i><i class="w"></i><i class="g"></i><i class="w"></i></span>
+   <span class="tip"><b>Next time:</b> Put your Infused Flash of Lights on someone with your Beacon, because Moment of Compassion makes them heal 50% more there.</span></div>
+  <div class="tt"><b>Infused Flash of Light on a Beacon</b>12 of your 25 Infused Flash of Lights landed on someone with a Beacon, where Moment of Compassion makes them heal 50% more.<span>Top players: 57%</span></div>
+  <div class="more">Show 1 more</div>
+  <div class="ok">Done right: Weapon oil or rite on, Rotation priority, Holy Shock, Infusion of Light.</div>
+ </div>
+</div>
+<div class="notes"><h3>What's new in your Rotation section</h3><ul>
+<li><b>Your score</b> from the Rotation tab, in the header (87/100).</li>
+<li><b>Each fix</b> shows your number next to the <b>top players'</b> number.</li>
+<li><b>A square per moment</b> for checks that happen many times: green done right, orange not (each Infused Flash of Light, each Holy Power spend).</li>
+<li><b>Next time:</b> the one thing to do differently, from the Rotation tab.</li>
+<li><b>Hover a row</b> for why it matters and the top players' number.</li>
+<li><b>Done right:</b> what you nailed, in green.</li>
+<li>How many fixes show follows your style (Simple 1, Medium 3, Detailed 4); the rest are under "Show more".</li>
+</ul></div>
+</body></html>

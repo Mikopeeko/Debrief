@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Options, sleek</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0d12;--win:#13161d;--line:#232833;--text:#ece8df;--muted:#a4abb8;--faint:#6c7381;--gold:#e6b450;--em:#5fdc7a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:13.5px/1.4 Barlow,system-ui,sans-serif;padding:26px}
+h1{font:700 24px 'Barlow Semi Condensed',Barlow;margin:0 0 4px}.sub{color:#9aa1ad;margin:0 0 20px;max-width:1150px}
+.row3{display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap}.cap{color:var(--muted);font:600 12.5px Barlow;margin:0 0 8px}.cap b{color:var(--gold)}
+.win{width:380px;background:radial-gradient(420px 220px at 0% 0%,rgba(95,220,122,.07),transparent 60%),radial-gradient(420px 240px at 100% 0%,rgba(230,180,80,.05),transparent 60%),var(--win);border:1px solid #2c323e;border-radius:10px;box-shadow:0 16px 40px rgba(0,0,0,.5)}
+.hd{display:flex;align-items:center;gap:8px;padding:12px 14px 0}.hd svg{width:16px;height:18px;filter:drop-shadow(0 0 6px rgba(95,220,122,.35))}.hd b{font:700 15px 'Barlow Semi Condensed'}.hd span{color:var(--faint);font-size:12px}.hd .x{margin-left:auto;color:var(--faint);font-size:13px}
+.tabs{display:flex;gap:18px;padding:0 14px;margin-top:8px;border-bottom:1px solid var(--line)}
+.tabs span{padding:7px 0 8px;font:600 13px Barlow;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}.tabs span.on{color:var(--text);border-bottom:2px solid transparent;border-image:linear-gradient(90deg,#e6b450,#5fdc7a) 1}
+.body{padding:12px 14px 12px}
+.k{font:700 10.5px/1 Barlow;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:14px 0 6px}.k:first-child{margin-top:2px}.k.gold{color:var(--gold)}
+.r{display:flex;align-items:center;justify-content:space-between;min-height:30px;border-top:1px solid var(--line);gap:10px}.r:first-of-type{border-top:0}
+.r .l{font:500 13.5px Barlow;color:var(--text)}.r .l i{font-style:normal;color:var(--faint);font-size:11px;margin-left:5px;border:1px solid #3a404c;border-radius:50%;width:13px;height:13px;display:inline-grid;place-items:center;vertical-align:1px}
+.tg{width:26px;height:15px;border-radius:8px;background:#2a2f3b;position:relative;flex:none}.tg:after{content:'';position:absolute;top:2px;left:2px;width:11px;height:11px;border-radius:50%;background:#6c7381}.tg.on{background:linear-gradient(90deg,#178a3c,#5fdc7a)}.tg.on:after{left:13px;background:#0f2416}
+.seg{display:flex;gap:2px}.seg span{padding:3px 8px;border-radius:5px;font:600 12px Barlow;color:var(--muted)}.seg span.on{background:rgba(230,180,80,.14);color:var(--gold)}
+.styles{display:flex;gap:4px;flex-wrap:wrap}.styles span{padding:4px 10px;border-radius:5px;font:600 12.5px Barlow;color:var(--muted);border:1px solid var(--line)}.styles span.on{border-color:var(--gold);color:var(--gold);background:rgba(230,180,80,.08)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{padding:3px 9px;border-radius:5px;font:600 12.5px Barlow;border:1px solid var(--line);color:var(--faint)}.chip.on{border-color:rgba(95,220,122,.5);color:var(--text);background:rgba(95,220,122,.1)}.chip.on:before{content:'✓ ';color:var(--em)}
+.new{color:var(--em);font:700 9.5px Barlow;letter-spacing:.06em;margin-left:6px}
+.num{display:flex;align-items:center;gap:8px;font:700 12.5px Barlow}.num em{font-style:normal;color:var(--faint);cursor:default}
+.sw{display:flex;gap:6px}.sw i{width:14px;height:14px;border-radius:50%;display:block}.sw i.on{box-shadow:0 0 0 2px var(--win),0 0 0 3px var(--gold)}
+.sl{display:flex;align-items:center;gap:8px;width:150px}.sl div{flex:1;height:3px;border-radius:2px;background:#2f3542;position:relative}.sl div:before{content:'';position:absolute;inset:0 auto 0 0;width:var(--w);background:linear-gradient(90deg,#e6b450,#5fdc7a);border-radius:2px}.sl div:after{content:'';position:absolute;top:-4px;left:calc(var(--w) - 5px);width:11px;height:11px;border-radius:50%;background:#ece8df}.sl span{font:700 11.5px Barlow;color:var(--muted);width:32px;text-align:right}
+.pick{font:600 12.5px Barlow;color:var(--text)}.pick em{font-style:normal;color:var(--faint);margin:0 6px}
+.note{color:var(--faint);font-size:11.5px;margin:8px 0 0}
+.ft{display:flex;justify-content:space-between;color:var(--faint);font-size:11.5px;padding:8px 14px;border-top:1px solid var(--line)}
+.old{opacity:.9}
+</style></head><body>
+<h1>Addon options: the test version as built</h1>
+<p class="sub">Like the website: thin rows instead of boxes, plain tabs with a gold line, small switches, explanations behind ⓘ, and the card's pieces as chips you click on or off. Colours from the Companion: green for what's on, gold for your picks, the gold-to-green line under the tab and on sliders.</p>
+<div class="row3">
+ <div><p class="cap"><b>Card</b> · what your recap shows</p><div class="win">
+  <div class="hd"><svg viewBox="0 0 64 64"><path d="M32 2 57 11.5V30c0 15.5-11.3 26.6-25 32C18.3 56.6 7 45.5 7 30V11.5Z" fill="#d9a441"/><path d="M32 9 50 16V30c0 11.7-8 20-18 24.5C22 50 14 41.7 14 30V16Z" fill="#161a25"/><path d="m26 32 4 4 8-8" fill="none" stroke="#5fdc7a" stroke-width="4" stroke-linecap="round"/></svg><b>Debrief</b><span>Settings</span><span class="x">✕</span></div>
+  <div class="tabs"><span class="on">Card</span><span>Look</span><span>More</span></div>
+  <div class="body">
+   <div class="k gold">Style</div>
+   <div class="styles"><span>Simple</span><span class="on">Glance</span><span>Medium</span><span>Heavy</span><span>Detailed</span></div>
+   <div class="k">On the card</div>
+   <div class="chips"><span class="chip on">Stop at death</span><span class="chip on">Coach box</span><span class="chip on">What went right</span><span class="chip on">Deaths</span><span class="chip on">Avoidable damage</span><span class="chip">Boss mechanics</span><span class="chip on">Your last pulls</span></div>
+   <div class="k">Your view</div>
+   <div class="chips"><span class="chip on">Your damage or healing</span><span class="chip on">Rotation tips</span><span class="chip on">Boss mistakes</span><span class="chip on">Survival</span><span class="chip on">Next pull tip</span></div>
+   <div class="k">Charts<span class="new">NEW</span></div>
+   <div class="chips"><span class="chip">Your numbers tonight</span><span class="chip">How far each pull got</span></div>
+   <div class="k">From the website<span class="new">NEW</span></div>
+   <div class="chips"><span class="chip">Report card grade</span></div>
+   <div class="k">How many</div><div class="r"><span class="l">Mistakes<i>i</i></span><span class="num"><em>–</em>3<em>+</em></span></div><div class="r"><span class="l">Rotation tips<i>i</i></span><span class="num"><em>–</em>3<em>+</em></span></div><div class="r"><span class="l">Deaths listed<i>i</i></span><span class="num"><em>–</em>3<em>+</em></span></div><div class="r"><span class="l">Stop at death<i>i</i></span><span class="num"><em>–</em>2<em>+</em></span></div><p class="note">Scroll for more. The card next to this window changes as you click.</p>
+  </div>
+  <div class="ft"><span>Saves as you go</span><span>/dmo</span></div>
+ </div></div>
+
+ <div><p class="cap"><b>Look</b> · colour, size, font</p><div class="win">
+  <div class="hd"><svg viewBox="0 0 64 64"><path d="M32 2 57 11.5V30c0 15.5-11.3 26.6-25 32C18.3 56.6 7 45.5 7 30V11.5Z" fill="#d9a441"/><path d="M32 9 50 16V30c0 11.7-8 20-18 24.5C22 50 14 41.7 14 30V16Z" fill="#161a25"/><path d="m26 32 4 4 8-8" fill="none" stroke="#5fdc7a" stroke-width="4" stroke-linecap="round"/></svg><b>Debrief</b><span>Settings</span><span class="x">✕</span></div>
+  <div class="tabs"><span>Card</span><span class="on">Look</span><span>More</span></div>
+  <div class="body">
+   <div class="k gold">Colour</div>
+   <div class="r"><span class="l">Accent</span><span class="sw"><i class="on" style="background:#e6b450"></i><i style="background:#F48CBA"></i><i style="background:#5aa9ff"></i><i style="background:#5fdc7a"></i><i style="background:#e5534b"></i><i style="background:#b07cff"></i></span></div>
+   <div class="r"><span class="l">Card style</span><span class="seg"><span class="on">Panels</span><span>Glass</span><span>Flat</span></span></div>
+   <div class="r"><span class="l">Colour-blind colours<i>i</i></span><span class="tg"></span></div>
+   <div class="k">Size</div>
+   <div class="r"><span class="l">Card size</span><span class="sl"><div style="--w:40%"></div><span>100%</span></span></div>
+   <div class="r"><span class="l">Text size</span><span class="sl"><div style="--w:45%"></div><span>100%</span></span></div>
+   <div class="r"><span class="l">Width</span><span class="seg"><span>Narrow</span><span class="on">Normal</span><span>Wide</span></span></div>
+   <div class="r"><span class="l">Font<i>i</i></span><span class="pick"><em>‹</em>Debrief<em>›</em></span></div>
+   <div class="r"><span class="l">Background</span><span class="sl"><div style="--w:92%"></div><span>97%</span></span></div>
+  </div>
+  <div class="ft"><span>Saves as you go</span><span>/dmo</span></div>
+ </div></div>
+
+ <div><p class="cap"><b>More</b> · set once and forget</p><div class="win">
+  <div class="hd"><svg viewBox="0 0 64 64"><path d="M32 2 57 11.5V30c0 15.5-11.3 26.6-25 32C18.3 56.6 7 45.5 7 30V11.5Z" fill="#d9a441"/><path d="M32 9 50 16V30c0 11.7-8 20-18 24.5C22 50 14 41.7 14 30V16Z" fill="#161a25"/><path d="m26 32 4 4 8-8" fill="none" stroke="#5fdc7a" stroke-width="4" stroke-linecap="round"/></svg><b>Debrief</b><span>Settings</span><span class="x">✕</span></div>
+  <div class="tabs"><span>Card</span><span>Look</span><span class="on">More</span></div>
+  <div class="body">
+   <div class="k gold">After a pull</div>
+   <div class="r"><span class="l">Open the card by itself</span><span class="tg on"></span></div>
+   <div class="r"><span class="l">Sound</span><span class="tg on"></span></div>
+   <div class="r"><span class="l">Hide during combat</span><span class="tg on"></span></div>
+   <div class="r"><span class="l">Lock in place</span><span class="tg"></span></div>
+   <div class="k">Raid</div>
+   <div class="r"><span class="l">Raid view for everyone<i>i</i></span><span class="tg on"></span></div>
+   <div class="r"><span class="l">Glow my NSRT cooldowns</span><span class="tg"></span></div>
+   <div class="r"><span class="l">Damage or healing goal</span><span class="num"><em>–</em>off<em>+</em></span></div>
+   <div class="k">Other</div>
+   <div class="r"><span class="l">Combat log always on</span><span class="tg on"></span></div>
+   <div class="r"><span class="l">Keep my last pulls</span><span class="num"><em>–</em>30<em>+</em></span></div>
+   <div class="r"><span class="l">Help and commands</span><span class="pick"><em>›</em></span></div>
+  </div>
+  <div class="ft"><span>Saves as you go</span><span>/dmo</span></div>
+ </div></div>
+</div>
+</body></html>

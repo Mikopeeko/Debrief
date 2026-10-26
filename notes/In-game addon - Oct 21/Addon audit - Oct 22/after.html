@@ -1,0 +1,92 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Addon audit</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0d12;--card:#141821;--raised:#1b2029;--line:#2a303c;--gold:#e6b450;--text:#ece8df;--soft:#cfd4dc;--muted:#9aa3b2;--faint:#6c7381;--bad:#e5534b;--warn:#e8a23a;--good:#7ee08f}
+body{margin:0;background:var(--bg);font:15px/1.45 Barlow,system-ui,sans-serif;color:var(--text);padding:22px}
+h1{font:700 22px Barlow;margin:0 0 4px}.sub{color:var(--muted);margin:0 0 18px}
+.wrap{display:flex;gap:26px;align-items:flex-start}
+.col{width:680px}.lab{font:700 13px Barlow;letter-spacing:.06em;color:var(--gold);margin:0 0 8px;text-transform:uppercase}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 18px 16px;box-shadow:0 14px 40px rgba(0,0,0,.5)}
+.hd{display:flex;align-items:center;gap:10px;margin-bottom:8px}.hd b{font:700 19px Barlow}.hd .m{color:var(--muted);font-size:13.5px}.pill{margin-left:auto;color:var(--bad);border:1px solid rgba(229,83,75,.5);background:rgba(229,83,75,.12);border-radius:6px;padding:2px 10px;font-weight:700;font-size:13px}
+.tabs{display:flex;gap:18px;border-bottom:1px solid var(--line);margin:6px 0 10px;font-weight:600;color:var(--muted)}.tabs span{padding:4px 0}.tabs .on{color:var(--text);border-bottom:2px solid var(--gold)}
+.stop{display:flex;align-items:center;gap:10px;background:var(--raised);border:1px solid var(--line);border-radius:8px;padding:7px 12px;margin-bottom:12px}.stop b{font-weight:600}.stop i{font-style:normal;color:var(--faint);font-size:13px}.stop .st{margin-left:auto;display:flex;gap:6px;align-items:center}.stop .st em{font-style:normal;background:#0f1218;border-radius:5px;width:22px;text-align:center;color:var(--muted)}
+.cl{font:700 12px Barlow;letter-spacing:.06em;color:var(--gold)}.chd{font:600 16.5px Barlow;margin:4px 0 10px}
+.foc{border:1px solid rgba(230,180,80,.55);background:rgba(230,180,80,.08);border-radius:8px;padding:9px 14px;margin-bottom:12px}.foc .cl{margin-bottom:2px}.foc p{margin:0;font-weight:700}
+.mut{color:var(--muted)}.w{display:grid;grid-template-columns:30px 1fr 18px;gap:10px;background:var(--raised);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:8px;padding:10px 12px;margin:8px 0}.w.bad{border-left-color:var(--bad)}
+.w .n{width:22px;height:22px;border-radius:50%;background:rgba(232,162,58,.2);color:var(--warn);display:grid;place-items:center;font-weight:700;font-size:12.5px}.w.bad .n{background:rgba(229,83,75,.2);color:var(--bad)}
+.w .t b{font-weight:700}.tag{font-size:11.5px;font-weight:700;color:var(--warn);margin-left:8px}.bad .tag{color:#f08a83}.w .r{display:grid;grid-template-columns:76px 1fr;gap:8px;font-size:13.5px;margin-top:4px}.w .r span:first-child{font:700 11.5px Barlow;color:var(--gold);padding-top:2px}.w .sg{color:var(--faint);font-weight:700}
+.goldt{color:var(--gold)}.ok{color:var(--good);margin:8px 0}
+.panel{background:var(--raised);border:1px solid var(--line);border-radius:8px;padding:9px 14px;margin:10px 0}.ph{display:flex;font:700 12px Barlow;letter-spacing:.05em;color:var(--muted)}.ph span:last-child{margin-left:auto;color:var(--faint)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;column-gap:16px;margin-top:6px}.dr{display:flex;align-items:center;gap:7px;font-size:13.5px;padding:3px 0}.dr .tm{color:var(--faint);width:30px}.dot{width:8px;height:8px;border-radius:50%}.dr .pl{margin-left:auto;color:var(--faint);font-weight:700}
+.ic{width:18px;height:18px;border-radius:3px;background:#2a2f3a;display:inline-block}
+.sv{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;margin:5px 0}.sv .dot{margin-top:6px}
+.yc{border:1px solid rgba(230,180,80,.55);background:rgba(230,180,80,.07);border-radius:8px;padding:10px 14px;margin-bottom:12px}.yc p{margin:2px 0 8px;color:var(--soft)}.yc ol{margin:2px 0 0;padding-left:20px;font-weight:700}.yc li{margin:3px 0}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}.tile{background:var(--raised);border:1px solid var(--line);border-radius:8px;padding:8px 10px}.tile small{color:var(--muted)}.tile b{display:block;font:700 20px Barlow}.tile i{font-style:normal;color:var(--faint);font-size:12px}
+.rw{display:flex;gap:8px;font-size:13.5px;margin:6px 0;align-items:center}.rw .q{margin-left:auto;color:var(--faint);font-weight:700;border:1px solid var(--line);border-radius:50%;width:16px;height:16px;font-size:11px;display:grid;place-items:center}
+.tip{position:relative;background:#0f1218;border:1px solid #3a4150;border-radius:6px;padding:7px 10px;font-size:13px;margin:-2px 0 6px 40px;width:360px;color:var(--soft)}.tip b{color:#fff;display:block}
+.notes{width:340px}.notes h3{font:700 15px Barlow;margin:0 0 6px;color:var(--gold)}.notes ul{margin:0 0 14px;padding-left:18px;color:var(--soft);font-size:14px}.notes li{margin:5px 0}.notes s{color:var(--faint)}
+</style></head><body>
+<h1>Debrief in game: the slimmer card (test copy, not live)</h1>
+<p class="sub">Your pull 35 on The Coiled Altar, Detailed size. Each thing is said once. The details are still there, on hover or one click.</p>
+<div class="wrap">
+<div class="col"><p class="lab">Raid view</p><div class="card">
+ <div class="hd"><b>The Coiled Altar</b><span class="m">Mythic · Pull 35</span><span class="pill">Wipe · 61%</span></div>
+ <div class="tabs"><span>Me</span><span class="on">Raid view</span></div>
+ <div class="stop"><b>Stop at death</b><i>counted to Schooty, 2:42</i><span class="st"><em>–</em><b>2</b><em>+</em></span></div>
+ <div class="cl">THIS PULL, COACHED</div>
+ <div class="chd">We wiped in P2 at 73%. That one's on Axegrinder. <span style="color:#C69B6D">Larryg</span> and <span style="color:#AAD372">Schooty</span>, you were hit by Axegrinder twice, and died to it at 2:39.</div>
+ <div class="foc"><div class="cl">FOCUS NEXT PULL</div><p>Dodge the Axegrinder axes.</p></div>
+ <div class="cl mut" style="color:var(--muted)">WHAT WENT WRONG</div>
+ <div class="w"><span class="n">1</span><div class="t"><span class="ic"></span> <b>Coalesced Venom (Pop the orbs with the frontals)</b><span class="tag">Top guilds mess this up too</span><div class="r"><span>NEXT TIME</span><span>Tanks, take turns and point each frontal at its own orbs: 5 to 6 per frontal (never 8).</span></div></div><span class="sg">+</span></div>
+ <div class="w bad"><span class="n">2</span><div class="t"><span class="ic"></span> <b>Axegrinder</b><div class="r"><span>NEXT TIME</span><span class="goldt">The focus above.</span></div></div><span class="sg">+</span></div>
+ <div class="w bad"><span class="n">3</span><div class="t"><span class="ic"></span> <b>Spiteful Soulcoiler (Kick and kill)</b><span class="tag">led to 1 death</span><div class="r"><span>NEXT TIME</span><span>Kick and kill.</span></div></div><span class="sg">+</span></div>
+ <div class="ok">✓ Phase changes, Sever, Guillotine and 1 more were done right.</div>
+ <div class="panel"><div class="ph"><span>DEATHS · 10 · 4 on the player · 17 not counted</span><span>–</span></div>
+  <div class="grid2">
+   <div class="dr"><span class="tm">2:39</span><i class="dot" style="background:#e5534b"></i><b style="color:#C69B6D">Larryg</b><span class="ic"></span>Axegrinder<span class="pl">+</span></div>
+   <div class="dr"><span class="tm">2:59</span><i class="dot" style="background:#6c7381"></i><b style="color:#8788EE">Komo</b><span class="ic"></span>Retaliatory Malice<span class="pl">+</span></div>
+   <div class="dr"><span class="tm">2:42</span><i class="dot" style="background:#e5534b"></i><b style="color:#AAD372">Schooty</b><span class="ic"></span>Axegrinder<span class="pl">+</span></div>
+   <div class="dr"><span class="tm">3:00</span><i class="dot" style="background:#6c7381"></i><b style="color:#8788EE">Arsyn</b><span class="ic"></span>Gravebound<span class="pl">+</span></div>
+   <div class="dr"><span class="tm">2:49</span><i class="dot" style="background:#e5534b"></i><b style="color:#F48CBA">Flëxørçïst</b><span class="ic"></span>Malevolent Resonance<span class="pl">+</span></div>
+   <div class="dr"><span class="tm">3:21</span><i class="dot" style="background:#6c7381"></i><b style="color:#FF7C0A">Jangokin</b><span class="ic"></span>Melee<span class="pl">+</span></div>
+   <div class="dr"><span class="tm">2:52</span><i class="dot" style="background:#e5534b"></i><b style="color:#0070DD">Shockabunga</b><span class="ic"></span>Dreadful Presence<span class="pl">+</span></div>
+   <div class="dr"><span class="tm">3:22</span><i class="dot" style="background:#6c7381"></i><b style="color:#33937F">Kargaryen</b><span class="ic"></span>Melee<span class="pl">+</span></div>
+  </div></div>
+ <div class="panel"><div class="ph"><span>AVOIDABLE DAMAGE · 4</span><span>+</span></div></div>
+ <div class="panel"><div class="ph"><span>SURVIVAL</span><span>–</span></div>
+  <div class="sv"><i class="dot" style="background:#e8a23a"></i><span class="ic"></span><span>Defensives: 18 of 20 pressed at least one. Never pressed one: <b style="color:#00FF98">Ashdknight</b>, <b style="color:#3FC7EB">Dragooned</b>.</span></div>
+  <div class="sv"><i class="dot" style="background:#7ee08f"></i><span class="ic"></span><span>Healthstones: 9 of 20 used, health potions: 4 of 20.</span></div>
+  <div class="sv"><i class="dot" style="background:#7ee08f"></i><span class="ic"></span><span>Nobody died with a Healthstone or potion unused.</span></div>
+ </div>
+</div></div>
+<div class="col" style="width:560px"><p class="lab">Me (your own card)</p><div class="card">
+ <div class="hd"><b style="color:#F48CBA">Flëxørçïst</b><span class="m">Holy Paladin</span></div>
+ <div class="stop"><b>Stop at death</b><i>counted to Schooty, 2:42</i><span class="st"><em>–</em><b>2</b><em>+</em></span></div>
+ <div class="yc"><div class="cl">YOUR COACH</div><p>Some good things this pull.</p><div class="cl">NEXT PULL</div><ol><li>Only you can see your ghost on Mythic. Hold it near the marker for Soul Sever and keep it away from other ghosts.</li><li>Press something every global cooldown. When you have to move, use an instant spell instead of stopping.</li></ol></div>
+ <div class="tiles"><div class="tile"><small>Your healing</small><b>322k</b><i>+9% vs pull 34 · 4th of 4</i></div><div class="tile"><small>Avoidable damage</small><b>578k</b><i>8th most of 20</i></div><div class="tile"><small>Dispels</small><b>0</b><i>raid: 6</i></div></div>
+ <div class="panel"><div class="ph"><span>ROTATION</span><span>–</span></div>
+  <div class="rw"><i class="dot" style="background:#e8a23a"></i><span class="ic"></span>Always be casting: 75%.<span class="q">?</span></div>
+  <div class="tip"><b>Always be casting: 75%.</b>You were casting for 75% of the time you were alive.</div>
+  <div class="rw"><i class="dot" style="background:#e8a23a"></i><span class="ic"></span>Divine Toll uses: 5 of 8.<span class="q">?</span></div>
+  <div class="rw"><i class="dot" style="background:#e8a23a"></i><span class="ic"></span>Cooldowns into the big hits: 0 of 1.<span class="q">?</span></div>
+ </div>
+ <div class="panel"><div class="ph"><span>BOSS MECHANICS</span><span>–</span></div>
+  <div class="rw"><i class="dot" style="background:#e5534b"></i><span class="ic"></span>Malevolent Resonance: Your ghost touched another ghost (with Shockabunga).</div>
+  <div class="rw"><i class="dot" style="background:#e5534b"></i><span class="ic"></span>You died at 2:49 to Malevolent Resonance. That one was on you.</div>
+ </div>
+ <div class="panel"><div class="ph"><span>SURVIVAL</span><span>–</span></div>
+  <div class="sv"><i class="dot" style="background:#7ee08f"></i><span class="ic"></span><span>Defensives: Divine Shield 1 of 1, Divine Protection 2 of 3, Lay on Hands 1 of 1.</span></div>
+  <div class="sv"><i class="dot" style="background:#6c7381"></i><span class="ic"></span><span>No Healthstone or potion used.</span></div>
+ </div>
+</div></div>
+<div class="notes"><h3>What changed</h3><ul>
+<li><b>Stop at death</b> is one line. <s>"The whole pull counts. Press + to stop counting…"</s> moved to hover.</li>
+<li><b>Said once:</b> the focus was printed 3 times. The card it came from now says <span class="goldt">"The focus above."</span></li>
+<li><b>Deaths</b> sit in two columns, with the summary in the title. <s>The legend sentence</s> and <s>"Click a death to see what happened."</s> are gone; each row has a + instead, and the legend is on hover.</li>
+<li><s>"The full coaching is on the website…"</s> removed.</li>
+<li><b>Survival:</b> Defensives, Healthstones and potions, and deaths with one unused were 3 sections. Now they're 1.</li>
+<li><b>Your coach + Next pull</b> were 2 gold boxes that disagreed ("one fix" vs a different tip). Now they're 1 box with your fixes numbered, the mechanic first.</li>
+<li><b>Rotation</b> rows show the number. The explanation is on hover (the ?).</li>
+<li><b>"Their ghost"</b> on your own card now says "Your ghost".</li>
+</ul><h3>Kept</h3><ul><li>Every number, every death and its story, the What went wrong cards (click opens What happened, How, Against top guilds), all your switches in /db.</li></ul></div>
+</div></body></html>
