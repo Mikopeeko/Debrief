@@ -6795,6 +6795,40 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-top h2 { display: inline-flex; align-items: center; gap: 10px; font-size: 24px; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-top h2::before { content: ''; display: inline-block; width: 18px; height: 22px; background: linear-gradient(#5b93e0, #2f73c9); clip-path: polygon(0 0, 100% 0, 100% 45%, 50% 100%, 0 45%); filter: drop-shadow(0 4px 10px rgba(44,95,168,.55)); }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-top .tn-chip.on { box-shadow: 0 2px 10px rgba(230,180,80,.35); }
+/* ===== Design studio round 15 (Oct 25): the front page's example window shows a pull being debriefed (the user's pick A): the verdict, three deaths
+   as bars, a death card, the Rotation grade; a 10.5 s loop, still under prefers-reduced-motion. Owner: the Design studio chat. ===== */
+.fp3-win .ds-dhost { padding: 12px 14px 10px; }
+.ds-demo { display: flex; flex-direction: column; gap: 10px; }
+.ds-dk { display: block; font: 700 12px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--gold); margin-bottom: 4px; }
+.ds-dbox { padding: 10px 14px 12px; border: 1px solid rgba(230,180,80,.5); border-left: 4px solid var(--gold); border-radius: 12px; background: var(--panel); }
+.ds-dv { margin: 0; font: 600 16px/1.35 var(--body); color: var(--text); } .ds-dv b { color: #f6dc9a; }
+.ds-dd { display: grid; gap: 5px; margin-top: 10px; }
+.ds-dr { display: grid; grid-template-columns: 34px 64px minmax(0, 1fr) 40px; gap: 8px; align-items: center; font-size: 13px; }
+.ds-dt { color: var(--muted); } .ds-dn { color: var(--c); font-weight: 700; } .ds-dx { text-align: right; color: var(--muted); }
+.ds-db { height: 7px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; } .ds-db i { display: block; height: 100%; width: calc(var(--p) * 1%); background: var(--bad); transform-origin: left; }
+.ds-dlow { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 10px; min-height: 92px; }
+.ds-dcard, .ds-dgrade { padding: 10px 12px; border: 1px solid var(--line2); border-radius: 12px; background: var(--panel); min-width: 0; }
+.ds-dcard b { display: block; font-size: 14px; } .ds-dcard p { margin: 3px 0 0; font-size: 12.5px; color: #d6d1c6; line-height: 1.35; }
+.ds-dpill { display: inline-block; margin-top: 6px; padding: 1px 8px; border-radius: 999px; font: 700 12px var(--body); background: rgba(229,83,75,.16); color: #ff8f87; }
+.ds-dgrade { display: flex; align-items: center; gap: 10px; } .ds-dgrade b { display: block; font-size: 14px; } .ds-dgrade span:not(.ds-dring) { font-size: 12.5px; color: var(--muted); }
+.ds-dring { --g: 0; flex: none; width: 50px; height: 50px; border-radius: 50%; background: conic-gradient(var(--good) calc(var(--g) * 1%), rgba(255,255,255,.08) 0); display: grid; place-items: center; }
+.ds-dring > span { width: 38px; height: 38px; border-radius: 50%; background: #13161d; display: grid; place-items: center; font: 700 16px var(--head); color: var(--text); }
+.ds-dfoot { font-size: 12px; color: var(--faint); }
+@property --g { syntax: '<number>'; inherits: false; initial-value: 0; }
+/* the scene: each piece starts hidden and plays in on its cue; still, everything shows at once */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes ds-din { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @keyframes ds-dbar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @keyframes ds-dring { to { --g: 88; } }
+  .ds-demo:not(.x) .ds-dv { opacity: 0; animation: ds-din .6s ease-out .4s forwards; }
+  .ds-demo .ds-dr { opacity: 0; animation: ds-din .35s ease-out forwards; animation-delay: calc(2.4s + var(--i) * .3s); }
+  .ds-demo .ds-db i { transform: scaleX(0); animation: ds-dbar .6s cubic-bezier(.2,.7,.2,1) forwards; animation-delay: calc(2.6s + var(--i) * .3s); }
+  .ds-demo .ds-dcard { opacity: 0; animation: ds-din .5s ease-out 4.4s forwards; }
+  .ds-demo .ds-dgrade { opacity: 0; animation: ds-din .5s ease-out 5.4s forwards; }
+  .ds-demo .ds-dring { animation: ds-dring 1s ease-out 5.8s forwards; }
+}
+.ds-dstill .ds-dring { --g: 88; }
+@media (max-width: 760px) { .ds-dlow { grid-template-columns: minmax(0, 1fr); min-height: 0; } .ds-dr { grid-template-columns: 30px 56px minmax(0, 1fr) 36px; font-size: 12.5px; } }
 /* ===== Design studio round 13 (Oct 25): Plan's Who plays table as dot rows: a filled class-colour dot plays, a hollow ring sits, a gold ring is a
    suggestion; the same buttons, so taps and drags still work. Owner: the Design studio chat. ===== */
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g .nt-tk { width: 14px !important; min-width: 0 !important; max-width: none !important; height: 14px !important; margin: 0 auto !important; border-radius: 50% !important; clip-path: circle(50% at 50% 50%); display: block !important; transition: transform .12s, box-shadow .12s; }
@@ -6834,10 +6868,11 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn > .tn-sec.tn-team, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn > .tn-sec.tn-team > .tn-cols { display: contents; }
   /* (your note: the Who plays title, its buttons and the hint sit at the top of the roster column; the things to fix stay across the top) */
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-cols > .tn-pcol { grid-column: 1 / -1; grid-row: 2; margin: 14px 0 12px; }
-  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-sec.tn-team > .tn-sh { grid-column: 1; grid-row: 3; margin-top: 0; }
-  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-sec.tn-team > .tn-hint { grid-column: 1; grid-row: 4; }
+  /* the Who plays title, its buttons and the hint run across the whole top; the roster and Bosses start level under them (Oct 26) */
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-sec.tn-team > .tn-sh { grid-column: 1 / -1; grid-row: 3; margin-top: 0; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-sec.tn-team > .tn-hint { grid-column: 1 / -1; grid-row: 4; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-cols > .tn-gcol { grid-column: 1; grid-row: 5; min-width: 0; }
-  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn > .tn-sec:not(.tn-team) { grid-column: 2; grid-row: 3 / span 3; min-width: 0; margin-top: 0; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn > .tn-sec:not(.tn-team) { grid-column: 2; grid-row: 5; min-width: 0; margin-top: 0; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-cols > .tn-pcol:empty { display: none; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn .tn-sec.tn-team > .tn-fold { grid-column: 1 / -1; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .assignbox > .panel.tn > .tn-sec:not(.tn-team) > .tn-sh { margin-top: 0; }
@@ -6856,40 +6891,6 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row { grid-template-columns: 64px minmax(0, 1fr) auto auto; grid-template-areas: 'pic name s ra' 'pic sits sits sits'; gap: 2px 10px; padding: 6px 10px 6px 6px; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-pic { grid-area: pic; height: 44px; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-bn { grid-area: name; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-s { grid-area: s; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra { grid-area: ra; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-sits { grid-area: sits; font-size: 12px; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-bn b { font-size: 15px; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-ra .btn.sm { padding: 5px 10px; font-size: 12.5px; } }
-/* ===== Design studio round 15 (Oct 25): the front page's example window shows a pull being debriefed (the user's pick A): the verdict, three deaths
-   as bars, a death card, the Rotation grade; a 10.5 s loop, still under prefers-reduced-motion. Owner: the Design studio chat. ===== */
-.fp3-win .ds-dhost { padding: 12px 14px 10px; }
-.ds-demo { display: flex; flex-direction: column; gap: 10px; }
-.ds-dk { display: block; font: 700 12px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--gold); margin-bottom: 4px; }
-.ds-dbox { padding: 10px 14px 12px; border: 1px solid rgba(230,180,80,.5); border-left: 4px solid var(--gold); border-radius: 12px; background: var(--panel); }
-.ds-dv { margin: 0; font: 600 16px/1.35 var(--body); color: var(--text); } .ds-dv b { color: #f6dc9a; }
-.ds-dd { display: grid; gap: 5px; margin-top: 10px; }
-.ds-dr { display: grid; grid-template-columns: 34px 64px minmax(0, 1fr) 40px; gap: 8px; align-items: center; font-size: 13px; }
-.ds-dt { color: var(--muted); } .ds-dn { color: var(--c); font-weight: 700; } .ds-dx { text-align: right; color: var(--muted); }
-.ds-db { height: 7px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; } .ds-db i { display: block; height: 100%; width: calc(var(--p) * 1%); background: var(--bad); transform-origin: left; }
-.ds-dlow { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 10px; min-height: 92px; }
-.ds-dcard, .ds-dgrade { padding: 10px 12px; border: 1px solid var(--line2); border-radius: 12px; background: var(--panel); min-width: 0; }
-.ds-dcard b { display: block; font-size: 14px; } .ds-dcard p { margin: 3px 0 0; font-size: 12.5px; color: #d6d1c6; line-height: 1.35; }
-.ds-dpill { display: inline-block; margin-top: 6px; padding: 1px 8px; border-radius: 999px; font: 700 12px var(--body); background: rgba(229,83,75,.16); color: #ff8f87; }
-.ds-dgrade { display: flex; align-items: center; gap: 10px; } .ds-dgrade b { display: block; font-size: 14px; } .ds-dgrade span:not(.ds-dring) { font-size: 12.5px; color: var(--muted); }
-.ds-dring { --g: 0; flex: none; width: 50px; height: 50px; border-radius: 50%; background: conic-gradient(var(--good) calc(var(--g) * 1%), rgba(255,255,255,.08) 0); display: grid; place-items: center; }
-.ds-dring > span { width: 38px; height: 38px; border-radius: 50%; background: #13161d; display: grid; place-items: center; font: 700 16px var(--head); color: var(--text); }
-.ds-dfoot { font-size: 12px; color: var(--faint); }
-@property --g { syntax: '<number>'; inherits: false; initial-value: 0; }
-/* the scene: each piece starts hidden and plays in on its cue; still, everything shows at once */
-@media (prefers-reduced-motion: no-preference) {
-  @keyframes ds-din { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-  @keyframes ds-dbar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-  @keyframes ds-dring { to { --g: 88; } }
-  .ds-demo:not(.x) .ds-dv { opacity: 0; animation: ds-din .6s ease-out .4s forwards; }
-  .ds-demo .ds-dr { opacity: 0; animation: ds-din .35s ease-out forwards; animation-delay: calc(2.4s + var(--i) * .3s); }
-  .ds-demo .ds-db i { transform: scaleX(0); animation: ds-dbar .6s cubic-bezier(.2,.7,.2,1) forwards; animation-delay: calc(2.6s + var(--i) * .3s); }
-  .ds-demo .ds-dcard { opacity: 0; animation: ds-din .5s ease-out 4.4s forwards; }
-  .ds-demo .ds-dgrade { opacity: 0; animation: ds-din .5s ease-out 5.4s forwards; }
-  .ds-demo .ds-dring { animation: ds-dring 1s ease-out 5.8s forwards; }
-}
-.ds-dstill .ds-dring { --g: 88; }
-@media (max-width: 760px) { .ds-dlow { grid-template-columns: minmax(0, 1fr); min-height: 0; } .ds-dr { grid-template-columns: 30px 56px minmax(0, 1fr) 36px; font-size: 12.5px; } }
 /* ===== Design studio round 14 (Oct 25): motion that feels alive, used sparingly: bars fill from the left, the pull line draws itself, big numbers
    fade in while they count up, kills light the banner. 300–900 ms, once on first view (html.ds-still stops replays), nothing moves
    under prefers-reduced-motion, transforms only so nothing shifts. Owner: the Design studio chat. ===== */
@@ -16853,6 +16854,7 @@ const PATCH_NOTES = [
   { d: '2026-10-26', h: [
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
   ] },
@@ -50691,11 +50693,6 @@ function dsPlan() { const v = document.querySelector('#view.plan-page'); if (!v)
     sh.classList.add('ds-ready'); sh.style.setProperty('--p', String(Math.round(100 * +m[1] / Math.max(1, +m[2])))); }); }
 (function () { const f6 = dsBars; dsBars = function (root) { f6(root); try { dsPlan(); } catch (e) {} }; })();
 
-// ===== Design studio round 13 (Oct 25): Who plays, the boss name on hover (the picture headers lose their printed name beside the Bosses rows). Owner: the Design studio chat. =====
-function dsPlanTips() { const v = document.querySelector('#view.plan-page'); if (v && /[?&]cells=check/.test(location.search)) v.classList.add('ds-check'); /* (practice compare only) */
-  document.querySelectorAll('#view.plan-page .nt-g .nt-bh[aria-label]:not([data-tt])').forEach((b) => { const n = b.getAttribute('aria-label').replace(/^Open /, ''); if (n) b.setAttribute('data-tt', '<b>' + n.replace(/</g, '&lt;') + '</b>'); }); }
-(function () { const f7 = dsBars; dsBars = function (root) { f7(root); try { dsPlanTips(); } catch (e) {} }; })();
-
 // ===== Design studio round 15 (Oct 25): the front page shows a pull being debriefed (the user's pick A). Replaces the example window's
 // coach box with a looping scene built from the site's card pieces; the chrome and the boss banner stay. Owner: the Design studio chat. =====
 function dsFrontDemo() { const win = document.querySelector('#main .home.fp .fpx-shot .fp3-win'); if (!win || win.dataset.dsDemo) return; const coach = win.querySelector('.fp3-coach'); if (!coach) return;
@@ -50723,6 +50720,11 @@ function dsFrontDemo() { const win = document.querySelector('#main .home.fp .fpx
     try { dsBars(); } catch (e) {} finally { if (mo) mo.takeRecords(); busy = false; } };
   const start = () => { if (!document.body) return false; mo = new MutationObserver(run); mo.observe(document.body, { childList: true, subtree: true }); return true; };
   if (!start()) document.addEventListener('DOMContentLoaded', start, { once: true }); })();
+
+// ===== Design studio round 13 (Oct 25): Who plays, the boss name on hover (the picture headers lose their printed name beside the Bosses rows). Owner: the Design studio chat. =====
+function dsPlanTips() { const v = document.querySelector('#view.plan-page'); if (v && /[?&]cells=check/.test(location.search)) v.classList.add('ds-check'); /* (practice compare only) */
+  document.querySelectorAll('#view.plan-page .nt-g .nt-bh[aria-label]:not([data-tt])').forEach((b) => { const n = b.getAttribute('aria-label').replace(/^Open /, ''); if (n) b.setAttribute('data-tt', '<b>' + n.replace(/</g, '&lt;') + '</b>'); }); }
+(function () { const f7 = dsBars; dsBars = function (root) { f7(root); try { dsPlanTips(); } catch (e) {} }; })();
 
 // ===== Design studio round 14 (Oct 25): motion. The CSS does the moving; this pass only (1) stops replays when the same page
 // redraws within 3 s (html.ds-still) and (2) counts big numbers up from 0 while their fade-in hides the swap. Owner: the Design studio chat. =====

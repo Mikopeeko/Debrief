@@ -1793,6 +1793,7 @@ const PATCH_NOTES = [
   { d: '2026-10-26', h: [
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
   ] },
@@ -30232,11 +30233,6 @@ function dsPlan() { const v = document.querySelector('#view.plan-page'); if (!v)
     sh.classList.add('ds-ready'); sh.style.setProperty('--p', String(Math.round(100 * +m[1] / Math.max(1, +m[2])))); }); }
 (function () { const f6 = dsBars; dsBars = function (root) { f6(root); try { dsPlan(); } catch (e) {} }; })();
 
-// ===== Design studio round 13 (Oct 25): Who plays, the boss name on hover (the picture headers lose their printed name beside the Bosses rows). Owner: the Design studio chat. =====
-function dsPlanTips() { const v = document.querySelector('#view.plan-page'); if (v && /[?&]cells=check/.test(location.search)) v.classList.add('ds-check'); /* (practice compare only) */
-  document.querySelectorAll('#view.plan-page .nt-g .nt-bh[aria-label]:not([data-tt])').forEach((b) => { const n = b.getAttribute('aria-label').replace(/^Open /, ''); if (n) b.setAttribute('data-tt', '<b>' + n.replace(/</g, '&lt;') + '</b>'); }); }
-(function () { const f7 = dsBars; dsBars = function (root) { f7(root); try { dsPlanTips(); } catch (e) {} }; })();
-
 // ===== Design studio round 15 (Oct 25): the front page shows a pull being debriefed (the user's pick A). Replaces the example window's
 // coach box with a looping scene built from the site's card pieces; the chrome and the boss banner stay. Owner: the Design studio chat. =====
 function dsFrontDemo() { const win = document.querySelector('#main .home.fp .fpx-shot .fp3-win'); if (!win || win.dataset.dsDemo) return; const coach = win.querySelector('.fp3-coach'); if (!coach) return;
@@ -30264,6 +30260,11 @@ function dsFrontDemo() { const win = document.querySelector('#main .home.fp .fpx
     try { dsBars(); } catch (e) {} finally { if (mo) mo.takeRecords(); busy = false; } };
   const start = () => { if (!document.body) return false; mo = new MutationObserver(run); mo.observe(document.body, { childList: true, subtree: true }); return true; };
   if (!start()) document.addEventListener('DOMContentLoaded', start, { once: true }); })();
+
+// ===== Design studio round 13 (Oct 25): Who plays, the boss name on hover (the picture headers lose their printed name beside the Bosses rows). Owner: the Design studio chat. =====
+function dsPlanTips() { const v = document.querySelector('#view.plan-page'); if (v && /[?&]cells=check/.test(location.search)) v.classList.add('ds-check'); /* (practice compare only) */
+  document.querySelectorAll('#view.plan-page .nt-g .nt-bh[aria-label]:not([data-tt])').forEach((b) => { const n = b.getAttribute('aria-label').replace(/^Open /, ''); if (n) b.setAttribute('data-tt', '<b>' + n.replace(/</g, '&lt;') + '</b>'); }); }
+(function () { const f7 = dsBars; dsBars = function (root) { f7(root); try { dsPlanTips(); } catch (e) {} }; })();
 
 // ===== Design studio round 14 (Oct 25): motion. The CSS does the moving; this pass only (1) stops replays when the same page
 // redraws within 3 s (html.ds-still) and (2) counts big numbers up from 0 while their fade-in hides the swap. Owner: the Design studio chat. =====
