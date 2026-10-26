@@ -17653,7 +17653,7 @@ const PATCH_NOTES = [
     { t: 'Plan: your raid night in one page', d: 'The Plan tab is out for everyone: bring in your team, and Debrief picks who plays each boss and plans every job, kick and healing cooldown the way the fastest kills do. Change anything, then copy it into the game for NSRT.' },
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
-    { t: 'Plan: a picture for every job', d: 'On The Coiled Altar, Ula\'tek, The Twin Fangs, Nymrissa and Nek\'zali (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
+    { t: 'Plan: a picture for every job', d: 'On The Coiled Altar, Ula\'tek, The Twin Fangs, Nymrissa, Nek\'zali and Entombed Sentinels (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
   ], n: [
     'Debrief in game: your card and PC pop-up use the newest boss mechanics, potion and death rules from the website.',
     'On a phone: the dots on the pull at a glance are easier to tap, and the front page\'s footer links have room for a thumb.',
@@ -52343,6 +52343,65 @@ function ppCardsNZ(J, M, U, P) {
     foot: 'Each cultist circle dashes to a new spot on Invoke: stay out of their paths.' });
   return cards;
 }
+// ===== Entombed Sentinels, Mythic (Oct 26, the same setup; Plan's Jobs cards in 02300fa), on the guide's whole-platform maps: Blood of
+// Ula'tek in the red corner (west), Breath in the green one (east), each half of the raid with its own boss =====
+// (the note's jobs, in the lines Plan writes: "Blood:" / "Breath:" (the halves), "Miasma:", "Droplets:", "Dispel 1:" / "Dispel 2:" /
+// "Backup Dispel:" (Blighted Blood))
+function ppReadSE(N, P) {
+  const isN = (w) => P.has(String(w).toLowerCase()), J = { blood: [], breath: [], miasma: [], drops: [], disp: [] };
+  for (const l of N.lines) { const lab = l.label.toLowerCase().trim(), who = l.words.filter(isN).map((w) => P.get(w.toLowerCase()).name); let m; if (!who.length) continue;
+    if (lab === 'blood') J.blood = who; else if (lab === 'breath') J.breath = who; else if (/miasma/.test(lab)) J.miasma = who; else if (/droplet/.test(lab)) J.drops = who;
+    else if ((m = /dispel\s*(\d)/.exec(lab))) J.disp[+m[1] - 1] = who[0]; else if (/backup dispel/.test(lab)) J.disp[2] = who[0]; }
+  return J;
+}
+// (each half on its own boss's side: the Blood names on the red half's spots, the Breath names on the green half's, by role; fix: spots
+// a picture has already given someone)
+function seHalves(J, P, fix) { const f = { ...fix }, used = new Set(Object.values(f).filter((v) => typeof v === 'string')), taken = new Set(Object.keys(f)), R = { tank: 't', healer: 'h', melee: 'm', ranged: 'r' };
+  [[J.blood, SE_RED], [J.breath, SE_GREEN]].forEach(([L, ids]) => { const left = L.filter((n) => !used.has(n)), put = (s, n) => { f[s] = n; taken.add(s); used.add(n); left.splice(left.indexOf(n), 1); };
+    for (const n of left.slice()) { const s = ids.find((x) => x[0] === (R[(P.get(n.toLowerCase()) || {}).role] || 'r') && !taken.has(x)); if (s) put(s, n); }
+    for (const n of left.slice()) { const s = ids.find((x) => !taken.has(x)); if (s) put(s, n); } });
+  return ppSeat(P, f); }
+function ppCardsSE(J, M, U, P) {
+  const cards = [], RD = '#ff5a5a', GN = '#6dff8e', GO = '#e6b450', BL = '#5aa0ff', OR = '#ff9628', Q = '#c9ced8', cdsOf = (L) => (L || []).map(([t, n, sp]) => ppI(P, n, t + ' ' + sp)), half = (n) => (J.blood.includes(n) ? 'Blood' : J.breath.includes(n) ? 'Breath' : '');
+  // The two halves: each with its own boss, the bosses 40+ yards apart (the guide's map with both Marks showing)
+  if (J.blood.length || J.breath.length) cards.push({ id: 'sides', ph: 1, when: 'All fight', title: 'Mark of Blood and Acid (Stay with your boss)', map: ppFreeze(SE_M.split(false), 3, seHalves(J, P, {}), P, M, { hl: [], labels: [[SE_RED, 'Blood half', RD, '#fff', 8], [SE_GREEN, 'Breath half', GN, '#06140a', 8]] }),
+    legend: [ppG('Blood half: the red boss', RD, J.blood.map((n) => ppI(P, n))), ppG('Breath half: the green boss', GN, J.breath.map((n) => ppI(P, n)))],
+    foot: 'Keep the bosses 40 yards or more apart: 20 of each Mark at once kills. The halves swap bosses after every intermission.' });
+  // Venom Coagulation: the green ranged bait it away from the tank, Breath tanked on its far side, every ranged on it (the guide's map)
+  cards.push({ id: 'add', ph: 1, when: 'Each add', title: 'Venom Coagulation (Bait it away, kill it fast)', map: ppFreeze(SE_M.coag(false), 5.6, seHalves(J, P, {}), P, M, {}),
+    legend: [ppG('Breath half\'s ranged', GN, [], 'Stack far from the tank\'s new puddle, so the add lands where melee can cleave it.'), ppG('Breath\'s tank', BL, [], 'Takes Breath to the far side of the add.'), ppG('Everyone', GO, [], 'Priority damage: the second add must die before the intermission.')],
+    foot: 'The add pulses raid damage for as long as it lives.' });
+  // Toxic Droplets: the note's soakers on the droplets with a defensive, the tanks taking most (the guide's map as they step on)
+  if (J.drops.length) { const fix = {}, tanks = J.drops.filter((n) => (P.get(n.toLowerCase()) || {}).role === 'tank'), rest = J.drops.filter((n) => !tanks.includes(n)), ids = [];
+    tanks.slice(0, 2).forEach((n, i) => { fix[['t1', 't2'][i]] = n; ids.push(['t1', 't2'][i]); }); rest.slice(0, 3).forEach((n, i) => { const s = ['r1', 'r4', 'h3'][i]; fix[s] = n; ids.push(s); });
+    cards.push({ id: 'drops', ph: 1, when: 'Each droplet set', title: 'Toxic Droplets (Soak with a defensive)', map: ppFreeze(SE_M.drops(false, 'm'), 5, seHalves(J, P, fix), P, M, { hl: ids, named: ids }),
+      legend: [ppG('Droplet soakers', '#b6ff5c', J.drops.map((n) => ppI(P, n, half(n))), 'Step on them before they burst, a defensive up; the tanks take most and grab the ones that land in blood.'), ppG('Everyone', GO, [], 'Each soaked droplet fires a blade back into Breath: step off that line.')],
+      foot: 'On Mythic two droplets at once can kill: wait for a defensive rather than soak one naked.' }); }
+  // Unstable Miasma: 8 or more soak it in the back corner, then line up along the wall for the puddles (the guide's map at the soak)
+  if (J.miasma.length) { const SO = ['r4', 'h3', 'm5', 'm6', 'r5', 'r6', 'r7', 'h4', 'm7', 't2'], fix = {}; J.miasma.slice(0, SO.length).forEach((n, i) => { fix[SO[i]] = n; }); const ids = SO.filter((s) => fix[s]);
+    cards.push({ id: 'miasma', ph: 1, when: 'Each Miasma', title: 'Unstable Miasma (8 or more soak it)', map: ppFreeze(SE_M.miasma(false, 'm'), 9.4, seHalves(J, P, fix), P, M, { hl: ids, labels: [[ids, 'Miasma soak', RD, '#fff', 8]] }),
+      legend: [ppG('Miasma soakers', RD, J.miasma.map((n) => ppI(P, n))), ppG('After', GO, [], 'Line up along the wall to drop the Clinging Murk puddles out of the way.')],
+      foot: 'It hurts: stack defensives on it (Anti-Magic Zone, Spirit Link).' }); }
+  // Shifting Protovenom: everyone spread, each circle meets another circle (the guide's map as the pairs meet)
+  cards.push({ id: 'proto', ph: 1, when: 'Twice a round', title: 'Shifting Protovenom (Circle meets circle)', map: ppFreeze(SE_M.proto(false), 5.6, seHalves(J, P, {}), P, M, {}),
+    legend: [ppG('Everyone', OR, [], 'Spread out before it. With a circle: count to two, then walk to another circle. Without one: step out of the way.'), ppG('Circle targets', Q, [ppI(P, ppAny('Whoever gets a circle'))], 'Never walk into a player without a circle.')],
+    foot: 'About four circles on each side, two sets a round.' });
+  // Blighted Blood: the note's dispellers on their side, dispelling at once (the halves' map)
+  if (J.disp.filter(Boolean).length) { const fix = {}, ids = [], tags = []; const free = { Blood: ['h3', 'h4'], Breath: ['h1', 'h2'] };
+    J.disp.forEach((n, i) => { if (!n) return; const side = half(n) || 'Blood', s = (free[side] || []).shift() || ['h1', 'h2', 'h3', 'h4'].find((x) => !fix[x]); if (!s) return; fix[s] = n; ids.push(s); tags.push([s, i === 2 ? 'Backup' : 'Dispel ' + (i + 1)]); });
+    cards.push({ id: 'disp', ph: 1, when: 'Every Blighted Blood', title: 'Blighted Blood (Dispel at once)', map: ppFreeze(SE_M.split(false), 3, seHalves(J, P, fix), P, M, { hl: ids, named: ids, tags }),
+      legend: [ppG('Dispels', '#7fd8ff', [J.disp[0] && ppI(P, J.disp[0], 'Dispel 1'), J.disp[1] && ppI(P, J.disp[1], 'Dispel 2'), J.disp[2] && ppI(P, J.disp[2], 'Backup')], 'Dispel the moment it lands.')],
+      foot: 'One that runs out drops a puddle.' }); }
+  // The last droplet set before the intermission: the second add, the droplets and the second Protovenom at once (the guide's hard map)
+  cards.push({ id: 'combo', ph: 1, when: 'Before each intermission', title: 'Toxic Droplets, last set (Immunities and cooldowns)', map: ppFreeze(SE_M.proto(false, 'm', { hard: true }), 4.6, seHalves(J, P, {}), P, M, {}),
+    legend: [ppG('Everyone', GO, [], 'The second add, the droplets and the second Protovenom land together: kill the add fast.'), ppG('Immunities', '#7fd8ff', [], 'Bubble, Turtle or Cloak take the droplets; without them, raid cooldowns.'), ppG('Raid cooldowns', '#9a7bff', cdsOf(J.combo))],
+    foot: 'The hardest moment of each round.' });
+  // Helical Toxins: the bosses pulled together, 2s under a boss, 1s ping in place, 3s find a pinger (the guide's map as the numbers show)
+  cards.push({ id: 'helix', ph: 1.5, when: 'Each intermission', title: 'Helical Toxins (Make 4)', map: ppFreeze(SE_M.helix(false, 'm'), 7, seHalves(J, P, {}), P, M, {}),
+    legend: [ppG('2s', GO, [], 'Run under the boss and pair there.'), ppG('1s', GN, [], 'Jump in place and ping yourself.'), ppG('3s', '#7fd8ff', [], 'Run round and find a jumping pinger.'), ppG('After', RD, [], 'The tank leaving Blood drops the middle of its big puddle in a gap among the old blood.')],
+    foot: 'Keep the bosses\' health even before it: the weaker one heals up to the other.' });
+  return cards;
+}
 // (the note's healing and raid cooldowns at a moment, for a picture's legend: NSRT reminder lines between two times of a phase)
 function ppCds(N, P, ph, t0, t1) { return N.reminders.filter((x) => x.ph === ph && x.time >= t0 && x.time <= t1 && x.spellid).flatMap((x) => x.tags.filter((w) => P.has(w.toLowerCase())).map((w) => [Math.floor(x.time / 60) + ':' + String(Math.round(x.time % 60)).padStart(2, '0'), P.get(w.toLowerCase()).name, (E.cdName && E.cdName(x.spellid)) || x.text || 'Cooldown'])); }
 const GDZ_PP = {
@@ -52417,6 +52476,17 @@ const GDZ_PP = {
     // (Plan's Jobs cards (173240d) and the pictures each shows, by its key, else by its title)
     mech: { ign: ['ign'], barrage: ['barrage'], well: ['well1', 'well2'], grip: ['grip'], rend: ['rend'], echo: ['echo'], pyre: ['pyre'], p2: ['p2'], cds: [], def: [] },
     jobs: [[/ignition/i, ['ign']], [/barrage/i, ['barrage']], [/well/i, ['well1', 'well2']], [/amani|grip/i, ['grip']], [/essence rend|dispel/i, ['rend']], [/echoes of jawae/i, ['echo']], [/pyre/i, ['pyre']], [/phase 2|invoke/i, ['p2']]] } },
+  'Entombed Sentinels': { Mythic: {
+    // (the guide places no markers here: a plain ring round the middle, 36 yards out at the compass points, for the raid lead to drag)
+    marks: { star: [0, 36], circle: [25, 25], diamond: [36, 0], triangle: [25, -25], moon: [0, -36], square: [-25, -25], cross: [-36, 0], skull: [-25, 25] },
+    stack: [0, 0],
+    uses: [],
+    room: { scene: (k) => { seBosses(k); }, focus: { x: 0, y: -3, r: 57 }, lim: 50, keep: ['Breath of Ula\'tek', 'Blood of Ula\'tek'] },
+    read(N, P) { const J = ppReadSE(N, P); J.combo = ppCds(N, P, 1, 118, 146).concat(ppCds(N, P, 1, 224, 256), ppCds(N, P, 1, 334, 362)); return J; },
+    cards: ppCardsSE,
+    // (Plan's Jobs cards (02300fa) and the pictures each shows, by its key, else by its title)
+    mech: { sides: ['sides'], add: ['add'], drops: ['drops'], miasma: ['miasma'], proto: ['proto'], disp: ['disp'], combo: ['combo'], helix: ['helix'], cds: [], def: [] },
+    jobs: [[/last set/i, ['combo']], [/blood and breath|sides/i, ['sides']], [/coagulation/i, ['add']], [/droplet/i, ['drops']], [/miasma/i, ['miasma']], [/protovenom/i, ['proto']], [/blighted blood|dispel/i, ['disp']], [/helical/i, ['helix']]] } },
 };
 const PP_PH = { 1: ['Phase 1', '#5aa0ff'], 1.9: ['Phase 1 ends', '#5aa0ff'], 2: ['Phase 2', '#b65cff'], 2.5: ['Intermission', '#e6b450'], 3: ['Phase 3', '#ff5a4f'] };
 
@@ -52528,7 +52598,7 @@ function ppOpen(r, u0, opt) {
   document.body.appendChild(box); document.body.classList.add('ndz-modal');
   const close = () => { box.remove(); if (!$('#ndzWiz') && !$('#ndzGuide') && !$('#ndzNoteView') && !$('#ndzShot')) document.body.classList.remove('ndz-modal'); };
   const head = '<div class="ndz-whead"><span class="sub">Pictures for Discord</span><button class="ndz-ex" type="button" data-ppx aria-label="Close">✕</button></div>';
-  if (!set.cf) { box.innerHTML = '<div class="ndz-wbox">' + head + '<h2>Pictures for Discord</h2><p class="sub">Pictures are ready on Mythic for The Coiled Altar, Ula\'tek, The Twin Fangs, Nymrissa and Nek\'zali so far. The other bosses come next.</p></div>'; box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); }; return; }
+  if (!set.cf) { box.innerHTML = '<div class="ndz-wbox">' + head + '<h2>Pictures for Discord</h2><p class="sub">Pictures are ready on Mythic for The Coiled Altar, Ula\'tek, The Twin Fangs, Nymrissa, Nek\'zali and Entombed Sentinels so far. The other bosses come next.</p></div>'; box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); }; return; }
   box.innerHTML = '<div class="ndz-wbox ndz-shotbox pp-win">' + head + '<h2 class="pp-h2"></h2>' +
     '<div class="pp-nav"><span class="sub pp-navt"></span><button class="btn sm" type="button" data-ppprev></button><button class="btn sm" type="button" data-ppnext></button><button class="btn sm" type="button" data-ppallv></button></div>' +
     '<p class="sub pp-intro">One picture for each mechanic your note gives jobs for, with everyone on their spot. Copy one and paste it in Discord (Ctrl+V), or download it.</p>' +
