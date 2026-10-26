@@ -20,16 +20,24 @@ routes = [
 # Patch notes to Discord: every 10 minutes the Worker checks for a new Patch notes day and posts it to #patch-notes
 # (needs the DISCORD_PATCH_WEBHOOK secret, set in Cloudflare). DEBRIEF_KV remembers the last day announced.
 [triggers]
-crons = ["*/10 * * * *", "* * * * *"] # (the second one: only the @Claudette tag check, every minute)
+crons = ["*/10 * * * *"] # (the one-minute run and every Discord job belong to the Discord helper's own Worker now: wrangler.bot.toml)
 
-# The instant listener for @Claudette tags (Oct 26): keeps Discord's connection open all day.
-[[durable_objects.bindings]]
-name = "GATEWAY"
-class_name = "DiscordGateway"
+# The Discord bot (the instant @Claudette listener and every Discord job) lives in its own Worker, "debrief-discord" (wrangler.bot.toml, Oct 26):
+# Cloudflare makes no practice links for a Worker that has a Durable Object. This Worker passes Discord's calls on to it (BOT), and hands it the
+# bot's keys inside Cloudflare (BotKeys in the Worker), so no key is copied or typed anywhere.
+[[services]]
+binding = "BOT"
+service = "debrief-discord"
 
+# (Oct 26 move) the listener class used to live here; gateway-2 removes it. It needs `npx wrangler deploy` (a versions upload can't apply
+# migrations). Once it has been applied, both blocks can be deleted.
 [[migrations]]
 tag = "gateway-1"
 new_sqlite_classes = ["DiscordGateway"]
+
+[[migrations]]
+tag = "gateway-2"
+deleted_classes = ["DiscordGateway"]
 
 [[kv_namespaces]]
 binding = "DEBRIEF_KV"

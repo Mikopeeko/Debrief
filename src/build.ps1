@@ -30,10 +30,18 @@ $ts = [regex]::Match($wcl, '// <topspec>[\s\S]*?// </topspec>')
 if (-not $ts.Success) { throw 'wcl.js has no <topspec> block' }
 $w = $w.Replace('/*TOPSPEC*/', $ts.Value)
 $hosted = ([regex]'<head>').Replace($html, "<head>`n<script>window.WLA_HOSTED = true;</script>", 1)
-$w = $w.Replace('__HTML__', (& $js $hosted)).Replace("`r`n", "`n")
-if ($w -match '__[A-Z_]+_Q__|__HTML__|/\*TOPSPEC\*/') { throw 'worker.js still has a placeholder' }
+$base = $w.Replace("`r`n", "`n")
+# the website's Worker: the app baked in, and no listener class (Cloudflare gives no practice links to a Worker that implements a Durable Object)
+$w = $base.Replace('__ROLE__', 'site').Replace('__HTML__', (& $js $hosted))
+$w = [regex]::Replace($w, '/\*@GATEWAY-START\*/[\s\S]*?/\*@GATEWAY-END\*/', '')
+# the Discord helper's own Worker "debrief-discord" (wrangler.bot.toml): the listener class and the Discord jobs, no site page and no key hand-over class
+$bot = $base.Replace('__ROLE__', 'bot').Replace('__HTML__', '""')
+$bot = [regex]::Replace($bot, '/\*@KEYS-START\*/[\s\S]*?/\*@KEYS-END\*/', '')
+foreach ($b in $w, $bot) { if ($b -match '__[A-Z_]+_Q__|__HTML__|__ROLE__|/\*TOPSPEC\*/') { throw 'a Worker still has a placeholder' } }
+if (($w -match 'class DiscordGateway') -or ($bot -notmatch 'export class DiscordGateway') -or ($w -notmatch 'export class BotKeys') -or ($bot -match 'class BotKeys')) { throw 'the split between the website Worker and the Discord Worker is wrong' }
 New-Item -ItemType Directory -Force (Join-Path $root 'online') | Out-Null
 [IO.File]::WriteAllText((Join-Path $root 'online\worker.js'), $w, $utf8)
+[IO.File]::WriteAllText((Join-Path $root 'online\bot.js'), $bot, $utf8)
 # the design check (Oct 22): warns about new code that breaks notes/Guides/Design system.md; it never stops the build
 $dc = 0; try { $dc = & (Join-Path $src 'design-check.ps1') -src $src } catch { Write-Host "  the design check didn't run: $_" }
-"app: {0:N0} chars; worker: {1:N0} chars; design check: {2}" -f $html.Length, $w.Length, $(if ($dc) { "$dc warning(s), see above" } else { 'OK' })
+"app: {0:N0} chars; worker: {1:N0} chars; discord worker: {3:N0} chars; design check: {2}" -f $html.Length, $w.Length, $(if ($dc) { "$dc warning(s), see above" } else { 'OK' }), $bot.Length

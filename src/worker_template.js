@@ -23,6 +23,7 @@ const CHAR_LOOK_Q = __CHAR_LOOK_Q__;
 const TOPRANK_Q = __TOPRANK_Q__;
 const TOPAB_Q = __TOPAB_Q__;
 const APP_HTML = __HTML__;
+const ROLE = '__ROLE__'; // ('site': the website's Worker, 'bot': the Discord helper, its own Worker "debrief-discord" since Oct 26; build.ps1 makes online/worker.js and online/bot.js from this one file)
 /*TOPSPEC*/
 
 let token = null;
@@ -1184,7 +1185,6 @@ async function discordJobs(env, now) {
   await sweepDone(env, all).catch((err) => console.warn('Sweep:', err && err.message));
   await ensureCommands(env).catch((err) => console.warn('Commands:', err && err.message));
   await runKillFeed(env, now).catch((err) => console.warn('Kill feed:', err && err.message));
-  await runFeatures(env).catch((err) => console.warn('Features:', err && err.message));
   await runQuestions(env, all).catch((err) => console.warn('Questions:', err && err.message));
   await runInbox(env).catch((err) => console.warn('Inbox:', err && err.message));
   await relink(env).catch((err) => console.warn('Relink:', err && err.message));
@@ -1414,10 +1414,12 @@ async function planShare(req, env, url) {
 // Object does: it holds the connection all day, hears every message, and answers a tag from the owner or a moderator in about a second. The
 // one-minute run pokes it each minute, so if the connection ever drops it is back within a minute, and the cursor-based tag check still
 // catches anything missed in between. Messages already handled are remembered in KV (dc-mentions), so nothing is filed twice.
+/*@GATEWAY-START*/
 export class DiscordGateway {
   constructor(state, env) { this.state = state; this.env = env; this.ws = null; this.up = false; this.connecting = false; this.seq = null; this.sid = null; this.resume = null; this.hb = null; this.acked = true; this.heard = 0; this.since = 0; this.noContent = false; this.log = []; }
   note(s) { this.log = [...this.log.slice(-9), new Date().toISOString().slice(11, 19) + ' ' + s]; console.log('Gateway:', s); }
   async fetch(req) {
+    this.env = await withKeys(this.env); // (the bot's keys come from the website's Worker: see withKeys)
     const url = new URL(req.url);
     if (!this.up && !this.connecting) await this.connect().catch((err) => this.note('connect failed: ' + (err && err.message)));
     if (url.pathname === '/status') return new Response(JSON.stringify({ up: this.up, heard: this.heard, since: this.since, sid: !!this.sid, noContent: this.noContent, log: this.log }), { headers: { 'Content-Type': 'application/json' } });
@@ -1480,6 +1482,7 @@ export class DiscordGateway {
     this.serial(() => runBugs(env, true)); // (and the new post is copied to GitHub and gets its review post right away)
   }
 }
+/*@GATEWAY-END*/
 // (poked every minute: makes sure the listener is connected)
 // (Discord sends a bot the messages of a thread only once it is a member of it: join each open thread once, up to 20 a minute)
 async function joinThreads(env, threads) {
@@ -1496,27 +1499,47 @@ async function pokeGateway(env) {
   if (!env.GATEWAY || !env.DISCORD_BOT_TOKEN) return;
   const r = await env.GATEWAY.get(env.GATEWAY.idFromName('main')).fetch('https://gateway/ping'); await r.text();
 }
+// ---- The Discord bot lives in its own Worker, "debrief-discord" (Oct 26: Cloudflare gives no practice links to a Worker that implements a Durable Object, so the listener can't sit in the website's Worker).
+// Nothing is copied or typed: the bot's keys are handed over inside Cloudflare. The website's Worker exports BotKeys; the bot Worker is bound to it (SITE) and asks for them (only a Worker bound to it can call it).
+let KEYS = null, KEYS_AT = 0;
+async function withKeys(env) {
+  if (env.DISCORD_BOT_TOKEN && env.GITHUB_TOKEN) return env; // (this Worker has its own keys: use those)
+  if (!env.SITE) return env;
+  if (!KEYS || Date.now() - KEYS_AT > 600000) { try { KEYS = Object.fromEntries(Object.entries(await env.SITE.keys()).filter(([, v]) => v)); KEYS_AT = Date.now(); } catch (err) { console.warn('Keys from the website Worker:', err && err.message); if (!KEYS) return env; } }
+  return { ...env, ...KEYS };
+}
+const botOn = async (env) => (await env.DEBRIEF_KV.get('dc-bot-on')) === '1'; // (the move switch: the bot Worker does nothing until the website's Worker has let go of the bot)
+/*@KEYS-START*/
+import { WorkerEntrypoint } from 'cloudflare:workers';
+export class BotKeys extends WorkerEntrypoint { async keys() { const e = this.env; return { DISCORD_BOT_TOKEN: e.DISCORD_BOT_TOKEN, GITHUB_TOKEN: e.GITHUB_TOKEN, WCL_CLIENT_ID: e.WCL_CLIENT_ID, WCL_CLIENT_SECRET: e.WCL_CLIENT_SECRET }; } }
+/*@KEYS-END*/
 export default {
   async scheduled(ev, env, ctx) {
-    if (ev.cron === MENTION_CRON) { const quickMinute = new Date(ev.scheduledTime || Date.now()).getUTCMinutes() % 10 !== 0; ctx.waitUntil((quickMinute ? tickGateway(env) : pokeGateway(env)).catch((err) => console.warn('One-minute run:', err && err.message))); return; } /* (every tenth minute the ten-minute run does all of it) */ /* (every tenth minute the ten-minute run does the tag check itself) */
+    if (ROLE === 'bot') { if (!(await botOn(env))) return; env = await withKeys(env); } // (the bot Worker sleeps until dc-bot-on is 1)
+    if (ev.cron === MENTION_CRON) { if (ROLE !== 'bot') return; const quickMinute = new Date(ev.scheduledTime || Date.now()).getUTCMinutes() % 10 !== 0; ctx.waitUntil((quickMinute ? tickGateway(env) : pokeGateway(env)).catch((err) => console.warn('One-minute run:', err && err.message))); return; } /* (every tenth minute the ten-minute run does all of it) */ /* (every tenth minute the ten-minute run does the tag check itself) */
     ctx.waitUntil((async () => {
     // (a test write first: with the free daily limit used up, nothing that posts and then saves its place may run (Oct 24))
     let kvOk = true; try { await env.DEBRIEF_KV.put('kv-probe', String(Date.now())); } catch (err) { kvOk = false; console.warn('KV can\'t be written to right now, skipping the Discord jobs:', err && err.message); }
-    return Promise.allSettled(kvOk ? [announcePatch(env), discordJobs(env, ev.scheduledTime || Date.now()), paceStep(env), curveCron(env)] : [paceStep(env), curveCron(env)]).then((r) => r.forEach((x) => { if (x.status === 'rejected') console.warn('Cron:', x.reason && x.reason.message); }));
+    return Promise.allSettled(ROLE === 'bot' ? (kvOk ? [discordJobs(env, ev.scheduledTime || Date.now())] : []) : (kvOk ? [announcePatch(env), runFeatures(env), paceStep(env), curveCron(env)] : [paceStep(env), curveCron(env)])).then((r) => r.forEach((x) => { if (x.status === 'rejected') console.warn('Cron:', x.reason && x.reason.message); }));
   })()); },
   async fetch(req, env, ctx) {
     const url = new URL(req.url), route = ROUTES[url.pathname];
+    if (ROLE === 'bot') { // (the Discord helper's own Worker: Discord's calls, and its status)
+      if (url.pathname === '/api/discord') return req.method === 'POST' ? discordClick(req, await withKeys(env), ctx) : json({ error: 'Discord only.' }, 405);
+      if (url.pathname === '/api/gwstatus') { if (!(await botOn(env))) return json({ on: false, note: 'asleep: dc-bot-on is not set' }); const e2 = await withKeys(env); return e2.GATEWAY.get(e2.GATEWAY.idFromName('main')).fetch('https://gateway/status'); }
+      return new Response('Debrief\'s Discord helper.', { status: 404 });
+    }
     /* (test copy only: read one kill's curves (raw=1 shows Warcraft Logs' answer), or step the gathering: the next kill not yet read from the
        rate kills of that boss, with the same healer count first, up to 12 a boss) */
     if (url.pathname === '/api/curvetest' && /-debrief./.test(url.hostname)) { try { return json(await curveOfKill(env, url.searchParams.get('code'), parseInt(url.searchParams.get('fight'), 10), url.searchParams.get('raw') === '1')); } catch (err) { return json({ error: err.message }); } }
     if (url.pathname === '/api/curvestep' && /-debrief./.test(url.hostname)) { try { return json(await curveStepFor(env, url.searchParams.get('e') + ':' + url.searchParams.get('d'), parseInt(url.searchParams.get('n') || '12', 10))); } catch (err) { return json({ error: err.message }); } }
     if (url.pathname === '/api/ratetest' && /-debrief./.test(url.hostname)) { try { return json(await rateOfKill(env, url.searchParams.get('code'), parseInt(url.searchParams.get('fight'), 10))); } catch (e) { return json({ error: String(e && e.message || e) }, 500); } } /* (test copies only (Oct 23)) */
     if (url.pathname === '/api/pacestep' && /-debrief./.test(url.hostname)) { try { return json(await paceStep(env, 1)); } catch (e) { return json({ error: String(e && e.message || e) }, 500); } } /* (test copies only: one cron step on demand, to check the pace job (Oct 23)) */
-    if (url.pathname === '/api/gwstatus' && env.GATEWAY) return env.GATEWAY.get(env.GATEWAY.idFromName('main')).fetch('https://gateway/status'); /* (is the instant listener connected: counts and its last few events) */
+    if (url.pathname === '/api/gwstatus' && env.BOT) return env.BOT.fetch(req); /* (is the instant listener connected: counts and its last few events) */
     if (url.hostname === HOME_HOST && url.pathname === '/__move' && req.method === 'POST') return moveIn(req, env);
     if ((url.hostname === 'www.' + HOME_HOST || url.origin === OLD_SITE) && (req.method === 'GET' || req.method === 'HEAD') && !/^\/(?:api|wcl|auth)\//.test(url.pathname)) return moveHome(req, url);
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
-    if (url.pathname === '/api/discord') return req.method === 'POST' ? discordClick(req, env, ctx) : json({ error: 'Discord only.' }, 405);
+    if (url.pathname === '/api/discord') return req.method !== 'POST' ? json({ error: 'Discord only.' }, 405) : env.BOT ? env.BOT.fetch(req) : discordClick(req, env, ctx); /* (Discord's address stays debriefme.io: the Discord helper's Worker answers) */
     if ((url.pathname === '/api/night' && !url.searchParams.has('code')) || url.pathname === '/api/night/part') return night(req, env, url); /* (a ?code= read is a raid night's pulls for a team import, not a shared night, Oct 22) */
     if (url.pathname === '/api/plan') return planShare(req, env, url); /* (shared plans, Oct 22) */
     if (url.pathname === '/api/idea') return req.method === 'POST' ? fileIdea(req, env, url) : json({ error: 'Send ideas with the website\'s form.' }, 405);

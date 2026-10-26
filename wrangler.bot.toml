@@ -1,0 +1,31 @@
+# The Discord bot's own Worker "debrief-discord" (Oct 26): Claudette, the instant @Claudette listener (a Durable Object), the one-minute run and
+# every Discord job. The website's Worker (wrangler.toml) can't hold the Durable Object: Cloudflare gives no practice links to a Worker that does.
+# Build first (src/build.ps1 writes online/bot.js), then upload with: npx wrangler deploy -c wrangler.bot.toml
+# It has no keys of its own: the website's Worker hands them over inside Cloudflare (SITE -> BotKeys). It sleeps until the KV key dc-bot-on is 1.
+# The bot's changes go live on their own with this deploy; the website waits for its own push.
+name = "debrief-discord"
+main = "online/bot.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+preview_urls = false
+keep_vars = true
+
+[triggers]
+crons = ["*/10 * * * *", "* * * * *"] # (every ten minutes: all the Discord jobs; every other minute: the tag check and the quick bug sync)
+
+[[durable_objects.bindings]]
+name = "GATEWAY"
+class_name = "DiscordGateway"
+
+[[migrations]]
+tag = "gateway-1"
+new_sqlite_classes = ["DiscordGateway"]
+
+[[kv_namespaces]]
+binding = "DEBRIEF_KV"
+id = "5f5a92a1ea294fb888dea9dc5d7a2aa8"
+
+[[services]]
+binding = "SITE"
+service = "debrief"
+entrypoint = "BotKeys"
