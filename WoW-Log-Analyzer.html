@@ -7305,6 +7305,16 @@ html body #view.plan-page.plan-page.plan-page .plb-one .plb-rc .plb-rr .ndz-ac +
 .pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r > .rck-mgb:not(:first-of-type) > h5.rck-mgh { padding-top: 9px !important; padding-bottom: 9px !important; }
 /* the ring inset goes flatter behind the boxes */
 .pfv .ds-rcols section.rck .rck-cat .rck-rs { background: rgba(0,0,0,.10) !important; }
+/* ===== Design studio round 35 (Oct 26): fewer bars, a rule on hover, a flash on arrival: no thin bar under a tile inside a ring (the ring rows keep theirs), the judging rule as the
+   tooltip on the tile's name, a gold flash on the tile a card jumps to, the stale hint hidden. Owner: the Design studio chat. ===== */
+.pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r > summary > .rck-z { display: none !important; }
+.pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r > summary { row-gap: 4px !important; }
+#view section.rck details.rck-r.ds-hastip > summary > .rck-n > b { border-bottom: 1px dotted rgba(200,205,215,.45); cursor: help; }
+#view section.rck.ds-all .rck-b.ds-slim > p.spc-hwp, #view section.rck.ds-all .rck-mgb > .rck-b > p.spc-hwp, #view section.rck details.rck-r.ds-hastip p.spc-hwp { display: none !important; }
+#view section.rck > h3.rck-h > .sub { display: none; }
+@keyframes ds-flash { 0% { box-shadow: 0 0 0 2px var(--gold), 0 0 26px rgba(230,180,80,.45); } 100% { box-shadow: 0 0 0 0 rgba(230,180,80,0), 0 0 0 rgba(230,180,80,0); } }
+.pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r.ds-flash { animation: ds-flash 1.5s ease-out 1; }
+@media (prefers-reduced-motion: reduce) { .pfv .ds-rcols section.rck .rck-cat .rck-rs > .rck-r.ds-flash { animation: none; box-shadow: 0 0 0 2px var(--gold); } }
 </style>
 
 
@@ -17185,6 +17195,7 @@ const PATCH_NOTES = [
     { t: 'Rotation, unpacked', d: 'The checks are rows now, not dropdowns: every check shows its sentence and its picture (the bar, the split bar, the cast strip) right there. One switch on the checklist, Summary or Everything, opens every reason and every list at once. The five rings still fold.' },
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
   ], n: [
+    'Rotation: inside a ring the thin bars under the checks are gone (the number in its colour says it; the five ring rows keep their bars), hover a check\'s name to read how it is judged, and a What to fix card lights up the row it jumps to.',
     'Rotation is less cluttered: the "top" numbers are gone from the checklist, the score and your healing or damage a second. The colours still come from what top players do, and the What to fix cards keep their target.',
     'Debrief in game: the last step of the setup is clearer, with what you type apart from what you click, and the card buttons it names ringed and numbered in gold.',
     'Rotation\'s top: your three numbers sit in one row under your name (and no empty Parse box when there is no rank), the ring that holds your Fix first opens by itself, Your pull at a glance sits folded right under the top boxes instead of at the very bottom, and on a phone a card\'s How line is no longer cut off.',
@@ -51512,6 +51523,16 @@ function dsRotTop() { const v = document.querySelector('#view .pf-inl.spc-v'); i
   const sec = v.querySelector('section.rck'), card = v.querySelector('.rck-fix .rck-sg[data-ck]');
   if (sec && card && !sec.dataset.dsAuto) { sec.dataset.dsAuto = '1'; if (![...sec.querySelectorAll('.rck-cat')].some((c) => c.open)) { const t = document.getElementById('spc-r-' + card.dataset.ck); const cat = t && t.closest('.rck-cat'); if (cat) cat.open = true; } } }
 (function () { const f21 = dsBars; dsBars = function (root) { f21(root); try { dsRotTop(); } catch (e) {} }; })();
+
+// ===== Design studio round 35 (Oct 26): a rule on hover, a flash on arrival: every tile's name carries its "How it's judged" as the tooltip; a What to fix card
+// flashes the tile it jumps to. Owner: the Design studio chat. =====
+function dsRotTips() { const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  document.querySelectorAll('#view section.rck details.rck-r:not([data-ds-tip])').forEach((t) => { t.dataset.dsTip = '1'; const sm = t.querySelector(':scope > summary'); if (!sm) return;
+    if (!sm.hasAttribute('data-tt')) { const hw = t.querySelector('p.spc-hwp'); const txt = hw ? hw.textContent.replace(/\s+/g, ' ').trim() : ''; if (txt) sm.setAttribute('data-tt', '<b>How it is judged</b><br>' + esc(txt)); }
+    if (sm.hasAttribute('data-tt')) t.classList.add('ds-hastip'); }); }
+(function () { const f22 = dsBars; dsBars = function (root) { f22(root); try { dsRotTips(); } catch (e) {} };
+  document.addEventListener('click', (e) => { const c = e.target && e.target.closest && e.target.closest('#view .rck-fix .rck-sg[data-ck]'); if (!c) return;
+    setTimeout(() => { const t = document.getElementById('spc-r-' + c.dataset.ck); if (!t) return; t.classList.remove('ds-flash'); void t.offsetWidth; t.classList.add('ds-flash'); setTimeout(() => t.classList.remove('ds-flash'), 1600); }, 350); }, true); })();
 
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
