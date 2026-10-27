@@ -3001,7 +3001,6 @@ GDZ_ORIGIN['Sszorak'] = { cx: -409, cy: 384.2 }; GDZ_FULL['Sszorak'] = { x: 0, y
 const SZ = 'Sszorak', SZ_EN = [-34, -6], SZ_EX = [33, 10], SZ_C = [3, 3];
 const SZ_L = ['m1', 'm2', 'm3', 'r1', 'r2', 'r3', 'h1', 'h2', 'm7'], SZ_R = ['m4', 'm5', 'm6', 'r4', 'r5', 'r6', 'r7', 'h3', 'h4'];
 // the four cysts of the kill's first phase, each opposite the tunnel its wind blows from; the fourth always at the exit
-const SZ_CYS = [[44, 11], [22, 38], [-1, 45], [-32, 29], [-18, -37], [9, -41], [38, -20]]; /* (every spot a cyst lands in 13 top kills: the exit, then the six wind spots, from north-east round) */
 const SZ_CY = [[9, -35], [-6, 41], [-22, 27], [38, 11]], SZ_MK = ['cross', 'circle', 'triangle', 'diamond'];
 // the Raging Crosswinds arrows, on this picture (the game's north, south, west and east, turned with the room)
 const SZ_AR = { n: 56, s: 236, w: 146, e: 326 };
@@ -6106,11 +6105,10 @@ const GDZ_PP = {
     mech: { fish: ['fish'], crates: ['crates'], kicks: ['kicks'] },
     jobs: [[/fish/i, ['fish']], [/crate/i, ['crates']], [/icebound|kick/i, ['kicks']]] } },
   'Vashnik the Malignant': { Mythic: {
-    // (the first Plague Froth line ("mow the lawn"): X, triangle and moon for ranged, diamond and star for melee, top to bottom, where the
-    // targets stood in 18 such sets of six top kills (Oct 26; the guide's line from our kill sat 5 to 14 yards further left and bunched at
-    // the top); skull where his tank holds him for Imbibe. Only this map: the user's call, the other jobs need no picture)
-    marks: { cross: [-3, -27], triangle: [-5, -37], moon: [-6, -42], diamond: [-6, -52], star: [-8, -63], skull: VA_I },
-    mver: 2, markersOnly: true,
+    // (the guide's Plague Froth markers on its slanted line ("mow the lawn"): X, triangle and moon for ranged, diamond and star for
+    // melee; skull where his tank holds him for Imbibe. Only this map: the user's call, the other jobs need no picture)
+    marks: { cross: VA_MK.cross, triangle: VA_MK.triangle, moon: VA_MK.moon, diamond: VA_MK.diamond, star: VA_MK.star, skull: VA_I },
+    mver: 3, markersOnly: true,
     stack: [0, 0],
     uses: [],
     room: { scene: (k) => { vaBoss(k); }, focus: { x: 0, y: -26, r: 66 }, lim: 75, keep: [VA] },
@@ -6120,22 +6118,20 @@ const GDZ_PP = {
     mech: { adds: ['adds'], bile: ['bile'], disp: ['disp'] },
     jobs: [[/grip|add/i, ['adds']], [/bile/i, ['bile']], [/exploding infection|dispel/i, ['disp']]] } },
   Sszorak: { Mythic: {
-    // (why they matter: in Dig In each wind blows the raid from the middle to the side across from its tunnel, and the cyst dropped on
-    // that side's marker catches it and throws it back; no cyst there and players are blown off the platform. 13 top kills (Oct 26): the
-    // exit cyst always lands about 44 yards out east-north-east; the other three use three of six spots round the edge, a different three
-    // each intermission (whichever tunnels show wind). So X, circle and triangle sit on the guide's three (south, north, north-west) as far
-    // out as top raids drop them, diamond on the exit, and every spot a cyst can go is ringed on the markers map)
-    marks: { cross: [9, -41], circle: [-1, 45], triangle: [-32, 29], diamond: [44, 11] },
-    mver: 2,
+    // (where the guide puts them: X, circle and triangle across from the three wind tunnels, one cyst on each, and the diamond at the exit,
+    // the guide's own spots (the user, Oct 26: "I need to see where the guides say to put the raid markers"). Why they matter: in Dig In
+    // each wind blows the raid toward the side across from its tunnel, and the cyst on that marker catches it and throws it back)
+    marks: { cross: SZ_CY[0], circle: SZ_CY[1], triangle: SZ_CY[2], diamond: SZ_CY[3] },
+    mver: 3,
     stack: [0, 0],
-    uses: [['exit', 'Exit cyst marker', 'diamond']],
-    room: { scene: (k) => { szBoss(k); SZ_CYS.forEach(([x, y], i) => k.ring({ x, y, r: 4, fx: 'zone', t0: 0, dur: 99, color: i ? '#8fe36a' : '#e6b450', cn: i ? 'Where a wind cyst can go' : 'The exit cyst', label: false })); }, focus: { x: 0, y: 0, r: 62 }, lim: 60, keep: [SZ] },
-    mkTip: 'The exit marker (diamond) never moves. The other three go across from the tunnels that show wind each intermission: the rings show every spot a cyst can go.',
+    uses: [],
+    room: { scene: (k) => { szBoss(k); }, focus: { x: 0, y: 0, r: 62 }, lim: 60, keep: [SZ] },
+    mkTip: 'X, circle and triangle go across from the wind tunnels (a cyst on each catches the raid in Dig In); the diamond is the exit.',
     read(N, P) { return ppReadSZ(N, P); },
-    cards: ppCardsSZ,
+    cards: (J, M, U, P) => ppCardsSZ(J, M, U, P).filter((cd) => cd.id !== 'cyst'), /* (no picture for the cyst popper: the user's call; the cysts stay on the markers map) */
     // (Plan's Jobs cards (a447ffe) and the pictures each shows, by its key, else by its title)
-    mech: { mut: ['mut'], fury: ['fury'], cyst: ['cyst'] },
-    jobs: [[/mutilate/i, ['mut']], [/fury/i, ['fury']], [/cyst/i, ['cyst']]] } },
+    mech: { mut: ['mut'], fury: ['fury'] },
+    jobs: [[/mutilate/i, ['mut']], [/fury/i, ['fury']]] } },
   "Kith'ix": { Mythic: {
     // (the guide's markers: the soak spots just inside the barrier (circle for the tanks, moon and triangle for the scar pairs) and the
     // fear spots (skull for healers, star for melee, X for ranged); diamond and square off to the side for the raid lead to use)
