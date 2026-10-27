@@ -22772,8 +22772,13 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
 function planNm(x) { if (!x) return ''; const nm = String(x.name || ''); if (/^(Mythic|Heroic)\s·\s.+\b(out|in)$/i.test(nm) || nm.length > 40) { const d = /^(Mythic|Heroic)/i.exec(nm), when = x.saved ? new Date(x.saved).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ''; return (d ? d[1] + ' plan' : nm.slice(0, 36) + '…') + (d && when ? ' · ' + when : ''); } return nm; }
 
 // (the "What changed and why" box an automated button leaves; Got it closes it)
-function planWhyH(v) { const W0 = S.plWhy; if (!W0 || (W0.v !== v && !(v === 'tonight' && W0.v === 'night')) || (W0.boss && (!S.planOpen || S.ndzPick !== W0.boss))) return '';
-  return '<div class="panel plw"><div class="plw-h"><b>' + esc(W0.t || 'What changed and why') + '</b><button class="btn sm" type="button" data-plwhyx="1">Got it</button></div>' + W0.html + '</div>'; }
+function planWhyH(v) { return ''; /* (no What changed box: the user, "Just remove them its too much", Oct 26) */ const W0 = S.plWhy; if (!W0 || (W0.v !== v && !(v === 'tonight' && W0.v === 'night')) || (W0.boss && (!S.planOpen || S.ndzPick !== W0.boss))) return '';
+  return planWhyBox('panel plw', W0.html, 'data-plwhyx', W0.t); }
+// (one slim notice: the summary sentence and Got it in a row, everything else under Every change, closed; the user, Oct 26)
+function planWhyBox(cls, html, xattr, t) { let h = String(html || ''), sum = ''; const m = /^\s*<p class="plw-sum">[\s\S]*?<\/p>/.exec(h) || /^\s*<p[^>]*>[\s\S]*?<\/p>/.exec(h);
+  if (m) { sum = m[0].replace(/^\s*<p[^>]*>/, '<p class="plw-sum">'); h = h.slice(m.index + m[0].length); } else sum = '<p class="plw-sum">' + esc(t || 'What changed and why') + '</p>';
+  if (h.trim() && !/^\s*<details class="plw-more"/.test(h)) h = '<details class="plw-more"><summary>Every change</summary>' + h + '</details>';
+  return '<div class="' + cls + '"><div class="plw-h">' + sum + '<button class="btn sm" type="button" ' + xattr + '="1">Got it</button></div>' + h + '</div>'; }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-plwhyx]'); if (!b || S.page !== 'plan') return; S.plWhy = null; const y = window.scrollY; planAssign(); window.scrollTo({ top: y }); });
 
 // (no roster yet and a team on Home: make one from the team's regulars, say what was done)
@@ -23808,17 +23813,22 @@ document.addEventListener('click', (e) => { if (S.page !== 'plan' || !e.target.c
 // (Redo it for me, explained: each job whose players changed, with the job's reason; each cooldown added, moved or dropped)
 function bjRedoWhyH(before, d) { const jobs = (t) => { const m = new Map(); for (const ln of String(t).split(/\r?\n/)) { if (/^EncounterID:|(^|;)\s*time:|^int(start|end)$/i.test(ln.trim())) continue; const i = ln.indexOf(':'); if (i > 0) m.set(ln.slice(0, i).trim(), ln.slice(i + 1).trim().split(/\s+/).filter(Boolean).map((w) => w.split('-')[0])); } return m; };
   const cds = (t) => { const a = []; for (const ln of String(t).split(/\r?\n/)) { if (!/(^|;)\s*time:/i.test(ln)) continue; const f = {}; for (const kv of ln.split(';')) { const i = kv.indexOf(':'); if (i > 0) f[kv.slice(0, i).trim().toLowerCase()] = kv.slice(i + 1).trim(); } if (+f.spellid) a.push({ t: +f.time || 0, ph: +f.ph || 1, id: +f.spellid, who: String(f.tag || '').split(/\s+/)[0].split('-')[0], nm: ndzSpellNm(+f.spellid) || f.text || '' }); } return a; };
-  const A = jobs(before), B = jobs(d.text), lines = [], tm = (c) => (c.ph % 1 ? 'Int ' : 'P' + c.ph + ' ') + bjfMm(c.t);
-  for (const [lab, now] of B) { const was = A.get(lab) || [], inn = now.filter((x) => !was.includes(x)), out = was.filter((x) => !now.includes(x)); if (!inn.length && !out.length) continue;
-    lines.push('<li><b>' + esc(lab) + '</b>: ' + (inn.length ? esc(andL(inn)) + ' in' : '') + (inn.length && out.length ? ', ' : '') + (out.length ? esc(andL(out)) + ' out' : '') + '.' + (d.whys && d.whys[lab] ? ' <span class="sub">' + esc(d.whys[lab]) + '</span>' : '') + '</li>'); }
-  for (const [lab, was] of A) if (!B.has(lab) && was.length) lines.push('<li><b>' + esc(lab) + '</b>: dropped (' + esc(andL(was)) + '). <span class="sub">The suggestions no longer use this job.</span></li>');
-  const ca = cds(before), cb = cds(d.text), key = (c) => c.who + '|' + c.id, used = new Set(), cl = [];
-  for (const c of cb) { const m = ca.find((x, i) => !used.has(i) && key(x) === key(c) && x.ph === c.ph && Math.abs(x.t - c.t) <= 2); if (m) { used.add(ca.indexOf(m)); continue; }
-    const mv = ca.findIndex((x, i) => !used.has(i) && key(x) === key(c)); if (mv >= 0) { used.add(mv); cl.push('<li><b>' + esc(c.nm) + '</b> (' + esc(c.who) + ') moved ' + tm(ca[mv]) + ' → ' + tm(c) + '. <span class="sub">Lined up with the damage there.</span></li>'); }
-    else cl.push('<li><b>' + esc(c.nm) + '</b> (' + esc(c.who) + ') added at ' + tm(c) + '. <span class="sub">It\'s back by then and the damage there needs it.</span></li>'); }
-  ca.forEach((c, i) => { if (!used.has(i)) cl.push('<li><b>' + esc(c.nm) + '</b> (' + esc(c.who) + ') at ' + tm(c) + ' dropped. <span class="sub">Not needed there, or the cooldown is used better elsewhere.</span></li>'); });
-  if (!lines.length && !cl.length) return '<p class="sub">Nothing changed: the plan was already what Debrief would make.</p>';
-  return '<p class="sub">Your edits to this plan were redone. Here is every change, and why.</p>' + (lines.length ? '<div class="plw-b"><span class="plw-bn">Jobs</span><ul>' + lines.join('') + '</ul></div>' : '') + (cl.length ? '<div class="plw-b"><span class="plw-bn">Cooldowns</span><ul>' + cl.join('') + '</ul></div>' : ''); }
+  const A = jobs(before), B = jobs(d.text), tm = (c) => (c.ph % 1 ? 'Int ' : 'P' + c.ph + ' ') + bjfMm(c.t); /* (one summary, the rest folded, Oct 26) */
+  const ch = []; for (const [lab, now] of B) { const was = A.get(lab) || [], inn = now.filter((x) => !was.includes(x)), out = was.filter((x) => !now.includes(x)); if (inn.length || out.length) ch.push({ lab, now, out }); }
+  const gone = [...A].filter(([lab, was]) => !B.has(lab) && was.length).map(([lab]) => lab);
+  const ca = cds(before), cb = cds(d.text), key = (c) => c.who + '|' + c.id, used = new Set(), add = [], mov = [];
+  for (const c of cb) { const m = ca.find((x, i) => !used.has(i) && key(x) === key(c) && x.ph === c.ph && Math.abs(x.t - c.t) <= 2); if (m) { used.add(ca.indexOf(m)); continue; } const mv = ca.findIndex((x, i) => !used.has(i) && key(x) === key(c)); if (mv >= 0) { used.add(mv); mov.push({ c, from: ca[mv] }); } else add.push(c); }
+  const drop = ca.filter((c, i) => !used.has(i));
+  if (!ch.length && !gone.length && !add.length && !mov.length && !drop.length) return '<p class="plw-sum">Nothing changed: the plan was already what Debrief would make.</p>';
+  const base = (l) => { const m = /^(.*?)\s*(\d+)$/.exec(l); return m ? m[1] : null; }, G = new Map(), single = []; for (const x of ch) { const b0 = base(x.lab); if (b0 && ch.filter((y) => base(y.lab) === b0).length > 1) { if (!G.has(b0)) G.set(b0, []); G.get(b0).push(x); } else single.push(x); }
+  const items = [], sum = [];
+  for (const [b0, xs] of G) { const nums = xs.map((x) => +/(\d+)$/.exec(x.lab)[1]).sort((a, b) => a - b), all = xs.map((x) => x.now), every = all[0].filter((n) => all.every((l) => l.includes(n))), rot = [...new Set(all.flat())].filter((n) => !every.includes(n));
+    items.push('<li><b>' + esc(b0) + ' ' + nums[0] + '–' + nums[nums.length - 1] + '</b>: ' + (xs.length > 2 && every.length ? esc(andL(every)) + ' in every one' + (rot.length ? ', with ' + esc(andL(rot)) + ' rotating' : '') : xs.map((x) => esc(x.lab.replace(b0, '').trim()) + ' ' + esc(andL(x.now))).join(' · ')) + '</li>'); sum.push(xs.length + ' ' + b0.toLowerCase() + (/s$/i.test(b0) ? '' : 's') + ' refilled'); }
+  for (const x of single) items.push('<li><b>' + esc(x.lab) + '</b>: ' + esc(andL(x.now)) + (x.out.length ? ' <span class="sub">(was ' + esc(andL(x.out)) + ')</span>' : '') + '</li>'); if (single.length) sum.push(andL(single.map((x) => x.lab.toLowerCase())) + ' set');
+  for (const l of gone) items.push('<li><b>' + esc(l) + '</b>: dropped</li>'); if (gone.length) sum.push(plural(gone.length, 'job') + ' dropped');
+  const cdl = add.map((c) => '<li><b>' + esc(c.nm) + '</b> ' + esc(c.who) + ' · ' + tm(c) + '</li>').concat(mov.map((m) => '<li><b>' + esc(m.c.nm) + '</b> ' + esc(m.c.who) + ' · ' + tm(m.from) + ' → ' + tm(m.c) + '</li>'), drop.map((c) => '<li><b>' + esc(c.nm) + '</b> ' + esc(c.who) + ' · ' + tm(c) + ' <span class="sub">dropped</span></li>'));
+  if (add.length) sum.push(plural(add.length, 'cooldown reminder') + ' placed'); if (mov.length) sum.push(mov.length + ' moved'); if (drop.length) sum.push(drop.length + ' dropped');
+  return '<p class="plw-sum">Your edits were redone to fit these players: ' + esc(sum.join(', ')) + '.</p><details class="plw-more"><summary>Every change</summary>' + (items.length ? '<div class="plw-b"><span class="plw-bn">Jobs</span><ul>' + items.join('') + '</ul></div>' : '') + (cdl.length ? '<div class="plw-b"><span class="plw-bn">Cooldowns</span><p class="sub">' + (add.length ? plural(add.length, 'cooldown') + ' placed at the hits that need them' : 'Cooldowns lined up with the damage') + '</p><ul>' + cdl.join('') + '</ul></div>' : '') + '</details>'; }
 // ---- Jobs in fight order (Oct 22, your ask: "is there a way to show a progression timeline with the assignments in it?") ----
 // A switch on the Boss page's Jobs panel: "By mechanic" (the cards) or "In fight order": every job at the moment it happens, phase
 // by phase, from the fastest kills' clock (NDZ_BOSSTL), with the raid cooldowns the note puts at that moment beside it. A job is
@@ -24127,7 +24137,8 @@ function planCarry(prev, o) { if (PLAN_CARRYING || S.page !== 'plan' || !prev ||
       done.push('<div class="plc-b"><b>' + esc(pnShort(b)) + '</b>' + res.html.replace(/<p class="sub">Saved as a new plan[\s\S]*$/, '') + '</div>'); } }
   finally { PLAN_CARRYING = false; }
   if (done.length) S.plCarry = done.join(''); }
-function planCarryH() { if (!S.plCarry) return ''; return '<div class="panel plw plc"><div class="plw-h"><b>Plans kept up to date</b><button class="btn sm" type="button" data-plcarryx="1">Got it</button></div>' + S.plCarry + '<p class="sub">Each plan now has these players, saved as a plan for them. The plan before the swap stays under ⇄ Other plans.</p></div>'; }
+function planCarryH() { return ''; /* (no Plans kept box either, the user, Oct 26) */ if (!S.plCarry) return ''; const bs = [...String(S.plCarry).matchAll(/<div class="plc-b"><b>([^<]+)<\/b>/g)].map((m) => m[1]); /* (one summary, the boss lists folded, Oct 26) */
+  return planWhyBox('panel plw plc', '<p class="plw-sum">Plans kept up to date' + (bs.length ? ' for ' + andL(bs) : '') + ': whoever came in took the jobs of whoever sits.</p>' + S.plCarry + '<p class="sub">Each plan now has these players, saved as a plan for them. The plan before the swap stays under ⇄ Other plans.</p>', 'data-plcarryx'); }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-plcarryx]'); if (!b || S.page !== 'plan') return; S.plCarry = null; const y = window.scrollY; planAssign(); window.scrollTo({ top: y }); });
 
 // (the spec picker by the ▾ the user tapped (Oct 26): a small pop-up under it with the class's specs, the current one lit)
