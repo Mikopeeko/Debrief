@@ -6336,6 +6336,7 @@ header.fight.bh.bhx, header.fight.bh.bhx.hero { display: block; min-height: 0; p
   .rp-open, .fpx-link, .gs-just, .gdz-howto, .gdz-wrong, .spc-hwb, .spc-mtx, .spc-sltc, .spc-mo, .ndh-go { padding-top: 8px; padding-bottom: 8px; margin-top: -8px; margin-bottom: -8px; }
 }
 /* ===== end of round 3 ===== */
+.fp3-wsub { margin: 6px 0 0; font-size: 15px; text-align: center; } /* (the Three ways line, matched to Pick your boss's, Oct 27) */
 /* the front page refresh (Oct 24): the hero's example of today's look, the three ways in, the What you get tiles */
 .fp3-ban { padding: 14px 16px 10px; background: linear-gradient(180deg, rgba(60,40,90,.35), rgba(19,22,29,0)); border-bottom: 1px solid var(--line); }
 .fp3-bt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; } .fp3-bt b { font: 700 18px var(--head); }
@@ -8500,10 +8501,11 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 
 </head>
 <body>
+<noscript><h1>Debrief: WoW raid log review for Mythic progression</h1><p>Debrief reads your World of Warcraft raid logs, from a Warcraft Logs report or your own combat log, and explains every pull: which mechanics were missed and by whom, why each player died, how your rotation compared with the top players, and what to fix before the next pull.</p><p>It also has Heroic and Mythic boss guides for every boss in the raid, a raid cooldown planner that reads Northern Sky Raid Tools (NSRT) notes, and an in-game addon. Debrief needs JavaScript turned on.</p></noscript>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="lgfMetal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff4cf"/><stop offset=".22" stop-color="#f6d27a"/><stop offset=".5" stop-color="#d9a441"/><stop offset=".62" stop-color="#a8701f"/><stop offset=".8" stop-color="#f2c862"/><stop offset="1" stop-color="#7a4f14"/></linearGradient><linearGradient id="lgfMetalDk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6e4611"/><stop offset=".5" stop-color="#c48a2c"/><stop offset="1" stop-color="#ffe3a0"/></linearGradient><radialGradient id="lgfEnamel" cx=".5" cy=".3" r=".8"><stop offset="0" stop-color="#2b3247"/><stop offset=".6" stop-color="#161a25"/><stop offset="1" stop-color="#0a0c12"/></radialGradient><linearGradient id="lgfEmerald" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c8ffd2"/><stop offset=".45" stop-color="#5fdc7a"/><stop offset="1" stop-color="#178a3c"/></linearGradient><linearGradient id="icoShade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient></defs></svg>
 <div class="app">
   <header class="topbar" id="topbar">
-    <div class="brand" id="brandHome" title="Home"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 2 57 11.5V30c0 15.5-11.3 26.6-25 32C18.3 56.6 7 45.5 7 30V11.5Z" fill="url(#lgfMetal)" stroke="#4a300a" stroke-width=".8"/><path d="M32 7 52.5 14.8V30c0 12.8-9.2 22-20.5 26.6C20.7 52 11.5 42.8 11.5 30V14.8Z" fill="url(#lgfMetalDk)"/><path d="M32 9.2 50.5 16.3V30c0 11.7-8.3 20.2-18.5 24.5C21.8 50.2 13.5 41.7 13.5 30V16.3Z" fill="url(#lgfEnamel)"/><path d="M32 9.2 50.5 16.3V23C40 20.5 24 20.5 13.5 23V16.3Z" fill="#fff" opacity=".07"/><path fill-rule="evenodd" transform="translate(0 1.2)" fill="#000" opacity=".55" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path fill-rule="evenodd" fill="url(#lgfMetal)" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path d="m29 32.4 2.7 2.7 5.6-6.1" fill="none" stroke="url(#lgfEmerald)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg><div><h1>Debrief</h1><p>Retail combat logs, read on your PC</p></div></div>
+    <div class="brand" id="brandHome" title="Home" aria-label="Debrief home"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 2 57 11.5V30c0 15.5-11.3 26.6-25 32C18.3 56.6 7 45.5 7 30V11.5Z" fill="url(#lgfMetal)" stroke="#4a300a" stroke-width=".8"/><path d="M32 7 52.5 14.8V30c0 12.8-9.2 22-20.5 26.6C20.7 52 11.5 42.8 11.5 30V14.8Z" fill="url(#lgfMetalDk)"/><path d="M32 9.2 50.5 16.3V30c0 11.7-8.3 20.2-18.5 24.5C21.8 50.2 13.5 41.7 13.5 30V16.3Z" fill="url(#lgfEnamel)"/><path d="M32 9.2 50.5 16.3V23C40 20.5 24 20.5 13.5 23V16.3Z" fill="#fff" opacity=".07"/><path fill-rule="evenodd" transform="translate(0 1.2)" fill="#000" opacity=".55" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path fill-rule="evenodd" fill="url(#lgfMetal)" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path d="m29 32.4 2.7 2.7 5.6-6.1" fill="none" stroke="url(#lgfEmerald)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg><div><h1>Debrief</h1><p>Retail combat logs, read on your PC</p></div></div>
     <div class="bosspick" id="bossPick"></div>
     <span class="tb-sp"></span>
     <div class="live" id="liveBar" hidden><button class="btn" id="liveBtn" title="Check the report for new pulls every 15 seconds">Live: off</button><span class="sub" id="liveMsg"></span></div>
@@ -46605,7 +46607,7 @@ function bindFphBosses() {
   };
 }
 // (the footer: the logo once more, and the places people look for at the bottom of a page)
-const fphFoot = () => '<footer class="fph-foot"><div class="fph-fb">' + LOGO + '<div><b>Debrief</b><span>Built by raiders, for every raid team from LFR to Mythic.</span></div></div><nav>' +
+const fphFoot = () => '<footer class="fph-foot"><div class="fph-fb">' + LOGO + '<div><b>Debrief</b><span>Built by raiders, for every raid team from LFR to Mythic: WoW raid log reviews from Warcraft Logs, Mythic boss guides, and a raid cooldown planner for NSRT notes.</span></div></div><nav>' +
   '<button type="button" id="fphPatch">Patch notes</button><button type="button" id="fphTour">Take the tour</button>' +
   (DISCORD_URL ? '<a href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">Join our Discord</a>' : '') +
   (REPORT_ON() ? '<a href="#" class="rp-open">Report a problem</a>' : '') + '</nav></footer>';
@@ -46649,7 +46651,7 @@ function homeHosted() {
         '<p class="gs-cs">' + (tg ? 'Straight to ' + esc(gName(tg)) + '.' : 'Add your character and your team, one step at a time. It takes about a minute.') + '</p></div>' +
         '<div class="fp-msg fp-note" id="fpDemoMsg"></div>' +
         '<p class="fp3-trust">Free · No account needed · Warcraft Logs or your own combat log</p></div>' + /* (one small line instead of four ticks; Just open a log is in the menu, Oct 24) */
-      '<div class="fpx-shot">' + fp3Shot() + '</div>' + /* (no floating tags: calmer, Oct 24) */
+      '<div class="fpx-shot" role="figure" aria-label="Example of a Debrief raid log review: the boss\'s health on every pull, and the coached debrief">' + fp3Shot() + '</div>' + /* (no floating tags: calmer, Oct 24) */
     '</div></section>' + fp3Ways(art) + /* (Oct 24 refresh: today's look in the hero, then the three ways in) */
     '<section class="fpx-sec fpb fpx-bosses"><div class="fpx-in"><div class="fpx-rh"><div><div class="fp-k">Boss by boss</div><h2>Pick your boss</h2>' +
         '<p>All ten this season, each with its own checks, LFR to Mythic. Pick one to see what Debrief checks.</p></div>' +
@@ -46701,7 +46703,7 @@ function fp3Shot() {
 // (the three ways in, Oct 24: Debrief before raid (the boss guides), during it (the addon and app) and after it (your night))
 function fp3Ways(art) {
   const card = (b, when, h, p, go) => '<div class="fp3-way" style="--fp3-art:' + art(b) + '"><span class="fp3-when">' + when + '</span><h3>' + h + '</h3><p>' + p + '</p>' + go + '</div>';
-  return '<section class="fpx-sec fp3-ways"><div class="fpx-in"><div class="fpx-sh"><div class="fp-k">Three ways in</div><h2>Before, during and after raid</h2><p class="sub">Mythic boss guides, a raid cooldown planner for your NSRT notes, and a debrief of every pull.</p></div><div class="fp3-wg">' +
+  return '<section class="fpx-sec fp3-ways"><div class="fpx-in"><div class="fpx-sh"><div class="fp-k">Three ways in</div><h2>Before, during and after raid</h2><p class="sub fp3-wsub">Boss guides before raid, a debrief in game during it, and every pull explained after.</p></div><div class="fp3-wg">' +
     card('The Twin Fangs', 'Before raid', 'Learn every boss', 'Guides for all ten bosses, Heroic and Mythic: maps that play each mechanic in order, and your job on each.', '<a class="fp3-go" href="?guides">Open the boss guides ›</a>') +
     card("Ula'tek", 'During raid', 'A debrief after every pull, in game', 'The Debrief addon and app show the mistakes and what to fix, before the next pull starts.', '<a class="fp3-go" href="?ingame">Get the addon ›</a>') +
     card('The Coiled Altar', 'After raid', 'Every pull, explained', 'Warcraft Logs or your own combat log: mechanics, deaths and your rotation, pull by pull.', '<button class="fp3-go linkbtn" id="fpDemo2" type="button">See a real raid night ›</button><div class="fp-msg fp-note" id="fpDemoMsg2"></div>') +

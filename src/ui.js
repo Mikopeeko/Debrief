@@ -30137,7 +30137,7 @@ function bindFphBosses() {
   };
 }
 // (the footer: the logo once more, and the places people look for at the bottom of a page)
-const fphFoot = () => '<footer class="fph-foot"><div class="fph-fb">' + LOGO + '<div><b>Debrief</b><span>Built by raiders, for every raid team from LFR to Mythic.</span></div></div><nav>' +
+const fphFoot = () => '<footer class="fph-foot"><div class="fph-fb">' + LOGO + '<div><b>Debrief</b><span>Built by raiders, for every raid team from LFR to Mythic: WoW raid log reviews from Warcraft Logs, Mythic boss guides, and a raid cooldown planner for NSRT notes.</span></div></div><nav>' +
   '<button type="button" id="fphPatch">Patch notes</button><button type="button" id="fphTour">Take the tour</button>' +
   (DISCORD_URL ? '<a href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">Join our Discord</a>' : '') +
   (REPORT_ON() ? '<a href="#" class="rp-open">Report a problem</a>' : '') + '</nav></footer>';
@@ -30181,7 +30181,7 @@ function homeHosted() {
         '<p class="gs-cs">' + (tg ? 'Straight to ' + esc(gName(tg)) + '.' : 'Add your character and your team, one step at a time. It takes about a minute.') + '</p></div>' +
         '<div class="fp-msg fp-note" id="fpDemoMsg"></div>' +
         '<p class="fp3-trust">Free · No account needed · Warcraft Logs or your own combat log</p></div>' + /* (one small line instead of four ticks; Just open a log is in the menu, Oct 24) */
-      '<div class="fpx-shot">' + fp3Shot() + '</div>' + /* (no floating tags: calmer, Oct 24) */
+      '<div class="fpx-shot" role="figure" aria-label="Example of a Debrief raid log review: the boss\'s health on every pull, and the coached debrief">' + fp3Shot() + '</div>' + /* (no floating tags: calmer, Oct 24) */
     '</div></section>' + fp3Ways(art) + /* (Oct 24 refresh: today's look in the hero, then the three ways in) */
     '<section class="fpx-sec fpb fpx-bosses"><div class="fpx-in"><div class="fpx-rh"><div><div class="fp-k">Boss by boss</div><h2>Pick your boss</h2>' +
         '<p>All ten this season, each with its own checks, LFR to Mythic. Pick one to see what Debrief checks.</p></div>' +
@@ -30233,7 +30233,7 @@ function fp3Shot() {
 // (the three ways in, Oct 24: Debrief before raid (the boss guides), during it (the addon and app) and after it (your night))
 function fp3Ways(art) {
   const card = (b, when, h, p, go) => '<div class="fp3-way" style="--fp3-art:' + art(b) + '"><span class="fp3-when">' + when + '</span><h3>' + h + '</h3><p>' + p + '</p>' + go + '</div>';
-  return '<section class="fpx-sec fp3-ways"><div class="fpx-in"><div class="fpx-sh"><div class="fp-k">Three ways in</div><h2>Before, during and after raid</h2><p class="sub">Mythic boss guides, a raid cooldown planner for your NSRT notes, and a debrief of every pull.</p></div><div class="fp3-wg">' +
+  return '<section class="fpx-sec fp3-ways"><div class="fpx-in"><div class="fpx-sh"><div class="fp-k">Three ways in</div><h2>Before, during and after raid</h2><p class="sub fp3-wsub">Boss guides before raid, a debrief in game during it, and every pull explained after.</p></div><div class="fp3-wg">' +
     card('The Twin Fangs', 'Before raid', 'Learn every boss', 'Guides for all ten bosses, Heroic and Mythic: maps that play each mechanic in order, and your job on each.', '<a class="fp3-go" href="?guides">Open the boss guides ›</a>') +
     card("Ula'tek", 'During raid', 'A debrief after every pull, in game', 'The Debrief addon and app show the mistakes and what to fix, before the next pull starts.', '<a class="fp3-go" href="?ingame">Get the addon ›</a>') +
     card('The Coiled Altar', 'After raid', 'Every pull, explained', 'Warcraft Logs or your own combat log: mechanics, deaths and your rotation, pull by pull.', '<button class="fp3-go linkbtn" id="fpDemo2" type="button">See a real raid night ›</button><div class="fp-msg fp-note" id="fpDemoMsg2"></div>') +
