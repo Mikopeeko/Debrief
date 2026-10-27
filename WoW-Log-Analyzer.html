@@ -7980,6 +7980,13 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster > details.pg-week .tn-sec.tn-team > .tn-sh > .tn-sp, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster > details.pg-week .tn-sec.tn-team > .tn-sh > [data-tnedit], html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster > details.pg-week .tn-sec.tn-team > .tn-sh > [data-tnfold], html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster > details.pg-week .tn-sec.tn-team > .tn-sh > .ds-info { display: none !important; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster > details.pg-week .tn-sec.tn-team > .tn-hint { display: none; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster > details.pg-week > .tn-sec, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster > details.pg-week > div > .tn-sec { padding-top: 8px; }
+/* ===== Design studio round 78 (Oct 27): today as a dot on the nights strip, no step number in Edit team. Owner: the Design studio chat. ===== */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pn-day.today::after { content: ''; display: block; width: 6px; height: 6px; right: 6px; top: 7px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 2px rgba(230,180,80,.25); font-size: 0; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pn-day.today > b { color: var(--gold); padding-right: 12px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pn-day.today[data-tt]::after, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pn-day.today:hover::after { opacity: 1; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster.ed .tn-sh > h3 > i { display: none; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster.ed .tn-sh > h3 { font-size: 15px; }
+@media (max-width: 760px) { html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pn-day.today::after { display: block; } }
 </style>
 
 
