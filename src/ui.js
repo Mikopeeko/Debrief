@@ -8699,6 +8699,13 @@ document.addEventListener('click', (e) => { if (S.page !== 'plan' || !e.target.c
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && BTL_SEL) btlSelOff(); });
 document.addEventListener('click', () => { if (BTL_SEL) setTimeout(() => { if (BTL_SEL && !document.querySelector('#ndzTl .bhl-sel, #ndzTl .btl-gd.aim')) btlSelPaint(); }, 60); }); /* (a redraw keeps it) */
 document.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('#ndzTl .btl-sugc[data-armat]')) { e.preventDefault(); e.target.closest('.btl-sugc').click(); } }); /* (a suggestion by keyboard) */
+
+// ---- Grey a tray cooldown that has no free moment left (Oct 27) ----
+function btlTrayFull() { const tr = document.querySelector('#ndzTl .btl-tray'); if (!tr || tr.dataset.fullchk || !NDZ_TL || !NDZ_TL.noteId) return; tr.dataset.fullchk = '1'; const O = btlOffs(), V = NDZ_BTLV; if (!V) return;
+  const o0 = V.ph === 99 ? 0 : ((O.find((o) => o.ph === V.ph) || { s: 0 }).s), len = V.len || 0;
+  tr.querySelectorAll('.btl-ti[data-tri], .btl-ti[data-trcall]').forEach((ti) => { const call = ti.dataset.trcall || '', why = (abs) => (call ? btlCallClash(call, abs, -1, O) : btlClash(ti.dataset.trw, +ti.dataset.tri, abs, -1, O)); let free = false; for (let s = 0; s <= len; s += 2) if (!why(o0 + s)) { free = true; break; }
+    ti.classList.toggle('ti-full', !free); if (!free && !ti.dataset.ttfull) { ti.dataset.ttfull = '1'; ti.dataset.tt = (ti.dataset.tt || '') + '<br><span class="no">No free spot left' + (V.ph === 99 ? '' : ' in this phase') + ': it\'s used every time it\'s back. Move or take out one of its uses to free it.</span>'; } }); }
+if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined') { let q2 = 0; new MutationObserver(() => { if (q2) return; q2 = requestAnimationFrame(() => { q2 = 0; if (S.page === 'plan') btlTrayFull(); }); }).observe(document.documentElement, { childList: true, subtree: true }); }
 // ---- Tonight: the Plan tab's home (your call, Oct 24: "B", fewer doors). Every boss on one row: who sits, its status and one
 // main button (✨ Make it for me, Fix or Open) with 🎮 Copy; Who plays' things to fix on top; the big who-plays grid one button
 // away. A boss opens its page; ← Tonight comes back. The boss page has four buttons (✎ Edit plan, ✨ Make it for me,
