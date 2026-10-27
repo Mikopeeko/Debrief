@@ -1948,7 +1948,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-27', h: [], n: [], f: [
-    'Defensives: an Arms or Fury Warrior\'s Defensive Stance counts as a defensive used now, in the raid summary and on the Survivability page.',
+    'Defensives: an Arms or Fury Warrior\'s Defensive Stance counts as a defensive used now, and it and Spell Reflection show how much damage they took off, in the raid summary and on the Survivability page.',
   ] },
   { d: '2026-10-26', h: [
     { t: 'Boss guides, one rail', d: 'A guide now opens with one bar on top: pick your role, the phase, and Summary or Everything. Your job and What wipes us come first, the fight at a glance names the mechanics that matter in each phase (tap one to jump), and every card starts short: the map, one line, three steps, with Everything a tap away.' },

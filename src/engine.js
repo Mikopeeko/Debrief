@@ -5988,14 +5988,15 @@ const CD_HEALS = new Map([['tranquility', 'Tranquility'], ['divine hymn', 'Divin
 // damage reduction cooldowns, by the buff on the players inside: [cooldown, reduction, magic damage only] (tooltips, patch 12.1)
 // Personal defensives' damage taken off (Oct 22, for the Defensives panel): buff name (lower case) -> [reduction, magic only]. Reduction 1 =
 // an immunity (no number); 'abs' = an absorb shield (its soak is logged exactly). Values from the spells' text (Midnight, about; check
-// against tooltips when tuning changes). Evasion, Spell Reflection and heals aren't here: they don't reduce damage taken.
+// against tooltips when tuning changes). Evasion and heals aren't here: they don't reduce damage taken.
 const PERS_DR = new Map([['barkskin', [0.2]], ['survival instincts', [0.5]], ['rage of the sleeper', [0.2]], ['icebound fortitude', [0.3]],
   ['astral shift', [0.4]], ['unending resolve', [0.25]], ['fortifying brew', [0.2]], ['dampen harm', [0.3]], ['diffuse magic', [0.6, true]],
   ['divine protection', [0.2]], ['ardent defender', [0.2]], ['guardian of ancient kings', [0.5]], ['shield wall', [0.4]], ['die by the sword', [0.3]],
   ['obsidian scales', [0.3]], ['blur', [0.2]], ['feint', [0.4]], ['survival of the fittest', [0.3]], ['aspect of the turtle', [0.3]],
   ['dispersion', [0.75]], ['stoneform', [0.1]], ['ice cold', [0.7]], ['zen meditation', [0.6]], ['stone bulwark totem', ['abs']],
   ['anti-magic shell', ['abs']], ['dark pact', ['abs']], ['ice barrier', ['abs']], ['prismatic barrier', ['abs']], ['blazing barrier', ['abs']],
-  ['ice block', [1]], ['divine shield', [1]], ['cloak of shadows', [1, true]], ['netherwalk', [1]]]);
+  ['ice block', [1]], ['divine shield', [1]], ['cloak of shadows', [1, true]], ['netherwalk', [1]],
+  ['spell reflection', [0.25, true]], ['defensive stance', [0.15]]]); // (Oct 27: Spell Reflection takes 25% off magic damage for 5 s, Defensive Stance 15% off everything while it's on: public tooltips, about; check against the game's tooltips)
 // externals and Zephyr, by the buff on the player it covers: [reduction, magic only, area damage only] (tooltips, about)
 const EXT_DR = new Map([['pain suppression', [0.4]], ['ironbark', [0.2]], ['blessing of sacrifice', [0.3]], ['zephyr', [0.2, false, true]]]);
 const CD_DR = new Map([['power word: barrier', ['Power Word: Barrier', 0.20]], ['spirit link totem', ['Spirit Link Totem', 0.10]], ['anti-magic zone', ['Anti-Magic Zone', 0.15, true]]]);
@@ -6073,7 +6074,7 @@ function* analyzeSteps(item, text, opts) {
     if (!make) return null; const u = { g, cd, t, end: null, heal: 0, over: 0, prev: 0, taken: 0, hp: 0, cov: new Set(), late: true }; r.cdUse.push(u); return u; };
   const extOn = new Map(); r.extMit = []; /* (externals and Zephyr up on a player: guid|buff -> the caster's use (EXT_DR)) */
   const persOn = new Map(); r.defMit = []; /* (personal defensives up on a player: guid|buff -> its use (PERS_DR)) */
-  const persUse = (g, ln, nm, t) => { const u = { g, name: nm, t, end: null, prev: 0, taken: 0, abs: PERS_DR.get(ln)[0] === 'abs', imm: PERS_DR.get(ln)[0] === 1 }; r.defMit.push(u); persOn.set(g + '|' + ln, u); return u; };
+  const persUse = (g, ln, nm, t) => { const old = persOn.get(g + '|' + ln); if (old && old.end == null && Math.abs(t - old.t) < 1) return old; /* (an aura that logs twice at once, like Spell Reflection's two, is one use) */ const u = { g, name: nm, t, end: null, prev: 0, taken: 0, abs: PERS_DR.get(ln)[0] === 'abs', imm: PERS_DR.get(ln)[0] === 1 }; r.defMit.push(u); persOn.set(g + '|' + ln, u); return u; };
   const persCover = (dg, amt, magic) => { for (const [k, u] of persOn) { if (u.g !== dg) continue; const [red, mag] = PERS_DR.get(k.slice(k.indexOf('|') + 1)); if (u.abs || u.imm || (mag && !magic)) continue; u.prev += amt * red / (1 - red); u.taken += amt; } };
   const devOn = new Map(), drOn = new Map(); // (who has Devotion Aura up, and whose aura it is; who sits in a Barrier, Spirit Link or Anti-Magic Zone: guid|buff -> the caster)
   const pMax = new Map(); r.pMax = pMax; // (each player's maximum health, last seen: what a Rallying Cry adds 10% to)
