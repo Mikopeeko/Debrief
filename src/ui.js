@@ -31822,6 +31822,22 @@ function dsGuides() {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
+// ===== Design studio round 73 (Oct 26): the no-job box moves to the Jobs section. Owner: the Design studio chat. =====
+(function () {
+  if (typeof document === 'undefined') return;
+  var busy = false;
+  function dsNoJob() {
+    if (busy) return; busy = true;
+    try {
+      var dal = document.querySelector('#view.plan-page .ndz-dash > .panel.ndz-dal'), jobs = document.querySelector('#view.plan-page .bj-jobs');
+      if (dal && jobs && jobs.parentElement && dal.nextElementSibling !== jobs) { dal.classList.add('ds-moved'); jobs.parentElement.insertBefore(dal, jobs); }
+    } catch (e) { /* (the box stays where it was drawn) */ } finally { busy = false; }
+  }
+  var t = 0, kick = function () { clearTimeout(t); t = setTimeout(dsNoJob, 40); };
+  var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
 (function () { const f17 = dsBars; let last = 0, tm = 0, pendingRoot;

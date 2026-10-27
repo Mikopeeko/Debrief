@@ -7909,6 +7909,14 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pg-bar > .ndz-dring { margin-left: auto; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pg-ros > .pg-rc { height: 26px; }
 }
+/* ===== Design studio round 73 (Oct 26): the Roster header on a phone, the no-job box by the Jobs. Owner: the Design studio chat. ===== */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.ndz-dal.ds-moved { margin: 0 0 10px; }
+@media (max-width: 640px) {
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster > .ndz-dph { gap: 6px 8px; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster > .ndz-dph > .sub { flex: 1 1 auto; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster > .ndz-dph > .tn-sp { flex: 1 1 100%; height: 0; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster > .ndz-dph > .btn { flex: 1 1 0; justify-content: center; }
+}
 </style>
 
 
@@ -54235,6 +54243,22 @@ function dsGuides() {
     } catch (e) { /* (the page stays as rendered) */ } finally { busy = false; }
   }
   var t = 0, kick = function () { clearTimeout(t); t = setTimeout(dsTonight, 40); };
+  var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
+// ===== Design studio round 73 (Oct 26): the no-job box moves to the Jobs section. Owner: the Design studio chat. =====
+(function () {
+  if (typeof document === 'undefined') return;
+  var busy = false;
+  function dsNoJob() {
+    if (busy) return; busy = true;
+    try {
+      var dal = document.querySelector('#view.plan-page .ndz-dash > .panel.ndz-dal'), jobs = document.querySelector('#view.plan-page .bj-jobs');
+      if (dal && jobs && jobs.parentElement && dal.nextElementSibling !== jobs) { dal.classList.add('ds-moved'); jobs.parentElement.insertBefore(dal, jobs); }
+    } catch (e) { /* (the box stays where it was drawn) */ } finally { busy = false; }
+  }
+  var t = 0, kick = function () { clearTimeout(t); t = setTimeout(dsNoJob, 40); };
   var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
