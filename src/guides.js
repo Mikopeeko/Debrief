@@ -5478,7 +5478,7 @@ function ppFreeze(mp, T, S, P, M, o) {
   // (a picture turned to read the way the raid faces: o.rot turns the raid lead's markers with it (deg, about c in yards), o.artRot the room
   // picture; o.bands, o.notes and o.badges are its own drawings: soft bands along an edge, text beside the map, number badges on the dots)
   if (o.rot) { const a = o.rot.deg * Math.PI / 180, c0 = cx + o.rot.c[0], c1 = cy + o.rot.c[1]; wm.forEach((w) => { const dx = w.x - c0, dy = w.y - c1; w.x = c0 + dx * Math.cos(a) - dy * Math.sin(a); w.y = c1 + dx * Math.sin(a) + dy * Math.cos(a); }); }
-  const out = { ...mp, frames: null, pts, t: T, ft: T, pauses: [], steps: [], callouts: calls, rings: (mp.rings || []).concat(rings), tags: (o.tags || []).map(([g, tx]) => [g, tx, null, null]), hl: Object.keys(S).filter((g) => (o.hl || []).includes(g)),
+  const out = { ...mp, frames: null, pts, t: T, ft: T, pauses: [], steps: [], callouts: calls, rings: (mp.rings || []).concat(rings, (o.rings || []).map((q) => ({ fx: 'zone', t0: 0, dur: 1e9, label: false, ...q }))), tags: (o.tags || []).map(([g, tx]) => [g, tx, null, null]), hl: Object.keys(S).filter((g) => (o.hl || []).includes(g)),
     good: [], goodAt: null, bad: [], badAt: null, cbars: o.noBars ? {} : cb, wmarks: wm, liveLeg: false, hlLabel: 'assigned in the note', playerLabel: 'Player (spec icon, class colour)' };
   if (o.artRot) out.artRot = o.artRot; if (o.badges) out.ppBadges = true;
   // (o.lines: [player, target guid or map point, colour], a thin line from each player to what they handle)
@@ -5558,7 +5558,7 @@ function ppCardsCA(J, M, U, P) {
     const HS = ['h1', 'h2', 'h3', 'h4'], hp = [[-9, 10], [9, 10], [-12, -11], [12, -11]]; O.helpers.slice(0, 4).forEach((n, i) => { const s = HS[i]; fix[s] = n; put.add(s); k.at(0, s, hp[i][0] * (ns ? 1 : 0.4) + (ns ? 0 : hp[i][1]), hp[i][1] * (ns ? 1 : 0.4) + (ns ? 0 : hp[i][0])); });
     ppRest(k, put, ns ? [[-17, 0], [17, 0]] : [[0, 17], [0, -17]]);
     k.cone({ from: 'zj', to: 't1', at: 1.2, r: 35 }).cone({ from: 'zj', to: 't2', at: 1.2, r: 35 });
-    const S = ppSeat(P, fix), PG = PS.slice(0, pur.length).concat(GS.slice(0, O.green.length)), lab = (d, t) => [{ rx: d[0] * 0.55 + (ns ? 22 : 0), ry: d[1] * 0.55 + (ns ? 0 : 22) }, t, R, '#fff', 0];
+    const S = ppSeat(P, fix), PG = PS.slice(0, pur.length).concat(GS.slice(0, O.green.length), HS.slice(0, O.helpers.length)), lab = (d, t) => [{ rx: d[0] * 0.55 + (ns ? 22 : 0), ry: d[1] * 0.55 + (ns ? 0 : 22) }, t, R, '#fff', 0];
     cards.push({ id: 'orbs1', ph: 1, when: 'Every orb set', title: 'Toxic Deluge (Purples on their markers)', map: ppFreeze(k.done({ title: 'Toxic Deluge', focus: { x: 0, y: 0, r: 30 } }), 1, S, P, M, { hl: PG.concat(['t1', 't2']), named: PG, labels: [lab(d1, '1st frontal'), lab(d2, '2nd frontal')] }),
       legend: [ppG('Purple carriers', PU, pur.map((q) => ppI(P, q.n, MKN(q.mk)))), ppG('Green carriers', GR, O.green.map(([mk, n]) => ppI(P, n, mk === 'side' ? 'Side' : MKN(mk))), O.green.length ? '' : 'Not in the note: whoever is closest carries them.'), ppG('Helpers', GO, O.helpers.map((n) => ppI(P, n)), 'Move greens out of the purple carriers\' way.'),
         ppG('Tanks', BL, [], 'One takes the 1st frontal; the other taunts for the 2nd.')],
@@ -5607,9 +5607,21 @@ function ppCardsCA(J, M, U, P) {
       foot: 'Every stop hits the whole raid, so stop a few at a time, then the big turn under the raid cooldowns.' }); }
   // Phase 3 orbs: the note's purple carriers build the diamond in the middle (the guide's shape; your Oct 21 pull dropped them there too)
   const O3 = J.orbs[1]; if (O3 && O3.purple.length) { const fix = {}, put = new Set(), slot = (n) => { const r = (P.get(n.toLowerCase()) || {}).role, s = (r === 'tank' ? ['t2'] : r === 'healer' ? ['h4', 'r3', 'r4'] : ['r3', 'r4', 'h4']).find((x) => !put.has(x)) || ['r3', 'r4', 't2', 'h4'].find((x) => !put.has(x)); put.add(s); return s; };
-    O3.purple.slice(0, 4).forEach(([, n]) => { fix[slot(n)] = n; }); const G = Object.keys(fix); ['m1', 'm2', 'm3'].forEach((s, i) => { if (O3.green[i]) fix[s] = O3.green[i][1]; });
-    cards.push({ id: 'orbs3', ph: 3, when: 'Every orb set', title: 'Toxic Deluge (Build the purple diamond)', map: ppFreeze(GDZ_CA_M.diamond(), 13.1, ppSeat(P, fix), P, M, { hl: G, named: G, labels: [[['p0', 'p1', 'p2', 'p3'], 'Purple diamond', PU, '#fff', 8, true]] }),
-      legend: [ppG('Purple carriers', PU, O3.purple.map(([mk, n]) => ppI(P, n, mk ? MKN(mk) : ''))), ppG('Green carriers', GR, O3.green.map(([mk, n]) => ppI(P, n, mk === 'side' ? 'Side' : MKN(mk))), 'Line the greens up off to the side.'), ppG('Helpers', GO, O3.helpers.map((n) => ppI(P, n)))],
+    O3.purple.slice(0, 4).forEach(([, n]) => { fix[slot(n)] = n; }); const G = Object.keys(fix);
+    // (who drops where at a glance (Plan's P3 orb carriers, Oct 26): each purple carrier beside their own orb, the off-tank on the frontal
+    // with a line to theirs; the greens on the line off to the side, a fourth at its end; the helpers just past the greens)
+    const mp = GDZ_CA_M.diamond(), fr = mp.frames.reduce((x, y) => (Math.abs(y.t - 13.1) < Math.abs(x.t - 13.1) ? y : x)), pt = (g) => fr.pts.find((p) => p.guid === g);
+    const GS = ['m1', 'm2', 'm3', 'm4'], HS = ['h1', 'h2', 'h3', 'm5'], AT = {}, LN = [], po = [0, 1, 2, 3].map((i) => pt('p' + i)), go = [0, 1, 2].map((i) => pt('g' + i));
+    O3.green.slice(0, 4).forEach(([, n], i) => { fix[GS[i]] = n; }); O3.helpers.slice(0, 4).forEach((n, i) => { fix[HS[i]] = n; });
+    if (po.every(Boolean) && go.every(Boolean)) { const D = [po.reduce((x, p) => x + p.x, 0) / 4, po.reduce((x, p) => x + p.y, 0) / 4];
+      // (a tank on the off-tank's spot takes the frontal; anyone else there stands by their orb like the rest)
+      ['r3', 'r4', 't2', 'h4'].forEach((sk, i) => { if (!G.includes(sk)) return; if (sk === 't2' && (P.get(String(fix.t2).toLowerCase()) || {}).role === 'tank') { LN.push([sk, 'p2', PU]); return; } const p = po[i], d = [p.x - D[0], p.y - D[1]], m = Math.hypot(d[0], d[1]) || 1; AT[sk] = [p.x + d[0] / m * 4.5, p.y + d[1] / m * 4.5]; });
+      const gs = go.slice().sort((x, y) => x.x - y.x || x.y - y.y), e0 = gs[0], e1 = gs[2], line = gs.map((p) => [p.x, p.y]).concat([[e1.x + (e1.x - e0.x) / 2, e1.y + (e1.y - e0.y) / 2]]);
+      if (fix.m4) AT.m4 = line[3]; const C = [(e0.x + e1.x) / 2, (e0.y + e1.y) / 2], nv = [C[0] - D[0], C[1] - D[1]], nl = Math.hypot(nv[0], nv[1]) || 1;
+      const al = [(e1.x - e0.x) / 16, (e1.y - e0.y) / 16]; /* (along the line, about a yard) */ HS.forEach((sk, i) => { if (fix[sk]) AT[sk] = [C[0] + nv[0] / nl * 4.5 + al[0] * (i - 1.5) * 5.5, C[1] + nv[1] / nl * 4.5 + al[1] * (i - 1.5) * 5.5]; }); }
+    const HL = G.concat(GS.filter((sk) => fix[sk]), HS.filter((sk) => fix[sk]));
+    cards.push({ id: 'orbs3', ph: 3, when: 'Every orb set', title: 'Toxic Deluge (Build the purple diamond)', map: ppFreeze(mp, 13.1, ppSeat(P, fix), P, M, { hl: HL, named: HL, at: AT, ...(LN.length ? { lines: LN } : {}), labels: [[['p0', 'p1', 'p2', 'p3'], 'Purple diamond', PU, '#fff', 8, true], [['g0', 'g1', 'g2'], 'Greens lined up', GR, '#04210a', 8, true]] }),
+      legend: [ppG('Purple carriers', PU, O3.purple.map(([mk, n]) => ppI(P, n, mk ? MKN(mk) : ''))), ppG('Green carriers', GR, O3.green.map(([mk, n]) => ppI(P, n, mk === 'side' ? 'Side' : MKN(mk))), 'Line the greens up off to the side.'), ppG('Helpers', GO, O3.helpers.map((n) => ppI(P, n)), 'Move greens out of the purple carriers\' way.')],
       foot: 'Every purple apart, all inside the frontal. The off-tank takes the frontal and aims it through the diamond.' }); }
   // Phase 3's three axes, each on the raid lead's marker
   J.grim.forEach((A, i) => { if (!A || !A.soak.length) return; const u = i ? 'grim2' : 'grim1', x = ppAxe(spot(u, [25, -35]), A.soak, A.ext, A.zeph, P, M);
@@ -5993,12 +6005,12 @@ function ppCardsVA(J, M, U, P) {
 }
 // ===== Sszorak, Mythic (Oct 26, the same setup; Plan's Jobs cards in a447ffe), on the guide's maps of the room =====
 // (the note's jobs, in the lines Plan writes: "Group 1:" / "Group 2:" (the Mutilate soak groups), "Fury Bait:" / "Backup Bait:",
-// "Exit Cyst:" / "Backup Cyst:")
+// "Exit Cyst:" / "Backup Cyst:", "Virulence Inside:" / "Virulence Outside:")
 function ppReadSZ(N, P) {
-  const isN = (w) => P.has(String(w).toLowerCase()), J = { groups: [[], []], bait: '', bait2: '', exit: '', exit2: '' };
+  const isN = (w) => P.has(String(w).toLowerCase()), J = { groups: [[], []], bait: '', bait2: '', exit: '', exit2: '', vin: [], vout: [] };
   for (const l of N.lines) { const lab = l.label.toLowerCase().trim(), who = l.words.filter(isN).map((w) => P.get(w.toLowerCase()).name); let m; if (!who.length) continue;
-    if ((m = /^group\s*(\d)/.exec(lab))) J.groups[+m[1] > 1 ? 1 : 0] = who; else if (/backup bait/.test(lab)) J.bait2 = who[0]; else if (/bait/.test(lab)) J.bait = who[0];
-    else if (/backup cyst/.test(lab)) J.exit2 = who[0]; else if (/exit cyst|cyst/.test(lab)) J.exit = who[0]; }
+    if (/virulence inside|^inside/.test(lab)) J.vin = who; else if (/virulence outside|^outside/.test(lab)) J.vout = who; else if ((m = /^group\s*(\d)/.exec(lab))) J.groups[+m[1] > 1 ? 1 : 0] = who; else if (/backup bait/.test(lab)) J.bait2 = who[0]; else if (/bait/.test(lab)) J.bait = who[0];
+    else if (/backup cyst/.test(lab)) J.exit2 = who[0]; else if (/^(exit )?cyst/.test(lab)) J.exit = who[0]; }
   return J;
 }
 // (the two Mutilate groups on the guide's two sides: group 1 on the north group's spots with the first tank, group 2 on the south-east
@@ -6028,6 +6040,17 @@ function ppCardsSZ(J, M, U, P) {
     cards.push({ id: 'cyst', ph: 1, when: 'After each Dig In', title: 'Viscous Cyst (The exit popper)', map: ppFreeze(k.done({ title: 'Exit cyst', focus: { x: 0, y: 0, r: 62 } }), 1, szGroups(J, P, fix), P, M, { hl: Object.keys(fix), named: Object.keys(fix), tags: [['r7', 'Exit']].concat(J.exit2 ? [['r6', 'Backup']] : []), noBars: true, labels: [[{ rx: EX[0], ry: EX[1] + 7 }, 'Exit cyst', GN, '#0a1a06', 0]] }),
       legend: [ppG('Exit cyst', GN, [ppI(P, J.exit, 'Pops it'), J.exit2 && ppI(P, J.exit2, 'Backup')], 'After the third wind, pop the fourth cyst to throw the raid back to the entrance.')],
       foot: 'On the last Dig In don\'t pop it: it hits with enrage damage.' }); }
+  // Virulence: after the Fury stack the 14 spread to set spots around the boss before the beams go off, half on the inner ring (inside),
+  // half on the outer one (outside), mirrored as he moves (the guide's map just before the beams; Plan's Virulence spots, Oct 26)
+  if (J.vin.length || J.vout.length) { const fix = {}, IN = ['m2', 'm4', 'm6', 'r1', 'r3', 'r5', 't2'], OUT = ['m1', 'm3', 'm5', 'm7', 'r2', 'r4', 'r6', 'h1'], LG = '#c0ff7a';
+    J.vin.slice(0, IN.length).forEach((n, i) => { fix[IN[i]] = n; }); J.vout.slice(0, OUT.length).forEach((n, i) => { fix[OUT[i]] = n; }); const a = IN.filter((x) => fix[x]), b = OUT.filter((x) => fix[x]);
+    // (the two rings drawn through the spots, each labelled on its edge: inside on top, outside underneath)
+    const mp = SZ_M.fury(false), fr = mp.frames.reduce((x, y) => (Math.abs(y.t - 9) < Math.abs(x.t - 9) ? y : x)), [mx, my] = ppMid(mp), sp = (L) => L.map((g) => fr.pts.find((p) => p.guid === g)).filter(Boolean), all = sp(IN.concat(OUT));
+    const C = all.length ? [all.reduce((x, p) => x + p.x, 0) / all.length, all.reduce((x, p) => x + p.y, 0) / all.length] : [mx, my], rad = (L) => { const q = sp(L); return q.length ? q.reduce((x, p) => x + Math.hypot(p.x - C[0], p.y - C[1]), 0) / q.length : 10; }, ri = rad(IN), ro = rad(OUT);
+    cards.push({ id: 'vir', ph: 1, when: 'After each Fury stack', title: 'Virulence (Spread to your spot)', map: ppFreeze(mp, 9, ppSeat(P, fix), P, M, { hl: a.concat(b), named: a.concat(b), focus: { x: -18, y: 6, r: 30 }, noBars: true,
+      rings: [{ x: C[0], y: C[1], r: ri, color: LG, cn: 'Inside ring' }, { x: C[0], y: C[1], r: ro, color: OR, cn: 'Outside ring' }], labels: [[{ rx: C[0] - mx, ry: C[1] - my, r: ri }, 'Inside', LG, '#0a1a06', 0], [{ rx: C[0] - mx, ry: C[1] - my, r: ro }, 'Outside', OR, '#fff', 0, true]] }),
+      legend: [ppG('Inside: the ring close to the boss', LG, J.vin.map((n) => ppI(P, n))), ppG('Outside: the ring further out', OR, J.vout.map((n) => ppI(P, n)))],
+      foot: 'Spread before the beams go off, 5 seconds after the stack, and keep them off everyone. Mirror your spot when he moves.' }); }
   return cards;
 }
 // ===== Kith'ix, Mythic (Oct 26, the same setup; Plan's Jobs cards in a564306), on the guide's maps of the room =====
@@ -6090,8 +6113,8 @@ const GDZ_PP = {
     cards: ppCardsCA,
     // (Plan's Jobs cards and the pictures each one shows: by the key Plan gives each card's picture row (its build parts), else by the
     // card's title, where the grim card is matched before the phase 1 axes)
-    mech: { kicks: ['kicks'], g: ['axe1', 'axe2'], g3: ['grim1', 'grim2', 'grim3'], orbs: ['orbs1', 'orbs3'], mc: ['dread'], curse: ['kicks'], stops: ['inter'] },
-    jobs: [[/p3|grim/i, ['grim1', 'grim2', 'grim3']], [/guillotine/i, ['axe1', 'axe2']], [/kick/i, ['kicks']], [/purple orb/i, ['orbs1', 'orbs3']], [/dreadmarch|mind ?control/i, ['dread']], [/curse/i, ['kicks']], [/fragments of malacrass|stop them at your marker/i, ['inter']]] } },
+    mech: { kicks: ['kicks'], g: ['axe1', 'axe2'], g3: ['grim1', 'grim2', 'grim3'], orbs: ['orbs1'], orbs3: ['orbs3'], mc: ['dread'], curse: ['kicks'], stops: ['inter'] },
+    jobs: [[/p3 orb/i, ['orbs3']], [/p3|grim/i, ['grim1', 'grim2', 'grim3']], [/guillotine/i, ['axe1', 'axe2']], [/kick/i, ['kicks']], [/purple orb|green orb|orb carrier|orb helper/i, ['orbs1']], [/dreadmarch|mind ?control/i, ['dread']], [/curse/i, ['kicks']], [/fragments of malacrass|stop them at your marker/i, ['inter']]] } },
   "Ula'tek": { Mythic: {
     // (the guide's octagon about 42 yards out (notes/Guides/Bosses/8 Ula'tek.md, "P1 setup"): star north-north-west, circle north-north-east,
     // skull east-north-east, moon east-south-east, diamond south-south-east, triangle south-south-west, square west-south-west, cross west-north-west)
@@ -6188,10 +6211,10 @@ const GDZ_PP = {
     room: { scene: (k) => { szBoss(k); }, focus: { x: 0, y: 0, r: 62 }, lim: 60, keep: [SZ] },
     mkTip: 'X, circle and triangle go across from the wind tunnels (a cyst on each catches the raid in Dig In); the diamond is the exit.',
     read(N, P) { return ppReadSZ(N, P); },
-    cards: (J, M, U, P) => ppCardsSZ(J, M, U, P).filter((cd) => cd.id === 'mut'), /* (only Mutilate has a picture: no cyst popper or Fury bait map, the user's calls) */
+    cards: (J, M, U, P) => ppCardsSZ(J, M, U, P).filter((cd) => cd.id === 'mut' || cd.id === 'vir'), /* (Mutilate and Virulence have pictures: no cyst popper or Fury bait map, the user's calls) */
     // (Plan's Jobs cards (a447ffe) and the pictures each shows, by its key, else by its title)
-    mech: { mut: ['mut'] },
-    jobs: [[/mutilate/i, ['mut']]] } },
+    mech: { mut: ['mut'], vir: ['vir'] },
+    jobs: [[/mutilate/i, ['mut']], [/virulence/i, ['vir']]] } },
   "Kith'ix": { Mythic: {
     // (the guide's markers: the soak spots just inside the barrier (circle for the tanks, moon and triangle for the scar pairs) and the
     // fear spots (skull for healers, star for melee, X for ranged); diamond and square off to the side for the raid lead to use)

@@ -1954,6 +1954,7 @@ const PATCH_NOTES = [
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
     { t: 'Plan: a picture for every job', d: 'On every boss (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
   ], n: [
+    'Plan, job pictures: The Coiled Altar\'s phase 3 orbs show each purple carrier beside their own orb, every green on the line off to the side and the helpers by them; Sszorak\'s Virulence spots get a picture of the inside and outside rings.',
     'Plan, job pictures: the class icons are smaller, so they don\'t hide the spots, rings and markers. Who is who stays in the list beside each picture.',
     'A raid night opened once is kept for everyone: the next raider, anywhere in the world, opens its pulls from Debrief\'s own storage instead of waiting on Warcraft Logs.',
     'Plan, job pictures by mechanic: kick and grip pictures show each target with a line from its player (The Coiled Altar\'s Spiritcackle, Nymrissa\'s murlocs, Kith\'ix\'s beetles); Kith\'ix\'s fear dispellers wait at their markers; big soak groups show their ring and label with the names in the list beside it; raid markers are drawn on top.',
