@@ -17658,7 +17658,7 @@ const PATCH_NOTES = [
     { t: 'Plan: a picture for every job', d: 'On every boss (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
   ], n: [
     'Plan, job pictures: each label now names something you can see. A group gets a ring in the label\'s colour and the label points right at it, from below when there\'s no room above, and labels stay inside the picture.',
-    'Plan, Sszorak: the raid markers are the guide\'s four (X, circle and triangle across from the wind tunnels, diamond at the exit), with a line on why; the four made-up extra markers are gone, and the cyst popper job has no picture.',
+    'Plan, Sszorak: the raid markers are the guide\'s four (X, circle and triangle across from the wind tunnels, diamond at the exit), with a line on why; the four made-up extra markers are gone, and the cyst popper and Serpent\'s Fury bait jobs have no picture.',
     'Plan, Vashnik: the raid markers are its only picture (the guide\'s Plague Froth line and the Imbibe spot). The Lost Explorers: only the raid markers picture too. Nek\'zali: only the raid markers, Hungering Pyre and the well teams. Ula\'tek: no pictures for the egg carriers, Doomscale kick teams or off-tank jobs.',
     'Plan, The Twin Fangs: the Broodling kicks picture shades each kick area\'s two Broodlings in its colour with its name, and puts that area\'s kickers beside them in kick order. Only the kickers are drawn.',
     'Plan, job pictures on every boss: only the players with that job are drawn, and the names and labels are smaller and sit beside the dots instead of on top of them. A name with no room is left off the map; it\'s still in the list beside it.',
@@ -52659,10 +52659,10 @@ const GDZ_PP = {
     room: { scene: (k) => { szBoss(k); }, focus: { x: 0, y: 0, r: 62 }, lim: 60, keep: [SZ] },
     mkTip: 'X, circle and triangle go across from the wind tunnels (a cyst on each catches the raid in Dig In); the diamond is the exit.',
     read(N, P) { return ppReadSZ(N, P); },
-    cards: (J, M, U, P) => ppCardsSZ(J, M, U, P).filter((cd) => cd.id !== 'cyst'), /* (no picture for the cyst popper: the user's call; the cysts stay on the markers map) */
+    cards: (J, M, U, P) => ppCardsSZ(J, M, U, P).filter((cd) => cd.id === 'mut'), /* (only Mutilate has a picture: no cyst popper or Fury bait map, the user's calls) */
     // (Plan's Jobs cards (a447ffe) and the pictures each shows, by its key, else by its title)
-    mech: { mut: ['mut'], fury: ['fury'] },
-    jobs: [[/mutilate/i, ['mut']], [/fury/i, ['fury']]] } },
+    mech: { mut: ['mut'] },
+    jobs: [[/mutilate/i, ['mut']]] } },
   "Kith'ix": { Mythic: {
     // (the guide's markers: the soak spots just inside the barrier (circle for the tanks, moon and triangle for the scar pairs) and the
     // fear spots (skull for healers, star for melee, X for ranged); diamond and square off to the side for the raid lead to use)

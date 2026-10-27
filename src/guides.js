@@ -6139,10 +6139,10 @@ const GDZ_PP = {
     room: { scene: (k) => { szBoss(k); }, focus: { x: 0, y: 0, r: 62 }, lim: 60, keep: [SZ] },
     mkTip: 'X, circle and triangle go across from the wind tunnels (a cyst on each catches the raid in Dig In); the diamond is the exit.',
     read(N, P) { return ppReadSZ(N, P); },
-    cards: (J, M, U, P) => ppCardsSZ(J, M, U, P).filter((cd) => cd.id !== 'cyst'), /* (no picture for the cyst popper: the user's call; the cysts stay on the markers map) */
+    cards: (J, M, U, P) => ppCardsSZ(J, M, U, P).filter((cd) => cd.id === 'mut'), /* (only Mutilate has a picture: no cyst popper or Fury bait map, the user's calls) */
     // (Plan's Jobs cards (a447ffe) and the pictures each shows, by its key, else by its title)
-    mech: { mut: ['mut'], fury: ['fury'] },
-    jobs: [[/mutilate/i, ['mut']], [/fury/i, ['fury']]] } },
+    mech: { mut: ['mut'] },
+    jobs: [[/mutilate/i, ['mut']]] } },
   "Kith'ix": { Mythic: {
     // (the guide's markers: the soak spots just inside the barrier (circle for the tanks, moon and triangle for the scar pairs) and the
     // fear spots (skull for healers, star for melee, X for ranged); diamond and square off to the side for the raid lead to use)
