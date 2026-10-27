@@ -1954,6 +1954,8 @@ const PATCH_NOTES = [
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
     { t: 'Plan: a picture for every job', d: 'On every boss (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
   ], n: [
+    'Plan, The Twin Fangs: the Broodling kicks picture shades each kick area\'s two Broodlings in its colour with its name, and puts that area\'s kickers beside them in kick order. Only the kickers are drawn.',
+    'Plan, job pictures on every boss: only the players with that job are drawn, and the names and labels are smaller and sit beside the dots instead of on top of them. A name with no room is left off the map; it\'s still in the list beside it.',
     'Plan, The Twin Fangs: the Orb CC quadrants job has its own pictures, one for each alternating set (sets 1, 3 and 5, then sets 2, 4 and 6): the platform split in four, each quadrant\'s players on it with their area crowd control (Blinding Light, Shockwave and the like) beside their names.',
     'Debrief in game: your card and PC pop-up use the newest boss mechanics, potion and death rules from the website.',
     'On a phone: the dots on the pull at a glance are easier to tap, and the front page\'s footer links have room for a thumb.',

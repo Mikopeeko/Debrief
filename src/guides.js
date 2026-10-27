@@ -5699,6 +5699,8 @@ function ppReadTF(N, P) {
   return J;
 }
 const TF_VIEW = { x: 50, y: -26, r: 38 }; // (the south-east platform with both bosses off its tip)
+const TF_LR = '#7fd8ff', TF_RR = '#ffc46b', TF_KA = [['front', ['FL', 'FR'], '#e6b450', 'Front'], ['lm', ['L3', 'L4'], '#5aa0ff', 'Left melee'], ['lr', ['L1', 'L2'], TF_LR, 'Left range'], ['rm', ['R3', 'R4'], '#ff9b5a', 'Right melee'], ['rr', ['R1', 'R2'], TF_RR, 'Right range']]; // (Rouse the Brood's kick areas)
+const TF_KVIEW = { x: 46, y: -22, r: 50 }; // (all ten Broodlings and the areas' names)
 const TF_QVIEW = { x: 46, y: -22, r: 40 }; // (the same platform a little wider, so the back quadrants' names fit)
 const TF_ROOM = { x: 0, y: 12, r: 84 }; // (the whole room: all three platforms round the pool and the bosses off the north tip, for the markers)
 function ppCardsTF(J, M, U, P) {
@@ -5725,16 +5727,21 @@ function ppCardsTF(J, M, U, P) {
     cards.push({ id: 'orbq' + (si + 1), ph: 1, when: si ? 'Sets 2, 4 and 6' : 'Sets 1, 3 and 5', title: 'Caustic Globule, set ' + (si + 1) + ' (Crowd control your quadrant)', map: ppFreeze(w.done({ title: 'Caustic Deluge quadrants', focus: { x: 0, y: 54, r: 30 } }), 1, ppSeat(P, fix), P, M, { hl, named: hl, labels: lab, focus: TF_QVIEW }),
       legend: QD.filter(([key]) => Q[key].length).map(([key, t, col]) => ppG(t, col, Q[key].map((n) => ppI(P, n, cc(n))))),
       foot: (si ? 'Set 2 takes the 2nd, 4th and 6th Caustic Deluge. ' : 'Set 1 takes the 1st, 3rd and 5th Caustic Deluge. ') + 'Front is the tip by the bosses; left and right as you face them. Stun or slow the globules that land in your quadrant to break their shields, then low stacks soak.' }); } });
-  // Rouse the Brood: a Broodling in every slot; each area's kickers in a line by their own Broodlings, in their order
+  // Rouse the Brood: a Broodling in every slot; each kick area's pair shaded in its colour and named, its kickers by that pair in their
+  // order (front: the tip; melee: the far pair on their side; range: the near pair), the backup in the middle
   { const K = J.kicks; if (['front', 'lm', 'rm', 'lr', 'rr'].some((x) => K[x].length)) { const w = tf2(), fix = {}, put = new Set(), tags = [], hl = [];
     Object.values(TF_SLOT).forEach((p, i) => w.add('bl' + i, 'Broodling', 0, p[0], p[1]));
-    const A = [['front', [-3, 70], [1, 0]], ['lm', [-19, 68], [0.25, -1]], ['lr', [-24, 47], [0.25, 1]], ['rm', [19, 68], [-0.25, -1]], ['rr', [26, 47], [-0.25, 1]], ['backup', [0, 52], [1, 0]]];
-    A.forEach(([key, c, d]) => (K[key] || []).forEach((n, i) => { const s = ppSlot(P, n, put); if (!s) return; fix[s] = n; hl.push(s); tags.push([s, key === 'backup' ? 'Backup' : String(i + 1)]); w.at(0, s, c[0] + d[0] * i * 4.5, c[1] + d[1] * i * 4.5); }));
-    home(w, put);
-    cards.push({ id: 'kicks', ph: 1, when: 'Every set', title: 'Rouse the Brood (Kick the Broodlings in your area)', map: ppFreeze(w.done({ title: 'Rouse the Brood', focus: { x: 0, y: 56, r: 30 } }), 1, ppSeat(P, fix), P, M, { hl, named: hl, tags, focus: TF_VIEW }),
-      legend: [['front', 'Front: the tip'], ['lm', 'Left melee: left 3 and 4'], ['rm', 'Right melee: right 3 and 4'], ['lr', 'Left range: left 1 and 2'], ['rr', 'Right range: right 1 and 2'], ['backup', 'Backup']].filter(([key]) => K[key].length)
-        .map(([key, t]) => ppG(t, key === 'backup' ? Q : key === 'front' ? GO : key[0] === 'l' ? BL : OR, K[key].map((n, i) => ppI(P, n, key === 'backup' ? 'Covers a miss' : 'Kick ' + (i + 1))))),
-      foot: 'Kick every Broodling in your area, in your order. Left and right as you face the bosses.' }); } }
+    const lab = [], PC = [0, 56], dark = (col) => (col === GO || col === TF_LR || col === TF_RR ? '#1a1405' : '#fff');
+    TF_KA.forEach(([key, sl, col, t]) => { const L = K[key] || [], m = sl.map((x) => TF_SLOT[x]), c = [(m[0][0] + m[1][0]) / 2, (m[0][1] + m[1][1]) / 2];
+      w.ring({ x: c[0], y: c[1], r: Math.hypot(m[0][0] - m[1][0], m[0][1] - m[1][1]) / 2 + 4.5, fx: 'zone', t0: 0, dur: 5, color: col, cn: t, label: false });
+      const v = [PC[0] - c[0], PC[1] - c[1]], d = Math.hypot(v[0], v[1]) || 1, u = [v[0] / d, v[1] / d], s0 = [c[0] + u[0] * 7, c[1] + u[1] * 7], pp = [-u[1], u[0]];
+      L.forEach((n, i) => { const s = ppSlot(P, n, put); if (!s) return; fix[s] = n; hl.push(s); tags.push([s, String(i + 1)]); const o = (i - (L.length - 1) / 2) * 5.2; w.at(0, s, s0[0] + pp[0] * o, s0[1] + pp[1] * o); });
+      if (L.length) { const q = w.P([c[0] - u[0] * 6.5, c[1] - u[1] * 6.5]); lab.push([{ rx: q[0], ry: q[1] }, t, col, dark(col), 0]); } }); /* (the area's name just outside its pair) */
+    (K.backup || []).forEach((n, i) => { const s = ppSlot(P, n, put); if (!s) return; fix[s] = n; hl.push(s); tags.push([s, 'Backup']); w.at(0, s, -2 + i * 4, 52); });
+    cards.push({ id: 'kicks', ph: 1, when: 'Every set', title: 'Rouse the Brood (Kick the Broodlings in your area)', map: ppFreeze(w.done({ title: 'Rouse the Brood', focus: { x: 0, y: 56, r: 30 } }), 1, ppSeat(P, fix), P, M, { hl, named: hl, tags, labels: lab, focus: TF_KVIEW }),
+      legend: [['front', 'Front: the two at the tip'], ['lm', 'Left melee: left 3 and 4'], ['rm', 'Right melee: right 3 and 4'], ['lr', 'Left range: left 1 and 2'], ['rr', 'Right range: right 1 and 2'], ['backup', 'Backup']].filter(([key]) => K[key].length)
+        .map(([key, t]) => ppG(t, key === 'backup' ? Q : (TF_KA.find((a) => a[0] === key) || [])[2], K[key].map((n, i) => ppI(P, n, key === 'backup' ? 'Covers a miss' : 'Kick ' + (i + 1))))),
+      foot: 'Kick the Broodlings in your coloured area, in your number order. Left and right as you face the bosses; the backup covers a missed kick.' }); } }
   // Ravenous Feast: the three groups at their Tainted Blood orbs (right, left, front), the Feast in the middle: right takes the 1st hit,
   // left the 2nd, the centre group the 3rd (the guide's order, from the top kills)
   { const F = J.feast; if (F.left.length || F.right.length || F.center.length) { const w = tf2(), fix = {}, put = new Set(), lab = [], hl = [], C = [4, 56], OB = [[24, 40], [-24, 40], [4, 72]];
@@ -6144,10 +6151,32 @@ function ppData(u) { if (!u) return Promise.resolve(''); if (PP_IMG.has(u)) retu
 const ppArt = (u) => { const m = /^https:\/\/cdn\.raidplan\.io\/raid\/wow\.venomabyss\/map\/([\w.-]+)$/.exec(u || ''); return m ? (window.WLA_HOSTED ? '/api/art/' + m[1] : '') : u; };
 const ppImg = (src) => new Promise((ok) => { if (!src) return ok(null); const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; });
 const PP_CSS = ['fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-opacity', 'stroke-dasharray', 'stroke-linecap', 'stroke-linejoin', 'opacity', 'font-family', 'font-size', 'font-weight', 'font-style', 'letter-spacing', 'text-anchor', 'dominant-baseline', 'paint-order', 'display', 'visibility'];
+// (a picture's labels (the user, Oct 26: "make them more readable the text on the map blocks things"): the map's text is sized for the
+// guide's close view, so in a picture's wider frame it's drawn smaller (about 3% of the frame's width, never bigger than before). Pills
+// shrink about their anchor and stay put; each name then takes the first free side of its own dot (above, below, right, left) that covers
+// no dot, marker, pill or other name, and a name with no free side is left off: the list beside the map names everyone)
+function ppDeclutter(sv) {
+  const vb = sv.viewBox.baseVal; if (!vb || !vb.width) return; const f = Math.min(1, vb.width * 0.03 / 12);
+  const bx = (x0, y0, x1, y1) => ({ x0, y0, x1, y1 }), hit = (a, b) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1, taken = [], icons = [];
+  sv.querySelectorAll('g.icl').forEach((g) => { const x = +g.dataset.x, y = +g.dataset.y; let b; try { b = g.getBBox(); } catch (e) { return; }
+    if (f < 1) g.setAttribute('transform', 'translate(' + x + ' ' + y + ') scale(' + f.toFixed(3) + ') translate(' + -x + ' ' + -y + ')');
+    taken.push(bx(x + (b.x - x) * f, y + (b.y - y) * f, x + (b.x + b.width - x) * f, y + (b.y + b.height - y) * f)); });
+  sv.querySelectorAll('g.ic:not(.icl)').forEach((g) => { if (g.querySelector('text.ml')) return; let b; try { b = g.getBBox(); } catch (e) { return; } if (!b.width || b.width > 40 || b.height > 40) return;
+    icons.push({ x: +g.dataset.x, y: +g.dataset.y, b: bx(b.x - 1, b.y - 1, b.x + b.width + 1, b.y + b.height + 1) }); });
+  sv.querySelectorAll('text.mlp').forEach((t) => { const g = t.parentNode, X = +g.dataset.x, Y = +g.dataset.y, r = 9;
+    t.style.fontSize = (12 * f).toFixed(2) + 'px'; t.style.strokeWidth = (3 * f).toFixed(2) + 'px';
+    // (the four sides close in, then the four corners, then the four sides a step further out)
+    const h = 12 * f, side = (d) => [['middle', X, Y - d - 0.15 * h], ['middle', X, Y + d + 0.85 * h], ['start', X + d, Y + 0.35 * h], ['end', X - d, Y + 0.35 * h]];
+    const C = side(r).concat([['start', X + 7, Y - 7], ['end', X - 7, Y - 7], ['start', X + 7, Y + 7 + 0.7 * h], ['end', X - 7, Y + 7 + 0.7 * h]], side(r + 6));
+    for (const [an, x, y] of C) { t.style.textAnchor = an; t.setAttribute('x', x.toFixed(1)); t.setAttribute('y', y.toFixed(1)); let b; try { b = t.getBBox(); } catch (e) { return; }
+      const q = bx(b.x - 1, b.y - 1, b.x + b.width + 1, b.y + b.height + 1); if (q.x0 < vb.x || q.x1 > vb.x + vb.width || q.y0 < vb.y || q.y1 > vb.y + vb.height) continue;
+      if (taken.some((o) => hit(o, q)) || icons.some((o) => (Math.abs(o.x - X) > 0.5 || Math.abs(o.y - Y) > 0.5) && hit(o.b, q))) continue; taken.push(q); return; }
+    t.remove(); }); }
 async function ppMapImg(fz) {
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:-10000px;top:0;width:700px;pointer-events:none'; box.className = 'pp-off'; box.innerHTML = miniMap(fz.out, fz.pm); document.body.appendChild(box);
   try { const sv = box.querySelector('svg.zmap') || box.querySelector('svg'); if (!sv) return null;
     sv.querySelectorAll('text.mlp').forEach((t) => { if (!fz.keep.some((n) => t.textContent === n || t.textContent.startsWith(n + ' '))) t.remove(); });
+    ppDeclutter(sv);
     const cl = sv.cloneNode(true), walk = (a, b) => { const cs = getComputedStyle(a); b.setAttribute('style', PP_CSS.map((k) => k + ':' + cs.getPropertyValue(k)).join(';')); for (let i = 0; i < a.children.length; i++) walk(a.children[i], b.children[i]); };
     walk(sv, cl); cl.removeAttribute('style'); cl.setAttribute('xmlns', 'http://www.w3.org/2000/svg'); cl.setAttribute('width', 1000); cl.setAttribute('height', 1000);
     // (the round clip for spec icons lives in the page's shared defs: the picture gets its own copy)
@@ -6161,7 +6190,10 @@ async function ppDraw(card, boss, diff) {
   const W = 1200, H = 675, S2 = 2, cv = document.createElement('canvas'); cv.width = W * S2; cv.height = H * S2; const g = cv.getContext('2d'); g.scale(S2, S2);
   await Promise.all(['800 28px "Barlow Semi Condensed"', '700 16px Barlow', '500 13px Barlow'].map((f) => document.fonts.load(f).catch(() => null)));
   g.fillStyle = '#12141b'; g.fillRect(0, 0, W, H);
-  const M0 = 18, MS = H - M0 * 2, map = await ppMapImg(card.map); g.save(); g.beginPath(); g.roundRect ? g.roundRect(M0, M0, MS, MS, 12) : g.rect(M0, M0, MS, MS); g.clip(); g.fillStyle = '#0b0d12'; g.fillRect(M0, M0, MS, MS); if (map) g.drawImage(map, M0, M0, MS, MS); g.restore();
+  // (only the players the card's list names: nobody without a job in it shows (the user, Oct 26); a card that names nobody keeps everyone)
+  const nmOf = (v) => String(v || '').split('-')[0].toLowerCase(), who = new Set(card.legend.flatMap((G) => G.items.map((it) => nmOf(it.name))));
+  const fz = who.size ? { ...card.map, out: { ...card.map.out, pts: card.map.out.pts.filter((p) => p.kind !== 'player' || who.has(nmOf(p.name))) } } : card.map;
+  const M0 = 18, MS = H - M0 * 2, map = await ppMapImg(fz); g.save(); g.beginPath(); g.roundRect ? g.roundRect(M0, M0, MS, MS, 12) : g.rect(M0, M0, MS, MS); g.clip(); g.fillStyle = '#0b0d12'; g.fillRect(M0, M0, MS, MS); if (map) g.drawImage(map, M0, M0, MS, MS); g.restore();
   const X0 = M0 * 2 + MS + 6, CW = W - X0 - 24, fit = (t, w) => { if (g.measureText(t).width <= w) return t; let s = t; while (s.length > 1 && g.measureText(s + '…').width > w) s = s.slice(0, -1); return s + '…'; };
   const wrap = (t, w) => { const out = []; let line = ''; for (const wd of String(t).split(' ')) { const tr = line ? line + ' ' + wd : wd; if (g.measureText(tr).width > w && line) { out.push(line); line = wd; } else line = tr; } if (line) out.push(line); return out; };
   const icons = new Map(); await Promise.all(card.legend.flatMap((G) => G.items).map(async (it) => { if (it.specIcon && !icons.has(it.specIcon)) icons.set(it.specIcon, await ppImg(await ppData('https://wow.zamimg.com/images/wow/icons/medium/' + it.specIcon + '.jpg'))); }));
