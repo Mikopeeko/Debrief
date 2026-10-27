@@ -7216,6 +7216,11 @@ async function planSpecBackfill() { if (S.planSpBf) return; let g = null; try { 
 function planRosterSpecs() { const o = rostersGet(); let ch = 0; const tm = ndzBTeams(), mem = {}; for (const g of tm) for (const [n, m] of Object.entries(g.members || {})) if (+m.sid) mem[n.split('-')[0].toLowerCase()] = m;
   const logs = ndzSpecs(); for (const R of o.list) for (const p of R.players) { const m = mem[p.n.toLowerCase()], lg = logs[p.n.toLowerCase()]; if (+p.sid || !m || (lg && +lg.sid) || (p.cls && p.cls !== m.cls)) continue; p.sid = +m.sid; p.role = planRoleOf(m.sid); p.cls = p.cls || m.cls; ch++; }
   if (ch) rostersSet(o); return ch; }
+// (the box's first line as the bottom message, Oct 26: the What changed boxes are gone, so these actions still say what they did)
+{ let lastT = 0; const t0 = toast; toast = function (h, ms) { lastT = Date.now(); return t0.call(this, h, ms); };
+  let W = S.plWhy; Object.defineProperty(S, 'plWhy', { configurable: true, get() { return W; }, set(v) { W = v; if (!v || S.page !== 'plan') return; const at = Date.now();
+    setTimeout(() => { if (lastT >= at) return; let m = v.t && !/^What changed/i.test(v.t) ? esc(v.t) : ''; if (!m) { const pm = /<p[^>]*>([\s\S]*?)<\/p>/.exec(v.html || ''); m = pm ? pm[1].replace(/<[^>]+>/g, '').replace(/\s*Here is every change[^.]*\.\s*/i, ' ').trim() : ''; }
+      if (/^Your own swaps were undone/.test(m)) m = 'Picked who plays for every boss. ' + m; if (m) toastOk(m.length > 220 ? m.slice(0, 217) + '…' : m, 6000); }, 40); } }); }
 // (test copies only: sample notes and a roster, so a practice link with empty storage can be tried (Oct 21, "open the test copy
 // for me to try always"); the button shows on practice links and this PC's copies when you have no notes yet. Every sample
 // raider's class is known (the user: "classes should all be known"): the plans were built with the note builder from a real
@@ -29507,7 +29512,7 @@ function runTips(k, steps) {
   ov.quit = () => finish(false);
   /* (a click anywhere outside the tip closes the tips (your note, Oct 22: "the preview is bugged i cant click anything": the dark
      layer took every click until Next was pressed through, and on a small screen the tip can sit out of view)) */
-  ov.addEventListener('click', (e) => { if (!(e.target.closest && e.target.closest('.pt-bub'))) finish(); });
+  ov.addEventListener('click', (e) => { if (!e.target.isConnected) return; /* (a button the bubble just redrew away, like Next: not an outside click, Oct 26) */ if (!(e.target.closest && e.target.closest('.pt-bub'))) finish(); });
   ov.innerHTML = '<div class="pt-hole"></div><div class="pt-bub" role="dialog" aria-modal="true" aria-label="Tips for this page"></div>';
   document.body.appendChild(ov);
   const hole = ov.querySelector('.pt-hole'), bub = ov.querySelector('.pt-bub');
