@@ -17657,6 +17657,7 @@ const PATCH_NOTES = [
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
     { t: 'Plan: a picture for every job', d: 'On every boss (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
   ], n: [
+    'Plan, The Twin Fangs: the Orb CC quadrants job has its own picture: the platform split in four, each quadrant\'s players on it with their area crowd control (Blinding Light, Shockwave and the like) beside their names.',
     'Debrief in game: your card and PC pop-up use the newest boss mechanics, potion and death rules from the website.',
     'On a phone: the dots on the pull at a glance are easier to tap, and the front page\'s footer links have room for a thumb.',
     'Debriefing, one pull: the pull at a glance runs the full width and the phase rows sit beside the details, so the left side is no longer half empty; Plan reads at 12 px everywhere (the roster tables, the builder, the note tool).',
@@ -17696,6 +17697,7 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'Plan, Markers: changing a marker to a mark that wasn\'t on the map (right-click) left the old mark on the same spot too, so two markers sat on one point. Now only the new mark is there.',
     'Plan, The Twin Fangs: the raid markers sit one on each of the three platforms, where raids stand through that platform\'s two sets (star north, circle south-east, diamond south-west), instead of eight bunched on one platform. The Raid markers map shows the whole room.',
     'Plan, a job\'s picture opened big: going to the next picture with ‹ or › now names that picture\'s own job under the heading (it kept naming the job you opened it from).',
     'Boss guides, Ula\'tek: in phase one her tank and the melee now stand on the platform below her (they were drawn past its edge), Mother\'s Wrath knocks the tank back from that edge, the eggs land clear of the melee, and in phase three the Serpent\'s Bite soakers spread out on the broken platform with their waves aimed where nobody stands. The Coiled Altar: anyone a purple circle of Eternal Nightfall lands on steps out of it.',
@@ -51942,7 +51944,7 @@ const ppKey = (b, d) => 'wla-pp|' + b + '|' + d;
 function ppConf(b, d) { const C = GDZ_PP[b] && GDZ_PP[b][d]; if (!C) return null; let s = {}; try { s = JSON.parse(store.get(ppKey(b, d)) || '{}') || {}; } catch (e) { s = {}; }
   if (C.mver && s.mver !== C.mver) delete s.marks; /* (spots saved before the boss's markers changed: the new ones show, the mechanic picks stay) */
   const base = s.base === 'raid' && C.raid ? 'raid' : 'guide', B = base === 'raid' ? C.raid : { marks: C.marks, stack: C.stack, uses: Object.fromEntries(C.uses.map(([id, , def]) => [id, def])) };
-  const marks = { _stack: B.stack }; for (const k of PP_MKS) marks[k] = (s.marks && s.marks[k]) || B.marks[k] || null;
+  const marks = { _stack: B.stack }; for (const k of PP_MKS) marks[k] = (s.marks && k in s.marks ? s.marks[k] : B.marks[k]) || null;
   const uses = {}; for (const [id] of C.uses) uses[id] = s.uses && id in s.uses ? s.uses[id] : B.uses[id];
   return { C, base, marks, uses, saved: !!(s.marks || s.uses) }; }
 const ppSave = (b, d, v) => { const C = GDZ_PP[b] && GDZ_PP[b][d]; store.set(ppKey(b, d), JSON.stringify(C && C.mver ? { ...v, mver: C.mver } : v)); };
@@ -52196,18 +52198,21 @@ function ppCardsUL(J, M, U, P) {
 // ===== The Twin Fangs, Mythic (Oct 26, the same setup again; Plan's Jobs cards in b2e86a2). Every picture is on the south-east platform,
 // as the guide's cards are (the room picture cuts off the north tip); the sets repeat on every platform =====
 // (the note's jobs, in the lines Plan writes: "Left:" / "Right:" / "Center:" (Ravenous Feast groups), "Front Melee:", "Left Melee:",
-// "Right Melee:", "Left Range:", "Right Range:", "Backup Kicker:" (Broodling kick areas), "Odd set Orbs:" / "Even set Orbs:" (globule CC))
+// "Right Melee:", "Left Range:", "Right Range:", "Backup Kicker:" (Broodling kick areas), "Odd set Orbs:" / "Even set Orbs:" (globule CC),
+// "CC Front Left:" / "CC Front Right:" / "CC Back Left:" / "CC Back Right:" (area crowd control by quadrant, Plan's orbq job))
 function ppReadTF(N, P) {
-  const isN = (w) => P.has(String(w).toLowerCase()), J = { feast: { left: [], right: [], center: [] }, kicks: { front: [], lm: [], rm: [], lr: [], rr: [], backup: [] }, cc: [[], []] };
+  const isN = (w) => P.has(String(w).toLowerCase()), J = { feast: { left: [], right: [], center: [] }, kicks: { front: [], lm: [], rm: [], lr: [], rr: [], backup: [] }, cc: [[], []], quad: { fl: [], fr: [], bl: [], br: [] } };
   for (const l of N.lines) {
     const lab = l.label.toLowerCase().trim(), who = l.words.filter(isN).map((w) => P.get(w.toLowerCase()).name); let m; if (!who.length) continue;
-    if ((m = /^(left|right|center|centre)$/.exec(lab))) J.feast[m[1] === 'centre' ? 'center' : m[1]] = who;
+    if ((m = /^cc\s+(front|back)\s+(left|right)/.exec(lab))) J.quad[m[1][0] + m[2][0]] = who;
+    else if ((m = /^(left|right|center|centre)$/.exec(lab))) J.feast[m[1] === 'centre' ? 'center' : m[1]] = who;
     else if ((m = /^(front|left|right)\s+(melee|range)/.exec(lab))) J.kicks[m[1] === 'front' ? 'front' : m[1][0] + (m[2] === 'melee' ? 'm' : 'r')] = who;
     else if (/backup/.test(lab)) J.kicks.backup = who; else if (/\bodd\b/.test(lab)) J.cc[0] = who; else if (/\beven\b/.test(lab)) J.cc[1] = who;
   }
   return J;
 }
 const TF_VIEW = { x: 50, y: -26, r: 38 }; // (the south-east platform with both bosses off its tip)
+const TF_QVIEW = { x: 46, y: -22, r: 40 }; // (the same platform a little wider, so the back quadrants' names fit)
 const TF_ROOM = { x: 0, y: 12, r: 84 }; // (the whole room: all three platforms round the pool and the bosses off the north tip, for the markers)
 function ppCardsTF(J, M, U, P) {
   const cards = [], GR = '#9ff26d', R = '#ff8a8a', BL = '#5aa0ff', GO = '#e6b450', OR = '#ff9b5a', Q = '#c9ced8';
@@ -52217,6 +52222,21 @@ function ppCardsTF(J, M, U, P) {
     cards.push({ id: 'orbcc', ph: 1, when: 'Every set', title: 'Caustic Globule (Crowd control the shields)', map: ppFreeze(TF_M.beams(false, 'm', { p: 2 }), 5.9, ppSeat(P, fix), P, M, { hl: ids, focus: TF_VIEW }),
       legend: [ppG('Odd sets: the 1st, 3rd and 5th', '#7fd8ff', J.cc[0].map((n) => ppI(P, n))), ppG('Even sets: the 2nd, 4th and 6th', BL, J.cc[1].map((n) => ppI(P, n)))],
       foot: 'Blood Torrent shields every globule: your set\'s stuns and slows break the shields, then low stacks soak. Wait for the orbs near you to land.' }); }
+  // Caustic Deluge, by quadrant: the platform split in four (front = the tip by the bosses, left and right as the raid faces them), each
+  // quadrant's players on it with their area crowd control (Blinding Light, Shockwave…) beside their names; everyone else at home
+  { const Q = J.quad; if (Object.values(Q).some((L) => L.length)) { const w = tf2(), k = w.k, fix = {}, put = new Set(), hl = [], lab = [], C = [0, 52];
+    const QD = [['fl', 'Front left', GO, [-14, 64]], ['fr', 'Front right', OR, [14, 64]], ['bl', 'Back left', BL, [-17, 41]], ['br', 'Back right', GR, [17, 41]]];
+    // (the two dividing lines, drawn between unseen anchor points: back edge to tip, left edge to right edge)
+    [[[0, 30], [0, 77]], [[-31, C[1]], [30, C[1]]]].forEach(([a, b], i) => { const q = w.P(a); k.obj('qa' + i, 'anchor', 0, q[0], q[1]); w.link({ from: 'qa' + i, toYd: { x: b[0], y: b[1] }, t0: 0, t1: 3, color: '#f3ead2' }); });
+    QD.forEach(([key, t, col, c]) => { w.ring({ x: c[0], y: c[1], r: 9, fx: 'zone', t0: 0, dur: 5, color: col, cn: t, label: false }); /* (each quadrant shaded in its colour) */
+      const ids = Q[key].map((n) => { const sl = ppSlot(P, n, put); if (sl) fix[sl] = n; return sl; }).filter(Boolean);
+      ids.forEach((sl, i) => { const q = gdzSpot(i, ids.length, 4.5); w.at(0, sl, c[0] + q[0], c[1] + q[1]); }); hl.push(...ids);
+      if (ids.length) lab.push([ids, t, col, col === GO || col === GR ? '#1a1405' : '#fff', 6]); }); /* (each quadrant's name just over its players) */
+    home(w, put);
+    const cc = (n) => { const x = P.get(String(n).toLowerCase()); return (x && NDZ_AOE_CC[x.cls]) || 'Area crowd control'; };
+    cards.push({ id: 'orbq', ph: 1, when: 'Every set', title: 'Caustic Globule (Crowd control your quadrant)', map: ppFreeze(w.done({ title: 'Caustic Deluge quadrants', focus: { x: 0, y: 54, r: 30 } }), 1, ppSeat(P, fix), P, M, { hl, named: hl, labels: lab, focus: TF_QVIEW }),
+      legend: QD.filter(([key]) => Q[key].length).map(([key, t, col]) => ppG(t, col, Q[key].map((n) => ppI(P, n, cc(n))))),
+      foot: 'Front is the tip by the bosses; left and right as you face them. Stun or slow the globules that land in your quadrant to break their shields, then low stacks soak.' }); } }
   // Rouse the Brood: a Broodling in every slot; each area's kickers in a line by their own Broodlings, in their order
   { const K = J.kicks; if (['front', 'lm', 'rm', 'lr', 'rr'].some((x) => K[x].length)) { const w = tf2(), fix = {}, put = new Set(), tags = [], hl = [];
     Object.values(TF_SLOT).forEach((p, i) => w.add('bl' + i, 'Broodling', 0, p[0], p[1]));
@@ -52541,8 +52561,8 @@ const GDZ_PP = {
     read(N, P) { return ppReadTF(N, P); },
     cards: ppCardsTF,
     // (Plan's Jobs cards (b2e86a2) and the pictures each shows, by its key, else by its title)
-    mech: { orbcc: ['orbcc'], kicks: ['kicks'], feast: ['feast'] },
-    jobs: [[/orb cc|crowd control/i, ['orbcc']], [/kick|brood/i, ['kicks']], [/feast/i, ['feast']]] } },
+    mech: { orbcc: ['orbcc'], orbq: ['orbq'], kicks: ['kicks'], feast: ['feast'] },
+    jobs: [[/quadrant/i, ['orbq']], [/orb cc|crowd control/i, ['orbcc']], [/kick|brood/i, ['kicks']], [/feast/i, ['feast']]] } },
   'Nymrissa Wavecaller': { Mythic: {
     // (the guide places no markers here: a plain ring round the bubble, 38 yards out at the compass points, for the raid lead to drag)
     marks: { star: [0, 38], circle: [27, 27], diamond: [38, 0], triangle: [27, -27], moon: [0, -38], square: [-27, -27], cross: [-38, 0], skull: [-27, 27] },
@@ -52783,7 +52803,7 @@ function ppOpen(r, u0, opt) {
     const toYd = (px, py) => { const R = sv.getBoundingClientRect(); const X = vb.x + (px - R.left) / R.width * vb.width, Y = vb.y + (py - R.top) / R.height * vb.height; return [Math.round((X / yd + x0 - cx) * 2) / 2, Math.round((-(Y / yd + y0) - cy) * 2) / 2]; };
     const dot = (m) => '<svg viewBox="-11 -11 22 22" width="26" height="26">' + gdzMarkSvg(m, 0, 0) + '</svg>', keep = (cc) => ppSave(boss, diff, { base: cc.base, marks: cc.marks, uses: cc.uses });
     lay.innerHTML = PP_MKS.filter((m) => c.marks[m]).map((m) => '<button type="button" class="pp-mkdot" data-mk="' + m + '" title="' + esc(GDZ_WM[m][1]) + ': drag to move, right-click to change the mark" aria-label="' + esc(GDZ_WM[m][1]) + '">' + dot(m) + '</button>').join('');
-    const place = () => lay.querySelectorAll('.pp-mkdot').forEach((b) => { const [px, py] = toPx(ppConf(boss, diff).marks[b.dataset.mk]); b.style.left = px + 'px'; b.style.top = py + 'px'; });
+    const place = () => lay.querySelectorAll('.pp-mkdot').forEach((b) => { const m = ppConf(boss, diff).marks[b.dataset.mk]; if (!m) return; const [px, py] = toPx(m); b.style.left = px + 'px'; b.style.top = py + 'px'; });
     requestAnimationFrame(place); if (mhost._ro) mhost._ro.disconnect(); if (window.ResizeObserver) (mhost._ro = new ResizeObserver(() => place())).observe(mhost); /* (the dots follow the map when the window or phone turns) */
     // (right-click a marker (hold it on a phone): the eight marks in a row, this one lit; picking another swaps the two marks, so no mark
     // shows twice and nothing else moves, and a mechanic set on either mark stays on its spot (your call, Oct 26: "right clicking them lets

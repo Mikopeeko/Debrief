@@ -1954,6 +1954,7 @@ const PATCH_NOTES = [
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
     { t: 'Plan: a picture for every job', d: 'On every boss (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
   ], n: [
+    'Plan, The Twin Fangs: the Orb CC quadrants job has its own picture: the platform split in four, each quadrant\'s players on it with their area crowd control (Blinding Light, Shockwave and the like) beside their names.',
     'Debrief in game: your card and PC pop-up use the newest boss mechanics, potion and death rules from the website.',
     'On a phone: the dots on the pull at a glance are easier to tap, and the front page\'s footer links have room for a thumb.',
     'Debriefing, one pull: the pull at a glance runs the full width and the phase rows sit beside the details, so the left side is no longer half empty; Plan reads at 12 px everywhere (the roster tables, the builder, the note tool).',
@@ -1993,6 +1994,7 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'Plan, Markers: changing a marker to a mark that wasn\'t on the map (right-click) left the old mark on the same spot too, so two markers sat on one point. Now only the new mark is there.',
     'Plan, The Twin Fangs: the raid markers sit one on each of the three platforms, where raids stand through that platform\'s two sets (star north, circle south-east, diamond south-west), instead of eight bunched on one platform. The Raid markers map shows the whole room.',
     'Plan, a job\'s picture opened big: going to the next picture with ‹ or › now names that picture\'s own job under the heading (it kept naming the job you opened it from).',
     'Boss guides, Ula\'tek: in phase one her tank and the melee now stand on the platform below her (they were drawn past its edge), Mother\'s Wrath knocks the tank back from that edge, the eggs land clear of the melee, and in phase three the Serpent\'s Bite soakers spread out on the broken platform with their waves aimed where nobody stands. The Coiled Altar: anyone a purple circle of Eternal Nightfall lands on steps out of it.',
