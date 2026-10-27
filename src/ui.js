@@ -1954,6 +1954,7 @@ const PATCH_NOTES = [
   { d: '2026-10-27', h: [], n: [
     'Each boss guide now has its own link to share, like debriefme.io/guide/the-coiled-altar/mythic.',
   ], f: [
+    'Pulls from before a boss\'s last nerf are no longer timed against the faster kills that came after it: their phase pace shows a note instead of 0% (thanks to the second team who spotted it).',
     'Defensives: an Arms or Fury Warrior\'s Defensive Stance counts as a defensive used now, and it and Spell Reflection show how much damage they took off, in the raid summary and on the Survivability page.',
   ] },
   { d: '2026-10-26', h: [

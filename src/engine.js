@@ -167,6 +167,12 @@ const NOT_HEALING = new Set([114556, 31850, 31230, 115069]);
 // spell name. What counts as a mistake comes from published raid strategy guides.
 // None of these have been checked against a real log yet.
 const SRC = ['the encounter journal', 'raid strategy guides'];
+/* (each Mythic boss's last nerf, the same dates as the pace chart's PACE_NERF in ui.js (notes/Guides/Patch notes vs kill data); Nek'zali,
+   Entombed Sentinels and Kith'ix were never tuned. A pull from before it isn't timed against the kills after it (Oct 27, the user's other team)) */
+const NERF_AT = { 'The Coiled Altar|16': '2026-10-13T15:00:00Z', 'Sszorak|16': '2026-10-13T15:00:00Z', "Ula'tek|16": '2026-10-06T15:00:00Z', 'The Twin Fangs|16': '2026-09-15T15:00:00Z',
+  'The Lost Explorers|16': '2026-09-10T18:00:00Z', 'Vashnik the Malignant|16': '2026-08-21T18:00:00Z', 'Nymrissa Wavecaller|16': '2026-09-01T15:00:00Z' };
+const preNerf = (it) => { const n = it && NERF_AT[it.boss + '|' + it.diffId], w = it && it.wallMs; return !!(n && w && w < Date.parse(n)); };
+const nerfDay = (it) => { const n = it && NERF_AT[it.boss + '|' + it.diffId]; return n ? new Date(n).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }) : ''; };
 // (in season order: Nymrissa Wavecaller first, Kith'ix last. Neither is in The Venomous Abyss in game: Nymrissa is the Tidebound
 // Grotto lair's boss (12.1, Flex Mythic) and Kith'ix is a one-boss raid added in 12.1.5. Warcraft Logs ranks both in its
 // Venomous Abyss zone, so they count on Progress; `raid` names their own instance on the pull banner. Spell IDs read from real
@@ -3400,9 +3406,9 @@ function paceCard(ev, r, h, mistakes, boss, x) {
   const hpAt = (re, t) => { const u = unitOf(re); if (!u) return null; let v = null; for (const [s, f] of u.samples) { if (s > t) break; v = f; } return v == null ? null : Math.round(100 * v); };
   // (one row: lvl 0 on pace, 1 a slip, 2 the plan broke; a mistake for 1 and 2 on Mythic)
   const row = (what, t, txt, kills, lvl, sub, detail, fix, noMistake) => {
-    const l = mythic && !kill ? lvl || 0 : 0; /* (a kill is shown, not judged: the boss died, so the pace was enough (Oct 22: All pulls said Pace "0% done right" with the kill among the misses)) */
+    const pre = mythic && preNerf(r.item), l = mythic && !kill && !pre ? lvl || 0 : 0; /* (before the boss's last nerf: shown, not judged (Oct 27)) (a kill is shown, not judged: the boss died, so the pace was enough (Oct 22: All pulls said Pace "0% done right" with the kill among the misses)) */
     if (l && !noMistake) mistakes.push({ t, player: 'Raid', mechanic: 'Pace', id: spell[0], severity: l === 2 ? 'High' : 'Medium', detail, fix });
-    rows.push([{ txt: what }, { t }, { txt, bad: l === 2, warn: l === 1, sub: sub || '' }, { txt: mythic ? kills : '', dim: true }]);
+    rows.push([{ txt: what }, { t }, { txt, bad: l === 2, warn: l === 1, sub: pre && lvl ? 'before the ' + nerfDay(r.item) + ' nerf, so not compared' + (sub ? ' · ' + sub : '') : sub || '' }, { txt: mythic ? kills : '', dim: true }]);
   };
   let spell = [0, 'Pace'], title = '', summary = '';
   if (boss === "Kith'ix") {
@@ -3899,6 +3905,7 @@ function buildCoiledAltar(ev, r, h) {
   // ---- pushes and cooldowns ----
   const pushRows = [];
   // (the 20 fastest Mythic kills, Oct 22: when each phase ended. Heroic has no kill numbers yet, so it's shown, not judged)
+  const mythicT = mythic && !preNerf(r.item), preT = mythic && !mythicT ? ' · before the ' + nerfDay(r.item) + ' nerf, so not compared' : ''; /* (Oct 27) */
   const KT = { p1: [134, 157], p2: [150, 176], zj: [22, 33] }, P2K = 'about 2:30, never past 2:56', ms2 = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
   const MT = (t, sev, detail, fix) => mistakes.push({ t, player: 'Raid', mechanic: 'Phase changes', id: S('fangs of the coiled altar')[0], severity: sev, detail, fix });
   const hpAtT = (gs, t) => { let v = null; for (const g of gs) { const u = r.hpUnits && r.hpUnits.get(g); if (u) for (const [s2, f2] of u.samples) { if (s2 > t) break; v = f2; } } return v == null ? null : Math.round(100 * v); };
@@ -3909,7 +3916,7 @@ function buildCoiledAltar(ev, r, h) {
     // The plan: after the last Toxic Deluge (the pools), hold the last frontal on empty ground, then kill Zul'jan in
     // the middle; his death explodes the orbs left (aim for 9 to 11 stacks) under stacked raid cooldowns.
     const lastDel = deluges.filter((t) => t <= pt).pop();
-    const fangs = casts('fangs of the coiled altar').filter((t) => t < p2 - 1).length, p1Late = mythic && p2 > KT.p1[1] + 3, p1Bad = mythic && fangs >= 3;
+    const fangs = casts('fangs of the coiled altar').filter((t) => t < p2 - 1).length, p1Late = mythicT && p2 > KT.p1[1] + 3, p1Bad = mythicT && fangs >= 3;
     if (p1Bad || p1Late) MT(p2, p1Bad ? 'High' : 'Medium', 'Zul\'jan went down at ' + ms2(p2) + (p1Bad ? ', after the third Noxious Ground pools' : '') + ' (top guilds: ' + ms2(KT.p1[0]) + ' to ' + ms2(KT.p1[1]) + ').',
       'Push Zul\'jan right after the second pools, at 11 Venom Rupture stacks or fewer: burn him with cooldowns stacked.');
     const st = stackAt(pt + 5), mx = st.length ? Math.max(...st) : 0;
@@ -3917,7 +3924,7 @@ function buildCoiledAltar(ev, r, h) {
     const pots = healPots(pt - 5, pt + 20);
     if (mx > 11) M(pt, 'Raid', 'venom rupture', mx >= 14 ? 'High' : 'Medium', 'The raid had up to ' + mx + ' Venom Rupture stacks after the P1 push (plan: 9 to 11).', 'Pop fewer orbs with the last frontals (2 to 3, then none), so the push explosion lands on fewer stacks.');
     if (!cds.length && mythic) M(pt, 'Raid', 'fangs of the coiled altar', 'Medium', 'No raid cooldown was used around the P1 push (' + mx + ' Venom Rupture stacks).', 'Group up and stack Darkness, Anti-Magic Zone and Spirit Link Totem for the push, and stay in them until the stacks fall off.');
-    pushRows.push([{ txt: 'P1 → P2' }, { t: pt }, { txt: 'P1 took ' + ms2(p2) + (mythic ? ' (top guilds: ' + ms2(KT.p1[0]) + ' to ' + ms2(KT.p1[1]) + ')' : ''), bad: p1Bad, warn: !p1Bad && p1Late, sub: lastDel != null ? (pt - lastDel).toFixed(0) + ' s after the last Toxic Deluge' + (fangs >= 3 ? ', after the third pools' : '') : '' },
+    pushRows.push([{ txt: 'P1 → P2' }, { t: pt }, { txt: 'P1 took ' + ms2(p2) + (mythic ? ' (top guilds: ' + ms2(KT.p1[0]) + ' to ' + ms2(KT.p1[1]) + ')' + preT : ''), bad: p1Bad, warn: !p1Bad && p1Late, sub: lastDel != null ? (pt - lastDel).toFixed(0) + ' s after the last Toxic Deluge' + (fangs >= 3 ? ', after the third pools' : '') : '' },
       { txt: mx + ' Venom Rupture (plan 9 to 11)', bad: mx >= 14, warn: mx > 11 }, { txt: fmtList(cds) || 'none', bad: mythic && !cds.length }, { txt: pots.length ? pots.length + ' (' + pots.join(', ') + ')' : 'none', dim: !pots.length }]);
   }
   // (P2, Malacrass: how long he took against the kills, with the moment it went late: his second shield (amber, 4 of the 20 kills
@@ -3927,13 +3934,13 @@ function buildCoiledAltar(ev, r, h) {
   const P2T = p2 == null || p2End == null ? null : (() => {
     const dmT = dm.filter((t) => t >= p2 - 1 && t < p2End), enT = ev.filter((x) => x.k === 'start' && L(x.spell) === 'eternal nightfall' && x.t >= p2 && x.t < p2End).map((x) => x.t).sort((p, q) => p - q).filter((t, i, l) => !i || t - l[i - 1] > 10);
     const len = p2End - p2, badAt = [dmT[4], p2 + 180].filter((t) => t != null && t < p2End), warnAt = [enT[1], p2 + 163].filter((t) => t != null && t < p2End);
-    const bad = mythic && badAt.length > 0, warn = mythic && !bad && warnAt.length > 0, got = [enT.length >= 2 ? 'a second Eternal Nightfall' : '', dmT.length >= 5 ? 'a ' + dmT.length + 'th Dreadmarch' : ''].filter(Boolean);
+    const bad = mythicT && badAt.length > 0, warn = mythicT && !bad && warnAt.length > 0, got = [enT.length >= 2 ? 'a second Eternal Nightfall' : '', dmT.length >= 5 ? 'a ' + dmT.length + 'th Dreadmarch' : ''].filter(Boolean);
     const at = bad || warn ? Math.min(...(bad ? badAt : warnAt)) : null;
     if (bad || warn) MT(at, bad ? 'High' : 'Medium', (inter != null ? 'Malacrass took ' : 'P2 went on for ') + ms2(len) + (inter != null ? '' : ' before the wipe') + ' (top guilds: ' + P2K + ')' + (got.length ? ', so he got ' + got.join(' and ') : '') + '.',
       'Push Malacrass before his second shield: keep damage on him between add sets and save cooldowns for his first shield. Top guilds finish P2 in about 2:30.');
     return { len, dmN: dmT.length, enN: enT.length, bad, warn, at };
   })();
-  const p2Cell = (x) => ({ txt: 'P2 ' + (inter != null ? 'took ' : 'lasted ') + ms2(x.len) + (mythic ? ' (top guilds: ' + P2K + ')' : ''), bad: x.bad, warn: x.warn, sub: (x.enN === 1 ? '1 shield' : x.enN + ' shields') + ', ' + x.dmN + ' Dreadmarch casts' + (mythic ? ' (top guilds: 1 shield, 4 casts)' : '') });
+  const p2Cell = (x) => ({ txt: 'P2 ' + (inter != null ? 'took ' : 'lasted ') + ms2(x.len) + (mythic ? ' (top guilds: ' + P2K + ')' + preT : ''), bad: x.bad, warn: x.warn, sub: (x.enN === 1 ? '1 shield' : x.enN + ' shields') + ', ' + x.dmN + ' Dreadmarch casts' + (mythic ? ' (top guilds: 1 shield, 4 casts)' : '') });
   if (P2T && inter == null) pushRows.push([{ txt: 'P2 (wiped)' }, { t: P2T.at ?? p2End }, p2Cell(P2T), { txt: '' }, { txt: '' }, { txt: '' }]);
   if (inter != null) {
     const pt = zeroAt(mal) ?? inter;
@@ -3942,7 +3949,7 @@ function buildCoiledAltar(ev, r, h) {
     const lust = pcasts(LUST).filter((e) => e.t >= inter - 20 && e.t <= inter + 25);
     if (!lust.length && mythic) M(inter, 'Raid', 'soulbinding', 'Low', 'No Bloodlust or Heroism during the Soulbinding intermission.', 'Use Hero/Lust on the intermission, because it is the big damage window on Zul\'jan.');
     const zjDmg = ev.filter((e) => e.k === 'pdmg' && e.t >= inter && e.t <= (p3 ?? dur) && zj.includes(e.dst)).reduce((s, e) => s + e.amt, 0);
-    const zjBack = p3 != null ? hpAtT(zj, p3) : null, zjBad = mythic && zjBack != null && zjBack > 40, zjWarn = mythic && !zjBad && zjBack != null && zjBack > 35;
+    const zjBack = p3 != null ? hpAtT(zj, p3) : null, zjBad = mythicT && zjBack != null && zjBack > 40, zjWarn = mythicT && !zjBad && zjBack != null && zjBack > 35;
     if (zjBad || zjWarn) MT(p3, zjBad ? 'High' : 'Medium', 'Zul\'jan was still at ' + zjBack + '% after the intermission (top guilds: ' + KT.zj[0] + ' to ' + KT.zj[1] + '%).', 'Lust in the intermission and put every damage cooldown on Zul\'jan: he takes double damage while he heals. A faster P2 gives him less time to heal, too.');
     const c2 = P2T ? p2Cell(P2T) : { txt: '' }; if (P2T && delta != null) c2.sub += '; ' + delta.toFixed(0) + ' s after the last Soul Sever';
     pushRows.push([{ txt: 'P2 → Intermission' }, { t: P2T && P2T.at != null ? Math.min(P2T.at, pt) : pt }, c2,
