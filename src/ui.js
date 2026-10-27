@@ -4438,7 +4438,7 @@ function ndzBuildStart(B) {
   for (const pg of B.pages) for (const sl of pg.slots) { const s0 = sug.find((x) => x.label === sl.label || (sl.kick && x.kick === sl.kick)); B.sel[pg.key + '|' + sl.label] = { n: s0 ? s0.names.map((y) => y.n) : [], why: s0 ? s0.why : '' }; }
   // (The Twin Fangs: three mixed Feast groups, kicks by melee or ranged area, the raid split for orb CC)
   if (NDZ_PICKS[B.pick]) NDZ_PICKS[B.pick](B, [...pr.players.values()], B.diff === 'Mythic'); /* (the other eight bosses: ndz-bosses.js) */
-  if (B.pick === 'The Twin Fangs') ndzTFPicks(B, pr); if (B.pick === 'The Coiled Altar' && typeof ndzCAOrbPicks === 'function') ndzCAOrbPicks(B, pr); /* (orb and ghost jobs, Oct 26) */ /* (the guide's rules: notes/Guides/Note suggestions - how picks are made.md) */
+  if (B.pick === 'The Twin Fangs') ndzTFPicks(B, pr); if (B.pick === 'The Coiled Altar' && typeof ndzCAOrbPicks === 'function') ndzCAOrbPicks(B, pr); if (B.src === 'sug' && typeof ndzFitPass === 'function') { try { ndzFitPass(B, [...pr.players.values()]); } catch (e) { /* (the boss's own picks stand) */ } } /* (who suits each mechanic best, and why, Oct 27) */ /* (orb and ghost jobs, Oct 26) */ /* (the guide's rules: notes/Guides/Note suggestions - how picks are made.md) */
   // cooldowns: your newest note for this boss, else the shield cooldowns Suggest made
   const rows = (B.src === 'pulls' && B.draft ? B.draft.rows : ndzNoteRows(B.pick, B.noteId)).filter((x) => x.rem && x.rem.id && !x.rem.glow); /* (externals have their own page) */
   B.cds = rows.length ? rows.map((x) => ({ ph: x.rem.ph, t: x.rem.time, id: x.rem.id, text: x.rem.text, who: x.names.map((y) => y.n).filter((n) => pr.players.has(n))[0] || '' }))
@@ -4660,7 +4660,7 @@ function plbRevCards(B, pages, stT) { const ps = [...B.pr.players.values()], byN
   const out = pages.map((pg, i) => { const s0 = i + 1, has = plbHas(B, pages, i);
     const labs = pg.slots.map((sl) => sl.label), baseOf = (l) => labs.find((m) => m !== l && l.endsWith(' ' + m) && /\d$/.test(m) && /^[A-Za-z]+$/.test(l.slice(0, l.length - m.length - 1)) && !/^P$/i.test(l.slice(0, l.length - m.length - 1))); /* ("External Guillotine 1" belongs to "Guillotine 1", Oct 26) */
     const namesOf = (sl) => { const n = (B.sel[pg.key + '|' + sl.label] || {}).n || [], ord = (sl.block === 'int' || sl.kick || sl.order) && n.length > 1; return n.length ? n.map((x, j) => nm(x, ord ? j + 1 : 0)).join('') : nobody; };
-    const rows = pg.slots.filter((sl) => !baseOf(sl.label) && !(sl.want === 0 && !((B.sel[pg.key + '|' + sl.label] || {}).n || []).length)).map((sl) => { /* (an optional line nobody's on stays off, Oct 26) */ const sides = pg.slots.filter((s2) => baseOf(s2.label) === sl.label); return row(esc(sl.label), namesOf(sl), '', sides.map((s2) => '<span class="plb-rsg"><span class="plb-rsl">' + esc(s2.label.slice(0, s2.label.length - sl.label.length - 1)) + '</span>' + namesOf(s2) + '</span>').join('')); }).join('');
+    const rows = pg.slots.filter((sl) => !baseOf(sl.label) && !(sl.want === 0 && !((B.sel[pg.key + '|' + sl.label] || {}).n || []).length)).map((sl) => { /* (an optional line nobody's on stays off, Oct 26) */ const sides = pg.slots.filter((s2) => baseOf(s2.label) === sl.label); return row(esc(sl.label) + (typeof plbWhyI === 'function' ? plbWhyI(B, sl.label) : ''), namesOf(sl), '', sides.map((s2) => '<span class="plb-rsg"><span class="plb-rsl">' + esc(s2.label.slice(0, s2.label.length - sl.label.length - 1)) + '</span>' + namesOf(s2) + '</span>').join('')); }).join('');
     if (B.pgEditKeys && B.pgEditKeys.has(pg.key) && typeof ndzBSlotsH === 'function') { const psE = [...B.pr.players.values()].sort((a, b) => ({ tank: 0, healer: 1, dps: 2 })[a.role] - ({ tank: 0, healer: 1, dps: 2 })[b.role] || a.name.localeCompare(b.name)), colE = (x) => (B.pr.players.get(x) || {}).color || 'inherit'; /* (editing in place, one page round 4, Oct 26) */
       const form = '<div class="plb-edit" data-bjpg="' + esc(pg.key) + '">' + ndzBSlotsH(B, pg, psE, colE) + '<div class="plb-edact"><button type="button" class="btn sm primary" data-pgdone="' + esc(pg.key) + '">✓ Done</button></div></div>', c0 = card(s0, stT[i][1], pg.title, !has ? 'none' : open.has(s0) ? 'warn' : 'ok', '', 0, pg.key).replace('<div class="plb-rc', '<div class="plb-rc editing'), at = c0.indexOf('<div class="pj-pics"');
       return at >= 0 ? c0.slice(0, at) + form + c0.slice(at) : c0.replace(/<\/div>$/, form + '</div>'); }
@@ -4919,6 +4919,11 @@ function pgDangerH(B, key) { const boss = B.boss || B.pick, pg = (B.pages || [])
     (wipe ? row('Wipes if', esc(wipe.s)) : '') + (worst ? row('Raid damage', fm(worst) + '/s at its worst' + (pr >= 0.5 ? ' <span class="btl-mtx">(top ' + Math.max(1, Math.round((1 - pr) * 100)) + '% of the fight)</span>' : '')) : '') +
     (ms.length ? row('Comes at', esc(ms.slice(0, 6).map(at).join(', ') + (ms.length > 6 ? ' +' + (ms.length - 6) : ''))) : '') + (tip ? row('How to', esc(tip)) : '') + '</div>';
   return '<span class="pg-dg" style="--dg:' + lev[1] + '" data-tt="' + esc(card) + '">' + lev[0] + '</span>'; }
+
+// (a job row's ⓘ: why these players, as saved with the plan; Oct 27)
+function plbWhyI(B, label) { if (S.page !== 'plan' || !B || !B.noteId) return ''; const x = notesOf(B.boss || B.pick).list.find((q) => q.id === B.noteId), w = x && x.whys && x.whys[label]; if (!w) return '';
+  const [m, pk] = String(w).split(' Picked: '), lines = pk ? pk.replace(/\.$/, '').split(' | ').map((s) => '• ' + esc(s)) : [];
+  return ' <i class="plb-why" tabindex="0" aria-label="Why these picks" data-tt="' + esc('<b>Why these picks</b><br>' + esc(m) + (lines.length ? '<br>' + lines.join('<br>') : '')) + '">ⓘ</i>'; }
 
 // ---- Get started (Oct 20, your idea: "make the note section a guided thing"; test copy only, behind NDZ_NEW) ----
 // One button on the notes page opens a short guide: "What do you want to do?" with three paths (I have a note, Make a new
@@ -5837,6 +5842,76 @@ const NDZ_PICKS = {
     ['Healer Marker', 'Melee Marker', 'Ranged Marker'].forEach((l, i) => ndzPut(B, 'fear', l, h.slice(i, i + 1), h[i] ? 'Dispels at the ' + ['healers\' (skull)', 'melee (star)', 'ranged (X)'][i] + ' marker' + (i ? '' : ', first') + ': ' + h[i].name + ' (' + (NDZ_DISPEL[h[i].cls] || 'dispel') + ').' : 'Not enough healers: a healer covers two markers.'));
   },
 };
+
+// ---- Who suits each mechanic, and why (Oct 27, the user: "Is it utility they have? Can they immune it? Do they have more movement
+// speed? Can they remove a debuff? ... in order to answer this question you need to know the mechanic itself") ----
+// (what a class and spec brings to a mechanic job; Midnight abilities, baseline cooldowns)
+const NDZF_IMMUNE = { HUNTER: ['Aspect of the Turtle', 'all'], PALADIN: ['Divine Shield', 'all'], MAGE: ['Ice Block', 'all'], ROGUE: ['Cloak of Shadows', 'magic'] };
+const NDZF_WALL = { WARRIOR: ['Die by the Sword, Spell Reflection', 3], ROGUE: ['Feint, Evasion', 3], DEATHKNIGHT: ['Anti-Magic Shell, Icebound Fortitude', 3], DEMONHUNTER: ['Blur', 2], MONK: ['Fortifying Brew, Diffuse Magic', 2], DRUID: ['Barkskin, Bear Form', 2],
+  PALADIN: ['Divine Protection', 2], HUNTER: ['Survival of the Fittest', 2], MAGE: ['Ice Barrier, Mirror Image', 2], SHAMAN: ['Astral Shift', 2], EVOKER: ['Obsidian Scales', 2], WARLOCK: ['Unending Resolve', 2], PRIEST: ['Desperate Prayer', 1] };
+const NDZF_MOVE = { DEMONHUNTER: [3, 'Fel Rush, Vengeful Retreat'], MONK: [3, 'Roll, Flying Serpent Kick'], EVOKER: [3, 'Hover, Soar'], DRUID: [3, 'Dash, Stampeding Roar'], MAGE: [3, 'Blink, Shimmer'], SHAMAN: [3, 'Ghost Wolf, Spiritwalker\'s Grace'], HUNTER: [3, 'Disengage, Aspect of the Cheetah'],
+  ROGUE: [2, 'Sprint, Shadowstep'], WARRIOR: [2, 'Heroic Leap, Charge'], PRIEST: [2, 'Angelic Feather'], PALADIN: [2, 'Divine Steed'], DEATHKNIGHT: [2, 'Death\'s Advance, Wraith Walk'], WARLOCK: [1, 'Demonic Circle, Burning Rush'] };
+const NDZF_FREEDOM = { PALADIN: 'Blessing of Freedom', MONK: 'Tiger\'s Lust', DRUID: 'Stampeding Roar (frees from slows)', SHAMAN: 'Wind Rush Totem', EVOKER: 'Rescue' };
+const NDZF_GRIPS = { DEATHKNIGHT: ['Death Grip', 3], DRUID: ['Ursol\'s Vortex, Typhoon', 2], DEMONHUNTER: ['Sigil of Chains', 2], MONK: ['Ring of Peace', 1], SHAMAN: ['Thunderstorm', 1], EVOKER: ['Wing Buffet', 1] };
+const NDZF_SLOWS = { DEATHKNIGHT: ['Chains of Ice, Death and Decay', 'slow'], HUNTER: ['Tar Trap, Concussive Shot', 'slow'], WARRIOR: ['Piercing Howl', 'slow'], SHAMAN: ['Earthbind Totem', 'slow'], MONK: ['Disable', 'slow'], WARLOCK: ['Curse of Exhaustion', 'slow'], ROGUE: ['Crippling Poison', 'slow'],
+  DRUID: ['Mass Entanglement, Ursol\'s Vortex', 'root'], MAGE: ['Frost Nova, Blizzard', 'root'], EVOKER: ['Landslide', 'root'], DEMONHUNTER: ['Sigil of Chains', 'slow'], PRIEST: ['Mind Flay (slow)', 'slow'], PALADIN: ['Hammer of Justice', 'stun'] };
+const NDZF_LIGHTCC = { WARLOCK: 'Banish', HUNTER: 'Freezing Trap', MONK: 'Paralysis', MAGE: 'Polymorph', SHAMAN: 'Hex', DRUID: 'Hibernate', EVOKER: 'Sleep Walk', ROGUE: 'Sap' };
+const NDZF_NOCANCEL = new Set(['PRIEST', 'PALADIN']); /* (Sszorak's guide: most classes cancel a launch; Priests and Paladins can't) */
+const NDZF_MAGICDMG = new Set([62, 63, 64, 265, 266, 267, 102, 258, 262, 1467, 1473]);
+const NDZF_HEALDISP = { 65: 'Cleanse', 256: 'Purify', 257: 'Purify', 264: 'Purify Spirit', 105: 'Nature\'s Cure', 270: 'Detox', 1468: 'Naturalize' };
+// (what each specialist job wants, from the boss guides: notes/Guides/Bosses; m: the mechanic in a line, s: per slot label: pool and wants)
+const ndzIsT = (p) => p.role === 'tank', ndzIsH = (p) => p.role === 'healer', ndzIsR = (p) => p.role === 'dps' && !ndzMel(p), ndzIsM = (p) => p.role === 'dps' && ndzMel(p);
+const NDZF_FIT = {
+  'Nymrissa Wavecaller': { adds: { m: 'Murlocs must not reach the bubble: grips pull packs into the cleave, long slows and roots hold the far packs.', s: [[/^Grips/, (p) => !ndzIsH(p), ['grip']], [/^Slows/, (p) => !ndzIsH(p) && !ndzIsT(p), ['rootaoe', 'ranged']]] } },
+  "Nek'zali the Soulcoiler": { rend: { m: 'Essence Rend is a magic debuff (and a heal absorb): dispel it at the edge, one target at a time.', s: [[/Dispel/, ndzIsH, ['dispmagic']]] },
+    grip: { m: 'Restless Amani walk to the well behind a magic shield: grips and knockbacks pull strays into the cleave.', s: [[/^Grips/, (p) => !ndzIsH(p), ['grip']]] } },
+  'Vashnik the Malignant': { disp: { m: 'Exploding Infection is dispelled one at a time: the dispel explodes on the raid, so the target runs out first.', s: [[/Dispel/, ndzIsH, ['dispmagic']]] },
+    bile: { m: 'Every Catalytic Bile circle needs one player in it or it hits the whole raid: ranged spread round the room and run to the circles.', s: [[/^Bile/, (p) => ndzIsR(p) || ndzIsH(p), ['move', 'ranged', 'wall']], [/^Max Range/, (p) => ndzIsR(p), ['move', 'ranged']]] },
+    adds: { m: 'Fire adds are gripped in and held one at a time (a banish or a light CC on one); shadow adds are pulled together.', s: [[/^Banish/, (p) => !ndzIsT(p), ['banish', 'lightcc']], [/^Shadow Add Grips/, (p) => !ndzIsH(p), ['massgrip']]] } },
+  Sszorak: { fury: { m: 'Serpent\'s Fury marks the farthest player: one mobile ranged player baits it far out and walks back in on time.', s: [[/Bait/, (p) => ndzIsR(p), ['move', 'ranged', 'hunter']]] },
+    cyst: { m: 'A Viscous Cyst knocks you back and coats you so you stick to the ground: poppers need to be fast, and DPS, so the healers keep healing through the intermission.', s: [[/Cyst/, (p) => !ndzIsT(p), ['move', 'notheal']]] } },
+  'Entombed Sentinels': { drops: { m: 'Each Toxic Droplet hurts whoever steps on it: tanks take most with a defensive, immunities take them at the worst overlap.', s: [[/^Droplets/, (p) => ndzIsT(p) || !!NDZF_IMMUNE[p.cls], ['tankfirst', 'immune', 'wall']]] },
+    miasma: { m: 'Unstable Miasma is split between 8+ soakers and it hurts: players with strong personal defensives soak.', s: [[/^Miasma/, (p) => !ndzIsT(p), ['wall'], 'explain']] },
+    disp: { m: 'Blighted Blood is a dispellable DoT: dispel it fast (it drops a puddle if it runs out).', s: [[/Dispel/, ndzIsH, ['dispmagic']]] } },
+  'The Lost Explorers': { fish: { m: 'The Disgusting Fish is carried to a tortollan at the right energy: a fast player who is not breaking crates.', s: [[/Fish/, (p) => !ndzIsH(p), ['move', 'ranged']]] },
+    crates: { m: 'Breaking a crate puts a bleed on the whole raid, and melee must never step on one by accident: a tank or mobile ranged break them, in pairs.', s: [[/^Crates/, (p) => ndzIsT(p) || ndzIsR(p), ['tank', 'move', 'ranged']]] } },
+  "Ula'tek": { tanks: { m: 'Mother\'s Wrath leaves Hobbled (a 55% slow) on the tank; clutches are gripped into the cleave.', s: [[/^Freedom/, (p) => true, ['freedom']], [/^Clutch Grips/, (p) => !ndzIsH(p), ['grip']]] },
+    eggs: { m: 'Carried eggs put a DoT on the carrier and hatch if the carrier is hit by venom: carriers need to move fast and survive the DoT.', s: [[/^Egg (Melee|Left|Right|Far|Backup)/, (p) => !ndzIsT(p), ['move', 'wall']]] } },
+  "Kith'ix": { beetles: { m: 'Bomber Beetles fixate a player and explode on contact: grip them onto the big adds one at a time, and slow them (do not root them: they need to reach the cleave).', s: [[/^Beetle Grips/, (p) => !ndzIsH(p), ['grip']], [/^Beetle Slows/, (p) => !ndzIsH(p), ['slowonly']]] },
+    scar: { m: 'Each Voidscar fragment is a stacking DoT on the soaker and anyone within 3 yards: ranged soakers alternate.', s: [[/^Scar/, (p) => ndzIsR(p), ['wall', 'immune', 'ranged']]] } },
+};
+// (a player's fit for a job: points, and the plain reasons)
+function ndzFitOf(p, wants) { let n = 0; const why = [], cls = p.cls, sid = +p.specId;
+  for (const w of wants) {
+    if (w === 'immune' && NDZF_IMMUNE[cls]) { n += 6; why.push('can immune it with ' + NDZF_IMMUNE[cls][0] + (NDZF_IMMUNE[cls][1] === 'magic' ? ' (magic only)' : '')); }
+    else if (w === 'immunenot' && NDZF_IMMUNE[cls]) { n -= 1; }
+    else if (w === 'wall' && NDZF_WALL[cls]) { const v = NDZF_WALL[cls][1] + (sid === 258 ? 2 : 0); n += v; why.push((sid === 258 ? 'Dispersion' : NDZF_WALL[cls][0]) + ' to survive it'); }
+    else if (w === 'move' && NDZF_MOVE[cls]) { n += NDZF_MOVE[cls][0] * 1.5; if (NDZF_MOVE[cls][0] >= 3) why.push('fast: ' + NDZF_MOVE[cls][1]); }
+    else if (w === 'cancel') { if (NDZF_NOCANCEL.has(cls)) n -= 4; else why.push('can cancel the launch'); }
+    else if (w === 'ranged' && ndzIsR(p)) { n += 1.5; }
+    else if (w === 'tank' && ndzIsT(p)) { n += 5; why.push('a tank, with a defensive ready'); }
+    else if (w === 'tankfirst' && ndzIsT(p)) { n += 12; why.push('a tank: takes most of them with a defensive'); }
+    else if (w === 'notheal' && ndzIsH(p)) { n -= 4; }
+    else if (w === 'rootaoe' && NDZF_SLOWS[cls]) { const k = NDZF_SLOWS[cls][1]; n += k === 'root' ? 5 : k === 'slow' ? 2 : 0; why.push(NDZF_SLOWS[cls][0] + (k === 'root' ? ' (an area root)' : ' (a slow)')); }
+    else if (w === 'massgrip') { const g = sid === 250 ? ['Gorefiend\'s Grasp', 7] : sid === 581 ? ['Sigil of Chains', 7] : cls === 'DRUID' ? ['Typhoon, Ursol\'s Vortex', 6] : cls === 'MONK' ? ['Ring of Peace', 3] : sid === 262 ? ['Thunderstorm', 2] : null; if (g) { n += g[1]; why.push(g[0] + ' pulls the pack together'); } }
+    else if (w === 'hunter' && cls === 'HUNTER') { n += 3; why.push('a Hunter, as top raids bait it'); }
+    else if (w === 'grip' && NDZF_GRIPS[cls] && (cls !== 'DEMONHUNTER' || sid === 581)) { n += NDZF_GRIPS[cls][1] * 2; why.push(NDZF_GRIPS[cls][0]); }
+    else if (w === 'slowany' && NDZF_SLOWS[cls]) { n += NDZF_SLOWS[cls][1] === 'stun' ? 1 : 3; why.push(NDZF_SLOWS[cls][0]); }
+    else if (w === 'slowonly' && NDZF_SLOWS[cls]) { const k = NDZF_SLOWS[cls][1]; n += k === 'slow' ? 4 : k === 'root' ? -1 : 0; if (k === 'slow') why.push(NDZF_SLOWS[cls][0] + ' (a slow, not a root)'); }
+    else if (w === 'banish' && cls === 'WARLOCK') { n += 6; why.push('Banish holds it until you want it'); }
+    else if (w === 'lightcc' && NDZF_LIGHTCC[cls] && cls !== 'WARLOCK') { n += 3; why.push(NDZF_LIGHTCC[cls] + ' holds it'); }
+    else if (w === 'freedom' && NDZF_FREEDOM[cls]) { n += cls === 'PALADIN' ? 6 : 4; why.push(NDZF_FREEDOM[cls] + ' clears the slow'); }
+    else if (w === 'dispmagic' && NDZF_HEALDISP[sid]) { n += 4; why.push(NDZF_HEALDISP[sid] + ' removes magic'); } }
+  return { n, why }; }
+// (re-rank each specialist slot: the boss's own pick keeps a small edge on a tie; nobody gets two jobs on one card)
+function ndzFitPass(B, ps) { const F = NDZF_FIT[B.pick]; if (!F || !ps.length) return;
+  for (const pg of B.pages || []) { const J = F[pg.key]; if (!J) continue; const used = new Set(); for (const sl0 of pg.slots) if (!J.s.find(([re]) => re.test(sl0.label))) ((B.sel[pg.key + '|' + sl0.label] || {}).n || []).forEach((n) => used.add(n)); /* (one job a card, Oct 27) */
+    for (const sl of pg.slots) { const rule = J.s.find(([re]) => re.test(sl.label)); const k = pg.key + '|' + sl.label, cur = (B.sel[k] || { n: [] }).n.slice(); if (!rule) { cur.forEach((n) => used.add(n)); continue; }
+      if (rule[3] === 'explain') { if (!cur.length) continue; const pp = cur.map((n) => ps.find((q) => q.name === n)).filter(Boolean); cur.forEach((n) => used.add(n)); B.sel[k] = { n: cur, why: J.m + ' Picked: ' + pp.map((p) => { const f0 = ndzFitOf(p, rule[2]); return p.name + (f0.why.length ? ' (' + f0.why.join('; ') + ')' : ''); }).join(' | ') + '.', fit: true }; continue; } /* (the boss's picks stand, explained) */
+      const want = Math.max(cur.length, typeof sl.want === 'number' ? sl.want : 0); if (!want) continue;
+      const pool = ps.filter((p) => rule[1](p) && !used.has(p.name)).map((p) => { const f = ndzFitOf(p, rule[2]); return { p, n: f.n + (cur.includes(p.name) ? 0.5 : 0), why: f.why }; }).sort((a, b) => b.n - a.n || a.p.name.localeCompare(b.p.name));
+      const pick = pool.slice(0, want); if (!pick.length) continue; pick.forEach((x) => used.add(x.p.name));
+      B.sel[k] = { n: pick.map((x) => x.p.name), why: J.m + ' Picked: ' + pick.map((x) => x.p.name + (x.why.length ? ' (' + x.why.join('; ') + ')' : '')).join(' | ') + '.', fit: true }; } } }
 
 // ---- A saved note, opened (Oct 20, your ask: "clicking on these should let you view the assignments/roster") ----
 // Clicking a saved note's card (anywhere but its buttons and night chips) opens it: the whole roster by role (tanks, melee,
@@ -7048,7 +7123,7 @@ function planPickFor(boss, diff) { const R = planRoster(); if (!R) return []; { 
 function planNewName(boss) { const R = planRoster(), base = (R ? R.name : 'New') + (typeof pnGet === 'function' && pnGet().diff === 'Heroic' ? ' Heroic' : '') + ' plan', /* (Heroic says so, Oct 24) */ l = notesOf(boss).list; let k = 1, nm = base; while (l.some((x) => x.name === nm)) nm = base + ' ' + (++k); return nm; }
 function planMakeFor(boss) { const on = planPickFor(boss), o = { diff: pnGet().diff || 'Mythic', phl: null }, d = pnDraftBoss(o, boss, on), L = notesOf(boss);
   { const k = nmSetOf(d.text), same = L.list.find((x) => !x.example && nmSetOf(x.text) === k && (typeof pnNoteDiff !== 'function' || pnNoteDiff(x) === (o.diff || 'Mythic'))); /* (same difficulty too, Oct 24) */ if (same) return { n: same, d, same: true }; } /* (same players: open that plan, Oct 23) */
-  const n = { id: 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name: planNewName(boss), text: d.text, saved: Date.now(), roster: on.map((x) => String(x).split('-')[0]) }; L.list.push(n); notesSave(boss, L); return { n, d }; }
+  const n = { id: 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name: planNewName(boss), text: d.text, saved: Date.now(), roster: on.map((x) => String(x).split('-')[0]), whys: d.whys || {} }; /* (each job's reason, kept, Oct 27) */ L.list.push(n); notesSave(boss, L); return { n, d }; }
 // (Make it for me: one boss, then open it)
 function planNoClassStop() { const o = pnGet(), away = new Set((o.away || []).map((s) => String(s).toLowerCase())), ps = pnPeople(o).filter((p) => !p.bench && !away.has(String(p.n).toLowerCase())), nc = ps.filter((p) => !p.cls); if (!nc.length || nc.length * 2 < ps.length) return false;
   toast('<b>Set classes first.</b> ' + nc.length + ' of ' + ps.length + ' raiders have no class yet, so a plan can\'t give out buffs, cooldowns or kicks. <button class="btn sm primary" type="button" data-tnsetstart="1" data-tnsetgo="1">Set classes</button>', 9000); return true; } /* (no plans for a team without classes, Oct 26) */
@@ -8089,7 +8164,7 @@ function ndzBjH(boss, n) { let B; try { B = ndzBjB(boss, n); } catch (e) { retur
 // (a change to one or more jobs: the note's lines for them rewritten, saved with Undo, the page drawn again where it was)
 function ndzBjSave(B, pg, slots, msg) { S.bjB = null; /* (read the note again next draw) */ const boss = B.pick, n = notesOf(boss).list.find((x) => x.id === B.noteId); if (!n) return; let t = n.text;
   for (const sl of slots) t = ndzBjWrite(t, B, pg, sl, B.sel[pg.key + '|' + sl.label].n);
-  if (t === n.text) return; S.ndzCovUndo = { boss, id: n.id, text: n.text, msg: msg || 'Job changed' }; const y = window.scrollY; ndzNoteSet(boss, n.id, t); planAssign(); window.scrollTo({ top: y });
+  if (t === n.text) return; S.ndzCovUndo = { boss, id: n.id, text: n.text, msg: msg || 'Job changed' }; const y = window.scrollY; ndzNoteSet(boss, n.id, t); { const o4 = notesOf(boss), x4 = o4.list.find((q) => q.id === n.id); if (x4 && x4.whys) { for (const sl of slots) delete x4.whys[sl.label]; notesSave(boss, o4); } } /* (your own pick: its old reason goes, Oct 27) */ planAssign(); window.scrollTo({ top: y });
   toast(esc(msg || 'Saved in the note') + '. <button class="btn sm" type="button" data-ndzundo="1">Undo</button>', 5000); }
 document.addEventListener('click', (e) => { if (S.page !== 'plan' || !e.target.closest) return; const card = e.target.closest('.bj-jobs [data-bjpg]'); if (!card || !S.bjB) return; const B = S.bjB.B, pg = (B.pages || []).find((p) => p.key === card.dataset.bjpg); if (!pg) return;
   const slot = (k) => pg.slots.find((sl) => pg.key + '|' + sl.label === k), t = e.target;
@@ -8106,7 +8181,7 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
   /* (one click: no "Click again" step, Undo is in the message, Oct 24) */
   const names = ndzNoteRoster(n) || [...new Set(noteNames(noteResolve(n.text)).map((x) => String(x).split('-')[0]))]; let hd = {}; try { hd = (E.parseNote(n.text) || {}).header || {}; } catch (x) { hd = {}; }
   let d; try { d = pnDraftBoss({ diff: /heroic|15/i.test(String(hd.difficulty || '')) ? 'Heroic' : 'Mythic', phl: n.phl || null }, boss, names); } catch (x) { toast('Couldn\'t redo it: ' + esc(x.message), 5000); return; }
-  const same = d.text === n.text; S.ndzCovUndo = same ? null : { boss, id, text: n.text, msg: 'Redone' }; S.plWhy = { v: 'plans', boss, html: bjRedoWhyH(n.text, d) }; /* (what changed and why, Oct 23) */ const y = window.scrollY; ndzNoteSet(boss, id, d.text); { const o2 = notesOf(boss), x2 = o2.list.find((q) => q.id === id); if (x2 && n.phl && !x2.phl) { x2.phl = n.phl; notesSave(boss, o2); } } S.bjB = null; /* (your phase times stay with the plan) */ planAssign(); window.scrollTo({ top: y });
+  const same = d.text === n.text; S.ndzCovUndo = same ? null : { boss, id, text: n.text, msg: 'Redone' }; S.plWhy = { v: 'plans', boss, html: bjRedoWhyH(n.text, d) }; /* (what changed and why, Oct 23) */ const y = window.scrollY; ndzNoteSet(boss, id, d.text); { const o3 = notesOf(boss), x3 = o3.list.find((q) => q.id === id); if (x3) { x3.whys = d.whys || {}; notesSave(boss, o3); } } /* (each job's reason, kept, Oct 27) */ { const o2 = notesOf(boss), x2 = o2.list.find((q) => q.id === id); if (x2 && n.phl && !x2.phl) { x2.phl = n.phl; notesSave(boss, o2); } } S.bjB = null; /* (your phase times stay with the plan) */ planAssign(); window.scrollTo({ top: y });
   toastOk(same ? 'Already up to date: Debrief would make the same plan.' : 'Redone: ' + d.jobs + ' jobs and ' + d.cds + ' cooldowns for the same ' + names.length + ' raiders. <button class="btn sm" type="button" data-ndzundo="1">Undo</button>', same ? 3500 : 7000); }); /* (nothing to change: no Undo, Oct 24) */
 document.addEventListener('toggle', (e) => { if (e.target && e.target.classList && e.target.classList.contains('bj-fold')) S.bjFold = e.target.open; }, true);
 document.addEventListener('click', (e) => { if (!e.target.closest || e.target.closest('.bj-mm')) return; document.querySelectorAll('.bj-mm[open]').forEach((d) => (d.open = false)); }); /* (More closes on a click elsewhere) */
@@ -8696,7 +8771,7 @@ window.addEventListener('click', (e) => { if (S.page !== 'plan' || !e.target.clo
 function pgFillCard(key) { const B = S.bjB && S.bjB.B; if (!B) return; const pg = (B.pages || []).find((p) => p.key === key); if (!pg) return; const on = [...(B.on || [])], ck = B.pick + '|' + B.diff + '|' + on.slice().sort().join(',');
   let d = S.pgSug && S.pgSug.k === ck ? S.pgSug.B : null; if (!d) { d = { fixed: true, boss: B.pick, pick: B.pick, diff: B.diff, on: new Set(on), team: store.get(GROUP_CUR) || null, roles: {}, step: 1, sel: null, cds: null, src: 'sug', noteId: null, name: '', draft: null }; try { ndzBuildStart(d); } catch (e) { toast("Couldn't suggest picks here.", 3500); return; } S.pgSug = { k: ck, B: d }; }
   const slots = []; for (const sl of pg.slots) { const k = pg.key + '|' + sl.label, v = (d.sel || {})[k]; if (!v || !v.n.length || ((B.sel[k] || {}).n || []).length) continue; B.sel[k] = { n: v.n.slice(), why: v.why || '' }; slots.push(sl); }
-  if (!slots.length) { toast('Nothing to fill: its jobs have people, or there are no picks for it.', 3500); return; } ndzBjSave(B, pg, slots, pg.title + ': filled the way the fastest kills do'); }
+  if (!slots.length) { toast('Nothing to fill: its jobs have people, or there are no picks for it.', 3500); return; } ndzBjSave(B, pg, slots, pg.title + ': filled the way the fastest kills do'); { const o5 = notesOf(B.pick), x5 = o5.list.find((q) => q.id === B.noteId); if (x5) { x5.whys = x5.whys || {}; for (const sl of slots) { const w = ((d.sel || {})[pg.key + '|' + sl.label] || {}).why; if (w) x5.whys[sl.label] = w; } notesSave(B.pick, o5); const y = window.scrollY; S.bjB = null; planAssign(); window.scrollTo({ top: y }); } } } /* (and why, Oct 27) */
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-pgfill]'); if (!b || S.page !== 'plan') return; e.preventDefault(); e.stopPropagation(); pgFillCard(b.dataset.pgfill); });
 // ---- Raid nights (Oct 26, the user: "Build B, the two-week strip, and bake the fixes into the raider and boss rows"). Each night
 // (a date) keeps its own setup: team, difficulty, who's out, who sits each boss, the bosses it does. The night on screen lives in
