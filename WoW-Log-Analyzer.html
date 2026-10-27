@@ -47985,7 +47985,7 @@ if (WCL.HOSTED) {
   else if (sharedLink) { { const tb = qp.get('tab'); if (tb && (tb === 'live' || TABS.some(([k]) => k === tb))) S.tab = tb; else if (!tb && !['audit', 'rot', 'perf', 'player', 'cmp'].includes(S.tab)) S.tab = 'audit'; /* (no tab named: Debriefing, unless the remembered tab is a raid tab, never Home (Oct 26)) */ if (tb || qp.get('all')) S.scope = qp.get('all') ? 'all' : 'pull'; navApplySel(S.tab, qp.get('p')); } /* (its tab, one pull or all, and its player (Oct 21)) */
     if (qp.get('m')) { S.tab = 'audit'; S.scope = 'pull'; S.pendingSec = 'sec-' + qp.get('m'); } /* (a link to one mechanic (Oct 20)) */
     if (qp.get('tab') === 'gdz') { setTimeout(() => openGuides(null, qp.get('d')), 0); } else /* (the first Guides links (Oct 20) open the guides page) */ $('#main').innerHTML = '<div class="empty">' + loadCard('Opening the report', 'Loading the report…', null, 'loadmsg') + '</div>'; openWcl({ code: qp.get('report'), fight: +qp.get('fight') || null }, null, false, !qp.get('fight')).catch((err) => hostedPanel(err.message)); }
-  else home();
+  else { const t = homeTarget(); if (t) { store.set(GROUP_CUR, t.gid); progressPage(undefined, t.gid); window.scrollTo(0, 0); } else home(); } /* (the user, Oct 27: "I want the home tab to be the landing page for returning players": anyone with a character or team lands on Home; first-timers get the front page, which the logo still opens) */
 } else if (RQ.has('guides')) setTimeout(() => openGuides(RQ.get('boss'), RQ.get('d')), 0);
 else if (RQ.has('ingame')) setTimeout(openInGame, 0);
 else if (!$('#main').innerHTML.trim()) home();
