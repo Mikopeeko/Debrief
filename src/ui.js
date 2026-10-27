@@ -14983,13 +14983,13 @@ function nightMechC(o) {
     const h1 = J.slice(0, Math.ceil(tot / 2)), h2 = J.slice(Math.ceil(tot / 2)), wr = (l) => l.filter((n) => stAt(r, n) !== 'ok').length, a = wr(h1), b = wr(h2);
     const trend = tot >= 6 && Math.abs(a / Math.max(1, h1.length) - b / Math.max(1, h2.length)) >= 0.3 ? '<p class="rw2-fl rw2-tr">Early pulls: wrong in ' + a + ' of ' + h1.length + ' · Late pulls: wrong in ' + b + ' of ' + h2.length + '</p>' : '';
     void trend; void bars; void wh;
-    /* (Oct 27, the calmer panel: one sentence of facts (counts in colour), then What went wrong as a table; no bars, no ×counts) */
+    /* (Oct 27, the calmer panel: one sentence of facts (counts in colour), then the Mistakes table; no bars, no ×counts) */
     const cnt = (n, c) => '<b class="' + c + '">' + n + '</b>', kc = (e) => (e.bad * 2 >= e.c ? 'r' : 'y'), lo = (t) => t.charAt(0).toLowerCase() + t.slice(1), cleanN = tot - wN;
     const s1 = top.slice(0, 2).map((e, i) => (i ? lo(esc(e.k)) : esc(e.k)) + ' in ' + cnt(e.pulls.size, kc(e)) + (i ? '' : ' ' + (e.pulls.size === 1 ? 'pull' : 'pulls'))).join(', and ');
     const sum = '<p class="mx-sum">' + (s1 ? s1 + '. ' : 'Mistakes in ' + cnt(wN, 'r') + ' of ' + tot + ' pulls. ') + (cleanN ? (cleanN === 1 ? 'Only ' + cnt(1, 'g') + ' pull was clean.' : (cleanN * 2 < tot ? 'Only ' : '') + cnt(cleanN, 'g') + ' pulls were clean.') : 'No pull was clean.') + '</p>';
     const pc = new Map([...pm].map(([n, p]) => [String(n).split('-')[0], p]));
     const whoC = (e) => { const ws = [...e.who].sort((a, b) => b[1] - a[1]); if (!ws.length) return '<span class="mx-who">—</span>'; return '<span class="mx-who">' + ws.slice(0, 2).map(([w]) => { const p = pc.get(w); return '<span class="nm"' + (p && p.color ? ' style="color:' + p.color + '"' : '') + '>' + esc(w) + '</span>'; }).join(', ') + (ws.length > 2 ? ' <span class="mx-more">+' + (ws.length - 2) + '</span>' : '') + '</span>'; };
-    const tb = top.length ? '<div class="mx-lab">What went wrong</div><div class="mx-tb"><div class="mx-th"><span>Mistake</span><span>Pulls</span><span>Who, most often</span></div>' + top.map((e, i) => { const wp = [...e.pulls].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0];
+    const tb = top.length ? '<div class="mx-lab">Mistakes</div><div class="mx-tb"><div class="mx-th"><span>Mistake</span><span>Pulls</span><span>Who, most often</span></div>' + top.map((e, i) => { const wp = [...e.pulls].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0];
       return '<div class="mx-tr" data-npq="' + wp + '" role="button" tabindex="0" title="' + esc('Pulls ' + [...e.pulls.keys()].sort((a, b) => a - b).join(', ') + '. Click to open pull ' + wp + '.') + '"><span class="mx-m">' + esc(e.k) + '.</span><span class="mx-ch' + (i === 0 || kc(e) === 'r' ? ' hi' : '') + '">' + e.pulls.size + ' of ' + plural(tot, 'pull') + '</span>' + whoC(e) + '</div>'; }).join('') + '</div>' : '';
     return sum + tb + ftL; };
   const line = (r) => { const lv = lvOf(r), wN = judged(r).filter((n) => stAt(r, n) !== 'ok').length, worst = worstOf(r), F = factsOf(r), sid = 'nml-' + r.x.id, ok = lv === 'clean', M = ok ? null : mapAt(r);
