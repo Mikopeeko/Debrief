@@ -32407,11 +32407,11 @@ function dsGuides() {
 (function () {
   if (typeof document === 'undefined') return;
   var mark = function () {
-    var h = document.querySelector('#view.plan-page .ndz-dtl > .ndz-cth'); if (!h || h.querySelector('.ds-hkey')) return;
+    var d = document.querySelector('#view.plan-page .ndz-dtl'); var sc = d && d.querySelector('.btl-sc'); if (!sc || d.querySelector('.ds-hkey')) return;
     if (!document.querySelector('#view.plan-page .ndz-dtl .btl-hit')) return;
     var k = document.createElement('span'); k.className = 'ds-hkey';
     k.innerHTML = '<b>◆ Big hits:</b> <i class="g">✓ covered</i> <i class="a">! only a healer’s own burst</i> <i class="r">✕ not covered</i>';
-    var copy = h.querySelector('[data-dstl]'); if (copy) h.insertBefore(k, copy); else h.appendChild(k);
+    sc.parentNode.insertBefore(k, sc.nextSibling); /* round 116: under the chart, out of the header */
   };
   var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(mark, 40); };
   var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
