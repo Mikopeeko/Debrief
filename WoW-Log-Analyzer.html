@@ -8767,6 +8767,21 @@ html body .home.fpn .fpn-guides a:hover { color: var(--gold); }
   html body .home.fpn .fpn-row p { grid-column: 2; }
   html body .home.fpn .fpn-bl { grid-template-columns: 1fr; }
 }
+/* ===== Design studio round 123 (Oct 27): strictness switch. Owner: the Design studio chat. ===== */
+@keyframes dsSlFlash { 0% { box-shadow: 0 0 0 0 rgba(230,180,80,.7); } 100% { box-shadow: 0 0 0 10px rgba(230,180,80,0); } }
+html body .sl-sw.sl-sw { display: inline-flex; align-items: center; gap: 6px; margin-left: 4px; }
+html body .sl-sw.sl-sw > .sl-k { font: 600 10.5px/1 var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+html body .sl-sw.sl-sw > .sl-o { height: 22px; min-height: 0; padding: 0 9px; margin: 0; border: 1px solid var(--line2, #353b49); border-radius: 0; background: rgba(13,16,23,.55); color: var(--muted); font: 600 11.5px/20px var(--body); cursor: pointer; box-shadow: none; }
+html body .sl-sw.sl-sw > .sl-o + .sl-o { margin-left: -1px; }
+html body .sl-sw.sl-sw > .sl-k + .sl-o { border-radius: 11px 0 0 11px; }
+html body .sl-sw.sl-sw > .sl-o:last-child { border-radius: 0 11px 11px 0; }
+html body .sl-sw.sl-sw > .sl-o:hover { color: var(--text); }
+html body .sl-sw.sl-sw > .sl-o.on { position: relative; z-index: 1; background: rgba(230,180,80,.16); border-color: rgba(230,180,80,.6); color: var(--gold); }
+html body .sl-sw.sl-sw.flash > .sl-o.on { animation: dsSlFlash .9s ease-out 2; }
+html body .sl-tag.sl-tag { display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 8px; margin-left: 8px; border: 1px solid var(--line2, #353b49); border-radius: 10px; font: 600 11px/1 var(--body); color: var(--muted); vertical-align: 2px; cursor: pointer; }
+html body .sl-tag.sl-tag b { color: var(--gold); font-weight: 700; }
+html body .sl-tag.sl-tag:hover { border-color: rgba(230,180,80,.6); }
+@media (prefers-reduced-motion: reduce) { html body .sl-sw.sl-sw.flash > .sl-o.on { animation: none; } }
 </style>
 
 
