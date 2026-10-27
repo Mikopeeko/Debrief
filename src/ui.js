@@ -30172,7 +30172,7 @@ function homeHosted() {
     '<section class="fpx-hero" id="fpStart" style="--fpx-art:' + art('The Coiled Altar') + '">' + (HW_ON ? HW_DECO : '') + '<div class="fpx-in fpx-hg">' + /* (Halloween: the cobweb and bats, Oct 20 to 31) */
       '<div class="fpx-copy"><span class="fpx-badge"><b>Beta</b>Season two · all 10 raid bosses</span>' + (HW_ON ? '<span class="hw-hi">🎃 Happy Halloween from Debrief</span>' : '') +
         '<h1>Every pull, <span>explained.</span></h1>' +
-        '<p class="fpx-lead">Debrief checks every mechanic, assignment and death, and tells you what to fix before the next pull.</p>' +
+        '<p class="fpx-lead">Debrief reviews your WoW raid logs, from Warcraft Logs or your own combat log: every mechanic, assignment and death, and what to fix before the next pull.</p>' + /* (says what Debrief is, for people and for search, Oct 27) */
         '<div class="fpx-cta"><button class="btn primary gs-go" id="gsGo" type="button">' + (tg ? 'Welcome Back!' : 'Start now') + '</button>' + demoBtn('fpDemo') +
         '<p class="gs-cs">' + (tg ? 'Straight to ' + esc(gName(tg)) + '.' : 'Add your character and your team, one step at a time. It takes about a minute.') + '</p></div>' +
         '<div class="fp-msg fp-note" id="fpDemoMsg"></div>' +
@@ -30229,7 +30229,7 @@ function fp3Shot() {
 // (the three ways in, Oct 24: Debrief before raid (the boss guides), during it (the addon and app) and after it (your night))
 function fp3Ways(art) {
   const card = (b, when, h, p, go) => '<div class="fp3-way" style="--fp3-art:' + art(b) + '"><span class="fp3-when">' + when + '</span><h3>' + h + '</h3><p>' + p + '</p>' + go + '</div>';
-  return '<section class="fpx-sec fp3-ways"><div class="fpx-in"><div class="fpx-sh"><div class="fp-k">Three ways in</div><h2>Before, during and after raid</h2></div><div class="fp3-wg">' +
+  return '<section class="fpx-sec fp3-ways"><div class="fpx-in"><div class="fpx-sh"><div class="fp-k">Three ways in</div><h2>Before, during and after raid</h2><p class="sub">Mythic boss guides, a raid cooldown planner for your NSRT notes, and a debrief of every pull.</p></div><div class="fp3-wg">' +
     card('The Twin Fangs', 'Before raid', 'Learn every boss', 'Guides for all ten bosses, Heroic and Mythic: maps that play each mechanic in order, and your job on each.', '<a class="fp3-go" href="?guides">Open the boss guides ›</a>') +
     card("Ula'tek", 'During raid', 'A debrief after every pull, in game', 'The Debrief addon and app show the mistakes and what to fix, before the next pull starts.', '<a class="fp3-go" href="?ingame">Get the addon ›</a>') +
     card('The Coiled Altar', 'After raid', 'Every pull, explained', 'Warcraft Logs or your own combat log: mechanics, deaths and your rotation, pull by pull.', '<button class="fp3-go linkbtn" id="fpDemo2" type="button">See a real raid night ›</button><div class="fp-msg fp-note" id="fpDemoMsg2"></div>') +

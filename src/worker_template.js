@@ -1140,6 +1140,16 @@ async function bugHunter(env, tid) {
 const PREVIEW_BOTS = /Discordbot|Twitterbot|Slackbot|facebookexternalhit|TelegramBot|WhatsApp|LinkedInBot|redditbot|Embedly|Applebot/i;
 const DIFF_NAME = { 1: 'LFR', 2: 'LFR', 3: 'Normal', 4: 'Heroic', 5: 'Mythic' };
 const mss = (ms) => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+// (search engines, Oct 27: what may be listed, and the header that keeps the rest out)
+const SEO_PRIVATE = ['report', 'fight', 'night', 'plan', 'pc', 'p', 'code', 'pull'];
+const SEO_PAGES = ['/', '/?guides', '/?ingame', '/?patchnotes'];
+const ROBOTS_TXT = 'User-agent: *\nAllow: /$\nAllow: /?guides\nAllow: /?ingame\nAllow: /?patchnotes\nDisallow: /api/\nDisallow: /*report=\nDisallow: /*night=\nDisallow: /*?plan\nDisallow: /*&plan\nDisallow: /*pc=\nDisallow: /*?p=\nDisallow: /*&p=\nDisallow: /*code=\n\nSitemap: https://debriefme.io/sitemap.xml\n';
+const SITEMAP_XML = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + SEO_PAGES.map((p) => '  <url><loc>https://debriefme.io' + p + '</loc></url>\n').join('') + '</urlset>\n';
+function seoHeaders(url) {
+  if (url.hostname !== HOME_HOST || SEO_PRIVATE.some((k) => url.searchParams.has(k))) return { 'X-Robots-Tag': 'noindex, nofollow' };
+  const pub = SEO_PAGES.find((p) => p === '/' ? !url.search : url.search.startsWith(p.slice(1)));
+  return pub ? { Link: '<https://debriefme.io' + pub + '>; rel="canonical"' } : {};
+}
 async function previewPage(env, url) {
   let title = 'Debrief: every pull, explained', desc = 'Free Mythic raid log reviews: every mechanic, death and rotation, pull by pull.';
   const code = url.searchParams.get('report'), fid = parseInt(url.searchParams.get('fight'), 10);
@@ -1637,7 +1647,12 @@ export default {
         return json(down ? { error: msg, down: true } : { error: msg }, down ? 503 : 502);
       }
     }
-    if (PREVIEW_BOTS.test(req.headers.get('User-Agent') || '')) return new Response(await previewPage(env, url), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=600' } });
-    return new Response(appHtml(env), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' } });
+    // (search engines, Oct 27: the public pages are listed; raid logs, nights, plans and character pages are other guilds' logs and
+    // people's names, so they stay out of search (robots.txt and a noindex header); practice and old addresses are never indexed)
+    if (url.pathname === '/robots.txt') return new Response(url.hostname === HOME_HOST ? ROBOTS_TXT : 'User-agent: *\nDisallow: /\n', { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=3600' } });
+    if (url.pathname === '/sitemap.xml') return new Response(SITEMAP_XML, { headers: { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600' } });
+    const seoH = seoHeaders(url);
+    if (PREVIEW_BOTS.test(req.headers.get('User-Agent') || '')) return new Response(await previewPage(env, url), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=600', ...seoH } });
+    return new Response(appHtml(env), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache', ...seoH } });
   },
 };
