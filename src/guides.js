@@ -241,9 +241,10 @@ function gdzCallSvg(c, x, y, ft, at, yd) {
       (p >= 1 ? '<circle cx="' + x + '" cy="' + y + '" r="' + (6 + 10 * Math.min(1, (el - 0.25) / 0.35)).toFixed(1) + '" fill="' + col + '" fill-opacity="' + (0.35 * o).toFixed(2) + '"/>' : '') + '</g>';
   }
   const el = ft - c.t0, left = c.t1 - ft, k = el < 0.25 ? 0.55 + 1.8 * el : 1, o = left < 0.3 ? Math.max(0, left / 0.3) : 1;
-  const col = c.color || '#f3c969', ink = c.ink || '#14100a', t = String(c.text).toUpperCase(), w = t.length * 7.4 + 20, h = 21, by = y - 16 - h;
-  return '<g transform="translate(' + x + ' ' + y + ') scale(' + k.toFixed(2) + ') translate(' + -x + ' ' + -y + ')" opacity="' + o.toFixed(2) + '">' +
-    '<path d="M' + (x - 6) + ' ' + (by + h - 1) + 'L' + x + ' ' + (y - 8) + 'L' + (x + 6) + ' ' + (by + h - 1) + 'Z" fill="' + col + '" stroke="#000" stroke-width="1.2" stroke-linejoin="round"/>' +
+  const col = c.color || '#f3c969', ink = c.ink || '#14100a', t = String(c.text).toUpperCase(), w = t.length * 7.4 + 20, h = 21, by = c.up ? y + 16 : y - 16 - h; /* (c.up: under the spot, pointing up) */
+  return '<g transform="translate(' + x + ' ' + y + ') scale(' + k.toFixed(2) + ') translate(' + -x + ' ' + -y + ')" opacity="' + o.toFixed(2) + '"' + (c.up ? ' data-up="1"' : '') + '>' +
+    (c.up ? '<path d="M' + (x - 6) + ' ' + (by + 1) + 'L' + x + ' ' + (y + 8) + 'L' + (x + 6) + ' ' + (by + 1) + 'Z" fill="' + col + '" stroke="#000" stroke-width="1.2" stroke-linejoin="round"/>'
+      : '<path d="M' + (x - 6) + ' ' + (by + h - 1) + 'L' + x + ' ' + (y - 8) + 'L' + (x + 6) + ' ' + (by + h - 1) + 'Z" fill="' + col + '" stroke="#000" stroke-width="1.2" stroke-linejoin="round"/>') +
     '<rect x="' + (x - w / 2) + '" y="' + by + '" width="' + w + '" height="' + h + '" rx="5" fill="' + col + '" stroke="#000" stroke-width="1.4"/>' +
     '<text x="' + x + '" y="' + (by + 15) + '" text-anchor="middle" style="font:800 12.5px var(--head,sans-serif);letter-spacing:.04em" fill="' + ink + '">' + esc(t) + '</text></g>';
 }
@@ -5458,13 +5459,23 @@ function ppFreeze(mp, T, S, P, M, o) {
   const pm = new Map(); for (const v of Object.values(S)) { const x = typeof v === 'string' ? P.get(v.toLowerCase()) : v; if (x) pm.set(x.name, x); }
   const [cx, cy] = ppMid(mp);
   const at = (ids, low) => { const q = pts.filter((p) => ids.includes(p.guid)); return q.length ? { x: q.reduce((a, p) => a + p.x, 0) / q.length, y: (low ? Math.min : Math.max)(...q.map((p) => p.y)) } : null; };
-  // (a label sits over its group, or under it (below) when the group is by the top wall; or on a spot in yards from the room's middle)
-  const calls = (o.labels || []).map(([ids, text, color, ink, dy, below]) => { const c = Array.isArray(ids) ? at(ids, below) : ids.rx != null ? { x: cx + ids.rx, y: cy + ids.ry } : ids;
-    return c ? { t0: 0, t1: 1e9, text, x: c.x, y: below ? c.y - (dy == null ? 9 : dy) : c.y + (dy == null ? 5 : dy), color, ink: ink || '#fff' } : null; }).filter(Boolean);
+  // (a label names a thing (the user, Oct 26: "They should be labeling things"): a group gets a ring in the label's colour and the bubble's
+  // pointer sits on that ring, over it (or under it, pointing up, when below); a spot ({ rx, ry }, r: its ring) gets the pointer on it. A
+  // group spread wider than 14 yards gets no ring: the pointer sits on its top (or bottom) player. off: the pointer's 8 units, in yards)
+  const off = (o.focus ? o.focus.r : 40) * 0.064, rings = [];
+  // (the picture's frame, in map yards: the card's focus, else the map's whole view, else its room box)
+  const FR = o.focus ? { x: cx + o.focus.x, y: cy + o.focus.y, r: o.focus.r } : mp.fullAt ? mp.fullAt : mp.room ? { x: (mp.room.x0 + mp.room.x1) / 2, y: (mp.room.y0 + mp.room.y1) / 2, r: Math.max(mp.room.x1 - mp.room.x0, mp.room.y1 - mp.room.y0) / 2 } : null;
+  const calls = (o.labels || []).map(([ids, text, color, ink, dy, below]) => { let c = null, r = 0;
+    if (Array.isArray(ids)) { const q = pts.filter((p) => ids.includes(p.guid)); if (!q.length) return null; const m = { x: q.reduce((a, p) => a + p.x, 0) / q.length, y: q.reduce((a, p) => a + p.y, 0) / q.length }, rr = Math.max(4, ...q.map((p) => Math.hypot(p.x - m.x, p.y - m.y) + 2.5));
+      if (rr <= 14) { c = m; r = rr; rings.push({ x: m.x, y: m.y, r: rr, fx: 'zone', t0: 0, dur: 1e9, color, cn: text, label: false }); } else { const e = at(ids, below); c = { x: e.x, y: e.y }; r = 1.5; } }
+    else if (ids.rx != null) { c = { x: cx + ids.rx, y: cy + ids.ry }; r = ids.r || 0; } else c = ids;
+    if (!c) return null; let up = !!below; /* (a bubble that would leave the picture's frame goes to the other side of its ring) */
+    if (FR) { const ph = FR.r * 0.19; if (!up && c.y + r + ph > FR.y + FR.r) up = true; else if (up && c.y - r - ph < FR.y - FR.r) up = false; }
+    return { t0: 0, t1: 1e9, text, x: c.x, y: up ? c.y - r + off : c.y + r - off, up, color, ink: ink || '#fff' }; }).filter(Boolean);
   const cb = {}; for (const [g, l] of Object.entries(mp.cbars || {})) cb[g] = l.map((b) => ({ ...b, by: '' }));
   // (the raid lead's markers, drawn 4 yards further out than their spot so whoever stands on one doesn't hide it)
   const mo = PP_MKOUT[mp.boss], wm = PP_MKS.filter((k) => M[k] && (!o.marks || o.marks.includes(k))).map((k) => ({ k, x: cx + M[k][0] + (Array.isArray(mo) ? mo[0] : 0), y: cy + M[k][1] + (Array.isArray(mo) ? mo[1] : (M[k][1] >= 0 ? 1 : -1) * (mo == null ? 4 : mo)) }));
-  const out = { ...mp, frames: null, pts, t: T, ft: T, pauses: [], steps: [], callouts: calls, tags: (o.tags || []).map(([g, tx]) => [g, tx, null, null]), hl: Object.keys(S).filter((g) => (o.hl || []).includes(g)),
+  const out = { ...mp, frames: null, pts, t: T, ft: T, pauses: [], steps: [], callouts: calls, rings: (mp.rings || []).concat(rings), tags: (o.tags || []).map(([g, tx]) => [g, tx, null, null]), hl: Object.keys(S).filter((g) => (o.hl || []).includes(g)),
     good: [], goodAt: null, bad: [], badAt: null, cbars: o.noBars ? {} : cb, wmarks: wm, liveLeg: false, hlLabel: 'assigned in the note', playerLabel: 'Player (spec icon, class colour)' };
   if (o.focus) out.focus = out.fullAt = { x: cx + o.focus.x, y: cy + o.focus.y, r: o.focus.r }; /* (a guide map shown whole: the user wants the whole arena in each picture) */
   return { out, pm, keep: (o.named || []).map((g) => nm(S[g])).filter(Boolean) };
@@ -5700,7 +5711,7 @@ function ppReadTF(N, P) {
 }
 const TF_VIEW = { x: 50, y: -26, r: 38 }; // (the south-east platform with both bosses off its tip)
 const TF_LR = '#7fd8ff', TF_RR = '#ffc46b', TF_KA = [['front', ['FL', 'FR'], '#e6b450', 'Front'], ['lm', ['L3', 'L4'], '#5aa0ff', 'Left melee'], ['lr', ['L1', 'L2'], TF_LR, 'Left range'], ['rm', ['R3', 'R4'], '#ff9b5a', 'Right melee'], ['rr', ['R1', 'R2'], TF_RR, 'Right range']]; // (Rouse the Brood's kick areas)
-const TF_KVIEW = { x: 46, y: -22, r: 50 }; // (all ten Broodlings and the areas' names)
+const TF_KVIEW = { x: 46, y: -25, r: 52 }; // (all ten Broodlings and the areas' names)
 const TF_QVIEW = { x: 46, y: -22, r: 40 }; // (the same platform a little wider, so the back quadrants' names fit)
 const TF_ROOM = { x: 0, y: 12, r: 84 }; // (the whole room: all three platforms round the pool and the bosses off the north tip, for the markers)
 function ppCardsTF(J, M, U, P) {
@@ -5718,7 +5729,7 @@ function ppCardsTF(J, M, U, P) {
     const QD = [['fl', 'Front left', GO, [-14, 64]], ['fr', 'Front right', OR, [14, 64]], ['bl', 'Back left', BL, [-17, 41]], ['br', 'Back right', GR, [17, 41]]];
     // (the two dividing lines, drawn between unseen anchor points: back edge to tip, left edge to right edge)
     [[[0, 30], [0, 77]], [[-31, C[1]], [30, C[1]]]].forEach(([a, b], i) => { const q = w.P(a); k.obj('qa' + i, 'anchor', 0, q[0], q[1]); w.link({ from: 'qa' + i, toYd: { x: b[0], y: b[1] }, t0: 0, t1: 3, color: '#f3ead2' }); });
-    QD.forEach(([key, t, col, c]) => { w.ring({ x: c[0], y: c[1], r: 9, fx: 'zone', t0: 0, dur: 5, color: col, cn: t, label: false }); /* (each quadrant shaded in its colour) */
+    QD.forEach(([key, t, col, c]) => { /* (each quadrant's players ringed in its colour by their label) */
       const ids = Q[key].map((n) => { const sl = ppSlot(P, n, put); if (sl) fix[sl] = n; return sl; }).filter(Boolean);
       ids.forEach((sl, i) => { const q = gdzSpot(i, ids.length, 4.5); w.at(0, sl, c[0] + q[0], c[1] + q[1]); }); hl.push(...ids);
       if (ids.length) lab.push([ids, t, col, col === GO || col === GR ? '#1a1405' : '#fff', 6]); }); /* (each quadrant's name just over its players) */
@@ -5733,10 +5744,10 @@ function ppCardsTF(J, M, U, P) {
     Object.values(TF_SLOT).forEach((p, i) => w.add('bl' + i, 'Broodling', 0, p[0], p[1]));
     const lab = [], PC = [0, 56], dark = (col) => (col === GO || col === TF_LR || col === TF_RR ? '#1a1405' : '#fff');
     TF_KA.forEach(([key, sl, col, t]) => { const L = K[key] || [], m = sl.map((x) => TF_SLOT[x]), c = [(m[0][0] + m[1][0]) / 2, (m[0][1] + m[1][1]) / 2];
-      w.ring({ x: c[0], y: c[1], r: Math.hypot(m[0][0] - m[1][0], m[0][1] - m[1][1]) / 2 + 4.5, fx: 'zone', t0: 0, dur: 5, color: col, cn: t, label: false });
+      const zr = Math.hypot(m[0][0] - m[1][0], m[0][1] - m[1][1]) / 2 + 4.5; w.ring({ x: c[0], y: c[1], r: zr, fx: 'zone', t0: 0, dur: 5, color: col, cn: t, label: false });
       const v = [PC[0] - c[0], PC[1] - c[1]], d = Math.hypot(v[0], v[1]) || 1, u = [v[0] / d, v[1] / d], s0 = [c[0] + u[0] * 7, c[1] + u[1] * 7], pp = [-u[1], u[0]];
       L.forEach((n, i) => { const s = ppSlot(P, n, put); if (!s) return; fix[s] = n; hl.push(s); tags.push([s, String(i + 1)]); const o = (i - (L.length - 1) / 2) * 5.2; w.at(0, s, s0[0] + pp[0] * o, s0[1] + pp[1] * o); });
-      if (L.length) { const q = w.P([c[0] - u[0] * 6.5, c[1] - u[1] * 6.5]); lab.push([{ rx: q[0], ry: q[1] }, t, col, dark(col), 0]); } }); /* (the area's name just outside its pair) */
+      if (L.length) { const q = w.P(c); lab.push([{ rx: q[0], ry: q[1], r: zr }, t, col, dark(col), 0, q[1] < -24]); } }); /* (the area's name on its shaded area: over it, or under it for the areas low in the picture) */
     (K.backup || []).forEach((n, i) => { const s = ppSlot(P, n, put); if (!s) return; fix[s] = n; hl.push(s); tags.push([s, 'Backup']); w.at(0, s, -2 + i * 4, 52); });
     cards.push({ id: 'kicks', ph: 1, when: 'Every set', title: 'Rouse the Brood (Kick the Broodlings in your area)', map: ppFreeze(w.done({ title: 'Rouse the Brood', focus: { x: 0, y: 56, r: 30 } }), 1, ppSeat(P, fix), P, M, { hl, named: hl, tags, labels: lab, focus: TF_KVIEW }),
       legend: [['front', 'Front: the two at the tip'], ['lm', 'Left melee: left 3 and 4'], ['rm', 'Right melee: right 3 and 4'], ['lr', 'Left range: left 1 and 2'], ['rr', 'Right range: right 1 and 2'], ['backup', 'Backup']].filter(([key]) => K[key].length)
@@ -5955,7 +5966,7 @@ const SZ_BOSS = { x: -26, y: 2, r: 30 }; // (the tank combo at the entrance)
 function ppCardsSZ(J, M, U, P) {
   const cards = [], BL = '#5aa0ff', GO = '#e6b450', OR = '#ff8a5a', GN = '#8fe36a', Q = '#c9ced8', has = J.groups[0].length || J.groups[1].length;
   // Mutilate: group 1 soaks the first, group 2 the second, one group each side of the boss (the guide's map at the first soak)
-  if (has) cards.push({ id: 'mut', ph: 1, when: 'Every tank combo', title: 'Mutilate (Your group soaks your turn)', map: ppFreeze(SZ_M.combo(false), 2.4, szGroups(J, P, {}), P, M, { focus: SZ_BOSS, hl: SZ_L, noBars: true, labels: [[SZ_L, 'Group 1 · 1st', OR, '#fff', 8], [SZ_R, 'Group 2 · 2nd', GO, '#1a1405', 8, true]] }),
+  if (has) cards.push({ id: 'mut', ph: 1, when: 'Every tank combo', title: 'Mutilate (Your group soaks your turn)', map: ppFreeze(SZ_M.combo(false), 2.4, szGroups(J, P, {}), P, M, { focus: { x: -26, y: -2, r: 33 }, hl: SZ_L, noBars: true, labels: [[SZ_L, 'Group 1 · 1st', OR, '#fff', 8], [SZ_R, 'Group 2 · 2nd', GO, '#1a1405', 8, true]] }),
     legend: [ppG('Group 1: the first Mutilate', OR, J.groups[0].map((n) => ppI(P, n))), ppG('Group 2: the second Mutilate', GO, J.groups[1].map((n) => ppI(P, n)))],
     foot: 'One group on each side of the boss; the groups take turns.' });
   // Serpent's Fury: everyone in the stack on the bait right after the tank combo (the guide's map as the bait walks in)
@@ -6164,9 +6175,12 @@ const PP_CSS = ['fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-opacit
 function ppDeclutter(sv) {
   const vb = sv.viewBox.baseVal; if (!vb || !vb.width) return; const f = Math.min(1, vb.width * 0.03 / 12);
   const bx = (x0, y0, x1, y1) => ({ x0, y0, x1, y1 }), hit = (a, b) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1, taken = [], icons = [];
-  sv.querySelectorAll('g.icl').forEach((g) => { const x = +g.dataset.x, y = +g.dataset.y; let b; try { b = g.getBBox(); } catch (e) { return; }
+  sv.querySelectorAll('g.icl').forEach((g) => { const x = +g.dataset.x, y = +g.dataset.y + (g.querySelector('[data-up]') ? 8 : -8); let b; try { b = g.getBBox(); } catch (e) { return; } /* (y: the pointer's tip) */
     if (f < 1) g.setAttribute('transform', 'translate(' + x + ' ' + y + ') scale(' + f.toFixed(3) + ') translate(' + -x + ' ' + -y + ')');
-    taken.push(bx(x + (b.x - x) * f, y + (b.y - y) * f, x + (b.x + b.width - x) * f, y + (b.y + b.height - y) * f)); });
+    const q = bx(x + (b.x - x) * f, y + (b.y - y) * f, x + (b.x + b.width - x) * f, y + (b.y + b.height - y) * f);
+    // (a bubble past the left or right edge slides its body back inside; its pointer stays on the thing)
+    const dx = q.x0 < vb.x + 2 ? vb.x + 2 - q.x0 : q.x1 > vb.x + vb.width - 2 ? vb.x + vb.width - 2 - q.x1 : 0;
+    if (dx) { g.querySelectorAll('rect, text').forEach((e) => e.setAttribute('transform', 'translate(' + (dx / f).toFixed(1) + ' 0)')); q.x0 += dx; q.x1 += dx; } taken.push(q); });
   const ds = Math.max(0.72, f); /* (the player icons: about three quarters in a platform-sized frame) */
   sv.querySelectorAll('g.ic:not(.icl)').forEach((g) => { if (g.querySelector('text.ml')) return; let b; try { b = g.getBBox(); } catch (e) { return; } if (!b.width || b.width > 40 || b.height > 40) return;
     const x = +g.dataset.x, y = +g.dataset.y, k = g.querySelector('.pl') && ds < 1 ? ds : 1; if (k < 1) g.setAttribute('transform', 'translate(' + x + ' ' + y + ') scale(' + k.toFixed(3) + ') translate(' + -x + ' ' + -y + ')');
