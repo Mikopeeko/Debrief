@@ -4321,8 +4321,12 @@ const NDZ_BUILD = {
       slots: [{ label: 'Guillotine 1', want: 7 }, { label: 'Guillotine 2', want: 4 }, { label: 'External Guillotine 1', want: 1 }, { label: 'External Guillotine 2', want: 1 }, { label: 'Zephyr Guillotine 1', want: 1 }, { label: 'Zephyr Guillotine 2', want: 1 }] },
     { key: 'g3', title: 'P3 Grim Guillotines', icon: 'Grim Guillotine', explain: 'Three more axes in P3, and this hit is magic, so Cloak of Shadows counts as an immunity too.', tip: 'Guillotined wears off after 2 minutes. Axe 2 comes a minute after axe 1, so it needs other players; axe 3 comes almost 3 minutes after axe 1, so axe 1\'s group takes it again.',
       slots: [{ label: 'P3 Guillotine 1', want: 5 }, { label: 'P3 Guillotine 2', want: 5 }, { label: 'P3 Guillotine 3', want: 5 }] },
-    { key: 'orbs', mythic: true, title: 'Purple orbs', icon: 'Virulent Mutation', explain: 'Purple orbs must never touch another orb. They\'re carried by a few hard-assigned players; everyone else clears green orbs.', tip: 'Warlocks (gateway, circle), Mages (Blink), the off-tank, then a mobile healer.',
-      slots: [{ label: 'Purple Orbs', want: 4 }] },
+    { key: 'orbs', mythic: true, title: 'Orb carriers', icon: 'Virulent Mutation', head: 'Orb Carriers', explain: 'Purple orbs must never touch another orb: four hard-assigned carriers, one per marker (cross, square, triangle, diamond, in that order). Two carry the green orbs (star, skull), two take the side greens, and the helpers clear the rest.', tip: 'Warlocks (gateway, circle), Mages (Blink), the off-tank, then a mobile healer.',
+      slots: [{ label: 'Purple Orbs', want: 4 }, { label: 'Green Orbs', want: 2 }, { label: 'Side Green Orbs', want: 2 }, { label: 'Orb Helpers', want: 4 }], exclusive: true }, /* (greens and helpers, WoWUtils gap, Oct 26) */
+    { key: 'orbs3', mythic: true, title: 'P3 orb carriers', icon: 'Virulent Mutation', head: 'P3 Orb Carriers', explain: 'The orbs again in phase 3: four purple carriers on cross, square, triangle and diamond, two green carriers on star and skull, two for the side greens, and helpers for the rest.', tip: 'Most raids keep the phase 1 carriers, so everyone knows their marker.', /* (WoWUtils gap, Oct 26) */
+      slots: [{ label: 'P3 Purple Orbs', want: 4 }, { label: 'P3 Green Orbs', want: 2 }, { label: 'P3 Side Green Orbs', want: 2 }, { label: 'P3 Orb Helpers', want: 4 }], exclusive: true },
+    { key: 'stops', mythic: true, title: 'Fragments of Malacrass', icon: 'Fragments of Malacrass', head: 'Soak Ghosts', explain: 'A ghost comes out at each marker: one player stops it there before it reaches the raid.', tip: 'Each purple carrier takes the ghost on their own marker.', /* (assignable now, WoWUtils gap, Oct 26) */
+      slots: [{ label: 'Soak Ghost at {cross}', want: 1 }, { label: 'Soak Ghost at {square}', want: 1 }, { label: 'Soak Ghost at {triangle}', want: 1 }, { label: 'Soak Ghost at {diamond}', want: 1 }], exclusive: true },
     { key: 'mc', title: 'Dreadmarch mind controls', icon: 'Dreadmarch', explain: 'Dreadmarch mind controls a few players, who walk off the edge. Stun or root them in this order; the next one covers a CC that\'s on cooldown.', tip: 'Ring of Peace, Shockwave, Ursol\'s Vortex, Chaos Nova, Capacitor Totem.',
       slots: [{ label: '1st CC on Mindcontrol', want: 1 }, { label: '2nd CC on Mindcontrol', want: 1 }, { label: '3rd CC on Mindcontrol', want: 1 }, { label: '4th CC on Mindcontrol', want: 1 }] },
     { key: 'curse', title: 'Curses on the adds', icon: 'Curse of Tongues', explain: 'Curse of Tongues slows each Spiteful Soulcoiler\'s casts, so kicks line up easier.', tip: 'One Warlock per add.',
@@ -4397,6 +4401,8 @@ const NDZ_BUILD_WHY = {
     orbs: 'Warlocks and Mages carry purples first: Gateway, Blink and their immunities make the run safe. Players already kicking are picked last.',
     mc: 'Each mind-controlled player needs a CC that doesn\'t break on damage. The order follows who has the best one, with a fourth as a backup.',
     curse: 'A Warlock puts Curse of Tongues on each add so its casts are slower and easier to kick.',
+    orbs3: 'The phase 1 carriers again, each on the same marker, so nobody has to learn a new spot.',
+    stops: 'Each purple carrier takes the ghost on their own marker: they\'re standing there already.',
   },
   'The Twin Fangs': {
     feast: 'Every group gets a healer, the tanks are split, and the DPS fill in evenly, so each group can live through its hit.',
@@ -4430,7 +4436,7 @@ function ndzBuildStart(B) {
   for (const pg of B.pages) for (const sl of pg.slots) { const s0 = sug.find((x) => x.label === sl.label || (sl.kick && x.kick === sl.kick)); B.sel[pg.key + '|' + sl.label] = { n: s0 ? s0.names.map((y) => y.n) : [], why: s0 ? s0.why : '' }; }
   // (The Twin Fangs: three mixed Feast groups, kicks by melee or ranged area, the raid split for orb CC)
   if (NDZ_PICKS[B.pick]) NDZ_PICKS[B.pick](B, [...pr.players.values()], B.diff === 'Mythic'); /* (the other eight bosses: ndz-bosses.js) */
-  if (B.pick === 'The Twin Fangs') ndzTFPicks(B, pr); /* (the guide's rules: notes/Guides/Note suggestions - how picks are made.md) */
+  if (B.pick === 'The Twin Fangs') ndzTFPicks(B, pr); if (B.pick === 'The Coiled Altar' && typeof ndzCAOrbPicks === 'function') ndzCAOrbPicks(B, pr); /* (orb and ghost jobs, Oct 26) */ /* (the guide's rules: notes/Guides/Note suggestions - how picks are made.md) */
   // cooldowns: your newest note for this boss, else the shield cooldowns Suggest made
   const rows = (B.src === 'pulls' && B.draft ? B.draft.rows : ndzNoteRows(B.pick, B.noteId)).filter((x) => x.rem && x.rem.id && !x.rem.glow); /* (externals have their own page) */
   B.cds = rows.length ? rows.map((x) => ({ ph: x.rem.ph, t: x.rem.time, id: x.rem.id, text: x.rem.text, who: x.names.map((y) => y.n).filter((n) => pr.players.has(n))[0] || '' }))
@@ -4458,6 +4464,8 @@ function ndzNoteUpdate(boss, id, text, name) { const o = notesOf(boss), n = o.li
 function ndzBuildText(B) {
   const blk = { int: [], trans: [] };
   const rows = []; for (const pg of B.pages) for (const sl of pg.slots) { const v = B.sel[pg.key + '|' + sl.label]; if (!v || !v.n.length) continue; if (sl.block) { blk[sl.block].push(v.n.map((n) => n.split('-')[0]).join(' ')); continue; }
+    const MK = B.pick === 'The Coiled Altar' ? { 'Purple Orbs': ['{cross} purple orb', '{square} purple orb', '{triangle} purple orb', '{diamond} purple orb'], 'Green Orbs': ['{star} green orb', '{skull} green orb'], 'Side Green Orbs': ['side green orb', 'side green orb'] }[sl.label.replace(/^P3 /, '')] : null; /* (one marker per carrier, as the user's note writes them, Oct 26) */
+    if (MK) { v.n.forEach((n, i) => rows.push({ sec: pg.title, label: MK[Math.min(i, MK.length - 1)], names: [{ n: n.split('-')[0] }], kick: null, head: pg.head || null, on: true })); continue; }
     rows.push({ sec: pg.title, label: sl.label, names: v.n.map((n) => ({ n: n.split('-')[0] })), kick: B.pick === 'The Coiled Altar' ? sl.kick : null, head: pg.head || null, on: true }); }
   for (const c of B.cds || []) if (c.who) rows.push({ rem: { time: c.t, ph: c.ph, tag: c.who, id: c.id || ndzSpellIdOf(c.text) || null, text: (c.id && ndzSpellNm(c.id)) || c.text || 'Cooldown' }, names: [{ n: c.who }], on: true, label: '' });
   const t = ndzText({ boss: B.pick, diff: B.diff, id: NDZ_ENC[B.pick], rows }).split('\n'), add = [];
@@ -4665,7 +4673,7 @@ function plbRevCards(B, pages, stT) { const ps = [...B.pr.players.values()], byN
     const ru = cds.filter((c) => (c.ph === 1 && c.t >= 160 && c.t <= 200) || (c.ph === 2 && c.t <= 5));
     put(card(pages.length + 1, ic('Venom Rupture', 'spell_nature_corrosivebreath'), 'Venom Rupture (Stack in the cooldowns)', ru.length ? 'ok' : 'none', ru.map((c) => { const w = String(c.who || '').split(/\s+/).filter(Boolean); return row(plbT(c.ph, c.t), sp(c.id, c.text || 'Cooldown') + (w.length ? w.map((x) => nm(x.split('-')[0], 0)).join('') : nobody), 'plb-rt'); }).join('') + row('Everyone', '<span class="sub">A defensive when the orbs blow up</span>'), 0, 'rupture'), 'orbs');
     const nt = B.noteId ? (notesOf(B.boss || B.pick).list.find((x) => x.id === B.noteId) || {}).text : '', gh = []; for (const m of String(nt || '').matchAll(/^Soak Ghost at \{(\w+)\}:\s*(\S.*)$/gim)) gh.push([m[1], m[2].trim()]);
-    if (gh.length) put(card(0, ic('Fragments of Malacrass', 'spell_shadow_shadesofdarkness'), 'Fragments of Malacrass (Stop them at your marker)', 'ok', gh.map(([mk, w]) => row(esc(mk[0].toUpperCase() + mk.slice(1)), w.split(/\s+/).map((x) => nm(x.split('-')[0], 0)).join(''))).join(''), 0, 'stops').replace(/<button class="btn sm plb-rcx"[^>]*>✎ Edit<\/button>/, '<span class="plb-rcn sub" data-tt="' + esc('<b>From your note</b><br>Paste an updated note to change who stops where.') + '">from your note</span>'), 'curse'); }
+    /* (the ghosts are the stops job's own card now, Oct 26) */ }
   if ((B.boss || B.pick) === "Ula'tek" && (B.diff || 'Mythic') === 'Mythic') { /* (Ula'tek's positional moments as cards, in fight order, Oct 26) */
     const ic = (nm0, fb) => { let id = typeof ndzSpellIdOf === 'function' ? ndzSpellIdOf(nm0) : 0; if (!id) { const bi = [...((E.BOSS_IDS && E.BOSS_IDS[B.boss || B.pick]) || [])]; id = bi.find((x) => String(E.BOSS_NAMES[x] || '').toLowerCase() === nm0.toLowerCase()) || 0; } return id ? spellIcon(id, nm0) : spIc(fb); } /* (the boss's own spell, like the title's link, Oct 26) */, noEd = (h, tip) => h.replace(/<button class="btn sm plb-rcx"[^>]*>✎ Edit<\/button>/, '<span class="plb-rcn sub" data-tt="' + esc(tip) + '">where to stand</span>');
     const inW = (c, W) => W.some(([ph, a, z]) => c.ph === ph && c.t >= a && c.t <= z), cdRows = (W) => cds.filter((c) => inW(c, W)).map((c) => { const w = String(c.who || '').split(/\s+/).filter(Boolean); return row(plbT(c.ph, c.t), sp(c.id, c.text || 'Cooldown') + (w.length ? w.map((x) => nm(x.split('-')[0], 0)).join('') : nobody), 'plb-rt'); }).join('');
@@ -4959,8 +4967,11 @@ const NDZ_PULL_ALIAS = { 'The Twin Fangs': { 'Feast groups|Group 1': 'Left', 'Fe
 const NDZ_NOTE_ALIAS = { 'The Coiled Altar': [
   [/^P1 Soak (\d)$/i, 'Guillotine $1'], [/^Soak (\d)$/i, 'Guillotine $1'], [/^P3 Soak (\d)$/i, 'P3 Guillotine $1'],
   [/^(?:P1 )?Guillotine (\d) External(?: Guillotine Target)?$/i, 'External Guillotine $1'], [/^(?:P1 )?Guillotine (\d) Zephyr(?: Guillotine)?$/i, 'Zephyr Guillotine $1'],
-  [/^(?:\{[^}]*\}\s*)*purple orbs?$/i, 'Purple Orbs', true]] };
-function ndzNoteAlias(boss, lab) { for (const [re, to, first] of NDZ_NOTE_ALIAS[boss] || []) if (re.test(String(lab).trim())) return { to: String(lab).trim().replace(re, to), first: !!first }; return null; }
+  [/^(?:\{[^}]*\}\s*)*purple orbs?$/i, 'Purple Orbs', true], [/^(?:\{[^}]*\}\s*)*purple orbs?$/i, 'P3 Purple Orbs', 2],
+  [/^(?:\{[^}]*\}\s*)*green orbs?$/i, 'Green Orbs', 1], [/^(?:\{[^}]*\}\s*)*green orbs?$/i, 'P3 Green Orbs', 2], [/^side green orbs?$/i, 'Side Green Orbs', 1], [/^side green orbs?$/i, 'P3 Side Green Orbs', 2],
+  [/^orb helpers?$/i, 'Orb Helpers', 1], [/^orb helpers?$/i, 'P3 Orb Helpers', 2]] }; /* (the 2nd Orb Carriers list is phase 3, Oct 26) */
+function ndzNoteAliases(boss, lab) { const out = []; for (const [re, to, nth] of NDZ_NOTE_ALIAS[boss] || []) if (re.test(String(lab).trim())) out.push({ to: String(lab).trim().replace(re, to), nth: nth === true ? 1 : +nth || 0 }); return out; } /* (every reading; nth = which list under a repeated heading, Oct 26) */
+function ndzNoteAlias(boss, lab) { const a = ndzNoteAliases(boss, lab)[0]; return a ? { to: a.to, first: a.nth === 1 } : null; }
 const ndzSrcOk = (B, r, s) => s === 'sug' || (s === 'pulls' && !!NDZ_FILL[B.pick] && B.pick === r.item.boss && ndzPulls(r).length > 0) || (s === 'note' && ndzNoteRows(B.pick, B.noteId).some((x) => x.names && x.names.length && !x.rem));
 function ndzSrcDef(r, v) { const B = { pick: NDZ_BUILD[r.item.boss] ? r.item.boss : 'The Coiled Altar' }; return v === 'note' && ndzSrcOk(B, r, v) ? v : 'sug'; } /* (your call: no more starting from your pulls) */
 const NDZ_SRC_TAG = { pulls: 'From your pulls', note: 'From your note' };
@@ -4981,13 +4992,13 @@ async function ndzSrcLoad(B, r, box) { const items = ndzPulls(r), msg = box.quer
 function ndzSrcFill(B, pr) { if (!B.src || B.src === 'sug') return;
   const src = B.src === 'pulls' ? (B.draft ? B.draft.rows : []) : ndzNoteRows(B.pick, B.noteId); if (!src.length) return;
   const isN = B.src === 'note', first = {}; B.nsrc = {}; B.noteLeft = [];
-  if (isN) for (const x of src) { const al = x.sec === 'Jobs' && ndzNoteAlias(B.pick, x.label); if (al && al.first && (first[al.to] == null || x.hi < first[al.to])) first[al.to] = x.hi; }
+  if (isN) { for (const x of src) if (x.sec === 'Jobs') for (const a of ndzNoteAliases(B.pick, x.label)) if (a.nth) { const L = first[a.to] = first[a.to] || []; if (!L.includes(x.hi)) L.push(x.hi); } for (const k in first) first[k].sort((p, q) => p - q); } /* (the lists under each repeated heading, in order, Oct 26) */
   const AL = B.src === 'pulls' ? NDZ_PULL_ALIAS[B.pick] || {} : {}, mel = (n) => { const p = pr.players.get(n); return !!p && (NDZ_MELEE.has(+p.specId) || p.role === 'tank'); }, got = new Map();
   for (const x of src) { const names = (x.names || []).map((y) => String(y.n).split('-')[0]); if (!names.length || x.lv === 'unsure' || x.rem) continue;
     const why = B.src === 'pulls' ? 'Done this way in ' + x.got + ' of ' + plural(x.of, x.unit || 'pull') + '.' : 'Kept as it was.', t = AL[x.sec + '|' + x.label];
-    let hit = false; const put = (lab, l) => { for (const pg of B.pages) for (const sl of pg.slots) if (lab === sl.label || (!t && sl.kick && x.kick === sl.kick)) { hit = true; const k0 = pg.key + '|' + sl.label, o = got.get(k0); got.set(k0, { l: [...new Set((o ? o.l : []).concat(l))], why: o ? o.why : why }); if (isN && x.sec === 'Jobs') (B.nsrc[k0] = B.nsrc[k0] || []).push(x.label); } }; /* (a name said twice, like a kick reminder per kick, counts once) */
-    const al = isN && x.sec === 'Jobs' ? ndzNoteAlias(B.pick, x.label) : null;
-    if (al && al.first && x.hi !== first[al.to]) { B.noteLeft.push({ label: x.label, head: x.head, why: 'a second list; the first one is used' }); continue; }
+    let hit = false; const put = (lab, l) => { for (const pg of B.pages) for (const sl of pg.slots) if (lab === sl.label || (!t && sl.kick && x.kick === sl.kick)) { hit = true; const k0 = pg.key + '|' + sl.label, o = got.get(k0); got.set(k0, { l: [...new Set((o ? o.l : []).concat(l))], why: o ? o.why : why }); if (isN && x.sec === 'Jobs') (B.nsrc[k0] = B.nsrc[k0] || []).push(al && al.nth > 1 ? '@' + x.hi + '@' + x.label : x.label); } }; /* (a name said twice, like a kick reminder per kick, counts once) */
+    const als = isN && x.sec === 'Jobs' ? ndzNoteAliases(B.pick, x.label) : [], al = als.length ? als.find((a) => !a.nth || (first[a.to] || []).indexOf(x.hi) + 1 === a.nth) || null : null;
+    if (als.length && !al) { B.noteLeft.push({ label: x.label, head: x.head, why: 'one list too many; the ones Plan knows are used' }); continue; }
     if (Array.isArray(t)) { put(t[0], names.filter(mel)); put(t[1], names.filter((n) => !mel(n))); } else put(al ? al.to : t || x.label, names);
     if (isN && !hit && x.sec === 'Jobs') B.noteLeft.push({ label: x.label, head: x.head }); }
   for (const pg of B.pages) { const mine = new Set(); for (const sl of pg.slots) { const v = got.get(pg.key + '|' + sl.label); if (v) v.l.filter((n) => pr.players.has(n)).forEach((n) => mine.add(n)); }
@@ -5200,6 +5211,17 @@ if (location.hostname === 'localhost') window.__ndzScan = (soakRe) => { const r 
   const top = (o, n) => Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, n || 60).map(([k, v]) => k + ': ' + v);
   return { boss: r.item.boss, diff: r.item.diff, dur: Math.round(r.duration), comp: ps.map(tag).sort().join(', '), kick: top(kick, 40), util: top(util, 70), ext: top(ext, 25), disp: top(disp, 20), soak: top(soak, 60),
     hitMany: Object.entries(hitBy).filter(([, v]) => v.who >= 4 && v.who <= ps.length - 3).sort((a, b) => b[1].hits - a[1].hits).slice(0, 25).map(([k, v]) => k + ' (' + v.who + ' players, ' + v.hits + ' hits)') }; };
+// (The Coiled Altar's orb jobs, Oct 26, as the user's own note does them: greens to ranged not carrying a purple, side greens to the next
+// ranged, helpers the mobile ones (Evokers for Rescue, Demon Hunters, Monks, then healers); phase 3 keeps the phase 1 carriers; each purple
+// carrier takes the ghost on their own marker)
+function ndzCAOrbPicks(B, pr) { if (!B.sel['orbs|Green Orbs']) return; const ps = [...pr.players.values()], P = (n) => ps.find((p) => p.name === n), pur = (B.sel['orbs|Purple Orbs'] || { n: [] }).n.slice(), used = new Set(pur);
+  const take = (k, list, why) => { const n = list.filter((p) => !used.has(p.name)).slice(0, k); n.forEach((p) => used.add(p.name)); return { n: n.map((p) => p.name), why }; };
+  const rng = ps.filter((p) => p.role === 'dps' && !ndzMel(p)), mob = { EVOKER: 0, DEMONHUNTER: 1, MONK: 2, DRUID: 3 }, mv = (p) => mob[p.cls] ?? (p.role === 'healer' ? 4 : 9);
+  B.sel['orbs|Green Orbs'] = take(2, rng, 'Ranged players not carrying a purple take the green orbs on star and skull.');
+  B.sel['orbs|Side Green Orbs'] = take(2, rng.concat(ps.filter((p) => p.role === 'dps' && ndzMel(p))), 'The next ranged take the side greens.');
+  B.sel['orbs|Orb Helpers'] = take(4, ps.filter((p) => p.role !== 'tank').slice().sort((a, b) => mv(a) - mv(b) || a.name.localeCompare(b.name)), 'Mobile players clear the rest: Evokers (Rescue), Demon Hunters, Monks, then healers.');
+  for (const [a, b] of [['Purple Orbs', 'P3 Purple Orbs'], ['Green Orbs', 'P3 Green Orbs'], ['Side Green Orbs', 'P3 Side Green Orbs'], ['Orb Helpers', 'P3 Orb Helpers']]) if (B.sel['orbs3|' + b]) B.sel['orbs3|' + b] = { n: (B.sel['orbs|' + a] || { n: [] }).n.slice(), why: 'The phase 1 ' + a.toLowerCase() + ' again, on the same markers.' };
+  ['{cross}', '{square}', '{triangle}', '{diamond}'].forEach((mk, i) => { const k = 'stops|Soak Ghost at ' + mk; if (B.sel[k]) B.sel[k] = { n: pur[i] ? [pur[i]] : [], why: pur[i] ? pur[i] + ' carries the purple on ' + mk.slice(1, -1) + ', so they take its ghost.' : 'No purple carrier on this marker yet.' }; }); }
 // ---- Healing cooldown power (Oct 23, research: notes/Healing cooldowns research - Oct 23) ----
 // NDZ_CDPOW: what one press does. Measured in the 19 fastest Mythic Coiled Altar kills with the site's own engine (healing credited to
 // each press; damage cuts on the players inside them), rules from the spell tooltips (12.1). heal/move/hp in thousands; est = not measured yet.
@@ -7930,7 +7952,8 @@ const ndzBjEsc = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // (one job's line in the note: "Label: names", under its section heading when the label repeats; a kick or soak block's own row)
 function ndzBjWrite(text, B, pg, sl, names) { const lines = String(text).replace(/\s+$/, '').split('\n'), nm = names.map((x) => String(x).split('-')[0]).join(' ');
   { const own = B.nsrc && B.nsrc[pg.key + '|' + sl.label]; if (own && own.length && !own.includes(sl.label)) { /* (a slot filled from the note's own lines, like "P1 Soak 1" or the four "{cross} purple orb" lines: those lines change) */
-    const at = own.map((lab) => lines.findIndex((l) => l.indexOf(':') > 0 && l.slice(0, l.indexOf(':')).trim() === lab)).filter((i) => i >= 0); if (at.length) { const ns = nm ? nm.split(' ') : [];
+    const hdAt = (n) => { let h = 0, inI = false; for (let i = 0; i < lines.length; i++) { const ln = lines[i].trim(); if (!ln || /^EncounterID:/i.test(ln)) continue; if (/^intstart$/i.test(ln)) { inI = true; continue; } if (/^intend$/i.test(ln)) { inI = false; continue; } if (inI || /(^|;)\s*time:/i.test(ln)) continue; if (ln.replace(/\{[^}]*\}/g, ' ').indexOf(':') < 0 && ++h === n) return i; } return -1; };
+    const at = own.map((lab0) => { const m = /^@(\d+)@([\s\S]*)$/.exec(lab0), lab = m ? m[2] : lab0, from = m ? hdAt(+m[1]) : -1; return lines.findIndex((l, i) => i > from && l.indexOf(':') > 0 && l.slice(0, l.indexOf(':')).trim() === lab); }).filter((i) => i >= 0); /* (a 2nd list's lines: under its own heading, Oct 26) */ if (at.length) { const ns = nm ? nm.split(' ') : [];
       if (at.length === 1) { const i = at[0]; if (ns.length) lines[i] = lines[i].slice(0, lines[i].indexOf(':') + 1) + ' ' + ns.join(' '); else lines.splice(i, 1); return lines.join('\n'); }
       const put = at.map((i, j) => (j < at.length - 1 ? ns.slice(j, j + 1) : ns.slice(j))); for (let j = at.length - 1; j >= 0; j--) { const i = at[j]; if (put[j].length) lines[i] = lines[i].slice(0, lines[i].indexOf(':') + 1) + ' ' + put[j].join(' '); else lines.splice(i, 1); }
       return lines.join('\n'); } } }
