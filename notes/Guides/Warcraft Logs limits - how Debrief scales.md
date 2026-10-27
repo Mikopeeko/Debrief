@@ -51,6 +51,24 @@ Your question: "If my website gets big, would this turn into a regular issue wit
 | 7 | **Fewer Database-point calls** | Slow "live now" to 60 s, and load parses only when someone opens them | small | Worth it once the new limits are switched on |
 | 8 | **Download only what the checks need** | Ask Warcraft Logs only for the event types the site reads | large (every check must still work) | Later, only if 1–3 aren't enough |
 
+## Step 3 is done: each night kept once, worldwide (Oct 26)
+- **What's stored:** the Cloudflare R2 bucket `debrief-nights` (Worker binding `debrief_nights`, in wrangler.toml) keeps every page of a pull's
+  events and every death list that the site's key fetched. It's gzipped (about 13 times smaller: a 3.4 MB page is 0.26 MB, so a 2-hour night is
+  about 150 MB). Keys: `n1-<query fingerprint>/<report>/<fight>/<start>-<end>` (death lists: `…/deaths/<start>-<end>`). A change to the
+  download query gets a new fingerprint, so old entries are simply not read.
+- **The order a request goes:** the regional edge cache → R2 → Warcraft Logs, and a Warcraft Logs answer is then kept in both.
+  The response header `X-Debrief-Store` says which (r2, wcl, or none for the edge cache).
+- **Privacy:** only answers fetched with the site's key are kept, and that key can't read private reports. An answer fetched with a raider's own
+  pass (a private report) is never stored or shared, the same rule as the edge cache.
+- **Live nights:** a pull is only listed once it has ended, and a finished pull's events never change, so a kept page never goes stale. The
+  night's pull list and the report itself keep the short edge cache, because they grow while the raid is live.
+- **Measured on a practice link** (one 4-minute Coiled Altar pull, 21 pages, both opens past the edge cache):
+  - First open: 21 pages from Warcraft Logs, 22 points, 14.4 s.
+  - Second open: 21 pages from R2, about 1 point (the check itself), 8.9 s.
+  - The death list: from Warcraft Logs, then from R2.
+- **Cost:** R2 storage is $0.015 per GB a month after the free 10 GB, so about $2 a month per 1,000 nights kept. There's no clean-up yet; an R2
+  lifecycle rule (delete after, say, 120 days) can be added in the Cloudflare dashboard if it ever matters.
+
 ## The first two steps
 1. **This week:** add the allowance check, read the numbers once on a quiet day and once on a raid night, and write them into this guide.
    Also open warcraftlogs.com/api/clients and see which subscription the site's key sits under. Don't opt into the new limits yet.

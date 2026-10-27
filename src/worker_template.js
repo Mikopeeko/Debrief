@@ -68,6 +68,18 @@ async function gqlText(env, query, variables, ut) {
   return txt;
 }
 // (the desktop app calls this site from its own window, so answers say any page may read them; they're public data)
+/* (Oct 26, the user's "wire R2 in so each raid night is stored once for everyone": the pull downloads (each page of a pull's events) and the
+   death lists are kept in the R2 bucket debrief-nights, gzipped, keyed by report, fight and time range plus a fingerprint of the query, so a
+   change to the query starts fresh. Only answers fetched with the site's key are kept (it can't read private reports); one fetched with a
+   raider's own pass is never stored or shared. A finished pull never changes, and a live night only lists pulls once they've ended, so a kept
+   page never goes stale. The night's pull list and the report itself keep the short edge cache (they grow while a raid is live)) */
+const R2_ROUTES = new Set(['/api/events', '/api/fightlog', '/api/deaths']);
+const strHash = (s) => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+const r2Key = (path, v) => path === '/api/deaths' ? 'n1-' + strHash(DEATHS_Q) + '/' + v.code + '/deaths/' + v.s + '-' + v.e : 'n1-' + strHash(EVENTS_Q) + '/' + v.code + '/' + v.fid[0] + '/' + v.s + '-' + v.e;
+async function r2Get(env, k) { if (!env.debrief_nights) return null; try { const o = await env.debrief_nights.get(k); if (!o) return null; return await new Response(o.body.pipeThrough(new DecompressionStream('gzip'))).text(); } catch (e) { return null; } }
+/* (kept only when it's a real page of events: never an error, a "not found" or a refusal) */
+const r2Ok = (txt) => typeof txt === 'string' && txt.length > 40 && txt.startsWith('{"data":{"reportData":{"report":{"events"') && !txt.slice(-600).includes('"errors"');
+async function r2Put(env, k, txt) { if (!env.debrief_nights || !r2Ok(txt)) return; try { const gz = await new Response(new Blob([txt]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer(); await env.debrief_nights.put(k, gz, { httpMetadata: { contentType: 'application/json' }, customMetadata: { at: String(Date.now()) } }); } catch (e) { /* (not kept: the next visitor downloads it) */ } }
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, OPTIONS', 'Access-Control-Max-Age': '86400' };
 const json = (obj, status, maxAge) => new Response(JSON.stringify(obj), {
   status: status || 200,
@@ -1604,11 +1616,13 @@ export default {
       const hasC = !!cookieOf(req, 'dbs'), mine = hasC && USER_LISTS.has(url.pathname), sess = mine ? await sessOf(req, env) : null;
       const cache = caches.default, key = new Request(url.toString(), { method: 'GET' });
       if (!sess) { const hit = await cache.match(key); if (hit) return hit; }
+      const r2k = !sess && R2_ROUTES.has(url.pathname) && route.raw ? r2Key(url.pathname, v) : null; /* (kept once for everyone, worldwide (Oct 26)) */
+      if (r2k) { const txt = await r2Get(env, r2k); if (txt != null) { const res = new Response(txt, { headers: { ...CORS, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=86400', 'X-Debrief-Store': 'r2' } }); ctx.waitUntil(cache.put(key, res.clone())); return res; } }
       if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once. Wait a minute and try again.' }, 429);
       const age = typeof route.age === 'function' ? route.age(url.searchParams) : route.age;
       const run = async (ut) => (route.raw ? { raw: await gqlText(env, route.q(), v, ut) } : { out: route.run ? await route.run(env, v) : route.out(route.text ? await gqlText(env, route.q(), v, ut) : await gql(env, route.q(), v, ut), v) });
       const send = (r, priv) => {
-        if (r.raw != null) { const res = new Response(r.raw, { headers: { ...CORS, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': priv ? 'private, no-store' : 'public, max-age=' + age } }); if (!priv) ctx.waitUntil(cache.put(key, res.clone())); return res; }
+        if (r.raw != null) { const res = new Response(r.raw, { headers: { ...CORS, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': priv ? 'private, no-store' : 'public, max-age=' + age, ...(r2k && !priv ? { 'X-Debrief-Store': 'wcl' } : {}) } }); if (!priv) { ctx.waitUntil(cache.put(key, res.clone())); if (r2k) ctx.waitUntil(r2Put(env, r2k, r.raw)); } return res; }
         if (r.out && r.out.error) return json({ error: r.out.error }, r.out.status || 400);
         const res = priv ? json(r.out, 200) : json(r.out, 200, age); if (!priv) ctx.waitUntil(cache.put(key, res.clone())); return res; };
       try {

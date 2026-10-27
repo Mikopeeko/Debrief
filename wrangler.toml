@@ -39,6 +39,11 @@ new_sqlite_classes = ["DiscordGateway"]
 tag = "gateway-2"
 deleted_classes = ["DiscordGateway"]
 
+# Raid nights kept once for everyone (Oct 26): each pull's event pages and death lists, gzipped (see R2_ROUTES in src/worker_template.js)
+[[r2_buckets]]
+binding = "debrief_nights"
+bucket_name = "debrief-nights"
+
 [[kv_namespaces]]
 binding = "DEBRIEF_KV"
 id = "5f5a92a1ea294fb888dea9dc5d7a2aa8"
