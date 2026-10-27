@@ -7723,7 +7723,15 @@ const ndzPlOn = () => !!S.ndzTlBig && S.page === 'plan';
 // (the spells a raider can plan: the roster audit's lists, by class and spec)
 function ndzPlSpells(p) { const out = []; if (!p || !p.cls) return out;
   for (const g of NDZ_BUFFS) if (NDZ_PL_GROUPS.includes(g[0])) for (const x of g[2]) if (x[1].includes(p.cls) && (!x[2] || !p.sid || x[2].includes(+p.sid)) && !out.some((o) => o.id === x[3]) && x[0] !== 'Devotion Aura') out.push({ name: x[0], id: x[3], grp: g[0] });
-  return out; }
+  const T = typeof NDZ_TALC !== 'undefined' && NDZ_TALC[+p.sid], tk = T && typeof ndzTalOf === 'function' ? ndzTalOf(p.n, p.sid) : null; /* (only the talent they take, Oct 27) */
+  if (!tk) return out; const grp = (out.find((o) => T[1].some(([n, id]) => +id === +o.id || n === o.name)) || {}).grp || 'Healer cooldowns', keep = out.filter((o) => !T[1].some(([n, id]) => n !== tk.pick && (+id === +o.id || n === o.name))), mine = T[1].find(([n]) => n === tk.pick);
+  if (mine && !keep.some((o) => +o.id === +mine[1])) keep.unshift({ name: mine[0], id: mine[1], grp }); return keep; }
+// (a planned cooldown from the talent a healer doesn't take: marked on the chart and in Big hits, Oct 27)
+function ndzTalOff(D, c) { if (!D || !c || typeof NDZ_TALC === 'undefined') return null; const p = ((D._orig || D).ps || []).find((x) => String(x.n).toLowerCase() === String(c.who).split('-')[0].toLowerCase()), T = p && NDZ_TALC[+p.sid]; if (!T || !T[1].some(([, id]) => +id === +c.id)) return null;
+  const tk = ndzTalOf(p.n, p.sid); return tk && !T[1].some(([n, id]) => n === tk.pick && +id === +c.id) ? tk.pick : null; }
+function ndzTalPaint() { const el = document.getElementById('ndzTl'); if (!el || !NDZ_TL) return; el.querySelectorAll('[data-cdk]').forEach((x) => { const c = NDZ_TL.cds[+x.dataset.cdk], pick = ndzTalOff(NDZ_TL, c), on = x.classList.contains('tal-off');
+  if (pick && !on) { x.classList.add('tal-off'); x.dataset.tt = '<b>' + esc(c.who) + ' takes ' + esc(pick) + ', not ' + esc(ndzSpellNm(+c.id) || 'this') + '</b><br>Only one of the two is in their talents. Take this one out, or change their pick in Healer talents.' + (x.dataset.tt ? '<br><br>' + x.dataset.tt : ''); } }); }
+if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined') { let q = 0; new MutationObserver(() => { if (q) return; q = requestAnimationFrame(() => { q = 0; if (S.page === 'plan') ndzTalPaint(); }); }).observe(document.documentElement, { childList: true, subtree: true }); }
 const NDZ_PL_ROLE = (p) => { const TK = [66, 73, 104, 250, 268, 581], HL = [65, 105, 256, 257, 264, 270, 1468], PS = typeof planSp === 'function' ? planSp() : {}, rr = (PS[String(p.n).toLowerCase()] || {}).role;
   return !p.sid ? (rr || 'dps') : TK.includes(+p.sid) ? 'tank' : HL.includes(+p.sid) ? 'healer' : 'dps'; };
 function ndzPlPeople(D) { const ord = { healer: 0, tank: 1, dps: 2 };
