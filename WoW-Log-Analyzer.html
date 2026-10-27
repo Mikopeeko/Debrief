@@ -8389,6 +8389,11 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.btl-tray .btl-trr > .btl-ti :is(.icw, img, .ico) { width: 16px !important; height: 16px !important; border-radius: 4px; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.btl-tray .btl-trr > .btl-ti:hover, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.btl-tray .btl-trr > .btl-ti:focus-visible { box-shadow: 0 0 0 2px rgba(230,180,80,.75); outline: 0; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.btl-tray > .btl-trh > .sub { font-size: 11px; color: var(--faint); }
+/* ===== Design studio round 101 (Oct 27): a green glow when a dragged cooldown is available. Owner: the Design studio chat. ===== */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .bhl-r.bhl-r.over:not(.bad) { background: rgba(69,193,92,.12) !important; box-shadow: inset 3px 0 0 #45c15c, 0 0 0 1px rgba(69,193,92,.6), 0 0 14px rgba(69,193,92,.35) !important; border-radius: 6px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .bhl-r.bhl-r.over:not(.bad) .bhl-drop { border-color: #45c15c; border-style: solid; color: #7ee08f; background: rgba(69,193,92,.10); }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .bhl-r.bhl-r.over:not(.bad) .bhl-drop::after { content: ' · available'; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .bhl-r.bhl-r.bad { box-shadow: inset 3px 0 0 #e5534b, 0 0 0 1px rgba(229,83,75,.55) !important; border-radius: 6px; }
 </style>
 
 
