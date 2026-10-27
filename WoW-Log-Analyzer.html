@@ -29712,7 +29712,7 @@ const mxSq = (pts) => '<span class="mx-sq" aria-hidden="true">' + pts.map((p) =>
 const mxTrend = (pts, mv) => { const J = pts.filter((p) => p.v != null), l5 = J.slice(-5);
   if (mv <= -10) { const f = l5.filter((p) => p.st === 'bad').length, m = l5.filter((p) => p.st === 'bad' || p.st === 'warn').length; return f ? '▼ Getting worse: ' + f + ' of the last ' + l5.length + ' pulls failed.' : '▼ Getting worse: ' + m + ' of the last ' + l5.length + ' pulls had mistakes.'; }
   if (mv >= 10) { let run = 0; for (let i = J.length - 1; i >= 0 && J[i].st === 'ok'; i--) run++; const ok = l5.filter((p) => p.st === 'ok').length;
-    return run >= 2 ? '▲ Getting better: the last ' + run + ' pulls were clean.' : '▲ Getting better: ' + ok + ' of the last ' + l5.length + ' pulls ' + (ok === 1 ? 'was' : 'were') + ' clean.'; }
+    return run >= 2 ? '▲ Getting better: the last ' + run + ' pulls were clean.' : ok ? '▲ Getting better: ' + ok + ' of the last ' + l5.length + ' pulls ' + (ok === 1 ? 'was' : 'were') + ' clean.' : '▲ Getting better: fewer mistakes in the last ' + l5.length + ' pulls.'; } /* (never "0 of" (Design studio, Oct 27)) */
   return ''; };
 function sparkSvg(pts, cls) { const W = 300, H = 24, P = 3, n = pts.length; if (!n) return ''; const X = (i) => (n === 1 ? W / 2 : P + (W - 2 * P) * i / (n - 1)), Y = (v) => P + (H - 2 * P) * (1 - v / 100);
   const on = pts.map((p, i) => [p, i]).filter(([p]) => p.v != null), d = on.map(([p, i], k) => (k ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(p.v).toFixed(1)).join(' ');
