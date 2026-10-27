@@ -8592,6 +8592,75 @@ html body #view .panel.rot-pick.rot-pick .rot-pk:hover { border-color: var(--cc,
 html body #view .panel.rot-pick.rot-pick .rot-pk:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
 html body #view .panel.rot-pick.rot-pick .rot-pk .av { flex: none; width: 22px; height: 22px; }
 html body #view .panel.rot-pick.rot-pick .rot-pk .rot-pkn { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 13px/1 var(--body); filter: brightness(1.25) saturate(1.1); }
+/* ===== Design studio round 121 (Oct 27): Home layout B. Owner: the Design studio chat. ===== */
+@media (min-width: 900px) {
+  html body .home.pg-v2 .my-flow.my-flow { display: flex !important; flex-direction: column !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who { order: 0 !important; display: flex !important; flex-direction: row !important; align-items: stretch; gap: 10px; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who > .panel { flex: 1 1 0 !important; min-width: 0; width: auto !important; margin: 0 !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .pg-rkbox { order: 1 !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .ds-row1 { display: contents !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .ds-row1 > .pg-now { order: 2 !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-raid { order: 3 !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .ds-row1 > .pg-nights { order: 4 !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-hist { order: 5 !important; }
+  html body .home.pg-v2 .my-flow.my-flow .my-raid .my-bcs { grid-template-columns: repeat(10, minmax(0, 1fr)) !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .ds-row1 > .pg-nights .pn-list > :nth-child(n+4) { display: none !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who > .panel { padding: 12px 16px !important; align-items: center !important; min-height: 0 !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .ht-ban { zoom: .7; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-team h1 { font-size: 21px !important; margin: 0 !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-team .pg-sum { font-size: 12px !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-team .pg-chips { gap: 14px !important; align-items: center !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-team .pgc { border: 0 !important; background: none !important; box-shadow: none !important; padding: 0 !important; min-height: 0 !important; height: auto !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-team .pgc.gold b { font-size: 24px !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-team .ds-rk { border: 0 !important; background: none !important; height: auto !important; gap: 16px !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-team .ds-rk .pgc { padding: 0 0 0 14px !important; border-left: 1px solid var(--line) !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-team .pg-info { font-size: 10.5px !important; opacity: .7; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who > .my-you { box-shadow: none !important; border: 1px solid var(--line) !important; border-left: 3px solid #f58cba !important; outline: 0 !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-you .yu-t { border: 0 !important; background: none !important; padding: 0 0 0 12px !important; border-left: 1px solid var(--line) !important; height: auto !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-you .yu-t b { font-size: 22px !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-you .yu-btns { margin-left: auto !important; gap: 6px !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-you .yu-btns .btn { height: 30px !important; min-height: 0 !important; padding: 0 12px !important; font-size: 13px !important; line-height: 28px !important; white-space: nowrap; }
+}
+/* 1150 px and up: team and you as ONE slim bar (the user: "I still think more sleek or a different design for that part") */
+@media (min-width: 1150px) {
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who { gap: 0 !important; background: var(--panel, #161a22); border: 1px solid var(--line, #262c38); border-radius: 12px; padding: 0 !important; overflow: hidden; height: auto !important; min-height: 0 !important; align-items: center !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who > .panel { background: none !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important; padding: 10px 18px !important; display: flex !important; flex-wrap: nowrap !important; align-items: center !important; gap: 14px !important; min-height: 0 !important; height: auto !important; align-self: stretch; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who > .my-team { flex: 1.25 1 0 !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who > .my-you { flex: 1 1 0 !important; border-left: 1px solid var(--line, #262c38) !important; position: relative; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who > .my-you::before { content: ''; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px; border-radius: 2px; background: #f58cba; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-lab, html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .pg-info { display: none !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .ht-ban { zoom: .62; flex: none; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .ds-nm { flex: none; min-width: 0; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-team h1 { font-size: 19px !important; margin: 0 !important; white-space: nowrap; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .pg-editb { height: 18px !important; padding: 0 6px !important; font-size: 10px !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-team .pg-sum { font-size: 11px !important; white-space: nowrap; max-width: 210px; overflow: hidden; text-overflow: ellipsis; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .pg-chips { display: flex !important; align-items: center !important; gap: 16px !important; margin: 0 0 0 auto !important; flex-wrap: nowrap !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .pgc { border: 0 !important; background: none !important; box-shadow: none !important; padding: 0 !important; height: auto !important; min-height: 0 !important; display: flex !important; flex-direction: column !important; align-items: flex-start !important; gap: 3px !important; font: 600 9.5px/1 'Barlow Condensed', sans-serif !important; letter-spacing: .08em; text-transform: uppercase; color: var(--faint, #6b7280) !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .pgc b { font: 800 17px/1 'Barlow Condensed', sans-serif !important; letter-spacing: 0; text-transform: none; order: -1; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .pgc.gold b { font-size: 22px !important; color: var(--gold) !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .pgc.gold .tm-bar { display: none !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-team .ds-rk { display: flex !important; gap: 16px !important; border: 0 !important; background: none !important; height: auto !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-team .ds-rk .pgc { padding: 0 !important; border-left: 0 !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .pgc.pgc-t { font-size: 11px !important; color: var(--gold) !important; text-transform: none; letter-spacing: 0; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-you .pg-you { display: contents; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-you b { white-space: nowrap; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-you .pg-you > span:not(.ht-ban):not(.pg-ych) b { font-size: 19px !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-you .yu-ln { font-size: 11px !important; white-space: nowrap; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-you .pg-ych { margin-left: auto; display: flex; gap: 16px; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; height: auto !important; align-self: center !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-you .yu-t { border: 0 !important; background: none !important; padding: 0 !important; height: auto !important; display: flex !important; flex-direction: column !important; gap: 3px !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-you .yu-t b { font: 800 19px/1 'Barlow Condensed', sans-serif !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .my-you .yu-t em { font: 600 9.5px/1 'Barlow Condensed', sans-serif !important; letter-spacing: .08em; text-transform: uppercase; color: var(--faint, #6b7280) !important; font-style: normal; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .yu-btns { display: flex !important; gap: 6px !important; flex: none; margin: 0 !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .yu-btns .btn { height: 28px !important; min-height: 0 !important; padding: 0 10px !important; font-size: 12px !important; line-height: 26px !important; white-space: nowrap; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .yu-btns .btn:not(.primary) { font-size: 0 !important; width: 28px; padding: 0 !important; }
+  html body .home.pg-v2 .my-flow.my-flow > .my-who.my-who .yu-btns .btn:not(.primary)::before { content: '+'; font-size: 16px; line-height: 26px; }
+}
+html body .my-team .ds-rk .pgc[data-ds-tier] b { color: var(--dsc) !important; }
+html body .my-team .pgc[data-ds-tier="leg"] { --dsc: #ff8000; }
+html body .my-team .pgc[data-ds-tier="epic"] { --dsc: #a335ee; }
+html body .my-team .pgc[data-ds-tier="rare"] { --dsc: #3d8bff; }
+html body .my-team .pgc[data-ds-tier="unc"] { --dsc: #1eff00; }
+html body .my-team .pgc[data-ds-tier="com"] { --dsc: #9aa3b2; }
 </style>
 
 

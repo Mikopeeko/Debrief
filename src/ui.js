@@ -32458,6 +32458,25 @@ function dsGuides() {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
+// ===== Design studio round 121 (Oct 27): team rank colours. Owner: the Design studio chat. =====
+(function () {
+  if (typeof document === 'undefined') return;
+  var B = { w: [100, 500, 2000, 5000], r: [50, 200, 800, 2000], s: [3, 10, 50, 150] }, T = ['leg', 'epic', 'rare', 'unc'];
+  var mark = function () {
+    document.querySelectorAll('.my-team .ds-rk .pgc:not(.pgc-t):not([data-ds-tier])').forEach(function (e) {
+      var t = e.textContent, m = t.match(/#([\d,]+)/); if (!m) return;
+      var n = +m[1].replace(/,/g, ''); if (!n) return;
+      var lab = t.replace(/#.*/, '').trim().toLowerCase();
+      var sc = /world|speed/.test(lab) ? B.w : /^(us|eu|kr|tw|cn|na)$/.test(lab) ? B.r : B.s;
+      var i = -1; for (var k = 0; k < sc.length; k++) if (n <= sc[k]) { i = k; break; }
+      e.setAttribute('data-ds-tier', i < 0 ? 'com' : T[i]);
+    });
+  };
+  var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(mark, 60); };
+  var start = function () { var v = document.getElementById('main') || document.body; if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
 (function () { const f17 = dsBars; let last = 0, tm = 0, pendingRoot;
