@@ -8808,6 +8808,33 @@ html body #view .mx-sq.mx-sq > i:hover { box-shadow: 0 0 0 2px rgba(255,255,255,
 html body #view .prw-s.prw-s.up, html body #view .prw-s.prw-s.dn { display: inline-block; padding: 2px 8px; border-radius: 8px; font-size: 12.5px; }
 html body #view .prw-s.prw-s.up { background: rgba(69,193,92,.1); color: #7ee08f; }
 html body #view .prw-s.prw-s.dn { background: rgba(229,83,75,.1); color: #ff8f87; }
+/* ===== Design studio round 125 (Oct 27): calmer mechanic panels. Owner: the Design studio chat. ===== */
+html body #view .mx-p.mx-p .mx-hd { display: flex; align-items: center; gap: 10px; }
+html body #view .mx-p.mx-p .mx-fl { margin-left: auto; flex: none; height: 22px; padding: 0 10px; border-radius: 11px; font: 700 12.5px/22px var(--body); white-space: nowrap; }
+html body #view .mx-p.mx-p .mx-fl.g { background: rgba(69,193,92,.14); color: #7ee08f; }
+html body #view .mx-p.mx-p .mx-fl.y { background: rgba(230,180,80,.15); color: var(--gold); }
+html body #view .mx-p.mx-p .mx-fl.r { background: rgba(229,83,75,.15); color: #ff8f87; }
+html body #view .mx-p.mx-p p.mx-sum { margin: 12px 0 0; font-size: 15.5px; line-height: 1.45; color: var(--text); }
+html body #view .mx-p.mx-p p.mx-sum b { font-weight: 700; }
+html body #view .mx-p.mx-p p.mx-sum b.r { color: #ff8f87; } html body #view .mx-p.mx-p p.mx-sum b.y { color: var(--gold); } html body #view .mx-p.mx-p p.mx-sum b.g { color: #7ee08f; }
+html body #view .mx-p.mx-p .mx-lab { margin: 18px 0 8px; font: 700 11px/1 var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+html body #view .mx-p.mx-p .mx-sq.mx-big { display: grid; grid-template-columns: repeat(auto-fill, minmax(22px, 1fr)); gap: 4px; width: 100%; }
+html body #view .mx-p.mx-p .mx-sq.mx-big > i { width: auto; height: auto; background: none !important; box-shadow: none !important; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; }
+html body #view .mx-p.mx-p .mx-sq.mx-big > i::before { content: ''; display: block; width: 100%; height: 16px; border-radius: 3px; background: rgba(255,255,255,.08); }
+html body #view .mx-p.mx-p .mx-sq.mx-big > i.g::before { background: #45c15c; } html body #view .mx-p.mx-p .mx-sq.mx-big > i.y::before { background: #e6b450; } html body #view .mx-p.mx-p .mx-sq.mx-big > i.r::before { background: #e5534b; }
+html body #view .mx-p.mx-p .mx-sq.mx-big > i:hover::before { box-shadow: 0 0 0 2px rgba(255,255,255,.55); }
+html body #view .mx-p.mx-p .mx-sq.mx-big > i > span { font: 500 11px/1 var(--body); font-style: normal; color: var(--faint); }
+html body #view .mx-p.mx-p .mx-tb { display: grid; grid-template-columns: minmax(0, 1fr) 110px minmax(0, 200px); column-gap: 14px; }
+html body #view .mx-p.mx-p .mx-th, html body #view .mx-p.mx-p .mx-tr { display: contents; }
+html body #view .mx-p.mx-p .mx-th > * { padding: 0 0 6px; font: 700 11px/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+html body #view .mx-p.mx-p .mx-tr > * { padding: 9px 0; border-top: 1px solid var(--line); cursor: pointer; align-self: stretch; display: flex; align-items: center; }
+html body #view .mx-p.mx-p .mx-tr:hover > * { background: rgba(255,255,255,.025); }
+html body #view .mx-p.mx-p .mx-m { font-size: 15px; color: var(--text); min-width: 0; }
+html body #view .mx-p.mx-p .mx-tr > .mx-ch { font-weight: 700; font-size: 13px; color: var(--muted); }
+html body #view .mx-p.mx-p .mx-tr > .mx-ch.hi { color: #ff8f87; }
+html body #view .mx-p.mx-p .mx-who { font-size: 13.5px; color: var(--muted); min-width: 0; flex-wrap: wrap; gap: 0; white-space: pre-wrap; }
+html body #view .mx-p.mx-p .mx-who .mx-more { color: var(--faint); }
+html body #view .mx-p.mx-p p.mx-ft { margin: 14px 0 0; font-size: 12.5px; color: var(--faint); }
 </style>
 
 
