@@ -27,7 +27,13 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 const READ = `(() => { const m = document.querySelector('#main'); if (!m) return null; const out = [], seen = new Set();
   const skip = 'nav, button, svg, .ov, .gdz-fto, .gdz-foot, .gdz-src, [aria-hidden="true"]';
   m.querySelectorAll('h3, h4, p, li').forEach((e) => { if (e.closest(skip)) return; if (e.tagName === 'LI' && e.querySelector('p, li')) return;
-    let t = (e.innerText || e.textContent).replace(/\\s+/g, ' ').trim(); if (e.tagName === 'H4' && /^Your job/.test(t)) t = 'Your job';
+    /* (a short title glued to its text, "A purple touches a green The purple ring...", reads "Title: text"; a doubled first word goes) */
+    const ln = (e.innerText || e.textContent).split(/\\n+/).map((x) => x.replace(/\\s+/g, ' ').trim()).filter(Boolean), f = e.firstElementChild;
+    const ft = f && /^(B|STRONG|EM|SPAN|DIV)$/.test(f.tagName) ? f.textContent.replace(/\\s+/g, ' ').trim() : '';
+    let t = ln.length > 1 && ln[0].length < 80 && !/[:.!?]$/.test(ln[0]) ? ln[0] + ': ' + ln.slice(1).join(' ') : ln.join(' ');
+    if (ft && ft.length < 80 && !/[:.!?]$/.test(ft) && t.startsWith(ft) && /^[A-Z]/.test(t.slice(ft.length).trim())) t = ft + ': ' + t.slice(ft.length).trim();
+    t = t.replace(/^(\\S+(?: \\S+)?) \\1\\b/, '$1').replace(/^([^:]{1,30}): \\1:/, '$1:');
+    if (e.tagName === 'H4' && /^Your job/.test(t)) t = 'Your job';
     if (!t || t.length < 3 || seen.has(t) || /^How each fight works/.test(t)) return; /* (the page's own subtitle is the same on every guide) */ seen.add(t); out.push([e.tagName.toLowerCase(), t]); });
   return out; })()`;
 const t0 = await send('Target.createTarget', { url: 'about:blank' }), sid0 = (await send('Target.attachToTarget', { targetId: t0.result.targetId, flatten: true })).result.sessionId;
