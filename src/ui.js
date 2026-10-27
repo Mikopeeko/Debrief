@@ -2005,6 +2005,7 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'Plan, The Twin Fangs: the Ravenous Feast picture had the hits in the wrong order. Hits go Left, Right, Center, and the Tainted Blood orbs Right, Left, Center; each group\'s label says its hit and its orb.',
     'Plan, Markers: the markers you drag no longer sit in a grey box.',
     'Plan, Markers: changing a marker to a mark that wasn\'t on the map (right-click) left the old mark on the same spot too, so two markers sat on one point. Now only the new mark is there.',
     'Plan, The Twin Fangs: the raid markers sit one on each of the three platforms, where raids stand through that platform\'s two sets (star north, circle south-west, diamond south-east, in the order most raids take them), instead of eight bunched on one platform. The Raid markers map shows the whole room.',

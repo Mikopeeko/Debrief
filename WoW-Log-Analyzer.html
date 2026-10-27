@@ -17708,6 +17708,7 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'Plan, The Twin Fangs: the Ravenous Feast picture had the hits in the wrong order. Hits go Left, Right, Center, and the Tainted Blood orbs Right, Left, Center; each group\'s label says its hit and its orb.',
     'Plan, Markers: the markers you drag no longer sit in a grey box.',
     'Plan, Markers: changing a marker to a mark that wasn\'t on the map (right-click) left the old mark on the same spot too, so two markers sat on one point. Now only the new mark is there.',
     'Plan, The Twin Fangs: the raid markers sit one on each of the three platforms, where raids stand through that platform\'s two sets (star north, circle south-west, diamond south-east, in the order most raids take them), instead of eight bunched on one platform. The Raid markers map shows the whole room.',
@@ -52330,17 +52331,17 @@ function ppCardsTF(J, M, U, P) {
       legend: [['front', 'Front: the two at the tip'], ['lm', 'Left melee: left 3 and 4'], ['rm', 'Right melee: right 3 and 4'], ['lr', 'Left range: left 1 and 2'], ['rr', 'Right range: right 1 and 2'], ['backup', 'Backup']].filter(([key]) => K[key].length)
         .map(([key, t]) => ppG(t, key === 'backup' ? Q : (TF_KA.find((a) => a[0] === key) || [])[2], K[key].map((n, i) => ppI(P, n, key === 'backup' ? 'Covers a miss' : 'Kick ' + (i + 1))))),
       foot: 'Kick the Broodlings in your coloured area, in your number order. Left and right as you face the bosses; the backup covers a missed kick.' }); } }
-  // Ravenous Feast: the three groups at their Tainted Blood orbs (right, left, front), the Feast in the middle: right takes the 1st hit,
-  // left the 2nd, the centre group the 3rd (the guide's order, from the top kills)
+  // Ravenous Feast: the three groups at their Tainted Blood orbs (right, left, front), the Feast in the middle. The hits go Left, Right,
+  // Center; the orbs go to the group knocked right first, then left, then center (Plan's card, dad6293; notes/Guides/Bosses/6)
   { const F = J.feast; if (F.left.length || F.right.length || F.center.length) { const w = tf2(), fix = {}, put = new Set(), lab = [], hl = [], C = [4, 56], OB = [[24, 40], [-24, 40], [4, 72]];
     w.ring({ x: C[0], y: C[1], r: 9, fx: 'soak', t0: 0, at: 1.05, dur: 5, color: R, cn: 'Ravenous Feast', label: false });
     OB.forEach(([x, y]) => w.ring({ x, y, r: 5, fx: 'soak', t0: 0, at: 1.05, dur: 5, color: '#d0303a', cn: 'Tainted Blood', label: false }));
-    [[F.right, OB[0], 'Right 1st', R], [F.left, OB[1], 'Left 2nd', BL, true], [F.center, OB[2], 'Center 3rd', GO]].forEach(([L, c, t, col, below]) => { const ids = L.map((n) => { const s = ppSlot(P, n, put); if (s) fix[s] = n; return s; }).filter(Boolean);
+    [[F.right, OB[0], 'Right · hit 2, orb 1', R], [F.left, OB[1], 'Left · hit 1, orb 2', BL, true], [F.center, OB[2], 'Center · hit 3, orb 3', GO]].forEach(([L, c, t, col, below]) => { const ids = L.map((n) => { const s = ppSlot(P, n, put); if (s) fix[s] = n; return s; }).filter(Boolean);
       ids.forEach((s, i) => { const q = gdzSpot(i, ids.length, 4.2); w.at(0, s, c[0] + q[0], c[1] + q[1]); }); hl.push(...ids); if (ids.length) lab.push([ids, t, col, col === GO ? '#1a1405' : '#fff', 7, !!below]); });
     home(w, put);
     cards.push({ id: 'feast', ph: 1, when: 'Every set', title: 'Ravenous Feast (Three groups, one hit each)', map: ppFreeze(w.done({ title: 'Ravenous Feast', focus: { x: 0, y: 50, r: 30 } }), 1, ppSeat(P, fix), P, M, { hl, labels: lab, focus: TF_VIEW }),
-      legend: [ppG('Right: the 1st hit, then the right orb', R, F.right.map((n) => ppI(P, n))), ppG('Left: the 2nd hit, then the left orb', BL, F.left.map((n) => ppI(P, n))), ppG('Center: the 3rd hit, then the front orb', GO, F.center.map((n) => ppI(P, n)))],
-      foot: 'Each hit knocks its group toward its Tainted Blood orb: 6 or more soak each one, or the raid wipes. Nobody takes two hits.' }); } }
+      legend: [ppG('Left: the 1st hit, then the 2nd orb (left)', BL, F.left.map((n) => ppI(P, n))), ppG('Right: the 2nd hit, then the 1st orb (right)', R, F.right.map((n) => ppI(P, n))), ppG('Center: the 3rd hit, then the 3rd orb (front)', GO, F.center.map((n) => ppI(P, n)))],
+      foot: 'Hits go Left, Right, Center; each knocks its group toward its Tainted Blood orb. Orbs: the group knocked right first, then left, then center; 6 or more on each, or the raid wipes. Nobody takes two hits.' }); } }
   return cards;
 }
 // ===== Nymrissa Wavecaller, Mythic (Oct 26, the same setup; Plan's Jobs cards in 23a0436). The raid plays in the island's south-west
