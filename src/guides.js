@@ -5455,7 +5455,7 @@ const PP_MKOUT = { 'The Twin Fangs': 0, 'Vashnik the Malignant': [4, 0], Sszorak
 const ppMid = (mp) => (mp.room ? [(mp.room.x0 + mp.room.x1) / 2, (mp.room.y0 + mp.room.y1) / 2] : ((A) => [A.cx, A.cy])(GDZ_ORIGIN[mp.boss] || ARENAS[mp.boss] || { cx: 0, cy: 0 }));
 function ppFreeze(mp, T, S, P, M, o) {
   o = o || {}; const f = mp.frames.reduce((a, b) => (Math.abs(b.t - T) < Math.abs(a.t - T) ? b : a)), nm = (v) => (typeof v === 'string' ? v : v && v.name);
-  const pts = f.pts.map((p) => (p.kind === 'player' && S[p.guid] ? { ...p, name: nm(S[p.guid]) } : p));
+  const pts = f.pts.map((p) => (p.kind === 'player' && S[p.guid] ? { ...p, name: nm(S[p.guid]) } : p)).map((p) => (o.at && o.at[p.guid] ? { ...p, x: o.at[p.guid][0], y: o.at[p.guid][1] } : p)); /* (o.at: a player moved to a map point) */
   const pm = new Map(); for (const v of Object.values(S)) { const x = typeof v === 'string' ? P.get(v.toLowerCase()) : v; if (x) pm.set(x.name, x); }
   const [cx, cy] = ppMid(mp);
   const at = (ids, low) => { const q = pts.filter((p) => ids.includes(p.guid)); return q.length ? { x: q.reduce((a, p) => a + p.x, 0) / q.length, y: (low ? Math.min : Math.max)(...q.map((p) => p.y)) } : null; };
@@ -5481,6 +5481,11 @@ function ppFreeze(mp, T, S, P, M, o) {
   const out = { ...mp, frames: null, pts, t: T, ft: T, pauses: [], steps: [], callouts: calls, rings: (mp.rings || []).concat(rings), tags: (o.tags || []).map(([g, tx]) => [g, tx, null, null]), hl: Object.keys(S).filter((g) => (o.hl || []).includes(g)),
     good: [], goodAt: null, bad: [], badAt: null, cbars: o.noBars ? {} : cb, wmarks: wm, liveLeg: false, hlLabel: 'assigned in the note', playerLabel: 'Player (spec icon, class colour)' };
   if (o.artRot) out.artRot = o.artRot; if (o.badges) out.ppBadges = true;
+  // (o.lines: [player, target guid or map point, colour], a thin line from each player to what they handle)
+  if (o.lines) out.links = (mp.links || []).concat(o.lines.map(([from, to, color]) => ({ from, to: typeof to === 'string' ? to : undefined, toPt: Array.isArray(to) ? { x: to[0], y: to[1] } : undefined, t0: -1e9, t1: 1e9, color: color || '#e9e4d6', dash: true })));
+  // (no names on the dots of a big group (5 or more under one label: its ring and label show where, the list beside the map says who), or
+  // on any dot with o.noNames)
+  out.ppNoName = (o.noNames ? Object.values(S).map(nm) : (o.labels || []).filter(([ids]) => Array.isArray(ids) && ids.length >= 5).flatMap(([ids]) => ids.map((g) => nm(S[g])))).filter(Boolean);
   if (o.bands) out.ppBands = o.bands.map((b) => ({ ...b, a: [cx + b.a[0], cy + b.a[1]], b: [cx + b.b[0], cy + b.b[1]] }));
   if (o.notes) out.ppNotes = o.notes.map((n) => ({ ...n, x: cx + n.x, y: cy + n.y }));
   if (o.focus) out.focus = out.fullAt = { x: cx + o.focus.x, y: cy + o.focus.y, r: o.focus.r }; /* (a guide map shown whole: the user wants the whole arena in each picture) */
@@ -5560,7 +5565,7 @@ function ppCardsCA(J, M, U, P) {
       foot: 'Two purples go with each frontal. Nothing may touch a purple ring.' }); }
   // Phase 1's two axes, on the raid lead's marker
   J.axes.forEach((A, i) => { if (!A || !A.soak.length) return; const x = ppAxe(spot('axe', [-37, 37]), A.soak, A.ext, A.zeph, P, M);
-    cards.push({ id: 'axe' + (i + 1), ph: 1, when: 'Axe ' + (i + 1), title: 'Guillotine ' + (i + 1) + ' (Soak ' + where('axe') + ')', map: ppFreeze(x.mp, x.T, x.S, P, M, { hl: x.G.concat(x.jobs.map((q) => q[0])), named: x.jobs.map((q) => q[0]), tags: x.jobs, labels: [[x.G, 'Axe ' + (i + 1) + ' soak', R, '#fff', 7]] }),
+    cards.push({ id: 'axe' + (i + 1), ph: 1, when: 'Axe ' + (i + 1), title: 'Guillotine ' + (i + 1) + ' (Soak ' + where('axe') + ')', map: ppFreeze(x.mp, x.T, x.S, P, M, { hl: x.G.concat(x.jobs.map((q) => q[0])), named: x.jobs.map((q) => q[0]), tags: x.jobs, labels: [[x.G, 'Axe ' + (i + 1) + ' soak ' + where('axe'), R, '#fff', 7]] }),
       legend: [ppG('Soak (' + A.soak.length + ' + the target)', R, A.soak.map((n) => ppI(P, n))), ppG('On the axe target', GO, [A.ext && ppI(P, A.ext, 'External'), A.zeph && ppI(P, A.zeph, 'Zephyr')]), ppG('Axe target', Q, [ppI(P, ppAny('Whoever gets the axe'))], 'Walks to the soak spot.')],
       foot: 'Soakers walk 40 yards out after it lands: the spot erupts.' }); });
   // Phase 2, Dreadmarch: the mind controls are stacked on the raid lead's marker; the note's crowd-control order frees them
@@ -5581,7 +5586,13 @@ function ppCardsCA(J, M, U, P) {
     seat(L[0] || [], MS); seat(L[1] || [], RS);
     const cu = [[J.curse.unmarked, 'Curse'], [J.curse.marked, 'Curse']].filter(([n]) => n), cs = cu.map(([n]) => Object.keys(fix).find((s) => fix[s] === n) || (() => { const s = RS.find((x) => !put.has(x)); fix[s] = n; put.add(s); return s; })());
     const mp = GDZ_CA_M.kicks(), ar = mp.frames[0].pts.find((p) => p.guid === 'ar'), am = mp.frames[0].pts.find((p) => p.guid === 'am');
-    cards.push({ id: 'kicks', ph: 2, when: 'Every add set', title: 'Spiritcackle (Kick every Wail of Terror)', map: ppFreeze(mp, 4.8, ppSeat(P, fix), P, M, { hl: [...put], named: cs, tags: cs.map((s) => [s, 'Curse']), labels: [[{ x: am.x, y: am.y }, 'Kick line 1', BL, '#fff', 6], [{ x: ar.x, y: ar.y }, 'Kick line 2 · marked', GR, '#06140a', 6]] }),
+    // (the targets first: each line's kickers stand by their add in order with a line to it, the curse player linked to theirs)
+    const f48 = mp.frames.reduce((a, b) => (Math.abs(b.t - 4.8) < Math.abs(a.t - 4.8) ? b : a)), AD = { am: f48.pts.find((p) => p.guid === 'am') || am, ar: f48.pts.find((p) => p.guid === 'ar') || ar }, [mx, my] = ppMid(mp), AT = {}, LN = [], TG = {};
+    const slotOf = (n) => Object.keys(fix).find((x) => fix[x] === n), near = (add, slots, col, dist) => { const a = AD[add]; if (!a) return; const d = [mx - a.x, my - a.y], dl = Math.hypot(d[0], d[1]) || 1, u = [d[0] / dl, d[1] / dl], pr = [-u[1], u[0]];
+      slots.forEach((sl, i) => { if (!AT[sl]) { const o2 = (i - (slots.length - 1) / 2) * 4.5; AT[sl] = [a.x + u[0] * dist + pr[0] * o2, a.y + u[1] * dist + pr[1] * o2]; } LN.push([sl, add, col]); }); };
+    [[L[0] || [], 'am', BL], [L[1] || [], 'ar', GR]].forEach(([names, add, col]) => { const sl = names.map(slotOf).filter(Boolean); sl.forEach((x, i) => { TG[x] = String(i + 1); }); near(add, sl, col, 7); });
+    [[J.curse.unmarked, 'am'], [J.curse.marked, 'ar']].forEach(([n, add]) => { const x = n && slotOf(n); if (!x) return; TG[x] = TG[x] ? TG[x] + ' · Curse' : 'Curse'; near(add, [x], '#8788EE', 11.5); });
+    cards.push({ id: 'kicks', ph: 2, when: 'Every add set', title: 'Spiritcackle (Kick every Wail of Terror)', map: ppFreeze(mp, 4.8, ppSeat(P, fix), P, M, { hl: [...put], named: [...put], tags: Object.entries(TG), at: AT, lines: LN, noBars: true, labels: [[{ x: AD.am.x, y: AD.am.y }, 'Kick line 1', BL, '#fff', 6], [{ x: AD.ar.x, y: AD.ar.y }, 'Kick line 2 · marked', GR, '#06140a', 6]] }),
       legend: [ppG('Kick line 1: the unmarked add', BL, (L[0] || []).map((n, i) => ppI(P, n, 'Kick ' + (i + 1)))), ppG('Kick line 2: the marked add', GR, (L[1] || []).map((n, i) => ppI(P, n, 'Kick ' + (i + 1)))),
         ppG('Curse of Tongues', '#8788EE', [J.curse.unmarked && ppI(P, J.curse.unmarked, 'Unmarked add'), J.curse.marked && ppI(P, J.curse.marked, 'Marked add')])],
       foot: 'The next kicker takes the next cast, even after the add teleports.' }); }
@@ -5602,7 +5613,7 @@ function ppCardsCA(J, M, U, P) {
       foot: 'Every purple apart, all inside the frontal. The off-tank takes the frontal and aims it through the diamond.' }); }
   // Phase 3's three axes, each on the raid lead's marker
   J.grim.forEach((A, i) => { if (!A || !A.soak.length) return; const u = i ? 'grim2' : 'grim1', x = ppAxe(spot(u, [25, -35]), A.soak, A.ext, A.zeph, P, M);
-    cards.push({ id: 'grim' + (i + 1), ph: 3, when: 'Axe ' + (i + 1), title: 'Grim Guillotine ' + (i + 1) + ' (Soak ' + where(u) + ')', map: ppFreeze(x.mp, x.T, x.S, P, M, { hl: x.G.concat(x.jobs.map((q) => q[0])), named: x.jobs.map((q) => q[0]), tags: x.jobs, labels: [[x.G, 'Axe ' + (i + 1) + ' soak', R, '#fff', 7]] }),
+    cards.push({ id: 'grim' + (i + 1), ph: 3, when: 'Axe ' + (i + 1), title: 'Grim Guillotine ' + (i + 1) + ' (Soak ' + where(u) + ')', map: ppFreeze(x.mp, x.T, x.S, P, M, { hl: x.G.concat(x.jobs.map((q) => q[0])), named: x.jobs.map((q) => q[0]), tags: x.jobs, labels: [[x.G, 'Axe ' + (i + 1) + ' soak ' + where(u), R, '#fff', 7]] }),
       legend: [ppG('Soak (' + A.soak.length + ' + the target)', R, A.soak.map((n) => ppI(P, n))), ppG('On the axe target', GO, [A.ext && ppI(P, A.ext, 'External'), A.zeph && ppI(P, A.zeph, 'Zephyr')]), ppG('Axe target', Q, [ppI(P, ppAny('Whoever gets the axe'))], 'Walks to the soak spot.')],
       foot: 'These axes are magic: big externals on the target. Soakers walk 40 yards out after it lands.' }); });
   return cards;
@@ -5680,7 +5691,7 @@ function ppCardsUL(J, M, U, P) {
     k.ring({ x: EP[0], y: EP[1], r: 5, fx: 'zone', t0: 0, dur: 9, color: '#7fd8ff', fill: 'rgba(127,216,255,.06)', cn: 'The end spot', label: false });
     const lab = GRP.map((g, n) => { const p = S(n), o = nzAdd([0, 0], a0 - n * 45, 33); return [{ rx: o[0], ry: o[1] }, String(n + 1), C3[g], g === 1 ? '#06140a' : g === 2 ? '#1a1405' : '#fff', 0]; });
     const nums = (g) => GRP.map((x, n) => (x === g ? n + 1 : 0)).filter(Boolean), list = (a) => (a.length > 2 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a.join(' and '));
-    cards.push({ id: 'trans', ph: 2.5, when: 'Intermission', title: 'Spectral Coils (Three groups take turns)', map: ppFreeze(k.done({ title: 'Intermission', focus: UL_WHOLE }), 1, ppSeat(P, fix), P, M, { focus: UL_WHOLE, hl: G.flat(), labels: lab.concat([[{ rx: EP[0], ry: EP[1] - 7 }, 'End', '#7fd8ff', '#06131c', 0]]) }),
+    cards.push({ id: 'trans', ph: 2.5, when: 'Intermission', title: 'Spectral Coils (Three groups take turns)', map: ppFreeze(k.done({ title: 'Intermission', focus: UL_WHOLE }), 1, ppSeat(P, fix), P, M, { focus: UL_WHOLE, hl: G.flat(), noNames: true, labels: lab.concat([[{ rx: EP[0], ry: EP[1] - 7 }, 'End', '#7fd8ff', '#06131c', 0]]) }),
       legend: G.map((ids, g) => ppG('Group ' + (g + 1) + ': soaks ' + list(nums(g)), C3[g], J.trans[g].map((n) => ppI(P, n)))),
       foot: 'The caller marks the first coil; each group takes its own from there. Then end ' + (U.intend ? 'toward ' + MKN(U.intend) : 'here') + ', on the inside: the platform breaks into four.' }); }
   // Serpent's Bite: each group on its own target's red circle (melee on her quarter, healers and ranged on the next one counter-clockwise)
@@ -5817,7 +5828,9 @@ function ppCardsNY(J, M, U, P) {
   // as the packs are stopped)
   if (J.grips.length || J.slows.length) { const fix = {}, ids = [], tags = [], put = (s, n, t) => { if (!n) return; fix[s] = n; ids.push(s); tags.push([s, t]); };
     put('t2', J.grips[0], 'Grip'); put('m7', J.grips[1], 'Grip'); put('r1', J.slows[0], 'Slow'); put('r5', J.slows[1], 'Slow');
-    cards.push({ id: 'adds', ph: 1, when: 'Every murloc set', title: 'Murlocs (Grip the Frostscale, slow the packs)', map: ppFreeze(NY_M.murlocs(false, 'm'), 9.2, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags, focus: { x: -12, y: 2, r: 60 } }),
+    // (the targets: the grip to the Frostscale, the slows to the pack nearest them, each target labelled, a line from its player)
+    const nmp = NY_M.murlocs(false, 'm'), NL = [], NX = new Set(); ids.forEach((g) => { const isG = g === 't2' || g === 'm7', q = ppNear(nmp, 9.2, g, g === 't2' ? /frostscale/i : null, 'add', NX) || ppNear(nmp, 9.2, g, null, 'add', NX); if (!q) return; NX.add(q.guid); NL.push([g, q.guid, isG ? '#c0394f' : BL]); });
+    cards.push({ id: 'adds', ph: 1, when: 'Every murloc set', title: 'Murlocs (Grip the Frostscale, slow the packs)', map: ppFreeze(nmp, 9.2, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags, lines: NL, focus: { x: -12, y: 2, r: 60 } }),
       legend: [ppG('Grips', '#c0394f', [J.grips[0] && ppI(P, J.grips[0], 'Frostscale away'), J.grips[1] && ppI(P, J.grips[1], 'Strays in')]), ppG('Slows', BL, J.slows.map((n) => ppI(P, n, 'Hold a pack'))),
         ppG('Everyone', GO, [], 'Walk her to the biggest pack; kill the Frostscale first (its shield protects the others). Two ranged squads take the left and right packs, then the back.')],
       foot: 'No murloc may reach the bubble: those that do pulse raid damage until they die.' }); }
@@ -6032,12 +6045,15 @@ function ppCardsKX(J, M, U, P) {
   // The beetles: gripped onto the Hulk or a Voidweaver one at a time, slowed, nobody in the middle (the guide's map as the eggs come)
   if (J.grips.length || J.slows.length) { const fix = {}, ids = [], tags = [], put = (s, n, t) => { if (!n) return; fix[s] = n; ids.push(s); tags.push([s, t]); };
     put('m7', J.grips[0], 'Grip'); put('r7', J.grips[1], 'Grip'); put('r1', J.slows[0], 'Slow'); put('r2', J.slows[1], 'Slow');
-    cards.push({ id: 'beetles', ph: 1, when: 'Every Voidswarm', title: 'Bomber Beetles (Grip them into the cleave)', map: ppFreeze(KX_M.adds(false, 'm'), 10, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags }),
+    const kmp = KX_M.adds(false, 'm'), KL = [], KX2 = new Set(); ids.forEach((g) => { const isG = g === 'm7' || g === 'r7', q = ppNear(kmp, 10, g, /beetle/i, 'add', KX2) || ppNear(kmp, 10, g, null, 'add', KX2); if (!q) return; KX2.add(q.guid); KL.push([g, q.guid, isG ? '#c0394f' : BL]); });
+    cards.push({ id: 'beetles', ph: 1, when: 'Every Voidswarm', title: 'Bomber Beetles (Grip them into the cleave)', map: ppFreeze(kmp, 10, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags, lines: KL }),
       legend: [ppG('Beetle grips', '#c0394f', J.grips.map((n) => ppI(P, n, 'Onto the adds'))), ppG('Beetle slows', BL, J.slows.map((n) => ppI(P, n, 'Hold them'))), ppG('Everyone', GO, [], 'One at a time, so their eggs land in the cleave. Nobody in the middle: touching a beetle sets it off.')],
       foot: 'Grip each onto the Hulk or a Voidweaver.' }); }
   // Unspeakable Horrors: the feared run to their marker (healers skull, melee star, ranged X), the note's dispeller for each (the guide's map)
   { const fix = {}, ids = [], tags = []; [['healer', 'h1', 'Skull'], ['melee', 'h2', 'Star'], ['ranged', 'h4', 'X']].forEach(([g, s, t]) => { const n = J.fear[g]; if (!n) return; fix[s] = n; ids.push(s); tags.push([s, 'Dispels ' + t]); });
-    cards.push({ id: 'fear', ph: 1, when: 'Every Horrors', title: 'Unspeakable Horrors (Run to your marker)', map: ppFreeze(KX_M.fear(false, 'm'), 5.8, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags }),
+    // (each dispeller waits at their own marker (healers skull, melee star, ranged X), 5 yards in from it)
+    const fmp = KX_M.fear(false, 'm'), [fx0, fy0] = ppMid(fmp), FA = {}; [['h1', 'skull'], ['h2', 'star'], ['h4', 'cross']].forEach(([g, mk]) => { if (!fix[g] || !M[mk]) return; const p = [fx0 + M[mk][0], fy0 + M[mk][1]], d = [fx0 - p[0], fy0 - p[1]], dl = Math.hypot(d[0], d[1]) || 1; FA[g] = [p[0] + d[0] / dl * 5, p[1] + d[1] / dl * 5]; });
+    cards.push({ id: 'fear', ph: 1, when: 'Every Horrors', title: 'Unspeakable Horrors (Run to your marker)', map: ppFreeze(fmp, 5.8, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags, at: FA }),
       legend: [ppG('Feared players', PU, [ppI(P, ppAny('Whoever gets a fear'))], 'You have 6 seconds to reach your marker: healers skull, melee star, ranged X.'),
         ppG('Dispels', '#7fd8ff', [J.fear.healer && ppI(P, J.fear.healer, 'Skull'), J.fear.melee && ppI(P, J.fear.melee, 'Star'), J.fear.ranged && ppI(P, J.fear.ranged, 'X')], 'The healer first, then one at a time.')],
       foot: 'Dispelled in place, nobody else gets feared.' }); }
@@ -6219,9 +6235,10 @@ function ppDeclutter(sv, out) {
     if (dx) { g.querySelectorAll('rect, text').forEach((e) => e.setAttribute('transform', 'translate(' + (dx / f).toFixed(1) + ' 0)')); q.x0 += dx; q.x1 += dx; } taken.push(q); });
   // (every icon: players, adds like the Broodlings, bosses, about 0.6 in a platform-sized frame; raid markers no smaller than three quarters)
   const ds = Math.min(1, Math.max(0.5, f * 1.15)), isMk = (g) => [...g.querySelectorAll('title')].some((t) => / marker$/.test(t.textContent));
-  sv.querySelectorAll('g.ic:not(.icl)').forEach((g) => { if (g.querySelector('text.ml')) return; let b; try { b = g.getBBox(); } catch (e) { return; } if (!b.width || b.width > 60 || b.height > 60) return;
+  sv.querySelectorAll('g.ic:not(.icl)').forEach((g) => { if (g.querySelector('text.ml')) return; let b; try { b = g.getBBox(); } catch (e) { return; } if (!b.width || b.width > 160 || b.height > 160) return; /* (cast bars shrink with their unit too) */
     const x = +g.dataset.x, y = +g.dataset.y, k = ds < 1 ? (isMk(g) ? Math.max(ds, 0.75) : ds) : 1; if (k < 1) g.setAttribute('transform', 'translate(' + x + ' ' + y + ') scale(' + k.toFixed(3) + ') translate(' + -x + ' ' + -y + ')');
     icons.push({ x, y, b: bx(x + (b.x - 1 - x) * k, y + (b.y - 1 - y) * k, x + (b.x + b.width + 1 - x) * k, y + (b.y + b.height + 1 - y) * k) }); });
+  sv.querySelectorAll('g.ic:not(.icl)').forEach((g) => { if (isMk(g)) sv.appendChild(g); }); /* (raid markers on top: the spot always shows) */
   sv.querySelectorAll('text.ml:not(.mlp)').forEach((t) => { const g = t.parentNode; if (!g || !g.dataset || g.dataset.y == null) return; const Y = +g.dataset.y, y0 = +t.getAttribute('y');
     t.style.fontSize = (11 * f).toFixed(2) + 'px'; t.style.strokeWidth = (3 * f).toFixed(2) + 'px'; if (isFinite(y0)) t.setAttribute('y', (Y + (y0 - Y) * ds).toFixed(1)); });
   sv.querySelectorAll('text.mlp').forEach((t) => { const g = t.parentNode, X = +g.dataset.x, Y = +g.dataset.y, r = 9 * ds;
@@ -6264,7 +6281,7 @@ async function ppDraw(card, boss, diff) {
   g.fillStyle = '#12141b'; g.fillRect(0, 0, W, H);
   // (only the players the card's list names: nobody without a job in it shows (the user, Oct 26); a card that names nobody keeps everyone)
   const nmOf = (v) => String(v || '').split('-')[0].toLowerCase(), who = new Set(card.legend.flatMap((G) => G.items.map((it) => nmOf(it.name))));
-  const fz = who.size ? { ...card.map, out: { ...card.map.out, pts: card.map.out.pts.filter((p) => p.kind !== 'player' || who.has(nmOf(p.name))) }, keep: [...new Set(card.legend.flatMap((G) => G.items.filter((it) => !it.any).map((it) => String(it.name).split('-')[0])).concat(card.map.keep || []))] } : card.map; /* (every named player keeps their name) */
+  const fz = who.size ? { ...card.map, out: { ...card.map.out, pts: card.map.out.pts.filter((p) => p.kind !== 'player' || who.has(nmOf(p.name))) }, keep: [...new Set(card.legend.flatMap((G) => G.items.filter((it) => !it.any).map((it) => String(it.name).split('-')[0])).concat(card.map.keep || []))].filter((n) => !(card.map.out.ppNoName || []).some((x) => String(x).split('-')[0].toLowerCase() === n.toLowerCase())) } : card.map; /* (every named player keeps their name, but a big group's are in the list) */
   const M0 = 18, MS = H - M0 * 2, map = await ppMapImg(fz); g.save(); g.beginPath(); g.roundRect ? g.roundRect(M0, M0, MS, MS, 12) : g.rect(M0, M0, MS, MS); g.clip(); g.fillStyle = '#0b0d12'; g.fillRect(M0, M0, MS, MS); if (map) g.drawImage(map, M0, M0, MS, MS); g.restore();
   const X0 = M0 * 2 + MS + 6, CW = W - X0 - 24, fit = (t, w) => { if (g.measureText(t).width <= w) return t; let s = t; while (s.length > 1 && g.measureText(s + '…').width > w) s = s.slice(0, -1); return s + '…'; };
   const wrap = (t, w) => { const out = []; let line = ''; for (const wd of String(t).split(' ')) { const tr = line ? line + ' ' + wd : wd; if (g.measureText(tr).width > w && line) { out.push(line); line = wd; } else line = tr; } if (line) out.push(line); return out; };
@@ -6335,6 +6352,9 @@ function ppSet(r, u0) {
   return set;
 }
 // (a picture's name and its short instruction, from "Guillotine 1 (Soak on Moon)")
+// (the unit nearest a player in a map's frame at T: kind 'add' by default, its name matching re when given)
+const ppNear = (mp, T, g, re, kind, ex) => { const fr = mp.frames.reduce((a, b) => (Math.abs(b.t - T) < Math.abs(a.t - T) ? b : a)), p = fr.pts.find((q) => q.guid === g); if (!p) return null; let best = null, bd = 1e9;
+  for (const q of fr.pts) { if (q.kind !== (kind || 'add') || (re && !re.test(q.name || '')) || (ex && ex.has(q.guid))) continue; const d = Math.hypot(q.x - p.x, q.y - p.y); if (d < bd) { bd = d; best = q; } } return best; };
 const ppSplit = (t) => { const m = /^(.*?)\s*\((.*)\)\s*$/.exec(t); return m ? [m[1], m[2]] : [t, '']; };
 // (the raid lead moved a marker: the Jobs cards' small pictures are drawn again from the new spots)
 const ppStale = () => document.querySelectorAll('.plb-rc[data-pj]').forEach((el) => { const p = el.querySelector(':scope > .pj-pics'); if (p) { if (p.dataset.mech) p.innerHTML = ''; else p.remove(); } el.classList.remove('pj-has', 'pj-3'); delete el.dataset.pj; }); /* (Plan's own empty row stays, emptied) */
