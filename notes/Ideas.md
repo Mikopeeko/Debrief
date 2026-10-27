@@ -166,3 +166,12 @@ execution."
     public number gets compared, so every point must be explainable on the page.
   - Cost: scoring is cheap once a night is stored; filling the comparison pool means more Warcraft Logs downloads (one gatherer).
 - Owners when it starts: Debriefing (the mechanics score), Rotation (the performance half), Design studio (how the number looks).
+
+## Plan: start a new raid night fresh or as a copy (Oct 27)
+- The user: clicking a new raid night in the nights strip should show two buttons right in that little section: **Open new** and **Copy from**.
+  - **Open new**: a blank night, the way a new night starts today.
+  - **Copy from**: lets you pick another night, and the new night starts with that night's roster, sits and plans.
+- My take, 8/10: most weeks the raid is nearly the same, so copying last week is the fastest start; asking up front also stops a
+  night from silently borrowing another night's plans. Keep both buttons small and inside the day's box, and pre-pick last
+  week's same weekday in Copy from.
+- Owners: Plan (the nights and the copy), Design studio (the look).
