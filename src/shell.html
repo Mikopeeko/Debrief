@@ -7987,6 +7987,23 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster.ed .tn-sh > h3 > i { display: none; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster.ed .tn-sh > h3 { font-size: 15px; }
 @media (max-width: 760px) { html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pn-day.today::after { display: block; } }
+/* ===== Design studio round 79 (Oct 27): the Roster chips' spec target, edit-mode controls, the spec pop-up. Owner: the Design studio chat. ===== */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster .pg-ros > .pg-rc > .pg-spc { display: inline-grid; place-items: center; width: 24px; height: 24px; margin: 0 -3px 0 -6px; border-radius: 12px; cursor: pointer; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster .pg-ros > .pg-rc > .pg-spc > img, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster .pg-ros > .pg-rc > .pg-spc > .pg-noc { width: 15px; height: 15px; border-radius: 3px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster .pg-ros > .pg-rc > .pg-spc > .pg-noc { display: grid; place-items: center; font: 700 11px/1 var(--body); background: rgba(0,0,0,.35); color: #fff; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster .pg-ros > .pg-rc > .pg-spc:hover, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster .pg-ros > .pg-rc > .pg-spc:focus-visible { background: rgba(0,0,0,.22); box-shadow: inset 0 0 0 1px rgba(255,255,255,.55); outline: 0; }
+/* edit mode: one height for the chip's controls, a round × */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster.editing .pg-ros > .pg-rc { height: 28px; padding: 0 4px 0 5px; gap: 5px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster.editing .pg-ros > .pg-rc > button.pg-spc { width: auto; height: 20px; margin: 0; padding: 0 4px 0 2px; gap: 2px; display: inline-flex; align-items: center; border: 0; border-radius: 10px; background: rgba(0,0,0,.18); color: inherit; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster.editing .pg-ros > .pg-rc > button.pg-spc > .pg-spv { font-size: 10px; font-style: normal; line-height: 1; opacity: .85; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster.editing .pg-ros > .pg-rc > [data-tnbench] { height: 20px; padding: 0 7px; font: 600 11px/1 var(--body); border-radius: 10px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster.editing .pg-ros > .pg-rc > button.x { width: 20px; height: 20px; padding: 0; border-radius: 50%; font: 700 13px/1 var(--body); display: inline-grid; place-items: center; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster.editing .pg-ros > .pg-rc > button.x:hover { background: rgba(229,83,75,.85); color: #fff; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster.editing .pg-ros > .pg-rc.bench { opacity: .7; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster.editing .pg-ros > .pg-rc.bench > [data-tnbench] { background: rgba(255,255,255,.6); }
+/* the spec pop-up */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sppop { border: 1px solid var(--line2); border-radius: 10px; background: #161b25; box-shadow: 0 10px 28px rgba(0,0,0,.5); padding: 6px; }
+@media (max-width: 640px) { html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.pg-roster .pg-ros > .pg-rc > .pg-spc { width: 28px; height: 26px; } }
 </style>
 
 
