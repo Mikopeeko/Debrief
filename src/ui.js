@@ -1947,7 +1947,9 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-10-27', h: [], n: [], f: [
+  { d: '2026-10-27', h: [], n: [
+    'Each boss guide now has its own link to share, like debriefme.io/guide/the-coiled-altar/mythic.',
+  ], f: [
     'Defensives: an Arms or Fury Warrior\'s Defensive Stance counts as a defensive used now, and it and Spell Reflection show how much damage they took off, in the raid summary and on the Survivability page.',
   ] },
   { d: '2026-10-26', h: [
@@ -29466,11 +29468,16 @@ function navState() {
   if (S.page === 'ingame') return { nav: 1, v: 'ig' }; if (S.page === 'plan') return { nav: 1, v: 'pl' }; /* (Plan has an address too, Oct 27) */
   return null;
 }
+// (a boss guide's own address (Oct 27): /guide/the-coiled-altar/mythic, so each guide is a page search engines list)
+const guideSlug = (n) => String(n).toLowerCase().replace(/['\u2019]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const GUIDE_PATH = /^\/guide\/([a-z0-9-]+)\/(heroic|mythic)\/?$/.exec(location.pathname);
+const PAGE_TITLE_SITE = 'Debrief: WoW raid log review for Mythic progression'; /* (the site's own tab title, Oct 27) */
 const navKey = (st) => (st ? [st.v, st.code, st.fight, st.bi, st.night, st.tab, st.scope, st.g, st.mine, st.b, st.d].join('|') : ''); // (b, d: a guide's boss and Heroic or Mythic, so its address follows them (Oct 21))
 function navNote() {
   const st = navState(); if (!st) return;
   const cur = history.state && history.state.nav ? navKey(history.state) : null, k = navKey(st);
-  const url = WCL.HOSTED ? (st.v === 'p' && st.night ? shrUrl(st) : st.v === 'p' && st.code ? '?report=' + st.code + '&fight=' + st.fight + '&tab=' + encodeURIComponent(st.tab || 'audit') + (st.scope === 'all' ? '&all=1' : '') + (st.sel ? '&p=' + encodeURIComponent(st.sel) : '') : st.v === 'gd' ? '?guides' + (st.b ? '&boss=' + encodeURIComponent(st.b) : '') + (st.d ? '&d=' + st.d : '') : st.v === 'ig' ? '?ingame' : st.v === 'pl' ? '?plan' : location.pathname) : location.pathname + location.search;
+  let url = WCL.HOSTED ? (st.v === 'p' && st.night ? shrUrl(st) : st.v === 'p' && st.code ? '?report=' + st.code + '&fight=' + st.fight + '&tab=' + encodeURIComponent(st.tab || 'audit') + (st.scope === 'all' ? '&all=1' : '') + (st.sel ? '&p=' + encodeURIComponent(st.sel) : '') : st.v === 'gd' ? '?guides' + (st.b ? '&boss=' + encodeURIComponent(st.b) : '') + (st.d ? '&d=' + st.d : '') : st.v === 'ig' ? '?ingame' : st.v === 'pl' ? '?plan' : location.pathname) : location.pathname + location.search;
+  if (WCL.HOSTED) { try { document.title = st.v === 'gd' && st.b ? st.b + ' ' + ((st.d || S.gdzDiff) === 'h' ? 'Heroic' : 'Mythic') + ' guide · Debrief' : PAGE_TITLE_SITE; } catch (e) { /* ignore */ } if (st.v === 'gd' && st.b) url = '/guide/' + guideSlug(st.b) + '/' + ((st.d || S.gdzDiff) === 'h' ? 'heroic' : 'mythic'); else if (url.startsWith('?')) url = '/' + url; else if (location.pathname.startsWith('/guide/')) url = '/'; } /* (guides at their own address, Oct 27) */
   const boot = NAV_BOOT; NAV_BOOT = false;
   // (the same page with another player picked on Rotation: the step is kept up to date for a reload, not a new step)
   try { if (cur === k) { if ((history.state.sel || null) !== (st.sel || null)) history.replaceState(st, '', url); return; } if (NAV_RESTORE || boot || cur == null) history.replaceState(st, '', url); else history.pushState(st, '', url); } catch (e) { /* ignore */ }
@@ -31350,6 +31357,7 @@ if (WCL.HOSTED) {
   if (reloadSt) { if (reloadSt.v === 'p') $('#main').innerHTML = '<div class="empty">' + loadCard('Opening the report', 'Loading the report…', null, 'loadmsg') + '</div>'; /* (not the paste panel: it flashed before Debriefing (Oct 25)) */ NAV_RESTORE = true; navGo(reloadSt).catch((err) => { console.warn('Reload:', err && err.message); home(); }).finally(() => { NAV_RESTORE = false; }); }
   else if (qp.has('plan')) setTimeout(() => { if (ASG_OFF()) home(); else { planPage(); window.scrollTo(0, 0); } }, 0); /* (a ?plan address opens the Plan tab) */
   else if (qp.has('ingame')) setTimeout(openInGame, 0); /* (a ?ingame address opens the Debrief in game page) */
+  else if (GUIDE_PATH) setTimeout(() => { const b = GDZ_ORDER.find((n) => guideSlug(n) === GUIDE_PATH[1]); openGuides(b || null, GUIDE_PATH[2] === 'heroic' ? 'h' : 'm'); }, 0); /* (a boss guide's own address, /guide/<boss>/<heroic|mythic>, Oct 27) */
   else if (qp.has('guides') || qp.get('tab') === 'gdz') setTimeout(() => openGuides(qp.get('boss'), qp.get('d')), 0); /* (once the guides code below has loaded) */
   else if (nightLink) openShared(qp.get('night'), { pull: qp.has('pull') ? +qp.get('pull') : null, tab: qp.get('tab'), all: !!qp.get('all'), m: qp.get('m'), p: qp.get('p') }).catch((err) => { $('#main').innerHTML = '<div class="empty"><div class="drop"><h2>Couldn\'t open that shared night</h2><p class="muted">' + esc(err.message) + '</p></div></div>'; });
   else if (sharedLink) { { const tb = qp.get('tab'); if (tb && (tb === 'live' || TABS.some(([k]) => k === tb))) S.tab = tb; else if (!tb && !['audit', 'rot', 'perf', 'player', 'cmp'].includes(S.tab)) S.tab = 'audit'; /* (no tab named: Debriefing, unless the remembered tab is a raid tab, never Home (Oct 26)) */ if (tb || qp.get('all')) S.scope = qp.get('all') ? 'all' : 'pull'; navApplySel(S.tab, qp.get('p')); } /* (its tab, one pull or all, and its player (Oct 21)) */
