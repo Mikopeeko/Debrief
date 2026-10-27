@@ -20025,8 +20025,8 @@ const NDZ_BUILD = {
       slots: [{ label: 'Front Melee', order: true, want: 1 }, { label: 'Left Melee', order: true, want: 4 }, { label: 'Right Melee', order: true, want: 4 }, { label: 'Left Range', order: true, want: 3 }, { label: 'Right Range', order: true, want: 3 }, { label: 'Backup Kicker', want: 1 }] },
     { key: 'orbcc', mythic: true, title: 'Caustic Deluge orb CC', icon: 'Caustic Deluge', head: 'Caustic Deluge Orbs CC', explain: 'Globules spawn every set. One group stuns and slows them on odd sets, the other on even sets, so nobody\'s CC is on cooldown.', tip: 'Split the raid in two; anyone with a stun, slow or knockback helps.',
       slots: [{ label: 'Odd set Orbs', want: 10 }, { label: 'Even set Orbs', want: 10 }], exclusive: true },
-    { key: 'orbq', mythic: true, title: 'Orb CC quadrants', icon: 'Caustic Deluge', head: 'Orb CC Quadrants', explain: 'Blood Torrent shields every globule; an area stun or incapacitate breaks the shield. Each quadrant of the platform has its own area CC, so every globule that lands near you gets stopped. Front is toward the bosses.', tip: 'One or two with an area CC in each quadrant: Blinding Light, Shockwave, Incapacitating Roar, Leg Sweep, Dragon\'s Breath, Blinding Sleet. Wait for the globules near you to land, then CC.', /* (the user\'s quadrants, Oct 26) */
-      slots: [{ label: 'CC Front Left', want: 2 }, { label: 'CC Front Right', want: 2 }, { label: 'CC Back Left', want: 2 }, { label: 'CC Back Right', want: 2 }], exclusive: true },
+    { key: 'orbq', mythic: true, title: 'Orb CC quadrants', icon: 'Caustic Deluge', head: 'Orb CC Quadrants', explain: 'Blood Torrent shields every globule; an area stun or incapacitate breaks the shield. Each quadrant of the platform has its own area CC, so every globule that lands near you gets stopped. The sets alternate like the orb CC groups: Set 1 takes sets 1, 3, 5 and on, Set 2 takes sets 2, 4, 6 and on. Front is toward the bosses.', tip: 'One or two with an area CC in each quadrant: Blinding Light, Shockwave, Incapacitating Roar, Leg Sweep, Dragon\'s Breath, Blinding Sleet. Wait for the globules near you to land, then CC.', /* (the user\'s quadrants, Oct 26) */
+      slots: [{ label: 'CC Set 1 Front Left', want: 2 }, { label: 'CC Set 1 Front Right', want: 2 }, { label: 'CC Set 1 Back Left', want: 2 }, { label: 'CC Set 1 Back Right', want: 2 }, { label: 'CC Set 2 Front Left', want: 2 }, { label: 'CC Set 2 Front Right', want: 2 }, { label: 'CC Set 2 Back Left', want: 2 }, { label: 'CC Set 2 Back Right', want: 2 }], exclusive: true }, /* (per set, the user: "alternating sets", Oct 26) */
   ],
 };
 // (the builder's roster: the selected team (the one picked on the site, else the team most of this pull is on); with no team
@@ -20088,7 +20088,7 @@ const NDZ_BUILD_WHY = {
     feast: 'Every group gets a healer, the tanks are split, and the DPS fill in evenly, so each group can live through its hit.',
     kicks: 'A tank is already at the boss, so they take the front Broodling. Melee kick the Broodlings near them and ranged the ones on their side, shortest kick first, with one spare kicker for a miss.',
     orbcc: 'The raid is split in half with tanks and healers spread out, so both orb sets have about the same stuns and slows ready.',
-    orbq: 'Everyone with an area stun or incapacitate, spread evenly over the four quadrants: melee in the two front ones (they\'re at the bosses), ranged and healers behind. Tanks aren\'t used: the beams push them around.',
+    orbq: 'Each set\'s group from the orb CC (Set 1 and Set 2, alternating) spreads its area stuns and incapacitates over the four quadrants, two each, strongest first: melee in the two front ones (they\'re at the bosses), ranged and healers behind. Tanks aren\'t used: the beams push them around.',
   },
 };
 // (the picked roster as a stand-in pull, and the job pages filled with suggestions the first time)
@@ -20745,10 +20745,11 @@ function ndzTFPicks(B, pr) {
   ['Odd set Orbs', 'Even set Orbs'].forEach((l, i) => { const g = O[i], cc = g.filter((p) => p.role !== 'tank' && NDZ_AOE_CC[p.cls]);
     B.sel['orbcc|' + l] = { n: g.map((q) => q.name), why: cc.length + ' with an area stun or incapacitate, spread over the room: ' + cc.slice(0, 5).map((p) => p.name + ' (' + NDZ_AOE_CC[p.cls] + ')').join(', ') + (cc.length > 5 ? ' and more' : '') + '.' }; });
   // Orb CC quadrants (the user, Oct 26): the area CC spread over the platform's four quadrants, melee in front, the rest behind, evenly
-  { const QL = ['CC Front Left', 'CC Front Right', 'CC Back Left', 'CC Back Right'], Q = [[], [], [], []], RK = ['PALADIN', 'WARRIOR', 'DRUID', 'MONK', 'DEMONHUNTER', 'SHAMAN', 'DEATHKNIGHT', 'WARLOCK', 'EVOKER', 'MAGE', 'HUNTER', 'PRIEST'], rk = (p) => { const i = RK.indexOf(p.cls); return i < 0 ? 99 : i; }, acc = ps.filter((p) => p.role !== 'tank' && NDZ_AOE_CC[p.cls]).sort((x, y) => rk(x) - rk(y) || x.name.localeCompare(y.name)).slice(0, 8); /* (two per quadrant, the strongest first) */
-    const put = (p, pref) => { const free = (idx) => idx.filter((i) => Q[i].length < 2), f = free(pref).length ? free(pref) : free([0, 1, 2, 3]); if (!f.length) return; const i = f.sort((x, y) => Q[x].length - Q[y].length || x - y)[0]; Q[i].push(p); };
-    acc.forEach((p) => put(p, cat(p) === 'melee' ? [0, 1] : [2, 3]));
-    QL.forEach((l, i) => { const g = Q[i]; if (B.sel['orbq|' + l]) B.sel['orbq|' + l] = { n: g.map((q) => q.name), why: g.length ? 'Area CC here: ' + g.map((q) => q.name + ' (' + NDZ_AOE_CC[q.cls] + ')').join(', ') + '.' : 'Nobody with an area CC left for this quadrant: a single-target stun can cover it.' }; }); }
+  { const RK = ['PALADIN', 'WARRIOR', 'DRUID', 'MONK', 'DEMONHUNTER', 'SHAMAN', 'DEATHKNIGHT', 'WARLOCK', 'EVOKER', 'MAGE', 'HUNTER', 'PRIEST'], rk = (p) => { const i = RK.indexOf(p.cls); return i < 0 ? 99 : i; }; /* (per set: the odd and even orb CC groups, Oct 26) */
+    ['Set 1', 'Set 2'].forEach((set, si) => { const QL = ['Front Left', 'Front Right', 'Back Left', 'Back Right'].map((q) => 'CC ' + set + ' ' + q), Q = [[], [], [], []], acc = O[si].filter((p) => p.role !== 'tank' && NDZ_AOE_CC[p.cls]).sort((x, y) => rk(x) - rk(y) || x.name.localeCompare(y.name)).slice(0, 8);
+      const put = (p, pref) => { const free = (idx) => idx.filter((i) => Q[i].length < 2), f = free(pref).length ? free(pref) : free([0, 1, 2, 3]); if (!f.length) return; const i = f.sort((x, y) => Q[x].length - Q[y].length || x - y)[0]; Q[i].push(p); };
+      acc.forEach((p) => put(p, cat(p) === 'melee' ? [0, 1] : [2, 3]));
+      QL.forEach((l, i) => { const g = Q[i]; if (B.sel['orbq|' + l]) B.sel['orbq|' + l] = { n: g.map((q) => q.name), why: g.length ? set + ' (' + (si ? 'sets 2, 4, 6…' : 'sets 1, 3, 5…') + '), area CC here: ' + g.map((q) => q.name + ' (' + NDZ_AOE_CC[q.cls] + ')').join(', ') + '.' : 'Nobody in the ' + set + ' group with an area CC left for this quadrant: a single-target stun can cover it.' }; }); }); }
 }
 
 // Cooldowns from your pulls: the raid's damage each second (every raider's added up), per phase, over your pulls on this
