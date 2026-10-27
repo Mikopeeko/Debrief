@@ -745,6 +745,9 @@ end
 -- default" is on; an empty one stays open, so its one green line shows)
 local SHUT = { rotation = true, boss = true, surv = true, died = true }
 local UI = { startsShut = function(key, n) return n > 0 and SHUT[key] and DB.openSecs == false end, rotRow = rotRow, rotGood = rotGood, rowS = rowS, wipeRow = wipeRow, trendCards = trendCards, cardCharts = cardCharts, cardGrade = cardGrade, parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded, pullQ = pullQ, worst = worstFirst, col = useCol, colFrame = colFrame, two = { cols = 1, brk = 0, n = 0, marks = {} } }
+-- (the newest saved pull the character you're on was in (Oct 27): the card opens there at login, so a Paladin's card isn't a key the Druid ran)
+UI.ownNewest = function() local me = meName(); if not me then return end
+  for i = #DB.pulls, 1, -1 do for _, p in ipairs(DB.pulls[i].players or {}) do if p.name == me or p.name:match("^([^%-]+)") == me then return i end end end end
 UI.ring = { { tMe, tRaid }, { prevB, nextB }, { bigBtn } } -- (the setup's step 4 rings these on the sample card, numbered (Oct 26))
 local function renderOnce()
   UI.col(1)
@@ -2663,7 +2666,8 @@ autoLog = function()
   end
 end
 -- (a training dummy: any target named "... Dummy" that isn't a player)
-local function isDummy(u) local n = UnitExists and UnitExists(u) and not UnitIsPlayer(u) and UnitName(u); return n and n:find("Dummy") ~= nil end
+-- (Midnight keeps some names secret, and reading one errors (Oct 27: 558 times on 0.5.67): a secret name just isn't a dummy)
+local function isDummy(u) local ok, r = pcall(function() local n = UnitExists and UnitExists(u) and not UnitIsPlayer(u) and UnitName(u); if not n or (issecretvalue and issecretvalue(n)) then return false end; return n:find("Dummy") ~= nil end); return ok and r == true end
 ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
   if e == "PLAYER_REGEN_DISABLED" then
     Debrief_CombatStart()
@@ -2706,6 +2710,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4)
       if #DB.pulls > 0 then DB.cur = #DB.pulls end
       DB.fromApp = #DB.pulls - n0
     end
+    do local own = UI.ownNewest(); if own then DB.cur = own end end -- (every login and /reload opens on your own newest pull (Oct 27))
     if DEBRIEF_HAS_APP then DB.hasApp = true end -- (Debrief Companion is on this PC)
     DB.raidAlways = nil; DB.glowCds = nil; DB.autoLog = nil -- (no leads-only Raid view and no cooldown glow any more (Oct 25); combat logging has no off switch (Oct 26))
     DB.show = DB.show or {}

@@ -152,6 +152,11 @@ namespace Debrief {
             foreach (var a in Directory.GetDirectories(acc)) foreach (var realm in Directory.GetDirectories(a)) { if (Path.GetFileName(realm) == "SavedVariables") continue;
               foreach (var ch in Directory.GetDirectories(realm)) { var t = Directory.GetLastWriteTimeUtc(ch); if (t > best) { best = t; meN = Path.GetFileName(ch); } } } } }
         o["me"] = meN;
+        // (every character on this PC (the WTF folders), so the pop-up still finds you after a switch: WoW writes "me" only at logout or /reload (Oct 27))
+        var mine = new List<string>(); try { var r2 = FindRetail(here); var acc2 = r2 == null ? null : Path.Combine(r2, @"WTF\Account");
+          if (acc2 != null && Directory.Exists(acc2)) foreach (var a in Directory.GetDirectories(acc2)) foreach (var realm in Directory.GetDirectories(a)) { if (Path.GetFileName(realm) == "SavedVariables") continue;
+            foreach (var ch in Directory.GetDirectories(realm)) mine.Add(Path.GetFileName(ch)); } } catch { }
+        o["mine"] = mine;
         o["reload"] = NeedsReload(here); // (the pop-up's "Type /reload" line (Oct 24))
       } catch { }
       return o;

@@ -227,7 +227,9 @@ function cardView() {
   const lim = (key, L, n, draw) => { const all = OPEN['m:' + key], show = all ? L : L.slice(0, n); return show.map(draw).join('') + (L.length > show.length ? '<div class="kmore" data-cmore="' + key + '">Show ' + (L.length - show.length) + ' more</div>' : ''); };
   /* (Me shows you, or anyone you step to with ‹ ›; without you in the pull, nobody (Oct 25, the user: "always load the current logged in player when
      possible, if not, load nothing")): the Me tab says so) */
-  const mine = LK.me ? PL.find((p) => p.name === LK.me || short(p.name) === short(LK.me)) : null;
+  /* (LK.me is the character from your last logout or /reload; after a switch, whichever of your characters on this PC is in the pull (Oct 27)) */
+  const isMe = (n) => (p) => p.name === n || short(p.name) === short(n);
+  const mine = (LK.me ? PL.find(isMe(LK.me)) : null) || (LK.mine || []).map((n) => PL.find(isMe(n))).find(Boolean) || null;
   if (WHO && !PL.some((p) => p.name === WHO)) WHO = null;
   const me = WHO ? PL.find((p) => p.name === WHO) || null : mine || null;
   if (!VIEW) VIEW = 'me';
