@@ -8437,7 +8437,7 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 /* ===== Design studio round 105 (Oct 27): click-to-arm, green where it fits. Owner: the Design studio chat. ===== */
 @keyframes dsCanPulse { 0%, 100% { filter: drop-shadow(0 0 0 rgba(69,193,92,0)); } 50% { filter: drop-shadow(0 0 6px rgba(69,193,92,.9)); } }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray .btl-trr > .btl-ti { place-items: center; overflow: visible; }
-html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray .btl-trr > .btl-ti > :is(.icw, img, .ico) { margin: 0 !important; position: static !important; transform: none !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray .btl-trr > .btl-ti > :is(.icw, img, .ico) { margin: 0 !important; position: relative !important; inset: auto !important; transform: none !important; } /* Design studio round 109: relative keeps the picture inside */
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray .btl-trr > .btl-ti.armed { outline: 0 !important; border-radius: 5px; box-shadow: 0 0 0 2px #45c15c, 0 0 10px rgba(69,193,92,.7) !important; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl.arming .btl-free { background: rgba(69,193,92,.09); border-left: 1px dashed rgba(69,193,92,.55); border-right: 1px dashed rgba(69,193,92,.55); }
 
@@ -8462,6 +8462,13 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl.ndz-dtl .btl-tray.btl-tray.btl-tray > .btl-selbar { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; padding: 5px 8px 5px 10px; border-radius: 6px; background: rgba(230,180,80,.10); box-shadow: inset 3px 0 0 var(--gold); font-size: 12px; color: var(--text); }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl.ndz-dtl .btl-tray.btl-tray.btl-tray > .btl-selbar > b { color: var(--gold); }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl.ndz-dtl .btl-tray.btl-tray.btl-tray > .btl-selbar > [data-selx] { margin-left: auto; height: 22px; min-height: 0; padding: 0 10px; font-size: 11px; border-radius: 11px; }
+/* ===== Design studio round 109b (Oct 27): quiet info marks and ghost card buttons. Owner: the Design studio chat. ===== */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-rr .plb-rl > .plb-why.plb-why { color: var(--faint); opacity: .6; font-size: 10px; margin-left: 5px; vertical-align: 1px; transition: color .12s, opacity .12s; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-rr .plb-rl > .plb-why.plb-why:hover, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-rr:hover .plb-rl > .plb-why.plb-why { color: var(--gold); opacity: 1; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-rr:has(.plb-rl > .plb-why) + .plb-rr:not(:hover) .plb-rl > .plb-why.plb-why { visibility: hidden; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .plb-rch.plb-rch.plb-rch > :is([data-dssheetcard], .plb-rcx) { width: 24px !important; height: 24px !important; min-width: 0 !important; padding: 0 !important; display: inline-grid !important; place-items: center; border: 0 !important; border-radius: 6px !important; background: transparent !important; box-shadow: none !important; color: var(--muted) !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .plb-rch.plb-rch.plb-rch > :is([data-dssheetcard], .plb-rcx):hover { background: rgba(255,255,255,.07) !important; color: var(--text) !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .plb-rch.plb-rch.plb-rch > :is([data-dssheetcard], .plb-rcx)::before { width: 14px !important; height: 14px !important; }
 </style>
 
 
