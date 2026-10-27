@@ -1959,6 +1959,7 @@ const PATCH_NOTES = [
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
     { t: 'Plan: a picture for every job', d: 'On every boss (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
   ], n: [
+    'Report card opens at once: its layout and your raiders show right away with grey placeholders while it grades, instead of a full-page loading screen (even after Debriefing had already read the night).',
     'Plan, Entombed Sentinels: when your plan has a Middle group, the sides picture shows them between the two bosses.',
     'Plan, job pictures: The Coiled Altar\'s phase 3 orbs show each purple carrier beside their own orb, every green on the line off to the side and the helpers by them; Sszorak\'s Virulence spots get a picture of the inside and outside rings.',
     'Plan, job pictures: the class icons are smaller, so they don\'t hide the spots, rings and markers. Who is who stays in the list beside each picture.',
@@ -28219,6 +28220,14 @@ function bindRoster(id, rows, onOpen, onBind) {
   // (opened from a player's name on another tab: bring their row into view, under the sticky tabs)
   if (open && S.plScroll) { S.plScroll = false; open.scrollIntoView({ block: 'start' }); window.scrollBy(0, -64); }
 }
+/* (the Report card while it reads and grades (Oct 27): its layout at once, grey placeholders where the numbers go, the raiders' names in their
+   colours, and one small line saying what it's doing; the Design studio styles the rc-sk classes) */
+function rcSkel(v, line) {
+  let PL = []; try { PL = players().filter((p) => p && p.name && (p.cls || p.specName)).sort((a, b) => String(a.name).localeCompare(String(b.name))); } catch (e) { PL = []; }
+  const b = (c) => '<i class="rc-sk-b ' + c + '"></i>';
+  return '<div class="rc-sk" aria-busy="true"><div class="rc-sk-line">' + esc(line) + '</div>' + (v === 'night' ? '<div class="rc-sk-band">' + b('rc-sk-tile').repeat(5) + '</div>' : '') +
+    '<div class="rc-sk-list">' + (PL.length ? PL : Array(10).fill(null)).map((p) => '<div class="rc-sk-row">' + b('rc-sk-av') + (p ? '<span class="rc-sk-nm" style="color:' + esc(p.color || '') + '">' + esc(String(p.name).split('-')[0]) + '</span>' : b('rc-sk-nmb')) + b('rc-sk-bar') + b('rc-sk-num') + '</div>').join('') + '</div></div>';
+}
 function player() {
   // (the wipe filter is part of the key: changing it grades the night again)
   const r = S.rep, it = r.item, isBoss = it.kind !== 'run', pulls = isBoss ? S.index.bosses.filter((b) => b.id === it.id && b.diffId === it.diffId) : [];
@@ -28230,7 +28239,8 @@ function player() {
   // (one pull or the whole night, switched on top of the page, next to the wipe filter's line)
   const sw = isBoss ? '<div class="seg plsw" role="tablist" aria-label="Pulls shown"><button data-v="all"' + (v === 'night' ? ' class="on"' : '') + '>All pulls<span class="n">' + pulls.length + '</span></button><button data-v="pull"' + (v === 'pull' ? ' class="on"' : '') + '>Pull #' + it.pull + '<span class="n">' + (it.kill ? 'kill' : 'wipe') + '</span></button></div>' : '';
   const cached = S.plData && S.plData.key === key ? S.plData : null;
-  void sw; view('<div class="plv"><div class="plhd">' + cutLine + '</div><div id="plBody">' + (cached ? '' : v === 'night' ? loadCard('Reading the night', 'Reading tonight\'s pulls…', 0) : loadCard('Grading the players', 'Mechanics, Rotation and prep…', null)) + '</div></div>');
+  void sw; const allRead = v === 'night' && pulls.every((b) => CACHE.has(b)), nRaid = (() => { try { return players().filter((p) => p.cls || p.specName).length; } catch (e) { return 0; } })(), gradeLine = 'Grading ' + (nRaid ? plural(nRaid, 'raider') : 'the raiders') + '…';
+  view('<div class="plv"><div class="plhd">' + cutLine + '</div><div id="plBody">' + (cached ? '' : rcSkel(v, v === 'night' && !allRead ? 'Reading tonight\'s pulls…' : gradeLine)) + '</div></div>'); /* (no full-page loader: the layout at once (Oct 27)) */
   $$('.plsw button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; S.scope = b.dataset.v; renderMain(); }));
   const still = () => S.tab === 'player' && S.rep && S.rep.item === it && $('#plBody');
   const draw = (c) => { const el = $('#plBody'); if (!el) return; el.innerHTML = (c.load || '') + (v === 'night' ? rcnPage(c) : plPage(c.data, c.reps, v === 'pull')); bindPlayers(c); if (v === 'night') bindRcn(c); refreshIcons(); fillItemNames(el);
@@ -28238,8 +28248,8 @@ function player() {
   if (cached) { draw(cached); return; }
   const grade = (reps, load) => plData(reps, still).then((data) => { if (!data || !still()) return; S.plData = { key, reps, data, load, wait: data.some((a) => a.wait) }; draw(S.plData); if (v === 'night') setHeadRes(); });
   if (v === 'pull') { grade([r], ''); return; }
-  bossReps(it, still, (k, of) => { const el = $('#plBody'); if (!el) return; const line = 'Reading tonight\'s pulls… ' + k + ' of ' + of; if (el.querySelector('.ld')) loadSet(el, line, of ? k / of : null); else el.innerHTML = loadCard('Reading the night', line, of ? k / of : 0); }, true) /* (the whole night, by itself (Oct 20): no grade on part of a night) */
-    .then((got) => { if (!got || !still()) return; grade(got.reps, loadBar(got.reps.length, got.pulls.length, got.skipped, 'plAll')); });
+  bossReps(it, still, (k, of) => { const el = $('#plBody'); if (!el || allRead) return; const ln = el.querySelector('.rc-sk-line'); const line = k >= of ? gradeLine : 'Reading tonight\'s pulls · ' + k + ' of ' + of; if (ln) ln.textContent = line; else el.innerHTML = rcSkel(v, line); }, true) /* (the whole night, by itself (Oct 20): no grade on part of a night) */
+    .then((got) => { if (!got || !still()) return; { const ln = document.querySelector('#plBody .rc-sk-line'); if (ln) ln.textContent = gradeLine; } grade(got.reps, loadBar(got.reps.length, got.pulls.length, got.skipped, 'plAll')); });
 }
 // ---------- Homework (your call, Oct 20): one raider's to-do list for this boss, from the whole night ----------
 // (mockup B, your pick: the three things worth the most as big cards, the smaller ones folded, and what they fixed during

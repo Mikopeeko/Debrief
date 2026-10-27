@@ -1060,6 +1060,19 @@ button.nm-cell { cursor: pointer; } button.nm-cell:hover { outline: 2px solid va
 .dsp-r { display: grid; grid-template-columns: 170px minmax(0, 1fr) 34px; gap: 10px; align-items: center; font-size: 14px; }
 .dsp-b { height: 14px; background: #12151c; border-radius: 4px; overflow: hidden; } .dsp-b i { display: block; height: 100%; background: #45c15c; opacity: .85; }
 .dsp-r b { text-align: right; font-variant-numeric: tabular-nums; }
+/* Report card placeholders while it reads and grades (Oct 27; the Design studio styles these) */
+.rc-sk { display: flex; flex-direction: column; gap: 12px; }
+.rc-sk-line { color: #8b919c; font-size: 13px; }
+.rc-sk-band { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; } .rc-sk-tile { height: 56px; }
+.rc-sk-list { display: flex; flex-direction: column; gap: 6px; }
+.rc-sk-row { display: grid; grid-template-columns: 24px 160px minmax(0, 1fr) 48px; gap: 10px; align-items: center; height: 32px; }
+.rc-sk-b { display: block; border-radius: 6px; background: linear-gradient(90deg, #1b1f27 0%, #262b36 50%, #1b1f27 100%); background-size: 200% 100%; animation: rcSkShine 1.4s ease-in-out infinite; }
+.rc-sk-av { width: 24px; height: 24px; border-radius: 50%; } .rc-sk-bar { height: 8px; } .rc-sk-num { height: 14px; } .rc-sk-nmb { height: 12px; width: 110px; }
+.rc-sk-nm { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@keyframes rcSkShine { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .rc-sk-b { animation: none; } }
+@media (max-width: 640px) { .rc-sk-band { grid-template-columns: repeat(3, minmax(0, 1fr)); } .rc-sk-row { grid-template-columns: 24px 110px minmax(0, 1fr) 40px; } }
+
 /* shield damage (Oct 26): the dispel bars plus a share; chips in one shape, dot first */
 .shd { margin: 14px 0 4px; } .shd-h { font-weight: 600; margin: 0 0 8px; }
 .shd-cs { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin: 0 0 12px; max-width: 760px; }
