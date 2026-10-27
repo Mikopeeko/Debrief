@@ -5485,6 +5485,7 @@ function ppFreeze(mp, T, S, P, M, o) {
   if (o.lines) out.links = (mp.links || []).concat(o.lines.map(([from, to, color]) => ({ from, to: typeof to === 'string' ? to : undefined, toPt: Array.isArray(to) ? { x: to[0], y: to[1] } : undefined, t0: -1e9, t1: 1e9, color: color || '#e9e4d6', dash: true })));
   // (no names on the dots of a big group (5 or more under one label: its ring and label show where, the list beside the map says who), or
   // on any dot with o.noNames)
+  out.ppGroups = (o.labels || []).filter(([ids]) => Array.isArray(ids) && ids.length >= 5).map(([ids]) => ids.map((g) => nm(S[g])).filter(Boolean));
   out.ppNoName = (o.noNames ? Object.values(S).map(nm) : (o.labels || []).filter(([ids]) => Array.isArray(ids) && ids.length >= 5).flatMap(([ids]) => ids.map((g) => nm(S[g])))).filter(Boolean);
   if (o.bands) out.ppBands = o.bands.map((b) => ({ ...b, a: [cx + b.a[0], cy + b.a[1]], b: [cx + b.b[0], cy + b.b[1]] }));
   if (o.notes) out.ppNotes = o.notes.map((n) => ({ ...n, x: cx + n.x, y: cy + n.y }));
@@ -5860,7 +5861,7 @@ function ppCardsNZ(J, M, U, P) {
   const cards = [], BL = '#5aa0ff', GO = '#e6b450', PU = '#c084ff', OR = '#ff8a3b', Q = '#c9ced8';
   // The well teams: each group down the well in turn, kicking the Drowned Echo's curse in its order (the guide's map with the group in)
   J.well.forEach((L, g) => { if (!L.length) return; const SQ = g ? NZ_SQB : NZ_SQA, fix = {}; L.slice(0, SQ.length).forEach((n, i) => { fix[SQ[i]] = n; }); const ids = SQ.filter((s) => fix[s]);
-    cards.push({ id: 'well' + (g + 1), ph: 1, when: g ? 'Second well' : 'First well', title: 'Grasping Depths (Group ' + (g + 1) + ' goes down)', map: ppFreeze(NZ_M.depths(false, g ? { b: true } : {}), 6, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags: ids.map((s, i) => [s, String(i + 1)]), focus: NZ_VIEW }),
+    cards.push({ id: 'well' + (g + 1), ph: 1, when: g ? 'Second well' : 'First well', title: 'Grasping Depths (Group ' + (g + 1) + ' goes down)', map: ppFreeze(NZ_M.depths(false, g ? { b: true } : {}), 6, ppSeat(P, fix), P, M, { noBars: true, hl: ids, named: ids, tags: ids.map((s, i) => [s, String(i + 1)]), focus: NZ_VIEW }),
       legend: [ppG('Group ' + (g + 1) + ': down the well, kick in order', PU, L.map((n, i) => ppI(P, n, 'Kick ' + (i + 1))), 'Kill the Drowned Echo; kick its curse late (2 melee kicks, or 3 others).'), ppG('Group ' + (g ? 1 : 2), Q, (J.well[g ? 0 : 1] || []).map((n) => ppI(P, n)), 'Stays up top this time: the teams take turns.')],
       foot: 'Dodge the circles and lasers down there. Nobody goes down twice in a row (Soul Exhaustion).' }); });
   // The Amani: the boss dragged to the glowing coffins, casters breaking the shields, the grips pulling strays in (the guide's map at the adds)
@@ -6238,7 +6239,21 @@ function ppDeclutter(sv, out) {
   sv.querySelectorAll('g.ic:not(.icl)').forEach((g) => { if (g.querySelector('text.ml')) return; let b; try { b = g.getBBox(); } catch (e) { return; } if (!b.width || b.width > 160 || b.height > 160) return; /* (cast bars shrink with their unit too) */
     const x = +g.dataset.x, y = +g.dataset.y, k = ds < 1 ? (isMk(g) ? Math.max(ds, 0.75) : ds) : 1; if (k < 1) g.setAttribute('transform', 'translate(' + x + ' ' + y + ') scale(' + k.toFixed(3) + ') translate(' + -x + ' ' + -y + ')');
     icons.push({ x, y, b: bx(x + (b.x - 1 - x) * k, y + (b.y - 1 - y) * k, x + (b.x + b.width + 1 - x) * k, y + (b.y + b.height + 1 - y) * k) }); });
-  sv.querySelectorAll('g.ic:not(.icl)').forEach((g) => { if (isMk(g)) sv.appendChild(g); }); /* (raid markers on top: the spot always shows) */
+  // (names instead of icons for a crowded group: its players' dots go, and each cluster of them becomes a block of names in class colour)
+  { const nn = new Set((out.ppNoName || []).map((n) => String(n).split('-')[0].toLowerCase())), dots = [];
+    if (nn.size) sv.querySelectorAll('g.ic:not(.icl)').forEach((g) => { const pl = g.querySelector('.pl'), t = pl && pl.querySelector('title'), nm = t ? String(t.textContent).split('-')[0] : ''; if (!nm || !nn.has(nm.toLowerCase())) return;
+      dots.push({ g, x: +g.dataset.x, y: +g.dataset.y, nm, col: (pl.querySelector('circle') || { getAttribute: () => '#ddd' }).getAttribute('fill') || '#ddd' }); });
+    // (a labelled group is one block wherever its players stand (Sentinels' halves); anyone else is grouped with whoever stands near)
+    const gi = new Map(), byG = new Map(), cl = []; (out.ppGroups || []).forEach((L, i) => L.forEach((n) => gi.set(String(n).split('-')[0].toLowerCase(), i)));
+    for (const d of dots) { const k = gi.get(d.nm.toLowerCase()); if (k == null) continue; if (!byG.has(k)) { byG.set(k, []); cl.push(byG.get(k)); } byG.get(k).push(d); }
+    const free = []; for (const d of dots.filter((d) => !gi.has(d.nm.toLowerCase()))) { const near = free.filter((c) => c.some((e) => Math.hypot(e.x - d.x, e.y - d.y) < 20 * ds)); if (!near.length) free.push([d]); else { near[0].push(d); for (const c of near.slice(1)) { near[0].push(...c); free.splice(free.indexOf(c), 1); } } } cl.push(...free);
+    const fz2 = 12 * f * 0.95, lh = fz2 * 1.18, cw = (c) => Math.max(...c.map((d) => d.nm.length)) * fz2 * 0.56 + fz2 * 0.9;
+    for (const c of cl) { c.forEach((d) => { d.g.remove(); const i = icons.findIndex((o) => o.x === d.x && o.y === d.y); if (i >= 0) icons.splice(i, 1); });
+      const cx2 = c.reduce((a, d) => a + d.x, 0) / c.length, cy2 = c.reduce((a, d) => a + d.y, 0) / c.length, cols = c.length > 6 ? 2 : 1, rows = Math.ceil(c.length / cols), w = cw(c), W = w * cols, H = rows * lh + fz2 * 0.5;
+      let h = '<rect x="' + (cx2 - W / 2).toFixed(1) + '" y="' + (cy2 - H / 2).toFixed(1) + '" width="' + W.toFixed(1) + '" height="' + H.toFixed(1) + '" rx="' + (fz2 * 0.4).toFixed(1) + '" fill="#0b0d12" fill-opacity=".78" stroke="#000" stroke-opacity=".6"/>';
+      c.slice().sort((a, b) => a.nm.localeCompare(b.nm)).forEach((d, i) => { const col = Math.floor(i / rows), row = i % rows; h += '<text x="' + (cx2 - W / 2 + col * w + fz2 * 0.45).toFixed(1) + '" y="' + (cy2 - H / 2 + fz2 * 0.25 + (row + 0.85) * lh).toFixed(1) + '" style="font:700 ' + fz2.toFixed(2) + 'px Barlow, sans-serif" fill="' + d.col + '">' + esc(d.nm) + '</text>'; });
+      const pill = sv.querySelector('g.icl'); if (pill && pill.parentNode === sv) pill.insertAdjacentHTML('beforebegin', h); else sv.insertAdjacentHTML('beforeend', h); taken.push(bx(cx2 - W / 2, cy2 - H / 2, cx2 + W / 2, cy2 + H / 2)); } }
+  { const pill = sv.querySelector('g.icl'); sv.querySelectorAll('g.ic:not(.icl)').forEach((g) => { if (isMk(g)) sv.insertBefore(g, pill && pill.parentNode === sv ? pill : null); }); } /* (raid markers over the icons, under the labels: the spot always shows) */
   sv.querySelectorAll('text.ml:not(.mlp)').forEach((t) => { const g = t.parentNode; if (!g || !g.dataset || g.dataset.y == null) return; const Y = +g.dataset.y, y0 = +t.getAttribute('y');
     t.style.fontSize = (11 * f).toFixed(2) + 'px'; t.style.strokeWidth = (3 * f).toFixed(2) + 'px'; if (isFinite(y0)) t.setAttribute('y', (Y + (y0 - Y) * ds).toFixed(1)); });
   sv.querySelectorAll('text.mlp').forEach((t) => { const g = t.parentNode, X = +g.dataset.x, Y = +g.dataset.y, r = 9 * ds;
