@@ -147,3 +147,22 @@ they would position for the fight."
   - Recommendation: start from the roster Debrief already knows (Home's team or Plan's roster for tonight), with a "Use my raid"
     switch that remembers its setting.
 - Owners: Boss guides (the maps and the seating), Plan (rosters and jobs), Design studio (the picker's look).
+
+## Debrief's own parses: a number for performance and mechanics (Oct 27)
+The user: "Now that i have server hosting/storage. Creating my own parse system with numbers. Based on performance, and mechanical
+execution."
+- What it is: every raider gets a Debrief score per pull and per boss (0 to 100, like a parse), ranked against other raiders of the
+  same spec on the same boss and difficulty. Two halves:
+  - **Performance:** damage or healing for the spec (what Warcraft Logs parses already measure), plus Debrief's Rotation score.
+  - **Mechanics:** what no parse site scores: avoidable damage, soaks, kicks, dispels, defensives, deaths, each judged by the
+    checks Debrief already runs.
+- Why now: the R2 storage (each night kept once, for everyone) and the log library (787 top fights) mean Debrief can keep the
+  numbers for every pull it reads and build its own comparison pool, instead of asking Warcraft Logs each time.
+- Pieces that already exist: the mechanics checks and their fair rules, the strictness tables (Flexible / Medium / Strict from
+  rank bands), the kill baselines (20 fastest kills per boss), the Rotation score.
+- Main chat's take (8/10): the mechanics half is the part nobody else has, and the hard work is already done.
+  - Start with **mechanics only**, on Mythic, scored against the saved top kills, before adding performance.
+  - Risks: it has to be fair across specs and jobs (a soaker takes more damage than a ranged player who never soaks), and a
+    public number gets compared, so every point must be explainable on the page.
+  - Cost: scoring is cheap once a night is stored; filling the comparison pool means more Warcraft Logs downloads (one gatherer).
+- Owners when it starts: Debriefing (the mechanics score), Rotation (the performance half), Design studio (how the number looks).
