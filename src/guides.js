@@ -5007,7 +5007,7 @@ function openGuides(boss, d) {
   if (boss && GDZ[boss]) S.gdzBoss = boss; if (d === 'm' || d === 'h') S.gdzDiff = d; else if (!S.gdzDiff) S.gdzDiff = gdzDefDiff();
   S.item = null; S.rep = null; S.page = 'guides';
   $('#list').innerHTML = ''; $('#bossHead').innerHTML = ''; $('#bossPick').innerHTML = '';
-  $('#main').innerHTML = '<div class="gdz-pagetop">' + (GDZ_BACK && S.index ? '<button type="button" class="btn gdz-back">‹ Back to your pull</button>' : '') + '<div><div class="gdz-kick">Debrief</div><h1>Boss guides</h1><p>How each fight works: the plan in plain words, animated maps, what goes wrong, and the whole fight played out.</p></div></div><section id="view"></section>';
+  $('#main').innerHTML = pgTabBar(null) + '<div class="gdz-pagetop">' /* (the main tab row on the guides too, Guides lit, Oct 27) */ + (GDZ_BACK && S.index ? '<button type="button" class="btn gdz-back">‹ Back to your pull</button>' : '') + '<div><div class="gdz-kick">Debrief</div><h1>Boss guides</h1><p>How each fight works: the plan in plain words, animated maps, what goes wrong, and the whole fight played out.</p></div></div><section id="view"></section>';
   const bk = $('#main .gdz-back'); if (bk) bk.onclick = () => { const g = GDZ_BACK; GDZ_BACK = null; S.tab = g.tab || 'audit'; S.scope = g.scope || 'pull'; select(g.item); };
   gdzView(); navNote(); window.scrollTo(0, 0);
 }

@@ -1441,11 +1441,11 @@ const tabIco = (k) => '<svg class="tab-ic" viewBox="0 0 24 24" aria-hidden="true
 // your team's page; that page shows the same tabs with My Page lit, and the raid's tabs take you back into the raid you came from (greyed out when
 // no raid is open yet). With no team added yet, it starts the setup.
 const ME_TIP = 'Your team\'s page: every boss and raid night, with your rankings.';
-const meTabHtml = (on) => '<button class="tab tab-me' + (on ? ' on' : '') + '" data-t="me" role="tab" aria-selected="' + !!on + '" data-tt="' + esc(ME_TIP) + '" aria-description="' + esc(ME_TIP) + '">' + tabIco('me') + 'Home</button>' + planTabHtml() + '<span class="tsep" aria-hidden="true"></span>';
+const meTabHtml = (on) => '<button class="tab tab-me' + (on ? ' on' : '') + '" data-t="me" role="tab" aria-selected="' + !!on + '" data-tt="' + esc(ME_TIP) + '" aria-description="' + esc(ME_TIP) + '">' + tabIco('me') + 'Home</button>' + planTabHtml() + guidesTabHtml() + '<span class="tsep" aria-hidden="true"></span>'; /* (Guides beside Plan, Oct 27) */
 // (in a raid, the tab; from a team's own page, back into the raid you came from on My Page; with no raid, your team's page)
 function openMyPage() { { const h = meHomeChar(); if (h) meSwitch(h.gid, true); } if (S.rep && $('#view')) { S.tab = 'me'; renderMain(); window.scrollTo(0, 0); return; }
   if (PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK)) { S.tab = 'me'; select(PROG_BACK); return; }
-  const t = homeTarget(); if (!t) { gsStart(); return; } progressPage(undefined, t.gid); window.scrollTo(0, 0); }
+  const t = homeTarget(); if (!t) { progressPage(); gsStart(true); return; } progressPage(undefined, t.gid); window.scrollTo(0, 0); } /* (nothing added yet: Home, with the setup as a card on top, Oct 27) */
 // My Page in a raid: your team's page inside the tab, the raid staying open above it (your call, Oct 19). It opens on your team each time (your
 // character's page is a click away on it); with no team added yet, an invitation to add one
 function myPageView() { const t = homeTarget(); if (!t) { myPageEmpty(); return; }
@@ -6801,6 +6801,10 @@ function ndzR() { return S.rep || (S.tab === 'overview' ? planRep(planBoss()) : 
 const PLAN_TIP = 'Your raid\'s prep: a plan for each boss, your rosters and all your notes. It doesn\'t use your logs.';
 function planTabHtml() { const off = ASG_OFF(), on = S.page === 'plan' && S.tab === 'overview', tt = off ? 'In Development' : PLAN_TIP;
   return '<button class="tab tab-plan' + (on ? ' on' : '') + (off ? ' tab-off' : '') + '" data-t="overview" role="tab" aria-selected="' + on + '"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + tabIco('overview') + 'Plan</button>'; }
+// (the Guides tab, beside Plan (Oct 27, the Design studio's review, the user's "fix them"): opens the boss guides from any page; lit on them)
+function guidesTabHtml() { const on = S.page === 'guides', tt = 'Boss guides: how each fight works, with maps and your job';
+  return '<button class="tab tab-gdz' + (on ? ' on' : '') + '" data-t="gdz" role="tab" aria-selected="' + on + '" data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + tabIco('gdz') + 'Guides</button>'; }
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.tab-gdz'); if (!b) return; e.preventDefault(); e.stopPropagation(); if (typeof openGuides === 'function') openGuides(); }, true);
 // (the page: like your team's page, the raid you came from stays one tab away)
 let PLAN_HIST = false;
 function planPage() { if (S.page !== 'plan' || !planPage.done) { planPage.done = true; /* (a fresh page load counts as coming in, Oct 23) */ if (!rostersGet().list.length) { planAutoRoster(); if (!rostersGet().list.length) setTimeout(() => planAutoRetry(1), 600); } /* (the roster makes itself from the Home team, Oct 23; retried while the team loads) */ S.planV = rostersGet().list.length ? 'tonight' : 'ros'; store.set(PLAN_VK, S.planV); /* (Who plays first; rosters are their own section, Oct 23) */ S.planOpen = false; S.planRosEd = null; { const st = history.state; if (st && st.plan && st.v && st.v !== 'ros' && rostersGet().list.length) { S.planV = st.v; store.set(PLAN_VK, st.v); S.planOpen = !!st.open; if (st.b) { S.ndzPick = st.b; store.set(PLAN_BK, st.b); } S.ndzPlanId = st.id || null; S.planExp = st.ex || null; } } /* (a reload opens the same place again, Oct 26) */ } /* (coming into Plan: Rosters first, Oct 23) */ if (S.item) PROG_BACK = S.item; S.item = null; S.rep = null; S.tab = 'overview'; S.page = 'plan'; progLit(false);
@@ -8146,7 +8150,7 @@ document.addEventListener('click', (e) => { const t = e.target.closest && e.targ
 document.addEventListener('toggle', (e) => { if (e.target && e.target.classList && e.target.classList.contains('nt-bsel')) S.ntBselOpen = e.target.open; }, true);
 
 // (Add my Warcraft Logs team: the Start now setup; coming back to Plan makes the roster from it; a typed roster comes back to Tonight, Oct 26)
-document.addEventListener('click', (e) => { if (S.page !== 'plan' || !e.target.closest) return; if (e.target.closest('[data-plgs]')) { e.preventDefault(); if (typeof gsStart === 'function') gsStart(); return; } if (e.target.closest('.plq-hero [data-plrnew]')) S.plRosBack = 'tonight'; }, true);
+document.addEventListener('click', (e) => { if (S.page !== 'plan' || !e.target.closest) return; if (e.target.closest('[data-plgs]')) { e.preventDefault(); if (typeof gsStart === 'function') gsStart(true); return; } /* (a card on top of Plan, Oct 27) */ if (e.target.closest('.plq-hero [data-plrnew]')) S.plRosBack = 'tonight'; }, true);
 // ---- The blank night (Oct 27): the empty plan a boss with none shows; saved on its first edit ----
 const PG_BLANKT = {}; /* (boss|difficulty -> an empty plan's text: its header only) */
 function pnBlankNote(pb) { const o = pnGet(), diff = o.diff || 'Mythic', on = (o.on[pb] || []).map((x) => String(x).split('-')[0]), L = notesOf(pb);
@@ -30314,17 +30318,18 @@ function mePair() {
 // skipped, Back goes to the one before, and Escape or × closes it.
 const GS_STEPS = ['Your character', 'Your team', 'Take a look'];
 let GS = null;
-function gsStart() {
+function gsStart(inline) { /* (inline (Oct 27): a card at the top of the page, not a blocking pop-up; Home's and Plan's "Add your character?") */
   if ($('#gs')) return;
   store.set(TOUR_KEY, '1'); // (the setup is the website's welcome now: no tour after it, and the pages' own tips can show)
   GS = { step: 'char', back: [], char: null, team: null, wait: 0, rw: null, none: false, t: 0, drawn: '' };
-  const el = document.createElement('div'); el.id = 'gs'; el.className = 'tour gs'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-labelledby', 'gsT');
-  document.body.appendChild(el); document.body.classList.add('touring');
+  const el = document.createElement('div'); el.id = 'gs'; el.setAttribute('aria-labelledby', 'gsT');
+  if (inline) { GS.inl = true; el.className = 'gs gs-inl'; el.setAttribute('role', 'region'); const m = $('#main'); if (m && m.parentElement) m.parentElement.insertBefore(el, m); else document.body.appendChild(el); }
+  else { el.className = 'tour gs'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); document.body.appendChild(el); document.body.classList.add('touring'); }
   GS.key = (e) => { if (e.key === 'Escape' && $('#gs')) { e.preventDefault(); e.stopPropagation(); gsClose(); } };
   document.addEventListener('keydown', GS.key, true);
   // (a step in the browser's history: Back, or a phone's back swipe, closes the setup instead of leaving Debrief)
-  try { history.pushState(Object.assign({}, history.state, { gs: 1 }), '', location.href); } catch (e) { /* ignore */ }
-  gsDraw();
+  if (!inline) try { history.pushState(Object.assign({}, history.state, { gs: 1 }), '', location.href); } catch (e) { /* ignore */ }
+  gsDraw(); if (inline) window.scrollTo({ top: 0 });
 }
 // (popped: Back already took the setup's step away; otherwise × or a finished setup takes it away first, then carries on)
 let GS_POP = null;
@@ -31343,7 +31348,7 @@ $('#brandHome').onclick = () => home();
   if (b && pop) {
     b.onclick = (e) => { e.stopPropagation(); if (!pop.hidden) { close(); return; }
       const m = $('#tbMenuPop'); if (m && !m.hidden) { m.hidden = true; $('#tbMenu').setAttribute('aria-expanded', 'false'); }
-      if (!groups().length) { gsStart(); return; } // (nothing added yet: the setup)
+      if (!groups().length) { progressPage(); gsStart(true); return; } // (nothing added yet: the setup, as a card on top of Home (Oct 27))
       if (HIST.mem.size) show(); else HIST.load().then(show); };
     pop.addEventListener('click', (e) => { const t = e.target.closest('[data-go]'); if (!t) return; close(); const v = t.dataset.go;
       if (v === '+') { gsStart(); return; } progressPage(undefined, v); window.scrollTo(0, 0); });
