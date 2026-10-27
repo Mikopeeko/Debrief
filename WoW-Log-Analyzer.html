@@ -8233,6 +8233,19 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 /* ===== Design studio round 90 (Oct 27): one height for the card header controls. Owner: the Design studio chat. ===== */
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .plb-rch > .btn, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .plb-rch > button { box-sizing: border-box; height: 22px; min-height: 0; padding: 0 9px; font-size: 11px; line-height: 1; border-radius: 11px; display: inline-flex; align-items: center; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .plb-rch > .plb-done { font-weight: 700; }
+/* ===== Design studio round 91 (Oct 27): the cooldown tray folds, slimmer chart bits. Owner: the Design studio chat. ===== */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.ds-tfold { padding: 5px 10px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.ds-tfold > .btl-trh { margin: 0; cursor: pointer; user-select: none; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.ds-tfold > .btl-trh > b::after { content: ' ▾'; color: var(--gold); }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.ds-tfold.ds-open > .btl-trh > b::after { content: ' ▴'; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.ds-tfold > .btl-trh > .sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.ds-tfold:not(.ds-open):not(.over) > .btl-trl { display: none; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.ds-tfold.ds-open > .btl-trh, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.ds-tfold.over > .btl-trh { margin-bottom: 4px; }
+/* the mechanic icons a size smaller */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-m :is(.icw, img, .ico) { width: 20px !important; height: 20px !important; border-radius: 4px; }
+/* Plan's "+N more" chip */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-more { display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border: 1px dashed var(--line2); border-radius: 9px; background: rgba(255,255,255,.07); color: var(--text); font: 700 10.5px/1 var(--body); cursor: pointer; white-space: nowrap; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-more:hover { border-color: var(--gold); color: var(--gold); }
 </style>
 
 
@@ -54921,6 +54934,20 @@ function dsGuides() {
     } catch (e) { /* (the tiles stay as rendered) */ } finally { busy = false; }
   }
   var t = 0, kick = function () { clearTimeout(t); t = setTimeout(dsBuffs, 40); };
+  var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
+// ===== Design studio round 91 (Oct 27): the cooldown tray folds. Owner: the Design studio chat. =====
+(function () {
+  if (typeof document === 'undefined') return;
+  var open = false;
+  var mark = function () { var t = document.querySelector('#view.plan-page .ndz-dtl .btl-tray'); if (!t) return; if (!t.classList.contains('ds-tfold')) t.classList.add('ds-tfold'); if (t.classList.contains('ds-open') !== open) t.classList.toggle('ds-open', open); };
+  window.addEventListener('click', function (e) {
+    var h = e.target && e.target.closest && e.target.closest('#view.plan-page .ndz-dtl .btl-tray > .btl-trh'); if (!h) return;
+    open = !open; mark();
+  }, true);
+  var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(mark, 30); };
   var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();

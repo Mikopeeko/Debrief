@@ -32184,6 +32184,20 @@ function dsGuides() {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
+// ===== Design studio round 91 (Oct 27): the cooldown tray folds. Owner: the Design studio chat. =====
+(function () {
+  if (typeof document === 'undefined') return;
+  var open = false;
+  var mark = function () { var t = document.querySelector('#view.plan-page .ndz-dtl .btl-tray'); if (!t) return; if (!t.classList.contains('ds-tfold')) t.classList.add('ds-tfold'); if (t.classList.contains('ds-open') !== open) t.classList.toggle('ds-open', open); };
+  window.addEventListener('click', function (e) {
+    var h = e.target && e.target.closest && e.target.closest('#view.plan-page .ndz-dtl .btl-tray > .btl-trh'); if (!h) return;
+    open = !open; mark();
+  }, true);
+  var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(mark, 30); };
+  var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
 (function () { const f17 = dsBars; let last = 0, tm = 0, pendingRoot;
