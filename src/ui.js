@@ -30220,6 +30220,51 @@ addEventListener('scroll', () => { const l = $('.fph-logo'); document.body.class
 const fphDiscord = () => DISCORD_URL ? '<section class="fph-dc"><div class="fph-dc-ico">' + DISC_SVG + '</div><div class="fph-dc-t"><h2>Join the raiders shaping Debrief</h2>' +
   '<p>Get the patch notes first, report a bug and hear when it\'s fixed, and tell us what to build next.</p></div>' +
   '<a class="fph-dc-go" href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">' + DISC_SVG + 'Join the Discord</a></section>' : '';
+// ===== Design studio practice: fresh front page. Owner: the Design studio chat. =====
+(function () {
+  if (typeof document === 'undefined') return;
+  var slug = function (b) { return String(b).toLowerCase().replace(/['’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); };
+  var pulls = [100, 92, 88, 79, 81, 70, 64, 66, 52, 48, 41, 22, 0];
+  var render = function () {
+    var tg = homeTarget();
+    var strip = pulls.map(function (p, i) { var k = p === 0; return '<div class="fpn-pl' + (k ? ' kill' : '') + '"><span>' + (k ? 'Kill' : p + '%') + '</span><i style="height:' + (k ? 100 : Math.max(8, 100 - p)) + '%"></i><em>' + (i + 1) + '</em></div>'; }).join('');
+    var list = (typeof FPB_ORDER !== 'undefined' ? FPB_ORDER : []).filter(function (b) { return typeof BOSS_HERO !== 'undefined' && BOSS_HERO[b]; });
+    var bosses = list.map(function (b) { return '<a class="fpn-b" href="/guide/' + slug(b) + '/mythic"><span class="fpn-ba" style="background-image:url(https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[b][0] + '.jpg)"></span><span class="fpn-bn">' + esc(b) + '</span><i>Guide ›</i></a>'; }).join('');
+    var crest = LOGO.replace('<svg ', '<svg width="60" height="60" ');
+    $('#main').innerHTML = '<div class="home fpn">' +
+      '<section class="fpn-hero"><div class="fpn-mark">' + crest + '<div class="fpn-word">Debrief</div></div>' +
+        '<div class="fp-k">The Venomous Abyss · Season 2</div>' +
+        '<h1>Every pull, <span>explained.</span></h1>' +
+        '<p class="fpn-lead">Debrief reads your Warcraft Logs or combat log and gives your raid a short, plain debrief: what happened, who did what, and the one thing to fix before the next pull.</p>' +
+        '<div class="fpn-cta">' + (tg ? '<button class="btn primary fpn-main" id="fpnMe" type="button">Open ' + esc(gName(tg)) + ' ›</button><p class="fpn-sub">Welcome back. Your raid nights come in by themselves after each raid.</p>' :
+          '<button class="btn primary fpn-main" id="fpnSign" type="button">Continue with Warcraft Logs<span class="fpn-arr">→</span></button><p class="fpn-sub">One click brings in your characters, your guild and every raid night. No password is shared with Debrief.</p>') + '</div>' +
+        '<div class="fpn-alt"><button class="linkbtn" id="fpnPaste" type="button">Or paste a Warcraft Logs link</button> · <button class="linkbtn" id="fpnFile" type="button">open your combat log</button> · <button class="linkbtn" id="fpnDemo" type="button">see a real raid night ›</button></div>' +
+        '<div class="fpn-box" id="fpnBox" hidden><input id="fpnIn" placeholder="Paste a Warcraft Logs report link…" autocomplete="off" aria-label="Warcraft Logs report link"><button class="btn" id="fpnGo" type="button">Open</button></div>' +
+        '<div class="fp-msg fp-note" id="fpnMsg"></div>' +
+      '</section>' +
+      '<section class="fpn-tour"><div class="fpn-th"><span class="fp-k">Take a look around</span><em>Real pages, with a real raid night loaded</em></div><div class="fpn-tiles">' +
+        '<button class="fpn-t" data-go="debrief" type="button"><span class="fpn-mini m1"><svg viewBox="0 0 120 44"><polyline points="6,10 20,13 34,12 48,20 62,22 76,21 90,29 112,36" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.5"/><circle cx="6" cy="10" r="2.6" fill="#ddd"/><circle cx="20" cy="13" r="2.6" fill="#ddd"/><circle cx="34" cy="12" r="2.6" fill="#ddd"/><circle cx="48" cy="20" r="2.6" fill="#45c15c"/><circle cx="62" cy="22" r="2.6" fill="#45c15c"/><circle cx="76" cy="21" r="2.6" fill="#45c15c"/><circle cx="90" cy="29" r="2.6" fill="#45c15c"/><circle cx="112" cy="36" r="4" fill="#e6b450"/></svg></span><b>A pull’s debrief</b><span>What happened, who did what, and the fix.</span></button>' +
+        '<button class="fpn-t" data-go="plan" type="button"><span class="fpn-mini m2"><i style="left:8%;width:22%;background:#2E8CFF"></i><i style="left:34%;width:16%;background:#F58CBA;top:17px"></i><i style="left:52%;width:26%;background:#33d6a6"></i><i style="left:62%;width:14%;background:#ff8a3d;top:29px"></i><i style="left:20%;width:12%;background:#a335ee;top:29px"></i></span><b>Raid cooldown plan</b><span>Every cooldown on the fight’s timeline.</span></button>' +
+        '<button class="fpn-t" data-go="guide" type="button"><span class="fpn-mini m3"' + (typeof BOSS_HERO !== 'undefined' && BOSS_HERO['The Coiled Altar'] ? ' style="background-image:url(https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO['The Coiled Altar'][0] + '.jpg)"' : '') + '></span><b>Boss guides</b><span>Maps that play each mechanic in order.</span></button>' +
+        '<button class="fpn-t" data-go="addon" type="button"><span class="fpn-mini m4"><u></u><u style="width:70%"></u><u style="width:84%;background:rgba(229,83,75,.6)"></u><u style="width:56%;background:rgba(69,193,92,.6)"></u></span><b>In-game addon</b><span>The debrief in WoW, seconds after a pull.</span></button>' +
+      '</div></section>' +
+      '<div class="fpn-sec fpn-foot">' + (list.length ? '<div class="fpn-guides"><span>Boss guides</span>' + list.map(function (b) { return '<a href="/guide/' + slug(b) + '/mythic">' + esc(b) + '</a>'; }).join('') + '</div>' : '') + fphFoot() + '</div></div>';
+    var msg = $('#fpnMsg'), go = function () { var v = $('#fpnIn').value.trim(); if (v) openReportLink(v, msg); };
+    $('#fpnGo').onclick = go; $('#fpnIn').onkeydown = function (e) { if (e.key === 'Enter') go(); };
+    $('#fpnFile').onclick = nightDlg;
+    $('#fpnDemo').onclick = function () { openReportLink(DEMO_REPORT, msg); };
+    { var sg = $('#fpnSign'); if (sg) sg.onclick = function () { wclSignIn(); }; }
+    $('#fpnPaste').onclick = function () { var bx = $('#fpnBox'); bx.hidden = !bx.hidden; if (!bx.hidden) $('#fpnIn').focus(); };
+    { var me = $('#fpnMe'); if (me) me.onclick = function () { var g = homeTarget(); if (!g) { gsStart(); return; } store.set(GROUP_CUR, g.gid); progressPage(undefined, g.gid); window.scrollTo(0, 0); }; }
+    document.querySelectorAll('.fpn-t').forEach(function (t) { t.onclick = function () { var g = t.dataset.go; if (g === 'debrief') openReportLink(DEMO_REPORT, msg); else if (g === 'plan') location.href = '/?plan'; else if (g === 'guide') location.href = '/guide/the-coiled-altar/mythic'; else location.href = '/?ingame'; }; });
+    { var p = $('#fphPatch'); if (p) p.onclick = openPatchNotes; var t = $('#fphTour'); if (t) t.onclick = function () { startTour(0); }; }
+    document.body.classList.add('fph-past');
+  };
+  var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(function () { if (document.querySelector('#main > .home.fpx')) render(); }, 0); };
+  var start = function () { var v = document.getElementById('main'); if (!v) return setTimeout(start, 200); new MutationObserver(kick).observe(v, { childList: true }); kick(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
 function homeHosted() {
   const fp = fpParts();
   // (one front page for everyone (your notes, Oct 19): the logo and headline and one button. Someone new gets Start now,

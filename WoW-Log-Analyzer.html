@@ -8662,6 +8662,104 @@ html body .my-team .pgc[data-ds-tier="epic"] { --dsc: #a335ee; }
 html body .my-team .pgc[data-ds-tier="rare"] { --dsc: #3d8bff; }
 html body .my-team .pgc[data-ds-tier="unc"] { --dsc: #1eff00; }
 html body .my-team .pgc[data-ds-tier="com"] { --dsc: #9aa3b2; }
+/* ===== Design studio practice: fresh front page. Owner: the Design studio chat. ===== */
+html body #main > .home.fpx { visibility: hidden; }
+html body .home.fpn { max-width: 1060px; margin: 0 auto; padding: 0 32px; position: relative; isolation: isolate; }
+html body .home.fpn::before { content: ''; position: absolute; left: 50%; top: -40px; width: min(900px, 100%); height: 560px; transform: translateX(-50%); pointer-events: none; z-index: -1;
+  background: radial-gradient(38% 42% at 50% 30%, rgba(230,180,80,.16), transparent 70%), radial-gradient(30% 34% at 50% 34%, rgba(40,170,120,.12), transparent 72%); }
+html body .home.fpn .fp-k { color: var(--gold); }
+html body .home.fpn .fpn-hero { padding: 64px 0 56px; text-align: center; }
+html body .home.fpn .fpn-mark { display: flex; flex-direction: column; align-items: center; margin-bottom: 22px; }
+html body .home.fpn .fpn-mark svg { filter: drop-shadow(0 10px 30px rgba(230,180,80,.28)) drop-shadow(0 0 18px rgba(40,170,120,.18)); }
+html body .home.fpn .fpn-word { font: 800 17px/1 var(--head, var(--body)); letter-spacing: .34em; text-transform: uppercase; margin-top: 12px; color: var(--gold); text-shadow: 0 0 18px rgba(230,180,80,.25); }
+html body .home.fpn .fpn-hero > .fp-k { margin-top: 6px; }
+html body .home.fpn h1 { font: 800 52px/1.02 var(--head, var(--body)); margin: 14px 0 14px; color: var(--text); }
+html body .home.fpn h1 span { color: var(--gold); }
+html body .home.fpn .fpn-lead { color: var(--muted); font-size: 17px; line-height: 1.5; margin: 0 auto; max-width: 560px; }
+html body .home.fpn .fpn-box { display: flex; align-items: center; gap: 8px; max-width: 640px; margin: 32px auto 0; padding: 6px 6px 6px 18px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line2, var(--line)); box-shadow: 0 18px 50px rgba(0,0,0,.35); }
+html body .home.fpn .fpn-box:focus-within { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(230,180,80,.15), 0 18px 50px rgba(0,0,0,.35); }
+html body .home.fpn .fpn-box input { flex: 1; min-width: 0; height: 40px; border: 0 !important; background: none !important; box-shadow: none !important; outline: 0; color: var(--text); font: 500 16px var(--body); padding: 0; }
+html body .home.fpn .fpn-box .btn { height: 40px; padding: 0 20px; font-size: 15px; }
+html body .home.fpn .fpn-or { margin-top: 14px; font-size: 14px; color: var(--faint); }
+html body .home.fpn .fpn-or .linkbtn { font-size: 14px; }
+html body .home.fpn .fpn-me { margin-top: 6px; }
+html body .home.fpn .fpn-sec { margin-top: 70px; }
+html body .home.fpn .fpn-night { margin-top: 24px; padding: 22px 24px; }
+html body .home.fpn .fpn-h { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+html body .home.fpn .fpn-h b { display: block; margin-top: 4px; font: 700 20px var(--head, var(--body)); color: var(--text); }
+html body .home.fpn .fpn-h > span { color: var(--faint); font-size: 13px; }
+html body .home.fpn .fpn-strip { display: grid; grid-template-columns: repeat(13, 1fr); gap: 8px; height: 160px; margin-top: 20px; }
+html body .home.fpn .fpn-pl { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 6px; min-width: 0; }
+html body .home.fpn .fpn-pl span { font: 700 12px var(--body); color: var(--muted); }
+html body .home.fpn .fpn-pl em { font: 600 12px var(--body); font-style: normal; color: var(--faint); }
+html body .home.fpn .fpn-pl i { display: block; width: 100%; border-radius: 5px 5px 2px 2px; background: linear-gradient(180deg, rgba(64,190,140,.55), rgba(40,170,120,.12)); box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
+html body .home.fpn .fpn-pl.kill i { background: linear-gradient(180deg, var(--gold), rgba(230,180,80,.3)); box-shadow: 0 0 22px rgba(230,180,80,.35); }
+html body .home.fpn .fpn-pl.kill span { color: var(--gold); }
+html body .home.fpn .fpn-notes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+html body .home.fpn .fpn-notes div { background: rgba(255,255,255,.03); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+html body .home.fpn .fpn-notes div.k { border-color: rgba(230,180,80,.45); background: rgba(230,180,80,.06); }
+html body .home.fpn .fpn-notes b { display: block; font: 700 15px var(--head, var(--body)); color: var(--text); }
+html body .home.fpn .fpn-notes div.k b { color: var(--gold); }
+html body .home.fpn .fpn-notes p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+html body .home.fpn .fpn-row { display: grid; grid-template-columns: 56px 1fr 1.3fr; gap: 28px; padding: 26px 0; border-top: 1px solid var(--line); align-items: center; }
+html body .home.fpn .fpn-row > span { font: 800 26px var(--head, var(--body)); color: rgba(230,180,80,.35); }
+html body .home.fpn .fpn-row h3 { margin: 4px 0 0; font: 700 22px var(--head, var(--body)); color: var(--text); }
+html body .home.fpn .fpn-row p { margin: 0; color: var(--muted); font-size: 16px; }
+html body .home.fpn .fpn-bl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; margin-top: 16px; }
+html body .home.fpn .fpn-b { display: flex; align-items: center; gap: 12px; padding: 6px 12px 6px 6px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--text); text-decoration: none; }
+html body .home.fpn .fpn-b:hover { border-color: rgba(230,180,80,.5); }
+html body .home.fpn .fpn-ba { width: 64px; height: 36px; border-radius: 6px; background: center / cover no-repeat; flex: none; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+html body .home.fpn .fpn-bn { flex: 1; font: 700 16px var(--head, var(--body)); }
+html body .home.fpn .fpn-b i { font-style: normal; font-size: 13px; color: var(--faint); }
+html body .home.fpn .fpn-b:hover i { color: var(--gold); }
+html body .home.fpn .fpn-hero { padding: 30px 0 22px; }
+html body .home.fpn .fpn-mark { margin-bottom: 14px !important; }
+html body .home.fpn h1 { margin: 10px 0 10px !important; }
+html body .home.fpn .fpn-box { margin-top: 24px !important; }
+html body .home.fpn .fpn-cta { margin-top: 26px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+html body .home.fpn .fpn-main.fpn-main { height: 48px; padding: 0 26px 0 28px; border-radius: 10px; border: 0 !important; display: inline-flex; align-items: center; gap: 12px; font: 700 17px/1 var(--head, var(--body)); letter-spacing: .02em; color: #1d1405 !important; background: linear-gradient(180deg, #f3d27e 0%, #e6b450 48%, #c9932f 100%) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.45), inset 0 -1px 0 rgba(0,0,0,.18), 0 1px 0 rgba(0,0,0,.4), 0 10px 26px rgba(230,180,80,.18) !important; transition: transform .15s, box-shadow .15s, filter .15s; }
+html body .home.fpn .fpn-main.fpn-main:hover { transform: translateY(-1px); filter: brightness(1.05); box-shadow: inset 0 1px 0 rgba(255,255,255,.5), inset 0 -1px 0 rgba(0,0,0,.18), 0 1px 0 rgba(0,0,0,.4), 0 14px 32px rgba(230,180,80,.26) !important; }
+html body .home.fpn .fpn-main .fpn-arr { font-size: 18px; opacity: .75; transition: transform .15s; }
+html body .home.fpn .fpn-main:hover .fpn-arr { transform: translateX(3px); }
+html body .home.fpn .fpn-sub { margin: 0; color: var(--faint); font-size: 13.5px; max-width: 460px; }
+html body .home.fpn .fpn-alt { margin-top: 16px; font-size: 14px; color: var(--faint); }
+html body .home.fpn .fpn-alt .linkbtn { font-size: 14px; }
+html body .home.fpn .fpn-box[hidden] { display: none !important; }
+html body .home.fpn .fpn-box { margin-top: 14px !important; max-width: 560px; }
+html body .home.fpn .fpn-tour { margin: 18px auto 0; max-width: 980px; }
+html body .home.fpn .fpn-th { display: flex; align-items: baseline; justify-content: center; gap: 10px; margin-bottom: 14px; }
+html body .home.fpn .fpn-th em { font-style: normal; color: var(--faint); font-size: 13px; }
+html body .home.fpn .fpn-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+html body .home.fpn .fpn-t { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px 10px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--text); text-align: left; cursor: pointer; transition: border-color .15s, transform .15s; }
+html body .home.fpn .fpn-t:hover { border-color: rgba(230,180,80,.55); transform: translateY(-2px); }
+html body .home.fpn .fpn-t b { margin: 8px 4px 0; font: 700 17px/1.1 var(--head, var(--body)); }
+html body .home.fpn .fpn-t > span:last-child { margin: 0 4px; color: var(--muted); font-size: 13.5px; line-height: 1.35; }
+html body .home.fpn .fpn-t:hover b { color: var(--gold); }
+html body .home.fpn .fpn-mini { position: relative; display: block; width: 100%; height: 64px; border-radius: 8px; overflow: hidden; background: rgba(255,255,255,.03); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
+html body .home.fpn .fpn-mini.m1 { background: radial-gradient(80% 120% at 90% 100%, rgba(230,180,80,.14), transparent 60%), rgba(255,255,255,.03); }
+html body .home.fpn .fpn-mini.m1 svg { position: absolute; inset: 10px 12px; width: calc(100% - 24px); height: 44px; }
+html body .home.fpn .fpn-mini.m2 i { position: absolute; top: 9px; height: 7px; border-radius: 4px; opacity: .85; }
+html body .home.fpn .fpn-mini.m2::after { content: ''; position: absolute; left: 0; right: 0; bottom: 10px; height: 12px; background: linear-gradient(90deg, rgba(69,193,92,.25), rgba(229,83,75,.35) 40%, rgba(69,193,92,.25) 60%, rgba(229,83,75,.3) 85%); clip-path: polygon(0 100%, 8% 40%, 20% 70%, 38% 0, 52% 60%, 66% 20%, 80% 55%, 100% 30%, 100% 100%); }
+html body .home.fpn .fpn-mini.m3 { background: center 30% / cover no-repeat; }
+html body .home.fpn .fpn-mini.m3::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 30%, rgba(10,12,16,.55)); }
+html body .home.fpn .fpn-mini.m4 { padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; background: linear-gradient(180deg, rgba(230,180,80,.08), transparent 40%), rgba(255,255,255,.03); }
+html body .home.fpn .fpn-mini.m4 u { display: block; height: 6px; width: 46%; border-radius: 3px; background: rgba(255,255,255,.22); text-decoration: none; }
+html body .home.fpn .fpn-foot { margin-top: 56px; }
+html body .home.fpn .fpn-guides { display: flex; flex-wrap: wrap; gap: 4px 14px; justify-content: center; padding: 0 0 18px; font-size: 13px; }
+html body .home.fpn .fpn-guides span { color: var(--faint); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; font-size: 11px; align-self: center; }
+html body .home.fpn .fpn-guides a { color: var(--muted); text-decoration: none; }
+html body .home.fpn .fpn-guides a:hover { color: var(--gold); }
+@media (max-width: 860px) { html body .home.fpn .fpn-tiles { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 700px) {
+  html body .home.fpn { padding: 0 16px; }
+  html body .home.fpn h1 { font-size: 38px; }
+  html body .home.fpn .fpn-strip { gap: 4px; height: 120px; }
+  html body .home.fpn .fpn-pl span { display: none; }
+  html body .home.fpn .fpn-notes { grid-template-columns: 1fr; }
+  html body .home.fpn .fpn-row { grid-template-columns: 40px 1fr; gap: 6px 14px; }
+  html body .home.fpn .fpn-row p { grid-column: 2; }
+  html body .home.fpn .fpn-bl { grid-template-columns: 1fr; }
+}
 </style>
 
 
@@ -46865,6 +46963,51 @@ addEventListener('scroll', () => { const l = $('.fph-logo'); document.body.class
 const fphDiscord = () => DISCORD_URL ? '<section class="fph-dc"><div class="fph-dc-ico">' + DISC_SVG + '</div><div class="fph-dc-t"><h2>Join the raiders shaping Debrief</h2>' +
   '<p>Get the patch notes first, report a bug and hear when it\'s fixed, and tell us what to build next.</p></div>' +
   '<a class="fph-dc-go" href="' + esc(DISCORD_URL) + '" target="_blank" rel="noopener">' + DISC_SVG + 'Join the Discord</a></section>' : '';
+// ===== Design studio practice: fresh front page. Owner: the Design studio chat. =====
+(function () {
+  if (typeof document === 'undefined') return;
+  var slug = function (b) { return String(b).toLowerCase().replace(/['’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); };
+  var pulls = [100, 92, 88, 79, 81, 70, 64, 66, 52, 48, 41, 22, 0];
+  var render = function () {
+    var tg = homeTarget();
+    var strip = pulls.map(function (p, i) { var k = p === 0; return '<div class="fpn-pl' + (k ? ' kill' : '') + '"><span>' + (k ? 'Kill' : p + '%') + '</span><i style="height:' + (k ? 100 : Math.max(8, 100 - p)) + '%"></i><em>' + (i + 1) + '</em></div>'; }).join('');
+    var list = (typeof FPB_ORDER !== 'undefined' ? FPB_ORDER : []).filter(function (b) { return typeof BOSS_HERO !== 'undefined' && BOSS_HERO[b]; });
+    var bosses = list.map(function (b) { return '<a class="fpn-b" href="/guide/' + slug(b) + '/mythic"><span class="fpn-ba" style="background-image:url(https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[b][0] + '.jpg)"></span><span class="fpn-bn">' + esc(b) + '</span><i>Guide ›</i></a>'; }).join('');
+    var crest = LOGO.replace('<svg ', '<svg width="60" height="60" ');
+    $('#main').innerHTML = '<div class="home fpn">' +
+      '<section class="fpn-hero"><div class="fpn-mark">' + crest + '<div class="fpn-word">Debrief</div></div>' +
+        '<div class="fp-k">The Venomous Abyss · Season 2</div>' +
+        '<h1>Every pull, <span>explained.</span></h1>' +
+        '<p class="fpn-lead">Debrief reads your Warcraft Logs or combat log and gives your raid a short, plain debrief: what happened, who did what, and the one thing to fix before the next pull.</p>' +
+        '<div class="fpn-cta">' + (tg ? '<button class="btn primary fpn-main" id="fpnMe" type="button">Open ' + esc(gName(tg)) + ' ›</button><p class="fpn-sub">Welcome back. Your raid nights come in by themselves after each raid.</p>' :
+          '<button class="btn primary fpn-main" id="fpnSign" type="button">Continue with Warcraft Logs<span class="fpn-arr">→</span></button><p class="fpn-sub">One click brings in your characters, your guild and every raid night. No password is shared with Debrief.</p>') + '</div>' +
+        '<div class="fpn-alt"><button class="linkbtn" id="fpnPaste" type="button">Or paste a Warcraft Logs link</button> · <button class="linkbtn" id="fpnFile" type="button">open your combat log</button> · <button class="linkbtn" id="fpnDemo" type="button">see a real raid night ›</button></div>' +
+        '<div class="fpn-box" id="fpnBox" hidden><input id="fpnIn" placeholder="Paste a Warcraft Logs report link…" autocomplete="off" aria-label="Warcraft Logs report link"><button class="btn" id="fpnGo" type="button">Open</button></div>' +
+        '<div class="fp-msg fp-note" id="fpnMsg"></div>' +
+      '</section>' +
+      '<section class="fpn-tour"><div class="fpn-th"><span class="fp-k">Take a look around</span><em>Real pages, with a real raid night loaded</em></div><div class="fpn-tiles">' +
+        '<button class="fpn-t" data-go="debrief" type="button"><span class="fpn-mini m1"><svg viewBox="0 0 120 44"><polyline points="6,10 20,13 34,12 48,20 62,22 76,21 90,29 112,36" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.5"/><circle cx="6" cy="10" r="2.6" fill="#ddd"/><circle cx="20" cy="13" r="2.6" fill="#ddd"/><circle cx="34" cy="12" r="2.6" fill="#ddd"/><circle cx="48" cy="20" r="2.6" fill="#45c15c"/><circle cx="62" cy="22" r="2.6" fill="#45c15c"/><circle cx="76" cy="21" r="2.6" fill="#45c15c"/><circle cx="90" cy="29" r="2.6" fill="#45c15c"/><circle cx="112" cy="36" r="4" fill="#e6b450"/></svg></span><b>A pull’s debrief</b><span>What happened, who did what, and the fix.</span></button>' +
+        '<button class="fpn-t" data-go="plan" type="button"><span class="fpn-mini m2"><i style="left:8%;width:22%;background:#2E8CFF"></i><i style="left:34%;width:16%;background:#F58CBA;top:17px"></i><i style="left:52%;width:26%;background:#33d6a6"></i><i style="left:62%;width:14%;background:#ff8a3d;top:29px"></i><i style="left:20%;width:12%;background:#a335ee;top:29px"></i></span><b>Raid cooldown plan</b><span>Every cooldown on the fight’s timeline.</span></button>' +
+        '<button class="fpn-t" data-go="guide" type="button"><span class="fpn-mini m3"' + (typeof BOSS_HERO !== 'undefined' && BOSS_HERO['The Coiled Altar'] ? ' style="background-image:url(https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO['The Coiled Altar'][0] + '.jpg)"' : '') + '></span><b>Boss guides</b><span>Maps that play each mechanic in order.</span></button>' +
+        '<button class="fpn-t" data-go="addon" type="button"><span class="fpn-mini m4"><u></u><u style="width:70%"></u><u style="width:84%;background:rgba(229,83,75,.6)"></u><u style="width:56%;background:rgba(69,193,92,.6)"></u></span><b>In-game addon</b><span>The debrief in WoW, seconds after a pull.</span></button>' +
+      '</div></section>' +
+      '<div class="fpn-sec fpn-foot">' + (list.length ? '<div class="fpn-guides"><span>Boss guides</span>' + list.map(function (b) { return '<a href="/guide/' + slug(b) + '/mythic">' + esc(b) + '</a>'; }).join('') + '</div>' : '') + fphFoot() + '</div></div>';
+    var msg = $('#fpnMsg'), go = function () { var v = $('#fpnIn').value.trim(); if (v) openReportLink(v, msg); };
+    $('#fpnGo').onclick = go; $('#fpnIn').onkeydown = function (e) { if (e.key === 'Enter') go(); };
+    $('#fpnFile').onclick = nightDlg;
+    $('#fpnDemo').onclick = function () { openReportLink(DEMO_REPORT, msg); };
+    { var sg = $('#fpnSign'); if (sg) sg.onclick = function () { wclSignIn(); }; }
+    $('#fpnPaste').onclick = function () { var bx = $('#fpnBox'); bx.hidden = !bx.hidden; if (!bx.hidden) $('#fpnIn').focus(); };
+    { var me = $('#fpnMe'); if (me) me.onclick = function () { var g = homeTarget(); if (!g) { gsStart(); return; } store.set(GROUP_CUR, g.gid); progressPage(undefined, g.gid); window.scrollTo(0, 0); }; }
+    document.querySelectorAll('.fpn-t').forEach(function (t) { t.onclick = function () { var g = t.dataset.go; if (g === 'debrief') openReportLink(DEMO_REPORT, msg); else if (g === 'plan') location.href = '/?plan'; else if (g === 'guide') location.href = '/guide/the-coiled-altar/mythic'; else location.href = '/?ingame'; }; });
+    { var p = $('#fphPatch'); if (p) p.onclick = openPatchNotes; var t = $('#fphTour'); if (t) t.onclick = function () { startTour(0); }; }
+    document.body.classList.add('fph-past');
+  };
+  var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(function () { if (document.querySelector('#main > .home.fpx')) render(); }, 0); };
+  var start = function () { var v = document.getElementById('main'); if (!v) return setTimeout(start, 200); new MutationObserver(kick).observe(v, { childList: true }); kick(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
 function homeHosted() {
   const fp = fpParts();
   // (one front page for everyone (your notes, Oct 19): the logo and headline and one button. Someone new gets Start now,
