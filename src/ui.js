@@ -831,7 +831,11 @@ function histFor(it) {
   // (only the nights of the group this log is: your team's raid counts your team's nights, a log with just your character in it
   // counts that character's (Oct 19: a pug isn't the team's progress))
   const rr = S.realRep || S.rep, me = rr && rr.item === it ? { players: rosterOf(rr) } : null, gl = groups();
-  const gm = me && (gl.find((g) => g.kind !== 'char' && groupFilter(g)(me)) || gl.find((g) => g.kind === 'char' && groupFilter(g)(me))), inG = gm ? groupFilter(gm) : () => true;
+  const gm = me && (gl.find((g) => g.kind !== 'char' && groupFilter(g)(me)) || gl.find((g) => g.kind === 'char' && groupFilter(g)(me)));
+  /* (Oct 27: a log that isn't one of your teams counted every saved night of the boss, anyone's (the example night read 240 on a phone with
+     your own nights saved, 13 on desktop): now only nights with mostly the same raiders, at least half the smaller roster) */
+  const sameRaid = (v) => { const a0 = new Set(me.players), b0 = v.players || []; let k = 0; for (const p of b0) if (a0.has(p)) k++; return k >= Math.max(3, Math.ceil(Math.min(a0.size, b0.length) / 2)); };
+  const inG = gm ? groupFilter(gm) : me ? sameRaid : () => false;
   for (const v of HIST.mem.values()) { if (v.boss !== it.boss || v.diffId !== it.diffId || !inG(v)) continue; const n = nightOf(v.at); if (n >= tn) continue; if (!by.has(n)) by.set(n, []); by.get(n).push(v); }
   const earlier = [...by].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([n, list]) => {
     list.sort((a, b) => a.at - b.at);
@@ -14140,13 +14144,19 @@ function guildHist(it0) { if (!it0 || !it0.gid || !WCL.guildProg) return null; c
   if (G === undefined) { GHIST.set(key, null); Promise.resolve(WCL.guildProg(S.wclCreds, { g: it0.gid, e: it0.id, d: WCL_DIFF_OF[it0.diffId] || 5, t: it0.wallMs || it0.startMs || Date.now() } /* (the real date: startMs is the log's own clock) */)).then((o) => { GHIST.set(key, o && o.pl && o.pl.length ? o : false); if (o && o.pl && o.pl.length && S.tab === 'audit' && S.item) liveRedraw(); }).catch(() => GHIST.set(key, false)); return null; }
   if (!G) return null; const by = new Map(); for (const [t, left] of G.pl) { const n = nightOf(t); if (!by.has(n)) by.set(n, []); by.get(n).push({ at: t, left, kill: left === 0 }); }
   return { earlier: [...by].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([n, list]) => ({ n, label: nightLabel(list[0].at), list, kill: list.find((x) => x.kill) || null })), guild: true }; }
+/* (the guild's Warcraft Logs history for this boss: 'loading', 'ok', 'failed', or 'none' when the log has no guild) */
+const ghState = (it0) => { if (!it0 || !it0.gid || !WCL.guildProg) return 'none'; const v = GHIST.get(it0.gid + '|' + it0.id + '|' + it0.diffId + '|' + Math.floor((it0.wallMs || it0.startMs || 0) / 864e5)); return v === undefined || v === null ? 'loading' : v === false ? 'failed' : 'ok'; };
 function paceTile(num, it0, reps, nT, kl, onT) { let PANEL = ''; const tile = (() => {
       let H = { earlier: [] }; try { H = histFor(it0); } catch (e) { /* (no saved nights) */ }
       { const GH = guildHist(it0); if (GH) { H = GH; nT = 0; kl = false; reps = []; } } /* (the guild's own history includes tonight) */
+      /* (Oct 27, the site review: "Pulls to the kill" read 13 on one screen and 240 on another for the same night: tonight's count stood in while the
+         guild's history was still coming. Now the tile says so, and fills in when it arrives) */
+      const ghs = ghState(it0); if (ghs === 'loading') return num('Pulls on this boss', '<b class="pcx-wait">…</b>', 'counting the guild\'s pulls on Warcraft Logs');
+      const onlyTonight = ghs !== 'ok' && !H.earlier.length; /* (no history from Warcraft Logs and no saved nights: it only knows tonight) */
       let n = 0, killed = false; for (const x of H.earlier) { if (x.kill) { n += x.list.indexOf(x.kill) + 1; killed = true; break; } n += x.list.length; }
       if (!killed) { n += nT; killed = !!kl; }
       const nights = Math.min(H.earlier.length, H.earlier.findIndex((x) => x.kill) < 0 ? H.earlier.length : H.earlier.findIndex((x) => x.kill) + 1) + (H.earlier.some((x) => x.kill) ? 0 : 1);
-      const R = it0.diffId === 16 ? PROG_PULLS[it0.boss] : null, lab = killed ? 'Pulls to the kill' : 'Pulls on this boss', where = plural(nights, 'night');
+      const R = it0.diffId === 16 ? PROG_PULLS[it0.boss] : null, lab = onlyTonight ? 'Pulls tonight' : killed ? 'Pulls to the kill' : 'Pulls on this boss', where = plural(nights, 'night');
       /* (best so far: every saved night up to the kill, then tonight's pulls) */
       const CV = paceCV(it0); if (CV && n >= 1) { let best = 0; const seq = [], raw = [], take = (left, k) => { const v = k ? 100 : left != null && isFinite(left) ? 100 - left : null; if (v != null) best = Math.max(best, v); seq.push(best); raw.push(v); };
         const NI = []; for (const x of H.earlier) { NI.push({ at: seq.length, label: x.label, ms: x.list[0] && x.list[0].at }); for (const v of x.list) { take(v.left, v.kill); if (v === x.kill) break; } if (x.kill) break; }
