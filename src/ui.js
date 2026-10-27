@@ -32157,6 +32157,30 @@ function dsGuides() {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
+// ===== Design studio round 85 (Oct 27): Raid nights as a dropdown from the bar. Owner: the Design studio chat. =====
+(function () {
+  if (typeof document === 'undefined') return;
+  var busy = false;
+  function place() {
+    if (busy) return; busy = true;
+    try {
+      var bar = document.querySelector('#view.plan-page .panel.pg-bar'), wk = document.querySelector('#view.plan-page .panel.pn-week');
+      if (bar && wk && wk.parentElement !== bar) { wk.classList.add('ds-drop'); bar.appendChild(wk); }
+    } catch (e) { /* (the strip stays where it was drawn) */ } finally { busy = false; }
+  }
+  var close = function () { var b = document.querySelector('#view.plan-page .panel.pg-bar.ds-nopen'); if (b) b.classList.remove('ds-nopen'); };
+  window.addEventListener('click', function (e) {
+    var t = e.target; if (!t || !t.closest) return;
+    var btn = t.closest('#view.plan-page .pg-bar [data-pgnight]');
+    if (btn) { e.preventDefault(); e.stopImmediatePropagation(); place(); var bar = btn.closest('.pg-bar'); if (bar) bar.classList.toggle('ds-nopen'); return; }
+    if (!t.closest('#view.plan-page .pg-bar .pn-week')) close();
+  }, true);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(place, 30); };
+  var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
 (function () { const f17 = dsBars; let last = 0, tm = 0, pendingRoot;
