@@ -842,7 +842,7 @@ const clean = (s) => String(s == null ? '' : s).replace(/[\^~|\r\n]+/g, ' ').rep
 // (the wipe filter: ^C~n says the code holds versions 0 to n, one per "stop at death" number; ^K~versions~line is a line only
 // some of them have, e.g. K~012~R~... is in versions 0, 1 and 2. Lines in every version are written as they are)
 RECAP.encode = (m) => {
-  const body = (v) => RECAP.lines(v), head = [['DBF1'], ['H', m.h.boss, m.h.diff, m.h.pull, m.h.kill ? 1 : 0, m.h.pct, m.h.dur, m.h.where, m.h.deaths, m.h.dungeon ? 1 : '']];
+  const body = (v) => RECAP.lines(v), head = [['DBF1'], ['H', m.h.boss, m.h.diff, m.h.pull, m.h.kill ? 1 : 0, m.h.pct, m.h.dur, m.h.where, m.h.deaths, m.h.dungeon ? 1 : '', m.h.night || '']];
   let rec;
   if (!m.cuts || m.cuts.length < 2) rec = head.concat(body(m));
   else {

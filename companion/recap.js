@@ -676,6 +676,7 @@ function buildOne(b, rep, same, W, L, cutN) {
   // (deaths have their own lines; a tank's notes on hits tanks take on purpose aren't mistakes)
   const mist = [].concat(rep.mistakes || [], (rep.module && !rep.module.error && rep.module.mistakes) || []).filter((m) => m && m.mechanic !== 'Death' && !/only a note/i.test(m.detail || '') && !(m.tankJudged && roleOf.get(m.player) === 'tank') && before(m.t, T));
   const h = { boss: b.boss, diff: b.dungeon && b.key ? 'Mythic+ ' + b.key : DIFFN[b.diffId] || b.diff || '', pull: b.pull, kill: !!b.kill, pct, dur: mmss(b.duration || rep.duration), dungeon: b.dungeon ? 1 : '',
+    night: b.startMs ? new Date(b.startMs - 6 * 3600e3).toISOString().slice(0, 10).replace(/-/g, '') : '', // (the raid night, from the PC's clock in the log: until 6 in the morning is the same night (Oct 27))
     where: b.kill || b.id === 990001 || b.dungeon ? '' : pr && pr.phase ? String(pr.phase).replace(/^P(\d)$/, 'Phase $1') : '', deaths: (rep.deaths || []).length };
 
   // ---- each player ----

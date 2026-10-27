@@ -84,7 +84,7 @@ local function decode(code)
       m.coach = m.coachV["0"] or m.coach; return o
     end
     if t == "H" then
-      m.h = { boss = g(2), diff = g(3), pull = g(4), kill = g(5) == "1", pct = g(6), dur = g(7), where = g(8), deaths = g(9), dungeon = g(10) == "1" } -- (a dungeon boss: your Me view only (Oct 24))
+      m.h = { boss = g(2), diff = g(3), pull = g(4), kill = g(5) == "1", pct = g(6), dur = g(7), where = g(8), deaths = g(9), dungeon = g(10) == "1", night = g(11) } -- (a dungeon boss: your Me view only (Oct 24))
     elseif t == "P" then
       local p = { name = g(2), cls = g(3), spec = g(4), role = g(5), unit = g(6), v = g(7), d = tonumber(g(8)), vs = g(9), best = g(10), bp = g(11), rank = g(12), icon = g(13), bt = g(14) == "1", slips = {}, boss = {}, surv = {}, tiles = {}, next = "", next2 = "" }
       m.players[#m.players + 1] = p; by[p.name] = p
@@ -720,8 +720,12 @@ local function cardChart(y, title, pts, curPull, fmt)
   local b = FS("bold", 11, "5fdc7a"); b:SetJustifyH("RIGHT"); b:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - 12, -(y + 9)); b:SetText("Best: pull " .. pts[best][1] .. (fmt and (" · " .. fmt(pts[best][2])) or ""))
   return y + h + 8
 end
+-- (a pull's raid night (Oct 27, the user: "only show tonight's pulls"): the app stamps it from the log, until 6 in the morning counting as the same
+-- night; an older pull without the stamp goes by the day it came into WoW)
+local function nightKey(q) local n = q and q.h and q.h.night; if n and n ~= "" then return n end; return (q and q.t and date) and date("%Y%m%d", q.t - 21600) or "" end
 local function cardCharts(y, raw, P, SH)
-  local list = {}; for _, q in ipairs(DB.pulls) do if q.h and q.h.boss == raw.h.boss and q.h.diff == raw.h.diff then list[#list + 1] = q end end
+  local nk = nightKey(DB.pulls[DB.cur] or raw)
+  local list = {}; for _, q in ipairs(DB.pulls) do if q.h and q.h.boss == raw.h.boss and q.h.diff == raw.h.diff and nightKey(q) == nk then list[#list + 1] = q end end
   if SH.chartNight then
     local pts = {}; for _, q in ipairs(list) do local v = q.h.kill and 100 or (tonumber(q.h.pct) and (100 - tonumber(q.h.pct))); if v then pts[#pts + 1] = { q.h.pull, v } end end
     y = cardChart(y, "How far each pull got", pts, raw.h.pull, function(v) return v >= 100 and "kill" or (math.floor(100 - v + 0.5) .. "% left") end)
@@ -763,8 +767,10 @@ local function renderOnce()
   local h = m.h
   UI.rounded(card.lineT, "line", 8, h.kill and COL.gold or COL.line2, 1) -- (a kill: a gold edge (Oct 25, the Design studio's round 3))
   bossT:SetText(h.boss .. "  ·  " .. h.diff)
-  -- chips: this boss and difficulty only (Oct 24: other bosses' pulls read as a second "Pull 1"), as many as fit, around the one on screen
-  local IX = {}; for k0, q0 in ipairs(DB.pulls) do if q0.h and q0.h.boss == h.boss and q0.h.diff == h.diff then IX[#IX + 1] = k0 end end
+  -- chips: this boss and difficulty only (Oct 24: other bosses' pulls read as a second "Pull 1"), and tonight only (Oct 27: Oct 24's kill sat
+  -- next to tonight's Pull 1), as many as fit, around the one on screen
+  local nk = nightKey(DB.pulls[DB.cur])
+  local IX = {}; for k0, q0 in ipairs(DB.pulls) do if q0.h and q0.h.boss == h.boss and q0.h.diff == h.diff and nightKey(q0) == nk then IX[#IX + 1] = k0 end end
   local pos = #IX; for i0, k0 in ipairs(IX) do if k0 == DB.cur then pos = i0 end end
   local last = math.min(#IX, pos + 1)
   local first = math.max(1, last - #chips + 1)
@@ -1561,9 +1567,10 @@ end
 -- the night's pulls on this boss, oldest first
 local function nightOf(m)
   local l = {}
-  -- (same boss and difficulty, within 10 hours of this pull: tonight)
+  -- (same boss and difficulty, the same raid night (Oct 27; it was "within 10 hours of this pull"))
+  local nk = nightKey(m)
   for _, q in ipairs(DB.pulls) do
-    if q.h.boss == m.h.boss and q.h.diff == m.h.diff and (not (q.t and m.t) or math.abs(q.t - m.t) < 36000) then l[#l + 1] = q end
+    if q.h.boss == m.h.boss and q.h.diff == m.h.diff and nightKey(q) == nk then l[#l + 1] = q end
   end
   table.sort(l, function(a, b) return (tonumber(a.h.pull) or 0) < (tonumber(b.h.pull) or 0) end)
   return l
