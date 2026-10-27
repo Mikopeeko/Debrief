@@ -1855,7 +1855,7 @@ function headerHtml0(r, allMode) {
   // phase bar and the All pulls tag are merged into it. A Mythic+ key keeps the banner below and its cards.)
   if (!isKey && !it.run) return '<header class="fight bh bhx ' + cls + (hero ? ' hero' : '') + (qcol ? ' q" style="--qc:' + qcol : '') + '">' + art + '<div class="bh-t">' +
     '<div class="bh-l1"><h2 class="bh-name">' + esc(it.boss) + '</h2><button class="bh-pickb" type="button" aria-haspopup="true" aria-expanded="false" hidden></button><span class="bh-big">' + pill + '</span>' + (side ? '<span class="bh-side">' + side + '</span>' : '') + bhCutBtn() + '</div>' +
-    '<div class="bh-l2"><span class="bhp-as" id="bhAll"></span>' + (allMode ? '' : scope) + '<span class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</span>' + nerfTag(it) + '<span class="bh-s">' + stats.map(([ic, t]) => '<span' + (ic === 'timer' ? ' class="bh-dur" title="How long the pull lasted"' : '') + '>' + bhIc(ic) + esc(t) + '</span>').join('') + '</span>' + tmL + '</div></div>' +
+    '<div class="bh-l2"><span class="bhp-as" id="bhAll"></span>' + (allMode ? '' : scope) + '<span class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</span>' + nerfTag(it) + strictSw(it) + '<span class="bh-s">' + stats.map(([ic, t]) => '<span' + (ic === 'timer' ? ' class="bh-dur" title="How long the pull lasted"' : '') + '>' + bhIc(ic) + esc(t) + '</span>').join('') + '</span>' + tmL + '</div></div>' +
     '<div class="bhp" id="bhPulls"></div></header>';
   return '<header class="fight bh ' + cls + (hero ? ' hero' : '') + (qcol ? ' q" style="--qc:' + qcol : '') + '">' + art + '<div class="bh-t">' +
     '<div class="bh-l1"><h2 class="bh-name">' + esc(it.boss) + '</h2><button class="bh-pickb" type="button" aria-haspopup="true" aria-expanded="false" hidden></button><span class="bh-big">' + pill + '</span>' + progBar(it, left, !allMode && !isKey && r ? (progressOf(r) || {}).phase : null, qcol) + tmL + '</div>' +
@@ -1954,7 +1954,8 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-10-27', h: [], n: [
+  { d: '2026-10-27', h: [
+    { t: 'Choose how strict the review is', d: 'On Mythic bosses, the boss header has a Light, Medium or Strict switch. Strict judges you like a top-100 guild; Light like a mid-pack guild. Only the colours and the raid lead\'s tone change, never the numbers, and deaths are red at every level.' },], n: [
     'Each boss guide now has its own link to share, like debriefme.io/guide/the-coiled-altar/mythic.',
   ], f: [
     'Pulls from before a boss\'s last nerf are no longer timed against the faster kills that came after it: their phase pace shows a note instead of 0% (thanks to the second team who spotted it).',
@@ -10202,7 +10203,20 @@ function cutInfo(r) {
 }
 const cutT = (r) => { const c = cutInfo(r); return c ? c.t : Infinity; };
 const keptDeaths = (r) => { const t = cutT(r); return r.deaths.filter((d) => d.t <= t + 0.05); };
-const keptMistakes = (r) => { const t = cutT(r); return r.mistakes.filter((m) => m.t <= t + 0.05); };
+/* (Oct 27, the strictness setting (the user: "lets apply the strictness setting"): Light / Medium / Strict, per viewer, remembered here.
+   E.strictView re-grades a reading's mistakes from its Medium list, so switching needs no re-read; Mythic raid bosses only) */
+const strictLv = () => { const v = store.get('wla-strict'); return v === 'light' || v === 'strict' ? v : 'medium'; };
+const strictOn = (r) => { if (r && r.mistakes && r.item && r._sl !== strictLv()) { try { E.strictView(r, strictLv()); } catch (e) { console.error(e); } } return r; };
+const STRICT_TIP = { light: 'Light: judged like a mid-pack guild. Slips are fine, repeats and wipers are not.', medium: 'Medium: judged like the fastest kills. The usual bar.', strict: 'Strict: judged like a top-100 guild. Every slip shows.' };
+const strictSw = (it) => { if (!it || it.diffId !== 16 || it.kind === 'run' || it.run) return ''; const lv = strictLv();
+  return '<span class="sl-sw" role="group" aria-label="How strictly this page judges you" title="How strictly this page judges you. Only the colours, grades and the raid lead\'s tone change; the numbers stay the same. Deaths are red at every level."><span class="sl-k">Judged</span>' +
+    ['light', 'medium', 'strict'].map((k) => '<button type="button" class="sl-o' + (k === lv ? ' on' : '') + '" data-sl="' + k + '" aria-pressed="' + (k === lv) + '" title="' + STRICT_TIP[k] + '">' + k.charAt(0).toUpperCase() + k.slice(1) + '</button>').join('') + '</span>'; };
+/* (a small reminder beside the coach box's title when the level isn't the usual one) */
+const strictTag = () => { const lv = strictLv(); return lv === 'medium' || !S.item || S.item.diffId !== 16 ? '' : '<button type="button" class="sl-tag" data-sltag="1" title="' + STRICT_TIP[lv] + ' Click to change it.">Judged <b>' + lv + '</b></button>'; };
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-sl],[data-sltag]'); if (!b) return;
+  if (b.dataset.sltag) { const sw = document.querySelector('.sl-sw'); if (sw) { sw.scrollIntoView({ block: 'center', behavior: 'smooth' }); sw.classList.remove('flash'); void sw.offsetWidth; sw.classList.add('flash'); } return; }
+  const lv = b.dataset.sl; if (lv === strictLv()) return; store.set('wla-strict', lv); for (const r of CACHE.values()) strictOn(r); if (S.rep) { const y = window.scrollY; renderMain(); refreshIcons(); window.scrollTo(0, y); } });
+const keptMistakes = (r) => { strictOn(r); const t = cutT(r); return r.mistakes.filter((m) => m.t <= t + 0.05); };
 // The module's results with everything after the cutoff removed: timed rows, sets, and phases that start after it.
 // (Rows without a time, e.g. a player's peak stacks, are whole-pull totals and stay.)
 function cutModule(m, t) {
@@ -12751,7 +12765,7 @@ function oaRowWhy(r, d) { const secs = (r.module && !r.module.error && r.module.
     for (const row of (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || []))) { if (!row.some((c) => c && c.bad)) continue; const tc = row.find((c) => c && c.t != null); if (!tc || tc.t < d.t - 3 || tc.t > d.t + 1) continue;
       if (row.some((c) => c && c.p && oaBase(c.p) === nm)) { const tx = row.filter((c) => c && c.bad && c.txt && !c.p).map((c) => String(c.txt)); return { l: (s.spell && s.spell[1]) || shortT(s.title || '').replace(/\s*\(.*$/, ''), why: tx.length ? tx[tx.length - 1] : '' }; } } }
   return null; }
-function oaCache(reps, name, f) { const k = reps.map((r) => (r.item.id || r.item.boss) + ':' + r.item.diffId + ':' + r.item.pull).join(',') + '|' + deathCutN() + '|' + oaBase(name)
+function oaCache(reps, name, f) { for (const r of reps) strictOn(r); const k = reps.map((r) => (r.item.id || r.item.boss) + ':' + r.item.diffId + ':' + r.item.pull).join(',') + '|' + deathCutN() + '|' + strictLv() + '|' + oaBase(name)
     /* (Oct 24, your note "you removed the getting better / worse tags again": a pull's comparison with the last pull was worked out once, sometimes before
        the earlier pulls had loaded, and stayed empty. How many earlier pulls are loaded is part of the key now, so it's worked out again when they arrive) */
     + '|p' + (reps.length === 1 && reps[0].item ? ((S.index && S.index.bosses) || []).filter((b) => b.id === reps[0].item.id && b.diffId === reps[0].item.diffId && b.pull < reps[0].item.pull && CACHE.has(b)).length : 0);
@@ -14198,20 +14212,22 @@ function coachHypeFix(c) { const h = coachHype(c); if (c.kill || !c.focus) retur
 function coachHype(c) { const T0 = c.trend || {}, well = T0.well || [], better = T0.better || [], R = (c.right || []).map((x) => x.t || '');
   /* (Oct 26, your note "the debriefing coach talks like a robot": plain sentences, no shouting in capitals; on a night the line above already
      says what got cleaner, so this is only the lift) */
-  if (c.kill) return 'Boss down! Great work, everyone.';
+  const lv = strictLv(), sm = S.item && S.item.diffId === 16 ? lv : 'medium';
+  if (c.kill) return sm === 'strict' ? 'Boss down. Now let\'s make it clean.' : sm === 'light' ? 'Boss down! Amazing work, everyone.' : 'Boss down! Great work, everyone.';
   if (c.night) { const B0 = well.find((x) => !x.id && /^Best pull$/.test(x.nm)), p3 = B0 && /^P3|^Intermission/i.test(B0.sub || '');
     if (p3) return 'We\'re reaching P3 now, so the kill is close.';
     if (better.length >= 3) return 'Lots of real progress tonight.';
     if (better.length) return 'That\'s real progress.';
+    if (sm === 'strict') return 'That\'s not good enough yet, so let\'s tighten it up.';
     return 'Good work tonight, everyone.'; }
   const best = R.find((t) => /^Our best pull tonight/.test(t)), fx = well.filter((x) => x.fixed), fu = well.find((x) => /^Further than last pull$/.test(x.nm));
-  if (best) return /P3|Intermission/i.test(best) ? 'Our best pull yet, and the kill is right there.' : 'Our best pull yet, so let\'s do that again.';
+  if (best) return sm === 'strict' ? 'Best pull so far, but it\'s still not clean.' : /P3|Intermission/i.test(best) ? 'Our best pull yet, and the kill is right there.' : sm === 'light' ? 'Our best pull yet! That\'s real progress.' : 'Our best pull yet, so let\'s do that again.';
   const wr = T0.worse || []; /* (realistic: big praise only when nothing slipped; a mixed pull gets a mixed line (Oct 23)) */
   if (fx.length >= 2 && !wr.length) return 'Much better: ' + lpAnd(fx.slice(0, 2).map((x) => x.nm)) + ' were done right this time.';
   if (fx.length && wr.length) return lpAnd(fx.slice(0, 2).map((x) => x.nm)) + (fx.length > 1 ? ' were' : ' was') + ' done right this time, but ' + wr[0].nm + ' slipped.';
   if (fx.length) return 'Nice job fixing ' + lpAnd(fx.slice(0, 2).map((x) => x.nm)) + '.';
-  if (fu) return 'We got further than last pull, so keep pushing.';
-  return 'Shake it off, the next one\'s the one.'; }
+  if (fu) return sm === 'strict' ? 'We got further than last pull, but it\'s still not clean.' : 'We got further than last pull, so keep pushing.';
+  return sm === 'strict' ? 'A top-100 guild wouldn\'t accept this pull.' : sm === 'light' ? 'Fix the big ones and this pull is in good shape.' : 'Shake it off, the next one\'s the one.'; }
 function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' + (o.key || 'x'), PM = coachPm();
   const pm = c.name ? PM.get(oaBase(c.name)) : null;
   const MAPS = [], pmc = (() => { try { return new Map(players().map((p) => [p.name, p])); } catch (e) { return new Map(); } })();
@@ -14290,7 +14306,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
   const dch = D ? (D.items && D.items.length ? D.items.map((it) => dchip(it)).join('') + (D.rest && D.rest.length ? '<span class="dch more" role="button" tabindex="0" data-ddmore>+' + D.rest.length + ' more</span>' + D.rest.map((it) => dchip(it, 1)).join('') : D.more ? '<span class="dch more">+' + D.more + ' more</span>' : '') : '<span class="cch-none">' + esc(D.line) + '</span>') + (D.note ? '<div class="cch-anote">' + esc(D.note) + '</div>' : '') : '';
   const achip = (it, x) => '<span class="ach' + (it.bad ? ' bad' : '') + (x ? ' ach-x' : '') + '"' + (it.avk ? ' data-avk="' + esc(it.avk) + '" role="button" tabindex="0"' : it.avn ? ' data-avn="' + esc(it.avn) + '" role="button" tabindex="0"' : '') + (x ? ' hidden' : '') + '><b>' + esc(it.k) + '</b>' + (it.who ? '<span>' + esc(it.who) + '</span>' : '') + '</span>';
   const ach = A ? (A.items && A.items.length ? A.items.map((it) => achip(it)).join('') + (A.rest && A.rest.length ? '<span class="ach more" role="button" tabindex="0" data-avmore>+' + A.rest.length + ' more</span>' + A.rest.map((it) => achip(it, 1)).join('') : A.more ? '<span class="ach more">+' + A.more + ' more</span>' : '') : '<span class="cch-none">' + esc(A.line) + '</span>') : '';
-  const html = '<section class="cch cch2" aria-label="Coach"><div class="cch-hd"><span class="cch-k">' + esc(o.title || (c.name ? 'Your coach' : 'Coach')) + '</span>' + (pm ? '<span class="nm" style="color:' + pm.color + '">' + esc(c.name.split('-')[0]) + '</span>' : '') + '</div>' +
+  const html = '<section class="cch cch2" aria-label="Coach"><div class="cch-hd"><span class="cch-k">' + esc(o.title || (c.name ? 'Your coach' : 'Coach')) + '</span>' + strictTag() + (pm ? '<span class="nm" style="color:' + pm.color + '">' + esc(c.name.split('-')[0]) + '</span>' : '') + '</div>' +
     (c.trend && !c.night && /Root cause:/.test(String(c.headline)) ? '<p class="cch-h">' + esc(String(c.headline).replace(/\s*Root cause:[\s\S]*$/, '')) + ' <span class="cch-hype">' + esc(coachHypeFix(c)) + '</span></p>' /* (the root cause sits in the grid (Oct 23)) */
       : c.wipes && c.wipes.length && c.trend ? '<p class="cch-h">' + (() => { /* (Oct 23, your note "raid lead awful quiet": the night in a breath, from the cards below: pulls and best, what wiped us most, the best news, what to watch) */
         const T0 = c.trend, B0 = (T0.well || []).find((x) => !x.id && /^Best pull$/.test(x.nm)), w = c.wipes[0], up = (T0.better || [])[0], dn = (T0.worse || [])[0], b = (t) => '<b>' + esc(t) + '</b>';

@@ -3556,6 +3556,60 @@ function avoidMistakes(r) {
   }
   r.mistakes.sort((a, b) => a.t - b.t);
 }
+/* ---- Strictness (Oct 27; the user: "lets apply the strictness setting"). Three levels per viewer: Light, Medium (today's rules, the
+   default) and Strict. Strict = the typical raider in world top-100 guilds' fastest Mythic kills (median → amber, 9 in 10 → red); Light = world
+   #300–1,000 guilds' first kill after the nerf, never stricter than Medium. Deaths are red at every level. Mythic only; facts never change,
+   only the grades. strictView re-grades a reading in place from its Medium list (r._m0), so the switch needs no re-read. Tables: the
+   mechanics chat's side notes "Strictness - <boss> Mythic.md". ---- */
+/* (Strict avoidable-damage lines per source: [amber, red], 0 = never red; never looser than Medium's own line) */
+const STRICT_AV = {
+  'The Coiled Altar': { 'Axegrinder': [4, 8], 'Noxious Ground': [6, 16], 'Mutagenic Venom (near a purple carrier)': [1, 2], 'Volatile Venom (near a green carrier)': [2, 0], 'Gloombomb (not your own)': [1, 2], 'Toxic Deluge impacts': [1, 0] },
+  'Entombed Sentinels': { 'Living Venom': [1, 3] },
+  "Kith'ix": { 'Venom Roar': [1, 2], 'Nullshards': [2, 3], 'Twisted Appendage': [1, 2], 'Voidscar': [1, 2] },
+  "Nek'zali the Soulcoiler": { 'Latent Cultist': [1, 5], 'Anguished Echoes': [1, 2], 'Swirling Spirit': [1, 0] },
+  'Nymrissa Wavecaller': { 'Water Jet': [1, 2], 'Lingering Frost': [2, 0], 'Swirling Whirlpools': [1, 2] },
+  'Sszorak': { 'Caustic Claws': [1, 2], 'Caustic Residue': [3, 0] },
+  'The Lost Explorers': { 'Aftershock': [1, 5], 'Fungal Burst': [1, 2] },
+  'The Twin Fangs': { 'Stir the Depths water': [1, 3], 'Sanguine Storm': [2, 3] },
+  "Ula'tek": { 'Caustic Waves': [1, 2], 'Fester Burst': [1, 2], 'Desperate Thrash (Doomscale frontal)': [1, 2], 'Falling Debris': [1, 2], 'Virulent Spit': [1, 2], "Warden's Protection": [1, 0] },
+  'Vashnik the Malignant': { 'Plague Wave': [2, 3], 'Umbral Ejection': [1, 2], 'Stygian Burst': [1, 2], 'Plague Froth (nearby)': [3, 0] } };
+/* (Strict turns notes amber, except these: more than half the top-100 kills have them too) */
+const STRICT_NOTE = { 'Entombed Sentinels': [[/^vitriolic stasis$/]], 'Nymrissa Wavecaller': [[/^frost burst$/, /soaks came within/]], 'The Lost Explorers': [[/^relic rupture$/]],
+  'The Twin Fangs': [[/^barbed bulwark$/, /seconds to break/]], "Ula'tek": [[/^revenge$/]], 'Vashnik the Malignant': [[/^exploding infection$/], [/^catalytic bile$/, /went off and hit/]] };
+/* (Light eases one step only where average guilds' first kills really are looser (the user: "Follow the data") ) */
+const LIGHT_EASE = { 'The Coiled Altar': [[/^malevolent resonance$/]], 'Entombed Sentinels': [[/^venom coagulation$/]], 'The Lost Explorers': [[/^relic rupture$/]], 'The Twin Fangs': [[/^eternal venom$/, /^reached/i]] };
+const STRICT_LV = ['light', 'medium', 'strict'];
+function strictView(r, lv) {
+  if (!r || !r.mistakes || !r.item) return r; lv = STRICT_LV.includes(lv) ? lv : 'medium';
+  if (!r._m0) r._m0 = r.mistakes; const av = ((r.module && r.module.sections) || []).find((s) => s.id === 'avoid');
+  if (av && !av._v0) av._v0 = { verdict: av.verdict, g: (av.groups || []).map((g) => ({ bad: g.bad, warn: g.warn, cells: (g.rows || []).map((x) => x[1] ? { bad: x[1].bad, warn: x[1].warn } : null) })) };
+  const boss = r.item.boss, on = r.item.diffId === 16; r._sl = lv;
+  if (av && av._v0) { av.verdict = av._v0.verdict; (av.groups || []).forEach((g, i) => { const o = av._v0.g[i]; if (!o) return; g.bad = o.bad; g.warn = o.warn; (g.rows || []).forEach((x, k) => { if (x[1] && o.cells[k]) { x[1].bad = o.cells[k].bad; x[1].warn = o.cells[k].warn; } }); }); }
+  if (!on || lv === 'medium') { r.mistakes = r._m0; return r; }
+  const L = (x) => String(x || '').toLowerCase(), hit = (list, m) => (list || []).some(([a, b]) => a.test(L(m.mechanic)) && (!b || b.test(m.detail || '')));
+  const step = (m, sev, extra) => Object.assign({}, m, { severity: sev, avAmber: false, _orig: m.severity }, extra || {});
+  if (lv === 'light') { r.mistakes = r._m0.map((m) => (m.mechanic !== 'Death' && hit(LIGHT_EASE[boss], m) ? (m.severity === 'High' ? step(m, 'Medium') : m.severity === 'Medium' ? step(m, 'Low') : m) : m)); return r; }
+  // Strict: notes become amber; avoidable damage re-judged against the top-100 raider
+  let out = r._m0.map((m) => (m.mechanic !== 'Death' && m.severity === 'Low' && !m.avAmber && !m.avoidRule && !hit(STRICT_NOTE[boss], m) ? step(m, 'Medium') : m));
+  const T0 = STRICT_AV[boss]; if (av && T0) {
+    const ds = (r.deaths || []).map((d) => d.t).sort((a, b) => a - b), T = Math.min(r.duration || Infinity, !r.item.kill && ds.length >= 2 ? ds[1] : Infinity);
+    const fmt = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k');
+    for (const g of av.groups || []) { const lim = T0[g.label]; if (!lim || g.harm === 'High') continue;
+      const ml = g._lim || [Infinity, Infinity], wA = Math.min(lim[0], ml[0]), bA = lim[1] ? Math.min(lim[1], ml[1]) : Infinity, short = g.label.replace(/\s*\(.*$/, '');
+      out = out.filter((m) => !(m.avoidRule && L(m.mechanic) === L(g.label)));
+      const byP = new Map();
+      for (const j of g.judge || []) { if (j.tank) continue; const ts = (j.ts || []).filter((t) => t <= T + 0.05).sort((a, b) => a - b), n = ts.length, died = j.dt != null && j.dt <= T + 0.05;
+        const tA = n >= wA ? ts[wA - 1] : null, tR = died ? j.dt : n >= bA ? ts[bA - 1] : null; if (tA == null && tR == null) continue; byP.set(j.p, tR != null ? 2 : 1);
+        if (out.some((m) => !m.avoidRule && m.player === j.p && (g.names || []).includes(L(m.mechanic)) && Math.abs(m.t - (tR != null ? tR : tA)) <= 3)) continue;
+        const what = g.secs ? 'Stood in ' + short + ' for ' + n + ' s' : 'Hit by ' + short + ' ' + (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times');
+        out.push({ t: tR != null ? tR : tA, player: j.p, mechanic: g.label, id: (g.spell && g.spell[0]) || 0, severity: tR != null ? 'High' : 'Medium', dmg: j.amt, pos: true, avoidRule: true, avoid: true, touches: n, ruleIds: [], strict: true,
+          detail: what + (j.amt >= 1 ? ' (' + fmt(j.amt) + ')' : '') + ', more than the typical raider in the world\'s top 100 guilds' + (died ? ', and died to it.' : '.'), fix: g.fix || (g.secs ? 'Stay out of ' + short + '.' : 'Dodge ' + short + '.') }); }
+      const jp = new Set((g.judge || []).filter((j) => !j.tank).map((j) => j.p));
+      for (const x of g.rows || []) { const c = x[1], p = x[0] && x[0].p; if (!c || !p || !jp.has(p)) continue; const s = byP.get(p) || 0; c.bad = !!c.bad || s === 2; c.warn = !c.bad && (!!c.warn || s === 1); }
+      g.bad = (g.rows || []).some((x) => x[1] && x[1].bad); g.warn = (g.rows || []).some((x) => x[1] && x[1].warn); }
+    av.verdict = (av.groups || []).some((g) => g.bad) ? 'bad' : (av.groups || []).some((g) => g.warn) ? 'warn' : 'good'; }
+  r.mistakes = out.sort((a, b) => a.t - b.t); return r;
+}
 // (The Coiled Altar: when each Fangs cast's pools were down, from the cast to the last Noxious Ground hit after it. Sizes from 9 Mythic
 // kills (Oct 20): the first cast's pools reach about 28 yards from the middle of the west and east walls, later ones about 48)
 function caPools(ev) {
@@ -7316,7 +7370,7 @@ function coach(p, r, cut) {
   return tips.sort((a, b) => b.w - a.w).slice(0, 4);
 }
 
-const api = { MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
+const api = { strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
 root.ENGINE = api;
 if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
