@@ -1798,6 +1798,9 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
 /* (Oct 25: the header carries a fingerprint of its own markup, so refreshHead rebuilds it only when what it shows changed (it was re-created every
    few seconds while background pulls loaded, replaying the Design studio's line draw)) */
 const hhKey = (s) => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+/* (Pre-nerf / Post-nerf beside the difficulty on a Mythic boss that was nerfed (Oct 27, the user: short words); the pace chart's dates) */
+const nerfTag = (it) => { const n = it && it.diffId === 16 && PACE_NERF[it.boss + '|16'], w = it && (it.wallMs || 0); if (!n || !w) return ''; const pre = w < Date.parse(n), d = new Date(n).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+  return '<span class="bh-nerf' + (pre ? ' pre' : '') + '" title="' + (pre ? 'Before the ' + d + ' nerf: timing isn\'t compared with later kills' : 'After the ' + d + ' nerf') + '">' + (pre ? 'Pre-nerf' : 'Post-nerf') + '</span>'; };
 function headerHtml(r, allMode) { const h = headerHtml0(r, allMode); return typeof h === 'string' ? h.replace('<header ', '<header data-hh="' + hhKey(h) + '" ') : h; }
 function headerHtml0(r, allMode) {
   const it = S.item, same = S.index && S.index.bosses ? S.index.bosses.filter((b) => b.id === it.id && b.diffId === it.diffId) : [], isKey = it.kind === 'run';
@@ -1852,11 +1855,11 @@ function headerHtml0(r, allMode) {
   // phase bar and the All pulls tag are merged into it. A Mythic+ key keeps the banner below and its cards.)
   if (!isKey && !it.run) return '<header class="fight bh bhx ' + cls + (hero ? ' hero' : '') + (qcol ? ' q" style="--qc:' + qcol : '') + '">' + art + '<div class="bh-t">' +
     '<div class="bh-l1"><h2 class="bh-name">' + esc(it.boss) + '</h2><button class="bh-pickb" type="button" aria-haspopup="true" aria-expanded="false" hidden></button><span class="bh-big">' + pill + '</span>' + (side ? '<span class="bh-side">' + side + '</span>' : '') + bhCutBtn() + '</div>' +
-    '<div class="bh-l2"><span class="bhp-as" id="bhAll"></span>' + (allMode ? '' : scope) + '<span class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</span><span class="bh-s">' + stats.map(([ic, t]) => '<span' + (ic === 'timer' ? ' class="bh-dur" title="How long the pull lasted"' : '') + '>' + bhIc(ic) + esc(t) + '</span>').join('') + '</span>' + tmL + '</div></div>' +
+    '<div class="bh-l2"><span class="bhp-as" id="bhAll"></span>' + (allMode ? '' : scope) + '<span class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</span>' + nerfTag(it) + '<span class="bh-s">' + stats.map(([ic, t]) => '<span' + (ic === 'timer' ? ' class="bh-dur" title="How long the pull lasted"' : '') + '>' + bhIc(ic) + esc(t) + '</span>').join('') + '</span>' + tmL + '</div></div>' +
     '<div class="bhp" id="bhPulls"></div></header>';
   return '<header class="fight bh ' + cls + (hero ? ' hero' : '') + (qcol ? ' q" style="--qc:' + qcol : '') + '">' + art + '<div class="bh-t">' +
     '<div class="bh-l1"><h2 class="bh-name">' + esc(it.boss) + '</h2><button class="bh-pickb" type="button" aria-haspopup="true" aria-expanded="false" hidden></button><span class="bh-big">' + pill + '</span>' + progBar(it, left, !allMode && !isKey && r ? (progressOf(r) || {}).phase : null, qcol) + tmL + '</div>' +
-    '<div class="bh-l2">' + scope + '<span class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</span>' + (side ? '<span class="bh-side">' + side + '</span>' : '') +
+    '<div class="bh-l2">' + scope + '<span class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</span>' + (isKey ? '' : nerfTag(it)) + (side ? '<span class="bh-side">' + side + '</span>' : '') +
     '<span class="bh-s">' + stats.map(([ic, t]) => '<span' + (ic === 'timer' ? ' class="bh-dur" title="How long the pull lasted"' : '') + '>' + bhIc(ic) + esc(t) + '</span>').join('') + '</span>' + (isKey ? '' : bhCutChip()) + '</div></div></header>';
 }
 // redraw the banner once more pulls are known (the background reader, or an all-pulls view that read every pull)
@@ -1955,6 +1958,7 @@ const PATCH_NOTES = [
     'Each boss guide now has its own link to share, like debriefme.io/guide/the-coiled-altar/mythic.',
   ], f: [
     'Pulls from before a boss\'s last nerf are no longer timed against the faster kills that came after it: their phase pace shows a note instead of 0% (thanks to the second team who spotted it).',
+    'Mythic bosses that were nerfed now show a small Pre-nerf or Post-nerf tag beside the difficulty, so you can tell an old pull at a glance.',
     'Defensives: an Arms or Fury Warrior\'s Defensive Stance counts as a defensive used now, and it and Spell Reflection show how much damage they took off, in the raid summary and on the Survivability page.',
   ] },
   { d: '2026-10-26', h: [

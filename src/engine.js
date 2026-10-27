@@ -3408,7 +3408,7 @@ function paceCard(ev, r, h, mistakes, boss, x) {
   const row = (what, t, txt, kills, lvl, sub, detail, fix, noMistake) => {
     const pre = mythic && preNerf(r.item), l = mythic && !kill && !pre ? lvl || 0 : 0; /* (before the boss's last nerf: shown, not judged (Oct 27)) (a kill is shown, not judged: the boss died, so the pace was enough (Oct 22: All pulls said Pace "0% done right" with the kill among the misses)) */
     if (l && !noMistake) mistakes.push({ t, player: 'Raid', mechanic: 'Pace', id: spell[0], severity: l === 2 ? 'High' : 'Medium', detail, fix });
-    rows.push([{ txt: what }, { t }, { txt, bad: l === 2, warn: l === 1, sub: pre && lvl ? 'before the ' + nerfDay(r.item) + ' nerf, so not compared' + (sub ? ' · ' + sub : '') : sub || '' }, { txt: mythic ? kills : '', dim: true }]);
+    rows.push([{ txt: what }, { t }, { txt, bad: l === 2, warn: l === 1, sub: pre && lvl ? 'pre-nerf, not compared' + (sub ? ' · ' + sub : '') : sub || '' }, { txt: mythic ? kills : '', dim: true }]);
   };
   let spell = [0, 'Pace'], title = '', summary = '';
   if (boss === "Kith'ix") {
@@ -3905,7 +3905,7 @@ function buildCoiledAltar(ev, r, h) {
   // ---- pushes and cooldowns ----
   const pushRows = [];
   // (the 20 fastest Mythic kills, Oct 22: when each phase ended. Heroic has no kill numbers yet, so it's shown, not judged)
-  const mythicT = mythic && !preNerf(r.item), preT = mythic && !mythicT ? ' · before the ' + nerfDay(r.item) + ' nerf, so not compared' : ''; /* (Oct 27) */
+  const mythicT = mythic && !preNerf(r.item), preT = mythic && !mythicT ? ' · pre-nerf, not compared' : ''; /* (Oct 27) */
   const KT = { p1: [134, 157], p2: [150, 176], zj: [22, 33] }, P2K = 'about 2:30, never past 2:56', ms2 = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
   const MT = (t, sev, detail, fix) => mistakes.push({ t, player: 'Raid', mechanic: 'Phase changes', id: S('fangs of the coiled altar')[0], severity: sev, detail, fix });
   const hpAtT = (gs, t) => { let v = null; for (const g of gs) { const u = r.hpUnits && r.hpUnits.get(g); if (u) for (const [s2, f2] of u.samples) { if (s2 > t) break; v = f2; } } return v == null ? null : Math.round(100 * v); };

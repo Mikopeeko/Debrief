@@ -2133,6 +2133,7 @@ path.tl-hpa { fill: rgba(230,180,80,.55); } path.tl-mna { fill: rgba(106,168,255
 .bh-scope span { font-weight: 500; opacity: .8; }
 .bh-scope.one { color: #fff; border-color: #f3f5f9; background: rgba(243,245,249,.12); }
 .bh-scope.all { color: #f3c969; border-color: var(--gold); background: rgba(230,180,80,.14); }
+.bh-nerf { display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 4px; font: 600 11px/1.5 var(--body); letter-spacing: .06em; text-transform: uppercase; color: #9aa1ad; border: 1px solid rgba(255,255,255,.14); cursor: help; } .bh-nerf.pre { color: #f0b54a; border-color: rgba(240,181,74,.45); background: rgba(240,181,74,.08); }
 .bh-k { font: 600 12px/1.3 var(--body); letter-spacing: .09em; text-transform: uppercase; color: #b4bac6; } .bh-k i { margin: 0 7px; font-style: normal; opacity: .45; }
 .fight.bh h2.bh-name { margin: 4px 0 11px; font: 700 31px/1.08 var(--head); letter-spacing: -.01em; color: #f6f8fb; overflow-wrap: anywhere; }
 .bh-res { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; }
@@ -12111,7 +12112,7 @@ function paceCard(ev, r, h, mistakes, boss, x) {
   const row = (what, t, txt, kills, lvl, sub, detail, fix, noMistake) => {
     const pre = mythic && preNerf(r.item), l = mythic && !kill && !pre ? lvl || 0 : 0; /* (before the boss's last nerf: shown, not judged (Oct 27)) (a kill is shown, not judged: the boss died, so the pace was enough (Oct 22: All pulls said Pace "0% done right" with the kill among the misses)) */
     if (l && !noMistake) mistakes.push({ t, player: 'Raid', mechanic: 'Pace', id: spell[0], severity: l === 2 ? 'High' : 'Medium', detail, fix });
-    rows.push([{ txt: what }, { t }, { txt, bad: l === 2, warn: l === 1, sub: pre && lvl ? 'before the ' + nerfDay(r.item) + ' nerf, so not compared' + (sub ? ' · ' + sub : '') : sub || '' }, { txt: mythic ? kills : '', dim: true }]);
+    rows.push([{ txt: what }, { t }, { txt, bad: l === 2, warn: l === 1, sub: pre && lvl ? 'pre-nerf, not compared' + (sub ? ' · ' + sub : '') : sub || '' }, { txt: mythic ? kills : '', dim: true }]);
   };
   let spell = [0, 'Pace'], title = '', summary = '';
   if (boss === "Kith'ix") {
@@ -12608,7 +12609,7 @@ function buildCoiledAltar(ev, r, h) {
   // ---- pushes and cooldowns ----
   const pushRows = [];
   // (the 20 fastest Mythic kills, Oct 22: when each phase ended. Heroic has no kill numbers yet, so it's shown, not judged)
-  const mythicT = mythic && !preNerf(r.item), preT = mythic && !mythicT ? ' · before the ' + nerfDay(r.item) + ' nerf, so not compared' : ''; /* (Oct 27) */
+  const mythicT = mythic && !preNerf(r.item), preT = mythic && !mythicT ? ' · pre-nerf, not compared' : ''; /* (Oct 27) */
   const KT = { p1: [134, 157], p2: [150, 176], zj: [22, 33] }, P2K = 'about 2:30, never past 2:56', ms2 = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
   const MT = (t, sev, detail, fix) => mistakes.push({ t, player: 'Raid', mechanic: 'Phase changes', id: S('fangs of the coiled altar')[0], severity: sev, detail, fix });
   const hpAtT = (gs, t) => { let v = null; for (const g of gs) { const u = r.hpUnits && r.hpUnits.get(g); if (u) for (const [s2, f2] of u.samples) { if (s2 > t) break; v = f2; } } return v == null ? null : Math.round(100 * v); };
@@ -18442,6 +18443,9 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
 /* (Oct 25: the header carries a fingerprint of its own markup, so refreshHead rebuilds it only when what it shows changed (it was re-created every
    few seconds while background pulls loaded, replaying the Design studio's line draw)) */
 const hhKey = (s) => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+/* (Pre-nerf / Post-nerf beside the difficulty on a Mythic boss that was nerfed (Oct 27, the user: short words); the pace chart's dates) */
+const nerfTag = (it) => { const n = it && it.diffId === 16 && PACE_NERF[it.boss + '|16'], w = it && (it.wallMs || 0); if (!n || !w) return ''; const pre = w < Date.parse(n), d = new Date(n).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+  return '<span class="bh-nerf' + (pre ? ' pre' : '') + '" title="' + (pre ? 'Before the ' + d + ' nerf: timing isn\'t compared with later kills' : 'After the ' + d + ' nerf') + '">' + (pre ? 'Pre-nerf' : 'Post-nerf') + '</span>'; };
 function headerHtml(r, allMode) { const h = headerHtml0(r, allMode); return typeof h === 'string' ? h.replace('<header ', '<header data-hh="' + hhKey(h) + '" ') : h; }
 function headerHtml0(r, allMode) {
   const it = S.item, same = S.index && S.index.bosses ? S.index.bosses.filter((b) => b.id === it.id && b.diffId === it.diffId) : [], isKey = it.kind === 'run';
@@ -18496,11 +18500,11 @@ function headerHtml0(r, allMode) {
   // phase bar and the All pulls tag are merged into it. A Mythic+ key keeps the banner below and its cards.)
   if (!isKey && !it.run) return '<header class="fight bh bhx ' + cls + (hero ? ' hero' : '') + (qcol ? ' q" style="--qc:' + qcol : '') + '">' + art + '<div class="bh-t">' +
     '<div class="bh-l1"><h2 class="bh-name">' + esc(it.boss) + '</h2><button class="bh-pickb" type="button" aria-haspopup="true" aria-expanded="false" hidden></button><span class="bh-big">' + pill + '</span>' + (side ? '<span class="bh-side">' + side + '</span>' : '') + bhCutBtn() + '</div>' +
-    '<div class="bh-l2"><span class="bhp-as" id="bhAll"></span>' + (allMode ? '' : scope) + '<span class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</span><span class="bh-s">' + stats.map(([ic, t]) => '<span' + (ic === 'timer' ? ' class="bh-dur" title="How long the pull lasted"' : '') + '>' + bhIc(ic) + esc(t) + '</span>').join('') + '</span>' + tmL + '</div></div>' +
+    '<div class="bh-l2"><span class="bhp-as" id="bhAll"></span>' + (allMode ? '' : scope) + '<span class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</span>' + nerfTag(it) + '<span class="bh-s">' + stats.map(([ic, t]) => '<span' + (ic === 'timer' ? ' class="bh-dur" title="How long the pull lasted"' : '') + '>' + bhIc(ic) + esc(t) + '</span>').join('') + '</span>' + tmL + '</div></div>' +
     '<div class="bhp" id="bhPulls"></div></header>';
   return '<header class="fight bh ' + cls + (hero ? ' hero' : '') + (qcol ? ' q" style="--qc:' + qcol : '') + '">' + art + '<div class="bh-t">' +
     '<div class="bh-l1"><h2 class="bh-name">' + esc(it.boss) + '</h2><button class="bh-pickb" type="button" aria-haspopup="true" aria-expanded="false" hidden></button><span class="bh-big">' + pill + '</span>' + progBar(it, left, !allMode && !isKey && r ? (progressOf(r) || {}).phase : null, qcol) + tmL + '</div>' +
-    '<div class="bh-l2">' + scope + '<span class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</span>' + (side ? '<span class="bh-side">' + side + '</span>' : '') +
+    '<div class="bh-l2">' + scope + '<span class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</span>' + (isKey ? '' : nerfTag(it)) + (side ? '<span class="bh-side">' + side + '</span>' : '') +
     '<span class="bh-s">' + stats.map(([ic, t]) => '<span' + (ic === 'timer' ? ' class="bh-dur" title="How long the pull lasted"' : '') + '>' + bhIc(ic) + esc(t) + '</span>').join('') + '</span>' + (isKey ? '' : bhCutChip()) + '</div></div></header>';
 }
 // redraw the banner once more pulls are known (the background reader, or an all-pulls view that read every pull)
@@ -18599,6 +18603,7 @@ const PATCH_NOTES = [
     'Each boss guide now has its own link to share, like debriefme.io/guide/the-coiled-altar/mythic.',
   ], f: [
     'Pulls from before a boss\'s last nerf are no longer timed against the faster kills that came after it: their phase pace shows a note instead of 0% (thanks to the second team who spotted it).',
+    'Mythic bosses that were nerfed now show a small Pre-nerf or Post-nerf tag beside the difficulty, so you can tell an old pull at a glance.',
     'Defensives: an Arms or Fury Warrior\'s Defensive Stance counts as a defensive used now, and it and Spell Reflection show how much damage they took off, in the raid summary and on the Survivability page.',
   ] },
   { d: '2026-10-26', h: [
