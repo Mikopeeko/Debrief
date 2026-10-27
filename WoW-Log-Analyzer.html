@@ -18499,6 +18499,7 @@ const PATCH_NOTES = [
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
     { t: 'Plan: a picture for every job', d: 'On every boss (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
   ], n: [
+    'Rotation never opens on an empty page: it opens on you when you\'re in the pull, and otherwise shows the pull\'s raiders as a grid (Tanks, Healers, DPS), one click each. One picker instead of two.',
     'Report card opens at once: its layout and your raiders show right away with grey placeholders while it grades, instead of a full-page loading screen (even after Debriefing had already read the night).',
     'Plan, Entombed Sentinels: when your plan has a Middle group, the sides picture shows them between the two bosses.',
     'Plan, job pictures: The Coiled Altar\'s phase 3 orbs show each purple carrier beside their own orb, every green on the line off to the side and the helpers by them; Sszorak\'s Virulence spots get a picture of the inside and outside rings.',
@@ -41380,9 +41381,9 @@ function specView(reps, one) {
   if (!ps.length) return '<div class="panel"><p class="muted" style="margin:0">None of these players\' specs has a Rotation page yet. Rotation covers every spec that\'s common in Mythic raids.</p></div>';
   const ROLES = [['tank', 'Tanks'], ['healer', 'Healers'], ['dps', 'Damage dealers']], inRole = (k) => ps.filter((p) => (p.role || 'dps') === k).sort(byN);
   // (you're not in these pulls (Oct 20): pick a raider, as on Homework, instead of opening on the first name in the list)
-  if ((!S.specSel || !pm.has(S.specSel)) && !meN) return '<section class="panel hwk"><div class="hwk-h"><h2>Rotation</h2><label class="hwk-who"><span class="sub">Showing</span><select class="rot-sel" aria-label="Change player"><option value="" selected disabled>Pick a raider…</option>' +
-    ROLES.map(([k, l]) => { const l2 = inRole(k); return l2.length ? '<optgroup label="' + l + '">' + l2.map((x) => '<option value="' + esc(x.name) + '">' + esc(x.name) + ' · ' + esc(x.specName || '') + '</option>').join('') + '</optgroup>' : ''; }).join('') +
-    '</select></label></div><p class="sub" style="margin:0">' + (me ? esc(me.name) + ' isn\'t in these pulls. Pick a raider to see their Rotation.' : 'Pick a raider to see how they pressed their buttons.') + '</p></section>';
+  // (you're not in these pulls: a grid of the pull's raiders, one click each, instead of a second dropdown over an empty page (Oct 27, "fix them"))
+  if ((!S.specSel || !pm.has(S.specSel)) && !meN) return '<section class="panel rot-pick"><h2>Rotation</h2><p class="sub">' + (me ? esc(me.name) + ' isn\'t in these pulls. ' : '') + 'Pick a raider to see how they pressed their buttons.</p>' +
+    ROLES.map(([k, l]) => { const l2 = inRole(k); return l2.length ? '<div class="rot-pg"><h3 class="rot-pgh">' + (k === 'dps' ? 'DPS' : l) + '</h3><div class="rot-pgl">' + l2.map((x) => '<button type="button" class="rot-pk" data-pick="' + esc(x.name) + '" title="' + esc(x.specName || '') + '" style="--cc:' + (x.color || '#9aa0ac') + '">' + avatar(x, true) + '<span class="rot-pkn" style="color:' + (x.color || 'inherit') + '">' + esc(x.name) + '</span></button>').join('') + '</div></div>' : ''; }).join('') + '</section>';
   if (!S.specSel || !pm.has(S.specSel)) S.specSel = meN || ROLES.flatMap(([k]) => inRole(k))[0].name;
   // (your pick, Oct 19: no buttons above the page; a "Change player" dropdown beside the player's name in its header, everyone
   // grouped by role inside it)
@@ -42972,6 +42973,7 @@ function bindPerf() {
   const stOf = (b) => { const w = b.closest('[data-st]'); return w ? w.dataset.st : 'util'; };
   $$('.pfu-cat button').forEach((b) => (b.onclick = () => { if (b.classList.contains('on')) return; const st = stOf(b); S[st + 'Cat'] = b.dataset.c; S[st + 'Sel'] = null; renderMain(); refreshIcons(); }));
   $$('.rot-sel').forEach((s) => (s.onchange = () => { if (!s.value) return; S.specSel = s.value; renderMain(); refreshIcons(); })); // (Rotation's Change player)
+  $$('.rot-pk').forEach((b) => (b.onclick = () => { S.specSel = b.dataset.pick; renderMain(); refreshIcons(); })); // (Rotation's raider grid, when you're not in the pull (Oct 27))
   $$('.rot-shot').forEach((b) => (b.onclick = () => rotShot(b)));
   $$('.pfu-bars .pf-row:not(.nb)').forEach((b) => (b.onclick = () => { const st = stOf(b); S[st + 'Sel'] = S[st + 'Sel'] === b.dataset.un ? null : b.dataset.un; renderMain(); refreshIcons(); pfKeep(); }));
   $$('.pf-row:not(.nb)').forEach((b) => { if (!b.closest('.pfu-bars') && !b.closest('.rs-bars')) b.onclick = () => { S.perfSel = S.perfSel === b.dataset.n ? null : b.dataset.n; perf(); pfKeep(); }; });
