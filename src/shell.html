@@ -4403,6 +4403,19 @@ details.secd.mcx-tile[open] .mcx-alt { display: none; }
 #view .mxa-sq .lbl { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 #view .nsa > details.phase { margin: 0 0 16px !important; }
 /* (Oct 24: All pulls, a line across the night per mechanic) */
+#view .mx-fl { margin-left: auto; padding: 3px 10px; border-radius: 999px; font: 600 12px/1.3 var(--body); border: 1px solid currentColor; }
+#view .mx-fl.g { color: #6fd38a; } #view .mx-fl.y { color: #f3c969; } #view .mx-fl.r { color: #ff8f87; }
+#view .mx-sum { margin: 8px 0 10px; font-size: 14px; line-height: 1.5; } #view .mx-sum b.r { color: #ff8f87; } #view .mx-sum b.y { color: #f3c969; } #view .mx-sum b.g { color: #6fd38a; }
+#view .mx-lab { margin: 10px 0 6px; font: 600 11px/1.3 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+#view .mx-sq.mx-big i { width: 22px; height: auto; background: none; display: inline-flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; font-style: normal; }
+#view .mx-sq.mx-big i::before { content: ''; width: 18px; height: 14px; border-radius: 3px; background: rgba(255,255,255,.12); }
+#view .mx-sq.mx-big i.g::before { background: #45c15c; } #view .mx-sq.mx-big i.y::before { background: #e8a23a; } #view .mx-sq.mx-big i.r::before { background: #e5534b; }
+#view .mx-sq.mx-big i span { font-size: 10px; color: var(--muted); }
+#view .mx-tb { display: grid; grid-template-columns: 1fr auto minmax(120px, 30%); gap: 0 14px; font-size: 13px; }
+#view .mx-th, #view .mx-tr { display: contents; } #view .mx-th span { font-size: 11px; color: var(--muted); padding-bottom: 4px; } #view .mx-tr > span { padding: 6px 0; border-top: 1px solid rgba(255,255,255,.07); cursor: pointer; }
+#view .mx-ch { white-space: nowrap; color: var(--muted); } #view .mx-ch.hi { color: #ff8f87; } #view .mx-who .mx-more { color: var(--muted); }
+#view .mx-ft { margin: 10px 0 0; font-size: 12px; color: var(--muted); opacity: .8; }
+#view .mx-p .rw2-k, #view .mx-p .rw2-kh { display: none; }
 #view .mx-sq { display: flex; flex-wrap: wrap; gap: 3px; margin: 4px 0 2px; } #view .mx-sq i { width: 10px; height: 14px; border-radius: 2px; background: rgba(255,255,255,.12); }
 #view .mx-sq i.g { background: #45c15c; } #view .mx-sq i.y { background: #e8a23a; } #view .mx-sq i.r { background: #e5534b; } #view .mx-sq i.n { background: none; box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
 #view .prw-sl { display: block; width: 100%; height: 28px; margin: 3px 0 1px; overflow: visible; }

@@ -4403,6 +4403,19 @@ details.secd.mcx-tile[open] .mcx-alt { display: none; }
 #view .mxa-sq .lbl { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 #view .nsa > details.phase { margin: 0 0 16px !important; }
 /* (Oct 24: All pulls, a line across the night per mechanic) */
+#view .mx-fl { margin-left: auto; padding: 3px 10px; border-radius: 999px; font: 600 12px/1.3 var(--body); border: 1px solid currentColor; }
+#view .mx-fl.g { color: #6fd38a; } #view .mx-fl.y { color: #f3c969; } #view .mx-fl.r { color: #ff8f87; }
+#view .mx-sum { margin: 8px 0 10px; font-size: 14px; line-height: 1.5; } #view .mx-sum b.r { color: #ff8f87; } #view .mx-sum b.y { color: #f3c969; } #view .mx-sum b.g { color: #6fd38a; }
+#view .mx-lab { margin: 10px 0 6px; font: 600 11px/1.3 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+#view .mx-sq.mx-big i { width: 22px; height: auto; background: none; display: inline-flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; font-style: normal; }
+#view .mx-sq.mx-big i::before { content: ''; width: 18px; height: 14px; border-radius: 3px; background: rgba(255,255,255,.12); }
+#view .mx-sq.mx-big i.g::before { background: #45c15c; } #view .mx-sq.mx-big i.y::before { background: #e8a23a; } #view .mx-sq.mx-big i.r::before { background: #e5534b; }
+#view .mx-sq.mx-big i span { font-size: 10px; color: var(--muted); }
+#view .mx-tb { display: grid; grid-template-columns: 1fr auto minmax(120px, 30%); gap: 0 14px; font-size: 13px; }
+#view .mx-th, #view .mx-tr { display: contents; } #view .mx-th span { font-size: 11px; color: var(--muted); padding-bottom: 4px; } #view .mx-tr > span { padding: 6px 0; border-top: 1px solid rgba(255,255,255,.07); cursor: pointer; }
+#view .mx-ch { white-space: nowrap; color: var(--muted); } #view .mx-ch.hi { color: #ff8f87; } #view .mx-who .mx-more { color: var(--muted); }
+#view .mx-ft { margin: 10px 0 0; font-size: 12px; color: var(--muted); opacity: .8; }
+#view .mx-p .rw2-k, #view .mx-p .rw2-kh { display: none; }
 #view .mx-sq { display: flex; flex-wrap: wrap; gap: 3px; margin: 4px 0 2px; } #view .mx-sq i { width: 10px; height: 14px; border-radius: 2px; background: rgba(255,255,255,.12); }
 #view .mx-sq i.g { background: #45c15c; } #view .mx-sq i.y { background: #e8a23a; } #view .mx-sq i.r { background: #e5534b; } #view .mx-sq i.n { background: none; box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
 #view .prw-sl { display: block; width: 100%; height: 28px; margin: 3px 0 1px; overflow: visible; }
@@ -30763,7 +30776,15 @@ function mxaOpen(ph, id) { const k = ph.dataset.phk; let pan = ph.querySelector(
   hd.innerHTML = (ic ? ic.outerHTML : '') + '<b>' + (tb ? tb.innerHTML : '') + '</b>' + (sec.classList.contains('dbn-line') ? '<span class="mxa-yn">' + emoIc('📜') + 'From your note</span>' : '') + (st ? '<span class="mxa-st ' + (st.className.match(/\b(ok|warn|bad|na)\b/) || ['', ''])[1] + '">' + st.innerHTML + '</span>' : '') + '<button type="button" class="mxa-x" data-mxax="1" aria-label="Close">✕ Close</button>';
   hd.querySelectorAll('img.oi').forEach((i) => { if (!i.getAttribute('src')) i.removeAttribute('data-done'); }); /* (the header's copied icon loads its own picture) */
   /* (All pulls: a square for every pull is added once the header is in the panel, below) */
-  pan.appendChild(hd); { const q = pan.ownerDocument && hd._sq; void q; } pan.appendChild(sec); { const sq = sm && sm.querySelector('.npc'); if (sq && !pan.querySelector('.mxa-sq')) { const d = document.createElement('div'); d.className = 'mxa-sq'; d.innerHTML = '<span class="lbl">Each pull</span>'; d.appendChild(sq.cloneNode(true)); hd.after(d); } }
+  pan.appendChild(hd); pan.classList.add('mx-p'); hd.classList.add('mx-hd'); pan.appendChild(sec);
+  /* (Oct 27, the calmer panel: the header's one flag (three-flag rule: half or more wrong = failed), and on All pulls one numbered square per pull it came up in) */
+  { const sq = sm && sm.querySelector('.npc'), P = sq ? [...sq.querySelectorAll('i[data-npq]')].map((i) => ({ p: +i.dataset.npq, st: (i.className.match(/npc-(ok|warn|bad)/) || [])[1], tt: i.dataset.tt || '' })).filter((x) => x.st) : [];
+    const xb = hd.querySelector('.mxa-x'), old = hd.querySelector('.mxa-st'), fl = document.createElement('span');
+    if (P.length) { const w = P.filter((x) => x.st !== 'ok').length, c = !w ? 'g' : w * 2 >= P.length ? 'r' : 'y'; fl.className = 'mx-fl ' + c; fl.textContent = (c === 'g' ? 'Done right · all ' + plural(P.length, 'pull') : (c === 'r' ? 'Failed · ' : 'Some mistakes · ') + w + ' of ' + plural(P.length, 'pull')); if (old) old.remove(); hd.insertBefore(fl, xb);
+      const d = document.createElement('div'); d.className = 'mx-sqw'; d.innerHTML = '<div class="mx-lab">Each pull</div><span class="mx-sq mx-big">' + P.map((x) => '<i class="' + (x.st === 'ok' ? 'g' : x.st === 'warn' ? 'y' : 'r') + '" data-npq="' + x.p + '" data-tt="' + esc(x.tt) + '" role="button" tabindex="0"><span>' + x.p + '</span></i>').join('') + '</span>';
+      const sumP = sec.querySelector('.mx-sum'); if (sumP) { hd.after(sumP); sumP.after(d); } else hd.after(d); }
+    else { const so = sm && sm.querySelector('.rw2-pc, .sst'), cn = so ? so.className : '', c = /\bbad\b/.test(cn) ? 'r' : /\bwarn\b/.test(cn) ? 'y' : /\b(ok|good)\b/.test(cn) ? 'g' : '';
+      if (c) { fl.className = 'mx-fl ' + c; fl.textContent = (c === 'g' ? 'Done right' : c === 'r' ? 'Failed' : 'Some mistakes') + (so && /%/.test(so.textContent) ? ' · ' + so.textContent.trim() + ' done right' : ''); if (old) old.remove(); hd.insertBefore(fl, xb); } } }
   // (your note's job: one line ("Your note · Mind control CC: ✓ both mind controls CC'd") and its player chips; the rest under Show everything)
   sec.querySelectorAll('.dbn-jh').forEach((j) => { if (!j.querySelector('.mxa-yn2')) j.insertAdjacentHTML('afterbegin', '<span class="mxa-yn2">Your note ·</span>'); });
   sec.querySelectorAll('.pdesc').forEach((p) => { if (/\d+\/\d+/.test(p.textContent || '') && p.querySelector('.chips, .chipn')) p.classList.add('mxa-keep'); });
@@ -31796,14 +31817,26 @@ function nightMechC(o) {
     k = k.replace(/§'s\b/g, 'someone\'s').replace(/§/g, '').replace(/\s+([,.:])/g, '$1').replace(/\s+/g, ' ').trim().replace(/^[,:\s-]+|[,:\s-]+$/g, '');
     if (!k || /(^|\s)(clean|done right)$/i.test(k)) return ''; return k.charAt(0).toUpperCase() + k.slice(1); };
   const rw2Facts = (r, { ok, wN, kb, wh, F }) => { const J = judged(r), tot = J.length;
-    if (ok) return '<p class="rw2-fl">Done right in ' + (tot === 1 ? 'the one pull it came up in' : 'all ' + tot + ' pulls it came up in') + (kb ? ' · ' + esc(kb) : '') + '</p>';
-    const K = new Map(); for (const n of J) { const p = r.x.per.get(n); if (!p) continue; for (const l of p.lines || []) { const k = rw2Kind(l.txt); if (!k) continue; const e = K.get(k) || { k, c: 0, bad: 0, pulls: new Map() }; e.c++; if (l.st === 'bad') e.bad++; e.pulls.set(n, (e.pulls.get(n) || 0) + 1); K.set(k, e); } }
+    const ftL = kb ? '<p class="mx-ft">Against the fastest kills: ' + esc(kb) + '.</p>' : '';
+    if (ok) return '<p class="mx-sum">Done right in ' + (tot === 1 ? 'the one pull it came up in' : 'all <b class="g">' + tot + '</b> pulls it came up in') + '.</p>' + ftL;
+    const K = new Map(); for (const n of J) { const p = r.x.per.get(n); if (!p) continue; for (const l of p.lines || []) { const k = rw2Kind(l.txt); if (!k) continue; const e = K.get(k) || { k, c: 0, bad: 0, pulls: new Map(), who: new Map() }; e.c++; if (l.st === 'bad') e.bad++; e.pulls.set(n, (e.pulls.get(n) || 0) + 1);
+      const nm0 = rw2Names ? [...new Set(String(l.txt || '').replace(/<[^>]+>/g, '').match(rw2Names) || [])] : []; /* (a line without names: who was flagged on this mechanic in that pull) */
+      for (const w of nm0.length ? nm0 : [...new Set((l.who || p.who || []).map((x) => String(x).split('-')[0]))]) e.who.set(w, (e.who.get(w) || 0) + 1); K.set(k, e); } }
     const ks = [...K.values()].sort((a, b) => b.c - a.c), top = ks.slice(0, 5), mx = top.length ? top[0].c : 1;
     const bars = top.length ? '<div class="rw2-kh">Mistakes by kind</div><div class="rw2-ks">' + top.map((e) => { const wp = [...e.pulls].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0], pl = [...e.pulls.keys()].sort((a, b) => a - b);
       return '<div class="rw2-k" data-npq="' + wp + '" role="button" tabindex="0" title="' + esc('Pulls ' + pl.join(', ') + '. Click to open pull ' + wp + '.') + '"><span class="rw2-kl">' + esc(e.k) + '</span><span class="rw2-kb"><i class="' + (e.bad * 2 >= e.c ? 'bad' : 'warn') + '" style="width:' + Math.max(6, Math.round(100 * e.c / mx)) + '%"></i></span><span class="rw2-kn">×' + e.c + '</span><span class="rw2-kp">' + plural(e.pulls.size, 'pull') + '</span></div>'; }).join('') + (ks.length > 5 ? '<div class="rw2-more">+' + (ks.length - 5) + ' other kinds</div>' : '') + '</div>' : '';
     const h1 = J.slice(0, Math.ceil(tot / 2)), h2 = J.slice(Math.ceil(tot / 2)), wr = (l) => l.filter((n) => stAt(r, n) !== 'ok').length, a = wr(h1), b = wr(h2);
     const trend = tot >= 6 && Math.abs(a / Math.max(1, h1.length) - b / Math.max(1, h2.length)) >= 0.3 ? '<p class="rw2-fl rw2-tr">Early pulls: wrong in ' + a + ' of ' + h1.length + ' · Late pulls: wrong in ' + b + ' of ' + h2.length + '</p>' : '';
-    return '<p class="rw2-fl">Mistakes in ' + wN + ' of ' + tot + ' pulls' + (F && F.R ? ' · ' + F.Wr + ' of ' + F.R + ' moments wrong' : '') + (kb ? ' · ' + esc(kb) : '') + '</p>' + (wh ? '<p class="rw2-fl rw2-wh">Most often: ' + wh + '</p>' : '') + trend + bars; };
+    void trend; void bars; void wh;
+    /* (Oct 27, the calmer panel: one sentence of facts (counts in colour), then What went wrong as a table; no bars, no ×counts) */
+    const cnt = (n, c) => '<b class="' + c + '">' + n + '</b>', kc = (e) => (e.bad * 2 >= e.c ? 'r' : 'y'), lo = (t) => t.charAt(0).toLowerCase() + t.slice(1), cleanN = tot - wN;
+    const s1 = top.slice(0, 2).map((e, i) => (i ? lo(esc(e.k)) : esc(e.k)) + ' in ' + cnt(e.pulls.size, kc(e)) + (i ? '' : ' ' + (e.pulls.size === 1 ? 'pull' : 'pulls'))).join(', and ');
+    const sum = '<p class="mx-sum">' + (s1 ? s1 + '. ' : 'Mistakes in ' + cnt(wN, 'r') + ' of ' + tot + ' pulls. ') + (cleanN ? (cleanN === 1 ? 'Only ' + cnt(1, 'g') + ' pull was clean.' : (cleanN * 2 < tot ? 'Only ' : '') + cnt(cleanN, 'g') + ' pulls were clean.') : 'No pull was clean.') + '</p>';
+    const pc = new Map([...pm].map(([n, p]) => [String(n).split('-')[0], p]));
+    const whoC = (e) => { const ws = [...e.who].sort((a, b) => b[1] - a[1]); if (!ws.length) return '<span class="mx-who">—</span>'; return '<span class="mx-who">' + ws.slice(0, 2).map(([w]) => { const p = pc.get(w); return '<span class="nm"' + (p && p.color ? ' style="color:' + p.color + '"' : '') + '>' + esc(w) + '</span>'; }).join(', ') + (ws.length > 2 ? ' <span class="mx-more">+' + (ws.length - 2) + '</span>' : '') + '</span>'; };
+    const tb = top.length ? '<div class="mx-lab">What went wrong</div><div class="mx-tb"><div class="mx-th"><span>Mistake</span><span>Pulls</span><span>Who, most often</span></div>' + top.map((e, i) => { const wp = [...e.pulls].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0];
+      return '<div class="mx-tr" data-npq="' + wp + '" role="button" tabindex="0" title="' + esc('Pulls ' + [...e.pulls.keys()].sort((a, b) => a - b).join(', ') + '. Click to open pull ' + wp + '.') + '"><span class="mx-m">' + esc(e.k) + '.</span><span class="mx-ch' + (i === 0 || kc(e) === 'r' ? ' hi' : '') + '">' + e.pulls.size + ' of ' + plural(tot, 'pull') + '</span>' + whoC(e) + '</div>'; }).join('') + '</div>' : '';
+    return sum + tb + ftL; };
   const line = (r) => { const lv = lvOf(r), wN = judged(r).filter((n) => stAt(r, n) !== 'ok').length, worst = worstOf(r), F = factsOf(r), sid = 'nml-' + r.x.id, ok = lv === 'clean', M = ok ? null : mapAt(r);
     const who = new Map(); if (!one) for (const p of r.x.per.values()) for (const w of new Set(p.who || [])) who.set(w, (who.get(w) || 0) + 1);
     const faces = [...who].filter(([n]) => pm.has(n)).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([n]) => avatar(pm.get(n), true)).join('');
