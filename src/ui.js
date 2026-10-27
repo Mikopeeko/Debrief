@@ -1954,6 +1954,7 @@ const PATCH_NOTES = [
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
     { t: 'Plan: a picture for every job', d: 'On every boss (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
   ], n: [
+    'Plan, The Twin Fangs: the Broodling kicks picture is turned so the bosses are at the top (left is left, right is right). Each kick area is a band along its edge with numbered kickers just inside it, and each area\'s name and kickers in order sit beside it.',
     'Plan, The Twin Fangs: the Caustic Deluge orb CC picture is just the platform\'s four quadrants, named, with small globules; who crowd controls which set stays in the list beside it.',
     'Plan, job pictures: icons, names and labels are smaller (Broodlings, bosses and raid markers too), so it\'s easy to see who stands where. The Twin Fangs pictures fit the room without a black band.',
     'Plan, job pictures: each label now names something you can see. A group gets a ring in the label\'s colour and the label points right at it, from below when there\'s no room above, and labels stay inside the picture.',
@@ -11266,7 +11267,7 @@ function miniMap(mp, pmap) {
   const span = fc ? Math.max(30, fc.r * 3.2) : Math.max(fx1r - fx0r, fy1r - fy0r, 30), fcx = fc ? fc.x : (fx0r + fx1r) / 2, fcy = fc ? -fc.y : (fy0r + fy1r) / 2;
   const fx0 = fcx - span * 0.6, fy0 = fcy - span * 0.6, fs = span * 1.2; // focus square, in yards
   const W = 480, yd = W / fs; // svg units per yard (icons are sized for the focus view)
-  const MB = mp.boss || S.rep.item.boss, A = (mp.gdzLook && typeof GDZ_ARENAS !== 'undefined' && GDZ_ARENAS[MB]) || ARENAS[MB]; /* (a guide's own fit of a room picture, Oct 21: Debriefing's maps keep ARENAS) */ /* (a guide's map names its boss: Guides shows every boss, not just this pull's) */
+  const MB = mp.boss || S.rep.item.boss, A0 = (mp.gdzLook && typeof GDZ_ARENAS !== 'undefined' && GDZ_ARENAS[MB]) || ARENAS[MB], A = A0 && mp.artRot ? { ...A0, rot: (A0.rot || 0) + mp.artRot } : A0; /* (artRot: a picture turned to read the raid's way (Plan's Rouse the Brood)) */ /* (a guide's own fit of a room picture, Oct 21: Debriefing's maps keep ARENAS) */ /* (a guide's map names its boss: Guides shows every boss, not just this pull's) */
   // world frame: the arena image plus the focus area
   const ax0 = A ? A.cx - A.w / A.s / 2 : fx0, ay0 = A ? -A.cy - A.h / A.s / 2 : fy0, ax1 = A ? ax0 + A.w / A.s : fx0 + fs, ay1 = A ? ay0 + A.h / A.s : fy0 + fs;
   const x0 = Math.min(ax0, fx0), y0 = Math.min(ay0, fy0), x1 = Math.max(ax1, fx0 + fs), y1 = Math.max(ay1, fy0 + fs);

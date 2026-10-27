@@ -5475,8 +5475,14 @@ function ppFreeze(mp, T, S, P, M, o) {
   const cb = {}; for (const [g, l] of Object.entries(mp.cbars || {})) cb[g] = l.map((b) => ({ ...b, by: '' }));
   // (the raid lead's markers, drawn 4 yards further out than their spot so whoever stands on one doesn't hide it)
   const mo = PP_MKOUT[mp.boss], wm = PP_MKS.filter((k) => M[k] && (!o.marks || o.marks.includes(k))).map((k) => ({ k, x: cx + M[k][0] + (Array.isArray(mo) ? mo[0] : 0), y: cy + M[k][1] + (Array.isArray(mo) ? mo[1] : (M[k][1] >= 0 ? 1 : -1) * (mo == null ? 4 : mo)) }));
+  // (a picture turned to read the way the raid faces: o.rot turns the raid lead's markers with it (deg, about c in yards), o.artRot the room
+  // picture; o.bands, o.notes and o.badges are its own drawings: soft bands along an edge, text beside the map, number badges on the dots)
+  if (o.rot) { const a = o.rot.deg * Math.PI / 180, c0 = cx + o.rot.c[0], c1 = cy + o.rot.c[1]; wm.forEach((w) => { const dx = w.x - c0, dy = w.y - c1; w.x = c0 + dx * Math.cos(a) - dy * Math.sin(a); w.y = c1 + dx * Math.sin(a) + dy * Math.cos(a); }); }
   const out = { ...mp, frames: null, pts, t: T, ft: T, pauses: [], steps: [], callouts: calls, rings: (mp.rings || []).concat(rings), tags: (o.tags || []).map(([g, tx]) => [g, tx, null, null]), hl: Object.keys(S).filter((g) => (o.hl || []).includes(g)),
     good: [], goodAt: null, bad: [], badAt: null, cbars: o.noBars ? {} : cb, wmarks: wm, liveLeg: false, hlLabel: 'assigned in the note', playerLabel: 'Player (spec icon, class colour)' };
+  if (o.artRot) out.artRot = o.artRot; if (o.badges) out.ppBadges = true;
+  if (o.bands) out.ppBands = o.bands.map((b) => ({ ...b, a: [cx + b.a[0], cy + b.a[1]], b: [cx + b.b[0], cy + b.b[1]] }));
+  if (o.notes) out.ppNotes = o.notes.map((n) => ({ ...n, x: cx + n.x, y: cy + n.y }));
   if (o.focus) out.focus = out.fullAt = { x: cx + o.focus.x, y: cy + o.focus.y, r: o.focus.r }; /* (a guide map shown whole: the user wants the whole arena in each picture) */
   return { out, pm, keep: (o.named || []).map((g) => nm(S[g])).filter(Boolean) };
 }
@@ -5711,7 +5717,8 @@ function ppReadTF(N, P) {
 }
 const TF_VIEW = { x: 50, y: -26, r: 38 }; // (the south-east platform with both bosses off its tip)
 const TF_LR = '#7fd8ff', TF_RR = '#ffc46b', TF_KA = [['front', ['FL', 'FR'], '#e6b450', 'Front'], ['lm', ['L3', 'L4'], '#5aa0ff', 'Left melee'], ['lr', ['L1', 'L2'], TF_LR, 'Left range'], ['rm', ['R3', 'R4'], '#ff9b5a', 'Right melee'], ['rr', ['R1', 'R2'], TF_RR, 'Right range']]; // (Rouse the Brood's kick areas)
-const TF_KVIEW = { x: 46, y: -20, r: 42 }; // (all ten Broodlings and the areas' names)
+const TF_KVIEW = { x: 46, y: -20, r: 42 };
+const TF_UP = [10.39, 18], TF_UPVIEW = { x: 14, y: 72, r: 56 }; // (Rouse the Brood turned: the north frame moved so it lands on the south-east platform turned 120 degrees about the room picture's middle (0, 12); the frame round it) // (all ten Broodlings and the areas' names)
 const TF_QVIEW = { x: 46, y: -19, r: 40 }; // (the same platform a little wider, so the back quadrants' names fit)
 const TF_ROOM = { x: 0, y: 12, r: 84 }; // (the whole room: all three platforms round the pool and the bosses off the north tip, for the markers)
 function ppCardsTF(J, M, U, P) {
@@ -5746,16 +5753,36 @@ function ppCardsTF(J, M, U, P) {
       foot: (si ? 'Set 2 takes the 2nd, 4th and 6th Caustic Deluge. ' : 'Set 1 takes the 1st, 3rd and 5th Caustic Deluge. ') + 'Front is the tip by the bosses; left and right as you face them. Stun or slow the globules that land in your quadrant to break their shields, then low stacks soak.' }); } });
   // Rouse the Brood: a Broodling in every slot; each kick area's pair shaded in its colour and named, its kickers by that pair in their
   // order (front: the tip; melee: the far pair on their side; range: the near pair), the backup in the middle
-  { const K = J.kicks; if (['front', 'lm', 'rm', 'lr', 'rr'].some((x) => K[x].length)) { const w = tf2(), fix = {}, put = new Set(), tags = [], hl = [];
-    Object.values(TF_SLOT).forEach((p, i) => w.add('bl' + i, 'Broodling', 0, p[0], p[1]));
-    const lab = [], PC = [0, 56], dark = (col) => (col === GO || col === TF_LR || col === TF_RR ? '#1a1405' : '#fff');
-    TF_KA.forEach(([key, sl, col, t]) => { const L = K[key] || [], m = sl.map((x) => TF_SLOT[x]), c = [(m[0][0] + m[1][0]) / 2, (m[0][1] + m[1][1]) / 2];
+  // (Design studio's layout, Oct 26: the south-east platform turned 120 degrees so the bosses are at the top: drawn in the north platform's
+  // frame moved by TF_UP, the room picture turned with it)
+  { const K = J.kicks; if (['front', 'lm', 'rm', 'lr', 'rr'].some((x) => K[x].length)) { const k = gdzKit(TF, 3), D = TF_UP, fix = {}, put = new Set(), tags = [], hl = [], bands = [], notes = [], PC = [0, 56];
+    const at = (id, x, y) => { const q = tfIn([x, y]); k.at(0, id, q[0] + D[0], q[1] + D[1]); }, cc = (n) => ((P.get(String(n).toLowerCase()) || {}).color || '#ddd');
+    k.boss('vx', 'Vexhul', 0, TF_VX[0] + D[0], TF_VX[1] + D[1]).boss('it', 'Ithraz', 0, TF_IT[0] + D[0], TF_IT[1] + D[1]);
+    Object.values(TF_SLOT).forEach((p, i) => k.add('bl' + i, 'Broodling', 0, p[0] + D[0], p[1] + D[1]));
+    // (each area: a band through its pair of slots, its kickers in a straight line just inside it (1, 2, 3 along the edge), and its name with
+    // the kickers in order beside it, outside the platform)
+    TF_KA.forEach(([key, sl, col, t]) => { const L = K[key] || [], [a, b] = sl.map((x) => TF_SLOT[x]), c = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], len = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, u = [(b[0] - a[0]) / len, (b[1] - a[1]) / len];
+      const v = [c[0] - PC[0], c[1] - PC[1]], vu = v[0] * u[0] + v[1] * u[1], nn = [v[0] - vu * u[0], v[1] - vu * u[1]], nl = Math.hypot(nn[0], nn[1]) || 1, n = [nn[0] / nl, nn[1] / nl];
+      bands.push({ a: [a[0] - u[0] * 3 + D[0], a[1] - u[1] * 3 + D[1]], b: [b[0] + u[0] * 3 + D[0], b[1] + u[1] * 3 + D[1]], w: 8, color: col });
+      // (the targets come first (the user, Oct 26: "they are interrupting, so its more important to know where there targets are"): kicker 1
+      // takes the area's first Broodling, kicker 2 the second, a 3rd and 4th double up on them in the same order (the second spawn has doubles);
+      // the front kicker covers both at the tip. Each kicker stands just inside their Broodling with a line to it, and each Broodling is
+      // labelled beside it, outside the platform: its slot and who kicks it)
+      const T = key === 'front' ? [sl] : sl.map((x) => [x]), byT = T.map(() => []), SN = (x) => x === 'FL' || x === 'FR' ? 'Front' : (x[0] === 'L' ? 'Left ' : 'Right ') + x.slice(1);
+      L.forEach((nm, i) => { const s = ppSlot(P, nm, put); if (!s) return; fix[s] = nm; hl.push(s); tags.push([s, String(i + 1)]); byT[i % T.length].push([s, nm, i]); });
+      T.forEach((tg, ti) => { const q0 = tg.map((x) => TF_SLOT[x]), tc = [q0.reduce((z, q) => z + q[0], 0) / q0.length, q0.reduce((z, q) => z + q[1], 0) / q0.length], ks = byT[ti]; if (!ks.length) return;
+        const w0 = [PC[0] - tc[0], PC[1] - tc[1]], wl = Math.hypot(w0[0], w0[1]) || 1, wi = [w0[0] / wl, w0[1] / wl];
+        ks.forEach(([s, , ], j) => { const o = (j - (ks.length - 1) / 2) * 4.2; at(s, tc[0] + wi[0] * 8 + u[0] * o, tc[1] + wi[1] * 8 + u[1] * o); q0.forEach((q) => k.link({ from: s, toYd: { x: q[0] + D[0], y: q[1] + D[1] }, t0: 0, t1: 3, color: col, dash: true })); });
+        const an = Math.abs(n[0]) < 0.5 ? 'middle' : n[0] < 0 ? 'end' : 'start', lp = [tc[0] + n[0] * (an === 'middle' ? 9 : 5) + D[0], tc[1] + n[1] * (an === 'middle' ? 9 : 5) + D[1]];
+        notes.push({ x: lp[0], y: lp[1], anchor: an, lines: [{ size: 0.85, parts: [{ t: SN(tg[0]).toUpperCase(), c: col, w: 800 }] }].concat(ks.map(([, nm, i]) => ({ size: 0.95, parts: [{ t: (i + 1) + ' ', c: '#f3d48a', w: 800 }, { t: nm, c: cc(nm), w: 700 }] }))) }); }); });
+    (K.backup || []).forEach((nm, i) => { const s = ppSlot(P, nm, put); if (!s) return; fix[s] = nm; hl.push(s); tags.push([s, 'Backup']); at(s, -2 + i * 4, 55); });
+    if ((K.backup || []).length) notes.push({ x: D[0], y: 35 + D[1], anchor: 'middle', lines: [{ size: 0.92, parts: [{ t: 'BACKUP  ', c: '#c9ced8', w: 800 }].concat(K.backup.flatMap((nm, i) => (i ? [{ t: ' · ', c: '#9aa0ac' }] : []).concat([{ t: nm, c: cc(nm), w: 700 }]))) }] });
+    /* (old layout below, replaced) */ if (0) TF_KA.forEach(([key, sl, col, t]) => { const L = [], m = sl.map((x) => TF_SLOT[x]), c = [(m[0][0] + m[1][0]) / 2, (m[0][1] + m[1][1]) / 2], w = { ring() {}, P: (q) => q, at() {} }, lab = [], PC = [0, 56], dark = () => '';
       const zr = Math.hypot(m[0][0] - m[1][0], m[0][1] - m[1][1]) / 2 + 4.5; w.ring({ x: c[0], y: c[1], r: zr, fx: 'zone', t0: 0, dur: 5, color: col, cn: t, label: false });
       const v = [PC[0] - c[0], PC[1] - c[1]], d = Math.hypot(v[0], v[1]) || 1, u = [v[0] / d, v[1] / d], s0 = [c[0] + u[0] * 7, c[1] + u[1] * 7], pp = [-u[1], u[0]];
       L.forEach((n, i) => { const s = ppSlot(P, n, put); if (!s) return; fix[s] = n; hl.push(s); tags.push([s, String(i + 1)]); const o = (i - (L.length - 1) / 2) * 6.2; w.at(0, s, s0[0] + pp[0] * o, s0[1] + pp[1] * o); });
       if (L.length) { const q = w.P(c); lab.push([{ rx: q[0], ry: q[1], r: zr }, t, col, dark(col), 0, q[1] < -24]); } }); /* (the area's name on its shaded area: over it, or under it for the areas low in the picture) */
-    (K.backup || []).forEach((n, i) => { const s = ppSlot(P, n, put); if (!s) return; fix[s] = n; hl.push(s); tags.push([s, 'Backup']); w.at(0, s, -2 + i * 4, 52); });
-    cards.push({ id: 'kicks', ph: 1, when: 'Every set', title: 'Rouse the Brood (Kick the Broodlings in your area)', map: ppFreeze(w.done({ title: 'Rouse the Brood', focus: { x: 0, y: 56, r: 30 } }), 1, ppSeat(P, fix), P, M, { hl, named: hl, tags, labels: lab, focus: TF_KVIEW }),
+    cards.push({ id: 'kicks', ph: 1, when: 'Every set', title: 'Rouse the Brood (Kick the Broodlings in your area)', map: ppFreeze(k.done({ title: 'Rouse the Brood', focus: { x: D[0], y: 60 + D[1], r: 30 } }), 1, ppSeat(P, fix), P, M, { hl, named: hl, tags, badges: true, bands, notes, marks: [], artRot: -120, rot: { deg: 120, c: [0, 12] }, focus: TF_UPVIEW }),
       legend: [['front', 'Front: the two at the tip'], ['lm', 'Left melee: left 3 and 4'], ['rm', 'Right melee: right 3 and 4'], ['lr', 'Left range: left 1 and 2'], ['rr', 'Right range: right 1 and 2'], ['backup', 'Backup']].filter(([key]) => K[key].length)
         .map(([key, t]) => ppG(t, key === 'backup' ? Q : (TF_KA.find((a) => a[0] === key) || [])[2], K[key].map((n, i) => ppI(P, n, key === 'backup' ? 'Covers a miss' : 'Kick ' + (i + 1))))),
       foot: 'Kick the Broodlings in your coloured area, in your number order. Left and right as you face the bosses; the backup covers a missed kick.' }); } }
@@ -6178,8 +6205,11 @@ const PP_CSS = ['fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-opacit
 // guide's close view, so in a picture's wider frame it's drawn smaller (about 3% of the frame's width, never bigger than before). Pills
 // shrink about their anchor and stay put; each name then takes the first free side of its own dot (above, below, right, left) that covers
 // no dot, marker, pill or other name, and a name with no free side is left off: the list beside the map names everyone)
-function ppDeclutter(sv) {
-  const vb = sv.viewBox.baseVal; if (!vb || !vb.width) return; const f = Math.min(1, vb.width * 0.024 / 12); /* (text and labels: about 2.4% of the frame's width) */
+function ppDeclutter(sv, out) {
+  const vb = sv.viewBox.baseVal; if (!vb || !vb.width) return; out = out || {};
+  const [ox, oy] = (sv.dataset.o || '0,0').split(',').map(Number), yu = +sv.dataset.yd || 1, SX = (x) => ((x - ox) * yu).toFixed(1), SY = (y) => ((-y - oy) * yu).toFixed(1); /* (map yards to the picture's units) */
+  if (out.ppBands) { const h = out.ppBands.map((b) => '<line x1="' + SX(b.a[0]) + '" y1="' + SY(b.a[1]) + '" x2="' + SX(b.b[0]) + '" y2="' + SY(b.b[1]) + '" stroke="' + b.color + '" stroke-opacity=".34" stroke-width="' + (b.w * yu).toFixed(1) + '" stroke-linecap="round"/>').join('');
+    const first = sv.querySelector('g.ic'); if (first) first.insertAdjacentHTML('beforebegin', h); else sv.insertAdjacentHTML('beforeend', h); } /* (soft rounded bands under everything else) */ const f = Math.min(1, vb.width * 0.024 / 12); /* (text and labels: about 2.4% of the frame's width) */
   const bx = (x0, y0, x1, y1) => ({ x0, y0, x1, y1 }), hit = (a, b) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1, taken = [], icons = [];
   sv.querySelectorAll('g.icl').forEach((g) => { const x = +g.dataset.x, y = +g.dataset.y + (g.querySelector('[data-up]') ? 8 : -8); let b; try { b = g.getBBox(); } catch (e) { return; } /* (y: the pointer's tip) */
     if (f < 1) g.setAttribute('transform', 'translate(' + x + ' ' + y + ') scale(' + f.toFixed(3) + ') translate(' + -x + ' ' + -y + ')');
@@ -6195,6 +6225,9 @@ function ppDeclutter(sv) {
   sv.querySelectorAll('text.ml:not(.mlp)').forEach((t) => { const g = t.parentNode; if (!g || !g.dataset || g.dataset.y == null) return; const Y = +g.dataset.y, y0 = +t.getAttribute('y');
     t.style.fontSize = (11 * f).toFixed(2) + 'px'; t.style.strokeWidth = (3 * f).toFixed(2) + 'px'; if (isFinite(y0)) t.setAttribute('y', (Y + (y0 - Y) * ds).toFixed(1)); });
   sv.querySelectorAll('text.mlp').forEach((t) => { const g = t.parentNode, X = +g.dataset.x, Y = +g.dataset.y, r = 9 * ds;
+    if (out.ppBadges) { const tg = String((t.querySelector('tspan') || {}).textContent || '').trim(), ch = /^backup$/i.test(tg) ? 'B' : tg; /* (badges: a gold number on the dot, no name) */
+      if (ch) { const bx0 = X + 5.2 * ds, by0 = Y - 5.2 * ds; sv.insertAdjacentHTML('beforeend', '<circle cx="' + bx0.toFixed(1) + '" cy="' + by0.toFixed(1) + '" r="' + (4.6 * ds).toFixed(2) + '" fill="#f3c969" stroke="#000" stroke-width="' + (0.9 * ds).toFixed(2) + '"/>' +
+        '<text x="' + bx0.toFixed(1) + '" y="' + (by0 + 2 * ds).toFixed(1) + '" text-anchor="middle" style="font:800 ' + (5.8 * ds).toFixed(2) + 'px Barlow, sans-serif" fill="#1a1405">' + esc(ch) + '</text>'); } t.remove(); return; }
     t.style.fontSize = (12 * f).toFixed(2) + 'px'; t.style.strokeWidth = (3 * f).toFixed(2) + 'px';
     // (the four sides close in, then the four corners, then the four sides a step further out)
     const h = 12 * f, side = (d) => [['middle', X, Y - d - 0.15 * h], ['middle', X, Y + d + 0.85 * h], ['start', X + d, Y + 0.35 * h], ['end', X - d, Y + 0.35 * h]];
@@ -6206,12 +6239,16 @@ function ppDeclutter(sv) {
     for (let i = 0; i < C.length; i++) { const [an, x, y] = C[i]; t.style.textAnchor = an; t.setAttribute('x', x.toFixed(1)); t.setAttribute('y', y.toFixed(1)); let b; try { b = t.getBBox(); } catch (e) { return; }
       const q = bx(b.x - 1, b.y - 1, b.x + b.width + 1, b.y + b.height + 1); if (q.x0 < vb.x + 3 || q.x1 > vb.x + vb.width - 3 || q.y0 < vb.y + 3 || q.y1 > vb.y + vb.height - 3) continue; /* (a small margin inside the picture) */
       const n = taken.filter((o) => hit(o, q)).length + icons.filter((o) => (Math.abs(o.x - X) > 0.5 || Math.abs(o.y - Y) > 0.5) && hit(o.b, q)).length; if (!n) { put(C[i], q, i); return; } if (!best || n < best.n) best = { c: C[i], q, i, n }; }
-    if (best) put(best.c, best.q, best.i); else t.remove(); }); }
+    if (best) put(best.c, best.q, best.i); else t.remove(); });
+  // (notes beside the map: a block of lines in colour (an area's name, then its kickers in order), centred on its spot)
+  for (const n of out.ppNotes || []) { const sz = (k) => (12 * f * (k || 1)), H = n.lines.reduce((a, l) => a + sz(l.size) * 1.25, 0); let y = +SY(n.y) - H / 2;
+    for (const l of n.lines) { y += sz(l.size) * 1.1; sv.insertAdjacentHTML('beforeend', '<text x="' + SX(n.x) + '" y="' + y.toFixed(1) + '" text-anchor="' + (n.anchor || 'middle') + '" style="font:600 ' + sz(l.size).toFixed(2) + 'px Barlow, sans-serif;paint-order:stroke;stroke:#0f1117;stroke-width:' + (2.6 * f).toFixed(2) + 'px">' +
+      l.parts.map((p) => '<tspan fill="' + p.c + '"' + (p.w ? ' font-weight="' + p.w + '"' : '') + '>' + esc(p.t) + '</tspan>').join('') + '</text>'); y += sz(l.size) * 0.15; } } }
 async function ppMapImg(fz) {
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:-10000px;top:0;width:700px;pointer-events:none'; box.className = 'pp-off'; box.innerHTML = miniMap(fz.out, fz.pm); document.body.appendChild(box);
   try { const sv = box.querySelector('svg.zmap') || box.querySelector('svg'); if (!sv) return null;
     sv.querySelectorAll('text.mlp').forEach((t) => { if (!fz.keep.some((n) => t.textContent === n || t.textContent.startsWith(n + ' '))) t.remove(); });
-    ppDeclutter(sv);
+    ppDeclutter(sv, fz.out);
     const cl = sv.cloneNode(true), walk = (a, b) => { const cs = getComputedStyle(a); b.setAttribute('style', PP_CSS.map((k) => k + ':' + cs.getPropertyValue(k)).join(';')); for (let i = 0; i < a.children.length; i++) walk(a.children[i], b.children[i]); };
     walk(sv, cl); cl.removeAttribute('style'); cl.setAttribute('xmlns', 'http://www.w3.org/2000/svg'); cl.setAttribute('width', 1000); cl.setAttribute('height', 1000);
     // (the round clip for spec icons lives in the page's shared defs: the picture gets its own copy)
