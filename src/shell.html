@@ -7729,6 +7729,23 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 @media (max-width: 640px) { html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-marks:has(.pj-pic[data-pj="marks"]) { grid-template-columns: minmax(0, 1fr); } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .plb-marks:has(.pj-pic[data-pj="marks"]) > .pj-pics { grid-column: 1; grid-row: auto; margin-top: 10px !important; } }
 /* ===== Design studio round 67 (Oct 26): the changes box inside the Tonight panel spans its width. Owner: the Design studio chat. ===== */
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .panel.tn > .panel.plw { grid-column: 1 / -1 !important; grid-row: auto !important; width: auto; margin: 4px 0 10px; }
+/* ===== Design studio round 68 (Oct 26): the Jobs cards in the list look (mock B): a header band per card, role chips, a one-line what-it-is,
+   tighter rows, the On this page jump line. Owner: the Design studio chat. ===== */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc { padding: 0 14px 12px; overflow: hidden; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .plb-rch { margin: 0 -14px 8px; padding: 9px 14px; background: rgba(255,255,255,.035); border-bottom: 1px solid rgba(255,255,255,.07); gap: 8px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .plb-rch > b { font-size: 15px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .plb-rch > .plb-chips { display: inline-flex; gap: 4px; flex: none; order: 0; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .plb-rch > .plb-chips > .chip { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: .04em; line-height: 1.5; background: rgba(255,255,255,.07); color: var(--muted); }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .plb-what { margin: 0 0 6px; font-size: 12.5px; color: var(--muted); }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc .plb-rr { padding-top: 6px; padding-bottom: 6px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc.plb-rc0 { padding-top: 0; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc.plb-rc0 > .plb-rch { border-bottom: 0; margin-bottom: 0; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .pj-pics { margin-top: 8px; padding-top: 8px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc.plb-marks:has(.pj-pic[data-pj="marks"]) > .plb-rch { grid-column: 1 / -1; margin: 0 -14px 8px; }
+/* the On this page line */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page nav.pg-jump { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0 0 10px; font-size: 12px; color: var(--muted); }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page nav.pg-jump a { color: var(--gold); font-weight: 600; text-decoration: none; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page nav.pg-jump a:hover { text-decoration: underline; }
 </style>
 
 
