@@ -1954,8 +1954,8 @@ const PATCH_NOTES = [
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
     { t: 'Plan: a picture for every job', d: 'On every boss (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
   ], n: [
+    'Plan, job pictures: the class icons are smaller, so they don\'t hide the spots, rings and markers. Who is who stays in the list beside each picture.',
     'A raid night opened once is kept for everyone: the next raider, anywhere in the world, opens its pulls from Debrief\'s own storage instead of waiting on Warcraft Logs.',
-    'Plan, job pictures: where a group is too crowded for icons and names together (big soak groups, Ula\'tek\'s transition groups), the picture shows a block of their names in class colour where they stand instead of the icons.',
     'Plan, job pictures by mechanic: kick and grip pictures show each target with a line from its player (The Coiled Altar\'s Spiritcackle, Nymrissa\'s murlocs, Kith\'ix\'s beetles); Kith\'ix\'s fear dispellers wait at their markers; big soak groups show their ring and label with the names in the list beside it; raid markers are drawn on top.',
     'Plan, The Twin Fangs: the Broodling kicks picture is turned so the bosses are at the top (left is left, right is right). Each kick area is a band along its edge with numbered kickers just inside it, and each area\'s name and kickers in order sit beside it.',
     'Plan, The Twin Fangs: the Caustic Deluge orb CC picture is just the platform\'s four quadrants, named, with small globules; who crowd controls which set stays in the list beside it.',
@@ -2005,7 +2005,7 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
-    'Plan, The Twin Fangs: the Ravenous Feast picture had the hits in the wrong order. Hits go Left, Right, Center, and the Tainted Blood orbs Right, Left, Center; each group\'s label says its hit and its orb.',
+    'The Twin Fangs, Ravenous Feast: the boss guide, the Plan job and its picture now give one order: Left, Right, Center. Each group soaks its own Tainted Blood orb about 2 seconds after its hit, so the orbs go in that order too.',
     'Plan, Markers: the markers you drag no longer sit in a grey box.',
     'Plan, Markers: changing a marker to a mark that wasn\'t on the map (right-click) left the old mark on the same spot too, so two markers sat on one point. Now only the new mark is there.',
     'Plan, The Twin Fangs: the raid markers sit one on each of the three platforms, where raids stand through that platform\'s two sets (star north, circle south-west, diamond south-east, in the order most raids take them), instead of eight bunched on one platform. The Raid markers map shows the whole room.',
@@ -4333,7 +4333,7 @@ const NDZ_BUILD = {
       slots: [{ label: 'Curse Unmarked Add', want: 0 }, { label: 'Curse Raid-Marked Add', want: 1 }] },
   ],
   'The Twin Fangs': [
-    { key: 'feast', title: 'Ravenous Feast groups', icon: 'Ravenous Feast', head: 'Ravenous Feast and Tainted Blood Groups', explain: 'Ravenous Feast smashes three times. Anyone hit can\'t take another hit (Feasted), so three groups take one strike each, in order: Left first, Right second, Center third (the strikes knock them left, right and to the front). Then each group soaks a Tainted Blood orb: the group knocked right first, then left, then center.', tip: 'A third of the raid each, with a healer in every group. Tanks soak too.',
+    { key: 'feast', title: 'Ravenous Feast groups', icon: 'Ravenous Feast', head: 'Ravenous Feast and Tainted Blood Groups', explain: 'Ravenous Feast smashes three times. Anyone hit can\'t take another hit (Feasted), so three groups take one strike each, in order: Left first, Right second, Center third (the strikes knock them left, right and to the front). Then each group soaks its own Tainted Blood orb about 2 seconds after its hit, so the orbs go in the same order.', tip: 'A third of the raid each, with a healer in every group. Tanks soak too.',
       slots: [{ label: 'Left', want: 6 }, { label: 'Right', want: 6 }, { label: 'Center', want: 6 }], exclusive: true },
     { key: 'kicks', mythic: true, title: 'Broodling kicks', icon: 'Rouse the Brood', head: 'Broodling Kicks - Area Assign', explain: 'Broodlings come in on both sides. Each area kicks its own Broodlings in order; the backup kicker covers a miss.', tip: 'Melee areas need melee kicks, range areas ranged ones. Healers can\'t kick, except a Restoration Shaman.',
       slots: [{ label: 'Front Melee', order: true, want: 1 }, { label: 'Left Melee', order: true, want: 4 }, { label: 'Right Melee', order: true, want: 4 }, { label: 'Left Range', order: true, want: 3 }, { label: 'Right Range', order: true, want: 3 }, { label: 'Backup Kicker', want: 1 }] },

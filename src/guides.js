@@ -3325,7 +3325,7 @@ const TF_MEL = ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7'], TF_RNG = ['r1', 'h1',
 const TF_HOME = (() => { const H = { t1: [-11, 64], t2: [11, 64] }; TF_MEL.forEach((id, i) => { H[id] = [-18 + i * 6, i % 2 ? 51 : 56]; }); const RS = [[-24, 44], [-14, 40], [-4, 44], [6, 40], [16, 44], [26, 40], [-20, 34], [-8, 32], [4, 34], [14, 32], [24, 33]]; TF_RNG.forEach((id, i) => { H[id] = RS[i]; }); return H; })();
 function tfHome(w, t, hold, skip) { Object.entries(TF_HOME).forEach(([id, q]) => { if (skip && skip.includes(id)) return; if (hold != null) w.hold(hold, id); w.at(t, id, q[0], q[1]); }); return w; }
 function tfBosses(w, t) { w.boss('vx', 'Vexhul', t || 0, TF_VX[0], TF_VX[1]).boss('it', 'Ithraz', t || 0, TF_IT[0], TF_IT[1]); return w; }
-// Ravenous Feast's groups: knocked right, knocked left, and the front group
+// Ravenous Feast's groups: knocked right, knocked left, and the center group (knocked to the front)
 const TF_GR = ['m6', 'm7', 'h2', 'r4', 'r7', 'h4'], TF_GL = ['m1', 'm2', 'r1', 'h1', 'r5', 'h3'], TF_GF = ['m3', 'm4', 'm5', 'r2', 'r3', 'r6'];
 // the ten Broodling slots on platform 1 (the kill), named as the raid calls them
 const TF_SLOT = { L1: [-37, 43], L2: [-33, 51], L3: [-30, 65], L4: [-27, 72], R1: [39, 43], R2: [33, 50], R3: [30, 64], R4: [26, 71], FL: [-6, 80], FR: [6, 80] };
@@ -3460,29 +3460,29 @@ const TF_M = {
     return w.done({ title: 'Stir the Depths: step into the gaps', focus: { x: 0, y: 50, r: 30 }, hlLabel: 'players stepping into a gap' });
   },
   // Ravenous Feast (Ithraz): a big soak smashed three times (split between everyone in it, -1 venom stack each, a knockback). Heroic and
-  // up, each player can only take one hit, so three groups: knocked right first, knocked left second, the front group last. Mythic: after
-  // each hit a Tainted Blood orb appears (a soak, 6 or more; one left wipes the raid): the right group soaks the first, the left the second,
-  // the front the third (fail: the third orb left alone)
+  // up, each player can only take one hit, so three groups: left first, right second, the center group last (the user's kill, Oct 26).
+  // Mythic: after each hit a Tainted Blood orb appears (a soak, 6 or more; one left wipes the raid) and the group just hit soaks it about
+  // 2 seconds later (top kills), so the orbs go in the same order (fail: the third orb left alone)
   feast(fail, d, o) {
     const myth = d !== 'h', plat = o && o.p != null ? o.p : 2, L = 21, w = tfKit(L, plat), k = w.k, C = [4, 56]; /* (where our kill's hits landed) */ tfBosses(w); tfHome(w, 0); k.cast('it', 'Ravenous Feast', 0.4, 3.4);
     const grp = (ids, c, r, t, hold) => ids.forEach((id, i) => { const [dx, dy] = gdzSpot(i, ids.length, r); w.hold(hold, id).at(t, id, c[0] + dx, c[1] + dy); });
-    const G = [[TF_GR, 4.4, [6, 0]], [TF_GL, 7.4, [-6, 0]], [TF_GF, 10.4, [0, 6]]], WAIT = [[22, 44], [-22, 44], [12, 40]];
+    const G = [[TF_GL, 4.4, [-6, 0]], [TF_GR, 7.4, [6, 0]], [TF_GF, 10.4, [0, 6]]], WAIT = [[-22, 44], [22, 44], [12, 40]];
     G.forEach(([ids], j) => j && grp(ids, WAIT[j], 6, 3.4, 0.2));
     const SHORT = fail && !myth; /* (Heroic's mistake: only three take the last hit) */
     G.forEach(([ids0, t, dv], j) => { const ids = SHORT && j === 2 ? ids0.slice(0, 3) : ids0; grp(ids, [C[0] + dv[0], C[1] + dv[1]], SHORT && j === 2 ? 3 : 4.5, t - 0.4, Math.max(0.2, t - 4)); w.ring({ x: C[0], y: C[1], r: 9, fx: 'soak', t0: t - 2.6, at: t, dur: 2.8, color: '#ff8a8a', cn: 'Ravenous Feast', legend: 'Ravenous Feast: split between everyone in it, -1 stack, then a knockback' });
-      const kb = j === 0 ? [14, 0] : j === 1 ? [-14, 0] : [0, 8]; grp(ids, [C[0] + dv[0] + kb[0], C[1] + dv[1] + kb[1]], 6, t + 1, t + 0.1); w.call(t, t + 1.3, 'Knocked back', { x: C[0], y: C[1] - 13, color: '#ff8a8a', ink: '#200a0a' }); });
-    w.call(0.6, 3.4, 'Right group first', { x: 18, y: 64, color: '#ff8a8a', ink: '#200a0a' });
+      const kb = j === 0 ? [-14, 0] : j === 1 ? [14, 0] : [0, 8]; grp(ids, [C[0] + dv[0] + kb[0], C[1] + dv[1] + kb[1]], 6, t + 1, t + 0.1); w.call(t, t + 1.3, 'Knocked back', { x: C[0], y: C[1] - 13, color: '#ff8a8a', ink: '#200a0a' }); });
+    w.call(0.6, 3.4, 'Left group first', { x: -18, y: 64, color: '#ff8a8a', ink: '#200a0a' });
     if (SHORT) { TF_GF.slice(0, 3).forEach((id, i) => k.oops(id, 10.6 + i * 0.2)); k.step(0.4).step(4.4).step(10.4);
       w.pause(10.9, 'Only three stood in the third hit. Split between too few, it killed them.', { x: C[0], y: C[1] + 6, r: 9 });
       return w.done({ title: 'Mistake: too few in the third hit', focus: { x: 2, y: 54, r: 28 }, badLabel: 'too few in the hit' }); }
-    if (myth) { const OB = [[24, 40], [-24, 40], [4, 72]]; OB.forEach(([x, y], j) => { const t0 = 5 + j * 3, land = t0 + 4, gp = G[j][0], miss = fail && j === 2;
+    if (myth) { const OB = [[-24, 40], [24, 40], [4, 72]]; OB.forEach(([x, y], j) => { const t0 = 5 + j * 3, land = t0 + 4, gp = G[j][0], miss = fail && j === 2;
         w.ring({ x, y, r: 5, fx: 'soak', t0, at: land, dur: land - t0 + 0.4, color: '#d0303a', cn: 'Tainted Blood', legend: 'Mythic: a Tainted Blood orb: 6 or more soak it, or the raid wipes' });
         if (!miss) gp.forEach((id, i) => { const [dx, dy] = gdzSpot(i, gp.length, 4); w.hold(land - 2.6, id).at(land - 0.3, id, x + dx, y + dy); if (!fail) { const q = TF_HOME[id]; w.hold(land + 0.4, id).at(land + 0.4 + Math.max(3.6, Math.hypot(q[0] - x - dx, q[1] - y - dy) / 8.5), id, q[0], q[1]); } }); });
       if (fail) { gdzFailBlast(k, 15.6, 'An empty Tainted Blood orb: a wipe', ...w.P([0, 44]), ['m7', 'h2'], 'Tainted Blood'); k.step(0.4).step(4.4).step(10.4).step(15.6);
-        w.pause(15.2, 'The front group took the third hit but never went to the third orb. Nobody soaked it: Tainted Blood wiped the raid.', { x: 0, y: 70, r: 8 });
+        w.pause(15.2, 'The center group took the third hit but never went to the third orb. Nobody soaked it: Tainted Blood wiped the raid.', { x: 0, y: 70, r: 8 });
         return w.done({ title: 'Mistake: the third orb left alone', focus: { x: 0, y: 42, r: 30 } }); } }
-    k.ring1(TF_GR.slice(0, 2).concat(TF_GL.slice(0, 2), TF_GF.slice(0, 2))).step(0.4).step(4.4).step(7.4).step(10.4);
-    w.pause(3.4, myth ? 'Three hits, three groups: the right group first, then the left, then the front. After each hit the group knocked out takes its Tainted Blood orb.' : 'Three hits, three groups: the right group first, then the left, then the front. Nobody takes two.', { x: 0, y: 44, r: 20 });
+    k.ring1(TF_GL.slice(0, 2).concat(TF_GR.slice(0, 2), TF_GF.slice(0, 2))).step(0.4).step(4.4).step(7.4).step(10.4);
+    w.pause(3.4, myth ? 'Three hits, three groups: the left group first, then the right, then the center. Each group soaks its own Tainted Blood orb right after its hit.' : 'Three hits, three groups: the left group first, then the right, then the center. Nobody takes two.', { x: 0, y: 44, r: 20 });
     return w.done({ title: 'Ravenous Feast: three groups, one hit each', focus: { x: 0, y: 42, r: 30 }, hlLabel: 'two from each group' });
   },
   // the intermission, Submerge: both bosses dive; Vexhul's Vile Flood beam turns round the room from the pool (the orbs circling him spin
@@ -3529,7 +3529,7 @@ const TF_FAIL = {
   ichor: { name: 'A puddle in the middle', what: 'A Coiling Ichor target drops their puddle in the middle of the platform: it stays there all platform.', do: ['Coiling Ichor goes out.', 'One target stays in the middle.', 'A puddle where the raid needs room.'], map: (d) => TF_M.ichor(true, d) },
   waves: { name: 'Hit by a wave', what: 'A player doesn\'t step into a gap as a set of waves rolls in: another venom stack.', do: ['Waves roll in from behind.', 'One player doesn\'t step into a gap.', 'Hit: +1 stack.'], map: (d) => TF_M.waves(true, d) },
   feastH: { name: 'Too few in the third hit', what: 'Only three players stand in the third Ravenous Feast hit: split between too few, it kills them.', do: ['Three Feast hits.', 'Only three take the last.', 'Split too few ways: they die.'], map: (d) => TF_M.feast(true, 'h') },
-  feast: { name: 'The third orb left alone', what: 'Nobody soaks the third Tainted Blood orb: it wipes the raid.', do: ['Ithraz starts the Feast.', 'The right and left groups take their hits and orbs.', 'The front group takes the third hit, then skips its orb.', 'Tainted Blood: a wipe.'], map: (d) => TF_M.feast(true, d) },
+  feast: { name: 'The third orb left alone', what: 'Nobody soaks the third Tainted Blood orb: it wipes the raid.', do: ['Ithraz starts the Feast.', 'The left and right groups take their hits and orbs.', 'The center group takes the third hit, then skips its orb.', 'Tainted Blood: a wipe.'], map: (d) => TF_M.feast(true, d) },
   submerge: { name: 'Caught by the beam', what: 'A player stays where the Vile Flood beam starts: it turns straight over them, more venom stacks.', do: ['They dive.', 'One player stays where the beam starts.', 'Hit: more stacks.'], map: (d) => TF_M.submerge(true, d) },
 };
 // ---- the whole fight, by Wolfthorn's Mythic kill's clock (6:43)
@@ -3620,9 +3620,9 @@ GDZ['The Twin Fangs'] = {
         { id: 'waves', fail: TF_FAIL.waves, name: 'Stir the Depths (Step into the gaps)', spell: 'Stir the Depths', what: 'Raid-wide pulses, and sets of small waves rolling in from behind the raid, each set from its own direction: left, right or middle, in an order that changes. Each wave that hits you is another venom stack.',
           do: ['Tanks look back and call where each set comes from: left, right or middle.', 'Sets of small waves roll in from behind, one after another.', 'Step sideways into a gap between the waves before each set reaches you.'], line: 'Tanks call where each set of waves comes from; step into a gap before it reaches you.',
           map: (d, o) => TF_M.waves(false, d, o) },
-        { id: 'feast', fail: TF_FAIL.feast, h: { fail: TF_FAIL.feastH }, name: 'Ravenous Feast (Three groups, one hit each)', spell: 'Ravenous Feast', what: 'Ithraz smashes a big soak three times: split between everyone in it, one venom stack off each, then a knockback. A player can only take one hit.', line: 'Three hits, one per group: right, then left, then front, six or more in each.',
-          do: ['Right group takes the first hit, and is knocked right.', 'Left group takes the second, knocked left.', 'Front group takes the third.', 'Six or more in each hit.'],
-          m: { what: 'Ithraz smashes a big soak three times: split between everyone in it, one venom stack off each, then a knockback. A player can only take one hit. After each hit a Tainted Blood orb appears: unsoaked, it wipes the raid.', do: ['Right group takes the first hit, then its Tainted Blood orb.', 'Left group takes the second hit and the second orb.', 'Front group takes the third hit and the last orb.', 'Six or more in each.'], line: 'Three hits, one per group: right, then left, then front, and each group then soaks its Tainted Blood orb.', plan: ['Always the same order, even when the orbs come out the other way round.', 'Mind where each hit throws you: never into a Coiling Ichor puddle.', 'Tanks split into the first two groups so they get back to their bosses in time.', 'Each orb gives you about 8 seconds to get there.', 'An immunity can\'t soak an orb alone any more (a hotfix): six or more in each.'] },
+        { id: 'feast', fail: TF_FAIL.feast, h: { fail: TF_FAIL.feastH }, name: 'Ravenous Feast (Three groups, one hit each)', spell: 'Ravenous Feast', what: 'Ithraz smashes a big soak three times: split between everyone in it, one venom stack off each, then a knockback. A player can only take one hit.', line: 'Three hits, one per group: left, then right, then center, six or more in each.',
+          do: ['Left group takes the first hit, and is knocked left.', 'Right group takes the second, knocked right.', 'Center group takes the third, knocked to the front.', 'Six or more in each hit.'],
+          m: { what: 'Ithraz smashes a big soak three times: split between everyone in it, one venom stack off each, then a knockback. A player can only take one hit. After each hit a Tainted Blood orb appears: unsoaked, it wipes the raid.', do: ['Left group takes the first hit, then its Tainted Blood orb.', 'Right group takes the second hit and the second orb.', 'Center group takes the third hit and the last orb.', 'Six or more in each.'], line: 'Three hits, one per group: left, then right, then center, and each group then soaks its Tainted Blood orb.', plan: ['Each group soaks its own orb about 2 seconds after its hit, so the orbs go in the same order.', 'Mind where each hit throws you: never into a Coiling Ichor puddle.', 'Tanks split into the first two groups so they get back to their bosses in time.', 'Each orb gives you about 8 seconds to get there.', 'An immunity can\'t soak an orb alone any more (a hotfix): six or more in each.'] },
           map: (d, o) => TF_M.feast(false, d, o) },
       ],
       tiles: [
@@ -5485,7 +5485,6 @@ function ppFreeze(mp, T, S, P, M, o) {
   if (o.lines) out.links = (mp.links || []).concat(o.lines.map(([from, to, color]) => ({ from, to: typeof to === 'string' ? to : undefined, toPt: Array.isArray(to) ? { x: to[0], y: to[1] } : undefined, t0: -1e9, t1: 1e9, color: color || '#e9e4d6', dash: true })));
   // (no names on the dots of a big group (5 or more under one label: its ring and label show where, the list beside the map says who), or
   // on any dot with o.noNames)
-  out.ppGroups = (o.labels || []).filter(([ids]) => Array.isArray(ids) && ids.length >= 5).map(([ids]) => ids.map((g) => nm(S[g])).filter(Boolean));
   out.ppNoName = (o.noNames ? Object.values(S).map(nm) : (o.labels || []).filter(([ids]) => Array.isArray(ids) && ids.length >= 5).flatMap(([ids]) => ids.map((g) => nm(S[g])))).filter(Boolean);
   if (o.bands) out.ppBands = o.bands.map((b) => ({ ...b, a: [cx + b.a[0], cy + b.a[1]], b: [cx + b.b[0], cy + b.b[1]] }));
   if (o.notes) out.ppNotes = o.notes.map((n) => ({ ...n, x: cx + n.x, y: cy + n.y }));
@@ -5799,16 +5798,16 @@ function ppCardsTF(J, M, U, P) {
         .map(([key, t]) => ppG(t, key === 'backup' ? Q : (TF_KA.find((a) => a[0] === key) || [])[2], K[key].map((n, i) => ppI(P, n, key === 'backup' ? 'Covers a miss' : 'Kick ' + (i + 1))))),
       foot: 'Kick the Broodlings in your coloured area, in your number order. Left and right as you face the bosses; the backup covers a missed kick.' }); } }
   // Ravenous Feast: the three groups at their Tainted Blood orbs (right, left, front), the Feast in the middle. The hits go Left, Right,
-  // Center; the orbs go to the group knocked right first, then left, then center (Plan's card, dad6293; notes/Guides/Bosses/6)
+  // Center (the user, Oct 26), and each group soaks its own orb about 2 s after its hit (top kills), so the orbs go in the same order
   { const F = J.feast; if (F.left.length || F.right.length || F.center.length) { const w = tf2(), fix = {}, put = new Set(), lab = [], hl = [], C = [4, 56], OB = [[24, 40], [-24, 40], [4, 72]];
     w.ring({ x: C[0], y: C[1], r: 9, fx: 'soak', t0: 0, at: 1.05, dur: 5, color: R, cn: 'Ravenous Feast', label: false });
     OB.forEach(([x, y]) => w.ring({ x, y, r: 5, fx: 'soak', t0: 0, at: 1.05, dur: 5, color: '#d0303a', cn: 'Tainted Blood', label: false }));
-    [[F.right, OB[0], 'Right · hit 2, orb 1', R], [F.left, OB[1], 'Left · hit 1, orb 2', BL, true], [F.center, OB[2], 'Center · hit 3, orb 3', GO]].forEach(([L, c, t, col, below]) => { const ids = L.map((n) => { const s = ppSlot(P, n, put); if (s) fix[s] = n; return s; }).filter(Boolean);
+    [[F.right, OB[0], 'Right 2nd', R], [F.left, OB[1], 'Left 1st', BL, true], [F.center, OB[2], 'Center 3rd', GO]].forEach(([L, c, t, col, below]) => { const ids = L.map((n) => { const s = ppSlot(P, n, put); if (s) fix[s] = n; return s; }).filter(Boolean);
       ids.forEach((s, i) => { const q = gdzSpot(i, ids.length, 4.2); w.at(0, s, c[0] + q[0], c[1] + q[1]); }); hl.push(...ids); if (ids.length) lab.push([ids, t, col, col === GO ? '#1a1405' : '#fff', 7, !!below]); });
     home(w, put);
     cards.push({ id: 'feast', ph: 1, when: 'Every set', title: 'Ravenous Feast (Three groups, one hit each)', map: ppFreeze(w.done({ title: 'Ravenous Feast', focus: { x: 0, y: 50, r: 30 } }), 1, ppSeat(P, fix), P, M, { hl, labels: lab, focus: TF_VIEW }),
-      legend: [ppG('Left: the 1st hit, then the 2nd orb (left)', BL, F.left.map((n) => ppI(P, n))), ppG('Right: the 2nd hit, then the 1st orb (right)', R, F.right.map((n) => ppI(P, n))), ppG('Center: the 3rd hit, then the 3rd orb (front)', GO, F.center.map((n) => ppI(P, n)))],
-      foot: 'Hits go Left, Right, Center; each knocks its group toward its Tainted Blood orb. Orbs: the group knocked right first, then left, then center; 6 or more on each, or the raid wipes. Nobody takes two hits.' }); } }
+      legend: [ppG('Left: the 1st hit, then the 1st orb (left)', BL, F.left.map((n) => ppI(P, n))), ppG('Right: the 2nd hit, then the 2nd orb (right)', R, F.right.map((n) => ppI(P, n))), ppG('Center: the 3rd hit, then the 3rd orb (front)', GO, F.center.map((n) => ppI(P, n)))],
+      foot: 'Hits go Left, Right, Center; each knocks its group toward its Tainted Blood orb, and the group soaks it about 2 seconds later, so the orbs go in the same order. 6 or more on each, or the raid wipes. Nobody takes two hits.' }); } }
   return cards;
 }
 // ===== Nymrissa Wavecaller, Mythic (Oct 26, the same setup; Plan's Jobs cards in 23a0436). The raid plays in the island's south-west
@@ -6234,25 +6233,12 @@ function ppDeclutter(sv, out) {
     // (a bubble past the left or right edge slides its body back inside; its pointer stays on the thing)
     const dx = q.x0 < vb.x + 2 ? vb.x + 2 - q.x0 : q.x1 > vb.x + vb.width - 2 ? vb.x + vb.width - 2 - q.x1 : 0;
     if (dx) { g.querySelectorAll('rect, text').forEach((e) => e.setAttribute('transform', 'translate(' + (dx / f).toFixed(1) + ' 0)')); q.x0 += dx; q.x1 += dx; } taken.push(q); });
-  // (every icon: players, adds like the Broodlings, bosses, about 0.6 in a platform-sized frame; raid markers no smaller than three quarters)
+  // (every icon: players, adds like the Broodlings, bosses, about 0.6 in a platform-sized frame; raid markers no smaller than three quarters;
+  // players' class icons 70% of that, so they don't hide the spots)
   const ds = Math.min(1, Math.max(0.5, f * 1.15)), isMk = (g) => [...g.querySelectorAll('title')].some((t) => / marker$/.test(t.textContent));
   sv.querySelectorAll('g.ic:not(.icl)').forEach((g) => { if (g.querySelector('text.ml')) return; let b; try { b = g.getBBox(); } catch (e) { return; } if (!b.width || b.width > 160 || b.height > 160) return; /* (cast bars shrink with their unit too) */
-    const x = +g.dataset.x, y = +g.dataset.y, k = ds < 1 ? (isMk(g) ? Math.max(ds, 0.75) : ds) : 1; if (k < 1) g.setAttribute('transform', 'translate(' + x + ' ' + y + ') scale(' + k.toFixed(3) + ') translate(' + -x + ' ' + -y + ')');
+    const x = +g.dataset.x, y = +g.dataset.y, k = isMk(g) ? (ds < 1 ? Math.max(ds, 0.75) : 1) : g.querySelector('.pl') ? Math.max(0.35, ds * 0.7) : ds; if (k < 1) g.setAttribute('transform', 'translate(' + x + ' ' + y + ') scale(' + k.toFixed(3) + ') translate(' + -x + ' ' + -y + ')');
     icons.push({ x, y, b: bx(x + (b.x - 1 - x) * k, y + (b.y - 1 - y) * k, x + (b.x + b.width + 1 - x) * k, y + (b.y + b.height + 1 - y) * k) }); });
-  // (names instead of icons for a crowded group: its players' dots go, and each cluster of them becomes a block of names in class colour)
-  { const nn = new Set((out.ppNoName || []).map((n) => String(n).split('-')[0].toLowerCase())), dots = [];
-    if (nn.size) sv.querySelectorAll('g.ic:not(.icl)').forEach((g) => { const pl = g.querySelector('.pl'), t = pl && pl.querySelector('title'), nm = t ? String(t.textContent).split('-')[0] : ''; if (!nm || !nn.has(nm.toLowerCase())) return;
-      dots.push({ g, x: +g.dataset.x, y: +g.dataset.y, nm, col: (pl.querySelector('circle') || { getAttribute: () => '#ddd' }).getAttribute('fill') || '#ddd' }); });
-    // (a labelled group is one block wherever its players stand (Sentinels' halves); anyone else is grouped with whoever stands near)
-    const gi = new Map(), byG = new Map(), cl = []; (out.ppGroups || []).forEach((L, i) => L.forEach((n) => gi.set(String(n).split('-')[0].toLowerCase(), i)));
-    for (const d of dots) { const k = gi.get(d.nm.toLowerCase()); if (k == null) continue; if (!byG.has(k)) { byG.set(k, []); cl.push(byG.get(k)); } byG.get(k).push(d); }
-    const free = []; for (const d of dots.filter((d) => !gi.has(d.nm.toLowerCase()))) { const near = free.filter((c) => c.some((e) => Math.hypot(e.x - d.x, e.y - d.y) < 20 * ds)); if (!near.length) free.push([d]); else { near[0].push(d); for (const c of near.slice(1)) { near[0].push(...c); free.splice(free.indexOf(c), 1); } } } cl.push(...free);
-    const fz2 = 12 * f * 0.95, lh = fz2 * 1.18, cw = (c) => Math.max(...c.map((d) => d.nm.length)) * fz2 * 0.56 + fz2 * 0.9;
-    for (const c of cl) { c.forEach((d) => { d.g.remove(); const i = icons.findIndex((o) => o.x === d.x && o.y === d.y); if (i >= 0) icons.splice(i, 1); });
-      const cx2 = c.reduce((a, d) => a + d.x, 0) / c.length, cy2 = c.reduce((a, d) => a + d.y, 0) / c.length, cols = c.length > 6 ? 2 : 1, rows = Math.ceil(c.length / cols), w = cw(c), W = w * cols, H = rows * lh + fz2 * 0.5;
-      let h = '<rect x="' + (cx2 - W / 2).toFixed(1) + '" y="' + (cy2 - H / 2).toFixed(1) + '" width="' + W.toFixed(1) + '" height="' + H.toFixed(1) + '" rx="' + (fz2 * 0.4).toFixed(1) + '" fill="#0b0d12" fill-opacity=".78" stroke="#000" stroke-opacity=".6"/>';
-      c.slice().sort((a, b) => a.nm.localeCompare(b.nm)).forEach((d, i) => { const col = Math.floor(i / rows), row = i % rows; h += '<text x="' + (cx2 - W / 2 + col * w + fz2 * 0.45).toFixed(1) + '" y="' + (cy2 - H / 2 + fz2 * 0.25 + (row + 0.85) * lh).toFixed(1) + '" style="font:700 ' + fz2.toFixed(2) + 'px Barlow, sans-serif" fill="' + d.col + '">' + esc(d.nm) + '</text>'; });
-      const pill = sv.querySelector('g.icl'); if (pill && pill.parentNode === sv) pill.insertAdjacentHTML('beforebegin', h); else sv.insertAdjacentHTML('beforeend', h); taken.push(bx(cx2 - W / 2, cy2 - H / 2, cx2 + W / 2, cy2 + H / 2)); } }
   { const pill = sv.querySelector('g.icl'); sv.querySelectorAll('g.ic:not(.icl)').forEach((g) => { if (isMk(g)) sv.insertBefore(g, pill && pill.parentNode === sv ? pill : null); }); } /* (raid markers over the icons, under the labels: the spot always shows) */
   sv.querySelectorAll('text.ml:not(.mlp)').forEach((t) => { const g = t.parentNode; if (!g || !g.dataset || g.dataset.y == null) return; const Y = +g.dataset.y, y0 = +t.getAttribute('y');
     t.style.fontSize = (11 * f).toFixed(2) + 'px'; t.style.strokeWidth = (3 * f).toFixed(2) + 'px'; if (isFinite(y0)) t.setAttribute('y', (Y + (y0 - Y) * ds).toFixed(1)); });
