@@ -5631,18 +5631,18 @@ function ppCardsCA(J, M, U, P) {
   return cards;
 }
 // ===== Ula'tek, Mythic (Oct 26, the user: "Exact same setup" as The Coiled Altar; Plan's Jobs cards in 2caefe9) =====
-// (the note's jobs, in the lines Plan writes: "Egg Carriers:", "Egg Shields:", "Team 1:" / "Team 2:" (Spectral Coils), the intstart kick lines
+// (the note's jobs, in the lines Plan writes: "Egg Carriers:" (or by area: "Egg Melee:", "Egg Left:", "Egg Right:", "Egg Far:", "Egg Backup:"), "Egg Shields:", "Team 1:" / "Team 2:" (Spectral Coils), the intstart kick lines
 // (left ledge, then right), the transitionStart groups (intermission soaks 1 to 3), "Bite Melee:" / "Bite Ranged:" / "Bite Healers:",
 // "Incubation Beam:", "Clutch Grips:", "Freedom:")
 function ppReadUL(N, P) {
-  const isN = (w) => P.has(String(w).toLowerCase()), J = { eggs: [], shields: [], teams: [[], []], kicks: [], trans: [], bite: { melee: [], ranged: [], healers: [] }, beam: '', grips: [], freedom: [] };
+  const isN = (w) => P.has(String(w).toLowerCase()), J = { eggs: [], ez: { melee: [], left: [], right: [], far: [], backup: [] }, shields: [], teams: [[], []], kicks: [], trans: [], bite: { melee: [], ranged: [], healers: [] }, beam: '', grips: [], freedom: [] };
   let blk = '';
   for (const l of N.lines) {
     const lab = l.label.toLowerCase(), who = l.words.filter(isN).map((w) => P.get(w.toLowerCase()).name), w0 = (l.words[0] || '').toLowerCase(); let m;
     if (w0 === 'intstart' || w0 === 'transitionstart') { blk = w0; continue; } if (w0 === 'intend' || w0 === 'transitionend') { blk = ''; continue; }
     if (blk) { if (who.length) (blk === 'intstart' ? J.kicks : J.trans).push(who); continue; }
     if (!who.length) continue;
-    if (/egg carriers?/.test(lab)) J.eggs = who; else if (/egg shields?/.test(lab)) J.shields = who;
+    if ((m = /^egg\s*(melee|left|right|far|backup)/.exec(lab))) J.ez[m[1]] = who; else if (/egg carriers?/.test(lab)) J.eggs = who; else if (/egg shields?/.test(lab)) J.shields = who;
     else if ((m = /^team\s*(\d)/.exec(lab))) J.teams[+m[1] - 1 ? 1 : 0] = who;
     else if ((m = /bite\s*(melee|ranged|healers?)/.exec(lab))) J.bite[m[1].startsWith('heal') ? 'healers' : m[1]] = who;
     else if (/incubation|beam/.test(lab)) J.beam = who[0]; else if (/grip/.test(lab)) J.grips = who; else if (/freedom/.test(lab)) J.freedom = who;
@@ -5667,9 +5667,14 @@ function ppCardsUL(J, M, U, P) {
   const cards = [], spot = (u, def) => (U[u] && M[U[u]]) || def, MKN = (k) => (GDZ_WM[k] || [0, ''])[1].replace(' (X)', ''), R = '#f24824', GO = '#e6b450', TE = '#24f2cb', BL = '#5aa0ff', GR = '#2fd15a', Q = '#c9ced8';
   const rest = (k, put, c, sp) => { const left = GDZ_RAID.filter((s) => !put.has(s)); if (left.length) k.at(0, left, c[0], c[1], sp || 6); left.forEach((s) => put.add(s)); };
   // Call of the Serpent: each carrier on the egg in their zone (the guide's map just after the pickup), the two shield breakers named
-  if (J.eggs.length) { const fix = ulZones(J.eggs, P), SH = ['h3', 'h4']; J.shields.slice(0, 2).forEach((n, i) => { fix[SH[i]] = n; }); const car = UX_CAR.filter((s) => fix[s]), sh = SH.filter((s) => fix[s]);
-    cards.push({ id: 'eggs', ph: 1, when: 'Every egg set', title: 'Call of the Serpent (Carry the egg in your zone)', map: ppFreeze(UX_M.eggs(false, 'm'), 8.4, ppSeat(P, fix), P, M, { hl: car.concat(sh), named: car.concat(sh), tags: sh.map((s) => [s, 'Shields']), focus: UL_WHOLE }),
-      legend: [ppG('Egg carriers: your zone', '#3af2a8', car.map((s) => ppI(P, fix[s], UL_ZN[s]))), ppG('Egg shields', '#e6e0c8', sh.map((s) => ppI(P, fix[s], 'Break shells')), 'Break each egg\'s shield first, so its carrier can pick it up.')],
+  // (Plan's areas (0c69ea7): melee on the two zones by her, left and right on their inside and back zones, far on the far left and far
+  // right (Mages: Blink over the waves), the backup at home, tagged; an older note's one "Egg Carriers:" line is dealt by class)
+  const ez = J.ez, hasZ = Object.values(ez).some((L) => L.length);
+  if (J.eggs.length || hasZ) { const fix = hasZ ? {} : ulZones(J.eggs, P), SH = ['h3', 'h4'], ZS = { melee: ['m1', 'm2'], left: ['r5', 'r1'], right: ['r6', 'r2'], far: ['r3', 'r4'] };
+    if (hasZ) { Object.entries(ZS).forEach(([z, sl]) => ez[z].slice(0, 2).forEach((n, i) => { fix[sl[i]] = n; })); if (ez.backup[0]) fix.r7 = ez.backup[0]; }
+    J.shields.slice(0, 2).forEach((n, i) => { fix[SH[i]] = n; }); const ord = hasZ ? ['m1', 'm2', 'r5', 'r1', 'r6', 'r2', 'r3', 'r4'] : UX_CAR, car = ord.filter((s) => fix[s]), sh = SH.filter((s) => fix[s]), bk = hasZ && fix.r7 ? ['r7'] : [];
+    cards.push({ id: 'eggs', ph: 1, when: 'Every egg set', title: 'Call of the Serpent (Carry the egg in your zone)', map: ppFreeze(UX_M.eggs(false, 'm'), 8.4, ppSeat(P, fix), P, M, { hl: car.concat(sh, bk), named: car.concat(sh, bk), tags: sh.map((s) => [s, 'Shields']).concat(bk.map((s) => [s, 'Backup'])), focus: UL_WHOLE }),
+      legend: [ppG('Egg carriers: your zone', '#3af2a8', car.map((s) => ppI(P, fix[s], UL_ZN[s])), hasZ ? 'Eggs land at random: take the ones in your zone. Far: Mages Blink over the waves.' : ''), bk.length ? ppG('Backup', '#3af2a8', [ppI(P, fix.r7, 'Any egg nobody reaches')]) : null, ppG('Egg shields', '#e6e0c8', sh.map((s) => ppI(P, fix[s], 'Break shells')), 'Break each egg\'s shield first, so its carrier can pick it up.')].filter(Boolean),
       foot: 'Zones turn with her: when she moves at 1:17, so do they. Never let your 3-yard ring touch another carrier\'s.' }); }
   // Toxic Incubation: the off tank in the spectral image's beam, its waves aimed off the platform (the guide's map at the beam)
   if (J.beam) { const fix = { t2: J.beam };
@@ -5901,9 +5906,9 @@ function ppCardsNZ(J, M, U, P) {
 // (the note's jobs, in the lines Plan writes: "Blood:" / "Breath:" (the halves), "Miasma:", "Droplets:", "Dispel 1:" / "Dispel 2:" /
 // "Backup Dispel:" (Blighted Blood))
 function ppReadSE(N, P) {
-  const isN = (w) => P.has(String(w).toLowerCase()), J = { blood: [], breath: [], miasma: [], drops: [], disp: [] };
+  const isN = (w) => P.has(String(w).toLowerCase()), J = { blood: [], breath: [], middle: [], miasma: [], drops: [], disp: [] };
   for (const l of N.lines) { const lab = l.label.toLowerCase().trim(), who = l.words.filter(isN).map((w) => P.get(w.toLowerCase()).name); let m; if (!who.length) continue;
-    if (lab === 'blood') J.blood = who; else if (lab === 'breath') J.breath = who; else if (/miasma/.test(lab)) J.miasma = who; else if (/droplet/.test(lab)) J.drops = who;
+    if (lab === 'blood') J.blood = who; else if (lab === 'breath') J.breath = who; else if (lab === 'middle') J.middle = who; else if (/miasma/.test(lab)) J.miasma = who; else if (/droplet/.test(lab)) J.drops = who;
     else if ((m = /dispel\s*(\d)/.exec(lab))) J.disp[+m[1] - 1] = who[0]; else if (/backup dispel/.test(lab)) J.disp[2] = who[0]; }
   return J;
 }
@@ -5917,9 +5922,13 @@ function seHalves(J, P, fix) { const f = { ...fix }, used = new Set(Object.value
 function ppCardsSE(J, M, U, P) {
   const cards = [], RD = '#ff5a5a', GN = '#6dff8e', GO = '#e6b450', BL = '#5aa0ff', OR = '#ff9628', Q = '#c9ced8', half = (n) => (J.blood.includes(n) ? 'Blood' : J.breath.includes(n) ? 'Breath' : '');
   // The two halves: each with its own boss, the bosses 40+ yards apart (the guide's map with both Marks showing)
-  if (J.blood.length || J.breath.length) cards.push({ id: 'sides', ph: 1, when: 'All fight', title: 'Mark of Blood and Acid (Stay with your boss)', map: ppFreeze(SE_M.split(false), 3, seHalves(J, P, {}), P, M, { hl: [], labels: [[SE_RED, 'Blood half', RD, '#fff', 8], [SE_GREEN, 'Breath half', GN, '#06140a', 8]] }),
-    legend: [ppG('Blood half: the red boss', RD, J.blood.map((n) => ppI(P, n))), ppG('Breath half: the green boss', GN, J.breath.map((n) => ppI(P, n)))],
-    foot: 'Keep the bosses 40 yards or more apart: 20 of each Mark at once kills. The halves swap bosses after every intermission.' });
+  // (Plan's optional Middle group (16605be): between the two halves, on both bosses)
+  if (J.blood.length || J.breath.length) { const smp = SE_M.split(false), mid = J.middle.slice(0, 4), MS = ['r7', 'r6', 'm7', 'm6'].slice(0, mid.length), fix = {}, AT = {}; mid.forEach((n, i) => { fix[MS[i]] = n; });
+    if (mid.length) { const fr = smp.frames.reduce((x, y) => (Math.abs(y.t - 3) < Math.abs(x.t - 3) ? y : x)), cen = (L) => { const q = fr.pts.filter((p) => L.includes(p.guid) && !MS.includes(p.guid)); return q.length ? [q.reduce((a, p) => a + p.x, 0) / q.length, q.reduce((a, p) => a + p.y, 0) / q.length] : null; }, a = cen(SE_RED), b = cen(SE_GREEN);
+      if (a && b) MS.forEach((g, i) => { const [dx, dy] = gdzSpot(i, MS.length, 3); AT[g] = [(a[0] + b[0]) / 2 + dx, (a[1] + b[1]) / 2 + dy]; }); }
+    cards.push({ id: 'sides', ph: 1, when: 'All fight', title: 'Mark of Blood and Acid (Stay with your boss)', map: ppFreeze(smp, 3, seHalves(J, P, fix), P, M, { hl: MS, named: MS, at: AT, labels: [[SE_RED.filter((g) => !MS.includes(g)), 'Blood half', RD, '#fff', 8], [SE_GREEN.filter((g) => !MS.includes(g)), 'Breath half', GN, '#06140a', 8]].concat(MS.length ? [[MS, 'Middle', OR, '#1a0d00', 8, true]] : []) }),
+    legend: [ppG('Blood half: the red boss', RD, J.blood.map((n) => ppI(P, n))), ppG('Breath half: the green boss', GN, J.breath.map((n) => ppI(P, n))), mid.length ? ppG('Middle: between them, on both', OR, mid.map((n) => ppI(P, n))) : null].filter(Boolean),
+    foot: 'Keep the bosses 40 yards or more apart: 20 of each Mark at once kills. The halves swap bosses after every intermission.' }); }
   // Toxic Droplets: the note's soakers on the droplets with a defensive, the tanks taking most (the guide's map as they step on)
   if (J.drops.length) { const fix = {}, tanks = J.drops.filter((n) => (P.get(n.toLowerCase()) || {}).role === 'tank'), rest = J.drops.filter((n) => !tanks.includes(n)), ids = [];
     tanks.slice(0, 2).forEach((n, i) => { fix[['t1', 't2'][i]] = n; ids.push(['t1', 't2'][i]); }); rest.slice(0, 3).forEach((n, i) => { const s = ['r1', 'r4', 'h3'][i]; fix[s] = n; ids.push(s); });
