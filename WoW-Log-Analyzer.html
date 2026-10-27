@@ -8423,7 +8423,7 @@ const DEF_REPLACED = { 'ice block': 'ice cold' };
 // for a druid who isn't the Guardian tank (they're in it all fight); Death Strike for a Death Knight who isn't Blood.
 // [name, spellId, specs (null = all), kind]
 const SURV_MINOR = {
-  WARRIOR: [['Impending Victory', 202168, null, 'heal'], ['Victory Rush', 34428, null, 'heal'], ['Spell Reflection', 23920, null, 'dr']],
+  WARRIOR: [['Impending Victory', 202168, null, 'heal'], ['Victory Rush', 34428, null, 'heal'], ['Spell Reflection', 23920, null, 'dr'], ['Defensive Stance', 386208, [71, 72], 'dr']], // (Arms and Fury choose Defensive Stance as a defensive; a Protection warrior lives in it, so it isn't counted for them)
   ROGUE: [['Feint', 1966, null, 'dr']],
   MAGE: [['Prismatic Barrier', 235450, [62], 'dr'], ['Blazing Barrier', 235313, [63], 'dr'], ['Ice Barrier', 11426, [64], 'dr']],
   MONK: [['Expel Harm', 322101, [269, 270], 'heal']],
@@ -18191,6 +18191,9 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
+  { d: '2026-10-27', h: [], n: [], f: [
+    'Defensives: an Arms or Fury Warrior\'s Defensive Stance counts as a defensive used now, in the raid summary and on the Survivability page.',
+  ] },
   { d: '2026-10-26', h: [
     { t: 'Boss guides, one rail', d: 'A guide now opens with one bar on top: pick your role, the phase, and Summary or Everything. Your job and What wipes us come first, the fight at a glance names the mechanics that matter in each phase (tap one to jump), and every card starts short: the map, one line, three steps, with Everything a tap away.' },
     { t: 'Plan: your raid night in one page', d: 'The Plan tab is out for everyone: bring in your team, and Debrief picks who plays each boss and plans every job, kick and healing cooldown the way the fastest kills do. Change anything, then copy it into the game for NSRT.' },

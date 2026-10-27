@@ -112,7 +112,7 @@ const DEF_REPLACED = { 'ice block': 'ice cold' };
 // for a druid who isn't the Guardian tank (they're in it all fight); Death Strike for a Death Knight who isn't Blood.
 // [name, spellId, specs (null = all), kind]
 const SURV_MINOR = {
-  WARRIOR: [['Impending Victory', 202168, null, 'heal'], ['Victory Rush', 34428, null, 'heal'], ['Spell Reflection', 23920, null, 'dr']],
+  WARRIOR: [['Impending Victory', 202168, null, 'heal'], ['Victory Rush', 34428, null, 'heal'], ['Spell Reflection', 23920, null, 'dr'], ['Defensive Stance', 386208, [71, 72], 'dr']], // (Arms and Fury choose Defensive Stance as a defensive; a Protection warrior lives in it, so it isn't counted for them)
   ROGUE: [['Feint', 1966, null, 'dr']],
   MAGE: [['Prismatic Barrier', 235450, [62], 'dr'], ['Blazing Barrier', 235313, [63], 'dr'], ['Ice Barrier', 11426, [64], 'dr']],
   MONK: [['Expel Harm', 322101, [269, 270], 'heal']],
