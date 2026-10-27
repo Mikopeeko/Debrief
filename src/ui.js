@@ -31773,32 +31773,6 @@ function dsGuides() {
   var tm = 0; new MutationObserver(function () { if (!tm) tm = requestAnimationFrame(function () { tm = 0; addBtn(); addCardBtns(); }); }).observe(document.documentElement, { childList: true, subtree: true }); addBtn(); addCardBtns();
 })();
 
-// ===== Design studio round 69 (Oct 26): the Raid buffs tiles as one grid: Kicks joins the grid, complete tiles marked, a one-line summary.
-// Owner: the Design studio chat. =====
-(function () {
-  if (typeof document === 'undefined') return;
-  var busy = false;
-  function dsBuffs() {
-    if (busy) return; busy = true;
-    try {
-      var p = document.querySelector('#view.plan-page .bj-tp[data-p="aud"] .ndz-dpan'); if (!p || !p.querySelector(':scope > .ndz-dag')) return;
-      var k = document.querySelector('#view.plan-page .bj-kickd'); if (k && k.parentElement !== p) p.appendChild(k);
-      var miss = [];
-      p.querySelectorAll(':scope > .ndz-dag').forEach(function (d) {
-        var em = d.querySelector('summary em'), m = em && /(\d+)\s*\/\s*(\d+)/.exec(em.textContent || ''), full = !!(m && +m[1] >= +m[2]);
-        if (d.classList.contains('ds-full') !== full) d.classList.toggle('ds-full', full);
-        if (d.classList.contains('st-bad')) d.querySelectorAll('.ndz-bfi.no').forEach(function (b) { var t = /<b>([^<]*)<\/b>/.exec(b.getAttribute('data-tt') || ''); if (t) miss.push(t[1].replace(/&amp;/g, '&')); });
-      });
-      var h = p.querySelector(':scope > .ndz-dph'); if (h) { var s = h.querySelector('.ds-bsum'); if (!s) { s = document.createElement('span'); s.className = 'ds-bsum'; h.appendChild(s); }
-        var txt = miss.length ? 'Missing: ' + miss.join(', ') : 'Every buff and debuff', bad = !!miss.length;
-        if (s.textContent !== txt) s.textContent = txt; if (s.classList.contains('bad') !== bad) s.classList.toggle('bad', bad); }
-    } catch (e) { /* (the tiles stay as rendered) */ } finally { busy = false; }
-  }
-  var t = 0, kick = function () { clearTimeout(t); t = setTimeout(dsBuffs, 40); };
-  var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
-})();
-
 // ===== Design studio round 70 (Oct 26): the Tonight page: the table folded by default when nobody sits, the Sits column
 // hidden at 0, boss cards marked when nobody sits, the help text behind an ⓘ. Owner: the Design studio chat. =====
 (function () {
@@ -31840,6 +31814,32 @@ function dsGuides() {
     } catch (e) { /* (the box stays where it was drawn) */ } finally { busy = false; }
   }
   var t = 0, kick = function () { clearTimeout(t); t = setTimeout(dsNoJob, 40); };
+  var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
+// ===== Design studio round 69 (Oct 26): the Raid buffs tiles as one grid: Kicks joins the grid, complete tiles marked, a one-line summary.
+// (Oct 26, round 74: the panel may sit in the boss header now.) Owner: the Design studio chat. =====
+(function () {
+  if (typeof document === 'undefined') return;
+  var busy = false;
+  function dsBuffs() {
+    if (busy) return; busy = true;
+    try {
+      var p = document.querySelector('#view.plan-page .ndz-dpan.pg-buffs') || document.querySelector('#view.plan-page .bj-tp[data-p="aud"] .ndz-dpan'); if (!p || !p.querySelector(':scope > .ndz-dag')) return;
+      var k = document.querySelector('#view.plan-page .bj-kickd'); if (k && k.parentElement !== p) p.appendChild(k);
+      var miss = [];
+      p.querySelectorAll(':scope > .ndz-dag').forEach(function (d) {
+        var em = d.querySelector('summary em'), m = em && /(\d+)\s*\/\s*(\d+)/.exec(em.textContent || ''), full = !!(m && +m[1] >= +m[2]);
+        if (d.classList.contains('ds-full') !== full) d.classList.toggle('ds-full', full);
+        if (d.classList.contains('st-bad')) d.querySelectorAll('.ndz-bfi.no').forEach(function (b) { var t = /<b>([^<]*)<\/b>/.exec(b.getAttribute('data-tt') || ''); if (t) miss.push(t[1].replace(/&amp;/g, '&')); });
+      });
+      var h = p.querySelector(':scope > .ndz-dph'); if (h) { var s = h.querySelector('.ds-bsum'); if (!s) { s = document.createElement('span'); s.className = 'ds-bsum'; h.appendChild(s); }
+        var txt = miss.length ? 'Missing: ' + miss.join(', ') : 'Every buff and debuff', bad = !!miss.length;
+        if (s.textContent !== txt) s.textContent = txt; if (s.classList.contains('bad') !== bad) s.classList.toggle('bad', bad); }
+    } catch (e) { /* (the tiles stay as rendered) */ } finally { busy = false; }
+  }
+  var t = 0, kick = function () { clearTimeout(t); t = setTimeout(dsBuffs, 40); };
   var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
