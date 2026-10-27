@@ -8364,8 +8364,8 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .bhl-r.w .bhl-s { background: rgba(230,180,80,.16); color: var(--gold); }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .bhl-r.no .bhl-s { background: rgba(229,83,75,.16); color: #ff8f87; }
 /* ===== Design studio round 99 (Oct 27): the damage bar in the Big hits list. Owner: the Design studio chat. ===== */
-html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .bhl-r.bhl-r { grid-template-columns: 48px minmax(300px, 360px) minmax(0, 1fr) auto; }
-html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .bhl-r.bhl-r > .bhl-m { display: grid; grid-template-columns: minmax(0, 1fr) 128px; align-items: center; column-gap: 12px; min-width: 0; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .bhl-r.bhl-r { grid-template-columns: 48px 300px minmax(0, 1fr) auto; column-gap: 20px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .bhl-r.bhl-r > .bhl-m { display: grid; grid-template-columns: 160px 128px; align-items: center; column-gap: 10px; padding-right: 10px; border-right: 1px solid rgba(255,255,255,.07); min-width: 0; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .bhl-r.bhl-r > .bhl-m > .bhl-n { display: flex; align-items: center; gap: 7px; min-width: 0; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .bhl-r.bhl-r > .bhl-m > .bhl-n > :is(.sp, .icw) { flex: none; width: 18px; height: 18px; display: inline-grid; place-items: center; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .bhl-r.bhl-r > .bhl-m > .bhl-n :is(.sp, .icw) :is(img, .ico, .icw) { width: 18px !important; height: 18px !important; border-radius: 4px; }
@@ -8375,6 +8375,20 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .bhl-r.bhl-r .bhl-d.vh { color: #ff8f87; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .bhl-r.bhl-r .bhl-d.h { color: #f0883e; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .bhl-r.bhl-r .bhl-d.m { color: var(--gold); }
+/* ===== Design studio round 100 (Oct 27): the Add a cooldown tray as a grid of raider cards. Owner: the Design studio chat. ===== */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.btl-tray > .btl-trl { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin-top: 6px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.btl-tray .btl-trr { display: flex !important; flex-direction: column; align-items: flex-start; gap: 5px; min-width: 0; padding: 6px 8px 7px; border: 1px solid rgba(255,255,255,.07); border-radius: 8px; background: rgba(255,255,255,.025); }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.btl-tray .btl-trr:hover { border-color: rgba(255,255,255,.14); }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.btl-tray .btl-trr > .btl-trn { max-width: 100%; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 11.5px/1.1 var(--body); }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.btl-tray .btl-trr:first-child > .btl-trn { color: var(--gold) !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.btl-tray .btl-trr > .btl-ti { margin: 0; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.btl-tray .btl-trr { flex-wrap: nowrap; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.btl-tray .btl-trr > .btl-trn + .btl-ti, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.btl-tray .btl-trr > .btl-ti + .btl-ti { margin-top: 0; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.btl-tray .btl-trr { display: grid !important; grid-template-columns: repeat(auto-fill, 24px); grid-auto-rows: auto; column-gap: 4px; row-gap: 5px; align-items: center; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.btl-tray .btl-trr > .btl-trn { grid-column: 1 / -1; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.btl-tray .btl-trr > .btl-ti { width: 24px; height: 24px; border-radius: 6px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.btl-tray .btl-trr > .btl-ti :is(.icw, img, .ico) { width: 24px !important; height: 24px !important; border-radius: 6px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.btl-tray > .btl-trh > .sub { font-size: 11px; color: var(--faint); }
 </style>
 
 
