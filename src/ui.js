@@ -31761,6 +31761,35 @@ function dsGuides() {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
+// ===== Design studio round 70 (Oct 26): the Tonight page: the table folded by default when nobody sits, the Sits column
+// hidden at 0, boss cards marked when nobody sits, the help text behind an ⓘ. Owner: the Design studio chat. =====
+(function () {
+  if (typeof document === 'undefined') return;
+  var busy = false;
+  function dsTonight() {
+    if (busy) return; busy = true;
+    try {
+      var sec = document.querySelector('#view.plan-page .panel.tn .tn-sec.tn-team'); if (!sec) return;
+      var g = sec.querySelector('.nt-g');
+      if (g) {
+        var cells = g.querySelectorAll('tbody tr:not(.grp) > td:last-child'), zero = cells.length > 0;
+        cells.forEach(function (c) { if ((c.textContent || '').trim() !== '0') zero = false; });
+        if (g.classList.contains('ds-nosits') !== zero) g.classList.toggle('ds-nosits', zero);
+        // (the first visit: nobody sits, so the table starts folded; Show the table remembers the choice from then on)
+        var f = null; try { f = localStorage.getItem('wla-tn-fold'); } catch (e) { /* (no store) */ }
+        if (f == null && zero && !g.querySelector('.nt-tk.sit, .nt-tk.out')) { var fb = sec.querySelector('[data-tnfold]'); if (fb) { busy = false; fb.click(); /* (the button flips the stored flag to 1 and re-draws) */ return; } }
+      }
+      var hint = sec.querySelector(':scope > .tn-hint'), h3 = sec.querySelector(':scope > .tn-sh > h3');
+      if (hint && h3 && !h3.querySelector('.ds-info')) { var i = document.createElement('span'); i.className = 'ds-info'; i.tabIndex = 0; i.setAttribute('role', 'button'); i.setAttribute('aria-label', 'How this table works');
+        i.setAttribute('data-tt', '<b>How this table works</b><br>' + (hint.textContent || '').replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; })); i.textContent = 'ⓘ'; h3.appendChild(i); }
+      document.querySelectorAll('#view.plan-page .panel.tn .tn-row').forEach(function (r) { var s = r.querySelector(':scope > .tn-sits'), no = !!(s && /nobody sits/i.test(s.textContent || '')); if (r.classList.contains('ds-nosit') !== no) r.classList.toggle('ds-nosit', no); });
+    } catch (e) { /* (the page stays as rendered) */ } finally { busy = false; }
+  }
+  var t = 0, kick = function () { clearTimeout(t); t = setTimeout(dsTonight, 40); };
+  var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
 (function () { const f17 = dsBars; let last = 0, tm = 0, pendingRoot;

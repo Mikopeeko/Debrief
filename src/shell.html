@@ -7777,6 +7777,50 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-tp[data-p="aud"] .ndz-dpan > .bj-kickd > .panel > .ndz-dph { display: none; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-tabs .bj-tp[data-p="kick"]:not(:has(.bj-kickd)) { display: none !important; }
 @media (max-width: 640px) { html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-tp[data-p="aud"] .ndz-dpan { grid-template-columns: repeat(2, minmax(0, 1fr)); } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-tp[data-p="aud"] .ndz-dpan > .ndz-dph { flex-wrap: wrap; gap: 2px 10px; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-tp[data-p="aud"] .ndz-dpan > .ndz-dph > b { white-space: nowrap; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-tp[data-p="aud"] .ndz-dpan > .ndz-dph > .ds-bsum { flex: 1 1 100%; margin-left: 0; white-space: normal; } }
+/* ===== Design studio round 70 (Oct 26): the Tonight page: compact Who plays table, boss cards five to a row, day cards with a count pill,
+   the help text behind an ⓘ, a phone swipe hint. Owner: the Design studio chat. ===== */
+/* 3 the day cards */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pn-day { gap: 1px; padding: 6px 7px; min-height: 58px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pn-day b { font-size: 12.5px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pn-day small { font-size: 11px; line-height: 1.2; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pn-day .pn-bd { margin-top: 2px; padding: 0 7px; font-size: 11px; font-weight: 700; line-height: 17px; max-width: none; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pn-day .pn-l { display: none; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pn-day .pn-s { display: inline; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pn-day.today::after { font-size: 10px; right: 5px; top: 5px; }
+/* 4 the help text */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec.tn-team > .tn-hint { display: none; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec .tn-sh > h3 > .ds-info { display: inline-grid; place-items: center; width: 18px; height: 18px; margin-left: 6px; border-radius: 50%; font: 600 13px/1 var(--body); color: var(--muted); cursor: help; vertical-align: 1px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec .tn-sh > h3 > .ds-info:hover, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec .tn-sh > h3 > .ds-info:focus-visible { color: var(--gold); outline: 0; }
+/* 1 the table, tighter */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-one.tn-sec .nt-g td.c { height: 22px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-one.tn-sec .nt-tk { width: 16px; height: 16px; font-size: 9px; border-radius: 4px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-one.tn-sec .nt-g tr.grp td { padding: 6px 10px 0; font-size: 10px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-one.tn-sec .tn-blkg { height: 18px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-one.tn-sec .nt-g.ds-nosits th.nt-sits, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-one.tn-sec .nt-g.ds-nosits tbody tr:not(.grp) > td:last-child { display: none; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-one.tn-sec .tn-fold { margin: 6px 0 0; padding: 7px 12px; font-size: 12.5px; }
+/* 2 the bosses as cards */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec .tn-rows { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: none; gap: 3px 6px; align-items: center; padding: 0 0 8px; border: 1px solid var(--line2); border-radius: 10px; background: rgba(255,255,255,.025); overflow: hidden; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row:hover { border-color: #3a4152; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-pic { grid-column: 1 / -1; width: 100%; height: 64px; border-radius: 0; margin-bottom: 4px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-bn { grid-column: 1 / -1; padding: 0 10px; min-width: 0; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-bn b { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-bn small { font-size: 11.5px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-sits { grid-column: 1 / -1; padding: 0 10px; font-size: 11.5px; line-height: 1.3; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row.ds-nosit > .tn-sits { display: none; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-s { grid-column: 1; grid-row: auto; justify-self: start; margin: 2px 0 0 10px; font-size: 11px; padding: 2px 8px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra { grid-column: 2; grid-row: auto; margin: 2px 8px 0 0; justify-content: flex-end; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-ra .btn.sm { height: 24px; min-height: 0; padding: 0 9px; font-size: 11.5px; line-height: 1; display: inline-flex; align-items: center; }
+@media (max-width: 1100px) { html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec .tn-rows { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 760px) {
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-sec .tn-rows { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-pic { height: 54px; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-row > .tn-bn b { font-size: 14px; }
+  /* 5 the table on a phone: a fade and a swipe hint on the right */
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-one.tn-sec .tn-gcol { position: relative; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-one.tn-sec .tn-gcol::after { content: 'swipe ›'; position: absolute; right: 0; top: 0; bottom: 0; width: 64px; display: flex; align-items: center; justify-content: flex-end; padding-right: 4px; font: 600 11px var(--body); color: var(--gold); background: linear-gradient(90deg, rgba(0,0,0,0), var(--panel) 70%); pointer-events: none; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-one.tn-sec .nt-g th.pl, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-one.tn-sec .nt-g td.pl { position: sticky; left: 0; z-index: 2; background: var(--panel); }
+}
 </style>
 
 
