@@ -32258,6 +32258,21 @@ function dsGuides() {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
+// ===== Design studio round 95 (Oct 27): the big-hit key in the chart header. Owner: the Design studio chat. =====
+(function () {
+  if (typeof document === 'undefined') return;
+  var mark = function () {
+    var h = document.querySelector('#view.plan-page .ndz-dtl > .ndz-cth'); if (!h || h.querySelector('.ds-hkey')) return;
+    if (!document.querySelector('#view.plan-page .ndz-dtl .btl-hit')) return;
+    var k = document.createElement('span'); k.className = 'ds-hkey';
+    k.innerHTML = '<b>◆ Big hits:</b> <i class="g">✓ covered</i> <i class="a">! only a healer’s own burst</i> <i class="r">✕ not covered</i>';
+    var copy = h.querySelector('[data-dstl]'); if (copy) h.insertBefore(k, copy); else h.appendChild(k);
+  };
+  var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(mark, 40); };
+  var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
 (function () { const f17 = dsBars; let last = 0, tm = 0, pendingRoot;
