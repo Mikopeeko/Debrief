@@ -6827,7 +6827,7 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-
   @keyframes ds-din { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   @keyframes ds-dbar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
   @keyframes ds-dring { to { --g: 88; } }
-  .ds-demo:not(.x) .ds-dv { opacity: 0; animation: ds-din .6s ease-out .4s forwards; }
+  .ds-demo:not(.x) .ds-dv { opacity: 1; } /* (the verdict shows at once, so the box is never empty, even on a replay; the rest still plays in (Oct 27, the Design studio's ask)) */
   .ds-demo .ds-dr { opacity: 0; animation: ds-din .35s ease-out forwards; animation-delay: calc(2.4s + var(--i) * .3s); }
   .ds-demo .ds-db i { transform: scaleX(0); animation: ds-dbar .6s cubic-bezier(.2,.7,.2,1) forwards; animation-delay: calc(2.6s + var(--i) * .3s); }
   .ds-demo .ds-dcard { opacity: 0; animation: ds-din .5s ease-out 4.4s forwards; }
