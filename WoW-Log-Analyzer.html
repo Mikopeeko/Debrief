@@ -24193,6 +24193,7 @@ const ndzPlOn = () => !!S.ndzTlBig && S.page === 'plan';
 // (the spells a raider can plan: the roster audit's lists, by class and spec)
 function ndzPlSpells(p) { const out = []; if (!p || !p.cls) return out;
   for (const g of NDZ_BUFFS) if (NDZ_PL_GROUPS.includes(g[0])) for (const x of g[2]) if (x[1].includes(p.cls) && (!x[2] || !p.sid || x[2].includes(+p.sid)) && !out.some((o) => o.id === x[3]) && x[0] !== 'Devotion Aura') out.push({ name: x[0], id: x[3], grp: g[0] });
+  if (typeof NDZ_CDSPEC !== 'undefined' && p.sid) for (const [nm, id] of NDZ_CDSPEC[+p.sid] || []) if (!out.some((o) => +o.id === +id)) out.push({ name: nm, id, grp: 'Healer cooldowns' }); /* (the spec's own healing cooldowns, Oct 27) */
   const T = typeof NDZ_TALC !== 'undefined' && NDZ_TALC[+p.sid], tk = T && typeof ndzTalOf === 'function' ? ndzTalOf(p.n, p.sid) : null; /* (only the talent they take, Oct 27) */
   if (!tk) return out; const grp = (out.find((o) => T[1].some(([n, id]) => +id === +o.id || n === o.name)) || {}).grp || 'Healer cooldowns', keep = out.filter((o) => !T[1].some(([n, id]) => n !== tk.pick && (+id === +o.id || n === o.name))), mine = T[1].find(([n]) => n === tk.pick);
   if (mine && !keep.some((o) => +o.id === +mine[1])) keep.unshift({ name: mine[0], id: mine[1], grp }); return keep; }
