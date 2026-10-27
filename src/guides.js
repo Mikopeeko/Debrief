@@ -5686,12 +5686,12 @@ function ppCardsUL(J, M, U, P) {
 // as the guide's cards are (the room picture cuts off the north tip); the sets repeat on every platform =====
 // (the note's jobs, in the lines Plan writes: "Left:" / "Right:" / "Center:" (Ravenous Feast groups), "Front Melee:", "Left Melee:",
 // "Right Melee:", "Left Range:", "Right Range:", "Backup Kicker:" (Broodling kick areas), "Odd set Orbs:" / "Even set Orbs:" (globule CC),
-// "CC Front Left:" / "CC Front Right:" / "CC Back Left:" / "CC Back Right:" (area crowd control by quadrant, Plan's orbq job))
+// "CC Set 1 Front Left:" … "CC Set 2 Back Right:" (area crowd control by quadrant for each alternating set, Plan's orbq job))
 function ppReadTF(N, P) {
-  const isN = (w) => P.has(String(w).toLowerCase()), J = { feast: { left: [], right: [], center: [] }, kicks: { front: [], lm: [], rm: [], lr: [], rr: [], backup: [] }, cc: [[], []], quad: { fl: [], fr: [], bl: [], br: [] } };
+  const isN = (w) => P.has(String(w).toLowerCase()), J = { feast: { left: [], right: [], center: [] }, kicks: { front: [], lm: [], rm: [], lr: [], rr: [], backup: [] }, cc: [[], []], quad: [{ fl: [], fr: [], bl: [], br: [] }, { fl: [], fr: [], bl: [], br: [] }] };
   for (const l of N.lines) {
     const lab = l.label.toLowerCase().trim(), who = l.words.filter(isN).map((w) => P.get(w.toLowerCase()).name); let m; if (!who.length) continue;
-    if ((m = /^cc\s+(front|back)\s+(left|right)/.exec(lab))) J.quad[m[1][0] + m[2][0]] = who;
+    if ((m = /^cc\s+(?:set\s*([12])\s+)?(front|back)\s+(left|right)/.exec(lab))) J.quad[m[1] === '2' ? 1 : 0][m[2][0] + m[3][0]] = who;
     else if ((m = /^(left|right|center|centre)$/.exec(lab))) J.feast[m[1] === 'centre' ? 'center' : m[1]] = who;
     else if ((m = /^(front|left|right)\s+(melee|range)/.exec(lab))) J.kicks[m[1] === 'front' ? 'front' : m[1][0] + (m[2] === 'melee' ? 'm' : 'r')] = who;
     else if (/backup/.test(lab)) J.kicks.backup = who; else if (/\bodd\b/.test(lab)) J.cc[0] = who; else if (/\beven\b/.test(lab)) J.cc[1] = who;
@@ -5710,8 +5710,9 @@ function ppCardsTF(J, M, U, P) {
       legend: [ppG('Odd sets: the 1st, 3rd and 5th', '#7fd8ff', J.cc[0].map((n) => ppI(P, n))), ppG('Even sets: the 2nd, 4th and 6th', BL, J.cc[1].map((n) => ppI(P, n)))],
       foot: 'Blood Torrent shields every globule: your set\'s stuns and slows break the shields, then low stacks soak. Wait for the orbs near you to land.' }); }
   // Caustic Deluge, by quadrant: the platform split in four (front = the tip by the bosses, left and right as the raid faces them), each
-  // quadrant's players on it with their area crowd control (Blinding Light, Shockwave…) beside their names; everyone else at home
-  { const Q = J.quad; if (Object.values(Q).some((L) => L.length)) { const w = tf2(), k = w.k, fix = {}, put = new Set(), hl = [], lab = [], C = [0, 52];
+  // quadrant's players on it with their area crowd control (Blinding Light, Shockwave…) beside their names; everyone else at home. One
+  // picture per alternating set: set 1 takes the 1st, 3rd and 5th Caustic Deluge, set 2 the 2nd, 4th and 6th
+  J.quad.forEach((Q, si) => { if (Object.values(Q).some((L) => L.length)) { const w = tf2(), k = w.k, fix = {}, put = new Set(), hl = [], lab = [], C = [0, 52];
     const QD = [['fl', 'Front left', GO, [-14, 64]], ['fr', 'Front right', OR, [14, 64]], ['bl', 'Back left', BL, [-17, 41]], ['br', 'Back right', GR, [17, 41]]];
     // (the two dividing lines, drawn between unseen anchor points: back edge to tip, left edge to right edge)
     [[[0, 30], [0, 77]], [[-31, C[1]], [30, C[1]]]].forEach(([a, b], i) => { const q = w.P(a); k.obj('qa' + i, 'anchor', 0, q[0], q[1]); w.link({ from: 'qa' + i, toYd: { x: b[0], y: b[1] }, t0: 0, t1: 3, color: '#f3ead2' }); });
@@ -5721,9 +5722,9 @@ function ppCardsTF(J, M, U, P) {
       if (ids.length) lab.push([ids, t, col, col === GO || col === GR ? '#1a1405' : '#fff', 6]); }); /* (each quadrant's name just over its players) */
     home(w, put);
     const cc = (n) => { const x = P.get(String(n).toLowerCase()); return (x && NDZ_AOE_CC[x.cls]) || 'Area crowd control'; };
-    cards.push({ id: 'orbq', ph: 1, when: 'Every set', title: 'Caustic Globule (Crowd control your quadrant)', map: ppFreeze(w.done({ title: 'Caustic Deluge quadrants', focus: { x: 0, y: 54, r: 30 } }), 1, ppSeat(P, fix), P, M, { hl, named: hl, labels: lab, focus: TF_QVIEW }),
+    cards.push({ id: 'orbq' + (si + 1), ph: 1, when: si ? 'Sets 2, 4 and 6' : 'Sets 1, 3 and 5', title: 'Caustic Globule, set ' + (si + 1) + ' (Crowd control your quadrant)', map: ppFreeze(w.done({ title: 'Caustic Deluge quadrants', focus: { x: 0, y: 54, r: 30 } }), 1, ppSeat(P, fix), P, M, { hl, named: hl, labels: lab, focus: TF_QVIEW }),
       legend: QD.filter(([key]) => Q[key].length).map(([key, t, col]) => ppG(t, col, Q[key].map((n) => ppI(P, n, cc(n))))),
-      foot: 'Front is the tip by the bosses; left and right as you face them. Stun or slow the globules that land in your quadrant to break their shields, then low stacks soak.' }); } }
+      foot: (si ? 'Set 2 takes the 2nd, 4th and 6th Caustic Deluge. ' : 'Set 1 takes the 1st, 3rd and 5th Caustic Deluge. ') + 'Front is the tip by the bosses; left and right as you face them. Stun or slow the globules that land in your quadrant to break their shields, then low stacks soak.' }); } });
   // Rouse the Brood: a Broodling in every slot; each area's kickers in a line by their own Broodlings, in their order
   { const K = J.kicks; if (['front', 'lm', 'rm', 'lr', 'rr'].some((x) => K[x].length)) { const w = tf2(), fix = {}, put = new Set(), tags = [], hl = [];
     Object.values(TF_SLOT).forEach((p, i) => w.add('bl' + i, 'Broodling', 0, p[0], p[1]));
@@ -6048,8 +6049,8 @@ const GDZ_PP = {
     read(N, P) { return ppReadTF(N, P); },
     cards: ppCardsTF,
     // (Plan's Jobs cards (b2e86a2) and the pictures each shows, by its key, else by its title)
-    mech: { orbcc: ['orbcc'], orbq: ['orbq'], kicks: ['kicks'], feast: ['feast'] },
-    jobs: [[/quadrant/i, ['orbq']], [/orb cc|crowd control/i, ['orbcc']], [/kick|brood/i, ['kicks']], [/feast/i, ['feast']]] } },
+    mech: { orbcc: ['orbcc'], orbq: ['orbq1', 'orbq2'], kicks: ['kicks'], feast: ['feast'] },
+    jobs: [[/quadrant/i, ['orbq1', 'orbq2']], [/orb cc|crowd control/i, ['orbcc']], [/kick|brood/i, ['kicks']], [/feast/i, ['feast']]] } },
   'Nymrissa Wavecaller': { Mythic: {
     // (the guide places no markers here: a plain ring round the bubble, 38 yards out at the compass points, for the raid lead to drag)
     marks: { star: [0, 38], circle: [27, 27], diamond: [38, 0], triangle: [27, -27], moon: [0, -38], square: [-27, -27], cross: [-38, 0], skull: [-27, 27] },
