@@ -8495,6 +8495,19 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl.ndz-dtl .btl .btl-sug:hover, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl.ndz-dtl .bhl-sugt:hover { filter: brightness(1.12); }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl.ndz-dtl .bhl-r.bhl-r.bhl-sug:not(.bhl-sel) { box-shadow: inset 3px 0 0 var(--gold) !important; }
 @media (prefers-reduced-motion: reduce) { html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl.ndz-dtl .btl .btl-sug, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl.ndz-dtl .bhl-sugt { animation: none; } }
+/* ===== Design studio round 112 (Oct 27): suggested pill on its line. Owner: the Design studio chat. ===== */
+@keyframes dsGhost { 0%, 100% { box-shadow: 0 0 0 0 rgba(69,193,92,0); } 50% { box-shadow: 0 0 0 3px rgba(69,193,92,.25); } }
+@keyframes dsGhostG { 0%, 100% { box-shadow: 0 0 0 0 rgba(230,180,80,0); } 50% { box-shadow: 0 0 0 3px rgba(230,180,80,.28); } }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl.ndz-dtl .btl.btl .btl-c.btl-c.btl-sugc { cursor: pointer; z-index: 7; border-radius: 4px; outline: 1px dashed #45c15c; outline-offset: 1px; background: rgba(69,193,92,.13) !important; animation: dsGhost 1.8s ease-in-out infinite; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl.ndz-dtl .btl.btl .btl-c.btl-c.btl-sugc > :is(.icw, b) { opacity: .8; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl.ndz-dtl .btl.btl .btl-c.btl-c.btl-sugc.red { outline-color: var(--gold); background: rgba(230,180,80,.13) !important; animation-name: dsGhostG; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl.ndz-dtl .btl.btl .btl-c.btl-c.btl-sugc > .btl-f { background: repeating-linear-gradient(90deg, var(--cc) 0 6px, transparent 6px 10px) !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl.ndz-dtl .btl.btl .btl-c.btl-c.btl-sugc::before { content: "★"; position: absolute; left: -5px; top: -6px; z-index: 2; width: 12px; height: 12px; border-radius: 50%; display: grid; place-items: center; font: 800 8px/1 var(--body); background: #45c15c; color: #0d1a10; box-shadow: 0 0 0 2px rgba(13,17,23,.9); }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl.ndz-dtl .btl.btl .btl-c.btl-c.btl-sugc.red::before { background: var(--gold); color: #1a1408; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl.ndz-dtl .btl.btl .btl-c.btl-c.btl-sugc:hover { animation: none; background: rgba(69,193,92,.28) !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl.ndz-dtl .btl.btl .btl-c.btl-c.btl-sugc.red:hover { background: rgba(230,180,80,.28) !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl.ndz-dtl .btl.btl .btl-c.btl-c.btl-sugc:hover > :is(.icw, b) { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl.ndz-dtl .btl.btl .btl-c.btl-c.btl-sugc { animation: none; } }
 </style>
 
 
