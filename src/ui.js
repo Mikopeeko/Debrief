@@ -31854,6 +31854,23 @@ function dsGuides() {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
+// ===== Design studio round 76 (Oct 27): the Roster above the build chooser on a fresh night. Owner: the Design studio chat. =====
+(function () {
+  if (typeof document === 'undefined') return;
+  var busy = false;
+  function dsRosterFirst() {
+    if (busy) return; busy = true;
+    try {
+      var ros = document.querySelector('#view.plan-page .assignbox > .panel.pg-roster'); if (!ros) return;
+      var first = ros.parentElement.querySelector(':scope > .panel.pwho, :scope > .panel.pls');
+      if (first && (first.compareDocumentPosition(ros) & Node.DOCUMENT_POSITION_FOLLOWING)) { ros.classList.add('ds-first'); ros.parentElement.insertBefore(ros, first); }
+    } catch (e) { /* (the page stays as rendered) */ } finally { busy = false; }
+  }
+  var t = 0, kick = function () { clearTimeout(t); t = setTimeout(dsRosterFirst, 40); };
+  var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
 (function () { const f17 = dsBars; let last = 0, tm = 0, pendingRoot;
