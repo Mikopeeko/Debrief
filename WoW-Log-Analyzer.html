@@ -14371,7 +14371,7 @@ const PERS_DR = new Map([['barkskin', [0.2]], ['survival instincts', [0.5]], ['r
   ['dispersion', [0.75]], ['stoneform', [0.1]], ['ice cold', [0.7]], ['zen meditation', [0.6]], ['stone bulwark totem', ['abs']],
   ['anti-magic shell', ['abs']], ['dark pact', ['abs']], ['ice barrier', ['abs']], ['prismatic barrier', ['abs']], ['blazing barrier', ['abs']],
   ['ice block', [1]], ['divine shield', [1]], ['cloak of shadows', [1, true]], ['netherwalk', [1]],
-  ['spell reflection', [0.25, true]], ['defensive stance', [0.15]]]); // (Oct 27: Spell Reflection takes 25% off magic damage for 5 s, Defensive Stance 15% off everything while it's on: public tooltips, about; check against the game's tooltips)
+  ['spell reflection', [0.2, true]], ['defensive stance', [0.2]]]); // (Oct 27: both take 20% off (Spell Reflection magic damage only, for 5 s; Defensive Stance everything while it's on). Warcraft Logs' own table for a real Midnight kill (TP7H64vChZqzA3yk fight 23, Arms Warrior: Spell Reflection 1.01M over 35 s, Defensive Stance 699k) fits 20%, not the tooltips' 25% / 15% found on the web)
 // externals and Zephyr, by the buff on the player it covers: [reduction, magic only, area damage only] (tooltips, about)
 const EXT_DR = new Map([['pain suppression', [0.4]], ['ironbark', [0.2]], ['blessing of sacrifice', [0.3]], ['zephyr', [0.2, false, true]]]);
 const CD_DR = new Map([['power word: barrier', ['Power Word: Barrier', 0.20]], ['spirit link totem', ['Spirit Link Totem', 0.10]], ['anti-magic zone', ['Anti-Magic Zone', 0.15, true]]]);
