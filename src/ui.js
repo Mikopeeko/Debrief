@@ -1445,7 +1445,7 @@ const meTabHtml = (on) => '<button class="tab tab-me' + (on ? ' on' : '') + '" d
 // (in a raid, the tab; from a team's own page, back into the raid you came from on My Page; with no raid, your team's page)
 function openMyPage() { { const h = meHomeChar(); if (h) meSwitch(h.gid, true); } if (S.rep && $('#view')) { S.tab = 'me'; renderMain(); window.scrollTo(0, 0); return; }
   if (PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK)) { S.tab = 'me'; select(PROG_BACK); return; }
-  const t = homeTarget(); if (!t) { progressPage(); gsStart(true); return; } progressPage(undefined, t.gid); window.scrollTo(0, 0); } /* (nothing added yet: Home, with the setup as a card on top, Oct 27) */
+  const t = homeTarget(); if (!t) { progressPage(); window.scrollTo(0, 0); return; } progressPage(undefined, t.gid); window.scrollTo(0, 0); } /* (nothing added yet: the front page and its pitch; Start now opens the setup (the Design studio, Oct 27)) */
 // My Page in a raid: your team's page inside the tab, the raid staying open above it (your call, Oct 19). It opens on your team each time (your
 // character's page is a click away on it); with no team added yet, an invitation to add one
 function myPageView() { const t = homeTarget(); if (!t) { myPageEmpty(); return; }
@@ -31348,7 +31348,7 @@ $('#brandHome').onclick = () => home();
   if (b && pop) {
     b.onclick = (e) => { e.stopPropagation(); if (!pop.hidden) { close(); return; }
       const m = $('#tbMenuPop'); if (m && !m.hidden) { m.hidden = true; $('#tbMenu').setAttribute('aria-expanded', 'false'); }
-      if (!groups().length) { progressPage(); gsStart(true); return; } // (nothing added yet: the setup, as a card on top of Home (Oct 27))
+      if (!groups().length) { progressPage(); window.scrollTo(0, 0); return; } // (nothing added yet: the front page; its Start now opens the setup (Oct 27))
       if (HIST.mem.size) show(); else HIST.load().then(show); };
     pop.addEventListener('click', (e) => { const t = e.target.closest('[data-go]'); if (!t) return; close(); const v = t.dataset.go;
       if (v === '+') { gsStart(); return; } progressPage(undefined, v); window.scrollTo(0, 0); });
