@@ -7821,6 +7821,36 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-one.tn-sec .tn-gcol::after { content: 'swipe ›'; position: absolute; right: 0; top: 0; bottom: 0; width: 64px; display: flex; align-items: center; justify-content: flex-end; padding-right: 4px; font: 600 11px var(--body); color: var(--gold); background: linear-gradient(90deg, rgba(0,0,0,0), var(--panel) 70%); pointer-events: none; }
   html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-one.tn-sec .nt-g th.pl, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .tn-one.tn-sec .nt-g td.pl { position: sticky; left: 0; z-index: 2; background: var(--panel); }
 }
+/* ===== Design studio round 71 (Oct 26): the Jobs cards (masonry, title rows, name chips, pictures row, phone header). Owner: the Design studio chat. ===== */
+/* 8 masonry: two columns, a card never splits */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rcg { display: block; columns: 2; column-gap: 12px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rcg > .plb-rc { break-inside: avoid; page-break-inside: avoid; -webkit-column-break-inside: avoid; margin: 0 0 12px; width: 100%; box-sizing: border-box; }
+/* 9 the title keeps its line; the controls wrap under it when short of room */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .plb-rch { flex-wrap: wrap; row-gap: 6px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .plb-rch > b { flex: 1 1 auto; min-width: min(100%, 190px); white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.2; }
+/* 10 names as chips */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rr > .plb-rn { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 4px; line-height: 1; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rr > .plb-rn > .ndz-ac { display: inline-flex; align-items: center; height: 22px; padding: 0 8px 0 4px; border-radius: 11px; background: rgba(255,255,255,.055); white-space: nowrap; font-size: 12px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rr > .plb-rn > .ndz-ac + .ndz-ac::before { content: none; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rr > .plb-rn > .ndz-ac .nm.pk { display: inline-flex; align-items: center; gap: 4px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rr > .plb-rn > .ndz-ac .nm.pk img { width: 15px; height: 15px; border-radius: 3px; margin: 0; vertical-align: middle; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rr > .plb-rn.plb-rsub { display: block; line-height: 1.5; }
+/* 11 the pictures row */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .pj-pics { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .pj-pics::before { content: 'Pictures'; margin-right: auto; font: 600 10.5px/1 var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .pj-pics > .pj-pic { width: 96px; height: 96px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .pj-pics > .pj-pic img { width: 96px; height: 96px; }
+@media (max-width: 760px) {
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rcg { columns: 1; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc > .plb-rch > b { flex: 1 1 55%; min-width: 0; } /* (fits beside the icon, grows to the full line; the controls wrap under) */
+}
+/* 14 the header's buttons on a phone: a two-column grid, Copy for the game and Pictures on top */
+@media (max-width: 640px) {
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dhd .ndz-dact.bj-act { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; width: 100%; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dhd .ndz-dact.bj-act > .btn, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dhd .ndz-dact.bj-act .bj-copy > .btn, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dhd .ndz-dact.bj-act .ndz-hdb > .btn { width: 100%; margin: 0; justify-content: center; box-sizing: border-box; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dhd .ndz-dact.bj-act > .bj-copy { order: -1; grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dhd .ndz-dact.bj-act > .ndz-hdb { grid-column: 1 / -1; display: block; }
+}
 </style>
 
 
