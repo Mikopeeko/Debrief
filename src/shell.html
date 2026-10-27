@@ -724,6 +724,8 @@ body.ndz-tlbig-on { overflow: hidden; } body.ndz-tlbig-on::after { content: ''; 
 /* plan sug ghost */ #ndzTl .btl-sug.ghost { transform: none; height: 20px; display: inline-flex; align-items: center; gap: 4px; padding: 0 4px; border: 1px dashed #45c15c; background: rgba(69,193,92,.14); color: var(--cc, #8fe39d); font: 700 11px/1 var(--body, inherit); overflow: visible; } #ndzTl .btl-sug.ghost.red { border-color: #e6b450; } #ndzTl .btl-sug.ghost .icw, #ndzTl .btl-sug.ghost img { width: 16px; height: 16px; } #ndzTl .btl-sug.ghost .btl-f { position: absolute; left: 0; bottom: -4px; height: 3px; background: var(--cc, #45c15c); opacity: .6; border-radius: 2px; } #ndzTl .btl-sug.ghost .sugl { position: absolute; left: 0; top: -13px; font: 700 9.5px/1 var(--body, inherit); color: #8fe39d; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; } #ndzTl .btl-sug.ghost.red .sugl { color: #f2cf7a; }
 /* plan tray full */ #ndzTl .btl-ti.ti-full { opacity: .3; filter: grayscale(1); }
 /* plan fit wrap */ #ndzTl .btl-wrap.fit .btl-sc { overflow-x: hidden; }
+/* plan hit crowd */ #ndzTl .btl-hit.crowd > em { visibility: hidden; } #ndzTl .btl-hit.crowd:hover > em { visibility: visible; z-index: 9; }
+/* plan fit icons */ #ndzTl .btl-wrap.fit .btl-c > b { display: none; }
 .ndz { padding: 20px 22px; } .ndz-hd { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; } .ndz-hd h3 { margin: 0; font-size: 20px; }
 .ndz-test { padding: 2px 9px; border-radius: 999px; background: var(--warn-bg); color: #f3c06a; font-size: 12px; font-weight: 700; }
 .ndz-key { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 12px; font-size: 13px; color: var(--muted); }
