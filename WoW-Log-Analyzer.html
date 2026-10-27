@@ -8137,6 +8137,26 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rr > .plb-rn > .ndz-ac + .ndz-ac::before { content: none; } /* (no dot between names: "get rid of it") */
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rr > .plb-rn > .ndz-ac .nm.pk { display: inline-flex; align-items: center; gap: 5px; font-weight: 700; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rr > .plb-rn > .ndz-ac .nm.pk img { width: 16px; height: 16px; border-radius: 4px; margin: 0; }
+/* ===== Design studio round 84 (Oct 27): the cooldown tray and drag states. Owner: the Design studio chat. ===== */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray { margin: 8px 0 0; padding: 7px 10px 8px; border: 1px dashed var(--line2); border-radius: 8px; background: rgba(255,255,255,.015); transition: border-color .12s, background .12s; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray.over { border-style: solid; border-color: #e5534b; background: rgba(229,83,75,.08); }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray > .btl-trh { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; margin: 0 0 4px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray > .btl-trh > b { font: 700 12.5px var(--head); }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray > .btl-trh > .sub { font-size: 11.5px; color: var(--muted); }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray > .btl-trl { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray .btl-trr { display: inline-flex; align-items: center; gap: 3px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray .btl-trr > .btl-trn { font: 700 11.5px/1 var(--body); margin-right: 2px; white-space: nowrap; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray .btl-trr > .btl-ti { width: 24px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: none; cursor: grab; display: grid; place-items: center; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray .btl-trr > .btl-ti :is(.icw, img, .ico) { width: 22px !important; height: 22px !important; border-radius: 5px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray .btl-trr > .btl-ti:hover, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray .btl-trr > .btl-ti:focus-visible { box-shadow: 0 0 0 2px rgba(230,180,80,.75); outline: 0; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray .btl-trr > .btl-ti:active { cursor: grabbing; }
+/* the chart while dragging */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-c[data-cdk] { cursor: grab; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-c.drag { opacity: .5; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-c.drag.bad { outline: 2px solid rgba(229,83,75,.8); outline-offset: 1px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-busy > em { font: 600 10.5px/1 var(--body); font-style: normal; color: #ff9c94; background: rgba(13,16,23,.8); padding: 2px 5px; border-radius: 4px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-ghost :is(.icw, img, .ico) { width: 26px !important; height: 26px !important; border-radius: 6px; box-shadow: 0 6px 16px rgba(0,0,0,.5); }
+@media (max-width: 640px) { html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray > .btl-trl { gap: 4px 12px; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray .btl-trr > .btl-ti { width: 28px; height: 28px; } }
 </style>
 
 
