@@ -17657,6 +17657,8 @@ const PATCH_NOTES = [
     { t: 'Graphs, a page of raw numbers', d: 'Graphs is one rail of filters on the left (metric, target, by player or by ability) and the lists on the right as slim rows: the name in its class colour, the numbers on the right, a thin bar. No more podium cards; the first three rows are the podium.' },
     { t: 'Plan: a picture for every job', d: 'On every boss (Mythic), every job in your plan now comes with a picture of the whole room: who goes where and on which raid marker, step by step. Tap one to see it big, move the markers to your raid\'s spots, or copy every step as one picture.' },
   ], n: [
+    'Plan, Sszorak: the cyst markers sit where top raids drop them, with every spot a cyst can go ringed on the markers map, and a line on why: the exit marker never moves, the other three go across from the tunnels that show wind. The four made-up extra markers are gone.',
+    'Plan, Vashnik: the Plague Froth markers sit on the line top raids use, and the raid markers are its only picture. The Lost Explorers: only the raid markers picture too. Nek\'zali: only the raid markers, Hungering Pyre and the well teams. Ula\'tek: no pictures for the egg carriers, Doomscale kick teams or off-tank jobs.',
     'Plan, The Twin Fangs: the Broodling kicks picture shades each kick area\'s two Broodlings in its colour with its name, and puts that area\'s kickers beside them in kick order. Only the kickers are drawn.',
     'Plan, job pictures on every boss: only the players with that job are drawn, and the names and labels are smaller and sit beside the dots instead of on top of them. A name with no room is left off the map; it\'s still in the list beside it.',
     'Plan, The Twin Fangs: the Orb CC quadrants job has its own pictures, one for each alternating set (sets 1, 3 and 5, then sets 2, 4 and 6): the platform split in four, each quadrant\'s players on it with their area crowd control (Blinding Light, Shockwave and the like) beside their names.',
@@ -17699,8 +17701,9 @@ const PATCH_NOTES = [
     'Plan: the Who plays tonight header runs across the whole top, so the roster and Bosses start level under it.',
     'Debriefing: the bars, numbers and the boss header play once the moment the page shows, now that it draws once; nothing moves while it is still reading.',
   ], f: [
+    'Plan, Markers: the markers you drag no longer sit in a grey box.',
     'Plan, Markers: changing a marker to a mark that wasn\'t on the map (right-click) left the old mark on the same spot too, so two markers sat on one point. Now only the new mark is there.',
-    'Plan, The Twin Fangs: the raid markers sit one on each of the three platforms, where raids stand through that platform\'s two sets (star north, circle south-east, diamond south-west), instead of eight bunched on one platform. The Raid markers map shows the whole room.',
+    'Plan, The Twin Fangs: the raid markers sit one on each of the three platforms, where raids stand through that platform\'s two sets (star north, circle south-west, diamond south-east, in the order most raids take them), instead of eight bunched on one platform. The Raid markers map shows the whole room.',
     'Plan, a job\'s picture opened big: going to the next picture with ‹ or › now names that picture\'s own job under the heading (it kept naming the job you opened it from).',
     'Boss guides, Ula\'tek: in phase one her tank and the melee now stand on the platform below her (they were drawn past its edge), Mother\'s Wrath knocks the tank back from that edge, the eggs land clear of the melee, and in phase three the Serpent\'s Bite soakers spread out on the broken platform with their waves aimed where nobody stands. The Coiled Altar: anyone a purple circle of Eternal Nightfall lands on steps out of it.',
     'A combat potion drunk before the pull now counts, on a night read from your PC too. Before, a pre-pull Potion of Recklessness was missed on the Report card.',
@@ -49517,6 +49520,7 @@ GDZ_ORIGIN['Sszorak'] = { cx: -409, cy: 384.2 }; GDZ_FULL['Sszorak'] = { x: 0, y
 const SZ = 'Sszorak', SZ_EN = [-34, -6], SZ_EX = [33, 10], SZ_C = [3, 3];
 const SZ_L = ['m1', 'm2', 'm3', 'r1', 'r2', 'r3', 'h1', 'h2', 'm7'], SZ_R = ['m4', 'm5', 'm6', 'r4', 'r5', 'r6', 'r7', 'h3', 'h4'];
 // the four cysts of the kill's first phase, each opposite the tunnel its wind blows from; the fourth always at the exit
+const SZ_CYS = [[44, 11], [22, 38], [-1, 45], [-32, 29], [-18, -37], [9, -41], [38, -20]]; /* (every spot a cyst lands in 13 top kills: the exit, then the six wind spots, from north-east round) */
 const SZ_CY = [[9, -35], [-6, 41], [-22, 27], [38, 11]], SZ_MK = ['cross', 'circle', 'triangle', 'diamond'];
 // the Raging Crosswinds arrows, on this picture (the game's north, south, west and east, turned with the room)
 const SZ_AR = { n: 56, s: 236, w: 146, e: 326 };
@@ -51981,7 +51985,7 @@ function ppFreeze(mp, T, S, P, M, o) {
   // (the raid lead's markers, drawn 4 yards further out than their spot so whoever stands on one doesn't hide it)
   const mo = PP_MKOUT[mp.boss], wm = PP_MKS.filter((k) => M[k] && (!o.marks || o.marks.includes(k))).map((k) => ({ k, x: cx + M[k][0] + (Array.isArray(mo) ? mo[0] : 0), y: cy + M[k][1] + (Array.isArray(mo) ? mo[1] : (M[k][1] >= 0 ? 1 : -1) * (mo == null ? 4 : mo)) }));
   const out = { ...mp, frames: null, pts, t: T, ft: T, pauses: [], steps: [], callouts: calls, tags: (o.tags || []).map(([g, tx]) => [g, tx, null, null]), hl: Object.keys(S).filter((g) => (o.hl || []).includes(g)),
-    good: [], goodAt: null, bad: [], badAt: null, cbars: cb, wmarks: wm, liveLeg: false, hlLabel: 'assigned in the note', playerLabel: 'Player (spec icon, class colour)' };
+    good: [], goodAt: null, bad: [], badAt: null, cbars: o.noBars ? {} : cb, wmarks: wm, liveLeg: false, hlLabel: 'assigned in the note', playerLabel: 'Player (spec icon, class colour)' };
   if (o.focus) out.focus = out.fullAt = { x: cx + o.focus.x, y: cy + o.focus.y, r: o.focus.r }; /* (a guide map shown whole: the user wants the whole arena in each picture) */
   return { out, pm, keep: (o.named || []).map((g) => nm(S[g])).filter(Boolean) };
 }
@@ -52471,18 +52475,20 @@ const SZ_BOSS = { x: -26, y: 2, r: 30 }; // (the tank combo at the entrance)
 function ppCardsSZ(J, M, U, P) {
   const cards = [], BL = '#5aa0ff', GO = '#e6b450', OR = '#ff8a5a', GN = '#8fe36a', Q = '#c9ced8', has = J.groups[0].length || J.groups[1].length;
   // Mutilate: group 1 soaks the first, group 2 the second, one group each side of the boss (the guide's map at the first soak)
-  if (has) cards.push({ id: 'mut', ph: 1, when: 'Every tank combo', title: 'Mutilate (Your group soaks your turn)', map: ppFreeze(SZ_M.combo(false), 2.4, szGroups(J, P, {}), P, M, { focus: SZ_BOSS, hl: SZ_L, labels: [[SZ_L, 'Group 1 · 1st', OR, '#fff', 8], [SZ_R, 'Group 2 · 2nd', GO, '#1a1405', 8, true]] }),
+  if (has) cards.push({ id: 'mut', ph: 1, when: 'Every tank combo', title: 'Mutilate (Your group soaks your turn)', map: ppFreeze(SZ_M.combo(false), 2.4, szGroups(J, P, {}), P, M, { focus: SZ_BOSS, hl: SZ_L, noBars: true, labels: [[SZ_L, 'Group 1 · 1st', OR, '#fff', 8], [SZ_R, 'Group 2 · 2nd', GO, '#1a1405', 8, true]] }),
     legend: [ppG('Group 1: the first Mutilate', OR, J.groups[0].map((n) => ppI(P, n))), ppG('Group 2: the second Mutilate', GO, J.groups[1].map((n) => ppI(P, n)))],
     foot: 'One group on each side of the boss; the groups take turns.' });
   // Serpent's Fury: everyone in the stack on the bait right after the tank combo (the guide's map as the bait walks in)
   { const fix = J.bait ? { r7: J.bait } : {};
-    cards.push({ id: 'fury', ph: 1, when: 'At 92 rage', title: 'Serpent\'s Fury (14 in the stack)', map: ppFreeze(SZ_M.fury(false), 4.4, szGroups(J, P, fix), P, M, { hl: J.bait ? ['r7'] : [], named: J.bait ? ['r7'] : [], tags: J.bait ? [['r7', 'Bait']] : [], focus: SZ_BOSS }),
+    cards.push({ id: 'fury', ph: 1, when: 'At 92 rage', title: 'Serpent\'s Fury (14 in the stack)', map: ppFreeze(SZ_M.fury(false), 4.4, szGroups(J, P, fix), P, M, { hl: J.bait ? ['r7'] : [], named: J.bait ? ['r7'] : [], tags: J.bait ? [['r7', 'Bait']] : [], focus: SZ_BOSS, noBars: true }),
       legend: [ppG('Fury bait', '#ff5a5a', [J.bait && ppI(P, J.bait, 'Bait'), J.bait2 && ppI(P, J.bait2, 'Backup')], 'Walk in 1 second before the Surge bombs; never just before or after Dig In.'), ppG('Everyone', GO, [], 'All DPS, the off-tank and the mobile healers stack on the bait near the melee; then spread to your Virulence spot, half inside, half outside.')],
       foot: '14 players inside resets his rage.' }); }
   // The exit cyst: after the third wind its popper pops the fourth cyst, throwing the raid back to the entrance
-  if (J.exit) { const k = gdzKit(SZ, 3), fix = { r7: J.exit }, put = new Set(['r7']), EX = SZ_CY[3]; szBoss(k, 0, SZ_C); SZ_CY.forEach(([x, y], i) => k.ring({ x, y, r: 4, fx: i === 3 ? 'soak' : 'puddle', t0: 0, at: 1.05, dur: 5, color: GN, fill: 'rgba(143,227,106,.35)', cn: 'Viscous Cyst', label: false }));
+  // (the cysts on the raid lead's markers: the exit on the marker set as the exit, the wind cysts on the others)
+  if (J.exit) { const k = gdzKit(SZ, 3), fix = { r7: J.exit }, put = new Set(['r7']), xm = (U && U.exit) || 'diamond', EX = M[xm] || [44, 11], CY = PP_MKS.filter((m) => m !== xm && M[m]).map((m) => M[m]).concat([EX]);
+    szBoss(k, 0, SZ_C); CY.forEach(([x, y], i) => k.ring({ x, y, r: 4, fx: i === CY.length - 1 ? 'soak' : 'puddle', t0: 0, at: 1.05, dur: 5, color: GN, fill: 'rgba(143,227,106,.35)', cn: 'Viscous Cyst', label: false }));
     k.at(0, 'r7', EX[0] - 4, EX[1] - 1); if (J.exit2) { fix.r6 = J.exit2; put.add('r6'); k.at(0, 'r6', EX[0] - 7, EX[1] - 5); } k.at(0, GDZ_RAID.filter((s) => !put.has(s)), SZ_C[0], SZ_C[1] - 12, 8);
-    cards.push({ id: 'cyst', ph: 1, when: 'After each Dig In', title: 'Viscous Cyst (The exit popper)', map: ppFreeze(k.done({ title: 'Exit cyst', focus: { x: 0, y: 0, r: 62 } }), 1, szGroups(J, P, fix), P, M, { hl: Object.keys(fix), named: Object.keys(fix), tags: [['r7', 'Exit']].concat(J.exit2 ? [['r6', 'Backup']] : []), labels: [[{ rx: EX[0], ry: EX[1] + 7 }, 'Exit cyst', GN, '#0a1a06', 0]] }),
+    cards.push({ id: 'cyst', ph: 1, when: 'After each Dig In', title: 'Viscous Cyst (The exit popper)', map: ppFreeze(k.done({ title: 'Exit cyst', focus: { x: 0, y: 0, r: 62 } }), 1, szGroups(J, P, fix), P, M, { hl: Object.keys(fix), named: Object.keys(fix), tags: [['r7', 'Exit']].concat(J.exit2 ? [['r6', 'Backup']] : []), noBars: true, labels: [[{ rx: EX[0], ry: EX[1] + 7 }, 'Exit cyst', GN, '#0a1a06', 0]] }),
       legend: [ppG('Exit cyst', GN, [ppI(P, J.exit, 'Pops it'), J.exit2 && ppI(P, J.exit2, 'Backup')], 'After the third wind, pop the fourth cyst to throw the raid back to the entrance.')],
       foot: 'On the last Dig In don\'t pop it: it hits with enrage damage.' }); }
   return cards;
@@ -52556,16 +52562,16 @@ const GDZ_PP = {
     uses: [['int1', 'First intermission coil', ''], ['intend', 'Intermission end spot', 'diamond']],
     room: { scene: (k) => { k.art(0, UL_FULL); uxBoss(k, 0); }, focus: { x: 0, y: 0, r: 54 }, lim: 52, keep: [UX] },
     read(N, P) { return ppReadUL(N, P); },
-    cards: ppCardsUL,
+    cards: (J, M, U, P) => ppCardsUL(J, M, U, P).filter((cd) => ['coils', 'trans', 'bite'].includes(cd.id)), /* (the user's call: no pictures for eggs, kick teams or the off-tank jobs) */
     // (Plan's Jobs cards (2caefe9) and the pictures each shows, by its key, else by its title)
-    mech: { eggs: ['eggs'], coils: ['coils'], kicks: ['kicksL', 'kicksR'], trans: ['trans'], bite: ['bite'], tanks: ['beam', 'grips'] },
-    jobs: [[/egg/i, ['eggs']], [/coils team|spectral coils/i, ['coils']], [/kick/i, ['kicksL', 'kicksR']], [/transition|soak group/i, ['trans']], [/serpent'?s bite/i, ['bite']], [/tank|grip/i, ['beam', 'grips']]] } },
+    mech: { coils: ['coils'], trans: ['trans'], bite: ['bite'] },
+    jobs: [[/coils team|spectral coils/i, ['coils']], [/transition|soak group/i, ['trans']], [/serpent'?s bite/i, ['bite']]] } },
   'The Twin Fangs': { Mythic: {
     // (one marker on each of the three platforms the raid moves between, where it stands through that platform's two sets: about 49 yards
     // out from the pool's middle, on the platform's centre line, the same on all three platforms in six top kills (Oct 26). Star on the
-    // north platform where the fight starts, circle south-east and diamond south-west, in the order four of the six took them)
-    marks: (() => { const at = (p) => tfT(p).P([0, 49]).map((v) => Math.round(v)); return { star: at(0), circle: at(2), diamond: at(1) }; })(),
-    mver: 2, /* (markers a raid lead saved before the three-platform spots are set aside once) */
+    // north platform where the fight starts, circle south-west and diamond south-east, in the order four of the six took them)
+    marks: (() => { const at = (p) => tfT(p).P([0, 49]).map((v) => Math.round(v)); return { star: at(0), circle: at(1), diamond: at(2) }; })(),
+    mver: 3, /* (markers a raid lead saved before the three-platform spots are set aside once) */
     stack: [0, 0],
     uses: [],
     room: { scene: (k) => { k.boss('vx', 'Vexhul', 0, TF_VX[0], TF_VX[1]).boss('it', 'Ithraz', 0, TF_IT[0], TF_IT[1]); }, focus: TF_ROOM, full: TF_ROOM, lim: 90, keep: ['Vexhul', 'Ithraz'] },
@@ -52592,10 +52598,10 @@ const GDZ_PP = {
     uses: [],
     room: { scene: (k) => { k.boss('nz', NZ, 0, NZ_B[0], NZ_B[1]); }, focus: { x: 0, y: -4, r: 54 }, lim: 50, keep: [NZ] },
     read(N, P) { return ppReadNZ(N, P); },
-    cards: ppCardsNZ,
+    cards: (J, M, U, P) => ppCardsNZ(J, M, U, P).filter((cd) => !['grip', 'rend'].includes(cd.id)), /* (the markers, Hungering Pyre and the well teams only: the user's call) */
     // (Plan's Jobs cards (173240d) and the pictures each shows, by its key, else by its title)
-    mech: { well: ['well1', 'well2'], grip: ['grip'], rend: ['rend'], pyre: ['pyre'] },
-    jobs: [[/well/i, ['well1', 'well2']], [/amani|grip/i, ['grip']], [/essence rend|dispel/i, ['rend']], [/pyre/i, ['pyre']]] } },
+    mech: { well: ['well1', 'well2'], pyre: ['pyre'] },
+    jobs: [[/well/i, ['well1', 'well2']], [/pyre/i, ['pyre']]] } },
   'Entombed Sentinels': { Mythic: {
     // (the guide places no markers here: a plain ring round the middle, 36 yards out at the compass points, for the raid lead to drag)
     marks: { star: [0, 36], circle: [25, 25], diamond: [36, 0], triangle: [25, -25], moon: [0, -36], square: [-25, -25], cross: [-36, 0], skull: [-25, 25] },
@@ -52614,29 +52620,36 @@ const GDZ_PP = {
     uses: [],
     room: { scene: (k) => { const G = leG(-80), I = nzU(-89, 33), N = nzU(-160, 31); k.boss('ge', 'Trader Gebbo', 0, G[0], G[1]).boss('ik', 'Scrollsage Iku', 0, I[0], I[1]).boss('na', 'First Mate Nama', 0, N[0], N[1]); }, focus: { x: 0, y: 0, r: 56 }, lim: 50, keep: ['Trader Gebbo', 'Scrollsage Iku', 'First Mate Nama'] },
     read(N, P) { return ppReadLE(N, P); },
-    cards: ppCardsLE,
+    cards: () => [], markersOnly: true, /* (only the markers map: the user's call) */
     // (Plan's Jobs cards (7cc94b2) and the pictures each shows, by its key, else by its title)
     mech: { fish: ['fish'], crates: ['crates'], kicks: ['kicks'] },
     jobs: [[/fish/i, ['fish']], [/crate/i, ['crates']], [/icebound|kick/i, ['kicks']]] } },
   'Vashnik the Malignant': { Mythic: {
-    // (the guide's Plague Froth markers on their slanted line (X, triangle and moon for ranged, diamond and star for melee), skull where
-    // his tank holds him for Imbibe, and circle and square off to the sides for the raid lead to use)
-    marks: { cross: VA_MK.cross, triangle: VA_MK.triangle, moon: VA_MK.moon, diamond: VA_MK.diamond, star: VA_MK.star, skull: VA_I, circle: [40, -10], square: [-40, -10] },
+    // (the first Plague Froth line ("mow the lawn"): X, triangle and moon for ranged, diamond and star for melee, top to bottom, where the
+    // targets stood in 18 such sets of six top kills (Oct 26; the guide's line from our kill sat 5 to 14 yards further left and bunched at
+    // the top); skull where his tank holds him for Imbibe. Only this map: the user's call, the other jobs need no picture)
+    marks: { cross: [-3, -27], triangle: [-5, -37], moon: [-6, -42], diamond: [-6, -52], star: [-8, -63], skull: VA_I },
+    mver: 2, markersOnly: true,
     stack: [0, 0],
     uses: [],
     room: { scene: (k) => { vaBoss(k); }, focus: { x: 0, y: -26, r: 66 }, lim: 75, keep: [VA] },
     read(N, P) { return ppReadVA(N, P); },
-    cards: ppCardsVA,
+    cards: () => [],
     // (Plan's Jobs cards (d99d75e) and the pictures each shows, by its key, else by its title)
     mech: { adds: ['adds'], bile: ['bile'], disp: ['disp'] },
     jobs: [[/grip|add/i, ['adds']], [/bile/i, ['bile']], [/exploding infection|dispel/i, ['disp']]] } },
   Sszorak: { Mythic: {
-    // (the guide's cyst markers, each across from its wind tunnel: X, circle and triangle, and the diamond at the exit; the other four off
-    // to the sides for the raid lead to use)
-    marks: { cross: SZ_CY[0], circle: SZ_CY[1], triangle: SZ_CY[2], diamond: SZ_CY[3], star: [30, 38], moon: [-40, -32], skull: [44, -22], square: [-46, 12] },
+    // (why they matter: in Dig In each wind blows the raid from the middle to the side across from its tunnel, and the cyst dropped on
+    // that side's marker catches it and throws it back; no cyst there and players are blown off the platform. 13 top kills (Oct 26): the
+    // exit cyst always lands about 44 yards out east-north-east; the other three use three of six spots round the edge, a different three
+    // each intermission (whichever tunnels show wind). So X, circle and triangle sit on the guide's three (south, north, north-west) as far
+    // out as top raids drop them, diamond on the exit, and every spot a cyst can go is ringed on the markers map)
+    marks: { cross: [9, -41], circle: [-1, 45], triangle: [-32, 29], diamond: [44, 11] },
+    mver: 2,
     stack: [0, 0],
-    uses: [],
-    room: { scene: (k) => { szBoss(k); }, focus: { x: 0, y: 0, r: 62 }, lim: 60, keep: [SZ] },
+    uses: [['exit', 'Exit cyst marker', 'diamond']],
+    room: { scene: (k) => { szBoss(k); SZ_CYS.forEach(([x, y], i) => k.ring({ x, y, r: 4, fx: 'zone', t0: 0, dur: 99, color: i ? '#8fe36a' : '#e6b450', cn: i ? 'Where a wind cyst can go' : 'The exit cyst', label: false })); }, focus: { x: 0, y: 0, r: 62 }, lim: 60, keep: [SZ] },
+    mkTip: 'The exit marker (diamond) never moves. The other three go across from the tunnels that show wind each intermission: the rings show every spot a cyst can go.',
     read(N, P) { return ppReadSZ(N, P); },
     cards: ppCardsSZ,
     // (Plan's Jobs cards (a447ffe) and the pictures each shows, by its key, else by its title)
@@ -52677,9 +52690,11 @@ function ppDeclutter(sv) {
   sv.querySelectorAll('g.icl').forEach((g) => { const x = +g.dataset.x, y = +g.dataset.y; let b; try { b = g.getBBox(); } catch (e) { return; }
     if (f < 1) g.setAttribute('transform', 'translate(' + x + ' ' + y + ') scale(' + f.toFixed(3) + ') translate(' + -x + ' ' + -y + ')');
     taken.push(bx(x + (b.x - x) * f, y + (b.y - y) * f, x + (b.x + b.width - x) * f, y + (b.y + b.height - y) * f)); });
+  const ds = Math.max(0.72, f); /* (the player icons: about three quarters in a platform-sized frame) */
   sv.querySelectorAll('g.ic:not(.icl)').forEach((g) => { if (g.querySelector('text.ml')) return; let b; try { b = g.getBBox(); } catch (e) { return; } if (!b.width || b.width > 40 || b.height > 40) return;
-    icons.push({ x: +g.dataset.x, y: +g.dataset.y, b: bx(b.x - 1, b.y - 1, b.x + b.width + 1, b.y + b.height + 1) }); });
-  sv.querySelectorAll('text.mlp').forEach((t) => { const g = t.parentNode, X = +g.dataset.x, Y = +g.dataset.y, r = 9;
+    const x = +g.dataset.x, y = +g.dataset.y, k = g.querySelector('.pl') && ds < 1 ? ds : 1; if (k < 1) g.setAttribute('transform', 'translate(' + x + ' ' + y + ') scale(' + k.toFixed(3) + ') translate(' + -x + ' ' + -y + ')');
+    icons.push({ x, y, b: bx(x + (b.x - 1 - x) * k, y + (b.y - 1 - y) * k, x + (b.x + b.width + 1 - x) * k, y + (b.y + b.height + 1 - y) * k) }); });
+  sv.querySelectorAll('text.mlp').forEach((t) => { const g = t.parentNode, X = +g.dataset.x, Y = +g.dataset.y, r = 9 * ds;
     t.style.fontSize = (12 * f).toFixed(2) + 'px'; t.style.strokeWidth = (3 * f).toFixed(2) + 'px';
     // (the four sides close in, then the four corners, then the four sides a step further out)
     const h = 12 * f, side = (d) => [['middle', X, Y - d - 0.15 * h], ['middle', X, Y + d + 0.85 * h], ['start', X + d, Y + 0.35 * h], ['end', X - d, Y + 0.35 * h]];
@@ -52758,7 +52773,7 @@ function ppZip(files) {
 function ppCss() {
   if (document.getElementById('pp-css')) return; const st = document.createElement('style'); st.id = 'pp-css';
   st.textContent = '#ppWin .pp-mkmap{position:relative}#ppWin .pp-mkmap .zbar,#ppWin .pp-mkmap .zctl,#ppWin .pp-mkmap .zkey,#ppWin .pp-mkmap .znorth{display:none!important}' +
-    '#ppWin .pp-mklay{position:absolute;inset:0;pointer-events:none}#ppWin .pp-mkdot{position:absolute;transform:translate(-50%,-50%);pointer-events:auto;touch-action:none;cursor:grab}#ppWin .pp-mkdot.on{cursor:grabbing}' +
+    '#ppWin .pp-mklay{position:absolute;inset:0;pointer-events:none}#ppWin .pp-mkdot{position:absolute;transform:translate(-50%,-50%);pointer-events:auto;touch-action:none;cursor:grab;background:none;border:0;padding:0;box-shadow:none;line-height:0}#ppWin .pp-mkdot.on{cursor:grabbing}' +
     '#ppWin .pp-mkpick{position:fixed;z-index:1001}' +
     '#ppWin:not(.pp-one) .pp-nav{display:none}#ppWin.pp-one .pp-intro,#ppWin.pp-one .pp-all,#ppWin.pp-one .pp-mkbox,#ppWin.pp-one .ds-ppnav,#ppWin.pp-one .pp-card:not(.pp-cur),#ppWin.pp-one .pp-cur .pp-ph{display:none}' +
     '.pj-pic img:not([src]){visibility:hidden}';
@@ -52819,7 +52834,7 @@ function ppOpen(r, u0, opt) {
   // the finished pictures; the button here only waits until they're drawn)
   const copyAll = box.querySelector('[data-ppcopyall]');
   const draw = async () => { const my = ++gen; all.disabled = true; copyAll.disabled = true;
-    if (!set.cards.length) { host.innerHTML = '<p class="sub">This note has no jobs a picture can show yet (soaks, orb carriers, kick lines, crowd control).</p>'; return; }
+    if (!set.cards.length) { host.innerHTML = '<p class="sub">' + (set.cf.C.markersOnly ? 'This boss has one picture: the raid markers. Move them on the Markers map above.' : 'This note has no jobs a picture can show yet (soaks, orb carriers, kick lines, crowd control).') + '</p>'; return; }
     host.innerHTML = set.cards.map((cd, i) => '<div class="pp-card" data-i="' + i + '" data-ph="' + (cd.ph >= 3 ? '3' : cd.ph >= 2.5 ? 'int' : cd.ph >= 2 ? '2' : '1') + '" data-when="' + esc(cd.when || '') + '" data-legend="' + esc(JSON.stringify(cd.legend.map((G) => ({ title: G.title, color: G.color, sub: G.sub || '', items: G.items.map((it) => ({ name: it.name, color: it.color, specIcon: it.specIcon, job: it.job || '', any: !!it.any })) })))) + '"><div class="pp-ph sub">' + esc(cd.title) + '</div><div class="pp-pic"><span class="sub">Drawing…</span></div><div class="pp-act"><span class="sub pp-msg"></span><button class="btn sm" type="button" data-ppdl>Download</button><button class="btn sm primary" type="button" data-ppcp>Copy</button></div></div>').join('');
     show(); if (one) return; for (let i = 0; i < set.cards.length; i++) { await fill(i, my); if (my !== gen) return; } all.disabled = false; copyAll.disabled = false; };
   box.querySelector('[data-ppprev]').onclick = () => { if (cur > 0) { cur--; show(); } };
@@ -52862,7 +52877,7 @@ function ppOpen(r, u0, opt) {
     uses.innerHTML = '<div class="sub">Where each mechanic happens</div>' + c.C.uses.map(([id, label]) => '<label class="pp-use"><span>' + esc(label) + '</span><select data-use="' + id + '">' + opt0(c.uses[id]) + '</select></label>').join('') +
       '<div class="pp-mkbase"><button class="btn sm" type="button" data-ppreset' + (c.base === 'guide' && !c.saved ? ' disabled' : '') + '>Back to the guide\'s spots</button>' +
       (c.C.raid ? '<button class="btn sm" type="button" data-ppraid' + (c.base === 'raid' && !c.saved ? ' disabled' : '') + '>Use your raid\'s spots</button>' : '') + '</div>' +
-      '<p class="sub">' + (c.base === 'raid' ? 'Started from where your raid stood in your own pulls.' : 'Started from the guide\'s spots.') + ' Drag a marker to move it; right-click it (hold it on a phone) to change which mark it is. Saved in this browser.</p>';
+      (c.C.mkTip ? '<p class="sub"><b>' + esc(c.C.mkTip) + '</b></p>' : '') + '<p class="sub">' + (c.base === 'raid' ? 'Started from where your raid stood in your own pulls.' : 'Started from the guide\'s spots.') + ' Drag a marker to move it; right-click it (hold it on a phone) to change which mark it is. Saved in this browser.</p>';
     uses.querySelectorAll('select[data-use]').forEach((s) => { s.onchange = () => { const cc = ppConf(boss, diff); cc.uses[s.dataset.use] = s.value; keep(cc); mkDraw(); redo(); }; });
     uses.querySelector('[data-ppreset]').onclick = () => { ppSave(boss, diff, { base: 'guide' }); mkDraw(); redo(); };
     const rb = uses.querySelector('[data-ppraid]'); if (rb) rb.onclick = () => { ppSave(boss, diff, { base: 'raid' }); mkDraw(); redo(); }; };
