@@ -32203,6 +32203,35 @@ function dsGuides() {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
+// ===== Design studio round 93 (Oct 27): short rows in the open card. Owner: the Design studio chat. =====
+(function () {
+  if (typeof document === 'undefined') return;
+  var busy = false, seen = new WeakSet();
+  function mark() {
+    if (busy) return; busy = true;
+    try {
+      document.querySelectorAll('#view.plan-page .bj-jobs .plb-rc.editing').forEach(function (card) {
+        var first = null;
+        card.querySelectorAll('.plb-edit .ndz-brow, .plb-edit .ndz-bsi').forEach(function (r) {
+          var c = r.querySelector('.ndz-bcnt'), m = c && /(\d+)\s*of\s*(\d+)/.exec(c.textContent || ''), shortBy = m ? Math.max(0, +m[2] - +m[1]) : 0;
+          var isShort = shortBy > 0, isFull = !!m && !isShort;
+          if (r.classList.contains('ds-short') !== isShort) r.classList.toggle('ds-short', isShort);
+          if (r.classList.contains('ds-full') !== isFull) r.classList.toggle('ds-full', isFull);
+          if (c) { var t = isShort ? 'needs ' + shortBy + ' more' : ''; if ((c.getAttribute('data-ds') || '') !== t) { c.setAttribute('data-ds', t); } }
+          // (the "From your note" line that follows the row, when it is its own element)
+          var why = r.nextElementSibling; if (why && !why.matches('.ndz-brow, .ndz-bsi') && /From your note/.test(why.textContent || '')) { if (why.classList.contains('ds-why-full') !== isFull) why.classList.toggle('ds-why-full', isFull); }
+          r.querySelectorAll(':scope > *').forEach(function (k) { if (!k.matches('.lab, .cl, .ndz-bcnt') && /From your note/.test(k.textContent || '')) { if (k.classList.contains('ds-why-full') !== isFull) k.classList.toggle('ds-why-full', isFull); } });
+          if (isShort && !first) first = r;
+        });
+        if (first && !seen.has(card)) { seen.add(card); setTimeout(function () { try { first.scrollIntoView({ block: 'center' }); } catch (e) { /* (no scroll) */ } }, 60); }
+      });
+    } catch (e) { /* (the editor stays as drawn) */ } finally { busy = false; }
+  }
+  var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(mark, 30); };
+  var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
 (function () { const f17 = dsBars; let last = 0, tm = 0, pendingRoot;
