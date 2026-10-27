@@ -5635,8 +5635,8 @@ Object.assign(NDZ_BUILD, {
       slots: [{ label: 'Grips', want: 2 }, { label: 'Slows', want: 2 }] },
   ],
   'Entombed Sentinels': [
-    { key: 'sides', title: 'Blood and Breath sides', icon: 'Mark of Blood', exclusive: true, explain: 'Blood of Ula\'tek (red) and Breath of Ula\'tek (green) stay 40+ yards apart, and each marks everyone near it with a stacking DoT. Each group stays with its boss, and the groups swap bosses after every intermission.', tip: 'On Mythic, 20+ stacks of both marks at once kills, so multi-dotters don\'t refresh into both.',
-      slots: [{ label: 'Blood', want: 'half' }, { label: 'Breath', want: 'half' }] },
+    { key: 'sides', title: 'Blood and Breath sides', icon: 'Mark of Blood', exclusive: true, explain: 'Blood of Ula\'tek (red) and Breath of Ula\'tek (green) stay 40+ yards apart, and each marks everyone near it with a stacking DoT. Each group stays with its boss, and the groups swap bosses after every intermission.', tip: 'On Mythic, 20+ stacks of both marks at once kills, so multi-dotters don\'t refresh into both. Optional: a Middle group stands between the bosses and hits both (they take both marks, so watch the stacks).',
+      slots: [{ label: 'Blood', want: 'half' }, { label: 'Breath', want: 'half' }, { label: 'Middle', want: 0 }] }, /* (optional: hits both bosses, WoWUtils gap, Oct 26) */
     { key: 'miasma', title: 'Unstable Miasma', icon: 'Unstable Miasma', head: 'Miasma Soaks', explain: 'Unstable Miasma (red side) is a group soak, at least 8 on Mythic. Soakers get Clinging Murk, which ends in a puddle: soak in a corner, then line up along the back wall.', tip: 'It hurts: stack defensives, Anti-Magic Zone and Spirit Link on it.',
       slots: [{ label: 'Miasma', want: 10 }] },
     { key: 'drops', title: 'Toxic Droplets', icon: 'Toxic Droplets', head: 'Droplets', explain: 'Toxic Droplets (green side) must be stepped on before they explode on the raid, and each pickup hurts. On Mythic two at once can kill.', tip: 'Wait for a defensive rather than soak one naked. Immunities (Turtle, Bubble, Cloak) at the worst overlap.',
