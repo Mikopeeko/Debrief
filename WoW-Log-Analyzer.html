@@ -4403,6 +4403,8 @@ details.secd.mcx-tile[open] .mcx-alt { display: none; }
 #view .mxa-sq .lbl { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 #view .nsa > details.phase { margin: 0 0 16px !important; }
 /* (Oct 24: All pulls, a line across the night per mechanic) */
+#view .mx-sq { display: flex; flex-wrap: wrap; gap: 3px; margin: 4px 0 2px; } #view .mx-sq i { width: 10px; height: 14px; border-radius: 2px; background: rgba(255,255,255,.12); }
+#view .mx-sq i.g { background: #45c15c; } #view .mx-sq i.y { background: #e8a23a; } #view .mx-sq i.r { background: #e5534b; } #view .mx-sq i.n { background: none; box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
 #view .prw-sl { display: block; width: 100%; height: 28px; margin: 3px 0 1px; overflow: visible; }
 #view .prw-sl .sl-top { stroke: rgba(255,255,255,.09); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
 #view .prw-sl .sl-line { fill: none; stroke: rgba(236,232,223,.55); stroke-width: 1.5; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
@@ -29679,16 +29681,25 @@ function dtPull(r, name) { const m = DTT.get(r); if (m && m.name === name) retur
   try { const cs = coachSummary([r], name), t = document.createElement('template'); t.innerHTML = cs ? coachBox(cs, { key: 'p' }) : '';
     t.content.querySelectorAll('summary.cch-al.cgl').forEach((s) => { const n = ((s.querySelector('.cgl-n') || {}).textContent || '').trim().toLowerCase(), p = s.querySelector('.cgl-p'); if (!n || !p) return; const val = parseInt(p.textContent, 10); if (!isNaN(val)) v[n] = { v: val, st: ((p.className.match(/\b(ok|warn|bad)\b/) || [])[1]) || 'ok' }; }); } catch (e) { /* (that pull gives no dot) */ }
   DTT.set(r, { name, v }); return v; }
+/* (one square per pull, in pull order: g done right, y some mistakes, r failed, n didn't come up (Oct 27, the Design studio styles .mx-sq)) */
+const mxSq = (pts) => '<span class="mx-sq" aria-hidden="true">' + pts.map((p) => { const c = p.v == null ? 'n' : p.st === 'bad' ? 'r' : p.st === 'warn' ? 'y' : 'g';
+  return '<i class="' + c + '" data-p="' + (p.p || '') + '" data-v="' + (p.v == null ? '' : p.v) + '" title="' + esc('Pull ' + (p.p || '?') + ' · ' + (p.v == null ? 'didn\'t come up' : p.v + '%')) + '"></i>'; }).join('') + '</span>';
+/* (the trend in one plain sentence about the latest pulls; same trigger as before (early vs late moved 10+ points), no line otherwise) */
+const mxTrend = (pts, mv) => { const J = pts.filter((p) => p.v != null), l5 = J.slice(-5);
+  if (mv <= -10) { const f = l5.filter((p) => p.st === 'bad').length, m = l5.filter((p) => p.st === 'bad' || p.st === 'warn').length; return f ? '▼ Getting worse: ' + f + ' of the last ' + l5.length + ' pulls failed.' : '▼ Getting worse: ' + m + ' of the last ' + l5.length + ' pulls had mistakes.'; }
+  if (mv >= 10) { let run = 0; for (let i = J.length - 1; i >= 0 && J[i].st === 'ok'; i--) run++; const ok = l5.filter((p) => p.st === 'ok').length;
+    return run >= 2 ? '▲ Getting better: the last ' + run + ' pulls were clean.' : '▲ Getting better: ' + ok + ' of the last ' + l5.length + ' pulls ' + (ok === 1 ? 'was' : 'were') + ' clean.'; }
+  return ''; };
 function sparkSvg(pts, cls) { const W = 300, H = 24, P = 3, n = pts.length; if (!n) return ''; const X = (i) => (n === 1 ? W / 2 : P + (W - 2 * P) * i / (n - 1)), Y = (v) => P + (H - 2 * P) * (1 - v / 100);
   const on = pts.map((p, i) => [p, i]).filter(([p]) => p.v != null), d = on.map(([p, i], k) => (k ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(p.v).toFixed(1)).join(' ');
   return '<svg class="prw-sl ' + (cls || '') + '" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true"><line x1="0" x2="' + W + '" y1="' + Y(100) + '" y2="' + Y(100) + '" class="sl-top"/>' + (on.length > 1 ? '<path d="' + d + '" class="sl-line"/>' : '') + on.map(([p, i]) => '<circle cx="' + X(i).toFixed(1) + '" cy="' + Y(p.v).toFixed(1) + '" r="2" class="sl-' + p.st + '"/>').join('') + '</svg>'; }
 function dtTrends(v) { if (!v || !v.querySelector('.nmc')) return; const box = v.querySelector('.dt-box'); if (!box || box._dtt) return; box._dtt = 1;
   const it = S.item || (S.rep && S.rep.item); if (!it) return; const R = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && CACHE.has(b)).sort((a, b) => a.pull - b.pull).map((b) => CACHE.get(b)).filter((x) => x && x.players && !x.allPulls);
   if (R.length < 3) return; const name = S.mechP && R.some((r) => [...r.players.values()].some((p) => oaBase(p.name) === oaBase(S.mechP))) ? S.mechP : null, per = []; let i = 0;
-  const draw = () => { if (!box.isConnected) return; box.querySelectorAll('summary.cch-al.cgl').forEach((s) => { if (s.querySelector('.cgl-sl')) return; const n = ((s.querySelector('.cgl-n') || {}).textContent || '').trim().toLowerCase(), pts = per.map((m) => m[n] || { v: null, st: 'na' }), J = pts.filter((p) => p.v != null);
-      if (J.length < 3) return; const bar = s.querySelector('.cgl-b'); if (!bar) return; bar.insertAdjacentHTML('afterend', sparkSvg(pts, 'cgl-sl')); bar.style.display = 'none';
+  const draw = () => { if (!box.isConnected) return; box.querySelectorAll('summary.cch-al.cgl').forEach((s) => { if (s.querySelector('.mx-sq')) return; const n = ((s.querySelector('.cgl-n') || {}).textContent || '').trim().toLowerCase(), pts = per.map((m, k) => ({ p: R[k].item.pull, ...(m[n] || { v: null, st: 'na' }) })), J = pts.filter((p) => p.v != null);
+      if (J.length < 3) return; const bar = s.querySelector('.cgl-b'); if (!bar) return; bar.insertAdjacentHTML('afterend', mxSq(pts)); bar.style.display = 'none';
       const th = Math.max(2, Math.floor(J.length / 3)), avg = (L) => Math.round(L.reduce((a, p) => a + p.v, 0) / L.length), e0 = J.length >= 4 ? avg(J.slice(0, th)) : null, l0 = J.length >= 4 ? avg(J.slice(-th)) : null, mv = e0 == null ? 0 : l0 - e0;
-      if (e0 != null && Math.abs(mv) >= 10) { const nm = s.querySelector('.cgl-n'); if (nm) nm.insertAdjacentHTML('beforeend', '<span class="cgl-tr ' + (mv > 0 ? 'up' : 'dn') + '" data-tt="' + esc('Early in the night ' + e0 + '%, late ' + l0 + '%') + '">' + (mv > 0 ? '▲' : '▼') + '</span>'); } }); };
+      if (e0 != null && Math.abs(mv) >= 10) { const nm = s.querySelector('.cgl-n'); if (nm) nm.insertAdjacentHTML('beforeend', '<span class="cgl-tr ' + (mv > 0 ? 'up' : 'dn') + '" data-tt="' + esc(mxTrend(pts, mv)) + '">' + (mv > 0 ? '▲' : '▼') + '</span>'); } }); };
   const step = () => { if (!box.isConnected) return; const t0 = performance.now(); while (i < R.length && performance.now() - t0 < 24) per.push(dtPull(R[i++], name)); if (i < R.length) setTimeout(step, 0); else draw(); };
   setTimeout(step, 50); }
 function dtMove(v) { if (!v) return; const el = v.querySelector('#oaTop'), tl = v.querySelector('.mcx-tl2') || v.querySelector('.nmc-tl'); if (!el || !tl || tl.parentNode !== v) return;
@@ -30766,16 +30777,16 @@ function nightBars(v) { if (!v || !v.querySelector('.nmc')) return;
       const st = pe ? (((pe.className || '').match(/\b(ok|warn|bad)\b/) || [, 'ok'])[1]) : 'ok';
       /* (Oct 24, your call "show me your vision of All pulls": the same cards as one pull, but each mechanic is a line across the night, one dot per
          pull it came up in (green / yellow / red), and one plain line: early in the night against late, with Improving / Worsening when it moved) */
-      const pts = [...rs.querySelectorAll('[data-npq]')].map((x) => { const m = (x.getAttribute('aria-label') || '').match(/(\d+)% done right/); return { v: m ? +m[1] : null, st: ((x.className.match(/npc-(ok|warn|bad)/) || [])[1]) || 'na' }; });
+      const pts = [...rs.querySelectorAll('[data-npq]')].map((x) => { const m = (x.getAttribute('aria-label') || '').match(/(\d+)% done right/); return { p: +x.dataset.npq || null, v: m ? +m[1] : null, st: ((x.className.match(/npc-(ok|warn|bad)/) || [])[1]) || 'na' }; });
       const J = pts.filter((p) => p.v != null), th = Math.max(2, Math.floor(J.length / 3)), avg = (L) => Math.round(L.reduce((s0, p) => s0 + p.v, 0) / L.length);
       const early = J.length >= 4 ? avg(J.slice(0, th)) : null, late = J.length >= 4 ? avg(J.slice(-th)) : null, mv = early == null ? 0 : late - early;
-      const say = early == null ? (J.length ? 'Came up in ' + J.length + ' pull' + (J.length === 1 ? '' : 's') + '.' : '') : 'Early ' + early + '% → late ' + late + '%.' + (mv >= 10 ? ' ▲ Improving' : mv <= -10 ? ' ▼ Worsening' : ' Steady.');
+      const say = mxTrend(pts, mv);
       return { k: row.dataset.k, ic, nm, pc, st, pts, say, mv }; }).filter((q) => q && q.nm);
     if (!items.length) return;
     const spark = (pts) => { const W = 300, H = 28, P = 3, n = pts.length; if (!n) return ''; const X = (i) => (n === 1 ? W / 2 : P + (W - 2 * P) * i / (n - 1)), Y = (v) => P + (H - 2 * P) * (1 - v / 100);
       const on = pts.map((p, i) => [p, i]).filter(([p]) => p.v != null), d = on.map(([p, i], k) => (k ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(p.v).toFixed(1)).join(' ');
       return '<svg class="prw-sl" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true"><line x1="0" x2="' + W + '" y1="' + Y(100) + '" y2="' + Y(100) + '" class="sl-top"/>' + (on.length > 1 ? '<path d="' + d + '" class="sl-line"/>' : '') + on.map(([p, i]) => '<circle cx="' + X(i).toFixed(1) + '" cy="' + Y(p.v).toFixed(1) + '" r="2.2" class="sl-' + p.st + '"/>').join('') + '</svg>'; };
-    const bar = (q) => '<span class="prw-i prw-tl" role="button" tabindex="0" data-phjump="' + esc(q.k) + '" data-tt="' + esc('<b>' + esc(q.nm) + '</b><br>One dot per pull it came up in, from the first pull of the night to the last. Higher is more done right. Click for every pull and the mistakes by kind.') + '">' + (q.ic ? q.ic.outerHTML : '') + '<span class="prw-l"><span class="prw-n">' + esc(q.nm) + '</span>' + spark(q.pts) + (q.say ? '<span class="prw-s ' + (q.mv >= 10 ? 'up' : q.mv <= -10 ? 'dn' : '') + '">' + esc(q.say) + '</span>' : '') + '</span><span class="prw-p ' + q.st + '">' + (q.pc == null ? '' : q.pc + '%') + '</span></span>';
+    const bar = (q) => '<span class="prw-i prw-tl" role="button" tabindex="0" data-phjump="' + esc(q.k) + '" data-tt="' + esc('<b>' + esc(q.nm) + '</b><br>One square per pull, first to last: green done right, yellow some mistakes, red failed. Click for every pull and the mistakes by kind.') + '">' + (q.ic ? q.ic.outerHTML : '') + '<span class="prw-l"><span class="prw-n">' + esc(q.nm) + '</span>' + mxSq(q.pts) + (q.say ? '<span class="prw-s ' + (q.mv >= 10 ? 'up' : q.mv <= -10 ? 'dn' : '') + '">' + esc(q.say) + '</span>' : '') + '</span><span class="prw-p ' + q.st + '">' + (q.pc == null ? '' : q.pc + '%') + '</span></span>';
     sm.innerHTML = '<span class="phr-dot ' + (lv === 'good' ? 'ok' : lv) + '"></span><span class="phr-nm"><b>' + esc(name) + '</b></span><span class="prw">' + items.map(bar).join('') + '</span><span class="phr-chev">▸</span>';
     ph.classList.remove('rw2-ph'); ph.classList.add('phr-b'); ph.dataset.phk = 'nph-' + i; if (!S.openSecs.has('nph-' + i)) ph.open = false;
     sm.querySelectorAll('img.oi').forEach((im) => { if (!im.getAttribute('src')) im.removeAttribute('data-done'); }); }); try { hydrateIcons(); } catch (e) { /* (icons load when seen) */ } }
