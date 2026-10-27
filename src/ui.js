@@ -32246,6 +32246,18 @@ function dsGuides() {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
+// ===== Design studio round 94 (Oct 27): icon-only card header buttons: accessible names for the icon-only Edit and Copy buttons. Owner: the Design studio chat. =====
+(function () {
+  if (typeof document === 'undefined') return;
+  var mark = function () {
+    document.querySelectorAll('#view.plan-page .bj-jobs .plb-rch > .plb-rcx:not([aria-label])').forEach(function (b) { b.setAttribute('aria-label', 'Edit'); if (!b.getAttribute('data-tt')) b.setAttribute('data-tt', '<b>Edit</b><br>Change who does this job, right here'); });
+    document.querySelectorAll('#view.plan-page .bj-jobs .plb-rch > [data-dssheetcard]:not([aria-label])').forEach(function (b) { b.setAttribute('aria-label', 'Copy these pictures'); });
+  };
+  var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(mark, 40); };
+  var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
 (function () { const f17 = dsBars; let last = 0, tm = 0, pendingRoot;
