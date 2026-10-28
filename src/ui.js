@@ -1954,6 +1954,9 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
+  { d: '2026-10-28', h: [], n: [], f: [
+    'All pulls, By mechanic: a mechanic now shows under every phase it came up in, so a night that reached the last phase lists it (P3 was missing for The Coiled Altar). Thanks to the raider who reported it.',
+  ] },
   { d: '2026-10-27', h: [
     { t: 'Choose how strict the review is', d: 'On Mythic bosses, the boss header has a Light, Medium or Strict switch. Strict judges you like a top-100 guild; Light like a mid-pack guild. Only the colours and the raid lead\'s tone change, never the numbers, and deaths are red at every level.' },], n: [
     'Each boss guide now has its own link to share, like debriefme.io/guide/the-coiled-altar/mythic.',
@@ -14828,6 +14831,17 @@ function rowText(s, row) {
 }
 // every Fight audit mechanic across the pulls: per pull its status (up to the wipe filter), its problems as short lines,
 // and the players in the flagged rows; plus the phase it mostly happens in
+// (the part of one section that falls in each phase of a pull: a set by its time, a row by its first time; ones with no time go with the
+// earliest one that has a time (Oct 28, report 12 "p3 not showing": All pulls filed a mechanic under one phase only, so a phase with no
+// mechanic of its own, like P3, never got a heading))
+function phSlices(m, s) {
+  const phs = m.phases || [], idx = (t) => { let k = 0; phs.forEach((p, i) => { if (t >= p.start - 0.5) k = i; }); return k; }, groups = s.groups || [];
+  const gk = groups.map((g) => (g.t != null ? idx(g.t) : null)), rk = s.rows.map((row) => { const c = row.find((q) => q.t != null); return c ? idx(c.t) : null; });
+  const tk = gk.concat(rk).filter((v) => v != null), out = new Map(); if (!tk.length) return out;
+  const f = Math.min(...tk);
+  for (const k of [...new Set(tk)].sort((a, b) => a - b)) out.set(phs[k].name, { groups: groups.filter((g, i) => (gk[i] == null ? f : gk[i]) === k), rows: s.rows.filter((row, i) => (rk[i] == null ? f : rk[i]) === k) });
+  return out;
+}
 function mechAcross(reps) {
   const secs = new Map(), order = [], isB = (row) => row.some((c) => c.bad), isW = (row) => !isB(row) && row.some((c) => c.warn);
   for (const r of reps) {
@@ -14836,15 +14850,18 @@ function mechAcross(reps) {
     const phName = (t) => { let n = null; for (const p of phs) if (t >= p.start - 0.5) n = p.name; return n; };
     for (const s of m.sections) {
       if (s.id === 'deaths') continue;
-      let x = secs.get(s.id); if (!x) { secs.set(s.id, x = { id: s.id, title: s.title, spell: s.spell, how: s.how, info: s.info, per: new Map(), ph: new Map() }); order.push(s.id); }
-      const groups = s.groups || [], rows = s.rows.concat(...groups.map((g) => g.rows));
+      let x = secs.get(s.id); if (!x) { secs.set(s.id, x = { id: s.id, title: s.title, spell: s.spell, how: s.how, info: s.info, per: new Map(), ph: new Map(), perPh: new Map() }); order.push(s.id); }
+      const ts = (s.groups || []).map((g) => g.t).concat(s.rows.map((row) => { const c = row.find((q) => q.t != null); return c ? c.t : null; })).filter((v) => v != null);
+      if (ts.length) { const pn = phName(Math.min(...ts)); if (pn) x.ph.set(pn, (x.ph.get(pn) || 0) + 1); }
+      const ent = (groups, srows) => {
+      const rows = srows.concat(...groups.map((g) => g.rows));
       const lines = [], who = [];
       for (const g of groups) {
         const hit = g.rows.filter((row) => isB(row) || isW(row));
         for (const row of hit) lines.push({ st: isB(row) ? 'bad' : 'warn', txt: g.title + ', ' + rowText(s, row) });
         if (!hit.length && (g.bad || g.warn)) lines.push({ st: g.bad ? 'bad' : 'warn', txt: g.title + (g.sub ? ': ' + g.sub : '') });
       }
-      for (const row of s.rows) if (isB(row) || isW(row)) lines.push({ st: isB(row) ? 'bad' : 'warn', txt: rowText(s, row) });
+      for (const row of srows) if (isB(row) || isW(row)) lines.push({ st: isB(row) ? 'bad' : 'warn', txt: rowText(s, row) });
       for (const row of rows) {
         if (!isB(row) && !isW(row)) continue;
         const named = row.filter((c) => (c.bad || c.warn) && (c.p || c.ps)).flatMap((c) => c.p ? [c.p] : c.ps);
@@ -14855,8 +14872,6 @@ function mechAcross(reps) {
       // (a section that only shows something, like the floor maps, is never "clean")
       // (bad: it failed this pull, warn: some mistakes, as its flag on Mechanics (lvlJudge))
       const fl = lvlJudge(s.id, nb, nw, Math.max(rows.length, nb + nw)), st = !rows.length && !groups.length ? 'na' : fl === 'major' ? 'bad' : fl === 'minor' ? 'warn' : s.info ? 'na' : 'ok';
-      const ts = groups.map((g) => g.t).concat(s.rows.map((row) => { const c = row.find((q) => q.t != null); return c ? c.t : null; })).filter((v) => v != null);
-      if (ts.length) { const pn = phName(Math.min(...ts)); if (pn) x.ph.set(pn, (x.ph.get(pn) || 0) + 1); }
       // (sc: this pull's score for the row's grade, the share of its results that went right; could be better counts half)
       // (a set flagged as a whole counts as one result; avoidable damage uses the report card's own score: each player over
       // the line costs their share, a death to it or going past the red line all of it, past the amber line 40%)
@@ -14865,7 +14880,11 @@ function mechAcross(reps) {
       if (s.id === 'avoid' && groups.some((g) => g.judge)) { const ct = cutT(r), ok = (t) => t == null || t <= ct + 0.05, cost = new Map();
         for (const g of groups) for (const j of g.judge || []) { if (j.tank) continue; const n = j.ts.filter(ok).length, [wA, bA] = avLimAt(g, ct), c = (j.dt != null && ok(j.dt)) || n >= bA ? 100 : n >= wA ? 25 : 0; if (c) cost.set(j.p, (cost.get(j.p) || 0) + c); }
         sc = Math.max(0, 100 - [...cost.values()].reduce((a, v) => a + Math.min(100, v), 0) / Math.max(1, r.players.size)); }
-      x.per.set(r.item.pull, { st, nb, nw, lines, who, sc, nR });
+      return { st, nb, nw, lines, who, sc, nR };
+      };
+      x.per.set(r.item.pull, ent(s.groups || [], s.rows));
+      // (a mechanic that came up in more than one phase has a result in each, so All pulls lists it under every phase it happened in, the way a single pull does (Oct 28))
+      if (phs.length > 1 && s.id !== 'avoid' && !s.info) for (const [pn, q] of phSlices(m, s)) { let mp = x.perPh.get(pn); if (!mp) x.perPh.set(pn, mp = new Map()); mp.set(r.item.pull, ent(q.groups, q.rows)); }
     }
   }
   return order.map((id) => secs.get(id));
@@ -14987,8 +15006,9 @@ function nightMechC(o) {
   // (a mechanic's flag over the night: red when it failed in at least half the pulls it came up in, yellow when it went wrong in any)
   const lvOf = (r) => { const j = judged(r); return lvlJudge(null, j.filter((n) => stAt(r, n) === 'bad').length, j.filter((n) => stAt(r, n) === 'warn').length, j.length); };
   const rowMap = (row) => { for (const c of row || []) { if (c.map) return c.map; if (c.maps && c.maps.length) return c.maps[0][1]; } return null; };
-  const mapIn = (n, id) => { const r = mByPull.get(n); if (!r || !r.module || r.module.error || !r.module.sections) return null; const s = cutModule(r.module, cutT(r)).m.sections.find((q) => q.id === id); if (!s) return null;
-    const all = (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || [])); for (const want of [(row) => row.some((c) => c.bad), (row) => row.some((c) => c.warn)]) for (const row of all) if (want(row)) { const m = rowMap(row); if (m) return m; } return null; };
+  const mapIn = (n, id, ph) => { const r = mByPull.get(n); if (!r || !r.module || r.module.error || !r.module.sections) return null; const cm = cutModule(r.module, cutT(r)).m, s = cm.sections.find((q) => q.id === id); if (!s) return null;
+    const sl = ph ? phSlices(cm, s).get(ph) : null; if (ph && !sl) return null;
+    const all = sl ? sl.rows.concat(...sl.groups.map((g) => g.rows || [])) : (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || [])); for (const want of [(row) => row.some((c) => c.bad), (row) => row.some((c) => c.warn)]) for (const row of all) if (want(row)) { const m = rowMap(row); if (m) return m; } return null; };
   const LC = LVL_CLS, LW = { major: '✕ Failed', moderate: '✕ Failed', minor: '! Some mistakes', clean: '✓ Clean' };
   const worstOf = (r) => { const b = judged(r).filter((n) => stAt(r, n) === 'bad'), w = judged(r).filter((n) => stAt(r, n) === 'warn'); return r.v.worst || b.concat(w).sort((a, z) => z - a)[0] || judged(r)[judged(r).length - 1]; };
   const MAPS = [];
@@ -15001,7 +15021,7 @@ function nightMechC(o) {
   const barTip = (r, n) => { const p = r.x.per.get(n), st = p ? p.st : 'na', R = mByPull.get(n), it = R && R.item;
     const head = 'Pull ' + n + (it ? ' · ' + (it.kill ? 'Kill' : 'Wipe at ' + pullShort(it)) : ''), len = R && R.duration ? T(R.duration) + ' long' : '';
     const how = st === 'na' ? 'It didn\'t come up in this pull' + (R && cutT(R) < Infinity ? ' (before the wipe filter)' : '') + '.' : st === 'ok' ? 'Done right.' : Math.round(p.sc) + '% done right: ' + plural(p.nb + p.nw, 'moment') + ' with mistakes.';
-    let first = ''; if (st !== 'na' && R && R.module && !R.module.error) { try { const s = cutModule(R.module, cutT(R)).m.sections.find((q) => q.id === r.x.id); const all = s ? (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || [])).filter(Array.isArray) : [];
+    let first = ''; if (st !== 'na' && R && R.module && !R.module.error) { try { const cm = cutModule(R.module, cutT(R)).m, s = cm.sections.find((q) => q.id === r.x.id), sl = s && r.x.phName ? phSlices(cm, s).get(r.x.phName) : null; const all = s ? (sl ? sl.rows.concat(...sl.groups.map((g) => g.rows || [])) : (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || []))).filter(Array.isArray) : [];
       const sev = (rw) => (rw.some((c) => c && c.bad) ? 2 : rw.some((c) => c && c.warn) ? 1 : 0), pick = all.map((rw, i) => ({ rw, i })).sort((a, b) => sev(b.rw) - sev(a.rw) || a.i - b.i).slice(0, 3).sort((a, b) => sev(b.rw) - sev(a.rw) || a.i - b.i);
       /* (each moment in brief: its name and time, then what the row measured, the flagged parts first) */
       /* (a bare number says its column: "In circle 5", not "5"; a moment that went wrong is the site's own sentence for it) */
@@ -15016,7 +15036,7 @@ function nightMechC(o) {
   const bars = (r) => '<span class="npc">' + pullNs.map((n) => { const p = r.x.per.get(n), st = p ? p.st : 'na', h = !p || st === 'na' || p.sc == null ? 0 : Math.max(8, p.sc); return '<i class="npc-' + st + '" data-npq="' + n + '" style="--h:' + h.toFixed(0) + '%" data-tt="' + esc(barTip(r, n)) + '" aria-label="' + esc('Pull ' + n + ': ' + (st === 'na' ? 'didn\'t come up' : Math.round(p.sc) + '% done right')) + '"></i>'; }).join('') + '</span>';
   const whoTop = (r) => { if (one) return ''; const m = new Map(); for (const p of r.x.per.values()) for (const w of p.who || []) m.set(w, (m.get(w) || 0) + 1); return [...m].filter(([n]) => pm.has(n)).sort((u, v) => v[1] - u[1]).slice(0, 3).map(([n, k]) => '<span style="color:' + pm.get(n).color + '">' + esc(n.split('-')[0]) + '</span> ×' + k).join(', '); };
   const tile = (r, big) => { const lv = lvOf(r), wN = judged(r).filter((n) => stAt(r, n) !== 'ok').length, worst = worstOf(r), L = lateOf(r), F = factsOf(r);
-    let mp = null; for (const n of [worst].concat(judged(r).filter((q) => stAt(r, q) !== 'ok').reverse())) { mp = mapIn(n, r.x.id); if (mp) break; }
+    let mp = null; for (const n of [worst].concat(judged(r).filter((q) => stAt(r, q) !== 'ok').reverse())) { mp = mapIn(n, r.x.id, r.x.phName); if (mp) break; }
     const who = new Map(); if (!one) for (const p of r.x.per.values()) for (const w of new Set(p.who || [])) who.set(w, (who.get(w) || 0) + 1);
     const faces = [...who].filter(([n]) => pm.has(n)).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([n]) => avatar(pm.get(n), true)).join('');
     return '<details class="panel secd st-' + LC[lv] + ' mcx-tile' + (big ? ' mcx-big' : '') + '" data-np="' + worst + '" data-sec="sec-' + esc(r.x.id) + '"><summary>' + (big ? '<span class="mcx-rib">Fix this first</span>' : '') +
@@ -15031,7 +15051,7 @@ function nightMechC(o) {
   /* (where our typical pull stands among the fastest kills: the median pull's share of moments that went wrong (Oct 22, a test)) */
   const nightKb = (r) => { if (r.x.id === 'avoid' || isInfo(r)) return ''; const sh = judged(r).map((n) => r.x.per.get(n)).filter((p) => p && p.nR).map((p) => (100 * ((p.nb || 0) + (p.nw || 0))) / p.nR).sort((a, b) => a - b);
     return sh.length ? kbChip({ boss, diffId: o.reps && o.reps[0] ? o.reps[0].item.diffId : null }, r.x.id, sh[Math.floor(sh.length / 2)]) : ''; };
-  const mapAt = (r) => { for (const n of [worstOf(r)].concat(judged(r).filter((q) => stAt(r, q) !== 'ok').reverse())) { const mp = mapIn(n, r.x.id); if (mp) return { mp, n }; } return null; };
+  const mapAt = (r) => { for (const n of [worstOf(r)].concat(judged(r).filter((q) => stAt(r, q) !== 'ok').reverse())) { const mp = mapIn(n, r.x.id, r.x.phName); if (mp) return { mp, n }; } return null; };
   /* (Oct 23, your call: All pulls is facts and numbers, "not coaching style"; the map and the detail live on each pull) */
   const rw2Names = (() => { const ns = [...pm.keys()].map((n) => String(n).split('-')[0]).filter((n) => n.length > 2).sort((a, b) => b.length - a.length).map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')); return ns.length ? new RegExp('(' + ns.join('|') + ')', 'g') : null; })();
   const rw2Kind = (t) => { let k = String(t || '').replace(/<[^>]+>/g, ''); const sg = k.split(' · '); k = sg.length > 1 ? sg[sg.length - 1] : k;
@@ -15067,7 +15087,7 @@ function nightMechC(o) {
     const tb = top.length ? '<div class="mx-lab">Mistakes</div><div class="mx-tb"><div class="mx-th"><span>What happened</span><span>Pulls</span><span>Who, most often</span></div>' + top.map((e, i) => { const wp = [...e.pulls].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0];
       return '<div class="mx-tr" data-npq="' + wp + '" role="button" tabindex="0" title="' + esc('Pulls ' + [...e.pulls.keys()].sort((a, b) => a - b).join(', ') + '. Click to open pull ' + wp + '.') + '"><span class="mx-m">' + esc(e.k) + '.</span><span class="mx-ch' + (i === 0 || kc(e) === 'r' ? ' hi' : '') + '">' + e.pulls.size + ' of ' + plural(tot, 'pull') + '</span>' + whoC(e) + '</div>'; }).join('') + '</div>' : '';
     return sum + tb + ftL; };
-  const line = (r) => { const lv = lvOf(r), wN = judged(r).filter((n) => stAt(r, n) !== 'ok').length, worst = worstOf(r), F = factsOf(r), sid = 'nml-' + r.x.id, ok = lv === 'clean', M = ok ? null : mapAt(r);
+  const line = (r) => { const lv = lvOf(r), wN = judged(r).filter((n) => stAt(r, n) !== 'ok').length, worst = worstOf(r), F = factsOf(r), sid = 'nml-' + r.x.id + (r.x.phSfx || ''), ok = lv === 'clean', M = ok ? null : mapAt(r);
     const who = new Map(); if (!one) for (const p of r.x.per.values()) for (const w of new Set(p.who || [])) who.set(w, (who.get(w) || 0) + 1);
     const faces = [...who].filter(([n]) => pm.has(n)).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([n]) => avatar(pm.get(n), true)).join('');
     const facts = ok ? '<span class="mcx-s">Clean in ' + (judged(r).length === 1 ? 'the one pull it came up in' : judged(r).length === 2 ? 'both pulls it came up in' : 'all ' + judged(r).length + ' pulls it came up in') + '</span>' + bars(r)
@@ -15115,11 +15135,11 @@ function nightMechC(o) {
   const cntL = (l) => { const o2 = { major: 0, moderate: 0, minor: 0 }; for (const r of l) { const v = lvOf(r); if (v !== 'clean') o2[v]++; } return o2; };
   const lvTxt = (o2) => lvlText(o2);
   // ---- each phase ----
-  const phases = groups.map((g, i) => { const l = g.list.filter((r) => !isInfo(r) && judged(r).length && r.x.id !== 'avoid' && r.x.id !== 'deaths'); /* (the coach box's panels have these (Oct 22)) */ if (!l.length) return '';
+  const phases = groups.map((g, i) => { const l = (g.plist || g.list).filter((r) => !isInfo(r) && judged(r).length && r.x.id !== 'avoid' && r.x.id !== 'deaths'); /* (the coach box's panels have these (Oct 22)) */ if (!l.length) return g.note ? '<p class="muted phlate" style="margin:10px 4px 0"><b>' + esc(g.name) + '</b> ' + esc(g.note) + '</p>' : '';
     /* (Oct 23, your call "more at a glance": worst first by its %, the more dangerous one first when two are within 3 points) */
     const pcOf = (r) => { const F = factsOf(r); return F.R ? 100 * (F.R - F.Wr) / F.R : 100; };
     const pr = l.filter((r) => lvOf(r) !== 'clean').sort((a, b) => ['major', 'moderate', 'minor'].indexOf(lvOf(a)) - ['major', 'moderate', 'minor'].indexOf(lvOf(b)) || factsOf(b).Wr - factsOf(a).Wr || a.ord - b.ord).sort((a, b) => (Math.abs(pcOf(a) - pcOf(b)) > 3 ? pcOf(a) - pcOf(b) : 0)), ok = l.filter((r) => lvOf(r) === 'clean');
-    const bigI = pr.findIndex((r) => judged(r).some((n) => stAt(r, n) !== 'ok' && mapIn(n, r.x.id))), pl = pr.slice(); void bigI; /* (a checklist keeps its order: failed first, then slips) */
+    const bigI = pr.findIndex((r) => judged(r).some((n) => stAt(r, n) !== 'ok' && mapIn(n, r.x.id, r.x.phName))), pl = pr.slice(); void bigI; /* (a checklist keeps its order: failed first, then slips) */
     const lv = cntL(l), lvl = lv.major ? 'major' : lv.moderate ? 'moderate' : lv.minor ? 'minor' : 'clean', m = String(g.name).match(/^P(\d+)/);
     void m; const wst = pl.length ? pl[0] : null; void ring;
     return '<details class="phase mcx-ph rw2-ph" data-mst="' + lvl + '" open><summary><span class="rw2-dot ' + LC[lvl] + '"></span><b>' + esc(g.name) + '</b><span class="rw2-st ' + LC[lvl] + '">' + (wst ? 'Worst: ' + esc(shortT(wst.title).replace(/\s*\(.*$/, '')) : 'All done right') + '</span></summary>' +
@@ -15362,16 +15382,24 @@ async function night(part) {
   const imp = IMPORTANCE[b0.boss] || [], ixOf = (id) => (imp.indexOf(id) < 0 ? 99 : imp.indexOf(id));
   // the furthest pull's phases ("P1 Zul'jan" …), and the one a short phase name ("P2", "Intermission") stands for
   const phNames = refPh.map((p) => p.name), phKey = (ph) => (ph === 'Intermission' ? phNames.find((n) => /^Intermission/.test(n)) : phNames.find((n) => new RegExp('^' + ph + '\\b').test(n)));
-  const mRows = mech.map((x) => {
-    const v = verdictOf(x.per), ph = x.ph.size ? [...x.ph].sort((a, b) => b[1] - a[1])[0][0] : null;
+  // (a phase the pulls reached only after their wipe call isn't counted, so it has no mechanics to list: say so instead of leaving it out (Oct 28, report 12: "p3 not showing"))
+  const phLate = (pn) => { const has = (r) => r.module && !r.module.error && (r.module.phases || []).find((q) => q.name === pn), reach = mReps.filter(has), late = reach.filter((r) => has(r).start > cutT(r) + 0.05).length; if (!late) return '';
+    return (late === reach.length ? 'was reached in ' + plural(late, 'pull') + ', but the wipe was called before it' + (late === 1 ? '' : ' each time') : 'was reached in ' + plural(reach.length, 'pull') + ', and the wipe was called before it in ' + late) + ', so it isn\'t counted. Turn off the wipe filter to see it.'; };
+  const domPh = (x) => (x.ph.size ? [...x.ph].sort((a, b) => b[1] - a[1])[0][0] : null);
+  const mkRow = (x, ph, sfx) => {
+    const v = verdictOf(x.per);
     // (avoidable damage: its chart by source instead of a list of pulls)
     // (a section that only shows something, like the floor maps, says so instead of "didn't come up")
     const info = x.info && v.st === 'na' && x.per.size > 0;
     const body = info ? '<div class="pdesc">This one isn\'t judged here. Open a pull\'s Debriefing tab to see it.</div>' : x.id === 'avoid' && !one ? trendLine(v) + avoidChart(reps, whoT) : bodyOf(x.per, v, 'audit', 'sec-' + x.id, 'this mechanic');
-    return { x, v, id: 'sm-' + x.id, ph, ord: ixOf(x.id), st: v.st, txt: info ? x.info : v.txt + (v.worst ? ', worst on pull ' + v.worst : '') + (v.trend ? ', ' + v.trend : ''), tip: x.spell && x.spell[1], title: x.title, how: x.how, icon: GENERIC_SEC.test(x.title) ? spellIcon(0, x.title, true) : spellIcon(x.spell ? x.spell[0] : 0, x.spell ? x.spell[1] : '', true), dots: dotsOf(x.per, 'audit', 'sec-' + x.id), gr: gradeOf(x.per), body };
-  });
+    return { x, v, id: 'sm-' + x.id + sfx, ph, ord: ixOf(x.id), st: v.st, txt: info ? x.info : v.txt + (v.worst ? ', worst on pull ' + v.worst : '') + (v.trend ? ', ' + v.trend : ''), tip: x.spell && x.spell[1], title: x.title, how: x.how, icon: GENERIC_SEC.test(x.title) ? spellIcon(0, x.title, true) : spellIcon(x.spell ? x.spell[0] : 0, x.spell ? x.spell[1] : '', true), dots: dotsOf(x.per, 'audit', 'sec-' + x.id), gr: gradeOf(x.per), body };
+  };
+  const mRows = mech.map((x) => mkRow(x, domPh(x), ''));
+  // (Oct 28, report 12 "p3 not showing": the phase lists show a mechanic under every phase it came up in, with that phase's results only;
+  // the summaries above and the night's counts keep one row per mechanic)
+  const pRows = mech.flatMap((x) => { const d = domPh(x); if (x.perPh.size < 2) return [mkRow(x, d, '')]; let k = 0; return [...x.perPh].map(([pn, per]) => { const sfx = pn === d ? '' : '-' + (++k); return mkRow({ ...x, per, phName: pn, phSfx: sfx }, pn, sfx); }); });
   let mHtml = '';
-  const mGroups = [], addG = (n, s, l) => { mGroups.push({ name: n, list: l }); return phaseBlock(n, s, l); };
+  const mGroups = [], addG = (n, s, l, pl) => { mGroups.push({ name: n, list: l, plist: pl || l }); return phaseBlock(n, s, pl || l); };
   // (a module that groups its mechanics by boss instead of by phase, like Entombed Sentinels, gets the same groups here)
   const sGroups = reps.map((r) => r.module && !r.module.error && r.module.sectionGroups).find((g) => g && g.length);
   if (sGroups) {
@@ -15379,8 +15407,8 @@ async function night(part) {
     for (const g of sGroups) { const at = (o) => (g.ids.indexOf(idOf(o)) < 0 ? 100 + o.ord : g.ids.indexOf(idOf(o)));
       const list = mRows.filter((o) => g.ids.includes(idOf(o)) || (g.rest && !listed.has(idOf(o)))).sort((a, b) => at(a) - at(b)); if (list.length) mHtml += addG(g.name, g.sub || '', list); }
   } else {
-    for (const p of refPh) { const list = mRows.filter((o) => o.ph === p.name).sort((a, b) => a.ord - b.ord); if (list.length) mHtml += addG(p.name, '', list); }
-    { const list = mRows.filter((o) => !o.ph || !refPh.some((p) => p.name === o.ph)).sort((a, b) => a.ord - b.ord); if (list.length) mHtml += addG('Whole fight', 'mechanics that aren\'t tied to one phase', list); }
+    for (const p of refPh) { const list = mRows.filter((o) => o.ph === p.name).sort((a, b) => a.ord - b.ord), pl = pRows.filter((o) => o.ph === p.name).sort((a, b) => a.ord - b.ord); if (list.length || pl.length) mHtml += addG(p.name, '', list, pl); else { const note = phLate(p.name); if (note) { mGroups.push({ name: p.name, list: [], plist: [], note }); mHtml += '<p class="muted phlate" style="margin:10px 4px 0"><b>' + esc(p.name) + '</b> ' + esc(note) + '</p>'; } } }
+    { const out = (o) => !o.ph || !refPh.some((p) => p.name === o.ph), list = mRows.filter(out).sort((a, b) => a.ord - b.ord), pl = pRows.filter(out).sort((a, b) => a.ord - b.ord); if (list.length || pl.length) mHtml += addG('Whole fight', 'mechanics that aren\'t tied to one phase', list, pl); }
   }
   // ---- Assignments: every check from the NSRT note, one row per assignment and phase; healing cooldowns at the end ----
   const asg = hasNote ? assignAcross(reps, one ? isOne : null) : [];
