@@ -10270,6 +10270,12 @@ html body #view .rtl .rtl-mid .rtl-t { margin: 0; }
 .rtl .rtv.f-procs .rtv-pb{display:none}
 .rtv-fd.p{background:#ffd666}
 .rtl .rtv-key .k.pbar{width:3px;border-radius:2px;background:#ffd666}
+/* round 157c: the proc's icon at the top of each proc line */
+.rtl .rtv-pbi{position:absolute;left:-17px;top:-3px;width:14px;height:14px;border-radius:3px;overflow:hidden;opacity:.8;box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 0 2px rgba(255,214,102,.35)}
+.rtl .rtv-pbi .icw{display:block;position:relative;width:14px;height:14px}
+.rtl .rtv-pbi .icw > *{position:absolute;inset:0;width:14px!important;height:14px!important}
+.rtl .rtv-pb:hover .rtv-pbi,.rtl .rtv-pb.rtv-hot .rtv-pbi{opacity:1}
+.rtl .rtv-pb.lost .rtv-pbi{opacity:.55;filter:grayscale(.6)}
 </style>
 
 
