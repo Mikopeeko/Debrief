@@ -10253,6 +10253,23 @@ html body #view .rtl .rtl-mid .rtl-t { margin: 0; }
 .rtl .rtv .rtv-top > .rtv-key{width:0;min-width:100%;box-sizing:border-box;flex-wrap:wrap}
 /* round 156c: on a phone the chart scrolls inside its own box, never the page */
 @media (max-width:760px){.rtl .rtv-lay{align-items:stretch}.rtl .rtv-lay > .rtv-wrap{width:100%;max-width:100%;overflow-x:auto}}
+/* round 157: the wave's scale, button numbers, proc bars */
+.rtl .rtv-wavg{position:absolute;top:0;bottom:0;width:0;border-left:1px dashed rgba(201,206,216,.28);pointer-events:none;z-index:1}
+.rtl .rtv-wavg b{position:sticky;top:110px;display:inline-block;margin-left:5px;padding:1px 6px;border-radius:6px;background:rgba(14,17,24,.85);font:600 10.5px/16px 'Barlow Condensed',sans-serif;letter-spacing:.04em;color:#9aa1b0;white-space:nowrap}
+.rtl .rtv-wpk{position:absolute;width:0;height:0;pointer-events:none;z-index:2}
+.rtl .rtv-wpk::before{content:"";position:absolute;left:-3px;top:-3px;width:6px;height:6px;border-radius:50%;background:#c9ced8;box-shadow:0 0 0 3px rgba(201,206,216,.15)}
+.rtl .rtv-wpk b{position:absolute;left:8px;top:-9px;padding:1px 6px;border-radius:6px;background:rgba(14,17,24,.85);font:600 10.5px/16px 'Barlow Condensed',sans-serif;color:#c9ced8;white-space:nowrap}
+.rtl .rtv-hd{height:48px}
+.rtl .rtv-heads i{overflow:visible!important;cursor:help}
+.rtl .rtv-heads i em{position:absolute;left:50%;top:21px;transform:translateX(-50%);font:700 9.5px/1 'Barlow Condensed',sans-serif;font-style:normal;color:#7d8596;opacity:1}
+.rtl .rtv-heads i:hover em{color:#ece8df}
+.rtl .rtv-pb{position:absolute;width:3px;border-radius:2px;background:linear-gradient(180deg,#ffd666,rgba(255,214,102,.55));cursor:pointer;z-index:2}
+.rtl .rtv-pb.lost{background:repeating-linear-gradient(180deg,rgba(255,214,102,.6) 0 3px,transparent 3px 6px)}
+.rtl .rtv-pb.lost::after{content:"✕";position:absolute;left:-3px;bottom:-11px;font-size:9px;color:#f0b85c}
+.rtl .rtv-pb:hover{box-shadow:0 0 0 2px rgba(255,214,102,.25)}
+.rtl .rtv.f-procs .rtv-pb{display:none}
+.rtv-fd.p{background:#ffd666}
+.rtl .rtv-key .k.pbar{width:3px;border-radius:2px;background:#ffd666}
 </style>
 
 
