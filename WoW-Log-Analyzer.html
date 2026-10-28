@@ -10091,6 +10091,51 @@ html body #view .rtl .rtl-mid .rtl-t { margin: 0; }
 .rtl .rtv-mk.n::after{content:attr(data-n);position:absolute;top:-7px;right:-9px;min-width:14px;height:14px;padding:0 3px;border-radius:7px;background:#0f1218;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);font:700 9.5px/14px 'Barlow Condensed',sans-serif;color:#c9ced8;text-align:center}
 .rtl .rtv-mk.mi.n::after{top:-9px;right:-12px}
 .rtl .rtv-key .k.mi{width:8px;height:8px;border-radius:50%;background:#e8a23a;vertical-align:0}
+/* round 155n: refine pass: one framed piece (numbers on top, key at the foot), whole column icons, calmer type */
+.rtl .rtv{overflow:visible;border:1px solid rgba(255,255,255,.07);border-radius:16px;background:linear-gradient(180deg,#12161f 0,#0f131a 320px,#0e1118)}
+/* the numbers: one quiet strip with hairline dividers */
+.rtl .rtv .rtv-top{margin:0;padding:16px 20px 14px;border-bottom:1px solid rgba(255,255,255,.06);border-radius:16px 16px 0 0;background:linear-gradient(180deg,rgba(255,255,255,.03),transparent)}
+.rtl .rtv .rtv-st{gap:0}
+.rtl .rtv .rtv-st span{min-width:0;padding:0 22px 0 0;margin-right:22px;background:none;box-shadow:none;border-radius:0;border-right:1px solid rgba(255,255,255,.07);font-size:10.5px;letter-spacing:.1em;color:#6f7787}
+.rtl .rtv .rtv-st span:last-child{border-right:0;margin-right:0}
+.rtl .rtv .rtv-st span b{font-size:24px;font-weight:700}
+.rtl .rtv .rtv-act{gap:14px}
+.rtl .rtv .rtv-hint{font-size:12px;color:#5c6474}
+.rtl .rtv .rtv-dim{height:30px;border-radius:15px;padding:0 14px;border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.02)}
+.rtl .rtv .rtv-dim:hover{background:rgba(255,255,255,.05);color:var(--text,#ece8df)}
+.rtl .rtv .rtv-dim.on{background:rgba(229,83,75,.14);border-color:rgba(229,83,75,.45);color:#ffb3ad}
+/* the head: whole icons, a calm bar */
+.rtl .rtv-hd{border-radius:0;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(14,17,24,.96)}
+.rtl .rtv-hd span{font-size:10.5px;letter-spacing:.16em}
+.rtl .rtv-heads i{width:18px;height:18px;display:block;opacity:.5}
+.rtl .rtv-heads i .icw{display:block;position:relative;width:18px;height:18px;flex:none}
+.rtl .rtv-heads i .icw > *{position:absolute;inset:0;width:18px!important;height:18px!important;border-radius:4px}
+.rtl .rtv-c .icw,.rtl .rtv-cdi .icw{display:block;position:relative;width:100%;height:100%}
+.rtl .rtv-c .icw > *,.rtl .rtv-cdi .icw > *{position:absolute;inset:0;width:100%!important;height:100%!important}
+/* the sides fade out from the casts */
+.rtl .rtv-side.l{background:linear-gradient(270deg,rgba(255,255,255,.015),transparent 70%)}
+.rtl .rtv-side.r{background:linear-gradient(90deg,rgba(255,255,255,.015),transparent 70%)}
+/* cards: a touch smaller and tighter */
+.rtl .rtv-cd{width:212px;padding:10px 12px 10px 14px;border-radius:12px}
+.rtl .rtv-cdh b{font-size:13.5px;line-height:1.2}
+.rtl .rtv-cdb{margin-top:7px;padding-top:7px}
+/* time labels: a small tick */
+.rtl .rtv-tm::after{content:"";position:absolute;right:-6px;top:50%;width:4px;height:1px;background:rgba(255,255,255,.18)}
+.rtl .rtv-tm.min::after{width:6px;background:rgba(255,255,255,.4)}
+/* the foot: key and cut-off note */
+.rtl .rtv-foot{padding:12px 20px 14px;border-top:1px solid rgba(255,255,255,.06)}
+.rtl .rtv-foot .rtv-cut{margin:0 0 8px}
+.rtl .rtv-foot .rtv-key{margin:0;padding:0;background:none;font-size:11.5px;color:#6f7787;gap:8px 20px}
+@media (max-width:760px){
+.rtl .rtv .rtv-top{padding:12px 12px 10px}
+.rtl .rtv .rtv-st{row-gap:10px}
+.rtl .rtv .rtv-st span{padding-right:12px;margin-right:12px}
+.rtl .rtv .rtv-st span b{font-size:19px}
+.rtl .rtv .rtv-hint{display:none}
+.rtl .rtv-foot{padding:10px 12px 12px}
+}
+/* round 155o: on a phone the numbers and key stay in view while the chart scrolls sideways */
+@media (max-width:760px){.rtl .rtv .rtv-top,.rtl .rtv .rtv-foot{position:sticky;left:0;width:calc(100vw - 52px);box-sizing:border-box}.rtl .rtv .rtv-st span{flex:1 1 40%;border-right:0;margin-right:0}}
 </style>
 
 
@@ -57904,9 +57949,8 @@ function dsGuides() {
       '<div class="rtv-act"><span class="rtv-hint">Hover any mark for the full story</span><button type="button" class="rtv-dim' + (F.only ? ' on' : '') + '" data-only="1">Spotlight mistakes</button></div></div>';
     var cut = D.cut != null && D.dur && D.cut < D.dur - 1 ? '<p class="rtv-cut">Counted to ' + mm(D.cut) + ', the wipe call.</p>' : '';
     box._notes = N;
-    box.innerHTML = top + '<div class="rtv-wrap"><div class="rtv' + (F.only ? ' dim' : '') + '" style="--cc:' + E(D.color || '#e6b450') + ';--stk:' + (((document.querySelector('.tabbar') || {}).offsetHeight || 0)) + 'px"><div class="rtv-hd" style="grid-template-columns:' + cols + '"><span class="l">Done well</span><span class="rtv-heads">' + SPL.filter(function (s) { return !s.u; }).map(function (s) { return '<i style="left:' + (56 + colOf[s.n] * CW + CW / 2) + 'px" title="' + E(s.n) + '">' + D.ico(s.n, s.id) + '</i>'; }).join('') + (uCol >= 0 ? '<i class="u" style="left:' + (56 + uCol * CW + CW / 2) + 'px" title="Defensives and utility">⛨</i>' : '') + '</span><span>Mistakes</span></div>' +
-      '<div class="rtv-body" data-y="' + Y + '" data-t0="' + T0 + '" style="grid-template-columns:' + cols + ';height:' + H + 'px">' + tags(GL, 'l') + '<div class="rtv-mid">' + mid + '</div>' + tags(BL, 'r') + '</div></div></div>' + cut +
-      '<div class="rtv-key"><span><i class="k bad"></i>A better button was ready</span>' + (md.C.some(function (c) { return c.proc; }) ? '<span><b>★</b> Proc spent</span>' : '') + '<span><i class="k win"></i>Cooldown window</span><span><i class="k mk g">✓</i>Done well</span><span><i class="k mk r">!</i>Mistake</span><span><i class="k mi"></i>Minor slip</span>' + (/rtv-rdy/.test(mid) ? '<span><i class="k rdy"></i>Sat ready, not pressed</span>' : '') + (md.C.some(function (c) { return c.big; }) ? '<span><i class="k big"></i>Big cooldown</span>' : '') + (idleN ? '<span><i class="k idle"></i>Nothing pressed</span>' : '') + '</div>';
+    box.innerHTML = '<div class="rtv-wrap"><div class="rtv' + (F.only ? ' dim' : '') + '" style="--cc:' + E(D.color || '#e6b450') + ';--stk:' + (((document.querySelector('.tabbar') || {}).offsetHeight || 0)) + 'px">' + top + '<div class="rtv-hd" style="grid-template-columns:' + cols + '"><span class="l">Done well</span><span class="rtv-heads">' + SPL.filter(function (s) { return !s.u; }).map(function (s) { return '<i style="left:' + (56 + colOf[s.n] * CW + CW / 2) + 'px" title="' + E(s.n) + '">' + D.ico(s.n, s.id) + '</i>'; }).join('') + (uCol >= 0 ? '<i class="u" style="left:' + (56 + uCol * CW + CW / 2) + 'px" title="Defensives and utility">⛨</i>' : '') + '</span><span>Mistakes</span></div>' +
+      '<div class="rtv-body" data-y="' + Y + '" data-t0="' + T0 + '" style="grid-template-columns:' + cols + ';height:' + H + 'px">' + tags(GL, 'l') + '<div class="rtv-mid">' + mid + '</div>' + tags(BL, 'r') + '</div><div class="rtv-foot">' + cut + '<div class="rtv-key"><span><i class="k bad"></i>A better button was ready</span>' + (md.C.some(function (c) { return c.proc; }) ? '<span><b>★</b> Proc spent</span>' : '') + '<span><i class="k win"></i>Cooldown window</span><span><i class="k mk g">✓</i>Done well</span><span><i class="k mk r">!</i>Mistake</span><span><i class="k mi"></i>Minor slip</span>' + (/rtv-rdy/.test(mid) ? '<span><i class="k rdy"></i>Sat ready, not pressed</span>' : '') + (md.C.some(function (c) { return c.big; }) ? '<span><i class="k big"></i>Big cooldown</span>' : '') + (idleN ? '<span><i class="k idle"></i>Nothing pressed</span>' : '') + '</div></div></div></div>'; /* (round 155n: numbers and key inside the chart) */
   };
   /* the note next to whatever is hovered or tapped */
   var rtvPop = function (el) { var box = el.closest('.rtl'), body = el.closest('.rtv-body'); if (!box || !body || !box._notes) return; var n = box._notes[+el.dataset.nt]; if (!n) return;
