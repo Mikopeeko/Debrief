@@ -1968,6 +1968,7 @@ const PATCH_NOTES = [
     'Debriefing: the boss banner is tidier, with one chip shape and without the start time and player count; "The details" tiles open into slim lists, and only a tile that needs fixing is edged in red.',
     'Debriefing: "The details" are small tiles, three to a row, each with its score, its name and a short line; tap one to open it across the row.',
     'Rotation: Gear and extras are small tiles in a row above your checklist (each item, its number and its short line), and the checklist has the full width under them.',], f: [
+    'Debriefing: Overview no longer opens on the old "Your raid lead says" box when you reload or come back; "Why we wiped" leads both views.',
     "Deaths after the wipe call no longer show up as if they happened earlier in the pull.",
     'Debriefing: "The pull at a glance" ends where the pull was counted to, instead of running on to the last second; a long "What happened" line fits inside its box; and the rows under "The details" are all one width.',
     'All pulls, By mechanic: a mechanic now shows under every phase it came up in, so a night that reached the last phase lists it (P3 was missing for The Coiled Altar). Thanks to the raider who reported it.',
