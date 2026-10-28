@@ -13945,7 +13945,7 @@ function mxOne(pan, sec, hd, fl, xb) {
   const cnt = (k, c) => '<b class="' + c + '">' + k + '</b>';
   const sum = '<p class="mx-sum">' + (w ? cnt(w, worst.st === 'bad' ? 'r' : 'y') + ' of ' + n + (n === 1 ? ' time' : ' times') + ' had mistakes' + (worst ? '; the worst, at ' + esc(txt(worst.li.querySelector('.u1-t'))) + ': ' + esc(what(worst.li).replace(/<[^>]+>/g, '').replace(/\.$/, '').replace(/^./, (c) => c.toLowerCase())) : '') + '.' : 'Done right all ' + cnt(n, 'g') + ' times.') + '</p>';
   const shown = n <= 8 ? rows : rows.filter((x) => x.st !== 'ok'), rest = n - shown.length;
-  const tb = '<div class="mx-lab">Each time it happened</div><div class="mx-tb mx-one"><div class="mx-th"><span>Time</span><span>' + (named ? 'Who' : 'Moment') + '</span><span>What happened</span></div>' +
+  const tb = !w ? '' /* (no mistakes: the sentence says it, no table (the user, Oct 27)) */ : '<div class="mx-lab">Each time it happened</div><div class="mx-tb mx-one"><div class="mx-th"><span>Time</span><span>' + (named ? 'Who' : 'Moment') + '</span><span>What happened</span></div>' +
     shown.map((x) => '<div class="mx-tr ' + x.st + '" data-u1i="' + x.i + '" role="button" tabindex="0"><span class="mx-t">' + esc(txt(x.li.querySelector('.u1-t'))) + '</span><span class="mx-who">' + who(x.li) + '</span><span class="mx-m ' + x.st + '">' + what(x.li) + '</span></div>').join('') +
     (rest ? '<div class="mx-tr mx-rest"><span></span><span></span><span class="mx-m ok">' + rest + ' more done right</span></div>' : '') + '</div>';
   const box = document.createElement('div'); box.className = 'mx-one-w'; box.innerHTML = sum + tb + (kbT ? '<p class="mx-ft">Against the fastest kills: ' + esc(kbT) + '.</p>' : '');
