@@ -9031,6 +9031,11 @@ html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .rch-l p.cgl-d { marg
 /* lists by player (Healthstones, Defensives, Combat potions) and Avoidable damage */
 html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .cbl-list, html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .cbl-by { margin-top: 4px !important; }
 html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .ckt-note, html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .cch-ddtip { margin-top: 8px !important; font-size: 12px; line-height: 1.45; color: var(--faint); }
+/* ===== Design studio round 142 (Oct 28): The details, a full-width row above the phases. Owner: the Design studio chat. ===== */
+html body #view.ds-two > .ds-r > .dt-box.dt-box { grid-column: 1 / -1 !important; order: 2 !important; margin-bottom: 18px !important; } /* (with the phases (order 2), before them in the page) */
+html body #view.ds-two > .ds-l { grid-column: 1 / -1 !important; }
+@media (min-width: 1100px) { html body #view.ds-two .dt-box.dt-box.dt-box { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+@media (min-width: 761px) and (max-width: 1099px) { html body #view.ds-two .dt-box.dt-box.dt-box { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 </style>
 
 
