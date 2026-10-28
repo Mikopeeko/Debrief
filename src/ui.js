@@ -13964,7 +13964,7 @@ function mxOne(pan, sec, hd, fl, xb) {
   hd.after(box); sec.classList.add('mx-old');
 }
 document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('.mx-tr[data-u1i]'); if (!t) return; const pan = t.closest('.mxa-p'), li = pan && pan.querySelectorAll('li.u1-r')[+t.dataset.u1i]; if (li) li.click(); });
-function mxaOpen(ph, id) { const k = ph.dataset.phk; let pan = ph.querySelector(':scope > .mxa-p');
+function mxaOpen(ph, id) { const k = ph.dataset.phk; try { dsUndock(ph); } catch (e) { /* (no dock) */ } let pan = ph.querySelector(':scope > .mxa-p');
   if (!pan) { pan = document.createElement('div'); pan.className = 'mxa-p'; ph.querySelector(':scope > summary').after(pan); }
   const cur = pan.querySelector(':scope > details.secd'); if (cur && cur._mxaHome) { cur._mxaHome.replaceWith(cur); cur._mxaHome = null; }
   pan.innerHTML = ''; pan.classList.remove('mxa-all'); ph.querySelectorAll('.prw-i.on').forEach((b) => b.classList.remove('on'));
@@ -31814,18 +31814,24 @@ function dsRotSlim() { document.querySelectorAll('#view section.rck .rck-b:not(.
 function dsDock() { document.querySelectorAll('#view details.phase').forEach((ph) => { const sum = ph.querySelector(':scope > summary'); if (!sum) return; const prw = sum.querySelector('.prw'); if (!prw) return;
   const box = ph.querySelector(':scope > .mxa-p') || ph.querySelector('.mxa-p'); const on = sum.querySelector('.prw-i.on'); /* round 131: the fresh box first */ const live = !!(box && box.children.length && on && ph.classList.contains('mxa'));
   /* a docked box goes home when it empties or its row is no longer the open one */
-  prw.querySelectorAll(':scope > .ds-dock').forEach((d) => { const b = d.querySelector(':scope > .mxa-p'), row = d.previousElementSibling; if (live && b === box && row === on) return;
-    if (b && box && b !== box && box.parentElement === ph) { b.remove(); const m = ph.querySelector(':scope > i.ds-dockph'); if (m) m.remove(); } /* round 131: a stale box goes, it never comes home next to the fresh one */
+  const at = on && on.classList.contains('mx-folded') ? (prw.querySelector(':scope > .mx-okl') || on) : on; /* round 132: a folded row docks under the Done right line */
+  prw.querySelectorAll(':scope > .mx-okc.on, :scope > .mx-okl > .mx-okc.on').forEach((c) => c.classList.remove('on')); if (live && at !== on) { const c = at.querySelector('.mx-okc[data-phjump="' + CSS.escape(on.dataset.phjump) + '"]'); if (c) c.classList.add('on'); }
+  prw.querySelectorAll(':scope > .ds-dock').forEach((d) => { const b = d.querySelector(':scope > .mxa-p'), row = d.previousElementSibling; if (live && b === box && row === at) return;
+    if (b && box && b !== box && box.parentElement === ph) { dsHome(b); b.remove(); /* round 132: its details go home first */ const m = ph.querySelector(':scope > i.ds-dockph'); if (m) m.remove(); } /* round 131: a stale box goes, it never comes home next to the fresh one */
     else if (b) { const m = ph.querySelector(':scope > i.ds-dockph'); if (m) m.replaceWith(b); else ph.appendChild(b); } d.remove(); });
   if (!live || box.closest('.ds-dock')) return;
   if (box.parentElement === ph) { const m = document.createElement('i'); m.className = 'ds-dockph'; m.hidden = true; box.replaceWith(m); }
   const d = document.createElement('div'); d.className = 'ds-dock'; d.appendChild(box);
   /* inside a summary a plain click would fold the phase; buttons, links and the panel's own titles keep their jobs */
   d.addEventListener('click', (e) => { if (!e.target.closest('button, a, summary, input, select, textarea, label')) e.preventDefault(); });
-  on.after(d);
+  at.after(d);
   const dx = prw.getBoundingClientRect().left - sum.getBoundingClientRect().left - (parseFloat(getComputedStyle(sum).paddingLeft) || 0); if (dx > 40) { d.style.marginLeft = (-dx) + 'px'; d.style.width = 'calc(100% + ' + dx + 'px)'; }
   /* the app has just started scrolling to the box's old place below the list: stop that and keep the row where the eye is */
   window.scrollTo({ top: window.scrollY, left: window.scrollX, behavior: 'instant' }); on.scrollIntoView({ block: 'nearest', behavior: 'instant' }); }); }
+/* round 132: dsHome / dsUndock */ function dsHome(b) { b.querySelectorAll(':scope > details.secd').forEach((c) => { if (c._mxaHome) { c._mxaHome.replaceWith(c); c._mxaHome = null; } }); }
+function dsUndock(ph) { const sum = ph.querySelector(':scope > summary'); if (!sum) return; const dk = sum.querySelector('.ds-dock > .mxa-p'); if (!dk) return;
+  ph.querySelectorAll(':scope > .mxa-p').forEach((x) => { if (x !== dk) { dsHome(x); x.remove(); } }); const m = ph.querySelector(':scope > i.ds-dockph'); if (m) m.replaceWith(dk); else sum.after(dk);
+  sum.querySelectorAll('.ds-dock').forEach((d) => { if (!d.querySelector('.mxa-p')) d.remove(); }); sum.querySelectorAll('.mx-okc.on').forEach((c) => c.classList.remove('on')); }
 function dsMapZoom() { document.querySelectorAll('#view .secd .u1-m .wr-map:not([data-ds-zoom])').forEach((wm) => { const svg = wm.querySelector('svg.zmap'); if (!svg) return; wm.dataset.dsZoom = '1';
   const here = () => wm.contains(svg) && wm.closest('.u1-m');
   const base = () => (svg.dataset.dsBase || (svg.dataset.dsBase = svg.getAttribute('viewBox') || '')).split(/[\s,]+/).map(Number);

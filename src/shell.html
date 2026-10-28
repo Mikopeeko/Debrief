@@ -8890,6 +8890,14 @@ html body #view details.phase.phase > summary .prw.prw > .ds-dock .mx-p .mx-hd >
 /* a done-right moment reads as a green check (the user: "#1 green check mark") */
 html body #view .mx-p.mx-p .mx-tb.mx-tb.mx-one .mx-tr > .mx-m.ok { font-size: 0 !important; }
 html body #view .mx-p.mx-p .mx-tb.mx-tb.mx-one .mx-tr > .mx-m.ok::before { content: "✓"; font: 800 16px/1 var(--body); color: #7ee08f; }
+/* ===== Design studio round 132 (Oct 27): the Done right line. Owner: the Design studio chat. ===== */
+html body #view details.phase.phase > summary .prw.prw > .mx-okl { margin: 8px 0 2px !important; padding: 7px 10px !important; gap: 4px 14px !important; border-radius: 8px; border-top: 1px solid var(--line, #262c38); font-size: 12.5px !important; }
+html body #view details.phase.phase > summary .prw.prw > .mx-okl .mx-okk { font: 700 11px/1 'Barlow Condensed', sans-serif; letter-spacing: .07em; text-transform: uppercase; color: #7ee08f; }
+html body #view details.phase.phase > summary .prw.prw > .mx-okl .mx-okc { color: var(--muted) !important; border-radius: 5px; padding: 2px 6px 2px 3px !important; }
+html body #view details.phase.phase > summary .prw.prw > .mx-okl .mx-okc:hover { color: var(--text, #e8eaee) !important; background: rgba(255,255,255,.04); }
+html body #view details.phase.phase > summary .prw.prw > .mx-okl .mx-okc.on { color: var(--gold) !important; background: rgba(230,180,80,.1); box-shadow: inset 0 0 0 1px rgba(230,180,80,.45); }
+html body #view details.phase.phase > summary .prw.prw > .mx-okl:has(+ .ds-dock) { border-top-color: transparent; border-radius: 8px 8px 0 0 !important; box-shadow: inset 0 0 0 1px rgba(230,180,80,.6); background: rgba(230,180,80,.06); margin-bottom: 0 !important; }
+html body #view details.phase.phase > summary .prw.prw > .mx-okl + .ds-dock > .mx-p { border: 1px solid rgba(230,180,80,.6) !important; border-top-color: rgba(230,180,80,.2) !important; border-radius: 0 0 10px 10px !important; background: rgba(230,180,80,.025) !important; padding: 12px 14px 10px !important; }
 </style>
 
 
