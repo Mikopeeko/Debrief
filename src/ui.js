@@ -33161,9 +33161,10 @@ function dsGuides() {
       var good = F.show.ok ? s.P : s.P.filter(function (m) { return m.st === 'bad' || m.st === 'warn'; });
       var has = s.C.length || good.length || s.S.length || s.B.length; if (!has) return; if (F.only && !s.S.length) return; shownN++;
       var p = phOf(phs, s.a), nb = s.C.filter(function (c) { return c.bad; }).length;
-      var left = s.B.map(bandHead).join('') + (s.C.length ? '<div class="rtl-strip">' + s.C.map(icon).join('') + '</div>' : '');
+      var winOf = function (t) { return F.show.win ? BANDS.filter(function (bd) { return t >= bd.a - 0.05 && t <= bd.b + 0.05; })[0] || null : null; }, segs = []; s.C.forEach(function (c) { var bd = winOf(c.t), g = segs[segs.length - 1]; if (g && g.bd === bd) g.l.push(c); else segs.push({ bd: bd, l: [c] }); });
+      var left = s.B.map(bandHead).join('') + (s.C.length ? '<div class="rtl-strip">' + segs.map(function (g) { return g.bd ? '<span class="rtl-wseg ' + g.bd.cls + '" title="' + E(g.bd.w.head + ' ' + mm(g.bd.a) + '–' + mm(g.bd.b)) + '">' + g.l.map(icon).join('') + '</span>' : g.l.map(icon).join(''); }).join('') + '</div>' : ''); /* (only the casts inside a window sit in its band) */
       var right = s.S.map(slipCo).join('') + good.map(goodCo).join('') + procCo(s);
-      rows += '<div class="rtl-r' + (inBand(s) ? ' inw' : '') + '"><div class="rtl-l">' + left + '</div><span class="rtl-t' + (s.S.some(function (m) { return m.lv >= 2; }) ? ' r' : s.S.length ? ' y' : nb ? ' y' : '') + '">' + mm(s.a) + '<small>' + phTag(p) + '</small></span><div class="rtl-rr">' + right + '</div></div>';
+      rows += '<div class="rtl-r"><div class="rtl-l">' + left + '</div><span class="rtl-t' + (s.S.some(function (m) { return m.lv >= 2; }) ? ' r' : s.S.length ? ' y' : nb ? ' y' : '') + '">' + mm(s.a) + '<small>' + phTag(p) + '</small></span><div class="rtl-rr">' + right + '</div></div>';
     });
     while (np < phs.length) { rows += marker(phs[np]); np++; }
     if (D.cut != null && D.dur && D.cut < D.dur - 1) rows += '<div class="rtl-ph end"><span><b>Counted to ' + mm(D.cut) + '</b> <i>the wipe call</i></span></div>';
@@ -33182,7 +33183,7 @@ function dsGuides() {
       (phs.length > 1 ? '<div class="rtl-sg"><span class="rtl-k">Phase</span><div class="rtl-phs">' + ['all'].concat(phs.map(function (p) { return p.name; })).map(function (n) { return '<button type="button" class="rtl-pb' + (F.ph === n ? ' on' : '') + '" data-ph="' + E(n) + '">' + (n === 'all' ? 'Whole pull' : E(phTag(phs.filter(function (p) { return p.name === n; })[0]) || n)) + '</button>'; }).join('') + '</div></div>' : '') +
       '<div class="rtl-sg"><span class="rtl-k">Buttons</span><div class="rtl-spl">' + SPL.map(function (s) { return q('data-sp="' + E(s.n) + '"', F.sp[s.n], '<span class="rtl-ic">' + D.ico(s.n, s.id) + '</span>', E(s.n), s.k + (s.bad ? ' <b class="rtl-bn2">' + s.bad + ' ✕</b>' : '')); }).join('') + '</div></div>';
     var top = '<div class="rtl-top2"><div class="rtl-sum"><span><b>' + tot + '</b> buttons pressed</span><span class="g"><b>' + right0 + '</b> right</span><span class="r"><b>' + (tot - right0) + '</b> a better button was ready</span>' + (prN ? '<span class="p"><b>' + prN + '</b> procs spent</span>' : '') + '<span><b>' + BANDS.length + '</b> cooldown windows</span><span><b>' + nS(function () { return true; }) + '</b> mistakes</span></div>' +
-      '<div class="rtl-key"><span><i class="rtl-ci k bad"></i>a better button was ready</span><span><i class="rtl-ci k pr"></i>★ spent a proc</span><span><i class="rtl-ci k big"></i>big cooldown</span><span><i class="rtl-kb"></i>cooldown window</span></div></div>';
+      '<div class="rtl-key"><span><i class="rtl-ci k bad"></i>a better button was ready</span><span><i class="rtl-ci k pr"></i>★ spent a proc</span><span><i class="rtl-ci k big"></i>big cooldown</span><span><i class="rtl-kb"></i>cast inside a cooldown window</span></div></div>';
     box.innerHTML = top + '<div class="rtl-main"><div class="rtl-tlw"><div class="rtl-heads"><span>What you pressed</span><span></span><span>What it meant</span></div><div class="rtl-tl">' + rows + '</div></div><aside class="rtl-p rtl-side">' + side + '</aside></div>';
   };
 

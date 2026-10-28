@@ -9795,12 +9795,17 @@ html body #view .rtl .rtl-co.op .rtl-op b { display: none; }
 html body #view .rtl .rtl-key { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; font: 600 12px 'Barlow Condensed', sans-serif; color: var(--faint); }
 html body #view .rtl .rtl-key > span { display: inline-flex; align-items: center; gap: 6px; }
 html body #view .rtl .rtl-ci.k { width: 14px; height: 14px; border-radius: 4px; background: #2a3040; display: inline-block; }
-html body #view .rtl .rtl-kb { width: 22px; height: 12px; border-radius: 3px; background: rgba(106,168,255,.18); border-right: 3px solid rgba(106,168,255,.6); display: inline-block; }
+html body #view .rtl .rtl-kb { width: 22px; height: 14px; border-radius: 4px; background: rgba(106,168,255,.13); box-shadow: inset 0 0 0 1px rgba(106,168,255,.55); display: inline-block; }
 html body #view .rtl .rtl-d.u { background: #6aa8ff; }
 html body #view .rtl .rtl-sum .p b { color: #ffd666; }
 html body #view .rtl .rtl-bn2 { color: #e8a23a; font-weight: 700; }
 @media (max-width: 900px) { html body #view .rtl .rtl-strip { justify-content: flex-start; } html body #view .rtl .rtl-r.inw > .rtl-l { border-right: 0; border-left: 3px solid rgba(106,168,255,.6); border-radius: 0 8px 8px 0; } }
 @media (max-width: 900px) { html body #view .rtl .rtl-r > .rtl-l { grid-column: 2; grid-row: 1; } html body #view .rtl .rtl-r > .rtl-rr { grid-column: 2; grid-row: 2; padding: 6px 0 0 8px !important; } html body #view .rtl .rtl-r > .rtl-t { grid-row: 1 / span 2; align-self: start; } html body #view .rtl .rtl-r.inw > .rtl-l { padding-left: 8px; } }
+/* round 147g: the casts inside a window sit in their own band */
+html body #view .rtl .rtl-wseg { display: inline-flex; flex-wrap: wrap; gap: 3px; padding: 3px 4px; border-radius: 7px; background: rgba(106,168,255,.13); box-shadow: inset 0 0 0 1px rgba(106,168,255,.55); }
+html body #view .rtl .rtl-wseg.warn { background: rgba(230,180,80,.12); box-shadow: inset 0 0 0 1px rgba(230,180,80,.55); }
+html body #view .rtl .rtl-wseg.bad { background: rgba(229,83,75,.12); box-shadow: inset 0 0 0 1px rgba(229,83,75,.55); }
+html body #view .rtl .rtl-strip { align-items: center; }
 </style>
 
 
