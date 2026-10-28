@@ -1799,7 +1799,7 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
    few seconds while background pulls loaded, replaying the Design studio's line draw)) */
 const hhKey = (s) => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
 /* (Pre-nerf / Post-nerf beside the difficulty on a Mythic boss that was nerfed (Oct 27, the user: short words); the pace chart's dates) */
-const nerfTag = (it) => { const n = it && it.diffId === 16 && PACE_NERF[it.boss + '|16'], w = it && (it.wallMs || 0); if (!n || !w) return ''; const pre = w < Date.parse(n), d = new Date(n).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+const nerfTag = (it) => { const n = it && it.diffId === 16 && PACE_NERF[it.boss + '|16'], w = it && (it.wallMs || 0); if (!n || !w) return ''; const pre = w < Date.parse(n), d = new Date(n).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }); if (!pre) return ''; /* (Pre-nerf only: Post-nerf is every normal pull (Oct 28)) */
   return '<span class="bh-nerf' + (pre ? ' pre' : '') + '" title="' + (pre ? 'Before the ' + d + ' nerf: timing isn\'t compared with later kills' : 'After the ' + d + ' nerf') + '">' + (pre ? 'Pre-nerf' : 'Post-nerf') + '</span>'; };
 function headerHtml(r, allMode) { const h = headerHtml0(r, allMode); return typeof h === 'string' ? h.replace('<header ', '<header data-hh="' + hhKey(h) + '" ') : h; }
 function headerHtml0(r, allMode) {
@@ -1960,8 +1960,7 @@ const PATCH_NOTES = [
     'Debriefing: "The pull at a glance" ends where the pull was counted to, instead of running on to the last second; a long "What happened" line fits inside its box; and the rows under "The details" are all one width.',
     'All pulls, By mechanic: a mechanic now shows under every phase it came up in, so a night that reached the last phase lists it (P3 was missing for The Coiled Altar). Thanks to the raider who reported it.',
   ] },
-  { d: '2026-10-27', h: [
-    { t: 'Choose how strict the review is', d: 'On Mythic bosses, the boss header has a Light, Medium or Strict switch. Strict judges you like a top-100 guild; Light like a mid-pack guild. Only the colours and the raid lead\'s tone change, never the numbers, and deaths are red at every level.' },], n: [
+  { d: '2026-10-27', h: [], n: [
     'Each boss guide now has its own link to share, like debriefme.io/guide/the-coiled-altar/mythic.',
   ], f: [
     'Pulls from before a boss\'s last nerf are no longer timed against the faster kills that came after it: their phase pace shows a note instead of 0% (thanks to the second team who spotted it).',
@@ -10211,10 +10210,12 @@ const cutT = (r) => { const c = cutInfo(r); return c ? c.t : Infinity; };
 const keptDeaths = (r) => { const t = cutT(r); return r.deaths.filter((d) => d.t <= t + 0.05); };
 /* (Oct 27, the strictness setting (the user: "lets apply the strictness setting"): Light / Medium / Strict, per viewer, remembered here.
    E.strictView re-grades a reading's mistakes from its Medium list, so switching needs no re-read; Mythic raid bosses only) */
-const strictLv = () => { const v = store.get('wla-strict'); return v === 'light' || v === 'strict' ? v : 'medium'; };
+/* (Oct 28, the user: "remove it from the live site until i refine it more": only practice links and the local page show it) */
+const STRICT_ON = location.hostname === 'localhost' || /-debrief\./.test(location.hostname);
+const strictLv = () => { if (!STRICT_ON) return 'medium'; const v = store.get('wla-strict'); return v === 'light' || v === 'strict' ? v : 'medium'; };
 const strictOn = (r) => { if (r && r.mistakes && r.item && r._sl !== strictLv()) { try { E.strictView(r, strictLv()); } catch (e) { console.error(e); } } return r; };
 const STRICT_TIP = { light: 'Light: judged like a mid-pack guild. Slips are fine, repeats and wipers are not.', medium: 'Medium: judged like the fastest kills. The usual bar.', strict: 'Strict: judged like a top-100 guild. Every slip shows.' };
-const strictSw = (it) => { if (!it || it.diffId !== 16 || it.kind === 'run' || it.run) return ''; const lv = strictLv();
+const strictSw = (it) => { if (!STRICT_ON || !it || it.diffId !== 16 || it.kind === 'run' || it.run) return ''; const lv = strictLv();
   return '<span class="sl-sw" role="group" aria-label="How strictly this page judges you" title="How strictly this page judges you. Only the colours, grades and the raid lead\'s tone change; the numbers stay the same. Deaths are red at every level."><span class="sl-k">Judged</span>' +
     ['light', 'medium', 'strict'].map((k) => '<button type="button" class="sl-o' + (k === lv ? ' on' : '') + '" data-sl="' + k + '" aria-pressed="' + (k === lv) + '" title="' + STRICT_TIP[k] + '">' + k.charAt(0).toUpperCase() + k.slice(1) + '</button>').join('') + '</span>'; };
 /* (a small reminder beside the coach box's title when the level isn't the usual one) */
