@@ -30847,11 +30847,12 @@ function mxOne(pan, sec, hd, fl, xb) {
   const lis = [...sec.querySelectorAll('li.u1-r')]; if (!lis.length || sec.querySelector('.mx-tb')) return;
   const stOf = (li) => (/\bbad\b/.test(li.className) ? 'bad' : /\bwarn\b/.test(li.className) ? 'warn' : 'ok'), rows = lis.map((li, i) => ({ li, i, st: stOf(li) }));
   const fg = mxFlag(rows), n = rows.length, w = rows.filter((x) => x.st !== 'ok').length;
-  if (fg) { fl.className = 'mx-fl ' + { ok: 'g', warn: 'y', bad: 'r' }[fg.c]; fl.textContent = fg.t + (n === 1 ? ' time' : ' times'); if (!fl.parentNode) hd.insertBefore(fl, xb); }
-  const txt = (el) => { if (!el) return ''; const c = el.cloneNode(true); c.querySelectorAll('.icw, svg, img').forEach((x) => x.remove()); return c.textContent.replace(/\s+/g, ' ').trim(); };
-  const html = (el) => { if (!el) return ''; const c = el.cloneNode(true); c.querySelectorAll('.icw, svg, img').forEach((x) => x.remove()); c.querySelectorAll('.sp.mt').forEach((x) => x.replaceWith(document.createTextNode(x.textContent))); return c.innerHTML.trim(); };
+  if (fg) { fl.className = 'mx-fl ' + { ok: 'g', warn: 'y', bad: 'r' }[fg.c]; fl.textContent = fg.t.replace('Mistakes every pull', 'Mistakes every time') + (n === 1 ? ' time' : ' times'); if (!fl.parentNode) hd.insertBefore(fl, xb); }
+  const unroll = (c) => { if (c.dataset && c.dataset.raw != null) c.textContent = c.dataset.raw; c.querySelectorAll('[data-raw]').forEach((x) => { x.textContent = x.dataset.raw; }); return c; }; /* (numbers still counting up hold their real value in data-raw) */
+  const txt = (el) => { if (!el) return ''; const c = unroll(el.cloneNode(true)); c.querySelectorAll('.icw, svg, img').forEach((x) => x.remove()); return c.textContent.replace(/\s+/g, ' ').trim(); };
+  const html = (el) => { if (!el) return ''; const c = unroll(el.cloneNode(true)); c.querySelectorAll('.icw, svg, img').forEach((x) => x.remove()); c.querySelectorAll('.sp.mt').forEach((x) => x.replaceWith(document.createTextNode(x.textContent))); return c.innerHTML.trim(); };
   const who = (li) => { const nm = li.querySelector('.u1-h .nm, .u1-h [style*="color"], .u1-o .nm'); if (nm) return nm.outerHTML; return esc(txt(li.querySelector('.u1-h') || li.querySelector('.u1-o'))); };
-  const what = (li) => { const o = li.querySelector('.u1-o'); if (!o || (!li.querySelector('.u1-h') && !li.querySelector('.nm'))) return 'Done right'; const c = o.cloneNode(true); c.querySelectorAll('.nm').forEach((x) => x.remove()); const h = html(c); return h.replace(/<[^>]+>/g, '').trim() ? h : 'Done right'; };
+  const what = (li) => { const o = li.querySelector('.u1-o'); if (!o || (!li.querySelector('.u1-h') && !li.querySelector('.nm'))) return 'Done right'; const c = unroll(o.cloneNode(true)); c.querySelectorAll('.nm').forEach((x) => x.remove()); const h = html(c); return h.replace(/<[^>]+>/g, '').trim() ? h : 'Done right'; };
   const named = lis.some((li) => li.querySelector('.nm'));
   const worst = rows.find((x) => x.st === 'bad') || rows.find((x) => x.st === 'warn');
   const f0 = sec.querySelector('.u1-f'), kbT = f0 ? (txt(f0).split(' · ').find((t) => /top guild|fastest/i.test(t)) || '') : '';
@@ -55204,7 +55205,7 @@ function dsMotion() { const H = document.documentElement; if (!window.matchMedia
     /* the clock starts on the first frame, never from a frame time that predates a freeze (that printed negative numbers) */
     let t0 = null; const dur = 450, fmt = (x) => (commas ? Math.round(x).toLocaleString('en-US') : x.toFixed(dec)) + suf;
     const step = (t) => { if (t0 === null) t0 = t; const k = Math.max(0, Math.min(1, (t - t0) / dur)), e = 1 - Math.pow(1 - k, 3); if (k < 1) { tn.nodeValue = fmt(Math.max(0, end * e)); requestAnimationFrame(step); } else tn.nodeValue = raw; };
-    tn.nodeValue = fmt(0); M.played.push(el); requestAnimationFrame(step); }); }
+    el.dataset.raw = raw; tn.nodeValue = fmt(0); M.played.push(el); requestAnimationFrame(step); }); } /* (data-raw: the real number, for anything that copies it mid count-up) */
 (function () { const f8 = dsBars; dsBars = function (root) { f8(root); try { dsMotion(); } catch (e) {} };
   /* the hold coming off is the moment Debriefing is first seen: play then */
   const H = document.documentElement; let held = H.classList.contains('dbr-holding');
