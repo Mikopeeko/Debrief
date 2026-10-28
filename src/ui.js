@@ -10192,7 +10192,8 @@ function wipeAt(r) {
     if (nd >= Math.ceil(n / 2)) { call = { t, why: 'half', d }; break; } }
   // (the damage check: "took 3:33 (… never past 2:56)" at its end → went late at end − 3:33 + 2:56)
   const mss = (x) => { const m = /(\d+):(\d\d)/.exec(x || ''); return m ? 60 * +m[1] + +m[2] : null; };
-  for (const m of r.mistakes || []) { if (m.mechanic !== 'Phase changes' || m.severity !== 'High') continue; const det = String(m.detail || ''), took = mss((/took (\d+:\d\d)/.exec(det) || [])[1]), nev = mss((/never past (\d+:\d\d)/.exec(det) || [])[1]);
+  const phs = (r.module && !r.module.error && r.module.phases) || []; /* (Oct 28: a check the raid got past (a later phase started after it) isn't a wipe) */
+  for (const m of r.mistakes || []) { if (m.mechanic !== 'Phase changes' || m.severity !== 'High') continue; if (phs.some((p) => p.start > m.t + 1)) continue; const det = String(m.detail || ''), took = mss((/took (\d+:\d\d)/.exec(det) || [])[1]), nev = mss((/never past (\d+:\d\d)/.exec(det) || [])[1]);
     const at = took != null && nev != null && took > nev ? m.t - took + nev : m.t; if (!call || at < call.t) call = { t: at, why: 'check', d: null }; }
   /* (a wipe mechanic: called when it happens, if that's first (not while the boss is at 10% or less, like the other calls)) */
   { const mc = wipeMech(r); if (mc && (!call || mc.t < call.t - 0.05) && !near(mc.t)) call = { t: mc.end, at: mc.t, why: 'mech', d: null, mn: mc.n, ms: mc.s, kn: mc.kn }; }
