@@ -3901,12 +3901,22 @@ function buildCoiledAltar(ev, r, h) {
     vfRows.push({ t: a.t, g: a.dst, took, by: disp ? disp.src : null, died: !!r.deaths.find((d) => d.guid === a.dst && d.t >= a.t && d.t <= (rem ? rem.t : a.t + 14) + 0.5) });
   }
   const slow = vfRows.filter((x) => x.took != null && x.took > 4 && !x.by);
+  /* (why and next time for one Venomfang (Oct 27): the poison dispellers are the players who dispelled it this pull; one is free when their last dispel
+     was 8 s or more before it landed) */
+  const vfDis = [...new Set(ev.filter((x) => x.k === 'dispel' && L(x.spell) === 'venomfang' && x.src).map((x) => x.src))], allDisp = ev.filter((x) => x.k === 'dispel' && x.src); /* (src is the player's name) */
+  const nm0 = (n) => String(n || '').split('-')[0];
+  const vfWhy = (x) => { const lst = (n) => (n.length <= 1 ? n.join('') : n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1]), atOnce = vfRows.filter((y) => y !== x && Math.abs(y.t - x.t) < 1.5).length;
+    const free = vfDis.filter((g) => g !== x.by && !allDisp.some((d) => d.src === g && d.t <= x.t + 0.5 && d.t > x.t - 8)).map(nm0), took = x.took != null ? x.took.toFixed(1) + ' s' : 'the full 14 s';
+    if (x.took != null && x.took <= 4) return {};
+    if (!vfDis.length) return { why: 'Nobody dispelled Venomfang this pull, so it stayed on for ' + took + '.', next: 'Give one poison dispeller (a Druid, Monk, Holy or Protection Paladin, or Evoker) the Venomfang job.' };
+    const why = (x.by ? nm0(x.by) + ' dispelled it after ' + took : 'Nobody dispelled it; it stayed on for ' + took) + (atOnce ? ' (' + (atOnce + 1) + ' landed at once)' : '') + (free.length ? '; ' + lst(free.slice(0, 3)) + (free.length === 1 ? ' had a dispel ready' : ' had dispels ready') : '; every dispeller had just used theirs') + '.';
+    return { why, next: free.length ? free[0] + ' takes the next Venomfang as soon as it lands.' : atOnce ? 'Split the dispels: one dispeller per Venomfang when several land together.' : 'Keep one dispel free for Venomfang (it comes every 35 s or so).' }; };
   if (vfRows.length) sections.push({ id: 'vf', title: 'Venomfang (Dispel fast)', place: 'Venomfang (poison) dispels', spell: S('venomfang'), // (no panel on a pull without Venomfang)
     verdict: slow.length > 2 ? 'warn' : 'good', // (Oct 21, your call: dispel it quickly, but it isn't deadly: a slow one is a slip, never a fail, never red)
     summary: pl(vfRows.length, 'Venomfang debuff') + ', and ' + vfRows.filter((x) => x.by).length + ' were dispelled. The average time on a player was ' +
       (vfRows.filter((x) => x.took != null).length ? (vfRows.filter((x) => x.took != null).reduce((s, x) => s + x.took, 0) / vfRows.filter((x) => x.took != null).length).toFixed(1) + ' s' : 'n/a') + '.',
     // amber: a slow or missed dispel (no guide sets a hard rule); red only when the player died with it on them
-    cols: ['When', 'Player', 'Removed after', 'Dispelled by'], rows: vfRows.map((x) => [{ t: x.t }, { p: pname(x.g) }, { txt: x.took != null ? x.took.toFixed(1) + ' s' : 'not removed', warn: x.took == null || x.took > 4 }, x.by ? { p: pname(x.by) } : { txt: 'expired / not dispelled', dim: true }]),
+    cols: ['When', 'Player', 'Removed after', 'Dispelled by'], rows: vfRows.map((x) => [{ t: x.t, ...vfWhy(x) }, { p: pname(x.g) }, { txt: x.took != null ? x.took.toFixed(1) + ' s' : 'not removed', warn: x.took == null || x.took > 4 }, x.by ? { p: pname(x.by) } : { txt: 'expired / not dispelled', dim: true }]),
     // how many each player dispelled
     extra: (() => { const by = new Map(); for (const x of vfRows) if (x.by) by.set(pname(x.by), (by.get(pname(x.by)) || 0) + 1); return by.size ? { title: 'Dispels by player', items: [...by].sort((a, b) => b[1] - a[1]).map(([p, n]) => ({ p, n })) } : null; })() });
 
@@ -3978,7 +3988,12 @@ function buildCoiledAltar(ev, r, h) {
     const pots = healPots(pt - 5, pt + 20);
     if (mx > 11) M(pt, 'Raid', 'venom rupture', mx >= 14 ? 'High' : 'Medium', 'The raid had up to ' + mx + ' Venom Rupture stacks after the P1 push (plan: 9 to 11).', 'Pop fewer orbs with the last frontals (2 to 3, then none), so the push explosion lands on fewer stacks.');
     if (!cds.length && mythic) M(pt, 'Raid', 'fangs of the coiled altar', 'Medium', 'No raid cooldown was used around the P1 push (' + mx + ' Venom Rupture stacks).', 'Group up and stack Darkness, Anti-Magic Zone and Spirit Link Totem for the push, and stay in them until the stacks fall off.');
-    pushRows.push([{ txt: 'P1 → P2' }, { t: pt }, { txt: 'P1 took ' + ms2(p2) + (mythic ? ' (top guilds: ' + ms2(KT.p1[0]) + ' to ' + ms2(KT.p1[1]) + ')' + preT : ''), bad: p1Bad, warn: !p1Bad && p1Late, sub: lastDel != null ? (pt - lastDel).toFixed(0) + ' s after the last Toxic Deluge' + (fangs >= 3 ? ', after the third pools' : '') : '' },
+    /* (why P1 ran long (Oct 27): players lost before the push, Bloodlust's timing, a third set of pools) */
+    const p1Why = (() => { if (!p1Late && !p1Bad) return {}; const dP1 = r.deaths.filter((d) => d.t < p2), lt = LUST.flatMap((n) => auras(n).filter((x) => x.op === 'apply' && h.isPlayer(x.dst)).map((x) => x.t)).sort((a, b) => a - b)[0];
+      const why = [dP1.length ? pl(dP1.length, 'player') + ' died before the push (' + dP1.slice(0, 3).map((d) => d.player.split('-')[0] + ' ' + ms2(d.t)).join(', ') + ')' : '', lt == null || lt > p2 ? 'no Bloodlust in P1' : lt > 60 ? 'Bloodlust came late, at ' + ms2(lt) : '', fangs >= 3 ? 'it ran into the third pools' : ''].filter(Boolean);
+      return { why: 'P1 took ' + ms2(p2) + ', ' + Math.round(p2 - KT.p1[1]) + ' s longer than the slowest top kill' + (why.length ? ': ' + why.join(', ') : ', with no deaths and Bloodlust on time, so damage on Zul\'jan was short') + '.',
+        next: dP1.length ? 'Keep everyone alive in P1: every player lost is damage Zul\'jan doesn\'t take.' : lt == null || lt > 60 ? 'Use Bloodlust early in P1 (top guilds use it at the pull or the first pools).' : 'Push Zul\'jan right after the second pools, with damage cooldowns stacked.' }; })();
+    pushRows.push([{ txt: 'P1 → P2', ...p1Why }, { t: pt }, { txt: 'P1 took ' + ms2(p2) + (mythic ? ' (top guilds: ' + ms2(KT.p1[0]) + ' to ' + ms2(KT.p1[1]) + ')' + preT : ''), bad: p1Bad, warn: !p1Bad && p1Late, sub: lastDel != null ? (pt - lastDel).toFixed(0) + ' s after the last Toxic Deluge' + (fangs >= 3 ? ', after the third pools' : '') : '' },
       { txt: mx + ' Venom Rupture (plan 9 to 11)', bad: mx >= 14, warn: mx > 11 }, { txt: fmtList(cds) || 'none', bad: mythic && !cds.length }, { txt: pots.length ? pots.length + ' (' + pots.join(', ') + ')' : 'none', dim: !pots.length }]);
   }
   // (P2, Malacrass: how long he took against the kills, with the moment it went late: his second shield (amber, 4 of the 20 kills
@@ -4088,7 +4103,11 @@ function buildCoiledAltar(ev, r, h) {
       // isn't judged and earlier P3 sets are only Low)
       if (mythic && !shOff && a.died == null && !lastOfPhase) M(t, 'Raid', 'spirit shield', phaseAt(t) === 'P3' ? 'Low' : 'Medium', 'A Spiteful Soulcoiler\'s Spirit Shield was never broken (set ' + (i + 1) + ').', phaseAt(t) === 'P3' ? 'In P3, break the shields while there\'s time. Near the end, keeping kicks on the adds is enough.' : 'The two Gloombomb targets overlap their circles on the add: melee targets on the melee add, and ranged targets on the ranged add.');
       if (mythic && beforeGb && (!shOff || shLate)) M(k, 'Raid', 'wail of terror', 'Low', 'First kick on set ' + (i + 1) + ' came ' + (gbS - k).toFixed(1) + ' s before Gloombomb started, so the add jumped before the bombs could overlap on it.', 'Kick as soon as you see the Gloombomb cast start, so the add stays put for the overlap and there\'s still time for the next kick.');
-      addRows.push([{ txt: 'Set ' + (i + 1) }, { t: a.t0 }, { txt: kd == null ? 'no kick' : kd.toFixed(1) + ' s after it spawned', sub: gbS != null && k != null ? (beforeGb ? (gbS - k).toFixed(1) + ' s before Gloombomb started' : 'after Gloombomb started') : '', warn: mythic && beforeGb && (!shOff || shLate) },
+      /* (why this add lived (Oct 27): its shield, its kick, how long it lived) */
+      const adWhy = (() => { const lived = (a.died != null ? a.died : r.duration) - a.t0, bad = (!shOff && a.died == null && !lastOfPhase) || (beforeGb && (!shOff || shLate)) || k == null; if (!bad) return {};
+        const why = (k == null ? 'Nobody kicked it' : beforeGb ? 'It was kicked ' + (gbS - k).toFixed(1) + ' s before Gloombomb started, so it moved before the bombs could overlap on it' : 'It was kicked ' + kd.toFixed(1) + ' s after it spawned') + (shOff ? '; its Spirit Shield came off ' + (shOff.t - a.t0).toFixed(0) + ' s in' : '; its Spirit Shield was never broken, so nothing could kill it') + (a.died != null ? ', and it died after ' + Math.round(lived) + ' s.' : ', and it was still alive at the end.');
+        return { why, next: !shOff ? 'Overlap two Gloombombs on it: melee bombs on the melee add, ranged bombs on the ranged add.' : k == null ? 'Assign a kicker to each add before the set spawns.' : 'Kick when the Gloombomb cast starts, so the add stays put for the overlap.' }; })();
+      addRows.push([{ txt: 'Set ' + (i + 1), ...adWhy }, { t: a.t0 }, { txt: kd == null ? 'no kick' : kd.toFixed(1) + ' s after it spawned', sub: gbS != null && k != null ? (beforeGb ? (gbS - k).toFixed(1) + ' s before Gloombomb started' : 'after Gloombomb started') : '', warn: mythic && beforeGb && (!shOff || shLate) },
         { txt: shOff ? 'broken ' + (shOff.t - a.t0).toFixed(1) + ' s after it spawned' : mythic ? (lastOfPhase ? (phaseAt(t) === 'P3' ? 'not broken (kicks are enough at the end of P3)' : 'not broken (breaks at the transition)') : 'never broken') : '—', bad: mythic && !shOff && !lastOfPhase && phaseAt(t) !== 'P3', warn: mythic && !shOff && !lastOfPhase && phaseAt(t) === 'P3' },
         { txt: a.died != null ? 'killed in ' + Math.round(a.died - a.t0) + ' s' : 'alive', bad: a.died == null && !lastOfPhase, dim: a.died == null && lastOfPhase }]);
     }
@@ -4498,9 +4517,9 @@ function buildCoiledAltar(ev, r, h) {
       const groups = sAd.rows.map((r0, i) => {
         const t = r0[1].t, mine = (sAx ? sAx.rows : []).filter((x) => x[0].txt === 'Set ' + (i + 1));
         shieldOf[i] = mine.map((x, k) => ({ k: k + 1, t: x[1].t, cell: x[3] }));
-        const rows = mine.map((x, k) => [{ txt: 'Soulcoiler ' + (k + 1) }, x[1], x[2], { txt: '' }, x[4]]); // (same numbering as the kick rows)
+        const rows = mine.map((x, k) => [{ txt: 'Soulcoiler ' + (k + 1), why: x[0].why, next: x[0].next }, x[1], x[2], { txt: '' }, x[4]]); // (same numbering as the kick rows)
         // (Mythic: the raid damage the adds' Retaliatory Malice did while they lived, and anyone it killed)
-        if (r0.rm && (r0.rm.amt || r0.rm.dead.length)) rows.push([{ txt: 'Retaliatory Malice', sub: 'hits the raid every 3 s while the adds live' }, { t }, { txt: h.compact(r0.rm.amt) + ' on the raid' },
+        if (r0.rm && (r0.rm.amt || r0.rm.dead.length)) rows.push([{ txt: 'Retaliatory Malice', sub: 'hits the raid every 3 s while the adds live', ...(r0.rm.dead.length ? { why: 'Set ' + (i + 1) + '\'s adds stayed alive, so Retaliatory Malice kept hitting the raid (' + h.compact(r0.rm.amt) + ') until it killed ' + pl(r0.rm.dead.length, 'player') + '.', next: 'Kill both adds before the next set: their Malice only stops when they die.' } : {}) }, { t }, { txt: h.compact(r0.rm.amt) + ' on the raid' },
           { txt: '' }, r0.rm.dead.length ? { txt: (r0.rm.dead.length > 4 ? pl(r0.rm.dead.length, 'player') + ' died, first at ' + h.fmtT(r0.rm.dead[0].t) : r0.rm.dead.map((d) => d.player + ' ' + h.fmtT(d.t)).join(', ') + ' died'), bad: true } /* (with when: a set's adds left alive can kill much later (Oct 27)) */ : { txt: 'no deaths', dim: true }]);
         return { title: 'Set ' + (i + 1), t, bad: r0[4].bad || rows.some(isBad), warn: r0[4].warn, sub: r0[3].txt + ' kicks, ' + r0[4].txt, rows: rows.length ? rows : [[{ txt: 'no adds seen', dim: true }, { txt: '' }, { txt: '' }, { txt: '' }, { txt: '' }]] };
       });
