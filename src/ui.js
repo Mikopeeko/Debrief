@@ -1955,7 +1955,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-10-28', h: [{ t: 'Debriefing, as a timeline', d: 'Each pull reads top to bottom: every mistake and death where it happened, why it happened and what to do next time, with a filter for players, roles and how serious. Prefer the old page? Overview is one tap away and remembered.' }, { t: "Plan: place cooldowns in a click", d: "The Cooldowns chart has a Big hits view: one row per big hit with the cooldowns covering it. Click a cooldown and the spots where it fits light up with suggestions; Fit shows the whole fight on one screen." }, { t: "A new front page", d: "First-time visitors get one calm page: what Debrief does, Continue with Warcraft Logs, and a quick look around. Returning raiders land straight on Home." }, ], n: [
+  { d: '2026-10-28', h: [{ t: 'Rotation, as a timeline', d: 'Every button you pressed, in order, with the wrong ones ringed and each slip explained where it happened: why, and what to press next time. Filter by phase, button, slip type or how serious. The player card now leads with the one thing to fix first.' }, { t: 'Debriefing, as a timeline', d: 'Each pull reads top to bottom: every mistake and death where it happened, why it happened and what to do next time, with a filter for players, roles and how serious. Prefer the old page? Overview is one tap away and remembered.' }, { t: "Plan: place cooldowns in a click", d: "The Cooldowns chart has a Big hits view: one row per big hit with the cooldowns covering it. Click a cooldown and the spots where it fits light up with suggestions; Fit shows the whole fight on one screen." }, { t: "A new front page", d: "First-time visitors get one calm page: what Debrief does, Continue with Warcraft Logs, and a quick look around. Returning raiders land straight on Home." }, ], n: [
     "Guides is a main tab now, and the tabs stay on top of every guide page.",
     "Home: your team and you in one slim bar, the current boss across the page, all ten bosses in one row of tiles, then your latest raid nights.",
     "Debriefing, All pulls: each mechanic shows one square per pull and says how it went in words (\"Failed · 11 of 13\"); mechanics done right every time fold into one \"✓ Done right\" line.",
@@ -25053,7 +25053,7 @@ function specView(reps, one) {
   // grouped by role inside it)
   const sel = '<select class="rot-sel" aria-label="Change player"><option value="" selected disabled>Change player</option>' + ROLES.map(([k, l]) => { const l2 = inRole(k); return l2.length ? '<optgroup label="' + l + '">' +
     l2.map((p) => '<option value="' + esc(p.name) + '"' + (p.name === S.specSel ? ' disabled' : '') + '>' + esc(p.name) + (p.name === meN ? ' (you)' : '') + ' · ' + esc(p.specName || '') + '</option>').join('') + '</optgroup>' : ''; }).join('') + '</select>';
-  SPC_DRAW = true; let x0 = null; try { x0 = SPEC_CHECKS[pm.get(S.specSel).specName](reps, S.specSel, one); } finally { SPC_DRAW = false; } const x = x0 ? { ...x0, html: x0.html.replace('<div><h3>', '<div class="rot-hn"><h3>').replace('</h3><div class="spc-hs">', '</h3>' + sel + '<div class="spc-hs">') } : x0;
+  SPC_DRAW = true; let x0 = null; try { x0 = SPEC_CHECKS[pm.get(S.specSel).specName](reps, S.specSel, one); } finally { SPC_DRAW = false; } try { const r0 = reps[0], ci = one && r0 ? cutInfo(r0) : null, pp = pm.get(S.specSel); window.rotData = x0 ? { checks: x0.checks || [], wins: x0.wins || [], one: !!one, name: S.specSel, spec: pp.specName || '', color: pp.color || '', dur: one && r0 ? r0.duration : 0, cut: ci && ci.t != null ? ci.t : null, phases: one && r0 && r0.module && !r0.module.error && r0.module.phases ? r0.module.phases.map((q) => ({ name: q.name, start: q.start, end: q.end })) : [], key: S.specSel + '|' + (one && r0 && r0.item ? r0.item.pull : 'all'), casts: (n) => { try { return ((pp.byName && pp.byName.get(String(n).toLowerCase())) || []).slice().sort((a, b) => a - b); } catch (e) { return []; } }, ico: (n, id) => { try { return spellIcon(id || 0, n); } catch (e) { return ''; } }, all: () => { try { const o = []; for (const [n, ca] of pp.castAb || []) { const ts = (pp.castTimes && pp.castTimes.get(ca.id)) || []; for (const t of ts) o.push({ t, n: ca.name || n, id: ca.id }); } return o.sort((x, y) => x.t - y.t); } catch (e) { return []; } } } : null; } catch (e) { window.rotData = null; } /* round 146: the Rotation timeline's bridge */ const x = x0 ? { ...x0, html: x0.html.replace('<div><h3>', '<div class="rot-hn"><h3>').replace('</h3><div class="spc-hs">', '</h3>' + sel + '<div class="spc-hs">') } : x0;
   const ak = S.specSel + '|' + (one ? (S.rep && S.rep.item ? S.rep.item.pull : '') : 'all'), an = ak !== SPC_AK ? ' spc-anim' : ''; SPC_AK = ak;
   const page = x ? '<div class="pf-inl pf-srcd spc-v' + an + '">' + x.html + '</div>' + (x.wait ? '<p class="sub" style="margin:8px 0 0">Reading the spells\' cooldowns…</p>' : '') : '<p class="muted" style="margin:10px 0 0">No Rotation page for ' + esc(S.specSel) + (one ? ' this pull' : ' over these pulls') + '.</p>';
   return '<div class="pf-cols solo" data-st="spec"><div class="panel rot-pickp">' + page + '</div></div>' + PERF_HOW.spec; // (full width: no side panel)
@@ -32930,6 +32930,177 @@ function dsGuides() {
       if (k === 'players') { var rb = v.querySelector(':scope > .ds-raidb'); if (!rb) return; var on2 = !v.classList.contains('dbt-pl'); v.classList.toggle('dbt-pl', on2); b.textContent = on2 ? 'Hide players ▴' : 'Every player ›'; var kp = v.querySelector(':scope > .brf-keep'); if (on2 && (!kp || getComputedStyle(kp).display === 'none')) rb.click(); if (!on2 && kp && getComputedStyle(kp).display !== 'none') rb.click(); if (on2) setTimeout(function () { rb.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 60); } });
   };
   var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(function () { try { build(); } catch (e) { console.error(e); } }, 150); };
+  var start = function () { var m = document.getElementById('main') || document.body; if (!m) return setTimeout(start, 300); new MutationObserver(kick).observe(m, { childList: true, subtree: true }); kick(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
+// ===== Design studio round 147 (Oct 28): the Rotation timeline. Owner: the Design studio chat. =====
+// (an alternate view of a player's Rotation page, like Debriefing's (the user: "basically the same thing as debrief but for rotations";
+// "show their entire rotation, including things they did right vs things they did wrong with a ton of filter options"). One line down
+// the middle, in 10-second steps. On the left every button they pressed in that step as a strip of icons (a slip ringed in its colour,
+// a big cooldown in gold), big cooldowns and potions, and each burst window's own card. On the right the slips of that step: a better
+// button was ready, a proc wasted, a cast cancelled, a cooldown left ready; each with why and what to do next time. Filters on the side:
+// what to show, slip types, how serious, phase, every spell, and "only steps with a slip". "Checklist / Timeline" is remembered.)
+(function () {
+  var E = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+  var mm = function (s) { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+  var txt = function (h) { var d = document.createElement('div'); d.innerHTML = String(h || ''); return (d.textContent || '').replace(/\s+/g, ' ').trim(); };
+  var first = function (s) { var m = String(s || '').match(/^[\s\S]*?[.!?](\s|$)/); return (m ? m[0] : String(s || '')).trim(); };
+  var LVN = function (lv) { return lv >= 3 ? 'Serious' : lv === 2 ? 'Moderate' : 'Minor'; };
+  var LV = function (lv) { return '<i class="rtl-lv l' + lv + '">' + LVN(lv) + '</i>'; };
+  var getV = function () { try { return localStorage.getItem('wla-rot-view') || 'ck'; } catch (e) { return 'ck'; } };
+  var setV = function (k) { try { localStorage.setItem('wla-rot-view', k); } catch (e) { /* (not remembered) */ } };
+  var TYPES = [['pri', 'A better button was ready'], ['proc', 'Procs wasted'], ['ready', 'Cooldowns left ready'], ['cc', 'Cancelled casts'], ['other', 'Other slips']];
+  var F0 = function () { return { show: { cast: 1, cd: 1, win: 1, slip: 1, ok: 1 }, type: { pri: 1, proc: 1, ready: 1, cc: 1, other: 1 }, sev: { 1: 1, 2: 1, 3: 1 }, ph: 'all', sp: {}, only: 0 }; };
+  var F = F0();
+  var phOf = function (phs, t) { var p = null; phs.forEach(function (q) { if (t >= q.start - 0.5) p = q; }); return p; };
+  var phTag = function (p) { if (!p) return ''; var g = String(p.name).match(/^P(\d+)/i); return g ? 'P' + g[1] : /^intermission/i.test(p.name) ? 'Int' : ''; };
+  var iconOf = function (pg, label, nm, D) { var hit = ''; [].slice.call(pg.querySelectorAll('.rck-t > summary, .rck-cat summary, details[id^="spc-r-"] > summary')).some(function (s) { if (txt(s.innerHTML).indexOf(label) !== 0) return false; var ic = s.querySelector('.icw, img.rgx-i'); if (ic) { hit = ic.outerHTML; return true; } return false; }); return hit || (nm && !/^rot:/.test(nm) ? D.ico(nm) : ''); };
+
+  var model = function (D, pg) {
+    var end = D.cut != null ? D.cut : D.dur, S = [], P = [], W = [], big = {}, wrong = [];
+    (D.checks || []).forEach(function (c) {
+      var lv = c.st === 'bad' ? 3 : c.st === 'warn' ? 2 : 1, ic = iconOf(pg, c.label, c.ic, D), sub = first(txt(c.sub)), tip = txt(c.tip);
+      if (c.k === 'apl' && c.slips && c.slips.length) { c.slips.forEach(function (s) { (s.ts || []).forEach(function (t) { wrong.push({ t: t, n: s.did }); S.push({ t: t, type: 'pri', lv: 1, by: 'Rotation priority', ic: D.ico(s.want) || ic, head: 'Pressed ' + s.did, line: s.why ? s.why.charAt(0).toUpperCase() + s.why.slice(1) + ', so ' + s.want + ' was the better button.' : s.want + ' was the better button.', next: 'Press ' + s.want + ' first.' }); }); }); return; }
+      var isCd = /^cd:/.test(c.k), onCd = isCd && /on cooldown/i.test(c.label);
+      if ((isCd && !onCd) || c.k === 'potn') { var nm = c.ic && !/^rot:/.test(c.ic) ? c.ic : ''; if (nm) { big[nm.toLowerCase()] = 1; D.casts(nm).forEach(function (t) { P.push({ t: t, by: c.label, ic: ic, head: nm, st: c.st }); }); } }
+      if (c.k === 'win') return;
+      var pn = /^p:/.test(c.k) ? c.label : '', type = c.k === 'apl' ? 'pri' : pn ? 'proc' : c.k === 'cc' ? 'cc' : onCd ? 'ready' : 'other';
+      var hd = pn ? pn + ' proc wasted' : c.k === 'cc' ? 'Cancelled cast' : onCd ? c.label.replace(/\s*on cooldown$/i, '') + ' sat ready' : c.label;
+      var ln = pn ? 'A new ' + pn + ' proc replaced one you hadn\u2019t used yet.' : c.k === 'cc' ? 'A cast you started didn\u2019t finish.' : sub;
+      var nx = tip || (pn ? 'Spend ' + pn + ' before the next one comes.' : c.k === 'cc' ? 'Finish your casts unless you have to move.' : onCd ? 'Press it as soon as it\u2019s ready.' : '');
+      (c.mo || []).forEach(function (m) { if (m.a == null) return; S.push({ t: m.a, b: m.b, type: type, lv: lv, by: c.label, ic: ic, head: hd, line: ln, next: nx }); });
+    });
+    var win = (D.checks || []).filter(function (c) { return c.k === 'win' && c.cards; })[0];
+    if (win) { big[String(win.ic || '').toLowerCase()] = 1; (Array.isArray(win.cards) ? win.cards : [win.cards]).forEach(function (h) { var hs = String(h), re = /<div class="spc-w[^"]*"[^>]*data-mt="([\d.]+)"/g, m0, pos = []; while ((m0 = re.exec(hs))) pos.push({ i: m0.index, t: +m0[1] }); pos.forEach(function (p, j) { var seg = hs.slice(p.i, j + 1 < pos.length ? pos[j + 1].i : hs.length); W.push({ t: p.t, by: win.label, ic: iconOf(pg, win.label, win.ic, D), head: win.ic + ' window', html: seg }); }); }); }
+    var inEnd = function (m) { return end ? m.t <= end + 0.5 : true; };
+    var C = (D.all ? D.all() : []).filter(inEnd).map(function (c) { var lk = String(c.n).toLowerCase(), w = wrong.filter(function (x) { return Math.abs(x.t - c.t) < 0.06 && String(x.n).toLowerCase() === lk; })[0]; return { t: c.t, n: c.n, id: c.id, big: !!big[lk], bad: !!w }; });
+    /* (a channel's ticks are one press; a press that opens a window card is shown by the card) */
+    var lastP = {}; P = P.filter(inEnd).sort(function (a, b) { return a.t - b.t; }).filter(function (m) { if (win && m.head === win.ic && W.some(function (x) { return Math.abs(x.t - m.t) <= 3; })) return false; if (lastP[m.head] != null && m.t - lastP[m.head] < 10) return false; lastP[m.head] = m.t; return true; });
+    S = S.filter(inEnd).sort(function (a, b) { return a.t - b.t; });
+    var G = []; S.forEach(function (m) { var g = G.filter(function (x) { return x.by === m.by && x.head === m.head && m.t - x.tl <= 8; })[0]; if (g) { g.ts.push(m.t); g.tl = m.t; g.lv = Math.max(g.lv, m.lv); return; } m.ts = [m.t]; m.tl = m.t; G.push(m); });
+    return { S: G, P: P, W: W.filter(inEnd), C: C, end: end };
+  };
+
+  var draw = function (D, pg, box) {
+    var md = model(D, pg), phs = (D.phases || []).filter(function (p) { return p.start < (md.end || 1e9); });
+    if (!md.C.length && !md.S.length && !md.P.length) { box.innerHTML = '<div class="rtl-p rtl-empty">Nothing with a time to show for this pull.</div>'; return; }
+    var spells = {}; md.C.forEach(function (c) { var k = c.n; if (!spells[k]) spells[k] = { n: k, id: c.id, k: 0, bad: 0 }; spells[k].k++; if (c.bad) spells[k].bad++; });
+    var SPL = Object.keys(spells).map(function (k) { return spells[k]; }).sort(function (a, b) { return b.k - a.k; }); SPL.forEach(function (s) { if (F.sp[s.n] == null) F.sp[s.n] = 1; });
+    var inPh = function (t) { if (F.ph === 'all') return true; var p = phOf(phs, t); return !!p && p.name === F.ph; };
+    var sOk = function (m) { return F.show.slip && F.type[m.type] && F.sev[m.lv] && inPh(m.t); };
+    var STEP = 10, last = md.end || D.dur || 0, steps = [];
+    for (var a = 0; a <= last; a += STEP) steps.push({ a: a, b: a + STEP, C: [], P: [], W: [], S: [] });
+    var at = function (t) { return steps[Math.min(steps.length - 1, Math.max(0, Math.floor(t / STEP)))]; };
+    md.C.forEach(function (c) { if (F.show.cast && F.sp[c.n] && inPh(c.t)) at(c.t).C.push(c); });
+    md.P.forEach(function (m) { if (F.show.cd && inPh(m.t)) at(m.t).P.push(m); });
+    md.W.forEach(function (m) { if (F.show.win && inPh(m.t)) at(m.t).W.push(m); });
+    md.S.forEach(function (m) { if (sOk(m)) at(m.t).S.push(m); });
+    var nS = function (f) { return md.S.filter(f).reduce(function (x, m) { return x + m.ts.length; }, 0); };
+    var icon = function (c) { return '<span class="rtl-ci' + (c.bad ? ' bad' : c.big ? ' big' : '') + '" title="' + E(mm(c.t) + ' ' + c.n + (c.bad ? ': a better button was ready' : '')) + '">' + D.ico(c.n, c.id) + '</span>'; };
+    var pill = function (m) { return '<span class="rtl-pill' + (m.st === 'bad' || m.st === 'warn' ? ' w' : '') + '"><span class="rtl-ic">' + m.ic + '</span>' + E(m.head) + '<em>' + mm(m.t) + '</em></span>'; };
+    var card = function (m) { var many = m.ts.length > 1; return '<div class="rtl-c l' + m.lv + '"><div class="rtl-ch"><span class="rtl-ic">' + m.ic + '</span><b>' + E(m.head) + '</b>' + LV(m.lv) + '</div><div class="rtl-by">' + (m.by !== m.head ? E(m.by) + ' · ' : '') + mm(m.t) + '</div><p>' + E(m.line) + (many ? ' <span class="rtl-n">' + m.ts.length + ' times: ' + m.ts.map(mm).join(', ') + '</span>' : '') + '</p>' + (m.next ? '<div class="rtl-ln"><span>NEXT TIME</span><span>' + E(first(m.next)) + '</span></div>' : '') + '</div>'; };
+    var marker = function (p) { var e0 = Math.min(p.end, md.end || p.end), n = nS(function (m) { return m.t >= p.start && m.t < e0; }); return '<div class="rtl-ph"><span><b>' + E(p.name) + '</b> ' + mm(p.start) + '–' + mm(e0) + ' <i>' + (n ? n + ' slip' + (n > 1 ? 's' : '') : 'no slips') + '</i></span></div>'; };
+    var rows = '', np = 0, shownN = 0;
+    steps.forEach(function (s) {
+      while (np < phs.length && phs[np].start < s.b - 0.01) { rows += (F.ph === 'all' || F.ph === phs[np].name) ? marker(phs[np]) : ''; np++; }
+      var has = s.C.length || s.P.length || s.W.length || s.S.length; if (!has) return; if (F.only && !s.S.length) return; shownN++;
+      var p = phOf(phs, s.a), nb = s.C.filter(function (c) { return c.bad; }).length;
+      var left = (s.C.length ? '<div class="rtl-strip">' + s.C.map(icon).join('') + '</div>' + (F.show.ok ? '<span class="rtl-okn' + (nb ? ' w' : '') + '">' + (nb ? '✓ ' + (s.C.length - nb) + ' of ' + s.C.length + ' right' : '✓ all ' + s.C.length + ' right') + '</span>' : '') : '') + s.P.map(pill).join('') +
+        s.W.map(function (m) { return '<div class="rtl-w"><div class="rtl-ch"><span class="rtl-ic">' + m.ic + '</span><b>' + E(m.head) + '</b></div>' + m.html + '</div>'; }).join('');
+      rows += '<div class="rtl-r"><div class="rtl-l">' + left + '</div><span class="rtl-t' + (s.S.some(function (m) { return m.lv >= 2; }) ? ' r' : s.S.length ? ' y' : '') + '">' + mm(s.a) + '<small>' + phTag(p) + '</small></span><div class="rtl-rr">' + s.S.map(card).join('') + '</div></div>';
+    });
+    if (D.cut != null && D.dur && D.cut < D.dur - 1) rows += '<div class="rtl-ph end"><span><b>Counted to ' + mm(D.cut) + '</b> <i>the wipe call</i></span></div>';
+    if (!shownN) rows += '<p class="rtl-none">Nothing to show with these filters.</p>';
+    /* the side panel (quiet list) */
+    var q = function (attr, on, lead, label, num) { return '<button type="button" class="rtl-q' + (on ? ' on' : '') + '" ' + attr + ' aria-pressed="' + (on ? 'true' : 'false') + '">' + lead + '<span class="rtl-ql">' + label + '</span><span class="rtl-qn">' + num + '</span><span class="rtl-eye" aria-hidden="true">' + (on ? '◉' : '○') + '</span></button>'; };
+    var dot = function (c) { return '<i class="rtl-d ' + c + '"></i>'; };
+    var cnt = { 1: nS(function (m) { return m.lv === 1; }), 2: nS(function (m) { return m.lv === 2; }), 3: nS(function (m) { return m.lv === 3; }) };
+    var right = md.C.filter(function (c) { return !c.bad; }).length, tot = md.C.length;
+    var side = '<div class="rtl-sh"><b>Filters</b><span>' + shownN + ' steps</span><button type="button" class="rtl-reset" data-rtl="reset">Reset</button></div><p class="rtl-hint">Tap a row to hide it.</p>' +
+      '<div class="rtl-sg"><span class="rtl-k">Show</span>' + q('data-show="cast"', F.show.cast, dot('w'), 'Every button pressed', tot) + q('data-show="ok"', F.show.ok, dot('g'), 'Right / wrong count', right + ' right') + q('data-show="cd"', F.show.cd, dot('o'), 'Big cooldowns and potions', md.P.length) + q('data-show="win"', F.show.win, dot('b'), 'Burst windows', md.W.length) + q('data-show="slip"', F.show.slip, dot('r'), 'Slips', nS(function () { return true; })) +
+      '<div class="rtl-sev">' + [3, 2, 1].map(function (lv) { return '<button type="button" class="rtl-sv l' + lv + (F.sev[lv] ? ' on' : '') + '" data-sev="' + lv + '">' + LVN(lv) + ' ' + cnt[lv] + '</button>'; }).join('') + '</div>' +
+      q('data-only="1"', F.only, dot('y'), 'Only steps with a slip', '') + '</div>' +
+      '<div class="rtl-sg"><span class="rtl-k">Slip types</span>' + TYPES.map(function (t) { var n = nS(function (m) { return m.type === t[0]; }); return n ? q('data-type="' + t[0] + '"', F.type[t[0]], '', t[1], n) : ''; }).join('') + '</div>' +
+      (phs.length > 1 ? '<div class="rtl-sg"><span class="rtl-k">Phase</span><div class="rtl-phs">' + ['all'].concat(phs.map(function (p) { return p.name; })).map(function (n) { return '<button type="button" class="rtl-pb' + (F.ph === n ? ' on' : '') + '" data-ph="' + E(n) + '">' + (n === 'all' ? 'Whole pull' : E(phTag(phs.filter(function (p) { return p.name === n; })[0]) || n)) + '</button>'; }).join('') + '</div></div>' : '') +
+      '<div class="rtl-sg"><span class="rtl-k">Buttons</span><div class="rtl-spl">' + SPL.map(function (s) { return q('data-sp="' + E(s.n) + '"', F.sp[s.n], '<span class="rtl-ic">' + D.ico(s.n, s.id) + '</span>', E(s.n), s.k + (s.bad ? ' <b class="rtl-bn">' + s.bad + ' ✕</b>' : '')); }).join('') + '</div></div>';
+    var top = '<div class="rtl-top2"><div class="rtl-sum"><span><b>' + tot + '</b> buttons pressed</span><span class="g"><b>' + right + '</b> right</span><span class="r"><b>' + (tot - right) + '</b> a better button was ready</span><span><b>' + md.P.length + '</b> big cooldowns</span><span><b>' + md.W.length + '</b> windows</span><span><b>' + nS(function () { return true; }) + '</b> slips in all</span></div></div>';
+    box.innerHTML = top + '<div class="rtl-main"><div class="rtl-tlw"><div class="rtl-heads"><span>What you pressed</span><span></span><span>Slips</span></div><div class="rtl-tl">' + rows + '</div></div><aside class="rtl-p rtl-side">' + side + '</aside></div>';
+  };
+
+  var build = function () {
+    var v = document.querySelector('#view'), pg = v && v.querySelector('.pf-inl.spc-v'), D = window.rotData; if (!pg || !D) return;
+    if (!D.one) { var o = pg.querySelector(':scope > .rtl-vt'); if (o) o.remove(); var b0 = pg.querySelector(':scope > .rtl'); if (b0) b0.remove(); pg.classList.remove('rtl-on'); return; }
+    var hero = pg.querySelector(':scope > .ds-rtop') || pg.firstElementChild; if (!hero) return;
+    var vt = pg.querySelector(':scope > .rtl-vt'), box = pg.querySelector(':scope > .rtl');
+    if (!vt) { vt = document.createElement('div'); vt.className = 'rtl-vt'; vt.setAttribute('role', 'tablist'); vt.innerHTML = '<button type="button" role="tab" data-rv="ck">Checklist</button><button type="button" role="tab" data-rv="tl">Timeline</button><span>Two ways to read the same pull</span>'; hero.after(vt); }
+    if (!box) { box = document.createElement('section'); box.className = 'rtl'; vt.after(box); }
+    var on = getV() === 'tl'; pg.classList.toggle('rtl-on', on); vt.querySelectorAll('button').forEach(function (b) { var s = (b.dataset.rv === 'tl') === on; b.classList.toggle('on', s); b.setAttribute('aria-selected', s ? 'true' : 'false'); });
+    if (on && (box._k !== D.key || box._d !== D || !box.firstChild)) { if (box._k !== D.key) F = F0(); box._k = D.key; box._d = D; try { draw(D, pg, box); } catch (e) { console.error(e); box.innerHTML = '<div class="rtl-p rtl-empty">The timeline could not be drawn for this pull.</div>'; } }
+  };
+  var redraw = function () { var v = document.querySelector('#view'), pg = v && v.querySelector('.pf-inl.spc-v'), box = pg && pg.querySelector(':scope > .rtl'); if (box && window.rotData) { var y = window.scrollY; draw(window.rotData, pg, box); window.scrollTo(0, y); } };
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('.rtl-vt [data-rv], .rtl [data-show], .rtl [data-sev], .rtl [data-type], .rtl [data-ph], .rtl [data-sp], .rtl [data-only], .rtl [data-rtl]'); if (!t) return;
+    if (t.dataset.rv) { setV(t.dataset.rv); build(); return; }
+    var d = t.dataset;
+    if (d.show) F.show[d.show] = F.show[d.show] ? 0 : 1;
+    else if (d.sev) F.sev[d.sev] = F.sev[d.sev] ? 0 : 1;
+    else if (d.type) F.type[d.type] = F.type[d.type] ? 0 : 1;
+    else if (d.ph) F.ph = d.ph;
+    else if (d.sp) F.sp[d.sp] = F.sp[d.sp] ? 0 : 1;
+    else if (d.only) F.only = F.only ? 0 : 1;
+    else if (d.rtl === 'reset') F = F0();
+    redraw();
+  });
+  var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(function () { try { build(); } catch (e) { console.error(e); } }, 120); };
+  var start = function () { var m = document.getElementById('main') || document.body; if (!m) return setTimeout(start, 300); new MutationObserver(function (ms) { if (ms.every(function (x) { return x.target.closest && x.target.closest('.rtl'); })) return; kick(); }).observe(m, { childList: true, subtree: true }); kick(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
+// ===== Design studio round 148 (Oct 28): the Rotation player card, in the Debriefing style. Owner: the Design studio chat. =====
+// (the user's pick, mockup A: "Do A". One slim strip for who and how they scored (portrait, name, hero talent, spec and pull, the score,
+// the parse, talents and Change player); then "Fix first" as one headline with its Next time line, "Also" rows for the rest, and Done
+// right as one quiet line. The page's own parts are moved, not copied, so every click still works.)
+(function () {
+  var txt = function (e) { return e ? (e.textContent || '').replace(/\s+/g, ' ').trim() : ''; };
+  var E = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+  var lc1 = function (s) { return s ? s.charAt(0).toLowerCase() + s.slice(1) : s; };
+  var make = function (top) {
+    var hero = top.querySelector(':scope > .spc-hero'), fixw = top.querySelector(':scope > .rck-fixtop'); if (!hero) return;
+    var hn = hero.querySelector('.rot-hn'), h3 = hn && hn.querySelector('h3'), sel = hn && hn.querySelector('.rot-sel'), av = hero.querySelector('.spc-av'), rw = hero.querySelector('.spc-rw');
+    var kt = [].slice.call(hero.querySelectorAll('.spc-kt')).filter(function (k) { return !k.classList.contains('ds-hide'); }), tq = hero.querySelector('.spc-tqd'), good = hero.querySelector('.rck-good');
+    var sgs = fixw ? [].slice.call(fixw.querySelectorAll('.rck-sg')) : [], lead = fixw ? fixw.querySelector('.rck-lead') : null;
+    var card = document.createElement('section'); card.className = 'rpc' + (hero.className.match(/\bcls-[a-z]+/) ? ' ' + hero.className.match(/\bcls-[a-z]+/)[0] : '');
+    var strip = document.createElement('div'); strip.className = 'rpc-id';
+    if (av) strip.appendChild(av);
+    var nm = document.createElement('div'); nm.className = 'rpc-nm'; if (h3) nm.appendChild(h3);
+    var meta = document.createElement('div'); meta.className = 'rpc-meta'; meta.innerHTML = E([txt(hn && hn.querySelector('.spc-hs')), txt(hn && hn.querySelector('.sub'))].filter(Boolean).join(' · ')); nm.appendChild(meta); strip.appendChild(nm);
+    var sp = document.createElement('span'); sp.className = 'rpc-sp'; strip.appendChild(sp);
+    if (rw) strip.appendChild(rw);
+    kt.forEach(function (k) { k.classList.add('rpc-kt'); strip.appendChild(k); });
+    if (sel) strip.appendChild(sel);
+    if (tq) { tq.classList.add('rpc-tq'); strip.appendChild(tq); }
+    card.appendChild(strip);
+    if (lead) { var ld = document.createElement('p'); ld.className = 'rpc-lead'; ld.innerHTML = lead.innerHTML; card.appendChild(ld); }
+    var body = document.createElement('div'); body.className = 'rpc-body';
+    var s0 = sgs[0];
+    if (s0 && /\b(warn|bad)\b/.test(s0.className)) {
+      var ic = s0.querySelector('.icw'), t = s0.querySelector('.rck-sgt'), lab = t ? txt(t.querySelector(':scope > b')).replace(/\s*(Fix first|Small gain|Big gain)\s*$/i, '') : '', ps = t ? [].slice.call(t.querySelectorAll(':scope > p')).filter(function (x) { return !x.classList.contains('rck-how'); }) : [], p = ps.filter(function (x) { return /\d/.test(txt(x)); })[0] || ps[0] || null, /* (the line with the numbers, not the one about why it matters) */ how = t ? t.querySelector('.rck-how') : null, vs = s0.querySelector('.rck-vs');
+      var ck = window.rotData && (window.rotData.checks || []).filter(function (c) { return c.k === s0.dataset.ck; })[0], one1 = function (x) { var m = String(x || '').match(/^[\s\S]*?[.!?](\s|$)/); return (m ? m[0] : String(x || '')).trim(); }, cSub = ck ? one1(txt((function () { var d0 = document.createElement('div'); d0.innerHTML = String(ck.sub || ''); return d0; })())) : '', cTip = ck ? one1(txt((function () { var d0 = document.createElement('div'); d0.innerHTML = String(ck.tip || ''); return d0; })())) : ''; /* (the result in its own words, and its own tip) */
+      var hd = document.createElement('div'); hd.className = 'rck-sg rpc-fx ' + (/\bbad\b/.test(s0.className) ? 'bad' : 'warn'); hd.setAttribute('data-ck', s0.dataset.ck || ''); hd.setAttribute('role', 'button'); hd.tabIndex = 0; hd.title = s0.title || '';
+      hd.innerHTML = '<span class="rpc-ic">' + (ic ? ic.outerHTML : '') + '</span><div class="rpc-fxb"><span class="rpc-k">Fix first</span><h2>' + E(lab) + (cSub ? ': ' + E((/^(You|Your)\b/.test(cSub) ? lc1(cSub) : cSub).replace(/\.$/, '')) : p ? ': ' + E((/^(You|Your)\b/.test(txt(p)) ? lc1(txt(p)) : txt(p)).replace(/\.$/, '')) : '') + '.</h2>' +
+        (cTip || how ? '<div class="rpc-ln"><span>NEXT TIME</span><span>' + E(cTip || txt(how).replace(/^How:\s*/i, '')) + '</span></div>' : '') + '</div>' + (vs ? '<span class="rpc-v">' + vs.innerHTML + '</span>' : '');
+      body.appendChild(hd); s0.remove(); sgs = sgs.slice(1);
+    } else {
+      var ok = document.createElement('div'); ok.className = 'rpc-fx ok'; ok.innerHTML = '<span class="rpc-ic ck">✓</span><div class="rpc-fxb"><span class="rpc-k">Clean pull</span><h2>Nothing to fix first.</h2></div>'; body.appendChild(ok);
+    }
+    if (sgs.length) { var al = document.createElement('div'); al.className = 'rpc-also'; al.innerHTML = '<span class="rpc-k">Also</span>'; sgs.forEach(function (g) { g.classList.add('rpc-row'); al.appendChild(g); }); body.appendChild(al); }
+    if (good && good.children.length) { var dn = document.createElement('div'); dn.className = 'rpc-done'; dn.innerHTML = '<span class="rpc-dk">✓ Done right</span>'; [].slice.call(good.children).forEach(function (c) { dn.appendChild(c); }); body.appendChild(dn); }
+    card.appendChild(body);
+    top.classList.add('rpc-on'); top.prepend(card);
+  };
+  var run = function () { document.querySelectorAll('#view .pf-inl.spc-v > .ds-rtop:not(.rpc-on)').forEach(function (top) { try { make(top); } catch (e) { console.error(e); } }); };
+  var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(run, 60); };
   var start = function () { var m = document.getElementById('main') || document.body; if (!m) return setTimeout(start, 300); new MutationObserver(kick).observe(m, { childList: true, subtree: true }); kick(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
