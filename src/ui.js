@@ -11118,7 +11118,7 @@ function audit() {
   /* (phase rows, Oct 22 test (your ask: "this section may need simplification"): B = a bar per mechanic, how often it was done right, worst first;
      A (?rows=a) = one plain line naming the worst. Both drop the number badge, the ring and the pill, which counted the same thing) */
   { const m = location.search.match(/[?&]rows=([ab])\b/); if (m) S.phRows = m[1]; } const PHROWS = S.phRows || 'b'; /* (the address is tidied after the first draw: keep the choice) */
-  const phStat = (list) => list.filter((x) => !x.s.info).map((x) => { const a = x.rows.concat(...x.groups.map((g) => g.rows)), nb = a.filter(isBadRow).length, nw = a.filter((row) => !isBadRow(row) && isWarnRow(row)).length, lv = LVL_CLS[lvlOf(phLv([x]))];
+  const phStat = (list) => list.filter((x) => !x.s.info).map((x) => { const a = x.rows.concat(...x.groups.map((g) => g.rows)), nb = a.filter(isBadRow).length, nw = a.filter((row) => !isBadRow(row) && isWarnRow(row)).length, fg = a.length ? mxFlag(a.map((row) => ({ st: isBadRow(row) ? 'bad' : isWarnRow(row) ? 'warn' : 'ok' }))) : null, sl = LVL_CLS[lvlOf(phLv([x]))], lv = fg && { ok: 0, warn: 1, bad: 2 }[fg.c] > { ok: 0, warn: 1, bad: 2 }[sl] ? fg.c : sl; /* (the worse of the dropdown flag's rule and the mechanic's own verdict (Oct 27)) */
       return { x, nm: String(x.s.title).replace(/\s*\(.*$/, ''), lv, pc: a.length ? Math.round(100 * (a.length - nb - nw) / a.length) : 100 }; })
     .sort((p, q) => ({ bad: 0, warn: 1, ok: 2 }[p.lv] - { bad: 0, warn: 1, ok: 2 }[q.lv]) || p.pc - q.pc);
   const phIco = (s) => { if (s.icon) return '<span class="icw">' + svgIcon(0, s.title) + '<img class="oi" data-icon="' + esc(s.icon) + '" alt=""></span>'; const generic = GENERIC_SEC.test(s.title), name = generic ? s.title : (s.spell && s.spell[1]) || s.title; return spellIcon(generic ? 0 : (s.spell && s.spell[0]) || sidOf(name), name); };
@@ -12863,7 +12863,7 @@ function dtPull(r, name) { const m = DTT.get(r); if (m && m.name === name) retur
 /* (a row's flag in words, from its pulls: "Failed · 10 of 10", "Some mistakes · 4 of 13", "Done right · 13 of 13"; st is the row's own colour (Oct 27)) */
 const mxFlag = (pts) => { const J = pts.filter((p) => p.st === 'ok' || p.st === 'warn' || p.st === 'bad'), n = J.length; if (!n) return null; const f = J.filter((p) => p.st === 'bad').length, w = J.filter((p) => p.st !== 'ok').length;
   /* (by pulls: Done right with no failed pull and at most one with a small slip; Failed when half or more failed, or every pull had mistakes; else Some mistakes) */
-  if (!f && w <= 1) return { c: 'ok', t: 'Done right · ' + (n - w) + ' of ' + n };
+  if (!f && (!w || (w === 1 && n >= 5))) return { c: 'ok', t: 'Done right · ' + (n - w) + ' of ' + n };
   if (f * 2 >= n) return { c: 'bad', t: 'Failed · ' + f + ' of ' + n };
   if (w === n && n >= 2) return { c: 'bad', t: 'Mistakes every pull · ' + n + ' of ' + n };
   return { c: 'warn', t: 'Some mistakes · ' + w + ' of ' + n }; };
@@ -13933,6 +13933,8 @@ function mxOne(pan, sec, hd, fl, xb) {
   const lis = [...sec.querySelectorAll('li.u1-r')]; if (!lis.length || sec.querySelector('.mx-tb')) return;
   const stOf = (li) => (/\bbad\b/.test(li.className) ? 'bad' : /\bwarn\b/.test(li.className) ? 'warn' : 'ok'), rows = lis.map((li, i) => ({ li, i, st: stOf(li) }));
   const fg = mxFlag(rows), n = rows.length, w = rows.filter((x) => x.st !== 'ok').length;
+  { const so = sec.querySelector(':scope > summary .sst, :scope > summary .rw2-pc'), sl = so ? ((so.className.match(/\b(ok|warn|bad)\b/) || [])[1] || 'ok') : 'ok', K = { ok: 0, warn: 1, bad: 2 };
+    if (fg && K[sl] > K[fg.c]) { fg.c = sl; fg.t = (sl === 'bad' ? 'Failed · ' : 'Some mistakes · ') + Math.max(1, w) + ' of ' + n; } } /* (the mechanic's own verdict when it's worse, like its row) */
   if (fg) { fl.className = 'mx-fl ' + { ok: 'g', warn: 'y', bad: 'r' }[fg.c]; fl.textContent = fg.t.replace('Mistakes every pull', 'Mistakes every time') + (n === 1 ? ' time' : ' times'); if (!fl.parentNode) hd.insertBefore(fl, xb); }
   const unroll = (c) => { if (c.dataset && c.dataset.raw != null) c.textContent = c.dataset.raw; c.querySelectorAll('[data-raw]').forEach((x) => { x.textContent = x.dataset.raw; }); return c; }; /* (numbers still counting up hold their real value in data-raw) */
   const txt = (el) => { if (!el) return ''; const c = unroll(el.cloneNode(true)); c.querySelectorAll('.icw, svg, img').forEach((x) => x.remove()); return c.textContent.replace(/\s+/g, ' ').trim(); };
