@@ -28089,7 +28089,12 @@ function audit() {
   const HPL = (() => { if (r.allPulls) return null; try { return bossHpLine(r, r.duration || 0, 2); } catch (e) { return null; } })(), hpAtL = (t) => { if (!HPL || !HPL.length) return null; let v = HPL[0][1]; for (const [s, f] of HPL) { if (s > t + 0.01) break; v = f; } return Math.round(100 * v); };
   const phHp = (p) => { if (!HPL || !p || p.start == null) return ''; const ct = cutT(r), t0 = p.start, t1 = Math.min(p.end != null ? p.end : r.duration, isFinite(ct) ? ct : Infinity, r.duration || Infinity), pts = [];
     for (let t = t0; t < t1; t += 10) pts.push(T(t) + '=' + hpAtL(t)); pts.push(T(t1) + '=' + hpAtL(t1));
-    return ' data-hp0="' + hpAtL(t0) + '" data-hp1="' + hpAtL(t1) + '" data-hps="' + esc(pts.join(',')) + '"'; };
+    /* (the phase's own boss: its name after "P2 " matched to one tracked unit) */
+    let own = ''; { const w = String(p.name || '').replace(/^(P\d+|Phase \d+|Intermission)\s*/i, '').trim().toLowerCase(), U = w.length >= 4 ? [...(r.hpUnits || new Map()).values()].filter((x) => String(x.name || '').toLowerCase().includes(w) && x.samples && x.samples.length > 3) : [];
+      const names = [...new Set(U.map((x) => x.name))]; if (names.length === 1) { const us = U.sort((a, b) => b.samples.length - a.samples.length)[0], at = (t) => { let v = null; for (const [s2, f2] of us.samples) { if (s2 > t + 0.01) break; v = f2; } return v == null ? 100 : Math.round(100 * v); };
+        const bp = []; for (let t = t0; t < t1; t += 10) bp.push(T(t) + '=' + at(t)); bp.push(T(t1) + '=' + at(t1));
+        own = ' data-bhn="' + esc(names[0]) + '" data-bhp0="' + at(t0) + '" data-bhp1="' + at(t1) + '" data-bhps="' + esc(bp.join(',')) + '"'; } }
+    return ' data-hp0="' + hpAtL(t0) + '" data-hp1="' + hpAtL(t1) + '" data-hps="' + esc(pts.join(',')) + '"' + own; };
   const phStat = (list) => list.filter((x) => !x.s.info).map((x) => { const a = x.rows.concat(...x.groups.map((g) => g.rows)), nb = a.filter(isBadRow).length, nw = a.filter((row) => !isBadRow(row) && isWarnRow(row)).length, fg = a.length ? mxFlag(a.map((row) => ({ st: isBadRow(row) ? 'bad' : isWarnRow(row) ? 'warn' : 'ok' }))) : null, sl = LVL_CLS[lvlOf(phLv([x]))], lv = fg && { ok: 0, warn: 1, bad: 2 }[fg.c] > { ok: 0, warn: 1, bad: 2 }[sl] ? fg.c : sl; /* (the worse of the dropdown flag's rule and the mechanic's own verdict (Oct 27)) */
       return { x, nm: String(x.s.title).replace(/\s*\(.*$/, ''), lv, pc: a.length ? Math.round(100 * (a.length - nb - nw) / a.length) : 100 }; })
     .sort((p, q) => ({ bad: 0, warn: 1, ok: 2 }[p.lv] - { bad: 0, warn: 1, ok: 2 }[q.lv]) || p.pc - q.pc);
