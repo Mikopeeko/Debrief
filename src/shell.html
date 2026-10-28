@@ -10210,6 +10210,36 @@ html body #view .rtl .rtl-mid .rtl-t { margin: 0; }
 .rtl .rtv.f-dim .rtv-c:not(.mk-r):not(.mk-y){opacity:.2}
 .rtl .rtv.f-dim .rtv-mk.gd,.rtl .rtv.f-dim .rtv-mk.u,.rtl .rtv.f-dim .rtv-cd.gd,.rtl .rtv.f-dim .rtv-cd.op,.rtl .rtv.f-dim .rtv-band,.rtl .rtv.f-dim .rtv-wave{opacity:.25}
 @media (max-width:760px){.rtv-fp{left:12px;right:12px;width:auto;top:auto;bottom:12px;max-height:70vh}}
+/* round 155z: the filters beside the chart, in view while scrolling, collapsible */
+.rtl .rtv-lay{display:flex;align-items:flex-start;justify-content:center;gap:14px}
+.rtl .rtv-lay > .rtv-wrap{flex:0 1 auto;min-width:0}
+.rtl .rtv-fside{position:sticky;top:62px;flex:none;width:214px;max-height:calc(100vh - 90px);overflow:auto;border-radius:14px;background:linear-gradient(180deg,#12161f,#0f131a);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),0 12px 30px rgba(0,0,0,.3);font-family:Barlow,sans-serif;color:#ece8df;transition:width .15s}
+.rtl .rtv-fsh{display:flex;align-items:center;gap:8px;width:100%;height:42px;padding:0 14px;border:0;border-bottom:1px solid rgba(255,255,255,.06);background:none;color:#ece8df;cursor:pointer;text-align:left}
+.rtl .rtv-fsh b{font:700 13px 'Barlow Condensed',sans-serif;letter-spacing:.12em;text-transform:uppercase}
+.rtl .rtv-fsh .rtv-fbn{flex:1;font:600 12px 'Barlow Condensed',sans-serif;font-style:normal;color:#f0cf7a}
+.rtl .rtv-fsc{font-size:16px;color:#7d8596}
+.rtl .rtv-fsh:hover .rtv-fsc{color:#ece8df}
+.rtl .rtv-fsb{padding:4px 8px 10px}
+.rtl .rtv-fsb .rtv-fq{height:30px;font-size:12.5px}
+.rtl .rtv-fsf{padding:8px 6px 0;border-top:1px solid rgba(255,255,255,.06);margin-top:6px}
+.rtl .rtv-fsf .rtv-fpr{border:0;background:none;padding:2px 2px;color:#7d8596;font:600 12px 'Barlow Condensed',sans-serif;cursor:pointer}
+.rtl .rtv-fsf .rtv-fpr:hover{color:#ece8df}
+/* collapsed: a slim tab that still says what it is */
+.rtl .rtv-fside.min{width:40px;overflow:hidden}
+.rtl .rtv-fside.min .rtv-fsb{display:none}
+.rtl .rtv-fside.min .rtv-fsh{flex-direction:column;justify-content:flex-start;height:auto;min-height:150px;padding:14px 0;border-bottom:0;gap:10px}
+.rtl .rtv-fside.min .rtv-fsh b{writing-mode:vertical-rl;transform:rotate(180deg)}
+.rtl .rtv-fside.min .rtv-fsh .rtv-fbn{flex:none;writing-mode:vertical-rl;transform:rotate(180deg)}
+.rtl .rtv-fside.min .rtv-fsc{order:-1}
+.rtl .rtv-cd{width:196px}
+@media (max-width:760px){.rtl .rtv-lay{display:block}.rtl .rtv-fside{position:static;width:auto;margin-top:12px;max-height:none}.rtl .rtv-fside.min{width:auto}.rtl .rtv-fside.min .rtv-fsh{flex-direction:row;min-height:0;height:42px;padding:0 14px}.rtl .rtv-fside.min .rtv-fsh b,.rtl .rtv-fside.min .rtv-fsh .rtv-fbn{writing-mode:horizontal-tb;transform:none}.rtl .rtv-fside.min .rtv-fsc{order:0}}
+/* round 155z2: in Timeline view the page box does not scroll on its own, so the filters and the head can stay in view */
+.pf-inl.spc-v.rtl-on{overflow:visible!important}
+.rtl .rtv-fside.min{box-shadow:inset 0 0 0 1px rgba(230,180,80,.35),0 12px 30px rgba(0,0,0,.3)}
+.rtl .rtv-fside.min .rtv-fsh b{color:#f0cf7a}
+/* round 155z3: cards follow the side width; the panel sits above the sticky head */
+.rtl .rtv-cd{width:var(--cdw,196px)}
+.rtl .rtv-fside{z-index:6}
 </style>
 
 
