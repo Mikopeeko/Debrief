@@ -1,7 +1,7 @@
 # Subtlety Rogue (melee DPS)
 
 Read Oct 19 2026. Wowhead + Icy Veins (12.1.5).
-**12.1.5 change** (Wowhead): Shadow damage interactions reworked — clone attacks work reliably and spells get each damage amplifier only once; Subtlety got +14% to compensate. Builds may shift over time.
+**12.1.5 change** (Wowhead): Shadow damage interactions reworked — clone attacks work reliably and spells get each damage amplifier only once; Subtlety got +14% to compensate. Oct 27 hotfix: all Subtlety ability damage -8%, Trickster's Fazed 7% -> 5% (audit, Oct 28). Builds may shift over time.
 12.1: Goremaw's Bite#426591 reworked (no CP; bleed on up to 3 targets that repeats 20% of your finishers' damage — now baseline); Shadow Techniques#196912 buffed, Shadowcraft#426594 Energy nerfed; Lingering Shadow#382524 works with Shuriken Storm
 (taken only with the 4-piece); Secret Technique#280719 shadow part reworked. Midnight removed Flagellation, Symbols of Death, Rupture; Secret Technique static 25 s (haste-reduced), Shadow Dance#185313 static 20 s; Shadow Blades#121471 doubles builder CP.
 

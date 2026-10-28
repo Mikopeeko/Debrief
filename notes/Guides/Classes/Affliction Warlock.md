@@ -1,6 +1,6 @@
 # Affliction Warlock (ranged DPS)
 
-Read Oct 19 2026. Wowhead + Icy Veins (12.1.5). No 12.1.5 class changes.
+Read Oct 19 2026. Wowhead + Icy Veins (12.1.5). Oct 27 hotfix: Unstable Affliction damage +20%. No priority change (audit, Oct 28).
 12.1 (Wowhead): few changes; Nocturnal Yield and Patient Zero removed; new Hedonic Gorging#1311969, Impetuous Wrath#1312998; **Shard Instability#1260269 can now give a free Seed of Corruption#27243** as well as a free Unstable Affliction#1259790.
 Weak single target in stacked-AoE builds (pathing can't reach both).
 

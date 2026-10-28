@@ -1,6 +1,6 @@
 # Holy Priest (healer)
 
-Read Oct 19 2026. Wowhead + Icy Veins (12.1.5). No 12.1.5 class changes.
+Read Oct 19 2026. Wowhead + Icy Veins (12.1.5). 12.1.5 (patch notes): Celerity and Ultimate Serenity swapped places in the tree. No Holy change in the Oct 23/26/27 hotfixes (audit, Oct 28).
 Midnight changes (Wowhead): Divine Hymn now also gives you Guardian Spirit while channeling; Benediction rank 3 changed (Serenity now always upgrades your
 next Flash Heal to Benediction; Apotheosis no longer does); Apotheosis cuts Holy Word mana cost by 70% (was 50%).
 

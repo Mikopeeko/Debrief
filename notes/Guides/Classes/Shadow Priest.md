@@ -1,6 +1,6 @@
 # Shadow Priest (ranged DPS)
 
-Read Oct 19 2026. Wowhead + Icy Veins (12.1.5). No 12.1.5 class changes.
+Read Oct 19 2026. Wowhead + Icy Veins (12.1.5). No Shadow change in 12.1.5 or the Oct 23/26/27 hotfixes (audit, Oct 28).
 Season 2 (Wowhead): Void Volley#1242173 has **charges instead of a cooldown**; Ancient Madness#1231346 adds haste and more Voidform extension; Improved Voidform#341240 adds Void Volley charges;
 new Shadeburst#73510 (apparitions cleave) replaces Phantom Menace.
 

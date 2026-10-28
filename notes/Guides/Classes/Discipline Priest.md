@@ -1,6 +1,6 @@
 # Discipline Priest (healer)
 
-Read Oct 19 2026. Wowhead + Icy Veins (12.1.5). No 12.1.5 class changes.
+Read Oct 19 2026. Wowhead + Icy Veins (12.1.5). 12.1.5 (patch notes): Master the Darkness 60 s -> 30 s. No Discipline change in the Oct 23/26/27 hotfixes (audit, Oct 28).
 Season 2 changes (Wowhead): new talent Grim Deliverance (Shadow Mend +30% healing, +4 s Atonement, +0.5 s cast); Shadow Mend is now a passive upgrade of
 Flash Heal (stronger, costs more); Apex Master the Darkness rank 3: Mind Blast upgrades your next Power Word: Shield to Void Shield; Penance's Void Shield chance
 33% → 15%; Void Shield absorb −28%; Master the Darkness holds 2 charges.

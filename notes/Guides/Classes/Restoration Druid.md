@@ -1,7 +1,7 @@
 # Restoration Druid (healer)
 
 Read Oct 19 2026. Both guides are by the same author (Voulk). Wowhead updated 2026-10-13, patch 12.1.5; Icy Veins 12.1.5.
-No class changes in 12.1.5. (Icy Veins mentions a "minor revamp to Nature's Bounty" in 12.1.5 but also says no changes — treat as none.)
+Oct 27 hotfix (aimed at dungeons): Verdancy healing +60%, Regrowth healing +10%, Improved Swiftmend 30% -> 40%. No guide change since Oct 13 (audit, Oct 28). Before that: no class changes in 12.1.5. (Icy Veins mentions a "minor revamp to Nature's Bounty" in 12.1.5 but also says no changes — treat as none.)
 
 ## The spec in one line
 HoT healer. Keep 5 Rejuvenations out so **Abundance** makes Regrowth cheap and crit-heavy, then cast lots of Regrowth.

@@ -1,6 +1,6 @@
 # Fire Mage (ranged DPS)
 
-Read Oct 19 2026. Wowhead + Icy Veins (12.1.5). No 12.1.5 class changes.
+Read Oct 19 2026. Wowhead + Icy Veins (12.1.5). Oct 27 hotfix: Fire damage +5%. No guide change since Oct 13 (audit, Oct 28).
 12.1 (Wowhead): tuning moved to filler time between Combustions; Improved Warding#1297073 new; Improved Blazing Barrier#321708 gains a HoT and 2nd charge. Tier set **requires Pyroclasm#269650** and hard-cast Pyroblasts.
 
 ## The spec in one line

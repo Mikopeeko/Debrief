@@ -1,6 +1,6 @@
 # Feral Druid (melee DPS)
 
-Read Oct 19 2026. Wowhead + Icy Veins (12.1.5). No 12.1.5 class changes.
+Read Oct 19 2026. Wowhead + Icy Veins (12.1.5). Oct 27 hotfix: all Feral damage +5% (not PvP). Nothing else, and no guide change since Oct 13 (audit, Oct 28).
 12.1 (Wowhead): Matted Fur +25%, Heart of the Wild Wild Growth +25%, Shred/Swipe +10%; Feral +3% all; Rampant Ferocity +25%; Saber Jaws 60%/pt; Focused Frenzy 15%; Rip and Tear 20%; Chomp +30%;
 Apex Predator's Craving#391881 base 4%; Merciless Claws 25%; Blood Spattered#1244532 8% per stack max 6; Taste for Blood 16% (+8% in Tiger's Fury); Rejuv/Wild Growth/Regrowth +25%; Cooldown Manager shows empowered DoT icons.
 

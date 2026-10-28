@@ -1,6 +1,6 @@
 # Destruction Warlock (ranged DPS)
 
-Read Oct 19 2026. Wowhead + Icy Veins (12.1.5). No 12.1.5 class changes.
+Read Oct 19 2026. Wowhead + Icy Veins (12.1.5). Oct 27 hotfix: Rain of Fire damage +20%. No priority change; the Rain of Fire target counts may shift down when the guides catch up (audit, Oct 28).
 Midnight stripped many debuffs: removed Eradication, Decimation, Power Overwhelming, Burn to Ashes, Ritual of Ruin, Rolling Havoc, Pyrogenics, etc. New: Apex Embers of Nihilam#1265770, Chaotic Inferno#1244788, Destructive Rapidity#1244928,
 Improved Havoc#1244460, Lake of Fire#1244877. **Shadowburn#17877 is now an execute (under 20%), no cooldown, 1 shard** (Conflagration of Chaos#387108 lets it be cast at any health and always crit); Roaring Blaze#205184 spreads Immolate to 3 on Conflagrate;
 Dimensional Rift#387976 passive (choice with Soul Fire#6353); Avatar of Destruction#1245089 Overfiend.
