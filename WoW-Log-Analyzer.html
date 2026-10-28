@@ -9066,6 +9066,367 @@ html body #bossHead header.bh.bhx.bhx .bh-l2 .bhp-cut:hover, html body #bossHead
 html body #bossHead header.bh.bhx.bhx .bh-l2 > * { margin-left: 0 !important; }
 html body #bossHead header.bh.bhx.bhx .bh-l2 > .sl-sw { margin-left: auto !important; }
 @media (max-width: 760px) { html body #bossHead header.bh.bhx.bhx .bh-l1 .bh-name { font-size: 28px !important; } html body #bossHead header.bh.bhx.bhx .bh-l1 .bh-seg { margin-left: 0; flex-basis: 100%; } }
+/* ===== Design studio round 135 (Oct 27): the timeline Debriefing. Owner: the Design studio chat. ===== */
+html body #view.dbt-on:not(.dbt-full) > :is(#oaTop, .oa-tiles, .ds-r, .ds-l, .ds-raidb) { display: none !important; }
+html body #view.dbt-on.dbt-full > #oaTop { display: block !important; }
+html body #view.dbt-on.dbt-full > .dbt.dbt > .dbt-why { display: none !important; }
+html body #view.dbt-on > #oaTop.dbt-show { display: block !important; grid-column: 1 / -1; }
+html body #view > .dbt.dbt { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 12px; min-width: 0; margin-bottom: 4px; }
+html body #view > .dbt.dbt .dbt-p { background: var(--panel, #171a22); border: 1px solid var(--line, #2a2f3b); border-radius: 12px; }
+html body #view > .dbt.dbt .dbt-k { font: 700 10.5px/1 'Barlow Condensed', sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); }
+html body #view > .dbt.dbt .dbt-ic { width: 20px; height: 20px; flex: none; display: inline-grid; place-items: center; }
+html body #view > .dbt.dbt .dbt-ic :is(img, .icw, svg) { width: 20px !important; height: 20px !important; border-radius: 5px; }
+html body #view > .dbt.dbt .dbt-chip { font-weight: 700; color: var(--cc, var(--text)); white-space: nowrap; } /* (a player's name in their class colour, no bubble: the user, Oct 27) */
+/* why we wiped */
+html body #view > .dbt.dbt .dbt-why { border-left: 3px solid #e5534b; padding: 14px 18px; }
+html body #view > .dbt.dbt .dbt-why.ok { border-left-color: #5fcf78; }
+html body #view > .dbt.dbt .dbt-why > .dbt-k { color: #f0726a; display: block; margin-bottom: 9px; }
+html body #view > .dbt.dbt .dbt-why.ok > .dbt-k { color: #7ee08f; }
+html body #view > .dbt.dbt .dbt-wb { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; }
+html body #view > .dbt.dbt .dbt-wb > .dbt-ic, html body #view > .dbt.dbt .dbt-wb > .dbt-ic :is(img, .icw, svg) { width: 34px !important; height: 34px !important; border-radius: 8px; }
+html body #view > .dbt.dbt .dbt-wb > .dbt-ic.ck { font: 800 22px/1 var(--body); color: #7ee08f; background: rgba(95,207,120,.1); }
+html body #view > .dbt.dbt .dbt-wb h2 { font: 700 18px/1.25 'Barlow Condensed', sans-serif !important; margin: 0 !important; color: var(--text); }
+html body #view > .dbt.dbt .dbt-wb h2 em { font-style: normal; color: #f0726a; }
+html body #view > .dbt.dbt .dbt-ln { display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 6px; margin-top: 6px; font-size: 13px; color: var(--muted); line-height: 1.45; }
+html body #view > .dbt.dbt .dbt-ln > span:first-child { font: 700 10.5px/18px 'Barlow Condensed', sans-serif; letter-spacing: .1em; color: var(--faint); }
+/* the timeline + side panel */
+html body #view > .dbt.dbt .dbt-main { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 18px; align-items: start; }
+html body #view > .dbt.dbt .dbt-tl { position: relative; padding: 4px 0 20px; min-width: 0; }
+html body #view > .dbt.dbt .dbt-tl::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--line2, #353b49); }
+html body #view > .dbt.dbt .dbt-it { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr); align-items: center; min-height: 26px; }
+html body #view > .dbt.dbt .dbt-it > .dbt-c { grid-column: 1; grid-row: 1; justify-self: end; max-width: 100%; min-width: 0; }
+html body #view > .dbt.dbt .dbt-it.R > .dbt-c { grid-column: 3; justify-self: start; }
+html body #view > .dbt.dbt .dbt-it > .dbt-tm { grid-column: 2; grid-row: 1; justify-self: center; z-index: 1; background: var(--bg, #0f1117); padding: 1px 6px; border-radius: 5px; font: 700 11.5px 'Barlow Condensed', sans-serif; color: var(--muted); }
+html body #view > .dbt.dbt .dbt-it.y > .dbt-tm { color: #111; background: #e8a23a; }
+html body #view > .dbt.dbt .dbt-it.r > .dbt-tm { color: #fff; background: #e5534b; }
+html body #view > .dbt.dbt .dbt-okc { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 4px; border-radius: 99px; background: rgba(95,207,120,.07); border: 1px solid rgba(95,207,120,.2); font-size: 12px; color: var(--muted); max-width: 100%; min-width: 0; }
+html body #view > .dbt.dbt .dbt-okc > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html body #view > .dbt.dbt .dbt-okc b { font: 700 12.5px 'Barlow Condensed', sans-serif; color: #bfe9c9; white-space: nowrap; }
+html body #view > .dbt.dbt .dbt-okc .dbt-ic, html body #view > .dbt.dbt .dbt-okc .dbt-ic :is(img, .icw, svg) { width: 16px !important; height: 16px !important; border-radius: 50%; }
+html body #view > .dbt.dbt .dbt-big { margin: 6px 0; background: var(--panel); border: 1px solid rgba(232,162,58,.4); border-radius: 12px; padding: 11px 14px; width: 400px; max-width: 100%; position: relative; }
+html body #view > .dbt.dbt .dbt-big::after { content: ''; position: absolute; top: 50%; right: -30px; width: 30px; border-top: 2px solid #e8a23a; }
+html body #view > .dbt.dbt .dbt-it.R .dbt-big::after { right: auto; left: -30px; }
+html body #view > .dbt.dbt .dbt-it.r .dbt-big { border-color: rgba(229,83,75,.55); background: linear-gradient(180deg, rgba(229,83,75,.1), rgba(229,83,75,.02)); }
+html body #view > .dbt.dbt .dbt-it.r .dbt-big::after { border-top-color: #e5534b; }
+html body #view > .dbt.dbt .dbt-big .dbt-h { display: flex; align-items: center; gap: 8px; }
+html body #view > .dbt.dbt .dbt-big .dbt-h b { font: 700 15px 'Barlow Condensed', sans-serif; color: var(--text); }
+html body #view > .dbt.dbt .dbt-big .dbt-h em { font-style: normal; margin-left: auto; font: 700 11px 'Barlow Condensed', sans-serif; letter-spacing: .05em; color: var(--faint); white-space: nowrap; }
+html body #view > .dbt.dbt .dbt-big h3 { font: 600 13.5px/1.4 var(--body) !important; margin: 6px 0 !important; color: var(--text); }
+html body #view > .dbt.dbt .dbt-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+html body #view > .dbt.dbt .dbt-two .dbt-k { display: block; margin-bottom: 3px; }
+html body #view > .dbt.dbt .dbt-two p { font-size: 12px; color: var(--muted); margin: 0 !important; line-height: 1.4; }
+html body #view > .dbt.dbt .dbt-two > div:nth-child(1) .dbt-k { color: #e8a23a; }
+html body #view > .dbt.dbt .dbt-two > div:nth-child(2) .dbt-k { color: #7ee08f; }
+html body #view > .dbt.dbt .dbt-more { background: none; border: 0; padding: 0; margin-top: 7px; color: var(--gold); font: 700 12px 'Barlow Condensed', sans-serif; cursor: pointer; }
+html body #view > .dbt.dbt .dbt-st { position: relative; display: flex; justify-content: center; margin: 14px 0; }
+html body #view > .dbt.dbt .dbt-st span { position: relative; z-index: 1; font: 800 13px 'Barlow Condensed', sans-serif; letter-spacing: .06em; padding: 5px 14px; border-radius: 99px; background: var(--panel); border: 1px solid var(--line2, #353b49); color: var(--text); }
+html body #view > .dbt.dbt .dbt-st span em { font-style: normal; color: var(--faint); font-weight: 600; margin-left: 6px; }
+html body #view > .dbt.dbt .dbt-st.cut span { border-color: rgba(229,83,75,.6); color: #f0726a; }
+html body #view > .dbt.dbt .dbt-add { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; }
+html body #view > .dbt.dbt .dbt-add > .dbt-k { margin-bottom: 4px; }
+html body #view > .dbt.dbt .dbt-addr { display: grid; grid-template-columns: 20px auto minmax(0, 1fr) auto; gap: 10px; align-items: center; width: 100%; padding: 5px 8px; border: 0; border-radius: 7px; background: rgba(255,255,255,.025); color: var(--muted); font: 400 13px var(--body); text-align: left; cursor: pointer; }
+html body #view > .dbt.dbt .dbt-addr:hover { background: rgba(230,180,80,.08); }
+html body #view > .dbt.dbt .dbt-addr > b { font: 700 14px 'Barlow Condensed', sans-serif; color: var(--text); white-space: nowrap; }
+html body #view > .dbt.dbt .dbt-addr > span:nth-child(3) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html body #view > .dbt.dbt .dbt-addr > i { font: 700 11px 'Barlow Condensed', sans-serif; font-style: normal; letter-spacing: .05em; }
+@media (max-width: 760px) { html body #view > .dbt.dbt .dbt-addr { grid-template-columns: 20px minmax(0, 1fr) auto; row-gap: 2px; padding: 7px 8px; } html body #view > .dbt.dbt .dbt-addr > span:nth-child(3) { grid-column: 2 / -1; grid-row: 2; white-space: normal; font-size: 12px; line-height: 1.35; } } /* (on a phone the reason wraps under the name, it isn't hidden) */
+html body #view > .dbt.dbt .dbt-pc { font-style: normal; display: inline-flex; gap: 8px; margin-left: 10px; padding-left: 10px; border-left: 1px solid var(--line2, #353b49); }
+html body #view > .dbt.dbt .dbt-pc b { font: 700 12px 'Barlow Condensed', sans-serif; letter-spacing: .03em; }
+html body #view > .dbt.dbt .dbt-empty { text-align: center; color: var(--faint); padding: 30px; position: relative; z-index: 1; }
+html body #view > .dbt.dbt .dbt-side { position: sticky; top: 72px; /* (clears the site's sticky bar) */ padding: 12px 14px; display: flex; flex-direction: column; gap: 14px; max-height: calc(100vh - 84px); overflow: auto; }
+html body #view > .dbt.dbt .dbt-side .dbt-k { display: block; margin-bottom: 6px; }
+html body #view > .dbt.dbt .dbt-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; cursor: pointer; background: none; border: 0; width: 100%; text-align: left; font: 600 13px var(--body); color: var(--text); }
+html body #view > .dbt.dbt .dbt-row .dbt-n { margin-left: auto; font: 700 11px 'Barlow Condensed', sans-serif; color: var(--faint); }
+html body #view > .dbt.dbt .dbt-row .dbt-sw { margin-left: 8px; width: 28px; height: 16px; border-radius: 99px; background: #2a2f3b; position: relative; flex: none; }
+html body #view > .dbt.dbt .dbt-row .dbt-sw::after { content: ''; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: #7f8696; }
+html body #view > .dbt.dbt .dbt-row.on .dbt-sw { background: rgba(230,180,80,.35); }
+html body #view > .dbt.dbt .dbt-row.on .dbt-sw::after { left: 14px; background: var(--gold); }
+html body #view > .dbt.dbt .dbt-row:not(.on) { color: var(--faint); }
+html body #view > .dbt.dbt .dbt-row .dbt-ic, html body #view > .dbt.dbt .dbt-row .dbt-ic :is(img, .icw, svg) { width: 18px !important; height: 18px !important; }
+html body #view > .dbt.dbt .dbt-row > span.dbt-lb { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html body #view > .dbt.dbt .dbt-pp { display: flex; flex-wrap: wrap; gap: 5px; }
+html body #view > .dbt.dbt .dbt-pb { font: 700 12px/1 'Barlow Condensed', sans-serif; padding: 6px 10px; border-radius: 99px; border: 1px solid var(--line2, #353b49); background: none; color: var(--muted); cursor: pointer; }
+html body #view > .dbt.dbt .dbt-pb.on { border-color: var(--gold); color: var(--gold); }
+html body #view > .dbt.dbt .dbt-fbtn { display: none; }
+html body #view > .dbt.dbt .dbt-ov { position: relative; height: 150px; margin: 2px 0 18px 34px; border-left: 2px solid var(--line2, #353b49); }
+html body #view > .dbt.dbt .dbt-ov > i.ph { position: absolute; left: -8px; width: 14px; border-top: 1px dashed var(--faint); }
+html body #view > .dbt.dbt .dbt-ov > button { position: absolute; left: -2px; width: 34px; height: 5px; margin-top: -2px; border: 0; border-radius: 0 3px 3px 0; background: #e8a23a; cursor: pointer; padding: 0; }
+html body #view > .dbt.dbt .dbt-ov > button.r { background: #e5534b; width: 46px; } html body #view > .dbt.dbt .dbt-ov > button.d { background: #f2f2f2; width: 46px; }
+html body #view > .dbt.dbt .dbt-ov > button:hover { filter: brightness(1.3); height: 7px; }
+html body #view > .dbt.dbt .dbt-ov > span { position: absolute; left: -36px; font: 700 10px 'Barlow Condensed', sans-serif; color: var(--faint); white-space: nowrap; }
+html body #view > .dbt.dbt .dbt-ov > .t0 { top: -5px; } html body #view > .dbt.dbt .dbt-ov > .t1 { bottom: -14px; left: -36px; }
+html body #view > .dbt.dbt .dbt-fold { margin: 6px 0; }
+html body #view > .dbt.dbt .dbt-fold button { position: relative; z-index: 1; font: 700 12px 'Barlow Condensed', sans-serif; letter-spacing: .04em; padding: 4px 12px; border-radius: 99px; background: var(--bg, #0f1117); border: 1px dashed rgba(95,207,120,.4); color: #9fdcb0; cursor: pointer; }
+html body #view > .dbt.dbt .dbt-fold button:hover { border-style: solid; }
+html body #view#view.dbt-on.dbt-pl:not(.dbt-full) > .ds-raidb.ds-raidb { display: block !important; grid-column: 1 / -1; }
+html body #view.dbt-on > .ds-raidb, html body #view.dbt-on > .brf-keep { grid-column: 1 / -1; }
+html body #view > .dbt.dbt .dbt-ev { margin-top: 8px; border-top: 1px solid var(--line); padding-top: 6px; }
+html body #view > .dbt.dbt .dbt-evr { display: grid; grid-template-columns: 38px minmax(0, 1fr) 16px; gap: 8px; align-items: baseline; padding: 3px 0; font-size: 12.5px; color: var(--muted); }
+html body #view > .dbt.dbt .dbt-evr > span:first-child { font: 700 12px 'Barlow Condensed', sans-serif; color: var(--faint); }
+html body #view > .dbt.dbt .dbt-evr > b { font: 800 12px/1 var(--body); text-align: center; }
+html body #view > .dbt.dbt .dbt-evr.g > b { color: #7ee08f; } html body #view > .dbt.dbt .dbt-evr.y > b { color: #e8a23a; } html body #view > .dbt.dbt .dbt-evr.r > b { color: #f0726a; }
+html body #view > .dbt.dbt .dbt-evr.r > span:nth-child(2), html body #view > .dbt.dbt .dbt-evr.y > span:nth-child(2) { color: var(--text); }
+html body #view > .dbt.dbt .dbt-full1 { background: none; border: 0; padding: 0; margin-top: 6px; color: var(--faint); font: 600 11.5px var(--body); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+html body #view > .dbt.dbt .dbt-full1:hover { color: var(--gold); }
+html body #view > .dbt.dbt .dbt-ddw { position: relative; }
+/* How it went (the wipe chain) */
+html body #view > .dbt.dbt .dbt-chn { margin-top: 14px; }
+html body #view > .dbt.dbt .dbt-chn > .dbt-k { display: block; margin-bottom: 4px; }
+html body #view > .dbt.dbt .dbt-chr { position: relative; display: grid; grid-template-columns: 70px 22px auto minmax(0, 1fr) auto; align-items: center; gap: 0 9px; width: 100%; padding: 7px 0 7px 14px; border: 0; background: none; text-align: left; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; }
+html body #view > .dbt.dbt .dbt-chr::before { content: ""; position: absolute; left: 3px; top: 0; bottom: 0; width: 2px; background: rgba(229,83,75,.35); }
+html body #view > .dbt.dbt .dbt-chr::after { content: ""; position: absolute; left: 0; top: 50%; width: 8px; height: 8px; margin-top: -4px; border-radius: 50%; background: #e5534b; }
+html body #view > .dbt.dbt .dbt-chn > .dbt-chr:first-of-type::before { top: 50%; } html body #view > .dbt.dbt .dbt-chn > .dbt-chr:last-child::before { bottom: 50%; }
+html body #view > .dbt.dbt .dbt-chr:hover { background: rgba(255,255,255,.03); } html body #view > .dbt.dbt .dbt-chr.end { cursor: default; } html body #view > .dbt.dbt .dbt-chr.end:hover { background: none; }
+html body #view > .dbt.dbt .dbt-chr .dbt-cht { font: 700 12.5px/1 'Barlow Condensed', sans-serif; color: #ff8f87; font-variant-numeric: tabular-nums; }
+html body #view > .dbt.dbt .dbt-chp { margin-left: 6px; padding: 1px 5px; border-radius: 4px; background: rgba(255,255,255,.06); font: 700 10.5px/1.3 'Barlow Condensed', sans-serif; font-style: normal; letter-spacing: .04em; color: var(--muted); vertical-align: 1px; }
+html body #view > .dbt.dbt .dbt-chr > b { color: var(--text); font-weight: 700; white-space: nowrap; }
+html body #view > .dbt.dbt .dbt-chr .dbt-ic.x { display: inline-flex; align-items: center; justify-content: center; color: #f0726a; font-weight: 800; }
+@media (max-width: 760px) { html body #view > .dbt.dbt .dbt-chr { grid-template-columns: 70px 22px minmax(0, 1fr) auto; } html body #view > .dbt.dbt .dbt-chr > span:nth-of-type(3) { grid-column: 3 / 5; grid-row: 2; } }
+html body #view > .dbt.dbt .dbt-lv { font: 700 11px 'Barlow Condensed', sans-serif; font-style: normal; letter-spacing: .06em; text-transform: uppercase; }
+html body #view > .dbt.dbt .dbt-lv.l1, html body #view > .dbt.dbt .dbt-lv.l2 { color: #cdb35a; } html body #view > .dbt.dbt .dbt-lv.l3 { color: #e8a23a; } html body #view > .dbt.dbt .dbt-lv.l4, html body #view > .dbt.dbt .dbt-lv.l5 { color: #f0726a; }
+/* the Overview, refined (look only) */
+html body #view.dbt-on.dbt-full > .dbt.dbt > .dbt-nums { display: none !important; }
+html body #view.dbt-on.dbt-full .mcx-tl .mcx-ll { font: 600 13px 'Barlow Condensed', sans-serif !important; color: var(--text); }
+html body #view.dbt-on.dbt-full .mcx-tl .mcx-ll :is(small, .sub, em, i) { font: 500 11.5px var(--body) !important; color: var(--faint) !important; font-style: normal; }
+html body #view.dbt-on.dbt-full .mcx-tl .mcx-lane { border-color: rgba(255,255,255,.04) !important; }
+html body #view.dbt-on.dbt-full .ds-l details.phase > summary .prw-t { height: 3px !important; border-radius: 3px !important; background: rgba(255,255,255,.06) !important; }
+html body #view.dbt-on.dbt-full .ds-l details.phase > summary .prw-t > i { border-radius: 3px !important; }
+html body #view.dbt-on.dbt-full .ds-l details.phase > summary .prw-s { font-size: 12.5px !important; color: var(--muted) !important; }
+html body #view.dbt-on.dbt-full .ds-l details.phase > summary .prw-i { padding-top: 9px !important; padding-bottom: 9px !important; border-color: rgba(255,255,255,.05) !important; }
+html body #view.dbt-on.dbt-full .ds-l details.phase > summary .prw-p { font-size: 14px !important; }
+html body #view.dbt-on.dbt-full .ds-l details.phase > summary .mx-okl { background: none !important; border: 0 !important; border-top: 1px solid rgba(255,255,255,.05) !important; border-radius: 0 !important; }
+/* Timeline / Overview switch */
+html body #view > .dbt.dbt .dbt-vt { display: flex; align-items: flex-end; gap: 22px; border-bottom: 1px solid var(--line, #2a2f3b); margin: 4px 0 2px; }
+html body #view > .dbt.dbt .dbt-vt > button { background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 6px 2px 9px; font: 800 15px 'Barlow Condensed', sans-serif; letter-spacing: .03em; color: var(--faint); cursor: pointer; }
+html body #view > .dbt.dbt .dbt-vt > button:hover { color: var(--text); }
+html body #view > .dbt.dbt .dbt-vt > button.on { color: var(--gold); border-bottom-color: var(--gold); }
+html body #view > .dbt.dbt .dbt-vt > span { margin-left: auto; padding-bottom: 10px; font-size: 12px; color: var(--faint); }
+@media (max-width: 760px) { html body #view > .dbt.dbt .dbt-vt > span { display: none; } }
+/* the numbers bar, balanced */
+@media (min-width: 761px) {
+  html body #view > .dbt.dbt .dbt-nums { display: grid !important; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); align-items: start !important; gap: 0 !important; padding: 14px 6px !important; }
+  html body #view > .dbt.dbt .dbt-nums > div { grid-row: 1 / span 2; padding: 0 16px; border-left: 1px solid var(--line, #2a2f3b); }
+  html body #view > .dbt.dbt .dbt-nums > div:first-child { border-left: 0; }
+  html body #view > .dbt.dbt .dbt-nums > div em { min-height: 1.3em; display: block; }
+  html body #view > .dbt.dbt .dbt-nums > i { display: none !important; }
+  html body #view > .dbt.dbt .dbt-nums > .dbt-btn { grid-row: auto; grid-column: auto; }
+  html body #view > .dbt.dbt .dbt-nums > .dbt-btn { border: 0 !important; background: none !important; padding: 2px 16px !important; color: var(--gold) !important; font: 700 12.5px 'Barlow Condensed', sans-serif !important; letter-spacing: .03em; text-align: right; justify-self: end; white-space: nowrap; }
+  html body #view > .dbt.dbt .dbt-nums > .dbt-btn:hover { text-decoration: underline; text-underline-offset: 3px; }
+  html body #view > .dbt.dbt .dbt-nums > .dbt-btn { align-self: center; }
+}
+/* raid checks */
+html body #view > .dbt.dbt .dbt-rc { padding-top: 14px; border-top: 1px solid var(--line, #2a2f3b); }
+html body #view > .dbt.dbt .dbt-fh2 { margin-bottom: 4px; } html body #view > .dbt.dbt .dbt-fh2 b { font-size: 15px !important; }
+html body #view > .dbt.dbt .dbt-rcq { grid-template-columns: 20px minmax(0, 1fr) auto 14px !important; }
+html body #view > .dbt.dbt .dbt-rcq .dbt-qn.r { color: #f0726a; } html body #view > .dbt.dbt .dbt-rcq .dbt-qn.y { color: #e8a23a; }
+html body #view > .dbt.dbt .dbt-chev { font-style: normal; color: var(--faint); font-size: 12px; text-align: center; }
+html body #view > .dbt.dbt .dbt-rcq.open { background: rgba(255,255,255,.035); }
+html body #view > .dbt.dbt .dbt-rcd { margin: 0 6px 6px 35px; }
+html body #view > .dbt.dbt .dbt-rcd p { font-size: 12px; color: var(--muted); line-height: 1.4; margin: 6px 0 4px !important; }
+html body #view > .dbt.dbt .dbt-rcb { display: block; height: 2px; border-radius: 2px; background: rgba(255,255,255,.08); overflow: hidden; margin-top: 2px; }
+html body #view > .dbt.dbt .dbt-rcb > i { display: block; height: 100%; } html body #view > .dbt.dbt .dbt-rcb > i.r { background: #e5534b; } html body #view > .dbt.dbt .dbt-rcb > i.y { background: #e8a23a; } html body #view > .dbt.dbt .dbt-rcb > i.g { background: #5fcf78; }
+html body #view > .dbt.dbt .dbt-rctag { font: 700 9.5px/1 'Barlow Condensed', sans-serif; letter-spacing: .08em; text-transform: uppercase; color: #111; background: var(--gold); padding: 2px 5px; border-radius: 4px; margin-left: 6px; vertical-align: 2px; }
+/* round 135w: the quiet list */
+html body #view > .dbt.dbt .dbt-side { gap: 14px !important; padding: 16px 14px 14px !important; }
+html body #view > .dbt.dbt .dbt-fh { border-bottom: 0 !important; padding-bottom: 0 !important; }
+html body #view > .dbt.dbt .dbt-fh > span { font-variant-numeric: tabular-nums; }
+html body #view > .dbt.dbt .dbt-hint { font-size: 11.5px; color: var(--faint); margin-top: -10px; }
+html body #view > .dbt.dbt .dbt-qg { display: flex; flex-direction: column; gap: 1px; }
+html body #view > .dbt.dbt .dbt-qg > .dbt-k { margin-bottom: 5px; }
+html body #view > .dbt.dbt .dbt-q { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto 16px; gap: 9px; align-items: center; width: 100%; padding: 6px 6px; border: 0; border-radius: 7px; background: none; cursor: pointer; text-align: left; color: var(--text); }
+html body #view > .dbt.dbt .dbt-q:hover { background: rgba(255,255,255,.045); }
+html body #view > .dbt.dbt .dbt-q:hover .dbt-eye { color: var(--gold); opacity: 1; }
+html body #view > .dbt.dbt .dbt-q:focus-visible { outline: 1px solid var(--gold); outline-offset: 1px; }
+html body #view > .dbt.dbt .dbt-qd { width: 8px; height: 8px; border-radius: 50%; justify-self: center; }
+html body #view > .dbt.dbt .dbt-q .dbt-ic, html body #view > .dbt.dbt .dbt-q .dbt-ic :is(img, .icw, svg:not(.dbt-eye)) { width: 18px !important; height: 18px !important; border-radius: 5px; }
+html body #view > .dbt.dbt .dbt-ql { font: 600 13.5px 'Barlow Condensed', sans-serif; letter-spacing: .01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html body #view > .dbt.dbt .dbt-qn { font: 700 13px 'Barlow Condensed', sans-serif; color: var(--muted); font-variant-numeric: tabular-nums; }
+html body #view > .dbt.dbt .dbt-qn.y { color: #e8a23a; }
+html body #view > .dbt.dbt .dbt-eye { width: 15px; height: 15px; color: var(--faint); opacity: .55; }
+html body #view > .dbt.dbt .dbt-eye .dbt-eyex { display: none; }
+html body #view > .dbt.dbt .dbt-q:not(.on) { color: var(--faint); }
+html body #view > .dbt.dbt .dbt-q:not(.on) .dbt-ql { text-decoration: line-through; text-decoration-color: rgba(255,255,255,.3); }
+html body #view > .dbt.dbt .dbt-q:not(.on) :is(.dbt-qd, .dbt-ic, .dbt-qn) { opacity: .35; }
+html body #view > .dbt.dbt .dbt-q:not(.on) .dbt-ic { filter: grayscale(1); }
+html body #view > .dbt.dbt .dbt-q:not(.on) .dbt-eye { opacity: .9; color: var(--muted); }
+html body #view > .dbt.dbt .dbt-q:not(.on) .dbt-eye .dbt-eyex { display: inline; }
+html body #view > .dbt.dbt .dbt-qsev { display: flex; flex-wrap: wrap; gap: 2px 12px; padding: 0 6px 4px 35px; }
+html body #view > .dbt.dbt .dbt-qs { display: inline-flex; align-items: center; gap: 5px; padding: 2px 0; border: 0; background: none; cursor: pointer; font: 700 12px 'Barlow Condensed', sans-serif; letter-spacing: .02em; color: var(--qc); font-variant-numeric: tabular-nums; }
+html body #view > .dbt.dbt .dbt-qs > i { width: 6px; height: 6px; border-radius: 2px; background: var(--qc); }
+html body #view > .dbt.dbt .dbt-qs:hover { text-decoration: underline; text-underline-offset: 3px; }
+html body #view > .dbt.dbt .dbt-qs:not(.on) { opacity: .35; text-decoration: line-through; }
+/* roles: slim tabs */
+html body #view > .dbt.dbt .dbt-seg { display: flex !important; gap: 0 !important; border-bottom: 1px solid var(--line, #2a2f3b); }
+html body #view > .dbt.dbt .dbt-seg button { flex: 1 1 0; flex-direction: row !important; gap: 3px !important; padding: 6px 0 7px !important; border: 0 !important; border-bottom: 2px solid transparent !important; border-radius: 0 !important; margin-bottom: -1px; background: none !important; color: var(--faint) !important; font: 700 12px 'Barlow Condensed', sans-serif !important; }
+html body #view > .dbt.dbt .dbt-seg button:hover { color: var(--text) !important; }
+html body #view > .dbt.dbt .dbt-seg button.on { color: var(--gold) !important; border-bottom-color: var(--gold) !important; background: none !important; }
+html body #view > .dbt.dbt .dbt-seg button i { font-size: 10.5px !important; }
+/* the player: a plain line */
+html body #view > .dbt.dbt .dbt-dd { border: 0 !important; border-bottom: 1px solid var(--line, #2a2f3b) !important; border-radius: 0 !important; background: none !important; padding: 6px 2px !important; }
+html body #view > .dbt.dbt .dbt-dd:hover { border-bottom-color: var(--gold) !important; }
+/* refined panel */
+html body #view > .dbt.dbt .dbt-side { overflow-x: hidden !important; gap: 18px !important; }
+html body #view > .dbt.dbt .dbt-side .dbt-k { font-size: 10px !important; letter-spacing: .14em; color: var(--faint); opacity: .85; }
+html body #view > .dbt.dbt .dbt-tile { padding: 10px 10px 9px !important; border-radius: 10px !important; }
+html body #view > .dbt.dbt .dbt-tile b { font-size: 24px !important; }
+html body #view > .dbt.dbt .dbt-tile span { font-size: 10.5px !important; }
+html body #view > .dbt.dbt .dbt-sevr { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; }
+html body #view > .dbt.dbt .dbt-svb { flex-direction: column; align-items: flex-start !important; gap: 4px !important; padding: 8px 9px !important; border-radius: 10px !important; min-width: 0; }
+html body #view > .dbt.dbt .dbt-svb > b { margin-left: 0 !important; font: 800 18px/1 'Barlow Condensed', sans-serif !important; }
+html body #view > .dbt.dbt .dbt-svb > span { display: inline-flex; align-items: center; gap: 5px; font: 700 10.5px/1 'Barlow Condensed', sans-serif; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+html body #view > .dbt.dbt .dbt-svb > span > i { width: 6px; height: 6px; border-radius: 50%; background: var(--svc); flex: none; }
+html body #view > .dbt.dbt .dbt-svb > i { display: none; }
+html body #view > .dbt.dbt .dbt-mr2 { grid-template-columns: 20px minmax(0, 1fr) 22px 16px !important; padding: 6px 6px !important; }
+html body #view > .dbt.dbt .dbt-mb0 { width: 22px; }
+html body #view > .dbt.dbt .dbt-mb.y { justify-self: center; min-width: 20px; text-align: center; }
+html body #view > .dbt.dbt .dbt-mlist { gap: 1px !important; }
+html body #view > .dbt.dbt .dbt-seg { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 3px !important; }
+html body #view > .dbt.dbt .dbt-seg button { padding: 6px 2px !important; font-size: 11.5px !important; flex-direction: column; gap: 1px !important; line-height: 1.1; min-width: 0; overflow: hidden; }
+html body #view > .dbt.dbt .dbt-seg button i { font-size: 10px !important; }
+html body #view > .dbt.dbt .dbt-fh { padding-bottom: 2px; border-bottom: 1px solid var(--line, #2a2f3b); padding-bottom: 10px; }
+html body #view > .dbt.dbt .dbt-sevf > .dbt-k { display: block; margin-bottom: 6px; }
+html body #view > .dbt.dbt .dbt-sevr { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+html body #view > .dbt.dbt .dbt-svb { display: flex; align-items: center; gap: 6px; padding: 7px 8px; border-radius: 8px; border: 1px solid var(--line2, #353b49); background: rgba(255,255,255,.02); color: var(--faint); font: 700 12px 'Barlow Condensed', sans-serif; letter-spacing: .03em; cursor: pointer; opacity: .55; --svc: #cdb35a; }
+html body #view > .dbt.dbt .dbt-svb.s { --svc: #f0726a; } html body #view > .dbt.dbt .dbt-svb.m { --svc: #e8a23a; }
+html body #view > .dbt.dbt .dbt-svb > i { width: 8px; height: 8px; border-radius: 2px; background: var(--svc); flex: none; }
+html body #view > .dbt.dbt .dbt-svb > b { margin-left: auto; font: 800 13px/1 'Barlow Condensed', sans-serif; color: var(--muted); }
+html body #view > .dbt.dbt .dbt-svb.on { opacity: 1; color: var(--svc); border-color: color-mix(in srgb, var(--svc) 55%, transparent); background: color-mix(in srgb, var(--svc) 10%, transparent); }
+html body #view > .dbt.dbt .dbt-svb.on > b { color: var(--svc); }
+html body #view > .dbt.dbt .dbt-svb:hover { opacity: 1; }
+html body #view > .dbt.dbt .dbt-dx { margin: 6px 0 2px; display: flex; flex-direction: column; gap: 3px; }
+html body #view > .dbt.dbt .dbt-dx p { margin: 0 !important; font-size: 12px; color: var(--muted); line-height: 1.4; }
+html body #view > .dbt.dbt .dbt-dx b { font: 700 10.5px/1 'Barlow Condensed', sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); margin-right: 6px; }
+@media (max-width: 760px) {
+  html body #view > .dbt.dbt .dbt-nums { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 10px !important; }
+  html body #view > .dbt.dbt .dbt-nums > div { min-width: 0; }
+  html body #view > .dbt.dbt .dbt-nums > div em { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  html body #view > .dbt.dbt .dbt-nums > .dbt-btn { grid-column: span 3; justify-self: stretch; text-align: center; }
+  html body #view > .dbt.dbt .dbt-nums > .dbt-btn + .dbt-btn { margin-top: -4px; }
+}
+/* cards: a severity stripe, a quieter border, a bigger name */
+html body #view > .dbt.dbt .dbt-big { border-color: var(--line2, #353b49) !important; padding: 12px 15px 12px 17px !important; overflow: hidden; }
+html body #view > .dbt.dbt .dbt-big::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #cdb35a; }
+html body #view > .dbt.dbt .dbt-it.sv3 .dbt-big::before { background: #e8a23a; }
+html body #view > .dbt.dbt .dbt-it.sv4 .dbt-big::before, html body #view > .dbt.dbt .dbt-it.sv5 .dbt-big::before { background: #e5534b; }
+html body #view > .dbt.dbt .dbt-it.sv5 .dbt-big { border-color: rgba(229,83,75,.5) !important; box-shadow: 0 0 0 1px rgba(229,83,75,.12), 0 8px 24px rgba(229,83,75,.08); }
+html body #view > .dbt.dbt .dbt-big .dbt-h { gap: 7px !important; }
+html body #view > .dbt.dbt .dbt-big .dbt-h b { font-size: 16px !important; letter-spacing: .01em; }
+html body #view > .dbt.dbt .dbt-big h3 { font-size: 13.5px !important; margin: 7px 0 8px !important; }
+html body #view > .dbt.dbt .dbt-two { gap: 14px !important; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.05); }
+html body #view > .dbt.dbt .dbt-two p { font-size: 12.5px !important; line-height: 1.45 !important; }
+html body #view > .dbt.dbt .dbt-big .dbt-more { margin-top: 9px; }
+/* the time label: health as a hair-thin bar */
+html body #view > .dbt.dbt .dbt-it > .dbt-tm { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+html body #view > .dbt.dbt .dbt-hpb { display: block; width: 30px; height: 2px; border-radius: 2px; background: rgba(255,255,255,.12); overflow: hidden; margin-top: 2px; }
+html body #view > .dbt.dbt .dbt-hpb > i { display: block; height: 100%; background: currentColor; opacity: .8; }
+/* phase markers: chapter dividers across the page */
+html body #view > .dbt.dbt .dbt-st:not(.dbt-fold) { margin: 22px 0 16px !important; }
+html body #view > .dbt.dbt .dbt-st:not(.dbt-fold)::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid var(--line2, #353b49); }
+html body #view > .dbt.dbt .dbt-st:not(.dbt-fold) > span { padding: 7px 16px !important; box-shadow: 0 0 0 6px var(--bg, #0f1117); }
+html body #view > .dbt.dbt .dbt-st.cut::before { border-top-color: rgba(229,83,75,.45) !important; border-top-style: dashed !important; }
+/* the top card's count */
+html body #view > .dbt.dbt .dbt-c5w { display: inline-flex; gap: 6px; float: right; margin-top: -3px; }
+html body #view > .dbt.dbt .dbt-c5 { font: 700 11px/1 'Barlow Condensed', sans-serif; letter-spacing: .05em; text-transform: uppercase; padding: 4px 8px; border-radius: 99px; }
+html body #view > .dbt.dbt .dbt-c5.s { color: #f0726a; background: rgba(229,83,75,.14); } html body #view > .dbt.dbt .dbt-c5.m { color: #e8a23a; background: rgba(232,162,58,.14); } html body #view > .dbt.dbt .dbt-c5.n { color: #cdb35a; background: rgba(205,179,90,.12); }
+@media (max-width: 760px) { html body #view > .dbt.dbt .dbt-c5w { float: none; display: flex; margin: 2px 0 8px; } html body #view > .dbt.dbt .dbt-st:not(.dbt-fold)::before { left: 26px; } }
+html body #view > .dbt.dbt .dbt-also { font-size: 11.5px; color: var(--faint); margin: -2px 0 6px; } html body #view > .dbt.dbt .dbt-also b { color: var(--muted); font-weight: 600; }
+html body #view > .dbt.dbt .dbt-it > .dbt-tm small { display: block; font: 600 10px/1.1 'Barlow Condensed', sans-serif; opacity: .75; text-align: center; letter-spacing: .02em; }
+html body #view > .dbt.dbt .dbt-hpv { font-style: normal; font: 700 12px 'Barlow Condensed', sans-serif; color: var(--muted); margin-left: 10px; padding-left: 10px; border-left: 1px solid var(--line2, #353b49); }
+html body #view > .dbt.dbt .dbt-roles > .dbt-k { display: block; margin-bottom: 6px; }
+html body #view > .dbt.dbt .dbt-seg { display: grid; grid-template-columns: repeat(5, auto); gap: 4px; }
+html body #view > .dbt.dbt .dbt-seg button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 4px; border-radius: 8px; border: 1px solid var(--line2, #353b49); background: none; color: var(--muted); font: 700 12px 'Barlow Condensed', sans-serif; cursor: pointer; }
+html body #view > .dbt.dbt .dbt-seg button:hover { border-color: rgba(230,180,80,.5); }
+html body #view > .dbt.dbt .dbt-seg button.on { border-color: var(--gold); background: rgba(230,180,80,.12); color: var(--gold); }
+html body #view > .dbt.dbt .dbt-seg button i { font-style: normal; font: 700 10px/1 'Barlow Condensed', sans-serif; color: #e8a23a; }
+html body #view > .dbt.dbt .dbt-sv { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font: 700 11px/1 'Barlow Condensed', sans-serif; font-style: normal; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; --svc: #cdb35a; color: var(--svc); }
+html body #view > .dbt.dbt .dbt-sv.s3 { --svc: #e8a23a; } html body #view > .dbt.dbt .dbt-sv.s4, html body #view > .dbt.dbt .dbt-sv.s5 { --svc: #f0726a; }
+html body #view > .dbt.dbt .dbt-pips { display: inline-flex; gap: 2px; }
+html body #view > .dbt.dbt .dbt-pips i { width: 4px; height: 10px; border-radius: 1px; background: rgba(255,255,255,.12); }
+html body #view > .dbt.dbt .dbt-pips i.f { background: var(--svc); }
+html body #view > .dbt.dbt .dbt-it.sv1 .dbt-big, html body #view > .dbt.dbt .dbt-it.sv2 .dbt-big { border-color: rgba(205,179,90,.35); }
+html body #view > .dbt.dbt .dbt-it.sv1 .dbt-big::after, html body #view > .dbt.dbt .dbt-it.sv2 .dbt-big::after { border-top-color: #cdb35a; }
+html body #view > .dbt.dbt .dbt-it.sv1 > .dbt-tm, html body #view > .dbt.dbt .dbt-it.sv2 > .dbt-tm { background: #cdb35a; }
+html body #view > .dbt.dbt .dbt-it.sv4 .dbt-big { border-color: rgba(229,83,75,.45); background: linear-gradient(180deg, rgba(229,83,75,.06), rgba(229,83,75,.015)); }
+html body #view > .dbt.dbt .dbt-side { gap: 16px !important; padding: 14px !important; background: linear-gradient(180deg, rgba(255,255,255,.025), transparent 120px), var(--panel, #171a22) !important; }
+html body #view > .dbt.dbt .dbt-fh { display: flex; align-items: baseline; gap: 8px; }
+html body #view > .dbt.dbt .dbt-fh > b { font: 800 16px/1 'Barlow Condensed', sans-serif; color: var(--text); }
+html body #view > .dbt.dbt .dbt-fh > span { font-size: 12px; color: var(--faint); }
+html body #view > .dbt.dbt .dbt-rst { margin-left: auto; background: none; border: 0; padding: 0; font: 700 12px 'Barlow Condensed', sans-serif; letter-spacing: .04em; color: var(--gold); cursor: pointer; }
+html body #view > .dbt.dbt .dbt-rst:hover { text-decoration: underline; }
+html body #view > .dbt.dbt .dbt-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+html body #view > .dbt.dbt .dbt-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 9px 10px 8px; border-radius: 10px; border: 1px solid var(--line2, #353b49); background: rgba(255,255,255,.02); color: var(--faint); cursor: pointer; text-align: left; opacity: .55; }
+html body #view > .dbt.dbt .dbt-tile b { font: 800 22px/1 'Barlow Condensed', sans-serif; color: var(--muted); }
+html body #view > .dbt.dbt .dbt-tile span { font: 700 11px/1.1 'Barlow Condensed', sans-serif; letter-spacing: .05em; text-transform: uppercase; }
+html body #view > .dbt.dbt .dbt-tile.on { opacity: 1; }
+html body #view > .dbt.dbt .dbt-tile.td.on { border-color: rgba(229,83,75,.55); background: rgba(229,83,75,.09); } html body #view > .dbt.dbt .dbt-tile.td.on b, html body #view > .dbt.dbt .dbt-tile.td.on span { color: #f0726a; }
+html body #view > .dbt.dbt .dbt-tile.ty.on { border-color: rgba(232,162,58,.55); background: rgba(232,162,58,.09); } html body #view > .dbt.dbt .dbt-tile.ty.on b, html body #view > .dbt.dbt .dbt-tile.ty.on span { color: #e8a23a; }
+html body #view > .dbt.dbt .dbt-tile.tg.on { border-color: rgba(95,207,120,.5); background: rgba(95,207,120,.08); } html body #view > .dbt.dbt .dbt-tile.tg.on b, html body #view > .dbt.dbt .dbt-tile.tg.on span { color: #7ee08f; }
+html body #view > .dbt.dbt .dbt-tile:hover { opacity: 1; }
+html body #view > .dbt.dbt .dbt-mlist { display: flex; flex-direction: column; gap: 2px; }
+html body #view > .dbt.dbt .dbt-mlist > .dbt-k { margin-bottom: 6px; }
+html body #view > .dbt.dbt .dbt-mr2 { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto 16px; gap: 9px; align-items: center; width: 100%; padding: 5px 6px; border: 0; border-radius: 7px; background: none; cursor: pointer; text-align: left; font: 600 13px var(--body); color: var(--text); }
+html body #view > .dbt.dbt .dbt-mr2:hover { background: rgba(255,255,255,.04); }
+html body #view > .dbt.dbt .dbt-mr2 .dbt-ic, html body #view > .dbt.dbt .dbt-mr2 .dbt-ic :is(img, .icw, svg) { width: 20px !important; height: 20px !important; border-radius: 5px; }
+html body #view > .dbt.dbt .dbt-mr2 .dbt-lb { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html body #view > .dbt.dbt .dbt-mb { font: 700 11px/1 'Barlow Condensed', sans-serif; font-style: normal; padding: 3px 6px; border-radius: 99px; }
+html body #view > .dbt.dbt .dbt-mb.y { color: #e8a23a; background: rgba(232,162,58,.13); } html body #view > .dbt.dbt .dbt-mb.g { color: #7ee08f; background: rgba(95,207,120,.1); }
+html body #view > .dbt.dbt .dbt-ck { width: 16px; height: 16px; border-radius: 5px; border: 1.5px solid var(--line2, #353b49); display: grid; place-items: center; }
+html body #view > .dbt.dbt .dbt-mr2.on .dbt-ck { border-color: var(--gold); background: var(--gold); }
+html body #view > .dbt.dbt .dbt-mr2.on .dbt-ck::after { content: '✓'; font: 800 11px/1 var(--body); color: #1a1408; }
+html body #view > .dbt.dbt .dbt-mr2:not(.on) { opacity: .45; } html body #view > .dbt.dbt .dbt-mr2:not(.on) .dbt-ic { filter: grayscale(1); }
+html body #view > .dbt.dbt .dbt-ddw > .dbt-k { display: block; margin-bottom: 6px; }
+html body #view > .dbt.dbt .dbt-sp { cursor: help; text-decoration: underline dotted rgba(255,255,255,.28); text-underline-offset: 3px; color: inherit; }
+html body #view > .dbt.dbt b.dbt-sp { text-decoration-color: rgba(255,255,255,.2); }
+html body #view > .dbt.dbt .dbt-nk { font: 700 10.5px/1 'Barlow Condensed', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); padding: 3px 6px; border-radius: 4px; background: rgba(255,255,255,.05); }
+html body #view > .dbt.dbt .dbt-okc .dbt-nk { padding: 2px 5px; font-size: 9.5px; }
+html body #view > .dbt.dbt .dbt-new { font: 700 10.5px/1 'Barlow Condensed', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: #111; background: var(--gold); padding: 3px 6px; border-radius: 4px; }
+html body #view > .dbt.dbt .dbt-agn { font: 700 10.5px/1 'Barlow Condensed', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: #f0726a; border: 1px solid rgba(229,83,75,.5); padding: 2px 6px; border-radius: 4px; }
+html body #view > .dbt.dbt .dbt-dth { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; font-size: 12px; color: var(--muted); margin-top: 2px; }
+html body #view > .dbt.dbt .dbt-dth .dbt-more { margin-top: 0; }
+html body #view > .dbt.dbt .dbt-dbox { margin-top: 8px; border-top: 1px solid var(--line); padding-top: 8px; font-size: 12.5px; max-width: 100%; overflow-x: auto; }
+html body #view > .dbt.dbt .dbt-jump { position: fixed; left: 50%; transform: translateX(-50%); bottom: 18px; z-index: 30; display: none; font: 700 13px 'Barlow Condensed', sans-serif; letter-spacing: .03em; padding: 9px 14px; border-radius: 99px; border: 1px solid rgba(230,180,80,.6); background: rgba(23,26,34,.96); color: var(--gold); box-shadow: 0 8px 24px rgba(0,0,0,.45); cursor: pointer; }
+html body #view > .dbt.dbt .dbt-jump.on { display: inline-flex; }
+html body #view > .dbt.dbt .dbt-jump:hover { background: rgba(230,180,80,.12); }
+html body #view > .dbt.dbt .dbt-dd { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--line2, #353b49); background: rgba(255,255,255,.02); font: 700 13.5px 'Barlow Condensed', sans-serif; color: var(--text); cursor: pointer; }
+html body #view > .dbt.dbt .dbt-dd:hover { border-color: rgba(230,180,80,.5); }
+html body #view > .dbt.dbt .dbt-dd i { font-style: normal; color: var(--faint); }
+html body #view > .dbt.dbt .dbt-ddm { margin-top: 4px; border: 1px solid var(--line2, #353b49); border-radius: 8px; background: #12151c; padding: 4px; max-height: 260px; overflow: auto; }
+html body #view > .dbt.dbt .dbt-ddo { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 6px 8px; border: 0; border-radius: 6px; background: none; font: 700 13.5px 'Barlow Condensed', sans-serif; color: var(--text); cursor: pointer; text-align: left; }
+html body #view > .dbt.dbt .dbt-ddo:hover { background: rgba(255,255,255,.05); }
+html body #view > .dbt.dbt .dbt-ddo.on { background: rgba(230,180,80,.1); }
+html body #view > .dbt.dbt .dbt-ddo em { font: 600 11px var(--body); font-style: normal; color: var(--faint); white-space: nowrap; }
+@keyframes dbtFlash { 0% { box-shadow: 0 0 0 3px rgba(230,180,80,.8); } 100% { box-shadow: 0 0 0 3px rgba(230,180,80,0); } }
+html body #view > .dbt.dbt .dbt-it.dbt-flash > .dbt-c { animation: dbtFlash 1.6s ease-out; border-radius: 12px; }
+/* numbers */
+html body #view > .dbt.dbt .dbt-nums { display: flex; flex-wrap: wrap; padding: 10px 16px; gap: 12px 28px; align-items: center; }
+html body #view > .dbt.dbt .dbt-nums > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+html body #view > .dbt.dbt .dbt-nums > div b { font: 800 18px/1 'Barlow Condensed', sans-serif; order: -1; color: var(--text); }
+html body #view > .dbt.dbt .dbt-nums > div span { font: 700 10px 'Barlow Condensed', sans-serif; letter-spacing: .1em; color: var(--faint); text-transform: uppercase; }
+html body #view > .dbt.dbt .dbt-nums > div em { font-style: normal; font-size: 11.5px; color: var(--muted); }
+html body #view > .dbt.dbt .dbt-nums > i { flex: 1; }
+html body #view > .dbt.dbt .dbt-btn { font: 700 12px 'Barlow Condensed', sans-serif; letter-spacing: .04em; padding: 6px 11px; border-radius: 7px; border: 1px solid var(--line2, #353b49); color: var(--muted); background: none; cursor: pointer; }
+html body #view > .dbt.dbt .dbt-btn:hover { border-color: var(--gold); color: var(--gold); }
+html body #view > .dbt.dbt .dbt-g { color: #5fcf78 !important; } html body #view > .dbt.dbt .dbt-y { color: #e8a23a !important; } html body #view > .dbt.dbt .dbt-r { color: #f0726a !important; }
+html body #view.dbt-full > .dbt.dbt > .dbt-main { display: none; }
+@media (max-width: 1000px) {
+  html body #view > .dbt.dbt .dbt-main { grid-template-columns: 1fr; }
+  html body #view > .dbt.dbt .dbt-side { position: static; max-height: none; display: none; }
+  html body #view > .dbt.dbt .dbt-side.open { display: flex; }
+  html body #view > .dbt.dbt .dbt-fbtn { display: inline-flex; align-self: start; gap: 8px; align-items: center; padding: 7px 14px; border-radius: 99px; background: var(--panel); border: 1px solid var(--line2, #353b49); font: 700 13px 'Barlow Condensed', sans-serif; color: var(--text); cursor: pointer; }
+  html body #view > .dbt.dbt .dbt-fbtn em { font-style: normal; color: var(--gold); }
+}
+@media (max-width: 760px) {
+  html body #view > .dbt.dbt .dbt-tl::before { left: 26px; }
+  html body #view > .dbt.dbt .dbt-it { grid-template-columns: 52px minmax(0, 1fr); }
+  html body #view > .dbt.dbt .dbt-it > .dbt-c, html body #view > .dbt.dbt .dbt-it.R > .dbt-c { grid-column: 2; justify-self: start; }
+  html body #view > .dbt.dbt .dbt-it > .dbt-tm { grid-column: 1; }
+  html body #view > .dbt.dbt .dbt-big::after { display: none; }
+  html body #view > .dbt.dbt .dbt-big { width: 100%; }
+  html body #view > .dbt.dbt .dbt-two { grid-template-columns: 1fr; }
+  html body #view > .dbt.dbt .dbt-st { justify-content: flex-start; }
+  html body #view > .dbt.dbt .dbt-ln { grid-template-columns: 1fr; gap: 2px; }
+  html body #view > .dbt.dbt .dbt-nums > i { display: none; }
+}
 </style>
 
 
@@ -19096,7 +19457,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-10-28', h: [], n: [
+  { d: '2026-10-28', h: [{ t: 'Debriefing, as a timeline', d: 'Each pull reads top to bottom: every mistake and death where it happened, why it happened and what to do next time, with a filter for players, roles and how serious. Prefer the old page? Overview is one tap away and remembered.' }, ], n: [
     'The boss banner is two calm lines: the boss (tap its name to change boss), how far the pull got and whether it beat the last one, the All pulls / pull switch on the right, then how long it lasted, the deaths and the wipe call.',
     'Debriefing: "The details" are one row of six right under "The pull at a glance", like a scorecard, and the phases below have the full width.',
     'Debriefing: the boss banner is tidier, with one chip shape and without the start time and player count; "The details" tiles open into slim lists, and only a tile that needs fixing is edged in red.',
@@ -24877,6 +25238,7 @@ function ndzOptsG(ps) { const kind = (p) => (p.role === 'tank' || p.role === 'he
 // (melee or not: the spec when it's known; else the class (Rogues, Warriors, Death Knights, Demon Hunters, Paladins and Monks who
 // aren't healing play melee); tanks count as melee)
 function ndzMeleeOf(p) { const sid = +(p.specId || p.sid || 0); return p.role === 'tank' || (sid ? NDZ_MELEE.has(sid) : p.role !== 'healer' && typeof PLAN_MELEE_CLS !== 'undefined' && PLAN_MELEE_CLS.has(p.cls)); }
+/* Design studio round 135: dbtRoles, the timeline's role filter */ window.dbtRoles = function () { var o = {}; try { S.rep.players.forEach(function (p) { if (!p || !p.name) return; var r0 = p.role === 'tank' ? 'tank' : p.role === 'healer' ? 'healer' : ndzMeleeOf(p) ? 'melee' : 'ranged'; o[p.name] = r0; o[String(p.name).split('-')[0]] = r0; }); } catch (e) { /* (no pull yet) */ } return o; };
 // (who can kick: healers can't, except a Restoration Shaman; a damage dealer whose spec isn't known yet can if the class has a kick)
 function ndzCanKick(p) { const sid = +(p.specId || p.sid || 0); return sid ? !!ndzKickOf({ role: p.role, cls: p.cls, specId: sid }) : p.role !== 'healer' && (E.INTERRUPTS[p.cls] || []).length > 0; }
 // (a + list on a kick page: Spiteful Soulcoiler kicks, Broodling kicks…)
@@ -56380,6 +56742,222 @@ function dsGuides() {
   };
   var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(mark, 60); };
   var start = function () { var v = document.getElementById('main') || document.body; if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
+// ===== Design studio round 135 (Oct 27): the timeline Debriefing. Owner: the Design studio chat. =====
+(function () {
+  if (typeof document === 'undefined') return;
+  var E = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var Q = function (s) { return '[data-phjump="' + CSS.escape(s) + '"]'; };
+  var sx = function (s) { var m = String(s).split(':'); return +m[0] * 60 + +m[1]; };
+  var mm = function (s) { return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+  var nm = function (lab) { return String(lab || '').replace(/\s*\(.*\)\s*$/, ''); };
+  var nick = function (lab) { var p = (String(lab || '').match(/\(([^)]*)\)\s*$/) || [])[1] || '', w = p.split(/[\s,]+/)[0] || ''; w = w.replace(/[^\w'’-]/g, ''); return w ? w.charAt(0).toUpperCase() + w.slice(1) : ''; }; /* (the user: "just like one word nicknames") */
+  var paren = function (lab) { return (String(lab || '').match(/\(([^)]*)\)\s*$/) || [])[1] || ''; };
+  var sent = function (t, n) { var s = String(t || '').replace(/\s+/g, ' ').trim(), p = s.match(/.+?[.!?]+(?=\s|$)/g) || [s]; /* (a sentence ends at a stop before a space: "14.0 s" stays whole) */ return p.slice(0, n || 2).join(' ').trim(); };
+  var txt = function (el, drop) { if (!el) return ''; var c = el.cloneNode(true); if (c.dataset && c.dataset.raw != null) c.textContent = c.dataset.raw; c.querySelectorAll('[data-raw]').forEach(function (x) { x.textContent = x.dataset.raw; }); c.querySelectorAll('.panel, .pcx-open, button, [hidden], svg, ' + (drop || '.x-none')).forEach(function (x) { x.remove(); }); return c.textContent.replace(/\s+/g, ' ').trim(); };
+  var nameB = function (m) { return m.sid ? '<b class="sp dbt-sp" data-sid="' + E(m.sid) + '" data-sn="' + E(m.sn || m.m) + '">' + E(m.m) + '</b>' : '<b>' + E(m.m) + '</b>'; };
+  /* (any spell this page knows, named in plain text, becomes the site's tooltip span) */
+  var spellify = function (v, root) { if (!root) return; var map = v._dbtSp; if (!map) { map = {}; v.querySelectorAll('.sp[data-sid][data-sn]').forEach(function (e) { var n = e.dataset.sn; if (n && n.length >= 4 && +e.dataset.sid) map[n] = e.dataset.sid; }); v._dbtSp = map; }
+    var names = Object.keys(map).sort(function (a, b) { return b.length - a.length; }); if (!names.length) return; var rx = new RegExp('\\b(' + names.map(function (n) { return n.replace(/[.*+?^$\{}()|[\]\\]/g, '\\$&'); }).join('|') + ')\\b', 'g');
+    var tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: function (n) { return n.parentElement && n.parentElement.closest('.sp, .nm, button, .dbt-tm, .dbt-k, .dbt-nk, svg, .dbt-new, .dbt-agn, em') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; } }), L = [];
+    for (var n = tw.nextNode(); n; n = tw.nextNode()) { rx.lastIndex = 0; if (rx.test(n.nodeValue)) L.push(n); }
+    L.forEach(function (n) { var fr = document.createDocumentFragment(), t = n.nodeValue, last = 0; rx.lastIndex = 0; t.replace(rx, function (m0, nm1, off) { if (off > last) fr.appendChild(document.createTextNode(t.slice(last, off))); var sp = document.createElement('span'); sp.className = 'sp dbt-sp'; sp.dataset.sid = map[nm1]; sp.dataset.sn = nm1; sp.textContent = nm1; fr.appendChild(sp); last = off + m0.length; return m0; }); if (last < t.length) fr.appendChild(document.createTextNode(t.slice(last))); n.parentNode.replaceChild(fr, n); }); };
+  var howIt = function (sec) { var h = sec && sec.querySelector('details.howit'); if (!h) return ''; var c = h.cloneNode(true), s = c.querySelector(':scope > summary'); if (s) s.remove(); return sent(c.textContent, 1); };
+  var F = { y: 1, d: 1, ok: 1, mech: {}, who: '', role: '', sev: { s: 1, m: 1, n: 1 }, open: {} }, keep = {};
+  var full = function (v, d, on, keep) { v.classList.toggle('dbt-full', on); if (!keep) { try { localStorage.setItem('wla-dbt-view', on ? 'full' : 'tl'); } catch (e) { /* (not remembered) */ } } d.querySelectorAll('.dbt-vt > button').forEach(function (b) { b.classList.toggle('on', (b.dataset.dbt === 'full') === !!on); b.setAttribute('aria-selected', (b.dataset.dbt === 'full') === !!on ? 'true' : 'false'); }); }; /* (Timeline / Overview) */
+  var openRow = function (v, d, key, ok) { var ph = [].slice.call(v.querySelectorAll(':scope > .ds-l > details.phase')).filter(function (p) { return p.dataset.phk === key.ph; })[0] || null; if (!ph) return;
+    var r = ph.querySelector(':scope > summary .prw-i' + Q(key.id) + ':not(.mx-folded)') || ph.querySelector(':scope > summary .mx-okc' + Q(key.id)) || ph.querySelector(':scope > summary .prw-i' + Q(key.id)); if (!r) return;
+    full(v, d, true, true); setTimeout(function () { if (!r.classList.contains('on')) r.click(); setTimeout(function () { ph.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 120); }, 40); };
+  /* (every moment of the pull, from the page's own mechanic sections) */
+  var moments = function (v, cs, cut) { var L = v.querySelector(':scope > .ds-l'), out = [], W = cs.wrong || [];
+    [].slice.call(L.querySelectorAll(':scope > details.phase')).forEach(function (ph) {
+      [].slice.call(ph.querySelectorAll('details.secd[data-k]')).forEach(function (sec) { var k = sec.dataset.k, id = k.replace(/-\d+$/, ''), sm = sec.querySelector(':scope > summary');
+        var title = txt(sm && sm.querySelector('.sechd b')) || txt(sm && sm.querySelector('b')), name = nm(title), icon = sm && sm.querySelector('.icw, img.oi'), spEl = sm && sm.querySelector('.sp[data-sid]');
+        var w = W.filter(function (x) { return x.sec === id; })[0], g = {};
+        [].slice.call(sec.querySelectorAll('li.u1-r')).forEach(function (li) { var t = txt(li.querySelector('.u1-t')); if (!/^\d+:\d\d$/.test(t)) return; var T = sx(t); if (cut && T > cut) return;
+          var st = li.classList.contains('bad') ? 'r' : li.classList.contains('warn') ? 'y' : li.classList.contains('ok') ? 'ok' : ''; if (!st) return;
+          if (cut && st !== 'ok') { var lt = (txt(li.querySelector('.u1-o')).match(/\b\d+:\d\d\b/g) || []).map(sx); if (lt.length && lt.every(function (x) { return x > cut; })) return; } /* (a mistake whose every time is after the wipe call is not judged) */
+          var ox = st === 'ok' ? 'ok' : 'x', o = null; /* (the same mechanic again within 10 s joins the same moment) */ Object.keys(g).forEach(function (kk) { var c = g[kk]; if (c.ox === ox && T - c.t >= 0 && T - c.t <= 10) o = c; }); var key = T + '|' + ox; var hd = txt(li.querySelector('.u1-h')), oc = txt(li.querySelector('.u1-o')), nt = [].slice.call(li.querySelectorAll('.u1-n')).map(function (n) { return txt(n); }).join(' · ');
+          var who = [].slice.call(li.querySelectorAll('.nm')).map(function (n) { return { n: n.textContent.trim(), c: n.style.color }; });
+          if (o) o.tl = T; if (!o) { o = g[key] = { t: T, tl: T, ox: ox, st: st, id: id, ph: ph.dataset.phk, m: name, nk: nick(title), lab: title, sid: spEl ? spEl.dataset.sid : '', sn: spEl ? (spEl.dataset.sn || name) : '', icon: icon ? icon.outerHTML : '', who: [], lines: [], w: w, sec: sec }; out.push(o); }
+          if (st === 'r') o.st = 'r'; if (st !== 'ok') { var sv0 = +li.dataset.sev || 0; if (sv0 > (o.sev || 0)) o.sev = sv0; if (!o.why && li.dataset.why) o.why = li.dataset.why; if (!o.next && li.dataset.next) o.next = li.dataset.next; } /* (that moment's own reason and fix) */ who.forEach(function (x) { if (!o.who.some(function (y) { return y.n === x.n; })) o.who.push(x); });
+          if (/^(nobody|no one)$/i.test(hd)) hd = ''; var line = [hd, oc].filter(Boolean).join(': ') + (nt ? ' (' + nt + ')' : ''); if (line.toLowerCase() === name.toLowerCase()) line = ''; if (st === 'ok' && line && who.length && line === who.map(function (x) { return x.n; }).join(', ')) line += ' · done right'; /* (a bare name reads as "Yookevo · done right") */ o.n = (o.n || 0) + 1; if (line && o.lines.indexOf(line) < 0) o.lines.push(line); }); }); });
+    ((cs.deaths && cs.deaths.items) || []).forEach(function (x) { var T = /^\d+:\d\d$/.test(x.t || '') ? sx(x.t) : null; if (T == null || (cut && T > cut)) return; var hit = ''; try { var gr = v.querySelector('.dth-p .cbl-mgo[data-ddgo="' + CSS.escape(x.dg || '') + '"] .cb-v'); if (gr) hit = gr.dataset.raw || gr.textContent.trim(); } catch (e) { /* (no panel) */ } out.push({ t: T, st: 'r', death: 1, m: 'Death', who: [{ n: x.who, c: '' }], lines: [x.who + ' died to ' + (x.ab || 'something') + '.'], word: x.word || '', hit: hit, dg: x.dg || '', cause: x.ab }); });
+    /* (a mistake row without a name takes the name of whoever died at that moment, so the player filter finds it) */
+    out.forEach(function (m) { if (m.death || m.st === 'ok' || m.who.length) return; out.forEach(function (d0) { if (d0.death && Math.abs(d0.t - m.t) <= 2) d0.who.forEach(function (w) { if (!m.who.some(function (y) { return y.n === w.n; })) m.who.push(w); }); }); });
+    out.sort(function (a, b) { return a.t - b.t || (a.death ? 1 : 0) - (b.death ? 1 : 0); }); return out; };
+  var build = function () {
+    var v = document.getElementById('view'); if (!v) return; var cs = v._cs, L = v.querySelector(':scope > .ds-l');
+    var old = v.querySelector(':scope > .dbt'); if (!cs || !L || !L.querySelector('details.phase details.secd')) { if (old) old.remove(); v.classList.remove('dbt-on', 'dbt-full'); return; }
+    if (old && old._cs === cs) return; if (old) old.remove();
+    var hb = (document.getElementById('bossHead') || document.body).textContent, cm = hb.match(/Wipe called at (\d+:\d\d)/), cut = cm ? sx(cm[1]) : 0;
+    var M = moments(v, cs, cut); if (!M.length) return;
+    var phs = [].slice.call(L.querySelectorAll(':scope > details.phase')).map(function (ph) { var s = ph.querySelector(':scope > summary'), tm = (s.textContent.match(/(\d+:\d\d)\s*[–-]\s*(\d+:\d\d)/) || []); return { k: ph.dataset.phk, n: ((s.querySelector('b') || {}).textContent || '').trim(), s: tm[0] || '', t: tm[1] ? sx(tm[1]) : 0, hp0: ph.dataset.bhp0 != null && ph.dataset.bhp0 !== '' ? ph.dataset.bhp0 : ph.dataset.hp0, hp1: ph.dataset.bhp1 != null && ph.dataset.bhp1 !== '' ? ph.dataset.bhp1 : ph.dataset.hp1, hps: ph.dataset.bhps || ph.dataset.hps || '', own: !!ph.dataset.bhps }; /* (the phase's own boss first, the whole fight's health if not) */ });
+    if (phs.some(function (p) { return p.s; })) phs = phs.filter(function (p) { return p.s; }); /* (untimed sections get no marker when there are timed phases) */
+    /* (boss health over the pull, from each phase's samples) */
+    var HP = []; phs.forEach(function (p) { String(p.hps || '').split(',').forEach(function (q) { var m0 = q.match(/^\s*(\d+:\d\d)\s*=\s*([\d.]+)/); if (m0) HP.push([sx(m0[1]), +m0[2]]); }); }); HP.sort(function (a, b) { return a[0] - b[0]; });
+    var hpAt = function (t) { if (HP.length < 2 || t < HP[0][0] || t > HP[HP.length - 1][0]) return null; for (var k = 1; k < HP.length; k++) if (HP[k][0] >= t) { var a = HP[k - 1], b = HP[k], f0 = b[0] === a[0] ? 0 : (t - a[0]) / (b[0] - a[0]); return Math.round(a[1] + (b[1] - a[1]) * f0); } return null; };
+    var tmH = function (t) { var h = hpAt(t); return mm(t) + (h != null ? '<small>' + h + '%</small><i class="dbt-hpb"><i style="width:' + Math.max(2, Math.min(100, h)) + '%"></i></i>' : ''); };
+    var mechs = []; M.forEach(function (m) { if (!m.death && mechs.indexOf(m.m) < 0) mechs.push(m.m); }); mechs.forEach(function (m) { if (F.mech[m] == null) F.mech[m] = 1; });
+    var people = []; M.forEach(function (m) { if (m.st !== 'ok') m.who.forEach(function (w) { if (people.indexOf(w.n) < 0) people.push(w.n); }); }); if (F.who && people.indexOf(F.who) < 0) F.who = '';
+    var col = {}; M.forEach(function (m) { m.who.forEach(function (w) { if (w.c) col[w.n] = w.c; }); });
+    var chips = function (html, who) { (who || []).map(function (w) { return w.n; }).filter(function (n, i, a) { return n && a.indexOf(n) === i; }).sort(function (a, b) { return b.length - a.length; }).forEach(function (n) { html = html.split(E(n)).join('<span class="dbt-chip"' + (col[n] ? ' style="--cc:' + col[n] + '"' : '') + '>' + E(n) + '</span>'); }); return html; };
+    /* the card on top */
+    var RC = [].slice.call(v.querySelectorAll(':scope > .ds-r .dt-box details.cch-ab')).map(function (dt, k) { var sm = dt.querySelector(':scope > summary'), p = sm && sm.querySelector('.cgl-p'), n0 = sm && sm.querySelector('.cgl-n'); if (!p || !n0) return null; var pc = parseFloat(txt(p)); if (isNaN(pc)) return null; var ic = sm.querySelector('.icw, img');
+      return { k: k, el: dt, n: txt(n0), pc: pc, fl: /\bbad\b/.test(p.className) ? 'bad' : /\bwarn\b/.test(p.className) ? 'warn' : 'ok', d: txt(dt.querySelector(':scope > .cgl-d')), ic: ic ? ic.outerHTML : '' }; }).filter(Boolean).sort(function (a, b) { return a.pc - b.pc; }); /* (the raid checks, worst first) */
+    var W = (cs.wrong || []).filter(function (x) { return x && (x.sev === 'bad' || x.sev === 'warn'); }), kill = !!cs.kill;
+    var lead = kill ? null : (W.filter(function (x) { return x.sev === 'bad' && x.cause; })[0] || W.filter(function (x) { return x.sev === 'bad'; })[0] || null);
+    var h = '', TOPC = '', CHT = []; /* (CHT: the wipe chain's times, so the same moment isn't listed again) */ /* (TOPC: the severity count, filled in once the levels are known) */
+    /* (a wipe is rarely one thing (the user, Oct 27): the other mistakes that added up, worst first, each a tap from its card) */
+    var addUp = function (ld, skip) { var L2 = W.filter(function (x) { return x !== ld && !(skip && skip.indexOf(x) >= 0); }).sort(function (a, b) { return (b.sev === 'bad') - (a.sev === 'bad'); }).slice(0, 4); if (!L2.length && !RC.some(function (c) { return c.pc < 50; })) return '';
+      return '<div class="dbt-add"><span class="dbt-k">It added up with</span>' + L2.map(function (x) { var tt = (String(x.what || '').match(/\b(\d+:\d\d)\b/) || [])[1], cand = M.map(function (m, i) { return [m, i]; }).filter(function (p) { return p[0].id === x.sec && p[0].st !== 'ok'; }), pick = (tt ? cand.filter(function (p) { return Math.abs(p[0].t - sx(tt)) <= 5; })[0] : null) || cand[0];
+        var ic = pick ? pick[0].icon : ''; return '<button type="button" class="dbt-addr"' + (pick ? ' data-jump="' + pick[1] + '"' : '') + '><span class="dbt-ic">' + ic + '</span><b>' + E(nm(x.label)) + '</b><span>' + chips(E(sent(x.what || x.fix || '', 1)), M.reduce(function (a, m) { return a.concat(m.who); }, [])) + '</span>' + (function (lv) { return '<i class="dbt-lv l' + lv + '">' + (lv >= 4 ? 'Serious' : lv === 3 ? 'Moderate' : 'Minor') + '</i>'; })((pick && (pick[0].dead ? 5 : pick[0].sev)) || (x.sev === 'bad' ? 3 : 2)) + '</button>'; }).join('') +
+        /* (and any other mechanic with mistakes on the timeline that the summary left out) */
+        (function () { var seen = W.map(function (x) { return x.sec; }), extra = {}; var lt0 = (String(ld.what || '').match(/\b(\d+:\d\d)\b/) || [])[1], lt = lt0 ? sx(lt0) : -99; M.forEach(function (m, i) { if (m.death || m.st === 'ok' || seen.indexOf(m.id) >= 0 || Math.abs(m.t - lt) <= 5 || CHT.some(function (q) { return Math.abs(m.t - q) <= 5; })) return; /* (the same moment as the main cause isn't listed twice) */ (extra[m.id] = extra[m.id] || { m: m, i: i, n: 0 }).n++; }); return RC.filter(function (c) { return c.pc < 50; }).map(function (c) { return '<button type="button" class="dbt-addr" data-rcgo="' + c.k + '"><span class="dbt-ic">' + c.ic + '</span><b>' + E(c.n) + '<span class="dbt-rctag">Raid check</span></b><span>' + E(c.d) + '</span><i class="dbt-r">' + Math.round(c.pc) + '%</i></button>'; }).join('') + Object.keys(extra).slice(0, Math.max(0, 5 - L2.length)).map(function (k) { var e = extra[k]; return '<button type="button" class="dbt-addr" data-jump="' + e.i + '"><span class="dbt-ic">' + e.m.icon + '</span><b>' + E(e.m.m) + '</b><span>' + e.n + ' time' + (e.n > 1 ? 's' : '') + ' with a mistake' + (e.m.why ? ': ' + E(sent(e.m.why, 1)) : '') + '</span>' + (function (lv) { return '<i class="dbt-lv l' + lv + '">' + (lv >= 4 ? 'Serious' : lv === 3 ? 'Moderate' : 'Minor') + '</i>'; })(e.m.sev || 2) + '</button>'; }).join(''); })() + '</div>'; };
+    var CH = !kill && cs.chain && cs.chain.start && cs.chain.start.txt ? cs.chain : null; /* (where the wipe started, from the Debriefing chat) */
+    if (CH) { var mAt = function (t) { var b = null; M.forEach(function (m, i) { if (m.death || m.st === 'ok') return; var dd = Math.abs(m.t - t); if (dd <= 3 && (!b || dd < b.d)) b = { m: m, i: i, d: dd }; }); return b; };
+      var wOf = function (b) { return b ? W.filter(function (x) { return x.sec === b.m.id; })[0] || null : null; }, LVf = function (lv) { return '<i class="dbt-lv l' + lv + '">' + (lv >= 4 ? 'Serious' : lv === 3 ? 'Moderate' : 'Minor') + '</i>'; };
+      var nz = function (x) { return String(x || '').toLowerCase().replace(/\s+/g, ' ').trim(); }, wFor = function (it) { var tx = nz(it.txt).slice(0, 28), tm = mm(Math.floor(it.t)), mc = nz(it.mech); return W.filter(function (x) { return tx && nz(x.what).indexOf(tx) >= 0; })[0] || W.filter(function (x) { return mc && nz(x.what).indexOf(mc) >= 0 && String(x.what || '').indexOf(tm) >= 0; })[0] || W.filter(function (x) { return mc && nz(x.what).indexOf(mc) >= 0; })[0] || null; }; /* (the summary's own line for this link, by its words, then its mechanic and time) */
+      var its = (CH.items && CH.items.length ? CH.items : [CH.start]).map(function (it) { var w1 = wFor(it), b = null; if (w1) M.forEach(function (m, i) { if (m.death || m.st === 'ok' || m.id !== w1.sec) return; var dd = Math.abs(m.t - it.t); if (!b || dd < b.d) b = { m: m, i: i, d: dd }; }); if (!b) b = mAt(it.t); return { it: it, b: b, w: w1 || wOf(b) }; }), st0 = its[0], sm = st0.b ? st0.b.m : null, sw = st0.w; CHT = its.map(function (x) { return x.it.t; });
+      var who0 = M.reduce(function (a, m) { return a.concat(m.who); }, []), lwhy0 = sm && sm.why && sm.why !== sm.lab ? sm.why : '', nx0 = sw && (sw.how || sw.fix) ? sw.how || sw.fix : sm && sm.next ? sm.next : '';
+      var phT = function (t, m) { var p = m ? phs.filter(function (q) { return q.k === m.ph; })[0] : null; if (!p) { var tp = phs.filter(function (q) { return q.s && q.t <= t + 0.5; }); p = tp[tp.length - 1] || null; } if (!p || !p.n) return ''; var n = p.n, g = n.match(/^P(\d+)/i); return '<i class="dbt-chp">' + (g ? 'P' + g[1] : /^intermission/i.test(n) ? 'Int' : /^whole/i.test(n) ? '' : E(n.split(/\s+/)[0])) + '</i>'; }; /* (the phase, short: P1, P2, Int) */
+      var row = function (x, k) { var m = x.b ? x.b.m : null, lv = m ? (m.dead ? 5 : m.sev || (/high/i.test(x.it.sev || '') ? 4 : 3)) : (/high/i.test(x.it.sev || '') ? 4 : 3);
+        return '<button type="button" class="dbt-chr"' + (x.b ? ' data-jump="' + x.b.i + '"' : '') + '><span class="dbt-cht">' + mm(Math.floor(x.it.t)) + phT(x.it.t, m) + '</span><span class="dbt-ic">' + (m ? m.icon : '') + '</span><b>' + E(m ? m.m : x.it.mech || '') + '</b><span>' + chips(E(String(x.it.txt || '').replace(/\.\s*$/, '')), who0) + '.</span>' + LVf(lv) + '</button>'; };
+      var chain = its.length > 1 || CH.call ? '<div class="dbt-chn"><span class="dbt-k">How it went</span>' + its.map(row).join('') + (CH.call ? '<div class="dbt-chr end"><span class="dbt-cht">' + mm(Math.floor(CH.call.t)) + phT(CH.call.t, null) + '</span><span class="dbt-ic x">✕</span><b>Wipe called</b><span>' + E(String(CH.call.why || '').replace(/^./, function (c) { return c.toUpperCase(); }).replace(/\.?\s*$/, '.')) + '</span></div>' : '') + '</div>' : '';
+      h += '<div class="dbt-p dbt-why"><span class="dbt-k">Why we wiped</span><div class="dbt-wb"><span class="dbt-ic">' + (sm ? sm.icon : '') + '</span><div><h2>It started at ' + mm(Math.floor(CH.start.t)) + ': ' + chips(E(String(CH.start.txt).replace(/\.\s*$/, '')), who0) + '.</h2>' +
+        (lwhy0 ? '<div class="dbt-ln"><span>WHY</span><span>' + E(lwhy0) + '</span></div>' : '') + (nx0 ? '<div class="dbt-ln"><span>NEXT TIME</span><span>' + E(sent(nx0, 2)) + '</span></div>' : '') + chain +
+        addUp(sw || { what: mm(Math.floor(CH.start.t)) }, its.map(function (x) { return x.w; }).filter(Boolean)).replace('<div class="dbt-add"><span class="dbt-k">It added up with</span>', '<div class="dbt-add"><span class="dbt-k">It added up with</span>') + '</div></div></div>'; }
+    else if (lead) { var w = String(lead.what || ''), t = (w.match(/\b(\d+:\d\d)\b/) || [])[1] || '', body = (function () { var mt = w.match(/^(.*?):\s+(?=\S)([\s\S]*)$/), w2 = w; if (mt) { var pre = mt[1].trim(), rest = mt[2], names = {}; M.forEach(function (q) { q.who.forEach(function (x) { names[x.n] = 1; }); }); if (names[pre]) w2 = pre + ' ' + rest.charAt(0).toLowerCase() + rest.slice(1); else if (/^lost\b/i.test(pre)) w2 = rest; } return E(w2.replace(/\.\s*$/, '')); })(); /* (who did it stays in the sentence) */ if (lead.cause) body = body.split(E(lead.cause)).join('<em>' + E(lead.cause) + '</em>');
+      var lms = M.filter(function (m) { return m.id === lead.sec && m.st !== 'ok'; }), lm = (t ? lms.filter(function (m) { return Math.abs(m.t - sx(t)) <= 5; })[0] : null) || lms[0] || M.filter(function (m) { return m.id === lead.sec; })[0], lwhy = lm && lm.why && lm.why !== lm.lab ? lm.why : '';
+      h += '<div class="dbt-p dbt-why"><span class="dbt-k">Why we wiped</span><div class="dbt-wb"><span class="dbt-ic">' + (lm ? lm.icon : '') + '</span><div><h2>' + chips(body, M.reduce(function (a, m) { return a.concat(m.who); }, [])) + (t && body.indexOf(t) < 0 ? ' at ' + t : '') + '.</h2>' + (lwhy ? '<div class="dbt-ln"><span>WHY</span><span>' + E(lwhy) + '</span></div>' : '') + (lead.how || lead.fix ? '<div class="dbt-ln"><span>NEXT TIME</span><span>' + E(sent(lead.how || lead.fix, 2)) + '</span></div>' : '') + addUp(lead) + '</div></div></div>'; }
+    else if (kill) h += '<div class="dbt-p dbt-why ok"><span class="dbt-k">Killed it</span><div class="dbt-wb"><span class="dbt-ic ck">✓</span><div><h2>' + (W.length ? 'Down, with ' + W.length + ' thing' + (W.length > 1 ? 's' : '') + ' to tidy up.' : 'Down, and clean.') + '</h2><div class="dbt-ln"><span>RAID LEAD</span><span>' + E(sent(String(cs.headline || '').replace(/^[^\w]+/, ''), 1)) + '</span></div></div></div></div>';
+    else if (cs.headline) h += '<div class="dbt-p dbt-why"><span class="dbt-k">What happened</span><div class="dbt-wb"><span class="dbt-ic"></span><div><h2>' + E(sent(cs.headline, 1)) + '</h2></div></div></div>';
+    h += '<div class="dbt-vt" role="tablist"><button type="button" class="on" role="tab" aria-selected="true" data-dbt="tl">Timeline</button><button type="button" role="tab" aria-selected="false" data-dbt="full">Overview</button><span>Two ways to read the same pull</span></div>';
+    h += '<div class="dbt-main"><div class="dbt-tlw"><button type="button" class="dbt-fbtn" data-dbt="filters">⚙ Filters</button><div class="dbt-tl"></div></div><aside class="dbt-p dbt-side"></aside></div>';
+    var tiles = [].slice.call(v.querySelectorAll(':scope > .oa-tiles .dbr-n'));
+    h += '<div class="dbt-p dbt-nums">' + tiles.map(function (tt) { var k = txt(tt.querySelector('.dbr-k')), val = txt(tt.querySelector('.dbr-v')), s = txt(tt.querySelector('.dbr-s')); s = s.replace(/\s*·.*$/, '').replace(/\s*\(.*?\)/g, '').trim(); var cl = /above|lower/.test(s) ? 'dbt-g' : /below|higher/.test(s) ? 'dbt-y' : '';
+        var vc = ''; try { var ve = tt.querySelector('.dbr-v b') || tt.querySelector('.dbr-v'), c0 = ve && getComputedStyle(ve).color; if (c0 && !/^rgba?\(\s*(23[0-9]|2[4-5][0-9])\s*,\s*2[2-5][0-9]\s*,\s*2[0-5][0-9]/.test(c0)) vc = c0; } catch (e) { /* (no colour) */ } /* (the tile's own colour, unless it is the plain text colour) */
+        return '<div><span>' + E(k) + '</span><b' + (/death/i.test(k) && +val > 0 ? ' class="dbt-r"' : vc ? ' style="color:' + vc + '"' : '') + '>' + E(val) + '</b><em class="' + cl + '">' + E(s) + '</em></div>'; }).join('') +
+      '<i></i>' + '' /* (Every player: removed (the user, Oct 28: this can be removed); the table stays on Graphs) */ + '<button type="button" class="dbt-btn" data-dbt="lead">Raid lead’s recap ›</button></div>';
+    var d = document.createElement('section'); d.className = 'dbt'; d._cs = cs; d.innerHTML = h; v.insertBefore(d, v.firstChild); { var pv = ''; try { pv = localStorage.getItem('wla-dbt-view') || ''; } catch (e) { pv = ''; } full(v, d, pv === 'full', true); if (pv === 'full') [0, 80, 400].forEach(function (ms) { setTimeout(function () { if (d.isConnected && !v.classList.contains('dbt-full') && d.querySelector('.dbt-vt [data-dbt="full"].on')) full(v, d, true, true); }, ms); }); } /* (the viewer's own choice of layout) */ { var wk = d.querySelector('.dbt-why > .dbt-k'); if (wk && TOPC) wk.insertAdjacentHTML('afterend', '<span class="dbt-c5w">' + TOPC + '</span>'); } { var nb = d.querySelector('.dbt-nums'), vt = d.querySelector('.dbt-vt'); if (nb && vt) d.insertBefore(nb, vt); } /* (the numbers sit under the top card, above the timeline (the user, Oct 28)) */ v.classList.add('dbt-on'); v.classList.remove('dbt-full');
+    var tl = d.querySelector('.dbt-tl'), side = d.querySelector('.dbt-side');
+    var svG = function (m) { var lv = m.death || m.dead ? 5 : (m.sv || 2); return lv >= 4 ? 's' : lv === 3 ? 'm' : 'n'; };
+    var vis = function (m) { if (F.role && !hasRole(m, F.role)) return 0; if (m.st !== 'ok' && !F.sev[svG(m)]) return 0; return vis0(m); };
+    var vis0 = function (m) { if (m.death) return F.d && (!F.who || m.who.some(function (w) { return w.n === F.who; })); if (!F[m.st === 'ok' ? 'ok' : 'y']) return 0; if (!F.mech[m.m]) return 0; if (F.who && !m.who.some(function (w) { return w.n === F.who; }) && String(m.why || '').indexOf(F.who) < 0 && m.lines.join(' ').indexOf(F.who) < 0) return 0; return 1; }; /* (named anywhere in the moment counts) */
+    /* (you: the character you picked on Home, when they're in this pull) */
+    var me = ''; try { var mp = JSON.parse(localStorage.getItem('wla-me') || 'null') /* (the app's ME_KEY, "Which one is you?") */, nm0 = mp && mp.name ? String(mp.name).split('-')[0].toLowerCase() : ''; if (nm0) M.forEach(function (m) { m.who.forEach(function (w) { if (w.n.toLowerCase() === nm0) me = w.n; }); }); } catch (e) { /* (no one picked) */ }
+    F.open = {}; F.ev = {}; F.pdd = false; F.rc = null;
+    var ROLE = {}; try { ROLE = (window.dbtRoles && window.dbtRoles()) || {}; } catch (e) { ROLE = {}; } /* (the app's own roles; no roles, no role filter) */
+    var hasRole = function (m, r) { return m.who.some(function (w) { return ROLE[w.n] === r; }); };
+    var TR = cs.trend || {}, NEWI = (TR.worse || []).map(function (x) { return x.id; }), AGN = (TR.better || []).map(function (x) { return x.id; }); /* (New: right last pull, wrong now. Again: wrong last pull too, fewer now) */
+    /* (every moment of that mechanic in that phase, right in the card: no jumping away (the user, Oct 27)) */
+    var every = function (m, i) { var rows = [].slice.call(m.sec.querySelectorAll('li.u1-r')).map(function (li) { var t = txt(li.querySelector('.u1-t')); if (!/^\d+:\d\d$/.test(t) || (cut && sx(t) > cut)) return null; var st = li.classList.contains('bad') ? 'r' : li.classList.contains('warn') ? 'y' : li.classList.contains('ok') ? 'g' : ''; if (!st) return null;
+        var who = [].slice.call(li.querySelectorAll('.nm')).map(function (n) { return { n: n.textContent.trim(), c: n.style.color }; }), l = [txt(li.querySelector('.u1-h')), txt(li.querySelector('.u1-o'))].filter(Boolean).join(': ');
+        return { t: t, st: st, h: chips(E(l || (st === 'g' ? 'Done right' : '')), who) }; }).filter(Boolean);
+      var seen = {}; rows = rows.filter(function (r) { var k = r.t + r.h; if (seen[k]) return false; seen[k] = 1; return true; }).sort(function (a, b) { return sx(a.t) - sx(b.t); });
+      return '<div class="dbt-ev">' + rows.map(function (r) { return '<div class="dbt-evr ' + r.st + '"><span>' + r.t + '</span><span>' + (r.h || '') + '</span><b>' + (r.st === 'g' ? '✓' : r.st === 'r' ? '✕' : '!') + '</b></div>'; }).join('') + '<button type="button" class="dbt-full1" data-i="' + i + '">Full breakdown with the map ›</button></div>'; };
+    var WT = (function () { if (kill) return null; var lw = lead ? (String(lead.what || '').match(/\b(\d+:\d\d)\b/g) || []).map(sx).filter(function (x) { return x > 0 && (!cut || x <= cut); }) : []; return lw.length ? lw[lw.length - 1] : cut ? cut - 1 : null; })(); /* (when the wipe happened: the lead's moment, or just before the wipe call) */
+    M.forEach(function (d0) { if (!d0.death) return; var nm0 = (d0.who[0] || {}).n; if (!nm0) return; var mm0 = M.filter(function (m) { var named = m.lines.join(' ').indexOf(nm0) >= 0; return !m.death && m.st !== 'ok' && Math.abs(m.t - d0.t) <= (named ? 8 : 3) && (named || m.who.some(function (w) { return w.n === nm0; })); }) /* (a mistake that names the player who died joins their death up to 8 s later) */.sort(function (a, b) { return (lead && b.id === lead.sec) - (lead && a.id === lead.sec) || (b.st === 'r') - (a.st === 'r'); })[0]; /* (the wipe's own mechanic first) */ if (mm0) { (mm0.deads = mm0.deads || []).push(d0); if (!mm0.dead) mm0.dead = d0; d0.into = mm0; } /* (a mass death: every death on the one card) */ }); /* (one card for a mistake and the death it caused) */
+    /* (the same moment counted under two mechanics, with the same reason, is one card: "also counted under …") */
+    M.forEach(function (m) { if (m.death || m.st === 'ok' || !m.why || m.dupOf) return; var o2 = M.filter(function (q) { return q !== m && !q.death && q.st !== 'ok' && !q.dupOf && q.why === m.why && Math.abs(q.t - m.t) <= 1; })[0]; if (!o2) return; var keep2 = (o2.dead && !m.dead) || (lead && o2.id === lead.sec) ? o2 : m, drop = keep2 === m ? o2 : m; drop.dupOf = keep2; (keep2.also = keep2.also || []).push(drop.m); });
+    var LT = lead ? ((String(lead.what || '').match(/\b(\d+:\d\d)\b/) || [])[1] || '') : '';
+    M.forEach(function (m) { if (m.st === 'ok') return; if (m.death) { m.sv = 5; return; } if (m.sev) { m.sv = Math.max(1, Math.min(5, m.sev)); return; }
+      var sv = m.st === 'r' ? 3 : 2; if (M.some(function (q) { return q.death && Math.abs(q.t - m.t) <= 2; })) sv = 5; else if (lead && m.id === lead.sec && LT && Math.abs(m.t - sx(LT)) <= 5) sv = 5; m.sv = sv; }); /* (a stand-in until the moment carries its own level) */
+    var SVL = function (n) { return n >= 4 ? 'Serious' : n === 3 ? 'Moderate' : 'Minor'; };
+    var svTag = function (n, dead) { var p = ''; for (var k = 1; k <= 5; k++) p += '<i' + (k <= n ? ' class="f"' : '') + '></i>'; return '<em class="dbt-sv s' + n + '" title="' + SVL(n) + ' (' + n + ' of 5)"><span class="dbt-pips">' + p + '</span>' + (dead ? '☠ ' : '') + SVL(n) + '</em>'; };
+    (function () { var c5 = { s: 0, m: 0, n: 0 }; M.forEach(function (m) { if (m.st === 'ok' || m.dupOf || (m.death && m.into)) return; var lv = m.dead ? 5 : (m.sv || 2); if (lv >= 4) c5.s++; else if (lv === 3) c5.m++; else c5.n++; }); TOPC = (c5.s ? '<span class="dbt-c5 s">' + c5.s + ' Serious</span>' : '') + (c5.m ? '<span class="dbt-c5 m">' + c5.m + ' Moderate</span>' : '') + (c5.n ? '<span class="dbt-c5 n">' + c5.n + ' Minor</span>' : ''); var wk = d.querySelector('.dbt-why > .dbt-k'); if (wk && TOPC && !d.querySelector('.dbt-c5w')) wk.insertAdjacentHTML('afterend', '<span class="dbt-c5w">' + TOPC + '</span>'); })();
+    var LEN = cut || (M.length ? M[M.length - 1].t + 10 : 1);
+    var draw = function () { var lastR = true, o = '', sd = 0, pi = 0, n = 0, run = [];
+      var flush = function () { if (!run.length) return; if (run.length >= 4 && !F.open[run[0].i]) { o += '<div class="dbt-st dbt-fold"><button type="button" data-fold="' + run[0].i + '">✓ ' + run.length + ' done right · ' + mm(run[0].m.t) + '–' + mm(run[run.length - 1].m.t) + ' ▸</button></div>'; } else run.forEach(function (r) { o += r.h; }); run = []; };
+      M.forEach(function (m, i) { while (pi < phs.length && phs[pi].t <= m.t) { flush(); var p0 = phs[pi], p1 = phs[pi + 1], inP = M.filter(function (q) { return q.t >= p0.t && (!p1 || q.t < p1.t) && q.st !== 'ok'; }), nmk = inP.filter(function (q) { return !q.death; }).length, ndt = inP.filter(function (q) { return q.death; }).length;
+          var inW = !kill && WT != null && WT >= p0.t && (!p1 || WT < p1.t); /* (the phase the wipe came from is never "clean") */
+          o += '<div class="dbt-st"><span>' + E(phs.length === 1 && /^mechanics$/i.test(p0.n) ? 'Whole fight' : p0.n) + '<em>' + E(p0.s) + '</em>' + (p0.hp0 != null && p0.hp1 != null && p0.hp0 !== '' && p0.hp1 !== '' ? '<i class="dbt-hpv">' + Math.round(+p0.hp0) + '% → ' + Math.round(+p0.hp1) + '%</i>' : '') + (nmk || ndt || inW ? '<i class="dbt-pc">' + (inW ? '<b class="dbt-r">✕ the wipe</b>' : '') + (nmk ? '<b class="dbt-y">' + nmk + ' mistake' + (nmk > 1 ? 's' : '') + '</b>' : '') + (ndt ? '<b class="dbt-r">☠ ' + ndt + '</b>' : '') + '</i>' : '<i class="dbt-pc"><b class="dbt-g">✓ clean</b></i>') + '</span></div>'; pi++; }
+        if (!vis(m)) return; if (m.death && m.into && vis(m.into)) return; if (m.dupOf && vis(m.dupOf)) return; n++; var R = m.st === 'ok' ? (lastR ? '' : ' R') : (sd++ % 2 ? ' R' : ''); if (m.st !== 'ok') lastR = !!R; /* (cards alternate with each other; the small pills sit opposite the last card) */
+        if (m.st === 'ok') { run.push({ i: i, m: m, h: '<div class="dbt-it ok' + R + '" data-i="' + i + '"><div class="dbt-c dbt-okc"><span class="dbt-ic">' + m.icon + '</span>' + nameB(m) + (m.nk ? '<span class="dbt-nk">' + E(m.nk) + '</span>' : '') + '<span>' + E(m.lines[0] || (m.n > 1 ? m.n + ' times, done right' : 'Done right')) + (m.lines.length > 1 ? ' (+' + (m.lines.length - 1) + ' more)' : '') + '</span></div><span class="dbt-tm">' + tmH(m.t) + '</span></div>' }); return; }
+        flush();
+        var x = m.w, why = m.death ? '' : (m.why || howIt(m.sec) || ''), nx = m.death ? '' : (m.next || (x && (x.how || x.fix)) || (paren(m.lab) ? paren(m.lab) + '.' : ''));
+        if (why && nx && sent(nx, 1).toLowerCase() === why.toLowerCase()) why = ''; /* (no reason twice) */
+        var dd = m.death ? m : m.dead || null; if (m.dead) m.sv = 5;
+        var deadN = m.death ? [] : (function () { var L0 = []; (m.deads || []).forEach(function (q) { var n0 = (q.who[0] || {}).n; if (n0 && L0.indexOf(n0) < 0) L0.push(n0); }); m.lines.forEach(function (l) { var mt = String(l).match(/^([^:·]+):\s*Died\b/); if (mt && L0.indexOf(mt[1].trim()) < 0) L0.push(mt[1].trim()); }); return L0; })(); /* (everyone this moment killed: its deaths and the names its lines say died) */
+        var tag = m.death ? '☠ DEATH' : m.st === 'r' ? 'FAILED' : 'MISTAKE', nw = !m.death && NEWI.indexOf(m.id) >= 0 ? '<span class="dbt-new">New this pull</span>' : !m.death && AGN.indexOf(m.id) >= 0 ? '<span class="dbt-agn">Again</span>' : '';
+        o += '<div class="dbt-it ' + ((m.sv || 2) >= 4 ? 'r' : 'y') + ' sv' + (m.sv || 2) + R + '" data-i="' + i + '"><div class="dbt-c dbt-big"><div class="dbt-h"><span class="dbt-ic">' + (m.death ? '☠' : m.icon) + '</span>' + (m.death ? '<b>Death</b>' : nameB(m)) + (m.nk ? '<span class="dbt-nk">' + E(m.nk) + '</span>' : '') + nw + svTag(m.sv || 2, !!dd) + '</div><h3>' + chips(E(m.lines.slice(0, 3).join('. ').replace(/\.\./g, '.')), m.who) + (m.lines.length > 3 ? ' <span style="color:var(--faint)">(+' + (m.lines.length - 3) + ' more)</span>' : '') + '</h3>' +
+          (m.also && m.also.length ? '<div class="dbt-also">Also counted under ' + m.also.map(function (a) { return '<b>' + E(a) + '</b>'; }).join(', ') + '</div>' : '') +
+          (dd && (dd.kb || dd.kw) ? '<div class="dbt-two">' + (dd.kb ? '<div><span class="dbt-k" style="color:#f0726a">' + (m.death ? 'Killed by' : deadN.length > 1 ? '☠ ' + deadN.length + ' died' : '☠ ' + E((dd.who[0] || {}).n || '') + ' killed by') + '</span><p>' + (deadN.length > 1 ? chips(E(deadN.join(', ')), deadN.map(function (n0) { return { n: n0 }; })) + ' · ' : '') + E(dd.kb) + '</p></div>' : '') + (dd.kw && m.death ? '<div><span class="dbt-k">Why</span><p>' + E(dd.kw) + '</p></div>' : '') + '</div>' : '') +
+          (dd && (dd.kc || dd.ks) ? '<div class="dbt-dx">' + (dd.kc ? '<p><b>Cause</b> ' + E(dd.kc) + '</p>' : '') + (dd.ks ? '<p><b>Could have saved them</b> ' + E(dd.ks) + '</p>' : '') + '</div>' : '') +
+          (dd ? '<div class="dbt-dth">' + (dd.word ? '<span class="' + (/own/.test(dd.word) ? 'dbt-r' : '') + '">' + E(dd.word.charAt(0).toUpperCase() + dd.word.slice(1)) + '</span>' : '') + '' + (dd.dg && v.querySelector('.dth-p .cbl-mgo[data-ddgo="' + CSS.escape(dd.dg) + '"]') ? '<button type="button" class="dbt-more" data-dg="' + E(dd.dg) + '">What killed them ▾</button>' : '') + '</div>' : '') +
+          (why || nx ? '<div class="dbt-two">' + (why ? '<div><span class="dbt-k">Why</span><p>' + E(why) + '</p></div>' : '') + (nx ? '<div><span class="dbt-k">Next time</span><p>' + E(sent(nx, 2)) + '</p></div>' : '') + '</div>' : '') +
+          (m.death ? '' : '<button type="button" class="dbt-more" data-ev="' + i + '">' + (F.ev[i] ? 'Hide ▴' : 'Every time this phase ▾') + '</button>' + (F.ev[i] ? every(m, i) : '')) + '</div><span class="dbt-tm">' + tmH(m.t) + '</span></div>'; });
+      flush(); if (!n) o += '<div class="dbt-empty">Nothing matches these filters.</div>';
+      if (cut) o += '<div class="dbt-st cut"><span>Wipe called · ' + mm(cut) + '<em>the rest is not judged</em></span></div>';
+      tl.innerHTML = o;
+      var cnt = function (k) { return M.filter(function (m) { return k === 'd' ? m.death : !m.death && (m.st === 'ok' ? 'ok' : 'y') === k; }).length; };
+      var row = function (attr, on, label, num, ic) { return '<button type="button" class="dbt-row' + (on ? ' on' : '') + '" ' + attr + '>' + (ic || '') + '<span class="dbt-lb">' + label + '</span><span class="dbt-n">' + num + '</span><span class="dbt-sw"></span></button>'; };
+      var ov = '<div><span class="dbt-k">The pull at a glance</span><div class="dbt-ov">' + phs.filter(function (p) { return p.t > 0 && p.t < LEN; }).map(function (p) { return '<i class="ph" style="top:' + (p.t / LEN * 100) + '%"></i>'; }).join('') +
+        M.map(function (m, i) { return m.st === 'ok' || !vis(m) ? '' : '<button type="button" class="' + (m.death ? 'd' : m.st) + '" data-jump="' + i + '" style="top:' + (m.t / LEN * 100) + '%" title="' + E(mm(m.t) + ' · ' + (m.death ? 'Death' : m.m)) + '"></button>'; }).join('') +
+        '<span class="t0">0:00</span><span class="t1">' + mm(LEN) + (cut ? ' · wipe called' : '') + '</span></div></div>';
+      ov = ''; /* (the user, Oct 27: "I hate this" about the strip: out) */
+      /* round 135w quiet list */
+      var shown = M.filter(vis).length;
+      var EYE = '<svg class="dbt-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3" fill="currentColor"/><path class="dbt-eyex" d="M4 20L20 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+      var qrow = function (attr, on, lead, label, num, numCls) { return '<button type="button" class="dbt-q' + (on ? ' on' : '') + '" ' + attr + ' aria-pressed="' + (on ? 'true' : 'false') + '" title="' + (on ? 'Tap to hide' : 'Tap to show') + '">' + lead + '<span class="dbt-ql">' + label + '</span><span class="dbt-qn' + (numCls ? ' ' + numCls : '') + '">' + (num == null ? '' : num) + '</span>' + EYE + '</button>'; };
+      var cn5 = { s: 0, m: 0, n: 0 }; M.forEach(function (m) { if (m.st === 'ok' || m.dupOf || (m.death && m.into)) return; cn5[svG(m)]++; });
+      var anyOff = shown < M.length || F.who || F.role || !F.sev.s || !F.sev.m || !F.sev.n;
+      var rcH = RC.length ? '<div class="dbt-qg dbt-rc"><div class="dbt-fh dbt-fh2"><b>Raid checks</b><span>worst first</span></div>' + RC.map(function (c) { var op = F.rc === c.k, cl = c.fl === 'bad' || c.pc < 50 ? 'r' : c.pc < 80 ? 'y' : ''; return '<button type="button" class="dbt-q on dbt-rcq' + (op ? ' open' : '') + '" data-rc="' + c.k + '" aria-expanded="' + (op ? 'true' : 'false') + '"><span class="dbt-ic">' + c.ic + '</span><span class="dbt-ql">' + E(c.n) + '</span><span class="dbt-qn' + (cl ? ' ' + cl : '') + '">' + Math.round(c.pc) + '%</span><i class="dbt-chev">' + (op ? '▾' : '›') + '</i></button>' + (op ? '<div class="dbt-rcd"><i class="dbt-rcb"><i class="' + (cl || 'g') + '" style="width:' + Math.max(2, Math.min(100, c.pc)) + '%"></i></i><p>' + E(c.d) + '</p><button type="button" class="dbt-full1" data-rcfull="' + c.k + '">See it in full ›</button></div>' : ''); }).join('') + '</div>' : '';
+      side.innerHTML = ov + '<div class="dbt-fh"><b>Filters</b><span>' + shown + ' of ' + M.length + '</span>' + (anyOff ? '<button type="button" class="dbt-rst" data-reset="1">Reset</button>' : '') + '</div><div class="dbt-hint">Tap a row to hide it.</div>' +
+        '<div class="dbt-qg"><span class="dbt-k">Show</span>' +
+          qrow('data-f="d"', F.d, '<i class="dbt-qd" style="background:#f0726a"></i>', 'Deaths', cnt('d')) +
+          qrow('data-f="y"', F.y, '<i class="dbt-qd" style="background:#e8a23a"></i>', 'Mistakes', cnt('y')) +
+          '<div class="dbt-qsev">' + [['s', 'Serious', '#f0726a'], ['m', 'Moderate', '#e8a23a'], ['n', 'Minor', '#cdb35a']].map(function (q) { return '<button type="button" class="dbt-qs' + (F.sev[q[0]] ? ' on' : '') + '" data-sev="' + q[0] + '" aria-pressed="' + (F.sev[q[0]] ? 'true' : 'false') + '" title="' + (F.sev[q[0]] ? 'Tap to hide' : 'Tap to show') + '" style="--qc:' + q[2] + '"><i></i>' + q[1] + ' ' + cn5[q[0]] + '</button>'; }).join('') + '</div>' +
+          qrow('data-f="ok"', F.ok, '<i class="dbt-qd" style="background:#7ee08f"></i>', 'Done right', cnt('ok')) +
+        '</div>' +
+        (RC.length ? '' : '') + '<div class="dbt-qg"><span class="dbt-k">Mechanics</span>' + mechs.map(function (mc) { var f0 = M.filter(function (m) { return m.m === mc; }), bad = f0.filter(function (m) { return m.st !== 'ok'; }).length; return qrow('data-m="' + E(mc) + '"', F.mech[mc], '<span class="dbt-ic">' + f0[0].icon + '</span>', E(mc), bad || '', bad ? 'y' : ''); }).join('') + '</div>' +
+        (people.length ? (function () { /* (one dropdown of players, each in their class colour (the user, Oct 27)) */
+          var pc = function (p) { return M.filter(function (m) { return m.st !== 'ok' && m.who.some(function (w) { return w.n === p; }); }).length; };
+          var lab = function (p) { return p ? '<span style="color:' + (col[p] || 'var(--text)') + '">' + (p === me ? '★ ' : '') + E(p) + '</span>' : 'Everyone'; };
+          var opts = (me && (!F.role || ROLE[me] === F.role) ? [me] : []).concat(['']).concat(people.filter(function (p) { return p !== me && (!F.role || ROLE[p] === F.role); }).sort(function (a, b) { return pc(b) - pc(a) || a.localeCompare(b); }));
+          var RL = [['', 'All'], ['tank', 'Tanks'], ['healer', 'Healers'], ['melee', 'Melee'], ['ranged', 'Ranged']], roles = Object.keys(ROLE).length ? '<div class="dbt-roles"><span class="dbt-k">Role</span><div class="dbt-seg">' + RL.map(function (r) { var n0 = r[0] ? M.filter(function (m) { return m.st !== 'ok' && hasRole(m, r[0]); }).length : 0; return '<button type="button" class="' + (F.role === r[0] ? 'on' : '') + '" data-role="' + r[0] + '">' + r[1] + (r[0] && n0 ? '<i>' + n0 + '</i>' : '') + '</button>'; }).join('') + '</div></div>' : '';
+          return roles + '<div class="dbt-ddw"><span class="dbt-k">Player</span><button type="button" class="dbt-dd" data-pdd="1">' + lab(F.who) + '<i>▾</i></button>' + (F.pdd ? '<div class="dbt-ddm">' + opts.map(function (p) { return '<button type="button" class="dbt-ddo' + (F.who === p ? ' on' : '') + '" data-p="' + E(p) + '">' + (p === me && p ? '<span style="color:' + (col[p] || 'var(--text)') + '">★ Me (' + E(p) + ')</span>' : lab(p)) + (p ? '<em>' + pc(p) + ' mistake' + (pc(p) === 1 ? '' : 's') + '</em>' : '') + '</button>'; }).join('') + '</div>' : '') + '</div>'; })() : '') +
+        rcH; /* (raid checks last, under the player) */
+      var off = [F.d, F.y, F.ok].filter(function (x) { return !x; }).length + mechs.filter(function (mc) { return !F.mech[mc]; }).length + (F.who ? 1 : 0) + (F.role ? 1 : 0) + ['s', 'm', 'n'].filter(function (k) { return !F.sev[k]; }).length;
+      var fb = d.querySelector('.dbt-fbtn'); if (fb) fb.innerHTML = '⚙ Filters' + (off ? ' <em>' + off + ' off</em>' : '') + ' ▾';
+      try { spellify(v, tl); spellify(v, d.querySelector('.dbt-why')); } catch (e) { /* (plain text stays) */ }
+      d.querySelectorAll('img.oi').forEach(function (im) { if (!im.getAttribute('src')) im.removeAttribute('data-done'); }); try { hydrateIcons(); } catch (e) { /* (icons load when seen) */ } };
+    draw();
+    /* (each death's recap, read once from the page's own Deaths panel: "Killed by" and "Why" go on the card) */
+    (function () { var any = 0; M.forEach(function (m) { if (!m.death || !m.dg || m.box != null) return; var g3 = v.querySelector('.dth-p .cbl-mgo[data-ddgo="' + CSS.escape(m.dg) + '"]'), ab3 = g3 && g3.closest('.cch-ab'); m.box = ''; if (!g3 || !ab3) return; try { var bx3 = ab3.querySelector('.cch-ddbox'); if (bx3 && !bx3.hidden) g3.click(); g3.click(); bx3 = ab3.querySelector('.cch-ddbox'); if (bx3 && !bx3.hidden && bx3.innerHTML) { m.box = bx3.innerHTML; var tx = bx3.innerText || bx3.textContent || ''; var LBL = '(?=Killed by:|Why:|Fix:|Cause:|Could have saved them:|$)', pick = function (lab) { var mt = tx.match(new RegExp(lab + ':\\s*([\\s\\S]*?)\\s*' + LBL)); return mt ? mt[1].trim() : ''; }; m.kb = pick('Killed by'); m.kw = pick('Why'); m.kc = pick('Cause'); m.ks = pick('Could have saved them'); if (/\bstill ready\b/i.test(m.ks)) { var ks0 = m.ks.split(/\s·\s/), last = ks0[ks0.length - 1], cut0 = last.indexOf(ks0[0], 1); if (cut0 > 0) { ks0[ks0.length - 1] = last.slice(0, cut0).trim(); m.ks = ks0.join(' · ') + ' (still ready)'; } else { var one = m.ks.match(/^(.+?)\s+\1\s+still ready\b/i); if (one) m.ks = one[1] + ' (still ready)'; } } /* (the list once, not twice) */ /* (each label on its own) */ any = 1; } g3.click(); } catch (e) { /* (no recap) */ } }); if (any) draw(); })();
+    var jb = document.createElement('button'); jb.type = 'button'; jb.className = 'dbt-jump'; jb.textContent = 'Next mistake ↓'; d.appendChild(jb);
+    jb.addEventListener('click', function () { var L2 = [].slice.call(tl.querySelectorAll('.dbt-it.y, .dbt-it.r')), nx2 = L2.filter(function (x) { return x.getBoundingClientRect().top > innerHeight / 2 + 10; })[0]; /* (the next one below the middle of the screen, never back up) */ if (!nx2) { (L2[0] || tl).scrollIntoView({ block: 'center', behavior: 'smooth' }); return; } nx2.scrollIntoView({ block: 'center', behavior: 'smooth' }); nx2.classList.remove('dbt-flash'); void nx2.offsetWidth; nx2.classList.add('dbt-flash'); });
+    var jv = function () { if (!d.isConnected) { window.removeEventListener('scroll', jv); return; } var r0 = tl.getBoundingClientRect(), L2 = [].slice.call(tl.querySelectorAll('.dbt-it.y, .dbt-it.r')), left = L2.filter(function (x) { return x.getBoundingClientRect().top > innerHeight / 2 + 10; }).length; jb.classList.toggle('on', r0.top < innerHeight - 100 && r0.bottom > 200 && L2.length > 0 && !v.classList.contains('dbt-full')); jb.textContent = left ? 'Next mistake ↓ ' + left + ' left' : 'Back to the first ↑'; };
+    window.addEventListener('scroll', jv, { passive: true }); setTimeout(jv, 50);
+    d.addEventListener('click', function (e) { var t = e.target, b = t.closest('button'); if (!b || !d.contains(b)) return;
+      if (b.dataset.dg) { var card = b.closest('.dbt-big'), had = card.querySelector('.dbt-dbox'); if (had) { had.remove(); b.textContent = 'What killed them ▾'; return; } var mm0 = M.filter(function (q) { return q.dg === b.dataset.dg; })[0]; if (mm0 && mm0.box) { var dv0 = document.createElement('div'); dv0.className = 'dbt-dbox'; dv0.innerHTML = mm0.box; card.appendChild(dv0); b.textContent = 'Hide ▴'; try { refreshIcons(); } catch (e) { /* (icons) */ } return; } /* (the page's own death recap, copied into the card) */
+        var g2 = v.querySelector('.dth-p .cbl-mgo[data-ddgo="' + CSS.escape(b.dataset.dg) + '"]'); if (!g2) return; var ab2 = g2.closest('.cch-ab'), bx = ab2 && ab2.querySelector('.cch-ddbox'); if (bx && !bx.hidden) g2.click(); g2.click();
+        setTimeout(function () { var bx2 = ab2 && ab2.querySelector('.cch-ddbox'); if (!bx2 || bx2.hidden || !bx2.innerHTML) return; var dv = document.createElement('div'); dv.className = 'dbt-dbox'; dv.innerHTML = bx2.innerHTML; card.appendChild(dv); g2.click(); b.textContent = 'Hide ▴'; try { refreshIcons(); } catch (e) { /* (icons) */ } }, 60); return; }
+      if (b.dataset.fold) { F.open[b.dataset.fold] = 1; draw(); return; }
+      if (b.dataset.ev) { F.ev[b.dataset.ev] = !F.ev[b.dataset.ev]; draw(); return; }
+      if (b.dataset.jump) { var it = tl.querySelector('.dbt-it[data-i="' + b.dataset.jump + '"]'); if (it) { it.scrollIntoView({ block: 'center', behavior: 'smooth' }); it.classList.remove('dbt-flash'); void it.offsetWidth; it.classList.add('dbt-flash'); } return; }
+      if (b.dataset.rc != null) { F.rc = F.rc === +b.dataset.rc ? null : +b.dataset.rc; draw(); return; }
+      if (b.dataset.rcgo != null) { F.rc = +b.dataset.rcgo; draw(); if (innerWidth < 1000) side.classList.add('open'); var rq = side.querySelector('[data-rc="' + b.dataset.rcgo + '"]'); if (rq) rq.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
+      if (b.dataset.rcfull != null) { var c0 = RC.filter(function (c) { return c.k === +b.dataset.rcfull; })[0]; if (!c0) return; full(v, d, true, true); setTimeout(function () { c0.el.open = true; var hd0 = c0.el.closest('details:not(.cch-ab)'); if (hd0) hd0.open = true; c0.el.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 60); return; }
+      if (b.dataset.sev) { F.sev[b.dataset.sev] ^= 1; draw(); return; }
+      if (b.dataset.f) { F[b.dataset.f] ^= 1; draw(); return; }
+      if (b.dataset.m) { F.mech[b.dataset.m] ^= 1; draw(); return; }
+      if (b.dataset.role != null) { F.role = b.dataset.role; if (F.who && F.role && ROLE[F.who] !== F.role) F.who = ''; draw(); return; }
+      if (b.dataset.pdd) { F.pdd = !F.pdd; draw(); return; }
+      if (b.dataset.p != null) { F.who = b.dataset.p; F.pdd = false; draw(); return; }
+      if (b.dataset.reset) { F.sev = { s: 1, m: 1, n: 1 }; F.role = ''; F.y = F.d = F.ok = 1; mechs.forEach(function (mc) { F.mech[mc] = 1; }); F.who = ''; draw(); return; }
+      if (b.dataset.i != null) { var m = M[+b.dataset.i]; openRow(v, d, { ph: m.ph, id: m.id }); return; }
+      var k = b.dataset.dbt; if (!k) return;
+      if (k === 'filters') { side.classList.toggle('open'); return; }
+      if (k === 'tl') { full(v, d, false); return; }
+      if (k === 'full') { if (b.closest('.dbt-vt') && v.classList.contains('dbt-full')) return; full(v, d, !v.classList.contains('dbt-full')); if (v.classList.contains('dbt-full')) (v.querySelector(':scope > .oa-tiles') || L).scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
+      if (k === 'lead') { var top = v.querySelector(':scope > #oaTop'); if (top) { var on = top.classList.toggle('dbt-show'); b.textContent = on ? 'Hide the recap ▴' : 'Raid lead’s recap ›'; if (on) { d.after(top); top.scrollIntoView({ block: 'start', behavior: 'smooth' }); } } return; }
+      if (k === 'players') { var rb = v.querySelector(':scope > .ds-raidb'); if (!rb) return; var on2 = !v.classList.contains('dbt-pl'); v.classList.toggle('dbt-pl', on2); b.textContent = on2 ? 'Hide players ▴' : 'Every player ›'; var kp = v.querySelector(':scope > .brf-keep'); if (on2 && (!kp || getComputedStyle(kp).display === 'none')) rb.click(); if (!on2 && kp && getComputedStyle(kp).display !== 'none') rb.click(); if (on2) setTimeout(function () { rb.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 60); } });
+  };
+  var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(function () { try { build(); } catch (e) { console.error(e); } }, 150); };
+  var start = function () { var m = document.getElementById('main') || document.body; if (!m) return setTimeout(start, 300); new MutationObserver(kick).observe(m, { childList: true, subtree: true }); kick(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
