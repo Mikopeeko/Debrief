@@ -10348,6 +10348,17 @@ html body #view .rtl .rtl-mid .rtl-t { margin: 0; }
 /* round 161i: each proc bar starts with its icon (the user: "procs should still have their icon") */
 .rtl .rtv-pbi{display:block!important;left:-3px;top:-16px;width:14px;height:14px;opacity:.9}
 .rtl .rtv-pb{margin-top:0}
+/* round 162: slim cooldown strips, window presses marked, new filters */
+.rtl .rtv-dur.col{width:10px!important;margin-left:calc((var(--cw, 34px) - 10px) / 2 - 5px);border-radius:5px;background:linear-gradient(180deg,rgba(230,180,80,.42),rgba(230,180,80,.12));box-shadow:none}
+.rtl .rtv-pop .rtv-win span.ok{color:#8fe39d}.rtl .rtv-pop .rtv-win span.no{color:#f39a93}
+.rtl .rtv.f-outwin .rtv-c.ow.mk-r img,.rtl .rtv.f-outwin .rtv-c.ow.mk-r svg,.rtl .rtv.f-outwin .rtv-c.ow.mk-y img,.rtl .rtv.f-outwin .rtv-c.ow.mk-y svg{box-shadow:0 0 0 1px rgba(0,0,0,.5),0 2px 4px rgba(0,0,0,.4)!important}
+.rtl .rtv.f-outwin .rtv-c.ow::before,.rtl .rtv.f-outwin .rtv-mk.ow{display:none}
+.rtl .rtv.f-dead .rtv-after{background:rgba(10,12,16,.94)}
+.rtl .rtv-ones{display:flex;flex-wrap:wrap;gap:5px;padding:4px 6px 2px}
+.rtl .rtv-one{width:26px;height:26px;padding:0;border:0;border-radius:6px;background:none;cursor:pointer;opacity:.55;box-shadow:0 0 0 1px rgba(255,255,255,.08)}
+.rtl .rtv-one .icw,.rtl .rtv-one .icw > *{display:block;width:26px!important;height:26px!important;border-radius:6px}
+.rtl .rtv-one:hover{opacity:.9}
+.rtl .rtv-one.on{opacity:1;box-shadow:0 0 0 2px #f0cf7a}
 </style>
 
 
