@@ -20424,6 +20424,7 @@ const PATCH_NOTES = [
     'Debriefing: the boss banner is tidier, with one chip shape and without the start time and player count; "The details" tiles open into slim lists, and only a tile that needs fixing is edged in red.',
     'Debriefing: "The details" are small tiles, three to a row, each with its score, its name and a short line; tap one to open it across the row.',
     'Rotation: Gear and extras are small tiles in a row above your checklist (each item, its number and its short line), and the checklist has the full width under them.',], f: [
+    'Survival Hunter: the tier set\'s 2-piece and 4-piece were the wrong way round. Big cooldowns now track Takedown for Survival, Zenith for Windwalker and Dark Transformation for Unholy, not buttons that are gone.',
     'Arcane Mage as Spellslinger: Arcane Missiles with Clearcasting is checked at under 15 Arcane Salvo, your hero tree\'s line, not Sunfury\'s 12. Fire Mage as Frostfire: Scorch with Heat Shimmer is no longer expected.',
     'Rotation Timeline: only buttons you pressed show in the strips. Procs the log writes as casts (Holy Paladin\'s Reclamation, Soul Fragments, Shadowy Apparitions and others) and auto-attacks are gone, the same as on the Casts tab.',
     'Debriefing: Overview no longer opens on the old "Your raid lead says" box when you reload or come back; "Why we wiped" leads both views.',
@@ -22234,7 +22235,7 @@ const NDZ_IMMUNE = { HUNTER: 'Aspect of the Turtle', PALADIN: 'Divine Shield', M
 const NDZ_IMMUNE3 = { ...NDZ_IMMUNE, ROGUE: 'Cloak of Shadows' }; // (P3's Grim Guillotine is magic)
 const NDZ_WALL = { WARRIOR: 'Die by the Sword', PRIEST: 'Dispersion', DEATHKNIGHT: 'Icebound Fortitude', SHAMAN: 'Astral Shift', EVOKER: 'Obsidian Scales', DRUID: 'Barkskin', MONK: 'Fortifying Brew', DEMONHUNTER: 'Blur', ROGUE: 'Feint', WARLOCK: 'Unending Resolve' };
 const NDZ_CC = [['MONK', 'Ring of Peace'], ['DRUID', "Ursol's Vortex"], ['WARRIOR', 'Shockwave'], ['DEMONHUNTER', 'Chaos Nova'], ['SHAMAN', 'Capacitor Totem'], ['DEATHKNIGHT', "Gorefiend's Grasp"], ['PALADIN', 'Hammer of Justice']];
-const NDZ_BIG = { 62: 'Arcane Surge', 63: 'Combustion', 64: 'Icy Veins', 253: 'Bestial Wrath', 254: 'Trueshot', 255: 'Coordinated Assault', 265: 'Summon Darkglare', 266: 'Summon Demonic Tyrant', 267: 'Summon Infernal',
+const NDZ_BIG = { 62: 'Arcane Surge', 63: 'Combustion', 64: 'Icy Veins', 253: 'Bestial Wrath', 254: 'Trueshot', 255: 'Takedown', 265: 'Summon Darkglare', 266: 'Summon Demonic Tyrant', 267: 'Summon Infernal',
   71: 'Avatar', 72: 'Avatar', 102: 'Incarnation', 103: 'Incarnation', 258: 'Voidform', 262: 'Ascendance', 263: 'Ascendance', 251: 'Pillar of Frost', 252: 'Army of the Dead', 259: 'Deathmark', 260: 'Adrenaline Rush', 261: 'Shadow Blades',
   269: 'Invoke Xuen', 577: 'Metamorphosis', 1467: 'Dragonrage', 70: 'Avenging Wrath' };
 // (the Mythic Eternal Nightfall shields, from the raid addon's own timeline: seconds into P2 and P3)
@@ -34864,24 +34865,26 @@ const PERF_COUNTS = new Set(['card', 'spec', 'util', 'surv', 'pi', 'cds', 'aura'
 // shortens it just means more presses, and uses above the count are full marks. A cooldown is only judged for a player who
 // cast it at least once that night, so an untalented one is never "never used". (Empower Rune Weapon is gone: it has two
 // charges on a 30 s recharge now, not a big cooldown.)
+// (Oct 28 audit: only buttons in the 12.1.5 kit: Takedown, Zenith and Dark Transformation in; Coordinated Assault, Spearhead, Storm, Earth, and Fire,
+// Summon Gargoyle, Call of the Wild, Bloodshed and Flagellation out)
 const PERF_CDS = {
   'Blood Death Knight': [['Dancing Rune Weapon', 120]], 'Frost Death Knight': [['Pillar of Frost', 45], ["Frostwyrm's Fury", 90]],
-  'Unholy Death Knight': [['Army of the Dead', 90], ['Summon Gargoyle', 180], ['Unholy Assault', 90]],
+  'Unholy Death Knight': [['Army of the Dead', 90], ['Dark Transformation', 45], ['Unholy Assault', 90]],
   'Havoc Demon Hunter': [['Metamorphosis', 120], ['The Hunt', 90]], 'Vengeance Demon Hunter': [['Metamorphosis', 120], ['Fel Devastation', 40]],
   'Balance Druid': [['Incarnation: Chosen of Elune', 180], ['Celestial Alignment', 180], ['Convoke the Spirits', 120], ['Force of Nature', 60]],
   'Feral Druid': [['Incarnation: Avatar of Ashamane', 180], ['Berserk', 180], ['Convoke the Spirits', 120]], 'Guardian Druid': [['Incarnation: Guardian of Ursoc', 180], ['Berserk', 180]],
   'Restoration Druid': [['Tranquility', 180], ['Incarnation: Tree of Life', 180], ['Convoke the Spirits', 120], ['Flourish', 90]],
   'Devastation Evoker': [['Dragonrage', 120], ['Deep Breath', 120]], 'Preservation Evoker': [['Rewind', 240], ['Dream Flight', 120], ['Emerald Communion', 180], ['Tip the Scales', 120]],
   'Augmentation Evoker': [['Breath of Eons', 120], ['Tip the Scales', 120]],
-  'Beast Mastery Hunter': [['Bestial Wrath', 90], ['Call of the Wild', 120], ['Bloodshed', 60]], 'Marksmanship Hunter': [['Trueshot', 120], ['Volley', 45]], 'Survival Hunter': [['Coordinated Assault', 120], ['Spearhead', 90]],
+  'Beast Mastery Hunter': [['Bestial Wrath', 90]], 'Marksmanship Hunter': [['Trueshot', 120], ['Volley', 45]], 'Survival Hunter': [['Takedown', 90]],
   'Arcane Mage': [['Arcane Surge', 90], ['Touch of the Magi', 45]], 'Fire Mage': [['Combustion', 120]], 'Frost Mage': [['Icy Veins', 120], ['Frozen Orb', 60]],
   'Brewmaster Monk': [['Invoke Niuzao, the Black Ox', 120]], 'Mistweaver Monk': [['Restoral', 180], ['Revival', 180], ["Invoke Yu'lon, the Jade Serpent", 120], ['Invoke Chi-Ji, the Red Crane', 120], ['Celestial Conduit', 90]],
-  'Windwalker Monk': [['Storm, Earth, and Fire', 90], ['Invoke Xuen, the White Tiger', 120], ['Celestial Conduit', 90]],
+  'Windwalker Monk': [['Zenith', 90], ['Invoke Xuen, the White Tiger', 120], ['Celestial Conduit', 90]],
   'Holy Paladin': [['Avenging Wrath', 120], ['Aura Mastery', 180], ['Divine Toll', 60]], 'Protection Paladin': [['Avenging Wrath', 120], ['Sentinel', 120]],
   'Retribution Paladin': [['Avenging Wrath', 120], ['Crusade', 120], ['Divine Toll', 60], ['Execution Sentence', 60], ['Final Reckoning', 60]],
   'Discipline Priest': [['Power Word: Barrier', 180], ['Rapture', 90], ['Evangelism', 90], ['Power Infusion', 120]], 'Holy Priest': [['Divine Hymn', 180], ['Apotheosis', 120], ['Holy Word: Salvation', 720], ['Power Infusion', 120]],
   'Shadow Priest': [['Voidform', 120], ['Dark Ascension', 60], ['Power Infusion', 120]],
-  'Assassination Rogue': [['Deathmark', 120], ['Kingsbane', 60]], 'Outlaw Rogue': [['Adrenaline Rush', 180], ['Killing Spree', 180]], 'Subtlety Rogue': [['Shadow Blades', 90], ['Flagellation', 90]],
+  'Assassination Rogue': [['Deathmark', 120], ['Kingsbane', 60]], 'Outlaw Rogue': [['Adrenaline Rush', 180], ['Killing Spree', 180]], 'Subtlety Rogue': [['Shadow Blades', 90]],
   'Elemental Shaman': [['Ascendance', 180], ['Stormkeeper', 60], ['Fire Elemental', 120], ['Storm Elemental', 120]], 'Enhancement Shaman': [['Feral Spirit', 90], ['Ascendance', 180], ['Doom Winds', 60]],
   'Restoration Shaman': [['Healing Tide Totem', 180], ['Spirit Link Totem', 180], ['Ascendance', 180]],
   'Affliction Warlock': [['Summon Darkglare', 120], ['Malevolence', 60]], 'Demonology Warlock': [['Summon Demonic Tyrant', 60], ['Grimoire: Imp Lord', 120], ['Grimoire: Fel Ravager', 120], ['Summon Doomguard', 120]],
@@ -39787,7 +39790,7 @@ const TIER_FX = {
   'Restoration Shaman': { p2: TIER_X.rsham2 ? [{ own: TIER_X.rsham2 }] : [], p4: [{ own: ['Condensation'], why: 'the watery shields' }], t2: 'Healing Wave and Chain Heal sometimes make a Healing Rain where they land', t4: 'every second, an ally in your Healing Rain gets a watery shield', no: TIER_X.rsham2 ? '' : 'the 2-piece (its Healing Rains look like yours in the log)' },
   'Beast Mastery Hunter': { p2: [{ sp: ['Stomp'], share: 1 / 3, why: 'your pets stomp once more at half strength: 0.5 of every 1.5' }], p4: [{ stk: 'Cobra Fang', hit: 'Cobra Shot', cast: 'cobra shot', per: 0.2, max: 4, win: 1 }], t2: 'Barbed Shot makes your pets stomp one more time at half strength', t4: 'each Stomp makes your next Cobra Shot 20% stronger, up to 4 times (or cleave)', no: 'Cobra Shot\'s cleave (4-piece)' },
   'Marksmanship Hunter': { p2: [{ sp: ['Explosive Shot'], pct: 0.05 }], p4: [{ sp: ['Aimed Shot', 'Rapid Fire'], pct: 0.05 }], t2: 'Explosive Shot lasts a second longer and does 5% more damage', t4: 'Aimed Shot and Rapid Fire do 5% more damage and come back sooner', no: 'Explosive Shot\'s extra second (2-piece) and the faster Aimed Shot and Rapid Fire (4-piece)' },
-  'Survival Hunter': { p2: [], p4: [{ stk: 'Mongoose Fury', hit: 'Wildfire Bomb', cast: 'wildfire bomb', per: 0.1, flat: true, win: 1.5 }], t2: 'Boomstick keeps Mongoose Fury up longer, and Mongoose Fury is 10% stronger', t4: 'Mongoose Fury also makes Wildfire Bomb 10% stronger', no: 'the 2-piece (a longer and stronger Mongoose Fury)' },
+  'Survival Hunter': { p2: [{ stk: 'Mongoose Fury', hit: 'Wildfire Bomb', cast: 'wildfire bomb', per: 0.1, flat: true, win: 1.5 }], p4: [], t2: 'Mongoose Fury also makes Wildfire Bomb 10% stronger', t4: 'each Boomstick keeps Mongoose Fury up a second longer, and Mongoose Fury is 10% stronger', no: 'the 4-piece (a longer and stronger Mongoose Fury)' }, /* (2-piece and 4-piece the right way round (Oct 28 audit, both guides)) */
   'Brewmaster Monk': { p2: [{ own: ['Fiery Shrapnel', 'Hot Potato'], why: 'the ignited Keg Smash' }], p4: [{ own: ['Scorched', 'In Flames', 'Aflame'], why: 'the flames' }], t2: 'Breath of Fire ignites your next Keg Smash, so it explodes for extra damage', t4: 'ignited Keg Smashes leave flames on the ground and make enemies take 8% more Physical damage from you', no: 'the 8% more Physical damage (4-piece)' },
   'Mistweaver Monk': { p2: [{ sp: ['Rushing Wind Kick'], pct: 1 }], p4: [{ cb: 'Rising Sun Kick', cast: ['rushing wind kick', 'rising sun kick'], spell: ['Rushing Wind Kick'], frac: 0.5, why: 'free casts, without the 2-piece\'s part' }], t2: 'Rushing Wind Kick heals twice as much, and Rising Sun Kick hits 30% harder', t4: 'Rising Sun Kick and Rushing Wind Kick sometimes come right back, for free' },
   'Windwalker Monk': { p2: [{ sp: ['Fists of Fury'], share: 0.5 / 5.5, why: 'one more strike at half strength on top of its 5: 0.5 of every 5.5' }], p4: [{ stk: 'Unbroken Rhythm', hit: 'Rising Sun Kick', cast: 'rising sun kick', per: 0.1, max: 6 }, { stk: 'Unbroken Rhythm', hit: 'Spinning Crane Kick', cast: 'spinning crane kick', per: 0.2, max: 6, win: 2 }], t2: 'Fists of Fury strikes once more at the start, at half strength', t4: 'each strike of Fists of Fury makes your next Rising Sun Kick 10% or Spinning Crane Kick 20% stronger, up to 6 times' },

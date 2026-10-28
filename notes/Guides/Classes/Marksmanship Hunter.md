@@ -1,6 +1,7 @@
 # Marksmanship Hunter (ranged DPS)
 
 Read Oct 19 2026. Wowhead + Icy Veins (12.1.5).
+Oct 27 hotfix (aimed at area damage): Trick Shots ricochet 75% -> 85%, Explosive Shot +10%, Volley +10%. No priority change (audit, Oct 28).
 **12.1.5 change** (both): Unload#1277548 removed, Blood Fletching#1319011 added (crit Aimed Shot leaves a double Master Marksman bleed + 4 s of extra bleed). Rapid Fire#257044 no longer fires Arcane Shots that spend
 Precise Shots#260240 → **Sentinel must spend Precise Shots manually before every generator again** (OK to waste one with Rapid Fire during Trueshot). Dark Ranger: Rapid Fire on cooldown regardless.
 12.1 rework: Explosive Shot#212431 back as a core 3 s bomb (Unstable Trigger#473520 = second cast within 3 s, vs Tactical Reload#1301406 = Lock and Load); Rapid Fire now out-damages Aimed Shot#19434 per cast; Bulletstorm, Windrunner Quiver,
