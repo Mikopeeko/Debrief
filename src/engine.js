@@ -2699,7 +2699,7 @@ function buildNekzali(ev, r, h) {
       else if (n === 2) M(w.t, 'Raid', 'Vessel of Awakening', 'Medium', '2 Amani corpses came back at once.', 'Burn more corpses during the intermission. One coming back at a time is the goal.');
       // (where each came back: the corpse's position, or the new Amani's first one)
       const at = [...w.g].map((g) => { for (const x of [g, revOf.get(g)]) { const u = x && r.positions.get(x); if (u && u.pts.length) { const p = u.pts.find((q) => q[0] >= w.t - 1) || u.pts[u.pts.length - 1]; return { x: p[1], y: p[2] }; } } return null; }).filter(Boolean);
-      rows.push([{ txt: 'Corpses back' }, { t: w.t }, { txt: n + ' at once', bad: n >= 3, warn: n === 2 }, died.length ? { txt: pl(died.length, 'death'), bad: true } : { txt: '—', dim: true },
+      rows.push([{ txt: 'Corpses back', ...(n >= 2 ? { why: n + ' corpses were repossessed at once at ' + T(w.t) + (died.length ? ', and ' + pl(died.length, 'player') + ' died' : '') + '.', next: 'Burn every corpse in the intermission: park the Echo on the corpse pile for Hungering Pyre, and use Slithering Flame on the strays.' } : {}) }, { t: w.t }, { txt: n + ' at once', bad: n >= 3, warn: n === 2 }, died.length ? { txt: pl(died.length, 'death'), bad: true } : { txt: '—', dim: true },
         at.length ? { map: { t: w.t1 + 0.3, title: 'Corpses coming back at ' + T(w.t), pts: h.snap(w.t1 + 0.3), rings: [wellRing].concat(at.map((p) => spot(p.x, p.y, '#ff5a4f', 'a corpse coming back', 'Red dot'))), frames: frames(w.t - 2, w.t1 + 4) } } : { txt: '' }]);
     }
     // (Hungering Pyre: the soak lands 7.5 s after its cast starts; its hit splits between everyone within 10 yards)
