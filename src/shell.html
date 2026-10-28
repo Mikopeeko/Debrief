@@ -8979,6 +8979,58 @@ html body #view .dt-box.dt-box.dt-box details.cch-ab[open] > :not(summary) { mar
 html body #view .dt-box.dt-box.dt-box details.cch-ab[open] > :last-child { margin-bottom: 12px !important; }
 html body #view .dt-box.dt-box.dt-box details.cch-ab:not([open]):hover { border-color: color-mix(in srgb, var(--tc) 45%, var(--line, #262c38)) !important; }
 @media (max-width: 760px) { html body #view .dt-box.dt-box.dt-box { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* ===== Design studio round 140 (Oct 28): the boss header, one chip shape. Owner: the Design studio chat. ===== */
+html body #bossHead header.bh.bh .bh-pickb, html body #bossHead header.bh.bh .bh-big, html body #bossHead header.bh.bh .bhp-all, html body #bossHead header.bh.bh .bh-scope, html body #bossHead header.bh.bh .bhp-cut, html body #bossHead header.bh.bh .sl-sw { box-sizing: border-box; display: inline-flex !important; align-items: center; gap: 5px; height: 26px !important; min-height: 0 !important; padding: 0 10px !important; border-radius: 8px !important; border-width: 1px !important; border-style: solid !important;
+  font: 600 13px/1 'Barlow Condensed', sans-serif !important; letter-spacing: .02em; white-space: nowrap; box-shadow: none !important; }
+html body #bossHead header.bh.bh .bh-big { border-color: transparent !important; font-weight: 700 !important; font-size: 14px !important; }
+html body #bossHead header.bh.bh .bh-big svg { width: 14px; height: 14px; }
+html body #bossHead header.bh.bh .bh-pickb { padding: 0 9px !important; }
+html body #bossHead header.bh.bh .bh-pickb .bp-n { font: inherit !important; }
+html body #bossHead header.bh.bh .bhp-as { display: inline-flex; align-items: center; }
+html body #bossHead header.bh.bh .bhp-all span, html body #bossHead header.bh.bh .bh-scope span, html body #bossHead header.bh.bh .bhp-cut .bhp-cl, html body #bossHead header.bh.bh .bhp-cut b { font: inherit !important; }
+html body #bossHead header.bh.bh .bhp-all span, html body #bossHead header.bh.bh .bh-scope span { opacity: .75; }
+html body #bossHead header.bh.bh .sl-sw { padding: 0 3px 0 8px !important; gap: 3px; }
+html body #bossHead header.bh.bh .sl-sw .sl-o { height: 20px !important; padding: 0 8px !important; border-radius: 6px !important; font: 600 12px/1 'Barlow Condensed', sans-serif !important; }
+html body #bossHead header.bh.bh .bh-side .sub:has(+ .okv), html body #bossHead header.bh.bh .bh-side .sub:has(+ .hotv) { display: none !important; }
+html body #bossHead header.bh.bh .bh-side { display: inline-flex; align-items: center; gap: 10px; }
+html body #bossHead header.bh.bh .bh-l1, html body #bossHead header.bh.bh .bh-l2 { align-items: center !important; }
+html body #bossHead header.bh.bh .bh-l2 { gap: 8px 12px !important; }
+html body #bossHead header.bh.bh .bh-s { display: inline-flex; align-items: center; gap: 14px; }
+html body #bhCutBox .cutside { border-radius: 10px !important; }
+/* ===== Design studio round 141 (Oct 28): The details tiles, opened; calmer edges. Owner: the Design studio chat. ===== */
+/* calm: a quiet edge unless it needs fixing */
+html body #view .dt-box.dt-box.dt-box details.cch-ab { --tc: rgba(255,255,255,.14); background: var(--panel, #161a22) !important; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab:has(> summary .cgl-p.bad) { --tc: #e5534b; background: linear-gradient(180deg, rgba(229,83,75,.08), transparent 70%), var(--panel, #161a22) !important; }
+/* the opened tile: a one-line head */
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] > summary.cch-al { grid-template-columns: 22px minmax(0, 1fr) auto !important; grid-template-areas: 'i n p' 'i d p'; gap: 2px 10px !important; padding: 11px 14px !important; border-bottom: 1px solid var(--line, #262c38) !important; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] > summary.cch-al > .cgl-i { align-self: center; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] > summary.cch-al > .cgl-n { font-size: 14px !important; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] > summary.cch-al > .cgl-p { align-self: center; font-size: 18px !important; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] > :not(summary) { margin-left: 14px !important; margin-right: 14px !important; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] > :nth-child(2):not(p.cgl-d), html body #view .dt-box.dt-box.dt-box details.cch-ab[open] > p.cgl-d + * { margin-top: 4px !important; }
+/* slim rows (Power Infusion, Raid cooldowns) */
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .rch-l { margin: 4px 14px 0 !important; padding: 0 !important; }
+/* the by-player rows: the name over a slim bar, not a filled block */
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .cbl-list .cbl-s { min-height: 32px; padding: 2px 0 !important; border-radius: 0 !important; border-top: 1px solid rgba(255,255,255,.05); background: none !important; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .cbl-list > details.cbl:first-child > .cbl-s { border-top: 0; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .cbl-list .cbl-s:hover { background: rgba(255,255,255,.025) !important; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .cbl-list .cb-b { position: relative; height: 26px !important; background: none !important; border-radius: 0 !important; overflow: visible !important; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .cbl-list .cb-f { position: absolute !important; left: 26px; right: 0; bottom: 1px; top: auto !important; height: 3px !important; border-radius: 3px; background: rgba(255,255,255,.06) !important; overflow: hidden; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .cbl-list .cb-f > i { display: block; height: 100% !important; border-radius: 3px; opacity: .85; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .cbl-list .cb-in { position: relative; z-index: 1; height: 22px !important; align-items: center; gap: 7px; padding: 0 !important; background: none !important; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .cbl-list .cb-v { font: 600 12.5px/1 var(--body) !important; color: var(--muted); text-align: right; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .cbl-list .pf-k { font: 600 12px/1 var(--body); color: var(--faint); }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .cbl-list .cbl-body { padding: 4px 0 8px 28px !important; font-size: 12.5px; color: var(--muted); }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .rch-l > li.rch { padding: 8px 0 !important; border-top: 1px solid rgba(255,255,255,.05); align-items: start; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .rch-l > li.rch:first-child { border-top: 0; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .rch-l .rch-t { padding-top: 1px !important; font: 600 12.5px/1.3 var(--body); color: var(--faint); font-variant-numeric: tabular-nums; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .rch-l .rch-top { align-items: center; gap: 8px !important; flex-wrap: wrap; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .rch-l .rch-n { display: inline-flex !important; align-items: center; gap: 6px; font-weight: 600; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .rch-l .rch-n .icw { flex: none; width: 16px !important; height: 16px !important; margin: 0 !important; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .rch-l p.cgl-d { margin: 2px 0 0 !important; font-size: 12px; line-height: 1.4; color: var(--faint); }
+/* lists by player (Healthstones, Defensives, Combat potions) and Avoidable damage */
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .cbl-list, html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .cbl-by { margin-top: 4px !important; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .ckt-note, html body #view .dt-box.dt-box.dt-box details.cch-ab[open] .cch-ddtip { margin-top: 8px !important; font-size: 12px; line-height: 1.45; color: var(--faint); }
 </style>
 
 

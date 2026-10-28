@@ -1825,7 +1825,7 @@ function headerHtml0(r, allMode) {
     const ds = keptDeaths(r).length;
     cls = it.kill ? 'good' : 'bad'; left = now; kick = [it.diff, raid];
     big = it.kill ? 'Kill' : now != null ? (usesPh ? 'Wipe in ' : 'Wipe at ') + (pg ? pg.label : now.toFixed(1) + '%') : 'Wipe';
-    stats = [['clock', it.wallMs ? wallClock(it.wallMs) : clock(it.startMs)], ['timer', 'Lasted ' + T(r.duration)] /* (easier to read (your note, Oct 23)) */, ['users', plural(r.players.size, 'player')], ['skull', plural(ds, 'death') + (cutInfo(r) ? ' before the wipe call' : '')]];
+    stats = [['timer', 'Lasted ' + T(r.duration)] /* (easier to read (your note, Oct 23)) */, ['skull', plural(ds, 'death') + (cutInfo(r) ? ' by the call' : '')]]; /* round 140: no start time or player count (the user: "remove a few things") */
     const yet = !it.kill && now != null && everBest != null && now < everBest && (!bestO || now < bestO.v); // (further than every saved night too)
     // (a kill says how long it took tonight; "Boss down" only repeated the pill)
     const wipes = same.slice(0, Math.max(0, k)).filter((x) => !x.kill).length;
@@ -1955,6 +1955,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-28', h: [], n: [
+    'Debriefing: the boss banner is tidier, with one chip shape and without the start time and player count; "The details" tiles open into slim lists, and only a tile that needs fixing is edged in red.',
     'Debriefing: "The details" are small tiles, three to a row, each with its score, its name and a short line; tap one to open it across the row.',
     'Rotation: Gear and extras are small tiles in a row above your checklist (each item, its number and its short line), and the checklist has the full width under them.',], f: [
     'Debriefing: "The pull at a glance" ends where the pull was counted to, instead of running on to the last second; a long "What happened" line fits inside its box; and the rows under "The details" are all one width.',
