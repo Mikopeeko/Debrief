@@ -11053,14 +11053,37 @@ function audit() {
         return '<span class="u1-x">' + (hd ? '<span class="u1-h">' + colorNames(esc(hd), PMc) + '</span>' : '') + '<span class="u1-o ' + q.st + '">' + colorNames(esc(cClip(dbfCap(tl.replace(/\s*\([^)]*\)/g, '')), 150)), PMc) + '</span>' + ((tl.match(/\(([^)]*)\)/g) || []).map((n) => '<span class="u1-n">' + colorNames(esc(n.slice(1, -1)), PMc) + '</span>').join('')) + '</span>'; };
       /* (a mistake moment's why and next time, one plain sentence each: the engine's detail and fix for that moment, else the mechanic's own words (Oct 27)) */
       const s1 = (t) => { const x = String(t || '').replace(/<[^>]+>/g, '').trim(), m = x.match(/^(.{8,220}?[.!?])(\s|$)/); return (m ? m[1] : x).trim(); }, secL = String(s.title || '').toLowerCase();
+      /* (a moment's own line as one plain sentence, when the engine has none for it (Oct 28, the user: "make sure they are readable words")) */
+      const mechN = String(s.title || '').replace(/\s*\(.*$/, '').trim();
+      const momentSay = (q) => { const raw = String(q.x || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim(), mm = raw.match(/^(.{2,80}?):\s(.+)$/), hd = mm ? mm[1] : '', tl0 = mm ? mm[2] : raw;
+        const notes = (tl0.match(/\(([^)]*)\)/g) || []).map((n) => n.slice(1, -1)).join(', '), tl = tl0.replace(/\s*\([^)]*\)/g, '').trim(), lt = tl.toLowerCase();
+        const names = [...new Set((q.row || []).flatMap((c) => (c && c.p ? [c.p] : c && c.ps ? c.ps : [])).map((n) => String(n).split('-')[0]))], who = names.length > 3 ? names.length + ' players' : names.length ? (names.length === 1 ? names[0] : names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1]) : '';
+        const hd0 = hd.replace(/\s*\([^)]*\)/g, '').trim(), hdL = hd0.split(' · ').pop().trim(), hdS = hdL || hd0;
+        if (/erupted/i.test(hd0)) return mechN + ' erupted on the raid' + (/died/.test(lt) ? ' and killed ' + (notes || 'someone') : '') + '.';
+        const subj = who || hdS || mechN, at = hd && /^\d+:\d\d$/.test(hd) ? ' at ' + hd : '';
+        if (/^died with it/.test(lt)) return subj + ' died with ' + mechN + ' still on them.';
+        if (/^(\d+ players? hit,? )?died\b/.test(lt) || lt === 'died') return subj + ' died to ' + (notes || mechN) + '.';
+        if (/\bgot off\b/.test(lt)) return 'Nobody kicked ' + (hdS && !/^\d+:\d\d$/.test(hdS) ? hdS : mechN) + ' in time' + at + '.';
+        if (/still alive (at|when) the intermission/.test(lt)) return (hdS || mechN) + ' was still alive when the intermission started.';
+        if (/^(removed|cleared|healed off) after ([\d.]+) ?s/.test(lt)) return 'It took ' + lt.match(/([\d.]+) ?s/)[1] + ' s to clear ' + mechN + (who ? ' from ' + who : '') + '.';
+        if (/^took ([\d.]+) ?s/.test(lt)) return (who || 'They') + ' took ' + lt.match(/([\d.]+) ?s/)[1] + ' s to clear ' + mechN + '.';
+        if (/ruptured/.test(lt)) return (hdS || 'A box') + ' ruptured before anyone popped it.';
+        if (/enraged/.test(lt)) return (hdS || mechN) + ' enraged before it was dealt with.';
+        if (/^(\d+) highest stacks/.test(lt)) return (who || 'They') + ' reached ' + lt.match(/^(\d+)/)[1] + ' stacks' + (notes ? ' (' + notes + ')' : '') + '.';
+        if (/killed after (\d+) ?s/.test(lt)) return (hdS || mechN) + ' lived ' + lt.match(/killed after (\d+)/)[1] + ' s' + (/hardened/.test(lt + ' ' + notes) ? ' and hardened' : '') + ' before it died.';
+        return ''; };
+      /* (Next time is a tip: a fix that opens with a fact uses the sentence after it) */
+      const TIPV = /^(stay|dodge|soak|kick|interrupt|move|press|use|pop|spread|stack|line|put|get|pick|watch|run|help|keep|take|swap|save|go|stand|face|turn|kill|focus|heal|don't|do|make|hit|bait|clear|break|catch|collect|avoid|call|wait|step|drop|let|grab|bring|give|stop|start|check|follow|aim|switch|hold|leave|walk|try|cast|time|plan|split|dispel|cleanse|purge|taunt|tank|send|push|burn|slow|stun|feed|assign|find|spend|group|space|only the|have|tell|mark|position|place|break|carry|pass|never|always|both|one|the tank|healers|tanks|melee|ranged)\b/i;
+      const tipOf = (fix) => { const ss = String(fix || '').replace(/<[^>]+>/g, '').match(/[^.!?]+[.!?]/g) || []; const t = ss.map((x) => x.trim()).find((x) => TIPV.test(x)); return t || (ss[0] || '').trim(); };
       const whyOf = (q) => { if (q.st === 'ok' || r.allPulls) return null; const xl = String(q.x || '').replace(/<[^>]+>/g, '').toLowerCase();
         const sc = (m) => { let k = 0; const p = String(m.player || '').split('-')[0].toLowerCase(), me = String(m.mechanic || '').toLowerCase(); if (p && p !== 'raid' && xl.includes(p)) k += 2; const wb = (w) => new RegExp('\\b' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b'); if (me && (wb(me).test(secL) || wb(me).test(xl) || me.split(' ').some((w) => w.length > 4 && (wb(w).test(secL) || wb(w).test(xl))))) k += 1; /* (whole words: "venom" isn't "Venomfang") */ if ((m.severity === 'High') === (q.st === 'bad')) k += 0.5; return k; };
         const c = q.t == null ? [] : (r.mistakes || []).filter((m) => m.mechanic !== 'Death' && Math.abs(m.t - q.t) <= 4).map((m) => [m, sc(m)]).filter(([, k]) => k % 2 >= 1) /* (the mechanic must match; the player only ranks (Oct 27)) */.sort((a, b) => b[1] - a[1] || Math.abs(a[0].t - q.t) - Math.abs(b[0].t - q.t));
-        const m = c.length ? c[0][0] : null, br = (String(s.title || '').match(/\(([^)]+)\)/) || [])[1];
+        const m = c.length ? c[0][0] : null, br = (String(s.title || '').match(/\(([^)]+)\)/) || [])[1], brTip = br ? br.charAt(0).toUpperCase() + br.slice(1) + '.' : '';
         const tier = tierOf(r.item.boss, s.id), died = /\bdied\b|\bdeaths?\b|\bkilled\b/.test(xl) || (m && /died/i.test(m.detail || '')) || (q.t != null && (r.deaths || []).some((d) => Math.abs(d.t - q.t) <= 3 && d.ability && xl.includes(String(d.ability).toLowerCase()))); /* (a death by this moment's spell, even when the line names nobody) */
         const sev = died ? 5 : q.st === 'bad' ? Math.min(4, (tier === 'major' ? 4 : tier === 'minor' ? 2 : 3) + (m && m.severity === 'High' && tier !== 'major' ? 1 : 0)) : (tier === 'major' ? 2 : 1) + (m && m.severity === 'High' ? 1 : 0); /* (data-sev 1 to 5 (Oct 27)) */
         const own = (q.row || []).find((cc) => cc && cc.why); if (own) return { why: own.why, next: own.next || '', sev };
-        return { why: m && m.detail ? s1(m.detail) : s1(s.how), next: m && m.fix ? s1(m.fix) : br ? br.charAt(0).toUpperCase() + br.slice(1) + '.' : '', sev }; };
+        const say = m && m.detail ? s1(m.detail) : momentSay(q) || s1(s.how); /* (a missed kick with no tip of its own gets the kick plan) */
+        return { why: say, next: (m && m.fix ? tipOf(m.fix) || brTip : brTip) || (/^Nobody kicked/.test(say) ? 'Give every cast a kicker and a backup.' : ''), sev }; };
       const wAttr = (q) => { const w = whyOf(q); return w ? (w.why ? ' data-why="' + esc(w.why) + '"' : '') + (w.next ? ' data-next="' + esc(w.next) + '"' : '') + ' data-sev="' + w.sev + '"' : ''; };
       const li = (q) => '<li class="u1-r ' + q.st + (q === sel ? ' on' : '') + (q.map ? ' u1-hm' : '') + '"' + wAttr(q) + (q.map ? ' data-u1="' + q.i + '" role="button" tabindex="0"' : '') + '><span class="u1-d"></span><span class="u1-t">' + (q.t != null ? T(q.t) : '') + '</span>' + u1x(q) + '</li>';
       const maps = L.filter((q) => q.map && (q === sel || q.st !== 'ok')).slice(0, 12).concat(ok.filter((q) => q.map).slice(0, 8));
