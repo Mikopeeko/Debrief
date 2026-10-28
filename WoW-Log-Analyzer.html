@@ -29822,7 +29822,7 @@ function oaRowWhy(r, d) { const secs = (r.module && !r.module.error && r.module.
     for (const row of (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || []))) { if (!row.some((c) => c && c.bad)) continue; const tc = row.find((c) => c && c.t != null); if (!tc || tc.t < d.t - 3 || tc.t > d.t + 1) continue;
       if (row.some((c) => c && c.p && oaBase(c.p) === nm)) { const tx = row.filter((c) => c && c.bad && c.txt && !c.p).map((c) => String(c.txt)); return { l: (s.spell && s.spell[1]) || shortT(s.title || '').replace(/\s*\(.*$/, ''), why: tx.length ? tx[tx.length - 1] : '' }; } } }
   return null; }
-function oaCache(reps, name, f) { for (const r of reps) strictOn(r); const k = reps.map((r) => (r.item.id || r.item.boss) + ':' + r.item.diffId + ':' + r.item.pull).join(',') + '|' + deathCutN() + '|' + strictLv() + '|' + oaBase(name)
+function oaCache(reps, name, f) { for (const r of reps) strictOn(r); const k = reps.map((r) => (r.item.id || r.item.boss) + ':' + r.item.diffId + ':' + r.item.pull + (r._stale ? 's' : '')).join(',') + '|' + deathCutN() + '|' + strictLv() + '|' + oaBase(name)
     /* (Oct 24, your note "you removed the getting better / worse tags again": a pull's comparison with the last pull was worked out once, sometimes before
        the earlier pulls had loaded, and stayed empty. How many earlier pulls are loaded is part of the key now, so it's worked out again when they arrive) */
     + '|p' + (reps.length === 1 && reps[0].item ? ((S.index && S.index.bosses) || []).filter((b) => b.id === reps[0].item.id && b.diffId === reps[0].item.diffId && b.pull < reps[0].item.pull && CACHE.has(b)).length : 0);
