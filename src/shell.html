@@ -10240,6 +10240,19 @@ html body #view .rtl .rtl-mid .rtl-t { margin: 0; }
 /* round 155z3: cards follow the side width; the panel sits above the sticky head */
 .rtl .rtv-cd{width:var(--cdw,196px)}
 .rtl .rtv-fside{z-index:6}
+/* round 156: the key under the numbers, yellow count, phone filters on top */
+.rtl .rtv .rtv-top{flex-wrap:wrap}
+.rtl .rtv .rtv-top > .rtv-key{flex:1 1 100%;margin:12px 0 0;padding:10px 0 0;border-top:1px solid rgba(255,255,255,.05);background:none;font-size:11.5px;color:#7d8596;gap:6px 18px}
+.rtl .rtv .rtv-st .y b{color:#f0c35c}
+.rtl .rtv-foot:empty,.rtl .rtv-foot:not(:has(*)){display:none}
+@media (max-width:760px){
+.rtl .rtv-lay{display:flex;flex-direction:column}
+.rtl .rtv-lay > .rtv-fside{order:-1;margin:0 0 12px}
+}
+/* round 156b: the key wraps inside the chart's width instead of widening it */
+.rtl .rtv .rtv-top > .rtv-key{width:0;min-width:100%;box-sizing:border-box;flex-wrap:wrap}
+/* round 156c: on a phone the chart scrolls inside its own box, never the page */
+@media (max-width:760px){.rtl .rtv-lay{align-items:stretch}.rtl .rtv-lay > .rtv-wrap{width:100%;max-width:100%;overflow-x:auto}}
 </style>
 
 

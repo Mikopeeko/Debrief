@@ -33087,7 +33087,7 @@ function dsGuides() {
       var hd = pn ? pn + ' proc wasted' : c.k === 'cc' ? 'Cancelled cast' : onCd ? c.label.replace(/\s*on cooldown$/i, '') + ' sat ready' : c.label;
       var ln = pn ? 'A new ' + pn + ' proc replaced one you hadn\u2019t used yet.' : c.k === 'cc' ? 'A cast you started didn\u2019t finish.' : sub;
       var nx = tip || (pn ? 'Spend ' + pn + ' before the next one comes.' : c.k === 'cc' ? 'Finish your casts unless you have to move.' : onCd ? 'Press it as soon as it\u2019s ready.' : '');
-      var lnH = pn || c.k === 'cc' ? ln : here(ln, c.label, onCd), hdH = hd; if (/^Here: /.test(lnH)) { hdH = c.label; lnH = ''; } else if (/^Missed here: /.test(lnH)) { hdH = 'Missed: ' + c.label; lnH = ''; } /* (the title says it once) */ (c.mo || []).forEach(function (m) { if (m.a == null) return; S.push({ t: m.a, b: m.b, type: type, lv: lv, by: c.label, ic: ic, head: hdH, line: lnH, next: nx }); });
+      var lnH = pn || c.k === 'cc' ? ln : here(ln, c.label, onCd), hdH = hd; if (/^Here: /.test(lnH)) { hdH = c.label; lnH = ''; } else if (/^Missed here: /.test(lnH)) { hdH = 'Missed: ' + c.label; lnH = ''; } /* (the title says it once) */ (c.mo || []).forEach(function (m) { if (m.a == null) return; S.push({ t: m.a, b: m.b, type: type, lv: lv, by: c.label, ic: ic, head: hdH, line: lnH, next: nx, sub: sub }); });
     });
     var wins = (D.checks || []).filter(function (c) { return c.cards; }), win = wins[0];
     wins.forEach(function (win) { big[String(win.ic || '').toLowerCase()] = 1; (Array.isArray(win.cards) ? win.cards : [win.cards]).forEach(function (h) { var hs = String(h), re = /<div class="spc-w[^"]*"[^>]*data-mt="([\d.]+)"/g, m0, pos = []; while ((m0 = re.exec(hs))) pos.push({ i: m0.index, t: +m0[1] }); pos.forEach(function (p, j) { var seg = hs.slice(p.i, j + 1 < pos.length ? pos[j + 1].i : hs.length); W.push({ t: p.t, by: win.label, ic: iconOf(pg, win.label, win.ic, D), head: win.ic + ' window', html: seg }); }); }); });
@@ -33120,9 +33120,9 @@ function dsGuides() {
      press to see it); what went well is a short tag on the left, mistakes a short tag on the right; a wrong press has a red border and
      every note opens on hover or tap. Cooldown windows are a soft tint across the columns, a cooldown that sat ready a dotted red bar.) */
   /* (round 155w: the timeline's filters, remembered per viewer) */
-  var FV0 = { press: 1, minor: 1, span: 1, good: 1, cards: 1, win: 1, wave: 1, util: 1, filler: 1, dim: 0 };
-  var getFV = function () { try { var o = JSON.parse(localStorage.getItem('wla-rtv-f') || '{}'); return Object.assign({}, FV0, o); } catch (e) { return Object.assign({}, FV0); } };
-  var setFV = function (o) { try { localStorage.setItem('wla-rtv-f', JSON.stringify(o)); } catch (e) { /* (not remembered) */ } };
+  var FV0 = { press: 1, minor: 0, span: 1, good: 1, cards: 1, win: 1, wave: 1, util: 1, filler: 1, dim: 0 };
+  var getFV = function () { try { var o = JSON.parse(localStorage.getItem('wla-rtv-f2') || '{}'); return Object.assign({}, FV0, o); } catch (e) { return Object.assign({}, FV0); } };
+  var setFV = function (o) { try { localStorage.setItem('wla-rtv-f2', JSON.stringify(o)); } catch (e) { /* (not remembered) */ } };
   var fvCls = function (o) { return Object.keys(FV0).filter(function (k) { return k === 'dim' ? o.dim : !o[k]; }).map(function (k) { return ' f-' + k; }).join(''); };
   var draw = function (D, pg, box) {
     var md = model(D, pg), phs = (D.phases || []).filter(function (p) { return p.start < (md.end || 1e9); });
@@ -33148,7 +33148,7 @@ function dsGuides() {
     var TYN = {}; TYPES.forEach(function (t) { TYN[t[0]] = t[1]; });
     var bandAt = function (t) { return BANDS.filter(function (bd) { return t >= bd.a - 0.05 && t <= bd.b + 0.05; })[0] || null; };
     /* a mistake's note: what, why, every time it came, what to do */
-    var tipM = function (m) { var many = m.ts.length > 1, bd = bandAt(m.t); return '<div class="rtv-pt"><em class="rtv-sv l' + m.lv + '">' + LVN(m.lv) + '</em><span>' + E(m.type !== 'other' && TYN[m.type] || 'Rotation check') + '</span></div><b>' + mm(m.t) + ' · ' + E(m.head) + '</b>' + (m.line ? '<p>' + E(m.line) + '</p>' : '') +
+    var tipM = function (m) { var many = m.ts.length > 1, bd = bandAt(m.t); return '<div class="rtv-pt"><em class="rtv-sv l' + m.lv + '">' + LVN(m.lv) + '</em><span>' + E(m.type !== 'other' && TYN[m.type] || '') + '</span></div><b>' + mm(m.t) + ' · ' + E(m.head) + '</b>' + (m.line ? '<p>' + E(m.line) + '</p>' : (function () { var w = m.sub || (md.S.filter(function (z) { return z.by === m.by && z.sub; })[0] || {}).sub; return w ? '<p>' + E(w) + '</p>' : ''; })()) + /* (round 156, a why on every note) */
       (bd ? '<p class="rtv-in">Inside ' + E(bd.w.head) + ' (' + mm(bd.a) + '–' + mm(bd.b) + ').</p>' : '') + (many ? '<p class="rtv-ts"><i>' + m.ts.length + ' times</i>' + m.ts.map(mm).join(' · ') + '</p>' : '') + (m.next ? '<p class="rtv-nx"><i>NEXT TIME</i>' + E(first(m.next)) + '</p>' : '') + (m.by && m.by !== TYN[m.type] && String(m.head).indexOf(m.by) < 0 ? '<p class="rtv-by">From the check: ' + E(m.by) + '</p>' : ''); };
     /* a window's note: verdict, numbers, what was in it, and what was pressed inside */
     var tipW = function (bd) { var ins = {}; md.C.forEach(function (c) { if (c.t >= bd.a - 0.05 && c.t <= bd.b + 0.05) ins[c.n] = (ins[c.n] || 0) + 1; }); var ok = bd.cls === 'ok';
@@ -33168,7 +33168,7 @@ function dsGuides() {
       mid += '<i class="rtv-rdy" data-nt="' + note('bad', '<b>' + mm(m.t) + ' ' + E(m.head) + '</b><span>It came back at ' + mm(m.t) + ' and was pressed at ' + mm(m.b) + '.</span>') + '" style="left:' + (56 + ci * CW + CW / 2) + 'px;top:' + y(m.t) + 'px;height:' + ((m.b - m.t) * Y) + 'px"></i>'; });
     /* (round 155q: each mistake moment sits on the press it is about) */
     var DEAD = (D.deaths ? D.deaths() : []).map(function (d) { var bk = md.C.filter(function (c) { return c.t > d.t + 2; }).map(function (c) { return c.t; }).sort(function (a, b) { return a - b; })[0]; return [d.t, bk != null ? bk : 1e9]; }), dead = function (t) { return DEAD.some(function (x) { return t > x[0] + 0.5 && t < x[1] - 0.5; }); };
-    md.S = md.S.filter(function (m) { m.ts = m.ts.filter(function (t) { return !dead(t); }); if (!m.ts.length) return false; if (dead(m.t)) m.t = m.ts[0]; return true; }); /* (round 155u: no mistakes while dead) */
+    md.S = md.S.filter(function (m) { m.ts = m.ts.filter(function (t) { return !dead(t) && !(m.lv < 2 && t < 1.5); }); if (!m.ts.length) return false; if (dead(m.t)) m.t = m.ts[0]; return true; }); /* (round 155u: no mistakes while dead) */
     var OPEN_T = []; if (OPEN) md.S = md.S.filter(function (m) { if (m.by === OPEN.by) { OPEN_T = OPEN_T.concat(m.ts); return false; } return true; });
     var onP = {}, cIx = new Map(); md.C.forEach(function (c, i) { cIx.set(c, i); });
     md.S.forEach(function (m) { var nm = String(m.head + ' ' + (m.by || '')).toLowerCase(); m.rest = [];
@@ -33228,7 +33228,7 @@ function dsGuides() {
     var CDW = Math.max(150, Math.min(sl > 100 ? sl : 999, sr > 100 ? sr : 999, 244) - 48); cols = sl + 'px ' + MIDW + 'px ' + sr + 'px';
     var tot = md.C.length, right0 = md.C.filter(function (c) { return !c.bad; }).length, prN = md.PR.reduce(function (a, p) { return a + p.n; }, 0), nM = md.S.reduce(function (x, m) { return x + m.ts.length; }, 0);
     var okW = BANDS.filter(function (b) { return b.cls === 'ok'; }).length;
-    var top = '<div class="rtv-top"><div class="rtv-st"><span><b>' + tot + '</b>presses</span><span class="r"><b>' + (tot - right0) + '</b>a better button was ready</span>' + (prN ? '<span class="p"><b>' + prN + '</b>procs spent</span>' : '') + (BANDS.length ? '<span class="g"><b>' + okW + '<small>/' + BANDS.length + '</small></b>windows done well</span>' : '') + '<span class="r"><b>' + nM + '</b>mistakes</span></div>' +
+    var top = '<div class="rtv-top"><div class="rtv-st"><span><b>' + tot + '</b>presses</span>' + (prN ? '<span class="p"><b>' + prN + '</b>procs spent</span>' : '') + (BANDS.length ? '<span class="g"><b>' + okW + '<small>/' + BANDS.length + '</small></b>windows done well</span>' : '') + '<span class="r"><b>' + (Object.keys(onP).filter(function (k) { return onP[k].lv >= 2; }).length + BL.filter(function (a) { return !a.card && !a.mi && a.cl === 'bd' && !a.died; }).reduce(function (x, a) { return x + (a.n || 1); }, 0)) + '</b>mistakes</span><span class="y"><b>' + (Object.keys(onP).filter(function (k) { return onP[k].lv < 2; }).length + BL.filter(function (a) { return !a.card && a.mi; }).reduce(function (x, a) { return x + (a.n || 1); }, 0)) + '</b>minor slips</span></div>' + /* (round 156, the same counts as the filters) */
       '<div class="rtv-act"><span class="rtv-hint">Hover any mark for the full story</span><button type="button" class="rtv-dim' + (getFV().dim ? ' on' : '') + '" data-rtvf="dim">Spotlight mistakes</button></div></div>';
     var cut = D.cut != null && D.dur && D.cut < D.dur - 1 ? '<p class="rtv-cut">Counted to ' + mm(D.cut) + ', the wipe call.</p>' : '';
     box._notes = N;
@@ -33241,6 +33241,7 @@ function dsGuides() {
       '<div class="rtv-body" data-y="' + Y + '" data-t0="' + T0 + '" style="grid-template-columns:' + cols + ';height:' + H + 'px">' + tags(GL, 'l') + '<div class="rtv-mid">' + mid + '</div>' + tags(BL, 'r') + '</div><div class="rtv-foot">' + cut + '<div class="rtv-key"><span><i class="k bad"></i>Mistake on that press</span><span><i class="k mky"></i>Minor slip</span>' + (box._wave ? '<span><i class="k wave"></i>' + (box._wave.heal ? 'HPS' : 'DPS') + ' over the pull</span>' : '') + '' + (md.C.some(function (c) { return c.proc; }) ? '<span><b>★</b> Proc spent</span>' : '') + '<span><i class="k win"></i>Cooldown window</span><span><i class="k mk g">✓</i>Done well</span><span><i class="k mk r">!</i>Mistake over several presses</span>' + (/rtv-rdy/.test(mid) ? '<span><i class="k rdy"></i>Sat ready, not pressed</span>' : '') + (md.C.some(function (c) { return c.big; }) ? '<span><i class="k big"></i>Big cooldown</span>' : '') + (idleN ? '<span><i class="k idle"></i>Nothing pressed</span>' : '') + '</div></div></div></div><aside class="rtv-fside" aria-label="Timeline filters"></aside></div>'; /* (round 155z: the filters beside the chart) (round 155n: numbers and key inside the chart) */
     /* (round 155p: measure the cards and stack them, so a taller card never runs into the next) */
     box.querySelectorAll('.rtv-side').forEach(function (sd) { var last = -1e9; [].slice.call(sd.querySelectorAll('.rtv-cd')).sort(function (a, b) { return +a.dataset.ay - +b.dataset.ay; }).forEach(function (c) { var ay = +c.dataset.ay, q = Math.max(ay - 14, last + 8); c.style.top = q + 'px'; var ln = c.querySelector('.rtv-cdl'); if (ln) ln.style.top = (ay - q) + 'px'; last = q + c.offsetHeight; }); });
+    var kk = box.querySelector('.rtv-foot .rtv-key'), tp = box.querySelector('.rtv > .rtv-top'); if (kk && tp) tp.appendChild(kk); /* (round 156, the key at the top) */
     rtvSide(box);
   };
   /* the note next to whatever is hovered or tapped */
