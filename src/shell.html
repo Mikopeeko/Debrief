@@ -10300,6 +10300,25 @@ html body #view .rtl .rtl-mid .rtl-t { margin: 0; }
 /* round 159f: slim cards keep their whole title (two lines at most); the note sits above the filter panel */
 .rtl .rtv-cdh.slim b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .rtv-pop,.rtl .rtv-pop{z-index:80!important}
+/* round 159h: how long a buff lasted, a soft bar in its column */
+.rtl .rtv-dur{position:absolute;border-radius:6px;background:linear-gradient(180deg,rgba(230,180,80,.22),rgba(230,180,80,.06));box-shadow:inset 0 0 0 1px rgba(230,180,80,.28);pointer-events:none;z-index:0}
+.rtl .rtv.f-win .rtv-dur{display:none}
+.rtl .rtv-pop.n{width:auto;max-width:300px;white-space:normal}
+/* round 160: the Buffs lanes */
+.rtl .rtv-pb{width:8px!important;border-radius:4px;background:linear-gradient(180deg,rgba(255,214,102,.85),rgba(255,214,102,.45))}
+.rtl .rtv-pb.lost{background:repeating-linear-gradient(180deg,rgba(255,214,102,.65) 0 4px,transparent 4px 7px)}
+.rtl .rtv-pb.lost::after{left:0;bottom:-12px}
+.rtl .rtv-pbi{display:none}
+.rtl .rtv-dur.lane{border-radius:4px;background:linear-gradient(180deg,rgba(201,206,216,.55),rgba(201,206,216,.2));box-shadow:none;pointer-events:auto;cursor:pointer;z-index:2}
+.rtl .rtv-dur.lane:hover,.rtl .rtv-dur.lane.rtv-hot{background:linear-gradient(180deg,rgba(236,232,223,.8),rgba(236,232,223,.35))}
+.rtl .rtv-sep.bf{background:rgba(255,255,255,.09)}
+.rtl .rtv-heads i.bf{width:14px;height:14px;margin:-7px 0 0 -7px;opacity:.75}
+.rtl .rtv-heads i.bf .icw,.rtl .rtv-heads i.bf .icw > *{width:14px!important;height:14px!important}
+.rtl .rtv-heads .rtv-bfk{position:absolute;top:2px;padding:0!important;font:700 8.5px 'Barlow Condensed',sans-serif!important;letter-spacing:.12em;text-transform:uppercase;color:#7d8596!important}
+.rtl .rtv.f-procs .rtv-dur.lane{display:none}
+/* round 160b: a pressed buff's bar in its own column (the user: "i actually really like these") */
+.rtl .rtv-dur.col{pointer-events:auto;cursor:pointer}
+.rtl .rtv-dur.col:hover,.rtl .rtv-dur.col.rtv-hot{background:linear-gradient(180deg,rgba(230,180,80,.32),rgba(230,180,80,.1))}
 </style>
 
 
