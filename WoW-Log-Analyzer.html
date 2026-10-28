@@ -9036,6 +9036,36 @@ html body #view.ds-two > .ds-r > .dt-box.dt-box { grid-column: 1 / -1 !important
 html body #view.ds-two > .ds-l { grid-column: 1 / -1 !important; }
 @media (min-width: 1100px) { html body #view.ds-two .dt-box.dt-box.dt-box { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 @media (min-width: 761px) and (max-width: 1099px) { html body #view.ds-two .dt-box.dt-box.dt-box { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* ===== Design studio round 144 (Oct 28): boss banner A, two quiet lines. Owner: the Design studio chat. ===== */
+html body #bossHead header.bh.bhx.bhx .bh-t { display: flex !important; flex-direction: column; gap: 9px !important; }
+html body #bossHead header.bh.bhx.bhx .bh-l0 { display: flex; align-items: center; gap: 10px; min-height: 16px; }
+html body #bossHead header.bh.bhx.bhx .bh-l0 .bh-k { font: 700 11.5px/1 'Barlow Condensed', sans-serif !important; letter-spacing: .14em; text-transform: uppercase; color: var(--faint) !important; }
+html body #bossHead header.bh.bhx.bhx .bh-l0 .bh-k i { margin: 0 6px; font-style: normal; }
+html body #bossHead header.bh.bhx.bhx .bh-l0 .bh-team { margin-left: auto; }
+html body #bossHead header.bh.bhx.bhx .bh-l1 { display: flex !important; align-items: center !important; gap: 14px !important; flex-wrap: wrap; }
+html body #bossHead header.bh.bhx.bhx .bh-l1 .bh-name { margin: 0 !important; font-size: 34px !important; line-height: 1 !important; }
+html body #bossHead header.bh.bhx.bhx .bh-l1 .bh-pickb { width: 26px; padding: 0 !important; justify-content: center; margin-left: -6px; border-color: var(--line, #262c38) !important; background: rgba(0,0,0,.25) !important; color: var(--faint) !important; }
+html body #bossHead header.bh.bhx.bhx .bh-l1 .bh-pickb .bp-n { display: none !important; }
+html body #bossHead header.bh.bhx.bhx .bh-l1 .bh-big { height: auto !important; padding: 0 !important; border: 0 !important; background: none !important; color: var(--pill, #b25ef5) !important; font: 800 22px/1 'Barlow Condensed', sans-serif !important; letter-spacing: .01em; }
+html body #bossHead header.bh.bhx.bhx .bh-l1 .bh-big svg { width: 18px; height: 18px; }
+html body #bossHead header.bh.bhx.bhx .bh-l1 .bh-side { font: 600 13.5px/1 'Barlow Condensed', sans-serif; }
+html body #bossHead header.bh.bhx.bhx .bh-l1 .bh-seg { margin-left: auto; display: inline-flex; align-items: center; }
+html body #bossHead header.bh.bhx.bhx .bh-l1 .bh-seg .bhp-all { border-radius: 8px 0 0 8px !important; }
+html body #bossHead header.bh.bhx.bhx .bh-l1 .bh-seg .bh-scope { border-radius: 0 8px 8px 0 !important; margin-left: -1px; }
+html body #bossHead header.bh.bhx.bhx .bh-l1 .bh-seg:not(:has(.bh-scope)) .bhp-all { border-radius: 8px !important; }
+html body #bossHead header.bh.bhx.bhx .bh-l1 .bh-seg .bhp-all > span, html body #bossHead header.bh.bhx.bhx .bh-l1 .bh-seg .bh-scope > span { display: none !important; }
+html body #bossHead header.bh.bhx.bhx .bh-l2 { display: flex !important; align-items: center !important; gap: 18px !important; flex-wrap: wrap; font: 600 13px/1 'Barlow Condensed', sans-serif; color: var(--muted); }
+html body #bossHead header.bh.bhx.bhx .bh-l2 .bh-s { display: inline-flex; gap: 18px; color: var(--muted); }
+html body #bossHead header.bh.bhx.bhx .bh-l2 .bh-s > span { color: var(--muted); }
+html body #bossHead header.bh.bhx.bhx .bh-l2 .bh-s .bh-dur { color: var(--text); }
+html body #bossHead header.bh.bhx.bhx .bh-l2 .bhp-cut { height: auto !important; padding: 0 !important; border: 0 !important; background: none !important; color: var(--muted) !important; gap: 4px; cursor: pointer; }
+html body #bossHead header.bh.bhx.bhx .bh-l2 .bhp-cut b { color: var(--text); }
+html body #bossHead header.bh.bhx.bhx .bh-l2 .bhp-cut::after { content: "▾"; margin-left: 2px; font-size: 11px; color: var(--faint); }
+html body #bossHead header.bh.bhx.bhx .bh-l2 .bhp-cut svg { display: none; }
+html body #bossHead header.bh.bhx.bhx .bh-l2 .bhp-cut:hover, html body #bossHead header.bh.bhx.bhx .bh-l2 .bhp-cut:hover b { color: var(--gold) !important; }
+html body #bossHead header.bh.bhx.bhx .bh-l2 > * { margin-left: 0 !important; }
+html body #bossHead header.bh.bhx.bhx .bh-l2 > .sl-sw { margin-left: auto !important; }
+@media (max-width: 760px) { html body #bossHead header.bh.bhx.bhx .bh-l1 .bh-name { font-size: 28px !important; } html body #bossHead header.bh.bhx.bhx .bh-l1 .bh-seg { margin-left: 0; flex-basis: 100%; } }
 </style>
 
 
@@ -18941,7 +18971,7 @@ function headerHtml0(r, allMode) {
     // (a kill says how long it took tonight; "Boss down" only repeated the pill)
     const wipes = same.slice(0, Math.max(0, k)).filter((x) => !x.kill).length;
     side = (it.kill ? '<span class="nc-res ok">' + (wipes ? '✓\u00a0Down after ' + plural(wipes, 'wipe') + ' tonight' : k > 0 ? '✓\u00a0Down again' : '✓\u00a0Down on the first pull') + '</span>' : yet ? '<span class="nc-res ok">✓ Best pull yet</span>' : bestO && now != null && now < bestO.v ? '<span class="nc-res ok">✓ Best pull tonight</span>' : bestO ? '<span class="sub">Best tonight: ' + esc(pullLabel(bestO.x)) + '</span>' : '') +
-      (delta != null && !it.kill ? '<span class="' + (delta > 0 ? 'okv' : delta < 0 ? 'hotv' : 'sub') + '">' + (usesPh ? (delta > 0 ? '▲ further than last pull (' : delta < 0 ? '▼ not as far as last pull (' : 'The same as last pull (') + esc(pullLabel(prevItem)) + ')' : delta > 0 ? '▲ ' + delta.toFixed(1) + '% further than last pull' : delta < 0 ? '▼ ' + (-delta).toFixed(1) + '% behind last pull' : 'The same as last pull') + '</span>'
+      (delta != null && !it.kill ? '<span class="' + (delta > 0 ? 'okv' : delta < 0 ? 'hotv' : 'sub') + '"' + (usesPh && prevItem ? ' title="Last pull: ' + esc(pullLabel(prevItem)) + '"' : '') + '>' + (usesPh ? (delta > 0 ? '▲ Further than last pull' : delta < 0 ? '▼ Not as far as last pull' : 'The same as last pull') /* round 144: last pull's phase on hover */ : delta > 0 ? '▲ ' + delta.toFixed(1) + '% further than last pull' : delta < 0 ? '▼ ' + (-delta).toFixed(1) + '% behind last pull' : 'The same as last pull') + '</span>'
         : !prevItem && !it.run && !it.kill ? '<span class="sub">First pull on this boss tonight</span>' : '');
   }
   // (a log you said isn't your raid: one quiet line, with the way back)
@@ -18965,8 +18995,9 @@ function headerHtml0(r, allMode) {
   // of the boss tonight as a bar, as high as it got: the pull row is the progress line (renderList fills #bhPulls). The
   // phase bar and the All pulls tag are merged into it. A Mythic+ key keeps the banner below and its cards.)
   if (!isKey && !it.run) return '<header class="fight bh bhx ' + cls + (hero ? ' hero' : '') + (qcol ? ' q" style="--qc:' + qcol : '') + '">' + art + '<div class="bh-t">' +
-    '<div class="bh-l1"><h2 class="bh-name">' + esc(it.boss) + '</h2><button class="bh-pickb" type="button" aria-haspopup="true" aria-expanded="false" hidden></button><span class="bh-big">' + pill + '</span>' + (side ? '<span class="bh-side">' + side + '</span>' : '') + bhCutBtn() + '</div>' +
-    '<div class="bh-l2"><span class="bhp-as" id="bhAll"></span>' + (allMode ? '' : scope) + '<span class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</span>' + nerfTag(it) + strictSw(it) + '<span class="bh-s">' + stats.map(([ic, t]) => '<span' + (ic === 'timer' ? ' class="bh-dur" title="How long the pull lasted"' : '') + '>' + bhIc(ic) + esc(t) + '</span>').join('') + '</span>' + tmL + '</div></div>' +
+    '<div class="bh-l0"><span class="bh-k">' + kick.filter(Boolean).map(esc).join('<i>·</i>') + '</span>' + nerfTag(it) + tmL + '</div>' /* round 144: banner A, the kicker */ +
+    '<div class="bh-l1"><h2 class="bh-name">' + esc(it.boss) + '</h2><button class="bh-pickb" type="button" aria-haspopup="true" aria-expanded="false" hidden></button><span class="bh-big">' + pill + '</span>' + (side ? '<span class="bh-side">' + side + '</span>' : '') + '<span class="bh-seg"><span class="bhp-as" id="bhAll"></span>' + (allMode ? '' : scope) + '</span></div>' +
+    '<div class="bh-l2"><span class="bh-s">' + stats.map(([ic, t]) => '<span' + (ic === 'timer' ? ' class="bh-dur" title="How long the pull lasted"' : '') + '>' + esc(t) + '</span>').join('') + '</span>' + bhCutBtn() + strictSw(it) + '</div></div>' +
     '<div class="bhp" id="bhPulls"></div></header>';
   return '<header class="fight bh ' + cls + (hero ? ' hero' : '') + (qcol ? ' q" style="--qc:' + qcol : '') + '">' + art + '<div class="bh-t">' +
     '<div class="bh-l1"><h2 class="bh-name">' + esc(it.boss) + '</h2><button class="bh-pickb" type="button" aria-haspopup="true" aria-expanded="false" hidden></button><span class="bh-big">' + pill + '</span>' + progBar(it, left, !allMode && !isKey && r ? (progressOf(r) || {}).phase : null, qcol) + tmL + '</div>' +
@@ -19066,6 +19097,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-28', h: [], n: [
+    'The boss banner is two calm lines: the boss (tap its name to change boss), how far the pull got and whether it beat the last one, the All pulls / pull switch on the right, then how long it lasted, the deaths and the wipe call.',
     'Debriefing: "The details" are one row of six right under "The pull at a glance", like a scorecard, and the phases below have the full width.',
     'Debriefing: the boss banner is tidier, with one chip shape and without the start time and player count; "The details" tiles open into slim lists, and only a tile that needs fixing is edged in red.',
     'Debriefing: "The details" are small tiles, three to a row, each with its score, its name and a short line; tap one to open it across the row.',
@@ -46739,7 +46771,7 @@ function bhCutChip() { return '<span class="bh-cut" id="bhCut"></span>'; }
 function bhCutBtn() { const n = deathCutN(); return '<button class="bhp-cut' + (n ? '' : ' off') + '" type="button" id="bhCutB" aria-haspopup="true" aria-expanded="' + !!S.cutOpen + '" aria-controls="bhCutBox" title="' + (n ? 'On a wipe, nothing after the wipe call counts: the moment more were dead than any kill survived, the damage check was missed, or half the raid was dead. A kill counts in full.' : 'Off: every pull counts in full') + '"><svg class="cs-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 4.5h11.5l-2.6 4 2.6 4H6"/></svg><span class="bhp-cl">' + (n && S.rep && cutInfo(S.rep) ? 'Wipe called at ' : 'Wipe call: ') + '</span><b>' + (!n ? 'off' : S.rep && cutInfo(S.rep) ? T(cutInfo(S.rep).t) : 'on') + '</b></button>'; }
 const bhCutBox = () => '<div class="bhp-cw"><div class="bhp-cbox" id="bhCutBox"' + (S.cutOpen ? '' : ' hidden') + '>' + (() => { const r = S.rep, c = r && !r.allPulls ? cutInfo(r) : null; return c && c.auto ? '<div class="bhp-cwhy"><b>Wipe called at ' + T(c.t) + '</b>: ' + esc(wipeSay(c)) + '.' + wipePic(r, c) + '</div>' : ''; })() + '<span class="bh-cut" id="bhCut"></span><div class="bh-cutpop" id="bhCutPop" hidden></div></div></div>';
 function bhCutPlace() { const box = $('#bhCutBox'), b = $('#bhCutB'); if (!box || !b) return; b.setAttribute('aria-expanded', String(!box.hidden)); if (box.hidden) return;
-  const hb = box.parentNode.getBoundingClientRect(), r = b.getBoundingClientRect(); box.style.top = Math.round(r.bottom - hb.top + 8) + 'px'; box.style.right = Math.max(0, Math.round(hb.right - r.right)) + 'px'; }
+  const hb = box.parentNode.getBoundingClientRect(), r = b.getBoundingClientRect(); box.style.top = Math.round(r.bottom - hb.top + 8) + 'px'; if (r.left - hb.left < hb.width / 2) { box.style.left = Math.max(0, Math.round(r.left - hb.left)) + 'px'; box.style.right = 'auto'; } else { box.style.left = 'auto'; box.style.right = Math.max(0, Math.round(hb.right - r.right)) + 'px'; } } /* round 144: under its words */
 document.addEventListener('click', (e) => { const t = e.target, box = $('#bhCutBox'); if (!box || !t || !t.closest) return;
   if (t.closest('#bhCutB')) { S.cutOpen = box.hidden; box.hidden = !S.cutOpen; bhCutPlace(); return; }
   if (!box.hidden && !t.closest('#bhCutBox')) { S.cutOpen = false; box.hidden = true; bhCutPlace(); } });
