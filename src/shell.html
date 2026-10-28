@@ -10319,6 +10319,35 @@ html body #view .rtl .rtl-mid .rtl-t { margin: 0; }
 /* round 160b: a pressed buff's bar in its own column (the user: "i actually really like these") */
 .rtl .rtv-dur.col{pointer-events:auto;cursor:pointer}
 .rtl .rtv-dur.col:hover,.rtl .rtv-dur.col.rtv-hot{background:linear-gradient(180deg,rgba(230,180,80,.32),rgba(230,180,80,.1))}
+/* round 161: window brackets outside the chart, a faint tint inside */
+.rtl .rtv-band,.rtl .rtv-band.warn,.rtl .rtv-band.bad{background:rgba(255,255,255,.025);box-shadow:none;border:0}
+.rtl .rtv-brkw{position:absolute;left:-16px;width:10px;border:2px solid #45c15c;border-right:0;border-radius:6px 0 0 6px;cursor:pointer;z-index:3}
+.rtl .rtv-brkw.meh{border-color:#e8a23a}
+.rtl .rtv-brkw:hover,.rtl .rtv-brkw.rtv-hot{box-shadow:-4px 0 12px -4px rgba(69,193,92,.6)}
+.rtl .rtv-brkw.meh:hover,.rtl .rtv-brkw.meh.rtv-hot{box-shadow:-4px 0 12px -4px rgba(232,162,58,.6)}
+.rtl .rtv-brkw > b{position:absolute;right:16px;top:-2px;display:flex;align-items:center;gap:6px;max-width:180px;padding:3px 8px 3px 4px;border-radius:8px;background:#141a24;box-shadow:inset 0 0 0 1px rgba(69,193,92,.4);white-space:nowrap}
+.rtl .rtv-brkw.meh > b{box-shadow:inset 0 0 0 1px rgba(232,162,58,.45)}
+.rtl .rtv-brkw > b .rtv-cdi,.rtl .rtv-brkw > b .rtv-cdi .icw,.rtl .rtv-brkw > b .rtv-cdi img,.rtl .rtv-brkw > b .rtv-cdi svg{width:18px;height:18px;flex:none}
+.rtl .rtv-brkw > b .t{min-width:0;overflow:hidden;text-overflow:ellipsis;font:700 12px 'Barlow Condensed',sans-serif;color:#ece8df}
+.rtl .rtv-brkw > b em{font:700 11.5px 'Barlow Condensed',sans-serif;font-style:normal;color:#8fe39d}
+.rtl .rtv-brkw.meh > b em{color:#f0c35c}
+.rtl .rtv-brkw > b i{font:600 10px 'Barlow Condensed',sans-serif;font-style:normal;letter-spacing:.04em;text-transform:uppercase;color:#f0b85c}
+.rtl .rtv.f-win .rtv-brkw{display:none}
+.rtl .rtv-wd{display:none}
+/* round 161b: brackets without labels (the hover note says it) */
+.rtl .rtv-brkw > b{display:none}
+/* round 161g: group names in the head instead of icons */
+.rtl .rtv-heads > i{display:none!important}
+.rtl .rtv-grp{position:absolute;bottom:8px;height:20px;border-bottom:2px solid rgba(255,255,255,.14);display:flex;align-items:flex-end;justify-content:center;padding:0!important}
+.rtl .rtv-grp b{padding:0 6px 3px;font:700 10.5px 'Barlow Condensed',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#9aa1b0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rtl .rtv-grp.g0{border-color:rgba(230,180,80,.55)}.rtl .rtv-grp.g0 b{color:#f0cf7a}
+.rtl .rtv-grp.g2{border-color:rgba(106,168,255,.45)}.rtl .rtv-grp.g2 b{color:#a9c8ff}
+.rtl .rtv-grp.gp{border-color:rgba(255,214,102,.45)}.rtl .rtv-grp.gp b{color:#ffd666;font-size:9.5px;padding:0 2px 3px}
+/* round 161h: a hidden minor slip hides its bracket too */
+.rtl .rtv.f-minor .rtv-brk.y{display:none}
+/* round 161i: each proc bar starts with its icon (the user: "procs should still have their icon") */
+.rtl .rtv-pbi{display:block!important;left:-3px;top:-16px;width:14px;height:14px;opacity:.9}
+.rtl .rtv-pb{margin-top:0}
 </style>
 
 

@@ -6550,6 +6550,7 @@ function* analyzeSteps(item, text, opts) {
         if (PERF_CC_CAST.has(spell.toLowerCase()) && p.ccL.length < 600) p.ccL.push({ t, spell, id, on: '' });
         const ca = p.castAb.get(spell); if (ca) ca.n++; else p.castAb.set(spell, { name: spell, id, n: 1 });
         let tl = p.castTimes.get(id); if (!tl) p.castTimes.set(id, tl = []); tl.push(t);
+        if (dg && dg !== sg && isPlayer(dg)) { if (!p.castTo) p.castTo = new Map(); let to = p.castTo.get(id); if (!to) p.castTo.set(id, to = []); if (to.length < 400) to.push([t, String(f[5] || '').replace(/\x22/g, '').split('-')[0]]); } /* (round 157: who a cast on another player went on) */
         const ln = spell.toLowerCase();
         let bl = p.byName.get(ln); if (!bl) p.byName.set(ln, bl = []); bl.push(t);
         { const pq = POT_ID.get(+id), pn = pq && pq.n.toLowerCase(); if (pn && pn !== ln) { let bq = p.byName.get(pn); if (!bq) p.byName.set(pn, bq = []); bq.push(t); } } /* (a potion under its English name too (Oct 26)) */
