@@ -8877,6 +8877,16 @@ html body #view .mx-p.mx-p .mx-tb.mx-tb.mx-one .mx-tr > .mx-m.ok b { color: #7ee
 html body #view .mx-p.mx-p .mx-tb.mx-tb.mx-one .mx-tr > .mx-m.warn b { color: var(--gold); }
 html body #view .mx-p.mx-p .mx-tb.mx-tb.mx-one .mx-tr > .mx-m.bad b { color: #ff8f87; }
 html body #view .mx-p.mx-p .mx-tb.mx-tb.mx-one .mx-rest, html body #view .mx-p.mx-p .mx-tb.mx-tb.mx-one .mx-rest > * { color: var(--faint) !important; font-size: 13px; font-style: normal; }
+/* ===== Design studio round 130 (Oct 27): dropdown under its own row. Owner: the Design studio chat. ===== */
+html body #view details.phase.phase > summary .prw.prw > .ds-dock { margin: -1px 0 10px !important; width: auto !important; max-width: none !important; }
+html body #view details.phase.phase > summary .prw.prw > .prw-i.on:has(+ .ds-dock) { border-radius: 8px 8px 0 0 !important; box-shadow: inset 0 0 0 1px rgba(230,180,80,.6) !important; background: rgba(230,180,80,.06) !important; }
+html body #view details.phase.phase > summary .prw.prw > .prw-i.on + .ds-dock > .mx-p { border: 1px solid rgba(230,180,80,.6) !important; border-top-color: rgba(230,180,80,.2) !important; border-radius: 0 0 10px 10px !important; background: rgba(230,180,80,.025) !important; padding: 12px 14px 10px !important; }
+html body #view details.phase.phase > summary .prw.prw > .ds-dock .mx-p .mx-hd { flex-wrap: nowrap !important; min-width: 0; }
+html body #view details.phase.phase > summary .prw.prw > .ds-dock .mx-p .mx-hd > :not(.mx-fl):not(button):not(.icw):not(img) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html body #view details.phase.phase > summary .prw.prw > .ds-dock .mx-p .mx-hd > button { flex: none; margin-left: 6px; }
+/* a done-right moment reads as a green check (the user: "#1 green check mark") */
+html body #view .mx-p.mx-p .mx-tb.mx-tb.mx-one .mx-tr > .mx-m.ok { font-size: 0 !important; }
+html body #view .mx-p.mx-p .mx-tb.mx-tb.mx-one .mx-tr > .mx-m.ok::before { content: "✓"; font: 800 16px/1 var(--body); color: #7ee08f; }
 </style>
 
 
