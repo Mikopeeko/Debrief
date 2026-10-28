@@ -31095,7 +31095,8 @@ function liveBar() {
   let bar = $('#lvBar');
   if (!show) { if (bar) bar.remove(); return; }
   const html = '<span class="lv-dot" aria-hidden="true"></span><span class="lv-t"><b>' + esc(gName(x.g)) + ' is raiding now</b><span class="sub">' + esc(liveAgo(x)) + '</span></span><button class="btn primary" id="lvGo" type="button">Follow live</button><button class="lv-x" id="lvX" type="button" aria-label="Hide this">×</button>';
-  if (!bar) { bar = document.createElement('div'); bar.id = 'lvBar'; bar.className = 'lv-bar'; bar.setAttribute('role', 'status'); $('#topbar').insertAdjacentElement('afterend', bar); }
+  if (!bar) { const tb = $('#topbar'), vw = $('#view'); if (!tb && !vw) return; /* (Oct 27: a page without the top bar threw every 2 s while a team was live) */
+    bar = document.createElement('div'); bar.id = 'lvBar'; bar.className = 'lv-bar'; bar.setAttribute('role', 'status'); if (tb) tb.insertAdjacentElement('afterend', bar); else vw.insertAdjacentElement('beforebegin', bar); }
   if (bar.dataset.h !== html) { bar.dataset.h = html; bar.innerHTML = html; $('#lvGo').onclick = liveFollow; $('#lvX').onclick = () => { S.liveHide = x.code; liveBar(); }; }
 }
 setTimeout(liveCheck, 6000); setInterval(liveCheck, 30e3); // (every 30 seconds, your call: a raid shows up soon after its first pull)
