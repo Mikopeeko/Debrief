@@ -10136,6 +10136,80 @@ html body #view .rtl .rtl-mid .rtl-t { margin: 0; }
 }
 /* round 155o: on a phone the numbers and key stay in view while the chart scrolls sideways */
 @media (max-width:760px){.rtl .rtv .rtv-top,.rtl .rtv .rtv-foot{position:sticky;left:0;width:calc(100vw - 52px);box-sizing:border-box}.rtl .rtv .rtv-st span{flex:1 1 40%;border-right:0;margin-right:0}}
+/* round 155q: mistakes on the presses, the HPS/DPS wave */
+.rtl .rtv-c.mk-r img,.rtl .rtv-c.mk-r svg{box-shadow:0 0 0 2px #0f1218,0 0 0 3.5px #ef5b52,0 0 14px rgba(239,91,82,.55)!important}
+.rtl .rtv-c.mk-y img,.rtl .rtv-c.mk-y svg{box-shadow:0 0 0 2px #0f1218,0 0 0 3.5px #e8b23a,0 0 12px rgba(232,178,58,.4)!important}
+.rtl .rtv-c.mk-r,.rtl .rtv-c.mk-y{z-index:3;cursor:pointer}
+.rtl .rtv-c.mk-r::before,.rtl .rtv-c.mk-y::before{content:"!";position:absolute;left:-7px;top:-7px;z-index:2;width:13px;height:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:800 9.5px/1 'Barlow Condensed',sans-serif;color:#fff;background:#d94a42;box-shadow:0 0 0 1.5px #0f1218}
+.rtl .rtv-c.mk-y::before{background:#d39a22;color:#1a1305}
+.rtl .rtv.dim .rtv-c.mk-r,.rtl .rtv.dim .rtv-c.mk-y{opacity:1}
+.rtl .rtv-pop .rtv-hr{border:0;border-top:1px solid rgba(255,255,255,.08);margin:10px 0}
+.rtl .rtv-wave{position:absolute;top:0;pointer-events:none;z-index:0}
+.rtv-wtip{position:fixed;z-index:60;pointer-events:none;padding:4px 9px;border-radius:8px;background:rgba(12,15,21,.94);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),0 6px 16px rgba(0,0,0,.45);font:700 12px 'Barlow Condensed',sans-serif;color:#ece8df;opacity:0;transition:opacity .1s;white-space:nowrap}
+.rtl .rtv-key .k.mky{box-shadow:0 0 0 2px #e8b23a;background:#f5d27a}
+.rtl .rtv-key .k.wave{width:16px;border-radius:3px;background:linear-gradient(90deg,rgba(201,206,216,.5),transparent)}
+/* round 155r: a bracket down the stretch a side mistake covers */
+.rtl .rtv-brk{position:absolute;width:2px;margin-left:-1px;border-radius:1px;background:linear-gradient(180deg,rgba(229,83,75,.7),rgba(229,83,75,.15));pointer-events:none}
+.rtl .rtv-brk.y{background:linear-gradient(180deg,rgba(232,162,58,.7),rgba(232,162,58,.15))}
+/* round 155s: where they died */
+.rtl .rtv-death{position:absolute;left:0;right:0;height:0;z-index:4;pointer-events:none}
+.rtl .rtv-death::before{content:"";position:absolute;left:0;right:0;top:-1px;height:2px;background:linear-gradient(90deg,#ef5b52,rgba(239,91,82,.35));box-shadow:0 0 12px rgba(239,91,82,.6)}
+.rtl .rtv-death b{position:absolute;right:8px;top:-12px;display:inline-flex;align-items:center;gap:8px;height:22px;padding:0 10px;border-radius:11px;background:#3a1514;box-shadow:inset 0 0 0 1px rgba(239,91,82,.6),0 4px 12px rgba(0,0,0,.45);font:700 12px/22px 'Barlow Condensed',sans-serif;letter-spacing:.05em;text-transform:uppercase;color:#ffb3ad}
+.rtl .rtv-death b em{font-style:normal;font-weight:600;text-transform:none;letter-spacing:0;color:#e88a83}
+.rtl .rtv-after{position:absolute;left:0;right:0;background:repeating-linear-gradient(135deg,rgba(8,10,14,.55) 0 8px,rgba(8,10,14,.68) 8px 16px);z-index:3;pointer-events:none}
+.rtl .rtv-skull{display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:#3a1514;color:#ff8e86;font-size:14px}
+/* round 155t: the opener always highlighted, back up after a death */
+.rtl .rtv-open{position:absolute;left:56px;right:0;background:linear-gradient(180deg,rgba(230,180,80,.10),rgba(230,180,80,.03));box-shadow:inset 2px 0 0 rgba(230,180,80,.7),inset 0 -1px 0 rgba(230,180,80,.25);pointer-events:none}
+.rtl .rtv-openb{position:absolute;right:8px;height:0;z-index:4;pointer-events:none}
+.rtl .rtv-openb b{position:absolute;right:0;top:6px;display:inline-flex;align-items:center;gap:7px;height:20px;padding:0 9px;border-radius:10px;background:#2a2312;box-shadow:inset 0 0 0 1px rgba(230,180,80,.5);font:700 11px/20px 'Barlow Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#f0cf7a;white-space:nowrap}
+.rtl .rtv-openb b em{font-style:normal;font-weight:600;letter-spacing:.02em;color:#a8925a}
+.rtl .rtv-cd.op{box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),inset 3px 0 0 #e6b450,0 8px 22px rgba(0,0,0,.35)}
+.rtl .rtv-ops{display:flex!important;flex-wrap:wrap;gap:4px!important;align-items:center;-webkit-line-clamp:unset!important}
+.rtl .rtv-ops i{position:relative;display:block;width:20px;height:20px;border-radius:4px;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.5)}
+.rtl .rtv-ops i.big{box-shadow:0 0 0 1.5px #e6b450}
+.rtl .rtv-ops i .icw{display:block;position:relative;width:20px;height:20px}
+.rtl .rtv-ops i .icw > *{position:absolute;inset:0;width:20px!important;height:20px!important}
+.rtl .rtv-ops em{font-style:normal;font-size:11.5px;color:#7d8596;margin-left:2px}
+.rtl .rtv-sv.op{background:rgba(230,180,80,.18);color:#f0cf7a}
+.rtl .rtv-back{position:absolute;left:0;right:0;height:0;z-index:4;pointer-events:none}
+.rtl .rtv-back::before{content:"";position:absolute;left:0;right:0;top:-1px;height:1px;background:linear-gradient(90deg,rgba(126,224,143,.7),rgba(126,224,143,.1))}
+.rtl .rtv-back b{position:absolute;right:8px;top:-11px;height:20px;padding:0 9px;border-radius:10px;background:#14261a;box-shadow:inset 0 0 0 1px rgba(69,193,92,.5);font:700 11px/20px 'Barlow Condensed',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#8fe39d}
+/* round 155w: the timeline's filters (a slim panel docked right, quiet list rows) and what each one hides */
+.rtl .rtv .rtv-fb{height:30px;padding:0 14px;border-radius:15px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.02);color:var(--muted,#a4abb8);font:600 13px 'Barlow Condensed',sans-serif;cursor:pointer}
+.rtl .rtv .rtv-fb:hover{background:rgba(255,255,255,.05);color:var(--text,#ece8df)}
+.rtl .rtv .rtv-fbn{font-style:normal;color:#f0cf7a}
+.rtv-fp{position:fixed;right:16px;top:72px;z-index:70;width:270px;max-height:calc(100vh - 96px);overflow:auto;padding:12px 10px 10px;border-radius:14px;background:rgba(14,17,24,.97);backdrop-filter:blur(8px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.09),0 18px 40px rgba(0,0,0,.55);font-family:Barlow,sans-serif;color:#ece8df}
+.rtv-fph{display:flex;align-items:center;gap:8px;padding:0 6px 8px;border-bottom:1px solid rgba(255,255,255,.06)}
+.rtv-fph b{flex:1;font:700 14px 'Barlow Condensed',sans-serif;letter-spacing:.04em}
+.rtv-fpr,.rtv-fpx{border:0;background:none;color:#7d8596;font:600 12px 'Barlow Condensed',sans-serif;cursor:pointer;padding:2px 4px}
+.rtv-fpr:hover,.rtv-fpx:hover{color:#ece8df}
+.rtv-fpg{padding:8px 0 2px}
+.rtv-fpk{display:block;padding:2px 8px 4px;font:700 10px 'Barlow Condensed',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#5c6474}
+.rtv-fq{display:flex;align-items:center;gap:9px;width:100%;height:32px;padding:0 8px;border:0;border-radius:8px;background:none;color:#7d8596;font:500 13px Barlow,sans-serif;text-align:left;cursor:pointer}
+.rtv-fq:hover{background:rgba(255,255,255,.04)}
+.rtv-fq.on{color:#ece8df}
+.rtv-fd{flex:none;width:8px;height:8px;border-radius:50%;opacity:.4}
+.rtv-fq.on .rtv-fd{opacity:1}
+.rtv-fd.r{background:#ef5b52}.rtv-fd.y{background:#e8b23a}.rtv-fd.g{background:#45c15c}.rtv-fd.b{background:#6fbf7d;border-radius:2px}.rtv-fd.w{background:#c9ced8}.rtv-fd.u{background:#6aa8ff}
+.rtv-fl{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rtv-fn{font:600 12px 'Barlow Condensed',sans-serif;color:#7d8596;font-variant-numeric:tabular-nums}
+.rtv-fe{width:14px;text-align:center;font-size:12px;color:#5c6474}.rtv-fq.on .rtv-fe{color:#f0cf7a}
+.rtv-fph2{margin:8px 8px 2px;font-size:11.5px;color:#5c6474}
+/* what each filter hides */
+.rtl .rtv.f-press .rtv-c.mk-r img,.rtl .rtv.f-press .rtv-c.mk-r svg{box-shadow:0 0 0 1px rgba(0,0,0,.5),0 2px 4px rgba(0,0,0,.4)!important}
+.rtl .rtv.f-press .rtv-c.mk-r::before{display:none}
+.rtl .rtv.f-minor .rtv-c.mk-y img,.rtl .rtv.f-minor .rtv-c.mk-y svg{box-shadow:0 0 0 1px rgba(0,0,0,.5),0 2px 4px rgba(0,0,0,.4)!important}
+.rtl .rtv.f-minor .rtv-c.mk-y::before,.rtl .rtv.f-minor .rtv-mk.mi{display:none}
+.rtl .rtv.f-span .rtv-side.r .rtv-mk:not(.mi),.rtl .rtv.f-span .rtv-brk{display:none}
+.rtl .rtv.f-good .rtv-side.l .rtv-mk{display:none}
+.rtl .rtv.f-cards .rtv-cd{display:none}
+.rtl .rtv.f-win .rtv-band{display:none}
+.rtl .rtv.f-wave .rtv-wave{display:none}
+.rtl .rtv.f-util .rtv-c.u,.rtl .rtv.f-util .rtv-mk.u{display:none}
+.rtl .rtv.f-filler .rtv-c:not(.big):not(.u):not(.mk-r):not(.mk-y){opacity:.12}
+.rtl .rtv.f-dim .rtv-c:not(.mk-r):not(.mk-y){opacity:.2}
+.rtl .rtv.f-dim .rtv-mk.gd,.rtl .rtv.f-dim .rtv-mk.u,.rtl .rtv.f-dim .rtv-cd.gd,.rtl .rtv.f-dim .rtv-cd.op,.rtl .rtv.f-dim .rtv-band,.rtl .rtv.f-dim .rtv-wave{opacity:.25}
+@media (max-width:760px){.rtv-fp{left:12px;right:12px;width:auto;top:auto;bottom:12px;max-height:70vh}}
 </style>
 
 
