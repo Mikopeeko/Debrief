@@ -8956,6 +8956,29 @@ html body .pfv section.rck-gx.rck-gx .rgx-ex > .rck-t > summary > b { order: 2; 
 html body .pfv section.rck-gx.rck-gx .rgx-ex > .rck-t > summary > .rck-tx { order: 3; font-size: 11.5px; line-height: 1.35; color: var(--faint); }
 html body .pfv section.rck-gx.rck-gx .rgx-ex > .rck-t > summary::after, html body .pfv section.rck-gx.rck-gx .rgx-ex > .rck-t > summary::marker { display: none; content: none; }
 @media (max-width: 420px) { html body .pfv section.rck-gx.rck-gx .rgx-c, html body .pfv section.rck-gx.rck-gx .rgx-ex > .rck-t { flex: 1 1 140px; } html body .pfv section.rck-gx.rck-gx .rgx-pn > .rgx-gp { flex: 1 1 100%; } }
+/* ===== Design studio round 139 (Oct 28): The details as tiles. Owner: the Design studio chat. ===== */
+html body #view .dt-box.dt-box.dt-box { position: relative; display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; align-items: stretch; }
+html body #view .dt-box.dt-box.dt-box > .cch-acct2 { display: contents !important; }
+html body #view .dt-box.dt-box.dt-box > .cch-acct2:not(.cch-acct3)::before { grid-column: 1 / -1; display: block; margin: 0 0 4px !important; }
+html body #view .dt-box.dt-box.dt-box > .cch-acct2 > .cbl-sw { position: absolute !important; top: 0; right: 0; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab { --tc: rgba(230,180,80,.75); box-sizing: border-box; min-width: 0; width: auto !important; margin: 0 !important; padding: 0 !important; border: 1px solid var(--line, #262c38) !important; border-top: 2px solid var(--tc) !important; border-radius: 10px !important;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--tc) 8%, transparent), transparent 70%), var(--panel, #161a22) !important; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab:has(> summary .cgl-p.bad) { --tc: #e5534b; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab:has(> summary .cgl-p.ok) { --tc: #45c15c; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab { grid-column: auto !important; grid-row: auto !important; align-self: stretch !important; height: auto !important; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] { grid-column: 1 / -1 !important; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab > summary.cch-al { display: grid !important; grid-template-columns: 22px minmax(0, 1fr) !important; grid-template-areas: 'i p' 'n n' 'd d'; align-items: center; gap: 6px 8px !important; padding: 10px 12px 11px !important; border: 0 !important; background: none !important; cursor: pointer; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab > summary.cch-al::after { content: none !important; display: none !important; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab > summary.cch-al > .cgl-i { grid-area: i; width: 22px !important; height: 22px !important; margin: 0 !important; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab > summary.cch-al > .cgl-p { grid-area: p; justify-self: end; font: 700 20px/1 var(--head) !important; font-variant-numeric: tabular-nums; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab > summary.cch-al > .cgl-n { grid-area: n; min-width: 0; font: 600 13px/1.25 var(--body) !important; color: var(--text); white-space: normal !important; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab > summary.cch-al > .cgl-dt { grid-area: d; min-width: 0; font-size: 11.5px; line-height: 1.35; color: var(--faint); }
+html body #view .dt-box.dt-box.dt-box details.cch-ab > summary.cch-al > .cgl-b { display: none !important; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] > p.cgl-d { display: none !important; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] > :not(summary) { margin-left: 12px !important; margin-right: 12px !important; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab[open] > :last-child { margin-bottom: 12px !important; }
+html body #view .dt-box.dt-box.dt-box details.cch-ab:not([open]):hover { border-color: color-mix(in srgb, var(--tc) 45%, var(--line, #262c38)) !important; }
+@media (max-width: 760px) { html body #view .dt-box.dt-box.dt-box { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>
 
 
@@ -18986,6 +19009,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-28', h: [], n: [
+    'Debriefing: "The details" are small tiles, three to a row, each with its score, its name and a short line; tap one to open it across the row.',
     'Rotation: Gear and extras are small tiles in a row above your checklist (each item, its number and its short line), and the checklist has the full width under them.',], f: [
     'Debriefing: "The pull at a glance" ends where the pull was counted to, instead of running on to the last second; a long "What happened" line fits inside its box; and the rows under "The details" are all one width.',
     'All pulls, By mechanic: a mechanic now shows under every phase it came up in, so a night that reached the last phase lists it (P3 was missing for The Coiled Altar). Thanks to the raider who reported it.',
@@ -29960,7 +29984,8 @@ function dtTrends(v) { if (!v || !v.querySelector('.nmc')) return; const box = v
 function dtMove(v) { if (!v) return; const el = v.querySelector('#oaTop'), tl = v.querySelector('.mcx-tl2') || v.querySelector('.nmc-tl'); if (!el || !tl || tl.parentNode !== v) return;
   const accts = [...el.querySelectorAll('.cch-acct2:not(.dth-w)')].filter((x) => !x.parentElement.closest('.cch-acct2')); let box = v.querySelector(':scope > .dt-box'); if (!accts.length && box) { if (box.previousElementSibling !== tl) tl.after(box); if (tl.classList.contains('nmc-tl')) tl.remove(); return; } if (!accts.length) return;
   if (!box) { box = document.createElement('section'); box.className = 'cch2 dt-box'; box.setAttribute('aria-label', 'The details'); } box.innerHTML = ''; box._dtt = 0; accts.forEach((x) => box.appendChild(x)); /* (both groups: the switch with Innervate and Avoidable damage, then the kit rows) */ if (box.previousElementSibling !== tl) tl.after(box);
-  if (tl.classList.contains('nmc-tl')) tl.remove(); /* (Oct 27, the user's yes: no "All pulls at a glance" dot grid on All pulls; The details sit in its place) */ }
+  if (tl.classList.contains('nmc-tl')) tl.remove(); /* (Oct 27, the user's yes: no "All pulls at a glance" dot grid on All pulls; The details sit in its place) */
+  box.querySelectorAll('details.cch-ab > summary.cch-al').forEach((s) => { if (s.querySelector('.cgl-dt')) return; const d = s.parentElement.querySelector(':scope > .cgl-d'); const t = d ? d.textContent.replace(/\s+/g, ' ').trim() : ''; if (t) s.insertAdjacentHTML('beforeend', '<span class="cgl-dt">' + esc(t) + '</span>'); }); /* round 139: each tile shows its short line */ }
 /* (Oct 24 polish: in What wiped us / What we did well every title has an icon, borrowed from its phase bar or check row; "Further than
    last pull" gets a small green arrow) */
 function topIcons(v) { if (!v) return; const lc = (s) => String(s || '').replace(/\s+/g, ' ').trim().toLowerCase();

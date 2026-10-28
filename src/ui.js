@@ -1955,6 +1955,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-28', h: [], n: [
+    'Debriefing: "The details" are small tiles, three to a row, each with its score, its name and a short line; tap one to open it across the row.',
     'Rotation: Gear and extras are small tiles in a row above your checklist (each item, its number and its short line), and the checklist has the full width under them.',], f: [
     'Debriefing: "The pull at a glance" ends where the pull was counted to, instead of running on to the last second; a long "What happened" line fits inside its box; and the rows under "The details" are all one width.',
     'All pulls, By mechanic: a mechanic now shows under every phase it came up in, so a night that reached the last phase lists it (P3 was missing for The Coiled Altar). Thanks to the raider who reported it.',
@@ -12929,7 +12930,8 @@ function dtTrends(v) { if (!v || !v.querySelector('.nmc')) return; const box = v
 function dtMove(v) { if (!v) return; const el = v.querySelector('#oaTop'), tl = v.querySelector('.mcx-tl2') || v.querySelector('.nmc-tl'); if (!el || !tl || tl.parentNode !== v) return;
   const accts = [...el.querySelectorAll('.cch-acct2:not(.dth-w)')].filter((x) => !x.parentElement.closest('.cch-acct2')); let box = v.querySelector(':scope > .dt-box'); if (!accts.length && box) { if (box.previousElementSibling !== tl) tl.after(box); if (tl.classList.contains('nmc-tl')) tl.remove(); return; } if (!accts.length) return;
   if (!box) { box = document.createElement('section'); box.className = 'cch2 dt-box'; box.setAttribute('aria-label', 'The details'); } box.innerHTML = ''; box._dtt = 0; accts.forEach((x) => box.appendChild(x)); /* (both groups: the switch with Innervate and Avoidable damage, then the kit rows) */ if (box.previousElementSibling !== tl) tl.after(box);
-  if (tl.classList.contains('nmc-tl')) tl.remove(); /* (Oct 27, the user's yes: no "All pulls at a glance" dot grid on All pulls; The details sit in its place) */ }
+  if (tl.classList.contains('nmc-tl')) tl.remove(); /* (Oct 27, the user's yes: no "All pulls at a glance" dot grid on All pulls; The details sit in its place) */
+  box.querySelectorAll('details.cch-ab > summary.cch-al').forEach((s) => { if (s.querySelector('.cgl-dt')) return; const d = s.parentElement.querySelector(':scope > .cgl-d'); const t = d ? d.textContent.replace(/\s+/g, ' ').trim() : ''; if (t) s.insertAdjacentHTML('beforeend', '<span class="cgl-dt">' + esc(t) + '</span>'); }); /* round 139: each tile shows its short line */ }
 /* (Oct 24 polish: in What wiped us / What we did well every title has an icon, borrowed from its phase bar or check row; "Further than
    last pull" gets a small green arrow) */
 function topIcons(v) { if (!v) return; const lc = (s) => String(s || '').replace(/\s+/g, ' ').trim().toLowerCase();
