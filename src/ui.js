@@ -1955,6 +1955,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-28', h: [], n: [], f: [
+    'Debriefing: "The pull at a glance" ends where the pull was counted to, instead of running on to the last second; a long "What happened" line fits inside its box; and the rows under "The details" are all one width.',
     'All pulls, By mechanic: a mechanic now shows under every phase it came up in, so a night that reached the last phase lists it (P3 was missing for The Coiled Altar). Thanks to the raider who reported it.',
   ] },
   { d: '2026-10-27', h: [
@@ -11258,7 +11259,7 @@ function audit() {
     void verdict; // (the sentence on top is gone: the four Debriefing blocks above say it)
     const head = '<div class="panel mcx-tl mcx-tl2"><div class="mcx-th"><h3 class="nh">The pull at a glance<small>Click a dot to see that moment</small></h3>' + pills + '</div>';
     // (the whole pull to its last phase, or to its end when the wipe filter cut it short; one phase is enough: most prog wipes end in P1)
-    const tp = byGroup ? [] : phs.map((p, i) => ({ p, i })).filter(({ p }) => isFinite(p.end) && p.end > p.start), lastE = tp.length ? tp[tp.length - 1].p.end : 0, end = Math.max(lastE, isFinite(r.duration) ? r.duration : 0);
+    const tp = byGroup ? [] : phs.map((p, i) => ({ p, i })).filter(({ p }) => isFinite(p.end) && p.end > p.start), lastE = tp.length ? tp[tp.length - 1].p.end : 0, end0 = Math.max(lastE, isFinite(r.duration) ? r.duration : 0), end = cut && cut.t > 0 && cut.t < end0 ? cut.t : end0; /* round 137: a pull the wipe filter cut short ends at its cut */
     if (!tp.length || !(end > 0)) return head + '</div>';
     const at = (t) => (100 * t / end).toFixed(2) + '%', X = (t) => 'calc(var(--lw) + (100% - var(--lw)) * ' + (t / end).toFixed(4) + ')';
     // (one lane per mechanic with a mistake, Deaths first, then the busiest; every moment is on its lane, the clean ones as faint ticks, so
@@ -11286,7 +11287,7 @@ function audit() {
     const wipe = cl.map((c, i) => { const last = i === cl.length - 1 && !r.item.kill, n = dts.filter((t) => t >= c.a && t <= c.b).length, z = last ? end : Math.max(c.b, c.a + 3);
       return '<div class="mcx-wipe' + (last ? ' end' : '') + '" style="left:' + X(c.a) + ';width:calc((100% - var(--lw)) * ' + ((z - c.a) / end).toFixed(4) + ')" title="' + esc(last ? 'The wipe started here: ' + n + ' deaths from ' + T(c.a) + '.' : n + ' deaths in ' + Math.max(1, Math.round(c.b - c.a)) + ' seconds, from ' + T(c.a) + '.') + '"><span>' + (last ? 'Wipe started' : n + ' deaths') + '</span></div>'; }).join('');
     const over = tp.filter(({ p }) => p.start > 0 && p.start < end).map(({ p }) => '<i class="mcx-pl" style="left:' + X(p.start) + '"></i>').join('') + ticks.map((t) => '<i class="mcx-tk" style="left:' + X(t) + '"></i>').join('') +
-      (cut && cut.t < end ? '<div class="mcx-cut" style="left:' + X(cut.t) + '" title="' + esc('Counted up to ' + T(cut.t) + ', ' + (cut.auto ? 'when the wipe was called: ' + wipeSay(cut) : 'the ' + ordinal(cut.n) + ' death') + '. What comes after is not counted.') + '"><span>Counted to ' + T(cut.t) + '</span></div>' : '');
+      (cut && cut.t < end0 ? '<div class="mcx-cut mcx-cut-end" style="left:' + X(cut.t) + '" title="' + esc('Counted up to ' + T(cut.t) + ', ' + (cut.auto ? 'when the wipe was called: ' + wipeSay(cut) : 'the ' + ordinal(cut.n) + ' death') + '. What comes after is not counted.') + '"><span>Counted to ' + T(cut.t) + '</span></div>' : '');
     const axis = '<div class="mcx-ax2">' + [0].concat(ticks, [end]).map((t, i, l) => '<span class="' + (i === 0 ? 'a0' : i === l.length - 1 ? 'a1' : '') + '" style="left:' + X(t) + '">' + T(t) + '</span>').join('') + '</div>';
     return head + '<div class="mcx-lanes">' + band + rows + wipe + over + axis + '</div></div>'; });
   const refAt = h.length; let dbMore = ''; // (where the reference panels start: they're gathered into one card below)

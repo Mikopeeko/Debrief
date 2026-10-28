@@ -8898,6 +8898,32 @@ html body #view details.phase.phase > summary .prw.prw > .mx-okl .mx-okc:hover {
 html body #view details.phase.phase > summary .prw.prw > .mx-okl .mx-okc.on { color: var(--gold) !important; background: rgba(230,180,80,.1); box-shadow: inset 0 0 0 1px rgba(230,180,80,.45); }
 html body #view details.phase.phase > summary .prw.prw > .mx-okl:has(+ .ds-dock) { border-top-color: transparent; border-radius: 8px 8px 0 0 !important; box-shadow: inset 0 0 0 1px rgba(230,180,80,.6); background: rgba(230,180,80,.06); margin-bottom: 0 !important; }
 html body #view details.phase.phase > summary .prw.prw > .mx-okl + .ds-dock > .mx-p { border: 1px solid rgba(230,180,80,.6) !important; border-top-color: rgba(230,180,80,.2) !important; border-radius: 0 0 10px 10px !important; background: rgba(230,180,80,.025) !important; padding: 12px 14px 10px !important; }
+/* ===== Design studio round 137 (Oct 28): the counted part only; wrapping table rows. Owner: the Design studio chat. ===== */
+/* the chart ends at the cut: the line sits on the right edge with its label just inside */
+html body #view .mcx-lanes .mcx-cut.mcx-cut-end { background: none; border-left: 2px solid rgba(229,83,75,.75); }
+html body #view .mcx-lanes .mcx-cut.mcx-cut-end > span { left: auto !important; right: 8px !important; transform: none !important; }
+/* "What happened" wraps inside the panel (it was a row of flex pieces that could not wrap) */
+html body #view .mx-p.mx-p .mx-tb.mx-tb.mx-one .mx-tr > .mx-m { display: block; align-self: center; min-width: 0; overflow-wrap: anywhere; line-height: 1.45; }
+html body #view .mx-p.mx-p .mx-tb.mx-tb.mx-one .mx-tr > .mx-t, html body #view .mx-p.mx-p .mx-tb.mx-tb.mx-one .mx-tr > .mx-who { min-width: 0; }
+html body #view .mx-p.mx-p .mx-tb.mx-tb.mx-one .mx-tr > * { align-self: stretch; }
+/* "N more done right" stays words, not a lone check */
+html body #view .mx-p.mx-p .mx-tb.mx-tb.mx-one .mx-tr.mx-rest > .mx-m.ok { font-size: 13px !important; color: var(--faint) !important; }
+html body #view .mx-p.mx-p .mx-tb.mx-tb.mx-one .mx-tr.mx-rest > .mx-m.ok::before { content: "✓ "; font: 800 13px/1 var(--body); color: #7ee08f; }
+html body #view .mx-p.mx-p .mx-tb.mx-tb.mx-one .mx-tr.mx-rest > * { cursor: default; }
+/* "The details" as one quiet list (the user: "this can be changed on appearance"): every row the full width (the By player /
+   By mechanic switch moves up beside the heading as slim tabs), no gap between the two groups, one hairline between rows */
+html body #view .ds-r .dt-box > .cch-acct2:not(.cch-acct3) { display: block; position: relative; }
+html body #view .ds-r .dt-box > .cch-acct2:not(.cch-acct3)::before { display: block; margin-bottom: 6px; }
+html body #view .ds-r .dt-box > .cch-acct2 > .cbl-sw { position: absolute; top: 0; right: 0; display: flex; gap: 16px; padding: 0; background: none; border: 0; border-radius: 0; box-shadow: none; }
+html body #view .ds-r .dt-box > .cch-acct2 > .cbl-sw > button { background: none !important; border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 2px 1px 5px; font: 700 12.5px/1 var(--body); color: var(--faint); box-shadow: none; cursor: pointer; }
+html body #view .ds-r .dt-box > .cch-acct2 > .cbl-sw > button:hover { color: var(--text); }
+html body #view .ds-r .dt-box > .cch-acct2 > .cbl-sw > button.on { color: var(--gold); border-bottom-color: var(--gold); }
+html body #view .ds-r .dt-box > .cch-acct3 { margin-top: 0 !important; }
+html body #view .ds-r .dt-box details.cch-ab { width: auto; border-top: 1px solid var(--line, #262c38); }
+html body #view .ds-r .dt-box > .cch-acct2:not(.cch-acct3) > details.cch-ab:first-of-type { border-top: 0; }
+html body #view .ds-r .dt-box details.cch-ab > summary.cch-al { padding: 9px 0; }
+html body #view .ds-r .dt-box details.cch-ab > summary.cch-al .cgl-b { height: 3px; }
+html body #view .ds-r .dt-box details.cch-ab > summary.cch-al .cgl-p { font-variant-numeric: tabular-nums; }
 </style>
 
 
@@ -18921,6 +18947,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-28', h: [], n: [], f: [
+    'Debriefing: "The pull at a glance" ends where the pull was counted to, instead of running on to the last second; a long "What happened" line fits inside its box; and the rows under "The details" are all one width.',
     'All pulls, By mechanic: a mechanic now shows under every phase it came up in, so a night that reached the last phase lists it (P3 was missing for The Coiled Altar). Thanks to the raider who reported it.',
   ] },
   { d: '2026-10-27', h: [
@@ -28224,7 +28251,7 @@ function audit() {
     void verdict; // (the sentence on top is gone: the four Debriefing blocks above say it)
     const head = '<div class="panel mcx-tl mcx-tl2"><div class="mcx-th"><h3 class="nh">The pull at a glance<small>Click a dot to see that moment</small></h3>' + pills + '</div>';
     // (the whole pull to its last phase, or to its end when the wipe filter cut it short; one phase is enough: most prog wipes end in P1)
-    const tp = byGroup ? [] : phs.map((p, i) => ({ p, i })).filter(({ p }) => isFinite(p.end) && p.end > p.start), lastE = tp.length ? tp[tp.length - 1].p.end : 0, end = Math.max(lastE, isFinite(r.duration) ? r.duration : 0);
+    const tp = byGroup ? [] : phs.map((p, i) => ({ p, i })).filter(({ p }) => isFinite(p.end) && p.end > p.start), lastE = tp.length ? tp[tp.length - 1].p.end : 0, end0 = Math.max(lastE, isFinite(r.duration) ? r.duration : 0), end = cut && cut.t > 0 && cut.t < end0 ? cut.t : end0; /* round 137: a pull the wipe filter cut short ends at its cut */
     if (!tp.length || !(end > 0)) return head + '</div>';
     const at = (t) => (100 * t / end).toFixed(2) + '%', X = (t) => 'calc(var(--lw) + (100% - var(--lw)) * ' + (t / end).toFixed(4) + ')';
     // (one lane per mechanic with a mistake, Deaths first, then the busiest; every moment is on its lane, the clean ones as faint ticks, so
@@ -28252,7 +28279,7 @@ function audit() {
     const wipe = cl.map((c, i) => { const last = i === cl.length - 1 && !r.item.kill, n = dts.filter((t) => t >= c.a && t <= c.b).length, z = last ? end : Math.max(c.b, c.a + 3);
       return '<div class="mcx-wipe' + (last ? ' end' : '') + '" style="left:' + X(c.a) + ';width:calc((100% - var(--lw)) * ' + ((z - c.a) / end).toFixed(4) + ')" title="' + esc(last ? 'The wipe started here: ' + n + ' deaths from ' + T(c.a) + '.' : n + ' deaths in ' + Math.max(1, Math.round(c.b - c.a)) + ' seconds, from ' + T(c.a) + '.') + '"><span>' + (last ? 'Wipe started' : n + ' deaths') + '</span></div>'; }).join('');
     const over = tp.filter(({ p }) => p.start > 0 && p.start < end).map(({ p }) => '<i class="mcx-pl" style="left:' + X(p.start) + '"></i>').join('') + ticks.map((t) => '<i class="mcx-tk" style="left:' + X(t) + '"></i>').join('') +
-      (cut && cut.t < end ? '<div class="mcx-cut" style="left:' + X(cut.t) + '" title="' + esc('Counted up to ' + T(cut.t) + ', ' + (cut.auto ? 'when the wipe was called: ' + wipeSay(cut) : 'the ' + ordinal(cut.n) + ' death') + '. What comes after is not counted.') + '"><span>Counted to ' + T(cut.t) + '</span></div>' : '');
+      (cut && cut.t < end0 ? '<div class="mcx-cut mcx-cut-end" style="left:' + X(cut.t) + '" title="' + esc('Counted up to ' + T(cut.t) + ', ' + (cut.auto ? 'when the wipe was called: ' + wipeSay(cut) : 'the ' + ordinal(cut.n) + ' death') + '. What comes after is not counted.') + '"><span>Counted to ' + T(cut.t) + '</span></div>' : '');
     const axis = '<div class="mcx-ax2">' + [0].concat(ticks, [end]).map((t, i, l) => '<span class="' + (i === 0 ? 'a0' : i === l.length - 1 ? 'a1' : '') + '" style="left:' + X(t) + '">' + T(t) + '</span>').join('') + '</div>';
     return head + '<div class="mcx-lanes">' + band + rows + wipe + over + axis + '</div></div>'; });
   const refAt = h.length; let dbMore = ''; // (where the reference panels start: they're gathered into one card below)
