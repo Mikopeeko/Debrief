@@ -13928,6 +13928,29 @@ document.addEventListener('toggle', (e) => { const d = e.target; if (!d.matches 
    cards. Show everything brings back the full detail (the note's tables, the CC order, the line against the top guilds)) */
 S.mxaSel = S.mxaSel || {}; S.mxaAll = S.mxaAll || new Set();
 const mxaSecOf = (ph, id) => ph.querySelector('details.secd[data-k="' + CSS.escape(id) + '"]') || ph.querySelector('details.secd[data-k^="' + CSS.escape(id) + '-"]');
+/* (a single pull's opened mechanic, Oct 27: its moments (li.u1-r: time, label, outcome) become one sentence and a Time | Who | What happened table) */
+function mxOne(pan, sec, hd, fl, xb) {
+  const lis = [...sec.querySelectorAll('li.u1-r')]; if (!lis.length || sec.querySelector('.mx-tb')) return;
+  const stOf = (li) => (/\bbad\b/.test(li.className) ? 'bad' : /\bwarn\b/.test(li.className) ? 'warn' : 'ok'), rows = lis.map((li, i) => ({ li, i, st: stOf(li) }));
+  const fg = mxFlag(rows), n = rows.length, w = rows.filter((x) => x.st !== 'ok').length;
+  if (fg) { fl.className = 'mx-fl ' + { ok: 'g', warn: 'y', bad: 'r' }[fg.c]; fl.textContent = fg.t + (n === 1 ? ' time' : ' times'); if (!fl.parentNode) hd.insertBefore(fl, xb); }
+  const txt = (el) => { if (!el) return ''; const c = el.cloneNode(true); c.querySelectorAll('.icw, svg, img').forEach((x) => x.remove()); return c.textContent.replace(/\s+/g, ' ').trim(); };
+  const html = (el) => { if (!el) return ''; const c = el.cloneNode(true); c.querySelectorAll('.icw, svg, img').forEach((x) => x.remove()); c.querySelectorAll('.sp.mt').forEach((x) => x.replaceWith(document.createTextNode(x.textContent))); return c.innerHTML.trim(); };
+  const who = (li) => { const nm = li.querySelector('.u1-h .nm, .u1-h [style*="color"], .u1-o .nm'); if (nm) return nm.outerHTML; return esc(txt(li.querySelector('.u1-h') || li.querySelector('.u1-o'))); };
+  const what = (li) => { const o = li.querySelector('.u1-o'); if (!o || (!li.querySelector('.u1-h') && !li.querySelector('.nm'))) return 'Done right'; const c = o.cloneNode(true); c.querySelectorAll('.nm').forEach((x) => x.remove()); const h = html(c); return h.replace(/<[^>]+>/g, '').trim() ? h : 'Done right'; };
+  const named = lis.some((li) => li.querySelector('.nm'));
+  const worst = rows.find((x) => x.st === 'bad') || rows.find((x) => x.st === 'warn');
+  const f0 = sec.querySelector('.u1-f'), kbT = f0 ? (txt(f0).split(' · ').find((t) => /top guild|fastest/i.test(t)) || '') : '';
+  const cnt = (k, c) => '<b class="' + c + '">' + k + '</b>';
+  const sum = '<p class="mx-sum">' + (w ? cnt(w, worst.st === 'bad' ? 'r' : 'y') + ' of ' + n + (n === 1 ? ' time' : ' times') + ' had mistakes' + (worst ? '; the worst, at ' + esc(txt(worst.li.querySelector('.u1-t'))) + ': ' + esc(what(worst.li).replace(/<[^>]+>/g, '').replace(/\.$/, '').replace(/^./, (c) => c.toLowerCase())) : '') + '.' : 'Done right all ' + cnt(n, 'g') + ' times.') + '</p>';
+  const shown = n <= 8 ? rows : rows.filter((x) => x.st !== 'ok'), rest = n - shown.length;
+  const tb = '<div class="mx-lab">Each time it happened</div><div class="mx-tb mx-one"><div class="mx-th"><span>Time</span><span>' + (named ? 'Who' : 'Moment') + '</span><span>What happened</span></div>' +
+    shown.map((x) => '<div class="mx-tr ' + x.st + '" data-u1i="' + x.i + '" role="button" tabindex="0"><span class="mx-t">' + esc(txt(x.li.querySelector('.u1-t'))) + '</span><span class="mx-who">' + who(x.li) + '</span><span class="mx-m ' + x.st + '">' + what(x.li) + '</span></div>').join('') +
+    (rest ? '<div class="mx-tr mx-rest"><span></span><span></span><span class="mx-m ok">' + rest + ' more done right</span></div>' : '') + '</div>';
+  const box = document.createElement('div'); box.className = 'mx-one-w'; box.innerHTML = sum + tb + (kbT ? '<p class="mx-ft">Against the fastest kills: ' + esc(kbT) + '.</p>' : '');
+  hd.after(box); sec.classList.add('mx-old');
+}
+document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('.mx-tr[data-u1i]'); if (!t) return; const pan = t.closest('.mxa-p'), li = pan && pan.querySelectorAll('li.u1-r')[+t.dataset.u1i]; if (li) li.click(); });
 function mxaOpen(ph, id) { const k = ph.dataset.phk; let pan = ph.querySelector(':scope > .mxa-p');
   if (!pan) { pan = document.createElement('div'); pan.className = 'mxa-p'; ph.querySelector(':scope > summary').after(pan); }
   const cur = pan.querySelector(':scope > details.secd'); if (cur && cur._mxaHome) { cur._mxaHome.replaceWith(cur); cur._mxaHome = null; }
@@ -13953,7 +13976,8 @@ function mxaOpen(ph, id) { const k = ph.dataset.phk; let pan = ph.querySelector(
       const d = document.createElement('div'); d.className = 'mx-sqw'; d.innerHTML = '<div class="mx-lab">Each pull</div><span class="mx-sq mx-big">' + P.map((x) => '<i class="' + (x.st === 'ok' ? 'g' : x.st === 'warn' ? 'y' : 'r') + '" data-npq="' + x.p + '" data-tt="' + esc(x.tt) + '" role="button" tabindex="0"><span>' + x.p + '</span></i>').join('') + '</span>';
       const sumP = sec.querySelector('.mx-sum'); if (sumP) { hd.after(sumP); sumP.after(d); } else hd.after(d); }
     else { const so = sm && sm.querySelector('.rw2-pc, .sst'), cn = so ? so.className : '', c = /\bbad\b/.test(cn) ? 'r' : /\bwarn\b/.test(cn) ? 'y' : /\b(ok|good)\b/.test(cn) ? 'g' : '';
-      if (c) { fl.className = 'mx-fl ' + c; fl.textContent = (c === 'g' ? 'Done right' : c === 'r' ? 'Failed' : 'Some mistakes') + (so && /%/.test(so.textContent) ? ' · ' + so.textContent.trim() + ' done right' : ''); if (old) old.remove(); hd.insertBefore(fl, xb); } } }
+      if (c) { fl.className = 'mx-fl ' + c; fl.textContent = (c === 'g' ? 'Done right' : c === 'r' ? 'Failed' : 'Some mistakes') + (so && /%/.test(so.textContent) ? ' · ' + so.textContent.trim() + ' done right' : ''); if (old) old.remove(); hd.insertBefore(fl, xb); }
+      try { mxOne(pan, sec, hd, fl, xb); } catch (e) { console.error(e); } } }
   // (your note's job: one line ("Your note · Mind control CC: ✓ both mind controls CC'd") and its player chips; the rest under Show everything)
   sec.querySelectorAll('.dbn-jh').forEach((j) => { if (!j.querySelector('.mxa-yn2')) j.insertAdjacentHTML('afterbegin', '<span class="mxa-yn2">Your note ·</span>'); });
   sec.querySelectorAll('.pdesc').forEach((p) => { if (/\d+\/\d+/.test(p.textContent || '') && p.querySelector('.chips, .chipn')) p.classList.add('mxa-keep'); });
