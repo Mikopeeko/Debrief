@@ -1955,7 +1955,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-10-28', h: [{ t: 'Rotation, as a timeline', d: 'Every button you pressed, in order, with the wrong ones ringed and each slip explained where it happened: why, and what to press next time. Filter by phase, button, slip type or how serious. The player card now leads with the one thing to fix first.' }, { t: 'Debriefing, as a timeline', d: 'Each pull reads top to bottom: every mistake and death where it happened, why it happened and what to do next time, with a filter for players, roles and how serious. Prefer the old page? Overview is one tap away and remembered.' }, { t: "Plan: place cooldowns in a click", d: "The Cooldowns chart has a Big hits view: one row per big hit with the cooldowns covering it. Click a cooldown and the spots where it fits light up with suggestions; Fit shows the whole fight on one screen." }, { t: "A new front page", d: "First-time visitors get one calm page: what Debrief does, Continue with Warcraft Logs, and a quick look around. Returning raiders land straight on Home." }, ], n: [
+  { d: '2026-10-28', h: [{ t: 'Rotation, as a timeline', d: 'Your whole rotation down the page, one column per button: big cooldowns glow gold, wrong presses are ringed in red, and burst windows and big mistakes get a card. Hover anything for the full story, with every time it happened lit up. The player card now leads with the one thing to fix first.' }, { t: 'Debriefing, as a timeline', d: 'Each pull reads top to bottom: every mistake and death where it happened, why it happened and what to do next time, with a filter for players, roles and how serious. Prefer the old page? Overview is one tap away and remembered.' }, { t: "Plan: place cooldowns in a click", d: "The Cooldowns chart has a Big hits view: one row per big hit with the cooldowns covering it. Click a cooldown and the spots where it fits light up with suggestions; Fit shows the whole fight on one screen." }, { t: "A new front page", d: "First-time visitors get one calm page: what Debrief does, Continue with Warcraft Logs, and a quick look around. Returning raiders land straight on Home." }, ], n: [
     "Guides is a main tab now, and the tabs stay on top of every guide page.",
     "Home: your team and you in one slim bar, the current boss across the page, all ten bosses in one row of tiles, then your latest raid nights.",
     "Debriefing, All pulls: each mechanic shows one square per pull and says how it went in words (\"Failed · 11 of 13\"); mechanics done right every time fold into one \"✓ Done right\" line.",
@@ -33107,7 +33107,7 @@ function dsGuides() {
     var lastP = {}; P = P.filter(inEnd).sort(function (a, b) { return a.t - b.t; }).filter(function (m) { if (win && m.head === win.ic && W.some(function (x) { return Math.abs(x.t - m.t) <= 3; })) return false; if (lastP[m.head] != null && m.t - lastP[m.head] < 10) return false; lastP[m.head] = m.t; return true; });
     S = S.filter(inEnd).sort(function (a, b) { return a.t - b.t; });
     var seenL = {}; S.forEach(function (m) { if (m.type === 'pri' || !m.line) return; var k = m.by + '|' + m.line; if (seenL[k] != null && m.t - seenL[k] > 8) { m.next = ''; } else if (seenL[k] == null) seenL[k] = m.t; }); /* (a check's sentence in full once, then "Again") */
-    var G = []; S.forEach(function (m) { var g = G.filter(function (x) { return x.by === m.by && x.head === m.head && m.t - x.tl <= 8; })[0]; if (g) { g.ts.push(m.t); g.tl = m.t; g.lv = Math.max(g.lv, m.lv); return; } m.ts = [m.t]; m.tl = m.t; G.push(m); });
+    var G = []; S.forEach(function (m) { var g = G.filter(function (x) { return x.by === m.by && x.head === m.head && m.t - x.tl <= 20; })[0]; if (g) { g.ts.push(m.t); g.tl = m.t; g.lv = Math.max(g.lv, m.lv); return; } m.ts = [m.t]; m.tl = m.t; G.push(m); });
     /* the opener, as a card at the start */
     (D.checks || []).filter(function (c) { return /opener/i.test(c.label) && c.st !== 'na'; }).slice(0, 1).forEach(function (c) { var sub = first(txt(c.sub)), tip = txt(c.tip), v = txt(c.v); W.unshift({ t: 0, by: c.label, ic: iconOf(pg, c.label, c.ic, D), head: c.label, html: '<div class="rtl-op ' + (c.st === 'bad' ? 'bad' : c.st === 'warn' ? 'warn' : 'ok') + '"><b>' + (c.st === 'ok' ? 'Done right' : c.st === 'bad' ? 'Fix this' : 'Could be better') + (v ? ' · ' + E(v) : '') + '</b><p>' + E(sub) + '</p>' + (tip && c.st !== 'ok' ? '<div class="rtl-ln"><span>NEXT TIME</span><span>' + E(first(tip)) + '</span></div>' : '') + '</div>' }); });
     /* proc spends: a proc that ends early was spent by the pressed cast at that moment */
@@ -33115,18 +33115,14 @@ function dsGuides() {
     return { S: G, P: P, U: U, W: W.filter(inEnd), C: C, PR: PR, end: end };
   };
 
-  /* (round 147e: a picture of what they did. Left: one track of every button pressed, in order (wrong ones ringed, a spent proc
-     starred, big cooldowns in gold), with each cooldown window as a shaded band carrying its verdict and numbers. Right: short
-     callouts for that moment: mistakes in red or amber, good plays in green, defensives in blue.) */
+  /* (round 155, the user's vision: "a visual representation of your rotation with enhanced layers showing right and wrongs", vertical
+     like the Debriefing tab. Time runs down the page; the casts sit in the centre, one narrow column per button (no names on top: hover a
+     press to see it); what went well is a short tag on the left, mistakes a short tag on the right; a wrong press has a red border and
+     every note opens on hover or tap. Cooldown windows are a soft tint across the columns, a cooldown that sat ready a dotted red bar.) */
   var draw = function (D, pg, box) {
     var md = model(D, pg), phs = (D.phases || []).filter(function (p) { return p.start < (md.end || 1e9); });
     if (!md.C.length && !md.S.length && !md.P.length) { box.innerHTML = '<div class="rtl-p rtl-empty">Nothing with a time to show for this pull.</div>'; return; }
-    var spells = {}; md.C.forEach(function (c) { var k = c.n; if (!spells[k]) spells[k] = { n: k, id: c.id, k: 0, bad: 0 }; spells[k].k++; if (c.bad) spells[k].bad++; });
-    var SPL = Object.keys(spells).map(function (k) { return spells[k]; }).sort(function (a, b) { return b.k - a.k; }); SPL.forEach(function (s) { if (F.sp[s.n] == null) F.sp[s.n] = 1; });
-    var inPh = function (t) { if (F.ph === 'all') return true; var p = phOf(phs, t); return !!p && p.name === F.ph; };
-    var sOk = function (m) { return F.show.slip && F.type[m.type] && F.sev[m.lv] && inPh(m.t); };
     var sec = function (s) { var m = String(s || '').match(/(\d+):(\d\d)/); return m ? +m[1] * 60 + +m[2] : null; };
-    /* windows: the band's span, verdict and numbers come from its own card */
     var BANDS = [], OPEN = null;
     md.W.forEach(function (w) {
       if (/opener/i.test(w.head)) { OPEN = w; return; }
@@ -33135,57 +33131,89 @@ function dsGuides() {
       var chips = [].slice.call(d.querySelectorAll('.spc-wc span')).map(function (x) { return { ok: !/\bno\b/.test(x.className), t: x.textContent.replace(/^[✓✕]\s*/, '').trim() }; });
       BANDS.push({ a: a, b: b, w: w, val: val, cls: cls, vd: vd, chips: chips });
     });
-    var STEP = 10, last = md.end || D.dur || 0, steps = [];
-    for (var a0 = 0; a0 <= last; a0 += STEP) steps.push({ a: a0, b: a0 + STEP, C: [], P: [], S: [], B: [] });
-    var at = function (t) { return steps[Math.min(steps.length - 1, Math.max(0, Math.floor(t / STEP)))]; };
-    md.C.forEach(function (c) { if (F.show.cast && F.sp[c.n] && inPh(c.t)) at(c.t).C.push(c); });
-    md.P.forEach(function (m) { if (F.show.cd && inPh(m.t)) at(m.t).P.push(m); });
-    (md.U || []).forEach(function (m) { if (F.show.util && inPh(m.t)) at(m.t).P.push(m); });
-    md.S.forEach(function (m) { if (sOk(m)) at(m.t).S.push(m); });
-    if (F.show.win) BANDS.forEach(function (bd) { if (inPh(bd.a)) at(bd.a).B.push(bd); });
-    var inBand = function (s) { return F.show.win && BANDS.some(function (bd) { return bd.a < s.b && bd.b > s.a; }); };
-    var nS = function (f) { return md.S.filter(f).reduce(function (x, m) { return x + m.ts.length; }, 0); };
-    var icon = function (c) { var pr = c.proc && F.show.proc; return '<span class="rtl-ci' + (c.bad ? ' bad' : c.big ? ' big' : '') + (pr ? ' pr' : '') + '" title="' + E(mm(c.t) + ' ' + c.n + (c.proc ? ', spent ' + c.proc : '') + (c.bad ? ': a better button was ready' : '')) + '">' + D.ico(c.n, c.id) + (pr ? '<i class="rtl-st">★</i>' : '') + '</span>'; };
-    /* callouts */
-    var co = function (cls, ic, t, head, line, extra) { return '<div class="rtl-co ' + cls + '"><span class="rtl-ic">' + (ic || '') + '</span><div><div class="rtl-coh"><em>' + mm(t) + '</em><b>' + E(head) + '</b>' + (extra || '') + '</div>' + (line ? '<p>' + line + '</p>' : '') + '</div></div>'; };
-    var slipCo = function (m) { var many = m.ts.length > 1; return co(m.lv >= 3 ? 'bad' : 'warn', m.ic, m.t, m.head, E(m.line) + (many ? ' <span class="rtl-n">' + m.ts.length + ' times: ' + m.ts.map(mm).join(', ') + '</span>' : '') + (m.next ? '<span class="rtl-nx"><i>Next time</i> ' + E(first(m.next)) + '</span>' : ''), LV(m.lv)); };
-    var goodCo = function (m) { var u = m.st === 'u', bad = m.st === 'bad' || m.st === 'warn'; return co(u ? 'util' : bad ? 'warn' : 'good', m.ic, m.t, (u ? 'Used ' : 'Pressed ') + m.head, bad ? E(m.by) + ': could be better.' : ''); };
-    var procCo = function (s) { if (!F.show.proc || !F.show.ok) return ''; var g = {}; s.C.forEach(function (c) { if (c.proc) { var k = c.proc + '|' + c.n; g[k] = (g[k] || 0) + 1; } }); var ks = Object.keys(g); if (!ks.length) return ''; return '<div class="rtl-co good sm"><span class="rtl-ic rtl-sti">★</span><div><p>' + ks.map(function (k) { var p = k.split('|'); return g[k] + ' ' + E(p[0]) + ' spent on ' + E(p[1]); }).join(' · ') + '</p></div></div>'; };
-    var bandHead = function (bd) { return '<div class="rtl-band ' + bd.cls + '"><div class="rtl-bh"><span class="rtl-ic">' + bd.w.ic + '</span><b>' + E(bd.w.head) + '</b><em>' + mm(bd.a) + '–' + mm(bd.b) + '</em>' + (bd.vd ? '<i class="rtl-bv">' + E(bd.vd) + '</i>' : '') + (bd.val ? '<span class="rtl-bn">' + E(bd.val) + '</span>' : '') + '<button type="button" class="rtl-bx" data-bx="1">Details ▾</button></div>' +
-      (bd.chips.length ? '<div class="rtl-bc">' + bd.chips.map(function (c) { return '<span class="' + (c.ok ? 'ok' : 'no') + '">' + (c.ok ? '✓ ' : '✕ ') + E(c.t) + '</span>'; }).join('') + '</div>' : '') + '<div class="rtl-bd" hidden>' + bd.w.html + '</div></div>'; };
-    var marker = function (p) { var e0 = Math.min(p.end, md.end || p.end), n = nS(function (m) { return m.t >= p.start && m.t < e0; }); return '<div class="rtl-ph"><span><b>' + E(p.name) + '</b> ' + mm(p.start) + '–' + mm(e0) + ' <i>' + (n ? n + ' slip' + (n > 1 ? 's' : '') : 'no slips') + '</i></span></div>'; };
-    var rows = '', np = 0, shownN = 0;
-    if (OPEN && F.show.win && F.ph === 'all') { rows += '<div class="rtl-r"><div class="rtl-l"></div><span class="rtl-t">0:00<small>Opener</small></span><div class="rtl-rr"><div class="rtl-co ' + (/rtl-op (bad|warn)/.test(OPEN.html) ? (/rtl-op bad/.test(OPEN.html) ? 'bad' : 'warn') : 'good') + ' op"><span class="rtl-ic">' + OPEN.ic + '</span><div><div class="rtl-coh"><b>' + E(OPEN.head) + '</b></div>' + OPEN.html + '</div></div></div></div>'; }
-    steps.forEach(function (s) {
-      while (np < phs.length && phs[np].start < s.b - 0.01) { rows += (F.ph === 'all' || F.ph === phs[np].name) ? marker(phs[np]) : ''; np++; }
-      var good = F.show.ok ? s.P : s.P.filter(function (m) { return m.st === 'bad' || m.st === 'warn'; });
-      var has = s.C.length || good.length || s.S.length || s.B.length; if (!has) return; if (F.only && !s.S.length) return; shownN++;
-      var p = phOf(phs, s.a), nb = s.C.filter(function (c) { return c.bad; }).length;
-      var winOf = function (t) { return F.show.win ? BANDS.filter(function (bd) { return t >= bd.a - 0.05 && t <= bd.b + 0.05; })[0] || null : null; }, segs = []; s.C.forEach(function (c) { var bd = winOf(c.t), g = segs[segs.length - 1]; if (g && g.bd === bd) g.l.push(c); else segs.push({ bd: bd, l: [c] }); });
-      var left = s.B.map(bandHead).join('') + (s.C.length ? '<div class="rtl-strip">' + segs.map(function (g) { return g.bd ? '<span class="rtl-wseg ' + g.bd.cls + '" title="' + E(g.bd.w.head + ' ' + mm(g.bd.a) + '–' + mm(g.bd.b)) + '">' + g.l.map(icon).join('') + '</span>' : g.l.map(icon).join(''); }).join('') + '</div>' : ''); /* (only the casts inside a window sit in its band) */
-      var right = s.S.map(slipCo).join('') + good.map(goodCo).join('') + procCo(s);
-      rows += '<div class="rtl-r"><div class="rtl-l">' + left + '</div><span class="rtl-t' + (s.S.some(function (m) { return m.lv >= 2; }) ? ' r' : s.S.length ? ' y' : nb ? ' y' : '') + '">' + mm(s.a) + '<small>' + phTag(p) + '</small></span><div class="rtl-rr">' + right + '</div></div>';
-    });
-    while (np < phs.length) { rows += marker(phs[np]); np++; }
-    if (D.cut != null && D.dur && D.cut < D.dur - 1) rows += '<div class="rtl-ph end"><span><b>Counted to ' + mm(D.cut) + '</b> <i>the wipe call</i></span></div>';
-    if (!shownN) rows += '<p class="rtl-none">Nothing to show with these filters.</p>';
-    /* the side panel (quiet list) */
-    var q = function (attr, on, lead, label, num) { return '<button type="button" class="rtl-q' + (on ? ' on' : '') + '" ' + attr + ' aria-pressed="' + (on ? 'true' : 'false') + '">' + lead + '<span class="rtl-ql">' + label + '</span><span class="rtl-qn">' + num + '</span><span class="rtl-eye" aria-hidden="true">' + (on ? '◉' : '○') + '</span></button>'; };
-    var dot = function (c) { return '<i class="rtl-d ' + c + '"></i>'; };
-    var cnt = { 1: nS(function (m) { return m.lv === 1; }), 2: nS(function (m) { return m.lv === 2; }), 3: nS(function (m) { return m.lv === 3; }) };
-    var right0 = md.C.filter(function (c) { return !c.bad; }).length, tot = md.C.length, prN = md.PR.reduce(function (a, p) { return a + p.n; }, 0);
-    var side = '<div class="rtl-sh"><b>Filters</b><span>' + shownN + ' steps</span><button type="button" class="rtl-reset" data-rtl="reset">Reset</button></div><p class="rtl-hint">Tap a row to hide it.</p>' +
-      '<div class="rtl-sg"><span class="rtl-k">Show</span>' + q('data-show="cast"', F.show.cast, dot('w'), 'Every button pressed', tot) + (prN ? q('data-show="proc"', F.show.proc, '<i class="rtl-d p"></i>', 'Procs spent (★)', prN) : '') + q('data-show="win"', F.show.win, dot('b'), 'Cooldown windows', BANDS.length) + q('data-show="cd"', F.show.cd, dot('o'), 'Big cooldowns and potions', md.P.length) + ((md.U || []).length ? q('data-show="util"', F.show.util, dot('u'), 'Defensives and utility', md.U.length) : '') + q('data-show="ok"', F.show.ok, dot('g'), 'Good plays', '') + q('data-show="slip"', F.show.slip, dot('r'), 'Mistakes', nS(function () { return true; })) +
-      '<div class="rtl-sev">' + [3, 2, 1].map(function (lv) { return '<button type="button" class="rtl-sv l' + lv + (F.sev[lv] ? ' on' : '') + '" data-sev="' + lv + '">' + LVN(lv) + ' ' + cnt[lv] + '</button>'; }).join('') + '</div>' +
-      q('data-only="1"', F.only, dot('y'), 'Only steps with a mistake', '') + '</div>' +
-      (md.PR.length ? '<div class="rtl-sg"><span class="rtl-k">Procs spent</span>' + md.PR.map(function (p) { return '<div class="rtl-pr"><span class="rtl-ic">' + p.ic + '</span><span><b>' + E(p.nm) + '</b> ' + p.n + ' spent<em>' + Object.keys(p.on).sort(function (a, b) { return p.on[b] - p.on[a]; }).map(function (k) { return p.on[k] + ' on ' + E(k); }).join(', ') + '</em></span></div>'; }).join('') + '</div>' : '') +
-      '<div class="rtl-sg"><span class="rtl-k">Mistake types</span>' + TYPES.map(function (t) { var n = nS(function (m) { return m.type === t[0]; }); return n ? q('data-type="' + t[0] + '"', F.type[t[0]], '', t[1], n) : ''; }).join('') + '</div>' +
-      (phs.length > 1 ? '<div class="rtl-sg"><span class="rtl-k">Phase</span><div class="rtl-phs">' + ['all'].concat(phs.map(function (p) { return p.name; })).map(function (n) { return '<button type="button" class="rtl-pb' + (F.ph === n ? ' on' : '') + '" data-ph="' + E(n) + '">' + (n === 'all' ? 'Whole pull' : E(phTag(phs.filter(function (p) { return p.name === n; })[0]) || n)) + '</button>'; }).join('') + '</div></div>' : '') +
-      '<div class="rtl-sg"><span class="rtl-k">Buttons</span><div class="rtl-spl">' + SPL.map(function (s) { return q('data-sp="' + E(s.n) + '"', F.sp[s.n], '<span class="rtl-ic">' + D.ico(s.n, s.id) + '</span>', E(s.n), s.k + (s.bad ? ' <b class="rtl-bn2">' + s.bad + ' ✕</b>' : '')); }).join('') + '</div></div>';
-    var top = '<div class="rtl-top2"><div class="rtl-sum"><span><b>' + tot + '</b> buttons pressed</span><span class="g"><b>' + right0 + '</b> right</span><span class="r"><b>' + (tot - right0) + '</b> a better button was ready</span>' + (prN ? '<span class="p"><b>' + prN + '</b> procs spent</span>' : '') + '<span><b>' + BANDS.length + '</b> cooldown windows</span><span><b>' + nS(function () { return true; }) + '</b> mistakes</span></div>' +
-      '<div class="rtl-key"><span><i class="rtl-ci k bad"></i>a better button was ready</span><span><i class="rtl-ci k pr"></i>★ spent a proc</span><span><i class="rtl-ci k big"></i>big cooldown</span><span><i class="rtl-kb"></i>cast inside a cooldown window</span></div></div>';
-    box.innerHTML = top + '<div class="rtl-main"><div class="rtl-tlw"><div class="rtl-heads"><span>What you pressed</span><span></span><span>What it meant</span></div><div class="rtl-tl">' + rows + '</div></div><aside class="rtl-p rtl-side">' + side + '</aside></div>';
+    /* the columns: big cooldowns first (in the order they came), then the rotation by how often it was pressed, then defensives */
+    var uN = {}; (md.U || []).forEach(function (u) { uN[u.head] = 1; });
+    var sp = {}; md.C.forEach(function (c) { var s = sp[c.n] || (sp[c.n] = { n: c.n, id: c.id, k: 0, t0: c.t, big: c.big, u: !!uN[c.n] }); s.k++; });
+    var SPL = Object.keys(sp).map(function (k) { return sp[k]; }), grp = function (s) { return s.u ? 2 : s.big ? 0 : 1; };
+    SPL.sort(function (a, b) { return grp(a) - grp(b) || (grp(a) === 1 ? b.k - a.k : a.t0 - b.t0); });
+    var colOf = {}, NC = 0, uCol = -1; SPL.forEach(function (s) { if (s.u) { if (uCol < 0) uCol = NC++; colOf[s.n] = uCol; } else colOf[s.n] = NC++; }); /* (round 155i: defensives and utility share one column) */
+    var END = md.end || D.dur || 0, Y = 20, T0 = 20, y = function (t) { return T0 + t * Y; }, PH = (window.innerWidth || 1200) < 760, CW = PH ? 27 : 34, MIDW = 56 + NC * CW, H = Math.round(y(END) + 24); /* (round 155k: narrower on a phone) */
+    var cols = ''; /* (round 155m: set once the sides are known) */ /* (round 155c: marks beside the casts, notes on hover) */
+    var N = [], note = function (cls, h, ts) { N.push({ c: cls, h: h, ts: ts || [] }); return N.length - 1; };
+    var TYN = {}; TYPES.forEach(function (t) { TYN[t[0]] = t[1]; });
+    var bandAt = function (t) { return BANDS.filter(function (bd) { return t >= bd.a - 0.05 && t <= bd.b + 0.05; })[0] || null; };
+    /* a mistake's note: what, why, every time it came, what to do */
+    var tipM = function (m) { var many = m.ts.length > 1, bd = bandAt(m.t); return '<div class="rtv-pt"><em class="rtv-sv l' + m.lv + '">' + LVN(m.lv) + '</em><span>' + E(m.type !== 'other' && TYN[m.type] || 'Rotation check') + '</span></div><b>' + mm(m.t) + ' · ' + E(m.head) + '</b>' + (m.line ? '<p>' + E(m.line) + '</p>' : '') +
+      (bd ? '<p class="rtv-in">Inside ' + E(bd.w.head) + ' (' + mm(bd.a) + '–' + mm(bd.b) + ').</p>' : '') + (many ? '<p class="rtv-ts"><i>' + m.ts.length + ' times</i>' + m.ts.map(mm).join(' · ') + '</p>' : '') + (m.next ? '<p class="rtv-nx"><i>NEXT TIME</i>' + E(first(m.next)) + '</p>' : '') + (m.by && m.by !== TYN[m.type] && String(m.head).indexOf(m.by) < 0 ? '<p class="rtv-by">From the check: ' + E(m.by) + '</p>' : ''); };
+    /* a window's note: verdict, numbers, what was in it, and what was pressed inside */
+    var tipW = function (bd) { var ins = {}; md.C.forEach(function (c) { if (c.t >= bd.a - 0.05 && c.t <= bd.b + 0.05) ins[c.n] = (ins[c.n] || 0) + 1; }); var ok = bd.cls === 'ok';
+      return '<div class="rtv-pt"><em class="rtv-sv ' + (ok ? 'ok' : 'l2') + '">' + (ok ? 'Done well' : 'Could be better') + '</em><span>Cooldown window</span></div><b>' + E(bd.w.head) + ' · ' + mm(bd.a) + '–' + mm(bd.b) + '</b>' + (bd.vd ? '<p>' + E(bd.vd) + '</p>' : '') + (bd.val ? '<p class="rtv-val">' + E(bd.val) + '</p>' : '') +
+        (bd.chips.length ? '<p class="rtv-ch">' + bd.chips.map(function (c) { return '<i class="' + (c.ok ? 'ok' : 'no') + '">' + (c.ok ? '✓ ' : '✕ ') + E(c.t) + '</i>'; }).join('') + '</p>' : '') +
+        (Object.keys(ins).length ? '<p class="rtv-ts"><i>Pressed inside</i>' + Object.keys(ins).sort(function (a, b) { return ins[b] - ins[a]; }).map(function (k) { return ins[k] + ' ' + E(k); }).join(' · ') + '</p>' : ''); };
+    /* the middle: time marks, windows, phases, then every press */
+    var mid = '';
+    for (var s0 = 0; s0 <= END; s0 += 5) mid += '<i class="rtv-gl' + (s0 % 60 ? '' : ' min') + '" style="top:' + y(s0) + 'px"></i>' + (s0 % 10 ? '' : '<span class="rtv-tm' + (s0 % 60 ? '' : ' min') + '" style="top:' + y(s0) + 'px">' + mm(s0) + '</span>');
+    BANDS.forEach(function (bd) { mid += '<i class="rtv-band ' + bd.cls + '" data-nt="' + note(bd.cls === 'ok' ? 'g' : 'y', tipW(bd), [bd.a, bd.b]) + '" style="top:' + y(bd.a) + 'px;height:' + Math.max(4, (bd.b - bd.a) * Y) + 'px"></i>'; });
+    mid += '<i class="rtv-spine"></i><i class="rtv-colhi" style="width:' + CW + 'px"></i>';
+    var idleN = 0; /* (round 155j: no idle stripes: the Rotation tab is about the rotation) */
+    phs.forEach(function (p, i) { if (i || p.start > 1) mid += '<i class="rtv-ph" style="top:' + y(p.start) + 'px"><b>' + E(p.name) + '<em>' + mm(p.start) + '</em></b></i>'; }); /* (a slim banner where each phase starts) */
+    SPL.forEach(function (s, i) { if (i && grp(SPL[i - 1]) !== grp(s)) mid += '<i class="rtv-sep" style="left:' + (56 + i * CW) + 'px"></i>'; });
+    /* a cooldown that sat ready: a dotted bar in its column from when it came back to the press */
+    md.S.forEach(function (m) { if (m.type !== 'ready' || m.b == null) return; var nm = String(m.head).replace(/ sat ready$/, ''), ci = colOf[nm]; if (ci == null || m.b - m.t < 1) return;
+      mid += '<i class="rtv-rdy" data-nt="' + note('bad', '<b>' + mm(m.t) + ' ' + E(m.head) + '</b><span>It came back at ' + mm(m.t) + ' and was pressed at ' + mm(m.b) + '.</span>') + '" style="left:' + (56 + ci * CW + CW / 2) + 'px;top:' + y(m.t) + 'px;height:' + ((m.b - m.t) * Y) + 'px"></i>'; });
+    var lastY = {}; md.C.slice().sort(function (a, b) { return a.t - b.t; }).forEach(function (c) { var ci = colOf[c.n]; if (ci == null) return; var yy = y(c.t), l = lastY[ci], sh = l && !l.sh && yy - l.y < 24; lastY[ci] = { y: yy, sh: sh }; /* (too close to the last press of this button: step aside) */
+      mid += '<span class="rtv-c' + (c.big ? ' big' : '') + (c.bad ? ' bad' : '') + (c.proc ? ' pr' : '') + '" data-ci="' + ci + '" data-nt="' + (function () { var g = c.bad ? md.S.filter(function (m) { return m.type === 'pri' && m.ts.some(function (t) { return Math.abs(t - c.t) < 0.1; }); })[0] : null, bd = bandAt(c.t);
+        if (g) return note('bad', tipM({ t: c.t, ts: [c.t], lv: g.lv, type: g.type, by: g.by, head: g.head, line: g.line, next: g.next }), [c.t]);
+        return note(c.bad ? 'bad' : 'n', '<b>' + mm(c.t) + ' · ' + E(c.n) + '</b>' + (c.proc ? '<p>★ Spent ' + E(c.proc) + '.</p>' : '') + (bd ? '<p class="rtv-in">Inside ' + E(bd.w.head) + '.</p>' : '') + (c.bad ? '<p>A better button was ready.</p>' : '')); })() + '" style="left:' + (56 + ci * CW + CW / 2 + (sh ? 9 : 0)) + 'px;top:' + yy + 'px">' + D.ico(c.n, c.id) + '</span>'; });
+    /* the tags on each side, pushed down so they never sit on each other */
+    /* (round 155i: shared utility column, icon heads, column light) (round 155h: picks 1, 3, 4, 5, no repeats, cards on the right too) (round 155e, the user: "some cards on the sides for bigger moments like openers, burst windows, etc.. just not for every single
+       moment". The opener, each cooldown window and serious mistakes get a small card on their side; everything else stays a mark.
+       Marks sit by the casts, cards further out; cards never sit on each other.) */
+    var tags = function (list, side) { var last = -99, alt = 0, lastC = -999; return '<div class="rtv-side ' + side + '">' + list.sort(function (a, b) { return a.t - b.t; }).map(function (a) {
+      var p = y(a.t);
+      if (a.card && !PH) { var q = Math.max(p - 14, lastC + 10); lastC = q + 84; return '<div class="rtv-cd ' + a.cl + '" data-nt="' + a.nt + '" style="top:' + q + 'px"><i class="rtv-cdl" style="top:' + (p - q) + 'px"></i>' + a.card + '</div>'; }
+      alt = p - last < 22 ? (alt + 1) % 2 : 0; last = p; return '<span class="rtv-mk ' + a.cl + (a.mi ? ' mi' : '') + (a.n > 1 ? ' n' : '') + '"' + (a.n > 1 ? ' data-n="' + a.n + '"' : '') + ' data-nt="' + a.nt + '" style="top:' + p + 'px;' + (side === 'l' ? 'right' : 'left') + ':' + (10 + alt * 20) + 'px">' + (a.cl === 'gd' ? '✓' : a.cl === 'u' ? '' : '!') + '</span>'; }).join('') + '</div>'; };
+    var card = function (ic, title, when, tag, tagCl, line) { return '<div class="rtv-cdh"><span class="rtv-cdi">' + (ic || '') + '</span><b>' + title + '</b><em>' + when + '</em></div><div class="rtv-cdb">' + (tag ? '<i class="rtv-sv ' + tagCl + '">' + tag + '</i>' : '') + (line ? '<span>' + line + '</span>' : '') + '</div>'; };
+    var GL = [], BL = [];
+    if (OPEN) { var ob = /rtl-op bad/.test(OPEN.html) ? 'bd' : /rtl-op warn/.test(OPEN.html) ? 'y' : 'gd', oSub = (function () { var d = document.createElement('div'); d.innerHTML = OPEN.html; var x = d.querySelector('p'); return x ? x.textContent.trim() : ''; })();
+      (ob === 'gd' ? GL : BL).push({ t: 0, cl: ob, nt: note(ob === 'gd' ? 'g' : 'bad', '<div class="rtv-pt"><em class="rtv-sv ' + (ob === 'gd' ? 'ok' : 'l2') + '">' + (ob === 'gd' ? 'Done well' : 'Could be better') + '</em><span>Opener</span></div><b>' + E(OPEN.head) + '</b>' + OPEN.html, [0]),
+        card: card(OPEN.ic, E(OPEN.head), '0:00', ob === 'gd' ? '' : 'Could be better', ob === 'gd' ? 'ok' : 'l2', E(oSub.length > 70 ? oSub.slice(0, 68).replace(/\s+\S*$/, '') + '…' : oSub)) }); }
+    BANDS.forEach(function (bd) { var ok = bd.cls === 'ok', miss = bd.chips.filter(function (c) { return !c.ok; }), has = bd.chips.filter(function (c) { return c.ok; });
+      var line = (bd.val ? '<b class="rtv-cdv">' + E(bd.val.split(/\s·\s|,\s/)[0]) + '</b>' : '') + (miss.length ? '<i class="no">✕ ' + E(miss[0].t) + '</i>' : has.length ? '<i class="ok">✓ ' + E(has[0].t) + '</i>' : '');
+      (ok ? GL : BL).push({ t: bd.a, cl: ok ? 'gd' : 'y', nt: note(ok ? 'g' : 'y', tipW(bd), [bd.a, bd.b]), card: card(bd.w.ic, E(bd.w.head), mm(bd.a) + '–' + mm(bd.b), ok ? '' : 'Could be better', ok ? 'ok' : 'l2', line) }); }); /* (round 155h: on the Done well side it needs no tag) */
+    md.P.forEach(function (m) { var ok = !(m.st === 'bad' || m.st === 'warn'); GL.push({ t: m.t, cl: ok ? 'gd' : 'y', nt: note(ok ? 'g' : 'y', '<div class="rtv-pt"><em class="rtv-sv ' + (ok ? 'ok' : 'l2') + '">' + (ok ? 'Done well' : 'Could be better') + '</em><span>Big cooldown</span></div><b>' + mm(m.t) + ' · ' + E(m.head) + '</b><p>' + E(m.by) + '.</p>' + (bandAt(m.t) ? '<p class="rtv-in">Inside ' + E(bandAt(m.t).w.head) + '.</p>' : ''), [m.t]) }); });
+    (md.U || []).forEach(function (m) { GL.push({ t: m.t, cl: 'u', nt: note('u', '<div class="rtv-pt"><em class="rtv-sv u">Used</em><span>Defensive or utility</span></div><b>' + mm(m.t) + ' · ' + E(m.head) + '</b>', [m.t]) }); });
+    if (OPEN) { var oT = []; md.S = md.S.filter(function (m) { if (m.by === OPEN.by) { oT = oT.concat(m.ts); return false; } return true; }); if (oT.length && GL.concat(BL)[0]) { var oi = GL.concat(BL).filter(function (x) { return x.t === 0 && x.card; })[0]; if (oi) N[oi.nt].ts = [0].concat(oT); } } /* (round 155i: the opener is said once) */
+    var allTs = {}, carded = {}; md.S.forEach(function (m) { var k = m.by + '|' + m.head; allTs[k] = (allTs[k] || []).concat(m.ts); });
+    md.S.forEach(function (m) { var k = m.by + '|' + m.head, many = m.ts.length > 1, it = { t: m.t, mi: m.lv < 2, cl: m.lv >= 2 ? 'bd' : 'y', nt: note(m.lv >= 2 ? 'bad' : 'y', tipM(m), m.ts) };
+      if (m.ts.length > 1) it.n = m.ts.length;
+      if (m.lv === 2 && !carded[k]) { carded[k] = 1; var at = allTs[k], mm2 = { t: m.t, ts: at, lv: m.lv, type: m.type, by: m.by, head: m.head, line: m.line, next: m.next || (md.S.filter(function (x) { return x.by + '|' + x.head === k && x.next; })[0] || {}).next }; it.nt = note('bad', tipM(mm2), at);
+        it.card = card(m.ic, E(m.head), mm(m.t), at.length > 1 ? 'First of ' + at.length : 'Moderate', 'l2', mm2.next ? E(first(mm2.next)) : E(m.line || '')); }
+      if (m.lv >= 3) it.card = card(m.ic, E(m.head) + (many ? ' <i class="rtv-x">×' + m.ts.length + '</i>' : ''), mm(m.t), 'Serious', 'l3', m.next ? E(first(m.next)) : E(m.line || ''));
+      BL.push(it); });
+    var sideW = function (l) { return PH ? 44 : l.some(function (a) { return a.card; }) ? 272 : 76; }; cols = sideW(GL) + 'px ' + MIDW + 'px ' + sideW(BL) + 'px';
+    var tot = md.C.length, right0 = md.C.filter(function (c) { return !c.bad; }).length, prN = md.PR.reduce(function (a, p) { return a + p.n; }, 0), nM = md.S.reduce(function (x, m) { return x + m.ts.length; }, 0);
+    var okW = BANDS.filter(function (b) { return b.cls === 'ok'; }).length;
+    var top = '<div class="rtv-top"><div class="rtv-st"><span><b>' + tot + '</b>presses</span><span class="r"><b>' + (tot - right0) + '</b>a better button was ready</span>' + (prN ? '<span class="p"><b>' + prN + '</b>procs spent</span>' : '') + (BANDS.length ? '<span class="g"><b>' + okW + '<small>/' + BANDS.length + '</small></b>windows done well</span>' : '') + '<span class="r"><b>' + nM + '</b>mistakes</span></div>' +
+      '<div class="rtv-act"><span class="rtv-hint">Hover any mark for the full story</span><button type="button" class="rtv-dim' + (F.only ? ' on' : '') + '" data-only="1">Spotlight mistakes</button></div></div>';
+    var cut = D.cut != null && D.dur && D.cut < D.dur - 1 ? '<p class="rtv-cut">Counted to ' + mm(D.cut) + ', the wipe call.</p>' : '';
+    box._notes = N;
+    box.innerHTML = top + '<div class="rtv-wrap"><div class="rtv' + (F.only ? ' dim' : '') + '" style="--cc:' + E(D.color || '#e6b450') + ';--stk:' + (((document.querySelector('.tabbar') || {}).offsetHeight || 0)) + 'px"><div class="rtv-hd" style="grid-template-columns:' + cols + '"><span class="l">Done well</span><span class="rtv-heads">' + SPL.filter(function (s) { return !s.u; }).map(function (s) { return '<i style="left:' + (56 + colOf[s.n] * CW + CW / 2) + 'px" title="' + E(s.n) + '">' + D.ico(s.n, s.id) + '</i>'; }).join('') + (uCol >= 0 ? '<i class="u" style="left:' + (56 + uCol * CW + CW / 2) + 'px" title="Defensives and utility">⛨</i>' : '') + '</span><span>Mistakes</span></div>' +
+      '<div class="rtv-body" data-y="' + Y + '" data-t0="' + T0 + '" style="grid-template-columns:' + cols + ';height:' + H + 'px">' + tags(GL, 'l') + '<div class="rtv-mid">' + mid + '</div>' + tags(BL, 'r') + '</div></div></div>' + cut +
+      '<div class="rtv-key"><span><i class="k bad"></i>A better button was ready</span>' + (md.C.some(function (c) { return c.proc; }) ? '<span><b>★</b> Proc spent</span>' : '') + '<span><i class="k win"></i>Cooldown window</span><span><i class="k mk g">✓</i>Done well</span><span><i class="k mk r">!</i>Mistake</span><span><i class="k mi"></i>Minor slip</span>' + (/rtv-rdy/.test(mid) ? '<span><i class="k rdy"></i>Sat ready, not pressed</span>' : '') + (md.C.some(function (c) { return c.big; }) ? '<span><i class="k big"></i>Big cooldown</span>' : '') + (idleN ? '<span><i class="k idle"></i>Nothing pressed</span>' : '') + '</div>';
   };
+  /* the note next to whatever is hovered or tapped */
+  var rtvPop = function (el) { var box = el.closest('.rtl'), body = el.closest('.rtv-body'); if (!box || !body || !box._notes) return; var n = box._notes[+el.dataset.nt]; if (!n) return;
+    var o = body.querySelector('.rtv-pop'); if (o && o._el === el) return; if (o) o.remove(); [].slice.call(body.querySelectorAll('.rtv-guide')).forEach(function (g) { g.remove(); }); body.querySelectorAll('.rtv-hot').forEach(function (x) { x.classList.remove('rtv-hot'); });
+    var mid = body.querySelector('.rtv-mid'), Yp = +body.dataset.y || 20, T0 = +body.dataset.t0 || 20; (n.ts || []).forEach(function (t) { var g = document.createElement('i'); g.className = 'rtv-guide ' + n.c; g.style.top = (T0 + t * Yp) + 'px'; mid.appendChild(g); });
+    el.classList.add('rtv-hot');
+    var r = el.getBoundingClientRect(), br = body.getBoundingClientRect(), d = document.createElement('div'); d.className = 'rtv-pop ' + n.c; d._el = el; d.innerHTML = n.h; d.style.position = 'fixed'; body.appendChild(d);
+    var w = d.offsetWidth, vw = document.documentElement.clientWidth, sd = el.closest('.rtv-side'), x = sd && sd.classList.contains('l') ? r.left - w - 12 : r.right + 12; /* (beside what was hovered) */
+    if (x < 4) x = r.right + 12; if (x + w > vw - 4) x = r.left - w - 12; x = Math.max(4, Math.min(vw - 4 - w, x)); var hgt = d.offsetHeight, vh = window.innerHeight; d.style.left = x + 'px'; d.style.top = Math.max(60, Math.min(vh - hgt - 8, r.top - 10)) + 'px'; };
+  window.addEventListener('scroll', function () { var o = document.querySelector('.rtv-pop'); if (o && !o._tap) { o.remove(); document.querySelectorAll('.rtv-guide').forEach(function (g) { g.remove(); }); document.querySelectorAll('.rtv-hot').forEach(function (x) { x.classList.remove('rtv-hot'); }); } }, { passive: true });
+  document.addEventListener('mouseover', function (e) { var cp = e.target.closest && e.target.closest('.rtv-c'), hi = document.querySelector('.rtv-colhi'); if (hi) { if (cp) { hi.style.left = (56 + +cp.dataset.ci * (hi.offsetWidth || 34)) + 'px'; hi.classList.add('on'); } else hi.classList.remove('on'); } });
+  document.addEventListener('mouseover', function (e) { var t = e.target.closest && e.target.closest('.rtv [data-nt]'); if (t) rtvPop(t); else if (e.target.closest && !e.target.closest('.rtv-pop')) { var o = document.querySelector('.rtv-pop'); if (o && !o._tap) { o.remove(); document.querySelectorAll('.rtv-guide').forEach(function (g) { g.remove(); }); document.querySelectorAll('.rtv-hot').forEach(function (x) { x.classList.remove('rtv-hot'); }); } } });
+  document.addEventListener('click', function (e) { var t = e.target.closest && e.target.closest('.rtv [data-nt]'); if (t) { rtvPop(t); var o = document.querySelector('.rtv-pop'); if (o) o._tap = 1; } });
 
   var build = function () {
     var v = document.querySelector('#view'), pg = v && v.querySelector('.pf-inl.spc-v'), D = window.rotData; if (!pg || !D) return;
