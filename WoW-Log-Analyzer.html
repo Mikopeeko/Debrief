@@ -19457,12 +19457,20 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-10-28', h: [{ t: 'Debriefing, as a timeline', d: 'Each pull reads top to bottom: every mistake and death where it happened, why it happened and what to do next time, with a filter for players, roles and how serious. Prefer the old page? Overview is one tap away and remembered.' }, ], n: [
+  { d: '2026-10-28', h: [{ t: 'Debriefing, as a timeline', d: 'Each pull reads top to bottom: every mistake and death where it happened, why it happened and what to do next time, with a filter for players, roles and how serious. Prefer the old page? Overview is one tap away and remembered.' }, { t: "Plan: place cooldowns in a click", d: "The Cooldowns chart has a Big hits view: one row per big hit with the cooldowns covering it. Click a cooldown and the spots where it fits light up with suggestions; Fit shows the whole fight on one screen." }, { t: "A new front page", d: "First-time visitors get one calm page: what Debrief does, Continue with Warcraft Logs, and a quick look around. Returning raiders land straight on Home." }, ], n: [
+    "Guides is a main tab now, and the tabs stay on top of every guide page.",
+    "Home: your team and you in one slim bar, the current boss across the page, all ten bosses in one row of tiles, then your latest raid nights.",
+    "Debriefing, All pulls: each mechanic shows one square per pull and says how it went in words (\"Failed · 11 of 13\"); mechanics done right every time fold into one \"✓ Done right\" line.",
+    "Debriefing: an opened mechanic shows one sentence, a numbered square per pull, and a table of each time it happened and who.",
+    "Why we wiped tells where the pull started to fall apart and how it went from there, not just the last big mistake.",
+    "Venomfang dispels are judged by the moment: a slow dispel only counts when a dispeller was free and the raid wasn't under a big hit.",
+    "Plan, Cooldowns: healers with a talent choice only offer the cooldown they take, and full cooldowns fade in the tray.",
     'The boss banner is two calm lines: the boss (tap its name to change boss), how far the pull got and whether it beat the last one, the All pulls / pull switch on the right, then how long it lasted, the deaths and the wipe call.',
     'Debriefing: "The details" are one row of six right under "The pull at a glance", like a scorecard, and the phases below have the full width.',
     'Debriefing: the boss banner is tidier, with one chip shape and without the start time and player count; "The details" tiles open into slim lists, and only a tile that needs fixing is edged in red.',
     'Debriefing: "The details" are small tiles, three to a row, each with its score, its name and a short line; tap one to open it across the row.',
     'Rotation: Gear and extras are small tiles in a row above your checklist (each item, its number and its short line), and the checklist has the full width under them.',], f: [
+    "Deaths after the wipe call no longer show up as if they happened earlier in the pull.",
     'Debriefing: "The pull at a glance" ends where the pull was counted to, instead of running on to the last second; a long "What happened" line fits inside its box; and the rows under "The details" are all one width.',
     'All pulls, By mechanic: a mechanic now shows under every phase it came up in, so a night that reached the last phase lists it (P3 was missing for The Coiled Altar). Thanks to the raider who reported it.',
   ] },
