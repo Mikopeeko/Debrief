@@ -63,6 +63,9 @@ Edit files in src/, run `python build.py` inside src/, refresh the browser tab o
 - `.gitignore` keeps installers, `backups/`, `*.raid-backup.*`, `.claude/` and raw combat logs off GitHub. The Warcraft Logs login is stored outside the project (LOCALAPPDATA), never in the repo.
 
 ## Conventions
+- ALWAYS GIVE FEEDBACK ON THE USER'S SUGGESTIONS (the user, Oct 28: "make sure my chats know to always give feedback when i suggest"). Every idea,
+  change or pick the user suggests, big or small, gets a short "My take: x/10" first: why, the catch or risk, and what you would
+  do instead or add. Put it at the top of the reply, before building, even mid-task. Clear bug reports and direct "fix X" just get done.
 - Never bundle Blizzard art; icons load at runtime (Wowhead/Blizzard) with built-in SVG fallbacks.
 - Mechanic rules are only as good as their spell names/IDs: unverified ones are flagged. The Fight audit "Data check" panel shows which tracked spells a real pull contained.
 - Midnight: healers have no interrupts except Restoration Shaman (Wind Shear 30s).
