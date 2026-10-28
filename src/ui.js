@@ -1954,7 +1954,8 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-10-28', h: [], n: [], f: [
+  { d: '2026-10-28', h: [], n: [
+    'Rotation: Gear and extras are small tiles in a row above your checklist (each item, its number and its short line), and the checklist has the full width under them.',], f: [
     'Debriefing: "The pull at a glance" ends where the pull was counted to, instead of running on to the last second; a long "What happened" line fits inside its box; and the rows under "The details" are all one width.',
     'All pulls, By mechanic: a mechanic now shows under every phase it came up in, so a night that reached the last phase lists it (P3 was missing for The Coiled Altar). Thanks to the raider who reported it.',
   ] },
