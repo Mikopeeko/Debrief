@@ -10289,6 +10289,17 @@ html body #view .rtl .rtl-mid .rtl-t { margin: 0; }
 /* round 159b */
 .rtl .rtv-mall{margin-left:10px;border:0;background:none;padding:0;font:600 11px 'Barlow Condensed',sans-serif;letter-spacing:.02em;text-transform:none;color:#f39a93;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .rtl .rtv-mall:hover{color:#ffb3ad}
+/* round 159e: slim one-row cards (the hover note has the detail) */
+.rtl .rtv-cd{padding:6px 10px 6px 12px;border-radius:10px}
+.rtl .rtv-cdh.slim{gap:7px}
+.rtl .rtv-cdh.slim .rtv-cdi,.rtl .rtv-cdh.slim .rtv-cdi .icw,.rtl .rtv-cdh.slim .rtv-cdi img,.rtl .rtv-cdh.slim .rtv-cdi svg{width:20px;height:20px}
+.rtl .rtv-cdh.slim b{font-size:13px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rtl .rtv-cdh.slim .rtv-sv{flex:none;padding:0 6px;font-size:9.5px;line-height:16px;letter-spacing:.06em;text-transform:uppercase}
+.rtl .rtv-cdh.slim em{flex:none;font-size:11px}
+.rtl .rtv-cd .rtv-cdb{margin-top:6px;padding-top:6px}
+/* round 159f: slim cards keep their whole title (two lines at most); the note sits above the filter panel */
+.rtl .rtv-cdh.slim b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.rtv-pop,.rtl .rtv-pop{z-index:80!important}
 </style>
 
 
@@ -58117,7 +58128,7 @@ function dsGuides() {
       var p = y(a.t);
       if (a.card && !PH) { var q = Math.max(p - 14, lastC + 10); lastC = q + 84; return '<div class="rtv-cd ' + a.cl + '" data-nt="' + a.nt + '" data-ay="' + p + '" style="top:' + q + 'px"><i class="rtv-cdl" style="top:' + (p - q) + 'px"></i>' + a.card + '</div>'; }
       alt = p - last < 22 ? (alt + 1) % 2 : 0; last = p; return (a.span > 1.5 ? '<i class="rtv-brk ' + a.cl + '" style="top:' + p + 'px;height:' + (a.span * Y) + 'px;' + (side === 'l' ? 'right' : 'left') + ':' + (19 + alt * 20) + 'px"></i>' : '') + '<span class="rtv-mk ' + a.cl + (a.mi ? ' mi' : '') + (a.n > 1 ? ' n' : '') + '"' + (a.n > 1 ? ' data-n="' + a.n + '"' : '') + ' data-nt="' + a.nt + '" style="top:' + p + 'px;' + (side === 'l' ? 'right' : 'left') + ':' + (10 + alt * 20) + 'px">' + (a.cl === 'gd' ? '✓' : a.cl === 'u' ? '' : '!') + '</span>'; }).join('') + '</div>'; };
-    var card = function (ic, title, when, tag, tagCl, line) { return '<div class="rtv-cdh"><span class="rtv-cdi">' + (ic || '') + '</span><b>' + title + '</b><em>' + when + '</em></div><div class="rtv-cdb">' + (tag ? '<i class="rtv-sv ' + tagCl + '">' + tag + '</i>' : '') + (line ? '<span>' + line + '</span>' : '') + '</div>'; };
+    var card = function (ic, title, when, tag, tagCl, line) { return '<div class="rtv-cdh slim"><span class="rtv-cdi">' + (ic || '') + '</span><b>' + title + '</b>' + (tag ? '<i class="rtv-sv ' + tagCl + '">' + tag + '</i>' : '') + '<em>' + when + '</em></div>' + (/rtv-ops/.test(line || '') ? '<div class="rtv-cdb">' + line + '</div>' : ''); }; /* (round 159e, the user: "keep them slim, and have tooltips": one row; the detail is in the hover note) */ var _cd0 = function () { };
     var GL = [], BL = [];
     if (OPEN) { var ob = /rtl-op bad/.test(OPEN.html) ? 'bd' : /rtl-op warn/.test(OPEN.html) ? 'y' : 'gd', oSub = (function () { var d = document.createElement('div'); d.innerHTML = OPEN.html; var x = d.querySelector('p'); return x ? x.textContent.trim() : ''; })();
       (ob === 'gd' ? GL : BL).push({ t: 0, cl: ob, nt: note(ob === 'gd' ? 'g' : 'bad', '<div class="rtv-pt"><em class="rtv-sv ' + (ob === 'gd' ? 'ok' : 'l2') + '">' + (ob === 'gd' ? 'Done well' : 'Could be better') + '</em><span>Opener</span></div><b>' + E(OPEN.head) + '</b>' + OPEN.html, [0]),
@@ -58135,7 +58146,7 @@ function dsGuides() {
       if (m.ts.length > 1) it.n = m.ts.length;
       if (false && m.lv === 2 && !carded[k]) { /* (round 159c: moderate mistakes are marks, never cards) */ carded[k] = 1; var at = allTs[k], mm2 = { t: m.t, ts: at, lv: m.lv, type: m.type, by: m.by, head: m.head, line: m.line, next: m.next || (md.S.filter(function (x) { return x.by + '|' + x.head === k && x.next; })[0] || {}).next }; it.nt = note('bad', tipM(mm2), at);
         it.card = card(m.ic, E(m.head), mm(m.t), at.length > 1 ? 'First of ' + at.length : 'Moderate', 'l2', mm2.next ? E(first(mm2.next)) : E(m.line || '')); }
-      if (m.lv >= 3 && !carded[k]) { carded[k] = 1; var at3 = allTs[k] || m.ts, nx3 = m.next || (md.S.filter(function (x) { return x.by + '|' + x.head === k && x.next; })[0] || {}).next; it.nt = note('bad', tipM({ t: m.t, ts: at3, lv: m.lv, type: m.type, by: m.by, head: m.head, line: m.line, next: nx3, sub: m.sub }), at3); it.card = card(m.ic, E(m.head), mm(m.t), at3.length > 1 ? 'Serious · ' + at3.length + ' times' : 'Serious', 'l3', nx3 ? E(first(nx3)) : E(m.line || '')); } /* (round 159c: one card per kind of serious mistake) */
+      if (m.lv >= 3 && !carded[k]) { carded[k] = 1; var at3 = allTs[k] || m.ts, nx3 = m.next || (md.S.filter(function (x) { return x.by + '|' + x.head === k && x.next; })[0] || {}).next; it.nt = note('bad', tipM({ t: m.t, ts: at3, lv: m.lv, type: m.type, by: m.by, head: m.head, line: m.line, next: nx3, sub: m.sub }), at3); it.card = card(m.ic, E(m.head), mm(m.t), at3.length > 1 ? '×' + at3.length : 'Serious', 'l3', nx3 ? E(first(nx3)) : E(m.line || '')); } /* (round 159c: one card per kind of serious mistake) */
       it.mk = 1; it.score = m.lv * 1000 + (allTs[k] || m.ts).length; it.rest = m.rest; it.mspan = m.span || 0;
       if (!it.card) { if (!m.rest.length) return; it.t = m.rest[0]; it.n = m.rest.length > 1 ? m.rest.length : 0; it.span = m.span || 0; it.nt = note(m.lv >= 2 ? 'bad' : 'y', tipM({ t: m.rest[0], ts: m.rest, lv: m.lv, type: m.type, by: m.by, head: m.head, line: m.line, next: m.next }), m.rest); } /* (round 155q: a mark only when no press carries it) */
       BL.push(it); });
