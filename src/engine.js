@@ -3821,6 +3821,7 @@ function buildCoiledAltar(ev, r, h) {
   // (Mythic, found in Oct 21's pulls, in no guide: every Soulcoiler casts Retaliatory Malice on itself the moment it spawns, and
   // it hits the raid every 3 s until the add dies. Its hits are credited to the add that cast them; a death to it goes to the
   // oldest set with an add alive at that moment)
+  let mFrom = null; const tagFrom = () => { if (mFrom != null && mistakes.length) mistakes[mistakes.length - 1].from = mFrom; mFrom = null; };
   const rmHits = dmg('retaliatory malice'), rmDeaths = r.deaths.filter((d) => /^retaliatory malice$/i.test(String(d.ability || ''))), rmUsed = new Set();
   const setRows = sc.map((t, i) => {
     // adds should die before the next set spawns (the last set before a phase change is cleaned up by the transition)
@@ -3831,8 +3832,10 @@ function buildCoiledAltar(ev, r, h) {
     /* (Coiled Altar fix 8, Oct 24: the 11 top kills had an add live up to 10.7 s into the next set, so up to 12 s isn't flagged) */
     const alive = next != null ? mine.filter((a) => a.died == null || a.died > next + 12) : [];
     const next2 = sc[i + 2] != null && phaseAt(sc[i + 2]) === phaseAt(t) ? sc[i + 2] : null, lateDm = next2 != null ? mine.filter((a) => a.died == null || a.died > next2) : [];
-    if (lateDm.length) M(next2, 'Raid', 'spiritcackle', 'High', lateDm.length + ' Spiteful Soulcoiler' + (lateDm.length > 1 ? 's were' : ' was') + ' still alive two sets later.', 'Break each Spirit Shield with two overlapping Gloombombs (melee targets on the melee add, ranged on the ranged add) and kill both adds before the next set.');
+    if (lateDm.length) mFrom = t; /* (from: when the problem began, for the wipe chain (Oct 28)) */
+    if (lateDm.length) M(next2, 'Raid', 'spiritcackle', 'High', lateDm.length + ' Spiteful Soulcoiler' + (lateDm.length > 1 ? 's were' : ' was') + ' still alive two sets later (set ' + (i + 1) + ').', 'Break each Spirit Shield with two overlapping Gloombombs (melee targets on the melee add, ranged on the ranged add) and kill both adds before the next set.');
     else if (alive.length) M(next, 'Raid', 'spiritcackle', 'Low', alive.length + ' Spiteful Soulcoiler' + (alive.length > 1 ? 's were' : ' was') + ' still alive when the next set of adds spawned.', 'Kill both adds before the next set spawns. The shield comes first, but don\'t let sets pile up.');
+    tagFrom();
     const kicks = r.interrupts.filter((k) => mine.some((a) => a.g === k.target));
     const rmAmt = rmHits.filter((e) => mine.some((a) => a.g === e.src)).reduce((s, e) => s + (e.amt || 0), 0);
     const rmDead = rmDeaths.filter((d) => !rmUsed.has(d) && mine.some((a) => d.t >= a.t0 - 0.5 && (a.died == null || d.t <= a.died + 3))); rmDead.forEach((d) => rmUsed.add(d));

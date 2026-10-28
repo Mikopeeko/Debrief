@@ -11024,7 +11024,7 @@ function audit() {
     const U1 = simp && !['amps', 'deaths', 'avoid'].includes(s.id);
     const u1Body = () => { const sv = (row) => (row.some((c) => c && c.bad) ? 'bad' : row.some((c) => c && c.warn) ? 'warn' : 'ok');
       const L = rows.filter(Array.isArray).map((row) => ({ row, g: null })).concat(...groups.map((g) => (g.rows || []).filter(Array.isArray).map((row) => ({ row, g })))).map((it, i) => { const c = it.row.find((q) => q && q.t != null), t = c ? c.t : it.g ? it.g.t : null;
-        let x = ''; try { x = cHtml(rowText(s, it.row)); } catch (e) { x = ''; } x = String(x).replace(/^\d+:\d\d\s*/, '').replace(/\s+·\s+/g, ' · ').replace(/\s{2,}/g, ' ').trim(); /* (the reasons in brackets stay: shown as a grey note (Oct 23)) */ if (it.g && it.g.title && !x.startsWith(it.g.title)) x = it.g.title + ' · ' + x;
+        let x = ''; try { x = cutLate(cHtml(rowText(s, it.row)), r); } catch (e) { x = ''; } x = String(x).replace(/^\d+:\d\d\s*/, '').replace(/\s+·\s+/g, ' · ').replace(/\s{2,}/g, ' ').trim(); /* (the reasons in brackets stay: shown as a grey note (Oct 23)) */ if (it.g && it.g.title && !x.startsWith(it.g.title)) x = it.g.title + ' · ' + x;
         return { ...it, i, t, st: sv(it.row), x, map: cRowMap(it.row) }; });
       if (!L.length) return '<p class="u1-f">Nothing recorded for this one on this pull.</p>';
       const by = (a, b) => (a.t == null ? 1e9 : a.t) - (b.t == null ? 1e9 : b.t), prob = L.filter((q) => q.st !== 'ok').sort((a, b) => (a.st === 'bad' ? 0 : 1) - (b.st === 'bad' ? 0 : 1) || by(a, b)), ok = L.filter((q) => q.st === 'ok').sort(by);
@@ -11152,7 +11152,7 @@ function audit() {
     if (!w.length) return ''; const tOf = (row) => { const c = row.find((x) => x && x.t != null); return c ? c.t : null; };
     const L = w.slice().sort((p, r) => (isBadRow(p) ? 0 : 1) - (isBadRow(r) ? 0 : 1) || (tOf(p) == null ? 1e9 : tOf(p)) - (tOf(r) == null ? 1e9 : tOf(r)));
     /* (the worst moment in full, the way the addon says it: "Deluge #3 at 1:27: 5, then 5 orbs popped, too many in Tyralien's frontal") */
-    let one = ''; try { const m = String(rowText(q.x.s, L[0])).replace(/<[^>]+>/g, '').replace(/\s*\([^)]*\)/g, '').replace(/\s+·\s+/g, ', ').match(/^(?:(\d+:\d\d)\s+)?([^:]*?)(?::\s*(.*))?$/); if (m) one = (m[2] ? m[2] + (m[1] ? ' at ' + m[1] : '') : m[1] ? 'At ' + m[1] : '') + (m[3] ? ': ' + m[3] : ''); } catch (e) { one = ''; }
+    let one = ''; try { const m = String(cutLate(String(rowText(q.x.s, L[0])), r)).replace(/<[^>]+>/g, '').replace(/\s*\([^)]*\)/g, '').replace(/\s+·\s+/g, ', ').match(/^(?:(\d+:\d\d)\s+)?([^:]*?)(?::\s*(.*))?$/); if (m) one = (m[2] ? m[2] + (m[1] ? ' at ' + m[1] : '') : m[1] ? 'At ' + m[1] : '') + (m[3] ? ': ' + m[3] : ''); } catch (e) { one = ''; }
     const head = w.length === 1 ? '1 mistake' : w.length + ' mistakes';
     return '<span class="prw-s">' + colorNames(esc((one ? dbfCap(one.trim()) /* (no 'N of M went wrong' (your call, Oct 24): the bar says how many) */ : head) + (L.length > 1 ? ' (+' + (L.length - 1) + ' more)' : '') + (/[.!?)]$/.test(one) ? '' : '.')), PMp) + '</span>'; };
   const phBars = (list, jobs) => '<span class="prw">' + phStat(list).map((q) => '<span class="prw-i" role="button" tabindex="0" data-phjump="' + esc(q.x.s.id) + '" title="' + esc(q.nm + ': ' + q.pc + '% done right. Click to open it.') + '">' + phIco(q.x.s) + '<span class="prw-l"><span class="prw-n">' + esc(q.nm) + '</span><span class="prw-t"><i class="' + q.lv + '" style="width:' + Math.max(3, q.pc) + '%"></i></span>' + phSay(q) + '</span><span class="prw-p ' + q.lv + '">' + q.pc + '%</span></span>').join('') + (jobs || []).map((o) => '<span class="prw-i prw-nj" role="button" tabindex="0" data-phjump="dbn-' + esc(o.id) + '">' + (o.icon || '') + '<span class="prw-l"><span class="prw-n">' + o.title + '<span class="prw-nt">' + emoIc('📜') + 'note</span></span><span class="prw-s ' + o.st + '">' + (o.txtHtml != null ? o.txtHtml : esc(o.txt || DBN_W[o.st] || '')) + '</span></span><span class="prw-p ' + o.st + '">' + ({ ok: '✓', warn: '!', bad: '✕' }[o.st] || '') + '</span></span>').join('') /* (a job only in your note gets a bar too (Oct 24, style A)) */ + '</span>';
@@ -13836,7 +13836,24 @@ function coachTrends(reps, right, wrongAll, WKN, WKP) {
   const wellOut = night ? [well[0] && !well[0].id ? well[0] : null].filter(Boolean).concat(top(well.filter((x) => x.id && !seen(x)))).slice(0, 3) : well.filter((x) => !x.id || !seen(x)).slice(0, 3);
   return { well: wellOut, worse: W3, better: B3, cmp, prvN };
 }
-function coachSummary(reps, name) {
+/* (where a wipe started, in time order (Oct 28): serious mistakes (High) and deaths before the wipe call, each mechanic once at its first,
+   dated from when it began (m.from), then the call itself) */
+/* ("Name 8:45, Name 8:46 died": the names whose time is after the wipe call come out, said once at the end (Oct 28)) */
+const cutLate = (x, r) => { const ct = cutT(r); if (!isFinite(ct) || !/\bdied\b/.test(x)) return x; const ss = (m) => 60 * +m[1] + +m[2]; let n = 0;
+  const y = String(x).replace(/(?:,\s*)?([^,:·]+?)\s(\d+):(\d\d)(?=,|\s+died)/g, (all, nm, a, b) => (ss([0, a, b]) > ct + 0.5 ? (n++, '') : all)).replace(/^,\s*/, '').replace(/^\s*died/, '').trim();
+  if (!n) return x; const tail = plural(n, 'death') + ' after the wipe call'; if (/(^|:\s*)died\.?$/.test(y)) return y.replace(/(^|:\s*)died\.?$/, (m0, p) => p + tail); return y ? y + ' (' + n + ' more after the wipe call)' : tail; };
+function wipeChain(r) { if (!r || !r.item || r.item.kill) return null; const ct = cutT(r), ci = cutInfo(r), s1 = (x) => { const m = String(x || '').match(/^(.{8,200}?[.!?])(\s|$)/); return (m ? m[1] : String(x || '')).replace(/\.$/, ''); };
+  const seen = new Set(), items = [];
+  const KM = keptMistakes(r).filter((x) => x.mechanic !== 'Death' && !(x.avoidRule && !/died/i.test(x.detail || ''))), sevW = KM.some((x) => x.severity === 'High') ? 'High' : 'Medium';
+  for (const m of KM.filter((x) => x.severity === sevW).map((x) => ({ ...x, at: x.from != null ? x.from : x.t })).sort((a, b) => a.at - b.at)) { const k = String(m.mechanic).toLowerCase(); if (seen.has(k)) continue; seen.add(k);
+    const who = m.player && m.player !== 'Raid' ? String(m.player).split('-')[0] : '', d0 = s1(m.detail); items.push({ t: m.at, mech: m.mechanic, txt: who && !new RegExp(who, 'i').test(d0) && !/^(A|An|The|\d)\b/.test(d0) ? who + ' ' + d0.charAt(0).toLowerCase() + d0.slice(1) : d0, sev: m.severity, nm: !!who && !/^(A|An|The|\d)\b/.test(d0) }); }
+  for (const d of keptDeaths(r).slice().sort((a, b) => a.t - b.t).slice(0, 3)) if (!items.some((x) => Math.abs(x.t - d.t) < 2 && new RegExp(String(d.player).split('-')[0], 'i').test(x.txt))) items.push({ t: d.t, mech: 'Death', txt: String(d.player).split('-')[0] + ' died to ' + (d.ability || 'damage'), sev: 'Death', nm: true });
+  items.sort((a, b) => a.t - b.t); const L = items.slice(0, 4); if (!L.length) return null;
+  const callW = ci ? (ci.why === 'check' ? 'the damage check was missed' : ci.why === 'half' ? 'half the raid was dead' : ci.why === 'line' ? 'more were dead than any kill survived' : 'the wipe mechanic went off') : '';
+  const txt = 'It started at ' + T(L[0].t) + ': ' + L[0].txt + '.' + L.slice(1).map((x) => ' Then at ' + T(x.t) + ': ' + (x.nm ? x.txt : x.txt.charAt(0).toLowerCase() + x.txt.slice(1)) + '.').join('') + (ci && isFinite(ct) ? ' The wipe was called at ' + T(ct) + ': ' + callW + '.' : '');
+  return { start: L[0], items: L, call: ci && isFinite(ct) ? { t: ct, why: callW } : null, txt }; }
+function coachSummary(reps, name) { const cs = coachSummary0(reps, name); if (cs && !cs.night && !cs.kill && !cs.chain && reps && reps.length === 1) { try { cs.chain = wipeChain(reps[0]); } catch (e) { cs.chain = null; } } return cs; }
+function coachSummary0(reps, name) {
   reps = (reps || []).filter((r) => r && r.players && !r.allPulls); if (!reps.length) return null;
   return oaCache(reps, 'cs:' + (name || ''), () => {
     const night = reps.length > 1, it = reps[reps.length - 1].item, kill = reps.find((r) => r.item.kill);
