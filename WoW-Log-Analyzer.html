@@ -8838,6 +8838,12 @@ html body #view .mx-p.mx-p .mx-who .mx-more { color: var(--faint); }
 html body #view .mx-p.mx-p p.mx-ft { margin: 14px 0 0; font-size: 12.5px; color: var(--faint); }
 /* ===== Design studio round 126 (Oct 27): one pull strip. Owner: the Design studio chat. ===== */
 html body #view .prw-i.prw-i.on .mx-sq, html body #view details[open] > summary.cgl .mx-sq { visibility: hidden; }
+/* ===== Design studio round 127 (Oct 27): flag text in the rows. Owner: the Design studio chat. ===== */
+html body #view :is(.prw-p, .cgl-p) { white-space: nowrap; flex: none; text-align: right; font: 700 12.5px/1.2 var(--body) !important; letter-spacing: 0; }
+html body #view .prw-i.prw-i, html body #view details.phase.mcx-ph > summary .prw-i.prw-i { grid-template-columns: 18px minmax(0, 1fr) max-content !important; column-gap: 10px; }
+html body #view :is(.prw-p, .cgl-p).ok { color: #7ee08f !important; }
+html body #view :is(.prw-p, .cgl-p).warn { color: var(--gold) !important; }
+html body #view :is(.prw-p, .cgl-p).bad { color: #ff8f87 !important; }
 </style>
 
 
