@@ -4121,6 +4121,9 @@ function buildCoiledAltar(ev, r, h) {
       { txt: [...new Set([...pers, ...exts])].map((x) => SHORT_CD[x] || x.replace(/\b\w/g, (c) => c.toUpperCase())).join(', ') || 'nothing up', sub: st >= 2 ? (!lowCover ? 'covered' : 'plan: a big defensive and an external') : '', warn: lowCover || (!pers.length && !exts.length && st >= 2), dim: st < 2 && !pers.length && !exts.length },
       { txt: died ? 'died' : 'lived', bad: !!died }] });
   }
+  /* (a non-tank in the frontal is one of its moments too: the coach names Sever when it kills someone, so its row can't read clean (Oct 27)) */
+  for (const f of front) { const died = (r.deaths || []).some((d) => d.guid === f.dst && d.t >= f.t - 0.5 && d.t <= f.t + 3);
+    tfRows.push({ t: f.t, row: [{ t: f.t }, { s: S(L(f.spell)) }, { p: pname(f.dst) }, { txt: '—', dim: true }, { txt: '—', dim: true }, { txt: died ? 'a non-tank died in it' : 'a non-tank stood in it', bad: died || !f.soft, warn: !died && !!f.soft }] }); }
   if (tfRows.length) sections.push({ id: 'tankfront', title: 'Tank frontals (Defensives on stack 2)', place: 'Tank frontals: stacks and defensives', spell: S('soul sever'),
     verdict: tfRows.some((x) => x.row.some((c) => c.bad)) ? 'bad' : tfRows.some((x) => x.row.some((c) => c.warn)) ? 'warn' : 'good',
     summary: pl(tfRows.length, 'tank frontal') + '. It shows who took each one, on which stack, and the defensives and externals they had up.',
