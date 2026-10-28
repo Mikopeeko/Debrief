@@ -9743,6 +9743,11 @@ html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs >
 html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .spc-sts > .spc-str > b { text-align: right; }
 @media (max-width: 760px) { html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .rck-b, html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r.rck-mg > .rck-mgb { margin-left: 0 !important; } html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .spc-sts > .spc-str { grid-template-columns: 90px minmax(0, 1fr) 52px; } }
 @media (max-width: 900px) { html body #view .pf-inl.pf-inl.spc-v.spc-v > .ds-rcols > section.rck { order: 3 !important; } html body #view .pf-inl.pf-inl.spc-v.spc-v > .ds-rcols > section.rck-gx { order: 4 !important; } html body #view .pf-inl.pf-inl.spc-v.spc-v > .ds-srcwide { order: 5 !important; } html body #view .pf-inl.pf-inl.spc-v.spc-v > .ds-glance { order: 6 !important; } html body #view .pf-inl.pf-inl.spc-v.spc-v > .spc-src { order: 7 !important; } }
+/* ===== Design studio round 152 (Oct 28): Overview dropdowns in readable words. Owner: the Design studio chat. ===== */
+html body #view .mx-one-w .mx-nx { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 10px; margin: 2px 0 12px; font-size: 13.5px; line-height: 1.5; color: var(--text); }
+html body #view .mx-one-w .mx-nx > b { font: 700 11px/1.9 'Barlow Condensed', sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
+html body #view .mx-one-w .mx-nt { color: var(--faint); }
+@media (max-width: 640px) { html body #view .mx-one-w .mx-nx { grid-template-columns: 1fr; gap: 2px; } }
 </style>
 
 
@@ -28994,7 +28999,7 @@ function audit() {
     if (!w.length) return ''; const tOf = (row) => { const c = row.find((x) => x && x.t != null); return c ? c.t : null; };
     const L = w.slice().sort((p, r) => (isBadRow(p) ? 0 : 1) - (isBadRow(r) ? 0 : 1) || (tOf(p) == null ? 1e9 : tOf(p)) - (tOf(r) == null ? 1e9 : tOf(r)));
     /* (the worst moment in full, the way the addon says it: "Deluge #3 at 1:27: 5, then 5 orbs popped, too many in Tyralien's frontal") */
-    let one = ''; try { const m = String(cutLate(String(rowText(q.x.s, L[0])), r)).replace(/<[^>]+>/g, '').replace(/\s*\([^)]*\)/g, '').replace(/\s+·\s+/g, ', ').match(/^(?:(\d+:\d\d)\s+)?([^:]*?)(?::\s*(.*))?$/); if (m) one = (m[2] ? m[2] + (m[1] ? ' at ' + m[1] : '') : m[1] ? 'At ' + m[1] : '') + (m[3] ? ': ' + m[3] : ''); } catch (e) { one = ''; }
+    let one = ''; const ow = (L[0] || []).find((c) => c && c.why); /* round 152: the moment's own sentence */ if (ow) { const t0 = tOf(L[0]); one = (t0 != null ? 'At ' + T(t0) + ': ' : '') + String(ow.why).replace(/<[^>]+>/g, '').trim(); } else try { const m = String(cutLate(String(rowText(q.x.s, L[0])), r)).replace(/<[^>]+>/g, '').replace(/\s*\([^)]*\)/g, '').replace(/\s+·\s+/g, ', ').match(/^(?:(\d+:\d\d)\s+)?([^:]*?)(?::\s*(.*))?$/); if (m) one = (m[2] ? m[2] + (m[1] ? ' at ' + m[1] : '') : m[1] ? 'At ' + m[1] : '') + (m[3] ? ': ' + m[3] : ''); } catch (e) { one = ''; }
     const head = w.length === 1 ? '1 mistake' : w.length + ' mistakes';
     return '<span class="prw-s">' + colorNames(esc((one ? dbfCap(one.trim()) /* (no 'N of M went wrong' (your call, Oct 24): the bar says how many) */ : head) + (L.length > 1 ? ' (+' + (L.length - 1) + ' more)' : '') + (/[.!?)]$/.test(one) ? '' : '.')), PMp) + '</span>'; };
   const phBars = (list, jobs) => '<span class="prw">' + phStat(list).map((q) => '<span class="prw-i" role="button" tabindex="0" data-phjump="' + esc(q.x.s.id) + '" title="' + esc(q.nm + ': ' + q.pc + '% done right. Click to open it.') + '">' + phIco(q.x.s) + '<span class="prw-l"><span class="prw-n">' + esc(q.nm) + '</span><span class="prw-t"><i class="' + q.lv + '" style="width:' + Math.max(3, q.pc) + '%"></i></span>' + phSay(q) + '</span><span class="prw-p ' + q.lv + '">' + q.pc + '%</span></span>').join('') + (jobs || []).map((o) => '<span class="prw-i prw-nj" role="button" tabindex="0" data-phjump="dbn-' + esc(o.id) + '">' + (o.icon || '') + '<span class="prw-l"><span class="prw-n">' + o.title + '<span class="prw-nt">' + emoIc('📜') + 'note</span></span><span class="prw-s ' + o.st + '">' + (o.txtHtml != null ? o.txtHtml : esc(o.txt || DBN_W[o.st] || '')) + '</span></span><span class="prw-p ' + o.st + '">' + ({ ok: '✓', warn: '!', bad: '✕' }[o.st] || '') + '</span></span>').join('') /* (a job only in your note gets a bar too (Oct 24, style A)) */ + '</span>';
@@ -31835,12 +31840,15 @@ function mxOne(pan, sec, hd, fl, xb) {
   const txt = (el) => { if (!el) return ''; const c = unroll(el.cloneNode(true)); c.querySelectorAll('.icw, svg, img').forEach((x) => x.remove()); return c.textContent.replace(/\s+/g, ' ').trim(); };
   const html = (el) => { if (!el) return ''; const c = unroll(el.cloneNode(true)); c.querySelectorAll('.icw, svg, img').forEach((x) => x.remove()); c.querySelectorAll('.sp.mt').forEach((x) => x.replaceWith(document.createTextNode(x.textContent))); return c.innerHTML.trim(); };
   const who = (li) => { if (li.querySelectorAll('.u1-o .nm').length > 1) return 'Raid'; const nm = li.querySelector('.u1-h .nm, .u1-h [style*="color"], .u1-o .nm'); if (nm) return nm.outerHTML; return esc(txt(li.querySelector('.u1-h') || li.querySelector('.u1-o'))); };
-  const what = (li) => { const o = li.querySelector('.u1-o'); if (!o || (!li.querySelector('.u1-h') && !li.querySelector('.nm') && stOf(li) === 'ok')) return 'Done right'; if (!li.querySelector('.u1-h') && !li.querySelector('.nm')) return 'Had a mistake'; /* (its line is only its label, already in the Moment column) */ const c = unroll(o.cloneNode(true)); if (c.querySelectorAll('.nm').length === 1) c.querySelectorAll('.nm').forEach((x) => x.remove()); /* (a line naming several players keeps them all) */ const h = html(c), nt = [...li.querySelectorAll('.u1-n')].map((n) => txt(n)).filter(Boolean).join(' '); return h.replace(/<[^>]+>/g, '').trim() ? h + (nt ? ' <span class="mx-nt">' + esc(nt) + '</span>' : '') : 'Done right'; }; /* (the bracketed notes too (Oct 28)) */
+  const howT = txt(sec.querySelector('details.howit')).toLowerCase(), whyS = (li) => { const s = String(li.dataset.why || '').trim().replace(/\s+/g, ' '); if (!s || stOf(li) === 'ok') return ''; return howT && howT.includes(s.toLowerCase().slice(0, 40)) ? '' : s; }; /* round 152: the moment's plain sentence */
+  const what = (li) => { if (whyS(li)) return esc(whyS(li)); const o = li.querySelector('.u1-o'); if (!o || (!li.querySelector('.u1-h') && !li.querySelector('.nm') && stOf(li) === 'ok')) return 'Done right'; if (!li.querySelector('.u1-h') && !li.querySelector('.nm')) return 'Had a mistake'; /* (its line is only its label, already in the Moment column) */ const c = unroll(o.cloneNode(true)); if (c.querySelectorAll('.nm').length === 1) c.querySelectorAll('.nm').forEach((x) => x.remove()); /* (a line naming several players keeps them all) */ const h = html(c), nt = [...li.querySelectorAll('.u1-n')].map((n) => txt(n)).filter(Boolean).join(' · '); return h.replace(/<[^>]+>/g, '').trim() ? h + (nt ? ' <span class="mx-nt">(' + esc(nt) + ')</span>' : '') : 'Done right'; }; /* (the bracketed notes too (Oct 28)) */
   const named = lis.some((li) => li.querySelector('.nm'));
   const worst = rows.find((x) => x.st === 'bad') || rows.find((x) => x.st === 'warn');
   const f0 = sec.querySelector('.u1-f'), kbT = f0 ? (txt(f0).split(' · ').find((t) => /top guild|fastest/i.test(t)) || '') : '';
   const cnt = (k, c) => '<b class="' + c + '">' + k + '</b>';
-  const sum = '<p class="mx-sum">' + (w ? cnt(w, worst.st === 'bad' ? 'r' : 'y') + ' of ' + n + (n === 1 ? ' time' : ' times') + ' had mistakes' + (worst && !worst.li.querySelector('.u1-h') && !worst.li.querySelector('.nm') ? '; the worst was at ' + esc(txt(worst.li.querySelector('.u1-t'))) + ', ' + esc(txt(worst.li.querySelector('.u1-o'))) : '') + (worst && (worst.li.querySelector('.u1-h') || worst.li.querySelector('.nm')) ? '; the worst, at ' + esc(txt(worst.li.querySelector('.u1-t'))) + ': ' + esc(what(worst.li).replace(/<[^>]+>/g, '').replace(/\.$/, '').replace(/^./, (c) => (/^<span class="nm"/.test(what(worst.li)) ? c : c.toLowerCase()))) : '') + '.' : 'Done right all ' + cnt(n, 'g') + ' times.') + '</p>';
+  const worstW = rows.find((x) => x.st === 'bad' && whyS(x.li)) || (worst && worst.st === 'warn' ? rows.find((x) => x.st === 'warn' && whyS(x.li)) : null) || (worst && !rows.some((x) => x.st === 'bad') ? null : rows.find((x) => x.st !== 'ok' && whyS(x.li))) || worst; /* round 152: lead with a moment that says what happened */
+  const wS = worstW ? whyS(worstW.li) : '', nxS = worst ? String(worst.li.dataset.next || (rows.find((x) => x.st !== 'ok' && x.li.dataset.next) || { li: { dataset: {} } }).li.dataset.next || '').trim() : '';
+  const sum = (w && wS ? '<p class="mx-sum">' + cnt(w, worst.st === 'bad' ? 'r' : 'y') + ' of ' + n + (n === 1 ? ' time' : ' times') + ' had mistakes. The worst' + (txt(worstW.li.querySelector('.u1-t')) ? ', at ' + esc(txt(worstW.li.querySelector('.u1-t'))) : '') + ': ' + esc(wS).replace(/([^.!?])$/, '$1.') + '</p>' : !w ? '<p class="mx-sum">' + (n === 1 ? 'Done right the one time it came.' : 'Done right all ' + cnt(n, 'g') + ' times.') + '</p>' : '') /* round 152 */ + (w && wS ? '' : !w ? '' : '<p class="mx-sum">' + (w ? cnt(w, worst.st === 'bad' ? 'r' : 'y') + ' of ' + n + (n === 1 ? ' time' : ' times') + ' had mistakes' + (worst && !worst.li.querySelector('.u1-h') && !worst.li.querySelector('.nm') ? '; the worst was at ' + esc(txt(worst.li.querySelector('.u1-t'))) + ', ' + esc(txt(worst.li.querySelector('.u1-o'))) : '') + (worst && (worst.li.querySelector('.u1-h') || worst.li.querySelector('.nm')) ? (txt(worst.li.querySelector('.u1-t')) ? '; the worst, at ' + esc(txt(worst.li.querySelector('.u1-t'))) + ': ' : '; the worst: ') + esc(what(worst.li).replace(/<[^>]+>/g, '').replace(/\.$/, '').replace(/^./, (c) => (/^<span class="nm"/.test(what(worst.li)) ? c : c.toLowerCase()))) : '') + '.' : 'Done right all ' + cnt(n, 'g') + ' times.') + '</p>') + (w && nxS ? '<p class="mx-nx"><b>Next time</b><span>' + esc(nxS) + '</span></p>' : '');
   const shown = n <= 8 ? rows : rows.filter((x) => x.st !== 'ok'), rest = n - shown.length;
   const tb = !w ? '' /* (no mistakes: the sentence says it, no table (the user, Oct 27)) */ : '<div class="mx-lab">Each time it happened</div><div class="mx-tb mx-one"><div class="mx-th"><span>Time</span><span>' + (named ? 'Who' : 'Moment') + '</span><span>What happened</span></div>' +
     shown.map((x) => '<div class="mx-tr ' + x.st + '" data-u1i="' + x.i + '" role="button" tabindex="0"><span class="mx-t">' + esc(txt(x.li.querySelector('.u1-t'))) + '</span><span class="mx-who">' + who(x.li) + '</span><span class="mx-m ' + x.st + '">' + what(x.li) + '</span></div>').join('') +
@@ -57460,6 +57468,31 @@ function dsGuides() {
   };
   var run = function () { document.querySelectorAll('#view .pf-inl.spc-v > .ds-rtop:not(.rpc-on)').forEach(function (top) { try { make(top); } catch (e) { console.error(e); } }); };
   var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(run, 60); };
+  var start = function () { var m = document.getElementById('main') || document.body; if (!m) return setTimeout(start, 300); new MutationObserver(kick).observe(m, { childList: true, subtree: true }); kick(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
+// ===== Design studio round 152 (Oct 28): the phase rows' one-line summary in the moment's own words. Owner: the Design studio chat. =====
+// (the line under each mechanic's bar in an Overview phase read like shorthand ("slow P2, Cooldowns / Zul'jan's health Zul'jan back at
+// 48%"); it now reads the worst moment's own sentence, the same one its dropdown leads with: "At 4:59: Died to Soul Sever on stack 2.")
+(function () {
+  var tm = 0;
+  var run = function () {
+    document.querySelectorAll('#view details.phase .prw-i[data-phjump]').forEach(function (b) {
+      var line = b.querySelector('.prw-s'); if (!line || line.dataset.w152) return;
+      var ph = b.closest('details.phase'), id = b.dataset.phjump; if (!ph || !id) return;
+      var sec = ph.querySelector('details.secd[data-k="' + CSS.escape(id) + '"]') || ph.querySelector('details.secd[data-k^="' + CSS.escape(id) + '-"]'); if (!sec) return;
+      var howT = ((sec.querySelector('details.howit') || {}).textContent || '').toLowerCase();
+      var all = [].slice.call(sec.querySelectorAll('li.u1-r.bad, li.u1-r.warn'));
+      var lis = all.filter(function (li) { var w = String(li.dataset.why || '').trim(); return w && !(howT && howT.indexOf(w.toLowerCase().slice(0, 40)) >= 0); });
+      if (!lis.length) return;
+      var li = lis.filter(function (x) { return x.classList.contains('bad'); })[0] || lis[0];
+      var t = ((li.querySelector('.u1-t') || {}).textContent || '').trim(), more = all.length - 1, w = String(li.dataset.why).trim().replace(/\s+/g, ' ');
+      line.textContent = (t ? 'At ' + t + ': ' : '') + w + (more > 0 ? ' (+' + more + ' more)' : '');
+      line.dataset.w152 = '1';
+    });
+  };
+  var kick = function () { clearTimeout(tm); tm = setTimeout(run, 200); };
   var start = function () { var m = document.getElementById('main') || document.body; if (!m) return setTimeout(start, 300); new MutationObserver(kick).observe(m, { childList: true, subtree: true }); kick(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
