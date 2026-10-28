@@ -4501,7 +4501,7 @@ function buildCoiledAltar(ev, r, h) {
         const rows = mine.map((x, k) => [{ txt: 'Soulcoiler ' + (k + 1) }, x[1], x[2], { txt: '' }, x[4]]); // (same numbering as the kick rows)
         // (Mythic: the raid damage the adds' Retaliatory Malice did while they lived, and anyone it killed)
         if (r0.rm && (r0.rm.amt || r0.rm.dead.length)) rows.push([{ txt: 'Retaliatory Malice', sub: 'hits the raid every 3 s while the adds live' }, { t }, { txt: h.compact(r0.rm.amt) + ' on the raid' },
-          { txt: '' }, r0.rm.dead.length ? { txt: (r0.rm.dead.length > 4 ? pl(r0.rm.dead.length, 'player') : r0.rm.dead.map((d) => d.player).join(', ')) + ' died', bad: true } : { txt: 'no deaths', dim: true }]);
+          { txt: '' }, r0.rm.dead.length ? { txt: (r0.rm.dead.length > 4 ? pl(r0.rm.dead.length, 'player') + ' died, first at ' + h.fmtT(r0.rm.dead[0].t) : r0.rm.dead.map((d) => d.player + ' ' + h.fmtT(d.t)).join(', ') + ' died'), bad: true } /* (with when: a set's adds left alive can kill much later (Oct 27)) */ : { txt: 'no deaths', dim: true }]);
         return { title: 'Set ' + (i + 1), t, bad: r0[4].bad || rows.some(isBad), warn: r0[4].warn, sub: r0[3].txt + ' kicks, ' + r0[4].txt, rows: rows.length ? rows : [[{ txt: 'no adds seen', dim: true }, { txt: '' }, { txt: '' }, { txt: '' }, { txt: '' }]] };
       });
       // the Gloombomb panel: per set, each add's Spirit Shield, then every bomb, then players clipped by someone's bomb
