@@ -9653,6 +9653,96 @@ html body #view .rpc .rpc-done > span:not(.rpc-dk) { display: inline-flex !impor
 html body #view .rpc .rpc-done > span:not(.rpc-dk) .sp { display: inline-flex; align-items: center; gap: 5px; }
 html body #view .rpc .rpc-done > span:not(.rpc-dk) .icw { width: 18px !important; height: 18px !important; margin: 0 !important; }
 @media (max-width: 760px) { html body #view .rpc .rpc-also, html body #view .rpc .rpc-done { margin-left: 0; } html body #view .rpc .rpc-nm h3 { font-size: 24px !important; } }
+/* ===== Design studio round 151 (Oct 28): the Rotation checklist dropdowns, wide and clear. Owner: the Design studio chat. ===== */
+/* (the user: "go through every drop down ... Now that the rows are wider you have more creative space", "just as clear as the rotation
+   ones", "just the rotation drop down menus". Each check is one wide row, like a timeline card: a coloured edge and a plain verdict
+   (Done right / Could be better / Fix this), its number on the right, the full sentence of what happened, a Next time line, and its
+   picture across the full width under it. Look only; nothing is removed.) */
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs { display: flex !important; flex-direction: column; gap: 8px !important; margin: 4px 0 12px !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r { --sc: #45c15c; width: auto !important; max-width: none !important; grid-column: auto !important; margin: 0 !important; padding: 12px 16px 12px !important;
+  border: 1px solid var(--line, #262c38) !important; border-left: 3px solid var(--sc) !important; border-radius: 10px !important;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--sc) 6%, transparent), transparent 40%), var(--panel, #151922) !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r.warn { --sc: #e6b450; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r.bad { --sc: #e5534b; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r.na { --sc: #6f7787; }
+/* the head: icon, name with its verdict, number on the right */
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r > summary { display: grid !important; grid-template-columns: 30px minmax(0, 1fr) auto !important; grid-template-areas: 'i n v' 'i s v' !important; align-items: center; gap: 2px 12px !important; padding: 0 !important; border: 0 !important; background: none !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r > summary > .spc-ri { grid-area: i; align-self: start; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r > summary > .spc-ri .icw { width: 30px !important; height: 30px !important; margin: 0 !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r > summary > .rck-n { grid-area: n; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; min-width: 0; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r > summary > .rck-n > b { font: 700 16px/1.2 'Barlow Condensed', sans-serif !important; color: var(--text); }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r > summary > .rck-n::after { content: "Done right"; font: 700 11px/1 'Barlow Condensed', sans-serif; letter-spacing: .07em; text-transform: uppercase; color: var(--sc); }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r.warn > summary > .rck-n::after { content: "Could be better"; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r.bad > summary > .rck-n::after { content: "Fix this"; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r.na > summary > .rck-n::after { content: "Not graded"; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r > summary > .rck-z { display: none !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r > summary > .rck-v { grid-area: v; align-self: center; text-align: right; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r > summary > .rck-v b { font: 800 24px/1 'Barlow Condensed', sans-serif !important; color: var(--sc) !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r > summary > .rck-v b span { font-size: 15px; color: var(--faint); }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r > summary > .ds-note { grid-area: s; display: none !important; }
+/* the body: the full sentence of what happened, then Next time, then its picture full width */
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .rck-b { margin: 6px 0 0 42px !important; padding: 0 !important; border: 0 !important; background: none !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .rck-b > p.spc-rs { display: block !important; margin: 0 0 6px !important; font-size: 14px !important; line-height: 1.5; color: var(--muted); }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .rck-b > p.spc-rs:empty, html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .rck-b > p.spc-rs:not(:has(*)):is(:empty) { display: none !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .rck-b > p.ds-short { display: none !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .rck-b .ds-n { color: var(--text); }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .rck-tip { display: grid !important; grid-template-columns: 90px minmax(0, 1fr); gap: 12px; margin: 4px 0 8px !important; padding: 0 !important; border: 0 !important; background: none !important; font-size: 13.5px !important; color: var(--text) !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .rck-tip > b:first-child { font: 700 11px/1.75 'Barlow Condensed', sans-serif !important; letter-spacing: .1em; text-transform: uppercase; color: var(--sc) !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .ds-rbot { margin-top: 6px !important; }
+/* a merged check (Always be casting with Casts per minute): its parts side by side */
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r.rck-mg { display: block !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r.rck-mg > .rck-mgb { margin-left: 42px !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r.rck-mg > .rck-mgb > .rck-b { margin-left: 0 !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r.rck-mg .rck-mgh { display: flex; align-items: baseline; gap: 10px; margin: 8px 0 2px !important; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.05); font: 700 14px 'Barlow Condensed', sans-serif !important; color: var(--text); }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r.rck-mg .rck-mgh .rck-mgv { margin-left: auto; font: 800 18px 'Barlow Condensed', sans-serif; color: var(--muted); }
+@media (max-width: 760px) {
+  html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .rck-b, html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r.rck-mg > .rck-mgb { margin-left: 0 !important; }
+  html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .rck-tip { grid-template-columns: 1fr; gap: 2px; }
+}
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs { align-items: stretch !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r { box-sizing: border-box; align-self: stretch !important; width: 100% !important; min-width: 0 !important; flex: none !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .rck-tip { display: block !important; padding-left: 102px !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .rck-tip > b:first-child { display: inline-block; width: 90px; margin-left: -102px; margin-right: 12px; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r > summary > .spc-ri, html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r > summary > .spc-ri .icw, html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r > summary > .spc-ri :is(img, svg) { width: 30px !important; height: 30px !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r > summary > .spc-ri .icw { border-radius: 7px; overflow: hidden; }
+@media (max-width: 760px) { html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .rck-tip { padding-left: 0 !important; } html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .rck-tip > b:first-child { display: block; margin: 0 0 2px; } }
+/* the layout: checks with a picture (marked wide) across the full width; number-and-sentence checks as tiles side by side */
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 10px !important; align-items: stretch !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r { width: auto !important; height: auto; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r.ds-wide { grid-column: 1 / -1 !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r:not(.ds-wide) .rck-b, html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r.rck-mg:not(.ds-wide) > .rck-mgb { margin-left: 0 !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r:not(.ds-wide) > summary { grid-template-columns: 26px minmax(0, 1fr) auto !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r:not(.ds-wide) > summary > .spc-ri, html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r:not(.ds-wide) > summary > .spc-ri .icw, html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r:not(.ds-wide) > summary > .spc-ri :is(img, svg) { width: 26px !important; height: 26px !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r:not(.ds-wide) > summary > .rck-n { flex-direction: column; align-items: flex-start; gap: 3px; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r:not(.ds-wide) > summary > .rck-n > b { font-size: 15px !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r:not(.ds-wide) > summary > .rck-v b { font-size: 22px !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r:not(.ds-wide) .rck-b > p.spc-rs { font-size: 13px !important; margin-top: 8px !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r:not(.ds-wide) .rck-tip { padding-left: 0 !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r:not(.ds-wide) .rck-tip > b:first-child { display: block; width: auto; margin: 0 0 2px; }
+@media (max-width: 1099px) { html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
+@media (max-width: 640px) { html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs { grid-template-columns: minmax(0, 1fr) !important; } }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs { grid-auto-flow: row dense; } html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r.ds-wide { order: -1; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs:has(> details.rck-r:only-child) { grid-template-columns: minmax(0, 1fr) !important; } html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs:has(> details.rck-r:nth-child(2):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } @media (max-width: 640px) { html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs:has(> details.rck-r:nth-child(2):last-child) { grid-template-columns: minmax(0, 1fr) !important; } }
+/* tiles fill their row (a last tile alone takes the room left), wide cards take a whole row */ html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs, html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs:has(> details.rck-r:only-child), html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs:has(> details.rck-r:nth-child(2):last-child) { display: flex !important; flex-wrap: wrap !important; flex-direction: row !important; } html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r { flex: 1 1 320px !important; width: auto !important; } html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r.ds-wide { flex: 1 1 100% !important; }
+/* round 151b (Oct 28, the user's "Yea fix those"): the checklist comes first, right under the tabs; the source bar, the pull at a glance
+   and Gear and extras follow it. Every card's text lines up under its title. Stat order's bars use the card's width. */
+html body #view .pf-inl.pf-inl.spc-v.spc-v { display: flex !important; flex-direction: column !important; }
+html body #view .pf-inl.pf-inl.spc-v.spc-v > * { order: 10 !important; }
+html body #view .pf-inl.pf-inl.spc-v.spc-v > .ds-rtop { order: 0 !important; } html body #view .pf-inl.pf-inl.spc-v.spc-v > .rtl-vt { order: 1 !important; } html body #view .pf-inl.pf-inl.spc-v.spc-v > .rtl { order: 2 !important; }
+html body #view .pf-inl.pf-inl.spc-v.spc-v > .ds-rcols { order: 3 !important; } html body #view .pf-inl.pf-inl.spc-v.spc-v > .ds-srcwide { order: 4 !important; } html body #view .pf-inl.pf-inl.spc-v.spc-v > .ds-glance { order: 5 !important; }
+html body #view .pf-inl.pf-inl.spc-v.spc-v > .spc-src { order: 6 !important; }
+@media (min-width: 901px) {
+  html body #view .pf-inl.spc-v .ds-rcols.ds-rcols > section.rck { grid-row: 1 !important; }
+  html body #view .pf-inl.spc-v .ds-rcols.ds-rcols > section.rck-gx { grid-row: 2 !important; order: 0 !important; }
+}
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .rck-b, html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r.rck-mg > .rck-mgb, html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r:not(.ds-wide) .rck-b, html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r.rck-mg:not(.ds-wide) > .rck-mgb { margin-left: 38px !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r.rck-mg > .rck-mgb > .rck-b { margin-left: 0 !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .spc-sts { width: 100% !important; max-width: none !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .spc-sts > .spc-str { display: grid !important; grid-template-columns: 130px minmax(0, 1fr) 70px; align-items: center; gap: 12px; width: 100% !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .spc-sts > .spc-str > .spc-stb { width: auto !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .spc-sts > .spc-str > b { text-align: right; }
+@media (max-width: 760px) { html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .rck-b, html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r.rck-mg > .rck-mgb { margin-left: 0 !important; } html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r .spc-sts > .spc-str { grid-template-columns: 90px minmax(0, 1fr) 52px; } }
+@media (max-width: 900px) { html body #view .pf-inl.pf-inl.spc-v.spc-v > .ds-rcols > section.rck { order: 3 !important; } html body #view .pf-inl.pf-inl.spc-v.spc-v > .ds-rcols > section.rck-gx { order: 4 !important; } html body #view .pf-inl.pf-inl.spc-v.spc-v > .ds-srcwide { order: 5 !important; } html body #view .pf-inl.pf-inl.spc-v.spc-v > .ds-glance { order: 6 !important; } html body #view .pf-inl.pf-inl.spc-v.spc-v > .spc-src { order: 7 !important; } }
 </style>
 
 
