@@ -3928,7 +3928,7 @@ function buildCoiledAltar(ev, r, h) {
     summary: pl(vfRows.length, 'Venomfang debuff') + ', and ' + vfRows.filter((x) => x.by).length + ' were dispelled. The average time on a player was ' +
       (vfRows.filter((x) => x.took != null).length ? (vfRows.filter((x) => x.took != null).reduce((s, x) => s + x.took, 0) / vfRows.filter((x) => x.took != null).length).toFixed(1) + ' s' : 'n/a') + '.',
     // amber: a slow or missed dispel (no guide sets a hard rule); red only when the player died with it on them
-    cols: ['When', 'Player', 'Removed after', 'Dispelled by'], rows: vfRows.map((x) => [{ t: x.t, ...vfWhy(x) }, { p: pname(x.g) }, { txt: x.took == null ? 'not removed' : x.took >= 13.5 && !x.by ? 'never dispelled (ran the full 14 s)' : x.took.toFixed(1) + ' s', warn: x.slow, dim: x.soft, sub: x.soft ? (x.busy ? 'during ' + x.busy : 'no dispel was free') : '' }, x.by ? { p: pname(x.by) } : { txt: 'expired / not dispelled', dim: true }]),
+    cols: ['When', 'Player', 'Removed after', 'Dispelled by'], rows: vfRows.map((x) => [{ t: x.t, ...vfWhy(x) }, { p: pname(x.g) }, { txt: x.took == null ? 'not removed' : x.took >= 13.5 && !x.by ? 'never dispelled (ran the full 14s)' : !x.by ? 'not dispelled (gone after ' + x.took.toFixed(1) + 's)' : x.slow ? 'slow dispel (' + x.took.toFixed(1) + 's)' : 'dispelled in ' + x.took.toFixed(1) + 's', /* (plain words (the user, Oct 28)) */ warn: x.slow, dim: x.soft, sub: x.soft ? (x.busy ? 'during ' + x.busy : 'no dispel was free') : '' }, x.by ? { p: pname(x.by) } : { txt: 'expired / not dispelled', dim: true }]),
     // how many each player dispelled
     extra: (() => { const by = new Map(); for (const x of vfRows) if (x.by) by.set(pname(x.by), (by.get(pname(x.by)) || 0) + 1); return by.size ? { title: 'Dispels by player', items: [...by].sort((a, b) => b[1] - a[1]).map(([p, n]) => ({ p, n })) } : null; })() });
 
@@ -4005,7 +4005,7 @@ function buildCoiledAltar(ev, r, h) {
       const why = [dP1.length ? pl(dP1.length, 'player') + ' died before the push (' + dP1.slice(0, 3).map((d) => d.player.split('-')[0] + ' ' + ms2(d.t)).join(', ') + ')' : '', lt == null || lt > p2 ? 'no Bloodlust in P1' : lt > 60 ? 'Bloodlust came late, at ' + ms2(lt) : '', fangs >= 3 ? 'it ran into the third pools' : ''].filter(Boolean);
       return { why: 'P1 took ' + ms2(p2) + ', ' + Math.round(p2 - KT.p1[1]) + ' s longer than the slowest top kill' + (why.length ? ': ' + why.join(', ') : ', with no deaths and Bloodlust on time, so damage on Zul\'jan was short') + '.',
         next: dP1.length ? 'Keep everyone alive in P1: every player lost is damage Zul\'jan doesn\'t take.' : lt == null || lt > 60 ? 'Use Bloodlust early in P1 (top guilds use it at the pull or the first pools).' : 'Push Zul\'jan right after the second pools, with damage cooldowns stacked.' }; })();
-    pushRows.push([{ txt: 'P1 → P2', ...p1Why }, { t: pt }, { txt: 'P1 took ' + ms2(p2) + (mythic ? ' (top guilds: ' + ms2(KT.p1[0]) + ' to ' + ms2(KT.p1[1]) + ')' + preT : ''), bad: p1Bad, warn: !p1Bad && p1Late, sub: lastDel != null ? (pt - lastDel).toFixed(0) + ' s after the last Toxic Deluge' + (fangs >= 3 ? ', after the third pools' : '') : '' },
+    pushRows.push([{ txt: 'P1 → P2', ...p1Why }, { t: pt }, { txt: (p1Bad || p1Late ? 'slow P1 (' : 'on time (') + ms2(p2) + ')', bad: p1Bad, warn: !p1Bad && p1Late, sub: (mythic ? 'top guilds: ' + ms2(KT.p1[0]) + ' to ' + ms2(KT.p1[1]) + preT + ' · ' : '') + lastDel != null ? (pt - lastDel).toFixed(0) + ' s after the last Toxic Deluge' + (fangs >= 3 ? ', after the third pools' : '') : '' },
       { txt: mx + ' Venom Rupture (plan 9 to 11)', bad: mx >= 14, warn: mx > 11 }, { txt: fmtList(cds) || 'none', bad: mythic && !cds.length }, { txt: pots.length ? pots.length + ' (' + pots.join(', ') + ')' : 'none', dim: !pots.length }]);
   }
   // (P2, Malacrass: how long he took against the kills, with the moment it went late: his second shield (amber, 4 of the 20 kills
@@ -4021,7 +4021,7 @@ function buildCoiledAltar(ev, r, h) {
       'Push Malacrass before his second shield: keep damage on him between add sets and save cooldowns for his first shield. Top guilds finish P2 in about 2:30.');
     return { len, dmN: dmT.length, enN: enT.length, bad, warn, at };
   })();
-  const p2Cell = (x) => ({ txt: 'P2 ' + (inter != null ? 'took ' : 'lasted ') + ms2(x.len) + (mythic ? ' (top guilds: ' + P2K + ')' + preT : ''), bad: x.bad, warn: x.warn, sub: (x.enN === 1 ? '1 shield' : x.enN + ' shields') + ', ' + x.dmN + ' Dreadmarch casts' + (mythic ? ' (top guilds: 1 shield, 4 casts)' : '') });
+  const p2Cell = (x) => ({ txt: (x.bad || x.warn ? 'slow P2 (' : 'on time (') + ms2(x.len) + ')', bad: x.bad, warn: x.warn, sub: (mythic ? 'top guilds: ' + P2K + preT + ' · ' : '') + (x.enN === 1 ? '1 shield' : x.enN + ' shields') + ', ' + x.dmN + ' Dreadmarch casts' + (mythic ? ' (top guilds: 1 shield, 4 casts)' : '') });
   if (P2T && inter == null) pushRows.push([{ txt: 'P2 (wiped)' }, { t: P2T.at ?? p2End }, p2Cell(P2T), { txt: '' }, { txt: '' }, { txt: '' }]);
   if (inter != null) {
     const pt = zeroAt(mal) ?? inter;
@@ -4060,7 +4060,7 @@ function buildCoiledAltar(ev, r, h) {
   sections.unshift({ id: 'push', title: 'Phase changes (Push on time)', spell: S('fangs of the coiled altar'),
     verdict: mistakes.some((x) => ['Phase changes', 'Fangs of the Coiled Altar', 'Soulbinding', 'Defilement of the Coiled Altar'].includes(x.mechanic) && x.player === 'Raid') ? 'warn' : 'good',
     summary: 'Each phase change against the 20 fastest kills: when Zul\'jan went down, how long Malacrass took (kills push him before his second shield), how healthy Zul\'jan came back after the intermission, and boss balance in P3. Also the stacks and raid cooldowns at the P1 push and Bloodlust in the intermission.',
-    cols: ['Transition', 'When', 'Timing', 'Stacks / Lust / balance', 'Cooldowns / Zul\'jan\'s health', 'Potions at push'], rows: pushRows });
+    cols: ['Transition', 'When', 'Push timing', 'Stacks / Lust / balance', 'Cooldowns / Zul\'jan\'s health', 'Potions at push'], rows: pushRows });
 
   // ---- Sever orb accounting ----
   // frontals are timed to when they land (cast success, ~3s after the cast bar starts): that's when orbs pop
