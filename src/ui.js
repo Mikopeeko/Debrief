@@ -31812,10 +31812,11 @@ function dsRotSlim() { document.querySelectorAll('#view section.rck .rck-b:not(.
 // ===== Design studio round 21 (Oct 25): Debriefing details under their row, map previews that zoom. dsDock() docks the app's
 // open detail box (div.mxa-p) under its row; dsMapZoom() gives the inline map wheel and button zoom and drag. Owner: the Design studio chat. =====
 function dsDock() { document.querySelectorAll('#view details.phase').forEach((ph) => { const sum = ph.querySelector(':scope > summary'); if (!sum) return; const prw = sum.querySelector('.prw'); if (!prw) return;
-  const box = ph.querySelector('.mxa-p'); const on = sum.querySelector('.prw-i.on'); const live = !!(box && box.children.length && on && ph.classList.contains('mxa'));
+  const box = ph.querySelector(':scope > .mxa-p') || ph.querySelector('.mxa-p'); const on = sum.querySelector('.prw-i.on'); /* round 131: the fresh box first */ const live = !!(box && box.children.length && on && ph.classList.contains('mxa'));
   /* a docked box goes home when it empties or its row is no longer the open one */
   prw.querySelectorAll(':scope > .ds-dock').forEach((d) => { const b = d.querySelector(':scope > .mxa-p'), row = d.previousElementSibling; if (live && b === box && row === on) return;
-    if (b) { const m = ph.querySelector(':scope > i.ds-dockph'); if (m) m.replaceWith(b); else ph.appendChild(b); } d.remove(); });
+    if (b && box && b !== box && box.parentElement === ph) { b.remove(); const m = ph.querySelector(':scope > i.ds-dockph'); if (m) m.remove(); } /* round 131: a stale box goes, it never comes home next to the fresh one */
+    else if (b) { const m = ph.querySelector(':scope > i.ds-dockph'); if (m) m.replaceWith(b); else ph.appendChild(b); } d.remove(); });
   if (!live || box.closest('.ds-dock')) return;
   if (box.parentElement === ph) { const m = document.createElement('i'); m.className = 'ds-dockph'; m.hidden = true; box.replaceWith(m); }
   const d = document.createElement('div'); d.className = 'ds-dock'; d.appendChild(box);
