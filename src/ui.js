@@ -11129,6 +11129,10 @@ function audit() {
   /* (phase rows, Oct 22 test (your ask: "this section may need simplification"): B = a bar per mechanic, how often it was done right, worst first;
      A (?rows=a) = one plain line naming the worst. Both drop the number badge, the ring and the pill, which counted the same thing) */
   { const m = location.search.match(/[?&]rows=([ab])\b/); if (m) S.phRows = m[1]; } const PHROWS = S.phRows || 'b'; /* (the address is tidied after the first draw: keep the choice) */
+  const HPL = (() => { if (r.allPulls) return null; try { return bossHpLine(r, r.duration || 0, 2); } catch (e) { return null; } })(), hpAtL = (t) => { if (!HPL || !HPL.length) return null; let v = HPL[0][1]; for (const [s, f] of HPL) { if (s > t + 0.01) break; v = f; } return Math.round(100 * v); };
+  const phHp = (p) => { if (!HPL || !p || p.start == null) return ''; const ct = cutT(r), t0 = p.start, t1 = Math.min(p.end != null ? p.end : r.duration, isFinite(ct) ? ct : Infinity, r.duration || Infinity), pts = [];
+    for (let t = t0; t < t1; t += 10) pts.push(T(t) + '=' + hpAtL(t)); pts.push(T(t1) + '=' + hpAtL(t1));
+    return ' data-hp0="' + hpAtL(t0) + '" data-hp1="' + hpAtL(t1) + '" data-hps="' + esc(pts.join(',')) + '"'; };
   const phStat = (list) => list.filter((x) => !x.s.info).map((x) => { const a = x.rows.concat(...x.groups.map((g) => g.rows)), nb = a.filter(isBadRow).length, nw = a.filter((row) => !isBadRow(row) && isWarnRow(row)).length, fg = a.length ? mxFlag(a.map((row) => ({ st: isBadRow(row) ? 'bad' : isWarnRow(row) ? 'warn' : 'ok' }))) : null, sl = LVL_CLS[lvlOf(phLv([x]))], lv = fg && { ok: 0, warn: 1, bad: 2 }[fg.c] > { ok: 0, warn: 1, bad: 2 }[sl] ? fg.c : sl; /* (the worse of the dropdown flag's rule and the mechanic's own verdict (Oct 27)) */
       return { x, nm: String(x.s.title).replace(/\s*\(.*$/, ''), lv, pc: a.length ? Math.round(100 * (a.length - nb - nw) / a.length) : 100 }; })
     .sort((p, q) => ({ bad: 0, warn: 1, ok: 2 }[p.lv] - { bad: 0, warn: 1, ok: 2 }[q.lv]) || p.pc - q.pc);
@@ -11160,10 +11164,11 @@ function audit() {
     list.sort((a, b) => rank[a.s.verdict] - rank[b.s.verdict] || ix(a) - ix(b));
     /* (worst first by its %, the more dangerous one first when two are within 3 points (Oct 23)) */
     { const pc = (x) => { const a = x.rows.concat(...x.groups.map((g) => g.rows)); return a.length ? 100 * a.filter((row) => !isBadRow(row) && !isWarnRow(row)).length / a.length : 100; }; list.sort((a, b) => (Math.abs(pc(a) - pc(b)) > 3 ? pc(a) - pc(b) : 0)); }
-    const p = phs[i], allR = list.flatMap((x) => x.rows.concat(...x.groups.map((g) => g.rows))), probs = allR.filter(isBadRow).length, better = allR.filter((row) => !isBadRow(row) && isWarnRow(row)).length;
+    const p = phs[i]; /* (phHp: the phase's boss health for the timeline (Oct 27)) */
+    const allR = list.flatMap((x) => x.rows.concat(...x.groups.map((g) => g.rows))), probs = allR.filter(isBadRow).length, better = allR.filter((row) => !isBadRow(row) && isWarnRow(row)).length;
     // a slim phase heading: name, its time span and one status line (no banner), in the same words as each section's
     // (a heading with only amber rows says so, not "clean")
-    h += '<details class="phase mcx-ph phr-' + PHROWS + '" data-mst="' + lvlOf(phLv(list)) + '" data-phk="ph-' + i + '"' + (S.openSecs.has('ph-' + i) ? ' open' : '') + '><summary><span class="phr-dot ' + LVL_CLS[lvlOf(phLv(list))] + '"></span><span class="phr-nm"><b>' + esc(!r.allPulls && /^deaths and avoidable damage$/i.test(p.name) ? (list.every((x) => x.s.id === 'kicks') ? 'Interrupts' : 'The rest') : p.name) + '</b>' + (isFinite(p.end) ? ' <span class="sub">' + T(p.start) + '–' + T(p.end) + '</span>' : p.sub ? ' <span class="sub">' + esc(p.sub) + '</span>' : '') + '</span>' +
+    h += '<details class="phase mcx-ph phr-' + PHROWS + '" data-mst="' + lvlOf(phLv(list)) + '" data-phk="ph-' + i + '"' + phHp(p) + (S.openSecs.has('ph-' + i) ? ' open' : '') + '><summary><span class="phr-dot ' + LVL_CLS[lvlOf(phLv(list))] + '"></span><span class="phr-nm"><b>' + esc(!r.allPulls && /^deaths and avoidable damage$/i.test(p.name) ? (list.every((x) => x.s.id === 'kicks') ? 'Interrupts' : 'The rest') : p.name) + '</b>' + (isFinite(p.end) ? ' <span class="sub">' + T(p.start) + '–' + T(p.end) + '</span>' : p.sub ? ' <span class="sub">' + esc(p.sub) + '</span>' : '') + '</span>' +
       (PHROWS === 'a' ? phLine(list) : phBars(list, nOnly.get(i))) + '<span class="phr-chev">▸</span></summary>' + withOnly(phaseBody(list, i), i) + '</details>';
   });
   // (a single pull: deaths and avoidable damage live in the coach box (Oct 22, your call: "I think this can be removed from all bosses"), so the
