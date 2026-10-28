@@ -9532,6 +9532,38 @@ html body #view .rtl .rtl-bn { color: #e8a23a; font-weight: 700; }
 html body #view .rtl .rtl-sum { flex-wrap: wrap; } html body #view .rtl .rtl-sum .g b { color: #7ee08f; } html body #view .rtl .rtl-sum .r b { color: #e8a23a; }
 html body #view .rtl .rtl-l { gap: 6px; }
 @media (max-width: 900px) { html body #view .rtl .rtl-strip { justify-content: flex-start; } }
+/* ===== Design studio round 150 (Oct 28): the Rotation checklist view, refined to match the new card and timeline. Owner: the Design studio chat. ===== */
+/* (the user: "one more refining pass of the overview section of the rotations tab". One heading style, the quiet-list switch, the
+   score in its colour, slim bars, a calmer healing-source bar, even spacing between sections. Look only.) */
+html body #view .pf-inl.spc-v:not(.rtl-on) > :is(.ds-srcwide, .ds-glance, .ds-rcols) { margin-top: 0 !important; margin-bottom: 18px !important; }
+/* headings: one style */
+html body #view .pf-inl.spc-v .ds-rcols :is(section.rck, section.rck-gx) > .rck-h { display: flex; align-items: center; gap: 10px; margin: 0 0 10px !important; font: 800 18px/1 'Barlow Condensed', sans-serif !important; color: var(--text); }
+html body #view .pf-inl.spc-v .ds-rcols section.rck-gx > .rck-h .sub { font: 500 12.5px var(--body) !important; color: var(--faint) !important; margin-left: 0 !important; }
+/* Summary / Everything as slim tabs with a gold underline */
+html body #view .pf-inl.spc-v section.rck > .rck-h .ds-sw { margin-left: auto !important; display: inline-flex !important; gap: 16px; padding: 0 !important; border: 0 !important; background: none !important; border-radius: 0 !important; }
+html body #view .pf-inl.spc-v section.rck > .rck-h .ds-sw > b { padding: 2px 1px 5px !important; border: 0 !important; border-bottom: 2px solid transparent !important; border-radius: 0 !important; background: none !important; font: 700 12.5px/1 'Barlow Condensed', sans-serif !important; color: var(--faint) !important; cursor: pointer; }
+html body #view .pf-inl.spc-v section.rck > .rck-h .ds-sw > b:hover { color: var(--text) !important; }
+html body #view .pf-inl.spc-v section.rck > .rck-h .ds-sw > b.on { color: var(--gold) !important; border-bottom-color: var(--gold) !important; }
+/* checklist rows: the score in its colour, a slim bar, the label first */
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat > summary { padding: 10px 2px 9px !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat > summary .rck-ct > b { font: 700 15px 'Barlow Condensed', sans-serif !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat > summary .rck-cr b { font: 800 18px/1 'Barlow Condensed', sans-serif !important; color: #7ee08f !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat > summary:has(.rck-ct em.w) .rck-cr b { color: #e6c27a !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat > summary:has(.rck-ct :is(em.r, em.b, em.bad)) .rck-cr b { color: #f0726a !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat > summary::after { height: 3px !important; border-radius: 3px !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat > summary .rck-cv { color: var(--faint) !important; font-size: 11px !important; }
+/* opened category: its checks sit on one quiet surface */
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs { gap: 8px !important; }
+html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > * { border-radius: 10px !important; }
+/* where your healing / damage came from: a thinner bar, quieter legend */
+html body #view .pf-inl.spc-v > .ds-srcwide { padding: 12px 16px !important; border-radius: 12px !important; }
+html body #view .pf-inl.spc-v > .ds-srcwide .rgx-h span { font: 700 13px 'Barlow Condensed', sans-serif !important; color: var(--muted) !important; }
+html body #view .pf-inl.spc-v > .ds-srcwide .rgx-bar { height: 6px !important; border-radius: 6px !important; margin: 8px 0 8px !important; gap: 2px; }
+html body #view .pf-inl.spc-v > .ds-srcwide .rgx-bar > i { border-radius: 3px; }
+/* your pull at a glance: the same row look as the checklist */
+html body #view .pf-inl.spc-v > .ds-glance { border-radius: 12px !important; }
+html body #view .pf-inl.spc-v > .ds-glance > summary .spc-chn { display: none !important; }
+html body #view .pf-inl.spc-v > .ds-glance > summary > span:not(.spc-cht) { font: 700 15px 'Barlow Condensed', sans-serif !important; }
 /* ===== Design studio round 148 (Oct 28): the Rotation player card, in the Debriefing style. Owner: the Design studio chat. ===== */
 html body #view .pf-inl.spc-v > .ds-rtop.rpc-on { display: block !important; }
 html body #view .pf-inl.spc-v > .ds-rtop.rpc-on > :not(.rpc) { display: none !important; }
@@ -9600,38 +9632,27 @@ html body #view .rpc .rpc-done > span:not(.rpc-dk) { padding: 0 !important; bord
   html body #view .rpc .rpc-id > .rot-sel { flex-basis: 100%; max-width: none; }
 }
 @media (max-width: 760px) { html body #view .rpc .rpc-fx h2 { font-size: 18px; } }
-/* ===== Design studio round 150 (Oct 28): the Rotation checklist view, refined to match the new card and timeline. Owner: the Design studio chat. ===== */
-/* (the user: "one more refining pass of the overview section of the rotations tab". One heading style, the quiet-list switch, the
-   score in its colour, slim bars, a calmer healing-source bar, even spacing between sections. Look only.) */
-html body #view .pf-inl.spc-v:not(.rtl-on) > :is(.ds-srcwide, .ds-glance, .ds-rcols) { margin-top: 0 !important; margin-bottom: 18px !important; }
-/* headings: one style */
-html body #view .pf-inl.spc-v .ds-rcols :is(section.rck, section.rck-gx) > .rck-h { display: flex; align-items: center; gap: 10px; margin: 0 0 10px !important; font: 800 18px/1 'Barlow Condensed', sans-serif !important; color: var(--text); }
-html body #view .pf-inl.spc-v .ds-rcols section.rck-gx > .rck-h .sub { font: 500 12.5px var(--body) !important; color: var(--faint) !important; margin-left: 0 !important; }
-/* Summary / Everything as slim tabs with a gold underline */
-html body #view .pf-inl.spc-v section.rck > .rck-h .ds-sw { margin-left: auto !important; display: inline-flex !important; gap: 16px; padding: 0 !important; border: 0 !important; background: none !important; border-radius: 0 !important; }
-html body #view .pf-inl.spc-v section.rck > .rck-h .ds-sw > b { padding: 2px 1px 5px !important; border: 0 !important; border-bottom: 2px solid transparent !important; border-radius: 0 !important; background: none !important; font: 700 12.5px/1 'Barlow Condensed', sans-serif !important; color: var(--faint) !important; cursor: pointer; }
-html body #view .pf-inl.spc-v section.rck > .rck-h .ds-sw > b:hover { color: var(--text) !important; }
-html body #view .pf-inl.spc-v section.rck > .rck-h .ds-sw > b.on { color: var(--gold) !important; border-bottom-color: var(--gold) !important; }
-/* checklist rows: the score in its colour, a slim bar, the label first */
-html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat > summary { padding: 10px 2px 9px !important; }
-html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat > summary .rck-ct > b { font: 700 15px 'Barlow Condensed', sans-serif !important; }
-html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat > summary .rck-cr b { font: 800 18px/1 'Barlow Condensed', sans-serif !important; color: #7ee08f !important; }
-html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat > summary:has(.rck-ct em.w) .rck-cr b { color: #e6c27a !important; }
-html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat > summary:has(.rck-ct :is(em.r, em.b, em.bad)) .rck-cr b { color: #f0726a !important; }
-html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat > summary::after { height: 3px !important; border-radius: 3px !important; }
-html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat > summary .rck-cv { color: var(--faint) !important; font-size: 11px !important; }
-/* opened category: its checks sit on one quiet surface */
-html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs { gap: 8px !important; }
-html body #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > * { border-radius: 10px !important; }
-/* where your healing / damage came from: a thinner bar, quieter legend */
-html body #view .pf-inl.spc-v > .ds-srcwide { padding: 12px 16px !important; border-radius: 12px !important; }
-html body #view .pf-inl.spc-v > .ds-srcwide .rgx-h span { font: 700 13px 'Barlow Condensed', sans-serif !important; color: var(--muted) !important; }
-html body #view .pf-inl.spc-v > .ds-srcwide .rgx-bar { height: 6px !important; border-radius: 6px !important; margin: 8px 0 8px !important; gap: 2px; }
-html body #view .pf-inl.spc-v > .ds-srcwide .rgx-bar > i { border-radius: 3px; }
-/* your pull at a glance: the same row look as the checklist */
-html body #view .pf-inl.spc-v > .ds-glance { border-radius: 12px !important; }
-html body #view .pf-inl.spc-v > .ds-glance > summary .spc-chn { display: none !important; }
-html body #view .pf-inl.spc-v > .ds-glance > summary > span:not(.spc-cht) { font: 700 15px 'Barlow Condensed', sans-serif !important; }
+/* round 148b (Oct 28): one frame, not two (the user: "Why is this in two chips?"), and a livelier card ("Make the player card a little more interesting to look at") */
+html body #view .pf-inl.spc-v > .ds-rtop.rpc-on { border: 0 !important; background: none !important; padding: 0 !important; box-shadow: none !important; }
+html body #view .rpc { --cc: #e6b450; border-left: 3px solid var(--cc) !important; padding: 16px 22px 16px !important;
+  background: radial-gradient(ellipse 55% 160% at 0% 0%, color-mix(in srgb, var(--cc) 16%, transparent), transparent 62%), radial-gradient(ellipse 40% 120% at 100% 0%, rgba(230,180,80,.07), transparent 60%), var(--panel, #151922) !important; }
+html body #view .rpc .rpc-id { border-bottom-color: rgba(255,255,255,.07); }
+html body #view .rpc .rpc-id > .spc-av, html body #view .rpc .rpc-id > .spc-av img, html body #view .rpc .rpc-id > .spc-av .av { width: 54px !important; height: 54px !important; }
+html body #view .rpc .rpc-id > .spc-av { border-radius: 12px; box-shadow: 0 0 0 2px color-mix(in srgb, var(--cc) 70%, transparent), 0 0 18px color-mix(in srgb, var(--cc) 30%, transparent); overflow: hidden; }
+html body #view .rpc .rpc-nm h3 { font-size: 28px !important; color: var(--cc) !important; }
+html body #view .rpc .rpc-id > .spc-rw, html body #view .rpc .rpc-id > .spc-rw svg, html body #view .rpc .rpc-id > .spc-rw .spc-rc { width: 64px !important; height: 64px !important; }
+html body #view .rpc .rpc-id > .spc-rw .spc-rc b { font-size: 21px !important; }
+html body #view .rpc .rpc-lead { margin: 12px 0 0; font-size: 13.5px; }
+html body #view .rpc .rpc-fx { margin-top: 2px !important; padding: 14px 16px !important; border-radius: 12px !important; border: 1px solid rgba(230,180,80,.28) !important; background: linear-gradient(90deg, rgba(230,180,80,.10), rgba(230,180,80,.02) 70%) !important; }
+html body #view .rpc .rpc-fx.bad { border-color: rgba(229,83,75,.35) !important; background: linear-gradient(90deg, rgba(229,83,75,.11), rgba(229,83,75,.02) 70%) !important; }
+html body #view .rpc .rpc-fx.ok { border-color: rgba(69,193,92,.3) !important; background: linear-gradient(90deg, rgba(69,193,92,.10), rgba(69,193,92,.02) 70%) !important; }
+html body #view .rpc .rpc-fx .rpc-v { font-size: 32px !important; text-align: right; }
+html body #view .rpc .rpc-fx .rpc-ic .icw { width: 42px !important; height: 42px !important; border-radius: 9px; box-shadow: 0 0 14px rgba(230,180,80,.25); }
+html body #view .rpc .rpc-also, html body #view .rpc .rpc-done { margin-left: 70px; }
+html body #view .rpc .rpc-done > span:not(.rpc-dk) { display: inline-flex !important; align-items: center; gap: 5px; }
+html body #view .rpc .rpc-done > span:not(.rpc-dk) .sp { display: inline-flex; align-items: center; gap: 5px; }
+html body #view .rpc .rpc-done > span:not(.rpc-dk) .icw { width: 18px !important; height: 18px !important; margin: 0 !important; }
+@media (max-width: 760px) { html body #view .rpc .rpc-also, html body #view .rpc .rpc-done { margin-left: 0; } html body #view .rpc .rpc-nm h3 { font-size: 24px !important; } }
 </style>
 
 

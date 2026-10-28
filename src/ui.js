@@ -33071,6 +33071,7 @@ function dsGuides() {
     var kt = [].slice.call(hero.querySelectorAll('.spc-kt')).filter(function (k) { return !k.classList.contains('ds-hide'); }), tq = hero.querySelector('.spc-tqd'), good = hero.querySelector('.rck-good');
     var sgs = fixw ? [].slice.call(fixw.querySelectorAll('.rck-sg')) : [], lead = fixw ? fixw.querySelector('.rck-lead') : null;
     var card = document.createElement('section'); card.className = 'rpc' + (hero.className.match(/\bcls-[a-z]+/) ? ' ' + hero.className.match(/\bcls-[a-z]+/)[0] : '');
+    try { card.style.setProperty('--cc', (window.rotData && window.rotData.color) || '#e6b450'); } catch (e) { /* (gold) */ } /* (the player's class colour) */
     var strip = document.createElement('div'); strip.className = 'rpc-id';
     if (av) strip.appendChild(av);
     var nm = document.createElement('div'); nm.className = 'rpc-nm'; if (h3) nm.appendChild(h3);
