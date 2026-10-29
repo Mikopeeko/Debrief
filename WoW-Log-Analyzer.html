@@ -21039,7 +21039,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-29', h: [{ t: 'Your resources on the Rotation timeline', d: "Every spec now has its resource beside each press, like Holy Power: squares for Combo Points, Chi, Soul Shards and Essence, a bar for Rage, Focus, Fury, Insanity, Astral Power and the rest, and mana for every healer." }], n: [
-    "Debriefing: Avoidable damage, Deaths, Healthstones and potions, Defensives and Combat potions now show a parse against top guilds over the same part of the fight (\"31 parse\"), coloured like Warcraft Logs, on a single pull and All pulls. Hover a tile to see what it compares.",
+    "Debriefing: Avoidable damage, Deaths, Healthstones and potions, Defensives and Combat potions now show a parse as their big number: how many top guilds' kills you beat over the same part of the fight, coloured like Warcraft Logs, on a single pull and All pulls. Hover a tile to see what it compares.",
     "Rotation timeline: every spec's big cooldowns sit in the Cooldowns column (Celestial Alignment and Force of Nature on Balance, for example).",
     "Rotation timeline filters: your resource (Holy Power, Combo Points, Astral Power ...) and mana can be hidden like the other layers.",
     "Rotation timeline: every resource track flags what you wasted, healers get \"low mana\" and \"mana to spare\" flags, and a faint red or amber line runs across the chart at each mistake.",
@@ -33305,9 +33305,9 @@ function kitRanks(reps) {
   const L = (reps || []).filter((r) => r && r.item && r.players); if (!L.length) return null; const K = KIT_BASE[L[0].item.boss + '|' + L[0].item.diffId]; if (!K) return null;
   const at = (a, t) => { if (!a || !a.length) return null; const i = Math.max(0, t / 30 - 1), i0 = Math.min(a.length - 1, Math.floor(i)), i1 = Math.min(a.length - 1, i0 + 1), v0 = a[i0], v1 = a[i1]; if (v0 == null) return null; return v1 == null || i1 === i0 ? v0 : v0 + (v1 - v0) * Math.min(1, i - i0); };
   const RCD = /^(Rallying Cry|Darkness|Anti-Magic Zone|Lay on Hands)$/, J = { hs: 0, df: 1, cp: 2, av: 3, dth: 4 }, acc = {};
-  for (const k in J) acc[k] = { v: 0, ex: K.map(() => 0), ok: K.map(() => true), any: false };
+  for (const k in J) acc[k] = { v: 0, n: 0, ex: K.map(() => 0), ok: K.map(() => true), any: false };
   // (ours adds up; each kill's number at the same moment of each pull adds up beside it, weighted the same way)
-  const put = (k, ours, w, sc) => { if (!w) return; const A = acc[k]; A.any = true; A.v += ours; K.forEach((kl, j) => { const x = at(kl[J[k]], A.t); if (x == null) A.ok[j] = false; else A.ex[j] += x * sc * w; }); };
+  const put = (k, ours, w, sc) => { if (!w) return; const A = acc[k]; A.any = true; A.v += ours; A.n += w; K.forEach((kl, j) => { const x = at(kl[J[k]], A.t); if (x == null) A.ok[j] = false; else A.ex[j] += x * sc * w; }); };
   for (const r of L) { const t = Math.min(r.duration || 0, cutT(r)); if (!(t >= 10)) continue; for (const k in J) acc[k].t = t; const ps = [...r.players.values()];
     let hsN = 0, hsU = 0, dfN = 0, dfU = 0;
     for (const p of ps) { if (!p || !p.name || !p.role || !(p.cls || p.specName) || !p.cons) continue; const dd = r.deaths.filter((d) => d.guid === p.guid), end = Math.min(t, dd.length ? Math.min(...dd.map((d) => d.t)) : Infinity); if (!(end >= 10)) continue;
@@ -33323,11 +33323,12 @@ function kitRanks(reps) {
   const night = L.length > 1, out = {};
   for (const [k, hiGood, what] of [['av', false, 'Avoidable damage your raid took'], ['dth', true, "How much of your raid didn't die from their own mistake"], ['hs', true, 'How many of your raid used a Healthstone or health potion'], ['df', true, 'How many of your raid pressed a defensive'], ['cp', true, 'How many of your raid drank a combat potion']]) {
     const A = acc[k], list = A.ex.filter((v, j) => A.ok[j]).map((v) => (k === 'dth' ? v / A.cnt : v)); if (!A.any || list.length < 5) continue;
-    out[k] = { v: A.v, list, w: k === 'dth' ? acc.dth.v : null, hiGood, what: what + (night ? ' in each pull' : '') }; }
+    out[k] = { k, v: A.v, n: A.n, list, hiGood, what: what + (night ? ' in each pull' : '') }; }
   return out; }
 /* (one tile's parse: 0 to 100, how many top guilds' kills we beat over the same part of the fight) */
 function kitParse(x, ours) { const v = ours != null ? ours : x.v, p = parseOf(v, x.list, x.hiGood); if (p == null) return null; const b = x.list.filter((y) => (x.hiGood ? v > y : v < y)).length;
-  return { p, cls: parseCls(p), say: p + ' parse', tt: 'Better than ' + b + ' of ' + x.list.length + " top guilds' kills over the same part of the fight. " + x.what + (x.hiGood ? ', more is better.' : ', less is better.') }; }
+  const m = x.list.slice().sort((a1, b1) => a1 - b1)[x.list.length >> 1], typ = x.k === 'av' ? C(m) + ' taken' : x.k === 'dth' ? Math.round(100 * m) + '% of the raid alive' : Math.round(100 * m / Math.max(1, x.n)) + '% of the raid';
+  return { p, cls: parseCls(p), tt: 'Parse ' + p + ': better than ' + b + ' of ' + x.list.length + " top guilds' kills over the same part of the fight · top guilds typically: " + typ }; }
 /* round 215 percent colour */ const pctCls = (g) => 'dbr-pq ' + (g >= 20 ? 'q-gold' : g > 10 ? 'q-orange' : g >= 0 ? 'q-purple' : g >= -10 ? 'q-blue' : g > -20 ? 'q-green' : 'q-grey');
 const parseOf = (v, list, hiGood) => { const L = (list || []).filter((x) => x != null); if (!L.length) return null; let b = 0; for (const x of L) b += (hiGood ? v > x : v < x) ? 1 : v === x ? 0.5 : 0; return Math.round(100 * b / L.length); };
 const parseCls = (p) => 'dbr-pq ' + (p >= 100 ? 'q-gold' : p >= 99 ? 'q-pink' : p >= 95 ? 'q-orange' : p >= 75 ? 'q-purple' : p >= 50 ? 'q-blue' : p >= 25 ? 'q-green' : 'q-grey');
@@ -33680,7 +33681,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
       const gs = (m0.match(/ data-gs="(\d+)\|([^"]*)"/) || []); const ic = /^Deaths/i.test(nm) ? 'inv_misc_bone_humanskull_01' : /^Avoidable/i.test(nm) ? 'ability_rogue_feint' : /^Healthstone/i.test(nm) ? 'inv_stone_04' : /^Defensive/i.test(nm) ? 'spell_holy_divineshield' : /^Combat/i.test(nm) ? 'inv_potion_93' : /^Raid cooldowns/i.test(nm) ? 'spell_holy_auramastery' : /^Power Infusion/i.test(nm) ? 'spell_holy_powerinfusion' : /^Innervate/i.test(nm) ? 'spell_nature_lightning' : '';
       let kr = KR && KR[/^Avoidable/i.test(nm) ? 'av' : /^Healthstone/i.test(nm) ? 'hs' : /^Defensive/i.test(nm) ? 'df' : /^Combat/i.test(nm) ? 'cp' : ''];
       if (KR && KR.dth && /^Deaths/i.test(nm)) kr = KR.dth; kr = kr ? kitParse(kr, kr === (KR && KR.dth) ? g.pc / 100 : null) : null;
-      return '<summary class="cch-al cgl"' + (kr ? ' data-tt="' + esc('<b>' + nm + ': ' + kr.say + '</b><br>' + kr.tt) + '" data-rank-tt="' + esc(kr.tt) + '"' : '') + '>' + (gs[1] ? '<span class="icw cgl-i">' + spellIcon(+gs[1], gs[2]) + '</span>' : ic ? '<span class="icw cgl-i">' + svgIcon(0, nm) + '<img class="oi" data-icon="' + ic + '" alt=""></span>' : '<span></span>') + '<span class="cgl-n">' + esc(nm) + '</span><span class="cgl-b"><i class="' + g.st + '" style="width:' + Math.max(3, g.pc) + '%"></i></span><span class="cgl-p ' + g.st + (kr ? ' ' + kr.cls : '') + '">' + g.pc + '%</span>' + (kr ? '<span class="cgl-dt r-rank"><b class="' + kr.cls + '">' + kr.say + '</b></span>' : '') + '</summary><p class="cgl-d">' + cglTint(sum, g.st) + '</p>'; });
+      return '<summary class="cch-al cgl"' + (kr ? ' data-tt="' + esc('<b>' + nm + '</b><br>' + kr.tt) + '" data-rank-tt="' + esc(kr.tt) + '"' : '') + '>' + (gs[1] ? '<span class="icw cgl-i">' + spellIcon(+gs[1], gs[2]) + '</span>' : ic ? '<span class="icw cgl-i">' + svgIcon(0, nm) + '<img class="oi" data-icon="' + ic + '" alt=""></span>' : '<span></span>') + '<span class="cgl-n">' + esc(nm) + '</span><span class="cgl-b"><i class="' + g.st + '" style="width:' + Math.max(3, g.pc) + '%"></i></span><span class="cgl-p ' + g.st + (kr ? ' ' + kr.cls + '" data-pc="' + g.pc + '">' + kr.p : '">' + g.pc + '%') + '</span>' + '</summary><p class="cgl-d">' + cglTint(sum, g.st) + '</p>'; });
   return colorNames(iconSpells(graded(html)), PM).replace(/<span class="cch-pmap" data-mi="(\d+)"><\/span>/g, (m0, n) => '<span class="cch-pmap">' + (MAPS[+n] || '') + '</span>'); }
 // (the whole Debriefing tab for one pull, as the site draws it, for the PC app's recap pop-up (Oct 22): the pull opens here (the app's
 // hidden copy of the site) and the tab's HTML goes to the pop-up; only the pull on screen stays in the site's pulls)
