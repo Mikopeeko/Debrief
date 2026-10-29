@@ -11231,7 +11231,7 @@ function audit() {
     const head = w.length === 1 ? '1 mistake' : w.length + ' mistakes';
     return '<span class="prw-s">' + colorNames(esc((one ? dbfCap(one.trim()) /* (no 'N of M went wrong' (your call, Oct 24): the bar says how many) */ : head) + (L.length > 1 ? ' (+' + (L.length - 1) + ' more)' : '') + (/[.!?)]$/.test(one) ? '' : '.')), PMp) + '</span>'; };
   /* round 209 night strip: this mechanic over tonight's loaded pulls, this pull outlined */
-  const phNight = (id) => { try { const it = r && r.item; if (!it || S.scope === 'all') return ''; const L = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && (b.code == null || it.code == null || b.code === it.code)).slice().sort((a, b) => a.pull - b.pull);
+  const phNight = (id) => { try { const it = r && r.item; if (!it || S.scope === 'all') return ''; const L = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && (b.code == null || it.code == null || b.code === it.code) && CACHE.has(b)).slice().sort((a, b) => a.pull - b.pull); /* round 210 */
     const secV = (q) => { const k = cutT(q); if (q._r209 && q._r209.k === k) return q._r209.m; const m = new Map(); for (const [sid, x] of pullSections(q)) m.set(sid, x && x.s ? x.s.verdict : null); q._r209 = { k, m }; return m; };
     const pts = L.map((b) => { const q = CACHE.get(b); const v = q && q.module ? secV(q).get(id) : undefined; return { p: b.pull, st: v === 'bad' ? 'r' : v === 'warn' ? 'y' : v ? 'g' : 'n', cur: b.pull === it.pull }; });
     if (pts.filter((p) => p.st !== 'n').length < 2) return ''; const W0 = { r: 'failed', y: 'some mistakes', g: 'done right', n: 'didn\'t come up' };

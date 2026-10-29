@@ -10933,11 +10933,13 @@ html body #view .dbt-why .r208-sub{margin:4px 0 0;font:500 14.5px 'Barlow Conden
 html body #view .dbt-why .r208-sub .dbt-chip{font-weight:600}
 /* round 209: The details inside Why we wiped, and the night strip on each single-pull mechanic */
 html body #view .dbt-why .r209-in{grid-column:auto!important;margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line,#222930)}
-html body #view .dbt-why .r209-in > section.dt-box{margin:0!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important}
-html body #view .prw .mx-sq.r209{display:inline-flex;gap:2px;margin:0 0 0 10px;vertical-align:middle}
-html body #view .prw .mx-sq.r209 i{width:4px;height:10px;border-radius:1px;background:#2a323a;display:inline-block}
-html body #view .prw .mx-sq.r209 i.g{background:#3b8f5d}html body #view .prw .mx-sq.r209 i.y{background:#e8a23a}html body #view .prw .mx-sq.r209 i.r{background:#f0726a}
-html body #view .prw .mx-sq.r209 i.cur{outline:1.5px solid var(--text,#e8ebee);outline-offset:1px}
+html body #view .dbt-why section.dt-box.r209-in{margin:0!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important}
+html body #view .prw-i:not(.prw-tl) > .prw-l{align-items:flex-start!important;text-align:left!important;gap:5px}
+html body #view .prw .mx-sq.r209{display:flex!important;flex-wrap:nowrap;gap:3px!important;margin:0!important;padding:0!important;background:none!important;border:0!important;height:auto!important}
+html body #view .prw .mx-sq.r209 i{flex:none;width:7px!important;height:13px!important;border-radius:2px!important;background:#2a323a!important;margin:0!important;border:0!important;box-shadow:none!important}
+html body #view .prw .mx-sq.r209 i::before,html body #view .prw .mx-sq.r209 i::after{display:none!important}
+html body #view .prw .mx-sq.r209 i.g{background:#3b8f5d!important}html body #view .prw .mx-sq.r209 i.y{background:#e8a23a!important}html body #view .prw .mx-sq.r209 i.r{background:#f0726a!important}
+html body #view .prw .mx-sq.r209 i.cur{outline:2px solid var(--text,#e8ebee);outline-offset:1px}
 @media (max-width:720px){html body #view .prw .mx-sq.r209{display:none}}
 
 </style>
@@ -30253,7 +30255,7 @@ function audit() {
     const head = w.length === 1 ? '1 mistake' : w.length + ' mistakes';
     return '<span class="prw-s">' + colorNames(esc((one ? dbfCap(one.trim()) /* (no 'N of M went wrong' (your call, Oct 24): the bar says how many) */ : head) + (L.length > 1 ? ' (+' + (L.length - 1) + ' more)' : '') + (/[.!?)]$/.test(one) ? '' : '.')), PMp) + '</span>'; };
   /* round 209 night strip: this mechanic over tonight's loaded pulls, this pull outlined */
-  const phNight = (id) => { try { const it = r && r.item; if (!it || S.scope === 'all') return ''; const L = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && (b.code == null || it.code == null || b.code === it.code)).slice().sort((a, b) => a.pull - b.pull);
+  const phNight = (id) => { try { const it = r && r.item; if (!it || S.scope === 'all') return ''; const L = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && (b.code == null || it.code == null || b.code === it.code) && CACHE.has(b)).slice().sort((a, b) => a.pull - b.pull); /* round 210 */
     const secV = (q) => { const k = cutT(q); if (q._r209 && q._r209.k === k) return q._r209.m; const m = new Map(); for (const [sid, x] of pullSections(q)) m.set(sid, x && x.s ? x.s.verdict : null); q._r209 = { k, m }; return m; };
     const pts = L.map((b) => { const q = CACHE.get(b); const v = q && q.module ? secV(q).get(id) : undefined; return { p: b.pull, st: v === 'bad' ? 'r' : v === 'warn' ? 'y' : v ? 'g' : 'n', cur: b.pull === it.pull }; });
     if (pts.filter((p) => p.st !== 'n').length < 2) return ''; const W0 = { r: 'failed', y: 'some mistakes', g: 'done right', n: 'didn\'t come up' };
@@ -59390,7 +59392,7 @@ function dsGuides() {
        line goes when it repeats "It started at": both are the same moment. */
     document.querySelectorAll('#view .dbt-why').forEach(function (w) {
       var sub = w.querySelector('.r208-sub'); if (sub) { var sv = sub.textContent.replace(/^It started at \d+:\d{2}:\s*/i, '').replace(/[.\s]+$/, '').toLowerCase(); [].forEach.call(w.querySelectorAll('.dbt-ln'), function (l) { var k = (l.firstElementChild || {}).textContent || '', v = ((l.lastElementChild || {}).textContent || '').replace(/[.\s]+$/, '').toLowerCase(); if (/^why$/i.test(k.trim()) && v && (v === sv || sv.indexOf(v) >= 0 || v.indexOf(sv) >= 0)) l.classList.add('rwd-gone'); }); }
-      var dt = document.querySelector('#view .ds-r > section.dt-box'); if (!dt) return; var holder = dt.parentElement; if (w.contains(holder)) return;
+      var dt = document.querySelector('#view section.dt-box'); if (!dt) return; var holder = dt; if (w.contains(holder)) return; /* (only the tiles: The pull at a glance stays where it is) */
       var add = w.querySelector('.dbt-add'); (add || w).insertAdjacentElement(add ? 'afterend' : 'beforeend', holder); holder.classList.add('r209-in');
       if (add) [].forEach.call(add.querySelectorAll('.dbt-addr'), function (b) { if (b.querySelector('.dbt-rctag')) b.classList.add('rwd-gone'); }); });
     document.querySelectorAll('#view section.cch-night').forEach(function (s) { try { nightBox(s); } catch (e) { console.warn('night summary', e); } });
