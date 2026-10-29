@@ -10931,6 +10931,14 @@ html body #view > .dbt.dbt .dbt-nk{background:none!important;border:0!important;
 /* round 208: Why we wiped, the whole pull in one line, then how it started, smaller */
 html body #view .dbt-why .r208-sub{margin:4px 0 0;font:500 14.5px 'Barlow Condensed',sans-serif;color:var(--muted)}
 html body #view .dbt-why .r208-sub .dbt-chip{font-weight:600}
+/* round 209: The details inside Why we wiped, and the night strip on each single-pull mechanic */
+html body #view .dbt-why .r209-in{grid-column:auto!important;margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line,#222930)}
+html body #view .dbt-why .r209-in > section.dt-box{margin:0!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important}
+html body #view .prw .mx-sq.r209{display:inline-flex;gap:2px;margin:0 0 0 10px;vertical-align:middle}
+html body #view .prw .mx-sq.r209 i{width:4px;height:10px;border-radius:1px;background:#2a323a;display:inline-block}
+html body #view .prw .mx-sq.r209 i.g{background:#3b8f5d}html body #view .prw .mx-sq.r209 i.y{background:#e8a23a}html body #view .prw .mx-sq.r209 i.r{background:#f0726a}
+html body #view .prw .mx-sq.r209 i.cur{outline:1.5px solid var(--text,#e8ebee);outline-offset:1px}
+@media (max-width:720px){html body #view .prw .mx-sq.r209{display:none}}
 
 </style>
 
@@ -11336,6 +11344,14 @@ html body #view .dbt-why .r208-sub .dbt-chip{font-weight:600}
       var fl = hd.querySelector('.mx-fl'); if (fl) fl.classList.add('rwd-gone'); var ic = hd.querySelector(':scope > .icw'); if (ic) ic.classList.add('rwd-gone'); });
     /* (round 203: the boss's health under a time shows only when it changed since the row before; a new phase starts fresh) */
     document.querySelectorAll('#view .dbt-tl').forEach(function (tl) { var last = null; [].forEach.call(tl.children, function (k) { if (k.classList.contains('dbt-st') && !k.classList.contains('dbt-fold')) { last = null; return; } var sm = k.querySelector && k.querySelector(':scope > .dbt-tm > small'); if (!sm) return; var v = sm.textContent.trim(); sm.classList.toggle('r203-same', v === last); last = v; }); });
+    /* Round 209 (Oct 29, the user: "we could even merge this into it"): on a single pull, The details tiles move into Why we wiped, under
+       It added up with; the raid-check rows there (Innervate, Raid cooldowns ...) step aside, since their tiles say the same. And the Why
+       line goes when it repeats "It started at": both are the same moment. */
+    document.querySelectorAll('#view .dbt-why').forEach(function (w) {
+      var sub = w.querySelector('.r208-sub'); if (sub) { var sv = sub.textContent.replace(/^It started at \d+:\d{2}:\s*/i, '').replace(/[.\s]+$/, '').toLowerCase(); [].forEach.call(w.querySelectorAll('.dbt-ln'), function (l) { var k = (l.firstElementChild || {}).textContent || '', v = ((l.lastElementChild || {}).textContent || '').replace(/[.\s]+$/, '').toLowerCase(); if (/^why$/i.test(k.trim()) && v && (v === sv || sv.indexOf(v) >= 0 || v.indexOf(sv) >= 0)) l.classList.add('rwd-gone'); }); }
+      var dt = document.querySelector('#view .ds-r > section.dt-box'); if (!dt) return; var holder = dt.parentElement; if (w.contains(holder)) return;
+      var add = w.querySelector('.dbt-add'); (add || w).insertAdjacentElement(add ? 'afterend' : 'beforeend', holder); holder.classList.add('r209-in');
+      if (add) [].forEach.call(add.querySelectorAll('.dbt-addr'), function (b) { if (b.querySelector('.dbt-rctag')) b.classList.add('rwd-gone'); }); });
     document.querySelectorAll('#view section.cch-night').forEach(function (s) { try { nightBox(s); } catch (e) { console.warn('night summary', e); } });
     document.querySelectorAll('#view .mx-tb .mx-tr').forEach(function (r) { if (r.dataset.r201) return; r.dataset.r201 = '1'; var who = r.querySelector('.mx-who'), m = r.querySelector('.mx-m'); if (!who || !m) return; var nm = who.querySelector('.nm');
       if (!nm && nt(who)) { var lab = nt(who); m.textContent = lab + (/^done right$/i.test(nt(m)) ? ': done right' : ': ' + nt(m).charAt(0).toLowerCase() + nt(m).slice(1)); who.innerHTML = '<span class="r201-none">Everyone</span>'; return; }
