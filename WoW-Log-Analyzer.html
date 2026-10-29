@@ -10486,6 +10486,8 @@ html body #view section.rpc.rpx-on > .rpc-lead b { color: #7fc99a; }
 /* round 182: wording pass helpers */
 .rwd-gone { display: none !important; }
 .dbt-two.rwd-one { grid-template-columns: 1fr !important; }
+/* round 184: the old Summary / Everything switch never shows, even for the first paint */
+html body #view section.rck .rck-h .ds-sw{display:none!important}
 /* refined look (Design studio round 170, Oct 28): one set of finishes everywhere, see notes/Design rules.md */
 /* The refined finishes (trial): the rules in notes/Design rules.md. Same layout, same font (Barlow Condensed), new finishes:
    greys for structure, colour only where it means something, gold as the mark, one panel / row / tag / chip, flat, sharp. */
@@ -58843,7 +58845,7 @@ function dsGuides() {
   }
   function run(muts) {
     if (muts) for (var m = 0; m < muts.length; m++) if (muts[m].type === 'attributes') seen.delete(muts[m].target);
-    if (t) return; t = setTimeout(function () { t = 0; try { fix(); } catch (e) { console.warn('refine', e); } }, 200);
+    if (t) return; t = 1; Promise.resolve().then(function () { t = 0; try { fix(); } catch (e) { console.warn('refine', e); } }); /* (round 184: before the paint, so no flash of round corners or small text) */
   }
   run(); new MutationObserver(run).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
 })();
@@ -58983,7 +58985,9 @@ function dsGuides() {
   function scan() { document.querySelectorAll('#view section.rck').forEach(function (s) { try { draw(s); } catch (e) { console.warn('checklist', e); } }); document.querySelectorAll('#view section.rpc').forEach(function (c) { try { card(c); } catch (e) { console.warn('player card', e); } });
     document.querySelectorAll('#view .dbt-big').forEach(function (c) { try { dbtCard(c); } catch (e) { console.warn('timeline card', e); } });
     document.querySelectorAll('#view .ds-r').forEach(function (g) { var t = g.textContent.replace(/\s+/g, ' ').trim(); if (/^The pull at a glance/.test(t) && t.length < 70) g.classList.add('rwd-gone'); }); }
-  function run() { if (t) return; t = setTimeout(function () { t = 0; scan(); }, 250); }
+  /* (round 184, Main: the old pieces showed "for a second" on the live site: the swap now runs in a microtask, which comes before the
+     browser paints, so the first paint is already the new layout) */
+  function run() { if (t) return; t = 1; Promise.resolve().then(function () { t = 0; scan(); }); }
   run(); new MutationObserver(run).observe(document.body, { childList: true, subtree: true });
 })();</script>
 </body>
