@@ -10859,6 +10859,12 @@ html body .rtl .rtv.f-filler .rtv-c:not(.big):not(.u):not(.mk-r):not(.mk-y){opac
 .rtl .rtv-phb.alt{background:linear-gradient(180deg,rgba(120,160,230,.07),rgba(120,160,230,.02) 60px,rgba(120,160,230,.012))}
 html body .rtl .rtv-grp.gh b{white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;font-size:9.5px!important;letter-spacing:.04em!important;line-height:1.1;display:block;text-align:center}
 html body .rtl .rtv-grp.gh{overflow:visible!important}
+/* round 201: Debriefing, one status look and no repeats */
+html body #view .dbt-addr > i.dbt-r,html body #view .dbt-addr > i.dbt-y,html body #view .dbt-addr > i.dbt-g,html body #view .dbt-addr > i[class^="dbt-"]:not(.dbt-lv){display:inline-block;padding:1px 7px;border-radius:2px;font-size:10px!important;letter-spacing:.04em;font-weight:600;background:none!important;border:1px solid currentColor;opacity:.85}
+html body #view .dbt-rctag{background:none!important;color:var(--faint)!important;border:1px solid rgba(255,255,255,.18);font-weight:600!important}
+html body #view .mxa-h.r201 > b{font-weight:500}
+html body #view .mxa-h.r201 .r201-ins{font:500 13.5px 'Barlow Condensed',sans-serif;color:var(--muted)}
+html body #view .mx-tb .r201-none{color:var(--faint)}
 
 </style>
 
@@ -34121,7 +34127,7 @@ function nightMechC(o) {
     /* (Oct 27, the calmer panel: one sentence of facts (counts in colour), then the Mistakes table; no bars, no ×counts) */
     const cnt = (n, c) => '<b class="' + c + '">' + n + '</b>', kc = (e) => (e.bad * 2 >= e.c ? 'r' : 'y'), lo = (t) => t.charAt(0).toLowerCase() + t.slice(1), cleanN = tot - wN;
     const s1 = top.slice(0, 2).map((e, i) => (i ? lo(esc(e.k)) : esc(e.k)) + ' in ' + cnt(e.pulls.size, kc(e)) + (i ? '' : ' ' + (e.pulls.size === 1 ? 'pull' : 'pulls'))).join(', and ');
-    const sum = '<p class="mx-sum">' + (s1 ? s1 + '. ' : 'Mistakes in ' + cnt(wN, 'r') + ' of ' + tot + ' pulls. ') + (cleanN ? (cleanN === tot ? 'All ' + cnt(tot, 'g') + ' pulls were clean.' : 'The other ' + (cleanN === 1 ? 'pull was' : cnt(cleanN, 'g') + ' were') + ' clean.') : 'No pull was clean.') + '</p>';
+    const sum = '<p class="mx-sum">' + 'Mistakes in ' + cnt(wN, 'r') + ' of ' + tot + ' pulls' + (top.length ? ': ' + top.slice(0, 2).map((e) => lo(esc(String(e.k).replace(/\.$/, ''))) + ' in ' + cnt(e.pulls.size, kc(e))).join(', ') + (ks.length > 2 ? ', and ' + (ks.length - 2) + ' more ' + (ks.length - 2 === 1 ? 'kind' : 'kinds') + ' below' : '') : '') + '. ' /* round 201: every kind counted, the total first */ + (cleanN ? (cleanN === tot ? 'All ' + cnt(tot, 'g') + ' pulls were clean.' : 'The other ' + (cleanN === 1 ? 'pull was' : cnt(cleanN, 'g') + ' were') + ' clean.') : 'No pull was clean.') + '</p>';
     const pc = new Map([...pm].map(([n, p]) => [String(n).split('-')[0], p]));
     const whoC = (e) => { const ws = [...e.who].sort((a, b) => b[1] - a[1]); if (!ws.length) return '<span class="mx-who">—</span>'; return '<span class="mx-who">' + ws.slice(0, 2).map(([w]) => { const p = pc.get(w); return '<span class="nm"' + (p && p.color ? ' style="color:' + p.color + '"' : '') + '>' + esc(w) + '</span>'; }).join(', ') + (ws.length > 2 ? ' <span class="mx-more">+' + (ws.length - 2) + '</span>' : '') + '</span>'; };
     const tb = top.length ? '<div class="mx-lab">Mistakes</div><div class="mx-tb"><div class="mx-th"><span>What happened</span><span>Pulls</span><span>Who, most often</span></div>' + top.map((e, i) => { const wp = [...e.pulls].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0];
@@ -48672,7 +48678,7 @@ function bhCutChip() { return '<span class="bh-cut" id="bhCut"></span>'; }
 // (the one header (Oct 22): the wipe filter behind a small button on the banner's first line, "Wipe filter: 2 deaths"; it
 // opens a box under it with the filter itself and its ? help. The box sits just under the banner (whose art is clipped),
 // is placed under the button when it opens, and stays open while you change the number.)
-function bhCutBtn() { const n = deathCutN(); return '<button class="bhp-cut' + (n ? '' : ' off') + '" type="button" id="bhCutB" aria-haspopup="true" aria-expanded="' + !!S.cutOpen + '" aria-controls="bhCutBox" title="' + (n ? 'On a wipe, nothing after the wipe call counts: the moment more were dead than any kill survived, the damage check was missed, or half the raid was dead. A kill counts in full.' : 'Off: every pull counts in full') + '"><svg class="cs-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 4.5h11.5l-2.6 4 2.6 4H6"/></svg><span class="bhp-cl">' + (n && S.rep && cutInfo(S.rep) ? 'Wipe called at ' : 'Wipe call: ') + '</span><b>' + (!n ? 'off' : S.rep && cutInfo(S.rep) ? T(cutInfo(S.rep).t) : 'on') + '</b></button>'; }
+function bhCutBtn() { const n = deathCutN(); return '<button class="bhp-cut' + (n ? '' : ' off') + '" type="button" id="bhCutB" aria-haspopup="true" aria-expanded="' + !!S.cutOpen + '" aria-controls="bhCutBox" title="' + (n ? 'On a wipe, nothing after the wipe call counts: the moment more were dead than any kill survived, the damage check was missed, or half the raid was dead. A kill counts in full.' : 'Off: every pull counts in full') + '"><svg class="cs-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 4.5h11.5l-2.6 4 2.6 4H6"/></svg><span class="bhp-cl">' + (n && S.rep && S.scope !== 'all' && !S.rep.allPulls && cutInfo(S.rep) ? 'Wipe called at ' : 'Wipe call: ') + '</span><b>' + (!n ? 'off' : S.rep && S.scope !== 'all' && !S.rep.allPulls && cutInfo(S.rep) ? T(cutInfo(S.rep).t) : 'on') /* (round 201: one pull's time isn't the night's) */ + '</b></button>'; }
 const bhCutBox = () => '<div class="bhp-cw"><div class="bhp-cbox" id="bhCutBox"' + (S.cutOpen ? '' : ' hidden') + '>' + (() => { const r = S.rep, c = r && !r.allPulls ? cutInfo(r) : null; return c && c.auto ? '<div class="bhp-cwhy"><b>Wipe called at ' + T(c.t) + '</b>: ' + esc(wipeSay(c)) + '.' + wipePic(r, c) + '</div>' : ''; })() + '<span class="bh-cut" id="bhCut"></span><div class="bh-cutpop" id="bhCutPop" hidden></div></div></div>';
 function bhCutPlace() { const box = $('#bhCutBox'), b = $('#bhCutB'); if (!box || !b) return; b.setAttribute('aria-expanded', String(!box.hidden)); if (box.hidden) return;
   const hb = box.parentNode.getBoundingClientRect(), r = b.getBoundingClientRect(); box.style.top = Math.round(r.bottom - hb.top + 8) + 'px'; if (r.left - hb.left < hb.width / 2) { box.style.left = Math.max(0, Math.round(r.left - hb.left)) + 'px'; box.style.right = 'auto'; } else { box.style.left = 'auto'; box.style.right = Math.max(0, Math.round(hb.right - r.right)) + 'px'; } } /* round 144: under its words */
@@ -59223,7 +59229,21 @@ function dsGuides() {
   }
   function scan() { document.querySelectorAll('#view section.rck').forEach(function (s) { try { draw(s); } catch (e) { console.warn('checklist', e); } }); document.querySelectorAll('#view section.rpc').forEach(function (c) { try { card(c); } catch (e) { console.warn('player card', e); } });
     var seenM = {}, bossN = ((document.querySelector('.bh-name') || {}).textContent || '').trim(); document.querySelectorAll('#view .dbt-big').forEach(function (c) { try { dbtCard(c, seenM, bossN); } catch (e) { console.warn('timeline card', e); } });
-    document.querySelectorAll('#view .ds-r').forEach(function (g) { var t = g.textContent.replace(/\s+/g, ' ').trim(); if (/^The pull at a glance/.test(t) && t.length < 70) g.classList.add('rwd-gone'); }); }
+    document.querySelectorAll('#view .ds-r').forEach(function (g) { var t = g.textContent.replace(/\s+/g, ' ').trim(); if (/^The pull at a glance/.test(t) && t.length < 70) g.classList.add('rwd-gone'); });
+    /* Round 201 (Oct 29, the user: "Do 1 to 4" from the Debriefing review): say each thing once, and the table's columns hold what they say.
+       - Why we wiped: the Why line is left out when it is the headline again.
+       - An open mechanic: its title isn't repeated (the row above names it): the instruction stays, without brackets; the badge that
+         repeats the row's own result goes.
+       - Each time it happened: a moment ("Deluge #1") goes under What happened, not under Who; a player's line doesn't start with their name again. */
+    var nt = function (e) { return (e ? e.textContent : '').replace(/\s+/g, ' ').trim(); };
+    document.querySelectorAll('#view .dbt-why').forEach(function (w) { if (w.dataset.r201) return; w.dataset.r201 = '1'; var h = nt(w.querySelector('h2')).replace(/^It started at \d+:\d{2}:\s*/i, '').replace(/[.\s]+$/, '').toLowerCase();
+      [].forEach.call(w.querySelectorAll('.dbt-ln'), function (l) { var k = nt(l.firstElementChild).toLowerCase(), v = nt(l.lastElementChild).replace(/[.\s]+$/, '').toLowerCase(); if (k === 'why' && v && (v === h || h.indexOf(v) >= 0 || v.indexOf(h) >= 0)) l.classList.add('rwd-gone'); }); });
+    document.querySelectorAll('#view .mxa-h').forEach(function (hd) { if (hd.dataset.r201) return; hd.dataset.r201 = '1'; var b = hd.querySelector(':scope > b'), ins = b && b.querySelector('.sim-i, .rw2-i'); hd.classList.add('r201');
+      if (b && ins) { var tx = nt(ins).replace(/^\(|\)$/g, ''); b.innerHTML = ''; var s0 = document.createElement('span'); s0.className = 'r201-ins'; s0.textContent = tx; b.appendChild(s0); } else if (b) b.classList.add('rwd-gone');
+      var fl = hd.querySelector('.mx-fl'); if (fl) fl.classList.add('rwd-gone'); var ic = hd.querySelector(':scope > .icw'); if (ic) ic.classList.add('rwd-gone'); });
+    document.querySelectorAll('#view .mx-tb .mx-tr').forEach(function (r) { if (r.dataset.r201) return; r.dataset.r201 = '1'; var who = r.querySelector('.mx-who'), m = r.querySelector('.mx-m'); if (!who || !m) return; var nm = who.querySelector('.nm');
+      if (!nm && nt(who)) { var lab = nt(who); m.textContent = lab + (/^done right$/i.test(nt(m)) ? ': done right' : ': ' + nt(m).charAt(0).toLowerCase() + nt(m).slice(1)); who.innerHTML = '<span class="r201-none">Everyone</span>'; return; }
+      if (nm) { var n0 = nt(nm), mt = nt(m); if (n0 && mt.indexOf(n0 + ' ') === 0) { var rest = mt.slice(n0.length + 1).replace(/^(was|were) /, ''); m.textContent = rest.charAt(0).toUpperCase() + rest.slice(1); } } }); }
   /* (round 184, Main: the old pieces showed "for a second" on the live site: the swap now runs in a microtask, which comes before the
      browser paints, so the first paint is already the new layout) */
   function run() { if (t) return; t = 1; Promise.resolve().then(function () { t = 0; scan(); }); }
