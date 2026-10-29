@@ -10530,7 +10530,6 @@ body.refine .rpc .rpc-id > .rot-sel{border-radius:4px!important;border-color:var
 body.refine .rpc .spc-rw svg circle,body.refine .rpc .spc-rw svg path{filter:none}
 body.refine .rpc .rpc-tq > summary{text-decoration:none;border-bottom:1px solid rgba(255,255,255,.14)}
 body.refine .rpc .rpc-lead{color:var(--muted)}
-body.refine .rpc .rpc-fxb{border:1px solid var(--line2)!important;border-radius:4px!important;background:var(--raised)!important;box-shadow:none!important}
 body.refine .rpc .rpc-fx .rpc-k{color:#b8964f;letter-spacing:.2em}
 body.refine .rpc .rpc-fx.bad .rpc-k{color:#f0726a}body.refine .rpc .rpc-fx.ok .rpc-k{color:#7ee08f}
 body.refine .rpc .rpc-fx h2{font-weight:700;font-size:20px}
@@ -10696,6 +10695,31 @@ body.refine .fpn-t{padding:14px!important}
 body.refine .fpn-t .fpn-mini{height:104px!important}
 body.refine .fpn-t > b{font-size:18px!important}
 body.refine .fpn-t > span:not(.fpn-mini){font-size:14.5px!important;color:#aab4be!important}
+/* round 175 (Oct 28, the Rotation tab's leftovers): one box per card, no tints, no edge bars, no glows, tight labels */
+/* Fix first: one panel; its outline carries the verdict (gold = the one thing to fix, red = bad, green = done well); the headline sits straight in it */
+html body.refine #view .rpc .rpc-fx,html body.refine #view .rpc .rpc-fx.bad,html body.refine #view .rpc .rpc-fx.ok{background:var(--panel)!important;background-image:none!important;border-radius:4px!important;box-shadow:none!important}
+html body.refine #view .rpc .rpc-fx{border-color:rgba(230,180,80,.5)!important}
+html body.refine #view .rpc .rpc-fx.bad{border-color:rgba(239,107,99,.55)!important}
+html body.refine #view .rpc .rpc-fx.ok{border-color:rgba(69,193,92,.45)!important}
+html body.refine #view .rpc .rpc-fxb{border:0!important;background:none!important;padding:0!important;box-shadow:none!important}
+html body.refine #view .rpc .rpc-fx .rpc-k{color:var(--gold)!important;letter-spacing:.04em!important}
+html body.refine #view .rpc .rpc-fx .rpc-ic .icw{box-shadow:0 0 0 1px rgba(0,0,0,.6)!important;border-radius:4px!important}
+html body.refine #view .rpc .rpc-ln{display:grid!important;grid-template-columns:max-content minmax(0,1fr)!important;gap:2px 10px!important;align-items:baseline;margin-top:8px}
+html body.refine #view .rpc .rpc-ln > span:first-child{min-width:0!important;width:auto!important;letter-spacing:.04em!important}
+/* the player card: no class-colour wash in the corner */
+html body.refine #view .rpc,html body.refine #view .rpc[class*="cls-"]{background-image:none!important}
+/* checklist rows and the gear cards: flat panels, a 1px line, no coloured edge or tint */
+html body.refine #view .rck-r,html body.refine #view .rck-r.rck-mg,html body.refine #view .rck-tip,html body.refine #view .rck-t,html body.refine #view .rgx-c{background-image:none!important;border-left-width:1px!important;border-left-color:var(--line2)!important;border-radius:4px!important}
+html body.refine #view .rck-tip,html body.refine #view .rgx-c{background-color:var(--panel)!important;border:1px solid var(--line2)!important}
+html body.refine #view .rgx-c.rgx-sum{border-color:rgba(230,180,80,.45)!important}
+html body.refine #view .icw.has{box-shadow:0 0 0 1px rgba(230,180,80,.55)!important}
+/* labels that were still wide-spaced */
+html body.refine #view .rgx-lab,html body.refine #view .spc-chap,html body.refine #view .rpc-ln > span:first-child{letter-spacing:.04em!important}
+/* round 175b: the Checklist cards inside an open category (their own rule is very specific), the stat/prep cards, the hint lines and the Extras tiles */
+html body.refine #view .pf-inl.spc-v section.rck .rck-cats > .rck-cat[open] > .rck-rs > details.rck-r,html body.refine #view section.rck details.rck-r.rck-mg,html body.refine #view section.rck details.rck-r.rck-mg.ok,html body.refine #view section.rck details.rck-r.rck-mg.na{border-left:1px solid var(--line2)!important;background-image:none!important;border-radius:4px!important}
+html body.refine #view .spc-w,html body.refine #view .spc-w.ok,html body.refine #view .spc-w.warn,html body.refine #view .spc-w.bad{border-left:1px solid var(--line2)!important;background-image:none!important}
+html body.refine #view .spc-hwp,html body.refine #view section.rck details.rck-r.ds-flat > p.spc-hwp{border-left:0!important}
+html body.refine #view .pfv section.rck-gx.rck-gx .rgx-ex > .rck-t,html body.refine #view .rck-t{border-top:1px solid var(--line2)!important}
 
 </style>
 
