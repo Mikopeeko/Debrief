@@ -10941,6 +10941,43 @@ html body #view .prw .mx-sq.r209 i::before,html body #view .prw .mx-sq.r209 i::a
 html body #view .prw .mx-sq.r209 i.g{background:#3b8f5d!important}html body #view .prw .mx-sq.r209 i.y{background:#e8a23a!important}html body #view .prw .mx-sq.r209 i.r{background:#f0726a!important}
 html body #view .prw .mx-sq.r209 i.cur{outline:2px solid var(--text,#e8ebee);outline-offset:1px}
 @media (max-width:720px){html body #view .prw .mx-sq.r209{display:none}}
+/* round 212: the scoreboard band (the five numbers with The details as a second row, one box, the same dividers, no boxes inside) */
+html body #view > .r212-sb{grid-column:1 / -1;border:1px solid var(--line2,#2d363e);border-radius:4px;background:var(--panel,#13171b);margin:0 0 14px;overflow:hidden}
+html body #view > .r212-sb > .dbr-4{border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;margin:0!important}
+html body #view > .r212-sb > section.dt-box{margin:0!important;padding:0!important;border:0!important;border-top:1px solid var(--line,#222930)!important;border-radius:0!important;background:none!important;box-shadow:none!important;position:relative}
+html body #view > .r212-sb > section.dt-box > :not(.cch-acct2){display:none!important}
+html body #view > .r212-sb .cch-acct2{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0!important;margin:0!important;padding:0!important}
+html body #view > .r212-sb .cch-acct2 > .cbl-sw{position:absolute;right:10px;top:-34px;z-index:2;display:none!important}
+html body #view > .r212-sb .cch-acct2 > details.cch-ab{margin:0!important;border:0!important;border-left:1px solid var(--line,#222930)!important;border-radius:0!important;background:none!important;box-shadow:none!important}
+html body #view > .r212-sb .cch-acct2 > details.cch-ab.r212-first{border-left:0!important}
+html body #view > .r212-sb .cch-acct2 > details.cch-ab[open]{grid-column:1 / -1;border-left:0!important;border-top:1px solid var(--line,#222930)!important}
+/* every mechanic as its own row (the done-right ones at 100%) */
+html body #view .prw .r212-ok .prw-p{color:#4fbf7a}
+@media (max-width:720px){html body #view > .r212-sb .cch-acct2{grid-template-columns:1fr 1fr}html body #view > .r212-sb .cch-acct2 > details.cch-ab{border-left:0!important;border-top:1px solid var(--line,#222930)!important}}
+html body #view > .r212-sb .cch-acct2::before,html body #view > .r212-sb .cch-acct2::after{display:none!important;content:none!important}
+html body #view > .r212-sb details.cch-ab,html body #view > .r212-sb details.cch-ab > summary,html body #view > .r212-sb details.cch-ab > summary *{background-color:transparent!important;box-shadow:none!important;border-radius:0!important}
+html body #view > .r212-sb details.cch-ab,html body #view > .r212-sb details.cch-ab > summary{border:0!important;outline:0!important}
+html body #view > .r212-sb details.cch-ab:not(.r212-first){box-shadow:inset 1px 0 0 var(--line,#222930)!important}
+html body #view > .r212-sb details.cch-ab.r212-dup{display:none!important}
+/* the details tiles read like the numbers row above them: a small caps label, the big number, the line under it, no icon */
+html body #view > .r212-sb details.cch-ab > summary.cgl{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:2px!important;padding:12px 16px!important;min-height:0!important}
+html body #view > .r212-sb details.cch-ab > summary.cgl > .cgl-i,html body #view > .r212-sb details.cch-ab > summary.cgl > .cgl-b{display:none!important}
+html body #view > .r212-sb details.cch-ab > summary.cgl > .cgl-n{order:1;font:700 11.5px 'Barlow Condensed',sans-serif!important;letter-spacing:.04em!important;text-transform:uppercase;color:var(--faint)!important}
+html body #view > .r212-sb details.cch-ab > summary.cgl > .cgl-n .sp{color:inherit!important;border:0!important;text-decoration:none!important}
+html body #view > .r212-sb details.cch-ab > summary.cgl > .cgl-p{order:2;font:800 22px/1.1 'Barlow Condensed',sans-serif!important;margin:0!important}
+html body #view > .r212-sb details.cch-ab > summary.cgl > .cgl-dt{order:3;font:500 12.5px 'Barlow Condensed',sans-serif!important;color:var(--muted)!important;margin:0!important}
+html body.refine #view > .r212-sb details.cch-ab > summary.cgl > span.cgl-p{font-size:22px!important;line-height:1.1!important;font-weight:800!important}
+html body.refine #view > .r212-sb details.cch-ab > summary.cgl > span.cgl-n{font-size:11.5px!important}
+html body.refine #view > .r212-sb.r212-sb.r212-sb details.cch-ab.cch-ab.cch-ab > summary.cch-al.cgl > .cgl-p.cgl-p{font:800 22px/1.1 'Barlow Condensed',sans-serif!important}
+html body.refine #view > .r212-sb.r212-sb.r212-sb details.cch-ab.cch-ab.cch-ab > summary.cch-al.cgl > .cgl-n.cgl-n{font:700 11.5px/1.2 'Barlow Condensed',sans-serif!important;letter-spacing:.04em!important;text-transform:uppercase!important;color:var(--faint)!important}
+html body.refine #view > .r212-sb.r212-sb.r212-sb details.cch-ab.cch-ab.cch-ab > summary.cch-al.cgl > .cgl-dt.cgl-dt{font:500 12.5px/1.3 'Barlow Condensed',sans-serif!important;color:var(--muted)!important}
+html body.refine #view > .r212-sb.r212-sb.r212-sb details.cch-ab.cch-ab.cch-ab{border:0!important;border-radius:0!important;background:none!important}
+html body.refine #view > .r212-sb.r212-sb.r212-sb details.cch-ab.cch-ab.cch-ab > summary.cch-al.cgl{display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:flex-start!important;gap:1px!important;padding:12px 16px!important;grid-template-columns:none!important;border:0!important;background:none!important}
+html body.refine #view > .r212-sb.r212-sb.r212-sb details.cch-ab.cch-ab.cch-ab > summary.cch-al.cgl > *{grid-area:auto!important;margin:0!important;justify-self:auto!important;text-align:left!important;position:static!important}
+html body.refine #view > .r212-sb.r212-sb.r212-sb details.cch-ab.cch-ab.cch-ab > summary.cch-al.cgl > .cgl-n{order:1!important}
+html body.refine #view > .r212-sb.r212-sb.r212-sb details.cch-ab.cch-ab.cch-ab > summary.cch-al.cgl > .cgl-p{order:2!important}
+html body.refine #view > .r212-sb.r212-sb.r212-sb details.cch-ab.cch-ab.cch-ab > summary.cch-al.cgl > .cgl-dt{order:3!important}
+html body.refine #view > .r212-sb.r212-sb.r212-sb details.cch-ab.cch-ab.cch-ab > summary.cch-al.cgl > .cgl-p.cgl-p.r212-long{font:700 15px/1.25 'Barlow Condensed',sans-serif!important;white-space:normal!important}
 
 </style>
 
@@ -59343,7 +59380,7 @@ function dsGuides() {
   }
   function scan() { document.querySelectorAll('#view section.rck').forEach(function (s) { try { draw(s); } catch (e) { console.warn('checklist', e); } }); document.querySelectorAll('#view section.rpc').forEach(function (c) { try { card(c); } catch (e) { console.warn('player card', e); } });
     var seenM = {}, bossN = ((document.querySelector('.bh-name') || {}).textContent || '').trim(); document.querySelectorAll('#view .dbt-big').forEach(function (c) { try { dbtCard(c, seenM, bossN); } catch (e) { console.warn('timeline card', e); } });
-    document.querySelectorAll('#view .ds-r').forEach(function (g) { var t = g.textContent.replace(/\s+/g, ' ').trim(); if (/^The pull at a glance/.test(t) && t.length < 70) g.classList.add('rwd-gone'); });
+    document.querySelectorAll('#view .ds-r').forEach(function (g) { var t = g.textContent.replace(/\s+/g, ' ').trim(); if (/^The pull at a glance/.test(t) && t.length < 70) g.classList.add('rwd-gone'); }); /* (round 212 hides it always: see below) */
     /* Round 201 (Oct 29, the user: "Do 1 to 4" from the Debriefing review): say each thing once, and the table's columns hold what they say.
        - Why we wiped: the Why line is left out when it is the headline again.
        - An open mechanic: its title isn't repeated (the row above names it): the instruction stays, without brackets; the badge that
@@ -59392,9 +59429,31 @@ function dsGuides() {
        line goes when it repeats "It started at": both are the same moment. */
     document.querySelectorAll('#view .dbt-why').forEach(function (w) {
       var sub = w.querySelector('.r208-sub'); if (sub) { var sv = sub.textContent.replace(/^It started at \d+:\d{2}:\s*/i, '').replace(/[.\s]+$/, '').toLowerCase(); [].forEach.call(w.querySelectorAll('.dbt-ln'), function (l) { var k = (l.firstElementChild || {}).textContent || '', v = ((l.lastElementChild || {}).textContent || '').replace(/[.\s]+$/, '').toLowerCase(); if (/^why$/i.test(k.trim()) && v && (v === sv || sv.indexOf(v) >= 0 || v.indexOf(sv) >= 0)) l.classList.add('rwd-gone'); }); }
-      var dt = document.querySelector('#view section.dt-box'); if (!dt) return; var holder = dt; if (w.contains(holder)) return; /* (only the tiles: The pull at a glance stays where it is) */
-      var add = w.querySelector('.dbt-add'); (add || w).insertAdjacentElement(add ? 'afterend' : 'beforeend', holder); holder.classList.add('r209-in');
+      var add = w.querySelector('.dbt-add'); if (!document.querySelector('#view section.dt-box')) return; /* (round 212: the tiles live in the scoreboard at the top now) */
       if (add) [].forEach.call(add.querySelectorAll('.dbt-addr'), function (b) { if (b.querySelector('.dbt-rctag')) b.classList.add('rwd-gone'); }); });
+    /* Round 212 (Oct 29, the user: "i like this mockup, remove the timeline and make it", mockup notes/Debriefing polish mockups/single-pull-order.html;
+       "the bottom row should look like the top row and be attatched to it", "remove the boses from the bottom section"; "dont do this just show all
+       the mechanics"): the page reads scoreboard, story, detail.
+       - The scoreboard: the five numbers and The details tiles in one band at the top, the tiles as a second row with the same dividers, no boxes.
+       - Then Why we wiped, then the Timeline or Overview switch and the view.
+       - The pull at a glance is gone (How it went and the Timeline tell it).
+       - Every mechanic is its own row: the "Done right" line becomes rows at 100%. */
+    (function () { var v = document.getElementById('view'); if (!v) return; var num = v.querySelector(':scope > .dbr-4, :scope > .r212-sb > .dbr-4'), dt = v.querySelector('section.dt-box'); if (!num) return;
+      var sb = v.querySelector(':scope > .r212-sb'); if (!sb) { sb = document.createElement('div'); sb.className = 'r212-sb'; }
+      var first = v.querySelector(':scope > section.dbt'), anchor = first || (num.parentElement === v ? num : null); /* (a single pull: before Why we wiped; All pulls: where the numbers were) */
+      if (anchor && sb.nextElementSibling !== anchor && sb !== anchor) v.insertBefore(sb, anchor); else if (!sb.parentElement) v.insertBefore(sb, v.firstChild);
+      if (sb.firstElementChild !== num) sb.insertBefore(num, sb.firstChild); if (dt && (dt.parentElement !== sb || dt.previousElementSibling !== num)) num.after(dt); /* (the numbers first, the details right under them) */
+      /* (the user's order: Avoidable damage, Healthstones and potions, Defensives, Combat potions, Innervate, Power Infusion, Raid cooldowns) */
+      var ORD = [/avoidable/i, /healthstone/i, /defensive/i, /combat potion/i, /innervate/i, /power infusion/i, /raid cooldown/i], tl = sb.querySelectorAll('.cch-acct2 > details.cch-ab'), lo = null;
+      [].forEach.call(tl, function (d) { var n = ((d.querySelector('.cgl-n') || d.querySelector('summary') || {}).textContent || ''), i = ORD.findIndex(function (re) { return re.test(n); }); var o = i < 0 ? 9 : i + 1; d.style.order = o; d.classList.remove('r212-first'); if (!lo || o < +lo.style.order) lo = d; });
+      if (lo) lo.classList.add('r212-first');
+      [].forEach.call(sb.querySelectorAll('.cgl-p'), function (p) { p.classList.toggle('r212-long', !/^s*d+%s*$/.test(p.textContent)); }); /* (All pulls: "Some mistakes · 32 of 35" at a readable size) */
+      [].forEach.call(tl, function (d) { if (/^s*Deaths/i.test((d.querySelector('.cgl-n') || d.querySelector('summary') || {}).textContent || '') && num.textContent.indexOf('Deaths') >= 0) d.classList.add('r212-dup'); }); /* (Deaths is already a number in the row above) */ })();
+    document.querySelectorAll('#view .ds-r').forEach(function (g) { if (/^The pull at a glance/.test(g.textContent.replace(/\s+/g, ' ').trim()) && !g.querySelector('section.dt-box')) g.classList.add('rwd-gone'); });
+    document.querySelectorAll('#view .prw > .mx-okl').forEach(function (ok) { if (ok.dataset.r212) return; ok.dataset.r212 = '1'; var prw = ok.parentElement;
+      [].forEach.call(ok.querySelectorAll('.mx-okc'), function (b) { var ic = b.querySelector('.icw'), nm = (b.textContent || '').replace(/\s+/g, ' ').trim(), row = document.createElement('span'); row.className = 'prw-i r212-ok'; row.setAttribute('role', 'button'); row.tabIndex = 0; if (b.dataset.phjump) row.dataset.phjump = b.dataset.phjump; row.title = b.title || '';
+        row.innerHTML = (ic ? ic.outerHTML : '') + '<span class="prw-l"><span class="prw-n">' + nm.replace(/[&<>]/g, '') + '</span></span><span class="prw-p ok">100%</span>'; prw.insertBefore(row, ok); });
+      ok.classList.add('rwd-gone'); });
     document.querySelectorAll('#view section.cch-night').forEach(function (s) { try { nightBox(s); } catch (e) { console.warn('night summary', e); } });
     document.querySelectorAll('#view .mx-tb .mx-tr').forEach(function (r) { if (r.dataset.r201) return; r.dataset.r201 = '1'; var who = r.querySelector('.mx-who'), m = r.querySelector('.mx-m'); if (!who || !m) return; var nm = who.querySelector('.nm');
       if (!nm && nt(who)) { var lab = nt(who); m.textContent = lab + (/^done right$/i.test(nt(m)) ? ': done right' : ': ' + nt(m).charAt(0).toLowerCase() + nt(m).slice(1)); who.innerHTML = '<span class="r201-none">Everyone</span>'; return; }
