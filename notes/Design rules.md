@@ -5,7 +5,7 @@ The user's words: "clean and refined, but I don't want to lose my own vision", "
 
 ## Keep (the vision)
 - Layout as it is: header, boss banner, tabs, the panels on each tab. Nothing moves.
-- Font: Barlow Condensed everywhere, as before. Weights 600 for bold, 700 for headings, 800 only for the biggest numbers.
+- Font: Barlow Condensed everywhere, as before, numbers included. Weights 600 for bold, 700 for headings and big numbers, 800 only for the biggest.
 - The Forged logo, gold as Debrief's mark, the boss art banners, class colours on names, the vertical timelines, mistakes on the press.
 
 ## Colour means something
@@ -24,7 +24,7 @@ The user's words: "clean and refined, but I don't want to lose my own vision", "
 - Dropdown: same frame and corners as a chip; its menu is a panel (same rules). Always check it after restyling.
 
 ## Numbers
-- Big numbers in the code font (JetBrains Mono), 600 weight, tabular. Small numbers in body text stay in Barlow Condensed but tabular.
+- Every number is Barlow Condensed too: big ones bold (700), all tabular. No code font anywhere (the user, Oct 28: "some incorrect fonts").
 - Numbers lead, labels follow, in tiles and stat strips.
 
 ## Depth

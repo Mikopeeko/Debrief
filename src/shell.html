@@ -10448,118 +10448,45 @@ section.rck.rcx-on .rck-h .seg, section.rck.rcx-on .rck-h [class*="tog"], sectio
   .rcx-open { padding-left: 14px; }
 }
 html body #view section.rck.rcx-on .rck-h .ds-sw { display: none !important; }
+/* round 179b (the user: "the areas that need work don't stand out, maybe the numbers should be colored"): every number takes its verdict's colour (done right a soft green), and a row that needs work is tinted so it pops */
+.rcx-row.g .v { color: #7fc99a; }
+.rcx-row.y { background: rgba(227,169,75,.07); } .rcx-row.y:hover, .rcx-row.y.on { background: rgba(227,169,75,.12); }
+.rcx-row.r { background: rgba(239,107,99,.08); } .rcx-row.r:hover, .rcx-row.r.on { background: rgba(239,107,99,.13); }
+.rcx-row.y .l, .rcx-row.r .l { color: var(--text); font-weight: 700; }
+.rcx-row.y .v, .rcx-row.r .v { font-size: 16px; }
+.rcx-row.y .v span { color: rgba(227,169,75,.7); } .rcx-row.r .v span { color: rgba(239,107,99,.7); } .rcx-row.g .v span { color: rgba(127,201,154,.65); }
+.rcx-ph b.g { color: #7fc99a; } .rcx-ph b.y { color: #e3a94b; } .rcx-ph b.r { color: #ef6b63; }
+.rcx-ph b.g span, .rcx-ph b.y span, .rcx-ph b.r span { color: inherit; opacity: .6; }
+/* round 180b (the user: "yes" to bold numbers in the sentences): numbers white and bold; the key one on a row that needs work in the row's colour */
+.rcx-row .s b { color: var(--text); font-weight: 700; }
+.rcx-row .s b.y { color: #e3a94b; } .rcx-row .s b.r { color: #ef6b63; }
+/* round 181 (the user: "A: ranked list"): the player card's fixes as one numbered list, biggest gain first */
+html body #view section.rpc.rpx-on .rpc-body > .rpc-fx, html body #view section.rpc.rpx-on .rpc-body > .rpc-also, html body #view section.rpc.rpx-on .rpc-body > .rpc-done { display: none !important; }
+html body #view section.rpc .rpc-kt.rpx-none { display: none !important; }
+html body #view section.rpc.rpx-on > .rpc-lead { margin: 2px 0 10px !important; font-size: 15px; color: var(--muted); }
+html body #view section.rpc.rpx-on > .rpc-lead b { color: #7fc99a; }
+.rpx { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line2); border-radius: 4px; background: var(--panel); font-family: var(--body); font-variant-numeric: tabular-nums; }
+.rpx-i { display: grid; grid-template-columns: 22px 24px minmax(0, 1fr) auto; gap: 4px 12px; align-items: start; padding: 11px 14px; border-top: 1px solid var(--line); }
+.rpx-i:first-child { border-top: 0; }
+.rpx-n { width: 22px; height: 22px; margin-top: 1px; display: grid; place-items: center; border: 1px solid var(--line2); border-radius: 2px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.rpx-i .icw { width: 24px !important; height: 24px !important; border-radius: 3px !important; overflow: hidden; } .rpx-i .icw img, .rpx-i .icw svg { width: 24px !important; height: 24px !important; border-radius: 3px !important; }
+.rpx-t { font-size: 16px; font-weight: 700; line-height: 1.3; }
+.rpx-k { font-style: normal; font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--gold); margin-right: 8px; vertical-align: 1px; }
+.rpx-tag { font-style: normal; display: inline-block; margin-left: 8px; padding: 0 5px; border: 1px solid rgba(227,169,75,.55); border-radius: 2px; color: #e3a94b; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; vertical-align: 2px; }
+.rpx-s { margin-top: 2px; color: var(--muted); font-size: 14.5px; } .rpx-s b { color: var(--text); font-weight: 700; } .rpx-s b.y { color: #e3a94b; } .rpx-s b.r { color: #ef6b63; }
+.rpx-nx { margin-top: 4px; font-size: 14.5px; } .rpx-nx i { font-style: normal; font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--gold); margin-right: 8px; }
+.rpx-v { text-align: right; white-space: nowrap; } .rpx-v b { display: block; font-size: 17px; font-weight: 700; } .rpx-v b small, .rpx-v b span { color: var(--faint); }
+.rpx-v small { display: block; margin-top: 2px; color: var(--faint); font-size: 12.5px; font-weight: 600; }
+.rpx-i.first { background: var(--raised); } .rpx-i.first .rpx-t { font-size: 18px; } .rpx-i.first .rpx-v b { font-size: 26px; line-height: 1.05; }
+.rpx-i.first.y .rpx-n { border-color: rgba(227,169,75,.7); color: #e3a94b; } .rpx-i.first.y .rpx-v b { color: #e3a94b; }
+.rpx-i.first.r .rpx-n { border-color: rgba(239,107,99,.7); color: #ef6b63; } .rpx-i.first.r .rpx-v b { color: #ef6b63; }
+.rpx-i.first.g .rpx-n { border-color: rgba(79,191,122,.6); color: #7fc99a; } .rpx-i.first.g .rpx-v b { color: #7fc99a; }
+@media (max-width: 760px) { .rpx-i { grid-template-columns: 22px minmax(0, 1fr) auto; } .rpx-i .icw { display: none; } .rpx-i.first .rpx-v b { font-size: 22px; } }
+@media (max-width: 760px) { .rpx-i { grid-template-columns: 22px minmax(0, 1fr); } .rpx-v { grid-column: 2; text-align: left; display: flex; align-items: baseline; gap: 8px; margin-top: 2px; } .rpx-v b, .rpx-i.first .rpx-v b { display: inline; font-size: 18px; } .rpx-v small { display: inline; margin: 0; } }
 /* refined look (Design studio round 170, Oct 28): one set of finishes everywhere, see notes/Design rules.md */
-/* cyrillic-ext */
-@font-face {
-  font-family: 'JetBrains Mono';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx3cwhsk.woff2) format('woff2');
-  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
-}
-/* cyrillic */
-@font-face {
-  font-family: 'JetBrains Mono';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxTcwhsk.woff2) format('woff2');
-  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-/* greek */
-@font-face {
-  font-family: 'JetBrains Mono';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxPcwhsk.woff2) format('woff2');
-  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
-}
-/* vietnamese */
-@font-face {
-  font-family: 'JetBrains Mono';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx_cwhsk.woff2) format('woff2');
-  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
-}
-/* latin-ext */
-@font-face {
-  font-family: 'JetBrains Mono';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx7cwhsk.woff2) format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-/* latin */
-@font-face {
-  font-family: 'JetBrains Mono';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxDcwg.woff2) format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-/* cyrillic-ext */
-@font-face {
-  font-family: 'JetBrains Mono';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx3cwhsk.woff2) format('woff2');
-  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
-}
-/* cyrillic */
-@font-face {
-  font-family: 'JetBrains Mono';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxTcwhsk.woff2) format('woff2');
-  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-/* greek */
-@font-face {
-  font-family: 'JetBrains Mono';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxPcwhsk.woff2) format('woff2');
-  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
-}
-/* vietnamese */
-@font-face {
-  font-family: 'JetBrains Mono';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx_cwhsk.woff2) format('woff2');
-  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
-}
-/* latin-ext */
-@font-face {
-  font-family: 'JetBrains Mono';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx7cwhsk.woff2) format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-/* latin */
-@font-face {
-  font-family: 'JetBrains Mono';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxDcwg.woff2) format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
 /* The refined finishes (trial): the rules in notes/Design rules.md. Same layout, same font (Barlow Condensed), new finishes:
    greys for structure, colour only where it means something, gold as the mark, one panel / row / tag / chip, flat, sharp. */
-body.refine{--bg:#0d1013;--panel:#13171b;--raised:#181d22;--line:#222930;--line2:#2d363e;--text:#e8ebee;--muted:#95a0ab;--faint:#5f6a75;--r:4px;--mono:'JetBrains Mono',ui-monospace,monospace}
+body.refine{--bg:#0d1013;--panel:#13171b;--raised:#181d22;--line:#222930;--line2:#2d363e;--text:#e8ebee;--muted:#95a0ab;--faint:#5f6a75;--r:4px;--mono:'Barlow Condensed',sans-serif}
 body.refine{background-color:#0d1013;background-image:linear-gradient(rgba(150,180,200,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(150,180,200,.03) 1px,transparent 1px);background-size:28px 28px;font-variant-numeric:tabular-nums}
 body.refine *{text-shadow:none!important}
 /* one panel */
@@ -10800,6 +10727,9 @@ html body.refine #view .prw-l{padding-bottom:0!important}
 html body.refine #view .ds-ptrans::after{display:none!important}
 /* round 177b (Oct 28, "check the icon shape with the new design"): every spell icon is a crisp 3px square; player avatars stay round */
 html body.refine .oi,html body.refine .icw,html body.refine .icw img,html body.refine .tm-n img,html body.refine .spc-ri .icw{border-radius:3px!important}
+/* round 180 (Oct 28, the user: "some incorrect fonts"): one font on the whole site, numbers included: Barlow Condensed, tabular, bold */
+body.refine{--mono:'Barlow Condensed',sans-serif}
+body.refine :is(.dsum > div > b,.dsum > div > span:first-child,.rtv-st span b,.spc-rc b,.rpc-v,.rpc .rpc-row .rck-vs,.cmp-hpv,.cmp-hpm b,.phb em,.bh-l2 b){font-family:'Barlow Condensed',sans-serif!important;font-weight:700!important;font-variant-numeric:tabular-nums;letter-spacing:0!important}
 
 </style>
 
@@ -10932,6 +10862,11 @@ html body.refine .oi,html body.refine .icw,html body.refine .icw img,html body.r
     if (el) return el.outerHTML;
     var D = window.rotData; try { return D && D.ico ? D.ico(String(c.ic || c.label).replace(/^rot:/, '')) : ''; } catch (e) { return ''; }
   }
+  /* a row's sentence: its numbers bold and white so the facts stand out; on a row that needs work the first one takes the row's colour; times and ungraded rows stay plain */
+  function nums(txt, st) {
+    var t = E(txt); if (st === 'na') return t; var first = st === 'warn' || st === 'bad';
+    return t.replace(/(\d{1,2}:\d{2})|(\d[\d,]*(?:\.\d+)?(?:%|M|K)?)/g, function (m, tm) { if (tm) return m; var cl = first ? (st === 'bad' ? ' class="r"' : ' class="y"') : ''; first = false; return '<b' + cl + '>' + m + '</b>'; });
+  }
   function draw(sec) {
     var D = window.rotData; if (!D || !D.checks || !D.checks.length) return;
     var old = sec.querySelector('.rck-ovw'); if (!old) return;
@@ -10947,14 +10882,14 @@ html body.refine .oi,html body.refine .icw,html body.refine .icw img,html body.r
     /* 1. the phase strip */
     h += '<div class="rcx-strip">';
     PH.forEach(function (p) { if (p[0] === 'open' && heal) return; var l = C.filter(function (c) { return bySec[c.sec] === p[0]; }), g = graded(l), ok = g.filter(function (c) { return c.st === 'ok'; }).length, miss = g.filter(function (c) { return c.st !== 'ok'; }).sort(function (a, b) { return ORD[a.st] - ORD[b.st]; })[0], w = g.some(function (c) { return c.st === 'bad'; }) ? 'r' : miss ? 'y' : g.length ? 'g' : 'n';
-      h += '<button type="button" class="rcx-ph" data-go="' + p[0] + '"><span class="rcx-k"><i class="d ' + w + '"></i>' + p[1] + '</span><b>' + (g.length ? ok + '<span>/' + g.length + '</span>' : '—') + '</b><em>' + (g.length ? (miss ? E(miss.label) : 'All done right') : l.length ? 'Your numbers' : 'Not in this pull') + '</em></button>'; });
+      h += '<button type="button" class="rcx-ph" data-go="' + p[0] + '"><span class="rcx-k"><i class="d ' + w + '"></i>' + p[1] + '</span><b class="' + w + '">' + (g.length ? ok + '<span>/' + g.length + '</span>' : '—') + '</b><em>' + (g.length ? (miss ? E(miss.label) : 'All done right') : l.length ? 'Your numbers' : 'Not in this pull') + '</em></button>'; });
     h += '</div>';
     /* (no "Work on these" list: the player card above already leads with Fix first and Also) */
     /* 3. the phases */
     PH.forEach(function (p) { if (p[0] === 'open' && heal) return; var ss = secs.filter(function (s) { return bySec[s] === p[0]; }); var l = C.filter(function (c) { return bySec[c.sec] === p[0]; }); if (!l.length) return; var g = graded(l), ok = g.filter(function (c) { return c.st === 'ok'; }).length;
       h += '<div class="rcx-sec" data-ph="' + p[0] + '"><div class="rcx-sh"><b>' + p[1] + '</b><span>' + p[2] + '</span><em>' + (g.length ? ok + ' of ' + g.length + ' done right' : 'not graded') + '</em></div>';
       ss.forEach(function (s) { var r = C.filter(function (c) { return c.sec === s; }).sort(function (a, b) { return ORD[a.st] - ORD[b.st]; }); if (ss.length > 1 || s !== p[1]) h += '<div class="rcx-grp">' + E(s) + '</div>';
-        r.forEach(function (c) { h += '<div class="rcx-row ' + col(c.st) + '" data-k="' + E(c.k) + '" role="button" tabindex="0"><i class="d ' + col(c.st) + '"></i>' + iconFor(c, old) + '<span class="l">' + E(c.label) + '</span><span class="s">' + E(strip(c.sub)) + '</span><span class="v">' + c.v + '</span></div>'; }); });
+        r.forEach(function (c) { h += '<div class="rcx-row ' + col(c.st) + '" data-k="' + E(c.k) + '" role="button" tabindex="0"><i class="d ' + col(c.st) + '"></i>' + iconFor(c, old) + '<span class="l">' + E(c.label) + '</span><span class="s">' + nums(strip(c.sub), c.st) + '</span><span class="v">' + c.v + '</span></div>'; }); });
       h += '</div>'; });
     h += '</div>';
     var prev = sec.querySelector('.rcx'); if (prev) prev.remove();
@@ -10972,10 +10907,33 @@ html body.refine .oi,html body.refine .icw,html body.refine .icw img,html body.r
     });
     box.addEventListener('keydown', function (ev) { if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.classList.contains('rcx-row')) { ev.preventDefault(); ev.target.click(); } });
   }
-  function scan() { document.querySelectorAll('#view section.rck').forEach(function (s) { try { draw(s); } catch (e) { console.warn('checklist', e); } }); }
+  /* Round 181 (the user: "A: ranked list"): the player card's Fix first and Also become one numbered list, biggest gain first.
+     It reads the card's own items (the coach's order), says each check's name once, and drops the empty Parse box and the
+     Done right line (the checklist below shows those). The old pieces stay in the page, hidden. */
+  function card(c) {
+    var fx = c.querySelector('.rpc-body > .rpc-fx'); if (!fx) return;
+    var key = c.textContent.length + '|' + (fx.textContent || '').slice(0, 60); if (c.dataset.rpx === key && c.querySelector('.rpx')) return;
+    var top = function (s) { var m = String(s || '').match(/top\s+(.+)/i); return m ? 'Top players: ' + m[1] : String(s || ''); };
+    var items = [];
+    var h2 = fx.querySelector('h2'), ht = h2 ? h2.textContent.trim() : '', ix = ht.indexOf(': '), ln = fx.querySelector('.rpc-ln span:last-child'), v = fx.querySelector('.rpc-v');
+    var vsm = v && v.querySelector('small') ? v.querySelector('small').textContent : '', vn = v ? v.cloneNode(true) : null; if (vn && vn.querySelector('small')) vn.querySelector('small').remove();
+    var st = fx.classList.contains('bad') ? 'r' : fx.classList.contains('ok') ? 'g' : 'y';
+    items.push({ ic: (fx.querySelector('.rpc-ic .icw') || {}).outerHTML || '', t: ix > 0 ? ht.slice(0, ix) : ht, s: ix > 0 ? ht.slice(ix + 2) : '', nx: ln ? ln.textContent.trim() : '', v: vn ? vn.innerHTML : '', top: top(vsm), st: st, first: 1 });
+    [].forEach.call(c.querySelectorAll('.rpc-body > .rpc-also .rpc-row'), function (r) {
+      var b = r.querySelector('.rck-sgt > b'), bc = b ? b.cloneNode(true) : null, tg = bc && bc.querySelector('.rck-f1'), tgt = tg ? tg.textContent.trim() : ''; if (tg) tg.remove(); if (bc) [].forEach.call(bc.querySelectorAll('.icw'), function (x) { x.remove(); });
+      var p = r.querySelector('.rck-sgt > p'), vs = r.querySelector('.rck-vs'), sm = vs && vs.querySelector('small') ? vs.querySelector('small').textContent : '', vv = vs ? vs.cloneNode(true) : null; if (vv && vv.querySelector('small')) vv.querySelector('small').remove();
+      items.push({ ic: (r.querySelector(':scope > .icw') || {}).outerHTML || '', t: bc ? bc.textContent.replace(/\s+/g, ' ').trim() : '', tag: tgt, s: p ? p.textContent.trim() : '', v: vv ? vv.innerHTML : '', top: top(sm), st: '' });
+    });
+    var h = '<ol class="rpx">' + items.map(function (it, i) {
+      return '<li class="rpx-i' + (it.first ? ' first ' + it.st : '') + '"><span class="rpx-n">' + (i + 1) + '</span>' + it.ic + '<div class="rpx-b"><div class="rpx-t">' + (it.first ? '<em class="rpx-k">Fix first</em>' : '') + E(it.t) + (it.tag ? '<em class="rpx-tag">' + E(it.tag) + '</em>' : '') + '</div>' + (it.s ? '<div class="rpx-s">' + nums(it.s, it.first ? (it.st === 'r' ? 'bad' : it.st === 'y' ? 'warn' : 'ok') : 'ok') + '</div>' : '') + (it.nx ? '<div class="rpx-nx"><i>Next time</i>' + E(it.nx) + '</div>' : '') + '</div><div class="rpx-v"><b>' + it.v + '</b>' + (it.top ? '<small>' + E(it.top) + '</small>' : '') + '</div></li>';
+    }).join('') + '</ol>';
+    var old = c.querySelector('.rpx'); if (old) old.remove();
+    fx.insertAdjacentHTML('beforebegin', h); c.classList.add('rpx-on'); c.dataset.rpx = key;
+    var kt = c.querySelector('.rpc-kt .spc-ktv'); if (kt && /^[–-]?$/.test(kt.textContent.trim())) c.querySelector('.rpc-kt').classList.add('rpx-none');
+  }
+  function scan() { document.querySelectorAll('#view section.rck').forEach(function (s) { try { draw(s); } catch (e) { console.warn('checklist', e); } }); document.querySelectorAll('#view section.rpc').forEach(function (c) { try { card(c); } catch (e) { console.warn('player card', e); } }); }
   function run() { if (t) return; t = setTimeout(function () { t = 0; scan(); }, 250); }
   run(); new MutationObserver(run).observe(document.body, { childList: true, subtree: true });
-})();
-</script>
+})();</script>
 </body>
 </html>
