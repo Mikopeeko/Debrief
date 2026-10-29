@@ -10816,6 +10816,12 @@ html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-fq:not(.on) .rtv-eye .rtv-eye
 html body.refine .rtl .rtv-fside .rtv-fsf{border-top:0;padding:10px 6px 0}
 html body.refine .rtl .rtv-fside .rtv-fsf .rtv-fpr{font:700 12px 'Barlow Condensed',sans-serif;letter-spacing:.04em;color:var(--gold)}
 html body.refine .rtl .rtv-fside .rtv-fsf .rtv-fpr:hover{text-decoration:underline;color:var(--gold)}
+/* round 188: resource lanes beside each press (points as squares like Holy Power, a slim bar otherwise; mana in blue for healers) */
+.rtv-rsb{position:absolute;z-index:2;width:40px;height:6px;margin-top:-3px;border-radius:1px;background:#2a323a;overflow:hidden;cursor:help}
+.rtv-rsb i{display:block;height:100%;background:#e2b04f}
+.rtv-rsb.mn i{background:#5aa0ff}
+.rtv-rsb.mn.lo i{background:#e3a94b}
+.rtv-rsb:hover{box-shadow:0 0 0 2px rgba(255,255,255,.12)}
 
 </style>
 
