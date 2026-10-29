@@ -19,7 +19,7 @@ The user's words: "clean and refined, but I don't want to lose my own vision", "
 - Row: 36px tall, hairline between rows, hover = one shade lighter. Icon 22px, text 13.5px, number right-aligned.
 - Tag (severity, status): small caps 10px, 1px outline in its colour, no fill, 2px corners. SERIOUS / MODERATE / MINOR / DONE RIGHT.
 - Chip (a fact, a filter): 24px tall, grey outline, no fill, 4px corners. Never a coloured pill.
-- Label (section kicker): 10.5px, letter-spaced .18em, uppercase, grey. The only decoration is a 6px square dot before it when it has a verdict colour.
+- Label (section kicker): 11.5px, uppercase, grey, letter-spacing .04em at most (the user, Oct 28: wide-spaced capitals "look weird"). Tabs and headings in normal case. The only decoration is a 6px square dot before it when it has a verdict colour.
 - Button: 30px, grey outline, 4px corners. The one main button on a page may be gold-filled.
 - Dropdown: same frame and corners as a chip; its menu is a panel (same rules). Always check it after restyling.
 
