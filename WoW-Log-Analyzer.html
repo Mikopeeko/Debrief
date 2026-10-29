@@ -12766,7 +12766,7 @@ function buildSszorak(ev, r, h) {
       return { x: c.x, y: c.y, n: c.n, ring: COL[f], label: { wind: 'wind ' + (c.pop && c.pop.slot), spare: 'spare', outside: 'popped early', none: '' }[f] }; });
     const tm = x ? x.t0 : list[list.length - 1].tEnd + 1;
     const rows = list.map((c) => [{ p: pname(c.g) }, { t: c.tEnd }, c.died ? { txt: 'died with it', bad: true } : { txt: 'cyst #' + c.n }, fate(c), { txt: '' }]);
-    return { title: x ? 'For intermission ' + (x.i + 1) : 'After the last intermission', t: list[0].t, bad: rows.some((q) => q[2].bad), warn: rows.some((q) => q[3].warn), sub: pl(list.length, 'cyst') + (x ? ', ' + list.filter((c) => c.pop && c.pop.inter === x && c.pop.slot !== 'outside').length + ' popped in the intermission' : ''),
+    return { title: x ? 'For intermission ' + (x.i + 1) : k < 2 ? 'For intermission ' + (k + 1) : 'After the last intermission', /* (round 185: Sszorak has two Dig Ins) */ t: list[0].t, bad: rows.some((q) => q[2].bad), warn: rows.some((q) => q[3].warn), sub: pl(list.length, 'cyst') + (x ? ', ' + list.filter((c) => c.pop && c.pop.inter === x && c.pop.slot !== 'outside').length + ' popped in the intermission' : ''),
       rows: [[{ txt: 'Every cyst', sub: 'where each landed, on one map', dim: true }, { t: tm }, { txt: '' }, { txt: '' }, { map: { t: tm, title: 'Viscous Cysts' + (x ? ' for intermission ' + (x.i + 1) : ''), pts: h.snap(tm), cysts: cyMap, ...(cyFocus(list) ? { focus: cyFocus(list) } : {}) } }]].concat(rows) };
   });
   if (cysts.length) sections.push({ id: 'cysts', title: 'Venomous Surge (Save cysts for the winds)', place: 'Venomous Surge (cysts): saved for the winds', spell: [SZ.surgeCast, 'Venomous Surge'], verdict: cyGroups.some((g) => g.bad) ? 'bad' : cyGroups.some((g) => g.warn) ? 'warn' : 'good',
@@ -15203,10 +15203,10 @@ function buildCoiledAltar(ev, r, h) {
       const aim = (x) => x.replace(/\s*\(hits empty ground\)/, ', into empty ground');
       const cnt = fs.length ? { txt: fs.map((f) => f.popped).join(', then ') + (fs.length === 1 && fs[0].popped === 1 ? ' orb' : ' orbs'), bad: fBad, warn: fWarn,
         sub: 'aim for ' + (new Set(fs.map((f) => f.plan)).size === 1 ? (!many ? aim(fs[0].plan) : fs[0].plan.includes(' (') ? aim(fs[0].plan).replace(' (', ' each (') : aim(fs[0].plan) + ' each') : fs.map((f) => aim(f.plan)).join(', then ')) + (raidMax > 12 ? ' · the raid ended at ' + raidMax + ' stacks' : '') } : { txt: 'no frontal', dim: true };
-      const res = coll ? { txt: 'orbs collided', sub: '+' + coll.gain + ' stacks at once: a purple touched other orbs', bad: true }
-        : left ? { txt: 'orb left at the next Deluge', sub: 'it erupted on the raid', bad: true }
-        : det.length ? { txt: 'Defilement detonation', sub: '+' + det[0].gain + ' stacks at once: orbs still on the ground', bad: true }
-        : fBad ? { txt: 'too many in ' + (() => { const f = fs.find((x) => x.bad), n = f && f.tankG ? pname(f.tankG) : null; return n ? String(n).split('-')[0] + '\'s frontal' : 'one frontal'; })() /* (whose frontal: the tank it was aimed at (Oct 23)) */, bad: true } : fWarn ? { txt: 'a little off the plan', warn: true } : { txt: 'clean' };
+      const res = coll ? { txt: 'orbs collided', sub: '+' + coll.gain + ' stacks at once: a purple touched other orbs', bad: true, why: 'A purple orb touched other orbs: +' + coll.gain + ' Venom Rupture stacks on everyone at once.', next: 'Carry purple orbs on their own, away from the other orbs.' }
+        : left ? { txt: 'orb left at the next Deluge', sub: 'it erupted on the raid', bad: true, why: 'An orb was still out when the next Toxic Deluge came, and it erupted on the raid.', next: 'Pop every orb before the next Toxic Deluge.' }
+        : det.length ? { txt: 'Defilement detonation', sub: '+' + det[0].gain + ' stacks at once: orbs still on the ground', bad: true, why: 'Orbs left on the ground detonated: +' + det[0].gain + ' Venom Rupture stacks at once.', next: 'Pop the orbs with the frontals before they detonate.' }
+        : fBad ? { txt: 'too many in ' + (() => { const f = fs.find((x) => x.bad), n = f && f.tankG ? pname(f.tankG) : null; return n ? String(n).split('-')[0] + '\'s frontal' : 'one frontal'; })() /* (whose frontal: the tank it was aimed at (Oct 23)) */, bad: true } : fWarn ? { txt: 'a little off the plan', warn: true } : { txt: 'clean' }; if (res.bad && /^too many in /.test(res.txt)) { const f0 = fs.find((x) => x.bad); res.why = (f0 ? f0.popped + ' orbs' : 'Too many orbs') + ' went into one frontal, and each is a Venom Rupture stack on everyone.'; res.next = 'Tanks take turns so each frontal pops about 4 orbs, never 8.'; } /* (round 185) */
       // (one map: every cone of the Deluge, in the order it landed, each popping the orbs it held; it plays from just before
       // the first to just after the last, the orbs on the ground switching to each frontal's own as it comes)
       const fc = fs.filter((f) => f.cone), all = new Map(); for (const f of fs) for (const o of f.ground) if (!all.has(o.guid)) all.set(o.guid, o);
@@ -15342,7 +15342,7 @@ function buildCoiledAltar(ev, r, h) {
         : rowsOf(oSec).find(({ row }) => row[2] && row[2].s && L(row[2].s[1]) === n && Math.abs(row[1].t - e.t) <= 2);
       // (the orbs panel is a row per Deluge, its frontals' cones on one map: a hit goes on the Deluge whose map has its cone, marked on the Result)
       const dRow = n === 'soul sever' || hitRow ? null : (oSec && oSec.rows || []).find((row) => row.some((x) => x.map && (x.map.cones || []).some((c0) => Math.abs(c0.at - e.t) <= 2)));
-      if (dRow) { const rc = dRow[3]; rc.hits = (rc.hits || []).concat(who); rc.sub = (rc.sub && !/^hit non-tank/.test(rc.sub) ? rc.sub + ' · ' : '') + 'hit non-tank: ' + rc.hits.join(', '); if (e.soft) { rc.warn = true; if (rc.txt === 'clean') rc.txt = 'a frontal hit a non-tank'; } else rc.bad = true;
+      if (dRow) { const rc = dRow[3]; rc.hits = (rc.hits || []).concat(who); rc.sub = (rc.sub && !/^hit non-tank/.test(rc.sub) ? rc.sub + ' · ' : '') + 'hit non-tank: ' + rc.hits.join(', '); if (e.soft) { rc.warn = true; if (rc.txt === 'clean') rc.txt = 'a frontal hit a non-tank'; } else { rc.bad = true; if (rc.txt === 'clean' || /^the frontal hit /.test(rc.txt)) { const nm = rc.hits.map((x) => String(x).replace(/\s*\(.*$/, '')); rc.txt = 'the frontal hit ' + nm.join(', '); rc.why = (nm.length > 1 ? nm.slice(0, -1).join(', ') + ' and ' + nm[nm.length - 1] + ' were' : nm[0] + ' was') + ' hit by the tank frontal.'; rc.next = 'Only the tank belongs in front of the boss.'; } } /* (round 185: a mistake never reads "clean", and says its own why and fix) */
         const mc = dRow.find((x) => x.map); mc.map.bad = (mc.map.bad || []).concat(e.dst); mc.map.badLabel = 'non-tank hit by the frontal'; continue; }
       if (!hitRow) { loose.push(e); continue; }
       const c = n === 'soul sever' ? hitRow.row[0] : hitRow.row[2];
@@ -29972,8 +29972,8 @@ function audit() {
         const sev = died ? 5 : q.st === 'bad' ? Math.min(4, (tier === 'major' ? 4 : tier === 'minor' ? 2 : 3) + (m && m.severity === 'High' && tier !== 'major' ? 1 : 0)) : (tier === 'major' ? 2 : 1) + (m && m.severity === 'High' ? 1 : 0); /* (data-sev 1 to 5 (Oct 27)) */
         const own = (q.row || []).find((cc) => cc && cc.why); if (own) return { why: own.why, next: own.next || '', sev };
         const mSay = momentSay(q), bareList = (x) => { const L = String(x || '').trim().replace(/\.?$/, '').replace(/,? died$/, '').split(/,\s*|\s+and\s+/); const PN = new Set([...((r.players && r.players.values()) || [])].map((p) => String(p.name || '').split('-')[0])); return /died\.?$/.test(String(x || '').trim()) && L.length > 0 && L.every((n) => PN.has(n)); };
-        const whoM = m && m.player && m.player !== 'Raid' ? String(m.player).split('-')[0] : '', d1 = m && m.detail ? s1(m.detail) : '', withWho = whoM && d1 && !d1.toLowerCase().includes(whoM.toLowerCase()) && /^[A-Z][a-z]+ /.test(d1) && !/^(A|An|The|\d)\b/.test(d1) ? whoM + ' ' + d1.charAt(0).toLowerCase() + d1.slice(1) : d1; /* (a player's own mistake says who (Oct 28)) */
-        const say = m && m.detail && !(mSay && bareList(m.detail)) ? withWho : mSay || s1(s.how); /* (a missed kick with no tip of its own gets the kick plan) */
+        const whoM = m && m.player && m.player !== 'Raid' ? String(m.player).split('-')[0] : '', d1 = m && m.detail ? s1(m.detail) : '', withWho = whoM && d1 && !d1.toLowerCase().includes(whoM.toLowerCase()) && /^[A-Z][a-z]+ /.test(d1) && !/^(A|An|The|\d)\b/.test(d1) ? (/^(Their|Your) /.test(d1) ? whoM + '\'s ' + d1.replace(/^(Their|Your) /, '') : whoM + ' ' + d1.charAt(0).toLowerCase() + d1.slice(1)) : d1; /* (round 185: "Urgdragon's ghost", not "Urgdragon their ghost") */ /* (a player's own mistake says who (Oct 28)) */
+        const say = m && m.detail && !(mSay && bareList(m.detail)) ? withWho : mSay || ''; /* (round 185: no general mechanic description as the Why) */ /* (a missed kick with no tip of its own gets the kick plan) */
         return { why: say, next: (m && m.fix ? tipOf(m.fix) || brTip : brTip) || (/^Nobody kicked/.test(say) ? 'Give every cast a kicker and a backup.' : ''), sev }; };
       const wAttr = (q) => { const w = whyOf(q); return w ? (w.why ? ' data-why="' + esc(w.why) + '"' : '') + (w.next ? ' data-next="' + esc(w.next) + '"' : '') + ' data-sev="' + w.sev + '"' : ''; };
       const li = (q) => '<li class="u1-r ' + q.st + (q === sel ? ' on' : '') + (q.map ? ' u1-hm' : '') + '"' + wAttr(q) + (q.map ? ' data-u1="' + q.i + '" role="button" tabindex="0"' : '') + '><span class="u1-d"></span><span class="u1-t">' + (q.t != null ? T(q.t) : '') + '</span>' + u1x(q) + '</li>';
@@ -58324,7 +58324,7 @@ function dsGuides() {
         if (!vis(m)) return; if (m.death && m.into && vis(m.into)) return; if (m.dupOf && vis(m.dupOf)) return; n++; var R = m.st === 'ok' ? (lastR ? '' : ' R') : (sd++ % 2 ? ' R' : ''); if (m.st !== 'ok') lastR = !!R; /* (cards alternate with each other; the small pills sit opposite the last card) */
         if (m.st === 'ok') { run.push({ i: i, m: m, h: '<div class="dbt-it ok' + R + '" data-i="' + i + '"><div class="dbt-c dbt-okc"><span class="dbt-ic">' + m.icon + '</span>' + nameB(m) + (m.nk ? '<span class="dbt-nk">' + E(m.nk) + '</span>' : '') + '<span>' + E(m.lines[0] || (m.n > 1 ? m.n + ' times, done right' : 'Done right')) + (m.lines.length > 1 ? ' (+' + (m.lines.length - 1) + ' more)' : '') + '</span></div><span class="dbt-tm">' + tmH(m.t) + '</span></div>' }); return; }
         flush();
-        var x = m.w, why = m.death ? '' : (m.why || howIt(m.sec) || ''), nx = m.death ? '' : (m.next || (x && (x.how || x.fix)) || (paren(m.lab) ? paren(m.lab) + '.' : ''));
+        var x = m.w, why = m.death ? '' : (m.why || ''), nx = m.death ? '' : (m.next || (paren(m.lab) ? paren(m.lab) + '.' : '')); /* (round 185: no general text standing in for this moment's Why or Next time) */
         if (why && nx && sent(nx, 1).toLowerCase() === why.toLowerCase()) why = ''; /* (no reason twice) */
         var dd = m.death ? m : m.dead || null; if (m.dead) m.sv = 5;
         var deadN = m.death ? [] : (function () { var L0 = []; (m.deads || []).forEach(function (q) { var n0 = (q.who[0] || {}).n; if (n0 && L0.indexOf(n0) < 0) L0.push(n0); }); m.lines.forEach(function (l) { var mt = String(l).match(/^([^:·]+):\s*Died\b/); if (mt && L0.indexOf(mt[1].trim()) < 0) L0.push(mt[1].trim()); }); return L0; })(); /* (everyone this moment killed: its deaths and the names its lines say died) */
@@ -58964,32 +58964,73 @@ function dsGuides() {
     fx.insertAdjacentHTML('beforebegin', h); c.classList.add('rpx-on'); c.dataset.rpx = key;
     var kt = c.querySelector('.rpc-kt .spc-ktv'); if (kt && /^[–-]?$/.test(kt.textContent.trim())) c.querySelector('.rpc-kt').classList.add('rpx-none');
   }
-  /* Round 182 (the user: "make sure the wording/cards are clear and not overly complicated"): the Debriefing timeline cards say it once,
-     in plain words. Headlines that repeat their set merge ("Set 5: A, B and C died"); "in one hit at 16%" says it's their health;
-     a Why that only repeats the headline is left out; "Cause X (1:54) → Y" reads "How it happened: X at 1:54, then Y"; a one-letter tag goes.
-     And an empty "The pull at a glance" heading is hidden. Facts are untouched: only how they are said. */
-  function dbtCard(c) {
-    if (c.dataset.rwd) return; c.dataset.rwd = '1';
-    var h = c.querySelector(':scope > h3');
-    if (h) { var re = /([\s\S]*?) · (<span class="dbt-chip"[^>]*>[^<]*<\/span>): ([^.<]*)\.?\s*/g, m, segs = [], html = h.innerHTML.trim(), used = 0;
-      while ((m = re.exec(html))) { segs.push({ pre: m[1].replace(/^\.?\s*/, '').trim(), ptxt: m[1].replace(/<[^>]+>/g, '').replace(/^\.?\s*/, '').trim(), who: m[2], st: m[3].trim().toLowerCase().replace(/, /g, ' and ') }); used += m[0].length; }
-      if (segs.length > 1 && used >= html.length - 2 && segs.every(function (x) { return x.ptxt === segs[0].ptxt; })) {
-        var by = {}, ord = []; segs.forEach(function (x) { if (!by[x.st]) { by[x.st] = []; ord.push(x.st); } by[x.st].push(x.who); });
-        var list = function (a) { return a.length < 2 ? a[0] : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; };
-        h.innerHTML = segs[0].pre + ': ' + ord.map(function (st) { return list(by[st]) + ' ' + st; }).join('; ');
-      } }
+  /* Round 182/185 (the user: "make sure the wording/cards are clear and not overly complicated"; Oct 29: "heavily audited for accuracy and
+     clear wording, simplistic approach"; "I don't think we need the why and next time on every single card"): each Debriefing timeline card
+     says what happened once, in plain words. Facts are untouched: only how they are said.
+     - The headline: "Set 5 (after intermission 2) · Ashdknight: Died. Set 5 ... · Zaffia: Died" -> "Set 5 (after intermission 2): Ashdknight
+       and Zaffia died"; parts with one set name share it once; a player listed as dying twice keeps the first; "He enraged" names the boss.
+     - "in one hit at 16%" says it's their health; "Cause X (1:54) -> Y" reads "How it happened: X at 1:54, then Y"; a one-letter tag goes.
+     - The Why: left out when it only repeats the headline; death notes become sentences.
+     - Why and Next time show on the first card of each mechanic only; later cards keep "Every time this phase" for both. */
+  var ST = [[/^died$/i, 'died'], [/^drifted, died$/i, 'drifted and died'], [/^clipped, died$/i, 'was clipped and died'], [/^surge died with it$/i, 'died with Venomous Surge on'], [/^alive$/i, 'stayed alive'], [/^popped outside the intermission\s*\((\d+:\d{2}), popped by (.+)\)$/i, "'s cyst was popped early by $2, at $1"], [/^popped outside the intermission\s*\((\d+:\d{2})\)$/i, "'s cyst popped early, at $1"], [/^missed their soul fragments and died$/i, 'missed their soul fragments and died']];
+  var stOf = function (s) { s = String(s || '').trim(); for (var i = 0; i < ST.length; i++) if (ST[i][0].test(s)) return s.replace(ST[i][0], ST[i][1]); return s ? s.charAt(0).toLowerCase() + s.slice(1) : s; };
+  var listOf = function (a) { return a.length < 2 ? a[0] || '' : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; };
+  var WHYS = [[/^the hits before did the damage$/i, 'The hits before it did most of the damage.'], [/^too big without a defensive$/i, 'The hit was too big to survive without a defensive.'], [/^the hits before did the damage · little healing for (\d+) s$/i, 'The hits before it did most of the damage, with little healing in the last $1 seconds.'], [/^too big without a defensive · little healing for (\d+) s$/i, 'The hit was too big to survive without a defensive, with little healing in the last $1 seconds.']];
+  function headline(h, boss, mech) {
+    var html = h.innerHTML.trim(), more = '', mm = html.match(/\s*\(\+(\d+) more\)\s*$/); if (mm) { more = ' (and ' + mm[1] + ' more)'; html = html.slice(0, mm.index); }
+    html = html.replace(/^For (intermission \d+)/i, function (m0, a) { return a.charAt(0).toUpperCase() + a.slice(1); }); /* ("For intermission 1" -> "Intermission 1") */
+    var parts = html.split(/\.\s+(?=\S)/).map(function (p) { return p.replace(/\.\s*$/, '').trim(); }).filter(Boolean);
+    var segs = parts.map(function (p) { var i = p.indexOf(' · '); var pre = i > 0 ? p.slice(0, i) : '', rest = i > 0 ? p.slice(i + 3) : p; var c = rest.match(/^(<span class="dbt-chip"[^>]*>[^<]*<\/span>):\s*([\s\S]+)$/); return { pre: pre, ptxt: pre.replace(/<[^>]+>/g, '').trim(), who: c ? c[1] : '', wtxt: c ? c[1].replace(/<[^>]+>/g, '') : '', st: c ? stOf(c[2]) : '', rest: c ? '' : rest }; });
+    if (!segs.length) return;
+    var dead = {}; segs = segs.filter(function (s) { if (!s.who || !/died/.test(s.st)) return true; if (dead[s.wtxt]) return false; dead[s.wtxt] = 1; return true; }); /* (nobody dies twice) */
+    var groups = [], byPre = {}; segs.forEach(function (s) { var g = byPre[s.ptxt]; if (!g) { g = byPre[s.ptxt] = { pre: s.pre, items: [] }; groups.push(g); } g.items.push(s); });
+    var out = groups.map(function (g) {
+      var by = {}, ord = [], txt = []; g.items.forEach(function (s) { if (s.who) { if (!by[s.st]) { by[s.st] = []; ord.push(s.st); } by[s.st].push(s.who); } else txt.push(s.rest.replace(/^([^:<]+): (\S)/, function (m0, a, b) { return a + ': ' + b.toLowerCase(); })); });
+      var body = ord.map(function (st) { return listOf(by[st]) + ' ' + st; }).concat(txt).join('; ');
+      return (g.pre ? g.pre + ': ' : '') + body;
+    }).join('. ');
+    out = out.replace(/: [Hh]e (enraged|cast|hit)/, ': ' + (boss || 'the boss') + ' $1').replace(/^He (enraged)/, (boss || 'The boss') + ' $1');
+    out = out.replace(/(?: · |: )Ravage:? [Oo]thers hit /, ': Ravage hit ').replace(/(Ravage hit [^·;]+) · ([^;]+ died)/, '$1; $2');
+    out = out.replace(/^(Intermission \d+): Wind (\d+): /, '$1, wind $2: ').replace(/; Wind (\d+): /g, '; wind $1: '); /* ("Intermission 1: Wind 3: Arsyn died" -> "Intermission 1, wind 3: Arsyn died") */
+    if (mech) { var mq = mech.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); out = out.replace(new RegExp(': (?:<span[^>]*>)?' + mq + '(?:</span>)?: '), ': '); } /* (the card's title already names the mechanic) */
+    out = out.replace(/: ([A-Z][\w' ]+): (\d+) players died/g, ': $2 players died to $1').replace(/(^|; )([A-Z][\w' ]+ \d+): alive\b/g, '$1$2 stayed alive'); /* ("Retaliatory Malice: 6 players died" -> "6 players died to Retaliatory Malice") */
+    out = out.replace(/ \(\+(\d+) more\)/g, function (m0, n) { more = more || ' (and ' + n + ' more)'; return ''; });
+    { var gone = {}; out = out.split(/; |\. /).map(function (cl) { var hadChip = /<span class="dbt-chip"/.test(cl); if (!/ died/.test(cl) || !hadChip || / hit </.test(cl)) return cl; var keep = cl.replace(/<span class="dbt-chip"[^>]*>([^<]*)<\/span>(, | and )?/g, function (m0, nm) { if (gone[nm]) return ''; gone[nm] = 1; return m0; }).replace(/(, | and )(\s+died)/, '$2').replace(/:\s*(and |, )/, ': '); return /<span class="dbt-chip"/.test(keep) ? keep : ''; }).filter(Boolean).join('; '); } /* (nobody dies twice in one headline; a line without names stays) */
+    out = out.replace(/((?:<span class="dbt-chip"[^>]*>[^<]*<\/span>, )+)(<span class="dbt-chip"[^>]*>[^<]*<\/span>) died/g, function (m0, a, b) { return a.replace(/, $/, '') + ' and ' + b + ' died'; }); /* ("A, B, C died" -> "A, B and C died") */
+    out = out.replace(/^([^:<]+): ([A-Z][a-z]+(?: [a-z]+){0,2}): ([a-z][^:]*)$/, function (m0, a, lab, rest) { var w = lab.toLowerCase().split(' ')[0].replace(/s$/, ''); return rest.toLowerCase().indexOf(w) >= 0 ? a + ': ' + rest : m0; }); /* ("Dreadmarch #2: Ghost collision: ghosts touched" -> "Dreadmarch #2: ghosts touched") */
+    out = out.replace(/^(Deluge #\d+): [\d, then]+ orbs? popped: /, '$1: '); /* (the orb counts are in the Why and the map) */
+    out = out.replace(/<\/span> '/g, "</span>'"); /* ("Earthday's cyst") */
+    out = out.replace(/(<\/span>):? [Ss]low dispel \(([\d.]+) ?s\)/g, '$1 was dispelled late, after $2 s') /* ("Schooty slow dispel (4.2s)" -> "Schooty was dispelled late, after 4.2 s") */
+      .replace(/^P(\d) → P(\d): [Ss]low P\1 \((\d+:\d{2}): (\d+) s after the last ([^)]+)\)/, 'Phase $1 ran long: the push to phase $2 came at $3, $4 s after the last $5')
+      .replace(/^P(\d) → P(\d): /, 'Phase $1 to phase $2: ')
+      .replace(/: ([A-Z][\w' ]+): (\d+) deaths? after the wipe call/, function (m0, a, n) { return ': ' + n + (n === '1' ? ' player' : ' players') + ' died to ' + a + ' after the wipe call'; })
+      .replace(/: Ghost collision: ghosts touched/, ': ghosts touched');
+    h.innerHTML = out + more;
+  }
+  function dbtCard(c, seen, boss) {
+    if (c.dataset.rwd) { var m0 = ((c.querySelector('.dbt-h b') || {}).textContent || '').trim(); if (m0) seen[m0] = 1; return; } c.dataset.rwd = '1';
+    var h = c.querySelector(':scope > h3'); if (h) headline(h, boss, ((c.querySelector('.dbt-h b') || {}).textContent || '').trim());
     [].forEach.call(c.querySelectorAll('.dbt-two p'), function (p) { if (/ in one hit at \d+%/.test(p.innerHTML)) p.innerHTML = p.innerHTML.replace(/ in one hit at (\d+%)/, ' in one hit, at $1 health'); });
-    [].forEach.call(c.querySelectorAll('.dbt-k'), function (k) {
-      var t = k.textContent.trim().toLowerCase(), p = k.nextElementSibling, box = k.parentElement;
-      if (t === 'why' && p && /^[^.]+ died to [^.]+\.?$/.test(p.textContent.trim()) && c.querySelector('.dbt-dth')) { box.classList.add('rwd-gone'); }
-      if (t === 'cause' && p) { k.textContent = 'How it happened'; p.innerHTML = p.innerHTML.replace(/\s*\((\d{1,2}:\d{2})\)\s*→\s*/, ' at $1, then ').replace(/\s*→\s*/g, ', then '); }
-    });
     [].forEach.call(c.querySelectorAll('p > b'), function (b) { if (b.textContent.trim().toLowerCase() !== 'cause') return; var p = b.parentElement; b.textContent = 'How it happened:'; p.innerHTML = p.innerHTML.replace(/\s*\((\d{1,2}:\d{2})\)\s*→\s*/, ' at $1, then ').replace(/\s*→\s*/g, ', then '); });
+    var head = h ? h.textContent.toLowerCase() : '', mech = ((c.querySelector('.dbt-h b') || {}).textContent || '').trim(), later = mech && mech !== 'Death' && seen[mech];
+    if (mech) seen[mech] = 1;
+    [].forEach.call(c.querySelectorAll('.dbt-k'), function (k) {
+      var t = k.textContent.trim().toLowerCase(), p = k.nextElementSibling, box = k.parentElement; if (!p) return;
+      if (/\bP[1-4]\b/.test(p.innerHTML)) p.innerHTML = p.innerHTML.replace(/(^|[\s(:;,])P([1-4])\b/g, '$1phase $2').replace(/^phase/, 'Phase'); /* ("P1 took 2:51" -> "Phase 1 took 2:51") */
+      var w = p.textContent.replace(/\s+/g, ' ').trim();
+      if (t === 'why' && h && /A non-tank died in it/.test(h.innerHTML)) { var sv = w.match(/^(\S+) stood in /); if (sv) h.innerHTML = h.innerHTML.replace('A non-tank died in it', sv[1] + ' died in it'); } /* (the Sever card names who) */
+      if (t === 'why') { for (var i = 0; i < WHYS.length; i++) if (WHYS[i][0].test(w)) { p.textContent = w.replace(WHYS[i][0], WHYS[i][1]); w = p.textContent; break; }
+        var names = (h ? [].map.call(h.querySelectorAll('.dbt-chip'), function (x) { return x.textContent.trim(); }) : []);
+        var restates = /^[^.]+ died (to|in|with) [^.]+\.?$/i.test(w) || /^\d+ players died to [^.]+\.?$/i.test(w) || /^[^.]{0,30} enraged before it was dealt with\.?$/i.test(w) || (names.length && names.every(function (n) { return w.indexOf(n) >= 0; }) && /died\.?$/.test(w) && w.length < 70);
+        if (restates || !w || later) box.classList.add('rwd-gone'); }
+      if (t === 'next time') { var NX = { 'watch them and move early.': 'Dodge the tornadoes ' + mech + ' sends roaming out from the boss.', 'collide in the air.': 'Point your arrow at another marked player so you collide in the air.', 'hold it near the marker for soul sever and keep it away from other ghosts.': 'Hold your ghost near the marker for Soul Sever, away from other ghosts.' }; var better = NX[w.toLowerCase()]; if (better && mech !== 'Tempest' && /tornado/.test(better)) better = ''; if (better) p.textContent = better; } /* (the clearer of two lines the guides give for the same thing) */
+      if (t === 'next time' && later) box.classList.add('rwd-gone');
+    });
     [].forEach.call(c.querySelectorAll('.dbt-nk'), function (n) { if (n.textContent.trim().length <= 1) n.remove(); });
-    [].forEach.call(c.querySelectorAll('.dbt-two'), function (t) { if (t.querySelector('.rwd-gone')) t.classList.add('rwd-one'); });
+    [].forEach.call(c.querySelectorAll('.dbt-two'), function (t) { var kids = [].filter.call(t.children, function (x) { return !x.classList.contains('rwd-gone'); }); if (!kids.length) t.classList.add('rwd-gone'); else if (kids.length === 1) t.classList.add('rwd-one'); });
   }
   function scan() { document.querySelectorAll('#view section.rck').forEach(function (s) { try { draw(s); } catch (e) { console.warn('checklist', e); } }); document.querySelectorAll('#view section.rpc').forEach(function (c) { try { card(c); } catch (e) { console.warn('player card', e); } });
-    document.querySelectorAll('#view .dbt-big').forEach(function (c) { try { dbtCard(c); } catch (e) { console.warn('timeline card', e); } });
+    var seenM = {}, bossN = ((document.querySelector('.bh-name') || {}).textContent || '').trim(); document.querySelectorAll('#view .dbt-big').forEach(function (c) { try { dbtCard(c, seenM, bossN); } catch (e) { console.warn('timeline card', e); } });
     document.querySelectorAll('#view .ds-r').forEach(function (g) { var t = g.textContent.replace(/\s+/g, ' ').trim(); if (/^The pull at a glance/.test(t) && t.length < 70) g.classList.add('rwd-gone'); }); }
   /* (round 184, Main: the old pieces showed "for a second" on the live site: the swap now runs in a microtask, which comes before the
      browser paints, so the first paint is already the new layout) */
