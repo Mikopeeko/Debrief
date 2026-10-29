@@ -11025,6 +11025,18 @@ html body #view .r236-two .r236-rc { margin-top: 12px; padding-top: 10px; border
 html body #view .r236-two.r236-on > .dbt-add { margin-top: 12px !important; }
 html body #view .r236-two .r236-rc > .dbt-k { margin-top: 0 !important; } /* round 236b: label level with the left one */
 html body #view .r236-two .r236-rc > .dbt-addr.r236-row.r236-row { display: grid !important; grid-template-columns: max-content minmax(0, 1fr) max-content !important; column-gap: 10px !important; align-items: center; } /* round 236d: name, line, tag (no icon slot) */
+/* round 237 (Main relaying the user's "Yes, send it": fix the Home top band): one calm band. Both halves start at the top, the team half
+   stacks (name and rankings, then Difficulty, nothing squeezed), the nights line wraps instead of cutting off, no colour stripe down the
+   character card (the thin grey line between the halves stays), and Mythic / Heroic sit side by side so the card is shorter */
+html body.refine .my-who.my-who { align-items: stretch !important; }
+html body.refine .my-who > .my-team.tm2 { flex-direction: column !important; align-items: flex-start !important; justify-content: flex-start !important; gap: 12px !important; padding: 18px 20px !important; }
+html body.refine .my-who > .my-team.tm2 > .pg-ttl { width: 100%; flex-wrap: wrap !important; }
+html body.refine .my-who > .my-team.tm2 > .pc-diffs { flex: none !important; }
+html body.refine .my-who > .my-team.tm2 .pg-sum { max-width: none !important; white-space: normal !important; overflow: visible !important; }
+html body.refine .my-who > .my-you.yu2::before { display: none !important; }
+html body.refine .my-who > .my-you.yu2 { justify-content: flex-start !important; padding: 18px 20px !important; }
+html body.refine .my-who > .my-you.yu2 > .yu-x { flex-direction: row !important; width: 100%; max-width: 440px; gap: 10px !important; }
+html body.refine .my-who > .my-you.yu2 > .yu-x > * { flex: 1 1 0; min-width: 0; }
 
 </style>
 
