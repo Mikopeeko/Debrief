@@ -10685,6 +10685,17 @@ body.refine .prw-t{border-radius:2px!important;background:rgba(255,255,255,.06)!
 body.refine .prw-t i,body.refine .prw-t i.ok,body.refine .prw-t i.warn{background:#56616c!important;border-radius:2px!important}
 body.refine .prw-t i.bad{background:var(--bad)!important}
 body.refine #view .prw-tr,body.refine #view .prw-tr.dn,body.refine #view .prw-tr.up{background:none!important;border:1px solid currentColor;border-radius:2px!important;padding:0 5px!important;font-weight:600}
+/* round 174 (Oct 28, designer's review 4-5): the front page speaks up. Bigger headline and lead, readable helper lines, bigger sample tiles */
+body.refine .fpn-hero{padding:46px 0 30px!important}
+body.refine .fpn-hero h1{font-size:clamp(40px,5.4vw,68px)!important;line-height:1.02!important;letter-spacing:-.01em}
+body.refine .fpn-hero .fpn-lead{font-size:19px!important;color:#b9c2cb!important;max-width:620px;line-height:1.45}
+body.refine .fpn-hero .fp-k{font-size:14px!important}
+body.refine .fpn-cta .fpn-sub,body.refine .fpn-hero .fpn-alt,body.refine .fpn-hero .fp-note{color:var(--muted)!important;font-size:14.5px!important}
+body.refine .fpn-cta .btn.primary{font-size:17px!important;padding:12px 26px!important;height:auto!important}
+body.refine .fpn-t{padding:14px!important}
+body.refine .fpn-t .fpn-mini{height:104px!important}
+body.refine .fpn-t > b{font-size:18px!important}
+body.refine .fpn-t > span:not(.fpn-mini){font-size:14.5px!important;color:#aab4be!important}
 
 </style>
 
@@ -10735,25 +10746,46 @@ body.refine #view .prw-tr,body.refine #view .prw-tr.dn,body.refine #view .prw-tr
 /*UI*/
 </script>
 <script>/* refined look: one corner size (Design studio round 170) */
-/* refined theme (trial): one corner size everywhere. Anything drawn rounder than 4px is squared to 4px, except small circles (dots, avatars, 50% radii) which stay round. Re-runs after the page redraws. */
+/* refined theme: two finishes the stylesheet can't reach on its own, kept up as the page redraws.
+   1. One corner size: anything drawn rounder than 4px is squared to 4px, except small circles (dots, avatars) which stay round.
+   2. Readable sentences (Oct 28, the designer's review): a line of reading text (6+ words, not a capitals label) under 14px gets 1px bigger, up to 14.5px.
+      Labels, tags and numbers are left alone. Each element is checked once; a class change checks it again. */
 (function () {
   if (!document.body || !document.body.classList.contains('refine')) return;
-  var MAX = 4, t = 0;
+  var MAX = 4, t = 0, seen = new WeakSet(), INL = /^(SPAN|B|STRONG|I|EM|A|SMALL|U|MARK)$/;
+  function grow(e, fs) {
+    if (e.dataset.fsg) return; e.dataset.fsg = '1';
+    var nf = Math.min(14.5, fs + 1) + 'px';
+    e.style.setProperty('font-size', nf, 'important');
+    var kids = e.querySelectorAll('*');
+    for (var j = 0; j < kids.length; j++) {
+      var k = kids[j]; if (!INL.test(k.tagName)) continue;
+      if (Math.abs(parseFloat(getComputedStyle(k).fontSize) - fs) < 0.3) k.style.setProperty('font-size', nf, 'important');
+      seen.add(k);
+    }
+  }
   function fix() {
     var all = document.body.querySelectorAll('*');
     for (var i = 0; i < all.length; i++) {
       var e = all[i];
+      if (seen.has(e)) continue; seen.add(e);
       if (e.namespaceURI !== 'http://www.w3.org/1999/xhtml' || !e.dataset) continue;
-      if (e.dataset.rr) continue;
-      var cs = getComputedStyle(e), tl = cs.borderTopLeftRadius;
-      var r = parseFloat(tl); if (!(r > MAX)) { continue; }
-      var w = e.offsetWidth, h = e.offsetHeight; if (!w) continue;
-      if (Math.abs(w - h) <= 2 && w <= 44) { e.dataset.rr = 'o'; continue; }
-      if (/%/.test(tl) && Math.abs(w - h) <= 2) { e.dataset.rr = 'o'; continue; }
-      e.style.setProperty('border-radius', MAX + 'px', 'important'); e.dataset.rr = '1';
+      var cs = getComputedStyle(e), tl = cs.borderTopLeftRadius, r = parseFloat(tl);
+      if (r > MAX) {
+        var w = e.offsetWidth, h = e.offsetHeight;
+        if (w && !(Math.abs(w - h) <= 2 && (w <= 44 || /%/.test(tl)))) e.style.setProperty('border-radius', MAX + 'px', 'important');
+      }
+      var fs = parseFloat(cs.fontSize);
+      if (fs >= 11.5 && fs < 14 && cs.textTransform !== 'uppercase' && !INL.test(e.tagName) || fs >= 11.5 && fs < 14 && INL.test(e.tagName) && e.parentElement && !INL.test(e.parentElement.tagName) && e.parentElement.childElementCount === 1) {
+        var own = ''; for (var n = e.firstChild; n; n = n.nextSibling) if (n.nodeType === 3) own += n.textContent;
+        if (own.trim().length >= 12 && e.textContent.trim().split(/\s+/).length >= 6 && !e.closest('svg,select,option,button,input,textarea,.tab,.tabs')) grow(e, fs);
+      }
     }
   }
-  function run() { if (t) return; t = setTimeout(function () { t = 0; try { fix(); } catch (e) { console.warn('refine corners', e); } }, 200); }
+  function run(muts) {
+    if (muts) for (var m = 0; m < muts.length; m++) if (muts[m].type === 'attributes') seen.delete(muts[m].target);
+    if (t) return; t = setTimeout(function () { t = 0; try { fix(); } catch (e) { console.warn('refine', e); } }, 200);
+  }
   run(); new MutationObserver(run).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
 })();
 </script>
