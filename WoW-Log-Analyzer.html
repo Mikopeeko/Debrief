@@ -10991,7 +10991,6 @@ html body #view > .r212-sb{order:-10!important} /* (first on the page, ahead of 
 html body.refine #view > .r212-sb > section.dt-box{display:grid!important;width:100%!important}
 html body.refine #view > .r212-sb > section.dt-box .cch-acct2{display:contents!important}
 
-#view .dbr-s .r214-mid { display: block; color: var(--faint, #8a8f98); font-weight: 500; margin-top: 2px; } /* round 214 */
 </style>
 
 
@@ -33282,6 +33281,7 @@ function deathsTile(num, reps) { const L = (reps || []).filter((r) => r && r.ite
   else { const S2 = L.slice().sort((a, b) => a.item.pull - b.item.pull), mx = Math.max(1, ...S2.map((r) => kept.get(r).length)); pic = '<span class="dbr-db" aria-hidden="true">' + S2.map((r) => { const n = kept.get(r).length; return '<i class="' + (n ? '' : 'z') + '" style="height:' + (n ? Math.max(15, Math.round(100 * n / mx)) : 8) + '%" title="' + esc('Pull ' + r.item.pull + ': ' + plural(n, 'death')) + '"></i>'; }).join('') + '</span>'; }
   const fl = one ? (first ? 'First: ' + esc(String(first.player).split('-')[0]) + ' to ' + esc(first.ability || first.killer || 'a hit') + ' at ' + T(first.t) : 'Nobody died') : (ours / L.length).toFixed(1).replace(/\.0$/, '') + ' a pull';
   void say; void pic; void fl; return num('Deaths', '<b>' + ours + '</b>', ''); /* (just the number: the details are below it (your call, Oct 23)) */ /* (just the count, the dots and who died first: no top-kill comparison (your call, Oct 23)) */ }
+/* round 215 percent colour */ const pctCls = (g) => 'dbr-pq ' + (g >= 20 ? 'q-gold' : g > 10 ? 'q-orange' : g >= 0 ? 'q-purple' : g >= -10 ? 'q-blue' : g > -20 ? 'q-green' : 'q-grey');
 const parseOf = (v, list, hiGood) => { const L = (list || []).filter((x) => x != null); if (!L.length) return null; let b = 0; for (const x of L) b += (hiGood ? v > x : v < x) ? 1 : v === x ? 0.5 : 0; return Math.round(100 * b / L.length); };
 const parseCls = (p) => 'dbr-pq ' + (p >= 100 ? 'q-gold' : p >= 99 ? 'q-pink' : p >= 95 ? 'q-orange' : p >= 75 ? 'q-purple' : p >= 50 ? 'q-blue' : p >= 25 ? 'q-green' : 'q-grey');
 /* (one rate tile, single pull and All pulls alike: the number in its parse colour, then where it ranks and the top kills' middle) */
@@ -33290,13 +33290,12 @@ function rateBars(lab, v, list, hiGood, pp) { const L = (list || []).filter((q) 
   const at = (f) => L[Math.min(L.length - 1, Math.max(0, Math.round(f * (L.length - 1))))], top = (f) => (hiGood ? at(1 - f) : at(f));
   const rows = [['Top 10% of kills', top(0.1)], ['Top 25%', top(0.25)], ['Typical kill', at(0.5)], ['Bottom 25%', top(0.75)]].map(([t, val]) => ({ t, val })), p = parseOf(v, list, hiGood), us = { t: pp && pp.length ? 'Us tonight' : 'Us', val: v, us: true };
   const all = rows.concat([us]).sort((a, b) => (hiGood ? b.val - a.val : a.val - b.val)), mx = Math.max(...all.map((r) => r.val)) || 1, mn = Math.min(...all.map((r) => r.val)), lo = Math.max(0, mn - (mx - mn) * 0.6) /* (bars start just below the lowest, so close numbers still look different (Oct 23)) */;
-  const bar = (r) => '<div class="rtb-r' + (r.us ? ' us' : '') + '"><span class="rtb-t">' + esc(r.t) + '</span><span class="rtb-b"><i class="' + (r.us && p != null ? parseCls(p) : '') + '" style="width:' + Math.max(3, 100 * (r.val - lo) / Math.max(1, mx - lo)).toFixed(1) + '%"></i></span><span class="rtb-v">' + C(r.val) + '</span></div>';
-  const strip = pp && pp.length > 1 ? '<div class="rtb-pp"><span class="rtb-t">Each pull</span><span class="rtb-sq">' + pp.map((q) => '<i class="' + (q.p == null ? '' : parseCls(q.p)) + '" title="' + esc('Pull ' + q.n + (q.p == null ? '' : ': better than ' + q.p + '% of the kills')) + '"></i>').join('') + '</span></div>' : '';
+  const bar = (r) => '<div class="rtb-r' + (r.us ? ' us' : '') + '"><span class="rtb-t">' + esc(r.t) + '</span><span class="rtb-b"><i class="' + (r.us && at(0.5) ? pctCls(Math.round(100 * (hiGood ? v / at(0.5) - 1 : 1 - v / at(0.5)))) : '') + '" style="width:' + Math.max(3, 100 * (r.val - lo) / Math.max(1, mx - lo)).toFixed(1) + '%"></i></span><span class="rtb-v">' + C(r.val) + '</span></div>';
+  const strip = pp && pp.length > 1 ? '<div class="rtb-pp"><span class="rtb-t">Each pull</span><span class="rtb-sq">' + pp.map((q) => '<i class="' + (q.p == null ? '' : pctCls(q.p)) + '" title="' + esc('Pull ' + q.n + (q.p == null ? '' : q.p === 0 ? ': even with the typical kill' : ': ' + Math.abs(q.p) + '% ' + (q.p > 0 ? 'better' : 'worse') + ' than the typical kill')) + '"></i>').join('') + '</span></div>' : '';
   return '<div class="panel pcx-p rtb" hidden><p class="rtb-h">' + esc(lab) + ' <span>· ' + (hiGood ? 'higher is better' : 'lower is better') + ' · ' + plural(L.length, 'kill') + '</span></p>' + all.map(bar).join('') + strip + '</div>'; }
 function rateTile(num, lab, v, x, list, hiGood, n, who, pp) { if (x == null) return num(lab, '<b>' + C(v) + '</b>', 'Top kills still loading' /* (Oct 23: until a boss's kills are in; Oct 29: no "a second") */); const p = parseOf(v, list, hiGood), W0 = who || 'top kills';
-  /* round 214 rank words */ const LL = (list || []).filter((q) => q != null), nL = LL.length, beat = LL.filter((q) => (hiGood ? v > q : v < q)).length, verb = /dtps/i.test(lab) ? 'Less damage taken than' : /hps/i.test(lab) ? 'More healing than' : /dps/i.test(lab) ? 'More damage than' : 'Better than';
-  const say = nL ? verb + ' ' + beat + ' of ' + nL + ' top kills' : 'Compared with ' + W0, W1 = (who || 'the typical top kill').replace(/^the /, ''), mid = W1.charAt(0).toUpperCase() + W1.slice(1) + ': ' + C(x);
-  const P0 = rateBars(lab, v, list, hiGood, pp), T0 = num(lab, '<b class="' + (p == null ? '' : parseCls(p)) + '">' + C(v) + '</b>', '<b class="' + (p == null ? '' : parseCls(p)) + '">' + say + '</b><span class="r214-mid">' + esc(mid) + '</span>' + (P0 ? '<span class="pcx-open">Ranks ▾</span>' + P0 : ''));
+  const d0 = Math.round(100 * (v / x - 1)), say = d0 === 0 ? 'Even with ' + W0 : hiGood ? Math.abs(d0) + '% ' + (d0 > 0 ? 'above' : 'below') + ' ' + W0 : Math.abs(d0) + '% ' + (d0 > 0 ? 'higher' : 'lower') + ' than ' + W0, pc = pctCls(hiGood ? d0 : -d0);
+  const P0 = rateBars(lab, v, list, hiGood, pp), T0 = num(lab, '<b class="' + pc + '">' + C(v) + '</b>', '<b class="' + pc + '">' + say + '</b> (' + C(x) + ')' + (n ? ' · ' + plural(n, 'kill') : '') + (P0 ? '<span class="pcx-open">Ranks ▾</span>' + P0 : ''));
   return P0 ? T0.replace('<div class="dbr-n"', '<div class="dbr-n pcx-tile" role="button" tabindex="0" onclick="if(event.target.closest(\'.pcx-p\'))return;var p=this.querySelector(\'.pcx-p\')||this.pcxP;if(p){this.pcxP=p;if(p.previousElementSibling!==this.parentNode)this.parentNode.after(p);p.hidden=!p.hidden;this.classList.toggle(\'on\',!p.hidden)}"') : T0; }
 /* (Oct 23, your call: pulls on a boss across every night against how many pulls most guilds needed for the kill. progstats.io's typical
    pull count on Mythic (the middle half of its recorded kills), read Oct 23; Nymrissa and Kith'ix aren't listed there yet) */
@@ -34358,7 +34357,7 @@ function nightMechC(o) {
       const pk = { dps: [], dtps: [], hps: [] }, pt = { dps: [], dtps: [], hps: [] }, PP = { dps: [], dtps: [], hps: [] }; let nK = 20;
       for (const r of reps) { if (!r || !r.item) continue; let q; try { q = rateNums(r); } catch (e) { continue; } tot.t += q.t; cutAny = cutAny || q.cut; for (const k of ['dps', 'dtps', 'hps']) { tot[k] += q.sum[k]; if (q.exp[k] != null) { ex[k][0] += q.exp[k] * q.t; ex[k][1] += q.t; }
         (q.per[k] || []).forEach((v, i) => { if (v == null) return; nK = q.per[k].length; pk[k][i] = (pk[k][i] || 0) + v * q.t; pt[k][i] = (pt[k][i] || 0) + q.t; });
-        PP[k].push({ n: r.item.pull, p: q.per[k] && q.per[k].length ? parseOf(q.sum[k] / q.t, q.per[k], k !== 'dtps') : null }); } }
+        PP[k].push({ n: r.item.pull, p: q.exp && q.exp[k] ? (k !== 'dtps' ? 1 : -1) * Math.round(100 * (q.sum[k] / q.t / q.exp[k] - 1)) : null }); } }
       for (const k of ['dps', 'dtps', 'hps']) PP[k].sort((a, b) => a.n - b.n);
       if (!tot.t) return '';
       const tile = (k, lab, hiGood) => rateTile(num, lab, tot[k] / tot.t, ex[k][1] ? ex[k][0] / ex[k][1] : null, pk[k].map((v, i) => (pt[k][i] ? v / pt[k][i] : null)), hiGood, nK, (() => { const b0 = reps[0] && reps[0].item ? rateBase(reps[0]) : null; return b0 && b0.live ? (b0.heal ? 'the typical ' + b0.heal + '-healer kill' : 'the typical kill') : ''; })(), PP[k]);
