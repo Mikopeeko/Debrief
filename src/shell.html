@@ -11296,6 +11296,27 @@ html body #view > .dbt.dbt .dbt-nk{background:none!important;border:0!important;
          repeats the row's own result goes.
        - Each time it happened: a moment ("Deluge #1") goes under What happened, not under Who; a player's line doesn't start with their name again. */
     var nt = function (e) { return (e ? e.textContent : '').replace(/\s+/g, ' ').trim(); };
+    /* Round 207 (Oct 29, the user: "#1 yes", "#2 yes the more simple sentences the better"):
+       - Simpler sentences in Why we wiped and on the timeline cards: "Fourinches their ghost touched another ghost (with Kargaryen)" reads
+         "Fourinches's ghost touched Kargaryen's ghost"; "stood in Soul Sever (tank frontal) for 771,882 and picked up its 200% vulnerability"
+         reads "stood in the tank frontal (Soul Sever) and took 771,882 damage".
+       - Why we wiped leads with the worst moment (biggest cause first): when a Serious moment came after a lesser one that "started it",
+         the headline names the Serious one, and the lesser one stays in How it went. Its Why and Next time were about the lesser one, so
+         they step aside. */
+    var CHP = '<span class="dbt-chip"[^>]*>[^<]*<\\/span>';
+    var simp = function (el) { if (!el || el.dataset.r207) return; el.dataset.r207 = '1'; var h0 = el.innerHTML, h1 = h0
+        .replace(new RegExp('(' + CHP + ') their ghost touched another ghost \\(with (' + CHP + ')\\)'), "$1's ghost touched $2's ghost")
+        .replace(new RegExp('(' + CHP + ') their '), "$1's ")
+        .replace(/ stood in ((?:<span[^>]*>)?[^<(]+?(?:<\/span>)?) \(tank frontal\) for ([\d,.]+[KM]?) and picked up its 200% vulnerability\./, ' stood in the tank frontal ($1) and took $2 damage.');
+      if (h1 !== h0) el.innerHTML = h1; };
+    document.querySelectorAll('#view .dbt-why .dbt-chr > span:not(.dbt-cht):not(.dbt-ic), #view .dbt-why h2, #view .dbt-big > h3, #view .dbt-why .dbt-ln > span:last-child').forEach(simp);
+    document.querySelectorAll('#view .dbt-why').forEach(function (w) { if (w.dataset.r207h) return; var h2 = w.querySelector('h2'), rows = [].slice.call(w.querySelectorAll('.dbt-chr')); if (!h2 || !rows.length) return; w.dataset.r207h = '1';
+      var lvOf = function (r) { var m = ((r.querySelector('.dbt-lv') || {}).className || '').match(/\bl(\d)\b/); return m ? +m[1] : 0; }, nt0 = function (e) { return (e ? e.textContent : '').replace(/\s+/g, ' ').trim(); };
+      var head = nt0(h2).replace(/^It started at \d+:\d{2}:\s*/i, '').replace(/\.$/, '').toLowerCase(), first = rows.filter(function (r) { var s = r.querySelector(':scope > span:not(.dbt-cht):not(.dbt-ic)'); return s && head && nt0(s).replace(/\.$/, '').toLowerCase() === head; })[0] || rows[0];
+      var top = rows.filter(function (r) { return lvOf(r) > 0; }).sort(function (a, b) { return lvOf(b) - lvOf(a); })[0]; if (!top || top === first || lvOf(top) <= lvOf(first)) return;
+      var sp = top.querySelector(':scope > span:not(.dbt-cht):not(.dbt-ic)'), tm = (nt0(top.querySelector('.dbt-cht')).match(/\d+:\d{2}/) || [])[0], mech = nt0(top.querySelector(':scope > b')); if (!sp || !tm) return;
+      h2.innerHTML = (mech && !/^death$/i.test(mech) ? mech + ' at ' : 'At ') + tm + ': ' + sp.innerHTML;
+      [].forEach.call(w.querySelectorAll('.dbt-ln'), function (l) { l.classList.add('rwd-gone'); }); });
     document.querySelectorAll('#view .dbt-why').forEach(function (w) { if (w.dataset.r201) return; w.dataset.r201 = '1'; var h = nt(w.querySelector('h2')).replace(/^It started at \d+:\d{2}:\s*/i, '').replace(/[.\s]+$/, '').toLowerCase();
       [].forEach.call(w.querySelectorAll('.dbt-ln'), function (l) { var k = nt(l.firstElementChild).toLowerCase(), v = nt(l.lastElementChild).replace(/[.\s]+$/, '').toLowerCase(); if (k === 'why' && v && (v === h || h.indexOf(v) >= 0 || v.indexOf(h) >= 0)) l.classList.add('rwd-gone'); }); });
     document.querySelectorAll('#view .mxa-h').forEach(function (hd) { if (hd.dataset.r201) return; hd.dataset.r201 = '1'; var b = hd.querySelector(':scope > b'), ins = b && b.querySelector('.sim-i, .rw2-i'); hd.classList.add('r201');
