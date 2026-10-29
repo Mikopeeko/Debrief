@@ -10842,6 +10842,13 @@ html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-ckq:not(.on) .rtv-fl{text-dec
 html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-ckq:not(.on) :is(.rtv-fd,.rtv-fn){opacity:.35}
 html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-ckq:not(.on) .rtv-eye{opacity:.9;color:var(--muted)}
 html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-ckq:not(.on) .rtv-eye .rtv-eyex{display:inline}
+/* round 196: wasted-resource and mana flags, and a faint line across the chart at each mistake */
+.rtv-rsx{position:absolute;z-index:3;margin:-5px 0 0 0;cursor:help;font-family:'Barlow Condensed',sans-serif!important}
+.rtv-rsx.y{color:#f0c46a;border-color:rgba(232,178,58,.6)}
+.rtv-rsb.bad i{background:#ef6b63}
+.rtv-mline{position:absolute;left:0;right:0;height:0;border-top:1px solid rgba(240,114,106,.34);pointer-events:none;z-index:1}
+.rtv-mline.y{border-top-color:rgba(232,178,58,.24)}
+.rtl .rtv.f-minor .rtv-mline.y,.rtl .rtv.f-press .rtv-mline.r{display:none}
 
 </style>
 
