@@ -10788,6 +10788,34 @@ html body.refine #view .ndz-dag,html body.refine #view .ndz-dag.ndz-dagd{border-
 /* Report card roster: the grade is its letter and its number, no bar behind them */
 html body.refine #view .rcb-tr .rcb-g::before{display:none!important}
 html body.refine #view .rcb-tr .rcb-g{background:none!important}
+/* round 186 (Oct 29, the user: "style it to match the debriefing one"): the Rotation timeline's filters look like Debriefing's */
+html body.refine .rtl .rtv-fside{background:linear-gradient(180deg,rgba(255,255,255,.025),transparent 120px),var(--panel,#171a22)!important}
+html body.refine .rtl .rtv-fside:not(.min) .rtv-fsh{height:auto;padding:14px 14px 4px;border-bottom:0;align-items:baseline}
+html body.refine .rtl .rtv-fside:not(.min) .rtv-fsh b{font:800 16px/1 'Barlow Condensed',sans-serif;letter-spacing:0;text-transform:none;color:var(--text)}
+html body.refine .rtl .rtv-fside:not(.min) .rtv-fsh .rtv-fbn{font:600 12px 'Barlow Condensed',sans-serif;color:var(--faint)}
+html body.refine .rtl .rtv-fside .rtv-fhint{padding:0 6px 4px;font:500 12.5px 'Barlow Condensed',sans-serif;color:var(--faint)}
+html body.refine .rtl .rtv-fside .rtv-fsb{padding:0 8px 12px}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-fpg{display:flex;flex-direction:column;gap:1px;padding:12px 0 0}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-fpk{padding:0 6px 5px;color:var(--faint)}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-fq{display:grid;grid-template-columns:20px minmax(0,1fr) auto 16px;gap:9px;align-items:center;height:auto;padding:6px;border-radius:4px;color:var(--text)}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-fq:hover{background:rgba(255,255,255,.045)}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-fq:hover .rtv-eye{color:var(--gold);opacity:1}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-fd{justify-self:center;opacity:1}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-fl{font:600 13.5px 'Barlow Condensed',sans-serif;letter-spacing:.01em}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-fn{font:700 13px 'Barlow Condensed',sans-serif;color:var(--muted)}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-fn.n-r{color:#f0726a}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-fn.n-y{color:#e8a23a}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-fe{display:none}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-eye{width:15px;height:15px;color:var(--faint);opacity:.55}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-eye .rtv-eyex{display:none}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-fq:not(.on){color:var(--faint)}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-fq:not(.on) .rtv-fl{text-decoration:line-through;text-decoration-color:rgba(255,255,255,.3)}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-fq:not(.on) :is(.rtv-fd,.rtv-fn){opacity:.35}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-fq:not(.on) .rtv-eye{opacity:.9;color:var(--muted)}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-fq:not(.on) .rtv-eye .rtv-eyex{display:inline}
+html body.refine .rtl .rtv-fside .rtv-fsf{border-top:0;padding:10px 6px 0}
+html body.refine .rtl .rtv-fside .rtv-fsf .rtv-fpr{font:700 12px 'Barlow Condensed',sans-serif;letter-spacing:.04em;color:var(--gold)}
+html body.refine .rtl .rtv-fside .rtv-fsf .rtv-fpr:hover{text-decoration:underline;color:var(--gold)}
 
 </style>
 
