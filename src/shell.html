@@ -10898,6 +10898,19 @@ html body #view section.cch-night.nsm-on{padding:0!important}
 .nsm-cols.one{grid-template-columns:1fr}
 .nsm-cols .nsm-sec + .nsm-sec{border-left:1px solid var(--line,#222930)}
 @media (max-width:720px){.nsm-top{grid-template-columns:1fr}.nsm-facts div{text-align:left}.nsm-row{grid-template-columns:22px minmax(0,1fr) auto}.nsm-row .nsm-strip{display:none}.nsm-cols{grid-template-columns:1fr}.nsm-cols .nsm-sec + .nsm-sec{border-left:0;border-top:1px solid var(--line,#222930)}}
+/* round 203 (Oct 29, the user: "ok swap it then"): the Debriefing timeline on one left-hand line, every card full width (as on phones), the times in one column */
+html body #view > .dbt.dbt .dbt-tl::before{left:26px!important;margin-left:-1px}
+html body #view > .dbt.dbt .dbt-it{grid-template-columns:52px minmax(0,1fr)!important;column-gap:10px}
+html body #view > .dbt.dbt .dbt-it > .dbt-c,html body #view > .dbt.dbt .dbt-it.R > .dbt-c{grid-column:2!important;justify-self:stretch!important;max-width:none!important}
+html body #view > .dbt.dbt .dbt-it > .dbt-tm{grid-column:1!important}
+html body #view > .dbt.dbt .dbt-st{justify-content:flex-start!important}
+html body #view > .dbt.dbt .dbt-big::after{display:none!important}
+html body #view > .dbt.dbt .dbt-fold{padding-left:62px}
+/* the Done right rows step back so the mistake cards stand out */
+html body #view > .dbt.dbt .dbt-c.dbt-okc{background:rgba(79,191,122,.035)!important;border-color:rgba(79,191,122,.16)!important}
+/* the boss's health only where it changed */
+html body #view > .dbt.dbt .dbt-it > .dbt-tm small.r203-same{display:none!important}
+html body #view > .dbt.dbt .dbt-it > .dbt-c.dbt-big{width:auto!important;max-width:none!important}
 
 </style>
 
@@ -11271,6 +11284,8 @@ html body #view section.cch-night.nsm-on{padding:0!important}
     document.querySelectorAll('#view .mxa-h').forEach(function (hd) { if (hd.dataset.r201) return; hd.dataset.r201 = '1'; var b = hd.querySelector(':scope > b'), ins = b && b.querySelector('.sim-i, .rw2-i'); hd.classList.add('r201');
       if (b && ins) { var tx = nt(ins).replace(/^\(|\)$/g, ''); b.innerHTML = ''; var s0 = document.createElement('span'); s0.className = 'r201-ins'; s0.textContent = tx; b.appendChild(s0); } else if (b) b.classList.add('rwd-gone');
       var fl = hd.querySelector('.mx-fl'); if (fl) fl.classList.add('rwd-gone'); var ic = hd.querySelector(':scope > .icw'); if (ic) ic.classList.add('rwd-gone'); });
+    /* (round 203: the boss's health under a time shows only when it changed since the row before; a new phase starts fresh) */
+    document.querySelectorAll('#view .dbt-tl').forEach(function (tl) { var last = null; [].forEach.call(tl.children, function (k) { if (k.classList.contains('dbt-st') && !k.classList.contains('dbt-fold')) { last = null; return; } var sm = k.querySelector && k.querySelector(':scope > .dbt-tm > small'); if (!sm) return; var v = sm.textContent.trim(); sm.classList.toggle('r203-same', v === last); last = v; }); });
     document.querySelectorAll('#view section.cch-night').forEach(function (s) { try { nightBox(s); } catch (e) { console.warn('night summary', e); } });
     document.querySelectorAll('#view .mx-tb .mx-tr').forEach(function (r) { if (r.dataset.r201) return; r.dataset.r201 = '1'; var who = r.querySelector('.mx-who'), m = r.querySelector('.mx-m'); if (!who || !m) return; var nm = who.querySelector('.nm');
       if (!nm && nt(who)) { var lab = nt(who); m.textContent = lab + (/^done right$/i.test(nt(m)) ? ': done right' : ': ' + nt(m).charAt(0).toLowerCase() + nt(m).slice(1)); who.innerHTML = '<span class="r201-none">Everyone</span>'; return; }
