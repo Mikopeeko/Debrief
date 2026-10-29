@@ -10822,6 +10822,26 @@ html body.refine .rtl .rtv-fside .rtv-fsf .rtv-fpr:hover{text-decoration:underli
 .rtv-rsb.mn i{background:#5aa0ff}
 .rtv-rsb.mn.lo i{background:#e3a94b}
 .rtv-rsb:hover{box-shadow:0 0 0 2px rgba(255,255,255,.12)}
+/* round 192: more Rotation timeline filters (severity chips, by check, cooldowns column, resource, mana) */
+.rtl .rtv.f-sev3 :is(.rtv-mk,.rtv-cd,.rtv-brk).lv3,.rtl .rtv.f-sev2 :is(.rtv-mk,.rtv-cd,.rtv-brk).lv2,.rtl .rtv :is(.rtv-mk,.rtv-cd,.rtv-brk).rtv-off{display:none!important}
+.rtl .rtv.f-sev3 .rtv-c.lv3::before,.rtl .rtv.f-sev2 .rtv-c.lv2::before,.rtl .rtv .rtv-c.rtv-off::before{display:none!important}
+.rtl .rtv.f-sev3 .rtv-c.lv3 :is(img,svg),.rtl .rtv.f-sev2 .rtv-c.lv2 :is(img,svg),.rtl .rtv .rtv-c.rtv-off :is(img,svg){box-shadow:0 0 0 1px rgba(0,0,0,.5),0 2px 4px rgba(0,0,0,.4)!important}
+.rtl .rtv.f-cdcol .rtv-c.big{display:none!important}
+.rtl .rtv.f-res :is(.rtv-hpr,.rtv-rsb:not(.mn)){display:none!important}
+.rtl .rtv.f-mana .rtv-rsb.mn{display:none!important}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-sevr{display:flex;flex-wrap:wrap;gap:2px 14px;padding:0 6px 2px}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-fq.rtv-sevq{display:inline-flex!important;align-items:center;gap:6px;width:auto!important;height:auto;padding:3px 0!important;background:none!important;font:700 12.5px 'Barlow Condensed',sans-serif;color:var(--qc)!important}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-sevq i{width:7px;height:7px;border-radius:1px;background:var(--qc)}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-sevq:not(.on){opacity:.4;text-decoration:line-through}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-ckq{display:grid;grid-template-columns:20px minmax(0,1fr) auto 16px;gap:9px;align-items:center;width:100%;padding:6px;border:0;border-radius:4px;background:none;color:var(--text);text-align:left;cursor:pointer}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-ckq:hover{background:rgba(255,255,255,.045)}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-ckq .rtv-fd{justify-self:center;opacity:1}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-ckq .rtv-fl{font:600 13px 'Barlow Condensed',sans-serif;white-space:normal;line-height:1.2}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-ckq:not(.on){color:var(--faint)}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-ckq:not(.on) .rtv-fl{text-decoration:line-through;text-decoration-color:rgba(255,255,255,.3)}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-ckq:not(.on) :is(.rtv-fd,.rtv-fn){opacity:.35}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-ckq:not(.on) .rtv-eye{opacity:.9;color:var(--muted)}
+html body.refine :is(.rtl .rtv-fside,.rtv-fp) .rtv-ckq:not(.on) .rtv-eye .rtv-eyex{display:inline}
 
 </style>
 
