@@ -11004,6 +11004,12 @@ html body.refine #view .rcb-tr .rcb-g{background:none!important}
   function headline(h, boss, mech) {
     var html = h.innerHTML.trim(), more = '', mm = html.match(/\s*\(\+(\d+) more\)\s*$/); if (mm) { more = ' (and ' + mm[1] + ' more)'; html = html.slice(0, mm.index); }
     html = html.replace(/^For (intermission \d+)/i, function (m0, a) { return a.charAt(0).toUpperCase() + a.slice(1); }); /* ("For intermission 1" -> "Intermission 1") */
+    /* (phase timing lines, read before the headline is split into parts: "P2 → Intermission · Slow P2 (3:37 · top guilds...)") */
+    var SEP = '(?: ·|:)? ';
+    html = html.replace(new RegExp('^P(\\d) → Intermission' + SEP + '[Ss]low P\\1 \\((\\d+:\\d{2})' + SEP + 'top guilds: about (\\d+:\\d{2}), never past \\d+:\\d{2}' + SEP + '(\\d+) shields?, (\\d+) Dreadmarch casts, top guilds: (\\d+) shields?, (\\d+) casts[^)]*\\)'), 'Phase $1 ran long: the intermission came at $2 (top guilds: about $3), after $4 shields and $5 Dreadmarch casts (top guilds: $6 and $7)')
+      .replace(new RegExp('^P(\\d) → P(\\d)' + SEP + '[Ss]low P\\1[^(]*\\((\\d+:\\d{2})[^)]*?(\\d+) s after the last ([^)]+)\\)'), 'Phase $1 ran long: the push to phase $2 came at $3, $4 s after the last $5')
+      .replace(new RegExp('^P(\\d) → (P\\d|[A-Za-z]+)' + SEP + '[Ss]low P\\1[^(]*\\((\\d+:\\d{2})[^)]*\\)'), function (m0, p, nx, t) { return 'Phase ' + p + ' ran long: ' + (/^P\d$/.test(nx) ? 'phase ' + nx.slice(1) : 'the ' + nx.toLowerCase()) + ' came at ' + t; })
+      .replace(new RegExp('^P(\\d) → P(\\d)' + SEP), 'Phase $1 to phase $2: ').replace(new RegExp('^P(\\d) → ([A-Za-z]+)' + SEP), function (m0, p, nx) { return 'Phase ' + p + ' to the ' + nx.toLowerCase() + ': '; });
     var parts = html.split(/\.\s+(?=\S)/).map(function (p) { return p.replace(/\.\s*$/, '').trim(); }).filter(Boolean);
     var segs = parts.map(function (p) { var i = p.indexOf(' · '); var pre = i > 0 ? p.slice(0, i) : '', rest = i > 0 ? p.slice(i + 3) : p; var c = rest.match(/^(<span class="dbt-chip"[^>]*>[^<]*<\/span>):\s*([\s\S]+)$/); return { pre: pre, ptxt: pre.replace(/<[^>]+>/g, '').trim(), who: c ? c[1] : '', wtxt: c ? c[1].replace(/<[^>]+>/g, '') : '', st: c ? stOf(c[2]) : '', rest: c ? '' : rest }; });
     if (!segs.length) return;
@@ -11019,36 +11025,91 @@ html body.refine #view .rcb-tr .rcb-g{background:none!important}
     out = out.replace(/^(Intermission \d+): Wind (\d+): /, '$1, wind $2: ').replace(/; Wind (\d+): /g, '; wind $1: '); /* ("Intermission 1: Wind 3: Arsyn died" -> "Intermission 1, wind 3: Arsyn died") */
     if (mech) { var mq = mech.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); out = out.replace(new RegExp(': (?:<span[^>]*>)?' + mq + '(?:</span>)?: '), ': '); } /* (the card's title already names the mechanic) */
     out = out.replace(/: ([A-Z][\w' ]+): (\d+) players died/g, ': $2 players died to $1').replace(/(^|; )([A-Z][\w' ]+ \d+): alive\b/g, '$1$2 stayed alive'); /* ("Retaliatory Malice: 6 players died" -> "6 players died to Retaliatory Malice") */
-    out = out.replace(/ \(\+(\d+) more\)/g, function (m0, n) { more = more || ' (and ' + n + ' more)'; return ''; });
+    out = out.replace(/ ?(?:<span>)?\(\+(\d+) more\)(?:<\/span>)?/g, function (m0, n) { more = more || ' (and ' + n + ' more)'; return ''; });
     { var gone = {}; out = out.split(/; |\. /).map(function (cl) { var hadChip = /<span class="dbt-chip"/.test(cl); if (!/ died/.test(cl) || !hadChip || / hit </.test(cl)) return cl; var keep = cl.replace(/<span class="dbt-chip"[^>]*>([^<]*)<\/span>(, | and )?/g, function (m0, nm) { if (gone[nm]) return ''; gone[nm] = 1; return m0; }).replace(/(, | and )(\s+died)/, '$2').replace(/:\s*(and |, )/, ': '); return /<span class="dbt-chip"/.test(keep) ? keep : ''; }).filter(Boolean).join('; '); } /* (nobody dies twice in one headline; a line without names stays) */
     out = out.replace(/((?:<span class="dbt-chip"[^>]*>[^<]*<\/span>, )+)(<span class="dbt-chip"[^>]*>[^<]*<\/span>) died/g, function (m0, a, b) { return a.replace(/, $/, '') + ' and ' + b + ' died'; }); /* ("A, B, C died" -> "A, B and C died") */
     out = out.replace(/^([^:<]+): ([A-Z][a-z]+(?: [a-z]+){0,2}): ([a-z][^:]*)$/, function (m0, a, lab, rest) { var w = lab.toLowerCase().split(' ')[0].replace(/s$/, ''); return rest.toLowerCase().indexOf(w) >= 0 ? a + ': ' + rest : m0; }); /* ("Dreadmarch #2: Ghost collision: ghosts touched" -> "Dreadmarch #2: ghosts touched") */
     out = out.replace(/^(Deluge #\d+): [\d, then]+ orbs? popped: /, '$1: '); /* (the orb counts are in the Why and the map) */
     out = out.replace(/<\/span> '/g, "</span>'"); /* ("Earthday's cyst") */
     out = out.replace(/(<\/span>):? [Ss]low dispel \(([\d.]+) ?s\)/g, '$1 was dispelled late, after $2 s') /* ("Schooty slow dispel (4.2s)" -> "Schooty was dispelled late, after 4.2 s") */
-      .replace(/^P(\d) → P(\d): [Ss]low P\1 \((\d+:\d{2}): (\d+) s after the last ([^)]+)\)/, 'Phase $1 ran long: the push to phase $2 came at $3, $4 s after the last $5')
-      .replace(/^P(\d) → P(\d): /, 'Phase $1 to phase $2: ')
       .replace(/: ([A-Z][\w' ]+): (\d+) deaths? after the wipe call/, function (m0, a, n) { return ': ' + n + (n === '1' ? ' player' : ' players') + ' died to ' + a + ' after the wipe call'; })
-      .replace(/: Ghost collision: ghosts touched/, ': ghosts touched');
+      .replace(/: Ghost collision: ghosts touched/, ': ghosts touched')
+      /* (Twin Fangs, Coiled Altar and the dispel lines: a table's column names read as words, Oct 29 audit) */
+      .replace(/ (never|not) dispelled \(ran the full ([\d.]+) ?s\)/g, ' $1 dispelled (it ran the full $2 s)').replace(/ not dispelled \(gone after ([\d.]+) ?s\)/g, ' not dispelled (it was gone after $1 s)')
+      .replace(/(<\/span>) (never|not) dispelled/g, function (m0, a, w) { return a + ' was ' + w + ' dispelled'; }).replace(/(<\/span>) and (<span class="dbt-chip"[^>]*>[^<]*<\/span>) was (never|not) dispelled/g, '$1 and $2 were $3 dispelled')
+      .replace(/: Retaliatory Malice: ((?:<span class="dbt-chip"[^>]*>[^<]*<\/span> \d+:\d{2}(?:, )?)+) died/, function (m0, l) { var a = l.split(/, (?=<span)/).map(function (x) { return x.replace(/(<\/span>) (\d+:\d{2})/, '$1 ($2)'); }); return ': Retaliatory Malice killed ' + listOf(a); })
+      .replace(/: (?:<span[^>]*>)?Globule(?:<\/span>)? (\d+): barrier up ([\d.]+ s)/, ', globule $1: the barrier stayed up $2')
+      .replace(/: Exploded unsoaked: [Rr]isky soaks (\d+) players hit, \+1 ([^;.]+) each/, ': a globule exploded unsoaked: $1 players hit, +1 $2 each')
+      .replace(/(<\/span>) (\d+) globules · [Rr]isky soaks (\d+) stacks, extra globule · died/, '$1 soaked $2 globules, an extra one at $3 stacks, and died').replace(/[Rr]isky soaks (\d+) stacks, extra globule/g, 'an extra globule at $1 stacks')
+      .replace(/: ((?:<span[^>]*>)?[A-Z][\w' ]+(?:<\/span>)?): got off/, ': nobody kicked $1')
+      .replace(/: (?:<span[^>]*>)?Globule(?:<\/span>)? (\d+): [Rr]an into it (<span class="dbt-chip"[^>]*>[^<]*<\/span>)/, ', globule $1: $2 ran into the barrier')
+      .replace(/ · [Rr]an into it (<span class="dbt-chip"[^>]*>[^<]*<\/span>)/g, ', and $1 ran into it')
+      .replace(/(<\/span>) (\d+) barbed bulwark hits?/gi, function (m0, a, n) { return a + ' ran into a Barbed Bulwark' + (n === '1' ? '' : ' ' + n + ' times'); })
+      .replace(/(: |; )Exploded unsoaked: [Rr]isky soaks (\d+) players hit, \+1 ([^;.(]+) each/g, '$1a globule exploded unsoaked: $2 players hit, +1 $3 each')
+      .replace(/(: |; )Spawn (\d+), spit \d+: (<span class="dbt-chip"[^>]*>[^<]*<\/span>) hit by (<span class="dbt-chip"[^>]*>[^<]*<\/span>)'s beam/g, function (m0, s, n, a, b) { return (s === ': ' ? ', ' : s) + 'spawn ' + n + ': ' + b + '\'s beam hit ' + a; })
+      .replace(/(: |; )Spawn (\d+), spit (\d+): add lived too long/g, function (m0, s, n, k) { return (s === ': ' ? ', ' : s) + 'spawn ' + n + ': the add lived ' + (k === '1' ? 'too long' : 'to its ' + ({ 2: 'second', 3: 'third', 4: 'fourth' }[k] || k + 'th') + ' spit'); })
+      .replace(/^(Feast \d+): Strike (\d+): /, '$1, strike $2: ');
+    /* (the other bosses, Oct 29 audit: the same column-name lines on Explorers, Nek'zali, Vashnik, Sentinels and Nymrissa) */
+    var CH = '<span class="dbt-chip"[^>]*>[^<]*<\\/span>', chips = function (s) { return s.match(new RegExp(CH, 'g')) || []; };
+    if (mech === 'Frost Burst') out = out.split('; ').map(function (cl) { /* ("Volkovod Kargaryen, Larryg and Schooty died" = Volkovod soaked the orb, the others died) */
+      var m = cl.match(new RegExp('^((?:[^<]*?: )?)((?:' + CH + '(?:, )?)+?)(?:: | )(' + CH + '[\\s\\S]*?) died([\\s\\S]*)$')); if (!m) return cl.replace(/(<\/span>)\s{2,}died/, '$1 died');
+      var so = chips(m[2]); return m[1] + (so.length === 1 ? so[0] + '\'s orb' : 'the orb ' + listOf(so) + ' soaked') + ' killed ' + listOf(chips(m[3])) + m[4]; }).join('; ');
+    out = out.replace(new RegExp('((?:' + CH + ' ran out · (?:<span[^>]*>)?Cultivated Burst(?:</span>)? after a wrong bump, died \\([^)]*\\)(?:; )?\\s*)+)'), function (m0) { return listOf(chips(m0)) + ' took Cultivated Burst after a wrong bump and died'; })
+      .replace(new RegExp('(' + CH + ') took ([\\d.]+ s) · (?:<span[^>]*>)?Eruption(?:</span>)? erupted with ((?:' + CH + '(?:, )?)+) and died'), function (m0, a, t, l) { return a + ' took ' + t + ' to clear it, then it erupted on ' + listOf(chips(l)) + ', and ' + a + ' died'; })
+      .replace(new RegExp('^(' + CH + ') in the path: (' + CH + ')'), '$2 stood between ' + (boss || 'the boss') + ' and $1')
+      .replace(new RegExp('(' + CH + ') (\\d+) players? hit by the Blast Wave'), function (m0, a, n) { return a + '\'s bomb hit ' + n + (n === '1' ? ' player' : ' players') + ' with its Blast Wave'; })
+      .replace(/(<\/span>) puddle (\d+) yd from the well/, "$1's puddle landed $2 yards from the well")
+      .replace(/(<\/span>) (\d+) Swirling Spirit hits?/g, function (m0, a, n) { return a + ' was hit by ' + (n === '1' ? 'a Swirling Spirit' : n + ' Swirling Spirits'); })
+      .replace(/(^|: )(Amani|Box|Add|Totem|Orb) (\d+): (reached|ruptured|not killed)/g, function (m0, s, a, n, v) { return s + (s && a !== 'Amani' ? a.toLowerCase() : a) + ' ' + n + ' ' + (v === 'not killed' ? 'was not killed' : v); })
+      .replace(/^((?:<span[^>]*>)?United Defense(?:<\/span>)?): [Uu]p for/, '$1 was up for')
+      .replace(/ died with it/g, ' died').replace(/ ; /g, '; ').replace(/: ([Ww])ent off/g, ' went off')
+      .replace(/: ((?:<span[^>]*>)?[A-Z][\w' ]+(?:<\/span>)?): Got off/, ': nobody kicked $1')
+      .replace(/\((P)(\d)\)/g, '(phase $2)').replace(/\(Set (\d+)\)/g, '(set $1)')
+      .replace(/: Going in: (\d+) players with /, ': $1 players went in with ').replace(/: Going in: (?=<span class="dbt-chip")/, ': ')
+      .replace(/: Corpses back: (\d+) at once/, ': $1 corpses came back at once').replace(/ · Who (\d+) deaths/, '; $1 players died')
+      .replace(/^(Invoke \d+): (\d+) players interrupted/, '$1 interrupted $2 players')
+      .replace(/(\d+) (biles?) unsoaked/, function (m0, n, b) { return n + ' ' + b + ' landed with nobody under ' + (n === '1' ? 'it' : 'them'); })
+      /* (the user, Oct 29: "for things that die too slow it needs to be clear that was the issue": a slow kill says so first) */
+      .replace(/: ([A-Z][\w ]+ \d+): killed after (\d+) s · hardened \(over 60 s\)/, ': $1 was killed too slowly: it lived $2 s and hardened (kill it within 60 s)')
+      .replace(/: ([A-Z][\w ]+ \d+): killed after (\d+) s(?= ·|;|$)/, ': $1 was killed too slowly ($2 s)')
+      .replace(/[Ss]oakers (\d+) \((\d+) needed\)/, function (m0, n, k) { return (n === '0' ? 'nobody soaked' : 'only ' + n + ' soaked') + ' (at least ' + k + ' needed)'; })
+      .replace(/: Within 40 yards: [Gg]ap 99% less damage taken \(for about ([\d.]+ s) in all\)/, ': within 40 yards of each other for about $1 in all, so they took 99% less damage')
+      .replace(/: Erupted on the raid: (\d+) players hit died/, ': they erupted on the raid, hitting $1 players')
+      .replace(/: Raid cooldowns none: /, ': no raid cooldown; ')
+      .replace(/: Frostscale (\d+): dead (\d+) s after it came/g, ', Frostscale $1 was killed too slowly: it lived $2 s (top raids: 20 to 25 s)')
+      .replace(/: ([A-Z][\w ]+?) (\d+): dead (\d+) s after it came/g, ': $1 $2 was killed too slowly: it lived $3 s')
+      .replace(/the add lived (too long|to its \w+ spit)/g, function (m0, w) { return 'the add was killed too slowly' + (w === 'too long' ? '' : ': it lived ' + w.replace(/^to /, 'to ')); })
+      .replace(new RegExp('(' + CH + ') died; (' + CH + ') died', 'g'), '$1 and $2 died');
+    if (mech === 'Shifting Protovenom') out = out.replace(/(<\/span>) took ([\d.]+ s)(?=$|;)/g, '$1 took $2 to clear it');
+    if (mech === 'Pace') out = out.replace(/^([A-Z][a-z]+ \d+): (\S+) at (\d+%)$/, '$1: $2 was still at $3').replace(/^([A-Z][a-z]+ \d+): up to (\d+%)/, '$1: still at $2 health');
+    out = out.replace(new RegExp('(' + CH + ') (?=<span class="dbt-chip")', 'g'), '$1, ').replace(/(<\/span>)\s{2,}/g, '$1 ').replace(/ {2,}/g, ' '); /* ("Earthday Arsyn died" -> "Earthday and Arsyn died") */
+    out = out.replace(new RegExp('((?:' + CH + ', )+)(' + CH + ') (died|were)', 'g'), function (m0, a, b, v) { return a.replace(/, $/, '') + ' and ' + b + ' ' + v; });
     h.innerHTML = out + more;
   }
   function dbtCard(c, seen, boss) {
     if (c.dataset.rwd) { var m0 = ((c.querySelector('.dbt-h b') || {}).textContent || '').trim(); if (m0) seen[m0] = 1; return; } c.dataset.rwd = '1';
     var h = c.querySelector(':scope > h3'); if (h) headline(h, boss, ((c.querySelector('.dbt-h b') || {}).textContent || '').trim());
+    if (h && !h.querySelector('.dbt-chip') && /Gravebound death|clip: [Hh]it by another/.test(h.textContent)) { /* (these lines named nobody: take the name from the card's death box) */
+      var who = ''; [].some.call(c.querySelectorAll('.dbt-k'), function (k) { var m = k.textContent.match(/([^\s☠]+)\s+killed by/i); if (m) who = m[1]; return !!who; });
+      if (!who) { var wm = c.textContent.match(/(\S+) got clipped by/); if (wm) who = wm[1]; }
+      who = who || 'A player';
+      h.innerHTML = h.innerHTML.replace(/: Gravebound death: missed their soul fragments and died/, ': ' + who + ' missed their soul fragments and died')
+        .replace(/: ((?:<span[^>]*>)?Gloombomb(?:<\/span>)?) clip: [Hh]it by another ((?:<span[^>]*>)?Gloombomb(?:<\/span>)?), died/, ': ' + who + ' was hit by another player\'s $2 and died'); }
     [].forEach.call(c.querySelectorAll('.dbt-two p'), function (p) { if (/ in one hit at \d+%/.test(p.innerHTML)) p.innerHTML = p.innerHTML.replace(/ in one hit at (\d+%)/, ' in one hit, at $1 health'); });
     [].forEach.call(c.querySelectorAll('p > b'), function (b) { if (b.textContent.trim().toLowerCase() !== 'cause') return; var p = b.parentElement; b.textContent = 'How it happened:'; p.innerHTML = p.innerHTML.replace(/\s*\((\d{1,2}:\d{2})\)\s*→\s*/, ' at $1, then ').replace(/\s*→\s*/g, ', then '); });
     var head = h ? h.textContent.toLowerCase() : '', mech = ((c.querySelector('.dbt-h b') || {}).textContent || '').trim(), later = mech && mech !== 'Death' && seen[mech];
     if (mech) seen[mech] = 1;
     [].forEach.call(c.querySelectorAll('.dbt-k'), function (k) {
       var t = k.textContent.trim().toLowerCase(), p = k.nextElementSibling, box = k.parentElement; if (!p) return;
+      if (t === 'why') p.innerHTML = p.innerHTML.replace(/^((?:<span[^>]*>)?[^\s<]+(?:<\/span>)?) hit by /, '$1 was hit by ').replace(/^(\d+) players was hit/, '$1 players were hit').replace(/, so got interrupted/, ', so they got interrupted'); /* (plain grammar) */
       if (/\bP[1-4]\b/.test(p.innerHTML)) p.innerHTML = p.innerHTML.replace(/(^|[\s(:;,])P([1-4])\b/g, '$1phase $2').replace(/^phase/, 'Phase'); /* ("P1 took 2:51" -> "Phase 1 took 2:51") */
       var w = p.textContent.replace(/\s+/g, ' ').trim();
       if (t === 'why' && h && /A non-tank died in it/.test(h.innerHTML)) { var sv = w.match(/^(\S+) stood in /); if (sv) h.innerHTML = h.innerHTML.replace('A non-tank died in it', sv[1] + ' died in it'); } /* (the Sever card names who) */
       if (t === 'why') { for (var i = 0; i < WHYS.length; i++) if (WHYS[i][0].test(w)) { p.textContent = w.replace(WHYS[i][0], WHYS[i][1]); w = p.textContent; break; }
         var names = (h ? [].map.call(h.querySelectorAll('.dbt-chip'), function (x) { return x.textContent.trim(); }) : []);
-        var restates = /^[^.]+ died (to|in|with) [^.]+\.?$/i.test(w) || /^\d+ players died to [^.]+\.?$/i.test(w) || /^[^.]{0,30} enraged before it was dealt with\.?$/i.test(w) || (names.length && names.every(function (n) { return w.indexOf(n) >= 0; }) && /died\.?$/.test(w) && w.length < 70);
+        var restates = /^[^.]+ died (to|in|with) [^.]+\.?$/i.test(w) || /^\d+ players died to [^.]+\.?$/i.test(w) || /^[^.]{0,30} enraged before it was dealt with\.?$/i.test(w) || /^Nobody kicked [^.]+ in time\.?$/i.test(w) || /^\d+ players? (was|were) hit by the Blast Wave\.?$/i.test(w) || /^[A-Z][\w ]+ got [^.]+ off\.?$/.test(w) || /^The barrier stayed up [\d.]+ s before it broke\.?$/i.test(w) || (names.length && names.every(function (n) { return w.indexOf(n) >= 0; }) && /died\.?$/.test(w) && w.length < 70);
         if (restates || !w || later) box.classList.add('rwd-gone'); }
-      if (t === 'next time') { var NX = { 'watch them and move early.': 'Dodge the tornadoes ' + mech + ' sends roaming out from the boss.', 'collide in the air.': 'Point your arrow at another marked player so you collide in the air.', 'hold it near the marker for soul sever and keep it away from other ghosts.': 'Hold your ghost near the marker for Soul Sever, away from other ghosts.' }; var better = NX[w.toLowerCase()]; if (better && mech !== 'Tempest' && /tornado/.test(better)) better = ''; if (better) p.textContent = better; } /* (the clearer of two lines the guides give for the same thing) */
+      if (t === 'next time') { var NX = { 'watch them and move early.': 'Dodge the tornadoes ' + mech + ' sends roaming out from the boss.', 'collide in the air.': 'Point your arrow at another marked player so you collide in the air.', 'hold it near the marker for soul sever and keep it away from other ghosts.': 'Hold your ghost near the marker for Soul Sever, away from other ghosts.', 'pop early.': 'Pop each box before it ruptures.', 'clear circles in pairs.': 'Clear the circles in pairs, quickly.' }; var better = NX[w.toLowerCase()]; if (better && mech !== 'Tempest' && /tornado/.test(better)) better = ''; if (better) p.textContent = better; } /* (the clearer of two lines the guides give for the same thing) */
       if (t === 'next time' && later) box.classList.add('rwd-gone');
     });
     [].forEach.call(c.querySelectorAll('.dbt-nk'), function (n) { if (n.textContent.trim().length <= 1) n.remove(); });
