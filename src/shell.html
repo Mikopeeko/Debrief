@@ -10998,6 +10998,8 @@ html body.refine #view > .r212-sb details.cch-ab > summary { cursor: default; } 
 /* round 222: Raid DPS, DTPS and HPS stack: label, the parse (big, in its colour), the amount under it; single pull and All pulls alike */
 html body #view .dbr-4 > .dbr-n[data-r217].dbr-n.dbr-n { grid-template-columns: minmax(0, 1fr) !important; grid-template-areas: "k" "v" "s" !important; row-gap: 2px; }
 html body #view .dbr-4 > .dbr-n[data-r217] > .dbr-s .r222-amt { color: var(--muted, #aab0b8); font-weight: 600; }
+/* round 223: the top row gets the same thin dividers as the bottom row */
+html body.refine #view > .r212-sb .dbr-4 > .dbr-n:not(:first-child) { box-shadow: inset 1px 0 0 var(--line,#222930) !important; padding-left: 18px !important; }
 
 </style>
 
