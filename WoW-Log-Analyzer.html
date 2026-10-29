@@ -21036,6 +21036,7 @@ const PATCH_NOTES = [
     "Innervate on Balance, Feral and Guardian: once a pull on a healer is the goal, and a pull without it is a small miss.",
     "Debriefing: slow kills say so first (\"was killed too slowly: it lived 29 s\"), and the timeline headlines read as plain sentences on every boss.",
   ], f: [
+    'Augment runes never count against you anywhere: no red "No augment rune", no points off Ready to raid, and never a first fix. Using one shows as a bonus.',
     "Rotation timeline: both Infusion of Light charges get their ★ on Flash of Light (only the second one did), and any proc that stacks works the same way.",
     "Rotation: \"Always be casting\" no longer counts a channel (Divine Hymn, Penance, Tranquility, Mind Flay, a channelled trinket ...) or an Evoker's charge-up as time spent not casting.",
     "Healing cooldowns are judged at their own moment: Revival, Restoral and Rewind right after heavy damage, Tranquility and Divine Hymn as it lands, Barrier, Aura Mastery and Spirit Link just before.",
@@ -34922,7 +34923,7 @@ function prepChips(x) {
     // (food and the augment rune by quality, as the Report card grades them: Hearty food stays through a death; the current rune is Ethereal)
     c(!x.food ? 'bad' : /hearty/i.test(x.food.name || '') ? 'ok' : 'warn', PL_ICON.food, !x.food ? 'No food' : /hearty/i.test(x.food.name || '') ? 'Hearty food' : 'Plain food', x.food && !/hearty/i.test(x.food.name || '') ? 'Hearty food stays through a death' : '') +
     c(x.temp ? (x.temp[2] === 1 && x.temp[1] === 1 ? 'warn' : 'ok') : 'bad', PL_ICON.oil, x.temp ? esc(x.temp[0]) + (x.temp[2] === 1 && x.temp[1] === 1 ? ' (rank 1)' : '') : 'No weapon oil') +
-    c(!x.rune ? 'bad' : /ethereal|^void-touched$/i.test(x.rune.name || '') ? 'ok' : 'warn', PL_ICON.rune, !x.rune ? 'No augment rune' : /ethereal|^void-touched$/i.test(x.rune.name || '') ? 'Augment rune' : 'Older augment rune', x.rune ? x.rune.name : '') + '</div>';
+    (x.rune ? c('ok', PL_ICON.rune, 'Augment rune (bonus)', x.rune.name) : '') + '</div>'; /* (a bonus when used, nothing shown without one (Oct 29)) */
 }
 function survLines(s) {
   return ckLine(s.expect ? (s.used >= s.expect ? 'ok' : s.used ? 'warn' : 'bad') : 'na', s.expect ? 'Combat or mana potion: ' + s.used + ' of ' + s.expect + (s.pre ? ' (' + (s.pre === true || s.pre === 1 ? 'pre-pot' : s.pre + ' pre-pots') + ')' : '') : 'Combat or mana potion: not judged (under 20 s alive)') +
@@ -46181,15 +46182,15 @@ function readyScore(x) {
 }
 // Prep for the Report card grade (your ask, Oct 19: "everything, low quality against high quality"), 0 to 100 at the pull:
 // flask 25 (its rank isn't in the log: every rank of a flask has the same buff), food 20 (Hearty, which stays through a
-// death, in full; plain Well Fed 17), weapon oil or stone 15 (rank 1: 10), augment rune 5 (the current Ethereal one in
-// full, an older one 2), enchants 25 shared between the enchantable slots (rank 1 half, missing none), gem sockets 10
+// death, in full; plain Well Fed 17), weapon oil or stone 15 (rank 1: 10), (an augment rune is a bonus and
+// never costs anything), enchants 25 shared between the enchantable slots (rank 1 half, missing none), gem sockets 10
 // (5 off each empty one), and 15 off for each empty gear slot. items: what cost points, with how many.
 function prepScore(x) {
   const items = [], lose = (t, n) => { if (n > 0) items.push({ t, n }); };
   lose('No flask', x.flask ? 0 : 25);
   const hearty = x.food && /hearty/i.test(x.food.name || ''); lose(x.food ? 'Plain food (Hearty food stays through a death)' : 'No food buff', x.food ? (hearty ? 0 : 3) : 20);
   const r1Oil = x.temp && x.temp[2] === 1 && x.temp[1] === 1; lose(x.temp ? (r1Oil ? x.temp[0] + ' is rank 1' : '') : 'No weapon oil or stone', x.temp ? (r1Oil ? 5 : 0) : 15);
-  const newRune = x.rune && /ethereal|^void-touched$/i.test(x.rune.name || ''); lose(x.rune ? (newRune ? '' : 'An older augment rune (' + x.rune.name + ')') : 'No augment rune', x.rune ? (newRune ? 0 : 3) : 5);
+  // (augment runes are a bonus, never a miss (Oct 29, "augment runes should not count against ranking anywhere on my site"): none costs nothing)
   const en = [...x.ench.entries()], each = en.length ? 25 / en.length : 0, slotN = new Map(ENCHANT_SLOTS);
   for (const [i, e] of en) { if (!e) lose('No ' + String(slotN.get(i) || 'gear').toLowerCase() + ' enchant', each); else if (e.rank === 1) lose((slotN.get(i) || 'An') + ' enchant is rank 1', each / 2); }
   if (x.emptySockets) lose(plural(x.emptySockets, 'empty gem socket'), Math.min(10, 5 * x.emptySockets));
@@ -47461,7 +47462,8 @@ function rqcOf(c, F, a) {
   const add = (sec, s, l, rule, v, tt) => { const o = { s, l, rule, v, tt: tt || '' }; rows[sec].push(o); return o; }; /* (o.f: the share done right, drawn as a bar) */
   // ready to raid: each buff at every pull, and the gear at the last pull
   const xs = a.per.map((g) => g.x).filter(Boolean), cnt = (f) => xs.filter(f).length, pull = (k, of) => (k === of ? 'ok' : of - k <= Math.max(1, Math.floor(of / 10)) ? 'w' : 'bad');
-  if (xs.length) { for (const [l, f] of [['Flask', (x) => x.flask], ['Food', (x) => x.food], ['Weapon oil or stone', (x) => x.temp], ['Augment rune', (x) => x.rune]]) { const k = cnt(f); add('prep', pull(k, xs.length), l, 'every pull', k + ' of ' + xs.length).f = k / xs.length; }
+  if (xs.length) { for (const [l, f] of [['Flask', (x) => x.flask], ['Food', (x) => x.food], ['Weapon oil or stone', (x) => x.temp]]) { const k = cnt(f); add('prep', pull(k, xs.length), l, 'every pull', k + ' of ' + xs.length).f = k / xs.length; }
+    { const k = cnt((x) => x.rune); if (k) { const xr = add('prep', 'ok', 'Augment rune', 'optional: a bonus when you use one, never a miss', k + ' of ' + xs.length); xr.bonus = true; xr.f = 1; } } /* (augment runes: a bonus only (Oct 29)) */
     const x = xs[xs.length - 1], en = [...(x.ench ? x.ench.values() : [])], miss = en.filter((e) => !e).length, low = en.filter((e) => e && e.rank === 1).length;
     if (en.length) add('prep', miss ? 'bad' : low ? 'w' : 'ok', 'Enchants', 'every slot, top rank', (en.length - miss) + ' of ' + en.length + (low ? ' (' + low + ' rank 1)' : '')).f = (en.length - miss) / en.length;
     add('prep', x.emptySockets ? 'bad' : 'ok', 'Gems', 'every socket filled', x.emptySockets ? plural(x.emptySockets, 'empty socket') : 'all');
