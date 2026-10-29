@@ -10928,6 +10928,9 @@ html body #view > .dbt.dbt .dbt-st.cut > span{border-color:rgba(239,107,99,.4)!i
 html body #view > .dbt.dbt .dbt-it:has(> .dbt-big){margin:12px 0}
 /* 5. job tags (Pop, Defensive, Dispel) as plain small grey text */
 html body #view > .dbt.dbt .dbt-nk{background:none!important;border:0!important;padding:0 0 0 2px!important;color:var(--faint)!important;font:600 11px 'Barlow Condensed',sans-serif!important;letter-spacing:.04em!important}
+/* round 208: Why we wiped, the whole pull in one line, then how it started, smaller */
+html body #view .dbt-why .r208-sub{margin:4px 0 0;font:500 14.5px 'Barlow Condensed',sans-serif;color:var(--muted)}
+html body #view .dbt-why .r208-sub .dbt-chip{font-weight:600}
 
 </style>
 
@@ -59347,11 +59350,20 @@ function dsGuides() {
     document.querySelectorAll('#view .dbt-why .dbt-chr > span:not(.dbt-cht):not(.dbt-ic), #view .dbt-why h2, #view .dbt-big > h3, #view .dbt-why .dbt-ln > span:last-child').forEach(simp);
     document.querySelectorAll('#view .dbt-why').forEach(function (w) { if (w.dataset.r207h) return; var h2 = w.querySelector('h2'), rows = [].slice.call(w.querySelectorAll('.dbt-chr')); if (!h2 || !rows.length) return; w.dataset.r207h = '1';
       var lvOf = function (r) { var m = ((r.querySelector('.dbt-lv') || {}).className || '').match(/\bl(\d)\b/); return m ? +m[1] : 0; }, nt0 = function (e) { return (e ? e.textContent : '').replace(/\s+/g, ' ').trim(); };
-      var head = nt0(h2).replace(/^It started at \d+:\d{2}:\s*/i, '').replace(/\.$/, '').toLowerCase(), first = rows.filter(function (r) { var s = r.querySelector(':scope > span:not(.dbt-cht):not(.dbt-ic)'); return s && head && nt0(s).replace(/\.$/, '').toLowerCase() === head; })[0] || rows[0];
-      var top = rows.filter(function (r) { return lvOf(r) > 0; }).sort(function (a, b) { return lvOf(b) - lvOf(a); })[0]; if (!top || top === first || lvOf(top) <= lvOf(first)) return;
-      var sp = top.querySelector(':scope > span:not(.dbt-cht):not(.dbt-ic)'), tm = (nt0(top.querySelector('.dbt-cht')).match(/\d+:\d{2}/) || [])[0], mech = nt0(top.querySelector(':scope > b')); if (!sp || !tm) return;
-      h2.innerHTML = (mech && !/^death$/i.test(mech) ? mech + ' at ' : 'At ') + tm + ': ' + sp.innerHTML;
-      [].forEach.call(w.querySelectorAll('.dbt-ln'), function (l) { l.classList.add('rwd-gone'); }); });
+      /* (round 208, the user: "The why we wiped should kinda summarize as a whole what happened... briefly describe the general vibe of what
+         caused the wipe"): the headline is the whole pull in one line, from the rows of How it went: what wiped us and in which phase
+         ("Dreadmarch and Spiteful Soulcoiler wiped us in P2"), with how many died; the moment it started moves under it, smaller. */
+      var R0 = rows.map(function (r) { var cht = nt0(r.querySelector('.dbt-cht')); return { r: r, lv: lvOf(r), mech: nt0(r.querySelector(':scope > b')), t: (cht.match(/\d+:\d{2}/) || [])[0] || '', ph: (cht.match(/P\d|Int\w*/) || [])[0] || '', s: nt0(r.querySelector(':scope > span:not(.dbt-cht):not(.dbt-ic)')) }; });
+      var isWipe = function (x) { return /^wipe called$/i.test(x.mech); }, isDeath = function (x) { return /^death$/i.test(x.mech); };
+      var pick = function (minLv) { var o = []; R0.forEach(function (x) { if (!isWipe(x) && !isDeath(x) && x.lv >= minLv && x.mech && o.indexOf(x.mech) < 0) o.push(x.mech); }); return o; };
+      var mechs = pick(4); if (!mechs.length) mechs = pick(3); if (!mechs.length) { var by = {}; R0.forEach(function (x) { if (!isDeath(x)) return; var m = x.s.match(/died to (.+?)\.?$/); if (m) by[m[1]] = (by[m[1]] || 0) + 1; }); mechs = Object.keys(by).sort(function (a, b) { return by[b] - by[a]; }).slice(0, 2); }
+      if (!mechs.length) return;
+      var wr = R0.filter(isWipe)[0], last = wr || R0[R0.length - 1], ph = last.ph || '', nD = R0.filter(isDeath).length;
+      var and = function (l) { return l.length < 2 ? l[0] : l.slice(0, -1).join(', ') + ' and ' + l[l.length - 1]; }, ms = mechs.slice(0, 3);
+      var orig = h2.innerHTML, st = (nt0(h2).match(/^It started at (\d+:\d{2})/i) || [])[1];
+      h2.innerHTML = '<span class="r208-m">' + and(ms.map(function (m) { return m.replace(/[&<>]/g, ''); })) + '</span> cost us this pull' + (ph ? ': we wiped in ' + ph : '') + '.'; void nD; /* (no death count: "too many dead" is obvious, the user's note) */
+      if (st) { var sub = document.createElement('p'); sub.className = 'r208-sub'; sub.innerHTML = orig.replace(/^It started at (\d+:\d{2}):\s*/i, 'It started at $1: '); h2.after(sub); }
+      var startMech = R0[0] && R0[0].mech; if (startMech && ms.indexOf(startMech) < 0) [].forEach.call(w.querySelectorAll('.dbt-ln'), function (l) { l.classList.add('rwd-gone'); }); /* (its Why and Next time were about the start; they stay when the start is one of the causes) */ });
     document.querySelectorAll('#view .dbt-why').forEach(function (w) { if (w.dataset.r201) return; w.dataset.r201 = '1'; var h = nt(w.querySelector('h2')).replace(/^It started at \d+:\d{2}:\s*/i, '').replace(/[.\s]+$/, '').toLowerCase();
       [].forEach.call(w.querySelectorAll('.dbt-ln'), function (l) { var k = nt(l.firstElementChild).toLowerCase(), v = nt(l.lastElementChild).replace(/[.\s]+$/, '').toLowerCase(); if (k === 'why' && v && (v === h || h.indexOf(v) >= 0 || v.indexOf(h) >= 0)) l.classList.add('rwd-gone'); }); });
     document.querySelectorAll('#view .mxa-h').forEach(function (hd) { if (hd.dataset.r201) return; hd.dataset.r201 = '1'; var b = hd.querySelector(':scope > b'), ins = b && b.querySelector('.sim-i, .rw2-i'); hd.classList.add('r201');
