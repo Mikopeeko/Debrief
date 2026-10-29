@@ -10854,6 +10854,11 @@ html body .rtl .rtv .rtv-c.big :is(img,svg,.icw){box-shadow:0 0 0 1.5px #0f1218,
 html body .rtl .rtv .rtv-c:not(.big):not(.u):not(.mk-r):not(.mk-y):not(.pr){opacity:.55;filter:saturate(.6);transition:opacity .12s,filter .12s}
 html body .rtl .rtv .rtv-c:not(.big):hover{opacity:1;filter:none}
 html body .rtl .rtv.f-filler .rtv-c:not(.big):not(.u):not(.mk-r):not(.mk-y){opacity:.12}
+/* round 200: phase bands on the Rotation timeline, and one-line lane headers */
+.rtl .rtv-phb{position:absolute;left:0;right:0;z-index:0;pointer-events:none;background:linear-gradient(180deg,rgba(230,180,80,.06),rgba(230,180,80,.015) 60px,rgba(230,180,80,0))}
+.rtl .rtv-phb.alt{background:linear-gradient(180deg,rgba(120,160,230,.07),rgba(120,160,230,.02) 60px,rgba(120,160,230,.012))}
+html body .rtl .rtv-grp.gh b{white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;font-size:9.5px!important;letter-spacing:.04em!important;line-height:1.1;display:block;text-align:center}
+html body .rtl .rtv-grp.gh{overflow:visible!important}
 
 </style>
 
