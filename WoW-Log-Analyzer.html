@@ -10978,6 +10978,15 @@ html body.refine #view > .r212-sb.r212-sb.r212-sb details.cch-ab.cch-ab.cch-ab >
 html body.refine #view > .r212-sb.r212-sb.r212-sb details.cch-ab.cch-ab.cch-ab > summary.cch-al.cgl > .cgl-p{order:2!important}
 html body.refine #view > .r212-sb.r212-sb.r212-sb details.cch-ab.cch-ab.cch-ab > summary.cch-al.cgl > .cgl-dt{order:3!important}
 html body.refine #view > .r212-sb.r212-sb.r212-sb details.cch-ab.cch-ab.cch-ab > summary.cch-al.cgl > .cgl-p.cgl-p.r212-long{font:700 15px/1.25 'Barlow Condensed',sans-serif!important;white-space:normal!important}
+html body #view > .r212-sb details.cch-ab.r212-off{display:none!important}
+/* All pulls: each tile's pull squares sit under its text as a slim strip, not above it */
+html body.refine #view > .r212-sb.r212-sb.r212-sb details.cch-ab.cch-ab.cch-ab > summary.cch-al.cgl > .mx-sq{order:4!important;display:flex!important;flex-wrap:wrap;gap:2px!important;margin-top:6px!important;height:auto!important;max-width:100%}
+html body.refine #view > .r212-sb details.cch-ab > summary.cgl > .mx-sq i{width:4px!important;height:10px!important;border-radius:1px!important;margin:0!important;background:#2a323a!important;box-shadow:none!important;border:0!important}
+html body.refine #view > .r212-sb details.cch-ab > summary.cgl > .mx-sq i.g{background:#3b8f5d!important}html body.refine #view > .r212-sb details.cch-ab > summary.cgl > .mx-sq i.y{background:#e8a23a!important}html body.refine #view > .r212-sb details.cch-ab > summary.cgl > .mx-sq i.r{background:#f0726a!important}
+html body.refine #view > .r212-sb details.cch-ab > summary.cgl > .mx-sq i::before,html body.refine #view > .r212-sb details.cch-ab > summary.cgl > .mx-sq i::after{display:none!important}
+/* (the user: "remove the squares from these": the tiles in the scoreboard are just the label, the number and the line under it) */
+html body.refine #view > .r212-sb.r212-sb.r212-sb details.cch-ab.cch-ab.cch-ab > summary.cch-al.cgl > .mx-sq{display:none!important}
+html body #view > .r212-sb{order:-10!important} /* (first on the page, ahead of the night summary, which the page also moves up) */
 
 </style>
 
@@ -59440,13 +59449,17 @@ function dsGuides() {
        - Every mechanic is its own row: the "Done right" line becomes rows at 100%. */
     (function () { var v = document.getElementById('view'); if (!v) return; var num = v.querySelector(':scope > .dbr-4, :scope > .r212-sb > .dbr-4'), dt = v.querySelector('section.dt-box'); if (!num) return;
       var sb = v.querySelector(':scope > .r212-sb'); if (!sb) { sb = document.createElement('div'); sb.className = 'r212-sb'; }
-      var first = v.querySelector(':scope > section.dbt'), anchor = first || (num.parentElement === v ? num : null); /* (a single pull: before Why we wiped; All pulls: where the numbers were) */
+      var nightS = v.querySelector('section.cch-night'), nightTop = null; if (nightS) { nightTop = nightS; while (nightTop.parentElement && nightTop.parentElement !== v) nightTop = nightTop.parentElement; if (nightTop.parentElement !== v) nightTop = null; }
+      var first = v.querySelector(':scope > section.dbt') || nightTop, anchor = first || (num.parentElement === v ? num : null); /* (a single pull: before Why we wiped; All pulls: before the night's summary, like the mock) */ /* (a single pull: before Why we wiped; All pulls: where the numbers were) */
       if (anchor && sb.nextElementSibling !== anchor && sb !== anchor) v.insertBefore(sb, anchor); else if (!sb.parentElement) v.insertBefore(sb, v.firstChild);
       if (sb.firstElementChild !== num) sb.insertBefore(num, sb.firstChild); if (dt && (dt.parentElement !== sb || dt.previousElementSibling !== num)) num.after(dt); /* (the numbers first, the details right under them) */
       /* (the user's order: Avoidable damage, Healthstones and potions, Defensives, Combat potions, Innervate, Power Infusion, Raid cooldowns) */
       var ORD = [/avoidable/i, /healthstone/i, /defensive/i, /combat potion/i, /innervate/i, /power infusion/i, /raid cooldown/i], tl = sb.querySelectorAll('.cch-acct2 > details.cch-ab'), lo = null;
       [].forEach.call(tl, function (d) { var n = ((d.querySelector('.cgl-n') || d.querySelector('summary') || {}).textContent || ''), i = ORD.findIndex(function (re) { return re.test(n); }); var o = i < 0 ? 9 : i + 1; d.style.order = o; d.classList.remove('r212-first'); if (!lo || o < +lo.style.order) lo = d; });
       if (lo) lo.classList.add('r212-first');
+      var night = !!document.querySelector('#view section.cch-night'); [].forEach.call(tl, function (d) { var n0 = ((d.querySelector('.cgl-n') || {}).textContent || ''); d.classList.toggle('r212-off', night && /innervate|power infusion/i.test(n0)); }); /* (the user: "Remove innervate and PI from this" on All pulls) */
+      var shown = [].filter.call(tl, function (d) { return !d.classList.contains('r212-off') && !d.classList.contains('r212-dup'); }).length, grid = sb.querySelector('.cch-acct2.dth-w') || sb.querySelector('.cch-acct2'); if (grid && shown) grid.style.gridTemplateColumns = 'repeat(' + shown + ', minmax(0, 1fr))'; /* (the tiles share the row evenly) */
+      lo = null; [].forEach.call(tl, function (d) { d.classList.remove('r212-first'); if (d.classList.contains('r212-off') || d.classList.contains('r212-dup')) return; if (!lo || +d.style.order < +lo.style.order) lo = d; }); if (lo) lo.classList.add('r212-first');
       [].forEach.call(sb.querySelectorAll('.cgl-p'), function (p) { p.classList.toggle('r212-long', !/^s*d+%s*$/.test(p.textContent)); }); /* (All pulls: "Some mistakes · 32 of 35" at a readable size) */
       [].forEach.call(tl, function (d) { if (/^s*Deaths/i.test((d.querySelector('.cgl-n') || d.querySelector('summary') || {}).textContent || '') && num.textContent.indexOf('Deaths') >= 0) d.classList.add('r212-dup'); }); /* (Deaths is already a number in the row above) */ })();
     document.querySelectorAll('#view .ds-r').forEach(function (g) { if (/^The pull at a glance/.test(g.textContent.replace(/\s+/g, ' ').trim()) && !g.querySelector('section.dt-box')) g.classList.add('rwd-gone'); });
