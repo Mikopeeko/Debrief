@@ -10912,11 +10912,7 @@ html body #view > .dbt.dbt .dbt-c.dbt-okc{background:rgba(79,191,122,.035)!impor
 html body #view > .dbt.dbt .dbt-it > .dbt-tm small.r203-same{display:none!important}
 html body #view > .dbt.dbt .dbt-it > .dbt-c.dbt-big{width:auto!important;max-width:none!important}
 /* round 204 (Oct 29, the user: "yea do those"): the Debriefing timeline, visual polish
-   1. each card's left edge in its severity colour (amber Minor, orange Moderate, red Serious) */
-html body.refine #view > .dbt.dbt .dbt-it .dbt-big{position:relative;overflow:hidden}
-html body.refine #view > .dbt.dbt .dbt-it .dbt-big::before{display:block!important;content:''!important;position:absolute;left:0;top:0;bottom:0;width:3px!important;background:#cdb35a}
-html body.refine #view > .dbt.dbt .dbt-it.sv3 .dbt-big::before{background:#e8a23a!important}
-html body.refine #view > .dbt.dbt .dbt-it:is(.sv4,.sv5,.r) .dbt-big::before{background:#ef6b63!important}
+   1. (no coloured left edge: the design rules say no bar down the left edge of anything) */
 /* 2. calmer time markers: a dot on the line and the time in bold, coloured by severity, no filled box */
 html body #view > .dbt.dbt .dbt-it:is(.y,.r) > .dbt-tm{background:var(--bg,#0f1117)!important;color:#cdb35a!important;padding:2px 4px!important;font-weight:800!important;font-size:12.5px!important}
 html body #view > .dbt.dbt .dbt-it.sv3 > .dbt-tm{color:#e8a23a!important}
@@ -10926,9 +10922,9 @@ html body #view > .dbt.dbt .dbt-it:is(.y,.r) > .dbt-tm small{color:var(--faint)}
 html body #view > .dbt.dbt .dbt-it:is(.y,.r) > .dbt-tm .dbt-hpb{display:none}
 /* 3. each phase header is a full-width band, like a chapter */
 html body #view > .dbt.dbt .dbt-st:not(.dbt-fold)::before{display:none!important}
-html body #view > .dbt.dbt .dbt-st:not(.dbt-fold) > span{display:flex!important;align-items:baseline;gap:12px;width:100%;padding:10px 14px!important;border-radius:4px!important;border:1px solid rgba(230,180,80,.28)!important;border-left:3px solid var(--gold,#e2b04f)!important;background:linear-gradient(90deg,rgba(230,180,80,.09),rgba(230,180,80,.02) 60%)!important;box-shadow:none!important;font-size:15px!important}
+html body #view > .dbt.dbt .dbt-st:not(.dbt-fold) > span{display:flex!important;align-items:baseline;gap:12px;width:100%;padding:10px 14px!important;border-radius:4px!important;border:1px solid rgba(230,180,80,.28)!important;background:linear-gradient(90deg,rgba(230,180,80,.09),rgba(230,180,80,.02) 60%)!important;box-shadow:none!important;font-size:15px!important}
 html body #view > .dbt.dbt .dbt-st:not(.dbt-fold) > span i{font-style:normal}
-html body #view > .dbt.dbt .dbt-st.cut > span{border-color:rgba(239,107,99,.4)!important;border-left-color:#ef6b63!important;background:linear-gradient(90deg,rgba(239,107,99,.08),transparent 60%)!important}
+html body #view > .dbt.dbt .dbt-st.cut > span{border-color:rgba(239,107,99,.4)!important;background:linear-gradient(90deg,rgba(239,107,99,.08),transparent 60%)!important}
 /* 4. a little more room around each mistake card */
 html body #view > .dbt.dbt .dbt-it:has(> .dbt-big){margin:12px 0}
 /* 5. job tags (Pop, Defensive, Dispel) as plain small grey text */
