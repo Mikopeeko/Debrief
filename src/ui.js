@@ -1955,6 +1955,9 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
+  { d: '2026-10-29', f: [
+    'Report card: a Blessing of Sacrifice that Worthy Sacrifice cast for you now counts in Your toolkit, and a moment it covered while your button was cooling down is no longer a miss.',
+  ] },
   { d: '2026-10-28', h: [{ t: 'A cleaner look, same Debrief', d: 'Every page is drawn the same way now: one panel, one row, one tag, one chip, one corner. Colour only where it means something (red for a mistake, amber for could be better, green for done well, gold for the one thing to fix first), big numbers in a code font, and nothing moved.' }, { t: 'Rotation, as a timeline', d: 'Your whole rotation down the page, one column per button: big cooldowns glow gold, a mistake rings the press it was on, and your HPS or DPS flows behind it all. Openers, burst windows and where you died stand out; hover anything for the full story, and filter what you see. The player card now leads with the one thing to fix first.' }, { t: 'Debriefing, as a timeline', d: 'Each pull reads top to bottom: every mistake and death where it happened, why it happened and what to do next time, with a filter for players, roles and how serious. Prefer the old page? Overview is one tap away and remembered.' }, { t: "Plan: place cooldowns in a click", d: "The Cooldowns chart has a Big hits view: one row per big hit with the cooldowns covering it. Click a cooldown and the spots where it fits light up with suggestions; Fit shows the whole fight on one screen." }, { t: "A new front page", d: "First-time visitors get one calm page: what Debrief does, Continue with Warcraft Logs, and a quick look around. Returning raiders land straight on Home." }, ], n: [
     'Holy Paladin: an Infused Flash of Light counts as good on a Beacon of Virtue or Savior target, and as a slip on your Beacon of Light or Faith target, which only copies your other heals. Haste and Critical Strike are never flagged when your hero tree\'s stat is the one ahead (Haste as Herald of the Sun, Critical Strike as Lightsmith).',
     'Holy Paladin: an Infused Flash of Light on someone without a Beacon only counts against you when someone with a Beacon needed the healing. Saving someone who was low is the right call.',
@@ -27292,6 +27295,8 @@ function survivalOf0(r, p) {
 const RC_W = { dps: { btn: 45, alive: 35, kit: 20 }, healer: { btn: 40, alive: 30, kit: 30 }, tank: { btn: 30, alive: 50, kit: 20 } };
 const RC_SEC = [['btn', 'Pressing buttons', 'spell_holy_borrowedtime'], ['alive', 'Staying alive', 'spell_holy_ardentdefender'], ['kit', 'Using the toolkit', 'inv_misc_enggizmos_swissarmy']];
 // (each healer spec's external: its name in the log and its base cooldown)
+// (externals a talent casts on its own: the buff lands with no cast (Oct 29, "count the talent that automatically casts it for you"))
+const EXT_AUTO = { 'Blessing of Sacrifice': 'Worthy Sacrifice' };
 const RC_EXT = { 256: [['Pain Suppression', 180]], 257: [['Guardian Spirit', 180]], 105: [['Ironbark', 90]], 270: [['Life Cocoon', 120]], 65: [['Blessing of Sacrifice', 120]], 1468: [['Time Dilation', 60]] };
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
 // (raid cooldowns: saved for the fight's big damage, not used whenever they're ready)
@@ -27461,11 +27466,12 @@ function cardOf(r, p) {
     return l.sort((u, v) => u.t - v.t).filter((x, i, a) => !a.slice(0, i).some((y) => y.who === x.who && x.t - y.t < 8)); })();
   for (const [n, cd] of RC_EXT[p.specId] || []) {
     const all = one(p.byName.get(n.toLowerCase()) || []), ts = all.filter((t) => t <= until), poss = 1 + Math.floor(until / cd), judged = until >= 60;
-    const ready = (t) => !all.some((u) => u <= t && u > t - cd), need = danger.filter((x) => ready(x.a) || all.some((u) => u >= x.a && u <= x.b)), hit = need.filter((x) => all.some((u) => u >= x.a && u <= x.b)), miss = need.filter((x) => !hit.includes(x) && x.death); /* (a close call they lived through earns credit when answered, but never costs points: they lived (Oct 23)) */
+    const auto = EXT_AUTO[n] ? (r.extMit || []).filter((u) => u.g === p.guid && u.name === n && u.t <= until && !all.some((c) => Math.abs(c - u.t) < 0.5)).map((u) => u.t) : [], use = all.concat(auto);
+    const ready = (t) => !all.some((u) => u <= t && u > t - cd), need = danger.filter((x) => ready(x.a) || use.some((u) => u >= x.a && u <= x.b)), hit = need.filter((x) => use.some((u) => u >= x.a && u <= x.b)), miss = need.filter((x) => !hit.includes(x) && x.death); /* (a close call they lived through earns credit when answered, but never costs points: they lived (Oct 23)) */
     const chances = Math.min(hit.length + miss.length, poss), sc = !judged ? null : !chances ? 100 : Math.max(ts.length ? 50 : 30, Math.round(100 * Math.min(1, hit.length / chances)));
     const id = (p.castAb.get(n) || {}).id || sidOf(n);
     add('kit', { k: 'ext', label: n, sc, w: judged ? (chances ? 15 : 5) : 0, num: hit.length, den: chances || null, nt: 'frac', word: 'moments someone needed it',
-      html: spell(id, n) + ': ' + (!(hit.length + miss.length) ? (ts.length ? 'pressed at ' + ts.map(T).join(', ') : 'held') + '<span class="sub"> · nobody was in real danger while it was ready, so holding it was fine</span>' : '<b>' + hit.length + ' of ' + (hit.length + miss.length) + '</b> moments someone needed it' + (miss.length ? rcSub('warn', 'Ready while ' + miss.slice(0, 3).map((x) => x.txt).join(', ')) : '')),
+      html: spell(id, n) + ': ' + (!(hit.length + miss.length) ? (ts.length ? 'pressed at ' + ts.map(T).join(', ') : 'held') + '<span class="sub"> · nobody was in real danger while it was ready, so holding it was fine</span>' : '<b>' + hit.length + ' of ' + (hit.length + miss.length) + '</b> moments someone needed it') + (auto.length ? '<span class="sub"> · ' + auto.length + ' cast for you by ' + EXT_AUTO[n] + '</span>' : '' + (miss.length ? rcSub('warn', 'Ready while ' + miss.slice(0, 3).map((x) => x.txt).join(', ')) : '')),
       fix: judged && miss.length && sc < 90 ? { t: 'Save someone with ' + n, x: n + ' was ready while ' + andList(miss.slice(0, 3).map((x) => x.txt)) + '. Put it on whoever is sliding toward death or about to take a big hit: one well-timed external is a life, and a life keeps the pull going.' } : null });
   }
   const disp = new Set((p.dispL || []).filter((d) => d.t <= until).map((d) => String(d.on || '') + '|' + d.t.toFixed(1))).size;
