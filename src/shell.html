@@ -10913,12 +10913,11 @@ html body #view > .dbt.dbt .dbt-it > .dbt-tm small.r203-same{display:none!import
 html body #view > .dbt.dbt .dbt-it > .dbt-c.dbt-big{width:auto!important;max-width:none!important}
 /* round 204 (Oct 29, the user: "yea do those"): the Debriefing timeline, visual polish
    1. (no coloured left edge: the design rules say no bar down the left edge of anything) */
-/* 2. calmer time markers: a dot on the line and the time in bold, coloured by severity, no filled box */
-html body #view > .dbt.dbt .dbt-it:is(.y,.r) > .dbt-tm{background:var(--bg,#0f1117)!important;color:#cdb35a!important;padding:2px 4px!important;font-weight:800!important;font-size:12.5px!important}
-html body #view > .dbt.dbt .dbt-it.sv3 > .dbt-tm{color:#e8a23a!important}
-html body #view > .dbt.dbt .dbt-it:is(.sv4,.sv5,.r) > .dbt-tm{color:#f0726a!important}
-html body #view > .dbt.dbt .dbt-it:is(.y,.r) > .dbt-tm::before{content:'';display:block;width:8px;height:8px;margin:0 auto 3px;border-radius:50%;background:currentColor;box-shadow:0 0 0 3px var(--bg,#0f1117)}
-html body #view > .dbt.dbt .dbt-it:is(.y,.r) > .dbt-tm small{color:var(--faint)}
+/* 2. (round 206, the user: "yes" to boxes) each mistake's time is a filled box in its severity colour, so its spot on the line stands out: amber Minor, orange Moderate, red Serious */
+html body #view > .dbt.dbt .dbt-it:is(.y,.r) > .dbt-tm{background:#cdb35a!important;color:#14110a!important;padding:2px 6px!important;border-radius:3px!important;font-weight:800!important;font-size:12px!important}
+html body #view > .dbt.dbt .dbt-it.sv3 > .dbt-tm{background:#e8a23a!important}
+html body #view > .dbt.dbt .dbt-it:is(.sv4,.sv5,.r) > .dbt-tm{background:#ef6b63!important;color:#180807!important}
+html body #view > .dbt.dbt .dbt-it:is(.y,.r) > .dbt-tm small{color:inherit;opacity:.7}
 html body #view > .dbt.dbt .dbt-it:is(.y,.r) > .dbt-tm .dbt-hpb{display:none}
 /* 3. each phase header is a full-width band, like a chapter */
 html body #view > .dbt.dbt .dbt-st:not(.dbt-fold)::before{display:none!important}
