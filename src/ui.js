@@ -1962,6 +1962,7 @@ const PATCH_NOTES = [
     "Innervate on Balance, Feral and Guardian: once a pull on a healer is the goal, and a pull without it is a small miss.",
     "Debriefing: slow kills say so first (\"was killed too slowly: it lived 29 s\"), and the timeline headlines read as plain sentences on every boss.",
   ], f: [
+    "Rotation: \"Always be casting\" no longer counts a channel (Divine Hymn, Penance, Tranquility, Mind Flay, a channelled trinket ...) or an Evoker's charge-up as time spent not casting.",
     "Healing cooldowns are judged at their own moment: Revival, Restoral and Rewind right after heavy damage, Tranquility and Divine Hymn as it lands, Barrier, Aura Mastery and Spirit Link just before.",
     "Raid DPS, DTPS and HPS no longer say \"a second\" under the number.",
     "Assassination Rogue: combo points from Seal Fate, Deal Fate and Implacable Strikes procs no longer count as wasted; only what your builders lost does, like Outlaw and Subtlety.",
@@ -18768,6 +18769,11 @@ const paceSt = (f) => (f == null ? 'na' : f >= 0.9 ? 'ok' : f >= 0.75 ? 'warn' :
 const pacePill = (f) => (f == null ? 'No sim' : f >= 0.9 ? 'On pace' : f >= 0.75 ? 'A little slow' : 'Slow');
 // one player's presses between w0 and w1 (up to when they stopped for good): { al (seconds they could cast), n, cpm,
 // ab: [{ name, id, n, ts }], all: times, gaps: [{ t, len, mv }] (4 s or more, not forced), auto, procs: Map name -> n }
+/* round 197 channels: how long a press keeps you busy past its cast (channels and trinkets), and the charge-up before an empowered spell */
+const CHAN_S = { 'divine hymn': 5, 'penance': 2, 'dark reprimand': 2, 'ultimate penitence': 3, 'mind flay': 4.5, 'mind flay: insanity': 2, 'void torrent': 3, 'tranquility': 6, 'convoke the spirits': 4, 'soothing mist': 8, 'fists of fury': 4, 'celestial conduit': 4, 'crackling jade lightning': 4, 'rapid fire': 2, 'barrage': 3, 'disintegrate': 3, 'ray of frost': 5, 'arcane missiles': 2.5, 'evocation': 3, 'shifting power': 4, 'drain life': 5, 'drain soul': 5, 'health funnel': 5, 'eye beam': 2, 'fel devastation': 2 };
+const EMP_S = new Set(['fire breath', 'eternity surge', 'dream breath', 'spiritbloom', 'upheaval']); let TRINK_N = null;
+function chanLen(p, name, t) { const ln = String(name).toLowerCase(); if (!TRINK_N) { try { TRINK_N = new Set(Object.values(TRINK_IT).map((x) => String(x[0]).toLowerCase())); } catch (e) { TRINK_N = new Set(); } } const ch = CHAN_S[ln]; if (ch == null && !TRINK_N.has(ln)) return 0;
+  const b = p.buffs && p.buffs.get(name), s = b ? b.sp.find(([a, z]) => z != null && a >= t - 0.4 && a <= t + 0.6 && z - a >= 1 && z - a <= 12) : null; return s ? Math.max(0, s[1] - t) : ch || 0; }
 function castOf(r, p, w0, w1, lite) {
   const C0 = perfContext(r), x = C0.per.get(p.name), t1 = Math.min(w1, x ? x.until : w1);
   const mcw = C0.mc.get(p.name) || [], idle = rcIdle(r, p), cut = (l) => l.reduce((s, [a, b]) => s + Math.max(0, Math.min(b, t1) - Math.max(a, w0)), 0);
@@ -18785,7 +18791,9 @@ function castOf(r, p, w0, w1, lite) {
   all.sort((a, b) => a - b); ab.sort((a, b) => b.n - a.n);
   const gaps = [];
   if (!lite) { const ds = x ? x.ds : [], forced = (a, b) => ds.some(([u, v]) => a < v && b > u) || mcw.some(([u, v]) => a < v && b > u) || idle.some(([u, v]) => a < v && b > u);
-    for (let i = 1; i < all.length; i++) { const g = all[i] - all[i - 1]; if (g >= 4 && !forced(all[i - 1], all[i])) { const d = pathIn(r, p, all[i - 1], all[i]); gaps.push({ t: all[i - 1], len: g, mv: d == null ? null : d >= 4 }); } }
+    const nmAt = new Map(); for (const a of ab) for (const t of a.ts) { const k = t.toFixed(2); if (!nmAt.has(k)) nmAt.set(k, []); nmAt.get(k).push(a.name); }
+    const busyTo = (t) => (nmAt.get(t.toFixed(2)) || []).reduce((e, n) => Math.max(e, chanLen(p, n, t)), 0), chargeOf = (t) => ((nmAt.get(t.toFixed(2)) || []).some((n) => EMP_S.has(n.toLowerCase())) ? 2.5 : 0); /* (round 197: a channel or a charge-up isn't idle) */
+    for (let i = 1; i < all.length; i++) { const a0 = all[i - 1] + busyTo(all[i - 1]), b0 = all[i] - chargeOf(all[i]), g = b0 - a0; if (g >= 4 && !forced(a0, b0)) { const d = pathIn(r, p, a0, b0); gaps.push({ t: a0, len: g, mv: d == null ? null : d >= 4 }); } }
     gaps.sort((a, b) => b.len - a.len); }
   return { p, t1, al, n: all.length, cpm: al >= 1 ? 60 * all.length / al : 0, ab, all, gaps, auto, procs };
 }
@@ -22908,7 +22916,7 @@ function busyOf(p, c, t1) {
   const gs = c.all.slice().sort((a, b) => a - b).map((u, i, l) => (i ? u - l[i - 1] : 9)).filter((g) => g > 0.5 && g < 3).sort((a, b) => a - b), gcd = gs.length ? gs[Math.floor(gs.length * 0.15)] : 1.3, l = [], bySp = new Map();
   for (const y of p.starts || []) { if (y.t > t1) continue; const k = y.spell.toLowerCase(); if (!bySp.has(k)) bySp.set(k, []); bySp.get(k).push([y.t, 0]); }
   for (const a of c.ab) { const k = a.name.toLowerCase(), ev = (bySp.get(k) || []).concat(a.ts.filter((t) => t <= t1).map((t) => [t, 1])).sort((u, w) => u[0] - w[0] || w[1] - u[1]); let open = null, lastC = -9;
-    for (const [t, kk] of ev) { if (kk === 1) { if (open != null && t - open >= 0.25 && t - open <= 8) l.push([open, Math.max(t, open + gcd)]); else { l.push([t, t + gcd]); lastC = t; } open = null; } else if (Math.abs(t - lastC) > 0.02) open = t; } }
+    for (const [t, kk] of ev) { if (kk === 1) { if (open != null && t - open >= 0.25 && t - open <= 8) l.push([open, Math.max(t, open + gcd)]); else { l.push([t, t + Math.max(gcd, chanLen(p, a.name, t))]); lastC = t; } /* (round 197: a channel is busy for as long as it ran) */ open = null; } else if (Math.abs(t - lastC) > 0.02) open = t; } }
   l.sort((a, b) => a[0] - b[0]); const mg = []; let cs = -1, ce = -1; for (const [a, z] of l) { if (a > ce) { if (ce > cs) mg.push([cs, ce]); cs = a; ce = z; } else ce = Math.max(ce, z); } if (ce > cs) mg.push([cs, ce]); return mg;
 }
 // (a big window's details: what went in before it (setup), the share of it spent casting, your mana at its start, your potion and Bloodlust, what you
@@ -23145,7 +23153,7 @@ function genRun0(spec, D, reps, name, one) {
     const gs = c.all.slice().sort((a, b) => a - b).map((u, i, l) => (i ? u - l[i - 1] : 9)).filter((g) => g > 0.5 && g < 3).sort((a, b) => a - b), gcd = gs.length ? gs[Math.floor(gs.length * 0.15)] : 1.3;
     { const l = [], bySp = new Map(); for (const y of p.starts || []) { if (y.t > t1) continue; const k = y.spell.toLowerCase(); if (!bySp.has(k)) bySp.set(k, []); bySp.get(k).push([y.t, 0]); }
       for (const a of c.ab) { const k = a.name.toLowerCase(), ev = (bySp.get(k) || []).concat(a.ts.filter((t) => t <= t1).map((t) => [t, 1])).sort((u, w) => u[0] - w[0] || w[1] - u[1]); let open = null, lastC = -9;
-        for (const [t, kk] of ev) { if (kk === 1) { if (open != null && t - open >= 0.25 && t - open <= 8) l.push([open, Math.max(t, open + gcd)]); else { l.push([t, t + gcd]); lastC = t; } open = null; } else if (Math.abs(t - lastC) > 0.02) open = t; } }
+        for (const [t, kk] of ev) { if (kk === 1) { if (open != null && t - open >= 0.25 && t - open <= 8) l.push([open, Math.max(t, open + gcd)]); else { l.push([t, t + Math.max(gcd, chanLen(p, a.name, t))]); lastC = t; } /* (round 197: a channel is busy for as long as it ran) */ open = null; } else if (Math.abs(t - lastC) > 0.02) open = t; } }
       l.sort((a, b) => a[0] - b[0]); let cs = -1, ce = -1, bz = 0; const mg = []; for (const [a, z] of l) { if (a > ce) { if (ce > cs) { bz += ce - cs; mg.push([cs, ce]); } cs = a; ce = z; } else ce = Math.max(ce, z); } if (ce > cs) { bz += ce - cs; mg.push([cs, ce]); }
       s.busy = mg; s.abcAl = c.al; s.abcBusy = Math.min(bz, c.al); s.abcTop = (c.gaps || []).find((g) => g.t > 1) || null; s.m.abc = (c.gaps || []).filter((g) => g.len >= 4).sort((a, b) => a.t - b.t).map((g) => [g.t, g.t + g.len]); }
     // (melee uptime, for a melee damage dealer: the gaps that were only you are the times listed)
