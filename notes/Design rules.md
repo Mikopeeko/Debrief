@@ -35,3 +35,7 @@ The user's words: "clean and refined, but I don't want to lose my own vision", "
 - Don't put a red/pink/gold bar down the left edge of anything.
 - Don't fill chips with colour. Don't colour whole headings. Don't glow what isn't a cooldown or a mistake.
 - Don't mix corner sizes on one page. Don't add a second font for reading text.
+
+## Scores (Oct 28)
+- A score row is its dot and its number, no bar under it (the user's call, "A everywhere": when scores sit between 80% and 100% the bars all look the same).
+- Bars are only for splitting real data: where healing came from, Gained from, stat order, meters.

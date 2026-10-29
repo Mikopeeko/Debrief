@@ -10374,6 +10374,28 @@ html body #view .rtl .rtl-mid .rtl-t { margin: 0; }
 .rtv-toura button.go{background:#e6b450;border-color:#e6b450;color:#1a1305}
 .rtv-tourhi{outline:2px solid #e6b450!important;outline-offset:4px;border-radius:8px}
 
+/* round 177: the Holy Power lane on the Rotation timeline, and one icon size for every press */
+.rtv-hpr { position: absolute; z-index: 2; display: flex; gap: 2px; margin-top: -4px; padding: 1px; border-radius: 2px; cursor: help; }
+.rtv-hpr i { width: 6px; height: 6px; border-radius: 1px; background: #2a323a; }
+.rtv-hpr i.f { background: #e2b04f; }
+.rtv-hpr i.w { background: #ef6b63; }
+.rtv-hpr:hover { background: rgba(255,255,255,.08); }
+.rtv-hpx { margin-left: 5px; padding: 0 4px; font: 600 10.5px/9px var(--body); color: #ff9b94; border: 1px solid rgba(239,107,99,.6); border-radius: 2px; white-space: nowrap; letter-spacing: .02em; }
+.rtv-hpr.bad { align-items: center; }
+html body .rtl .rtv-brkw { display: none !important; }
+html body .rtl .rtv-hd > span.l { visibility: hidden; }
+html body .rtl .rtv-band.ok { background: rgba(79,191,122,.075) !important; box-shadow: inset 0 1px 0 rgba(79,191,122,.5); }
+html body .rtl .rtv-band:not(.ok) { background: rgba(227,169,75,.075) !important; box-shadow: inset 0 1px 0 rgba(227,169,75,.5); }
+/* the polish pass: slimmer cooldown and proc bars, square-ish icons, grey column heads */
+html body .rtl .rtv-c img, html body .rtl .rtv-c svg, html body .rtl .rtv-c .icw, html body .rtl .rtv-c .oi, html body .rtl .rtv-pbi, html body .rtl .rtv-pbi .oi { border-radius: 3px !important; }
+html body .rtl .rtv-dur.col { width: 4px !important; margin-left: 10px !important; border-radius: 2px !important; background: rgba(226,176,79,.2) !important; }
+html body .rtl .rtv-pb:not(.lost) { width: 4px !important; margin-left: 2px; border-radius: 2px !important; background: rgba(226,176,79,.6) !important; }
+html body .rtl .rtv-pb.lost { width: 4px !important; margin-left: 2px; }
+html body .rtl .rtv-hd > span { color: var(--faint) !important; }
+html body .rtl .rtv-gl { background: rgba(255,255,255,.018) !important; }
+.rtv-grp.gh b { line-height: 1.05; white-space: normal; text-align: center; }
+html body .rtl .rtv-c.big, html body .rtl .rtv-c.big img, html body .rtl .rtv-c.big svg, html body .rtl .rtv-c.big .icw { width: 22px !important; height: 22px !important; }
+html body .rtl .rtv-c.big { margin: -11px 0 0 -11px !important; }
 /* refined look (Design studio round 170, Oct 28): one set of finishes everywhere, see notes/Design rules.md */
 /* cyrillic-ext */
 @font-face {
@@ -10724,6 +10746,8 @@ html body.refine #view .pfv section.rck-gx.rck-gx .rgx-ex > .rck-t,html body.ref
 html body.refine #view .prw-t{display:none!important}
 html body.refine #view .prw-l{padding-bottom:0!important}
 html body.refine #view .ds-ptrans::after{display:none!important}
+/* round 177b (Oct 28, "check the icon shape with the new design"): every spell icon is a crisp 3px square; player avatars stay round */
+html body.refine .oi,html body.refine .icw,html body.refine .icw img,html body.refine .tm-n img,html body.refine .spc-ri .icw{border-radius:3px!important}
 
 </style>
 
@@ -43917,7 +43941,7 @@ function specView(reps, one) {
         const o = [], fk = pp.fakeT || new Map(); for (const [n, ca] of pp.castAb || []) { const nm = ca.name || n, ln = String(nm).toLowerCase(); if (TL_NOT_PRESSED.has(ln) || AUTO_N.has(ln) || ca.id === 1 || ca.id === 6603 || ca.id === 75) continue;
           const fm = new Map(); for (const u of fk.get(ln) || []) fm.set(u, (fm.get(u) || 0) + 1);
           for (const t of (pp.byName && pp.byName.get(ln)) || (pp.castTimes && pp.castTimes.get(ca.id)) || []) { const c = fm.get(t); if (c) { fm.set(t, c - 1); continue; } o.push({ t, n: nm, id: ca.id }); } }
-        return o.sort((x, y) => x.t - y.t); } catch (e) { return []; } }, buffs: (n) => { try { const bb = pp.buffs && pp.buffs.get(n); return bb ? bb.sp.map((s2) => [s2[0], s2[1]]) : []; } catch (e) { return []; } }, out: () => { try { const hl = pp.role === 'healer' || /^(Holy|Discipline|Restoration|Mistweaver|Preservation)\b/.test(pp.specName || ''); return { heal: hl, s: ((hl ? pp.healS : pp.dmgS) || []).slice() }; } catch (e) { return { heal: false, s: [] }; } }, deaths: () => { try { return one && r0 ? (r0.deaths || []).filter((d) => d.player === S.specSel).map((d) => ({ t: d.t, ab: d.ability || '', by: d.killer || '' })) : []; } catch (e) { return []; } }, target: (id, t) => { try { const l = pp.castTo && pp.castTo.get(id); if (!l) return ''; for (const x of l) if (Math.abs(x[0] - t) < 0.15) return x[1]; return ''; } catch (e) { return ''; } }, winDef: (() => { try { const g = GEN_SPECS[pp.specName], w = g && g.win; if (!w) return null; const fl = (a) => [].concat(...(a || []).map((x) => [].concat(x))).map((x) => String(typeof x === 'object' && x ? x.n || '' : x)).filter(Boolean); return { n: w.n, names: w.names || [w.n], with: fl(w.with), key: (w.key && w.key.names) || [], setup: fl(w.setup) }; } catch (e) { return null; } })() /* round 165: the spec's window definition */ /* round 157: who a cast went on */ /* round 155: output per second for the wave, and when they died */ /* round 154: buffs for proc spends */ } : null; } catch (e) { window.rotData = null; } /* round 146: the Rotation timeline's bridge */ const x = x0 ? { ...x0, html: x0.html.replace('<div><h3>', '<div class="rot-hn"><h3>').replace('</h3><div class="spc-hs">', '</h3>' + sel + '<div class="spc-hs">') } : x0;
+        return o.sort((x, y) => x.t - y.t); } catch (e) { return []; } }, buffs: (n) => { try { const bb = pp.buffs && pp.buffs.get(n); return bb ? bb.sp.map((s2) => [s2[0], s2[1]]) : []; } catch (e) { return []; } }, res: (ty) => { try { const r = pp.res && pp.res.get(String(ty)); return r ? r.pts.map((x) => [x[0], x[1], x[2]]) : []; } catch (e) { return []; } }, gain: (ty) => { try { return (pp.gainL || []).filter((g) => g.ty === String(ty)).map((g) => [g.t, g.amt, g.over || 0, g.spell]); } catch (e) { return []; } }, out: () => { try { const hl = pp.role === 'healer' || /^(Holy|Discipline|Restoration|Mistweaver|Preservation)\b/.test(pp.specName || ''); return { heal: hl, s: ((hl ? pp.healS : pp.dmgS) || []).slice() }; } catch (e) { return { heal: false, s: [] }; } }, deaths: () => { try { return one && r0 ? (r0.deaths || []).filter((d) => d.player === S.specSel).map((d) => ({ t: d.t, ab: d.ability || '', by: d.killer || '' })) : []; } catch (e) { return []; } }, target: (id, t) => { try { const l = pp.castTo && pp.castTo.get(id); if (!l) return ''; for (const x of l) if (Math.abs(x[0] - t) < 0.15) return x[1]; return ''; } catch (e) { return ''; } }, winDef: (() => { try { const g = GEN_SPECS[pp.specName], w = g && g.win; if (!w) return null; const fl = (a) => [].concat(...(a || []).map((x) => [].concat(x))).map((x) => String(typeof x === 'object' && x ? x.n || '' : x)).filter(Boolean); return { n: w.n, names: w.names || [w.n], with: fl(w.with), key: (w.key && w.key.names) || [], setup: fl(w.setup) }; } catch (e) { return null; } })() /* round 165: the spec's window definition */ /* round 157: who a cast went on */ /* round 155: output per second for the wave, and when they died */ /* round 154: buffs for proc spends */ } : null; } catch (e) { window.rotData = null; } /* round 146: the Rotation timeline's bridge */ const x = x0 ? { ...x0, html: x0.html.replace('<div><h3>', '<div class="rot-hn"><h3>').replace('</h3><div class="spc-hs">', '</h3>' + sel + '<div class="spc-hs">') } : x0;
   const ak = S.specSel + '|' + (one ? (S.rep && S.rep.item ? S.rep.item.pull : '') : 'all'), an = ak !== SPC_AK ? ' spc-anim' : ''; SPC_AK = ak;
   const page = x ? '<div class="pf-inl pf-srcd spc-v' + an + '">' + x.html + '</div>' + (x.wait ? '<p class="sub" style="margin:8px 0 0">Reading the spells\' cooldowns…</p>' : '') : '<p class="muted" style="margin:10px 0 0">No Rotation page for ' + esc(S.specSel) + (one ? ' this pull' : ' over these pulls') + '.</p>';
   return '<div class="pf-cols solo" data-st="spec"><div class="panel rot-pickp">' + page + '</div></div>' + PERF_HOW.spec; // (full width: no side panel)
@@ -58512,6 +58536,11 @@ function dsGuides() {
     (D.checks || []).filter(function (c) { return /^p:/.test(c.k); }).forEach(function (c) { if (LANES.length < 2 && !LANES.some(function (l) { return l.n === c.label; }) && D.buffs && (D.buffs(c.label) || []).length) LANES.push({ n: c.label, proc: 1 }); });
     if (0) SPL.filter(function (s2) { return s2.big && !s2.u && winNames /* (round 160b: the user likes a pressed buff's bar in its own column; lanes are for procs) */.indexOf(String(s2.n).toLowerCase()) < 0; }).forEach(function (s2) { if (LANES.length < 5 && D.buffs && (D.buffs(s2.n) || []).some(function (x) { return x[1] != null && x[1] - x[0] >= 2; })) LANES.push({ n: s2.n, id: s2.id }); });
     var laneIx = {}; LANES.forEach(function (l, i) { laneIx[l.n] = i; }); var LW = LANES.length ? LANES.length * 18 + 14 : 0;
+    /* (round 177, the Holy Power lane: rebuilt from every gain and every spender press; five squares beside each press) */
+    var HPG = D.gain ? D.gain(9) : [], HPM = (D.res ? D.res(9) : []).reduce(function (a, x) { return Math.max(a, x[2] || 0); }, 0) || 5, HPS = [], HPWL = [], HPSP = /^(word of glory|eternal flame|light of dawn|shield of the righteous|templar's verdict|final verdict|divine storm|justicar's vengeance)$/i;
+    if (HPG.length >= 3 && HPM <= 10) { var hev = HPG.map(function (g) { return { t: g[0], d: g[1] - g[2], w: g[2], sp: g[3] }; }); md.C.forEach(function (c) { if (HPSP.test(c.n) && !/divine purpose/i.test(c.proc || '')) hev.push({ t: c.t, d: -3, sp: c.n }); if (/^divine toll$/i.test(c.n)) hev.push({ t: c.t, d: 0, dt: 1 }); }); var dtOk = []; /* (the guide: Divine Toll at 1-2 Holy Power is fine, even when it fills you up) */
+      hev.sort(function (a, b) { return a.t - b.t || b.d - a.d; }); var hv = 0; HPS.push([0, 0]); hev.forEach(function (e) { if (e.dt) { if (hv <= 2) dtOk.push(e.t); return; } hv = Math.max(0, Math.min(HPM, hv + e.d)); HPS.push([e.t, hv]); if (e.w > 0 && !dtOk.some(function (d) { return e.t >= d - 0.05 && e.t <= d + 2.5; })) HPWL.push(e); }); }
+    var HPW = HPS.length > 3 ? HPM * 8 + 12 + (HPWL.length ? 52 : 0) : 0; LW += HPW;
     var END = md.end || D.dur || 0, Y = 20, T0 = 20, y = function (t) { return T0 + t * Y; }, PH = (window.innerWidth || 1200) < 760, CW = PH ? 27 : Math.max(34, Math.min(46, Math.floor(((box.clientWidth || 1200) - (getMin() === '1' ? 56 : 230) - 144 - 56 - LW - 24) / Math.max(1, NC)))), /* (round 161f: the columns use the room the cards gave back) */ MIDW = 56 + NC * CW + LW, LX0 = 56 + NC * CW + 12, H = Math.round(y(END) + 24); /* (round 155k: narrower on a phone) */
     var cols = ''; /* (round 155m: set once the sides are known) */ /* (round 155c: marks beside the casts, notes on hover) */
     var N = [], note = function (cls, h, ts) { N.push({ c: cls, h: h, ts: ts || [] }); return N.length - 1; };
@@ -58538,6 +58567,13 @@ function dsGuides() {
     BANDS.forEach(function (bd) { var okb = bd.cls === 'ok', val = bd.val ? E(bd.val.split(/\s·\s|,\s/)[0]) : ''; mid += '<i class="rtv-brkw ' + (okb ? 'ok' : 'meh') + '" data-nt="' + note(okb ? 'g' : 'y', tipW(bd), [bd.a, bd.b]) + '" style="top:' + y(bd.a).toFixed(1) + 'px;height:' + Math.max(8, (bd.b - bd.a) * Y).toFixed(1) + 'px"><b><span class="rtv-cdi">' + bd.w.ic + '</span><span class="t">' + E(String(bd.w.head).replace(/ window$/i, '')) + '</span>' + (val ? '<em>' + val + '</em>' : '') + (okb ? '' : '<i>could be better</i>') + '</b></i>'; }); /* (round 161, a bracket outside the chart for each window) */
     if (0) BANDS.forEach(function (bd) { if (bd.cls !== 'ok') return; var f = bd.chips.filter(function (c) { return c.ok; })[0]; mid += '<i class="rtv-wl" data-nt="' + note('g', tipW(bd), [bd.a, bd.b]) + '" style="top:' + (y(bd.a) + 5) + 'px"><b>' + (bd.val ? E(bd.val.split(/\s·\s|,\s/)[0]) : 'Done well') + '</b>' + (f ? '<em>✓ ' + E(f.t) + '</em>' : '') + '</i>'; }); /* (round 158, a label inside each good window) */
     if (LANES.length) mid += '<i class="rtv-sep bf" style="left:' + (LX0 - 7) + 'px"></i>';
+    var HX = LX0 + (LANES.length ? LANES.length * 18 + 10 : 0);
+    if (HPW) { mid += '<i class="rtv-sep bf" style="left:' + (HX - 7) + 'px"></i>';
+      var hpAt = function (t) { var v = 0; for (var i = 0; i < HPS.length && HPS[i][0] <= t; i++) v = HPS[i][1]; return v; }, hpLost = 0;
+      md.C.forEach(function (c, ci) { if (c.t > END) return; var nx = md.C[ci + 1], at = Math.min(c.t + 0.35, nx && nx.t > c.t ? nx.t - 0.01 : c.t + 0.35), v = hpAt(at), w = HPWL.filter(function (e) { return e.t >= c.t - 0.05 && e.t <= at; }).reduce(function (a, e) { return a + e.w; }, 0), sq = '';
+        for (var k = 1; k <= HPM; k++) sq += '<i class="' + (k <= v ? (w ? 'w' : 'f') : '') + '"></i>'; hpLost += w;
+        mid += '<span class="rtv-hpr' + (w ? ' bad' : '') + '" data-nt="' + note(w ? 'bad' : 'n', w ? '<div class="rtv-pt"><em class="rtv-sv l2">Wasted</em><span>Holy Power</span></div><b>' + mm(c.t) + ' · ' + E(c.n) + ' while you were full</b><p>' + w + ' Holy Power lost: you already had ' + HPM + '.</p><p class="rtv-nx"><i>NEXT TIME</i>Spend Holy Power first, then press the builder.</p>' : '<b>' + mm(c.t) + ' · after ' + E(c.n) + '</b><p>' + v + ' of ' + HPM + ' Holy Power.</p>', [c.t]) + '" style="left:' + HX + 'px;top:' + y(c.t).toFixed(1) + 'px">' + sq + (w ? '<b class="rtv-hpx">' + w + ' wasted</b>' : '') + '</span>'; });
+      box._hpLost = hpLost; }
     mid += '<i class="rtv-spine"></i><i class="rtv-colhi" style="width:' + CW + 'px"></i>';
     var idleN = 0; /* (round 155j: no idle stripes: the Rotation tab is about the rotation) */
     phs.forEach(function (p, i) { if (i || p.start > 1) mid += '<i class="rtv-ph" style="top:' + y(p.start) + 'px"><b>' + E(p.name) + '<em>' + mm(p.start) + '</em></b></i>'; }); /* (a slim banner where each phase starts) */
@@ -58630,7 +58666,7 @@ function dsGuides() {
       '<div class="rtv-act"><span class="rtv-hint">Hover any mark for the full story</span><button type="button" class="rtv-dim' + (getFV().dim ? ' on' : '') + '" data-rtvf="dim">Spotlight mistakes</button></div></div>';
     var cut = D.cut != null && D.dur && D.cut < D.dur - 1 ? '<p class="rtv-cut">Counted to ' + mm(D.cut) + ', the wipe call.</p>' : '';
     /* (round 161g: the head names the groups of columns) */
-    var GH = [[0, 'Cooldowns'], [1, 'Button presses'], [2, 'Utility']].map(function (g) { var cs = SPL.filter(function (s2) { return grp(s2) === g[0]; }).map(function (s2) { return colOf[s2.n]; }).filter(function (v, i, a) { return a.indexOf(v) === i; }); if (!cs.length) return ''; var a0 = Math.min.apply(null, cs), b0 = Math.max.apply(null, cs), w0 = (b0 - a0 + 1) * CW - 6; return '<span class="rtv-grp g' + g[0] + '" style="left:' + (56 + a0 * CW + 3) + 'px;width:' + w0 + 'px"><b>' + (g[0] === 2 && w0 < 70 ? '⛨' : g[0] === 0 && w0 < 110 ? 'CDs' : g[1]) /* (round 164: short labels when there is no room) */ + '</b></span>'; }).join('') + (LANES.length ? '<span class="rtv-grp gp" style="left:' + (LX0 - 3) + 'px;width:' + (LANES.length * 18 + 2) + 'px"><b>' + (LANES.length < 2 ? '✦' : 'Procs') + '</b></span>' : '');
+    var GH = [[0, 'Cooldowns'], [1, 'Button presses'], [2, 'Utility']].map(function (g) { var cs = SPL.filter(function (s2) { return grp(s2) === g[0]; }).map(function (s2) { return colOf[s2.n]; }).filter(function (v, i, a) { return a.indexOf(v) === i; }); if (!cs.length) return ''; var a0 = Math.min.apply(null, cs), b0 = Math.max.apply(null, cs), w0 = (b0 - a0 + 1) * CW - 6; return '<span class="rtv-grp g' + g[0] + '" style="left:' + (56 + a0 * CW + 3) + 'px;width:' + w0 + 'px"><b>' + (g[0] === 2 && w0 < 70 ? '⛨' : g[0] === 0 && w0 < 110 ? 'CDs' : g[1]) /* (round 164: short labels when there is no room) */ + '</b></span>'; }).join('') + (LANES.length ? '<span class="rtv-grp gp" style="left:' + (LX0 - 3) + 'px;width:' + (LANES.length * 18 + 2) + 'px"><b>' + (LANES.length < 2 ? '✦' : 'Procs') + '</b></span>' : '') + (HPW ? '<span class="rtv-grp gh" style="left:' + (HX - 4) + 'px;width:' + (HPM * 8 + 6) + 'px"><b>Holy<br>Power</b></span>' : ''); /* (round 177) */
     box._notes = N;
     var nOn = function (f) { return Object.keys(onP).filter(function (k) { return f(onP[k]); }).length; }, nUtil = md.C.filter(function (c) { return sp[c.n] && sp[c.n].u; }).length;
     var FROWS = [['Mistakes', [['allcards', 'All mistake cards', mAll > 3 ? mAll : 0, 'r'], ['outwin', 'Outside burst windows', BANDS.length ? Object.keys(onP).filter(function (k) { return onP[k].lv >= 2 && !bandAt(md.C[k].t); }).length : 0, 'r'], ['press', 'Mistakes on a press', nOn(function (r) { return r.lv >= 2; }), 'r'], ['minor', 'Minor slips', nOn(function (r) { return r.lv < 2; }) + BL.filter(function (a) { return a.mi && !a.card; }).length, 'y'], ['span', 'Over several presses', BL.filter(function (a) { return !a.mi && !a.card && a.cl === 'bd' && !a.died; }).length, 'r']]],
@@ -58753,7 +58789,7 @@ function dsGuides() {
       var cs = getComputedStyle(e), tl = cs.borderTopLeftRadius, r = parseFloat(tl);
       if (r > MAX) {
         var w = e.offsetWidth, h = e.offsetHeight;
-        if (w && !(Math.abs(w - h) <= 2 && (w <= 44 || /%/.test(tl)))) e.style.setProperty('border-radius', MAX + 'px', 'important');
+        if (w && !(Math.abs(w - h) <= 2 && (/%/.test(tl) ? parseFloat(tl) >= 45 : r >= w * 0.45))) e.style.setProperty('border-radius', MAX + 'px', 'important'); /* (a real circle stays round; a small rounded square gets the one corner size) */
       }
       var fs = parseFloat(cs.fontSize);
       if (fs >= 11.5 && fs < 14 && cs.textTransform !== 'uppercase' && !INL.test(e.tagName) || fs >= 11.5 && fs < 14 && INL.test(e.tagName) && e.parentElement && !INL.test(e.parentElement.tagName) && e.parentElement.childElementCount === 1) {

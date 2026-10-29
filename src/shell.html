@@ -10374,6 +10374,28 @@ html body #view .rtl .rtl-mid .rtl-t { margin: 0; }
 .rtv-toura button.go{background:#e6b450;border-color:#e6b450;color:#1a1305}
 .rtv-tourhi{outline:2px solid #e6b450!important;outline-offset:4px;border-radius:8px}
 
+/* round 177: the Holy Power lane on the Rotation timeline, and one icon size for every press */
+.rtv-hpr { position: absolute; z-index: 2; display: flex; gap: 2px; margin-top: -4px; padding: 1px; border-radius: 2px; cursor: help; }
+.rtv-hpr i { width: 6px; height: 6px; border-radius: 1px; background: #2a323a; }
+.rtv-hpr i.f { background: #e2b04f; }
+.rtv-hpr i.w { background: #ef6b63; }
+.rtv-hpr:hover { background: rgba(255,255,255,.08); }
+.rtv-hpx { margin-left: 5px; padding: 0 4px; font: 600 10.5px/9px var(--body); color: #ff9b94; border: 1px solid rgba(239,107,99,.6); border-radius: 2px; white-space: nowrap; letter-spacing: .02em; }
+.rtv-hpr.bad { align-items: center; }
+html body .rtl .rtv-brkw { display: none !important; }
+html body .rtl .rtv-hd > span.l { visibility: hidden; }
+html body .rtl .rtv-band.ok { background: rgba(79,191,122,.075) !important; box-shadow: inset 0 1px 0 rgba(79,191,122,.5); }
+html body .rtl .rtv-band:not(.ok) { background: rgba(227,169,75,.075) !important; box-shadow: inset 0 1px 0 rgba(227,169,75,.5); }
+/* the polish pass: slimmer cooldown and proc bars, square-ish icons, grey column heads */
+html body .rtl .rtv-c img, html body .rtl .rtv-c svg, html body .rtl .rtv-c .icw, html body .rtl .rtv-c .oi, html body .rtl .rtv-pbi, html body .rtl .rtv-pbi .oi { border-radius: 3px !important; }
+html body .rtl .rtv-dur.col { width: 4px !important; margin-left: 10px !important; border-radius: 2px !important; background: rgba(226,176,79,.2) !important; }
+html body .rtl .rtv-pb:not(.lost) { width: 4px !important; margin-left: 2px; border-radius: 2px !important; background: rgba(226,176,79,.6) !important; }
+html body .rtl .rtv-pb.lost { width: 4px !important; margin-left: 2px; }
+html body .rtl .rtv-hd > span { color: var(--faint) !important; }
+html body .rtl .rtv-gl { background: rgba(255,255,255,.018) !important; }
+.rtv-grp.gh b { line-height: 1.05; white-space: normal; text-align: center; }
+html body .rtl .rtv-c.big, html body .rtl .rtv-c.big img, html body .rtl .rtv-c.big svg, html body .rtl .rtv-c.big .icw { width: 22px !important; height: 22px !important; }
+html body .rtl .rtv-c.big { margin: -11px 0 0 -11px !important; }
 /* refined look (Design studio round 170, Oct 28): one set of finishes everywhere, see notes/Design rules.md */
 /* cyrillic-ext */
 @font-face {
@@ -10724,6 +10746,8 @@ html body.refine #view .pfv section.rck-gx.rck-gx .rgx-ex > .rck-t,html body.ref
 html body.refine #view .prw-t{display:none!important}
 html body.refine #view .prw-l{padding-bottom:0!important}
 html body.refine #view .ds-ptrans::after{display:none!important}
+/* round 177b (Oct 28, "check the icon shape with the new design"): every spell icon is a crisp 3px square; player avatars stay round */
+html body.refine .oi,html body.refine .icw,html body.refine .icw img,html body.refine .tm-n img,html body.refine .spc-ri .icw{border-radius:3px!important}
 
 </style>
 
@@ -10801,7 +10825,7 @@ html body.refine #view .ds-ptrans::after{display:none!important}
       var cs = getComputedStyle(e), tl = cs.borderTopLeftRadius, r = parseFloat(tl);
       if (r > MAX) {
         var w = e.offsetWidth, h = e.offsetHeight;
-        if (w && !(Math.abs(w - h) <= 2 && (w <= 44 || /%/.test(tl)))) e.style.setProperty('border-radius', MAX + 'px', 'important');
+        if (w && !(Math.abs(w - h) <= 2 && (/%/.test(tl) ? parseFloat(tl) >= 45 : r >= w * 0.45))) e.style.setProperty('border-radius', MAX + 'px', 'important'); /* (a real circle stays round; a small rounded square gets the one corner size) */
       }
       var fs = parseFloat(cs.fontSize);
       if (fs >= 11.5 && fs < 14 && cs.textTransform !== 'uppercase' && !INL.test(e.tagName) || fs >= 11.5 && fs < 14 && INL.test(e.tagName) && e.parentElement && !INL.test(e.parentElement.tagName) && e.parentElement.childElementCount === 1) {
