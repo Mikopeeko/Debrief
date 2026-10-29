@@ -10865,6 +10865,39 @@ html body #view .dbt-rctag{background:none!important;color:var(--faint)!importan
 html body #view .mxa-h.r201 > b{font-weight:500}
 html body #view .mxa-h.r201 .r201-ins{font:500 13.5px 'Barlow Condensed',sans-serif;color:var(--muted)}
 html body #view .mx-tb .r201-none{color:var(--faint)}
+/* round 202: the All pulls summary, rebuilt in the quiet list style (mockup: notes/Debriefing polish mockups/all-pulls-summary.html) */
+html body #view section.cch-night.nsm-on > :not(.nsm){display:none!important}
+html body #view section.cch-night.nsm-on{padding:0!important}
+.nsm{font-family:'Barlow Condensed',sans-serif;font-variant-numeric:tabular-nums}
+.nsm .nsm-k{display:block;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--faint)}
+.nsm-top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line,#222930)}
+.nsm-top h2{margin:4px 0 0;font-size:22px;font-weight:700;line-height:1.2;color:var(--text)}
+.nsm-top h2 b{color:#4fbf7a}
+.nsm-facts{display:flex;gap:22px}.nsm-facts div{text-align:right}.nsm-facts b{display:block;font-size:22px;line-height:1;color:var(--text)}.nsm-facts small{color:var(--faint);font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.nsm-focus{display:grid;grid-template-columns:28px minmax(0,1fr);gap:4px 14px;padding:14px 18px;border-bottom:1px solid var(--line,#222930);background:linear-gradient(90deg,rgba(226,176,79,.08),transparent 60%)}
+.nsm-focus > .icw,.nsm-focus > .cti,.nsm-focus > .nsm-noi{width:28px!important;height:28px!important}
+.nsm-focus .icw img,.nsm-focus .icw svg{width:28px!important;height:28px!important}
+.nsm-focus .nsm-k{color:var(--gold)}
+.nsm-focus h3{margin:1px 0 0;font-size:19px;font-weight:700;color:var(--text)}
+.nsm-focus p{grid-column:2;margin:0;color:var(--muted);font-size:15px}.nsm-focus p b{color:#f0726a}
+.nsm-sec{padding:12px 18px 6px}
+.nsm-row{display:grid;grid-template-columns:22px minmax(0,1fr) 180px 84px;gap:14px;align-items:center;padding:8px 0;border-top:1px solid var(--line,#222930)}
+.nsm-sec .nsm-k + .nsm-row{border-top:0}
+.nsm-row.c2{grid-template-columns:22px minmax(0,1fr) auto}
+.nsm-row > .icw,.nsm-row > .cti,.nsm-row > .nsm-noi{width:22px!important;height:22px!important;justify-self:center}
+.nsm-row .icw img,.nsm-row .icw svg{width:22px!important;height:22px!important}
+.nsm-t{font-weight:700;font-size:15.5px;color:var(--text)}
+.nsm-s{display:block;color:var(--muted);font-size:14.5px;font-weight:500}.nsm-s b{color:var(--text)}
+.nsm-strip{display:flex;gap:2px;align-items:center;flex-wrap:nowrap;overflow:hidden}
+.nsm-strip i{flex:none;width:3px;height:10px;border-radius:1px;background:#2a323a}
+.nsm-strip i.r{background:#f0726a}.nsm-strip i.y{background:#e8a23a}.nsm-strip i.g{background:#3b8f5d}
+.nsm-v{text-align:right}
+.nsm-tag{display:inline-block;padding:1px 7px;border:1px solid currentColor;border-radius:2px;font-size:11px;font-weight:600;letter-spacing:.04em;opacity:.9;white-space:nowrap}
+.nsm-tag.r{color:#f0726a}.nsm-tag.y{color:#e8a23a}.nsm-tag.g{color:#4fbf7a}
+.nsm-cols{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line,#222930)}
+.nsm-cols.one{grid-template-columns:1fr}
+.nsm-cols .nsm-sec + .nsm-sec{border-left:1px solid var(--line,#222930)}
+@media (max-width:720px){.nsm-top{grid-template-columns:1fr}.nsm-facts div{text-align:left}.nsm-row{grid-template-columns:22px minmax(0,1fr) auto}.nsm-row .nsm-strip{display:none}.nsm-cols{grid-template-columns:1fr}.nsm-cols .nsm-sec + .nsm-sec{border-left:0;border-top:1px solid var(--line,#222930)}}
 
 </style>
 
@@ -32902,7 +32935,7 @@ function coachSummary0(reps, name) {
       else { /* (Oct 23, your ask "very very clear and not muddled": every wipe's root cause, grouped and counted, worst first) */
         const by = new Map(); for (const r of reps) { if (!r || !r.item || r.item.kill) continue; let o = null; try { o = whyWiped(r); } catch (e) { o = null; } if (!o) continue; const k = whyKey(o); if (k === '?') continue;
           const nm = o.k === 'dmg' ? 'not enough damage' : o.how === 'wave' ? 'raid damage' : o.how === 'kit' ? 'unused defensives' : o.how === 'bleed' ? 'missed healing' : o.how === 'tank' ? 'tank deaths' : cHtml(o.how === 'raid' ? mech(o.mech, o.id) : o.l || (o.d && o.d.ability) || ''); if (!nm) continue;
-          const x = by.get(k) || { nm, n: 0, os: [] }; x.n++; x.os.push(o); by.set(k, x); }
+          const x = by.get(k) || { nm, n: 0, os: [], ps: [] }; x.n++; x.os.push(o); x.ps.push(r.item.pull); by.set(k, x); } /* round 202 */
         /* (Oct 23, your ask "what about those things wiped us?": each cause with what went wrong in it, and who when it was people:
            "Dreadmarch · 4 wipes: Dashtoswirly ×2, Komo and Boltzzx didn't pick up their soul fragments") */
         const whyOf = (x) => { const os = x.os.slice().reverse(), o = os[0];
@@ -32912,7 +32945,7 @@ function coachSummary0(reps, name) {
             if (!r1) return wl ? wl + ' died to it' : ''; const pas = /^(hit|caught|clipped|struck|knocked|pulled|feared|stunned|grabbed|targeted|marked|chained|tethered)\b/i.test(r1); return wl + ' ' + (pas ? (who.length > 1 ? 'were ' : 'was ') : '') + r1; }
           if (o.how === 'raid' && o.k !== 'dmg') { let s0 = ''; try { s0 = cHtml(whyShort(o, new Map()).short); } catch (e) { s0 = ''; } return s0; }
           let w0 = ''; try { w0 = cHtml(whySay(o, new Map(), 1).h).replace(/\.$/, ''); } catch (e) { w0 = ''; } return w0; };
-        const WL = [...by.values()].sort((a, b) => b.n - a.n).slice(0, 3).map((x) => ({ nm: dbfCap(x.nm), n: x.n, why: dbfCap(String(whyOf(x) || '').replace(/,? and (?:died to it|it got (?:them|you))$/, '').replace(/ (?:were|was) still alive$/, ' lived too long')) }));
+        const WL = [...by.values()].sort((a, b) => b.n - a.n).slice(0, 3).map((x) => ({ nm: dbfCap(x.nm), n: x.n, ps: x.ps || [], why: dbfCap(String(whyOf(x) || '').replace(/,? and (?:died to it|it got (?:them|you))$/, '').replace(/ (?:were|was) still alive$/, ' lived too long')) }));
         if (WL.length) { WIPES = WL; talk = 'What wiped us: ' + WL.map((x) => x.nm + ' (' + plural(x.n, 'wipe') + ')' + (x.why ? ': ' + x.why.charAt(0).toLowerCase() + x.why.slice(1) : '')).join('; ') + '.'; } }
       if (night && !talk) { const hn = whyNight(reps, pmT), p = (hn.match(/<p>([\s\S]*?)<\/p>/) || [])[1]; if (p) { const q = p.replace(/^<b>[^<]*<\/b>\s*/, ''), m1 = q.match(/^(<b>[^<]+<\/b>) got us /); talk = m1 ? cHtml(m1[1]) + ' cost us the most.' : s1(q, 1); } /* (the headline names the big picture only: how often is in Went wrong and the fix in Next raid, so each says it once (Oct 23)) */ } } catch (e) { talk = ''; } }
     const headline2 = talk ? res + '. ' + talk : headline;
@@ -33433,7 +33466,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
     const rcm = !c.night ? String(c.headline).match(/Root cause: (.*?\.)(?=\s|$)\s*([\s\S]*)$/) : null, wip1 = rcm ? '<div class="cch-tsec wip"><div class="cch-tsh">What wiped us</div><p class="cch-trc"><b>' + esc(rcm[1]) + '</b>' + trTag((T0.worse || []).some((y) => lcN(y.nm) && rcm[1].toLowerCase().includes(lcN(y.nm))) ? 'dn' : (T0.better || []).some((y) => lcN(y.nm) && rcm[1].toLowerCase().includes(lcN(y.nm))) ? 'up' : '') + (rcm[2] ? ' ' + esc(wipNoNames(rcm[2]) /* (no names in the grid (your rule, Oct 23)) */) : '') + '</p>' + ((L) => (L.length ? '<div class="cch-tsh cch-also-h">Other big mistakes</div>' + alsoUl(L) : ''))(alsoOf(rcm[1])) + '</div>' : c.night ? '' /* (All pulls keeps What wiped us, with its own Other big mistakes) */ : ((L) => (L.length ? '<div class="cch-tsec wip"><div class="cch-tsh">Big mistakes</div>' + alsoUl(L) + '</div>' : ''))(alsoOf(''));
     const meW = c.name ? (() => { const L = W.slice(0, 3).map((x) => ({ nm: String(x.label).replace(/<[^>]+>/g, '').replace(/\s*\(.*$/, ''), tag: x.wipes ? (x.wipes === 1 ? (x.wipe1 ? 'caused the wipe' : 'caused a wipe') : 'caused ' + x.wipes + ' wipes') : x.led ? 'led to ' + plural(x.led, 'death') : '', sub: x.what ? cClip(tidyLine(String(x.what).replace(/<[^>]+>/g, '')), 110) : '', trH: trTag(trOf(String(x.label), x)) }));
       return L.length ? sec('wip', 'Your mistakes', '', L, '') : none('wip', 'Your mistakes', '', 'No mistakes from you.'); })() : '';
-    const wip = c.name ? meW : wip1 || (c.wipes && c.wipes.length ? '<div class="cch-tsec wip"><div class="cch-tsh">What wiped us</div><ul class="cch-wl">' + c.wipes.map((x) => '<li><b>' + esc(x.nm) + '</b>' + trTag(trOf(x.nm)) + '<span class="cch-wn">' + plural(x.n, 'wipe') + '</span>' + (x.why ? '<span class="cch-wy">' + esc(x.why) + '</span>' : '') + '</li>').join('') + '</ul>' + ((L) => (L.length ? '<div class="cch-tsh cch-also-h">Other big mistakes</div>' + alsoUl(L) : ''))(alsoOf(c.wipes.map((w) => w.nm).join(' | '))) + '</div>' : '');
+    const wip = c.name ? meW : wip1 || (c.wipes && c.wipes.length ? '<div class="cch-tsec wip"><div class="cch-tsh">What wiped us</div><ul class="cch-wl">' + c.wipes.map((x) => '<li data-pulls="' + (x.ps || []).join(',') + '"><b>' + esc(x.nm) + '</b>' + trTag(trOf(x.nm)) + '<span class="cch-wn">' + plural(x.n, 'wipe') + '</span>' + (x.why ? '<span class="cch-wy">' + esc(x.why) + '</span>' : '') + '</li>').join('') + '</ul>' + ((L) => (L.length ? '<div class="cch-tsh cch-also-h">Other big mistakes</div>' + alsoUl(L) : ''))(alsoOf(c.wipes.map((w) => w.nm).join(' | '))) + '</div>' : '');
     const none = (cls, title, note, msg) => '<div class="cch-tsec ' + cls + '"><div class="cch-tsh">' + title + (note ? ' <span>· ' + esc(note) + '</span>' : '') + '</div><p class="cch-tnone">' + msg + '</p></div>'; /* (an empty section says so: good news is news (Oct 23)) */
     return '<div class="cch-tgrid">' + wip + (c.name && !T0.well.length ? none('ok', 'What you did well', '', 'Nothing stood out yet.') : '') + sec('ok', c.name ? 'What you did well' : 'What we did well', '', T0.well.filter((x) => !(c.wipes || []).some((w) => String(w.nm).toLowerCase() === String(x.nm).toLowerCase())).map((x) => ({ ...x, trH: trTag(trOf(x.nm) || (/after a mistake on pull/i.test(x.sub || '') ? 'up' : '')) })) /* (what wiped us is never also "done well") */) + (single ? '' : !T0.worse.length && !T0.better.length ? '<p class="cch-tsame">' + (single ? 'About the same as last pull: nothing got better or worse.' : 'Nothing clearly got better or worse.') + '</p>' /* (one line, not two empty boxes (Oct 24, from the addon's recap)) */ : T0.worse.length ? sec('bad', single ? 'Worse than last pull' : 'What\'s getting worse', single ? '' : T0.cmp, T0.worse, '') : none('bad', single ? 'Worse than last pull' : 'What\'s getting worse', single ? '' : T0.cmp, single ? 'Nothing got worse than last pull.' : 'Nothing got worse.')) +
       (single || (!T0.worse.length && !T0.better.length) ? '' : T0.better.length ? sec('up', single ? 'Better than last pull' : 'What\'s improving', single ? '' : T0.cmp, T0.better, '') : none('up', single ? 'Better than last pull' : 'What\'s improving', single ? '' : T0.cmp, single ? 'Nothing improved on last pull.' : 'Nothing clearly improved.')) + '</div>' + sinceH() +
@@ -33444,7 +33477,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
   const dch = D ? (D.items && D.items.length ? D.items.map((it) => dchip(it)).join('') + (D.rest && D.rest.length ? '<span class="dch more" role="button" tabindex="0" data-ddmore>+' + D.rest.length + ' more</span>' + D.rest.map((it) => dchip(it, 1)).join('') : D.more ? '<span class="dch more">+' + D.more + ' more</span>' : '') : '<span class="cch-none">' + esc(D.line) + '</span>') + (D.note ? '<div class="cch-anote">' + esc(D.note) + '</div>' : '') : '';
   const achip = (it, x) => '<span class="ach' + (it.bad ? ' bad' : '') + (x ? ' ach-x' : '') + '"' + (it.avk ? ' data-avk="' + esc(it.avk) + '" role="button" tabindex="0"' : it.avn ? ' data-avn="' + esc(it.avn) + '" role="button" tabindex="0"' : '') + (x ? ' hidden' : '') + '><b>' + esc(it.k) + '</b>' + (it.who ? '<span>' + esc(it.who) + '</span>' : '') + '</span>';
   const ach = A ? (A.items && A.items.length ? A.items.map((it) => achip(it)).join('') + (A.rest && A.rest.length ? '<span class="ach more" role="button" tabindex="0" data-avmore>+' + A.rest.length + ' more</span>' + A.rest.map((it) => achip(it, 1)).join('') : A.more ? '<span class="ach more">+' + A.more + ' more</span>' : '') : '<span class="cch-none">' + esc(A.line) + '</span>') : '';
-  const html = '<section class="cch cch2" aria-label="Coach"><div class="cch-hd"><span class="cch-k">' + esc(o.title || (c.name ? 'Your coach' : 'Coach')) + '</span>' + strictTag() + (pm ? '<span class="nm" style="color:' + pm.color + '">' + esc(c.name.split('-')[0]) + '</span>' : '') + '</div>' +
+  const html = '<section class="cch cch2' + (c.night ? ' cch-night' : '') + '"' + (c.night && c.reps ? ' data-allp="' + c.reps.filter((q) => q && q.item).map((q) => q.item.pull + (q.item.kill ? 'k' : '')).join(',') + '"' : '') + ' aria-label="Coach"><div class="cch-hd"><span class="cch-k">' + esc(o.title || (c.name ? 'Your coach' : 'Coach')) + '</span>' + strictTag() + (pm ? '<span class="nm" style="color:' + pm.color + '">' + esc(c.name.split('-')[0]) + '</span>' : '') + '</div>' +
     (c.trend && !c.night && /Root cause:/.test(String(c.headline)) ? '<p class="cch-h">' + esc(String(c.headline).replace(/\s*Root cause:[\s\S]*$/, '')) + ' <span class="cch-hype">' + esc(coachHypeFix(c)) + '</span></p>' /* (the root cause sits in the grid (Oct 23)) */
       : c.wipes && c.wipes.length && c.trend ? '<p class="cch-h">' + (() => { /* (Oct 23, your note "raid lead awful quiet": the night in a breath, from the cards below: pulls and best, what wiped us most, the best news, what to watch) */
         const T0 = c.trend, B0 = (T0.well || []).find((x) => !x.id && /^Best pull$/.test(x.nm)), w = c.wipes[0], up = (T0.better || [])[0], dn = (T0.worse || [])[0], b = (t) => '<b>' + esc(t) + '</b>';
@@ -59227,6 +59260,38 @@ function dsGuides() {
     [].forEach.call(c.querySelectorAll('.dbt-nk'), function (n) { if (n.textContent.trim().length <= 1) n.remove(); });
     [].forEach.call(c.querySelectorAll('.dbt-two'), function (t) { var kids = [].filter.call(t.children, function (x) { return !x.classList.contains('rwd-gone'); }); if (!kids.length) t.classList.add('rwd-gone'); else if (kids.length === 1) t.classList.add('rwd-one'); });
   }
+  /* Round 202 (Oct 29, the user: "I dont love this for all pulls tab anymore", then "Build it" on the mockup
+     notes/Debriefing polish mockups/all-pulls-summary.html): the All pulls box, rebuilt in the quiet list style from what the coach already
+     says: the night in one line, the one thing to work on as a gold card, What wiped us as one ranked list (the other big mistakes in it,
+     each with a strip of the pulls it hit), then Getting worse (or Improving) and Done well. Nothing is made up: every line is the coach's. */
+  function nightBox(s) {
+    if (s.querySelector(':scope > .nsm')) return;
+    var nw = Date.now(); window.__nsmT = (window.__nsmT || []).filter(function (t) { return nw - t < 3000; }); if (window.__nsmT.length >= 8) return; window.__nsmT.push(nw); /* (a safety stop: never redraw it more than 8 times in 3 seconds) */
+    var h = s.querySelector(':scope > .cch-h'), g = s.querySelector(':scope > .cch-tgrid'); if (!h || !g) return;
+    var tx = function (e) { return (e ? e.textContent : '').replace(/\s+/g, ' ').trim(); }, esc = function (v) { return String(v).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+    var ht = tx(h), boss = tx(document.querySelector('.bh-name')) || 'the boss', pulls = (ht.match(/^(\d+) pulls?/) || [])[1], bm = ht.match(/our best was pull (\d+), which (?:got to|reached) ([^.]+?)\./i), kill = /\bkill(ed)?\b/i.test(ht) && !bm;
+    var head = (document.getElementById('bossHead') || document.body).textContent, onB = (head.match(/(\d+h \d+m|\d+m) on the boss/) || [])[1];
+    var hype = h.querySelector('.cch-hype'), fm = tx(hype).match(/focus on one thing:\s*(.+?)\.?$/i), whySent = (ht.match(/[^.]*\bwiped us \d+ times?[^.]*\./i) || [])[0];
+    var all = (s.dataset.allp || '').split(',').filter(Boolean).map(function (v) { return { n: +v.replace(/k$/, ''), k: /k$/.test(v) }; });
+    var strip = function (bad, warn) { if (!all.length) return ''; return '<span class="nsm-strip" aria-hidden="true">' + all.map(function (p) { return '<i class="' + (bad.indexOf(p.n) >= 0 ? 'r' : warn.indexOf(p.n) >= 0 ? 'y' : p.k ? 'g' : '') + '" title="Pull ' + p.n + '"></i>'; }).join('') + '</span>'; };
+    var icon = function (li) { var i = li && li.querySelector('.icw, .cti'); return i ? i.outerHTML : '<span class="nsm-noi"></span>'; };
+    var nameOf = function (li) { var b = li.querySelector(':scope > b'); if (!b) return ''; var c = b.cloneNode(true); [].forEach.call(c.querySelectorAll('.icw, .cti'), function (z) { z.remove(); }); return tx(c); };
+    var row = function (li, tag, tagCls, bad, warn, cols) { var wy = li.querySelector('.cch-wy'), why = wy ? wy.innerHTML.replace(/Ghost collision: ghosts touched/g, 'the ghosts touched') : '';
+      return '<div class="nsm-row' + (cols ? ' c2' : '') + '">' + icon(li) + '<div><span class="nsm-t">' + esc(nameOf(li)) + '</span>' + (why ? '<span class="nsm-s">' + why + '</span>' : '') + '</div>' + (cols ? '' : strip(bad || [], warn || [])) + '<span class="nsm-v">' + (tag ? '<span class="nsm-tag ' + tagCls + '">' + esc(tag) + '</span>' : '') + '</span></div>'; };
+    var wipL = [].slice.call(g.querySelectorAll('.cch-tsec.wip ul.cch-wl:not(.cch-also) > li')), alsoL = [].slice.call(g.querySelectorAll('.cch-tsec.wip ul.cch-also > li'));
+    var worseL = [].slice.call(g.querySelectorAll('.cch-tsec.bad > ul > li')), upL = [].slice.call(g.querySelectorAll('.cch-tsec.up > ul > li')), wellL = [].slice.call(g.querySelectorAll('.cch-tsec.ok > ul > li')).filter(function (li) { return !/^Best pull$/i.test(nameOf(li)); });
+    var focusLi = wipL.filter(function (li) { return fm && fm[1].toLowerCase().indexOf(nameOf(li).toLowerCase()) >= 0; })[0] || wipL[0];
+    var o = '<div class="nsm"><div class="nsm-top"><div><span class="nsm-k">Tonight on ' + esc(boss) + '</span><h2>' + (bm ? 'Best pull: <b>' + esc(bm[2]) + '</b> (pull ' + esc(bm[1]) + ')' : esc(ht.split('. ')[0].replace(/\.$/, ''))) + '</h2></div>' +
+      '<div class="nsm-facts">' + (pulls ? '<div><b>' + esc(pulls) + '</b><small>Pulls</small></div>' : '') + (onB ? '<div><b>' + esc(onB) + '</b><small>On the boss</small></div>' : '') + (bm && /^P\d/.test(bm[2]) ? '<div><b>' + esc(bm[2].split(' ')[0]) + '</b><small>Furthest</small></div>' : '') + '</div></div>';
+    if (fm) o += '<div class="nsm-focus">' + icon(focusLi) + '<div><div class="nsm-k">Next raid, focus on one thing</div><h3>' + esc(fm[1].charAt(0).toUpperCase() + fm[1].slice(1)) + '</h3></div>' + (whySent ? '<p>' + esc(whySent).replace(/(\d+) times/, '<b>$1</b> times') + '</p>' : '') + '</div>';
+    if (wipL.length || alsoL.length) o += '<div class="nsm-sec"><span class="nsm-k">What wiped us</span>' + wipL.map(function (li) { var ps = (li.dataset.pulls || '').split(',').filter(Boolean).map(Number); return row(li, tx(li.querySelector('.cch-wn')), 'r', ps, []); }).join('') +
+      alsoL.map(function (li) { var pm = (tx(li.querySelector('.cch-wy')).match(/^Pull (\d+)/) || [])[1]; return row(li, 'Big mistake', 'y', [], pm ? [+pm] : []); }).join('') + '</div>';
+    var left = worseL.length ? ['Getting worse', worseL, 'r', '▼ Worse'] : upL.length ? ['Improving', upL, 'g', '▲ Better'] : null, right = upL.length && worseL.length ? ['Improving', upL, 'g', '▲ Better'] : wellL.length ? ['Done well', wellL, 'g', ''] : null;
+    var col = function (c) { return '<div class="nsm-sec"><span class="nsm-k">' + c[0] + '</span>' + c[1].map(function (li) { var tt = tx(li.querySelector('.cch-tt')); return row(li, c[3] ? (tt ? (c[2] === 'r' ? '▼ ' : '▲ ') + tt : c[3]) : '✓', c[2], null, null, true); }).join('') + '</div>'; };
+    if (left || right) o += '<div class="nsm-cols' + (left && right ? '' : ' one') + '">' + (left ? col(left) : '') + (right ? col(right) : '') + '</div>';
+    o += '</div>';
+    s.insertAdjacentHTML('beforeend', o); s.classList.add('nsm-on');
+  }
   function scan() { document.querySelectorAll('#view section.rck').forEach(function (s) { try { draw(s); } catch (e) { console.warn('checklist', e); } }); document.querySelectorAll('#view section.rpc').forEach(function (c) { try { card(c); } catch (e) { console.warn('player card', e); } });
     var seenM = {}, bossN = ((document.querySelector('.bh-name') || {}).textContent || '').trim(); document.querySelectorAll('#view .dbt-big').forEach(function (c) { try { dbtCard(c, seenM, bossN); } catch (e) { console.warn('timeline card', e); } });
     document.querySelectorAll('#view .ds-r').forEach(function (g) { var t = g.textContent.replace(/\s+/g, ' ').trim(); if (/^The pull at a glance/.test(t) && t.length < 70) g.classList.add('rwd-gone'); });
@@ -59241,6 +59306,7 @@ function dsGuides() {
     document.querySelectorAll('#view .mxa-h').forEach(function (hd) { if (hd.dataset.r201) return; hd.dataset.r201 = '1'; var b = hd.querySelector(':scope > b'), ins = b && b.querySelector('.sim-i, .rw2-i'); hd.classList.add('r201');
       if (b && ins) { var tx = nt(ins).replace(/^\(|\)$/g, ''); b.innerHTML = ''; var s0 = document.createElement('span'); s0.className = 'r201-ins'; s0.textContent = tx; b.appendChild(s0); } else if (b) b.classList.add('rwd-gone');
       var fl = hd.querySelector('.mx-fl'); if (fl) fl.classList.add('rwd-gone'); var ic = hd.querySelector(':scope > .icw'); if (ic) ic.classList.add('rwd-gone'); });
+    document.querySelectorAll('#view section.cch-night').forEach(function (s) { try { nightBox(s); } catch (e) { console.warn('night summary', e); } });
     document.querySelectorAll('#view .mx-tb .mx-tr').forEach(function (r) { if (r.dataset.r201) return; r.dataset.r201 = '1'; var who = r.querySelector('.mx-who'), m = r.querySelector('.mx-m'); if (!who || !m) return; var nm = who.querySelector('.nm');
       if (!nm && nt(who)) { var lab = nt(who); m.textContent = lab + (/^done right$/i.test(nt(m)) ? ': done right' : ': ' + nt(m).charAt(0).toLowerCase() + nt(m).slice(1)); who.innerHTML = '<span class="r201-none">Everyone</span>'; return; }
       if (nm) { var n0 = nt(nm), mt = nt(m); if (n0 && mt.indexOf(n0 + ' ') === 0) { var rest = mt.slice(n0.length + 1).replace(/^(was|were) /, ''); m.textContent = rest.charAt(0).toUpperCase() + rest.slice(1); } } }); }
