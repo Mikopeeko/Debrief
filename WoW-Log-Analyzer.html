@@ -29933,7 +29933,7 @@ function audit() {
   const phIco = (s) => { if (s.icon) return '<span class="icw">' + svgIcon(0, s.title) + '<img class="oi" data-icon="' + esc(s.icon) + '" alt=""></span>'; const generic = GENERIC_SEC.test(s.title), name = generic ? s.title : (s.spell && s.spell[1]) || s.title; return spellIcon(generic ? 0 : (s.spell && s.spell[0]) || sidOf(name), name); };
   /* (Oct 24, from the in-game addon's recap (your call: "do what's best"): a mechanic that went wrong says so in one plain line under its
      bar, with who and when: "1 of 4 went wrong. Maridão at 0:58, Sindo at 1:48." Names in their class colour; clean ones stay a bar) */
-  const PMp = coachPm(), phSay = (q) => { if (q.lv === 'ok') return ''; const a = q.x.rows.concat(...q.x.groups.map((g) => g.rows)).filter(Array.isArray), w = a.filter((row) => isBadRow(row) || isWarnRow(row));
+  const PMp = coachPm(), phSay = (q) => { if (q.lv === 'ok' || PH_NO_PREVIEW) return ''; /* (no preview line under the row: the dropdown says it (the user, Oct 28: "just have whats in the dropdowns")) */ const a = q.x.rows.concat(...q.x.groups.map((g) => g.rows)).filter(Array.isArray), w = a.filter((row) => isBadRow(row) || isWarnRow(row));
     if (!w.length) return ''; const tOf = (row) => { const c = row.find((x) => x && x.t != null); return c ? c.t : null; };
     const L = w.slice().sort((p, r) => (isBadRow(p) ? 0 : 1) - (isBadRow(r) ? 0 : 1) || (tOf(p) == null ? 1e9 : tOf(p)) - (tOf(r) == null ? 1e9 : tOf(r)));
     /* (the worst moment in full, the way the addon says it: "Deluge #3 at 1:27: 5, then 5 orbs popped, too many in Tyralien's frontal") */
@@ -31340,6 +31340,7 @@ const loadBar = (n, of, skipped, id) => (skipped ? '<div class="nightload"><span
 // ---- Night summary: one card per boss pulled tonight, in the order first pulled (see nightTimeline and nightDebrief) ----
 // (Warcraft Logs pulls that aren't downloaded yet still show on the timeline; the debrief needs "Load all pulls".)
 // what ended a wipe: the earliest of its first death and its first serious raid-wide failure
+const PH_NO_PREVIEW = true;
 function causeOf(r) {
   if (r.item.kill) return null;
   const d = r.deaths.slice().sort((a, b) => a.t - b.t)[0];
