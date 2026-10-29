@@ -10401,6 +10401,53 @@ html body .rtl .rtv-c, html body .rtl .rtv-c.big, html body .rtl .rtv-c img, htm
 html body .rtl .rtv-c, html body .rtl .rtv-c.big { margin: -9px 0 0 -9px !important; }
 html body .rtl .rtv-pbi, html body .rtl .rtv-pbi .icw, html body .rtl .rtv-pbi .oi, html body .rtl .rtv-pbi img { width: 18px !important; height: 18px !important; }
 html body .rtl .rtv-pbi { left: -7px !important; top: -20px !important; opacity: 1 !important; box-shadow: 0 0 0 1px rgba(0,0,0,.6) !important; }
+/* round 179: the Rotation tab's Checklist, redrawn (one font: Barlow Condensed, numbers tabular) */
+section.rck.rcx-on > .rck-ovw { display: none !important; }
+section.rck.rcx-on .rck-h .seg, section.rck.rcx-on .rck-h [class*="tog"], section.rck.rcx-on .rck-h .ds-sw { display: none !important; }
+.rcx { font-family: var(--body); font-variant-numeric: tabular-nums; }
+.rcx .rcx-k { font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--faint); display: inline-flex; align-items: center; gap: 6px; }
+.rcx i.d { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--line2); }
+.rcx i.d.g { background: #4fbf7a; } .rcx i.d.y { background: #e3a94b; } .rcx i.d.r { background: #ef6b63; }
+.rcx .icw { width: 18px !important; height: 18px !important; flex: none; border-radius: 3px !important; overflow: hidden; }
+.rcx .icw img, .rcx .icw svg { width: 18px !important; height: 18px !important; border-radius: 3px !important; }
+/* 1. the phase strip */
+.rcx-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); margin: 4px 0 14px; border: 1px solid var(--line2); border-radius: 4px; background: var(--panel); overflow: hidden; }
+.rcx-ph { display: block; text-align: left; padding: 10px 12px; border: 0; border-right: 1px solid var(--line); background: none; color: var(--text); font: inherit; cursor: pointer; min-width: 0; }
+.rcx-ph:last-child { border-right: 0; } .rcx-ph:hover { background: var(--raised); }
+.rcx-ph b { display: block; margin-top: 3px; font: 700 20px/1.1 var(--body); } .rcx-ph b span { color: var(--faint); font-size: 14px; font-weight: 600; }
+.rcx-ph em { display: block; font-style: normal; font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 2. work on these */
+.rcx-fix { margin-bottom: 16px; border: 1px solid rgba(227,169,75,.45); border-radius: 4px; background: var(--panel); }
+.rcx-fh { display: flex; align-items: baseline; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+.rcx-fh .rcx-k { color: #e3a94b; }
+.rcx-fr { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 4px 12px; padding: 11px 14px; border-top: 1px solid var(--line); cursor: pointer; }
+.rcx-fh + .rcx-fr { border-top: 0; } .rcx-fr:hover, .rcx-fr.on { background: var(--raised); }
+.rcx-fr .t { font-weight: 700; font-size: 16px; } .rcx-fr .v { text-align: right; font: 700 18px var(--body); } .rcx-fr .s, .rcx-fr .w { grid-column: 2 / -1; color: var(--muted); font-size: 14.5px; }
+.rcx-fr .w { color: var(--text); } .rcx-fr .w i { font-style: normal; font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--gold); margin-right: 8px; }
+.rcx-tag { display: inline-block; margin-left: 8px; padding: 0 5px; border: 1px solid currentColor; border-radius: 2px; font-size: 11px; font-style: normal; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; vertical-align: 2px; }
+.rcx .y { color: #e3a94b; } .rcx .r { color: #ef6b63; }
+/* 3. the phases */
+.rcx-sec { margin-bottom: 14px; border: 1px solid var(--line2); border-radius: 4px; background: var(--panel); scroll-margin-top: 120px; }
+.rcx-sh { display: flex; align-items: baseline; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--line); }
+.rcx-sh b { font-size: 18px; } .rcx-sh span { color: var(--muted); font-size: 14px; } .rcx-sh em { margin-left: auto; font-style: normal; font-size: 13px; color: var(--faint); white-space: nowrap; }
+.rcx-grp { padding: 8px 14px 2px; font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--faint); }
+.rcx-row { display: grid; grid-template-columns: 7px 18px minmax(150px, .9fr) minmax(0, 2fr) minmax(70px, auto); gap: 12px; align-items: center; min-height: 36px; padding: 0 14px; border-top: 1px solid var(--line); font-size: 14.5px; cursor: pointer; }
+.rcx-grp + .rcx-row, .rcx-sh + .rcx-row { border-top: 0; }
+.rcx-row:hover, .rcx-row.on { background: var(--raised); } .rcx-row:focus-visible { outline: 1px solid var(--gold); outline-offset: -1px; }
+.rcx-row .l { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rcx-row .s { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rcx-row .v { text-align: right; font-weight: 700; white-space: nowrap; }
+.rcx-row.y .v { color: #e3a94b; } .rcx-row.r .v { color: #ef6b63; }
+.rcx-row.n .l { color: var(--muted); font-weight: 500; } .rcx-row.n .v { color: var(--muted); font-weight: 600; }
+.rcx-row .v span { color: var(--faint); font-weight: 600; }
+.rcx-open { padding: 10px 14px 14px 51px; border-top: 1px solid var(--line); background: var(--raised); font-size: 14.5px; color: var(--muted); }
+.rcx-open > * { max-width: 860px; } .rcx-open .rcx-how { color: var(--text); }
+@media (max-width: 760px) {
+  .rcx-strip { grid-template-columns: repeat(3, 1fr); } .rcx-ph { border-bottom: 1px solid var(--line); }
+  .rcx-row { grid-template-columns: 7px 18px minmax(0, 1fr) auto; min-height: 40px; } .rcx-row .s { display: none; }
+  .rcx-open { padding-left: 14px; }
+}
+html body #view section.rck.rcx-on .rck-h .ds-sw { display: none !important; }
 /* refined look (Design studio round 170, Oct 28): one set of finishes everywhere, see notes/Design rules.md */
 /* cyrillic-ext */
 @font-face {
@@ -58808,6 +58855,90 @@ function dsGuides() {
     if (t) return; t = setTimeout(function () { t = 0; try { fix(); } catch (e) { console.warn('refine', e); } }, 200);
   }
   run(); new MutationObserver(run).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+})();
+</script>
+<script>/* Round 179 (Oct 28, the user: "look through the checklist/rules for the classes and adjust the checklist tab in rotations, and design it
+   accordingly/layout/everything. Even if it means a complete re-design of the page"): the Rotation tab's Checklist, redrawn.
+   1. A strip of the six phases every spec shares, in fight order (Before the pull, Opener, Rotation, Resources, Cooldowns, Stats).
+   2. (no separate fix list: the player card above already leads with Fix first and Also)
+   3. Each phase as quiet rows: a dot, the icon, the name, one sentence, the number; the spec's own groups as small labels.
+      A row opens the same detail the old card had. Ungraded numbers are grey. "Saves" lives in Gear and extras, not here.
+   It draws from window.rotData.checks and borrows each detail from the old checklist, which stays in the page, hidden. */
+(function () {
+  var t = 0;
+  var E = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var strip = function (h) { return String(h || '').replace(/<[^>]+>/g, ''); };
+  var first = function (s) { var m = String(s || '').match(/^[\s\S]*?[.!?](\s|$)/); return (m ? m[0] : String(s || '')).trim(); };
+  var slug = function (k) { return 'spc-r-' + String(k).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); };
+  var SKIP = { saves: 1 };
+  var RES = /^(holy power|mana|soul shards?|runic power|runes|energy|rage|focus|combo points?|chi|maelstrom|insanity|astral power|fury|essence|arcane charges|pain|lunar power|resources?)$/i;
+  var PH = [['pre', 'Before the pull', 'Buffs, oils and potions'], ['open', 'Opener', 'The first seconds of the pull'], ['rot', 'Rotation', 'Casting, priority and your buttons'], ['res', 'Resources', 'What you build and spend'], ['cd', 'Cooldowns', 'Windows, uses and big damage'], ['st', 'Stats', 'Your gear\'s stats']];
+  function phaseOf(sec, ks, ls) {
+    if (ks.some(function (k) { return /^pre:/.test(k) || k === 'potn'; }) || /^(before the pull|potions)$/i.test(sec)) return 'pre';
+    if (/opener/i.test(sec) || ks.some(function (k) { return /^open/.test(k); })) return 'open';
+    if (ks.some(function (k) { return /^st:/.test(k); }) || /stats/i.test(sec)) return 'st';
+    if (ks.some(function (k) { return /^(win:|boss:)/.test(k); }) || ls.some(function (l) { return / (uses|windows?)$|in bloodlust|into big damage|inside /i.test(l); }) || /other cooldowns|big damage|heavy damage/i.test(sec)) return 'cd'; /* (a button kept on cooldown, like Haunt or Blood Boil, is the rotation; a big cooldown's uses and windows are Cooldowns) */
+    if (RES.test(sec) || ks.some(function (k) { return k === 'hp' || k === 'mana' || /waste/.test(k); })) return 'res';
+    return 'rot';
+  }
+  function detailFor(c, old) {
+    /* the old card's detail, without what the row already says: no second title, no other check's block, no repeat of the sentence */
+    var el = old.querySelector('#' + slug(c.k)), d = document.createElement('div');
+    if (el) { [].forEach.call(el.children, function (ch) { if (ch.tagName === 'SUMMARY' || ch.classList.contains('rck-mgh')) return; if (ch.id && /^spc-r-/.test(ch.id)) return; /* (another check's block inside a merged card) */ d.appendChild(ch.cloneNode(true)); }); }
+    else { var sub = [].filter.call(old.querySelectorAll('.rck-mgb'), function (bx) { var hd = bx.querySelector('.rck-mgh'); return hd && hd.textContent.indexOf(c.label) >= 0; })[0];
+      if (sub) { var cl = sub.cloneNode(true); [].forEach.call(cl.querySelectorAll('.rck-mgh'), function (x) { x.remove(); }); d.appendChild(cl); } }
+    if (!d.textContent.trim()) d.innerHTML = (c.how ? '<p class="rcx-how">' + E(c.how) + '</p>' : '<p>' + E(strip(c.sub)) + '</p>');
+    var said = strip(c.sub).trim(); [].forEach.call(d.querySelectorAll('p, .rck-b > div'), function (p) { if (said && p.textContent.trim() === said && !p.children.length) p.remove(); });
+    return d.innerHTML;
+  }
+  function iconFor(c, old) {
+    var el = old.querySelector('#' + slug(c.k) + ' > summary .icw') || [].filter.call(old.querySelectorAll('summary'), function (s) { return s.textContent.indexOf(c.label) >= 0; }).map(function (s) { return s.querySelector('.icw'); })[0];
+    if (el) return el.outerHTML;
+    var D = window.rotData; try { return D && D.ico ? D.ico(String(c.ic || c.label).replace(/^rot:/, '')) : ''; } catch (e) { return ''; }
+  }
+  function draw(sec) {
+    var D = window.rotData; if (!D || !D.checks || !D.checks.length) return;
+    var old = sec.querySelector('.rck-ovw'); if (!old) return;
+    var key = (D.name || '') + '|' + D.checks.length + '|' + D.checks.map(function (c) { return c.st; }).join(''); if (sec.dataset.rcx === key && sec.querySelector('.rcx')) return;
+    var C = D.checks.filter(function (c) { return !SKIP[c.k]; });
+    var secs = []; C.forEach(function (c) { if (secs.indexOf(c.sec) < 0) secs.push(c.sec); });
+    var heal = /^(Holy|Discipline|Restoration|Mistweaver|Preservation)\b/.test(D.spec || '');
+    var bySec = {}; secs.forEach(function (s) { var cs = C.filter(function (c) { return c.sec === s; }); bySec[s] = phaseOf(s, cs.map(function (c) { return String(c.k); }), cs.map(function (c) { return String(c.label); })); });
+    var ORD = { bad: 0, warn: 1, ok: 2, na: 3 };
+    var graded = function (l) { return l.filter(function (c) { return c.st !== 'na'; }); };
+    var col = function (st) { return st === 'bad' ? 'r' : st === 'warn' ? 'y' : st === 'ok' ? 'g' : 'n'; };
+    var h = '<div class="rcx">';
+    /* 1. the phase strip */
+    h += '<div class="rcx-strip">';
+    PH.forEach(function (p) { if (p[0] === 'open' && heal) return; var l = C.filter(function (c) { return bySec[c.sec] === p[0]; }), g = graded(l), ok = g.filter(function (c) { return c.st === 'ok'; }).length, miss = g.filter(function (c) { return c.st !== 'ok'; }).sort(function (a, b) { return ORD[a.st] - ORD[b.st]; })[0], w = g.some(function (c) { return c.st === 'bad'; }) ? 'r' : miss ? 'y' : g.length ? 'g' : 'n';
+      h += '<button type="button" class="rcx-ph" data-go="' + p[0] + '"><span class="rcx-k"><i class="d ' + w + '"></i>' + p[1] + '</span><b>' + (g.length ? ok + '<span>/' + g.length + '</span>' : '—') + '</b><em>' + (g.length ? (miss ? E(miss.label) : 'All done right') : l.length ? 'Your numbers' : 'Not in this pull') + '</em></button>'; });
+    h += '</div>';
+    /* (no "Work on these" list: the player card above already leads with Fix first and Also) */
+    /* 3. the phases */
+    PH.forEach(function (p) { if (p[0] === 'open' && heal) return; var ss = secs.filter(function (s) { return bySec[s] === p[0]; }); var l = C.filter(function (c) { return bySec[c.sec] === p[0]; }); if (!l.length) return; var g = graded(l), ok = g.filter(function (c) { return c.st === 'ok'; }).length;
+      h += '<div class="rcx-sec" data-ph="' + p[0] + '"><div class="rcx-sh"><b>' + p[1] + '</b><span>' + p[2] + '</span><em>' + (g.length ? ok + ' of ' + g.length + ' done right' : 'not graded') + '</em></div>';
+      ss.forEach(function (s) { var r = C.filter(function (c) { return c.sec === s; }).sort(function (a, b) { return ORD[a.st] - ORD[b.st]; }); if (ss.length > 1 || s !== p[1]) h += '<div class="rcx-grp">' + E(s) + '</div>';
+        r.forEach(function (c) { h += '<div class="rcx-row ' + col(c.st) + '" data-k="' + E(c.k) + '" role="button" tabindex="0"><i class="d ' + col(c.st) + '"></i>' + iconFor(c, old) + '<span class="l">' + E(c.label) + '</span><span class="s">' + E(strip(c.sub)) + '</span><span class="v">' + c.v + '</span></div>'; }); });
+      h += '</div>'; });
+    h += '</div>';
+    var prev = sec.querySelector('.rcx'); if (prev) prev.remove();
+    old.insertAdjacentHTML('beforebegin', h); sec.dataset.rcx = key; sec.classList.add('rcx-on'); [].forEach.call(sec.querySelectorAll(':scope > .rck-h .ds-sw'), function (x) { x.style.setProperty('display', 'none', 'important'); }); /* (the old Summary / Everything switch) */
+    var box = sec.querySelector('.rcx');
+    box.addEventListener('click', function (ev) {
+      var ph = ev.target.closest('.rcx-ph'); if (ph) { var to = box.querySelector('.rcx-sec[data-ph="' + ph.dataset.go + '"]'); if (to) to.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+      var row = ev.target.closest('.rcx-row, .rcx-fr'); if (!row || ev.target.closest('.rcx-open')) return;
+      var nx = row.nextElementSibling; if (nx && nx.classList.contains('rcx-open')) { nx.remove(); row.classList.remove('on'); return; }
+      var c = C.filter(function (x) { return String(x.k) === row.dataset.k; })[0]; if (!c) return;
+      var d = document.createElement('div'); d.className = 'rcx-open'; d.innerHTML = detailFor(c, old); row.after(d); row.classList.add('on');
+      /* once it is on the page: no second title, no repeat of the row's sentence, and the guides' why when nothing else shows */
+      var said = strip(c.sub).trim(); [].forEach.call(d.querySelectorAll('.rck-mgh'), function (x) { x.remove(); }); [].forEach.call(d.querySelectorAll('p'), function (p) { if (said && p.offsetHeight && p.textContent.trim() === said) p.remove(); });
+      if (!d.innerText.trim()) d.innerHTML = c.how ? '<p class="rcx-how">' + E(c.how) + '</p>' : '<p>' + E(strip(c.sub)) + '</p>';
+    });
+    box.addEventListener('keydown', function (ev) { if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.classList.contains('rcx-row')) { ev.preventDefault(); ev.target.click(); } });
+  }
+  function scan() { document.querySelectorAll('#view section.rck').forEach(function (s) { try { draw(s); } catch (e) { console.warn('checklist', e); } }); }
+  function run() { if (t) return; t = setTimeout(function () { t = 0; scan(); }, 250); }
+  run(); new MutationObserver(run).observe(document.body, { childList: true, subtree: true });
 })();
 </script>
 </body>
