@@ -1969,6 +1969,7 @@ const PATCH_NOTES = [
     'Debriefing: the boss banner is tidier, with one chip shape and without the start time and player count; "The details" tiles open into slim lists, and only a tile that needs fixing is edged in red.',
     'Debriefing: "The details" are small tiles, three to a row, each with its score, its name and a short line; tap one to open it across the row.',
     'Rotation: Gear and extras are small tiles in a row above your checklist (each item, its number and its short line), and the checklist has the full width under them.',], f: [
+    'Rotation: a cooldown can no longer read "3 of 2 possible times". When you pressed it more often than the count allowed, the count now matches your presses.',
     'Rotation, from a re-read of every class guide: Protection Warrior\'s Execute counts on targets under 20% health too; Retribution\'s Templars aren\'t told to hold Blade of Justice in Avenging Wrath; Devourer\'s Annihilators aren\'t asked to press The Hunt; Halo is checked only for Archon; Guardian\'s Maul at 80 Rage; The Hunt and Takedown every minute with Eternal Hunt and Savagery.',
     'Survival Hunter: the tier set\'s 2-piece and 4-piece were the wrong way round. Big cooldowns now track Takedown for Survival, Zenith for Windwalker and Dark Transformation for Unholy, not buttons that are gone.',
     'Arcane Mage as Spellslinger: Arcane Missiles with Clearcasting is checked at under 15 Arcane Salvo, your hero tree\'s line, not Sunfury\'s 12. Fire Mage as Frostfire: Scorch with Heat Shimmer is no longer expected.',
@@ -19740,7 +19741,7 @@ function hpalChecks(reps, name, one) {
     // (each big cooldown, against how often it could have been pressed: its base cooldown, or a shorter one the log shows a talent gives)
     { const forced = castForced(r, p); s.cdu = {}; s.dtEn = (p.castTg || []).filter((x) => x[1] === 'Divine Toll' && x[0] <= t1 && /^(Creature|Vehicle)/.test(String(x[2]))).length; for (const [n, base] of [['divine toll', tal('Quickened Invocation') ? 45 : 60], [wingN.toLowerCase(), 120], ['aura mastery', tal('Unwavering Spirit') ? 150 : 180]]) { const a = c.ab.find((y) => y.name.toLowerCase() === n); if (!a) continue;
         const ci = cdInfo(a.id); if (ci === undefined) s.wait = (s.wait || 0) + 1; const b0 = ci && ci.cd >= 20 ? Math.min(ci.cd, base) : base, ts = a.ts.filter((t) => t <= t1).slice().sort((u, w) => u - w), mg = Math.min(Infinity, ...ts.slice(1).map((t, i) => t - ts[i]));
-        let cd = seenCd(r, p, a.name, b0) || b0; if (mg >= 0.75 * b0 && mg < cd) cd = mg; const sim = cdSim(ts, cd, 1, 0, t1, forced); s.cdu[n] = { n: ts.length, poss: sim.poss + sim.early, cap: sim.cap, cd, capL: sim.capL }; } }
+        let cd = seenCd(r, p, a.name, b0) || b0; if (mg >= 0.75 * b0 && mg < cd) cd = mg; const sim = cdSim(ts, cd, 1, 0, t1, forced); s.cdu[n] = { n: ts.length, poss: Math.max(ts.length, sim.poss + sim.early), cap: sim.cap, cd, capL: sim.capL }; } } /* (never fewer possible uses than uses (Oct 28, "3 of 2 possible times")) */
     // (what each mistake cost, in healing: your own middle heal of each kind, from this pull, times what was lost. Estimates)
     { const med = (l) => { const a = l.filter((v) => v > 0).sort((x, y) => x - y); return a.length ? a[Math.floor(a.length / 2)] : 0; }, hit = (name, ts) => { const l = (p.hT && p.hT.get(name)) || []; return ts.map((u) => Math.max(0, ...l.filter(([v]) => v >= u - 0.05 && v <= u + 0.6).map((x) => x[2] || 0))); };
       const cFoL = med(hit('Flash of Light', infused)) || med(hit('Flash of Light', fol)), cHS = med(hit('Holy Shock', hsT.filter((u) => !dt.concat(am).some((d) => Math.abs(d - u) < 1.2)))), cEF = med(hit('Eternal Flame', by(p, 'Eternal Flame', t1))) || med(hit('Word of Glory', by(p, 'Word of Glory', t1))), cHL = med(hit('Holy Light', by(p, 'Holy Light', t1)));
@@ -21884,7 +21885,7 @@ function rdruChecks(reps, name, one) {
       const need = { 'convoke the spirits': convT, 'incarnation: tree of life': treeT && !convT, tranquility: tal('Tranquility'), "nature's swiftness": tal("Nature's Swiftness"), innervate: tal('Innervate'), ironbark: tal('Ironbark') };
       for (const n of Object.keys(RDRU_CD)) { const a = c.ab.find((y) => y.name.toLowerCase() === n); if (!a && !need[n]) continue;
         const ci = a ? cdInfo(a.id) : null; if (ci === undefined) { s.wait++; } const base = ci && ci.cd >= 20 ? ci.cd : RDRU_CD[n], ts = a ? a.ts.filter((t) => t <= t1).slice().sort((u, w) => u - w) : [], mg = Math.min(Infinity, ...ts.slice(1).map((t, i) => t - ts[i])); let cd = seenCd(r, p, a ? a.name : n, base) || base; if (mg >= 0.75 * base && mg < cd) cd = mg;
-        const sim = cdSim(ts, cd, 1, 0, t1, forced); s.cdu[n] = { n: ts.length, poss: sim.poss + sim.early, cap: sim.cap, cd, capL: sim.capL }; } }
+        const sim = cdSim(ts, cd, 1, 0, t1, forced); s.cdu[n] = { n: ts.length, poss: Math.max(ts.length, sim.poss + sim.early), cap: sim.cap, cd, capL: sim.capL }; } } /* (never fewer possible uses than uses (Oct 28, "3 of 2 possible times")) */
     // (Nature's Swiftness with the tier set's 4 pieces: the global right before Convoke the Spirits or Tranquility, or right after Tranquility starts)
     s.ns = pr("nature's swiftness").map((t) => ({ t, sync: cvT.some((u) => u >= t - 0.1 && u - t <= 2.6) || tqT.some((u) => Math.abs(u - t) <= 2.6) }));
     if (tier4) for (const q of s.ns) { BX('ns4', q.t, q.sync ? 'ok' : 'warn', T(q.t) + (q.sync ? ': lined up with ' + (cvT.some((u) => u >= q.t - 0.1 && u - q.t <= 2.6) ? 'Convoke the Spirits' : 'Tranquility') : ': on its own')); if (!q.sync) (s.m.ns4 = s.m.ns4 || []).push(q.t); }
@@ -22324,7 +22325,7 @@ function pevkChecks(reps, name, one) {
     { const forced = castForced(r, p); s.cdu = {}; const need = { stasis: stasisT, 'tip the scales': tal('Tip the Scales'), rewind: tal('Rewind'), 'dream flight': flightT, 'time dilation': tal('Time Dilation'), zephyr: tal('Zephyr') };
       for (const n of Object.keys(PEVK_CD)) { const nm = n === 'stasis' ? 'stasis (store)' : n, a = c.ab.find((y) => y.name.toLowerCase() === nm); if (!a && !need[n]) continue;
         const ci = a ? cdInfo(a.id) : null; if (ci === undefined) s.wait++; const base = ci && ci.cd >= 20 ? ci.cd : PEVK_CD[n], ts = a ? a.ts.filter((t) => t <= t1).slice().sort((u, w) => u - w) : [], mg = Math.min(Infinity, ...ts.slice(1).map((t, i) => t - ts[i])); let cd = seenCd(r, p, a ? a.name : n, base) || base; if (mg >= 0.75 * base && mg < cd) cd = mg;
-        const sim = cdSim(ts, cd, 1, 0, t1, forced); s.cdu[n] = { n: ts.length, poss: sim.poss + sim.early, cap: sim.cap, cd, capL: sim.capL }; } }
+        const sim = cdSim(ts, cd, 1, 0, t1, forced); s.cdu[n] = { n: ts.length, poss: Math.max(ts.length, sim.poss + sim.early), cap: sim.cap, cd, capL: sim.capL }; } } /* (never fewer possible uses than uses (Oct 28, "3 of 2 possible times")) */
     // (mana: what each spell cost, what came back, the low point, running dry, and mana from others)
     s.mx = p.manaMax || 0; s.mnSp = new Map(); s.mnG = new Map();
     for (const y of (p.spendL || [])) if (y.ty === '0' && y.t <= t1) { const v = s.mnSp.get(y.spell) || [0, 0]; v[0]++; v[1] += y.amt; s.mnSp.set(y.spell, v); }
@@ -22658,7 +22659,7 @@ function pdemChecks(reps, name, one) {
     { const forced = castForced(r, p); s.cdu = {}; const need = { 'summon demonic tyrant': true, 'call dreadstalkers': true, 'grimoire: imp lord': grimIL, 'grimoire: fel ravager': grimFR, 'summon doomguard': dgT, 'power siphon': psT };
       for (const n of Object.keys(PDEM_CD)) { const a = c.ab.find((y) => y.name.toLowerCase() === n); if (!a && !need[n]) continue; const base = PDEM_CD[n], ts = a ? a.ts.filter((t) => t <= t1).slice().sort((u, w) => u - w) : [], mg = Math.min(Infinity, ...ts.slice(1).map((t, i) => t - ts[i]));
         let cd = seenCd(r, p, a ? a.name : n, base) || base; if (mg >= 0.75 * base && mg < cd) cd = mg;
-        const sim = cdSim(ts, cd, 1, 0, t1, forced); s.cdu[n] = { n: ts.length, poss: sim.poss + sim.early, cap: sim.cap, cd, capL: sim.capL }; } }
+        const sim = cdSim(ts, cd, 1, 0, t1, forced); s.cdu[n] = { n: ts.length, poss: Math.max(ts.length, sim.poss + sim.early), cap: sim.cap, cd, capL: sim.capL }; } } /* (never fewer possible uses than uses (Oct 28, "3 of 2 possible times")) */
     // (the rotation check: each cast against the priority list)
     s.apl = aplPull(x, s, PDEM_APL, per, tal, heroN);
     // (always be casting: a cast bar from its start, an instant a global cooldown, time dead or with the whole raid waiting left out)
@@ -23144,7 +23145,7 @@ function genRun0(spec, D, reps, name, one) {
         if (ch === 1 && a && !q.noSeen) { const sc = seenCd(r, p, a.name, cd); if (sc) cd = sc; const mg = Math.min(Infinity, ...ts.slice(1).map((t, i) => t - ts[i])); if (mg >= 0.75 * cd && mg < cd) cd = mg; }
         // (what the spell itself did, by its own name: its damage and its healing)
         const own = (m) => [...(m || new Map()).values()].filter((y) => nms.includes(lc(String(y.name)))).reduce((v, y) => v + (y.total || 0), 0);
-        const sim = cdSim(ts, cd, ch, 0, t1, forced); s.cdu[n] = { n: ts.length, poss: sim.poss + sim.early, cap: sim.cap, cd, ch, ch0, capL: sim.capL, dmg: own(p.dmgAb), heal: own(p.healAb) }; } }
+        const sim = cdSim(ts, cd, ch, 0, t1, forced); s.cdu[n] = { n: ts.length, poss: Math.max(ts.length, sim.poss + sim.early), cap: sim.cap, cd, ch, ch0, capL: sim.capL, dmg: own(p.dmgAb), heal: own(p.healAb) }; } }
     // (the rotation check: each cast against the priority list)
     if (D.apl) s.apl = genAplRun(x, s, D.apl, { hasteF, pressed: (n) => per.some(({ p: pp, t1: tt }) => (pp.byName.get(lc(n)) || []).some((t) => t <= tt)), tal, heroN, ctxRes: res ? res.ty : null, ctxB: D.apl.ctx || procs.map((q) => q.n) });
     // (procs: each one spent with the spell it's for, or wasted: run out, or replaced while still up)
