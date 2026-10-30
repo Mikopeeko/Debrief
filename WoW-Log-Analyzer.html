@@ -11493,6 +11493,26 @@ html body #view .gb.gb-tb .gb-bx { color: var(--t2) !important; font-size: 12px 
 html body #view .gb.gb-tb .gb-v, html body #view .gb.gb-tb .gb-bn { color: var(--t1) !important; }
 html body #view .gb.gb-tb .sp { font-size: 12.5px; }
 html body #view .gb.gb-tb .pfc .pfc-x, html body #view .gb.gb-tb .pfc .pfc-y, html body #view .gb.gb-tb .pfc .pfc-pl { fill: var(--t3) !important; font-size: 11px !important; }
+/* round 310: muted colour on each Graphs menu icon (the user: "Maybe the icons could be colored?"); calmer names, the open page stays gold */
+@media (min-width: 700px) {
+html body #view .gb.gb-tb .ds-grail .gb-tabs button[data-gtab="dmg"] { --gc: #e8915a; }
+html body #view .gb.gb-tb .ds-grail .gb-tabs button[data-gtab="heal"] { --gc: #5cc98a; }
+html body #view .gb.gb-tb .ds-grail .gb-tabs button[data-gtab="taken"] { --gc: #e06c6c; }
+html body #view .gb.gb-tb .ds-grail .gb-tabs button[data-gtab="hp"] { --gc: #e58aa8; }
+html body #view .gb.gb-tb .ds-grail .gb-tabs button[data-gtab="death"] { --gc: #b86a6a; }
+html body #view .gb.gb-tb .ds-grail .gb-tabs button[data-gtab="surv"] { --gc: #6aa5e0; }
+html body #view .gb.gb-tb .ds-grail .gb-tabs button[data-gtab="disp"] { --gc: #6fc7bd; }
+html body #view .gb.gb-tb .ds-grail .gb-tabs button[data-gtab="kick"] { --gc: #dcbf5a; }
+html body #view .gb.gb-tb .ds-grail .gb-tabs button[data-gtab="cpm"] { --gc: #93a6bf; }
+html body #view .gb.gb-tb .ds-grail .gb-tabs button[data-gtab="mana"] { --gc: #5b9bea; }
+html body #view .gb.gb-tb .ds-grail .gb-tabs button[data-gtab="buff"] { --gc: #7cc47c; }
+html body #view .gb.gb-tb .ds-grail .gb-tabs button[data-gtab="debuff"] { --gc: #b48be0; }
+html body #view .gb.gb-tb .ds-grail .gb-tabs button[data-gtab="enemy"] { --gc: #e0965a; }
+html body #view .gb.gb-tb .ds-grail .gb-tabs button[data-gtab]:not(.on) { color: #a3abb4 !important; }
+html body #view .gb.gb-tb .ds-grail .gb-tabs button[data-gtab]:not(.on)::before { background: var(--gc, currentColor) !important; opacity: .75 !important; }
+html body #view .gb.gb-tb .ds-grail .gb-tabs button[data-gtab]:not(.on):hover::before { opacity: 1 !important; }
+html body #view .gb.gb-tb .ds-grail .gb-tabs button[data-gtab]:not(.on):hover { color: #e8eaed !important; }
+}
 
 </style>
 
