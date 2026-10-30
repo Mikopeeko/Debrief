@@ -21083,6 +21083,7 @@ const PATCH_NOTES = [
     "Innervate on Balance, Feral and Guardian: once a pull on a healer is the goal, and a pull without it is a small miss.",
     "Debriefing: slow kills say so first (\"was killed too slowly: it lived 29 s\"), and the timeline headlines read as plain sentences on every boss.",
   ], f: [
+    'Compare: a hunter\'s pets count together, so Bloodshed and other pet attacks are one row for each player. No more "didn\'t use it" because the pets had different names, or the log credited the hunter instead of the pet.',
     'Augment runes never count against you anywhere: no red "No augment rune", no points off Ready to raid, and never a first fix. Using one shows as a bonus.',
     "Rotation timeline: both Infusion of Light charges get their ★ on Flash of Light (only the second one did), and any proc that stacks works the same way.",
     "Rotation: \"Always be casting\" no longer counts a channel (Divine Hymn, Penance, Tranquility, Mind Flay, a channelled trinket ...) or an Evoker's charge-up as time spent not casting.",
@@ -44498,7 +44499,15 @@ const cmpPt = (a, b, mul = 100) => { if (a == null || b == null) return ''; cons
 const cmpGapTxt = (a, b, who) => (!a || !b ? '' : Math.abs(a - b) / b < 0.02 ? 'Level with ' + who + '.' : Math.round(100 * Math.abs(a - b) / b) + '% ' + (a > b ? 'above ' : 'below ') + who + '.');
 const cmpGapSt = (a, b) => (!a || !b ? 'na' : a >= b * 0.95 ? 'ok' : a >= b * 0.8 ? 'warn' : 'bad');
 // Two players' spells matched by name: [[a, b]], biggest first. side: { ab: [{ name, id, share, cpm }] }
+// (one row a spell: the player's own and all their pets' added up (Oct 29, "Schooty didn't use it": three pets each had a Bloodshed row, and the log
+// credits some spells to the hunter one night and the pet another))
+// (a pet's basic attack is Bite, Claw or Smack by its family: the same button, so one row)
+const PET_BASIC = new Set(['bite', 'claw', 'smack']);
+const cmpMerge = (ab) => { const g = new Map(), out = []; for (const a of ab || []) { let k = String(a.name).replace(/^[^:]+: /, '').toLowerCase(); const basic = /^[^:]+: /.test(String(a.name)) && PET_BASIC.has(k); if (basic) k = 'pet basic attack'; let o = g.get(k);
+    if (!o) { o = { ...a, _n: [a.name] }; if (basic) o._b = 1; g.set(k, o); out.push(o); continue; } o._n.push(a.name); for (const f of ['share', 'cpm', 'total', 'casts', 'n', 'hits']) if (typeof a[f] === 'number') o[f] = (o[f] || 0) + a[f]; }
+  for (const o of out) { if (o._b) { o.name = 'Pets: Bite or Claw'; delete o._b; } else if (o._n.length > 1) { const sp = String(o.name).replace(/^[^:]+: /, ''); o.name = o._n.some((n) => !/^[^:]+: /.test(String(n))) ? sp : 'Pets: ' + sp; } delete o._n; } return out; };
 function cmpPairs(A, B) {
+  A = { ...A, ab: cmpMerge(A.ab) }; B = { ...B, ab: cmpMerge(B.ab) };
   const key = (a) => String(a.name).replace(/^[^:]+: /, '').toLowerCase();
   // (the exact name first, then the name without a pet's prefix, then the spell ID, each only for what's still unmatched: a
   // copy of a spell, like "Rune Weapon: Death Strike", would otherwise take the other player's Death Strike and leave this
