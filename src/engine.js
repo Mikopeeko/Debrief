@@ -6480,7 +6480,7 @@ function* analyzeSteps(item, text, opts) {
         // (a buff's extra stack is a proc too, and its top stack: e.g. Infusion of Light at 2 with Inflorescence of the Sunwell)
         if (pl && f[11] === 'BUFF' && isStatBuf(f[9].toLowerCase())) statBuf(P(dg, dn), num(f[8]), f[9], t, ev === 'SPELL_AURA_APPLIED' ? 'a' : 'd', stacks);
         if (pl && f[11] === 'BUFF' && ev === 'SPELL_AURA_APPLIED_DOSE') { const b = buffPre(P(dg, dn), num(f[8]), f[9]); if (b) { b.mx = Math.max(b.mx || 1, stacks); if (!b.dose) b.dose = []; if (b.dose.length < 600) b.dose.push([t, stacks]); if (!b.dn) b.dn = []; if (b.dn.length < 3000) b.dn.push([t, stacks, 1]); } }
-        if (pl && f[11] === 'DEBUFF') { const q = P(dg, dn); if (ev === 'SPELL_AURA_APPLIED') debuffUp(q, num(f[8]), f[9], t, sn && !isPlayer(sg) ? shortName(sg, sn) : ''); else { if (!q.debuffs.has(f[9])) debuffUp(q, num(f[8]), f[9], t, ''); const b = q.debuffs.get(f[9]); b.mx = Math.max(b.mx, stacks); } }
+        if (pl && f[11] === 'DEBUFF') { const q = P(dg, dn); if (ev === 'SPELL_AURA_APPLIED') debuffUp(q, num(f[8]), f[9], t, sn && !isPlayer(sg) ? shortName(sg, sn) : ''); else { if (!q.debuffs.has(f[9])) debuffUp(q, num(f[8]), f[9], t, ''); const b = q.debuffs.get(f[9]); b.mx = Math.max(b.mx, stacks); if (ev === 'SPELL_AURA_APPLIED_DOSE' && stacks > 1) { if (!b.st) b.st = []; if (b.st.length < 1500) b.st.push([t, stacks]); } /* round 315 debuff stacks */ } }
         break;
       }
       case 'SPELL_AURA_REMOVED':
