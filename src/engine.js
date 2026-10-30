@@ -1,5 +1,6 @@
 (function (root) {
 'use strict';
+/* RULES_MARK 285: change this line to make every saved pull read again (the saved readings are keyed to this script's text) */
 
 // ---------- static data ----------
 // (the label on a mechanic's whole-set map row: 'Both circles' for two, 'All 3 leaps' for more)

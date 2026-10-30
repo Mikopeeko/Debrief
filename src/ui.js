@@ -1270,7 +1270,8 @@ function rfDraw(k) { if (!S.rep || !TAB_ORDER.includes(S.tab)) return;
   const y = window.scrollY; try { renderMain(); } catch (e) { console.warn(e); } window.scrollTo({ top: y }); }
 async function readRep(item) {
   if (CACHE.has(item)) return CACHE.get(item);
-  { const saved = item._rdSkip ? null : await RD.get(item); if (saved) { saved.item = item;
+  { const saved = item._rdSkip ? null : await RD.get(item); /* round 285 stale reads */ if (saved && saved._stale) { try { const f = await readFresh(item); if (f) return f; } catch (e) { /* (the old reading below) */ } }
+    if (saved) { saved.item = item;
       if (item.wcl) for (const a of item.wcl.abilities.values()) { const k = String(a.name || '').toLowerCase(); if (k && a.gameID > 1 && !E.SPELLID.has(k)) E.SPELLID.set(k, a.gameID); }
       saved._saved = true; applyNote(saved); ndzSpecSave(saved); CACHE.set(item, saved); cacheTrim(); histSave(saved); if (saved._stale) rfQueue(item); return saved; } }
   return readFresh(item);
