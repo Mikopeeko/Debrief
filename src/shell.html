@@ -11174,6 +11174,19 @@ html body #view .gb-chart249 .r265-p.on { color: var(--c); border-color: var(--c
 html body #view .gb-chart249 .r265-clr { border-style: dashed; }
 html body #view .gb-card .r267-key { margin: 8px 0 0; font-size: 11.5px; color: #7d8792; } /* round 267 */
 html body #view .gb-bd .r268-rc { margin: 4px 0 12px 28px; } /* round 268: a death recap under each death on Graphs */
+html body #view .gb-chart249 .r269-mk { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 10px 0 0; } /* round 269: marks under the chart */
+html body #view .gb-chart249 .r269-lbl { font-size: 11.5px; color: #7d8792; margin-right: 4px; }
+html body #view .gb-chart249 .r269-c { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,.1); background: transparent; color: #c9d1d9; font: inherit; font-size: 11.5px; cursor: pointer; }
+html body #view .gb-chart249 .r269-c:hover { border-color: rgba(255,255,255,.22); }
+html body #view .gb-chart249 .r269-c[aria-pressed="false"] { opacity: .42; }
+html body #view .gb-chart249 .r269-c i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+html body #view .r269-c .k-lust { background: #e268a8; } html body #view .r269-c .k-death { background: #e5534b; } html body #view .r269-c .k-res { background: #4cc38a; } html body #view .r269-c .k-add { background: #9aa3ad; } html body #view .r269-c .k-boss { background: #7d8494; }
+html body #view .gb-chart249:not(.no-boss) .pfc-m { display: inline; }
+html body #view .gb-chart249.no-lust .mk-lust, html body #view .gb-chart249.no-lust .pfc-lust, html body #view .gb-chart249.no-lust .pfc-lt, html body #view .gb-chart249.no-death .mk-death, html body #view .gb-chart249.no-death .pfc-dg, html body #view .gb-chart249.no-res .mk-res, html body #view .gb-chart249.no-add .mk-add { display: none; }
+html body #view .r254-tip .r269-tm { margin: 6px 0 0; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.08); font-size: 11px; color: #c9d1d9; line-height: 1.45; }
+html body #view .r269-dc .r269-svg { width: 100%; height: auto; display: block; margin-top: 6px; }
+html body #view .r269-dc .r269-dd { cursor: pointer; } html body #view .r269-dc .r269-dd:hover circle { stroke: #fff; }
+html body #view .r269-mana .rs-sw { display: none; }
 
 </style>
 
