@@ -1410,6 +1410,11 @@ const PF_TAB = (t) => t === 'perf' || t === 'rot';
 // report cards); Latest pull, Assignments and Mechanics are always one pull; the Player audit has both, switched on its
 // own page. The pull cards pick it: a pull, or All pulls (which opens Summary, or the Player audit's all-pulls view).
 const OLD_ALL = { nightaudit: 1, nightassign: 1 }; // (the old all-pulls Mechanics and Assignments, e.g. in a saved resume: Summary has them now)
+/* round 325 pull pick */ const PICK325 = (it) => (S.pullPick && it && S.pullPick.k === it.id + ':' + it.diffId ? S.pullPick.s : null), pickOk325 = (it, b) => { const s = PICK325(it); return !s || s.has(b.pull); }, pickKey325 = (it) => { const s = PICK325(it); return s ? [...s].sort((a, b) => a - b).join(',') : ''; };
+window.getPullPick325 = () => { const it = S.rep && S.rep.item, s = PICK325(it); return s ? [...s].sort((a, b) => a - b) : null; };
+window.clearPullPick325 = () => { S.pullPick = null; S.plData = null; };
+window.setPullPick325 = (list) => { const it = S.rep && S.rep.item; if (!it) return false; const L = (list || []).map(Number).filter((n) => n > 0); S.pullPick = L.length ? { k: it.id + ':' + it.diffId, s: new Set(L) } : null; S.plData = null;
+  if (S.scope === 'all') { renderMain(); return true; } const b = document.querySelector('.bhp-all'); if (b) b.click(); else { setScope('all'); renderMain(); } return true; };
 function setScope(sc) {
   S.scope = sc; // (every tab follows it: one pull, or the whole night)
 }
@@ -1959,6 +1964,8 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-30', h: [{ t: 'A cleaner banner and one bar for every tab', d: "The banner is now just the boss: its name, the difficulty and the result, with the boss art bigger. Who you're looking at, the pull (or another boss from the night), All pulls, the wipe call and how strictly you're judged all sit in one bar at the top of every tab." }, { t: 'Graphs, redesigned', d: "Names in their own column with slim class-coloured bars, every page laid out the same way with its controls on the card's title line, and the chart now follows the phase, Bloodlust or Power Infusion you pick." }], n: [
+    "Pick pulls… in the Pull drop-down: tick any pulls of the boss and every tab shows just those, like All pulls does for the whole night.",
+    "Report card: a raider's checks fit in two columns, the ones they did well included, the raid's report card reads like Debriefing's numbers, and the roster is slimmer with every score in its grade's colour (hover a name for their spec).",
     "Graphs Debuffs shows only what the boss put on the raid. Debuffs that stack (Eternal Venom) show when each stack landed and the top stack, and clicking a debuff opens a chart of it over the pull. Click players in it to compare their lines.",
     "Graphs Interrupts has a chart: every kick as a dot in the kicker's colour and every cast that went off as a red ✕. Each player's list shows their kicks one by one.",
     "Graphs Defensives & heals: Defensives, then Healthstones, potions & self-heals, a new Combat potions page, then Health over the pull.",
@@ -12682,7 +12689,7 @@ function nsrtChecks(r) {
 // ---------- the night: every pull of the boss on screen ----------
 // Reads every pull of this boss (Warcraft Logs pulls only once downloaded, unless "Load all pulls" was clicked).
 async function bossReps(it, still, onCount, all) {
-  const pulls = S.index.bosses.filter((b) => b.id === it.id && b.diffId === it.diffId);
+  const pulls = S.index.bosses.filter((b) => b.id === it.id && b.diffId === it.diffId && pickOk325(it, b));
   const reps = []; let skipped = 0;
   // (every pull of the night (all): 3 downloads at a time, so a 30-pull night reads in a third of the time; kept in pull order)
   if (all) {
@@ -28905,8 +28912,8 @@ function rcSkel(v, line) {
 }
 function player() {
   // (the wipe filter is part of the key: changing it grades the night again)
-  const r = S.rep, it = r.item, isBoss = it.kind !== 'run', pulls = isBoss ? S.index.bosses.filter((b) => b.id === it.id && b.diffId === it.diffId) : [];
-  const v = isBoss && S.scope === 'all' ? 'night' : 'pull', key = it.id + ':' + it.diffId + ':' + pulls.length + ':' + deathCutN() + ':' + v + ':' + (v === 'pull' ? it.pull : '');
+  const r = S.rep, it = r.item, isBoss = it.kind !== 'run', pulls = isBoss ? S.index.bosses.filter((b) => b.id === it.id && b.diffId === it.diffId && pickOk325(it, b)) : [];
+  const v = isBoss && S.scope === 'all' ? 'night' : 'pull', key = it.id + ':' + it.diffId + ':' + pulls.length + ':' + deathCutN() + ':' + v + ':' + (v === 'pull' ? it.pull : pickKey325(it));
   // the wipe filter as one quiet line, as on Mechanics: where this pull (or every pull) stops counting
   const n = deathCutN(), cut = cutInfo(r);
   const cutLine = '<div class="cutbar' + (cut && v === 'pull' ? ' on' : '') + '"><span class="cutnow">' + (v === 'night' ? (n ? 'Each wipe counts up to <b>its wipe call</b>, and a kill counts in full' : '<b>The wipe filter is off</b>, so every pull counts in full')
@@ -28980,7 +28987,7 @@ function hwSave(a, top, it) { const me = meOf(); if (!me || String(a.p.name).spl
 function hw() {
   const r = S.rep, it = r.item;
   if (it.kind === 'run') { view('<section class="panel hwk"><h2>Homework</h2><p class="sub" style="margin:0">Homework covers raid bosses. Open a raid boss to see it.</p></section>'); return; }
-  const pulls = S.index.bosses.filter((b) => b.id === it.id && b.diffId === it.diffId), key = it.id + ':' + it.diffId + ':' + pulls.length + ':' + deathCutN() + ':night:';
+  const pulls = S.index.bosses.filter((b) => b.id === it.id && b.diffId === it.diffId && pickOk325(it, b)), key = it.id + ':' + it.diffId + ':' + pulls.length + ':' + deathCutN() + ':night:' + pickKey325(it);
   const cached = S.plData && S.plData.key === key ? S.plData : null;
   view('<div class="plv"><div id="plBody">' + (cached ? '' : loadCard('Making your homework', 'Reading tonight\'s pulls…', 0)) + '</div></div>');
   const still = () => S.tab === 'hw' && S.rep && S.rep.item === it && $('#plBody');
