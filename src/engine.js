@@ -6360,6 +6360,7 @@ function* analyzeSteps(item, text, opts) {
           if (ev !== 'SPELL_PERIODIC_DAMAGE' && (parseInt(f[2], 16) & 0x40)) { if (!p.hitIn) p.hitIn = []; if (p.hitIn.length < 20000) p.hitIn.push([t, id]); } /* (an enemy's direct hits on them, melee included: when a tank was tanking (Oct 25)) */
           p.taken += base; addAb(p.takenAb, spell, id, base, 0, crit, t); bump(r.takenS, t, base); bump(p.takenS, t, base); { const raw = num(f[s0 + 1]), ab = Math.max(0, num(f[s0 + 6])); if (raw > 0) { bump(p.rawS, t, raw); bump(p.mitS, t, Math.max(0, raw - base - ab)); } if (ab > 0) bump(p.shS, t, ab); if (devOn.has(dg)) { const dv = (base + ab) * 0.03 / (amOn(t) ? 0.88 : 0.97), gq = r.players.get(devOn.get(dg)); bump(p.devS, t, dv); if (gq) bump(gq.devGS || (gq.devGS = []), t, dv); } } /* (devS: what Devotion Aura's 3% took off, about) */ /* (Graphs' Mitigation tab (Oct 23)) */
           if (base > 0) bumpAb(r.takenAbS, t, spell, id, base);
+          if (base > 0 && sn && !isPlayer(sg) && !pets.get(sg)) { const en = r.enDmg || (r.enDmg = {}), o = en[sn] || (en[sn] = {}), a9 = o[spell] || (o[spell] = [id, 0, 0]); a9[1] += base; a9[2]++; } /* round 294: what each enemy did to the raid */
           const av = mech.damage(t, p.name, id, spell, base), raw = base + Math.max(0, num(f[s0 + 6])); p.avoidable += av;
           if (raw > 0) bumpTk(p.takenAbS, t, spell, id, base, av, raw);
           if (base + num(f[s0 + 6]) > 0) bigHit(p, { t, amt: base + Math.max(0, num(f[s0 + 6])), spell, id, src: shortName(sg, sn), hp });
@@ -6374,7 +6375,7 @@ function* analyzeSteps(item, text, opts) {
           if (swing && !pet) (p.swT || (p.swT = [])).push(t); // (their own auto attacks, for melee uptime; a Warcraft Logs miss comes as a hit of 0)
           p.damage += dealt;
           if (mod && mod.focus && mod.focus.has(dn)) modEv.push({ k: 'pdmg', t, src: owner, dst: dg, dn, amt: dealt }); addAb(p.dmgAb, pet ? sn + ': ' + spell : spell, id, dealt, 0, crit, t); bump(r.dmgS, t, dealt);
-          bump(p.dmgS, t, dealt); if (dealt > 0) { p.dmgT.set(dn, (p.dmgT.get(dn) || 0) + dealt); bumpN(r.dmgTS, t, dn, dealt); bumpN(p.dmgTS, t, dn, dealt); if (!p.firstHit.has(dg)) p.firstHit.set(dg, t); }
+          bump(p.dmgS, t, dealt); if (dealt > 0) { p.dmgT.set(dn, (p.dmgT.get(dn) || 0) + dealt); { const gg = p.dmgG || (p.dmgG = {}); gg[dg] = (gg[dg] || 0) + dealt; } /* round 294: damage into each enemy */ bumpN(r.dmgTS, t, dn, dealt); bumpN(p.dmgTS, t, dn, dealt); if (!p.firstHit.has(dg)) p.firstHit.set(dg, t); }
           if ((TIER_EVN.has(spell) || TIER_EVP.test(spell)) && (!pet || TIER_EVPET.has(spell))) { if (!p.tierEv) p.tierEv = []; if (p.tierEv.length < 12000) p.tierEv.push([t, spell, dealt, dg, ev === 'SPELL_PERIODIC_DAMAGE' ? 1 : 0, crit ? 1 : 0]); } /* (each hit of a spell a tier bonus changes hit by hit, for the tier set card (Oct 25)) */
           p.lastHit = [t, pet ? sn + ': ' + spell : spell, dg]; // (for a support line that follows it: see *_DAMAGE_SUPPORT)
           // (the hits the spec checks count one by one, e.g. Implosion's: one per Wild Imp on each target)
@@ -6420,6 +6421,7 @@ function* analyzeSteps(item, text, opts) {
       // a heal eaten by a heal absorb the module watches (e.g. Twin Fangs' Tainted Blood): the absorb's owner, the player
       // with it, the absorb, then the healer and their heal, then the amount eaten (the healer's pet or totem counts for them)
       case 'SPELL_HEAL_ABSORBED': {
+        if (f.length >= 19) { const hg9 = f[11], ho9 = isPlayer(hg9) ? hg9 : pets.get(hg9) || ''; if (ho9 && f[9] && !/^(Light of the Martyr|Death Pact|Shroud of Purgatory|Purgatory)$/i.test(f[9])) { /* (a player's own heal-absorbs are not the fight's) */ const q9 = P(ho9), hb = q9.habs || (q9.habs = {}); hb[f[9]] = (hb[f[9]] || 0) + num(f[18]); } } /* round 294: healing into heal-absorbs */
         if (mod && f.length >= 19 && W(f[9], f[8])) { const hg = f[11], ho = isPlayer(hg) ? hg : pets.get(hg) || '';
           modEv.push({ k: 'habs', t, dst: dg, spell: f[9], id: num(f[8]), healer: ho || hg, heal: f[16], healId: num(f[15]), amt: num(f[18]) }); }
         break;
