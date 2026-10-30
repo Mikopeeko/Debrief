@@ -11159,6 +11159,13 @@ html body #view .gb-card .pf-row.cb-h > .r263-x { font-size: 10.5px; letter-spac
 html body #view .gb-card .pf-row.r263-tot { border-top: 1px solid var(--line2, #2d363e); margin-top: 4px; padding-top: 4px !important; font-weight: 700; }
 html body #view .gb-card .pf-row.r263-tot .cb-f { display: none !important; }
 @media (max-width: 760px) { html body #view .gb.gb-tb .gb-card .pf-row.cb[class*="r263-"] { grid-template-columns: 22px minmax(0, 1fr) 64px 56px !important; } html body #view .gb-card .pf-row > .r263-x, html body #view .gb-card .pf-row[class*="r263-"] > .cb-r, html body #view .gb-card .pf-row[class*="r263-"] > .r262-x { display: none !important; } }
+/* round 264: drag to zoom on the Graphs chart */
+html body #view .gb-chart249 .r264-band { position: absolute; top: 0; bottom: 18px; background: rgba(229, 204, 128, .16); border-left: 1px solid rgba(229, 204, 128, .6); border-right: 1px solid rgba(229, 204, 128, .6); pointer-events: none; z-index: 2; }
+html body #view .gb-chart249 .r250-svg, html body #view .gb-chart249 svg { cursor: crosshair; }
+html body #view .gb-chart249 .gb-hd { position: relative; }
+html body #view .gb-chart249 .r264-reset, html body #view .gb-chart249 .r264-hint { float: right; order: 9; margin-left: auto; }
+html body #view .gb-chart249 .r264-hint { font-size: 11.5px; color: #7d8792; }
+html body #view .gb-chart249 > svg, html body #view .gb-chart249 .pf-chart, html body #view .gb-chart249 .pfc-wrap { position: relative; }
 
 </style>
 
