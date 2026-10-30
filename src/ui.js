@@ -1315,7 +1315,9 @@ const holding = () => document.documentElement.classList.contains('dbr-holding')
 function prevArrived() { if (holding()) { liveRedraw(); return; } try { if (S.tab === 'audit' && S.rep && !S.rep.allPulls) oaFill([S.rep]); } catch (e) { liveRedraw(); } }
 function liveRedraw() { clearTimeout(LIVE_T); if (!LIVE_0) LIVE_0 = Date.now(); LIVE_T = setTimeout(() => { LIVE_T = 0; if (S.tab !== 'audit' || !S.item || !S.rep || document.querySelector('#main .ld')) { LIVE_0 = 0; return; }
   if (!holding() && (document.querySelector('.pcx-tile.on') || livePending()) && Date.now() - LIVE_0 < 10000) { liveRedraw(); return; } /* (wait for the rest, at most 10 s; behind the hold card it draws at once, which starts the next read) */
-  LIVE_0 = 0; const y = window.scrollY; renderMain(); window.scrollTo({ top: y }); }, holding() ? 60 : 700); }
+  LIVE_0 = 0; const y = window.scrollY, v0 = document.getElementById('view'), g0 = v0 && v0.querySelector(':scope > .dbt'), gc = g0 ? g0.cloneNode(true) : null, gcl = v0 ? ['dbt-on', 'dbt-full'].filter((c) => v0.classList.contains(c)) : [];
+  renderMain(); { const v1 = document.getElementById('view'); if (gc && v1 && !v1.querySelector(':scope > .dbt')) { gc.classList.add('dbt-ghost'); v1.insertBefore(gc, v1.firstChild); gcl.forEach((c) => v1.classList.add(c)); } } /* (Oct 29: no flicker: the timeline stays on screen until the fresh one replaces it) */
+  window.scrollTo({ top: y }); }, holding() ? 60 : 700); }
 /* (the hold: Debriefing is drawn out of sight until its live numbers are in, then shown once (4 s at most)) */
 /* (Oct 25: the live numbers are remembered on this PC for 6 hours, so a reload doesn't wait for them again) */
 let LIVE_RESTORED = false;
@@ -2890,7 +2892,15 @@ function killFlags() { const R = document.documentElement, r = S.rep, it = r && 
   if (kill) { try { const H = [...HIST.mem.values()].filter((v) => v.boss === it.boss && v.diffId === it.diffId), before = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull < (it.pull || 1) && b.kill);
     first = !before.length && !H.some((v) => v.kill && v.at < (it.wallMs || Infinity) - 60000); } catch (e) { first = false; } }
   R.classList.toggle('is-kill', kill); R.classList.toggle('is-first-kill', kill && first); }
-function renderMain() {
+/* (Oct 29, the flicker (the user: "watch how it flickers")): a redraw of the same single pull keeps the timeline on screen as a still copy
+   until the fresh one replaces it; a first draw hides the old layout until the timeline is built (2.5 s at most)) */
+function renderMain() { const one = () => S.tab === 'audit' && S.rep && !S.rep.allPulls, v0 = document.getElementById('view'), same = one() && v0 && v0._dbtItem === S.item;
+  const g0 = same ? v0.querySelector(':scope > .dbt') : null, gc = g0 ? g0.cloneNode(true) : null, gcl = v0 ? ['dbt-on', 'dbt-full'].filter((c) => v0.classList.contains(c)) : [];
+  const out = renderMain0(), v1 = document.getElementById('view');
+  if (v1 && one()) { v1._dbtItem = S.item; if (gc && !v1.querySelector(':scope > .dbt')) { gc.classList.add('dbt-ghost'); v1.insertBefore(gc, v1.firstChild); gcl.forEach((c) => v1.classList.add(c)); }
+    else if (!gc && !v1.classList.contains('dbt-on') && v1.querySelector(':scope > :is(.ds-l, details.phase.mcx-ph)')) { v1.classList.add('dbt-wait'); clearTimeout(v1._dbtW); v1._dbtW = setTimeout(() => v1.classList.remove('dbt-wait'), 2500); } }
+  return out; }
+function renderMain0() {
   try { killFlags(); if (S.tab !== 'audit') document.documentElement.classList.remove('dbr-holding'); } catch (e) { /* (no flags) */ }
   { const oa = $('#oaTop'); if (oa) { oa.innerHTML = ''; oa.hidden = true; } } /* (the one-answer box, filled again by Debriefing) */
   if (S.tab === 'overview') { planPage(); return; } /* (Plan is its own page: it never reads the open raid (your call, Oct 21)) */
@@ -33111,7 +33121,10 @@ function dsGuides() {
       if (k === 'full') { if (b.closest('.dbt-vt') && v.classList.contains('dbt-full')) return; full(v, d, !v.classList.contains('dbt-full')); if (v.classList.contains('dbt-full')) (v.querySelector(':scope > .oa-tiles') || L).scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
       if (k === 'players') { var rb = v.querySelector(':scope > .ds-raidb'); if (!rb) return; var on2 = !v.classList.contains('dbt-pl'); v.classList.toggle('dbt-pl', on2); b.textContent = on2 ? 'Hide players ▴' : 'Every player ›'; var kp = v.querySelector(':scope > .brf-keep'); if (on2 && (!kp || getComputedStyle(kp).display === 'none')) rb.click(); if (!on2 && kp && getComputedStyle(kp).display !== 'none') rb.click(); if (on2) setTimeout(function () { rb.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 60); } });
   };
-  var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(function () { try { build(); } catch (e) { console.error(e); } }, 150); };
+  /* (Oct 29: on a single pull the old layout stays hidden until the timeline is built (2.5 s at most), and the build runs within 250 ms) */
+  var runB = function () { clearTimeout(tm); clearTimeout(mw); mw = 0; try { build(); } catch (e) { console.error(e); } var v = document.getElementById('view'); if (v && (v.classList.contains('dbt-on') || !v.querySelector(':scope > :is(.ds-l, details.phase.mcx-ph)'))) { v.classList.remove('dbt-wait'); clearTimeout(v._dbtW); } };
+  var tm = 0, mw = 0, kick = function () { var v = document.getElementById('view'); if (v && !v.classList.contains('dbt-on') && !v.classList.contains('dbt-wait') && v.querySelector(':scope > :is(.ds-l, details.phase.mcx-ph)') && S.tab === 'audit' && S.rep && !S.rep.allPulls) { v.classList.add('dbt-wait'); clearTimeout(v._dbtW); v._dbtW = setTimeout(function () { v.classList.remove('dbt-wait'); }, 2500); }
+    clearTimeout(tm); tm = setTimeout(runB, 150); if (!mw) mw = setTimeout(runB, 250); };
   var start = function () { var m = document.getElementById('main') || document.body; if (!m) return setTimeout(start, 300); new MutationObserver(kick).observe(m, { childList: true, subtree: true }); kick(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
