@@ -6078,10 +6078,10 @@ function newPlayer(guid) {
     fakeT: new Map(),
     cons: { healthstone: [], healpot: [], combatpot: [], manapot: [], utilpot: [] } };
 }
-function addAb(m, name, id, amt, over, crit) {
+function addAb(m, name, id, amt, over, crit, t) { /* round 250: t, the second it landed: each spell's amount per second in a.s */
   let a = m.get(name);
   if (!a) m.set(name, a = { name, id, total: 0, over: 0, hits: 0, crits: 0, max: 0 });
-  a.total += amt; a.over += over; a.hits++; if (crit) a.crits++; if (amt > a.max) a.max = amt;
+  a.total += amt; a.over += over; a.hits++; if (crit) a.crits++; if (amt > a.max) a.max = amt; if (t != null && amt) { if (!a.s) a.s = []; const k = Math.max(0, Math.floor(t)); a.s[k] = (a.s[k] || 0) + amt; }
 }
 // battle resses and externals: who they went on (the Performance tab's Utility view)
 const HELP_CAST = new Set(['rebirth', 'raise ally', 'intercession', 'soulstone', 'pain suppression', 'guardian spirit', 'ironbark', 'life cocoon', 'blessing of sacrifice', 'blessing of protection', 'blessing of spellwarding', 'time dilation', 'rescue', 'power infusion']);
@@ -6322,7 +6322,7 @@ function* analyzeSteps(item, text, opts) {
         if (!isPlayer(sup)) break;
         const amt = Math.max(0, num(f[s0]) + num(f[s0 + 4]) + num(f[s0 + 5]) - Math.max(0, num(f[s0 + 2]))); if (!amt) break;
         const spell = swing ? 'Support' : f[9], id = swing ? 0 : num(f[8]), crit = f[s0 + 7] === '1';
-        const a = P(sup, null); a.damage += amt; addAb(a.dmgAb, spell, id, amt, 0, crit); if (spell === 'Fate Mirror') { if (!a.tierEv) a.tierEv = []; if (a.tierEv.length < 12000) a.tierEv.push([t, spell, amt, null, 0, crit ? 1 : 0]); } bump(a.dmgS, t, amt); a.dmgT.set(dn, (a.dmgT.get(dn) || 0) + amt); bumpN(a.dmgTS, t, dn, amt);
+        const a = P(sup, null); a.damage += amt; addAb(a.dmgAb, spell, id, amt, 0, crit, t); if (spell === 'Fate Mirror') { if (!a.tierEv) a.tierEv = []; if (a.tierEv.length < 12000) a.tierEv.push([t, spell, amt, null, 0, crit ? 1 : 0]); } bump(a.dmgS, t, amt); a.dmgT.set(dn, (a.dmgT.get(dn) || 0) + amt); bumpN(a.dmgTS, t, dn, amt);
         // (by buff, and by whose hit it came through, for "damage through your buffs"; Breath of Eons' explosions one by one)
         (a.supAb || (a.supAb = new Map())).set(spell, (a.supAb.get(spell) || 0) + amt); if (hitter && hitter !== sup) { const hn = P(hitter, null).name || ''; if (hn) (a.supTo || (a.supTo = new Map())).set(hn, (a.supTo.get(hn) || 0) + amt); }
         if (DMG_EV.has(String(spell).toLowerCase())) { if (!a.dmgEv) a.dmgEv = []; if (a.dmgEv.length < 6000) a.dmgEv.push([t, spell, dg, amt]); }
@@ -6348,7 +6348,7 @@ function* analyzeSteps(item, text, opts) {
         if (isPlayer(dg)) {
           const p = P(dg, dn);
           if (ev !== 'SPELL_PERIODIC_DAMAGE' && (parseInt(f[2], 16) & 0x40)) { if (!p.hitIn) p.hitIn = []; if (p.hitIn.length < 20000) p.hitIn.push([t, id]); } /* (an enemy's direct hits on them, melee included: when a tank was tanking (Oct 25)) */
-          p.taken += base; addAb(p.takenAb, spell, id, base, 0, crit); bump(r.takenS, t, base); bump(p.takenS, t, base); { const raw = num(f[s0 + 1]), ab = Math.max(0, num(f[s0 + 6])); if (raw > 0) { bump(p.rawS, t, raw); bump(p.mitS, t, Math.max(0, raw - base - ab)); } if (ab > 0) bump(p.shS, t, ab); if (devOn.has(dg)) { const dv = (base + ab) * 0.03 / (amOn(t) ? 0.88 : 0.97), gq = r.players.get(devOn.get(dg)); bump(p.devS, t, dv); if (gq) bump(gq.devGS || (gq.devGS = []), t, dv); } } /* (devS: what Devotion Aura's 3% took off, about) */ /* (Graphs' Mitigation tab (Oct 23)) */
+          p.taken += base; addAb(p.takenAb, spell, id, base, 0, crit, t); bump(r.takenS, t, base); bump(p.takenS, t, base); { const raw = num(f[s0 + 1]), ab = Math.max(0, num(f[s0 + 6])); if (raw > 0) { bump(p.rawS, t, raw); bump(p.mitS, t, Math.max(0, raw - base - ab)); } if (ab > 0) bump(p.shS, t, ab); if (devOn.has(dg)) { const dv = (base + ab) * 0.03 / (amOn(t) ? 0.88 : 0.97), gq = r.players.get(devOn.get(dg)); bump(p.devS, t, dv); if (gq) bump(gq.devGS || (gq.devGS = []), t, dv); } } /* (devS: what Devotion Aura's 3% took off, about) */ /* (Graphs' Mitigation tab (Oct 23)) */
           if (base > 0) bumpAb(r.takenAbS, t, spell, id, base);
           const av = mech.damage(t, p.name, id, spell, base), raw = base + Math.max(0, num(f[s0 + 6])); p.avoidable += av;
           if (raw > 0) bumpTk(p.takenAbS, t, spell, id, base, av, raw);
@@ -6363,7 +6363,7 @@ function* analyzeSteps(item, text, opts) {
           const p = P(owner, pet ? null : sn);
           if (swing && !pet) (p.swT || (p.swT = [])).push(t); // (their own auto attacks, for melee uptime; a Warcraft Logs miss comes as a hit of 0)
           p.damage += dealt;
-          if (mod && mod.focus && mod.focus.has(dn)) modEv.push({ k: 'pdmg', t, src: owner, dst: dg, dn, amt: dealt }); addAb(p.dmgAb, pet ? sn + ': ' + spell : spell, id, dealt, 0, crit); bump(r.dmgS, t, dealt);
+          if (mod && mod.focus && mod.focus.has(dn)) modEv.push({ k: 'pdmg', t, src: owner, dst: dg, dn, amt: dealt }); addAb(p.dmgAb, pet ? sn + ': ' + spell : spell, id, dealt, 0, crit, t); bump(r.dmgS, t, dealt);
           bump(p.dmgS, t, dealt); if (dealt > 0) { p.dmgT.set(dn, (p.dmgT.get(dn) || 0) + dealt); bumpN(r.dmgTS, t, dn, dealt); bumpN(p.dmgTS, t, dn, dealt); if (!p.firstHit.has(dg)) p.firstHit.set(dg, t); }
           if ((TIER_EVN.has(spell) || TIER_EVP.test(spell)) && (!pet || TIER_EVPET.has(spell))) { if (!p.tierEv) p.tierEv = []; if (p.tierEv.length < 12000) p.tierEv.push([t, spell, dealt, dg, ev === 'SPELL_PERIODIC_DAMAGE' ? 1 : 0, crit ? 1 : 0]); } /* (each hit of a spell a tier bonus changes hit by hit, for the tier set card (Oct 25)) */
           p.lastHit = [t, pet ? sn + ': ' + spell : spell, dg]; // (for a support line that follows it: see *_DAMAGE_SUPPORT)
@@ -6376,7 +6376,7 @@ function* analyzeSteps(item, text, opts) {
       case 'ENVIRONMENTAL_DAMAGE': {
         if (!isPlayer(dg) || f.length < 31) break;
         const base = num(f[28]), p = P(dg, dn);
-        p.taken += base; addAb(p.takenAb, f[27], 0, base, 0, false); bump(r.takenS, t, base); bump(p.takenS, t, base); if (base > 0) bumpTk(p.takenAbS, t, f[27], 0, base, 0, base);
+        p.taken += base; addAb(p.takenAb, f[27], 0, base, 0, false, t); bump(r.takenS, t, base); bump(p.takenS, t, base); if (base > 0) bumpTk(p.takenAbS, t, f[27], 0, base, 0, base);
         recap(dg, { t, heal: false, amount: base, src: 'Environment', spell: f[27], id: 0, hp: -1 });
         break;
       }
@@ -6390,7 +6390,7 @@ function* analyzeSteps(item, text, opts) {
         noteSchool(id, f[10]);
         if (owner) {
           const p = P(owner, pet ? null : sn);
-          p.healing += eff; p.overheal += over; addAb(p.healAb, pet ? sn + ': ' + spell : spell, id, eff, over, crit); bump(r.healS, t, eff); bump(p.healS, t, eff);
+          p.healing += eff; p.overheal += over; addAb(p.healAb, pet ? sn + ': ' + spell : spell, id, eff, over, crit, t); bump(r.healS, t, eff); bump(p.healS, t, eff);
           // (triage: the heal's advanced block is the target's, health after it; under half before it)
           if (s0 > 11 && f[11] === dg && eff > 0 && isPlayer(dg)) { const mx = num(f[14]); if (mx > 0 && (num(f[13]) - eff) / mx < 0.5) { p.lowHeal += eff; if (lowHL.length < 60000) lowHL.push([t, dg, owner, eff, 0, spell]); } }
           if (!pet && spell === 'Flash of Light') { if (!p.folEv) p.folEv = []; if (p.folEv.length < 3000) p.folEv.push([t, eff, over]); } if (!pet && spell === 'Living Flame') { if (!p.lfEv) p.lfEv = []; if (p.lfEv.length < 3000) p.lfEv.push([t, eff]); } if (!pet && ev === 'SPELL_PERIODIC_HEAL' && eff > 0) { if (!p.hotS) p.hotS = []; const i0 = Math.floor(t); if (i0 >= 0 && i0 < 7200) p.hotS[i0] = (p.hotS[i0] || 0) + eff; } /* (each Flash of Light, for the tier set card (Oct 25)) */
@@ -6434,7 +6434,7 @@ function* analyzeSteps(item, text, opts) {
         { const u = PERS_DR.has(String(f[sp + 1]).toLowerCase()) && ow === dg ? r.defMit.slice().reverse().find((x) => x.g === dg && x.abs && x.name.toLowerCase() === String(f[sp + 1]).toLowerCase() && t - x.t <= 30) : null; if (u) u.prev += amt; } /* (a personal shield's soak, exact (Oct 22)) */
         const p = P(ow, isPlayer(absorber) ? f[a + 1] : null);
         if (isPlayer(dg)) { const tp = r.players.get(dg); if (tp) { const m = tp.shBy || (tp.shBy = new Map()); m.set(p.name || '', (m.get(p.name || '') || 0) + amt); } } /* (who shielded whom (Oct 23)) */
-        p.healing += amt; p.absorbs += amt; addAb(p.healAb, f[sp + 1], id, amt, 0, false);
+        p.healing += amt; p.absorbs += amt; addAb(p.healAb, f[sp + 1], id, amt, 0, false, t);
         if (awOn.has(ow) && String(f[sp + 1]) === 'Overflowing Light') p.awOL = (p.awOL || 0) + amt; /* (Overflowing Light soaked while Avenging Wrath was up) */
         if (isPlayer(dg) && phpNow(dg) < 0.5 && lowHL.length < 60000) lowHL.push([t, dg, ow, amt, 1, f[sp + 1]]); bump(r.healS, t, amt); bump(p.healS, t, amt);
         if (isPlayer(dg)) recap(dg, { t, heal: true, amount: amt, src: shortName(absorber, f[a + 1]), spell: f[sp + 1] + ' (absorb)', id, hp: -1 });

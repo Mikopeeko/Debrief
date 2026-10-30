@@ -11114,6 +11114,21 @@ html body #view .gb-card .pf-row.r247.cb-h > .r247-x { font-size: 10.5px; letter
 @media (max-width: 760px) { html body #view .gb.gb-tb .gb-card .pf-row.cb.r247.r247.r247 { grid-template-columns: 22px minmax(0, 1fr) 64px !important; } html body #view .gb-card .pf-row.r247 > .cb-s, html body #view .gb-card .pf-row.r247 > .cb-r, html body #view .gb-card .pf-row.r247 > .r247-x { display: none !important; } }
 html body #view .gb-card[data-k="buff"] h3.nh .r248-sw { margin-left: auto; } html body #view .gb-card[data-k="buff"] h3.nh { display: flex; align-items: baseline; gap: 8px; } /* round 248 */
 html body #view .gb-card.gb-chart249 { margin-bottom: 12px; } html body #view .gb-card.gb-chart249 .gb-hd { margin-bottom: 6px; } /* round 249 */
+/* round 250: a picked player's spells stacked on the Graphs chart */
+html body #view .gb-chart249 .r250-lg { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 2px 0 8px; font-size: 12px; color: var(--muted, #aab0b8); }
+html body #view .gb-chart249 .r250-lg i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+html body #view .gb-chart249 .r250-svg { width: 100%; height: 190px; display: block; }
+/* round 254: the stacked spell chart, polished, with a hover readout */
+html body #view .gb-chart249 .r254-wrap { position: relative; }
+html body #view .gb-chart249 .r250-svg { height: 210px !important; }
+html body #view .gb-chart249 .r250-lg { gap: 6px 16px !important; margin: 4px 0 10px !important; }
+html body #view .gb-chart249 .r250-lg span { display: inline-flex; align-items: center; }
+html body #view .gb-chart249 .r250-lg i { width: 10px !important; height: 10px !important; border-radius: 3px !important; margin-right: 6px !important; }
+html body #view .gb-chart249 .r254-x { position: absolute; top: 6px; bottom: 22px; width: 1px; background: rgba(255, 255, 255, .45); pointer-events: none; }
+html body #view .gb-chart249 .r254-tip { position: absolute; top: 8px; min-width: 170px; max-width: 240px; padding: 8px 10px; background: var(--panel, #13171b); border: 1px solid var(--line2, #2d363e); border-radius: 4px; font-size: 12px; line-height: 1.4; pointer-events: none; z-index: 3; }
+html body #view .gb-chart249 .r254-tip > b { font-size: 12px; } html body #view .gb-chart249 .r254-tip .r254-tt { float: right; color: var(--muted, #aab0b8); font-weight: 600; }
+html body #view .gb-chart249 .r254-tip div { display: flex; align-items: center; gap: 6px; margin-top: 2px; } html body #view .gb-chart249 .r254-tip div i { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+html body #view .gb-chart249 .r254-tip div span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted, #aab0b8); } html body #view .gb-chart249 .r254-tip div b { font-variant-numeric: tabular-nums; }
 
 </style>
 
@@ -17235,10 +17250,10 @@ function newPlayer(guid) {
     fakeT: new Map(),
     cons: { healthstone: [], healpot: [], combatpot: [], manapot: [], utilpot: [] } };
 }
-function addAb(m, name, id, amt, over, crit) {
+function addAb(m, name, id, amt, over, crit, t) { /* round 250: t, the second it landed: each spell's amount per second in a.s */
   let a = m.get(name);
   if (!a) m.set(name, a = { name, id, total: 0, over: 0, hits: 0, crits: 0, max: 0 });
-  a.total += amt; a.over += over; a.hits++; if (crit) a.crits++; if (amt > a.max) a.max = amt;
+  a.total += amt; a.over += over; a.hits++; if (crit) a.crits++; if (amt > a.max) a.max = amt; if (t != null && amt) { if (!a.s) a.s = []; const k = Math.max(0, Math.floor(t)); a.s[k] = (a.s[k] || 0) + amt; }
 }
 // battle resses and externals: who they went on (the Performance tab's Utility view)
 const HELP_CAST = new Set(['rebirth', 'raise ally', 'intercession', 'soulstone', 'pain suppression', 'guardian spirit', 'ironbark', 'life cocoon', 'blessing of sacrifice', 'blessing of protection', 'blessing of spellwarding', 'time dilation', 'rescue', 'power infusion']);
@@ -17479,7 +17494,7 @@ function* analyzeSteps(item, text, opts) {
         if (!isPlayer(sup)) break;
         const amt = Math.max(0, num(f[s0]) + num(f[s0 + 4]) + num(f[s0 + 5]) - Math.max(0, num(f[s0 + 2]))); if (!amt) break;
         const spell = swing ? 'Support' : f[9], id = swing ? 0 : num(f[8]), crit = f[s0 + 7] === '1';
-        const a = P(sup, null); a.damage += amt; addAb(a.dmgAb, spell, id, amt, 0, crit); if (spell === 'Fate Mirror') { if (!a.tierEv) a.tierEv = []; if (a.tierEv.length < 12000) a.tierEv.push([t, spell, amt, null, 0, crit ? 1 : 0]); } bump(a.dmgS, t, amt); a.dmgT.set(dn, (a.dmgT.get(dn) || 0) + amt); bumpN(a.dmgTS, t, dn, amt);
+        const a = P(sup, null); a.damage += amt; addAb(a.dmgAb, spell, id, amt, 0, crit, t); if (spell === 'Fate Mirror') { if (!a.tierEv) a.tierEv = []; if (a.tierEv.length < 12000) a.tierEv.push([t, spell, amt, null, 0, crit ? 1 : 0]); } bump(a.dmgS, t, amt); a.dmgT.set(dn, (a.dmgT.get(dn) || 0) + amt); bumpN(a.dmgTS, t, dn, amt);
         // (by buff, and by whose hit it came through, for "damage through your buffs"; Breath of Eons' explosions one by one)
         (a.supAb || (a.supAb = new Map())).set(spell, (a.supAb.get(spell) || 0) + amt); if (hitter && hitter !== sup) { const hn = P(hitter, null).name || ''; if (hn) (a.supTo || (a.supTo = new Map())).set(hn, (a.supTo.get(hn) || 0) + amt); }
         if (DMG_EV.has(String(spell).toLowerCase())) { if (!a.dmgEv) a.dmgEv = []; if (a.dmgEv.length < 6000) a.dmgEv.push([t, spell, dg, amt]); }
@@ -17505,7 +17520,7 @@ function* analyzeSteps(item, text, opts) {
         if (isPlayer(dg)) {
           const p = P(dg, dn);
           if (ev !== 'SPELL_PERIODIC_DAMAGE' && (parseInt(f[2], 16) & 0x40)) { if (!p.hitIn) p.hitIn = []; if (p.hitIn.length < 20000) p.hitIn.push([t, id]); } /* (an enemy's direct hits on them, melee included: when a tank was tanking (Oct 25)) */
-          p.taken += base; addAb(p.takenAb, spell, id, base, 0, crit); bump(r.takenS, t, base); bump(p.takenS, t, base); { const raw = num(f[s0 + 1]), ab = Math.max(0, num(f[s0 + 6])); if (raw > 0) { bump(p.rawS, t, raw); bump(p.mitS, t, Math.max(0, raw - base - ab)); } if (ab > 0) bump(p.shS, t, ab); if (devOn.has(dg)) { const dv = (base + ab) * 0.03 / (amOn(t) ? 0.88 : 0.97), gq = r.players.get(devOn.get(dg)); bump(p.devS, t, dv); if (gq) bump(gq.devGS || (gq.devGS = []), t, dv); } } /* (devS: what Devotion Aura's 3% took off, about) */ /* (Graphs' Mitigation tab (Oct 23)) */
+          p.taken += base; addAb(p.takenAb, spell, id, base, 0, crit, t); bump(r.takenS, t, base); bump(p.takenS, t, base); { const raw = num(f[s0 + 1]), ab = Math.max(0, num(f[s0 + 6])); if (raw > 0) { bump(p.rawS, t, raw); bump(p.mitS, t, Math.max(0, raw - base - ab)); } if (ab > 0) bump(p.shS, t, ab); if (devOn.has(dg)) { const dv = (base + ab) * 0.03 / (amOn(t) ? 0.88 : 0.97), gq = r.players.get(devOn.get(dg)); bump(p.devS, t, dv); if (gq) bump(gq.devGS || (gq.devGS = []), t, dv); } } /* (devS: what Devotion Aura's 3% took off, about) */ /* (Graphs' Mitigation tab (Oct 23)) */
           if (base > 0) bumpAb(r.takenAbS, t, spell, id, base);
           const av = mech.damage(t, p.name, id, spell, base), raw = base + Math.max(0, num(f[s0 + 6])); p.avoidable += av;
           if (raw > 0) bumpTk(p.takenAbS, t, spell, id, base, av, raw);
@@ -17520,7 +17535,7 @@ function* analyzeSteps(item, text, opts) {
           const p = P(owner, pet ? null : sn);
           if (swing && !pet) (p.swT || (p.swT = [])).push(t); // (their own auto attacks, for melee uptime; a Warcraft Logs miss comes as a hit of 0)
           p.damage += dealt;
-          if (mod && mod.focus && mod.focus.has(dn)) modEv.push({ k: 'pdmg', t, src: owner, dst: dg, dn, amt: dealt }); addAb(p.dmgAb, pet ? sn + ': ' + spell : spell, id, dealt, 0, crit); bump(r.dmgS, t, dealt);
+          if (mod && mod.focus && mod.focus.has(dn)) modEv.push({ k: 'pdmg', t, src: owner, dst: dg, dn, amt: dealt }); addAb(p.dmgAb, pet ? sn + ': ' + spell : spell, id, dealt, 0, crit, t); bump(r.dmgS, t, dealt);
           bump(p.dmgS, t, dealt); if (dealt > 0) { p.dmgT.set(dn, (p.dmgT.get(dn) || 0) + dealt); bumpN(r.dmgTS, t, dn, dealt); bumpN(p.dmgTS, t, dn, dealt); if (!p.firstHit.has(dg)) p.firstHit.set(dg, t); }
           if ((TIER_EVN.has(spell) || TIER_EVP.test(spell)) && (!pet || TIER_EVPET.has(spell))) { if (!p.tierEv) p.tierEv = []; if (p.tierEv.length < 12000) p.tierEv.push([t, spell, dealt, dg, ev === 'SPELL_PERIODIC_DAMAGE' ? 1 : 0, crit ? 1 : 0]); } /* (each hit of a spell a tier bonus changes hit by hit, for the tier set card (Oct 25)) */
           p.lastHit = [t, pet ? sn + ': ' + spell : spell, dg]; // (for a support line that follows it: see *_DAMAGE_SUPPORT)
@@ -17533,7 +17548,7 @@ function* analyzeSteps(item, text, opts) {
       case 'ENVIRONMENTAL_DAMAGE': {
         if (!isPlayer(dg) || f.length < 31) break;
         const base = num(f[28]), p = P(dg, dn);
-        p.taken += base; addAb(p.takenAb, f[27], 0, base, 0, false); bump(r.takenS, t, base); bump(p.takenS, t, base); if (base > 0) bumpTk(p.takenAbS, t, f[27], 0, base, 0, base);
+        p.taken += base; addAb(p.takenAb, f[27], 0, base, 0, false, t); bump(r.takenS, t, base); bump(p.takenS, t, base); if (base > 0) bumpTk(p.takenAbS, t, f[27], 0, base, 0, base);
         recap(dg, { t, heal: false, amount: base, src: 'Environment', spell: f[27], id: 0, hp: -1 });
         break;
       }
@@ -17547,7 +17562,7 @@ function* analyzeSteps(item, text, opts) {
         noteSchool(id, f[10]);
         if (owner) {
           const p = P(owner, pet ? null : sn);
-          p.healing += eff; p.overheal += over; addAb(p.healAb, pet ? sn + ': ' + spell : spell, id, eff, over, crit); bump(r.healS, t, eff); bump(p.healS, t, eff);
+          p.healing += eff; p.overheal += over; addAb(p.healAb, pet ? sn + ': ' + spell : spell, id, eff, over, crit, t); bump(r.healS, t, eff); bump(p.healS, t, eff);
           // (triage: the heal's advanced block is the target's, health after it; under half before it)
           if (s0 > 11 && f[11] === dg && eff > 0 && isPlayer(dg)) { const mx = num(f[14]); if (mx > 0 && (num(f[13]) - eff) / mx < 0.5) { p.lowHeal += eff; if (lowHL.length < 60000) lowHL.push([t, dg, owner, eff, 0, spell]); } }
           if (!pet && spell === 'Flash of Light') { if (!p.folEv) p.folEv = []; if (p.folEv.length < 3000) p.folEv.push([t, eff, over]); } if (!pet && spell === 'Living Flame') { if (!p.lfEv) p.lfEv = []; if (p.lfEv.length < 3000) p.lfEv.push([t, eff]); } if (!pet && ev === 'SPELL_PERIODIC_HEAL' && eff > 0) { if (!p.hotS) p.hotS = []; const i0 = Math.floor(t); if (i0 >= 0 && i0 < 7200) p.hotS[i0] = (p.hotS[i0] || 0) + eff; } /* (each Flash of Light, for the tier set card (Oct 25)) */
@@ -17591,7 +17606,7 @@ function* analyzeSteps(item, text, opts) {
         { const u = PERS_DR.has(String(f[sp + 1]).toLowerCase()) && ow === dg ? r.defMit.slice().reverse().find((x) => x.g === dg && x.abs && x.name.toLowerCase() === String(f[sp + 1]).toLowerCase() && t - x.t <= 30) : null; if (u) u.prev += amt; } /* (a personal shield's soak, exact (Oct 22)) */
         const p = P(ow, isPlayer(absorber) ? f[a + 1] : null);
         if (isPlayer(dg)) { const tp = r.players.get(dg); if (tp) { const m = tp.shBy || (tp.shBy = new Map()); m.set(p.name || '', (m.get(p.name || '') || 0) + amt); } } /* (who shielded whom (Oct 23)) */
-        p.healing += amt; p.absorbs += amt; addAb(p.healAb, f[sp + 1], id, amt, 0, false);
+        p.healing += amt; p.absorbs += amt; addAb(p.healAb, f[sp + 1], id, amt, 0, false, t);
         if (awOn.has(ow) && String(f[sp + 1]) === 'Overflowing Light') p.awOL = (p.awOL || 0) + amt; /* (Overflowing Light soaked while Avenging Wrath was up) */
         if (isPlayer(dg) && phpNow(dg) < 0.5 && lowHL.length < 60000) lowHL.push([t, dg, ow, amt, 1, f[sp + 1]]); bump(r.healS, t, amt); bump(p.healS, t, amt);
         if (isPlayer(dg)) recap(dg, { t, heal: true, amount: amt, src: shortName(absorber, f[a + 1]), spell: f[sp + 1] + ' (absorb)', id, hp: -1 });
@@ -36055,12 +36070,17 @@ function graphsBoard(r, end, NP) {
     if (GB_TABS) { const H = new Map(GR.map((x) => [x[0], x[2]]));
       // Buffs: the raid's buffs by uptime, the most common first; tap one for each player's uptime of it
       const gbStrip = (p, nm) => { const b = p.buffs && p.buffs.get(nm), E = Math.max(1, end); return '<span class="gb-strip" style="--c:' + (p.color || '#6aa8ff') + ';--tk:' + (100 * 60 / E).toFixed(2) + '%">' + (b ? b.sp.filter(([a]) => a < E).map(([a, c]) => { const a0 = Math.max(0, a), e2 = Math.min(c == null ? E : c, E), w = 100 * (e2 - a0) / E; return w > 0 ? '<i style="left:' + (100 * a0 / E).toFixed(2) + '%;width:' + Math.max(0.4, w).toFixed(2) + '%"></i>' : ''; }).join('') : '') + '</span>'; }; /* (a buff's uptime over the pull (Oct 23)) */
-      const bf = (() => { let rows = []; try { rows = auraRows(REPS, false).rows.filter((x) => !x.always).sort((a, b) => b.cov - a.cov || b.apps - a.apps).slice(0, 20); } catch (x) { rows = []; } if (!rows.length) return '';
+      /* round 253 debuffs */ const dbf = (() => { let rows = []; try { rows = auraRows(REPS, true).rows.filter((x) => !x.always); } catch (x) { rows = []; } if (!rows.length) return '';
+        rows.sort((a, b) => (b.who || []).length - (a.who || []).length || b.f - a.f); rows = rows.slice(0, 40); const pc = (f) => (f > 0 && f < 0.01 ? '<1' : Math.round(100 * f)) + '%', mx = Math.max(1, (rows[0].who || []).length), dStrip = (p, nm) => gbStrip({ ...p, buffs: p.debuffs }, nm);
+        return '<section class="panel pf-bars gb-card" data-k="debuff"><h3 class="nh"><span>Debuffs</span><small>players affected' + ALLP + '</small></h3>' + cbHead('Players', 'Avg uptime', '', '', 'Debuff') + '<div class="gb-rows">' +
+          rows.map((x, i) => '<details class="gb-bfd">' + cbRow({ tag: 'summary', cls: ' nb', k: i + 1, color: '#e5534b', icon: spellIcon(x.id, x.name), name: esc(x.name), segs: [[Math.max(1.5, 100 * (x.who || []).length / mx), 'm']], v: String((x.who || []).length), sub: pc(x.f) }) + '<div class="gb-bfb">' +
+            (x.who || []).slice().sort((a1, b1) => b1.f - a1.f).map((w) => '<div class="gb-br"><span class="gb-bn">' + avatar(w.p, true) + '<span style="color:' + (w.p.color || 'var(--text)') + '">' + esc(w.p.name) + '</span></span>' + (night ? '<span class="gb-tr sm"><i class="gb-f" style="width:' + Math.max(1.5, 100 * w.f).toFixed(1) + '%;background:' + (w.p.color || '#e5534b') + '"></i><span class="gb-v">' + pc(w.f) + '</span></span>' : dStrip(w.p, x.name)) + '<span class="gb-bx">' + pc(w.f) + '</span></div>').join('') + '</div></details>').join('') + '</div></section>'; })();
+      const bf = (() => { let rows = []; try { rows = auraRows(REPS, false).rows.filter((x) => !x.always).sort((a, b) => b.cov - a.cov || b.apps - a.apps).slice(0, 20).sort((a, b) => b.f - a.f); } catch (x) { rows = []; } if (!rows.length) return '';
         const pc = (f) => (f > 0 && f < 0.01 ? '<1' : Math.round(100 * f)) + '%';
         /* round 248 buffs by player */ if (S.gbBfBy !== 'b') { let all = []; try { all = auraRows(REPS, false).rows.filter((x) => !x.always); } catch (x) { all = []; } const PM = new Map(); for (const x of all) for (const w of x.who || []) { const o = PM.get(w.p.name) || { p: w.p, L: [] }; o.L.push({ name: x.name, id: x.id, f: w.f }); PM.set(w.p.name, o); }
           const PL = [...PM.values()].map((o) => ({ ...o, avg: o.L.reduce((v, y) => v + y.f, 0) / Math.max(1, o.L.length) })).sort((a1, b1) => b1.L.length - a1.L.length || b1.avg - a1.avg); if (PL.length) {
             return '<section class="panel pf-bars gb-card" data-k="buff"><h3 class="nh"><span>Buffs</span><small>by player' + ALLP + '</small>' + '<span class="seg gb-by r248-sw" role="tablist" aria-label="Show">' + [['p', 'By player'], ['b', 'By buff']].map(([k1, l1]) => '<button type="button" role="tab" data-gbf="' + k1 + '" aria-selected="' + ((S.gbBfBy === 'b' ? 'b' : 'p') === k1) + '"' + ((S.gbBfBy === 'b' ? 'b' : 'p') === k1 ? ' class="on"' : '') + '>' + l1 + '</button>').join('') + '</span>' + '</h3>' + cbHead('Buffs', 'Avg uptime', '', '', 'Player') + '<div class="gb-rows">' +
-              PL.map((o, i) => '<details class="gb-bfd">' + cbRow({ tag: 'summary', cls: ' nb', k: i + 1, p: o.p, segs: [[Math.max(1.5, 100 * o.avg), 'm']], v: String(o.L.length), sub: pc(o.avg) }) + '<div class="gb-bfb">' +
+              PL.map((o, i) => '<details class="gb-bfd">' + cbRow({ tag: 'summary', cls: ' nb', k: i + 1, p: o.p, segs: [[Math.max(1.5, 100 * o.L.length / Math.max(1, PL[0].L.length)), 'm']], /* round 252 bars follow the order */ v: String(o.L.length), sub: pc(o.avg) }) + '<div class="gb-bfb">' +
                 o.L.sort((a1, b1) => b1.f - a1.f).map((y) => '<div class="gb-br"><span class="gb-bn">' + spellIcon(y.id || 0, y.name) + '<span>' + esc(y.name) + '</span></span>' + (night ? '<span class="gb-tr sm"><i class="gb-f" style="width:' + Math.max(1.5, 100 * y.f).toFixed(1) + '%;background:' + (o.p.color || '#6aa8ff') + '"></i><span class="gb-v">' + pc(y.f) + '</span></span>' : gbStrip(o.p, y.name)) + '<span class="gb-bx">' + pc(y.f) + '</span></div>').join('') + '</div></details>').join('') + '</div></section>'; } }
         return '<section class="panel pf-bars gb-card" data-k="buff"><h3 class="nh"><span>Buffs</span><small>Avg uptime' + ALLP + '</small>' + '<span class="seg gb-by r248-sw" role="tablist" aria-label="Show">' + [['p', 'By player'], ['b', 'By buff']].map(([k1, l1]) => '<button type="button" role="tab" data-gbf="' + k1 + '" aria-selected="' + ((S.gbBfBy === 'b' ? 'b' : 'p') === k1) + '"' + ((S.gbBfBy === 'b' ? 'b' : 'p') === k1 ? ' class="on"' : '') + '>' + l1 + '</button>').join('') + '</span>' + '</h3>' + cbHead('Uptime', 'Players', '', '', 'Buff') + '<div class="gb-rows">' +
           rows.map((x, i) => '<details class="gb-bfd">' + cbRow({ tag: 'summary', cls: ' nb', k: i + 1, color: '#6aa8ff', icon: spellIcon(x.id, x.name), name: esc(x.name), segs: [[Math.max(1.5, 100 * x.f), 'm']], v: pc(x.f), sub: String(x.who.length) }) +
@@ -36217,12 +36237,34 @@ function graphsBoard(r, end, NP) {
         H.set('svdef', DR.length ? '<section class="panel pf-bars gb-card" data-k="svdef"><div class="gb-hd"><span class="gb-lbl">Defensives</span><span class="gb-big">' + totD + '<small>pressed</small></span><span class="gb-hs">times pressed and about how much they took off' + ALLP + '</span></div>' +
           cbHead('Pressed', 'Taken off', 'Kinds', ' gb-r3', 'Player') + '<div class="gb-rows">' +
           DR.map((x, i) => '<details class="gb-bfd">' + cbRow({ tag: 'summary', cls: ' nb gb-r3', k: i + 1, p: x.o.p, segs: [[x.k ? Math.max(1.5, 100 * x.k / mxD) : 0, 'm']], v: String(x.k), sub: x.off ? C(x.off) : '-', end: String(x.kinds) }) + '<div class="gb-bfb">' + dBd(x) + '</div></details>').join('') + '</div></section>' : ''); }
+      /* round 250 stacked spells */ /* round 254 chart polish */ const stack250 = (sel, k, dur0) => { const mk = { dmg: 'dmgAb', heal: 'healAb', taken: 'takenAb' }[k], AB = sel && sel[mk]; if (!AB) return '';
+        const G = new Map(); for (const a of AB.values()) { if (!a.s || !(a.total > 0)) continue; const nm = String(a.name || '').replace(/^[^:]+: /, '').trim() || 'Other'; const g = G.get(nm) || { name: nm, total: 0, s: [] }; g.total += a.total; a.s.forEach((v, i) => { if (v) g.s[i] = (g.s[i] || 0) + v; }); G.set(nm, g); } const L = [...G.values()].sort((a, b) => b.total - a.total); if (!L.length) return '';
+        const N = Math.max(2, Math.ceil(dur0)), top = L.slice(0, 9), rest = L.slice(9), pal = ['#5b9cf0', '#f0a04b', '#4cc38a', '#e4637a', '#a77bf3', '#3fc7d4', '#e8c95a', '#7bd35b', '#f07fc0', '#8a94a0'];
+        const sm = (arr) => { const o = new Array(N).fill(0); for (let i = 0; i < N; i++) { let s = 0, w = 0; for (let j = -4; j <= 4; j++) { const q = i + j; if (q < 0 || q >= N) continue; const wt = 5 - Math.abs(j); s += (arr[q] || 0) * wt; w += wt; } o[i] = s / w; } return o; };
+        const lay = top.map((a, i) => ({ n: String(a.name), c: pal[i], v: sm(a.s) })); if (rest.length) { const o = []; for (const a of rest) for (let i = 0; i < N; i++) o[i] = (o[i] || 0) + (a.s[i] || 0); lay.push({ n: 'Other', c: pal[9], v: sm(o) }); }
+        const W = 1000, H = 190, L0 = 52, T0 = 10, B0 = 22, iw = W - L0 - 10, ih = H - T0 - B0, tot = new Array(N).fill(0); for (const l of lay) for (let i = 0; i < N; i++) tot[i] += l.v[i]; const raw = Math.max(1, ...tot);
+        const nice = (v) => { const p = Math.pow(10, Math.floor(Math.log10(v))), f = v / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p; }, mx = nice(raw * 1.05);
+        const X = (i) => L0 + iw * i / (N - 1), Y = (v) => T0 + ih - ih * v / mx, uid = 's' + Math.random().toString(36).slice(2, 8);
+        const curve = (pts) => { let d = 'M' + pts[0][0].toFixed(1) + ',' + pts[0][1].toFixed(1); for (let i = 1; i < pts.length; i++) { const [x0, y0] = pts[i - 1], [x1, y1] = pts[i], cx = (x0 + x1) / 2; d += 'C' + cx.toFixed(1) + ',' + y0.toFixed(1) + ' ' + cx.toFixed(1) + ',' + y1.toFixed(1) + ' ' + x1.toFixed(1) + ',' + y1.toFixed(1); } return d; };
+        let defs = '', paths = ''; const base = new Array(N).fill(0); lay.forEach((l, li) => { const up = base.map((b, i) => b + l.v[i]), tp = up.map((v, i) => [X(i), Y(v)]), bp = base.map((v, i) => [X(i), Y(v)]).reverse();
+          defs += '<linearGradient id="' + uid + li + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + l.c + '" stop-opacity=".85"/><stop offset="1" stop-color="' + l.c + '" stop-opacity=".45"/></linearGradient>';
+          paths += '<path d="' + curve(tp) + 'L' + bp.map((p) => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join('L') + 'Z" fill="url(#' + uid + li + ')"/><path d="' + curve(tp) + '" fill="none" stroke="' + l.c + '" stroke-width="1.2" stroke-opacity=".95"/>';
+          for (let i = 0; i < N; i++) base[i] = up[i]; });
+        let grid = ''; for (let g = 1; g <= 4; g++) { const v = mx * g / 4, y = Y(v); grid += '<line x1="' + L0 + '" x2="' + (W - 10) + '" y1="' + y.toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="rgba(255,255,255,.06)"/><text x="' + (L0 - 8) + '" y="' + (y + 3.5).toFixed(1) + '" font-size="10.5" fill="#7d8792" text-anchor="end">' + C(v) + '</text>'; }
+        grid += '<line x1="' + L0 + '" x2="' + (W - 10) + '" y1="' + (T0 + ih) + '" y2="' + (T0 + ih) + '" stroke="rgba(255,255,255,.12)"/>'; const st = N > 420 ? 60 : 30; for (let t = 0; t < N; t += st) grid += '<text x="' + X(t).toFixed(1) + '" y="' + (H - 6) + '" font-size="10.5" fill="#7d8792" text-anchor="middle">' + T(t) + '</text>';
+        const data = { L0, iw, N, lay: lay.map((l) => ({ n: l.n, c: l.c, v: l.v.map((x) => Math.round(x)) })) };
+        const lg = '<div class="r250-lg">' + lay.map((l) => '<span><i style="background:' + l.c + '"></i>' + esc(l.n) + '</span>').join('') + '</div>';
+        return lg + '<div class="r254-wrap" data-st="' + esc(JSON.stringify(data)) + '"><svg class="r250-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="' + esc(sel.name) + ' by spell"><defs>' + defs + '</defs>' + grid + paths + '</svg><i class="r254-x" hidden></i><div class="r254-tip" hidden></div></div>'; };
+      if (!window.__r254) { window.__r254 = 1; document.addEventListener('mousemove', (e) => { const w = e.target.closest && e.target.closest('.r254-wrap'); document.querySelectorAll('.r254-wrap').forEach((x) => { if (x !== w) { const a = x.querySelector('.r254-x'), b = x.querySelector('.r254-tip'); if (a) a.hidden = true; if (b) b.hidden = true; } }); if (!w) return;
+        let D = w._st; if (!D) { try { D = w._st = JSON.parse(w.getAttribute('data-st')); } catch (er) { return; } } const r = w.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width * 1000, i = Math.max(0, Math.min(D.N - 1, Math.round((fx - D.L0) / D.iw * (D.N - 1)))), px = (D.L0 + D.iw * i / (D.N - 1)) / 1000 * r.width;
+        const ln = w.querySelector('.r254-x'), tp = w.querySelector('.r254-tip'); ln.hidden = false; ln.style.left = px + 'px'; const rows = D.lay.map((l) => [l, l.v[i] || 0]).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1]), tt = rows.reduce((v, x) => v + x[1], 0);
+        tp.innerHTML = '<b>' + T(i) + '</b><span class="r254-tt">' + C(tt) + '/s</span>' + rows.map(([l, v]) => '<div><i style="background:' + l.c + '"></i><span>' + esc(l.n) + '</span><b>' + C(v) + '</b></div>').join(''); tp.hidden = false; const tw = tp.offsetWidth; tp.style.left = (px + 14 + tw > r.width ? px - 14 - tw : px + 14) + 'px'; }); }
       /* round 249 graphs chart */ const gbChart249 = (k) => { if (night) return ''; const r9 = REPS && REPS[0]; if (!r9) return ''; const key = { dmg: 'dmgS', heal: 'healS', taken: 'takenS' }[k]; if (!key) return '';
         const sel = S.mechP ? ps.find((p) => p.name === S.mechP) : null, ser = ((sel ? sel[key] : r9[key]) || []).slice(0, Math.ceil(end)); if (!ser.length) return '';
         const lab = { dmg: 'Damage per second', heal: 'Healing per second', taken: 'Damage taken per second' }[k];
-        try { return '<section class="panel gb-card gb-chart249"><div class="gb-hd"><span class="gb-lbl">' + lab + '</span><span class="gb-hs">' + (sel ? '<span style="color:' + (sel.color || 'var(--text)') + '">' + esc(sel.name) + '</span> · open another player below to switch' : 'the whole raid · open a player below to see theirs') + '</span></div>' + perfChart(r9, ser, end, sel || null, null, k, chartPx(false)) + '</section>'; } catch (e) { return ''; } };
-      const TB = [['dmg', 'Damage', ['dmg'], ['spells', 'tgt']], ['heal', 'Healing', ['heal'], ['oh']], ['taken', 'Damage taken', ['taken'], ['src']], ['mit', 'Mitigation', ['mit'], ['mitsrc', 'mitsh', 'mitcd', 'mitdef']], ['surv', 'Survival', [H.get('svheal') ? 'svheal' : 'surv'], [H.get('svheal') ? 'svdef' : '', 'svtl', H.get('svheal') ? 'surv' : ''].filter(Boolean)], ['death', 'Deaths', ['death'], ['kick', 'disp']], ['cpm', 'Casts', ['cpm'], []], ['buff', 'Buffs', [], []]]
-        .map(([k, l, m, s]) => [k, l, k === 'buff' ? bf : (m.some((x) => H.get(x)) ? gbChart249(k) : '') + m.map((x) => H.get(x) || '').join(''), s.map((x) => H.get(x) || '').join('')]).filter((x) => x[2]);
+        try { return '<section class="panel gb-card gb-chart249"><div class="gb-hd"><span class="gb-lbl">' + lab + '</span><span class="gb-hs">' + (sel ? '<span style="color:' + (sel.color || 'var(--text)') + '">' + esc(sel.name) + '</span> · open another player below to switch' : 'the whole raid · open a player below to see theirs') + '</span></div>' + ((sel && stack250(sel, k, end)) || perfChart(r9, ser, end, sel || null, null, k, chartPx(false))) + '</section>'; } catch (e) { return ''; } };
+      const TB = [['dmg', 'Damage', ['dmg'], ['spells', 'tgt']], ['heal', 'Healing', ['heal'], ['oh']], ['taken', 'Damage taken', ['taken'], ['src']], ['mit', 'Mitigation', ['mit'], ['mitsrc', 'mitsh', 'mitcd', 'mitdef']], ['surv', 'Survival', [H.get('svheal') ? 'svheal' : 'surv'], [H.get('svheal') ? 'svdef' : '', 'svtl', H.get('svheal') ? 'surv' : ''].filter(Boolean)], ['death', 'Deaths', ['death'], ['kick']], ['disp', 'Dispels', ['disp'], []], ['cpm', 'Casts', ['cpm'], []], ['buff', 'Buffs', [], []], ['debuff', 'Debuffs', [], []]]
+        .map(([k, l, m, s]) => [k, l, k === 'buff' ? bf : k === 'debuff' ? dbf : (m.some((x) => H.get(x)) ? gbChart249(k) : '') + m.map((x) => H.get(x) || '').join(''), s.map((x) => H.get(x) || '').join('')]).filter((x) => x[2]);
       let tb = S.gbTab || store.get('wla-gb-tab') || 'dmg'; if (!TB.some((x) => x[0] === tb)) tb = TB.length ? TB[0][0] : 'dmg'; const cur = TB.find((x) => x[0] === tb) || ['', '', '', ''];
       return '<div class="gb gb-tb"><div class="gb-tabrow"><div class="seg gb-tabs" role="tablist" aria-label="Graphs">' + TB.map(([k, l]) => '<button type="button" role="tab" data-gtab="' + k + '" aria-selected="' + (k === tb) + '"' + (k === tb ? ' class="on"' : '') + '>' + esc(l) + '</button>').join('') + '</div>' +
         '<span class="gb-cnt">' + (night ? 'All ' + NP.length + ' pulls, each up to its wipe filter' : end < r.duration - 0.5 ? 'Counted up to ' + T(end) + ', the wipe filter' : 'The whole pull') + '</span></div>' +
