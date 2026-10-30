@@ -1,0 +1,70 @@
+# Manually upload a preview version of Debrief without changing live traffic.
+# This deliberately does NOT use wrangler deploy or versions deploy.
+# Claude's existing Wrangler workflow and "next" preview alias are untouched.
+name: Debrief — Manual preview (ChatGPT)
+
+on:
+  workflow_dispatch:
+    inputs:
+      preview_alias:
+        description: "Preview alias (use chatgpt-review; keep Claude's next alias free)"
+        type: string
+        required: true
+        default: chatgpt-review
+
+permissions:
+  contents: read
+
+concurrency:
+  group: debrief-chatgpt-preview
+  cancel-in-progress: false
+
+jobs:
+  build-and-upload:
+    name: Build and upload preview version only
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out selected branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build the Worker from source
+        working-directory: src
+        run: python build.py
+
+      - name: Check generated Worker
+        run: |
+          test -s online/worker.js
+          node --check online/worker.js
+
+      - name: Upload preview version (do NOT deploy to production)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PREVIEW_ALIAS: ${{ inputs.preview_alias }}
+        shell: bash
+        run: |
+          if [[ -z "$CLOUDFLARE_API_TOKEN" || -z "$CLOUDFLARE_ACCOUNT_ID" ]]; then
+            echo "::error::Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID to GitHub Actions secrets."
+            exit 1
+          fi
+          if [[ ! "$PREVIEW_ALIAS" =~ ^[a-z][a-z0-9-]{0,30}$ ]]; then
+            echo "::error::Preview alias must be 1-31 lowercase letters, numbers, or hyphens, starting with a letter."
+            exit 1
+          fi
+          npx --yes wrangler@4 versions upload --preview-alias "$PREVIEW_ALIAS" --keep-vars --message "GitHub preview $GITHUB_SHA"
+          {
+            echo "### Preview version uploaded"
+            echo "This workflow does not change production traffic."
+            echo "View the exact preview URL in the Wrangler step output or Cloudflare's Deployments tab."
+            echo "Warning: Cloudflare Version URLs may access production KV/R2 resources; avoid modifying real data while testing."
+          } >> "$GITHUB_STEP_SUMMARY"
