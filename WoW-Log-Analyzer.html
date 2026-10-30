@@ -11173,6 +11173,7 @@ html body #view .gb-chart249 .r265-p, html body #view .gb-chart249 .r265-clr { f
 html body #view .gb-chart249 .r265-p.on { color: var(--c); border-color: var(--c); background: color-mix(in srgb, var(--c) 12%, transparent); }
 html body #view .gb-chart249 .r265-clr { border-style: dashed; }
 html body #view .gb-card .r267-key { margin: 8px 0 0; font-size: 11.5px; color: #7d8792; } /* round 267 */
+html body #view .gb-bd .r268-rc { margin: 4px 0 12px 28px; } /* round 268: a death recap under each death on Graphs */
 
 </style>
 
@@ -35953,7 +35954,7 @@ function graphsBoard(r, end, NP) {
     heal: (p) => '<p class="gb-bh">Healing by spell' + (night ? ', all pulls' : PH ? ' · whole pull' : '') + '</p>' + abRows(gbFold([...p.healAb.values()]), { crit: true, over: true, p }),
     taken: (p) => '<p class="gb-bh">Damage taken by source</p>' + abRows(takenBy(p), { big: true }),
     avoid: (p) => '<p class="gb-bh">Avoidable hits</p>' + abRows(takenBy(p).filter((x) => x.av > 0).map((x) => ({ ...x, total: x.av })), { big: true }),
-    death: (p) => '<div class="gb-bt">' + deaths(p).map((d) => '<div class="gb-br"><span class="gb-bn">' + spIc(d.ability || 'Melee') + '<span>' + PL(d) + T(d.t) + ' · ' + esc(d.ability ? d.ability + (d.killer && d.killer !== 'Unknown' ? ' · ' + d.killer : '') : 'Melee' + (d.killer ? ' · ' + d.killer : '')) + '</span></span></div>').join('') + '</div>',
+    death: (p) => '<div class="gb-bt">' + deaths(p).map((d) => '<div class="gb-br"><span class="gb-bn">' + spIc(d.ability || 'Melee') + '<span>' + PL(d) + T(d.t) + ' · ' + esc(d.ability ? d.ability + (d.killer && d.killer !== 'Unknown' ? ' · ' + d.killer : '') : 'Melee' + (d.killer ? ' · ' + d.killer : '')) + '</span></span></div>' + (night ? '' : (() => { /* round 268 death recap */ try { const v = deathVerdict(r, d), h = deathTimeline(d, r, v); return h ? '<div class="r268-rc">' + h + '</div>' : ''; } catch (e) { return ''; } })())).join('') + '</div>',
     kick: (p) => { const l = kicks(p); return '<p class="gb-bh">Interrupted</p><div class="gb-bt">' + cnt(l, (k) => k.spell || 'a cast').map(([n, c]) => '<div class="gb-br"><span class="gb-bn">' + spIc(n) + '<span>' + esc(n) + '</span></span><span class="gb-bx">' + c + (c === 1 ? ' time' : ' times') + '</span></div>').join('') + '</div><p class="sub">With ' + esc(andL([...new Set(l.map((k) => k.by).filter(Boolean))])) + '.</p>'; },
     disp: (p) => { const l = disp(p); return '<p class="gb-bh">Dispelled</p><div class="gb-bt">' + cnt(l, (d) => d.aura || 'an effect').map(([n, c]) => '<div class="gb-br"><span class="gb-bn">' + spIc(n) + '<span>' + esc(n) + '</span></span><span class="gb-bx">' + c + (c === 1 ? ' time' : ' times') + '</span></div>').join('') + '</div>'; },
     cpm: (p) => { const c = castsOf(p); if (!c) return ''; const mins = Math.max(1, c.al) / 60, L = c.ab.map((a) => ({ name: a.name, total: a.ts.length })).sort((a, b) => b.total - a.total), mx = L.length ? L[0].total : 1;
