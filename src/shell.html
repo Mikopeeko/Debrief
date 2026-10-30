@@ -11303,6 +11303,22 @@ html body #view .r294-lg { display: flex; flex-wrap: wrap; gap: 6px 14px; margin
 html body #view .gb-dur .r294-dl { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #7d8792; margin-right: 4px; align-self: center; }
 html body #view .r294-b { font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: #e8c95a; margin-left: 4px; }
 @media (max-width: 760px) { html body #view .gb.gb-tb .gb-tl .gb-card:is([data-k="hp"],[data-k="pi"],[data-k="en"],[data-k="habs"]) .pf-row.cb.gb-r3 { grid-template-columns: 20px minmax(0, 1fr) 52px 44px 36px !important; } html body #view .gb.gb-tb .gb-tl .gb-card:is([data-k="hp"],[data-k="pi"],[data-k="en"],[data-k="habs"]) .pf-row.cb.gb-r3 > .cb-s, html body #view .gb.gb-tb .gb-tl .gb-card:is([data-k="hp"],[data-k="pi"],[data-k="en"],[data-k="habs"]) .pf-row.cb.gb-r3 > .cb-r { display: block !important; overflow: hidden; text-align: right; } } /* round 294: the new tables on a phone */
+/* round 295: page structure: When above the chart, View above the table, the left side the menu only */
+html body #view .gb.gb-tb .r295-when, html body #view .gb.gb-tb .r295-view { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; margin: 0 0 10px; padding: 0; }
+html body #view .gb.gb-tb .r295-when::before, html body #view .gb.gb-tb .r295-view::before { font: 700 10.5px var(--body, inherit); letter-spacing: .09em; text-transform: uppercase; color: #7d8792; margin-right: 2px; }
+html body #view .gb.gb-tb .r295-when::before { content: 'When'; } html body #view .gb.gb-tb .r295-view::before { content: 'View'; }
+html body #view .gb.gb-tb .r295-when .pft-lb, html body #view .gb.gb-tb .r295-when .r294-dl { display: none !important; }
+html body #view .gb.gb-tb .r295-when.r295-ph .gb-dur [data-gdur=""] { display: none !important; }
+html body #view .gb.gb-tb .r295-when .pfph, html body #view .gb.gb-tb .r295-when .gb-dur, html body #view .gb.gb-tb .r295-view .gb-by { display: inline-flex !important; flex-direction: row !important; flex-wrap: wrap; gap: 2px; margin: 0; padding: 0; border: 0; background: none; }
+html body #view .gb.gb-tb .r295-when .pfph::before, html body #view .gb.gb-tb .r295-view .gb-by::before { display: none !important; content: none !important; }
+html body #view .gb.gb-tb .r295-when button, html body #view .gb.gb-tb .r295-view .gb-by button { padding: 5px 11px; border-radius: 999px; border: 1px solid transparent; background: none; color: #aab0b8; font-size: 12.5px; box-shadow: none; }
+html body #view .gb.gb-tb .r295-when button.on, html body #view .gb.gb-tb .r295-view .gb-by button.on { color: #e8eaed; border-color: rgba(230,180,80,.45); background: rgba(230,180,80,.08); }
+html body #view .gb.gb-tb .r295-when button:hover, html body #view .gb.gb-tb .r295-view .gb-by button:hover { color: #e8eaed; }
+html body #view .gb.gb-tb .r295-when .icw, html body #view .gb.gb-tb .r295-view .icw { display: none !important; }
+html body #view .gb.gb-tb .r295-view .gb-hm { padding-left: 14px; border-left: 1px solid rgba(255,255,255,.08) !important; }
+html body #view .gb.gb-tb .r295-view .gb-tgl { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #7d8792; } html body #view .gb.gb-tb .r295-view .gb-tgl select { min-width: 150px; }
+html body #view .gb.gb-tb .r295-when, html body #view .gb.gb-tb .r295-view { min-width: 0; max-width: 100%; } html body #view .gb.gb-tb .r295-when > *, html body #view .gb.gb-tb .r295-view > * { min-width: 0; max-width: 100%; flex-wrap: wrap !important; }
+html body #view .gb.gb-tb .gb-tl, html body #view .gb.gb-tb .gb-tmain { min-width: 0; } html body #view .gb.gb-tb .gb-tmain { grid-template-columns: minmax(0, 1fr); } /* round 295: the When row wraps on a phone */
 
 </style>
 
