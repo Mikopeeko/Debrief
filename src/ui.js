@@ -1959,6 +1959,10 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-30', h: [{ t: 'A cleaner banner and one bar for every tab', d: "The banner is now just the boss: its name, the difficulty and the result, with the boss art bigger. Who you're looking at, the pull (or another boss from the night), All pulls, the wipe call and how strictly you're judged all sit in one bar at the top of every tab." }, { t: 'Graphs, redesigned', d: "Names in their own column with slim class-coloured bars, every page laid out the same way with its controls on the card's title line, and the chart now follows the phase, Bloodlust or Power Infusion you pick." }], n: [
+    "Graphs Debuffs shows only what the boss put on the raid. Debuffs that stack (Eternal Venom) show when each stack landed and the top stack, and clicking a debuff opens a chart of it over the pull. Click players in it to compare their lines.",
+    "Graphs Interrupts has a chart: every kick as a dot in the kicker's colour and every cast that went off as a red ✕. Each player's list shows their kicks one by one.",
+    "Graphs Defensives & heals: Defensives, then Healthstones, potions & self-heals, a new Combat potions page, then Health over the pull.",
+    "Graphs: debuff names show the spell's description when you hover them, and Damage and Healing no longer repeat their total at the top.",
     "Graphs: overhealing is a dashed line on the healing chart (switch it off under the chart) instead of a second list.",
     "Graphs: each page in the menu has its own coloured icon, the phase buttons use the phase's real name (Both Fangs, One Fang left), and Compare players sits on the chart's title line.",
     "Graphs: one set of text colours and sizes across the tab, so nothing is too faint to read.",
