@@ -11702,6 +11702,34 @@ html body #view .r269-mana .pf-inl > .pf-sec:not(:has(.r327-bt)) { display: none
 html body #view .r269-mana .pf-inl > .pf-sec:first-of-type { margin-top: 0 !important; }
 html body #view .r269-mana .pf-inl > .pf-sec:not(.r328-sg):has(.r327-bt) ~ .pf-sec:not(.r328-sg):has(.r327-bt) { display: none !important; } /* round 328: only where their mana came back from, no Spent on (the user: "remove the spent on") */
 html body #view .r269-mana .pf-inl > .pf-sec.r328-sg { display: block !important; margin: 0 0 10px !important; } html body #view .r269-mana .r328-sg .gb-br:nth-child(2) .gb-f { background: #3fb950 !important; } html body #view .r269-mana .r328-sg .gb-br:nth-child(1) .gb-f { background: #5b9bea !important; }
+/* round 330: Compare in story order (layout A) */
+html body #view .cmp.r330 .r330-nav { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 14px; }
+html body #view .cmp.r330 .r330-nav button { height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.1); background: #171c21; color: #aeb6bf; font-size: 12px; font-weight: 600; cursor: pointer; }
+html body #view .cmp.r330 .r330-nav button:hover { color: #f2dcab; border-color: rgba(230,180,80,.45); background: rgba(230,180,80,.08); }
+html body #view .cmp.r330 > .ds-ctop.r330-gap { display: flex !important; flex-direction: column !important; gap: 0 !important; grid-template-columns: none !important; }
+html body #view .cmp.r330 > .ds-ctop.r330-gap > .panel { width: auto !important; height: auto !important; min-height: 0 !important; margin: 0 !important; }
+html body #view .cmp.r330 > .ds-ctop.r330-gap > .panel:first-child { border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; border-bottom: 0 !important; }
+html body #view .cmp.r330 > .ds-ctop.r330-gap > .panel + .panel { border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; border-top: 1px solid rgba(255,255,255,.06) !important; }
+html body #view .cmp.r330 > * + * { margin-top: 14px; }
+html body #view .cmp.r330 details.r330-sub { margin: 8px 0 0; border: 1px solid rgba(255,255,255,.07); border-radius: 8px; background: #13171b; }
+html body #view .cmp.r330 details.r330-sub > summary { padding: 10px 14px; cursor: pointer; font-size: 13px; font-weight: 700; color: #e8eaed; list-style: none; }
+html body #view .cmp.r330 details.r330-sub > summary::-webkit-details-marker { display: none; }
+html body #view .cmp.r330 details.r330-sub > summary::before { content: '▸'; display: inline-block; width: 16px; color: #868f99; }
+html body #view .cmp.r330 details.r330-sub[open] > summary::before { content: '▾'; }
+html body #view .cmp.r330 details.r330-sub > .panel { margin: 0 !important; border: 0 !important; border-top: 1px solid rgba(255,255,255,.06) !important; border-radius: 0 0 8px 8px !important; }
+html body #view .cmp.r330 details.r330-sub > .panel > h3:first-child { display: none; }
+
+/* round 330: Compare bars in the Graphs style (the user: "consistent bar graph types like the graph tab") */
+html body #view .cmp .pf-row.cb .cb-b.cb-b.cb-b:has(> .cb-f) { display: grid !important; grid-template-columns: 168px minmax(0, 1fr) !important; column-gap: 8px; align-items: center !important; height: auto !important; min-height: 20px; padding: 0 !important; }
+html body #view .cmp .pf-row.cb .cb-b.cb-b.cb-b > .cb-in { grid-area: 1 / 1 / 2 / 2 !important; position: relative !important; inset: auto !important; display: flex !important; align-items: center; min-width: 0; padding: 0 !important; overflow: hidden; }
+html body #view .cmp .pf-row.cb .cb-b.cb-b.cb-b > .cb-in .pf-nm, html body #view .cmp .pf-row.cb .cb-b.cb-b.cb-b > .cb-in .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html body #view .cmp .pf-row.cb .cb-b.cb-b.cb-b > .cb-f { grid-area: 1 / 2 / 2 / 3 !important; position: relative !important; inset: auto !important; transform: none !important; align-self: center !important; height: 13px !important; border-radius: 2px !important; background: rgba(255,255,255,.04) !important; display: flex !important; }
+html body #view .cmp .pf-row.cb .cb-b.cb-b.cb-b > .cb-f > i { height: 100% !important; background: var(--c, #8a939c) !important; opacity: .9 !important; border-radius: 2px 0 0 2px !important; }
+html body #view .cmp .pf-row.cb.cb.cb:not(.cb-h) { padding-top: 2px !important; padding-bottom: 2px !important; min-height: 0 !important; }
+html body #view .cmp .pf-row.cb:not(:has(.av)) .cb-b > .cb-f > i { background: #c9a34a !important; } html body #view .cmp .pf-row.cb:has(.av) .cb-b > .cb-f > i { background: var(--c, #8788ee) !important; }
+html body #view .cmp .cmp-cbb { height: 10px !important; border-radius: 2px !important; background: rgba(255,255,255,.04) !important; } html body #view .cmp .cmp-cbb > i { height: 100% !important; border-radius: 2px 0 0 2px !important; }
+@media (max-width: 699px) { html body #view .cmp .pf-row.cb .cb-b.cb-b.cb-b:has(> .cb-f) { grid-template-columns: minmax(0, 1fr) !important; row-gap: 3px; } html body #view .cmp .pf-row.cb .cb-b.cb-b.cb-b > .cb-f { grid-area: 2 / 1 / 3 / 2 !important; height: 5px !important; } html body #view .cmp .pf-row.cb.cb.cb { grid-template-columns: 22px minmax(0, 1fr) auto auto !important; column-gap: 8px; } }
+@media (min-width: 700px) { html body #view .cmp .pf-row.cb .cb-b.cb-b.cb-b:has(> .cb-f) { grid-template-columns: 250px minmax(0, 1fr) !important; } }
 
 </style>
 

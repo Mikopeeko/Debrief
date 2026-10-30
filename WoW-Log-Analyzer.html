@@ -11702,6 +11702,34 @@ html body #view .r269-mana .pf-inl > .pf-sec:not(:has(.r327-bt)) { display: none
 html body #view .r269-mana .pf-inl > .pf-sec:first-of-type { margin-top: 0 !important; }
 html body #view .r269-mana .pf-inl > .pf-sec:not(.r328-sg):has(.r327-bt) ~ .pf-sec:not(.r328-sg):has(.r327-bt) { display: none !important; } /* round 328: only where their mana came back from, no Spent on (the user: "remove the spent on") */
 html body #view .r269-mana .pf-inl > .pf-sec.r328-sg { display: block !important; margin: 0 0 10px !important; } html body #view .r269-mana .r328-sg .gb-br:nth-child(2) .gb-f { background: #3fb950 !important; } html body #view .r269-mana .r328-sg .gb-br:nth-child(1) .gb-f { background: #5b9bea !important; }
+/* round 330: Compare in story order (layout A) */
+html body #view .cmp.r330 .r330-nav { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 14px; }
+html body #view .cmp.r330 .r330-nav button { height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.1); background: #171c21; color: #aeb6bf; font-size: 12px; font-weight: 600; cursor: pointer; }
+html body #view .cmp.r330 .r330-nav button:hover { color: #f2dcab; border-color: rgba(230,180,80,.45); background: rgba(230,180,80,.08); }
+html body #view .cmp.r330 > .ds-ctop.r330-gap { display: flex !important; flex-direction: column !important; gap: 0 !important; grid-template-columns: none !important; }
+html body #view .cmp.r330 > .ds-ctop.r330-gap > .panel { width: auto !important; height: auto !important; min-height: 0 !important; margin: 0 !important; }
+html body #view .cmp.r330 > .ds-ctop.r330-gap > .panel:first-child { border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; border-bottom: 0 !important; }
+html body #view .cmp.r330 > .ds-ctop.r330-gap > .panel + .panel { border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; border-top: 1px solid rgba(255,255,255,.06) !important; }
+html body #view .cmp.r330 > * + * { margin-top: 14px; }
+html body #view .cmp.r330 details.r330-sub { margin: 8px 0 0; border: 1px solid rgba(255,255,255,.07); border-radius: 8px; background: #13171b; }
+html body #view .cmp.r330 details.r330-sub > summary { padding: 10px 14px; cursor: pointer; font-size: 13px; font-weight: 700; color: #e8eaed; list-style: none; }
+html body #view .cmp.r330 details.r330-sub > summary::-webkit-details-marker { display: none; }
+html body #view .cmp.r330 details.r330-sub > summary::before { content: '▸'; display: inline-block; width: 16px; color: #868f99; }
+html body #view .cmp.r330 details.r330-sub[open] > summary::before { content: '▾'; }
+html body #view .cmp.r330 details.r330-sub > .panel { margin: 0 !important; border: 0 !important; border-top: 1px solid rgba(255,255,255,.06) !important; border-radius: 0 0 8px 8px !important; }
+html body #view .cmp.r330 details.r330-sub > .panel > h3:first-child { display: none; }
+
+/* round 330: Compare bars in the Graphs style (the user: "consistent bar graph types like the graph tab") */
+html body #view .cmp .pf-row.cb .cb-b.cb-b.cb-b:has(> .cb-f) { display: grid !important; grid-template-columns: 168px minmax(0, 1fr) !important; column-gap: 8px; align-items: center !important; height: auto !important; min-height: 20px; padding: 0 !important; }
+html body #view .cmp .pf-row.cb .cb-b.cb-b.cb-b > .cb-in { grid-area: 1 / 1 / 2 / 2 !important; position: relative !important; inset: auto !important; display: flex !important; align-items: center; min-width: 0; padding: 0 !important; overflow: hidden; }
+html body #view .cmp .pf-row.cb .cb-b.cb-b.cb-b > .cb-in .pf-nm, html body #view .cmp .pf-row.cb .cb-b.cb-b.cb-b > .cb-in .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html body #view .cmp .pf-row.cb .cb-b.cb-b.cb-b > .cb-f { grid-area: 1 / 2 / 2 / 3 !important; position: relative !important; inset: auto !important; transform: none !important; align-self: center !important; height: 13px !important; border-radius: 2px !important; background: rgba(255,255,255,.04) !important; display: flex !important; }
+html body #view .cmp .pf-row.cb .cb-b.cb-b.cb-b > .cb-f > i { height: 100% !important; background: var(--c, #8a939c) !important; opacity: .9 !important; border-radius: 2px 0 0 2px !important; }
+html body #view .cmp .pf-row.cb.cb.cb:not(.cb-h) { padding-top: 2px !important; padding-bottom: 2px !important; min-height: 0 !important; }
+html body #view .cmp .pf-row.cb:not(:has(.av)) .cb-b > .cb-f > i { background: #c9a34a !important; } html body #view .cmp .pf-row.cb:has(.av) .cb-b > .cb-f > i { background: var(--c, #8788ee) !important; }
+html body #view .cmp .cmp-cbb { height: 10px !important; border-radius: 2px !important; background: rgba(255,255,255,.04) !important; } html body #view .cmp .cmp-cbb > i { height: 100% !important; border-radius: 2px 0 0 2px !important; }
+@media (max-width: 699px) { html body #view .cmp .pf-row.cb .cb-b.cb-b.cb-b:has(> .cb-f) { grid-template-columns: minmax(0, 1fr) !important; row-gap: 3px; } html body #view .cmp .pf-row.cb .cb-b.cb-b.cb-b > .cb-f { grid-area: 2 / 1 / 3 / 2 !important; height: 5px !important; } html body #view .cmp .pf-row.cb.cb.cb { grid-template-columns: 22px minmax(0, 1fr) auto auto !important; column-gap: 8px; } }
+@media (min-width: 700px) { html body #view .cmp .pf-row.cb .cb-b.cb-b.cb-b:has(> .cb-f) { grid-template-columns: 250px minmax(0, 1fr) !important; } }
 
 </style>
 
@@ -58580,6 +58608,15 @@ function dsReport() { const v = document.getElementById('view'); if (!v) return;
     L.querySelectorAll('.rqc-row > b').forEach((v) => { const t = v.firstChild && v.firstChild.nodeType === 3 ? v.firstChild : null; if (!t) return; const m = t.textContent.match(/^(#[0-9]+ of [0-9]+) [A-Za-z ]+ · (.+)$/); if (m) { v.title = t.textContent.trim(); t.textContent = m[1] + ' · ' + m[2]; } });
   } catch (e) { /* (leave it as it is) */ } }
 (function () { const f4 = dsBars; dsBars = function (root) { f4(root); try { dsReportA(); } catch (e) {} }; })();
+/* round 330 compare A */ function dsCompareA() { const c = document.querySelector('#view .cmp'); if (!c || c.classList.contains('r330')) return; const hps = c.querySelector(':scope > .cmp-hps'), top = c.querySelector(':scope > .ds-ctop'); if (!hps || !top) return; c.classList.add('r330');
+  const kids = [...c.children], h3t = (e) => ((e.querySelector(':scope > h3, :scope > summary') || {}).textContent || '').trim();
+  const stand = kids.find((e) => e.classList.contains('pf-bars') && /Where you stand/i.test(e.textContent.slice(0, 120))), how = kids.find((e) => e.querySelector(':scope > .cmp-cards')), cds = kids.find((e) => e.querySelector(':scope > .cmp-cdt')), mom = kids.find((e) => e.classList.contains('cmp-story') && /big moments/i.test(h3t(e))), fold = kids.find((e) => e.classList.contains('cmp-fold'));
+  top.classList.add('r330-gap'); const items = [[top, 'The gap'], [cds, 'Cooldowns'], [mom, 'Big moments'], [how, 'How they play'], [stand, 'Where you stand'], [fold, 'Details']].filter((x) => x[0]);
+  const nav = document.createElement('div'); nav.className = 'r330-nav'; nav.innerHTML = items.map((x, i) => '<button type="button" data-r330="' + i + '">' + x[1] + '</button>').join('');
+  nav.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-r330]'); if (!b) return; const el = items[+b.dataset.r330][0]; if (el.tagName === 'DETAILS') el.open = true; window.scrollTo({ top: el.getBoundingClientRect().top + scrollY - 110, behavior: 'smooth' }); });
+  hps.after(nav); let prev = nav; for (const [el] of items) { prev.after(el); prev = el; }
+  if (fold) { const sm = fold.querySelector(':scope > summary'); if (sm) { sm.classList.add('r330-dsum'); const h0 = sm.querySelector('h3') || sm, tn = h0.firstChild && h0.firstChild.nodeType === 3 ? h0.firstChild : null; if (tn) tn.textContent = 'Details'; const sm0 = h0.querySelector('small'); if (sm0) sm0.textContent = 'Rotation, talents and every number, side by side. Click to open.'; } [...fold.children].filter((x) => x.tagName !== 'SUMMARY' && x.classList.contains('panel')).forEach((p) => { const h = p.querySelector(':scope > h3'), t0 = h ? ((h.firstChild && h.firstChild.nodeType === 3 ? h.firstChild.textContent : (h.firstElementChild || h).textContent) || '').trim() : 'More', d = document.createElement('details'); d.className = 'r330-sub'; const s = document.createElement('summary'); const RN = { 'Rotation side by side': 'Rotation checks', 'Side by side': 'Every number, side by side' }; s.textContent = RN[t0] || t0 || 'More'; d.appendChild(s); p.before(d); d.appendChild(p); }); } }
+(function () { const f5 = dsBars; dsBars = function (root) { f5(root); try { dsCompareA(); } catch (e) {} }; })();
 
 // ===== Design studio round 9 (Oct 25): Compare, the answer first. Moves the biggest-fixes and Why-the-gap panels out of the fold to under the
 // face-off, and folds the big moments after the first two. Runs after dsBars on every redraw. Owner: the Design studio chat. =====
