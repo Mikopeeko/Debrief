@@ -25743,7 +25743,7 @@ const cmpIcon = (ic, col) => '<span class="cmp-ico" style="--c:' + col + '"><svg
 // and its details under it when open. segs: the fill, as on Graphs ([width %, kind]; 'ad' is the avoidable part in red)
 function cmpGroup(g, label, sides, detail) {
   const open = S.cmpG === g && !!detail, mx = Math.max(...sides.map((s) => s.v || 0)) || 1;
-  return '<div class="cmp-grp' + (open ? ' on' : '') + '"><div class="cmp-lbl">' + label + (detail ? '<span>' + (open ? 'Click again to close' : 'Click for the details') + '</span>' : '') + '</div>' +
+  return '<div class="cmp-grp' + (open ? ' on' : '') + '"><div class="cmp-lbl">' + ({ 'Damage a second': 'DPS', 'Healing a second': 'HPS', 'Casts a minute': 'CPM' }[label] || label) /* round 332 short labels */ + (detail ? '<span>' + (open ? 'Click again to close' : 'Click for the details') + '</span>' : '') + '</div>' +
     sides.map((s) => cbRow({ tag: detail ? 'button' : 'div', cls: (detail ? '' : ' nb') + (open ? ' on' : '') + ' cmp-gr', attrs: (detail ? ' type="button" data-cg="' + g + '"' : '') + ' data-tt="' + esc(s.tip || '') + '"', k: '',
       p: s.p, pname: s.pname, pcol: s.col, color: s.col, name: s.name, icon: s.icon, chips: s.chips || '', segs: s.segs || [[100 * (s.v || 0) / mx, 'm']], v: s.txt, sub: s.sub || '' })).join('') +
     (open ? '<div class="pf-inl cmp-inl">' + detail + '</div>' : '') + '</div>';
@@ -32252,7 +32252,7 @@ function dsReport() { const v = document.getElementById('view'); if (!v) return;
 /* round 330 compare A */ function dsCompareA() { const c = document.querySelector('#view .cmp'); if (!c || c.classList.contains('r330')) return; const hps = c.querySelector(':scope > .cmp-hps'), top = c.querySelector(':scope > .ds-ctop'); if (!hps || !top) return; c.classList.add('r330');
   const kids = [...c.children], h3t = (e) => ((e.querySelector(':scope > h3, :scope > summary') || {}).textContent || '').trim();
   const stand = kids.find((e) => e.classList.contains('pf-bars') && /Where you stand/i.test(e.textContent.slice(0, 120))), how = kids.find((e) => e.querySelector(':scope > .cmp-cards')), cds = kids.find((e) => e.querySelector(':scope > .cmp-cdt')), mom = kids.find((e) => e.classList.contains('cmp-story') && /big moments/i.test(h3t(e))), fold = kids.find((e) => e.classList.contains('cmp-fold'));
-  top.classList.add('r330-gap'); const items = [[top, 'The gap'], [cds, 'Cooldowns'], [mom, 'Big moments'], [how, 'How they play'], [stand, 'Where you stand'], [fold, 'Details']].filter((x) => x[0]);
+  top.classList.add('r330-gap'); const items = [[stand, 'Where you stand'], [top, 'The gap'], [cds, 'Cooldowns'], [mom, 'Big moments'], [how, 'How they play'], [fold, 'Details']].filter((x) => x[0]); /* round 332 stand first */
   const nav = document.createElement('div'); nav.className = 'r330-nav'; nav.innerHTML = items.map((x, i) => '<button type="button" data-r330="' + i + '">' + x[1] + '</button>').join('');
   nav.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-r330]'); if (!b) return; const el = items[+b.dataset.r330][0]; if (el.tagName === 'DETAILS') el.open = true; window.scrollTo({ top: el.getBoundingClientRect().top + scrollY - 110, behavior: 'smooth' }); });
   hps.after(nav); let prev = nav; for (const [el] of items) { prev.after(el); prev = el; }
