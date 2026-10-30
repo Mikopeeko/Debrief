@@ -11565,6 +11565,48 @@ html body #view .gb.gb-tb .r318-kr .icw, html body #view .gb.gb-tb .r318-kr .icw
 /* round 319: the Combat potions page */
 html body #view .gb.gb-tb .r319-when { margin-left: 10px; font-size: 11.5px; font-weight: 500; color: var(--t3, #868f99); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 html body #view .gb.gb-tb .r319-when.z { color: #e5534b; opacity: .8; }
+/* round 321: the individual Report card, one column (layout A) */
+html body #view .ds-rcard.r321 { display: flex !important; flex-direction: column !important; gap: 14px !important; grid-template-columns: none !important; }
+html body #view .ds-rcard.r321 > .ds-rr { display: none !important; }
+html body #view .ds-rcard.r321 > .ds-rl { width: 100% !important; max-width: none !important; }
+html body #view .rcb-2 .rqc-hd { display: flex !important; align-items: center !important; justify-content: flex-start !important; gap: 28px !important; flex-wrap: wrap; }
+html body #view .rcb-2 .rqc-hd > .rqc-sc { order: 0; margin: 0 !important; display: grid !important; grid-template-columns: auto auto; grid-template-rows: auto auto; column-gap: 10px; align-items: center; padding-left: 24px; border-left: 1px solid rgba(255,255,255,.08); }
+html body #view .rcb-2 .rqc-hd > .rqc-sc > .grade { grid-row: 1 / 3; font-size: 22px !important; width: 44px; height: 44px; display: flex !important; align-items: center; justify-content: center; }
+html body #view .rcb-2 .rqc-hd > .rqc-sc > b { font-size: 22px !important; line-height: 1.1; }
+html body #view .rcb-2 .rqc-hd > .rqc-sc > span:not(.grade) { font-size: 12px !important; color: var(--t3, #868f99) !important; }
+html body #view .r321-top { display: flex; flex-direction: column; gap: 10px; }
+html body #view .r321-top .r321-sum { margin: 0; font-size: 13.5px; color: #c9cfd6; line-height: 1.5; }
+html body #view .r321-top .rcw-nx { margin: 0 !important; padding: 10px 14px !important; border-radius: 8px; background: rgba(230,180,80,.08) !important; border: 1px solid rgba(230,180,80,.35) !important; color: #f2dcab !important; font-size: 13.5px !important; }
+html body #view .r321-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+html body #view .r321-tiles > * { margin: 0 !important; padding: 12px 14px !important; border-radius: 8px !important; background: #171c21 !important; border: 1px solid rgba(255,255,255,.07) !important; min-width: 0; }
+html body #view .r321-tiles h5 { margin: 0 0 8px !important; font-size: 11px !important; letter-spacing: .1em; text-transform: uppercase; }
+html body #view .r321-tiles .rcw-l.g h5 { color: #3fb950 !important; } html body #view .r321-tiles .rcw-l.w h5 { color: #dcbf5a !important; } html body #view .r321-tiles .r321-dl h5 { color: #e5534b !important; }
+html body #view .r321-tiles ul { margin: 0 !important; padding: 0 !important; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+html body #view .r321-tiles li { font-size: 12.5px !important; line-height: 1.4; color: #c9cfd6; padding: 0 !important; }
+html body #view .r321-tiles li::before { display: none !important; }
+html body #view .r321-tiles .r321-big { font-size: 22px; font-weight: 700; color: #e8eaed; } html body #view .r321-tiles .r321-big small { font-size: 12px; font-weight: 500; color: #868f99; }
+html body #view .r321-tiles .r321-dl .sub { margin: 2px 0 0 !important; font-size: 12px; color: #868f99; }
+html body #view .r321-tiles .rcw-ok { margin-top: 8px !important; display: flex; flex-wrap: wrap; gap: 6px; }
+/* (the checklist: one line per check) */
+html body #view .ds-rcard.r321 .rqc-row { display: grid !important; grid-template-columns: 22px minmax(120px, auto) minmax(0, 1fr) 72px 44px 92px !important; align-items: center !important; column-gap: 12px !important; padding: 6px 6px !important; min-height: 0 !important; border-bottom: 1px solid rgba(255,255,255,.05); }
+html body #view .ds-rcard.r321 .rqc-row > span:nth-child(2) { display: contents !important; }
+html body #view .ds-rcard.r321 .rqc-row .rqc-i { grid-column: 1; }
+html body #view .ds-rcard.r321 .rqc-row .rqc-nm { grid-column: 2; font-size: 13px !important; font-weight: 600; color: #e8eaed; display: inline-flex; align-items: center; gap: 8px; margin: 0 !important; }
+html body #view .ds-rcard.r321 .rqc-row small { grid-column: 3; font-size: 12px !important; color: #868f99 !important; margin: 0 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body #view .ds-rcard.r321 .rqc-row .rqc-bar { grid-column: 4; height: 6px !important; margin: 0 !important; }
+html body #view .ds-rcard.r321 .rqc-row .rqc-pc { grid-column: 5; font-size: 12px !important; text-align: right; margin: 0 !important; }
+html body #view .ds-rcard.r321 .rqc-row > b { grid-column: 6; text-align: right; font-size: 12.5px !important; white-space: nowrap; }
+html body #view .ds-rcard.r321 .rqc-row .rqc-nm img, html body #view .ds-rcard.r321 .rqc-row .rqc-nm .icw { width: 18px !important; height: 18px !important; }
+html body #view .ds-rcard.r321 .rqc-sec h5 { margin: 14px 0 4px !important; }
+@media (max-width: 699px) {
+  html body #view .r321-tiles { grid-template-columns: minmax(0, 1fr); }
+  html body #view .ds-rcard.r321 .rqc-row { grid-template-columns: 20px minmax(0, 1fr) 40px 70px !important; }
+  html body #view .ds-rcard.r321 .rqc-row small, html body #view .ds-rcard.r321 .rqc-row .rqc-bar { display: none !important; }
+  html body #view .ds-rcard.r321 .rqc-row .rqc-pc { grid-column: 3; } html body #view .ds-rcard.r321 .rqc-row > b { grid-column: 4; }
+  html body #view .rcb-2 .rqc-hd > .rqc-sc { padding-left: 0; border-left: 0; }
+}
+html body #view .ds-rcard.r321 .rqc-row > *, html body #view .ds-rcard.r321 .rqc-row > span:nth-child(2) > * { grid-row: 1 !important; }
+html body #view .ds-rcard.r321 .rqc-sec:not(.ds-show) .rqc-row:has(.rqc-i.ok), html body #view .ds-rcard.r321 .rqc-sec:not(.ds-show) .rqc-dd:has(.rqc-i.ok) { display: none !important; }
 
 </style>
 
@@ -58420,6 +58462,15 @@ function dsReport() { const v = document.getElementById('view'); if (!v) return;
     if (op && hd) { const btns = hd.querySelector('.rqc-btns'); (btns || hd).appendChild(op); } }
   (rqc || under.firstElementChild).after(card); }
 (function () { const f3 = dsBars; dsBars = function (root) { f3(root); try { dsReport(); } catch (e) {} }; })();
+/* round 321 report card A */ function dsReportA() { const card = document.querySelector('#view .ds-rcard'); if (!card || card.classList.contains('r321')) return; const L = card.querySelector(':scope > .ds-rl'), Rr = card.querySelector(':scope > .ds-rr'); if (!L || !Rr) return; card.classList.add('r321');
+  const you = Rr.querySelector('.rcw-you'), first = you && you.querySelector(':scope > div:first-child'), sum = first && first.querySelector(':scope > p'), nx = first && first.querySelector('.rcw-nx'), g = you && you.querySelector('.rcw-l.g'), w = you && you.querySelector('.rcw-l.w'), more = you && you.querySelector(':scope > .rcw-more'), dl = Rr.querySelector('.rcb-ydl');
+  const top = document.createElement('div'); top.className = 'r321-top'; if (sum) { sum.classList.add('r321-sum'); top.appendChild(sum); } if (nx) top.appendChild(nx);
+  if (w) { w.querySelectorAll('li').forEach((li) => { if (/Your one fix/i.test(li.textContent) && nx) li.remove(); }); if (more) w.appendChild(more); if (!w.querySelector('li') && !w.querySelector('.rcw-more')) { const p0 = document.createElement('p'); p0.className = 'okv'; p0.textContent = 'Only the one fix above.'; w.appendChild(p0); } }
+  if (dl) { const tx = (dl.textContent || '').replace(/^\s*Deaths/, '').trim(), all = (tx.match(/Died (\d+) time/) || [])[1], cn = (tx.match(/(\d+) counted/) || [])[1] || (/None counted/.test(tx) ? '0' : /(It|Both|All \d+) counted/.test(tx) ? all : null), pen = (tx.match(/−(\d+)/) || [])[1];
+    if (all != null && cn != null) { dl.innerHTML = '<h5>Deaths</h5><div class="r321-big">' + cn + ' <small>counted</small></div><p class="sub">of ' + all + (all === '1' ? ' death' : ' deaths') + (pen ? ' · −' + pen + ' on the grade' : '') + '</p>'; dl.title = tx; } else dl.insertAdjacentHTML('afterbegin', '<h5>Deaths</h5>'); dl.classList.add('r321-dl'); }
+  const tiles = document.createElement('div'); tiles.className = 'r321-tiles'; [g, w, dl].forEach((x) => { if (x) tiles.appendChild(x); });
+  if (top.children.length) card.insertBefore(top, L); card.insertBefore(tiles, L); }
+(function () { const f4 = dsBars; dsBars = function (root) { f4(root); try { dsReportA(); } catch (e) {} }; })();
 
 // ===== Design studio round 9 (Oct 25): Compare, the answer first. Moves the biggest-fixes and Why-the-gap panels out of the fold to under the
 // face-off, and folds the big moments after the first two. Runs after dsBars on every redraw. Owner: the Design studio chat. =====

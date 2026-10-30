@@ -32226,6 +32226,15 @@ function dsReport() { const v = document.getElementById('view'); if (!v) return;
     if (op && hd) { const btns = hd.querySelector('.rqc-btns'); (btns || hd).appendChild(op); } }
   (rqc || under.firstElementChild).after(card); }
 (function () { const f3 = dsBars; dsBars = function (root) { f3(root); try { dsReport(); } catch (e) {} }; })();
+/* round 321 report card A */ function dsReportA() { const card = document.querySelector('#view .ds-rcard'); if (!card || card.classList.contains('r321')) return; const L = card.querySelector(':scope > .ds-rl'), Rr = card.querySelector(':scope > .ds-rr'); if (!L || !Rr) return; card.classList.add('r321');
+  const you = Rr.querySelector('.rcw-you'), first = you && you.querySelector(':scope > div:first-child'), sum = first && first.querySelector(':scope > p'), nx = first && first.querySelector('.rcw-nx'), g = you && you.querySelector('.rcw-l.g'), w = you && you.querySelector('.rcw-l.w'), more = you && you.querySelector(':scope > .rcw-more'), dl = Rr.querySelector('.rcb-ydl');
+  const top = document.createElement('div'); top.className = 'r321-top'; if (sum) { sum.classList.add('r321-sum'); top.appendChild(sum); } if (nx) top.appendChild(nx);
+  if (w) { w.querySelectorAll('li').forEach((li) => { if (/Your one fix/i.test(li.textContent) && nx) li.remove(); }); if (more) w.appendChild(more); if (!w.querySelector('li') && !w.querySelector('.rcw-more')) { const p0 = document.createElement('p'); p0.className = 'okv'; p0.textContent = 'Only the one fix above.'; w.appendChild(p0); } }
+  if (dl) { const tx = (dl.textContent || '').replace(/^\s*Deaths/, '').trim(), all = (tx.match(/Died (\d+) time/) || [])[1], cn = (tx.match(/(\d+) counted/) || [])[1] || (/None counted/.test(tx) ? '0' : /(It|Both|All \d+) counted/.test(tx) ? all : null), pen = (tx.match(/−(\d+)/) || [])[1];
+    if (all != null && cn != null) { dl.innerHTML = '<h5>Deaths</h5><div class="r321-big">' + cn + ' <small>counted</small></div><p class="sub">of ' + all + (all === '1' ? ' death' : ' deaths') + (pen ? ' · −' + pen + ' on the grade' : '') + '</p>'; dl.title = tx; } else dl.insertAdjacentHTML('afterbegin', '<h5>Deaths</h5>'); dl.classList.add('r321-dl'); }
+  const tiles = document.createElement('div'); tiles.className = 'r321-tiles'; [g, w, dl].forEach((x) => { if (x) tiles.appendChild(x); });
+  if (top.children.length) card.insertBefore(top, L); card.insertBefore(tiles, L); }
+(function () { const f4 = dsBars; dsBars = function (root) { f4(root); try { dsReportA(); } catch (e) {} }; })();
 
 // ===== Design studio round 9 (Oct 25): Compare, the answer first. Moves the biggest-fixes and Why-the-gap panels out of the fold to under the
 // face-off, and folds the big moments after the first two. Runs after dsBars on every redraw. Owner: the Design studio chat. =====
