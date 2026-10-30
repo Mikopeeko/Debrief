@@ -11262,6 +11262,19 @@ html body #view .prw-n .prw-nt.prw-nk::before { content: '('; } html body #view 
 html body #view > .dbt.dbt .dbt-nk.dbt-nk { text-transform: none !important; letter-spacing: 0 !important; font: inherit !important; font-weight: 500 !important; color: var(--muted, #aab0b8) !important; padding: 0 0 0 5px !important; background: none !important; }
 html body #view > .dbt.dbt .dbt-nk.dbt-nk::before { content: '('; } html body #view > .dbt.dbt .dbt-nk.dbt-nk::after { content: ')'; }
 html body #view .mxa-p .mxa-h > b { display: none !important; }
+/* round 288: a small map on each moment (click for the big one), the rest of the moments on a click, kicks by add */
+html body #view .mxa-p .mx-mapth:hover { border-color: rgba(255,255,255,.35); }
+html body #view .mxa-p .mx-mapth svg { width: 100% !important; height: 100% !important; display: block; pointer-events: none; }
+html body #view .mxa-p:not(.mx-big):not(.mxa-all) .u1-m { display: none !important; }
+html body #view .mxa-p:not(.mx-allrows):not(.mxa-all) .mx-tr.mx-xtra { display: none !important; }
+html body #view .mxa-p.mx-allrows .mx-tr.mx-rest, html body #view .mxa-p.mxa-all .mx-tr.mx-rest { display: none !important; }
+html body #view .mxa-p .mx-tr.mx-rest { cursor: pointer; } html body #view .mxa-p .mx-tr.mx-rest:hover .mx-m { text-decoration: underline; }
+html body #view .r272 .r272-tot { margin-bottom: 6px; }
+
+html body #view .mx-p.mx-p .mx-tb.mx-tb.mx-one.mx-hasmap { grid-template-columns: 52px minmax(0, 200px) minmax(0, 1fr) 82px; } /* round 288: the map column */
+html body #view .mxa-p .mx-mapc { display: flex; align-items: center; justify-content: flex-end; padding: 4px 0; }
+html body #view .mxa-p .mx-mapth { display: block; width: 76px; height: 56px; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); background: #0b0d10; cursor: zoom-in; }
+@media (max-width: 600px) { html body #view .mx-p.mx-p .mx-tb.mx-tb.mx-one.mx-hasmap { grid-template-columns: 40px minmax(0, 1fr) 60px; } html body #view .mx-p.mx-p .mx-tb.mx-one.mx-hasmap .mx-who { display: none; } html body #view .mx-p.mx-p .mx-tb.mx-one.mx-hasmap .mx-th > span:nth-child(2) { display: none; } html body #view .mxa-p .mx-mapth { width: 56px; height: 44px; } }
 
 </style>
 
