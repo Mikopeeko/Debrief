@@ -666,7 +666,7 @@ const TITLE_FIX = {
   'The Coiled Altar': {
     'Venom orbs (Into the frontals)': 'Coalesced Venom (Pop the orbs with the frontals)',
     'Tank frontals (Defensives on stack 2)': 'Sever (Defensive on the second stack)',
-    'Soulcoiler adds (Kick and kill)': 'Spiteful Soulcoiler (Kick and kill)',
+    'Soulcoiler adds (Kill fast)': 'Spiteful Soulcoiler (Kill fast)', /* round 278 split */
     'Gloombombs (Drop them on the adds)': 'Gloombomb (Drop it on the adds)'
   },
   "Ula'tek": {
@@ -677,7 +677,7 @@ const TITLE_FIX = {
     'Toxic Incubation (Beam)': 'Toxic Incubation (Off-tank soaks the beam)',
     'Blightscale Wretch (Bubble)': 'Blightscale Wretch (Stand in its bubble)',
     'Rage of the Shackled (Damage windows)': 'Rage of the Shackled (Burst the heart)',
-    'Wardens and Doomscales (Big adds)': 'Wardens and Doomscales (Kick and kill)',
+    'Wardens and Doomscales (Big adds)': 'Wardens and Doomscales (Kill fast)',
     'Serpent\'s Bite (Soak)': 'Serpent\'s Bite (Soak with 3)',
     'Shriekers and Rawlings (Adds)': 'Shriekers and Rawlings (Kill the adds)'
   }
@@ -4626,8 +4626,8 @@ function buildCoiledAltar(ev, r, h) {
         for (const g of gGroups) if (g.gb) g.sub = 'Gloombombs: ' + g.gb.map((x) => x.on + ' of ' + x.n + ' on this set\'s adds').join(', then ') + ' · ' + g.sub;
         for (const g of gGroups) { g.bad = g.bad || g.rows.some(isBad); g.warn = g.warn || g.rows.some((row) => row.some((c) => c.warn)); }
       }
-      sections.push({ id: 'addsets', title: 'Soulcoiler adds (Kick and kill)', place: 'Spiritcackle (fear adds): kicks', spell: S('spiritcackle'), verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
-        summary: pl(groups.length, 'add set') + '. Each set shows its adds (first kick against the Gloombomb cast, and when it died), then every Wail of Terror and who kicked it, or that it got off.',
+      sections.push({ id: 'addsets', title: 'Soulcoiler adds (Kill fast)', place: 'Spiritcackle (fear adds): killing the sets', spell: S('spiritcackle'), verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
+        summary: pl(groups.length, 'add set') + '. Each set shows its adds and when each died, and what their Retaliatory Malice did to the raid while they lived. The kicks are in Wail of Terror (Kicks).',
         cols: ['Add', 'Spawned', 'First kick', '', 'Died'], rows: [], groups });
       if (mythic) sections.push({ id: 'gloom', title: 'Gloombombs (Drop them on the adds)', place: 'Gloombombs (player bombs): breaking the Spirit Shields', spell: S('gloombomb'), mythicOnly: true,
         verdict: gGroups.some((g) => g.bad) ? 'bad' : gGroups.some((g) => g.warn) ? 'warn' : 'good',
@@ -6763,8 +6763,8 @@ function* analyzeSteps(item, text, opts) {
       for (const g of sets) g.rows = g.rows.map((row) => {
         if (!/^Soulcoiler \d+$/.test(row[0].txt || '')) return row;
         const [what, when, kick, , died] = row; // (the shield is in the Gloombombs panel)
-        return [what, when, { txt: '', dim: true },
-          { txt: died.txt, bad: !!died.bad, warn: !!died.warn || !!kick.warn, dim: !died.bad && died.dim, sub: (kick.txt === 'no kick' ? 'no kick' : 'first kick ' + kick.txt) + (kick.sub ? ', ' + kick.sub : '') }, { txt: '' }];
+        void kick; return [what, when, { txt: '', dim: true },
+          { txt: died.txt, bad: !!died.bad, warn: !!died.warn, dim: !died.bad && died.dim }, { txt: '' }];
       });
       const left = [];
       for (const kg of groups) {
@@ -6773,8 +6773,7 @@ function* analyzeSteps(item, text, opts) {
         const set = /Soulcoiler/.test(kg.title) ? setOf(kg.t) : null;
         if (!set) { left.push(kg); continue; }
         const n = sets.indexOf(set), mine = groups.filter((x) => setOf(x.t) === set && /Soulcoiler/.test(x.title)), k = mine.indexOf(kg) + 1;
-        for (const row of kg.rows) set.rows.push([{ txt: 'Soulcoiler ' + k + ': ' + row[1].txt }, row[0], row[2], row[3], row[4]]); // e.g. "Soulcoiler 1: Wail of Terror"
-        if (kg.bad) set.bad = true;
+        kg.title = 'Set ' + (n + 1) + ' · Soulcoiler ' + k; left.push(kg); void set; // (the kicks stay in their own mechanic, per set and add)
         set.kicks = (set.kicks || 0) + kg.rows.filter((x) => x[3].txt === 'kicked').length; set.got = (set.got || 0) + kg.rows.filter((x) => x[3].txt === 'got off').length;
         void n;
       }
@@ -6782,13 +6781,14 @@ function* analyzeSteps(item, text, opts) {
         const isAdd = (row) => /^Soulcoiler \d+$/.test(row[0].txt || '');
         const addN = (row) => +((String(row[0].txt || '').match(/^Soulcoiler (\d+)/) || [])[1] || 99);
         g.rows.sort((a, b) => (addN(a) - addN(b)) || ((isAdd(a) ? 0 : 1) - (isAdd(b) ? 0 : 1)) || ((a[1].t ?? 0) - (b[1].t ?? 0)));
-        if (g.kicks != null) g.sub = g.sub.replace(/^\d+ kicks?, /, '') + ' · ' + pl2e(g.kicks, 'kick') + (g.got ? ', ' + pl2e(g.got, 'Wail') + ' got off' : ', every Wail kicked');
+        g.sub = String(g.sub || '').replace(/^[^,]*kicks?, /, '');
       }
       addSec.cols = ['What', 'When', 'Who', 'Result', ''];
       const kSec = r.module.sections.find((s) => s.id === 'kicks');
-      if (!left.length) { r.module.sections.splice(r.module.sections.indexOf(kSec), 1); r.module.kicksMerged = true; }
-      else kSec.groups = left;
-      if (groups.some((x) => x.bad && !left.includes(x) && /Soulcoiler/.test(x.title))) addSec.verdict = missed > 2 ? 'bad' : addSec.verdict === 'good' ? 'warn' : addSec.verdict;
+      if (!left.length) r.module.sections.splice(r.module.sections.indexOf(kSec), 1);
+      else { kSec.groups = left; const off = left.reduce((v, g) => v + g.rows.filter((x) => x[3] && x[3].txt === 'got off').length, 0); kSec.verdict = left.some((g) => g.bad) || off > 2 ? 'bad' : off || left.some((g) => g.warn) ? 'warn' : 'good';
+        if (left.every((g) => /Soulcoiler/.test(g.title))) { kSec.title = 'Wail of Terror (Kicks)'; kSec.spell = addSec.spell; } }
+      addSec.verdict = sets.some((g) => g.bad) ? 'bad' : sets.some((g) => g.warn) ? 'warn' : 'good';
     }
   }
   // (rule-pack mistakes about where someone stood used to get a map of just the player, ringed: no puddle, cone or circle,
