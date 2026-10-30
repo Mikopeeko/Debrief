@@ -11275,6 +11275,8 @@ html body #view .mx-p.mx-p .mx-tb.mx-tb.mx-one.mx-hasmap { grid-template-columns
 html body #view .mxa-p .mx-mapc { display: flex; align-items: center; justify-content: flex-end; padding: 4px 0; }
 html body #view .mxa-p .mx-mapth { display: block; width: 76px; height: 56px; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); background: #0b0d10; cursor: zoom-in; }
 @media (max-width: 600px) { html body #view .mx-p.mx-p .mx-tb.mx-tb.mx-one.mx-hasmap { grid-template-columns: 40px minmax(0, 1fr) 60px; } html body #view .mx-p.mx-p .mx-tb.mx-one.mx-hasmap .mx-who { display: none; } html body #view .mx-p.mx-p .mx-tb.mx-one.mx-hasmap .mx-th > span:nth-child(2) { display: none; } html body #view .mxa-p .mx-mapth { width: 56px; height: 44px; } }
+html body #view .mxa-p .mxa-all-b, html body #view .mxa-f [data-mxaall] { display: none !important; } /* round 289: no "Show everything" (the drop-down already has every moment, a map each and "N more"); "How it works" stays */
+html body #view .mxa-p.mx-p { display: flex; flex-direction: column; } html body #view .mxa-p.mx-p > .mxa-h { order: -2; } html body #view .mxa-p.mx-p > .mxa-f { order: -1; margin: 0 0 8px; padding-top: 0; border-top: 0; } /* round 289: "How it works" at the top, under the header */
 
 </style>
 
