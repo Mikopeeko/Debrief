@@ -11137,6 +11137,11 @@ html body #view .gb-chart249 .r256-k small { margin-left: 5px; color: #7d8792; f
 html body #view .gb-chart249 .r256-l { transition: opacity .12s; }
 html body #view .gb-chart249.r256-hl .r256-l:not(.r256-on) { opacity: .18; }
 html body #view .gb-chart249.r256-hl .r256-k:not(.r256-on) { opacity: .45; }
+/* round 261 (the user: "finding a way to color code some of this information would be helpful"): the per-second column in each page's own
+   colour, like Warcraft Logs' HPS column: damage gold, healing green, damage taken red (reading aid only, no verdicts) */
+html body #view .gb-card[data-k="dmg"] .gb-rows > .pf-row > .cb-s, html body #view .gb-card[data-k="ab-dmg"] .gb-rows .pf-row > .cb-s, html body #view .gb-card[data-k="tgt-dmg"] .gb-rows > .pf-row > .cb-s { color: #e8c46a !important; font-weight: 600; }
+html body #view .gb-card[data-k="heal"] .gb-rows > .pf-row > .cb-s, html body #view .gb-card[data-k="ab-heal"] .gb-rows .pf-row > .cb-s { color: #7fd38f !important; font-weight: 600; }
+html body #view .gb-card[data-k="taken"] .gb-rows > .pf-row > .cb-s, html body #view .gb-card[data-k="ab-taken"] .gb-rows .pf-row > .cb-s { color: #ef8a80 !important; font-weight: 600; }
 
 </style>
 
