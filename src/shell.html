@@ -11404,6 +11404,17 @@ html body main#main > .r300-tb .sl-sw .sl-o { display: inline-flex !important; a
 html body main#main > .r300-tb .sl-sw .sl-k { line-height: 1 !important; }
 html body main#main > .r300-tb .op-pick:hover, html body main#main > .r300-tb .r300-pull:hover, html body main#main > .r300-tb .bhp-all:hover, html body main#main > .r300-tb .bhp-cut:hover { border-color: rgba(255,255,255,.2) !important; }
 html body main#main > .r300-tb .bhp-all[aria-pressed="true"] { color: #f2dcab !important; border-color: rgba(230,180,80,.45) !important; background: rgba(230,180,80,.08) !important; }
+/* round 306 (the user: "Maybe the boss can be a bigger part of the banner?"): a taller banner with the boss filling two thirds of it */
+html body #bossHead header.fight.bh.bh.bh.hero { min-height: 210px !important; }
+html body #bossHead header.fight.bh.bh.bh .bh-t { min-height: 210px; align-content: center; }
+html body #bossHead header.fight.bh.bh.bh .bh-hero img { left: auto !important; right: 0 !important; top: 0 !important; bottom: 0 !important; transform: none !important; width: 68% !important; height: 100% !important; object-fit: cover !important; object-position: 60% 12% !important; -webkit-mask-image: linear-gradient(90deg, transparent 0, rgba(0,0,0,.6) 16%, #000 34%) !important; mask-image: linear-gradient(90deg, transparent 0, rgba(0,0,0,.6) 16%, #000 34%) !important; filter: saturate(1.08) brightness(.98) !important; }
+html body #bossHead header.fight.bh.bh.bh.hero::after { background: linear-gradient(90deg, rgba(13,16,19,.9), rgba(13,16,19,.45) 30%, transparent 52%), linear-gradient(0deg, rgba(13,16,19,.35), transparent 30%) !important; }
+@media (max-width: 699px) {
+  html body #bossHead header.fight.bh.bh.bh.hero, html body #bossHead header.fight.bh.bh.bh .bh-t { min-height: 170px !important; }
+  html body #bossHead header.fight.bh.bh.bh .bh-hero img { width: 100% !important; -webkit-mask-image: linear-gradient(90deg, transparent 0, rgba(0,0,0,.5) 30%, #000 65%) !important; mask-image: linear-gradient(90deg, transparent 0, rgba(0,0,0,.5) 30%, #000 65%) !important; }
+  html body #bossHead header.fight.bh.bh.bh.hero::after { background: linear-gradient(90deg, rgba(13,16,19,.88), rgba(13,16,19,.45) 50%, rgba(13,16,19,.15) 85%) !important; }
+  html body #bossHead header.fight.bh.bh.bh .bh-hero { opacity: 1 !important; }
+}
 
 </style>
 
