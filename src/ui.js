@@ -18610,7 +18610,8 @@ function resTypeView(list, one, ty, sw) {
     top = resNightChart(list, valOf, { ty, full: mana, ttl: mana ? 'Healer mana left at the end, per pull' : esc(nm) + ' wasted, per pull', sub: mana ? 'on average' : 'of all the raid built', tip: (v) => resPc(v) + (mana ? ' mana left on average' : ' of the ' + nm + ' built went to waste') });
   }
   // ---- a bar per player: all they built, the wasted part in red (mana: what they had left at the end) ----
-  const bars = rows.map((x, i) => { const on = sel === x; let segs, v, sub, chips = '';
+  const gain329 = (x) => (x.per || []).reduce((s, o) => s + ((o.q && o.q.built) || 0), 0); /* round 329 mana order */
+  const bars = (mana ? rows.slice().sort((a, b) => gain329(b) - gain329(a)) : rows).map((x, i) => { const on = sel === x; let segs, v, sub, chips = '';
     if (mana) { const e = x.end || 0; segs = [[Math.max(1, 100 * e), 'm']]; v = x.end == null ? '—' : resPc(e); sub = resAmt(ty, x.sA); }
     else { segs = [[100 * (1 - x.share), 'm'], [100 * x.share, 'ad']]; v = resPc(x.share); sub = secsS(x.capped); }
     return cbRow({ tag: 'button', cls: (on ? ' on' : '') + ' rs-r', attrs: ' type="button" data-rn="' + esc(x.p.name) + '" aria-pressed="' + on + '"', k: i + 1, p: x.p, segs, v, sub, chips }) + (on ? '<!--pf-inl-->' : ''); }).join('');
