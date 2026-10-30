@@ -11107,6 +11107,11 @@ html body #view .gb-br > .gb-bx.r245 > span:first-child { width: 44px; }
 html body #view .gb-br.gb-brh { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: #7d8792; }
 html body #view .gb-br.gb-brh .gb-tr { background: none !important; }
 @media (max-width: 760px) { html body #view .gb-br > .gb-bx.r245 > span:nth-child(n+2):not(:nth-child(4)):not(:nth-child(6)) { display: none; } }
+/* round 247: Healing from your kit's columns (healed, self-heals, Healthstones, potions) */
+html body #view .gb.gb-tb .gb-card .pf-row.cb.r247.r247.r247 { grid-template-columns: 22px minmax(150px, 1fr) 80px 80px 90px 80px !important; }
+html body #view .gb-card .pf-row.r247 > .r247-x { font-variant-numeric: tabular-nums; text-align: right; justify-self: end; font-size: 12.5px; color: var(--muted, #aab0b8); }
+html body #view .gb-card .pf-row.r247.cb-h > .r247-x { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: #7d8792; }
+@media (max-width: 760px) { html body #view .gb.gb-tb .gb-card .pf-row.cb.r247.r247.r247 { grid-template-columns: 22px minmax(0, 1fr) 64px !important; } html body #view .gb-card .pf-row.r247 > .cb-s, html body #view .gb-card .pf-row.r247 > .cb-r, html body #view .gb-card .pf-row.r247 > .r247-x { display: none !important; } }
 
 </style>
 
