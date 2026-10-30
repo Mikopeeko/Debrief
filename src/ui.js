@@ -32233,7 +32233,13 @@ function dsReport() { const v = document.getElementById('view'); if (!v) return;
   if (dl) { const tx = (dl.textContent || '').replace(/^\s*Deaths/, '').trim(), all = (tx.match(/Died (\d+) time/) || [])[1], cn = (tx.match(/(\d+) counted/) || [])[1] || (/None counted/.test(tx) ? '0' : /(It|Both|All \d+) counted/.test(tx) ? all : null), pen = (tx.match(/−(\d+)/) || [])[1];
     if (all != null && cn != null) { dl.innerHTML = '<h5>Deaths</h5><div class="r321-big">' + cn + ' <small>counted</small></div><p class="sub">of ' + all + (all === '1' ? ' death' : ' deaths') + (pen ? ' · −' + pen + ' on the grade' : '') + '</p>'; dl.title = tx; } else dl.insertAdjacentHTML('afterbegin', '<h5>Deaths</h5>'); dl.classList.add('r321-dl'); }
   const tiles = document.createElement('div'); tiles.className = 'r321-tiles'; [g, w, dl].forEach((x) => { if (x) tiles.appendChild(x); });
-  if (top.children.length) card.insertBefore(top, L); card.insertBefore(tiles, L); }
+  if (top.children.length) card.insertBefore(top, L); card.insertBefore(tiles, L);
+  /* round 323 toolkit into performance */ try { const secs = [...L.querySelectorAll('.rqc-sec')], nm = (s) => ((s.querySelector('h5 > span') || {}).textContent || '').trim().toLowerCase(), tk = secs.find((s) => nm(s) === 'your toolkit'), pf = secs.find((s) => nm(s) === 'performance');
+    if (tk && pf) { const fine = pf.querySelector(':scope > .ds-fine'); [...tk.children].filter((x) => x.tagName !== 'H5' && !x.classList.contains('ds-fine')).forEach((x) => (fine ? pf.insertBefore(x, fine) : pf.appendChild(x))); tk.remove();
+      const sp = [...pf.querySelectorAll('h5 > span')].find((x) => / of /.test(x.textContent)); if (sp) { const rs = [...pf.querySelectorAll('.rqc-row')], ok = rs.filter((r) => r.querySelector('.rqc-i.ok')).length, all = rs.filter((r) => !r.querySelector('.rqc-i.na')).length; sp.textContent = ok + ' of ' + all; } }
+    L.querySelectorAll('.rqc-row small').forEach((s) => { if (!s.title) s.title = s.textContent.trim(); });
+    L.querySelectorAll('.rqc-row > b').forEach((v) => { const t = v.firstChild && v.firstChild.nodeType === 3 ? v.firstChild : null; if (!t) return; const m = t.textContent.match(/^(#[0-9]+ of [0-9]+) [A-Za-z ]+ · (.+)$/); if (m) { v.title = t.textContent.trim(); t.textContent = m[1] + ' · ' + m[2]; } });
+  } catch (e) { /* (leave it as it is) */ } }
 (function () { const f4 = dsBars; dsBars = function (root) { f4(root); try { dsReportA(); } catch (e) {} }; })();
 
 // ===== Design studio round 9 (Oct 25): Compare, the answer first. Moves the biggest-fixes and Why-the-gap panels out of the fold to under the

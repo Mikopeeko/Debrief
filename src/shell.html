@@ -11641,6 +11641,19 @@ html body #view .rcb-tr .rcb-v[data-g="C"], html body #view .rcb-subs > .rcb-st 
 html body #view .rcb-tr .rcb-v[data-g="D"], html body #view .rcb-subs > .rcb-st > b[data-g="D"] { color: #c9cfd6 !important; }
 html body #view .rcb-tr .rcb-v[data-g="F"], html body #view .rcb-subs > .rcb-st > b[data-g="F"] { color: #e5534b !important; }
 html body #view .ds-rcard.r321 > .r321-top, html body #view .ds-rcard.r321 > .r321-tiles { display: none !important; } /* round 322: the summary (sentence, Next pull, Went well / Work on / Deaths) is off for now (the user: "remove this section for now, i need to think about what i want here"); delete this line to bring it back */
+/* round 323: the checklist in two columns on a wide screen */
+@media (min-width: 1100px) {
+  html body #view .ds-rcard.r321 .rqc-grid { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; column-gap: 28px !important; row-gap: 4px !important; align-items: start; }
+  html body #view .ds-rcard.r321 .rqc-row { grid-template-columns: 22px minmax(110px, auto) minmax(0, 1fr) 44px 74px !important; }
+  html body #view .ds-rcard.r321 .rqc-row .rqc-bar { display: none !important; }
+  html body #view .ds-rcard.r321 .rqc-row .rqc-pc { grid-column: 4 !important; } html body #view .ds-rcard.r321 .rqc-row > b { grid-column: 5 !important; }
+}
+@media (min-width: 1100px) {
+  html body #view .ds-rcard.r321 .rqc-row { grid-template-columns: 22px minmax(0, 168px) minmax(0, 1fr) 44px auto !important; }
+  html body #view .ds-rcard.r321 .rqc-row .rqc-nm { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  html body #view .ds-rcard.r321 .rqc-row > b { max-width: 190px; overflow: hidden; text-overflow: ellipsis; }
+}
+html body #view .rcb-2 .rqc-hd .rqc-btns [data-rctp] { display: none !important; } /* round 323: no Every pull / Open their whole night buttons, the Report card is the whole night already (the user: "these can be removed") */
 
 </style>
 
