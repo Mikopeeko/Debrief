@@ -2227,7 +2227,7 @@ function buildNymrissa(ev, r, h) {
       const rows = s.scales.map((u, k) => {
         const end = u.died ?? dur, life = end - u.t, still = s.runners.filter((x) => x.died == null || x.died > end).length, late = u.died != null && life > 25; /* (the 10 fastest Mythic kills: most die within 20 s, almost all within 25) */
         if (late) M(u.died, 'Raid', 'Waterfog Shield', NY.shield, 'Low', 'A Bubblefin Frostscale in set ' + (s.i + 1) + ' lived ' + Math.round(life) + ' s, shielding the murlocs near it.', 'Kill the Frostscales first, then cleave the Shorerunners.');
-        const scWhy = late ? { why: 'It lived ' + Math.round(life) + ' s (top raids kill it within 20 to 25 s), and its Waterfog Shield kept the murlocs near it at 99% less damage' + (still ? '; ' + pl(still, 'Shorerunner') + (still === 1 ? ' was' : ' were') + ' still up when it died.' : '.'), next: 'Swap to both Frostscales the moment set ' + (s.i + 1) + ' lands, then cleave the Shorerunners.' }
+        const scWhy = late ? { why: 'It lived ' + Math.round(life) + ' s (top raids kill it in 20 to 25 s). While it lived, its Waterfog Shield cut the damage the murlocs near it took by 99%.' + (still ? ' ' + pl(still, 'Shorerunner') + (still === 1 ? ' was' : ' were') + ' still up when it died.' : ''), next: 'Swap to both Frostscales the moment set ' + (s.i + 1) + ' lands, then cleave the Shorerunners.' }
           : u.died == null && s.reached.length ? { why: 'It was still alive when the murlocs reached the bubble, so its shield kept them from dying.', next: 'Kill the Frostscales first: with them down, the Shorerunners die to cleave before the bubble.' } : {};
         return [{ txt: 'Frostscale ' + (k + 1), ...scWhy }, { t: end }, u.died != null ? { txt: 'dead ' + Math.round(life) + ' s after it came', warn: late } : s.reached.length ? { txt: 'alive as murlocs reached the bubble', bad: true } : { txt: 'still alive when the pull ended', dim: true },
           { txt: still ? still + ' of ' + s.runners.length + ' Shorerunners still up' : 'every Shorerunner already dead', dim: true }];
@@ -6787,7 +6787,7 @@ function* analyzeSteps(item, text, opts) {
       const kSec = r.module.sections.find((s) => s.id === 'kicks');
       if (!left.length) r.module.sections.splice(r.module.sections.indexOf(kSec), 1);
       else { kSec.groups = left; const off = left.reduce((v, g) => v + g.rows.filter((x) => x[3] && x[3].txt === 'got off').length, 0); kSec.verdict = left.some((g) => g.bad) || off > 2 ? 'bad' : off || left.some((g) => g.warn) ? 'warn' : 'good';
-        if (left.every((g) => /Soulcoiler/.test(g.title))) { kSec.title = 'Wail of Terror (Kicks)'; kSec.spell = addSec.spell; } }
+        if (left.every((g) => /Soulcoiler/.test(g.title))) { kSec.title = 'Wail of Terror (Kicks)'; kSec.spell = [1286399, 'Wail of Terror']; /* round 281: its own icon */ } }
       addSec.verdict = sets.some((g) => g.bad) ? 'bad' : sets.some((g) => g.warn) ? 'warn' : 'good';
     }
   }
