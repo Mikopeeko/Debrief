@@ -2638,8 +2638,13 @@ function buildNekzali(ev, r, h) {
       rows.sort((a, b) => a[1].t - b[1].t);
       return { title: 'Grasping Depths ' + (i + 1) + ' (' + phOf(w.t0) + ')', t: w.t0, bad: rows.some((x) => x[2].bad), warn: rows.some((x) => x[2].warn || x[3].warn) || !!head[3].warn, sub: (team.length ? pl(team.length, 'player') + ' in the well' : 'nobody in the well') + (w.t1 != null ? ', Echo dead in ' + Math.round(w.t1 - w.t0) + ' s' : ''), rows: [head].concat(rows) };
     });
-    if (dpGroups.length) sections.push({ id: 'depths', title: 'Grasping Depths (Kill the Echo, kick the Curse)', place: 'Grasping Depths (add): the well team', spell: [NZ.curse, "Soulcoiler's Curse"], verdict: dpGroups.some((g) => g.bad) ? 'bad' : dpGroups.some((g) => g.warn) ? 'warn' : 'good',
-      summary: dpGroups.length + (dpGroups.length === 1 ? ' Drowned Echo' : ' Drowned Echoes') + '. It shows who went into the well, every Soulcoiler\'s Curse and its kick, and any Swirling Spirit hits or Soul Exhaustion in the team.', cols: ['What', 'When', 'Result', 'Who', ''], groups: dpGroups, rows: [] });
+    /* round 284 split */ const isCurse284 = (row) => /^Soulcoiler's Curse \d+$/.test((row[0] && row[0].txt) || '');
+    const ckGroups = dpGroups.map((g) => { const cr = g.rows.filter(isCurse284); if (!cr.length) return null; const nK = cr.filter((x) => x[2] && x[2].txt === 'kicked').length; return { title: g.title, t: g.t, bad: cr.some((x) => x[2] && x[2].bad), warn: false, sub: nK + ' of ' + cr.length + ' kicked', rows: cr }; }).filter(Boolean);
+    for (const g of dpGroups) { g.rows = g.rows.filter((x) => !isCurse284(x)); g.bad = g.rows.some((x) => x[2] && x[2].bad); g.warn = g.rows.some((x) => (x[2] && x[2].warn) || (x[3] && x[3].warn)); }
+    if (ckGroups.length) sections.push({ id: 'depthkick', title: "Soulcoiler's Curse (Kicks)", place: "Soulcoiler's Curse: kicked in the well", spell: [NZ.curse, "Soulcoiler's Curse"], verdict: ckGroups.some((g) => g.bad) ? 'bad' : 'good',
+      summary: 'Every Soulcoiler\'s Curse cast in the well, and who kicked it. A Curse that gets off throws the well team out.', cols: ['What', 'When', 'Result', 'Who', ''], groups: ckGroups, rows: [] });
+    if (dpGroups.length) sections.push({ id: 'depths', title: 'Grasping Depths (Kill the Echo)', place: 'Grasping Depths (add): the well team', spell: [NZ.depths, 'Grasping Depths'], verdict: dpGroups.some((g) => g.bad) ? 'bad' : dpGroups.some((g) => g.warn) ? 'warn' : 'good',
+      summary: dpGroups.length + (dpGroups.length === 1 ? ' Drowned Echo' : ' Drowned Echoes') + '. It shows who went into the well, when the Echo died, and any Swirling Spirit hits or Soul Exhaustion in the team. The kicks are in Soulcoiler\'s Curse (Kicks).', cols: ['What', 'When', 'Result', 'Who', ''], groups: dpGroups, rows: [] });
   }
 
   // ---- 4. Essence Rend: a dispellable damage over time; a Latent Cultist puddle spawns where it ends ----
@@ -4196,10 +4201,14 @@ function buildCoiledAltar(ev, r, h) {
       _shields.push({ n: i + 1, t, ph: phaseAt(t), brokeAt, spare, done: done != null, kicked: !!kick, dmg: dmgIn, secs: Math.max(0.1, to - t) }); }
     return [{ txt: 'Shield ' + (i + 1) }, { t }, { txt: phaseAt(t) }, breakCell, kickCell, res];
   });
-  if (enRows.length) sections.push({ id: 'shield', title: 'Eternal Nightfall (Break and kick)', place: 'Eternal Nightfall (boss shield): break it, then kick', spell: S('eternal nightfall'),
-    verdict: enRows.some((x) => x[5].bad) ? 'bad' : enRows.some((x) => x[3].warn) ? 'warn' : 'good',
-    summary: pl(enRows.length, 'shield') + ', and ' + enRows.filter((x) => x[5].txt === 'stopped').length + ' were broken and kicked in time.',
-    cols: ['Shield', 'Cast started', 'Phase', 'Broken', 'Kicked by', 'Result'], rows: enRows });
+  /* round 284 split: the kicks, only for shields that broke */ const enK = enRows.filter((x) => /^after /.test(x[3].txt || '')).map((x) => [x[0], x[1], x[4], x[5].txt === 'stopped' ? { txt: 'kicked' } : x[5]]);
+  if (enK.length) sections.push({ id: 'enkick', title: 'Eternal Nightfall (Kicks)', place: 'Eternal Nightfall: kicked after the break', spell: S('eternal nightfall'), verdict: enK.some((x) => x[3].bad) ? 'bad' : 'good',
+    summary: pl(enK.length, 'broken shield') + ', and ' + enK.filter((x) => x[3].txt === 'kicked').length + ' kicked before the cast finished.', cols: ['Shield', 'When', 'Kicked by', 'Result'], rows: enK });
+  const enB = enRows.map((x) => [x[0], x[1], { txt: x[2].txt }, x[3]]);
+  if (enRows.length) sections.push({ id: 'shield', title: 'Eternal Nightfall (Break the shield)', place: 'Eternal Nightfall (boss shield): broken in time', spell: S('eternal nightfall'),
+    verdict: enB.some((x) => x[3].bad) ? 'bad' : enB.some((x) => x[3].warn) ? 'warn' : 'good',
+    summary: pl(enRows.length, 'shield') + ', and ' + enB.filter((x) => /^after /.test(x[3].txt || '')).length + ' broken in time. The kicks are in Eternal Nightfall (Kicks).',
+    cols: ['Shield', 'Cast started', 'Phase', 'Broken', 'Kicked by', 'Result'], rows: enB });
 
   // ---- Guillotine protection ----
   const qRows = [];
@@ -5157,10 +5166,10 @@ function buildUlatek(ev, r, h) {
     const life = x.died != null ? x.died - x.t0 : dur - x.t0;
     shRows.push([{ t: x.t0 }, { txt: 'Blightscale Shrieker' }, { txt: x.died != null ? 'killed in ' + Math.round(life) + 's' : 'still up', warn: life > 40 && !(x.died == null && r.item.kill), dim: x.died == null && r.item.kill }, { txt: (b ? 'Boiling Venom' : '') + (b && nE ? ', ' : '') + (nE ? pl(nE, 'Acidic Expulsion') : '') || '—', warn: nE > 1, dim: nE < 2 }]); }
   const rawEx = exp.filter((e) => /Rawling/.test(h.unitName(e.src) || ''));
-  for (const e of rawEx) shRows.push([{ t: e.t }, { txt: 'Blightscale Rawling' }, { txt: 'lived long enough to expel' }, { txt: 'Acidic Expulsion', warn: true }]);
+  for (const e of rawEx) shRows.push([{ t: e.t }, { txt: 'Blightscale Rawling' }, { txt: 'lived long enough to cast Acidic Expulsion' }, { txt: 'Acidic Expulsion', warn: true }]);
   shRows.sort((a, b) => a[0].t - b[0].t);
   if (shRows.length) sections.push({ id: 'shriek', title: 'Shriekers and Rawlings (Adds)', place: 'Shriekers and Rawlings (Kill in time)', spell: S('acidic expulsion'), verdict: shRows.some((x) => x.some((c) => c.bad)) ? 'bad' : shRows.some((x) => x.some((c) => c.warn)) ? 'warn' : 'good',
-    summary: 'It shows each Shrieker\'s time alive and what it got off (the first Acidic Expulsion comes right after it spawns), and any Rawling that cast Acidic Expulsion (a raid-wide damage over time).', cols: ['When', 'Add', 'Killed', 'Got off'], rows: shRows });
+    summary: 'It shows each Shrieker\'s time alive and what it got off (the first Acidic Expulsion comes right after it spawns), and any Rawling that cast Acidic Expulsion (a raid-wide damage over time).', cols: ['When', 'Add', 'Killed', 'Cast'], rows: shRows });
 
   // ---- 10. avoidable damage ----
   // (each Mephitic Thrash's hit window, and whether half the raid or more was hit by it)

@@ -11256,6 +11256,12 @@ html body #view .prw-tr, html body #view .prw-n .prw-tr { display: inline-flex !
 html body #view .prw-n { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 html body #view .prw-i .prw-n .prw-tr.prw-tr.prw-tr, html body #view .prw-tr.prw-tr.prw-tr { padding-top: 0 !important; padding-bottom: 2px !important; } /* round 278: caps sit in the middle of the outline */
 html body #view .prw-n .prw-nt.prw-nk { display: inline-block; margin-left: 7px; font: 600 11px/1 'Barlow Condensed', sans-serif !important; letter-spacing: .05em; text-transform: uppercase; color: var(--faint, #7d8792) !important; vertical-align: middle; } /* round 280: the Timeline's one-word nickname on Overview rows */
+/* round 284: the nickname sits right after the mechanic name in brackets, in plain text, on Overview and Timeline ("Eternal Nightfall (Break)"); the open drop-down no longer repeats the bracket words */
+html body #view .prw-n .prw-nt.prw-nk { margin-left: 5px; font: inherit !important; font-weight: 500 !important; letter-spacing: 0; text-transform: none; color: var(--muted, #aab0b8) !important; }
+html body #view .prw-n .prw-nt.prw-nk::before { content: '('; } html body #view .prw-n .prw-nt.prw-nk::after { content: ')'; }
+html body #view > .dbt.dbt .dbt-nk.dbt-nk { text-transform: none !important; letter-spacing: 0 !important; font: inherit !important; font-weight: 500 !important; color: var(--muted, #aab0b8) !important; padding: 0 0 0 5px !important; background: none !important; }
+html body #view > .dbt.dbt .dbt-nk.dbt-nk::before { content: '('; } html body #view > .dbt.dbt .dbt-nk.dbt-nk::after { content: ')'; }
+html body #view .mxa-p .mxa-h > b { display: none !important; }
 
 </style>
 
