@@ -11040,6 +11040,18 @@ html body.refine .my-who > .my-you.yu2::before { display: none !important; }
 html body.refine .my-who > .my-you.yu2 { justify-content: flex-start !important; padding: 18px 20px !important; }
 html body.refine .my-who > .my-you.yu2 > .yu-x { flex-direction: row !important; width: 100%; max-width: 440px; gap: 10px !important; }
 html body.refine .my-who > .my-you.yu2 > .yu-x > * { flex: 1 1 0; min-width: 0; }
+/* round 237b (the user's screenshot: Difficulty floated in the middle, the character card spread out): the team half lines up on the left;
+   the character card is three compact rows: crest, name and averages / Mythic and Heroic / the buttons */
+html body.refine #main .my-who.my-who > .my-team.tm2.tm2 { align-items: flex-start !important; }
+html body.refine #main .my-who.my-who > .my-you.yu2.yu2 { display: grid !important; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "ban name avg" "x x x" "act act act"; align-items: center !important; align-content: start; column-gap: 14px; row-gap: 14px; text-align: left !important; }
+html body.refine #main .my-who > .my-you.yu2 > .pg-you > .ht-ban { grid-area: ban; margin: 0 !important; }
+html body.refine #main .my-who > .my-you.yu2 > .pg-you > :nth-child(2) { grid-area: name; text-align: left !important; align-items: flex-start !important; }
+html body.refine #main .my-who > .my-you.yu2 > .pg-you > .pg-ych { grid-area: avg; display: flex !important; gap: 22px !important; justify-content: flex-end; width: auto !important; margin: 0 !important; }
+html body.refine #main .my-who > .my-you.yu2 > .yu-x { grid-area: x; margin: 0 !important; max-width: none !important; }
+html body.refine #main .my-who > .my-you.yu2 > .yu-act { grid-area: act; margin: 0 !important; }
+html body.refine #main .my-who > .my-team.tm2 > .pg-ttl { flex-wrap: nowrap !important; }
+html body.refine #main .my-who > .my-team.tm2 > .pg-ttl > .pg-tt { flex: 1 1 auto; min-width: 0; }
+html body.refine #main .my-who > .my-team.tm2 #pgRkT { white-space: nowrap !important; }
 
 </style>
 
