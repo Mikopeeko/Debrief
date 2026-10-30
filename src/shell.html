@@ -11215,6 +11215,31 @@ html body #view .gb-tb .gb-tmain > .gb-chart249 + .gb-card, html body #view .gb-
 /* round 271: pages with no side list use the whole width (Dispels, Casts, Mana, Buffs, Debuffs); the chart switches show dots only */
 html body #view .gb.gb-tb.ds-gb .gb-tl.solo { grid-template-columns: minmax(0, 1fr) !important; }
 html body #view .gb-chart249 .r269-c img, html body #view .gb-chart249 .r269-c .oi, html body #view .gb-chart249 .r269-c svg, html body #view .gb-chart249 .r269-c .av { display: none !important; }
+/* round 272: who did the damage to the adds and who kicked, under each Debriefing mechanic (quiet rows) */
+html body #view .r272 { margin: 14px 0 4px; }
+html body #view .r272-h { margin: 16px 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #7d8792; }
+html body #view .r272-h:first-child { margin-top: 4px; }
+html body #view .r272-st { margin: 10px 0 4px; font-size: 12.5px; color: #aab0b8; } html body #view .r272-st b { color: #e8eaed; }
+html body #view .r272-bad { color: #e5534b; }
+html body #view .r272-set + .r272-set { margin-top: 8px; }
+html body #view .r272-row { display: grid; grid-template-columns: minmax(90px, 150px) minmax(40px, 1fr) 64px 44px 74px; column-gap: 10px; align-items: center; min-height: 26px; border-top: 1px solid rgba(255,255,255,.05); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+html body #view .r272-row.r272-k { grid-template-columns: minmax(90px, 150px) minmax(40px, 1fr) 44px minmax(80px, 1.4fr); }
+html body #view .r272-row > b, html body #view .r272-row > span:not(.r272-n):not(.r272-bar) { text-align: right; color: #aab0b8; } html body #view .r272-row > b { color: #e8eaed; font-weight: 600; }
+html body #view .r272-row.r272-k > .r272-t { text-align: left; color: #8b949e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body #view .r272-row.r272-hd { min-height: 22px; border-top: 0; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: #7d8792; } html body #view .r272-row.r272-hd > span { color: #7d8792 !important; } html body #view .r272-row.r272-k.r272-hd > span:last-child { text-align: left; }
+html body #view .r272-n { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body #view .r272-bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,.05); overflow: hidden; } html body #view .r272-bar i { display: block; height: 100%; border-radius: 3px; opacity: .75; }
+html body #view .r272-low .r272-n, html body #view .r272-low > span:last-child { color: #e5534b !important; }
+html body #view .r272-off { margin: 8px 0 0; font-size: 12px; color: #aab0b8; } html body #view .r272-off b { color: #e5534b; font-weight: 600; }
+@media (max-width: 600px) { html body #view .r272-row { grid-template-columns: minmax(70px, 1fr) 56px 38px 64px; } html body #view .r272-row > .r272-bar { display: none; } html body #view .r272-row.r272-k { grid-template-columns: minmax(70px, 1fr) 36px minmax(70px, 1.2fr); } }
+/* round 272: one look for every "more" and "How it works" fold inside a Debriefing drop-down */
+html body #view .secbody details.u1-ok > summary, html body #view .secbody details.howit > summary, html body #view details.shd-more > summary, html body #view details.r272-more > summary { list-style: none; display: inline-flex; align-items: center; gap: 6px; margin: 6px 0 2px; padding: 3px 0; border: 0 !important; background: none !important; box-shadow: none !important; border-radius: 0; font: inherit; font-size: 12px !important; font-weight: 500; color: #8b949e !important; cursor: pointer; }
+html body #view .secbody details.u1-ok > summary::-webkit-details-marker, html body #view .secbody details.howit > summary::-webkit-details-marker, html body #view details.shd-more > summary::-webkit-details-marker, html body #view details.r272-more > summary::-webkit-details-marker { display: none; }
+html body #view .secbody details.u1-ok > summary::before, html body #view .secbody details.howit > summary::before, html body #view details.shd-more > summary::before, html body #view details.r272-more > summary::before { content: '›'; display: inline-block; width: 10px; font-size: 14px; line-height: 1; transition: transform .15s; }
+html body #view .secbody details.u1-ok[open] > summary::before, html body #view .secbody details.howit[open] > summary::before, html body #view details.shd-more[open] > summary::before, html body #view details.r272-more[open] > summary::before { transform: rotate(90deg); }
+html body #view .secbody details.u1-ok > summary:hover, html body #view .secbody details.howit > summary:hover, html body #view details.shd-more > summary:hover, html body #view details.r272-more > summary:hover { color: #e8eaed !important; }
+html body #view .secbody details.u1-ok, html body #view .secbody details.howit, html body #view details.shd-more, html body #view details.r272-more { border: 0 !important; background: none !important; box-shadow: none !important; padding: 0 !important; }
+html body #view .r272 .r272-row.r272-hd > .r272-hb { background: none; }
 
 </style>
 

@@ -11215,6 +11215,31 @@ html body #view .gb-tb .gb-tmain > .gb-chart249 + .gb-card, html body #view .gb-
 /* round 271: pages with no side list use the whole width (Dispels, Casts, Mana, Buffs, Debuffs); the chart switches show dots only */
 html body #view .gb.gb-tb.ds-gb .gb-tl.solo { grid-template-columns: minmax(0, 1fr) !important; }
 html body #view .gb-chart249 .r269-c img, html body #view .gb-chart249 .r269-c .oi, html body #view .gb-chart249 .r269-c svg, html body #view .gb-chart249 .r269-c .av { display: none !important; }
+/* round 272: who did the damage to the adds and who kicked, under each Debriefing mechanic (quiet rows) */
+html body #view .r272 { margin: 14px 0 4px; }
+html body #view .r272-h { margin: 16px 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #7d8792; }
+html body #view .r272-h:first-child { margin-top: 4px; }
+html body #view .r272-st { margin: 10px 0 4px; font-size: 12.5px; color: #aab0b8; } html body #view .r272-st b { color: #e8eaed; }
+html body #view .r272-bad { color: #e5534b; }
+html body #view .r272-set + .r272-set { margin-top: 8px; }
+html body #view .r272-row { display: grid; grid-template-columns: minmax(90px, 150px) minmax(40px, 1fr) 64px 44px 74px; column-gap: 10px; align-items: center; min-height: 26px; border-top: 1px solid rgba(255,255,255,.05); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+html body #view .r272-row.r272-k { grid-template-columns: minmax(90px, 150px) minmax(40px, 1fr) 44px minmax(80px, 1.4fr); }
+html body #view .r272-row > b, html body #view .r272-row > span:not(.r272-n):not(.r272-bar) { text-align: right; color: #aab0b8; } html body #view .r272-row > b { color: #e8eaed; font-weight: 600; }
+html body #view .r272-row.r272-k > .r272-t { text-align: left; color: #8b949e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body #view .r272-row.r272-hd { min-height: 22px; border-top: 0; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: #7d8792; } html body #view .r272-row.r272-hd > span { color: #7d8792 !important; } html body #view .r272-row.r272-k.r272-hd > span:last-child { text-align: left; }
+html body #view .r272-n { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body #view .r272-bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,.05); overflow: hidden; } html body #view .r272-bar i { display: block; height: 100%; border-radius: 3px; opacity: .75; }
+html body #view .r272-low .r272-n, html body #view .r272-low > span:last-child { color: #e5534b !important; }
+html body #view .r272-off { margin: 8px 0 0; font-size: 12px; color: #aab0b8; } html body #view .r272-off b { color: #e5534b; font-weight: 600; }
+@media (max-width: 600px) { html body #view .r272-row { grid-template-columns: minmax(70px, 1fr) 56px 38px 64px; } html body #view .r272-row > .r272-bar { display: none; } html body #view .r272-row.r272-k { grid-template-columns: minmax(70px, 1fr) 36px minmax(70px, 1.2fr); } }
+/* round 272: one look for every "more" and "How it works" fold inside a Debriefing drop-down */
+html body #view .secbody details.u1-ok > summary, html body #view .secbody details.howit > summary, html body #view details.shd-more > summary, html body #view details.r272-more > summary { list-style: none; display: inline-flex; align-items: center; gap: 6px; margin: 6px 0 2px; padding: 3px 0; border: 0 !important; background: none !important; box-shadow: none !important; border-radius: 0; font: inherit; font-size: 12px !important; font-weight: 500; color: #8b949e !important; cursor: pointer; }
+html body #view .secbody details.u1-ok > summary::-webkit-details-marker, html body #view .secbody details.howit > summary::-webkit-details-marker, html body #view details.shd-more > summary::-webkit-details-marker, html body #view details.r272-more > summary::-webkit-details-marker { display: none; }
+html body #view .secbody details.u1-ok > summary::before, html body #view .secbody details.howit > summary::before, html body #view details.shd-more > summary::before, html body #view details.r272-more > summary::before { content: '›'; display: inline-block; width: 10px; font-size: 14px; line-height: 1; transition: transform .15s; }
+html body #view .secbody details.u1-ok[open] > summary::before, html body #view .secbody details.howit[open] > summary::before, html body #view details.shd-more[open] > summary::before, html body #view details.r272-more[open] > summary::before { transform: rotate(90deg); }
+html body #view .secbody details.u1-ok > summary:hover, html body #view .secbody details.howit > summary:hover, html body #view details.shd-more > summary:hover, html body #view details.r272-more > summary:hover { color: #e8eaed !important; }
+html body #view .secbody details.u1-ok, html body #view .secbody details.howit, html body #view details.shd-more, html body #view details.r272-more { border: 0 !important; background: none !important; box-shadow: none !important; padding: 0 !important; }
+html body #view .r272 .r272-row.r272-hd > .r272-hb { background: none; }
 
 </style>
 
@@ -29862,6 +29887,31 @@ document.addEventListener('click', (e) => { const t = e.target.closest && e.targ
   const copy = (txt, msg) => { (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => done(msg), () => { window.prompt('Copy this:', txt); }); };
   if (t.dataset.dbcopy) { const nx = (document.querySelector('.dbr-nx') || {}).textContent || ''; copy((S.dbCopy || '') + (nx ? '\n' + nx.replace(/^Next pull:\s*/, '**Next pull:** ') : ''), '✓ Copied, paste it in Discord'); }
   else if (t.dataset.dblink) { e.preventDefault(); e.stopPropagation(); copy(t.dataset.dblink, '✓ Link copied'); } });
+/* round 272 mechanic numbers */ function MSTAT272(r, s) { try { if (!r || !r.players || r.allPulls || !s) return '';
+  const ttl = String(s.title || '').toLowerCase(), base = ttl.replace(/\s*\(.*$/, '').trim(), bn = bossNamesOf(r), PN = new Map([...r.players.values()].filter((p) => p.name).map((p) => [p.name, p]));
+  const nm = (n) => String(n || '').split('-')[0], col = (n) => ((PN.get(n) || {}).color || '#c9d1d9'), who = (n) => '<span class="r272-n" style="color:' + col(n) + '">' + esc(nm(n)) + '</span>', end = Math.min(r.duration || 0, isFinite(cutT(r)) ? cutT(r) : r.duration || 0);
+  // (the adds this mechanic is about: an enemy (not the boss) named in its title that the raid hit for at least 1% of its damage)
+  const tot = new Map(); for (const o of r.dmgTS || []) if (o) for (const [k, v] of Object.entries(o)) tot.set(k, (tot.get(k) || 0) + (+v || 0)); const all = [...tot.values()].reduce((a, b) => a + b, 0) || 1;
+  const hitN = (n) => { const l = n.toLowerCase(); return base && (base.includes(l) || l.includes(base) || base.split(/\s+/).some((w) => w.length > 5 && l.includes(w.replace(/s$/, '')))); };
+  const AN = new Set([...tot.keys()].filter((n) => !bn.has(n) && hitN(n) && tot.get(n) >= 0.01 * all)); let h = '';
+  if (AN.size) { const first = new Map(); for (const p of r.players.values()) for (const [g, t] of p.firstHit || []) { const n = r.unitNames && r.unitNames.get(g); if (!AN.has(n) || t > end) continue; if (!first.has(g) || t < first.get(g)) first.set(g, t); }
+    const byN = new Map(); for (const [g, t] of first) { const n = r.unitNames.get(g); if (!byN.has(n)) byN.set(n, []); byN.get(n).push([g, t]); }
+    const sets = []; for (const [n, l] of byN) { l.sort((a, b) => a[1] - b[1]); let cur = null; for (const [g, t] of l) { if (!cur || t - cur.t0 > 8) sets.push(cur = { n, t0: t, gs: [] }); cur.gs.push(g); } } sets.sort((a, b) => a.t0 - b.t0);
+    const one = sets.length === 1, perN = new Map(); h += sets.slice(0, 8).map((st, si) => { const ds = st.gs.map((g) => (r.enemyDied || new Map()).get(g)), dead = ds.every((d) => d != null) ? Math.max(...ds) : null, until = Math.min(dead != null ? dead : end, end), k = (perN.get(st.n) || 0) + 1; perN.set(st.n, k);
+      const rows = [...r.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)).map((p) => { let d = 0; for (let i = Math.max(0, Math.floor(st.t0 - 1)); i <= Math.ceil(until) && i < (p.dmgTS || []).length; i++) { const o = p.dmgTS[i]; if (o && o[st.n]) d += +o[st.n] || 0; } const fh = st.gs.map((g) => (p.firstHit || new Map()).get(g)).filter((t) => t != null); return { p, d, sw: fh.length ? Math.max(0, Math.min(...fh) - st.t0) : null }; })
+        .filter((x) => x.d > 0 || (x.p.role || 'dps') === 'dps').sort((a, b) => b.d - a.d); const sum = rows.reduce((a, x) => a + x.d, 0) || 1, mx = rows.length ? rows[0].d || 1 : 1;
+      const none = rows.filter((x) => (x.p.role || 'dps') === 'dps' && x.d < 0.02 * sum).map((x) => nm(x.p.name)), live = dead != null ? Math.round(dead - st.t0) : null;
+      const row = (x) => '<div class="r272-row' + (x.d < 0.02 * sum ? ' r272-low' : '') + '">' + who(x.p.name) + '<span class="r272-bar"><i style="width:' + Math.max(1, 100 * x.d / mx).toFixed(1) + '%;background:' + col(x.p.name) + '"></i></span><b>' + (x.d ? C(x.d) : '—') + '</b><span>' + Math.round(100 * x.d / sum) + '%</span><span>' + (x.sw == null ? 'never hit' : '+' + x.sw.toFixed(1) + ' s') + '</span></div>';
+      return '<div class="r272-set"><p class="r272-st"><b>' + (one ? esc(st.n) : 'Set ' + k + (byN.size > 1 ? ' · ' + esc(st.n) : '')) + '</b> · ' + st.gs.length + (st.gs.length === 1 ? ' add' : ' adds') + ' · up at ' + T(st.t0) + (live != null ? ', dead after <b>' + live + ' s</b>' : ', still alive at ' + T(until)) + (none.length ? ' · <span class="r272-bad">barely hit them: ' + esc(none.slice(0, 4).join(', ')) + (none.length > 4 ? ' +' + (none.length - 4) : '') + '</span>' : '') + '</p>' +
+        '<div class="r272-row r272-hd"><span>Player</span><span class="r272-bar r272-hb"></span><span>Damage</span><span>Share</span><span>Switched</span></div>' + rows.slice(0, 6).map(row).join('') + (rows.length > 6 ? '<details class="r272-more"><summary>' + (rows.length - 6) + ' more</summary>' + rows.slice(6).map(row).join('') + '</details>' : '') + '</div>'; }).join('');
+    if (h) h = '<p class="r272-h">Damage to the adds</p>' + h; }
+  // (the casts to kick: from the adds above, or a kickable spell named in the title)
+  const B = (r.castBars || []).filter((b) => b.t0 <= end && b.t1 <= end + 0.5 && (AN.has(r.unitNames && r.unitNames.get(b.g)) || (b.spell && ttl.includes(String(b.spell).toLowerCase())))); if (B.length) { const kk = B.filter((b) => b.end === 'kick'), off = B.filter((b) => b.end === 'done'), by = new Map(); for (const b of kk) { if (!by.has(b.by)) by.set(b.by, []); by.get(b.by).push(b); }
+    const L = [...by].sort((a, b) => b[1].length - a[1].length), mx = L.length ? L[0][1].length : 1;
+    h += '<p class="r272-h">Kicks</p><p class="r272-st"><b>' + kk.length + ' of ' + B.length + '</b> casts kicked' + (off.length ? ' · <span class="r272-bad">' + off.length + ' went off</span>' : '') + (B.length - kk.length - off.length > 0 ? ' · ' + (B.length - kk.length - off.length) + ' stopped another way (the add died, or a stun)' : '') + '</p>' +
+      '<div class="r272-row r272-k r272-hd"><span>Player</span><span class="r272-bar r272-hb"></span><span>Kicks</span><span>When</span></div>' + L.map(([n, l]) => '<div class="r272-row r272-k">' + who(n) + '<span class="r272-bar"><i style="width:' + (100 * l.length / mx).toFixed(1) + '%;background:' + col(n) + '"></i></span><b>' + l.length + '</b><span class="r272-t">' + l.map((b) => T(b.t1)).join(', ') + '</span></div>').join('') +
+      (off.length ? '<p class="r272-off">Went off: ' + off.slice(0, 8).map((b) => '<b>' + T(b.t0) + '</b> ' + esc(b.spell)).join(' · ') + (off.length > 8 ? ' +' + (off.length - 8) + ' more' : '') + '</p>' : ''); }
+  return h ? '<div class="r272">' + h + '</div>' : ''; } catch (e) { return ''; } }
 function audit() {
   const r = S.rep, m0 = r.module || { title: (r.item.kind === 'run' ? r.item.boss : r.item.diff + ' ' + r.item.boss) + ': mechanics', sections: [], phases: [], marks: [], mistakes: [] };
   if (m0.error) { view('<div class="panel">The audit for this fight hit an error: ' + esc(m0.error) + '</div>'); return; }
@@ -30441,7 +30491,7 @@ function audit() {
       (simp || s.info || !allRows.length || s.id === 'avoid' || r.allPulls ? '' : kbChip(r.item, s.id, 100 * (nBad + nWarn) / allRows.length)) /* (where we stand among the fastest kills (Oct 22, a test)) */ +
       '<span class="sst ' + stc + '">' + (nBad || nWarn ? lvlText(lc, true) : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0Clean') + '</span>' + (ti ? (tile === 'line' ? '' : '</span>') + (simp ? '<span class="rw2-pc ' + stc + '">' + (simPc == null ? '—' : simPc + '%') + '</span>' + simSq : tiLn) : '') + dbnTag(jobs) + (simp ? '' : dbdDots(s.id, DD)) + '</summary><div class="secbody' + (simp ? ' sim-body' : '') + '">' + (simp && !U1 ? simLn.replace('mcx-ln sim-ln', 'sim-ln rw2-what') : '') + '' /* (no Copy link buttons on Debriefing (Oct 23 click-through)) */ + dbnBox(jobs) +
       (simp ? '' : (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '')) /* (no guide button on Debriefing, Oct 23) */ + (U1 ? u1Body() : synopsis(s, rows, groups) + simTiles); // (the old counts summary was dropped: the synopsis and the table cover it)
-    if (U1) return b + (SH_ID[s.id] && !r.allPulls ? shieldBlock([r], s.id) : '') + simLinks + '</div></details>';
+    if (U1) return b + (SH_ID[s.id] && !r.allPulls ? shieldBlock([r], s.id) : '') + MSTAT272(r, s) + simLinks + '</div></details>';
     // grouped sections: one header row per set, then that set's rows
     // (column headings live inside each opened set's card, so the list of sets stays clean)
     // the bulky panels: a list on the left (one entry per soak, transition, frontal, shield or set) and the picked
@@ -33401,7 +33451,7 @@ function mxOne(pan, sec, hd, fl, xb) {
     shown.map((x) => '<div class="mx-tr ' + x.st + '" data-u1i="' + x.i + '" role="button" tabindex="0"><span class="mx-t">' + esc(txt(x.li.querySelector('.u1-t'))) + '</span><span class="mx-who">' + who(x.li) + '</span><span class="mx-m ' + x.st + '">' + what(x.li) + '</span></div>').join('') +
     (rest ? '<div class="mx-tr mx-rest"><span></span><span></span><span class="mx-m ok">' + rest + ' more done right</span></div>' : '') + '</div>';
   const box = document.createElement('div'); box.className = 'mx-one-w'; box.innerHTML = sum + tb + (kbT ? '<p class="mx-ft">Against the fastest kills: ' + esc(kbT) + '.</p>' : '');
-  hd.after(box); sec.classList.add('mx-old');
+  hd.after(box); sec.classList.add('mx-old'); { const n272 = sec.querySelector('.r272'); if (n272) box.appendChild(n272.cloneNode(true)); } /* round 272: the add and kick tables in the open panel */
 }
 document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('.mx-tr[data-u1i]'); if (!t) return; const pan = t.closest('.mxa-p'), li = pan && pan.querySelectorAll('li.u1-r')[+t.dataset.u1i]; if (li) li.click(); });
 function mxaOpen(ph, id) { const k = ph.dataset.phk; try { dsUndock(ph); } catch (e) { /* (no dock) */ } let pan = ph.querySelector(':scope > .mxa-p');
@@ -59009,7 +59059,7 @@ function dsGuides() {
           (dd && (dd.kc || dd.ks) ? '<div class="dbt-dx">' + (dd.kc ? '<p><b>Cause</b> ' + E(dd.kc) + '</p>' : '') + (dd.ks ? '<p><b>Could have saved them</b> ' + E(dd.ks) + '</p>' : '') + '</div>' : '') +
           (dd ? '<div class="dbt-dth">' + (dd.word ? '<span class="' + (/own/.test(dd.word) ? 'dbt-r' : '') + '">' + E(dd.word.charAt(0).toUpperCase() + dd.word.slice(1)) + '</span>' : '') + '' + (dd.dg && v.querySelector('.dth-p .cbl-mgo[data-ddgo="' + CSS.escape(dd.dg) + '"]') ? '<button type="button" class="dbt-more" data-dg="' + E(dd.dg) + '">What killed them ▾</button>' : '') + '</div>' : '') +
           (why || nx ? '<div class="dbt-two">' + (why ? '<div><span class="dbt-k">Why</span><p>' + E(why) + '</p></div>' : '') + (nx ? '<div><span class="dbt-k">Next time</span><p>' + E(sent(nx, 2)) + '</p></div>' : '') + '</div>' : '') +
-          (m.mapEl ? '<button type="button" class="dbt-more dbt-mapb" data-dmap="' + i + '">' + (F.map[i] ? 'Hide the map ▴' : 'Map ▾') + '</button>' + (F.map[i] ? '<div class="dbt-mapslot" data-i="' + i + '"></div>' : '') : '') + (m.death ? '' : '<button type="button" class="dbt-more" data-ev="' + i + '">' + (F.ev[i] ? 'Hide ▴' : 'Every time this phase ▾') + '</button>' + (F.ev[i] ? every(m, i) : '')) + '</div><span class="dbt-tm">' + tmH(m.t) + '</span></div>'; });
+          (m.mapEl ? '<button type="button" class="dbt-more dbt-mapb" data-dmap="' + i + '">' + (F.map[i] ? 'Hide the map ▴' : 'Map ▾') + '</button>' + (F.map[i] ? '<div class="dbt-mapslot" data-i="' + i + '"></div>' : '') : '') + (m.death ? '' : '<button type="button" class="dbt-more" data-ev="' + i + '">' + (F.ev[i] ? 'Hide ▴' : 'Every time this phase ▾') + '</button>' + (F.ev[i] ? every(m, i) + (m.sec && m.sec.querySelector('.r272') ? m.sec.querySelector('.r272').outerHTML : '') /* round 272: the tables on the Timeline too */ : '')) + '</div><span class="dbt-tm">' + tmH(m.t) + '</span></div>'; });
       flush(); if (!n) o += '<div class="dbt-empty">Nothing matches these filters.</div>';
       if (cut) o += '<div class="dbt-st cut"><span>Wipe called · ' + mm(cut) + '<em>the rest is not judged</em></span></div>';
       tl.innerHTML = o; dbtMapsPlace(tl, M);
