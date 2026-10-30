@@ -11374,7 +11374,7 @@ html body #bossHead header.fight.bh.bh.bh .bh-t > .bh-l1, html body #bossHead he
 html body #bossHead header.fight.bh.bh.bh .bh-l0 { grid-row: 1; grid-column: 1 / -1; margin: 0 0 4px !important; }
 html body #bossHead header.fight.bh.bh.bh .bh-name { grid-row: 2; grid-column: 1; margin: 0 !important; font-size: 34px !important; line-height: 1.1 !important; }
 html body #bossHead header.fight.bh.bh.bh .bh-l1 > .bh-pickb { grid-row: 2; grid-column: 2; justify-self: start; }
-html body #bossHead header.fight.bh.bh.bh .bh-l1 > .bh-big.bh-big.bh-big { grid-row: 2; grid-column: 3; justify-self: start; }
+html body #bossHead header.fight.bh.bh.bh .bh-l1 > .bh-big { grid-row: 2; grid-column: 3; justify-self: start; }
 html body #bossHead header.fight.bh.bh.bh .bh-t > * { position: relative; }
 html body main#main > .r300-tb { margin: 20px 0 2px; padding-left: max(var(--gmin), calc((100% - var(--wrap)) / 2)); padding-right: max(var(--gmin), calc((100% - var(--wrap)) / 2)); box-sizing: border-box; min-width: 0; max-width: 100%; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 html body main#main > .r300-tb .r300-sp { flex: 1; }
@@ -11415,6 +11415,11 @@ html body #bossHead header.fight.bh.bh.bh.hero::after { background: linear-gradi
   html body #bossHead header.fight.bh.bh.bh.hero::after { background: linear-gradient(90deg, rgba(13,16,19,.88), rgba(13,16,19,.45) 50%, rgba(13,16,19,.15) 85%) !important; }
   html body #bossHead header.fight.bh.bh.bh .bh-hero { opacity: 1 !important; }
 }
+/* round 313: a boss with no banner art: a shorter banner, its model picture bigger */
+html body #bossHead header.fight.bh.bh.bh:not(.hero) .bh-t { min-height: 150px !important; }
+html body #bossHead header.fight.bh.bh.bh:not(.hero) .bart { top: 0 !important; bottom: 0 !important; right: 24px !important; display: flex !important; align-items: center; }
+html body #bossHead header.fight.bh.bh.bh:not(.hero) .bart img { height: 150px !important; width: auto !important; max-height: 100%; filter: drop-shadow(0 6px 18px rgba(0,0,0,.6)); }
+
 /* round 307 (the user: "separate the names from the graph line so the line can be the same height as the text"): names in their own column, a slim bar beside them */
 html body #view .gb.gb-tb .pf-row.cb .cb-b.cb-b.cb-b:has(> .cb-f) { display: grid !important; grid-template-columns: 168px minmax(0, 1fr) !important; column-gap: 8px; align-items: center !important; height: auto !important; min-height: 22px; padding: 0 !important; }
 html body #view .gb.gb-tb .pf-row.cb .cb-b.cb-b.cb-b > .cb-in { grid-column: 1 !important; grid-row: 1 !important; grid-area: 1 / 1 / 2 / 2 !important; position: relative !important; inset: auto !important; display: flex !important; align-items: center; min-width: 0; padding: 0 !important; overflow: hidden; }
@@ -21578,6 +21583,19 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
+  { d: '2026-10-30', h: [{ t: 'A cleaner banner and one bar for every tab', d: "The banner is now just the boss: its name, the difficulty and the result, with the boss art bigger. Who you're looking at, the pull (or another boss from the night), All pulls, the wipe call and how strictly you're judged all sit in one bar at the top of every tab." }, { t: 'Graphs, redesigned', d: "Names in their own column with slim class-coloured bars, every page laid out the same way with its controls on the card's title line, and the chart now follows the phase, Bloodlust or Power Infusion you pick." }], n: [
+    "Graphs: overhealing is a dashed line on the healing chart (switch it off under the chart) instead of a second list.",
+    "Graphs: each page in the menu has its own coloured icon, the phase buttons use the phase's real name (Both Fangs, One Fang left), and Compare players sits on the chart's title line.",
+    "Graphs: one set of text colours and sizes across the tab, so nothing is too faint to read.",
+    "Graphs: tighter rows, so the whole raid fits on one screen.",
+    "The Pull drop-down shows each pull in its progress colour, like the pull chart did.",
+    "The page background is plain dark, without the grid."
+  ], f: [
+    "The banner on a first kill is no longer dimmed.",
+    "Graphs: picking a phase or Bloodlust now changes the chart, not just the table.",
+    "Graphs: Healing's Overhealing view no longer opens further down the page.",
+    "Graphs: the Healing table shows its parses again."
+  ] },
   { d: '2026-10-29', h: [{ t: 'Your resources on the Rotation timeline', d: "Every spec now has its resource beside each press, like Holy Power: squares for Combo Points, Chi, Soul Shards and Essence, a bar for Rage, Focus, Fury, Insanity, Astral Power and the rest, and mana for every healer." }], n: [
     "Debriefing: Avoidable damage, Deaths, Healthstones and potions, Defensives and Combat potions now show a parse as their big number: how many top guilds' kills you beat over the same part of the fight, coloured like Warcraft Logs, on a single pull and All pulls. Hover a tile to see what it compares.",
     "Rotation timeline: every spec's big cooldowns sit in the Cooldowns column (Celestial Alignment and Force of Nature on Balance, for example).",
@@ -36273,7 +36291,7 @@ function perfTabs(kind) {
 }
 // a phase by its short name (P1, P2, Intermission, P3); the chips: the whole pull, or one phase
 const PHN311 = {}; /* round 311 phase names */ const pfPhK = (q) => { const k = q.name.split(' ')[0]; if (q.name) PHN311[k] = q.name; return k; };
-const phLab311 = (k) => { const n = PHN311[k]; return !n || /^(Pd|Id|Intermission|Phase)/i.test(k) || n.length > 20 ? k : n; };
+const phLab311 = (k) => { const n = PHN311[k]; return !n || /^(P[0-9]|I[0-9]|Intermission|Phase)/i.test(k) || n.length > 20 ? k : n; };
 // (plain words with a gold line under the one you're on, and a small "Phase" label, to match the tabs above (your pick))
 function phaseChips(keys, sel) {
   return keys.length > 1 ? '<div class="pfph" role="tablist" aria-label="Phase"><span class="pft-lb" aria-hidden="true">Phase</span><button data-ph=""' + (!sel ? ' class="on"' : '') + '>Whole pull</button>' + keys.map((k) => '<button data-ph="' + esc(k) + '"' + (k === sel ? ' class="on"' : '') + '>' + esc(phLab311(k)) + '</button>').join('') + '</div>' : '';

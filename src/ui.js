@@ -1958,6 +1958,19 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
+  { d: '2026-10-30', h: [{ t: 'A cleaner banner and one bar for every tab', d: "The banner is now just the boss: its name, the difficulty and the result, with the boss art bigger. Who you're looking at, the pull (or another boss from the night), All pulls, the wipe call and how strictly you're judged all sit in one bar at the top of every tab." }, { t: 'Graphs, redesigned', d: "Names in their own column with slim class-coloured bars, every page laid out the same way with its controls on the card's title line, and the chart now follows the phase, Bloodlust or Power Infusion you pick." }], n: [
+    "Graphs: overhealing is a dashed line on the healing chart (switch it off under the chart) instead of a second list.",
+    "Graphs: each page in the menu has its own coloured icon, the phase buttons use the phase's real name (Both Fangs, One Fang left), and Compare players sits on the chart's title line.",
+    "Graphs: one set of text colours and sizes across the tab, so nothing is too faint to read.",
+    "Graphs: tighter rows, so the whole raid fits on one screen.",
+    "The Pull drop-down shows each pull in its progress colour, like the pull chart did.",
+    "The page background is plain dark, without the grid."
+  ], f: [
+    "The banner on a first kill is no longer dimmed.",
+    "Graphs: picking a phase or Bloodlust now changes the chart, not just the table.",
+    "Graphs: Healing's Overhealing view no longer opens further down the page.",
+    "Graphs: the Healing table shows its parses again."
+  ] },
   { d: '2026-10-29', h: [{ t: 'Your resources on the Rotation timeline', d: "Every spec now has its resource beside each press, like Holy Power: squares for Combo Points, Chi, Soul Shards and Essence, a bar for Rage, Focus, Fury, Insanity, Astral Power and the rest, and mana for every healer." }], n: [
     "Debriefing: Avoidable damage, Deaths, Healthstones and potions, Defensives and Combat potions now show a parse as their big number: how many top guilds' kills you beat over the same part of the fight, coloured like Warcraft Logs, on a single pull and All pulls. Hover a tile to see what it compares.",
     "Rotation timeline: every spec's big cooldowns sit in the Cooldowns column (Celestial Alignment and Force of Nature on Balance, for example).",
@@ -16653,7 +16666,7 @@ function perfTabs(kind) {
 }
 // a phase by its short name (P1, P2, Intermission, P3); the chips: the whole pull, or one phase
 const PHN311 = {}; /* round 311 phase names */ const pfPhK = (q) => { const k = q.name.split(' ')[0]; if (q.name) PHN311[k] = q.name; return k; };
-const phLab311 = (k) => { const n = PHN311[k]; return !n || /^(Pd|Id|Intermission|Phase)/i.test(k) || n.length > 20 ? k : n; };
+const phLab311 = (k) => { const n = PHN311[k]; return !n || /^(P[0-9]|I[0-9]|Intermission|Phase)/i.test(k) || n.length > 20 ? k : n; };
 // (plain words with a gold line under the one you're on, and a small "Phase" label, to match the tabs above (your pick))
 function phaseChips(keys, sel) {
   return keys.length > 1 ? '<div class="pfph" role="tablist" aria-label="Phase"><span class="pft-lb" aria-hidden="true">Phase</span><button data-ph=""' + (!sel ? ' class="on"' : '') + '>Whole pull</button>' + keys.map((k) => '<button data-ph="' + esc(k) + '"' + (k === sel ? ' class="on"' : '') + '>' + esc(phLab311(k)) + '</button>').join('') + '</div>' : '';
