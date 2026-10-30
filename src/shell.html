@@ -11477,6 +11477,22 @@ html body #view .gb.gb-tb .r308-ctl .gb-tgl select { height: 32px !important; bo
 html body #view .gb.gb-tb .r308-ctl .seg { height: 32px !important; box-sizing: border-box; display: inline-flex !important; align-items: center !important; }
 html body #view .gb.gb-tb .r308-ctl .gb-tgl > span, html body #view .gb.gb-tb .r308-ctl .r295-view::before, html body #view .gb.gb-tb .r308-ctl .r295-when::before { line-height: 1 !important; align-self: center !important; }
 html body #bossHead header.fight.r308-nopk .bh-pickb { display: none !important; } html body main#main > .r300-tb .r300-pull optgroup { color: #8a939c; font-style: normal; font-weight: 700; background: #13171b; } html body main#main > .r300-tb .r300-pull optgroup option { color: #e8eaed; font-weight: 600; } /* round 308: other bosses in the Pull drop-down */
+/* round 309: one text scale on Graphs (the user: "Do 1 to 4" of the colour audit): three text colours (bright, soft, label), four sizes (11 labels, 12.5 text, 14 titles), nothing too faint to read */
+html body #view .gb.gb-tb { --t1: #e8eaed; --t2: #aeb6bf; --t3: #868f99; }
+html body #view .gb.gb-tb .gb-tabs button[data-gtab]:not(.on) { color: var(--t2) !important; }
+html body #view .gb.gb-tb .gb-tabs .r292-mh { font-size: 10.5px !important; color: var(--t3) !important; letter-spacing: .12em !important; }
+html body #view .gb.gb-tb .gb-card .gb-hd .gb-hs, html body #view .gb.gb-tb h3.nh > small, html body #view .gb.gb-tb .gb-card .gb-hd .gb-big small { color: var(--t3) !important; font-size: 12px !important; }
+html body #view .gb.gb-tb .r295-when::before, html body #view .gb.gb-tb .r295-view::before, html body #view .gb.gb-tb .gb-tgl > span, html body #view .gb.gb-tb .r269-lbl { color: var(--t3) !important; font-size: 11px !important; font-weight: 700 !important; letter-spacing: .1em !important; text-transform: uppercase; }
+html body #view .gb.gb-tb .r308-ctl button:not(.on), html body #view .gb.gb-tb .r269-c, html body #view .gb.gb-tb .r292-cmp summary { color: var(--t2) !important; font-size: 12.5px !important; }
+html body #view .gb.gb-tb .pf-row.cb-h > *, html body #view .gb.gb-tb .pf-row.cb-h .cb-hn { color: var(--t3) !important; font-size: 11px !important; font-weight: 600 !important; letter-spacing: .06em !important; }
+html body #view .gb.gb-tb .pf-row:not(.cb-h) > .pf-k { color: var(--t3) !important; font-size: 11px !important; font-weight: 600 !important; opacity: 1 !important; }
+html body #view .gb.gb-tb .pf-row:not(.cb-h) > .cb-v { color: var(--t1) !important; font-size: 12.5px !important; font-weight: 700 !important; }
+html body #view .gb.gb-tb .pf-row:not(.cb-h) > .cb-s { font-size: 12.5px !important; font-weight: 600 !important; }
+html body #view .gb.gb-tb .pf-row:not(.cb-h) > .cb-r, html body #view .gb.gb-tb .pf-row:not(.cb-h) > .r263-x { color: var(--t2) !important; font-size: 12px !important; font-weight: 500 !important; }
+html body #view .gb.gb-tb .gb-bx { color: var(--t2) !important; font-size: 12px !important; }
+html body #view .gb.gb-tb .gb-v, html body #view .gb.gb-tb .gb-bn { color: var(--t1) !important; }
+html body #view .gb.gb-tb .sp { font-size: 12.5px; }
+html body #view .gb.gb-tb .pfc .pfc-x, html body #view .gb.gb-tb .pfc .pfc-y, html body #view .gb.gb-tb .pfc .pfc-pl { fill: var(--t3) !important; font-size: 11px !important; }
 
 </style>
 
