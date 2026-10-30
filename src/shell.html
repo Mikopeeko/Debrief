@@ -11095,6 +11095,18 @@ html body #view .gb-side { width: auto !important; max-width: none !important; }
 html body #view .gb-tabs .r243-sub { padding-left: 22px !important; font-size: 13px; opacity: .8; text-align: left; }
 html body #view .gb-tabs .r243-sub.on { opacity: 1; }
 html body #view .gb-tabs button[data-gtab].on:not(.r243-main) { opacity: .75; }
+/* round 244: the By ability tables' extra columns (Casts, Avg cast, Hits, Avg hit, Crit %), right-aligned like the rest; hidden on a phone */
+html body #view .gb.gb-tb .gb-card .pf-row.cb.gb-r8.gb-r8.gb-r8 { grid-template-columns: 22px minmax(150px, 1fr) 72px 64px 50px 52px 66px 52px 66px 56px !important; }
+html body #view .gb-card .pf-row.gb-r8 > .r244-x { font-variant-numeric: tabular-nums; text-align: right; justify-self: end; font-size: 12.5px; color: var(--muted, #aab0b8); }
+html body #view .gb-card .pf-row.gb-r8.cb-h > .r244-x { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: #7d8792; }
+@media (max-width: 760px) { html body #view .gb.gb-tb .gb-card .pf-row.cb.gb-r8.gb-r8.gb-r8 { grid-template-columns: 22px minmax(0, 1fr) 64px 56px 44px !important; } html body #view .gb-card .pf-row.gb-r8 > .r244-x { display: none !important; } }
+/* round 245: a player's spell list in columns (share, casts, average cast, hits, average hit, crit), right-aligned */
+html body #view .gb-br > .gb-bx.r245 { display: flex !important; gap: 0; white-space: nowrap; }
+html body #view .gb-br > .gb-bx.r245 > span { display: inline-block; width: 62px; text-align: right; font-variant-numeric: tabular-nums; }
+html body #view .gb-br > .gb-bx.r245 > span:first-child { width: 44px; }
+html body #view .gb-br.gb-brh { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: #7d8792; }
+html body #view .gb-br.gb-brh .gb-tr { background: none !important; }
+@media (max-width: 760px) { html body #view .gb-br > .gb-bx.r245 > span:nth-child(n+2):not(:nth-child(4)):not(:nth-child(6)) { display: none; } }
 
 </style>
 
