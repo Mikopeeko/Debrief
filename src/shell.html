@@ -11513,6 +11513,12 @@ html body #view .gb.gb-tb .ds-grail .gb-tabs button[data-gtab]:not(.on)::before 
 html body #view .gb.gb-tb .ds-grail .gb-tabs button[data-gtab]:not(.on):hover::before { opacity: 1 !important; }
 html body #view .gb.gb-tb .ds-grail .gb-tabs button[data-gtab]:not(.on):hover { color: #e8eaed !important; }
 }
+html body #view .gb.gb-tb .pfc .pfc-dim { fill: rgba(10,12,15,.72) !important; } /* round 311: the rest of the pull clearly dimmed */
+/* round 311: Compare players sits in the chart's title line, its list opens as a small panel */
+html body #view .gb.gb-tb .r308-ctl .r292-cmp { position: relative; margin: 0 !important; }
+html body #view .gb.gb-tb .r308-ctl .r292-cmp > summary { height: 32px; box-sizing: border-box; display: inline-flex !important; align-items: center; gap: 6px; padding: 0 12px !important; border-radius: 4px; border: 1px solid rgba(255,255,255,.1); background: #171c21; cursor: pointer; }
+html body #view .gb.gb-tb .r308-ctl .r292-cmp > summary .r292-ch { display: none; }
+html body #view .gb.gb-tb .r308-ctl .r292-cmp > .r292-cmpl { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; width: min(520px, 86vw); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,.1); background: #13171b; box-shadow: 0 10px 28px rgba(0,0,0,.5); display: flex; flex-wrap: wrap; gap: 4px; }
 
 </style>
 
@@ -11872,6 +11878,7 @@ html body #view .gb.gb-tb .ds-grail .gb-tabs button[data-gtab]:not(.on):hover { 
     o += '</div>';
     s.insertAdjacentHTML('beforeend', o); s.classList.add('nsm-on');
   }
+  if (!window.__cmp311t) { window.__cmp311t = 1; document.addEventListener('toggle', function (e) { var d = e.target; if (d && d.classList && d.classList.contains('r292-cmp')) window.__cmp311 = d.open; }, true); document.addEventListener('click', function (e) { var d = document.querySelector('#view details.r292-cmp[open]'); if (d && !d.contains(e.target)) { d.open = false; window.__cmp311 = false; } }, true); } /* round 311 compare toggle */
   function scan() { /* round 300 banner bar */ (function () { var mn = document.querySelector('main#main'), bar = mn && mn.querySelector(':scope > .tabbar'); if (!bar) return; var h = document.querySelector('#bossHead header.fight.bh'), tb = mn.querySelector(':scope > .r300-tb'), t = h && h.querySelector('.bh-t');
     var fresh = t && (t.querySelector('.bh-seg') || t.querySelector('.sl-sw') || t.querySelector('.bhp-cut'));
     if (tb && (!h || tb.__h !== h || fresh)) { var op0 = tb.querySelector('.op-pick'); if (op0 && !bar.querySelector('.op-pick')) bar.appendChild(op0); tb.remove(); tb = null; }
