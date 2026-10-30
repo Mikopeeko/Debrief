@@ -11187,6 +11187,31 @@ html body #view .r254-tip .r269-tm { margin: 6px 0 0; padding-top: 6px; border-t
 html body #view .r269-dc .r269-svg { width: 100%; height: auto; display: block; margin-top: 6px; }
 html body #view .r269-dc .r269-dd { cursor: pointer; } html body #view .r269-dc .r269-dd:hover circle { stroke: #fff; }
 html body #view .r269-mana .rs-sw { display: none; }
+/* round 270: Deaths says when and what killed them; chart + table as one panel; phone tab strip and the % fix */
+html body #view .gb.gb-tb .gb-card .pf-row.cb.r263-death.r263-death { grid-template-columns: 22px minmax(0, 1fr) 52px 0 46px 92px minmax(150px, 300px) !important; }
+html body #view .gb-card .pf-row > .r263-x.r270-wh { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 92px; color: #c9d1d9; }
+html body #view .gb-card .pf-row > .r263-x.r270-kb { justify-self: stretch; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 14px; color: #c9d1d9; }
+html body #view .gb-card .pf-row > .r263-x.r270-kb .oi, html body #view .gb-card .pf-row > .r263-x.r270-kb img, html body #view .gb-card .pf-row > .r263-x.r270-kb svg { width: 15px; height: 15px; border-radius: 3px; vertical-align: -3px; margin-right: 5px; }
+html body #view .gb-card .pf-row > .r263-x.r270-kb b { color: #e5534b; font-weight: 600; margin-left: 3px; }
+html body #view .gb-card .pf-row > .r263-x.r270-kb .r270-sep { font-style: normal; color: #5d6670; margin: 0 7px; }
+html body #view .gb-card .pf-row.cb-h > .r263-x:last-child { text-align: left; justify-self: stretch; padding-left: 14px; }
+html body #view .gb-card .pf-row.cb-h.r263-dmg > .r263-x:last-child, html body #view .gb-card .pf-row.cb-h.r263-heal > .r263-x:last-child { text-align: right; justify-self: end; padding-left: 0; }
+html body #view .gb-tb .gb-tmain > .gb-chart249:has(+ .gb-card), html body #view .gb-tb .gb-tmain > .r269-dc:has(+ .gb-card) { border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; border-bottom-color: transparent !important; padding-bottom: 10px; }
+html body #view .gb-tb .gb-tmain > .gb-chart249 + .gb-card, html body #view .gb-tb .gb-tmain > .r269-dc + .gb-card { margin-top: -14px !important; border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; border-top: 1px solid rgba(255,255,255,.07) !important; }
+@media (max-width: 760px) {
+  html body #view .gb.gb-tb .gb-tl .pf-row.cb.gb-r3:not([class*="r263-"]) { grid-template-columns: 20px minmax(0, 1fr) 56px 0 44px !important; }
+  html body #view .gb.gb-tb .gb-tl .pf-row.cb.gb-r3:not([class*="r263-"]) > .cb-s { display: block !important; min-width: 0; overflow: hidden; }
+  html body #view .gb.gb-tb .gb-card .pf-row.cb.r263-death.r263-death { grid-template-columns: 20px minmax(0, 1fr) 40px 0 74px !important; }
+  html body #view .gb.gb-tb .gb-card .pf-row.cb.r263-death > .cb-s { display: block !important; min-width: 0; overflow: hidden; }
+  html body #view .gb.gb-tb .gb-card .pf-row.r263-death > .r263-x.r270-wh, html body #view .gb.gb-tb .gb-card .pf-row.cb-h.r263-death > .r263-x:nth-last-child(2) { display: block !important; text-align: right; justify-self: end; }
+}
+@media (max-width: 700px) {
+  html body #view .gb.gb-tb.ds-gb .ds-grail .gb-tabs { flex: 1 1 100%; min-width: 0; max-width: 100%; flex-wrap: nowrap !important; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; gap: 2px !important; padding-bottom: 2px; }
+  html body #view .gb.gb-tb.ds-gb .ds-grail .gb-tabs::-webkit-scrollbar { display: none; }
+  html body #view .gb.gb-tb.ds-gb .ds-grail .gb-tabs::before { display: none !important; }
+  html body #view .gb.gb-tb.ds-gb .ds-grail .gb-tabs button { flex: 0 0 auto; white-space: nowrap; }
+  html body #view .gb.gb-tb.ds-gb .ds-grail .gb-tabs .r243-sub { padding-left: 8px !important; }
+}
 
 </style>
 
