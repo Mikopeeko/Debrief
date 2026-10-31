@@ -11788,6 +11788,48 @@ html body #view .rtl .r338-d { top: 2px; width: 8px; height: 8px; margin-left: -
 html body #view .rtl .r338-v { top: 0; bottom: 0; border: 2px solid #e6b450; border-radius: 4px; background: rgba(230,180,80,.06); pointer-events: none; transition: left .08s linear, width .08s linear; }
 html body #view .rtl .r338-ax { display: flex; justify-content: space-between; margin-top: 3px; font-size: 10.5px; color: #868f99; }
 @media (max-width: 699px) { html body #view .rtl .r338-ov { top: 0; } html body #view .rtl .r338-hd span { display: none; } }
+/* round 340 Home A: one slim header, the boss you're on, the raid as bars beside the raid nights */
+body:has(#main .my-flow.r340) #bossHead, body:has(#main .my-flow.r340) main#main > .r300-tb { display: none !important; }
+#main .home.prog .my-flow.r340 > *, #main .home.prog .my-flow.r340 > #pgNow.pg-now.pg-now { order: 0 !important; }
+#main .home.prog .my-flow.r340 > .my-who.r340-old.r340-old { display: none !important; }
+.r340-hd.panel { display: flex !important; align-items: center; gap: 12px 18px; flex-wrap: wrap; padding: 12px 18px !important; margin: 0 !important; }
+.r340-id { flex: none; display: flex; } .r340-id .ht-ban { width: 38px !important; height: 47px !important; margin: 0 !important; }
+.r340-tx { min-width: 0; flex: 1 1 280px; }
+.r340-nm { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .r340-nm > b { font-size: 19px; font-weight: 700; color: #e8eaed; letter-spacing: .01em; }
+.r340-pr { color: #e6b450; font-size: 13px; font-weight: 600; } .r340-pr b { font-weight: 700; }
+.r340-nm #pgEdit { margin: 0 !important; font-size: 11px !important; padding: 2px 8px !important; }
+.r340-rk { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 14px; margin-top: 4px; color: #868f99; font-size: 12.5px; }
+.r340-rk b { color: #aeb6bf; font-weight: 600; }
+.r340-rk #pgRkT { all: unset; cursor: pointer; color: #aeb6bf; font-size: 12.5px; } .r340-rk #pgRkT:hover { color: #e6b450; }
+.r340-hd > .pc-diffs { margin: 0 !important; padding: 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; flex: none; max-width: 100%; overflow-x: auto; }
+.r340-you { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #2c3038; border-radius: 8px; padding: 7px 12px; font-size: 13px; color: #868f99; }
+.r340-you:hover { border-color: #e6b450; } .r340-you b { font-weight: 600; } .r340-you em { font-style: normal; color: #aeb6bf; } .r340-you span { color: #868f99; }
+.r340-hd #yuAdd { all: unset; cursor: pointer; color: #868f99; font-size: 12.5px; } .r340-hd #yuAdd:hover { color: #e6b450; }
+.r340-hd .r340-yup, .r340-hd .r340-edrow { flex-basis: 100%; }
+#main .home.prog .my-flow.r340 > #pgRk.pg-rkbox { margin: 0 !important; order: 0 !important; }
+.r340-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.r340-cols > .panel { margin: 0 !important; min-width: 0; }
+@media (max-width: 900px) { .r340-cols { grid-template-columns: minmax(0, 1fr); } }
+.r340 .my-raid .my-h { margin-bottom: 6px !important; } .r340 .my-raid .my-dsw { display: none !important; }
+.r340 .my-raid .my-strip.my-bcs { display: block !important; overflow: visible !important; padding: 0 !important; margin: 0 !important; gap: 0 !important; }
+.r340 .my-raid .my-bc.my-bc.my-bc { all: unset; box-sizing: border-box; display: grid !important; grid-template-columns: 20px minmax(0, 150px) minmax(40px, 1fr) 92px; align-items: center; gap: 12px; width: 100%; padding: 8px 6px; border-top: 1px solid #1d2026; cursor: pointer; font-size: 13px; position: relative; }
+.r340 .my-raid .my-bc::before, .r340 .my-raid .my-bc::after { display: none !important; }
+.r340 .my-raid .my-bc:hover { background: rgba(255, 255, 255, .03); } .r340 .my-raid .my-bc.my-sel { background: rgba(230, 180, 80, .08); }
+.r340 .my-raid .my-bc.lock { cursor: default; }
+.r340 .my-raid .my-bc :is(.my-bcbg, .my-bcsh, .my-dtag, .my-bx) { display: none !important; }
+.r340 .my-raid .my-bc .my-bcb { display: contents !important; }
+.r340 .my-raid .my-bc .my-bn { all: unset; order: 1; color: #868f99; font-size: 12px; font-style: normal; text-align: right; }
+.r340 .my-raid .my-bc .my-bcb > b { order: 2; color: #e8eaed; font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: none !important; }
+.r340 .my-raid .my-bc.lock .my-bcb > b { color: #868f99; font-weight: 500; }
+.r340 .my-raid .my-bc .r340-bar { order: 3; display: block; height: 6px; background: #1f232a; border-radius: 3px; overflow: hidden; }
+.r340 .my-raid .my-bc .r340-bar > i { display: block; height: 100%; background: var(--mc, #e6b450); border-radius: 3px; }
+.r340 .my-raid .my-bc .my-tag { all: unset; order: 4; text-align: right; font-size: 12.5px; font-weight: 600; color: var(--mc, #868f99); white-space: nowrap; }
+.r340 .my-raid .my-bc.lock .my-tag { color: #868f99; font-weight: 500; }
+.r340-cols .pg-nights .pn-list { display: flex !important; flex-direction: column; gap: 6px; }
+.r340-cols .pg-nights .pn-row { width: 100% !important; }
+.r340 > .my-bxp:empty { display: none; } .r340 > .my-bxp { margin: 0 !important; }
+.r340 .my-bxp .pc-card.r340-dup :is(.pc-hero, .pc-mini, .pc-stats, .pc-chart) { display: none !important; }
+@media (max-width: 600px) { .r340-hd.panel { padding: 12px !important; } .r340 .my-raid .my-bc.my-bc.my-bc { grid-template-columns: 18px minmax(0, 110px) minmax(30px, 1fr) auto; gap: 8px; } }
 
 </style>
 

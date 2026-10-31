@@ -1968,6 +1968,8 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-30', h: [{ t: 'A cleaner banner and one bar for every tab', d: "The banner is now just the boss: its name, the difficulty and the result, with the boss art bigger. Who you're looking at, the pull (or another boss from the night), All pulls, the wipe call and how strictly you're judged all sit in one bar at the top of every tab." }, { t: 'Graphs, redesigned', d: "Names in their own column with slim class-coloured bars, every page laid out the same way with its controls on the card's title line, and the chart now follows the phase, Bloodlust or Power Infusion you pick." }], n: [
+    "Home is tidier: one slim header with your team, its ranks, one difficulty switch and you, then the boss you're on, then the raid as bars beside your raid nights. All rankings opens right under the header, and Home is half as long on a phone.",
+    "First time on a tab? A few short tips point out its main parts again, made for today's pages: the Pull drop-down and Everyone, Debriefing, Rotation, Graphs, Report card and Compare.",
     "Pick pulls… in the Pull drop-down: tick any pulls of the boss and every tab shows just those, like All pulls does for the whole night.",
     "Report card: a raider's checks fit in two columns, the ones they did well included, the raid's report card reads like Debriefing's numbers, and the roster is slimmer with every score in its grade's colour (hover a name for their spec).",
     "Select multiple in the Pull drop-down: tick any pulls of the boss and every tab shows just those, like All pulls does for the whole night.",
@@ -1983,6 +1985,8 @@ const PATCH_NOTES = [
     "The Pull drop-down shows each pull in its progress colour, like the pull chart did.",
     "The page background is plain dark, without the grid."
   ], f: [
+    "A raid night on Home opens the boss it's named after, not the night's first pull.",
+    "Home no longer shows the boss banner and pull bar of a log you have open.",
     "The banner on a first kill is no longer dimmed.",
     "Graphs: picking a phase or Bloodlust now changes the chart, not just the table.",
     "Graphs: Healing's Overhealing view no longer opens further down the page.",
@@ -30668,25 +30672,33 @@ const PAGE_TIPS = {
     { sel: '#view .ndz-how', t: 'See this again', p: 'Show me how plays these tips again any time.' },
     { sel: '#assignBox .as-how, #assignBox .notebar', t: 'Your raid\'s plan', p: 'Paste your raid\'s NSRT note here, or try the example first. Debrief checks every assignment in it on every pull: soaks, kicks, orbs and cooldowns. When the note changes, paste the new one.' },
     { sel: '#view .as-tiles', t: 'Each assignment at a glance', p: 'Red failed, green was done. Click one to jump straight to it.' }],
+  // (round 339 page tips: today's pages, Oct 30)
   audit: [
-    { sel: '#oaTop .cch', t: 'Your coach', p: 'What went right, the mistakes and how to fix them, and the one thing to focus on next pull. Pick yourself at the top right and it coaches you.' },
-    { sel: '#view details.secd', t: 'Open a mechanic for its map', p: 'Each one shows who got it wrong and when. Many have a map of where everyone stood, and Play shows the moment again.' }],
+    { sel: 'main#main > .r300-tb .r300-pull', t: 'Pick a pull', p: 'Every boss of the night is in this list. Pick one pull, All pulls for the whole night, or Select multiple to look at a few pulls together.' },
+    { sel: 'main#main > .r300-tb .op-pick', t: 'Just you', p: 'Pick yourself here and every tab follows: your mistakes, your rotation and your grade.' },
+    { sel: '#view .oa-tiles', t: 'The pull at a glance', p: 'Deaths, avoidable damage, kicks and more. Click a box for the details.' },
+    { sel: '#view .dbt-why', t: 'Why it ended', p: 'The verdict for this pull: the serious mistakes first, then the minor ones.' },
+    { sel: '#view .dbt-main, #view .ds-l', t: 'Each part of the fight', p: 'Every mechanic, part by part, with who got it wrong and when. Click one for the full story.' },
+    { sel: '.tabbar .tabs', t: 'Go deeper', p: 'Rotation checks how each player played their spec. Graphs has the raw numbers. Report card grades everyone over the night, and Compare puts two players side by side.' }],
   night: [
     { sel: '#sum-prog', t: 'How far the night got', p: 'Every pull of the night on one chart, where lower means further. Click a dot to open that pull.' },
     { sel: '#view .sum-rc', t: 'The night\'s grades', p: 'Mechanics and assignments, each graded over every pull of the night.' },
     { sel: '#view .sumv details.secd', t: 'Each mechanic, pull by pull', p: 'Each pull gets a square. Green is clean, yellow had some mistakes, and red failed. Click a square to open that pull.' }],
   player: [
-    { sel: '#view .plsw', t: 'All pulls, or one pull', p: 'Look at every pull of the night together, or just the pull you\'re on.' },
-    { sel: '#view .pl-bars', t: 'Every player', p: 'Each player gets one grade from their mechanics, their Rotation, and how they stayed alive. Prep can only take points off. Sort them best first, or by who has the most to gain.' },
-    { sel: '#view .pl-det', t: 'Their page', p: 'Pick a player to see what they should fix first, each with a link to the tab that shows it, and their prep.' }],
+    { sel: '#view .rcb-subs', t: 'The raid\'s grades', p: 'How the whole raid did over every pull of the night: mechanics, rotation and staying alive.' },
+    { sel: '#view .rqc-grid', t: 'Every player', p: 'Everyone ranked by their grade. Point at a name for their spec.' }],
   perf: [
-    { sel: '#view .pft-row', t: 'What to look at', p: 'Pick a view here: damage, healing or damage taken, casts and resources, cooldowns and buffs, or utility and survivability. Each one shows the raw numbers, player by player.' },
-    { sel: '#view .pfph', t: 'One phase', p: 'Count the whole pull, or only one phase of it.' },
-    { sel: '#view .pf-bars > h3', t: 'Every player', p: 'Click a player to see their numbers on the chart.' },
-    { sel: '#bhPulls .bhp-row, #list .sg-row', t: 'Another pull', p: 'Pick another pull from the bars at the top. You stay on the same view.' }],
+    { sel: '#view .gb-tabrow', t: 'What to look at', p: 'Damage, healing, damage taken, deaths, debuffs, kicks, mana and more. Each one shows the raw numbers, player by player.' },
+    { sel: '#view .gb-card', t: 'The chart', p: 'Point at the chart for its numbers. Phases and Bloodlust are marked on it.' }],
+  rotpick: [
+    { sel: '#view .rot-pick', t: 'Pick a raider', p: 'See how anyone played their own spec, checked the way a top player of it would.' }],
   rot: [
-    { sel: '#view .rot-sel', t: 'Every player', p: 'Change player to see how anyone else played their spec: what they pressed and when, their cooldowns, their resources and their talents. It opens on you when you\'re in the pull.' },
-    { sel: '#bhPulls .bhp-row, #list .sg-row', t: 'Another pull', p: 'Pick another pull from the bars at the top. You stay on Rotation.' }],
+    { sel: '#view .rpc', t: 'Their pull in short', p: 'Their score, and the few things to fix first, the most important at the top.' },
+    { sel: '#view .r338-ov', t: 'The whole fight', p: 'Burst windows, mistakes and deaths on one line. Click anywhere to jump there.' },
+    { sel: '#view .r336-fix', t: 'What to fix', p: 'The checks they missed most. Show jumps to the first one on the timeline and lights up the rest.' }],
+  cmp: [
+    { sel: '#view .cmp-hps', t: 'Who to compare', p: 'Pick a player, then who to measure them against: a top player of the same spec, or anyone in your raid.' },
+    { sel: '#view .r330-nav', t: 'Jump to a part', p: 'Click one to jump to it: where they stand, their numbers, their cooldowns and more.' }],
   hub: [
     { sel: '.pg-hub .hc-card', t: 'Your teams', p: 'Each card is a team or a character. It shows the boss they\'re on now, a square per boss (orange once killed) and their kills on each difficulty. Click one to see every boss and night.' },
     { sel: '.pg-hub .pg-addc', t: 'Add more', p: 'Paste a team, guild or character page from Warcraft Logs. "Which link?" says exactly what to copy.' }],
@@ -30697,10 +30709,10 @@ const PAGE_TIPS = {
     { sel: '.pc-diffs', t: 'Pick a difficulty', p: 'Switch between Mythic, Heroic, Normal and LFR, with how many bosses are down on each.' },
     { sel: '#pgEdit', t: 'Edit', p: 'Remove this team.' }],
 };
-const TIPS_V = { live: 2, perf: 4, audit: 2, overview: 5, team: 2 }; // (bumped when a page's tips change, so they show once more)
+const TIPS_V = { live: 2, perf: 5, audit: 3, overview: 5, team: 2, rot: 2, player: 2, cmp: 1 }; // (bumped when a page's tips change, so they show once more)
 const TIPS_KEY = (k) => 'wla-tips-' + k + (TIPS_V[k] ? '-v' + TIPS_V[k] : '');
 // (which page is up: a pull's tab, the teams page, or a team's page)
-const tipsPage = () => (S.page === 'ingame' && $('#main .igm-page') ? 'ingame' : $('#main .pg-hub') && !S.hubHome ? 'hub' : $('#pgEdit') ? 'team' : S.rep && $('#view') ? S.tab : null);
+const tipsPage = () => (S.page === 'ingame' && $('#main .igm-page') ? 'ingame' : $('#main .pg-hub') && !S.hubHome ? 'hub' : $('#pgEdit') ? 'team' : S.rep && $('#view') ? (S.tab === 'rot' && $('#view .rot-pick') ? 'rotpick' : S.tab) : null);
 const tipVis = (sel) => { for (const e of document.querySelectorAll(sel)) { const b = e.getBoundingClientRect(); if (b.width > 4 && b.height > 4) return e; } return null; };
 let TIPS_WAIT = null;
 function pageTips(k, force) {
@@ -31923,7 +31935,7 @@ function renderProgress(msg, msgErr) {
   const nightsM = new Map(); for (const v of list) { const k = nightOf(v.at); if (!nightsM.has(k)) nightsM.set(k, []); nightsM.get(k).push(v); }
   const nightsL = [...nightsM].sort((x, y) => (x[0] < y[0] ? 1 : -1)).map(([k, l]) => { l.sort((a, b) => a.at - b.at);
     const by = order.map((boss) => ({ boss, l: l.filter((v) => v.boss === boss) })).filter((x) => x.l.length), main = by.slice().sort((a, b) => b.l.length - a.l.length)[0];
-    return { k, at: l[0].at, by, main, kills: by.filter((x) => x.l.some((v) => v.kill)).map((x) => x.boss), nb: bestOf(main.l), op: nightOpen(l) }; });
+    return { k, at: l[0].at, by, main, kills: by.filter((x) => x.l.some((v) => v.kill)).map((x) => x.boss), nb: bestOf(main.l), op: nightOpen(main.l) || nightOpen(l) }; });
   const dayOf = (at) => new Date(at - 6 * 3600e3);
   const pnRow = (n) => { const kill = n.main.l.some((v) => v.kill), d = dayOf(n.at), others = n.by.filter((x) => x !== n.main).map((x) => x.boss), killO = n.kills.filter((b) => b !== n.main.boss);
     const sub = plural(n.main.l.length, 'pull') + (kill ? ', killed on pull ' + n.main.l.find((v) => v.kill).pull : n.nb ? ', best ' + n.nb.label + (/%$/.test(n.nb.label) ? ' left' : '') : '') + /* (boss health left, beside the % done on the right (Oct 21)) */
@@ -33908,3 +33920,32 @@ function dsGuides() {
   /* the Rotation chat's hook (2367e9d): view() calls this right after it writes a page, so a page never paints in its old layout
      because it landed inside the 150 ms; it runs the whole chain at once and resets the clock */
   dsBars.now = (root) => { last = performance.now(); clearTimeout(tm); f17(root); }; })();
+
+// ===== Design studio round 340 (Oct 30): round 340 home A (the user's pick). Home in one header: the team's name, kills and ranks,
+// one difficulty switch and you, in a single slim row; under it the boss you're on; then the raid as slim bars beside the raid nights,
+// and a boss opened from the list under both. Re-homes the existing pieces (their buttons keep working). Owner: the Design studio chat. =====
+function r340Home() { const fl = document.querySelector('#main .home.prog .my-flow'); if (!fl || fl.classList.contains('r340')) return; const who = fl.querySelector(':scope > .my-who'); if (!who) return;
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const q = (s) => fl.querySelector(s), mk = (c, t) => { const e = document.createElement(t || 'div'); e.className = c; return e; }; fl.classList.add('r340');
+  const hd = mk('panel r340-hd', 'section'), h1 = q('.my-team .pg-tt > h1'), nm = h1 ? [...h1.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('').trim() : '';
+  const crest = q('.my-team .ht-ban'), gold = q('.my-team .pgc.gold'), rk = [...fl.querySelectorAll('#pgRkChips .pgc')];
+  const id = mk('r340-id'); if (crest) id.append(crest.cloneNode(true)); hd.append(id);
+  const tx = mk('r340-tx'); tx.innerHTML = '<div class="r340-nm"><b>' + esc(nm) + '</b>' + (gold ? '<span class="r340-pr">' + esc(gold.textContent.replace(/\s+/g, ' ').trim()) + '</span>' : '') + '</div><div class="r340-rk">' + rk.map((c) => '<span>' + c.innerHTML + '</span>').join('') + '</div>'; hd.append(tx);
+  const ed = q('#pgEdit'); if (ed) tx.querySelector('.r340-nm').append(ed); const rkT = q('#pgRkT'); if (rkT) tx.querySelector('.r340-rk').append(rkT);
+  const dl = q('#pgDel'); if (dl && dl.parentElement && !dl.parentElement.contains(who)) { const er = dl.parentElement; er.classList.add('r340-edrow'); hd.append(er); }
+  const sw = q('.my-team .pc-diffs'); if (sw) { const lb = sw.querySelector('.my-dlab'); if (lb) lb.remove(); hd.append(sw); }
+  const pyou = q('.my-you .pg-you'), mine = q('#pgMine'); if (pyou && mine) { const yb = pyou.querySelector('b'), t1 = q('.my-you .yu-t'), best = t1 ? (t1.textContent.match(/[0-9]+/) || [])[0] : null;
+    const yo = mk('r340-you', 'button'); yo.type = 'button'; yo.title = 'See your summary'; yo.innerHTML = '<b style="color:' + esc((yb && yb.style.color) || '#e8eaed') + '">' + esc(yb ? yb.textContent.trim() : 'You') + '</b>' + (best ? '<em>' + best + ' best</em>' : '') + '<span>›</span>'; yo.onclick = () => mine.click(); hd.append(yo);
+    /* (the averages come in a moment later: the chip follows them, and shows none while there isn't one yet) */ const upd = () => { if (!yo.isConnected) return; const v = (((q('.my-you .yu-t b') || {}).textContent) || '').trim(), em = yo.querySelector('em'); if (/^[1-9][0-9]*$/.test(v)) { if (em) em.textContent = v + ' best'; else yo.querySelector('b').insertAdjacentHTML('afterend', '<em>' + v + ' best</em>'); } else if (em) em.remove(); }; upd(); [600, 2000, 5000, 10000].forEach((t) => setTimeout(upd, t));
+    const ya = q('#yuAdd'), yp = q('#yuPanel'); if (ya) { ya.textContent = 'Add a character'; ya.title = 'Add your other characters'; hd.append(ya); } if (yp) { yp.classList.add('r340-yup'); hd.append(yp); } }
+  else { const yc = q('.my-you'); if (yc) who.after(yc); } /* (no character picked yet: the You card with its "Which one is you?" stays, under the header) */
+  who.before(hd); who.classList.add('r340-old'); const rb = q('#pgRk'); if (rb) hd.after(rb);
+  // (the raid as bars, beside the raid nights; a boss opened from it shows under both)
+  const raid = q('.my-raid'), pn = q('#pgNights'); if (raid) { const strip = raid.querySelector('.my-strip'), bcs = [...raid.querySelectorAll('.my-bc')], kills = bcs.filter((b) => b.classList.contains('kill')).length;
+    const sub = raid.querySelector('.my-h .sub'); if (sub) sub.textContent = kills + ' of ' + bcs.length + ' killed';
+    bcs.forEach((b) => { if (b.querySelector('.r340-bar')) return; const tg = b.querySelector('.my-tag'), p = b.classList.contains('kill') ? 100 : +(((tg && tg.textContent) || '').match(/([0-9]+)%/) || [0, 0])[1]; b.insertAdjacentHTML('beforeend', '<i class="r340-bar"><i style="width:' + p + '%"></i></i>'); });
+    const slot = raid.querySelector('.my-bxp'); if (pn) { const cols = mk('r340-cols'); raid.before(cols); cols.append(raid, pn); if (slot) cols.after(slot); } else if (slot) raid.after(slot);
+    const nowB = ((q('#pgNow h2') || {}).textContent || '').trim(); if (strip && slot) strip.addEventListener('click', () => setTimeout(() => { const c = slot.querySelector('.pc-card'); if (c) c.classList.toggle('r340-dup', !!nowB && (c.dataset.boss || '') === nowB); }, 0));
+    const c0 = slot && slot.querySelector('.pc-card'); if (c0) c0.classList.toggle('r340-dup', !!nowB && (c0.dataset.boss || '') === nowB); }
+  const hist = q('.my-hist'); if (hist && !hist.children.length) hist.remove(); }
+(function () { const f6 = dsBars; dsBars = function (root) { f6(root); try { r340Home(); } catch (e) { /* (the old layout stays) */ } }; })();
