@@ -11899,6 +11899,31 @@ body:has(#main .my-flow.r340) #bossHead, body:has(#main .my-flow.r340) main#main
 .r344-bar { display: block; flex: 1 1 auto; max-width: 360px; min-width: 40px; height: 5px; margin-left: auto; margin-right: 28px; background: #1f232a; border-radius: 3px; overflow: hidden; }
 .r344-bar > i { display: block; height: 100%; border-radius: 3px; }
 @media (max-width: 600px) { .r344-bar { display: none !important; } .r344-pt { width: 44px; height: 44px; } }
+/* round 348 opened mechanic, layout A: no gold frame, no gap, slim rows, one map beside them */
+html body #view details.phase.phase > summary .prw.prw.prw > .prw-i.on.on:has(+ .ds-dock) { border-radius: 8px 8px 0 0 !important; box-shadow: inset 0 0 0 1px #2a2e36 !important; background: rgba(255, 255, 255, .04) !important; }
+html body #view details.phase.phase > summary .prw.prw.prw > .prw-i.on.on + .ds-dock > .mx-p.mx-p, #view .ds-dock > .mx-p.mx-p.mx-p { border: 1px solid #2a2e36 !important; border-top: 0 !important; border-radius: 0 0 8px 8px !important; background: #101318 !important; box-shadow: none !important; padding: 12px 16px !important; margin: 0 0 10px !important; }
+#view .mx-p.mx-p > .mxa-h.r201 { display: none !important; }
+#view .mx-p.mx-p > .mxa-h:not(.r201) { padding: 0 0 8px !important; margin: 0 0 8px !important; border-bottom: 1px solid #1d2026 !important; }
+#view .mx-p .mx-one-w { margin: 0 !important; }
+#view .mx-p .mx-sum { margin: 0 0 2px !important; font-size: 13.5px !important; line-height: 1.5 !important; }
+#view .mx-p .mx-nx { margin: 2px 0 0 !important; }
+#view .mx-p .mx-lab { margin: 12px 0 4px !important; }
+#view .mx-p .mx-tb .mx-th > span { padding-top: 0 !important; padding-bottom: 4px !important; }
+#view .mx-p .mx-tb .mx-tr > span { padding-top: 6px !important; padding-bottom: 6px !important; min-height: 0 !important; border-top: 1px solid #1d2026 !important; }
+#view .mx-p .mx-tb .mx-tr::before, #view .mx-p .mx-tb .mx-tr > span::before { width: 2px !important; }
+#view .mx-p .mx-tb .mx-tr .mx-m { font-size: 12.5px !important; }
+.r348-g { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 320px); gap: 18px; align-items: start; }
+.r348-l { min-width: 0; }
+.r348-g .mx-tb.mx-hasmap { grid-template-columns: 52px minmax(90px, 170px) minmax(0, 1fr) !important; }
+.r348-g .mx-tb.mx-hasmap .mx-mapc, .r348-g .mx-tb.mx-hasmap .mx-th > span:nth-child(4) { display: none !important; }
+.r348-g .mx-tr { cursor: pointer; } .r348-g .mx-tr:hover > span { background: rgba(255, 255, 255, .025); } .r348-g .mx-tr.r348-on > span { background: none !important; } .r348-g .mx-tr.r348-on .mx-t { color: #e6b450 !important; font-weight: 700; } .r348-g .mx-tr.r348-on .mx-m { color: #e8eaed !important; }
+.r348-m { position: sticky; top: 110px; margin-top: 12px; }
+.r348-mh { color: #aeb6bf; font-size: 12px; font-weight: 600; margin: 0 0 6px; }
+.r348-mb { cursor: zoom-in; border: 1px solid #23262d; border-radius: 8px; overflow: hidden; background: #0b0d11; } .r348-mb:hover { border-color: #e6b450; }
+.r348-mb svg { display: block; width: 100%; height: auto; }
+.r348-mf { color: #868f99; font-size: 11.5px; margin-top: 6px; }
+@media (max-width: 820px) { .r348-g { grid-template-columns: minmax(0, 1fr); } .r348-m { position: static; order: -1; margin: 8px 0 0; } .r348-mf { display: none; } }
+#view .mx-p.mx-big .r348-m { display: none !important; } #view .mx-p.mx-big .r348-g { grid-template-columns: minmax(0, 1fr); }
 
 </style>
 
@@ -21966,6 +21991,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-30', h: [{ t: 'A cleaner banner and one bar for every tab', d: "The banner is now just the boss: its name, the difficulty and the result, with the boss art bigger. Who you're looking at, the pull (or another boss from the night), All pulls, the wipe call and how strictly you're judged all sit in one bar at the top of every tab." }, { t: 'Graphs, redesigned', d: "Names in their own column with slim class-coloured bars, every page laid out the same way with its controls on the card's title line, and the chart now follows the phase, Bloodlust or Power Infusion you pick." }], n: [
+    "An opened mechanic on Debriefing is calmer: no gold frame or empty gap, slim rows, and one map beside them that shows the moment you click (click the map for the big one).",
     "The Coiled Altar mechanics have clearer nicknames: Dreadmarch (Mind Control), Eternal Nightfall (Shield Break), Spiteful Soulcoiler (Adds) and Coalesced Venom (Orb Pops).",
     "Your summary matches Home: the same slim header, your numbers in one quiet line, and your bosses as slim rows in raid order.",
     "Home's boss chart shows the best pull of each night, one dot a night with its result, the raid nights are slim rows beside the raid, and killed bosses are quieter so the one you're on stands out.",
@@ -60840,7 +60866,13 @@ function r344Sum() { const pg = document.querySelector('#main .home.prog.r343');
     s.insertAdjacentHTML('beforeend', o); s.classList.add('nsm-on');
   }
   if (!window.__cmp311t) { window.__cmp311t = 1; document.addEventListener('toggle', function (e) { var d = e.target; if (d && d.classList && d.classList.contains('r292-cmp')) window.__cmp311 = d.open; }, true); document.addEventListener('click', function (e) { var d = document.querySelector('#view details.r292-cmp[open]'); if (d && !d.contains(e.target)) { d.open = false; window.__cmp311 = false; } }, true); } /* round 311 compare toggle */
-  function scan() { /* round 338 overview strip */ [].forEach.call(document.querySelectorAll('#view section.rtl'), function (bx) { if (bx.querySelector('.r338-ov')) return; var body = bx.querySelector('.rtv-body'); if (!body) return; var Y = parseFloat(body.dataset.y) || 0, T0 = parseFloat(body.dataset.t0) || 0; if (!(Y > 0)) return; var dur = Math.max(1, (body.offsetHeight - T0) / Y), tOf = function (px) { return Math.max(0, (px - T0) / Y); }, pc = function (t) { return Math.max(0, Math.min(100, 100 * t / dur)); };
+  function scan() { /* round 348 one map */ [].forEach.call(document.querySelectorAll('#view .mx-p .mx-tb.mx-hasmap:not([data-r348])'), function (tb) { tb.setAttribute('data-r348', '1'); var rows = [].slice.call(tb.querySelectorAll('.mx-tr')).filter(function (r) { return r.querySelector('.mx-mapth svg'); }); if (!rows.length) return;
+    var g = document.createElement('div'); g.className = 'r348-g'; tb.parentNode.insertBefore(g, tb); var lab = g.previousElementSibling, left = document.createElement('div'); left.className = 'r348-l'; if (lab && lab.classList.contains('mx-lab')) left.appendChild(lab); left.appendChild(tb); g.appendChild(left);
+    var mp = document.createElement('div'); mp.className = 'r348-m'; mp.innerHTML = '<div class="r348-mh"></div><div class="r348-mb" role="button" tabindex="0" title="Click for the big map"></div><div class="r348-mf">Click a moment to see its map</div>'; g.appendChild(mp); var mb = mp.querySelector('.r348-mb');
+    var pick = function (r) { rows.forEach(function (x) { x.classList.remove('r348-on'); }); r.classList.add('r348-on'); var th = r.querySelector('.mx-mapth'); mp._th = th; mb.innerHTML = th ? th.innerHTML : ''; var t = (r.querySelector('.mx-t') || {}).textContent || '', w = ((r.querySelector('.mx-who') || {}).textContent || '').trim(); mp.querySelector('.r348-mh').textContent = t + (w ? ' · ' + w : ''); };
+    tb.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('.mx-mapth')) return; var r = e.target.closest && e.target.closest('.mx-tr'); if (r && rows.indexOf(r) >= 0) pick(r); });
+    var big = function () { if (mp._th) mp._th.click(); }; mb.addEventListener('click', big); mb.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); big(); } });
+    pick(rows.filter(function (r) { return r.classList.contains('bad'); })[0] || rows.filter(function (r) { return r.classList.contains('warn'); })[0] || rows[0]); if (rows.length < 2) mp.querySelector('.r348-mf').remove(); }); /* round 338 overview strip */ [].forEach.call(document.querySelectorAll('#view section.rtl'), function (bx) { if (bx.querySelector('.r338-ov')) return; var body = bx.querySelector('.rtv-body'); if (!body) return; var Y = parseFloat(body.dataset.y) || 0, T0 = parseFloat(body.dataset.t0) || 0; if (!(Y > 0)) return; var dur = Math.max(1, (body.offsetHeight - T0) / Y), tOf = function (px) { return Math.max(0, (px - T0) / Y); }, pc = function (t) { return Math.max(0, Math.min(100, 100 * t / dur)); };
     var h = ''; [].forEach.call(body.querySelectorAll('.rtv-band'), function (b) { var t1 = tOf(parseFloat(b.style.top) || 0), t2 = t1 + (parseFloat(b.style.height) || 0) / Y; h += '<i class="r338-b' + (b.classList.contains('ok') ? ' ok' : '') + '" style="left:' + pc(t1).toFixed(2) + '%;width:' + Math.max(0.4, pc(t2) - pc(t1)).toFixed(2) + '%"></i>'; });
     [].forEach.call(body.querySelectorAll('.rtv-c.mk-y'), function (m) { h += '<i class="r338-y" style="left:' + pc(tOf(parseFloat(m.style.top) || 0)).toFixed(2) + '%"></i>'; }); [].forEach.call(body.querySelectorAll('.rtv-c.mk-r'), function (m) { h += '<i class="r338-r" style="left:' + pc(tOf(parseFloat(m.style.top) || 0)).toFixed(2) + '%"></i>'; }); [].forEach.call(body.querySelectorAll('.rtv-death'), function (m) { h += '<i class="r338-d" style="left:' + pc(tOf(parseFloat(m.style.top) || 0)).toFixed(2) + '%" title="Died"></i>'; });
     var mm = function (t) { t = Math.round(t); return Math.floor(t / 60) + ':' + ('0' + (t % 60)).slice(-2); }, ax = ''; for (var k = 0; k <= 4; k++) ax += '<span>' + mm(dur * k / 4) + '</span>';

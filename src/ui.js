@@ -1968,6 +1968,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-30', h: [{ t: 'A cleaner banner and one bar for every tab', d: "The banner is now just the boss: its name, the difficulty and the result, with the boss art bigger. Who you're looking at, the pull (or another boss from the night), All pulls, the wipe call and how strictly you're judged all sit in one bar at the top of every tab." }, { t: 'Graphs, redesigned', d: "Names in their own column with slim class-coloured bars, every page laid out the same way with its controls on the card's title line, and the chart now follows the phase, Bloodlust or Power Infusion you pick." }], n: [
+    "An opened mechanic on Debriefing is calmer: no gold frame or empty gap, slim rows, and one map beside them that shows the moment you click (click the map for the big one).",
     "The Coiled Altar mechanics have clearer nicknames: Dreadmarch (Mind Control), Eternal Nightfall (Shield Break), Spiteful Soulcoiler (Adds) and Coalesced Venom (Orb Pops).",
     "Your summary matches Home: the same slim header, your numbers in one quiet line, and your bosses as slim rows in raid order.",
     "Home's boss chart shows the best pull of each night, one dot a night with its result, the raid nights are slim rows beside the raid, and killed bosses are quieter so the one you're on stands out.",
