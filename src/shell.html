@@ -11986,6 +11986,24 @@ html body #view .dbt-why[data-r357] h2 { white-space: normal !important; }
 html body #view .dbt-why .r357-facts { color: #868f99 !important; font-size: 12.5px !important; margin: 2px 0 8px !important; }
 html body #view .dbt-why .dbt-chr > span:not(.dbt-cht):not(.dbt-ic), html body #view .dbt-why .dbt-addr > span, html body #view .dbt-why .dbt-ln > span:last-child { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }
 html body #view .dbt-why .dbt-lv.r357-cc { color: #e6b450 !important; border-color: rgba(230, 180, 80, .45) !important; background: rgba(230, 180, 80, .08) !important; }
+/* round 358 Debriefing type scale: 11 labels and tags · 12.5 secondary · 14 body and names · 18 headings · 22 big numbers · 40 the boss
+   (bar lists stay 13, like Graphs) · weights 400, 600, 700 */
+html body #bossHead .bh-k, html body #bossHead .r308-df, html body #view .dbt-k.dbt-k, html body #view .dbr-k.dbr-k, html body #view .dbt-c5.dbt-c5, html body #view .dbt-lv.dbt-lv, html body #view .dbt-chp.dbt-chp { font-size: 11px !important; font-weight: 700 !important; }
+html body #view .dbt-cht.dbt-cht, html body #view .dbt-why .r208-sub.r208-sub, html body #view .dbt-why .r357-facts.r357-facts, html body #view details.phase > summary .sub, html body #view .prw-tr, html body #view .pf-k, html body #view .cgl-dt, html body #view .r240-rk, html body #view .pcx-open, html body #view .dbr-s, html body #view .dbt-vt span, html body #view .dbt .sub { font-size: 12.5px !important; }
+html body #view .dbt-why .r208-sub.r208-sub, html body #view .cgl-dt, html body #view details.phase > summary .sub { font-weight: 400 !important; }
+html body #view .dbt-why .dbt-chr > span:not(.dbt-cht):not(.dbt-ic), html body #view .dbt-why .dbt-addr > span, html body #view .dbt-why .dbt-chr > b, html body #view .dbt-why .dbt-addr > b, html body #view .dbt-why .dbt-chip, html body #view .dbt-why .dbt-ln > span:last-child, html body #view .cbl-fix, html body #view .dbn-t, html body #view .dbt-note b { font-size: 14px !important; }
+html body #view .dbt-why .dbt-chr > span:not(.dbt-cht):not(.dbt-ic), html body #view .dbt-why .dbt-addr > span, html body #view .cbl-fix { font-weight: 400 !important; }
+html body #view .prw-n { font-weight: 600 !important; }
+html body #view .dbt-vt button { font-size: 14px !important; font-weight: 700 !important; }
+html body #bossHead .bh-big { font-size: 14px !important; }
+html body #view .dbt-why h2, html body #view .dbt-why h2 .r208-m { font-size: 18px !important; font-weight: 700 !important; }
+html body #view .dbt-why.dbt-why .r208-sub.r208-sub.r357-facts { font-size: 12.5px !important; font-weight: 400 !important; }
+html body #view .cch-al .cgl-dt.cgl-dt, html body #view .r240-rk.r240-rk.dbr-pq { font-size: 12.5px !important; font-weight: 400 !important; }
+html body #view .prw-n .prw-nt.prw-nk.prw-nk { font-weight: 400 !important; }
+html body #bossHead header .bh-big.bh-big.bh-big { font-size: 14px !important; }
+html body #view .cch-al.cch-al .cgl-dt.cgl-dt.cgl-dt { font-size: 12.5px !important; font-weight: 400 !important; }
+html body #view#view .cgl-dt.cgl-dt, html body #view#view .prw-tr.prw-tr { font-size: 12.5px !important; }
+html body #view#view .cgl-dt.cgl-dt { font-weight: 400 !important; }
 
 </style>
 
@@ -12346,7 +12364,7 @@ html body #view .dbt-why .dbt-lv.r357-cc { color: #e6b450 !important; border-col
     s.insertAdjacentHTML('beforeend', o); s.classList.add('nsm-on');
   }
   if (!window.__cmp311t) { window.__cmp311t = 1; document.addEventListener('toggle', function (e) { var d = e.target; if (d && d.classList && d.classList.contains('r292-cmp')) window.__cmp311 = d.open; }, true); document.addEventListener('click', function (e) { var d = document.querySelector('#view details.r292-cmp[open]'); if (d && !d.contains(e.target)) { d.open = false; window.__cmp311 = false; } }, true); } /* round 311 compare toggle */
-  function scan() { /* round 357 why we wiped */ [].forEach.call(document.querySelectorAll('#view .dbt-why:not([data-r357])'), function (w) { var h2 = w.querySelector('h2'); if (!h2 || !h2.querySelector('.r208-m')) return; w.setAttribute('data-r357', '1');
+  function scan() { /* round 358 type fixes */ [].forEach.call(document.querySelectorAll('#view .dbt-why .r357-facts'), function (p) { if (p.style.getPropertyValue('font-size') !== '12.5px') p.style.setProperty('font-size', '12.5px', 'important'); }); [].forEach.call(document.querySelectorAll('#view .dbt-why .dbt-addr'), function (x) { var lv = x.querySelector('.dbt-lv'), sp = x.querySelector(':scope > span:not(.dbt-ic)'); if (lv && !lv.classList.contains('r357-cc') && sp && /to spare/i.test(sp.textContent)) { lv.className = 'dbt-lv r357-cc'; lv.textContent = 'Close call'; } }); /* round 357 why we wiped */ [].forEach.call(document.querySelectorAll('#view .dbt-why:not([data-r357])'), function (w) { var h2 = w.querySelector('h2'); if (!h2 || !h2.querySelector('.r208-m')) return; w.setAttribute('data-r357', '1');
     var T = function (e) { return (e ? e.textContent : '').replace(/\s+/g, ' ').trim(); }, lvOf = function (r) { var m = ((r.querySelector('.dbt-lv') || {}).className || '').match(/\bl(\d)\b/); return m ? +m[1] : 0; }, sOf = function (r) { return r.querySelector(':scope > span:not(.dbt-cht):not(.dbt-ic)'); };
     var N = []; [].forEach.call(document.querySelectorAll('#view [data-phjump][title]'), function (b) { var n = String(b.getAttribute('title') || '').split(':')[0].replace(/\s*\(.*$/, ''); if (n && n.length > 2 && N.indexOf(n) < 0) N.push(n); }); N.sort(function (x, y) { return y.length - x.length; });
     var rows = [].slice.call(w.querySelectorAll('.dbt-chn > .dbt-chr:not(.end)')), end = w.querySelector('.dbt-chn > .dbt-chr.end');
@@ -12356,7 +12374,7 @@ html body #view .dbt-why .dbt-lv.r357-cc { color: #e6b450 !important; border-col
     moved.forEach(function (r) { var bt = document.createElement('button'); bt.type = 'button'; bt.className = 'dbt-addr'; if (r.dataset.jump) bt.dataset.jump = r.dataset.jump; var ic = r.querySelector('.dbt-ic'), b = r.querySelector(':scope > b'), sp = sOf(r), lv = r.querySelector('.dbt-lv'), tm = (T(r.querySelector('.dbt-cht')).match(/\d+:\d\d/) || [''])[0];
       bt.innerHTML = (ic ? ic.outerHTML : '<span class="dbt-ic"></span>') + '<b>' + (b ? b.innerHTML : '') + '</b><span>' + (tm ? tm + ': ' : '') + (sp ? sp.innerHTML : '') + '</span>' + (lv ? lv.outerHTML : ''); add.appendChild(bt); r.remove(); });
     var kept = [].slice.call(w.querySelectorAll('.dbt-chn > .dbt-chr:not(.end)')), kn = kept.map(function (r) { return T(r.querySelector(':scope > b')); });
-    if (add) { var lab = add.querySelector('.dbt-k'); if (lab) lab.textContent = 'Also hurt'; var seen = {}; [].slice.call(add.querySelectorAll(':scope > .dbt-addr')).forEach(function (x) { var n = T(x.querySelector(':scope > b')); if (kn.indexOf(n) >= 0 || seen[n]) { x.remove(); return; } seen[n] = 1; var sp = x.querySelector(':scope > span'), lv = x.querySelector('.dbt-lv'); if (/to spare/i.test(T(sp)) && lv) { lv.className = 'dbt-lv r357-cc'; lv.textContent = 'Close call'; } });
+    if (add) { var lab = add.querySelector('.dbt-k'); if (lab) lab.textContent = 'Also hurt'; var seen = {}; [].slice.call(add.querySelectorAll(':scope > .dbt-addr')).forEach(function (x) { var n = T(x.querySelector(':scope > b')); if (kn.indexOf(n) >= 0 || seen[n]) { x.remove(); return; } seen[n] = 1; var sp = x.querySelector(':scope > span:not(.dbt-ic)'), lv = x.querySelector('.dbt-lv'); if (/to spare/i.test(T(sp)) && lv) { lv.className = 'dbt-lv r357-cc'; lv.textContent = 'Close call'; } });
       var L = [].slice.call(add.querySelectorAll(':scope > .dbt-addr')); L.sort(function (x, y) { var cx = x.querySelector('.r357-cc') ? -1 : lvOf(x), cy = y.querySelector('.r357-cc') ? -1 : lvOf(y); return cy - cx; }).forEach(function (x) { add.appendChild(x); }); if (!L.length) add.remove(); }
     var bh = T(document.querySelector('#bossHead')), hp = (bh.match(/Wipe in [^·]*·\s*(\d+(?:\.\d+)?)%/) || [])[1], phw = (bh.match(/Wipe in (P\d|the intermission|Intermission)/i) || [])[1] || '', et = end ? (T(end.querySelector('.dbt-cht')).match(/\d+:\d\d/) || [''])[0] : '';
     var dn = (T(document.querySelector('#view .dbr-4')).match(/DEATHS\s*(\d+)/i) || [])[1];
