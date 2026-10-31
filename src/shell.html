@@ -12023,6 +12023,19 @@ html body #view .rck .rcx-sh .r362-pr .r362-pt, html body #view .rck .rcx-sh .r3
 html body #view .rck .rcx-sh .r362-pr .r362-pt { justify-content: flex-end; gap: 4px; }
 /* (the design rules: no coloured edge bars; the icon, the count and its bar carry the result colour, the user OKd the icon) */
 html body #view .rck .rcx-sec > .rcx-sh.rcx-sh { border-left: 0 !important; }
+/* round 363 checklist hierarchy (the user: "you cant at a glance tell whats a header compared to whats under it"): the header its own
+   lighter band, the group labels brighter with room above, the rows regular weight and set in, no tinted row backgrounds */
+html body #view .rck .rcx-sec > .rcx-sh.rcx-sh { background: #1a1f27 !important; border-bottom: 1px solid #2c323c !important; }
+html body #view .rck .rcx-sec .rcx-grp.rcx-grp { color: #aeb6bf !important; font-weight: 600 !important; padding-top: 12px !important; padding-bottom: 4px !important; }
+html body #view .rck .rcx-sec .rcx-row.rcx-row { background: none !important; padding-left: 26px !important; }
+html body #view .rck .rcx-sec .rcx-row.rcx-row:hover { background: rgba(255, 255, 255, .03) !important; }
+html body #view .rck .rcx-sec .rcx-row.rcx-row > .l { font-weight: 400 !important; color: #c9cfd6 !important; }
+html body #view .rck .rcx-sec .rcx-row.rcx-row.on { background: rgba(255, 255, 255, .03) !important; }
+/* round 363 (the user: "maybe even slightly more?"): a step further */
+html body #view .rck .rcx-sec > .rcx-sh.rcx-sh.rcx-sh { background: #1d222b !important; border-bottom: 1px solid #30363f !important; padding-top: 13px !important; padding-bottom: 13px !important; }
+html body #view .rck .rcx-sec .rcx-grp.rcx-grp.rcx-grp { color: #dfe3e8 !important; font-weight: 700 !important; padding-top: 16px !important; letter-spacing: .08em !important; }
+html body #view .rck .rcx-sec .rcx-row.rcx-row.rcx-row { padding-left: 34px !important; }
+html body #view .rck .rcx-sec .rcx-row.rcx-row.rcx-row > .l { color: #b8bfc7 !important; }
 
 </style>
 
