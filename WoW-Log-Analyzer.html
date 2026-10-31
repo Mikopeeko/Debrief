@@ -11885,6 +11885,20 @@ body:has(#main .my-flow.r340) #bossHead, body:has(#main .my-flow.r340) main#main
 #main .home.prog.r343 :is(#chpList, .chp-dd) .pn-row .pn-go { all: unset; color: #5a616b; font-size: 14px; }
 @media (max-width: 600px) { #main .home.prog.r343 #chpTiles .pt { padding-right: 16px; margin-right: 16px; } #main .home.prog.r343 :is(#chpList, .chp-dd) .pn-row.pn-row.pn-row { grid-template-columns: 70px minmax(0, 1fr) 44px; } #main .home.prog.r343 :is(#chpList, .chp-dd) .pn-row .pn-go, #main .home.prog.r343 :is(#chpList, .chp-dd) .pn-row .pn-b .sub { display: none; } }
 #main .home.prog.r343 .chp-dd { display: flex !important; flex-direction: column; gap: 0 !important; padding: 4px 0 8px 18px !important; background: none !important; border: 0 !important; }
+/* round 344 Your summary finish: portrait, no repeated numbers, slim filters, parse bars */
+.r343-hd .r343-ch .pg-chs { display: none !important; }
+.r343-hd .r340-id { gap: 10px; align-items: center; }
+.r344-pt { display: block; position: relative; width: 52px; height: 52px; border-radius: 10px; overflow: hidden; border: 1px solid #2c3038; background: #14171c; flex: none; }
+.r344-pt img { display: block; width: 100%; height: 100%; object-fit: cover; }
+#main .home.prog.r343 .chp-fb { gap: 8px !important; align-items: center !important; flex-wrap: wrap; margin-bottom: 8px !important; }
+#main .home.prog.r343 .chp-fb #chpQ { height: 32px !important; min-height: 0 !important; flex: 0 1 280px !important; width: auto !important; font-size: 12.5px !important; padding: 0 10px !important; }
+#main .home.prog.r343 .chp-fb select { height: 32px !important; min-height: 0 !important; font-size: 12.5px !important; padding-top: 0 !important; padding-bottom: 0 !important; width: auto !important; }
+#main .home.prog.r343 .chp-fb #chpR { height: auto !important; padding: 2px !important; } #main .home.prog.r343 .chp-fb #chpR button { padding: 4px 10px !important; min-height: 0 !important; height: auto !important; font-size: 12px !important; }
+#main .home.prog.r343 .chp-tbl .chp-bo { display: flex !important; align-items: center; gap: 14px; min-width: 0; }
+#main .home.prog.r343 .chp-tbl .chp-bo b { flex: none; }
+.r344-bar { display: block; flex: 1 1 auto; max-width: 360px; min-width: 40px; height: 5px; margin-left: auto; margin-right: 28px; background: #1f232a; border-radius: 3px; overflow: hidden; }
+.r344-bar > i { display: block; height: 100%; border-radius: 3px; }
+@media (max-width: 600px) { .r344-bar { display: none !important; } .r344-pt { width: 44px; height: 44px; } }
 
 </style>
 
@@ -60495,6 +60509,16 @@ function r343Sum() { const pg = document.querySelector('#main .home.prog'); if (
   const tbl = q('.chp-tbl'), P = (window.ENGINE && window.ENGINE.PACKS) || []; if (tbl && P.length) { const ord = P.map((p) => p.encounter), rows = [...tbl.querySelectorAll(':scope > button.chp-tr[data-chb]')], ix = (r) => { const i = ord.indexOf(r.dataset.chb); return i < 0 ? 99 : i; };
     rows.sort((a, c) => ix(a) - ix(c)).forEach((r) => tbl.append(r)); } }
 (function () { const f8 = dsBars; dsBars = function (root) { f8(root); try { r343Sum(); } catch (e) { /* (the old look stays) */ } }; })();
+
+// ===== Design studio round 344 (Oct 31): round 344 summary finish. Owner: the Design studio chat. =====
+function r344Sum() { const pg = document.querySelector('#main .home.prog.r343'); if (!pg || pg.classList.contains('r344')) return; pg.classList.add('r344');
+  const hd = pg.querySelector('.r343-hd'), fig = pg.querySelector('.pg-top .lk-fig'), src = fig && fig.getAttribute('src');
+  if (hd && src && /-main(-raw)?\.(png|jpg)/.test(src) && !hd.querySelector('.r344-pt')) { const pt = document.createElement('span'), im = document.createElement('img'); pt.className = 'r344-pt'; im.alt = ''; im.onerror = () => pt.remove(); im.src = src.replace(/-main(-raw)?\.(png|jpg)/, '-avatar.jpg'); pt.append(im); const id = hd.querySelector('.r340-id'); if (id) id.prepend(pt); }
+  /* (the parses come in a moment after the page: each bar follows its number) */
+  const bars = () => { if (!pg.isConnected) return; pg.querySelectorAll('.chp-tbl > button.chp-tr[data-chb]').forEach((r) => { const bo = r.querySelector('.chp-bo'), n = r.querySelector('.chp-pb .chp-n'); if (!bo) return; let br = bo.querySelector('.r344-bar'); if (!br) { bo.insertAdjacentHTML('beforeend', '<i class="r344-bar"><i></i></i>'); br = bo.querySelector('.r344-bar'); }
+    const v = n ? parseFloat(n.textContent) : NaN, fi = br.firstElementChild; fi.style.width = (v >= 0 ? Math.min(100, v) : 0) + '%'; fi.style.background = (n && n.style.color) || '#5a616b'; }); };
+  bars(); [600, 2000, 5000, 10000].forEach((t) => setTimeout(bars, t)); }
+(function () { const f9 = dsBars; dsBars = function (root) { f9(root); try { r344Sum(); } catch (e) { /* (fine as it is) */ } }; })();
 
 </script>
 <script>/* refined look: one corner size (Design studio round 170) */

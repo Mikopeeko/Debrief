@@ -33981,3 +33981,13 @@ function r343Sum() { const pg = document.querySelector('#main .home.prog'); if (
   const tbl = q('.chp-tbl'), P = (window.ENGINE && window.ENGINE.PACKS) || []; if (tbl && P.length) { const ord = P.map((p) => p.encounter), rows = [...tbl.querySelectorAll(':scope > button.chp-tr[data-chb]')], ix = (r) => { const i = ord.indexOf(r.dataset.chb); return i < 0 ? 99 : i; };
     rows.sort((a, c) => ix(a) - ix(c)).forEach((r) => tbl.append(r)); } }
 (function () { const f8 = dsBars; dsBars = function (root) { f8(root); try { r343Sum(); } catch (e) { /* (the old look stays) */ } }; })();
+
+// ===== Design studio round 344 (Oct 31): round 344 summary finish. Owner: the Design studio chat. =====
+function r344Sum() { const pg = document.querySelector('#main .home.prog.r343'); if (!pg || pg.classList.contains('r344')) return; pg.classList.add('r344');
+  const hd = pg.querySelector('.r343-hd'), fig = pg.querySelector('.pg-top .lk-fig'), src = fig && fig.getAttribute('src');
+  if (hd && src && /-main(-raw)?\.(png|jpg)/.test(src) && !hd.querySelector('.r344-pt')) { const pt = document.createElement('span'), im = document.createElement('img'); pt.className = 'r344-pt'; im.alt = ''; im.onerror = () => pt.remove(); im.src = src.replace(/-main(-raw)?\.(png|jpg)/, '-avatar.jpg'); pt.append(im); const id = hd.querySelector('.r340-id'); if (id) id.prepend(pt); }
+  /* (the parses come in a moment after the page: each bar follows its number) */
+  const bars = () => { if (!pg.isConnected) return; pg.querySelectorAll('.chp-tbl > button.chp-tr[data-chb]').forEach((r) => { const bo = r.querySelector('.chp-bo'), n = r.querySelector('.chp-pb .chp-n'); if (!bo) return; let br = bo.querySelector('.r344-bar'); if (!br) { bo.insertAdjacentHTML('beforeend', '<i class="r344-bar"><i></i></i>'); br = bo.querySelector('.r344-bar'); }
+    const v = n ? parseFloat(n.textContent) : NaN, fi = br.firstElementChild; fi.style.width = (v >= 0 ? Math.min(100, v) : 0) + '%'; fi.style.background = (n && n.style.color) || '#5a616b'; }); };
+  bars(); [600, 2000, 5000, 10000].forEach((t) => setTimeout(bars, t)); }
+(function () { const f9 = dsBars; dsBars = function (root) { f9(root); try { r344Sum(); } catch (e) { /* (fine as it is) */ } }; })();
