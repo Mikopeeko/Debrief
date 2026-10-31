@@ -12206,6 +12206,15 @@ html body #view#view .r399-d .r399-v.own { color: #e8605d; }
 html body #view#view .r399-d.r399-m b { color: var(--muted); font-weight: 600; }
 html body #view#view .r399-pm { color: var(--muted); font-weight: 400; font-size: 11px; }
 html body #view#view .prw-i.r399-it .r399-ic { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 4px; background: rgba(232,96,93,.16); color: #e8605d; font-size: 12px; flex: none; }
+/* round 400: each death in the Overview's Deaths row opens its full recap */
+html body #view#view .r399-d { grid-template-columns: 44px 120px minmax(0, 1fr) 110px 14px !important; }
+html body #view#view details.r399-dd > summary.r399-d { list-style: none; cursor: pointer; }
+html body #view#view details.r399-dd > summary.r399-d::-webkit-details-marker { display: none; }
+html body #view#view details.r399-dd > summary .r399-x { color: var(--muted); font-size: 11px; transition: transform .15s; }
+html body #view#view details.r399-dd[open] > summary .r399-x { transform: rotate(90deg); }
+html body #view#view details.r399-dd + details.r399-dd > summary, html body #view#view details.r399-dd + .r399-d { border-top: 1px solid var(--line); }
+html body #view#view .r399-rc { padding: 6px 0 10px 52px; }
+@media (max-width: 699px) { html body #view#view .r399-d { grid-template-columns: 40px minmax(0, 1fr) 96px 14px !important; } html body #view#view .r399-rc { padding-left: 0; } }
 
 </style>
 
