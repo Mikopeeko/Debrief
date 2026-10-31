@@ -6491,6 +6491,8 @@ function* analyzeSteps(item, text, opts) {
         if (!pl && owner && ev === 'SPELL_AURA_APPLIED' && f[11] === 'DEBUFF' && (parseInt(f[6], 16) & 0x40) && PERF_CC.has(f[9].toLowerCase())) { const q = P(owner, pet ? null : sn); if (q.ccL.length < 600) q.ccL.push({ t, spell: f[9], id: num(f[8]), on: dn }); }
         // (a debuff a player, their pet or their totem put on an enemy, e.g. a damage over time: when it went on, per target, for the spec checks' uptimes)
         if (!pl && owner && ev === 'SPELL_AURA_APPLIED' && f[11] === 'DEBUFF') { const q = P(owner, pet ? null : sn); if (!q.dotEv) q.dotEv = []; if (q.dotEv.length < 30000) q.dotEv.push([t, 1, f[9], dg]); }
+        // (a stack added to a debuff a player put on an enemy, e.g. Frost's Freezing: kept with its new count, for the spec checks (Oct 31))
+        if (!pl && owner && ev === 'SPELL_AURA_APPLIED_DOSE' && f[11] === 'DEBUFF') { const q = P(owner, pet ? null : sn); if (!q.dStk) q.dStk = []; if (q.dStk.length < 20000) q.dStk.push([t, stacks, f[9], dg]); }
         // (a buff's extra stack is a proc too, and its top stack: e.g. Infusion of Light at 2 with Inflorescence of the Sunwell)
         if (pl && f[11] === 'BUFF' && isStatBuf(f[9].toLowerCase())) statBuf(P(dg, dn), num(f[8]), f[9], t, ev === 'SPELL_AURA_APPLIED' ? 'a' : 'd', stacks);
         if (pl && f[11] === 'BUFF' && ev === 'SPELL_AURA_APPLIED_DOSE') { const b = buffPre(P(dg, dn), num(f[8]), f[9]); if (b) { b.mx = Math.max(b.mx || 1, stacks); if (!b.dose) b.dose = []; if (b.dose.length < 600) b.dose.push([t, stacks]); if (!b.dn) b.dn = []; if (b.dn.length < 3000) b.dn.push([t, stacks, 1]); } }
@@ -6539,6 +6541,7 @@ function* analyzeSteps(item, text, opts) {
         break;
       case 'SPELL_AURA_REMOVED_DOSE': {
         if (f.length >= 13 && W(f[9], f[8])) modEv.push({ k: 'aura', op: 'rdose', t, dst: dg, spell: f[9], id: num(f[8]), stacks: num(f[12]), src: sg });
+        if (f.length >= 13 && f[11] === 'DEBUFF' && owner && !isPlayer(dg)) { const q = P(owner, pet ? null : sn); if (!q.dStk) q.dStk = []; if (q.dStk.length < 20000) q.dStk.push([t, num(f[12]), f[9], dg]); } /* (stacks taken off it, e.g. a Shatter (Oct 31)) */
         if (f.length < 13 || !isPlayer(dg)) break;
         if (f[11] === 'BUFF' && isStatBuf(f[9].toLowerCase())) statBuf(P(dg, dn), num(f[8]), f[9], t, 'd', num(f[12]));
         if (f[11] === 'BUFF') { const b = buffPre(P(dg, dn), num(f[8]), f[9]); if (b) { if (!b.rd) b.rd = []; if (b.rd.length < 600) b.rd.push(t); if (!b.dn) b.dn = []; if (b.dn.length < 3000) b.dn.push([t, num(f[12]), -1]); } } // (a stack spent)
