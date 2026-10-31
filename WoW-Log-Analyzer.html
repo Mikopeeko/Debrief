@@ -22224,6 +22224,7 @@ const PATCH_NOTES = [
     'Holy Paladin: Beacon of Virtue is only marked as held when it sat ready for 8 seconds or more while 5 or more people were hurt. Holding it before the damage, or for Divine Toll and Aura Mastery, is right. The row is now called Beacon of Virtue uses.',
   ] },
   { d: '2026-10-30', h: [{ t: 'A cleaner banner and one bar for every tab', d: "The banner is now just the boss: its name, the difficulty and the result, with the boss art bigger. Who you're looking at, the pull (or another boss from the night), All pulls, the wipe call and how strictly you're judged all sit in one bar at the top of every tab." }, { t: 'Graphs, redesigned', d: "Names in their own column with slim class-coloured bars, every page laid out the same way with its controls on the card's title line, and the chart now follows the phase, Bloodlust or Power Infusion you pick." }], n: [
+    "On a night with a kill, the Report card shows your real Warcraft Logs parse for Damage or Healing. Nights of wipes compare you with the top players of your spec instead.",
     "Each Rotation checklist card has a clearer header: an icon and a short progress bar in its result's colour, and the group labels inside it are dividers.",
     "Why we wiped, How it went: deaths to the same hit are one line (\"3 died to the same Venom Rupture\"), with why in a few words, the mechanic's icon, and the wipe call says what ended the pull.",
     "Every page uses the same text sizes and weights now, so labels, lists, names and headings read the same on each tab.",
@@ -45991,7 +45992,7 @@ function parsesFor(r, kind) {
   const k = r.item.wcl.code + ':' + r.item.wcl.fight + ':' + kind;
   if (PARSES.has(k)) { const v = PARSES.get(k); return v instanceof Map ? v : null; }
   PARSES.set(k, 'loading');
-  WCL.loadRankings(S.wclCreds, r.item, kind === 'heal' ? 'hps' : 'dps').then((m) => { PARSES.set(k, m); if (PF_TAB(S.tab) && S.rep === r && S.scope !== 'all' && (S.tab === 'rot' || S.perfKind === kind || S.gbTab === kind)) perf(); /* round 293: Graphs' own tab too */ else if (S.tab === 'cmp' && S.rep === r) cmp(); })
+  WCL.loadRankings(S.wclCreds, r.item, kind === 'heal' ? 'hps' : 'dps').then((m) => { PARSES.set(k, m); if (PF_TAB(S.tab) && S.rep === r && S.scope !== 'all' && (S.tab === 'rot' || S.perfKind === kind || S.gbTab === kind)) perf(); /* round 293: Graphs' own tab too */ else if (S.tab === 'cmp' && S.rep === r) cmp(); else if (S.tab === 'player' && S.plData && S.plData._rn) { delete S.plData._rn; renderMain(); } /* (round 377: the Report card shows the parse) */ })
     .catch((e) => { console.warn('Parses:', e && e.message); PARSES.set(k, new Map()); });
   return null;
 }
@@ -49151,6 +49152,10 @@ function rqcOf(c, F, a) {
   /* round 376 perf vs top players */ const top376 = (() => { const sp = p.specId && E.SPECS && E.SPECS[p.specId]; if (!sp) return null; const cl = E.CLASSES[sp[1]], spec = sp[0] + ' ' + (cl ? cl[0] : ''); let sum = 0, nn = 0;
     for (const g of a.per) { const it = g.r && g.r.item; if (!it) continue; const T = (SPEC_TOP[spec] || {})[it.boss + '|' + it.diffId], op = T && +T.outP; if (!op) continue; const x = perfContext(g.r).per.get(g.p.name), v = x && x.tot > 0 ? x.ps : null; if (v == null) continue; sum += v / op; nn++; }
     return nn ? { f: sum / nn, n: nn } : null; })();
+  /* round 377 real parse */ const par377 = (() => { const me = String(p.name).split('-')[0]; let sum = 0, nn = 0;
+    for (const g of a.per) { if (!g.r || !g.r.item || !g.r.item.kill) continue; const m = parsesFor(g.r, role === 'healer' ? 'heal' : 'dps'), v = m && (m.get(p.name) || m.get(me)); if (v && v.pct != null) { sum += +v.pct; nn++; } }
+    return nn ? { pct: Math.round(sum / nn), n: nn } : null; })();
+  if (par377) { add('perf', par377.pct >= 50 ? 'ok' : par377.pct >= 25 ? 'w' : 'bad', role === 'healer' ? 'Healing' : 'Damage', 'a parse of 50 or more on the kill', par377.pct + ' parse', 'Your Warcraft Logs parse on the kill' + (par377.n > 1 ? ' (' + par377.n + ' kills, averaged)' : '') + '. Wipes have no parses.').f = par377.pct / 100; } else
   if (top376) { const sh = Math.round(100 * top376.f); add('perf', sh >= 85 ? 'ok' : sh >= 70 ? 'w' : 'bad', role === 'healer' ? 'Healing' : 'Damage', '85% of top players of your spec on this boss', sh + '% of top players', 'Against the middle of the top 100 Warcraft Logs parses for your spec on this boss, pull by pull' + (top376.n > 1 ? ' (' + top376.n + ' pulls, averaged)' : '')).f = Math.min(1, top376.f); } else
   if (pf.out != null && mates.length) { const best = F.pl.get(mates[0].p.name).out, sh = best ? 100 * pf.out / best : 100, r = mates.indexOf(a) + 1, RN = { tank: 'tanks', healer: 'healers', dps: 'damage dealers' }[role];
     add('perf', sh >= 85 ? 'ok' : sh >= 70 ? 'w' : 'bad', role === 'healer' ? 'Healing' : 'Damage', '85% of the best ' + RN.replace(/s$/, '') + ' tonight', '#' + r + ' of ' + mates.length + ' ' + RN + ' · ' + Math.round(sh) + '%').f = Math.min(1, sh / 100); }
