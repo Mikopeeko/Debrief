@@ -11966,6 +11966,13 @@ html body #view .rck .rcx-row.rcx-row { grid-template-columns: 7px 18px minmax(0
 html body #view .rck .rcx-row.rcx-row > .v { padding-left: 16px; }
 html body #view .rck .rcx-open .r353-s { margin: 0 0 6px !important; font-size: 13px; line-height: 1.5; color: #e8eaed; }
 html body #view .rck .rcx-open .r353-s b { color: #e8eaed; }
+/* round 354 Rotation checklist layout A: each section a card, the cards in two columns (one on a narrow screen) */
+@media (min-width: 1000px) {
+  html body #view .rck .rcx { columns: 2; column-gap: 14px; }
+  html body #view .rck .rcx > .rcx-strip { column-span: all; margin-bottom: 14px; }
+  html body #view .rck .rcx > .rcx-sec { break-inside: avoid; display: inline-block; width: 100%; vertical-align: top; margin: 0 0 14px !important; }
+}
+html body #view .rck .rcx > .rcx-sec .rcx-row.rcx-row { padding-top: 6px !important; padding-bottom: 6px !important; }
 
 </style>
 
@@ -22036,7 +22043,7 @@ const PATCH_NOTES = [
     'Holy Paladin: Beacon of Virtue is only marked as held when it sat ready for 8 seconds or more while 5 or more people were hurt. Holding it before the damage, or for Divine Toll and Aura Mastery, is right. The row is now called Beacon of Virtue uses.',
   ] },
   { d: '2026-10-30', h: [{ t: 'A cleaner banner and one bar for every tab', d: "The banner is now just the boss: its name, the difficulty and the result, with the boss art bigger. Who you're looking at, the pull (or another boss from the night), All pulls, the wipe call and how strictly you're judged all sit in one bar at the top of every tab." }, { t: 'Graphs, redesigned', d: "Names in their own column with slim class-coloured bars, every page laid out the same way with its controls on the card's title line, and the chart now follows the phase, Bloodlust or Power Infusion you pick." }], n: [
-    "The Rotation checklist is shorter: each check is its name and result, and its sentence shows once, when you open it.",
+    "The Rotation checklist is shorter: each check is its name and result, its sentence shows once when you open it, and its sections sit side by side in two columns on a wide screen.",
     "The top of the Rotation timeline is one tidy block: the numbers and Spotlight mistakes in one row, the whole fight under them (bigger, with its own colour key), then What to fix beside the key, which always shows.",
     "An opened mechanic on Debriefing is calmer: no gold frame or empty gap, slim rows, and one map beside them that shows the moment you click (click the map for the big one).",
     "The Coiled Altar mechanics have clearer nicknames: Dreadmarch (Mind Control), Eternal Nightfall (Shield Break), Spiteful Soulcoiler (Adds) and Coalesced Venom (Orb Pops).",
