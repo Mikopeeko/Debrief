@@ -696,7 +696,7 @@ const MODULES = [{
   spells: Object.keys(CA_IDS).concat(['noxious ground', 'defiled ground', 'volatile venom', 'toxic deluge', 'bloodlust', 'heroism', 'time warp', 'fury of the aspects', 'primal rage', "harrier's cry", 'darkness', 'spirit link totem', 'anti-magic zone', 'rallying cry', 'power word: barrier', 'aura mastery', 'tranquility', 'revival', 'rewind', 'divine hymn', 'vampiric embrace',
     'divine shield', 'ice block', 'aspect of the turtle', 'cloak of shadows', 'anti-magic shell', 'netherwalk', 'dispersion', 'blessing of spellwarding', 'blessing of protection', 'blessing of sacrifice', 'pain suppression', 'guardian spirit', 'ironbark', 'life cocoon', 'time dilation', 'zephyr', 'dreadful presence', 'retaliatory malice'], PERSONAL, CA_CC, CA_CURSE),
   focus: new Set(["Zul'jan", 'Hex Lord Malacrass', 'Malacrass']),
-  ids: [1286912], // the Eternal Nightfall absorb shield (its own aura, separate from the cast's 1310752)
+  ids: [1286912, 1285911], // (1285911: Unnerving Fixation, the ghost's fixate: whose ghost it is (round 411e)) the Eternal Nightfall absorb shield (its own aura, separate from the cast's 1310752)
   priority: ['Spiteful Soulcoiler'], // (the adds that have to die: the Performance tab's priority damage and switch speed)
   build: buildCoiledAltar,
 }, {
@@ -3264,7 +3264,9 @@ const HOW = {
     soakq: 'Zul\'jan marks a player and drops an axe on them. Everyone inside the 9-yard circle splits the damage. On Mythic it needs at least 5 players (3 on Heroic and Normal), so over-send. In phase 1 the first soak is 5 to 8 players with personals, and the second is the immunities and both tanks. In phase 3 each axe needs at least 5, free of the debuff. The row shows who was in, what each had up, the target and the corner.',
     tankfront: 'The boss frontals leave a debuff on the tank. In P1 the tanks taunt-swap so every Sever lands on a fresh tank. In P2 one tank takes every Soul Sever: a defensive on the first stack, a big defensive and an external on the second, and the stacks drop before a third. Red: a tank died to it or took a third stack. Amber: a second stack with no external, immunity or second defensive, or a missed swap in P1.',
     shield: 'Every second set of adds is followed by Eternal Nightfall: Malacrass shields himself while casting it. This is the damage check of P2 and P3: assign cooldowns and pool damage for every shield. The cast can only be kicked once the shield is gone, so it takes two steps. Break the shield, then kick Malacrass before the 17s cast finishes. Give every shield a kicker and a backup. Broken shows how far into the cast the shield came off and how much time was left to kick.',
-    dmghost: 'Dreadmarch mind controls a few players, who walk to the edge and jump off unless their absorb shield is broken in time. Targets stack on the raid\'s Dreadmarch marker and press a macro that cancels their own shields and speed buffs. Stuns and grips stop them walking. When the mind control breaks, stand still: your ghost spawns where you are a moment later, so the ghosts start in one clump. On Mythic only you can see your ghost (an interrupted Wail reveals them all briefly). Two ghosts touching hits both players hard (Malevolent Resonance). The boss tank aims Soul Sever to hit as many ghosts as possible; a ghost it misses is walked back for the next one, and staring at your ghost at the end of P2 makes it disappear at the transition. (Maps show ghosts where they spawned; the log has no later positions for them.)',
+    dmghost: 'Dreadmarch mind controls a few players, who walk to the edge and jump off unless their absorb shield is broken in time. Targets stack on the raid\'s Dreadmarch marker and press a macro that cancels their own shields and speed buffs. Stuns and grips stop them walking. When the mind control breaks, stand still: your ghost spawns where you are a moment later, so the ghosts start in one clump.',
+    ghosts: 'Each freed player gets a ghost that follows them and only moves while they aren\'t looking at it, so stare at yours. On Mythic only you can see your ghost (an interrupted Wail reveals them all briefly). Two ghosts touching hits both players hard (Malevolent Resonance), and a ghost that reaches its player mind controls them again. Staring at your ghost at the end of P2 makes it disappear at the transition. (Maps show ghosts where they spawned; the log has no later positions for them.)',
+    soulsever: 'The boss tank aims Soul Sever, the P2 frontal, to hit as many ghosts as possible: every ghost it hits is destroyed. A ghost it misses is walked back for the next one. Players hit by it get Gravebound and must pick up their soul fragments.',
     addsets: 'Spiritcackle summons two Spiteful Soulcoilers that cast Wail of Terror, a raid-wide fear that must be interrupted. They jump after each kick and become immune to kicks at full energy. Kick as soon as the Gloombomb cast starts, so the add stays put for the Gloombomb overlap and there is time for the next kick. The melee add\'s second kick should be a melee player. Kill both adds before the next set spawns: on Mythic each add hits the raid with Retaliatory Malice every 3 seconds for as long as it lives. (Their Spirit Shields and the Gloombombs are in the Gloombombs panel.)',
     gloom: 'On Mythic each Spiteful Soulcoiler spawns with Spirit Shield (99% damage reduction, 2 stacks). Malacrass puts Gloombomb on two melee and two ranged players; 5 seconds later each one explodes in a 15-yard circle, and every Soulcoiler inside loses a stack. Each pair overlaps its circles on its own add (melee on the unmarked melee add, ranged on the marked ranged add), so both shields break. A bomb that misses, or lands on a leftover add from an earlier set, leaves this set\'s shield up. Everyone else stays out of the circles.',
     inter: 'Malacrass channels Soulbinding: Zul\'jan takes double damage, so use Bloodlust and burn him. Fragments of Malacrass rush toward Zul\'jan and heal him for about 10% if they reach him, which is close to a wipe. Players block them, but every block gives the whole raid a Spirit Erasure stack (more damage taken), so soak in rounds: 3 to 5 stacks, let them drop, repeat; near the end stack raid cooldowns in the middle and go up to 7 to 10. Spread soakers around the room, including the inner ring. Zul\'jan under 35% when it ends is on pace for the kill.',
@@ -4472,40 +4474,63 @@ function buildCoiledAltar(ev, r, h) {
   }
   const gSec = sections.find((s) => s.id === 'ghosts'); if (gSec && gSec.rows.length) gSec.cols = gSec.cols.concat(['']);
   // ghost collisions also show the ghosts that were out in the 15s before
-  for (const s of sections) if (s.id === 'ghosts') for (const row of s.rows) for (const c of row) if (c.map) c.map.from = c.map.t - 15;
+  /* round 411c ghosts of the Dreadmarch */ const dmFrom = (t) => { const c = dm.filter((x) => x <= t).pop(); return c == null ? t - 15 : c; }; for (const s of sections) if (s.id === 'ghosts') for (const row of s.rows) for (const c of row) if (c.map) c.map.from = dmFrom(c.map.t);
 
   // ---- keep each mechanic's checks together: one panel per mechanic, grouped by its cycle ----
   const take = (id) => { const i = sections.findIndex((s) => s.id === id); return i >= 0 ? sections.splice(i, 1)[0] : null; };
   const worst = (secs) => secs.some((x) => x && x.verdict === 'bad') ? 'bad' : secs.some((x) => x && x.verdict === 'warn') ? 'warn' : 'good';
   const isBad = (row) => row.some((c) => c.bad);
-  // Dreadmarch and ghosts: targets and ghost spawns, ghost collisions, mind-control falls and Soul Sever, per Dreadmarch
+  // Dreadmarch in three panels (round 411 dreadmarch split): the mind controls, the ghosts and Soul Sever, each grouped per Dreadmarch
   {
     const sDm = take('dmstack'), sGh = take('ghosts'), sMc = take('mc'), sSs = take('soulsever');
-    const items = [];
-    // (the targets go in each set's header; the stacking check stays in Mistakes by player)
-    for (const r0 of (sGh ? sGh.rows : [])) items.push({ t: r0[0].t, row: [{ txt: 'Ghost collision', bad: true }, { t: r0[0].t }, { ps: r0[1].ps }, { txt: 'ghosts touched (Malevolent Resonance), ' + h.compact(r0[2].n) + ' damage', bad: true }, r0[3] || { txt: '' }] });
-    for (const r0 of (sMc ? sMc.rows : [])) items.push({ t: r0[0].t, row: [{ txt: 'Mind control fall', bad: true }, { t: r0[0].t }, { p: r0[1].p }, { txt: 'died, ' + r0[3].txt, bad: true }, r0[4]] });
-    // (Gravebound deaths (Oct 21): a player hit by Soul Sever or a Gloombomb who didn't pick up their soul fragments, up to 30 s after the last Dreadmarch)
-    /* (round 355 gravebound: these deaths go to Gloombomb or Sever, below) */ if (0) { const lastDm = dm.length ? dm[dm.length - 1] + 30 : -1; for (const d of r.deaths || []) if (/^gravebound$/i.test(String(d.ability || '')) && d.t <= lastDm) items.push({ t: d.t, row: [{ txt: 'Gravebound death', bad: true }, { t: d.t }, { p: d.player }, { txt: 'missed their soul fragments and died', bad: true }, { txt: '' }] }); }
-    for (const r0 of (sSs ? sSs.rows : [])) items.push({ t: r0[0].t, row: [{ txt: 'Soul Sever' }, { t: r0[0].t }, { txt: r0[3].txt + ' of ' + r0[2].txt + ' ghosts removed' }, { txt: r0[4].txt + ' missed', dim: true }, r0[5]] }); /* (a missed ghost is walked back for the next frontal (Oct 21): not a mistake) */
-    if (dm.length || items.length) {
+    const perDm = (items, clean) => {
       const groups = dm.map((t, i) => ({ title: 'Dreadmarch #' + (i + 1), t, from: t - 1, to: (dm[i + 1] ?? dur + 1) - 1, rows: [], tg: sDm && sDm.rows[i] ? sDm.rows[i][1].ps : [] }));
       const other = { title: 'Other', t: 0, rows: [] };
-      for (const it of items.sort((a, b) => a.t - b.t)) (groups.find((g) => it.t >= g.from && it.t < g.to) || other).rows.push(it.row);
+      for (const it of items.slice().sort((a, b) => a.t - b.t)) (groups.find((g) => it.t >= g.from && it.t < g.to) || other).rows.push(it.row);
       if (other.rows.length) groups.push(other);
-      for (const g of groups) {
-        const nBad = g.rows.filter(isBad).length, nColl = g.rows.filter((r0) => r0[0].txt === 'Ghost collision').length;
-        g.bad = nBad > 0;
-        // always say whether ghosts collided, even when nothing else happened
-        g.sub = (g.tg && g.tg.length ? 'targets ' + g.tg.join(', ') + ' · ' : '') + (nColl ? pl(nColl, 'ghost collision') : 'no ghost collisions') + (nBad - nColl > 0 ? ' · ' + pl(nBad - nColl, 'other problem') : '');
-        // crowd control on the mind-controlled players (amber when none landed)
-        const di = dm.indexOf(g.t);
+      for (const g of groups) { g.bad = g.rows.some(isBad); g.n = g.rows.filter(isBad).length; if (!g.rows.length) g.rows.push([{ txt: 'Clean', dim: true }, { t: g.t }, { txt: '' }, { txt: clean, dim: true }, { txt: '' }]); }
+      return groups.filter((g) => g.rows.length);
+    };
+    // 1) the mind controls: who was targeted, the CC on them, and anyone walked off the edge
+    const mcItems = (sMc ? sMc.rows : []).map((r0) => ({ t: r0[0].t, row: [{ txt: 'Mind control fall', bad: true }, { t: r0[0].t }, { p: r0[1].p }, { txt: 'died, ' + r0[3].txt, bad: true }, r0[4]] }));
+    if (dm.length || mcItems.length) {
+      const groups = perDm(mcItems, 'no one fell');
+      for (const g of groups) { const di = dm.indexOf(g.t); g.sub = g.tg && g.tg.length ? 'targets ' + g.tg.join(', ') : '';
         if (di >= 0 && g.tg && g.tg.length) { const cc = dmCC[di] || []; g.sub += ' · ' + (cc.length ? 'CC: ' + cc.join(', ') : 'no CC on the targets'); } /* (no CC isn't a mistake (Oct 21): the cancel macro stops the walk) */
-        if (!g.rows.length) g.rows.push([{ txt: 'Clean', dim: true }, { t: g.t }, { txt: '' }, { txt: 'no collisions, falls or missed ghosts', dim: true }, { txt: '' }]);
-      }
-      sections.push({ id: 'dmghost', title: 'Dreadmarch (Stack, then stand still)', place: 'Dreadmarch (mind control): ghosts and falls', spell: S('dreadmarch'), verdict: items.some((x) => x.row[0].bad) ? 'bad' : 'good', /* (Oct 21: falls, ghost collisions and Gravebound deaths only) */
-        summary: 'It shows each Dreadmarch from start to finish: who was targeted and whether they stacked on the marker, where the ghosts spawned, ghosts touching, players mind controlled off the edge, and whether Soul Sever cleaned the ghosts up. Every row has its map.',
-        cols: ['What', 'When', 'Who', 'Result', ''], rows: [], groups: groups.filter((g) => g.rows.length) });
+        if (g.n) g.sub += (g.sub ? ' · ' : '') + pl(g.n, 'fall'); }
+      sections.push({ id: 'dmghost', title: 'Dreadmarch (Break your shield)', place: 'Dreadmarch: the mind controls', spell: S('dreadmarch'), verdict: mcItems.length ? 'bad' : 'good',
+        summary: 'It shows each Dreadmarch: who was mind controlled, the crowd control that landed on them, and anyone who walked off the edge. Every row has its map.',
+        cols: ['What', 'When', 'Who', 'Result', ''], rows: [], groups });
+    }
+    // 2) the ghosts: two ghosts touching (Malevolent Resonance), or a ghost reaching the player it follows. The log shows that as the
+    // player mind controlled again: a Dreadmarch debuff with no Dreadmarch cast just before it
+    const ghItems = (sGh ? sGh.rows : []).map((r0) => ({ t: r0[0].t, row: [{ txt: 'Ghost collision', bad: true }, { t: r0[0].t }, { ps: r0[1].ps }, { txt: 'ghosts touched (Malevolent Resonance), ' + h.compact(r0[2].n) + ' damage', bad: true }, r0[3] || { txt: '' }] }));
+    const reach = [];
+    for (const e of auras('dreadmarch')) {
+      if (e.op !== 'apply' || !h.isPlayer(e.dst) || dm.some((t) => e.t >= t - 1 && e.t <= t + 4) || !dm.some((t) => t < e.t)) continue;
+      if (reach.some((x) => x.g === e.dst && Math.abs(x.t - e.t) < 3)) continue;
+      reach.push({ t: e.t, g: e.dst });
+    }
+    for (const x of reach) {
+      M(x.t, pname(x.g), 'dreadmarch', 'Medium', 'Their ghost reached them and mind controlled them again.', 'Your ghost only moves while you aren\'t looking at it. Turn to face it as soon as it spawns and keep it in view.');
+      ghItems.push({ t: x.t, row: [{ txt: 'Ghost reached its player', bad: true }, { t: x.t }, { p: pname(x.g) }, { txt: 'mind controlled again', bad: true }, { map: { t: x.t, from: dmFrom(x.t), hl: [x.g], bad: [x.g], badLabel: 'their ghost reached them', title: pname(x.g) + '\'s ghost reached them at ' + h.fmtT(x.t) } }] });
+    }
+    if (dm.length && ghItems.length + (sGh ? 1 : 0) + reach.length) {
+      const groups = perDm(ghItems, 'no ghosts touched or reached anyone');
+      for (const g of groups) { const nC = g.rows.filter((r0) => r0[0].txt === 'Ghost collision').length, nR = g.rows.filter((r0) => r0[0].txt === 'Ghost reached its player').length;
+        g.sub = (nC ? pl(nC, 'ghost collision') : 'no ghost collisions') + (nR ? ' · ' + pl(nR, 'ghost') + ' reached ' + (nR === 1 ? 'its player' : 'their players') : ''); }
+      sections.push({ id: 'ghosts', title: 'Ghosts (Stare at yours)', place: 'Dreadmarch: the ghosts', spell: S('dreadmarch'), verdict: ghItems.length ? 'bad' : 'good',
+        summary: 'Each freed player gets a ghost that follows them and only moves while they aren\'t looking at it. It shows ghosts touching another ghost (Malevolent Resonance) and ghosts that reached their player and mind controlled them again. Maps show the ghosts where they spawned; the log has no later positions for them.',
+        cols: ['What', 'When', 'Who', 'Result', ''], rows: [], groups });
+    }
+    // 3) Soul Sever: the tank frontal destroys the ghosts it hits (a missed ghost is walked back for the next frontal (Oct 21): not a mistake)
+    const ssItems = (sSs ? sSs.rows : []).map((r0) => ({ t: r0[0].t, row: [{ txt: 'Soul Sever' }, { t: r0[0].t }, { txt: r0[3].txt + ' of ' + r0[2].txt + ' ghosts removed' }, { txt: r0[4].txt + ' missed', dim: true }, r0[5]] }));
+    if (ssItems.length) {
+      const groups = perDm(ssItems, 'no Soul Sever in this Dreadmarch');
+      for (const g of groups) { const rm = g.rows.filter((r0) => r0[0].txt === 'Soul Sever'); let a = 0, b = 0; for (const r0 of rm) { const m = String(r0[2].txt).match(/^(\d+) of (\d+)/); if (m) { a += +m[1]; b = Math.max(b, +m[2]); } }
+        g.sub = rm.length ? pl(rm.length, 'Soul Sever') + ' · ' + a + ' ghost' + (a === 1 ? '' : 's') + ' removed' : 'no Soul Sever'; }
+      sections.push({ id: 'soulsever', title: 'Soul Sever (Hit the ghosts)', place: 'Soul Sever: ghosts in the frontal', spell: S('soul sever'), verdict: 'good',
+        summary: sSs ? sSs.summary : '', cols: ['What', 'When', 'Ghosts', 'Missed', ''], rows: [], groups });
     }
   }
   // Tank frontals that hit non-tanks: shown on the frontal's own row (Sever / Blighted Sever under Orbs and
@@ -6700,10 +6725,15 @@ function* analyzeSteps(item, text, opts) {
       const kind = pl ? 'player' : (mod && mod.focus.has(nm)) || r.bossUnits.includes(nm) ? 'boss' : ex.has(u.guid) || named.has(nm) ? 'add' : null;
       if (kind) units.push({ u, guid: u.guid, name: pl ? pl.name : nm, kind });
     }
+    /* round 411e ghost frames: a ghost glides between the spots the log has for it, from its spawn until it dies (or 20 s after it was last placed) */
+    const isGh = (x) => /^manifestation of dread$/i.test(x.name), ghAt = (x, t) => { const a = x.u.pts; if (!a.length || t < a[0][0] - 0.3) return null; const end = deadAt.has(x.guid) ? deadAt.get(x.guid) : a[a.length - 1][0] + 20; if (t > end) return null;
+      let lo = 0; while (lo < a.length - 1 && a[lo + 1][0] <= t) lo++; const p = a[lo], q = a[lo + 1]; if (p[0] <= t && q) { const f = (t - p[0]) / (q[0] - p[0] || 1); return [p[1] + (q[1] - p[1]) * f, p[2] + (q[2] - p[2]) * f]; } return [p[1], p[2]]; };
+    if (!framesAt._own) { framesAt._own = new Map(); for (const e of modEv) if ((e.id === 1285911 || /^unnerving fixation$/i.test(String(e.spell || ''))) && e.src && e.dst && r.players.get(e.dst)) framesAt._own.set(e.src, e.dst); }
+    const own = framesAt._own;
     const out = [];
     for (let t = t0; t <= t1 + 1e-6; t += step) {
       const pts = [];
-      for (const x of units) { if (deadAt.has(x.guid) && deadAt.get(x.guid) < t) continue; const p = posAt(x.u, t); if (p) pts.push({ guid: x.guid, name: x.name, x: +p[0].toFixed(2), y: +p[1].toFixed(2), kind: x.kind }); }
+      for (const x of units) { if (deadAt.has(x.guid) && deadAt.get(x.guid) < t) continue; const gh = isGh(x), p = gh ? ghAt(x, t) : posAt(x.u, t); if (p) pts.push(Object.assign({ guid: x.guid, name: x.name, x: +p[0].toFixed(2), y: +p[1].toFixed(2), kind: x.kind }, gh && own.has(x.guid) ? { owner: own.get(x.guid) } : {})); }
       out.push({ t: +t.toFixed(2), pts });
     }
     return out;
