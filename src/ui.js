@@ -1987,6 +1987,7 @@ const PATCH_NOTES = [
     "The Pull drop-down shows each pull in its progress colour, like the pull chart did.",
     "The page background is plain dark, without the grid."
   ], f: [
+    "The browser's Back button: Back from your summary returns to your team's Home.",
     "A raid night on Home opens the boss it's named after, not the night's first pull.",
     "Home no longer shows the boss banner and pull bar of a log you have open.",
     "The banner on a first kill is no longer dimmed.",
@@ -30185,7 +30186,7 @@ const navSel = () => (S.tab === 'rot' ? S.specSel : S.tab === 'player' ? S.rcbSe
 // (and back: a link's or a step's player goes onto its tab)
 function navApplySel(tab, p) { if (tab === 'hw') tab = 'player'; /* (old Homework links (Oct 22)) */ if (!p) return; if (tab === 'rot') S.specSel = p; else if (tab === 'player') S.rcbSel = p; else if (tab === 'hw') S.hwSel = p; else if (tab === 'audit') setOneP(p); }
 function navState() {
-  if (S.page === 'pull' && S.item) { const it = S.item; return { nav: 1, v: 'p', code: it.wcl ? it.wcl.code : null, fight: it.wcl ? it.wcl.fight : null, bi: S.index && S.index.bosses ? S.index.bosses.indexOf(it) : -1, ...shrNav(it), tab: S.tab, scope: S.scope || 'pull', sel: navSel() }; }
+  if (S.page === 'pull' && S.item) { const it = S.item; return { nav: 1, v: 'p', code: it.wcl ? it.wcl.code : null, fight: it.wcl ? it.wcl.fight : null, bi: S.index && S.index.bosses ? S.index.bosses.indexOf(it) : -1, ...shrNav(it), tab: S.tab, scope: S.scope || 'pull', sel: navSel(), ...(S.tab === 'me' && S.progMine ? { mine: 1, g: S.progView } : {}) /* (round 342 summary back) */ }; }
   if (S.page === 'prog') return { nav: 1, v: 'g', g: S.progView == null ? null : S.progView, mine: S.progMine ? 1 : 0 }; // (mine: your own page, not your team's)
   if (S.page === 'home') return { nav: 1, v: 'h' };
   if (S.page === 'guides') return { nav: 1, v: 'gd', b: S.gdzBoss || null, d: S.gdzDiff || null };
@@ -30218,7 +30219,7 @@ async function navGo(st) {
     else if (st.night && !st.own) { if (!S.shr || S.shr.id !== st.night) await openShared(st.night, { quiet: true }); b = S.index && S.index.bosses ? S.index.bosses.find((x) => x.shr && x.shr.n === st.sn) : null; } /* (a shared night (Oct 21); your own night, shared, reloads as before) */
     else if (S.index && S.index.bosses && st.bi >= 0) b = S.index.bosses[st.bi];
     if (!b) { home(); return; }
-    S.tab = st.tab || S.tab; S.scope = st.scope || 'pull'; navApplySel(S.tab, st.sel);
+    S.tab = st.tab || S.tab; S.scope = st.scope || 'pull'; navApplySel(S.tab, st.sel); if (S.tab === 'me') { S.progMine = !!st.mine; if (st.mine && st.g != null) S.progView = st.g; }
     if (S.item !== b || !S.rep) await select(b); else renderMain();
   }
   window.scrollTo(0, 0);
@@ -31994,9 +31995,9 @@ function renderProgress(msg, msgErr) {
   if ($('#pnMore')) $('#pnMore').onclick = () => { S.pnAll = !S.pnAll; renderProgress(); };
   if ($('#pgRkT')) $('#pgRkT').onclick = () => { S.pgRkOpen = !S.pgRkOpen; const bx = $('#pgRk'), t = $('#pgRkT'); if (bx) bx.hidden = !S.pgRkOpen; t.setAttribute('aria-expanded', String(S.pgRkOpen)); t.textContent = 'All rankings ' + (S.pgRkOpen ? '▴' : '▾'); };
   if ($('#pgLiveGo')) $('#pgLiveGo').onclick = liveFollow;
-  if ($('#pgMine')) $('#pgMine').onclick = () => { S.progMine = true; S.progView = you.gid; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); window.scrollTo(0, 0); };
+  if ($('#pgMine')) $('#pgMine').onclick = () => { S.progMine = true; S.progView = you.gid; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); navNote(); window.scrollTo(0, 0); };
   ROOT.querySelectorAll('[data-mesw]').forEach((b) => (b.onclick = () => meSwitch(b.dataset.mesw)));
-  if ($('#pgTeamBack')) $('#pgTeamBack').onclick = () => { S.progMine = false; S.progView = mineOf.gid; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); window.scrollTo(0, 0); };
+  if ($('#pgTeamBack')) $('#pgTeamBack').onclick = () => { S.progMine = false; S.progView = mineOf.gid; S.pgRename = S.pgDel = S.pgEdit = false; renderProgress(); navNote(); window.scrollTo(0, 0); };
   if ($('#pgEdit')) $('#pgEdit').onclick = () => { const on = !(S.pgEdit || S.pgRename || S.pgDel); S.pgEdit = on; S.pgRename = S.pgDel = false; renderProgress(); };
   if ($('#pgEditNo')) $('#pgEditNo').onclick = () => { S.pgEdit = false; renderProgress(); };
   if ($('#pgSugg')) {
