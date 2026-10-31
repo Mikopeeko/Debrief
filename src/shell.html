@@ -12144,6 +12144,15 @@ html body #view#view.dbt-on .pf-row.cb .cb-b.cb-b.cb-b > .cb-f.r315-f { backgrou
 html body #view.dbt-on .dsp-r.shd-r .dsp-b { height: 13px !important; border-radius: 2px !important; background: rgba(255,255,255,.04) !important; } html body #view.dbt-on .dsp-r.shd-r .dsp-b > i { height: 100% !important; opacity: .78; border-radius: 2px 0 0 2px !important; }
 /* round 374: no coloured edge on a card's summary sentence (the design rules) */
 html body #view#view .msum > p { border-left: 0 !important; padding-left: 0 !important; }
+/* round 378: parse-style numbers on the rate tiles, with a small tag, and the Compare with switch */
+html body #view#view .dbr-n .dbr-v .r378-p { font-size: 22px; font-weight: 700; }
+html body #view#view .dbr-n .dbr-v .r378-t { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-left: 6px; }
+html body #view#view .r378-sw { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 12.5px; color: var(--muted); flex-wrap: wrap; }
+html body #view#view .r378-seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+html body #view#view .r378-seg button { background: none; border: 0; border-radius: 0; color: var(--muted); font-size: 12.5px; font-weight: 600; padding: 4px 10px; margin: 0; cursor: pointer; }
+html body #view#view .r378-seg button.on { background: rgba(255,255,255,.07); color: var(--text); }
+html body #view#view .dbr-4 > .r378-sw { grid-column: 1 / -1; margin: 0; padding: 8px 12px 6px; border-bottom: 1px solid var(--line); }
+html body #view#view .dbr-4 > .r378-sw { flex: 0 0 100% !important; width: 100% !important; max-width: none !important; box-sizing: border-box; }
 
 </style>
 
