@@ -3425,7 +3425,8 @@ function paceCard(ev, r, h, mistakes, boss, x) {
   const row = (what, t, txt, kills, lvl, sub, detail, fix, noMistake) => {
     const pre = mythic && preNerf(r.item), l = mythic && !kill && !pre ? lvl || 0 : 0; /* (before the boss's last nerf: shown, not judged (Oct 27)) (a kill is shown, not judged: the boss died, so the pace was enough (Oct 22: All pulls said Pace "0% done right" with the kill among the misses)) */
     if (l && !noMistake) mistakes.push({ t, player: 'Raid', mechanic: 'Pace', id: spell[0], severity: l === 2 ? 'High' : 'Medium', detail, fix });
-    rows.push([{ txt: what }, { t }, { txt, bad: l === 2, warn: l === 1, sub: pre && lvl ? 'pre-nerf, not compared' + (sub ? ' · ' + sub : '') : sub || '' }, { txt: mythic ? kills : '', dim: true }]);
+    /* (round 370 pace numbers: an on-pace moment says its numbers in its line) */ const okL = !l && txt ? what + ' · ' + txt + (sub ? ' (' + sub + ')' : kills && mythic ? ' (' + kills + ')' : '') : what;
+    rows.push([{ txt: okL }, { t }, { txt, bad: l === 2, warn: l === 1, sub: pre && lvl ? 'pre-nerf, not compared' + (sub ? ' · ' + sub : '') : sub || '' }, { txt: mythic ? kills : '', dim: true }]);
   };
   let spell = [0, 'Pace'], title = '', summary = '';
   if (boss === "Kith'ix") {
