@@ -12036,6 +12036,9 @@ html body #view .rck .rcx-sec > .rcx-sh.rcx-sh.rcx-sh { background: #1d222b !imp
 html body #view .rck .rcx-sec .rcx-grp.rcx-grp.rcx-grp { color: #dfe3e8 !important; font-weight: 700 !important; padding-top: 16px !important; letter-spacing: .08em !important; }
 html body #view .rck .rcx-sec .rcx-row.rcx-row.rcx-row { padding-left: 34px !important; }
 html body #view .rck .rcx-sec .rcx-row.rcx-row.rcx-row > .l { color: #b8bfc7 !important; }
+/* round 364: the Cooldowns card is one list, no per-cooldown group labels */
+html body #view .rck .rcx-sec.r364 .rcx-grp { display: none !important; }
+html body #view .rck .rcx-sec.r364 > .rcx-sh + .rcx-grp + .rcx-row, html body #view .rck .rcx-sec.r364 > .rcx-sh ~ .rcx-row:first-of-type { margin-top: 6px; }
 
 </style>
 
@@ -61001,7 +61004,7 @@ function r344Sum() { const pg = document.querySelector('#main .home.prog.r343');
     s.insertAdjacentHTML('beforeend', o); s.classList.add('nsm-on');
   }
   if (!window.__cmp311t) { window.__cmp311t = 1; document.addEventListener('toggle', function (e) { var d = e.target; if (d && d.classList && d.classList.contains('r292-cmp')) window.__cmp311 = d.open; }, true); document.addEventListener('click', function (e) { var d = document.querySelector('#view details.r292-cmp[open]'); if (d && !d.contains(e.target)) { d.open = false; window.__cmp311 = false; } }, true); } /* round 311 compare toggle */
-  function scan() { /* round 362 checklist headers */ [].forEach.call(document.querySelectorAll('#view .rck .rcx-sec'), function (sec) { var sh = sec.querySelector(':scope > .rcx-sh'); if (!sh) return; var em = sh.querySelector(':scope > em'), b = sh.querySelector(':scope > b');
+  function scan() { /* round 364 one cooldowns list */ [].forEach.call(document.querySelectorAll('#view .rck .rcx-sec:not(.r364)'), function (sec) { var b = sec.querySelector(':scope > .rcx-sh > b'); if (b && /^s*cooldownss*$/i.test(b.textContent)) sec.classList.add('r364'); }); /* round 362 checklist headers */ [].forEach.call(document.querySelectorAll('#view .rck .rcx-sec'), function (sec) { var sh = sec.querySelector(':scope > .rcx-sh'); if (!sh) return; var em = sh.querySelector(':scope > em'), b = sh.querySelector(':scope > b');
     var res = sec.querySelector('.rcx-row.r') ? 'r' : sec.querySelector('.rcx-row.y') ? 'y' : 'g'; if (sec.getAttribute('data-r362') !== res) sec.setAttribute('data-r362', res); if (sh.querySelector('.r362-ic') || !em || !b) return;
     var t = (b.textContent || '').toLowerCase(), P = { pull: 'M9 3h6M10 3v6L5 18a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 14h9', open: 'M7 4v16l13-8z', rot: 'M4 12a8 8 0 0 1 14-5.3M20 4v4h-4M20 12a8 8 0 0 1-14 5.3M4 20v-4h4', cd: 'M13 2 4 14h7l-1 8 9-12h-7z', stat: 'M4 20V10M10 20V4M16 20v-7M22 20H2', res: 'M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z' };
     var k = /before|pull/.test(t) ? 'pull' : /opener/.test(t) ? 'open' : /cooldown/.test(t) ? 'cd' : /stat/.test(t) ? 'stat' : /resource|mana|power/.test(t) ? 'res' : 'rot', ic = document.createElement('span'); ic.className = 'r362-ic'; ic.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + P[k] + '"/></svg>'; sh.insertBefore(ic, sh.firstChild);
