@@ -12007,6 +12007,22 @@ html body #view#view .cgl-dt.cgl-dt { font-weight: 400 !important; }
 /* round 360 (Main's phone check): the scoreboard's bottom row of tiles wraps on narrow screens (3 a row, 2 on a phone) */
 @media (max-width: 760px) { html body #view .r212-sb section.dt-box.dt-box { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; row-gap: 10px !important; } }
 @media (max-width: 480px) { html body #view .r212-sb section.dt-box.dt-box { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
+/* round 362 Rotation checklist headers (layout A): icon, title, progress bar, coloured edge by result, group labels with a line */
+html body #view .rck .rcx-sec > .rcx-sh { display: flex !important; align-items: center; gap: 10px; padding: 11px 14px !important; background: #161a20 !important; border-left: 3px solid var(--r362c, #52d65a) !important; }
+html body #view .rck .rcx-sec[data-r362="g"] { --r362c: #52d65a; } html body #view .rck .rcx-sec[data-r362="y"] { --r362c: #e6b450; } html body #view .rck .rcx-sec[data-r362="r"] { --r362c: #e5534b; }
+html body #view .rck .rcx-sh .r362-ic { flex: none; display: inline-flex; width: 20px; height: 20px; color: var(--r362c, #52d65a); }
+html body #view .rck .rcx-sh .r362-ic svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+html body #view .rck .rcx-sh > b { font-size: 18px !important; }
+html body #view .rck .rcx-sh > em.r362-old { display: none !important; }
+html body #view .rck .rcx-sh .r362-pr { margin-left: auto; flex: none; width: 120px; display: flex; flex-direction: column; gap: 4px; }
+html body #view .rck .rcx-sh .r362-pt { font-size: 11px; color: #868f99; font-style: normal; display: flex; justify-content: space-between; } html body #view .rck .rcx-sh .r362-pt b { color: var(--r362c, #52d65a); font-weight: 700; }
+html body #view .rck .rcx-sh .r362-bar { display: block; height: 5px; border-radius: 3px; background: #23262d; overflow: hidden; } html body #view .rck .rcx-sh .r362-bar > i { display: block; height: 100%; border-radius: 3px; background: var(--r362c, #52d65a); }
+html body #view .rck .rcx-sec .rcx-grp { display: flex !important; align-items: center; gap: 10px; } html body #view .rck .rcx-sec .rcx-grp::after { content: ''; flex: 1; height: 1px; background: #23262d; }
+@media (max-width: 600px) { html body #view .rck .rcx-sh > span:not(.r362-ic):not(.r362-pr) { display: none; } html body #view .rck .rcx-sh .r362-pr { width: 96px; } }
+html body #view .rck .rcx-sh .r362-pr .r362-pt, html body #view .rck .rcx-sh .r362-pr .r362-pt b { font-size: 11px !important; line-height: 1.2 !important; letter-spacing: .02em; }
+html body #view .rck .rcx-sh .r362-pr .r362-pt { justify-content: flex-end; gap: 4px; }
+/* (the design rules: no coloured edge bars; the icon, the count and its bar carry the result colour, the user OKd the icon) */
+html body #view .rck .rcx-sec > .rcx-sh.rcx-sh { border-left: 0 !important; }
 
 </style>
 
@@ -22086,6 +22102,7 @@ const PATCH_NOTES = [
     'Holy Paladin: Beacon of Virtue is only marked as held when it sat ready for 8 seconds or more while 5 or more people were hurt. Holding it before the damage, or for Divine Toll and Aura Mastery, is right. The row is now called Beacon of Virtue uses.',
   ] },
   { d: '2026-10-30', h: [{ t: 'A cleaner banner and one bar for every tab', d: "The banner is now just the boss: its name, the difficulty and the result, with the boss art bigger. Who you're looking at, the pull (or another boss from the night), All pulls, the wipe call and how strictly you're judged all sit in one bar at the top of every tab." }, { t: 'Graphs, redesigned', d: "Names in their own column with slim class-coloured bars, every page laid out the same way with its controls on the card's title line, and the chart now follows the phase, Bloodlust or Power Infusion you pick." }], n: [
+    "Each Rotation checklist card has a clearer header: an icon and a short progress bar in its result's colour, and the group labels inside it are dividers.",
     "Why we wiped, How it went: deaths to the same hit are one line (\"3 died to the same Venom Rupture\"), with why in a few words, the mechanic's icon, and the wipe call says what ended the pull.",
     "Every page uses the same text sizes and weights now, so labels, lists, names and headings read the same on each tab.",
     "Why we wiped is shorter: one plain line (\"We wiped in P3: Axegrinder and a slow push.\") with when the wipe was called, the boss's health and how many died; How it went keeps the moments that hurt; Also hurt lists the rest once, worst first, with near misses tagged Close call; and a death filed under the wrong mechanic is labelled with the one it died to.",
@@ -60971,7 +60988,11 @@ function r344Sum() { const pg = document.querySelector('#main .home.prog.r343');
     s.insertAdjacentHTML('beforeend', o); s.classList.add('nsm-on');
   }
   if (!window.__cmp311t) { window.__cmp311t = 1; document.addEventListener('toggle', function (e) { var d = e.target; if (d && d.classList && d.classList.contains('r292-cmp')) window.__cmp311 = d.open; }, true); document.addEventListener('click', function (e) { var d = document.querySelector('#view details.r292-cmp[open]'); if (d && !d.contains(e.target)) { d.open = false; window.__cmp311 = false; } }, true); } /* round 311 compare toggle */
-  function scan() { /* round 361 deaths explained */ [].forEach.call(document.querySelectorAll('#view .dbt-why[data-r357]:not([data-r361])'), function (w) { w.setAttribute('data-r361', '1'); var T = function (e) { return (e ? e.textContent : '').replace(/\s+/g, ' ').trim(); }, sx = function (m) { var p = String(m || '').split(':'); return p.length === 2 ? +p[0] * 60 + +p[1] : null; };
+  function scan() { /* round 362 checklist headers */ [].forEach.call(document.querySelectorAll('#view .rck .rcx-sec'), function (sec) { var sh = sec.querySelector(':scope > .rcx-sh'); if (!sh) return; var em = sh.querySelector(':scope > em'), b = sh.querySelector(':scope > b');
+    var res = sec.querySelector('.rcx-row.r') ? 'r' : sec.querySelector('.rcx-row.y') ? 'y' : 'g'; if (sec.getAttribute('data-r362') !== res) sec.setAttribute('data-r362', res); if (sh.querySelector('.r362-ic') || !em || !b) return;
+    var t = (b.textContent || '').toLowerCase(), P = { pull: 'M9 3h6M10 3v6L5 18a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 14h9', open: 'M7 4v16l13-8z', rot: 'M4 12a8 8 0 0 1 14-5.3M20 4v4h-4M20 12a8 8 0 0 1-14 5.3M4 20v-4h4', cd: 'M13 2 4 14h7l-1 8 9-12h-7z', stat: 'M4 20V10M10 20V4M16 20v-7M22 20H2', res: 'M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z' };
+    var k = /before|pull/.test(t) ? 'pull' : /opener/.test(t) ? 'open' : /cooldown/.test(t) ? 'cd' : /stat/.test(t) ? 'stat' : /resource|mana|power/.test(t) ? 'res' : 'rot', ic = document.createElement('span'); ic.className = 'r362-ic'; ic.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + P[k] + '"/></svg>'; sh.insertBefore(ic, sh.firstChild);
+    var m = (em.textContent || '').match(/([0-9]+)\s*of\s*([0-9]+)/); if (m) { var n1 = +m[1], n2 = +m[2] || 1, pr = document.createElement('span'); pr.className = 'r362-pr'; pr.innerHTML = '<span class="r362-pt"><b>' + n1 + ' of ' + n2 + '</b> done right</span><i class="r362-bar"><i style="width:' + Math.round(100 * n1 / n2) + '%"></i></i>'; em.classList.add('r362-old'); sh.appendChild(pr); } }); /* round 361 deaths explained */ [].forEach.call(document.querySelectorAll('#view .dbt-why[data-r357]:not([data-r361])'), function (w) { w.setAttribute('data-r361', '1'); var T = function (e) { return (e ? e.textContent : '').replace(/\s+/g, ' ').trim(); }, sx = function (m) { var p = String(m || '').split(':'); return p.length === 2 ? +p[0] * 60 + +p[1] : null; };
     var AL = { 'Venom Rupture': 'Coalesced Venom', 'Malevolent Resonance': 'Dreadmarch', 'Grim Execution': 'Guillotine', 'Retaliatory Malice': 'Spiteful Soulcoiler', 'Soul Sever': 'Sever', 'Blighted Sever': 'Sever' };
     var WHY = { 'Venom Rupture': 'too many orb stacks at once', 'Malevolent Resonance': 'ghosts touched each other', 'Gravebound': 'missed their soul fragments', 'Grim Execution': 'a Guillotine soak was short', 'Retaliatory Malice': 'adds were left alive' };
     var icOf = function (mech) { var p = [].filter.call(document.querySelectorAll('#view [data-phjump][title]'), function (x) { return String(x.getAttribute('title')).split(':')[0].trim() === mech; })[0], ic = p && p.querySelector('.icw'); return ic ? ic.cloneNode(true) : null; };
