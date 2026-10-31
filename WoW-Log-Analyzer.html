@@ -12192,6 +12192,20 @@ html body #view#view .pcx-p .pcx-hero { font-size: 18px !important; margin: 0 0 
 html body #view#view .pcx-p .pcx-hero span, html body #view#view .pcx-p .pcx-hero small { font-size: 12.5px !important; }
 html body #view#view .pcx-p .pcx-key { font-size: 12px !important; gap: 4px 14px !important; margin: 4px 0 !important; }
 html body #view#view .pcx-p .pcx-w { font-size: 12px !important; margin: 4px 0 0 !important; line-height: 1.4 !important; }
+/* round 399: a Deaths row in each phase of the Overview */
+html body #view#view .r399-row .r399-ic { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 5px; background: rgba(232,96,93,.16); color: #e8605d; font-size: 14px; }
+html body #view#view .r399-dl { padding: 4px 0 8px 34px !important; }
+html body #view#view .r399-d { display: grid; grid-template-columns: 44px 120px minmax(0, 1fr) 110px; gap: 8px; padding: 4px 0; font-size: 12.5px; align-items: baseline; border-top: 1px solid var(--line); }
+html body #view#view .r399-d:first-child { border-top: 0; }
+html body #view#view .r399-d .r399-t { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+html body #view#view .r399-d b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html body #view#view .r399-d .r399-w { color: var(--muted); }
+html body #view#view .r399-d .r399-v { text-align: right; font-size: 12px; color: var(--muted); }
+html body #view#view .r399-d .r399-v.own { color: #e8605d; }
+@media (max-width: 699px) { html body #view#view .r399-dl { padding-left: 0 !important; } html body #view#view .r399-d { grid-template-columns: 40px minmax(0, 1fr) 96px; } html body #view#view .r399-d .r399-w { grid-column: 2 / 4; } }
+html body #view#view .r399-d.r399-m b { color: var(--muted); font-weight: 600; }
+html body #view#view .r399-pm { color: var(--muted); font-weight: 400; font-size: 11px; }
+html body #view#view .prw-i.r399-it .r399-ic { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 4px; background: rgba(232,96,93,.16); color: #e8605d; font-size: 12px; flex: none; }
 
 </style>
 
@@ -33435,8 +33449,15 @@ function topIcons(v) { if (!v) return; const lc = (s) => String(s || '').replace
     for (const s of v.querySelectorAll('summary.cch-al')) { const n = s.querySelector('.cgl-n, .ckt-t'); if (n && lc(n.textContent) === k) return s.querySelector('.icw'); } return null; };
   v.querySelectorAll('.cch-tgrid li').forEach((li) => { const b = li.querySelector(':scope > b'); if (!b || li.querySelector('.icw, .cti')) return; const nm = b.textContent, ic = from(nm);
     if (ic) { const c = ic.cloneNode(true); c.classList.add('cti'); const im = c.querySelector('img'); if (im && im.getAttribute('src') && ic.classList.contains('has')) c.classList.add('has'); /* (a picture already loaded stays shown) */ b.prepend(c); } else if (/^(further than last pull|best pull)/i.test(lc(nm))) b.insertAdjacentHTML('afterbegin', '<span class="cti cti-up" aria-hidden="true"><svg viewBox="0 0 20 20"><rect width="20" height="20" rx="5" fill="rgba(69,193,92,.18)"/><path d="M10 4.5l5.2 6.2h-3.4v4.8H8.2v-4.8H4.8z" fill="#45c15c"/></svg></span>'); }); v.querySelectorAll('.cch-tgrid .cti img').forEach((i) => { if (!i.getAttribute('src')) i.removeAttribute('data-done'); }); try { hydrateIcons(); } catch (e) { /* (icons load when seen) */ } v.querySelectorAll('.cch-tgrid .cti img').forEach((i) => { const ok = () => { if (i.naturalWidth) i.parentElement.classList.add('has'); }; if (i.complete) ok(); else i.addEventListener('load', ok, { once: true }); }); /* (the picture shows once it loads, like every other icon) */ }
+/* round 399 deaths row */ function oaDeaths399(v) { const r = S.rep; if (!r || r.allPulls || S.scope === 'all' || !r.deaths || !v) return; v.querySelectorAll('.r399').forEach((e) => e.remove());
+  const ph = (r.module && r.module.phases) || [], blocks = [...v.querySelectorAll('details.phase')]; if (!ph.length || !blocks.length) return; const by = new Map(), mass = new Map();
+  for (const d of r.deaths.slice().sort((a, b) => a.t - b.t)) { let vv = null; try { vv = deathVerdict(r, d); } catch (e) { vv = null; } if (!vv || !vv.counts) continue; const pi = ph.findIndex((p) => d.t >= p.start - 0.05 && d.t < p.end + 0.05); if (pi < 0) continue; if (!by.has(pi)) by.set(pi, []); if (vv.why === 'mass') { mass.set(pi, (mass.get(pi) || 0) + 1); continue; } by.get(pi).push({ d, vv }); } /* (a mass death is one line: the Deaths tile leaves it out) */
+  for (const [pi, L] of by) { const pd = blocks[pi], box = pd && pd.querySelector('.dbck'); if (!box) continue; const ms = mass.get(pi) || 0; if (!L.length && !ms) continue; const own = L.filter((x) => x.vv.on).length, st = own ? 'bad' : 'warn';
+    const rows = L.map(({ d, vv }) => { const p = r.players && [...r.players.values()].find((q) => q.guid === d.guid), nm = String(d.player || (p && p.name) || '').split('-')[0], why = d.ability ? d.ability + (d.hit ? ', ' + C(d.hit) + ' hit' : '') : (vv.story || ''); return '<div class="r399-d"><span class="r399-t">' + T(d.t) + '</span><b style="color:' + ((p && p.color) || 'inherit') + '">' + esc(nm) + '</b><span class="r399-w">' + esc(why) + '</span><span class="r399-v' + (vv.on ? ' own' : '') + '">' + (vv.on ? 'Their mistake' : 'Not their fault') + '</span></div>'; }).join('') + (ms ? '<div class="r399-d r399-m"><span class="r399-t"></span><b>' + ms + ' more</b><span class="r399-w">died at once as the raid went down</span><span class="r399-v">Not counted</span></div>' : '');
+    const lst = pd.querySelector(':scope > summary .prw'); if (lst) lst.insertAdjacentHTML('beforeend', '<span class="prw-i r399 r399-it" role="button" tabindex="0" data-phjump="deaths" title="' + esc(plural(L.length, 'death') + (own ? ', ' + own + ' their own mistake' : '') + '. Click to open it.') + '"><span class="icw r399-ic" aria-hidden="true">☠</span><span class="prw-l"><span class="prw-n">Deaths<span class="prw-nt prw-nk">' + (own ? plural(own, 'own mistake') : 'none their fault') + '</span></span><span class="prw-t"></span></span><span class="prw-p ' + st + '">' + L.length + (ms ? ' +' + ms : '') + '</span></span>');
+    box.insertAdjacentHTML('beforeend', '<details class="panel secd dbr-line st-' + st + ' r399 r399-row" data-k="deaths-' + pi + '"><summary><span class="sp sechd"><span class="icw big r399-ic" aria-hidden="true">☠</span><b>Deaths <span class="sim-i">(' + (own ? plural(own, 'own mistake') : 'none their fault') + ')</span></b></span><span class="rw2-pc ' + st + '">' + L.length + (ms ? '<small class="r399-pm"> +' + ms + '</small>' : '') + '</span></summary><div class="secbody r399-dl">' + rows + '</div></details>'); } }
 function oaLayout(v, el) {
-  if (!el.innerHTML) return;
+  if (!el.innerHTML) return; setTimeout(() => { try { oaDeaths399(v); } catch (e) { /* (no death rows) */ } }, 0);
   const tiles = v.querySelector('.dbr-4'); if (tiles && tiles.nextElementSibling !== el) { v.insertBefore(tiles, el); tiles.classList.add('oa-tiles'); }
   // (the small buttons)
   const hd = el.querySelector('.cch-hd');

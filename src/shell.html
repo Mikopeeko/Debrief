@@ -12192,6 +12192,20 @@ html body #view#view .pcx-p .pcx-hero { font-size: 18px !important; margin: 0 0 
 html body #view#view .pcx-p .pcx-hero span, html body #view#view .pcx-p .pcx-hero small { font-size: 12.5px !important; }
 html body #view#view .pcx-p .pcx-key { font-size: 12px !important; gap: 4px 14px !important; margin: 4px 0 !important; }
 html body #view#view .pcx-p .pcx-w { font-size: 12px !important; margin: 4px 0 0 !important; line-height: 1.4 !important; }
+/* round 399: a Deaths row in each phase of the Overview */
+html body #view#view .r399-row .r399-ic { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 5px; background: rgba(232,96,93,.16); color: #e8605d; font-size: 14px; }
+html body #view#view .r399-dl { padding: 4px 0 8px 34px !important; }
+html body #view#view .r399-d { display: grid; grid-template-columns: 44px 120px minmax(0, 1fr) 110px; gap: 8px; padding: 4px 0; font-size: 12.5px; align-items: baseline; border-top: 1px solid var(--line); }
+html body #view#view .r399-d:first-child { border-top: 0; }
+html body #view#view .r399-d .r399-t { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+html body #view#view .r399-d b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html body #view#view .r399-d .r399-w { color: var(--muted); }
+html body #view#view .r399-d .r399-v { text-align: right; font-size: 12px; color: var(--muted); }
+html body #view#view .r399-d .r399-v.own { color: #e8605d; }
+@media (max-width: 699px) { html body #view#view .r399-dl { padding-left: 0 !important; } html body #view#view .r399-d { grid-template-columns: 40px minmax(0, 1fr) 96px; } html body #view#view .r399-d .r399-w { grid-column: 2 / 4; } }
+html body #view#view .r399-d.r399-m b { color: var(--muted); font-weight: 600; }
+html body #view#view .r399-pm { color: var(--muted); font-weight: 400; font-size: 11px; }
+html body #view#view .prw-i.r399-it .r399-ic { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 4px; background: rgba(232,96,93,.16); color: #e8605d; font-size: 12px; flex: none; }
 
 </style>
 
