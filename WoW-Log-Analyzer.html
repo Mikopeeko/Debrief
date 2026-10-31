@@ -12004,6 +12004,9 @@ html body #bossHead header .bh-big.bh-big.bh-big { font-size: 14px !important; }
 html body #view .cch-al.cch-al .cgl-dt.cgl-dt.cgl-dt { font-size: 12.5px !important; font-weight: 400 !important; }
 html body #view#view .cgl-dt.cgl-dt, html body #view#view .prw-tr.prw-tr { font-size: 12.5px !important; }
 html body #view#view .cgl-dt.cgl-dt { font-weight: 400 !important; }
+/* round 360 (Main's phone check): the scoreboard's bottom row of tiles wraps on narrow screens (3 a row, 2 on a phone) */
+@media (max-width: 760px) { html body #view .r212-sb section.dt-box.dt-box { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; row-gap: 10px !important; } }
+@media (max-width: 480px) { html body #view .r212-sb section.dt-box.dt-box { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
 
 </style>
 
