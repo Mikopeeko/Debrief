@@ -3674,13 +3674,13 @@ function buildCoiledAltar(ev, r, h) {
   // them; only each frontal's first hit on a player counts (not the damage it leaves every 2 s); and in a log with no specs, a player
   // two different frontals hit is a tank. Mythic is unchanged)
   const fKeep = new Set(), fTanks = new Set();
-  if (!mythic) {
+  { /* (round 345 one hit per frontal: on Mythic too, Oct 31) */
     const seen = new Set(), hitAt = new Map();
     for (const n of ['sever', 'soul sever', 'blighted sever']) for (const e of dmg(n)) { const c = casts(n).filter((t) => e.t >= t - 0.5 && e.t <= t + 5).pop(); if (c == null || seen.has(n + c + e.dst)) continue; seen.add(n + c + e.dst); fKeep.add(e);
       if (!(r.players.get(e.dst) || {}).specId) { const l = hitAt.get(e.dst) || []; if (!l.some((t) => Math.abs(t - e.t) < 8)) l.push(e.t); hitAt.set(e.dst, l); } }
-    for (const [g, l] of hitAt) if (l.length >= 2) fTanks.add(g);
+    if (!mythic) for (const [g, l] of hitAt) if (l.length >= 2) fTanks.add(g);
   }
-  for (const n of ['sever', 'soul sever', 'blighted sever']) for (const e of dmg(n)) if (role(e.dst) !== 'tank' && (mythic || (fKeep.has(e) && !fTanks.has(e.dst))))
+  for (const n of ['sever', 'soul sever', 'blighted sever']) for (const e of dmg(n)) if (role(e.dst) !== 'tank' && fKeep.has(e) && (mythic || !fTanks.has(e.dst)))
     front.push(mythic ? e : { ...e, soft: !(r.deaths || []).some((d) => d.guid === e.dst && d.t >= e.t - 0.5 && d.t <= e.t + 3) });
   for (const e of front) { M(e.t, pname(e.dst), L(e.spell), e.soft ? 'Medium' : 'High', 'Stood in ' + e.spell + ' (tank frontal) for ' + Math.round(e.amt).toLocaleString('en-US') + ' and picked up its 200% vulnerability.', 'Only the tank belongs in front of the boss. Stay out of the cone unless you are placing orbs or ghosts for it and step out before it lands.'); mistakes[mistakes.length - 1].avoid = true; }
   sections.push({ id: 'front', title: 'Tank frontals (Raid hits)', place: 'Tank frontals hitting the raid', spell: S('sever'),
@@ -4529,7 +4529,11 @@ function buildCoiledAltar(ev, r, h) {
       const mc = hitRow.row.find((x) => x.map); if (mc) { mc.map.bad = (mc.map.bad || []).concat(e.dst); mc.map.badLabel = 'non-tank hit by the frontal'; }
     }
     for (const g of (oSec && oSec.groups || []).concat(gSec && gSec.groups || [])) if (g.rows.some((row) => (row[0].hits || row[2] && row[2].hits)) && !/non-tank/.test(g.sub)) g.sub = g.sub.replace(/, clean$/, ', orbs clean') + ', a frontal hit a non-tank';
-    if (front.length && oSec) { const hard = front.some((e) => !e.soft); oSec.verdict = hard ? 'bad' : oSec.verdict === 'bad' ? 'bad' : 'warn'; oSec.summary += ' Frontals that hit a non-tank are marked in ' + (hard ? 'red' : 'yellow') + ' on their row.'; }
+    /* (round 346 soul sever hits: a Soul Sever with no ghost row of its own isn't an orb frontal, so it gets its own card) */ const looseSS = loose.filter((e) => L(e.spell) === 'soul sever'), frontO = front.filter((e) => !looseSS.includes(e)); loose.splice(0, loose.length, ...loose.filter((e) => !looseSS.includes(e)));
+    if (looseSS.length) sections.push({ id: 'front', title: 'Soul Sever (Frontal Hits)', place: 'Soul Sever hitting the raid', spell: S('soul sever'), verdict: looseSS.some((e) => !e.soft) ? 'bad' : 'warn',
+      summary: pl(looseSS.length, 'non-tank hit') + ' from Soul Sever: only the tank belongs in front of Malacrass.', cols: ['When', 'Player', 'Frontal', 'Damage'],
+      rows: looseSS.map((e) => { const mp = frontMap(e); return [{ t: e.t }, { p: pname(e.dst) }, { s: S(L(e.spell)) }, { n: e.amt, bad: !e.soft, warn: !!e.soft }].concat(mp ? [{ map: mp }] : []); }) });
+    if (frontO.length && oSec) { const hard = frontO.some((e) => !e.soft); oSec.verdict = hard ? 'bad' : oSec.verdict === 'bad' ? 'bad' : 'warn'; oSec.summary += ' Frontals that hit a non-tank are marked in ' + (hard ? 'red' : 'yellow') + ' on their row.'; }
     if (loose.length && oSec) oSec.summary += ' ' + pl(loose.length, 'other non-tank frontal hit') + ': ' + loose.map((e) => pname(e.dst) + ' (' + e.spell + ' at ' + h.fmtT(e.t) + ')').join(', ') + '.';
     // (a hit with no row of its own (a Sever before the first Deluge) gets its own row and map, so a death to it shows the cone (your note, Oct 20))
     if (loose.length && oSec && oSec.rows) { for (const e of loose) { const mp = frontMap(e); oSec.rows.push([{ txt: S(L(e.spell))[1], sub: 'no Deluge before it' }, { t: e.t }, { p: pname(e.dst) }, { txt: 'hit a non-tank', sub: h.compact(e.amt), bad: !e.soft, warn: !!e.soft }, mp ? { map: mp } : { txt: '' }]); }
