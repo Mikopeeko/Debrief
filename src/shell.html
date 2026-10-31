@@ -11960,6 +11960,12 @@ html body #view .rtl .rtv.r350 .r350-kw .rtv-key > span { display: flex !importa
 /* round 351 (the user: "Right above timeline"): the whole fight sits right on top of the timeline, under the summary card */
 html body #view .rtl .rtv.r350 > .r350-row.r350-row { order: 2; } html body #view .rtl .rtv.r350 > .r338-ov.r338-ov { order: 3; }
 html body #view .rtl .rtv.r350 > .r338-ov.r338-ov { margin: 0 0 6px !important; border: 1px solid #2a2e36 !important; border-radius: 10px !important; box-shadow: 0 8px 16px -10px rgba(0, 0, 0, .7) !important; }
+/* round 353 Rotation checklist: a row is its icon, name and result; the sentence shows once, in the opened row */
+html body #view .rck .rcx-row.rcx-row > .s { display: none !important; }
+html body #view .rck .rcx-row.rcx-row { grid-template-columns: 7px 18px minmax(0, 1fr) auto !important; }
+html body #view .rck .rcx-row.rcx-row > .v { padding-left: 16px; }
+html body #view .rck .rcx-open .r353-s { margin: 0 0 6px !important; font-size: 13px; line-height: 1.5; color: #e8eaed; }
+html body #view .rck .rcx-open .r353-s b { color: #e8eaed; }
 
 </style>
 
@@ -12320,7 +12326,7 @@ html body #view .rtl .rtv.r350 > .r338-ov.r338-ov { margin: 0 0 6px !important; 
     s.insertAdjacentHTML('beforeend', o); s.classList.add('nsm-on');
   }
   if (!window.__cmp311t) { window.__cmp311t = 1; document.addEventListener('toggle', function (e) { var d = e.target; if (d && d.classList && d.classList.contains('r292-cmp')) window.__cmp311 = d.open; }, true); document.addEventListener('click', function (e) { var d = document.querySelector('#view details.r292-cmp[open]'); if (d && !d.contains(e.target)) { d.open = false; window.__cmp311 = false; } }, true); } /* round 311 compare toggle */
-  function scan() { /* round 350 tidy top */ [].forEach.call(document.querySelectorAll('#view section.rtl .rtv'), function (rv) { var top = rv.querySelector(':scope > .rtv-top'); if (!top) return; if (!rv.classList.contains('r350')) rv.classList.add('r350');
+  function scan() { /* round 353 sentence once */ [].forEach.call(document.querySelectorAll('#view .rcx-row.on + .rcx-open:not([data-r353])'), function (o) { o.setAttribute('data-r353', '1'); var r = o.previousElementSibling, sx = r && r.querySelector(':scope > .s'); if (!sx || !sx.textContent.trim()) return; var p = document.createElement('p'); p.className = 'r353-s'; p.innerHTML = sx.innerHTML; o.insertBefore(p, o.firstChild); }); /* round 350 tidy top */ [].forEach.call(document.querySelectorAll('#view section.rtl .rtv'), function (rv) { var top = rv.querySelector(':scope > .rtv-top'); if (!top) return; if (!rv.classList.contains('r350')) rv.classList.add('r350');
     var row = rv.querySelector(':scope > .r350-row'); if (!row) { row = document.createElement('div'); row.className = 'r350-row'; rv.insertBefore(row, top.nextSibling); }
     var fix = rv.querySelector(':scope > .r336-fix'); if (fix && fix.parentNode !== row) row.insertBefore(fix, row.firstChild);
     var k = top.querySelector(':scope > .rtv-key'); if (k) { [].forEach.call(row.querySelectorAll('.rtv-key'), function (o) { if (o !== k) o.remove(); }); var kw = row.querySelector('.r350-kw'); if (!kw) { kw = document.createElement('div'); kw.className = 'r350-kw'; kw.innerHTML = '<div class="r350-kh">Key</div>'; row.appendChild(kw); } kw.appendChild(k); }
