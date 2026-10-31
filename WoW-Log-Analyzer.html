@@ -11957,6 +11957,9 @@ html body #view .rtl .rtv.r350 .r350-kw .rtv-key.rtv-key { display: grid !import
 html body #view .rtl .rtv.r350 .r350-kw .rtv-key > span { display: flex !important; align-items: center; gap: 8px; font-size: 12px !important; color: #aeb6bf !important; margin: 0 !important; }
 @media (max-width: 760px) { html body #view .rtl .rtv.r350 > .r350-row { grid-template-columns: minmax(0, 1fr); } html body #view .rtl .rtv.r350 .r338-hd > span:not(.r350-lg) { display: none; } }
 @media (max-width: 760px) { html body #view .rtl .rtv.r350 > .rtv-top, html body #view .rtl .rtv.r350 > .r338-ov, html body #view .rtl .rtv.r350 > .r350-row { width: calc(100vw - 50px) !important; max-width: 100% !important; box-sizing: border-box; } html body #view .rtl .rtv.r350 .r350-kw .rtv-key.rtv-key { grid-template-columns: minmax(0, 1fr); } }
+/* round 351 (the user: "Right above timeline"): the whole fight sits right on top of the timeline, under the summary card */
+html body #view .rtl .rtv.r350 > .r350-row.r350-row { order: 2; } html body #view .rtl .rtv.r350 > .r338-ov.r338-ov { order: 3; }
+html body #view .rtl .rtv.r350 > .r338-ov.r338-ov { margin: 0 0 6px !important; border: 1px solid #2a2e36 !important; border-radius: 10px !important; box-shadow: 0 8px 16px -10px rgba(0, 0, 0, .7) !important; }
 
 </style>
 
