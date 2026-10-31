@@ -9874,6 +9874,7 @@ html body #view .rtl .rtl-mid .rtl-t { margin: 0; }
 .rtl .rtv-c.pr::after{content:"★";position:absolute;right:-7px;top:-8px;font-size:10px;color:#ffd666;text-shadow:0 0 3px #000}
 .rtl .rtv.dim .rtv-c:not(.bad){opacity:.2}
 .rtl .rtv-rdy{position:absolute;width:6px;margin-left:-3px;border-radius:3px;background:repeating-linear-gradient(180deg,rgba(229,83,75,.6) 0 3px,transparent 3px 6px);cursor:pointer}
+.rtl .rtv-cdt{position:absolute;width:3px;border-radius:2px;cursor:pointer;z-index:1}.rtl .rtv-cdt.ok{background:rgba(69,193,92,.75)}.rtl .rtv-cdt.no{background:repeating-linear-gradient(180deg,rgba(232,162,58,.85) 0 4px,transparent 4px 7px)}
 .rtl .rtv-side{position:relative}
 .rtl .rtv-m{position:absolute;display:flex;align-items:center;gap:8px;transform:translateY(-50%);white-space:nowrap;cursor:pointer;max-width:calc(100% - 20px)}
 .rtl .rtv-side.r .rtv-m{left:16px}
@@ -22140,7 +22141,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-10-31', f: [
+  { d: '2026-10-31', h: [{ t: 'Cooldown timing on The Coiled Altar', d: 'Rotation now shows if your big cooldown went out at the same moments the top players use it on Mythic, like Trueshot on the pull, at P2 start and in the intermission. Debriefing tells you when you missed one. For now: Holy Paladin, Marksmanship Hunter, Affliction Warlock, Arcane Mage, Arms Warrior and Balance Druid.' }], f: [
     'Holy Paladin: Beacon of Virtue is only marked as held when it sat ready for 8 seconds or more while 5 or more people were hurt. Holding it before the damage, or for Divine Toll and Aura Mastery, is right. The row is now called Beacon of Virtue uses.',
   ] },
   { d: '2026-10-30', h: [{ t: 'A cleaner banner and one bar for every tab', d: "The banner is now just the boss: its name, the difficulty and the result, with the boss art bigger. Who you're looking at, the pull (or another boss from the night), All pulls, the wipe call and how strictly you're judged all sit in one bar at the top of every tab." }, { t: 'Graphs, redesigned', d: "Names in their own column with slim class-coloured bars, every page laid out the same way with its controls on the card's title line, and the chart now follows the phase, Bloodlust or Power Infusion you pick." }], n: [
@@ -33451,7 +33452,10 @@ function coachMine(reps, name) { return oaCache(reps, 'c:' + name, () => {
   // 3. their Rotation slips (on a night only the red ones; proc-driven lines are never red or amber)
   const p0 = mine[mine.length - 1].p, rot = rotOf(mine.map((x) => x.r), p0, !night);
   const cks = rot ? (rot.checks || []).filter((c) => !/^st:/.test(String(c.k || '')) && (c.st === 'bad' || (!night && c.st === 'warn')) && (c.tip || c.sub)).sort((a, b) => (b.st === 'bad') - (a.st === 'bad') || (b.cost || 0) - (a.cost || 0) || (b.share || 0) - (a.share || 0)) : []; /* (Rotation's own "Work on these first" order, stats checks left out (Oct 22)) */
-  for (const ck of cks.slice(0, 2)) out.push({ kind: 'rot', key: ck.k, what: ck.tip && ck.sub ? cHtml(ck.sub) : '', sev: ck.st === 'bad' ? 'bad' : 'warn', label: cHtml(ck.label) || 'Your rotation', n: 0, of: reps.length, pulls: [], fix: dbfTip1(tipNow(cHtml(ck.tip || ck.sub))), how: cHtml(tipNow(ck.tip || ck.sub)) });
+  /* (Oct 31: a big cooldown pressed away from the moment the top players use it on this boss, one line, even when it isn't in Rotation's top two) */
+  const cdt = rot ? (rot.checks || []).filter((c) => /^cdt:/.test(String(c.k || '')) && c.cdtHead && (c.st === 'bad' || (c.st === 'warn' && (!night || (c.cdtPulls || []).length >= 2))) && !cks.slice(0, 2).includes(c)) : [];
+  for (const ck of cdt.slice(0, 1)) out.push({ kind: 'rot', key: ck.k, what: ck.cdtWhat, sev: ck.st === 'bad' ? 'bad' : 'warn', label: ck.cdtHead, n: night ? (ck.cdtPulls || []).length : 0, of: reps.length, pulls: night ? ck.cdtPulls || [] : [], fix: dbfTip1(cHtml(ck.tip || ck.sub)), how: cHtml(ck.sub) });
+  for (const ck of cks.slice(0, 2)) out.push({ kind: 'rot', key: ck.k, what: ck.cdtWhat || (ck.tip && ck.sub ? cHtml(ck.sub) : ''), sev: ck.st === 'bad' ? 'bad' : 'warn', label: ck.cdtHead || cHtml(ck.label) || 'Your rotation', n: 0, of: reps.length, pulls: [], fix: dbfTip1(tipNow(cHtml(ck.tip || ck.sub))), how: cHtml(tipNow(ck.tip || ck.sub)) });
   for (const g of mL.filter((x) => !x.hi)) { const it = mItem(g); if (it) out.push(it); }
   return out.filter((x, i) => out.findIndex((y) => y.fix === x.fix) === i); /* (one fix said once) */ }) || []; }
 // (the raid's list: what wiped us most, then the mechanics that went wrong (on a night, in 2 or more pulls))
@@ -41314,6 +41318,59 @@ function bossWins(A, r, p, t1) {
   return (r.bossAuras || []).filter((w) => w.n === A.aura).map((w) => ({ a: w.a, e: w.e == null ? t1 : w.e }));
 }
 const BOSS_SHIELD = { 'Entombed Sentinels': { aura: 'Vitriolic Stasis', what: 'Vitriolic Stasis', lead: 'During Vitriolic Stasis, both Sentinels take 99% less damage for about 30 seconds while they balance their health. A burst cooldown pressed into it is wasted: press it after.' } };
+// ---- Cooldown timing on this boss (Oct 31, your ask: "were their major cooldowns used at the right moment on that boss") ----
+// One rule per spec and big cooldown: the moments the top players press it, read from the fastest Mythic kills in the log library
+// (scratchpad cdt/: dump.js reads every kill, judge.js runs cdtJudge below on them). w: [moment, from, to, hold] in seconds around the
+// moment (pull, P2 start, the intermission); hold = only judged when the cooldown came back at most 45 s before the moment (a slower P1
+// gets an extra use in between, as the slower top kills do). oncd: [first by, then within] = pressed on cooldown, no moment to save it for.
+// top: how many of the top players did it; prog: what a progression raid should do differently, when anything.
+const CDT_SRC = 'the 31 fastest Mythic kills (Oct 15 to 22)';
+const CDT_RULES = {
+  'The Coiled Altar|Mythic': {
+    'Marksmanship Hunter': [{ n: ['Trueshot'], cd: 120, w: [['pull', 0, 20], ['p2', -5, 35, 1], ['inter', -8, 20]], top: '43 of 43', also: 'In slower kills, where P1 runs past about 2:45, they press it once more in P1 and still hold one for the intermission.' }],
+    'Affliction Warlock': [{ n: ['Summon Darkglare'], cd: 120, w: [['pull', 0, 20], ['p2', -5, 35, 1], ['inter', -8, 20]], top: '46 of 46', also: 'In slower kills, where P1 runs past about 2:45, they press it once more in P1 and still hold one for the intermission.' }],
+    'Arcane Mage': [{ n: ['Arcane Surge'], cd: 90, w: [['pull', 0, 15], ['inter', -8, 20]], top: '48 of 49', also: 'In between, they press it as soon as it comes back.' }],
+    'Arms Warrior': [{ n: ['Avatar'], cd: 90, w: [['pull', 0, 15], ['inter', -8, 30]], top: '35 of 35', also: 'In between, they press it as soon as it comes back.' }],
+    'Balance Druid': [{ n: ['Incarnation: Chosen of Elune', 'Celestial Alignment'], cd: 120, w: [['pull', 0, 25], ['inter', -8, 20]], top: '35 of 36', also: 'In between, most press it about 25 seconds into P2, when the first adds are up.' }],
+    'Holy Paladin': [{ n: ['Avenging Wrath', 'Avenging Crusader'], cd: 120, oncd: [45, 30], heal: true, top: '14 of 21 (and 90% of all their presses)',
+      also: 'That is the pull, about 2:00, late P2 and early P3. Only 1 of 21 held it for the intermission.', prog: 'If your raid\'s plan saves it for a big hit, follow the plan: that is why this is never red.' }] } };
+const CDT_MOM = { pull: 'on the pull', p2: 'as P2 starts', inter: 'as the intermission starts', cd: 'when it came back' };
+const CDT_MOMC = { pull: 'On the pull', p2: 'As P2 started', inter: 'As the intermission started', cd: 'When it came back' };
+// (one pull: each moment, and whether it was pressed in it. casts sorted; ph { p2, inter }; t1 the end of the pull or your death)
+function cdtJudge(R, casts, ph, t1) {
+  const out = [];
+  if (R.oncd) { const [first, tol] = R.oncd; let a = 0, b = first;
+    while (a < t1 - 10) { const hit = casts.find((t) => t >= a - 2 && t <= b), late = hit == null ? casts.find((t) => t > b) : null;
+      out.push({ a, b, A: a, at: 'cd', hit, late }); const u = hit != null ? hit : late; if (u == null) break; a = u + R.cd; b = a + tol; }
+    out[0].at = 'pull'; return out; }
+  for (const [at, from, to, hold] of R.w) { const A = at === 'pull' ? 0 : ph[at]; if (A == null || A + Math.max(0, from) >= t1 - 3) continue;
+    const a = Math.max(0, A + from), b = A + to;
+    if (hold) { const f = casts.find((t) => t < a - 30), base = f != null ? f : 0; if (A - (base + R.cd) > 45) continue; }
+    let hit = casts.find((t) => t >= a && t <= b), pre = false, prev = null, late = null;
+    // (pressed before the pull: the log starts at the pull, so the first press we see is one cooldown in)
+    if (hit == null && at === 'pull' && casts.length && casts[0] >= R.cd - 15 && casts[0] <= R.cd + 8) { hit = 0; pre = true; }
+    if (hit == null) { const pr = casts.filter((t) => t < a).pop(); if (pr != null && pr + R.cd > b) prev = pr; else late = casts.find((t) => t > b); }
+    out.push({ a, b, A, at, hit, pre, prev, late }); }
+  return out;
+}
+// (a moment in one plain sentence)
+function cdtSay(w, nm) {
+  if (w.hit != null) return '✓ ' + CDT_MOMC[w.at] + (w.pre ? ': pressed before the pull' : ' (' + T(w.hit) + ')');
+  if (w.at === 'cd') return 'It came back at ' + T(w.a) + (w.late != null ? ' and you pressed it at ' + T(w.late) + ', ' + Math.round(w.late - w.a) + ' seconds later.' : ' and you didn\'t press it again.');
+  if (w.prev != null) return CDT_MOMC[w.at] + ' (' + T(w.A) + ') ' + nm + ' was still cooling down: you pressed it at ' + T(w.prev) + '.';
+  return CDT_MOMC[w.at] + ' (' + T(w.A) + ') you ' + (w.late != null ? 'held it until ' + T(w.late) + '.' : 'didn\'t press it.');
+}
+// (the miss as a short headline, for Debriefing's one-player list: "Held Trueshot past the intermission")
+const CDT_AT = { pull: 'the pull', p2: 'P2 start', inter: 'the intermission' };
+function cdtHead(w, nm) { if (w.at === 'cd') return nm + ' sat ready ' + (w.late != null ? Math.round(w.late - w.a) + ' seconds' : 'to the end');
+  return w.prev != null ? nm + ' wasn\'t ready for ' + CDT_AT[w.at] : w.late != null ? 'Held ' + nm + ' past ' + CDT_AT[w.at] : 'No ' + nm + ' at ' + CDT_AT[w.at]; }
+// (a pull's phases as the rules name them)
+const cdtPh = (r) => { const l = (r.module && !r.module.error && r.module.phases) || [], f = (re) => { const q = l.find((x) => re.test(x.name)); return q ? q.start : null; }; return { p2: f(/^P2\b/), inter: f(/^Intermission/i) }; };
+// (the rules for this player and pull, or none)
+const cdtRules = (r, p) => (CDT_RULES[r.item.boss + '|' + r.item.diff] || {})[p.specName] || [];
+// (every rule judged on one pull, for the Debriefing line and the timeline)
+function cdtPull(r, p, t1) { return cdtRules(r, p).map((R) => { const casts = R.n.flatMap((n) => p.byName.get(n.toLowerCase()) || []).sort((a, b) => a - b), nm = (R.n.find((n) => (p.byName.get(n.toLowerCase()) || []).length) || R.n[0]);
+  return { R, nm, used: casts.length > 0, l: casts.length || !R.oncd ? cdtJudge(R, casts, cdtPh(r), t1) : [] }; }).filter((x) => x.used); }
 // Talent swaps the guides make for one boss (notes/Guides/Classes). take: talents a guide adds there, skip: ones it drops; hero: only for that hero tree.
 const BOSS_TAL = {
   'Shadow Priest': {
@@ -41401,6 +41458,26 @@ function bossRot(o) {
       out.WT['boss:hits'] = 2;
       out.VIZ['boss:hits'] = () => (one && cds.length ? '<div class="spc-ws">' + cds.map((c) => '<div class="spc-w ' + (c.inHit ? 'ok' : 'warn') + '" role="button" tabindex="0" data-mt="' + c.t.toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + T(c.t) + '</b><span class="sub">' + (c.x >= 1.1 ? c.x.toFixed(1) + ' times the usual damage' : 'about the usual damage') + '</span></div>' +
         '<div class="spc-wc spc-chk"><span class="' + (c.inHit ? 'ok' : 'no') + '">' + (c.inHit ? '✓ ' : '') + esc(c.cd) + (c.inHit && c.top && c.top.length ? (HCD_WHEN[c.cd] === 'post' ? ' after ' : ' into ') + esc(andL(c.top)) : c.inHit ? '' : ', not heavy damage') + '</span></div></div>').join('') + '</div>' : ''); } }
+  // (3b) cooldown timing on this boss: each big cooldown against the moments the top players press it (CDT_RULES)
+  { const L = new Map();
+    for (const x of per) for (const c of cdtPull(x.r, x.p, x.t1)) { const e = L.get(c.R) || { R: c.R, nm: c.nm, ws: [] }; L.set(c.R, e); for (const w of c.l) e.ws.push({ ...w, pull: x.r.item.pull }); }
+    const RL = [...L.values()].filter((e) => e.ws.length);
+    if (RL.length) { const g = { t: 'Cooldown timing on this boss', l: [] }; out.groups.push(g);
+      for (const { R, nm, ws } of RL) { const ok = ws.filter((w) => w.hit != null).length, n = ws.length, miss = ws.filter((w) => w.hit == null), f = ok / n;
+        const st = f === 1 ? 'ok' : f >= 0.5 || R.heal ? 'warn' : 'bad', k = 'cdt:' + lc(nm).replace(/[^a-z0-9]+/g, '-');
+        const where = R.oncd ? 'as soon as it comes back, from the pull' : andL([...new Set(R.w.map((y) => CDT_MOM[y[0]]))]);
+        add(g, { st, ic: nm, label: nm + ' timing', v: ok + '<span>/' + n + '</span>', k,
+          sub: (ok + ' of ' + n + ' ' + (R.oncd ? (ok === 1 ? 'press was' : 'presses were') + ' on time' : nm + (n === 1 ? '' : 's') + (ok === 1 ? ' was' : ' were') + ' pressed at the right moment') + '. Top players on this boss press it ' + where + '. ' +
+            miss.slice(0, 3).map((w) => (one ? '' : 'Pull ' + w.pull + ': ') + cdtSay(w, nm)).join(' ') + (miss.length > 3 ? ' And ' + (miss.length - 3) + ' more.' : '')).trim(),
+          how: 'From ' + CDT_SRC + ': ' + R.top + ' top ' + P0.specName + 's did this. ' + (R.also ? R.also + ' ' : '') +
+            (R.oncd ? 'A press counts as on time up to ' + R.oncd[1] + ' seconds after it came back (the first one by ' + R.oncd[0] + ' seconds into the pull).' :
+              'A press counts from a few seconds before the moment to ' + Math.max(...R.w.map((y) => y[2])) + ' seconds after it. A moment your pull never reached, or came after your death, isn\'t counted.' + (R.w.some((y) => y[3]) ? ' P2 start counts only when your cooldown was back by then: in a long P1 an extra press is fine.' : '')) +
+            (R.prog ? ' ' + R.prog : ''),
+          mo: miss.map((w) => ({ pull: w.pull, a: w.A, b: w.b })), cdtHead: miss.length ? cdtHead(miss[0], nm) : '', cdtWhat: miss.slice(0, 2).map((w) => (one ? '' : 'Pull ' + w.pull + ': ') + cdtSay(w, nm)).join(' '), cdtPulls: [...new Set(miss.map((w) => w.pull))], cdtW: one ? ws.map((w) => ({ a: w.a, b: w.b, at: w.at, ok: w.hit != null, say: cdtSay(w, nm) })) : null,
+          tip: miss.length ? (R.oncd ? 'Press ' + nm + ' as soon as it comes back: the top players don\'t save it on this boss.' : miss.some((w) => w.prev != null) ? 'Don\'t press ' + nm + ' just before ' + andL([...new Set(miss.filter((w) => w.prev != null).map((w) => CDT_MOM[w.at].replace(/^(on|as) /, '')))]) + ': hold it so it\'s ready then.' : 'Press ' + nm + ' ' + andL([...new Set(miss.map((w) => CDT_MOM[w.at]))]) + '.') : '' });
+        out.WT[k] = 1.5;
+        out.VIZ[k] = () => (one ? '<div class="spc-ws">' + ws.map((w) => '<div class="spc-w ' + (w.hit != null ? 'ok' : 'warn') + '" role="button" tabindex="0" data-mt="' + (w.hit != null && !w.pre ? w.hit : w.A).toFixed(2) + '" title="Show it on your cooldowns"><div class="spc-wh"><b>' + esc(CDT_MOMC[w.at]) + '</b><span class="sub">' + T(w.a) + '–' + T(w.b) + '</span></div><div class="spc-wc spc-chk"><span class="' + (w.hit != null ? 'ok' : 'no') + '">' + esc(cdtSay(w, nm).replace(/^✓ /, '✓ ')) + '</span></div></div>').join('') + '</div>' : ''); }
+      out.MERGE['Cooldown timing on this boss'] = { ic: RL[0].nm, main: 'cdt:' + lc(RL[0].nm).replace(/[^a-z0-9]+/g, '-'), lead: 'When the top players on this boss press their big cooldowns, and whether yours went out at the same moments.' }; } }
   // (4) talents a guide changes for this boss
   const TB = [];
   const TAL = o.TAL; if (TB.length && TAL) { const g = { t: 'Talents for this boss', l: [] }; out.groups.push(g);
@@ -60464,6 +60541,7 @@ function dsGuides() {
     var idleN = 0; /* (round 155j: no idle stripes: the Rotation tab is about the rotation) */
     if (phs.length >= 2) phs.forEach(function (p, i) { var e0 = i + 1 < phs.length ? phs[i + 1].start : (p.end != null ? Math.min(p.end, END) : END); if (e0 > p.start) mid += '<i class="rtv-phb' + (i % 2 ? ' alt' : '') + '" style="top:' + y(p.start).toFixed(1) + 'px;height:' + Math.max(2, (e0 - p.start) * Y).toFixed(1) + 'px"></i>'; }); /* round 200 phase bands */
     phs.forEach(function (p, i) { if (i || p.start > 1) mid += '<i class="rtv-ph" style="top:' + y(p.start) + 'px"><b>' + E(p.name) + '<em>' + mm(p.start) + '</em></b></i>'; }); /* (a slim banner where each phase starts) */
+    (D.checks || []).forEach(function (c) { var ci = colOf[c.ic]; if (ci == null || !c.cdtW) return; c.cdtW.forEach(function (w) { if (END && w.a > END) return; mid += '<i class="rtv-cdt ' + (w.ok ? 'ok' : 'no') + '" data-nt="' + note(w.ok ? 'g' : 'y', '<b>' + mm(w.a) + ' · ' + E(c.ic) + ' moment</b><span>' + E(String(w.say).replace(/^✓ /, '')) + '</span>' + (w.ok ? '' : '<span>Top players press it here.</span>'), [w.a]) + '" style="left:' + (56 + ci * CW + 2) + 'px;top:' + y(w.a).toFixed(1) + 'px;height:' + Math.max(6, (Math.min(w.b, END || w.b) - w.a) * Y).toFixed(1) + 'px"></i>'; }); }); /* (Oct 31: the moments the top players press this cooldown on this boss, a slim bar down the side of its column: green pressed, amber missed) */
     SPL.forEach(function (s, i) { if (i && grp(SPL[i - 1]) !== grp(s)) mid += '<i class="rtv-sep" style="left:' + (56 + i * CW) + 'px"></i>'; });
     /* a cooldown that sat ready: a dotted bar in its column from when it came back to the press */
     md.S.forEach(function (m) { if (m.type !== 'ready' || m.b == null) return; var nm = String(m.head).replace(/ sat ready$/, ''), ci = colOf[nm]; if (ci == null || m.b - m.t < 1) return;
