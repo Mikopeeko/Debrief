@@ -1969,6 +1969,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-31', h: [{ t: 'Cooldown timing on The Coiled Altar', d: 'Rotation now shows if your big cooldown went out at the same moments the top players use it on Mythic, like Trueshot on the pull, at P2 start and in the intermission. Debriefing tells you when you missed one. For now: Holy Paladin, Marksmanship Hunter, Affliction Warlock, Arcane Mage, Arms Warrior and Balance Druid.' }], n: [
+    "Beast Mastery Hunter Rotation: top-player marks on every Mythic boss, Ula'tek included, from more top Hunters.",
     "Mistweaver Rotation: top-player marks on every Mythic boss. Mystic Touch uptime now counts whichever Monk put it on (with two Monks in the raid, one used to read 0%).",
     "Affliction Warlock Rotation: top-player marks on every Mythic boss, and the Darkglare window bar matches what top players do (they miss Dark Harvest in about 1 window in 3, since it comes back every 40 seconds).",
     "Protection Warrior Rotation: a new check for Mountain Thane, Avatar pressed with your Thunder Blasts already spent (Avatar gives you 2 and you can't hold more), and top-player marks on every Mythic boss.",
@@ -19514,16 +19515,16 @@ const SPEC_TOP = {
     'Kith\'ix|16': { 'n': '7', 'score': '95', 'abc': '80%', 'up:Eclipse': '70%', 'apl': '89%', 'cd:fury of elune': '100%', 'dot:Moonfire': '100%', 'dot:Sunfire': '100%', 'res': '1%', 'win': '100%', 'cd:incarnation: chosen of elune': '100%', 'outP': '215521' },
   },
   'Beast Mastery Hunter': {
-    'The Twin Fangs|16': { 'n': '4', 'score': '100', 'abc': '79%', 'apl': '88%', 'cd:kill command': '99%', 'cd:barbed shot': '100%', 'res': '10%', 'win': '100%', 'cd:bestial wrath': '93%', 'outP': '269463' },
-    'Nek\'zali the Soulcoiler|16': { 'n': '7', 'score': '100', 'abc': '80%', 'apl': '88%', 'cd:kill command': '99%', 'cd:barbed shot': '100%', 'res': '11%', 'win': '100%', 'cd:bestial wrath': '90%', 'outP': '233822' },
-    'Entombed Sentinels|16': { 'n': '4', 'score': '100', 'abc': '79%', 'apl': '88%', 'cd:kill command': '98%', 'cd:barbed shot': '100%', 'res': '13%', 'win': '100%', 'cd:bestial wrath': '100%', 'outP': '213137' },
-    'Vashnik the Malignant|16': { 'n': '5', 'score': '94', 'abc': '79%', 'apl': '86%', 'cd:kill command': '100%', 'cd:barbed shot': '100%', 'res': '7%', 'win': '100%', 'cd:bestial wrath': '80%', 'outP': '342251' },
-    'The Lost Explorers|16': { 'n': '4', 'score': '100', 'abc': '77%', 'apl': '88%', 'cd:kill command': '99%', 'cd:barbed shot': '100%', 'res': '7%', 'win': '100%', 'cd:bestial wrath': '100%', 'outP': '275355' },
-    'Sszorak|16': { 'n': '17', 'score': '100', 'abc': '81%', 'apl': '88%', 'cd:kill command': '99%', 'cd:barbed shot': '100%', 'res': '11%', 'win': '100%', 'cd:bestial wrath': '91%', 'outP': '244134' },
-    'The Coiled Altar|16': { 'n': '3', 'score': '100', 'abc': '83%', 'apl': '87%', 'cd:kill command': '99%', 'cd:barbed shot': '101%', 'res': '14%', 'win': '100%', 'cd:bestial wrath': '100%', 'outP': '214616' },
-    'Ula\'tek|16': { 'outP': '339840' },
-    'Nymrissa Wavecaller|16': { 'n': '9', 'score': '100', 'abc': '80%', 'apl': '87%', 'cd:kill command': '99%', 'cd:barbed shot': '100%', 'res': '11%', 'win': '100%', 'cd:bestial wrath': '100%', 'outP': '237516' },
-    'Kith\'ix|16': { 'n': '3', 'score': '100', 'abc': '76%', 'apl': '89%', 'cd:kill command': '100%', 'cd:barbed shot': '100%', 'res': '12%', 'win': '90%', 'cd:bestial wrath': '100%', 'outP': '216261' },
+    'Nymrissa Wavecaller|16': { 'n': '12', 'score': '97', 'pot': '100%', 'abc': '80%', 'open': '100%', 'apl': '94%', 'pr:kcna': '99%', 'cd:kill command': '99%', 'cd:barbed shot': '100%', 'res': '12%', 'win': '100%', 'cd:bestial wrath': '100%', 'boss:amp': '100%', 'outP': '237516' },
+    'Nek\'zali the Soulcoiler|16': { 'n': '10', 'score': '97', 'pot': '100%', 'abc': '80%', 'open': '100%', 'apl': '95%', 'pr:kcna': '99%', 'cd:kill command': '99%', 'cd:barbed shot': '100%', 'res': '11%', 'win': '100%', 'cd:bestial wrath': '100%', 'boss:amp': '100%', 'outP': '233822' },
+    'Entombed Sentinels|16': { 'n': '10', 'score': '93', 'pot': '100%', 'abc': '77%', 'open': '67%', 'apl': '91%', 'pr:kcna': '98%', 'cd:kill command': '98%', 'cd:barbed shot': '100%', 'res': '12%', 'win': '100%', 'cd:bestial wrath': '90%', 'boss:amp': '100%', 'outP': '213137' },
+    'The Lost Explorers|16': { 'n': '11', 'score': '96', 'pot': '100%', 'abc': '78%', 'open': '67%', 'apl': '85%', 'pr:kcna': '96%', 'cd:kill command': '98%', 'cd:barbed shot': '98%', 'res': '9%', 'win': '100%', 'cd:bestial wrath': '92%', 'boss:amp': '100%', 'outP': '275355' },
+    'Vashnik the Malignant|16': { 'n': '11', 'score': '97', 'pot': '100%', 'abc': '77%', 'open': '100%', 'apl': '94%', 'pr:kcna': '99%', 'cd:kill command': '99%', 'cd:barbed shot': '100%', 'res': '10%', 'win': '100%', 'cd:bestial wrath': '90%', 'boss:amp': '100%', 'outP': '342251' },
+    'Sszorak|16': { 'n': '11', 'score': '97', 'pot': '100%', 'abc': '80%', 'open': '100%', 'apl': '92%', 'pr:kcna': '99%', 'cd:kill command': '99%', 'cd:barbed shot': '100%', 'res': '12%', 'win': '100%', 'cd:bestial wrath': '100%', 'boss:amp': '100%', 'outP': '244134' },
+    'The Twin Fangs|16': { 'n': '11', 'score': '97', 'pot': '100%', 'abc': '77%', 'open': '67%', 'apl': '85%', 'pr:kcna': '95%', 'cd:kill command': '99%', 'cd:barbed shot': '100%', 'res': '9%', 'win': '100%', 'cd:bestial wrath': '92%', 'boss:amp': '100%', 'outP': '269463' },
+    'The Coiled Altar|16': { 'n': '9', 'score': '95', 'pot': '100%', 'abc': '79%', 'open': '100%', 'apl': '90%', 'pr:kcna': '96%', 'cd:kill command': '98%', 'cd:barbed shot': '100%', 'res': '14%', 'win': '100%', 'cd:bestial wrath': '88%', 'boss:amp': '100%', 'outP': '214616' },
+    'Ula\'tek|16': { 'n': '5', 'score': '93', 'pot': '100%', 'abc': '81%', 'open': '100%', 'apl': '85%', 'pr:kcna': '94%', 'cd:kill command': '98%', 'cd:barbed shot': '100%', 'res': '11%', 'win': '94%', 'cd:bestial wrath': '80%', 'boss:amp': '100%', 'outP': '339840' },
+    'Kith\'ix|16': { 'n': '9', 'score': '96', 'pot': '100%', 'abc': '78%', 'open': '100%', 'apl': '93%', 'pr:kcna': '98%', 'cd:kill command': '99%', 'cd:barbed shot': '100%', 'res': '12%', 'win': '100%', 'cd:bestial wrath': '100%', 'boss:amp': '100%', 'outP': '216261' },
   },
   'Blood Death Knight': {
     'The Twin Fangs|16': { 'n': '11', 'score': '100', 'abc': '83%', 'apl': '93%', 'cd:blood boil': '82%', 'cd:death and decay': '96%', 'res': '1%', 'up:Bone Shield': '100%', 'cd:dancing rune weapon': '100%', 'outP': '180753' },
