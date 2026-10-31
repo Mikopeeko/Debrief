@@ -13136,7 +13136,7 @@ function oaLayout(v, el) {
     const nb = v.querySelector('.dbn-bar.dbn-none'); if (nb) { const ld = nb.querySelector('[data-ndzwiz]'); if (ld) { ld.textContent = 'Add NSRT note'; ld.classList.add('sm'); ld.classList.remove('primary'); acts.appendChild(ld); } nb.remove(); } /* (no note yet: just Add NSRT note in the corner, the same paste window as the Plan tab (your call, Oct 24); no Swap players) */
     if (acts.children.length) hd.appendChild(acts); }
   // (a loaded NSRT note's bar stays in view, right under the coach: which note, what it checks, Swap players)
-  const nbar = v.querySelector('.dbn-bar:not(.dbn-none)'); if (nbar && nbar.previousElementSibling !== el) { el.after(nbar); nbar.classList.add('oa-note'); }
+  /* round 367 one note bar */ const nbar = [...v.querySelectorAll('.dbn-bar:not(.dbn-none):not(.dbn-add)')].find((b) => !b.closest('.dbt')); if (nbar && nbar.previousElementSibling !== el) { el.after(nbar); nbar.classList.add('oa-note'); }
   // (a small map on each of the coach's problems: the Fix card's own map for that mechanic)
   const cards = [...v.querySelectorAll('a.dbr-fx')];
   for (const li of el.querySelectorAll('.cch-p')) { /* (the brief lines take no borrowed map: none on All pulls (Oct 23)) */ if (li.querySelector('.wr-map')) { li.querySelectorAll('.cch-pmap .mz-big').forEach((x) => x.remove()); continue; }
