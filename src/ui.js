@@ -13874,7 +13874,7 @@ function coachKitHtml(K) {
   const hsUsers = K.rows.filter((q) => q.uses.length).length, hsN = K.rows.reduce((a, q) => a + q.uses.length, 0), hsBad = hs.filter((x) => x.st === 'bad').length;
   // Defensives: everyone whose spec has one (and anyone who pressed one); the bar is how many presses (one pull) or in how many pulls (All
   // pulls), with the damage they took off in all; a drop-down bar per press with its share
-  const df = K.rows.filter((q) => q.hasDef || q.presses.length).map((q) => { const no = q.lows.filter((x) => !x.ans), n = q.presses.length, tot = q.presses.reduce((a, x) => a + x.prev, 0);
+  const df = K.rows.filter((q) => (q.hasDef || q.presses.length) && q.p.role !== 'tank' /* round 383c no tanks */).map((q) => { const no = q.lows.filter((x) => !x.ans), n = q.presses.length, tot = q.presses.reduce((a, x) => a + x.prev, 0);
     const st = no.length ? flag(no.length) : !q.presses.length ? 'warn' : '';
     const M = (night ? [...q.presses.reduce((m, x) => { const g = m.get(x.name) || { name: x.name, id: x.id, n: 0, prev: 0, imm: false }; g.n++; g.prev += x.prev; g.imm = g.imm || x.imm; return m.set(x.name, g); }, new Map()).values()].map((g) => ({ label: g.name + ' ×' + g.n, icon: spellIcon(g.id, g.name), st: '', amt: Math.max(1, g.prev), vt: g.prev >= 1000 ? 'about ' + kf(g.prev) : g.imm ? 'immune' : '—' }))
       : q.presses.map((x) => ({ label: pre(x, x.t) + x.name, icon: spellIcon(x.id, x.name), st: '', amt: Math.max(1, x.prev), vt: x.prev >= 1000 ? 'about ' + kf(x.prev) : x.imm ? 'immune' : '—' })))
@@ -13885,7 +13885,7 @@ function coachKitHtml(K) {
     return { key: 'df-' + q.p.name, label: nm(q.p), p: q.p, st, n, tot, sc, rank: st === 'bad' ? 0 : !q.presses.length ? 1 : 2, v: sc ? Math.round(100 * sc.f) + '%' : q.p.role === 'tank' ? 'Tank' : cnt(n), sub: tot >= 1000 ? kf(tot) + ' prevented' : '',
       body: head + (M.length ? cblMini(M, fx) : '<p class="ckt-none">' + (you ? 'You' : nm(q.p)) + ' didn\'t press a defensive' + (night ? ' all night' : ' this pull') + '.</p>') }; })
     .sort((a, b) => (a.sc && b.sc ? a.sc.f - b.sc.f : a.sc ? -1 : b.sc ? 1 : 0) || a.rank - b.rank || b.n - a.n || b.tot - a.tot); /* (round 383: lowest score first) */
-  const dfUsers = K.rows.filter((q) => (q.hasDef || q.presses.length) && q.presses.length).length, dfTot = df.reduce((a, x) => a + x.tot, 0);
+  const dfUsers = K.rows.filter((q) => (q.hasDef || q.presses.length) && q.presses.length && q.p.role !== 'tank').length, dfTot = df.reduce((a, x) => a + x.tot, 0);
   const hsHeal = K.rows.reduce((s, q) => s + (q.healAmt || 0), 0), hsH = hsHeal >= 1000 ? ' · healed ' + kf(hsHeal) : '';
   const hsSum = (you ? (hsN ? 'You used ' + plural(hsN, 'time') + (night ? ' in ' + plural(hs[0] ? hs[0].n : 0, 'pull') : '') : 'You didn\'t use one') : hsUsers + ' of ' + hs.length + ' used one' + (night ? ' at least once' : '') + ' · ' + hsN + ' in all' + (hsBad ? ' · ' + hsBad + ' sat low with one unused' : '')) + hsH;
   const dfS = df.filter((x) => x.sc), dfAvg = dfS.length ? Math.round(100 * dfS.reduce((s, x) => s + x.sc.f, 0) / dfS.length) : null;
@@ -13899,7 +13899,7 @@ function coachKitHtml(K) {
   const panel = (k, title, sum, warn, body, note, g) => '<details class="cch-ab cch-abx' + (warn ? ' warn' : '') + '" data-k="' + k + '"' + open(k) + '><summary class="cch-al"' + (g != null ? ' data-g="' + g + '"' : '') + '><span class="icw-no ckt-t">' + title + '</span><span class="cch-abs">' + esc(sum) + '</span></summary>' + body + note + '</details>';
   return '<div class="cch-acct2 cch-acct3">' +
     panel('cch-ab-hs', 'Healthstones and potions', hsSum, hsBad > 0, coachBars(hs, (x) => Math.max(x.n, x.st ? 0.5 : 0), (x) => x.body), '<p class="ckt-note">Yellow: never used one (fine if they never got low). Red: low for a long time with one unused, twice or more. Tap a name to see when and how low.</p>', hsG) +
-    panel('cch-ab-df', 'Defensives', dfSum, df.some((x) => x.st === 'bad'), coachBars(df, dfS.length ? (x) => (x.sc ? x.sc.f : 0) : (x) => Math.max(x.n, x.st ? 0.5 : 0), (x) => x.body), rate + '<p class="ckt-note">' + (dfS.length ? 'Each raider is compared with top players of their own spec on this boss: every defensive they press, in the same time alive (from 500+ saved top kills). Tanks are left out (Rotation judges theirs). ' : '') + 'Damage prevented is an estimate from what still got through while each was up (shields are exact). Yellow: never pressed one. Red: low for a long time with nothing pressed, twice or more.</p>', dfG) +
+    panel('cch-ab-df', 'Defensives', dfSum, df.some((x) => x.st === 'bad'), coachBars(df, dfS.length ? (x) => (x.sc ? x.sc.f : 0) : (x) => Math.max(x.n, x.st ? 0.5 : 0), (x) => x.body), rate + '<p class="ckt-note">' + (dfS.length ? 'Each raider is compared with top players of their own spec on this boss: every defensive they press, in the same time alive (from 500+ saved top kills). Tanks aren\'t listed: Rotation judges theirs. ' : '') + 'Damage prevented is an estimate from what still got through while each was up (shields are exact). Yellow: never pressed one. Red: low for a long time with nothing pressed, twice or more.</p>', dfG) +
     '</div>';
 }
 function coachAvoid(reps, name) {
