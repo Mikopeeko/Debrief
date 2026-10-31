@@ -3676,7 +3676,7 @@ function buildCoiledAltar(ev, r, h) {
   const fKeep = new Set(), fTanks = new Set();
   { /* (round 345 one hit per frontal: on Mythic too, Oct 31) */
     const seen = new Set(), hitAt = new Map();
-    for (const n of ['sever', 'soul sever', 'blighted sever']) for (const e of dmg(n)) { const c = casts(n).filter((t) => e.t >= t - 0.5 && e.t <= t + 5).pop(); if (c == null || seen.has(n + c + e.dst)) continue; seen.add(n + c + e.dst); fKeep.add(e);
+    for (const n of ['sever', 'soul sever', 'blighted sever']) for (const e of dmg(n)) { const c = casts(n).find((t) => Math.abs(e.t - (ev.find((x) => x.k === 'cast' && L(x.spell) === n && x.t >= t && x.t <= t + 8) || { t }).t) < 0.6); /* (round 349 frontal hits: with the frontal, not a later tick) */ if (c == null || seen.has(n + c + e.dst)) continue; seen.add(n + c + e.dst); fKeep.add(e);
       if (!(r.players.get(e.dst) || {}).specId) { const l = hitAt.get(e.dst) || []; if (!l.some((t) => Math.abs(t - e.t) < 8)) l.push(e.t); hitAt.set(e.dst, l); } }
     if (!mythic) for (const [g, l] of hitAt) if (l.length >= 2) fTanks.add(g);
   }
@@ -4166,11 +4166,11 @@ function buildCoiledAltar(ev, r, h) {
   }
   /* (a non-tank in the frontal is one of its moments too: the coach names Sever when it kills someone, so its row can't read clean (Oct 27)) */
   for (const f of front) { const died = (r.deaths || []).some((d) => d.guid === f.dst && d.t >= f.t - 0.5 && d.t <= f.t + 3);
-    tfRows.push({ t: f.t, row: [{ t: f.t }, { s: S(L(f.spell)) }, { p: pname(f.dst) }, { txt: '—', dim: true }, { txt: '—', dim: true }, { txt: died ? 'a non-tank died in it' : 'a non-tank stood in it', bad: died || !f.soft, warn: !died && !!f.soft }] }); }
+    tfRows.push({ t: f.t, row: [{ t: f.t }, { s: S(L(f.spell)) }, { p: pname(f.dst) }, { txt: '—', dim: true }, { txt: '—', dim: true }, { txt: died ? 'a non-tank died in it' : 'a non-tank stood in it', bad: died || !f.soft, warn: !died && !!f.soft }].concat((() => { const mp = frontMap(f); return mp ? [{ map: mp }] : []; })()) }); }
   if (tfRows.length) sections.push({ id: 'tankfront', title: 'Tank frontals (Defensives on stack 2)', place: 'Tank frontals: stacks and defensives', spell: S('soul sever'),
     verdict: tfRows.some((x) => x.row.some((c) => c.bad)) ? 'bad' : tfRows.some((x) => x.row.some((c) => c.warn)) ? 'warn' : 'good',
     summary: pl(tfRows.length, 'tank frontal') + '. It shows who took each one, on which stack, and the defensives and externals they had up.',
-    cols: ['When', 'Frontal', 'Tank', 'Stack', 'Had up', 'Result'], rows: tfRows.sort((a, b) => a.t - b.t).map((x) => x.row) });
+    cols: ['When', 'Frontal', 'Tank', 'Stack', 'Had up', 'Result', ''], rows: tfRows.sort((a, b) => a.t - b.t).map((x) => x.row) });
 
   // ---- Eternal Nightfall: Malacrass shields himself while casting; breaking it in time is the real damage check ----
   // Two steps (encounter journal: "interruptible if the shield is broken"): the raid breaks the absorb shield (aura
@@ -4510,7 +4510,7 @@ function buildCoiledAltar(ev, r, h) {
   // Tank frontals that hit non-tanks: shown on the frontal's own row (Sever / Blighted Sever under Orbs and
   // frontals, Soul Sever under Dreadmarch and ghosts) instead of a separate panel
   {
-    take('front');
+    take('front'); if (0) { /* (round 349: non-tank hits stay on Sever (Frontal) only) */
     const oSec = sections.find((s) => s.id === 'orbs'), gSec = sections.find((s) => s.id === 'dmghost');
     const rowsOf = (sec) => sec && sec.groups ? sec.groups.flatMap((g) => g.rows.map((row) => ({ g, row }))) : [];
     const loose = [];
@@ -4538,7 +4538,7 @@ function buildCoiledAltar(ev, r, h) {
     // (a hit with no row of its own (a Sever before the first Deluge) gets its own row and map, so a death to it shows the cone (your note, Oct 20))
     if (loose.length && oSec && oSec.rows) { for (const e of loose) { const mp = frontMap(e); oSec.rows.push([{ txt: S(L(e.spell))[1], sub: 'no Deluge before it' }, { t: e.t }, { p: pname(e.dst) }, { txt: 'hit a non-tank', sub: h.compact(e.amt), bad: !e.soft, warn: !!e.soft }, mp ? { map: mp } : { txt: '' }]); }
       oSec.rows.sort((a, b) => a[1].t - b[1].t); }
-  }
+  } }
   // Spiritcackle adds: each set with its adds (kick timing, shield, death)
   {
     const sAd = take('adds'), sAx = take('addx');

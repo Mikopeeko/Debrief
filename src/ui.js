@@ -1991,7 +1991,7 @@ const PATCH_NOTES = [
     "The page background is plain dark, without the grid."
   ], f: [
     "The Coiled Altar Mythic: a player in a tank frontal counts each Sever once, not every 2 seconds of the damage it leaves behind.",
-    "The Coiled Altar: Soul Sever hitting a non-tank has its own card in phase two, Soul Sever (Frontal Hits), instead of showing up under Coalesced Venom.",
+    "The Coiled Altar: a tank frontal that hits a non-tank is listed once, under Sever (Frontal) with its map, not also under Dreadmarch or Coalesced Venom, and a tick of the damage an earlier frontal left behind no longer counts as a new hit.",
     "The browser's Back button: Back from your summary returns to your team's Home.",
     "A raid night on Home opens the boss it's named after, not the night's first pull.",
     "Home no longer shows the boss banner and pull bar of a log you have open.",
