@@ -1968,6 +1968,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-30', h: [{ t: 'A cleaner banner and one bar for every tab', d: "The banner is now just the boss: its name, the difficulty and the result, with the boss art bigger. Who you're looking at, the pull (or another boss from the night), All pulls, the wipe call and how strictly you're judged all sit in one bar at the top of every tab." }, { t: 'Graphs, redesigned', d: "Names in their own column with slim class-coloured bars, every page laid out the same way with its controls on the card's title line, and the chart now follows the phase, Bloodlust or Power Infusion you pick." }], n: [
+    "Your summary matches Home: the same slim header, your numbers in one quiet line, and your bosses as slim rows in raid order.",
     "Home's boss chart shows the best pull of each night, one dot a night with its result, the raid nights are slim rows beside the raid, and killed bosses are quieter so the one you're on stands out.",
     "Home's ranks are labelled Mythic progress, so they don't read as Heroic ranks on the Heroic view.",
     "Home is tidier: one slim header with your team, its ranks, one difficulty switch and you, then the boss you're on, then the raid as bars beside your raid nights. All rankings opens right under the header, and Home is half as long on a phone.",
@@ -33963,3 +33964,20 @@ function r341Home() { const fl = document.querySelector('#main .home.prog .my-fl
       const lab = kill ? 'Kill' : ph && pc ? ph + ' · ' + pc + '%' : pc ? pc + '%' : ''; if (!lab) return; const x = +h.getAttribute('cx'), y = +h.getAttribute('cy'), an = x < 60 ? 'start' : x > vb[2] - 60 ? 'end' : 'middle';
       const tx = document.createElementNS('http://www.w3.org/2000/svg', 'text'); tx.setAttribute('class', 'r341-vl'); tx.setAttribute('x', x); tx.setAttribute('y', Math.max(14, y - 12)); tx.setAttribute('text-anchor', an); tx.setAttribute('fill', (d && d.getAttribute('fill')) || '#e8eaed'); tx.textContent = lab; ch.append(tx); }); } }
 (function () { const f7 = dsBars; dsBars = function (root) { f7(root); try { r341Home(); } catch (e) { /* (fine as it is) */ } }; })();
+
+// ===== Design studio round 343 (Oct 31): round 343 summary like Home. Your summary page in Home's look: one slim header in place of
+// the banner (its buttons moved, not copied), and the bosses in raid order. Owner: the Design studio chat. =====
+function r343Sum() { const pg = document.querySelector('#main .home.prog'); if (!pg || !pg.querySelector('.chp-sum') || pg.classList.contains('r343')) return; pg.classList.add('r343');
+  const q = (s) => pg.querySelector(s), mk = (c, t) => { const e = document.createElement(t || 'div'); e.className = c; return e; }, top = q(':scope > .pg-top');
+  if (top) { const hd = mk('panel r340-hd r343-hd', 'section'), id = mk('r340-id'), crest = top.querySelector('.ht-ban'), h1 = top.querySelector('.pg-tt > h1'); if (crest) id.append(crest.cloneNode(true)); hd.append(id);
+    const tx = mk('r340-tx'), nm = mk('r340-nm'), b = document.createElement('b'); b.textContent = h1 ? [...h1.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('').trim() : ''; if (h1 && h1.style.color) b.style.color = h1.style.color; nm.append(b);
+    const ed = top.querySelector('#pgEdit'); if (ed) nm.append(ed); tx.append(nm);
+    const ln = mk('r343-ln'), aff = top.querySelector('.ht-g'), inf = top.querySelector('.pg-info'); ln.textContent = [aff && aff.textContent.trim(), inf && inf.textContent.trim()].filter(Boolean).join(' · '); if (ln.textContent) tx.append(ln);
+    const ch = top.querySelector('.pg-chips'); if (ch) { ch.classList.add('r343-ch'); tx.append(ch); } hd.append(tx);
+    const sw = top.querySelector('.pc-diffs'); if (sw) hd.append(sw);
+    const dl = top.querySelector('#pgDel'); if (dl && dl.parentElement) { dl.parentElement.classList.add('r340-edrow'); hd.append(dl.parentElement); }
+    top.before(hd); top.classList.add('r343-old'); }
+  // (the bosses in raid order, like Home's raid list)
+  const tbl = q('.chp-tbl'), P = (window.ENGINE && window.ENGINE.PACKS) || []; if (tbl && P.length) { const ord = P.map((p) => p.encounter), rows = [...tbl.querySelectorAll(':scope > button.chp-tr[data-chb]')], ix = (r) => { const i = ord.indexOf(r.dataset.chb); return i < 0 ? 99 : i; };
+    rows.sort((a, c) => ix(a) - ix(c)).forEach((r) => tbl.append(r)); } }
+(function () { const f8 = dsBars; dsBars = function (root) { f8(root); try { r343Sum(); } catch (e) { /* (the old look stays) */ } }; })();
