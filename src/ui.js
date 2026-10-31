@@ -33621,7 +33621,7 @@ function dsGuides() {
      press to see it); what went well is a short tag on the left, mistakes a short tag on the right; a wrong press has a red border and
      every note opens on hover or tap. Cooldown windows are a soft tint across the columns, a cooldown that sat ready a dotted red bar.) */
   /* (round 155w: the timeline's filters, remembered per viewer) */
-  var FV0 = { outwin: 1, dead: 1, allcards: 0, press: 1, minor: 0, span: 1, good: 1, cards: 1, win: 1, wave: 1, procs: 1, util: 1, filler: 1, dim: 0, res: 1, mana: 1 }; /* round 192 filters; round 195: severity chips, By check and the Cooldowns layer out */ /* round 195 */
+  var FV0 = { outwin: 1, dead: 1, allcards: 0, press: 1, minor: 0, span: 1, good: 1, cards: 1, win: 1, wave: 1, procs: 1, util: 1, filler: 1, dim: 1, res: 1, mana: 1 }; /* round 336 spotlight first */ /* round 192 filters; round 195: severity chips, By check and the Cooldowns layer out */ /* round 195 */
   var ckHid = function () { try { return JSON.parse(localStorage.getItem('wla-rtv-ck') || '[]'); } catch (e) { return []; } }, setCkH = function (l) { try { localStorage.setItem('wla-rtv-ck', JSON.stringify(l)); } catch (e) { /* (not remembered) */ } };
   var rtvCk = function () { var bx = document.querySelector('.rtl'), c = bx && bx.querySelector('.rtv'); if (!bx || !c) return; var hid = ckHid(), L = bx._cks || [];
     c.querySelectorAll('[data-ck]').forEach(function (el) { var ks = el.getAttribute('data-ck').split(' ').filter(Boolean); el.classList.toggle('rtv-off', ks.length > 0 && ks.every(function (k) { return hid.indexOf(L[+k.slice(1)]) >= 0; })); });
