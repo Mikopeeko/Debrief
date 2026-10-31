@@ -12215,6 +12215,8 @@ html body #view#view details.r399-dd[open] > summary .r399-x { transform: rotate
 html body #view#view details.r399-dd + details.r399-dd > summary, html body #view#view details.r399-dd + .r399-d { border-top: 1px solid var(--line); }
 html body #view#view .r399-rc { padding: 6px 0 10px 52px; }
 @media (max-width: 699px) { html body #view#view .r399-d { grid-template-columns: 40px minmax(0, 1fr) 96px 14px !important; } html body #view#view .r399-rc { padding-left: 0; } }
+/* round 402: the boss banner hides the moment Home opens (not after Home has drawn), so nothing jumps */
+html.tab-me body #bossHead, html.tab-me body main#main > .r300-tb { display: none !important; }
 
 </style>
 
@@ -23287,6 +23289,7 @@ function renderMain() { const one = () => S.tab === 'audit' && S.rep && !S.rep.a
     else if (!gc && !v1.classList.contains('dbt-on') && v1.querySelector(':scope > :is(.ds-l, details.phase.mcx-ph)')) { v1.classList.add('dbt-wait'); clearTimeout(v1._dbtW); v1._dbtW = setTimeout(() => v1.classList.remove('dbt-wait'), 2500); } }
   return out; }
 function renderMain0() {
+  /* round 402 tab class */ try { document.documentElement.classList.toggle('tab-me', S.tab === 'me'); } catch (e) { /* (no class) */ }
   try { killFlags(); if (S.tab !== 'audit') document.documentElement.classList.remove('dbr-holding'); } catch (e) { /* (no flags) */ }
   { const oa = $('#oaTop'); if (oa) { oa.innerHTML = ''; oa.hidden = true; } } /* (the one-answer box, filled again by Debriefing) */
   if (S.tab === 'overview') { planPage(); return; } /* (Plan is its own page: it never reads the open raid (your call, Oct 21)) */

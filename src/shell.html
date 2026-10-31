@@ -12215,6 +12215,8 @@ html body #view#view details.r399-dd[open] > summary .r399-x { transform: rotate
 html body #view#view details.r399-dd + details.r399-dd > summary, html body #view#view details.r399-dd + .r399-d { border-top: 1px solid var(--line); }
 html body #view#view .r399-rc { padding: 6px 0 10px 52px; }
 @media (max-width: 699px) { html body #view#view .r399-d { grid-template-columns: 40px minmax(0, 1fr) 96px 14px !important; } html body #view#view .r399-rc { padding-left: 0; } }
+/* round 402: the boss banner hides the moment Home opens (not after Home has drawn), so nothing jumps */
+html.tab-me body #bossHead, html.tab-me body main#main > .r300-tb { display: none !important; }
 
 </style>
 

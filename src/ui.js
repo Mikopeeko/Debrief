@@ -2962,6 +2962,7 @@ function renderMain() { const one = () => S.tab === 'audit' && S.rep && !S.rep.a
     else if (!gc && !v1.classList.contains('dbt-on') && v1.querySelector(':scope > :is(.ds-l, details.phase.mcx-ph)')) { v1.classList.add('dbt-wait'); clearTimeout(v1._dbtW); v1._dbtW = setTimeout(() => v1.classList.remove('dbt-wait'), 2500); } }
   return out; }
 function renderMain0() {
+  /* round 402 tab class */ try { document.documentElement.classList.toggle('tab-me', S.tab === 'me'); } catch (e) { /* (no class) */ }
   try { killFlags(); if (S.tab !== 'audit') document.documentElement.classList.remove('dbr-holding'); } catch (e) { /* (no flags) */ }
   { const oa = $('#oaTop'); if (oa) { oa.innerHTML = ''; oa.hidden = true; } } /* (the one-answer box, filled again by Debriefing) */
   if (S.tab === 'overview') { planPage(); return; } /* (Plan is its own page: it never reads the open raid (your call, Oct 21)) */
