@@ -14405,8 +14405,8 @@ function kitRanks(reps) {
 /* (one tile's parse: 0 to 100, how many top guilds' kills we beat over the same part of the fight) */
 function kitParse(x, ours) { const v = ours != null ? ours : x.v, p = parseOf(v, x.list, x.hiGood); if (p == null) return null; const b = x.list.filter((y) => (x.hiGood ? v > y : v < y)).length;
   const m = x.list.slice().sort((a1, b1) => a1 - b1)[x.list.length >> 1], typ = x.k === 'av' ? C(m) + ' taken' : x.k === 'dth' ? Math.round(100 * m) + '% of the raid alive' : Math.round(100 * m / Math.max(1, x.n)) + '% of the raid';
-  /* round 387b close to top */ const q = x.k === 'av' ? (v <= 0 ? 100 : Math.min(100, Math.round(100 * m / v))) : p;
-  return { p: q, like: x.like || '', cls: parseCls(q), tt: (x.k === 'av' ? 'Score ' : 'Parse ') + q + ': better than ' + b + ' of ' + x.list.length + " top guilds' kills over the same part of the fight · top guilds typically: " + typ }; }
+  /* round 394 rank again */ const q = p;
+  return { p: q, like: x.like || '', cls: parseCls(q), tt: 'Parse ' + q + ': better than ' + b + ' of ' + x.list.length + " top guilds' kills over the same part of the fight · top guilds typically: " + typ }; }
 /* round 215 percent colour */ const pctCls = (g) => 'dbr-pq ' + (g >= 20 ? 'q-gold' : g > 10 ? 'q-orange' : g >= 0 ? 'q-purple' : g >= -10 ? 'q-blue' : g > -20 ? 'q-green' : 'q-grey');
 const parseOf = (v, list, hiGood) => { const L = (list || []).filter((x) => x != null); if (!L.length) return null; let b = 0; for (const x of L) b += (hiGood ? v > x : v < x) ? 1 : v === x ? 0.5 : 0; return Math.round(100 * b / L.length); };
 const parseCls = (p) => 'dbr-pq ' + (p >= 100 ? 'q-gold' : p >= 99 ? 'q-pink' : p >= 95 ? 'q-orange' : p >= 75 ? 'q-purple' : p >= 50 ? 'q-blue' : p >= 25 ? 'q-green' : 'q-grey');
