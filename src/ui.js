@@ -13904,7 +13904,7 @@ function coachKitHtml(K) {
   const hsG = you && K.rows[0] ? gOne(K.rows[0].uses.length, K.rows[0].lows.filter((x) => x.kit).length) : null, dfG = you && K.rows[0] ? gOne(K.rows[0].presses.length, K.rows[0].lows.filter((x) => !x.ans).length) : null;
   const panel = (k, title, sum, warn, body, note, g) => '<details class="cch-ab cch-abx' + (warn ? ' warn' : '') + '" data-k="' + k + '"' + open(k) + '><summary class="cch-al"' + (g != null ? ' data-g="' + g + '"' : '') + '><span class="icw-no ckt-t">' + title + '</span><span class="cch-abs">' + esc(sum) + '</span></summary>' + body + note + '</details>';
   return '<div class="cch-acct2 cch-acct3">' +
-    panel('cch-ab-hs', 'Healthstones and potions', hsSum, hsBad > 0, coachBars(hs, (x) => Math.max(x.n, x.st ? 0.5 : 0), (x) => x.body), '<p class="ckt-note">Yellow: never used one (fine if they never got low). Red: low for a long time with one unused, twice or more. Tap a name to see when and how low.</p>', hsG) +
+    panel('cch-ab-hs', 'Healthstones', hsSum, hsBad > 0, coachBars(hs, (x) => Math.max(x.n, x.st ? 0.5 : 0), (x) => x.body), '<p class="ckt-note">Yellow: never used one (fine if they never got low). Red: low for a long time with one unused, twice or more. Tap a name to see when and how low.</p>', hsG) +
     panel('cch-ab-df', 'Defensives', dfSum, df.some((x) => x.st === 'bad'), coachBars(df, dfS.length ? (x) => (x.sc ? x.sc.f : 0) : (x) => Math.max(x.n, x.st ? 0.5 : 0), (x) => x.body), rate + '<p class="ckt-note">' + (dfS.length ? 'Each raider is compared with top players of their own spec on this boss: every defensive they press, in the same time alive (from 500+ saved top kills). Tanks aren\'t listed: Rotation judges theirs. ' : '') + 'Damage prevented is an estimate from what still got through while each was up (shields are exact). Yellow: never pressed one. Red: low for a long time with nothing pressed, twice or more.</p>', dfG) +
     '</div>';
 }
@@ -14611,12 +14611,12 @@ function paceTile(num, it0, reps, nT, kl, onT) { let PANEL = ''; const tile = ((
       { const GH = guildHist(it0); if (GH) { H = GH; nT = 0; kl = false; reps = []; } } /* (the guild's own history includes tonight) */
       /* (Oct 27, the site review: "Pulls to the kill" read 13 on one screen and 240 on another for the same night: tonight's count stood in while the
          guild's history was still coming. Now the tile says so, and fills in when it arrives) */
-      const ghs = ghState(it0); if (ghs === 'loading') return num('Pulls on this boss', '<b class="pcx-wait">…</b>', 'counting the guild\'s pulls on Warcraft Logs');
+      const ghs = ghState(it0); if (ghs === 'loading') return num('Pulls', '<b class="pcx-wait">…</b>', 'counting the guild\'s pulls on Warcraft Logs');
       const onlyTonight = ghs !== 'ok' && !H.earlier.length; /* (no history from Warcraft Logs and no saved nights: it only knows tonight) */
       let n = 0, killed = false; for (const x of H.earlier) { if (x.kill) { n += x.list.indexOf(x.kill) + 1; killed = true; break; } n += x.list.length; }
       if (!killed) { n += nT; killed = !!kl; }
       const nights = Math.min(H.earlier.length, H.earlier.findIndex((x) => x.kill) < 0 ? H.earlier.length : H.earlier.findIndex((x) => x.kill) + 1) + (H.earlier.some((x) => x.kill) ? 0 : 1);
-      const R = it0.diffId === 16 ? PROG_PULLS[it0.boss] : null, lab = onlyTonight ? 'Pulls tonight' : killed ? 'Pulls to the kill' : 'Pulls on this boss', where = plural(nights, 'night');
+      const R = it0.diffId === 16 ? PROG_PULLS[it0.boss] : null, lab = onlyTonight ? 'Pulls tonight' : killed ? 'Pulls' : 'Pulls', where = plural(nights, 'night');
       /* (best so far: every saved night up to the kill, then tonight's pulls) */
       const CV = paceCV(it0); if (CV && n >= 1) { let best = 0; const seq = [], raw = [], take = (left, k) => { const v = k ? 100 : left != null && isFinite(left) ? 100 - left : null; if (v != null) best = Math.max(best, v); seq.push(best); raw.push(v); };
         const NI = []; for (const x of H.earlier) { NI.push({ at: seq.length, label: x.label, ms: x.list[0] && x.list[0].at }); for (const v of x.list) { take(v.left, v.kill); if (v === x.kill) break; } if (x.kill) break; }
@@ -22224,7 +22224,7 @@ const TIP_CHECKS = { 'Power Infusion': 'Was Power Infusion given to a damage dea
   'Healthstones and potions': 'Did players use a Healthstone or healing potion when they got low?', 'Defensives': 'Did players press a defensive before the big hits?',
   'Combat potions': 'Did players drink a combat potion, and how much damage it added.', 'Note cooldowns': 'Healing cooldowns from your NSRT note: pressed on time?',
   'Raid cooldowns': 'Were the big raid hits covered by a raid cooldown?', 'Deaths': 'Who died, what killed them, and whether it could have been avoided.' };
-const TIP_TILES = { 'pulls on this boss': ['Pulls on this boss', 'Your guild\'s pulls on this boss, from the first pull to the first kill. Click for the pace chart next to other guilds.'],
+const TIP_TILES = { 'pulls on this boss': ['Pulls', 'Your guild\'s pulls on this boss, from the first pull to the first kill. Click for the pace chart next to other guilds.'],
   'deaths': ['Deaths', 'How many died this pull. Click to see who and why.'], 'raid dps': ['Raid DPS', 'The whole raid\'s damage a second, next to a typical top kill. Click for the chart.'],
   'dtps': ['DTPS', 'Damage the raid took a second. Lower is better. Click for the chart.'], 'hps': ['HPS', 'The whole raid\'s healing a second. Click for the chart.'],
   'note jobs': ['Note jobs', 'Jobs from your NSRT note that came up this pull, and how many were done.'] };
@@ -32133,7 +32133,7 @@ function renderProgress(msg, msgErr) {
     nowHtml = '<section class="pg-now" id="pgNow" style="--ec:' + col + '">' + (BOSS_HERO[nowBoss] ? '<img class="pnw-art" src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[nowBoss][0] + '.jpg" alt="" loading="lazy" style="object-position:' + BOSS_HERO[nowBoss][1] + '% 20%" onerror="this.remove()">' : '') +
       '<div class="pnw-t"><div><span class="pnw-k">' + (openB ? 'Now on' : 'Last kill') + ' · ' + esc(diffName) + '</span><h2>' + esc(nowBoss) + '</h2><span class="sub">' +
         esc(bk.length ? 'Killed ' + nightLabel(bk[0].at) + ' on pull ' + bk[0].pull + ' of the night' : nb ? 'Best: ' + nb.label + (/%$/.test(nb.label) ? ' left' : '') : 'No result yet') + '</span>' +
-        '<div class="pnw-tiles">' + [[bk.length ? 'Pulls to the kill' : 'Pulls', pr.length], ['Nights', nts], ['Time on the boss', durH(time)]].map(([l, v]) => '<span class="pnw-ti"><em>' + l + '</em><b>' + esc(String(v)) + '</b></span>').join('') + '</div></div>' +
+        '<div class="pnw-tiles">' + [[bk.length ? 'Pulls' : 'Pulls', pr.length], ['Nights', nts], ['Time on the boss', durH(time)]].map(([l, v]) => '<span class="pnw-ti"><em>' + l + '</em><b>' + esc(String(v)) + '</b></span>').join('') + '</div></div>' +
         '<div class="pnw-big" style="color:' + col + '">' + (bk.length ? 'Killed' : nb && nb.left != null ? Math.floor(100 - nb.left) + '%' : '—') + (bk.length ? '' : '<span>of the encounter done</span>') + '</div></div>' +
       /* (round 341 home polish: the best pull of each night) */ progChart(((m) => { pr.forEach((v) => { const k = nightOf(v.at), o = m.get(k); if (!o || (v.kill && !o.kill) || (!o.kill && !v.kill && v.left != null && (o.left == null || v.left < o.left))) m.set(k, v); }); return [...m.values()].sort((a, b) => a.at - b.at); })(new Map()), nowBoss, [1000, 170], true) +
       (lastOp ? '<div class="pnw-b"><button class="btn primary" id="pnwGo" type="button" data-code="' + esc(lastOp.code) + '" data-fight="' + esc(String(lastOp.fight)) + '">Open the last night</button><span class="sub">' + esc(nightLabel(lastN.at)) + ' · ' + plural(lastL.length, 'pull') + ' on ' + esc(nowBoss) + '</span></div>' : '') + '</section>';
