@@ -12217,6 +12217,8 @@ html body #view#view .r399-rc { padding: 6px 0 10px 52px; }
 @media (max-width: 699px) { html body #view#view .r399-d { grid-template-columns: 40px minmax(0, 1fr) 96px 14px !important; } html body #view#view .r399-rc { padding-left: 0; } }
 /* round 402: the boss banner hides the moment Home opens (not after Home has drawn), so nothing jumps */
 html.tab-me body #bossHead, html.tab-me body main#main > .r300-tb { display: none !important; }
+/* round 403: a spell link inside a tile's label (Healthstones) keeps the label's size and weight */
+html body #view#view#view#view summary.cgl > .cgl-n .sp, html body #view#view#view#view .dbr-n .dbr-k .sp { font-size: inherit !important; font-weight: inherit !important; letter-spacing: inherit !important; text-transform: inherit !important; color: inherit !important; }
 
 </style>
 
@@ -12270,36 +12272,37 @@ html.tab-me body #bossHead, html.tab-me body main#main > .r300-tb { display: non
 /* refined theme: two finishes the stylesheet can't reach on its own, kept up as the page redraws.
    1. One corner size: anything drawn rounder than 4px is squared to 4px, except small circles (dots, avatars) which stay round.
    2. Readable sentences (Oct 28, the designer's review): a line of reading text (6+ words, not a capitals label) under 14px gets 1px bigger, up to 14.5px.
-      Labels, tags and numbers are left alone. Each element is checked once; a class change checks it again. */
+      Labels, tags and numbers are left alone. Each element is checked once; a class change checks it again.
+   (Round 403, Oct 31: every read first, then every write. Reading an element's style or size right after changing another one made
+   the browser lay out the whole page again each time: on a big All-pulls page that was about 2.7 s of a freeze.) */
 (function () {
   if (!document.body || !document.body.classList.contains('refine')) return;
   var MAX = 4, t = 0, seen = new WeakSet(), INL = /^(SPAN|B|STRONG|I|EM|A|SMALL|U|MARK)$/;
-  function grow(e, fs) {
-    if (e.dataset.fsg) return; e.dataset.fsg = '1';
-    var nf = Math.min(14.5, fs + 1) + 'px';
-    e.style.setProperty('font-size', nf, 'important');
-    var kids = e.querySelectorAll('*');
-    for (var j = 0; j < kids.length; j++) {
-      var k = kids[j]; if (!INL.test(k.tagName)) continue;
-      if (Math.abs(parseFloat(getComputedStyle(k).fontSize) - fs) < 0.3) k.style.setProperty('font-size', nf, 'important');
-      seen.add(k);
-    }
-  }
   function fix() {
-    var all = document.body.querySelectorAll('*');
+    var all = document.body.querySelectorAll('*'), todo = [];
+    // reads: style, and size only where a corner needs judging; nothing is changed yet
     for (var i = 0; i < all.length; i++) {
       var e = all[i];
       if (seen.has(e)) continue; seen.add(e);
       if (e.namespaceURI !== 'http://www.w3.org/1999/xhtml' || !e.dataset) continue;
-      var cs = getComputedStyle(e), tl = cs.borderTopLeftRadius, r = parseFloat(tl);
-      if (r > MAX) {
-        var w = e.offsetWidth, h = e.offsetHeight;
-        if (w && !(Math.abs(w - h) <= 2 && (/%/.test(tl) ? parseFloat(tl) >= 45 : r >= w * 0.45))) e.style.setProperty('border-radius', MAX + 'px', 'important'); /* (a real circle stays round; a small rounded square gets the one corner size) */
-      }
-      var fs = parseFloat(cs.fontSize), lsp = parseFloat(cs.letterSpacing) || 0; if (fs && lsp / fs > 0.06) e.style.setProperty('letter-spacing', '.04em', 'important'); /* (round 182: no wide-spaced capitals anywhere) */
-      if (fs >= 11.5 && fs < 14 && cs.textTransform !== 'uppercase' && !INL.test(e.tagName) || fs >= 11.5 && fs < 14 && INL.test(e.tagName) && e.parentElement && !INL.test(e.parentElement.tagName) && e.parentElement.childElementCount === 1) {
+      var cs = getComputedStyle(e), tl = cs.borderTopLeftRadius, r = parseFloat(tl), x = { e: e, sq: false, ls: false, grow: 0, kids: null };
+      if (r > MAX) { var w = e.offsetWidth, h = e.offsetHeight; if (w && !(Math.abs(w - h) <= 2 && (/%/.test(tl) ? parseFloat(tl) >= 45 : r >= w * 0.45))) x.sq = true; } /* (a real circle stays round; a small rounded square gets the one corner size) */
+      var fs = parseFloat(cs.fontSize), lsp = parseFloat(cs.letterSpacing) || 0; if (fs && lsp / fs > 0.06) x.ls = true; /* (round 182: no wide-spaced capitals anywhere) */
+      if (!e.dataset.fsg && (fs >= 11.5 && fs < 14 && cs.textTransform !== 'uppercase' && !INL.test(e.tagName) || fs >= 11.5 && fs < 14 && INL.test(e.tagName) && e.parentElement && !INL.test(e.parentElement.tagName) && e.parentElement.childElementCount === 1)) {
         var own = ''; for (var n = e.firstChild; n; n = n.nextSibling) if (n.nodeType === 3) own += n.textContent;
-        if (own.trim().length >= 12 && e.textContent.trim().split(/\s+/).length >= 6 && !e.closest('svg,select,option,button,input,textarea,.tab,.tabs')) grow(e, fs);
+        if (own.trim().length >= 12 && e.textContent.trim().split(/\s+/).length >= 6 && !e.closest('svg,select,option,button,input,textarea,.tab,.tabs')) {
+          x.grow = fs; x.kids = []; var kids = e.querySelectorAll('*'); for (var j = 0; j < kids.length; j++) { var k = kids[j]; if (INL.test(k.tagName)) x.kids.push([k, parseFloat(getComputedStyle(k).fontSize)]); } }
+      }
+      if (x.sq || x.ls || x.grow) todo.push(x);
+    }
+    // writes, in page order (a line inside a line that just grew is left as it is)
+    for (var q = 0; q < todo.length; q++) {
+      var y = todo[q], el = y.e;
+      if (y.sq) el.style.setProperty('border-radius', MAX + 'px', 'important');
+      if (y.ls) el.style.setProperty('letter-spacing', '.04em', 'important');
+      if (y.grow && !el.dataset.fsg && !(el.parentElement && el.parentElement.closest('[data-fsg]'))) {
+        el.dataset.fsg = '1'; var nf = Math.min(14.5, y.grow + 1) + 'px'; el.style.setProperty('font-size', nf, 'important');
+        for (var z = 0; z < y.kids.length; z++) if (Math.abs(y.kids[z][1] - y.grow) < 0.3) y.kids[z][0].style.setProperty('font-size', nf, 'important');
       }
     }
   }
@@ -12598,9 +12601,16 @@ html.tab-me body #bossHead, html.tab-me body main#main > .r300-tb { display: non
     var snap = function (px) { return px < 11.75 ? 11 : px < 12.75 ? 12.5 : px < 13.25 ? 13 : px < 16 ? 13.5 : px < 20 ? 18 : px <= 24 ? 22 : px; }, wt = function (w) { w = +w || 400; return w < 500 ? 400 : w < 650 ? 600 : 700; }, n = 0;
     var sig = function (e) { var ST = /^(on|sel|open|active|rd+-on)$/, cl = [].slice.call(e.classList), own = cl.filter(function (x) { return !ST.test(x); }).map(function (x) { return '.' + CSS.escape(x); }).join(''), st = cl.filter(function (x) { return ST.test(x); }).map(function (x) { return '.' + CSS.escape(x); }).join(''), tg = e.tagName.toLowerCase(), pe = e.parentElement, pf = pe && [].slice.call(pe.classList).filter(function (x) { return !ST.test(x); })[0];
       if (own) return (pf ? '.' + CSS.escape(pf) + ' > ' : '') + tg + own + st; var path = tg + (st || ':not([class])'), p = pe; for (var d = 0; d < 3 && p; d++) { var pc = [].slice.call(p.classList).filter(function (x) { return !ST.test(x); }).map(function (x) { return '.' + CSS.escape(x); }).join(''); if (pc) return pc + ' > ' + path; path = p.tagName.toLowerCase() + ' > ' + path; p = p.parentElement; } return ''; };
-    [].forEach.call(document.querySelectorAll('#view *, #main .home *, #bossHead *, main#main > .r300-tb *'), function (e) { if (W.seen.has(e) || n > 4000) return; W.seen.add(e); n++; if (e.closest('svg')) return; var t = ''; for (var i = 0; i < e.childNodes.length; i++) if (e.childNodes[i].nodeType === 3) t += e.childNodes[i].textContent; if (!/[A-Za-z0-9\u00C0-\u024F]/.test(t)) return;
-      if (e.style.getPropertyValue('font-size') || e.style.getPropertyValue('font-weight')) { var cs1 = getComputedStyle(e), p1 = parseFloat(cs1.fontSize), q1 = snap(p1), w1 = wt(cs1.fontWeight); if (Math.abs(q1 - p1) > 0.05) e.style.setProperty('font-size', q1 + 'px', 'important'); if (e.style.getPropertyValue('font-weight') && String(w1) !== String(cs1.fontWeight)) e.style.setProperty('font-weight', String(w1), 'important'); } var k = sig(e); if (!k) return; if (W.keys[k]) { /* (same kind, another weight here: a rule for this one's own row) */ var cs2 = getComputedStyle(e), cw = cs2.fontWeight, nw2 = wt(cw), cp2 = parseFloat(cs2.fontSize), np2 = snap(cp2); if (String(nw2) !== String(cw) || Math.abs(np2 - cp2) > 0.05) { var pe2 = e.parentElement, pk = pe2 ? [].slice.call(pe2.classList).map(function (x) { return '.' + CSS.escape(x); }).join('') : ''; var k2 = (pk ? pk + ' > ' : '') + k.split(' > ').pop() + '|w' + cw + '|s' + cp2; if (!W.keys[k2]) { W.keys[k2] = 1; try { W.sheet.insertRule('html body :is(#view, #main, #bossHead):is(#view, #main, #bossHead):is(#view, #main, #bossHead) ' + k2.split('|')[0] + ' {' + (String(nw2) !== String(cw) ? 'font-weight:' + nw2 + ' !important;' : '') + (Math.abs(np2 - cp2) > 0.05 ? 'font-size:' + np2 + 'px !important;' : '') + '}', W.sheet.cssRules.length); } catch (er) { /* (left) */ } } } return; } W.keys[k] = 1; var cs = getComputedStyle(e), px = parseFloat(cs.fontSize), np = snap(px), w0 = cs.fontWeight, nw = wt(w0), d = ''; if (Math.abs(np - px) > 0.05) d += 'font-size:' + np + 'px !important;'; if (String(nw) !== String(w0)) d += 'font-weight:' + nw + ' !important;'; if (!d) return;
-      try { W.sheet.insertRule('html body :is(#view, #main, #bossHead):is(#view, #main, #bossHead):is(#view, #main, #bossHead) ' + k + ' {' + d + '}', W.sheet.cssRules.length); } catch (er) { /* (a selector the browser won't take: left as it is) */ } }); })(); /* round 358 type fixes */ [].forEach.call(document.querySelectorAll('#view .dbt-why .r357-facts'), function (p) { if (p.style.getPropertyValue('font-size') !== '12.5px') p.style.setProperty('font-size', '12.5px', 'important'); }); [].forEach.call(document.querySelectorAll('#view .dbt-why .dbt-addr'), function (x) { var lv = x.querySelector('.dbt-lv'), sp = x.querySelector(':scope > span:not(.dbt-ic)'); if (lv && !lv.classList.contains('r357-cc') && sp && /to spare/i.test(sp.textContent)) { lv.className = 'dbt-lv r357-cc'; lv.textContent = 'Close call'; } }); /* round 357 why we wiped */ [].forEach.call(document.querySelectorAll('#view .dbt-why:not([data-r357])'), function (w) { var h2 = w.querySelector('h2'); if (!h2 || !h2.querySelector('.r208-m')) return; w.setAttribute('data-r357', '1');
+    var todo = []; [].forEach.call(document.querySelectorAll('#view *, #main .home *, #bossHead *, main#main > .r300-tb *'), function (e) { if (W.seen.has(e) || n > 4000) return; W.seen.add(e); n++; if (e.closest('svg')) return; var t = ''; for (var i = 0; i < e.childNodes.length; i++) if (e.childNodes[i].nodeType === 3) t += e.childNodes[i].textContent; if (!/[A-Za-z0-9\u00C0-\u024F]/.test(t)) return; todo.push(e); });
+    if (!todo.length) return; /* round 403 batched: every read, then every write */
+    var inl = todo.filter(function (e) { return e.style.getPropertyValue('font-size') || e.style.getPropertyValue('font-weight'); }).map(function (e) { var c = getComputedStyle(e); return [e, parseFloat(c.fontSize), c.fontWeight]; });
+    inl.forEach(function (x) { var e = x[0], p1 = x[1], q1 = snap(p1), w1 = wt(x[2]); if (Math.abs(q1 - p1) > 0.05) e.style.setProperty('font-size', q1 + 'px', 'important'); if (e.style.getPropertyValue('font-weight') && String(w1) !== String(x[2])) e.style.setProperty('font-weight', String(w1), 'important'); });
+    var heads = [], rest = []; todo.forEach(function (e) { var k = sig(e); if (!k) return; if (W.keys[k]) rest.push([e, k]); else { W.keys[k] = 1; heads.push([e, k]); } });
+    heads.map(function (x) { var cs = getComputedStyle(x[0]); return [x[1], parseFloat(cs.fontSize), cs.fontWeight]; }).forEach(function (x) { var k = x[0], px = x[1], np = snap(px), w0 = x[2], nw = wt(w0), d = ''; if (Math.abs(np - px) > 0.05) d += 'font-size:' + np + 'px !important;'; if (String(nw) !== String(w0)) d += 'font-weight:' + nw + ' !important;'; if (!d) return;
+      try { W.sheet.insertRule('html body :is(#view, #main, #bossHead):is(#view, #main, #bossHead):is(#view, #main, #bossHead) ' + k + ' {' + d + '}', W.sheet.cssRules.length); } catch (er) { /* (a selector the browser won't take: left as it is) */ } });
+    rest.map(function (x) { var cs2 = getComputedStyle(x[0]); return [x[0], x[1], parseFloat(cs2.fontSize), cs2.fontWeight]; }).forEach(function (x) { var e = x[0], k = x[1], cp2 = x[2], cw = x[3], nw2 = wt(cw), np2 = snap(cp2); if (String(nw2) === String(cw) && Math.abs(np2 - cp2) <= 0.05) return; /* (same kind, another weight here: a rule for this one's own row) */
+      var pe2 = e.parentElement, pk = pe2 ? [].slice.call(pe2.classList).map(function (y) { return '.' + CSS.escape(y); }).join('') : ''; var k2 = (pk ? pk + ' > ' : '') + k.split(' > ').pop() + '|w' + cw + '|s' + cp2; if (W.keys[k2]) return; W.keys[k2] = 1;
+      try { W.sheet.insertRule('html body :is(#view, #main, #bossHead):is(#view, #main, #bossHead):is(#view, #main, #bossHead) ' + k2.split('|')[0] + ' {' + (String(nw2) !== String(cw) ? 'font-weight:' + nw2 + ' !important;' : '') + (Math.abs(np2 - cp2) > 0.05 ? 'font-size:' + np2 + 'px !important;' : '') + '}', W.sheet.cssRules.length); } catch (er) { /* (left) */ } }); })(); /* round 358 type fixes */ [].forEach.call(document.querySelectorAll('#view .dbt-why .r357-facts'), function (p) { if (p.style.getPropertyValue('font-size') !== '12.5px') p.style.setProperty('font-size', '12.5px', 'important'); }); [].forEach.call(document.querySelectorAll('#view .dbt-why .dbt-addr'), function (x) { var lv = x.querySelector('.dbt-lv'), sp = x.querySelector(':scope > span:not(.dbt-ic)'); if (lv && !lv.classList.contains('r357-cc') && sp && /to spare/i.test(sp.textContent)) { lv.className = 'dbt-lv r357-cc'; lv.textContent = 'Close call'; } }); /* round 357 why we wiped */ [].forEach.call(document.querySelectorAll('#view .dbt-why:not([data-r357])'), function (w) { var h2 = w.querySelector('h2'); if (!h2 || !h2.querySelector('.r208-m')) return; w.setAttribute('data-r357', '1');
     var T = function (e) { return (e ? e.textContent : '').replace(/\s+/g, ' ').trim(); }, lvOf = function (r) { var m = ((r.querySelector('.dbt-lv') || {}).className || '').match(/\bl(\d)\b/); return m ? +m[1] : 0; }, sOf = function (r) { return r.querySelector(':scope > span:not(.dbt-cht):not(.dbt-ic)'); };
     var N = []; [].forEach.call(document.querySelectorAll('#view [data-phjump][title]'), function (b) { var n = String(b.getAttribute('title') || '').split(':')[0].replace(/\s*\(.*$/, ''); if (n && n.length > 2 && N.indexOf(n) < 0) N.push(n); }); N.sort(function (x, y) { return y.length - x.length; });
     var rows = [].slice.call(w.querySelectorAll('.dbt-chn > .dbt-chr:not(.end)')), end = w.querySelector('.dbt-chn > .dbt-chr.end');
