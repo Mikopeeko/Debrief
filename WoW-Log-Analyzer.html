@@ -11830,6 +11830,28 @@ body:has(#main .my-flow.r340) #bossHead, body:has(#main .my-flow.r340) main#main
 .r340 > .my-bxp:empty { display: none; } .r340 > .my-bxp { margin: 0 !important; }
 .r340 .my-bxp .pc-card.r340-dup :is(.pc-hero, .pc-mini, .pc-stats, .pc-chart) { display: none !important; }
 @media (max-width: 600px) { .r340-hd.panel { padding: 12px !important; } .r340 .my-raid .my-bc.my-bc.my-bc { grid-template-columns: 18px minmax(0, 110px) minmax(30px, 1fr) auto; gap: 8px; } }
+/* round 341 Home polish: slim raid nights, quieter kills, the chart's caption, the ranks' label */
+.r340-cols .pg-nights .pn-list { gap: 0 !important; }
+.r340-cols .pg-nights .pn-row.pn-row.pn-row { all: unset; box-sizing: border-box; display: grid !important; grid-template-columns: 82px minmax(0, 1fr) 52px 10px; align-items: center; gap: 10px; width: 100% !important; padding: 8px 6px; border-top: 1px solid #1d2026; cursor: pointer; font-size: 13px; position: relative; }
+.r340-cols .pg-nights .pn-row::before, .r340-cols .pg-nights .pn-row::after { display: none !important; }
+.r340-cols .pg-nights .pn-row:hover { background: rgba(255, 255, 255, .03); } .r340-cols .pg-nights .pn-row:disabled { cursor: default; opacity: .6; }
+.r340-cols .pg-nights .pn-row .pn-th { display: none !important; }
+.r340-cols .pg-nights .pn-row .pn-d { all: unset; display: flex; gap: 6px; align-items: baseline; white-space: nowrap; }
+.r340-cols .pg-nights .pn-row .pn-d b { color: #868f99; font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; } .r340-cols .pg-nights .pn-row .pn-d span { color: #aeb6bf; font-size: 12.5px; }
+.r340-cols .pg-nights .pn-row .pn-b { all: unset; display: flex; gap: 8px; align-items: baseline; min-width: 0; white-space: nowrap; overflow: hidden; }
+.r340-cols .pg-nights .pn-row .pn-b b { color: #e8eaed; font-weight: 600; font-size: 13px; flex: none; max-width: 60%; overflow: hidden; text-overflow: ellipsis; }
+.r340-cols .pg-nights .pn-row .pn-b .sub { color: #868f99 !important; font-size: 12px !important; overflow: hidden; text-overflow: ellipsis; margin: 0 !important; }
+.r340-cols .pg-nights .pn-row .pn-r { all: unset; text-align: right; font-size: 12.5px; font-weight: 600; white-space: nowrap; } .r340-cols .pg-nights .pn-row .pn-r .pn-dn { display: none !important; }
+.r340-cols .pg-nights .pn-row .pn-go { all: unset; color: #5a616b; font-size: 14px; }
+.r340-cols .pg-nights .pg-sh { margin-bottom: 6px !important; } .r340-cols .pg-nights .pn-more { margin-top: 8px !important; }
+.r340 .my-raid .my-bc.kill .r340-bar > i { opacity: .4; } .r340 .my-raid .my-bc.kill .r340-bar { height: 4px; }
+.r340 .my-raid .my-bc.kill .my-tag { color: #b98552; font-weight: 500; } .r340 .my-raid .my-bc.kill .my-bcb > b { color: #aeb6bf; font-weight: 500; }
+.r340 .my-raid .my-bc.prog .r340-bar { height: 8px; } .r340 .my-raid .my-bc.prog .my-bcb > b { color: #e8eaed; }
+.r341-rl { color: #5f6873; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+.r341-cap { position: relative; z-index: 1; color: #868f99; font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; font-weight: 600; margin: 6px 0 2px; }
+@media (max-width: 600px) { .r340-cols .pg-nights .pn-row.pn-row.pn-row { grid-template-columns: 70px minmax(0, 1fr) 44px; } .r340-cols .pg-nights .pn-row .pn-go { display: none; } .r340-cols .pg-nights .pn-row .pn-b .sub { display: none; } }
+#pgNow .pc-chart .pd { r: 5px; } #pgNow .pc-chart .r341-vl { font-size: 13px; font-weight: 700; paint-order: stroke; stroke: rgba(10, 12, 16, .85); stroke-width: 3px; }
+@media (max-width: 600px) { .r340 #pgNow .pc-chart, .r340 #pgNow .r341-cap { display: none !important; } }
 
 </style>
 
@@ -21893,6 +21915,8 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-30', h: [{ t: 'A cleaner banner and one bar for every tab', d: "The banner is now just the boss: its name, the difficulty and the result, with the boss art bigger. Who you're looking at, the pull (or another boss from the night), All pulls, the wipe call and how strictly you're judged all sit in one bar at the top of every tab." }, { t: 'Graphs, redesigned', d: "Names in their own column with slim class-coloured bars, every page laid out the same way with its controls on the card's title line, and the chart now follows the phase, Bloodlust or Power Infusion you pick." }], n: [
+    "Home's boss chart shows the best pull of each night, one dot a night with its result, the raid nights are slim rows beside the raid, and killed bosses are quieter so the one you're on stands out.",
+    "Home's ranks are labelled Mythic progress, so they don't read as Heroic ranks on the Heroic view.",
     "Home is tidier: one slim header with your team, its ranks, one difficulty switch and you, then the boss you're on, then the raid as bars beside your raid nights. All rankings opens right under the header, and Home is half as long on a phone.",
     "First time on a tab? A few short tips point out its main parts again, made for today's pages: the Pull drop-down and Everyone, Debriefing, Rotation, Graphs, Report card and Compare.",
     "Pick pulls… in the Pull drop-down: tick any pulls of the boss and every tab shows just those, like All pulls does for the whole night.",
@@ -51870,7 +51894,7 @@ function renderProgress(msg, msgErr) {
       (BOSS_HERO[n.main.boss] ? '<img class="pn-th" src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[n.main.boss][0] + '.jpg" alt="" loading="lazy" style="object-position:' + BOSS_HERO[n.main.boss][1] + '% 25%" onerror="this.remove()">' : '') +
       '<span class="pn-b"><b>' + esc(n.main.boss) + '</b><span class="sub">' + esc(sub) + '</span></span>' +
       '<span class="pn-r" style="color:' + (kill ? '#ff8000' : n.nb ? qc(n.nb) : 'var(--muted)') + '">' + (kill ? 'Kill' : n.nb && n.nb.left != null ? Math.floor(100 - n.nb.left) + '%<small class="pn-dn">done</small>' : '—') + '</span><span class="pn-go" aria-hidden="true">›</span></button>'; };
-  const PN_MAX = 6;
+  const PN_MAX = 10;
   const nightsHtml = nightsL.length ? '<section class="panel pg-nights" id="pgNights"><div class="pg-sh"><h2>Raid nights</h2><span class="sub">' + plural(nightsL.length, 'night') + ' on ' + esc(diffName) + '</span></div>' +
     '<div class="pn-list">' + nightsL.slice(0, S.pnAll ? nightsL.length : PN_MAX).map(pnRow).join('') + '</div>' +
     (nightsL.length > PN_MAX ? '<button class="linkbtn pn-more" id="pnMore" type="button">' + (S.pnAll ? 'Show fewer' : 'Show all ' + nightsL.length + ' nights') + '</button>' : '') + '</section>' : '';
@@ -51889,7 +51913,7 @@ function renderProgress(msg, msgErr) {
         esc(bk.length ? 'Killed ' + nightLabel(bk[0].at) + ' on pull ' + bk[0].pull + ' of the night' : nb ? 'Best: ' + nb.label + (/%$/.test(nb.label) ? ' left' : '') : 'No result yet') + '</span>' +
         '<div class="pnw-tiles">' + [[bk.length ? 'Pulls to the kill' : 'Pulls', pr.length], ['Nights', nts], ['Time on the boss', durH(time)]].map(([l, v]) => '<span class="pnw-ti"><em>' + l + '</em><b>' + esc(String(v)) + '</b></span>').join('') + '</div></div>' +
         '<div class="pnw-big" style="color:' + col + '">' + (bk.length ? 'Killed' : nb && nb.left != null ? Math.floor(100 - nb.left) + '%' : '—') + (bk.length ? '' : '<span>of the encounter done</span>') + '</div></div>' +
-      progChart(pr, nowBoss, [1000, 210], true) +
+      /* (round 341 home polish: the best pull of each night) */ progChart(((m) => { pr.forEach((v) => { const k = nightOf(v.at), o = m.get(k); if (!o || (v.kill && !o.kill) || (!o.kill && !v.kill && v.left != null && (o.left == null || v.left < o.left))) m.set(k, v); }); return [...m.values()].sort((a, b) => a.at - b.at); })(new Map()), nowBoss, [1000, 170], true) +
       (lastOp ? '<div class="pnw-b"><button class="btn primary" id="pnwGo" type="button" data-code="' + esc(lastOp.code) + '" data-fight="' + esc(String(lastOp.fight)) + '">Open the last night</button><span class="sub">' + esc(nightLabel(lastN.at)) + ' · ' + plural(lastL.length, 'pull') + ' on ' + esc(nowBoss) + '</span></div>' : '') + '</section>';
   }
   // (the header's standing: kills on this difficulty, and the team's World and region rank once its rankings have been read;
@@ -60408,6 +60432,17 @@ function r340Home() { const fl = document.querySelector('#main .home.prog .my-fl
     const c0 = slot && slot.querySelector('.pc-card'); if (c0) c0.classList.toggle('r340-dup', !!nowB && (c0.dataset.boss || '') === nowB); }
   const hist = q('.my-hist'); if (hist && !hist.children.length) hist.remove(); }
 (function () { const f6 = dsBars; dsBars = function (root) { f6(root); try { r340Home(); } catch (e) { /* (the old layout stays) */ } }; })();
+
+// ===== Design studio round 341 (Oct 30): Home polish, after round 340's layout. Owner: the Design studio chat. =====
+function r341Home() { const fl = document.querySelector('#main .home.prog .my-flow.r340'); if (!fl || fl.classList.contains('r341')) return; fl.classList.add('r341');
+  fl.querySelectorAll('.my-raid .my-tag').forEach((t) => { if (/ · open now$/.test(t.textContent)) t.textContent = t.textContent.replace(/ · open now$/, ''); });
+  const rk = fl.querySelector('.r340-rk'); if (rk && rk.querySelector('span') && !rk.querySelector('.r341-rl')) rk.insertAdjacentHTML('afterbegin', '<span class="r341-rl" title="Warcraft Logs progress ranks, from your Mythic kills">Mythic progress</span>');
+  const now = fl.querySelector('#pgNow'), ch = now && now.querySelector('svg.pc-chart'); if (ch && !now.querySelector('.r341-cap')) ch.insertAdjacentHTML('beforebegin', '<div class="r341-cap">Best pull of each night</div>');
+  /* (each night's result written over its dot: "P3 · 41%", or Kill) */ if (ch && !ch.querySelector('.r341-vl')) { const hs = [...ch.querySelectorAll('circle.thit')], dots = [...ch.querySelectorAll('circle.pd')], vb = (ch.getAttribute('viewBox') || '0 0 1000 170').split(' ').map(Number);
+    hs.forEach((h, i) => { let ct = []; try { ct = JSON.parse(h.dataset.ct || '[]'); } catch (e) { /* (no label) */ } const t = String(ct[1] || ''), d = dots[i], ph = (t.match(/^(P[0-9]|I[0-9]|Intermission)/) || [])[1], pc = (t.match(/([0-9]+)%/) || [])[1], kill = /kill/i.test(ct.join(' '));
+      const lab = kill ? 'Kill' : ph && pc ? ph + ' · ' + pc + '%' : pc ? pc + '%' : ''; if (!lab) return; const x = +h.getAttribute('cx'), y = +h.getAttribute('cy'), an = x < 60 ? 'start' : x > vb[2] - 60 ? 'end' : 'middle';
+      const tx = document.createElementNS('http://www.w3.org/2000/svg', 'text'); tx.setAttribute('class', 'r341-vl'); tx.setAttribute('x', x); tx.setAttribute('y', Math.max(14, y - 12)); tx.setAttribute('text-anchor', an); tx.setAttribute('fill', (d && d.getAttribute('fill')) || '#e8eaed'); tx.textContent = lab; ch.append(tx); }); } }
+(function () { const f7 = dsBars; dsBars = function (root) { f7(root); try { r341Home(); } catch (e) { /* (fine as it is) */ } }; })();
 
 </script>
 <script>/* refined look: one corner size (Design studio round 170) */

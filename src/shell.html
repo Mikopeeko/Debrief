@@ -11830,6 +11830,28 @@ body:has(#main .my-flow.r340) #bossHead, body:has(#main .my-flow.r340) main#main
 .r340 > .my-bxp:empty { display: none; } .r340 > .my-bxp { margin: 0 !important; }
 .r340 .my-bxp .pc-card.r340-dup :is(.pc-hero, .pc-mini, .pc-stats, .pc-chart) { display: none !important; }
 @media (max-width: 600px) { .r340-hd.panel { padding: 12px !important; } .r340 .my-raid .my-bc.my-bc.my-bc { grid-template-columns: 18px minmax(0, 110px) minmax(30px, 1fr) auto; gap: 8px; } }
+/* round 341 Home polish: slim raid nights, quieter kills, the chart's caption, the ranks' label */
+.r340-cols .pg-nights .pn-list { gap: 0 !important; }
+.r340-cols .pg-nights .pn-row.pn-row.pn-row { all: unset; box-sizing: border-box; display: grid !important; grid-template-columns: 82px minmax(0, 1fr) 52px 10px; align-items: center; gap: 10px; width: 100% !important; padding: 8px 6px; border-top: 1px solid #1d2026; cursor: pointer; font-size: 13px; position: relative; }
+.r340-cols .pg-nights .pn-row::before, .r340-cols .pg-nights .pn-row::after { display: none !important; }
+.r340-cols .pg-nights .pn-row:hover { background: rgba(255, 255, 255, .03); } .r340-cols .pg-nights .pn-row:disabled { cursor: default; opacity: .6; }
+.r340-cols .pg-nights .pn-row .pn-th { display: none !important; }
+.r340-cols .pg-nights .pn-row .pn-d { all: unset; display: flex; gap: 6px; align-items: baseline; white-space: nowrap; }
+.r340-cols .pg-nights .pn-row .pn-d b { color: #868f99; font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; } .r340-cols .pg-nights .pn-row .pn-d span { color: #aeb6bf; font-size: 12.5px; }
+.r340-cols .pg-nights .pn-row .pn-b { all: unset; display: flex; gap: 8px; align-items: baseline; min-width: 0; white-space: nowrap; overflow: hidden; }
+.r340-cols .pg-nights .pn-row .pn-b b { color: #e8eaed; font-weight: 600; font-size: 13px; flex: none; max-width: 60%; overflow: hidden; text-overflow: ellipsis; }
+.r340-cols .pg-nights .pn-row .pn-b .sub { color: #868f99 !important; font-size: 12px !important; overflow: hidden; text-overflow: ellipsis; margin: 0 !important; }
+.r340-cols .pg-nights .pn-row .pn-r { all: unset; text-align: right; font-size: 12.5px; font-weight: 600; white-space: nowrap; } .r340-cols .pg-nights .pn-row .pn-r .pn-dn { display: none !important; }
+.r340-cols .pg-nights .pn-row .pn-go { all: unset; color: #5a616b; font-size: 14px; }
+.r340-cols .pg-nights .pg-sh { margin-bottom: 6px !important; } .r340-cols .pg-nights .pn-more { margin-top: 8px !important; }
+.r340 .my-raid .my-bc.kill .r340-bar > i { opacity: .4; } .r340 .my-raid .my-bc.kill .r340-bar { height: 4px; }
+.r340 .my-raid .my-bc.kill .my-tag { color: #b98552; font-weight: 500; } .r340 .my-raid .my-bc.kill .my-bcb > b { color: #aeb6bf; font-weight: 500; }
+.r340 .my-raid .my-bc.prog .r340-bar { height: 8px; } .r340 .my-raid .my-bc.prog .my-bcb > b { color: #e8eaed; }
+.r341-rl { color: #5f6873; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+.r341-cap { position: relative; z-index: 1; color: #868f99; font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; font-weight: 600; margin: 6px 0 2px; }
+@media (max-width: 600px) { .r340-cols .pg-nights .pn-row.pn-row.pn-row { grid-template-columns: 70px minmax(0, 1fr) 44px; } .r340-cols .pg-nights .pn-row .pn-go { display: none; } .r340-cols .pg-nights .pn-row .pn-b .sub { display: none; } }
+#pgNow .pc-chart .pd { r: 5px; } #pgNow .pc-chart .r341-vl { font-size: 13px; font-weight: 700; paint-order: stroke; stroke: rgba(10, 12, 16, .85); stroke-width: 3px; }
+@media (max-width: 600px) { .r340 #pgNow .pc-chart, .r340 #pgNow .r341-cap { display: none !important; } }
 
 </style>
 
