@@ -11973,6 +11973,14 @@ html body #view .rck .rcx-open .r353-s b { color: #e8eaed; }
   html body #view .rck .rcx > .rcx-sec { break-inside: avoid; display: inline-block; width: 100%; vertical-align: top; margin: 0 0 14px !important; }
 }
 html body #view .rck .rcx > .rcx-sec .rcx-row.rcx-row { padding-top: 6px !important; padding-bottom: 6px !important; }
+/* round 356 shields folded: each shield a closed line */
+html body #view details.shd-one { margin: 0 !important; border-top: 1px solid #1d2026; }
+html body #view details.shd-one > summary.shd-oh { list-style: none; cursor: pointer; padding: 7px 4px !important; margin: 0 !important; display: flex; align-items: baseline; gap: 4px; flex-wrap: wrap; color: #aeb6bf; }
+html body #view details.shd-one > summary.shd-oh::-webkit-details-marker { display: none; }
+html body #view details.shd-one > summary.shd-oh::before { content: '▸'; color: #868f99; margin-right: 6px; font-size: 11px; }
+html body #view details.shd-one[open] > summary.shd-oh::before { content: '▾'; }
+html body #view details.shd-one > summary.shd-oh:hover { color: #e8eaed; }
+html body #view details.shd-one > .dsp { padding: 2px 0 10px 18px; }
 
 </style>
 

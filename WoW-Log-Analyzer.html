@@ -11973,6 +11973,14 @@ html body #view .rck .rcx-open .r353-s b { color: #e8eaed; }
   html body #view .rck .rcx > .rcx-sec { break-inside: avoid; display: inline-block; width: 100%; vertical-align: top; margin: 0 0 14px !important; }
 }
 html body #view .rck .rcx > .rcx-sec .rcx-row.rcx-row { padding-top: 6px !important; padding-bottom: 6px !important; }
+/* round 356 shields folded: each shield a closed line */
+html body #view details.shd-one { margin: 0 !important; border-top: 1px solid #1d2026; }
+html body #view details.shd-one > summary.shd-oh { list-style: none; cursor: pointer; padding: 7px 4px !important; margin: 0 !important; display: flex; align-items: baseline; gap: 4px; flex-wrap: wrap; color: #aeb6bf; }
+html body #view details.shd-one > summary.shd-oh::-webkit-details-marker { display: none; }
+html body #view details.shd-one > summary.shd-oh::before { content: '▸'; color: #868f99; margin-right: 6px; font-size: 11px; }
+html body #view details.shd-one[open] > summary.shd-oh::before { content: '▾'; }
+html body #view details.shd-one > summary.shd-oh:hover { color: #e8eaed; }
+html body #view details.shd-one > .dsp { padding: 2px 0 10px 18px; }
 
 </style>
 
@@ -16501,7 +16509,7 @@ function buildCoiledAltar(ev, r, h) {
     for (const r0 of (sGh ? sGh.rows : [])) items.push({ t: r0[0].t, row: [{ txt: 'Ghost collision', bad: true }, { t: r0[0].t }, { ps: r0[1].ps }, { txt: 'ghosts touched (Malevolent Resonance), ' + h.compact(r0[2].n) + ' damage', bad: true }, r0[3] || { txt: '' }] });
     for (const r0 of (sMc ? sMc.rows : [])) items.push({ t: r0[0].t, row: [{ txt: 'Mind control fall', bad: true }, { t: r0[0].t }, { p: r0[1].p }, { txt: 'died, ' + r0[3].txt, bad: true }, r0[4]] });
     // (Gravebound deaths (Oct 21): a player hit by Soul Sever or a Gloombomb who didn't pick up their soul fragments, up to 30 s after the last Dreadmarch)
-    { const lastDm = dm.length ? dm[dm.length - 1] + 30 : -1; for (const d of r.deaths || []) if (/^gravebound$/i.test(String(d.ability || '')) && d.t <= lastDm) items.push({ t: d.t, row: [{ txt: 'Gravebound death', bad: true }, { t: d.t }, { p: d.player }, { txt: 'missed their soul fragments and died', bad: true }, { txt: '' }] }); }
+    /* (round 355 gravebound: these deaths go to Gloombomb or Sever, below) */ if (0) { const lastDm = dm.length ? dm[dm.length - 1] + 30 : -1; for (const d of r.deaths || []) if (/^gravebound$/i.test(String(d.ability || '')) && d.t <= lastDm) items.push({ t: d.t, row: [{ txt: 'Gravebound death', bad: true }, { t: d.t }, { p: d.player }, { txt: 'missed their soul fragments and died', bad: true }, { txt: '' }] }); }
     for (const r0 of (sSs ? sSs.rows : [])) items.push({ t: r0[0].t, row: [{ txt: 'Soul Sever' }, { t: r0[0].t }, { txt: r0[3].txt + ' of ' + r0[2].txt + ' ghosts removed' }, { txt: r0[4].txt + ' missed', dim: true }, r0[5]] }); /* (a missed ghost is walked back for the next frontal (Oct 21): not a mistake) */
     if (dm.length || items.length) {
       const groups = dm.map((t, i) => ({ title: 'Dreadmarch #' + (i + 1), t, from: t - 1, to: (dm[i + 1] ?? dur + 1) - 1, rows: [], tg: sDm && sDm.rows[i] ? sDm.rows[i][1].ps : [] }));
@@ -16665,6 +16673,15 @@ function buildCoiledAltar(ev, r, h) {
         cols: ['What', 'When', 'Who', 'Result', ''], rows: [], groups: gGroups });
     }
   }
+  /* (round 355 gravebound) a Gravebound death goes to what gave it: the last Gloombomb or frontal that hit them, up to 30 s before */
+  { const gSec = sections.find((s) => s.id === 'gloom'), tSec = sections.find((s) => s.id === 'tankfront');
+    for (const d of r.deaths || []) { if (!/^gravebound$/i.test(String(d.ability || ''))) continue; let src = null;
+      for (const n of ['gloombomb', 'soul sever', 'blighted sever']) for (const e of dmg(n)) if (e.dst === d.guid && e.t <= d.t && e.t >= d.t - 30 && (!src || e.t > src.t)) src = { n, t: e.t };
+      const toGloom = src ? src.n === 'gloombomb' : !!gSec, sec = toGloom ? gSec || tSec : tSec || gSec; if (!sec) continue;
+      const how = pname(d.guid) + ' missed their soul fragments and died' + (src ? ' (Gravebound from ' + S(src.n)[1] + ' at ' + h.fmtT(src.t) + ')' : '');
+      if (sec.id === 'gloom') sec.rows.push([{ txt: 'Gravebound death', bad: true }, { t: d.t }, { p: pname(d.guid) }, { txt: how, bad: true }, { txt: '' }]);
+      else sec.rows.push([{ t: d.t }, { s: S(src ? src.n : 'soul sever') }, { p: pname(d.guid) }, { txt: '—', dim: true }, { txt: '—', dim: true }, { txt: how, bad: true }]);
+      sec.rows.sort((a, b) => ((a.find((c) => c && c.t != null) || {}).t || 0) - ((b.find((c) => c && c.t != null) || {}).t || 0)); sec.verdict = 'bad'; } }
   const fill = (mp) => { mp.pts = h.snap(mp.t).concat(mp.extraPts || (mp.from != null ? objs(mp.t, mp.from) : [])); orbRings(mp); };
   for (const s of sections) for (const row of s.rows.concat(...(s.groups || []).map((g) => g.rows))) for (const c of row) { if (c.map) fill(c.map); if (c.maps) for (const [, mp] of c.maps) fill(mp); }
   // every positional mistake gets a map of that moment (player ringed, orbs and ghosts from the 15s before)
@@ -22043,6 +22060,7 @@ const PATCH_NOTES = [
     'Holy Paladin: Beacon of Virtue is only marked as held when it sat ready for 8 seconds or more while 5 or more people were hurt. Holding it before the damage, or for Divine Toll and Aura Mastery, is right. The row is now called Beacon of Virtue uses.',
   ] },
   { d: '2026-10-30', h: [{ t: 'A cleaner banner and one bar for every tab', d: "The banner is now just the boss: its name, the difficulty and the result, with the boss art bigger. Who you're looking at, the pull (or another boss from the night), All pulls, the wipe call and how strictly you're judged all sit in one bar at the top of every tab." }, { t: 'Graphs, redesigned', d: "Names in their own column with slim class-coloured bars, every page laid out the same way with its controls on the card's title line, and the chart now follows the phase, Bloodlust or Power Infusion you pick." }], n: [
+    "Damage into the shields: each shield is one closed line you can open, and opened it lists everyone who hit it.",
     "The Rotation checklist is shorter: each check is its name and result, its sentence shows once when you open it, and its sections sit side by side in two columns on a wide screen.",
     "The top of the Rotation timeline is one tidy block: the numbers and Spotlight mistakes in one row, the whole fight under them (bigger, with its own colour key), then What to fix beside the key, which always shows.",
     "An opened mechanic on Debriefing is calmer: no gold frame or empty gap, slim rows, and one map beside them that shows the moment you click (click the map for the big one).",
@@ -22067,6 +22085,7 @@ const PATCH_NOTES = [
     "The Pull drop-down shows each pull in its progress colour, like the pull chart did.",
     "The page background is plain dark, without the grid."
   ], f: [
+    "The Coiled Altar: A Gravebound death (soul fragments not picked up) is listed under the Gloombomb or frontal that gave it, not under Dreadmarch.",
     "The Coiled Altar Mythic: a player in a tank frontal counts each Sever once, not every 2 seconds of the damage it leaves behind.",
     "The Coiled Altar: a tank frontal that hits a non-tank is listed once, under Sever (Frontal) with its map, not also under Dreadmarch or Coalesced Venom, and a tick of the damage an earlier frontal left behind no longer counts as a new hit.",
     "The browser's Back button: Back from your summary returns to your team's Home.",
@@ -33088,7 +33107,7 @@ function shieldBlock(reps, kind) {
   const top = rows.slice(0, 10), more = rows.slice(10);
   return '<div class="shd"><div class="shd-h">' + (kind === 'shield' ? 'Damage into Veil of Twilight' : 'Damage into the Dreadmarch shields') + '</div><div class="shd-cs">' + chips + '</div>' + (!night && parts.length > 1 ? parts.map((p, i) => { /* round 291 each shield */ const L = [...p.by].filter(([n, a]) => n && a > 0).sort((a, b) => b[1] - a[1]); if (!L.length) return ''; const t2 = L.reduce((x, [, a]) => x + a, 0) || 1, m2 = L[0][1] || 1;
       const row2 = ([n, a]) => '<div class="dsp-r shd-r"><span>' + nm(n) + '</span><span class="dsp-b"><i style="width:' + (100 * a / m2).toFixed(1) + '%' + ((PL.get(n) || {}).color ? ';background:' + PL.get(n).color : '') + '"></i></span><b>' + M(a) + '</b><span class="shd-p">' + Math.round(100 * a / t2) + '%</span></div>';
-      return '<div class="shd-one"><p class="shd-oh"><b>' + ordinal(i + 1) + ' shield</b> · ' + T(p.t) + (p.took != null ? ' · broke in <b>' + p.took.toFixed(1) + ' s</b>' : p.done ? ' · <span class="r272-bad">not broken</span>' : '') + ' · ' + M(t2) + ' in all</p><div class="dsp">' + L.slice(0, 6).map(row2).join('') + '</div>' + (L.length > 6 ? '<details class="shd-more"><summary>' + (L.length - 6) + ' more</summary><div class="dsp">' + L.slice(6).map(row2).join('') + '</div></details>' : '') + '</div>'; }).join('') :
+      /* round 356 shields folded */ return '<details class="shd-one"><summary class="shd-oh"><b>' + ordinal(i + 1) + ' shield</b> · ' + T(p.t) + (p.took != null ? ' · broke in <b>' + p.took.toFixed(1) + ' s</b>' : p.done ? ' · <span class="r272-bad">not broken</span>' : '') + ' · ' + M(t2) + ' in all · ' + L.length + (L.length === 1 ? ' player' : ' players') + '</summary><div class="dsp">' + L.map(row2).join('') + '</div></details>'; }).join('') :
     '<div class="dsp">' + top.map(row).join('') + '</div>' + (more.length ? '<details class="shd-more"><summary>' + more.length + ' more</summary><div class="dsp">' + more.map(row).join('') + '</div></details>' : '')) +
     '<p class="sub shd-f">' + M(tot) + ' into ' + plural(parts.length, 'shield') + (night ? ' over ' + plural(new Set(parts.map((p) => p.pull)).size, 'pull') : ' this pull') + '.' + (late ? ' ' + plural(late, 'more shield') + ' after the wipe call ' + (late === 1 ? 'isn\'t' : 'aren\'t') + ' counted.' : '') + '</p></div>';
 }

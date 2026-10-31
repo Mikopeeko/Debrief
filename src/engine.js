@@ -4485,7 +4485,7 @@ function buildCoiledAltar(ev, r, h) {
     for (const r0 of (sGh ? sGh.rows : [])) items.push({ t: r0[0].t, row: [{ txt: 'Ghost collision', bad: true }, { t: r0[0].t }, { ps: r0[1].ps }, { txt: 'ghosts touched (Malevolent Resonance), ' + h.compact(r0[2].n) + ' damage', bad: true }, r0[3] || { txt: '' }] });
     for (const r0 of (sMc ? sMc.rows : [])) items.push({ t: r0[0].t, row: [{ txt: 'Mind control fall', bad: true }, { t: r0[0].t }, { p: r0[1].p }, { txt: 'died, ' + r0[3].txt, bad: true }, r0[4]] });
     // (Gravebound deaths (Oct 21): a player hit by Soul Sever or a Gloombomb who didn't pick up their soul fragments, up to 30 s after the last Dreadmarch)
-    { const lastDm = dm.length ? dm[dm.length - 1] + 30 : -1; for (const d of r.deaths || []) if (/^gravebound$/i.test(String(d.ability || '')) && d.t <= lastDm) items.push({ t: d.t, row: [{ txt: 'Gravebound death', bad: true }, { t: d.t }, { p: d.player }, { txt: 'missed their soul fragments and died', bad: true }, { txt: '' }] }); }
+    /* (round 355 gravebound: these deaths go to Gloombomb or Sever, below) */ if (0) { const lastDm = dm.length ? dm[dm.length - 1] + 30 : -1; for (const d of r.deaths || []) if (/^gravebound$/i.test(String(d.ability || '')) && d.t <= lastDm) items.push({ t: d.t, row: [{ txt: 'Gravebound death', bad: true }, { t: d.t }, { p: d.player }, { txt: 'missed their soul fragments and died', bad: true }, { txt: '' }] }); }
     for (const r0 of (sSs ? sSs.rows : [])) items.push({ t: r0[0].t, row: [{ txt: 'Soul Sever' }, { t: r0[0].t }, { txt: r0[3].txt + ' of ' + r0[2].txt + ' ghosts removed' }, { txt: r0[4].txt + ' missed', dim: true }, r0[5]] }); /* (a missed ghost is walked back for the next frontal (Oct 21): not a mistake) */
     if (dm.length || items.length) {
       const groups = dm.map((t, i) => ({ title: 'Dreadmarch #' + (i + 1), t, from: t - 1, to: (dm[i + 1] ?? dur + 1) - 1, rows: [], tg: sDm && sDm.rows[i] ? sDm.rows[i][1].ps : [] }));
@@ -4649,6 +4649,15 @@ function buildCoiledAltar(ev, r, h) {
         cols: ['What', 'When', 'Who', 'Result', ''], rows: [], groups: gGroups });
     }
   }
+  /* (round 355 gravebound) a Gravebound death goes to what gave it: the last Gloombomb or frontal that hit them, up to 30 s before */
+  { const gSec = sections.find((s) => s.id === 'gloom'), tSec = sections.find((s) => s.id === 'tankfront');
+    for (const d of r.deaths || []) { if (!/^gravebound$/i.test(String(d.ability || ''))) continue; let src = null;
+      for (const n of ['gloombomb', 'soul sever', 'blighted sever']) for (const e of dmg(n)) if (e.dst === d.guid && e.t <= d.t && e.t >= d.t - 30 && (!src || e.t > src.t)) src = { n, t: e.t };
+      const toGloom = src ? src.n === 'gloombomb' : !!gSec, sec = toGloom ? gSec || tSec : tSec || gSec; if (!sec) continue;
+      const how = pname(d.guid) + ' missed their soul fragments and died' + (src ? ' (Gravebound from ' + S(src.n)[1] + ' at ' + h.fmtT(src.t) + ')' : '');
+      if (sec.id === 'gloom') sec.rows.push([{ txt: 'Gravebound death', bad: true }, { t: d.t }, { p: pname(d.guid) }, { txt: how, bad: true }, { txt: '' }]);
+      else sec.rows.push([{ t: d.t }, { s: S(src ? src.n : 'soul sever') }, { p: pname(d.guid) }, { txt: '—', dim: true }, { txt: '—', dim: true }, { txt: how, bad: true }]);
+      sec.rows.sort((a, b) => ((a.find((c) => c && c.t != null) || {}).t || 0) - ((b.find((c) => c && c.t != null) || {}).t || 0)); sec.verdict = 'bad'; } }
   const fill = (mp) => { mp.pts = h.snap(mp.t).concat(mp.extraPts || (mp.from != null ? objs(mp.t, mp.from) : [])); orbRings(mp); };
   for (const s of sections) for (const row of s.rows.concat(...(s.groups || []).map((g) => g.rows))) for (const c of row) { if (c.map) fill(c.map); if (c.maps) for (const [, mp] of c.maps) fill(mp); }
   // every positional mistake gets a map of that moment (player ringed, orbs and ghosts from the 15s before)

@@ -1971,6 +1971,7 @@ const PATCH_NOTES = [
     'Holy Paladin: Beacon of Virtue is only marked as held when it sat ready for 8 seconds or more while 5 or more people were hurt. Holding it before the damage, or for Divine Toll and Aura Mastery, is right. The row is now called Beacon of Virtue uses.',
   ] },
   { d: '2026-10-30', h: [{ t: 'A cleaner banner and one bar for every tab', d: "The banner is now just the boss: its name, the difficulty and the result, with the boss art bigger. Who you're looking at, the pull (or another boss from the night), All pulls, the wipe call and how strictly you're judged all sit in one bar at the top of every tab." }, { t: 'Graphs, redesigned', d: "Names in their own column with slim class-coloured bars, every page laid out the same way with its controls on the card's title line, and the chart now follows the phase, Bloodlust or Power Infusion you pick." }], n: [
+    "Damage into the shields: each shield is one closed line you can open, and opened it lists everyone who hit it.",
     "The Rotation checklist is shorter: each check is its name and result, its sentence shows once when you open it, and its sections sit side by side in two columns on a wide screen.",
     "The top of the Rotation timeline is one tidy block: the numbers and Spotlight mistakes in one row, the whole fight under them (bigger, with its own colour key), then What to fix beside the key, which always shows.",
     "An opened mechanic on Debriefing is calmer: no gold frame or empty gap, slim rows, and one map beside them that shows the moment you click (click the map for the big one).",
@@ -1995,6 +1996,7 @@ const PATCH_NOTES = [
     "The Pull drop-down shows each pull in its progress colour, like the pull chart did.",
     "The page background is plain dark, without the grid."
   ], f: [
+    "The Coiled Altar: A Gravebound death (soul fragments not picked up) is listed under the Gloombomb or frontal that gave it, not under Dreadmarch.",
     "The Coiled Altar Mythic: a player in a tank frontal counts each Sever once, not every 2 seconds of the damage it leaves behind.",
     "The Coiled Altar: a tank frontal that hits a non-tank is listed once, under Sever (Frontal) with its map, not also under Dreadmarch or Coalesced Venom, and a tick of the damage an earlier frontal left behind no longer counts as a new hit.",
     "The browser's Back button: Back from your summary returns to your team's Home.",
@@ -13016,7 +13018,7 @@ function shieldBlock(reps, kind) {
   const top = rows.slice(0, 10), more = rows.slice(10);
   return '<div class="shd"><div class="shd-h">' + (kind === 'shield' ? 'Damage into Veil of Twilight' : 'Damage into the Dreadmarch shields') + '</div><div class="shd-cs">' + chips + '</div>' + (!night && parts.length > 1 ? parts.map((p, i) => { /* round 291 each shield */ const L = [...p.by].filter(([n, a]) => n && a > 0).sort((a, b) => b[1] - a[1]); if (!L.length) return ''; const t2 = L.reduce((x, [, a]) => x + a, 0) || 1, m2 = L[0][1] || 1;
       const row2 = ([n, a]) => '<div class="dsp-r shd-r"><span>' + nm(n) + '</span><span class="dsp-b"><i style="width:' + (100 * a / m2).toFixed(1) + '%' + ((PL.get(n) || {}).color ? ';background:' + PL.get(n).color : '') + '"></i></span><b>' + M(a) + '</b><span class="shd-p">' + Math.round(100 * a / t2) + '%</span></div>';
-      return '<div class="shd-one"><p class="shd-oh"><b>' + ordinal(i + 1) + ' shield</b> · ' + T(p.t) + (p.took != null ? ' · broke in <b>' + p.took.toFixed(1) + ' s</b>' : p.done ? ' · <span class="r272-bad">not broken</span>' : '') + ' · ' + M(t2) + ' in all</p><div class="dsp">' + L.slice(0, 6).map(row2).join('') + '</div>' + (L.length > 6 ? '<details class="shd-more"><summary>' + (L.length - 6) + ' more</summary><div class="dsp">' + L.slice(6).map(row2).join('') + '</div></details>' : '') + '</div>'; }).join('') :
+      /* round 356 shields folded */ return '<details class="shd-one"><summary class="shd-oh"><b>' + ordinal(i + 1) + ' shield</b> · ' + T(p.t) + (p.took != null ? ' · broke in <b>' + p.took.toFixed(1) + ' s</b>' : p.done ? ' · <span class="r272-bad">not broken</span>' : '') + ' · ' + M(t2) + ' in all · ' + L.length + (L.length === 1 ? ' player' : ' players') + '</summary><div class="dsp">' + L.map(row2).join('') + '</div></details>'; }).join('') :
     '<div class="dsp">' + top.map(row).join('') + '</div>' + (more.length ? '<details class="shd-more"><summary>' + more.length + ' more</summary><div class="dsp">' + more.map(row).join('') + '</div></details>' : '')) +
     '<p class="sub shd-f">' + M(tot) + ' into ' + plural(parts.length, 'shield') + (night ? ' over ' + plural(new Set(parts.map((p) => p.pull)).size, 'pull') : ' this pull') + '.' + (late ? ' ' + plural(late, 'more shield') + ' after the wipe call ' + (late === 1 ? 'isn\'t' : 'aren\'t') + ' counted.' : '') + '</p></div>';
 }
