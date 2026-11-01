@@ -12523,6 +12523,12 @@ html[data-theme="warrior"] body.refine ::selection{background:rgba(198,155,109,0
 
 
 
+
+<style id="rcss-443">
+/* round 443 still: no count-ups, growing bars or tab fade */
+html body #view > :not(.ld){animation:none !important}
+.ds-ptrans{transition:none !important}
+</style>
 <style id="rcss-432">
 /* round 432 one shield list */
 html body .shd.shd432 .shd-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
@@ -23018,6 +23024,8 @@ const PATCH_NOTES = [
   { d: '2026-11-01', h: [], n: ["Pages open crisp: no more half-faded page while the numbers are worked out, and the boxes at the top show a soft placeholder until their numbers are ready instead of flicking between guesses.", "Report card: a raider's card reads top to bottom in one column: their name with the grade beside it, the one thing to fix first, a box per list (tap one to jump to it), then the lists one under the other."], f: [] },
   { d: '2026-10-31', h: [{ t: 'Themes', d: 'Pick how Debrief looks from Menu > Theme: Aurora, Aurora Gold, Raid frame, Ember Crown, Glass, Midnight, Forge, or your class colours. It only changes the look, and it is saved on your device.' }, { t: 'Cooldown timing on The Coiled Altar', d: 'Rotation now shows if your big cooldown went out at the same moments the top players use it on Mythic, like Trueshot on the pull, at P2 start and in the intermission. Debriefing tells you when you missed one. For now: Holy Paladin, Marksmanship Hunter, Affliction Warlock, Arcane Mage, Arms Warrior and Balance Druid.' }], n: [
     "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
+    "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
+    "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
     "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
@@ -61869,6 +61877,10 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
   const sb = document.querySelector('#view .r212-sb'), now = Date.now(); if (sb) { if (!R440.t0) R440.t0 = now; const bot = [...sb.querySelectorAll('details.cch-ab')].find((d) => /^Deaths/.test(((d.querySelector('.cgl-n') || {}).textContent || '').trim())), v = bot && bot.querySelector('.cgl-p');
     if (v) { const ok = R440.ok || r440Same() || now - R440.t0 > 4000; if (ok) R440.ok = 1; /* (once right, it stays shown: no blink on a later draw) */ v.style.visibility = ok ? '' : 'hidden'; if (ok && now - R440.t0 > 1500) return; } else if (now - R440.t0 > 4000) return; }
   setTimeout(r442Tick, 100); })();
+
+// ===== Design studio round 443 (Nov 1): page-load motion off, for now (Flex: "maybe just remove the animations for now", "and start
+// over"). Owner: the Design studio chat. =====
+/* round 443 still */ dsMotion = function () { /* (no count-ups or growing bars) */ };
 
 </script>
 <script>/* refined look: one corner size (Design studio round 170) */
