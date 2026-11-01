@@ -10518,6 +10518,25 @@ html:not([data-theme]) body.refine .btn:not(.primary),html:not([data-theme]) bod
 }
  html body .r340-cols > .my-raid .my-h h2,html body .r340-cols .pn-wh > b,html body .r340-cols .pg-nights .pg-sh > h2{font-size:18px !important;font-weight:700 !important;line-height:1.2 !important}
  html body .r340-cols > .my-raid .my-h .sub,html body .r340-cols .pn-wh .sub{font-size:13px !important}
+/* round 437 report card A */
+html body #view .rqc-under.r437 .rqc-grid,html body #view .rqc-under.r437 .ds-rcard.r321 .rqc-grid.rqc-grid{grid-template-columns:minmax(0,1fr) !important;row-gap:14px !important}
+html body #view .rqc-under.r437 .r437-nmrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+html body #view .rqc-under.r437 .r437-nmrow .rqc-sc{display:flex !important;align-items:center;gap:8px;margin:0 !important;padding:0 !important;border:0 !important}
+html body #view .rqc-under.r437 .r437-nmrow .rqc-sc .grade{font-size:18px;min-width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center}
+html body #view .rqc-under.r437 .r437-nmrow .rqc-sc b{font-size:13.5px} html body #view .rqc-under.r437 .r437-nmrow .rqc-sc span:not(.grade){font-size:12.5px;color:var(--muted)}
+html body #view .rqc-under.r437 .r437-fix{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:12px 0 0;padding:10px 14px;border-radius:6px;border:1px solid rgba(229,83,75,.35);background:rgba(229,83,75,.07);cursor:pointer;font-size:13.5px}
+html body #view .rqc-under.r437 .r437-fix:hover{background:rgba(229,83,75,.11)}
+html body #view .rqc-under.r437 .r437-k{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#ff8f87}
+html body #view .rqc-under.r437 .r437-fix b{color:var(--text);font-weight:600} html body #view .rqc-under.r437 .r437-v{color:#ff8f87;font-weight:600} html body #view .rqc-under.r437 .r437-g{color:var(--muted);font-size:12.5px}
+html body #view .rqc-under.r437 .r437-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;margin:12px 0 14px;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--line)}
+html body #view .rqc-under.r437 .r437-t{all:unset;box-sizing:border-box;position:relative;display:flex;flex-direction:column;gap:2px;padding:9px 14px 11px;background:var(--panel);cursor:pointer}
+html body #view .rqc-under.r437 .r437-t:hover{background:var(--raised)}
+html body #view .rqc-under.r437 .r437-t > span{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+html body #view .rqc-under.r437 .r437-t > b{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums} html body #view .rqc-under.r437 .r437-t > b small{font-size:12.5px;font-weight:400;color:var(--muted)}
+html body #view .rqc-under.r437 .r437-t.g > b{color:#7ee08f} html body #view .rqc-under.r437 .r437-t.y > b{color:#f3c969} html body #view .rqc-under.r437 .r437-t.r > b{color:#ff8f87}
+html body #view .rqc-under.r437 .r437-t > i{position:absolute;left:0;bottom:0;height:2px;background:currentColor;opacity:.0}
+html body #view .rqc-under.r437 .r437-t.g > i{background:#45c15c;opacity:.7} html body #view .rqc-under.r437 .r437-t.y > i{background:#e8a23a;opacity:.7} html body #view .rqc-under.r437 .r437-t.r > i{background:#e5534b;opacity:.7}
+@media (max-width: 700px){html body #view .rqc-under.r437 .r437-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* refined look (Design studio round 170, Oct 28): one set of finishes everywhere, see notes/Design rules.md */
 /* The refined finishes (trial): the rules in notes/Design rules.md. Same layout, same font (Barlow Condensed), new finishes:
    greys for structure, colour only where it means something, gold as the mark, one panel / row / tag / chip, flat, sharp. */
@@ -12514,6 +12533,7 @@ html[data-theme="warrior"] body.refine .bh-name{font-family:'Cinzel',var(--head)
 html[data-theme="warrior"] body.refine .brand h1,html[data-theme="warrior"] body.refine #topbar .tb-brand b{font-family:'Cinzel',var(--head)}
 html[data-theme="warrior"] body.refine ::selection{background:rgba(198,155,109,0.35)}
 </style>
+
 
 
 

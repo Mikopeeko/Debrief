@@ -1968,8 +1968,11 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
+  { d: '2026-11-01', h: [], n: ["Report card: a raider's card reads top to bottom in one column: their name with the grade beside it, the one thing to fix first, a box per list (tap one to jump to it), then the lists one under the other."], f: [] },
   { d: '2026-10-31', h: [{ t: 'Themes', d: 'Pick how Debrief looks from Menu > Theme: Aurora, Aurora Gold, Raid frame, Ember Crown, Glass, Midnight, Forge, or your class colours. It only changes the look, and it is saved on your device.' }, { t: 'Cooldown timing on The Coiled Altar', d: 'Rotation now shows if your big cooldown went out at the same moments the top players use it on Mythic, like Trueshot on the pull, at P2 start and in the intermission. Debriefing tells you when you missed one. For now: Holy Paladin, Marksmanship Hunter, Affliction Warlock, Arcane Mage, Arms Warrior and Balance Druid.' }], n: [
     "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
+    "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
+    "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
     "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
@@ -34224,3 +34227,23 @@ function r344Sum() { const pg = document.querySelector('#main .home.prog.r343');
     const v = n ? parseFloat(n.textContent) : NaN, fi = br.firstElementChild; fi.style.width = (v >= 0 ? Math.min(100, v) : 0) + '%'; fi.style.background = (n && n.style.color) || '#5a616b'; }); };
   bars(); [600, 2000, 5000, 10000].forEach((t) => setTimeout(bars, t)); }
 (function () { const f9 = dsBars; dsBars = function (root) { f9(root); try { r344Sum(); } catch (e) { /* (fine as it is) */ } }; })();
+
+// ===== Design studio round 437 (Oct 31): Report card layout A. A raider's card in one column: name with the grade beside it, the
+// one fix, a box per list, then the lists one under the other. Re-orders the existing pieces. Owner: the Design studio chat. =====
+function r437Card() { document.querySelectorAll('.rqc-under').forEach((g) => { if (g.classList.contains('r437')) return; const hd = g.querySelector('.rqc-hd'), secs = [...g.querySelectorAll('.rqc-sec')]; if (!hd || !secs.length) return; g.classList.add('r437');
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const nm = hd.querySelector('b.nm'), sc = hd.querySelector('.rqc-sc'); if (nm && sc) { const r = document.createElement('div'); r.className = 'r437-nmrow'; nm.before(r); r.append(nm, sc); }
+  const title = (s) => ((s.querySelector('h5 > span') || {}).textContent || '').trim(), cnt = (s) => ((s.querySelector('h5 > span:last-child') || {}).textContent || '').trim();
+  // (the one fix: the worst failed row of the most important list that has one; bonuses don't count, like the grade)
+  const ORD = ['staying alive', 'mechanics', 'ready to raid', 'performance'], rank = (s) => { const i = ORD.indexOf(title(s).toLowerCase()); return i < 0 ? 9 : i; };
+  let fix = null; for (const s of secs.slice().sort((a, b) => rank(a) - rank(b))) { const rows = [...s.querySelectorAll('.rqc-row')].filter((r) => r.querySelector('.rqc-i.bad') && !/bonus/i.test((r.querySelector('small') || {}).textContent || ''));
+    if (!rows.length) continue; const pc = (r) => { const m = ((r.querySelector('.rqc-pc') || {}).textContent || '').match(/[0-9]+/); return m ? +m[0] : 101; }; fix = { s, r: rows.sort((a, b) => pc(a) - pc(b))[0] }; break; }
+  if (fix) { const lab = (fix.r.querySelector('.rqc-nm') || {}).textContent || '', val = (fix.r.querySelector(':scope > b, :scope > span > b') || fix.r.querySelector('b') || {}).textContent || '', goal = ((fix.r.querySelector('small') || {}).textContent || '').replace(/^Goal:\s*/, '');
+    const f = document.createElement('div'); f.className = 'r437-fix'; f.innerHTML = '<span class="r437-k">Fix first</span><b>' + esc(lab.trim()) + '</b>' + (val.trim() ? '<span class="r437-v">' + esc(val.replace(/\s*▾\s*$/, '').trim()) + '</span>' : '') + (goal ? '<span class="r437-g">Goal: ' + esc(goal.trim()) + '</span>' : '');
+    f.addEventListener('click', () => { fix.r.scrollIntoView({ block: 'center', behavior: 'smooth' }); if (fix.r.tagName === 'SUMMARY') fix.r.parentElement.open = true; }); hd.after(f); }
+  // (a box per list)
+  const t = document.createElement('div'); t.className = 'r437-tiles'; secs.forEach((s) => { const m = cnt(s).match(/([0-9]+) of ([0-9]+)/), a = m ? +m[1] : 0, b = m ? +m[2] : 0, c = !b || a === b ? 'g' : a / b >= 0.6 ? 'y' : 'r';
+    const x = document.createElement('button'); x.type = 'button'; x.className = 'r437-t ' + c; x.innerHTML = '<span>' + esc(title(s)) + '</span><b>' + a + '<small> of ' + b + '</small></b><i style="width:' + (b ? Math.round(100 * a / b) : 100) + '%"></i>';
+    x.addEventListener('click', () => s.scrollIntoView({ block: 'start', behavior: 'smooth' })); t.append(x); });
+  (g.querySelector('.r437-fix') || hd).after(t); }); }
+(function () { const f9 = dsBars; dsBars = function (root) { f9(root); try { r437Card(); } catch (e) { /* (the two-column card stays) */ } }; })();

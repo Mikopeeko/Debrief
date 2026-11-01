@@ -10518,6 +10518,25 @@ html:not([data-theme]) body.refine .btn:not(.primary),html:not([data-theme]) bod
 }
  html body .r340-cols > .my-raid .my-h h2,html body .r340-cols .pn-wh > b,html body .r340-cols .pg-nights .pg-sh > h2{font-size:18px !important;font-weight:700 !important;line-height:1.2 !important}
  html body .r340-cols > .my-raid .my-h .sub,html body .r340-cols .pn-wh .sub{font-size:13px !important}
+/* round 437 report card A */
+html body #view .rqc-under.r437 .rqc-grid,html body #view .rqc-under.r437 .ds-rcard.r321 .rqc-grid.rqc-grid{grid-template-columns:minmax(0,1fr) !important;row-gap:14px !important}
+html body #view .rqc-under.r437 .r437-nmrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+html body #view .rqc-under.r437 .r437-nmrow .rqc-sc{display:flex !important;align-items:center;gap:8px;margin:0 !important;padding:0 !important;border:0 !important}
+html body #view .rqc-under.r437 .r437-nmrow .rqc-sc .grade{font-size:18px;min-width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center}
+html body #view .rqc-under.r437 .r437-nmrow .rqc-sc b{font-size:13.5px} html body #view .rqc-under.r437 .r437-nmrow .rqc-sc span:not(.grade){font-size:12.5px;color:var(--muted)}
+html body #view .rqc-under.r437 .r437-fix{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:12px 0 0;padding:10px 14px;border-radius:6px;border:1px solid rgba(229,83,75,.35);background:rgba(229,83,75,.07);cursor:pointer;font-size:13.5px}
+html body #view .rqc-under.r437 .r437-fix:hover{background:rgba(229,83,75,.11)}
+html body #view .rqc-under.r437 .r437-k{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#ff8f87}
+html body #view .rqc-under.r437 .r437-fix b{color:var(--text);font-weight:600} html body #view .rqc-under.r437 .r437-v{color:#ff8f87;font-weight:600} html body #view .rqc-under.r437 .r437-g{color:var(--muted);font-size:12.5px}
+html body #view .rqc-under.r437 .r437-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;margin:12px 0 14px;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--line)}
+html body #view .rqc-under.r437 .r437-t{all:unset;box-sizing:border-box;position:relative;display:flex;flex-direction:column;gap:2px;padding:9px 14px 11px;background:var(--panel);cursor:pointer}
+html body #view .rqc-under.r437 .r437-t:hover{background:var(--raised)}
+html body #view .rqc-under.r437 .r437-t > span{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+html body #view .rqc-under.r437 .r437-t > b{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums} html body #view .rqc-under.r437 .r437-t > b small{font-size:12.5px;font-weight:400;color:var(--muted)}
+html body #view .rqc-under.r437 .r437-t.g > b{color:#7ee08f} html body #view .rqc-under.r437 .r437-t.y > b{color:#f3c969} html body #view .rqc-under.r437 .r437-t.r > b{color:#ff8f87}
+html body #view .rqc-under.r437 .r437-t > i{position:absolute;left:0;bottom:0;height:2px;background:currentColor;opacity:.0}
+html body #view .rqc-under.r437 .r437-t.g > i{background:#45c15c;opacity:.7} html body #view .rqc-under.r437 .r437-t.y > i{background:#e8a23a;opacity:.7} html body #view .rqc-under.r437 .r437-t.r > i{background:#e5534b;opacity:.7}
+@media (max-width: 700px){html body #view .rqc-under.r437 .r437-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* refined look (Design studio round 170, Oct 28): one set of finishes everywhere, see notes/Design rules.md */
 /* The refined finishes (trial): the rules in notes/Design rules.md. Same layout, same font (Barlow Condensed), new finishes:
    greys for structure, colour only where it means something, gold as the mark, one panel / row / tag / chip, flat, sharp. */
@@ -12514,6 +12533,7 @@ html[data-theme="warrior"] body.refine .bh-name{font-family:'Cinzel',var(--head)
 html[data-theme="warrior"] body.refine .brand h1,html[data-theme="warrior"] body.refine #topbar .tb-brand b{font-family:'Cinzel',var(--head)}
 html[data-theme="warrior"] body.refine ::selection{background:rgba(198,155,109,0.35)}
 </style>
+
 
 
 
@@ -22972,8 +22992,11 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
+  { d: '2026-11-01', h: [], n: ["Report card: a raider's card reads top to bottom in one column: their name with the grade beside it, the one thing to fix first, a box per list (tap one to jump to it), then the lists one under the other."], f: [] },
   { d: '2026-10-31', h: [{ t: 'Themes', d: 'Pick how Debrief looks from Menu > Theme: Aurora, Aurora Gold, Raid frame, Ember Crown, Glass, Midnight, Forge, or your class colours. It only changes the look, and it is saved on your device.' }, { t: 'Cooldown timing on The Coiled Altar', d: 'Rotation now shows if your big cooldown went out at the same moments the top players use it on Mythic, like Trueshot on the pull, at P2 start and in the intermission. Debriefing tells you when you missed one. For now: Holy Paladin, Marksmanship Hunter, Affliction Warlock, Arcane Mage, Arms Warrior and Balance Druid.' }], n: [
     "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
+    "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
+    "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
     "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
@@ -61778,6 +61801,26 @@ function r344Sum() { const pg = document.querySelector('#main .home.prog.r343');
     const v = n ? parseFloat(n.textContent) : NaN, fi = br.firstElementChild; fi.style.width = (v >= 0 ? Math.min(100, v) : 0) + '%'; fi.style.background = (n && n.style.color) || '#5a616b'; }); };
   bars(); [600, 2000, 5000, 10000].forEach((t) => setTimeout(bars, t)); }
 (function () { const f9 = dsBars; dsBars = function (root) { f9(root); try { r344Sum(); } catch (e) { /* (fine as it is) */ } }; })();
+
+// ===== Design studio round 437 (Oct 31): Report card layout A. A raider's card in one column: name with the grade beside it, the
+// one fix, a box per list, then the lists one under the other. Re-orders the existing pieces. Owner: the Design studio chat. =====
+function r437Card() { document.querySelectorAll('.rqc-under').forEach((g) => { if (g.classList.contains('r437')) return; const hd = g.querySelector('.rqc-hd'), secs = [...g.querySelectorAll('.rqc-sec')]; if (!hd || !secs.length) return; g.classList.add('r437');
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const nm = hd.querySelector('b.nm'), sc = hd.querySelector('.rqc-sc'); if (nm && sc) { const r = document.createElement('div'); r.className = 'r437-nmrow'; nm.before(r); r.append(nm, sc); }
+  const title = (s) => ((s.querySelector('h5 > span') || {}).textContent || '').trim(), cnt = (s) => ((s.querySelector('h5 > span:last-child') || {}).textContent || '').trim();
+  // (the one fix: the worst failed row of the most important list that has one; bonuses don't count, like the grade)
+  const ORD = ['staying alive', 'mechanics', 'ready to raid', 'performance'], rank = (s) => { const i = ORD.indexOf(title(s).toLowerCase()); return i < 0 ? 9 : i; };
+  let fix = null; for (const s of secs.slice().sort((a, b) => rank(a) - rank(b))) { const rows = [...s.querySelectorAll('.rqc-row')].filter((r) => r.querySelector('.rqc-i.bad') && !/bonus/i.test((r.querySelector('small') || {}).textContent || ''));
+    if (!rows.length) continue; const pc = (r) => { const m = ((r.querySelector('.rqc-pc') || {}).textContent || '').match(/[0-9]+/); return m ? +m[0] : 101; }; fix = { s, r: rows.sort((a, b) => pc(a) - pc(b))[0] }; break; }
+  if (fix) { const lab = (fix.r.querySelector('.rqc-nm') || {}).textContent || '', val = (fix.r.querySelector(':scope > b, :scope > span > b') || fix.r.querySelector('b') || {}).textContent || '', goal = ((fix.r.querySelector('small') || {}).textContent || '').replace(/^Goal:\s*/, '');
+    const f = document.createElement('div'); f.className = 'r437-fix'; f.innerHTML = '<span class="r437-k">Fix first</span><b>' + esc(lab.trim()) + '</b>' + (val.trim() ? '<span class="r437-v">' + esc(val.replace(/\s*▾\s*$/, '').trim()) + '</span>' : '') + (goal ? '<span class="r437-g">Goal: ' + esc(goal.trim()) + '</span>' : '');
+    f.addEventListener('click', () => { fix.r.scrollIntoView({ block: 'center', behavior: 'smooth' }); if (fix.r.tagName === 'SUMMARY') fix.r.parentElement.open = true; }); hd.after(f); }
+  // (a box per list)
+  const t = document.createElement('div'); t.className = 'r437-tiles'; secs.forEach((s) => { const m = cnt(s).match(/([0-9]+) of ([0-9]+)/), a = m ? +m[1] : 0, b = m ? +m[2] : 0, c = !b || a === b ? 'g' : a / b >= 0.6 ? 'y' : 'r';
+    const x = document.createElement('button'); x.type = 'button'; x.className = 'r437-t ' + c; x.innerHTML = '<span>' + esc(title(s)) + '</span><b>' + a + '<small> of ' + b + '</small></b><i style="width:' + (b ? Math.round(100 * a / b) : 100) + '%"></i>';
+    x.addEventListener('click', () => s.scrollIntoView({ block: 'start', behavior: 'smooth' })); t.append(x); });
+  (g.querySelector('.r437-fix') || hd).after(t); }); }
+(function () { const f9 = dsBars; dsBars = function (root) { f9(root); try { r437Card(); } catch (e) { /* (the two-column card stays) */ } }; })();
 
 </script>
 <script>/* refined look: one corner size (Design studio round 170) */
