@@ -3,7 +3,7 @@
 From each dungeon's Wowhead overview: the "Important interrupts and dispels" table and the boss quick strategy. All guides were by iMX3,
 updated Aug 27 (Blinding Vale Oct 2). Read Nov 1 for the run recap (companion/mplus.js `MPLUS_LISTS`).
 T# means trash before boss #, B# means boss #, and * means dispel only after a failed mechanic.
-"Seen" means the spell shows up in your keys (Oct 24 to 31). "Not seen yet" means we have no key of that dungeon yet, so the names are unverified.
+"Seen" means the spell shows up in your keys (Oct 4 to 31).
 
 ## What the check on your keys found (Nov 1)
 - **Keys checked:**
@@ -12,7 +12,15 @@ T# means trash before boss #, B# means boss #, and * means dispel only after a f
   - Ruby Life Pools +12
   - Den of Nalorakk +20 (left after 4 pulls)
   - Temple of Sethraliss +12 and +20 (left after 1 pull)
-- **Not checked:** no keys of Murder Row, The Blinding Vale or Voidscar Arena yet, so their names are unverified.
+  - Murder Row +12 (Oct 4 and 8), The Blinding Vale +12 and +10 (Oct 24 and 31), Voidscar Arena +12 (Oct 24): found by date on
+    Raider.IO and read from those days' logs.
+- **The last three dungeons (checked later on Nov 1):**
+  - Every must-kick, dispel and purge name is in the logs.
+  - Fel Missiles, Felstorm (Murder Row) and Mending Void (Voidscar Arena) are channels.
+  - Light Bolt counts only from Kezkitt, the guide's boss. The Radiant Spellsower trash casts a Light Bolt of the same name three times as often; the trash kick there is Light Bolt Volley.
+  - Murder in a Row is a bleed, which ordinary dispels can't remove (41 on players over two keys, none removed), so it's off the dispel list.
+  - Cosmic Crash, Dark Bloom and Demonic Rage hit every player on each cast, about 5 direct hits a cast, like Hailburst. They're left out of avoidable damage.
+  - Nether Dash counts only its direct hits (about 1 a cast); its 230 damage-over-time ticks don't count.
 - **Must-kicks:** every one is in the logs except:
   - Den of Nalorakk's Scavenge, Frigid Roar, Winter's Shroud and Arc Lightning (that key ended after the first boss)
   - Temple's Essence Disruption
@@ -178,4 +186,18 @@ The guides list boss mechanics only, so trash came from your keys. I looked for 
 - **On the tank:** Ravenous Claws, Duostrike.
 - **Unclear who could have moved:** Spark Step, Stormcloud Detonation, Dark Revelation, Infest. The chosen player is hit either way.
 
-**Not checked yet:** Murder Row, The Blinding Vale and Voidscar Arena trash (no keys of those yet).
+**Murder Row, The Blinding Vale and Voidscar Arena trash (Nov 1, the same way):**
+- **Counted:**
+  - Lightmaw Beams (Vale, light beamed at a spot)
+  - Belch Spores (Vale, spores where they land)
+  - Lightwarden's Blight (Vale, the beetle explodes when it dies)
+  - Void Beam (Voidscar, a beam at a spot)
+- **Left out:**
+  - Searing Magma (the totem hits everyone: kill it)
+  - Dimensional Shred and Glaive Toss (aimed at a player)
+  - Sky Strike (shared damage)
+  - Spiny Shield (it hurts whoever attacks the beetle)
+  - Burning Fel (everyone)
+- **Murder Row:** nothing new to dodge on trash.
+
+**One hit per stay (Nov 1):** beams, breaths and pools that hit every second while you stand in them count as one hit until you've been out of them for 1.6 seconds; the damage still adds up. Lightmaw Beams went from 33 to 56 "hits" a key down to 10, Flame Breath from 4 to 1.

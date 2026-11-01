@@ -25,18 +25,18 @@ const KNOCK = new Set(['thunderstorm', 'typhoon', 'ursol\'s vortex', 'ring of pe
 // when they start); cc: [cast, what the enemy gains when nobody stopped it]; dispel: debuffs on players to remove (not the "only after a failed
 // mechanic" ones); purge: enemy buffs to purge or soothe; dodge: damage a player who isn't tanking should never take (bosses from the guides, trash
 // from Flex's keys and each spell's Wowhead text, Nov 1); pool: a puddle that puts a debuff on whoever stands in it (each landing is one hit). Seen on Flex's keys
-// Oct 24 to 31 except Murder Row, The Blinding Vale and Voidscar Arena (no key yet) and Den of Nalorakk past its first boss)
+// Oct 4 to 31 (Murder Row, The Blinding Vale and Voidscar Arena found by date on Raider.IO), except Den of Nalorakk past its first boss)
 const LISTS = {
   'altar of fangs': { kick: ['Piercing Hiss', 'Toxic Atrophy', 'Mass Envenom'], cc: [['Evolve', 'Evolved']],
     dispel: ['Paralyzing Shots', 'Regurgitate', 'Envenom'], purge: ['Ravenous Claws'], dodge: ['Regurgitate', 'Burrowing Charge', 'Axegrinder', 'Septic Spatter'] },
-  'murder row': { kick: ['Fel Missiles', 'Seduction', 'Felstorm', 'Fel Rage', 'Health Funnel', 'Chaos Bolt'], chan: ['Health Funnel'],
-    dispel: ['Corroding Spittle', 'Heartstop Poison', 'Murder in a Row', 'Curse of Doom'], purge: ['Back to Work!'], dodge: ['Legion Strike', 'Demonic Rage'] },
+  'murder row': { kick: ['Fel Missiles', 'Seduction', 'Felstorm', 'Fel Rage', 'Health Funnel', 'Chaos Bolt'], chan: ['Health Funnel', 'Fel Missiles', 'Felstorm'],
+    dispel: ['Corroding Spittle', 'Heartstop Poison', 'Curse of Doom'], purge: ['Back to Work!'], dodge: ['Legion Strike'] },
   'den of nalorakk': { kick: ['Scavenge', 'Healing Breeze', 'Frigid Roar', 'Winter\'s Shroud', 'Arc Lightning'],
     dispel: ['Insatiable Hunger', 'Toxic Spores', 'Cryo Surge', 'Glacial Torment'], purge: ['Mother\'s Wrath', 'Bestial Wrath'], dodge: ['Earthshatter Slam'], pool: ['Rotten Ground'] },
-  'the blinding vale': { kick: ['Light Bolt Volley', 'Light Bolt', 'Disorienting Screech', 'Warden\'s Wrath', 'Lightspore Shot'],
-    dispel: ['Bloodthorn Roots'], purge: [], dodge: ['Lightsower Dash', 'Fan of Thorns'] },
-  'voidscar arena': { kick: ['Demoralizing Shout', 'Shadowbolt Volley', 'Violent Sand', 'Mad Shriek', 'Mending Void'],
-    dispel: ['Melt Armor', 'Corrosive Essence'], purge: ['Bolster'], dodge: ['Nether Dash', 'Dark Bloom', 'Poison Splash', 'Unstable Singularity', 'Cosmic Crash'] },
+  'the blinding vale': { kick: ['Light Bolt Volley', 'Light Bolt@Kezkitt', 'Disorienting Screech', 'Warden\'s Wrath', 'Lightspore Shot'],
+    dispel: ['Bloodthorn Roots'], purge: [], dodge: ['Lightsower Dash', 'Fan of Thorns', 'Lightmaw Beams', 'Belch Spores', "Lightwarden's Blight"] },
+  'voidscar arena': { kick: ['Demoralizing Shout', 'Shadowbolt Volley', 'Violent Sand', 'Mad Shriek', 'Mending Void'], chan: ['Mending Void'],
+    dispel: ['Melt Armor', 'Corrosive Essence'], purge: ['Bolster'], dodge: ['Nether Dash', 'Poison Splash', 'Unstable Singularity', 'Void Beam'] },
   'ruby life pools': { kick: ['Ice Shield', 'Frigid Shard', 'Fiery Blast', 'Blaze Volley'], chan: ['Ice Shield'],
     dispel: ['Cold Claws', 'Rolling Thunder', 'Stormslam'], purge: ['Blaze of Glory', 'Stormcloud Barrier'], dodge: ['Molten Boulder', 'Roaring Firebreath', 'Flame Breath'] },
   'kings\' rest': { kick: ['Hex Volley', 'Bind Soul', 'Unholy Mending', 'Wretched Discharge', 'Hex', 'Poison Nova', 'Deathly Roar'],
@@ -159,7 +159,7 @@ function build(text, E) {
   }
   // (must-kick: the dungeon's list; without one, a spell somebody deliberately kicked at least once this key (an area stun alone doesn't make one))
   const kickedIds = new Set(casts.filter((c) => c.res === 'kicked').map((c) => c.id));
-  const danger = (c) => (LIST ? LIST.kick.has(lc(c.spell)) : kickedIds.has(c.id));
+  const danger = (c) => (LIST ? LIST.kick.has(lc(c.spell)) || LIST.kick.has(lc(c.spell) + '@' + lc(c.mob)) : kickedIds.has(c.id)); /* ("Spell@Caster": only from that enemy) */
   // (whose kick was ready when a must-kick cast went off: each player's interrupts for their spec, from the engine, and when they last pressed
   // them. A cast that got through with nobody's kick ready isn't a mistake (Nov 1))
   const kickNames = new Map(); for (const p of players.values()) { const l = ((E.INTERRUPTS || {})[p.cls] || []).filter((k) => !k[2] || k[2].includes(p.specId)); if (l.length) kickNames.set(p.guid, l); }
@@ -171,14 +171,15 @@ function build(text, E) {
     mobs: [...p.mobs].map(([n, g]) => [n, g.size]).sort((a, b) => b[1] - a[1]), dmg: {}, heal: {}, kicks: [], stops: [], through: [], deaths: [], defs: [], dispels: [], purges: [],
     avoid: {}, debs: {}, ebuffs: {} }));
   const addTo = (o, k, v) => { o[k] = (o[k] || 0) + v; }, avoidOf = (o, who, spell) => o.avoid[who + '|' + spell] || (o.avoid[who + '|' + spell] = { who, spell, n: 0, dmg: 0 });
-  const recent = new Map(), inPool = new Set(); // player -> last hits; player|puddle stepped into, not ticked yet
+  const recent = new Map(), inPool = new Set(), lastHit = new Map(); // player -> last hits; player|puddle stepped into, not ticked yet; player|spell -> its last hit
   for (const x of ev) {
     const pi = pullOf(x[0]), o = out[pi]; if (!o) continue;
     if (x[1] === 'dmg') addTo(o.dmg, x[2], x[3]);
     else if (x[1] === 'heal') addTo(o.heal, x[2], x[3]);
     else if (x[1] === 'hit') { const l = recent.get(x[2]) || []; l.push([x[0], x[4], x[5], x[3]]); if (l.length > 6) l.shift(); recent.set(x[2], l);
-      /* (avoidable damage: a dodge-list spell's direct hit (not the damage-over-time some leave) on anyone but a tank, who may be standing in a frontal on purpose) */
-      if (LIST && (players.get(x[2]) || {}).role !== 'tank') { if (!x[7] && LIST.dodge.has(lc(x[4]))) { const a = avoidOf(o, x[2], x[4]); a.n++; a.dmg += x[3]; } else if (x[7] && LIST.pool.has(lc(x[4]))) { const a = avoidOf(o, x[2], x[4]), k = x[2] + '|' + lc(x[4]); if (inPool.has(k)) { a.n++; inPool.delete(k); } a.dmg += x[3]; } } }
+      /* (avoidable damage: a dodge-list spell's direct hit (not the damage-over-time some leave) on anyone but a tank, who may be standing in a frontal on purpose;
+         a beam or breath that hits every second while you stand in it is one hit until you're out of it for 1.6 s (Nov 1)) */
+      if (LIST && (players.get(x[2]) || {}).role !== 'tank') { if (!x[7] && LIST.dodge.has(lc(x[4]))) { const a = avoidOf(o, x[2], x[4]), k = x[2] + '|' + lc(x[4]); if (!(lastHit.get(k) > x[0] - 1.6)) a.n++; lastHit.set(k, x[0]); a.dmg += x[3]; } else if (x[7] && LIST.pool.has(lc(x[4]))) { const a = avoidOf(o, x[2], x[4]), k = x[2] + '|' + lc(x[4]); if (inPool.has(k)) { a.n++; inPool.delete(k); } a.dmg += x[3]; } } }
     /* (a puddle: one hit each time someone stepped in and it ticked on them; out again within a second isn't a mistake. Its ticks are the damage) */
     else if (x[1] === 'pool') inPool.add(x[2] + '|' + lc(x[3]));
     else if (x[1] === 'aura' && defIds.has(x[3])) o.defs.push({ t: x[0], who: x[2], name: defIds.get(x[3]) });
