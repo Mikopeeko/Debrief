@@ -6728,12 +6728,13 @@ function* analyzeSteps(item, text, opts) {
     /* round 411e ghost frames: a ghost glides between the spots the log has for it, from its spawn until it dies (or 20 s after it was last placed) */
     const isGh = (x) => /^manifestation of dread$/i.test(x.name), ghAt = (x, t) => { const a = x.u.pts; if (!a.length || t < a[0][0] - 0.3) return null; if (!framesAt._hit) { framesAt._hit = new Map(); for (const e of modEv) if ((e.k === 'dmg' || (e.k === 'aura' && e.op === 'apply')) && e.dst && /^(soul sever|blighted sever)$/i.test(String(e.spell || '')) && !framesAt._hit.has(e.dst)) framesAt._hit.set(e.dst, e.t); } /* round 413 ghost gone */ const end = Math.min(deadAt.has(x.guid) ? deadAt.get(x.guid) : Infinity, framesAt._hit.has(x.guid) ? framesAt._hit.get(x.guid) + 0.4 : Infinity, a[a.length - 1][0] + 150); /* round 414 leftover ghosts */ if (t > end) return null;
       let lo = 0; while (lo < a.length - 1 && a[lo + 1][0] <= t) lo++; const p = a[lo], q = a[lo + 1]; if (p[0] <= t && q) { const f = (t - p[0]) / (q[0] - p[0] || 1); return [p[1] + (q[1] - p[1]) * f, p[2] + (q[2] - p[2]) * f]; } return [p[1], p[2]]; };
-    if (!framesAt._own) { framesAt._own = new Map(); for (const e of modEv) if ((e.id === 1285911 || /^unnerving fixation$/i.test(String(e.spell || ''))) && e.src && e.dst && r.players.get(e.dst)) framesAt._own.set(e.src, e.dst); r.ghostOwner = Object.fromEntries(framesAt._own); /* round 413 ghost owners */ }
+    if (!framesAt._own) { framesAt._own = new Map(); for (const e of modEv.filter((x) => x.k === 'aura' && x.op === 'apply' && (x.id === 1285911 || /^unnerving fixation$/i.test(String(x.spell || ''))) && x.src && x.dst && r.players.get(x.dst)).sort((a, b) => a.t - b.t)) { let l = framesAt._own.get(e.src); if (!l) framesAt._own.set(e.src, l = []); l.push([+e.t.toFixed(2), e.dst]); } r.ghostOwner = Object.fromEntries(framesAt._own); /* round 415 owner by time: [time, player] per ghost */ }
+    const ownAt = (g, t) => { const l = framesAt._own.get(g); if (!l) return null; let o = l[0][1]; for (const [a, d] of l) { if (a > t + 0.1) break; o = d; } return o; };
     const own = framesAt._own;
     const out = [];
     for (let t = t0; t <= t1 + 1e-6; t += step) {
       const pts = [];
-      for (const x of units) { if (deadAt.has(x.guid) && deadAt.get(x.guid) < t) continue; const gh = isGh(x), p = gh ? ghAt(x, t) : posAt(x.u, t); if (p) pts.push(Object.assign({ guid: x.guid, name: x.name, x: +p[0].toFixed(2), y: +p[1].toFixed(2), kind: x.kind }, gh && own.has(x.guid) ? { owner: own.get(x.guid) } : {})); }
+      for (const x of units) { if (deadAt.has(x.guid) && deadAt.get(x.guid) < t) continue; const gh = isGh(x), p = gh ? ghAt(x, t) : posAt(x.u, t); if (p) pts.push(Object.assign({ guid: x.guid, name: x.name, x: +p[0].toFixed(2), y: +p[1].toFixed(2), kind: x.kind }, gh && own.has(x.guid) ? { owner: ownAt(x.guid, t) } : {})); }
       out.push({ t: +t.toFixed(2), pts });
     }
     return out;
