@@ -886,7 +886,7 @@ RECAP.encode = (m) => {
 // MO~pull~who~flag~icon~check~value~line   MG~pull~who~went well (a;b)   MX~who~flag~icon~check~pulls (1;3)~pulls checked)
 RECAP.encodeMplus = (R, night) => {
   const run = R.run, c = run.clock || {}, n0 = (v) => (v == null ? '' : Math.round(v));
-  const rec = [['DBF1'], ['H', run.dungeon, 'Mythic+ ' + run.level, 1, run.timed && !run.left ? 1 : 0, '', mmss(run.timeMs / 1000), '', R.pulls.reduce((a, o) => a + o.deaths.length, 0), 1, night || ''],
+  const rec = [['DBF1'], ['H', run.dungeon, 'Mythic+ ' + run.level, 1, run.timed && !run.left ? 1 : 0, '', mmss(run.timeMs ? run.timeMs / 1000 : run.left || 0), '', R.pulls.reduce((a, o) => a + o.deaths.length, 0), 1, night || ''], /* (a key left early: how long it ran) */
     ['MR', run.level, run.left ? 'L' : run.timed ? 'T' : 'O', n0(c.time != null ? c.time : run.timeMs / 1000), n0(c.par), n0(c.up), n0(c.next), n0(c.deathCost), n0(c.deaths), n0(c.upWithout), n0(c.fight), n0(c.between), n0(run.score)]];
   for (const p of R.people) rec.push(['MP', p.name, p.cls, p.spec, p.role, p.dps, p.hps, p.kicks, p.stops, p.defs, p.deaths, p.dispels, p.purges || 0, p.avoid || 0, p.kick ? 1 : '']);
   for (const o of R.pulls) {

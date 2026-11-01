@@ -134,7 +134,7 @@ local function decode(code)
     elseif t == "C" then m.cutN = tonumber(g(2)) -- (the wipe filter: versions 0 to n)
     elseif t == "WC" then m.wc = { at = g(2), txt = g(3) } -- (the wipe call: when and why; then version 1 is up to it (Oct 23))
     -- (a Mythic+ key (Nov 1, the in-game card): the run, the group, each pull and what happened in it; see RECAP.encodeMplus in the app)
-    elseif t == "MR" then local K0 = mp(); K0.run = { level = g(2), stat = g(3), time = tonumber(g(4)) or 0, par = tonumber(g(5)), up = tonumber(g(6)) or 0, next = tonumber(g(7)), dcost = tonumber(g(8)) or 0, deaths = tonumber(g(9)) or 0, upw = tonumber(g(10)), fight = tonumber(g(11)), between = tonumber(g(12)), score = g(13) }
+    elseif t == "MR" then local K0 = mp(); if m.h then m.h.mstat = g(3) end; K0.run = { level = g(2), stat = g(3), time = tonumber(g(4)) or 0, par = tonumber(g(5)), up = tonumber(g(6)) or 0, next = tonumber(g(7)), dcost = tonumber(g(8)) or 0, deaths = tonumber(g(9)) or 0, upw = tonumber(g(10)), fight = tonumber(g(11)), between = tonumber(g(12)), score = g(13) }
     elseif t == "MP" then local K0 = mp(); local q = { name = g(2), cls = g(3), spec = g(4), role = g(5), dps = tonumber(g(6)) or 0, hps = tonumber(g(7)) or 0, kicks = tonumber(g(8)) or 0, stops = tonumber(g(9)) or 0, defs = tonumber(g(10)) or 0, deaths = tonumber(g(11)) or 0, dispels = tonumber(g(12)) or 0, purges = tonumber(g(13)) or 0, avoid = tonumber(g(14)) or 0, kick = g(15) == "1", rot = {} }; K0.people[#K0.people + 1] = q; K0.byP[q.name] = q
     elseif t == "MU" then local K0 = mp(); local q = { n = tonumber(g(2)) or (#K0.pulls + 1), boss = g(3), kill = g(4) == "1", s = tonumber(g(5)) or 0, dur = tonumber(g(6)) or 0, mobs = g(7), thr = {}, avoid = {}, deaths = {}, kicks = {}, defs = {}, vals = {}, ds = {}, rot = {}, good = {} }; K0.pulls[#K0.pulls + 1] = q; K0.byN[q.n] = q
     elseif t == "MX" then local q = mp().byP[g(2)]; if q then local pl = {}; for _, x in ipairs(split(g(6), ";")) do if tonumber(x) then pl[#pl + 1] = tonumber(x) end end; q.rot[#q.rot + 1] = { st = g(3), ic = g(4), label = g(5), pulls = pl, of = tonumber(g(7)) or #pl } end
@@ -162,6 +162,10 @@ end
 -- how a pull's result reads (Kill, Wipe at 24%, or Practice), and its colours: text, fill, outline
 local function resultOf(h, long)
   if h.practice or h.diff == "Practice" then return "Practice", COL.muted, COL.raised, COL.line2 end
+  if (h.mstat or "") ~= "" then -- (a Mythic+ key (Nov 1))
+    if h.mstat == "T" then return "Timed", COL.goodT, COL.goodBg, "2b5a36" elseif h.mstat == "L" then return "Left early", COL.muted, COL.raised, COL.line2 end
+    return "Over time", COL.badT, COL.badBg, "6a2f2b"
+  end
   if h.kill then return "Kill", COL.goodT, COL.goodBg, "2b5a36" end
   if long then return "Wipe" .. (h.pct ~= "" and ("  ·  " .. h.pct .. "%") or ""), COL.badT, COL.badBg, "6a2f2b" end
   return (h.pct ~= "" and (h.pct .. "%") or "Wipe"), COL.badT, COL.badBg, "6a2f2b"
@@ -1076,7 +1080,8 @@ end
 local function renderOnce()
   UI.col(1)
   local raw = DB.pulls[DB.cur]
-  if raw and raw.mplus then UI.mplus(raw); return end -- (a Mythic+ key: its own card (Nov 1))
+  if raw and raw.mplus then bigBtn:Hide(); UI.mplus(raw); return end -- (a Mythic+ key: its own card, without Expand (Nov 1))
+  bigBtn:Show()
   local m = UI.cutView(raw); CUR = m
   if not m then return end
   local T = UI.two; T.n = 0; T.marks = {}; T.total = nil
@@ -1942,7 +1947,9 @@ end
 
 local bView = "me"
 bigRender = function()
-  local raw = DB.pulls[DB.cur]; local m = cutView(raw); if not m then return end
+  local raw = DB.pulls[DB.cur]
+  if raw and raw.mplus then big:Hide(); card:Show(); render(); return end -- (a Mythic+ key opens on its card: the big window is for raid nights (Nov 1))
+  local m = cutView(raw); if not m then return end
   CUR = m
   if DB.bigPos then big:ClearAllPoints(); big:SetPoint(DB.bigPos[1], UIParent, DB.bigPos[2], DB.bigPos[3], DB.bigPos[4]) end
   bReset()
@@ -1962,7 +1969,7 @@ bigRender = function()
     end
     local b = bBTN(side); b:SetPoint("TOPLEFT", 0, -sy); b:SetSize(SIDE - 14, 26)
     if i == DB.cur then local hl = bRT(side, "BACKGROUND"); hl:SetPoint("TOPLEFT", 0, -sy); hl:SetSize(SIDE - 14, 26); rounded(hl, "fill", 5, "2a2618", 1); local e = bTEX(side); e:SetPoint("TOPLEFT", 0, -(sy + 3)); e:SetSize(2, 20); fill(e, COL.gold) end
-    local n = bFS(side, "body", 13, COL.faint); n:SetPoint("TOPLEFT", 10, -(sy + 6)); n:SetText("Pull " .. q.h.pull)
+    local n = bFS(side, "body", 13, COL.faint); n:SetPoint("TOPLEFT", 10, -(sy + 6)); n:SetText(q.mplus and "Key" or ("Pull " .. q.h.pull))
     local qt, qc, qb = resultOf(q.h)
     local c = bFS(side, "bold", 11.5, qc); c:SetPoint("TOPLEFT", 74, -(sy + 6)); c:SetText(qt)
     local cb = bRT(side, "BORDER"); cb:SetPoint("TOPLEFT", 68, -(sy + 4)); cb:SetSize(c:GetStringWidth() + 12, 18); rounded(cb, "fill", 5, qb, 1)
