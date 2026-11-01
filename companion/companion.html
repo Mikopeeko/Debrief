@@ -507,7 +507,8 @@ function popSaved() {
   const out = { raid: [], keys: [], lastRaid: null, lastRaidBoss: '', lastKey: null };
   if (!L.name) return out;
   const N = nightOf(L.name), G = new Map();
-  for (const b of L.items) { if (!b.endByte || b.id === DUMMY) continue; const k = b.boss + ' · ' + (DIFFN[b.diffId] || b.diff || ''), e = N[b.startByte];
+  for (const b of L.items) { if (b.endByte && b.id === DUMMY) { out.practice = { n: ((out.practice || {}).n || 0) + 1, sb: b.startByte, boss: b.boss, night: nightStr(b.startMs) }; continue; } /* (dummies: one small Practice line, last (Nov 1)) */
+    if (!b.endByte || b.id === DUMMY) continue; const k = b.boss + ' · ' + (DIFFN[b.diffId] || b.diff || ''), e = N[b.startByte];
     const g = G.get(k) || { name: k, n: 0, best: null, kill: false, sb: 0, night: nightStr(b.startMs) }; g.n++; g.sb = b.startByte; if (b.kill) g.kill = true;
     if (e && e.l != null && (g.best == null || e.l < g.best)) g.best = e.l; G.delete(k); G.set(k, g); }
   out.raid = [...G.values()].reverse();

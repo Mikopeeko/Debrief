@@ -868,14 +868,15 @@ function UI.keyRows(y, title)
   if #L == 0 then local n = FS("body", 13.5, COL.muted); n:SetPoint("TOPLEFT", 0, -y); n:SetWidth(CW); n:SetText("No keys yet. Run a key with Debrief Companion on, then Save this key."); return y + 30 end
   for k, i in ipairs(L) do
     local q = DB.pulls[i]; local K = q.mplus; local run = K.run or {}
-    local who; for _, p in ipairs(K.people or {}) do if p.name == me or p.name:match("^([^%-]+)") == me then who = p end end
+    local who, alt; for _, p in ipairs(K.people or {}) do local s = p.name:match("^([^%-]+)") or p.name; if p.name == me or s == me then who = p elseif DB.myChars and (DB.myChars[p.name] or DB.myChars[s]) then alt = p end end; who = who or alt
     if k > 1 then local l = TEX("ARTWORK"); l:SetPoint("TOPLEFT", 0, -y); l:SetSize(CW, 1); fill(l, COL.line) end
     local yA = y; y = y + 8
     local d = TEX("ARTWORK"); d:SetTexture(SLICE .. "dot"); d:SetPoint("TOPLEFT", 2, -(y + 4)); d:SetSize(8, 8)
     d:SetVertexColor(rgb(run.stat == "T" and COL.good or (run.stat == "L" and COL.faint or COL.bad)))
     local f = FS("body", 14, COL.soft); f:SetPoint("TOPLEFT", 18, -y); f:SetWidth(CW - 80); f:SetWordWrap(false)
     f:SetText("|cffffffff" .. q.h.boss .. " +" .. (run.level or "") .. "|r" .. (who and ("   |cff" .. UI.classHex(who.cls) .. who.name .. "|r") or "") .. "   |cff" .. COL.faint .. UI.dayOf(q) .. "|r")
-    if (run.up or 0) > 0 then local u = FS("bold", 13, COL.goodT); u:SetJustifyH("RIGHT"); u:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - 4, -y); u:SetText("+" .. run.up) end
+    local res = run.stat == "L" and "Left early" or (run.stat == "O" and "Over time") or (((run.up or 0) > 0) and ("+" .. run.up)) or ""
+    if res ~= "" then local u = FS("bold", 13, run.stat == "L" and COL.muted or (run.stat == "O" and COL.badT or COL.goodT)); u:SetJustifyH("RIGHT"); u:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - 4, -y); u:SetText(res) end
     y = y + 26
     local b = BTN(); b:SetPoint("TOPLEFT", 0, -yA); b:SetSize(CW, y - yA); b.label = q.h.boss .. " +" .. (run.level or "") -- (label: for the tests)
     b:SetScript("OnClick", function() DB.cur = i; DB.who = nil; UI.saved = false; UI.mp.pick = false; wipe(EXPANDED); scroller:SetVerticalScroll(0); render() end)
@@ -907,7 +908,11 @@ function UI.savedView()
   scroller:ClearAllPoints(); scroller:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -TOPY)
   UI.resetPool(); local y = 4
   local h0 = FS("head", 17, COL.text); h0:SetPoint("TOPLEFT", 0, -y); h0:SetText("Saved pulls"); y = y + 24
-  local s0 = FS("body", 13, COL.muted); s0:SetPoint("TOPLEFT", 0, -y); s0:SetWidth(CW); s0:SetText("Click one to open it."); y = y + 26
+  local bk = FS("bold", 13, COL.gold); bk:SetPoint("TOPLEFT", 0, -y); bk:SetText("‹ Back") -- (back to the card you came from (the Design studio, Nov 1))
+  local bkB = BTN(); bkB:SetPoint("TOPLEFT", -4, -(y - 3)); bkB:SetSize(bk:GetStringWidth() + 8, 20); bkB.label = "back"
+  bkB:SetScript("OnClick", function() UI.saved = false; scroller:SetVerticalScroll(0); render() end)
+  bkB:SetScript("OnEnter", function() bk:SetTextColor(rgb(COL.text)) end); bkB:SetScript("OnLeave", function() bk:SetTextColor(rgb(COL.gold)) end)
+  local s0 = FS("body", 13, COL.muted); s0:SetPoint("LEFT", bk, "RIGHT", 10, 0); s0:SetText("Click one to open it."); y = y + 28
   -- (raid nights: one row per boss and difficulty on each night, newest first)
   local G, order = {}, {}
   for i, q in ipairs(DB.pulls) do if q.h and not q.mplus and not q.demo and q.h.diff ~= "Practice" then -- (a training dummy is not a raid night)
@@ -932,6 +937,16 @@ function UI.savedView()
     local last = g.last
     local b = BTN(); b:SetPoint("TOPLEFT", 0, -yA); b:SetSize(CW, y - yA); b.label = g.boss .. " · " .. g.diff
     b:SetScript("OnClick", function() DB.cur = last; DB.who = nil; UI.saved = false; wipe(EXPANDED); scroller:SetVerticalScroll(0); render() end)
+  end
+  local pn, plast, pq = 0, nil, nil; for i, q in ipairs(DB.pulls) do if q.h and not q.mplus and not q.demo and q.h.diff == "Practice" then pn = pn + 1; plast = i; pq = q end end
+  if pn > 0 then
+    if #order > 0 then local l = TEX("ARTWORK"); l:SetPoint("TOPLEFT", 0, -y); l:SetSize(CW, 1); fill(l, COL.line) end
+    local yA = y; y = y + 8
+    local f = FS("body", 13, COL.muted); f:SetPoint("TOPLEFT", 18, -y); f:SetWidth(CW - 30); f:SetWordWrap(false)
+    f:SetText("Practice  ·  " .. pq.h.boss .. "   |cff" .. COL.faint .. UI.dayOf(pq) .. "  ·  " .. pn .. (pn == 1 and " pull" or " pulls") .. "|r")
+    y = y + 24
+    local b = BTN(); b:SetPoint("TOPLEFT", 0, -yA); b:SetSize(CW, y - yA); b.label = "Practice"
+    b:SetScript("OnClick", function() DB.cur = plast; DB.who = nil; UI.saved = false; wipe(EXPANDED); scroller:SetVerticalScroll(0); render() end)
   end
   y = y + 12
   y = UI.keyRows(y, "MYTHIC+ KEYS")
@@ -3351,6 +3366,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4, a5)
     if DB.pos then card:ClearAllPoints(); card:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) end
   elseif e == "PLAYER_LOGIN" then
     Debrief_ApplyStyle()
+    DB.myChars = DB.myChars or {}; local me0 = UnitName and UnitName("player"); if me0 then DB.myChars[me0] = true end -- (your characters, for Saved (Nov 1))
     -- (Advanced Combat Logging on from the start, so every log Debrief reads has positions and health; the combat log itself goes on everywhere)
     if GetCVar and SetCVar and GetCVar("advancedCombatLogging") ~= "1" then SetCVar("advancedCombatLogging", 1) end
     -- (the first time: the guided setup, a few seconds after you're in the world)
