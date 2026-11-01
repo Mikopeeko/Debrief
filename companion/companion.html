@@ -455,7 +455,25 @@ function cardOf(m) {
   return { h: m.h, wc: m.wc || null, grade: m.grade || null, players: v.players, raid: v.raid, coach: v.coach ? { raid: v.coach.raid || null, you: v.coach.you || {} } : null };
 }
 // (the Mythic+ run recap (Nov 1): the whole key read once at its end, then one pop-up with a Run tab and a tab per pull)
-function mplusShow(r) {
+// (the one card's Saved list and its Raid | Mythic+ switch (Nov 1): this log's bosses, each with its pulls, and its keys, newest first)
+const nightStr = (ms) => (ms ? new Date(ms - 6 * 3600e3).toISOString().slice(0, 10).replace(/-/g, '') : '');
+function popSaved() {
+  const out = { raid: [], keys: [], lastRaid: null, lastRaidBoss: '', lastKey: null };
+  if (!L.name) return out;
+  const N = nightOf(L.name), G = new Map();
+  for (const b of L.items) { if (!b.endByte || b.id === DUMMY) continue; const k = b.boss + ' · ' + (DIFFN[b.diffId] || b.diff || ''), e = N[b.startByte];
+    const g = G.get(k) || { name: k, n: 0, best: null, kill: false, sb: 0, night: nightStr(b.startMs) }; g.n++; g.sb = b.startByte; if (b.kill) g.kill = true;
+    if (e && e.l != null && (g.best == null || e.l < g.best)) g.best = e.l; G.delete(k); G.set(k, g); }
+  out.raid = [...G.values()].reverse();
+  const runs = ((L.ix && L.ix.peek && L.ix.peek().runs) || []).filter((r) => r.endByte);
+  out.keys = runs.slice().reverse().map((r) => Object.assign({ sb: r.startByte, dungeon: r.boss, level: r.level, night: nightStr(r.startMs) }, (L.mpRes || {})[r.startByte] || {}));
+  const lr = L.popLast && L.popLast.b; out.lastRaid = lr ? lr.startByte : out.raid[0] ? out.raid[0].sb : null; out.lastRaidBoss = lr ? lr.boss : out.raid[0] ? out.raid[0].name.replace(/ · .*/, '') : '';
+  out.lastKey = L.mpLast || (out.keys[0] ? out.keys[0].sb : null);
+  return out;
+}
+// (a key picked in the pop-up, from the switch, Saved or the key's name: its recap again, without saving it twice)
+window.DBF_POPKEY = (sb) => { const r = ((L.ix && L.ix.peek && L.ix.peek().runs) || []).find((x) => x.startByte === +sb); if (r) mplusShow(r, true); };
+function mplusShow(r, again) {
   L.busy = L.busy.then(async () => {
     try {
       await engineReady; stat('Reading your key…', 'busy');
@@ -464,9 +482,10 @@ function mplusShow(r) {
       const CB = window.DBF_CARDBITS || {};
       if (window.DBF_MPLUS_ROT && W.specRun) { stat('Checking everyone\'s rotation…', 'busy'); try { await window.DBF_MPLUS_ROT(R, txt, W, { line: CB.slipLine, icon: (n) => (CB.spellId ? CB.spellId(W, n) : '') }); } catch (e) { console.error(e); } }
       // (and the key for the addon (Nov 1, the in-game card): Save this key in WoW brings the run recap in, as a saved pull)
-      try { if (L.name) { const key = L.name + ':' + r.startByte, code = RECAP.encodeMplus(R, r.startMs ? new Date(r.startMs - 6 * 3600e3).toISOString().slice(0, 10).replace(/-/g, '') : '');
+      (L.mpRes = L.mpRes || {})[r.startByte] = { stat: R.run.left ? 'L' : R.run.timed ? 'T' : 'O', up: (R.run.clock && R.run.clock.up) || 0, people: R.people.map((p) => [p.name, p.cls]) }; L.mpLast = r.startByte;
+      if (!again) try { if (L.name) { const key = L.name + ':' + r.startByte, code = RECAP.encodeMplus(R, r.startMs ? new Date(r.startMs - 6 * 3600e3).toISOString().slice(0, 10).replace(/-/g, '') : '');
         j('/addonpull', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key, code }) }).catch(() => {}); markSaved(key); } } catch (e) { console.error(e); }
-      L.popUp = true; j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: true, data: { full: true, mplus: R }, sound: $('snd').checked }) }).catch(() => {});
+      L.popUp = true; j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: true, data: { full: true, mplus: R, saved: popSaved() }, sound: $('snd').checked && !again }) }).catch(() => {});
     } catch (e) { console.error(e); }
     stat(L.live ? 'Watching your combat log' : '', L.live ? 'live' : '');
   }).catch(() => {});
@@ -475,6 +494,7 @@ function popShow(model, code, copied, pack, cm) {
   if (!$('pop').checked || !model || !model.h) return;
   L.popUp = true;
   const data = { h: model.h, coach: (model.coach && model.coach.raid) || null, cls: (model.players || []).map((p) => [String(p.name || '').split('-')[0], p.cls]), code, copiedAlready: !!copied, full: true, pack: pack || null, cut: cm ? cm.cut : null, cutN: cm ? cm.cutN : 0, wc: cm ? cm.wc || null : null, card: cardOf(model), night: popNight(L.popLast && L.popLast.b ? L.popLast.b.startByte : null) };
+  data.saved = popSaved(); /* (the switch and Saved (Nov 1)) */
   j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: true, data, sound: $('snd').checked && !copied && !(cm && cm.quiet) }) }).catch(() => {});
 }
 function popHide() { if (!L.popUp) return; L.popUp = false; j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: false }) }).catch(() => {}); }

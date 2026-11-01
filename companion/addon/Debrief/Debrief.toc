@@ -4,7 +4,6 @@
 ## Author: Debrief
 ## Version: 0.5.69
 ## SavedVariables: DebriefDB
-## AddonCompartmentFunc: Debrief_OnAddonCompartmentClick
 ## Category: Combat
 ## IconTexture: Interface\AddOns\Debrief\Media\logo
 

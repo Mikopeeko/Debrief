@@ -27,6 +27,15 @@ body.is-kill .kyou .kv { font-size: 17px; }
 .top .bt { font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .top .pill { margin-left: auto; font: 700 13px Barlow Condensed, sans-serif; border-radius: 5px; padding: 2px 9px; background: #3a1d1d; color: var(--badT); white-space: nowrap; }
 .top .pill.k { background: #17301e; color: var(--goodT); }
+.top .sv { app-region: no-drag; -webkit-app-region: no-drag; margin-left: auto; background: none; border: 0; color: var(--muted); font: 700 14px Barlow Condensed, sans-serif; cursor: pointer; padding: 2px 4px; } .top .sv:hover { color: var(--text); } .top .sv.on { color: var(--gold); }
+.top .sv + .x { margin-left: 4px; }
+.ksw { display: flex; gap: 14px; padding: 0 14px; border-bottom: 1px solid var(--line); flex: none; }
+.ksw span { padding: 8px 4px 7px; font: 700 15px Barlow Condensed, sans-serif; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.ksw span:hover { color: var(--text); } .ksw span.on { color: var(--text); border-bottom-color: var(--gold); }
+.ksw small { font: 500 13.5px Barlow Condensed, sans-serif; color: var(--faint); margin-left: 7px; }
+.kpick { background: none; border: 0; padding: 0; color: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-align: left; } .kpick .kcar { color: var(--muted); } .kpick:hover .kcar { color: var(--text); }
+.ksr { cursor: pointer; } .ksr:hover { background: rgba(255,255,255,.03); } .ksr.wait { opacity: .6; }
+.ksr b { color: var(--text); } .ksr em { font-style: normal; color: var(--faint); margin-left: 6px; } .ksr i { float: right; font-style: normal; font-weight: 700; color: var(--muted); } .ksr i.up { color: var(--goodT); } .ksr i.kl { color: var(--gold); }
 .x { app-region: no-drag; -webkit-app-region: no-drag; background: none; border: 0; color: var(--faint); font-size: 16px; width: 26px; height: 26px; border-radius: 5px; cursor: pointer; flex: none; }
 .x:hover { color: var(--text); background: var(--raised); }
 .body { padding: 12px 14px 4px; overflow: auto; flex: 1; min-height: 0; }
@@ -136,7 +145,7 @@ html, body { font-weight: 500; } .body b { font-weight: 600; } .kyou { border-le
 .kyou { background: rgba(230,180,80,.07); border: 1px solid rgba(230,180,80,.5); border-radius: 8px; padding: 10px 14px; margin: 0 0 10px; }
 .kv { margin: 0 0 9px; color: var(--soft); font-size: 15px; } .ktips { margin: 0; padding-left: 20px; font-weight: 600; font-size: 15px; } .ktips li { margin: 2px 0; } .ktip1 { margin: 0; font-weight: 600; font-size: 15px; }
 .ktr { margin-top: 8px; font-size: 14px; color: var(--soft); } .ktr p { margin: 3px 0; }
-.ktiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 0 0 10px; }
+.ktiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 0 0 10px; } .ktiles:has(> .kt:nth-child(6):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)); } /* (six tiles sit three by three, the Design studio, Nov 1) */
 .kt { background: var(--raised); border: 1px solid var(--line); border-radius: 8px; padding: 8px 11px; } .kt small { display: block; color: var(--muted); font-size: 13px; } .kt b { display: block; font: 700 21px Barlow Condensed, sans-serif; } .kt b em { font-style: normal; font-size: 13px; color: var(--muted); } .kt i { font-style: normal; color: var(--faint); font-size: 13px; }
 .kt.w b { color: var(--warn); } .kt.b b { color: var(--badT); }
 .krr { display: grid; grid-template-columns: 10px 22px minmax(0, 1fr); gap: 0 9px; align-items: start; padding: 6px 0; border-top: 1px solid rgba(255,255,255,.04); } .krr:first-child { border-top: 0; }
@@ -423,11 +432,30 @@ function cardView() {
 // ---------- the Mythic+ run recap (Nov 1): a Run tab and a tab per pull; Me (you, or anyone with ‹ ›) and Group (Nov 1, Flex: "filter by
 // player too, so the user can see their own individual performance as well as others individual performance") ----------
 let MPULL = 0, MVIEW = 'me', MWHO = null, MCUR = null, MORD = [];
+// ---------- one card (Nov 1, Flex: "Just one card that you can customize. regardless of how you open it it should look the same"): the Raid |
+// Mythic+ switch under the header, Saved in the header (the body becomes your saved pulls), the key picker on the key's name; as in WoW ----------
+let SAVED = false, MPICK = false;
+const dayOf = (n) => { if (!n) return ''; const k = (ms) => new Date(ms - 6 * 3600e3).toISOString().slice(0, 10).replace(/-/g, '');
+  if (n === k(Date.now())) return 'today'; if (n === k(Date.now() - 864e5)) return 'yesterday';
+  return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+n.slice(4, 6) - 1] + ' ' + (+n.slice(6, 8)); };
+const topBar = () => '<div class="top">' + LOGO + '<b>Debrief</b><button class="sv' + (SAVED ? ' on' : '') + '" type="button" data-saved="1">Saved</button><button class="x" type="button" title="Close (it comes back after the next pull)" data-close="1">✕</button></div>';
+function swRow(side) { const S0 = D.saved || {}, nk = (S0.keys || []).length, rb = side === 'raid' && D.h ? D.h.boss : S0.lastRaidBoss || 'no pulls yet';
+  return '<div class="ksw"><span data-sw="raid" class="' + (side === 'raid' ? 'on' : '') + '">Raid<small>' + esc(rb) + '</small></span><span data-sw="mplus" class="' + (side === 'mplus' ? 'on' : '') + '">Mythic+<small>' + (nk ? nk + (nk === 1 ? ' key' : ' keys') : 'no keys yet') + '</small></span></div>'; }
+const caretSvg = (up) => '<svg class="kcar" viewBox="0 0 12 8" width="12" height="8"><path d="' + (up ? 'M1 7 L6 2 L11 7' : 'M1 1 L6 6 L11 1') + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function keyRows(title) { const L0 = (D.saved || {}).keys || [], LK = D.lk || {}, short = (n) => String(n || '').split('-')[0];
+  const mineOf = (k) => (k.people || []).find((p) => (LK.me && short(p[0]) === short(LK.me)) || (LK.mine || []).some((n) => short(n) === short(p[0])));
+  const rows = L0.map((k) => { const w = mineOf(k);
+    return '<div class="kr ksr" data-key="' + k.sb + '"><span class="kd" style="background:' + (k.stat === 'T' ? 'var(--good)' : k.stat === 'L' ? 'var(--faint)' : k.stat ? 'var(--bad)' : 'var(--faint)') + '"></span><span></span><span><b>' + esc(k.dungeon) + ' +' + esc(k.level) + '</b>' + (w ? ' <b style="color:' + (CC[w[1]] || 'var(--soft)') + ';font-weight:600">' + esc(short(w[0])) + '</b>' : '') + ' <em>' + esc(dayOf(k.night)) + '</em>' + (k.up ? '<i class="up">+' + k.up + '</i>' : '') + '</span></div>'; });
+  return '<div class="kc"><div class="kh"><b>' + title + (L0.length ? ' · ' + L0.length : '') + '</b></div><div class="kb">' + (rows.length ? rows.join('') : '<div class="kr"><span class="kd" style="background:var(--muted)"></span><span></span><span>No keys yet. Run a key with Debrief Companion on.</span></div>') + '</div></div>'; }
+function savedView() { const R0 = (D.saved || {}).raid || [];
+  const rows = R0.map((g) => '<div class="kr ksr" data-spull="' + g.sb + '"><span class="kd" style="background:' + (g.kill ? 'var(--good)' : 'var(--bad)') + '"></span><span></span><span><b>' + esc(g.name) + '</b> <em>' + esc(dayOf(g.night)) + ' · ' + g.n + (g.n === 1 ? ' pull' : ' pulls') + '</em>' + (g.kill ? '<i class="kl">Kill</i>' : g.best != null ? '<i>best ' + Math.round(g.best) + '%</i>' : '') + '</span></div>');
+  return '<p class="mph">Saved pulls<small>Click one to open it.</small></p><div class="kc"><div class="kh"><b>Raid nights</b></div><div class="kb">' + (rows.length ? rows.join('') : '<div class="kr"><span class="kd" style="background:var(--muted)"></span><span></span><span>No raid pulls yet.</span></div>') + '</div></div>' + keyRows('Mythic+ keys'); }
 const mmssP = (x) => { const r = Math.round(x); return Math.floor(r / 60) + ':' + String(r % 60).padStart(2, '0'); };
 const kN = (v) => v >= 1e6 ? (v / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'm' : Math.round(v / 1000) + 'k';
 const nth = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
 function renderMplus() {
   const app = document.getElementById('app'), R = D.mplus, run = R.run, LK = D.lk || {};
+  if (SAVED) { app.innerHTML = topBar() + '<div class="body mpx">' + savedView() + '</div><div class="foot"><button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">Your key, pull by pull</span></div>'; fit(); return; }
   const ORD = (q) => (q.role === 'tank' ? 0 : q.role === 'healer' ? 2 : 1);
   const ppl = (R.people || []).slice().sort((a, b) => ORD(a) - ORD(b) || b.dps - a.dps);
   /* (Me opens on you: the character from your last logout, or whichever of your characters on this PC is in the key; ‹ › steps to anyone;
@@ -501,7 +529,7 @@ function renderMplus() {
   const runHead = '<p class="mph">' + esc(run.dungeon) + ' +' + run.level + '<small>' + stat + (run.timeMs ? ' · ' + mmssP(run.timeMs / 1000) : '') + (run.score ? ' · run score ' + Math.round(run.score) : '') + ' · ' + R.pulls.length + ' pulls</small></p>';
   const pullHead = (o) => '<p class="mph">' + (o.boss ? esc(o.boss) + (o.kill ? ' · Kill' : '') : 'Pull ' + o.n) + ' · ' + mmssP(o.dur) + '<small>at ' + mmssP(o.s) + ' · ' + o.mobs.slice(0, 5).map((m) => (m[1] > 1 ? m[1] + ' ' : '') + esc(m[0])).join(', ') + '</small></p>';
   const o = MPULL ? R.pulls[MPULL - 1] : null;
-  let body = tabs + (o ? pullHead(o) : runHead);
+  let body = tabs + (o ? pullHead(o) : ''); void runHead;
   if (MVIEW === 'me' && !me) body += sec('Me', [row('var(--muted)', 'Your character isn\'t in this key. Step to anyone with ‹ ›, or open Group.')]);
   else if (me && !o) {
     // (Me, the whole key: your numbers, what got through on your kick, your deaths, and your key pull by pull)
@@ -560,8 +588,9 @@ function renderMplus() {
     body += '<div class="kc"><div class="kh"><b>Damage and healing</b></div><div class="kb"><table class="mpt"><tr><th>Player</th><th class="r">DPS</th><th class="r">HPS</th></tr>' +
       ppl.map((q) => [q, o.dmg[q.name] || 0, o.heal[q.name] || 0]).sort((a, b) => b[1] - a[1]).map(([q, d, hh]) => '<tr><td>' + nm(q.name) + '</td><td class="r">' + kN(d) + '</td><td class="r">' + (hh ? kN(hh) : '—') + '</td></tr>').join('') + '</table></div></div>';
   }
-  app.innerHTML = '<div class="top">' + LOGO + '<b>Debrief</b><span class="bt">' + esc(run.dungeon) + ' · +' + run.level + '</span><span class="pill' + (run.timed && !run.left ? ' k' : '') + '">' + stat + '</span><button class="x" type="button" title="Close" data-close="1">×</button></div>' +
-    chips + '<div class="body mpx">' + body + '</div><div class="foot"><button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">Your key, pull by pull</span></div>';
+  const c0 = run.clock || {}, kmeta = [stat, c0.time ? mmssP(c0.time) + (c0.par ? ' of ' + mmssP(c0.par) : '') : run.timeMs ? mmssP(run.timeMs / 1000) : '', c0.up ? 'up ' + c0.up + (c0.up === 1 ? ' level' : ' levels') : '', R.pulls.length + (R.pulls.length === 1 ? ' pull' : ' pulls'), dayOf(D.saved && D.saved.keys && (D.saved.keys.find((k) => k.sb === D.saved.lastKey) || {}).night)].filter(Boolean).join(' · ');
+  const khead = '<div class="khead"><div><button class="kbn kpick" type="button" data-mpick="1">' + esc(run.dungeon) + ' +' + run.level + caretSvg(MPICK) + '</button><div class="kmeta">' + kmeta + '</div></div><span class="kres' + (run.timed && !run.left ? ' k' : '') + '">' + stat + '</span></div>';
+  app.innerHTML = topBar() + swRow('mplus') + '<div class="body mpx">' + khead + (MPICK ? keyRows('Your keys, newest first') : chips + body) + '</div><div class="foot"><button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">Your key, pull by pull</span></div>';
   fit();
 }
 function render() {
@@ -578,7 +607,7 @@ function render() {
   const paint = (s) => { let x = esc(s); for (const [n, k] of cls) if (n.length > 2 && x.includes(n)) x = x.split(n).join('<b style="color:' + (CC[k] || '#ece8df') + ';font-weight:600">' + n + '</b>'); return x; };
   const res = h.kill ? 'Kill' : 'Wipe' + (h.pct !== '' && h.pct != null ? ' ' + h.pct + '%' : '');
   let body = '';
-  if (D.card) body = cardView(); /* (the /recap card (Oct 24): its own header, pulls and wipe call; the one recap window, the same as in WoW) */
+  if (D.card) body = SAVED ? savedView() : cardView(); /* (the /recap card (Oct 24): its own header, pulls and wipe call; the one recap window, the same as in WoW) */
   else if (D.pack && D.pack.html) body = stopRow() + '<div id="site"></div>';
   else if (c && c.headline) {
     body += '<div class="cl">' + (c.kill ? 'THE KILL, COACHED' : 'THIS PULL, COACHED') + '</div><p class="chd">' + paint(c.headline) + '</p>';
@@ -594,9 +623,9 @@ function render() {
     body += '<p class="cnt" style="margin-top:10px">The full coaching is on the website, in the Debriefing tab.</p>';
   } else body += '<p class="chd">' + esc(res) + ' · ' + esc(h.dur) + '</p><p class="cnt">No coaching for this pull.</p>';
   const pr0 = document.getElementById('pullsRow'), sl0 = pr0 ? pr0.scrollLeft : null, bd0 = document.querySelector('.body'), st0 = bd0 ? bd0.scrollTop : 0; /* (a redraw keeps your place (Oct 24)) */
-  app.innerHTML = '<div class="top">' + LOGO + '<b>Debrief</b>' + (D.card ? '' : '<span class="bt">' + esc(h.boss) + ' · ' + esc(h.diff) + ' · Pull ' + esc(h.pull) + '</span><span class="pill' + (h.kill ? ' k' : '') + '">' + esc(res) + '</span>') + '<button class="x" type="button" title="Close (it comes back after the next pull)" data-close="1">✕</button></div>' +
+  app.innerHTML = (D.card ? topBar() + (SAVED ? '' : swRow('raid')) : '<div class="top">' + LOGO + '<b>Debrief</b>' + '<span class="bt">' + esc(h.boss) + ' · ' + esc(h.diff) + ' · Pull ' + esc(h.pull) + '</span><span class="pill' + (h.kill ? ' k' : '') + '">' + esc(res) + '</span>' + '<button class="x" type="button" title="Close (it comes back after the next pull)" data-close="1">✕</button></div>') +
     (D.card ? '' : nightRow()) +
-    '<div class="body' + (D.pack && D.pack.html ? ' sitebody' : '') + '">' + body + '</div>' +
+    '<div class="body' + (D.pack && D.pack.html ? ' sitebody' : '') + (SAVED ? ' mpx' : '') + '">' + body + '</div>' +
     '<div class="foot">' +
     '<button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">Closes when the next pull starts</span></div>';
   if (D.pack && D.pack.html) siteBox(document.getElementById('site'), D.pack);
@@ -650,7 +679,13 @@ function cols2(b, chrome) {
 }
 window.addEventListener('resize', () => fit()); /* (the app widened or narrowed the window: measure again) */
 document.addEventListener('click', (e) => {
-  const t = e.target.closest ? e.target.closest('[data-fold],[data-row],[data-close],[data-open],[data-big],[data-cut],[data-cutt],[data-pull],[data-tab],[data-cf],[data-cr],[data-cmore],[data-who],[data-mp],[data-mview],[data-mwstep],[data-mwho]') : null; if (!t) return;
+  const t = e.target.closest ? e.target.closest('[data-fold],[data-row],[data-close],[data-open],[data-big],[data-cut],[data-cutt],[data-pull],[data-tab],[data-cf],[data-cr],[data-cmore],[data-who],[data-saved],[data-sw],[data-key],[data-spull],[data-mpick],[data-mp],[data-mview],[data-mwstep],[data-mwho]') : null; if (!t) return;
+  if (t.dataset.saved) { SAVED = !SAVED; MPICK = false; render(); const b0 = document.querySelector('.body'); if (b0) b0.scrollTop = 0; return; } /* (Saved, inside the card (Nov 1)) */
+  if (t.dataset.mpick) { MPICK = !MPICK; render(); return; } /* (the key picker on the key's name) */
+  if (t.dataset.sw) { const S0 = D.saved || {}, cur = D.mplus ? 'mplus' : 'raid'; if (t.dataset.sw === cur) { if (SAVED) { SAVED = false; render(); } return; }
+    const sb = t.dataset.sw === 'raid' ? S0.lastRaid : S0.lastKey; if (sb == null) return; loadingPull = +sb; post((t.dataset.sw === 'raid' ? 'pull:' : 'key:') + sb); return; } /* (the switch: the raid pull or key you saw last) */
+  if (t.dataset.key) { loadingPull = +t.dataset.key; t.classList.add('wait'); post('key:' + t.dataset.key); return; }
+  if (t.dataset.spull) { loadingPull = +t.dataset.spull; t.classList.add('wait'); post('pull:' + t.dataset.spull); return; }
   if (t.dataset.mview) { MVIEW = t.dataset.mview; render(); return; } /* (the Mythic+ recap: Me or Group (Nov 1)) */
   if (t.dataset.mwho) { MVIEW = 'me'; MWHO = t.dataset.mwho; render(); return; } /* (a name: that player's Me view) */
   if (t.dataset.mwstep) { const n = MORD.length; if (!n) return; const i = MORD.indexOf(MCUR), d = +t.dataset.mwstep; MWHO = MORD[i < 0 ? (d > 0 ? 0 : n - 1) : (i + d + n) % n]; render(); return; } /* (‹ ›: the player before or after) */
@@ -674,7 +709,7 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') post('clos
 function take(d) {
   if (!d) return;
   const fromChip = loadingPull != null; /* (a pull button brought it: no motion) */
-  waiting = false; loadingPull = null; WHO = null; VIEW = null; MPULL = 0; MVIEW = 'me'; MWHO = null; /* (each recap starts on you, on Me, like the card in WoW (Oct 24)) */ D = d; big = !!d.full; for (const k of Object.keys(OPEN)) delete OPEN[k]; render();
+  waiting = false; loadingPull = null; WHO = null; VIEW = null; MPULL = 0; MVIEW = 'me'; MWHO = null; SAVED = false; MPICK = false; /* (each recap starts on you, on Me, like the card in WoW (Oct 24)) */ D = d; big = !!d.full; for (const k of Object.keys(OPEN)) delete OPEN[k]; render();
   const pr = document.getElementById('pullsRow'), on = pr && pr.querySelector('.pc.on'); if (on) pr.scrollLeft = Math.max(0, on.offsetLeft - pr.clientWidth + on.offsetWidth + 12);
   const b = document.querySelector('.body'); if (b) b.scrollTop = 0;
   if (big && !fromChip) motion();

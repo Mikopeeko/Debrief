@@ -76,6 +76,7 @@ namespace Debrief {
       else if (m == "close") { SaveBounds(); Hide(); }
       else if (m == "open") main.ShowInFront();
       else if (m.StartsWith("pull:")) main.PopupPull(m.Substring(5)); // (a pull chip: the main page loads that pull's coach box)
+      else if (m.StartsWith("key:")) main.PopupKey(m.Substring(4)); // (a key picked from the switch, Saved or the key's name (Nov 1))
       else if (m.StartsWith("cut:")) main.PopupCut(m.Substring(4)); // (Stop at death changed: the main page rebuilds the coach box)
       else if (m.StartsWith("cols:")) {
         // (two columns when the card is long (Oct 24): twice as wide, still centred where it was; back to one when it fits)

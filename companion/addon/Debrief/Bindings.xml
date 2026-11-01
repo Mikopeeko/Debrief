@@ -1,5 +1,2 @@
 <Bindings>
-  <Binding name="DEBRIEF_TOGGLE" header="DEBRIEF" category="ADDONS">
-    Debrief_Toggle()
-  </Binding>
 </Bindings>
