@@ -53401,9 +53401,10 @@ const GDZ_CA_M = {
     // (a dashed line from each freed player to their ghost while they look at it: a ghost only moves while its player looks away)
     G.forEach((_, q) => { const own = mc[Math.floor(q / 2)], g = 'g' + q; if (IN[q]) k.link({ from: own, to: g, t0: 6.6, t1: 8, color: '#c49bff', dash: true, legend: 'looking at their ghost: it stays frozen' }).link({ from: own, to: g, t0: 9.6, t1: 11, color: '#c49bff', dash: true, legend: 'looking at their ghost: it stays frozen' }); else k.link({ from: own, to: g, t0: 6.6, t1: 11, color: '#c49bff', dash: true, legend: 'looking at their ghost: it stays frozen' }); });
     mc.forEach((id, i) => k.at(9.4, id, 12 - i * 3, 30 + i * 3));
-    k.cast('hm', 'Soul Sever', 9.8, 11).cone({ from: 'hm', to: 't1', at: 11, r: 45, hit: ['g0', 'g1', 'g2', 'g3', 'g4', 'g5'] });
-    k.ring1(mc.concat('t1')).step(1).step(2).step(6.2).step(8).step(11);
-    k.pause(9.7, 'Freeze. Every ghost on its own spot, none touching, all in the frontal\'s path. The boss tank lines it up from the diamond side.', { x: 36, y: 34, r: 12 }); return k.done({ title: 'Dreadmarch on Mythic: stack on square', focus: { x: 30, y: 30, r: 15 }, hlLabel: 'mind-controlled players and the boss tank', tagLabel: 'Mind controlled, with a shield' });
+    /* round 421 dreadmarch ghosts only */ ['g0', 'g4'].forEach((g) => k.ring({ on: g, r: 2.2, fx: 'zone', t0: 10.2, dur: 2.8, color: '#ff4d4d', cn: 'Malevolent Resonance', legend: 'two ghosts must never touch: it kills both players' }));
+    k.ring1(mc).step(1).step(2).step(6.2).step(8).step(10.2);
+    k.pause(8.1, 'A ghost only moves while its player looks away. Look away and it creeps toward you; look back and it freezes.', { x: 30, y: 32, r: 12 });
+    k.pause(10.3, 'Never let two ghosts touch: both players get Malevolent Resonance and die. Keep yours frozen on its own spot.', { x: 27, y: 31, r: 9 }); return k.done({ title: 'Dreadmarch on Mythic: stack on square', focus: { x: 30, y: 30, r: 15 }, hlLabel: 'mind-controlled players', tagLabel: 'Mind controlled, with a shield' });
   },
   bombs(o) {
     const k = gdzCaMarks(gdzKit('The Coiled Altar', 11)), RA = [-32, -28], MA = [24, 8];
@@ -53848,10 +53849,10 @@ GDZ['The Coiled Altar'] = {
       m: { sum: 'Malacrass. Mind controls always stack on the square marker, ghosts get frozen apart and swept by the frontal, bombs go on the adds, and every second set brings the shield.' },
       mechs: [
         { id: 'dm', fail: GDZ_CA_FAIL.dmH, name: 'Dreadmarch (Stack them, then pile the ghosts)', spell: 'Dreadmarch', what: 'A few players get mind controlled and walk toward the edge with a big shield on. When they break free, two ghosts chase each of them. A ghost only moves while its target isn\'t looking at it.',
-          do: ['A few players are mind controlled and start walking to the edge.', 'The raid brings them to the set spot, stuns or roots them there and breaks their shields. Mind controlled? Press your cancel macro.', 'Once free, stand still until your ghosts spawn: two each.', 'Lead your ghosts into one pile in front of the boss, then turn and look at them so they freeze.', 'Soul Sever, the tank frontal, wipes out every ghost in it. Hit by it? Pick up your 3 Soul Fragments or you die.'],
+          do: ['A few players are mind controlled and start walking to the edge.', 'The raid brings them to the set spot, stuns or roots them there and breaks their shields. Mind controlled? Press your cancel macro.', 'Once free, stand still until your ghosts spawn: two each.', 'Lead your ghosts into one pile in front of the boss, then turn and look at them so they freeze.', 'Keep looking at your ghosts so they stay frozen in the pile. A ghost only moves while you look away. Soul Sever clears them next (its own card).'],
           note: 'A ghost that reaches its player mind controls them again.',
           m: { fail: GDZ_CA_FAIL.dmM, name: 'Dreadmarch (Stack on square, freeze your ghosts)', what: 'A few players get mind controlled with a big shield. When freed, two ghosts chase each of them. Only you can see your ghosts, and two ghosts touching kills both players.',
-            do: ['Arrow over your head? Press the cancel macro. The raid stacks on the square marker.', 'The raid stuns or roots them on the square (Ring of Peace, Leg Sweep, Shockwave, Ursol\'s Vortex, Mass Grip, Chaos Nova) and breaks the shields.', 'Freed? Stand still. Your ghosts spawn where you stand, so they land near the square. Look at yours right away.', 'Keep your ghosts frozen and apart: the dashed line is you looking at yours. Only if yours is outside the frontal, look away and let it creep in.', 'Boss tank: step toward the diamond or the circle so Soul Sever hits the most ghosts. The frontal wipes them out.'],
+            do: ['Arrow over your head? Press the cancel macro. The raid stacks on the square marker.', 'The raid stuns or roots them on the square (Ring of Peace, Leg Sweep, Shockwave, Ursol\'s Vortex, Mass Grip, Chaos Nova) and breaks the shields.', 'Freed? Stand still. Your ghosts spawn where you stand, so they land near the square. Look at yours right away.', 'Look away and your ghost creeps toward you; look at it and it freezes (the dashed line). Only if yours is outside the frontal, look away and let it creep in.', 'Never let two ghosts touch: both players die (Malevolent Resonance). Keep yours frozen on its own spot until Soul Sever clears them (its own card).'],
             plan: ['The cancel macro removes your speed boosts and shields (Power Word: Shield, Void Shield and the like) so the stack can break you out fast. Press it only if you were picked.', 'Put an air-horn sound alert on the ghost fixate, so you turn and look right away.', 'A ghost the frontal missed is fine: walk it back toward the square for the next one.', 'One tank took every phase 2 frontal: a defensive on the odd ones, a big defensive and an external on the even ones. The stacks fall off before the third.', 'After the kicks, the other tank taunts the boss back to the square, so the Mages can hit the shields on the mind controls.', 'End of the phase: if your ghost is still up, keep looking at it and it vanishes at the transition. The transition knocks you back: stay off the edge.'],
             note: 'Kicking Wail of Terror shows every ghost to everyone for a moment.' },
           map: (d) => {
@@ -53865,9 +53866,25 @@ GDZ['The Coiled Altar'] = {
             mc.forEach((id, i) => { for (let j = 0; j < 2; j++) { const g = 'g' + i + j, p = k.posAt(id, 6), a = (i * 2 + j) * 1.1, q = i * 2 + j; k.obj(g, 'ghost', 6, p[0] + Math.cos(a) * 6, p[1] + Math.sin(a) * 6).show(g, 6, 12);
               const [ex, ey] = gdzSpot(q, 6, 4); k.obj(g, 'ghost', 7, p[0] + Math.cos(a) * 6, p[1] + Math.sin(a) * 6).obj(g, 'ghost', 9.6, ex, -13 + ey); } });
             mc.forEach((id, i) => { k.at(8.2, id, -3 + i * 3, -16).at(9.8, id, -14 + i * 2, -7 + i); for (let j = 0; j < 2; j++) k.link({ from: id, to: 'g' + i + j, t0: 9.7, t1: 11, color: '#c49bff', dash: true, legend: 'looking at their ghost: it stays frozen' }); }); /* (pile made: they turn and look, so the ghosts freeze) */
-            k.cast('hm', 'Soul Sever', 9.8, 11).cone({ from: 'hm', to: 't1', at: 11, r: 45, hit: ['g00', 'g01', 'g10', 'g11', 'g20', 'g21'] });
-            k.ring1(mc).step(1).step(2).step(6).step(7).step(11);
-            k.pause(9.7, 'Freeze. The ghosts are piled in front of the boss and their players have stepped aside. Now the frontal takes them all.', { x: 0, y: -13, r: 9 }); return k.done({ title: 'Dreadmarch and Soul Sever', focus: { x: -4, y: -4, r: 18 }, hlLabel: 'mind-controlled players', tagLabel: 'Mind controlled, with a shield' });
+            k.ring1(mc).step(1).step(2).step(6).step(7).step(9.8);
+            k.pause(9.8, 'Freeze. The ghosts are piled in front of the boss, and their players look at them so they stay put. A ghost only moves while its player looks away.', { x: 0, y: -13, r: 9 }); return k.done({ title: 'Dreadmarch', focus: { x: -4, y: -4, r: 18 }, hlLabel: 'mind-controlled players', tagLabel: 'Mind controlled, with a shield' });
+          } },
+        /* round 420 soul sever card */ { id: 'ssever', spell: 'Soul Sever', name: 'Soul Sever (Sweep the ghosts)', what: 'Malacrass\'s tank frontal. Every ghost it hits is wiped out. Anyone else it hits gets Gravebound and must pick up 3 Soul Fragments.',
+          do: ['The ghosts are piled in front of the boss, and their players look at them so they stay frozen.', 'The boss tank steps so the pile is behind them. Everyone else stays out of the line.', 'Soul Sever sweeps the pile: every ghost in it is gone. Swap tanks after each one.'],
+          m: { what: 'Malacrass\'s tank frontal. Every ghost it hits is wiped out. Anyone else it hits gets Gravebound and must pick up 3 Soul Fragments.',
+            do: ['The ghosts are piled in the corner by the square, and their players look at them so they stay frozen.', 'The boss tank steps toward the diamond side so the frontal hits the most ghosts. Everyone else stays out of the line.', 'Soul Sever sweeps the pile: every ghost in it is gone. One tank can take them all: a defensive on odd casts, a big defensive and an external on even ones.'],
+            note: 'A ghost it missed is fine: walk it back toward the square for the next one.' },
+          map: () => {
+            /* (the Mythic plan's spot: ghosts piled in the bottom-right corner by the square, the boss tank on the diamond side, as on the Dreadmarch map) */
+            const k = gdzCaMarks(gdzKit('The Coiled Altar', 7));
+            k.boss('hm', 'Malacrass', 0, 16, 16);
+            k.at(0, 't1', 24, 20).at(1.4, 't1', 30, 26).at(0, 't2', 8, 14).at(0, ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7'], 12, 22, 5).at(0, ['h1', 'h2', 'h3', 'h4'], 0, 24, 4).at(0, ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7'], -2, 6, 6);
+            const G = [[28, 34], [31, 26], [36, 32], [37, 25], [25, 28], [24, 32]], gs = G.map((_, q) => 'g' + q); G.forEach(([x, y], q) => k.obj(gs[q], 'ghost', 0, x, y).show(gs[q], 0, 4.6));
+            ['r5', 'm4', 'h2'].forEach((id, i) => { k.at(0, id, 12 - i * 3, 30 + i * 3); for (let j = 0; j < 2; j++) k.link({ from: id, to: gs[i * 2 + j], t0: 0.2, t1: 4.4, color: '#c49bff', dash: true, legend: 'looking at their ghost: it stays frozen' }); });
+            k.cast('hm', 'Soul Sever', 2.6, 4.2).cone({ from: 'hm', to: 't1', at: 4.2, r: 45, hit: gs });
+            k.ring1(['t1']).step(0.3).step(1.4).step(4.2);
+            k.pause(4.2, 'Soul Sever lands: every ghost in the pile is wiped out.', { x: 31, y: 30, r: 10 });
+            return k.done({ title: 'Soul Sever', focus: { x: 26, y: 26, r: 15 }, hlLabel: 'the boss tank' });
           } },
         { id: 'bombs', fail: GDZ_CA_FAIL.bombs, only: 'm', name: 'Gloombomb (Drop it on your add)', what: 'The two Soulcoiler adds take almost no damage until 2 Gloombombs hit each one. Every time, 2 ranged and 2 melee get a bomb that explodes 15 yards around them.',
           do: ['Bombs are out. Kick the adds the moment the Gloombomb cast shows, so they stand still.', 'Ranged bombs go to the ranged add, melee bombs to the melee add, one on each side of it. Everyone else stays 15 yards away. Bombs: use your best defensive.', 'The bombs go off on the adds and break their shields. Now kill them.', 'Kick every Wail of Terror. The melee add\'s second kick has to be a melee.'],
@@ -53887,7 +53904,6 @@ GDZ['The Coiled Altar'] = {
           map: () => GDZ_CA_M.kicks() },
       ],
       tiles: [
-        { name: 'Soul Sever (Tanks swap)', do: 'The tank frontal. Swap tanks after each one, and aim it through the ghosts.', m: { do: 'One tank can take them all: a defensive on odd casts, a big defensive and an external on even ones. Aim it through as many ghosts as you can.' } },
       ] },
     { id: 'int', name: 'Intermission: Soulbinding', sum: 'Zul\'jan comes back healing himself but taking double damage. Bloodlust here.',
       mechs: [
