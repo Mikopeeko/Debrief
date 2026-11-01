@@ -12964,7 +12964,7 @@ const MODULES = [{
   build: buildNymrissa,
 }, {
   encounter: 'The Coiled Altar',
-  units: ["Zul'jan", 'Hex Lord Malacrass', 'Malacrass', 'Spiteful Soulcoiler', 'Fragment of Malacrass', 'Coalesced Venom Stalker', 'Virulent Mutation', 'Manifestation of Dread'],
+  units: ["Zul'jan", 'Hex Lord Malacrass', 'Malacrass', 'Axegrinder' /* round 414: the rolling axes, on the moving maps */, 'Spiteful Soulcoiler', 'Fragment of Malacrass', 'Coalesced Venom Stalker', 'Virulent Mutation', 'Manifestation of Dread'],
   spells: Object.keys(CA_IDS).concat(['noxious ground', 'defiled ground', 'volatile venom', 'toxic deluge', 'bloodlust', 'heroism', 'time warp', 'fury of the aspects', 'primal rage', "harrier's cry", 'darkness', 'spirit link totem', 'anti-magic zone', 'rallying cry', 'power word: barrier', 'aura mastery', 'tranquility', 'revival', 'rewind', 'divine hymn', 'vampiric embrace',
     'divine shield', 'ice block', 'aspect of the turtle', 'cloak of shadows', 'anti-magic shell', 'netherwalk', 'dispersion', 'blessing of spellwarding', 'blessing of protection', 'blessing of sacrifice', 'pain suppression', 'guardian spirit', 'ironbark', 'life cocoon', 'time dilation', 'zephyr', 'dreadful presence', 'retaliatory malice'], PERSONAL, CA_CC, CA_CURSE),
   focus: new Set(["Zul'jan", 'Hex Lord Malacrass', 'Malacrass']),
@@ -15908,7 +15908,7 @@ function caPools(ev) {
   const casts = ev.filter((e) => (e.k === 'cast' || e.k === 'start') && e.id === 1282487).map((e) => e.t).sort((a, b) => a - b).filter((t, i, a) => !i || t - a[i - 1] > 10);
   const hits = ev.filter((e) => e.k === 'dmg' && e.id === 1283290).map((e) => e.t);
   return casts.map((t, i) => { const nx = i + 1 < casts.length ? casts[i + 1] : Infinity, mine = hits.filter((x) => x >= t && x < Math.min(nx, t + 45));
-    return { t0: +(t + 0.8).toFixed(2), t1: +((mine.length ? Math.max(...mine) : t + 28) + 0.5).toFixed(2), r: i ? 48 : 28 }; });
+    return { t0: +(t + 5).toFixed(2), t1: +((mine.length ? Math.max(...mine) : t + 30) + 0.5).toFixed(2), r: i ? 51 : 41 }; }); /* round 414 real pools: 40 Mythic pulls' hits */
 }
 function buildCoiledAltar(ev, r, h) {
   const pl = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
@@ -16566,7 +16566,7 @@ function buildCoiledAltar(ev, r, h) {
     const noHit = !lastHit || d.t - lastHit.t > 4;
     if (fell || noHit) {
       M(d.t, d.player, 'dreadmarch', 'High', 'Died ' + (fell ? 'from falling' : 'with no damage in the seconds before') + ' in ' + ph + ', most likely mind controlled off the platform.', 'Cancel shields and absorbs when mind controlled, and keep a stun plus a grip or ring ready for every Dreadmarch.');
-      mcRows.push([{ t: d.t }, { p: d.player }, { txt: ph }, { txt: fell ? 'falling damage' : 'no damage before death', dim: true }, { map: { t: d.t - 1, hl: [d.guid], bad: [d.guid], badLabel: 'mind controlled off the edge', title: d.player + ' just before dying' } }]);
+      mcRows.push([{ t: d.t }, { p: d.player }, { txt: ph }, { txt: fell ? 'falling damage' : 'no damage before death', dim: true }, { map: { t: d.t - 1, lead: 8, hl: [d.guid], bad: [d.guid], badLabel: 'mind controlled off the edge', title: d.player + ' just before dying' } }]);
     }
   }
   sections.push({ id: 'mc', title: 'Mind controls (Falls)', place: 'Mind controls (falls)', spell: S('dreadmarch'), mythicOnly: false,
@@ -16746,7 +16746,7 @@ function buildCoiledAltar(ev, r, h) {
   }
   const gSec = sections.find((s) => s.id === 'ghosts'); if (gSec && gSec.rows.length) gSec.cols = gSec.cols.concat(['']);
   // ghost collisions also show the ghosts that were out in the 15s before
-  /* round 411c ghosts of the Dreadmarch */ const dmFrom = (t) => { const c = dm.filter((x) => x <= t).pop(); return c == null ? t - 15 : c; }; for (const s of sections) if (s.id === 'ghosts') for (const row of s.rows) for (const c of row) if (c.map) c.map.from = dmFrom(c.map.t);
+  /* round 411c ghosts of the Dreadmarch */ const dmFrom = (t) => { const c = dm.filter((x) => x <= t).pop(); return c == null ? t - 15 : c; }; for (const s of sections) if (s.id === 'ghosts') for (const row of s.rows) for (const c of row) if (c.map) { c.map.from = dmFrom(c.map.t); c.map.lead = 12; c.map.focus = { x: 0, y: 1158, r: 30 }; } /* round 414 lead-up */
 
   // ---- keep each mechanic's checks together: one panel per mechanic, grouped by its cycle ----
   const take = (id) => { const i = sections.findIndex((s) => s.id === id); return i >= 0 ? sections.splice(i, 1)[0] : null; };
@@ -16785,7 +16785,7 @@ function buildCoiledAltar(ev, r, h) {
     }
     for (const x of reach) {
       M(x.t, pname(x.g), 'dreadmarch', 'Medium', 'Their ghost reached them and mind controlled them again.', 'Your ghost only moves while you aren\'t looking at it. Turn to face it as soon as it spawns and keep it in view.');
-      ghItems.push({ t: x.t, row: [{ txt: 'Ghost reached its player', bad: true }, { t: x.t }, { p: pname(x.g) }, { txt: 'mind controlled again', bad: true }, { map: { t: x.t, from: dmFrom(x.t), hl: [x.g], bad: [x.g], badLabel: 'their ghost reached them', title: pname(x.g) + '\'s ghost reached them at ' + h.fmtT(x.t) } }] });
+      ghItems.push({ t: x.t, row: [{ txt: 'Ghost reached its player', bad: true }, { t: x.t }, { p: pname(x.g) }, { txt: 'mind controlled again', bad: true }, { map: { t: x.t, from: dmFrom(x.t), lead: 12, focus: { x: 0, y: 1158, r: 30 }, hl: [x.g], bad: [x.g], badLabel: 'their ghost reached them', title: pname(x.g) + '\'s ghost reached them at ' + h.fmtT(x.t) } }] });
     }
     if (dm.length && ghItems.length + (sGh ? 1 : 0) + reach.length) {
       const groups = perDm(ghItems, 'no ghosts touched or reached anyone');
@@ -18998,7 +18998,7 @@ function* analyzeSteps(item, text, opts) {
       if (kind) units.push({ u, guid: u.guid, name: pl ? pl.name : nm, kind });
     }
     /* round 411e ghost frames: a ghost glides between the spots the log has for it, from its spawn until it dies (or 20 s after it was last placed) */
-    const isGh = (x) => /^manifestation of dread$/i.test(x.name), ghAt = (x, t) => { const a = x.u.pts; if (!a.length || t < a[0][0] - 0.3) return null; if (!framesAt._hit) { framesAt._hit = new Map(); for (const e of modEv) if (e.k === 'dmg' && e.dst && !framesAt._hit.has(e.dst)) framesAt._hit.set(e.dst, e.t); } /* round 413 ghost gone */ const end = Math.min(deadAt.has(x.guid) ? deadAt.get(x.guid) : Infinity, framesAt._hit.has(x.guid) ? framesAt._hit.get(x.guid) + 0.4 : Infinity, a[a.length - 1][0] + 60); if (t > end) return null;
+    const isGh = (x) => /^manifestation of dread$/i.test(x.name), ghAt = (x, t) => { const a = x.u.pts; if (!a.length || t < a[0][0] - 0.3) return null; if (!framesAt._hit) { framesAt._hit = new Map(); for (const e of modEv) if ((e.k === 'dmg' || (e.k === 'aura' && e.op === 'apply')) && e.dst && /^(soul sever|blighted sever)$/i.test(String(e.spell || '')) && !framesAt._hit.has(e.dst)) framesAt._hit.set(e.dst, e.t); } /* round 413 ghost gone */ const end = Math.min(deadAt.has(x.guid) ? deadAt.get(x.guid) : Infinity, framesAt._hit.has(x.guid) ? framesAt._hit.get(x.guid) + 0.4 : Infinity, a[a.length - 1][0] + 150); /* round 414 leftover ghosts */ if (t > end) return null;
       let lo = 0; while (lo < a.length - 1 && a[lo + 1][0] <= t) lo++; const p = a[lo], q = a[lo + 1]; if (p[0] <= t && q) { const f = (t - p[0]) / (q[0] - p[0] || 1); return [p[1] + (q[1] - p[1]) * f, p[2] + (q[2] - p[2]) * f]; } return [p[1], p[2]]; };
     if (!framesAt._own) { framesAt._own = new Map(); for (const e of modEv) if ((e.id === 1285911 || /^unnerving fixation$/i.test(String(e.spell || ''))) && e.src && e.dst && r.players.get(e.dst)) framesAt._own.set(e.src, e.dst); r.ghostOwner = Object.fromEntries(framesAt._own); /* round 413 ghost owners */ }
     const own = framesAt._own;
@@ -19157,7 +19157,7 @@ function* analyzeSteps(item, text, opts) {
           if (mp.cone && mp.cone.at != null) { const objs = mp.pts.filter((p) => p.kind !== 'player' && p.kind !== 'boss');
             mp.frames = framesAt(Math.max(0, mp.t - 3), Math.min(r.duration, mp.t + 1.6), 0.2).map((fr) => ({ t: fr.t, pts: fr.pts.filter((p) => !/venom stalker|virulent mutation|manifestation of dread/i.test(p.name)).concat(objs) })); continue; }
           const extra = mp.pts.filter((p) => p.kind !== 'player' && p.kind !== 'boss'); if (!extra.every((p) => p.guid && r.positions.has(p.guid))) continue;
-          mp.frames = framesAt(Math.max(0, mp.t - 4), Math.min(r.duration, mp.t + 1.5), 0.25, extra.map((p) => p.guid)); } }
+          mp.frames = framesAt(Math.max(0, mp.t - (mp.lead || 4)), Math.min(r.duration, mp.t + 1.5), 0.25, extra.map((p) => p.guid)); } }
       const drawsMech = (mp) => !!(mp.cone || (mp.cones || []).length || ['marks', 'lines', 'rings', 'cysts', 'arrows', 'links', 'goodAdd', 'badAdd', 'tags', 'ghostHit', 'ghostMiss'].some((f) => (mp[f] || []).length) || mp.hitOrbs ||
         [mp.pts || []].concat((mp.frames || []).map((f) => f.pts || [])).some((ps) => ps.some((p) => p.kind && p.kind !== 'player' && p.kind !== 'boss')));
       if (r.module && r.module.sections) for (const sec of r.module.sections) for (const row of sec.rows.concat(...(sec.groups || []).map((g) => g.rows))) for (const c of row) {
@@ -32429,7 +32429,7 @@ function mapIcon(g, x, y, R) {
 }
 // (The Coiled Altar's orb and ghost units, when a map's snapshot carries them as units, are drawn as orbs and ghosts, never
 // as labelled adds like "Coalesced Venom Stalker" (scan, Oct 19); each once)
-const MAP_OBJ_U = { 'coalesced venom stalker': 'orb', 'virulent mutation': 'porb', 'manifestation of dread': 'ghost' };
+const MAP_OBJ_U = { 'coalesced venom stalker': 'orb', 'virulent mutation': 'porb', 'manifestation of dread': 'ghost', axegrinder: 'axe' };
 const mapObjs = (l) => { const seen = new Set(); return l.map((p) => { const k = p.kind !== 'player' && (p.kind !== 'boss' || /^manifestation of dread$/i.test(String(p.name || ''))) /* round 411b boss ghost */ && MAP_OBJ_U[String(p.name || '').toLowerCase()]; return k ? { ...p, kind: k } : p; })
   .filter((p) => !(MAP_OBJ_U[String(p.name || '').toLowerCase()] && p.guid) || (!seen.has(p.guid) && seen.add(p.guid))); };
 // Debriefing maps in the Boss guides look (your call, Oct 20). Every boss: players drawn as the guides' role tokens (shield, cross, swords,
@@ -32513,7 +32513,7 @@ function miniMap(mp, pmap) {
   for (let g = 0; g <= (x1 - x0); g += 10) s += '<line x1="' + g * yd + '" x2="' + g * yd + '" y1="0" y2="' + FH + '" class="mg" vector-effect="non-scaling-stroke"/>';
   for (let g = 0; g <= (y1 - y0); g += 10) s += '<line y1="' + g * yd + '" y2="' + g * yd + '" x1="0" x2="' + FW + '" class="mg" vector-effect="non-scaling-stroke"/>';
   // orbs and ghosts (Coiled Altar): glowing spheres for orbs, a ghost shape for ghosts
-  const OBJS = { egg: ['#c9d98a', 'Egg (Blightscale Spawn)'], begg: ['#7fbf3a', 'Doomscale Egg'], orb: ['#5fd35f', 'Green orb (Coalesced Venom)'], porb: ['#b65cff', 'Purple orb (Virulent Mutation)'], ghost: ['#e9eef7', 'Ghost (Manifestation of Dread)'] };
+  const OBJS = { egg: ['#c9d98a', 'Egg (Blightscale Spawn)'], begg: ['#7fbf3a', 'Doomscale Egg'], orb: ['#5fd35f', 'Green orb (Coalesced Venom)'], porb: ['#b65cff', 'Purple orb (Virulent Mutation)'], ghost: ['#e9eef7', 'Ghost (Manifestation of Dread)'], axe: ['#ff9628', 'Axegrinder (a rolling axe: it hits within about 6 yards)'] };
   const hasObj = new Set();
   s += MAP_DEFS;
   const RID = mp.room ? mp.room.id + '-' + (++MAP_RN) : null;
@@ -32729,11 +32729,12 @@ function miniMap(mp, pmap) {
     }
     let inner = (p.kind === 'egg' || p.kind === 'begg') ? gdzEgg(X(p), Y(p), p.kind, label) : p.kind === 'ghost'
       ? (/* round 411b ghost look */ mp.gdzLook || typeof gdzGhost === 'function' ? gdzGhost(X(p), Y(p), label) : '<path d="M' + (X(p) - 6) + ' ' + (Y(p) + 7) + 'v-7a6 6 0 0 1 12 0v7l-3-2-3 2-3-2z" fill="' + col + '" stroke="#000" stroke-width="1" opacity=".9"><title>' + label + '</title></path>')
-      : orbDot(X(p), Y(p), p.kind, label + (hitSet.has(p.guid) ? ', popped by the frontal' : ''));
+      : p.kind === 'axe' ? (typeof gdzAxe === 'function' ? gdzAxe(X(p), Y(p), ft) : '') + '<title>' + label + '</title>' /* round 414 real axes */ : orbDot(X(p), Y(p), p.kind, label + (hitSet.has(p.guid) ? ', popped by the frontal' : ''));
     if (hitSet.has(p.guid) && (!conesNow || hitBy.get(p.guid) === conesNow) && !(mp.lateHit && !(elP != null && elP >= -1.4))) /* (a guide's map rings them only while the frontal is cast) */ inner += '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="10.5" fill="none" stroke="#ffd23b" stroke-width="2.5"/>'; // yellow: reads on top of the red cone
     // Soul Sever: ghosts it removed (green ring) and missed (red X)
     if (gHit.has(p.guid)) inner += '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="10" fill="none" stroke="#45c15c" stroke-width="2.5"/>';
     if (gMiss.has(p.guid) && !(elS != null && elS < 0)) inner += '<path d="M' + (X(p) - 8) + ' ' + (Y(p) - 8) + 'l16 16M' + (X(p) + 8) + ' ' + (Y(p) - 8) + 'l-16 16" stroke="#ff4d4d" stroke-width="3" stroke-linecap="round"/>';
+    if (p.kind === 'axe') s += '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="' + (6 * yd).toFixed(1) + '" fill="rgba(255,150,40,.12)" stroke="#ff9628" stroke-opacity=".8" stroke-width="1.4" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>'; /* (its reach, to scale) */
     /* round 411e whose ghost */ const own0 = p.kind === 'ghost' ? p.owner || (S.rep && S.rep.ghostOwner && S.rep.ghostOwner[p.guid]) : null; /* round 413 owner list */ const ow = own0 ? pts.find((q) => q.guid === own0) : null; if (ow) { s += '<line x1="' + X(p) + '" y1="' + Y(p) + '" x2="' + X(ow) + '" y2="' + Y(ow) + '" stroke="#e9eef7" stroke-opacity=".55" stroke-width="1.5" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>'; inner += '<text x="' + X(p) + '" y="' + (Y(p) + 17) + '" text-anchor="middle" font-size="8" font-weight="600" fill="#e9eef7" stroke="#05060a" stroke-width="2.5" paint-order="stroke">' + esc(String(ow.name || '').split('-')[0]) + '</text>'; }
     s += ic(X(p), Y(p), inner);
   }

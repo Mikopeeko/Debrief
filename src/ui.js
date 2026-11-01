@@ -12057,7 +12057,7 @@ function mapIcon(g, x, y, R) {
 }
 // (The Coiled Altar's orb and ghost units, when a map's snapshot carries them as units, are drawn as orbs and ghosts, never
 // as labelled adds like "Coalesced Venom Stalker" (scan, Oct 19); each once)
-const MAP_OBJ_U = { 'coalesced venom stalker': 'orb', 'virulent mutation': 'porb', 'manifestation of dread': 'ghost' };
+const MAP_OBJ_U = { 'coalesced venom stalker': 'orb', 'virulent mutation': 'porb', 'manifestation of dread': 'ghost', axegrinder: 'axe' };
 const mapObjs = (l) => { const seen = new Set(); return l.map((p) => { const k = p.kind !== 'player' && (p.kind !== 'boss' || /^manifestation of dread$/i.test(String(p.name || ''))) /* round 411b boss ghost */ && MAP_OBJ_U[String(p.name || '').toLowerCase()]; return k ? { ...p, kind: k } : p; })
   .filter((p) => !(MAP_OBJ_U[String(p.name || '').toLowerCase()] && p.guid) || (!seen.has(p.guid) && seen.add(p.guid))); };
 // Debriefing maps in the Boss guides look (your call, Oct 20). Every boss: players drawn as the guides' role tokens (shield, cross, swords,
@@ -12141,7 +12141,7 @@ function miniMap(mp, pmap) {
   for (let g = 0; g <= (x1 - x0); g += 10) s += '<line x1="' + g * yd + '" x2="' + g * yd + '" y1="0" y2="' + FH + '" class="mg" vector-effect="non-scaling-stroke"/>';
   for (let g = 0; g <= (y1 - y0); g += 10) s += '<line y1="' + g * yd + '" y2="' + g * yd + '" x1="0" x2="' + FW + '" class="mg" vector-effect="non-scaling-stroke"/>';
   // orbs and ghosts (Coiled Altar): glowing spheres for orbs, a ghost shape for ghosts
-  const OBJS = { egg: ['#c9d98a', 'Egg (Blightscale Spawn)'], begg: ['#7fbf3a', 'Doomscale Egg'], orb: ['#5fd35f', 'Green orb (Coalesced Venom)'], porb: ['#b65cff', 'Purple orb (Virulent Mutation)'], ghost: ['#e9eef7', 'Ghost (Manifestation of Dread)'] };
+  const OBJS = { egg: ['#c9d98a', 'Egg (Blightscale Spawn)'], begg: ['#7fbf3a', 'Doomscale Egg'], orb: ['#5fd35f', 'Green orb (Coalesced Venom)'], porb: ['#b65cff', 'Purple orb (Virulent Mutation)'], ghost: ['#e9eef7', 'Ghost (Manifestation of Dread)'], axe: ['#ff9628', 'Axegrinder (a rolling axe: it hits within about 6 yards)'] };
   const hasObj = new Set();
   s += MAP_DEFS;
   const RID = mp.room ? mp.room.id + '-' + (++MAP_RN) : null;
@@ -12357,11 +12357,12 @@ function miniMap(mp, pmap) {
     }
     let inner = (p.kind === 'egg' || p.kind === 'begg') ? gdzEgg(X(p), Y(p), p.kind, label) : p.kind === 'ghost'
       ? (/* round 411b ghost look */ mp.gdzLook || typeof gdzGhost === 'function' ? gdzGhost(X(p), Y(p), label) : '<path d="M' + (X(p) - 6) + ' ' + (Y(p) + 7) + 'v-7a6 6 0 0 1 12 0v7l-3-2-3 2-3-2z" fill="' + col + '" stroke="#000" stroke-width="1" opacity=".9"><title>' + label + '</title></path>')
-      : orbDot(X(p), Y(p), p.kind, label + (hitSet.has(p.guid) ? ', popped by the frontal' : ''));
+      : p.kind === 'axe' ? (typeof gdzAxe === 'function' ? gdzAxe(X(p), Y(p), ft) : '') + '<title>' + label + '</title>' /* round 414 real axes */ : orbDot(X(p), Y(p), p.kind, label + (hitSet.has(p.guid) ? ', popped by the frontal' : ''));
     if (hitSet.has(p.guid) && (!conesNow || hitBy.get(p.guid) === conesNow) && !(mp.lateHit && !(elP != null && elP >= -1.4))) /* (a guide's map rings them only while the frontal is cast) */ inner += '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="10.5" fill="none" stroke="#ffd23b" stroke-width="2.5"/>'; // yellow: reads on top of the red cone
     // Soul Sever: ghosts it removed (green ring) and missed (red X)
     if (gHit.has(p.guid)) inner += '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="10" fill="none" stroke="#45c15c" stroke-width="2.5"/>';
     if (gMiss.has(p.guid) && !(elS != null && elS < 0)) inner += '<path d="M' + (X(p) - 8) + ' ' + (Y(p) - 8) + 'l16 16M' + (X(p) + 8) + ' ' + (Y(p) - 8) + 'l-16 16" stroke="#ff4d4d" stroke-width="3" stroke-linecap="round"/>';
+    if (p.kind === 'axe') s += '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="' + (6 * yd).toFixed(1) + '" fill="rgba(255,150,40,.12)" stroke="#ff9628" stroke-opacity=".8" stroke-width="1.4" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>'; /* (its reach, to scale) */
     /* round 411e whose ghost */ const own0 = p.kind === 'ghost' ? p.owner || (S.rep && S.rep.ghostOwner && S.rep.ghostOwner[p.guid]) : null; /* round 413 owner list */ const ow = own0 ? pts.find((q) => q.guid === own0) : null; if (ow) { s += '<line x1="' + X(p) + '" y1="' + Y(p) + '" x2="' + X(ow) + '" y2="' + Y(ow) + '" stroke="#e9eef7" stroke-opacity=".55" stroke-width="1.5" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>'; inner += '<text x="' + X(p) + '" y="' + (Y(p) + 17) + '" text-anchor="middle" font-size="8" font-weight="600" fill="#e9eef7" stroke="#05060a" stroke-width="2.5" paint-order="stroke">' + esc(String(ow.name || '').split('-')[0]) + '</text>'; }
     s += ic(X(p), Y(p), inner);
   }

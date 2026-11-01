@@ -692,7 +692,7 @@ const MODULES = [{
   build: buildNymrissa,
 }, {
   encounter: 'The Coiled Altar',
-  units: ["Zul'jan", 'Hex Lord Malacrass', 'Malacrass', 'Spiteful Soulcoiler', 'Fragment of Malacrass', 'Coalesced Venom Stalker', 'Virulent Mutation', 'Manifestation of Dread'],
+  units: ["Zul'jan", 'Hex Lord Malacrass', 'Malacrass', 'Axegrinder' /* round 414: the rolling axes, on the moving maps */, 'Spiteful Soulcoiler', 'Fragment of Malacrass', 'Coalesced Venom Stalker', 'Virulent Mutation', 'Manifestation of Dread'],
   spells: Object.keys(CA_IDS).concat(['noxious ground', 'defiled ground', 'volatile venom', 'toxic deluge', 'bloodlust', 'heroism', 'time warp', 'fury of the aspects', 'primal rage', "harrier's cry", 'darkness', 'spirit link totem', 'anti-magic zone', 'rallying cry', 'power word: barrier', 'aura mastery', 'tranquility', 'revival', 'rewind', 'divine hymn', 'vampiric embrace',
     'divine shield', 'ice block', 'aspect of the turtle', 'cloak of shadows', 'anti-magic shell', 'netherwalk', 'dispersion', 'blessing of spellwarding', 'blessing of protection', 'blessing of sacrifice', 'pain suppression', 'guardian spirit', 'ironbark', 'life cocoon', 'time dilation', 'zephyr', 'dreadful presence', 'retaliatory malice'], PERSONAL, CA_CC, CA_CURSE),
   focus: new Set(["Zul'jan", 'Hex Lord Malacrass', 'Malacrass']),
@@ -3636,7 +3636,7 @@ function caPools(ev) {
   const casts = ev.filter((e) => (e.k === 'cast' || e.k === 'start') && e.id === 1282487).map((e) => e.t).sort((a, b) => a - b).filter((t, i, a) => !i || t - a[i - 1] > 10);
   const hits = ev.filter((e) => e.k === 'dmg' && e.id === 1283290).map((e) => e.t);
   return casts.map((t, i) => { const nx = i + 1 < casts.length ? casts[i + 1] : Infinity, mine = hits.filter((x) => x >= t && x < Math.min(nx, t + 45));
-    return { t0: +(t + 0.8).toFixed(2), t1: +((mine.length ? Math.max(...mine) : t + 28) + 0.5).toFixed(2), r: i ? 48 : 28 }; });
+    return { t0: +(t + 5).toFixed(2), t1: +((mine.length ? Math.max(...mine) : t + 30) + 0.5).toFixed(2), r: i ? 51 : 41 }; }); /* round 414 real pools: 40 Mythic pulls' hits */
 }
 function buildCoiledAltar(ev, r, h) {
   const pl = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
@@ -4294,7 +4294,7 @@ function buildCoiledAltar(ev, r, h) {
     const noHit = !lastHit || d.t - lastHit.t > 4;
     if (fell || noHit) {
       M(d.t, d.player, 'dreadmarch', 'High', 'Died ' + (fell ? 'from falling' : 'with no damage in the seconds before') + ' in ' + ph + ', most likely mind controlled off the platform.', 'Cancel shields and absorbs when mind controlled, and keep a stun plus a grip or ring ready for every Dreadmarch.');
-      mcRows.push([{ t: d.t }, { p: d.player }, { txt: ph }, { txt: fell ? 'falling damage' : 'no damage before death', dim: true }, { map: { t: d.t - 1, hl: [d.guid], bad: [d.guid], badLabel: 'mind controlled off the edge', title: d.player + ' just before dying' } }]);
+      mcRows.push([{ t: d.t }, { p: d.player }, { txt: ph }, { txt: fell ? 'falling damage' : 'no damage before death', dim: true }, { map: { t: d.t - 1, lead: 8, hl: [d.guid], bad: [d.guid], badLabel: 'mind controlled off the edge', title: d.player + ' just before dying' } }]);
     }
   }
   sections.push({ id: 'mc', title: 'Mind controls (Falls)', place: 'Mind controls (falls)', spell: S('dreadmarch'), mythicOnly: false,
@@ -4474,7 +4474,7 @@ function buildCoiledAltar(ev, r, h) {
   }
   const gSec = sections.find((s) => s.id === 'ghosts'); if (gSec && gSec.rows.length) gSec.cols = gSec.cols.concat(['']);
   // ghost collisions also show the ghosts that were out in the 15s before
-  /* round 411c ghosts of the Dreadmarch */ const dmFrom = (t) => { const c = dm.filter((x) => x <= t).pop(); return c == null ? t - 15 : c; }; for (const s of sections) if (s.id === 'ghosts') for (const row of s.rows) for (const c of row) if (c.map) c.map.from = dmFrom(c.map.t);
+  /* round 411c ghosts of the Dreadmarch */ const dmFrom = (t) => { const c = dm.filter((x) => x <= t).pop(); return c == null ? t - 15 : c; }; for (const s of sections) if (s.id === 'ghosts') for (const row of s.rows) for (const c of row) if (c.map) { c.map.from = dmFrom(c.map.t); c.map.lead = 12; c.map.focus = { x: 0, y: 1158, r: 30 }; } /* round 414 lead-up */
 
   // ---- keep each mechanic's checks together: one panel per mechanic, grouped by its cycle ----
   const take = (id) => { const i = sections.findIndex((s) => s.id === id); return i >= 0 ? sections.splice(i, 1)[0] : null; };
@@ -4513,7 +4513,7 @@ function buildCoiledAltar(ev, r, h) {
     }
     for (const x of reach) {
       M(x.t, pname(x.g), 'dreadmarch', 'Medium', 'Their ghost reached them and mind controlled them again.', 'Your ghost only moves while you aren\'t looking at it. Turn to face it as soon as it spawns and keep it in view.');
-      ghItems.push({ t: x.t, row: [{ txt: 'Ghost reached its player', bad: true }, { t: x.t }, { p: pname(x.g) }, { txt: 'mind controlled again', bad: true }, { map: { t: x.t, from: dmFrom(x.t), hl: [x.g], bad: [x.g], badLabel: 'their ghost reached them', title: pname(x.g) + '\'s ghost reached them at ' + h.fmtT(x.t) } }] });
+      ghItems.push({ t: x.t, row: [{ txt: 'Ghost reached its player', bad: true }, { t: x.t }, { p: pname(x.g) }, { txt: 'mind controlled again', bad: true }, { map: { t: x.t, from: dmFrom(x.t), lead: 12, focus: { x: 0, y: 1158, r: 30 }, hl: [x.g], bad: [x.g], badLabel: 'their ghost reached them', title: pname(x.g) + '\'s ghost reached them at ' + h.fmtT(x.t) } }] });
     }
     if (dm.length && ghItems.length + (sGh ? 1 : 0) + reach.length) {
       const groups = perDm(ghItems, 'no ghosts touched or reached anyone');
@@ -6726,7 +6726,7 @@ function* analyzeSteps(item, text, opts) {
       if (kind) units.push({ u, guid: u.guid, name: pl ? pl.name : nm, kind });
     }
     /* round 411e ghost frames: a ghost glides between the spots the log has for it, from its spawn until it dies (or 20 s after it was last placed) */
-    const isGh = (x) => /^manifestation of dread$/i.test(x.name), ghAt = (x, t) => { const a = x.u.pts; if (!a.length || t < a[0][0] - 0.3) return null; if (!framesAt._hit) { framesAt._hit = new Map(); for (const e of modEv) if (e.k === 'dmg' && e.dst && !framesAt._hit.has(e.dst)) framesAt._hit.set(e.dst, e.t); } /* round 413 ghost gone */ const end = Math.min(deadAt.has(x.guid) ? deadAt.get(x.guid) : Infinity, framesAt._hit.has(x.guid) ? framesAt._hit.get(x.guid) + 0.4 : Infinity, a[a.length - 1][0] + 60); if (t > end) return null;
+    const isGh = (x) => /^manifestation of dread$/i.test(x.name), ghAt = (x, t) => { const a = x.u.pts; if (!a.length || t < a[0][0] - 0.3) return null; if (!framesAt._hit) { framesAt._hit = new Map(); for (const e of modEv) if ((e.k === 'dmg' || (e.k === 'aura' && e.op === 'apply')) && e.dst && /^(soul sever|blighted sever)$/i.test(String(e.spell || '')) && !framesAt._hit.has(e.dst)) framesAt._hit.set(e.dst, e.t); } /* round 413 ghost gone */ const end = Math.min(deadAt.has(x.guid) ? deadAt.get(x.guid) : Infinity, framesAt._hit.has(x.guid) ? framesAt._hit.get(x.guid) + 0.4 : Infinity, a[a.length - 1][0] + 150); /* round 414 leftover ghosts */ if (t > end) return null;
       let lo = 0; while (lo < a.length - 1 && a[lo + 1][0] <= t) lo++; const p = a[lo], q = a[lo + 1]; if (p[0] <= t && q) { const f = (t - p[0]) / (q[0] - p[0] || 1); return [p[1] + (q[1] - p[1]) * f, p[2] + (q[2] - p[2]) * f]; } return [p[1], p[2]]; };
     if (!framesAt._own) { framesAt._own = new Map(); for (const e of modEv) if ((e.id === 1285911 || /^unnerving fixation$/i.test(String(e.spell || ''))) && e.src && e.dst && r.players.get(e.dst)) framesAt._own.set(e.src, e.dst); r.ghostOwner = Object.fromEntries(framesAt._own); /* round 413 ghost owners */ }
     const own = framesAt._own;
@@ -6885,7 +6885,7 @@ function* analyzeSteps(item, text, opts) {
           if (mp.cone && mp.cone.at != null) { const objs = mp.pts.filter((p) => p.kind !== 'player' && p.kind !== 'boss');
             mp.frames = framesAt(Math.max(0, mp.t - 3), Math.min(r.duration, mp.t + 1.6), 0.2).map((fr) => ({ t: fr.t, pts: fr.pts.filter((p) => !/venom stalker|virulent mutation|manifestation of dread/i.test(p.name)).concat(objs) })); continue; }
           const extra = mp.pts.filter((p) => p.kind !== 'player' && p.kind !== 'boss'); if (!extra.every((p) => p.guid && r.positions.has(p.guid))) continue;
-          mp.frames = framesAt(Math.max(0, mp.t - 4), Math.min(r.duration, mp.t + 1.5), 0.25, extra.map((p) => p.guid)); } }
+          mp.frames = framesAt(Math.max(0, mp.t - (mp.lead || 4)), Math.min(r.duration, mp.t + 1.5), 0.25, extra.map((p) => p.guid)); } }
       const drawsMech = (mp) => !!(mp.cone || (mp.cones || []).length || ['marks', 'lines', 'rings', 'cysts', 'arrows', 'links', 'goodAdd', 'badAdd', 'tags', 'ghostHit', 'ghostMiss'].some((f) => (mp[f] || []).length) || mp.hitOrbs ||
         [mp.pts || []].concat((mp.frames || []).map((f) => f.pts || [])).some((ps) => ps.some((p) => p.kind && p.kind !== 'player' && p.kind !== 'boss')));
       if (r.module && r.module.sections) for (const sec of r.module.sections) for (const row of sec.rows.concat(...(sec.groups || []).map((g) => g.rows))) for (const c of row) {
