@@ -195,7 +195,7 @@ function build(text, E) {
     const cnt = (k) => out.reduce((a, o) => a + o[k].filter((x) => x.who === p.guid).length, 0);
     const av = out.flatMap((o) => Object.values(o.avoid).filter((a) => a.who === p.guid));
     return { guid: p.guid, name: p.name, cls: p.cls, spec: p.spec, role: p.role, dps: Math.round(sum('dmg') / total), hps: Math.round(sum('heal') / total),
-      kicks: cnt('kicks'), stops: cnt('stops'), deaths: cnt('deaths'), defs: cnt('defs'), dispels: cnt('dispels'), purges: cnt('purges'), kick: kickNames.has(p.guid),
+      kicks: cnt('kicks'), stops: cnt('stops'), deaths: cnt('deaths'), defs: cnt('defs'), dispels: cnt('dispels'), purges: cnt('purges'), kick: kickNames.has(p.guid) || cnt('kicks') > 0, /* (has a kick: their spec's, or they kicked something) */
       avoid: av.reduce((a, x) => a + x.n, 0), avoidDmg: av.reduce((a, x) => a + x.dmg, 0) };
   });
   const name = (g) => (players.get(g) || {}).name || short(g);

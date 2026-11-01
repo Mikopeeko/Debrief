@@ -442,6 +442,11 @@ function renderMplus() {
       const each = [...cnt.values()].every((c) => c === n), names = [...cnt].sort((a, b) => b[1] - a[1]).map(([r, c]) => nm(r) + (n > 1 && !each ? ' (' + c + ')' : '')).join(', ');
       const ready = x.cc ? ' Nobody stunned or stopped it.' : cnt.size ? ' ' + (who ? 'Also ready' : 'Kick ready') + (n > 1 && each ? ' each time' : '') + ': ' + names + '.' : '';
       return row('var(--bad)', '<b>' + esc(x.spell) + '</b> from ' + esc(x.mob) + ' got through' + (n > 1 ? ' ' + n + ' times' : '') + '.' + ready + (n > 1 ? '<span class="mpcs">' + g.map((y) => '<span class="mptm">' + mmssP(y.t) + '</span>').join('') + '</span>' : ' <span class="mptm">' + mmssP(x.t) + '</span>')); }); };
+  /* (Rotation per pull (Nov 1, Flex: "will this also include rotation break down pull by pull?"): the website's checks on each pull in the card's
+     short lines, then what went well; across the key, the fixes that came up in the most pulls, with those pulls as chips) */
+  const RC = { bad: 'var(--bad)', warn: 'var(--warn)' }, rotOf = (q, n) => (q.rot && q.rot[n]) || null;
+  const rotRows = (r) => (r ? r.fix.map((f) => row(RC[f[0]] || 'var(--warn)', esc(f[4] || f[2]))).concat(r.good && r.good.length ? [row('var(--good)', 'Went well: ' + r.good.map(esc).join(', ') + '.')] : []) : []);
+  const rotKey = (q) => (q.rot ? q.rot.fix.map((f) => row(RC[f.st] || 'var(--warn)', '<b>' + esc(f.label) + '</b> needed work in ' + f.pulls.length + ' of ' + q.rot.pulls + ' pulls.' + pch(f.pulls))) : []);
   const stat = run.left ? 'Left early' : run.timed ? 'Timed' : 'Over time';
   const runHead = '<p class="mph">' + esc(run.dungeon) + ' +' + run.level + '<small>' + stat + (run.timeMs ? ' · ' + mmssP(run.timeMs / 1000) : '') + (run.score ? ' · run score ' + Math.round(run.score) : '') + ' · ' + R.pulls.length + ' pulls</small></p>';
   const pullHead = (o) => '<p class="mph">' + (o.boss ? esc(o.boss) + (o.kill ? ' · Kill' : '') : 'Pull ' + o.n) + ' · ' + mmssP(o.dur) + '<small>at ' + mmssP(o.s) + ' · ' + o.mobs.slice(0, 5).map((m) => (m[1] > 1 ? m[1] + ' ' : '') + esc(m[0])).join(', ') + '</small></p>';
@@ -457,6 +462,7 @@ function renderMplus() {
     body += sec('Got through while ' + yo + ' kick was ready', [...by].sort((a, b) => b[1].n - a[1].n).map(([sp, b]) => row('var(--bad)', '<b>' + esc(sp) + '</b> from ' + esc(b.mob) + ', ' + (b.n === 1 ? 'once' : b.n + ' times') + '.' + pch(b.pulls))));
     body += sec(Yo + ' deaths', R.pulls.flatMap((q) => q.deaths.filter((x) => x.who === n).map((x) => deathRow(x, q.boss ? esc(q.boss) : 'Pull ' + q.n))));
     body += sec('Avoidable damage', avRows(R.pulls.flatMap((q) => myAvoid(q, n)), me === mine ? 'you' : esc(n)));
+    body += sec('Rotation across the key', rotKey(me));
     body += '<div class="kc"><div class="kh"><b>' + Yo + ' key, pull by pull</b></div><div class="kb"><table class="mpt"><tr><th>Pull</th><th class="r">' + (heal(me) ? 'HPS' : 'DPS') + '</th><th class="r">Kicks</th><th class="r">Stops</th>' + (me.kick ? '<th class="r">Got through</th>' : '<th class="r">Dispels</th>') + (R.list ? '<th class="r">Avoidable</th>' : '') + '<th class="r">Defensives</th><th class="r">Deaths</th></tr>' +
       R.pulls.map((q) => { const my = (k) => q[k].filter((x) => x.who === n).length, g = me.kick ? mineThrough(q, n).length : my('dispels'), d = my('deaths'), av = myAvoid(q, n).reduce((a, x) => a + x.n, 0);
         return '<tr data-mp="' + q.n + '" title="Open this pull"><td>' + (q.boss ? esc(q.boss) : 'Pull ' + q.n) + '</td><td class="r">' + kN(val(me, q)) + '</td><td class="r">' + my('kicks') + '</td><td class="r">' + my('stops') + '</td><td class="r"' + (me.kick && g ? ' style="color:var(--badT)"' : '') + '>' + g + '</td>' + (R.list ? '<td class="r"' + (av ? ' style="color:var(--warn)"' : '') + '>' + av + '</td>' : '') + '<td class="r">' + my('defs') + '</td><td class="r"' + (d ? ' style="color:var(--badT)"' : '') + '>' + d + '</td></tr>'; }).join('') + '</table></div></div>';
@@ -465,10 +471,12 @@ function renderMplus() {
     const n = me.name, th = mineThrough(o, n), my = (k) => (o[k] || []).filter((x) => x.who === n), dd = my('deaths'), av = myAvoid(o, n);
     body += '<div class="ktiles">' + tile(Yo + (heal(me) ? ' HPS' : ' DPS'), kN(val(me, o)), '', rank(me, o)) + tile(Yo + ' kicks and stops', ks(my('kicks').length, my('stops').length)) +
       (me.kick ? tile('Got through, ' + yo + ' kick ready', th.length, th.length > 2 ? 'b' : th.length ? 'w' : '') : tile(Yo + ' dispels', my('dispels').length)) + (av.length ? tile('Avoidable damage', av.reduce((a, x) => a + x.n, 0) + ' hit' + (av.reduce((a, x) => a + x.n, 0) === 1 ? '' : 's'), 'w') : '') + tile('Defensives', my('defs').length) + (dd.length ? tile('Deaths', dd.length, 'b') : '') + '</div>';
-    if (!th.length && !dd.length && !av.length) body += sec('This pull', [row('var(--good)', 'Nothing to fix for ' + (me === mine ? 'you' : esc(n)) + ' on this pull.')]);
+    const rt = rotOf(o, n);
+    if (!th.length && !dd.length && !av.length && !(rt && rt.fix.length)) body += sec('This pull', [row('var(--good)', 'Nothing to fix for ' + (me === mine ? 'you' : esc(n)) + ' on this pull.')]);
     body += sec('Got through while ' + yo + ' kick was ready', gotGroup(th, n));
     body += sec('Deaths', dd.map((x) => deathRow(x)));
     body += sec('Avoidable damage', avRows(av, me === mine ? 'you' : esc(n)));
+    body += sec('Rotation', rotRows(rt));
     body += sec('Kicks and stops', my('kicks').map((x) => ['k', x]).concat(my('stops').map((x) => ['s', x])).sort((a, b) => a[1].t - b[1].t).map(([k, x]) => row('var(--good)', mmssP(x.t) + ' · ' + (k === 'k' ? 'Kicked' : 'Stopped') + ' <b>' + esc(x.spell) + '</b> from ' + esc(x.mob) + (k === 'k' ? ' (' + esc(x.with) + ')' : ' with ' + esc(x.with)) + '.')));
     body += sec('Defensives', my('defs').map((x) => row('var(--muted)', mmssP(x.t) + ' · ' + esc(x.name) + '.')));
     body += sec('Dispels and purges', my('dispels').map((x) => row('var(--muted)', mmssP(x.t) + ' · Removed ' + esc(x.removed || 'a debuff') + (x.on ? ' from ' + esc(x.on) : '') + '.'))
@@ -481,6 +489,7 @@ function renderMplus() {
     body += sec('What got through', [...by].sort((a, b) => b[1].n - a[1].n).map(([sp, b]) => row('var(--bad)', '<b>' + esc(sp) + '</b> from ' + esc(b.mob) + ' got through ' + (b.n === 1 ? 'once' : b.n + ' times') + '.' + (b.cc ? ' It needs a stun or other crowd control.' : ' Kick ready: ' + [...b.ready].sort((x, y) => y[1] - x[1]).slice(0, 3).map(([n, c]) => nm(n) + ' (' + c + ')').join(', ') + '.') + pch(b.pulls))));
     body += sec('Avoidable damage', avRows(R.pulls.flatMap((q) => q.avoid || []), true));
     body += sec('Dispels and purges', dpRows(R.pulls.flatMap((q) => q.debs || []), R.pulls.flatMap((q) => q.ebuffs || [])));
+    body += sec('Rotation across the key', ppl.filter((q) => q.rot && q.rot.fix.length).map((q) => { const f = q.rot.fix[0]; return row(RC[f.st] || 'var(--warn)', nm(q.name) + ': <b>' + esc(f.label) + '</b> needed work in ' + f.pulls.length + ' of ' + q.rot.pulls + ' pulls.'); }));
     body += '<div class="kc"><div class="kh"><b>Everyone</b></div><div class="kb"><table class="mpt"><tr><th>Player</th><th class="r">DPS / HPS</th><th class="r">Kicks</th><th class="r">Stops</th><th class="r">Dispels</th>' + (R.list ? '<th class="r">Avoidable</th>' : '') + '<th class="r">Defensives</th><th class="r">Deaths</th></tr>' +
       ppl.map((q) => '<tr><td>' + nm(q.name) + ' <span style="color:var(--faint)">' + esc(q.spec) + '</span></td><td class="r">' + (heal(q) ? kN(q.hps) + ' HPS' : kN(q.dps)) + '</td><td class="r">' + q.kicks + '</td><td class="r">' + q.stops + '</td><td class="r">' + (q.dispels + (q.purges || 0)) + '</td>' + (R.list ? '<td class="r"' + (q.avoid ? ' style="color:var(--warn)"' : '') + '>' + (q.avoid || 0) + '</td>' : '') + '<td class="r">' + q.defs + '</td><td class="r"' + (q.deaths ? ' style="color:var(--badT)"' : '') + '>' + q.deaths + '</td></tr>').join('') + '</table></div></div>';
   } else {
@@ -490,6 +499,8 @@ function renderMplus() {
     const per = new Map(); for (const x of o.kicks.concat(o.stops)) { if (!per.has(x.who)) per.set(x.who, { k: 0, s: 0, with: new Map() }); const q = per.get(x.who); if (o.kicks.includes(x)) q.k++; else { q.s++; q.with.set(x.with, (q.with.get(x.with) || 0) + 1); } }
     body += sec('Kicks and stops', [...per].sort((a, b) => (b[1].k + b[1].s) - (a[1].k + a[1].s)).map(([n, q]) => row('var(--good)', nm(n) + ': ' + [q.k ? q.k + (q.k === 1 ? ' kick' : ' kicks') : '', q.s ? q.s + (q.s === 1 ? ' stop' : ' stops') + ' (' + [...q.with].map(([w, c]) => esc(w) + (c > 1 ? ' ×' + c : '')).join(', ') + ')' : ''].filter(Boolean).join(', ') + '.')));
     body += sec('Deaths', o.deaths.map((x) => deathRow(x)));
+    body += sec('Rotation', ppl.filter((q) => rotOf(o, q.name)).map((q) => { const r = rotOf(o, q.name), f = r.fix[0];
+      return row(f ? RC[f[0]] || 'var(--warn)' : 'var(--good)', nm(q.name) + ': ' + (f ? '<b>' + esc(f[2]) + '</b>' + (f[3] ? ' (' + esc(f[3]) + ')' : '') + (r.fix.length > 1 ? ', and ' + (r.fix.length - 1) + ' more' : '') : 'nothing to fix') + '.'); }));
     const dpl = new Map(); for (const x of o.defs) dpl.set(x.who, (dpl.get(x.who) || []).concat(x.name));
     body += sec('Defensives', [...dpl].map(([n, l]) => row('var(--muted)', nm(n) + ': ' + esc([...new Set(l)].join(', ')) + (l.length > 1 ? ' (' + l.length + ')' : '') + '.')));
     body += sec('Dispels and purges', dpRows(o.debs, o.ebuffs).concat(o.dispels.length ? [row('var(--muted)', o.dispels.length + (o.dispels.length === 1 ? ' dispel' : ' dispels') + ': ' + [...new Set(o.dispels.map((x) => x.who))].map(nm).join(', ') + '.')] : [])
