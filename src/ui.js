@@ -12377,10 +12377,10 @@ function miniMap(mp, pmap) {
     const live = ft < c.t1 - 0.25, frac = c.end === 'done' && !live ? 1 : Math.min(1, Math.max(0.04, ((live ? ft : c.t1) - c.t0) / (c.len || 1)));
     const col = live ? '#f3c969' : c.end === 'kick' ? '#2fd15a' : c.end === 'done' ? '#ff3b3b' : '#8a909c';
     const txt = live ? c.spell : c.end === 'kick' ? 'Kicked: ' + c.by : c.end === 'done' ? c.spell + ' went off' : c.end === 'died' ? 'Add died' : 'Stopped';
-    const t = txt.length > 26 ? txt.slice(0, 25) + '…' : txt, w = 108, h = 14, bx = x - w / 2;
-    return '<g class="cbar"><rect x="' + bx + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2.5" fill="#05060a" fill-opacity=".85" stroke="#000" stroke-width="1"/>' +
+    const t = txt.length > 22 ? txt.slice(0, 21) + '…' : txt, w = 66, h = 9, bx = x - w / 2; /* round 419 slim cast bars */
+    return '<g class="cbar"><rect x="' + bx + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2" fill="#05060a" fill-opacity=".8" stroke="#000" stroke-width=".8"/>' +
       '<rect x="' + (bx + 1) + '" y="' + (y + 1) + '" width="' + ((w - 2) * frac).toFixed(1) + '" height="' + (h - 2) + '" rx="2" fill="' + col + '"/>' +
-      '<text x="' + x + '" y="' + (y + h - 3.2) + '" text-anchor="middle" style="font-size:10.5px;font-weight:800" fill="#fff" stroke="#000" stroke-width="2.4" paint-order="stroke">' + esc(t) + '</text></g>';
+      '<text x="' + x + '" y="' + (y + h - 2.1) + '" text-anchor="middle" style="font-size:7.5px;font-weight:700" fill="#fff" stroke="#000" stroke-width="1.8" paint-order="stroke">' + esc(t) + '</text></g>';
   };
   // adds (e.g. the Spiteful Soulcoiler casting Wail of Terror): diamond with its name; green ring = kicked, red = got off
   const gAdd = new Set(mp.goodAdd || []), bAdd = new Set(mp.badAdd || []), addRes = [];

@@ -3266,7 +3266,7 @@ const HOW = {
     shield: 'Every second set of adds is followed by Eternal Nightfall: Malacrass shields himself while casting it. This is the damage check of P2 and P3: assign cooldowns and pool damage for every shield. The cast can only be kicked once the shield is gone, so it takes two steps. Break the shield, then kick Malacrass before the 17s cast finishes. Give every shield a kicker and a backup. Broken shows how far into the cast the shield came off and how much time was left to kick.',
     dmghost: 'Dreadmarch mind controls a few players, who walk to the edge and jump off unless their absorb shield is broken in time. Targets stack on the raid\'s Dreadmarch marker and press a macro that cancels their own shields and speed buffs. Stuns and grips stop them walking. When the mind control breaks, stand still: your ghost spawns where you are a moment later, so the ghosts start in one clump.',
     ghosts: 'Each freed player gets a ghost that follows them and only moves while they aren\'t looking at it, so stare at yours. On Mythic only you can see your ghost (an interrupted Wail reveals them all briefly). Two ghosts touching hits both players hard (Malevolent Resonance), and a ghost that reaches its player mind controls them again. Staring at your ghost at the end of P2 makes it disappear at the transition. (Maps show ghosts where they spawned; the log has no later positions for them.)',
-    soulsever: 'The boss tank aims Soul Sever, the P2 frontal, to hit as many ghosts as possible: every ghost it hits is destroyed. A ghost it misses is walked back for the next one. Players hit by it get Gravebound and must pick up their soul fragments.',
+    soulsever: 'The boss tank aims Soul Sever, the P2 frontal, to hit as many ghosts as possible: every ghost it hits is destroyed. A ghost it misses is walked back for the next one. One tank takes every Soul Sever: a defensive on the first stack, a bigger one plus externals on the second. Anyone else hit by it gets Gravebound and must pick up their soul fragments.',
     addsets: 'Spiritcackle summons two Spiteful Soulcoilers that cast Wail of Terror, a raid-wide fear that must be interrupted. They jump after each kick and become immune to kicks at full energy. Kick as soon as the Gloombomb cast starts, so the add stays put for the Gloombomb overlap and there is time for the next kick. The melee add\'s second kick should be a melee player. Kill both adds before the next set spawns: on Mythic each add hits the raid with Retaliatory Malice every 3 seconds for as long as it lives. (Their Spirit Shields and the Gloombombs are in the Gloombombs panel.)',
     gloom: 'On Mythic each Spiteful Soulcoiler spawns with Spirit Shield (99% damage reduction, 2 stacks). Malacrass puts Gloombomb on two melee and two ranged players; 5 seconds later each one explodes in a 15-yard circle, and every Soulcoiler inside loses a stack. Each pair overlaps its circles on its own add (melee on the unmarked melee add, ranged on the marked ranged add), so both shields break. A bomb that misses, or lands on a leftover add from an earlier set, leaves this set\'s shield up. Everyone else stays out of the circles.',
     inter: 'Malacrass channels Soulbinding: Zul\'jan takes double damage, so use Bloodlust and burn him. Fragments of Malacrass rush toward Zul\'jan and heal him for about 10% if they reach him, which is close to a wipe. Players block them, but every block gives the whole raid a Spirit Erasure stack (more damage taken), so soak in rounds: 3 to 5 stacks, let them drop, repeat; near the end stack raid cooldowns in the middle and go up to 7 to 10. Spread soakers around the room, including the inner ring. Zul\'jan under 35% when it ends is on pace for the kill.',
@@ -4675,6 +4675,26 @@ function buildCoiledAltar(ev, r, h) {
         cols: ['What', 'When', 'Who', 'Result', ''], rows: [], groups: gGroups });
     }
   }
+  /* round 418 one soul sever: the tank's side of each Soul Sever goes on its line in the Soul Sever card */ {
+    const tf = sections.find((s) => s.id === 'tankfront'), ss = sections.find((s) => s.id === 'soulsever');
+    if (tf && ss && ss.groups) {
+      const isSS = (x) => x[1] && x[1].s && /^soul sever$/i.test(String(x[1].s[1])), used = new Set();
+      ss.cols = ['What', 'When', 'Tank', 'Ghosts', 'Missed', ''];
+      for (const g of ss.groups) g.rows = g.rows.map((row) => {
+        if (row[0].txt !== 'Soul Sever') return [row[0], row[1], { txt: '' }].concat(row.slice(2));
+        const mine = tf.rows.map((x, i) => [x, i]).filter(([x, i]) => !used.has(i) && isSS(x) && Math.abs(x[0].t - row[1].t) <= 2); mine.forEach(([, i]) => used.add(i));
+        const tk = mine.find(([x]) => /^stack /.test(String(x[3].txt || ''))), others = mine.filter((m) => m !== tk).map(([x]) => x);
+        let cell = { txt: 'tank not found', dim: true };
+        if (tk) { const x = tk[0]; cell = { p: x[2].p, sub: [x[3].txt, x[4].txt].concat(x[5].bad || x[5].warn ? [x[5].txt] : []).filter(Boolean).join(' \u00b7 '), bad: !!(x[3].bad || x[5].bad), warn: !!(x[3].warn || x[5].warn), why: x[5].why, next: x[5].next }; }
+        if (others.length) { cell.sub = (cell.sub ? cell.sub + ' \u00b7 ' : '') + 'also hit ' + others.map((x) => x[2].p).join(', '); if (others.some((x) => x[5].bad)) cell.bad = true; else cell.warn = true; if (!cell.why) { cell.why = others[0][5].why; cell.next = others[0][5].next; } }
+        return [row[0], row[1], cell].concat(row.slice(2));
+      });
+      tf.rows = tf.rows.filter((x, i) => !used.has(i));
+      if (ss.groups.some((g) => g.rows.some((row) => row[2] && row[2].bad))) ss.verdict = 'bad'; else if (ss.verdict !== 'bad' && ss.groups.some((g) => g.rows.some((row) => row[2] && row[2].warn))) ss.verdict = 'warn';
+      for (const g of ss.groups) if (g.rows.some((row) => row[2] && row[2].bad)) g.bad = true;
+      if (!tf.rows.length) sections.splice(sections.indexOf(tf), 1);
+      ss.summary = (ss.summary ? ss.summary + ' ' : '') + 'Each line also shows who tanked it: the stack, what they had up, and anyone else it hit.';
+    } }
   /* (round 355 gravebound) a Gravebound death goes to what gave it: the last Gloombomb or frontal that hit them, up to 30 s before */
   { const gSec = sections.find((s) => s.id === 'gloom'), tSec = sections.find((s) => s.id === 'tankfront');
     for (const d of r.deaths || []) { if (!/^gravebound$/i.test(String(d.ability || ''))) continue; let src = null;
