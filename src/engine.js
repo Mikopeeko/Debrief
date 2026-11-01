@@ -4504,7 +4504,7 @@ function buildCoiledAltar(ev, r, h) {
     }
     // 2) the ghosts: two ghosts touching (Malevolent Resonance), or a ghost reaching the player it follows. The log shows that as the
     // player mind controlled again: a Dreadmarch debuff with no Dreadmarch cast just before it
-    const ghItems = (sGh ? sGh.rows : []).map((r0) => ({ t: r0[0].t, row: [{ txt: 'Ghost collision', bad: true }, { t: r0[0].t }, { ps: r0[1].ps }, { txt: 'ghosts touched (Malevolent Resonance), ' + h.compact(r0[2].n) + ' damage', bad: true }, r0[3] || { txt: '' }] }));
+    const ghItems = (sGh ? sGh.rows : []).map((r0) => ({ t: r0[0].t, row: [{ txt: 'Ghost collision', bad: true }, { t: r0[0].t }, { ps: r0[1].ps }, { txt: 'ghosts touched (Malevolent Resonance), ' + h.compact(r0[2].n) + ' damage', bad: true }, { txt: '' } /* round 424 no ghost maps */] }));
     const reach = [];
     for (const e of auras('dreadmarch')) {
       if (e.op !== 'apply' || !h.isPlayer(e.dst) || dm.some((t) => e.t >= t - 1 && e.t <= t + 4) || !dm.some((t) => t < e.t)) continue;
@@ -4512,8 +4512,8 @@ function buildCoiledAltar(ev, r, h) {
       reach.push({ t: e.t, g: e.dst });
     }
     for (const x of reach) {
-      M(x.t, pname(x.g), 'dreadmarch', 'Medium', 'Their ghost reached them and mind controlled them again.', 'Your ghost only moves while you aren\'t looking at it. Turn to face it as soon as it spawns and keep it in view.');
-      ghItems.push({ t: x.t, row: [{ txt: 'Ghost reached its player', bad: true }, { t: x.t }, { p: pname(x.g) }, { txt: 'mind controlled again', bad: true }, { map: { t: x.t, from: dmFrom(x.t), lead: 12, focus: { x: 0, y: 1158, r: 30 }, hl: [x.g], bad: [x.g], badLabel: 'their ghost reached them', title: pname(x.g) + '\'s ghost reached them at ' + h.fmtT(x.t) } }] });
+      M(x.t, pname(x.g), 'manifestation of dread', 'Medium', 'Their ghost reached them and mind controlled them again.', 'Your ghost only moves while you aren\'t looking at it. Turn to face it as soon as it spawns and keep it in view.');
+      ghItems.push({ t: x.t, row: [{ txt: 'Ghost reached its player', bad: true }, { t: x.t }, { p: pname(x.g) }, { txt: 'mind controlled again', bad: true }, { txt: '' }] });
     }
     if (dm.length && ghItems.length + (sGh ? 1 : 0) + reach.length) {
       const groups = perDm(ghItems, 'no ghosts touched or reached anyone');
@@ -4707,7 +4707,7 @@ function buildCoiledAltar(ev, r, h) {
   const fill = (mp) => { mp.pts = h.snap(mp.t).concat(mp.extraPts || (mp.from != null ? objs(mp.t, mp.from) : [])); orbRings(mp); };
   for (const s of sections) for (const row of s.rows.concat(...(s.groups || []).map((g) => g.rows))) for (const c of row) { if (c.map) fill(c.map); if (c.maps) for (const [, mp] of c.maps) fill(mp); }
   // every positional mistake gets a map of that moment (player ringed, orbs and ghosts from the 15s before)
-  const POSM = new Set(['sever', 'soul sever', 'blighted sever', 'mutagenic venom', 'venom rupture', 'virulent mutation', 'guillotine', 'grim guillotine', 'malevolent resonance', 'gloombomb', 'dreadmarch', 'reclaim essence']);
+  const POSM = new Set(['sever', 'soul sever', 'blighted sever', 'mutagenic venom', 'venom rupture', 'virulent mutation', 'guillotine', 'grim guillotine', 'gloombomb', 'dreadmarch', 'reclaim essence']);
   const gOf = new Map([...r.players.values()].map((p) => [p.name, p.guid]));
   for (const x of mistakes) {
     if (!x.map && POSM.has(L(x.mechanic))) x.map = { t: x.t, gloom: L(x.mechanic) === 'gloombomb', hl: gOf.has(x.player) ? [gOf.get(x.player)] : [], bad: gOf.has(x.player) ? [gOf.get(x.player)] : [], badLabel: 'made this mistake', title: x.mechanic + ' at ' + h.fmtT(x.t) + (gOf.has(x.player) ? ' (' + x.player + ' ringed)' : '') };
