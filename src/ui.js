@@ -1980,6 +1980,8 @@ const PATCH_NOTES = [
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
     "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
+    "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
+    "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
     "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Your first Debriefing is quicker to learn: three short tips that start with why the pull ended, and the NSRT note card waits until they're done.",    "Holy Paladin Rotation now has top-player marks on Ula'tek and Kith'ix, and Elemental Shaman on Ula'tek, so every Mythic boss has them.",
     "Subtlety Rogue and Protection Paladin Rotation: top-player marks refreshed on every Mythic boss, from more top players.",
     "Beast Mastery Hunter Rotation: top-player marks on every Mythic boss, Ula'tek included, from more top Hunters.",
@@ -34255,8 +34257,11 @@ function r437Card() { document.querySelectorAll('.rqc-under').forEach((g) => { i
 document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('.tabbar .tab, .tabbar [data-t]'); if (t) document.body.classList.add('r438-tab'); }, true);
 // (the boxes at the top of a pull: their numbers wait under a soft placeholder until they stop changing, for at most 6 s, so a
 // count like Deaths never shows 25 and then 5 while the wipe call is still being worked out; only while a page first opens)
-let R438_T0 = 0, R438_END = 0; /* (once per page open: a redraw while waiting keeps the same clock, so boxes never flick back) */
-function r438Settle() { if (document.body.classList.contains('r438-tab') || R438_END) return; if (!R438_T0) R438_T0 = Date.now(); const sb = document.querySelector('#view .r212-sb'); if (!sb || sb.dataset.r438) return; sb.dataset.r438 = '1'; sb.classList.add('r438-wait');
-  const t0 = R438_T0; let tm = 0; const done = () => { clearTimeout(tm); mo.disconnect(); R438_END = Date.now(); document.querySelectorAll('.r438-wait').forEach((x) => x.classList.remove('r438-wait')); };
-  const mo = new MutationObserver(() => { clearTimeout(tm); if (Date.now() - t0 > 6000) return done(); tm = setTimeout(done, 1500); }); mo.observe(sb, { subtree: true, childList: true, characterData: true }); tm = setTimeout(done, Math.max(0, Math.min(1500, 6000 - (Date.now() - t0)))); }
-(function () { const f10 = dsBars; dsBars = function (root) { f10(root); try { r438Settle(); } catch (e) { /* (numbers show as they come) */ } }; })();
+/* round 440 one switch: the top boxes' numbers show once, when they're final (body.r438-ok); a tab click shows them at once */
+const R440 = { t0: 0, sig: '', since: 0 };
+const r440Sig = () => { const sb = document.querySelector('#view .r212-sb'); return sb ? [...sb.querySelectorAll('.oa-tiles .dbr-v, .cch-ab .cgl-p')].map((e) => e.textContent).join('|') : null; };
+// (the Deaths box shows the raw count for a moment (25) while the real one (5) is already in the top row's hidden Deaths box)
+const r440Same = () => { const sb = document.querySelector('#view .r212-sb'); if (!sb) return true; const bot = [...sb.querySelectorAll('details.cch-ab')].find((d) => /^Deaths/.test(((d.querySelector('.cgl-n') || {}).textContent || '').trim())), top = [...sb.querySelectorAll('.oa-tiles .dbr-n')].find((d) => /^Deaths/.test(((d.querySelector('.dbr-k') || {}).textContent || '').trim())); if (!bot || !top) return true; const x = ((bot.querySelector('.cgl-p') || {}).textContent || '').trim(), y = ((top.querySelector('.dbr-v b, .dbr-v') || {}).textContent || '').trim(); return !x || !y || x === y; };
+(function r440Tick() { const bd = document.body; if (!bd) { setTimeout(r440Tick, 200); return; } if (bd.classList.contains('r438-ok')) return; if (bd.classList.contains('r438-tab')) { bd.classList.add('r438-ok'); return; }
+  const s = r440Sig(), now = Date.now(); if (s != null) { if (!R440.t0) R440.t0 = now; if (s !== R440.sig) { R440.sig = s; R440.since = now; } if ((now - R440.since >= 1200 && r440Same()) || now - R440.t0 > 8000) { bd.classList.add('r438-ok'); return; } }
+  setTimeout(r440Tick, 200); })();

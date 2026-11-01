@@ -10518,12 +10518,6 @@ html:not([data-theme]) body.refine .btn:not(.primary),html:not([data-theme]) bod
 }
  html body .r340-cols > .my-raid .my-h h2,html body .r340-cols .pn-wh > b,html body .r340-cols .pg-nights .pg-sh > h2{font-size:18px !important;font-weight:700 !important;line-height:1.2 !important}
  html body .r340-cols > .my-raid .my-h .sub,html body .r340-cols .pn-wh .sub{font-size:13px !important}
-/* round 438 crisp first paint */
-html body:not(.r438-tab) #view > :not(.ld){animation:none !important}
-@keyframes r438sh{0%{background-position:100% 0}100%{background-position:-100% 0}}
-html body #view .r212-sb.r438-wait .oa-tiles .dbr-v,html body #view .r212-sb.r438-wait .oa-tiles .dbr-s,html body #view .r212-sb.r438-wait .cch-ab .cgl-p,html body #view .r212-sb.r438-wait .cch-ab .cgl-dt{color:transparent !important;-webkit-text-fill-color:transparent !important;border-radius:3px;background:linear-gradient(90deg,rgba(255,255,255,.04) 30%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.04) 70%) !important;background-size:200% 100% !important;animation:r438sh 1.2s linear infinite}
-html body #view .r212-sb.r438-wait .oa-tiles .dbr-v *,html body #view .r212-sb.r438-wait .oa-tiles .dbr-s *,html body #view .r212-sb.r438-wait .cch-ab .cgl-p *,html body #view .r212-sb.r438-wait .cch-ab .cgl-dt *{visibility:hidden}
-html body #view .r212-sb .oa-tiles .dbr-v,html body #view .r212-sb .cch-ab .cgl-p{transition:color .2s ease-out}
 /* refined look (Design studio round 170, Oct 28): one set of finishes everywhere, see notes/Design rules.md */
 /* The refined finishes (trial): the rules in notes/Design rules.md. Same layout, same font (Barlow Condensed), new finishes:
    greys for structure, colour only where it means something, gold as the mark, one panel / row / tag / chip, flat, sharp. */
@@ -12527,6 +12521,46 @@ html[data-theme="warrior"] body.refine ::selection{background:rgba(198,155,109,0
 
 
 
+
+<style id="rcss-432">
+/* round 432 one shield list */
+html body .shd.shd432 .shd-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+html body .shd.shd432 .shd-tk{font-size:12.5px;font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0}
+html body .shd.shd432 .shd-tk b{color:var(--text);font-weight:600}
+html body .shd.shd432 .shd-one .shd-d{display:inline-block;margin-right:6px;vertical-align:middle}
+html body #view .shd.shd432 details.shd-one > summary.shd-oh{display:block !important}
+html body .shd.shd432 .shd-sp.ok{color:#7ee08f} html body .shd.shd432 .shd-sp.warn{color:#f3c969} html body .shd.shd432 .shd-sp.bad{color:#ff8f87}
+html body .shd.shd432 .shd-late .shd-oh{color:var(--muted);padding:8px 0}
+</style>
+<style id="rcss-437">
+/* round 437 report card A */
+html body #view .rqc-under.r437 .rqc-grid,html body #view .rqc-under.r437 .ds-rcard.r321 .rqc-grid.rqc-grid{grid-template-columns:minmax(0,1fr) !important;row-gap:14px !important}
+html body #view .rqc-under.r437 .r437-nmrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+html body #view .rqc-under.r437 .r437-nmrow .rqc-sc{display:flex !important;align-items:center;gap:8px;margin:0 !important;padding:0 !important;border:0 !important}
+html body #view .rqc-under.r437 .r437-nmrow .rqc-sc .grade{font-size:18px;min-width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center}
+html body #view .rqc-under.r437 .r437-nmrow .rqc-sc b{font-size:13.5px} html body #view .rqc-under.r437 .r437-nmrow .rqc-sc span:not(.grade){font-size:12.5px;color:var(--muted)}
+html body #view .rqc-under.r437 .r437-fix{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:12px 0 0;padding:10px 14px;border-radius:6px;border:1px solid rgba(229,83,75,.35);background:rgba(229,83,75,.07);cursor:pointer;font-size:13.5px}
+html body #view .rqc-under.r437 .r437-fix:hover{background:rgba(229,83,75,.11)}
+html body #view .rqc-under.r437 .r437-k{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#ff8f87}
+html body #view .rqc-under.r437 .r437-fix b{color:var(--text);font-weight:600} html body #view .rqc-under.r437 .r437-v{color:#ff8f87;font-weight:600} html body #view .rqc-under.r437 .r437-g{color:var(--muted);font-size:12.5px}
+html body #view .rqc-under.r437 .r437-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;margin:12px 0 14px;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--line)}
+html body #view .rqc-under.r437 .r437-t{all:unset;box-sizing:border-box;position:relative;display:flex;flex-direction:column;gap:2px;padding:9px 14px 11px;background:var(--panel);cursor:pointer}
+html body #view .rqc-under.r437 .r437-t:hover{background:var(--raised)}
+html body #view .rqc-under.r437 .r437-t > span{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+html body #view .rqc-under.r437 .r437-t > b{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums} html body #view .rqc-under.r437 .r437-t > b small{font-size:12.5px;font-weight:400;color:var(--muted)}
+html body #view .rqc-under.r437 .r437-t.g > b{color:#7ee08f} html body #view .rqc-under.r437 .r437-t.y > b{color:#f3c969} html body #view .rqc-under.r437 .r437-t.r > b{color:#ff8f87}
+html body #view .rqc-under.r437 .r437-t > i{position:absolute;left:0;bottom:0;height:2px;background:currentColor;opacity:.0}
+html body #view .rqc-under.r437 .r437-t.g > i{background:#45c15c;opacity:.7} html body #view .rqc-under.r437 .r437-t.y > i{background:#e8a23a;opacity:.7} html body #view .rqc-under.r437 .r437-t.r > i{background:#e5534b;opacity:.7}
+@media (max-width: 700px){html body #view .rqc-under.r437 .r437-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+<style id="rcss-438">
+/* round 438 crisp first paint */
+html body:not(.r438-tab) #view > :not(.ld){animation:none !important}
+@keyframes r438sh{0%{background-position:100% 0}100%{background-position:-100% 0}}
+html body:not(.r438-ok) #view .r212-sb .oa-tiles .dbr-v,html body:not(.r438-ok) #view .r212-sb .oa-tiles .dbr-s,html body:not(.r438-ok) #view .r212-sb .cch-ab .cgl-p,html body:not(.r438-ok) #view .r212-sb .cch-ab .cgl-dt{color:transparent !important;-webkit-text-fill-color:transparent !important;border-radius:3px;background:linear-gradient(90deg,rgba(255,255,255,.04) 30%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.04) 70%) !important;background-size:200% 100% !important;animation:r438sh 1.2s linear infinite}
+html body:not(.r438-ok) #view .r212-sb .oa-tiles .dbr-v *,html body:not(.r438-ok) #view .r212-sb .oa-tiles .dbr-s *,html body:not(.r438-ok) #view .r212-sb .cch-ab .cgl-p *,html body:not(.r438-ok) #view .r212-sb .cch-ab .cgl-dt *{visibility:hidden}
+html body #view .r212-sb .oa-tiles .dbr-v,html body #view .r212-sb .cch-ab .cgl-p{transition:color .2s ease-out}
+</style>
 <style id="r430">
 /* round 430 themes reach the fixed colours */
 :where(html[data-theme]) .pull.sel{background-color:var(--line)}
@@ -22983,6 +23017,8 @@ const PATCH_NOTES = [
   { d: '2026-11-01', h: [], n: ["Pages open crisp: no more half-faded page while the numbers are worked out, and the boxes at the top show a soft placeholder until their numbers are ready instead of flicking between guesses.", "Report card: a raider's card reads top to bottom in one column: their name with the grade beside it, the one thing to fix first, a box per list (tap one to jump to it), then the lists one under the other."], f: [] },
   { d: '2026-10-31', h: [{ t: 'Themes', d: 'Pick how Debrief looks from Menu > Theme: Aurora, Aurora Gold, Raid frame, Ember Crown, Glass, Midnight, Forge, or your class colours. It only changes the look, and it is saved on your device.' }, { t: 'Cooldown timing on The Coiled Altar', d: 'Rotation now shows if your big cooldown went out at the same moments the top players use it on Mythic, like Trueshot on the pull, at P2 start and in the intermission. Debriefing tells you when you missed one. For now: Holy Paladin, Marksmanship Hunter, Affliction Warlock, Arcane Mage, Arms Warrior and Balance Druid.' }], n: [
     "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
+    "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
+    "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
     "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
@@ -61817,11 +61853,14 @@ function r437Card() { document.querySelectorAll('.rqc-under').forEach((g) => { i
 document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('.tabbar .tab, .tabbar [data-t]'); if (t) document.body.classList.add('r438-tab'); }, true);
 // (the boxes at the top of a pull: their numbers wait under a soft placeholder until they stop changing, for at most 6 s, so a
 // count like Deaths never shows 25 and then 5 while the wipe call is still being worked out; only while a page first opens)
-let R438_T0 = 0, R438_END = 0; /* (once per page open: a redraw while waiting keeps the same clock, so boxes never flick back) */
-function r438Settle() { if (document.body.classList.contains('r438-tab') || R438_END) return; if (!R438_T0) R438_T0 = Date.now(); const sb = document.querySelector('#view .r212-sb'); if (!sb || sb.dataset.r438) return; sb.dataset.r438 = '1'; sb.classList.add('r438-wait');
-  const t0 = R438_T0; let tm = 0; const done = () => { clearTimeout(tm); mo.disconnect(); R438_END = Date.now(); document.querySelectorAll('.r438-wait').forEach((x) => x.classList.remove('r438-wait')); };
-  const mo = new MutationObserver(() => { clearTimeout(tm); if (Date.now() - t0 > 6000) return done(); tm = setTimeout(done, 1500); }); mo.observe(sb, { subtree: true, childList: true, characterData: true }); tm = setTimeout(done, Math.max(0, Math.min(1500, 6000 - (Date.now() - t0)))); }
-(function () { const f10 = dsBars; dsBars = function (root) { f10(root); try { r438Settle(); } catch (e) { /* (numbers show as they come) */ } }; })();
+/* round 440 one switch: the top boxes' numbers show once, when they're final (body.r438-ok); a tab click shows them at once */
+const R440 = { t0: 0, sig: '', since: 0 };
+const r440Sig = () => { const sb = document.querySelector('#view .r212-sb'); return sb ? [...sb.querySelectorAll('.oa-tiles .dbr-v, .cch-ab .cgl-p')].map((e) => e.textContent).join('|') : null; };
+// (the Deaths box shows the raw count for a moment (25) while the real one (5) is already in the top row's hidden Deaths box)
+const r440Same = () => { const sb = document.querySelector('#view .r212-sb'); if (!sb) return true; const bot = [...sb.querySelectorAll('details.cch-ab')].find((d) => /^Deaths/.test(((d.querySelector('.cgl-n') || {}).textContent || '').trim())), top = [...sb.querySelectorAll('.oa-tiles .dbr-n')].find((d) => /^Deaths/.test(((d.querySelector('.dbr-k') || {}).textContent || '').trim())); if (!bot || !top) return true; const x = ((bot.querySelector('.cgl-p') || {}).textContent || '').trim(), y = ((top.querySelector('.dbr-v b, .dbr-v') || {}).textContent || '').trim(); return !x || !y || x === y; };
+(function r440Tick() { const bd = document.body; if (!bd) { setTimeout(r440Tick, 200); return; } if (bd.classList.contains('r438-ok')) return; if (bd.classList.contains('r438-tab')) { bd.classList.add('r438-ok'); return; }
+  const s = r440Sig(), now = Date.now(); if (s != null) { if (!R440.t0) R440.t0 = now; if (s !== R440.sig) { R440.sig = s; R440.since = now; } if ((now - R440.since >= 1200 && r440Same()) || now - R440.t0 > 8000) { bd.classList.add('r438-ok'); return; } }
+  setTimeout(r440Tick, 200); })();
 
 </script>
 <script>/* refined look: one corner size (Design studio round 170) */
