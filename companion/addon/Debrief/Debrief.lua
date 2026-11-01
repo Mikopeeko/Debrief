@@ -1076,6 +1076,7 @@ UI.tiles = function(y0, list, mp)
         local plain = tostring(tl[2]):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
         local v = FS("head", #plain > 12 and 16 or 20, tl[4] == "bad" and COL.badT or tl[4] == "warn" and COL.warn or COL.text)
         v:SetPoint("TOPLEFT", x + 11, -(yy + 24)); v:SetWidth(tw - 20); v:SetWordWrap(false); v:SetText(tl[2])
+        if (tl.unit or "") ~= "" then v:SetWidth(v:GetStringWidth() + 2); local un = FS("bold", 12, COL.muted); un:SetPoint("BOTTOMLEFT", v, "BOTTOMRIGHT", 3, 2); un:SetText(tl.unit) end
         if (tl[3] or "") ~= "" then local sb = FS("body", 12, COL.faint); sb:SetPoint("TOPLEFT", x + 11, -(yy + 48)); sb:SetWidth(tw - 20); sb:SetWordWrap(false); sb:SetText(names(tl[3])) end
       end
     end
@@ -2040,7 +2041,7 @@ local function renderOnce()
         if goal > 0 then sub = "Goal " .. goal .. "k  ·  " .. math.floor(UI.parseK(P.v) / goal * 100 + 0.5) .. "%"
         elseif P.d and SH.vs ~= false then sub = (P.d >= 0 and ("|cff7ee08f+" .. P.d .. "%|r") or ("|cffff8f87" .. P.d .. "%|r")) .. " vs pull " .. P.vs
         else sub = P.bt and "your best tonight" or "first pull read" end
-        L0[1] = { P.role == "healer" and "Your healing" or "Your damage", P.v .. " |cff" .. COL.muted .. (P.unit or "") .. "|r", sub }
+        L0[1] = { P.role == "healer" and "Your healing" or "Your damage", P.v, sub, nil, unit = P.unit } -- (the unit small and muted, as in the pop-up (Nov 1))
       end
       for _, t0 in ipairs(P.tiles or {}) do L0[#L0 + 1] = t0 end
       if not m.h.practice and #(m.raid.died or {}) == 0 then L0[#L0 + 1] = { "Deaths", 0, "nobody died" } end -- (a tile when nobody died; otherwise Who died)
