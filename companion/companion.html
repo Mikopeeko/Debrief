@@ -459,7 +459,10 @@ function mplusShow(r) {
   L.busy = L.busy.then(async () => {
     try {
       await engineReady; stat('Reading your key…', 'busy');
-      const R = window.DBF_MPLUS ? window.DBF_MPLUS(await readText(r, true), W.E) : null; if (!R || !R.pulls.length) return;
+      const txt = await readText(r, true), R = window.DBF_MPLUS ? window.DBF_MPLUS(txt, W.E) : null; if (!R || !R.pulls.length) return;
+      // (Rotation per pull (Nov 1): the website's checks on each pull, in the card's own short lines; a few seconds for a whole key)
+      const CB = window.DBF_CARDBITS || {};
+      if (window.DBF_MPLUS_ROT && W.specRun) { stat('Checking everyone\'s rotation…', 'busy'); try { await window.DBF_MPLUS_ROT(R, txt, W, { line: CB.slipLine, icon: (n) => (CB.spellId ? CB.spellId(W, n) : '') }); } catch (e) { console.error(e); } }
       L.popUp = true; j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: true, data: { full: true, mplus: R }, sound: $('snd').checked }) }).catch(() => {});
     } catch (e) { console.error(e); }
     stat(L.live ? 'Watching your combat log' : '', L.live ? 'live' : '');

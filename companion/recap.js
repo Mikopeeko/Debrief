@@ -727,6 +727,7 @@ const RECIPE_IDS = {
   'The Coiled Altar|orbs': 'Venom orbs',
 };
 
+window.DBF_CARDBITS = { slipLine, spellId }; // (the Mythic+ run recap's Rotation per pull says each fix the card's way (Nov 1))
 window.DBF_BUILD = (b, rep, same, W, L) => {
   // (Rotation checks are the whole pull: worked out once, shared by every version)
   const memo = new Map(), W2 = Object.assign({}, W, { specRun: (...a) => { const k = a[0] + '|' + a[2]; if (!memo.has(k)) memo.set(k, W.specRun(...a)); return memo.get(k); } });
