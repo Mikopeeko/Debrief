@@ -13025,6 +13025,15 @@ html body #view.dbt-full > .dbt.dbt.dbx .dbt-fbtn{display:none !important}
   html body #view > .dbt.dbt.dbx .dbx-w,html body #view > .dbt.dbt.dbx .dbx-ok{margin-left:0}
 }
 </style>
+<style id="rcss-459">
+/* round 459 timeline: grey labels after the line, the phase-change flag, mechanic names that explain themselves */
+html body #view > .dbt.dbt.dbx .dbx-row .w .sub{font-style:normal;color:var(--faint)}
+html body #view > .dbt.dbt.dbx .dbx-l[data-hn]{cursor:help}
+html body #view > .dbt.dbt.dbx .dbx-pf{position:absolute !important;top:0;width:12px !important;margin:0 0 0 -6px !important;padding:0 !important;border:0 !important;background:none !important;box-shadow:none !important;cursor:pointer;z-index:2}
+html body #view > .dbt.dbt.dbx .dbx-pf::before{content:"";position:absolute;left:5.5px;top:0;bottom:0;border-left:1px dashed var(--gold);opacity:.75}
+html body #view > .dbt.dbt.dbx .dbx-pf span{position:absolute;top:-3px;left:9px;padding:0 4px;border-radius:3px;background:var(--panel);font:700 11px 'Barlow Condensed',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);white-space:nowrap}
+html body #view > .dbt.dbt.dbx .dbx-pf:is(:hover,.dbx-hl,:focus-visible) span{color:var(--text)}
+</style>
 </head>
 <body class="refine">
 <noscript><h1>Debrief: WoW raid log review for Mythic progression</h1><p>Debrief reads your World of Warcraft raid logs, from a Warcraft Logs report or your own combat log, and explains every pull: which mechanics were missed and by whom, why each player died, how your rotation compared with the top players, and what to fix before the next pull.</p><p>It also has Heroic and Mythic boss guides for every boss in the raid, a raid cooldown planner that reads Northern Sky Raid Tools (NSRT) notes, and an in-game addon. Debrief needs JavaScript turned on.</p></noscript>
