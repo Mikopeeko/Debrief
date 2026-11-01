@@ -1968,9 +1968,11 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-11-01', h: [], n: ["Report card: a raider's card reads top to bottom in one column: their name with the grade beside it, the one thing to fix first, a box per list (tap one to jump to it), then the lists one under the other."], f: [] },
+  { d: '2026-11-01', h: [], n: ["Pages open crisp: no more half-faded page while the numbers are worked out, and the boxes at the top show a soft placeholder until their numbers are ready instead of flicking between guesses.", "Report card: a raider's card reads top to bottom in one column: their name with the grade beside it, the one thing to fix first, a box per list (tap one to jump to it), then the lists one under the other."], f: [] },
   { d: '2026-10-31', h: [{ t: 'Themes', d: 'Pick how Debrief looks from Menu > Theme: Aurora, Aurora Gold, Raid frame, Ember Crown, Glass, Midnight, Forge, or your class colours. It only changes the look, and it is saved on your device.' }, { t: 'Cooldown timing on The Coiled Altar', d: 'Rotation now shows if your big cooldown went out at the same moments the top players use it on Mythic, like Trueshot on the pull, at P2 start and in the intermission. Debriefing tells you when you missed one. For now: Holy Paladin, Marksmanship Hunter, Affliction Warlock, Arcane Mage, Arms Warrior and Balance Druid.' }], n: [
     "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
+    "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
+    "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
     "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
@@ -34247,3 +34249,14 @@ function r437Card() { document.querySelectorAll('.rqc-under').forEach((g) => { i
     x.addEventListener('click', () => s.scrollIntoView({ block: 'start', behavior: 'smooth' })); t.append(x); });
   (g.querySelector('.r437-fix') || hd).after(t); }); }
 (function () { const f9 = dsBars; dsBars = function (root) { f9(root); try { r437Card(); } catch (e) { /* (the two-column card stays) */ } }; })();
+
+// ===== Design studio round 438 (Nov 1): no fade when a page first opens (it froze halfway while the numbers were worked out);
+// the quick fade is for switching tabs. Owner: the Design studio chat. =====
+document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('.tabbar .tab, .tabbar [data-t]'); if (t) document.body.classList.add('r438-tab'); }, true);
+// (the boxes at the top of a pull: their numbers wait under a soft placeholder until they stop changing, for at most 6 s, so a
+// count like Deaths never shows 25 and then 5 while the wipe call is still being worked out; only while a page first opens)
+let R438_T0 = 0, R438_END = 0; /* (once per page open: a redraw while waiting keeps the same clock, so boxes never flick back) */
+function r438Settle() { if (document.body.classList.contains('r438-tab') || R438_END) return; if (!R438_T0) R438_T0 = Date.now(); const sb = document.querySelector('#view .r212-sb'); if (!sb || sb.dataset.r438) return; sb.dataset.r438 = '1'; sb.classList.add('r438-wait');
+  const t0 = R438_T0; let tm = 0; const done = () => { clearTimeout(tm); mo.disconnect(); R438_END = Date.now(); document.querySelectorAll('.r438-wait').forEach((x) => x.classList.remove('r438-wait')); };
+  const mo = new MutationObserver(() => { clearTimeout(tm); if (Date.now() - t0 > 6000) return done(); tm = setTimeout(done, 1500); }); mo.observe(sb, { subtree: true, childList: true, characterData: true }); tm = setTimeout(done, Math.max(0, Math.min(1500, 6000 - (Date.now() - t0)))); }
+(function () { const f10 = dsBars; dsBars = function (root) { f10(root); try { r438Settle(); } catch (e) { /* (numbers show as they come) */ } }; })();
