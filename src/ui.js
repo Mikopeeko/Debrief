@@ -27749,7 +27749,7 @@ function deathOwn(r, d) {
   for (const s of m.sections) { if (own) break;
     // (died on a hit the avoidable damage panel judged, and that dodgeable damage did a quarter or more of what killed them: a small
     // tick at the end of a raid wipe isn't their own death (deaths research, Oct 22: an 8% axe tick made a wipe Flëxørçïst's own))
-    if (s.id === 'avoid') { own = (s.groups || []).some((g) => (g.judge || []).some((x) => x.p === d.player && !x.tank && x.dt != null && Math.abs(x.dt - d.t) < 0.6) && deathShare(d, g.names) >= 25); continue; }
+    if (s.id === 'avoid') { const kb = String(d.ability || '').toLowerCase(); /* round 425 avoidable killing blow: the spell that killed them is on their avoidable list, so it's theirs (Flex, Oct 31) */ own = (s.groups || []).some((g) => (g.judge || []).some((x) => x.p === d.player && !x.tank && ((x.dt != null && Math.abs(x.dt - d.t) < 0.6) || (g.names || []).includes(kb)))); continue; }
     for (const row of (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || []))) { const tc = row.find((c) => c && c.t != null);
       if (tc && Math.abs(tc.t - d.t) <= 1.5 && row.some((c) => c && (c.p === d.player || (c.ps || []).includes(d.player))) && row.some((c) => c && c.bad)) { own = true; break; } } }
   if (!own) own = (m.mistakes || []).some((x) => x.player === d.player && x.mechanic !== 'Death' && Math.abs(x.t - d.t) <= 1.5);

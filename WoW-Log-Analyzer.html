@@ -18967,6 +18967,7 @@ function* analyzeSteps(item, text, opts) {
     for (const b of p.buffs.values()) for (const s of b.sp) if (s[1] == null) s[1] = r.duration;
     for (const b of p.debuffs.values()) for (const s of b.sp) if (s[1] == null) s[1] = r.duration;
   }
+  /* round 425: a death after Malevolent Resonance (two ghosts touching) is that death, whatever landed last */ for (const d of r.deaths) { if (/^malevolent resonance$/i.test(String(d.ability || ''))) continue; const mr = (d.recap || []).filter((x) => !x.heal && /^malevolent resonance$/i.test(String(x.spell || '')) && x.t >= d.t - 8 && x.t <= d.t + 0.2).pop(); if (mr) { d.via = d.ability; d.ability = mr.spell; d.abilityId = mr.id || d.abilityId; if (mr.src) d.killer = mr.src; } }
   for (const d of r.deaths) { const p = r.players.get(d.guid); d.color = p ? p.color : '#9aa0ac'; d.icon = p && p.icon; d.specIcon = p && p.specIcon; d.spec = p ? p.specName : ''; }
 
   yield; survivability(r); triageSaves(r);
@@ -48163,7 +48164,7 @@ function deathOwn(r, d) {
   for (const s of m.sections) { if (own) break;
     // (died on a hit the avoidable damage panel judged, and that dodgeable damage did a quarter or more of what killed them: a small
     // tick at the end of a raid wipe isn't their own death (deaths research, Oct 22: an 8% axe tick made a wipe Flëxørçïst's own))
-    if (s.id === 'avoid') { own = (s.groups || []).some((g) => (g.judge || []).some((x) => x.p === d.player && !x.tank && x.dt != null && Math.abs(x.dt - d.t) < 0.6) && deathShare(d, g.names) >= 25); continue; }
+    if (s.id === 'avoid') { const kb = String(d.ability || '').toLowerCase(); /* round 425 avoidable killing blow: the spell that killed them is on their avoidable list, so it's theirs (Flex, Oct 31) */ own = (s.groups || []).some((g) => (g.judge || []).some((x) => x.p === d.player && !x.tank && ((x.dt != null && Math.abs(x.dt - d.t) < 0.6) || (g.names || []).includes(kb)))); continue; }
     for (const row of (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || []))) { const tc = row.find((c) => c && c.t != null);
       if (tc && Math.abs(tc.t - d.t) <= 1.5 && row.some((c) => c && (c.p === d.player || (c.ps || []).includes(d.player))) && row.some((c) => c && c.bad)) { own = true; break; } } }
   if (!own) own = (m.mistakes || []).some((x) => x.player === d.player && x.mechanic !== 'Death' && Math.abs(x.t - d.t) <= 1.5);
