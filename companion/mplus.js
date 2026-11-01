@@ -108,7 +108,8 @@ function build(text, E) {
         else if (LIST && isNpc(dg) && f[11] === 'BUFF' && (LIST.purge.has(lc(f[9])) || LIST.ccCast.has(lc(f[9])))) ev.push([t, 'ebuff', dg, f[9], dn]); /* (an enemy buff to purge, or what an unstopped cast gave) */
         break;
       }
-      case 'SPELL_DISPEL': case 'SPELL_STOLEN': { const ow = isPlayer(sg) ? sg : owners.get(sg); if (ow) ev.push([t, isNpc(dg) ? 'purge' : 'dispel', ow, f[9], dg, dn, f[12]]); break; }
+      /* (a buff taken off is a purge or soothe; a debuff taken off is a dispel, a friendly NPC's too: Altar's Cursed Bones get their Cursed cleansed) */
+      case 'SPELL_DISPEL': case 'SPELL_STOLEN': { const ow = isPlayer(sg) ? sg : owners.get(sg); if (ow) ev.push([t, e === 'SPELL_STOLEN' || f[14] === 'BUFF' ? 'purge' : 'dispel', ow, f[9], dg, dn, f[12]]); break; }
       case 'UNIT_DIED': if (isPlayer(dg)) ev.push([t, 'died', dg, dn]); else if (isNpc(dg)) ev.push([t, 'mobdied', dg]); break;
       default: break;
     }
