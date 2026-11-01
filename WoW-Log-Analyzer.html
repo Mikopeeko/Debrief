@@ -35319,6 +35319,12 @@ function wipeChain(r) { if (!r || !r.item || r.item.kill) return null; const ct 
   for (const m of KM.filter((x) => x.severity === sevW).map((x) => ({ ...x, at: x.from != null ? x.from : x.t })).sort((a, b) => a.at - b.at)) { const k = String(m.mechanic).toLowerCase(); if (seen.has(k)) continue; seen.add(k);
     const who = m.player && m.player !== 'Raid' ? String(m.player).split('-')[0] : '', d0 = s1(m.detail); items.push({ t: m.at, mech: m.mechanic, txt: who && !new RegExp(who, 'i').test(d0) && !/^(A|An|The|\d)\b/.test(d0) ? who + ' ' + d0.charAt(0).toLowerCase() + d0.slice(1) : d0, sev: m.severity, nm: !!who && !/^(A|An|The|\d)\b/.test(d0) }); }
   for (const d of keptDeaths(r).slice().sort((a, b) => a.t - b.t).slice(0, 3)) if (!items.some((x) => Math.abs(x.t - d.t) < 2 && new RegExp(String(d.player).split('-')[0], 'i').test(x.txt))) items.push({ t: d.t, mech: 'Death', txt: String(d.player).split('-')[0] + ' died to ' + (d.ability || 'damage'), sev: 'Death', nm: true });
+  /* (a Gravebound death says which it was (Nov 1, Design studio for Flex): all 3 soul fragments picked up and the last pickup's hit killed
+     them, or fewer than 3 picked up (missed). Pickups are the Gravebound hits (#1308330) in their last 20 s) */
+  for (const x of items) { const m = String(x.txt || '').match(/^(.+?) died to Gravebound\.?$/i); if (!m) continue;
+    const d = r.deaths.find((y) => String(y.player).split('-')[0] === m[1] && Math.abs(y.t - x.t) < 5 && /^gravebound$/i.test(String(y.ability || ''))); if (!d) continue;
+    const n = (d.recap || []).filter((e) => !e.heal && /^gravebound$/i.test(e.spell || '') && (e.id == null || +e.id === 1308330) && e.t >= d.t - 20).length;
+    x.txt = m[1] + ' died to Gravebound: ' + (n >= 3 ? 'picked up all 3 soul fragments, and the last one\'s hit killed them' : 'missed their soul fragments'); }
   items.sort((a, b) => a.t - b.t); const L = items.slice(0, 4); if (!L.length) return null;
   const callW = ci ? (ci.why === 'check' ? 'the damage check was missed' : ci.why === 'half' ? 'half the raid was dead' : ci.why === 'line' ? 'more were dead than any kill survived' : 'the wipe mechanic went off') : '';
   const txt = 'It started at ' + T(L[0].t) + ': ' + L[0].txt + '.' + L.slice(1).map((x) => ' Then at ' + T(x.t) + ': ' + (x.nm ? x.txt : x.txt.charAt(0).toLowerCase() + x.txt.slice(1)) + '.').join('') + (ci && isFinite(ct) ? ' The wipe was called at ' + T(ct) + ': ' + callW + '.' : '');
