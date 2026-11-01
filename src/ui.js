@@ -1990,6 +1990,8 @@ const PATCH_NOTES = [
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
     "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
+    "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
+    "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
     "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Your first Debriefing is quicker to learn: three short tips that start with why the pull ended, and the NSRT note card waits until they're done.",    "Holy Paladin Rotation now has top-player marks on Ula'tek and Kith'ix, and Elemental Shaman on Ula'tek, so every Mythic boss has them.",
     "Subtlety Rogue and Protection Paladin Rotation: top-player marks refreshed on every Mythic boss, from more top players.",
     "Beast Mastery Hunter Rotation: top-player marks on every Mythic boss, Ula'tek included, from more top Hunters.",
@@ -34282,3 +34284,14 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
 // ===== Design studio round 443 (Nov 1): page-load motion off, for now (Flex: "maybe just remove the animations for now", "and start
 // over"). Owner: the Design studio chat. =====
 /* round 443 still */ dsMotion = function () { /* (no count-ups or growing bars) */ };
+
+// ===== Design studio round 444 (Nov 1): Debriefing's bottom part shows once, when it has stopped being rebuilt. Owner: the Design studio chat. =====
+/* round 444 hold */ (function () { const H = document.documentElement; let t0 = 0, last = 0, mo = null, view = null, done = false;
+  const BOT = '#view > .ds-l'; /* (the Timeline / Overview under Why we wiped; Why we wiped itself always shows) */
+  const tick = () => { if (done) return; const v = document.getElementById('view'), now = performance.now();
+    if (v && v.querySelector(BOT)) { if (!t0) { t0 = now; last = now;  } if (v !== view) { view = v; last = now; if (mo) mo.disconnect(); mo = new MutationObserver(() => { last = performance.now(); }); mo.observe(v, { childList: true, subtree: true }); }
+      if (now - last > 800 || now - t0 > 5000) { done = true; if (mo) mo.disconnect(); H.classList.add('r444-done'); return; } }
+    else if (t0 && now - t0 > 5000) { done = true; H.classList.add('r444-done'); return; }
+    setTimeout(tick, 100); };
+  tick(); setTimeout(() => { done = true; if (mo) mo.disconnect(); H.classList.add('r444-done'); }, 20000); /* (never hidden for good) */
+  /* (a click anywhere, a tab or the pull picker, shows it at once) */ document.addEventListener('click', () => { if (!done) { done = true; if (mo) mo.disconnect(); H.classList.add('r444-done'); } }, true); })();

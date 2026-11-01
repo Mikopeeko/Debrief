@@ -12526,6 +12526,7 @@ html[data-theme="warrior"] body.refine ::selection{background:rgba(198,155,109,0
 
 
 
+
 <style id="rcss-443">
 /* round 443 still: no count-ups, growing bars or tab fade */
 html body #view > :not(.ld){animation:none !important}
@@ -12534,6 +12535,10 @@ html body .rtb-b > i,html body .cgl-b > i,html body .cb-f > i,html body .prw-t >
 html body #view .dbr-v > b:first-child,html body #view .cb-v,html body #view .dbt-n,html body #view .cgl-c,html body #view .rqc-sc,html body #main .yu-t > b,html body #main .pnw-ti > b,html body #main .pgc > b,html body #view .dbr-pq{animation:none !important}
 html body #view .r212-sb .oa-tiles .dbr-v,html body #view .r212-sb .cch-ab .cgl-p,html body #view .r212-sb .cch-ab .cgl-p *{transition:none !important}
 html body #bgReadT,html body #bgReadT *,html body #view .spc-anim,html body #view .spc-anim *,html body #view .spc-hero,html body #view .spc-hero *,html body #view .spc-card,html body #view .spc-card *,html body .rc-sk-b,html body .bgread-t::before,html body .bgread i{animation:none !important}
+</style>
+<style id="rcss-444">
+/* round 444 hold: Debriefing's bottom part, out of sight while it is still being rebuilt */
+html:not(.r444-done) #view > .ds-l{opacity:0 !important}
 </style>
 <style id="rcss-432">
 /* round 432 one shield list */
@@ -23030,6 +23035,8 @@ const PATCH_NOTES = [
   { d: '2026-11-01', h: [], n: ["Pages open crisp: no more half-faded page while the numbers are worked out, and the boxes at the top show a soft placeholder until their numbers are ready instead of flicking between guesses.", "Report card: a raider's card reads top to bottom in one column: their name with the grade beside it, the one thing to fix first, a box per list (tap one to jump to it), then the lists one under the other."], f: [] },
   { d: '2026-10-31', h: [{ t: 'Themes', d: 'Pick how Debrief looks from Menu > Theme: Aurora, Aurora Gold, Raid frame, Ember Crown, Glass, Midnight, Forge, or your class colours. It only changes the look, and it is saved on your device.' }, { t: 'Cooldown timing on The Coiled Altar', d: 'Rotation now shows if your big cooldown went out at the same moments the top players use it on Mythic, like Trueshot on the pull, at P2 start and in the intermission. Debriefing tells you when you missed one. For now: Holy Paladin, Marksmanship Hunter, Affliction Warlock, Arcane Mage, Arms Warrior and Balance Druid.' }], n: [
     "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
+    "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
+    "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
     "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
@@ -61891,6 +61898,17 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
 // ===== Design studio round 443 (Nov 1): page-load motion off, for now (Flex: "maybe just remove the animations for now", "and start
 // over"). Owner: the Design studio chat. =====
 /* round 443 still */ dsMotion = function () { /* (no count-ups or growing bars) */ };
+
+// ===== Design studio round 444 (Nov 1): Debriefing's bottom part shows once, when it has stopped being rebuilt. Owner: the Design studio chat. =====
+/* round 444 hold */ (function () { const H = document.documentElement; let t0 = 0, last = 0, mo = null, view = null, done = false;
+  const BOT = '#view > .ds-l'; /* (the Timeline / Overview under Why we wiped; Why we wiped itself always shows) */
+  const tick = () => { if (done) return; const v = document.getElementById('view'), now = performance.now();
+    if (v && v.querySelector(BOT)) { if (!t0) { t0 = now; last = now;  } if (v !== view) { view = v; last = now; if (mo) mo.disconnect(); mo = new MutationObserver(() => { last = performance.now(); }); mo.observe(v, { childList: true, subtree: true }); }
+      if (now - last > 800 || now - t0 > 5000) { done = true; if (mo) mo.disconnect(); H.classList.add('r444-done'); return; } }
+    else if (t0 && now - t0 > 5000) { done = true; H.classList.add('r444-done'); return; }
+    setTimeout(tick, 100); };
+  tick(); setTimeout(() => { done = true; if (mo) mo.disconnect(); H.classList.add('r444-done'); }, 20000); /* (never hidden for good) */
+  /* (a click anywhere, a tab or the pull picker, shows it at once) */ document.addEventListener('click', () => { if (!done) { done = true; if (mo) mo.disconnect(); H.classList.add('r444-done'); } }, true); })();
 
 </script>
 <script>/* refined look: one corner size (Design studio round 170) */
