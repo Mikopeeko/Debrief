@@ -61941,6 +61941,10 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
   var MAX = 4, t = 0, seen = new WeakSet(), INL = /^(SPAN|B|STRONG|I|EM|A|SMALL|U|MARK)$/;
   function fix() {
     var all = document.body.querySelectorAll('*'), todo = [];
+    // (Nov 1, your note "the corners of the boxes on the inside are still not pixel perfect": a box drawn round somewhere, then moved where the page
+    // squares it (Debriefing's bottom row of boxes), kept its 4px stamp, which beats every square rule. A stamped box that is checked again loses
+    // its stamp first, so it's judged by what the page asks for where it is now; all of them before any read)
+    for (var p = 0; p < all.length; p++) if (!seen.has(all[p]) && all[p].dataset && all[p].dataset.rfsq) { all[p].style.removeProperty('border-radius'); delete all[p].dataset.rfsq; }
     // reads: style, and size only where a corner needs judging; nothing is changed yet
     for (var i = 0; i < all.length; i++) {
       var e = all[i];
@@ -61959,7 +61963,7 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
     // writes, in page order (a line inside a line that just grew is left as it is)
     for (var q = 0; q < todo.length; q++) {
       var y = todo[q], el = y.e;
-      if (y.sq) el.style.setProperty('border-radius', MAX + 'px', 'important');
+      if (y.sq) { el.style.setProperty('border-radius', MAX + 'px', 'important'); el.dataset.rfsq = '1'; }
       if (y.ls) el.style.setProperty('letter-spacing', '.04em', 'important');
       if (y.grow && !el.dataset.fsg && !(el.parentElement && el.parentElement.closest('[data-fsg]'))) {
         el.dataset.fsg = '1'; var nf = Math.min(14.5, y.grow + 1) + 'px'; el.style.setProperty('font-size', nf, 'important');
@@ -61968,7 +61972,9 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
     }
   }
   function run(muts) {
-    if (muts) for (var m = 0; m < muts.length; m++) if (muts[m].type === 'attributes') seen.delete(muts[m].target);
+    if (muts) for (var m = 0; m < muts.length; m++) { var mu = muts[m], roots = mu.type === 'attributes' ? [mu.target] : mu.addedNodes;
+      for (var a = 0; a < roots.length; a++) { var rt = roots[a]; if (rt.nodeType !== 1) continue; seen.delete(rt); if (mu.type === 'attributes' && rt.dataset && rt.dataset.rfsq == null && !rt.querySelector('[data-rfsq]')) continue;
+        var st = rt.querySelectorAll('[data-rfsq]'); for (var s = 0; s < st.length; s++) seen.delete(st[s]); } } /* (a class change or a move: that box, and the stamped boxes inside it, are checked again) */
     if (t) return; t = 1; Promise.resolve().then(function () { t = 0; try { fix(); } catch (e) { console.warn('refine', e); } }); /* (round 184: before the paint, so no flash of round corners or small text) */
   }
   run(); new MutationObserver(run).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
