@@ -237,6 +237,21 @@ html, body { font-weight: 500; } .body b { font-weight: 600; } .kyou { border-le
 .body.mpx .mptb .ls span.won { color: var(--goodT, var(--good)); }
 /* Design studio round 463: the without-deaths marker is a ring on the bar, not a line beside the upgrade ticks */
 .body.mpx .mptb .gh { top: 50%; bottom: auto; width: 8px; height: 8px; margin: -4px 0 0 -4px; border: 2px solid var(--warn); border-radius: 50%; background: var(--pop, #151920); box-sizing: border-box; z-index: 1; }
+/* (Design studio round 467: the key card in the raid card's pieces: boxed sections that fold, a line per thing with its number on the right, + for the detail) */
+.body.mpx.mpk .kc { background: var(--raised); border: 1px solid var(--line); border-radius: 8px; margin: 0 0 10px; }
+.body.mpx.mpk .kh { padding: 9px 12px; cursor: pointer; }
+.body.mpx.mpk .kh b { font: 700 15.5px Barlow Condensed, sans-serif; letter-spacing: 0; text-transform: none; color: var(--text); }
+.body.mpx.mpk .kh:hover b, .body.mpx.mpk .kh:hover > i { color: var(--gold); }
+.body.mpx.mpk .kb { padding: 0 12px 10px; }
+.body.mpx.mpk .ksc.r { color: var(--badT); } .body.mpx.mpk .ksc.w { color: var(--warn); } .body.mpx.mpk .ksc.g { color: var(--goodT); }
+.body.mpx.mpk .krr.mpr { grid-template-columns: 10px 22px minmax(0, 1fr); }
+.body.mpx.mpk .kb:not(:has(> .krr .ic)) > .krr.mpr { grid-template-columns: 10px minmax(0, 1fr); } .body.mpx.mpk .kb:not(:has(> .krr .ic)) > .krr.mpr > .ic0 { display: none; }
+.body.mpx.mpk .ic0 { width: 20px; height: 20px; display: inline-block; } .body.mpx.mpk .krr .ic { margin-top: 1px; }
+.body.mpx.mpk .krt .mpl { flex: 1; min-width: 0; font-size: 14.5px; } .body.mpx.mpk .krt .of { color: var(--muted); }
+.body.mpx.mpk .mpd { margin: 2px 0 2px; } .body.mpx.mpk .mpd .kwhy { margin: 3px 0 2px; } .body.mpx.mpk .mpc em { font-style: normal; color: var(--muted); margin-left: 4px; }
+.body.mpx.mpk .kt.g b { color: var(--goodT); } .body.mpx.mpk .kgood { margin: 6px 0 2px 2px; } .body.mpx.mpk .kmore { padding-left: 19px; }
+.pulls.mpx-p .pc:not(.run) { background: rgba(229,83,75,.13); } .pulls.mpx-p .pc.k { background: rgba(69,193,92,.12); } .pulls.mpx-p .pc.n:not(.run) { background: rgba(232,162,58,.12); }
+.pulls.mpx-p .pc.n > i { background: var(--warn); } .pulls.mpx-p .pc.boss { font-weight: 700; }
 </style>
 </head>
 <body>
@@ -519,128 +534,161 @@ function renderMplus() {
   const mineThrough = (o, n) => o.through.filter((x) => x.ready.includes(n));
   const myAvoid = (o, n) => (o.avoid || []).filter((a) => a.who === n);
   const pills = (o) => { if (me) { const th = mineThrough(o, me.name).length; return o.deaths.some((x) => x.who === me.name) || th > 2 ? '' : th || myAvoid(o, me.name).length ? ' n' : ' k'; } return o.deaths.length || o.through.length > 2 ? '' : o.through.length || (o.avoid || []).length ? ' n' : ' k'; };
-  const chips = '<div class="pulls mpx-p" id="pullsRow"><span class="pc n run' + (MPULL === 0 ? ' on' : '') + '" data-mp="0">Run</span>' + R.pulls.map((o) => '<span class="pc' + pills(o) + (MPULL === o.n ? ' on' : '') + '" data-mp="' + o.n + '"><i></i>' + (o.boss ? esc(o.boss) : 'Pull ' + o.n) + '<small>' + mmssP(o.dur) + '</small></span>').join('') + '</div>';
+  const chips = '<div class="pulls mpx-p" id="pullsRow"><span class="pc n run' + (MPULL === 0 ? ' on' : '') + '" data-mp="0">Run</span>' + R.pulls.map((o) => '<span class="pc' + pills(o) + (o.boss ? ' boss' : '') + (MPULL === o.n ? ' on' : '') + '" data-mp="' + o.n + '"><i></i>' + (o.boss ? esc(o.boss) : 'Pull ' + o.n) + '<small>' + mmssP(o.dur) + '</small></span>').join('') + '</div>';
   const step = MVIEW === 'me' && ppl.length > 1 ? '<span class="kwho"><button type="button" data-mwstep="-1" title="The player before">‹</button>' + (me ? '<b class="knm" style="color:' + col(me.name) + '">' + esc(me.name) + '</b>' : '<b class="knm" style="color:var(--faint)">Not in this key</b>') + '<button type="button" data-mwstep="1" title="The next player">›</button></span>' : '';
   const tabs = '<div class="ktabs"><span data-mview="me" class="' + (MVIEW === 'me' ? 'on' : '') + '">Me</span><span data-mview="group" class="' + (MVIEW === 'group' ? 'on' : '') + '">Group</span>' + step + '</div>';
-  /* (Design studio round 460: "41 kicks · 15 stops", and a spell's pulls as chips that open them) */
+  /* (Design studio round 467, Flex: "they key version of the addon is also very different from the raid one the raid one has drop down menus with
+     detail, the m+ version should have that too" and "that pop up is not color coded at all"): the raid card's pieces on a key. Sections fold, with
+     their count in the title in red, amber or green; each thing is one line with its number on the right in the same colour, and + opens the
+     detail (which pulls, the times, who else had a kick ready, Next time). Your DPS or HPS takes a Warcraft Logs parse colour once the app has a
+     parse for the key (q.parse, 0 to 100: your spec, this dungeon, this key level); without one it stays white. A spell with an id (x.id) gets its icon) */
   const ks = (a, b) => a + '<em> ' + (a === 1 ? 'kick' : 'kicks') + '</em> · ' + b + '<em> ' + (b === 1 ? 'stop' : 'stops') + '</em>';
   const pch = (S) => '<span class="mpcs">' + [...S].map((n) => { const q = R.pulls[n - 1]; return '<span class="mpc" data-mp="' + n + '" title="Open this pull">' + (q && q.boss ? esc(q.boss) : 'Pull ' + n) + '</span>'; }).join('') + '</span>';
-  const tile = (k, v, w, sub) => '<div class="kt' + (w ? ' ' + w : '') + '"><small>' + k + '</small><b>' + v + '</b>' + (sub ? '<i>' + sub + '</i>' : '') + '</div>';
-  const sec = (title, rows) => rows.length ? '<div class="kc"><div class="kh"><b>' + title + '</b></div><div class="kb">' + rows.join('') + '</div></div>' : '';
-  const row = (dot, html) => '<div class="kr"><span class="kd" style="background:' + dot + '"></span><span></span><span>' + html + '</span></div>';
-  const deathRow = (x, where) => row('var(--bad)', (where ? where + ' at ' : '') + mmssP(x.t) + ' · ' + nm(x.who) + ' died to ' + esc(x.to) + (x.from ? ' (' + esc(x.from) + ')' : '') + (x.defs ? '' : ', no defensive in the 30 s before') + '.');
-  // (avoidable damage, dispels and purges, from the dungeon's lists (Nov 1, "Must-kick lists"): who: true names everyone hit, or a word ("you"))
-  const avRows = (L, who) => { const by = new Map(); for (const a of L) { const b = by.get(a.spell) || { n: 0, dmg: 0, who: new Map() }; b.n += a.n; b.dmg += a.dmg; b.who.set(a.who, (b.who.get(a.who) || 0) + a.n); by.set(a.spell, b); }
-    return [...by].sort((x, y) => y[1].dmg - x[1].dmg).map(([sp, b]) => row('var(--warn)', '<b>' + esc(sp) + '</b> hit ' + (who === true ? [...b.who].sort((x, y) => y[1] - x[1]).map(([w, c]) => nm(w) + (c > 1 ? ' ×' + c : '')).join(', ') : who + ' ' + (b.n === 1 ? 'once' : b.n + ' times')) + ' (' + kN(b.dmg) + ').')); };
+  const pcht = (L) => '<span class="mpcs">' + L.map(([n, t]) => { const q = R.pulls[n - 1]; return '<span class="mpc" data-mp="' + n + '" title="Open this pull">' + (q && q.boss ? esc(q.boss) : 'Pull ' + n) + (t != null && t !== '' ? '<em>' + t + '</em>' : '') + '</span>'; }).join('') + '</span>';
+  const PQ = (p) => (p == null || p === '' || isNaN(p) ? '' : p >= 100 ? '#e5cc80' : p >= 99 ? '#e268a8' : p >= 95 ? '#ff8000' : p >= 75 ? '#b981f5' : p >= 50 ? '#3b8cff' : p >= 25 ? '#1eff00' : '#9d9d9d'); /* (Warcraft Logs' parse colours) */
+  const tile = (k, v, w, sub, c) => '<div class="kt' + (w ? ' ' + w : '') + '"><small>' + k + '</small><b' + (c ? ' style="color:' + c + '"' : '') + '>' + v + '</b>' + (sub ? '<i>' + sub + '</i>' : '') + '</div>';
+  const numT = (q, o) => { const p = o ? null : q.parse, pc = PQ(p), rk = rank(q, o);
+    return tile(Yo + (heal(q) ? ' healing' : ' damage'), kN(val(q, o)) + '<em> ' + (heal(q) ? 'HPS' : 'DPS') + '</em>', '', (pc ? '<span style="color:' + pc + ';font-weight:700">Parse ' + Math.round(p) + '</span>' + (run.level ? ' at +' + run.level : '') + (rk ? ' · ' : '') : '') + rk, pc); };
+  const sec = (title, rows, sum, def) => { if (!rows.length) return ''; const k = 's:mp' + String(title).replace(/<[^>]+>/g, '').replace(/[^a-z]+/gi, '').toLowerCase(), o = OPEN[k] != null ? !!OPEN[k] : def !== false;
+    return '<div class="kc"><div class="kh" data-cf="' + k + '"' + (def === false ? ' data-cdef="0"' : '') + '><b>' + title + '</b>' + (sum ? '<span class="ksc' + (sum[1] ? ' ' + sum[1] : '') + '">· ' + sum[0] + '</span>' : '') + '<i>' + (o ? '–' : '+') + '</i></div>' + (o ? '<div class="kb">' + rows.join('') + '</div>' : '') + '</div>'; };
+  // (one line: a dot, the spell's icon, the name in bold and the rest in grey, the number on the right in the line's colour, + for the detail)
+  const SC = { bad: ['var(--bad)', 'var(--badT)'], warn: ['var(--warn)', 'var(--warn)'], ok: ['var(--good)', 'var(--goodT)'], okq: ['var(--good)', 'var(--soft)'], info: ['var(--faint)', 'var(--soft)'] };
+  const rv = (st, icon, label, rest, v, det, key) => { const c = SC[st] || SC.info, d = !!(det && key), o = d && !!OPEN[key];
+    return '<div class="krr mpr' + (d ? ' kopen' : '') + '"' + (d ? ' data-cr="' + esc(key) + '"' : '') + '><i class="kd" style="background:' + c[0] + '"></i>' + (icon || '<span class="ic0"></span>') +
+      '<div class="krb"><div class="krt"><span class="mpl">' + (label ? '<b>' + label + '</b>' + (rest ? ' <span class="of">' + rest + '</span>' : '') : rest) + '</span>' +
+      (v !== '' && v != null ? '<span class="krv" style="color:' + c[1] + '">' + v + '</span>' : '') + (d ? '<i class="kpl">' + (o ? '–' : '+') + '</i>' : '') + '</div>' + (o ? '<div class="mpd">' + det + '</div>' : '') + '</div></div>'; };
+  const timesW = (n) => (n === 1 ? 'once' : n + ' times');
+  const deathRow = (x, where) => rv('bad', '', '', (where ? '' : nm(x.who) + ' died to ') + (where ? 'Died to ' : '') + '<b>' + esc(x.to) + '</b>' + (x.from ? ' (' + esc(x.from) + ')' : '') + (where ? ', ' + where : '') + '.' + (x.defs ? '' : ' <span style="color:var(--badT)">No defensive in the 30 s before.</span>'), mmssP(x.t));
+  // (avoidable damage, from the dungeon's lists: by spell, the most damage first; who: true names everyone hit; each hit's pull, when known, in the detail)
+  const avRows = (L, who, kp) => { const by = new Map(); for (const a of L) { const b = by.get(a.spell) || { n: 0, dmg: 0, id: a.id, who: new Map(), pulls: new Map() }; b.n += a.n; b.dmg += a.dmg; b.who.set(a.who, (b.who.get(a.who) || 0) + a.n); if (a.pull) b.pulls.set(a.pull, (b.pulls.get(a.pull) || 0) + a.n); by.set(a.spell, b); }
+    return [...by].sort((x, y) => y[1].dmg - x[1].dmg).map(([sp, b]) => rv('warn', ic(b.id), esc(sp), who === true ? [...b.who].sort((x, y) => y[1] - x[1]).map(([w, c]) => nm(w) + (c > 1 ? ' ×' + c : '')).join(', ') : '',
+      b.n + (b.n === 1 ? ' hit' : ' hits') + '<small>' + kN(b.dmg) + '</small>', b.pulls.size ? pcht([...b.pulls].sort((x, y) => x[0] - y[0]).map(([p, c]) => [p, '×' + c])) : '', 'r:mpa:' + kp + ':' + sp)); };
   const sumBy = (L) => { const m = new Map(); for (const d of L || []) { const b = m.get(d.spell) || { on: 0, removed: 0 }; b.on += d.on; b.removed += d.removed; m.set(d.spell, b); } return [...m].filter(([, b]) => b.on); };
-  const dpRows = (debs, ebuffs) => sumBy(debs).map(([sp, b]) => row(b.removed < b.on / 2 ? 'var(--warn)' : 'var(--muted)', '<b>' + esc(sp) + '</b> landed on players ' + (b.on === 1 ? 'once' : b.on + ' times') + ', ' + (b.removed ? b.removed + ' dispelled' : 'none dispelled') + '.'))
-    .concat(sumBy(ebuffs).map(([sp, b]) => row(b.removed < b.on / 2 ? 'var(--warn)' : 'var(--muted)', '<b>' + esc(sp) + '</b> went up on enemies ' + (b.on === 1 ? 'once' : b.on + ' times') + ', ' + (b.removed ? b.removed + ' purged or soothed' : 'none purged or soothed') + '.')));
-  /* (a pull's casts that got through, repeats grouped (Nov 1, the Design studio: one line, not 11 near-identical ones): the spell, how many
-     times, whose kick was ready each time (or how often each), and the times as small chips. who: the player whose Me view this is) */
-  const gotGroup = (L, who) => { const by = new Map(); for (const x of L) { const k = x.spell + '|' + x.mob; if (!by.has(k)) by.set(k, []); by.get(k).push(x); }
+  const dpRows = (debs, ebuffs) => sumBy(debs).map(([sp, b]) => rv(b.removed < b.on / 2 ? 'warn' : 'okq', '', esc(sp), 'on players ' + timesW(b.on), b.removed + ' dispelled'))
+    .concat(sumBy(ebuffs).map(([sp, b]) => rv(b.removed < b.on / 2 ? 'warn' : 'okq', '', esc(sp), 'on enemies ' + timesW(b.on), b.removed + ' purged or soothed')));
+  /* (a pull's casts that got through, repeats grouped: the spell, how many times, and in the detail whose kick was ready each time (or how often
+     each) and the times. who: the player whose Me view this is) */
+  const gotRows = (L, who) => { const by = new Map(); for (const x of L) { const k = x.spell + '|' + x.mob; if (!by.has(k)) by.set(k, []); by.get(k).push(x); }
     return [...by.values()].sort((a, b) => b.length - a.length || a[0].t - b[0].t).map((g) => { const x = g[0], n = g.length, cnt = new Map();
       for (const y of g) for (const r of y.ready) if (r !== who) cnt.set(r, (cnt.get(r) || 0) + 1);
       const each = [...cnt.values()].every((c) => c === n), names = [...cnt].sort((a, b) => b[1] - a[1]).map(([r, c]) => nm(r) + (n > 1 && !each ? ' (' + c + ')' : '')).join(', ');
-      const ready = x.cc ? ' Nobody stunned or stopped it.' : cnt.size ? ' ' + (who ? 'Also ready' : 'Kick ready') + (n > 1 && each ? ' each time' : '') + ': ' + names + '.' : '';
-      return row('var(--bad)', '<b>' + esc(x.spell) + '</b> from ' + esc(x.mob) + ' got through' + (n > 1 ? ' ' + n + ' times' : '') + '.' + ready + (n > 1 ? '<span class="mpcs">' + g.map((y) => '<span class="mptm">' + mmssP(y.t) + '</span>').join('') + '</span>' : ' <span class="mptm">' + mmssP(x.t) + '</span>')); }); };
-  /* (Rotation per pull (Nov 1, Flex: "will this also include rotation break down pull by pull?"): the website's checks on each pull in the card's
-     short lines, then what went well; across the key, the fixes that came up in the most pulls, with those pulls as chips) */
-  /* (Design studio round 461: a fix line carries its spell icon; the check's name bold; "6/19" as "6 of 19"; "in all 9 pulls" when it was every pull) */
-  const rowI = (dot, icon, html) => icon ? '<div class="kr ri"><span class="kd" style="background:' + dot + '"></span><span>' + icon + '</span><span>' + html + '</span></div>' : row(dot, html);
+      const why = x.cc ? 'Nobody stunned or stopped it.' : cnt.size ? (who ? 'Also ready' : 'Kick ready') + (n > 1 && each ? ' each time' : '') + ': ' + names + '.' : '';
+      return rv('bad', ic(x.id), esc(x.spell), 'from ' + esc(x.mob), n > 1 ? n + ' times' : mmssP(x.t), (why ? '<p class="kwhy">' + why + '</p>' : '') + (n > 1 ? '<span class="mpcs">' + g.map((y) => '<span class="mptm">' + mmssP(y.t) + '</span>').join('') + '</span>' : ''), 'r:mpg:' + (who || 'g') + ':' + x.spell + '|' + x.mob); }); };
+  /* (Rotation per pull: the website's checks on each pull, with the check's own number on the right; across the key, the fixes that came up in the
+     most pulls, with those pulls as chips; what went well as a green line) */
   const boldL = (label, line) => { const L = String(line || label || ''), b = String(label || ''); return b && L.indexOf(b) === 0 ? '<b>' + esc(b) + '</b>' + esc(L.slice(b.length)) : esc(L); };
+  const whyL = (label, line) => (line && String(line) !== String(label) ? '<p class="kwhy">' + boldL(label, line) + '</p>' : '');
   const ofV = (v) => String(v || '').replace(/^(\d+)\/(\d+)$/, '$1 of $2');
-  const inP = (k, of, pulls) => (k >= of ? 'in all ' + of + ' pulls.' : 'in ' + k + ' of ' + of + ' pulls.' + (pulls ? pch(pulls) : ''));
-  const RC = { bad: 'var(--bad)', warn: 'var(--warn)' }, rotOf = (q, n) => (q.rot && q.rot[n]) || null;
-  const rotRows = (r) => (r ? r.fix.map((f) => rowI(RC[f[0]] || 'var(--warn)', f[1] ? ic(f[1]) : '', boldL(f[2], f[4] || f[2]))).concat(r.good && r.good.length ? [row('var(--good)', 'Went well: ' + r.good.map(esc).join(', ') + '.')] : []) : []);
-  const rotKey = (q) => (q.rot ? q.rot.fix.map((f) => rowI(RC[f.st] || 'var(--warn)', f.ic ? ic(f.ic) : '', '<b>' + esc(f.label) + '</b> needed work ' + inP(f.pulls.length, q.rot.pulls, f.pulls))) : []);
-  /* (the timer story (Nov 1, Flex: "yea"): the result against the timer and the next upgrade's mark, what the deaths cost and whether that
-     changed the result, fighting against the time between pulls, and the longest pulls) */
+  const inPv = (k, of) => (k >= of ? 'all ' + of + ' pulls' : k + ' of ' + of + ' pulls');
+  const RS = { bad: 'bad', warn: 'warn' }, rotOf = (q, n) => (q.rot && q.rot[n]) || null;
+  const lim = (key, L, n) => (OPEN['m:' + key] || L.length <= n ? L : L.slice(0, n).concat(['<div class="kmore" data-cmore="' + esc(key) + '">Show ' + (L.length - n) + ' more</div>']));
+  const goodL = (L) => (L.length ? ['<p class="kgood">Done right: ' + L.map(esc).join(', ') + '.</p>'] : []);
+  const rotRows = (r, kp) => (r ? lim('mpr' + kp, r.fix.map((f) => rv(RS[f[0]] || 'warn', f[1] ? ic(f[1]) : '', esc(f[2]), '', esc(ofV(f[3])), whyL(f[2], f[4]), 'r:mpr:' + kp + ':' + f[2])), 3).concat(goodL(r.good || [])) : []);
+  const rotKey = (q) => { if (!q.rot) return [];
+    const good = [...new Set(R.pulls.flatMap((o) => (o.rot && o.rot[q.name] ? o.rot[q.name].good || [] : [])))].filter((g) => !q.rot.fix.some((f) => f.label === g)).slice(0, 4);
+    return lim('mprk' + q.name, q.rot.fix.map((f) => rv(RS[f.st] || 'warn', f.ic ? ic(f.ic) : '', esc(f.label), '', inPv(f.pulls.length, q.rot.pulls), whyL(f.label, f.line) + pch(f.pulls) + '<p class="khow">How it\'s judged: the website\'s Rotation checks, pull by pull.</p>', 'r:mprk:' + q.name + ':' + f.label)), 3).concat(goodL(good)); };
+  const worstOf = (L, k) => (L.some((f) => f[k] === 'bad') ? 'r' : 'w');
+  /* (the timer story: the bar against the three upgrade marks, the result against the timer and the next upgrade's mark, what the deaths cost and
+     whether that changed the result, fighting against the time between pulls, and the longest pulls) */
   const lvW = (n) => n + (n === 1 ? ' level' : ' levels'), ago = (s) => { const r = Math.round(s); return r < 60 ? r + (r === 1 ? ' second' : ' seconds') : mmssP(r); }; /* ("3 seconds short", not "0:03 short") */
+  const c0k = run.clock, mark0 = c0k ? (c0k.up === 3 ? c0k.par * 0.6 : c0k.up === 2 ? c0k.par * 0.8 : c0k.par) : 0;
+  const clockSum = c0k ? (c0k.up ? ['in time, ' + ago(mark0 - c0k.time) + ' to spare', 'g'] : ['over by ' + ago(c0k.over), 'r']) : null;
   const clockRows = () => { const c = run.clock; if (!c) return [];
-    const L = [], mark = c.up === 3 ? c.par * 0.6 : c.up === 2 ? c.par * 0.8 : c.par;
-    /* (Design studio round 462: the run against the three upgrade marks, at a glance) */
+    const L = [], mark = mark0;
     { const W = Math.max(c.par, c.time) * 1.05, X = (t) => Math.max(0, Math.min(100, t / W * 100)).toFixed(2) + '%', M = [[0.6, '+3'], [0.8, '+2'], [1, '+1']];
       const nowR = c.time / W > 0.84, gh = c.deathCost && c.time - c.deathCost > 0 ? c.time - c.deathCost : null;
       L.push('<div class="mptb' + (c.up ? '' : ' over') + '" role="img" aria-label="' + esc(mmssP(c.time) + ' of ' + mmssP(c.par) + (c.up ? ', the key goes up ' + c.up : ', over time')) + '"><div class="tr"><i class="fl" style="width:' + X(c.time) + '"></i>' +
         M.map(([f]) => '<i class="mk' + (c.time <= c.par * f ? ' won' : '') + '" style="left:' + X(c.par * f) + '"></i>').join('') + (gh != null ? '<i class="gh" style="left:' + X(gh) + '" title="Without the deaths: ' + mmssP(gh) + '"></i>' : '') +
         '<span class="now' + (nowR ? ' r' : '') + '" style="left:' + X(c.time) + '">' + mmssP(c.time) + '</span></div><div class="ls">' +
         M.map(([f, l]) => '<span class="' + (c.time <= c.par * f ? 'won' : '') + '" style="left:' + X(c.par * f) + '">' + l + ' <em>' + mmssP(c.par * f) + '</em></span>').join('') + '</div></div>'); }
-    if (c.up) L.push(row('var(--good)', '<b>In time</b>: ' + mmssP(c.time) + ' of ' + mmssP(c.par) + '. The key goes up ' + lvW(c.up) + ', with ' + ago(mark - c.time) + ' to spare.' + (c.next ? ' ' + lvW(c.up + 1) + ' needed ' + mmssP(c.next) + ', ' + ago(c.time - c.next) + ' short.' : '')));
-    else L.push(row('var(--bad)', '<b>Over time</b> by ' + ago(c.over) + ': ' + mmssP(c.time) + ' of ' + mmssP(c.par) + '.'));
-    if (c.deathCost) L.push(row(c.upWithout > c.up ? 'var(--bad)' : 'var(--warn)', (c.deaths === 1 ? 'The death' : 'The ' + c.deaths + ' deaths') + ' cost ' + ago(c.deathCost) + ' on the timer.' + (c.upWithout > c.up ? ' Without ' + (c.deaths === 1 ? 'it' : 'them') + (c.up ? ', the key goes up ' + lvW(c.upWithout) + '.' : ', the key was in time.') : '')));
-    L.push(row('var(--muted)', mmssP(c.fight) + ' fighting, ' + mmssP(c.between) + ' between pulls.'));
-    L.push(row('var(--muted)', 'Longest pulls: ' + R.pulls.slice().sort((a, b) => b.dur - a.dur).slice(0, 3).map((q) => (q.boss ? esc(q.boss) : 'Pull ' + q.n) + ' ' + mmssP(q.dur)).join(', ') + '.'));
+    if (c.up) { L.push(rv('ok', '', 'In time', mmssP(c.time) + ' of ' + mmssP(c.par) + ', the key goes up ' + lvW(c.up), ago(mark - c.time) + ' to spare'));
+      if (c.next) L.push(rv('warn', '', 'Up ' + lvW(c.up + 1), 'needed ' + mmssP(c.next), ago(c.time - c.next) + ' short')); }
+    else L.push(rv('bad', '', 'Over time', mmssP(c.time) + ' of ' + mmssP(c.par), 'by ' + ago(c.over)));
+    if (c.deathCost) L.push(rv(c.upWithout > c.up ? 'bad' : 'warn', '', '', (c.deaths === 1 ? 'The death' : 'The ' + c.deaths + ' deaths') + ' cost time on the timer.' + (c.upWithout > c.up ? ' Without ' + (c.deaths === 1 ? 'it' : 'them') + (c.up ? ', the key goes up ' + lvW(c.upWithout) + '.' : ', the key was in time.') : ''), ago(c.deathCost)));
+    L.push(rv('info', '', '', mmssP(c.fight) + ' fighting, ' + mmssP(c.between) + ' between pulls.', ''));
+    L.push(rv('info', '', '', 'Longest pulls: ' + R.pulls.slice().sort((a, b) => b.dur - a.dur).slice(0, 3).map((q) => (q.boss ? esc(q.boss) : 'Pull ' + q.n) + ' ' + mmssP(q.dur)).join(', ') + '.', ''));
     return L; };
   const stat = run.left ? 'Left early' : run.timed ? 'Timed' : 'Over time';
   const runHead = '<p class="mph">' + esc(run.dungeon) + ' +' + run.level + '<small>' + stat + (run.timeMs ? ' · ' + mmssP(run.timeMs / 1000) : '') + (run.score ? ' · run score ' + Math.round(run.score) : '') + ' · ' + R.pulls.length + ' pulls</small></p>';
   const pullHead = (o) => '<p class="mph">' + (o.boss ? esc(o.boss) + (o.kill ? ' · Kill' : '') : 'Pull ' + o.n) + ' · ' + mmssP(o.dur) + '<small>at ' + mmssP(o.s) + ' · ' + o.mobs.slice(0, 5).map((m) => (m[1] > 1 ? m[1] + ' ' : '') + esc(m[0])).join(', ') + '</small></p>';
   const o = MPULL ? R.pulls[MPULL - 1] : null;
   let body = tabs + (o ? pullHead(o) : ''); void runHead;
-  if (MVIEW === 'me' && !me) body += sec('Me', [row('var(--muted)', 'Your character isn\'t in this key. Step to anyone with ‹ ›, or open Group.')]);
+  if (MVIEW === 'me' && !me) body += sec('Me', [rv('info', '', '', 'Your character isn\'t in this key. Step to anyone with ‹ ›, or open Group.', '')]);
   else if (me && !o) {
-    // (Me, the whole key: your numbers, what got through on your kick, your deaths, and your key pull by pull)
+    // (Me, the whole key: your numbers, the timer, what got through on your kick, your deaths, avoidable damage, rotation, and your key pull by pull)
     const n = me.name, th = R.pulls.flatMap((q) => mineThrough(q, n).map((x) => Object.assign({ pull: q.n }, x)));
+    const by = new Map(); for (const x of th) { if (!by.has(x.spell)) by.set(x.spell, { n: 0, mob: x.mob, id: x.id, ev: [], also: new Map() }); const b = by.get(x.spell); b.n++; b.ev.push(x); for (const r of x.ready) if (r !== n) b.also.set(r, (b.also.get(r) || 0) + 1); }
+    const thL = [...by].sort((a, b) => b[1].n - a[1].n);
     { const ab = [...new Set(R.pulls.flatMap((q) => q.deaths.filter((x) => x.who === n && !x.defs).map((x) => x.to)))], tips = [];
-      if (ab.length) tips.push('Use a defensive before ' + (ab.length === 1 ? esc(ab[0]) : esc(ab[0]) + ' and ' + esc(ab[1])) + ': ' + (ab.length === 1 ? 'that death had' : 'those deaths had') + ' none in the 30 s before.');
-      const f0 = me.rot && me.rot.fix[0]; if (f0) tips.push(esc(f0.label) + ' needed work ' + (f0.pulls.length >= me.rot.pulls ? 'in all ' + me.rot.pulls + ' pulls.' : 'in ' + f0.pulls.length + ' of ' + me.rot.pulls + ' pulls.'));
+      if (thL.length) tips.push('Save ' + (me === mine ? 'your' : 'the') + ' kick for <b>' + esc(thL[0][0]) + '</b>' + (thL[1] ? ' and <b>' + esc(thL[1][0]) + '</b>' : '') + ': ' + th.length + ' got through while it was ready.');
+      if (ab.length) tips.push('Use a defensive before <b>' + esc(ab[0]) + '</b>' + (ab.length > 1 ? ' and <b>' + esc(ab[1]) + '</b>' : '') + ': ' + (ab.length === 1 ? 'that death had' : 'those deaths had') + ' none in the 30 s before.');
+      const f0 = me.rot && me.rot.fix[0]; if (f0) tips.push('<b>' + esc(f0.label) + '</b> needed work ' + (f0.pulls.length >= me.rot.pulls ? 'in all ' + me.rot.pulls + ' pulls.' : 'in ' + f0.pulls.length + ' of ' + me.rot.pulls + ' pulls.'));
       if (tips.length) body += '<div class="kyou"><div class="kl">NEXT KEY</div>' + (tips.length > 1 ? '<ol class="ktips">' + tips.map((t) => '<li>' + t + '</li>').join('') + '</ol>' : '<p class="ktip1">' + tips[0] + '</p>') + '</div>'; } /* (NEXT KEY (Nov 1)) */
-    body += '<div class="ktiles">' + tile(Yo + (heal(me) ? ' HPS' : ' DPS'), kN(val(me)), '', rank(me)) + tile(Yo + ' kicks and stops', ks(me.kicks, me.stops)) +
-      (me.kick ? tile('Got through, ' + yo + ' kick ready', th.length, th.length > 5 ? 'b' : th.length ? 'w' : '') : tile(Yo + ' dispels', me.dispels)) + (R.list ? tile('Avoidable damage', (me.avoid || 0) + (me.avoid === 1 ? ' hit' : ' hits'), me.avoid ? 'w' : '') : '') + tile('Deaths', me.deaths, me.deaths ? 'b' : '') + tile('Defensives', me.defs) + '</div>';
-    body += sec('Timer', clockRows());
-    const by = new Map(); for (const x of th) { if (!by.has(x.spell)) by.set(x.spell, { n: 0, mob: x.mob, pulls: new Set() }); const b = by.get(x.spell); b.n++; b.pulls.add(x.pull); }
-    body += sec('Got through while ' + yo + ' kick was ready', [...by].sort((a, b) => b[1].n - a[1].n).map(([sp, b]) => row('var(--bad)', '<b>' + esc(sp) + '</b> from ' + esc(b.mob) + ', ' + (b.n === 1 ? 'once' : b.n + ' times') + '.' + pch(b.pulls))));
-    body += sec(Yo + ' deaths', R.pulls.flatMap((q) => q.deaths.filter((x) => x.who === n).map((x) => deathRow(x, q.boss ? esc(q.boss) : 'Pull ' + q.n))));
-    body += sec('Avoidable damage', avRows(R.pulls.flatMap((q) => myAvoid(q, n)), me === mine ? 'you' : esc(n)));
-    body += sec('Rotation across the key', rotKey(me));
-    body += '<div class="kc"><div class="kh"><b>' + Yo + ' key, pull by pull</b></div><div class="kb"><table class="mpt"><tr><th>Pull</th><th class="r">' + (heal(me) ? 'HPS' : 'DPS') + '</th><th class="r">Kicks</th><th class="r">Stops</th>' + (me.kick ? '<th class="r">Got through</th>' : '<th class="r">Dispels</th>') + (R.list ? '<th class="r">Avoidable</th>' : '') + '<th class="r">Defensives</th><th class="r">Deaths</th></tr>' +
+    body += '<div class="ktiles">' + numT(me) + tile(Yo + ' kicks and stops', ks(me.kicks, me.stops)) +
+      (me.kick ? tile('Got through, ' + yo + ' kick ready', th.length, th.length > 5 ? 'b' : th.length ? 'w' : 'g') : tile(Yo + ' dispels', me.dispels)) + (R.list ? tile('Avoidable damage', (me.avoid || 0) + '<em> ' + (me.avoid === 1 ? 'hit' : 'hits') + '</em>', me.avoid ? 'w' : 'g') : '') + tile('Deaths', me.deaths, me.deaths ? 'b' : 'g') + tile('Defensives', me.defs) + '</div>';
+    body += sec('Timer', clockRows(), clockSum);
+    body += sec('Got through while ' + yo + ' kick was ready', thL.map(([sp, b]) => rv('bad', ic(b.id), esc(sp), 'from ' + esc(b.mob), timesW(b.n),
+      (b.also.size ? '<p class="kwhy">Also ready: ' + [...b.also].sort((x, y) => y[1] - x[1]).map(([r, c]) => nm(r) + (c > 1 ? ' (' + c + ')' : '')).join(', ') + '.</p>' : '') + pcht(b.ev.map((x) => [x.pull, mmssP(x.t)])) + '<p class="knx"><b>Next time:</b> save the kick for it.</p>', 'r:mpk:' + n + ':' + sp)), [th.length + ' got through', 'r']);
+    const dd = R.pulls.flatMap((q) => q.deaths.filter((x) => x.who === n).map((x) => deathRow(x, q.boss ? esc(q.boss) : 'Pull ' + q.n)));
+    body += sec(Yo + ' deaths', dd, [dd.length + (dd.length === 1 ? ' death' : ' deaths'), 'r']);
+    body += sec('Avoidable damage', avRows(R.pulls.flatMap((q) => myAvoid(q, n).map((a) => Object.assign({ pull: q.n }, a))), false, n), [(me.avoid || 0) + (me.avoid === 1 ? ' hit' : ' hits'), 'w']);
+    body += sec('Rotation across the key', rotKey(me), me.rot && me.rot.fix.length ? [me.rot.fix.length + ' to fix', worstOf(me.rot.fix, 'st')] : null);
+    body += sec(Yo + ' key, pull by pull', ['<table class="mpt"><tr><th>Pull</th><th class="r">' + (heal(me) ? 'HPS' : 'DPS') + '</th><th class="r">Kicks</th><th class="r">Stops</th>' + (me.kick ? '<th class="r">Got through</th>' : '<th class="r">Dispels</th>') + (R.list ? '<th class="r">Avoidable</th>' : '') + '<th class="r">Defensives</th><th class="r">Deaths</th></tr>' +
       R.pulls.map((q) => { const my = (k) => q[k].filter((x) => x.who === n).length, g = me.kick ? mineThrough(q, n).length : my('dispels'), d = my('deaths'), av = myAvoid(q, n).reduce((a, x) => a + x.n, 0);
-        return '<tr data-mp="' + q.n + '" title="Open this pull"><td>' + (q.boss ? esc(q.boss) : 'Pull ' + q.n) + '</td><td class="r">' + kN(val(me, q)) + '</td><td class="r">' + my('kicks') + '</td><td class="r">' + my('stops') + '</td><td class="r"' + (me.kick && g ? ' style="color:var(--badT)"' : '') + '>' + g + '</td>' + (R.list ? '<td class="r"' + (av ? ' style="color:var(--warn)"' : '') + '>' + av + '</td>' : '') + '<td class="r">' + my('defs') + '</td><td class="r"' + (d ? ' style="color:var(--badT)"' : '') + '>' + d + '</td></tr>'; }).join('') + '</table></div></div>';
+        return '<tr data-mp="' + q.n + '" title="Open this pull"><td>' + (q.boss ? esc(q.boss) : 'Pull ' + q.n) + '</td><td class="r">' + kN(val(me, q)) + '</td><td class="r">' + my('kicks') + '</td><td class="r">' + my('stops') + '</td><td class="r"' + (me.kick && g ? ' style="color:var(--badT)"' : '') + '>' + g + '</td>' + (R.list ? '<td class="r"' + (av ? ' style="color:var(--warn)"' : '') + '>' + av + '</td>' : '') + '<td class="r">' + my('defs') + '</td><td class="r"' + (d ? ' style="color:var(--badT)"' : '') + '>' + d + '</td></tr>'; }).join('') + '</table>'], [R.pulls.length + ' pulls', ''], false);
   } else if (me) {
-    // (Me, one pull: your number and rank, what got through on your kick, your kicks and stops, deaths, defensives and dispels)
-    const n = me.name, th = mineThrough(o, n), my = (k) => (o[k] || []).filter((x) => x.who === n), dd = my('deaths'), av = myAvoid(o, n);
-    body += '<div class="ktiles">' + tile(Yo + (heal(me) ? ' HPS' : ' DPS'), kN(val(me, o)), '', rank(me, o)) + tile(Yo + ' kicks and stops', ks(my('kicks').length, my('stops').length)) +
-      (me.kick ? tile('Got through, ' + yo + ' kick ready', th.length, th.length > 2 ? 'b' : th.length ? 'w' : '') : tile(Yo + ' dispels', my('dispels').length)) + (av.length ? tile('Avoidable damage', av.reduce((a, x) => a + x.n, 0) + ' hit' + (av.reduce((a, x) => a + x.n, 0) === 1 ? '' : 's'), 'w') : '') + tile('Defensives', my('defs').length) + (dd.length ? tile('Deaths', dd.length, 'b') : '') + '</div>';
+    // (Me, one pull: your number and rank, what got through on your kick, your deaths, avoidable damage, rotation, kicks and stops, defensives and dispels)
+    const n = me.name, th = mineThrough(o, n), my = (k) => (o[k] || []).filter((x) => x.who === n), dd = my('deaths'), av = myAvoid(o, n), avN = av.reduce((a, x) => a + x.n, 0);
+    body += '<div class="ktiles">' + numT(me, o) + tile(Yo + ' kicks and stops', ks(my('kicks').length, my('stops').length)) +
+      (me.kick ? tile('Got through, ' + yo + ' kick ready', th.length, th.length > 2 ? 'b' : th.length ? 'w' : 'g') : tile(Yo + ' dispels', my('dispels').length)) + (av.length ? tile('Avoidable damage', avN + '<em> ' + (avN === 1 ? 'hit' : 'hits') + '</em>', 'w') : '') + tile('Defensives', my('defs').length) + (dd.length ? tile('Deaths', dd.length, 'b') : '') + '</div>';
     const rt = rotOf(o, n);
-    if (!th.length && !dd.length && !av.length && !(rt && rt.fix.length)) body += sec('This pull', [row('var(--good)', 'Nothing to fix for ' + (me === mine ? 'you' : esc(n)) + ' on this pull.')]);
-    body += sec('Got through while ' + yo + ' kick was ready', gotGroup(th, n));
-    body += sec('Deaths', dd.map((x) => deathRow(x)));
-    body += sec('Avoidable damage', avRows(av, me === mine ? 'you' : esc(n)));
-    body += sec('Rotation', rotRows(rt));
-    body += sec('Kicks and stops', my('kicks').map((x) => ['k', x]).concat(my('stops').map((x) => ['s', x])).sort((a, b) => a[1].t - b[1].t).map(([k, x]) => row('var(--good)', mmssP(x.t) + ' · ' + (k === 'k' ? 'Kicked' : 'Stopped') + ' <b>' + esc(x.spell) + '</b> from ' + esc(x.mob) + (k === 'k' ? ' (' + esc(x.with) + ')' : ' with ' + esc(x.with)) + '.')));
-    body += sec('Defensives', my('defs').map((x) => row('var(--muted)', mmssP(x.t) + ' · ' + esc(x.name) + '.')));
-    body += sec('Dispels and purges', my('dispels').map((x) => row('var(--muted)', mmssP(x.t) + ' · Removed ' + esc(x.removed || 'a debuff') + (x.on ? ' from ' + esc(x.on) : '') + '.'))
-      .concat(my('purges').map((x) => row('var(--muted)', mmssP(x.t) + ' · Took ' + esc(x.removed || 'a buff') + ' off ' + esc(x.on || 'an enemy') + '.'))));
+    if (!th.length && !dd.length && !av.length && !(rt && rt.fix.length)) body += sec('This pull', [rv('ok', '', '', 'Nothing to fix for ' + (me === mine ? 'you' : esc(n)) + ' on this pull.', '')]);
+    body += sec('Got through while ' + yo + ' kick was ready', gotRows(th, n), [th.length + ' got through', 'r']);
+    body += sec('Deaths', dd.map((x) => deathRow(x)), [dd.length + (dd.length === 1 ? ' death' : ' deaths'), 'r']);
+    body += sec('Avoidable damage', avRows(av, false, n + ':' + o.n), [avN + (avN === 1 ? ' hit' : ' hits'), 'w']);
+    body += sec('Rotation', rotRows(rt, n + ':' + o.n), rt && rt.fix.length ? [rt.fix.length + ' to fix', worstOf(rt.fix, 0)] : null);
+    const kL = my('kicks').map((x) => ['k', x]).concat(my('stops').map((x) => ['s', x])).sort((a, b) => a[1].t - b[1].t);
+    body += sec('Kicks and stops', kL.map(([k, x]) => rv('okq', '', '', (k === 'k' ? 'Kicked' : 'Stopped') + ' <b>' + esc(x.spell) + '</b> from ' + esc(x.mob) + (k === 'k' ? ' (' + esc(x.with) + ')' : ' with ' + esc(x.with)) + '.', mmssP(x.t))), [my('kicks').length + ' kicks · ' + my('stops').length + ' stops', 'g']);
+    body += sec('Defensives', my('defs').map((x) => rv('info', '', '', esc(x.name) + '.', mmssP(x.t))), [String(my('defs').length), '']);
+    body += sec('Dispels and purges', my('dispels').map((x) => rv('okq', '', '', 'Removed <b>' + esc(x.removed || 'a debuff') + '</b>' + (x.on ? ' from ' + esc(x.on) : '') + '.', mmssP(x.t)))
+      .concat(my('purges').map((x) => rv('okq', '', '', 'Took <b>' + esc(x.removed || 'a buff') + '</b> off ' + esc(x.on || 'an enemy') + '.', mmssP(x.t)))));
   } else if (!o) {
     const C0 = R.casts, nT = C0.through + (C0.ccThrough || 0), deaths = R.pulls.reduce((a, q) => a + q.deaths.length, 0), slow = R.pulls.filter((q) => !q.boss).sort((a, b) => b.dur - a.dur)[0];
-    body += '<div class="ktiles">' + tile(R.list ? 'Must-stop casts that got through' : 'Casts that got through', nT, nT > 5 ? 'b' : nT ? 'w' : '') + tile('Kicks and stops', ks(C0.kicked, C0.stopped)) + (R.list ? tile('Avoidable damage', (R.avoid || 0) + (R.avoid === 1 ? ' hit' : ' hits'), R.avoid > 10 ? 'b' : R.avoid ? 'w' : '') : '') + tile('Deaths', deaths, deaths ? 'b' : '') + (slow ? tile('Slowest pull', 'Pull ' + slow.n + ' · ' + mmssP(slow.dur)) : '') + '</div>';
-    body += sec('Timer', clockRows());
+    body += '<div class="ktiles">' + tile(R.list ? 'Must-stop casts that got through' : 'Casts that got through', nT, nT > 5 ? 'b' : nT ? 'w' : 'g') + tile('Kicks and stops', ks(C0.kicked, C0.stopped)) + (R.list ? tile('Avoidable damage', (R.avoid || 0) + '<em> ' + (R.avoid === 1 ? 'hit' : 'hits') + '</em>', R.avoid > 10 ? 'b' : R.avoid ? 'w' : 'g') : '') + tile('Deaths', deaths, deaths ? 'b' : 'g') + (slow ? tile('Slowest pull', 'Pull ' + slow.n + ' · ' + mmssP(slow.dur)) : '') + '</div>';
+    body += sec('Timer', clockRows(), clockSum);
     // (what kept getting through, by spell, and whose kicks were ready most; a must-stop-with-CC cast says nobody stopped it)
-    const by = new Map(); for (const q of R.pulls) for (const x of q.through) { const k = x.spell; if (!by.has(k)) by.set(k, { n: 0, mob: x.mob, cc: !!x.cc, pulls: new Set(), ready: new Map() }); const b = by.get(k); b.n++; b.pulls.add(q.n); for (const r of x.ready) b.ready.set(r, (b.ready.get(r) || 0) + 1); }
-    body += sec('What got through', [...by].sort((a, b) => b[1].n - a[1].n).map(([sp, b]) => row('var(--bad)', '<b>' + esc(sp) + '</b> from ' + esc(b.mob) + ' got through ' + (b.n === 1 ? 'once' : b.n + ' times') + '.' + (b.cc ? ' It needs a stun or other crowd control.' : ' Kick ready: ' + [...b.ready].sort((x, y) => y[1] - x[1]).slice(0, 3).map(([n, c]) => nm(n) + ' (' + c + ')').join(', ') + '.') + pch(b.pulls))));
-    body += sec('Avoidable damage', avRows(R.pulls.flatMap((q) => q.avoid || []), true));
+    const by = new Map(); for (const q of R.pulls) for (const x of q.through) { const k = x.spell; if (!by.has(k)) by.set(k, { n: 0, mob: x.mob, id: x.id, cc: !!x.cc, pulls: new Set(), ready: new Map() }); const b = by.get(k); b.n++; b.pulls.add(q.n); for (const r of x.ready) b.ready.set(r, (b.ready.get(r) || 0) + 1); }
+    body += sec('What got through', [...by].sort((a, b) => b[1].n - a[1].n).map(([sp, b]) => rv('bad', ic(b.id), esc(sp), 'from ' + esc(b.mob), timesW(b.n),
+      '<p class="kwhy">' + (b.cc ? 'It needs a stun or other crowd control.' : b.ready.size ? 'Kick ready: ' + [...b.ready].sort((x, y) => y[1] - x[1]).slice(0, 3).map(([n, c]) => nm(n) + ' (' + c + ')').join(', ') + '.' : 'Nobody had a kick ready.') + '</p>' + pch(b.pulls), 'r:mpw:' + sp)), [nT + ' got through', nT > 5 ? 'r' : 'w']);
+    body += sec('Avoidable damage', avRows(R.pulls.flatMap((q) => (q.avoid || []).map((a) => Object.assign({ pull: q.n }, a))), true, 'g'), [(R.avoid || 0) + (R.avoid === 1 ? ' hit' : ' hits'), 'w']);
     body += sec('Dispels and purges', dpRows(R.pulls.flatMap((q) => q.debs || []), R.pulls.flatMap((q) => q.ebuffs || [])));
-    body += sec('Rotation across the key', ppl.filter((q) => q.rot && q.rot.fix.length).map((q) => { const f = q.rot.fix[0]; return rowI(RC[f.st] || 'var(--warn)', f.ic ? ic(f.ic) : '', nm(q.name) + ': <b>' + esc(f.label) + '</b> needed work ' + inP(f.pulls.length, q.rot.pulls, null)); }));
-    body += '<div class="kc"><div class="kh"><b>Everyone</b></div><div class="kb"><table class="mpt"><tr><th>Player</th><th class="r">DPS / HPS</th><th class="r">Kicks</th><th class="r">Stops</th><th class="r">Dispels</th>' + (R.list ? '<th class="r">Avoidable</th>' : '') + '<th class="r">Defensives</th><th class="r">Deaths</th></tr>' +
-      ppl.map((q) => '<tr><td>' + nm(q.name) + ' <span style="color:var(--faint)">' + esc(q.spec) + '</span></td><td class="r">' + (heal(q) ? kN(q.hps) + ' HPS' : kN(q.dps)) + '</td><td class="r">' + q.kicks + '</td><td class="r">' + q.stops + '</td><td class="r">' + (q.dispels + (q.purges || 0)) + '</td>' + (R.list ? '<td class="r"' + (q.avoid ? ' style="color:var(--warn)"' : '') + '>' + (q.avoid || 0) + '</td>' : '') + '<td class="r">' + q.defs + '</td><td class="r"' + (q.deaths ? ' style="color:var(--badT)"' : '') + '>' + q.deaths + '</td></tr>').join('') + '</table></div></div>';
+    const rk = ppl.filter((q) => q.rot && q.rot.fix.length);
+    body += sec('Rotation across the key', rk.map((q) => { const f = q.rot.fix[0]; return rv(RS[f.st] || 'warn', f.ic ? ic(f.ic) : '', nm(q.name) + ': ' + esc(f.label), q.rot.fix.length > 1 ? 'and ' + (q.rot.fix.length - 1) + ' more' : '', inPv(f.pulls.length, q.rot.pulls),
+      q.rot.fix.map((g) => '<p class="kwhy"><b>' + esc(g.label) + '</b>: ' + inPv(g.pulls.length, q.rot.pulls) + '</p>').join('') + pch(f.pulls), 'r:mpgk:' + q.name); }), rk.length ? [rk.length + (rk.length === 1 ? ' player' : ' players') + ' to fix', worstOf(rk.map((q) => q.rot.fix[0]), 'st')] : null);
+    body += sec('Everyone', ['<table class="mpt"><tr><th>Player</th><th class="r">DPS / HPS</th><th class="r">Kicks</th><th class="r">Stops</th><th class="r">Dispels</th>' + (R.list ? '<th class="r">Avoidable</th>' : '') + '<th class="r">Defensives</th><th class="r">Deaths</th></tr>' +
+      ppl.map((q) => '<tr><td>' + nm(q.name) + ' <span style="color:var(--faint)">' + esc(q.spec) + '</span></td><td class="r"' + (PQ(q.parse) ? ' style="color:' + PQ(q.parse) + ';font-weight:700"' : '') + '>' + (heal(q) ? kN(q.hps) + ' HPS' : kN(q.dps)) + '</td><td class="r">' + q.kicks + '</td><td class="r">' + q.stops + '</td><td class="r">' + (q.dispels + (q.purges || 0)) + '</td>' + (R.list ? '<td class="r"' + (q.avoid ? ' style="color:var(--warn)"' : '') + '>' + (q.avoid || 0) + '</td>' : '') + '<td class="r">' + q.defs + '</td><td class="r"' + (q.deaths ? ' style="color:var(--badT)"' : '') + '>' + q.deaths + '</td></tr>').join('') + '</table>'], [ppl.length + ' players', '']);
   } else {
-    body += sec('Got through', gotGroup(o.through, null));
-    body += sec('Avoidable damage', avRows(o.avoid || [], true));
+    body += sec('Got through', gotRows(o.through, null), [o.through.length + ' got through', o.through.length > 2 ? 'r' : 'w']);
+    const oav = o.avoid || [], oavN = oav.reduce((a, x) => a + x.n, 0);
+    body += sec('Avoidable damage', avRows(oav, true, 'g:' + o.n), [oavN + (oavN === 1 ? ' hit' : ' hits'), 'w']);
     // (kicks and stops, by player: what they stopped and with what)
     const per = new Map(); for (const x of o.kicks.concat(o.stops)) { if (!per.has(x.who)) per.set(x.who, { k: 0, s: 0, with: new Map() }); const q = per.get(x.who); if (o.kicks.includes(x)) q.k++; else { q.s++; q.with.set(x.with, (q.with.get(x.with) || 0) + 1); } }
-    body += sec('Kicks and stops', [...per].sort((a, b) => (b[1].k + b[1].s) - (a[1].k + a[1].s)).map(([n, q]) => row('var(--good)', nm(n) + ': ' + [q.k ? q.k + (q.k === 1 ? ' kick' : ' kicks') : '', q.s ? q.s + (q.s === 1 ? ' stop' : ' stops') + ' (' + [...q.with].map(([w, c]) => esc(w) + (c > 1 ? ' ×' + c : '')).join(', ') + ')' : ''].filter(Boolean).join(', ') + '.')));
-    body += sec('Deaths', o.deaths.map((x) => deathRow(x)));
-    body += sec('Rotation', ppl.filter((q) => rotOf(o, q.name)).map((q) => { const r = rotOf(o, q.name), f = r.fix[0];
-      return rowI(f ? RC[f[0]] || 'var(--warn)' : 'var(--good)', f && f[1] ? ic(f[1]) : '', nm(q.name) + ': ' + (f ? '<b>' + esc(f[2]) + '</b>' + (f[3] ? ' (' + esc(ofV(f[3])) + ')' : '') + (r.fix.length > 1 ? ', and ' + (r.fix.length - 1) + ' more' : '') : 'nothing to fix') + '.'); }));
+    body += sec('Kicks and stops', [...per].sort((a, b) => (b[1].k + b[1].s) - (a[1].k + a[1].s)).map(([n, q]) => rv('okq', '', '', nm(n) + ': ' + [q.k ? q.k + (q.k === 1 ? ' kick' : ' kicks') : '', q.s ? q.s + (q.s === 1 ? ' stop' : ' stops') + ' (' + [...q.with].map(([w, c]) => esc(w) + (c > 1 ? ' ×' + c : '')).join(', ') + ')' : ''].filter(Boolean).join(', ') + '.', String(q.k + q.s))), [o.kicks.length + ' kicks · ' + o.stops.length + ' stops', 'g']);
+    body += sec('Deaths', o.deaths.map((x) => deathRow(x)), [o.deaths.length + (o.deaths.length === 1 ? ' death' : ' deaths'), 'r']);
+    const rp = ppl.filter((q) => rotOf(o, q.name));
+    body += sec('Rotation', rp.map((q) => { const r = rotOf(o, q.name), f = r.fix[0];
+      return rv(f ? RS[f[0]] || 'warn' : 'ok', f && f[1] ? ic(f[1]) : '', nm(q.name) + (f ? ': ' + esc(f[2]) : ''), f ? (r.fix.length > 1 ? 'and ' + (r.fix.length - 1) + ' more' : '') : 'nothing to fix', f ? esc(ofV(f[3])) : '',
+        f ? r.fix.map((g) => whyL(g[2], g[4]) || '<p class="kwhy"><b>' + esc(g[2]) + '</b> ' + esc(ofV(g[3])) + '</p>').join('') : '', 'r:mpgp:' + o.n + ':' + q.name); }));
     const dpl = new Map(); for (const x of o.defs) dpl.set(x.who, (dpl.get(x.who) || []).concat(x.name));
-    body += sec('Defensives', [...dpl].map(([n, l]) => row('var(--muted)', nm(n) + ': ' + esc([...new Set(l)].join(', ')) + (l.length > 1 ? ' (' + l.length + ')' : '') + '.')));
-    body += sec('Dispels and purges', dpRows(o.debs, o.ebuffs).concat(o.dispels.length ? [row('var(--muted)', o.dispels.length + (o.dispels.length === 1 ? ' dispel' : ' dispels') + ': ' + [...new Set(o.dispels.map((x) => x.who))].map(nm).join(', ') + '.')] : [])
-      .concat((o.purges || []).length ? [row('var(--muted)', o.purges.length + (o.purges.length === 1 ? ' purge or soothe' : ' purges and soothes') + ': ' + [...new Set(o.purges.map((x) => x.who))].map(nm).join(', ') + '.')] : []));
-    body += '<div class="kc"><div class="kh"><b>Damage and healing</b></div><div class="kb"><table class="mpt"><tr><th>Player</th><th class="r">DPS</th><th class="r">HPS</th></tr>' +
-      ppl.map((q) => [q, o.dmg[q.name] || 0, o.heal[q.name] || 0]).sort((a, b) => b[1] - a[1]).map(([q, d, hh]) => '<tr><td>' + nm(q.name) + '</td><td class="r">' + kN(d) + '</td><td class="r">' + (hh ? kN(hh) : '—') + '</td></tr>').join('') + '</table></div></div>';
+    body += sec('Defensives', [...dpl].map(([n, l]) => rv('info', '', '', nm(n) + ': ' + esc([...new Set(l)].join(', ')) + '.', String(l.length))), [String(o.defs.length), '']);
+    body += sec('Dispels and purges', dpRows(o.debs, o.ebuffs).concat(o.dispels.length ? [rv('okq', '', '', (o.dispels.length === 1 ? 'Dispel' : 'Dispels') + ': ' + [...new Set(o.dispels.map((x) => x.who))].map(nm).join(', ') + '.', String(o.dispels.length))] : [])
+      .concat((o.purges || []).length ? [rv('okq', '', '', (o.purges.length === 1 ? 'Purge or soothe' : 'Purges and soothes') + ': ' + [...new Set(o.purges.map((x) => x.who))].map(nm).join(', ') + '.', String(o.purges.length))] : []));
+    body += sec('Damage and healing', ['<table class="mpt"><tr><th>Player</th><th class="r">DPS</th><th class="r">HPS</th></tr>' +
+      ppl.map((q) => [q, o.dmg[q.name] || 0, o.heal[q.name] || 0]).sort((a, b) => b[1] - a[1]).map(([q, d, hh]) => '<tr><td>' + nm(q.name) + '</td><td class="r">' + kN(d) + '</td><td class="r">' + (hh ? kN(hh) : '—') + '</td></tr>').join('') + '</table>']);
   }
   const c0 = run.clock || {}, kmeta = [stat, c0.time ? mmssP(c0.time) + (c0.par ? ' of ' + mmssP(c0.par) : '') : run.timeMs ? mmssP(run.timeMs / 1000) : '', c0.up ? 'up ' + c0.up + (c0.up === 1 ? ' level' : ' levels') : '', R.pulls.length + (R.pulls.length === 1 ? ' pull' : ' pulls'), dayOf(D.saved && D.saved.keys && (D.saved.keys.find((k) => k.sb === D.saved.lastKey) || {}).night)].filter(Boolean).join(' · ');
   const khead = '<div class="khead"><div><button class="kbn kpick" type="button" data-mpick="1">' + esc(run.dungeon) + ' +' + run.level + caretSvg(MPICK) + '</button><div class="kmeta">' + kmeta + '</div></div><span class="kres' + (run.timed && !run.left ? ' k' : '') + '">' + stat + '</span></div>';
-  app.innerHTML = topBar('mplus') + '<div class="body mpx">' + khead + (MPICK ? keyRows('Your keys, newest first') : chips + body) + '</div><div class="foot"><button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">Your key, pull by pull</span></div>';
+  app.innerHTML = topBar('mplus') + '<div class="body mpx mpk">' + khead + (MPICK ? keyRows('Your keys, newest first') : chips + body) + '</div><div class="foot"><button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">Your key, pull by pull</span></div>';
   fit();
 }
 function render() {
@@ -752,7 +800,7 @@ document.addEventListener('click', (e) => {
   if (t.dataset.who) { const PL = (D.card && D.card.players) || []; if (!PL.length) return; const curN = document.querySelector('.kwho .knm'), cur = PL.findIndex((p) => p.name === WHO || (!WHO && curN && String(p.name).split('-')[0] === curN.textContent)); WHO = PL[cur < 0 ? (+t.dataset.who > 0 ? 0 : PL.length - 1) : (cur + (+t.dataset.who) + PL.length) % PL.length].name; for (const k of Object.keys(OPEN)) if (/^r:rot|^m:rot|^s:rot/.test(k)) delete OPEN[k]; render(); return; }
   if (t.dataset.pull) { if (t.classList.contains('on')) return; loadingPull = +t.dataset.pull; t.classList.add('wait'); t.textContent = t.textContent.replace(/ · .*/, ' · loading…'); post('pull:' + t.dataset.pull); return; } /* (a pull button, in the card's row or the old strip) */
   if (t.dataset.tab) { VIEW = t.dataset.tab; render(); return; } /* (the card: Me or Raid view) */
-  if (t.dataset.cf) { const k = t.dataset.cf, cur = OPEN[k] != null ? OPEN[k] : (k === 's:cw' || k === 's:cd' || k === 's:ca' ? DEEP() : true); OPEN[k] = !cur; render(); return; }
+  if (t.dataset.cf) { const k = t.dataset.cf, cur = OPEN[k] != null ? OPEN[k] : t.dataset.cdef === '0' ? false : (k === 's:cw' || k === 's:cd' || k === 's:ca' ? DEEP() : true); OPEN[k] = !cur; render(); return; }
   if (t.dataset.cr) { const k = t.dataset.cr; OPEN[k] = !(OPEN[k] != null ? OPEN[k] : ((k === 'r:w0' || k === 'r:rot0') && DEEP())); render(); return; }
   if (t.dataset.cmore) { OPEN['m:' + t.dataset.cmore] = true; render(); return; }
   if (t.dataset.cutt) { const v = D.cut ? 0 : 1; waiting = true; D.cut = v; render(); post('cut:' + v); return; } /* (Wipe call on or off) */
