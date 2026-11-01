@@ -68,6 +68,9 @@ namespace Debrief {
       else if (ready) Send(json);
     }
     int cols = 1, oneW = 0, fixW = 0;
+    // (the recap hotkey (Nov 1): the last recap again, on top of the game (windowed or windowed fullscreen), without taking focus)
+    public bool HasRecap { get { return pending != null; } }
+    public void ShowAgain() { if (!Visible) Show(); SetWindowPos(Handle, (IntPtr)(-1) /* HWND_TOPMOST */, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010 | 0x0040 /* NOSIZE NOMOVE NOACTIVATE SHOWWINDOW */); }
     void Send(string json) { try { web.CoreWebView2.PostWebMessageAsJson(json); } catch (Exception e) { Program.Log("popup send: " + e.Message); } }
 
     void OnMessage(object s, CoreWebView2WebMessageReceivedEventArgs e) {

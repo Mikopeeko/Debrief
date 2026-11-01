@@ -19,6 +19,7 @@ namespace Debrief {
     readonly object scanLock = new object();
     public Action<string, bool> Popup; // (the recap pop-up over the game)
     public Action Quit;
+    public Func<int, int, string, string> SetHotkey; public Func<Dictionary<string, object>> HotkeyInfo; // (the recap hotkey (Nov 1))
     static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
     // (the window marks its requests; an old Edge window from the PowerShell app still open on this address gets told to stand down,
     // so a pull isn't copied twice)
@@ -70,7 +71,7 @@ namespace Debrief {
           if (!(get && (path == "/log/info" || path == "/log/read" || path == "/app-version"))) { res.StatusCode = 403; Send(res, Encoding.UTF8.GetBytes("No"), "text/plain"); return; }
         }
         if (post && !string.IsNullOrEmpty(origin) && origin != "http://localhost:" + Port) { res.StatusCode = 403; Send(res, Encoding.UTF8.GetBytes("No"), "text/plain"); return; }
-        if (!fromApp && (path == "/wait" || path == "/scan" || path == "/clip" || path == "/read" || path == "/archive" || path == "/popup" || path == "/addonflags" || path == "/addonpull" || path == "/" || path == "/index.html")) {
+        if (!fromApp && (path == "/wait" || path == "/scan" || path == "/clip" || path == "/read" || path == "/archive" || path == "/popup" || path == "/hotkey" || path == "/addonflags" || path == "/addonpull" || path == "/" || path == "/index.html")) {
           if (path == "/wait") { Thread.Sleep(25000); SendJson(res, new Dictionary<string, object> { { "size", Num(q["size"]) }, { "name", q["name"] ?? "" } }); return; }
           if (path == "/" || path == "/index.html") { Send(res, Encoding.UTF8.GetBytes(Moved), "text/html; charset=utf-8"); return; }
           res.StatusCode = 409; SendJson(res, new Dictionary<string, object> { { "error", "Debrief Companion is its own app now. Close this window." } }); return;
@@ -153,6 +154,13 @@ namespace Debrief {
           var body = Json.Deserialize<Dictionary<string, object>>(Body(req));
           Wow.SetFlags(here, !(body.ContainsKey("popup") && body["popup"] is bool p0 && !p0), body.ContainsKey("autocopy") && body["autocopy"] is bool a0 && a0);
           SendJson(res, new Dictionary<string, object> { { "ok", true } });
+        }
+        else if (get && path == "/hotkey") SendJson(res, HotkeyInfo != null ? HotkeyInfo() : new Dictionary<string, object>()); // (the recap hotkey (Nov 1))
+        else if (post && path == "/hotkey") {
+          var body = Json.Deserialize<Dictionary<string, object>>(Body(req));
+          int mods = Convert.ToInt32(body.ContainsKey("mods") ? body["mods"] : 0), vk = Convert.ToInt32(body.ContainsKey("vk") ? body["vk"] : 0);
+          var why = SetHotkey != null ? SetHotkey(mods, vk, body.ContainsKey("name") ? Convert.ToString(body["name"]) : "") : "off";
+          SendJson(res, new Dictionary<string, object> { { "ok", why == "" }, { "why", why } });
         }
         else if (get && path == "/popup") Send(res, File.ReadAllBytes(Path.Combine(here, "popup.html")), "text/html; charset=utf-8");
         else if (post && path == "/popup") {

@@ -89,6 +89,18 @@ a.btn { text-decoration: none; display: inline-flex; align-items: center; }
 .night text { font-family: var(--body); }
 /* slim on/off switches, in the logo's green */
 .swrow { display: flex; align-items: center; gap: 26px; flex-wrap: wrap; }
+.hk .hkb { padding: 4px 10px; font-size: 13.5px; } .hk .hkb.wait { border-color: var(--gold); color: var(--gold); }
+.hkline { margin: 8px 0 0; font: 500 13px var(--body); color: var(--faint); } .hkline.bad { color: #ff8f87; }
+.hkask { position: fixed; inset: 0; background: rgba(8,9,12,.72); display: flex; align-items: center; justify-content: center; z-index: 50; }
+.hkask[hidden] { display: none; }
+.hkcard { width: min(460px, 92vw); background: var(--panel, #161921); border: 1px solid var(--line2); border-radius: 12px; padding: 22px 24px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+.hkcard h2 { margin: 2px 0 8px; font: 700 22px var(--head, 'Barlow Condensed', sans-serif); color: var(--text); }
+.hkcard .k { margin: 0; font: 700 12px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--gold); }
+.hkp { margin: 0 0 14px; font: 500 14.5px var(--body); color: #d6d1c6; } .hkp.sm { margin: 14px 0 0; font-size: 13px; color: var(--muted); }
+.hkbig { text-align: center; padding: 14px; border: 1px dashed var(--line2); border-radius: 9px; font: 700 24px var(--head, 'Barlow Condensed', sans-serif); color: var(--text); }
+.hkbig.wait { border-color: var(--gold); color: var(--gold); }
+.hkmsg { min-height: 18px; margin: 8px 0 10px; font: 600 13.5px var(--body); color: #ff8f87; }
+.hkacts { display: flex; gap: 10px; flex-wrap: wrap; }
 .tg { display: flex; align-items: center; gap: 10px; font: 600 14.5px var(--body); color: #d6d1c6; cursor: pointer; user-select: none; }
 .tg input { appearance: none; -webkit-appearance: none; width: 36px; height: 20px; border-radius: 999px; background: #2a2f3b; position: relative; margin: 0; cursor: pointer; transition: background .15s; flex: none; }
 .tg input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: #6c7381; transition: left .15s, background .15s; }
@@ -214,13 +226,24 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
       <div class="swrow">
         <label class="tg" for="pop" title="After each boss pull, a small bar floats over the game: click it for your recap. It never takes focus from WoW and closes when the next pull starts."><input type="checkbox" id="pop" checked>Pop-up recap</label>
         <label class="tg" for="snd" title="A short chime when your recap is ready."><input type="checkbox" id="snd" checked>Chime</label>
+        <span class="tg hk" title="Press it anywhere, even in WoW, to show or hide your recap over the game."><span>Recap key</span><button class="btn hkb" id="hkBtn" type="button">…</button></span>
       </div>
+      <p class="hkline" id="hkLine"></p>
       <div id="folderBox" hidden>
         <p class="empty">I couldn't find your WoW Logs folder. Type where WoW is installed (for example <b>C:\Program Files (x86)\World of Warcraft</b>).</p>
         <div class="folder"><input id="folderIn" placeholder="C:\Program Files (x86)\World of Warcraft"><button class="btn gold" id="folderGo" type="button">Use this folder</button></div>
       </div>
     </div>
   </main>
+  <div class="hkask" id="hkAsk" hidden><div class="hkcard">
+    <p class="k">One step</p>
+    <h2>Pick your recap key</h2>
+    <p class="hkp">Press it anywhere, even in WoW, and your newest recap shows over the game. Press it again to hide it.</p>
+    <div class="hkbig" id="hkBig">Ctrl + Shift + D</div>
+    <p class="hkmsg" id="hkMsg"></p>
+    <div class="hkacts"><button class="btn gold" id="hkUse" type="button">Use Ctrl + Shift + D</button><button class="btn" id="hkPick" type="button">Press another</button></div>
+    <p class="hkp sm">Play WoW in <b>Windowed (Fullscreen)</b> so the recap shows on top of the game. You can change the key any time here.</p>
+  </div></div>
 
   <aside class="more" id="more" hidden>
     <h2>Settings <button class="btn ib" id="moreX" type="button" aria-label="Close settings">✕</button></h2>
@@ -402,6 +425,29 @@ async function readText(b, quiet, name) {
 function progress(f) { L.prog = f; renderRing(); }
 for (const [id, def] of [['pop', true], ['snd', true]]) { $(id).checked = store.get('dbf-sw-' + id, def); $(id).addEventListener('change', () => { store.set('dbf-sw-' + id, $(id).checked); if (id === 'pop') addonFlags(); }); }
 // (tells the addon the pop-up's switch; WoW reads it at login or /reload)
+// ---------- the recap key (Nov 1): picked once in a one-step prompt, changeable with the button; Windows refuses a combo another program holds ----------
+const HK = { listen: null };
+const hkName = (e) => [e.ctrlKey ? 'Ctrl' : '', e.altKey ? 'Alt' : '', e.shiftKey ? 'Shift' : ''].filter(Boolean).concat([e.keyCode >= 112 && e.keyCode <= 123 ? 'F' + (e.keyCode - 111) : String.fromCharCode(e.keyCode)]).join(' + ');
+async function hkShow() { try { const x = await j('/hotkey'); $('hkBtn').textContent = x.name || 'Pick one'; $('hkLine').classList.toggle('bad', !!(x.chosen && !x.on));
+  $('hkLine').textContent = x.chosen ? (x.on ? x.name + ' shows or hides your recap over the game. Play WoW in Windowed (Fullscreen) so it shows on top.' : x.name + ' is taken by another program right now. Press the button to pick another.') : '';
+  if (!x.chosen) $('hkAsk').hidden = false; } catch (e) { /* an older app: no hotkey */ } }
+async function hkSet(mods, vk, name) { const x = await j('/hotkey', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mods, vk, name }) });
+  return x.ok ? '' : x.why === 'taken' ? 'Another program already uses ' + name + '. Press another combo.' : 'Use Ctrl, Alt or Shift with a letter, number or F key, so it never clashes with WoW.'; }
+// (listening: the saved key is let go first, so pressing it again counts; Esc stops and takes it back)
+function hkListen(target, done) { j('/hotkey', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mods: -1 }) }).catch(() => {});
+  target.classList.add('wait'); target.textContent = 'Press your keys…';
+  HK.listen = async (e) => { if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return; e.preventDefault();
+    if (e.key === 'Escape') { HK.listen = null; target.classList.remove('wait'); j('/hotkey', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mods: -2 }) }).catch(() => {}); done(null); return; }
+    const ok = (e.keyCode >= 48 && e.keyCode <= 57) || (e.keyCode >= 65 && e.keyCode <= 90) || (e.keyCode >= 112 && e.keyCode <= 123);
+    const mods = (e.altKey ? 1 : 0) | (e.ctrlKey ? 2 : 0) | (e.shiftKey ? 4 : 0), name = hkName(e);
+    const why = !ok || !mods ? 'Use Ctrl, Alt or Shift with a letter, number or F key, so it never clashes with WoW.' : await hkSet(mods, e.keyCode, name);
+    if (why) { target.textContent = 'Press your keys…'; done(why); return; }
+    HK.listen = null; target.classList.remove('wait'); done('', name); }; }
+document.addEventListener('keydown', (e) => { if (HK.listen) HK.listen(e); }, true);
+$('hkBtn').addEventListener('click', () => { const b = $('hkBtn'); hkListen(b, (why, name) => { $('hkLine').classList.toggle('bad', !!why); if (why) { $('hkLine').textContent = why; return; } hkShow(); if (!name) hkShow(); }); });
+$('hkUse').addEventListener('click', async () => { const why = await hkSet(6, 68, 'Ctrl + Shift + D'); if (why) { $('hkMsg').textContent = why; return; } $('hkAsk').hidden = true; hkShow(); });
+$('hkPick').addEventListener('click', () => { $('hkMsg').textContent = ''; hkListen($('hkBig'), (why, name) => { if (why) { $('hkMsg').textContent = why; return; } if (name) { $('hkAsk').hidden = true; hkShow(); } else { $('hkBig').textContent = 'Ctrl + Shift + D'; } }); });
+hkShow();
 function addonFlags() { j('/addonflags', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ popup: $('pop').checked, autocopy: false }) }).catch(() => {}); }
 addonFlags();
 // (the pop-up over the game: this pull's recap, or hidden when the next pull starts)
@@ -490,8 +536,9 @@ function mplusShow(r, again) {
     stat(L.live ? 'Watching your combat log' : '', L.live ? 'live' : '');
   }).catch(() => {});
 }
+window.DBF_POPLAST = () => { const p = L.popLast; if (p && p.model) { popShow(p.model, p.code || '', p.copied, null, { cut: p.cutN ? popCut() : null, cutN: p.cutN, wc: p.wc, quiet: true, force: true }); return; } if (L.mpLast) window.DBF_POPKEY(L.mpLast); };
 function popShow(model, code, copied, pack, cm) {
-  if (!$('pop').checked || !model || !model.h) return;
+  if ((!$('pop').checked && !(cm && cm.force)) || !model || !model.h) return;
   L.popUp = true;
   const data = { h: model.h, coach: (model.coach && model.coach.raid) || null, cls: (model.players || []).map((p) => [String(p.name || '').split('-')[0], p.cls]), code, copiedAlready: !!copied, full: true, pack: pack || null, cut: cm ? cm.cut : null, cutN: cm ? cm.cutN : 0, wc: cm ? cm.wc || null : null, card: cardOf(model), night: popNight(L.popLast && L.popLast.b ? L.popLast.b.startByte : null) };
   data.saved = popSaved(); /* (the switch and Saved (Nov 1)) */

@@ -98,6 +98,7 @@ namespace Debrief {
 
     protected override void OnHandleCreated(EventArgs e) {
       base.OnHandleCreated(e);
+      LoadHotkey(); // (the recap key picked before, made live again for this start)
       // (the size and place, now that Windows says how big this screen's pixels are)
       if (!sized) { sized = true; MinimumSize = new Size(Px(700), Px(380)); Bounds = SavedBounds(); }
       if (!pageStarted) { pageStarted = true; BeginInvoke(new Action(async () => await StartPage())); }
@@ -162,6 +163,47 @@ namespace Debrief {
         tray.ShowBalloonTip(8000, "Debrief " + v + " is ready", "Update when it suits you, not mid-raid: open Debrief and press Update now.", ToolTipIcon.None);
       };
       try { if (InvokeRequired) BeginInvoke(a); else a(); } catch { }
+    }
+
+    // ---------- the recap hotkey (Nov 1, Flex: "having a windows hotkey that opens the recap is my best option"): a key combo Windows hands
+    // to Debrief from anywhere, the game included, that shows the newest recap over the game or hides it. Nothing is sent to WoW. ----------
+    [DllImport("user32.dll")] static extern bool RegisterHotKey(IntPtr h, int id, uint mods, uint vk);
+    [DllImport("user32.dll")] static extern bool UnregisterHotKey(IntPtr h, int id);
+    const int HotkeyId = 0xD0B1;
+    int hkMods, hkVk; bool hkOn; string hkName = "";
+    string HotkeyFile { get { return Path.Combine(here, "hotkey.txt"); } } // ("mods,vk,name": mods 1 Alt, 2 Ctrl, 4 Shift; e.g. "6,68,Ctrl+Shift+D")
+    // (mods -1: let go of it while the window listens for a new one; -2: take the saved one back)
+    public string SetHotkey(int mods, int vk, string name) {
+      if (InvokeRequired) return (string)Invoke(new Func<string>(() => SetHotkey(mods, vk, name)));
+      if (mods == -1) { if (hkOn) UnregisterHotKey(Handle, HotkeyId); hkOn = false; return ""; }
+      if (mods == -2) { if (!hkOn && hkVk != 0) hkOn = RegisterHotKey(Handle, HotkeyId, (uint)hkMods | 0x4000, (uint)hkVk); return ""; }
+      if ((mods & 7) == 0 || vk <= 0) return "needs"; // (a plain key: WoW uses those)
+      if (hkOn) { UnregisterHotKey(Handle, HotkeyId); hkOn = false; }
+      if (!RegisterHotKey(Handle, HotkeyId, (uint)mods | 0x4000 /* MOD_NOREPEAT */, (uint)vk)) {
+        if (hkVk != 0) hkOn = RegisterHotKey(Handle, HotkeyId, (uint)hkMods | 0x4000, (uint)hkVk); // (the old one back)
+        return "taken";
+      }
+      hkOn = true; hkMods = mods; hkVk = vk; hkName = name ?? "";
+      try { File.WriteAllText(HotkeyFile, mods + "," + vk + "," + hkName); } catch { }
+      return "";
+    }
+    public System.Collections.Generic.Dictionary<string, object> HotkeyInfo() {
+      return new System.Collections.Generic.Dictionary<string, object> { { "name", hkName }, { "on", hkOn }, { "chosen", File.Exists(HotkeyFile) } };
+    }
+    void LoadHotkey() {
+      try { var p = File.ReadAllText(HotkeyFile).Split(new[] { ',' }, 3); int m = int.Parse(p[0]), v = int.Parse(p[1]); hkMods = m; hkVk = v; hkName = p[2];
+        hkOn = RegisterHotKey(Handle, HotkeyId, (uint)m | 0x4000, (uint)v); if (!hkOn) Program.Log("recap key " + hkName + " is taken by another program"); } catch { }
+    }
+    protected override void WndProc(ref Message m) {
+      if (m.Msg == 0x0312 /* WM_HOTKEY */ && (int)m.WParam == HotkeyId) { ToggleRecap(); return; }
+      base.WndProc(ref m);
+    }
+    // (shown: hide it; hidden: the last recap again, over the game and without taking focus; none yet since Debrief started: the page sends the newest)
+    void ToggleRecap() {
+      if (Program.EdgeFallback || web.CoreWebView2 == null) return;
+      if (popup != null && popup.Visible) { popup.Hide(); return; }
+      if (popup != null && popup.HasRecap) { popup.ShowAgain(); return; }
+      try { web.CoreWebView2.ExecuteScriptAsync("window.DBF_POPLAST && window.DBF_POPLAST()"); } catch { }
     }
 
     // ---------- the window's size and place, kept between starts ----------
