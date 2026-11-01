@@ -5261,6 +5261,16 @@ function buildUlatek(ev, r, h) {
   // (the Performance tab's damage windows)
   const windows = wins.map((w, i) => ({ label: 'Rage of the Shackled ' + (i + 1), short: 'Rage ' + (i + 1), t0: w.s, t1: w.e }));
   { const pc = paceCard(ev, r, h, mistakes, "Ula'tek"); if (pc) sections.push(pc); } /* (Pace, Oct 22: boss coverage) */
+  /* round 426 ulatek split: one card per mechanic */ {
+    const H = HOW["Ula'tek"] || {}, split = (id, test, nw) => { const s = sections.find((x) => x.id === id); if (!s) return; const rows = s.rows || [], mine = rows.filter(test); if (!mine.length) return;
+      const rest = rows.filter((x) => !test(x)), verd = (rs) => rs.some((x) => x.some((c) => c && c.bad)) ? 'bad' : rs.some((x) => x.some((c) => c && c.warn)) ? 'warn' : 'good';
+      const n = { ...s, ...nw, rows: mine, verdict: verd(mine) }; s.rows = rest; s.verdict = verd(rest); sections.splice(sections.indexOf(s), rest.length ? 0 : 1, n); };
+    const hd = H.doomscale || '', cut = hd.indexOf('The cauldron hatches');
+    split('doomscale', (x) => /warden/i.test(String((x[1] || {}).txt || '')), { id: 'warden', title: 'Doomscale Warden (Kill it on the eggs)', place: 'Doomscale Warden (start of stage 2)', summary: 'The Doomscale Warden at the start of stage 2: when it died, and whether in time.', how: cut > 0 ? hd.slice(0, cut).trim() : hd });
+    const dsec = sections.find((x) => x.id === 'doomscale'); if (dsec) { dsec.title = 'Weakened Doomscales (Kill them together)'; dsec.place = 'Weakened Doomscales (end of stage 2)'; dsec.how = cut > 0 ? hd.slice(cut).trim() : hd; }
+    split('shriek', (x) => /rawling/i.test(String((x[1] || {}).txt || '')), { id: 'rawling', title: 'Blightscale Rawling (Kill the adds)', place: 'Blightscale Rawlings (stage 3 clutches)', summary: 'Rawlings hatched from the stage 3 egg clutches: when each died.', how: H.shriek || '' });
+    const ssec = sections.find((x) => x.id === 'shriek'); if (ssec) { ssec.title = 'Blightscale Shrieker (Kick and kill)'; ssec.place = 'Blightscale Shriekers (eggs that reached the venom)'; ssec.how = H.shriek || ''; }
+  }
   return { diag, windows, title: diff + " audit: Ula'tek", reached: phases[phases.length - 1].name, phases, marks, sections: sections.filter((s) => mythic || !s.mythicOnly), mistakes,
     note: mythic ? '' : 'Mythic-only checks (Toxic Incubation, Rancid Yolk, Revenge) are hidden on this difficulty.' };
 }
@@ -6768,7 +6778,7 @@ function* analyzeSteps(item, text, opts) {
       r.module = mod.build(modEv, r, helpers); r.mistakes.push(...r.module.mistakes); r.mistakes.sort((a, b) => a.t - b.t);
       try { avoidMistakes(r); } catch (e) { console.error(e); } /* (the avoid panel's verdict is the one answer (Oct 22)) */
       if (mod.encounter === 'The Coiled Altar') r.module.pools = caPools(modEv); // (for the maps: the Fangs pools as they really were)
-      for (const s of r.module.sections) s.how = (HOW[mod.encounter] || {})[s.id] || ''; // short strategy note per mechanic
+      for (const s of r.module.sections) s.how = s.how || (HOW[mod.encounter] || {})[s.id] || ''; /* round 426: a split card keeps its own */ // short strategy note per mechanic
       for (const s of r.module.sections) { const nt = (TITLE_FIX[mod.encounter] || {})[s.title]; if (nt) { if (!s.place) s.place = s.title; s.title = nt; } } /* (one name everywhere, see TITLE_FIX) */
     }
     catch (err) { r.module = { title: mod.encounter + ' audit', error: String(err && err.message || err), sections: [], phases: [], marks: [] }; }
