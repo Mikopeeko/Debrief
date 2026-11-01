@@ -1119,7 +1119,12 @@ const INFLIGHT = new Map();
 /* (Oct 24, "the tags are gone again": the comparison with the last pull needs the pull just before this one read. The background reader goes
    newest first and stops at the memory limit, so on an early pull that one could come late or never. Opening a pull now reads the one before it
    straight away (when it isn't read yet), and the page redraws once when it's in) */
-function prevLoad(it) { if (!it || !S.index) return; const prev = (S.index.bosses || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull < it.pull).sort((a, b) => b.pull - a.pull)[0];
+const prevOf = (it) => (it && S.index && (S.index.bosses || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull < it.pull).sort((a, b) => b.pull - a.pull)[0]) || null;
+/* (Nov 1: when the pull before is saved on this PC, it's read alongside this one, so Since last pull is in the page's first draw) */
+async function prevEarly(it) { try { const prev = prevOf(it); if (!prev || CACHE.has(prev) || prev._pl || !(await RD.has(prev)) || prev._pl || CACHE.has(prev)) return; prev._pl = 1;
+  try { await getRep(prev); } finally { prev._pl = 0; }
+  const v0 = document.querySelector('#view'); if (S.item === it && S.tab === 'audit' && S.rep && !S.rep.allPulls && v0 && v0._cs && v0._cs.trend && !v0._cs.trend.prvN) prevArrived(); } catch (e) { /* (prevLoad reads it once the page is up) */ } }
+function prevLoad(it) { if (!it || !S.index) return; const prev = prevOf(it);
   if (!prev || CACHE.has(prev) || prev._pl) return; prev._pl = 1;
   (async () => { try { if (prev.wcl && !RW.on() && WCL.isSaved && !(await WCL.isSaved(prev))) await WCL.loadEvents(S.wclCreds, prev, () => {}); await getRep(prev); } finally { prev._pl = 0; }
     const v0 = document.querySelector('#view'); if (S.item === it && S.tab === 'audit' && S.rep && !S.rep.allPulls && v0 && v0._cs && v0._cs.trend && !v0._cs.trend.prvN) prevArrived(); })().catch(() => { prev._pl = 0; }); }
@@ -1256,7 +1261,7 @@ function rfQueue(item) { if (RF.q.includes(item)) return; if (S.item === item) R
 /* (a re-read after an update: true once the new reading is saved) */
 async function rfRead(item) { if (item.wcl && RW.on() && !item._rdSkip) { const m = await RW.read(item, null, true); if (m && m.saved) return true; } return !!(await readFresh(item)); }
 let RF_T = 0;
-function rfGo() { if (!RF.run && (document.querySelector('#main .ld') || holding() || Date.now() - RF_T < 1500)) { if (document.querySelector('#main .ld') || holding()) RF_T = Date.now(); setTimeout(rfGo, 500); return; } /* (once the page is up: they wait until it has been shown for a moment) */
+function rfGo() { if (!RF.run && (ldOn() || holding() || Date.now() - RF_T < 1500)) { if (ldOn() || holding()) RF_T = Date.now(); setTimeout(rfGo, 500); return; } /* (once the page is up: they wait until it has been shown for a moment) */
   const cap = RW.on() ? Math.min(2, RW.size()) : 1; /* (2 at a time: the page is in use) */
   while (RF.run < cap && RF.q.length) { const it = RF.q.shift(); RF.run++;
     (async () => { try { const old = CACHE.get(it); if (!(await rfRead(it))) return; RF.did.add(it);
@@ -1266,8 +1271,8 @@ function rfGo() { if (!RF.run && (document.querySelector('#main .ld') || holding
 function rfDone() { const did = [...RF.did], it = S.item; RF.did.clear(); if (!it || !did.includes(it) || !S.rep || S.rep.allPulls || S.scope === 'all') return; /* (All pulls shows the new readings on the next click: loading them all again at once would double the memory) */
   const old = CACHE.get(it); CACHE.delete(it); getRep(it).then((r) => { if (S.item !== it) return; if (S.realRep === old) S.realRep = r; if (S.rep === old) S.rep = r; rfDraw(0); }).catch(() => { /* (it shows on the next click) */ }); }
 function rfDraw(k) { if (!S.rep || !TAB_ORDER.includes(S.tab)) return;
-  if (document.querySelector('#main .ld') || holding() || document.querySelector('.pcx-tile.on')) { if (k < 40) setTimeout(() => rfDraw(k + 1), 500); return; }
-  const y = window.scrollY; try { renderMain(); } catch (e) { console.warn(e); } window.scrollTo({ top: y }); }
+  if (ldOn() || holding() || document.querySelector('.pcx-tile.on')) { if (k < 40) setTimeout(() => rfDraw(k + 1), 500); return; }
+  const y = window.scrollY; bufStart(null, 4000); try { renderMain(); } catch (e) { console.warn(e); } window.scrollTo({ top: y }); }
 async function readRep(item) {
   if (CACHE.has(item)) return CACHE.get(item);
   { const saved = item._rdSkip ? null : await RD.get(item); /* round 285 stale reads */ if (saved && saved._stale) { try { const f = await readFresh(item); if (f) return f; } catch (e) { /* (the old reading below) */ } }
@@ -1310,37 +1315,79 @@ async function readFresh(item) {
    guilds' names, health curves, guild history) each rebuilt the whole page through select(). They now ask for one redraw, 700 ms after the
    last one, keeping the scroll and the player picked; not while a tile's panel is open) */
 let LIVE_T = 0, LIVE_0 = 0;
-const livePending = (noPrev) => { try { return [CURVE_LIVE, KGUILD, RATE_LIVE, PACE_LIVE, GHIST].some((M) => [...M.values()].some((v) => v === null)) || (!noPrev && S.index && (S.index.bosses || []).some((b) => b._pl)); } catch (e) { return false; } };
+const livePending = (noPrev) => { try { return [CURVE_LIVE, KGUILD, RATE_LIVE, PACE_LIVE, GHIST, CAL381].some((M) => [...M.values()].some((v) => v === null)) || P378.size > 0 || (!noPrev && S.index && (S.index.bosses || []).some((b) => b._pl)); } catch (e) { return false; } };
 const holding = () => document.documentElement.classList.contains('dbr-holding');
-/* (the previous pull arriving after the page showed refills only the coach box (Since last pull, the tags); behind the hold it's one more hidden draw) */
-function prevArrived() { if (holding()) { liveRedraw(); return; } try { if (S.tab === 'audit' && S.rep && !S.rep.allPulls) oaFill([S.rep]); } catch (e) { liveRedraw(); } }
-function liveRedraw() { clearTimeout(LIVE_T); if (!LIVE_0) LIVE_0 = Date.now(); LIVE_T = setTimeout(() => { LIVE_T = 0; if (S.tab !== 'audit' || !S.item || !S.rep || document.querySelector('#main .ld')) { LIVE_0 = 0; return; }
+/* (Nov 1, one draw (Design studio's report: Debriefing was drawn about four times while a pull opened: the first draw, its finishing touches
+   (Why we wiped, the Timeline) arriving one by one, the previous pull's comparison and late live numbers each built it again, which looked like
+   flashing). A pull's page is now built out of sight: the screen keeps what it showed (the loading card, or the page you're reading) as a still
+   copy until the new page has stopped changing, then shows it in one go. A click, a key or a narrower or wider window shows it at once) */
+const BUF = { on: false, els: [], snaps: [], t0: 0, last: 0, max: 0, wait: null, done: null, mo: null, t: 0, w: 0 };
+const ldOn = () => !!document.querySelector('#main:not(.dbr-snap) .ld'); /* (the loading card is up; its still copy doesn't count) */
+const bufBg = (n) => n && n.nodeType === 1 && (n.id === 'bgRead' || n.id === 'bgReadT' || !!n.closest('#bgRead, #bgReadT')); /* (Reading pulls x of y keeps counting: it isn't the page changing) */
+function bufStart(wait, max, done) { const now = Date.now();
+  if (BUF.on) { BUF.last = now; BUF.max = Math.max(BUF.max, now - BUF.t0 + max); if (wait) BUF.wait = wait; if (done) { const d0 = BUF.done; BUF.done = () => { if (d0) d0(); done(); }; } return; }
+  const els = ['bossHead', 'main'].map((id) => document.getElementById(id)).filter(Boolean); if (!els.length) return;
+  const rs = els.map((e) => e.getBoundingClientRect()), imp = (st, k, v) => st.setProperty(k, v, 'important');
+  const snaps = els.map((e, i) => { const g = e.cloneNode(true); g.classList.add('dbr-snap'); g.setAttribute('inert', ''); g.setAttribute('aria-hidden', 'true'); g.querySelectorAll('input[name], select[name], textarea[name]').forEach((x) => x.removeAttribute('name'));
+    [['position', 'absolute'], ['margin', '0'], ['top', '0px'], ['left', '0px'], ['width', rs[i].width + 'px'], ['z-index', '0'], ['pointer-events', 'none']].forEach(([k, v]) => imp(g.style, k, v)); e.after(g); return g; });
+  snaps.forEach((g, i) => { const b = g.getBoundingClientRect(); imp(g.style, 'top', (rs[i].top - b.top) + 'px'); imp(g.style, 'left', (rs[i].left - b.left) + 'px');
+    for (const a of BUF_SCR) { try { if (!a.isConnected) { BUF_SCR.delete(a); continue; } if (!els[i].contains(a) || !(a.scrollTop || a.scrollLeft)) continue; const path = []; for (let n = a; n !== els[i]; n = n.parentElement) path.unshift([...n.parentElement.children].indexOf(n)); let b = g; for (const k of path) b = b && b.children[k]; if (b) { b.scrollTop = a.scrollTop; b.scrollLeft = a.scrollLeft; } } catch (e) { /* (scrolled to the start) */ } }
+    try { const A = els[i].getAnimations({ subtree: true }), B = g.getAnimations({ subtree: true }); if (A.length === B.length) B.forEach((x, k) => { x.currentTime = A[k].currentTime; }); } catch (e) { /* (the dancer starts over) */ } });
+  els.forEach((e) => { imp(e.style, 'opacity', '0'); imp(e.style, 'pointer-events', 'none'); }); [document.documentElement, document.body].forEach((e) => e.style.setProperty('overflow-anchor', 'none')); /* (the scroll never follows the hidden page's changes; a style, not a class on the page, which would restyle all of it) */
+  Object.assign(BUF, { on: true, els, snaps, t0: now, last: now, max, wait, done, w: window.innerWidth });
+  BUF.mo = new MutationObserver((ms) => { if (ms.some((m) => !(bufBg(m.target.nodeType === 1 ? m.target : m.target.parentElement) || (m.type === 'childList' && [...m.addedNodes, ...m.removedNodes].every(bufBg))))) BUF.last = Date.now(); });
+  els.forEach((e) => BUF.mo.observe(e, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['src', 'href'] }));
+  BUF.t = setTimeout(bufTick, 100); }
+function bufTick() { if (!BUF.on) return; const now = Date.now(), el = now - BUF.t0;
+  if (el < BUF.max && (now - BUF.last < 400 || (BUF.wait && BUF.wait(el)))) { BUF.t = setTimeout(bufTick, 100); return; } /* (still for 0.4 s: the finishing touches come at most a few tenths apart) */
+  bufEnd(); }
+function bufEnd() { if (!BUF.on) return; BUF.on = false; clearTimeout(BUF.t); if (BUF.mo) BUF.mo.disconnect();
+  BUF.snaps.forEach((g) => g.remove()); BUF.els.forEach((e) => { e.style.removeProperty('opacity'); e.style.removeProperty('pointer-events'); }); [document.documentElement, document.body].forEach((e) => e.style.removeProperty('overflow-anchor'));
+  const d = BUF.done; Object.assign(BUF, { els: [], snaps: [], wait: null, done: null, mo: null }); if (d) try { d(); } catch (e) { console.warn(e); } }
+const BUF_SCR = new Set(); document.addEventListener('scroll', (e) => { if (e.target && e.target.nodeType === 1) BUF_SCR.add(e.target); }, true); /* (boxes scrolled sideways or down: the still copy keeps their place) */
+document.addEventListener('click', () => bufEnd(), true);
+document.addEventListener('keydown', (e) => { if (!['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) bufEnd(); }, true);
+window.addEventListener('resize', () => { if (BUF.on && window.innerWidth !== BUF.w) bufEnd(); }); /* (a phone's address bar sliding away changes only the height) */
+/* (the previous pull arriving refills only the coach box (Since last pull, the tags), out of sight) */
+function prevArrived() { try { if (S.tab === 'audit' && S.rep && !S.rep.allPulls) { if (!holding()) bufStart(null, 4000); oaFill([S.rep]); } } catch (e) { liveRedraw(); } }
+function liveRedraw() { clearTimeout(LIVE_T); if (!LIVE_0) LIVE_0 = Date.now(); LIVE_T = setTimeout(() => { LIVE_T = 0; if (S.tab !== 'audit' || !S.item || !S.rep || ldOn()) { LIVE_0 = 0; return; }
   if (!holding() && (document.querySelector('.pcx-tile.on') || livePending()) && Date.now() - LIVE_0 < 10000) { liveRedraw(); return; } /* (wait for the rest, at most 10 s; behind the hold card it draws at once, which starts the next read) */
+  if (!holding()) bufStart(null, 4000); try { liveSave(); } catch (e) { /* (not remembered) */ } /* (each arrival is remembered, not only the ones in before the page showed) */
   LIVE_0 = 0; const y = window.scrollY, v0 = document.getElementById('view'), g0 = v0 && v0.querySelector(':scope > .dbt'), gc = g0 ? g0.cloneNode(true) : null, gcl = v0 ? ['dbt-on', 'dbt-full'].filter((c) => v0.classList.contains(c)) : [];
   renderMain(); { const v1 = document.getElementById('view'); if (gc && v1 && !v1.querySelector(':scope > .dbt')) { gc.classList.add('dbt-ghost'); v1.insertBefore(gc, v1.firstChild); gcl.forEach((c) => v1.classList.add(c)); } } /* (Oct 29: no flicker: the timeline stays on screen until the fresh one replaces it) */
   window.scrollTo({ top: y }); }, holding() ? 60 : 700); }
-/* (the hold: Debriefing is drawn out of sight until its live numbers are in, then shown once (4 s at most)) */
-/* (Oct 25: the live numbers are remembered on this PC for 6 hours, so a reload doesn't wait for them again) */
+/* (Oct 25: the live numbers are remembered on this PC for 6 hours, so a reload doesn't wait for them again; Nov 1: the per-raid scale and the
+   kill lists for "kills like yours" too (about 40 KB a boss, kept apart, the 8 newest), which came in late and drew the page again) */
 let LIVE_RESTORED = false;
-const liveMaps = () => ({ CURVE_LIVE, KGUILD, RATE_LIVE, PACE_LIVE, GHIST });
+const liveMaps = () => ({ CURVE_LIVE, KGUILD, RATE_LIVE, PACE_LIVE, GHIST, CAL381 });
 /* round 396 fetched at */ const LIVE_AT = new Map();
-function liveRestore() { if (LIVE_RESTORED) return; LIVE_RESTORED = true; try { const o = JSON.parse(localStorage.getItem('wla-live') || 'null'); if (!o) return; const M = liveMaps(), now = Date.now(); for (const [n, ent] of Object.entries(o.d || {})) { const m = M[n]; if (m) for (const [k, v, t] of ent) { const at = t || 0; if (!m.has(k) && v != null && now - at <= 6 * 3600e3) { m.set(k, v); LIVE_AT.set(n + '|' + k, at); } } } } catch (e) { /* (fetched again) */ } }
-function liveSave() { try { const M = liveMaps(), d = {}, now = Date.now(); for (const [n, m] of Object.entries(M)) d[n] = [...m].filter(([, v]) => v != null).map(([k, v]) => { const id = n + '|' + k; if (!LIVE_AT.has(id)) LIVE_AT.set(id, now); return [k, v, LIVE_AT.get(id)]; }); const s = JSON.stringify({ at: Date.now(), d }); if (s.length < 3e6) localStorage.setItem('wla-live', s); } catch (e) { /* (not remembered) */ } }
-let HOLD_T = 0, HOLD_0 = 0;
-function holdStart() { clearTimeout(HOLD_T); try { liveRestore(); } catch (e) { /* (fetched again) */ } const R0 = document.documentElement; if (S.tab !== 'audit') { R0.classList.remove('dbr-holding'); return; } R0.classList.add('dbr-holding'); HOLD_0 = Date.now(); HOLD_T = setTimeout(holdCheck, 400); }
-function holdCheck() { if (!holding()) return; if (S.tab === 'audit' && Date.now() - HOLD_0 < 4000 && (LIVE_T || livePending(true))) { HOLD_T = setTimeout(holdCheck, 250); return; } /* (4 s at most; the previous pull isn't waited for (it can take much longer): its comparison says it's reading) */ document.documentElement.classList.remove('dbr-holding'); try { liveSave(); } catch (e) { /* (not remembered) */ } }
+function liveRestore() { if (LIVE_RESTORED) return; LIVE_RESTORED = true; try { const o = JSON.parse(localStorage.getItem('wla-live') || 'null'); if (!o) return; const M = liveMaps(), now = Date.now(); for (const [n, ent] of Object.entries(o.d || {})) { const m = M[n]; if (m) for (const [k, v, t] of ent) { const at = t || 0; if (!m.has(k) && v != null && now - at <= 6 * 3600e3) { m.set(k, v); LIVE_AT.set(n + '|' + k, at); } } } } catch (e) { /* (fetched again) */ }
+  try { const o = JSON.parse(localStorage.getItem('wla-live-k') || 'null'), now = Date.now(); for (const [k, v, at] of (o || [])) if (!RATE_LIVE_ALL.has(k) && v && now - (at || 0) <= 6 * 3600e3) { RATE_LIVE_ALL.set(k, v); LIVE_AT.set('K|' + k, at); } } catch (e) { /* (fetched again) */ } }
+function liveSave() { try { const M = liveMaps(), d = {}, now = Date.now(); for (const [n, m] of Object.entries(M)) d[n] = [...m].filter(([, v]) => v != null).map(([k, v]) => { const id = n + '|' + k; if (!LIVE_AT.has(id)) LIVE_AT.set(id, now); return [k, v, LIVE_AT.get(id)]; }); const s = JSON.stringify({ at: Date.now(), d }); if (s.length < 3e6) localStorage.setItem('wla-live', s); } catch (e) { /* (not remembered) */ }
+  try { const L = [...RATE_LIVE_ALL].map(([k, v]) => { if (!LIVE_AT.has('K|' + k)) LIVE_AT.set('K|' + k, Date.now()); return [k, v, LIVE_AT.get('K|' + k)]; }).sort((a, b) => b[2] - a[2]).slice(0, 8), s = JSON.stringify(L); if (s.length < 1.5e6) localStorage.setItem('wla-live-k', s); } catch (e) { /* (not remembered) */ } }
+let HOLD_0 = 0;
+/* (the hold: while a pull opens, the loading card stays until the page is finished: its own live numbers (4 s at most), the previous pull for
+   Since last pull (3 s at most; a download can take much longer, then it swaps in when it's read) and the finishing touches; 6.5 s at most) */
+const holdWait = (el) => (el < 4000 && (!!LIVE_T || livePending(true))) || (el < 3000 && !!(prevOf(S.item) || {})._pl);
+function holdStart() { try { liveRestore(); } catch (e) { /* (fetched again) */ } const R0 = document.documentElement; if (S.tab !== 'audit') { R0.classList.remove('dbr-holding'); return; } R0.classList.add('dbr-holding'); HOLD_0 = Date.now();
+  bufStart(holdWait, 6500, () => { R0.classList.remove('dbr-holding'); try { liveSave(); } catch (e) { /* (not remembered) */ } });
+  BUF.snaps.forEach((g) => loadSet(g, 'Putting the page together…')); /* (the card says what it's waiting on) */ }
 /* round 333 all pulls list */ window.allPulls333 = () => { const L = ((S.index && S.index.bosses) || []).filter((b) => !b.run && b.kind !== 'run'), G = [], by = new Map(); L.forEach((b, i) => { const k = b.id + ':' + b.diffId; let g = by.get(k); if (!g) { g = { k, label: b.boss + (b.diff ? ' · ' + b.diff : ''), cur: false, pulls: [] }; by.set(k, g); G.push(g); } const pc = b.kill ? null : (typeof pullPct === 'function' ? pullPct(b) : null); g.pulls.push({ i, pull: b.pull, kill: !!b.kill, txt: 'Pull ' + b.pull + ' · ' + (b.kill ? 'Kill' : pc != null ? 'Wipe at ' + Math.round(pc) + '%' : 'Wipe'), col: b.kill ? '#e6b450' : (typeof pullCol === 'function' ? pullCol(b) : '') || '', on: b === S.item }); if (S.item && b.id === S.item.id && b.diffId === S.item.diffId) g.cur = true; }); return G; };
 /* round 334 pick any boss */ window.setPullPickAt334 = (idxs) => { const L = ((S.index && S.index.bosses) || []).filter((b) => !b.run && b.kind !== 'run'), bs = (idxs || []).map((i) => L[i]).filter(Boolean); if (!bs.length) return; const b0 = bs[0], same = bs.filter((b) => b.id === b0.id && b.diffId === b0.diffId); S.pullPick = { k: b0.id + ':' + b0.diffId, s: new Set(same.map((b) => b.pull)) }; S.plData = null; setScope('all'); if (S.item && S.item.id === b0.id && S.item.diffId === b0.diffId) renderMain(); else select(same[same.length - 1]); };
 /* round 335 open all */ window.openAll335 = (i) => { const L = ((S.index && S.index.bosses) || []).filter((b) => !b.run && b.kind !== 'run'), b = L[i]; if (!b) return; S.pullPick = null; S.plData = null; setScope('all'); select(b); };
 window.openPull333 = (i) => { const L = ((S.index && S.index.bosses) || []).filter((b) => !b.run && b.kind !== 'run'), b = L[i]; if (!b) return; S.pullPick = null; if (S.scope === 'all') setScope('pull'); select(b); };
-async function select(item) {
+/* (Nov 1: a pull asked for again while it's still opening (a reload asks twice: the report, then the remembered view) is opened once) */
+let SEL = null;
+function select(item) { if (SEL && SEL.item === item) return SEL.p; const p = select0(item), s = { item, p }; SEL = s; const off = () => { if (SEL === s) SEL = null; }; p.then(off, off); return p; }
+async function select0(item) {
+  bufEnd(); /* (the loading card, not the last page, while this one is read) */
   if (S.tab === 'overview') S.tab = 'audit'; /* (opening a pull leaves the Plan page) */
   S.miss = 0; syncUrl(item);
   S.item = item; S.mPlayer = null; S.pPlayer = null; S.death = 0;
   document.querySelectorAll('.pull').forEach((b) => b.classList.toggle('sel', ITEMS[+b.dataset.i] === item));
   $('#main').innerHTML = '<div class="empty">' + loadCard('Opening ' + item.boss + (item.pull ? ', pull ' + item.pull : ''), 'Reading the pull…', null, 'loadmsg') + '</div>';
-  let rep;
-  try { rep = await getRep(item); }
+  let rep; const pe = prevEarly(item);
+  try { rep = await getRep(item); await Promise.race([pe, new Promise((r) => setTimeout(r, 1500))]); } /* (a moment for the pull before, so the page is built once with it) */
   catch (err) {
     if (S.item !== item) return;
     $('#main').innerHTML = '<div class="empty"><p class="muted">Couldn\'t analyze this pull: ' + esc(err.message) + '</p><button class="btn primary" id="pullRetry" type="button">Try again</button></div>'; console.error(err);
@@ -1349,7 +1396,7 @@ async function select(item) {
   if (S.item !== item) return;
   try { S.rep = rep; }
   catch (err) { $('#main').innerHTML = '<div class="empty"><p class="muted">Couldn\'t analyze this pull: ' + esc(err.message) + '</p></div>'; console.error(err); return; }
-  holdStart(); try { renderMain(); } catch (e) { if (!rep._stale || item._rdSkip) throw e; console.warn('A saved reading from before the update didn\'t fit, reading the pull again:', e); item._rdSkip = 1; CACHE.delete(item); return select(item); }
+  holdStart(); try { renderMain(); } catch (e) { if (!rep._stale || item._rdSkip) throw e; console.warn('A saved reading from before the update didn\'t fit, reading the pull again:', e); item._rdSkip = 1; CACHE.delete(item); return select0(item); }
   bgFetch(item); // (the next pull, then the rest of this boss's pulls, download in the background)
 }
 // Warcraft Logs reports: once a pull is up, this boss's other pulls in the report download quietly, the next pull first,
@@ -1368,7 +1415,7 @@ function bgFetch(item) {
   // Report card, Homework and All pulls open at once; it stops at the memory limit, and a small note shows how far it is)
   let k = 0; const n = list.length; bgNote(0, 0);
   (async () => { const lane = async () => { while (list.length) { const b = list.shift(); if (tok !== BG_TOK || S.index !== idx) return;
-    while (document.querySelector('#main .ld') && tok === BG_TOK) await new Promise((r) => setTimeout(r, 1500));
+    while ((ldOn() || holding()) && tok === BG_TOK) await new Promise((r) => setTimeout(r, 1500)); /* (and while a pull's page is being built out of sight: it shows sooner) */
     if (tok !== BG_TOK || [...CACHE.keys()].filter((x) => x.id === item.id && x.diffId === item.diffId).length >= cacheCap()) break; k++; /* (other bosses' pulls make room: see cacheTrim) */ if (CACHE.has(b)) continue; bgNote(k, n);
     let was = true; try { if (RW.on()) was = await WCL.isSaved(b); else if (!(await WCL.isSaved(b))) { let pages = 0; await WCL.loadEvents(S.wclCreds, b, () => pages++); await new Promise((r) => setTimeout(r, Math.max(1500, pages * 700))); } } catch (e) { if (tok === BG_TOK) BG_KEY = null; break; }
     if (tok !== BG_TOK || S.index !== idx) break;
@@ -1968,7 +2015,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-11-01', h: [], n: ["Pages open crisp: no more half-faded page while the numbers are worked out, and the boxes at the top show a soft placeholder until their numbers are ready instead of flicking between guesses.", "Report card: a raider's card reads top to bottom in one column: their name with the grade beside it, the one thing to fix first, a box per list (tap one to jump to it), then the lists one under the other."], f: [] },
+  { d: '2026-11-01', h: [], n: ["Debriefing opens in one go: the loading card stays up a moment longer while the page is put together, then the whole pull shows at once, instead of Why we wiped and the Timeline being drawn again and again while it loaded.", "Pages open crisp: no more half-faded page while the numbers are worked out, and the boxes at the top show a soft placeholder until their numbers are ready instead of flicking between guesses.", "Report card: a raider's card reads top to bottom in one column: their name with the grade beside it, the one thing to fix first, a box per list (tap one to jump to it), then the lists one under the other."], f: [] },
   { d: '2026-10-31', h: [{ t: 'Themes', d: 'Pick how Debrief looks from Menu > Theme: Aurora, Aurora Gold, Raid frame, Ember Crown, Glass, Midnight, Forge, or your class colours. It only changes the look, and it is saved on your device.' }, { t: 'Cooldown timing on The Coiled Altar', d: 'Rotation now shows if your big cooldown went out at the same moments the top players use it on Mythic, like Trueshot on the pull, at P2 start and in the intermission. Debriefing tells you when you missed one. For now: Holy Paladin, Marksmanship Hunter, Affliction Warlock, Arcane Mage, Arms Warrior and Balance Druid.' }], n: [
     "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
@@ -3000,7 +3047,7 @@ function renderMain0() {
   if (S.tab === 'overview') { planPage(); return; } /* (Plan is its own page: it never reads the open raid (your call, Oct 21)) */
   progLit(false);
   // (opened from a shared pull link on a first visit: the pull first, then the tour)
-  if (S.tourAfterPull) { S.tourAfterPull = false; setTimeout(() => { if (!tourDone()) startTour(0); }, 1500); }
+  if (S.tourAfterPull) { S.tourAfterPull = false; setTimeout(function tourGo() { if (BUF.on) { setTimeout(tourGo, 300); return; } if (!tourDone()) startTour(0); }, 1500); } /* (once the page shows) */
   // (a tab's tips the first time it's opened; they wait for it to fill in)
   setTimeout(() => pageTips(tipsPage()), 0);
   if (S.nightRep && S.rep === S.nightRep) S.rep = S.realRep; // (leave the all-pulls report: back to the real pull)
@@ -14387,8 +14434,8 @@ const tag378 = () => (USED378 === 'like' ? 'vs guilds like us' : USED378 === 'al
 const sw378 = () => '<div class="r378-sw"><span>Compare with</span><span class="r378-seg" role="tablist"><button data-g="like"' + (G378 === 'like' ? ' class="on"' : '') + ' title="The saved kills closest to your kill time on this boss. Warcraft Logs ranks kills by time, so these guilds rank near you. Before your first kill: the slowest kills.">Guilds like us</button><button data-g="top" title="The fastest saved kills: top guilds."' + (G378 === 'top' ? ' class="on"' : '') + '>Top guilds</button></span></div>';
 document.addEventListener('click', (ev) => { const b = ev.target && ev.target.closest && ev.target.closest('.r378-seg button'); if (!b || b.classList.contains('on')) return; G378 = b.dataset.g === 'top' ? 'top' : 'like'; try { localStorage.setItem('g378', G378); } catch (e) { /* (not remembered) */ } if (S.tab === 'audit') liveRedraw(); else renderMain(); });
 function kill378(r) { if (r.item.kill && r.duration) return r.duration; let best = null; for (const b of (S.index && S.index.bosses) || []) { if (b.id !== r.item.id || b.diffId !== r.item.diffId || !b.kill) continue; const rp = CACHE.get(b), d = b.dur || b.duration || (rp && rp.duration); if (d && (best == null || d < best)) best = d; } return best; }
-const F378 = new Set(); /* (the saved copy of the numbers (liveSave) keeps no kill list: fetch it once when it's missing) */
-function like378(r, key, hn, np, cal, med, L0) { if (!RATE_LIVE_ALL.has(key) && !F378.has(key) && WCL.rateRecs && r.item.id > 0) { F378.add(key); const D = { 16: 5, 15: 4, 14: 3 }[r.item.diffId]; if (D) Promise.resolve(WCL.rateRecs({ e: r.item.id, d: D })).then((j) => { const since = PACE_NERF[key] ? Date.parse(PACE_NERF[key]) : 0, K = ((j && j.recs) || []).filter((x) => x && x.ph && x.ph.length && (!since || (x.at || 0) >= since)); if (K.length >= 15) { RATE_LIVE_ALL.set(key, K); if (S.tab === 'audit') liveRedraw(); } }).catch(() => {}); }
+const F378 = new Set(), P378 = new Set(); /* (fetched once when it's missing (Nov 1: liveSave keeps it now); P378: on its way, which the hold waits for) */
+function like378(r, key, hn, np, cal, med, L0) { if (!RATE_LIVE_ALL.has(key) && !F378.has(key) && WCL.rateRecs && r.item.id > 0) { F378.add(key); const D = { 16: 5, 15: 4, 14: 3 }[r.item.diffId]; if (D) { P378.add(key); Promise.resolve(WCL.rateRecs({ e: r.item.id, d: D })).then((j) => { P378.delete(key); const since = PACE_NERF[key] ? Date.parse(PACE_NERF[key]) : 0, K = ((j && j.recs) || []).filter((x) => x && x.ph && x.ph.length && (!since || (x.at || 0) >= since)); if (K.length >= 15) { RATE_LIVE_ALL.set(key, K); if (S.tab === 'audit') liveRedraw(); } }).catch(() => { P378.delete(key); }); } }
   const A = (RATE_LIVE_ALL.get(key) || []).filter((x) => x.ph.length === np && x.ph[np - 1][4] > 0); if (A.length < 15) return null;
   const H = A.filter((x) => x.h === hn), P = hn && H.length >= 30 ? H : A, dur = (x) => x.ph[np - 1][4], N = Math.max(15, Math.round(P.length / 3)), T = G378 === 'top' ? 0 : kill378(r);
   const KK = G378 === 'top' ? P.slice().sort((a, b) => dur(a) - dur(b)).slice(0, N) : T ? P.slice().sort((a, b) => Math.abs(dur(a) - T) - Math.abs(dur(b) - T)).slice(0, N) : P.slice().sort((a, b) => dur(b) - dur(a)).slice(0, N);
@@ -30975,6 +31022,7 @@ function pageTips(k, force) {
   const wait = () => {
     if (tipsPage() !== k) { TIPS_WAIT = null; return; } // (you've moved on: the tips wait for your next visit)
     if ($('.pg-dim')) { TIPS_WAIT = null; return; } // (a pop-up question came up meanwhile: the tips wait until it's answered)
+    if (BUF.on) { setTimeout(wait, 300); return; } // (Nov 1: the page is still being put together out of sight: nothing to point at yet)
     const LIST = k === 'audit' && !force ? AUDIT_FIRST : PAGE_TIPS[k]; // (round 431 first visit)
     const steps = LIST.filter((s) => tipVis(s.sel)), now = Date.now();
     if (steps.length && !first) first = now;
@@ -34267,31 +34315,14 @@ function r437Card() { document.querySelectorAll('.rqc-under').forEach((g) => { i
 document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('.tabbar .tab, .tabbar [data-t]'); if (t) document.body.classList.add('r438-tab'); }, true);
 // (the boxes at the top of a pull: their numbers wait under a soft placeholder until they stop changing, for at most 6 s, so a
 // count like Deaths never shows 25 and then 5 while the wipe call is still being worked out; only while a page first opens)
-/* round 440 one switch: the top boxes' numbers show once, when they're final (body.r438-ok); a tab click shows them at once */
-const R440 = { t0: 0, sig: '', since: 0 };
-const r440Sig = () => { const sb = document.querySelector('#view .r212-sb'); return sb ? [...sb.querySelectorAll('.oa-tiles .dbr-v, .cch-ab .cgl-p')].map((e) => e.textContent).join('|') : null; };
-// (the Deaths box shows the raw count for a moment (25) while the real one (5) is already in the top row's hidden Deaths box)
-const r440Same = () => { const sb = document.querySelector('#view .r212-sb'); if (!sb) return true; const bot = [...sb.querySelectorAll('details.cch-ab')].find((d) => /^Deaths/.test(((d.querySelector('.cgl-n') || {}).textContent || '').trim())), top = [...sb.querySelectorAll('.oa-tiles .dbr-n')].find((d) => /^Deaths/.test(((d.querySelector('.dbr-k') || {}).textContent || '').trim())); if (!bot || !top) return true; const x = ((bot.querySelector('.cgl-p') || {}).textContent || '').trim(), y = ((tb) => ((tb && tb.dataset && tb.dataset.raw) || (tb && tb.textContent) || '').trim())(top.querySelector('.dbr-v > b:first-child') || top.querySelector('.dbr-v')); return !x || !y || x === y; };
-/* round 442 once: no placeholder on the top boxes; only the Deaths box hides its number while it shows the raw count */
+/* round 440 one switch: the top boxes' numbers show once, when they're final (body.r438-ok) */
+/* (Nov 1: round 440/442's wait on the Deaths box (hidden while it still showed the raw count, 25 before 5) is gone: a pull's page is shown only once it is
+   finished (bufStart, near liveRedraw), so the box already has the real count. The data-raw below is still needed: round 231 copies it) */
 /* (round 231's Deaths box copies the real count from the top row's hidden Deaths tile, but only from its data-raw, which only a count-up wrote: with the count-up playing once, a redraw has none, so every draw's tile gets it here) */
 const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').forEach((n) => { if (((n.querySelector('.dbr-k') || {}).textContent || '').trim().toLowerCase() !== 'deaths') return; const b = n.querySelector('.dbr-v > b:first-child'); if (b && b.dataset.raw == null && /^\d+$/.test(b.textContent.trim())) b.dataset.raw = b.textContent.trim(); }); };
 (function () { const f11 = dsBars; dsBars = function (root) { try { r442Raw(); } catch (e) { /* (the raw count) */ } f11(root); }; })();
-(function r442Tick() { const bd = document.body; if (!bd) { setTimeout(r442Tick, 100); return; } bd.classList.add('r438-ok'); if (bd.classList.contains('r438-tab')) return; try { r442Raw(); } catch (e) { /* (the raw count) */ }
-  const sb = document.querySelector('#view .r212-sb'), now = Date.now(); if (sb) { if (!R440.t0) R440.t0 = now; const bot = [...sb.querySelectorAll('details.cch-ab')].find((d) => /^Deaths/.test(((d.querySelector('.cgl-n') || {}).textContent || '').trim())), v = bot && bot.querySelector('.cgl-p');
-    if (v) { const ok = R440.ok || r440Same() || now - R440.t0 > 4000; if (ok) R440.ok = 1; /* (once right, it stays shown: no blink on a later draw) */ v.style.visibility = ok ? '' : 'hidden'; if (ok && now - R440.t0 > 1500) return; } else if (now - R440.t0 > 4000) return; }
-  setTimeout(r442Tick, 100); })();
+(function r442On() { const bd = document.body; if (!bd) { setTimeout(r442On, 100); return; } bd.classList.add('r438-ok'); })();
 
 // ===== Design studio round 443 (Nov 1): page-load motion off, for now (Flex: "maybe just remove the animations for now", "and start
 // over"). Owner: the Design studio chat. =====
 /* round 443 still */ dsMotion = function () { /* (no count-ups or growing bars) */ };
-
-// ===== Design studio round 444 (Nov 1): Debriefing's bottom part shows once, when it has stopped being rebuilt. Owner: the Design studio chat. =====
-/* round 444 hold */ (function () { const H = document.documentElement; let t0 = 0, last = 0, mo = null, view = null, done = false;
-  const BOT = '#view > .ds-l'; /* (the Timeline / Overview under Why we wiped; Why we wiped itself always shows) */
-  const tick = () => { if (done) return; const v = document.getElementById('view'), now = performance.now();
-    if (v && v.querySelector(BOT)) { if (!t0) { t0 = now; last = now;  } if (v !== view) { view = v; last = now; if (mo) mo.disconnect(); mo = new MutationObserver(() => { last = performance.now(); }); mo.observe(v, { childList: true, subtree: true }); }
-      if (now - last > 800 || now - t0 > 5000) { done = true; if (mo) mo.disconnect(); H.classList.add('r444-done'); return; } }
-    else if (t0 && now - t0 > 5000) { done = true; H.classList.add('r444-done'); return; }
-    setTimeout(tick, 100); };
-  tick(); setTimeout(() => { done = true; if (mo) mo.disconnect(); H.classList.add('r444-done'); }, 20000); /* (never hidden for good) */
-  /* (a click anywhere, a tab or the pull picker, shows it at once) */ document.addEventListener('click', () => { if (!done) { done = true; if (mo) mo.disconnect(); H.classList.add('r444-done'); } }, true); })();
