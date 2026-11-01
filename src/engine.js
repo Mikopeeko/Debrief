@@ -693,7 +693,7 @@ const MODULES = [{
 }, {
   encounter: 'The Coiled Altar',
   units: ["Zul'jan", 'Hex Lord Malacrass', 'Malacrass', 'Axegrinder' /* round 414: the rolling axes, on the moving maps */, 'Spiteful Soulcoiler', 'Fragment of Malacrass', 'Coalesced Venom Stalker', 'Virulent Mutation', 'Manifestation of Dread'],
-  spells: Object.keys(CA_IDS).concat(['noxious ground', 'defiled ground', 'volatile venom', 'toxic deluge', 'bloodlust', 'heroism', 'time warp', 'fury of the aspects', 'primal rage', "harrier's cry", 'darkness', 'spirit link totem', 'anti-magic zone', 'rallying cry', 'power word: barrier', 'aura mastery', 'tranquility', 'revival', 'rewind', 'divine hymn', 'vampiric embrace',
+  spells: Object.keys(CA_IDS).concat(['gravebound' /* round 446 fragments: the debuff and each soul fragment picked up */, 'noxious ground', 'defiled ground', 'volatile venom', 'toxic deluge', 'bloodlust', 'heroism', 'time warp', 'fury of the aspects', 'primal rage', "harrier's cry", 'darkness', 'spirit link totem', 'anti-magic zone', 'rallying cry', 'power word: barrier', 'aura mastery', 'tranquility', 'revival', 'rewind', 'divine hymn', 'vampiric embrace',
     'divine shield', 'ice block', 'aspect of the turtle', 'cloak of shadows', 'anti-magic shell', 'netherwalk', 'dispersion', 'blessing of spellwarding', 'blessing of protection', 'blessing of sacrifice', 'pain suppression', 'guardian spirit', 'ironbark', 'life cocoon', 'time dilation', 'zephyr', 'dreadful presence', 'retaliatory malice'], PERSONAL, CA_CC, CA_CURSE),
   focus: new Set(["Zul'jan", 'Hex Lord Malacrass', 'Malacrass']),
   ids: [1286912, 1285911], // (1285911: Unnerving Fixation, the ghost's fixate: whose ghost it is (round 411e)) the Eternal Nightfall absorb shield (its own aura, separate from the cast's 1310752)
@@ -4704,6 +4704,23 @@ function buildCoiledAltar(ev, r, h) {
       if (sec.id === 'gloom') sec.rows.push([{ txt: 'Gravebound death', bad: true }, { t: d.t }, { p: pname(d.guid) }, { txt: how, bad: true }, { txt: '' }]);
       else sec.rows.push([{ t: d.t }, { s: S(src ? src.n : 'soul sever') }, { p: pname(d.guid) }, { txt: '—', dim: true }, { txt: '—', dim: true }, { txt: how, bad: true }]);
       sec.rows.sort((a, b) => ((a.find((c) => c && c.t != null) || {}).t || 0) - ((b.find((c) => c && c.t != null) || {}).t || 0)); sec.verdict = 'bad'; } }
+  /* round 446 fragments: who had soul fragments to pick up after a Gloombomb, where, and which they missed */
+  { const gSec = sections.find((s) => s.id === 'gloom');
+    if (gSec) { const ga = auras('gravebound').filter((e) => h.isPlayer(e.dst)).sort((a, b) => a.t - b.t), picks = dmg('gravebound').filter((e) => h.isPlayer(e.dst) && (e.id == null || +e.id === 1308330));
+      const at = (g, t) => { const p = h.snap(t).find((q) => q.guid === g); return p ? { x: p.x, y: p.y } : null; };
+      for (const a of ga.filter((e) => e.op === 'apply')) {
+        const off = ga.find((e) => e.dst === a.dst && e.op === 'remove' && e.t > a.t + 0.05), dd = r.deaths.find((d) => d.guid === a.dst && d.t >= a.t && d.t <= a.t + 25 && /^gravebound$/i.test(String(d.ability || '')));
+        const end = Math.min(off ? off.t : a.t + 20, dd ? dd.t : Infinity), mine = picks.filter((e) => e.dst === a.dst && e.t >= a.t - 0.2 && e.t <= end + 0.3).slice(0, 3), left = Math.max(0, 3 - mine.length);
+        /* (only a real miss: they died to it, or took Gravebound's fail hit (#1297906); a bomb near the end of a kill leaves fragments nobody needed) */ const fail = dmg('gravebound').find((e) => e.dst === a.dst && +e.id === 1297906 && e.t >= a.t && e.t <= a.t + 25);
+        /* (a Gravebound death with all 3 picked up: each pickup hurts, and the last one's hit killed them (pull 20's Jangokin)) */
+        if (!(dd || (left && fail))) continue; const spot = at(a.dst, a.t); if (!spot) continue; const who = pname(a.dst);
+        const rings = [{ x: spot.x, y: spot.y, r: 8, color: '#a99bff', fill: 'rgba(150,130,255,.12)', label: left ? left + (left === 1 ? ' fragment' : ' fragments') + ' left' : 'bomb went off here', legend: left ? 'Where the bomb went off: the fragments not picked up were around here (their spots aren\'t logged)' : 'Where the bomb went off' }];
+        mine.forEach((e) => { const q = at(e.dst, e.t); if (q) rings.push({ x: q.x, y: q.y, r: 1.3, color: '#7ee08f', fill: 'rgba(126,224,143,.55)', label: '+' + (e.t - a.t).toFixed(1) + ' s', legend: 'A soul fragment picked up, and when (seconds after the bomb)' }); });
+        const map = { t: a.t, hl: [a.dst], hlLabel: dd ? 'died to Gravebound' : 'missed fragments', rings, title: who + ': picked up ' + mine.length + ' of 3 soul fragments after the Gloombomb at ' + h.fmtT(a.t) + (dd ? ', and died at ' + h.fmtT(dd.t) : '') };
+        const row = dd && gSec.rows.find((x) => x[0] && x[0].txt === 'Gravebound death' && x[2] && x[2].p === who);
+        if (row) { row[4] = { map }; if (!left && row[3]) { row[3] = { ...row[3], txt: who + ' picked up all 3 soul fragments, and the last one\'s hit killed them: each fragment hurts', why: who + ' picked up all 3 soul fragments, but each one hurts and the last one\'s hit killed them at ' + h.fmtT(dd.t) + '.', next: 'Get healed up or use a defensive before picking up the last fragment.' }; } continue; }
+        gSec.rows.push([{ txt: 'Soul fragments', bad: !!dd, warn: !dd }, { t: a.t }, { p: who }, { txt: 'picked up ' + mine.length + ' of 3 soul fragments' + (dd ? ', died' : ', took the Gravebound hit'), bad: !!dd, warn: !dd, why: who + ' picked up ' + mine.length + ' of 3 soul fragments after the Gloombomb' + (dd ? ' and died to Gravebound.' : '.'), next: 'After a Gloombomb hits you, walk over all three soul fragments around where it went off.' }, { map }]); }
+      gSec.rows.sort((p, q) => ((p.find((c) => c && c.t != null) || {}).t || 0) - ((q.find((c) => c && c.t != null) || {}).t || 0)); } }
   const fill = (mp) => { mp.pts = h.snap(mp.t).concat(mp.extraPts || (mp.from != null ? objs(mp.t, mp.from) : [])); orbRings(mp); };
   for (const s of sections) for (const row of s.rows.concat(...(s.groups || []).map((g) => g.rows))) for (const c of row) { if (c.map) fill(c.map); if (c.maps) for (const [, mp] of c.maps) fill(mp); }
   // every positional mistake gets a map of that moment (player ringed, orbs and ghosts from the 15s before)
