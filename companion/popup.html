@@ -121,7 +121,7 @@ body.isMini { border-color: rgba(230,180,80,.85); box-shadow: inset 0 0 0 1px rg
 /* (the same type as the card in WoW (Oct 24, the user: "THEY ALL LOOK THE SAME"): Barlow Condensed (Oct 25: the site font), one size up, nothing under 12; the raid lead box's gold edge) */
 html, body { font-weight: 500; } .body b { font-weight: 600; } .kyou { border-left: 3px solid var(--gold); }
 .kgr { display: flex; gap: 14px; align-items: center; background: var(--raised); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; margin: 0 0 10px; } .kgr b { font: 700 31px Barlow Condensed, sans-serif; line-height: 1; min-width: 26px; } .kgr small, .kch small { display: block; color: var(--faint); font-weight: 700; font-size: 12px; letter-spacing: .04em; } .kgr span { color: var(--soft); font-size: 14px; }
-.kch { position: relative; background: var(--raised); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px 8px; margin: 0 0 10px; } .kch em { position: absolute; right: 12px; top: 8px; font-style: normal; color: #5fdc7a; font-weight: 700; font-size: 12.5px; } .kch svg { display: block; width: 100%; height: auto; margin-top: 6px; } .kch .kno { margin: 6px 0 0; } .kgrid.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } /* (two columns when it's long (Oct 24)) */
+.kch { position: relative; background: var(--raised); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px 8px; margin: 0 0 10px; } .kch em { position: absolute; right: 12px; top: 8px; font-style: normal; color: #5fdc7a; font-weight: 700; font-size: 12.5px; } .kch svg { display: block; width: 100%; height: auto; margin-top: 6px; } .kchs { margin: 0 0 10px; } .kchs .kch { margin: 0; } .kchs .kch + .kch { margin-top: 10px; } .kchs.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; } .kchs.two .kch + .kch { margin-top: 0; } .kch .kno { margin: 6px 0 0; } .kgrid.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } /* (two columns when it's long (Oct 24)) */
 .kl { color: var(--gold); font: 700 12.5px/1 Barlow Condensed, sans-serif; letter-spacing: .05em; margin: 2px 0 7px; } .kl.mut { color: var(--muted); margin-top: 12px; }
 .khd { font: 600 17.5px/1.35 Barlow Condensed, sans-serif; margin: 0 0 12px; }
 .kc { background: var(--raised); border: 1px solid var(--line); border-radius: 8px; margin: 0 0 10px; }
@@ -283,7 +283,7 @@ function cardView() {
   if (!VIEW) VIEW = 'me';
   const DUN = !!(C.h && C.h.dungeon); if (DUN) VIEW = 'me'; /* (a dungeon boss: your Me view only (Oct 24)) */
   const R = C.raid || {}, CO = (C.coach && C.coach.raid) || null;
-  let L = '', Rt = '';
+  let L = '', Rt = '', CH = '';
   /* (the Report card grade and tonight's two charts, when ticked in /db, above the raid lead box as /recap draws them (Oct 24, the user:
      "I should see the /recap window ... the ones i selected in the settings")) */
   { const H0 = C.h || D.h || {};
@@ -292,18 +292,23 @@ function cardView() {
       if (SH.grade === true && C.grade && C.grade.letter) L += '<div class="kgr"><b style="color:' + (GC[String(C.grade.letter).charAt(0)] || '#ece8df') + '">' + esc(C.grade.letter) + '</b><div><small>REPORT CARD · ' + esc(C.grade.score || '') + '</small><span>' + esc(C.grade.cats || '') + '</span></div></div>';
       const pk = (v) => { const m = String(v || '').replace(/,/g, '').match(/([\d.]+)\s*([kKmM]?)/); if (!m) return null; const n = +m[1]; return /m/i.test(m[2]) ? n * 1000 : /k/i.test(m[2]) ? n : n / 1000; };
       const NPc = (D.night || []).filter((p) => p.boss === (H0.boss || '') + ' · ' + (H0.diff || ''));
+      const twoCh = SH.chartNight === true && SH.chartLine === true && !!me && (document.documentElement.clientWidth || 0) >= 600;
+      const cwid = Math.max(220, (document.documentElement.clientWidth || 460) - 28), chW = Math.round((twoCh ? (cwid - 10) / 2 : cwid) - 26);
       const chart = (title, pts, fmt) => {
         if (pts.length < 2) return '<div class="kch"><small>' + esc(title.toUpperCase()) + '</small><p class="kno">Shows once you have two pulls on this boss tonight.</p></div>';
         let lo = Math.min(...pts.map((q) => q[1])), hi = Math.max(...pts.map((q) => q[1])), best = 0; if (hi === lo) hi = lo + 1;
         pts.forEach((q, i) => { if (q[1] >= pts[best][1]) best = i; });
-        const Wd = 560, Hh = 56, x = (i) => (10 + i * (Wd - 20) / (pts.length - 1)).toFixed(1), y = (v) => (Hh - 6 - (Hh - 14) * (v - lo) / (hi - lo)).toFixed(1);
+        const Wd = chW, Hh = 44, x = (i) => (10 + i * (Wd - 20) / (pts.length - 1)).toFixed(1), y = (v) => (Hh - 6 - (Hh - 14) * (v - lo) / (hi - lo)).toFixed(1);
         const mix = (i) => { const f = i / Math.max(1, pts.length - 1), a = [230, 180, 80], b = [95, 220, 122]; return 'rgb(' + a.map((c, j) => Math.round(c + (b[j] - c) * f)).join(',') + ')'; };
         let g = ''; for (let i = 1; i < pts.length; i++) g += '<line x1="' + x(i - 1) + '" y1="' + y(pts[i - 1][1]) + '" x2="' + x(i) + '" y2="' + y(pts[i][1]) + '" stroke="' + mix(i) + '" stroke-width="2.2" stroke-linecap="round"/>';
         g += pts.map((q, i) => '<circle cx="' + x(i) + '" cy="' + y(q[1]) + '" r="' + (q[2] ? 4.5 : 3) + '" fill="' + (q[2] ? '#5fdc7a' : mix(i)) + '"/>').join('');
         return '<div class="kch"><small>' + esc(title.toUpperCase()) + '</small><em>Best: pull ' + esc(pts[best][0]) + ' · ' + esc(fmt(pts[best][1])) + '</em><svg viewBox="0 0 ' + Wd + ' ' + Hh + '">' + g + '</svg></div>'; };
-      if (SH.chartNight === true) L += chart('How far each pull got', NPc.map((p) => [p.pull, p.kill ? 100 : p.left != null ? 100 - p.left : null, p.cur]).filter((q) => q[1] != null), (v) => (v >= 100 ? 'kill' : Math.round(100 - v) + '% left'));
-      if (SH.chartLine === true && me) { const k = short(me.name); L += chart((me.role === 'healer' ? 'Your healing' : 'Your damage') + ' tonight', NPc.map((p) => [p.pull, p.v && p.v[k] ? pk(p.v[k]) : null, p.cur]).filter((q) => q[1] != null && q[1] > 0), (v) => (v >= 1000 ? (v / 1000).toFixed(2).replace(/0+$/, '').replace(/\.$/, '') + 'M' : Math.round(v) + 'k')); }
+      if (SH.chartNight === true) CH += chart('How far each pull got', NPc.map((p) => [p.pull, p.kill ? 100 : p.left != null ? 100 - p.left : null, p.cur]).filter((q) => q[1] != null), (v) => (v >= 100 ? 'kill' : Math.round(100 - v) + '% left'));
+      if (SH.chartLine === true && me) { const k = short(me.name); CH += chart((me.role === 'healer' ? 'Your healing' : 'Your damage') + ' tonight', NPc.map((p) => [p.pull, p.v && p.v[k] ? pk(p.v[k]) : null, p.cur]).filter((q) => q[1] != null && q[1] > 0), (v) => (v >= 1000 ? (v / 1000).toFixed(2).replace(/0+$/, '').replace(/\.$/, '') + 'M' : Math.round(v) + 'k')); }
+      if (CH) CH = '<div class="kchs' + (twoCh ? ' two' : '') + '">' + CH + '</div>';
     } }
+  /* (the charts sit after your number and tiles on the Me tab, as in WoW (Nov 1, the Design studio: one design, two windows); elsewhere under the grade) */
+  if (!(VIEW === 'me' && me)) { L += CH; CH = ''; }
   if (VIEW === 'me' && me) {
     const P = me, you = C.coach && C.coach.you ? C.coach.you[P.name] : null;
     // (your raid lead box: how your pull went, your fixes numbered, then worse and better than last pull)
@@ -324,9 +329,10 @@ function cardView() {
       const d = P.d != null && P.d !== '' ? (P.d >= 0 ? '+' : '') + P.d + '% vs pull ' + esc(P.vs) : 'First pull read';
       /* (your big number with your spec's icon, like /recap; against last pull and your best on the right) */
       const dc = P.d != null && P.d !== '' ? (P.d >= 0 ? 'up' : 'dn') : '';
-      L += '<div class="kbig">' + (P.icon ? icn(P.icon) : '') + '<div><small>' + (P.role === 'healer' ? 'Your healing' : 'Your damage') + '</small><b>' + esc(P.v) + '<em>' + esc(P.unit) + '</em></b></div><div class="kbr">' + (!on('vs') ? '' : dc ? '<span class="' + dc + '">' + d.replace(/ vs pull.*/, '') + '</span>' + d.replace(/^[^ ]+/, '') : d) + (!on('best') ? '' : P.bt ? '<br><span class="up">Your best tonight</span>' + (P.best ? ' (was ' + esc(P.best) + ', pull ' + esc(P.bp) + ')' : '') : P.best ? '<br>best ' + esc(P.best) + (P.bp ? ' (pull ' + esc(P.bp) + ')' : '') : '') /* (your best tonight (Oct 24)) */ + (P.rank && on('rank') ? '<br>' + esc(P.rank) : '') + '</div></div>' +
+      L += '<div class="kbig">' + (P.icon ? icn(P.icon) : '') + '<div><small>' + (P.role === 'healer' ? 'Your healing' : 'Your damage') + '</small><b>' + esc(P.v) + '<em>' + esc(P.unit) + '</em></b></div><div class="kbr">' + (!on('vs') ? '' : dc ? '<span class="' + dc + '">' + d.replace(/ vs pull.*/, '') + '</span>' + d.replace(/^[^ ]+/, '') : d) + (!on('best') ? '' : P.bt ? '<br><span class="up">Your best tonight</span>' + (P.best ? ' (was ' + esc(P.best) + ', pull ' + esc(P.bp) + ')' : '') : P.best ? '<br>Best ' + esc(P.best) + (P.bp ? ' (pull ' + esc(P.bp) + ')' : '') : '') /* (your best tonight (Oct 24)) */ + (P.rank && on('rank') ? '<br>' + esc(P.rank) : '') + '</div></div>' +
         /* (the small tiles come with Standard and Detailed, as in /recap (Oct 24)) */ '<div class="ktiles">' + (LK.compact || LK.preset === 'simple' ? [] : (P.tiles || [])).map((t) => '<div class="kt' + (t[3] === 'warn' ? ' w' : t[3] === 'bad' ? ' b' : '') + '"><small>' + esc(t[0]) + '</small><b>' + esc(t[1]) + '</b><i>' + esc(t[2] || '') + '</i></div>').join('') + '</div>';
     }
+    L += CH;
     // (rotation, like the Rotation tab's checklist: your score, each fix against the top players, a square per moment, Next time)
     if (on('rotation') && !LK.compact) { /* (Simple's short card has no rotation, boss or survival sections, as in WoW (Oct 24)) */
       if (P.rot) {
@@ -635,7 +641,7 @@ function cols2(b, chrome) {
     const LKc = (D && D.lk) || {}, deep2 = (LKc.detailed || LKc.preset === 'detailed') && LKc.preset !== 'simple', cap = (screen.availHeight || 900) * 0.67 - chrome - above - 16;
     let best = -1, bh = total;
     /* (columns by style (Oct 24, the user: windows "keep switching"): Detailed, or a mix made from it, always two; the others always one) */
-    const two = LKc.twoCol !== false && deep2 && (screen.availWidth || 1600) >= 900; void cap;
+    const two = false; void cap; void deep2; /* (one column at every width, as in WoW (Nov 1, the Design studio's spec)) */
     if (two) for (let i = 1; i < kids.length; i++) { if (!kids[i].classList.contains('kc')) continue; const y = kids[i].getBoundingClientRect().top - top0, hh = Math.max(y, total - y); if (y > 60 && hh < bh) { best = i; bh = hh; } }
     g.style.width = '';
     if (two) { if (best > 0) { const R = document.createElement('div'); R.className = 'kR'; for (const k of kids.slice(best)) R.appendChild(k); g.appendChild(R); } g.classList.remove('one'); g.classList.add('two'); want = 2; }

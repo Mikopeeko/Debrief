@@ -898,6 +898,10 @@ RECAP.encodeMplus = (R, night) => {
     for (const x of o.stops) rec.push(['MK', o.n, n0(x.t), x.who, 's', x.spell, x.mob, x.with]);
     const dpl = new Map(); for (const x of o.defs) dpl.set(x.who, (dpl.get(x.who) || []).concat(x.name));
     for (const [w, l] of dpl) rec.push(['MF', o.n, w, [...new Set(l)].join(';')]);
+    /* (each defensive, dispel and purge with its time, so WoW lists them as the pop-up does (Nov 1)) */
+    for (const x of o.defs) rec.push(['MI', o.n, n0(x.t), x.who, 'f', x.name, '']);
+    for (const x of o.dispels) rec.push(['MI', o.n, n0(x.t), x.who, 'd', x.removed || '', x.on || '']);
+    for (const x of o.purges || []) rec.push(['MI', o.n, n0(x.t), x.who, 'p', x.removed || '', x.on || '']);
     for (const p of R.people) { const ds = o.dispels.filter((x) => x.who === p.name).length, ps = (o.purges || []).filter((x) => x.who === p.name).length; rec.push(['MV', o.n, p.name, o.dmg[p.name] || 0, o.heal[p.name] || 0, ds, ps]); }
     for (const d of o.debs || []) if (d.on) rec.push(['MS', o.n, d.spell, d.on, d.removed, 'd']);
     for (const d of o.ebuffs || []) if (d.on) rec.push(['MS', o.n, d.spell, d.on, d.removed, 'p']);
