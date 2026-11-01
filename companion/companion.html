@@ -504,19 +504,21 @@ function cardOf(m) {
 // (the one card's Saved list and its Raid | Mythic+ switch (Nov 1): this log's bosses, each with its pulls, and its keys, newest first)
 const nightStr = (ms) => (ms ? new Date(ms - 6 * 3600e3).toISOString().slice(0, 10).replace(/-/g, '') : '');
 function popSaved() {
-  const out = { raid: [], keys: [], lastRaid: null, lastRaidBoss: '', lastKey: null };
+  const out = { nights: [], other: [], dungeon: [], keys: [], lastRaid: null, lastRaidBoss: '', lastKey: null };
   if (!L.name) return out;
-  const N = nightOf(L.name), G = new Map(), DG = new Map(), RAIDD = new Set([14, 15, 16, 17]);
-  const runs0 = ((L.ix && L.ix.peek && L.ix.peek().runs) || []), inRun = (b) => runs0.some((r) => r.startByte <= b.startByte && (!r.endByte || b.startByte <= r.endByte)); /* (a dungeon boss inside a key belongs to the key (Nov 1)) */
-  for (const b of L.items) { if (b.endByte && b.id === DUMMY) { out.practice = { n: ((out.practice || {}).n || 0) + 1, sb: b.startByte, boss: b.boss, night: nightStr(b.startMs) }; continue; } /* (dummies: one small Practice line, last (Nov 1)) */
-    if (!b.endByte || b.id === DUMMY) continue; const dun = !RAIDD.has(+b.diffId); if (dun && inRun(b)) continue;
-    const k = b.boss + ' · ' + (DIFFN[b.diffId] || b.diff || ''), e = N[b.startByte], T = dun ? DG : G;
-    const g = T.get(k) || { name: k, n: 0, best: null, kill: false, sb: 0, night: nightStr(b.startMs), lvl: +((String(DIFFN[b.diffId] || b.diff || '').match(/(\d+)/) || [])[1] || 0) }; g.n++; g.sb = b.startByte; if (b.kill) g.kill = true;
-    if (e && e.l != null && (g.best == null || e.l < g.best)) g.best = e.l; T.delete(k); T.set(k, g); }
-  out.raid = [...G.values()].reverse(); out.dungeon = [...DG.values()].reverse().sort((a, c) => c.lvl - a.lvl); /* (Raid nights: raid bosses only; Dungeon bosses: no saved key, highest key first) */
-  const runs = ((L.ix && L.ix.peek && L.ix.peek().runs) || []).filter((r) => r.endByte);
+  const N = nightOf(L.name), NG = new Map(), OG = new Map(), DG = new Map(), RAIDD = new Set([14, 15, 16, 17]);
+  const runs0 = ((L.ix && L.ix.peek && L.ix.peek().runs) || []), inRun = (b) => runs0.some((r) => r.startByte <= b.startByte && (!r.endByte || b.startByte <= r.endByte)); /* (a dungeon boss inside a key belongs to the key) */
+  const add = (T, k, b, e, name) => { const g = T.get(k) || { name, n: 0, best: null, kill: false, sb: 0, night: nightStr(b.startMs), lvl: +((String(DIFFN[b.diffId] || b.diff || '').match(/(\d+)/) || [])[1] || 0) };
+    g.n++; g.sb = b.startByte; if (b.kill) g.kill = true; if (e && e.l != null && (g.best == null || e.l < g.best)) g.best = e.l; T.delete(k); T.set(k, g); };
+  for (const b of L.items) { if (!b.endByte) continue; const e = N[b.startByte], dn = DIFFN[b.diffId] || b.diff || '', name = b.boss + ' · ' + (b.id === DUMMY ? 'Practice' : dn);
+    if (b.id === DUMMY || +b.diffId === 14) { add(OG, name, b, e, name); continue; } /* (other pulls: raid Normal and practice) */
+    if (!RAIDD.has(+b.diffId)) { if (!inRun(b)) add(DG, name, b, e, name); continue; } /* (dungeon bosses whose key wasn't saved) */
+    const nk = nightStr(b.startMs); let n0 = NG.get(nk); if (!n0) { n0 = { night: nk, G: new Map(), diffs: new Set() }; } NG.delete(nk); NG.set(nk, n0); n0.diffs.add(dn); add(n0.G, name, b, e, name); }
+  out.nights = [...NG.values()].reverse().map((n0) => ({ night: n0.night, diffs: [...n0.diffs].sort(), bosses: [...n0.G.values()].reverse() }));
+  out.other = [...OG.values()].reverse(); out.dungeon = [...DG.values()].reverse().sort((a, c) => c.lvl - a.lvl);
+  const runs = runs0.filter((r) => r.endByte);
   out.keys = runs.slice().reverse().map((r) => Object.assign({ sb: r.startByte, dungeon: r.boss, level: r.level, night: nightStr(r.startMs) }, (L.mpRes || {})[r.startByte] || {}));
-  const lr = L.popLast && L.popLast.b; out.lastRaid = lr ? lr.startByte : out.raid[0] ? out.raid[0].sb : null; out.lastRaidBoss = lr ? lr.boss : out.raid[0] ? out.raid[0].name.replace(/ · .*/, '') : '';
+  const lr = L.popLast && L.popLast.b, nb = out.nights[0] && out.nights[0].bosses[0]; out.lastRaid = lr ? lr.startByte : nb ? nb.sb : null; out.lastRaidBoss = lr ? lr.boss : nb ? nb.name.replace(/ · .*/, '') : '';
   out.lastKey = L.mpLast || (out.keys[0] ? out.keys[0].sb : null);
   return out;
 }

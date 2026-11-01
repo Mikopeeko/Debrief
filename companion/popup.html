@@ -36,6 +36,10 @@ body.is-kill .kyou .kv { font-size: 17px; }
 .kpick { background: none; border: 0; padding: 0; color: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-align: left; } .kpick .kcar { color: var(--muted); } .kpick:hover .kcar { color: var(--text); }
 .ksr { cursor: pointer; } .ksr:hover { background: rgba(255,255,255,.03); } .ksr.wait { opacity: .6; }
 .ksr b { color: var(--text); } .ksr em { font-style: normal; color: var(--faint); margin-left: 6px; } .ksr i { float: right; font-style: normal; font-weight: 700; color: var(--muted); } .ksr i.up { color: var(--goodT); } .ksr i.ot { color: var(--badT); } .kpr { font-size: 13px; color: var(--muted); } .kpr span:last-child { color: var(--muted); }
+.ksv { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 4px 0 12px; } .ksv span { text-align: center; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; font: 700 15px Barlow Condensed, sans-serif; color: var(--muted); cursor: pointer; background: rgba(0,0,0,.15); }
+.ksv span.on { color: var(--text); background: var(--raised); border-color: var(--line2); } .ksv small { font: 500 13.5px Barlow Condensed, sans-serif; color: var(--faint); margin-left: 8px; }
+.ksr .so { color: var(--soft); font-weight: 500; } .ksr i.ar { margin-left: 10px; color: var(--faint); } .ksub { padding-left: 22px; font-size: 13.5px; } .kfold { border-top: 1px solid var(--line); } .kfold b.mu { color: var(--soft); }
+.kold { margin: 6px 0 0 17px; color: var(--gold); font: 700 14px Barlow Condensed, sans-serif; cursor: pointer; }
 .kbk { background: none; border: 0; padding: 0 10px 0 0; color: var(--gold); font: 700 14px Barlow Condensed, sans-serif; cursor: pointer; } .kbk:hover { color: var(--text); } .ksr i.kl { color: var(--gold); }
 .x { app-region: no-drag; -webkit-app-region: no-drag; background: none; border: 0; color: var(--faint); font-size: 16px; width: 26px; height: 26px; border-radius: 5px; cursor: pointer; flex: none; }
 .x:hover { color: var(--text); background: var(--raised); }
@@ -443,16 +447,39 @@ const topBar = () => '<div class="top">' + LOGO + '<b>Debrief</b><button class="
 function swRow(side) { const S0 = D.saved || {}, nk = (S0.keys || []).length, rb = side === 'raid' && D.h ? D.h.boss : S0.lastRaidBoss || 'no pulls yet';
   return '<div class="ksw"><span data-sw="raid" class="' + (side === 'raid' ? 'on' : '') + '">Raid<small>' + esc(rb) + '</small></span><span data-sw="mplus" class="' + (side === 'mplus' ? 'on' : '') + '">Mythic+<small>' + (nk ? nk + (nk === 1 ? ' key' : ' keys') : 'no keys yet') + '</small></span></div>'; }
 const caretSvg = (up) => '<svg class="kcar" viewBox="0 0 12 8" width="12" height="8"><path d="' + (up ? 'M1 7 L6 2 L11 7' : 'M1 1 L6 6 L11 1') + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-function keyRows(title) { const L0 = (D.saved || {}).keys || [], LK = D.lk || {}, short = (n) => String(n || '').split('-')[0];
+const RAIDS = new Set(['Nymrissa Wavecaller', "Nek'zali the Soulcoiler", 'Entombed Sentinels', 'The Lost Explorers', 'Vashnik the Malignant', 'Sszorak', 'The Twin Fangs', 'The Coiled Altar', "Ula'tek", "Kith'ix"]);
+let SV = { side: null, open: {}, older: false, other: false };
+const dayWord = (n, tonight) => { const w = dayOf(n); return w === 'today' ? (tonight ? 'Tonight' : 'Today') : w === 'yesterday' ? 'Yesterday' : w; };
+const svRes = (g) => (g.kill ? '<i class="kl">Kill</i>' : g.best != null ? '<i>best ' + Math.round(g.best) + '%</i>' : '');
+const svBoss = (g, mixed) => '<div class="kr ksr ksub" data-spull="' + g.sb + '"><span class="kd" style="background:' + (g.kill ? 'var(--good)' : 'var(--bad)') + '"></span><span></span><span><b>' + esc(mixed ? g.name : g.name.replace(/ · .*/, '')) + '</b> <em>' + g.n + (g.n === 1 ? ' pull' : ' pulls') + '</em>' + svRes(g) + '</span></div>';
+// (your keys, newest first; limit: the first few, then Show older; heads: a day heading above each day's keys)
+function keyRows(title, limit, heads) { const L0 = (D.saved || {}).keys || [], LK = D.lk || {}, short = (n) => String(n || '').split('-')[0];
   const mineOf = (k) => (k.people || []).find((p) => (LK.me && short(p[0]) === short(LK.me)) || (LK.mine || []).some((n) => short(n) === short(p[0])));
-  const rows = L0.map((k) => { const w = mineOf(k);
-    return '<div class="kr ksr" data-key="' + k.sb + '"><span class="kd" style="background:' + (k.stat === 'T' ? 'var(--good)' : k.stat === 'L' ? 'var(--faint)' : k.stat ? 'var(--bad)' : 'var(--faint)') + '"></span><span></span><span><b>' + esc(k.dungeon) + ' +' + esc(k.level) + '</b>' + (w ? ' <b style="color:' + (CC[w[1]] || 'var(--soft)') + ';font-weight:600">' + esc(short(w[0])) + '</b>' : '') + ' <em>' + esc(dayOf(k.night)) + '</em>' + (k.stat === 'L' ? '<i>Left early</i>' : k.stat === 'O' ? '<i class="ot">Over time</i>' : k.up ? '<i class="up">+' + k.up + '</i>' : '') + '</span></div>'; });
-  return '<div class="kc"><div class="kh"><b>' + title + (L0.length ? ' · ' + L0.length : '') + '</b></div><div class="kb">' + (rows.length ? rows.join('') : '<div class="kr"><span class="kd" style="background:var(--muted)"></span><span></span><span>No keys yet. Run a key with Debrief Companion on.</span></div>') + '</div></div>'; }
-function savedView() { const R0 = (D.saved || {}).raid || [];
-  const rows = R0.map((g) => '<div class="kr ksr" data-spull="' + g.sb + '"><span class="kd" style="background:' + (g.kill ? 'var(--good)' : 'var(--bad)') + '"></span><span></span><span><b>' + esc(g.name) + '</b> <em>' + esc(dayOf(g.night)) + ' · ' + g.n + (g.n === 1 ? ' pull' : ' pulls') + '</em>' + (g.kill ? '<i class="kl">Kill</i>' : g.best != null ? '<i>best ' + Math.round(g.best) + '%</i>' : '') + '</span></div>');
-  const DR = ((D.saved || {}).dungeon || []).map((g) => '<div class="kr ksr" data-spull="' + g.sb + '"><span class="kd" style="background:' + (g.kill ? 'var(--good)' : 'var(--bad)') + '"></span><span></span><span><b>' + esc(g.name) + '</b> <em>' + esc(dayOf(g.night)) + ' · ' + g.n + (g.n === 1 ? ' pull' : ' pulls') + '</em>' + (g.kill ? '<i class="kl">Kill</i>' : g.best != null ? '<i>best ' + Math.round(g.best) + '%</i>' : '') + '</span></div>');
-  const pr = (D.saved || {}).practice; if (pr && pr.n) rows.push('<div class="kr ksr kpr" data-spull="' + pr.sb + '"><span></span><span></span><span>Practice · ' + esc(pr.boss || 'Training Dummy') + ' <em>' + esc(dayOf(pr.night)) + ' · ' + pr.n + (pr.n === 1 ? ' pull' : ' pulls') + '</em></span></div>'); /* (dummies last, in their own small line) */
-  return '<p class="mph">Saved pulls<small><button class="kbk" type="button" data-saved="1">‹ Back</button>Click one to open it.</small></p><div class="kc"><div class="kh"><b>Raid nights</b></div><div class="kb">' + (rows.length ? rows.join('') : '<div class="kr"><span class="kd" style="background:var(--muted)"></span><span></span><span>No raid pulls yet.</span></div>') + '</div></div>' + (DR.length ? '<div class="kc"><div class="kh"><b>Dungeon bosses</b></div><div class="kb">' + DR.join('') + '</div></div>' : '') + keyRows('Mythic+ keys'); }
+  const n = limit && !SV.older ? Math.min(limit, L0.length) : L0.length; let last = null, out = '';
+  L0.slice(0, n).forEach((k) => { const w = mineOf(k);
+    if (heads) { const dw = dayWord(k.night); if (dw !== last) { out += (last != null ? '</div></div>' : '') + '<div class="kc"><div class="kh"><b>' + esc(dw) + '</b></div><div class="kb">'; last = dw; } }
+    out += '<div class="kr ksr" data-key="' + k.sb + '"><span class="kd" style="background:' + (k.stat === 'T' ? 'var(--good)' : k.stat === 'L' ? 'var(--faint)' : k.stat ? 'var(--bad)' : 'var(--faint)') + '"></span><span></span><span><b>' + esc(k.dungeon) + ' +' + esc(k.level) + '</b>' + (w ? ' <b style="color:' + (CC[w[1]] || 'var(--soft)') + ';font-weight:600">' + esc(short(w[0])) + '</b>' : '') + (heads ? '' : ' <em>' + esc(dayOf(k.night)) + '</em>') + '<i class="ar">›</i>' + (k.stat === 'L' ? '<i>Left early</i>' : k.stat === 'O' ? '<i class="ot">Over time</i>' : k.up ? '<i class="up">+' + k.up + '</i>' : '') + '</span></div>'; });
+  if (heads && last != null) out += '</div></div>';
+  if (!heads) out = '<div class="kc"><div class="kh"><b>' + title + (L0.length ? ' · ' + L0.length : '') + '</b></div><div class="kb">' + out + '</div></div>';
+  if (!L0.length) out = '<p class="kno">No keys yet. Run a key with Debrief Companion on.</p>';
+  if (L0.length > n) out += '<p class="kold" data-svolder="1">Show older (' + (L0.length - n) + ')</p>';
+  return out; }
+// (Saved, short: the Raid | Mythic+ switch, then nights or keys, then the leftovers in one closed line)
+function savedView() { const S0 = D.saved || {}, nights = S0.nights || [], nk = (S0.keys || []).length; if (!SV.side) SV.side = D.mplus ? 'mplus' : 'raid';
+  let h = '<p class="mph">Saved pulls<small><button class="kbk" type="button" data-saved="1">‹ Back</button>· tap one to open it</small></p>' +
+    '<div class="ksv"><span data-svside="raid" class="' + (SV.side === 'raid' ? 'on' : '') + '">Raid<small>' + nights.length + (nights.length === 1 ? ' night' : ' nights') + '</small></span><span data-svside="mplus" class="' + (SV.side === 'mplus' ? 'on' : '') + '">Mythic+<small>' + nk + (nk === 1 ? ' key' : ' keys') + '</small></span></div>';
+  const fold = (title, sub, list, rows) => { const n = list.reduce((a, g) => a + g.n, 0); return '<div class="kr ksr kfold" data-svother="1"><span></span><span></span><span><b class="mu">' + title + '</b> <em>' + sub + ' · ' + n + '</em><i class="ar">' + (SV.other ? '–' : '›') + '</i></span></div>' + (SV.other ? rows : ''); };
+  if (SV.side === 'raid') {
+    h += '<div class="kc"><div class="kb">' + (nights.length ? nights.map((N) => { const open = SV.open[N.night] != null ? SV.open[N.night] : dayOf(N.night) === 'today', kills = N.bosses.filter((g) => g.kill).length;
+      const best = N.bosses.filter((g) => !g.kill && g.best != null).reduce((a, g) => (a == null || g.best < a ? g.best : a), null), raid = RAIDS.has(N.bosses[0].name.replace(/ · .*/, '')) ? 'Venomous Abyss' : N.bosses[0].name.replace(/ · .*/, '');
+      return '<div class="kr ksr" data-svnight="' + esc(N.night) + '"><span class="kd" style="background:' + (kills ? 'var(--good)' : 'var(--bad)') + '"></span><span></span><span><b>' + esc(dayWord(N.night, true)) + '</b> <span class="so">' + esc(raid) + ' · ' + esc(N.diffs.join(', ')) + ' · ' + N.bosses.length + (N.bosses.length === 1 ? ' boss' : ' bosses') + '</span><i class="ar">' + (open ? '–' : '›') + '</i>' + (kills ? '<i class="kl">' + kills + (kills === 1 ? ' kill' : ' kills') + '</i>' : best != null ? '<i>best ' + Math.round(best) + '%</i>' : '') + '</span></div>' +
+        (open ? N.bosses.map((g) => svBoss(g, N.diffs.length > 1)).join('') : ''); }).join('') : '<p class="kno">No raid nights yet.</p>') + '</div></div>';
+    if ((S0.other || []).length) h += fold('Other pulls', 'Normal, practice', S0.other, S0.other.map((g) => svBoss(g, true)).join(''));
+  } else {
+    h += keyRows('', 5, true);
+    if ((S0.dungeon || []).length) h += fold('Dungeon bosses', 'their key wasn\'t saved', S0.dungeon, S0.dungeon.map((g) => svBoss(g, true)).join(''));
+  }
+  return h; }
 const mmssP = (x) => { const r = Math.round(x); return Math.floor(r / 60) + ':' + String(r % 60).padStart(2, '0'); };
 const kN = (v) => v >= 1e6 ? (v / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'm' : Math.round(v / 1000) + 'k';
 const nth = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
@@ -682,7 +709,11 @@ function cols2(b, chrome) {
 }
 window.addEventListener('resize', () => fit()); /* (the app widened or narrowed the window: measure again) */
 document.addEventListener('click', (e) => {
-  const t = e.target.closest ? e.target.closest('[data-fold],[data-row],[data-close],[data-open],[data-big],[data-cut],[data-cutt],[data-pull],[data-tab],[data-cf],[data-cr],[data-cmore],[data-who],[data-saved],[data-sw],[data-key],[data-spull],[data-mpick],[data-mp],[data-mview],[data-mwstep],[data-mwho]') : null; if (!t) return;
+  const t = e.target.closest ? e.target.closest('[data-fold],[data-row],[data-close],[data-open],[data-big],[data-cut],[data-cutt],[data-pull],[data-tab],[data-cf],[data-cr],[data-cmore],[data-who],[data-saved],[data-svside],[data-svnight],[data-svother],[data-svolder],[data-sw],[data-key],[data-spull],[data-mpick],[data-mp],[data-mview],[data-mwstep],[data-mwho]') : null; if (!t) return;
+  if (t.dataset.svside) { SV.side = t.dataset.svside; SV.other = false; render(); return; } /* (Saved: Raid or Mythic+ (Nov 1)) */
+  if (t.dataset.svnight) { const k = t.dataset.svnight, was = SV.open[k] != null ? SV.open[k] : dayOf(k) === 'today'; SV.open[k] = !was; render(); return; }
+  if (t.dataset.svother) { SV.other = !SV.other; render(); return; }
+  if (t.dataset.svolder) { SV.older = true; render(); return; }
   if (t.dataset.saved) { SAVED = !SAVED; MPICK = false; render(); const b0 = document.querySelector('.body'); if (b0) b0.scrollTop = 0; return; } /* (Saved, inside the card (Nov 1)) */
   if (t.dataset.mpick) { MPICK = !MPICK; render(); return; } /* (the key picker on the key's name) */
   if (t.dataset.sw) { const S0 = D.saved || {}, cur = D.mplus ? 'mplus' : 'raid'; if (t.dataset.sw === cur) { if (SAVED) { SAVED = false; render(); } return; }
@@ -712,7 +743,7 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') post('clos
 function take(d) {
   if (!d) return;
   const fromChip = loadingPull != null; /* (a pull button brought it: no motion) */
-  waiting = false; loadingPull = null; WHO = null; VIEW = null; MPULL = 0; MVIEW = 'me'; MWHO = null; SAVED = false; MPICK = false; /* (each recap starts on you, on Me, like the card in WoW (Oct 24)) */ D = d; big = !!d.full; for (const k of Object.keys(OPEN)) delete OPEN[k]; render();
+  waiting = false; loadingPull = null; WHO = null; VIEW = null; MPULL = 0; MVIEW = 'me'; MWHO = null; SAVED = false; MPICK = false; SV = { side: null, open: {}, older: false, other: false }; /* (each recap starts on you, on Me, like the card in WoW (Oct 24)) */ D = d; big = !!d.full; for (const k of Object.keys(OPEN)) delete OPEN[k]; render();
   const pr = document.getElementById('pullsRow'), on = pr && pr.querySelector('.pc.on'); if (on) pr.scrollLeft = Math.max(0, on.offsetLeft - pr.clientWidth + on.offsetWidth + 12);
   const b = document.querySelector('.body'); if (b) b.scrollTop = 0;
   if (big && !fromChip) motion();

@@ -861,27 +861,54 @@ function UI.titlePick(open)
   end
 end
 -- (your keys, newest first: the result's dot, the key, who you played, how far it went up; a click opens it)
-function UI.keyRows(y, title)
+-- ---------- Saved, short (Nov 1, Flex: "i dont like how they are all listed the lists will get too long"; the Design studio's saved-v2 picture he
+-- approved): a Raid | Mythic+ switch; Raid lists one line per night (tonight open, tap a night for its bosses); Mythic+ lists the 5 newest keys
+-- (Show older for the rest); the leftovers sit in one closed line at the bottom (Other pulls; Dungeon bosses whose key wasn't saved) ----------
+UI.sv = { side = nil, open = {}, older = false, other = false }
+UI.RAIDS = { ["Nymrissa Wavecaller"] = 1, ["Nek'zali the Soulcoiler"] = 1, ["Entombed Sentinels"] = 1, ["The Lost Explorers"] = 1, ["Vashnik the Malignant"] = 1, ["Sszorak"] = 1, ["The Twin Fangs"] = 1, ["The Coiled Altar"] = 1, ["Ula'tek"] = 1, ["Kith'ix"] = 1 }
+-- (a row: dot, text, the result on the right, an arrow; a tap runs go)
+function UI.svRow(y, x, dotHex, text, right, rightHex, arrow, go, label, small)
+  local yA = y; y = y + 8
+  if dotHex then local d = TEX("ARTWORK"); d:SetTexture(SLICE .. "dot"); d:SetPoint("TOPLEFT", x + 2, -(y + 4)); d:SetSize(8, 8); d:SetVertexColor(rgb(dotHex)) end
+  local f = FS("body", small and 13 or 14, small and COL.muted or COL.soft); f:SetPoint("TOPLEFT", x + 18, -y); f:SetWidth(CW - x - 110); f:SetWordWrap(false); f:SetText(text)
+  local ax = CW - 4
+  if arrow then local a = FS("bold", 13, COL.faint); a:SetJustifyH("RIGHT"); a:SetPoint("TOPRIGHT", body, "TOPLEFT", ax, -y); a:SetText(arrow); ax = ax - 18 end
+  if (right or "") ~= "" then local r = FS("bold", 13, rightHex or COL.muted); r:SetJustifyH("RIGHT"); r:SetPoint("TOPRIGHT", body, "TOPLEFT", ax, -y); r:SetText(right) end
+  y = y + 26
+  if go then local b = BTN(); b:SetPoint("TOPLEFT", 0, -yA); b:SetSize(CW, y - yA); b.label = label; b:SetScript("OnClick", go) end
+  return y
+end
+function UI.svLine(y) local l = TEX("ARTWORK"); l:SetPoint("TOPLEFT", 0, -y); l:SetSize(CW, 1); fill(l, COL.line) end
+function UI.svOpen(i) return function() DB.cur = i; DB.who = nil; UI.saved = false; if UI.mp then UI.mp.pick = false end; wipe(EXPANDED); scroller:SetVerticalScroll(0); render() end end
+-- (a night or a day as a word: Tonight / Today / Yesterday / Oct 22)
+function UI.dayWord(q, tonight)
+  local w = UI.dayOf(q); if w == "today" then return tonight and "Tonight" or "Today" end; if w == "yesterday" then return "Yesterday" end; return w
+end
+-- (your keys, newest first: dot, key, who of yours played it, how far it went up; limit: the first few, then Show older; heads: a day heading
+-- above each day's keys)
+function UI.keyRows(y, title, limit, heads)
   local me = UnitName and UnitName("player")
   local L = {}; for i = #DB.pulls, 1, -1 do local q = DB.pulls[i]; if q.mplus then L[#L + 1] = i end end
-  local t = FS("bold", 12.5, COL.muted); t:SetPoint("TOPLEFT", 0, -y); t:SetText(title .. (#L > 0 and ("  ·  " .. #L) or "")); y = y + 22
+  if title then local t = FS("bold", 12.5, COL.muted); t:SetPoint("TOPLEFT", 0, -y); t:SetText(title .. (#L > 0 and ("  ·  " .. #L) or "")); y = y + 22 end
   if #L == 0 then local n = FS("body", 13.5, COL.muted); n:SetPoint("TOPLEFT", 0, -y); n:SetWidth(CW); n:SetText("No keys yet. Run a key with Debrief Companion on, then Save this key."); return y + 30 end
-  for k, i in ipairs(L) do
-    local q = DB.pulls[i]; local K = q.mplus; local run = K.run or {}
+  local n = (limit and not UI.sv.older) and math.min(limit, #L) or #L
+  local lastDay
+  for k = 1, n do
+    local i = L[k]; local q = DB.pulls[i]; local K = q.mplus; local run = K.run or {}
+    if heads then local dw = UI.dayWord(q); if dw ~= lastDay then lastDay = dw; local hd = FS("bold", 12.5, COL.muted); hd:SetPoint("TOPLEFT", 0, -(y + (k > 1 and 8 or 0))); hd:SetText(string.upper(dw)); y = y + (k > 1 and 30 or 22) end
+    elseif k > 1 then UI.svLine(y) end
     local who, alt; for _, p in ipairs(K.people or {}) do local s = p.name:match("^([^%-]+)") or p.name; if p.name == me or s == me then who = p elseif DB.myChars and (DB.myChars[p.name] or DB.myChars[s]) then alt = p end end; who = who or alt
-    if k > 1 then local l = TEX("ARTWORK"); l:SetPoint("TOPLEFT", 0, -y); l:SetSize(CW, 1); fill(l, COL.line) end
-    local yA = y; y = y + 8
-    local d = TEX("ARTWORK"); d:SetTexture(SLICE .. "dot"); d:SetPoint("TOPLEFT", 2, -(y + 4)); d:SetSize(8, 8)
-    d:SetVertexColor(rgb(run.stat == "T" and COL.good or (run.stat == "L" and COL.faint or COL.bad)))
-    local f = FS("body", 14, COL.soft); f:SetPoint("TOPLEFT", 18, -y); f:SetWidth(CW - 80); f:SetWordWrap(false)
-    f:SetText("|cffffffff" .. q.h.boss .. " +" .. (run.level or "") .. "|r" .. (who and ("   |cff" .. UI.classHex(who.cls) .. who.name .. "|r") or "") .. "   |cff" .. COL.faint .. UI.dayOf(q) .. "|r")
     local res = run.stat == "L" and "Left early" or (run.stat == "O" and "Over time") or (((run.up or 0) > 0) and ("+" .. run.up)) or ""
-    if res ~= "" then local u = FS("bold", 13, run.stat == "L" and COL.muted or (run.stat == "O" and COL.badT or COL.goodT)); u:SetJustifyH("RIGHT"); u:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - 4, -y); u:SetText(res) end
-    y = y + 26
-    local b = BTN(); b:SetPoint("TOPLEFT", 0, -yA); b:SetSize(CW, y - yA); b.label = q.h.boss .. " +" .. (run.level or "") -- (label: for the tests)
-    b:SetScript("OnClick", function() DB.cur = i; DB.who = nil; UI.saved = false; UI.mp.pick = false; wipe(EXPANDED); scroller:SetVerticalScroll(0); render() end)
+    y = UI.svRow(y, 0, run.stat == "T" and COL.good or (run.stat == "L" and COL.faint or COL.bad),
+      "|cffffffff" .. q.h.boss .. " +" .. (run.level or "") .. "|r" .. (who and ("   |cff" .. UI.classHex(who.cls) .. who.name .. "|r") or "") .. (heads and "" or ("   |cff" .. COL.faint .. UI.dayOf(q) .. "|r")),
+      res, run.stat == "L" and COL.muted or (run.stat == "O" and COL.badT or COL.goodT), "›", UI.svOpen(i), q.h.boss .. " +" .. (run.level or ""))
   end
-  return y + 12
+  if #L > n then
+    local t = FS("bold", 13, COL.gold); t:SetPoint("TOPLEFT", 18, -(y + 6)); t:SetText("Show older (" .. (#L - n) .. ")")
+    local b = BTN(); b:SetPoint("TOPLEFT", 0, -y); b:SetSize(CW, 26); b.label = "older"; b:SetScript("OnClick", function() UI.sv.older = true; render() end)
+    y = y + 28
+  end
+  return y + 6
 end
 -- (the end of every card: never taller than the screen, the rest scrolls and the footer says so)
 function UI.fitCard(y)
@@ -895,7 +922,6 @@ function UI.fitCard(y)
   foot:ClearAllPoints(); foot:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -(TOPY + vh + 19)); foot:SetWidth(W - PAD * 2); foot:SetWordWrap(false)
   card:SetHeight(TOPY + vh + 42)
 end
--- (Saved, inside the card: your raid nights, each boss on each night with its pulls, and your keys; a click opens it in this same card)
 function UI.savedView()
   W = WIDTHS[DB.width or "normal"] or 400; CW = W - PAD * 2
   card:SetWidth(W); body:SetWidth(CW); scroller:SetWidth(CW); UI.colFrame(false, CW)
@@ -907,79 +933,91 @@ function UI.savedView()
   TOPY = 52
   scroller:ClearAllPoints(); scroller:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -TOPY)
   UI.resetPool(); local y = 4
+  local sv = UI.sv
+  if not sv.side then local cq = DB.pulls[DB.cur]; sv.side = (cq and cq.mplus) and "mplus" or "raid" end -- (opens on the side the card was on)
   local h0 = FS("head", 17, COL.text); h0:SetPoint("TOPLEFT", 0, -y); h0:SetText("Saved pulls"); y = y + 24
-  local bk = FS("bold", 13, COL.gold); bk:SetPoint("TOPLEFT", 0, -y); bk:SetText("‹ Back") -- (back to the card you came from (the Design studio, Nov 1))
+  local bk = FS("bold", 13, COL.gold); bk:SetPoint("TOPLEFT", 0, -y); bk:SetText("‹ Back") -- (back to the card you came from)
   local bkB = BTN(); bkB:SetPoint("TOPLEFT", -4, -(y - 3)); bkB:SetSize(bk:GetStringWidth() + 8, 20); bkB.label = "back"
   bkB:SetScript("OnClick", function() UI.saved = false; scroller:SetVerticalScroll(0); render() end)
   bkB:SetScript("OnEnter", function() bk:SetTextColor(rgb(COL.text)) end); bkB:SetScript("OnLeave", function() bk:SetTextColor(rgb(COL.gold)) end)
-  local s0 = FS("body", 13, COL.muted); s0:SetPoint("LEFT", bk, "RIGHT", 10, 0); s0:SetText("Click one to open it."); y = y + 28
-  -- (raid nights: one row per raid boss and difficulty on each night, newest first. A dungeon boss pulled inside a saved key belongs to that key,
-  -- and one with no saved key goes under Dungeon bosses (Nov 1, Flex: "its also saving keys into raid nights"); a dummy is practice)
+  local s0 = FS("body", 13, COL.muted); s0:SetPoint("LEFT", bk, "RIGHT", 8, 0); s0:SetText("·  tap one to open it"); y = y + 28
+  -- (what goes where: raid nights (raid bosses above Normal), other pulls (raid Normal, practice), keys, and dungeon bosses whose key wasn't saved)
   local inKey = {}
   for _, q in ipairs(DB.pulls) do if q.mplus then local nk = nightKey(q); for _, p in ipairs(q.mplus.pulls or {}) do if (p.boss or "") ~= "" then inKey[nk .. "|" .. p.boss] = true end end end end
-  local G, order, DG, dorder = {}, {}, {}, {}
-  for i, q in ipairs(DB.pulls) do if q.h and not q.mplus and not q.demo and q.h.diff ~= "Practice" then
-    local dun = q.h.dungeon or (q.h.diff or ""):match("^Mythic%+") ~= nil
-    if not (dun and inKey[nightKey(q) .. "|" .. q.h.boss]) then
-      local k = nightKey(q) .. "|" .. q.h.boss .. "|" .. q.h.diff
-      local T, O = dun and DG or G, dun and dorder or order
-      local g = T[k]; if not g then g = { boss = q.h.boss, diff = q.h.diff, q = q, n = 0, best = nil, kill = false, lvl = tonumber((q.h.diff or ""):match("(%d+)")) or 0 }; T[k] = g; O[#O + 1] = k end
-      g.n = g.n + 1; g.last = i; if q.h.kill then g.kill = true end
-      local p = tonumber(q.h.pct); if p and (not g.best or p < g.best) then g.best = p end
-    end
-  end end
-  local t = FS("bold", 12.5, COL.muted); t:SetPoint("TOPLEFT", 0, -y); t:SetText("RAID NIGHTS"); y = y + 22
-  if #order == 0 then local n = FS("body", 13.5, COL.muted); n:SetPoint("TOPLEFT", 0, -y); n:SetText("No raid pulls yet."); y = y + 30 end
-  table.sort(order, function(a, c) return G[a].last > G[c].last end) -- (newest first: the boss you pulled last on top)
-  for k = 1, #order do
-    local g = G[order[k]]
-    if k > 1 then local l = TEX("ARTWORK"); l:SetPoint("TOPLEFT", 0, -y); l:SetSize(CW, 1); fill(l, COL.line) end
-    local yA = y; y = y + 8
-    local d = TEX("ARTWORK"); d:SetTexture(SLICE .. "dot"); d:SetPoint("TOPLEFT", 2, -(y + 4)); d:SetSize(8, 8); d:SetVertexColor(rgb(g.kill and COL.good or COL.bad))
-    local f = FS("body", 14, COL.soft); f:SetPoint("TOPLEFT", 18, -y); f:SetWidth(CW - 90); f:SetWordWrap(false)
-    f:SetText("|cffffffff" .. g.boss .. "  ·  " .. g.diff .. "|r   |cff" .. COL.faint .. UI.dayOf(g.q) .. "  ·  " .. g.n .. (g.n == 1 and " pull" or " pulls") .. "|r")
-    local r = FS("bold", 13, g.kill and COL.gold or COL.muted); r:SetJustifyH("RIGHT"); r:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - 4, -y)
-    r:SetText(g.kill and "Kill" or (g.best and ("best " .. math.floor(g.best + 0.5) .. "%") or ""))
-    y = y + 26
-    local last = g.last
-    local b = BTN(); b:SetPoint("TOPLEFT", 0, -yA); b:SetSize(CW, y - yA); b.label = g.boss .. " · " .. g.diff
-    b:SetScript("OnClick", function() DB.cur = last; DB.who = nil; UI.saved = false; wipe(EXPANDED); scroller:SetVerticalScroll(0); render() end)
-  end
-  -- (dungeon bosses with no saved key: highest key first, then the newest)
-  if #dorder > 0 then
-    table.sort(dorder, function(a, c) if DG[a].lvl ~= DG[c].lvl then return DG[a].lvl > DG[c].lvl end; return DG[a].last > DG[c].last end)
-    y = y + 12
-    local dt = FS("bold", 12.5, COL.muted); dt:SetPoint("TOPLEFT", 0, -y); dt:SetText("DUNGEON BOSSES"); y = y + 22
-    for k = 1, #dorder do
-      local g = DG[dorder[k]]
-      if k > 1 then local l = TEX("ARTWORK"); l:SetPoint("TOPLEFT", 0, -y); l:SetSize(CW, 1); fill(l, COL.line) end
-      local yA = y; y = y + 8
-      local d = TEX("ARTWORK"); d:SetTexture(SLICE .. "dot"); d:SetPoint("TOPLEFT", 2, -(y + 4)); d:SetSize(8, 8); d:SetVertexColor(rgb(g.kill and COL.good or COL.bad))
-      local f = FS("body", 14, COL.soft); f:SetPoint("TOPLEFT", 18, -y); f:SetWidth(CW - 90); f:SetWordWrap(false)
-      f:SetText("|cffffffff" .. g.boss .. "  ·  " .. g.diff .. "|r   |cff" .. COL.faint .. UI.dayOf(g.q) .. "  ·  " .. g.n .. (g.n == 1 and " pull" or " pulls") .. "|r")
-      local r = FS("bold", 13, g.kill and COL.gold or COL.muted); r:SetJustifyH("RIGHT"); r:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - 4, -y)
-      r:SetText(g.kill and "Kill" or (g.best and ("best " .. math.floor(g.best + 0.5) .. "%") or ""))
-      y = y + 26
-      local last = g.last
-      local b = BTN(); b:SetPoint("TOPLEFT", 0, -yA); b:SetSize(CW, y - yA); b.label = g.boss .. " · " .. g.diff
-      b:SetScript("OnClick", function() DB.cur = last; DB.who = nil; UI.saved = false; wipe(EXPANDED); scroller:SetVerticalScroll(0); render() end)
+  local nights, norder, other, dung, nKeys = {}, {}, {}, {}, 0
+  local function addG(T, O, k, q, i, extra) local g = T[k]; if not g then g = { boss = q.h.boss, diff = q.h.diff, q = q, n = 0, best = nil, kill = false, lvl = tonumber((q.h.diff or ""):match("(%d+)")) or 0 }; T[k] = g; O[#O + 1] = k end
+    g.n = g.n + 1; g.last = i; if q.h.kill then g.kill = true end; local p = tonumber(q.h.pct); if p and (not g.best or p < g.best) then g.best = p end; return g end
+  local OT, OO, DT, DO = {}, {}, {}, {}
+  for i, q in ipairs(DB.pulls) do
+    if q.mplus then nKeys = nKeys + 1
+    elseif q.h and not q.demo then
+      local dun = q.h.dungeon or (q.h.diff or ""):match("^Mythic%+") ~= nil
+      if q.h.diff == "Practice" or (not dun and q.h.diff == "Normal") then addG(OT, OO, q.h.boss .. "|" .. q.h.diff, q, i)
+      elseif dun then if not inKey[nightKey(q) .. "|" .. q.h.boss] then addG(DT, DO, q.h.boss .. "|" .. q.h.diff, q, i) end
+      else
+        local nk = nightKey(q); local N = nights[nk]; if not N then N = { q = q, G = {}, O = {}, kills = 0, best = nil, diffs = {}, last = i }; nights[nk] = N; norder[#norder + 1] = nk end
+        N.last = i; N.diffs[q.h.diff] = true; local g = addG(N.G, N.O, q.h.boss .. "|" .. q.h.diff, q, i)
+      end
     end
   end
-  local pn, plast, pq = 0, nil, nil; for i, q in ipairs(DB.pulls) do if q.h and not q.mplus and not q.demo and q.h.diff == "Practice" then pn = pn + 1; plast = i; pq = q end end
-  if pn > 0 then
-    if #order > 0 then local l = TEX("ARTWORK"); l:SetPoint("TOPLEFT", 0, -y); l:SetSize(CW, 1); fill(l, COL.line) end
-    local yA = y; y = y + 8
-    local f = FS("body", 13, COL.muted); f:SetPoint("TOPLEFT", 18, -y); f:SetWidth(CW - 30); f:SetWordWrap(false)
-    f:SetText("Practice  ·  " .. pq.h.boss .. "   |cff" .. COL.faint .. UI.dayOf(pq) .. "  ·  " .. pn .. (pn == 1 and " pull" or " pulls") .. "|r")
-    y = y + 24
-    local b = BTN(); b:SetPoint("TOPLEFT", 0, -yA); b:SetSize(CW, y - yA); b.label = "Practice"
-    b:SetScript("OnClick", function() DB.cur = plast; DB.who = nil; UI.saved = false; wipe(EXPANDED); scroller:SetVerticalScroll(0); render() end)
+  table.sort(norder, function(a, c) return nights[a].last > nights[c].last end)
+  local nOther, nDung = 0, 0; for _, k in ipairs(OO) do nOther = nOther + OT[k].n end; for _, k in ipairs(DO) do nDung = nDung + DT[k].n end
+  -- (the switch: Raid · N nights, Mythic+ · N keys)
+  do
+    local bw = math.floor((CW - 6) / 2)
+    for k, s in ipairs({ { "raid", "Raid", #norder .. (#norder == 1 and " night" or " nights") }, { "mplus", "Mythic+", nKeys .. (nKeys == 1 and " key" or " keys") } }) do
+      local on = sv.side == s[1]; local x = (k - 1) * (bw + 6)
+      local f = RT("BACKGROUND"); f:SetPoint("TOPLEFT", x, -y); f:SetSize(bw, 30); UI.rounded(f, "fill", 5, on and COL.raised or COL.bg, on and 1 or 0.6)
+      local l = RT("BORDER"); l:SetPoint("TOPLEFT", f, "TOPLEFT"); l:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT"); UI.rounded(l, "line", 5, on and COL.line2 or COL.line, 1)
+      local t = FS("bold", 14, on and COL.text or COL.muted); t:SetText(s[2] .. "   |cff" .. COL.faint .. s[3] .. "|r"); t:SetPoint("CENTER", f, "CENTER", 0, 0)
+      local b = BTN(); b:SetPoint("TOPLEFT", x, -y); b:SetSize(bw, 30); b.label = "sv-" .. s[1]; b:SetScript("OnClick", function() sv.side = s[1]; render() end)
+    end
+    y = y + 42
   end
-  y = y + 12
-  y = UI.keyRows(y, "MYTHIC+ KEYS")
+  if sv.side == "raid" then
+    if #norder == 0 then local n = FS("body", 13.5, COL.muted); n:SetPoint("TOPLEFT", 0, -y); n:SetText("No raid nights yet."); y = y + 30 end
+    for k, nk in ipairs(norder) do
+      local N = nights[nk]
+      if k > 1 then UI.svLine(y) end
+      local kills, best = 0, nil; for _, gk in ipairs(N.O) do local g = N.G[gk]; if g.kill then kills = kills + 1 elseif g.best and (not best or g.best < best) then best = g.best end end
+      local dl = {}; for d in pairs(N.diffs) do dl[#dl + 1] = d end; table.sort(dl)
+      local raid = UI.RAIDS[N.q.h.boss] and "Venomous Abyss" or N.q.h.boss
+      local open = sv.open[nk]; if open == nil then open = (UI.dayOf(N.q) == "today") end
+      y = UI.svRow(y, 0, kills > 0 and COL.good or COL.bad, "|cffffffff" .. UI.dayWord(N.q, true) .. "|r   |cff" .. COL.soft .. raid .. "  ·  " .. table.concat(dl, ", ") .. "  ·  " .. #N.O .. (#N.O == 1 and " boss" or " bosses") .. "|r",
+        kills > 0 and (kills .. (kills == 1 and " kill" or " kills")) or (best and ("best " .. math.floor(best + 0.5) .. "%") or ""), kills > 0 and COL.gold or COL.muted, open and "–" or "›",
+        function() sv.open[nk] = not open; render() end, "night " .. nk)
+      if open then
+        table.sort(N.O, function(a, c) return N.G[a].last > N.G[c].last end)
+        for _, gk in ipairs(N.O) do local g = N.G[gk]
+          y = UI.svRow(y - 6, 22, g.kill and COL.good or COL.bad, "|cffffffff" .. g.boss .. "|r" .. (#dl > 1 and ("  ·  " .. g.diff) or "") .. "   |cff" .. COL.faint .. g.n .. (g.n == 1 and " pull" or " pulls") .. "|r",
+            g.kill and "Kill" or (g.best and ("best " .. math.floor(g.best + 0.5) .. "%") or ""), g.kill and COL.gold or COL.muted, nil, UI.svOpen(g.last), g.boss .. " · " .. g.diff, true)
+        end
+        y = y + 4
+      end
+    end
+    -- (the leftovers, one closed line: Normal raid pulls and practice)
+    if nOther > 0 then
+      UI.svLine(y + 4); y = y + 6
+      y = UI.svRow(y, 0, nil, "|cff" .. COL.soft .. "Other pulls|r   |cff" .. COL.faint .. "Normal, practice  ·  " .. nOther .. "|r", "", nil, sv.other and "–" or "›", function() sv.other = not sv.other; render() end, "other", true)
+      if sv.other then for _, k in ipairs(OO) do local g = OT[k]
+        y = UI.svRow(y - 6, 22, g.kill and COL.good or COL.faint, "|cffffffff" .. g.boss .. "  ·  " .. g.diff .. "|r   |cff" .. COL.faint .. UI.dayOf(g.q) .. "  ·  " .. g.n .. (g.n == 1 and " pull" or " pulls") .. "|r",
+          g.kill and "Kill" or (g.best and ("best " .. math.floor(g.best + 0.5) .. "%") or ""), g.kill and COL.gold or COL.muted, nil, UI.svOpen(g.last), g.boss .. " · " .. g.diff, true) end end
+    end
+  else
+    y = UI.keyRows(y, nil, 5, true)
+    -- (the leftovers, one closed line: dungeon bosses whose key wasn't saved, highest key first)
+    if nDung > 0 then
+      table.sort(DO, function(a, c) if DT[a].lvl ~= DT[c].lvl then return DT[a].lvl > DT[c].lvl end; return DT[a].last > DT[c].last end)
+      UI.svLine(y); y = y + 2
+      y = UI.svRow(y, 0, nil, "|cff" .. COL.soft .. "Dungeon bosses|r   |cff" .. COL.faint .. "their key wasn't saved  ·  " .. nDung .. "|r", "", nil, sv.other and "–" or "›", function() sv.other = not sv.other; render() end, "other", true)
+      if sv.other then for _, k in ipairs(DO) do local g = DT[k]
+        y = UI.svRow(y - 6, 22, g.kill and COL.good or COL.bad, "|cffffffff" .. g.boss .. "  ·  " .. g.diff .. "|r   |cff" .. COL.faint .. g.n .. (g.n == 1 and " pull" or " pulls") .. "|r",
+          g.kill and "Kill" or (g.best and ("best " .. math.floor(g.best + 0.5) .. "%") or ""), g.kill and COL.gold or COL.muted, nil, UI.svOpen(g.last), g.boss .. " · " .. g.diff, true) end end
+    end
+  end
   UI.fitCard(y)
 end
-card:HookScript("OnHide", function() UI.saved = false; if UI.mp then UI.mp.pick = false end end) -- (a closed card opens on the recap again, not the list)
+card:HookScript("OnHide", function() UI.saved = false; if UI.mp then UI.mp.pick = false end; UI.sv.side = nil; UI.sv.older = false; UI.sv.other = false end) -- (a closed card opens on the recap again, not the list)
 -- (the newest saved pull the character you're on was in (Oct 27): the card opens there at login, so a Paladin's card isn't a key the Druid ran)
 -- (the small number tiles, one look for the boss card and the Mythic+ key, as the pop-up draws them (Nov 1, the Design studio: "factor the
 -- boss card's tile into a shared function"): as many across as fit at 150 wide, at most four; a key's four tiles two by two and five as three
