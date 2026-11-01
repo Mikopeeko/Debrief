@@ -261,14 +261,15 @@ async function rotation(R, text, W, opts) {
       const cs = x.checks.filter((c) => c.st && c.st !== 'na' && !/^(st|boss):/.test(String(c.k || '')) && !ROT_SKIP.test(plainT(c.label)) && !(!o.boss && / uses$/i.test(plainT(c.label))));
       const fix = cs.filter((c) => c.st === 'bad' || c.st === 'warn').sort((a, c) => (c.st === 'bad') - (a.st === 'bad') || (c.cost || 0) - (a.cost || 0)).slice(0, 3);
       const ln = (c) => { try { return plainT(line(c)); } catch (e) { return plainT(c.label); } };
-      o.rot[short(p.name)] = { fix: fix.map((c) => [c.st, icon(c.ic) || '', plainT(c.label), plainT(c.v), ln(c)]), good: cs.filter((c) => c.st === 'ok' && c.isMain).slice(0, 3).map((c) => plainT(c.label)) };
+      const bt = (c) => { try { return o2.bits ? o2.bits(c, o.s) : null; } catch (e) { return null; } }; /* (what happened, the fix, the bar and the moments (Nov 1)) */
+      o.rot[short(p.name)] = { fix: fix.map((c) => { const b = bt(c); return b ? [c.st, icon(c.ic) || '', plainT(c.label), plainT(c.v), [b.what, b.why].filter(Boolean).join(' '), b.tip, b.aim, b.mom.join(';')] : [c.st, icon(c.ic) || '', plainT(c.label), plainT(c.v), ln(c)]; }), good: cs.filter((c) => c.st === 'ok' && c.isMain).slice(0, 3).map((c) => plainT(c.label)) };
     }
     await new Promise((r) => setTimeout(r, 0)); /* (the app stays responsive between pulls) */
   }
   // (across the key: each player's fixes by how many pulls they came up in, the worst colour, and the line from the first of them)
   for (const q of R.people) {
     const by = new Map(), seen = R.pulls.filter((o) => o.rot && o.rot[q.name]);
-    for (const o of seen) for (const f of o.rot[q.name].fix) { const k = f[2], a = by.get(k) || { st: f[0], ic: f[1], label: k, line: f[4], pulls: [] }; if (f[0] === 'bad') a.st = 'bad'; a.pulls.push(o.n); by.set(k, a); }
+    for (const o of seen) for (const f of o.rot[q.name].fix) { const k = f[2], a = by.get(k) || { st: f[0], ic: f[1], label: k, line: f[4], tip: f[5] || '', aim: f[6] || '', pulls: [] }; if (f[0] === 'bad') a.st = 'bad'; a.pulls.push(o.n); by.set(k, a); }
     q.rot = seen.length ? { pulls: seen.length, fix: [...by.values()].sort((a, c) => c.pulls.length - a.pulls.length || (c.st === 'bad') - (a.st === 'bad')).slice(0, 4) } : null;
   }
   return R;

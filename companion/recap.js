@@ -34,6 +34,27 @@ function slipLine(c) {
   if (rest.length) t += ' ' + rest[0];
   return shortTo(t, 150);
 }
+// (a Rotation check's detail for the card (Nov 1, Flex: "the rotation advice in the addon needs a little more detail, the wording at times is vague
+// and doesnt really give you a good idea what needs to be fixed"): what happened, without the name and number again and without a "done right" on a
+// check that wasn't; why it matters; when it slipped (each moment's own sentence); the fix ("Next time"); and the bar to aim for. '' when a check has none)
+const numsOf = (s) => plain(s).match(/\d+(?:\.\d+)?/g) || [];
+function rotBits(c, at0) { /* (at0: the moments on a key's clock, from the pull's start) */
+  const v = plain(c.v), vn = numsOf(v), off = c.st === 'bad' || c.st === 'warn', tip = c.tip ? plain(c.tip) : '';
+  const again = (s) => vn.length > 0 && vn.every((n) => numsOf(s).includes(n)); /* (only the number again: "On average you went into X with 45 ... out of 100.") */
+  const fine = (s) => /\b(was|were) done right\b|all the way through every|^You wasted no |^Your potion went out with/i.test(s);
+  const what = sentences(c.sub).filter((s) => !/\b(below|above|listed)\b/i.test(s) && !/^Debrief checked/.test(s) && !/^The (cards|bars|squares|picture|chart)\b/i.test(s) && !again(s) && !(off && fine(s))).slice(0, 2).join(' ');
+  const hs = sentences(plain(c.how || '')).map((s) => s.replace(/^(Both guides|Wowhead|Icy Veins)(, in raid)?[,:]\s*([a-z])/i, (m, a, b, ch) => ch.toUpperCase())) /* (no guide names on the card) */
+    .filter((s) => !/\b(Wowhead|Icy Veins|guides?|SimulationCraft|APL)\b/i.test(s));
+  const JUDGE = /^(Debrief |A window (lasts|counts)|Each (card|window)|It counts|The times listed|It is not graded|There aren't enough|A spell has to|How long it sat|This is the share|\d)/;
+  const casting = /casting/i.test(tip), aims = hs.filter((s) => /\bis good\b/i.test(s)); /* ("85% or more is good.", "72% or more is good (the top players ...)") */
+  let aim = (casting && aims.find((s) => /casting/i.test(s))) || aims[aims.length - 1] || '';
+  aim = aim ? 'Aim for ' + aim.replace(/\s+is good\b[\s\S]*$/i, '').replace(/ of (them|it)$/, '').replace(/^[A-Z](?=[a-z])/, (ch) => ch.toLowerCase()) + '.' : '';
+  let why = (casting && hs.find((s) => /^Every second of /.test(s))) || (hs.length && !JUDGE.test(hs[0]) && !/\bis good\b/i.test(hs[0]) ? hs[0] : '');
+  const wd = (s) => new Set(String(s).toLowerCase().match(/[a-z]{4,}/g) || []), tw = wd(tip), ww = [...wd(why)];
+  if (ww.length && ww.filter((w) => tw.has(w)).length >= 0.6 * ww.length) why = ''; /* (not the Next time again in other words) */
+  const mom = (c.bx || []).filter((q) => q.cls && !/^(ok|g3)$/.test(q.cls) && q.tip).slice(0, 3).map((q) => mmss((at0 || 0) + q.t) + ' ' + shortTo(sentences(plain(q.tip).replace(/;/g, ','))[0] || plain(q.tip), 110));
+  return { what: shortTo(what, 220), why: shortTo(why, 200), tip: shortTo(tip, 220), aim: shortTo(aim, 120), mom };
+}
 // (melee has no spell of its own: a sword icon, by its file name)
 const deathIcon = (d) => d.abilityId === 1 || /^melee$/i.test(d.ability || '') ? 'inv_sword_04' : d.abilityId ? String(d.abilityId) : '';
 // The wipe filter (the website's own): on a wipe, stop counting at the Nth death, since what comes after is the wipe, not
@@ -727,7 +748,7 @@ const RECIPE_IDS = {
   'The Coiled Altar|orbs': 'Venom orbs',
 };
 
-window.DBF_CARDBITS = { slipLine, spellId }; // (the Mythic+ run recap's Rotation per pull says each fix the card's way (Nov 1))
+window.DBF_CARDBITS = { slipLine, spellId, rotBits }; // (the Mythic+ run recap's Rotation per pull says each fix the card's way (Nov 1))
 window.DBF_BUILD = (b, rep, same, W, L) => {
   // (Rotation checks are the whole pull: worked out once, shared by every version)
   const memo = new Map(), W2 = Object.assign({}, W, { specRun: (...a) => { const k = a[0] + '|' + a[2]; if (!memo.has(k)) memo.set(k, W.specRun(...a)); return memo.get(k); } });
@@ -813,7 +834,7 @@ function buildOne(b, rep, same, W, L, cutN) {
       for (const c of focus.slice().sort(byCost)) if (c.tip) tips.push(plain(c.tip)); /* (the Next pull tip: still the costliest fix) */
       // (the Rotation tab's checklist, for the card (Oct 24): each fix with your number, the top players', a square per moment, the tip)
       const num = (v) => plain(v).replace(/(\d)\s*\/\s*(\d)/g, '$1/$2');
-      const why = (c) => shortTo(sentences(c.sub).filter((s) => !/\b(below|above|listed)\b/i.test(s) && !/^Debrief checked/.test(s) && !/^The (cards|bars|squares|picture|chart)\b/i.test(s)).slice(0, 3).join(' '), 300); /* (no pointers to the website's pictures, Oct 24) */
+      const why = (c) => { const b = rotBits(c); return shortTo([b.what, b.why].filter(Boolean).join(' '), 300); }; /* (what happened, then why it matters: never the name and number again (Nov 1)) */
       // (for the drop-down (Oct 24): how it's judged, and the moments that went wrong, a few)
       const howOf = (c) => shortTo(sentences(plain(c.how || '')).filter((s) => !/\b(Wowhead|Icy Veins|guide|SimulationCraft|APL)\b/i.test(s)).slice(0, 2).join(' '), 240);
       const momOf = (c) => (c.bx || []).filter((q) => q.cls && q.cls !== 'ok' && q.tip).slice(0, 5).map((q) => shortTo(sentences(plain(q.tip).replace(/;/g, ','))[0] || plain(q.tip), 110)).join(';'); /* (each moment's first sentence) */

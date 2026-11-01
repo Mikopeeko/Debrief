@@ -531,7 +531,7 @@ function mplusShow(r, again) {
       const txt = await readText(r, true), R = window.DBF_MPLUS ? window.DBF_MPLUS(txt, W.E) : null; if (!R || !R.pulls.length) return;
       // (Rotation per pull (Nov 1): the website's checks on each pull, in the card's own short lines; a few seconds for a whole key)
       const CB = window.DBF_CARDBITS || {};
-      if (window.DBF_MPLUS_ROT && W.specRun) { stat('Checking everyone\'s rotation…', 'busy'); try { await window.DBF_MPLUS_ROT(R, txt, W, { line: CB.slipLine, icon: (n) => (CB.spellId ? CB.spellId(W, n) : '') }); } catch (e) { console.error(e); } }
+      if (window.DBF_MPLUS_ROT && W.specRun) { stat('Checking everyone\'s rotation…', 'busy'); try { await window.DBF_MPLUS_ROT(R, txt, W, { line: CB.slipLine, bits: CB.rotBits, icon: (n) => (CB.spellId ? CB.spellId(W, n) : '') }); } catch (e) { console.error(e); } }
       // (and the key for the addon (Nov 1, the in-game card): Save this key in WoW brings the run recap in, as a saved pull)
       (L.mpRes = L.mpRes || {})[r.startByte] = { stat: R.run.left ? 'L' : R.run.timed ? 'T' : 'O', up: (R.run.clock && R.run.clock.up) || 0, people: R.people.map((p) => [p.name, p.cls]) }; L.mpLast = r.startByte;
       if (!again) try { if (L.name) { const key = L.name + ':' + r.startByte, code = RECAP.encodeMplus(R, r.startMs ? new Date(r.startMs - 6 * 3600e3).toISOString().slice(0, 10).replace(/-/g, '') : '');
@@ -980,9 +980,9 @@ RECAP.encodeMplus = (R, night) => {
     for (const p of R.people) { const ds = o.dispels.filter((x) => x.who === p.name).length, ps = (o.purges || []).filter((x) => x.who === p.name).length; rec.push(['MV', o.n, p.name, o.dmg[p.name] || 0, o.heal[p.name] || 0, ds, ps]); }
     for (const d of o.debs || []) if (d.on) rec.push(['MS', o.n, d.spell, d.on, d.removed, 'd']);
     for (const d of o.ebuffs || []) if (d.on) rec.push(['MS', o.n, d.spell, d.on, d.removed, 'p']);
-    for (const [w, r] of Object.entries(o.rot || {})) { for (const f of r.fix) rec.push(['MO', o.n, w, f[0], f[1] || '', f[2], f[3], f[4]]); if (r.good && r.good.length) rec.push(['MG', o.n, w, r.good.join(';')]); }
+    for (const [w, r] of Object.entries(o.rot || {})) { for (const f of r.fix) rec.push(['MO', o.n, w, f[0], f[1] || '', f[2], f[3], f[4], f[5] || '', f[6] || '', f[7] || '']); if (r.good && r.good.length) rec.push(['MG', o.n, w, r.good.join(';')]); }
   }
-  for (const p of R.people) for (const f of (p.rot && p.rot.fix) || []) rec.push(['MX', p.name, f.st, f.ic || '', f.label, f.pulls.join(';'), p.rot.pulls]);
+  for (const p of R.people) for (const f of (p.rot && p.rot.fix) || []) rec.push(['MX', p.name, f.st, f.ic || '', f.label, f.pulls.join(';'), p.rot.pulls, f.tip || '', f.aim || '', f.line || '']);
   if (RECAP.addonV) rec.push(['V', RECAP.addonV, RECAP.appV || '']);
   rec.push(['Z']);
   return rec.map((r) => r.map(clean).join('~')).join('^');

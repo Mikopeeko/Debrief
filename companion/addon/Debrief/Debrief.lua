@@ -137,7 +137,7 @@ local function decode(code)
     elseif t == "MR" then local K0 = mp(); if m.h then m.h.mstat = g(3) end; K0.run = { level = g(2), stat = g(3), time = tonumber(g(4)) or 0, par = tonumber(g(5)), up = tonumber(g(6)) or 0, next = tonumber(g(7)), dcost = tonumber(g(8)) or 0, deaths = tonumber(g(9)) or 0, upw = tonumber(g(10)), fight = tonumber(g(11)), between = tonumber(g(12)), score = g(13) }
     elseif t == "MP" then local K0 = mp(); local q = { name = g(2), cls = g(3), spec = g(4), role = g(5), dps = tonumber(g(6)) or 0, hps = tonumber(g(7)) or 0, kicks = tonumber(g(8)) or 0, stops = tonumber(g(9)) or 0, defs = tonumber(g(10)) or 0, deaths = tonumber(g(11)) or 0, dispels = tonumber(g(12)) or 0, purges = tonumber(g(13)) or 0, avoid = tonumber(g(14)) or 0, kick = g(15) == "1", rot = {} }; K0.people[#K0.people + 1] = q; K0.byP[q.name] = q
     elseif t == "MU" then local K0 = mp(); local q = { n = tonumber(g(2)) or (#K0.pulls + 1), boss = g(3), kill = g(4) == "1", s = tonumber(g(5)) or 0, dur = tonumber(g(6)) or 0, mobs = g(7), thr = {}, avoid = {}, deaths = {}, kicks = {}, defs = {}, vals = {}, ds = {}, rot = {}, good = {} }; K0.pulls[#K0.pulls + 1] = q; K0.byN[q.n] = q
-    elseif t == "MX" then local q = mp().byP[g(2)]; if q then local pl = {}; for _, x in ipairs(split(g(6), ";")) do if tonumber(x) then pl[#pl + 1] = tonumber(x) end end; q.rot[#q.rot + 1] = { st = g(3), ic = g(4), label = g(5), pulls = pl, of = tonumber(g(7)) or #pl } end
+    elseif t == "MX" then local q = mp().byP[g(2)]; if q then local pl = {}; for _, x in ipairs(split(g(6), ";")) do if tonumber(x) then pl[#pl + 1] = tonumber(x) end end; q.rot[#q.rot + 1] = { st = g(3), ic = g(4), label = g(5), pulls = pl, of = tonumber(g(7)) or #pl, tip = g(8), aim = g(9), line = g(10) } end
     elseif t:sub(1, 1) == "M" and #t == 2 and m.mplus and m.mplus.byN[tonumber(g(2)) or -1] then
       local q = m.mplus.byN[tonumber(g(2))]
       if t == "MT" then q.thr[#q.thr + 1] = { t = tonumber(g(3)) or 0, spell = g(4), mob = g(5), cc = g(6) == "1", ready = g(7) ~= "" and split(g(7), ";") or {}, id = g(8) or "" }
@@ -147,7 +147,7 @@ local function decode(code)
       elseif t == "MF" then q.defs[g(3)] = g(4)
       elseif t == "MV" then q.vals[g(3)] = { dps = tonumber(g(4)) or 0, hps = tonumber(g(5)) or 0, ds = tonumber(g(6)) or 0, ps = tonumber(g(7)) or 0 }
       elseif t == "MS" then q.ds[#q.ds + 1] = { spell = g(3), on = tonumber(g(4)) or 0, removed = tonumber(g(5)) or 0, kind = g(6) }
-      elseif t == "MO" then q.rot[g(3)] = q.rot[g(3)] or {}; table.insert(q.rot[g(3)], { st = g(4), ic = g(5), label = g(6), v = g(7), line = g(8) })
+      elseif t == "MO" then q.rot[g(3)] = q.rot[g(3)] or {}; table.insert(q.rot[g(3)], { st = g(4), ic = g(5), label = g(6), v = g(7), line = g(8), tip = g(9), aim = g(10), mom = g(11) })
       elseif t == "MG" then q.good[g(3)] = g(4)
       elseif t == "MI" then q.ev = q.ev or {}; q.ev[#q.ev + 1] = { t = tonumber(g(3)) or 0, who = g(4), kind = g(5), name = g(6), on = g(7) } end -- (each defensive, dispel and purge (Nov 1))
     elseif t == "RG" then m.grade = { letter = g(2), score = g(3), cats = g(4) } -- (the Report card's grade for the pull)
@@ -1097,8 +1097,10 @@ function UI.mplus(raw)
   local run, ppl, PL = K.run or {}, K.people, K.pulls
   if S.raw ~= raw then S.raw = raw; S.pull = 0 end -- (each key opens on its Run tab)
   CUR = { players = ppl }
-  W = WIDTHS[DB.width or "normal"] or 400; CW = W - PAD * 2
-  card:SetWidth(W); body:SetWidth(CW); scroller:SetWidth(CW); UI.colFrame(false, CW)
+  local TW = UI.two; TW.n = 0; TW.marks = {}; TW.total = nil -- (two columns when it's long, as the boss card (Nov 1))
+  W = WIDTHS[DB.width or "normal"] or 400; CW = TW.cwc or (W - PAD * 2)
+  if TW.cols == 2 then W = CW * 2 + 16 + PAD * 2 elseif TW.cwc then W = CW + PAD * 2 end
+  card:SetWidth(W); body:SetWidth(W - PAD * 2); scroller:SetWidth(W - PAD * 2); UI.colFrame(TW.cols == 2, CW)
   local timed = run.stat == "T"
   UI.rounded(card.lineT, "line", 8, timed and COL.gold or COL.line2, 1)
   local function mm(x) x = math.floor((tonumber(x) or 0) + 0.5); return math.floor(x / 60) .. ":" .. string.format("%02d", x % 60) end
@@ -1407,6 +1409,7 @@ function UI.mplus(raw)
   -- (a section: a box that folds, its title with the count in colour; sum = { text, "r" | "w" | "g" | "" })
   local function secB(title, rows, sum, def)
     if #rows == 0 then return end
+    TW.n = TW.n + 1; TW.marks[TW.n] = y; if TW.cols == 2 and TW.n == TW.brk then TW.lh = y; UI.col(2); y = 2 end -- (the right column starts at the chosen section)
     local k = "s:mp" .. title:gsub("[^%a]", ""):lower()
     local open = OPN[k]; if open == nil then open = def ~= false end
     local y0 = y; IND = 12; y = y + 11
@@ -1449,6 +1452,20 @@ function UI.mplus(raw)
     y = y + hh + 12
   end
   local function inPv(k, of) return k >= of and ("all " .. of .. " pulls") or (k .. " of " .. of .. " pulls") end
+  -- (a rotation fix's detail (Nov 1, Flex: "the wording at times is vague"): what happened, when it slipped, Next time and the bar to aim for;
+  -- a key saved by an older app keeps its one line)
+  local function rotD(f)
+    local d = {}
+    if (f.tip or "") == "" and (f.aim or "") == "" and (f.mom or "") == "" then
+      if (f.line or "") ~= "" and f.line ~= f.label and f.line:sub(1, #f.label) == f.label then d[1] = { "t", wl(f.line, f.label) } elseif (f.line or "") ~= "" and f.line ~= f.label then d[1] = { "t", f.line } end
+      return d
+    end
+    if (f.line or "") ~= "" then d[#d + 1] = { "t", f.line } end
+    for m in (f.mom or ""):gmatch("[^;]+") do local t0, s0 = m:match("^(%d+:%d%d) (.*)$"); d[#d + 1] = { "t", t0 and ("|cff" .. COL.muted .. t0 .. "|r  " .. s0) or m } end
+    if (f.tip or "") ~= "" then d[#d + 1] = { "t", "|cff" .. COL.gold .. "Next time:|r " .. f.tip } end
+    if (f.aim or "") ~= "" then d[#d + 1] = { "t", "|cff" .. COL.faint .. f.aim .. "|r" } end
+    return d
+  end
   local function ofV(v) return (tostring(v or ""):gsub("^(%d+)/(%d+)$", "%1 of %2")) end
   local RS = { bad = "bad", warn = "warn" }
   local function worstOf(L, k) for _, f in ipairs(L) do if f[k] == "bad" then return "r" end end; return "w" end
@@ -1530,7 +1547,7 @@ function UI.mplus(raw)
         if #order > 0 then tips[#tips + 1] = "Save " .. (you and "your" or "the") .. " kick for " .. WH .. order[1] .. "|r" .. (order[2] and (" and " .. WH .. order[2] .. "|r") or "") .. ": " .. #th .. " got through while it was ready." end
         for _, q in ipairs(PL) do for _, d in ipairs(q.deaths) do if d.who == n and d.defs == 0 then local seen = false; for _, x in ipairs(ab) do if x == d.to then seen = true end end; if not seen then ab[#ab + 1] = d.to end end end end
         if #ab > 0 then tips[#tips + 1] = "Use a defensive before " .. WH .. ab[1] .. "|r" .. (ab[2] and (" and " .. WH .. ab[2] .. "|r") or "") .. ": " .. (#ab == 1 and "that death had" or "those deaths had") .. " none in the 30 s before." end
-        local f = P.rot and P.rot[1]; if f then tips[#tips + 1] = WH .. f.label .. "|r needed work in " .. ((#f.pulls >= (f.of or 0)) and ("all " .. (f.of or #f.pulls)) or (#f.pulls .. " of " .. (f.of or #f.pulls))) .. " pulls." end
+        local f = P.rot and P.rot[1]; if f then tips[#tips + 1] = WH .. f.label .. "|r needed work in " .. ((#f.pulls >= (f.of or 0)) and ("all " .. (f.of or #f.pulls)) or (#f.pulls .. " of " .. (f.of or #f.pulls))) .. " pulls." .. ((f.tip or "") ~= "" and (" " .. f.tip) or "") end -- (and the fix itself (Nov 1))
         goldBox("NEXT KEY", tips) end
       local T = { numT(P), { Yo .. " kicks and stops", ks(P.kicks, P.stops) } }
       if P.kick then T[#T + 1] = { "Got through, " .. yo .. " kick ready", #th, nil, #th > 5 and "bad" or (#th > 0 and "warn" or "good") } else T[#T + 1] = { Yo .. " dispels", P.dispels } end
@@ -1551,7 +1568,7 @@ function UI.mplus(raw)
       secB("Avoidable damage", avR(A, false, n), { hits(P.avoid), "w" })
       local R0, good, isFix = {}, {}, {}
       for _, f in ipairs(P.rot) do isFix[f.label] = true; local pc = {}; if #f.pulls < (f.of or 0) then for _, p in ipairs(f.pulls) do pc[#pc + 1] = { p } end end
-        local det = {}; if #pc > 0 then det[#det + 1] = { "p", pc } end; det[#det + 1] = { "t", "|cff" .. COL.faint .. "How it's judged: the website's Rotation checks, pull by pull.|r" }
+        local det = rotD(f); if #pc > 0 then det[#det + 1] = { "p", pc } end; det[#det + 1] = { "t", "|cff" .. COL.faint .. "How it's judged: the website's Rotation checks, pull by pull.|r" }
         R0[#R0 + 1] = { RS[f.st] or "warn", f.ic, f.label, "", inPv(#f.pulls, f.of or #f.pulls), det, "r:mprk:" .. n .. ":" .. f.label } end
       for _, q in ipairs(PL) do for g in (q.good[n] or ""):gmatch("[^;]+") do if not isFix[g] and #good < 4 then local seen = false; for _, x in ipairs(good) do if x == g then seen = true end end; if not seen then good[#good + 1] = g end end end end
       secB("Rotation across the key", addGood(lim("mprk" .. n, R0, 3), good), #P.rot > 0 and { #P.rot .. " to fix", worstOf(P.rot, "st") } or nil)
@@ -1595,7 +1612,7 @@ function UI.mplus(raw)
       secB("Dispels and purges", dispR(DS))
       local RK, nk = {}, 0
       for _, q in ipairs(PO) do local f = q.rot[1]; if f then nk = nk + 1
-        local det = {}; for _, g in ipairs(q.rot) do det[#det + 1] = { "t", WH .. g.label .. "|r: " .. inPv(#g.pulls, g.of or #g.pulls) } end
+        local det = {}; for _, g in ipairs(q.rot) do det[#det + 1] = { "t", WH .. g.label .. "|r: " .. inPv(#g.pulls, g.of or #g.pulls) } end; if (f.tip or "") ~= "" then det[#det + 1] = { "t", "|cff" .. COL.gold .. "Next time:|r " .. f.tip } end
         local pc = {}; for _, p in ipairs(f.pulls) do pc[#pc + 1] = { p } end; det[#det + 1] = { "p", pc }
         RK[#RK + 1] = { RS[f.st] or "warn", f.ic, "", "@" .. q.name .. ": " .. WH .. f.label .. "|r" .. (#q.rot > 1 and (" and " .. (#q.rot - 1) .. " more") or ""), inPv(#f.pulls, f.of or #f.pulls), det, "r:mpgk:" .. q.name } end end
       secB("Rotation across the key", RK, nk > 0 and { nk .. (nk == 1 and " player" or " players") .. " to fix", "w" } or nil)
@@ -1634,7 +1651,7 @@ function UI.mplus(raw)
       secB("Got through while " .. yo .. " kick was ready", gotR(th, n), { #th .. " got through", "r" })
       secB("Deaths", D, { #D .. (#D == 1 and " death" or " deaths"), "r" })
       secB("Avoidable damage", avR(A, false, n .. ":" .. q.n), { hits(av), "w" })
-      local RR = {}; for _, f in ipairs(RO) do RR[#RR + 1] = { RS[f.st] or "warn", f.ic, f.label, "", ofV(f.v), (f.line ~= "" and f.line ~= f.label) and { { "t", wl(f.line, f.label) } } or nil, "r:mpr:" .. n .. ":" .. q.n .. ":" .. f.label } end
+      local RR = {}; for _, f in ipairs(RO) do RR[#RR + 1] = { RS[f.st] or "warn", f.ic, f.label, "", ofV(f.v), rotD(f), "r:mpr:" .. n .. ":" .. q.n .. ":" .. f.label } end
       local gd = {}; for g in (q.good[n] or ""):gmatch("[^;]+") do gd[#gd + 1] = g end
       local worst = "w"; for _, f in ipairs(RO) do if f.st == "bad" then worst = "r" end end
       secB("Rotation", addGood(lim("mpr" .. n .. q.n, RR, 3), gd), #RO > 0 and { #RO .. " to fix", worst } or nil)
@@ -1670,7 +1687,7 @@ function UI.mplus(raw)
       local D = {}; for _, d in ipairs(q.deaths) do D[#D + 1] = dRow(d) end
       secB("Deaths", D, { #D .. (#D == 1 and " death" or " deaths"), "r" })
       local RK = {}; for _, w in ipairs(PO) do local L0 = q.rot[w.name]; if L0 and L0[1] then local f = L0[1]
-        local det = {}; for _, g in ipairs(L0) do det[#det + 1] = { "t", (g.line ~= "" and g.line ~= g.label) and wl(g.line, g.label) or (WH .. g.label .. "|r " .. ofV(g.v)) } end
+        local det = {}; for _, g in ipairs(L0) do det[#det + 1] = { "t", ((g.tip or "") ~= "" or (g.aim or "") ~= "") and (WH .. g.label .. "|r " .. ofV(g.v) .. ((g.tip or "") ~= "" and (".  |cff" .. COL.gold .. "Next time:|r " .. g.tip) or "")) or ((g.line ~= "" and g.line ~= g.label) and wl(g.line, g.label) or (WH .. g.label .. "|r " .. ofV(g.v))) } end
         RK[#RK + 1] = { RS[f.st] or "warn", f.ic, "", "@" .. w.name .. ": " .. WH .. f.label .. "|r" .. (#L0 > 1 and (" and " .. (#L0 - 1) .. " more") or ""), ofV(f.v), det, "r:mpgp:" .. q.n .. ":" .. w.name } end end
       secB("Rotation", RK)
       local DF, nd = {}, 0; for _, w in ipairs(PO) do if q.defs[w.name] then local c = nDefs(q, w.name); nd = nd + c; DF[#DF + 1] = { "info", "", "", "@" .. w.name .. ": " .. (q.defs[w.name]:gsub(";", ", ")) .. ".", tostring(c) } end end
@@ -1687,9 +1704,11 @@ function UI.mplus(raw)
     end
   end
   -- (never taller than the screen: the rest scrolls, and the footer says so; as the boss card does)
+  if TW.cols == 2 then UI.colFrame(true, CW, y); UI.col(1); y = math.max(TW.lh or 0, y) end
   body:SetHeight(math.max(10, y))
   local room = math.max(320, ((UIParent and UIParent.GetHeight and UIParent:GetHeight()) or 768) / math.max(0.5, (card.GetScale and card:GetScale()) or 1) - 60)
   local vh = math.max(10, math.min(y, room - TOPY - 42))
+  TW.total, TW.avail, TW.room = y, room - TOPY - 42, room
   scroller:SetSize(W - PAD * 2, vh)
   scroller:SetVerticalScroll(math.min((scroller:GetVerticalScroll() or 0), math.max(0, y - vh)))
   foot:SetText(y > vh + 4 and "Scroll for more  ·  /recap opens this again" or "/recap opens this again  ·  /db settings")
@@ -2299,10 +2318,11 @@ local function renderAll()
   local T = UI.two
   T.cols, T.brk, T.cwc, T.rotMark = 1, 0, nil, nil
   renderOnce()
-  -- (the long card (Nov 1, Flex: "once it gets past a certain length it needs to widen and be two columns"): taller than the screen, it goes
-  -- twice as wide (capped at the screen) with Rotation, or the Raid view's later lists, on the right; it fits again: one column)
+  -- (the long card (Nov 1, Flex: "once it gets past a certain length it needs to widen and be two columns"): taller than two-thirds of the
+  -- screen (Nov 1, Flex: "the window is still very long, what happened to it being 2 columns?"), it goes twice as wide (capped at the screen)
+  -- with Rotation, or the Raid view's later lists, on the right; a key splits at the section that best balances the two sides)
   local raw = DB.pulls[DB.cur]
-  if not UI.saved and raw and not raw.mplus and T.total and T.avail and T.total > T.avail then
+  if not UI.saved and raw and not (raw.mplus and UI.mp.pick) and T.total and T.room and T.total + TOPY + 42 > (T.room + 60) * 0.67 then
     local cw1 = (WIDTHS[DB.width or "normal"] or 400) - PAD * 2
     local sw = ((UIParent and UIParent.GetWidth and UIParent:GetWidth()) or 1365) / math.max(0.5, (card.GetScale and card:GetScale()) or 1)
     local cwc = math.min(cw1, math.floor((sw - 60 - PAD * 2 - 16) / 2))
@@ -2310,7 +2330,7 @@ local function renderAll()
       T.cwc = cwc < cw1 and cwc or nil; T.cols = 2; T.brk = 0; renderOnce() -- (measured with the two-column order)
       local best = T.rotMark
       if not best then local bh = T.total or 0; for i, yb in ipairs(T.marks) do local hh = math.max(yb, (T.total or 0) - yb + 2); if yb > 60 and hh < bh then best, bh = i, hh end end end
-      T.brk = best or 0; renderOnce()
+      if best then T.brk = best else T.cols, T.cwc = 1, nil end; renderOnce() -- (no section to split at: one column again)
     end
   end
   if Debrief_FitPreview then Debrief_FitPreview() end
