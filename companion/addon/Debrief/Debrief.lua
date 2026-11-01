@@ -913,13 +913,20 @@ function UI.savedView()
   bkB:SetScript("OnClick", function() UI.saved = false; scroller:SetVerticalScroll(0); render() end)
   bkB:SetScript("OnEnter", function() bk:SetTextColor(rgb(COL.text)) end); bkB:SetScript("OnLeave", function() bk:SetTextColor(rgb(COL.gold)) end)
   local s0 = FS("body", 13, COL.muted); s0:SetPoint("LEFT", bk, "RIGHT", 10, 0); s0:SetText("Click one to open it."); y = y + 28
-  -- (raid nights: one row per boss and difficulty on each night, newest first)
-  local G, order = {}, {}
-  for i, q in ipairs(DB.pulls) do if q.h and not q.mplus and not q.demo and q.h.diff ~= "Practice" then -- (a training dummy is not a raid night)
-    local k = nightKey(q) .. "|" .. q.h.boss .. "|" .. q.h.diff
-    local g = G[k]; if not g then g = { boss = q.h.boss, diff = q.h.diff, q = q, n = 0, best = nil, kill = false }; G[k] = g; order[#order + 1] = k end
-    g.n = g.n + 1; g.last = i; if q.h.kill then g.kill = true end
-    local p = tonumber(q.h.pct); if p and (not g.best or p < g.best) then g.best = p end
+  -- (raid nights: one row per raid boss and difficulty on each night, newest first. A dungeon boss pulled inside a saved key belongs to that key,
+  -- and one with no saved key goes under Dungeon bosses (Nov 1, Flex: "its also saving keys into raid nights"); a dummy is practice)
+  local inKey = {}
+  for _, q in ipairs(DB.pulls) do if q.mplus then local nk = nightKey(q); for _, p in ipairs(q.mplus.pulls or {}) do if (p.boss or "") ~= "" then inKey[nk .. "|" .. p.boss] = true end end end end
+  local G, order, DG, dorder = {}, {}, {}, {}
+  for i, q in ipairs(DB.pulls) do if q.h and not q.mplus and not q.demo and q.h.diff ~= "Practice" then
+    local dun = q.h.dungeon or (q.h.diff or ""):match("^Mythic%+") ~= nil
+    if not (dun and inKey[nightKey(q) .. "|" .. q.h.boss]) then
+      local k = nightKey(q) .. "|" .. q.h.boss .. "|" .. q.h.diff
+      local T, O = dun and DG or G, dun and dorder or order
+      local g = T[k]; if not g then g = { boss = q.h.boss, diff = q.h.diff, q = q, n = 0, best = nil, kill = false, lvl = tonumber((q.h.diff or ""):match("(%d+)")) or 0 }; T[k] = g; O[#O + 1] = k end
+      g.n = g.n + 1; g.last = i; if q.h.kill then g.kill = true end
+      local p = tonumber(q.h.pct); if p and (not g.best or p < g.best) then g.best = p end
+    end
   end end
   local t = FS("bold", 12.5, COL.muted); t:SetPoint("TOPLEFT", 0, -y); t:SetText("RAID NIGHTS"); y = y + 22
   if #order == 0 then local n = FS("body", 13.5, COL.muted); n:SetPoint("TOPLEFT", 0, -y); n:SetText("No raid pulls yet."); y = y + 30 end
@@ -937,6 +944,26 @@ function UI.savedView()
     local last = g.last
     local b = BTN(); b:SetPoint("TOPLEFT", 0, -yA); b:SetSize(CW, y - yA); b.label = g.boss .. " · " .. g.diff
     b:SetScript("OnClick", function() DB.cur = last; DB.who = nil; UI.saved = false; wipe(EXPANDED); scroller:SetVerticalScroll(0); render() end)
+  end
+  -- (dungeon bosses with no saved key: highest key first, then the newest)
+  if #dorder > 0 then
+    table.sort(dorder, function(a, c) if DG[a].lvl ~= DG[c].lvl then return DG[a].lvl > DG[c].lvl end; return DG[a].last > DG[c].last end)
+    y = y + 12
+    local dt = FS("bold", 12.5, COL.muted); dt:SetPoint("TOPLEFT", 0, -y); dt:SetText("DUNGEON BOSSES"); y = y + 22
+    for k = 1, #dorder do
+      local g = DG[dorder[k]]
+      if k > 1 then local l = TEX("ARTWORK"); l:SetPoint("TOPLEFT", 0, -y); l:SetSize(CW, 1); fill(l, COL.line) end
+      local yA = y; y = y + 8
+      local d = TEX("ARTWORK"); d:SetTexture(SLICE .. "dot"); d:SetPoint("TOPLEFT", 2, -(y + 4)); d:SetSize(8, 8); d:SetVertexColor(rgb(g.kill and COL.good or COL.bad))
+      local f = FS("body", 14, COL.soft); f:SetPoint("TOPLEFT", 18, -y); f:SetWidth(CW - 90); f:SetWordWrap(false)
+      f:SetText("|cffffffff" .. g.boss .. "  ·  " .. g.diff .. "|r   |cff" .. COL.faint .. UI.dayOf(g.q) .. "  ·  " .. g.n .. (g.n == 1 and " pull" or " pulls") .. "|r")
+      local r = FS("bold", 13, g.kill and COL.gold or COL.muted); r:SetJustifyH("RIGHT"); r:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - 4, -y)
+      r:SetText(g.kill and "Kill" or (g.best and ("best " .. math.floor(g.best + 0.5) .. "%") or ""))
+      y = y + 26
+      local last = g.last
+      local b = BTN(); b:SetPoint("TOPLEFT", 0, -yA); b:SetSize(CW, y - yA); b.label = g.boss .. " · " .. g.diff
+      b:SetScript("OnClick", function() DB.cur = last; DB.who = nil; UI.saved = false; wipe(EXPANDED); scroller:SetVerticalScroll(0); render() end)
+    end
   end
   local pn, plast, pq = 0, nil, nil; for i, q in ipairs(DB.pulls) do if q.h and not q.mplus and not q.demo and q.h.diff == "Practice" then pn = pn + 1; plast = i; pq = q end end
   if pn > 0 then

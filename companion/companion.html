@@ -506,12 +506,14 @@ const nightStr = (ms) => (ms ? new Date(ms - 6 * 3600e3).toISOString().slice(0, 
 function popSaved() {
   const out = { raid: [], keys: [], lastRaid: null, lastRaidBoss: '', lastKey: null };
   if (!L.name) return out;
-  const N = nightOf(L.name), G = new Map();
+  const N = nightOf(L.name), G = new Map(), DG = new Map(), RAIDD = new Set([14, 15, 16, 17]);
+  const runs0 = ((L.ix && L.ix.peek && L.ix.peek().runs) || []), inRun = (b) => runs0.some((r) => r.startByte <= b.startByte && (!r.endByte || b.startByte <= r.endByte)); /* (a dungeon boss inside a key belongs to the key (Nov 1)) */
   for (const b of L.items) { if (b.endByte && b.id === DUMMY) { out.practice = { n: ((out.practice || {}).n || 0) + 1, sb: b.startByte, boss: b.boss, night: nightStr(b.startMs) }; continue; } /* (dummies: one small Practice line, last (Nov 1)) */
-    if (!b.endByte || b.id === DUMMY) continue; const k = b.boss + ' · ' + (DIFFN[b.diffId] || b.diff || ''), e = N[b.startByte];
-    const g = G.get(k) || { name: k, n: 0, best: null, kill: false, sb: 0, night: nightStr(b.startMs) }; g.n++; g.sb = b.startByte; if (b.kill) g.kill = true;
-    if (e && e.l != null && (g.best == null || e.l < g.best)) g.best = e.l; G.delete(k); G.set(k, g); }
-  out.raid = [...G.values()].reverse();
+    if (!b.endByte || b.id === DUMMY) continue; const dun = !RAIDD.has(+b.diffId); if (dun && inRun(b)) continue;
+    const k = b.boss + ' · ' + (DIFFN[b.diffId] || b.diff || ''), e = N[b.startByte], T = dun ? DG : G;
+    const g = T.get(k) || { name: k, n: 0, best: null, kill: false, sb: 0, night: nightStr(b.startMs), lvl: +((String(DIFFN[b.diffId] || b.diff || '').match(/(\d+)/) || [])[1] || 0) }; g.n++; g.sb = b.startByte; if (b.kill) g.kill = true;
+    if (e && e.l != null && (g.best == null || e.l < g.best)) g.best = e.l; T.delete(k); T.set(k, g); }
+  out.raid = [...G.values()].reverse(); out.dungeon = [...DG.values()].reverse().sort((a, c) => c.lvl - a.lvl); /* (Raid nights: raid bosses only; Dungeon bosses: no saved key, highest key first) */
   const runs = ((L.ix && L.ix.peek && L.ix.peek().runs) || []).filter((r) => r.endByte);
   out.keys = runs.slice().reverse().map((r) => Object.assign({ sb: r.startByte, dungeon: r.boss, level: r.level, night: nightStr(r.startMs) }, (L.mpRes || {})[r.startByte] || {}));
   const lr = L.popLast && L.popLast.b; out.lastRaid = lr ? lr.startByte : out.raid[0] ? out.raid[0].sb : null; out.lastRaidBoss = lr ? lr.boss : out.raid[0] ? out.raid[0].name.replace(/ · .*/, '') : '';
