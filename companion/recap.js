@@ -100,7 +100,11 @@ const RECIPES = {
     if (!rows.length || !rows[0][2] || !rows[0][2].p) return null;
     const bad = rows.filter((r) => r.some(isHurt));
     if (!bad.length) return rows.length > 1 ? allN(rows.length, 'frontals') + ' taken right: a defensive on every stack 2.' : 'Taken right.';
-    const line = (r) => '@' + (r[2].p || '?') + at(r) + ': ' + ctxt(r[3]) + ' with ' + (ctxt(r[4]) || 'nothing up') + (/died/i.test(ctxt(r[5])) ? ', died' : !/nothing/i.test(ctxt(r[4])) ? ' (plan: a defensive and two externals)' : '');
+    // (a stack row says its stack and defensive; other rows (Oct 27 on) have no stack: a non-tank in the frontal, or a death the row explains
+    // in its own words. Say those as they are, not "— with —" (Nov 1))
+    const line = (r) => { const nm = r[2].p || '?', last = ctxt(r[5]);
+      if (/^stack/i.test(ctxt(r[3]))) return '@' + nm + at(r) + ': ' + ctxt(r[3]) + ' with ' + (ctxt(r[4]) || 'nothing up') + (/died/i.test(last) ? ', died' : !/nothing/i.test(ctxt(r[4])) ? ' (plan: a defensive and two externals)' : '');
+      return '@' + nm + at(r) + ': ' + (/non-tank/i.test(last) ? 'not a tank, ' + (/died/i.test(last) ? 'died in the frontal' : 'stood in the frontal') : last.replace(nm + ' ', '').replace(/[.]$/, '')); };
     return bad.length + ' of ' + rows.length + ' failed. ' + bad.slice(0, 2).map(line).join('. ') + '.';
   },
   'Phase changes': ({ rows, flag, t, T, dur }) => {
@@ -120,16 +124,15 @@ const RECIPES = {
     const f = all.find((x) => x.r.some((c) => c && c.bad)), who = f ? (f.r[2] && f.r[2].ps ? andList(f.r[2].ps.map((n) => '@' + n)) + (/collision/i.test(ctxt(f.r[0])) ? "'s ghosts touched" : '') : f.r[2] && f.r[2].p ? '@' + f.r[2].p + (/Gravebound/.test(ctxt(f.r[0])) ? ' died to Gravebound' : ' ' + ctxt(f.r[3])) : ctxt(f.r[3])) : '';
     return badG.length + ' of ' + gs.length + ' failed: ' + (p.length ? andList(p) : plain(badG[0].sub)) + '.' + (f ? ' First: ' + plain(f.g.title).replace('#', '') + at(f.r) + ', ' + who + '.' : '');
   },
-  'Soulcoiler adds': ({ gs }) => {
+  // (the Soulcoiler sets, the kill only since Nov 1: the Wail kicks are their own mechanic, Wail of Terror (Kicks))
+  'Spiteful Soulcoiler (Kill fast)': ({ gs }) => {
     if (!gs.length) return null;
-    const all = rowsOf(gs), wails = all.filter((x) => /Wail of Terror/.test(ctxt(x.r[0]))), thr = wails.filter((x) => !/kicked/i.test(ctxt(x.r[3])));
-    const malice = gs.reduce((a, g) => a + (parseInt((plain(g.sub || '').match(/(\d+) deaths? to Retaliatory Malice/) || [])[1], 10) || 0), 0);
-    const alive = all.filter((x) => /^Soulcoiler \d+$/.test(ctxt(x.r[0])) && /alive/i.test(ctxt(x.r[3]))), bad = gs.filter((g) => g.bad || g.warn), p = [];
-    if (!bad.length) return (gs.length > 1 ? allN(gs.length, 'sets') : 'The set') + ' dead in time, every Wail kicked (' + wails.length + ' kicks).';
-    if (thr.length) p.push(thr.length + (thr.length > 1 ? ' Wails' : ' Wail') + ' got through (first' + at(thr[0].r) + ')');
-    if (malice) p.push(malice + (malice === 1 ? ' death' : ' deaths') + ' to Retaliatory Malice');
-    if (alive.length) p.push(alive.length + (alive.length > 1 ? ' adds' : ' add') + ' still alive');
-    return bad.length + ' of ' + gs.length + ' sets failed: ' + (p.length ? andList(p) : plain(bad[0].sub)) + '.';
+    const all = rowsOf(gs), malice = gs.reduce((a, g) => a + (parseInt((plain(g.sub || '').match(/(\d+) deaths? to Retaliatory Malice/) || [])[1], 10) || 0), 0);
+    const alive = all.filter((x) => /^Soulcoiler \d+$/.test(ctxt(x.r[0])) && /alive/i.test(ctxt(x.r[3]))), bad = gs.filter((g) => g.bad || g.warn), pts = [];
+    if (!bad.length) return (gs.length > 1 ? allN(gs.length, 'sets') : 'The set') + ' dead in time.';
+    if (malice) pts.push(malice + (malice === 1 ? ' death' : ' deaths') + ' to Retaliatory Malice');
+    if (alive.length) pts.push(alive.length + (alive.length > 1 ? ' adds' : ' add') + ' still alive');
+    return bad.length + ' of ' + gs.length + ' sets failed: ' + (pts.length ? andList(pts) : plain(bad[0].sub)) + '.';
   },
   'Gloombombs': ({ gs }) => {
     if (!gs.length) return null;
@@ -142,15 +145,22 @@ const RECIPES = {
     if (clips.length) p.push(andList([...new Set(clips.map((x) => '@' + ctxt(x.r[2])))]) + ' clipped by someone else\'s bomb (first' + at(clips[0].r) + ')');
     return bad.length + ' of ' + gs.length + ' sets failed: ' + (p.length ? andList(p) : plain(bad[0].sub)) + '.';
   },
-  'Eternal Nightfall': ({ rows }) => {
+  // (Eternal Nightfall is two mechanics on the site since Nov 1: breaking the shield, and the kick after it)
+  'Eternal Nightfall (Break the shield)': ({ rows }) => {
     if (!rows.length) return null;
     const spare = (r) => parseFloat((ctxt(r[3]).match(/\(([\d.]+) s to spare/) || [])[1]);
-    const fail = rows.filter((r) => /not broken|finished/i.test(ctxt(r[3]) + ' ' + ctxt(r[5])));
-    if (fail.length) return capF(ctxt(fail[0][0])) + at(fail[0]) + ': not broken, the cast finished.' + (rows.length > 1 ? ' ' + (rows.length - fail.length) + ' of ' + rows.length + ' stopped.' : '');
+    const fail = rows.filter((r) => /not broken/i.test(ctxt(r[3])));
+    if (fail.length) return capF(ctxt(fail[0][0])) + at(fail[0]) + ': not broken, the cast finished.' + (rows.length > 1 ? ' ' + (rows.length - fail.length) + ' of ' + rows.length + ' broken in time.' : '');
     const tight = rows.filter((r) => spare(r) < 1.5);
     if (tight.length) return capF(ctxt(tight[0][0])) + at(tight[0]) + ' broke with only ' + spare(tight[0]) + ' s to spare.';
-    const s = rows.map(spare).filter((x) => !isNaN(x));
-    return (rows.length > 1 ? allN(rows.length, 'shields') + ' broken' : 'The shield was broken') + ' and kicked' + (s.length ? ' (' + s.map((x) => x + ' s').join(', ') + ' to spare)' : '') + '.';
+    const sp = rows.map(spare).filter((x) => !isNaN(x));
+    return (rows.length > 1 ? allN(rows.length, 'shields') + ' broken' : 'The shield was broken') + (sp.length ? ' (' + sp.map((x) => x + ' s').join(', ') + ' to spare)' : '') + '.';
+  },
+  'Eternal Nightfall (Kicks)': ({ rows }) => {
+    if (!rows.length) return null;
+    const miss = rows.filter((r) => r[3] && r[3].bad), by = rows.map((r) => r[2] && r[2].p).filter(Boolean);
+    if (miss.length) return capF(ctxt(miss[0][0])) + at(miss[0]) + ': broken, but nobody kicked before the cast finished.' + (rows.length > 1 ? ' ' + (rows.length - miss.length) + ' of ' + rows.length + ' kicked.' : '');
+    return (rows.length > 1 ? 'Every broken shield kicked' : 'Kicked after the break') + (by.length ? ' (' + who(by, 3) + ')' : '') + '.';
   },
   'Intermission (Stop the fragments)': ({ rows }) => {
     if (!rows.length) return null;
@@ -222,11 +232,18 @@ const RECIPES = {
     if (!hit.length) return 'Nobody hit by the circles (' + (gs.length > 1 ? gs.length + ' casts' : 'one cast') + ').';
     return (hit.length === 1 ? 'The circles hit ' : 'The circles hit ' + hit.length + ' players: ') + who(hit.map((x) => x.r[0].p), 4) + ' (first' + at(hit[0].r) + ')' + (dd.length ? '; ' + who(dd.map((x) => x.r[0].p), 2) + ' died' : '') + '.';
   },
-  'Grasping Depths (Kill the Echo, kick the Curse)': ({ gs }) => {
+  // (Grasping Depths is two mechanics on the site since Nov 1: the Echo kill, and the Curse kicks)
+  'Grasping Depths (Kill the Echo)': ({ gs }) => {
     if (!gs.length) return null;
-    const all = rowsOf(gs), curse = all.filter((x) => /Curse/.test(ctxt(x.r[0]))), thr = curse.filter((x) => !/kicked/i.test(ctxt(x.r[2]))), slow = maxOf(gs.map((g) => numIn(plain(g.sub), /dead in (\d+) s/)));
-    if (thr.length) return "Soulcoiler's Curse got through" + at(thr[0].r) + (thr.length > 1 ? ' (' + thr.length + ' times)' : '') + '. ' + (curse.length - thr.length) + ' of ' + curse.length + ' kicked.';
-    return setLine(gs, 'casts', every(gs.length, 'Echoes', 'The Echo') + ' dead' + (isFinite(slow) ? ' (slowest ' + slow + ' s)' : '') + ', every Curse kicked.');
+    const slow = maxOf(gs.map((g) => numIn(plain(g.sub), /dead in (\d+) s/)));
+    return setLine(gs, 'Echoes', every(gs.length, 'Echoes', 'The Echo') + ' dead' + (isFinite(slow) ? ' (slowest ' + slow + ' s)' : '') + '.');
+  },
+  "Soulcoiler's Curse (Kicks)": ({ gs }) => {
+    // (a Curse is kicked, got off (the failure: the well team is thrown out) or stopped some other way, which is fine)
+    const all = rowsOf(gs), off = all.filter((x) => x.r[2] && x.r[2].bad), kicked = all.filter((x) => /^kicked$/i.test(ctxt(x.r[2])));
+    if (!all.length) return null;
+    if (off.length) return "Soulcoiler's Curse got off" + at(off[0].r) + (off.length > 1 ? ' (' + off.length + ' times)' : '') + ' and threw the well team out. ' + kicked.length + ' of ' + all.length + ' kicked.';
+    return kicked.length === all.length ? (all.length > 1 ? 'Every Curse kicked (' + all.length + ').' : 'The Curse was kicked.') : 'No Curse got off: ' + kicked.length + ' of ' + all.length + ' kicked, the rest stopped.';
   },
   'Essence Rend (Dispel at the side)': ({ gs }) => {
     if (!gs.length) return null;
@@ -629,6 +646,87 @@ const RECIPES = {
   },
 };
 
+// (each recipe by the mechanic's id (Nov 1): a name can change on the site (TITLE_FIX, a split), the id doesn't. "boss|id" where two bosses
+// share an id. Looked up after the exact name and before the name without its brackets)
+const RECIPE_IDS = {
+  venom: 'Eternal Venom (Stay under the limit)',
+  feast: 'Ravenous Feast (Soak in groups of 4)',
+  founts: 'Tainted Blood (Heal the absorbs off)',
+  soaks: 'Caustic Globules (One soak each)',
+  bulwark: 'Barbed Bulwark (CC breaks it)',
+  spit: "Corrosive Spit (Stay out of others' lines)",
+  stone: 'Stone Breaker (Tank catches the circles)',
+  helix: 'Helical Toxins (Pair up and solve)',
+  protovenom: 'Shifting Protovenom (Clear circles in pairs)',
+  droplets: 'Toxic Droplets (Step on one each)',
+  coag: 'Venom Coagulation (Kill before the intermission)',
+  miasma: 'Unstable Miasma (Soak with 8)',
+  blighted: 'Blighted Blood (Dispel fast)',
+  marks: "Marks (Stay on your boss's side)",
+  balance: 'Boss balance (Keep them even)',
+  tanks: 'Tanks (Swap at each intermission)',
+  ravage: 'Ravage (Tanks swap)',
+  mutilate: 'Mutilate (Soak in two groups)',
+  tempest: 'Tempest (Dodge the tornadoes)',
+  cysts: 'Venomous Surge (Save cysts for the winds)',
+  winds: 'Intermission (A cyst for each wind)',
+  crosswinds: 'Raging Crosswinds (Collide in the air)',
+  fury: "Serpent's Fury (Stack and pop it)",
+  virulence: 'Virulence (Spread out)',
+  nyburst: 'Frost Burst (Soak one at a time)',
+  nyadds: 'Murloc sets (Kill them before the bubble)',
+  nyscale: 'Bubblefin Frostscales (Kill them first)',
+  nyjet: 'Water Jet (Swap every jet)',
+  nyrain: 'Abyssal Rain (Cover it with cooldowns)',
+  nypop: 'Whirlpools and Pop! (Find the gap, stay dry)',
+  kxadds: 'Voidswarm (Kill before the intermission)',
+  kxbeetle: 'Bomber Beetles (Pop one at a time)',
+  kxext: 'Extinguish (Grab a mote)',
+  kxfear: 'Overwhelming Fear (Dispel one at a time)',
+  kxtank: 'Dark Devastation (Tank swap)',
+  kxgrasp: 'Abyssal Grasp (Heal it off)',
+  kxgate: 'Null Gates (Dodge the shards)',
+  amani: 'Restless Amani (Kill before the well)',
+  ignition: 'Soulcoil Ignition (Dodge the circles)',
+  depths: 'Grasping Depths (Kill the Echo)',
+  depthkick: "Soulcoiler's Curse (Kicks)",
+  rend: 'Essence Rend (Dispel at the side)',
+  barrage: 'Possession Barrage (Tank steps away)',
+  ritual: 'Intermission (Soak the Pyres)',
+  invoke: 'Invoke (Stop casting)',
+  venoms: 'Living Venoms (Kill one at a time)',
+  totems: 'Malignant Totems (Clear before the next Imbibe)',
+  froth: 'Plague Froth (Aim the lines at totems)',
+  bile: 'Catalytic Bile (Soak every bile)',
+  infect: 'Adaptive Infection (Dispel one at a time)',
+  boxes: 'Boxes (Pop early)',
+  united: 'United Defense (Keep the bosses apart)',
+  frostfire: 'Frostfire Volley (Swap patches)',
+  blink: 'Blink Nova (Target runs out)',
+  thud: 'Mighty Thud (Soak every leap)',
+  bomb: 'Explosive Surprise (Bounce over the wave)',
+  tankstacks: 'Tank stacks (Swap before too many)',
+  push: 'Phase changes',
+  inter: 'Intermission (Stop the fragments)',
+  vf: 'Venomfang',
+  tankfront: 'Tank frontals',
+  enkick: 'Eternal Nightfall (Kicks)',
+  shield: 'Eternal Nightfall (Break the shield)',
+  soakq: 'Guillotine',
+  dmstack: 'Dreadmarch',
+  dmghost: 'Dreadmarch',
+  addsets: 'Spiteful Soulcoiler (Kill fast)',
+  gloom: 'Gloombombs',
+  kicks: 'Interrupts',
+  eggs: 'Eggs (No Vipers)',
+  coils: 'Spectral Coils (Soak circles)',
+  waves: 'Caustic Waves (Dodge waves)',
+  amps: 'Rage of the Shackled (Damage windows)',
+  bite: "Serpent's Bite (Soak)",
+  shriek: 'Shriekers and Rawlings (Adds)',
+  'The Coiled Altar|orbs': 'Venom orbs',
+};
+
 window.DBF_BUILD = (b, rep, same, W, L) => {
   // (Rotation checks are the whole pull: worked out once, shared by every version)
   const memo = new Map(), W2 = Object.assign({}, W, { specRun: (...a) => { const k = a[0] + '|' + a[2]; if (!memo.has(k)) memo.set(k, W.specRun(...a)); return memo.get(k); } });
@@ -914,7 +1012,7 @@ function buildOne(b, rep, same, W, L, cutN) {
       }
       // (a recipe for this mechanic, from the research (notes/Guides/Debrief in game - mechanic lines research.md): its most useful
       // fact first, need against did, when and who. Without one, or if it can't read the rows, the generic line above stays)
-      const rc = RECIPES[plain(sec.title)] || RECIPES[plain(sec.title).replace(/\s*\(.*\)$/, '')];
+      const rc = RECIPES[plain(sec.title)] || RECIPES[RECIPE_IDS[b.boss + '|' + sec.id] || RECIPE_IDS[sec.id]] || RECIPES[plain(sec.title).replace(/\s*\(.*\)$/, '')];
       if (rc) { try { const x = rc({ sec, rows, gs, flag, t, mmss, cellTxt, rowLine, hurt, rowBad, T, dur: rep.duration || 0 }); if (x) t = x; } catch (e) { /* keep the generic line */ } }
       raid.mech.push([flag, sec.spell && sec.spell[0] ? String(sec.spell[0]) : '', plain(sec.title), shortTo(t.replace(/\s*\(see How it works\)/gi, '').replace(/\.\./g, '.').trim(), 230)]);
     } catch (e) { raid.mech.push([sec.verdict === 'bad' ? 'bad' : sec.verdict === 'warn' ? 'warn' : 'ok', sec.spell && sec.spell[0] ? String(sec.spell[0]) : '', plain(sec.title || ''), { bad: 'Failed.', warn: 'Some mistakes.' }[sec.verdict] || 'Done right.']); } }

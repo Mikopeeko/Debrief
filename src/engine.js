@@ -340,8 +340,9 @@ function unq(x) { return x.charCodeAt(0) === 34 && x.length > 1 ? x.slice(1, -1)
 // (a key is still followed, so the bosses inside it are recognized and skipped)
 const DUNGEON_DIFF = new Set([1, 2, 8, 23, 24, 150, 205, 208, 216, 236]);
 const isDungeon = (diffId, size) => DUNGEON_DIFF.has(diffId) || (size > 0 && size <= 5);
-// (the in-game app asks for dungeon bosses too (Oct 24): Normal, Heroic, Mythic and keystone dungeons, each marked dungeon with its key level)
-const DUNGEON_BOSS = new Set([1, 2, 8, 23]);
+// (the in-game app asks for dungeon bosses too, Mythic+ keys only (Nov 1, the user: "Only do dungeons for mythic +"; Normal, Heroic and Mythic 0
+// dungeons until then), each marked dungeon with its key level)
+const DUNGEON_BOSS = new Set([8]);
 function createIndexer(opts) {
   const bosses = [], runs = [], pulls = {}, withDungeons = !!(opts && opts.dungeons);
   let cur = null, run = null, lastMs = 0;
