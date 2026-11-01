@@ -29,11 +29,17 @@ body.is-kill .kyou .kv { font-size: 17px; }
 .top .pill.k { background: #17301e; color: var(--goodT); }
 .top .sv { app-region: no-drag; -webkit-app-region: no-drag; margin-left: auto; background: none; border: 0; color: var(--muted); font: 700 14px Barlow Condensed, sans-serif; cursor: pointer; padding: 2px 4px; } .top .sv:hover { color: var(--text); } .top .sv.on { color: var(--gold); }
 .top .sv + .x { margin-left: 4px; }
+.top .ksw { border: 0; padding: 0 0 0 12px; gap: 10px; align-self: stretch; align-items: stretch; app-region: no-drag; -webkit-app-region: no-drag; } .top .ksw span { padding: 2px 2px 0; display: flex; align-items: center; margin-bottom: -10px; }
+.ktabs.solo { justify-content: flex-end; border-bottom: 0; }
+.ktrl1 { margin: 10px 0 0; font-size: 14px; color: var(--soft); }
+.ksticky { display: none; position: sticky; top: -10px; z-index: 5; margin: -10px -14px 8px; padding: 6px 14px; background: var(--bg, #13151b); border-bottom: 1px solid var(--line); font: 700 15px Barlow Condensed, sans-serif; color: var(--text); }
+.body.scrolled .ksticky { display: block; }
+.kL .kch, .kR .kch { background: none; border: 0; padding: 0; } .kch small { color: var(--muted); }
 .ksw { display: flex; gap: 14px; padding: 0 14px; border-bottom: 1px solid var(--line); flex: none; }
 .ksw span { padding: 8px 4px 7px; font: 700 15px Barlow Condensed, sans-serif; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
 .ksw span:hover { color: var(--text); } .ksw span.on { color: var(--text); border-bottom-color: var(--gold); }
 .ksw small { font: 500 13.5px Barlow Condensed, sans-serif; color: var(--faint); margin-left: 7px; }
-.kpick { background: none; border: 0; padding: 0; color: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-align: left; } .kpick .kcar { color: var(--muted); } .kpick:hover .kcar { color: var(--text); }
+.kpick { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-align: left; } .kpick .kcar { color: var(--muted); } .kpick:hover .kcar { color: var(--text); }
 .ksr { cursor: pointer; } .ksr:hover { background: rgba(255,255,255,.03); } .ksr.wait { opacity: .6; }
 .ksr b { color: var(--text); } .ksr em { font-style: normal; color: var(--faint); margin-left: 6px; } .ksr i { float: right; font-style: normal; font-weight: 700; color: var(--muted); } .ksr i.up { color: var(--goodT); } .ksr i.ot { color: var(--badT); } .kpr { font-size: 13px; color: var(--muted); } .kpr span:last-child { color: var(--muted); }
 .ksv { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 4px 0 12px; } .ksv span { text-align: center; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; font: 700 15px Barlow Condensed, sans-serif; color: var(--muted); cursor: pointer; background: rgba(0,0,0,.15); }
@@ -304,7 +310,7 @@ function cardView() {
   { const H0 = C.h || D.h || {};
     if (H0.diff !== 'Practice') {
       const GC = { S: '#ff8000', A: '#a335ee', B: '#0070dd', C: '#1eff00', D: '#ece8df', F: '#9d9d9d' };
-      if (SH.grade === true && C.grade && C.grade.letter) L += '<div class="kgr"><b style="color:' + (GC[String(C.grade.letter).charAt(0)] || '#ece8df') + '">' + esc(C.grade.letter) + '</b><div><small>REPORT CARD · ' + esc(C.grade.score || '') + '</small><span>' + esc(C.grade.cats || '') + '</span></div></div>';
+      if (SH.grade === true && C.grade && C.grade.letter && !(VIEW === 'me' && me)) L += '<div class="kgr"><b style="color:' + (GC[String(C.grade.letter).charAt(0)] || '#ece8df') + '">' + esc(C.grade.letter) + '</b><div><small>REPORT CARD · ' + esc(C.grade.score || '') + '</small><span>' + esc(C.grade.cats || '') + '</span></div></div>';
       const pk = (v) => { const m = String(v || '').replace(/,/g, '').match(/([\d.]+)\s*([kKmM]?)/); if (!m) return null; const n = +m[1]; return /m/i.test(m[2]) ? n * 1000 : /k/i.test(m[2]) ? n : n / 1000; };
       const NPc = (D.night || []).filter((p) => p.boss === (H0.boss || '') + ' · ' + (H0.diff || ''));
       const twoCh = SH.chartNight === true && SH.chartLine === true && !!me && (document.documentElement.clientWidth || 0) >= 600;
@@ -332,12 +338,14 @@ function cardView() {
       if (verdict.indexOf(short(P.name) + ', ') === 0) verdict = verdict.slice(short(P.name).length + 2);
       verdict = verdict.replace(/, and one thing to fix first/, '').replace(/, with one thing to sharpen/, ''); verdict = verdict.charAt(0).toUpperCase() + verdict.slice(1);
       const first = (x) => String(x || '').split(/[.!?]\s/)[0].replace(/[.!?]$/, ''), tips = [];
-      for (const t of [you && you[1], P.next, deep ? P.next2 : '']) if (t && !tips.some((q) => first(q) === first(t))) tips.push(t);
+      let lead0 = !you && R.lead ? String(R.lead) : '', nt = ''; { const mm = lead0.match(/^(.*?)\s*Next time:\s*(.+)$/); if (mm) { lead0 = mm[1]; nt = mm[2]; } } /* (the kill line's own tip joins the list, once (Nov 1)) */
+      if (!verdict && lead0) verdict = lead0;
+      for (const t of [you && you[1], P.next, nt, deep ? P.next2 : '']) if (t && !tips.some((q) => first(q).toLowerCase() === first(t).toLowerCase())) tips.push(t.charAt(0).toUpperCase() + t.slice(1));
       const tr = you && you[2];
-      L += '<div class="kyou">' + (DUN ? '' : '<div class="kl">YOUR RAID LEAD SAYS</div>') + (verdict ? '<p class="kv">' + pt(verdict) + '</p>' : '') +
-        (tips.length ? '<div class="kl">' + (DUN ? 'NEXT TIME' : C.h && C.h.kill ? 'NEXT WEEK' : 'NEXT PULL') + '</div>' + (tips.length > 1 ? '<ol class="ktips">' + tips.map((t) => '<li>' + pt(t) + '</li>').join('') + '</ol>' : '<p class="ktip1">' + pt(tips[0]) + '</p>') : '') + '</div>' + /* (worse and better under the box, as /recap shows them) */
-        (tr && on('trend') && ((tr.worse || []).length || (tr.better || []).length) ? '<div class="ktrl">' + ((tr.worse || []).length ? '<p><b style="color:' + (C.h && C.h.kill ? 'var(--muted)' : '#e8a23a') + '">Worse than last pull:</b> ' + tr.worse.map((x) => esc(x[0]) + (x[1] ? ' (' + esc(String(x[1]).toLowerCase()) + ')' : '')).join(', ') + '</p>' : '') +
-          ((tr.better || []).length ? '<p><b style="color:' + (C.h && C.h.kill ? 'var(--muted)' : '#5aa9ff') + '">Better than last pull:</b> ' + tr.better.map((x) => esc(x[0]) + (x[1] ? ' (' + esc(String(x[1]).toLowerCase()) + ')' : '')).join(', ') + '</p>' : '') + '</div>' : '');
+      L += '<div class="kyou">' + (DUN || !you ? '<div class="kl">' + (C.h && C.h.kill ? 'THE KILL' : DUN ? '' : 'WHY WE WIPED') + '</div>' : '<div class="kl">YOUR RAID LEAD SAYS</div>') + (verdict ? '<p class="kv">' + pt(verdict) + '</p>' : '') +
+        (tips.length ? '<div class="kl">' + (DUN ? 'NEXT TIME' : C.h && C.h.kill ? 'NEXT WEEK' : 'NEXT PULL') + '</div>' + (tips.length > 1 ? '<ol class="ktips">' + tips.map((t) => '<li>' + pt(t) + '</li>').join('') + '</ol>' : '<p class="ktip1">' + pt(tips[0]) + '</p>') : '') + /* (Worse / Better as one line inside the box, at the bottom (Nov 1)) */
+        (tr && on('trend') && ((tr.worse || []).length || (tr.better || []).length) ? '<p class="ktrl1">' + [(tr.worse || []).length ? '<b style="color:' + (C.h && C.h.kill ? 'var(--muted)' : '#e8a23a') + '">Worse than last pull:</b> ' + tr.worse.map((x) => esc(x[0]) + (x[1] ? ' (' + esc(String(x[1]).toLowerCase()) + ')' : '')).join(', ') : '',
+          (tr.better || []).length ? '<b style="color:' + (C.h && C.h.kill ? 'var(--muted)' : '#5aa9ff') + '">Better:</b> ' + tr.better.map((x) => esc(x[0]) + (x[1] ? ' (' + esc(String(x[1]).toLowerCase()) + ')' : '')).join(', ') : ''].filter(Boolean).join(' · ') + '</p>' : '') + '</div>';
     }
     // (your numbers: your damage or healing against last pull and your best, then the small tiles)
     /* (your numbers as one row of small tiles (Nov 1, the Design studio's long-card spec): yours first, then the rest, and your deaths) */
@@ -345,8 +353,9 @@ function cardView() {
       if (on('tile')) { const sub = P.d != null && P.d !== '' && on('vs') ? '<span class="' + (P.d >= 0 ? 'up' : 'dn') + '">' + (P.d >= 0 ? '+' : '') + P.d + '%</span> vs pull ' + esc(P.vs) : P.bt ? 'your best tonight' : 'first pull read';
         T0.push('<div class="kt"><small>' + (P.role === 'healer' ? 'Your healing' : 'Your damage') + '</small><b>' + esc(P.v) + '<em> ' + esc(P.unit || '') + '</em></b><i>' + sub + '</i></div>'); }
       for (const t of (LK.compact || LK.preset === 'simple' ? [] : (P.tiles || []))) T0.push('<div class="kt' + (t[3] === 'warn' ? ' w' : t[3] === 'bad' ? ' b' : '') + '"><small>' + esc(t[0]) + '</small><b>' + esc(t[1]) + '</b><i>' + esc(t[2] || '') + '</i></div>');
-      if ((C.h || {}).diff !== 'Practice') { const died = R.died || [], mine = died.filter((d) => short(d[1]) === short(P.name)).length;
-        T0.push('<div class="kt' + (mine ? ' b' : '') + '"><small>Deaths</small><b>' + mine + '</b><i>' + (mine ? '' : died.length ? 'you stayed up' : 'nobody died') + '</i></div>'); }
+      if ((C.h || {}).diff !== 'Practice' && !(R.died || []).length) T0.push('<div class="kt"><small>Deaths</small><b>0</b><i>nobody died</i></div>'); /* (a tile when nobody died; otherwise Who died) */
+      if (SH.grade === true && C.grade && C.grade.letter && (C.h || {}).diff !== 'Practice') { const g0 = String(C.grade.letter).charAt(0), gc = g0 === 'S' || g0 === 'A' ? 'var(--goodT)' : g0 === 'B' ? 'var(--gold)' : g0 === 'C' ? 'var(--warn)' : 'var(--badT)';
+        T0.push('<div class="kt"><small>Report card</small><b style="color:' + gc + '">' + esc(C.grade.letter) + '</b><i>' + esc(C.grade.score || '') + ' of 100</i></div>'); } /* (coloured by grade: a C is amber (Nov 1)) */
       if (T0.length) L += '<div class="ktiles">' + T0.join('') + '</div>'; }
     L += CH;
     // (rotation, like the Rotation tab's checklist: your score, each fix against the top players, a square per moment, Next time)
@@ -380,7 +389,7 @@ function cardView() {
     if (sv.length) Rt += sec('surv', 'Survival', lim('surv', worst(sv), 6, row), undefined, sv.length, '');
     /* (Who died, as the card in WoW shows it on your Me tab (Oct 24): not on Simple, not on Detailed (it's in the Raid view there), and after a dungeon boss) */
     const H0d = C.h || {}, deepD = LK.detailed || LK.preset === 'detailed', nD = MX.maxDied != null ? MX.maxDied : 3;
-    if (!LK.compact && H0d.diff !== 'Practice' && (!deepD || DUN) && nD > 0) {
+    if (!LK.compact && H0d.diff !== 'Practice' && (!deepD || DUN) && nD > 0 && (R.died || []).length) {
       const died = R.died || [], shown = died.slice(0, nD), more = died.length - shown.length;
       Rt += sec('died', 'Who died <span class="ksc">· ' + esc(H0d.deaths != null ? H0d.deaths : died.length) + (+H0d.deaths === 1 ? ' death' : ' deaths') + '</span>',
         (died.length ? shown.map((d) => '<div class="kdd"><span>' + esc(d[0]) + '</span>' + nmH(d[1]) + icn(d[3]) + '<span>' + esc(d[4] || '') + '</span></div>').join('') + (more > 0 ? '<p class="kno">+' + more + ' more.</p>' : R.more ? '<p class="kno">' + pt(R.more) + '</p>' : '') : '<p class="kno">' + pt(R.more || 'Nobody died.') + '</p>'), undefined, died.length, null);
@@ -428,24 +437,29 @@ function cardView() {
   }
   /* (the header, as /recap draws it: the boss big, its line, the result; this boss's pulls; Me | Raid view with ‹ name ›) */
   const H = C.h || D.h || {}, prac = H.diff === 'Practice', res = prac ? 'Practice' : H.kill ? 'Kill' : 'Wipe' + (H.pct !== '' && H.pct != null ? ' · ' + H.pct + '%' : '');
-  const head = '<div class="khead"><div><div class="kbn">' + esc(H.boss) + '</div><div class="kmeta">' + [H.diff, 'Pull ' + H.pull, H.dur, H.where, H.deaths ? H.deaths + (H.deaths === 1 ? ' death' : ' deaths') : ''].filter(Boolean).map(esc).join(' · ') + '</div></div><span class="kres' + (prac ? ' p' : H.kill ? ' k' : '') + '">' + esc(res) + '</span></div>';
+  const lv0 = (String(H.diff || '').match(/(\d+)/) || [])[1], m0 = H.dungeon && H.inst ? [H.inst + (lv0 ? ' +' + lv0 : ''), H.dur] : [H.diff, 'Pull ' + H.pull, H.dur, H.where]; /* (Blinding Vale +10, not Mythic+ 10 (Nov 1)) */
+  const head = '<div class="khead"><div><div class="kbn"><button class="kpick" type="button" data-bpick="1">' + esc(H.boss) + caretSvg(BPICK) + '</button></div><div class="kmeta">' + m0.concat([H.deaths != null && H.deaths !== '' ? H.deaths + (+H.deaths === 1 ? ' death' : ' deaths') : '', D.wc ? 'wipe called ' + D.wc.at : '']).filter(Boolean).map(esc).join(' · ') + '</div></div><span class="kres' + (prac ? ' p' : H.kill ? ' k' : '') + '">' + esc(res) + '</span></div>';
   const bossKey = (H.boss || '') + ' · ' + (H.diff || ''), NP0 = (D.night || []).filter((p) => p.boss === bossKey), ci = Math.max(0, NP0.findIndex((p) => p.cur)), NP = NP0.slice(Math.max(0, Math.min(ci - 5, NP0.length - 7)), Math.max(0, Math.min(ci - 5, NP0.length - 7)) + 7); /* (seven at most, around this pull, as the card's row (Oct 24)) */
   const pulls = on('chips') && NP.length > 1 ? '<div class="kpulls">' + NP.map((p) => '<span class="' + (p.cur ? 'on' : '') + (loadingPull === p.sb ? ' wait' : '') + '" style="color:' + (p.kill ? '#ff8000' : p.left != null ? ([[80, '#b25ef5'], [60, '#2e8cff'], [40, '#2ee62e'], [20, '#f2f2f2'], [0, '#9d9d9d']].find(([lo]) => 100 - Math.round(p.left) >= lo) || [0, '#9d9d9d'])[1] : 'var(--muted)') + '" data-pull="' + p.sb + '" title="' + esc('Pull ' + p.pull + (p.h ? ': ' + p.h : '')) + '">Pull ' + p.pull + ' · ' + esc(p.txt) + '</span>').join('') + '</div>' : '';
   const who = VIEW === 'me' && PL.length > 1 ? '<span class="kwho"><button type="button" data-who="-1" title="The player before">‹</button>' + (me ? nmH(me.name) : '<b class="knm" style="color:var(--faint)">Not in this pull</b>') + '<button type="button" data-who="1" title="The next player">›</button></span>' : '';
-  const tabs = PL.length ? '<div class="ktabs"><span data-tab="me" class="' + (VIEW === 'me' ? 'on' : '') + '">Me</span>' + (DUN ? '' : '<span data-tab="raid" class="' + (VIEW === 'raid' ? 'on' : '') + '">Raid view</span>') + who + '</div>' : '';
+  const tabs = !PL.length ? '' : DUN ? '<div class="ktabs solo">' + who + '</div>' /* (no lone Me tab (Nov 1)) */ : '<div class="ktabs"><span data-tab="me" class="' + (VIEW === 'me' ? 'on' : '') + '">Me</span><span data-tab="raid" class="' + (VIEW === 'raid' ? 'on' : '') + '">Raid view</span>' + who + '</div>';
   const reloadLine = LK.reload ? '<div class="krl">Debrief was updated. Type <b>/reload</b> in WoW when you\'re ready.</div>' : ''; /* (goes by itself after the /reload (Oct 24)) */
-  return reloadLine + head + pulls + tabs + stopRow() + '<div class="kgrid one"><div class="kL">' + L + Rt + '</div></div>';
+  if (BPICK) { /* (tonight's bosses, from the boss name (Nov 1)): each boss on this night, its pulls, Kill or best %; tap for its newest pull */
+    const G = new Map(); for (const p of (D.night || [])) { const g = G.get(p.boss) || { name: p.boss, n: 0, kill: false, best: null, sb: 0 }; g.n++; g.sb = p.sb; if (p.kill) g.kill = true; if (p.left != null && (g.best == null || p.left < g.best)) g.best = p.left; G.set(p.boss, g); }
+    return reloadLine + head + '<div class="body0 mpx"><div class="kc"><div class="kh"><b>Tonight\'s bosses</b></div><div class="kb">' + [...G.values()].map((g) => '<div class="kr ksr" data-spull="' + g.sb + '"><span class="kd" style="background:' + (g.kill ? 'var(--good)' : 'var(--bad)') + '"></span><span></span><span><b>' + esc(g.name) + '</b> <em>' + g.n + (g.n === 1 ? ' pull' : ' pulls') + '</em><i class="ar">›</i>' + (g.kill ? '<i class="kl">Kill</i>' : g.best != null ? '<i>best ' + Math.round(g.best) + '%</i>' : '') + '</span></div>').join('') + '</div></div></div>';
+  }
+  return reloadLine + '<div class="ksticky">' + esc(H.boss) + ' · ' + esc(res) + '</div>' + head + pulls + tabs + stopRow() + '<div class="kgrid one"><div class="kL">' + L + Rt + '</div></div>';
 }
 // ---------- the Mythic+ run recap (Nov 1): a Run tab and a tab per pull; Me (you, or anyone with ‹ ›) and Group (Nov 1, Flex: "filter by
 // player too, so the user can see their own individual performance as well as others individual performance") ----------
 let MPULL = 0, MVIEW = 'me', MWHO = null, MCUR = null, MORD = [];
 // ---------- one card (Nov 1, Flex: "Just one card that you can customize. regardless of how you open it it should look the same"): the Raid |
 // Mythic+ switch under the header, Saved in the header (the body becomes your saved pulls), the key picker on the key's name; as in WoW ----------
-let SAVED = false, MPICK = false;
+let SAVED = false, MPICK = false, BPICK = false;
 const dayOf = (n) => { if (!n) return ''; const k = (ms) => new Date(ms - 6 * 3600e3).toISOString().slice(0, 10).replace(/-/g, '');
   if (n === k(Date.now())) return 'today'; if (n === k(Date.now() - 864e5)) return 'yesterday';
   return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+n.slice(4, 6) - 1] + ' ' + (+n.slice(6, 8)); };
-const topBar = () => '<div class="top">' + LOGO + '<b>Debrief</b><button class="sv' + (SAVED ? ' on' : '') + '" type="button" data-saved="1">Saved</button><button class="x" type="button" title="Close (it comes back after the next pull)" data-close="1">✕</button></div>';
+const topBar = (side) => '<div class="top">' + LOGO + '<b>Debrief</b>' + (side ? swRow(side) : '') + '<button class="sv' + (SAVED ? ' on' : '') + '" type="button" data-saved="1">Saved</button><button class="x" type="button" title="Close (it comes back after the next pull)" data-close="1">✕</button></div>';
 function swRow(side) { const S0 = D.saved || {}, nk = (S0.keys || []).length, rb = side === 'raid' && D.h ? D.h.boss : S0.lastRaidBoss || 'no pulls yet';
   return '<div class="ksw"><span data-sw="raid" class="' + (side === 'raid' ? 'on' : '') + '">Raid<small>' + esc(rb) + '</small></span><span data-sw="mplus" class="' + (side === 'mplus' ? 'on' : '') + '">Mythic+<small>' + (nk ? nk + (nk === 1 ? ' key' : ' keys') : 'no keys yet') + '</small></span></div>'; }
 const caretSvg = (up) => '<svg class="kcar" viewBox="0 0 12 8" width="12" height="8"><path d="' + (up ? 'M1 7 L6 2 L11 7' : 'M1 1 L6 6 L11 1') + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -566,6 +580,10 @@ function renderMplus() {
   else if (me && !o) {
     // (Me, the whole key: your numbers, what got through on your kick, your deaths, and your key pull by pull)
     const n = me.name, th = R.pulls.flatMap((q) => mineThrough(q, n).map((x) => Object.assign({ pull: q.n }, x)));
+    { const ab = [...new Set(R.pulls.flatMap((q) => q.deaths.filter((x) => x.who === n && !x.defs).map((x) => x.to)))], tips = [];
+      if (ab.length) tips.push('Use a defensive before ' + (ab.length === 1 ? esc(ab[0]) : esc(ab[0]) + ' and ' + esc(ab[1])) + ': ' + (ab.length === 1 ? 'that death had' : 'those deaths had') + ' none in the 30 s before.');
+      const f0 = me.rot && me.rot.fix[0]; if (f0) tips.push(esc(f0.label) + ' needed work ' + (f0.pulls.length >= me.rot.pulls ? 'in all ' + me.rot.pulls + ' pulls.' : 'in ' + f0.pulls.length + ' of ' + me.rot.pulls + ' pulls.'));
+      if (tips.length) body += '<div class="kyou"><div class="kl">NEXT KEY</div>' + (tips.length > 1 ? '<ol class="ktips">' + tips.map((t) => '<li>' + t + '</li>').join('') + '</ol>' : '<p class="ktip1">' + tips[0] + '</p>') + '</div>'; } /* (NEXT KEY (Nov 1)) */
     body += '<div class="ktiles">' + tile(Yo + (heal(me) ? ' HPS' : ' DPS'), kN(val(me)), '', rank(me)) + tile(Yo + ' kicks and stops', ks(me.kicks, me.stops)) +
       (me.kick ? tile('Got through, ' + yo + ' kick ready', th.length, th.length > 5 ? 'b' : th.length ? 'w' : '') : tile(Yo + ' dispels', me.dispels)) + (R.list ? tile('Avoidable damage', (me.avoid || 0) + (me.avoid === 1 ? ' hit' : ' hits'), me.avoid ? 'w' : '') : '') + tile('Deaths', me.deaths, me.deaths ? 'b' : '') + tile('Defensives', me.defs) + '</div>';
     body += sec('Timer', clockRows());
@@ -622,7 +640,7 @@ function renderMplus() {
   }
   const c0 = run.clock || {}, kmeta = [stat, c0.time ? mmssP(c0.time) + (c0.par ? ' of ' + mmssP(c0.par) : '') : run.timeMs ? mmssP(run.timeMs / 1000) : '', c0.up ? 'up ' + c0.up + (c0.up === 1 ? ' level' : ' levels') : '', R.pulls.length + (R.pulls.length === 1 ? ' pull' : ' pulls'), dayOf(D.saved && D.saved.keys && (D.saved.keys.find((k) => k.sb === D.saved.lastKey) || {}).night)].filter(Boolean).join(' · ');
   const khead = '<div class="khead"><div><button class="kbn kpick" type="button" data-mpick="1">' + esc(run.dungeon) + ' +' + run.level + caretSvg(MPICK) + '</button><div class="kmeta">' + kmeta + '</div></div><span class="kres' + (run.timed && !run.left ? ' k' : '') + '">' + stat + '</span></div>';
-  app.innerHTML = topBar() + swRow('mplus') + '<div class="body mpx">' + khead + (MPICK ? keyRows('Your keys, newest first') : chips + body) + '</div><div class="foot"><button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">Your key, pull by pull</span></div>';
+  app.innerHTML = topBar('mplus') + '<div class="body mpx">' + khead + (MPICK ? keyRows('Your keys, newest first') : chips + body) + '</div><div class="foot"><button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">Your key, pull by pull</span></div>';
   fit();
 }
 function render() {
@@ -655,7 +673,7 @@ function render() {
     body += '<p class="cnt" style="margin-top:10px">The full coaching is on the website, in the Debriefing tab.</p>';
   } else body += '<p class="chd">' + esc(res) + ' · ' + esc(h.dur) + '</p><p class="cnt">No coaching for this pull.</p>';
   const pr0 = document.getElementById('pullsRow'), sl0 = pr0 ? pr0.scrollLeft : null, bd0 = document.querySelector('.body'), st0 = bd0 ? bd0.scrollTop : 0; /* (a redraw keeps your place (Oct 24)) */
-  app.innerHTML = (D.card ? topBar() + (SAVED ? '' : swRow('raid')) : '<div class="top">' + LOGO + '<b>Debrief</b>' + '<span class="bt">' + esc(h.boss) + ' · ' + esc(h.diff) + ' · Pull ' + esc(h.pull) + '</span><span class="pill' + (h.kill ? ' k' : '') + '">' + esc(res) + '</span>' + '<button class="x" type="button" title="Close (it comes back after the next pull)" data-close="1">✕</button></div>') +
+  app.innerHTML = (D.card ? topBar(SAVED ? null : 'raid') : '<div class="top">' + LOGO + '<b>Debrief</b>' + '<span class="bt">' + esc(h.boss) + ' · ' + esc(h.diff) + ' · Pull ' + esc(h.pull) + '</span><span class="pill' + (h.kill ? ' k' : '') + '">' + esc(res) + '</span>' + '<button class="x" type="button" title="Close (it comes back after the next pull)" data-close="1">✕</button></div>') +
     (D.card ? '' : nightRow()) +
     '<div class="body' + (D.pack && D.pack.html ? ' sitebody' : '') + (SAVED ? ' mpx' : '') + '">' + body + '</div>' +
     '<div class="foot">' +
@@ -676,7 +694,8 @@ function nightRow() {
 function stopRow() {
   if (D.cut == null || !(D.cutN > 0)) return '';
   // (the Wipe call (Oct 23): on, nothing after the pull was lost counts; off, all of it)
-  if (D.wc) return '<div class="stp" title="When a pull is lost (more dead than any kill survived, a mechanic no kill ever survived, the damage check missed, or half the raid dead), nothing after it counts."><b>Wipe called at ' + esc(D.wc.at) + ' <i class="stpi">' + esc(D.wc.txt) + '. Nothing after it counts.</i></b></div>'; /* (always on, Oct 23) */
+  if (D.wc) return ''; /* (the wipe call is in the meta line now (Nov 1)) */
+  if (false) return '<div class="stp" title="When a pull is lost (more dead than any kill survived, a mechanic no kill ever survived, the damage check missed, or half the raid dead), nothing after it counts."><b>Wipe called at ' + esc(D.wc.at) + ' <i class="stpi">' + esc(D.wc.txt) + '. Nothing after it counts.</i></b></div>'; /* (always on, Oct 23) */
   const c = D.cut, n = D.cutN, ord = (k) => k + (k % 100 >= 11 && k % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[k % 10] || 'th'));
   // (one line (Oct 23): what it counts to beside the name, the explanation on hover)
   const note = waiting ? 'updating the coach…' : c === 0 ? 'off, all of it counts' : c > n ? 'fewer deaths, so all of it counts' : 'counted to the ' + ord(c) + ' death';
@@ -684,7 +703,7 @@ function stopRow() {
 }
 let waiting = false;
 // (the window grows to fit the card, up to most of the screen; the rest scrolls)
-function fit() { requestAnimationFrame(() => { const a = document.getElementById('app'), m = a.querySelector('.mini'), t = a.querySelector('.top'), b = a.querySelector('.body'), f = a.querySelector('.foot');
+function fit() { const bd0 = document.querySelector('.body'); if (bd0) bd0.onscroll = () => bd0.classList.toggle('scrolled', bd0.scrollTop > 140); /* (the slim bar (Nov 1)) */ requestAnimationFrame(() => { const a = document.getElementById('app'), m = a.querySelector('.mini'), t = a.querySelector('.top'), b = a.querySelector('.body'), f = a.querySelector('.foot');
   if (!m && b) cols2(b, (t ? t.offsetHeight : 0) + (f ? f.offsetHeight : 0));
   const want = m ? m.offsetHeight + 2 : (t ? t.offsetHeight : 0) + (b ? b.scrollHeight : 0) + (f ? f.offsetHeight : 0) + 2; post('h:' + Math.ceil(want)); }); }
 // (two columns when the card is long (Oct 24), like the card in WoW: measured at one column's width; when it's taller than the window can
@@ -714,7 +733,8 @@ function cols2(b, chrome) {
 }
 window.addEventListener('resize', () => fit()); /* (the app widened or narrowed the window: measure again) */
 document.addEventListener('click', (e) => {
-  const t = e.target.closest ? e.target.closest('[data-fold],[data-row],[data-close],[data-open],[data-big],[data-cut],[data-cutt],[data-pull],[data-tab],[data-cf],[data-cr],[data-cmore],[data-who],[data-saved],[data-svside],[data-svnight],[data-svother],[data-svolder],[data-sw],[data-key],[data-spull],[data-mpick],[data-mp],[data-mview],[data-mwstep],[data-mwho]') : null; if (!t) return;
+  const t = e.target.closest ? e.target.closest('[data-fold],[data-row],[data-close],[data-open],[data-big],[data-cut],[data-cutt],[data-pull],[data-tab],[data-cf],[data-cr],[data-cmore],[data-who],[data-saved],[data-bpick],[data-svside],[data-svnight],[data-svother],[data-svolder],[data-sw],[data-key],[data-spull],[data-mpick],[data-mp],[data-mview],[data-mwstep],[data-mwho]') : null; if (!t) return;
+  if (t.dataset.bpick) { BPICK = !BPICK; render(); return; } /* (the boss picker (Nov 1)) */
   if (t.dataset.svside) { SV.side = t.dataset.svside; SV.other = false; render(); return; } /* (Saved: Raid or Mythic+ (Nov 1)) */
   if (t.dataset.svnight) { const k = t.dataset.svnight, was = SV.open[k] != null ? SV.open[k] : dayOf(k) === 'today'; SV.open[k] = !was; render(); return; }
   if (t.dataset.svother) { SV.other = !SV.other; render(); return; }
@@ -748,10 +768,10 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') post('clos
 function take(d) {
   if (!d) return;
   const fromChip = loadingPull != null; /* (a pull button brought it: no motion) */
-  waiting = false; loadingPull = null; WHO = null; VIEW = null; MPULL = 0; MVIEW = 'me'; MWHO = null; SAVED = false; MPICK = false; SV = { side: null, open: {}, older: false, other: false }; /* (each recap starts on you, on Me, like the card in WoW (Oct 24)) */ D = d; big = !!d.full; for (const k of Object.keys(OPEN)) delete OPEN[k]; render();
+  waiting = false; loadingPull = null; WHO = null; VIEW = null; MPULL = 0; MVIEW = 'me'; MWHO = null; SAVED = false; MPICK = false; BPICK = false; SV = { side: null, open: {}, older: false, other: false }; /* (each recap starts on you, on Me, like the card in WoW (Oct 24)) */ D = d; big = !!d.full; for (const k of Object.keys(OPEN)) delete OPEN[k]; render();
   const pr = document.getElementById('pullsRow'), on = pr && pr.querySelector('.pc.on'); if (on) pr.scrollLeft = Math.max(0, on.offsetLeft - pr.clientWidth + on.offsetWidth + 12);
   const b = document.querySelector('.body'); if (b) b.scrollTop = 0;
-  if (big && !fromChip) motion();
+  /* (no opening motion (Nov 1, Flex turned page-load animations off): it appears in one go) */
 }
 /* (the pop-up moves like the site (Oct 25, the Design studio's round 3), once when a new pull's card first draws: the bars and the tile values scale
    in from the left, the big number fades in counting up, the raid lead box and the sections fade in 60 ms apart; a kill's edge glows. Transforms

@@ -361,7 +361,7 @@ function createIndexer(opts) {
         // (for the app, only a dungeon difficulty counts as inside a key: a key left without its end line never makes a raid boss a dungeon boss)
         const inKey = run && (!withDungeons || DUNGEON_DIFF.has(diffId)), dun = inKey || isDungeon(diffId, +f[3]);
         if (dun && !(withDungeons && DUNGEON_BOSS.has(diffId))) cur.skip = true; // (a dungeon boss: followed to its end, never listed on the site)
-        else { if (dun) { cur.dungeon = true; if (inKey && run.level > 0) cur.key = run.level; } const k = cur.id + ':' + diffId; pulls[k] = (pulls[k] || 0) + 1; cur.pull = pulls[k]; bosses.push(cur); }
+        else { if (dun) { cur.dungeon = true; if (inKey && run.level > 0) cur.key = run.level; if (inKey && run) cur.inst = run.boss; } /* (inst: the dungeon, for the card's title (Nov 1)) */ const k = cur.id + ':' + diffId; pulls[k] = (pulls[k] || 0) + 1; cur.pull = pulls[k]; bosses.push(cur); }
       } else if (ev === 'ENCOUNTER_END' && cur && +f[0] === cur.id) {
         cur.kill = f[4] === '1'; cur.result = cur.kill ? 'Kill' : 'Wipe';
         cur.duration = num(f[5]) / 1000; cur.endByte = end; cur = null;
