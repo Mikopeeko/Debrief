@@ -90,7 +90,7 @@ function build(text, E) {
         const amt = Math.max(0, num(f[s0]) + num(f[s0 + 4]) + num(f[s0 + 5]) - Math.max(0, num(f[s0 + 2])));
         const ow = ownerOf(adv);
         if (ow && isNpc(dg)) { if (isPlayer(sg)) P(sg, sn); ev.push([t, 'dmg', ow, amt, dg, dn]); }
-        else if (isNpc(sg) && isPlayer(dg)) ev.push([t, 'hit', dg, amt, swing ? 'Melee' : f[9], sn, sg, e === 'SPELL_PERIODIC_DAMAGE']);
+        else if (isNpc(sg) && isPlayer(dg)) ev.push([t, 'hit', dg, amt, swing ? 'Melee' : f[9], sn, sg, e === 'SPELL_PERIODIC_DAMAGE', swing ? '' : f[8]]); /* (x[8]: the spell id, for its icon (Nov 1)) */
         if (!swing && ow && isNpc(dg) && KNOCK.has(String(f[9]).toLowerCase())) ev.push([t, 'cc', ow, f[9], dg]);
         break;
       }
@@ -179,7 +179,7 @@ function build(text, E) {
     else if (x[1] === 'hit') { const l = recent.get(x[2]) || []; l.push([x[0], x[4], x[5], x[3]]); if (l.length > 6) l.shift(); recent.set(x[2], l);
       /* (avoidable damage: a dodge-list spell's direct hit (not the damage-over-time some leave) on anyone but a tank, who may be standing in a frontal on purpose;
          a beam or breath that hits every second while you stand in it is one hit until you're out of it for 1.6 s (Nov 1)) */
-      if (LIST && (players.get(x[2]) || {}).role !== 'tank') { if (!x[7] && LIST.dodge.has(lc(x[4]))) { const a = avoidOf(o, x[2], x[4]), k = x[2] + '|' + lc(x[4]); if (!(lastHit.get(k) > x[0] - 1.6)) a.n++; lastHit.set(k, x[0]); a.dmg += x[3]; } else if (x[7] && LIST.pool.has(lc(x[4]))) { const a = avoidOf(o, x[2], x[4]), k = x[2] + '|' + lc(x[4]); if (inPool.has(k)) { a.n++; inPool.delete(k); } a.dmg += x[3]; } } }
+      if (LIST && (players.get(x[2]) || {}).role !== 'tank') { if (!x[7] && LIST.dodge.has(lc(x[4]))) { const a = avoidOf(o, x[2], x[4]); if (!a.id && x[8]) a.id = x[8]; const k = x[2] + '|' + lc(x[4]); if (!(lastHit.get(k) > x[0] - 1.6)) a.n++; lastHit.set(k, x[0]); a.dmg += x[3]; } else if (x[7] && LIST.pool.has(lc(x[4]))) { const a = avoidOf(o, x[2], x[4]), k = x[2] + '|' + lc(x[4]); if (inPool.has(k)) { a.n++; inPool.delete(k); } a.dmg += x[3]; } } }
     /* (a puddle: one hit each time someone stepped in and it ticked on them; out again within a second isn't a mistake. Its ticks are the damage) */
     else if (x[1] === 'pool') inPool.add(x[2] + '|' + lc(x[3]));
     else if (x[1] === 'aura' && defIds.has(x[3])) o.defs.push({ t: x[0], who: x[2], name: defIds.get(x[3]) });
@@ -195,9 +195,9 @@ function build(text, E) {
   }
   for (const c of casts) {
     const o = out[pullOf(c.t)]; if (!o) continue;
-    if (c.res === 'kicked') o.kicks.push({ t: c.at, who: c.by, with: c.with, spell: c.spell, mob: c.mob });
-    else if (c.res === 'stopped') o.stops.push({ t: c.at, who: c.by, with: c.with, spell: c.spell, mob: c.mob });
-    else if (c.res === 'done' && danger(c)) { const rd = readyAt(c.t); if (rd.length) o.through.push({ t: c.t, spell: c.spell, mob: c.mob, ready: rd }); }
+    if (c.res === 'kicked') o.kicks.push({ t: c.at, who: c.by, with: c.with, spell: c.spell, mob: c.mob, id: c.id });
+    else if (c.res === 'stopped') o.stops.push({ t: c.at, who: c.by, with: c.with, spell: c.spell, mob: c.mob, id: c.id });
+    else if (c.res === 'done' && danger(c)) { const rd = readyAt(c.t); if (rd.length) o.through.push({ t: c.t, spell: c.spell, mob: c.mob, ready: rd, id: c.id }); } /* (id: the spell's icon (Nov 1)) */
   }
   for (const o of out) { const d = Math.max(1, o.e - o.s); o.dur = d; for (const k of ['dmg', 'heal']) for (const g of Object.keys(o[k])) o[k][g] = Math.round(o[k][g] / d); o.through.sort((a, b) => a.t - b.t); }
   // ---- the whole key, per player ----
@@ -214,7 +214,7 @@ function build(text, E) {
   for (const o of out) for (const k of ['kicks', 'stops', 'deaths', 'defs', 'dispels', 'purges']) for (const x of o[k]) x.who = name(x.who);
   for (const o of out) for (const x of o.through) x.ready = x.ready.map(name);
   for (const o of out) { const fix = (m) => { const r = {}; for (const [g, v] of Object.entries(m)) r[name(g)] = v; return r; }; o.dmg = fix(o.dmg); o.heal = fix(o.heal);
-    o.avoid = Object.values(o.avoid).filter((a) => a.n).map((a) => ({ who: name(a.who), spell: a.spell, n: a.n, dmg: Math.round(a.dmg) })).sort((a, b) => b.dmg - a.dmg);
+    o.avoid = Object.values(o.avoid).filter((a) => a.n).map((a) => ({ who: name(a.who), spell: a.spell, n: a.n, dmg: Math.round(a.dmg), id: a.id || '' })).sort((a, b) => b.dmg - a.dmg);
     o.debs = Object.entries(o.debs).map(([spell, b]) => ({ spell, on: b.on, removed: b.removed })); o.ebuffs = Object.entries(o.ebuffs).map(([spell, b]) => ({ spell, on: b.on, removed: b.removed })); }
   // ---- the timer (Nov 1): how close the key was to each upgrade, what the deaths cost, and fighting against the time between pulls. The
   // clock starts 10 s after CHALLENGE_MODE_START (the countdown); the time WoW wrote at the end, less the time that passed, is what deaths added
