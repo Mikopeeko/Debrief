@@ -10509,6 +10509,15 @@ html:not([data-theme]) body.refine .panel,html:not([data-theme]) body.refine .r2
 html:not([data-theme]) body.refine header.fight.bh{box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 14px 34px -18px rgba(0,0,0,.95)}
 html:not([data-theme]) body.refine #topbar{box-shadow:inset 0 -1px 0 rgba(255,255,255,.03),0 8px 22px -14px rgba(0,0,0,.8)}
 html:not([data-theme]) body.refine .btn:not(.primary),html:not([data-theme]) body.refine main#main > .r300-tb select{box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 1px 2px rgba(0,0,0,.35)}
+/* round 436 even home boxes */
+@media (min-width: 901px) {
+ html body .r340-cols{align-items:stretch !important}
+ html body .r340-cols > .my-raid{display:flex !important;flex-direction:column}
+ html body .r340 .my-raid .my-strip.my-bcs{flex:1 1 auto;display:flex !important;flex-direction:column}
+ html body .r340 .my-raid .my-bc.my-bc.my-bc{flex:1 1 auto}
+}
+ html body .r340-cols > .my-raid .my-h h2,html body .r340-cols .pn-wh > b,html body .r340-cols .pg-nights .pg-sh > h2{font-size:18px !important;font-weight:700 !important;line-height:1.2 !important}
+ html body .r340-cols > .my-raid .my-h .sub,html body .r340-cols .pn-wh .sub{font-size:13px !important}
 /* refined look (Design studio round 170, Oct 28): one set of finishes everywhere, see notes/Design rules.md */
 /* The refined finishes (trial): the rules in notes/Design rules.md. Same layout, same font (Barlow Condensed), new finishes:
    greys for structure, colour only where it means something, gold as the mark, one panel / row / tag / chip, flat, sharp. */
@@ -12505,6 +12514,7 @@ html[data-theme="warrior"] body.refine .bh-name{font-family:'Cinzel',var(--head)
 html[data-theme="warrior"] body.refine .brand h1,html[data-theme="warrior"] body.refine #topbar .tb-brand b{font-family:'Cinzel',var(--head)}
 html[data-theme="warrior"] body.refine ::selection{background:rgba(198,155,109,0.35)}
 </style>
+
 
 
 

@@ -10509,6 +10509,15 @@ html:not([data-theme]) body.refine .panel,html:not([data-theme]) body.refine .r2
 html:not([data-theme]) body.refine header.fight.bh{box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 14px 34px -18px rgba(0,0,0,.95)}
 html:not([data-theme]) body.refine #topbar{box-shadow:inset 0 -1px 0 rgba(255,255,255,.03),0 8px 22px -14px rgba(0,0,0,.8)}
 html:not([data-theme]) body.refine .btn:not(.primary),html:not([data-theme]) body.refine main#main > .r300-tb select{box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 1px 2px rgba(0,0,0,.35)}
+/* round 436 even home boxes */
+@media (min-width: 901px) {
+ html body .r340-cols{align-items:stretch !important}
+ html body .r340-cols > .my-raid{display:flex !important;flex-direction:column}
+ html body .r340 .my-raid .my-strip.my-bcs{flex:1 1 auto;display:flex !important;flex-direction:column}
+ html body .r340 .my-raid .my-bc.my-bc.my-bc{flex:1 1 auto}
+}
+ html body .r340-cols > .my-raid .my-h h2,html body .r340-cols .pn-wh > b,html body .r340-cols .pg-nights .pg-sh > h2{font-size:18px !important;font-weight:700 !important;line-height:1.2 !important}
+ html body .r340-cols > .my-raid .my-h .sub,html body .r340-cols .pn-wh .sub{font-size:13px !important}
 /* refined look (Design studio round 170, Oct 28): one set of finishes everywhere, see notes/Design rules.md */
 /* The refined finishes (trial): the rules in notes/Design rules.md. Same layout, same font (Barlow Condensed), new finishes:
    greys for structure, colour only where it means something, gold as the mark, one panel / row / tag / chip, flat, sharp. */
@@ -12505,6 +12514,7 @@ html[data-theme="warrior"] body.refine .bh-name{font-family:'Cinzel',var(--head)
 html[data-theme="warrior"] body.refine .brand h1,html[data-theme="warrior"] body.refine #topbar .tb-brand b{font-family:'Cinzel',var(--head)}
 html[data-theme="warrior"] body.refine ::selection{background:rgba(198,155,109,0.35)}
 </style>
+
 
 
 
@@ -22964,6 +22974,8 @@ function openReport() {
 const PATCH_NOTES = [
   { d: '2026-10-31', h: [{ t: 'Themes', d: 'Pick how Debrief looks from Menu > Theme: Aurora, Aurora Gold, Raid frame, Ember Crown, Glass, Midnight, Forge, or your class colours. It only changes the look, and it is saved on your device.' }, { t: 'Cooldown timing on The Coiled Altar', d: 'Rotation now shows if your big cooldown went out at the same moments the top players use it on Mythic, like Trueshot on the pull, at P2 start and in the intermission. Debriefing tells you when you missed one. For now: Holy Paladin, Marksmanship Hunter, Affliction Warlock, Arcane Mage, Arms Warrior and Balance Druid.' }], n: [
     "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
+    "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
+    "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
     "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
