@@ -5234,7 +5234,10 @@ function buildUlatek(ev, r, h) {
   // ---- 10. avoidable damage ----
   // (each Mephitic Thrash's hit window, and whether half the raid or more was hit by it)
   const thrashW = ev.filter((c) => c.id === UL.thrash && (c.k === 'cast' || c.k === 'start')).map((c) => (c.k === 'cast' ? [c.t - 0.5, c.t + 1.5] : [c.t + 3, c.t + 5.5]))
-    .map(([a0, b0]) => { const hit = new Set(ev.filter((e) => e.k === 'dmg' && h.isPlayer(e.dst) && String(e.spell).toLowerCase() === 'mephitic thrash' && e.t >= a0 && e.t <= b0 && e.amt !== 0).map((e) => e.dst)); return { a0, b0, raid: hit.size * 2 >= Math.max(10, r.players.size) }; });
+    .map(([a0, b0], wi, all) => { const hs = ev.filter((e) => e.k === 'dmg' && h.isPlayer(e.dst) && String(e.spell).toLowerCase() === 'mephitic thrash' && e.t >= a0 && e.t <= b0 && e.amt !== 0), hit = new Set(hs.map((e) => e.dst));
+      /* round 427 thrash slam: a second hit within half a second of a player's first is the slam (the raid-wide part is one hit, then ticks every 2 s) */ const by = new Map(); for (const e of hs.slice().sort((p, q) => p.t - q.t)) { let l = by.get(e.dst); if (!l) by.set(e.dst, l = []); l.push(e); }
+      const slam = new Set(), slamP = new Set(); for (const [g, l] of by) for (let i = 1; i < l.length; i++) if (l[i].t - l[0].t <= 0.5) { slam.add(l[i]); slamP.add(g); }
+      return { a0, b0, raid: hit.size * 2 >= Math.max(10, r.players.size), slam, slamP }; });
   const thrashWin = (t) => thrashW.find((w) => t >= w.a0 && t <= w.b0) || null;
   const av = avoidPanel(ev, r, h, [
     { n: ['noxious splash'], label: 'Noxious Splash', harm: 'High', why: 'two egg carriers within 3 yards of each other' },
@@ -5248,7 +5251,7 @@ function buildUlatek(ev, r, h) {
     // (Oct 21: the tail's Mephitic Thrash hits everyone within 35 yards as its 4 s cast ends (spell 1296301: a hit, a 10 s damage
     // over time and a knockback). Only that hit counts, not the ticks after it; tanks are judged loosely as usual)
     { n: ['mephitic thrash'], label: 'Mephitic Thrash', harm: 'Medium', warnAt: 1, badAt: 2, why: 'within 35 yards of the tail when it thrashed (knockback and a damage over time)',
-      skip: (e) => { const w = thrashWin(e.t); return !w || w.raid; } }, /* (only a thrash most of the raid stayed out of is judged: a top kill had all 19 hit by both (Oct 22), so then it's raid damage) */
+      skip: (e) => { const w = thrashWin(e.t); return !w || (w.raid && !w.slam.has(e)); } }, /* round 427: when the whole raid is hit, only the slam's extra hit counts */ /* (only a thrash most of the raid stayed out of is judged: a top kill had all 19 hit by both (Oct 22), so then it's raid damage) */
   ]);
   if (av) sections.push(av);
 
@@ -5261,6 +5264,13 @@ function buildUlatek(ev, r, h) {
   // (the Performance tab's damage windows)
   const windows = wins.map((w, i) => ({ label: 'Rage of the Shackled ' + (i + 1), short: 'Rage ' + (i + 1), t0: w.s, t1: w.e }));
   { const pc = paceCard(ev, r, h, mistakes, "Ula'tek"); if (pc) sections.push(pc); } /* (Pace, Oct 22: boss coverage) */
+  /* round 427 thrash card */ { const casts0 = ev.filter((c) => c.id === UL.thrash && c.k === 'cast').map((c) => c.t).sort((a, b) => a - b).filter((t, i, a) => !i || t - a[i - 1] > 5);
+    if (casts0.length) { const rows = casts0.map((t) => { const w = thrashW.find((x) => t >= x.a0 && t <= x.b0) || { slamP: new Set() }, who = [...w.slamP].map(pname);
+        return [{ t }, who.length ? { ps: who, bad: true, why: (who.length > 1 ? who.slice(0, -1).join(', ') + ' and ' + who[who.length - 1] + ' were' : who[0] + ' was') + ' in the tail\'s slam and took a second, bigger Mephitic Thrash hit.', next: 'When the tail rears up for Mephitic Thrash, run out of its slam, about 35 yards from it.' } : { txt: 'nobody', dim: true }, { txt: who.length ? pl(who.length, 'player') + ' in the slam' : 'everyone out of the slam', bad: who.length > 0 }]; });
+      sections.push({ id: 'thrash', title: 'Mephitic Thrash (Get out of the slam)', place: 'Mephitic Thrash: the tail\'s slam', spell: S('mephitic thrash'), verdict: rows.some((x) => x[1].bad) ? 'bad' : 'good',
+        summary: 'Every Mephitic Thrash hits the whole raid, but anyone in the tail\'s slam takes a second, bigger hit. It shows who was caught in each one.',
+        how: 'The tail rears up and slams. Everyone takes some damage, but anyone within about 35 yards of the slam takes a second, bigger hit and a knockback. The tail tank runs out and back; everyone else stays out of it and keeps the eggs safe.',
+        cols: ['When', 'Caught', 'Result'], rows }); } }
   /* round 426 ulatek split: one card per mechanic */ {
     const H = HOW["Ula'tek"] || {}, split = (id, test, nw) => { const s = sections.find((x) => x.id === id); if (!s) return; const rows = s.rows || [], mine = rows.filter(test); if (!mine.length) return;
       const rest = rows.filter((x) => !test(x)), verd = (rs) => rs.some((x) => x.some((c) => c && c.bad)) ? 'bad' : rs.some((x) => x.some((c) => c && c.warn)) ? 'warn' : 'good';
