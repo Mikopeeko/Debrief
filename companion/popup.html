@@ -173,6 +173,28 @@ html, body { font-weight: 500; } .body b { font-weight: 600; } .kyou { border-le
 .kwz-t small { color: var(--muted); font-size: 13px; } .kwz-v { margin: 3px 0 0 14px; color: var(--muted); font-size: 13px; }
 .kwz-c { margin: 4px 0 0 14px; display: flex; flex-wrap: wrap; gap: 3px 14px; font-size: 13.5px; } .kwz-c .ok { color: #7ee08f; } .kwz-c .no { color: #ff8f87; }
 .kwz-s { margin: 5px 0 0 14px; display: flex; flex-wrap: wrap; gap: 3px; } .kwz-s .ic { width: 19px; height: 19px; }
+/* Design studio round 460 (Nov 1): the Mythic+ recap in the quiet-list look: rows, not a box per section; no empty icon gap; quieter pull
+   buttons with a dot; the strip fades at the right edge; tiles fill their rows. Only .mpx (the M+ body) and .mpx-p (its pull strip). */
+.pulls.mpx-p { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent); padding-right: 34px; }
+.pulls.mpx-p .pc { display: inline-flex; align-items: center; gap: 6px; background: var(--raised); color: var(--text); border: 1px solid transparent; }
+.pulls.mpx-p .pc > i { width: 7px; height: 7px; border-radius: 50%; background: var(--bad); flex: none; }
+.pulls.mpx-p .pc.k > i { background: var(--good); } .pulls.mpx-p .pc.n > i { background: var(--muted); }
+.pulls.mpx-p .pc small { font: 600 12.5px Barlow Condensed, sans-serif; color: var(--muted); }
+.pulls.mpx-p .pc.on { border-color: var(--text); }
+.body.mpx .kc { background: none; border: 0; border-radius: 0; margin: 0 0 14px; }
+.body.mpx .kh { padding: 0 0 2px; cursor: default; }
+.body.mpx .kh b { font: 700 13.5px Barlow Condensed, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.body.mpx .kb { padding: 0; }
+.body.mpx .kr { grid-template-columns: 8px minmax(0, 1fr); padding: 7px 0; border-top: 1px solid var(--line); }
+.body.mpx .kb > .kr:first-child { border-top: 0; }
+.body.mpx .kr > span:nth-child(2):empty { display: none; }
+.body.mpx .ktiles:has(> .kt:nth-child(4):last-child) { grid-template-columns: 1fr 1fr; }
+.body.mpx .ktiles:has(> .kt:nth-child(5):last-child) { grid-template-columns: repeat(6, 1fr); } .body.mpx .ktiles:has(> .kt:nth-child(5):last-child) > .kt { grid-column: span 2; } .body.mpx .ktiles:has(> .kt:nth-child(5):last-child) > .kt:nth-child(n+4) { grid-column: span 3; }
+.body.mpx .mpcs { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.body.mpx .mpc, .body.mpx .mptm { font: 600 12.5px Barlow Condensed, sans-serif; line-height: 18px; padding: 0 6px; border-radius: 4px; background: rgba(255,255,255,.06); color: var(--muted); }
+.body.mpx .mpc { color: var(--text); cursor: pointer; } .body.mpx .mpc:hover { color: var(--gold); }
+.body.mpx .mpt td:first-child { min-width: 120px; }
+.body.mpx .mpt th { padding-bottom: 6px; white-space: nowrap; } .body.mpx .mpt td { padding: 6px 6px 6px 0; }
 </style>
 </head>
 <body>
@@ -396,9 +418,12 @@ function renderMplus() {
   const mineThrough = (o, n) => o.through.filter((x) => x.ready.includes(n));
   const myAvoid = (o, n) => (o.avoid || []).filter((a) => a.who === n);
   const pills = (o) => { if (me) { const th = mineThrough(o, me.name).length; return o.deaths.some((x) => x.who === me.name) || th > 2 ? '' : th || myAvoid(o, me.name).length ? ' n' : ' k'; } return o.deaths.length || o.through.length > 2 ? '' : o.through.length || (o.avoid || []).length ? ' n' : ' k'; };
-  const chips = '<div class="pulls" id="pullsRow"><span class="pc n' + (MPULL === 0 ? ' on' : '') + '" data-mp="0">Run</span>' + R.pulls.map((o) => '<span class="pc' + pills(o) + (MPULL === o.n ? ' on' : '') + '" data-mp="' + o.n + '">' + (o.boss ? esc(o.boss) : 'Pull ' + o.n) + ' · ' + mmssP(o.dur) + '</span>').join('') + '</div>';
+  const chips = '<div class="pulls mpx-p" id="pullsRow"><span class="pc n run' + (MPULL === 0 ? ' on' : '') + '" data-mp="0">Run</span>' + R.pulls.map((o) => '<span class="pc' + pills(o) + (MPULL === o.n ? ' on' : '') + '" data-mp="' + o.n + '"><i></i>' + (o.boss ? esc(o.boss) : 'Pull ' + o.n) + '<small>' + mmssP(o.dur) + '</small></span>').join('') + '</div>';
   const step = MVIEW === 'me' && ppl.length > 1 ? '<span class="kwho"><button type="button" data-mwstep="-1" title="The player before">‹</button>' + (me ? '<b class="knm" style="color:' + col(me.name) + '">' + esc(me.name) + '</b>' : '<b class="knm" style="color:var(--faint)">Not in this key</b>') + '<button type="button" data-mwstep="1" title="The next player">›</button></span>' : '';
   const tabs = '<div class="ktabs"><span data-mview="me" class="' + (MVIEW === 'me' ? 'on' : '') + '">Me</span><span data-mview="group" class="' + (MVIEW === 'group' ? 'on' : '') + '">Group</span>' + step + '</div>';
+  /* (Design studio round 460: "41 kicks · 15 stops", and a spell's pulls as chips that open them) */
+  const ks = (a, b) => a + '<em> ' + (a === 1 ? 'kick' : 'kicks') + '</em> · ' + b + '<em> ' + (b === 1 ? 'stop' : 'stops') + '</em>';
+  const pch = (S) => '<span class="mpcs">' + [...S].map((n) => { const q = R.pulls[n - 1]; return '<span class="mpc" data-mp="' + n + '" title="Open this pull">' + (q && q.boss ? esc(q.boss) : 'Pull ' + n) + '</span>'; }).join('') + '</span>';
   const tile = (k, v, w, sub) => '<div class="kt' + (w ? ' ' + w : '') + '"><small>' + k + '</small><b>' + v + '</b>' + (sub ? '<i>' + sub + '</i>' : '') + '</div>';
   const sec = (title, rows) => rows.length ? '<div class="kc"><div class="kh"><b>' + title + '</b></div><div class="kb">' + rows.join('') + '</div></div>' : '';
   const row = (dot, html) => '<div class="kr"><span class="kd" style="background:' + dot + '"></span><span></span><span>' + html + '</span></div>';
@@ -416,7 +441,7 @@ function renderMplus() {
       for (const y of g) for (const r of y.ready) if (r !== who) cnt.set(r, (cnt.get(r) || 0) + 1);
       const each = [...cnt.values()].every((c) => c === n), names = [...cnt].sort((a, b) => b[1] - a[1]).map(([r, c]) => nm(r) + (n > 1 && !each ? ' (' + c + ')' : '')).join(', ');
       const ready = x.cc ? ' Nobody stunned or stopped it.' : cnt.size ? ' ' + (who ? 'Also ready' : 'Kick ready') + (n > 1 && each ? ' each time' : '') + ': ' + names + '.' : '';
-      return row('var(--bad)', '<b>' + esc(x.spell) + '</b> from ' + esc(x.mob) + ' got through' + (n > 1 ? ' ' + n + ' times' : '') + '.' + ready + ' ' + g.map((y) => '<span class="mptm">' + mmssP(y.t) + '</span>').join(' ')); }); };
+      return row('var(--bad)', '<b>' + esc(x.spell) + '</b> from ' + esc(x.mob) + ' got through' + (n > 1 ? ' ' + n + ' times' : '') + '.' + ready + (n > 1 ? '<span class="mpcs">' + g.map((y) => '<span class="mptm">' + mmssP(y.t) + '</span>').join('') + '</span>' : ' <span class="mptm">' + mmssP(x.t) + '</span>')); }); };
   const stat = run.left ? 'Left early' : run.timed ? 'Timed' : 'Over time';
   const runHead = '<p class="mph">' + esc(run.dungeon) + ' +' + run.level + '<small>' + stat + (run.timeMs ? ' · ' + mmssP(run.timeMs / 1000) : '') + (run.score ? ' · run score ' + Math.round(run.score) : '') + ' · ' + R.pulls.length + ' pulls</small></p>';
   const pullHead = (o) => '<p class="mph">' + (o.boss ? esc(o.boss) + (o.kill ? ' · Kill' : '') : 'Pull ' + o.n) + ' · ' + mmssP(o.dur) + '<small>at ' + mmssP(o.s) + ' · ' + o.mobs.slice(0, 5).map((m) => (m[1] > 1 ? m[1] + ' ' : '') + esc(m[0])).join(', ') + '</small></p>';
@@ -426,10 +451,10 @@ function renderMplus() {
   else if (me && !o) {
     // (Me, the whole key: your numbers, what got through on your kick, your deaths, and your key pull by pull)
     const n = me.name, th = R.pulls.flatMap((q) => mineThrough(q, n).map((x) => Object.assign({ pull: q.n }, x)));
-    body += '<div class="ktiles">' + tile(Yo + (heal(me) ? ' HPS' : ' DPS'), kN(val(me)), '', rank(me)) + tile(Yo + ' kicks and stops', me.kicks + ' + ' + me.stops) +
+    body += '<div class="ktiles">' + tile(Yo + (heal(me) ? ' HPS' : ' DPS'), kN(val(me)), '', rank(me)) + tile(Yo + ' kicks and stops', ks(me.kicks, me.stops)) +
       (me.kick ? tile('Got through, ' + yo + ' kick ready', th.length, th.length > 5 ? 'b' : th.length ? 'w' : '') : tile(Yo + ' dispels', me.dispels)) + (R.list ? tile('Avoidable damage', (me.avoid || 0) + (me.avoid === 1 ? ' hit' : ' hits'), me.avoid ? 'w' : '') : '') + tile('Deaths', me.deaths, me.deaths ? 'b' : '') + tile('Defensives', me.defs) + '</div>';
     const by = new Map(); for (const x of th) { if (!by.has(x.spell)) by.set(x.spell, { n: 0, mob: x.mob, pulls: new Set() }); const b = by.get(x.spell); b.n++; b.pulls.add(x.pull); }
-    body += sec('Got through while ' + yo + ' kick was ready', [...by].sort((a, b) => b[1].n - a[1].n).map(([sp, b]) => row('var(--bad)', '<b>' + esc(sp) + '</b> from ' + esc(b.mob) + ', ' + (b.n === 1 ? 'once' : b.n + ' times') + ' (pull ' + [...b.pulls].join(', ') + ').')));
+    body += sec('Got through while ' + yo + ' kick was ready', [...by].sort((a, b) => b[1].n - a[1].n).map(([sp, b]) => row('var(--bad)', '<b>' + esc(sp) + '</b> from ' + esc(b.mob) + ', ' + (b.n === 1 ? 'once' : b.n + ' times') + '.' + pch(b.pulls))));
     body += sec(Yo + ' deaths', R.pulls.flatMap((q) => q.deaths.filter((x) => x.who === n).map((x) => deathRow(x, q.boss ? esc(q.boss) : 'Pull ' + q.n))));
     body += sec('Avoidable damage', avRows(R.pulls.flatMap((q) => myAvoid(q, n)), me === mine ? 'you' : esc(n)));
     body += '<div class="kc"><div class="kh"><b>' + Yo + ' key, pull by pull</b></div><div class="kb"><table class="mpt"><tr><th>Pull</th><th class="r">' + (heal(me) ? 'HPS' : 'DPS') + '</th><th class="r">Kicks</th><th class="r">Stops</th>' + (me.kick ? '<th class="r">Got through</th>' : '<th class="r">Dispels</th>') + (R.list ? '<th class="r">Avoidable</th>' : '') + '<th class="r">Defensives</th><th class="r">Deaths</th></tr>' +
@@ -438,7 +463,7 @@ function renderMplus() {
   } else if (me) {
     // (Me, one pull: your number and rank, what got through on your kick, your kicks and stops, deaths, defensives and dispels)
     const n = me.name, th = mineThrough(o, n), my = (k) => (o[k] || []).filter((x) => x.who === n), dd = my('deaths'), av = myAvoid(o, n);
-    body += '<div class="ktiles">' + tile(Yo + (heal(me) ? ' HPS' : ' DPS'), kN(val(me, o)), '', rank(me, o)) + tile(Yo + ' kicks and stops', my('kicks').length + ' + ' + my('stops').length) +
+    body += '<div class="ktiles">' + tile(Yo + (heal(me) ? ' HPS' : ' DPS'), kN(val(me, o)), '', rank(me, o)) + tile(Yo + ' kicks and stops', ks(my('kicks').length, my('stops').length)) +
       (me.kick ? tile('Got through, ' + yo + ' kick ready', th.length, th.length > 2 ? 'b' : th.length ? 'w' : '') : tile(Yo + ' dispels', my('dispels').length)) + (av.length ? tile('Avoidable damage', av.reduce((a, x) => a + x.n, 0) + ' hit' + (av.reduce((a, x) => a + x.n, 0) === 1 ? '' : 's'), 'w') : '') + tile('Defensives', my('defs').length) + (dd.length ? tile('Deaths', dd.length, 'b') : '') + '</div>';
     if (!th.length && !dd.length && !av.length) body += sec('This pull', [row('var(--good)', 'Nothing to fix for ' + (me === mine ? 'you' : esc(n)) + ' on this pull.')]);
     body += sec('Got through while ' + yo + ' kick was ready', gotGroup(th, n));
@@ -450,10 +475,10 @@ function renderMplus() {
       .concat(my('purges').map((x) => row('var(--muted)', mmssP(x.t) + ' · Took ' + esc(x.removed || 'a buff') + ' off ' + esc(x.on || 'an enemy') + '.'))));
   } else if (!o) {
     const C0 = R.casts, nT = C0.through + (C0.ccThrough || 0), deaths = R.pulls.reduce((a, q) => a + q.deaths.length, 0), slow = R.pulls.filter((q) => !q.boss).sort((a, b) => b.dur - a.dur)[0];
-    body += '<div class="ktiles">' + tile(R.list ? 'Must-stop casts that got through' : 'Casts that got through', nT, nT > 5 ? 'b' : nT ? 'w' : '') + tile('Kicks and stops', C0.kicked + ' + ' + C0.stopped) + (R.list ? tile('Avoidable damage', (R.avoid || 0) + (R.avoid === 1 ? ' hit' : ' hits'), R.avoid > 10 ? 'b' : R.avoid ? 'w' : '') : '') + tile('Deaths', deaths, deaths ? 'b' : '') + (slow ? tile('Slowest pull', 'Pull ' + slow.n + ' · ' + mmssP(slow.dur)) : '') + '</div>';
+    body += '<div class="ktiles">' + tile(R.list ? 'Must-stop casts that got through' : 'Casts that got through', nT, nT > 5 ? 'b' : nT ? 'w' : '') + tile('Kicks and stops', ks(C0.kicked, C0.stopped)) + (R.list ? tile('Avoidable damage', (R.avoid || 0) + (R.avoid === 1 ? ' hit' : ' hits'), R.avoid > 10 ? 'b' : R.avoid ? 'w' : '') : '') + tile('Deaths', deaths, deaths ? 'b' : '') + (slow ? tile('Slowest pull', 'Pull ' + slow.n + ' · ' + mmssP(slow.dur)) : '') + '</div>';
     // (what kept getting through, by spell, and whose kicks were ready most; a must-stop-with-CC cast says nobody stopped it)
     const by = new Map(); for (const q of R.pulls) for (const x of q.through) { const k = x.spell; if (!by.has(k)) by.set(k, { n: 0, mob: x.mob, cc: !!x.cc, pulls: new Set(), ready: new Map() }); const b = by.get(k); b.n++; b.pulls.add(q.n); for (const r of x.ready) b.ready.set(r, (b.ready.get(r) || 0) + 1); }
-    body += sec('What got through', [...by].sort((a, b) => b[1].n - a[1].n).map(([sp, b]) => row('var(--bad)', '<b>' + esc(sp) + '</b> from ' + esc(b.mob) + ' got through ' + (b.n === 1 ? 'once' : b.n + ' times') + ' (pull ' + [...b.pulls].join(', ') + ').' + (b.cc ? ' It needs a stun or other crowd control.' : ' Kick ready: ' + [...b.ready].sort((x, y) => y[1] - x[1]).slice(0, 3).map(([n, c]) => nm(n) + ' (' + c + ')').join(', ') + '.'))));
+    body += sec('What got through', [...by].sort((a, b) => b[1].n - a[1].n).map(([sp, b]) => row('var(--bad)', '<b>' + esc(sp) + '</b> from ' + esc(b.mob) + ' got through ' + (b.n === 1 ? 'once' : b.n + ' times') + '.' + (b.cc ? ' It needs a stun or other crowd control.' : ' Kick ready: ' + [...b.ready].sort((x, y) => y[1] - x[1]).slice(0, 3).map(([n, c]) => nm(n) + ' (' + c + ')').join(', ') + '.') + pch(b.pulls))));
     body += sec('Avoidable damage', avRows(R.pulls.flatMap((q) => q.avoid || []), true));
     body += sec('Dispels and purges', dpRows(R.pulls.flatMap((q) => q.debs || []), R.pulls.flatMap((q) => q.ebuffs || [])));
     body += '<div class="kc"><div class="kh"><b>Everyone</b></div><div class="kb"><table class="mpt"><tr><th>Player</th><th class="r">DPS / HPS</th><th class="r">Kicks</th><th class="r">Stops</th><th class="r">Dispels</th>' + (R.list ? '<th class="r">Avoidable</th>' : '') + '<th class="r">Defensives</th><th class="r">Deaths</th></tr>' +
@@ -473,7 +498,7 @@ function renderMplus() {
       ppl.map((q) => [q, o.dmg[q.name] || 0, o.heal[q.name] || 0]).sort((a, b) => b[1] - a[1]).map(([q, d, hh]) => '<tr><td>' + nm(q.name) + '</td><td class="r">' + kN(d) + '</td><td class="r">' + (hh ? kN(hh) : '—') + '</td></tr>').join('') + '</table></div></div>';
   }
   app.innerHTML = '<div class="top">' + LOGO + '<b>Debrief</b><span class="bt">' + esc(run.dungeon) + ' · +' + run.level + '</span><span class="pill' + (run.timed && !run.left ? ' k' : '') + '">' + stat + '</span><button class="x" type="button" title="Close" data-close="1">×</button></div>' +
-    chips + '<div class="body">' + body + '</div><div class="foot"><button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">Your key, pull by pull</span></div>';
+    chips + '<div class="body mpx">' + body + '</div><div class="foot"><button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">Your key, pull by pull</span></div>';
   fit();
 }
 function render() {
