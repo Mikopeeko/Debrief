@@ -456,6 +456,17 @@ function renderMplus() {
   const RC = { bad: 'var(--bad)', warn: 'var(--warn)' }, rotOf = (q, n) => (q.rot && q.rot[n]) || null;
   const rotRows = (r) => (r ? r.fix.map((f) => rowI(RC[f[0]] || 'var(--warn)', f[1] ? ic(f[1]) : '', boldL(f[2], f[4] || f[2]))).concat(r.good && r.good.length ? [row('var(--good)', 'Went well: ' + r.good.map(esc).join(', ') + '.')] : []) : []);
   const rotKey = (q) => (q.rot ? q.rot.fix.map((f) => rowI(RC[f.st] || 'var(--warn)', f.ic ? ic(f.ic) : '', '<b>' + esc(f.label) + '</b> needed work ' + inP(f.pulls.length, q.rot.pulls, f.pulls))) : []);
+  /* (the timer story (Nov 1, Flex: "yea"): the result against the timer and the next upgrade's mark, what the deaths cost and whether that
+     changed the result, fighting against the time between pulls, and the longest pulls) */
+  const lvW = (n) => n + (n === 1 ? ' level' : ' levels'), ago = (s) => { const r = Math.round(s); return r < 60 ? r + (r === 1 ? ' second' : ' seconds') : mmssP(r); }; /* ("3 seconds short", not "0:03 short") */
+  const clockRows = () => { const c = run.clock; if (!c) return [];
+    const L = [], mark = c.up === 3 ? c.par * 0.6 : c.up === 2 ? c.par * 0.8 : c.par;
+    if (c.up) L.push(row('var(--good)', '<b>In time</b>: ' + mmssP(c.time) + ' of ' + mmssP(c.par) + '. The key goes up ' + lvW(c.up) + ', with ' + ago(mark - c.time) + ' to spare.' + (c.next ? ' ' + lvW(c.up + 1) + ' needed ' + mmssP(c.next) + ', ' + ago(c.time - c.next) + ' short.' : '')));
+    else L.push(row('var(--bad)', '<b>Over time</b> by ' + ago(c.over) + ': ' + mmssP(c.time) + ' of ' + mmssP(c.par) + '.'));
+    if (c.deathCost) L.push(row(c.upWithout > c.up ? 'var(--bad)' : 'var(--warn)', (c.deaths === 1 ? 'The death' : 'The ' + c.deaths + ' deaths') + ' cost ' + ago(c.deathCost) + ' on the timer.' + (c.upWithout > c.up ? ' Without ' + (c.deaths === 1 ? 'it' : 'them') + (c.up ? ', the key goes up ' + lvW(c.upWithout) + '.' : ', the key was in time.') : '')));
+    L.push(row('var(--muted)', mmssP(c.fight) + ' fighting, ' + mmssP(c.between) + ' between pulls.'));
+    L.push(row('var(--muted)', 'Longest pulls: ' + R.pulls.slice().sort((a, b) => b.dur - a.dur).slice(0, 3).map((q) => (q.boss ? esc(q.boss) : 'Pull ' + q.n) + ' ' + mmssP(q.dur)).join(', ') + '.'));
+    return L; };
   const stat = run.left ? 'Left early' : run.timed ? 'Timed' : 'Over time';
   const runHead = '<p class="mph">' + esc(run.dungeon) + ' +' + run.level + '<small>' + stat + (run.timeMs ? ' · ' + mmssP(run.timeMs / 1000) : '') + (run.score ? ' · run score ' + Math.round(run.score) : '') + ' · ' + R.pulls.length + ' pulls</small></p>';
   const pullHead = (o) => '<p class="mph">' + (o.boss ? esc(o.boss) + (o.kill ? ' · Kill' : '') : 'Pull ' + o.n) + ' · ' + mmssP(o.dur) + '<small>at ' + mmssP(o.s) + ' · ' + o.mobs.slice(0, 5).map((m) => (m[1] > 1 ? m[1] + ' ' : '') + esc(m[0])).join(', ') + '</small></p>';
@@ -467,6 +478,7 @@ function renderMplus() {
     const n = me.name, th = R.pulls.flatMap((q) => mineThrough(q, n).map((x) => Object.assign({ pull: q.n }, x)));
     body += '<div class="ktiles">' + tile(Yo + (heal(me) ? ' HPS' : ' DPS'), kN(val(me)), '', rank(me)) + tile(Yo + ' kicks and stops', ks(me.kicks, me.stops)) +
       (me.kick ? tile('Got through, ' + yo + ' kick ready', th.length, th.length > 5 ? 'b' : th.length ? 'w' : '') : tile(Yo + ' dispels', me.dispels)) + (R.list ? tile('Avoidable damage', (me.avoid || 0) + (me.avoid === 1 ? ' hit' : ' hits'), me.avoid ? 'w' : '') : '') + tile('Deaths', me.deaths, me.deaths ? 'b' : '') + tile('Defensives', me.defs) + '</div>';
+    body += sec('Timer', clockRows());
     const by = new Map(); for (const x of th) { if (!by.has(x.spell)) by.set(x.spell, { n: 0, mob: x.mob, pulls: new Set() }); const b = by.get(x.spell); b.n++; b.pulls.add(x.pull); }
     body += sec('Got through while ' + yo + ' kick was ready', [...by].sort((a, b) => b[1].n - a[1].n).map(([sp, b]) => row('var(--bad)', '<b>' + esc(sp) + '</b> from ' + esc(b.mob) + ', ' + (b.n === 1 ? 'once' : b.n + ' times') + '.' + pch(b.pulls))));
     body += sec(Yo + ' deaths', R.pulls.flatMap((q) => q.deaths.filter((x) => x.who === n).map((x) => deathRow(x, q.boss ? esc(q.boss) : 'Pull ' + q.n))));
@@ -493,6 +505,7 @@ function renderMplus() {
   } else if (!o) {
     const C0 = R.casts, nT = C0.through + (C0.ccThrough || 0), deaths = R.pulls.reduce((a, q) => a + q.deaths.length, 0), slow = R.pulls.filter((q) => !q.boss).sort((a, b) => b.dur - a.dur)[0];
     body += '<div class="ktiles">' + tile(R.list ? 'Must-stop casts that got through' : 'Casts that got through', nT, nT > 5 ? 'b' : nT ? 'w' : '') + tile('Kicks and stops', ks(C0.kicked, C0.stopped)) + (R.list ? tile('Avoidable damage', (R.avoid || 0) + (R.avoid === 1 ? ' hit' : ' hits'), R.avoid > 10 ? 'b' : R.avoid ? 'w' : '') : '') + tile('Deaths', deaths, deaths ? 'b' : '') + (slow ? tile('Slowest pull', 'Pull ' + slow.n + ' · ' + mmssP(slow.dur)) : '') + '</div>';
+    body += sec('Timer', clockRows());
     // (what kept getting through, by spell, and whose kicks were ready most; a must-stop-with-CC cast says nobody stopped it)
     const by = new Map(); for (const q of R.pulls) for (const x of q.through) { const k = x.spell; if (!by.has(k)) by.set(k, { n: 0, mob: x.mob, cc: !!x.cc, pulls: new Set(), ready: new Map() }); const b = by.get(k); b.n++; b.pulls.add(q.n); for (const r of x.ready) b.ready.set(r, (b.ready.get(r) || 0) + 1); }
     body += sec('What got through', [...by].sort((a, b) => b[1].n - a[1].n).map(([sp, b]) => row('var(--bad)', '<b>' + esc(sp) + '</b> from ' + esc(b.mob) + ' got through ' + (b.n === 1 ? 'once' : b.n + ' times') + '.' + (b.cc ? ' It needs a stun or other crowd control.' : ' Kick ready: ' + [...b.ready].sort((x, y) => y[1] - x[1]).slice(0, 3).map(([n, c]) => nm(n) + ' (' + c + ')').join(', ') + '.') + pch(b.pulls))));

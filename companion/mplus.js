@@ -43,6 +43,10 @@ const LISTS = {
   'temple of sethraliss': { kick: ['Poisoned Cheap Shot', 'Addle Mind', 'Poison Spit', 'Essence Disruption', 'Flame Shock'], chan: ['Essence Disruption'],
     dispel: ['Cytotoxin', 'Imbued Conduction'], purge: ['Accumulate Charge'], dodge: ['Burrow'] },
 };
+// (each dungeon's timer in minutes (Nov 1, Flex: "yea" to the timer story): Wowhead's Season 2 table and each dungeon's own page agree, except
+// Altar of Fangs: 29 on its page, 30 in the table (which says it's from the PTR), so its page wins. Two levels at 80% of the timer and three at
+// 60%, as since Battle for Azeroth)
+const TIMER = { 'altar of fangs': 29, 'murder row': 34, 'den of nalorakk': 32, 'the blinding vale': 31, 'voidscar arena': 30, 'kings\' rest': 33, 'temple of sethraliss': 33, 'ruby life pools': 28 };
 const lc = (s) => String(s || '').toLowerCase().replace(/[’`]/g, '\'');
 const listFor = (dungeon) => { const L = LISTS[lc(dungeon)]; if (!L) return null; const S = (a) => new Set((a || []).map(lc));
   return { kick: S(L.kick), chan: S(L.chan), ccCast: new Map((L.cc || []).map(([c, r]) => [lc(r), c])), dispel: S(L.dispel), purge: S(L.purge), dodge: S(L.dodge) }; };
@@ -110,7 +114,7 @@ function build(text, E) {
       }
       /* (a buff taken off is a purge or soothe; a debuff taken off is a dispel, a friendly NPC's too: Altar's Cursed Bones get their Cursed cleansed) */
       case 'SPELL_DISPEL': case 'SPELL_STOLEN': { const ow = isPlayer(sg) ? sg : owners.get(sg); if (ow) ev.push([t, e === 'SPELL_STOLEN' || f[14] === 'BUFF' ? 'purge' : 'dispel', ow, f[9], dg, dn, f[12]]); break; }
-      case 'UNIT_DIED': if (isPlayer(dg)) ev.push([t, 'died', dg, dn]); else if (isNpc(dg)) ev.push([t, 'mobdied', dg]); break;
+      case 'UNIT_DIED': if (isPlayer(dg)) { if (f[8] !== '1') ev.push([t, 'died', dg, dn]); } else if (isNpc(dg)) ev.push([t, 'mobdied', dg]); break; /* (1 at the end: Feign Death, not a death, as the website reads it) */
       default: break;
     }
   }
@@ -205,6 +209,17 @@ function build(text, E) {
   for (const o of out) { const fix = (m) => { const r = {}; for (const [g, v] of Object.entries(m)) r[name(g)] = v; return r; }; o.dmg = fix(o.dmg); o.heal = fix(o.heal);
     o.avoid = Object.values(o.avoid).map((a) => ({ who: name(a.who), spell: a.spell, n: a.n, dmg: Math.round(a.dmg) })).sort((a, b) => b.dmg - a.dmg);
     o.debs = Object.entries(o.debs).map(([spell, b]) => ({ spell, on: b.on, removed: b.removed })); o.ebuffs = Object.entries(o.ebuffs).map(([spell, b]) => ({ spell, on: b.on, removed: b.removed })); }
+  // ---- the timer (Nov 1): how close the key was to each upgrade, what the deaths cost, and fighting against the time between pulls. The
+  // clock starts 10 s after CHALLENGE_MODE_START (the countdown); the time WoW wrote at the end, less the time that passed, is what deaths added
+  // (15 s each at +12 and up on Flex's keys, nothing at +2 to +5), within a second or two, so it's rounded to 5 s ----
+  const par = TIMER[lc(run.dungeon)];
+  if (par && run.timeMs && run.end != null && !run.left) {
+    const T = run.timeMs / 1000, P = par * 60, fight = out.reduce((a, o) => a + o.dur, 0);
+    const lost = Math.max(0, Math.round((T - (run.end - 10) - 1) / 5) * 5), deaths = out.reduce((a, o) => a + o.deaths.length, 0);
+    const up = (s) => (s <= P * 0.6 ? 3 : s <= P * 0.8 ? 2 : s <= P ? 1 : 0), lv = up(T);
+    run.clock = { par: P, time: T, up: lv, next: lv && lv < 3 ? (lv === 1 ? P * 0.8 : P * 0.6) : null, over: lv ? 0 : T - P,
+      deathCost: lost, deaths, upWithout: lost ? up(T - lost) : lv, fight: Math.round(fight), between: Math.max(0, Math.round(T - lost - fight)) };
+  }
   const thr = out.flatMap((o) => o.through);
   return { run, people, pulls: out, list: !!LIST, casts: { total: casts.length, kicked: casts.filter((c) => c.res === 'kicked').length, stopped: casts.filter((c) => c.res === 'stopped').length,
     through: thr.filter((x) => !x.cc).length, ccThrough: thr.filter((x) => x.cc).length }, avoid: people.reduce((a, p) => a + p.avoid, 0) };
