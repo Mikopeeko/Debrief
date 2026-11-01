@@ -74,3 +74,10 @@ Your pull recap inside WoW, after every boss pull. Built for the raid test on Oc
 - New commands: `/debrief big`, `/debrief mini`, `/debrief post`.
 - Tested in the fake WoW (every settings button clicked, big window, mini bar, styles, goals, raid chat, combat hiding).
   Not yet seen in the real game. Screenshots 20 and 21 in notes/In-game addon - Oct 21/ (a browser copy of the look).
+
+## Mythic+ keys (Nov 1)
+- **What it is:** a key comes as one recap at its end, on the card: Run and a button for each pull, Me and Group with the arrows, and a timer bar. Full rules: [Mythic+ run recap - how it works.md](Mythic+%20run%20recap%20-%20how%20it%20works.md).
+- **Getting it into WoW:** 12 s after a key ends, the strip says "Your <dungeon> key isn't in the addon yet." **Save this key** does one /reload.
+- **Inside a key:** bosses no longer offer Save this pull.
+- **Big window:** for raid nights only. A key in its saved list reads Key · Timed / Over time / Left early, and opens on the card.
+- **Code:** `decode` reads the app's M lines (`RECAP.encodeMplus` in companion.html); `UI.mplus(raw)` draws the key; `renderOnce` sends keys there.

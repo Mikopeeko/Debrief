@@ -1,5 +1,10 @@
 # Mythic+ run recap: gameplan (Nov 1)
 
+**Status:** every phase is built and pushed for the next build. The app and addon release is on hold for Flex's review. How it works now: [Mythic+ run recap - how it works.md](Mythic+%20run%20recap%20-%20how%20it%20works.md).
+Flex's decisions:
+- One tab per pull (not per boss section).
+- No boss pop-ups inside a key, then the full recap.
+
 Flex: "I want the dungeon module of this to only show at the end of a dungeon, and i want it to outline the run, and have tabs to look
 at each pull to show the mistakes on that given pull, bosses included... DPS, HPS, Defensive usage, interupts, stopping casts with
 disrupts, stuns etc." Mythic+ keystone dungeons only.
