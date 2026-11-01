@@ -1325,7 +1325,7 @@ const BUF = { on: false, els: [], snaps: [], t0: 0, last: 0, max: 0, wait: null,
 const ldOn = () => !!document.querySelector('#main:not(.dbr-snap) .ld'); /* (the loading card is up; its still copy doesn't count) */
 const bufBg = (n) => n && n.nodeType === 1 && (n.id === 'bgRead' || n.id === 'bgReadT' || !!n.closest('#bgRead, #bgReadT')); /* (Reading pulls x of y keeps counting: it isn't the page changing) */
 function bufStart(wait, max, done) { const now = Date.now();
-  if (BUF.on) { BUF.last = now; BUF.max = Math.max(BUF.max, now - BUF.t0 + max); if (wait) BUF.wait = wait; if (done) { const d0 = BUF.done; BUF.done = () => { if (d0) d0(); done(); }; } return; }
+  if (BUF.on) { BUF.last = now; BUF.max = Math.max(BUF.max, now - BUF.t0 + max); if (wait) BUF.wait = wait; if (done) { const d0 = BUF.done; BUF.done = (w) => { if (d0) d0(w); done(w); }; } return; }
   const els = ['bossHead', 'main'].map((id) => document.getElementById(id)).filter(Boolean); if (!els.length) return;
   const rs = els.map((e) => e.getBoundingClientRect()), imp = (st, k, v) => st.setProperty(k, v, 'important');
   const snaps = els.map((e, i) => { const g = e.cloneNode(true); g.classList.add('dbr-snap'); g.setAttribute('inert', ''); g.setAttribute('aria-hidden', 'true'); g.querySelectorAll('input[name], select[name], textarea[name]').forEach((x) => x.removeAttribute('name'));
@@ -1340,10 +1340,18 @@ function bufStart(wait, max, done) { const now = Date.now();
   BUF.t = setTimeout(bufTick, 100); }
 function bufTick() { if (!BUF.on) return; const now = Date.now(), el = now - BUF.t0;
   if (el < BUF.max && (now - BUF.last < 400 || (BUF.wait && BUF.wait(el)))) { BUF.t = setTimeout(bufTick, 100); return; } /* (still for 0.4 s: the finishing touches come at most a few tenths apart) */
-  bufEnd(); }
-function bufEnd() { if (!BUF.on) return; BUF.on = false; clearTimeout(BUF.t); if (BUF.mo) BUF.mo.disconnect();
+  bufEnd('ready'); }
+function bufEnd(why) { if (!BUF.on) return; BUF.on = false; clearTimeout(BUF.t); if (BUF.mo) BUF.mo.disconnect();
   BUF.snaps.forEach((g) => g.remove()); BUF.els.forEach((e) => { e.style.removeProperty('opacity'); e.style.removeProperty('pointer-events'); }); [document.documentElement, document.body].forEach((e) => e.style.removeProperty('overflow-anchor'));
-  const d = BUF.done; Object.assign(BUF, { els: [], snaps: [], wait: null, done: null, mo: null }); if (d) try { d(); } catch (e) { console.warn(e); } }
+  const d = BUF.done; Object.assign(BUF, { els: [], snaps: [], wait: null, done: null, mo: null }); if (d) try { d(why); } catch (e) { console.warn(e); } } /* (why: 'ready' when it finished by itself; nothing for a click, a key or a new pull) */
+/* (Nov 1, the first motion since round 443 turned it off: when a pull's page shows by itself after the loading card, it fades in over 0.2 s and its top
+   boxes and Why we wiped rise into place, once. Never on a redraw, a late swap or a click that shows it early; none with the device's "reduce motion".
+   One switch: DBR_MOTION) */
+const DBR_MOTION = true;
+function dbrReveal() { if (!DBR_MOTION || !Element.prototype.animate || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+  ['bossHead', 'main'].forEach((id) => { const e = document.getElementById(id); if (e) e.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'ease-out' }); });
+  const v = document.getElementById('view'); if (!v) return; /* (the browser's own animations: round 438's animation:none on #view's parts stops only CSS ones) */
+  [v.querySelector(':scope > .r212-sb'), v.querySelector(':scope > .dbt:not(.dbt-ghost)')].filter(Boolean).forEach((e, i) => e.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 260, delay: 40 + 70 * i, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'backwards' })); }
 const BUF_SCR = new Set(); document.addEventListener('scroll', (e) => { if (e.target && e.target.nodeType === 1) BUF_SCR.add(e.target); }, true); /* (boxes scrolled sideways or down: the still copy keeps their place) */
 document.addEventListener('click', () => bufEnd(), true);
 document.addEventListener('keydown', (e) => { if (!['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) bufEnd(); }, true);
@@ -1370,7 +1378,7 @@ let HOLD_0 = 0;
    Since last pull (3 s at most; a download can take much longer, then it swaps in when it's read) and the finishing touches; 6.5 s at most) */
 const holdWait = (el) => (el < 4000 && (!!LIVE_T || livePending(true))) || (el < 3000 && !!(prevOf(S.item) || {})._pl);
 function holdStart() { try { liveRestore(); } catch (e) { /* (fetched again) */ } const R0 = document.documentElement; if (S.tab !== 'audit') { R0.classList.remove('dbr-holding'); return; } R0.classList.add('dbr-holding'); HOLD_0 = Date.now();
-  bufStart(holdWait, 6500, () => { R0.classList.remove('dbr-holding'); try { liveSave(); } catch (e) { /* (not remembered) */ } });
+  bufStart(holdWait, 6500, (why) => { R0.classList.remove('dbr-holding'); try { liveSave(); } catch (e) { /* (not remembered) */ } if (why === 'ready') try { dbrReveal(); } catch (e) { /* (no motion) */ } });
   BUF.snaps.forEach((g) => loadSet(g, 'Putting the page together…')); /* (the card says what it's waiting on) */ }
 /* round 333 all pulls list */ window.allPulls333 = () => { const L = ((S.index && S.index.bosses) || []).filter((b) => !b.run && b.kind !== 'run'), G = [], by = new Map(); L.forEach((b, i) => { const k = b.id + ':' + b.diffId; let g = by.get(k); if (!g) { g = { k, label: b.boss + (b.diff ? ' · ' + b.diff : ''), cur: false, pulls: [] }; by.set(k, g); G.push(g); } const pc = b.kill ? null : (typeof pullPct === 'function' ? pullPct(b) : null); g.pulls.push({ i, pull: b.pull, kill: !!b.kill, txt: 'Pull ' + b.pull + ' · ' + (b.kill ? 'Kill' : pc != null ? 'Wipe at ' + Math.round(pc) + '%' : 'Wipe'), col: b.kill ? '#e6b450' : (typeof pullCol === 'function' ? pullCol(b) : '') || '', on: b === S.item }); if (S.item && b.id === S.item.id && b.diffId === S.item.diffId) g.cur = true; }); return G; };
 /* round 334 pick any boss */ window.setPullPickAt334 = (idxs) => { const L = ((S.index && S.index.bosses) || []).filter((b) => !b.run && b.kind !== 'run'), bs = (idxs || []).map((i) => L[i]).filter(Boolean); if (!bs.length) return; const b0 = bs[0], same = bs.filter((b) => b.id === b0.id && b.diffId === b0.diffId); S.pullPick = { k: b0.id + ':' + b0.diffId, s: new Set(same.map((b) => b.pull)) }; S.plData = null; setScope('all'); if (S.item && S.item.id === b0.id && S.item.diffId === b0.diffId) renderMain(); else select(same[same.length - 1]); };
@@ -2015,7 +2023,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-11-01', h: [], n: ["Debriefing opens in one go: the loading card stays up a moment longer while the page is put together, then the whole pull shows at once, instead of Why we wiped and the Timeline being drawn again and again while it loaded.", "Pages open crisp: no more half-faded page while the numbers are worked out, and the boxes at the top show a soft placeholder until their numbers are ready instead of flicking between guesses.", "Report card: a raider's card reads top to bottom in one column: their name with the grade beside it, the one thing to fix first, a box per list (tap one to jump to it), then the lists one under the other."], f: [] },
+  { d: '2026-11-01', h: [], n: ["Debriefing opens in one go: the loading card stays up a moment longer while the page is put together, then the whole pull shows at once with a short fade, instead of Why we wiped and the Timeline being drawn again and again while it loaded.", "Pages open crisp: no more half-faded page while the numbers are worked out, and the boxes at the top show a soft placeholder until their numbers are ready instead of flicking between guesses.", "Report card: a raider's card reads top to bottom in one column: their name with the grade beside it, the one thing to fix first, a box per list (tap one to jump to it), then the lists one under the other."], f: [] },
   { d: '2026-10-31', h: [{ t: 'Themes', d: 'Pick how Debrief looks from Menu > Theme: Aurora, Aurora Gold, Raid frame, Ember Crown, Glass, Midnight, Forge, or your class colours. It only changes the look, and it is saved on your device.' }, { t: 'Cooldown timing on The Coiled Altar', d: 'Rotation now shows if your big cooldown went out at the same moments the top players use it on Mythic, like Trueshot on the pull, at P2 start and in the intermission. Debriefing tells you when you missed one. For now: Holy Paladin, Marksmanship Hunter, Affliction Warlock, Arcane Mage, Arms Warrior and Balance Druid.' }], n: [
     "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
