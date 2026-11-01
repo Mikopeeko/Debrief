@@ -10495,6 +10495,20 @@ html body #view section.rpc.rpx-on > .rpc-lead b { color: #7fc99a; }
 .dbt-two.rwd-one { grid-template-columns: 1fr !important; }
 /* round 184: the old Summary / Everything switch never shows, even for the first paint */
 html body #view section.rck .rck-h .ds-sw{display:none!important}
+/* round 432 one shield list */
+html body .shd.shd432 .shd-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+html body .shd.shd432 .shd-tk{font-size:12.5px;font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0}
+html body .shd.shd432 .shd-tk b{color:var(--text);font-weight:600}
+html body .shd.shd432 .shd-one .shd-d{display:inline-block;margin-right:6px;vertical-align:middle}
+html body #view .shd.shd432 details.shd-one > summary.shd-oh{display:block !important}
+html body .shd.shd432 .shd-sp.ok{color:#7ee08f} html body .shd.shd432 .shd-sp.warn{color:#f3c969} html body .shd.shd432 .shd-sp.bad{color:#ff8f87}
+html body .shd.shd432 .shd-late .shd-oh{color:var(--muted);padding:8px 0}
+/* round 434 tile rows line up */
+html body #view .oa-tiles + section.cch2.dt-box{column-gap:1px !important;row-gap:1px !important;background:var(--line) !important}
+html body main#main #view .oa-tiles + section.cch2.dt-box.dt-box.dt-box.dt-box details.cch-ab{background-color:var(--panel) !important}
+html body #view .oa-tiles + section.cch2.dt-box .cch-ab,html body #view .oa-tiles + section.cch2.dt-box .cch-ab > summary,html body #view .oa-tiles + section.cch2.dt-box .cch-ab > summary *,html body #view .oa-tiles + section.cch2.dt-box > *,html body #view .oa-tiles + section.cch2.dt-box .cch-ab::before,html body #view .oa-tiles + section.cch2.dt-box .cch-ab::after,html body #view .oa-tiles + section.cch2.dt-box .cch-ab > summary::before{border-radius:0 !important}
+html body main#main #view .oa-tiles + section.cch2.dt-box details.cch-ab > summary,html body #view .oa-tiles + section.cch2.dt-box .cch-ab > summary{padding-left:18px !important;padding-right:14px !important}
+html body #view .oa-tiles + section.cch2.dt-box .cch-ab .cgl-n,html body #view .oa-tiles + section.cch2.dt-box .cch-ab .cgl-n .sp{font-size:11px !important;letter-spacing:.06em !important;font-weight:600 !important}
 /* refined look (Design studio round 170, Oct 28): one set of finishes everywhere, see notes/Design rules.md */
 /* The refined finishes (trial): the rules in notes/Design rules.md. Same layout, same font (Barlow Condensed), new finishes:
    greys for structure, colour only where it means something, gold as the mark, one panel / row / tag / chip, flat, sharp. */
@@ -12335,6 +12349,7 @@ html[data-theme="glass"] body.refine .bh-name{font-family:'Outfit',var(--head);l
 html[data-theme="glass"] body.refine .brand h1,html[data-theme="glass"] body.refine #topbar .tb-brand b{font-family:'Outfit',var(--head)}
 html[data-theme="glass"] body.refine ::selection{background:rgba(126,224,184,0.35)}
 html[data-theme="glass"] body.refine{--line:rgba(255,255,255,.12);--line2:rgba(255,255,255,.18)}
+html[data-theme="glass"] body.refine #view .dbr-4.oa-tiles > .dbr-n,html[data-theme="glass"] body.refine main#main #view .oa-tiles + section.cch2.dt-box.dt-box.dt-box.dt-box details.cch-ab{background:rgba(255,255,255,.055) !important}
 html[data-theme="glass"] body.refine .panel,html[data-theme="glass"] body.refine header.fight.bh,html[data-theme="glass"] body.refine .r212-sb,html[data-theme="glass"] body.refine .dbt-p,html[data-theme="glass"] body.refine #topbar{background-color:rgba(255,255,255,.055) !important;border-color:rgba(255,255,255,.14) !important}
 html[data-theme="midnight"]{background:radial-gradient(900px 420px at 80% -80px, rgba(124,92,255,0.28), transparent 70%), radial-gradient(700px 400px at 0% 100%, rgba(56,189,248,0.12), transparent 70%),#080b1f;background-attachment:fixed}
 html[data-theme="midnight"] body.refine{--bg:#080b1f;--panel:#161a3d;--raised:#262950;--line:#36346c;--line2:#4b468b;--gold:#b9a6ff;--gold-ink:#060816;--muted:#9195b8;--faint:#6b7091;--ds-label:#938ad6;--text:#e3e4ef;background:transparent}
@@ -12489,6 +12504,7 @@ html[data-theme="warrior"] body.refine .bh-name{font-family:'Cinzel',var(--head)
 html[data-theme="warrior"] body.refine .brand h1,html[data-theme="warrior"] body.refine #topbar .tb-brand b{font-family:'Cinzel',var(--head)}
 html[data-theme="warrior"] body.refine ::selection{background:rgba(198,155,109,0.35)}
 </style>
+
 
 
 <style id="r430">

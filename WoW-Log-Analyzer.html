@@ -10495,6 +10495,20 @@ html body #view section.rpc.rpx-on > .rpc-lead b { color: #7fc99a; }
 .dbt-two.rwd-one { grid-template-columns: 1fr !important; }
 /* round 184: the old Summary / Everything switch never shows, even for the first paint */
 html body #view section.rck .rck-h .ds-sw{display:none!important}
+/* round 432 one shield list */
+html body .shd.shd432 .shd-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+html body .shd.shd432 .shd-tk{font-size:12.5px;font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0}
+html body .shd.shd432 .shd-tk b{color:var(--text);font-weight:600}
+html body .shd.shd432 .shd-one .shd-d{display:inline-block;margin-right:6px;vertical-align:middle}
+html body #view .shd.shd432 details.shd-one > summary.shd-oh{display:block !important}
+html body .shd.shd432 .shd-sp.ok{color:#7ee08f} html body .shd.shd432 .shd-sp.warn{color:#f3c969} html body .shd.shd432 .shd-sp.bad{color:#ff8f87}
+html body .shd.shd432 .shd-late .shd-oh{color:var(--muted);padding:8px 0}
+/* round 434 tile rows line up */
+html body #view .oa-tiles + section.cch2.dt-box{column-gap:1px !important;row-gap:1px !important;background:var(--line) !important}
+html body main#main #view .oa-tiles + section.cch2.dt-box.dt-box.dt-box.dt-box details.cch-ab{background-color:var(--panel) !important}
+html body #view .oa-tiles + section.cch2.dt-box .cch-ab,html body #view .oa-tiles + section.cch2.dt-box .cch-ab > summary,html body #view .oa-tiles + section.cch2.dt-box .cch-ab > summary *,html body #view .oa-tiles + section.cch2.dt-box > *,html body #view .oa-tiles + section.cch2.dt-box .cch-ab::before,html body #view .oa-tiles + section.cch2.dt-box .cch-ab::after,html body #view .oa-tiles + section.cch2.dt-box .cch-ab > summary::before{border-radius:0 !important}
+html body main#main #view .oa-tiles + section.cch2.dt-box details.cch-ab > summary,html body #view .oa-tiles + section.cch2.dt-box .cch-ab > summary{padding-left:18px !important;padding-right:14px !important}
+html body #view .oa-tiles + section.cch2.dt-box .cch-ab .cgl-n,html body #view .oa-tiles + section.cch2.dt-box .cch-ab .cgl-n .sp{font-size:11px !important;letter-spacing:.06em !important;font-weight:600 !important}
 /* refined look (Design studio round 170, Oct 28): one set of finishes everywhere, see notes/Design rules.md */
 /* The refined finishes (trial): the rules in notes/Design rules.md. Same layout, same font (Barlow Condensed), new finishes:
    greys for structure, colour only where it means something, gold as the mark, one panel / row / tag / chip, flat, sharp. */
@@ -12335,6 +12349,7 @@ html[data-theme="glass"] body.refine .bh-name{font-family:'Outfit',var(--head);l
 html[data-theme="glass"] body.refine .brand h1,html[data-theme="glass"] body.refine #topbar .tb-brand b{font-family:'Outfit',var(--head)}
 html[data-theme="glass"] body.refine ::selection{background:rgba(126,224,184,0.35)}
 html[data-theme="glass"] body.refine{--line:rgba(255,255,255,.12);--line2:rgba(255,255,255,.18)}
+html[data-theme="glass"] body.refine #view .dbr-4.oa-tiles > .dbr-n,html[data-theme="glass"] body.refine main#main #view .oa-tiles + section.cch2.dt-box.dt-box.dt-box.dt-box details.cch-ab{background:rgba(255,255,255,.055) !important}
 html[data-theme="glass"] body.refine .panel,html[data-theme="glass"] body.refine header.fight.bh,html[data-theme="glass"] body.refine .r212-sb,html[data-theme="glass"] body.refine .dbt-p,html[data-theme="glass"] body.refine #topbar{background-color:rgba(255,255,255,.055) !important;border-color:rgba(255,255,255,.14) !important}
 html[data-theme="midnight"]{background:radial-gradient(900px 420px at 80% -80px, rgba(124,92,255,0.28), transparent 70%), radial-gradient(700px 400px at 0% 100%, rgba(56,189,248,0.12), transparent 70%),#080b1f;background-attachment:fixed}
 html[data-theme="midnight"] body.refine{--bg:#080b1f;--panel:#161a3d;--raised:#262950;--line:#36346c;--line2:#4b468b;--gold:#b9a6ff;--gold-ink:#060816;--muted:#9195b8;--faint:#6b7091;--ds-label:#938ad6;--text:#e3e4ef;background:transparent}
@@ -12489,6 +12504,7 @@ html[data-theme="warrior"] body.refine .bh-name{font-family:'Cinzel',var(--head)
 html[data-theme="warrior"] body.refine .brand h1,html[data-theme="warrior"] body.refine #topbar .tb-brand b{font-family:'Cinzel',var(--head)}
 html[data-theme="warrior"] body.refine ::selection{background:rgba(198,155,109,0.35)}
 </style>
+
 
 
 <style id="r430">
@@ -16820,7 +16836,7 @@ function buildCoiledAltar(ev, r, h) {
   const pushRows = [];
   // (the 20 fastest Mythic kills, Oct 22: when each phase ended. Heroic has no kill numbers yet, so it's shown, not judged)
   const mythicT = mythic && !preNerf(r.item), preT = mythic && !mythicT ? ' · pre-nerf, not compared' : ''; /* (Oct 27) */
-  const KT = { p1: [134, 157], p2: [150, 176], zj: [22, 33] }, P2K = 'about 2:30, never past 2:56', ms2 = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+  const KT = { p1: [134, 157], p2: [150, 176], zj: [22, 33] }, P2K = 'about 2:30, never longer than 2:56', /* round 433 plain push */ ms2 = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
   const MT = (t, sev, detail, fix) => mistakes.push({ t, player: 'Raid', mechanic: 'Phase changes', id: S('fangs of the coiled altar')[0], severity: sev, detail, fix });
   const hpAtT = (gs, t) => { let v = null; for (const g of gs) { const u = r.hpUnits && r.hpUnits.get(g); if (u) for (const [s2, f2] of u.samples) { if (s2 > t) break; v = f2; } } return v == null ? null : Math.round(100 * v); };
   if (p2 != null) {
@@ -16831,7 +16847,7 @@ function buildCoiledAltar(ev, r, h) {
     // the middle; his death explodes the orbs left (aim for 9 to 11 stacks) under stacked raid cooldowns.
     const lastDel = deluges.filter((t) => t <= pt).pop();
     const fangs = casts('fangs of the coiled altar').filter((t) => t < p2 - 1).length, p1Late = mythicT && p2 > KT.p1[1] + 3, p1Bad = mythicT && fangs >= 3;
-    if (p1Bad || p1Late) MT(p2, p1Bad ? 'High' : 'Medium', 'Zul\'jan went down at ' + ms2(p2) + (p1Bad ? ', after the third Noxious Ground pools' : '') + ' (top guilds: ' + ms2(KT.p1[0]) + ' to ' + ms2(KT.p1[1]) + ').',
+    if (p1Bad || p1Late) MT(p2, p1Bad ? 'High' : 'Medium', 'Phase 1 ran long: Zul\'jan went down at ' + ms2(p2) + (p1Bad ? ', after the third Noxious Ground pools' : '') + '. Top guilds get him down between ' + ms2(KT.p1[0]) + ' and ' + ms2(KT.p1[1]) + '.',
       'Push Zul\'jan right after the second pools, at 11 Venom Rupture stacks or fewer: burn him with cooldowns stacked.');
     const st = stackAt(pt + 5), mx = st.length ? Math.max(...st) : 0;
     const cds = pcasts(RAID_CD).filter((e) => e.t >= pt - 8 && e.t <= pt + 12);
@@ -16843,7 +16859,7 @@ function buildCoiledAltar(ev, r, h) {
       const why = [dP1.length ? pl(dP1.length, 'player') + ' died before the push (' + dP1.slice(0, 3).map((d) => d.player.split('-')[0] + ' ' + ms2(d.t)).join(', ') + ')' : '', lt == null || lt > p2 ? 'no Bloodlust in P1' : lt > 60 ? 'Bloodlust came late, at ' + ms2(lt) : '', fangs >= 3 ? 'it ran into the third pools' : ''].filter(Boolean);
       return { why: 'P1 took ' + ms2(p2) + ', ' + Math.round(p2 - KT.p1[1]) + ' s longer than the slowest top kill' + (why.length ? ': ' + why.join(', ') : ', with no deaths and Bloodlust on time, so damage on Zul\'jan was short') + '.',
         next: dP1.length ? 'Keep everyone alive in P1: every player lost is damage Zul\'jan doesn\'t take.' : lt == null || lt > 60 ? 'Use Bloodlust early in P1 (top guilds use it at the pull or the first pools).' : 'Push Zul\'jan right after the second pools, with damage cooldowns stacked.' }; })();
-    pushRows.push([{ txt: 'P1 → P2', ...p1Why }, { t: pt }, { txt: (p1Bad || p1Late ? 'slow P1 (' : 'on time (') + ms2(p2) + ')', bad: p1Bad, warn: !p1Bad && p1Late, sub: (mythic ? 'top guilds: ' + ms2(KT.p1[0]) + ' to ' + ms2(KT.p1[1]) + preT + ' · ' : '') + lastDel != null ? (pt - lastDel).toFixed(0) + ' s after the last Toxic Deluge' + (fangs >= 3 ? ', after the third pools' : '') : '' },
+    pushRows.push([{ txt: 'Phase 1 push', ...p1Why }, { t: pt }, { txt: (p1Bad || p1Late ? 'ran long (' : 'on time (') + ms2(p2) + ')', bad: p1Bad, warn: !p1Bad && p1Late, sub: (mythic ? 'top guilds: ' + ms2(KT.p1[0]) + ' to ' + ms2(KT.p1[1]) + preT + ' · ' : '') + lastDel != null ? (pt - lastDel).toFixed(0) + ' s after the last Toxic Deluge' + (fangs >= 3 ? ', after the third pools' : '') : '' },
       { txt: mx + ' Venom Rupture (plan 9 to 11)', bad: mx >= 14, warn: mx > 11 }, { txt: fmtList(cds) || 'none', bad: mythic && !cds.length }, { txt: pots.length ? pots.length + ' (' + pots.join(', ') + ')' : 'none', dim: !pots.length }]);
   }
   // (P2, Malacrass: how long he took against the kills, with the moment it went late: his second shield (amber, 4 of the 20 kills
@@ -16855,12 +16871,12 @@ function buildCoiledAltar(ev, r, h) {
     const len = p2End - p2, badAt = [dmT[4], p2 + 180].filter((t) => t != null && t < p2End), warnAt = [enT[1], p2 + 163].filter((t) => t != null && t < p2End);
     const bad = mythicT && badAt.length > 0, warn = mythicT && !bad && warnAt.length > 0, got = [enT.length >= 2 ? 'a second Eternal Nightfall' : '', dmT.length >= 5 ? 'a ' + dmT.length + 'th Dreadmarch' : ''].filter(Boolean);
     const at = bad || warn ? Math.min(...(bad ? badAt : warnAt)) : null;
-    if (bad || warn) MT(at, bad ? 'High' : 'Medium', (inter != null ? 'Malacrass took ' : 'P2 went on for ') + ms2(len) + (inter != null ? '' : ' before the wipe') + ' (top guilds: ' + P2K + ')' + (got.length ? ', so he got ' + got.join(' and ') : '') + '.',
-      'Push Malacrass before his second shield: keep damage on him between add sets and save cooldowns for his first shield. Top guilds finish P2 in about 2:30.');
+    if (bad || warn) MT(at, bad ? 'High' : 'Medium', (inter != null ? 'Phase 2 ran long: ' + ms2(len) + '.' : 'Phase 2 went on for ' + ms2(len) + ' before the wipe.') + ' Top guilds finish it in ' + P2K.replace(', never', ' (never') + ').' + (got.length ? ' Because it ran long, Malacrass got ' + got.join(' and ') + (enT.length >= 2 ? ', one more shield to break' : '') + '.' : ''),
+      'Get Malacrass to the intermission before his second Eternal Nightfall. Keep damage on him between add sets, and save cooldowns for his first shield.');
     return { len, dmN: dmT.length, enN: enT.length, bad, warn, at };
   })();
-  const p2Cell = (x) => ({ txt: (x.bad || x.warn ? 'slow P2 (' : 'on time (') + ms2(x.len) + ')', bad: x.bad, warn: x.warn, sub: (mythic ? 'top guilds: ' + P2K + preT + ' · ' : '') + (x.enN === 1 ? '1 shield' : x.enN + ' shields') + ', ' + x.dmN + ' Dreadmarch casts' + (mythic ? ' (top guilds: 1 shield, 4 casts)' : '') });
-  if (P2T && inter == null) pushRows.push([{ txt: 'P2 (wiped)' }, { t: P2T.at ?? p2End }, p2Cell(P2T), { txt: '' }, { txt: '' }, { txt: '' }]);
+  const p2Cell = (x) => ({ txt: (x.bad || x.warn ? 'ran long (' : 'on time (') + ms2(x.len) + ')', bad: x.bad, warn: x.warn, sub: (mythic ? 'top guilds: ' + P2K + preT + ' · ' : '') + (x.enN === 1 ? '1 shield' : x.enN + ' shields') + ', ' + x.dmN + ' Dreadmarch casts' + (mythic ? ' (top guilds: 1 shield, 4 casts)' : '') });
+  if (P2T && inter == null) pushRows.push([{ txt: 'Phase 2 (wiped)' }, { t: P2T.at ?? p2End }, p2Cell(P2T), { txt: '' }, { txt: '' }, { txt: '' }]);
   if (inter != null) {
     const pt = zeroAt(mal) ?? inter;
     const ssAll = casts('soul sever'), ss = ssAll.filter((t) => t <= pt + 1).pop();
@@ -16869,9 +16885,9 @@ function buildCoiledAltar(ev, r, h) {
     if (!lust.length && mythic) M(inter, 'Raid', 'soulbinding', 'Low', 'No Bloodlust or Heroism during the Soulbinding intermission.', 'Use Hero/Lust on the intermission, because it is the big damage window on Zul\'jan.');
     const zjDmg = ev.filter((e) => e.k === 'pdmg' && e.t >= inter && e.t <= (p3 ?? dur) && zj.includes(e.dst)).reduce((s, e) => s + e.amt, 0);
     const zjBack = p3 != null ? hpAtT(zj, p3) : null, zjBad = mythicT && zjBack != null && zjBack > 40, zjWarn = mythicT && !zjBad && zjBack != null && zjBack > 35;
-    if (zjBad || zjWarn) MT(p3, zjBad ? 'High' : 'Medium', 'Zul\'jan was still at ' + zjBack + '% after the intermission (top guilds: ' + KT.zj[0] + ' to ' + KT.zj[1] + '%).', 'Lust in the intermission and put every damage cooldown on Zul\'jan: he takes double damage while he heals. A faster P2 gives him less time to heal, too.');
+    if (zjBad || zjWarn) MT(p3, zjBad ? 'High' : 'Medium', 'Zul\'jan came back from the intermission at ' + zjBack + '%. Top guilds bring him back at ' + KT.zj[0] + ' to ' + KT.zj[1] + '%.', 'Lust in the intermission and put every damage cooldown on Zul\'jan: he takes double damage while he heals. A faster P2 gives him less time to heal, too.');
     const c2 = P2T ? p2Cell(P2T) : { txt: '' }; if (P2T && delta != null) c2.sub += '; ' + delta.toFixed(0) + ' s after the last Soul Sever';
-    pushRows.push([{ txt: 'P2 → Intermission' }, { t: P2T && P2T.at != null ? Math.min(P2T.at, pt) : pt }, c2,
+    pushRows.push([{ txt: 'Phase 2 push' }, { t: P2T && P2T.at != null ? Math.min(P2T.at, pt) : pt }, c2,
       { txt: 'Lust: ' + (lust.length ? fmtList(lust) : 'none'), bad: !lust.length && mythic }, { txt: zjBack != null ? 'Zul\'jan back at ' + zjBack + '%' + (mythic ? ' (top guilds: ' + KT.zj[0] + ' to ' + KT.zj[1] + '%)' : '') : 'Damage to Zul\'jan in intermission: ' + h.compact(zjDmg), bad: zjBad, warn: zjWarn, sub: zjBack != null ? 'damage to him in the intermission: ' + h.compact(zjDmg) : '' }, { txt: '' }]);
   }
   if (p3 != null) {
@@ -22945,7 +22961,9 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-31', h: [{ t: 'Themes', d: 'Pick how Debrief looks from Menu > Theme: Aurora, Aurora Gold, Raid frame, Ember Crown, Glass, Midnight, Forge, or your class colours. It only changes the look, and it is saved on your device.' }, { t: 'Cooldown timing on The Coiled Altar', d: 'Rotation now shows if your big cooldown went out at the same moments the top players use it on Mythic, like Trueshot on the pull, at P2 start and in the intermission. Debriefing tells you when you missed one. For now: Holy Paladin, Marksmanship Hunter, Affliction Warlock, Arcane Mage, Arms Warrior and Balance Druid.' }], n: [
-    "Your first Debriefing is quicker to learn: three short tips that start with why the pull ended, and the NSRT note card waits until they're done.",    "Holy Paladin Rotation now has top-player marks on Ula'tek and Kith'ix, and Elemental Shaman on Ula'tek, so every Mythic boss has them.",
+    "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
+    "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
+    "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Your first Debriefing is quicker to learn: three short tips that start with why the pull ended, and the NSRT note card waits until they're done.",    "Holy Paladin Rotation now has top-player marks on Ula'tek and Kith'ix, and Elemental Shaman on Ula'tek, so every Mythic boss has them.",
     "Subtlety Rogue and Protection Paladin Rotation: top-player marks refreshed on every Mythic boss, from more top players.",
     "Beast Mastery Hunter Rotation: top-player marks on every Mythic boss, Ula'tek included, from more top Hunters.",
     "Mistweaver Rotation: top-player marks on every Mythic boss. Mystic Touch uptime now counts whichever Monk put it on (with two Monks in the raid, one used to read 0%).",
@@ -31279,7 +31297,7 @@ function wipeAt(r) {
   // (the damage check: "took 3:33 (… never past 2:56)" at its end → went late at end − 3:33 + 2:56)
   const mss = (x) => { const m = /(\d+):(\d\d)/.exec(x || ''); return m ? 60 * +m[1] + +m[2] : null; };
   const phs = (r.module && !r.module.error && r.module.phases) || []; /* (Oct 28: a check the raid got past (a later phase started after it) isn't a wipe) */
-  for (const m of r.mistakes || []) { if (m.mechanic !== 'Phase changes' || m.severity !== 'High') continue; if (phs.some((p) => p.start > m.t + 1)) continue; const det = String(m.detail || ''), took = mss((/took (\d+:\d\d)/.exec(det) || [])[1]), nev = mss((/never past (\d+:\d\d)/.exec(det) || [])[1]);
+  for (const m of r.mistakes || []) { if (m.mechanic !== 'Phase changes' || m.severity !== 'High') continue; if (phs.some((p) => p.start > m.t + 1)) continue; const det = String(m.detail || ''), took = mss((/(?:took|ran long:|went on for) (\d+:\d\d)/.exec(det) || [])[1]), nev = mss((/never (?:past|longer than) (\d+:\d\d)/.exec(det) || [])[1]); /* round 433 plain push */
     const at = took != null && nev != null && took > nev ? m.t - took + nev : m.t; if (!call || at < call.t) call = { t: at, why: 'check', d: null }; }
   /* (a wipe mechanic: called when it happens, if that's first (not while the boss is at 10% or less, like the other calls)) */
   { const mc = wipeMech(r); if (mc && (!call || mc.t < call.t - 0.05) && !near(mc.t)) call = { t: mc.end, at: mc.t, why: 'mech', d: null, mn: mc.n, ms: mc.s, kn: mc.kn }; }
@@ -33865,7 +33883,7 @@ function whySay0(o, pm, nth) {
        Volkovod. Then Malevolent Resonance took five more by 4:18.") */
     if (a) { const ai = a.indexOf(', and their '); return ai > 0 ? { h: cz(a.slice(0, ai)), s: 'Their ' + a.slice(ai + 12).replace(/\.$/, '') + ' at ' + T(o.t) + '.' + (th || end) } : { h: cz(a), s: (th || end).trim() }; }
     /* ("Malacrass took 3:33 (… never past 2:56), so he got …" → "Malacrass's phase ran past 2:56 at 4:44, longer than any kill took, so he got …") */
-    const tk = o.chk ? String(o.detail || '').match(/^(.+?) took (\d+:\d\d) \(.*?never past (\d+:\d\d)\)(.*?)\.?$/) : null;
+    const tk = o.chk ? (String(o.detail || '').match(/^(.+?) took (\d+:\d\d) \(.*?never past (\d+:\d\d)\)(.*?)\.?$/) || ((m) => m ? [m[0], 'Malacrass', m[1], m[2], m[3] ? ', so he got ' + m[3] : ''] : null)(String(o.detail || '').match(/^Phase 2 (?:ran long:|went on for) (\d+:\d\d).*?never longer than (\d+:\d\d)\)\.(?: Because it ran long, Malacrass got (.+?)(?:, one more shield to break)?\.)?$/))) : null; /* round 433 plain push */
     if (tk) { const gave = String(tk[4] || '').replace(/^,?\s*so (?:he|she|it|they) got /, ''); return { h: cz('Not enough damage on ' + tk[1]), s: esc(tk[1] + '\'s phase took ' + tk[2] + ' (no top kill needed more than ' + tk[3] + ')' + (gave && gave !== tk[4] ? ', so ' + tk[1] + ' got ' + gave : '') + '.') }; }
     let sh0 = ''; try { sh0 = whyShort(o, pm).short; } catch (e) { sh0 = ''; }
     const pd = plain(o.detail), pd1 = (pd.match(/^.*?[.!?](?=\s|$)/) || [pd])[0];
@@ -33991,7 +34009,7 @@ function shieldParts(r, kind) {
   if (kind === 'shield') { const m = r.module && !r.module.error ? r.module._shields || [] : [];
     return m.map((x) => { const to = x.brokeAt != null ? x.brokeAt : x.t + x.secs, by = new Map();
       for (const h of hits) if (h[1] >= x.t - 0.5 && h[1] <= to + 0.5) by.set(h[2], (by.get(h[2]) || 0) + h[3]);
-      return { t: x.t, took: x.brokeAt != null ? x.brokeAt - x.t : null, done: x.done, by, late: x.t > ct + 0.05 }; }); }
+      return { t: x.t, took: x.brokeAt != null ? x.brokeAt - x.t : null, done: x.done, spare: x.spare, by, late: x.t > ct + 0.05 }; }); }
   /* (Dreadmarch: one shield per mind-controlled player, from its aura going on to coming off) */
   const on = new Map(), out = [];
   for (const a of r.shieldAuras || []) { if (a[0] !== id) continue; if (a[1]) { if (!on.has(a[3])) on.set(a[3], a[2]); } else if (on.has(a[3])) { out.push({ dst: a[3], t: on.get(a[3]), off: a[2] }); on.delete(a[3]); } }
@@ -34014,16 +34032,20 @@ function shieldBlock(reps, kind) {
   const row = ([n, a]) => '<div class="dsp-r shd-r"><span>' + nm(n) + '</span><span class="dsp-b"><i style="width:' + (100 * a / mx).toFixed(1) + '%' + ((PL.get(n) || {}).color ? ';background:' + PL.get(n).color : '') + '"></i></span><b>' + M(a) + '</b><span class="shd-p">' + Math.round(100 * a / tot) + '%</span></div>';
   const chip = (dot, k, v) => '<span class="shd-c">' + (dot ? '<i class="shd-d ' + dot + '"></i>' : '') + '<span class="shd-k">' + k + '</span>' + (v ? ' ' + v : '') + '</span>';
   let chips = '';
-  if (kind === 'shield') chips = all.map((p, i) => p.late ? chip('na', night ? 'Pull ' + p.pull : ordinal(i + 1) + ' · ' + T(p.t), 'after the wipe call') : chip(p.took == null ? (p.done ? 'bad' : 'na') : (!mythic || p.took <= 13.9) ? 'ok' : 'warn', night ? 'Pull ' + p.pull : ordinal(i + 1) + ' · ' + T(p.t),
+  /* round 432 one shield list */ const one432 = !night, tk432 = kind === 'shield' && mythic ? '<span class="shd-tk">Top kills break it in <b>10.6–13.9 s</b></span>' : '';
+  if (one432) chips = '';
+  else if (kind === 'shield') chips = all.map((p, i) => p.late ? chip('na', night ? 'Pull ' + p.pull : ordinal(i + 1) + ' · ' + T(p.t), 'after the wipe call') : chip(p.took == null ? (p.done ? 'bad' : 'na') : (!mythic || p.took <= 13.9) ? 'ok' : 'warn', night ? 'Pull ' + p.pull : ordinal(i + 1) + ' · ' + T(p.t),
     p.took != null ? 'broke in <b>' + p.took.toFixed(1) + ' s</b>' : p.done ? 'not broken' : 'pull ended first')).join('') + (mythic ? chip('', 'Top kills', '10.6–13.9 s') : '');
   else { const tk = parts.map((p) => p.took).filter((x) => x != null).sort((a, b) => a - b), med = tk.length ? tk[Math.floor(tk.length / 2)] : null;
     chips = chip('', plural(parts.length, 'shield'), '') + (tk.length ? chip('', 'Gone in', '<b>' + tk[0].toFixed(1) + '–' + tk[tk.length - 1].toFixed(1) + ' s</b>') + chip('', 'Typically', med.toFixed(1) + ' s') : ''); }
   const top = rows.slice(0, 10), more = rows.slice(10);
-  return '<div class="shd"><div class="shd-h">' + (kind === 'shield' ? 'Damage into Veil of Twilight' : 'Damage into the Dreadmarch shields') + '</div><div class="shd-cs">' + chips + '</div>' + (!night && parts.length > 1 ? parts.map((p, i) => { /* round 291 each shield */ const L = [...p.by].filter(([n, a]) => n && a > 0).sort((a, b) => b[1] - a[1]); if (!L.length) return ''; const t2 = L.reduce((x, [, a]) => x + a, 0) || 1, m2 = L[0][1] || 1;
+  return '<div class="shd' + (one432 ? ' shd432' : '') + '"><div class="shd-h">' + (one432 ? (kind === 'shield' ? 'Each shield' : 'Each Dreadmarch shield') + tk432 : kind === 'shield' ? 'Damage into Veil of Twilight' : 'Damage into the Dreadmarch shields') + '</div>' + (chips ? '<div class="shd-cs">' + chips + '</div>' : '') + (one432 ? all.map((p, i) => {
+      if (p.late) return '<div class="shd-one shd-late"><span class="shd-oh"><i class="shd-d na"></i><b>' + ordinal(i + 1) + ' shield</b> · ' + T(p.t) + ' · after the wipe call, not counted</span></div>'; /* round 291 each shield */ const L = [...p.by].filter(([n, a]) => n && a > 0).sort((a, b) => b[1] - a[1]); if (!L.length && !one432) return ''; /* round 432 */ const t2 = L.reduce((x, [, a]) => x + a, 0) || 1, m2 = L[0][1] || 1;
       const row2 = ([n, a]) => '<div class="dsp-r shd-r"><span>' + nm(n) + '</span><span class="dsp-b"><i style="width:' + (100 * a / m2).toFixed(1) + '%' + ((PL.get(n) || {}).color ? ';background:' + PL.get(n).color : '') + '"></i></span><b>' + M(a) + '</b><span class="shd-p">' + Math.round(100 * a / t2) + '%</span></div>';
-      /* round 356 shields folded */ return '<details class="shd-one"><summary class="shd-oh"><b>' + ordinal(i + 1) + ' shield</b> · ' + T(p.t) + (p.took != null ? ' · broke in <b>' + p.took.toFixed(1) + ' s</b>' : p.done ? ' · <span class="r272-bad">not broken</span>' : '') + ' · ' + M(t2) + ' in all · ' + L.length + (L.length === 1 ? ' player' : ' players') + '</summary><div class="dsp">' + L.map(row2).join('') + '</div></details>'; }).join('') :
+      /* round 356 shields folded */ const st432 = kind !== 'shield' ? '' : p.took == null ? (p.done ? 'bad' : 'na') : p.spare != null && p.spare < 1 ? 'warn' : 'ok';
+      return '<details class="shd-one' + (st432 ? ' ' + st432 : '') + '"><summary class="shd-oh">' + (st432 ? '<i class="shd-d ' + st432 + '"></i>' : '') + '<b>' + ordinal(i + 1) + ' shield</b> · ' + T(p.t) + (p.took != null ? ' · broke in <b>' + p.took.toFixed(1) + ' s</b>' + (p.spare != null ? ', <span class="shd-sp ' + st432 + '">' + p.spare.toFixed(1) + ' s to spare</span>' : '') : p.done ? ' · <span class="r272-bad">not broken</span>' : ' · pull ended first') + ' · ' + M(t2) + ' · ' + L.length + (L.length === 1 ? ' player' : ' players') + '</summary><div class="dsp">' + L.map(row2).join('') + '</div></details>'; }).join('') :
     '<div class="dsp">' + top.map(row).join('') + '</div>' + (more.length ? '<details class="shd-more"><summary>' + more.length + ' more</summary><div class="dsp">' + more.map(row).join('') + '</div></details>' : '')) +
-    '<p class="sub shd-f">' + M(tot) + ' into ' + plural(parts.length, 'shield') + (night ? ' over ' + plural(new Set(parts.map((p) => p.pull)).size, 'pull') : ' this pull') + '.' + (late ? ' ' + plural(late, 'more shield') + ' after the wipe call ' + (late === 1 ? 'isn\'t' : 'aren\'t') + ' counted.' : '') + '</p></div>';
+    (one432 ? '</div>' : '<p class="sub shd-f">' + M(tot) + ' into ' + plural(parts.length, 'shield') + (night ? ' over ' + plural(new Set(parts.map((p) => p.pull)).size, 'pull') : ' this pull') + '.' + (late ? ' ' + plural(late, 'more shield') + ' after the wipe call ' + (late === 1 ? 'isn\'t' : 'aren\'t') + ' counted.' : '') + '</p></div>');
 }
 // (the raid's fix: the cause that wiped us most, and on All pulls only when it wiped us twice or more)
 // (nth: 1 = what wiped us second most, for a night where two things each wiped us several times (Oct 22: missed kicks wiped us 10 times
@@ -35216,11 +35238,11 @@ function mxOne(pan, sec, hd, fl, xb) {
   const cnt = (k, c) => '<b class="' + c + '">' + k + '</b>';
   const worstW = rows.find((x) => x.st === 'bad' && whyS(x.li)) || (worst && worst.st === 'warn' ? rows.find((x) => x.st === 'warn' && whyS(x.li)) : null) || (worst && !rows.some((x) => x.st === 'bad') ? null : rows.find((x) => x.st !== 'ok' && whyS(x.li))) || worst; /* round 152: lead with a moment that says what happened */
   const wS = worstW ? whyS(worstW.li) : '', nxS = worst ? String(worst.li.dataset.next || (rows.find((x) => x.st !== 'ok' && x.li.dataset.next) || { li: { dataset: {} } }).li.dataset.next || '').trim() : '';
-  const sum = (w && wS ? '<p class="mx-sum">' + cnt(w, worst.st === 'bad' ? 'r' : 'y') + ' of ' + n + (n === 1 ? ' time' : ' times') + ' had mistakes. The worst' + (txt(worstW.li.querySelector('.u1-t')) && wS.indexOf(txt(worstW.li.querySelector('.u1-t'))) < 0 ? ', at ' + esc(txt(worstW.li.querySelector('.u1-t'))) : '') + ': ' + esc(D281(wS)).replace(/([^.!?])$/, '$1.') + '</p>' : !w ? '<p class="mx-sum">' + (n === 1 ? 'Done right.' : (n === 2 ? 'Done right both times.' : 'Done right all ' + cnt(n, 'g') + ' times.')) + '</p>' : '') /* round 152 */ + (w && wS ? '' : !w ? '' : '<p class="mx-sum">' + (w ? cnt(w, worst.st === 'bad' ? 'r' : 'y') + ' of ' + n + (n === 1 ? ' time' : ' times') + ' had mistakes' + (worst && !worst.li.querySelector('.u1-h') && !worst.li.querySelector('.nm') ? '; the worst was at ' + esc(txt(worst.li.querySelector('.u1-t'))) + ', ' + esc(txt(worst.li.querySelector('.u1-o'))) : '') + (worst && (worst.li.querySelector('.u1-h') || worst.li.querySelector('.nm')) ? (txt(worst.li.querySelector('.u1-t')) ? '; the worst, at ' + esc(txt(worst.li.querySelector('.u1-t'))) + ': ' : '; the worst: ') + esc(what(worst.li).replace(/<[^>]+>/g, '').replace(/\.$/, '').replace(/^./, (c) => (/^<span class="nm"/.test(what(worst.li)) ? c : c.toLowerCase()))) : '') + '.' : (n === 2 ? 'Done right both times.' : 'Done right all ' + cnt(n, 'g') + ' times.')) + '</p>') + (w && nxS ? '<p class="mx-nx"><b>Next time</b><span>' + esc(nxS) + '</span></p>' : '');
+  const sum = (w && wS && n === 1 ? '<p class="mx-sum">' + esc(D281(wS)).replace(/([^.!?])$/, '$1.') + '</p>' /* round 433 plain push */ : w && wS ? '<p class="mx-sum">' + cnt(w, worst.st === 'bad' ? 'r' : 'y') + ' of ' + n + (n === 1 ? ' time' : ' times') + ' had mistakes. The worst' + (txt(worstW.li.querySelector('.u1-t')) && wS.indexOf(txt(worstW.li.querySelector('.u1-t'))) < 0 ? ', at ' + esc(txt(worstW.li.querySelector('.u1-t'))) : '') + ': ' + esc(D281(wS)).replace(/([^.!?])$/, '$1.') + '</p>' : !w ? '<p class="mx-sum">' + (n === 1 ? 'Done right.' : (n === 2 ? 'Done right both times.' : 'Done right all ' + cnt(n, 'g') + ' times.')) + '</p>' : '') /* round 152 */ + (w && wS ? '' : !w ? '' : '<p class="mx-sum">' + (w && n === 1 && worst ? ((tt, wh) => (tt ? 'At ' + esc(tt) + ': ' : '') + esc(wh.replace(/^./, (c) => c.toUpperCase())) + '.')(txt(worst.li.querySelector('.u1-t')), (worst.li.querySelector('.u1-h') || worst.li.querySelector('.nm') ? what(worst.li) : txt(worst.li.querySelector('.u1-o'))).replace(/<[^>]+>/g, '').replace(/.$/, '')) /* round 433 once */ : w ? cnt(w, worst.st === 'bad' ? 'r' : 'y') + ' of ' + n + (n === 1 ? ' time' : ' times') + ' had mistakes' + (worst && !worst.li.querySelector('.u1-h') && !worst.li.querySelector('.nm') ? '; the worst was at ' + esc(txt(worst.li.querySelector('.u1-t'))) + ', ' + esc(txt(worst.li.querySelector('.u1-o'))) : '') + (worst && (worst.li.querySelector('.u1-h') || worst.li.querySelector('.nm')) ? (txt(worst.li.querySelector('.u1-t')) ? '; the worst, at ' + esc(txt(worst.li.querySelector('.u1-t'))) + ': ' : '; the worst: ') + esc(what(worst.li).replace(/<[^>]+>/g, '').replace(/\.$/, '').replace(/^./, (c) => (/^<span class="nm"/.test(what(worst.li)) ? c : c.toLowerCase()))) : '') + '.' : (n === 2 ? 'Done right both times.' : 'Done right all ' + cnt(n, 'g') + ' times.')) + '</p>') + (w && nxS ? '<p class="mx-nx"><b>Next time</b><span>' + esc(nxS) + '</span></p>' : '');
   const TH288 = (li) => { if (!HM288) return ''; const k = li.dataset.u1, m = k == null ? null : sec.querySelector('.u1-mp[data-u1m="' + k + '"] svg.map' /* round 290 map pictures */); return '<span class="mx-mapc">' + (m ? '<span class="mx-mapth" role="button" tabindex="0" title="Click for the big map">' + m.outerHTML + '</span>' : '') + '</span>'; };
   const HM288 = rows.some((x) => x.li.dataset.u1 != null && sec.querySelector('.u1-mp[data-u1m="' + x.li.dataset.u1 + '"] svg.map'));
   const shown = n <= 8 ? rows : rows.filter((x) => x.st !== 'ok'), rest = n - shown.length;
-  const tb = !w ? '' /* (no mistakes: the sentence says it, no table (the user, Oct 27)) */ : '<div class="mx-lab">Each time it happened</div><div class="mx-tb mx-one' + (HM288 ? ' mx-hasmap' : '') + '"><div class="mx-th"><span>Time</span><span>' + (named ? 'Who' : 'Moment') + '</span><span>What happened</span>' + (HM288 ? '<span></span>' : '') + '</div>' +
+  const tb = !w || sec.querySelector('.shd432') || (n === 1 && wS && !HM288) ? '' /* (no mistakes: the sentence says it, no table (the user, Oct 27)); round 432: the shield list is the table */ : '<div class="mx-lab">Each time it happened</div><div class="mx-tb mx-one' + (HM288 ? ' mx-hasmap' : '') + '"><div class="mx-th"><span>Time</span><span>' + (named ? 'Who' : 'Moment') + '</span><span>What happened</span>' + (HM288 ? '<span></span>' : '') + '</div>' +
     rows.map((x) => '<div class="mx-tr ' + x.st + (shown.includes(x) ? '' : ' mx-xtra') + '" data-u1i="' + x.i + '" role="button" tabindex="0"><span class="mx-t">' + esc(txt(x.li.querySelector('.u1-t'))) + '</span><span class="mx-who">' + ((li) => { const w0 = D281(whyS(li)), f = (w0.match(/^([A-Z\u00C0-\u024F][^\s:,.]+)\s/) || [])[1], P = f && S.rep && S.rep.players ? [...S.rep.players.values()].find((p) => String(p.name || '').split('-')[0] === f) : null, cur = who(li); return P && txt(li.querySelector('.u1-h') || li.querySelector('.u1-o') || li).indexOf(f) < 0 && cur.indexOf(f) < 0 ? '<span class="nm" style="color:' + (P.color || 'inherit') + '">' + esc(f) + '</span>' : cur; })(x.li) + '</span><span class="mx-m ' + x.st + '">' + what(x.li) + '</span>' + TH288(x.li) + '</div>').join('') +
     (rest ? '<div class="mx-tr mx-rest" role="button" tabindex="0" data-mxrest="1"><span></span><span></span><span class="mx-m ok">' + rest + ' more done right</span>' + (HM288 ? '<span></span>' : '') + '</div>' : '') + '</div>';
   const box = document.createElement('div'); box.className = 'mx-one-w'; box.innerHTML = sum + tb + (kbT ? '<p class="mx-ft">Against the fastest kills: ' + esc(kbT) + '.</p>' : '');
