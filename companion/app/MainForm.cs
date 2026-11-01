@@ -135,7 +135,9 @@ namespace Debrief {
       if (!show) { if (popup != null && popup.Visible) popup.Hide(); return; }
       if (popup == null) popup = new PopupForm(this, here, port, web.CoreWebView2.Environment);
       popup.ShowRecap(json);
+      try { File.WriteAllText(LastPopFile, json); } catch { } // (kept for the recap hotkey after a restart (Nov 1))
     }
+    string LastPopFile { get { return Path.Combine(here, "lastpop.json"); } }
 
     // (the pop-up's Stop at death: the main page rebuilds the coach box at that setting and sends it back)
     public void PopupPull(string sb) {
@@ -198,12 +200,17 @@ namespace Debrief {
       if (m.Msg == 0x0312 /* WM_HOTKEY */ && (int)m.WParam == HotkeyId) { ToggleRecap(); return; }
       base.WndProc(ref m);
     }
-    // (shown: hide it; hidden: the last recap again, over the game and without taking focus; none yet since Debrief started: the page sends the newest)
-    void ToggleRecap() {
+    // (shown: hide it; hidden: the last recap again, over the game and without taking focus; none yet since Debrief started: the page sends the newest
+    // pull or key in this log; none there (a new log after WoW restarts): the last recap kept beside the app; none ever: a note by the clock (Nov 1))
+    async void ToggleRecap() {
       if (Program.EdgeFallback || web.CoreWebView2 == null) return;
       if (popup != null && popup.Visible) { popup.Hide(); return; }
       if (popup != null && popup.HasRecap) { popup.ShowAgain(); return; }
-      try { web.CoreWebView2.ExecuteScriptAsync("window.DBF_POPLAST && window.DBF_POPLAST()"); } catch { }
+      string r = ""; try { r = await web.CoreWebView2.ExecuteScriptAsync("!!(window.DBF_POPLAST && window.DBF_POPLAST())"); } catch { }
+      if (r == "true") return;
+      string saved = null; try { if (File.Exists(LastPopFile)) saved = File.ReadAllText(LastPopFile); } catch { }
+      if (!string.IsNullOrEmpty(saved)) { Popup(saved, true); return; }
+      try { tray.ShowBalloonTip(5000, "No recap yet", "Your recap appears here after your first boss pull, key or practice on a dummy.", ToolTipIcon.None); } catch { }
     }
 
     // ---------- the window's size and place, kept between starts ----------
