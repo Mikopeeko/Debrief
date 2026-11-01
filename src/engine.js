@@ -3709,7 +3709,7 @@ function buildCoiledAltar(ev, r, h) {
     // transparent mint green circle with a "15 yd" label. Anyone the explosion clipped without carrying one gets an orange !
     if (mp.gloom) {
       const gb = gbAt(t);
-      mp.rings = (mp.rings || []).concat(gb.map((c) => ({ guid: c.g, r: 15, ...mcol('Gloombomb'), fx: 'burst', t0: c.s - 0.2, dur: c.e - c.s + 1, at: c.e, label: '15 yd', legend: 'Gloombomb explosion (15 yd around the carrier)' })));
+      mp.rings = (mp.rings || []).concat(gb.map((c) => ({ guid: c.g, r: 15, ...mcol('Gloombomb'), fx: 'burst', t0: c.s - 0.2, dur: c.e - c.s + 1, at: c.e, cd: 'Gloombomb', who: String(pname(c.g)).split('-')[0], label: '15 yd', legend: 'Gloombomb explosion (15 yd around the carrier)' })));
       const cl = clipAt(t).filter((g) => !gb.some((c) => c.g === g));
       if (cl.length) { mp.warn = [...new Set((mp.warn || []).concat(cl))]; mp.warnLabel = 'clipped by a bomb they didn\'t carry'; }
     }
@@ -3978,7 +3978,7 @@ function buildCoiledAltar(ev, r, h) {
     const tg = (dmg(n).find((x) => Math.abs(x.t - e.t) <= 1 && role(x.dst) === 'tank') || {}).dst;
     const boss = snap.find((p) => p.guid === e.src) || snap.find((p) => p.kind === 'boss' && (zj.includes(p.guid) || mal.includes(p.guid))), aim = snap.find((p) => p.guid === tg) || snap.find((p) => p.guid === e.dst);
     if (!boss || !aim) return null;
-    return { t: e.t, cone: { x: boss.x, y: boss.y, dir: Math.atan2(aim.y - boss.y, aim.x - boss.x), half: Math.PI / 6, r: RCH[n] || 35, at: e.t },
+    return { t: e.t, cone: { x: boss.x, y: boss.y, dir: Math.atan2(aim.y - boss.y, aim.x - boss.x), half: Math.PI / 6, r: RCH[n] || 35, at: e.t, name: S(n)[1], tank: tg ? pname(tg) : '' /* round 413 map labels */ },
       bad: [e.dst], badLabel: 'hit by the frontal', hl: tg ? [tg] : [], hlLabel: 'Tank it was aimed at', title: S(n)[1] + ' at ' + h.fmtT(e.t) + ': ' + pname(e.dst) + ' was in the cone' }; };
   const zeroAt = (gs, after) => { let best = null; for (const g of gs) { const u = r.hpUnits && r.hpUnits.get(g); if (!u) continue; for (const [s, p] of u.samples) if (s >= (after || 0) && p <= 0.01) { if (best == null || s < best) best = s; break; } } return best; };
   const hpEnd = (gs) => { let v = null; for (const g of gs) { const u = r.hpUnits && r.hpUnits.get(g); if (u && u.samples.length) v = Math.round(100 * u.samples[u.samples.length - 1][1]); } return v; };
@@ -4251,8 +4251,8 @@ function buildCoiledAltar(ev, r, h) {
     // (your note, Oct 19: the circle rides on the target while they run it to the spot, from the debuff to the drop, then
     // stays where the axe landed; a still map shows only the landed one)
     const gcol = mcol(s.n === 'grim guillotine' ? 'Grim Guillotine' : 'Guillotine'), tA = tgtE ? tgtE.t : hit, eName = s.n === 'grim guillotine' ? "Death's Embrace" : "Widow's Kiss";
-    const ring = lp ? (hit - tA > 0.3 ? [{ guid: tgt, t0: tA, dur: hit - tA - 0.05, r: GUILLOTINE_R, fx: 'soak', at: hit, label: 'soak ' + GUILLOTINE_R + ' yd', ...gcol, legend: S(s.n)[1] + ' soak, ' + GUILLOTINE_R + ' yd' }] : [])
-      .concat([{ x: lp.x, y: lp.y, t0: hit - 0.05, dur: 30, r: GUILLOTINE_R, fx: 'soak', at: hit, label: 'soak ' + GUILLOTINE_R + ' yd', ...gcol, legend: S(s.n)[1] + ' soak, ' + GUILLOTINE_R + ' yd' },
+    const ring = lp ? (hit - tA > 0.3 ? [{ guid: tgt, t0: tA, dur: hit - tA - 0.05, r: GUILLOTINE_R, fx: 'soak', at: hit, cd: S(s.n)[1], need, /* round 413 soak count */ label: 'soak ' + GUILLOTINE_R + ' yd', ...gcol, legend: S(s.n)[1] + ' soak, ' + GUILLOTINE_R + ' yd' }] : [])
+      .concat([{ x: lp.x, y: lp.y, t0: hit - 0.05, dur: 30, r: GUILLOTINE_R, fx: 'soak', at: hit, cd: S(s.n)[1], need, /* round 413 soak count */ label: 'soak ' + GUILLOTINE_R + ' yd', ...gcol, legend: S(s.n)[1] + ' soak, ' + GUILLOTINE_R + ' yd' },
         // (then the axe swells and erupts 40 yd around where it landed, 6 s later (your note, Oct 19): Widow's Kiss, or
         // Death's Embrace for Grim Guillotine; it shows from the landing, turning faster until it bursts)
         { x: lp.x, y: lp.y, t0: hit, dur: AXE_ERUPT_S + 0.7, r: AXE_ERUPT_R, fx: 'burst', at: hit + AXE_ERUPT_S, label: eName + ' ' + AXE_ERUPT_R + ' yd', ...mcol(eName, 0.07),
@@ -4366,7 +4366,7 @@ function buildCoiledAltar(ev, r, h) {
         // every orb inside the cone (an orb counts if its edge, ~2 yd, is inside)
         const REACH = REACH_OF[s.n] || 35;
         hit = ground.filter((o) => { const dd = Math.hypot(o.x - boss.x, o.y - boss.y); return dd <= REACH + 2 && (ang(o) <= CONE || dd * Math.sin(ang(o)) <= 2); });
-        cone = { x: boss.x, y: boss.y, dir, half: CONE, r: REACH, at: s.t };
+        cone = { x: boss.x, y: boss.y, dir, half: CONE, r: REACH, at: s.t, name: S(s.n)[1], tank: pname(tankG) };
       }
       // red: 8 or more at once (or the raid over 12 stacks); amber: off the plan at the end of P1 (the last frontal hits orbs, or the
       // second-to-last pops 5 or more)
@@ -4449,7 +4449,7 @@ function buildCoiledAltar(ev, r, h) {
     if (!out.length && f.n === 'blighted sever') continue; // P3 frontals with no ghosts out are about orbs
     const tankG = (dmg(f.n).find((e) => e.t >= f.t - 0.5 && e.t <= f.t + 2 && role(e.dst) === 'tank') || {}).dst;
     const snap = h.snap(f.t), boss = snap.find((p) => p.guid === f.src) || snap.find((p) => p.kind === 'boss' && mal.includes(p.guid)), tk = snap.find((p) => p.guid === tankG);
-    const cone = boss && tk ? { x: boss.x, y: boss.y, dir: Math.atan2(tk.y - boss.y, tk.x - boss.x), half: Math.PI / 6, r: 45, at: f.t } : null; // Soul Sever: 60 degrees, 45 yards (Wowhead)
+    const cone = boss && tk ? { x: boss.x, y: boss.y, dir: Math.atan2(tk.y - boss.y, tk.x - boss.x), half: Math.PI / 6, r: 45, at: f.t, name: S(f.n)[1], tank: tk.name || '' } : null; // Soul Sever: 60 degrees, 45 yards (Wowhead)
     const inCone = (g) => { if (!cone) return false; const x = g.pts[0][1] - cone.x, y = g.pts[0][2] - cone.y, d = Math.hypot(x, y); let a = Math.abs(Math.atan2(y, x) - cone.dir); if (a > Math.PI) a = 2 * Math.PI - a; return d <= cone.r + 2 && a <= cone.half; };
     const logged = (g) => { const ht = hitBy.get(g.guid); return ht != null && ht >= f.t - 0.5 && ht <= f.t + 1.5; };
     // Soul Sever hits are logged on every ghost; Blighted Sever's mostly aren't, so it also counts ghosts whose spawn spot is in the cone (an estimate)
@@ -6726,9 +6726,9 @@ function* analyzeSteps(item, text, opts) {
       if (kind) units.push({ u, guid: u.guid, name: pl ? pl.name : nm, kind });
     }
     /* round 411e ghost frames: a ghost glides between the spots the log has for it, from its spawn until it dies (or 20 s after it was last placed) */
-    const isGh = (x) => /^manifestation of dread$/i.test(x.name), ghAt = (x, t) => { const a = x.u.pts; if (!a.length || t < a[0][0] - 0.3) return null; const end = deadAt.has(x.guid) ? deadAt.get(x.guid) : a[a.length - 1][0] + 20; if (t > end) return null;
+    const isGh = (x) => /^manifestation of dread$/i.test(x.name), ghAt = (x, t) => { const a = x.u.pts; if (!a.length || t < a[0][0] - 0.3) return null; if (!framesAt._hit) { framesAt._hit = new Map(); for (const e of modEv) if (e.k === 'dmg' && e.dst && !framesAt._hit.has(e.dst)) framesAt._hit.set(e.dst, e.t); } /* round 413 ghost gone */ const end = Math.min(deadAt.has(x.guid) ? deadAt.get(x.guid) : Infinity, framesAt._hit.has(x.guid) ? framesAt._hit.get(x.guid) + 0.4 : Infinity, a[a.length - 1][0] + 60); if (t > end) return null;
       let lo = 0; while (lo < a.length - 1 && a[lo + 1][0] <= t) lo++; const p = a[lo], q = a[lo + 1]; if (p[0] <= t && q) { const f = (t - p[0]) / (q[0] - p[0] || 1); return [p[1] + (q[1] - p[1]) * f, p[2] + (q[2] - p[2]) * f]; } return [p[1], p[2]]; };
-    if (!framesAt._own) { framesAt._own = new Map(); for (const e of modEv) if ((e.id === 1285911 || /^unnerving fixation$/i.test(String(e.spell || ''))) && e.src && e.dst && r.players.get(e.dst)) framesAt._own.set(e.src, e.dst); }
+    if (!framesAt._own) { framesAt._own = new Map(); for (const e of modEv) if ((e.id === 1285911 || /^unnerving fixation$/i.test(String(e.spell || ''))) && e.src && e.dst && r.players.get(e.dst)) framesAt._own.set(e.src, e.dst); r.ghostOwner = Object.fromEntries(framesAt._own); /* round 413 ghost owners */ }
     const own = framesAt._own;
     const out = [];
     for (let t = t0; t <= t1 + 1e-6; t += step) {

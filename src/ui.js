@@ -12171,6 +12171,8 @@ function miniMap(mp, pmap) {
       }
     }
     // (more than one: each numbered at its far end, in the order it landed, while it shows)
+    /* round 413: one cone says which frontal and whose (and counts down while it's cast) */ if (CONES.length === 1 && c.name && (!live || (el >= -1.4 && el < 1.6))) { const lx = cx + R0 * 0.34 * Math.cos(c.dir), ly = cy - R0 * 0.34 * Math.sin(c.dir), tx = c.name + (live && el < 0 ? ' in ' + (-el).toFixed(1) + ' s' : '') + (c.tank ? ' \u2192 ' + String(c.tank).split('-')[0] : '');
+      s += ic(lx, ly, '<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" text-anchor="middle" class="ml" fill="#ffb3a8">' + esc(tx) + '</text>'); }
     if (CONES.length > 1 && (!live || (el >= -1.4 && el < 1.6))) { const lx = cx + R0 * 0.82 * Math.cos(c.dir), ly = cy - R0 * 0.82 * Math.sin(c.dir);
       s += '<circle cx="' + lx.toFixed(1) + '" cy="' + ly.toFixed(1) + '" r="9" fill="#ff3b3b" stroke="#000" stroke-width="1.5"/><text x="' + lx.toFixed(1) + '" y="' + (ly + 4).toFixed(1) + '" text-anchor="middle" font-size="11" font-weight="800" fill="#fff">' + (ci + 1) + '</text>'; }
   }
@@ -12225,12 +12227,13 @@ function miniMap(mp, pmap) {
     return null;
   };
   const micL = []; // (the mechanics' icons, drawn on top at the end)
+  /* round 413: a ring with a countdown (cd) says how long until it goes off */ const cdLab413 = (g0, g) => { const nw = mp.ft != null ? mp.ft : mp.t, lf = g0.at - nw; /* round 413 soak live */ if (g0.need && g) { const n = pts.filter((q) => q.kind === 'player' && Math.hypot(q.x - g.x, q.y - g.y) <= g0.r).length; return lf > 0.05 ? g0.cd + ' in ' + lf.toFixed(1) + ' s · ' + n + ' in, needs ' + g0.need : lf > -1.5 ? g0.cd + ': ' + n + ' soaked' : (g0.label || ''); } return lf > 0.05 ? (g0.who ? g0.who + ' ' + lf.toFixed(1) + ' s' : g0.cd + ' in ' + lf.toFixed(1) + ' s') : lf > -1.2 ? (g0.who ? g0.who + ': boom' : g0.cd + '!') : (g0.label || ''); };
   for (const g0 of mp.rings || []) {
     const g = ringAt(g0); if (!g) continue;
     const col = g.color || '#e6b450', fill = g.fill || (g.color ? 'rgba(126,224,143,.16)' : 'rgba(230,180,80,.14)');
     const look0 = g.fx ? ringFx(g, X(g), Y(g), g.r * yd, col, fill) : null, look = look0 != null && g.clip && mp.room ? '<g clip-path="url(#' + RID + ')">' + look0 + '</g>' : look0;
     s += (look != null ? look : '<circle cx="' + X(g) + '" cy="' + Y(g) + '" r="' + g.r * yd + '" fill="' + fill + '" stroke="' + col + '" stroke-opacity="' + (g.dim ? 0.5 : 1) + '" stroke-width="' + (g.dim ? 1.4 : 2) + '" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>') +
-      (micL.push(mapIcon(g, X(g), Y(g), g.r * yd)), '') + ic(X(g), Y(g) - g.r * yd, '<text x="' + X(g) + '" y="' + (Y(g) - g.r * yd - 6) + '" class="ml" fill="' + col + '">' + esc((g.label || '') + (g0.shrink ? ' ~' + Math.round(g.r) + ' yd' : '')) + '</text>');
+      (micL.push(mapIcon(g, X(g), Y(g), g.r * yd)), '') + ic(X(g), Y(g) - g.r * yd, '<text x="' + X(g) + '" y="' + (Y(g) - g.r * yd - 6) + '" class="ml" fill="' + col + '">' + esc((g0.cd && g0.at != null ? cdLab413(g0, g) : (g.label || '')) + (g0.shrink ? ' ~' + Math.round(g.r) + ' yd' : '')) + '</text>');
   }
   // spit lines (Corrosive Spit): add to its target while the aim is up; this row's add bright, the others dimmer
   const ft = mp.ft != null ? mp.ft : mp.t, byG = new Map(pts.map((p) => [p.guid, p]));
@@ -12359,7 +12362,7 @@ function miniMap(mp, pmap) {
     // Soul Sever: ghosts it removed (green ring) and missed (red X)
     if (gHit.has(p.guid)) inner += '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="10" fill="none" stroke="#45c15c" stroke-width="2.5"/>';
     if (gMiss.has(p.guid) && !(elS != null && elS < 0)) inner += '<path d="M' + (X(p) - 8) + ' ' + (Y(p) - 8) + 'l16 16M' + (X(p) + 8) + ' ' + (Y(p) - 8) + 'l-16 16" stroke="#ff4d4d" stroke-width="3" stroke-linecap="round"/>';
-    /* round 411e whose ghost */ const ow = p.kind === 'ghost' && p.owner ? pts.find((q) => q.guid === p.owner) : null; if (ow) { s += '<line x1="' + X(p) + '" y1="' + Y(p) + '" x2="' + X(ow) + '" y2="' + Y(ow) + '" stroke="#e9eef7" stroke-opacity=".55" stroke-width="1.5" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>'; inner += '<text x="' + X(p) + '" y="' + (Y(p) + 17) + '" text-anchor="middle" font-size="8" font-weight="600" fill="#e9eef7" stroke="#05060a" stroke-width="2.5" paint-order="stroke">' + esc(String(ow.name || '').split('-')[0]) + '</text>'; }
+    /* round 411e whose ghost */ const own0 = p.kind === 'ghost' ? p.owner || (S.rep && S.rep.ghostOwner && S.rep.ghostOwner[p.guid]) : null; /* round 413 owner list */ const ow = own0 ? pts.find((q) => q.guid === own0) : null; if (ow) { s += '<line x1="' + X(p) + '" y1="' + Y(p) + '" x2="' + X(ow) + '" y2="' + Y(ow) + '" stroke="#e9eef7" stroke-opacity=".55" stroke-width="1.5" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>'; inner += '<text x="' + X(p) + '" y="' + (Y(p) + 17) + '" text-anchor="middle" font-size="8" font-weight="600" fill="#e9eef7" stroke="#05060a" stroke-width="2.5" paint-order="stroke">' + esc(String(ow.name || '').split('-')[0]) + '</text>'; }
     s += ic(X(p), Y(p), inner);
   }
   // cast bars under an add's or boss's name, like in game (your note, Oct 18): gold while it casts something kickable, then
