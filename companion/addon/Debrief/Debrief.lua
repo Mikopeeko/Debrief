@@ -67,6 +67,7 @@ local function decode(code)
   if code:sub(1, 4) ~= "DBF1" then return nil, "That pull couldn't be read." end
   if code:sub(-2) ~= "^Z" then return nil, "That pull was cut off, so it couldn't be read." end
   local m, by = { players = {}, raid = { bad = {}, died = {}, mech = {}, cons = {}, defs = {}, kitd = {}, tiles = {}, good = {}, fixes = {}, ghap = {}, gchg = {}, more = "", next = "", story = "", better = "", worse = "", ghead = "", gnext = "" } }, {}
+  local function mp() if not m.mplus then m.mplus = { run = {}, people = {}, pulls = {}, byN = {}, byP = {} } end; return m.mplus end -- (a Mythic+ key (Nov 1))
   for _, r in ipairs(split(code, "^")) do
     local f = split(r, "~")
     -- (the wipe filter: K~versions~line is a line only some "stop at death" numbers have, e.g. K~012~R~... is in 0, 1 and 2)
@@ -132,6 +133,22 @@ local function decode(code)
     elseif t == "PT" and by[g(2)] then local p = by[g(2)]; p.ctr = p.ctr or { x = {}, b = {} }; local L = p.ctr[g(3)]; if L then L[#L + 1] = { nm = g(4), tag = g(5) } end -- (your worse/better than last pull)
     elseif t == "C" then m.cutN = tonumber(g(2)) -- (the wipe filter: versions 0 to n)
     elseif t == "WC" then m.wc = { at = g(2), txt = g(3) } -- (the wipe call: when and why; then version 1 is up to it (Oct 23))
+    -- (a Mythic+ key (Nov 1, the in-game card): the run, the group, each pull and what happened in it; see RECAP.encodeMplus in the app)
+    elseif t == "MR" then local K0 = mp(); K0.run = { level = g(2), stat = g(3), time = tonumber(g(4)) or 0, par = tonumber(g(5)), up = tonumber(g(6)) or 0, next = tonumber(g(7)), dcost = tonumber(g(8)) or 0, deaths = tonumber(g(9)) or 0, upw = tonumber(g(10)), fight = tonumber(g(11)), between = tonumber(g(12)), score = g(13) }
+    elseif t == "MP" then local K0 = mp(); local q = { name = g(2), cls = g(3), spec = g(4), role = g(5), dps = tonumber(g(6)) or 0, hps = tonumber(g(7)) or 0, kicks = tonumber(g(8)) or 0, stops = tonumber(g(9)) or 0, defs = tonumber(g(10)) or 0, deaths = tonumber(g(11)) or 0, dispels = tonumber(g(12)) or 0, purges = tonumber(g(13)) or 0, avoid = tonumber(g(14)) or 0, kick = g(15) == "1", rot = {} }; K0.people[#K0.people + 1] = q; K0.byP[q.name] = q
+    elseif t == "MU" then local K0 = mp(); local q = { n = tonumber(g(2)) or (#K0.pulls + 1), boss = g(3), kill = g(4) == "1", s = tonumber(g(5)) or 0, dur = tonumber(g(6)) or 0, mobs = g(7), thr = {}, avoid = {}, deaths = {}, kicks = {}, defs = {}, vals = {}, ds = {}, rot = {}, good = {} }; K0.pulls[#K0.pulls + 1] = q; K0.byN[q.n] = q
+    elseif t == "MX" then local q = mp().byP[g(2)]; if q then local pl = {}; for _, x in ipairs(split(g(6), ";")) do if tonumber(x) then pl[#pl + 1] = tonumber(x) end end; q.rot[#q.rot + 1] = { st = g(3), ic = g(4), label = g(5), pulls = pl, of = tonumber(g(7)) or #pl } end
+    elseif t:sub(1, 1) == "M" and #t == 2 and m.mplus and m.mplus.byN[tonumber(g(2)) or -1] then
+      local q = m.mplus.byN[tonumber(g(2))]
+      if t == "MT" then q.thr[#q.thr + 1] = { t = tonumber(g(3)) or 0, spell = g(4), mob = g(5), cc = g(6) == "1", ready = g(7) ~= "" and split(g(7), ";") or {} }
+      elseif t == "MA" then q.avoid[#q.avoid + 1] = { who = g(3), spell = g(4), n = tonumber(g(5)) or 0, dmg = tonumber(g(6)) or 0 }
+      elseif t == "MD" then q.deaths[#q.deaths + 1] = { t = tonumber(g(3)) or 0, who = g(4), to = g(5), from = g(6), defs = tonumber(g(7)) or 0 }
+      elseif t == "MK" then q.kicks[#q.kicks + 1] = { t = tonumber(g(3)) or 0, who = g(4), kind = g(5), spell = g(6), mob = g(7), with = g(8) }
+      elseif t == "MF" then q.defs[g(3)] = g(4)
+      elseif t == "MV" then q.vals[g(3)] = { dps = tonumber(g(4)) or 0, hps = tonumber(g(5)) or 0, ds = tonumber(g(6)) or 0, ps = tonumber(g(7)) or 0 }
+      elseif t == "MS" then q.ds[#q.ds + 1] = { spell = g(3), on = tonumber(g(4)) or 0, removed = tonumber(g(5)) or 0, kind = g(6) }
+      elseif t == "MO" then q.rot[g(3)] = q.rot[g(3)] or {}; table.insert(q.rot[g(3)], { st = g(4), ic = g(5), label = g(6), v = g(7), line = g(8) })
+      elseif t == "MG" then q.good[g(3)] = g(4) end
     elseif t == "RG" then m.grade = { letter = g(2), score = g(3), cats = g(4) } -- (the Report card's grade for the pull)
     elseif t == "X" then if K then m.raid.moreK = m.raid.moreK or {}; table.insert(m.raid.moreK, { K, g(2) }) else m.raid.more = g(2) end
     elseif t == "Q" then if K then m.raid.nextK = m.raid.nextK or {}; table.insert(m.raid.nextK, { K, g(2) }) else m.raid.next = g(2) end
@@ -753,9 +770,284 @@ local UI = { startsShut = function(key, n) return n > 0 and SHUT[key] and DB.ope
 UI.ownNewest = function() local me = meName(); if not me then return end
   for i = #DB.pulls, 1, -1 do for _, p in ipairs(DB.pulls[i].players or {}) do if p.name == me or p.name:match("^([^%-]+)") == me then return i end end end end
 UI.ring = { { tMe, tRaid }, { prevB, nextB }, { bigBtn } } -- (the setup's step 4 rings these on the sample card, numbered (Oct 26))
+-- ---------- the Mythic+ run recap on the card (Nov 1, the in-game card): a Run tab and a tab per pull (the chips: Run, then the pulls around
+-- the one open), Me and Group (the tabs; ‹ › steps through the group), the same sections and words as the PC pop-up, in the card's own rows ----------
+UI.mp = { pull = 0 }
+function UI.mplus(raw)
+  local K, h, S = raw.mplus, raw.h, UI.mp
+  local run, ppl, PL = K.run or {}, K.people, K.pulls
+  if S.raw ~= raw then S.raw = raw; S.pull = 0 end -- (each key opens on its Run tab)
+  CUR = { players = ppl }
+  W = WIDTHS[DB.width or "normal"] or 400; CW = W - PAD * 2
+  card:SetWidth(W); body:SetWidth(CW); scroller:SetWidth(CW); UI.colFrame(false, CW)
+  local timed = run.stat == "T"
+  UI.rounded(card.lineT, "line", 8, timed and COL.gold or COL.line2, 1)
+  local function mm(x) x = math.floor((tonumber(x) or 0) + 0.5); return math.floor(x / 60) .. ":" .. string.format("%02d", x % 60) end
+  local function secs(x) x = math.floor((tonumber(x) or 0) + 0.5); if x < 60 then return x .. (x == 1 and " second" or " seconds") end; return mm(x) end
+  local function kN(v) v = tonumber(v) or 0; if v >= 1e6 then return (string.format("%.2f", v / 1e6):gsub("%.?0+$", "")) .. "m" end; return math.floor(v / 1000 + 0.5) .. "k" end
+  local function pname(q) return (q.boss ~= "" and q.boss) or ("Pull " .. q.n) end
+  local function lv(n) return n .. (n == 1 and " level" or " levels") end
+  local function cnt(n, one1, many) return n .. " " .. (n == 1 and one1 or many) end
+  local function times(n) return n == 1 and "once" or (n .. " times") end
+  local function has(list, n) for _, v in ipairs(list) do if v == n then return true end end end
+  local function myThr(q, n) local o = {}; for _, x in ipairs(q.thr) do if has(x.ready, n) then o[#o + 1] = x end end; return o end
+  local function openPull(nn) return function() S.pull = nn; wipe(EXPANDED); scroller:SetVerticalScroll(0); render() end end
+  -- (the chips: Run, then the pulls around the one open; coloured by what happened in each: a death or 3+ casts through red, anything else amber)
+  local open, avail = S.pull, W - PAD * 2
+  local start = math.max(1, math.min(open > 0 and open - 1 or 1, #PL - (#chips - 2)))
+  local list, total = { 0 }, 0; for j = start, math.min(#PL, start + #chips - 2) do list[#list + 1] = j end
+  for i = 1, #chips do
+    local b, j = chips[i], list[i]
+    if j then
+      local q = j > 0 and PL[j] or nil
+      b.t:SetText(q and pname(q) or "Run")
+      local tc = COL.text
+      if q then tc = (#q.deaths > 0 or #q.thr > 2) and COL.badT or ((#q.thr > 0 or #q.avoid > 0) and COL.warn or COL.goodT) end
+      UI.chipColors(b, COL.raised, ((q and q.n or 0) == open) and COL.gold or COL.line2, tc)
+      b:SetWidth(b.t:GetStringWidth() + 20); b:ClearAllPoints()
+      if i == 1 then b:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -110) else b:SetPoint("LEFT", chips[i - 1], "RIGHT", 6, 0) end
+      total = total + b:GetWidth() + 6
+      b:SetScript("OnClick", openPull(q and q.n or 0))
+      b:SetShown(total - 6 <= avail or (q ~= nil and q.n == open))
+    else b:Hide() end
+  end
+  -- (the header: the key, the result, its time against the timer)
+  bossT:SetText(""); resT:SetText(h.boss .. "  +" .. (run.level or "")); resT:SetWidth(W - PAD * 2 - 110)
+  local rt = run.stat == "L" and "Left early" or (timed and "Timed" or "Over time")
+  pill.t:SetText(rt); pill.t:SetTextColor(rgb(timed and COL.goodT or COL.badT)); pill:SetWidth(pill.t:GetStringWidth() + 22)
+  UI.rounded(pill.fillT, "fill", 5, timed and COL.goodBg or COL.badBg, 1); UI.rounded(pill.lineT, "line", 5, timed and "2b5a36" or "6a2f2b", 1)
+  local meta = {}
+  if run.par and run.time > 0 then meta[#meta + 1] = mm(run.time) .. " of " .. mm(run.par) elseif run.time > 0 then meta[#meta + 1] = mm(run.time) end
+  if run.up > 0 then meta[#meta + 1] = "up " .. lv(run.up) end
+  meta[#meta + 1] = cnt(#PL, "pull", "pulls")
+  metaT:SetWidth(W - PAD * 2); metaT:SetText(table.concat(meta, "   ·   "))
+  -- (the tabs: Me and Group)
+  TOPY = 180
+  tMe:ClearAllPoints(); tMe:SetPoint("TOPLEFT", card, "TOPLEFT", PAD - 10, -TOPY + 38)
+  tRaid.t:SetText("Group"); tRaid:SetWidth(tRaid.t:GetStringWidth() + 20); tRaid:ClearAllPoints(); tRaid:SetPoint("LEFT", tMe, "RIGHT", 0, 0)
+  tMe:Show(); tRaid:Show(); tabLine:Show()
+  nextB:ClearAllPoints(); nextB:SetPoint("TOPRIGHT", card, "TOPRIGHT", -PAD, -TOPY + 36)
+  tabLine:ClearAllPoints(); tabLine:SetPoint("TOPLEFT", card, "TOPLEFT", 1, -TOPY + 12); tabLine:SetPoint("TOPRIGHT", card, "TOPRIGHT", -1, -TOPY + 12)
+  scroller:ClearAllPoints(); scroller:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -TOPY)
+  for k, b in pairs(tabs) do local on = (k == view); b.t:SetTextColor(rgb(on and COL.text or COL.muted)); b.u:SetShown(on); b:SetScript("OnClick", function() view = k; DB.viewPicked = true; render() end) end
+  local P = view == "me" and UI.pickWho(CUR) or nil
+  local showWho = view == "me" and #ppl > 1
+  who:SetShown(showWho); prevB:SetShown(showWho); nextB:SetShown(showWho)
+  who:SetWidth(W - PAD * 2 - 190); who:SetText(P and ("|cff" .. UI.classHex(P.cls) .. P.name .. "|r") or ("|cff" .. COL.faint .. "Not in this key|r")); who:SetWidth(math.min(W - PAD * 2 - 190, math.max(40, who:GetStringWidth() + 4)))
+  local function step(dir)
+    if not P then DB.who = (dir > 0 and ppl[1] or ppl[#ppl]).name; render(); return end
+    local idx = 1; for i, q in ipairs(ppl) do if q == P then idx = i end end
+    idx = ((idx - 1 + dir) % #ppl) + 1; DB.who = ppl[idx].name; render()
+  end
+  prevB:SetScript("OnClick", function() step(-1) end); nextB:SetScript("OnClick", function() step(1) end)
+  -- ---- the body ----
+  UI.resetPool(); local y = 2
+  -- (a row: a dot, the spell's icon when there is one, the text; a row that opens a pull is a button)
+  local function mrow(flag, ic, text, onClick)
+    local yA = y
+    if ic and ic ~= "" then y = row(y, flag, ic, text)
+    else
+      local d = TEX("ARTWORK"); d:SetTexture(SLICE .. "dot"); d:SetPoint("TOPLEFT", IND, -(y + 6)); d:SetSize(8, 8); d:SetVertexColor(rgb(FLAG[flag] or COL.faint))
+      local t = FS("body", 13.5, COL.soft); t:SetPoint("TOPLEFT", IND + 16, -y); t:SetWidth(CW - 16 - IND * 2); t:SetText(names(text))
+      y = math.max(y + 21, y + t:GetStringHeight()) + 9
+    end
+    if onClick then local b = BTN(); b:SetPoint("TOPLEFT", 0, -(yA - 4)); b:SetSize(CW, y - yA); b:SetScript("OnClick", onClick) end
+  end
+  -- (a section: a panel in the card style, its title, its rows; a long list shows the first few and "Show N more")
+  local function sec(key, title, rows, limit)
+    if #rows == 0 then return end
+    local y0 = y; IND = 12; y = y + 12
+    y = head(y, title)
+    local n = (EXPANDED["m:" .. key] or not limit) and #rows or math.min(#rows, limit)
+    for i = 1, n do local r = rows[i]; mrow(r[1], r[2], r[3], r[4]) end
+    if #rows > n then y = UI.moreLink(y, "m:" .. key, #rows - n) end
+    y = y + 3
+    if DB.cardStyle == "flat" then local l = TEX("ARTWORK"); l:SetPoint("TOPLEFT", 0, -y); l:SetSize(CW, 1); fill(l, COL.line)
+    else box(y0, y - y0, COL.raised, DB.cardStyle == "glass" and 0.55 or 1, COL.line, 1) end
+    IND = 0; y = y + 10
+  end
+  -- (the casts that got through, repeats grouped: the spell, how many times, whose kick was ready each time (or how often each), and when)
+  local function grouped(L, n)
+    local by, order = {}, {}
+    for _, x in ipairs(L) do local k = x.spell .. "|" .. x.mob; local b = by[k]; if not b then b = { x = x, n = 0, ts = {}, cnt = {}, who = {} }; by[k] = b; order[#order + 1] = k end
+      b.n = b.n + 1; b.ts[#b.ts + 1] = mm(x.t); for _, r in ipairs(x.ready) do if r ~= n then if not b.cnt[r] then b.cnt[r] = 0; b.who[#b.who + 1] = r end; b.cnt[r] = b.cnt[r] + 1 end end end
+    table.sort(order, function(a, c) return by[a].n > by[c].n end)
+    local o = {}
+    for _, k in ipairs(order) do local b = by[k]; local each = true; for _, r in ipairs(b.who) do if b.cnt[r] ~= b.n then each = false end end
+      table.sort(b.who, function(a, c) return b.cnt[a] > b.cnt[c] end)
+      local nm = {}; for _, r in ipairs(b.who) do nm[#nm + 1] = "@" .. r .. ((b.n > 1 and not each) and (" (" .. b.cnt[r] .. ")") or "") end
+      local ready = b.x.cc and " Nobody stunned or stopped it." or (#nm > 0 and (" " .. (n and "Also ready" or "Kick ready") .. ((b.n > 1 and each) and " each time" or "") .. ": " .. table.concat(nm, ", ") .. ".") or "")
+      o[#o + 1] = { "bad", nil, b.x.spell .. " from " .. b.x.mob .. " got through" .. (b.n > 1 and (" " .. b.n .. " times") or "") .. "." .. ready .. "  |cff" .. COL.faint .. table.concat(b.ts, "  ") .. "|r" } end
+    return o
+  end
+  -- (avoidable damage by spell: who: nil names everyone hit, or a word ("you"))
+  local function avoidRows(L, who)
+    local by, order = {}, {}
+    for _, a in ipairs(L) do local b = by[a.spell]; if not b then b = { n = 0, dmg = 0, cnt = {}, who = {} }; by[a.spell] = b; order[#order + 1] = a.spell end
+      b.n = b.n + a.n; b.dmg = b.dmg + a.dmg; if not b.cnt[a.who] then b.cnt[a.who] = 0; b.who[#b.who + 1] = a.who end; b.cnt[a.who] = b.cnt[a.who] + a.n end
+    table.sort(order, function(a, c) return by[a].dmg > by[c].dmg end)
+    local o = {}
+    for _, sp in ipairs(order) do local b = by[sp]
+      local t
+      if who then t = who .. " " .. times(b.n) else table.sort(b.who, function(a, c) return b.cnt[a] > b.cnt[c] end); local nm = {}; for _, r in ipairs(b.who) do nm[#nm + 1] = "@" .. r .. (b.cnt[r] > 1 and (" ×" .. b.cnt[r]) or "") end; t = table.concat(nm, ", ") end
+      o[#o + 1] = { "warn", nil, sp .. " hit " .. t .. " (" .. kN(b.dmg) .. ")." } end
+    return o
+  end
+  local function dispRows(L)
+    local by, order = {}, {}
+    for _, d in ipairs(L) do local k = d.spell .. "|" .. d.kind; local b = by[k]; if not b then b = { spell = d.spell, kind = d.kind, on = 0, removed = 0 }; by[k] = b; order[#order + 1] = k end; b.on = b.on + d.on; b.removed = b.removed + d.removed end
+    local o = {}
+    for _, k in ipairs(order) do local b = by[k]
+      if b.kind == "p" then o[#o + 1] = { b.removed < b.on / 2 and "warn" or "info", nil, b.spell .. " went up on enemies " .. times(b.on) .. ", " .. (b.removed > 0 and (b.removed .. " purged or soothed") or "none purged or soothed") .. "." }
+      else o[#o + 1] = { b.removed < b.on / 2 and "warn" or "info", nil, b.spell .. " landed on players " .. times(b.on) .. ", " .. (b.removed > 0 and (b.removed .. " dispelled") or "none dispelled") .. "." } end end
+    return o
+  end
+  -- (the timer: in time or over, the next level's mark, what the deaths cost, fighting against the time between pulls)
+  local function timerRows()
+    local L = {}
+    if not run.par or run.time <= 0 or run.stat == "L" then return L end
+    if run.up > 0 then
+      local mark = run.up == 3 and run.par * 0.6 or (run.up == 2 and run.par * 0.8 or run.par)
+      local t = "In time: " .. mm(run.time) .. " of " .. mm(run.par) .. ". The key goes up " .. lv(run.up) .. ", with " .. secs(mark - run.time) .. " to spare."
+      if run.next then t = t .. " " .. lv(run.up + 1) .. " needed " .. mm(run.next) .. ", " .. secs(run.time - run.next) .. " short." end
+      L[#L + 1] = { "ok", nil, t }
+    else L[#L + 1] = { "bad", nil, "Over time by " .. secs(run.time - run.par) .. ": " .. mm(run.time) .. " of " .. mm(run.par) .. "." } end
+    if run.dcost > 0 then
+      local better = (run.upw or run.up) > run.up
+      L[#L + 1] = { better and "bad" or "warn", nil, (run.deaths == 1 and "The death" or ("The " .. run.deaths .. " deaths")) .. " cost " .. secs(run.dcost) .. " on the timer." .. (better and (" Without " .. (run.deaths == 1 and "it" or "them") .. (run.up > 0 and (", the key goes up " .. lv(run.upw) .. ".") or ", the key was in time.")) or "") }
+    end
+    if run.fight then L[#L + 1] = { "info", nil, mm(run.fight) .. " fighting, " .. mm(run.between or 0) .. " between pulls." } end
+    return L
+  end
+  local me = UnitName and UnitName("player")
+  local you = P and (P.name == me or P.name:match("^([^%-]+)") == me)
+  local yo = you and "your" or (P and (P.name .. "'s") or "")
+  if S.pull == 0 then
+    sec("timer", "Timer", timerRows())
+    if view == "me" and not P then sec("me", "Me", { { "info", nil, "Your character isn't in this key. Step to anyone with the arrows, or open Group." } })
+    elseif P then
+      -- (Me, the whole key: your numbers, what got through on your kick, your deaths, avoidable damage, your rotation, and your key pull by pull)
+      local n = P.name
+      local nums = { P.role == "healer" and (kN(P.hps) .. " HPS") or (kN(P.dps) .. " DPS"), cnt(P.kicks, "kick", "kicks"), cnt(P.stops, "stop", "stops") }
+      if P.dispels > 0 then nums[#nums + 1] = cnt(P.dispels, "dispel", "dispels") end
+      nums[#nums + 1] = cnt(P.deaths, "death", "deaths"); nums[#nums + 1] = cnt(P.defs, "defensive", "defensives")
+      if P.avoid > 0 then nums[#nums + 1] = cnt(P.avoid, "avoidable hit", "avoidable hits") end
+      sec("you", you and "Your key" or (n .. "'s key"), { { "info", nil, table.concat(nums, "  ·  ") } })
+      if P.kick then
+        local by, order = {}, {}
+        for _, q in ipairs(PL) do for _, x in ipairs(myThr(q, n)) do local b = by[x.spell]; if not b then b = { n = 0, mob = x.mob, pulls = {} }; by[x.spell] = b; order[#order + 1] = x.spell end; b.n = b.n + 1; if b.pulls[#b.pulls] ~= q.n then b.pulls[#b.pulls + 1] = q.n end end end
+        table.sort(order, function(a, c) return by[a].n > by[c].n end)
+        local L = {}; for _, sp in ipairs(order) do local b = by[sp]; L[#L + 1] = { "bad", nil, sp .. " from " .. b.mob .. ", " .. times(b.n) .. " (pull " .. table.concat(b.pulls, ", ") .. ")." } end
+        sec("thr", "Got through while " .. yo .. " kick was ready", L, 5)
+      end
+      local D = {}; for _, q in ipairs(PL) do for _, d in ipairs(q.deaths) do if d.who == n then D[#D + 1] = { "bad", nil, pname(q) .. " at " .. mm(d.t) .. ": died to " .. d.to .. (d.from ~= "" and (" (" .. d.from .. ")") or "") .. (d.defs == 0 and ", no defensive in the 30 s before." or "."), openPull(q.n) } end end end
+      sec("died", you and "Your deaths" or (n .. "'s deaths"), D)
+      local A = {}; for _, q in ipairs(PL) do for _, a in ipairs(q.avoid) do if a.who == n then A[#A + 1] = a end end end
+      sec("avoid", "Avoidable damage", avoidRows(A, you and "you" or n))
+      local R0 = {}; for _, f in ipairs(P.rot) do R0[#R0 + 1] = { f.st, f.ic, f.label .. " needed work in " .. (#f.pulls == f.of and ("all " .. f.of .. " pulls") or (#f.pulls .. " of " .. f.of .. " pulls")) .. "." } end
+      sec("rot", "Rotation across the key", R0)
+      local PR = {}
+      for _, q in ipairs(PL) do
+        local v = q.vals[n] or {}; local dd, av = 0, 0
+        for _, d in ipairs(q.deaths) do if d.who == n then dd = dd + 1 end end
+        for _, a in ipairs(q.avoid) do if a.who == n then av = av + a.n end end
+        local th = P.kick and #myThr(q, n) or 0
+        local bits = { pname(q), mm(q.dur), P.role == "healer" and (kN(v.hps or 0) .. " HPS") or (kN(v.dps or 0) .. " DPS") }
+        if th > 0 then bits[#bits + 1] = th .. " got through" end
+        if av > 0 then bits[#bits + 1] = cnt(av, "avoidable hit", "avoidable hits") end
+        if dd > 0 then bits[#bits + 1] = cnt(dd, "death", "deaths") end
+        PR[#PR + 1] = { dd > 0 and "bad" or ((th > 0 or av > 0) and "warn" or "ok"), nil, table.concat(bits, "  ·  "), openPull(q.n) }
+      end
+      sec("pulls", you and "Your key, pull by pull" or (n .. "'s key, pull by pull"), PR)
+    else
+      -- (Group, the whole key: what got through, avoidable damage, dispels and purges, each player's rotation, everyone's numbers)
+      local by, order = {}, {}
+      for _, q in ipairs(PL) do for _, x in ipairs(q.thr) do local b = by[x.spell]; if not b then b = { n = 0, mob = x.mob, cc = x.cc, pulls = {}, cnt = {}, who = {} }; by[x.spell] = b; order[#order + 1] = x.spell end
+        b.n = b.n + 1; if b.pulls[#b.pulls] ~= q.n then b.pulls[#b.pulls + 1] = q.n end
+        for _, r in ipairs(x.ready) do if not b.cnt[r] then b.cnt[r] = 0; b.who[#b.who + 1] = r end; b.cnt[r] = b.cnt[r] + 1 end end end
+      table.sort(order, function(a, c) return by[a].n > by[c].n end)
+      local L = {}
+      for _, sp in ipairs(order) do local b = by[sp]; table.sort(b.who, function(a, c) return b.cnt[a] > b.cnt[c] end)
+        local nm = {}; for i = 1, math.min(3, #b.who) do nm[#nm + 1] = "@" .. b.who[i] .. " (" .. b.cnt[b.who[i]] .. ")" end
+        L[#L + 1] = { "bad", nil, sp .. " from " .. b.mob .. " got through " .. times(b.n) .. " (pull " .. table.concat(b.pulls, ", ") .. ")." .. (b.cc and " It needs a stun or other crowd control." or (#nm > 0 and (" Kick ready: " .. table.concat(nm, ", ") .. ".") or "")) } end
+      sec("thr", "What got through", L, 5)
+      local A, DS = {}, {}; for _, q in ipairs(PL) do for _, a in ipairs(q.avoid) do A[#A + 1] = a end; for _, d in ipairs(q.ds) do DS[#DS + 1] = d end end
+      sec("avoid", "Avoidable damage", avoidRows(A), 5)
+      sec("disp", "Dispels and purges", dispRows(DS), 5)
+      local RK = {}; for _, q in ipairs(ppl) do local f = q.rot[1]; if f then RK[#RK + 1] = { f.st, f.ic, "@" .. q.name .. ": " .. f.label .. " needed work in " .. (#f.pulls == f.of and ("all " .. f.of .. " pulls") or (#f.pulls .. " of " .. f.of .. " pulls")) .. "." } end end
+      sec("rot", "Rotation across the key", RK)
+      local E = {}; for _, q in ipairs(ppl) do E[#E + 1] = { q.deaths > 0 and "bad" or "info", nil, "@" .. q.name .. "  " .. q.spec .. ":  " .. (q.role == "healer" and (kN(q.hps) .. " HPS") or (kN(q.dps) .. " DPS")) .. "  ·  " .. cnt(q.kicks, "kick", "kicks") .. "  ·  " .. cnt(q.stops, "stop", "stops") .. "  ·  " .. cnt(q.deaths, "death", "deaths") } end
+      sec("all", "Everyone", E)
+    end
+  else
+    local q = K.byN[S.pull]
+    if not q then S.pull = 0; return UI.mplus(raw) end
+    -- (the pull: when, and what was in it)
+    local t0 = FS("bold", 15, COL.text); t0:SetPoint("TOPLEFT", 0, -y); t0:SetWidth(CW); t0:SetText(pname(q) .. (q.kill and "  ·  Kill" or "") .. "  ·  " .. mm(q.dur)); y = y + t0:GetStringHeight() + 4
+    local t1 = FS("body", 13, COL.muted); t1:SetPoint("TOPLEFT", 0, -y); t1:SetWidth(CW); t1:SetText("at " .. mm(q.s) .. (q.mobs ~= "" and ("  ·  " .. q.mobs) or "")); y = y + t1:GetStringHeight() + 12
+    if view == "me" and not P then sec("me", "Me", { { "info", nil, "Your character isn't in this key. Step to anyone with the arrows, or open Group." } })
+    elseif P then
+      -- (Me, one pull: what got through on your kick, deaths, avoidable damage, your rotation, kicks and stops, defensives, dispels)
+      local n = P.name
+      local th = P.kick and myThr(q, n) or {}
+      local D, A = {}, {}
+      for _, d in ipairs(q.deaths) do if d.who == n then D[#D + 1] = { "bad", nil, mm(d.t) .. "  ·  died to " .. d.to .. (d.from ~= "" and (" (" .. d.from .. ")") or "") .. (d.defs == 0 and ", no defensive in the 30 s before." or ".") } end end
+      for _, a in ipairs(q.avoid) do if a.who == n then A[#A + 1] = a end end
+      local RO = q.rot[n] or {}
+      if #th == 0 and #D == 0 and #A == 0 and #RO == 0 then sec("ok", "This pull", { { "ok", nil, "Nothing to fix for " .. (you and "you" or n) .. " on this pull." } }) end
+      sec("thr", "Got through while " .. yo .. " kick was ready", grouped(th, n))
+      sec("died", "Deaths", D)
+      sec("avoid", "Avoidable damage", avoidRows(A, you and "you" or n))
+      local RR = {}; for _, f in ipairs(RO) do RR[#RR + 1] = { f.st, f.ic, f.line ~= "" and f.line or f.label } end
+      if (q.good[n] or "") ~= "" then RR[#RR + 1] = { "ok", nil, "Went well: " .. (q.good[n]:gsub(";", ", ")) .. "." } end
+      sec("rot", "Rotation", RR)
+      local KS = {}; for _, x in ipairs(q.kicks) do if x.who == n then KS[#KS + 1] = { "ok", nil, mm(x.t) .. "  ·  " .. (x.kind == "k" and "Kicked " or "Stopped ") .. x.spell .. " from " .. x.mob .. (x.kind == "k" and (" (" .. x.with .. ")") or (" with " .. x.with)) .. "." } end end
+      sec("kicks", "Kicks and stops", KS, 6)
+      if q.defs[n] then sec("defs", "Defensives", { { "info", nil, (q.defs[n]:gsub(";", ", ")) .. "." } }) end
+      local v = q.vals[n]; if v and (v.ds + v.ps) > 0 then sec("disp", "Dispels and purges", { { "info", nil, cnt(v.ds, "dispel", "dispels") .. ", " .. cnt(v.ps, "purge or soothe", "purges and soothes") .. "." } }) end
+    else
+      -- (Group, one pull: what got through, avoidable damage, kicks and stops by player, deaths, rotation, defensives, dispels, damage and healing)
+      sec("thr", "Got through", grouped(q.thr, nil), 5)
+      sec("avoid", "Avoidable damage", avoidRows(q.avoid), 5)
+      local per, po = {}, {}
+      for _, x in ipairs(q.kicks) do local b = per[x.who]; if not b then b = { k = 0, s = 0, with = {} }; per[x.who] = b; po[#po + 1] = x.who end
+        if x.kind == "k" then b.k = b.k + 1 else b.s = b.s + 1; if not has(b.with, x.with) then b.with[#b.with + 1] = x.with end end end
+      table.sort(po, function(a, c) return (per[a].k + per[a].s) > (per[c].k + per[c].s) end)
+      local KS = {}; for _, w in ipairs(po) do local b = per[w]; local bits = {}
+        if b.k > 0 then bits[#bits + 1] = cnt(b.k, "kick", "kicks") end
+        if b.s > 0 then bits[#bits + 1] = cnt(b.s, "stop", "stops") .. " (" .. table.concat(b.with, ", ") .. ")" end
+        KS[#KS + 1] = { "ok", nil, "@" .. w .. ": " .. table.concat(bits, ", ") .. "." } end
+      sec("kicks", "Kicks and stops", KS)
+      local D = {}; for _, d in ipairs(q.deaths) do D[#D + 1] = { "bad", nil, mm(d.t) .. "  ·  @" .. d.who .. " died to " .. d.to .. (d.from ~= "" and (" (" .. d.from .. ")") or "") .. (d.defs == 0 and ", no defensive in the 30 s before." or ".") } end
+      sec("died", "Deaths", D)
+      local RK = {}; for _, w in ipairs(ppl) do local L0 = q.rot[w.name]; if L0 and L0[1] then local f = L0[1]; RK[#RK + 1] = { f.st, f.ic, "@" .. w.name .. ": " .. f.label .. (f.v ~= "" and (" (" .. f.v .. ")") or "") .. (#L0 > 1 and (", and " .. (#L0 - 1) .. " more") or "") .. "." } end end
+      sec("rot", "Rotation", RK)
+      local DF = {}; for _, w in ipairs(ppl) do if q.defs[w.name] then DF[#DF + 1] = { "info", nil, "@" .. w.name .. ": " .. (q.defs[w.name]:gsub(";", ", ")) .. "." } end end
+      sec("defs", "Defensives", DF)
+      local DP = dispRows(q.ds); for _, w in ipairs(ppl) do local v = q.vals[w.name]; if v and (v.ds + v.ps) > 0 then DP[#DP + 1] = { "info", nil, "@" .. w.name .. ": " .. cnt(v.ds, "dispel", "dispels") .. (v.ps > 0 and (", " .. cnt(v.ps, "purge or soothe", "purges and soothes")) or "") .. "." } end end
+      sec("disp", "Dispels and purges", DP)
+      local ord = {}; for _, w in ipairs(ppl) do ord[#ord + 1] = w end
+      table.sort(ord, function(a, c) return ((q.vals[a.name] or {}).dps or 0) > ((q.vals[c.name] or {}).dps or 0) end)
+      local DM = {}; for _, w in ipairs(ord) do local v = q.vals[w.name] or {}; DM[#DM + 1] = { "info", nil, "@" .. w.name .. ":  " .. kN(v.dps or 0) .. " DPS" .. ((v.hps or 0) > 0 and ("  ·  " .. kN(v.hps) .. " HPS") or "") } end
+      sec("dmg", "Damage and healing", DM)
+    end
+  end
+  -- (never taller than the screen: the rest scrolls, and the footer says so; as the boss card does)
+  body:SetHeight(math.max(10, y))
+  local room = math.max(320, ((UIParent and UIParent.GetHeight and UIParent:GetHeight()) or 768) / math.max(0.5, (card.GetScale and card:GetScale()) or 1) - 60)
+  local vh = math.max(10, math.min(y, room - TOPY - 42))
+  scroller:SetSize(W - PAD * 2, vh)
+  scroller:SetVerticalScroll(math.min((scroller:GetVerticalScroll() or 0), math.max(0, y - vh)))
+  foot:SetText(y > vh + 4 and "Scroll for more  ·  /recap opens this again" or "/recap opens this again  ·  /db settings")
+  footLine:ClearAllPoints(); footLine:SetPoint("TOPLEFT", card, "TOPLEFT", 1, -(TOPY + vh + 10)); footLine:SetPoint("TOPRIGHT", card, "TOPRIGHT", -1, -(TOPY + vh + 10))
+  foot:ClearAllPoints(); foot:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -(TOPY + vh + 19)); foot:SetWidth(W - PAD * 2); foot:SetWordWrap(false)
+  card:SetHeight(TOPY + vh + 42)
+end
 local function renderOnce()
   UI.col(1)
-  local raw = DB.pulls[DB.cur]; local m = UI.cutView(raw); CUR = m
+  local raw = DB.pulls[DB.cur]
+  if raw and raw.mplus then UI.mplus(raw); return end -- (a Mythic+ key: its own card (Nov 1))
+  local m = UI.cutView(raw); CUR = m
   if not m then return end
   local T = UI.two; T.n = 0; T.marks = {}; T.total = nil
   -- (two columns side by side when the card is long (Oct 24): CW is one column's width, W the whole card's)
@@ -817,6 +1109,7 @@ local function renderOnce()
   tabLine:ClearAllPoints(); tabLine:SetPoint("TOPLEFT", card, "TOPLEFT", 1, -TOPY + 12); tabLine:SetPoint("TOPRIGHT", card, "TOPRIGHT", -1, -TOPY + 12)
   scroller:ClearAllPoints(); scroller:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -TOPY)
   -- tabs
+  tRaid.t:SetText("Raid view"); tRaid:SetWidth(tRaid.t:GetStringWidth() + 20) -- (a key's card calls it Group (Nov 1))
   local raidOk = not m.h.dungeon -- (the Raid view is everyone's, no raid sharing (Oct 25); a dungeon boss has none (Oct 24))
   tRaid:SetShown(raidOk and not glanceOn); tMe:SetShown(not glanceOn); tabLine:SetShown(not glanceOn)
   if not raidOk then view = "me" end
@@ -2612,15 +2905,17 @@ end)
 -- (shown above the card while it's open, or on its own when there's no card yet)
 function Debrief_BringShow(alone)
   if behindN == 0 or not DB or not (DEBRIEF_HAS_APP or DB.hasApp) or (Debrief_PreviewReal and Debrief_PreviewReal()) then bring:Hide(); return end -- (not over the sample card in /db or the setup)
+  if behindN == 1 and bring.key then bring.t:SetText("Your " .. bring.key .. " isn't in the addon yet."); bringB.t:SetText("Save this key") else
   bring.t:SetText(behindN == 1 and ("Your newest pull" .. ((behindBoss and behindBoss ~= "") and (" on " .. behindBoss) or "") .. " isn't in the addon yet.") or (behindN .. " newer pulls aren't in the addon yet."))
-  bringB.t:SetText(behindN == 1 and "Save this pull" or "Save these pulls")
+  bringB.t:SetText(behindN == 1 and "Save this pull" or "Save these pulls") end
   bring:ClearAllPoints(); bring.alone = nil
   if card:IsShown() then bring:SetParent(card); bring:SetFrameStrata("HIGH"); bring:SetPoint("BOTTOMLEFT", card, "TOPLEFT", 0, 6); bring:SetPoint("BOTTOMRIGHT", card, "TOPRIGHT", 0, 6); bring:Show()
   elseif alone then bring:SetParent(UIParent); bring:SetFrameStrata("HIGH"); bring:SetSize(400, 36); bring:SetPoint("CENTER", UIParent, "CENTER", 260, 160); bring.alone = true; bring:Show()
   else bring:Hide() end
 end
 -- (a boss fight ended: its recap is on the PC now, not yet here)
-function Debrief_Behind(boss) behindN = behindN + 1; behindBoss = boss; Debrief_BringShow() end
+-- (a key that just ended (Nov 1): "Your Altar of Fangs key isn't in the addon yet." with Save this key)
+function Debrief_Behind(boss, key) behindN = behindN + 1; behindBoss = boss; bring.key = key; Debrief_BringShow() end
 function Debrief_BringIsShown() return bring:IsShown(), behindN end -- (for tests)
 
 -- ---------- opening it: key, slash command ----------
@@ -2659,6 +2954,7 @@ end
 
 local ev = CreateFrame("Frame")
 ev:RegisterEvent("ADDON_LOADED"); ev:RegisterEvent("PLAYER_LOGIN"); ev:RegisterEvent("PLAYER_LOGOUT"); ev:RegisterEvent("PLAYER_REGEN_ENABLED"); ev:RegisterEvent("PLAYER_REGEN_DISABLED"); ev:RegisterEvent("ENCOUNTER_END"); ev:RegisterEvent("PLAYER_ENTERING_WORLD"); ev:RegisterEvent("ZONE_CHANGED_NEW_AREA"); ev:RegisterEvent("PLAYER_TARGET_CHANGED"); ev:RegisterEvent("READY_CHECK"); ev:RegisterEvent("ENCOUNTER_START")
+pcall(ev.RegisterEvent, ev, "CHALLENGE_MODE_COMPLETED") -- (a Mythic+ key ended (Nov 1); pcall: an unknown event would stop the addon loading)
 -- (the combat log and Advanced Combat Logging are always on while Debrief is loaded, everywhere, so nobody has to type /combatlog;
 -- Debrief Companion reads the log. Never a switch (Oct 26, the user: "combatlogging should not be a toggle"): turned on at login, on every
 -- zone change, after every fight and at every ready check, so it's on again even if something else turned it off)
@@ -2701,14 +2997,18 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4, a5)
     end
   elseif e == "ENCOUNTER_START" then encStart = GetTime and GetTime() or nil
   elseif e == "ENCOUNTER_END" then
-    -- (a nudge after a boss (Oct 24): the recap is on your PC at once; WoW brings it in at /reload. Every raid boss, and dungeon bosses only
-    -- in a Mythic+ key (Nov 1, the user: "Only do dungeons for mythic +"); a boss reset within 10 s gets no recap, so no strip either)
+    -- (a nudge after a boss (Oct 24): the recap is on your PC at once; WoW brings it in at /reload. Every raid boss; a boss reset within 10 s
+    -- gets no recap, so no strip either. Not inside a Mythic+ key (Nov 1): the key comes as one recap at its end, offered then)
     local itype = GetInstanceInfo and select(2, GetInstanceInfo())
-    local raidBoss = (itype == "raid" or a3 == 14 or a3 == 15 or a3 == 16 or a3 == 17 or a3 == 8) and not (a5 ~= 1 and encStart and GetTime and GetTime() - encStart < 10)
+    local raidBoss = (itype == "raid" or a3 == 14 or a3 == 15 or a3 == 16 or a3 == 17) and not (a5 ~= 1 and encStart and GetTime and GetTime() - encStart < 10)
     if DB and raidBoss and (DEBRIEF_HAS_APP or DB.hasApp) then Debrief_Behind(a2) end -- (Save this pull on the card (Oct 25))
     if DB and raidBoss and (DEBRIEF_HAS_APP or DB.hasApp) and DB.nudge == true and C_Timer then -- (off unless you switch it on (Oct 25))
       local boss = a2; C_Timer.After(6, function() say("your recap" .. ((boss and boss ~= "") and (" for " .. boss) or "") .. " is up on your PC. /recap and Save this pull adds it here too.") end)
     end
+  elseif e == "CHALLENGE_MODE_COMPLETED" then
+    -- (a Mythic+ key ended (Nov 1): the app reads the whole key and saves its run recap a few seconds later; then Save this key brings it in)
+    local nm = GetInstanceInfo and GetInstanceInfo() or ""
+    if DB and (DEBRIEF_HAS_APP or DB.hasApp) and C_Timer then C_Timer.After(12, function() Debrief_Behind(nm, ((nm or "") ~= "" and nm or "Mythic+") .. " key") end) end
   elseif e == "PLAYER_LOGOUT" then Debrief_PreviewOff() -- (never save the sample in place of your pulls)
   elseif e == "ZONE_CHANGED_NEW_AREA" then
     if C_Timer then C_Timer.After(2, autoLog) end

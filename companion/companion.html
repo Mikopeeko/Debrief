@@ -463,6 +463,9 @@ function mplusShow(r) {
       // (Rotation per pull (Nov 1): the website's checks on each pull, in the card's own short lines; a few seconds for a whole key)
       const CB = window.DBF_CARDBITS || {};
       if (window.DBF_MPLUS_ROT && W.specRun) { stat('Checking everyone\'s rotation…', 'busy'); try { await window.DBF_MPLUS_ROT(R, txt, W, { line: CB.slipLine, icon: (n) => (CB.spellId ? CB.spellId(W, n) : '') }); } catch (e) { console.error(e); } }
+      // (and the key for the addon (Nov 1, the in-game card): Save this key in WoW brings the run recap in, as a saved pull)
+      try { if (L.name) { const key = L.name + ':' + r.startByte, code = RECAP.encodeMplus(R, r.startMs ? new Date(r.startMs - 6 * 3600e3).toISOString().slice(0, 10).replace(/-/g, '') : '');
+        j('/addonpull', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key, code }) }).catch(() => {}); markSaved(key); } } catch (e) { console.error(e); }
       L.popUp = true; j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: true, data: { full: true, mplus: R }, sound: $('snd').checked }) }).catch(() => {});
     } catch (e) { console.error(e); }
     stat(L.live ? 'Watching your combat log' : '', L.live ? 'live' : '');
@@ -872,6 +875,36 @@ RECAP.encode = (m) => {
   if (m.wc) rec.push(['WC', m.wc.at, m.wc.txt]); // (the wipe call: when and why (Oct 23))
   if (m.grade) rec.push(['RG', m.grade.letter, m.grade.score, m.grade.cats]); // (the Report card grade, for the card's chip (Oct 22))
   if (RECAP.addonV) rec.push(['V', RECAP.addonV, RECAP.appV || '']); /* (and the app version: a newer copy of the same pull wins in WoW (Oct 24)) */ // (the addon version this app carries: an older addon then says /reload, or where to get the new one)
+  rec.push(['Z']);
+  return rec.map((r) => r.map(clean).join('~')).join('^');
+};
+// (a Mythic+ key for the addon (Nov 1, the in-game card): the run recap, coded the same way, M lines after the H line.
+// MR~level~T|O|L~time~timer~levels up~next level's mark~deaths' cost~deaths~levels up without them~fighting~between pulls~score
+// MP~name~CLASS~spec~role~dps~hps~kicks~stops~defensives~deaths~dispels~purges~avoidable hits~has a kick   MU~pull~boss~kill~start~length~enemies
+// MT~pull~time~spell~enemy~needs CC~kick ready (a;b)   MA~pull~who~spell~hits~damage   MD~pull~time~who~died to~from~defensives before
+// MK~pull~time~who~k|s~spell~enemy~with   MF~pull~who~defensives (a;b)   MV~pull~who~dps~hps~dispels~purges   MS~pull~spell~landed~removed~d|p
+// MO~pull~who~flag~icon~check~value~line   MG~pull~who~went well (a;b)   MX~who~flag~icon~check~pulls (1;3)~pulls checked)
+RECAP.encodeMplus = (R, night) => {
+  const run = R.run, c = run.clock || {}, n0 = (v) => (v == null ? '' : Math.round(v));
+  const rec = [['DBF1'], ['H', run.dungeon, 'Mythic+ ' + run.level, 1, run.timed && !run.left ? 1 : 0, '', mmss(run.timeMs / 1000), '', R.pulls.reduce((a, o) => a + o.deaths.length, 0), 1, night || ''],
+    ['MR', run.level, run.left ? 'L' : run.timed ? 'T' : 'O', n0(c.time != null ? c.time : run.timeMs / 1000), n0(c.par), n0(c.up), n0(c.next), n0(c.deathCost), n0(c.deaths), n0(c.upWithout), n0(c.fight), n0(c.between), n0(run.score)]];
+  for (const p of R.people) rec.push(['MP', p.name, p.cls, p.spec, p.role, p.dps, p.hps, p.kicks, p.stops, p.defs, p.deaths, p.dispels, p.purges || 0, p.avoid || 0, p.kick ? 1 : '']);
+  for (const o of R.pulls) {
+    rec.push(['MU', o.n, o.boss || '', o.kill ? 1 : '', n0(o.s), n0(o.dur), o.mobs.slice(0, 5).map((m) => (m[1] > 1 ? m[1] + ' ' : '') + m[0]).join(', ')]);
+    for (const x of o.through) rec.push(['MT', o.n, n0(x.t), x.spell, x.mob, x.cc ? 1 : '', x.ready.join(';')]);
+    for (const a of o.avoid || []) rec.push(['MA', o.n, a.who, a.spell, a.n, a.dmg]);
+    for (const d of o.deaths) rec.push(['MD', o.n, n0(d.t), d.who, d.to, d.from || '', d.defs || 0]);
+    for (const x of o.kicks) rec.push(['MK', o.n, n0(x.t), x.who, 'k', x.spell, x.mob, x.with]);
+    for (const x of o.stops) rec.push(['MK', o.n, n0(x.t), x.who, 's', x.spell, x.mob, x.with]);
+    const dpl = new Map(); for (const x of o.defs) dpl.set(x.who, (dpl.get(x.who) || []).concat(x.name));
+    for (const [w, l] of dpl) rec.push(['MF', o.n, w, [...new Set(l)].join(';')]);
+    for (const p of R.people) { const ds = o.dispels.filter((x) => x.who === p.name).length, ps = (o.purges || []).filter((x) => x.who === p.name).length; rec.push(['MV', o.n, p.name, o.dmg[p.name] || 0, o.heal[p.name] || 0, ds, ps]); }
+    for (const d of o.debs || []) if (d.on) rec.push(['MS', o.n, d.spell, d.on, d.removed, 'd']);
+    for (const d of o.ebuffs || []) if (d.on) rec.push(['MS', o.n, d.spell, d.on, d.removed, 'p']);
+    for (const [w, r] of Object.entries(o.rot || {})) { for (const f of r.fix) rec.push(['MO', o.n, w, f[0], f[1] || '', f[2], f[3], f[4]]); if (r.good && r.good.length) rec.push(['MG', o.n, w, r.good.join(';')]); }
+  }
+  for (const p of R.people) for (const f of (p.rot && p.rot.fix) || []) rec.push(['MX', p.name, f.st, f.ic || '', f.label, f.pulls.join(';'), p.rot.pulls]);
+  if (RECAP.addonV) rec.push(['V', RECAP.addonV, RECAP.appV || '']);
   rec.push(['Z']);
   return rec.map((r) => r.map(clean).join('~')).join('^');
 };
