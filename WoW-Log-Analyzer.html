@@ -12875,6 +12875,15 @@ html:where([data-theme]) body #view .mx-p .md.amp .md-i{border-top-color:var(--l
 html body #view .mxa-p .mx-tb > .u1-m.r451-under,html body #view .mx-p.mx-p .mx-tb > .u1-m.r451-under{grid-column:1 / -1;margin:6px 0 12px;padding:0}
 html body #view .mxa-p .mx-tb > .u1-m.r451-under .u1-cap{font-size:12.5px;color:var(--muted)}
 </style>
+<style id="rcss-454">
+/* round 454 selected tab: one mark, on the divider */
+html body .tabbar .tab.tab.tab{border-radius:0 !important;background:transparent !important;box-shadow:none !important;margin-bottom:-1px !important;border-bottom:2px solid transparent !important}
+html body .tabbar .tab.tab.tab.on{color:var(--text) !important;border-bottom-color:var(--gold) !important}
+html body .tabbar .tab.tab.tab.on svg,html body .tabbar .tab.tab.tab.on .ic,html body .tabbar .tab.tab.tab.on i:not(.badge){color:var(--gold) !important}
+html body .tabbar .tab.tab.tab:not(.on):hover{color:var(--text) !important;background:transparent !important}
+html body .tabbar.tabbar.tabbar{background:transparent !important;border-bottom:0 !important;box-shadow:none !important}
+html body .tabbar.tabbar.tabbar > .tabs{background:var(--bg) !important;border-bottom:1px solid var(--line) !important}
+</style>
 </head>
 <body class="refine">
 <noscript><h1>Debrief: WoW raid log review for Mythic progression</h1><p>Debrief reads your World of Warcraft raid logs, from a Warcraft Logs report or your own combat log, and explains every pull: which mechanics were missed and by whom, why each player died, how your rotation compared with the top players, and what to fix before the next pull.</p><p>It also has Heroic and Mythic boss guides for every boss in the raid, a raid cooldown planner that reads Northern Sky Raid Tools (NSRT) notes, and an in-game addon. Debrief needs JavaScript turned on.</p></noscript>
@@ -23121,6 +23130,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-11-01', h: [], n: [
+    "The selected tab is marked once: white text, an accent icon and a thin line right on the divider (no grey box), and the tab bar is as wide as the page instead of running edge to edge.",
     "The Coiled Altar: Soul Sever's map draws each ghost where it most likely was when the frontal landed (an estimate: the log only says where ghosts spawn), and a ghost Soul Sever missed is a Moderate mistake for the player it was chasing.",
     "The Coiled Altar: a moving map for Gloombomb's soul fragments: where the bomb went off, the player walking to each fragment (each one disappears as it's picked up, with when), and how many were left. A Gravebound death with all three picked up now says so: each fragment hurts, and the last one's hit can kill.",
     "Debriefing is quicker to put together: building a pull used to freeze the page for about 2.6 s, now about 0.8 s, and nothing keeps working away in the background once it shows.",
