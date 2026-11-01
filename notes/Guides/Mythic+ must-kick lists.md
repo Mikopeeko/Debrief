@@ -162,3 +162,20 @@ T# means trash before boss #, B# means boss #, and * means dispel only after a f
   - Imbued Conduction (Imbued Stormcaller)
 - **Purge or soothe:** Accumulate Charge (Agitated Nimbus)
 - **Dodge:** Burrow (Merektha)
+
+## Trash you can dodge (Nov 1)
+The guides list boss mechanics only, so trash came from your keys. I looked for enemy spells that hit only some of the group, weren't aimed at a player, and weren't mostly on the tank, then read each spell's Wowhead text.
+
+**Counted:**
+- Suppression Slam (Kings' Rest, Animated Guardian): a frontal cone that stuns.
+- Septic Spatter (Altar of Fangs, Venom Leech): the pools left when the leech pops.
+- Flame Breath (Ruby Life Pools, Flamegullet): a frontal cone.
+- Rotten Ground (Den of Nalorakk, Thornclaw Gatherer): a puddle. One hit each time someone steps in and it ticks on them; stepping out within a second doesn't count.
+
+**Left out:**
+- **Aimed at a player:** Laced Edge (teleports behind a player), Arrow Barrage, Slither Strike, Serrated Charge, Lightning Torrent, the bolts.
+- **Hits everyone:** Rattle, Toxic Surge, Venom Burst, Thunderous Stomp, Caustic Stomp, Release Charge.
+- **On the tank:** Ravenous Claws, Duostrike.
+- **Unclear who could have moved:** Spark Step, Stormcloud Detonation, Dark Revelation, Infest. The chosen player is hit either way.
+
+**Not checked yet:** Murder Row, The Blinding Vale and Voidscar Arena trash (no keys of those yet).
