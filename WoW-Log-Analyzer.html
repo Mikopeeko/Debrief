@@ -13439,6 +13439,7 @@ function createIndexer(opts) {
       } else if (ev === 'CHALLENGE_MODE_START') {
         run = { kind: 'run', boss: f[0], zone: f[0], level: +f[3], diff: '+' + f[3], startMs: ts.ms, startByte: start, endByte: 0,
           kill: false, result: 'In progress', duration: 0, bosses: [] }; // (not listed: raids only)
+        if (withDungeons) runs.push(run); // (the in-game app reads the whole key at its end: the Mythic+ run recap (Nov 1))
       } else if (ev === 'CHALLENGE_MODE_END' && run) {
         run.kill = f[1] === '1'; run.result = run.kill ? 'Timed' : 'Depleted';
         run.duration = num(f[3]) / 1000 || (ts.ms - run.startMs) / 1000; run.endByte = end; run = null;
