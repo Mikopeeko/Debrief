@@ -772,7 +772,8 @@ local SHUT = { rotation = true, boss = true, surv = true, died = true }
 local UI = { startsShut = function(key, n) return n > 0 and SHUT[key] and DB.openSecs == false end, rotRow = rotRow, rotGood = rotGood, rowS = rowS, wipeRow = wipeRow, trendCards = trendCards, cardCharts = cardCharts, cardGrade = cardGrade, parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded, pullQ = pullQ, worst = worstFirst, col = useCol, colFrame = colFrame, two = { cols = 1, brk = 0, n = 0, marks = {} } }
 -- (the newest saved pull the character you're on was in (Oct 27): the card opens there at login, so a Paladin's card isn't a key the Druid ran)
 UI.ownNewest = function() local me = meName(); if not me then return end
-  for i = #DB.pulls, 1, -1 do for _, p in ipairs(DB.pulls[i].players or {}) do if p.name == me or p.name:match("^([^%-]+)") == me then return i end end end end
+  for i = #DB.pulls, 1, -1 do local q = DB.pulls[i]; for _, p in ipairs(q.players or {}) do if p.name == me or p.name:match("^([^%-]+)") == me then return i end end
+    for _, p in ipairs(q.mplus and q.mplus.people or {}) do if p.name == me or p.name:match("^([^%-]+)") == me then return i end end end end -- (a key you were in counts too (Nov 1))
 UI.ring = { { tMe, tRaid }, { prevB, nextB }, { bigBtn } } -- (the setup's step 4 rings these on the sample card, numbered (Oct 26))
 -- ---------- the Mythic+ run recap on the card (Nov 1, the in-game card): a Run tab and a tab per pull (the chips: Run, then the pulls around
 -- the one open), Me and Group (the tabs; ‹ › steps through the group), the same sections and words as the PC pop-up, in the card's own rows ----------
