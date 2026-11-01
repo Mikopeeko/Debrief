@@ -67,6 +67,11 @@ namespace Debrief {
                     Item(sb, ref first, lineStart, abs + i + 1, Encoding.UTF8.GetString(head, 0, hn).TrimEnd('\r'));
                     break;
                   }
+                  // (a zone change (Nov 1): leaving the dungeon ends a key for the run recap; a few lines an hour)
+                  if (head[k] == 32 && head[k + 1] == 32 && head[k + 2] == 90 && head[k + 3] == 79 && head[k + 4] == 78 && head[k + 5] == 69 && head[k + 6] == 95 && head[k + 7] == 67) {
+                    Item(sb, ref first, lineStart, abs + i + 1, Encoding.UTF8.GetString(head, 0, hn).TrimEnd('\r'));
+                    break;
+                  }
                   if (head[k] == 32 && head[k + 1] == 32 && head[k + 2] == 69 && head[k + 3] == 78 && head[k + 4] == 67 && head[k + 11] == 95) {
                     if (dm.open) Close(dm, sb, ref first);
                     dm.enc = head[k + 12] == 83; if (!dm.enc) dm.ended = DateTime.UtcNow; // (ENCOUNTER_START opens a boss pull, ENCOUNTER_END closes it)

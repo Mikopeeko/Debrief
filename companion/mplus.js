@@ -63,7 +63,7 @@ function build(text, E) {
   const owners = new Map(); // pet guid -> player guid
   const P = (g, n) => { let p = players.get(g); if (!p) { p = { guid: g, name: short(n), cls: '', spec: '' }; players.set(g, p); } if (n && !p.name) p.name = short(n); return p; };
   const ev = []; // [t, kind, ...]
-  const encs = []; let enc = null, LIST = null;
+  const encs = []; let enc = null, LIST = null, lastT = 0;
   let t0 = null;
   for (const line of lines) {
     const ts = E.parseTs(line); if (!ts) continue;
@@ -73,7 +73,8 @@ function build(text, E) {
     const t = (ts.ms - t0) / 1000;
     const f = E.split(line, c + 1);
     if (e === 'CHALLENGE_MODE_START') { run.dungeon = f[0]; run.level = num(f[3]); run.affixes = String(f[4] || '').replace(/[[\]]/g, '').split(/,/).filter(Boolean).map(Number); run.inst = f[1]; LIST = listFor(f[0]); continue; }
-    if (e === 'ZONE_CHANGE' && run.inst && f[0] !== run.inst) { run.left = t; break; } /* (the group left the dungeon: the key ends here for the recap) */
+    if (e === 'ZONE_CHANGE' && run.inst && f[0] !== run.inst && f[1] !== 'UNKNOWN AREA') { run.left = t; break; } /* (the group left the dungeon: the key ends here for the recap; a loading screen isn't leaving) */
+    lastT = t;
     if (e === 'CHALLENGE_MODE_END') { run.timed = f[1] === '1'; run.timeMs = num(f[3]); run.score = num(f[4]) || null; run.end = t; continue; }
     if (e === 'COMBATANT_INFO') { let s = num(f[24]); if (!E.SPECS[s]) s = num(f[23]); const p = P(f[0]); if (E.SPECS[s]) { p.spec = E.SPECS[s][0]; p.cls = E.SPECS[s][1]; p.specId = s; } continue; }
     if (e === 'ENCOUNTER_START') { enc = { id: num(f[0]), boss: f[1], s: t, e: null }; encs.push(enc); continue; }
@@ -121,6 +122,7 @@ function build(text, E) {
     }
   }
   if (!players.size) return null;
+  if (run.end == null && run.left == null) run.left = lastT; /* (no end line: the app ended the key where the group left the dungeon (Nov 1)) */
   for (const p of players.values()) p.role = roleOf(p.spec);
   // ---- pulls: bosses are their own; trash starts when new enemies are engaged after the last pack is dead, or after a 4 s lull ----
   const pulls = [], alive = new Set(), seen = new Set(); let cur = null, last = -1e9;
