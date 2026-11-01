@@ -2025,6 +2025,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-11-01', h: [], n: [
+    "The Coiled Altar: Soul Sever's map draws each ghost where it most likely was when the frontal landed (an estimate: the log only says where ghosts spawn), and a ghost Soul Sever missed is a Moderate mistake for the player it was chasing.",
     "The Coiled Altar: a map for Gloombomb's soul fragments: where the bomb went off, each fragment the player picked up and when, and how many were left. A Gravebound death with all three picked up now says so: each fragment hurts, and the last one's hit can kill.",
     "Debriefing is quicker to put together: building a pull used to freeze the page for about 2.6 s, now about 0.8 s, and nothing keeps working away in the background once it shows.",
     "Debriefing opens in one go: the loading card stays up a moment longer while the page is put together, then the whole pull shows at once with a short fade, instead of Why we wiped and the Timeline being drawn again and again while it loaded.",

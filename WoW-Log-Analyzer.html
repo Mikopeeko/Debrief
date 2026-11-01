@@ -17358,21 +17358,28 @@ function buildCoiledAltar(ev, r, h) {
     const snap = h.snap(f.t), boss = snap.find((p) => p.guid === f.src) || snap.find((p) => p.kind === 'boss' && mal.includes(p.guid)), tk = snap.find((p) => p.guid === tankG);
     const cone = boss && tk ? { x: boss.x, y: boss.y, dir: Math.atan2(tk.y - boss.y, tk.x - boss.x), half: Math.PI / 6, r: 45, at: f.t, name: S(f.n)[1], tank: tk.name || '' } : null; // Soul Sever: 60 degrees, 45 yards (Wowhead)
     const inCone = (g) => { if (!cone) return false; const x = g.pts[0][1] - cone.x, y = g.pts[0][2] - cone.y, d = Math.hypot(x, y); let a = Math.abs(Math.atan2(y, x) - cone.dir); if (a > Math.PI) a = 2 * Math.PI - a; return d <= cone.r + 2 && a <= cone.half; };
-    const logged = (g) => { const ht = hitBy.get(g.guid); return ht != null && ht >= f.t - 0.5 && ht <= f.t + 1.5; };
+    const logged = (g) => { const ht = hitBy.get(g.guid); if (ht != null && ht >= f.t - 0.5 && ht <= f.t + 1.5) return true; /* round 447 ghost spots: its fixate came off its player as the frontal landed */ return auras('unnerving fixation').some((e) => e.op === 'remove' && e.src === g.guid && e.t >= f.t - 0.3 && e.t <= f.t + 1.5); };
     // Soul Sever hits are logged on every ghost; Blighted Sever's mostly aren't, so it also counts ghosts whose spawn spot is in the cone (an estimate)
     const est = f.n === 'blighted sever';
-    const removed = out.filter((g) => logged(g) || (est && inCone(g))), missed = out.filter((g) => !removed.includes(g));
+    const removed = out.filter((g) => logged(g) || (est && inCone(g))), missed = out.filter((g) => !removed.includes(g) && !auras('unnerving fixation').some((e) => e.op === 'remove' && e.src === g.guid && e.t > f.t + 1.5 && e.t <= f.t + 5) && !(deadAt.get(g.guid) <= f.t + 5)); /* round 447: gone within 5 s anyway (the intermission) doesn't count */
+    /* round 447 ghost spots: where each ghost most likely was when the frontal landed (only its spawn spot is logged) */
+    const owner447 = (g) => { let o = null; for (const e of auras('unnerving fixation')) if (e.op === 'apply' && e.src === g && e.t <= f.t + 0.2) o = e.dst; return o; };
+    const spot447 = (g) => { const sx = g.pts[0][1], sy = g.pts[0][2];
+      if (removed.includes(g) && cone) { const dx = sx - cone.x, dy = sy - cone.y; let a = Math.atan2(dy, dx) - cone.dir; while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI;
+        const lim = cone.half * 0.8, a2 = Math.max(-lim, Math.min(lim, a)) + cone.dir, d = Math.max(4, Math.min(cone.r - 4, Math.hypot(dx, dy))); return { x: cone.x + Math.cos(a2) * d, y: cone.y + Math.sin(a2) * d }; }
+      const ow = owner447(g.guid), p = ow && snap.find((q) => q.guid === ow); if (!p) return { x: sx, y: sy };
+      const dx = p.x - sx, dy = p.y - sy, d = Math.hypot(dx, dy); if (d < 1) return { x: sx, y: sy }; const k = Math.min(d * 0.5, 12) / d; return { x: sx + dx * k, y: sy + dy * k }; };
     const map = { t: f.t, hl: tankG ? [tankG] : [], hlLabel: 'Tank the frontal hit', cone, ghostHit: removed.map((g) => g.guid), ghostMiss: missed.map((g) => g.guid),
-      extraPts: out.map((g) => ({ guid: g.guid, name: g.name, x: g.pts[0][1], y: g.pts[0][2], kind: 'ghost' })),
+      extraPts: out.map((g) => { const s = spot447(g), ow = owner447(g.guid); return { guid: g.guid, name: ow ? String(pname(ow)).split('-')[0] + '\'s ghost (estimated)' : 'Ghost (estimated)', x: s.x, y: s.y, kind: 'ghost' }; }),
       note: removed.length + ' of ' + out.length + ' ghosts removed' + (missed.length ? ', ' + missed.length + ' missed' : '') + (est ? ' (estimated from spawn spots; Blighted Sever hits on ghosts are not always logged)' : ''),
-      title: S(f.n)[1] + ' at ' + h.fmtT(f.t) + ': ghosts at their spawn spots (green ring = removed, red X = missed)' };
+      title: S(f.n)[1] + ' at ' + h.fmtT(f.t) + ': ghosts where they most likely were (estimated: the log only places a ghost where it spawned). Green ring = removed, red X = missed' };
     /* (Coiled Altar fix 7, Oct 24: 9 of 11 top kills; a missed ghost is walked back for the next frontal) */
-    if (false) MS(f.t, 'Raid', f.n, 'Low', missed.length + ' ghost' + (missed.length === 1 ? ' was' : 's were') + ' not in ' + S(f.n)[1] + ' and stayed alive.', 'Stare at your ghost so it stays put. If it was outside the frontal, walk it back to the stack spot for the next one.', map);
-    ssRows.push([{ t: f.t }, { s: S(f.n), sub: est ? 'estimate' : '' }, { txt: String(out.length) }, { txt: String(removed.length) }, { txt: String(missed.length) }, { map }]);
+    if (!est) for (const g of missed) { const ow = owner447(g.guid); MS(f.t, ow ? pname(ow) : 'Raid', f.n, 'Medium', (ow ? 'Their ghost' : 'A ghost') + ' wasn\'t in ' + S(f.n)[1] + ' at ' + h.fmtT(f.t) + ', so it stayed alive.', 'Stare at your ghost so it stays where the tank aims Soul Sever, or walk it back into the frontal before the next one.', map); } /* round 447 ghost spots: a missed ghost is a Moderate fail (Flex, Nov 1) */
+    ssRows.push([{ t: f.t }, { s: S(f.n), sub: est ? 'estimate' : '' }, { txt: String(out.length) }, { txt: String(removed.length) }, { txt: String(missed.length), warn: !est && missed.length > 0, ...(!est && missed.length ? { why: missed.map((g) => { const ow = owner447(g.guid); return ow ? String(pname(ow)).split('-')[0] + '\'s ghost' : 'a ghost'; }).join(', ').replace(/^./, (c) => c.toUpperCase()) + (missed.length === 1 ? ' wasn\'t' : ' weren\'t') + ' in ' + S(f.n)[1] + ', so ' + (missed.length === 1 ? 'it' : 'they') + ' stayed alive.', next: 'Stare at your ghost so it stays where the tank aims Soul Sever.' } : {}) }, { map }]);
   }
   if (ssRows.length) sections.push({ id: 'soulsever', title: 'Soul Sever (Frontal)', place: 'Soul Sever: ghosts in the frontal', spell: S('soul sever'),
-    verdict: ssRows.some((x) => x[4].bad) ? 'bad' : 'good',
-    summary: 'For each P2 Soul Sever, it shows how many ghosts it removed and how many it missed (from the log; P3 Blighted Sever isn\'t covered because its ghost hits aren\'t reliably logged). The map shows the 60° cone and where each ghost spawned. Ghosts move after spawning, so a missed ghost may have walked out of a good spawn spot.',
+    verdict: ssRows.some((x) => x[4].bad) ? 'bad' : ssRows.some((x) => x[4].warn) ? 'warn' : 'good',
+    summary: 'For each P2 Soul Sever, it shows how many ghosts it removed and how many it missed (from the log; P3 Blighted Sever isn\'t covered because its ghost hits aren\'t reliably logged). The map shows the 60° cone and where each ghost most likely was: the log only places a ghost where it spawned, so the spots are estimates. A missed ghost is a Moderate mistake for the player it was chasing.',
     cols: ['When', 'Frontal', 'Ghosts out', 'Removed', 'Missed', ''], rows: ssRows });
 
   // ---- maps on existing sections ----
@@ -17431,12 +17438,12 @@ function buildCoiledAltar(ev, r, h) {
         cols: ['What', 'When', 'Who', 'Result', ''], rows: [], groups });
     }
     // 3) Soul Sever: the tank frontal destroys the ghosts it hits (a missed ghost is walked back for the next frontal (Oct 21): not a mistake)
-    const ssItems = (sSs ? sSs.rows : []).map((r0) => ({ t: r0[0].t, row: [{ txt: 'Soul Sever' }, { t: r0[0].t }, { txt: r0[3].txt + ' of ' + r0[2].txt + ' ghosts removed' }, { txt: r0[4].txt + ' missed', dim: true }, r0[5]] }));
+    const ssItems = (sSs ? sSs.rows : []).map((r0) => ({ t: r0[0].t, row: [{ txt: 'Soul Sever' }, { t: r0[0].t }, { txt: r0[3].txt + ' of ' + r0[2].txt + ' ghosts removed' }, r0[4].warn ? { txt: r0[4].txt + ' missed', warn: true, why: r0[4].why, next: r0[4].next } : { txt: r0[4].txt + ' missed', dim: true }, r0[5]] })); /* round 447: a missed ghost is a Moderate fail */
     if (ssItems.length) {
       const groups = perDm(ssItems, 'no Soul Sever in this Dreadmarch');
       for (const g of groups) { const rm = g.rows.filter((r0) => r0[0].txt === 'Soul Sever'); let a = 0, b = 0; for (const r0 of rm) { const m = String(r0[2].txt).match(/^(\d+) of (\d+)/); if (m) { a += +m[1]; b = Math.max(b, +m[2]); } }
         g.sub = rm.length ? pl(rm.length, 'Soul Sever') + ' · ' + a + ' ghost' + (a === 1 ? '' : 's') + ' removed' : 'no Soul Sever'; }
-      sections.push({ id: 'soulsever', title: 'Soul Sever (Hit the ghosts)', place: 'Soul Sever: ghosts in the frontal', spell: S('soul sever'), verdict: 'good',
+      sections.push({ id: 'soulsever', title: 'Soul Sever (Hit the ghosts)', place: 'Soul Sever: ghosts in the frontal', spell: S('soul sever'), verdict: ssItems.some((x) => x.row[3].warn) ? 'warn' : 'good',
         summary: sSs ? sSs.summary : '', cols: ['What', 'When', 'Ghosts', 'Missed', ''], rows: [], groups });
     }
   }
@@ -23101,6 +23108,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-11-01', h: [], n: [
+    "The Coiled Altar: Soul Sever's map draws each ghost where it most likely was when the frontal landed (an estimate: the log only says where ghosts spawn), and a ghost Soul Sever missed is a Moderate mistake for the player it was chasing.",
     "The Coiled Altar: a map for Gloombomb's soul fragments: where the bomb went off, each fragment the player picked up and when, and how many were left. A Gravebound death with all three picked up now says so: each fragment hurts, and the last one's hit can kill.",
     "Debriefing is quicker to put together: building a pull used to freeze the page for about 2.6 s, now about 0.8 s, and nothing keeps working away in the background once it shows.",
     "Debriefing opens in one go: the loading card stays up a moment longer while the page is put together, then the whole pull shows at once with a short fade, instead of Why we wiped and the Timeline being drawn again and again while it loaded.",
