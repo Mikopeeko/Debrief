@@ -16541,7 +16541,7 @@ const ARENAS = {
   'The Lost Explorers': { f: '04.lostexplorers-ort-v112.jpg', w: 2448, h: 1371, cx: -470, cy: 698, s: 11 },
   Sszorak: { f: '05.sszorak-ort-v122.jpg', w: 2448, h: 1371, cx: -409, cy: 384.2, s: 11, rot: -17, sq: true }, // (Oct 21, your OK: on the game's floor map the platform's spokes sit at 17, 62, 107 and 152 degrees: turned 17 degrees, 3 yd south)
   'The Twin Fangs': { f: '06.twinfangs-ort-v140.jpg', w: 2448, h: 1371, cx: 0, cy: 624, s: 10 }, // (Oct 21, your eye: it sat 12 yd too far south; now the walkway lies where the game's floor map and our Mythic kill's players have it)
-  'The Coiled Altar': { f: '07.bargained-ort-v108.jpg', w: 2448, h: 1371, cx: 0, cy: 1158, s: 15 },
+  'The Coiled Altar': { f: '07.bargained-ort-v108.jpg', w: 2448, h: 1371, cx: 2, cy: 1156, s: 15 } /* round 417 room lined up */,
   "Ula'tek": { f: '08.ulatek-ort-fullbreak-v185.jpg', w: 2448, h: 1371, cx: -2.5, cy: 1553.1, s: 7.5 }, // (Oct 20, your note: the whole room, so phase 2 on the east and west ledges is on the map. Fitted to the game's own floor map (UiMap 2610, placed by its world bounds): its platform (about 81 yd across) and both ledges' steps line up with the render; on a Mythic and a Heroic kill phases 1 and 3 stay on the platform and phase 2 and the Doomscale Wardens on the stone ledges. Was the platform only: 08.ulatek-ort-platform-v85.jpg, w 2123, h 1188, cx 0, cy 1554, s 10.5)
 };
 ARENAS['The Bargained Crown'] = ARENAS['The Coiled Altar'];
