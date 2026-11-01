@@ -12490,6 +12490,7 @@ html[data-theme="warrior"] body.refine .brand h1,html[data-theme="warrior"] body
 html[data-theme="warrior"] body.refine ::selection{background:rgba(198,155,109,0.35)}
 </style>
 
+
 <style id="r430">
 /* round 430 themes reach the fixed colours */
 :where(html[data-theme]) .pull.sel{background-color:var(--line)}
@@ -22944,7 +22945,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-10-31', h: [{ t: 'Themes', d: 'Pick how Debrief looks from Menu > Theme: Aurora, Aurora Gold, Raid frame, Ember Crown, Glass, Midnight, Forge, or your class colours. It only changes the look, and it is saved on your device.' }, { t: 'Cooldown timing on The Coiled Altar', d: 'Rotation now shows if your big cooldown went out at the same moments the top players use it on Mythic, like Trueshot on the pull, at P2 start and in the intermission. Debriefing tells you when you missed one. For now: Holy Paladin, Marksmanship Hunter, Affliction Warlock, Arcane Mage, Arms Warrior and Balance Druid.' }], n: [
-    "Holy Paladin Rotation now has top-player marks on Ula'tek and Kith'ix, and Elemental Shaman on Ula'tek, so every Mythic boss has them.",
+    "Your first Debriefing is quicker to learn: three short tips that start with why the pull ended, and the NSRT note card waits until they're done.",    "Holy Paladin Rotation now has top-player marks on Ula'tek and Kith'ix, and Elemental Shaman on Ula'tek, so every Mythic boss has them.",
     "Subtlety Rogue and Protection Paladin Rotation: top-player marks refreshed on every Mythic boss, from more top players.",
     "Beast Mastery Hunter Rotation: top-player marks on every Mythic boss, Ula'tek included, from more top Hunters.",
     "Mistweaver Rotation: top-player marks on every Mythic boss. Mystic Touch uptime now counts whichever Monk put it on (with two Monks in the raid, one used to read 0%).",
@@ -25411,6 +25412,7 @@ function ndzAskCheck() {
     const open = $('#ndzAsk'); if (open && (S.tab !== 'audit' || !ndzR() || noteForRep(ndzR()) || notesOf(ndzR().item.boss).list.some((n) => !n.example))) { open.remove(); return; }
     // (only once the pull is on screen: never while another one is still loading)
     if (!NDZ_ASK_ON() || !ndzR() || S.item !== ndzR().item || !$('#view .dbn-bar') || S.tab !== 'audit' || open || $('#tour') || $('#ptip') || $('.pt-bub') || $('#ndzWiz')) return;
+    if (TIPS_WAIT === 'audit' || (tourDone() && store.get(TIPS_KEY('audit')) !== '1')) return; /* round 431 first visit: after the tips, never on top of them */
     if (store.get(NDZ_ASK_NEVER) === '1' || store.get(NDZ_ASK_DAY) === ndzToday()) return;
     const r = ndzR(); if (r.item.kind !== 'boss' || noteForRep(r) || notesOf(r.item.boss).list.some((n) => !n.example)) return;
     store.set(NDZ_ASK_DAY, ndzToday());
@@ -51902,6 +51904,11 @@ const PAGE_TIPS = {
     { sel: '.pc-diffs', t: 'Pick a difficulty', p: 'Switch between Mythic, Heroic, Normal and LFR, with how many bosses are down on each.' },
     { sel: '#pgEdit', t: 'Edit', p: 'Remove this team.' }],
 };
+/* round 431 first visit: a new raider's first Debriefing gets three tips, the answer first; Help plays all six */
+const AUDIT_FIRST = [
+  { sel: '#view .dbt-why', t: 'Start here: why it ended', p: 'Every pull opens with the answer: what ended it, the worst mistakes first, with who and when.' },
+  { sel: '#view .dbt-main, #view .ds-l', t: 'Every mechanic, checked', p: 'Each part of the fight, with who got it wrong. Click one for the full story, and Show map to see where everyone stood.' },
+  { sel: 'main#main > .r300-tb .op-pick', t: 'Just you', p: 'Pick yourself here and every tab follows: your mistakes, your rotation and your grade. Menu > Help shows these tips again.' }];
 const TIPS_V = { live: 2, perf: 5, audit: 3, overview: 5, team: 2, rot: 2, player: 2, cmp: 1 }; // (bumped when a page's tips change, so they show once more)
 const TIPS_KEY = (k) => 'wla-tips-' + k + (TIPS_V[k] ? '-v' + TIPS_V[k] : '');
 // (which page is up: a pull's tab, the teams page, or a team's page)
@@ -51917,9 +51924,10 @@ function pageTips(k, force) {
   const wait = () => {
     if (tipsPage() !== k) { TIPS_WAIT = null; return; } // (you've moved on: the tips wait for your next visit)
     if ($('.pg-dim')) { TIPS_WAIT = null; return; } // (a pop-up question came up meanwhile: the tips wait until it's answered)
-    const steps = PAGE_TIPS[k].filter((s) => tipVis(s.sel)), now = Date.now();
+    const LIST = k === 'audit' && !force ? AUDIT_FIRST : PAGE_TIPS[k]; // (round 431 first visit)
+    const steps = LIST.filter((s) => tipVis(s.sel)), now = Date.now();
     if (steps.length && !first) first = now;
-    const allUp = steps.length === PAGE_TIPS[k].length, firstUp = !!tipVis(PAGE_TIPS[k][0].sel);
+    const allUp = steps.length === LIST.length, firstUp = !!tipVis(LIST[0].sel);
     if (!allUp && now - t0 < 10000 && (!firstUp || now - first < 3000)) { setTimeout(wait, 300); return; }
     TIPS_WAIT = null; if (steps.length) runTips(k, steps);
   };
@@ -51952,8 +51960,9 @@ function runTips(k, steps) {
     bub.classList.remove('in'); void bub.offsetWidth; bub.classList.add('in');
     if (e) { const b = e.getBoundingClientRect();
       // (taller than most of the screen, like the debrief on a phone: its top comes into view, below the tabs)
-      if (b.height > innerHeight * 0.6) { e.style.scrollMarginTop = '150px'; e.scrollIntoView({ block: 'start' }); } else if (b.top < 70 || b.bottom > innerHeight - 40) e.scrollIntoView({ block: 'center' }); }
-    place(); const f = bub.querySelector('.btn.primary'); if (f) f.focus(); };
+      if (b.height > innerHeight * 0.35) { e.style.scrollMarginTop = '150px'; /* round 431 first visit */ e.scrollIntoView({ block: 'start' }); } else if (b.top < 70 || b.bottom > innerHeight - 40) e.scrollIntoView({ block: 'center' }); }
+    place(); const f = bub.querySelector('.btn.primary'); if (f) f.focus();
+    /* round 431 first visit */ const at = i; [700, 1600, 3000].forEach((ms) => setTimeout(() => { if (at !== i || !ov.isConnected) return; const x = tipVis(steps[i].sel); if (!x) return; const q = x.getBoundingClientRect(); if (q.top < 60 || q.top > innerHeight - 80) { x.style.scrollMarginTop = '150px'; x.scrollIntoView({ block: q.height > innerHeight * 0.35 ? 'start' : 'center' }); place(); } }, ms)); };
   // (Enter or → for next, ← for back; Escape doesn't skip it)
   const key = (e) => { if (!document.body.contains(ov)) return; if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); } else if (e.key === 'ArrowRight' && i < steps.length - 1) { i++; draw(); } else if (e.key === 'ArrowLeft' && i > 0) { i--; draw(); } };
   addEventListener('scroll', follow, true); addEventListener('resize', follow); document.addEventListener('keydown', key, true);
