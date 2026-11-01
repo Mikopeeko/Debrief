@@ -72,6 +72,7 @@ body.is-kill .kyou .kv { font-size: 17px; }
 .pc:hover { filter: brightness(1.25); }
 .pc.n { background: var(--raised); color: var(--soft); } /* (a Mythic+ pull with nothing to fix (Nov 1)) */
 .mpt { width: 100%; border-collapse: collapse; font-size: 14px; color: var(--soft); } .mpt th { text-align: left; color: var(--muted); font: 600 12.5px Barlow Condensed, sans-serif; padding: 2px 6px 4px 0; } .mpt td { padding: 3px 6px 3px 0; border-top: 1px solid var(--line); } .mpt td.r, .mpt th.r { text-align: right; }
+.mptm { display: inline-block; padding: 0 5px; border-radius: 4px; background: var(--line); color: var(--muted); font-size: 12.5px; line-height: 18px; } /* (a cast's time, after its grouped line (Nov 1)) */
 .mpn { cursor: pointer; } .mpn:hover { text-decoration: underline; } .mpt tr[data-mp] { cursor: pointer; } .mpt tr[data-mp]:hover td { background: rgba(255,255,255,.03); } /* (a name opens that player; a row opens that pull (Nov 1)) */
 .mph { margin: 0 0 8px; font: 700 17px Barlow Condensed, sans-serif; color: var(--text); } .mph small { display: block; color: var(--muted); font: 500 14px Barlow Condensed, sans-serif; }
 .pc.wait { opacity: .6; }
@@ -408,7 +409,14 @@ function renderMplus() {
   const sumBy = (L) => { const m = new Map(); for (const d of L || []) { const b = m.get(d.spell) || { on: 0, removed: 0 }; b.on += d.on; b.removed += d.removed; m.set(d.spell, b); } return [...m].filter(([, b]) => b.on); };
   const dpRows = (debs, ebuffs) => sumBy(debs).map(([sp, b]) => row(b.removed < b.on / 2 ? 'var(--warn)' : 'var(--muted)', '<b>' + esc(sp) + '</b> landed on players ' + (b.on === 1 ? 'once' : b.on + ' times') + ', ' + (b.removed ? b.removed + ' dispelled' : 'none dispelled') + '.'))
     .concat(sumBy(ebuffs).map(([sp, b]) => row(b.removed < b.on / 2 ? 'var(--warn)' : 'var(--muted)', '<b>' + esc(sp) + '</b> went up on enemies ' + (b.on === 1 ? 'once' : b.on + ' times') + ', ' + (b.removed ? b.removed + ' purged or soothed' : 'none purged or soothed') + '.')));
-  const gotRow = (x, ready) => row('var(--bad)', (x.t != null ? mmssP(x.t) + ' · ' : '') + '<b>' + esc(x.spell) + '</b> from ' + esc(x.mob) + '.' + (x.cc ? ' Nobody stunned or stopped it.' : ready));
+  /* (a pull's casts that got through, repeats grouped (Nov 1, the Design studio: one line, not 11 near-identical ones): the spell, how many
+     times, whose kick was ready each time (or how often each), and the times as small chips. who: the player whose Me view this is) */
+  const gotGroup = (L, who) => { const by = new Map(); for (const x of L) { const k = x.spell + '|' + x.mob; if (!by.has(k)) by.set(k, []); by.get(k).push(x); }
+    return [...by.values()].sort((a, b) => b.length - a.length || a[0].t - b[0].t).map((g) => { const x = g[0], n = g.length, cnt = new Map();
+      for (const y of g) for (const r of y.ready) if (r !== who) cnt.set(r, (cnt.get(r) || 0) + 1);
+      const each = [...cnt.values()].every((c) => c === n), names = [...cnt].sort((a, b) => b[1] - a[1]).map(([r, c]) => nm(r) + (n > 1 && !each ? ' (' + c + ')' : '')).join(', ');
+      const ready = x.cc ? ' Nobody stunned or stopped it.' : cnt.size ? ' ' + (who ? 'Also ready' : 'Kick ready') + (n > 1 && each ? ' each time' : '') + ': ' + names + '.' : '';
+      return row('var(--bad)', '<b>' + esc(x.spell) + '</b> from ' + esc(x.mob) + ' got through' + (n > 1 ? ' ' + n + ' times' : '') + '.' + ready + ' ' + g.map((y) => '<span class="mptm">' + mmssP(y.t) + '</span>').join(' ')); }); };
   const stat = run.left ? 'Left early' : run.timed ? 'Timed' : 'Over time';
   const runHead = '<p class="mph">' + esc(run.dungeon) + ' +' + run.level + '<small>' + stat + (run.timeMs ? ' · ' + mmssP(run.timeMs / 1000) : '') + (run.score ? ' · run score ' + Math.round(run.score) : '') + ' · ' + R.pulls.length + ' pulls</small></p>';
   const pullHead = (o) => '<p class="mph">' + (o.boss ? esc(o.boss) + (o.kill ? ' · Kill' : '') : 'Pull ' + o.n) + ' · ' + mmssP(o.dur) + '<small>at ' + mmssP(o.s) + ' · ' + o.mobs.slice(0, 5).map((m) => (m[1] > 1 ? m[1] + ' ' : '') + esc(m[0])).join(', ') + '</small></p>';
@@ -433,7 +441,7 @@ function renderMplus() {
     body += '<div class="ktiles">' + tile(Yo + (heal(me) ? ' HPS' : ' DPS'), kN(val(me, o)), '', rank(me, o)) + tile(Yo + ' kicks and stops', my('kicks').length + ' + ' + my('stops').length) +
       (me.kick ? tile('Got through, ' + yo + ' kick ready', th.length, th.length > 2 ? 'b' : th.length ? 'w' : '') : tile(Yo + ' dispels', my('dispels').length)) + (av.length ? tile('Avoidable damage', av.reduce((a, x) => a + x.n, 0) + ' hit' + (av.reduce((a, x) => a + x.n, 0) === 1 ? '' : 's'), 'w') : '') + tile('Defensives', my('defs').length) + (dd.length ? tile('Deaths', dd.length, 'b') : '') + '</div>';
     if (!th.length && !dd.length && !av.length) body += sec('This pull', [row('var(--good)', 'Nothing to fix for ' + (me === mine ? 'you' : esc(n)) + ' on this pull.')]);
-    body += sec('Got through while ' + yo + ' kick was ready', th.map((x) => { const also = x.ready.filter((r) => r !== n); return gotRow(x, also.length ? ' Also ready: ' + also.map(nm).join(', ') + '.' : ''); }));
+    body += sec('Got through while ' + yo + ' kick was ready', gotGroup(th, n));
     body += sec('Deaths', dd.map((x) => deathRow(x)));
     body += sec('Avoidable damage', avRows(av, me === mine ? 'you' : esc(n)));
     body += sec('Kicks and stops', my('kicks').map((x) => ['k', x]).concat(my('stops').map((x) => ['s', x])).sort((a, b) => a[1].t - b[1].t).map(([k, x]) => row('var(--good)', mmssP(x.t) + ' · ' + (k === 'k' ? 'Kicked' : 'Stopped') + ' <b>' + esc(x.spell) + '</b> from ' + esc(x.mob) + (k === 'k' ? ' (' + esc(x.with) + ')' : ' with ' + esc(x.with)) + '.')));
@@ -451,7 +459,7 @@ function renderMplus() {
     body += '<div class="kc"><div class="kh"><b>Everyone</b></div><div class="kb"><table class="mpt"><tr><th>Player</th><th class="r">DPS / HPS</th><th class="r">Kicks</th><th class="r">Stops</th><th class="r">Dispels</th>' + (R.list ? '<th class="r">Avoidable</th>' : '') + '<th class="r">Defensives</th><th class="r">Deaths</th></tr>' +
       ppl.map((q) => '<tr><td>' + nm(q.name) + ' <span style="color:var(--faint)">' + esc(q.spec) + '</span></td><td class="r">' + (heal(q) ? kN(q.hps) + ' HPS' : kN(q.dps)) + '</td><td class="r">' + q.kicks + '</td><td class="r">' + q.stops + '</td><td class="r">' + (q.dispels + (q.purges || 0)) + '</td>' + (R.list ? '<td class="r"' + (q.avoid ? ' style="color:var(--warn)"' : '') + '>' + (q.avoid || 0) + '</td>' : '') + '<td class="r">' + q.defs + '</td><td class="r"' + (q.deaths ? ' style="color:var(--badT)"' : '') + '>' + q.deaths + '</td></tr>').join('') + '</table></div></div>';
   } else {
-    body += sec('Got through', o.through.map((x) => gotRow(x, ' Kick ready: ' + x.ready.map(nm).join(', ') + '.')));
+    body += sec('Got through', gotGroup(o.through, null));
     body += sec('Avoidable damage', avRows(o.avoid || [], true));
     // (kicks and stops, by player: what they stopped and with what)
     const per = new Map(); for (const x of o.kicks.concat(o.stops)) { if (!per.has(x.who)) per.set(x.who, { k: 0, s: 0, with: new Map() }); const q = per.get(x.who); if (o.kicks.includes(x)) q.k++; else { q.s++; q.with.set(x.with, (q.with.get(x.with) || 0) + 1); } }
