@@ -1982,6 +1982,8 @@ const PATCH_NOTES = [
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
     "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
+    "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
+    "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
     "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Your first Debriefing is quicker to learn: three short tips that start with why the pull ended, and the NSRT note card waits until they're done.",    "Holy Paladin Rotation now has top-player marks on Ula'tek and Kith'ix, and Elemental Shaman on Ula'tek, so every Mythic boss has them.",
     "Subtlety Rogue and Protection Paladin Rotation: top-player marks refreshed on every Mythic boss, from more top players.",
     "Beast Mastery Hunter Rotation: top-player marks on every Mythic boss, Ula'tek included, from more top Hunters.",
@@ -32596,7 +32598,7 @@ function dsMotion() { const H = document.documentElement; if (!window.matchMedia
   const M = dsMotion, now = Date.now(), page = location.pathname + location.search; M.seen = M.seen || new WeakSet();
   /* a play the raider never saw does not count: when the page is drawn again and everything that played is gone (a second-stage
      draw replacing the first), it plays again on the new pieces; not on a held page, whose first draw is the one they see */
-  const gone = M.heldPage !== page && (!M.played || !M.played.length || M.played.every((el) => !document.contains(el)));
+  const gone = M.heldPage !== page && (!M.played || !M.played.length); /* round 442 once: a second draw of the same page doesn't play them again (it flashed) */
   /* a page that already played: the cheapest path out (this runs on every draw, dozens of times a minute on Debriefing). The boss
      header keeps its one play per page; a piece added now simply starts its own small entrance, which is right for a number that
      just changed */
@@ -34261,7 +34263,12 @@ document.addEventListener('click', (e) => { const t = e.target.closest && e.targ
 const R440 = { t0: 0, sig: '', since: 0 };
 const r440Sig = () => { const sb = document.querySelector('#view .r212-sb'); return sb ? [...sb.querySelectorAll('.oa-tiles .dbr-v, .cch-ab .cgl-p')].map((e) => e.textContent).join('|') : null; };
 // (the Deaths box shows the raw count for a moment (25) while the real one (5) is already in the top row's hidden Deaths box)
-const r440Same = () => { const sb = document.querySelector('#view .r212-sb'); if (!sb) return true; const bot = [...sb.querySelectorAll('details.cch-ab')].find((d) => /^Deaths/.test(((d.querySelector('.cgl-n') || {}).textContent || '').trim())), top = [...sb.querySelectorAll('.oa-tiles .dbr-n')].find((d) => /^Deaths/.test(((d.querySelector('.dbr-k') || {}).textContent || '').trim())); if (!bot || !top) return true; const x = ((bot.querySelector('.cgl-p') || {}).textContent || '').trim(), y = ((top.querySelector('.dbr-v b, .dbr-v') || {}).textContent || '').trim(); return !x || !y || x === y; };
-(function r440Tick() { const bd = document.body; if (!bd) { setTimeout(r440Tick, 200); return; } if (bd.classList.contains('r438-ok')) return; if (bd.classList.contains('r438-tab')) { bd.classList.add('r438-ok'); return; }
-  const s = r440Sig(), now = Date.now(); if (s != null) { if (!R440.t0) R440.t0 = now; if (s !== R440.sig) { R440.sig = s; R440.since = now; } if ((now - R440.since >= 1200 && r440Same()) || now - R440.t0 > 8000) { bd.classList.add('r438-ok'); return; } }
-  setTimeout(r440Tick, 200); })();
+const r440Same = () => { const sb = document.querySelector('#view .r212-sb'); if (!sb) return true; const bot = [...sb.querySelectorAll('details.cch-ab')].find((d) => /^Deaths/.test(((d.querySelector('.cgl-n') || {}).textContent || '').trim())), top = [...sb.querySelectorAll('.oa-tiles .dbr-n')].find((d) => /^Deaths/.test(((d.querySelector('.dbr-k') || {}).textContent || '').trim())); if (!bot || !top) return true; const x = ((bot.querySelector('.cgl-p') || {}).textContent || '').trim(), y = ((tb) => ((tb && tb.dataset && tb.dataset.raw) || (tb && tb.textContent) || '').trim())(top.querySelector('.dbr-v > b:first-child') || top.querySelector('.dbr-v')); return !x || !y || x === y; };
+/* round 442 once: no placeholder on the top boxes; only the Deaths box hides its number while it shows the raw count */
+/* (round 231's Deaths box copies the real count from the top row's hidden Deaths tile, but only from its data-raw, which only a count-up wrote: with the count-up playing once, a redraw has none, so every draw's tile gets it here) */
+const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').forEach((n) => { if (((n.querySelector('.dbr-k') || {}).textContent || '').trim().toLowerCase() !== 'deaths') return; const b = n.querySelector('.dbr-v > b:first-child'); if (b && b.dataset.raw == null && /^\d+$/.test(b.textContent.trim())) b.dataset.raw = b.textContent.trim(); }); };
+(function () { const f11 = dsBars; dsBars = function (root) { try { r442Raw(); } catch (e) { /* (the raw count) */ } f11(root); }; })();
+(function r442Tick() { const bd = document.body; if (!bd) { setTimeout(r442Tick, 100); return; } bd.classList.add('r438-ok'); if (bd.classList.contains('r438-tab')) return; try { r442Raw(); } catch (e) { /* (the raw count) */ }
+  const sb = document.querySelector('#view .r212-sb'), now = Date.now(); if (sb) { if (!R440.t0) R440.t0 = now; const bot = [...sb.querySelectorAll('details.cch-ab')].find((d) => /^Deaths/.test(((d.querySelector('.cgl-n') || {}).textContent || '').trim())), v = bot && bot.querySelector('.cgl-p');
+    if (v) { const ok = R440.ok || r440Same() || now - R440.t0 > 4000; if (ok) R440.ok = 1; /* (once right, it stays shown: no blink on a later draw) */ v.style.visibility = ok ? '' : 'hidden'; if (ok && now - R440.t0 > 1500) return; } else if (now - R440.t0 > 4000) return; }
+  setTimeout(r442Tick, 100); })();
