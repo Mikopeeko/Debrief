@@ -6887,6 +6887,16 @@ function* analyzeSteps(item, text, opts) {
             mp.frames = framesAt(Math.max(0, mp.t - 3), Math.min(r.duration, mp.t + 1.6), 0.2).map((fr) => ({ t: fr.t, pts: fr.pts.filter((p) => !/venom stalker|virulent mutation|manifestation of dread/i.test(p.name)).concat(objs) })); continue; }
           const extra = mp.pts.filter((p) => p.kind !== 'player' && p.kind !== 'boss'); if (!extra.every((p) => p.guid && r.positions.has(p.guid))) continue;
           mp.frames = framesAt(Math.max(0, mp.t - (mp.lead || 4)), Math.min(r.duration, mp.t + 1.5), 0.25, extra.map((p) => p.guid)); } }
+      /* round 416 ghosts meet */ if (r.module && r.module.sections) for (const sec of r.module.sections) if (sec.id === 'ghosts') for (const row of sec.rows.concat(...(sec.groups || []).map((g) => g.rows))) for (const c of row) {
+        const mp = c && c.map; if (!mp || !mp.frames || !mp.frames.length || !/collision/i.test(mp.title || '')) continue;
+        const who = new Set(mp.bad || []), f0 = mp.frames.find((f) => f.t >= mp.t - 0.05) || mp.frames[mp.frames.length - 1];
+        const gs = f0.pts.filter((p) => p.owner && who.has(p.owner)).map((p) => p.guid).slice(0, 2); if (gs.length < 2) continue;
+        const first = new Map(); for (const f of mp.frames) for (const p of f.pts) if (gs.includes(p.guid) && !first.has(p.guid)) first.set(p.guid, { x: p.x, y: p.y, t: f.t });
+        const A = first.get(gs[0]), B = first.get(gs[1]), mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2;
+        for (const f of mp.frames) for (const p of f.pts) if (gs.includes(p.guid)) { const s = first.get(p.guid), k = Math.max(0, Math.min(1, (f.t - s.t) / Math.max(0.5, mp.t - s.t))), e = k * k * (3 - 2 * k); p.x = +(s.x + (mx - s.x) * e).toFixed(2); p.y = +(s.y + (my - s.y) * e).toFixed(2); }
+        mp.rings = (mp.rings || []).concat([{ x: mx, y: my, r: 3, fx: 'burst', t0: mp.t - 0.3, at: mp.t, dur: 1.5, color: '#c47bff', label: 'touched', legend: 'the two ghosts touching' }]);
+        mp.note = (mp.note ? mp.note + ' ' : '') + 'The log doesn\'t record where ghosts move after they spawn, so the two ghosts are shown gliding together to touch.';
+      }
       const drawsMech = (mp) => !!(mp.cone || (mp.cones || []).length || ['marks', 'lines', 'rings', 'cysts', 'arrows', 'links', 'goodAdd', 'badAdd', 'tags', 'ghostHit', 'ghostMiss'].some((f) => (mp[f] || []).length) || mp.hitOrbs ||
         [mp.pts || []].concat((mp.frames || []).map((f) => f.pts || [])).some((ps) => ps.some((p) => p.kind && p.kind !== 'player' && p.kind !== 'boss')));
       if (r.module && r.module.sections) for (const sec of r.module.sections) for (const row of sec.rows.concat(...(sec.groups || []).map((g) => g.rows))) for (const c of row) {
