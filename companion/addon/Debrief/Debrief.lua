@@ -827,10 +827,11 @@ end
 function UI.switch(side)
   local sw = UI.sw
   local lastRaid, lastKey, nKeys = nil, nil, 0
-  for i, q in ipairs(DB.pulls) do if q.mplus then nKeys = nKeys + 1; lastKey = i elseif q.h then lastRaid = i end end
-  local rI = (DB.lastRaid and DB.pulls[DB.lastRaid] and not DB.pulls[DB.lastRaid].mplus) and DB.lastRaid or lastRaid
+  local function isRaid(q) return q and q.h and not q.mplus and not q.h.dungeon and not (q.h.diff or ""):match("^Mythic%+") end -- (a dungeon boss is never the Raid side (Nov 1))
+  for i, q in ipairs(DB.pulls) do if q.mplus then nKeys = nKeys + 1; lastKey = i elseif isRaid(q) then lastRaid = i end end
+  local rI = (DB.lastRaid and isRaid(DB.pulls[DB.lastRaid])) and DB.lastRaid or lastRaid
   local kI = (DB.lastKey and DB.pulls[DB.lastKey] and DB.pulls[DB.lastKey].mplus) and DB.lastKey or lastKey
-  sw.raid.h:SetText(rI and DB.pulls[rI].h.boss or "no pulls yet")
+  sw.raid.h:SetText(rI and DB.pulls[rI].h.boss or "no raid pulls yet")
   sw.key.h:SetText(nKeys > 0 and (nKeys .. (nKeys == 1 and " key" or " keys")) or "no keys yet")
   for _, b in ipairs({ sw.raid, sw.key }) do
     local on = b.key == side and not UI.saved
@@ -1511,7 +1512,8 @@ local function renderOnce()
   if UI.saved then UI.savedView(); return end -- (Saved: the list, inside the card (Nov 1))
   local raw = DB.pulls[DB.cur]
   if raw and raw.mplus then UI.mplus(raw); return end -- (a Mythic+ key: the Mythic+ side of the same card (Nov 1))
-  if raw then DB.lastRaid = DB.cur end; UI.switch("raid")
+  local dun0 = raw and raw.h and (raw.h.dungeon or (raw.h.diff or ""):match("^Mythic%+")) -- (a dungeon boss card sits on the Mythic+ side (Nov 1))
+  if raw and not dun0 then DB.lastRaid = DB.cur end; UI.switch(dun0 and "mplus" or "raid")
   if UI.bpick and raw then UI.bossPicker = true end
   local m = UI.cutView(raw); CUR = m
   if not m then return end

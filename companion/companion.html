@@ -518,7 +518,7 @@ function popSaved() {
   out.other = [...OG.values()].reverse(); out.dungeon = [...DG.values()].reverse().sort((a, c) => c.lvl - a.lvl);
   const runs = runs0.filter((r) => r.endByte);
   out.keys = runs.slice().reverse().map((r) => Object.assign({ sb: r.startByte, dungeon: r.boss, level: r.level, night: nightStr(r.startMs) }, (L.mpRes || {})[r.startByte] || {}));
-  const lr = L.popLast && L.popLast.b, nb = out.nights[0] && out.nights[0].bosses[0]; out.lastRaid = lr ? lr.startByte : nb ? nb.sb : null; out.lastRaidBoss = lr ? lr.boss : nb ? nb.name.replace(/ · .*/, '') : '';
+  const lr = L.popLast && L.popLast.b && !L.popLast.b.dungeon ? L.popLast.b : null, nb = out.nights[0] && out.nights[0].bosses[0]; /* (a dungeon boss is never the Raid side (Nov 1, Flex: "its also saving all bosses as raid bosses even if they are m+ bosses")) */ out.lastRaid = lr ? lr.startByte : nb ? nb.sb : null; out.lastRaidBoss = lr ? lr.boss : nb ? nb.name.replace(/ · .*/, '') : '';
   out.lastKey = L.mpLast || (out.keys[0] ? out.keys[0].sb : null);
   return out;
 }
@@ -541,7 +541,7 @@ function mplusShow(r, again) {
     stat(L.live ? 'Watching your combat log' : '', L.live ? 'live' : '');
   }).catch(() => {});
 }
-window.DBF_POPLAST = () => { const p = L.popLast; if (p && p.model) { popShow(p.model, p.code || '', p.copied, null, { cut: p.cutN ? popCut() : null, cutN: p.cutN, wc: p.wc, quiet: true, force: true }); return; } if (L.mpLast) window.DBF_POPKEY(L.mpLast); };
+window.DBF_POPLAST = () => { const p = L.popLast; if (p && p.b && p.b.dungeon && L.mpLast) { window.DBF_POPKEY(L.mpLast); return; } /* (after a key, its recap, not one of its bosses) */ if (p && p.model) { popShow(p.model, p.code || '', p.copied, null, { cut: p.cutN ? popCut() : null, cutN: p.cutN, wc: p.wc, quiet: true, force: true }); return; } if (L.mpLast) window.DBF_POPKEY(L.mpLast); };
 function popShow(model, code, copied, pack, cm) {
   if ((!$('pop').checked && !(cm && cm.force)) || !model || !model.h) return;
   L.popUp = true;
