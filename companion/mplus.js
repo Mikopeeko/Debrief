@@ -152,7 +152,7 @@ function build(text, E) {
     const role = /Restoration|Holy|Discipline|Mistweaver|Preservation/.test(p.spec) ? 'healer' : /Protection|Guardian|Blood|Brewmaster|Vengeance/.test(p.spec) ? 'tank' : 'dps';
     const cnt = (k) => out.reduce((a, o) => a + o[k].filter((x) => x.who === p.guid).length, 0);
     return { guid: p.guid, name: p.name, cls: p.cls, spec: p.spec, role, dps: Math.round(sum('dmg') / total), hps: Math.round(sum('heal') / total),
-      kicks: cnt('kicks'), stops: cnt('stops'), deaths: cnt('deaths'), defs: cnt('defs'), dispels: cnt('dispels') };
+      kicks: cnt('kicks'), stops: cnt('stops'), deaths: cnt('deaths'), defs: cnt('defs'), dispels: cnt('dispels'), kick: kickNames.has(p.guid) };
   });
   const name = (g) => (players.get(g) || {}).name || short(g);
   for (const o of out) for (const k of ['kicks', 'stops', 'deaths', 'defs', 'dispels']) for (const x of o[k]) x.who = name(x.who);
