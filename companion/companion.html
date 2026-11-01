@@ -329,6 +329,7 @@ async function openLog(i) {
   await engineReady.catch((e) => stat(e.message, 'err'));
   L.ix = W.E.createIndexer({ dungeons: true });
   await scanMore(true);
+  L.mpDone = new Set((L.ix.peek().runs || []).filter((r) => r.endByte).map((r) => r.startByte)); /* (keys already over: no pop-up (Nov 1)) */
   if (L.live) { stat('Watching your combat log', 'live'); if (!L.waiting) waitLoop(); if (L.fresh) resaveOld(); }
   else stat('Older log: not watching it', '');
   renderMain(); fillNight();
@@ -373,6 +374,7 @@ async function waitLoop() {
       try {
         const fresh = await scanMore(false);
         if (fresh.length && $('pop').checked) send(fresh[fresh.length - 1], false);
+        for (const r of (L.ix.peek().runs || [])) if (r.endByte && !(L.mpDone || (L.mpDone = new Set())).has(r.startByte)) { L.mpDone.add(r.startByte); if ($('pop').checked) mplusShow(r); } /* (a key just ended (Nov 1)) */
         if (fresh.length) fillNight();
       } catch (e) { stat('Read error: ' + e.message, 'err'); }
     }
@@ -451,6 +453,17 @@ window.DBF_POPPULL = async (sb) => {
 function cardOf(m) {
   if (!m || !m.players) return null; const v = m.wc && m.cuts && m.cuts[1] ? m.cuts[1] : m;
   return { h: m.h, wc: m.wc || null, grade: m.grade || null, players: v.players, raid: v.raid, coach: v.coach ? { raid: v.coach.raid || null, you: v.coach.you || {} } : null };
+}
+// (the Mythic+ run recap (Nov 1): the whole key read once at its end, then one pop-up with a Run tab and a tab per pull)
+function mplusShow(r) {
+  L.busy = L.busy.then(async () => {
+    try {
+      await engineReady; stat('Reading your key…', 'busy');
+      const R = window.DBF_MPLUS ? window.DBF_MPLUS(await readText(r, true), W.E) : null; if (!R || !R.pulls.length) return;
+      L.popUp = true; j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: true, data: { full: true, mplus: R }, sound: $('snd').checked }) }).catch(() => {});
+    } catch (e) { console.error(e); }
+    stat(L.live ? 'Watching your combat log' : '', L.live ? 'live' : '');
+  }).catch(() => {});
 }
 function popShow(model, code, copied, pack, cm) {
   if (!$('pop').checked || !model || !model.h) return;
@@ -794,7 +807,7 @@ async function send(b, byHand) {
       const wc = model.wc || null, cutN = wc ? 1 : 0, cut = cutN ? popCut() : null; /* (Wipe call on or off (Oct 23)) */
       const pack = null; /* (the pop-up draws the /recap card from the model (Oct 24)) */
       L.popLast = { model, code, copied: ok, b, rep, cutN, wc };
-      popShow(model, code, ok, pack, { cut, cutN, wc }); // (L.popLast is set first, so the chip row marks this pull)
+      if (!b.dungeon) popShow(model, code, ok, pack, { cut, cutN, wc }); // (L.popLast is set first, so the chip row marks this pull; inside a key, the run recap pops up at its end instead (Nov 1))
       L.sent.add(b.startByte); renderPulls(); progress(null);
       stat(L.live ? 'Watching your combat log' : 'Sent pull ' + b.pull, L.live ? 'live' : ''); renderMain();
     } catch (e) { console.error(e); L.reading = null; progress(null); renderMain(); stat('Could not read pull ' + b.pull + ': ' + e.message, 'err'); }
@@ -991,5 +1004,6 @@ engineReady.then(() => loadLogs()).catch((e) => stat(e.message, 'err'));
 })();
 </script>
 <script src="/recap.js"></script>
+<script src="/mplus.js"></script>
 </body>
 </html>

@@ -70,6 +70,9 @@ body.is-kill .kyou .kv { font-size: 17px; }
 .pc.best { border-color: rgba(230,180,80,.7); }
 .pc.on { border-color: var(--text); color: var(--text); }
 .pc:hover { filter: brightness(1.25); }
+.pc.n { background: var(--raised); color: var(--soft); } /* (a Mythic+ pull with nothing to fix (Nov 1)) */
+.mpt { width: 100%; border-collapse: collapse; font-size: 14px; color: var(--soft); } .mpt th { text-align: left; color: var(--muted); font: 600 12.5px Barlow Condensed, sans-serif; padding: 2px 6px 4px 0; } .mpt td { padding: 3px 6px 3px 0; border-top: 1px solid var(--line); } .mpt td.r, .mpt th.r { text-align: right; }
+.mph { margin: 0 0 8px; font: 700 17px Barlow Condensed, sans-serif; color: var(--text); } .mph small { display: block; color: var(--muted); font: 500 14px Barlow Condensed, sans-serif; }
 .pc.wait { opacity: .6; }
 .pb { flex: none; align-self: center; font: 700 12px Barlow Condensed, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); padding: 0 2px 0 6px; white-space: nowrap; }
 .pb:first-child { padding-left: 0; }
@@ -366,7 +369,49 @@ function cardView() {
   const reloadLine = LK.reload ? '<div class="krl">Debrief was updated. Type <b>/reload</b> in WoW when you\'re ready.</div>' : ''; /* (goes by itself after the /reload (Oct 24)) */
   return reloadLine + head + pulls + tabs + stopRow() + '<div class="kgrid one"><div class="kL">' + L + Rt + '</div></div>';
 }
+// ---------- the Mythic+ run recap (Nov 1): a Run tab and a tab per pull ----------
+let MPULL = 0;
+const mmssP = (x) => Math.floor(x / 60) + ':' + String(Math.round(x % 60)).padStart(2, '0');
+const kN = (v) => v >= 1e6 ? (v / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'm' : Math.round(v / 1000) + 'k';
+function renderMplus() {
+  const app = document.getElementById('app'), R = D.mplus, run = R.run, ppl = R.people || [];
+  const col = (n) => { const q = ppl.find((x) => x.name === n); return q && CC[q.cls] ? CC[q.cls] : 'var(--soft)'; };
+  const nm = (n) => '<b style="color:' + col(n) + '">' + esc(n) + '</b>';
+  const pills = (o) => o.deaths.length || o.through.length > 2 ? '' : o.through.length ? ' n' : ' k';
+  const chips = '<div class="pulls" id="pullsRow"><span class="pc n' + (MPULL === 0 ? ' on' : '') + '" data-mp="0">Run</span>' + R.pulls.map((o) => '<span class="pc' + pills(o) + (MPULL === o.n ? ' on' : '') + '" data-mp="' + o.n + '">' + (o.boss ? esc(o.boss) : 'Pull ' + o.n) + ' · ' + mmssP(o.dur) + '</span>').join('') + '</div>';
+  const tile = (k, v, w) => '<div class="kt' + (w ? ' ' + w : '') + '"><small>' + k + '</small><b>' + v + '</b></div>';
+  let body = '';
+  if (MPULL === 0) {
+    const C0 = R.casts, deaths = R.pulls.reduce((a, o) => a + o.deaths.length, 0), slow = R.pulls.filter((o) => !o.boss).sort((a, b) => b.dur - a.dur)[0];
+    body += '<p class="mph">' + esc(run.dungeon) + ' +' + run.level + '<small>' + (run.timed ? 'Timed' : 'Over time') + ' · ' + mmssP(run.timeMs / 1000) + (run.score ? ' · run score ' + Math.round(run.score) : '') + ' · ' + R.pulls.length + ' pulls</small></p>';
+    body += '<div class="ktiles">' + tile('Casts that got through', C0.through + ' <em style="font-size:13px;color:var(--muted)">with a kick ready</em>', C0.through > 5 ? 'b' : C0.through ? 'w' : '') + tile('Kicks and stops', C0.kicked + ' + ' + C0.stopped) + tile('Deaths', deaths, deaths ? 'b' : '') + (slow ? tile('Slowest pull', 'Pull ' + slow.n + ' · ' + mmssP(slow.dur)) : '') + '</div>';
+    // (what kept getting through, by spell, and whose kicks were ready most)
+    const by = new Map(); for (const o of R.pulls) for (const x of o.through) { const k = x.spell; if (!by.has(k)) by.set(k, { n: 0, mob: x.mob, pulls: new Set(), ready: new Map() }); const b = by.get(k); b.n++; b.pulls.add(o.n); for (const r of x.ready) b.ready.set(r, (b.ready.get(r) || 0) + 1); }
+    if (by.size) body += '<div class="kc"><div class="kh"><b>What got through</b></div><div class="kb">' + [...by].sort((a, b) => b[1].n - a[1].n).map(([sp, b]) => '<div class="kr"><span class="kd" style="background:var(--bad)"></span><span></span><span><b>' + esc(sp) + '</b> from ' + esc(b.mob) + ' got through ' + (b.n === 1 ? 'once' : b.n + ' times') + ' (pull ' + [...b.pulls].join(', ') + '). Kick ready: ' + [...b.ready].sort((x, y) => y[1] - x[1]).slice(0, 3).map(([n, c]) => nm(n) + ' (' + c + ')').join(', ') + '.</span></div>').join('') + '</div></div>';
+    body += '<div class="kc"><div class="kh"><b>Everyone</b></div><div class="kb"><table class="mpt"><tr><th>Player</th><th class="r">DPS / HPS</th><th class="r">Kicks</th><th class="r">Stops</th><th class="r">Defensives</th><th class="r">Deaths</th></tr>' +
+      ppl.slice().sort((a, b) => (a.role === 'tank' ? -1 : a.role === 'healer' ? 1 : 0) - (b.role === 'tank' ? -1 : b.role === 'healer' ? 1 : 0) || b.dps - a.dps).map((q) => '<tr><td>' + nm(q.name) + ' <span style="color:var(--faint)">' + esc(q.spec) + '</span></td><td class="r">' + (q.role === 'healer' ? kN(q.hps) + ' HPS' : kN(q.dps)) + '</td><td class="r">' + q.kicks + '</td><td class="r">' + q.stops + '</td><td class="r">' + q.defs + '</td><td class="r"' + (q.deaths ? ' style="color:var(--badT)"' : '') + '>' + q.deaths + '</td></tr>').join('') + '</table></div></div>';
+  } else {
+    const o = R.pulls[MPULL - 1];
+    body += '<p class="mph">' + (o.boss ? esc(o.boss) + (o.kill ? ' · Kill' : '') : 'Pull ' + o.n) + ' · ' + mmssP(o.dur) + '<small>at ' + mmssP(o.s) + ' · ' + o.mobs.slice(0, 5).map((m) => (m[1] > 1 ? m[1] + ' ' : '') + esc(m[0])).join(', ') + '</small></p>';
+    const sec = (title, rows) => rows.length ? '<div class="kc"><div class="kh"><b>' + title + '</b></div><div class="kb">' + rows.join('') + '</div></div>' : '';
+    const row = (dot, html) => '<div class="kr"><span class="kd" style="background:' + dot + '"></span><span></span><span>' + html + '</span></div>';
+    body += sec('Got through', o.through.map((x) => row('var(--bad)', mmssP(x.t) + ' · <b>' + esc(x.spell) + '</b> from ' + esc(x.mob) + '. Kick ready: ' + x.ready.map(nm).join(', ') + '.')));
+    // (kicks and stops, by player: what they stopped and with what)
+    const per = new Map(); for (const x of o.kicks.concat(o.stops)) { if (!per.has(x.who)) per.set(x.who, { k: 0, s: 0, with: new Map() }); const q = per.get(x.who); if (o.kicks.includes(x)) q.k++; else { q.s++; q.with.set(x.with, (q.with.get(x.with) || 0) + 1); } }
+    body += sec('Kicks and stops', [...per].sort((a, b) => (b[1].k + b[1].s) - (a[1].k + a[1].s)).map(([n, q]) => row('var(--good)', nm(n) + ': ' + [q.k ? q.k + (q.k === 1 ? ' kick' : ' kicks') : '', q.s ? q.s + (q.s === 1 ? ' stop' : ' stops') + ' (' + [...q.with].map(([w, c]) => esc(w) + (c > 1 ? ' ×' + c : '')).join(', ') + ')' : ''].filter(Boolean).join(', ') + '.')));
+    body += sec('Deaths', o.deaths.map((x) => row('var(--bad)', mmssP(x.t) + ' · ' + nm(x.who) + ' died to ' + esc(x.to) + (x.from ? ' (' + esc(x.from) + ')' : '') + (x.defs ? '' : ', no defensive in the 30 s before') + '.')));
+    const dpl = new Map(); for (const x of o.defs) dpl.set(x.who, (dpl.get(x.who) || []).concat(x.name));
+    body += sec('Defensives', [...dpl].map(([n, l]) => row('var(--muted)', nm(n) + ': ' + esc([...new Set(l)].join(', ')) + (l.length > 1 ? ' (' + l.length + ')' : '') + '.')));
+    body += sec('Dispels', o.dispels.length ? [row('var(--muted)', o.dispels.length + (o.dispels.length === 1 ? ' dispel' : ' dispels') + ': ' + [...new Set(o.dispels.map((x) => x.who))].map(nm).join(', ') + '.')] : []);
+    body += '<div class="kc"><div class="kh"><b>Damage and healing</b></div><div class="kb"><table class="mpt"><tr><th>Player</th><th class="r">DPS</th><th class="r">HPS</th></tr>' +
+      ppl.map((q) => [q, o.dmg[q.name] || 0, o.heal[q.name] || 0]).sort((a, b) => b[1] - a[1]).map(([q, d, hh]) => '<tr><td>' + nm(q.name) + '</td><td class="r">' + kN(d) + '</td><td class="r">' + (hh ? kN(hh) : '—') + '</td></tr>').join('') + '</table></div></div>';
+  }
+  app.innerHTML = '<div class="top">' + LOGO + '<b>Debrief</b><span class="bt">' + esc(run.dungeon) + ' · +' + run.level + '</span><span class="pill' + (run.timed ? ' k' : '') + '">' + (run.timed ? 'Timed' : 'Over time') + '</span><button class="x" type="button" title="Close" data-close="1">×</button></div>' +
+    chips + '<div class="body">' + body + '</div><div class="foot"><button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">Your key, pull by pull</span></div>';
+  fit();
+}
 function render() {
+  if (D && D.mplus) { renderMplus(); return; }
   const app = document.getElementById('app'); if (!D || !D.h) return;
   const h = D.h, c = D.coach, cls = new Map(D.cls || []);
   document.body.classList.toggle('isMini', !big); document.body.classList.toggle('is-kill', !!(big && h.kill));
@@ -451,7 +496,8 @@ function cols2(b, chrome) {
 }
 window.addEventListener('resize', () => fit()); /* (the app widened or narrowed the window: measure again) */
 document.addEventListener('click', (e) => {
-  const t = e.target.closest ? e.target.closest('[data-fold],[data-row],[data-close],[data-open],[data-big],[data-cut],[data-cutt],[data-pull],[data-tab],[data-cf],[data-cr],[data-cmore],[data-who]') : null; if (!t) return;
+  const t = e.target.closest ? e.target.closest('[data-fold],[data-row],[data-close],[data-open],[data-big],[data-cut],[data-cutt],[data-pull],[data-tab],[data-cf],[data-cr],[data-cmore],[data-who],[data-mp]') : null; if (!t) return;
+  if (t.dataset.mp != null) { MPULL = +t.dataset.mp; render(); const b = document.querySelector('.body'); if (b) b.scrollTop = 0; return; } /* (a Mythic+ pull tab (Nov 1)) */
   if (t.dataset.who) { const PL = (D.card && D.card.players) || []; if (!PL.length) return; const curN = document.querySelector('.kwho .knm'), cur = PL.findIndex((p) => p.name === WHO || (!WHO && curN && String(p.name).split('-')[0] === curN.textContent)); WHO = PL[cur < 0 ? (+t.dataset.who > 0 ? 0 : PL.length - 1) : (cur + (+t.dataset.who) + PL.length) % PL.length].name; for (const k of Object.keys(OPEN)) if (/^r:rot|^m:rot|^s:rot/.test(k)) delete OPEN[k]; render(); return; }
   if (t.dataset.pull) { if (t.classList.contains('on')) return; loadingPull = +t.dataset.pull; t.classList.add('wait'); t.textContent = t.textContent.replace(/ · .*/, ' · loading…'); post('pull:' + t.dataset.pull); return; } /* (a pull button, in the card's row or the old strip) */
   if (t.dataset.tab) { VIEW = t.dataset.tab; render(); return; } /* (the card: Me or Raid view) */
@@ -471,7 +517,7 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') post('clos
 function take(d) {
   if (!d) return;
   const fromChip = loadingPull != null; /* (a pull button brought it: no motion) */
-  waiting = false; loadingPull = null; WHO = null; VIEW = null; /* (each recap starts on you, on Me, like the card in WoW (Oct 24)) */ D = d; big = !!d.full; for (const k of Object.keys(OPEN)) delete OPEN[k]; render();
+  waiting = false; loadingPull = null; WHO = null; VIEW = null; MPULL = 0; /* (each recap starts on you, on Me, like the card in WoW (Oct 24)) */ D = d; big = !!d.full; for (const k of Object.keys(OPEN)) delete OPEN[k]; render();
   const pr = document.getElementById('pullsRow'), on = pr && pr.querySelector('.pc.on'); if (on) pr.scrollLeft = Math.max(0, on.offsetLeft - pr.clientWidth + on.offsetWidth + 12);
   const b = document.querySelector('.body'); if (b) b.scrollTop = 0;
   if (big && !fromChip) motion();
