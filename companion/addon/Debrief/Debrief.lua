@@ -493,15 +493,15 @@ local function BTN()
 end
 -- a section label: small, uppercase, quiet; click it to fold the section away (or open it again)
 local function head(y, text, key, folded, onClick)
-  local t = FS("head", 15, COL.text); t:SetPoint("TOPLEFT", IND, -y); t:SetText(text)
+  local t = FS("bold", 12.5, COL.muted); t:SetPoint("TOPLEFT", IND, -y); t:SetText(text) -- (small, uppercase and quiet, like the key's sections (Nov 1))
   if key then
     local sign = FS("bold", 14, COL.faint); sign:SetJustifyH("RIGHT"); sign:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - IND, -(y - 1)); sign:SetText(folded and "+" or "–")
     local b = BTN(); b:SetPoint("TOPLEFT", 0, -(y - 8)); b:SetSize(CW, 30)
     b:SetScript("OnClick", onClick or function() DB.collapsed = DB.collapsed or {}; DB.collapsed[key] = not DB.collapsed[key] or nil; render() end)
     b:SetScript("OnEnter", function() t:SetTextColor(rgb(COL.gold)); sign:SetTextColor(rgb(COL.gold)) end)
-    b:SetScript("OnLeave", function() t:SetTextColor(rgb(COL.text)); sign:SetTextColor(rgb(COL.faint)) end)
+    b:SetScript("OnLeave", function() t:SetTextColor(rgb(COL.muted)); sign:SetTextColor(rgb(COL.faint)) end)
   end
-  return y + (folded and 18 or 27)
+  return y + (folded and 18 or 24)
 end
 -- "Show 2 more"
 local function moreLink(y, key, n)
@@ -759,7 +759,7 @@ local function cardChart(y, title, pts, curPull, fmt, cx, cw) -- (cx, cw: where 
   local h = 78; cx = cx or 0; cw = cw or CW
   local bg = TEX("BACKGROUND"); bg:SetPoint("TOPLEFT", cx, -y); bg:SetSize(cw, h); rounded(bg, "fill", 8, COL.raised, (DB.cardStyle == "glass") and 0.55 or 1)
   local t = FS("bold", 10.5, COL.faint); t:SetPoint("TOPLEFT", cx + 12, -(y + 9)); t:SetText(string.upper(title))
-  if #pts < 2 then local n = FS("body", 12, COL.faint); n:SetPoint("TOPLEFT", cx + 12, -(y + 30)); n:SetWidth(cw - 24); n:SetText("Shows once you have two pulls on this boss tonight."); return y + h + 8 end
+  if #pts < 2 then bg:Hide(); t:Hide(); return y end -- (no empty chart box (Nov 1))
   local lo, hi, best = math.huge, -math.huge, 1
   for i, p in ipairs(pts) do lo = math.min(lo, p[2]); hi = math.max(hi, p[2]); if p[2] >= pts[best][2] then best = i end end
   if hi == lo then hi = lo + 1 end
@@ -781,6 +781,8 @@ local function cardCharts(y, raw, P, SH)
   local nk = nightKey(DB.pulls[DB.cur] or raw)
   local list = {}; for _, q in ipairs(DB.pulls) do if q.h and q.h.boss == raw.h.boss and q.h.diff == raw.h.diff and nightKey(q) == nk then list[#list + 1] = q end end
   -- (both charts side by side on a Large or Extra wide card, stacked on a narrower one, as in the pop-up (Nov 1, the Design studio: one design, two windows))
+  local nn = 0; for _ in ipairs(list) do nn = nn + 1 end
+  if nn < 2 then return y end -- (charts once there are two pulls on this boss tonight (Nov 1))
   local both = SH.chartNight and SH.chartLine and P and W >= 540
   local half = both and math.floor((CW - 10) / 2) or nil
   local y2 = y
@@ -1584,10 +1586,11 @@ local function renderOnce()
     local shut = UI.startsShut(key, #list)
     local folded = (shut and not EXPANDED["o:" .. key]) or (not shut and DB.collapsed and DB.collapsed[key])
     if shut and folded then title = title .. "  ·  " .. #list .. (key == "rotation" and (#list == 1 and " tip" or " tips") or "") end
-    local y0 = y; IND = 12; y = y + 12
+    title = (title:gsub("^[^|]+", string.upper)) -- (plain rows under a small uppercase title, no box (Nov 1))
+    local y0 = y; IND = 0; y = y + 4
     y = head(y, title, key, folded, shut and function() EXPANDED["o:" .. key] = not EXPANDED["o:" .. key] or nil; render() end or nil)
     if not folded then
-      if #list == 0 then if empty then y = row(y, "ok", nil, empty) end
+      if #list == 0 then if empty then local q0 = FS("body", 13.5, COL.muted); q0:SetPoint("TOPLEFT", 0, -y); q0:SetText(empty); y = y + 24 end
       else
         local n = EXPANDED[key] and #list or math.min(#list, limit)
         for i = 1, n do draw(list[i]) end
@@ -1595,8 +1598,6 @@ local function renderOnce()
       end
       if tail then tail() end
     end
-    y = y + 3
-    panel(y0, y - y0)
     IND = 0; y = y + 10
   end
   -- (who died, on both views, with the wipe filter on the right: Stop at − n +. On a wipe nothing after that death counts:
@@ -1696,16 +1697,21 @@ local function renderOnce()
     IND = 0; y = y + 10
   end
   -- (the raid lead's word: why we wiped, or the kill, in a few sentences; on your own view a "You" line under it)
-  local function leadBox(you)
+  local function leadBox(you, tips)
     if (m.raid.lead or "") == "" or m.h.practice or SH.lead == false then return end
     local t = FS("body", 14, COL.text); t:SetWidth(CW - 34); t:SetText(names(m.raid.lead))
     local u; if you and (you or "") ~= "" then u = FS("body", 13.5, COL.soft); u:SetWidth(CW - 34 - 40); u:SetText(names(you)) end
-    local hh = 12 + 17 + t:GetStringHeight() + (u and (8 + u:GetStringHeight()) or 0) + 12
+    -- ("Next time" once (Nov 1): the tips here, numbered, so no second box at the bottom)
+    local f; if tips and #tips > 0 then local l0 = {}; for i, x in ipairs(tips) do l0[i] = (#tips > 1 and (i .. ". ") or "") .. x end; f = FS("bold", 14, COL.text); f:SetWidth(CW - (#tips > 1 and 44 or 34)); f:SetText(names(table.concat(l0, "\n"))) end
+    local hh = 12 + 17 + t:GetStringHeight() + (u and (8 + u:GetStringHeight()) or 0) + (f and (12 + 16 + f:GetStringHeight()) or 0) + 12
     box(y, hh, COL.gold, 0.07, COL.gold, 0.5, COL.gold)
     local l = FS("bold", 11.5, COL.gold); l:SetPoint("TOPLEFT", 16, -(y + 11)); l:SetText(m.h.kill and "THE KILL" or "WHY WE WIPED")
     t:SetPoint("TOPLEFT", 16, -(y + 28))
     if u then local k = FS("bold", 13.5, COL.gold); k:SetPoint("TOPLEFT", 16, -(y + 28 + t:GetStringHeight() + 8)); k:SetText("You"); u:SetPoint("TOPLEFT", 56, -(y + 28 + t:GetStringHeight() + 8)) end
+    if f then local yy = y + 28 + t:GetStringHeight() + (u and (8 + u:GetStringHeight()) or 0) + 12
+      local k = FS("bold", 11.5, COL.gold); k:SetPoint("TOPLEFT", 16, -yy); k:SetText(m.h.dungeon and "NEXT TIME" or (m.h.kill and "NEXT WEEK" or "NEXT PULL")); f:SetPoint("TOPLEFT", #tips > 1 and 26 or 16, -(yy + 16)) end
     y = y + hh + 12
+    return true
   end
   -- (the Glance card: the raid lead's quick read)
   local function glanceBody()
@@ -1985,36 +1991,28 @@ local function renderOnce()
     -- (you weren't in this pull: say so, show nobody else (Oct 25))
     local t = FS("body", 13.5, COL.muted); t:SetPoint("TOPLEFT", 0, -(y + 4)); t:SetWidth(CW); t:SetJustifyH("LEFT"); t:SetText("You weren't in this pull. Use the arrows to look at someone else, or open the Raid view."); y = y + t:GetStringHeight() + 14
   elseif view == "me" and P then
-    if not (coachOn and youCoach(P)) then leadBox(P.lead) end
-    -- the tile: your damage or healing, against your last pull and your best
-    if SH.tile ~= false then
-      local th = 62
-      local goal = UI.goalFor(P, m)
-      if goal > 0 then th = 72 end
-      panel(y, th)
-      icon(12, y + 13, 36, P.icon)
-      local l = FS("body", 12.5, COL.muted); l:SetPoint("TOPLEFT", 60, -(y + 11)); l:SetText(P.role == "healer" and "Your healing" or "Your damage")
-      local v = FS("head", 28, COL.text); v:SetPoint("TOPLEFT", 60, -(y + 26)); v:SetText(P.v)
-      local u = FS("bold", 12, COL.muted); u:SetPoint("BOTTOMLEFT", v, "BOTTOMRIGHT", 5, 4); u:SetText(P.unit)
-      local s = FS("body", 12.5, COL.faint); s:SetJustifyH("RIGHT"); s:SetPoint("TOPRIGHT", body, "TOPLEFT", CW - 12, -(y + 11)); s:SetWidth(CW - 170); s:SetWordWrap(true) -- (every line shown, none cut off with "…" (Oct 24))
-      local lines = {}
-      if P.d and SH.vs ~= false then lines[#lines + 1] = (P.d >= 0 and ("|cff7ee08f+" .. P.d .. "%|r") or ("|cffff8f87" .. P.d .. "%|r")) .. " vs pull " .. P.vs end
-      if SH.best ~= false then lines[#lines + 1] = (P.bt and ("|cff7ee08fYour best tonight|r" .. (P.best ~= "" and (" (was " .. P.best .. ", pull " .. P.bp .. ")") or "")) or P.best ~= "" and ("Best " .. P.best .. " (pull " .. P.bp .. ")") or "First pull read") end
-      if P.rank ~= "" and SH.rank ~= false then lines[#lines + 1] = P.rank end
-      s:SetText(table.concat(lines, "\n"))
-      local need = 11 + s:GetStringHeight() + 10; if need > th then local bump = need - th; th = need; panel(y, th) end
-      -- (your goal: a thin bar along the bottom of the tile, gold until you reach it, then green)
-      if goal > 0 then
-        local pct = UI.parseK(P.v) / goal
-        local gl = FS("bold", 11, pct >= 1 and COL.goodT or COL.muted); gl:SetPoint("TOPLEFT", 60, -(y + 56)); gl:SetText("Goal " .. goal .. "k  ·  " .. math.floor(pct * 100 + 0.5) .. "%")
-        local tr = TEX("ARTWORK"); tr:SetPoint("TOPLEFT", 160, -(y + 61)); tr:SetSize(CW - 172, 3); fill(tr, COL.line2)
-        local fl = TEX("OVERLAY"); fl:SetPoint("TOPLEFT", 160, -(y + 61)); fl:SetSize(math.max(2, (CW - 172) * math.min(1, pct)), 3); fill(fl, pct >= 1 and COL.good or COL.gold)
-      end
-      y = y + th + 16
+    if not (coachOn and youCoach(P)) then
+      local tips, seen = {}, {}; local function first(x) return ((x:match("^(.-)[%.!%?]%s") or x):gsub("[%.!%?]$", "")) end
+      if SH.next ~= false then for _, x in ipairs({ P.next or "", P.next2 or "" }) do if x ~= "" and not seen[first(x)] then seen[first(x)] = true; tips[#tips + 1] = x end end end
+      if leadBox(P.lead, tips) and #tips > 0 then coachDrew = true end -- ("Next time" once, in the top box (Nov 1))
     end
-    -- (the Detailed card: three small number tiles under yours: avoidable damage, kicks or dispels, your death)
-    if (DB.detailed or DB.tiles) and not DB.compact and P.tiles and #P.tiles > 0 then y = tilesRow(y, P.tiles) end
+    -- (your numbers as one row of small tiles (Nov 1, the Design studio's long-card spec): your damage or healing first, then the rest, and your deaths)
+    do local L0 = {}
+      if SH.tile ~= false then
+        local goal, sub = UI.goalFor(P, m), nil
+        if goal > 0 then sub = "Goal " .. goal .. "k  ·  " .. math.floor(UI.parseK(P.v) / goal * 100 + 0.5) .. "%"
+        elseif P.d and SH.vs ~= false then sub = (P.d >= 0 and ("|cff7ee08f+" .. P.d .. "%|r") or ("|cffff8f87" .. P.d .. "%|r")) .. " vs pull " .. P.vs
+        else sub = P.bt and "your best tonight" or "first pull read" end
+        L0[1] = { P.role == "healer" and "Your healing" or "Your damage", P.v .. " |cff" .. COL.muted .. (P.unit or "") .. "|r", sub }
+      end
+      for _, t0 in ipairs(P.tiles or {}) do L0[#L0 + 1] = t0 end
+      if not m.h.practice then local dn, all = 0, 0; local me1 = P.name:match("^([^%-]+)") or P.name
+        for _, d in ipairs(m.raid.died or {}) do all = all + 1; local w = tostring(d[2] or ""); if w == P.name or (w:match("^([^%-]+)") or w) == me1 then dn = dn + 1 end end
+        L0[#L0 + 1] = { "Deaths", dn, dn > 0 and "" or (all == 0 and "nobody died" or "you stayed up"), dn > 0 and "bad" or nil } end
+      if #L0 > 0 then y = UI.tiles(y, L0) end
+    end
     if chartsOn then y = UI.cardCharts(y, raw, P, SH) end
+    local diedDone -- (two columns: Who died sits on the left, before Rotation (Nov 1))
     if not DB.compact then
       local rot = P.rot and function() section("rotation", "Rotation" .. ((P.rs and P.rs.score) and ("  |cff" .. COL.muted .. "·|r  |cff" .. COL.goodT .. P.rs.score .. "|r|cff" .. COL.muted .. "/100|r") or ""), P.rot, DB.maxSlips or 3, function(r) local k = "rt:" .. (r[3] or ""); local o = STORY[k]; if o == nil then o = DB.preset == "detailed" and r == P.rot[1] end; y = UI.rotRow(y, r, o, function() STORY[k] = not o; render() end) end, "Nothing to fix here.", function() y = UI.rotGood(y, P.rs) end) end
       or function() section("rotation", "Rotation", UI.onlyBad(P.slips), DB.maxSlips or 3, function(r) y = UI.rowS(y, r) end, #P.slips > 0 and "Nothing to fix here." or "No rotation checks for this spec yet.") end
@@ -2022,12 +2020,14 @@ local function renderOnce()
       if (DB.detailed or DB.tiles) and P.tiles and #P.tiles > 0 then bossL = {}; for _, r in ipairs(P.boss) do if not ({ ability_rogue_sprint = true, ability_kick = true, spell_holy_dispelmagic = true })[r[2]] then bossL[#bossL + 1] = r end end end
       local bos = function() section("boss", "Boss mechanics", UI.onlyBad(bossL), DB.maxBoss or 2, function(r) y = UI.rowS(y, r) end, "No boss mistakes.") end
       if m.h.practice and #P.boss == 0 then bos = function() end end -- (a training dummy has no boss mechanics)
-      if DB.bossFirst then bos(); rot() else rot(); bos() end
       -- (survival: your defensives, Healthstone and health potion)
-      do local L = {} -- (one Survival section (Oct 22 audit): defensives, Healthstone and potion, a death with one unused)
+      local function surv() local L = {} -- (one Survival section (Oct 22 audit): defensives, Healthstone and potion, a death with one unused)
         if SH.surv ~= false then for _, r in ipairs(UI.onlyBad(P.surv or {})) do L[#L + 1] = r end end
         if SH.cons ~= false then for _, r in ipairs(P.cons or {}) do L[#L + 1] = r end end
         if #L > 0 then UI.worst(L); section("surv", "Survival", L, 6, function(r) y = UI.rowS(y, r) end) end end
+      -- (two columns (Nov 1): Survival and Boss mechanics on the left, Rotation alone on the right)
+      if T.cols == 2 then surv(); bos(); if not m.h.practice and not (DB.detailed and raidOk) then diedRow(); diedDone = true end; T.rotMark = T.n + 1; rot()
+      else if DB.bossFirst then bos(); rot() else rot(); bos() end; surv() end
       -- (the Detailed card: the raid's side right here, so nobody has to switch to the Raid view)
       if DB.detailed and not m.h.practice and not m.h.dungeon and not raidOk then
         summary()
@@ -2035,7 +2035,7 @@ local function renderOnce()
         if m.raid.mech and #m.raid.mech > 0 and (DB.maxMech or 6) > 0 then section("rmech", "The raid: boss mechanics", m.raid.mech, DB.maxMech or 6, function(r) y = row(y, r[1], r[2], r[4], r[3]) end) end
       end
     end
-    if not m.h.practice and not (DB.detailed and raidOk) then diedRow() end -- (the death filter here too: a dummy has no deaths)
+    if not m.h.practice and not (DB.detailed and raidOk) and not diedDone then diedRow() end -- (the death filter here too: a dummy has no deaths)
     if P.next ~= "" and SH.next ~= false and not coachDrew then y = UI.nextBox(y + 2, (DB.detailed and (P.next2 or "") ~= "") and ("1. " .. P.next .. "\n2. " .. P.next2) or P.next, m.h.dungeon and "NEXT TIME" or nil) end
   else
     leadBox(nil)
@@ -2066,8 +2066,22 @@ end
 -- (the card is one column at every width, like the pop-up (Nov 1, the Design studio's spec: no two-column Detailed))
 local function renderAll()
   local T = UI.two
-  T.cols, T.brk, T.cwc = 1, 0, nil
+  T.cols, T.brk, T.cwc, T.rotMark = 1, 0, nil, nil
   renderOnce()
+  -- (the long card (Nov 1, Flex: "once it gets past a certain length it needs to widen and be two columns"): taller than the screen, it goes
+  -- twice as wide (capped at the screen) with Rotation, or the Raid view's later lists, on the right; it fits again: one column)
+  local raw = DB.pulls[DB.cur]
+  if not UI.saved and raw and not raw.mplus and T.total and T.avail and T.total > T.avail then
+    local cw1 = (WIDTHS[DB.width or "normal"] or 400) - PAD * 2
+    local sw = ((UIParent and UIParent.GetWidth and UIParent:GetWidth()) or 1365) / math.max(0.5, (card.GetScale and card:GetScale()) or 1)
+    local cwc = math.min(cw1, math.floor((sw - 60 - PAD * 2 - 16) / 2))
+    if cwc >= 300 then
+      T.cwc = cwc < cw1 and cwc or nil; T.cols = 2; T.brk = 0; renderOnce() -- (measured with the two-column order)
+      local best = T.rotMark
+      if not best then local bh = T.total or 0; for i, yb in ipairs(T.marks) do local hh = math.max(yb, (T.total or 0) - yb + 2); if yb > 60 and hh < bh then best, bh = i, hh end end end
+      T.brk = best or 0; renderOnce()
+    end
+  end
   if Debrief_FitPreview then Debrief_FitPreview() end
 end
 -- (a problem while drawing is noted, not thrown (Oct 24): the card stays as it was)
