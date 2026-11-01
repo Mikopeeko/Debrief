@@ -10495,20 +10495,20 @@ html body #view section.rpc.rpx-on > .rpc-lead b { color: #7fc99a; }
 .dbt-two.rwd-one { grid-template-columns: 1fr !important; }
 /* round 184: the old Summary / Everything switch never shows, even for the first paint */
 html body #view section.rck .rck-h .ds-sw{display:none!important}
-/* round 432 one shield list */
-html body .shd.shd432 .shd-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
-html body .shd.shd432 .shd-tk{font-size:12.5px;font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0}
-html body .shd.shd432 .shd-tk b{color:var(--text);font-weight:600}
-html body .shd.shd432 .shd-one .shd-d{display:inline-block;margin-right:6px;vertical-align:middle}
-html body #view .shd.shd432 details.shd-one > summary.shd-oh{display:block !important}
-html body .shd.shd432 .shd-sp.ok{color:#7ee08f} html body .shd.shd432 .shd-sp.warn{color:#f3c969} html body .shd.shd432 .shd-sp.bad{color:#ff8f87}
-html body .shd.shd432 .shd-late .shd-oh{color:var(--muted);padding:8px 0}
 /* round 434 tile rows line up */
 html body #view .oa-tiles + section.cch2.dt-box{column-gap:1px !important;row-gap:1px !important;background:var(--line) !important}
 html body main#main #view .oa-tiles + section.cch2.dt-box.dt-box.dt-box.dt-box details.cch-ab{background-color:var(--panel) !important}
 html body #view .oa-tiles + section.cch2.dt-box .cch-ab,html body #view .oa-tiles + section.cch2.dt-box .cch-ab > summary,html body #view .oa-tiles + section.cch2.dt-box .cch-ab > summary *,html body #view .oa-tiles + section.cch2.dt-box > *,html body #view .oa-tiles + section.cch2.dt-box .cch-ab::before,html body #view .oa-tiles + section.cch2.dt-box .cch-ab::after,html body #view .oa-tiles + section.cch2.dt-box .cch-ab > summary::before{border-radius:0 !important}
 html body main#main #view .oa-tiles + section.cch2.dt-box details.cch-ab > summary,html body #view .oa-tiles + section.cch2.dt-box .cch-ab > summary{padding-left:18px !important;padding-right:14px !important}
 html body #view .oa-tiles + section.cch2.dt-box .cch-ab .cgl-n,html body #view .oa-tiles + section.cch2.dt-box .cch-ab .cgl-n .sp{font-size:11px !important;letter-spacing:.06em !important;font-weight:600 !important}
+/* round 435 default depth */
+html:not([data-theme]){background:radial-gradient(1400px 520px at 50% -220px,rgba(255,255,255,.07),transparent 70%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"),#0d1013;background-attachment:fixed}
+html:not([data-theme]) body.refine{background:transparent}
+html:not([data-theme]) body.refine .panel,html:not([data-theme]) body.refine .r212-sb,html:not([data-theme]) body.refine .dbt-p:not(.dbt-side),html:not([data-theme]) body.refine #view .dbr-4.oa-tiles > .dbr-n,html:not([data-theme]) body.refine main#main #view .oa-tiles + section.cch2.dt-box.dt-box.dt-box.dt-box details.cch-ab{background-image:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,0) 160px) !important}
+html:not([data-theme]) body.refine .panel,html:not([data-theme]) body.refine .r212-sb,html:not([data-theme]) body.refine .dbt-p:not(.dbt-side){box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 1px 0 rgba(0,0,0,.5),0 14px 30px -16px rgba(0,0,0,.95)}
+html:not([data-theme]) body.refine header.fight.bh{box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 14px 34px -18px rgba(0,0,0,.95)}
+html:not([data-theme]) body.refine #topbar{box-shadow:inset 0 -1px 0 rgba(255,255,255,.03),0 8px 22px -14px rgba(0,0,0,.8)}
+html:not([data-theme]) body.refine .btn:not(.primary),html:not([data-theme]) body.refine main#main > .r300-tb select{box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 1px 2px rgba(0,0,0,.35)}
 /* refined look (Design studio round 170, Oct 28): one set of finishes everywhere, see notes/Design rules.md */
 /* The refined finishes (trial): the rules in notes/Design rules.md. Same layout, same font (Barlow Condensed), new finishes:
    greys for structure, colour only where it means something, gold as the mark, one panel / row / tag / chip, flat, sharp. */
@@ -12349,6 +12349,7 @@ html[data-theme="glass"] body.refine .bh-name{font-family:'Outfit',var(--head);l
 html[data-theme="glass"] body.refine .brand h1,html[data-theme="glass"] body.refine #topbar .tb-brand b{font-family:'Outfit',var(--head)}
 html[data-theme="glass"] body.refine ::selection{background:rgba(126,224,184,0.35)}
 html[data-theme="glass"] body.refine{--line:rgba(255,255,255,.12);--line2:rgba(255,255,255,.18)}
+html[data-theme="glass"] body.refine main#main #view .oa-tiles + section.cch2.dt-box{background:transparent !important}
 html[data-theme="glass"] body.refine #view .dbr-4.oa-tiles > .dbr-n,html[data-theme="glass"] body.refine main#main #view .oa-tiles + section.cch2.dt-box.dt-box.dt-box.dt-box details.cch-ab{background:rgba(255,255,255,.055) !important}
 html[data-theme="glass"] body.refine .panel,html[data-theme="glass"] body.refine header.fight.bh,html[data-theme="glass"] body.refine .r212-sb,html[data-theme="glass"] body.refine .dbt-p,html[data-theme="glass"] body.refine #topbar{background-color:rgba(255,255,255,.055) !important;border-color:rgba(255,255,255,.14) !important}
 html[data-theme="midnight"]{background:radial-gradient(900px 420px at 80% -80px, rgba(124,92,255,0.28), transparent 70%), radial-gradient(700px 400px at 0% 100%, rgba(56,189,248,0.12), transparent 70%),#080b1f;background-attachment:fixed}
@@ -12504,6 +12505,7 @@ html[data-theme="warrior"] body.refine .bh-name{font-family:'Cinzel',var(--head)
 html[data-theme="warrior"] body.refine .brand h1,html[data-theme="warrior"] body.refine #topbar .tb-brand b{font-family:'Cinzel',var(--head)}
 html[data-theme="warrior"] body.refine ::selection{background:rgba(198,155,109,0.35)}
 </style>
+
 
 
 
@@ -22962,6 +22964,8 @@ function openReport() {
 const PATCH_NOTES = [
   { d: '2026-10-31', h: [{ t: 'Themes', d: 'Pick how Debrief looks from Menu > Theme: Aurora, Aurora Gold, Raid frame, Ember Crown, Glass, Midnight, Forge, or your class colours. It only changes the look, and it is saved on your device.' }, { t: 'Cooldown timing on The Coiled Altar', d: 'Rotation now shows if your big cooldown went out at the same moments the top players use it on Mythic, like Trueshot on the pull, at P2 start and in the intermission. Debriefing tells you when you missed one. For now: Holy Paladin, Marksmanship Hunter, Affliction Warlock, Arcane Mage, Arms Warrior and Balance Druid.' }], n: [
     "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
+    "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
+    "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Eternal Nightfall (Shield Break) is one list: a row per shield with how fast it broke and the time to spare; tap a row for who hit it.",
     "Phase changes on The Coiled Altar say it plainly, like \"Phase 2 ran long: 2:57. Top guilds finish it in about 2:30.\" A mechanic that happened once no longer says \"1 of 1 time\".",
     "The two rows of boxes at the top of Debriefing line up, with the same size labels and square corners, and both take your theme.",    "Your first Debriefing is quicker to learn: three short tips that start with why the pull ended, and the NSRT note card waits until they're done.",    "Holy Paladin Rotation now has top-player marks on Ula'tek and Kith'ix, and Elemental Shaman on Ula'tek, so every Mythic boss has them.",
     "Subtlety Rogue and Protection Paladin Rotation: top-player marks refreshed on every Mythic boss, from more top players.",
