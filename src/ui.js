@@ -2024,7 +2024,8 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-11-01', h: [], n: [
+  { d: '2026-11-01', h: [{ t: 'Debriefing Timeline, across the page', d: 'Each phase is one chart: every mechanic a row, every moment a dot, green for done right and red for a mistake, with the boss health behind. Hover a dot for what happened. Under it, every mistake is one line; click it for why and what to do next time.' }], n: [
+    "The Coiled Altar reads more plainly: a soul fragment death says the third fragment's hit killed them, and the ghost advice says to keep facing your ghost (it moves while you look away).",
     "The tab bar is clear on every theme now, with a soft dark tint only while it sticks to the top as you scroll.",
     "The Debriefing tab no longer shows a small red number: it wasn't clear what it counted, and the page itself says how many serious mistakes there were.",
     "The selected tab is marked once: white text, an accent icon and a thin line right on the divider (no grey box), and the tab bar is as wide as the page instead of running edge to edge.",
@@ -14206,7 +14207,7 @@ function wipeChain(r) { if (!r || !r.item || r.item.kill) return null; const ct 
   for (const x of items) { const m = String(x.txt || '').match(/^(.+?) died to Gravebound\.?$/i); if (!m) continue;
     const d = r.deaths.find((y) => String(y.player).split('-')[0] === m[1] && Math.abs(y.t - x.t) < 5 && /^gravebound$/i.test(String(y.ability || ''))); if (!d) continue;
     const n = (d.recap || []).filter((e) => !e.heal && /^gravebound$/i.test(e.spell || '') && (e.id == null || +e.id === 1308330) && e.t >= d.t - 20).length;
-    x.txt = m[1] + ' died to Gravebound: ' + (n >= 3 ? 'picked up all 3 soul fragments, and the last one\'s hit killed them' : 'missed their soul fragments'); }
+    x.txt = m[1] + ' died to Gravebound: ' + (n >= 3 ? 'picked up all 3 soul fragments, and the third one\'s hit killed them' : 'missed their soul fragments'); }
   items.sort((a, b) => a.t - b.t); const L = items.slice(0, 4); if (!L.length) return null;
   const callW = ci ? (ci.why === 'check' ? 'the damage check was missed' : ci.why === 'half' ? 'half the raid was dead' : ci.why === 'line' ? 'more were dead than any kill survived' : 'the wipe mechanic went off') : '';
   const txt = 'It started at ' + T(L[0].t) + ': ' + L[0].txt + '.' + L.slice(1).map((x) => ' Then at ' + T(x.t) + ': ' + (x.nm ? x.txt : x.txt.charAt(0).toLowerCase() + x.txt.slice(1)) + '.').join('') + (ci && isFinite(ct) ? ' The wipe was called at ' + T(ct) + ': ' + callW + '.' : '');
@@ -33742,7 +33743,7 @@ function dsGuides() {
     var svTag = function (n, dead) { var p = ''; for (var k = 1; k <= 5; k++) p += '<i' + (k <= n ? ' class="f"' : '') + '></i>'; return '<em class="dbt-sv s' + n + '" title="' + SVL(n) + ' (' + n + ' of 5)"><span class="dbt-pips">' + p + '</span>' + (dead ? '☠ ' : '') + SVL(n) + '</em>'; };
     (function () { var c5 = { s: 0, m: 0, n: 0 }; M.forEach(function (m) { if (m.st === 'ok' || m.dupOf || (m.death && m.into)) return; var lv = m.dead ? 5 : (m.sv || 2); if (lv >= 4) c5.s++; else if (lv === 3) c5.m++; else c5.n++; }); TOPC = (c5.s ? '<span class="dbt-c5 s">' + c5.s + ' Serious</span>' : '') + (c5.m ? '<span class="dbt-c5 m">' + c5.m + ' Moderate</span>' : '') + (c5.n ? '<span class="dbt-c5 n">' + c5.n + ' Minor</span>' : ''); var wk = d.querySelector('.dbt-why > .dbt-k'); if (wk && TOPC && !d.querySelector('.dbt-c5w')) wk.insertAdjacentHTML('afterend', '<span class="dbt-c5w">' + TOPC + '</span>'); })();
     var LEN = cut || (M.length ? M[M.length - 1].t + 10 : 1);
-    var draw = function () { dbtMapsHome(); var lastR = true, o = '', sd = 0, pi = 0, n = 0, run = []; F.map = F.map || {};
+    var drawV = function () { dbtMapsHome(); var lastR = true, o = '', sd = 0, pi = 0, n = 0, run = []; F.map = F.map || {}; /* (round 457: the down-the-page drawing; across() turns it into the chart and cards) */
       var flush = function () { if (!run.length) return; if (run.length >= 4 && !F.open[run[0].i]) { o += '<div class="dbt-st dbt-fold"><button type="button" data-fold="' + run[0].i + '">✓ ' + run.length + ' done right · ' + mm(run[0].m.t) + '–' + mm(run[run.length - 1].m.t) + ' ▸</button></div>'; } else run.forEach(function (r) { o += r.h; }); run = []; };
       M.forEach(function (m, i) { while (pi < phs.length && phs[pi].t <= m.t) { flush(); var p0 = phs[pi], p1 = phs[pi + 1], inP = M.filter(function (q) { return q.t >= p0.t && (!p1 || q.t < p1.t) && q.st !== 'ok'; }), nmk = inP.filter(function (q) { return !q.death; }).length, ndt = inP.filter(function (q) { return q.death; }).length;
           var inW = !kill && WT != null && WT >= p0.t && (!p1 || WT < p1.t); /* (the phase the wipe came from is never "clean") */
@@ -33797,6 +33798,117 @@ function dsGuides() {
       var fb = d.querySelector('.dbt-fbtn'); if (fb) fb.innerHTML = '⚙ Filters' + (off ? ' <em>' + off + ' off</em>' : '') + ' ▾';
       try { spellify(v, tl); spellify(v, d.querySelector('.dbt-why')); } catch (e) { /* (plain text stays) */ }
       d.querySelectorAll('img.oi').forEach(function (im) { if (!im.getAttribute('src')) im.removeAttribute('data-done'); }); try { hydrateIcons(); } catch (e) { /* (icons load when seen) */ } };
+    /* round 457 across: one chart per phase above the cards: each mechanic a row, time left to right, every moment a mark (green done right,
+       yellow minor, orange moderate, red serious, a skull for a death); hover a mark for its story, click it to jump to its card. The cards
+       below are the old timeline's own cards, in time order (Flex, Nov 1: "Across the page"). Owner: the Design studio chat. */
+    var across = function () { var main0 = d.querySelector(':scope > .dbt-main'); if (!main0) return; d.classList.add('dbx');
+      var wrap = d.querySelector(':scope > .dbx-wrap'); if (!wrap) { wrap = document.createElement('div'); wrap.className = 'dbx-wrap'; d.insertBefore(wrap, main0); }
+      var lastT = 0; M.forEach(function (m) { if (m.t > lastT) lastT = m.t; });
+      var SP = phs.filter(function (p) { return p.s; }).map(function (p, k, a) { var tm2 = String(p.s).match(/(\d+:\d\d)\s*[–-]\s*(\d+:\d\d)/), a0 = tm2 ? sx(tm2[1]) : p.t, b0 = tm2 ? sx(tm2[2]) : a[k + 1] ? a[k + 1].t : LEN; return { p: p, a: a0, b: Math.max(a0 + 5, b0) }; });
+      if (!SP.length) SP = [{ p: { n: 'Whole fight', s: '', hp0: '', hp1: '' }, a: 0, b: Math.max(LEN, lastT + 5) }];
+      SP[0].a = Math.min(SP[0].a, 0); SP[SP.length - 1].b = Math.max(SP[SP.length - 1].b, cut || 0, lastT + 1);
+      var spOf = function (t) { for (var k = SP.length - 1; k >= 0; k--) if (t >= SP[k].a) return k; return 0; };
+      /* (deaths within 1.5 s of each other are one moment: one skull with a count, one line (pull 13 of xH3JNdbQ74wBDPAv: 11 at 7:13)) */
+      var DG = {}, GM = {}, gL = null, gT = -99; M.forEach(function (m, i) { if (!m.death || !vis(m) || (m.into && vis(m.into))) return; if (gL != null && m.t - gT <= 1.5) { DG[i] = gL; GM[gL].push(i); } else { gL = i; GM[i] = [i]; } gT = m.t; });
+      d._dbxG = GM; /* (the hover note reads the latest groups) */
+      var cOf = function (m) { var i = M.indexOf(m); if (DG[i] != null) return DG[i]; return M.indexOf(m.death && m.into ? m.into : m.dupOf || m); };
+      var own = function (m) { return /own/i.test(m.word || ''); };
+      var lvOf = function (m) { return m.st === 'ok' ? 'g' : m.death ? 'd' : svG(m); };
+      var short = function (r) { return r.nk || String(r.m).split(/\s+/)[0].slice(0, 9); };
+      var RH = 30, out = '';
+      SP.forEach(function (S0, k) { var a = S0.a, b = S0.b, dur = Math.max(1, b - a), p = S0.p, last = k === SP.length - 1;
+        var inS = M.map(function (m, i) { return [m, i]; }).filter(function (q) { return spOf(q[0].t) === k; });
+        var rows = []; inS.forEach(function (q) { var m = q[0]; if (m.death || !F.mech[m.m]) return; if (rows.every(function (r) { return r.m !== m.m; })) rows.push({ m: m.m, ic: m.icon, nk: m.nk }); });
+        if (F.d && inS.some(function (q) { return q[0].death; })) rows.push({ m: 'Deaths', d: 1 });
+        if (!rows.length) return;
+        var X = function (t) { return Math.max(0, Math.min(100, (t - a) / dur * 100)); };
+        var nOk = 0, nBad = 0, nD = 0; inS.forEach(function (q) { var m = q[0]; if (!vis(m)) return; if (m.st === 'ok') nOk++; else if (m.death) nD++; else if (!m.dupOf) nBad++; });
+        var inW = !kill && WT != null && WT >= a && (last || WT < b);
+        var h0 = p.hp0 != null && p.hp0 !== '' ? Math.round(+p.hp0) : null, h1 = p.hp1 != null && p.hp1 !== '' ? Math.round(+p.hp1) : null;
+        var nm2 = SP.length === 1 && /^(mechanics)?$/i.test(String(p.n || '')) ? 'Whole fight' : p.n;
+        var head = '<div class="dbx-h"><b>' + E(nm2) + '</b><em>' + E(p.s || (mm(a) + '–' + mm(b))) + '</em>' + (h0 != null && h1 != null ? '<em>Boss ' + h0 + '% → ' + h1 + '%</em>' : '') +
+          '<span class="dbx-c">' + [nOk ? '<b class="g">✓ ' + nOk + '</b> done right' : '', nBad ? '<b class="y">' + nBad + '</b> mistake' + (nBad > 1 ? 's' : '') : '', nD ? '<b class="r">☠ ' + nD + '</b> death' + (nD > 1 ? 's' : '') : ''].filter(Boolean).join(' · ') + '</span>' +
+          (inW ? '<span class="dbx-w">✕ The wipe</span>' : !nBad && !nD ? '<span class="dbx-ok">✓ Clean</span>' : '') + '</div>';
+        /* (a row with only green dots is shorter, so long fights stay close to one screen) */
+        rows.forEach(function (r) { r.bad = !!r.d || inS.some(function (q) { var m = q[0]; return !m.death && m.m === r.m && m.st !== 'ok' && vis(m); }); });
+        var YS = [], H = 0; rows.forEach(function (r) { r.h = r.bad ? RH : 22; YS.push(H); H += r.h; });
+        var tr = '';
+        rows.forEach(function (r, j) { tr += '<i class="dbx-rl" style="top:' + (YS[j] + r.h / 2) + 'px"></i>'; });
+        var step = dur > 300 ? 60 : 30; for (var t = Math.ceil((a + 1) / step) * step; t < b; t += step) { var x = X(t); tr += '<i class="dbx-gl" style="left:' + x + '%;height:' + H + 'px"></i>' + (x > 5 && x < 95 ? '<span class="dbx-ax" style="left:' + x + '%;top:' + (H + 5) + 'px">' + mm(t) + '</span>' : ''); }
+        tr += '<span class="dbx-ax a0" style="top:' + (H + 5) + 'px">' + mm(a) + '</span>';
+        var pts = HP.filter(function (q) { return q[0] >= a && (last ? q[0] <= b : q[0] < b); });
+        if (pts.length > 1) tr += '<svg class="dbx-hp" viewBox="0 0 1000 100" preserveAspectRatio="none" style="height:' + H + 'px" aria-hidden="true"><polyline points="' + pts.map(function (q) { return (X(q[0]) * 10).toFixed(1) + ',' + (4 + (1 - Math.max(0, Math.min(100, q[1])) / 100) * 92).toFixed(1); }).join(' ') + '" vector-effect="non-scaling-stroke"/></svg>';
+        if (last && cut && !kill) { var xc = X(cut); tr += (xc < 99.5 ? '<i class="dbx-after" style="left:' + xc + '%;height:' + H + 'px"></i>' : '') + '<i class="dbx-cut" style="left:' + xc + '%;height:' + (H + 2) + 'px"><span>Wipe called</span></i>'; }
+        var lastX = {};
+        inS.forEach(function (q) { var m = q[0], i = q[1]; if (!vis(m) || DG[i] != null) return; var j = -1, gn = GM[i] ? GM[i].length : 1; rows.forEach(function (r, jj) { if (m.death ? r.d : !r.d && r.m === m.m) j = jj; }); if (j < 0) return;
+          var lv = lvOf(m), y = YS[j] + rows[j].h / 2, kk = 'r' + j;
+          if (lastX[kk] && m.t - lastX[kk].t < dur * 0.02) { lastX[kk].n++; y += (lastX[kk].n % 2 ? -1 : 1) * 7; } else lastX[kk] = { t: m.t, n: 0 };
+          var cn = lv === 'g' && m.n > 1, g = lv === 'd' ? '☠' + (gn > 1 ? '<b>' + gn + '</b>' : '') : lv === 's' || lv === 'm' ? '!' : cn ? String(m.n) : '';
+          var al = mm(m.t) + ', ' + (m.death ? (gn > 1 ? gn + ' deaths' : m.lines[0] || 'a death') : m.m + ': ' + (m.st === 'ok' ? 'done right' : SVL(m.dead ? 5 : m.sv || 2)));
+          tr += '<button type="button" class="dbx-mk ' + lv + (lv === 'd' && own(m) ? ' own' : '') + (cn ? ' cn' : '') + '" data-mi="' + i + '"' + (m.st !== 'ok' ? ' data-jump="' + cOf(m) + '"' : '') + ' style="left:' + X(m.t) + '%;top:' + y + 'px" aria-label="' + E(al) + '">' + g + '</button>'; });
+        var labs = rows.map(function (r, j) { return '<div class="dbx-l' + (r.d ? ' dl' : '') + '" style="top:' + YS[j] + 'px;height:' + r.h + 'px" title="' + E(r.m) + '">' + (r.d ? '<span class="dbx-sk" aria-hidden="true">☠</span>' : '<span class="dbt-ic">' + (r.ic || '') + '</span>') + '<span class="dbx-ln">' + E(r.m) + '</span><span class="dbx-sn">' + E(r.d ? 'Deaths' : short(r)) + '</span></div>'; }).join('');
+        out += '<section class="dbx-ph">' + head + '<div class="dbx-box"><div class="dbx-labs" style="height:' + (H + 22) + 'px">' + labs + '</div><div class="dbx-sc"><div class="dbx-tr" style="height:' + (H + 22) + 'px;--mw:' + Math.round(dur * 3.4) + 'px">' + tr + '</div></div></div></section>'; });
+      var key = '<div class="dbx-key"><span class="dbx-ki"><i class="dbx-mk g"></i>Done right</span><span class="dbx-ki"><i class="dbx-mk n"></i>Minor</span><span class="dbx-ki"><i class="dbx-mk m">!</i>Moderate</span><span class="dbx-ki"><i class="dbx-mk s">!</i>Serious</span><span class="dbx-ki"><i class="dbx-mk d own">☠</i>Death, their mistake</span><span class="dbx-ki"><i class="dbx-mk d">☠</i>Death, not their fault</span>' + (HP.length > 1 ? '<span class="dbx-ki"><i class="dbx-hpk"></i>Boss health</span>' : '') +
+        '<span class="dbx-sp"></span><span class="dbx-hint"><span class="hv">Hover a mark for the full story</span><span class="tp">Tap a mark for the full story</span></span><button type="button" class="dbx-spot' + (F.spot ? ' on' : '') + '" data-dbx="spot" aria-pressed="' + (F.spot ? 'true' : 'false') + '">Spotlight mistakes</button></div>';
+      wrap.classList.toggle('spot', !!F.spot);
+      wrap.innerHTML = '<div class="dbt-p dbx-p">' + key + (out || '<div class="dbt-empty">Nothing matches these filters.</div>') + '</div>';
+      /* (the cards: only mistakes and deaths, in time order, under their phase) */
+      [].slice.call(tl.querySelectorAll(':scope > .dbt-it.ok, :scope > .dbt-st.dbt-fold, :scope > .dbt-st.cut, :scope > .dbt-empty, :scope > .dbx-wh')).forEach(function (x) { x.remove(); });
+      var kids = [].slice.call(tl.children); kids.forEach(function (x, j) { if (!x.classList.contains('dbt-st')) return; var nx = kids[j + 1]; if (!nx || !nx.classList.contains('dbt-it')) x.remove(); });
+      /* (each card folds into one slim line: time, its chart dot, the mechanic, what happened, how serious; click it to open the card
+         right there, one at a time (Flex, Nov 1: the grid of cards "just looks like cards thrown on the floor")) */
+      [].slice.call(tl.querySelectorAll(':scope > .dbt-it')).forEach(function (it) { if (DG[+it.dataset.i] != null) it.remove(); }); /* (a death folded into the moment's first line) */
+      var gWho = function (i) { var L0 = GM[i].map(function (k) { return M[k]; }), cz = L0.map(function (q) { return q.cause || ''; }), same = cz.every(function (c) { return c && c === cz[0]; }), nms = L0.map(function (q) { return (q.who[0] || {}).n || ''; }).filter(Boolean);
+        return { txt: L0.length + ' died' + (same ? ' to ' + cz[0] : '') + ': ' + nms.slice(0, 4).join(', ') + (nms.length > 4 ? ' and ' + (nms.length - 4) + ' more' : ''), who: L0.reduce(function (a, q) { return a.concat(q.who); }, []) }; };
+      var items = [].slice.call(tl.querySelectorAll(':scope > .dbt-it')), nCard = items.length;
+      if (F.xo != null && !items.some(function (it) { return +it.dataset.i === F.xo; })) F.xo = null;
+      items.forEach(function (it) { var i = +it.dataset.i, m = M[i]; if (!m) return; var open = F.xo === i; it.classList.toggle('dbx-open', open);
+        var lv = lvOf(m), wd = String(m.word || ''), dTag = own(m) ? 'Their mistake' : /mass death/i.test(wd) ? 'Mass death' : /nothing|too fast|shared|mind/i.test(wd) || !wd ? 'Not their fault' : wd.charAt(0).toUpperCase() + wd.slice(1);
+        var gw = m.death && GM[i] && GM[i].length > 1 ? gWho(i) : null;
+        var what = gw ? gw.txt : m.death ? String(m.lines[0] || 'Died').replace(/\.$/, '') : String(m.lines[0] || m.why || '').replace(/\.$/, '');
+        var tag = m.death ? '<span class="lv ' + (own(m) ? 's' : 'q') + '">' + E(dTag) + '</span>' : '<span class="lv ' + svG(m) + '">' + (NEWI.indexOf(m.id) >= 0 ? '<i class="nw">New</i>' : '') + SVL(m.dead ? 5 : m.sv || 2) + (m.dead ? ' · ☠' : '') + '</span>';
+        it.insertAdjacentHTML('afterbegin', '<button type="button" class="dbx-row" data-dbxo="' + i + '" aria-expanded="' + (open ? 'true' : 'false') + '"><span class="t">' + mm(m.t) + '</span><i class="dbx-mk ' + lv + (lv === 'd' && own(m) ? ' own' : '') + '" aria-hidden="true">' + (lv === 'd' ? '☠' : lv === 's' || lv === 'm' ? '!' : '') + '</i><span class="mc">' + E(m.death ? (gw ? 'Deaths' : 'Death') : m.m) + '</span><span class="w">' + chips(E(what), gw ? gw.who : m.who) + (m.lines.length > 1 && !m.death ? ' <em>(+' + (m.lines.length - 1) + ' more)</em>' : '') + '</span>' + tag + '<span class="ch" aria-hidden="true">' + (open ? '▾' : '›') + '</span></button>'); });
+      tl.insertAdjacentHTML('afterbegin', '<div class="dbx-wh"><b>What went wrong</b><span>' + (nCard ? 'In order. Click a line for why, and what to do next time.' : M.some(function (m) { return m.st !== 'ok'; }) ? 'No mistakes match these filters.' : 'No mistakes or deaths in this pull.') + '</span></div>');
+      wrap.querySelectorAll('img.oi').forEach(function (im) { if (!im.getAttribute('src')) im.removeAttribute('data-done'); }); try { hydrateIcons(); } catch (e) { /* (icons load when seen) */ }
+      if (d._dbx) return; d._dbx = 1;
+      /* (one small note beside the mark; a mark with a card lights its card, a card lights its marks) */
+      var tip = document.createElement('div'); tip.className = 'dbx-tip'; tip.setAttribute('role', 'tooltip'); d.appendChild(tip);
+      var unhl = function () { [].slice.call(d.querySelectorAll('.dbx-hl')).forEach(function (x) { x.classList.remove('dbx-hl'); }); };
+      var hide = function () { tip.classList.remove('on'); unhl(); };
+      var tipH = function (m) { var h2 = hpAt(m.t), S1 = SP[spOf(m.t)], pn = S1 && S1.p.n && SP.length > 1 ? String(S1.p.n).split(/\s+/)[0] : '';
+        var G0 = d._dbxG || {}, grp = G0[M.indexOf(m)]; if (grp && grp.length > 1) return '<div class="dbx-tt">' + grp.length + ' deaths</div><div class="dbx-tm">' + mm(m.t) + (pn ? ' · ' + E(pn) : '') + (h2 != null ? ' · boss ' + h2 + '%' : '') + '</div>' +
+          grp.slice(0, 12).map(function (k) { var q = M[k], w = q.who[0] || {}; return '<div><span style="color:' + (col[w.n] || 'var(--text)') + ';font-weight:600">' + E(w.n || '') + '</span> <span class="dbx-tl2">' + E(q.cause ? 'to ' + q.cause : '') + '</span></div>'; }).join('') + (grp.length > 12 ? '<div class="dbx-tl2">and ' + (grp.length - 12) + ' more</div>' : '');
+        var st = m.st === 'ok' ? '<span class="g">✓ ' + E(m.lines[0] || 'Done right') + '</span>' : m.death ? '<span class="' + (own(m) ? 'r' : 'q') + '">☠ ' + E(m.word ? m.word.charAt(0).toUpperCase() + m.word.slice(1) : 'Death') + '</span>' : '<span class="dbx-lv ' + svG(m) + '">' + SVL(m.dead ? 5 : m.sv || 2) + (m.dead ? ' · ☠ died' : '') + '</span>';
+        var who = m.who.length ? '<div class="dbx-tw">' + m.who.slice(0, 6).map(function (w) { return '<span style="color:' + (col[w.n] || 'var(--text)') + '">' + E(w.n) + '</span>'; }).join(', ') + (m.who.length > 6 ? ' +' + (m.who.length - 6) : '') + '</div>' : '';
+        var ln = m.st === 'ok' ? m.lines.slice(1, 3).map(function (l) { return '<div class="dbx-tl2">' + E(l) + '</div>'; }).join('') : !m.death && m.lines.length && !m.why ? '<div class="dbx-tl2">' + E(m.lines.slice(0, 2).join('. ').replace(/\.\./g, '.')) + '</div>' : '';
+        var why = m.death ? (m.kb ? '<div><b>Killed by</b> ' + E(m.kb) + '</div>' : '') : m.st !== 'ok' && m.why ? '<div><b>Why</b> ' + E(sent(m.why, 2)) + '</div>' : '';
+        var nx = !m.death && m.st !== 'ok' && m.next ? '<div><b class="g">Next time</b> ' + E(sent(m.next, 2)) + '</div>' : '';
+        return '<div class="dbx-tt">' + E(m.death ? String(m.lines[0] || 'Death').replace(/\.$/, '') : m.m) + '</div><div class="dbx-tm">' + mm(m.t) + (pn ? ' · ' + E(pn) : '') + (h2 != null ? ' · boss ' + h2 + '%' : '') + '</div><div class="dbx-ts">' + st + '</div>' + who + ln + why + nx; };
+      var show = function (b) { var m = M[+b.dataset.mi]; if (!m) return; unhl(); tip.innerHTML = tipH(m); tip.classList.add('on'); b.classList.add('dbx-hl');
+        var r = b.getBoundingClientRect(), w = Math.min(320, innerWidth - 16), x = r.right + 10; tip.style.maxWidth = w + 'px'; if (x + w > innerWidth - 8) x = Math.max(8, r.left - w - 10); tip.style.left = x + 'px';
+        var th = tip.offsetHeight, y = r.top - 8; if (y + th > innerHeight - 8) y = Math.max(8, innerHeight - th - 8); tip.style.top = y + 'px';
+        if (b.dataset.jump) { var cd = tl.querySelector(':scope > .dbt-it[data-i="' + b.dataset.jump + '"]'); if (cd) cd.classList.add('dbx-hl'); } };
+      d.addEventListener('mouseover', function (e) { var t0 = e.target; if (!t0.closest) return; var b = t0.closest('.dbx-mk[data-mi]'); if (b) { show(b); return; }
+        var c = t0.closest('.dbt-tl > .dbt-it'); if (c && !c.classList.contains('dbx-hl')) { hide(); c.classList.add('dbx-hl'); [].slice.call(d.querySelectorAll('.dbx-mk[data-jump="' + c.dataset.i + '"]')).forEach(function (x) { x.classList.add('dbx-hl'); }); } });
+      d.addEventListener('mouseout', function (e) { var t0 = e.target; if (!t0.closest) return; var b = t0.closest('.dbx-mk[data-mi], .dbt-tl > .dbt-it'); if (b && !(e.relatedTarget && b.contains(e.relatedTarget))) hide(); });
+      d.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('button'); if (b && b.dataset.dbx === 'spot') { F.spot = !F.spot; b.classList.toggle('on', F.spot); b.setAttribute('aria-pressed', F.spot ? 'true' : 'false'); var w0 = d.querySelector(':scope > .dbx-wrap'); if (w0) w0.classList.toggle('spot', F.spot); return; }
+        var openAt = function (i) { F.xo = F.xo === i ? null : i; F.map = F.map || {}; if (M[i] && M[i].mapEl) F.map[i] = F.xo === i ? 1 : 0; draw(); }; /* (an open line shows its map) */
+        if (b && b.dataset.dbxo != null) { var i0 = +b.dataset.dbxo; openAt(i0); var it0 = tl.querySelector(':scope > .dbt-it[data-i="' + i0 + '"]'); if (it0 && it0.getBoundingClientRect().top < 60) it0.scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
+        if (b && b.matches('.dbx-mk[data-mi]')) { if (!b.dataset.jump) show(b); else { hide(); if (F.xo !== +b.dataset.jump) openAt(+b.dataset.jump); } return; } if (!e.target.closest('.dbx-tip')) hide(); });
+      /* (Next mistake steps through the lines: it opens the next one and brings it to the middle (Flex: "Clicking this does nothing": with
+         slim lines the next one was only a line away)) */
+      d.addEventListener('click', function (e) { var jb0 = e.target.closest && e.target.closest('.dbt-jump'); if (!jb0) return; e.stopPropagation(); e.preventDefault();
+        var its = [].slice.call(tl.querySelectorAll(':scope > .dbt-it')); if (!its.length) return; var cur = -1; its.forEach(function (x, k) { if (+x.dataset.i === F.xo) cur = k; });
+        var nx = cur >= 0 ? its[cur + 1] || its[0] : its.filter(function (x) { return x.getBoundingClientRect().top > 90; })[0] || its[0], i1 = +nx.dataset.i;
+        F.xo = i1; F.map = F.map || {}; if (M[i1] && M[i1].mapEl) F.map[i1] = 1; draw(); hide();
+        var el = tl.querySelector(':scope > .dbt-it[data-i="' + i1 + '"]'); if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, true);
+      /* (the filters drawer closes on a click outside it, or Escape; its own buttons redraw it, so the click's path is read as it happened) */
+      var offD = function (e) { if (!d.isConnected) { document.removeEventListener('click', offD, true); document.removeEventListener('keydown', escD); return; } if (!side.classList.contains('open')) return; var p = e.composedPath ? e.composedPath() : []; if (p.indexOf(side) >= 0 || p.some(function (x) { return x && x.classList && x.classList.contains('dbt-fbtn'); })) return; side.classList.remove('open'); };
+      var escD = function (e) { if (e.key === 'Escape' && side.classList.contains('open')) side.classList.remove('open'); };
+      document.addEventListener('click', offD, true); document.addEventListener('keydown', escD);
+      var onScroll = function () { if (!d.isConnected) { window.removeEventListener('scroll', onScroll); return; } if (tip.classList.contains('on')) hide(); }; window.addEventListener('scroll', onScroll, { passive: true });
+    };
+    var draw = function () { drawV(); try { across(); } catch (e) { console.error(e); } };
     draw();
     /* (each death's recap, read once from the page's own Deaths panel: "Killed by" and "Why" go on the card) */
     (function () { var any = 0; M.forEach(function (m) { if (!m.death || !m.dg || m.box != null) return; var g3 = v.querySelector('.dth-p .cbl-mgo[data-ddgo="' + CSS.escape(m.dg) + '"]'), ab3 = g3 && g3.closest('.cch-ab'); m.box = ''; if (!g3 || !ab3) return; try { var bx3 = ab3.querySelector('.cch-ddbox'); if (bx3 && !bx3.hidden) g3.click(); g3.click(); bx3 = ab3.querySelector('.cch-ddbox'); if (bx3 && !bx3.hidden && bx3.innerHTML) { m.box = bx3.innerHTML; var tx = bx3.innerText || bx3.textContent || ''; var LBL = '(?=Killed by:|Why:|Fix:|Cause:|Could have saved them:|$)', pick = function (lab) { var mt = tx.match(new RegExp(lab + ':\\s*([\\s\\S]*?)\\s*' + LBL)); return mt ? mt[1].trim() : ''; }; m.kb = pick('Killed by'); m.kw = pick('Why'); m.kc = pick('Cause'); m.ks = pick('Could have saved them'); if (/\bstill ready\b/i.test(m.ks)) { var ks0 = m.ks.split(/\s·\s/), last = ks0[ks0.length - 1], cut0 = last.indexOf(ks0[0], 1); if (cut0 > 0) { ks0[ks0.length - 1] = last.slice(0, cut0).trim(); m.ks = ks0.join(' · ') + ' (still ready)'; } else { var one = m.ks.match(/^(.+?)\s+\1\s+still ready\b/i); if (one) m.ks = one[1] + ' (still ready)'; } } /* (the list once, not twice) */ /* (each label on its own) */ any = 1; } g3.click(); } catch (e) { /* (no recap) */ } }); if (any) draw(); })();
