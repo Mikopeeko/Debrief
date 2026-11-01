@@ -2035,6 +2035,7 @@ const PATCH_NOTES = [
     "Report card: a raider's card reads top to bottom in one column: their name with the grade beside it, the one thing to fix first, a box per list (tap one to jump to it), then the lists one under the other.",
     "Pages appear finished and calm: the count-up numbers, growing bars and slide-ins are off for now, and a pull fades in once when it's ready.",
   ], f: [
+    'Deaths while mind controlled by Dreadmarch now say so ("mind controlled by Dreadmarch, then died with no killing hit") instead of naming a tiny hit as the killer, and a Gravebound death says the last soul fragment you picked up killed you, with a real fix instead of "it\'s dodgeable".',
     "The boxes at the top of Debriefing have square inside corners again: Avoidable damage, Defensives, Combat potions and Deaths still had slightly rounded ones.",
     "Deaths at the top of Debriefing shows the right count straight away (it could show every death for a moment first).",
   ] },
@@ -11810,7 +11811,7 @@ function deathTag(r, d) { const rr = deathRep(r, d); if (!rr) return null; const
   const ready = v.kit.concat(v.defs).slice(0, 2).map(deathKit), raidL = (d.links || []).find((l) => l.raid), ab = d.ability || d.killer || 'a hit';
   const h = v.why === 'own' ? capS(deathWhat(d, v)) + '.'
     : v.why === 'ready' ? 'Had ' + andList(ready) + ' ready and didn\'t press ' + (ready.length > 1 ? 'them' : 'it') + '.'
-    : v.why === 'shared' ? (/mind controlled/.test(v.word) ? 'Mind controlled off the edge.' : (raidL ? 'Partly the raid\'s fault (' + deathMech(rr, raidL.mechanic) + ')' : 'Partly the raid\'s fault') + ', but they had ' + andList(ready) + ' ready.')
+    : v.why === 'shared' ? (v.dread ? capS(v.story) + '.' : /mind controlled/.test(v.word) ? 'Mind controlled off the edge.' : (raidL ? 'Partly the raid\'s fault (' + deathMech(rr, raidL.mechanic) + ')' : 'Partly the raid\'s fault') + ', but they had ' + andList(ready) + ' ready.')
     : v.why === 'heal' ? 'Nobody healed them enough for ' + Math.round(v.gap.starved) + ' seconds while they were under half health' + (ready.length ? ', and they had ' + andList(ready) + ' ready.' : '.')
     : v.why === 'nosave' ? 'Nothing they had would have saved them.'
     : v.why === 'noheal' ? 'Not enough healing: they did their part, but little healing came in for ' + deathSecs(v.gap.run40) + ' s while they were under 40%' + (v.healer ? ' (' + v.healer + ' was on them in the note)' : '') + '.'
@@ -11968,7 +11969,7 @@ function deathTimeline(d, rr, vv) {
   const spn = (id, n) => '<span class="sp" data-ic="1" data-sid="' + (id || sidOf(n || '') || 0) + '" data-sn="' + esc(n) + '">' + esc(n) + '</span>';
   const whyL = [before != null && before >= 0.5 ? 'too big without a defensive' : before != null && before < 0.2 ? 'the hits before did the damage' : '', g && g.starved >= 5 ? 'little healing for ' + Math.round(g.starved) + ' s' : ''].filter(Boolean).join(' · ');
   const cz = vv && vv.cause ? '<div><b>Cause:</b> ' + spn(0, vv.cause.mech) + (vv.cause.t != null ? ' (' + T(vv.cause.t) + ')' : '') + ' → ' + spn(kill && kill.id, (kill && kill.spell) || 'Melee') + '</div>' : '';
-  const res = !kill ? '' : '<div><b>Killed by:</b> ' + spn(kill.id, kill.spell || 'Melee') + ' · ' + kf(kill.amount) + ' in one hit' + (before != null ? ' at ' + Math.max(1, Math.round(100 * before)) + '%' : '') + '</div>' + cz + (whyL ? '<div><b>Why:</b> ' + whyL + '</div>' : '');
+  const res = vv && vv.dread && vv.dreadHow !== 'boss' ? '<div><b>Killed by:</b> ' + (vv.dreadHow === 'ours' && kill ? spn(kill.id, kill.spell || 'Melee') + ' (ours) while mind controlled by ' + spn(1285643, 'Dreadmarch') : spn(1285643, 'Dreadmarch') + ' (Mind Control) · off the edge') + '</div>' : !kill ? '' : '<div><b>Killed by:</b> ' + spn(kill.id, kill.spell || 'Melee') + ' · ' + kf(kill.amount) + ' in one hit' + (before != null ? ' at ' + Math.max(1, Math.round(100 * before)) + '%' : '') + '</div>' + cz + (whyL ? '<div><b>Why:</b> ' + whyL + '</div>' : '');
   const span = d.t - rows[0].t0;
   return '<div class="ddv-tl"><p class="ddv-tlh"><b>' + esc(String(d.player).split('-')[0]) + '</b> died at ' + T(d.t) + ' · over ' + secS(Math.max(0.1, span)) + ' s</p><div class="cbl-mini">' + html + '</div>' + (res ? '<div class="ddv-resbox">' + res + '</div>' : '') + '</div>';
 }
@@ -27899,7 +27900,17 @@ const deathShare = (d, names) => { const hs = (d.recap || []).filter((e) => !e.h
 function deathVerdict(r, d) {
   const ct = cutT(r); if (d._dv && d._dv.ct === ct) return d._dv.v;
   const lc = (s) => String(s || '').toLowerCase(), ab = lc(d.ability || d.killer), ownL = (d.links || []).filter((l) => !l.raid);
-  const noCtrl = ownL.some((l) => DEATH_NOCTRL.test(l.mechanic)), ownM = ownL.filter((l) => !DEATH_NOCTRL.test(l.mechanic));
+  // (mind controlled by Dreadmarch with no row for it: the Dreadmarch debuff on them in the 6 s before they died (Nov 1, Flex: a death read as
+  // "Too fast: Refraction"; Boltzzx was freed 4.3 s before he died with no killing hit, off the edge). How it killed them: dreadHow)
+  const dmEnd = ownL.some((l) => DEATH_NOCTRL.test(l.mechanic)) ? null : (() => { const pl = (r.players.get && r.players.get(d.guid)) || [...r.players.values()].find((p) => p.guid === d.guid), dm = pl && pl.debuffs && pl.debuffs.get('Dreadmarch');
+    const sp = dm ? dm.sp.filter(([a, b]) => a <= d.t + 0.1 && a >= d.t - 20 && (b == null || b >= d.t - 6)) : []; return sp.length ? Math.min(d.t, ...sp.map(([, b]) => (b == null ? d.t : b))) : null; })(), dread0 = dmEnd != null;
+  // (edge: no killing hit (or a fall); ours: our own raiders' damage on the shield; boss: a boss hit while controlled)
+  const me0 = String(d.player || '').split('-')[0], mx0 = (r.pMax && r.pMax.get(d.guid)) || 0; /* (their own ticks and hits under 10% of their health don't kill: Boltzzx's own Refraction) */
+  const dk = dread0 ? (d.recap || []).filter((e) => !e.heal && e.amount > 0 && e.t <= d.t + 0.05 && String(e.src || '').split('-')[0] !== me0 && (!mx0 || e.amount >= 0.1 * mx0)).pop() : null;
+  const mine0 = dread0 ? new Set([...r.players.values()].map((q) => String(q.name || '').split('-')[0]).filter(Boolean)) : null;
+  const how0 = !dread0 ? null : !dk || d.t - dk.t > 0.5 /* (a killing hit lands as they die) */ || /^falling$/i.test(dk.spell || '') ? 'edge' : dk.src && String(dk.src).split('-')[0] !== me0 && mine0.has(String(dk.src).split('-')[0]) ? 'ours' : 'boss';
+  const dread = dread0 && (how0 === 'edge' || dmEnd >= d.t - 2), dreadHow = dread ? how0 : null; /* (a hit only counts while controlled or freed under 2 s before) */
+  const noCtrl = dread || ownL.some((l) => DEATH_NOCTRL.test(l.mechanic)), ownM = ownL.filter((l) => !DEATH_NOCTRL.test(l.mechanic));
   const ownSame = ownM.some((l) => lc(l.mechanic) === ab) || (d.ownAvoid && lc(d.avoidName) === ab);
   const mass = (d.mass || 0) >= 3 && !ownSame, own = !mass && !noCtrl && (ownM.length > 0 || deathOwn(r, d));
   const raidL = (d.links || []).find((l) => l.raid), raid = !own && !!raidL, fast = deathFast(d), after = isFinite(ct) && d.t > ct + 0.05;
@@ -27923,15 +27934,17 @@ function deathVerdict(r, d) {
   const why = after && !late ? 'wipe' : end ? 'end' : mass ? 'mass' : noCtrl ? 'shared' : own ? 'own' : fast ? 'fast' : raid ? (has && d.reactable ? 'shared' : 'raid') : noheal ? 'noheal' : gap ? 'heal' : has ? 'ready' : nosave ? 'nosave' : 'nothing';
   const w = why === 'heal' ? (has ? 0.5 : 0) : { own: 1, ready: 1, nothing: 0.5, shared: 0.5 }[why] || 0, items = andList((defs.length ? defs : kit).slice(0, 2));
   const word = { noheal: 'not enough healing', wipe: 'after the pull was lost', end: 'in the last seconds of the kill', mass: 'a mass death, ' + (d.mass || 0) + ' of us at once', own: 'their own mistake', fast: 'too fast to react', raid: 'the raid\'s mistake', ready: items + ' still ready', nothing: 'nothing left to press', nosave: 'nothing they had would have saved them', heal: 'a healing gap: little healing for ' + Math.round(g ? g.starved : 0) + ' s' + (has ? ', with ' + items + ' ready' : ''),
-    shared: noCtrl ? 'mind controlled off the edge (shared with the CC team)' : 'the raid\'s mistake' + (raidL ? ' (' + raidL.mechanic + ')' : '') + ', but ' + items + ((defs.length ? defs : kit).slice(0, 2).length > 1 ? ' were' : ' was') + ' ready' }[why];
+    shared: dread ? 'mind controlled by Dreadmarch (shared with the raid)' : noCtrl ? 'mind controlled off the edge (shared with the CC team)' : 'the raid\'s mistake' + (raidL ? ' (' + raidL.mechanic + ')' : '') + ', but ' + items + ((defs.length ? defs : kit).slice(0, 2).length > 1 ? ' were' : ' was') + ' ready' }[why];
   // (the story: the engine's, but an own death says what went wrong, like Gravebound's missed fragments)
   const rw = why === 'own' && !ownM.length ? oaRowWhy(r, d) : null;
   const you = (t) => String(t).replace(/\btheir\b/g, 'your').replace(/\bthemselves\b/g, 'yourself').replace(/\bthey\b/g, 'you');
-  const story = why === 'own' && ownM.length ? 'right after a mistake on ' + ownM[0].mechanic : rw && rw.why ? (d.ability || rw.l) + ': ' + you(whyReason(rw.why))
+  // (Gravebound: each soul fragment picked up hits for about 208k, so the last one picked up while low is what killed them (Nov 1))
+  const gb = ab === 'gravebound' ? (d.recap || []).filter((e) => !e.heal && /^gravebound$/i.test(e.spell || '') && e.t >= d.t - 15).length : 0, rwy = rw && rw.why ? you(whyReason(rw.why)) : '';
+  const story = why === 'own' && ownM.length ? 'right after a mistake on ' + ownM[0].mechanic : why === 'own' && gb ? 'Gravebound: you picked up ' + (gb > 1 ? gb + ' soul fragments' : 'a soul fragment') + ', and the last one\'s hit killed you' : rwy ? (d.ability || rw.l) + ': ' + rwy
     : why === 'own' && !d.ownAvoid ? (d.ability || 'a hit') + ', which you can dodge, finished you (' + String(d.story || '').replace(/, too fast to react$/, '') + ')'
-    : noCtrl ? 'mind controlled off the edge by ' + ownL.find((l) => DEATH_NOCTRL.test(l.mechanic)).mechanic : d.story || '';
+    : dread ? (dreadHow === 'edge' ? 'mind controlled by Dreadmarch, then died with no killing hit (most likely off the edge)' : dreadHow === 'ours' ? 'mind controlled by Dreadmarch: our own damage on the shield killed them' : 'mind controlled by Dreadmarch when ' + (dk.spell || 'a hit') + ' killed them') : noCtrl ? 'mind controlled off the edge by ' + ownL.find((l) => DEATH_NOCTRL.test(l.mechanic)).mechanic : d.story || '';
   const c0 = why === 'own' && ownM.length && lc(ownM[0].mechanic) !== ab ? ownM[0] : null;
-  const v = { cause: c0 ? { mech: c0.mechanic, t: c0.t } : null, why, w, on: w > 0, counts: (!after || late) && why !== 'end', late, fast, own, raid, mass, defs, kit, word, story, gap: why === 'heal' || why === 'noheal' ? g : null, healer: why === 'noheal' ? deathHealerOf(r, d) : null };
+  const v = { dread, dreadHow, dreadKill: dk ? dk.spell : null, cause: c0 ? { mech: c0.mechanic, t: c0.t } : null, why, w, on: w > 0, counts: (!after || late) && why !== 'end', late, fast, own, raid, mass, defs, kit, word, story, gap: why === 'heal' || why === 'noheal' ? g : null, healer: why === 'noheal' ? deathHealerOf(r, d) : null };
   d._dv = { ct, v }; v.fix = deathFix(r, d, v, ownM, rw, raidL); return v; }
 // (the healer the pull's note put on this player, if any: a note line without a {spell} or {time} tag that names them and exactly one of the
 //  raid's healers, like "Holypal: Tankone Tanktwo". "Not enough healing" then goes to that healer rather than the healing team)
@@ -27947,6 +27960,7 @@ function deathFix(r, d, v, ownM, rw, raidL) {
   const k = d.ability || d.killer || 'that hit', pv = (d.prevent || []).filter((x) => !/^No (clear )?mistake|^Too fast|^Not on you/i.test(x));
   if (v.why === 'own') { const lc = (s) => String(s || '').toLowerCase(), ms = (r.mistakes || []).filter((m) => m.player === d.player && m.mechanic !== 'Death' && m.t >= d.t - 10 && m.t <= d.t + 1.5);
     const m = ms.find((x) => lc(x.mechanic) === lc(k)) || ms.find((x) => ownM.some((l) => l.mechanic === x.mechanic && Math.abs(l.t - x.t) < 0.1)) || null;
+    if (/^gravebound$/i.test(k)) return 'Get healed or use a defensive before you pick up the last soul fragment.';
     return (m && m.fix && dbfTip1(m.fix)) || (rw && oaFlip(rw.why)) || (d.ownAvoid && pv[0] && dbfTip1(pv[0])) || 'Stay out of ' + k + ': it\'s dodgeable.'; }
   if (v.why === 'ready') { const kf = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k'), first = v.kit.length ? v.kit[0] : v.defs[0], sv = d.saves && d.saves[first];
     const nm = first === 'a healing potion' ? 'health potion' : first, after = d.ability ? ' to survive the ' + d.ability + ' that followed' : ' to survive what followed';
@@ -27959,6 +27973,7 @@ function deathFix(r, d, v, ownM, rw, raidL) {
   if (v.why === 'fast') return 'Nothing to fix on your side: ' + k + ' was too fast to react to.';
   if (v.why === 'mass') return 'Not on you: ' + k + ' killed ' + d.mass + ' of us at once. Fix what set it off as a raid.';
   if (v.why === 'raid') return 'Not on you: the raid\'s fault (' + (raidL ? raidL.mechanic : k) + ').';
+  if (v.why === 'shared' && v.dread) return 'Raid: break the Dreadmarch shield before it ends. You: press your cancel macro the moment you\'re mind controlled.';
   if (v.why === 'shared') return /mind controlled/.test(v.word) ? 'Press your cancel macro the moment you\'re mind controlled; the CC team stops you.' : (v.defs.length ? 'Press ' + v.defs[0] : 'Use your ' + (v.kit[0] === 'Healthstone' ? 'Healthstone' : 'health potion')) + ' when you drop low.';
   if (v.why === 'nothing') return 'You had nothing left to press. ' + (d.healPct != null && d.healPct < 30 ? 'Little healing came in: stay in range and call for an external.' : 'Save a defensive for this point next time.');
   return ''; }

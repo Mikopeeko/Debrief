@@ -6738,6 +6738,14 @@ function* analyzeSteps(item, text, opts) {
     for (const b of p.debuffs.values()) for (const s of b.sp) if (s[1] == null) s[1] = r.duration;
   }
   /* round 425: a death after Malevolent Resonance (two ghosts touching) is that death, whatever landed last */ for (const d of r.deaths) { if (/^malevolent resonance$/i.test(String(d.ability || ''))) continue; const mr = (d.recap || []).filter((x) => !x.heal && /^malevolent resonance$/i.test(String(x.spell || '')) && x.t >= d.t - 8 && x.t <= d.t + 0.2).pop(); if (mr) { d.via = d.ability; d.ability = mr.spell; d.abilityId = mr.id || d.abilityId; if (mr.src) d.killer = mr.src; } }
+  // (Dreadmarch (Nov 1): the Dreadmarch debuff on them in their last 6 s (started within 20 s) and no killing hit (no hit of 10%+ of their
+  // health from someone else as they died, or a fall): a mind control off the edge, so that's what killed them, not a last tick (Boltzzx's own Refraction))
+  for (const d of r.deaths) { const p = r.players.get(d.guid), dm = p && p.debuffs && p.debuffs.get('Dreadmarch'); if (!dm || /^(dreadmarch|malevolent resonance)$/i.test(String(d.ability || ''))) continue;
+    if (!dm.sp.some(([a0, b0]) => a0 <= d.t + 0.1 && a0 >= d.t - 20 && (b0 == null || b0 >= d.t - 6))) continue;
+    const me = String(p.name || '').split('-')[0], mx = (r.pMax && r.pMax.get(d.guid)) || 0;
+    const kh = (d.recap || []).filter((x) => !x.heal && x.amount > 0 && x.t <= d.t + 0.05 && String(x.src || '').split('-')[0] !== me && (!mx || x.amount >= 0.1 * mx)).pop();
+    if (kh && d.t - kh.t <= 0.5 && !/^falling$/i.test(kh.spell || '')) continue;
+    d.via = d.ability; d.ability = 'Dreadmarch'; d.abilityId = 1285643; d.killer = 'Hex Lord Malacrass'; }
   for (const d of r.deaths) { const p = r.players.get(d.guid); d.color = p ? p.color : '#9aa0ac'; d.icon = p && p.icon; d.specIcon = p && p.specIcon; d.spec = p ? p.specName : ''; }
 
   yield; survivability(r); triageSaves(r);

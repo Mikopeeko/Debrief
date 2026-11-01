@@ -13,6 +13,9 @@ Three checklists for judging deaths the same way every time. The research and th
 3. **Mass death?** 3+ of us dead within 1.5 s to the same hit → *the raid's event*, weight 0.
    Exception: the player whose own mistake *was that hit* (stood in that Sever, their ghost touched another).
 4. **Mind-controlled off the edge** (Dreadmarch aura on, fell or no damage) → *shared*, half.
+   Also without a Dreadmarch row (Nov 1, Flex: Boltzzx read "Too fast: Refraction"): the Dreadmarch debuff on them in their last 6 s
+   (started within 20 s) and no killing hit (no hit of 10%+ of their health from someone else as they died, or a fall); or a killing
+   hit while still controlled or freed under 2 s before. The card says how: off the edge, our own damage on the shield, or a boss hit.
 5. **Their own mistake?** One of these, about the hit that killed them:
    - a mechanic mistake of theirs in the last 10 s (a soak they missed, Gravebound fragments, ghost collision, Sever cone);
    - dodgeable damage did 50%+ of their last 15 s;
