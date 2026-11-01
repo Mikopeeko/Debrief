@@ -12326,6 +12326,8 @@ function miniMap(mp, pmap) {
       const near = el > -1.5, spin = (ftC * (near ? 34 : 10)) % 40;
       return edge(2, ' stroke-dasharray="6 4" stroke-dashoffset="' + (-spin).toFixed(1) + '"' + (near ? ' fill-opacity="' + (0.65 + 0.35 * Math.abs(Math.sin(ftC * 9))).toFixed(2) + '"' : ''));
     }
+    if (fx === 'soul') { const k = 0.85 + 0.15 * Math.sin(ftC * 3.2); /* round 450 white souls: a white circle with a soft breathing glow */
+      return cir(x, y, R * 2.6 * k, 'fill="#ffffff" fill-opacity=".08"') + cir(x, y, R * 1.7 * k, 'fill="#ffffff" fill-opacity=".18"') + cir(x, y, R, 'fill="#ffffff" fill-opacity=".95" stroke="#ffffff" stroke-width="1"' + NS); }
     if (fx === 'debuff') return edge(g.dim ? 1.4 : 2, ' stroke-dasharray="6 4" stroke-dashoffset="' + (-(ftC * 8) % 40).toFixed(1) + '"');
     if (fx === 'puddle') { const e = g.t0 != null && live ? ftA - g.t0 : 9, gT = g.growT || 4, k = (e < 0.9 ? 0.35 + 0.65 * (1 - Math.pow(1 - Math.max(0, e) / 0.9, 3)) : 1) * (g.grow && e < gT ? g.grow + (1 - g.grow) * (1 - Math.pow(1 - Math.max(0, e) / gT, 2)) : 1); /* (a guide's puddle can land smaller and swell to full size) */
       return cir(x, y, R * k, 'fill="' + fill + '" stroke="' + col + '" stroke-opacity=".7" stroke-width="1.5"' + NS) + cir(x, y, R * k * 0.6, 'fill="' + col + '" fill-opacity=".14"'); }
