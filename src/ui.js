@@ -2105,14 +2105,14 @@ const PATCH_NOTES = [
     "Graphs: Healing's Overhealing view no longer opens further down the page.",
     "Graphs: the Healing table shows its parses again."
   ] },
-  { d: '2026-10-29', h: [{ t: 'Your resources on the Rotation timeline', d: "Every spec now has its resource beside each press, like Holy Power: squares for Combo Points, Chi, Soul Shards and Essence, a bar for Rage, Focus, Fury, Insanity, Astral Power and the rest, and mana for every healer." }], n: [
+  { d: '2026-10-29', h: [{ t: 'Your resources on the Rotation timeline', d: "Every spec now has its resource beside each press, like Holy Power: squares for Combo Points, Chi, Soul Shards and Essence, a bar for Rage, Focus, Fury, Insanity, Astral Power and the rest, and mana for every healer." }], n: ["Debriefing: the note line now heads the page in both views, with Remove note when a note is in and a bright Import NSRT note button when there isn't one.", "Debriefing: a mistake card with a map has a Map button that opens that moment's own map in the card, and Overview's dropdowns show their map again.", "Debriefing: every row in It added up with and Raid checks has its icon.", 
     "Debriefing: Avoidable damage, Deaths, Healthstones and potions, Defensives and Combat potions now show a parse as their big number: how many top guilds' kills you beat over the same part of the fight, coloured like Warcraft Logs, on a single pull and All pulls. Hover a tile to see what it compares.",
     "Rotation timeline: every spec's big cooldowns sit in the Cooldowns column (Celestial Alignment and Force of Nature on Balance, for example).",
     "Rotation timeline filters: your resource (Holy Power, Combo Points, Astral Power ...) and mana can be hidden like the other layers.",
     "Rotation timeline: every resource track flags what you wasted, healers get \"low mana\" and \"mana to spare\" flags, and a faint red or amber line runs across the chart at each mistake.",
     "Innervate on Balance, Feral and Guardian: once a pull on a healer is the goal, and a pull without it is a small miss.",
     "Debriefing: slow kills say so first (\"was killed too slowly: it lived 29 s\"), and the timeline headlines read as plain sentences on every boss.",
-  ], f: [
+  ], f: ["Debriefing no longer flickers while late numbers arrive, and the note line no longer vanishes a second after the page opens.", "Maps on Debriefing fill their frame instead of sitting in the corner of a wide black box.", 
     'Compare: a hunter\'s pets count together, so Bloodshed and other pet attacks are one row for each player. No more "didn\'t use it" because the pets had different names, or the log credited the hunter instead of the pet.',
     'Augment runes never count against you anywhere: no red "No augment rune", no points off Ready to raid, and never a first fix. Using one shows as a bonus.',
     "Rotation timeline: both Infusion of Light charges get their ★ on Flash of Light (only the second one did), and any proc that stacks works the same way.",
