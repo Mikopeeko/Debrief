@@ -843,23 +843,26 @@ function UI.mplus(raw)
   -- ---- the body ----
   UI.resetPool(); local y = 2
   -- (a row: a dot, the spell's icon when there is one, the text; a row that opens a pull is a button)
-  local function mrow(flag, ic, text, onClick)
+  local function mrow(flag, ic, text, onClick, slot)
     local yA = y
     if ic and ic ~= "" then y = row(y, flag, ic, text)
     else
       local d = TEX("ARTWORK"); d:SetTexture(SLICE .. "dot"); d:SetPoint("TOPLEFT", IND, -(y + 6)); d:SetSize(8, 8); d:SetVertexColor(rgb(FLAG[flag] or COL.faint))
-      local t = FS("body", 13.5, COL.soft); t:SetPoint("TOPLEFT", IND + 16, -y); t:SetWidth(CW - 16 - IND * 2); t:SetText(names(text))
+      local x0 = slot and 46 or 16 -- (in a list with icons, a line without one keeps the icon's room (the Design studio, Nov 1))
+      local t = FS("body", 13.5, COL.soft); t:SetPoint("TOPLEFT", IND + x0, -y); t:SetWidth(CW - x0 - IND * 2); t:SetText(names(text))
       y = math.max(y + 21, y + t:GetStringHeight()) + 9
     end
     if onClick then local b = BTN(); b:SetPoint("TOPLEFT", 0, -(yA - 4)); b:SetSize(CW, y - yA); b:SetScript("OnClick", onClick) end
   end
   -- (a section: a panel in the card style, its title, its rows; a long list shows the first few and "Show N more")
-  local function sec(key, title, rows, limit)
+  local function sec(key, title, rows, limit, pre)
     if #rows == 0 then return end
     local y0 = y; IND = 12; y = y + 12
     y = head(y, title)
+    if pre then y = pre(y) end
+    local slot = false; for _, r in ipairs(rows) do if r[2] and r[2] ~= "" then slot = true end end
     local n = (EXPANDED["m:" .. key] or not limit) and #rows or math.min(#rows, limit)
-    for i = 1, n do local r = rows[i]; mrow(r[1], r[2], r[3], r[4]) end
+    for i = 1, n do local r = rows[i]; mrow(r[1], r[2], r[3], r[4], slot) end
     if #rows > n then y = UI.moreLink(y, "m:" .. key, #rows - n) end
     y = y + 3
     if DB.cardStyle == "flat" then local l = TEX("ARTWORK"); l:SetPoint("TOPLEFT", 0, -y); l:SetSize(CW, 1); fill(l, COL.line)
@@ -919,20 +922,47 @@ function UI.mplus(raw)
     if run.fight then L[#L + 1] = { "info", nil, mm(run.fight) .. " fighting, " .. mm(run.between or 0) .. " between pulls." } end
     return L
   end
+  -- (the timer as a bar, as the PC pop-up draws it (the Design studio, Nov 1): the run's time over the +3, +2 and +1 marks (60, 80 and 100% of
+  -- the timer; white and green once beaten), the time above the end of the fill, and an amber ring where it would have ended without its deaths)
+  local function timerBar(y0)
+    local x0, bw = IND, CW - IND * 2
+    local sc = math.max(run.par, run.time) * 1.05
+    local function X(t) return x0 + math.floor(bw * math.max(0, math.min(t, sc)) / sc + 0.5) end
+    local lab = FS("bold", 12, COL.text); lab:SetText(mm(run.time))
+    local lw = lab:GetStringWidth(); lab:SetPoint("TOPLEFT", math.max(x0, math.min(X(run.time) - lw / 2, x0 + bw - lw)), -y0)
+    local ty = y0 + 18
+    local tr = TEX("ARTWORK"); tr:SetPoint("TOPLEFT", x0, -ty); tr:SetSize(bw, 8); fill(tr, "ffffff", 0.07)
+    local fl = TEX("ARTWORK"); fl:SetPoint("TOPLEFT", x0, -ty); fl:SetSize(math.max(3, X(run.time) - x0), 8); fill(fl, run.time > run.par and COL.bad or COL.good)
+    for i, f in ipairs({ 0.6, 0.8, 1 }) do
+      local mk = run.par * f; local won = run.time <= mk; local x = X(mk)
+      local tk = TEX("OVERLAY"); tk:SetPoint("TOPLEFT", x - 1, -(ty - 2)); tk:SetSize(2, 12); fill(tk, won and "ffffff" or COL.faint)
+      local l = FS("body", 11.5, won and COL.goodT or COL.muted); l:SetText("+" .. (4 - i) .. " " .. mm(mk))
+      local w0 = l:GetStringWidth(); l:SetPoint("TOPLEFT", math.max(x0, math.min(x - w0 / 2, x0 + bw - w0)), -(ty + 14))
+    end
+    if run.dcost > 0 then
+      local x = X(run.time - run.dcost)
+      local r0 = TEX("OVERLAY"); r0:SetTexture(SLICE .. "dot"); r0:SetPoint("TOPLEFT", x - 4, -ty); r0:SetSize(8, 8); r0:SetVertexColor(rgb(COL.warn))
+      local r1 = TEX("OVERLAY"); r1:SetTexture(SLICE .. "dot"); r1:SetPoint("TOPLEFT", x - 2, -(ty + 2)); r1:SetSize(4, 4); r1:SetVertexColor(rgb(COL.raised))
+    end
+    return ty + 36
+  end
+  -- (a rotation line with the check's name in white, the rest soft grey, as the bold does on the PC)
+  local function wl(line, label) if label ~= "" and line:sub(1, #label) == label then return "|cffffffff" .. label .. "|r" .. line:sub(#label + 1) end; return line end
   local me = UnitName and UnitName("player")
   local you = P and (P.name == me or P.name:match("^([^%-]+)") == me)
   local yo = you and "your" or (P and (P.name .. "'s") or "")
   if S.pull == 0 then
-    sec("timer", "Timer", timerRows())
+    sec("timer", "Timer", timerRows(), nil, (run.par and run.time > 0 and run.stat ~= "L") and timerBar or nil)
     if view == "me" and not P then sec("me", "Me", { { "info", nil, "Your character isn't in this key. Step to anyone with the arrows, or open Group." } })
     elseif P then
       -- (Me, the whole key: your numbers, what got through on your kick, your deaths, avoidable damage, your rotation, and your key pull by pull)
       local n = P.name
-      local nums = { P.role == "healer" and (kN(P.hps) .. " HPS") or (kN(P.dps) .. " DPS"), cnt(P.kicks, "kick", "kicks"), cnt(P.stops, "stop", "stops") }
-      if P.dispels > 0 then nums[#nums + 1] = cnt(P.dispels, "dispel", "dispels") end
-      nums[#nums + 1] = cnt(P.deaths, "death", "deaths"); nums[#nums + 1] = cnt(P.defs, "defensive", "defensives")
-      if P.avoid > 0 then nums[#nums + 1] = cnt(P.avoid, "avoidable hit", "avoidable hits") end
-      sec("you", you and "Your key" or (n .. "'s key"), { { "info", nil, table.concat(nums, "  ·  ") } })
+      -- (two short lines, not one that wraps (the Design studio, Nov 1): the number, deaths and defensives; then kicks, stops, dispels, avoidable hits)
+      local l1 = { P.role == "healer" and (kN(P.hps) .. " HPS") or (kN(P.dps) .. " DPS"), cnt(P.deaths, "death", "deaths"), cnt(P.defs, "defensive", "defensives") }
+      local l2 = { cnt(P.kicks, "kick", "kicks"), cnt(P.stops, "stop", "stops") }
+      if P.dispels > 0 then l2[#l2 + 1] = cnt(P.dispels, "dispel", "dispels") end
+      if P.avoid > 0 then l2[#l2 + 1] = cnt(P.avoid, "avoidable hit", "avoidable hits") end
+      sec("you", you and "Your key" or (n .. "'s key"), { { P.deaths > 0 and "bad" or "info", nil, table.concat(l1, "  ·  ") }, { "info", nil, table.concat(l2, "  ·  ") } })
       if P.kick then
         local by, order = {}, {}
         for _, q in ipairs(PL) do for _, x in ipairs(myThr(q, n)) do local b = by[x.spell]; if not b then b = { n = 0, mob = x.mob, pulls = {} }; by[x.spell] = b; order[#order + 1] = x.spell end; b.n = b.n + 1; if b.pulls[#b.pulls] ~= q.n then b.pulls[#b.pulls + 1] = q.n end end end
@@ -944,7 +974,7 @@ function UI.mplus(raw)
       sec("died", you and "Your deaths" or (n .. "'s deaths"), D)
       local A = {}; for _, q in ipairs(PL) do for _, a in ipairs(q.avoid) do if a.who == n then A[#A + 1] = a end end end
       sec("avoid", "Avoidable damage", avoidRows(A, you and "you" or n))
-      local R0 = {}; for _, f in ipairs(P.rot) do R0[#R0 + 1] = { f.st, f.ic, f.label .. " needed work in " .. (#f.pulls == f.of and ("all " .. f.of .. " pulls") or (#f.pulls .. " of " .. f.of .. " pulls")) .. "." } end
+      local R0 = {}; for _, f in ipairs(P.rot) do R0[#R0 + 1] = { f.st, f.ic, wl(f.label, f.label) .. " needed work in " .. (#f.pulls == f.of and ("all " .. f.of .. " pulls") or (#f.pulls .. " of " .. f.of .. " pulls")) .. "." } end
       sec("rot", "Rotation across the key", R0)
       local PR = {}
       for _, q in ipairs(PL) do
@@ -974,9 +1004,9 @@ function UI.mplus(raw)
       local A, DS = {}, {}; for _, q in ipairs(PL) do for _, a in ipairs(q.avoid) do A[#A + 1] = a end; for _, d in ipairs(q.ds) do DS[#DS + 1] = d end end
       sec("avoid", "Avoidable damage", avoidRows(A), 5)
       sec("disp", "Dispels and purges", dispRows(DS), 5)
-      local RK = {}; for _, q in ipairs(ppl) do local f = q.rot[1]; if f then RK[#RK + 1] = { f.st, f.ic, "@" .. q.name .. ": " .. f.label .. " needed work in " .. (#f.pulls == f.of and ("all " .. f.of .. " pulls") or (#f.pulls .. " of " .. f.of .. " pulls")) .. "." } end end
+      local RK = {}; for _, q in ipairs(ppl) do local f = q.rot[1]; if f then RK[#RK + 1] = { f.st, f.ic, "@" .. q.name .. ": " .. wl(f.label, f.label) .. " needed work in " .. (#f.pulls == f.of and ("all " .. f.of .. " pulls") or (#f.pulls .. " of " .. f.of .. " pulls")) .. "." } end end
       sec("rot", "Rotation across the key", RK)
-      local E = {}; for _, q in ipairs(ppl) do E[#E + 1] = { q.deaths > 0 and "bad" or "info", nil, "@" .. q.name .. "  " .. q.spec .. ":  " .. (q.role == "healer" and (kN(q.hps) .. " HPS") or (kN(q.dps) .. " DPS")) .. "  ·  " .. cnt(q.kicks, "kick", "kicks") .. "  ·  " .. cnt(q.stops, "stop", "stops") .. "  ·  " .. cnt(q.deaths, "death", "deaths") } end
+      local E = {}; for _, q in ipairs(ppl) do E[#E + 1] = { q.deaths > 0 and "bad" or "info", nil, "@" .. q.name .. " |cff" .. COL.faint .. q.spec .. "|r   " .. (q.role == "healer" and (kN(q.hps) .. " HPS") or (kN(q.dps) .. " DPS")) .. "  ·  " .. cnt(q.kicks, "kick", "kicks") .. "  ·  " .. cnt(q.stops, "stop", "stops") .. "  ·  " .. cnt(q.deaths, "death", "deaths") } end
       sec("all", "Everyone", E)
     end
   else
@@ -998,7 +1028,7 @@ function UI.mplus(raw)
       sec("thr", "Got through while " .. yo .. " kick was ready", grouped(th, n))
       sec("died", "Deaths", D)
       sec("avoid", "Avoidable damage", avoidRows(A, you and "you" or n))
-      local RR = {}; for _, f in ipairs(RO) do RR[#RR + 1] = { f.st, f.ic, f.line ~= "" and f.line or f.label } end
+      local RR = {}; for _, f in ipairs(RO) do RR[#RR + 1] = { f.st, f.ic, wl(f.line ~= "" and f.line or f.label, f.label) } end
       if (q.good[n] or "") ~= "" then RR[#RR + 1] = { "ok", nil, "Went well: " .. (q.good[n]:gsub(";", ", ")) .. "." } end
       sec("rot", "Rotation", RR)
       local KS = {}; for _, x in ipairs(q.kicks) do if x.who == n then KS[#KS + 1] = { "ok", nil, mm(x.t) .. "  ·  " .. (x.kind == "k" and "Kicked " or "Stopped ") .. x.spell .. " from " .. x.mob .. (x.kind == "k" and (" (" .. x.with .. ")") or (" with " .. x.with)) .. "." } end end
@@ -1020,7 +1050,7 @@ function UI.mplus(raw)
       sec("kicks", "Kicks and stops", KS)
       local D = {}; for _, d in ipairs(q.deaths) do D[#D + 1] = { "bad", nil, mm(d.t) .. "  ·  @" .. d.who .. " died to " .. d.to .. (d.from ~= "" and (" (" .. d.from .. ")") or "") .. (d.defs == 0 and ", no defensive in the 30 s before." or ".") } end
       sec("died", "Deaths", D)
-      local RK = {}; for _, w in ipairs(ppl) do local L0 = q.rot[w.name]; if L0 and L0[1] then local f = L0[1]; RK[#RK + 1] = { f.st, f.ic, "@" .. w.name .. ": " .. f.label .. (f.v ~= "" and (" (" .. f.v .. ")") or "") .. (#L0 > 1 and (", and " .. (#L0 - 1) .. " more") or "") .. "." } end end
+      local RK = {}; for _, w in ipairs(ppl) do local L0 = q.rot[w.name]; if L0 and L0[1] then local f = L0[1]; RK[#RK + 1] = { f.st, f.ic, "@" .. w.name .. ": " .. wl(f.label, f.label) .. (f.v ~= "" and (" (" .. f.v .. ")") or "") .. (#L0 > 1 and (", and " .. (#L0 - 1) .. " more") or "") .. "." } end end
       sec("rot", "Rotation", RK)
       local DF = {}; for _, w in ipairs(ppl) do if q.defs[w.name] then DF[#DF + 1] = { "info", nil, "@" .. w.name .. ": " .. (q.defs[w.name]:gsub(";", ", ")) .. "." } end end
       sec("defs", "Defensives", DF)
