@@ -2025,6 +2025,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-11-01', h: [], n: [
+    "The tab bar is clear on every theme now, with a soft dark tint only while it sticks to the top as you scroll.",
     "The Debriefing tab no longer shows a small red number: it wasn't clear what it counted, and the page itself says how many serious mistakes there were.",
     "The selected tab is marked once: white text, an accent icon and a thin line right on the divider (no grey box), and the tab bar is as wide as the page instead of running edge to edge.",
     "The Coiled Altar: Soul Sever's map draws each ghost where it most likely was when the frontal landed (an estimate: the log only says where ghosts spawn), and a ghost Soul Sever missed is a Moderate mistake for the player it was chasing.",
@@ -34367,3 +34368,10 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
 // ===== Design studio round 443 (Nov 1): page-load motion off, for now (Flex: "maybe just remove the animations for now", "and start
 // over"). Owner: the Design studio chat. =====
 /* round 443 still */ dsMotion = function () { /* (no count-ups or growing bars) */ };
+
+// ===== Design studio round 456 (Nov 1): the tab bar gets its tint only while pinned at the top (Flex: "it looks weird on every
+// theme honestly"). Owner: the Design studio chat. =====
+/* round 456 pinned */ (function () { let q = 0; const chk = () => { q = 0; const tb = document.querySelector('#main > .tabbar') || document.querySelector('.tabbar');
+  const on = !!tb && window.scrollY > 0 && tb.getBoundingClientRect().top <= 0.5; document.documentElement.classList.toggle('r456-pin', on); };
+  const go = () => { if (!q) q = requestAnimationFrame(chk); };
+  window.addEventListener('scroll', go, { passive: true }); window.addEventListener('resize', go, { passive: true }); document.addEventListener('click', () => setTimeout(go, 60), true); go(); })();
