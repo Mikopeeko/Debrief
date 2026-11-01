@@ -17640,6 +17640,14 @@ function buildCoiledAltar(ev, r, h) {
         if (row) { row[4] = { map }; if (!left && row[3]) { row[3] = { ...row[3], txt: who + ' picked up all 3 soul fragments, and the last one\'s hit killed them: each fragment hurts', why: who + ' picked up all 3 soul fragments, but each one hurts and the last one\'s hit killed them at ' + h.fmtT(dd.t) + '.', next: 'Get healed up or use a defensive before picking up the last fragment.' }; } continue; }
         gSec.rows.push([{ txt: 'Soul fragments', bad: !!dd, warn: !dd }, { t: a.t }, { p: who }, { txt: 'picked up ' + mine.length + ' of 3 soul fragments' + (dd ? ', died' : ', took the Gravebound hit'), bad: !!dd, warn: !dd, why: who + ' picked up ' + mine.length + ' of 3 soul fragments after the Gloombomb' + (dd ? ' and died to Gravebound.' : '.'), next: 'After a Gloombomb hits you, walk over all three soul fragments around where it went off.' }, { map }]); }
       gSec.rows.sort((p, q) => ((p.find((c) => c && c.t != null) || {}).t || 0) - ((q.find((c) => c && c.t != null) || {}).t || 0)); } }
+  /* round 453 one line a set: the Gloombombs card, one line per clean set; a set with mistakes lists just them */
+  { const gSec = sections.find((s) => s.id === 'gloom');
+    if (gSec && gSec.groups && gSec.groups.length) { const G = gSec.groups, tOf = (row) => ((row.find((c) => c && c.t != null) || {}).t), wrong = (row) => row.some((c) => c && (c.bad || c.warn));
+      /* (the soul fragment and Gravebound rows go under the set whose bombs gave them) */
+      const keep = []; for (const row of gSec.rows) { const t = tOf(row); let k = -1; G.forEach((g, i) => { if (t != null && t >= g.t - 1) k = i; }); if (k >= 0 && /^(Gravebound death|Soul fragments|Gloombomb clip)$/.test((row[0] && row[0].txt) || '')) G[k].rows.push(row); else keep.push(row); } gSec.rows = keep;
+      for (const g of G) { const bad = g.rows.filter(wrong).sort((p, q) => (tOf(p) || 0) - (tOf(q) || 0));
+        g.rows = bad.length ? bad : [[{ txt: 'Gloombombs and shields' }, { t: g.t }, { txt: '' }, { txt: 'no mistakes with the bombs or the shields' }, { txt: '' }]];
+        g.bad = bad.some((row) => row.some((c) => c && c.bad)); g.warn = !g.bad && bad.length > 0; } } }
   const fill = (mp) => { mp.pts = h.snap(mp.t).concat(mp.extraPts || (mp.from != null ? objs(mp.t, mp.from) : [])); orbRings(mp); };
   for (const s of sections) for (const row of s.rows.concat(...(s.groups || []).map((g) => g.rows))) for (const c of row) { if (c.map) fill(c.map); if (c.maps) for (const [, mp] of c.maps) fill(mp); }
   // every positional mistake gets a map of that moment (player ringed, orbs and ghosts from the 15s before)
