@@ -12239,6 +12239,28 @@ html body #view#view#view#view .mxa-p:not(.mx-big) .u1-g > .u1-m { display: none
 html body #view#view#view#view .mxa-p:not(.mx-big) .u1-g { grid-template-columns: minmax(0, 1fr) !important; }
 /* round 423: a player's name in plain text, in their class colour */
 html body #view .r423 { font-weight: inherit; }
+/* round 428 polish (Flex: "visually make it polished and professional looking", ideas 1-4) */
+/* 1. steady numbers: even-width digits where numbers line up or count (tables, times, timers, tiles, map labels); sentences keep the
+   font's own digits (its tabular 1 is wide) */
+html body #view :is(td, th, .mx-t, .u1-t, .dbt-tm, .dbt-cht, .ztime, .rcb-v, .gb-v, .gb-bx, .rs-nums, .dbr-4 b, .dbr-n, .rtv-time),
+html body #view svg text, html body #view .zanim { font-variant-numeric: tabular-nums !important; }
+/* 2. damage and healing numbers in sentences: the site's red and green, semi-bold (Oct 24 rule: coloured numbers at 600) */
+html body #view .r424n { font-weight: 600; } html body #view .r424n.dmg { color: var(--bad, #e5534b); } html body #view .r424n.heal { color: var(--good, #45c15c); }
+/* 3. a page swaps in with a short fade instead of a snap (the dancing loading card stays) */
+@keyframes r428in { from { opacity: 0; } to { opacity: 1; } }
+html body #view > :not(.ld) { animation: r428in .16s ease-out; }
+@media (prefers-reduced-motion: reduce) { html body #view > * { animation: none; } }
+/* 4. one spacing rhythm: the few odd gaps snapped onto the site's own steps (2, 4, 6, 8, 10, 12) */
+html body #view#view#view#view .prw-i, html body #view#view#view#view.dbt-on.dbt-full .ds-l details.phase > summary .prw-i { padding-top: 8px !important; padding-bottom: 8px !important; }
+html body #view#view#view#view .prw-l { gap: 6px !important; }
+html body #view#view#view#view .dbt-chr { column-gap: 8px !important; padding-top: 8px !important; padding-bottom: 8px !important; }
+html body #view#view#view#view .dbt-addr { padding-top: 6px !important; padding-bottom: 6px !important; }
+html body #view#view#view#view .dbt-k { margin-bottom: 10px !important; }
+html body #view#view#view#view .grade { padding-left: 6px !important; padding-right: 6px !important; }
+html body #view#view#view#view :is(.rcw-q, .seg) { padding-top: 4px !important; padding-bottom: 4px !important; }
+html body #view#view#view#view .cb-b { row-gap: 4px !important; }
+html body #view#view#view#view .r243-sub { padding-top: 6px !important; }
+html body #view#view#view#view .sub { margin-bottom: 12px !important; }
 
 </style>
 
@@ -12610,7 +12632,13 @@ function r423run() { try { var w = window.__wla, rep = w && w.S && w.S.rep; if (
   for (var n = tw.nextNode(); n; n = tw.nextNode()) { rx.lastIndex = 0; if (rx.test(n.nodeValue)) L.push(n); else n._r423 = n.nodeValue; }
   L.forEach(function (n) { var t = n.nodeValue, fr = document.createDocumentFragment(), last = 0; rx.lastIndex = 0; t.replace(rx, function (m0, pre, nm, off) { var st = off + pre.length; if (st > last) fr.appendChild(document.createTextNode(t.slice(last, st))); var sp = document.createElement('span'); sp.className = 'r423'; sp.style.color = R423.col[nm]; sp.textContent = nm; fr.appendChild(sp); last = st + nm.length; return m0; }); if (last < t.length) { var tail = document.createTextNode(t.slice(last)); tail._r423 = tail.nodeValue; fr.appendChild(tail); } if (n.parentNode) n.parentNode.replaceChild(fr, n); });
 } catch (e) { /* (names stay as they are) */ } }
-function r423soon() { if (R423.t) return; R423.t = setTimeout(function () { R423.t = 0; r423run(); }, 250); }
+/* round 428 signed numbers */ var RX428 = /(^|[\s(\u00b7:])([\u2212\-+])(\d[\d.,]*\s?[kKmM])(?![\p{L}\p{N}])/gu;
+function r428run() { try { var root = document.getElementById('view'); if (!root) return;
+  var tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: function (n) { if (n._r428 === n.nodeValue) return NodeFilter.FILTER_REJECT; var p = n.parentElement; if (!p || p.closest('.r424n, svg, input, textarea, select, script, style, [contenteditable], .zwrap') || (p.style && p.style.color)) { n._r428 = n.nodeValue; return NodeFilter.FILTER_REJECT; } return NodeFilter.FILTER_ACCEPT; } }), L = [];
+  for (var n = tw.nextNode(); n; n = tw.nextNode()) { RX428.lastIndex = 0; if (RX428.test(n.nodeValue)) L.push(n); else n._r428 = n.nodeValue; }
+  L.forEach(function (n) { var t = n.nodeValue, fr = document.createDocumentFragment(), last = 0; RX428.lastIndex = 0; t.replace(RX428, function (m0, pre, sg, num, off) { var st = off + pre.length; if (st > last) { var tx = document.createTextNode(t.slice(last, st)); tx._r428 = tx.nodeValue; fr.appendChild(tx); } var sp = document.createElement('span'); sp.className = 'r424n ' + (sg === '+' ? 'heal' : 'dmg'); sp.textContent = sg + num; fr.appendChild(sp); last = st + sg.length + num.length; return m0; }); if (last < t.length) { var tail = document.createTextNode(t.slice(last)); tail._r428 = tail.nodeValue; fr.appendChild(tail); } if (n.parentNode) n.parentNode.replaceChild(fr, n); });
+} catch (e) { /* (numbers stay as they are) */ } }
+function r423soon() { if (R423.t) return; R423.t = setTimeout(function () { R423.t = 0; r423run(); r428run(); }, 250); }
 function scan() { r423soon(); /* round 373 heart card */ [].forEach.call(document.querySelectorAll('#view .mx-p .md.amp:not([data-r373])'), function (md) { md.setAttribute('data-r373', '1'); var T = function (e) { return (e ? e.textContent : '').replace(/\s+/g, ' ').trim(); };
     [].forEach.call(md.querySelectorAll('.md-l, .md-h > b'), function (e) { var n = e.firstChild; if (n && n.nodeType === 3) n.textContent = n.textContent.replace(/^Amp (\d+)/, 'Heart window $1').replace(/^All (\d+) amps/, 'All $1 windows'); });
   }); /* round 370 pace card */ [].forEach.call(document.querySelectorAll('#view .mx-p'), function (pan) { var sec = pan.querySelector('details.secd[data-k^="pace-"]'), w = pan.querySelector('.mx-one-w'); if (!sec || !w || w.getAttribute('data-r370')) return; if (!/^\s*Done right/i.test(w.textContent || '')) return; var L = [].map.call(sec.querySelectorAll('li'), function (li) { return (li.textContent || '').replace(/\s+/g, ' ').trim().replace(/^(\d+:\d\d)\s*/, '$1: ').replace(/on pace(?=\d)/g, 'on pace: ').replace(/top guilds(?=\d)/g, 'top guilds: '); }).filter(function (t) { return / · /.test(t); }); if (!L.length) return; w.setAttribute('data-r370', '1'); w.innerHTML = '<p class="mx-sum">On pace. ' + L.map(function (t) { return t.replace(/[<>&]/g, ''); }).join('; ') + '.</p>'; }); /* round 366 one player */ (function () { var sel = document.getElementById('opP'), nm = sel && sel.value ? String(sel.value).split('-')[0] : ''; [].forEach.call(document.querySelectorAll('#view .dbt-why .dbt-chn'), function (ch) { var n = 0;
