@@ -199,6 +199,21 @@ html, body { font-weight: 500; } .body b { font-weight: 600; } .kyou { border-le
 .body.mpx .kr.ri { grid-template-columns: 8px 20px minmax(0, 1fr); }
 .body.mpx .kr.ri > span:nth-child(2) { display: inline-flex; margin-top: 1px; }
 .body.mpx .kb:has(> .kr.ri) > .kr:not(.ri) { grid-template-columns: 8px 20px minmax(0, 1fr); } .body.mpx .kb:has(> .kr.ri) > .kr:not(.ri) > span:nth-child(2):empty { display: block; }
+/* Design studio round 462: the M+ Timer bar: the run's time against the +3, +2 and +1 marks */
+.body.mpx .mptb { padding: 22px 2px 4px; }
+.body.mpx .mptb .tr { position: relative; height: 10px; border-radius: 5px; background: rgba(255,255,255,.07); }
+.body.mpx .mptb .fl { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; background: var(--good); opacity: .75; }
+.body.mpx .mptb.over .fl { background: var(--bad); }
+.body.mpx .mptb .mk { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--muted); border-radius: 1px; }
+.body.mpx .mptb .mk.won { background: var(--text); }
+.body.mpx .mptb .gh { position: absolute; top: -5px; bottom: -5px; margin-left: -1px; border-left: 2px dashed var(--warn); }
+.body.mpx .mptb .now { position: absolute; bottom: calc(100% + 6px); transform: translateX(-50%); font: 700 13.5px Barlow Condensed, sans-serif; color: var(--text); white-space: nowrap; }
+.body.mpx .mptb .now.r { transform: translateX(-100%); }
+.body.mpx .mptb .ls { position: relative; height: 18px; margin-top: 7px; }
+.body.mpx .mptb .ls span { position: absolute; transform: translateX(-50%); font: 700 12.5px Barlow Condensed, sans-serif; color: var(--muted); white-space: nowrap; }
+.body.mpx .mptb .ls span:last-child { transform: translateX(-100%); }
+.body.mpx .mptb .ls span em { font-style: normal; font-weight: 600; color: var(--faint); }
+.body.mpx .mptb .ls span.won { color: var(--goodT, var(--good)); }
 </style>
 </head>
 <body>
@@ -461,6 +476,13 @@ function renderMplus() {
   const lvW = (n) => n + (n === 1 ? ' level' : ' levels'), ago = (s) => { const r = Math.round(s); return r < 60 ? r + (r === 1 ? ' second' : ' seconds') : mmssP(r); }; /* ("3 seconds short", not "0:03 short") */
   const clockRows = () => { const c = run.clock; if (!c) return [];
     const L = [], mark = c.up === 3 ? c.par * 0.6 : c.up === 2 ? c.par * 0.8 : c.par;
+    /* (Design studio round 462: the run against the three upgrade marks, at a glance) */
+    { const W = Math.max(c.par, c.time) * 1.05, X = (t) => Math.max(0, Math.min(100, t / W * 100)).toFixed(2) + '%', M = [[0.6, '+3'], [0.8, '+2'], [1, '+1']];
+      const nowR = c.time / W > 0.84, gh = c.deathCost && c.time - c.deathCost > 0 ? c.time - c.deathCost : null;
+      L.push('<div class="mptb' + (c.up ? '' : ' over') + '" role="img" aria-label="' + esc(mmssP(c.time) + ' of ' + mmssP(c.par) + (c.up ? ', the key goes up ' + c.up : ', over time')) + '"><div class="tr"><i class="fl" style="width:' + X(c.time) + '"></i>' +
+        M.map(([f]) => '<i class="mk' + (c.time <= c.par * f ? ' won' : '') + '" style="left:' + X(c.par * f) + '"></i>').join('') + (gh != null ? '<i class="gh" style="left:' + X(gh) + '" title="Without the deaths: ' + mmssP(gh) + '"></i>' : '') +
+        '<span class="now' + (nowR ? ' r' : '') + '" style="left:' + X(c.time) + '">' + mmssP(c.time) + '</span></div><div class="ls">' +
+        M.map(([f, l]) => '<span class="' + (c.time <= c.par * f ? 'won' : '') + '" style="left:' + X(c.par * f) + '">' + l + ' <em>' + mmssP(c.par * f) + '</em></span>').join('') + '</div></div>'); }
     if (c.up) L.push(row('var(--good)', '<b>In time</b>: ' + mmssP(c.time) + ' of ' + mmssP(c.par) + '. The key goes up ' + lvW(c.up) + ', with ' + ago(mark - c.time) + ' to spare.' + (c.next ? ' ' + lvW(c.up + 1) + ' needed ' + mmssP(c.next) + ', ' + ago(c.time - c.next) + ' short.' : '')));
     else L.push(row('var(--bad)', '<b>Over time</b> by ' + ago(c.over) + ': ' + mmssP(c.time) + ' of ' + mmssP(c.par) + '.'));
     if (c.deathCost) L.push(row(c.upWithout > c.up ? 'var(--bad)' : 'var(--warn)', (c.deaths === 1 ? 'The death' : 'The ' + c.deaths + ' deaths') + ' cost ' + ago(c.deathCost) + ' on the timer.' + (c.upWithout > c.up ? ' Without ' + (c.deaths === 1 ? 'it' : 'them') + (c.up ? ', the key goes up ' + lvW(c.upWithout) + '.' : ', the key was in time.') : '')));
