@@ -214,7 +214,7 @@ async function mpFastOf(run, v) {
     let d = null; try { d = await run(q, {}); } catch (e) { d = null; }
     return ch.map((t, i) => { const x = d && d.reportData && d.reportData['k' + i], D = x ? amt(x.d) : new Map(), H = x ? amt(x.h) : new Map();
       return { code: t.report.code, fight: t.report.fightID, at: t.report.startTime || 0, dur: Math.round(t.duration), deaths: t.deaths | 0, region: t.server ? t.server.region || '' : '', server: t.server ? t.server.name || '' : '',
-        ppl: (t.team || []).map((m) => { const r = /heal/i.test(m.role) ? 'healer' : /tank/i.test(m.role) ? 'tank' : 'dps'; return { n: m.name, c: m.class, s: m.spec, r, a: (r === 'healer' ? H : D).get(m.name) || null }; }) }; });
+        ppl: (t.team || []).map((m) => { const r = /heal/i.test(m.role) ? 'healer' : /tank/i.test(m.role) ? 'tank' : 'dps'; return { n: m.name, c: m.class, s: m.spec, r, a: (r === 'healer' ? H : D).get(m.name) || null, ...(r === 'healer' ? { d: D.get(m.name) || null } : {}) }; }) }; }); /* (d: a healer's DPS too (Nov 2, healer damage in keys)) */
   }));
   return { e: v.e, l: v.l, n: all.length, med: Math.round(med), runs: got.flat() };
 }
@@ -224,7 +224,7 @@ async function topSpec(creds, v) {
   return topSpecOf((q, vars) => gql(creds, q, vars), v);
 }
 async function mpFast(creds, v) {
-  if (HOSTED) return api('/api/mpfast?e=' + v.e + '&l=' + v.l + '&v=2'); /* (v=2: the 20 fastest and their middle time, Nov 1) */
+  if (HOSTED) return api('/api/mpfast?e=' + v.e + '&l=' + v.l + '&v=3'); /* (v=2: the 20 fastest and their middle time, Nov 1; v=3: healers' DPS too, Nov 2) */
   return mpFastOf((q, vars) => gql(creds, q, vars), v);
 }
 async function topKills(creds, v) {
