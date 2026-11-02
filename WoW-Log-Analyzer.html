@@ -62648,16 +62648,22 @@ function mpRkHtml(R) { const st = R._rk, pick = MP.pp || '', ppl = (R.people || 
   const p = ppl.find((y) => y.name === pick), x = p && st.res[pick]; if (!x) return '<div id="mptRot" class="mpt-rk"><p class="mpt-mcf">No rotation to judge for ' + esc(pick) + '.</p></div>';
   const mins = (s2) => (s2 < 90 ? 'about 1 minute' : 'about ' + Math.round(s2 / 60) + ' minutes') + ' of the key', tms = (k) => (k === 1 ? 'once' : k + ' times'), W = MP_WHY[x.spec] || {};
   const bw = (t) => String(t || '').replace(/\bthe boss\b/g, 'your target').replace(/\bThe boss\b/g, 'Your target').replace(/\btwo bosses\b/gi, 'two enemies').replace(/\bbosses\b/g, 'enemies').replace(/\bboss\b/g, 'enemy'); /* (the Rotation tab's raid words, for a key) */
-  const part = (P2, v, title, aoe) => { const L = [...P2.mist.values()].sort((a, b) => b.n - a.n), pr = [...P2.procs].sort((a, b) => b[1] - a[1]);
-    const row = (m) => { const did = [...m.did].sort((a, b) => b[1] - a[1]), top1 = did[0][0], why = [...m.why].sort((a, b) => b[1] - a[1])[0][0], one = m.why.size === 1, wl = W[m.want], tip = m.tip || (Array.isArray(wl) ? wl[0] : wl) || '';
-      return '<div class="mpt-rkm"><span>Used <b>' + esc(top1) + '</b>' + (did.length > 1 ? ' and other buttons' : '') + ' instead of <b>' + esc(m.want) + '</b>' + (one && why !== m.want + ' was wanted' ? ' when ' + (why === m.want + ' was ready' ? 'it was ready' : esc(bw(why))) : '') + ', ' + tms(m.n) + '.' + (tip ? '<small class="mpt-ypw">' + esc(bw(tip)) + '</small>' : '') + '</span></div>'; };
-    const prow = ([b, k]) => '<div class="mpt-rkm"><span>Let <b>' + esc(b) + '</b> run out ' + tms(k) + '.' + (P2.spend && P2.spend[b] ? '<small class="mpt-ypw">Spend it on ' + esc(P2.spend[b]) + ' before it runs out.</small>' : '') + '</span></div>';
-    const body = L.map(row).concat(pr.map(prow)).join('') || (v ? '<p class="mpt-ypok">✓ ' + title + ' rotation done right.</p>' : '');
+  // (a spell's name in the site's spell style: bold, a dotted underline, its hover card; its icon is the row's label, never inside the sentence)
+  const sp = (n) => { const id = (typeof sidOf === 'function' && sidOf(n)) || (typeof talSid === 'function' && talSid(n)) || 0; return id ? '<span class="sp mt" data-sid="' + id + '" data-sn="' + esc(n) + '" data-ic="1">' + esc(n) + '</span>' : '<b>' + esc(n) + '</b>'; };
+  const lab = (n) => '<span class="mpt-rki">' + spellIcon(0, n) + '</span>';
+  const part = (P2, v, title, aoe) => { const L = [...P2.mist.values()].map((m) => ({ m, n: m.n })).concat([...P2.procs].map(([b, k]) => ({ b, n: k }))).sort((a, b) => b.n - a.n);
+    // (red: the biggest rows that take the part past 2 in 10 (without them it wouldn't be "not done right"); amber: the rest)
+    let rest = P2.off; for (const r of L) { r.red = v === 'm' && rest / P2.presses > 0.2; rest -= r.n; }
+    const cnt = (r) => '<b class="mpt-rkn ' + (r.red ? 'm' : 's') + '">' + tms(r.n) + '</b>';
+    const row = (r) => { if (r.b) return '<div class="mpt-rkm' + (r.red ? ' mpt-rkm-m' : '') + '">' + lab(r.b) + '<span class="mpt-rkt">Let ' + sp(r.b) + ' run out ' + cnt(r) + '.' + (P2.spend && P2.spend[r.b] ? '<small class="mpt-ypw">Spend it on ' + esc(P2.spend[r.b]) + ' before it runs out.</small>' : '') + '</span></div>';
+      const m = r.m, did = [...m.did].sort((a, b) => b[1] - a[1]), top1 = did[0][0], why = [...m.why].sort((a, b) => b[1] - a[1])[0][0], one = m.why.size === 1, wl = W[m.want], tip = m.tip || (Array.isArray(wl) ? wl[0] : wl) || '';
+      return '<div class="mpt-rkm' + (r.red ? ' mpt-rkm-m' : '') + '">' + lab(m.want) + '<span class="mpt-rkt">Used ' + sp(top1) + (did.length > 1 ? ' and other buttons' : '') + ' instead of ' + sp(m.want) + (one && why !== m.want + ' was wanted' ? ' when ' + (why === m.want + ' was ready' ? 'it was ready' : esc(bw(why))) : '') + ', ' + cnt(r) + '.' + (tip ? '<small class="mpt-ypw">' + esc(bw(tip)) + '</small>' : '') + '</span></div>'; };
+    const body = L.map(row).join('') || (v ? '<p class="mpt-ypok">✓ ' + title + ' rotation done right.</p>' : '');
     return '<div class="mpt-rkc"><p class="mpt-rkh"><b>' + title + '</b> ' + vw(v) + '<small>' + (aoe ? '3 or more enemies' : '1 or 2 enemies') + ' · ' + mins(P2.secs) + '</small></p>' + body + '</div>'; };
   return '<div id="mptRot" class="mpt-rk"><p class="mpt-rkv"><b style="color:' + mpCC(p.cls) + '">' + esc(p.name) + '</b>’s rotation: ' + vw(x.v) + '</p><div class="mpt-rkp">' + part(x.st, x.vst, 'Single target', false) + part(x.aoe, x.vaoe, 'AoE', true) + '</div>' +
     '<p class="mpt-ypf">Each press is judged by how many enemies the group was fighting then: the Rotation tab’s single-target priority on 1 or 2, the ' + esc(p.spec) + ' AoE priority on 3 or more.' + (x.heal ? ' Healers are checked on their damage buttons.' : '') + '</p></div>'; }
 // (paint the chapter's body where it is; start the work when the chapter comes into view, or when a player is picked)
-function mpRkPaint(R) { const it = MP.item, el = document.getElementById('mptRot'); if (!el || !it || MP.R[mpK(it)] !== R) return; el.outerHTML = mpRkHtml(R); }
+function mpRkPaint(R) { const it = MP.item, el = document.getElementById('mptRot'); if (!el || !it || MP.R[mpK(it)] !== R) return; el.outerHTML = mpRkHtml(R); try { refreshIcons(); } catch (e) { /* (icons load later) */ } }
 function mpRkGo() { const it = MP.item, R = it && MP.R[mpK(it)]; if (!R || !MP_ROT_ON || R._rk) return; mpRkRun(R); }
 window.addEventListener('scroll', () => { const el = document.getElementById('mptCR'); if (!el) return; const r = el.getBoundingClientRect(); if (r.top < innerHeight + 200 && r.bottom > -200) mpRkGo(); }, { passive: true });
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-mprk]'); if (!b) return; const nm = b.dataset.mprk, sel = document.querySelector('[data-mppsel]');
@@ -64119,7 +64125,9 @@ body.mpz-wh .spc-tt{display:none !important}
 /* (the Rotation chapter: Everyone's rows, a verdict, single target and AoE side by side (stacked on a phone), what went wrong as quiet rows) */
 .mpt .mpt-rke{display:flex;flex-direction:column} .mpt .mpt-rkr{display:flex;align-items:center;gap:8px;padding:7px 2px;border:0;border-bottom:1px solid var(--line);background:none;color:inherit;font:inherit;text-align:left;cursor:pointer} .mpt .mpt-rkr img{width:18px;height:18px;border-radius:4px} .mpt .mpt-rkr > b:last-child{margin-left:auto;font-weight:600}
 .mpt .mpt-rkr:hover{background:rgba(255,255,255,.03)} .mpt .mpt-rkv{font:600 13.5px var(--body);margin:2px 0 10px} .mpt .mpt-rkp{display:grid;grid-template-columns:1fr 1fr;gap:12px 18px} @media (max-width:640px){.mpt .mpt-rkp{grid-template-columns:1fr}}
-.mpt .mpt-rkh{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;margin:0 0 4px;font-size:13px} .mpt .mpt-rkh small{flex-basis:100%;color:var(--muted);font-size:11px} .mpt .mpt-rkm{padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+.mpt .mpt-rkh{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;margin:0 0 4px;font-size:13px} .mpt .mpt-rkh small{flex-basis:100%;color:var(--muted);font-size:11px}
+.mpt .mpt-rkm{display:flex;align-items:flex-start;gap:8px;padding:6px 0 6px 8px;border-left:3px solid #f2c46b;border-bottom:1px solid var(--line);font-size:12.5px;margin-top:4px} .mpt .mpt-rkm-m{border-left-color:#ff8f87} .mpt .mpt-rkt{flex:1;min-width:0}
+.mpt .mpt-rki{flex:none;line-height:0;margin-top:1px} .mpt .mpt-rki .icw{width:20px;height:20px} .mpt .mpt-rkm .sp{font-weight:600;color:var(--text)} .mpt .mpt-rkn{font-weight:600} .mpt .mpt-rkn.m{color:#ff8f87} .mpt .mpt-rkn.s{color:#f2c46b}
 .mpt .mpt-ypw{display:block;font:400 12.5px var(--body);color:#8f98a1;margin-top:2px} .mpt .mpt-ypk{display:block;font:400 11px var(--body);color:#6c757e;margin-top:1px} .mpt .mpt-ypf{font:400 11px var(--body);color:#6c757e;margin:6px 0 0}
 `;
  // (and src/mptab.js, the Mythic+ tab (Nov 1))
