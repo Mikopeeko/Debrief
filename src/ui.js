@@ -2050,6 +2050,8 @@ const PATCH_NOTES = [
     "Mythic+ map: point at a pull, a tile or a timeline block for a short summary: its time, forces, deaths, kicks, Lust and cooldowns. The timeline marks each cast that went off with a kick ready.",
     "Mythic+ map: the pulls are tiles under the map, so the pull's card has the whole side to itself.",
     "Mythic+ map: each pull’s number sits inside the pull, in a clear spot that never covers an enemy, a mark or another label. A pull spread across the room gets one outline round all of it, like in MDT. Only the dangerous missed kicks show on the map; the rest are on the card.",
+    "Mythic+ Your play also checks each spec’s own spells against top players of that spec: area spells on big pulls, single-target spenders pressed into a pack, procs and resource that went to waste, and DoTs on the pack. When the fast run has nobody of your spec, another fast run with one is used.",
+    "Mythic+ deaths no longer list a talent or racial defensive you never press as “ready”.",
     "Mythic+ pull card: pick one player to see Your play, what cost time in that pull (time not casting, a big cooldown held on a big pull, a death with a defensive ready, a kick missed) priced in seconds against top players of the spec. Your part adds it up.",
     "Mythic+ map: no more route lines. The pull numbers already show the order.",
     "Mythic+ boss pulls count only the trash you pulled with the boss. What the boss summoned is on its own line in the pull’s card.",
