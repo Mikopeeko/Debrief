@@ -2030,6 +2030,8 @@ const PATCH_NOTES = [
   { d: '2026-11-02', h: [{ t: 'Watch the pull on the Timeline', d: 'Debriefing\'s Timeline now replays the pull on a big map, with a play-by-play beside it of every mechanic and how the raid handled it, and the fight\'s timeline playing underneath. Click a dot or a line to watch that moment, and the box below says whether it was done right and what to do next time.' }], n: [ /* round 484 */
     "Debriefing Timeline replay, The Coiled Altar: orbs stay on the floor until someone picks them up or a frontal pops them, ghosts stay until they reach their player or a frontal clears them, and you can see purple orb carriers, Gravebound players, Malacrass's shield and Zul'jan healing in the intermission. Axes show where they hit someone, and every player's Soul Fragments glow until they pick them up.",
     "Debriefing Timeline replay, Ula'tek: the platform stays whole until phase 3, then you see it break.",
+    "Debriefing Timeline replay, tidier map: circles no longer carry long text over the players. Point at one to see what it is, and the map's Key has one line per kind.",
+    "Debriefing Timeline replay: click any name, on the map or in the play-by-play, to follow that player. Everyone else fades, everything on Debriefing follows them, and Show everyone goes back.",
     "The Coiled Altar's maps: the poison pools are drawn at their real size, a little smaller than before.",
     "Debriefing Timeline: a You and Top guilds lane under the replay shows your phase pushes, deaths, mistakes and Lust next to the 20 fastest kills (The Coiled Altar for now). Click the lane to move the replay there.",
     "Mythic+ tab, less to read: Your group is one table with each player's DPS, kicks, CC, deaths, defensives and big cooldowns. The map's controls sit in one bar, with the floors and layers on the map. The long pull list and route chart are gone: each pull's details are on its tile, its hover and its card, and the map's first line says where your enemy count ended.",
@@ -12433,7 +12435,7 @@ function miniMap(mp, pmap) {
     const g = ringAt(g0); if (!g) continue;
     const col = g.color || '#e6b450', fill = g.fill || (g.color ? 'rgba(126,224,143,.16)' : 'rgba(230,180,80,.14)');
     const look0 = g.fx ? ringFx(g, X(g), Y(g), g.r * yd, col, fill) : null, look = look0 != null && g.clip && mp.room ? '<g clip-path="url(#' + RID + ')">' + look0 + '</g>' : look0;
-    s += (look != null ? look : '<circle cx="' + X(g) + '" cy="' + Y(g) + '" r="' + g.r * yd + '" fill="' + fill + '" stroke="' + col + '" stroke-opacity="' + (g.dim ? 0.5 : 1) + '" stroke-width="' + (g.dim ? 1.4 : 2) + '" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>') +
+    s += (g0.tip ? '<g>' : '') + (look != null ? look : '<circle cx="' + X(g) + '" cy="' + Y(g) + '" r="' + g.r * yd + '" fill="' + fill + '" stroke="' + col + '" stroke-opacity="' + (g.dim ? 0.5 : 1) + '" stroke-width="' + (g.dim ? 1.4 : 2) + '" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>') + (g0.tip ? '<title>' + esc(g0.tip) + '</title></g>' : '') /* (the replay's circles: their full line when you point at them, Nov 2) */ +
       (micL.push(mapIcon(g, X(g), Y(g), g.r * yd)), '') + ic(X(g), Y(g) - g.r * yd, '<text x="' + X(g) + '" y="' + (Y(g) - g.r * yd - 6) + '" class="ml" fill="' + col + '">' + esc((g0.cd && g0.at != null ? cdLab413(g0, g) : (g.label || '')) + (g0.shrink ? ' ~' + Math.round(g.r) + ' yd' : '')) + '</text>');
   }
   // spit lines (Corrosive Spit): add to its target while the aim is up; this row's add bright, the others dimmer
@@ -34698,8 +34700,8 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
        recorder's own fragment units that nobody picked up, until Gravebound ends; drawn as the white glowing souls of the Gloombomb maps) */
     souls: { unit: 'Soul Fragment', debuff: 'Gravebound' },
     /* (a boss's shield from the fight check's rows (cast time + "after X s"), and boss buffs from the log [boss, yd, colour, label]) */
-    shield: { sec: 'shield', boss: 'Hex Lord Malacrass', r: 6, color: '#a35cf2', cn: 'Veil of Twilight (break the shield)' },
-    auras: { 'Ghastly Regeneration': ['Zul\'jan', 7, '#5fd35f', 'Ghastly Regeneration (healing; takes double damage)'] } },
+    shield: { sec: 'shield', boss: 'Hex Lord Malacrass', r: 6, color: '#a35cf2', cn: 'Veil of Twilight (break the shield)', lab: 'Shield' },
+    auras: { 'Ghastly Regeneration': ['Zul\'jan', 7, '#5fd35f', 'Ghastly Regeneration (healing; takes double damage)', 'Healing'] } },
     /* (Ula'tek: the eggs and what hatches, the adds, the heart; small labelled markers where the area's size isn't in our data) */
     "Ula'tek": { bosses: ['Ula\'tek'], adds: ['Blightscale Spawn', 'Blightscale Rawling', 'Blightscale Wretch', 'Doomscale Warden', 'Weakened Doomscale', 'Blightscale Shrieker', 'Venomous Heart', 'Blightscale Clutch', 'Slithering Clutch'], flash: [],
     debuffs: { 'Rancid Yolk': [3, '#e8c05a', 'Carrying an egg'], 'Grasping Fangs': [3, '#f0726a', 'Grasping Fangs (break it)'], "Serpent's Bite": [4, '#da3df2', "Serpent's Bite (soak)"], 'Volatile Purge': [4, '#7ee08f', 'Volatile Purge'], 'Toxic Burn': [3, '#c4f03c', 'Taking the beam'] } } };
@@ -34801,7 +34803,7 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
     /* (each mechanic told as a sentence from the fight checks' own rows: who tanked, who soaked, who carried, who dispelled, who kicked.
        The Coiled Altar first (Flex, Nov 2: "Yes, Coiled Altar first"); other bosses keep the checks' lines until they get theirs) */
     var CC = {}; [].slice.call(document.querySelectorAll('#view .nm')).forEach(function (e0) { var n = e0.textContent.trim(); if (n && e0.style.color && !CC[n]) CC[n] = e0.style.color; }); Object.keys(X.col || {}).forEach(function (n) { if (X.col[n]) CC[n] = X.col[n]; });
-    var nmH = function (n) { n = String(n || '').trim(); return n ? '<span style="color:' + (CC[n] || 'var(--text)') + '">' + E(n) + '</span>' : ''; };
+    var nmH = function (n) { n = String(n || '').trim(); return n ? '<span class="dtm-pn" data-pn="' + E(n) + '" title="Follow ' + E(n) + '" style="color:' + (CC[n] || 'var(--text)') + '">' + E(n) + '</span>' : ''; };
     var andL = function (L) { L = L.filter(Boolean); return L.length < 2 ? L.join('') : L.slice(0, -1).join(', ') + ' and ' + L[L.length - 1]; };
     var cap = function (s) { s = String(s || ''); return s.charAt(0).toUpperCase() + s.slice(1); };
     var sec2 = function (s) { return String(s || '').replace(/(\d)s\b/g, '$1 s'); };
@@ -34925,19 +34927,21 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
         var byN = {}; rep.players.forEach(function (p) { if (p && p.name) byN[p.name] = p.guid; });
         /* (every mechanic the site can draw, at its own time: frontals, circles, the pools; each mechanic map's own timing decides when it shows) */
         var rings = [], cones = [], pools = null, seenR = {}, seenC = {};
+        /* (a circle's colour as a word, for the map's Key: one line per kind, "Purple circle: Carrying a purple orb") */
+        var CW = function (c) { return ({ '#da3df2': 'Pink', '#5fd35f': 'Green', '#7ee08f': 'Green', '#b65cff': 'Purple', '#a35cf2': 'Purple', '#b98cff': 'Lilac', '#aeb6bf': 'Grey', '#e8c05a': 'Gold', '#cdb35a': 'Gold', '#e8a23a': 'Orange', '#f0726a': 'Red', '#c4f03c': 'Lime' }[String(c).toLowerCase()] || 'Coloured') + ' circle'; };
         MMs.forEach(function (x) { var mp0 = x.map || {}, F0 = mp0.frames || [], a0 = F0.length ? F0[0].t : x.t - 3, b0 = F0.length ? F0[F0.length - 1].t : x.t + 2;
-          (mp0.rings || []).forEach(function (g) { var q = Object.assign({}, g); if (q.t0 == null) q.t0 = a0; if (q.dur == null && q.fx !== 'puddle' && q.fx !== 'zone') q.dur = Math.max(1, b0 - q.t0); var kk = (q.guid || (q.x + ',' + q.y)) + '|' + Math.round(q.t0 * 10); if (seenR[kk]) return; seenR[kk] = 1; rings.push(q); });
+          (mp0.rings || []).forEach(function (g) { if (g.fx === 'debuff' && (RX[it0.boss] || {}).debuffs) return; var q = Object.assign({}, g); if (q.t0 == null) q.t0 = a0; if (q.dur == null && q.fx !== 'puddle' && q.fx !== 'zone') q.dur = Math.max(1, b0 - q.t0); var kk = (q.guid || (q.x + ',' + q.y)) + '|' + Math.round(q.t0 * 10); if (seenR[kk]) return; seenR[kk] = 1; rings.push(q); });
           (mp0.cones || []).concat(mp0.cone ? [mp0.cone] : []).forEach(function (c) { var q = Object.assign({}, c); if (q.at == null) q.at = x.t; var kk = (q.name || '') + '|' + Math.round(q.at * 10); if (seenC[kk]) return; seenC[kk] = 1; cones.push(q); });
           if (!pools && mp0.pools && mp0.pools.length) pools = mp0.pools; });
         /* (the players in a mistake get a ring for a few seconds as it happens) */
-        bad.forEach(function (i) { var m = M[i], lv = lvOf(m); if (((RX[it0.boss] || {}).noMap || []).indexOf(m.id) >= 0) return; /* (no circles for dispels: they stay in the list) */ var who0 =m.death && GM[i] ? GM[i].reduce(function (A, j) { return A.concat(M[j].who); }, []) : m.who; who0.forEach(function (wv) { var g = byN[wv.n]; if (g) rings.push({ guid: g, r: 3, color: lv === 'n' ? '#cdb35a' : lv === 'm' ? '#e8a23a' : '#f0726a', fill: 'rgba(240,114,106,0.14)', t0: m.t - 0.5, dur: 5, cn: m.death ? 'Died' : 'In a mistake', label: wv.n + ': ' + nameOf(m, i) }); }); });
+        bad.forEach(function (i) { var m = M[i], lv = lvOf(m); if (((RX[it0.boss] || {}).noMap || []).indexOf(m.id) >= 0) return; /* (no circles for dispels: they stay in the list) */ var who0 =m.death && GM[i] ? GM[i].reduce(function (A, j) { return A.concat(M[j].who); }, []) : m.who; who0.forEach(function (wv) { var g = byN[wv.n]; if (g) rings.push({ guid: g, r: 3, color: lv === 'n' ? '#cdb35a' : lv === 'm' ? '#e8a23a' : '#f0726a', fill: 'rgba(240,114,106,0.14)', t0: m.t - 0.5, dur: 5, cn: CW(lv === 'n' ? '#cdb35a' : lv === 'm' ? '#e8a23a' : '#f0726a'), legend: m.death ? 'died' : 'in a mistake', label: '', tip: wv.n + ': ' + nameOf(m, i) }); }); });
         /* (the debuff circles from the log: each Gloombomb, orb carried, mind control and Venomfang on its player, from when it lands until it ends) */
-        var DB = (RX[it0.boss] || {}).debuffs || {}; rep.players.forEach(function (p) { if (!p || !p.debuffs || !p.debuffs.forEach) return; p.debuffs.forEach(function (v, nm) { var st = DB[nm]; if (!st || !v || !v.sp) return; v.sp.forEach(function (iv) { var a1 = +iv[0], b1 = iv[1] == null ? a1 + 6 : +iv[1]; if (!(b1 > a1)) return; rings.push({ guid: p.guid, r: st[0], color: st[1], fill: st[1] + '22', t0: a1, dur: b1 - a1, cn: st[2], label: p.name + ': ' + st[2] }); }); }); });
+        var DB = (RX[it0.boss] || {}).debuffs || {}; rep.players.forEach(function (p) { if (!p || !p.debuffs || !p.debuffs.forEach) return; p.debuffs.forEach(function (v, nm) { var st = DB[nm]; if (!st || !v || !v.sp) return; v.sp.forEach(function (iv) { var a1 = +iv[0], b1 = iv[1] == null ? a1 + 6 : +iv[1]; if (!(b1 > a1)) return; rings.push({ guid: p.guid, r: st[0], color: st[1], fill: st[1] + '22', t0: a1, dur: b1 - a1, cn: CW(st[1]), legend: st[2], label: '', tip: p.name + ': ' + st[2] }); }); }); });
         /* (Soul Fragments, everyone's: each one at the spot its player picked it up, from their Gravebound until the pickup; the recorder's own
            fragments that nobody picked up stay until Gravebound ends. Drawn as the Gloombomb maps' white glowing souls (Flex, Nov 2: "They
            should be the very small white glowing orbs remember?", "Yes, do fragments")) */
         var SO = (RX[it0.boss] || {}).souls; if (SO) { var GBs = []; rep.players.forEach(function (p) { var v = p && p.debuffs && p.debuffs.get ? p.debuffs.get(SO.debuff) : null; if (v && v.sp) v.sp.forEach(function (s) { GBs.push({ g: p.guid, a: +s[0], b: s[1] == null ? +s[0] + 20 : +s[1] }); }); });
-          var gbOf = function (g, t) { return GBs.filter(function (x) { return x.g === g && t >= x.a - 0.3 && t <= x.b + 0.5; })[0]; }, soul = function (x, y, t0, t1) { rings.push({ x: x, y: y, r: 1.4, t0: t0, dur: Math.max(0.3, t1 - t0), fx: 'soul', color: '#ffffff', fill: '#ffffff', label: '', cn: 'Soul Fragment', legend: 'A soul fragment (it disappears when picked up)' }); };
+          var gbOf = function (g, t) { return GBs.filter(function (x) { return x.g === g && t >= x.a - 0.3 && t <= x.b + 0.5; })[0]; }, soul = function (x, y, t0, t1) { rings.push({ x: x, y: y, r: 1.4, t0: t0, dur: Math.max(0.3, t1 - t0), fx: 'soul', color: '#ffffff', fill: '#ffffff', label: '', cn: 'White glow', legend: 'a soul fragment (it disappears when picked up)', tip: 'A soul fragment' }); };
           var PK = (rep.fragPicks || []).map(function (q) { var gb = gbOf(q[1], q[0]); return gb ? { t: q[0], g: q[1], x: q[2], y: q[3], a: gb.a } : null; }).filter(Boolean); PK.forEach(function (q) { soul(q.x, q.y, q.a, q.t); });
           var posAt2 = function (g, t) { var u = rep.positions.get(g), b = null; if (!u) return null; for (var i = 0; i < u.pts.length && u.pts[i][0] <= t + 0.3; i++) b = u.pts[i]; return b; };
           /* (the recorder's fragment units: a player picks one up from up to about 5.5 yd away, so they're matched by count: only fragments
@@ -34952,8 +34956,8 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
         if (RB.shield) { var shS = ((rep.module && rep.module.sections) || []).filter(function (s) { return s.id === RB.shield.sec; })[0], shG = gOf(RB.shield.boss);
           if (shS && shG) { var shR = (shS.rows || []).map(function (row) { var tx = String((row[3] || {}).txt || ''), a = tx.match(/after ([\d.]+) s(?: \(([\d.]+) s to spare\))?/); return { t: (row[1] || {}).t, a: a ? +a[1] : null, len: a && a[2] ? +a[1] + +a[2] : null, end: /pull ended/i.test(tx), nb: /not broken/i.test(tx) }; }).filter(function (x) { return x.t != null; });
             var cast = (shR.filter(function (x) { return x.len; })[0] || {}).len;
-            shR.forEach(function (x) { var d = x.a != null ? x.a : x.nb ? cast : x.end ? end - x.t : null; if (d) rings.push({ guid: shG, r: RB.shield.r, color: RB.shield.color, fill: RB.shield.color + '22', t0: x.t, dur: d, cn: RB.shield.cn, label: RB.shield.cn }); }); } }
-        Object.keys(RB.auras || {}).forEach(function (nm) { var st = RB.auras[nm], g = gOf(st[0]); if (g) (rep.bossAuras || []).forEach(function (a) { if (a && a.n === nm && a.e > a.a) rings.push({ guid: g, r: st[1], color: st[2], fill: st[2] + '22', t0: a.a, dur: a.e - a.a, cn: st[3], label: st[3] }); }); });
+            shR.forEach(function (x) { var d = x.a != null ? x.a : x.nb ? cast : x.end ? end - x.t : null; if (d) rings.push({ guid: shG, r: RB.shield.r, color: RB.shield.color, fill: RB.shield.color + '22', t0: x.t, dur: d, cn: CW(RB.shield.color), legend: RB.shield.cn, label: RB.shield.lab || '', tip: RB.shield.cn }); }); } }
+        Object.keys(RB.auras || {}).forEach(function (nm) { var st = RB.auras[nm], g = gOf(st[0]); if (g) (rep.bossAuras || []).forEach(function (a) { if (a && a.n === nm && a.e > a.a) rings.push({ guid: g, r: st[1], color: st[2], fill: st[2] + '22', t0: a.a, dur: a.e - a.a, cn: CW(st[2]), legend: st[3], label: st[4] || '', tip: st[3] }); }); });
         var mp = { t: at, boss: it0.boss, pts: fr[fi].pts, frames: fr, spd: P.spd, rings: rings, cones: cones };
         if (pools) mp.pools = pools;
         /* (the room picture's platform is a little small: measured on its own pixels, the stone inside the dark border runs x -39.5..43.5,
@@ -34966,7 +34970,11 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
           var ix = +im.getAttribute('x'), iy = +im.getAttribute('y'), iw = +im.getAttribute('width'), ih = +im.getAttribute('height'), px = ix + (GROW.x - GROW.ax0) / (GROW.ax1 - GROW.ax0) * iw, py = iy + (GROW.ay1 - GROW.y) / (GROW.ay1 - GROW.ay0) * ih;
           im.setAttribute('x', px - (px - ix) * GROW.k); im.setAttribute('y', py - (py - iy) * GROW.k); im.setAttribute('width', iw * GROW.k); im.setAttribute('height', ih * GROW.k); im.dataset.grown = '1'; };
         /* (around a picked mistake or death, the players who weren't in it fade, so the ringed ones stand out) */
-        var fade = function (ft) { var s = mb.querySelector('svg.zmap'), m = typeof P.pick === 'number' ? M[P.pick] : null; if (!s || !m || m.st === 'ok' || Math.abs(ft - m.t) > 6) return; var keep = {};
+        /* (one player followed (Debriefing's player pick): everyone else fades on the map, names too, and the bar says who, with a way back) */
+        var FOL = w.S && w.S.mechP && byN[w.S.mechP] ? w.S.mechP : null;
+        var folMap = function () { var s = mb.querySelector('svg.zmap'); if (!s || !FOL) return; [].slice.call(s.querySelectorAll('g.ic')).forEach(function (g) { var tl = g.querySelector('title'), tx = g.querySelector('text.mlp'), nm = tl ? (tl.textContent || '').split(/[\s:·(]/)[0] : tx ? (tx.textContent || '').trim().split(' ')[0] : ''; if (byN[nm] && nm !== FOL) g.style.opacity = '.35'; }); };
+        var bar0 = box.querySelector('.dtm-bar'); if (bar0 && FOL && !bar0.querySelector('.dtm-fol')) { var fl0 = document.createElement('span'); fl0.className = 'dtm-fol'; fl0.innerHTML = 'Following ' + nmH(FOL) + ' <button type="button" data-unfollow="1">Show everyone</button>'; bar0.appendChild(fl0); }
+        var fade = function (ft) { folMap(); var s = mb.querySelector('svg.zmap'), m = typeof P.pick === 'number' ? M[P.pick] : null; if (!s || !m || m.st === 'ok' || Math.abs(ft - m.t) > 6) return; var keep = {};
           (m.death && GM[P.pick] ? GM[P.pick].reduce(function (A, j) { return A.concat(M[j].who); }, []) : m.who).forEach(function (w0) { keep[w0.n] = 1; });
           [].slice.call(s.querySelectorAll('g.ic')).forEach(function (g) { var nm = ((g.querySelector('title') || {}).textContent || '').split(/[\s:·(]/)[0]; if (byN[nm] && !keep[nm]) g.style.opacity = '.35'; }); };
         /* (a room that changes: the whole picture until the break, then the broken one; at the break the whole one fades out over 1.6 s
@@ -34990,7 +34998,7 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
             var tr = cl.querySelector('.dbx-tr'), lb = cl.querySelector('.dbx-labs'); if (tr) { var hd0 = document.createElement('div'); hd0.className = 'dtm-tlh'; hd0.style.height = (lb ? lb.offsetHeight || parseFloat(lb.style.height) || 140 : 140) + 'px'; tr.appendChild(hd0); } }
           var p = PHS[k], len = Math.max(1, p.end - p.start), hd = slot.querySelector('.dtm-tlh'); if (hd) hd.style.left = Math.max(0, Math.min(100, (ft - p.start) / len * 100)) + '%';
           [].slice.call(slot.querySelectorAll('.dbx-mk')).forEach(function (d) { var lf = parseFloat(d.style.left); if (!isNaN(lf)) d.classList.toggle('fut', p.start + lf / 100 * len > ft + 0.25); }); };
-        var pmap = new Map(); rep.players.forEach(function (p) { if (p && p.name) pmap.set(p.name, p); });
+        var pmap = new Map(); rep.players.forEach(function (p) { if (p && p.name) pmap.set(p.name, p); }); box._names = byN;
         mb.innerHTML = w.miniMap(mp, pmap);
         mb.addEventListener('input', function (ev) { if (ev.isTrusted) P.seek = true; }, true); /* (a drag on the slider counts as a jump) */
         if (w.bindZoom) w.bindZoom(mb); if (w.bindAnim) w.bindAnim(mb, mp, pmap); if (w.hydrateMapIcons) w.hydrateMapIcons(mb);
@@ -35015,6 +35023,14 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
       if (t.closest('.zplay')) { if (!P.auto) { P.clip = null; P.userScroll = false; } return; } /* (Play: the list follows again) */
       var sp = t.closest('[data-spd]'); if (sp) { P.spd = +sp.dataset.spd; P.clip = null; box._X.draw(); return; }
       var sc = t.closest('[data-scrub]'); if (sc && !t.closest('[data-ti]')) { var r = sc.getBoundingClientRect(), tt = Math.max(0, Math.min(box._end || 1, (e.clientX - r.left) / r.width * (box._axEnd || 1))); var rg = box.querySelector('.dtm-mm .zrange'); if (rg) { P.clip = null; P.seek = true; rg.value = Math.round(tt / STEP); rg.dispatchEvent(new Event('input')); P.mt = tt; } return; }
+      var follow = function (n) { var sel = document.querySelector('#opP'); if (!sel) return; var o = [].slice.call(sel.options).filter(function (x) { return !n ? !x.value : x.value === n || x.text === n || String(x.value).split('-')[0] === n || String(x.text).split('-')[0] === n; })[0]; if (!o || sel.value === o.value) return; tip.classList.remove('on');
+        /* (the page redraws for the pick and would land at the top: the replay is put back where it was on screen) */
+        var gd0 = box.querySelector('.dtm-grid'), y0 = gd0 ? gd0.getBoundingClientRect().top : null; sel.value = o.value; sel.dispatchEvent(new Event('change', { bubbles: true }));
+        if (y0 != null) { var t0 = Date.now(), stop = false, halt = function () { stop = true; }; addEventListener('wheel', halt, { once: true, passive: true }); addEventListener('touchmove', halt, { once: true, passive: true }); addEventListener('keydown', halt, { once: true }); /* (for 3 s, as the redraw can land late; scrolling yourself stops it) */
+          var back = function () { if (stop) return; var g1 = document.querySelector('.dtm-grid'); if (g1) { var dy = g1.getBoundingClientRect().top - y0; if (Math.abs(dy) > 2) scrollBy(0, dy); } if (Date.now() - t0 < 3000) setTimeout(back, 100); }; back(); } };
+      if (t.closest('[data-unfollow]')) { e.preventDefault(); e.stopPropagation(); follow(''); return; }
+      var pn = t.closest('[data-pn]'); if (pn && box.contains(pn)) { e.preventDefault(); e.stopPropagation(); follow(pn.dataset.pn); return; }
+      var pd = box._pd; if (pd && Math.hypot(e.clientX - pd.x, e.clientY - pd.y) < 5 && pd.el && pd.el.closest) { var g0 = pd.el.closest('.dtm-mm g.ic'); if (g0) { var tl0 = g0.querySelector('title'), tx0 = g0.querySelector('text.mlp'), nm0 = tl0 ? (tl0.textContent || '').split(/[\s:·(]/)[0] : tx0 ? (tx0.textContent || '').trim().split(' ')[0] : ''; if (nm0 && box._names && box._names[nm0]) { e.preventDefault(); follow(nm0); return; } } }
       var tjump = function (tt) { var rg0 = box.querySelector('.dtm-mm .zrange'); if (!rg0) return; P.clip = null; P.seek = true; rg0.value = Math.round(tt / STEP); rg0.dispatchEvent(new Event('input')); P.mt = tt; };
       var mk0 = t.closest('.dtm-tlm .dbx-mk[data-mi]'); if (mk0) { e.preventDefault(); e.stopPropagation(); pickI(+mk0.dataset.mi); return; }
       var ch0 = t.closest('.dtm-tlm [data-tph]'); if (ch0) { e.stopPropagation(); var P0 = (box._phs || [])[+ch0.dataset.tph]; if (P0) { tjump(P0.start + STEP * 0.52); /* (the first step inside the phase) */ setCur('p' + ch0.dataset.tph, true); } return; }
@@ -35028,6 +35044,7 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
       if (b.dataset.wipe) { pickI('w'); return; }
       pickI(+b.dataset.ti); });
     /* (scrolling the list yourself stops it following until you press Play or pick a moment) */
+    box.addEventListener('pointerdown', function (e) { box._pd = { el: e.target, x: e.clientX, y: e.clientY }; }, true);
     var mine = function (e) { if (e.target.closest && e.target.closest('.dtm-pb')) P.userScroll = true; }; box.addEventListener('wheel', mine, { passive: true }); box.addEventListener('touchmove', mine, { passive: true });
     box.addEventListener('mouseover', function (e) { var b = e.target.closest && e.target.closest('[data-tt]'); if (!b || !box.contains(b)) { tip.classList.remove('on'); return; } tip.innerHTML = b.dataset.tt; tip.classList.add('on'); var r = b.getBoundingClientRect(), wd = tip.offsetWidth, x = r.left + r.width / 2 - wd / 2; x = Math.max(8, Math.min(innerWidth - wd - 8, x)); var y = r.top - tip.offsetHeight - 8; if (y < 8) y = r.bottom + 8; tip.style.left = x + 'px'; tip.style.top = y + 'px'; });
     box.addEventListener('mouseleave', function () { tip.classList.remove('on'); });
