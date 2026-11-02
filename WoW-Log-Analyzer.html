@@ -24043,6 +24043,7 @@ const PATCH_NOTES = [
     "Mythic+ map: point at a pull, a tile or a timeline block for a short summary: its time, forces, deaths, kicks, Lust and cooldowns. The timeline marks each cast that went off with a kick ready.",
     "Mythic+ map: the pulls are tiles under the map, so the pull's card has the whole side to itself.",
     "Mythic+ map: each pull’s number sits inside the pull, on the route, and labels no longer overlap. A pull spread across the room gets one outline round all of it, like in MDT. Only the dangerous missed kicks show on the map; the rest are on the card.",
+    "Mythic+ boss pulls count only the trash you pulled with the boss. What the boss summoned is on its own line in the pull’s card.",
     "Mythic+ map: pointing at a pull shows just its enemies and forces. Everything else is on its card.",
     "Mythic+ map: a calmer map. Kicks and CC now live in each pull’s card.",
     "Mythic+ map: enemies show their portraits like in MDT. Elites always, the rest when you zoom in.",
@@ -61713,6 +61714,16 @@ const mpAnd = (a) => a.join(', ').replace(/, ([^,]*)$/, ' and $1');
 // the studio's pull-accuracy fix, Nov 2). Their damage still counts toward group DPS)
 const mpMobs = (RR, p) => { const sum = RR.summoned || new Set(), real = RR.realNames; return (p.mobs || []).filter((m) => !sum.has(m[0]) && (!real || real.has(m[0]))); };
 const mpCnt = (RR, p) => mpMobs(RR, p).reduce((a, m) => a + m[1], 0);
+// (a boss pull's kinds of enemy (the studio, Nov 2: "with 49 enemies" read as 49 mobs pulled with the boss): trash pulled along (worth forces in the key's
+// table; or seen in a trash pull and there when the pull began, each one), the boss (30% or more of the most health there; with no health known, anything not
+// trash), and what the fight summoned (the rest: no forces, and first seen 5 s or more into the fight (Ruby's Infused Whelps that wake on
+// Melidrussa) or never in a trash pull)). [[name, count], 'trash' | 'boss' | 'sum']
+const mpBossKinds = (RR, mobs, p) => { mpMid(RR); const ty = RR.mobType || {}, T = MP_ROUTE[mpLc((RR.run || {}).dungeon || (MP.item || {}).boss || '')], hp = (m) => (ty[m[0]] || {}).hp || 0, hi = Math.max(0, ...mobs.map(hp)), i = RR.pulls.indexOf(p);
+  const early = (n2) => { const us = (RR.units || []).filter((u) => u.k === i && u.n === n2 && u.h != null); return us.length ? us.filter((u) => u.h < p.s + 5).length : null; }, out = [];
+  for (const m of mobs) { if (T && T.n[(ty[m[0]] || {}).id]) { out.push([m, 'trash']); continue; } const e = early(m[0]);
+    if (RR.mobTrash.has(m[0]) && e !== 0) { const c = e == null ? m[1] : Math.min(m[1], e); out.push([[m[0], c], 'trash']); if (m[1] > c) out.push([[m[0], m[1] - c], 'sum']); continue; } /* (each one there when it began is trash; the ones that came later the fight's) */
+    out.push([m, !hi || hp(m) >= hi * 0.3 ? 'boss' : 'sum']); }
+  return out; };
 const mpWhere = (s) => (s.name.startsWith('Start → ') ? 'before ' + esc(s.boss) : 'between ' + esc(s.name.split(' → ')[0]) + ' and ' + esc(s.boss));
 // (a trash stretch: lead with the bigger cause (the studio's audit). More to kill: where the fast run got its count instead. Fewer, bigger
 // pulls only when the fast run took at least 2 fewer pulls there (by chain), quoting its biggest pack)
@@ -62075,13 +62086,12 @@ function mpPullTags(RR, i) {
   const miss = mpCdMiss(RR, i); if (miss.length) t('No big cooldown: ' + miss.map(esc).join(', '), 'mpt-t2c', 'Their spec has a big cooldown, and they didn\'t press one in this pull.');
   return out; }
 // (a pull's hover (Flex, Nov 2: "Just showing the # of mobs in the pull and % count maybe? since everything else is shown at the side when you click
-// on it"): the pull and how many enemies, counted like the Pack's line (a boss pull: the enemies with the boss, not the boss; a boss is one with 30% or
-// more of the pull's top health, as on the map, or with no health known, one never seen in a trash pull), then the forces it added and the running
+// on it"): the pull and how many enemies, counted like the Pack's line (a boss pull: only the trash pulled along with the boss, not the boss or what
+// the fight summoned, mpBossKinds), then the forces it added and the running
 // total, then "Click for the details". No forces data (Ruby): the first line only. On the map's pull labels, the tiles and the timeline's blocks alike)
 function mpPullTip(RR, i) { const p = RR.pulls[i], rt = RR.route && RR.route.ok ? RR.route : null, add = rt && rt.pulls[i] ? rt.pulls[i].add : 0;
   const f1 = (v) => (Math.round(1000 * v / rt.full) / 10).toFixed(1).replace(/\.0$/, '') + '%', tot = rt ? rt.pulls.slice(0, i + 1).reduce((a, x) => a + x.add, 0) : 0; /* (the running total (the cut): the Pulls list had it) */
-  const mobs = mpMobs(RR, p), ty = RR.mobType || {}, hp = (m) => (ty[m[0]] || {}).hp || 0, hi = p.boss ? Math.max(0, ...mobs.map(hp)) : 0; if (p.boss) mpMid(RR);
-  const big = (m) => p.boss && (hi ? hp(m) >= hi * 0.3 : !(RR.mobTrash || new Set()).has(m[0])), n = mobs.reduce((a, m) => a + (big(m) ? 0 : m[1]), 0), en = plural(n, 'enemy').replace(/enemys$/, 'enemies');
+  const mobs = mpMobs(RR, p), n = p.boss ? mpBossKinds(RR, mobs, p).reduce((a, [m, t]) => a + (t === 'trash' ? m[1] : 0), 0) : mobs.reduce((a, m) => a + m[1], 0), en = plural(n, 'enemy').replace(/enemys$/, 'enemies'); /* (a boss pull: the trash pulled along only) */
   const l1 = p.boss ? '★ ' + esc(p.boss) + (n ? ' · with ' + en : '') : 'Pull ' + mpNo(RR, p.n) + (n ? ' · ' + en : '');
   const l2 = rt ? (p.boss && !add ? '' : '+' + f1(add) + ' forces · ') + f1(tot) + ' total' : '';
   return '<b>' + l1 + '</b>' + (l2 ? '<br>' + l2 : '') + '<br><span class="sub">Click for the details</span>'; }
@@ -62500,10 +62510,11 @@ function mpScan(it, R, text) {
   { const ok = (u) => u.hit != null && u.at && (u.fl & 0x40) && !(u.fl & 0x3000) && !u.sum && ui.has(u.at[2]), zc = {};
     for (const u of U.values()) if (ok(u)) { const z = u.g.split('-')[4]; zc[z] = (zc[z] || 0) + 1; }
     const zone = (Object.entries(zc).sort((a, b) => b[1] - a[1])[0] || [])[0], L = [];
-    for (const u of U.values()) { if (!ok(u) || u.g.split('-')[4] !== zone) continue; const tt = u.died != null ? u.died : u.hit; let k = 0, best = 1e9;
-      for (let m = 0; m < N; m++) { const d = tt < P[m].s ? P[m].s - tt : tt > P[m].e ? tt - P[m].e : 0; if (d < best) { best = d; k = m; } }
-      L.push({ x: u.at[0], y: u.at[1], ui: u.at[2], k, hp: u.hp, t: tt, n: u.n, id: +u.g.split('-')[5] || 0 }); }
-    for (let m = 0; m < N; m++) if (!L.some((u) => u.k === m)) for (const u of U.values()) if (ok(u) && u.g.split('-')[4] === zone && u.hit >= P[m].s && u.hit <= P[m].e) L.push({ x: u.at[0], y: u.at[1], ui: u.at[2], k: m, hp: u.hp, t: u.hit, n: u.n, id: +u.g.split('-')[5] || 0 }); /* (a pull whose enemies all died in the next one: the ones first hit in it (Den of Nalorakk's two Frostfangs, Nov 2)) */
+    const kOf = (t2) => { let k = 0, best = 1e9; for (let m = 0; m < N; m++) { const d = t2 < P[m].s ? P[m].s - t2 : t2 > P[m].e ? t2 - P[m].e : 0; if (d < best) { best = d; k = m; } } return k; }, has = (m, n2) => (P[m].mobs || []).some((x) => x[0] === n2);
+    for (const u of U.values()) { if (!ok(u) || u.g.split('-')[4] !== zone) continue; const tt = u.died != null ? u.died : u.hit; let k = kOf(tt);
+      if (u.died != null && u.hit != null) { const kh = kOf(u.hit); if (kh !== k && has(kh, u.n) && !has(k, u.n)) k = kh; } /* (the pull the key reader counts it in, when they disagree: Voidscar's Dominated Brawler, hit in pull 1, died as pull 2 ended) */
+      L.push({ x: u.at[0], y: u.at[1], ui: u.at[2], k, hp: u.hp, t: tt, h: u.hit, n: u.n, id: +u.g.split('-')[5] || 0 }); }
+    for (let m = 0; m < N; m++) if (!L.some((u) => u.k === m)) for (const u of U.values()) if (ok(u) && u.g.split('-')[4] === zone && u.hit >= P[m].s && u.hit <= P[m].e) L.push({ x: u.at[0], y: u.at[1], ui: u.at[2], k: m, hp: u.hp, t: u.hit, h: u.hit, n: u.n, id: +u.g.split('-')[5] || 0 }); /* (a pull whose enemies all died in the next one: the ones first hit in it (Den of Nalorakk's two Frostfangs, Nov 2)) */
     for (let m = 0; m < N; m++) if (P[m].boss) { const us = L.filter((u) => u.k === m), top = Math.max(0, ...us.map((u) => u.hp)); for (const u of us) if (top && u.hp >= top * 0.3) u.boss = true; }
     const avT = new Map(); for (const p of P) for (const a of p.avoid || []) if (a.ts) { const k = a.who + '|' + mpLc(a.spell); avT.set(k, (avT.get(k) || []).concat(a.ts)); } /* (only the hits the key reader counted: not a cast on the whole group, not a spell's free hits (Nov 2)) */
     R.units = L; R.deathPos = deathPos; R.castPos = castPos; R.avHits = avT.size ? avHits.filter((h) => { const l = avT.get(h.who + '|' + mpLc(h.sp)); return !!l && l.some((t) => Math.abs(t - h.t) < 0.35); }) : avHits; R.kickEv = kickEv; R.ccEv = ccEv; }
@@ -62605,7 +62616,7 @@ function mpMapHtml(R, F, tl) {
       const gi = us.map((u, j) => j), root = (j) => (gi[j] === j ? j : (gi[j] = root(gi[j])));
       for (let a = 0; a < us.length; a++) for (let b = a + 1; b < us.length; b++) if (Math.hypot(us[a].x - us[b].x, us[a].y - us[b].y) <= 50) gi[root(a)] = root(b);
       const cl = new Map(); us.forEach((u, j) => { const r = root(j); if (!cl.has(r)) cl.set(r, []); cl.get(r).push(u); });
-      const groups = [...cl.values()].sort((a, b) => b.length - a.length), big = groups[0].map((u) => px(f, u));
+      const cn = new Set(mpMobs(q.RR, q.p).map((m) => m[0])), nc = (g2) => g2.filter((u) => cn.has(u.n)).length, groups = [...cl.values()].sort((a, b) => nc(b) - nc(a) || b.length - a.length), big = groups[0].map((u) => px(f, u)); /* (the label's group: the most counted enemies, then the biggest) */
       cen.set(q.i, [big.reduce((a, v) => a + v[0], 0) / big.length, big.reduce((a, v) => a + v[1], 0) / big.length]);
       const shape = (g, gi) => { const pts = g.map((u) => px(f, u)), hp = mpHull(pts), d = (hp.length === 1 ? [hp[0], hp[0]] : hp).map((v, j) => (j ? 'L' : 'M') + v[0].toFixed(1) + ' ' + v[1].toFixed(1)).join('') + (hp.length > 2 ? 'Z' : '');
         const pad = 30 * k, e = 1.6 * k, id = 'mpm-' + uid + '-' + q.i + '-' + gi, lj = ' stroke-linejoin="round" stroke-linecap="round"';
@@ -62708,7 +62719,8 @@ function mpMapHtml(R, F, tl) {
     // (the pack (map-extras.md item 17; Flex: "those are considered the mini bosses in dungeons or the harder mobs to deal with"): each kind of enemy with
     // one role, Caster (it healed another enemy, or it keeps casting: 14 or more casts a minute, or 10 or more with mostly magic damage) or Melee; Elite for the mini-boss tier, at least twice the health of
     // the key's middle trash enemy (the same on every pull), or a rare; fodder, half that or less, on one last line. 5 rows, then the rest in a hover)
-    const pack = (() => { const mobs = mpMobs(RR, p), ty = RR.mobType || {}; if (!mobs.length) return '';
+    const pack = (() => { const all = mpMobs(RR, p), ty = RR.mobType || {}, bk = p.boss ? mpBossKinds(RR, all, p) : null, mobs = bk ? bk.filter((x) => x[1] !== 'sum').map((x) => x[0]) : all, smn = bk ? bk.reduce((a, [m, t]) => a + (t === 'sum' ? m[1] : 0), 0) : 0; if (!all.length) return '';
+      /* (a boss pull: the boss and the trash pulled along; what the fight summoned on a faint last line (the studio, Nov 2)) */
       mpMid(RR); /* (the middle trash enemy of the whole key, each one counted: one-off kings don't lift it) */
       const mid = RR.mobMid, L = mobs.map(([n2, c]) => { const o = ty[n2] || {}, cast = !!o.caster, el = MP_RARE.has(o.id) || (mid && o.hp >= 2 * mid && RR.mobTrash.has(n2)), /* (trash only: never a boss or a boss fight's own enemies) */ fod = !el && mid && o.hp && o.hp <= mid / 2;
         return { n2, c, el, fod, cast, kick: o.kick || [] }; }).sort((a, b) => b.el - a.el || b.cast - a.cast || b.c - a.c);
@@ -62717,7 +62729,8 @@ function mpMapHtml(R, F, tl) {
       const main = L.filter((x) => !x.fod), fod = L.filter((x) => x.fod), more = main.slice(5);
       return '<div class="mpt-pk"><p class="mpt-mck2">Pack · ' + plural(mobs.reduce((a, m) => a + m[1], 0), 'enemy').replace('enemys', 'enemies') + '</p>' + main.slice(0, 5).map(row).join('') +
         (more.length ? '<p class="mpt-pkm" tabindex="0"' + mpT1(more.map((x) => x.c + '× ' + esc(x.n2)).join('<br>')) + '>+' + plural(more.length, 'more type') + '</p>' : '') +
-        (fod.length ? '<p class="mpt-pkf">+ ' + fod.map((x) => x.c + '× ' + esc(x.n2) + ' ' + role(x)).join(', ') + '</p>' : '') + '</div>'; })();
+        (fod.length ? '<p class="mpt-pkf">+ ' + fod.map((x) => x.c + '× ' + esc(x.n2) + ' ' + role(x)).join(', ') + '</p>' : '') +
+        (smn ? '<p class="mpt-pkf mpt-pks">+ ' + smn + ' summoned during the fight</p>' : '') + '</div>'; })();
     return '<div class="mpt-mch">' + badge(q) + '<b>' + nm(q) + '</b><span>' + mpMM(p.dur) + (q.add ? ' · +' + fmt(pc(q.add)) : '') + (() => { const r2 = RR.route && RR.route.ok ? RR.route : null; return r2 ? ' · ' + fmt(100 * r2.pulls.slice(0, q.i + 1).reduce((a, x) => a + x.add, 0) / r2.full) + ' total' : ''; })() + (gd ? ' · ' + mpGF(gd) + ' group DPS' : '') + '</span></div>' +
       '<p class="mpt-mtl">' + (tags.join(' ') || '<span class="mpt-t2g">✓ Clean</span>') + '</p>' + next + pack + plan + kicks + dps + died; };
   // (the pulls as tiles under the map (Flex, Nov 2: "any way to fill the dead space? Maybe the pull counter horizontal across the bottom somehow?"): the
@@ -63455,6 +63468,8 @@ body.mpz-wh .spc-tt{display:none !important}
 .mpt-ep{display:none} .mpt-ep.mpt-epe,svg.mpt-zin .mpt-ep{display:inline} .mpt-ep image{filter:brightness(1.25)}
 /* (the thumbnails are whole models: the middle 60% across, from 8% down, fills the ring, so the head and chest show) */
 .mpt .mpt-pkp{width:16px;height:16px;margin:0 5px 0 0;border-radius:50%;object-fit:cover;object-view-box:inset(8% 20% 32% 20%);vertical-align:-3px;background:#3b4458;filter:brightness(1.25)} .mpt .mpt-pkp0{display:inline-block;background:none}
+/* (a boss pull's summons line in the Pack: faint) */
+.mpt .mpt-pks{opacity:.7}
 `;
  // (and src/mptab.js, the Mythic+ tab (Nov 1))
 })();
