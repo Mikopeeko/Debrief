@@ -311,10 +311,9 @@ const mpWhere = (s) => (s.name.startsWith('Start → ') ? 'before ' + esc(s.boss
 function mpNextTrash(R, F, s, f, ST, fBy) {
   const yp = mpInSt(R, s).filter((p) => !p.boss), fp = mpInSt(F, f).filter((p) => !p.boss); if (!fp.length || !yp.length) return '';
   const sp = mpSplit(mpGrp(yp), mpGrp(fp)); if (!sp) return '';
-  const yN = mpChainN(R, yp), fN = mpChainN(F, fp), fewer = yN - fN >= 2, out = [];
-  const chSize = (RR, ps) => { const ch = mpChains(RR), m = new Map(); for (const p of ps) { const c = ch[RR.pulls.indexOf(p)]; m.set(c, (m.get(c) || 0) + mpCnt(RR, p)); } return [...m.values()]; };
-  const yc = chSize(R, yp), fBig = Math.max(...fp.map((p) => mpCnt(F, p)));
-  const pullLine = 'Pull it in fewer, bigger pulls. The fast run took it in ' + plural(fN, 'pull') + ', its biggest pack ' + fBig + ' enemies; you took ' + yN + (yc.length > 1 ? ' pulls of ' + Math.min(...yc) + ' to ' + Math.max(...yc) : '') + '.';
+  const yN = yp.length, fN = fp.length, fewer = yN - fN >= 2, out = []; /* (every pull, as the list and the stretch rows count them (the studio, Nov 2)) */
+  const yc = yp.map((p) => mpCnt(R, p)), fBig = Math.max(...fp.map((p) => mpCnt(F, p)));
+  const pullLine = 'Pull it in fewer, bigger pulls. The fast run took it in ' + plural(fN, 'pull') + ', the biggest ' + fBig + ' enemies; you took ' + yN + (yc.length > 1 ? ' (' + Math.min(...yc) + ' to ' + Math.max(...yc) + ')' : '') + '.';
   if (sp.low > sp.more) { if (fewer) out.push(pullLine + ' Every AoE hits more enemies in a bigger pull.'); else { const g = mpGapLine(R, F, yp, fp); if (g) out.push(g); } }
   else { const rt = R.route && R.route.ok ? R.route : null, frt = F.route && F.route.ok && rt && F.route.full === rt.full ? F.route : null;
     if (frt) { const share = (RR, rr, ps) => 100 * ps.reduce((a, p) => a + ((rr.pulls[RR.pulls.indexOf(p)] || {}).add || 0), 0) / rr.full; let best = null;
@@ -1057,10 +1056,10 @@ function mpMdtHtml(R, F, rt, fmt, pc) {
   const tip = (q) => '<b>' + nm(q) + '</b> · ' + en(q) + ' · ' + mpMM(q.p.dur) + (q.add ? ' · +' + fmt(pc(q.add)) : '') + (q.chained ? '<br><span class="sub">Chained: pulled while the last one was still dying.</span>' : '');
   const svg = (Q, fl, you) => { const k = fl.box[2] / W, parts = [];
     for (const q of Q) { const us = q.us.filter((u) => u.ui === fl.f[0]); if (!us.length) continue;
-      /* (one outline per group of enemies standing within 20 yards of each other (the studio, Nov 2): a pull stretched across the room, like
+      /* (one outline per group of enemies standing within 50 yards of each other (the studio, Nov 2; Voidscar pull 1 has a 46-yard gap, its dragged Siphoids 88 or more): a pull stretched across the room, like
          Charonus with the Siphoids dragged in, is several shapes in one colour, its number on the biggest) */
       const gi = us.map((u, j) => j), root = (j) => (gi[j] === j ? j : (gi[j] = root(gi[j])));
-      for (let a = 0; a < us.length; a++) for (let b = a + 1; b < us.length; b++) if (Math.hypot(us[a].x - us[b].x, us[a].y - us[b].y) <= 20) gi[root(a)] = root(b);
+      for (let a = 0; a < us.length; a++) for (let b = a + 1; b < us.length; b++) if (Math.hypot(us[a].x - us[b].x, us[a].y - us[b].y) <= 50) gi[root(a)] = root(b);
       const cl = new Map(); us.forEach((u, j) => { const r = root(j); if (!cl.has(r)) cl.set(r, []); cl.get(r).push(u); });
       const groups = [...cl.values()].sort((a, b) => b.length - a.length);
       const shape = (g) => { const pts = g.map((u) => px(fl.f, u)), hp = mpHull(pts), d = (hp.length === 1 ? [hp[0], hp[0]] : hp).map((v, j) => (j ? 'L' : 'M') + v[0].toFixed(1) + ' ' + v[1].toFixed(1)).join('') + (hp.length > 2 ? 'Z' : '');
