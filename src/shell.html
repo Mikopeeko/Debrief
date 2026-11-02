@@ -13067,7 +13067,7 @@ html body #view#view summary.cgl > .cgl-p.p469{color:var(--text,#e8ebee)}
 </style>
 <script id="rjs-473">/* round 473 tooltips: one layout for every hover on Debriefing's tiles */
 window.T473 = function (o) { var E = function (v) { return String(v == null ? '' : v).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
-  var R = (o.rows || []).filter(function (x) { return x && x[0]; }), top = R.slice(0, 10);
+  var R = (o.rows || []).filter(function (x) { return x && x[0]; }), top = R; /* round 480 every player: the whole list (Flex: "fully expanded") */
   return '<div class="r227-tt t473"><div class="t473-h"><b>' + E(o.title) + '</b>' + (o.res ? '<span class="t473-r"' + (o.resC ? ' style="color:' + o.resC + '"' : '') + '>' + E(o.res) + '</span>' : '') + '</div>' +
     (o.paras || []).filter(Boolean).map(function (p) { return '<p>' + p + '</p>'; }).join('') + (o.small ? '<p class="t473-s">' + o.small + '</p>' : '') +
     (top.length ? '<div class="t473-lh">By player</div><div class="t473-l">' + top.map(function (x) { return '<span style="color:' + (x[2] || 'inherit') + '">' + E(x[0]) + '</span><b>' + E(x[1]) + '</b>'; }).join('') + '</div>' + (R.length > top.length ? '<div class="t473-m">and ' + (R.length - top.length) + ' more</div>' : '') : '') +
