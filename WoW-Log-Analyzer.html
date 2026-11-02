@@ -61331,6 +61331,16 @@ function mpKeyName(it) { return it.boss + ' +' + it.level + ' · ' + (it.keyMs ?
 const mpUp = (it) => { const m = (window.DBF_MPTIMER || {})[mpLc(it.boss)], s = (it.keyMs || 0) / 1000; if (!m || !s) return 1; const P = m * 60; return s <= P * 0.6 ? 3 : s <= P * 0.8 ? 2 : s <= P ? 1 : 0; };
 
 // ---------- reading a key: its events, written as WoW writes a key, then the app's own reader ----------
+// (a key whose log has no combatant info (TAJzxH7ZwMG12RQ4 fight 16): the key reader takes each player's class and spec only from those lines, so it
+// would have no players. Each roster player gets one: their class from the report, their spec the one of that class whose own spells they pressed
+// most (Your play's spell table). No talents)
+function mpSpecGuess(it, ev) { const act = it.wcl && it.wcl.actors; if (!act || !act.get || typeof E === 'undefined' || !E.SPECS) return; const ros = new Set((it.roster || []).map(mpLc)), casts = new Map();
+  for (const e of ev) { if (e.type !== 'cast') continue; const a = act.get(e.sourceID); if (!a || a.type !== 'Player') continue; const m = casts.get(e.sourceID) || new Map(); m.set(e.abilityGameID, (m.get(e.abilityGameID) || 0) + 1); casts.set(e.sourceID, m); }
+  const t0 = ev.length ? ev[0].timestamp : 0, add = [];
+  for (const [id, m] of casts) { const a = act.get(id), cls = String(a.subType || '').toUpperCase(); if (ros.size && !ros.has(mpLc(a.name))) continue; let best = 0, bs = 0;
+    for (const [sid, sc] of Object.entries(E.SPECS)) { if (sc[1] !== cls) continue; const T = MP_SPECS[sc[0] + ' ' + ((E.CLASSES[sc[1]] || [])[0] || '')]; if (!T) continue; const ids = new Set(T.r.flatMap((r) => (r[3] || []).concat(r[4] || [])).map(Number)); let n = 0; for (const [ab, c] of m) if (ids.has(+ab)) n += c; if (n > bs) { bs = n; best = +sid; } }
+    if (best) add.push({ timestamp: t0, type: 'combatantinfo', sourceID: id, specID: best, gear: [], auras: [], talentTree: [] }); }
+  ev.unshift(...add); }
 async function mpRead(it, onStep) {
   const k = mpK(it); if (MP.R[k]) return MP.R[k];
   if (MP.busy.has(k)) { const p0 = MP.busy.get(k); if (onStep) p0.on = onStep; return p0; }
@@ -61342,6 +61352,7 @@ async function mpRead(it, onStep) {
       const ev = await WCL.loadEvents(S.wclCreds, it, (n) => { if (p.on) p.on('Downloading the key…', Math.min(0.9, 0.9 * n / est)); }); /* (page text never names Warcraft Logs: Flex's rule, Oct 19) */
       if (p.on) p.on('Reading the key…', 0.92);
       // (each player's talents, gear and stats as the raid reading takes them, for the Rotation tab's checks on each pull (Your play v4))
+      if (!ev.some((e) => e.type === 'combatantinfo')) mpSpecGuess(it, ev); /* (a key whose log has no combatant info: its players from the report) */
       comb = ev.filter((e) => e.type === 'combatantinfo').map((e) => ({ name: ((it.wcl.actors && it.wcl.actors.get(e.sourceID)) || {}).name, gear: e.gear || [], auras: e.auras || [], self: e.sourceID, talents: e.talentTree || [],
         stats: { strength: e.strength, agility: e.agility, intellect: e.intellect, stamina: e.stamina, crit: Math.max(e.critMelee || 0, e.critRanged || 0, e.critSpell || 0), haste: Math.max(e.hasteMelee || 0, e.hasteRanged || 0, e.hasteSpell || 0),
           mastery: e.mastery, versatility: e.versatilityDamageDone, leech: e.leech, avoidance: e.avoidance, speed: e.speed, armor: e.armor } }));
@@ -61664,6 +61675,7 @@ function mpDraw() {
   try { refreshIcons(); } catch (e) { /* (icons load later) */ }
   try { mpLabelFit(); } catch (e) { /* (labels stay as drawn) */ }
   mpJbTop();
+  try { mpRkSeen(); } catch (e) { /* (starts on scroll) */ }
   if (!fx) { const mine = it; MP.fastOf = { k: mpK(it), wait: true };
     mpFastRun(it).then((F) => { if (MP.item !== mine) return; MP.fastOf = { k: mpK(mine), ...F }; mpDraw(); }).catch(() => { if (MP.item !== mine) return; MP.fastOf = { k: mpK(mine), R: null, list: null }; mpDraw(); }); }
   mpPrevRate(it, R);
@@ -62665,7 +62677,9 @@ function mpRkHtml(R) { const st = R._rk, pick = MP.pp || '', ppl = (R.people || 
 // (paint the chapter's body where it is; start the work when the chapter comes into view, or when a player is picked)
 function mpRkPaint(R) { const it = MP.item, el = document.getElementById('mptRot'); if (!el || !it || MP.R[mpK(it)] !== R) return; el.outerHTML = mpRkHtml(R); try { refreshIcons(); } catch (e) { /* (icons load later) */ } }
 function mpRkGo() { const it = MP.item, R = it && MP.R[mpK(it)]; if (!R || !MP_ROT_ON || R._rk) return; mpRkRun(R); }
-window.addEventListener('scroll', () => { const el = document.getElementById('mptCR'); if (!el) return; const r = el.getBoundingClientRect(); if (r.top < innerHeight + 200 && r.bottom > -200) mpRkGo(); }, { passive: true });
+// (the page scrolls inside its main panel, not the window: listen to every scroll, and look once right after the page draws)
+function mpRkSeen() { const el = document.getElementById('mptCR'); if (!el) return; const r = el.getBoundingClientRect(); if (r.height && r.top < innerHeight + 200 && r.bottom > -200) mpRkGo(); }
+document.addEventListener('scroll', mpRkSeen, { passive: true, capture: true });
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-mprk]'); if (!b) return; const nm = b.dataset.mprk, sel = document.querySelector('[data-mppsel]');
   if (sel) { sel.value = nm; sel.dispatchEvent(new Event('change', { bubbles: true })); } else mpMapPP(nm); });
 // (a player picked: their pulls' checks, the open card's pull first)
