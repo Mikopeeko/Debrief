@@ -139,22 +139,27 @@ function build(text, E) {
   if (!players.size) return null;
   if (run.end == null && run.left == null) run.left = lastT; /* (no end line: the app ended the key where the group left the dungeon (Nov 1)) */
   for (const p of players.values()) p.role = roleOf(p.spec);
-  // ---- pulls: bosses are their own; trash starts when new enemies are engaged after the last pack is dead, or after a 4 s lull ----
-  const pulls = [], alive = new Set(), seen = new Set(); let cur = null, last = -1e9;
+  // ---- pulls: bosses are their own; trash starts when new enemies are engaged after the last pack is dead, or after a 4 s lull, or 20 s or
+  // more after the pull last took on new enemies even with stragglers still alive (Nov 2, Flex: "theres times where youre saying they pulled 51
+  // mobs at a time": one straggler kept the old pull open, so the next packs piled into it, Blinding Vale's first "pull" 66 enemies over 4½
+  // minutes). Packs dragged together within seconds stay one pull. An enemy counts in the pull it joined, not again in the next ----
+  const PULL_GAP = 20, pulls = [], alive = new Set(), seen = new Set(); let cur = null, last = -1e9;
   const inEnc = (t) => encs.find((x) => t >= x.s - 1 && t <= (x.e == null ? 1e9 : x.e + 1));
   for (const x of ev) {
     const t = x[0];
     if (x[1] === 'mobdied') { alive.delete(x[2]); continue; }
     let mob = null; if (x[1] === 'dmg') mob = [x[4], x[5]]; else if (x[1] === 'hit') mob = [x[6], x[5]]; if (!mob) continue;
-    const boss = inEnc(t);
-    if (boss) { if (!cur || cur.enc !== boss) { cur = { s: boss.s, e: boss.e || t, enc: boss, mobs: new Map() }; pulls.push(cur); } }
-    else if (!seen.has(mob[0]) && (!cur || cur.enc || alive.size === 0 || t - last > 4)) { cur = { s: t, e: t, enc: null, mobs: new Map() }; pulls.push(cur); }
-    if (!seen.has(mob[0])) { seen.add(mob[0]); alive.add(mob[0]); }
-    if (!cur.mobs.has(mob[1])) cur.mobs.set(mob[1], new Set()); cur.mobs.get(mob[1]).add(mob[0]);
+    const boss = inEnc(t), isNew = !seen.has(mob[0]);
+    if (boss) { if (!cur || cur.enc !== boss) { cur = { s: boss.s, e: boss.e || t, enc: boss, mobs: new Map(), hit: new Set() }; pulls.push(cur); } }
+    else if (isNew && (!cur || cur.enc || alive.size === 0 || t - last > 4 || t - cur.nw >= PULL_GAP)) { cur = { s: t, e: t, enc: null, mobs: new Map(), hit: new Set(), nw: t, chain: !!cur && !cur.enc && alive.size > 0 && t - last <= 4 }; pulls.push(cur); } /* (chain: joined while the fighting went on, no lull) */
+    if (isNew) { seen.add(mob[0]); alive.add(mob[0]); if (!cur.enc) cur.nw = t; }
+    cur.hit.add(mob[0]); /* (every enemy hit in it, leftovers too: the stray fold below judges by these, as before) */
+    if (cur.enc || isNew) { if (!cur.mobs.has(mob[1])) cur.mobs.set(mob[1], new Set()); cur.mobs.get(mob[1]).add(mob[0]); }
     if (!boss) cur.e = Math.max(cur.e, t); last = t;
   }
-  // (a pack of one stray enemy hit for a few seconds is folded into the pull before it)
-  for (let i = pulls.length - 1; i > 0; i--) { const p = pulls[i]; const n = [...p.mobs.values()].reduce((a, s) => a + s.size, 0); if (!p.enc && n <= 1 && p.e - p.s < 8) { const q = pulls[i - 1]; for (const [k, v] of p.mobs) { if (!q.mobs.has(k)) q.mobs.set(k, new Set()); for (const g of v) q.mobs.get(k).add(g); } q.e = Math.max(q.e, p.e); pulls.splice(i, 1); } }
+  // (a pack of one stray enemy hit for a few seconds is folded into the pull before it, and so are one or two that joined a pull still going:
+  // a patrol or a straggler, not a pull of their own. A lone elite pulled with nothing else alive stays its own pull)
+  for (let i = pulls.length - 1; i > 0; i--) { const p = pulls[i]; const n = [...p.mobs.values()].reduce((a, s) => a + s.size, 0); if (!p.enc && ((p.hit.size <= 1 && p.e - p.s < 8) || (p.chain && n <= 2))) { const q = pulls[i - 1]; for (const [k, v] of p.mobs) { if (!q.mobs.has(k)) q.mobs.set(k, new Set()); for (const g of v) q.mobs.get(k).add(g); } q.e = Math.max(q.e, p.e); pulls.splice(i, 1); } }
   const pullOf = (t) => { for (let i = pulls.length - 1; i >= 0; i--) if (t >= pulls[i].s - 2) return i; return 0; };
   // ---- casts: kicked, stopped, finished or cut short ----
   const casts = [], open = new Map();

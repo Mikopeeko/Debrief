@@ -2036,6 +2036,7 @@ const PATCH_NOTES = [
     "Mythic+ tab: every key shows how many rating points it's worth and its affixes, each explained on hover. A new Know this dungeon part has every boss's plan and what to kick, dispel and purge, with how often each kick was missed in your key.",
     "Mythic+ tab: see your group's DPS while fighting, overall and pull by pull, next to the fast run's. Where your time went now splits longer fighting into more to kill and lower damage.",
     "Mythic+ tab, colour coded: each colour means one thing (trash blue, bosses gold, standing grey, deaths red, kicks purple), and red, amber or green shows how far behind you were. A key read from your log shows how much rating it gained when Debrief knows your rating before it.",
+    "Mythic+ pulls are split better: a new pack pulled while a straggler from the last one is still alive is now its own pull, so a pull no longer shows 50 or more enemies when the group really took several packs one after another.",
     "On a smaller screen, the tiles at the top of Debriefing line up in even rows: no tile stretched across on its own and no empty gaps.",
     "The hovers on Debriefing's top tiles list every player, not just the first 10, and a tall hover stays on screen.",
     "Your recap is a side panel now: the full height of your screen on the right edge (or the left, with Side in /db card settings), one column that scrolls, in WoW and on your PC. Drag its inner edge on your PC to make it wider or narrower.",
