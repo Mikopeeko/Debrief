@@ -24060,12 +24060,8 @@ const PATCH_NOTES = [
     "Mythic+ map: point at a pull, a tile or a timeline block for a short summary: its time, forces, deaths, kicks, Lust and cooldowns. The timeline marks each cast that went off with a kick ready.",
     "Mythic+ map: the pulls are tiles under the map, so the pull's card has the whole side to itself.",
     "Mythic+ map: each pull’s number sits inside the pull, in a clear spot that never covers an enemy, a mark or another label. A pull spread across the room gets one outline round all of it, like in MDT. Only the dangerous missed kicks show on the map; the rest are on the card.",
-    "Mythic+ Your play tells you pull by pull whether your rotation was right: ✓ played right, mostly right, or needs work. It runs the Rotation tab's own checks on each pull (packs against your spec's pack priority) and compares you with top players of your spec on pulls like it. Each mistake is said once, with a short why.",
-    "Mythic+ Your play is fairer: channels like Arcane Missiles count as casting, a tank gathering a pack isn’t idle, a pull’s empty tail isn’t idle, time not casting is only judged against the same spec, and tanks’ survival buttons like Death Strike aren’t treated as damage spells. DoTs you spread, like Flame Shock, are judged by how many of the pack they’re on.",
-    "Mythic+ dispels: each pull card shows the debuffs worth dispelling, how fast they came off, and any left on too long while someone’s dispel was ready. Your part counts your dispels and self-cleanses like Stoneform, Your play flags the ones you could have taken off, and Your group has a Dispels column.",
-    "Mythic+ Your play also checks each spec’s own spells against top players of that spec: area spells on big pulls, single-target spenders pressed into a pack, procs and resource that went to waste, and DoTs on the pack. When the fast run has nobody of your spec, another fast run with one is used.",
+    "Mythic+ dispels: each pull card shows the debuffs worth dispelling, how fast they came off, and any left on too long while someone’s dispel was ready. Your part counts your dispels and self-cleanses like Stoneform, and Your group has a Dispels column.",
     "Mythic+ deaths no longer list a talent or racial defensive you never press as “ready”.",
-    "Mythic+ pull card: pick one player to see Your play, what cost time in that pull (time not casting, a big cooldown held on a big pull, a death with a defensive ready, a kick missed) priced in seconds against top players of the spec. Your part adds it up.",
     "Mythic+ map: no more route lines. The pull numbers already show the order.",
     "Mythic+ boss pulls count only the trash you pulled with the boss. What the boss summoned is on its own line in the pull’s card.",
     "Mythic+ map: pointing at a pull shows just its enemies and forces. Everything else is on its card.",
@@ -62169,6 +62165,9 @@ const mpWhat = (R2, p, k) => { if (p.boss) return esc(p.boss); const mobs = mpMo
 // one Next time. One source for the pull card, Your part and later the Rotation tab and the addon (window.MP_PLAY). Round 2 (each spec's area spells,
 // from the Rotation chat) plugs in through MP_PLAY_CHECKS: each is (ctx) => rows, ctx = { R, F, name, per, own, i, p, n, band, gd, top },
 // a row = { k, ic, t (HTML), s (seconds, or null for "!"), nt (the Next time text) })
+// (Your play's damage and healing rotation checks are off (Flex, Nov 2: "Just remove the rotation from the mythic plus section altogether", "I'm just
+// talking about damage and healing rotations"): no "… play" fold, no rotation row in Your part, no rotation runs, no pull lines kept. true brings them back)
+const MP_PLAY_ON = false;
 const MP_PLAY_CHECKS = [];
 // (each listed debuff's type, by name: read once from Wowhead's spell pages for the ids this season's logs showed (Nov 2), matching what the logs'
 // dispels took off; Savage Maul is a bleed. One not here takes its type from the dispels that took it off)
@@ -62614,7 +62613,7 @@ function mpPartHtml(R, fx, pick) {
     const sc = Object.keys(MP_RMV).filter((nm) => MP_RMV[nm][2] && !MP_RMV[nm][3] && cs[nm]); if (sc.length) row('◇', '#f2c46b', 'Self-cleanse', sc.map((nm) => '<b>' + esc(mpTitle(nm)) + ' ' + (w.selfN[nm] || 0) + '</b>' + (w.selfMiss[nm] ? '<small class="mpt-t2k"> · ' + w.selfMiss[nm] + ' missed</small>' : '')).join('<small> · </small>')); }
   // (Your play across the key: the time its rows add up to, on how many pulls; it picks the worst)
   // (v5: the pulls by their rotation verdict; a click picks the one with the most rotation mistakes)
-  { const F2 = fx && fx.R, ys = P.map((q, i) => ({ i, y: mpPlay(R, F2, name, i) })), nb = (k) => ys.filter((x) => x.y.vk === k).length, m2 = nb('m'), s2 = nb('s'), g2 = nb('g'), w = ys.slice().sort((a, b) => b.y.vm - a.y.vm || b.y.vs - a.y.vs)[0];
+  if (MP_PLAY_ON) { const F2 = fx && fx.R, ys = P.map((q, i) => ({ i, y: mpPlay(R, F2, name, i) })), nb = (k) => ys.filter((x) => x.y.vk === k).length, m2 = nb('m'), s2 = nb('s'), g2 = nb('g'), w = ys.slice().sort((a, b) => b.y.vm - a.y.vm || b.y.vs - a.y.vs)[0];
     if (F2 && F2.pc) row('▸', '#c39bff', own ? 'Your rotation' : esc(name) + '’s rotation', [m2 ? '<b class="mpt-bad">needs work on ' + m2 + '</b>' : '', s2 ? '<b class="mpt-a">mostly right on ' + s2 + '</b>' : '', g2 ? '<b class="mpt-g">right on ' + g2 + '</b>' : ''].filter(Boolean).join('<small> · </small>') + '<small> of ' + plural(P.length, 'pull') + '</small>', w && (w.y.vm || w.y.vs) ? ' data-mppick="' + w.i + '"' : ''); }
   // (7) avoidable hits
   const av = []; P.forEach((q, i) => { for (const a of q.avoid || []) if (a.who === name && a.n) av.push({ ...a, i }); }); const avN = av.reduce((t, a) => t + a.n, 0), byP = new Map(); for (const a of av) byP.set(a.i, (byP.get(a.i) || 0) + a.n);
@@ -62929,7 +62928,7 @@ function mpScan(it, R, text) {
     let j = text.indexOf('\n', i); if (j < 0) j = text.length; const line = text.substring(i, j); i = j + 1;
     const ts = E.parseTs(line); if (!ts) continue; if (t0 == null) t0 = ts.ms; const t = (ts.ms - t0) / 1000;
     const c = line.indexOf(',', ts.body); if (c < 0) continue; const ev = line.substring(ts.body, c);
-    if (ev === 'COMBATANT_INFO') wci.push(line); else { while (wk < N && t > P[wk].e + 0.5) wk++; for (let k = wk; k < N && P[k].s - 1 <= t; k++) if (t <= P[k].e + 0.5 && line.indexOf('Player-', c) >= 0) wl[k].push(line); } /* (an enemy's own lines (neither end a player) are left out) */
+    if (ev === 'COMBATANT_INFO') wci.push(line); else if (MP_PLAY_ON) { while (wk < N && t > P[wk].e + 0.5) wk++; for (let k = wk; k < N && P[k].s - 1 <= t; k++) if (t <= P[k].e + 0.5 && line.indexOf('Player-', c) >= 0) wl[k].push(line); } /* (an enemy's own lines (neither end a player) are left out) */
     if (ev === 'UNIT_DIED') { if (!T) continue; const f = E.split(line, c + 1), g = f[4]; if (String(g).startsWith('Player-')) { const lp = lastPos.get(g); if (lp && f[8] !== '1') { const who = short(f[5]), per = (R.people || []).find((x) => x.name === who), sid = per ? mpSpecId(per.spec, per.cls) : 0, us = defUse.get(g) || new Map();
         const last = (id) => { const l = (us.get(id) || []).filter((x) => x <= t); return l.length ? l[l.length - 1] : null; }, defs = per ? ((E.DEFENSIVES || {})[per.cls] || []).filter((d) => !d[3] || d[3].includes(sid)) : [];
         const ready = defs.filter((d) => { const u = last(+d[1]); return u == null || t - u >= d[2]; }).map((d) => d[0]), used = defs.map((d) => [d[0], last(+d[1])]).filter(([, u]) => u != null && t - u < 30).map(([n, u]) => [n, Math.round(t - u)]), hs = last('hs');
@@ -62984,7 +62983,7 @@ function mpScan(it, R, text) {
     if (T && NPC.test(f[adv] || '')) { const u = +f[adv + 16]; if (ui.has(u)) { while (pi < N - 1 && t > P[pi].e) pi++; if (t >= P[pi].s && t <= P[pi].e) { const q = pts[pi]; q.x.push(+f[adv + 14]); q.y.push(+f[adv + 15]); q.u.push(u); } } }
   }
   // (each pull's lines, gzipped (about a tenth of the size: 6 MB for a half-hour key), for the Rotation tab's checks when a pull card opens)
-  R.t0ms = t0; R.wci = wci; { const S2 = wl.map((a) => a.join('\n')); wl.length = 0; R.win = null; R.winP = Promise.all(S2.map(mpGz)).then((b) => { R.win = b; R.winP = null; }, () => { R.win = S2; R.winP = null; }); }
+  R.t0ms = t0; R.wci = wci; if (MP_PLAY_ON) { const S2 = wl.map((a) => a.join('\n')); wl.length = 0; R.win = null; R.winP = Promise.all(S2.map(mpGz)).then((b) => { R.win = b; R.winP = null; }, () => { R.win = S2; R.winP = null; }); }
   for (const [nm, o] of Object.entries(chOpen)) (pch[nm] || (pch[nm] = [])).push([o.s, o.e]); /* (the last channel of each player) */
   // (dispels: still on at the end, then what took each one off: a dispel just before it came off, else the player's own self-cleanse cast just before)
   for (const o of dOpen.values()) { o.e = P.length ? Math.max(o.s, P[pullAt(o.s)].e) : o.s; dbf.push(o); }
@@ -63226,7 +63225,7 @@ function mpMapHtml(R, F, tl) {
     // (DPS, highest first, with each player's big cooldowns pressed here in a fourth column ("none" when they have some but pressed none here, blank when
     // none are tracked, the times in the hover); the healer's healing a line under the rows)
     // (Your play: one closed line per player, shown only while that one player is picked (mpMapPP))
-    const play = run !== 'you' ? '' : ppl.map((x) => { const h = mpPlayHtml(RR, F, x.name, i); return fold('y', h.sum, h.body, ' data-who="' + esc(x.name) + '"'); }).join('');
+    const play = run !== 'you' || !MP_PLAY_ON ? '' : ppl.map((x) => { const h = mpPlayHtml(RR, F, x.name, i); return fold('y', h.sum, h.body, ' data-who="' + esc(x.name) + '"'); }).join('');
     const dl = ppl.slice().sort((a, b) => ((p.dmg || {})[b.name] || 0) - ((p.dmg || {})[a.name] || 0)), mx = Math.max(1, ...ppl.map((x) => (p.dmg || {})[x.name] || 0));
     const act = new Set((RR.cdWho || []).filter((n) => ((RR.cds || {})[n] || []).length)), mine = (n) => (act.has(n) ? RR.cds[n].filter((x) => x.t >= p.s - 3 && x.t <= p.e + 1) : []), cdc = act.size > 0;
     const cdCell = (n) => { if (!act.has(n)) return '<span class="mpt-mcc"></span>'; const l = mine(n); if (!l.length) return '<span class="mpt-mcc mpt-mcz">none</span>';
@@ -63302,7 +63301,7 @@ function mpMapPick(v, ids, sum) { const box = document.querySelector('.mpt-mdt')
 function mpMapPeek(view, i) { if (!view) return; view.classList.toggle('peek', i != null); view.querySelectorAll('[data-pi]').forEach((x) => x.classList.toggle('pk', i != null && x.dataset.pi === String(i))); }
 // (pick a player: only their kick, CC and death marks on the map, the others' rows in the card faded; the Home character is the default later)
 function mpMapPP(name) { const box = document.querySelector('.mpt-mdt'); if (!box) return; name = name || ''; MP.pp = name; box.classList.toggle('pp1', !!name); /* (Your play shows for one picked player) */
-  if (name) mpRotAll(name);
+  if (name && MP_PLAY_ON) mpRotAll(name);
   { const pe = document.getElementById('mptPart'), it2 = MP.item, R2 = it2 && MP.R[mpK(it2)]; if (pe && R2 && pe.dataset.for !== name) pe.outerHTML = mpPartHtml(R2, MP.fastOf && MP.fastOf.k === mpK(it2) ? MP.fastOf : null, name); } /* (Your part follows the pick) */
   box.querySelectorAll('[data-mppsel]').forEach((x) => { x.value = name; const o = x.selectedOptions[0]; x.style.color = name && o ? o.style.color : ''; });
   box.querySelectorAll('.mpt-mdtv[data-v="you"] [data-who]').forEach((el) => el.classList.toggle('pp-off', !!name && !el.dataset.who.split('|').includes(name))); }
