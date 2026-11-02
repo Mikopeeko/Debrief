@@ -61676,6 +61676,7 @@ function mpDraw() {
   try { mpLabelFit(); } catch (e) { /* (labels stay as drawn) */ }
   mpJbTop();
   try { mpRkSeen(); } catch (e) { /* (starts on scroll) */ }
+  setTimeout(() => { try { mpRkGo(); } catch (e) { /* (starts on scroll) */ } }, 3000); /* (and a few seconds after the page draws anyway: a hidden or background pane never scrolls (Main, Nov 2)) */
   if (!fx) { const mine = it; MP.fastOf = { k: mpK(it), wait: true };
     mpFastRun(it).then((F) => { if (MP.item !== mine) return; MP.fastOf = { k: mpK(mine), ...F }; mpDraw(); }).catch(() => { if (MP.item !== mine) return; MP.fastOf = { k: mpK(mine), R: null, list: null }; mpDraw(); }); }
   mpPrevRate(it, R);
