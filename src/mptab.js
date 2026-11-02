@@ -227,11 +227,23 @@ function mpfRow2(r, ccOf, showWho) { const i = MPF.view.push(r) - 1, it = r.it, 
 // (all 8 dungeons, A to Z so nothing jumps around, each a quiet fold with its best timed key and how many. Inside: timed keys first (highest, then
 // newest), then over time, then left early, so a reset doesn't take a top slot (the studio's row fixes); 3, then "Show N more")
 const mpfRank = (it) => (it.keyMs ? (it.timed ? 0 : 1) : 2);
+// (a key's result in words, as the verdict says it: "timed with 2:10 to spare" (to the limit of the level it got), "timed +2 with …", "over time by …",
+// "left early")
+const mpResWords = (k) => { const s = k.keyMs ? k.keyMs / 1000 : 0, tm = (window.DBF_MPTIMER || {})[mpLc(k.boss)]; if (!s) return 'left early'; if (!tm) return k.timed ? 'timed' : 'over time';
+  const P = tm * 60, up = k.timed ? (k.up || mpUp(k)) : 0, lim = up === 3 ? P * 0.6 : up === 2 ? P * 0.8 : P; return up ? 'timed' + (up > 1 ? ' +' + up : '') + ' with ' + mpMM(lim - s) + ' to spare' : 'over time by ' + mpMM(s - P); };
+// (last time on this dungeon: the viewer's own character in this key (the same pick as the tab's "open on you") and their key before this one on the
+// same dungeon, from the key finder's saved keys; nothing is loaded. Nothing when there's no own character or no earlier key)
+function mpLastTime(it, R) { const me = mpMine(R); if (!me || !it.wallMs) return ''; const g = mpkChars().find((c) => mpLc(c.name) === mpLc(me)); if (!g) return '';
+  const d = mpLc(mpDung(it.boss)), w = it.wcl || {}, prev = (((mpkGet().chars[g.id] || {}).keys) || []).filter((k) => mpLc(k.boss) === d && k.wallMs < it.wallMs - 60e3 && !(k.code === w.code && k.fight === w.fight)).sort((a, b) => b.wallMs - a.wallMs)[0];
+  if (!prev) return ''; const now = mpResWords({ ...it, boss: mpDung(it.boss) });
+  return '<p class="mpt-vd2">Last time on ' + esc(mpDung(it.boss)) + ' (+' + prev.level + ', ' + new Date(prev.wallMs).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '): ' + mpResWords(prev) + '. This one: +' + it.level + (/^timed with /.test(now) ? now.slice(5) : ', ' + now) + '.</p>'; }
 function mpfByDungeon(rows, id, people) { const showWho = !!(people && people.length > 1), cc = new Map((people || []).map((p) => [p.name, p.cls ? mpCC(p.cls) : ''])), ccOf = (n) => cc.get(n);
   return MP_DUNGEONS.map((d) => { const L = rows.filter((r) => mpLc(r.it.boss) === mpLc(d)).sort((a, b) => mpfRank(a.it) - mpfRank(b.it) || b.it.level - a.it.level || b.it.wallMs - a.it.wallMs), sid = id + '-' + d.toLowerCase().replace(/[^a-z]+/g, ''), more = MPK.more.has(sid);
     const b = (L.find((r) => r.it.timed && r.it.keyMs) || L[0] || {}).it, br = b && mpfRes(b);
     if (!L.length) return '<div class="mpf-dgh mpf-dg0"><div class="mpf-dsum"><b>' + esc(d) + '</b><span class="mpt-m">No keys yet</span></div></div>';
-    return '<details class="mpf-dgh" id="' + sid + '" open><summary class="mpf-dsum"><b>' + esc(d) + '</b><span><b class="' + br.c + '">+' + b.level + ' · ' + br.t + '</b> <span class="mpt-m">' + plural(L.length, 'key') + '</span></span></summary>' +
+    const trend = '<span class="mpf-trend" aria-label="Last keys, oldest first">' + L.filter((r) => r.it.wallMs).sort((a, c) => a.it.wallMs - c.it.wallMs).slice(-5).map((r) => { const k = r.it, sec = k.keyMs ? k.keyMs / 1000 : 0, tm = (window.DBF_MPTIMER || {})[mpLc(k.boss)];
+      return '<i class="' + (sec && k.timed ? ((k.up || mpUp(k)) >= 2 ? 'g' : 'a') : 'm') + '"' + mpT1(new Date(k.wallMs).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · +' + k.level + ' · ' + (sec ? mpMM(sec) + (tm ? ' of ' + tm + ':00' : '') : 'left early')) + '>' + k.level + '</i>'; }).join('') + '</span>';
+    return '<details class="mpf-dgh" id="' + sid + '" open><summary class="mpf-dsum"><b>' + esc(d) + '</b>' + trend + '<span><b class="' + br.c + '">+' + b.level + ' · ' + br.t + '</b> <span class="mpt-m">' + plural(L.length, 'key') + '</span></span></summary>' +
       '<div class="mpf-kl">' + L.slice(0, more ? L.length : 3).map((r) => mpfRow2(r, ccOf, showWho)).join('') + (L.length > 3 ? '<button type="button" class="linkbtn mpf-showm" data-mpfm="' + sid + '">' + (more ? 'Show fewer' : 'Show ' + (L.length - 3) + ' more') + '</button>' : '') + '</div></details>'; }).join(''); }
 // (a character's own keys, one row each)
 function mpkOwn(c, J) { const m = new Map(); for (const k of ((J.chars[c.id] || {}).keys || [])) { const it = { ...k, wcl: { code: k.code, fight: k.fight } }, id = mpkId(it), o = m.get(id); if (o) o.n++; else m.set(id, { it, n: 1, who: [c.name] }); } return [...m.values()]; }
@@ -634,7 +646,7 @@ function mpHtml(it, R, fx) {
   const behind = F ? (T - fT > 5 ? 'bad' : T - fT < -5 ? 'good' : '') : '';
   /* (the quick read: chapter 2 is "Fix these first"; chapter 3 is one sentence with the route and the pulls a click away) */
   const bh = {}, behindH = mpBehind(R, C, F, FC, fx, waiting, bh); /* (the map-first round: the map is chapter 2, with the timeline lanes under it) */
-  return mpChap('mptC1', 'The key', '', ban.replace('<!--MPV-->', keyLine) + tiles) + mpJumpBar(R, true) + mpChap('mptCM', 'Your key on the map', 'every pull, and where the mistakes were', mpRPFold(R, F, mpMapHtml(R, F, bh.tl))) +
+  return mpChap('mptC1', 'The key', '', ban.replace('<!--MPV-->', keyLine + mpLastTime(it, R)) + tiles) + mpJumpBar(R, true) + mpChap('mptCM', 'Your key on the map', 'every pull, and where the mistakes were', mpRPFold(R, F, mpMapHtml(R, F, bh.tl))) +
     mpChap('mptC2', 'Fix these first', F ? 'against a typical fast run' : '', fixes + behindH, behind) + mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpGroup(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', 'for your next key', mpKnowHtml(R, true));
 }
 // (five chapters (Nov 2, the Design studio's chapters.md, Flex: "the page is lacking depth. Maybe find a way to separate the information so its
@@ -967,7 +979,9 @@ const MP_ROUTE = {
   'ruby life pools': { full: 551, zone: 14063, floors: [[2095, 'Infusion Chambers', 1335, 1685, -450, 75], [2094, 'Ruby Overlook', 1345.83, 1868.75, -602.08, 181.25]],
     n: { 187897: 30, 187969: 5, 188011: 5, 188067: 7, 188244: 25, 190207: 7, 197535: 30, 197697: 40, 197698: 48, 197982: 5, 198047: 25 } },
   'temple of sethraliss': { full: 687, zone: 9527, floors: [[1038, 'Temple of Sethraliss', 3187.5, 3937.5, 2789.58, 3916.67], [1043, 'Atrium of Sethraliss', 3760.42, 4285.42, 3185.42, 3972.92]],
-    n: { 134364: 7, 134599: 7, 134600: 7, 134602: 7, 134616: 5, 134629: 25, 134686: 16, 134691: 5, 134990: 7, 134991: 25, 135007: 25, 135562: 7, 135846: 5, 136076: 25, 136250: 25, 139110: 5, 139422: 7, 139425: 7, 265057: 5, 268317: 5, 269227: 5 } },
+    n: { 134364: 7, 134599: 7, 134600: 7, 134602: 7, 134616: 5, 134629: 25, 134686: 16, 134691: 5, 134990: 7, 134991: 25, 135007: 25, 135562: 7, 135846: 5, 136076: 25, 136250: 25, 139110: 5, 139422: 7, 139425: 7, 265057: 5, 268317: 5, 269227: 5,
+      /* (Raider.IO lists these two as 0, yet every top run is 12 short of 687 without them: Rogue Krolusk 2 and Toxic Viper 1 bring all 20 of the top runs
+         we checked to 100-100.6%, Nov 2. A fit, not the game's own number) */ 134617: 2, 134389: 1 } },
   'the blinding vale': { full: 686, zone: 16359, floors: [[2500, 'The Blinding Vale', 916.67, 1675, 1202.08, 2341.67]],
     n: { 245336: 7, 245339: 6, 245345: 7, 245346: 20, 245410: 1, 245460: 7, 245473: 5, 245484: 7, 245513: 25, 245527: 1, 246871: 22, 249756: 60, 254850: 25 } },
   'voidscar arena': { full: 738, zone: 16425, floors: [[2574, 'Halls of Spite', 4358.33, 4691.67, -705.01, -204.99], [2572, 'Voidscar Arena', 4368.75, 4718.75, -720.83, -195.83], [2573, 'Domanaar\'s Ascent', 4716.67, 5312.5, -912.5, -18.75]],
@@ -1055,6 +1069,8 @@ function mpScan(it, R, text) {
       if (T && avSet.has(mpLc(sp)) && roleOf.get(short(f[5])) !== 'tank') { const k2 = f[4] + '|' + mpLc(sp), lt = avLast.get(k2); avLast.set(k2, t); if (!(lt > t - 1.6)) { let x = 0, y = 0, ui = 0; if (f[adv] === f[4]) { x = +f[adv + 14]; y = +f[adv + 15]; ui = +f[adv + 16] || 0; } else { const lp = lastPos.get(f[4]); if (lp && t - lp[3] <= 2) [x, y, ui] = lp; }
         if (x || y) avHits.push({ t, who: short(f[5]), sp, x, y, ui }); } } }
     if (dmg && String(f[0]).startsWith('Player-') && NPC.test(f[4] || '')) { const u = uOf(f[4], f[5]); u.fl |= parseInt(f[6], 16) || 0; if (u.hit == null) u.hit = t; }
+    /* (a killing blow counts as a death when the log has no death line for it: Temple's Static Anomalies, 6 killed and worth 30, never get one) */
+    if (T && dmg && /^(Player|Pet)-/.test(f[0] || '') && NPC.test(f[4] || '') && num(f[adv + ADV + 2]) > 0 && !seen.has(f[4])) { const g = f[4], u = uOf(g, f[5]); if (u.died == null) u.died = t; seen.add(g); const v = T.n[+g.split('-')[5]]; if (v) add[pullAt(t)] += v; }
     if (T) { const ig = f[adv];
       if (String(ig).startsWith('Player-')) { const x = +f[adv + 14], y = +f[adv + 15], mh = num(f[adv + 3]); if (x || y) lastPos.set(ig, [x, y, +f[adv + 16] || 0, t]); if (mh) maxOf.set(ig, mh); }
       else if (ev === 'SPELL_CAST_SUCCESS' && ig === f[0] && NPC.test(ig || '') && ksp.has(mpLc(f[9]))) { const x = +f[adv + 14], y = +f[adv + 15]; if (x || y) castPos.push({ t, sp: mpLc(f[9]), x, y, ui: +f[adv + 16] || 0 }); }
@@ -1376,6 +1392,11 @@ function mpMapPP(name) { const box = document.querySelector('.mpt-mdt'); if (!bo
 document.addEventListener('change', (e) => { const x = e.target; if (!x || !x.matches || !x.matches('[data-mppsel]')) return; mpMapPP(x.value); if (MP.ppK) { const m = mpPPGet(); m[MP.ppK] = x.value; try { localStorage.setItem(MP_PPK, JSON.stringify(m)); } catch (e2) { /* (not kept) */ } } });
 document.addEventListener('toggle', (e) => { const d = e.target; if (!d.matches || !d.matches('details[data-cf]')) return; if (d.dataset.auto) { delete d.dataset.auto; return; } const k = d.dataset.cf; /* (a skull's click opens one, and isn't kept) */ let m = {}; try { m = JSON.parse(localStorage.getItem('mpt-cardfold') || '{}') || {}; } catch (x) { m = {}; }
   if (!!m[k] !== d.open) { m[k] = d.open; try { localStorage.setItem('mpt-cardfold', JSON.stringify(m)); } catch (x) { /* (not kept) */ } } document.querySelectorAll('details[data-cf="' + k + '"]').forEach((x) => { if (x !== d && x.open !== d.open) x.open = d.open; }); }, true); /* (the card's one-liners, open or closed the same on every pull) */
+// (a tag on the pull card: a tap or click shows its hover's words on a line under the tags (who had a kick ready, who dispelled, who got hit), so
+// nothing on the card is hover-only on a phone (the studio's phone pass); a second tap hides it)
+document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('.mpt-mtl .mpt-tg2[data-tt]'); if (!t) return; const p = t.parentNode, nx = p.nextElementSibling;
+  const x = nx && nx.classList.contains('mpt-tgx') ? nx : p.insertAdjacentElement('afterend', Object.assign(document.createElement('p'), { className: 'mpt-tgx' })), on = !t.classList.contains('on');
+  p.querySelectorAll('.mpt-tg2.on').forEach((y) => y.classList.remove('on')); t.classList.toggle('on', on); x.hidden = !on; if (on) x.innerHTML = t.getAttribute('data-tt'); const tip = document.querySelector('.spc-tt'); if (tip) tip.hidden = true; });
 // (zoom (Flex: "the map should have a zoom in and zoom out option"): + and − step 1×, 1.5×, 2.25×, 3×; the scroll wheel zooms smoothly in between
 // (Flex, Nov 2: "can you make it so scroll wheel zooms in and out too"; Debriefing's maps keep + and − only); drag to pan; pinch on a phone. No reset
 // and no double-click (Flex's rules for maps, Oct 20/22). Tags, marks and the route keep their size on screen, so a busy pull spreads out. A
@@ -1982,4 +2003,11 @@ body.mpz-wh .spc-tt{display:none !important}
 .mpt-cfd + .mpt-cfd{margin-top:0} .mpt-cfb .mpt-mlh{margin-top:2px}
 .mpt .mpt-mchip-r i{color:#e8eaed} .mpt .mpt-mchip-d i{color:#ff8f87} .mpt .mpt-mchip-k i{color:#c39bff} .mpt .mpt-mchip-l i{color:#ffd166} .mpt .mpt-mchip-w i{color:#aeb6bf} .mpt .mpt-mchip-c i{color:#7ee08f} .mpt .mpt-mchip-a i{color:#f2c46b} .mpt-layp .mpt-mchip:not(.on) i{opacity:.45}
 .mpt-ll .mpt-i{margin-left:4px;font-size:12px;vertical-align:1px}
+/* (last time on this dungeon: the faint line under the verdict, and the key finder's 5-key trend, quiet tints) */
+.mpt .mpt-vd2{margin:2px 0 0;font:500 12.5px/1.45 var(--body);color:var(--faint)}
+.mpf-trend{display:inline-flex;gap:3px;margin-right:auto;align-self:center} .mpf-trend i{min-width:24px;height:18px;padding:0 3px;border-radius:3px;font:700 11px/18px var(--body);font-style:normal;text-align:center;color:var(--muted);background:rgba(149,160,171,.14)}
+.mpf-trend i.g{color:#7ee08f;background:rgba(126,224,143,.14)} .mpf-trend i.a{color:#f3c969;background:rgba(243,201,105,.14)}
+/* (the phone pass: a card tag opens its words on a line under the tags) */
+.mpt .mpt-mtl .mpt-tg2[data-tt]{cursor:pointer} .mpt .mpt-mtl .mpt-tg2.on{text-decoration:underline;text-underline-offset:3px}
+.mpt .mpt-tgx{margin:2px 0 6px;padding:6px 8px;border-radius:4px;background:rgba(255,255,255,.04);font:500 12.5px/1.45 var(--body);color:var(--mpt-soft)} .mpt .mpt-tgx b{color:var(--text)}
 `;

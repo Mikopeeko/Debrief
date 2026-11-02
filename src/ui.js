@@ -2034,6 +2034,9 @@ const PATCH_NOTES = [
     "Mythic+ tab: Next time lines are one short sentence each, with the details in the small ⓘ, and the tab opens on your own character when they're in the key.",
     "Mythic+ map: point at a pull, a tile or a timeline block for a short summary: its time, forces, deaths, kicks, Lust and cooldowns. The timeline marks each cast that went off with a kick ready.",
     "Mythic+ map: the pulls are tiles under the map, so the pull's card has the whole side to itself.",
+    "Mythic+ tab, last time on this dungeon: under the summary line, a faint line compares this key with your last one there: “Last time on Voidscar Arena (+18, Oct 3): timed with 2:10 to spare. This one: +19 with 0:59 to spare.” In the key finder, each dungeon shows your last 5 keys as small squares, coloured by result.",
+    "Mythic+ tab: Temple of Sethraliss shows its forces % on the map and on each pull, like the other dungeons.",
+    "Mythic+ map on a phone: tap a tag on the pull card to see its details right in the card (who had a kick ready, who dispelled).",
     "Mythic+ tab, one line to read first: under the key's name, whether you timed it and by how much, how far behind a typical fast run you were, and where most of that time went.",
     "Mythic+ map: pick a pull and the map zooms in on it, gliding from pull to pull. The pull's card is slimmer: one line of tags (deaths, casts that went off, Lust, waits), the pack and the plan, with Kicks & CC, DPS and each death folded into one line you open with a click.",
     "Mythic+ map: each mark has one colour everywhere (deaths red, Lust gold, kicks purple, waits grey, avoidable amber, kicks and CC green), and the Layers list doubles as the key.",
@@ -2041,6 +2044,8 @@ const PATCH_NOTES = [
     "Eternal Nightfall's shield damage looks like the Graphs tab now: names in their own column, solid bars and the numbers lined up. Each shield's list is open from the start.",
     "Debriefing, All pulls: Eternal Nightfall shows its break times as one strip, a dot per shield next to the top kills' 10.6 to 13.9 s, instead of a tag for every shield.",
   ], f: [
+    "Mythic+: each kick counts once, and a kick on a cast that began before the log saw it still counts, so Your group and the map show the same number.",
+    "Mythic+ forces: an enemy that dies without a death line in the log still counts (Temple of Sethraliss's Static Anomalies).",
     "Mythic+: hits nobody can dodge aren't avoidable any more: Kings' Rest's Gilded Destruction and Voidscar Arena's Poison Splash and Void Beam, or any one cast that lands on the whole group. Den of Nalorakk's Rotten Ground only counts past what the fastest groups take.",
     "Debriefing, All pulls: Eternal Nightfall sits under Phase 2 again, with only that phase's shields, even on a night when every Phase 2 shield broke in time.",
     "Debriefing: the list of mistakes on a card is called Mistakes.",

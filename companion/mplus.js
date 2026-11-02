@@ -182,8 +182,9 @@ function build(text, E) {
   }
   for (const c of casts) {
     if (c.res === 'done') continue;
-    const kk = kicks.find((k) => k[4] === c.guid && k[6] === c.id && k[0] >= c.t - 0.1 && k[0] <= c.t + (c.res === 'chan' ? 8 : 6));
-    if (kk) { c.res = 'kicked'; c.by = kk[2]; c.with = kk[3]; c.at = kk[0]; continue; }
+    /* (one kick stops one cast: a cast start the log wrote twice took the same kick twice, so Hansso's 14 kicks read 15 in Your group (Nov 2)) */
+    const kk = kicks.find((k) => !k.used && k[4] === c.guid && k[6] === c.id && k[0] >= c.t - 0.1 && k[0] <= c.t + (c.res === 'chan' ? 8 : 6));
+    if (kk) { kk.used = true; c.res = 'kicked'; c.by = kk[2]; c.with = kk[3]; c.at = kk[0]; continue; }
     const cc = ccs.find((k) => k[4] === c.guid && k[0] >= c.t - 0.2 && k[0] <= c.t + 4);
     if (cc) { c.res = 'stopped'; c.by = cc[2]; c.with = cc[3]; c.at = cc[0]; }
     else if (c.res === 'chan') c.res = 'done';
@@ -250,6 +251,9 @@ function build(text, E) {
     if (c.res === 'kicked') o.kicks.push({ t: c.at, who: c.by, with: c.with, spell: c.spell, mob: c.mob, id: c.id });
     else if (c.res === 'stopped') o.stops.push({ t: c.at, who: c.by, with: c.with, spell: c.spell, mob: c.mob, id: c.id });
   }
+  // (a kick with no cast start to pair it with (the cast began before the log saw it) is still a kick, so Your group and the map agree: Temple's
+  // Shrouded Fang, kicked 0:13 in (Nov 2))
+  for (const k of kicks) if (!k.used) { const o = out[pullOf(k[0])]; if (o) o.kicks.push({ t: k[0], who: k[2], with: k[3], spell: k[7], mob: k[5], id: k[6] }); }
   // (the fair count: high casts first, so a kick isn't spent on a lesser cast in the counting, then medium; who: the kick it's counted against; ready:
   // every kick that was still ready; id: the spell's icon. High ones that went off are mistakes (through); medium ones are a note (minor))
   for (const tier of ['high', 'medium']) for (const c of sorted) {
