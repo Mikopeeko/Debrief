@@ -2046,6 +2046,7 @@ const PATCH_NOTES = [
     "Mythic+ map: click a ☠ to see how they died (their last hits, and which defensives were ready). Each pull's card also shows the plan for that boss or those enemies, who kicked and stopped, purges and dispels, and avoidable hits, with an Avoidable switch to pin them on the map. Hover a pull for a short summary.",
     "Mythic+ tab: your pulls on the map the way Mythic Dungeon Tools draws a route: each pull its own colour and number, around the enemies it took. Switch between you and the fast run, floor by floor, and hover a pull to light it up. A pull taken while the last one was still dying says chained.",
     "Mythic+ map: the scroll wheel zooms in and out.",
+    "Mythic+ pull card: kicks, CC, damage and cooldowns line up in tidy rows.",
     "On a smaller screen, the tiles at the top of Debriefing line up in even rows: no tile stretched across on its own and no empty gaps.",
     "The hovers on Debriefing's top tiles list every player, not just the first 10, and a tall hover stays on screen.",
     "Your recap is a side panel now: the full height of your screen on the right edge (or the left, with Side in /db card settings), one column that scrolls, in WoW and on your PC. Drag its inner edge on your PC to make it wider or narrower.",

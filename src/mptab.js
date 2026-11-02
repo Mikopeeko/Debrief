@@ -1284,32 +1284,44 @@ function mpMapHtml(R, F, tl) {
     if (run === 'you' && p.boss && F) { const fb = F.pulls.filter((x) => x.boss === p.boss), t = fb.length ? mpNextBoss(R, F, [p], fb) : ''; if (t) out.push('<p class="mpt-mcn">▼ ' + t.replace(/^<p class="mpt-nt"><b>Next time<\/b> /, '').replace(/<\/p>$/, '') + '</p>'); }
     const tp = tips(q), ex = []; if (tp.length) ex.push('<p class="mpt-mck2">Plan</p><ul class="mpt-mtips">' + tp.map((x) => '<li>' + mpKm(x) + '</li>').join('') + '</ul>');
     const byW = (L) => { const m = new Map(); for (const x of L || []) if (x.who) m.set(x.who, (m.get(x.who) || 0) + 1); return [...m].sort((a, b) => b[1] - a[1]).map(([w, c]) => mpWho(RR, w) + ' ' + c).join(' · '); };
-    const pd = [];
+    const pd = [], en = (n) => plural(n, 'enemy').replace(/enemys$/, 'enemies');
     const rm = (L, b) => [...new Set((L || []).filter((x) => x.removed === b).map((x) => x.who))].map((n) => mpWho(RR, n)).join(', ');
-    for (const o of [].concat(p.ebuffs || [])) if (o && o.on) pd.push('<p class="mpt-mcv">' + esc(o.spell) + ' on ' + plural(o.on, 'enemy').replace(/enemys$/, 'enemies') + (o.removed ? ' · ' + o.removed + ' purged (' + rm(p.purges, o.spell) + ')' : '') + '</p>');
-    for (const o of [].concat(p.debs || [])) if (o && o.on) pd.push('<p class="mpt-mcv">' + esc(o.spell) + ' on ' + plural(o.on, 'player') + (o.removed ? ' · ' + o.removed + ' dispelled (' + rm(p.dispels, o.spell) + ')' : '') + '</p>');
-    { const kname = (e) => (String(e.src).startsWith('Pet-') ? ((p.kicks || []).find((x) => Math.abs(x.t - e.t) < 0.5) || {}).who || e.who : e.who), kg = new Map();
-      for (const e of q.kx) { const w = kname(e), k2 = w + '|' + e.tg + '|' + e.cut, o = kg.get(k2) || { w, tg: e.tg, cut: e.cut, n: 0 }; o.n++; kg.set(k2, o); }
-      const kl = [...kg.values()].map((o) => '<span data-who="' + esc(o.w) + '">' + mpWho(RR, o.w) + ' → ' + esc(o.tg) + (o.n > 1 ? ' ×' + o.n : '') + (o.cut ? ' <span class="mpt-m">(' + esc(o.cut) + ')</span>' : '') + '</span>').join(' · ');
-      const cg = new Map(); for (const e of q.cx) { const k2 = e.who + '|' + e.sp, o = cg.get(k2) || { w: e.who, sp: e.sp, g: new Set() }; if (e.g) o.g.add(e.g); cg.set(k2, o); }
-      const cl = [...cg.values()].map((o) => '<span data-who="' + esc(o.w) + '">' + mpWho(RR, o.w) + ' ' + esc(o.sp) + (o.g.size ? ' → ' + plural(o.g.size, 'enemy').replace(/enemys$/, 'enemies') : '') + '</span>').join(' · '), ss = byW(p.stops);
-      if (kl || cl || ss || pd.length) ex.push('<p class="mpt-mck2">Kicks &amp; CC</p>' + (kl ? '<p class="mpt-mcv">' + kl + '</p>' : '') + (cl ? '<p class="mpt-mcv">' + cl + '</p>' : '') + (ss ? '<p class="mpt-mcv">Stops: ' + ss + '</p>' : '') + pd.join('')); }
+    for (const o of [].concat(p.ebuffs || [])) if (o && o.on) pd.push('<p class="mpt-mcf">' + esc(o.spell) + ' went on ' + en(o.on) + '.' + (o.removed ? ' ' + o.removed + ' purged (' + rm(p.purges, o.spell) + ').' : '') + '</p>');
+    for (const o of [].concat(p.debs || [])) if (o && o.on) pd.push('<p class="mpt-mcf">' + esc(o.spell) + ' went on ' + plural(o.on, 'player') + '.' + (o.removed ? ' ' + o.removed + ' dispelled (' + rm(p.dispels, o.spell) + ').' : '') + '</p>');
+    // (Kicks & CC as a small table (Flex, Nov 2: "Can you tidy this up lol"): one row per player, most kicks first, with the spells they kicked and their
+    // CC ("on N" for more than one enemy). The enemies kicked and the CC's targets are in each cell's hover, as on the map)
+    { const kname = (e) => (String(e.src).startsWith('Pet-') ? ((p.kicks || []).find((x) => Math.abs(x.t - e.t) < 0.5) || {}).who || e.who : e.who), P = new Map();
+      const row = (w) => { if (!P.has(w)) P.set(w, { w, k: new Map(), kt: new Map(), c: new Map(), nk: 0, nc: 0 }); return P.get(w); };
+      for (const e of q.kx) { const o = row(kname(e)), sp = e.cut || e.tg, k2 = e.tg + '\n' + e.cut; o.nk++; o.k.set(sp, (o.k.get(sp) || 0) + 1); if (!o.kt.has(k2)) o.kt.set(k2, { tg: e.tg, cut: e.cut, n: 0 }); o.kt.get(k2).n++; }
+      for (const e of [...q.cx].sort((a, b) => a.t - b.t)) { const o = row(e.who), c = o.c.get(e.sp) || { tg: new Map(), at: -9 }; if (e.g && !c.tg.has(e.g)) c.tg.set(e.g, e.tg); if (e.t - c.at > 1) o.nc++; c.at = e.t; o.c.set(e.sp, c); } /* (one cast's CC lands within a second) */
+      const L = [...P.values()].sort((a, b) => b.nk - a.nk || b.nc - a.nc || a.w.localeCompare(b.w)), nk = L.reduce((t, o) => t + o.nk, 0), nc = L.reduce((t, o) => t + o.nc, 0), dash = '<span class="mpt-mcz">—</span>';
+      const tbl = L.map((o) => { const kc = [...o.k].map(([sp, n]) => esc(sp) + (n > 1 ? '&nbsp;<span class="mpt-m">×' + n + '</span>' : '')).join(', ');
+        const kh = '<b>' + esc(o.w) + '</b>' + [...o.kt.values()].map((x) => '<br>Kicked ' + esc(x.tg) + (x.n > 1 ? ' ×' + x.n : '') + (x.cut ? ' (' + esc(x.cut) + ')' : '')).join('');
+        const cc = [...o.c].map(([sp, c]) => esc(sp) + (c.tg.size > 1 ? ' <span class="mpt-m">on&nbsp;' + c.tg.size + '</span>' : '')).join(', ');
+        const ch = '<b>' + esc(o.w) + '</b>' + [...o.c].map(([sp, c]) => { const nm2 = new Map(); for (const n of c.tg.values()) nm2.set(n, (nm2.get(n) || 0) + 1);
+          return '<br>' + esc(sp) + (c.tg.size ? ' → ' + en(c.tg.size) + ' (' + [...nm2].map(([a, k]) => esc(a) + (k > 1 ? ' ×' + k : '')).join(', ') + ')' : ''); }).join('');
+        return '<div class="mpt-mkr" data-who="' + esc(o.w) + '"><span>' + mpWho(RR, o.w) + '</span><span' + (kc ? mpT1(kh) : '') + '>' + (kc || dash) + '</span><span' + (cc ? mpT1(ch) : '') + '>' + (cc || dash) + '</span></div>'; }).join(''), ss = byW(p.stops);
+      if (L.length || ss || pd.length) ex.push('<div class="mpt-mlh2"><span>Kicks &amp; CC</span>' + (L.length ? '<small>' + [nk ? plural(nk, 'kick') : '', nc ? nc + ' CC' : ''].filter(Boolean).join(' · ') + '</small>' : '') + '</div>' +
+        (L.length ? '<div class="mpt-mkr mpt-mkh"><span></span><span>Kicked</span><span>CC</span></div>' + tbl : '') + (ss ? '<p class="mpt-mcf">Stops: ' + ss + '</p>' : '') + pd.join('')); }
     if ((p.avoid || []).length) ex.push('<p class="mpt-mca">Avoidable: ' + p.avoid.map((a) => mpWho(RR, a.who) + ' ×' + a.n + ' ' + esc(a.spell)).join(', ') + '</p>');
     const recap = p.deaths.map((d) => { const r = q.dd.find((x) => x.who === d.who && Math.abs(x.t - d.t) < 3); if (!r) return '';
       return '<div class="mpt-mdr" data-dr="' + esc(d.who) + '"><p class="mpt-mck2">How ' + esc(d.who) + ' died</p>' + (r.hits.length ? '<ol>' + r.hits.map((h) => '<li><span class="mpt-m">' + h.ago.toFixed(1) + ' s before:</span> <b>' + esc(h.sp) + '</b>' + (h.from ? ' <span class="mpt-m">(' + esc(h.from) + ')</span>' : '') + ' ' + mpGF(h.amt) + (h.pct ? ' <span class="mpt-m">· ' + Math.round(100 * h.pct) + '% of their health</span>' : '') + '</li>').join('') + '</ol>' : '') +
         '<p class="mpt-mcm">' + (r.ready.length ? mpAnd(r.ready.map(esc)) + (r.ready.length === 1 ? ' was' : ' were') + ' ready.' : 'No defensive was ready.') + (r.used.length ? ' Used: ' + r.used.map(([n, sec]) => esc(n) + ' (' + sec + ' s before)').join(', ') + '.' : '') + ' Healthstone: ' + (r.hs != null ? 'used ' + r.hs + ' s before.' : 'not used.') + '</p></div>'; }).join('');
-    const mx = Math.max(1, ...ppl.map((x) => (p.dmg || {})[x.name] || 0));
-    const dps = ppl.map((x) => { const d = (p.dmg || {})[x.name] || 0, h = (p.heal || {})[x.name] || 0, cc = mpCC(x.cls);
-      return '<div class="mpt-mcr" data-who="' + esc(x.name) + '"><span style="color:' + cc + '">' + esc(x.name) + '</span><s><i style="width:' + (100 * d / mx).toFixed(0) + '%;background:' + cc + '"></i></s><b>' + mpGF(d) + (x.role === 'healer' && h ? ' <small>· ' + mpGF(h) + ' HPS</small>' : '') + '</b></div>'; }).join('');
-    const act = (RR.cdWho || []).filter((n) => ((RR.cds || {})[n] || []).length), own = act.map((n) => [n, RR.cds[n].filter((x) => x.t >= p.s - 3 && x.t <= p.e + 1)]).filter(([, l]) => l.length);
-    const chips = own.flatMap(([n, l]) => { const m = new Map(); for (const x of l) m.set(x.spell, (m.get(x.spell) || 0) + 1); const cc = mpCC(((RR.people || []).find((x) => x.name === n) || {}).cls);
-      return [...m].map(([sp, c]) => '<span style="border-color:' + cc + '"' + mpT1(esc(n)) + '><i style="background:' + cc + '"></i>' + esc(sp) + (c > 1 ? ' ×' + c : '') + '</span>'); }).join('');
-    const not = act.filter((n) => !own.some(([x]) => x === n));
+    // (damage a second, highest first, so the bars step down; each player's big cooldowns pressed here sit in a fourth column: "none" when they have some
+    // but pressed none here, blank when none are tracked, the times in the hover. The healer's healing is a line under the rows)
+    const dl = ppl.slice().sort((a, b) => ((p.dmg || {})[b.name] || 0) - ((p.dmg || {})[a.name] || 0)), mx = Math.max(1, ...ppl.map((x) => (p.dmg || {})[x.name] || 0));
+    const act = new Set((RR.cdWho || []).filter((n) => ((RR.cds || {})[n] || []).length)), mine = (n) => (act.has(n) ? RR.cds[n].filter((x) => x.t >= p.s - 3 && x.t <= p.e + 1) : []), cdc = act.size > 0;
+    const cdCell = (n) => { if (!act.has(n)) return '<span class="mpt-mcc"></span>'; const l = mine(n); if (!l.length) return '<span class="mpt-mcc mpt-mcz">none</span>';
+      const m = new Map(); for (const x of l) m.set(x.spell, (m.get(x.spell) || 0) + 1);
+      return '<span class="mpt-mcc"' + mpT1('<b>' + esc(n) + '</b>' + l.map((x) => '<br>' + esc(x.spell) + ' · ' + (x.t < p.s ? 'just before the pull' : mpMM(x.t - p.s) + ' in')).join('')) + '>' + [...m].map(([sp, c]) => esc(sp) + (c > 1 ? ' ×' + c : '')).join(', ') + '</span>'; };
+    const dps = dl.map((x) => { const d = (p.dmg || {})[x.name] || 0, cc = mpCC(x.cls);
+      return '<div class="mpt-mcr' + (cdc ? '' : ' no-cd') + '" data-who="' + esc(x.name) + '"><span style="color:' + cc + '">' + esc(x.name) + '</span><s><i style="width:' + (100 * d / mx).toFixed(0) + '%;background:' + cc + '"></i></s><b>' + mpGF(d) + '</b>' + (cdc ? cdCell(x.name) : '') + '</div>'; }).join('') +
+      ppl.filter((x) => x.role === 'healer' && (p.heal || {})[x.name]).map((x) => '<p class="mpt-mcf" data-who="' + esc(x.name) + '">' + mpWho(RR, x.name) + ' healed ' + mpGF(p.heal[x.name]) + ' a second.</p>').join('') +
+      (cdc && q.chained && !dl.some((x) => mine(x.name).length) ? '<p class="mpt-mcf">No big cooldowns here: chained onto the pull before, where they went out.</p>' : '');
     return '<div class="mpt-mch">' + badge(q) + '<b>' + nm(q) + '</b><span>' + mpMM(p.dur) + (q.add ? ' · +' + fmt(pc(q.add)) : '') + (gd ? ' · ' + mpGF(gd) + ' group DPS' : '') + '</span></div>' +
       (q.wait ? '<p class="mpt-mcw">⏱ Waited ' + mpMM(q.wait) + ' before this pull.</p>' : '') + (q.lust ? '<p class="mpt-mcl">⚡ Lust went out here.</p>' : '') +
-      (out.length ? out.join('') : '<p class="mpt-mco">✓ Clean.</p>') + ex.join('') + (ppl.length ? '<p class="mpt-mck2">Damage a second</p>' + dps : '') +
-      (act.length ? '<p class="mpt-mck2">Big cooldowns pressed in this pull</p>' + (own.length ? '<div class="mpt-mccd">' + chips + '</div>' + (not.length ? '<p class="mpt-mcm">Not pressed here: ' + not.map(esc).join(', ') + '</p>' : '')
-        : '<p class="mpt-mcm">' + (q.chained ? 'None (chained onto the pull before, where they went out).' : 'None.') + '</p>') : '') + recap; };
+      (out.length ? out.join('') : '<p class="mpt-mco">✓ Clean.</p>') + ex.join('') +
+      (ppl.length ? '<div class="mpt-mlh' + (cdc ? '' : ' no-cd') + '"><span>Damage a second</span>' + (cdc ? '<small>Big cooldown</small>' : '') + '</div>' + dps : '') + recap; };
   const list = (Q) => '<ol class="mpt-mfl">' + Q.map((q) => { const pct = q.add ? pc(q.add) : 0, th = (q.p.through || []).length;
     return '<li data-pi="' + q.i + '"' + (q.fl >= 0 ? ' data-fl="' + q.fl + '"' : '') + ' data-lab="' + esc(q.p.boss ? q.p.boss : 'Pull ' + mpNo(q.RR, q.p.n)) + '" tabindex="0">' + badge(q) +
       '<span class="mpt-pnm">' + nm(q) + ((q.chained || !q.us.length) ? '<small>' + [q.chained ? 'chained' : '', !q.us.length ? '<span' + mpT1('The run\'s log didn\'t record where these enemies stood.') + '>no spot</span>' : ''].filter(Boolean).join(' · ') + '</small>' : '') + '</span>' +
@@ -1824,9 +1836,15 @@ html:not([data-theme]) .mpt .mpt-chap{background-image:linear-gradient(rgba(255,
 .mpt-mch{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 4px} .mpt-mch > b{font:700 15px var(--body);color:var(--text)} .mpt-mch > span:last-child{color:var(--muted);font-size:12.5px}
 .mpt .mpt-mcd{color:#ffb3ad} .mpt .mpt-mck{color:#d9c4ff} .mpt .mpt-mcm{color:var(--muted)} .mpt .mpt-mcn{color:#f2c46b} .mpt .mpt-mcl{color:#ffd166} .mpt .mpt-mcw{color:var(--muted)} .mpt .mpt-mco{color:#7ee08f}
 .mpt .mpt-mck2{margin:10px 0 4px!important;font:700 11px var(--head);letter-spacing:.44px;text-transform:uppercase;color:var(--faint)}
-.mpt-mcr{display:grid;grid-template-columns:82px minmax(0,1fr) auto;align-items:center;gap:8px;font-size:12.5px;margin:2px 0} .mpt-mcr span{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mpt-mcr s{display:block;height:5px;border-radius:3px;background:rgba(255,255,255,.06);text-decoration:none} .mpt-mcr s i{display:block;height:5px;border-radius:3px;opacity:.85} .mpt-mcr b{text-align:right;font-weight:600} .mpt-mcr small{color:var(--muted);font-weight:500}
-.mpt-mccd{display:flex;flex-wrap:wrap;gap:4px} .mpt-mccd span{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 7px;border:1px solid;border-radius:4px;font-size:12px;color:var(--mpt-soft)} .mpt-mccd i{width:6px;height:6px;border-radius:50%}
+.mpt-mcr{display:grid;grid-template-columns:82px minmax(0,1fr) 44px 120px;align-items:center;gap:8px;font-size:12.5px;margin:2px 0} .mpt-mcr.no-cd{grid-template-columns:82px minmax(0,1fr) 44px} .mpt-mcr span{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mpt-mcr s{display:block;height:5px;border-radius:3px;background:rgba(255,255,255,.06);text-decoration:none} .mpt-mcr s i{display:block;height:5px;border-radius:3px;opacity:.85} .mpt-mcr b{text-align:right;font-weight:600;font-variant-numeric:tabular-nums} .mpt-mcr small{color:var(--muted);font-weight:500}
+.mpt-mcr .mpt-mcc{font-weight:500;color:var(--muted)} .mpt-mcr .mpt-mcc[data-tt]{cursor:help} .mpt .mpt-mcz{color:var(--faint)} .mpt .mpt-mcf{color:var(--faint)}
+.mpt .mpt-mlh, .mpt .mpt-mlh2{margin:10px 0 4px;font:700 11px var(--head);letter-spacing:.44px;text-transform:uppercase;color:var(--faint)} .mpt .mpt-mlh2{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.mpt .mpt-mlh{display:grid;grid-template-columns:82px minmax(0,1fr) 44px 120px;gap:8px;align-items:baseline} .mpt .mpt-mlh.no-cd{grid-template-columns:82px minmax(0,1fr) 44px} .mpt-mlh > span{grid-column:1/4;white-space:nowrap}
+.mpt-mlh2 small{font:500 11px var(--body);letter-spacing:0;text-transform:none} .mpt-mlh small{font:700 10px var(--head);letter-spacing:.4px;white-space:nowrap}
+.mpt-mkr{display:grid;grid-template-columns:82px minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:baseline;font-size:12.5px;margin:2px 0} .mpt-mkr > span{min-width:0;overflow-wrap:break-word} .mpt-mkr > span[data-tt]{cursor:help}
+.mpt-mkr > span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .mpt .mpt-mkh{margin:2px 0 3px;font:700 10px var(--head);letter-spacing:.4px;text-transform:uppercase;color:var(--faint)}
+@media (max-width:600px){ .mpt-mcr, .mpt .mpt-mlh{grid-template-columns:82px minmax(0,1fr) 44px 96px} }
 .mpt-mfl{list-style:none;margin:0;padding:0;max-height:300px;overflow:auto;border:1px solid var(--line2);border-radius:4px;position:relative}
 .mpt-mfl li{display:grid;grid-template-columns:30px minmax(0,1fr) auto 38px 46px;align-items:center;gap:6px;margin:0;padding:6px 8px;border-top:1px solid var(--line);cursor:pointer;font:500 13px var(--body)} .mpt-mfl li:first-child{border-top:0}
 .mpt-mfl li:hover,.mpt-mfl li.pk{background:rgba(255,255,255,.035)} .mpt-mfl li.hot{background:rgba(255,255,255,.07)} .mpt-mfl li:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
