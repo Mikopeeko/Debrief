@@ -261,6 +261,8 @@ html, body { font-weight: 500; } .body b { font-weight: 600; } .kyou { border-le
 .kpdd.kpdd .kb { padding: 0 !important; }
 .kpdd.kpdd .kr { padding: 6px 4px; border-radius: 5px; cursor: pointer; }
 .kpdd.kpdd .kr:hover { background: rgba(255,255,255,.05); }
+/* round 478: no empty icon box on a line without an icon */
+.kr > .ic:empty:not([data-ic]), .krr > .ic:empty:not([data-ic]) { visibility: hidden; }
 </style>
 </head>
 <body>
