@@ -384,14 +384,20 @@ local IND = 0 -- (rows sit this far in, inside a section panel)
 local bodyL, poolL, usedL = body, pool, used
 local bodyR = CreateFrame("Frame", nil, body); bodyR:SetSize(10, 10); bodyR:SetPoint("TOPLEFT", body, "TOPLEFT", 0, 0); bodyR:Hide()
 local poolR, usedR = { fs = {}, tex = {}, rt = {}, btn = {}, tip = {} }, { fs = 0, tex = 0, rt = 0, btn = 0, tip = 0 }
-local function useCol(n) if n == 2 then body, pool, used = bodyR, poolR, usedR else body, pool, used = bodyL, poolL, usedL end end
+-- (the key and boss pickers' drop-down (Nov 1, the Design studio's round 477): its own frame over the card with its own pieces, and a catcher
+-- under it across the card, so a click anywhere else closes it)
+OC.ddCatch = CreateFrame("Button", nil, card); OC.ddCatch:SetAllPoints(card); OC.ddCatch:SetFrameLevel(card:GetFrameLevel() + 40); OC.ddCatch:Hide()
+OC.dd = CreateFrame("Frame", nil, card); OC.dd:SetFrameLevel(card:GetFrameLevel() + 45); OC.dd:EnableMouse(true); OC.dd:Hide(); skin(OC.dd, 8, COL.raised, 1, COL.line2, 1, true)
+OC.ddBody = CreateFrame("Frame", nil, OC.dd); OC.ddBody:SetPoint("TOPLEFT", 8, -4); OC.ddBody:SetSize(10, 10)
+OC.ddPool, OC.ddUsed = { fs = {}, tex = {}, rt = {}, btn = {}, tip = {} }, { fs = 0, tex = 0, rt = 0, btn = 0, tip = 0 }
+local function useCol(n) if n == 3 then body, pool, used = OC.ddBody, OC.ddPool, OC.ddUsed elseif n == 2 then body, pool, used = bodyR, poolR, usedR else body, pool, used = bodyL, poolL, usedL end end
 local function colFrame(on, cw, h)
   bodyR:ClearAllPoints(); bodyR:SetPoint("TOPLEFT", bodyL, "TOPLEFT", cw + 16, 0); bodyR:SetWidth(cw)
   if h then bodyR:SetHeight(math.max(10, h)) end; bodyR:SetShown(on)
 end
 local function resetPool()
   useCol(1)
-  for _, pu in ipairs({ { poolL, usedL }, { poolR, usedR } }) do
+  for _, pu in ipairs({ { poolL, usedL }, { poolR, usedR }, { OC.ddPool, OC.ddUsed } }) do
     local p0, u0 = pu[1], pu[2]
     u0.fs, u0.tex, u0.rt, u0.btn, u0.ln, u0.tip = 0, 0, 0, 0, 0, 0
     for _, l in pairs(p0) do for _, o in ipairs(l) do o:Hide(); o:ClearAllPoints() end end
@@ -943,6 +949,24 @@ function UI.keyRows(y, title, limit, heads)
   end
   return y + 6
 end
+-- (the key and boss pickers as a small drop-down over the card (Nov 1, the Design studio's round 477; Flex: "a simple dropdown menu not something
+-- that changes the screen"): under the title, the card stays as it is under it; a click outside it or Esc closes it)
+function UI.dropdown(kind)
+  local dd, catch = OC.dd, OC.ddCatch
+  if not kind then dd:Hide(); catch:Hide(); return end
+  local close = function() UI.bpick = false; if UI.mp then UI.mp.pick = false end; render() end
+  catch:SetScript("OnClick", close)
+  if dd.EnableKeyboard then dd:EnableKeyboard(true); dd:SetScript("OnKeyDown", function(self, key)
+    if self.SetPropagateKeyboardInput and not (InCombatLockdown and InCombatLockdown()) then self:SetPropagateKeyboardInput(key ~= "ESCAPE") end
+    if key == "ESCAPE" then close() end end) end
+  local w = math.min(420, W - PAD * 2) local cw0 = CW
+  CW = w - 16; useCol(3)
+  local y = kind == "boss" and UI.bossRows(6) or UI.keyRows(6, "YOUR KEYS, NEWEST FIRST", 8)
+  useCol(1); CW = cw0
+  OC.ddBody:SetSize(w - 16, y); dd:SetSize(w, y + 6)
+  dd:ClearAllPoints(); dd:SetPoint("TOPLEFT", card, "TOPLEFT", PAD - 4, -(104 + UI.SW))
+  catch:Show(); dd:Show()
+end
 -- (the end of every card: never taller than the screen, the rest scrolls and the footer says so)
 function UI.fitCard(y)
   body:SetHeight(math.max(10, y))
@@ -1427,16 +1451,20 @@ function UI.mplus(raw)
   local function tblB(cols, rows)
     return function()
       local x0, ww = IND, CW - IND * 2
-      local fw = math.max(110, math.floor(ww * 0.26)); local cw = (ww - fw) / math.max(1, #cols - 1)
-      for i, c0 in ipairs(cols) do local f = FS("bold", 12, COL.muted); f:SetWordWrap(false)
-        if i == 1 then f:SetPoint("TOPLEFT", x0, -y) else f:SetJustifyH("RIGHT"); f:SetWidth(cw - 4); f:SetPoint("TOPLEFT", x0 + fw + cw * (i - 2), -y) end; f:SetText(c0) end
+      -- (each number column as wide as its widest text, the name column the rest (Nov 1: in a two-column card the headings were cut off))
+      local H, C, need = {}, {}, {}
+      for i, c0 in ipairs(cols) do local f = FS("bold", 12, COL.muted); f:SetWordWrap(false); f:SetText(c0); H[i] = f; need[i] = f:GetStringWidth() end
+      for j, r in ipairs(rows) do C[j] = {}; for i, v in ipairs(r) do local f = FS("body", 13.5, COL.soft); f:SetWordWrap(false); f:SetText(names(tostring(v))); C[j][i] = f; if i > 1 then need[i] = math.max(need[i] or 0, f:GetStringWidth()) end end end
+      local sum = 0; for i = 2, #cols do need[i] = need[i] + 14; sum = sum + need[i] end
+      local fw = ww - sum; if fw < 100 then local k = (ww - 100) / math.max(1, sum); for i = 2, #cols do need[i] = need[i] * k end; fw = 100 end
+      local xs, x = {}, x0 + fw; for i = 2, #cols do xs[i] = x; x = x + need[i] end
+      local function put(f, i) if i == 1 then f:SetPoint("TOPLEFT", x0, -y); f:SetWidth(fw - 6) else f:SetJustifyH("RIGHT"); f:SetWidth(need[i] - 4); f:SetPoint("TOPLEFT", xs[i] + 4, -y) end end
+      for i, f in ipairs(H) do put(f, i) end
       y = y + 20
-      for _, r in ipairs(rows) do
+      for j, r in ipairs(rows) do
         local l = TEX("ARTWORK"); l:SetPoint("TOPLEFT", x0, -y); l:SetSize(ww, 1); fill(l, COL.line)
         local yA = y; y = y + 7
-        for i, v in ipairs(r) do local f = FS("body", 13.5, COL.soft); f:SetWordWrap(false)
-          if i == 1 then f:SetPoint("TOPLEFT", x0, -y); f:SetWidth(fw - 4) else f:SetJustifyH("RIGHT"); f:SetWidth(cw - 4); f:SetPoint("TOPLEFT", x0 + fw + cw * (i - 2), -y) end
-          f:SetText(names(tostring(v))) end
+        for i, f in ipairs(C[j]) do put(f, i) end
         y = y + 24
         if r.click then local b = BTN(); b:SetPoint("TOPLEFT", 0, -yA); b:SetSize(CW, y - yA); b:SetScript("OnClick", r.click) end
       end
@@ -1532,8 +1560,7 @@ function UI.mplus(raw)
     local val = heal(Q) and (v and (v.hps or 0) or Q.hps) or (v and (v.dps or 0) or Q.dps)
     return { Yo .. (heal(Q) and " healing" or " damage"), kN(val), rank(Q, q), nil, unit = heal(Q) and "HPS" or "DPS" }
   end
-  if UI.mp.pick then y = UI.keyRows(y, "YOUR KEYS, NEWEST FIRST") -- (the key picker, opened from the key's name)
-  elseif S.pull == 0 then
+  if S.pull == 0 then
     if view == "me" and not P then secB("Me", { { "info", "", "", "Your character isn't in this key. Step to anyone with the arrows, or open Group.", "" } })
     elseif P then
       -- (Me, the whole key: NEXT KEY, your tiles, the timer, what got through on your kick, your deaths, avoidable damage, rotation, your key pull by pull)
@@ -1586,7 +1613,7 @@ function UI.mplus(raw)
       end
       secB(Yo .. " key, pull by pull", { tblB(cols, PR) }, { #PL .. " pulls", "" }, false)
     else
-      -- (Group, the whole key: the tiles, the timer, what got through, avoidable damage, dispels and purges, each player's rotation, everyone's numbers)
+      -- (Group, the whole key: the tiles, the timer, what got through, avoidable damage, dispels and purges, the key pull by pull, everyone's numbers)
       local nT, kk, ss, dd, avn, slow = 0, 0, 0, 0, 0, nil
       for _, q in ipairs(PL) do nT = nT + #q.thr; dd = dd + #q.deaths; for _, x in ipairs(q.kicks) do if x.kind == "k" then kk = kk + 1 else ss = ss + 1 end end
         for _, a in ipairs(q.avoid) do avn = avn + a.n end; if q.boss == "" and (not slow or q.dur > slow.dur) then slow = q end end
@@ -1610,12 +1637,18 @@ function UI.mplus(raw)
       local A, DS = {}, {}; for _, q in ipairs(PL) do for _, a in ipairs(q.avoid) do A[#A + 1] = { who = a.who, spell = a.spell, n = a.n, dmg = a.dmg, id = a.id, pull = q.n } end; for _, d in ipairs(q.ds) do DS[#DS + 1] = d end end
       secB("Avoidable damage", avR(A, true, "g"), { hits(avn), "w" })
       secB("Dispels and purges", dispR(DS))
-      local RK, nk = {}, 0
-      for _, q in ipairs(PO) do local f = q.rot[1]; if f then nk = nk + 1
-        local det = {}; for _, g in ipairs(q.rot) do det[#det + 1] = { "t", WH .. g.label .. "|r: " .. inPv(#g.pulls, g.of or #g.pulls) } end; if (f.tip or "") ~= "" then det[#det + 1] = { "t", "|cff" .. COL.gold .. "Next time:|r " .. f.tip } end
-        local pc = {}; for _, p in ipairs(f.pulls) do pc[#pc + 1] = { p } end; det[#det + 1] = { "p", pc }
-        RK[#RK + 1] = { RS[f.st] or "warn", f.ic, "", "@" .. q.name .. ": " .. WH .. f.label .. "|r" .. (#q.rot > 1 and (" and " .. (#q.rot - 1) .. " more") or ""), inPv(#f.pulls, f.of or #f.pulls), det, "r:mpgk:" .. q.name } end end
-      secB("Rotation across the key", RK, nk > 0 and { nk .. (nk == 1 and " player" or " players") .. " to fix", "w" } or nil)
+      -- (the key, pull by pull (Nov 1, the Design studio's round 477; Flex: "group view should be based on performance from pull to pull not individual
+      -- rotations"): each pull's time, the group's damage, what got through, avoidable hits and deaths; a row opens its pull)
+      local KR = {}
+      for _, q in ipairs(PL) do local gd, av, th, d0 = 0, 0, #q.thr, #q.deaths
+        for _, v in pairs(q.vals) do gd = gd + (v.dps or 0) end; for _, a in ipairs(q.avoid) do av = av + a.n end
+        local r = { pname(q), mm(q.dur), kN(gd), th > 0 and ("|cff" .. (th > 2 and COL.badT or COL.warn) .. th .. "|r") or th }
+        if listed then r[#r + 1] = av > 0 and ("|cff" .. COL.warn .. av .. "|r") or av end
+        r[#r + 1] = d0 > 0 and ("|cff" .. COL.badT .. d0 .. "|r") or d0
+        r.click = openPull(q.n); KR[#KR + 1] = r
+      end
+      local kc = { "Pull", "Time", "Group DPS", "Got through" }; if listed then kc[#kc + 1] = "Avoidable" end; kc[#kc + 1] = "Deaths"
+      secB("The key, pull by pull", { tblB(kc, KR) }, { #PL .. " pulls", "" })
       local E = {}
       for _, q in ipairs(PO) do
         local r = { "@" .. q.name .. " |cff" .. COL.faint .. q.spec .. "|r", heal(q) and (kN(q.hps) .. " HPS") or kN(q.dps), q.kicks, q.stops, q.dispels + (q.purges or 0) }
@@ -1670,26 +1703,27 @@ function UI.mplus(raw)
       secB("Defensives", DF, { tostring(#DF > 0 and nDefs(q, n) or 0), "" })
       secB("Dispels and purges", DP)
     else
-      -- (Group, one pull: what got through, avoidable damage, kicks and stops by player, deaths, rotation, defensives, dispels, damage and healing)
+      -- (Group, one pull: what got through, avoidable damage, kicks and stops by player, deaths, defensives, dispels, damage and healing)
       local avn = 0; for _, a in ipairs(q.avoid) do avn = avn + a.n end
       secB("Got through", gotR(q.thr, nil), { #q.thr .. " got through", #q.thr > 2 and "r" or "w" })
       local A = {}; for _, a in ipairs(q.avoid) do A[#A + 1] = a end
       secB("Avoidable damage", avR(A, true, "g:" .. q.n), { hits(avn), "w" })
+      -- (what each player kicked or stopped (Nov 1, Flex: "this should show what they kicked"): "Sacme: kicked Piercing Hiss ×2; stopped Fetid Spit.")
       local per, po, kn, sn = {}, {}, 0, 0
-      for _, x in ipairs(q.kicks) do local b = per[x.who]; if not b then b = { k = 0, s = 0, with = {}, wc = {} }; per[x.who] = b; po[#po + 1] = x.who end
-        if x.kind == "k" then b.k = b.k + 1; kn = kn + 1 else b.s = b.s + 1; sn = sn + 1; if not b.wc[x.with] then b.wc[x.with] = 0; b.with[#b.with + 1] = x.with end; b.wc[x.with] = b.wc[x.with] + 1 end end
-      table.sort(po, function(a, c) return (per[a].k + per[a].s) > (per[c].k + per[c].s) end)
+      for _, x in ipairs(q.kicks) do local b = per[x.who]; if not b then b = { n = 0, k = {}, ko = {}, s = {}, so = {} }; per[x.who] = b; po[#po + 1] = x.who end
+        local kk = x.kind == "k"; local m, o = kk and b.k or b.s, kk and b.ko or b.so
+        if kk then kn = kn + 1 else sn = sn + 1 end
+        b.n = b.n + 1; if not m[x.spell] then m[x.spell] = 0; o[#o + 1] = x.spell end; m[x.spell] = m[x.spell] + 1 end
+      table.sort(po, function(a, c) return per[a].n > per[c].n end)
+      local function lst(m, o) table.sort(o, function(a, c) return m[a] > m[c] end); local t = {}; for _, sp in ipairs(o) do t[#t + 1] = WH .. sp .. "|r" .. (m[sp] > 1 and (" ×" .. m[sp]) or "") end; return table.concat(t, ", ") end
       local KS = {}; for _, w in ipairs(po) do local b = per[w]; local bits = {}
-        if b.k > 0 then bits[#bits + 1] = cnt(b.k, "kick", "kicks") end
-        if b.s > 0 then local wl0 = {}; for _, x in ipairs(b.with) do wl0[#wl0 + 1] = x .. (b.wc[x] > 1 and (" ×" .. b.wc[x]) or "") end; bits[#bits + 1] = cnt(b.s, "stop", "stops") .. " (" .. table.concat(wl0, ", ") .. ")" end
-        KS[#KS + 1] = { "okq", "", "", "@" .. w .. ": " .. table.concat(bits, ", ") .. ".", tostring(b.k + b.s) } end
+        if #b.ko > 0 then bits[#bits + 1] = "kicked " .. lst(b.k, b.ko) end
+        if #b.so > 0 then bits[#bits + 1] = "stopped " .. lst(b.s, b.so) end
+        KS[#KS + 1] = { "okq", "", "", "@" .. w .. ": " .. table.concat(bits, "; ") .. ".", tostring(b.n) } end
       secB("Kicks and stops", KS, { kn .. " kicks  ·  " .. sn .. " stops", "g" })
       local D = {}; for _, d in ipairs(q.deaths) do D[#D + 1] = dRow(d) end
       secB("Deaths", D, { #D .. (#D == 1 and " death" or " deaths"), "r" })
-      local RK = {}; for _, w in ipairs(PO) do local L0 = q.rot[w.name]; if L0 and L0[1] then local f = L0[1]
-        local det = {}; for _, g in ipairs(L0) do det[#det + 1] = { "t", ((g.tip or "") ~= "" or (g.aim or "") ~= "") and (WH .. g.label .. "|r " .. ofV(g.v) .. ((g.tip or "") ~= "" and (".  |cff" .. COL.gold .. "Next time:|r " .. g.tip) or "")) or ((g.line ~= "" and g.line ~= g.label) and wl(g.line, g.label) or (WH .. g.label .. "|r " .. ofV(g.v))) } end
-        RK[#RK + 1] = { RS[f.st] or "warn", f.ic, "", "@" .. w.name .. ": " .. WH .. f.label .. "|r" .. (#L0 > 1 and (" and " .. (#L0 - 1) .. " more") or ""), ofV(f.v), det, "r:mpgp:" .. q.n .. ":" .. w.name } end end
-      secB("Rotation", RK)
+      -- (no rotation on Group (Nov 1, Flex): each player's rotation is on Me)
       local DF, nd = {}, 0; for _, w in ipairs(PO) do if q.defs[w.name] then local c = nDefs(q, w.name); nd = nd + c; DF[#DF + 1] = { "info", "", "", "@" .. w.name .. ": " .. (q.defs[w.name]:gsub(";", ", ")) .. ".", tostring(c) } end end
       secB("Defensives", DF, { tostring(nd), "" })
       local DP = dispR(q.ds); local dn, pn, dw, pw = 0, 0, {}, {}
@@ -1814,10 +1848,6 @@ local function renderOnce()
   -- body
   UI.resetPool()
   local y = 2
-  if UI.bpick then -- (tonight's bosses, from the boss name: tap one to open its newest pull)
-    tMe:Hide(); tRaid:Hide(); tabLine:Hide(); who:Hide(); prevB:Hide(); nextB:Hide(); for _, c in ipairs(chips) do c:Hide() end
-    UI.fitCard(UI.bossRows(4)); return
-  end
   local SH = DB.show or {}
   -- (a section edge (Oct 24): noted on every draw; on the two-column draw, the chosen one starts the right column)
   local function brk()
@@ -2322,7 +2352,7 @@ local function renderAll()
   -- screen (Nov 1, Flex: "the window is still very long, what happened to it being 2 columns?"), it goes twice as wide (capped at the screen)
   -- with Rotation, or the Raid view's later lists, on the right; a key splits at the section that best balances the two sides)
   local raw = DB.pulls[DB.cur]
-  if not UI.saved and raw and not (raw.mplus and UI.mp.pick) and T.total and T.room and T.total + TOPY + 42 > (T.room + 60) * 0.67 then
+  if not UI.saved and raw and T.total and T.room and T.total + TOPY + 42 > (T.room + 60) * 0.67 then
     local cw1 = (WIDTHS[DB.width or "normal"] or 400) - PAD * 2
     local sw = ((UIParent and UIParent.GetWidth and UIParent:GetWidth()) or 1365) / math.max(0.5, (card.GetScale and card:GetScale()) or 1)
     local cwc = math.min(cw1, math.floor((sw - 60 - PAD * 2 - 16) / 2))
@@ -2333,6 +2363,7 @@ local function renderAll()
       if best then T.brk = best else T.cols, T.cwc = 1, nil end; renderOnce() -- (no section to split at: one column again)
     end
   end
+  UI.dropdown(not UI.saved and raw and ((raw.mplus and UI.mp.pick and "key") or (not raw.mplus and UI.bpick and "boss")) or nil) -- (over the card, after it's drawn)
   if Debrief_FitPreview then Debrief_FitPreview() end
 end
 -- (a problem while drawing is noted, not thrown (Oct 24): the card stays as it was)
