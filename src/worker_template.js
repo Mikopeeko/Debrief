@@ -158,7 +158,7 @@ const ROUTES = {
   // 20 kills of a boss from one page of the fastest, with who played what (Compare's "Raids like yours"), kept a day
   '/api/topkills': { age: 86400, run: (env, v) => topKillsOf((q, vars) => gql(env, q, vars), v),
     v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10), pg = parseInt(p.get('p'), 10) || 1; return e > 0 && [3, 4, 5].includes(d) && pg >= 1 && pg <= 40 ? { e, d, p: pg, n: 20 } : null; } },
-  // the 10 fastest timed runs of a dungeon at one key level this season, with who played what (the Mythic+ tab, Nov 1): 3 requests, kept a day
+  // the 20 fastest timed runs of a dungeon at one key level this season, their middle time, and who played what in those with a public log (the Mythic+ tab, Nov 1): up to 5 requests, kept a day
   '/api/mpfast': { age: 86400, run: (env, v) => mpFastOf((q, vars) => gql(env, q, vars), v),
     v: (p) => { const e = parseInt(p.get('e'), 10), l = parseInt(p.get('l'), 10); return e > 0 && e < 1e7 && l >= 2 && l <= 40 ? { e, l } : null; } },
   // the pulls and nights a guild needed for its first kill of a boss (Compare): history, so kept a week

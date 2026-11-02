@@ -23,13 +23,15 @@ Page text never names Warcraft Logs (Flex's rule, Oct 19).
 4. The PC app's own reader, `companion/mplus.js` (`DBF_MPLUS`), reads it: the run, pulls, mobs, deaths, kicks, casts that went off, and the timer. The build puts that file in the site (`/*MPLUS*/` in shell.html), so a change there changes the site too.
 5. `src/mptab.js` draws the tab. The build puts it inside ui.js (`/*MPTAB*/`).
 
-## The fast run
-- `/api/mpfast?e=<dungeon>&l=<level>` (the Worker, kept a day): Warcraft Logs' speed rankings for that dungeon and level. Three requests in all.
+## The fast run: a typical fast run (the Design studio's audit, Flex: "Yes, send them", Nov 1)
+- `/api/mpfast?e=<dungeon>&l=<level>&v=2` (the Worker, kept a day): Warcraft Logs' speed rankings for that dungeon and level. Up to 5 requests.
 - Warcraft Logs' bracket is the level less one: bracket 11 is +12 (checked on Voidscar Arena).
-- It returns the 10 fastest with a public log, each with who played what and their damage or healing a second (from the run's own rankings, 5 runs a request).
-- The page reads the fastest one that isn't your own key with the same reader, so both sides are counted the same way.
+- It takes the 20 fastest and their middle (median) time. It returns those of them with a public log (13 of 20 for Voidscar Arena +12), each with who played what and their damage or healing a second (from the run's own rankings, 5 runs a request).
+- The page reads the public run closest to that middle time (never your own key) with the same reader, so both sides are counted the same way. Everything uses that one run: the tiles, the timeline, the stretches, the route lines, the strips and the maps.
+- It's labelled "a typical fast run". If fewer than 20 exist, the line says how many.
+- For Voidscar Arena +12 the middle of the 20 fastest is 12:50, about a minute slower than the very fastest (11:56): the top 20 are all very fast.
 - Until it's in, the tiles say "finding a fast run" and the fast lane waits. With none, the tab shows without it. It never makes up numbers.
-- Players: each player's damage or healing a second against the same spec in those 10 runs (spec and class must match). With none of that spec: "no X in the fast runs".
+- Players: each player's damage or healing a second against the middle player of the same spec in those runs (spec and class must match). With none of that spec: "no X in the fast runs".
 - Warcraft Logs encounter IDs for Midnight Season 2 (zone 55): Altar of Fangs 12993, Den of Nalorakk 12825, Kings' Rest 61762, Murder Row 12813, Ruby Life Pools 112521, Temple of Sethraliss 61877, The Blinding Vale 12859, Voidscar Arena 12923.
 
 ## How it decides
@@ -74,6 +76,14 @@ How it's worked out (`mpRouteOf` in `src/mptab.js`, from the key's own events):
 - **Floors:** corners from wago.tools `UiMapAssignment` (12.1.5.70688). Across = (maxY − y) / (maxY − minY), down = (maxX − x) / (maxX − minX).
 - **Pictures:** Wowhead's `wow.zamimg.com/images/wow/maps/enus/original/<zone>[-N].jpg`, loaded at runtime and never bundled. N is the game's floor order (`UiMapGroupMember.FloorIndex`). That matches the Design studio's hand check of Voidscar Arena, and all 18 pictures exist.
 - **Checked on the maps:** Voidscar Arena (3 floors), The Blinding Vale (1) and Ruby Life Pools (2). The dots sit on the walkways.
+- **Small maps** (the Design studio's audit): each map is at most 400 px wide and grows to twice its size on click (one at a time), and back. A one-floor dungeon's map sits beside the lines and strips.
+- **Dots closer than a dot's width** are nudged apart (worked out at the small map's size). The path still runs through the real spots, and a thin white line joins a nudged dot to its spot.
+- **Boss names on the strips never touch** (`mpLabelFit`, measured on the page and again on resize). Each name goes in the first place it fits:
+  1. close to the strip
+  2. one row further out
+  3. its short name (first word)
+  4. otherwise only the gold mark, with the name on hover
+  On a phone with four bosses close together, one name can end up as a mark only.
 - **Not yet:** grey dots for packs nobody pulled. That needs Mythic Dungeon Tools' pack layout and its author's okay.
 
 ## Rules Flex set

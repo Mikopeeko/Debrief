@@ -196,14 +196,17 @@ async function playerAbOf(run, v) {
     cast: kk.map((e) => ({ name: e.name, id: e.guid, n: e.total || 0 })) }; // (every spell they cast, cooldowns too, for casts a minute and cooldown uses)
 }
 // The fastest timed runs of one dungeon at one key level this season, for the Mythic+ tab (Nov 1): Warcraft Logs' speed rankings (its
-// bracket is the level less one: bracket 11 is +12, checked on Voidscar Arena), the 10 fastest with a public log, each with who played
-// what and their damage (healers: healing) a second from the run's own rankings, 5 runs a request. v: { e: the dungeon (Warcraft Logs'
-// encounter), l: the key level }
+// bracket is the level less one: bracket 11 is +12, checked on Voidscar Arena). The 20 fastest give the middle (median) time, "a typical
+// fast run" (the Design studio's audit, Flex: "Yes, send them": a target people can reach, not the single fastest); those of them with a
+// public log come back, each with who played what and their damage (healers: healing) a second from the run's own rankings, 5 runs a
+// request. v: { e: the dungeon (Warcraft Logs' encounter), l: the key level }
 const MPFAST_Q = `query($e:Int!,$b:Int!){worldData{encounter(id:$e){fightRankings(bracket:$b,metric:speed,page:1)}}}`;
 async function mpFastOf(run, v) {
   const P = (x) => (typeof x === 'string' ? JSON.parse(x) : x);
   const fr = await run(MPFAST_Q, { e: v.e, b: v.l - 1 }), R = P(fr && fr.worldData && fr.worldData.encounter && fr.worldData.encounter.fightRankings) || {};
-  const top = (R.rankings || []).filter((t) => t && t.report && /^[A-Za-z0-9]{8,32}$/.test(t.report.code) && t.report.fightID > 0 && t.duration > 0 && (t.bracketData == null || t.bracketData === v.l)).slice(0, 10);
+  const all = (R.rankings || []).filter((t) => t && t.duration > 0 && (t.bracketData == null || t.bracketData === v.l)).slice(0, 20), ds = all.map((t) => t.duration).sort((a, b) => a - b);
+  const med = ds.length ? (ds.length % 2 ? ds[ds.length >> 1] : (ds[ds.length / 2 - 1] + ds[ds.length / 2]) / 2) : 0;
+  const top = all.filter((t) => t.report && /^[A-Za-z0-9]{8,32}$/.test(t.report.code) && t.report.fightID > 0);
   const chunks = []; for (let i = 0; i < top.length; i += 5) chunks.push(top.slice(i, i + 5));
   const amt = (x) => { const m = new Map(); for (const f of (P(x) || {}).data || []) for (const role of Object.values(f.roles || {})) for (const c of role.characters || []) if (c && c.name) m.set(c.name, Math.round(c.amount || 0)); return m; };
   const got = await Promise.all(chunks.map(async (ch) => {
@@ -213,7 +216,7 @@ async function mpFastOf(run, v) {
       return { code: t.report.code, fight: t.report.fightID, at: t.report.startTime || 0, dur: Math.round(t.duration), deaths: t.deaths | 0, region: t.server ? t.server.region || '' : '', server: t.server ? t.server.name || '' : '',
         ppl: (t.team || []).map((m) => { const r = /heal/i.test(m.role) ? 'healer' : /tank/i.test(m.role) ? 'tank' : 'dps'; return { n: m.name, c: m.class, s: m.spec, r, a: (r === 'healer' ? H : D).get(m.name) || null }; }) }; });
   }));
-  return { e: v.e, l: v.l, runs: got.flat() };
+  return { e: v.e, l: v.l, n: all.length, med: Math.round(med), runs: got.flat() };
 }
 // </topspec>
 async function topSpec(creds, v) {
@@ -221,7 +224,7 @@ async function topSpec(creds, v) {
   return topSpecOf((q, vars) => gql(creds, q, vars), v);
 }
 async function mpFast(creds, v) {
-  if (HOSTED) return api('/api/mpfast?e=' + v.e + '&l=' + v.l);
+  if (HOSTED) return api('/api/mpfast?e=' + v.e + '&l=' + v.l + '&v=2'); /* (v=2: the 20 fastest and their middle time, Nov 1) */
   return mpFastOf((q, vars) => gql(creds, q, vars), v);
 }
 async function topKills(creds, v) {
