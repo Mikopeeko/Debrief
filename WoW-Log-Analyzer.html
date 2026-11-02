@@ -24042,7 +24042,7 @@ const PATCH_NOTES = [
     "Mythic+ tab: Next time lines are one short sentence each, with the details in the small ⓘ, and the tab opens on your own character when they're in the key.",
     "Mythic+ map: point at a pull, a tile or a timeline block for a short summary: its time, forces, deaths, kicks, Lust and cooldowns. The timeline marks each cast that went off with a kick ready.",
     "Mythic+ map: the pulls are tiles under the map, so the pull's card has the whole side to itself.",
-    "Mythic+ map: each pull’s number sits inside the pull, on the route, and labels no longer overlap. A pull spread across the room gets one outline round all of it, like in MDT. Only the dangerous missed kicks show on the map; the rest are on the card.",
+    "Mythic+ map: each pull’s number sits inside the pull, in a clear spot that never covers an enemy, a mark or another label. A pull spread across the room gets one outline round all of it, like in MDT. Only the dangerous missed kicks show on the map; the rest are on the card.",
     "Mythic+ boss pulls count only the trash you pulled with the boss. What the boss summoned is on its own line in the pull’s card.",
     "Mythic+ map: pointing at a pull shows just its enemies and forces. Everything else is on its card.",
     "Mythic+ map: a calmer map. Kicks and CC now live in each pull’s card.",
@@ -61715,13 +61715,14 @@ const mpAnd = (a) => a.join(', ').replace(/, ([^,]*)$/, ' and $1');
 const mpMobs = (RR, p) => { const sum = RR.summoned || new Set(), real = RR.realNames; return (p.mobs || []).filter((m) => !sum.has(m[0]) && (!real || real.has(m[0]))); };
 const mpCnt = (RR, p) => mpMobs(RR, p).reduce((a, m) => a + m[1], 0);
 // (a boss pull's kinds of enemy (the studio, Nov 2: "with 49 enemies" read as 49 mobs pulled with the boss): trash pulled along (worth forces in the key's
-// table; or seen in a trash pull and there when the pull began, each one), the boss (30% or more of the most health there; with no health known, anything not
-// trash), and what the fight summoned (the rest: no forces, and first seen 5 s or more into the fight (Ruby's Infused Whelps that wake on
-// Melidrussa) or never in a trash pull)). [[name, count], 'trash' | 'boss' | 'sum']
+// table, or seen in a trash pull; and there when the fight began, each one), the boss (30% or more of the most health there; with no health known, anything not
+// trash), and what the fight summoned (first hit 5 s or more into the fight, worth forces or not: Ruby's Infused Whelps that wake on Melidrussa,
+// Charonus's Siphoids; or never in a trash pull and not a boss)). [[name, count], 'trash' | 'boss' | 'sum', worth forces]
 const mpBossKinds = (RR, mobs, p) => { mpMid(RR); const ty = RR.mobType || {}, T = MP_ROUTE[mpLc((RR.run || {}).dungeon || (MP.item || {}).boss || '')], hp = (m) => (ty[m[0]] || {}).hp || 0, hi = Math.max(0, ...mobs.map(hp)), i = RR.pulls.indexOf(p);
   const early = (n2) => { const us = (RR.units || []).filter((u) => u.k === i && u.n === n2 && u.h != null); return us.length ? us.filter((u) => u.h < p.s + 5).length : null; }, out = [];
-  for (const m of mobs) { if (T && T.n[(ty[m[0]] || {}).id]) { out.push([m, 'trash']); continue; } const e = early(m[0]);
-    if (RR.mobTrash.has(m[0]) && e !== 0) { const c = e == null ? m[1] : Math.min(m[1], e); out.push([[m[0], c], 'trash']); if (m[1] > c) out.push([[m[0], m[1] - c], 'sum']); continue; } /* (each one there when it began is trash; the ones that came later the fight's) */
+  for (const m of mobs) { const fz = !!(T && T.n[(ty[m[0]] || {}).id]), e = early(m[0]);
+    if ((fz || RR.mobTrash.has(m[0])) && e !== 0) { const c = e == null ? m[1] : Math.min(m[1], e); out.push([[m[0], c], 'trash']); if (m[1] > c) out.push([[m[0], m[1] - c], 'sum', fz]); continue; } /* (each one there when it began is trash; the ones that came later the fight's, worth forces or not (the studio: "★ Charonus · with 30 enemies" read as 30 pulled)) */
+    if (fz || RR.mobTrash.has(m[0])) { out.push([m, 'sum', fz]); continue; }
     out.push([m, !hi || hp(m) >= hi * 0.3 ? 'boss' : 'sum']); }
   return out; };
 const mpWhere = (s) => (s.name.startsWith('Start → ') ? 'before ' + esc(s.boss) : 'between ' + esc(s.name.split(' → ')[0]) + ' and ' + esc(s.boss));
@@ -62091,8 +62092,9 @@ function mpPullTags(RR, i) {
 // total, then "Click for the details". No forces data (Ruby): the first line only. On the map's pull labels, the tiles and the timeline's blocks alike)
 function mpPullTip(RR, i) { const p = RR.pulls[i], rt = RR.route && RR.route.ok ? RR.route : null, add = rt && rt.pulls[i] ? rt.pulls[i].add : 0;
   const f1 = (v) => (Math.round(1000 * v / rt.full) / 10).toFixed(1).replace(/\.0$/, '') + '%', tot = rt ? rt.pulls.slice(0, i + 1).reduce((a, x) => a + x.add, 0) : 0; /* (the running total (the cut): the Pulls list had it) */
-  const mobs = mpMobs(RR, p), n = p.boss ? mpBossKinds(RR, mobs, p).reduce((a, [m, t]) => a + (t === 'trash' ? m[1] : 0), 0) : mobs.reduce((a, m) => a + m[1], 0), en = plural(n, 'enemy').replace(/enemys$/, 'enemies'); /* (a boss pull: the trash pulled along only) */
-  const l1 = p.boss ? '★ ' + esc(p.boss) + (n ? ' · with ' + en : '') : 'Pull ' + mpNo(RR, p.n) + (n ? ' · ' + en : '');
+  const mobs = mpMobs(RR, p), bk = p.boss ? mpBossKinds(RR, mobs, p) : null, n = bk ? bk.reduce((a, [m, t]) => a + (t === 'trash' ? m[1] : 0), 0) : mobs.reduce((a, m) => a + m[1], 0), en = plural(n, 'enemy').replace(/enemys$/, 'enemies'); /* (a boss pull: the trash pulled along only) */
+  const sm = bk ? bk.reduce((a, [m, t]) => a + (t === 'sum' ? m[1] : 0), 0) : 0;
+  const l1 = p.boss ? '★ ' + esc(p.boss) + (n ? ' · with ' + en : '') + (sm ? ' · ' + sm + ' summoned' : '') : 'Pull ' + mpNo(RR, p.n) + (n ? ' · ' + en : '');
   const l2 = rt ? (p.boss && !add ? '' : '+' + f1(add) + ' forces · ') + f1(tot) + ' total' : '';
   return '<b>' + l1 + '</b>' + (l2 ? '<br>' + l2 : '') + '<br><span class="sub">Click for the details</span>'; }
 function mpGroups(P) { const out = []; let cur = { from: '', to: '', ps: [] }; for (const p of P) { cur.ps.push(p); if (p.boss && p.kill !== false) { cur.to = p.boss; out.push(cur); cur = { from: p.boss, to: '', ps: [] }; } } if (cur.ps.length) out.push(cur); return out; }
@@ -62510,9 +62512,10 @@ function mpScan(it, R, text) {
   { const ok = (u) => u.hit != null && u.at && (u.fl & 0x40) && !(u.fl & 0x3000) && !u.sum && ui.has(u.at[2]), zc = {};
     for (const u of U.values()) if (ok(u)) { const z = u.g.split('-')[4]; zc[z] = (zc[z] || 0) + 1; }
     const zone = (Object.entries(zc).sort((a, b) => b[1] - a[1])[0] || [])[0], L = [];
-    const kOf = (t2) => { let k = 0, best = 1e9; for (let m = 0; m < N; m++) { const d = t2 < P[m].s ? P[m].s - t2 : t2 > P[m].e ? t2 - P[m].e : 0; if (d < best) { best = d; k = m; } } return k; }, has = (m, n2) => (P[m].mobs || []).some((x) => x[0] === n2);
+    const kOf = (t2) => { let k = 0, best = 1e9; for (let m = 0; m < N; m++) { const d = t2 < P[m].s ? P[m].s - t2 : t2 > P[m].e ? t2 - P[m].e : 0; if (d < best) { best = d; k = m; } } return k; };
     for (const u of U.values()) { if (!ok(u) || u.g.split('-')[4] !== zone) continue; const tt = u.died != null ? u.died : u.hit; let k = kOf(tt);
-      if (u.died != null && u.hit != null) { const kh = kOf(u.hit); if (kh !== k && has(kh, u.n) && !has(k, u.n)) k = kh; } /* (the pull the key reader counts it in, when they disagree: Voidscar's Dominated Brawler, hit in pull 1, died as pull 2 ended) */
+      /* (kept in the pull its death fell in, even when the key reader counts it in the one before (Voidscar's Dominated Brawler, hit in pull 1, died as
+         pull 2 ended): the outline spans where the pull was fought (Flex, Nov 2: pull 2 "should be like this", the long outline); the label goes to its counted enemies) */
       L.push({ x: u.at[0], y: u.at[1], ui: u.at[2], k, hp: u.hp, t: tt, h: u.hit, n: u.n, id: +u.g.split('-')[5] || 0 }); }
     for (let m = 0; m < N; m++) if (!L.some((u) => u.k === m)) for (const u of U.values()) if (ok(u) && u.g.split('-')[4] === zone && u.hit >= P[m].s && u.hit <= P[m].e) L.push({ x: u.at[0], y: u.at[1], ui: u.at[2], k: m, hp: u.hp, t: u.hit, h: u.hit, n: u.n, id: +u.g.split('-')[5] || 0 }); /* (a pull whose enemies all died in the next one: the ones first hit in it (Den of Nalorakk's two Frostfangs, Nov 2)) */
     for (let m = 0; m < N; m++) if (P[m].boss) { const us = L.filter((u) => u.k === m), top = Math.max(0, ...us.map((u) => u.hp)); for (const u of us) if (top && u.hp >= top * 0.3) u.boss = true; }
@@ -62719,7 +62722,7 @@ function mpMapHtml(R, F, tl) {
     // (the pack (map-extras.md item 17; Flex: "those are considered the mini bosses in dungeons or the harder mobs to deal with"): each kind of enemy with
     // one role, Caster (it healed another enemy, or it keeps casting: 14 or more casts a minute, or 10 or more with mostly magic damage) or Melee; Elite for the mini-boss tier, at least twice the health of
     // the key's middle trash enemy (the same on every pull), or a rare; fodder, half that or less, on one last line. 5 rows, then the rest in a hover)
-    const pack = (() => { const all = mpMobs(RR, p), ty = RR.mobType || {}, bk = p.boss ? mpBossKinds(RR, all, p) : null, mobs = bk ? bk.filter((x) => x[1] !== 'sum').map((x) => x[0]) : all, smn = bk ? bk.reduce((a, [m, t]) => a + (t === 'sum' ? m[1] : 0), 0) : 0; if (!all.length) return '';
+    const pack = (() => { const all = mpMobs(RR, p), ty = RR.mobType || {}, bk = p.boss ? mpBossKinds(RR, all, p) : null, mobs = bk ? bk.filter((x) => x[1] !== 'sum').map((x) => x[0]) : all, smn = bk ? bk.reduce((a, [m, t]) => a + (t === 'sum' ? m[1] : 0), 0) : 0, smf = bk ? bk.some((x) => x[1] === 'sum' && x[2]) : false; if (!all.length) return '';
       /* (a boss pull: the boss and the trash pulled along; what the fight summoned on a faint last line (the studio, Nov 2)) */
       mpMid(RR); /* (the middle trash enemy of the whole key, each one counted: one-off kings don't lift it) */
       const mid = RR.mobMid, L = mobs.map(([n2, c]) => { const o = ty[n2] || {}, cast = !!o.caster, el = MP_RARE.has(o.id) || (mid && o.hp >= 2 * mid && RR.mobTrash.has(n2)), /* (trash only: never a boss or a boss fight's own enemies) */ fod = !el && mid && o.hp && o.hp <= mid / 2;
@@ -62730,7 +62733,7 @@ function mpMapHtml(R, F, tl) {
       return '<div class="mpt-pk"><p class="mpt-mck2">Pack · ' + plural(mobs.reduce((a, m) => a + m[1], 0), 'enemy').replace('enemys', 'enemies') + '</p>' + main.slice(0, 5).map(row).join('') +
         (more.length ? '<p class="mpt-pkm" tabindex="0"' + mpT1(more.map((x) => x.c + '× ' + esc(x.n2)).join('<br>')) + '>+' + plural(more.length, 'more type') + '</p>' : '') +
         (fod.length ? '<p class="mpt-pkf">+ ' + fod.map((x) => x.c + '× ' + esc(x.n2) + ' ' + role(x)).join(', ') + '</p>' : '') +
-        (smn ? '<p class="mpt-pkf mpt-pks">+ ' + smn + ' summoned during the fight</p>' : '') + '</div>'; })();
+        (smn ? '<p class="mpt-pkf mpt-pks">+ ' + smn + ' summoned during the fight' + (smf ? ' (worth forces)' : '') + '</p>' : '') + '</div>'; })();
     return '<div class="mpt-mch">' + badge(q) + '<b>' + nm(q) + '</b><span>' + mpMM(p.dur) + (q.add ? ' · +' + fmt(pc(q.add)) : '') + (() => { const r2 = RR.route && RR.route.ok ? RR.route : null; return r2 ? ' · ' + fmt(100 * r2.pulls.slice(0, q.i + 1).reduce((a, x) => a + x.add, 0) / r2.full) + ' total' : ''; })() + (gd ? ' · ' + mpGF(gd) + ' group DPS' : '') + '</span></div>' +
       '<p class="mpt-mtl">' + (tags.join(' ') || '<span class="mpt-t2g">✓ Clean</span>') + '</p>' + next + pack + plan + kicks + dps + died; };
   // (the pulls as tiles under the map (Flex, Nov 2: "any way to fill the dead space? Maybe the pull counter horizontal across the bottom somehow?"): the
@@ -62809,14 +62812,31 @@ function mpZoom(box, at) { if (!box) return; const fi = mpZoomF(box), st = MP.mz
     for (const el of svg.querySelectorAll('.mpt-mpl > circle')) { if (!el.dataset.r) { el.dataset.r = el.getAttribute('r'); el.dataset.csw = el.getAttribute('stroke-width') || ''; } el.setAttribute('r', (el.dataset.r * sf / z).toFixed(2)); if (el.dataset.csw) el.setAttribute('stroke-width', (el.dataset.csw * sf / z).toFixed(3)); }
     svg.classList.toggle('mpt-zin', z >= 1.5); for (const im of svg.querySelectorAll(z >= 1.5 ? '.mpt-ep image[data-href]' : '.mpt-epe image[data-href]')) { im.setAttribute('href', im.dataset.href); im.removeAttribute('data-href'); } /* (portraits load when shown) */
     mpTagSpread(svg, z, sf); mpEdges(svg, z, sf); } }
-// (the pull labels and the "then …" chip at this zoom: any two whose boxes (2 px apart) overlap are pushed apart along the shorter overlap, each half
-// the way, until none do; the labels keep their screen size, so the push is worked out in the map's units at this zoom)
-function mpTagSpread(svg, z, sf) { const L = [...svg.querySelectorAll('.mpt-mtag[data-tf], .mpt-mthen[data-tf]')].map((el) => { const [tx, ty, , sc] = el.dataset.tf.split(',').map(Number), oy = +el.dataset.oy || 0;
-    return { el, x: tx, y: ty + oy - oy * sf / z, s: sc * sf / z, b: (el.dataset.bb || '0,0,0,0').split(',').map(Number), dx: 0, dy: 0 }; });
-  const box = (a) => [a.x + a.dx + (a.b[0] - 2) * a.s, a.y + a.dy + (a.b[1] - 2) * a.s, a.x + a.dx + (a.b[2] + 2) * a.s, a.y + a.dy + (a.b[3] + 2) * a.s];
-  for (let it = 0; it < 40; it++) { let mv = false; for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) { const A = box(L[i]), B = box(L[j]), ox = Math.min(A[2], B[2]) - Math.max(A[0], B[0]), oy = Math.min(A[3], B[3]) - Math.max(A[1], B[1]); if (ox <= 0 || oy <= 0) continue; mv = true;
-      if (oy <= ox) { const d = (A[1] + A[3] < B[1] + B[3] ? -1 : 1) * oy / 2; L[i].dy += d; L[j].dy -= d; } else { const d = (A[0] + A[2] < B[0] + B[2] ? -1 : 1) * ox / 2; L[i].dx += d; L[j].dx -= d; } } if (!mv) break; }
-  for (const a of L) { const rot = a.el.dataset.tf.split(',')[2]; a.el.setAttribute('transform', 'translate(' + (a.x + a.dx).toFixed(1) + ',' + (a.y + a.dy).toFixed(1) + ')' + (rot ? ' rotate(' + rot + ')' : '') + ' scale(' + a.s.toFixed(4) + ')'); } }
+// (where each pull's label sits at this zoom (Flex: "place these inside the pulls", then "make sure the numbers arent covering things up on the pulls"):
+// worked out again at every zoom, since the marks keep their screen size. In route order, each label tries spots along the route inside its pull (from
+// its middle toward the pulls before and after it), then rings round its middle inside the outline, then the same outside it; it takes the first spot
+// that covers no enemy dot or portrait, boss portrait, ☠ or "!", and no label placed before it or the "then …" chip (each box 2 px wider). A boss
+// pull's starts just above the boss's portrait. Nothing clear: the spot that covers least)
+function mpTagSpread(svg, z, sf) { const TF = (el) => { const m = MP_TF.exec(el.getAttribute('transform') || ''); return m ? [+m[1], +m[2], +m[4]] : null; }, zin = z >= 1.5, ob = [], placed = [];
+  for (const c of svg.querySelectorAll('.mpt-mpl:not(.mpt-mtag) > circle')) ob.push([+c.getAttribute('cx'), +c.getAttribute('cy'), +c.getAttribute('r')]);
+  for (const el of svg.querySelectorAll('.mpt-ep, .mpt-bport, .mk-death, .mk-kick')) { const cl = el.classList, ep = cl.contains('mpt-ep'); if (ep && !zin && !cl.contains('mpt-epe')) continue; const t = TF(el); if (!t) continue;
+    ob.push([t[0], t[1], t[2] * (cl.contains('mpt-bport') ? 15 : ep ? (cl.contains('mpt-epe') ? 10 : 8) : cl.contains('mk-death') ? 10 : 11)]); }
+  const hl = svg.__hl || (svg.__hl = new Map([...svg.querySelectorAll('.mpt-hpg path')].map((p) => [p.closest('[data-pi]').dataset.pi, { p: (p.getAttribute('d').match(/-?[\d.]+ -?[\d.]+/g) || []).map((v) => v.split(' ').map(Number)), r: +p.getAttribute('stroke-width') / 2 }])));
+  const sd = (x, y, a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy, t = L ? Math.max(0, Math.min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / L)) : 0; return Math.hypot(x - a[0] - t * dx, y - a[1] - t * dy); };
+  const inside = (pi, x, y) => { const h = hl.get(pi); if (!h || !h.p.length) return false; const P = h.p; let d = 1e9, w = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { d = Math.min(d, sd(x, y, P[j], P[i]));
+      if (P.length > 2 && (P[i][1] > y) !== (P[j][1] > y) && x < (P[j][0] - P[i][0]) * (y - P[i][1]) / (P[j][1] - P[i][1]) + P[i][0]) w = !w; } return w || d <= h.r; };
+  const cost = (R) => { let o = 0; for (const [x, y, r] of ob) { const dx = Math.max(R[0] - x, 0, x - R[2]), dy = Math.max(R[1] - y, 0, y - R[3]); if (dx * dx + dy * dy < r * r) o++; } for (const Q of placed) if (R[0] < Q[2] && R[2] > Q[0] && R[1] < Q[3] && R[3] > Q[1]) o += 5; return o; };
+  const th = svg.querySelector('.mpt-mthen[data-bb]'); if (th) { const t = TF(th), b = th.dataset.bb.split(',').map(Number); if (t) placed.push([t[0] + b[0] * t[2], t[1] + b[1] * t[2], t[0] + b[2] * t[2], t[1] + b[3] * t[2]]); }
+  const pl = svg.querySelector('polyline[data-pis]'), pis = pl ? pl.dataset.pis.split(',') : [], rp = pl ? (pl.getAttribute('points') || '').trim().split(/\s+/).map((v) => v.split(',').map(Number)) : [];
+  const tags = [...svg.querySelectorAll('.mpt-mtag[data-tf]')].sort((a, b) => a.dataset.pi - b.dataset.pi);
+  for (const el of tags) { const [tx, ty, , sc] = el.dataset.tf.split(',').map(Number), oy = +el.dataset.oy || 0, s = sc * sf / z, b = (el.dataset.bb || '0,0,0,0').split(',').map(Number), pi = el.dataset.pi;
+    const st = [tx, ty + oy - oy * sf / z], box = (x, y) => [x + (b[0] - 2) * s, y + (b[1] - 2) * s, x + (b[2] + 2) * s, y + (b[3] + 2) * s], step = 5 * s, rt = [], rg = [];
+    const ix = pis.indexOf(pi), nb = ix < 0 ? [] : [rp[ix - 1], rp[ix + 1]].filter(Boolean);
+    for (let d = step; d <= 160 * s; d += step) for (const v of nb) { const L = Math.hypot(v[0] - st[0], v[1] - st[1]); if (L > 1 && d < L - 6 * s) rt.push(Object.assign([st[0] + (v[0] - st[0]) * d / L, st[1] + (v[1] - st[1]) * d / L], { r: 1 })); }
+    for (let j = 1; j <= 30; j++) for (let a = 0; a < 16; a++) { const an = -Math.PI / 2 + (a % 2 ? -1 : 1) * Math.ceil(a / 2) * Math.PI / 8; rg.push([st[0] + Math.cos(an) * j * 6 * s, st[1] + Math.sin(an) * j * 6 * s]); } /* (up first, then fanning out both ways) */
+    const all = [st, ...rt, ...rg], far = (c) => Math.hypot(c[0] - st[0], c[1] - st[1]) - (c.r ? 8 * s : 0), near = [...all].sort((a, b) => far(a) - far(b)); let pick = null, best = null, bc = 1e9;
+    for (const pass of [1, 0]) { for (const c of pass ? all : near) { /* (outside: the nearest clear spot to its middle, the route a little preferred) */ if (pass && !inside(pi, c[0], c[1])) continue; const k = cost(box(c[0], c[1])); if (!k) { pick = c; break; } if (k < bc) { bc = k; best = c; } } if (pick) break; }
+    const [x, y] = pick || best || st; placed.push(box(x, y)); el.setAttribute('transform', 'translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ') scale(' + s.toFixed(4) + ')'); } }
 // (each pull's crisp edge: the masked copy's width is the pad plus twice the rim, the rim kept ~1.6 px on screen at any zoom, 2.4 px on the picked pull)
 function mpEdges(svg, z, sf) { const v = svg.closest('.mpt-mdtv'), pick = v && v.classList.contains('pick'); if (!sf) { const bx = svg.closest('.mpt-mdt'); sf = bx ? mpSF(bx) : 1; } for (const el of svg.querySelectorAll('.mpt-hedge')) { const hot = pick && el.closest('.mpt-mpl.hot'); el.setAttribute('stroke-width', (+el.dataset.pad + 2 * el.dataset.e * (hot ? 1.5 : 1) * sf / (z || 1)).toFixed(2)); } }
 document.addEventListener('click', (e) => { const zb = e.target.closest && e.target.closest('[data-mz]'); if (!zb) return; const box = zb.closest('.mpt-mdt'); if (!box) return; mpZoom(box); const st = MP.mz, up = zb.dataset.mz === '1';
