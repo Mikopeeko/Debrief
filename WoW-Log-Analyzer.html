@@ -23799,6 +23799,7 @@ const PATCH_NOTES = [
     "Mythic+ map: kicks and crowd control. A green ring shows how many times each enemy was kicked, and a tag in each player's colour shows where their stuns and other CC landed. Each pull's card lists who kicked what, and who stunned how many. Pick a player under the map to see only their kicks, CC and deaths.",
     "Mythic+ map: click a ☠ to see how they died (their last hits, and which defensives were ready). Each pull's card also shows the plan for that boss or those enemies, who kicked and stopped, purges and dispels, and avoidable hits, with an Avoidable switch to pin them on the map. Hover a pull for a short summary.",
     "Mythic+ tab: your pulls on the map the way Mythic Dungeon Tools draws a route: each pull its own colour and number, around the enemies it took. Switch between you and the fast run, floor by floor, and hover a pull to light it up. A pull taken while the last one was still dying says chained.",
+    "Mythic+ map: the scroll wheel zooms in and out.",
     "On a smaller screen, the tiles at the top of Debriefing line up in even rows: no tile stretched across on its own and no empty gaps.",
     "The hovers on Debriefing's top tiles list every player, not just the first 10, and a tall hover stays on screen.",
     "Your recap is a side panel now: the full height of your screen on the right edge (or the left, with Side in /db card settings), one column that scrolls, in WoW and on your PC. Drag its inner edge on your PC to make it wider or narrower.",
@@ -62272,8 +62273,9 @@ function mpMapPeek(view, i) { if (!view) return; view.classList.toggle('peek', i
 function mpMapPP(name) { const box = document.querySelector('.mpt-mdt'); if (!box) return; name = name || ''; MP.pp = name;
   box.querySelectorAll('[data-mpp]').forEach((b) => b.classList.toggle('on', b.dataset.mpp === name));
   box.querySelectorAll('.mpt-mdtv[data-v="you"] [data-who]').forEach((el) => el.classList.toggle('pp-off', !!name && !el.dataset.who.split('|').includes(name))); }
-// (zoom (Flex: "the map should have a zoom in and zoom out option"): + and − step 1×, 1.5×, 2.25×, 3×; drag to pan; pinch on a phone. No reset, no
-// wheel or double-click (Flex's rules for maps, Oct 20/22). Tags, marks and the route keep their size on screen, so a busy pull spreads out. A
+// (zoom (Flex: "the map should have a zoom in and zoom out option"): + and − step 1×, 1.5×, 2.25×, 3×; the scroll wheel zooms smoothly in between
+// (Flex, Nov 2: "can you make it so scroll wheel zooms in and out too"; Debriefing's maps keep + and − only); drag to pan; pinch on a phone. No reset
+// and no double-click (Flex's rules for maps, Oct 20/22). Tags, marks and the route keep their size on screen, so a busy pull spreads out. A
 // new floor goes back to 1×; picking a pull pans to it; a redraw keeps the zoom; a drag never picks)
 const MP_ZS = [1, 1.5, 2.25, 3], MP_TF = /translate\(([-\d.]+),([-\d.]+)\)(?: rotate\(([-\d.]+)\))? scale\(([-\d.]+)\)/;
 const mpZoomF = (box) => { const b = box.querySelector('[data-mdtf].on'); if (b && b.closest('.mpt-flb')) return b.dataset.mdtf; const m = box.querySelector('.mpt-mdtm:not([hidden])'); return m ? m.dataset.f : '0'; };
@@ -62298,6 +62300,18 @@ document.addEventListener('click', (e) => { const zb = e.target.closest && e.tar
     const r = pan.svg.getBoundingClientRect(), vb = pan.svg.getAttribute('viewBox').split(' ').map(Number); mpZoom(pan.box, [pan.c[0] - dx / r.width * vb[2], pan.c[1] - dy / r.height * vb[3]]); });
   const end = (e) => { P.delete(e.pointerId); if (P.size < 2) pin = null; if (!P.size) pan = null; };
   document.addEventListener('pointerup', end); document.addEventListener('pointercancel', end); }
+// (the wheel: the spot under the mouse stays put. The page never gets stuck: at 1× a wheel down scrolls the page, at 3× a wheel up is swallowed, and a
+// wheel that was scrolling the page in the last 0.4 s keeps scrolling it. Ctrl + wheel (a laptop pinch) zooms the map, never the page)
+{ let pgT = 0, wh = 0;
+  document.addEventListener('scroll', () => { pgT = Date.now(); }, { passive: true, capture: true });
+  document.addEventListener('wheel', (e) => { const svg = e.target.closest && e.target.closest('.mpt-mdtm svg'); if (!svg) return; const box = svg.closest('.mpt-mdt'); if (!box) return;
+    if (!e.ctrlKey && Date.now() - pgT < 400) return; let dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? innerHeight : 1); if (!dy) return;
+    mpZoom(box); const st = MP.mz, z0 = st.z; if (z0 <= 1.001 && dy > 0 && !e.ctrlKey) return; e.preventDefault();
+    if (e.ctrlKey) dy = Math.max(-100, Math.min(100, dy * 6.67)); /* (a laptop pinch sends small steps: scaled so the map follows your fingers; a Ctrl + wheel notch zooms like a plain one) */
+    const z = Math.max(1, Math.min(3, z0 * Math.exp(-dy * 0.0015))); if (Math.abs(z - z0) < 1e-4) return;
+    document.querySelectorAll('.spc-tt').forEach((t) => { t.hidden = true; }); document.body.classList.add('mpz-wh'); clearTimeout(wh); wh = setTimeout(() => document.body.classList.remove('mpz-wh'), 250); /* (no hover card while it turns) */
+    const at = () => { const m = svg.getScreenCTM(); if (!m) return null; const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(m.inverse()); return [p.x, p.y]; };
+    const a = at(); st.z = z; mpZoom(box); const b = at(); if (a && b) mpZoom(box, [st.c[0] + a[0] - b[0], st.c[1] + a[1] - b[1]]); }, { passive: false }); }
 function mpMapRestore() { const p = MP.pick; if (p && document.querySelector('.mpt-mdtv[data-v="' + p.v + '"]')) mpMapPick(p.v, p.ids, p.sum); if (MP.pp) mpMapPP(MP.pp); if (MP.mz && MP.mz.z > 1) { const st = MP.mz; mpZoom(document.querySelector('.mpt-mdt'), st.c); } }
 document.addEventListener('click', (e) => { const t = e.target; if (!t.closest) return; const box = t.closest('.mpt-mdt');
   if (MP.dragT && Date.now() - MP.dragT < 250 && t.closest('.mpt-mdtm')) { e.stopPropagation(); e.preventDefault(); return; } /* (the end of a drag or pinch, not a pick) */
@@ -62771,6 +62785,7 @@ html:not([data-theme]) .mpt .mpt-chap{background-image:linear-gradient(rgba(255,
 .mpf-kt{min-width:0;font:500 13.5px var(--body);color:#c9ced8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .mpf-kt small{color:var(--faint);font-size:12.5px} .mpf-res2{font:600 13.5px var(--head)} .mpf-dt2{color:var(--faint);font-size:13px;text-align:right}
 .mpf-kr .mpf-op{pointer-events:none} .mpt .mpf-showm{margin:4px 0 2px;font:600 12.5px var(--body)} .mpf-home .mpf-foot2{margin:-18px 0 0;font:500 12.5px var(--body);color:var(--faint)}
 @media (max-width:600px){ .mpf .mpf-kr{grid-template-columns:40px minmax(0,1fr) auto auto;gap:8px} .mpf-dt2{display:none} .mpf-kl{padding-left:0} .mpf-keys{padding:4px 12px 8px} }
+body.mpz-wh .spc-tt{display:none !important}
 `;
  // (and src/mptab.js, the Mythic+ tab (Nov 1))
 })();
