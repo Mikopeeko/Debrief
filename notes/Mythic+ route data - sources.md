@@ -31,7 +31,7 @@ From Raider.IO's season list ("MN Season 2", started Aug 18, 2026). Timers are t
 - The 100% forces come from Mythic Dungeon Tools. Raider.IO's real runs show the same totals (checked: Voidscar Arena, Kings' Rest, Temple of Sethraliss, Ruby Life Pools).
 - The three returning dungeons count only in this season's version. Both sources list them under Midnight Season 2, edited in October 2026.
 
-**Side finding: three timers in the app are off by a minute.** `companion/mplus.js` (TIMER) has Altar of Fangs at 29, The Blinding Vale at 31 and Temple of Sethraliss at 33. This season's runs say 30, 30 and 32. The Blinding Vale and Temple cuts were made in testing, before 12.1 went live. So an Altar key done in 29:30 shows as "over time" when it was timed. I changed no code. This is a follow-up for the in-game addon chat.
+**Side finding: three timers in the app were off by a minute.** `companion/mplus.js` (TIMER) has Altar of Fangs at 29, The Blinding Vale at 31 and Temple of Sethraliss at 33. This season's runs say 30, 30 and 32. The Blinding Vale and Temple cuts were made in testing, before 12.1 went live. So an Altar key done in 29:30 shows as "over time" when it was timed. I changed no code. Fixed on main in 6d0a29a (Nov 1).
 
 ---
 
@@ -103,7 +103,7 @@ From Raider.IO's season list ("MN Season 2", started Aug 18, 2026). Timers are t
 ## 4. Warcraft Logs v2 API
 
 **What it has for this season**
-- **Fastest runs at a key level:** `worldData.encounter(id).fightRankings(bracket, metric: speed)`. The docs say that for WoW, "brackets are … keystones". So bracket 12 means +12 runs. (A `score` metric exists too.) Each result points to a report and fight. We already call `fightRankings` for raid kills in `src/wcl.js`.
+- **Fastest runs at a key level:** `worldData.encounter(id).fightRankings(bracket, metric: speed)`. The docs say that for WoW, "brackets are … keystones". **The bracket is the key level minus 1**, so bracket 11 returns +12 runs. The Mythic+ tab builder tested this on Nov 1; the docs don't say it. (A `score` metric exists too.) Each result points to a report and fight. We already call `fightRankings` for raid kills in `src/wcl.js`.
 - **The pulls of a run:** `report.fights { dungeonPulls { ... } }` gives each pull:
   - `startTime` and `endTime`
   - `x` and `y`: where the first mob was hit (the pull's marker)
@@ -116,7 +116,15 @@ From Raider.IO's season list ("MN Season 2", started Aug 18, 2026). Timers are t
 
 **How we'd get it**
 - Through our Worker with the Warcraft Logs key already stored in Cloudflare. No new account.
-- First build step: one lookup to find the Season 2 Mythic+ zone and each dungeon's encounter ID.
+- The Season 2 Mythic+ zone is 55. Its dungeon encounter IDs, found by the Mythic+ tab builder on Nov 1:
+  - Altar of Fangs 12993
+  - Den of Nalorakk 12825
+  - Kings' Rest 61762
+  - Murder Row 12813
+  - Ruby Life Pools 112521
+  - Temple of Sethraliss 61877
+  - The Blinding Vale 12859
+  - Voidscar Arena 12923
 
 **Limits and terms**
 - Each call uses some of our hourly Warcraft Logs points. A comparison is about 1 rankings call plus 2 or 3 calls per run. Cache each dungeon and key level for a day.
@@ -162,7 +170,7 @@ Build in this order. Each step works on its own.
 ## Worked example: Voidscar Arena +12
 
 **Could we get the fastest timed +12 runs, their pulls and their forces?** Yes:
-- the runs come from Warcraft Logs (bracket 12, fastest first)
+- the runs come from Warcraft Logs (bracket 11 for +12 keys, fastest first)
 - the pulls and positions from `dungeonPulls` and the run's events
 - the forces from our table
 
