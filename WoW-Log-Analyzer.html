@@ -61106,7 +61106,12 @@ const MPK = { busy: false, ran: false, err: '', n: 0, of: 0, t0: 0, pick: '', mo
 const mpkGet = () => { try { const j = JSON.parse(store.get(MP_KEYK) || 'null'); if (j && j.chars) { j.added = j.added || []; return j; } } catch (e) { /* (unreadable: start again) */ } return { chars: {}, added: [] }; };
 const mpkSet = (j) => { try { store.set(MP_KEYK, JSON.stringify(j)); } catch (e) { /* (full: kept for this visit) */ } };
 const mpkOf = (it) => ({ code: it.wcl.code, fight: it.wcl.fight, boss: it.boss, level: it.level, keyMs: it.keyMs, timed: it.timed, up: it.up, wallMs: it.wallMs, duration: it.duration });
-const mpkChars = () => groups().filter((g) => g.kind === 'char' && g.id);
+// (whose keys: every character saved on Debrief, plus every character the Warcraft Logs sign-in sent, once each (Flex: "it was only showing my druid
+// and not my paladin"); one with no Mythic+ upload this season is left out (mpkImport marks it))
+const mpkChars = () => { const out = [], seen = new Set(); for (const g of groups()) if (g.kind === 'char' && g.id && !seen.has(+g.id)) { seen.add(+g.id); out.push(g); }
+  const w = WCL.HOSTED && typeof wclMe === 'function' ? wclMe() : null;
+  for (const c of (w && w.chars) || []) if (c.id && !seen.has(+c.id)) { seen.add(+c.id); out.push({ id: c.id, name: c.n, cls: (typeof WCL_CLS !== 'undefined' && WCL_CLS[c.cls]) || '', server: (c.srv || '') + (c.srv && c.reg ? ' (' + String(c.reg).toUpperCase() + ')' : ''), kind: 'char', signin: true }); }
+  return out; };
 const mpkId = (it) => [mpLc(it.boss), it.level, it.keyMs || 'x' + Math.round((it.duration || 0) / 60), new Date(it.wallMs).toISOString().slice(0, 10)].join('|');
 async function mpkImport() {
   const cs = mpkChars(); if (!cs.length || MPK.busy) return;
@@ -61114,7 +61119,10 @@ async function mpkImport() {
   Object.assign(MPK, { busy: true, err: '', n: 0, of: 0, t0: Date.now() }); store.set(IMPORT_LOCK, String(Date.now())); mpfDraw();
   let creds = null; try { creds = await wclCreds(); } catch (e) { creds = null; }
   try { const J = mpkGet(), todo = [];
-    for (const g of cs) { const c = J.chars[g.id] || { done: {} }; for (const x of await WCL.charReports(creds, g.id)) if (MP_SEASON(x.zone) && (c.done || {})[x.code] !== x.endTime) todo.push({ g, x }); }
+    for (const g of cs) { const c = J.chars[g.id] || (J.chars[g.id] = { done: {}, keys: [] }), p1 = await WCL.charReportsPage(creds, g.id, 1).catch(() => null); /* (no Mythic+ on the first page of uploads: none this season; left out) */
+      c.none = !p1 || !p1.data.some((x) => MP_SEASON(x.zone)); if (c.none) continue; /* (one that can't be read is skipped; the rest carry on) */
+      for (const x of await WCL.charReports(creds, g.id).catch(() => [])) if (MP_SEASON(x.zone) && (c.done || {})[x.code] !== x.endTime) todo.push({ g, x }); }
+    mpkSet(J);
     todo.sort((a, b) => b.x.startTime - a.x.startTime); MPK.of = todo.length; mpfDraw();
     for (let i = 0; i < todo.length; i += 3) { store.set(IMPORT_LOCK, String(Date.now())); const batch = todo.slice(i, i + 3), reps = await Promise.all(batch.map(({ x }) => WCL.loadReport(creds, x.code).catch(() => null))), J2 = mpkGet();
       batch.forEach(({ g, x }, b) => { const c = J2.chars[g.id] || (J2.chars[g.id] = { done: {}, keys: [] }), rep = reps[b], nm = mpLc(g.name); if (!rep) return; /* (a private upload is tried again next time) */
@@ -61146,7 +61154,7 @@ function mpfByDungeon(rows, id, people) { const pick = people && people.length >
     return '<details class="mpf-dgh" id="' + sid + '" open><summary><b>' + esc(d) + '</b><span>' + (b ? '<b class="' + br.c + '">+' + b.level + ' · ' + br.t + '</b> <span class="mpt-m">' + plural(L.length, 'key') + '</span>' : '') + '</span></summary>' +
       (L.length ? '<div class="mpf-l">' + L.slice(0, more ? L.length : 3).map((r) => mpfRow2(r, ccOf)).join('') + '</div>' + (L.length > 3 ? '<button type="button" class="linkbtn mpf-showm" data-mpfm="' + sid + '">' + (more ? 'Show fewer' : 'Show ' + (L.length - 3) + ' more') + '</button>' : '')
         : '<p class="mpf-none">No keys yet.</p>') + '</details>'; }).join(''); }
-function mpkHtml(cs) { const rows = mpkRows(cs), people = cs.map((g) => ({ name: g.name, cls: g.cls }));
+function mpkHtml(cs) { const rows = mpkRows(cs), people = cs.filter((g) => rows.some((r) => r.who.includes(g.name))).map((g) => ({ name: g.name, cls: g.cls }));
   const left = MPK.n ? (Date.now() - MPK.t0) / MPK.n * (MPK.of - MPK.n) / 1000 : 0, eta = left ? ' · about ' + (left < 60 ? 'a minute' : Math.round(left / 60) + ' min') + ' left' : '';
   const prog = MPK.busy ? '<p class="mpf-msg">Finding keys for ' + plural(cs.length, 'character') + (MPK.of ? ': ' + MPK.n + ' of ' + MPK.of + ' uploads (' + Math.round(100 * MPK.n / MPK.of) + '%)' + eta : '…') + '</p>' : MPK.err ? '<p class="mpf-msg mpt-bad">' + esc(MPK.err) + '</p>' : '';
   return prog + mpfByDungeon(rows, 'mptK', people); }
@@ -62115,7 +62123,7 @@ function mpMapHtml(R, F, tl) {
           pts.map((v, j) => '<circle cx="' + v[0].toFixed(1) + '" cy="' + v[1].toFixed(1) + '" r="' + ((g[j].boss ? 7 : 4.5) * k).toFixed(1) + '" fill="' + q.c + '" stroke="#0f1117" stroke-width="' + (1.2 * k).toFixed(1) + '"/>').join(''); };
       shapes.push('<g class="mpt-mpl" data-pi="' + q.i + '"' + mpT1(tip(q)) + '>' + groups.map(shape).join('') + '</g>');
       const top = big.reduce((a, v) => (v[1] < a[1] ? v : a)), wt = q.wait ? '⏱' + mpMM(q.wait) : '', ww = wt.length * 7 + 8;
-      tags.push('<g class="mpt-mpl mpt-mtag" data-pi="' + q.i + '"' + mpT1(tip(q)) + ' transform="translate(' + top[0].toFixed(1) + ',' + (top[1] - 26 * k).toFixed(1) + ') scale(' + k.toFixed(3) + ')"><rect x="-14" y="-12" width="28" height="22" rx="4" fill="#0f1117" stroke="' + q.c + '" stroke-width="2"/><text y="5" text-anchor="middle" fill="' + q.c + '">' + (q.p.boss ? '★' : mpNo(q.RR, q.p.n)) + '</text>' +
+      tags.push('<g class="mpt-mpl mpt-mtag" data-pi="' + q.i + '" data-oy="' + (26 * k).toFixed(1) + '"' + mpT1(tip(q)) + ' transform="translate(' + top[0].toFixed(1) + ',' + (top[1] - 26 * k).toFixed(1) + ') scale(' + k.toFixed(3) + ')"><rect x="-14" y="-12" width="28" height="22" rx="4" fill="#0f1117" stroke="' + q.c + '" stroke-width="2"/><text y="5" text-anchor="middle" fill="' + q.c + '">' + (q.p.boss ? '★' : mpNo(q.RR, q.p.n)) + '</text>' +
         (q.bad ? '<circle class="mk-bad" cx="13" cy="-11" r="5" fill="#e5534b" stroke="#0f1117" stroke-width="1.5"/>' : '') +
         (q.lust ? '<g class="mk-lust"><rect x="17" y="-11" width="20" height="20" rx="4" fill="#0f1117" stroke="#ffd166" stroke-width="1.5"/><text x="27" y="4" text-anchor="middle" fill="#ffd166" style="font-size:12px">⚡</text></g>' : '') +
         (wt ? '<g class="mk-wait"><rect x="' + (-17 - ww) + '" y="-10" width="' + ww + '" height="18" rx="4" fill="#0f1117" stroke="#95a0ab" stroke-width="1"/><text x="' + (-17 - ww / 2) + '" y="3.5" text-anchor="middle" fill="#c9cdd3" style="font-size:11px">' + wt + '</text></g>' : '') + '</g>');
@@ -62209,7 +62217,8 @@ function mpMapHtml(R, F, tl) {
       '<span class="mpt-ptm">' + mpMM(q.p.dur) + '</span><span class="mpt-pfc">' + (pct ? '+' + fmt(pct) : '<span class="mpt-m">—</span>') + '</span></li>'; }).join('') + '</ol>';
   const f0 = Math.max(0, floors.findIndex((x) => x.us[0].length));
   const views = runs.map(([v, RR], ri) => { const Q = pullsOf(RR);
-    return '<div class="mpt-mdtv" data-v="' + v + '" data-n="' + Q.length + '"' + (ri ? ' hidden' : '') + '><div class="mpt-mgrid"><div class="mpt-mwrap">' + floors.map((fl, j) => '<div class="mpt-mdtm" data-f="' + j + '"' + (j === f0 ? '' : ' hidden') + '>' + svg(Q, fl) + '</div>').join('') + '</div>' +
+    return '<div class="mpt-mdtv" data-v="' + v + '" data-n="' + Q.length + '"' + (ri ? ' hidden' : '') + '><div class="mpt-mgrid"><div class="mpt-mwrap">' + floors.map((fl, j) => '<div class="mpt-mdtm" data-f="' + j + '"' + (j === f0 ? '' : ' hidden') + '>' + svg(Q, fl) + '</div>').join('') +
+      '<div class="zctl mpt-zctl"><button type="button" data-mz="1" aria-label="Zoom in">+</button><button type="button" data-mz="-1" aria-label="Zoom out">−</button></div></div>' +
       '<div class="mpt-mside"><div class="mpt-mcard"><p class="mpt-mc0">Click a pull, or press ▶, to see what happened in it.</p><div class="mpt-mcx" hidden></div>' + Q.map((q) => '<div class="mpt-mc" data-pi="' + q.i + '" hidden>' + card(q, v) + '</div>').join('') + '</div>' + list(Q) + '</div></div></div>'; }).join('');
   const tg = runs.length > 1 ? '<div class="mpt-mtg" role="group" aria-label="Whose pulls">' + runs.map(([v, RR], ri) => '<button type="button" data-mdtv="' + v + '" aria-pressed="' + !ri + '"' + (ri ? '' : ' class="on"') + '>' + (v === 'you' ? 'You' : 'Fast run') + ' · ' + plural(RR.pulls.filter((p) => !p.boss).length, 'pull') + '</button>').join('') + '</div>' : '';
   const chips = '<div class="mpt-mchips" role="group" aria-label="Show on the map">' + [['r', '⋯', 'Route'], ['d', '☠', 'Deaths'], ['k', '!', 'Missed kicks'], ['l', '⚡', 'Lust'], ['w', '⏱', 'Waits'], ['c', '●', 'Kicks & CC'], ['a', '◆', 'Avoidable', 1]].map(([c, i, l, off]) => '<button type="button" class="mpt-mchip' + (off ? '' : ' on') + ' mpt-mchip-' + c + '" data-mchip="' + c + '" aria-pressed="' + !off + '"><i>' + i + '</i>' + l + '</button>').join('') + '</div>';
@@ -62219,7 +62228,7 @@ function mpMapHtml(R, F, tl) {
   return '<div class="mpt-mdt no-a"><div class="mpt-mdtc">' + tg + chips + '</div>' + pp + '<div class="mpt-mrow">' + fb + step + '</div>' + views + strip + '</div>'; }
 // (picking: a click or tap on a shape, tag, mark, list row, timeline block or ◀ ▶. The map goes to the pull's floor, the pull lights up and the
 // rest dim, the card shows it; the pick stays when the tab redraws. A hover only lights up (MP.peek), never moving the card or the floor)
-const mpMdtFloor = (box, j) => { if (!box || j == null || j === '') return; j = String(j); box.querySelectorAll('[data-mdtf]').forEach((x) => x.classList.toggle('on', x.dataset.mdtf === j)); box.querySelectorAll('.mpt-mdtm').forEach((m) => { m.hidden = m.dataset.f !== j; }); };
+const mpMdtFloor = (box, j) => { if (!box || j == null || j === '') return; j = String(j); if (MP.mz && MP.mz.f !== j) MP.mz = { f: j, z: 1, c: null }; box.querySelectorAll('[data-mdtf]').forEach((x) => x.classList.toggle('on', x.dataset.mdtf === j)); box.querySelectorAll('.mpt-mdtm').forEach((m) => { m.hidden = m.dataset.f !== j; }); };
 function mpMapView(box, v) { box.querySelectorAll('[data-mdtv]').forEach((x) => { x.classList.toggle('on', x.dataset.mdtv === v); x.setAttribute('aria-pressed', String(x.dataset.mdtv === v)); }); box.querySelectorAll('.mpt-mdtv').forEach((x) => { x.hidden = x.dataset.v !== v; }); }
 function mpMapPick(v, ids, sum) { const box = document.querySelector('.mpt-mdt'); if (!box) return; const view = box.querySelector('.mpt-mdtv[data-v="' + v + '"]'); if (!view) return;
   if (view.hidden) mpMapView(box, v); ids = [].concat(ids).map(String); const one = ids.length === 1 && !sum;
@@ -62230,14 +62239,41 @@ function mpMapPick(v, ids, sum) { const box = document.querySelector('.mpt-mdt')
   box.querySelectorAll('.mpt-mstrip .mpt-blk[data-pi]').forEach((b) => b.classList.toggle('hot', b.dataset.run === v && ids.includes(b.dataset.pi)));
   const lab = box.querySelector('.mpt-mstep span'); if (lab && li) lab.textContent = one ? li.dataset.lab + ' · ' + (+ids[0] + 1) + ' of ' + view.dataset.n : plural(ids.length, 'pull') + ' lit up';
   if (li) { const ol = li.parentNode; if (li.offsetTop < ol.scrollTop || li.offsetTop + li.offsetHeight > ol.scrollTop + ol.clientHeight) ol.scrollTop = li.offsetTop - ol.clientHeight / 2; }
-  MP.pick = { v, ids, sum: sum || '' }; }
+  MP.pick = { v, ids, sum: sum || '' };
+  if (MP.mz && MP.mz.z > 1) { const tg = view.querySelector('.mpt-mdtm:not([hidden]) .mpt-mtag[data-pi="' + ids[0] + '"]'); if (tg && tg.dataset.tf) { const [tx, ty] = tg.dataset.tf.split(',').map(Number); mpZoom(box, [tx, ty + (+tg.dataset.oy || 0)]); } else mpZoom(box); } }
 function mpMapPeek(view, i) { if (!view) return; view.classList.toggle('peek', i != null); view.querySelectorAll('[data-pi]').forEach((x) => x.classList.toggle('pk', i != null && x.dataset.pi === String(i))); }
 // (pick a player: only their kick, CC and death marks on the map, the others' rows in the card faded; the Home character is the default later)
 function mpMapPP(name) { const box = document.querySelector('.mpt-mdt'); if (!box) return; name = name || ''; MP.pp = name;
   box.querySelectorAll('[data-mpp]').forEach((b) => b.classList.toggle('on', b.dataset.mpp === name));
   box.querySelectorAll('.mpt-mdtv[data-v="you"] [data-who]').forEach((el) => el.classList.toggle('pp-off', !!name && !el.dataset.who.split('|').includes(name))); }
-function mpMapRestore() { const p = MP.pick; if (p && document.querySelector('.mpt-mdtv[data-v="' + p.v + '"]')) mpMapPick(p.v, p.ids, p.sum); if (MP.pp) mpMapPP(MP.pp); }
+// (zoom (Flex: "the map should have a zoom in and zoom out option"): + and − step 1×, 1.5×, 2.25×, 3×; drag to pan; pinch on a phone. No reset, no
+// wheel or double-click (Flex's rules for maps, Oct 20/22). Tags, marks and the route keep their size on screen, so a busy pull spreads out. A
+// new floor goes back to 1×; picking a pull pans to it; a redraw keeps the zoom; a drag never picks)
+const MP_ZS = [1, 1.5, 2.25, 3], MP_TF = /translate\(([-\d.]+),([-\d.]+)\)(?: rotate\(([-\d.]+)\))? scale\(([-\d.]+)\)/;
+const mpZoomF = (box) => { const b = box.querySelector('[data-mdtf].on'); if (b && b.closest('.mpt-flb')) return b.dataset.mdtf; const m = box.querySelector('.mpt-mdtm:not([hidden])'); return m ? m.dataset.f : '0'; };
+function mpZoom(box, at) { if (!box) return; const fi = mpZoomF(box), st = MP.mz && MP.mz.f === fi ? MP.mz : (MP.mz = { f: fi, z: 1, c: null }); if (at) st.c = at;
+  for (const svg of box.querySelectorAll('.mpt-mdtm[data-f="' + fi + '"] svg')) { const b = (svg.dataset.vb || (svg.dataset.vb = svg.getAttribute('viewBox'))).split(' ').map(Number), z = st.z, w = b[2] / z, h = b[3] / z;
+    const c = st.c || [b[0] + b[2] / 2, b[1] + b[3] / 2], x = Math.max(b[0], Math.min(b[0] + b[2] - w, c[0] - w / 2)), y = Math.max(b[1], Math.min(b[1] + b[3] - h, c[1] - h / 2)); st.c = [x + w / 2, y + h / 2];
+    svg.setAttribute('viewBox', [x, y, w, h].map((v) => v.toFixed(1)).join(' ')); svg.style.touchAction = z > 1 ? 'none' : 'pan-y';
+    for (const el of svg.querySelectorAll('[transform]')) { if (!el.dataset.tf) { const m = MP_TF.exec(el.getAttribute('transform')); if (!m) continue; el.dataset.tf = [m[1], m[2], m[3] || '', m[4]].join(','); }
+      const [tx, ty, rot, sc] = el.dataset.tf.split(','), oy = +el.dataset.oy || 0; el.setAttribute('transform', 'translate(' + tx + ',' + (+ty + oy - oy / z).toFixed(1) + ')' + (rot ? ' rotate(' + rot + ')' : '') + ' scale(' + (sc / z).toFixed(4) + ')'); }
+    for (const el of svg.querySelectorAll('polyline, line')) { if (el.dataset.sw == null) { el.dataset.sw = el.getAttribute('stroke-width') || ''; el.dataset.da = el.getAttribute('stroke-dasharray') || ''; }
+      if (el.dataset.sw) el.setAttribute('stroke-width', (el.dataset.sw / z).toFixed(3)); if (el.dataset.da) el.setAttribute('stroke-dasharray', el.dataset.da.split(' ').map((v) => (v / z).toFixed(2)).join(' ')); }
+    for (const el of svg.querySelectorAll('.mpt-mpl > circle')) { if (!el.dataset.r) el.dataset.r = el.getAttribute('r'); el.setAttribute('r', (el.dataset.r / z).toFixed(2)); } } }
+document.addEventListener('click', (e) => { const zb = e.target.closest && e.target.closest('[data-mz]'); if (!zb) return; const box = zb.closest('.mpt-mdt'); if (!box) return; mpZoom(box); const st = MP.mz, up = zb.dataset.mz === '1';
+  st.z = up ? (MP_ZS.find((v) => v > st.z + 0.01) || 3) : ([...MP_ZS].reverse().find((v) => v < st.z - 0.01) || 1); mpZoom(box); });
+{ const P = new Map(); let pan = null, pin = null;
+  document.addEventListener('pointerdown', (e) => { const svg = e.target.closest && e.target.closest('.mpt-mdtm svg'); if (!svg) return; P.set(e.pointerId, [e.clientX, e.clientY]); const box = svg.closest('.mpt-mdt'); mpZoom(box);
+    if (P.size === 2) { const [a, b] = [...P.values()]; pin = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), z: MP.mz.z, box }; pan = null; } else if (P.size === 1) pan = { x: e.clientX, y: e.clientY, c: MP.mz.c.slice(), svg, box, moved: false }; });
+  document.addEventListener('pointermove', (e) => { if (!P.has(e.pointerId)) return; P.set(e.pointerId, [e.clientX, e.clientY]);
+    if (pin && P.size === 2) { const [a, b] = [...P.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]); MP.mz.z = Math.max(1, Math.min(3, pin.z * d / (pin.d || 1))); mpZoom(pin.box); MP.dragT = Date.now(); return; }
+    if (!pan) return; const dx = e.clientX - pan.x, dy = e.clientY - pan.y; if (!pan.moved && Math.hypot(dx, dy) < 5) return; pan.moved = true; MP.dragT = Date.now();
+    const r = pan.svg.getBoundingClientRect(), vb = pan.svg.getAttribute('viewBox').split(' ').map(Number); mpZoom(pan.box, [pan.c[0] - dx / r.width * vb[2], pan.c[1] - dy / r.height * vb[3]]); });
+  const end = (e) => { P.delete(e.pointerId); if (P.size < 2) pin = null; if (!P.size) pan = null; };
+  document.addEventListener('pointerup', end); document.addEventListener('pointercancel', end); }
+function mpMapRestore() { const p = MP.pick; if (p && document.querySelector('.mpt-mdtv[data-v="' + p.v + '"]')) mpMapPick(p.v, p.ids, p.sum); if (MP.pp) mpMapPP(MP.pp); if (MP.mz && MP.mz.z > 1) { const st = MP.mz; mpZoom(document.querySelector('.mpt-mdt'), st.c); } }
 document.addEventListener('click', (e) => { const t = e.target; if (!t.closest) return; const box = t.closest('.mpt-mdt');
+  if (MP.dragT && Date.now() - MP.dragT < 250 && t.closest('.mpt-mdtm')) { e.stopPropagation(); e.preventDefault(); return; } /* (the end of a drag or pinch, not a pick) */
   const sv = t.closest('[data-mdtv]'); if (sv && box) { mpMapView(box, sv.dataset.mdtv); return; }
   const sf = t.closest('[data-mdtf]'); if (sf && box) { mpMdtFloor(box, sf.dataset.mdtf); return; }
   const pb = t.closest('[data-mpp]'); if (pb && box) { mpMapPP(pb.dataset.mpp); return; }
@@ -62662,7 +62698,7 @@ html:not([data-theme]) .mpt .mpt-chap{background-image:linear-gradient(rgba(255,
 .mpt-mstep{display:flex;align-items:center;gap:8px} .mpt .mpt-mstep button{height:28px;margin:0;padding:0 10px;border:1px solid var(--line2);border-radius:4px;background:none;color:var(--text);font:600 13px var(--body);cursor:pointer}
 .mpt-mstep span{min-width:150px;text-align:center;font:600 13px var(--body);color:var(--text)}
 .mpt-mgrid{display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,1.2fr);gap:12px;align-items:start}
-.mpt-mwrap .mpt-mdtm{aspect-ratio:16/10}
+.mpt-mwrap{position:relative} .mpt-mwrap .mpt-mdtm{aspect-ratio:16/10} .mpt-mdtm svg{touch-action:pan-y} .mpt-zctl{z-index:2} .mpt .mpt-zctl button{margin:0;font:700 16px var(--body);line-height:1}
 .mpt-mdtv .mpt-mpl,.mpt-mdtv .mpt-mk{transition:opacity .12s;cursor:pointer}
 .mpt-mdtv.pick:not(.peek) .mpt-mpl:not(.hot),.mpt-mdtv.pick:not(.peek) .mpt-mk:not(.hot){opacity:.15}
 .mpt-mdtv.peek .mpt-mpl:not(.pk),.mpt-mdtv.peek .mpt-mk:not(.pk){opacity:.35}
