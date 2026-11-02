@@ -1105,8 +1105,8 @@ const MP_ROUTE = {
 // - Lust: a Bloodlust-type buff landing on the group (Time Warp, ID 80353, on Flex's +19 of Oct 10); within 20 s is the same Lust
 // - big cooldowns: each player's casts of their spec's big cooldowns, the Rotation tab's own list (GEN_SPECS[spec].cds)
 // - damage taken: what enemies did to the group, each pull)
-// (crowd control a player put on an enemy, by the aura it leaves (the key reader's own list); knockbacks and grips by their cast (Nov 2, the map's
-// Kicks & CC layer))
+// (crowd control a player put on an enemy, by the aura it leaves (the key reader's own list); knockbacks and grips by their cast (Nov 2; the pull card's
+// Kicks & CC fold))
 const MP_KNOCK = new Set(['blast wave', 'gorefiend\'s grasp', 'death grip', 'mass grip', 'supernova', 'gravity lapse', 'typhoon', 'thunderstorm', 'ursol\'s vortex', 'wing buffet', 'tail swipe']);
 const MP_CC = new Set(['leg sweep', 'shadowfury', 'static charge', 'hammer of justice', 'kidney shot', 'cheap shot', 'storm bolt', 'shockwave', 'intimidating shout', 'war stomp', 'chaos nova', 'fel eruption', 'mighty bash', 'maim',
   'asphyxiate', 'blinding light', 'incapacitating roar', 'paralysis', 'binding shot', 'intimidation', 'psychic scream', 'psychic horror', 'silence', 'solar beam', 'sigil of silence', 'sigil of misery', 'strangulate', 'dragon\'s breath',
@@ -1165,7 +1165,7 @@ function mpScan(it, R, text) {
   const short = (n) => String(n || '').replace(/-.*$/, ''), num = (x) => { const v = +x; return v === v ? v : 0; };
   let t0 = null, pi = 0, i = 0;
   const lastPos = new Map(), deathPos = [], castPos = [], ksp = new Set(); for (const p of P) for (const x of (p.through || []).concat(p.minor || [])) ksp.add(mpLc(x.spell)); /* (the map chapter: ☠ and !N spots) */
-  const kickEv = [], ccEv = [], petOwn = new Map(), npcPos = new Map(), uq = (v) => String(v || '').replace(/^"|"$/g, ''); /* (the Kicks & CC layer) */
+  const kickEv = [], ccEv = [], petOwn = new Map(), npcPos = new Map(), uq = (v) => String(v || '').replace(/^"|"$/g, ''); /* (the pull card's Kicks & CC) */
   const hitsOf = new Map(), maxOf = new Map(), defUse = new Map(), avSet = new Set(), avHits = [], avLast = new Map(), DEF = new Map(), roleOf = new Map((R.people || []).map((x) => [x.name, x.role])); /* (how they died, and avoidable hits pinned: the map extras) */
   for (const p of P) for (const a of p.avoid || []) avSet.add(mpLc(a.spell)); for (const l of Object.values(E.DEFENSIVES || {})) for (const d of l) DEF.set(+d[1], d);
   const U = new Map(), uOf = (g, n) => { let u = U.get(g); if (!u) U.set(g, u = { g, n: '', fl: 0, at: null, hp: 0, hit: null, died: null, sum: false }); if (n && !u.n) u.n = String(n).replace(/^"|"$/g, ''); return u; }; /* (each enemy, for the map of pulls (Nov 2)) */
@@ -1342,7 +1342,6 @@ function mpMapHtml(R, F, tl) {
   const en = (q) => { const n = q.us.filter((u) => !u.boss).length || (q.p.boss ? 0 : mpCnt(q.RR, q.p)); return q.p.boss && !q.add ? (n ? plural(n, 'add') : 'no adds') : plural(n, 'enemy').replace(/enemys$/, 'enemies'); };
   const nm = (q) => (q.p.boss ? esc(q.p.boss) + (q.add ? ', with trash' : '') : 'Pull ' + mpNo(q.RR, q.p.n));
   const badge = (q) => '<span class="mpt-nb" style="border-color:' + q.c + ';color:' + q.c + '">' + (q.p.boss ? '★' : mpNo(q.RR, q.p.n)) + '</span>';
-  const tw = (k) => (k === 1 ? 'once' : k === 2 ? 'twice' : k + ' times');
   const kgrp = (L) => { const m = new Map(); for (const x of L || []) { const o = m.get(x.spell) || { n: 0, r: new Set() }; o.n++; for (const w of x.ready || []) o.r.add(w); m.set(x.spell, o); } return [...m]; };
   const tip =(q) => mpPullTip(q.RR, q.i, [q.wait ? '<span class="mpt-tg2">⏱ waited ' + mpMM(q.wait) + '</span>' : '', q.chained ? '<span class="mpt-tg2">chained</span>' : '', q.us && !q.us.length ? '<span class="mpt-tg2">no spot</span>' : ''].filter(Boolean)); /* (the studio's item 15) */
   // (Know this dungeon's tips on the matching pulls: a boss's plan; trash tips only for named enemies that were in the pull. At most 3)
@@ -1384,32 +1383,6 @@ function mpMapHtml(R, F, tl) {
       for (const [L, n, cls, col] of [[q.kh, (q.p.through || []).length, 'mk-kick', '#c39bff'], [q.km, (q.p.minor || []).length, 'mk-kick mk-kick2', '#95a0ab']]) { const l = L.filter(here); if (!l.length) continue;
         const [x, y] = px(f, { x: l.reduce((a, c) => a + c.x, 0) / l.length, y: l.reduce((a, c) => a + c.y, 0) / l.length });
         marks.push('<g class="mpt-mk ' + cls + '" data-pi="' + q.i + '"' + mpT1('<b>' + plural(n, 'cast') + ' went off with a kick ready</b> · ' + nm(q)) + ' transform="translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ') scale(' + k.toFixed(3) + ')"><circle r="11" fill="#0f1117" stroke="' + col + '" stroke-width="2"/><text y="4.5" text-anchor="middle" fill="' + col + '" style="font-size:12px">!' + n + '</text></g>'); }
-      // (kicks: a green ring with the count on each kicked enemy, at its spot; CC: a ✦N tag in the player's colour at the middle of its targets, or at
-      // the caster when the target has no spot yet. Marks of one pull closer than 20 px fan out in a small ring around their middle, kick rings first,
-      // a thin line back to each one's true spot (the studio's follow-up: pull 7 had 2 rings and 4 tags inside 20 px))
-      { const spot = (e) => (e.x != null && e.ui === f[0] ? e : e.cx != null && e.cui === f[0] ? { x: e.cx, y: e.cy } : null), kcc = [];
-        const kname = (e) => (String(e.src).startsWith('Pet-') ? ((q.p.kicks || []).find((x) => Math.abs(x.t - e.t) < 0.5) || {}).who || e.who : e.who), kg = new Map();
-        for (const e of q.kx) { if (!spot(e)) continue; const o = kg.get(e.g) || { l: [] }; o.l.push(e); kg.set(e.g, o); }
-        for (const o of kg.values()) { const e0 = o.l[o.l.length - 1], [x, y] = px(f, spot(e0)), who = [...new Set(o.l.map(kname))], cut = [...new Set(o.l.map((e) => e.cut).filter(Boolean))];
-          kcc.push({ x, y, who: who.join('|'), tip: '<b>' + esc(e0.tg) + '</b>: kicked ' + tw(o.l.length) + ' (' + who.map(esc).join(', ') + ')' + (cut.length ? ' · ' + cut.map(esc).join(', ') : ''),
-            body: '<circle r="9" fill="#0f1117" fill-opacity=".55" stroke="#7ee08f" stroke-width="2.2"/><text y="4" text-anchor="middle" fill="#7ee08f" style="font-size:10px;font-weight:700">' + o.l.length + '</text>' }); }
-        const cg = new Map(); for (const e of q.cx) { const o = cg.get(e.who + '|' + e.sp) || { w: e.who, sp: e.sp, l: [] }; o.l.push(e); cg.set(e.who + '|' + e.sp, o); }
-        for (const o of cg.values()) { const at = o.l.map(spot).filter(Boolean); if (!at.length) continue; const [x, y] = px(f, { x: at.reduce((a, e) => a + e.x, 0) / at.length, y: at.reduce((a, e) => a + e.y, 0) / at.length });
-          const tg = new Map(); for (const e of o.l) if (e.g && !tg.has(e.g)) tg.set(e.g, e.tg); const nm2 = new Map(); for (const n of tg.values()) nm2.set(n, (nm2.get(n) || 0) + 1);
-          const cc = mpCC(((q.RR.people || []).find((x2) => x2.name === o.w) || {}).cls), n = tg.size || o.l.length, lab = '✦' + n, wd = lab.length * 7 + 10;
-          kcc.push({ x, y, who: o.w, tip: '<b>' + esc(o.w) + '</b> · ' + esc(o.sp) + (tg.size ? ' → ' + plural(tg.size, 'enemy').replace(/enemys$/, 'enemies') + ' (' + [...nm2].map(([a, c]) => esc(a) + (c > 1 ? ' ×' + c : '')).join(', ') + ')' : ''),
-            body: '<rect x="' + (-wd / 2) + '" y="-9" width="' + wd + '" height="18" rx="4" fill="#0f1117" stroke="' + cc + '" stroke-width="1.5"/><text y="4" text-anchor="middle" fill="' + cc + '" style="font-size:11px;font-weight:700">' + lab + '</text>' }); }
-        const D = 20 * k, gi = kcc.map((m, j) => j), root = (j) => (gi[j] === j ? j : (gi[j] = root(gi[j])));
-        for (let a = 0; a < kcc.length; a++) for (let b = a + 1; b < kcc.length; b++) if (Math.hypot(kcc[a].x - kcc[b].x, kcc[a].y - kcc[b].y) < D) gi[root(a)] = root(b);
-        const grp2 = new Map(); kcc.forEach((m, j) => { const r = root(j); if (!grp2.has(r)) grp2.set(r, []); grp2.get(r).push(m); });
-        const pos = []; for (const g of grp2.values()) { const mx = g.reduce((a, m) => a + m.x, 0) / g.length, my = g.reduce((a, m) => a + m.y, 0) / g.length, rr = Math.max(16, 9 * g.length) * k;
-          g.forEach((m, j) => { const ang = -Math.PI / 2 + 2 * Math.PI * j / g.length; pos.push({ m, nx: g.length > 1 ? mx + rr * Math.cos(ang) : m.x, ny: g.length > 1 ? my + rr * Math.sin(ang) : m.y }); }); }
-        /* (then any two still closer than a mark's width are pushed apart, so none sits on another) */
-        for (let it = 0; it < 30; it++) { let mv = false; for (let a = 0; a < pos.length; a++) for (let b = a + 1; b < pos.length; b++) { let dx = pos[b].nx - pos[a].nx, dy = pos[b].ny - pos[a].ny, d = Math.hypot(dx, dy); const M = 24 * k; if (d >= M) continue; mv = true;
-          if (d < 0.01) { dx = 1; dy = 0.3; d = Math.hypot(dx, dy); } const s2 = (M - d) / 2 / d; pos[a].nx -= dx * s2; pos[a].ny -= dy * s2; pos[b].nx += dx * s2; pos[b].ny += dy * s2; } if (!mv) break; }
-        for (const { m, nx, ny } of pos) { const at2 = ' data-pi="' + q.i + '" data-who="' + esc(m.who) + '"';
-          if (Math.hypot(nx - m.x, ny - m.y) > 3 * k) marks.push('<line class="mpt-mk mk-kcc"' + at2 + ' x1="' + m.x.toFixed(1) + '" y1="' + m.y.toFixed(1) + '" x2="' + nx.toFixed(1) + '" y2="' + ny.toFixed(1) + '" stroke="#fff" stroke-opacity=".4" stroke-width="' + k.toFixed(2) + '"/>');
-          marks.push('<g class="mpt-mk mk-kcc"' + at2 + mpT1(m.tip) + ' transform="translate(' + nx.toFixed(1) + ',' + ny.toFixed(1) + ') scale(' + k.toFixed(3) + ')">' + m.body + '</g>'); } }
       // (avoidable hits where they landed: small amber marks, bunched within 5 yards, off until the chip turns them on)
       { const bs = []; for (const h of q.av.filter(here)) { const b = bs.find((x) => Math.hypot(x.x - h.x, x.y - h.y) <= 5); if (b) b.l.push(h); else bs.push({ x: h.x, y: h.y, l: [h] }); }
         for (const b of bs) { const [x, y] = px(f, b), m = new Map(); for (const h of b.l) { const k2 = h.who + ' · ' + h.sp; m.set(k2, (m.get(k2) || 0) + 1); }
@@ -1497,7 +1470,7 @@ function mpMapHtml(R, F, tl) {
       '<span class="mpt-mic">' + (q.p.deaths.length ? '<i class="d">☠</i>' : '') + (th ? '<i class="k">!' + th + '</i>' : '') + (q.lust ? '<i class="l">⚡</i>' : '') + '</span></span></li>'; }).join('') + '</ol>';
   const f0 = Math.max(0, floors.findIndex((x) => x.us[0].length));
   const fb = '<div class="mpt-flb" role="group" aria-label="Floor">' + (floors.length > 1 ? floors.map((fl, j) => '<button type="button" data-mdtf="' + j + '"' + (j === f0 ? ' class="on"' : '') + '>' + esc(fl.f[1]) + '</button>').join('') : '<span>' + esc(floors[0].f[1]) + '</span>') + '</div>';
-  const LAY = [['r', '⋯', 'Route'], ['d', '☠', 'Deaths'], ['k', '!', 'Missed kicks'], ['l', '⚡', 'Lust'], ['w', '⏱', 'Waits'], ['c', '●', 'Kicks & CC'], ['a', '◆', 'Avoidable', 1]];
+  const LAY = [['r', '⋯', 'Route'], ['d', '☠', 'Deaths'], ['k', '!', 'Missed kicks'], ['l', '⚡', 'Lust'], ['w', '⏱', 'Waits'], ['a', '◆', 'Avoidable', 1]];
   const eye = '<b class="mpt-eye" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8s-2.4 4.5-6.5 4.5S1.5 8 1.5 8Z" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="2" fill="currentColor"/><path class="x" d="M2.5 13.5 13.5 2.5" stroke="currentColor" stroke-width="1.4"/></svg></b>';
   const lay = '<div class="mpt-lay"><button type="button" class="mpt-layb" aria-expanded="false">Layers <span class="mpt-layn">' + LAY.filter((x) => !x[3]).length + ' of ' + LAY.length + '</span> ▾</button><div class="mpt-layp" role="group" aria-label="Show on the map">' +
     LAY.map(([c, i, l, off]) => '<button type="button" class="mpt-mchip' + (off ? '' : ' on') + ' mpt-mchip-' + c + '" data-mchip="' + c + '" aria-pressed="' + !off + '"><i>' + i + '</i><span>' + l + '</span>' + eye + '</button>').join('') + '</div></div>';
@@ -2027,7 +2000,7 @@ html:not([data-theme]) .mpt .mpt-chap{background-image:linear-gradient(rgba(255,
 .mpt-mdt [hidden]{display:none!important}
 .mpt-mdt .mpt-mdtc{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:0 0 10px}
 .mpt-mchips{display:flex;flex-wrap:wrap;gap:6px} .mpt .mpt-mchip{height:26px;margin:0;padding:0 10px;border:1px solid var(--line2);border-radius:4px;background:none;color:var(--faint);font:600 12.5px var(--body);cursor:pointer}
-.mpt .mpt-mchip.on{color:var(--text);border-color:var(--faint)} .mpt-mchip i{font-style:normal;margin-right:5px} .mpt-mchip-d i{color:#ff8f87} .mpt-mchip-k i{color:#c39bff;font-weight:700} .mpt-mchip-l i{color:#ffd166} .mpt-mchip-a i{color:#f2c46b} .mpt-mchip-c i{color:#7ee08f}
+.mpt .mpt-mchip.on{color:var(--text);border-color:var(--faint)} .mpt-mchip i{font-style:normal;margin-right:5px} .mpt-mchip-d i{color:#ff8f87} .mpt-mchip-k i{color:#c39bff;font-weight:700} .mpt-mchip-l i{color:#ffd166} .mpt-mchip-a i{color:#f2c46b}
 .mpt-mpp{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 10px} .mpt-mpp > span{font:600 12.5px var(--body);color:var(--faint)}
 .mpt .mpt-mpp button{height:26px;margin:0;padding:0 10px;border:1px solid var(--line2);border-radius:4px;background:none;font:600 12.5px var(--body);cursor:pointer;color:var(--muted)} .mpt .mpt-mpp button.on{border-color:currentColor;background:var(--raised)}
 .mpt-mcard .pp-off{opacity:.35}
@@ -2039,7 +2012,7 @@ html:not([data-theme]) .mpt .mpt-chap{background-image:linear-gradient(rgba(255,
 .mpt-mdtv .mpt-mpl,.mpt-mdtv .mpt-mk{transition:opacity .12s;cursor:pointer}
 .mpt-mdtv.pick:not(.peek) .mpt-mpl:not(.hot),.mpt-mdtv.pick:not(.peek) .mpt-mk:not(.hot){opacity:.15}
 .mpt-mdtv.peek .mpt-mpl:not(.pk),.mpt-mdtv.peek .mpt-mk:not(.pk){opacity:.35}
-.mpt-mdt.no-c .mk-kcc,.mpt-mdt .mpt-mk.pp-off,.mpt-mdt.no-a .mk-avoid,.mpt-mdt.no-r .mk-route,.mpt-mdt.no-r .mpt-mthen,.mpt-mdt.no-d .mk-death,.mpt-mdt.no-k .mk-kick,.mpt-mdt.no-k .mk-bad,.mpt-mdt.no-l .mk-lust,.mpt-mdt.no-w .mk-wait{display:none}
+.mpt-mdt .mpt-mk.pp-off,.mpt-mdt.no-a .mk-avoid,.mpt-mdt.no-r .mk-route,.mpt-mdt.no-r .mpt-mthen,.mpt-mdt.no-d .mk-death,.mpt-mdt.no-k .mk-kick,.mpt-mdt.no-k .mk-bad,.mpt-mdt.no-l .mk-lust,.mpt-mdt.no-w .mk-wait{display:none}
 .mpt-mthen{cursor:pointer}
 .mpt-mside{position:relative;min-width:0;min-height:380px} .mpt-mside > .mpt-mcard{position:absolute;inset:0;height:auto} /* (the card as tall as the map and its tiles; a longer one scrolls) */
 .mpt-mcard{position:relative;height:380px;overflow:auto;box-sizing:border-box;padding:10px 12px;background:var(--raised);border:1px solid var(--line2);border-radius:4px;font:500 13px/1.4 var(--body);color:var(--mpt-soft)}
@@ -2155,7 +2128,7 @@ body.mpz-wh .spc-tt{display:none !important}
 .mpt-cfd{border-top:1px solid var(--line);margin-top:8px} .mpt-cfs{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 6px;padding:7px 0 5px;cursor:pointer;list-style:none;font:500 12.5px var(--body);color:var(--muted)}
 .mpt-cfs::-webkit-details-marker{display:none} .mpt-cfs::after{content:"▸";margin-left:auto;color:var(--faint)} .mpt-cfd[open] > .mpt-cfs::after{content:"▾"} .mpt-cfs > b{color:var(--text);font-weight:600} .mpt-cfb{padding:0 0 6px}
 .mpt-cfd + .mpt-cfd{margin-top:0} .mpt-cfb .mpt-mlh{margin-top:2px}
-.mpt .mpt-mchip-r i{color:#e8eaed} .mpt .mpt-mchip-d i{color:#ff8f87} .mpt .mpt-mchip-k i{color:#c39bff} .mpt .mpt-mchip-l i{color:#ffd166} .mpt .mpt-mchip-w i{color:#aeb6bf} .mpt .mpt-mchip-c i{color:#7ee08f} .mpt .mpt-mchip-a i{color:#f2c46b} .mpt-layp .mpt-mchip:not(.on) i{opacity:.45}
+.mpt .mpt-mchip-r i{color:#e8eaed} .mpt .mpt-mchip-d i{color:#ff8f87} .mpt .mpt-mchip-k i{color:#c39bff} .mpt .mpt-mchip-l i{color:#ffd166} .mpt .mpt-mchip-w i{color:#aeb6bf} .mpt .mpt-mchip-a i{color:#f2c46b} .mpt-layp .mpt-mchip:not(.on) i{opacity:.45}
 .mpt-ll .mpt-i{margin-left:4px;font-size:12px;vertical-align:1px}
 /* (last time on this dungeon: the faint line under the verdict, and the key finder's 5-key trend, quiet tints) */
 .mpt .mpt-vd2{margin:2px 0 0;font:500 12.5px/1.45 var(--body);color:var(--faint)}
