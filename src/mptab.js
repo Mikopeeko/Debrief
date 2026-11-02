@@ -377,7 +377,10 @@ function mpCasts(R) {
   const thru = new Map(); for (const p of R.pulls) for (const t of p.through) { const k = t.spell + '|' + t.mob, o = thru.get(k) || { spell: t.spell, mob: t.mob, n: 0, pulls: new Map() }; o.n++; o.pulls.set(p.n, (o.pulls.get(p.n) || 0) + 1); thru.set(k, o); }
   const TH = [...thru.values()].sort((a, b) => b.n - a.n), thN = TH.reduce((a, t) => a + t.n, 0);
   const who = R.people.filter((p) => p.kicks + p.stops > 0).sort((a, b) => b.kicks + b.stops - a.kicks - a.stops), mx = Math.max(1, ...who.map((p) => p.kicks + p.stops));
-  const left = '<div><p class="mpt-k">Went off with a kick ready</p>' + (TH.length ? TH.map((t) => '<div class="mpt-kr"><span><b class="mpt-ab">' + esc(t.spell) + '</b><small>' + esc(t.mob) + '</small></span><span class="mpt-m">' + [...t.pulls].map(([n, c]) => 'pull ' + n + (c > 1 ? ' ×' + c : '')).join(', ') + '</span><b>' + t.n + '×</b></div>').join('') : '<p class="mpt-none">Nothing on the must-kick list went off while someone\'s kick was ready.</p>') + '</div>';
+  const left = '<div><p class="mpt-k">Went off with a kick ready</p>' + (TH.length ? TH.map((t) => '<div class="mpt-kr"><span><b class="mpt-ab">' + esc(t.spell) + '</b><small>' + esc(t.mob) + '</small></span><span class="mpt-m">' + [...t.pulls].map(([n, c]) => 'pull ' + n + (c > 1 ? ' ×' + c : '')).join(', ') + '</span><b>' + t.n + '×</b></div>').join('') : '<p class="mpt-none">Nothing on the must-kick list went off while someone\'s kick was ready.</p>') +
+    /* (kick when you can (Nov 1, companion/mplus.js 790983f; Flex okayed): a pack's spam, from 8 or more enemies or 6 or more casts in 10 s.
+       Too many to stop them all, so it's never a mistake and never in the counts above: one quiet line each, how many you kicked) */
+    ((R.spam || []).length ? '<p class="mpt-k mpt-ksh">Kick when you can</p>' + R.spam.map((x) => '<div class="mpt-kr mpt-ks" tabindex="0"' + mpT1('<b>' + esc(x.spell) + '</b> comes from a pack: ' + x.casts + ' casts from ' + plural(x.enemies, 'enemy').replace('enemys', 'enemies') + '. That\'s too many to stop them all. Every one you kick or stop helps, and one that goes off isn\'t a mistake.') + '><span><b>' + esc(x.spell) + '</b><small>' + esc(x.mob) + (x.enemies > 1 ? ' · ' + plural(x.enemies, 'enemy').replace('enemys', 'enemies') : '') + '</small></span><span class="mpt-m">kicked ' + x.kicked + ' of ' + x.casts + (x.stopped ? ', stopped ' + x.stopped + ' more' : '') + '</span><b></b></div>').join('') : '') + '</div>';
   const right = '<div><p class="mpt-k">Who stopped casts</p>' + (who.length ? who.map((p) => '<div class="mpt-kr2">' + mpWho(R, p.name) + '<span class="mpt-bar"><i style="width:' + (100 * (p.kicks + p.stops) / mx).toFixed(0) + '%"></i></span><span class="mpt-m">' + plural(p.kicks, 'kick') + ' · ' + plural(p.stops, 'stop') + '</span></div>').join('') : '<p class="mpt-none">No kicks or stops in this key.</p>') +
     '<p class="mpt-sm">A stop is a stun, knockback or other crowd control that cut a cast short. Healers have no kick in Midnight, except Restoration Shamans.</p></div>';
   const t0 = TH[0];
@@ -736,6 +739,7 @@ const MP_CSS = `
 .mpt-kr{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) 40px;gap:12px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line);font:500 14px var(--body)}
 .mpt-kr small{display:block;font:500 12.5px var(--body);color:var(--muted)}
 .mpt-kr > b{text-align:right}
+.mpt-ksh{margin-top:16px!important} .mpt-ks{color:var(--muted);cursor:help} .mpt-ks b{color:var(--mpt-soft);font-weight:600}
 .mpt-kr2{display:grid;grid-template-columns:120px minmax(0,1fr) auto;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font:500 14px var(--body)}
 .mpt-kr2 .mpt-nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mpt-bar{height:6px;border-radius:3px;background:var(--raised);position:relative;overflow:hidden}
