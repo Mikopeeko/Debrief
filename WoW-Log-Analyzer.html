@@ -17016,6 +17016,9 @@ function buildCoiledAltar(ev, r, h) {
   const pname = (g) => h.name(g), role = (g) => h.role(g);
   const mistakes = [], sections = [], dur = r.duration;
   const M = (t, player, spell, severity, detail, fix) => mistakes.push({ t, player, mechanic: S(spell)[1], id: S(spell)[0], severity, detail, fix });
+  // (every Soul Fragment pickup, [time, player, x, y]: the pickup hit (#1308330) lands where the fragment was. The Timeline replay draws each
+  // fragment from its player's Gravebound until this moment (Nov 2, Flex: "Yes, do fragments"))
+  r.fragPicks = dmg('gravebound').filter((e) => h.isPlayer(e.dst) && (e.id == null || +e.id === 1308330)).map((e) => { const q = e.x != null && e.x === e.x ? e : h.snap(e.t).find((p) => p.guid === e.dst); return q ? [+e.t.toFixed(2), e.dst, +(+q.x).toFixed(2), +(+q.y).toFixed(2)] : null; }).filter(Boolean);
 
   // ---- phases ----
   const dm = casts('dreadmarch'), sb = casts('soulbinding');
@@ -24004,7 +24007,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-11-02', h: [{ t: 'Watch the pull on the Timeline', d: 'Debriefing\'s Timeline now replays the pull on a big map, with a play-by-play beside it of every mechanic and how the raid handled it, and the fight\'s timeline playing underneath. Click a dot or a line to watch that moment, and the box below says whether it was done right and what to do next time.' }], n: [ /* round 484 */
-    "Debriefing Timeline replay, The Coiled Altar: orbs stay on the floor until someone picks them up or a frontal pops them, ghosts stay until they reach their player or a frontal clears them, and you can see purple orb carriers, Gravebound players, Malacrass's shield and Zul'jan healing in the intermission. Axes show where they hit someone, and Soul Fragments are small white orbs.",
+    "Debriefing Timeline replay, The Coiled Altar: orbs stay on the floor until someone picks them up or a frontal pops them, ghosts stay until they reach their player or a frontal clears them, and you can see purple orb carriers, Gravebound players, Malacrass's shield and Zul'jan healing in the intermission. Axes show where they hit someone, and every player's Soul Fragments glow until they pick them up.",
     "Debriefing Timeline replay, Ula'tek: the platform stays whole until phase 3, then you see it break.",
     "The Coiled Altar's maps: the poison pools are drawn at their real size, a little smaller than before.",
     "Debriefing Timeline: a You and Top guilds lane under the replay shows your phase pushes, deaths, mistakes and Lust next to the 20 fastest kills (The Coiled Altar for now). Click the lane to move the replay there.",
@@ -34316,7 +34319,7 @@ function miniMap(mp, pmap) {
   for (let g = 0; g <= (x1 - x0); g += 10) s += '<line x1="' + g * yd + '" x2="' + g * yd + '" y1="0" y2="' + FH + '" class="mg" vector-effect="non-scaling-stroke"/>';
   for (let g = 0; g <= (y1 - y0); g += 10) s += '<line y1="' + g * yd + '" y2="' + g * yd + '" x1="0" x2="' + FW + '" class="mg" vector-effect="non-scaling-stroke"/>';
   // orbs and ghosts (Coiled Altar): glowing spheres for orbs, a ghost shape for ghosts
-  const OBJS = { egg: ['#c9d98a', 'Egg (Blightscale Spawn)'], begg: ['#7fbf3a', 'Doomscale Egg'], orb: ['#5fd35f', 'Green orb (Coalesced Venom)'], porb: ['#b65cff', 'Purple orb (Virulent Mutation)'], ghost: ['#e9eef7', 'Ghost (Manifestation of Dread)'], frag: ['#ffffff', 'Soul Fragment (its player has to pick it up)'], axe: ['#ff9628', 'Axegrinder (a rolling axe: it hits within about 6 yards)'] };
+  const OBJS = { egg: ['#c9d98a', 'Egg (Blightscale Spawn)'], begg: ['#7fbf3a', 'Doomscale Egg'], orb: ['#5fd35f', 'Green orb (Coalesced Venom)'], porb: ['#b65cff', 'Purple orb (Virulent Mutation)'], ghost: ['#e9eef7', 'Ghost (Manifestation of Dread)'], axe: ['#ff9628', 'Axegrinder (a rolling axe: it hits within about 6 yards)'] };
   const hasObj = new Set();
   s += MAP_DEFS;
   const RID = mp.room ? mp.room.id + '-' + (++MAP_RN) : null;
@@ -34534,7 +34537,7 @@ function miniMap(mp, pmap) {
     }
     let inner = (p.kind === 'egg' || p.kind === 'begg') ? gdzEgg(X(p), Y(p), p.kind, label) : p.kind === 'ghost'
       ? (/* round 411b ghost look */ mp.gdzLook || typeof gdzGhost === 'function' ? gdzGhost(X(p), Y(p), label) : '<path d="M' + (X(p) - 6) + ' ' + (Y(p) + 7) + 'v-7a6 6 0 0 1 12 0v7l-3-2-3 2-3-2z" fill="' + col + '" stroke="#000" stroke-width="1" opacity=".9"><title>' + label + '</title></path>')
-      : p.kind === 'frag' ? cir(X(p), Y(p), 5.5, 'fill="#ffffff" fill-opacity=".2"') + cir(X(p), Y(p), 2.3, 'fill="#ffffff" stroke="#dbeaff" stroke-width=".8"') + '<title>' + label + '</title>' /* (a very small white glowing orb, as in game) */ : p.kind === 'axe' ? (typeof gdzAxe === 'function' ? gdzAxe(X(p), Y(p), ft) : '') + '<title>' + label + '</title>' /* round 414 real axes */ : orbDot(X(p), Y(p), p.kind, label + (hitSet.has(p.guid) ? ', popped by the frontal' : ''));
+      : p.kind === 'axe' ? (typeof gdzAxe === 'function' ? gdzAxe(X(p), Y(p), ft) : '') + '<title>' + label + '</title>' /* round 414 real axes */ : orbDot(X(p), Y(p), p.kind, label + (hitSet.has(p.guid) ? ', popped by the frontal' : ''));
     if (hitSet.has(p.guid) && (!conesNow || hitBy.get(p.guid) === conesNow) && !(mp.lateHit && !(elP != null && elP >= -1.4))) /* (a guide's map rings them only while the frontal is cast) */ inner += '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="10.5" fill="none" stroke="#ffd23b" stroke-width="2.5"/>'; // yellow: reads on top of the red cone
     // Soul Sever: ghosts it removed (green ring) and missed (red X)
     if (gHit.has(p.guid)) inner += '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="10" fill="none" stroke="#45c15c" stroke-width="2.5"/>';
@@ -34642,7 +34645,7 @@ function miniMap(mp, pmap) {
   // (on an animated map the bar can show up later in the clip, so the key says so when a cast falls inside the clip)
   const f0 = mp.frames && mp.frames.length ? mp.frames[0].t : null, f1 = f0 != null ? mp.frames[mp.frames.length - 1].t : null;
   if (cbShown || (!LL && f0 != null && pts.some((q) => (q.kind === 'add' || q.kind === 'boss') && (cbs.get(q.guid) || []).some((c) => c.t0 <= f1 && c.t1 + 1.5 >= f0)))) leg.push([(x, y) => '<rect x="' + (x - 7) + '" y="' + (y - 3) + '" width="14" height="6" rx="1.5" fill="#05060a" stroke="#000"/><rect x="' + (x - 6.5) + '" y="' + (y - 2.5) + '" width="8" height="5" rx="1" fill="#f3c969"/>', 'Cast bar: gold while it casts, then green with who kicked it, or red when it went off']);
-  for (const k of hasObj) leg.push([(x, y) => k === 'frag' ? '<circle cx="' + x + '" cy="' + y + '" r="5" fill="#fff" fill-opacity=".2"/><circle cx="' + x + '" cy="' + y + '" r="2.2" fill="#fff"/>' : k === 'axe' ? '<circle cx="' + x + '" cy="' + y + '" r="5.5" fill="rgba(255,150,40,.2)" stroke="#ff9628" stroke-width="1.2" stroke-dasharray="2 2"/>' : k === 'ghost' ? '<path d="M' + (x - 5) + ' ' + (y + 6) + 'v-6a5 5 0 0 1 10 0v6l-2.5-1.7-2.5 1.7-2.5-1.7z" fill="#e9eef7" stroke="#000"/>' : '<circle cx="' + x + '" cy="' + y + '" r="5.5" fill="url(#' + (k === 'porb' ? 'orbP' : 'orbG') + ')"/>', OBJS[k][1]]);
+  for (const k of hasObj) leg.push([(x, y) => k === 'axe' ? '<circle cx="' + x + '" cy="' + y + '" r="5.5" fill="rgba(255,150,40,.2)" stroke="#ff9628" stroke-width="1.2" stroke-dasharray="2 2"/>' : k === 'ghost' ? '<path d="M' + (x - 5) + ' ' + (y + 6) + 'v-6a5 5 0 0 1 10 0v6l-2.5-1.7-2.5 1.7-2.5-1.7z" fill="#e9eef7" stroke="#000"/>' : '<circle cx="' + x + '" cy="' + y + '" r="5.5" fill="url(#' + (k === 'porb' ? 'orbP' : 'orbG') + ')"/>', OBJS[k][1]]);
   if (mp.lines && mp.lines.length) leg.push([(x, y) => '<path d="M1 11L11 1L15 5L5 15Z" fill="rgba(159,242,109,.4)" stroke="#9ff26d" stroke-width="1.2"/>', 'Green band: Corrosive Spit aiming, from the add through its target and beyond. It only hurts the moment it fires (turns yellow); grey dashed = the add died before it fired, so it never hit anyone. About ' + SPIT_LEN + ' yd long, ' + SPIT_W + ' yd wide, measured from bystander hits']);
   for (const [nm, look] of Object.entries(ADD_LOOK)) if (pts.some((q) => q.kind === 'add' && q.name === nm) || (lm.frames && lm.frames.some((f) => f.pts.some((q) => q.name === nm)))) leg.push([(x, y) => addIcon(x, y, look, '', 6 / (look.r + 2.5)), look.legend || nm]);
   if ((mp.marks || []).some((m) => m.kind === 'ichor')) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="rgba(242,36,58,.2)" stroke="#f2243a" stroke-width="2" stroke-dasharray="3 2"/>', 'Red dashed ring: Coiling Ichor target (circle size not published)']);
@@ -65377,7 +65380,10 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
     hits: { Axegrinder: 'axe' }, noMap: ['vf'] /* (fight checks kept to the list: the Venomfang dispels) */,
     debuffs: { Gloombomb: [15, '#da3df2', 'Gloombomb'], 'Volatile Venom': [5, '#5fd35f', 'Carrying a green orb'], 'Mutagenic Venom': [6, '#b65cff', 'Carrying a purple orb'], Dreadmarch: [3, '#b98cff', 'Mind-controlled'], Gravebound: [2.5, '#aeb6bf', 'Gravebound (pick up your fragments)'] },
     /* (whole lives worked out from the log: orbs [kind, the debuff a pickup gives], ghosts [the fixation on their player]) */
-    life: { orbs: { 'Coalesced Venom Stalker': ['orb', 'Volatile Venom'], 'Virulent Mutation': ['porb', 'Mutagenic Venom'] }, ghosts: { 'Manifestation of Dread': 'Unnerving Fixation' }, frags: { 'Soul Fragment': 'Gravebound' } },
+    life: { orbs: { 'Coalesced Venom Stalker': ['orb', 'Volatile Venom'], 'Virulent Mutation': ['porb', 'Mutagenic Venom'] }, ghosts: { 'Manifestation of Dread': 'Unnerving Fixation' } },
+    /* (Soul Fragments, everyone's: each one where its player picked it up, from their Gravebound until the pickup (rep.fragPicks), and the
+       recorder's own fragment units that nobody picked up, until Gravebound ends; drawn as the white glowing souls of the Gloombomb maps) */
+    souls: { unit: 'Soul Fragment', debuff: 'Gravebound' },
     /* (a boss's shield from the fight check's rows (cast time + "after X s"), and boss buffs from the log [boss, yd, colour, label]) */
     shield: { sec: 'shield', boss: 'Hex Lord Malacrass', r: 6, color: '#a35cf2', cn: 'Veil of Twilight (break the shield)' },
     auras: { 'Ghastly Regeneration': ['Zul\'jan', 7, '#5fd35f', 'Ghastly Regeneration (healing; takes double damage)'] } },
@@ -65428,12 +65434,6 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
           if (e.pick) { var me = posAt(e.pick, e.t), bi = -1, bd = 25; if (!me) return; alive.forEach(function (o, i) { var d = Math.hypot(o.x - me[1], o.y - me[2]); if (d < bd) { bd = d; bi = i; } }); if (bi >= 0) close(alive.splice(bi, 1)[0], e.t); return; }
           alive = alive.filter(function (o) { if (inCone(e.cone, o)) { close(o, e.t); return false; } return true; }); });
         alive.forEach(function (o) { close(o, o.pe); }); });
-      /* (Soul Fragments: a very small white glowing orb from where it appears until its player walks over it (within 2.5 yd) or their
-         Gravebound ends; the log only has the fragments of whoever recorded it, as each player sees only their own) */
-      Object.keys(LF.frags || {}).forEach(function (nm) { var deb = LF.frags[nm], GB = []; r.players.forEach(function (p) { var v = p && p.debuffs && p.debuffs.get ? p.debuffs.get(deb) : null; if (v && v.sp) v.sp.forEach(function (s) { GB.push({ g: p.guid, a: +s[0], b: s[1] == null ? +s[0] + 8 : +s[1] }); }); });
-        r.positions.forEach(function (u, g) { if (((un && un.get(g)) || u.name) !== nm || !u.pts.length) return; var f = u.pts[0], own0 = null, bd = 25; GB.forEach(function (x) { if (f[0] < x.a - 0.5 || f[0] > x.b) return; var me = posAt(x.g, f[0]); if (!me) return; var d = Math.hypot(me[1] - f[1], me[2] - f[2]); if (d < bd) { bd = d; own0 = x; } });
-          var e1 = own0 ? own0.b : f[0] + 6, pu = own0 ? r.positions.get(own0.g) : null; if (pu) for (var i = 0; i < pu.pts.length && pu.pts[i][0] <= e1; i++) { var q = pu.pts[i]; if (q[0] > f[0] + 0.3 && Math.hypot(q[1] - f[1], q[2] - f[2]) <= 2.5) { e1 = q[0]; break; } }
-          lives.push({ guid: g, name: nm, kind: 'frag', t0: f[0], t1: e1, x: f[1], y: f[2] }); }); });
       Object.keys(LF.ghosts || {}).forEach(function (nm) { var deb = LF.ghosts[nm], GO = r.ghostOwner || {};
         r.positions.forEach(function (u, g) { if (((un && un.get(g)) || u.name) !== nm || !u.pts.length) return; var t0 = u.pts[0][0], ends = [];
           (GO[g] || []).forEach(function (w) { var p = r.players.get(w[1]), v = p && p.debuffs && p.debuffs.get ? p.debuffs.get(deb) : null; if (v && v.sp) v.sp.forEach(function (s) { if (s[0] <= w[0] + 1.5 && (s[1] == null || s[1] >= w[0] - 0.5)) ends.push(s[1] == null ? w[0] + 6 : +s[1]); }); });
@@ -65620,6 +65620,19 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
         bad.forEach(function (i) { var m = M[i], lv = lvOf(m); if (((RX[it0.boss] || {}).noMap || []).indexOf(m.id) >= 0) return; /* (no circles for dispels: they stay in the list) */ var who0 =m.death && GM[i] ? GM[i].reduce(function (A, j) { return A.concat(M[j].who); }, []) : m.who; who0.forEach(function (wv) { var g = byN[wv.n]; if (g) rings.push({ guid: g, r: 3, color: lv === 'n' ? '#cdb35a' : lv === 'm' ? '#e8a23a' : '#f0726a', fill: 'rgba(240,114,106,0.14)', t0: m.t - 0.5, dur: 5, cn: m.death ? 'Died' : 'In a mistake', label: wv.n + ': ' + nameOf(m, i) }); }); });
         /* (the debuff circles from the log: each Gloombomb, orb carried, mind control and Venomfang on its player, from when it lands until it ends) */
         var DB = (RX[it0.boss] || {}).debuffs || {}; rep.players.forEach(function (p) { if (!p || !p.debuffs || !p.debuffs.forEach) return; p.debuffs.forEach(function (v, nm) { var st = DB[nm]; if (!st || !v || !v.sp) return; v.sp.forEach(function (iv) { var a1 = +iv[0], b1 = iv[1] == null ? a1 + 6 : +iv[1]; if (!(b1 > a1)) return; rings.push({ guid: p.guid, r: st[0], color: st[1], fill: st[1] + '22', t0: a1, dur: b1 - a1, cn: st[2], label: p.name + ': ' + st[2] }); }); }); });
+        /* (Soul Fragments, everyone's: each one at the spot its player picked it up, from their Gravebound until the pickup; the recorder's own
+           fragments that nobody picked up stay until Gravebound ends. Drawn as the Gloombomb maps' white glowing souls (Flex, Nov 2: "They
+           should be the very small white glowing orbs remember?", "Yes, do fragments")) */
+        var SO = (RX[it0.boss] || {}).souls; if (SO) { var GBs = []; rep.players.forEach(function (p) { var v = p && p.debuffs && p.debuffs.get ? p.debuffs.get(SO.debuff) : null; if (v && v.sp) v.sp.forEach(function (s) { GBs.push({ g: p.guid, a: +s[0], b: s[1] == null ? +s[0] + 20 : +s[1] }); }); });
+          var gbOf = function (g, t) { return GBs.filter(function (x) { return x.g === g && t >= x.a - 0.3 && t <= x.b + 0.5; })[0]; }, soul = function (x, y, t0, t1) { rings.push({ x: x, y: y, r: 1.4, t0: t0, dur: Math.max(0.3, t1 - t0), fx: 'soul', color: '#ffffff', fill: '#ffffff', label: '', cn: 'Soul Fragment', legend: 'A soul fragment (it disappears when picked up)' }); };
+          var PK = (rep.fragPicks || []).map(function (q) { var gb = gbOf(q[1], q[0]); return gb ? { t: q[0], g: q[1], x: q[2], y: q[3], a: gb.a } : null; }).filter(Boolean); PK.forEach(function (q) { soul(q.x, q.y, q.a, q.t); });
+          var posAt2 = function (g, t) { var u = rep.positions.get(g), b = null; if (!u) return null; for (var i = 0; i < u.pts.length && u.pts[i][0] <= t + 0.3; i++) b = u.pts[i]; return b; };
+          /* (the recorder's fragment units: a player picks one up from up to about 5.5 yd away, so they're matched by count: only fragments
+             beyond that Gravebound's pickups show on their own, the ones farthest from any pickup) */
+          var UO = {}; rep.positions.forEach(function (u, g) { if (((rep.unitNames && rep.unitNames.get(g)) || u.name) !== SO.unit || !u.pts.length) return; var f = u.pts[0], own = null, bd = 25; GBs.forEach(function (x) { if (f[0] < x.a - 0.5 || f[0] > x.b) return; var me = posAt2(x.g, f[0]); if (!me) return; var d = Math.hypot(me[1] - f[1], me[2] - f[2]); if (d < bd) { bd = d; own = x; } });
+            if (own) { var k0 = own.g + '|' + own.a; (UO[k0] = UO[k0] || { own: own, f: [] }).f.push(f); } });
+          Object.keys(UO).forEach(function (k0) { var o = UO[k0].own, mine = PK.filter(function (q) { return q.g === o.g && q.t >= o.a - 0.3 && q.t <= o.b + 0.5; });
+            UO[k0].f.map(function (f) { return { f: f, d: Math.min.apply(0, mine.map(function (q) { return Math.hypot(q.x - f[1], q.y - f[2]); }).concat([1e9])) }; }).sort(function (x, y) { return y.d - x.d; }).slice(0, Math.max(0, UO[k0].f.length - mine.length)).forEach(function (x) { soul(x.f[1], x.f[2], x.f[0], o.b); }); }); }
         /* (a boss's shield while it's up (Malacrass's Veil of Twilight: from the cast until the raid broke it), and boss buffs from the log
            (Zul'jan's Ghastly Regeneration in the intermission)) */
         var RB = RX[it0.boss] || {}, gOf = function (nm) { var g0 = null; rep.positions.forEach(function (u, g) { if (!g0 && ((rep.unitNames && rep.unitNames.get(g)) || u.name) === nm) g0 = g; }); return g0; };

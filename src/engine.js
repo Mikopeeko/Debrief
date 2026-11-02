@@ -3656,6 +3656,9 @@ function buildCoiledAltar(ev, r, h) {
   const pname = (g) => h.name(g), role = (g) => h.role(g);
   const mistakes = [], sections = [], dur = r.duration;
   const M = (t, player, spell, severity, detail, fix) => mistakes.push({ t, player, mechanic: S(spell)[1], id: S(spell)[0], severity, detail, fix });
+  // (every Soul Fragment pickup, [time, player, x, y]: the pickup hit (#1308330) lands where the fragment was. The Timeline replay draws each
+  // fragment from its player's Gravebound until this moment (Nov 2, Flex: "Yes, do fragments"))
+  r.fragPicks = dmg('gravebound').filter((e) => h.isPlayer(e.dst) && (e.id == null || +e.id === 1308330)).map((e) => { const q = e.x != null && e.x === e.x ? e : h.snap(e.t).find((p) => p.guid === e.dst); return q ? [+e.t.toFixed(2), e.dst, +(+q.x).toFixed(2), +(+q.y).toFixed(2)] : null; }).filter(Boolean);
 
   // ---- phases ----
   const dm = casts('dreadmarch'), sb = casts('soulbinding');
