@@ -120,6 +120,34 @@ How it's worked out (`mpRouteOf` in `src/mptab.js`, from the key's own events):
 - **The cushion in the banner:** "Timed +1 · 59 s to spare" (the time under the limit you beat), amber under 90 s and green otherwise; "1:12 over" in red.
 - **Big cooldowns tag** only when someone didn't press theirs.
 
+## Easier on the eyes (Nov 1, the Design studio's mplus-tidy, Flex: "ok so then do it")
+Flex: "great, lots of awesome information but a bit hard to digest" and "i dont know what im looking at looking at the charts, maybe giving them some tooltips".
+- **One headline sentence per section** (`mpSec(title, line, body, id, { fold, tip })`):
+  - Timeline: "You fell furthest behind after Atroxus: 3:26."
+  - Route: "You pulled 12 times; the fast run pulled 7."
+  - Pulls: "You took 12 pulls, with 2 deaths." (or "and wiped on pull 9")
+  - Kicks: the spell that went off most with a kick ready.
+  - Players: who never pressed a big cooldown (else "Everyone pressed their big cooldowns."), then who was furthest behind their spec.
+- **Open at the top, folded below:**
+  - The banner, the top box, the tiles, the timeline and the route stay open.
+  - Pulls, Kicks and Players are `details.mpt-fold`, showing the sentence and a Show pill.
+  - The jump bar and a map dot open the folded section first. A section you opened stays open when the fast run arrives (`mpDraw`).
+- **Four tiles:** Time (with the cushion), Behind a typical fast run, Casts that went off, and Lust (how many, and on which pulls). Deaths and standing moved to the top box and the stretch rows.
+- **The split bar** in "Where your M:SS went":
+  - It splits the gap into longer fighting, standing between pulls and deaths. Fighting is what's left, so the pieces add up.
+  - Each piece has a hover, the key sits under the bar, and there are no words inside the bar.
+  - A piece where you beat the fast run shows in the key only, in green.
+- **Stretch rows:** one number per cell, the difference from the fast run (+1:46, +3 pulls, same). Both times are in the hover. A pull counts as 40 s when picking the worst cell to colour.
+- **Quiet tags:** sentence case, a dot, no box. Red for deaths, wipes and "not killed"; yellow (#ffd166) for Lust; grey for the rest. Three at most, then "+N" with the rest in its hover. "4 of 5 big cooldowns".
+- **Pull details:**
+  - Each death reads "1:05 in: Hansso died to Insidious Aura (from Chitigoth). Used 1 defensive."
+  - The cooldowns line is one sentence ("Everyone pressed a big cooldown." / "X didn't press one."), with who pressed what in its hover.
+- **Hovers:** the site's own (`data-tt`, through `mpT1`), plus an ⓘ (`mpInfo`, the site's `.ds-i`) by the timeline, the split bar, the forces strips ("How much each pull added toward 100% enemy forces") and "On the map".
+  - Every timeline piece has one: pulls, bosses, deaths, Lust (with its spell, `R.lust[].spell`), boss-down diamonds, the +3/+2/+1 marks and the fast run.
+  - So do strip pieces, boss marks, the striped extra past 100%, and the fast run's map dots.
+  - No native `title` hovers are left on the tab.
+- Not this round: the "casts went off" counts on boss pulls (many boss casts can't be kicked). The studio is scoping it.
+
 ## Lust and big cooldowns (Nov 1)
 No new section (the Design studio's call): they go where they belong. One pass over the key's lines (`mpScan`) finds them, with the route, for a report, a log and a shared night alike.
 - **Lust:** a Bloodlust-type buff landing on the group: Bloodlust, Heroism, Time Warp, Primal Rage, Fury of the Aspects, Harrier's Cry, or any drums.
