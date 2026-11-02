@@ -344,7 +344,7 @@ const isDungeon = (diffId, size) => DUNGEON_DIFF.has(diffId) || (size > 0 && siz
 // dungeons until then), each marked dungeon with its key level)
 const DUNGEON_BOSS = new Set([8]);
 function createIndexer(opts) {
-  const bosses = [], runs = [], pulls = {}, withDungeons = !!(opts && opts.dungeons);
+  const bosses = [], runs = [], pulls = {}, withDungeons = !!(opts && opts.dungeons), withKeys = withDungeons || !!(opts && opts.keys); /* (keys: the website's Mythic+ tab lists the keys too, its dungeon bosses still skipped (Nov 1)) */
   let cur = null, run = null, lastMs = 0;
   return {
     line(text, start, end) {
@@ -368,10 +368,10 @@ function createIndexer(opts) {
       } else if (ev === 'CHALLENGE_MODE_START') {
         run = { kind: 'run', boss: f[0], zone: f[0], level: +f[3], diff: '+' + f[3], startMs: ts.ms, startByte: start, endByte: 0,
           kill: false, result: 'In progress', duration: 0, bosses: [], inst: f[1] }; // (not listed: raids only)
-        if (withDungeons) runs.push(run); // (the in-game app reads the whole key at its end: the Mythic+ run recap (Nov 1))
+        if (withKeys) runs.push(run); // (the in-game app reads the whole key at its end: the Mythic+ run recap (Nov 1)); the website's Mythic+ tab too
       } else if (ev === 'CHALLENGE_MODE_END' && run) {
         run.kill = f[1] === '1'; run.result = run.kill ? 'Timed' : 'Depleted';
-        run.duration = num(f[3]) / 1000 || (ts.ms - run.startMs) / 1000; run.endByte = end; run = null;
+        run.duration = num(f[3]) / 1000 || (ts.ms - run.startMs) / 1000; run.timeMs = num(f[3]); run.endByte = end; run = null; /* (timeMs 0: a key left early, its end written when the next key starts) */
       } else if (ev === 'ZONE_CHANGE' && run && withDungeons && run.inst && f[0] !== run.inst && f[1] !== 'UNKNOWN AREA') {
         // (the app: the group left the dungeon with the key unfinished (Nov 1). WoW writes the key's end only when the next key starts, so its
         // run recap would pop up then; the key ends here instead. A loading screen's UNKNOWN AREA isn't leaving)
@@ -389,8 +389,8 @@ function createIndexer(opts) {
 
 // Live logging from a combat log that WoW is still writing: feed it the new bytes as the file grows; peek() lists the
 // pulls found so far (an unfinished pull stays "In progress" until its ENCOUNTER_END line arrives).
-function liveIndexer() {
-  const ix = createIndexer(), dec = new TextDecoder();
+function liveIndexer(opts) {
+  const ix = createIndexer(opts), dec = new TextDecoder();
   let carry = null, offset = 0;
   const check = (b, s, e, off) => {
     const lim = Math.min(e - 2, s + 48);
@@ -415,8 +415,8 @@ function liveIndexer() {
 }
 
 // next(): Promise<{done, value: Uint8Array}>
-async function indexChunks(next, total, onProgress) {
-  const ix = createIndexer();
+async function indexChunks(next, total, onProgress, opts) {
+  const ix = createIndexer(opts);
   const dec = new TextDecoder();
   let carry = null, offset = 0;
   const check = (b, s, e, off) => {

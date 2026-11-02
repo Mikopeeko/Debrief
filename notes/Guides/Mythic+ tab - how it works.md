@@ -9,7 +9,17 @@ Page text never names Warcraft Logs (Flex's rule, Oct 19).
 - A raid report that also has keys opens the raid as usual, with a **Mythic+** tab at the end of the tabs. The raid's tabs take you back.
 - With several keys in the report, a drop-down at the top picks one.
 - Address: `?report=<code>&fight=<n>&tab=mplus`. Reload, Back and Forward work.
-- Not yet: keys from a log on your PC or from a shared night (the site's own log reading skips keys). Those are a follow-up.
+- **Keys from a log on your PC** (Nov 1, Flex: "yea do those two"): opened as a file, or followed through the Debrief app or a Logs folder.
+  - The site's log reader keeps keys when asked (`createIndexer({ keys: true })`, `indexChunks(…, { keys: true })`, `liveIndexer({ keys: true })`); its dungeon bosses are still skipped.
+  - The keys go to `S.index.keys` (`mpLocalKeys`), never the raid list.
+  - A log with only keys opens on the Mythic+ tab, on the newest key. While following a log live, a newly finished key opens there when no raid pull is open.
+  - A key's lines are read from the file by its bytes, exactly as a raid pull's are.
+- **Shared nights carry keys:**
+  - Share sends the night's keys with its raid pulls (`shrMine`).
+  - The Mythic+ tab has its own Share line for a key from your PC, and the dialog says "Share your key".
+  - The links: `?night=<id>` (the whole night), and `?night=<id>&pull=<n>&tab=mplus` (that key).
+  - Opening one rebuilds the keys from the night's list (items with `kind: 'run'`).
+- Tested on Flex's Voidscar Arena +19 of Oct 10 (`RaiderIOLogsArchive/WoWCombatLog-101026_174717.txt`, lines 589 to 329,674, about 100 MB): opened from the file, shared, and opened from the shared link on a practice copy.
 
 ## The pipeline
 1. `src/wcl.js` `loadReport` lists each key as `runs` (the page keeps them as `S.index.keys`). Warcraft Logs keeps a whole key as one fight, with:
@@ -85,6 +95,22 @@ How it's worked out (`mpRouteOf` in `src/mptab.js`, from the key's own events):
   4. otherwise only the gold mark, with the name on hover
   On a phone with four bosses close together, one name can end up as a mark only.
 - **Not yet:** grey dots for packs nobody pulled. That needs Mythic Dungeon Tools' pack layout and its author's okay.
+
+## Lust and big cooldowns (Nov 1)
+No new section (the Design studio's call): they go where they belong. One pass over the key's lines (`mpScan`) finds them, with the route, for a report, a log and a shared night alike.
+- **Lust:** a Bloodlust-type buff landing on the group: Bloodlust, Heroism, Time Warp, Primal Rage, Fury of the Aspects, Harrier's Cry, or any drums.
+  - Checked in the log itself: Flex's +19 has Time Warp (ID 80353) 3 times, with Temporal Displacement after.
+  - A second landing within 20 s is the same Lust. A Lust just before a pull counts for that pull.
+- **Big cooldowns:** each player's casts of their spec's big cooldowns.
+  - The list is the Rotation tab's own (`GEN_SPECS[spec].cds`), cooldowns of a minute or more only.
+  - Healers also get the engine's healing cooldowns (`CD_NAMES`, less Lust and movement).
+  - One that player pressed more often than once every 50 s in that key is dropped: Flex's +19 Arms Warrior pressed Bladestorm (ID 446035) every 20 to 40 s.
+  - A press written twice within 5 s counts once.
+- **Where they show:**
+  - a pink Lust mark on your lane in Where you fell behind
+  - "Lust" and "Big cooldowns N of M" tags on each pull row, with who pressed what in the pull's details
+  - in Players, "N big cooldowns, K on the 3 biggest pulls" (biggest by what they counted, else by damage taken), with the hover listing each cooldown's pulls
+- **One line in What gets you +N:** "Lust on your biggest pulls", only when it's clear: no Lust went on a boss or on either of your two biggest trash pulls. No seconds, since the log can't measure them.
 
 ## Rules Flex set
 - Dungeon facts from 12.1 to 12.1.5 only. Timers and lists live in `companion/mplus.js`.

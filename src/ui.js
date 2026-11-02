@@ -543,7 +543,8 @@ async function openFile(file) {
   $('#bossHead').innerHTML = ''; $('#list').innerHTML = '<p class="muted" style="padding:8px">Reading ' + esc(file.name) + '…</p>';
   try {
     const reader = file.stream().getReader();
-    S.index = await E.indexChunks(() => reader.read(), file.size, (x) => { bar.style.width = (x * 100).toFixed(1) + '%'; });
+    S.index = await E.indexChunks(() => reader.read(), file.size, (x) => { bar.style.width = (x * 100).toFixed(1) + '%'; }, { keys: true });
+    S.index.keys = mpLocalKeys(S.index.runs); S.index.runs = []; /* (its Mythic+ keys go to the Mythic+ tab, never the raid list (Nov 1)) */
   } catch (err) {
     $('#list').innerHTML = '<p class="muted" style="padding:8px">Couldn\'t read that file: ' + esc(err.message) + '</p>';
     return;
@@ -551,7 +552,8 @@ async function openFile(file) {
   renderList();
   const all = S.index.bosses.concat(S.index.runs).sort((a, b) => a.startMs - b.startMs);
   if (all.length) { S.tab = 'live'; S.scope = 'all'; select(all[all.length - 1]); } // (a new log opens on Recap for the whole night)
-  else $('#main').innerHTML = '<div class="empty"><div class="drop"><h2>No raid pulls in this log</h2><p class="muted">The file opened, but it has no raid boss pulls (dungeons and Mythic+ keys are left out, because this site is for raids). Make sure combat logging was on during the raid.</p></div></div>';
+  else if (S.index.keys.length) mpOpen(S.index.keys[S.index.keys.length - 1]); /* (a log of keys opens on the Mythic+ tab, on the newest key) */
+  else $('#main').innerHTML = '<div class="empty"><div class="drop"><h2>No raid pulls or Mythic+ keys in this log</h2><p class="muted">The file opened, but it has no raid boss pulls and no finished Mythic+ key (other dungeons are left out). Make sure combat logging was on.</p></div></div>';
 }
 
 // times of day in US 12-hour format ("7:33 PM"); fight timers (0:43) are durations and use T()
@@ -2025,6 +2027,8 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-11-01', h: [{ t: 'Mythic+ tab', d: 'Open a report with a Mythic+ key, and the new Mythic+ tab shows the whole key. First, what gets you the next level, ranked by seconds on the timer. Then where you fell behind a typical fast run of your dungeon and level: the middle of the 20 fastest, a target you can reach. Your route is on the game\'s own map, with how much each pull counted. Click a map to make it bigger. Then every pull, the casts that got through, the deaths, and each player against the same spec in the fastest runs.' }, { t: 'Rotation knows single target from AoE', d: 'Your rotation is now judged by how many enemies were close: Divine Storm, Blade Flurry, Whirlwind, Spinning Crane Kick and Seed of Corruption on packs, the single-target buttons on one. For now in Mythic+, where packs are the fight. Raid shows how many enemies were close.' }, { t: 'A key for your recap', d: 'Press Ctrl + Shift + D anywhere, even in WoW, and your newest recap shows over the game; press it again to hide it. Debrief Companion asks you to pick the key once, and you can change it any time. Play in Windowed (Fullscreen) so it shows on top.' }, { t: 'Mythic+ run recap', d: 'When a key ends, Debrief Companion pops up one recap of the whole run: how close you came to the next level and what the deaths cost, a tab for each pull with what got through and whose kick was ready, kicks and stuns, avoidable damage, deaths, and everyone\'s rotation, for you or anyone in the group. Save this key brings the same recap into WoW.' }, { t: 'Debriefing Timeline, across the page', d: 'Each phase is one chart: every mechanic a row, every moment a dot, green for done right and red for a mistake, with the boss health behind. Hover a dot for what happened. Under it, every mistake is one line; click it for why and what to do next time.' }], n: [
+    "Mythic+ tab: open a key from your own combat log too, or from the Debrief app, not only from a report. Share it like a raid night, and the link opens on the Mythic+ tab.",
+    "Mythic+ tab: see where each Lust went, on your timeline and on the pull, and each player's big cooldowns: how many, and how many went on your biggest pulls.",
     "On a smaller screen, the tiles at the top of Debriefing line up in even rows: no tile stretched across on its own and no empty gaps.",
     "The hovers on Debriefing's top tiles list every player, not just the first 10, and a tall hover stays on screen.",
     "Your recap is a side panel now: the full height of your screen on the right edge (or the left, with Side in /db card settings), one column that scrolls, in WoW and on your PC. Drag its inner edge on your PC to make it wider or narrower.",
@@ -30396,10 +30400,10 @@ async function fileTick() {
   try {
     const nl = await newestLog(FH.dir);
     if (!nl) { if ($('#fhMsg')) $('#fhMsg').textContent = 'No WoWCombatLog file in that folder yet. Type /combatlog in game (with Advanced Combat Logging on).'; return; }
-    if (nl.name !== FH.name) { FH.name = nl.name; FH.ix = E.liveIndexer(); FH.size = 0; LIVE.seen.clear(); CACHE.clear(); S.index = { bosses: [], runs: [] }; renderList(); } // a new log file: start over on it
+    if (nl.name !== FH.name) { FH.name = nl.name; FH.ix = E.liveIndexer({ keys: true }); FH.size = 0; LIVE.seen.clear(); CACHE.clear(); S.index = { bosses: [], runs: [] }; renderList(); } // a new log file: start over on it
     FH.hd = nl.hd; S.file = nl.f;
     // (a log can shrink only if WoW started it over: then read it from the start)
-    if (nl.f.size < FH.size) { FH.ix = E.liveIndexer(); FH.size = 0; LIVE.seen.clear(); CACHE.clear(); S.index = { bosses: [], runs: [] }; renderList(); }
+    if (nl.f.size < FH.size) { FH.ix = E.liveIndexer({ keys: true }); FH.size = 0; LIVE.seen.clear(); CACHE.clear(); S.index = { bosses: [], runs: [] }; renderList(); }
     if (nl.f.size > FH.size) {
       const end = nl.f.size, first = FH.size === 0 && end > 50e6;
       if (first && $('#fhMsg')) $('#fhMsg').textContent = 'Reading tonight\'s log so far (' + Math.round(end / 1e6) + ' MB)…';
@@ -30409,10 +30413,13 @@ async function fileTick() {
     FH.err = '';
     const all = FH.ix.peek(), finished = all.bosses.filter((b) => b.result === 'Kill' || b.result === 'Wipe');
     const fresh = finished.filter((b) => !S.index.bosses.includes(b)), inProg = all.bosses.find((b) => b.result === 'In progress');
+    /* (finished Mythic+ keys go to the Mythic+ tab (Nov 1); with no raid pull open, a newly finished key opens there) */
+    { const kk = mpLocalKeys(all.runs.filter((r) => r.endByte)), was = (S.index.keys || []).length; S.index.keys = kk;
+      if (kk.length > was && !finished.length && S.page !== 'mplus' && !S.item) { mpOpen(kk[kk.length - 1]); LIVE.last = Date.now(); return; } }
     if ($('#fhMsg')) $('#fhMsg').textContent = finished.length ? '' : inProg ? 'Pull in progress: ' + inProg.boss + '…' : 'No boss pulls yet in ' + nl.name + '. Pulls appear here as they end.';
     if (fresh.length) {
       const wasNewest = !S.item || S.index.bosses[S.index.bosses.length - 1] === S.item;
-      S.index = { bosses: finished, runs: [] }; renderList();
+      S.index = { bosses: finished, runs: [], keys: S.index.keys || [] }; renderList();
       document.querySelectorAll('.pull').forEach((x) => x.classList.toggle('sel', ITEMS[+x.dataset.i] === S.item));
       // (after a reload: back to the pull that was open, at the same scroll position, instead of the newest one)
       if (RESUME_PICK) {
@@ -30606,7 +30613,7 @@ function navState() {
   if (S.page === 'home') return { nav: 1, v: 'h' };
   if (S.page === 'guides') return { nav: 1, v: 'gd', b: S.gdzBoss || null, d: S.gdzDiff || null };
   if (S.page === 'ingame') return { nav: 1, v: 'ig' }; if (S.page === 'plan') return { nav: 1, v: 'pl' }; /* (Plan has an address too, Oct 27) */
-  if (S.page === 'mplus' && MP.item) return { nav: 1, v: 'mp', code: MP.item.wcl.code, fight: MP.item.wcl.fight, tab: 'mplus' }; /* (a Mythic+ key, Nov 1) */
+  if (S.page === 'mplus' && MP.item) return MP.item.wcl ? { nav: 1, v: 'mp', code: MP.item.wcl.code, fight: MP.item.wcl.fight, tab: 'mplus' } : MP.item.shr ? { nav: 1, v: 'mp', night: MP.item.shr.id, sn: MP.item.shr.n, tab: 'mplus' } : { nav: 1, v: 'mp', sb: MP.item.startByte, tab: 'mplus' }; /* (a Mythic+ key, Nov 1: from a report, a shared night, or this PC's log) */
   return null;
 }
 // (a boss guide's own address (Oct 27): /guide/the-coiled-altar/mythic, so each guide is a page search engines list)
@@ -30617,7 +30624,7 @@ const navKey = (st) => (st ? [st.v, st.code, st.fight, st.bi, st.night, st.tab, 
 function navNote() {
   const st = navState(); if (!st) return;
   const cur = history.state && history.state.nav ? navKey(history.state) : null, k = navKey(st);
-  let url = WCL.HOSTED ? (st.v === 'mp' ? '?report=' + st.code + '&fight=' + st.fight + '&tab=mplus' : st.v === 'p' && st.night ? shrUrl(st) : st.v === 'p' && st.code ? '?report=' + st.code + '&fight=' + st.fight + '&tab=' + encodeURIComponent(st.tab || 'audit') + (st.scope === 'all' ? '&all=1' : '') + (st.sel ? '&p=' + encodeURIComponent(st.sel) : '') : st.v === 'gd' ? '?guides' + (st.b ? '&boss=' + encodeURIComponent(st.b) : '') + (st.d ? '&d=' + st.d : '') : st.v === 'ig' ? '?ingame' : st.v === 'pl' ? '?plan' : location.pathname) : location.pathname + location.search;
+  let url = WCL.HOSTED ? (st.v === 'mp' ? (st.code ? '?report=' + st.code + '&fight=' + st.fight + '&tab=mplus' : st.night ? '?night=' + st.night + '&pull=' + st.sn + '&tab=mplus' : location.pathname) : st.v === 'p' && st.night ? shrUrl(st) : st.v === 'p' && st.code ? '?report=' + st.code + '&fight=' + st.fight + '&tab=' + encodeURIComponent(st.tab || 'audit') + (st.scope === 'all' ? '&all=1' : '') + (st.sel ? '&p=' + encodeURIComponent(st.sel) : '') : st.v === 'gd' ? '?guides' + (st.b ? '&boss=' + encodeURIComponent(st.b) : '') + (st.d ? '&d=' + st.d : '') : st.v === 'ig' ? '?ingame' : st.v === 'pl' ? '?plan' : location.pathname) : location.pathname + location.search;
   if (WCL.HOSTED) { try { document.title = st.v === 'gd' && st.b ? st.b + ' ' + ((st.d || S.gdzDiff) === 'h' ? 'Heroic' : 'Mythic') + ' guide · Debrief' : PAGE_TITLE_SITE; } catch (e) { /* ignore */ } if (st.v === 'gd' && st.b) url = '/guide/' + guideSlug(st.b) + '/' + ((st.d || S.gdzDiff) === 'h' ? 'heroic' : 'mythic'); else if (url.startsWith('?')) url = '/' + url; else if (location.pathname.startsWith('/guide/')) url = '/'; } /* (guides at their own address, Oct 27) */
   const boot = NAV_BOOT; NAV_BOOT = false;
   // (the same page with another player picked on Rotation: the step is kept up to date for a reload, not a new step)
@@ -30627,7 +30634,7 @@ async function navGo(st) {
   if (st.v === 'h') { home(); }
   else if (st.v === 'gd') { openGuides(st.b, st.d); }
   else if (st.v === 'ig') { openInGame(); } else if (st.v === 'pl') { planPage(); }
-  else if (st.v === 'mp') { await mpGo(st.code, st.fight); } /* (a Mythic+ key, Nov 1) */
+  else if (st.v === 'mp') { if (st.code) await mpGo(st.code, st.fight); else if (st.night) { if (!S.shr || S.shr.id !== st.night) await openShared(st.night, { pull: st.sn, tab: 'mplus' }); else { const k = mpKeys().find((x) => x.shr && x.shr.n === st.sn); if (k) mpOpen(k); } } else { const k = mpKeys().find((x) => x.startByte === st.sb); if (k) mpOpen(k); else home(); } } /* (a Mythic+ key, Nov 1) */
   else if (st.v === 'g') { progressPage(undefined, st.g); if (st.mine) S.progMine = true; } // (set before the page draws)
   else if (st.v === 'p') {
     let b = null;
@@ -30660,7 +30667,7 @@ function syncUrl(item) {
 const SHR_PART = 20 * 1024 * 1024;
 const shrUrl = (st) => '?night=' + st.night + (st.sn != null ? '&pull=' + st.sn : '') + (st.tab ? '&tab=' + encodeURIComponent(st.tab) : '') + (st.scope === 'all' ? '&all=1' : '') + (st.sel ? '&p=' + encodeURIComponent(st.sel) : '');
 const shrIdent = (b) => b.id + ':' + b.diffId + ':' + b.startMs;
-const shrMine = () => (S.index && S.index.bosses ? S.index.bosses.filter((b) => !b.wcl && !b.shr && b.endByte > b.startByte) : []);
+const shrMine = () => (S.index && S.index.bosses ? S.index.bosses.concat(S.index.keys || []).filter((b) => !b.wcl && !b.shr && b.endByte > b.startByte) : []); /* (and the night's Mythic+ keys, so a shared night keeps its Mythic+ tab (Nov 1)) */
 // (this night's share, remembered on this PC: the key that lets this browser add to it, its name, and the pulls sent so far)
 const shrKey = () => { const l = shrMine(); return l.length && srcKey() ? 'dbf-shr:' + srcKey() + ':' + l[0].startMs : ''; };
 let SHR_ST = { k: null, v: null };
@@ -30710,7 +30717,7 @@ document.addEventListener('click', async (e) => { const t = e.target.closest && 
   try { await openWcl({ code, fight: null }, await wclCreds());
     const m = was && S.index && S.index.bosses.find((b) => b.id === was.id && b.diffId === was.diffId && b.pull === was.pull); if (m) select(m);
   } catch (x) { t.disabled = false; t.title = (x && x.message) || 'Couldn\'t open it'; } });
-const shrRedraw = () => { const b = $('#bossHead .shr-bar'); if (b) b.outerHTML = shrBar() || ''; };
+const shrRedraw = () => { const b = $('#bossHead .shr-bar'); if (b) b.outerHTML = shrBar() || ''; const m = $('#main .mpt-shr'); if (m && MP.item) m.outerHTML = mpShareHtml(MP.item); }; /* (and the Mythic+ tab's own Share line (Nov 1)) */
 async function shrIdOf(key) { const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key))).slice(0, 16); return btoa(String.fromCharCode(...h)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
 // (sends the pulls not sent yet, then the list of pulls; step(done, of, pull) says how far it is)
 async function shrSend(step) {
@@ -30738,17 +30745,18 @@ async function shrSend(step) {
 // (the Share pop-up: what it does and who can see it, then the links to copy)
 function shrDlg() {
   if ($('#shD')) return;
-  const list = shrMine(), v0 = shrSaved(), left = list.filter((b) => !(v0 && v0.sent[shrIdent(b)])).length;
-  document.body.insertAdjacentHTML('beforeend', pgDlg('sh', '<section class="wt nd shr-dlg"><button class="gs-x" id="shX" type="button" aria-label="Close">×</button><h2 id="shT">Share tonight\'s raid</h2>' +
-    '<p class="sub">Debrief keeps a copy of tonight\'s ' + plural(list.length, 'pull') + ' and gives you a link. Your officers open it on any PC or phone and see the same tabs you do. No app or sign-in needed. The link works for 30 days.</p>' +
-    '<div class="shr-warn"><b>Anyone with the link can see tonight\'s raid</b>: every pull, and every player\'s name and numbers. Only share it with people you trust.</div>' +
+  const list = shrMine(), v0 = shrSaved(), left = list.filter((b) => !(v0 && v0.sent[shrIdent(b)])).length, raid = !!(S.index && S.index.bosses && S.index.bosses.length); /* (a log of only Mythic+ keys shares its keys (Nov 1)) */
+  document.body.insertAdjacentHTML('beforeend', pgDlg('sh', '<section class="wt nd shr-dlg"><button class="gs-x" id="shX" type="button" aria-label="Close">×</button><h2 id="shT">' + (raid ? 'Share tonight\'s raid' : list.length === 1 ? 'Share your key' : 'Share your keys') + '</h2>' +
+    '<p class="sub">Debrief keeps a copy of ' + (raid ? 'tonight\'s ' + plural(list.length, 'pull') : list.length === 1 ? 'your key' : 'your ' + list.length + ' keys') + ' and gives you a link. ' + (raid ? 'Your officers open it' : 'Anyone you send it to opens it') + ' on any PC or phone and sees the same tabs you do. No app or sign-in needed. The link works for 30 days.</p>' +
+    '<div class="shr-warn"><b>Anyone with the link can see ' + (raid ? 'tonight\'s raid' : 'these keys') + '</b>: every pull, and every player\'s name and numbers. Only share it with people you trust.</div>' +
     '<div id="shBody">' + (v0 && !left ? '' : '<button class="btn primary" id="shGo" type="button" style="width:100%">' + (v0 ? 'Add the ' + plural(left, 'new pull') + ' and get the link' : 'Share and get the link') + '</button>') + '</div><div class="fp-msg" id="shMsg"></div></section>'));
   const d = $('#shD'), close = () => { d.remove(); document.removeEventListener('keydown', key, true); };
   const key = (e) => { if (e.key === 'Escape' && document.body.contains(d)) { e.preventDefault(); e.stopPropagation(); close(); } };
   document.addEventListener('keydown', key, true); d.onclick = (e) => { if (e.target === d) close(); }; $('#shX').onclick = close;
   const links = (id) => { const nv = shrNav(S.item), one = S.scope !== 'all' && nv.night ? location.origin + '/' + shrUrl({ night: id, sn: nv.sn, tab: 'audit' }) : '';
     const row = (lab, u) => '<div class="shr-lk"><div class="shr-lh">' + lab + '</div><div class="fph-box sm"><input readonly value="' + esc(u) + '" aria-label="' + lab + ' link"><button class="btn primary" type="button" data-shrc="' + esc(u) + '">Copy</button></div></div>';
-    $('#shBody').innerHTML = row('The whole night', location.origin + '/' + shrUrl({ night: id })) + (one ? row('This pull (' + esc(S.item.boss) + ', pull ' + S.item.pull + ')', one) : '');
+    const kv = S.page === 'mplus' && MP.item && !MP.item.wcl && !MP.item.shr ? (shrSaved() || { sent: {} }).sent[shrIdent(MP.item)] : null; /* (this key, on the Mythic+ tab (Nov 1)) */
+    $('#shBody').innerHTML = row('The whole night', location.origin + '/' + shrUrl({ night: id })) + (kv ? row('This key (' + esc(MP.item.boss) + ' +' + MP.item.level + ')', location.origin + '/' + shrUrl({ night: id, sn: kv.n, tab: 'mplus' })) : one ? row('This pull (' + esc(S.item.boss) + ', pull ' + S.item.pull + ')', one) : '');
     $('#shBody').querySelectorAll('input').forEach((x) => (x.onfocus = () => x.select()));
     $('#shMsg').textContent = '';
     try { const st = navState(); if (st && st.night) history.replaceState(st, '', shrUrl(st)); } catch (e) { /* ignore */ } /* (the address bar has the link too) */
@@ -30757,7 +30765,7 @@ function shrDlg() {
   $('#shGo').onclick = async () => { const b = $('#shGo'); b.disabled = true;
     $('#shBody').insertAdjacentHTML('beforeend', '<div class="ld-b shr-pb"><i style="width:0"></i></div>');
     const bar = $('#shBody .shr-pb i'), msg = $('#shMsg'); msg.style.color = '';
-    try { const id = await shrSend((i, n, p) => { b.textContent = p ? 'Saving ' + p.boss + ' pull ' + p.pull + ' (' + (i + 1) + ' of ' + n + ')…' : 'Making the link…'; bar.style.width = (100 * (n ? i / n : 1)).toFixed(1) + '%'; });
+    try { const id = await shrSend((i, n, p) => { b.textContent = p ? 'Saving ' + p.boss + (p.kind === 'run' ? ' +' + p.level + ' key' : ' pull ' + p.pull) + ' (' + (i + 1) + ' of ' + n + ')…' : 'Making the link…'; bar.style.width = (100 * (n ? i / n : 1)).toFixed(1) + '%'; });
       if (document.body.contains(d)) links(id); else { shrRedraw(); toast('<span><b>Tonight is shared</b> Press Share again to copy the link.</span>', 6000); } }
     catch (err) { b.disabled = false; b.textContent = 'Try again'; const pb = $('#shBody .shr-pb'); if (pb) pb.remove(); msg.style.color = 'var(--bad, #e5534b)'; msg.textContent = err.message + (/reach/.test(err.message) ? '' : ' The pulls saved so far are kept, so Try again carries on.'); console.error(err); } };
 }
@@ -30775,7 +30783,9 @@ async function openShared(id, o) {
   if (FH.dir) { FH.dir = null; if (LIVE.on) setLive(false); }
   S.file = null; S.wclCreds = null; S.wclCode = null; CACHE.clear();
   S.shr = { id, at: j.at, by: j.by || '', title: j.title || '' };
-  S.index = { bosses: j.items.map((x) => ({ ...x, run: null, shr: { id, n: x.n, parts: x.parts } })), runs: [] };
+  S.index = { bosses: j.items.filter((x) => x.kind !== 'run').map((x) => ({ ...x, run: null, shr: { id, n: x.n, parts: x.parts } })), runs: [],
+    keys: mpLocalKeys(j.items.filter((x) => x.kind === 'run').map((x) => ({ ...x, shr: { id, n: x.n, parts: x.parts } }))) }; /* (a shared night's Mythic+ keys keep their tab (Nov 1)) */
+  if (S.index.keys.length && (!S.index.bosses.length || o.tab === 'mplus')) { if (!S.index.bosses.length) $('.brand p').textContent = 'Shared night' + (j.title ? ': ' + j.title : ''); if (!o.quiet) { const want = o.pull != null ? S.index.keys.find((k) => k.shr.n === o.pull) : null; mpOpen(want || S.index.keys[S.index.keys.length - 1]); } return; }
   $('.brand p').textContent = 'Shared raid night' + (j.title ? ': ' + j.title : '');
   renderList();
   if (o.quiet) return;

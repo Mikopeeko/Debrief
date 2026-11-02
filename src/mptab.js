@@ -9,9 +9,21 @@
 //   /api/mpfast, kept a day), read the same way. Until it's in, or when there's none, the tab shows without it: never made-up numbers.
 // - Players: each one's damage or healing a second against the players of the same spec in the 10 fastest runs.
 // - Routes on a map are step 3 (researched apart).
-const MP = { item: null, R: {}, busy: new Map(), fast: {}, fastR: {}, err: {} };
+const MP = { item: null, R: {}, busy: new Map(), fast: {}, fastR: {}, err: {}, local: new Map() };
 const mpKeys = () => (S.index && S.index.keys) || [];
-const mpK = (it) => it.wcl.code + ':' + it.wcl.fight;
+const mpK = (it) => (it.wcl ? it.wcl.code + ':' + it.wcl.fight : it.shr ? 's:' + it.shr.id + ':' + it.shr.n : 'f:' + it.startMs + ':' + it.startByte);
+const mpLc = (s) => String(s || '').toLowerCase().replace(/[’`]/g, '\'');
+// (each dungeon's Warcraft Logs encounter, for the fast runs of a key read from a log on this PC or a shared night (Nov 1): zone 55, Midnight Season 2)
+const MP_WCLID = { 'altar of fangs': 12993, 'den of nalorakk': 12825, 'kings\' rest': 61762, 'murder row': 12813, 'ruby life pools': 112521, 'temple of sethraliss': 61877, 'the blinding vale': 12859, 'voidscar arena': 12923 };
+// (keys from a log on this PC, or from a shared night (Nov 1, Flex: "yea do those two"): the log reader's keys as the tab's items, kept as the
+// same objects from one look at the log to the next. A key of a minute or less is one started and reset)
+function mpLocalKeys(runs) {
+  return (runs || []).filter((r) => r && r.kind === 'run' && (r.shr || r.endByte > r.startByte) && (r.duration || 0) > 60).map((r) => {
+    const k = r.shr ? 's:' + r.shr.id + ':' + r.shr.n : 'f:' + r.startMs + ':' + r.startByte; let it = MP.local.get(k);
+    if (!it || it.endByte !== r.endByte) { it = { ...r, kind: 'run', id: MP_WCLID[mpLc(r.boss)] || 0, timed: !!r.kill, keyMs: r.timeMs || null, up: 0,
+      wallMs: r.wallMs != null ? r.wallMs : r.startMs + new Date(r.startMs).getTimezoneOffset() * 60000 }; MP.local.set(k, it); } /* (log times are the PC's own clock, read as UTC) */
+    return it; });
+}
 const mpMM = (s) => { const neg = s < 0; s = Math.round(Math.abs(s)); return (neg ? '−' : '') + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const mpCC = (cls) => ((E.CLASSES || {})[cls] || [])[1] || 'var(--text)';
 const mpWho = (R, n) => { const p = (R.people || []).find((x) => x.name === n); return '<b class="mpt-nm" style="color:' + (p ? mpCC(p.cls) : 'var(--text)') + '">' + esc(n) + '</b>'; };
@@ -26,21 +38,32 @@ function mpTabHtml(on) { if (!mpKeys().length) return ''; on = !!on; const tt = 
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.mpt-tab'); if (!b) return; e.preventDefault(); e.stopPropagation(); mpOpen(); }, true);
 // (a key picked in the report's list of keys)
 document.addEventListener('change', (e) => { const s = e.target; if (!s || s.id !== 'mptPick') return; const it = mpKeys()[+s.value]; if (it) mpOpen(it); });
-function mpKeyName(it) { return it.boss + ' +' + it.level + ' · ' + (it.keyMs ? mpMM(it.keyMs / 1000) : 'left early') + (it.keyMs ? (it.timed ? ' · Timed +' + it.up : ' · Over time') : ''); }
+function mpKeyName(it) { return it.boss + ' +' + it.level + ' · ' + (it.keyMs ? mpMM(it.keyMs / 1000) : 'left early') + (it.keyMs ? (it.timed ? ' · Timed +' + (it.up || mpUp(it)) : ' · Over time') : ''); }
+// (levels up from the time and the dungeon's timer (companion/mplus.js), for a key from a log, which has no count of its own)
+const mpUp = (it) => { const m = (window.DBF_MPTIMER || {})[mpLc(it.boss)], s = (it.keyMs || 0) / 1000; if (!m || !s) return 1; const P = m * 60; return s <= P * 0.6 ? 3 : s <= P * 0.8 ? 2 : s <= P ? 1 : 0; };
 
 // ---------- reading a key: its events, written as WoW writes a key, then the app's own reader ----------
 async function mpRead(it, onStep) {
   const k = mpK(it); if (MP.R[k]) return MP.R[k];
   if (MP.busy.has(k)) { const p0 = MP.busy.get(k); if (onStep) p0.on = onStep; return p0; }
   const p = (async () => {
-    const est = Math.max(20000, it.duration * 210); /* (about 210 events a second in a key, from a +12 on Warcraft Logs) */
-    const ev = await WCL.loadEvents(S.wclCreds, it, (n) => { if (p.on) p.on('Downloading the key…', Math.min(0.9, 0.9 * n / est)); }); /* (page text never names Warcraft Logs: Flex's rule, Oct 19) */
-    if (p.on) p.on('Reading the key…', 0.92);
-    const lines = await WCL.translateAsync(it, ev, () => new Promise((r) => setTimeout(r, 0)));
+    await new Promise((r) => setTimeout(r, 0)); /* (p exists from here on) */
+    let text;
+    if (it.wcl) {
+      const est = Math.max(20000, it.duration * 210); /* (about 210 events a second in a key, from a +12 on Warcraft Logs) */
+      const ev = await WCL.loadEvents(S.wclCreds, it, (n) => { if (p.on) p.on('Downloading the key…', Math.min(0.9, 0.9 * n / est)); }); /* (page text never names Warcraft Logs: Flex's rule, Oct 19) */
+      if (p.on) p.on('Reading the key…', 0.92);
+      text = (await WCL.translateAsync(it, ev, () => new Promise((r) => setTimeout(r, 0)))).join('\n');
+    } else { /* (a key from a log on this PC or a shared night: its own lines, Nov 1) */
+      if (p.on) p.on(it.shr ? 'Downloading the key…' : 'Reading the key from your log…', 0.3);
+      text = it.shr ? await shrText(it) : FH.dir ? await fhText(it.startByte, it.endByte) : await S.file.slice(it.startByte, it.endByte).text();
+      if (p.on) p.on('Reading the key…', 0.85);
+    }
     await new Promise((r) => setTimeout(r, 30));
-    const R = window.DBF_MPLUS ? window.DBF_MPLUS(lines.join('\n'), E) : null;
+    const R = window.DBF_MPLUS ? window.DBF_MPLUS(text, E) : null;
     if (!R || !R.pulls || !R.pulls.length) throw new Error('This key has no pulls Debrief could read.');
-    try { R.route = mpRouteOf(it, R, ev); } catch (e) { R.route = null; } /* (the route: where each pull happened and what it counted (step 3)) */
+    await new Promise((r) => setTimeout(r, 0));
+    try { mpScan(it, R, text); } catch (e) { console.error(e); R.route = null; } /* (the route, Lust and big cooldowns, from the same lines) */
     MP.R[k] = R; return R;
   })();
   p.on = onStep; MP.busy.set(k, p); p.then(() => MP.busy.delete(k), () => MP.busy.delete(k));
@@ -51,7 +74,7 @@ function mpFastRun(it) {
   const lk = it.id + ':' + it.level;
   if (!MP.fast[lk]) MP.fast[lk] = WCL.mpFast(S.wclCreds, { e: it.id, l: it.level }).catch((e) => ({ error: e.message, runs: [] }));
   return MP.fast[lk].then(async (L) => {
-    const med = L.med || 0, cand = (L.runs || []).filter((r) => !(r.code === it.wcl.code && r.fight === it.wcl.fight)).sort((a, b) => Math.abs(a.dur - med) - Math.abs(b.dur - med)).slice(0, 3); /* (a typical fast run: the public one closest to the middle of the 20 fastest (Nov 1, the Design studio's audit)) */
+    const med = L.med || 0, cand = (L.runs || []).filter((r) => !(it.wcl && r.code === it.wcl.code && r.fight === it.wcl.fight)).sort((a, b) => Math.abs(a.dur - med) - Math.abs(b.dur - med)).slice(0, 3); /* (a typical fast run: the public one closest to the middle of the 20 fastest (Nov 1, the Design studio's audit)) */
     for (const c of cand) {
       const fk = c.code + ':' + c.fight;
       if (!MP.fastR[fk]) MP.fastR[fk] = (async () => { const rep = await WCL.loadReport(S.wclCreds, c.code), fit = (rep.runs || []).find((x) => x.wcl.fight === c.fight); if (!fit || !fit.keyMs) throw new Error('not a finished key'); return { it: fit, R: await mpRead(fit) }; })();
@@ -68,7 +91,7 @@ function mpOpen(it) {
   MP.item = it; S.page = 'mplus'; mpCss();
   for (const id of ['#list', '#bossHead', '#bossPick']) { const el = $(id); if (el) el.innerHTML = ''; }
   { const oa = $('#oaTop'); if (oa) { oa.innerHTML = ''; oa.hidden = true; } }
-  $('#main').innerHTML = pgTabBar(null) + '<section id="view" class="mpt-page"><div class="mpt">' + mpPickHtml(it) + '<div id="mptBody"></div></div></section>';
+  $('#main').innerHTML = pgTabBar(null) + '<section id="view" class="mpt-page"><div class="mpt">' + mpShareHtml(it) + mpPickHtml(it) + '<div id="mptBody"></div></div></section>';
   { const nav = $('#main .pg-tabbar nav'); if (nav && !nav.querySelector('.mpt-tab')) nav.insertAdjacentHTML('beforeend', mpTabHtml()); const t = nav && nav.querySelector('.mpt-tab'); if (t) { t.classList.add('on'); t.setAttribute('aria-selected', 'true'); } }
   try { navNote(); } catch (e) { /* (no address) */ } window.scrollTo(0, 0);
   const k = mpK(it), body = () => (MP.item === it && S.page === 'mplus' ? $('#mptBody') : null);
@@ -78,6 +101,11 @@ function mpOpen(it) {
   mpRead(it, (line, frac) => { const b = body(); if (b && typeof loadSet === 'function') loadSet(b, line, frac); }).then(() => { if (body()) mpDraw(); })
     .catch((err) => { MP.err[k] = err.message; const b = body(); if (b) b.innerHTML = '<div class="mpt-err"><b>Couldn\'t read this key.</b> ' + esc(err.message) + '</div>'; });
 }
+// (Share, for a key read from a log on this PC (Nov 1): the same share as a raid night, keys and all, so the link opens on the Mythic+ tab)
+function mpShareHtml(it) { if (!it || it.wcl || it.shr || typeof shrOk !== 'function' || !shrOk()) return '';
+  const v = shrSaved(), left = shrMine().filter((b) => !(v && v.sent[shrIdent(b)])).length, done = v && !left;
+  return '<div class="mpt-shr"><span><b>' + (done ? 'Shared' : 'Share this key') + '</b> ' + (done ? 'Anyone with the link can see it. Copy the link to send it.' : 'Read from your PC, so this page\'s address won\'t open for anyone else. Get a link anyone can open, on a PC or phone.') + '</span>' +
+    '<button class="btn sm' + (done ? '' : ' primary') + '" type="button" data-shr="1">' + (done ? 'Copy link' : 'Share') + '</button></div>'; }
 function mpPickHtml(it) { const keys = mpKeys(); if (keys.length < 2) return '';
   return '<div class="mpt-pick"><label for="mptPick">' + keys.length + ' keys in this report</label><select id="mptPick">' + keys.map((x, i) => '<option value="' + i + '"' + (x === it ? ' selected' : '') + '>' + esc(mpKeyName(x)) + '</option>').join('') + '</select></div>'; }
 function mpDraw() {
@@ -129,6 +157,13 @@ function mpFixes(R, C) {
     else if (times >= 2) out.push({ s: times * pen, t: plural(times, 'death') + ' to ' + esc(o.to), d: 'Who died: ' + o.list.map((d) => mpWho(R, d.who) + ' <span class="mpt-m">(pull ' + d.pull + ')</span>').join(', ') + '. Each death put ' + pen + ' s on the timer.' });
     else rest.push(...o.list); }
   out.sort((a, b) => b.s - a.s);
+  // (Lust that missed your biggest pulls (Nov 1): only when it's clear in the log: no Lust went on a boss or on either of your two biggest trash
+  // pulls (what they counted toward the 100%, else the damage the group took). It saves time we can't measure, so no seconds)
+  { const L = R.lust || [], rt = R.route && R.route.ok ? R.route : null, trash = P.map((p, k) => ({ p, k, v: rt ? rt.pulls[k].add : (R.taken || [])[k] || 0 })).filter((x) => !x.p.boss).sort((a, b) => b.v - a.v), top = trash.slice(0, 2);
+    const amt = (x) => (rt ? Math.round(100 * x.v / rt.full) + '% of the enemies' : Math.round(x.v / 1e6) + 'M damage taken');
+    if (L.length && top.length && top[0].v > 0 && !L.some((l) => P[l.pull] && (P[l.pull].boss || top.some((x) => x.k === l.pull)))) {
+      const on = L.map((l) => { const x = trash.find((y) => y.k === l.pull); return 'pull ' + P[l.pull].n + (x ? ' (' + amt(x) + ')' : ''); });
+      out.push({ s: 0, ns: 'timing', t: 'Lust on your biggest pulls', d: 'Lust went on ' + on.join(' and ') + '. Your biggest pull was pull ' + top[0].p.n + ' (' + amt(top[0]) + ').' }); } }
   // (then must-kick casts that went off without killing anyone: fewer casts, not seconds)
   const wiped = new Set(P.filter((p) => mpWipe(p, n)).map((p) => p.n));
   const bySp = new Map(); for (const p of P) for (const t of p.through) { const k = thr.get(t.spell + '|' + t.mob); if (!k || k.done) continue; const o = bySp.get(t.spell) || { spell: t.spell, n: 0, pulls: new Map() }; o.n++; o.pulls.set(p.n, (o.pulls.get(p.n) || 0) + 1); bySp.set(t.spell, o); }
@@ -174,6 +209,16 @@ function mpHtml(it, R, fx) {
 }
 // (what "a typical fast run" is, for the line under the timeline and the hovers: the middle of the 20 fastest, or of as many as there are)
 const mpTypical = (R, fx) => { const n = (fx && fx.list && fx.list.n) || 0; return 'the one closest to the middle of the ' + (n >= 20 || !n ? '20' : n) + ' fastest timed +' + R.run.level + ' ' + esc(R.run.dungeon) + ' runs this season' + (n && n < 20 ? ' (only ' + n + ' so far)' : ''); };
+const mpPullName = (R, k) => { const p = R.pulls[k]; return p ? (p.boss ? p.boss : 'pull ' + p.n) : ''; };
+// (a player's big cooldowns over the key (Nov 1): how many, and how many went on the 3 biggest trash pulls, by what they counted toward the 100%
+// or else the damage the group took; the hover lists each one's pulls)
+function mpCdLine(R, p) {
+  if (!(R.cdWho || []).includes(p.name)) return '';
+  const l = (R.cds || {})[p.name] || [], rt = R.route && R.route.ok ? R.route : null, big = new Set(R.pulls.map((q, k) => ({ q, k, v: rt ? rt.pulls[k].add : (R.taken || [])[k] || 0 })).filter((x) => !x.q.boss).sort((a, b) => b.v - a.v).slice(0, 3).map((x) => x.k));
+  const by = new Map(); for (const x of l) by.set(x.spell, (by.get(x.spell) || []).concat(mpPullName(R, x.pull)));
+  const on = l.filter((x) => big.has(x.pull)).length;
+  return ' · <span title="' + esc(l.length ? [...by].map(([s, ps]) => s + ': ' + [...new Set(ps)].join(', ')).join(' · ') : 'No big cooldown pressed') + '">' + plural(l.length, 'big cooldown') + (l.length && big.size ? ', ' + on + ' on the 3 biggest pulls' : '') + '</span>';
+}
 const mpSec = (t, sub, body) => '<section class="mpt-sec"><div class="mpt-sh"><h2>' + t + '</h2>' + (sub ? '<span>' + sub + '</span>' : '') + '</div>' + body + '</section>';
 // (where you fell behind: one timeline on the key's timer, your pulls next to a fast run, then why, stretch by stretch)
 function mpBehind(R, C, F, FC, fx, waiting) {
@@ -187,7 +232,8 @@ function mpBehind(R, C, F, FC, fx, waiting) {
   if (F && CP.length && FS.length && FS[FS.length - 1].boss === CP[CP.length - 1].boss) CP[CP.length - 1].fast = FC.ck.time;
   const youLane = '<div class="mpt-lt">' + blocks.map((b) => '<i class="mpt-blk' + (b.p.boss ? ' mpt-bo' : '') + '" style="left:' + X(b.x) + ';width:' + W(b.w) + '" title="' + esc((b.p.boss || 'Pull ' + b.p.n) + ' · ' + mpMM(b.p.dur)) + '"></i>').join('') +
     dticks.map((t) => '<i class="mpt-dth" style="left:' + X(t.x) + ';width:' + W(C.pen) + '" title="' + esc(t.d.who + ' died to ' + t.d.to + ': +' + Math.round(C.pen) + ' s') + '"></i>').join('') +
-    CP.map((c) => '<span class="mpt-cp" style="left:' + X(c.you) + '"><i></i></span>').join('') + '</div>';
+    CP.map((c) => '<span class="mpt-cp" style="left:' + X(c.you) + '"><i></i></span>').join('') +
+    (R.lust || []).map((l) => '<i class="mpt-lst" style="left:' + X(C.tv(l.t)) + '" title="' + esc('Lust at ' + mpMM(C.tv(l.t)) + ' on the timer, ' + mpPullName(R, l.pull)) + '"></i>').join('') + '</div>'; /* (each Lust where it went out (Nov 1)) */
   const fastLane = F ? '<div class="mpt-lt"><i class="mpt-fbar" style="width:' + W(FC.ck.time) + '"></i>' + CP.filter((c) => c.fast != null).map((c) => '<span class="mpt-cp mpt-f" style="left:' + X(c.fast) + '"><i></i></span>').join('') + '</div>'
     : '<div class="mpt-lt mpt-lt0"><span>' + (waiting ? 'Finding a typical fast run…' : 'No public fast run at this level yet.') + '</span></div>';
   const marks = '<div class="mpt-mk">' + [[0.6, '+3'], [0.8, '+2'], [1, '+1']].map(([f, l]) => '<span style="left:' + X(ck.par * f) + '">' + l + ' · ' + mpMM(ck.par * f) + '</span>').join('') + '</div>';
@@ -195,7 +241,7 @@ function mpBehind(R, C, F, FC, fx, waiting) {
   let lastX = -99, row = 0, rows = 1; const rowOf = CP.map((c) => { const x = 100 * c.you / W0; row = x - lastX < 13 ? 1 - row : 0; lastX = x; rows = Math.max(rows, row + 1); return row; }); /* (bosses close together: their labels take turns on two rows) */
   const gapRow = '<div class="mpt-gp" style="--mpt-gph:' + 40 * rows + 'px">' + CP.map((c, i) => '<span style="left:' + X(c.you) + ';--mpt-gpt:' + 40 * rowOf[i] + 'px"><b>' + esc(c.boss) + '</b>' + mpMM(c.you) + (c.fast != null ? ' · <b class="' + (i === CP.length - 1 && c.you > c.fast ? 'mpt-bad' : '') + '">' + (c.you >= c.fast ? mpMM(c.you - c.fast) + ' behind' : mpMM(c.fast - c.you) + ' ahead') + '</b>' : '') + '</span>').join('') + '</div>';
   const timeline = '<div class="mpt-tl"><div class="mpt-tlg">' + marks + '<div class="mpt-lanes">' + lines + '<div class="mpt-ln"><span class="mpt-ll">You</span>' + youLane + '</div><div class="mpt-ln"><span class="mpt-ll" title="' + esc('A typical fast run: ' + mpTypical(R, fx).replace(/&#39;/g, '\'')) + '">Fast run</span>' + fastLane + '</div></div>' + gapRow + '</div>' +
-    '<div class="mpt-key"><span><i class="mpt-k1"></i>Pull</span><span><i class="mpt-k2"></i>Boss</span>' + (C.pen ? '<span><i class="mpt-k3"></i>Death (+' + Math.round(C.pen) + ' s)</span>' : '') + (F ? '<span><i class="mpt-k4"></i>Fast run</span>' : '') + '<span><i class="mpt-kd"></i>Boss down</span></div></div>';
+    '<div class="mpt-key"><span><i class="mpt-k1"></i>Pull</span><span><i class="mpt-k2"></i>Boss</span>' + (C.pen ? '<span><i class="mpt-k3"></i>Death (+' + Math.round(C.pen) + ' s)</span>' : '') + (F ? '<span><i class="mpt-k4"></i>Fast run</span>' : '') + '<span><i class="mpt-kd"></i>Boss down</span>' + ((R.lust || []).length ? '<span><i class="mpt-kl"></i>Lust</span>' : '') + '</div></div>';
   // why, stretch by stretch: only the worst number in a row coloured
   const why = '<div class="mpt-wyh"><span>Stretch</span><span>Time</span><span>Pulls</span><span>Fighting</span><span>Deaths</span><span>Standing</span></div>' + ST.map((s) => { const f = fBy.get(s.boss);
     const diffs = f ? [['n', (s.n - f.n) * 60], ['fight', s.fight - f.fight], ['d', s.pen - f.pen], ['stand', s.stand - f.stand]] : [], worst = diffs.sort((a, b) => b[1] - a[1])[0];
@@ -225,10 +271,16 @@ function mpPulls(R, C) {
     if (p.boss && p.kill === false && !wipe) tags.push('<span class="mpt-tg mpt-tb">Not killed</span>');
     if (p.through.length) tags.push('<span class="mpt-tg">' + plural(p.through.length, 'cast') + ' went off</span>');
     for (const b of (p.ebuffs || []).filter((x) => x.on > 0).slice(0, 2)) tags.push('<span class="mpt-tg" title="' + esc(b.spell + ' went on ' + plural(b.on, 'enemy').replace('enemys', 'enemies') + ' (from your log)') + '">' + esc(b.spell) + ' ×' + b.on + '</span>');
+    /* (Lust and big cooldowns on this pull (Nov 1): who pressed one, of the players whose spec's big cooldowns the Rotation tab knows) */
+    const lu = (R.lust || []).filter((l) => l.pull === i), cdu = Object.entries(R.cds || {}).map(([nm, l]) => [nm, l.filter((x) => x.pull === i)]).filter(([, l]) => l.length), cdn = (R.cdWho || []).length;
+    if (lu.length) tags.push('<span class="mpt-tg mpt-tl">Lust</span>');
+    if (cdn) tags.push('<span class="mpt-tg" title="' + esc(cdu.length ? cdu.map(([nm, l]) => nm + ': ' + [...new Set(l.map((x) => x.spell))].join(', ')).join(' · ') : 'Nobody pressed a big cooldown') + '">Big cooldowns ' + cdu.length + ' of ' + cdn + '</span>');
     const lead = wp ? wp.first : null, tk = lead && roleOf(lead.who) === 'tank';
     const th = new Map(); for (const t of p.through) th.set(t.spell, (th.get(t.spell) || 0) + 1);
     const body = (dd.length ? '<p><b>' + (wipe ? 'The wipe, in order:' : 'Deaths, in order:') + '</b></p><ol>' + dd.map((d, j) => '<li><span class="mpt-m">' + mpMM(d.t - p.s) + ' in</span> ' + mpWho(R, d.who) + (d === lead && tk ? ' <span class="mpt-tg mpt-tb">tank, first</span>' : '') + ' died to <b class="mpt-ab">' + esc(d.to) + '</b>' + (d.from ? ' <span class="mpt-m">(' + esc(d.from) + ')</span>' : '') + (d.defs ? ' · ' + plural(d.defs, 'defensive') + ' used' : ' · <b class="mpt-bad">no defensive</b>') + '</li>').join('') + '</ol>' : '') +
-      (th.size ? '<p>' + [...th].map(([s, k]) => '<b class="mpt-ab">' + esc(s) + '</b> went off ' + (k === 1 ? 'once' : k + ' times')).join(', ') + ' with a kick ready.</p>' : '');
+      (th.size ? '<p>' + [...th].map(([s, k]) => '<b class="mpt-ab">' + esc(s) + '</b> went off ' + (k === 1 ? 'once' : k + ' times')).join(', ') + ' with a kick ready.</p>' : '') +
+      (lu.length ? '<p><b class="mpt-lu">Lust</b> went out ' + lu.map((l) => (l.t < p.s ? mpMM(p.s - l.t) + ' before the pull' : mpMM(l.t - p.s) + ' in')).join(' and ') + '.</p>' : '') +
+      (cdu.length ? '<p>Big cooldowns: ' + cdu.map(([nm, l]) => mpWho(R, nm) + ' <span class="mpt-m">(' + esc([...new Set(l.map((x) => x.spell))].join(', ')) + ')</span>').join(', ') + '.</p>' : '');
     const open = !opened && wipe; if (open) opened = true;
     const head = '<span class="mpt-pn">' + (p.boss ? esc(p.boss) : 'Pull ' + p.n) + '</span><span class="mpt-pm">' + what + '</span><span class="mpt-pt">' + mpMM(p.dur) + '</span><span class="mpt-pc">' + (tags.join('') || '<span class="mpt-m">clean</span>') + '</span><span class="mpt-pg">' + (gap > 0.5 ? '+' + Math.round(gap) + ' s' : '') + '</span>';
     return body ? '<details class="mpt-pr' + (p.boss ? ' mpt-boss' : '') + '"' + (open ? ' open' : '') + '><summary>' + head + '</summary><div class="mpt-pd">' + body + '</div></details>' : '<div class="mpt-pr mpt-pr0' + (p.boss ? ' mpt-boss' : '') + '"><div class="mpt-sum">' + head + '</div></div>';
@@ -263,7 +315,7 @@ function mpPlayers(R, fx, waiting) {
       : '<span class="mpt-vs mpt-m">' + (waiting ? '…' : runs.length ? 'no ' + esc(p.spec) + ' in the fast runs' : '—') + '</span>';
     return '<div class="mpt-pl"><span class="mpt-si"><img src="' + whIcon(ic) + '" alt="" loading="lazy" onerror="this.remove()"></span><span class="mpt-pw">' + mpWho(R, p.name) + '<small>' + esc(p.spec) + '</small></span>' +
       '<span class="mpt-pv"><b>' + Math.round((heal ? p.hps : p.dps) / 1000) + 'k</b><small>' + (heal ? 'healing a second' : 'damage a second') + '</small></span><span class="mpt-bar"><i style="width:' + (heal ? 100 : 100 * p.dps / mxD).toFixed(0) + '%"></i></span>' + vtxt +
-      '<span class="mpt-m">' + plural(p.deaths, 'death') + ' · ' + plural(p.defs, 'defensive') + ' · ' + plural(p.avoid, 'avoidable hit') + '</span></div>'; }).join('');
+      '<span class="mpt-m">' + plural(p.deaths, 'death') + ' · ' + plural(p.defs, 'defensive') + ' · ' + plural(p.avoid, 'avoidable hit') + mpCdLine(R, p) + '</span></div>'; }).join('');
   return mpSec('Players', runs.length ? 'each against the middle player of the same spec in the 20 fastest runs' : 'damage and healing a second over the whole key', rows);
 }
 
@@ -291,27 +343,56 @@ const MP_ROUTE = {
   'voidscar arena': { full: 738, zone: 16425, floors: [[2574, 'Halls of Spite', 4358.33, 4691.67, -705.01, -204.99], [2572, 'Voidscar Arena', 4368.75, 4718.75, -720.83, -195.83], [2573, 'Domanaar\'s Ascent', 4716.67, 5312.5, -912.5, -18.75]],
     n: { 238883: 7, 241496: 7, 243766: 7, 243835: 5, 243983: 4, 243985: 5, 243988: 4, 243996: 4, 244260: 25, 244309: 25, 244708: 7, 245950: 65, 249461: 5, 249590: 8, 249603: 5, 249608: 5, 252053: 25, 252072: 25, 252508: 1, 263228: 25, 267545: 40, 267546: 40, 268184: 30 } },
 };
-// (from the key's own events: each enemy that died counts once, for the pull it died in or after; each pull's spot is the middle (median) of
-// its enemies' positions, on the floor most of them stood on (x and y the way WoW writes them: north and west). Checked Nov 1: Flex's Voidscar
-// Arena +12 adds up to 803 (108.8%), the same as Raider.IO's own list of that run)
-function mpRouteOf(it, R, ev) {
-  const T = MP_ROUTE[String(R.run.dungeon || it.boss).toLowerCase().replace(/[’`]/g, '\'')]; if (!T || !it.wcl || !it.wcl.actors) return null;
-  const A = it.wcl.actors, w0 = it.wcl.start, P = R.pulls, ui = new Set(T.floors.map((f) => f[0])), npc = (id) => { const a = A.get(id); return a && a.type === 'NPC' ? a : null; };
-  const pts = P.map(() => ({ x: [], y: [], u: [] })), add = P.map(() => 0), seen = new Set();
-  const pullAt = (t) => { for (let i = P.length - 1; i >= 0; i--) if (t >= P[i].s - 2) return i; return 0; };
-  let pi = 0;
-  for (const e of ev) {
-    const t = (e.timestamp - w0) / 1000;
-    if (e.type === 'death') { const a = npc(e.targetID); if (!a) continue; const k = e.targetID + ':' + (e.targetInstance || 1) + ':' + e.timestamp; if (seen.has(k)) continue; seen.add(k); const v = T.n[a.gameID]; if (v) add[pullAt(t)] += v; continue; }
-    if (e.x == null || e.y == null || !ui.has(e.mapID) || !npc(e.resourceActor === 1 ? e.sourceID : e.targetID)) continue;
-    while (pi < P.length - 1 && t > P[pi].e) pi++;
-    if (t >= P[pi].s && t <= P[pi].e) { const q = pts[pi]; q.x.push(e.y / 100); q.y.push(-e.x / 100); q.u.push(e.mapID); }
+// (one pass over the key's own lines (Nov 1), the same for a report, a log on this PC and a shared night:
+// - the route: each enemy that died counts once (its NPC ID is in its GUID), for the pull it died in or after; each pull's spot is the middle
+//   (median) of its enemies' positions (the advanced block: x and y at its end less 5 and 4, the floor at less 3), on the floor most of them stood
+//   on. Checked: Flex's Voidscar Arena +12 adds up to 803 (108.8%), the same as Raider.IO's own list of that run
+// - Lust: a Bloodlust-type buff landing on the group (Time Warp, ID 80353, on Flex's +19 of Oct 10); within 20 s is the same Lust
+// - big cooldowns: each player's casts of their spec's big cooldowns, the Rotation tab's own list (GEN_SPECS[spec].cds)
+// - damage taken: what enemies did to the group, each pull)
+const MP_LUST = /^(bloodlust|heroism|time warp|primal rage|fury of the aspects|harrier's cry)$|drums/i;
+function mpScan(it, R, text) {
+  const T = MP_ROUTE[mpLc(R.run.dungeon || it.boss)], P = R.pulls, N = P.length, ADV = 19, NPC = /^(Creature|Vehicle)-/;
+  const ui = T ? new Set(T.floors.map((f) => f[0])) : new Set(), pts = P.map(() => ({ x: [], y: [], u: [] })), add = P.map(() => 0), taken = P.map(() => 0), seen = new Set(), lustT = [], cast = {};
+  // (a minute or longer only: Colossus Smash, on the Arms list, isn't a big cooldown. Healers also get the engine's healing cooldowns (Aura
+  // Mastery, Tranquility, Revival…, CD_NAMES), less Lust and the movement ones: some healer specs have no list on the Rotation tab)
+  const HEAL_CD = [...((E.CD_NAMES && E.CD_NAMES.values()) || [])].map(mpLc).filter((n) => !MP_LUST.test(n) && !/^(stampeding roar|wind rush totem|blessing of protection)$/.test(n));
+  const cdOf = new Map(); for (const p of R.people || []) { const g = typeof GEN_SPECS !== 'undefined' ? GEN_SPECS[p.spec + ' ' + ((E.CLASSES[p.cls] || [])[0] || '')] : null, s = new Set();
+    for (const c of (g && g.cds) || []) { if (c.cd && c.cd < 60) continue; s.add(mpLc(c.n)); for (const nm of c.names || []) s.add(mpLc(nm)); }
+    if (p.role === 'healer') for (const n of HEAL_CD) s.add(n);
+    if (s.size) cdOf.set(p.name, s); }
+  const pullAt = (t) => { for (let i = N - 1; i >= 0; i--) if (t >= P[i].s - 2) return i; return 0; };
+  const short = (n) => String(n || '').replace(/-.*$/, ''), num = (x) => { const v = +x; return v === v ? v : 0; };
+  let t0 = null, pi = 0, i = 0;
+  while (i < text.length) {
+    let j = text.indexOf('\n', i); if (j < 0) j = text.length; const line = text.substring(i, j); i = j + 1;
+    const ts = E.parseTs(line); if (!ts) continue; if (t0 == null) t0 = ts.ms; const t = (ts.ms - t0) / 1000;
+    const c = line.indexOf(',', ts.body); if (c < 0) continue; const ev = line.substring(ts.body, c);
+    if (ev === 'UNIT_DIED') { if (!T) continue; const f = E.split(line, c + 1), g = f[4]; if (!NPC.test(g || '') || f[8] === '1' || seen.has(g)) continue; seen.add(g); const v = T.n[+g.split('-')[5]]; if (v) add[pullAt(t)] += v; continue; }
+    if (ev === 'SPELL_AURA_APPLIED') { if (line.indexOf('BUFF', c) < 0) continue; const f = E.split(line, c + 1); if (f[11] === 'BUFF' && String(f[4]).startsWith('Player-') && MP_LUST.test(f[9])) lustT.push(t); continue; }
+    const dmg = ev === 'SPELL_DAMAGE' || ev === 'SPELL_PERIODIC_DAMAGE' || ev === 'SWING_DAMAGE' || ev === 'RANGE_DAMAGE';
+    if (!dmg && ev !== 'SPELL_CAST_SUCCESS') continue;
+    const f = E.split(line, c + 1);
+    if (ev === 'SPELL_CAST_SUCCESS' && String(f[0]).startsWith('Player-')) { const nm = short(f[1]), s = cdOf.get(nm); if (s && s.has(mpLc(f[9]))) { const l = cast[nm] = cast[nm] || []; if (!l.some((x) => x[1] === f[9] && t - x[0] < 5)) l.push([t, f[9]]); } } /* (one press, even if the log writes it twice) */
+    const adv = ev === 'SWING_DAMAGE' ? 8 : 11; if (f.length < adv + ADV) continue;
+    if (dmg && NPC.test(f[0] || '') && String(f[4]).startsWith('Player-')) taken[pullAt(t)] += num(f[adv + ADV]);
+    if (T && NPC.test(f[adv] || '')) { const u = +f[adv + 16]; if (ui.has(u)) { while (pi < N - 1 && t > P[pi].e) pi++; if (t >= P[pi].s && t <= P[pi].e) { const q = pts[pi]; q.x.push(+f[adv + 14]); q.y.push(+f[adv + 15]); q.u.push(u); } } }
   }
+  // (a Lust or a cooldown pressed just before a pull counts for that pull: the pull it's in, else the next one starting within 15 s, else the one before)
+  const pullFor = (t) => { for (let k = 0; k < N; k++) if (t >= P[k].s - 1 && t <= P[k].e + 1) return k; for (let k = 0; k < N; k++) if (P[k].s > t && P[k].s - t <= 15) return k; return pullAt(t); };
+  lustT.sort((a, b) => a - b); R.lust = []; for (const t of lustT) if (!R.lust.length || t - R.lust[R.lust.length - 1].t > 20) R.lust.push({ t, pull: pullFor(t) });
+  // (a "big" cooldown pressed more often than once every 50 s in this key isn't one in this build: Flex's +19 Arms Warrior pressed Bladestorm,
+  // ID 446035, every 20 to 40 s. Dropped by what the log shows)
+  R.cds = {}; for (const [nm, l] of Object.entries(cast)) { const bySp = new Map(); for (const x of l) bySp.set(x[1], (bySp.get(x[1]) || []).concat(x[0]));
+    const keep = new Set([...bySp].filter(([, ts]) => { if (ts.length < 3) return true; const g = ts.slice(1).map((t, k) => t - ts[k]).sort((a, b) => a - b); return g[g.length >> 1] >= 50; }).map(([s]) => s));
+    R.cds[nm] = l.filter((x) => keep.has(x[1])).map(([t, sp]) => ({ t, spell: sp, pull: pullFor(t) })); }
+  R.cdWho = [...cdOf.keys()]; R.taken = taken;
+  if (!T) { R.route = null; return; }
   const med = (a) => { const s = a.slice().sort((p, q) => p - q); return s[s.length >> 1]; };
-  const out = P.map((p, i) => { const q = pts[i], c = {}; for (const u of q.u) c[u] = (c[u] || 0) + 1; const top = Object.entries(c).sort((a, b) => b[1] - a[1])[0]; if (!top) return { n: p.n, add: add[i], ui: null };
-    const u = +top[0], xs = q.x.filter((x, j) => q.u[j] === u), ys = q.y.filter((x, j) => q.u[j] === u); return { n: p.n, add: add[i], ui: u, x: med(xs), y: med(ys) }; });
+  const out = P.map((p, k) => { const q = pts[k], cn = {}; for (const u of q.u) cn[u] = (cn[u] || 0) + 1; const top = Object.entries(cn).sort((a, b) => b[1] - a[1])[0]; if (!top) return { n: p.n, add: add[k], ui: null };
+    const u = +top[0], xs = q.x.filter((x, m) => q.u[m] === u), ys = q.y.filter((x, m) => q.u[m] === u); return { n: p.n, add: add[k], ui: u, x: med(xs), y: med(ys) }; });
   const total = add.reduce((a, v) => a + v, 0), done = !!R.run.timeMs && !R.run.left;
-  return { full: T.full, zone: T.zone, floors: T.floors, pulls: out, total, ok: !done || total >= T.full * 0.99 };
+  R.route = { full: T.full, zone: T.zone, floors: T.floors, pulls: out, total, ok: !done || total >= T.full * 0.99 };
 }
 function mpRouteHtml(R, F, waiting) {
   const rt = R.route; if (!rt || !rt.pulls.length) return '';
@@ -555,6 +636,13 @@ const MP_CSS = `
 .mpt-sv{font:700 14px var(--head);text-align:right}
 .mpt-sv small{font:500 12px var(--body);color:var(--faint);margin-left:4px}
 .mpt-ex a{color:inherit}
+.mpt-lst{position:absolute;top:-7px;bottom:-7px;width:3px;margin-left:-1.5px;background:#e268a8;border-radius:2px;box-shadow:0 0 0 1px var(--bg)} /* (Lust, the colour Graphs uses for it) */
+.mpt-kl{background:#e268a8;width:4px!important}
+.mpt-tg.mpt-tl{color:#f09ccb;border-color:rgba(226,104,168,.55)}
+.mpt-lu{color:#f09ccb}
+.mpt-shr{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px;padding:9px 0 9px 14px;border-left:3px solid var(--line2);font:500 13.5px var(--body);color:var(--muted)}
+.mpt-shr b{color:var(--text);margin-right:6px}
+.mpt-shr span{flex:1;min-width:220px}
 .mpt-rl .mpt-pl2{stroke:#fff;stroke-opacity:.75;stroke-width:1.2;vector-effect:non-scaling-stroke}
 .mpt-mp{cursor:zoom-in} .mpt-fl.mpt-big .mpt-mp{cursor:zoom-out}
 .mpt-maps.mpt-zoom{flex-wrap:wrap} .mpt-maps.mpt-zoom .mpt-arr{display:none}
