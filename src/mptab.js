@@ -990,32 +990,31 @@ function mpPlay(R, F, name, i) { const p = R.pulls[i], per = (R.people || []).fi
   for (const r of rows) if (r.k === 'idle' || r.cmp) r.tip = src; out.src = src;
   // (v4: each row's why line, its kind line and its source ('prio' | 'top'), for the card and the addon)
   { const vs = 'vs ' + top(true), sm = hasSp(FJ); for (const r of rows) { const d = MP_YW[r.tag] || MP_YW[r.k] || MP_YW[r.ic]; if (!r.why && d) r.why = d[0]; if (r.kind == null) r.kind = (r.cmp || r.k === 'idle') && sm ? vs : d ? d[1] : ''; if (!r.src) r.src = 'top'; } }
-  out.oks = ctx.oks || []; out.wait = !!ctx.wait; out.foot = ctx.foot || (ctx.rot ? '' : 'Checked over the whole pull' + (hasSp(FJ) ? ' against the ' + per.spec + ' ' + cn + ' in ' + (FJ !== F ? 'another of the fastest runs' : 'the fast run') : '') + '.' + (per.role === 'healer' ? ' A healer is checked on damage, kicks and dispels here, not healing.' : ''));
+  out.oks = ctx.oks || []; out.wait = !!ctx.wait; out.foot = ctx.foot || mpPJudged(R, p, per, false, hasSp(FJ), FJ !== F);
   // (v3: every row that fails its bar, flagged (f: 'kick' | 'mistake' | 'slip'), kicks first, then mistakes, then slips, each by its seconds; the seconds
   // are never shown. A clean pull gets one ✓ line; no same-spec judge says so)
   // (v5: the rotation rows first, mistakes then slips, then kicks, dispels and deaths; one verdict on the rotation (the studio's A))
   const ROT = new Set(['rot', 'r2', 'heal', 'idle']), fo = { kick: 0, mistake: 1, slip: 2 }; if (ctx.rot) for (let k = rows.length - 1; k >= 0; k--) if (rows[k].k === 'cd') rows.splice(k, 1); /* (a held cooldown: the Rotation tab's row, in seconds) */
-  out.rows = rows.filter((r) => r.f).sort((a, c) => (ROT.has(a.k) ? 0 : 1) - (ROT.has(c.k) ? 0 : 1) || fo[a.f] - fo[c.f] || (c.s || 0) - (a.s || 0));
-  { const rr = out.rows.filter((r) => ROT.has(r.k)); out.vm = rr.filter((r) => r.f === 'mistake').length; out.vs = rr.filter((r) => r.f === 'slip').length; out.vk = out.vm ? 'm' : out.vs ? 's' : ctx.wait ? '' : 'g'; }
+  out.rows = rows.filter((r) => r.f).sort((a, c) => (ROT.has(a.k) ? 1 : 0) - (ROT.has(c.k) ? 1 : 0) || fo[a.f] - fo[c.f] || (c.s || 0) - (a.s || 0)); /* (the plan: kicks and dispels first, then the rotation) */
+  { const rr = out.rows.filter((r) => ROT.has(r.k)); out.vm = rr.filter((r) => r.f === 'mistake').length; out.vs = rr.filter((r) => r.f === 'slip').length; out.vk = out.vm ? 'm' : out.vs ? 's' : ctx.wait || ctx.short ? '' : 'g'; }
   out.nm = out.rows.filter((r) => r.f === 'mistake').length; out.ns = out.rows.filter((r) => r.f === 'slip').length; out.nk = out.rows.filter((r) => r.f === 'kick').length;
   out.n = out.rows.length; out.cost = out.rows.reduce((a, r) => a + (r.s || 0), 0); out.next = out.rows.length ? out.rows[0].nt : ''; out.same = hasSp(FJ);
-  out.verdict = out.vk === 'm' ? 'Rotation: needs work · ' + plural(out.vm, 'mistake') + (out.vs ? ' · ' + plural(out.vs, 'slip') : '') : out.vk === 's' ? 'Rotation: mostly right · ' + plural(out.vs, 'slip') : out.vk === 'g' ? 'Rotation: ✓ played right' : 'Rotation: checking…';
+  out.verdict = out.vk === 'm' ? 'needs work' : out.vk === 's' ? 'mostly right' : out.vk === 'g' ? 'played right ✓' : ctx.short ? 'too short to judge' : 'checking…';
   out.nojudge = out.same ? '' : 'No top ' + per.spec + ' ' + cn + 's to compare with yet.';
   const kk = (p.kicks || []).filter((x) => x.who === name).length;
-  out.ok = out.n || out.wait ? '' : out.same && (id || n >= 3) ? '✓ Played like top ' + per.spec + ' ' + cn + 's on this pull' : usedBig ? '✓ Big cooldown on this big pull' : kk >= 2 ? '✓ ' + kk + ' kicks' : '';
+  out.ok = out.n || out.wait || ctx.short ? '' : out.same && (id || n >= 3) ? '✓ Played like top ' + per.spec + ' ' + cn + 's on this pull' : usedBig ? '✓ Big cooldown on this big pull' : kk >= 2 ? '✓ ' + kk + ' kicks' : '';
   return out; }
 if (typeof window !== 'undefined') window.MP_PLAY = { rows: mpPlay, checks: MP_PLAY_CHECKS }; /* (for the Rotation tab, and to port to the addon) */
 // (the closed one-liner and its rows, as the pull card shows them)
 function mpPlayHtml(R, F, name, i) { const y = mpPlay(R, F, name, i), own = name === mpMine(R);
   // (v5: the summary is the verdict, in the flag colours, then kicks and dispels)
-  const cnt = '<span class="' + ({ m: 'mpt-ypc-m', s: 'mpt-ypc-s', g: 'mpt-g' }[y.vk] || 'mpt-m') + '">' + y.verdict + '</span>' + (y.nk ? ' · <span class="mpt-t2k">' + plural(y.nk, y.rows.filter((r) => r.f === 'kick').every((r) => r.tag === 'dispel') ? 'dispel' : 'kick') + '</span>' : '');
-  const sum = '<b>' + (own ? 'Your play' : '<span style="color:' + mpCC(((R.people || []).find((x) => x.name === name) || {}).cls) + '">' + esc(name) + '</span>' + '’s play') + '</b> · ' + cnt;
+  const cnt = '<span class="' + ({ m: 'mpt-ypc-m', s: 'mpt-ypc-s', g: 'mpt-g' }[y.vk] || 'mpt-m') + '">' + y.verdict + '</span>';
+  const sum = '<b>' + (own ? 'Your rotation' : '<span style="color:' + mpCC(((R.people || []).find((x) => x.name === name) || {}).cls) + '">' + esc(name) + '</span>' + '’s rotation') + '</b>: ' + cnt;
   // (v4: every row (Flex: "the website can have a decent amount of detail because theres a lot of space"), each with its why and kind lines; every check
   // that passed as a ✓; the footer says what the pull was checked against)
-  const row = (r) => '<div class="mpt-ypr mpt-ypr-' + r.f + '"' + (r.tip ? mpT1(esc(r.tip)) : '') + '><i aria-hidden="true">' + (r.f === 'kick' ? '!' : '●') + '</i><span>' + r.t + (r.why ? '<small class="mpt-ypw">' + esc(r.why) + '</small>' : '') + (r.kind ? '<small class="mpt-ypk">' + esc(r.kind) + '</small>' : '') + '</span><span class="mpt-ypt">' + (r.f === 'kick' ? r.tag || 'kick' : r.f) + '</span></div>';
+  const row = (r) => '<div class="mpt-ypr mpt-ypr-' + r.f + '"' + (r.tip ? mpT1(esc(r.tip)) : '') + '><i aria-hidden="true">' + (r.f === 'kick' ? '!' : '●') + '</i><span>' + r.t + (r.why ? '<small class="mpt-ypw">' + esc(r.why) + '</small>' : '') + '</span><span class="mpt-ypt">' + (r.f === 'kick' ? r.tag || 'kick' : r.f) + '</span></div>';
   const oks = y.oks.length ? '<p class="mpt-ypok">' + y.oks.map((t) => '✓ ' + esc(t)).join('<span class="mpt-m"> · </span>') + '</p>' : y.ok ? '<p class="mpt-ypok">' + y.ok + '</p>' : '';
-  const body = (y.nojudge && !y.foot ? '<p class="mpt-mcf">' + esc(y.nojudge) + '</p>' : '') + y.rows.map(row).join('') + (y.wait ? '<p class="mpt-mcf">Checking the rotation…</p>' : '') + oks +
-    (y.next ? '<p class="mpt-nt"><b>Next time</b> ' + y.next + '</p>' : '') + (y.foot ? '<p class="mpt-ypf">' + esc(y.foot) + '</p>' : '');
+  const body = y.rows.map(row).join('') + (y.wait ? '<p class="mpt-mcf">Checking the rotation…</p>' : '') + oks + (y.foot ? '<p class="mpt-ypf">' + esc(y.foot) + '</p>' : ''); /* (each row says what to do instead: no Next time line) */
   return { sum, body }; }
 // (Your play round 2 (the Rotation chat's your-play-specs.md, Nov 2): per spec, r: damage spells [name, 0 single target | 1 area | 2 spread (a DoT
 // spread over the pack) | 3 a survival button (never judged as damage), 0 casts a minute | 1 area cooldown | 2 damage a minute (it comes from a talent,
@@ -1165,9 +1164,9 @@ function mpRotJudge(FJ, J, jp) { const C = FJ._rotJ || (FJ._rotJ = new Map()), k
         if (q.casts != null) { o.casts += q.casts; for (const x of q.sl || []) o.sl[x.k] = (o.sl[x.k] || 0) + x.n; } if (q.n != null) o.n += q.n; A.set(c.k, o); } }
     return n ? { A, n, dur } : null; })().catch(() => null);
   C.set(key, pr); return pr; }
-// (the rows, one per spell or topic: the priority (slips with the same wanted spell and reason together), cooldowns, windows, levels, uptimes,
-// resource and procs, each against the same spec's player on pulls like this, their counts scaled to this pull's length. Counts (priority slips,
-// cancelled casts): at or under theirs is fine, over theirs +1 a slip, 2x theirs and 3 or more a mistake. A cooldown: on a boss, the share of the times
+// (the rows, one per spell or topic: the priority (slips with the same wanted spell together), cooldowns, windows, levels, uptimes,
+// resource and procs, each against the same spec's player on pulls like this, their counts scaled to this pull's length; flagged only when clearly worse
+// than theirs (the plan: "anything top players also do is not flagged"). Counts (priority slips, cancelled casts): over theirs by a quarter and one a slip, 2x theirs and 3 or more a mistake. A cooldown: on a boss, the share of the times
 // it was ready that it was used (one more missed than theirs a slip, under 65% of their share and 2+ more a mistake); on a 7+ pack, how long it sat
 // ready against how long theirs did (5 s longer a slip, twice theirs and 15 s longer a mistake); on a smaller trash pull, holding it isn't a break.
 // Procs from the log itself (mpGained, mpRanOut). No judge: only what the Rotation tab grades bad, a slip at most. MP_BARS: a mistake bar of 0 or 99 is
@@ -1180,54 +1179,70 @@ function mpRotRows(x, v) { const { R, name, per, p } = x, me = v.mine; if (!me) 
   // (G: one source for the why line: the Rotation chat's line for the step (the one matching the reason), else one sentence of the Rotation tab's own words
   // about this spell; repeats, times, sources, other spells and (on a boss) packs are left out)
   const why = (nm, c, cond) => { const w = W[nm]; if (w) return tb(Array.isArray(w) ? best(w, cond || '') : p.boss && /\bpacks?\b/i.test(w) ? '' : w); return mpWhyLine(tb([c && c.lead, c && c.tip, c && c.how].filter(Boolean).join(' ')), nm, !!p.boss); };
-  const tw = (k) => (k < 0.5 ? 'never' : k < 1.5 ? 'once' : k < 2.5 ? 'twice' : Math.round(k) + ' times'), kTop = 'vs ' + TOP + ' on pulls like this', kNo = SP + ' checks';
+  const tw = (k) => (k < 0.5 ? 'never' : k < 1.5 ? 'once' : k < 2.5 ? 'twice' : 'about ' + Math.round(k) + ' times'), kTop = '', kNo = '', tp = (t) => (t ? ' <span class="mpt-m">(' + TOP + ': ' + t + ')</span>' : '');
+  const often = (q2) => (q2 >= 0.95 ? 'every time' : q2 >= 0.7 ? 'most of the time' : q2 >= 0.4 ? 'about half the time' : q2 >= 0.15 ? 'now and then' : 'almost never');
   const T = new Map(), oks = [], FO = { mistake: 0, slip: 1 }, ok = (topic, t) => oks.push([mpLc(topic), t]);
   const add = (topic, f, t, o) => { const k = mpLc(topic), e = T.get(k); if (!e) { T.set(k, { k: 'rot', src: o.src || 'top', cmp: o.cmp, f, ic: o.ic || '•', s: o.s || 0, t, why: o.why || '', kind: o.kind || '', nt: o.nt || '', topic: k }); return; }
-    if (FO[f] < FO[e.f]) { e.f = f; if (o.nt) e.nt = o.nt; } e.t += '. ' + t; e.s += o.s || 0; if (!e.why) e.why = o.why || ''; if (o.src === 'prio') e.src = 'prio'; if (o.cmp) e.cmp = 1; };
-  const cdN = new Set(me.cs.filter((c) => c.k.startsWith('cd:')).map((c) => mpLc(c.ic || c.label))); { const g = typeof GEN_SPECS !== 'undefined' ? GEN_SPECS[SP] : null; for (const c2 of ((g && g.cds) || []).concat((g && g.rot) || [])) if (c2.cd >= 30) for (const n2 of [c2.n].concat(c2.names || [])) cdN.add(mpLc(n2)); }
+    if (FO[f] < FO[e.f]) { e.f = f; if (o.nt) e.nt = o.nt; } e.t = e.t.replace(/\.\s*$/, '') + '. ' + t; e.s += o.s || 0; if (!e.why) e.why = o.why || ''; if (o.src === 'prio') e.src = 'prio'; if (o.cmp) e.cmp = 1; };
+  // (the big cooldowns: the spec's cooldown list and any spell with a cooldown of 30 s or more; their own rows, and a priority slip about one is theirs)
+  const cdN = new Set(); { const g = typeof GEN_SPECS !== 'undefined' ? GEN_SPECS[SP] : null; for (const c2 of (g && g.cds) || []) for (const n2 of [c2.n].concat(c2.names || [])) cdN.add(mpLc(n2)); for (const c2 of (g && g.rot) || []) if (c2.cd >= 30) for (const n2 of [c2.n].concat(c2.names || [])) cdN.add(mpLc(n2)); }
   // (a slip's why line: its own step's line (the Rotation tab's tip for that step, or the Rotation chat's for an area step), else the spec's line for that spell)
   const stepTip = (want, cond, aoe) => { const L = aoe ? (MP_AOE[SP] || []).map((st) => ({ s: st.s, why: mpCondTxt(st), tip: st.tip })) : (((typeof GEN_SPECS !== 'undefined' && GEN_SPECS[SP]) || {}).apl || {}).list || []; const st = L.find((y) => y.s === want && y.why === cond); return st && st.tip ? tb(mpNoSrc(st.tip)) : ''; };
   const castsOf = (nm) => { const ids = ((R.cna || {})[name] || {})[mpLc(nm)] || [], cs = (R.cid || {})[name] || {}; let c = 0; for (const id of ids) for (const t of cs[id] || []) if (t >= p.s - 1 && t <= p.e) c++; return c; };
-  const share = (c, q, j, nm, text, nt) => { if (!q.b) return; const jf = j && j.b ? j.a / j.b : null, dm = q.b - q.a - (jf != null ? (1 - jf) * q.b : 0), f = jf != null ? (dm < 1 ? null : q.a / q.b < 0.65 * jf && dm >= 2 && red(nm) ? 'mistake' : 'slip') : c.st === 'bad' ? 'slip' : null;
-    if (!f) { ok(nm, text + ' ' + pc(q.a / q.b)); return; } add(nm, f, bx(text) + ': ' + pc(q.a / q.b) + ' (' + q.a + ' of ' + q.b + ')' + (jf != null ? ', ' + TOP + ' ' + pc(jf) : ''), { cmp: jf != null ? 1 : 0, ic: '⟳', s: dm, why: why(nm, c, 'on cooldown ready charges cap'), kind: jf != null ? kTop : kNo, nt }); };
+  const share = (c, q, j, nm, text, nt) => { if (!q.b) return; const jf = j && j.b ? j.a / j.b : null, dm = q.b - q.a - (jf != null ? (1 - jf) * q.b : 0), f = jf != null ? (dm < 1 || q.a / q.b >= 0.85 * jf ? null : q.a / q.b < 0.65 * jf && dm >= 2 && red(nm) ? 'mistake' : 'slip') : c.st === 'bad' ? 'slip' : null;
+    if (!f) { ok(nm, text + (q.a === q.b ? ' every time' : jf != null ? ', like top ' + SP + 's' : ' ' + often(q.a / q.b))); return; }
+    const sameW = jf != null && often(q.a / q.b) === often(jf), cdT = /^Used /.test(text);
+    add(nm, f, (cdT ? 'Used ' + bx(nm) + ' on ' + pc(q.a / q.b) + ' of its cooldowns' + tp(jf != null ? pc(jf) : '') : bx(text) + ' ' + (sameW ? pc(q.a / q.b) + tp(pc(jf)) : often(q.a / q.b) + tp(jf != null ? often(jf) : ''))) + '. ' + nt.charAt(0).toUpperCase() + nt.slice(1), { cmp: jf != null ? 1 : 0, ic: '⟳', s: dm, why: why(nm, c, 'on cooldown ready charges cap'), kind: '', nt }); };
   for (const c of me.cs) { const q = c.num, j = J && J.A.get(c.k);
     if (c.k === 'apl') { const ja = j && sc != null ? j : null; let any = false;
-      const G = new Map(); for (const sl of q.sl || []) { const gk = sl.want + '|' + sl.why, g = G.get(gk) || { want: sl.want, why: sl.why, n: 0, jn: 0, did: [] }; g.n += sl.n; g.did.push([sl.did, sl.n]); if (ja) g.jn += (ja.sl[sl.k] || 0) * sc; G.set(gk, g); }
+      // (one row per wanted spell, every reason together: "when Blood Boil was the right button")
+      const G = new Map(); for (const sl of q.sl || []) { const gk = sl.want, g = G.get(gk) || { want: sl.want, why: sl.why, ws: new Set(), n: 0, jn: 0, did: [] }; g.ws.add(sl.why); g.n += sl.n; const d0 = g.did.find((y) => y[0] === sl.did); if (d0) d0[1] += sl.n; else g.did.push([sl.did, sl.n]); if (ja) g.jn += (ja.sl[sl.k] || 0) * sc; G.set(gk, g); }
+      for (const g of G.values()) if (g.ws.size > 1) g.why = g.want + ' was the right button';
       for (const sl of [...G.values()].sort((a, b) => b.n - a.n)) { if (cdN.has(mpLc(sl.want))) continue; /* (holding a cooldown: that cooldown's own row) */
-        const jn = ja ? sl.jn : null, f = jn != null ? (sl.n <= jn + 1 ? null : sl.n >= 2 * jn && sl.n >= 3 && red(sl.want) ? 'mistake' : 'slip') : sl.n >= 3 ? 'slip' : null; if (!f) continue; any = true;
-        const one = sl.did.length === 1 ? sl.did[0][0] : null, dn = one ? castsOf(one) : 0, wy = esc(tb(sl.why)), ws = esc(sl.want), cond = wy.includes(ws) ? wy.replace(ws, '<b>' + ws + '</b>') : wy + ' (<b>' + ws + '</b> first)';
-        const what = one ? bx(one) + ' ' + (sl.n === 1 ? 'once' : sl.n + ' times') + (dn > sl.n ? ' (of ' + dn + ')' : '') : 'other buttons ' + sl.n + ' times';
-        const lst = one ? '' : ' <span class="mpt-m">(' + sl.did.sort((a, b) => b[1] - a[1]).map(([d, k]) => esc(d) + ' ' + k).join(', ') + ')</span>', rdy = sl.why === sl.want + ' was ready'; /* (a button left ready: said as the button) */
-        add(sl.want, f, (rdy ? '<b>' + ws + '</b> sat ready while you pressed ' + (one ? bx(one) + ' ' + (sl.n === 1 ? 'once' : sl.n + ' times') : 'other buttons ' + sl.n + ' times') : 'Pressed ' + what + ' when ' + cond) + lst,
-          { src: 'prio', cmp: jn != null ? 1 : 0, ic: '↯', s: sl.n - (jn || 0), why: stepTip(sl.want, sl.why, c.aoe) || why(sl.want, null, sl.why), kind: per.spec + (c.aoe ? ' pack priority' : ' priority') + (jn != null ? ' · ' + TOP + ' did this ' + tw(jn) + ' on pulls like this' : ''), nt: 'press ' + ws + ' first' + (one ? ', before ' + esc(one) : '') + '.' }); }
-      if (!any) ok('', 'Followed the ' + per.spec + (c.aoe ? ' pack' : '') + ' priority'); continue; }
+        const jn = ja ? sl.jn : null, f = jn != null ? (sl.n <= jn * 1.25 + 1 ? null : sl.n >= 2 * jn && sl.n >= 5 && red(sl.want) ? 'mistake' : 'slip') : sl.n >= 3 ? 'slip' : null; if (!f) continue; any = true;
+        // (what they did, then what to do instead: "Pressed Mortal Strike 5 times when Sudden Death was up. Execute comes first then.")
+        const one = sl.did.length === 1 ? sl.did[0][0] : null, top1 = sl.did.slice().sort((a, b) => b[1] - a[1])[0][0], wy = esc(tb(sl.why)), ws = esc(sl.want), rdy = sl.why === sl.want + ' was ready', tms = (k) => (k === 1 ? 'once' : k + ' times');
+        const t = rdy ? '<b>' + ws + '</b> sat ready while you pressed ' + (one ? bx(one) + ' ' + tms(sl.n) : 'other buttons ' + tms(sl.n) + ', mostly ' + bx(top1)) + '. Press it as soon as it’s ready'
+          : 'Pressed ' + (one ? bx(one) + ' ' + tms(sl.n) : 'other buttons ' + tms(sl.n) + ', mostly ' + bx(top1) + ',') + ' when ' + wy + '. <b>' + ws + '</b> comes first then';
+        add(sl.want, f, t + tp(jn != null ? tw(jn) : ''), { src: 'prio', cmp: jn != null ? 1 : 0, ic: '↯', s: sl.n - (jn || 0), why: stepTip(sl.want, sl.why, c.aoe) || why(sl.want, null, sl.why), kind: '', nt: 'press ' + ws + ' first' + (one ? ', before ' + esc(one) : '') + '.' }); }
+      if (!any) ok('', 'Followed the ' + per.spec + ' priority' + (c.aoe ? ' for packs' : '')); continue; }
     if (c.k.startsWith('p:')) continue; /* (procs are counted from the log itself, below) */
-    if (c.k.startsWith('cd:')) { const nm = c.ic || c.label; if (!p.boss && !big7) continue; /* (on a small trash pull, holding a cooldown for the next pack isn't a break) */
-      if (big7) { const h = q.held || 0, jh = j && sc != null ? j.held * sc : null, f = jh != null ? (h - jh < 5 ? null : h >= 2 * jh && h - jh >= 15 && red(nm) ? 'mistake' : 'slip') : h >= 15 && c.st === 'bad' ? 'slip' : null;
+    if (c.k.startsWith('cd:')) { const nm = c.ic || c.label; if (!cdN.has(mpLc(nm)) || (!p.boss && !big7)) continue; /* (a short cooldown: the priority covers it; on a smaller trash pull, holding a big one for the next pack isn't a break) */
+      if (big7) { const h = q.held || 0, jh = j && sc != null ? j.held * sc : null, f = jh != null ? (h - jh < 5 || h < jh * 1.25 ? null : h >= 2 * jh && h - jh >= 15 && red(nm) ? 'mistake' : 'slip') : h >= 15 && c.st === 'bad' ? 'slip' : null;
         if (!f) { if (q.a) ok(nm, nm + ' pressed when ready'); continue; }
-        add(nm, f, 'Held ' + bx(nm) + ' for ' + Math.round(h) + ' s' + (jh != null ? '. ' + Top + ' held it about ' + Math.round(jh) + ' s on pulls like this' : ''), { cmp: jh != null ? 1 : 0, ic: '⟳', s: (h - (jh || 0)) / 5, why: why(nm, c, 'on cooldown ready charges cap'), kind: jh != null ? kTop : kNo, nt: 'press ' + esc(nm) + ' as soon as the pack is pulled.' }); continue; }
-      share(c, q, j, nm, nm, 'press ' + esc(nm) + ' as soon as it’s ready.'); continue; }
+        add(nm, f, 'Held ' + bx(nm) + ' for ' + Math.round(h) + ' s on this ' + x.n + '-enemy pack. Press it as soon as the pack is pulled' + tp(jh != null ? 'about ' + Math.round(jh) + ' s' : ''), { cmp: jh != null ? 1 : 0, ic: '⟳', s: (h - (jh || 0)) / 5, why: why(nm, c, 'on cooldown ready charges cap'), kind: '', nt: 'press ' + esc(nm) + ' as soon as the pack is pulled.' }); continue; }
+      share(c, q, j, nm, 'Used ' + nm + ' when it was ready', 'press it as soon as it’s ready.'); continue; }
     if (c.k === 'res') { if (!q.gain) continue; const rn = q.rn || 'resource', [sl, mi] = bar(rn, [1, 2]), cst = Math.max(1, 0.05 * q.gain), js = j && j.gain ? j.lost / j.gain : null, ex = js != null ? js * q.gain : null; /* (a spender's worth: about a twentieth of what was gained) */
-      const f = ex != null ? (q.lost >= ex * 2 && q.lost - ex >= mi * cst && red(rn) ? 'mistake' : q.lost - ex >= sl * cst ? 'slip' : null) : c.st === 'bad' ? 'slip' : null;
+      const f = ex != null ? (q.lost >= ex * 2 && q.lost - ex >= mi * cst && red(rn) ? 'mistake' : q.lost - ex >= sl * cst && q.lost >= ex * 1.25 ? 'slip' : null) : c.st === 'bad' ? 'slip' : null;
       if (!f) { ok(rn, q.lost ? rn + ' spent in time' : 'No ' + rn + ' lost'); continue; }
-      add(rn, f, 'Lost ' + bx(pc(q.lost / q.gain) + ' of your ' + rn) + ' while full (' + q.lost + ' of ' + q.gain + ')' + (js != null ? ', ' + TOP + ' ' + pc(js) : ''), { cmp: js != null ? 1 : 0, ic: '▣', s: (q.lost - (ex || 0)) / cst, why: why(rn, c), kind: js != null ? kTop : kNo, nt: 'spend ' + esc(rn) + ' before it fills up.' }); continue; }
-    if (c.k === 'cc') { const jn = j && j.dur ? (j.n * me.dur) / j.dur : null, f = jn != null ? (q.n <= jn + 1 ? null : q.n >= 2 * jn && q.n >= 3 ? 'mistake' : 'slip') : c.st === 'bad' ? 'slip' : null; if (!f) continue;
-      add('cancelled casts', f, bx(String(q.n)) + ' casts cancelled' + (jn != null ? ', ' + TOP + ' about ' + Math.round(jn) : ''), { cmp: jn != null ? 1 : 0, ic: '✕', s: q.n - (jn || 0), why: 'A cast you cancel is a global cooldown with nothing to show for it.', kind: jn != null ? kTop : kNo, nt: 'finish the casts you start.' }); continue; }
-    if (q.b != null) { share(c, q, j, c.ic || c.label, tb(c.label), esc(mpNoSrc(tb(c.tip))) || 'line up ' + esc(c.ic || c.label) + '.'); continue; } /* (windows and pairs: shares too) */
+      add(rn, f, 'Let ' + bx(rn) + ' overflow: ' + pc(q.lost / q.gain) + ' of it was lost while full. Spend it before it fills up' + tp(js != null ? pc(js) : ''), { cmp: js != null ? 1 : 0, ic: '▣', s: (q.lost - (ex || 0)) / cst, why: why(rn, c), kind: '', nt: 'spend ' + esc(rn) + ' before it fills up.' }); continue; }
+    if (c.k === 'cc') { const jn = j && j.dur ? (j.n * me.dur) / j.dur : null, f = jn != null ? (q.n <= jn * 1.25 + 1 ? null : 'slip') : c.st === 'bad' ? 'slip' : null; if (!f) continue; /* (a slip at most: dodging cancels casts in a key) */
+      add('cancelled casts', f, 'Cancelled ' + bx(plural(q.n, 'cast')) + '. Finish the casts you start' + tp(jn != null ? 'about ' + Math.round(jn) : ''), { cmp: jn != null ? 1 : 0, ic: '✕', s: q.n - (jn || 0), why: 'A cast you cancel is a global cooldown with nothing to show for it.', kind: '', nt: 'finish the casts you start.' }); continue; }
+    if (q.b != null) { share(c, q, j, c.ic || c.label, tb(c.label), mpNoSrc(tb(c.tip)) || 'line up ' + (c.ic || c.label) + '.'); continue; } /* (windows and pairs: how often, as words) */
     if (q.pct != null) { const jp2 = j && j.pd ? j.pt / j.pd : null, nm = c.ic || c.label; let f = null;
       if (jp2) { const [sl, mi] = bar(nm, [0.85, 0.65]), fr = q.pct / jp2; f = fr >= sl ? null : fr < mi && red(nm) ? 'mistake' : 'slip'; } else f = c.st === 'bad' ? 'slip' : null;
-      if (!f) { ok(nm, tb(c.label) + ' ' + pc(q.pct)); continue; }
-      add(nm, f, bx(tb(c.label)) + ': ' + pc(q.pct) + (jp2 ? ', ' + TOP + ' ' + pc(jp2) : ''), { cmp: jp2 ? 1 : 0, ic: '◌', s: ((jp2 || 1) - q.pct) * 10, why: why(nm, c), kind: jp2 ? kTop : kNo, nt: esc(mpNoSrc(tb(c.tip))) || 'keep ' + esc(c.label.toLowerCase()) + ' higher.' }); } }
+      if (!f) { ok(nm, tb(c.label) + ' ' + pc(q.pct)); continue; } const tip = mpNoSrc(tb(c.tip));
+      add(nm, f, bx(tb(c.label)) + ' ' + pc(q.pct) + tp(jp2 ? pc(jp2) : '') + (tip ? '. ' + esc(tip).replace(/\.$/, '') : ''), { cmp: jp2 ? 1 : 0, ic: '◌', s: ((jp2 || 1) - q.pct) * 10, why: why(nm, c), kind: '', nt: esc(tip) || 'keep ' + esc(c.label.toLowerCase()) + ' higher.' }); } }
   // (D: procs from the log: a proc gained is one proc (a stack added counts, a top-up at full stacks doesn't), lost when it runs out unused; the same for
   // the judge on their pulls like this)
   for (const [, buff, ids, spend] of (((MP_SPECS[SP] || {}).c) || []).filter((y) => y[0] === 'p')) { const g = mpGained(R, name, x.i, ids); if (!g) continue; const w = mpRanOut(R, name, [x.i], ids, spend);
     let jw = 0, jg = 0; if (v.J && v.F) for (const nm of v.J) for (const k of v.jp) { jg += mpGained(v.F, nm, k, ids); jw += mpRanOut(v.F, nm, [k], ids, spend); }
-    const [sl, mi] = bar(buff, [1, 2]), ex = jg ? (jw / jg) * g : null, f = ex != null ? (w >= ex * 2 && w >= ex + mi && red(buff) ? 'mistake' : w > ex + sl ? 'slip' : null) : w > 2 ? 'slip' : null;
-    if (!f) { ok(buff, buff + ': ' + (w ? g - w + ' of ' + g : 'all ' + g) + ' spent'); continue; }
-    add(buff, f, bx(w + ' of ' + g + ' ' + buff) + ' ran out unused' + (ex != null ? '. ' + Top + ' lost about ' + Math.round(ex) + ' of ' + g : ''), { cmp: ex != null ? 1 : 0, ic: '✧', s: w - (ex || 0), why: why(buff, me.cs.find((c) => c.k === 'p:' + buff)), kind: ex != null ? kTop : kNo, nt: 'spend ' + esc(buff) + ' before it runs out.' }); }
-  const rows = [...T.values()], said = rows.map((r) => mpLc(mpPlain(r.t))).join(' | '); x.oks = [...new Set(oks.filter(([t]) => !t || !said.includes(t)).map(([, t]) => t))]; /* (no ✓ about a spell or proc a row talks about) */
-  x.foot = 'Checked over the whole pull against the ' + SP + (me.cs.some((c) => c.aoe) ? ' pack' : '') + ' priority and ' + (J ? 'the ' + SP + ' in ' + (x.xr ? 'another of the fastest runs' : 'the fast run') : 'no top ' + SP + 's to compare with yet') + '.';
+    const [sl, mi] = bar(buff, [1, 2]), ex = jg ? (jw / jg) * g : null, f = ex != null ? (w >= ex * 2 && w >= ex + mi && red(buff) ? 'mistake' : w > ex * 1.25 + sl ? 'slip' : null) : w > 2 ? 'slip' : null;
+    if (!f) { ok(buff, w ? buff + ' like top ' + SP + 's' : 'No ' + buff + ' lost'); continue; } const sp1 = (spend || [])[0];
+    add(buff, f, 'Let ' + bx(w + ' ' + buff) + ' run out. Spend ' + (w === 1 ? 'it' : 'them') + (sp1 ? ' on ' + esc(sp1) : ' before ' + (w === 1 ? 'it runs' : 'they run') + ' out') + tp(ex != null ? 'about ' + Math.round(ex) : ''), { cmp: ex != null ? 1 : 0, ic: '✧', s: w - (ex || 0), why: why(buff, me.cs.find((c) => c.k === 'p:' + buff)), kind: '', nt: 'spend ' + esc(buff) + ' before it runs out.' }); }
+  const rows = [...T.values()], said = rows.map((r) => mpLc(mpPlain(r.t))).join(' | '), nw = (t) => mpLc(mpPlain(t)).replace(/[^a-z]/g, '');
+  const wd = (t) => new Set(mpLc(mpPlain(t)).match(/[a-z']{4,}/g) || []); for (const r of rows) { if (!r.why) continue; const a = wd(r.why), b = wd(r.t); let k = 0; for (const y of a) if (b.has(y)) k++; if (nw(r.t).includes(nw(r.why)) || (a.size && k / a.size >= 0.5)) r.why = ''; } /* (no why line that says what the row already says) */ x.oks = [...new Set(oks.filter(([t]) => !t || !said.includes(t)).map(([, t]) => t))]; /* (no ✓ about a spell or proc a row talks about) */
+  x.foot = mpPJudged(R, p, per, me.cs.some((c) => c.aoe), !!J, x.xr);
   return rows; }
+// (a pull's type (Flex: "based on the type of pull it is"): a boss, 1–2 enemies, a pack of 3–6, a big pack of 7+; it picks the priority and the top
+// players' pulls it's compared with)
+function mpPType(RR, q) { const n = q.boss ? 0 : mpBigN(RR, q); return { k: q.boss ? 'boss' : n <= 2 ? 'small' : n <= 6 ? 'pack' : 'big', n, boss: q.boss || '' }; }
+// (the judge's pulls of the same type: the same boss, else any boss; the same size of trash)
+function mpPLike(F, q, R) { const ty = mpPType(R, q), L = F.pulls.map((y, k) => k).filter((k) => mpPType(F, F.pulls[k]).k === ty.k); if (ty.k !== 'boss') return L; const same = L.filter((k) => F.pulls[k].boss === q.boss); return same.length ? same : L; }
+// (the footer: "Judged as a big pack (8 enemies) against the Arms priority for packs and top Arms Warriors on big packs.")
+function mpPJudged(R, q, per, aoe, judged, xr) { const ty = mpPType(R, q), en = (n) => plural(n, 'enemy').replace(/enemys$/, 'enemies'), cn = (E.CLASSES[per.cls] || [])[0] || '', sp = per.spec + ' ' + cn;
+  const as = ty.k === 'boss' ? 'a boss (' + ty.boss + ')' : ty.k === 'small' ? 'a small pull (' + en(ty.n) + ')' : ty.k === 'pack' ? 'a pack (' + en(ty.n) + ')' : 'a big pack (' + en(ty.n) + ')', on = { boss: 'bosses', small: 'small pulls', pack: 'packs', big: 'big packs' }[ty.k];
+  return 'Judged as ' + as + ' against the ' + per.spec + (per.role === 'healer' ? ' ' + cn + ' damage' : '') + ' priority' + (aoe ? ' for packs' : '') + ' and ' + (judged ? 'top ' + sp + 's on ' + on + (xr ? ' in another of the fastest runs' : '') : 'no top ' + sp + 's yet') + '.' + (per.role === 'healer' ? ' A healer is judged on damage, kicks and dispels here, not healing.' : ''); }
 // (a priority step's reason, for an area step that has none: "Sudden Death was up", "you had 2 Opportunist", "Cleave was ready")
 function mpCondTxt(st) { const one = (c) => (!c ? null : c.buff ? (c.st ? 'you had ' + c.st + ' ' + c.buff : c.buff + ' was up') : c.deb ? c.deb + ' was on your target' : c.nodeb ? c.nodeb + ' was missing on your target' : c.dremOf ? c.dremOf + ' had under ' + c.drem + ' seconds left' : c.no ? c.no + ' wasn’t up' : c.en ? c.en + ' or more enemies were close' : c.res || c.resF ? 'you had the resource for it' : null);
   const c = st.if, t = c ? one(c) || (c.any || c.all ? [].concat(c.any || [], c.all || []).map(one).filter(Boolean)[0] : null) : null; return t || (st.cd ? st.s + ' was ready' : st.s + ' was wanted'); }
@@ -1237,9 +1252,9 @@ function mpWhyLine(t, topic, boss) { const S = mpNoSrc(t).split(/(?<=[.!?])\s+/)
 function mpGained(RR, nm, k, ids) { const m = (RR.aur || {})[nm] || {}, q = RR.pulls[k]; let g = 0; for (const id of ids) for (const [t, e] of m[id] || []) if ((e === 1 || e === 3) && t >= q.s - 1 && t <= q.e) g++; return g; }
 // (round v4's check: the picked player's pull, once its checks and the judge's are in; until then the card says it's checking, and the run is queued)
 function mpPlayRot(x) { const { R, F, name, per, i } = x; if (!mpRotCan(R, per)) return []; x.rot = true; x.aoeRan = !x.p.boss && x.n >= 3 && !!MP_AOE[mpSpN(per)] && typeof GEN_SPECS !== 'undefined' && !!GEN_SPECS[mpSpN(per)];
-  const J = x.same && F && (F.win || F.winP) ? (F.people || []).filter((y) => y.spec === per.spec && y.cls === per.cls).map((y) => y.name) : [], jp = J.length ? F.pulls.map((q, k) => k).filter((k) => mpPBand(F, F.pulls[k]) === x.band) : [];
+  const J = x.same && F && (F.win || F.winP) ? (F.people || []).filter((y) => y.spec === per.spec && y.cls === per.cls).map((y) => y.name) : [], jp = J.length ? mpPLike(F, x.p, R) : [];
   const key = name + '|' + i + '|' + (jp.length ? mpRid(F) : '-'), V = R._rotV || (R._rotV = new Map()), v = V.get(key);
-  if (!v) { x.wait = true; if (name === MP.pp) mpRotGo(R, jp.length ? F : null, J, jp, name, i, key); return []; }
+  if (!v) { x.wait = true; if (name === MP.pp) mpRotGo(R, jp.length ? F : null, J, jp, name, i, key); return []; } if (!v.mine) { x.short = true; return []; } /* (under 20 s alive: too short for the Rotation tab's checks) */
   return mpRotRows(x, v); }
 MP_PLAY_CHECKS.unshift(mpPlayRot);
 // (E: each spec's area priority for 3+ enemies, the Rotation chat's MP_PRIO aoe lists in the Rotation tab's step format)
@@ -1253,12 +1268,12 @@ function mpHealUse(RR, nm, k, L) { const cs = (RR.cid || {})[nm] || {}, q = RR.p
   return L.map(([s, ids, cd, ch, h]) => { const n = ids.flatMap((id) => cs[id] || []).filter((t) => t >= q.s - 1 && t <= q.e).length; return { s, n, m: Math.max(n, ch + Math.floor(len / (cd * (h ? hm : 1)))) }; }); }
 // (a healer, on Mythic+ judged on damage only (Flex's rule): each damage button pressed N of a possible M, against the same spec's share on pulls like
 // this; a slip at most, and only with a same-spec judge (nobody can say when the group needed healing instead))
-function mpPlayHeal(x) { const { R, F, name, per, i } = x, SP = mpSpN(per), L = MP_HDMG[SP]; if (per.role !== 'healer' || !L || !L.length || !x.same || !F) return [];
-  const J = (F.people || []).filter((y) => y.spec === per.spec && y.cls === per.cls).map((y) => y.name), jp = F.pulls.map((q, k) => k).filter((k) => mpPBand(F, F.pulls[k]) === x.band); if (!J.length || !jp.length) return [];
+function mpPlayHeal(x) { const { R, F, name, per, i } = x, SP = mpSpN(per), L = MP_HDMG[SP]; if (per.role !== 'healer' || !L || !L.length || !x.same || !F) return []; if (x.p.e - x.p.s < 20) { x.short = true; return []; } /* (too short to judge) */
+  const J = (F.people || []).filter((y) => y.spec === per.spec && y.cls === per.cls).map((y) => y.name), jp = mpPLike(F, x.p, R); if (!J.length || !jp.length) return [];
   const me = mpHealUse(R, name, i, L), ja = L.map(() => [0, 0]); for (const nm of J) for (const k of jp) mpHealUse(F, nm, k, L).forEach((u, z) => { ja[z][0] += u.n; ja[z][1] += u.m; });
   const rows = [], oks = x.oks || (x.oks = []), W = MP_WHY[SP] || {};
   me.forEach((u, z) => { const [jn, jm] = ja[z]; if (!jm || !u.m) return; if (!u.n && !jn) return; /* (a button neither of you pressed: not in the build) */ const jf = jn / jm, over = u.m - u.n - (1 - jf) * u.m; if (over < 1.5) { oks.push(u.s + ' ' + Math.round((100 * u.n) / u.m) + '%'); return; }
-    rows.push({ k: 'heal', src: 'prio', cmp: 1, f: 'slip', ic: '⟳', s: over, t: '<b>' + esc(u.s) + '</b>: ' + Math.round((100 * u.n) / u.m) + '% of the times it was ready (' + u.n + ' of ' + u.m + '), top ' + SP + 's ' + Math.round(jf * 100) + '%',
+    rows.push({ k: 'heal', src: 'prio', cmp: 1, f: 'slip', ic: '⟳', s: over, t: 'Used <b>' + esc(u.s) + '</b> on ' + Math.round((100 * u.n) / u.m) + '% of its cooldowns. Press it when nobody needs healing <span class="mpt-m">(top ' + SP + 's: ' + Math.round(jf * 100) + '%)</span>',
       why: Array.isArray(W[u.s]) ? W[u.s][0] : W[u.s] || '', kind: per.spec + ' damage · vs top ' + SP + 's', nt: 'press ' + esc(u.s) + ' when nobody needs healing.' }); });
   return rows; }
 MP_PLAY_CHECKS.push(mpPlayHeal);
