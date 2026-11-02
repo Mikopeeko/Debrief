@@ -23775,6 +23775,7 @@ const PATCH_NOTES = [
     "Mythic+ tab, colour coded: each colour means one thing (trash blue, bosses gold, standing grey, deaths red, kicks purple), and red, amber or green shows how far behind you were. A key read from your log shows how much rating it gained when Debrief knows your rating before it.",
     "Mythic+ pulls are split better: a new pack pulled while a straggler from the last one is still alive is now its own pull, so a pull no longer shows 50 or more enemies when the group really took several packs one after another.",
     "Mythic+ tab: \"Next time\" lines say what the fast run did differently on each slow stretch, your longest waits between pulls are listed with what explains each, and your healer's damage shows first, with a line when it was what timed the key.",
+    "Mythic+ tab in five chapters, with the same panels as your other pages: the key, where your time went, route and pulls, your group, and the dungeon. The result tiles moved up, right under the banner, so you read the outcome first.",
     "On a smaller screen, the tiles at the top of Debriefing line up in even rows: no tile stretched across on its own and no empty gaps.",
     "The hovers on Debriefing's top tiles list every player, not just the first 10, and a tall hover stays on screen.",
     "Your recap is a side panel now: the full height of your screen on the right edge (or the left, with Side in /db card settings), one column that scrolls, in WoW and on your PC. Drag its inner edge on your PC to make it wider or narrower.",
@@ -61197,7 +61198,8 @@ function mpHtml(it, R, fx) {
     /* (its affixes, each with a plain hover) */
     ((run.affixes || []).some((a) => MP_AFFIX[a]) ? '<div class="mpt-afx">' + run.affixes.filter((a) => MP_AFFIX[a]).map((a) => '<span class="mpt-af" tabindex="0"' + mpT1('<b>' + esc(MP_AFFIX[a][0]) + '</b><br>' + esc(MP_AFFIX[a][1])) + '>' + esc(MP_AFFIX[a][0]) + '</span>').join('') + '</div>' : '') + '</div>' +
     '<div class="mpt-grp">' + R.people.slice().sort(mpByRole).map((p) => '<span class="mpt-gm" style="color:' + mpCC(p.cls) + '"' + mpT1(esc(p.spec + ' ' + ((E.CLASSES[p.cls] || [])[0] || ''))) + '>' + (MP_ROLE[p.role] || '') + '<b>' + esc(p.name) + '</b></span>').join('') + '</div></div>';
-  if (!C) return ban + '<p class="mpt-note">' + (run.left || !run.timeMs ? 'This key was left before the end, so there\'s no timer to judge. Everything that happened is below.' : 'Debrief doesn\'t know this dungeon\'s timer yet. Everything that happened is below.') + '</p>' + mpJumpBar(R, false) + mpRouteHtml(R, null, false) + mpPulls(R, null, null, null) + mpCasts(R) + mpPlayers(R, fx, waiting) + mpKnowHtml(R);
+  if (!C) return mpChap('mptC1', 'The key', '', ban + '<p class="mpt-note">' + (run.left || !run.timeMs ? 'This key was left before the end, so there\'s no timer to judge. Everything that happened is below.' : 'Debrief doesn\'t know this dungeon\'s timer yet. Everything that happened is below.') + '</p>') + mpJumpBar(R, false) +
+    mpChap('mptC3', 'Route and pulls', '', mpRouteHtml(R, null, false) + mpPulls(R, null, null, null)) + mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpCasts(R) + mpPlayers(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', 'for your next key', mpKnowHtml(R));
   // what gets you the next level
   const T = ck.time, P = ck.par, lv = ck.up, tgt = lv === 0 ? P : lv === 1 ? P * 0.8 : lv === 2 ? P * 0.6 : null, need = tgt != null ? Math.max(1, Math.round(T - tgt)) : 0; /* (as the timer shows it: 24:06 against 24:00 is 6 s) */
   const head = lv === 0 ? 'What gets you in time' : lv === 3 ? 'What would save the most time' : 'What gets you +' + (lv + 1);
@@ -61259,12 +61261,22 @@ function mpHtml(it, R, fx) {
       '<b>Group DPS</b><br>Your whole group\'s damage a second while fighting. Walking and standing don\'t count.' + (fGr ? ' The fast run: ' + mpGF(fGr.r) + '.' : '')) : '') +
     tile('Casts that went off', String(thN), 'with a kick ready', thN ? 'mpt-bad' : 'mpt-g') + /* (red above 0, green at 0: the polish pass) */
     tile('Lust', LU.length ? plural(LU.length, 'time') : 'None', LU.length ? esc([...new Set(LU.map((l) => mpPullName(R, l.pull)))].join(', ')) : 'no Lust this key', LU.length ? 'mpt-lu' : 'mpt-m') + '</div>';
-  return ban + mpJumpBar(R, true) + fixes + tiles + mpBehind(R, C, F, FC, fx, waiting) + mpRouteHtml(R, F, waiting) + mpPulls(R, C, F, FC) + mpCasts(R) + mpPlayers(R, fx, waiting) + mpKnowHtml(R);
+  /* (the tiles moved up under the banner, so the result is read first (the chapters round; it changes the round-3 order Flex approved, and he
+     saw it in the mock)) */
+  const behind = F ? (T - fT > 5 ? 'bad' : T - fT < -5 ? 'good' : '') : '';
+  return mpChap('mptC1', 'The key', '', ban + tiles) + mpJumpBar(R, true) + mpChap('mptC2', 'Where your time went', F ? 'against a typical fast run' : '', fixes + mpBehind(R, C, F, FC, fx, waiting), behind) +
+    mpChap('mptC3', 'Route and pulls', '', mpRouteHtml(R, F, waiting) + mpPulls(R, C, F, FC)) + mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpCasts(R) + mpPlayers(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', 'for your next key', mpKnowHtml(R));
 }
-// (the jump bar under the banner (the Design studio's round 4): it sticks under the site's tab bar while you scroll)
-const mpJumpBar = (R, tl) => '<nav class="mpt-jb" aria-label="Jump to">' + [tl ? ['mptTl', 'Timeline'] : null, R.route ? ['mptRoute', 'Route'] : null, ['mptPulls', 'Pulls'], ['mptKicks', 'Kicks'], ['mptPlayers', 'Players'], MP_KNOW[mpLc(R.run.dungeon)] ? ['mptKnow', 'Dungeon'] : null].filter(Boolean).map(([id, l]) => '<button type="button" data-mptj="' + id + '">' + l + '</button>').join('') + '</nav>';
+// (five chapters (Nov 2, the Design studio's chapters.md, Flex: "the page is lacking depth. Maybe find a way to separate the information so its
+// more readable in sections", then "does it have depth like my other pages do?"): each one the site's own panel, the finish Debriefing's panels
+// have, opening with a small grey label and a sub-line; a 6 px square only when the chapter has a verdict (behind red, ahead green))
+const mpChap = (id, k, sub, body, dot) => (body ? '<div class="mpt-chap" role="region" aria-label="' + k + '" id="' + id + '"><p class="mpt-chk' + (dot ? ' mpt-chk-' + dot : '') + '">' + k + (sub ? '<span>' + sub + '</span>' : '') + '</p>' + body + '</div>' : ''); /* (a div: the site's type scale resizes text in a section inside a section) */
+// (the jump bar between chapter 1 and 2 (the Design studio's round 4, by chapter since Nov 2): it sticks under the site's tab bar while you scroll)
+const mpJumpBar = (R, tl) => '<nav class="mpt-jb" aria-label="Jump to">' + [tl ? ['mptC2', 'Time'] : null, ['mptC3', 'Route and pulls'], ['mptC4', 'Your group'], MP_KNOW[mpLc(R.run.dungeon)] ? ['mptC5', 'Dungeon'] : null].filter(Boolean).map(([id, l]) => '<button type="button" data-mptj="' + id + '">' + l + '</button>').join('') + '</nav>';
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-mptj]'); if (!b) return; e.preventDefault(); const s = document.getElementById(b.dataset.mptj); if (!s) return;
-  if (s.tagName === 'DETAILS') s.open = true; /* (a folded section opens first) */ s.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  if (s.tagName === 'DETAILS') s.open = true; /* (a folded section opens first) */
+  else { const f = s.querySelectorAll(':scope > details.mpt-fold'); if (f.length === 1 && s.children.length === 2) f[0].open = true; } /* (a chapter that's one folded part, Know this dungeon, opens it) */
+  s.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
 // (what "a typical fast run" is, for the line under the timeline and the hovers: the middle of the 20 fastest, or of as many as there are)
 const mpTypical = (R, fx) => { const n = (fx && fx.list && fx.list.n) || 0; return 'the middle of this season\'s ' + (n >= 20 || !n ? '20' : n) + ' fastest timed +' + R.run.level + ' ' + esc(R.run.dungeon) + ' runs' + (n && n < 20 ? ' (only ' + n + ' so far)' : ''); };
 const mpPullName = (R, k) => { const p = R.pulls[k]; return p ? (p.boss ? p.boss : 'pull ' + p.n) : ''; };
@@ -61782,7 +61794,7 @@ const MP_CSS = `
 .mpt-gm{display:inline-flex;align-items:center;gap:5px;font:600 14px var(--body)}
 .mpt-gm b{font-weight:700}
 .mpt-ro{width:13px;height:13px;fill:currentColor;opacity:.85;flex:none}
-.mpt-fx{margin:20px 0 0;padding:4px 0 4px 18px;border-left:3px solid var(--gold)}
+.mpt-fx{margin:0;padding:0} /* (no edge bar: Design rules, the chapters round) */
 .mpt-fxh{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px}
 .mpt-fxh h2{margin:0;font:700 22px var(--head);color:var(--gold)}
 .mpt-fxh span{font:500 15px var(--body);color:var(--mpt-soft)}
@@ -61973,7 +61985,7 @@ const MP_CSS = `
 .mpt-pw small,.mpt-pv small{display:block;font:500 12.5px var(--body);color:var(--muted)}
 .mpt-pv b{font:700 17px var(--head)}
 .mpt-vs{font:700 14px var(--body)}
-.mpt-say{margin:0 0 18px;padding:0 0 0 18px;border-left:3px solid var(--gold);list-style:none}
+.mpt-say{margin:0 0 18px;padding:0;list-style:none}
 .mpt-say li{padding:5px 0;color:var(--mpt-soft);font-size:15.5px}
 .mpt-say b{color:var(--text)}
 .mpt-fz{margin-left:84px;margin-right:56px}
@@ -61991,7 +62003,7 @@ const MP_CSS = `
 .mpt-sp{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;border-right:2px solid var(--bg);overflow:hidden}
 .mpt-sy .mpt-sp{background:var(--mpt-you)} .mpt-sf .mpt-sp{background:#7d8698}
 .mpt-sp b{font:700 12px var(--head);color:#0f1117}
-.mpt-sbm{position:absolute;top:-6px;bottom:-6px;width:0;border-left:3px solid var(--gold)}
+.mpt-sbm{position:absolute;top:-6px;bottom:-6px;width:0;border-left:2px solid var(--gold)} /* (the boss marker on the strip: kept, thinner (it marks where a boss died, not an edge)) */
 .mpt-sbm em{position:absolute;top:-16px;left:-2px;font:700 11px var(--head);font-style:normal;color:var(--gold);white-space:nowrap}
 .mpt-sf .mpt-sbm em{top:auto;bottom:-16px}
 .mpt-strip u{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(135deg,rgba(229,83,75,.85) 0 4px,rgba(229,83,75,.45) 4px 8px);text-decoration:none;border-radius:0 4px 4px 0}
@@ -62037,6 +62049,22 @@ const MP_CSS = `
 .mpt-rt1{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:28px;align-items:start}
 .mpt-rt1 .mpt-h3{margin-top:0}
 .mpt-rt1.mpt-zoom{grid-template-columns:minmax(0,1fr)}
+/* (five chapters (Nov 2, the Design studio's chapters.md): the site's own .panel finish, a small grey label, parts split by a hairline) */
+.mpt .mpt-chap{display:block;padding:16px 20px 18px;margin:0 0 16px;background:var(--panel);border:1px solid var(--line2);border-radius:var(--r,4px)}
+html:not([data-theme]) .mpt .mpt-chap{background-image:linear-gradient(rgba(255,255,255,.055),rgba(255,255,255,0) 160px);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 1px 0 rgba(0,0,0,.5),0 14px 30px -16px rgba(0,0,0,.95)} /* (Debriefing's panel finish, from the site's own variables; not the .panel class: the site's type scale resizes text inside it) */
+.mpt-chk{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;margin:0 0 8px;font:700 11px var(--head);letter-spacing:.44px;text-transform:uppercase;color:var(--faint)}
+.mpt-chk span{font:500 13px var(--body);letter-spacing:0;text-transform:none;color:var(--muted)}
+.mpt-chk-bad::before,.mpt-chk-good::before{content:"";width:6px;height:6px;align-self:center;flex:none;margin-right:-3px}
+.mpt-chk-bad::before{background:var(--bad)} .mpt-chk-good::before{background:#7ee08f}
+.mpt-chap > .mpt-chk + *{margin-top:0;border-top:0;padding-top:0}
+.mpt-chap > .mpt-sec + .mpt-sec,.mpt-chap > .mpt-fx + .mpt-sec{margin-top:18px;padding-top:18px;border-top:1px solid var(--line)}
+.mpt-chap > .mpt-sec + .mpt-fold{padding-top:4px}
+.mpt-chap .mpt-ban{padding:2px 0 14px;border-bottom:0}
+.mpt-chap .mpt-tiles{margin-top:0;border-bottom:0;padding-bottom:0}
+.mpt-chap .mpt-tile{border-left:0;box-shadow:inset 1px 0 0 var(--line)} .mpt-chap .mpt-tile:first-child{box-shadow:none}
+.mpt-fxr:hover{background:rgba(255,255,255,.025)}
+.mpt-chap + .mpt-jb{margin:0 0 16px}
+@media (max-width:600px){ .mpt .mpt-chap{padding:14px 12px 16px} }
 @media (max-width:860px){
   .mpt-rt1{grid-template-columns:minmax(0,1fr)}
   .mpt-fold > summary{grid-template-columns:minmax(0,1fr) auto;row-gap:4px}
@@ -62060,6 +62088,7 @@ const MP_CSS = `
   .mpt-tile{flex:1 1 45%;border-left:0;padding:0}
   .mpt-tile span{white-space:normal}
   .mpt-tile:last-child:nth-child(odd){flex-basis:100%} /* (five tiles: the last one across, never alone in half a row) */
+  .mpt-chap .mpt-tile{box-shadow:none}
   .mpt-tl{margin-left:64px} .mpt-ln{margin-left:-64px} .mpt-ll{width:64px} .mpt-key{margin-left:0}
   .mpt-mk span{font-size:11px}
   .mpt-gp{height:auto;display:flex;flex-direction:column;gap:2px;margin-left:-64px}
