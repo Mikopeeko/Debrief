@@ -21,6 +21,7 @@ T# means trash before boss #, B# means boss #, and * means dispel only after a f
   - Murder in a Row is a bleed, which ordinary dispels can't remove (41 on players over two keys, none removed), so it's off the dispel list.
   - Cosmic Crash, Dark Bloom and Demonic Rage hit every player on each cast, about 5 direct hits a cast, like Hailburst. They're left out of avoidable damage.
   - Nether Dash counts only its direct hits (about 1 a cast); its 230 damage-over-time ticks don't count.
+  - Nether Dash aims a line at every player (Wowhead: "Dodge Other Lines. Targets each player with a line attack."), so each player's first hit in a cast is their own line and isn't avoidable. Only a second hit within 8 seconds (someone else's line) counts (Nov 1, Flex: "its being marked as avoidable").
 - **Must-kicks:** every one is in the logs except:
   - Den of Nalorakk's Scavenge, Frigid Roar, Winter's Shroud and Arc Lightning (that key ended after the first boss)
   - Temple's Essence Disruption

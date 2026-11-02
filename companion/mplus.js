@@ -24,7 +24,8 @@ const KNOCK = new Set(['thunderstorm', 'typhoon', 'ursol\'s vortex', 'ring of pe
 // (each dungeon's lists, by spell name as the log writes it. kick: must-kick casts; chan: the ones that are channels (the log shows them only
 // when they start); cc: [cast, what the enemy gains when nobody stopped it]; dispel: debuffs on players to remove (not the "only after a failed
 // mechanic" ones); purge: enemy buffs to purge or soothe; dodge: damage a player who isn't tanking should never take (bosses from the guides, trash
-// from Flex's keys and each spell's Wowhead text, Nov 1); pool: a puddle that puts a debuff on whoever stands in it (each landing is one hit). Seen on Flex's keys
+// from Flex's keys and each spell's Wowhead text, Nov 1); own: a dodge-list attack aimed at each player in turn, so each player's first hit in a cast is
+// their own and only another one counts (Nov 1); pool: a puddle that puts a debuff on whoever stands in it (each landing is one hit). Seen on Flex's keys
 // Oct 4 to 31 (Murder Row, The Blinding Vale and Voidscar Arena found by date on Raider.IO), except Den of Nalorakk past its first boss)
 const LISTS = {
   'altar of fangs': { kick: ['Piercing Hiss', 'Toxic Atrophy', 'Mass Envenom'], cc: [['Evolve', 'Evolved']],
@@ -36,7 +37,7 @@ const LISTS = {
   'the blinding vale': { kick: ['Light Bolt Volley', 'Light Bolt@Kezkitt', 'Disorienting Screech', 'Warden\'s Wrath', 'Lightspore Shot'],
     dispel: ['Bloodthorn Roots'], purge: [], dodge: ['Lightsower Dash', 'Fan of Thorns', 'Lightmaw Beams', 'Belch Spores', "Lightwarden's Blight"] },
   'voidscar arena': { kick: ['Demoralizing Shout', 'Shadowbolt Volley', 'Violent Sand', 'Mad Shriek', 'Mending Void'], chan: ['Mending Void'],
-    dispel: ['Melt Armor', 'Corrosive Essence'], purge: ['Bolster'], dodge: ['Nether Dash', 'Poison Splash', 'Unstable Singularity', 'Void Beam'] },
+    dispel: ['Melt Armor', 'Corrosive Essence'], purge: ['Bolster'], dodge: ['Nether Dash', 'Poison Splash', 'Unstable Singularity', 'Void Beam'], own: ['Nether Dash'] }, /* (Nether Dash: "Dodge Other Lines. Targets each player with a line attack.") */
   'ruby life pools': { kick: ['Ice Shield', 'Frigid Shard', 'Fiery Blast', 'Blaze Volley'], chan: ['Ice Shield'],
     dispel: ['Cold Claws', 'Rolling Thunder', 'Stormslam'], purge: ['Blaze of Glory', 'Stormcloud Barrier'], dodge: ['Molten Boulder', 'Roaring Firebreath', 'Flame Breath'] },
   'kings\' rest': { kick: ['Hex Volley', 'Bind Soul', 'Unholy Mending', 'Wretched Discharge', 'Hex', 'Poison Nova', 'Deathly Roar'],
@@ -50,7 +51,7 @@ const LISTS = {
 const TIMER = { 'altar of fangs': 29, 'murder row': 34, 'den of nalorakk': 32, 'the blinding vale': 31, 'voidscar arena': 30, 'kings\' rest': 33, 'temple of sethraliss': 33, 'ruby life pools': 28 };
 const lc = (s) => String(s || '').toLowerCase().replace(/[’`]/g, '\'');
 const listFor = (dungeon) => { const L = LISTS[lc(dungeon)]; if (!L) return null; const S = (a) => new Set((a || []).map(lc));
-  return { kick: S(L.kick), chan: S(L.chan), ccCast: new Map((L.cc || []).map(([c, r]) => [lc(r), c])), dispel: S(L.dispel), purge: S(L.purge), dodge: S(L.dodge), pool: S(L.pool) }; };
+  return { kick: S(L.kick), chan: S(L.chan), ccCast: new Map((L.cc || []).map(([c, r]) => [lc(r), c])), dispel: S(L.dispel), purge: S(L.purge), dodge: S(L.dodge), own: S(L.own), pool: S(L.pool) }; };
 const num = (x) => { const n = +x; return n === n ? n : 0; };
 const isPlayer = (g) => typeof g === 'string' && g.startsWith('Player-');
 const isNpc = (g) => typeof g === 'string' && (g.startsWith('Creature-') || g.startsWith('Vehicle-'));
@@ -171,7 +172,7 @@ function build(text, E) {
     mobs: [...p.mobs].map(([n, g]) => [n, g.size]).sort((a, b) => b[1] - a[1]), dmg: {}, heal: {}, kicks: [], stops: [], through: [], deaths: [], defs: [], dispels: [], purges: [],
     avoid: {}, debs: {}, ebuffs: {} }));
   const addTo = (o, k, v) => { o[k] = (o[k] || 0) + v; }, avoidOf = (o, who, spell) => o.avoid[who + '|' + spell] || (o.avoid[who + '|' + spell] = { who, spell, n: 0, dmg: 0 });
-  const recent = new Map(), inPool = new Set(), lastHit = new Map(); // player -> last hits; player|puddle stepped into, not ticked yet; player|spell -> its last hit
+  const recent = new Map(), inPool = new Set(), lastHit = new Map(), ownAt = new Map(); // player -> last hits; player|puddle stepped into, not ticked yet; player|spell -> its last hit; player|spell -> their own line's hit
   for (const x of ev) {
     const pi = pullOf(x[0]), o = out[pi]; if (!o) continue;
     if (x[1] === 'dmg') addTo(o.dmg, x[2], x[3]);
@@ -179,7 +180,8 @@ function build(text, E) {
     else if (x[1] === 'hit') { const l = recent.get(x[2]) || []; l.push([x[0], x[4], x[5], x[3]]); if (l.length > 6) l.shift(); recent.set(x[2], l);
       /* (avoidable damage: a dodge-list spell's direct hit (not the damage-over-time some leave) on anyone but a tank, who may be standing in a frontal on purpose;
          a beam or breath that hits every second while you stand in it is one hit until you're out of it for 1.6 s (Nov 1)) */
-      if (LIST && (players.get(x[2]) || {}).role !== 'tank') { if (!x[7] && LIST.dodge.has(lc(x[4]))) { const a = avoidOf(o, x[2], x[4]); if (!a.id && x[8]) a.id = x[8]; const k = x[2] + '|' + lc(x[4]); if (!(lastHit.get(k) > x[0] - 1.6)) a.n++; lastHit.set(k, x[0]); a.dmg += x[3]; } else if (x[7] && LIST.pool.has(lc(x[4]))) { const a = avoidOf(o, x[2], x[4]), k = x[2] + '|' + lc(x[4]); if (inPool.has(k)) { a.n++; inPool.delete(k); } a.dmg += x[3]; } } }
+      if (LIST && (players.get(x[2]) || {}).role !== 'tank') { if (!x[7] && LIST.dodge.has(lc(x[4])) && LIST.own.has(lc(x[4])) && !(ownAt.get(x[2] + '|' + lc(x[4])) > x[0] - 8)) ownAt.set(x[2] + '|' + lc(x[4]), x[0]); /* (their own line this cast: not a mistake) */
+      else if (!x[7] && LIST.dodge.has(lc(x[4]))) { const a = avoidOf(o, x[2], x[4]); if (!a.id && x[8]) a.id = x[8]; const k = x[2] + '|' + lc(x[4]); if (!(lastHit.get(k) > x[0] - 1.6)) a.n++; lastHit.set(k, x[0]); a.dmg += x[3]; } else if (x[7] && LIST.pool.has(lc(x[4]))) { const a = avoidOf(o, x[2], x[4]), k = x[2] + '|' + lc(x[4]); if (inPool.has(k)) { a.n++; inPool.delete(k); } a.dmg += x[3]; } } }
     /* (a puddle: one hit each time someone stepped in and it ticked on them; out again within a second isn't a mistake. Its ticks are the damage) */
     else if (x[1] === 'pool') inPool.add(x[2] + '|' + lc(x[3]));
     else if (x[1] === 'aura' && defIds.has(x[3])) o.defs.push({ t: x[0], who: x[2], name: defIds.get(x[3]) });
