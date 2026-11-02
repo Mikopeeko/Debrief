@@ -13131,6 +13131,43 @@ html body #tbPlan{display:none !important}
 html body #view .oa-tiles.t481g{display:grid !important}
 html body #view .oa-tiles.t481g > :not(.dbr-n){grid-column:1 / -1 !important}
 </style>
+<style>
+/* round 484 (Nov 2, Flex: "can you make the graphs match the ones from the graphs tab design wise? That should be a general rule for the website"):
+   one meter row for bar lists outside Graphs, with the Graphs tab's own sizes and colours (round 307): the name in its own column, a 13 px bar,
+   the numbers in fixed columns. Columns: --gbx-cols (desktop) and --gbx-cols-m (under 700 px) */
+.gbx { display: flex; flex-direction: column; gap: 0; max-width: 760px; }
+.gbx-r { display: grid; grid-template-columns: var(--gbx-cols, 168px minmax(0, 1fr) 60px); align-items: center; column-gap: 8px; min-height: 20px; padding: 2px 4px; border-radius: 3px; font: 600 12.5px var(--body); color: #aeb6bf; }
+.gbx > .gbx-r:nth-child(even) { background: rgba(255,255,255,.02); }
+.gbx-hd { font: 600 10.5px var(--body); text-transform: uppercase; letter-spacing: .04em; color: #7d8792; border-bottom: 1px solid #222930; padding: 0 4px 4px; margin: 0 0 2px; }
+.gbx-n { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; white-space: nowrap; font: 600 13px var(--body); }
+.gbx-n .who { display: flex !important; align-items: center; gap: 6px; min-width: 0; }
+.gbx-n .who > span:not(.av) { display: block !important; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gbx-n .who .sub { display: none !important; }
+.gbx-n .av, .gbx-n .av img { width: 16px !important; height: 16px !important; min-width: 16px; flex: none; }
+.gbx-n .nm { font: 600 13px var(--body) !important; }
+.gbx-b { display: flex; height: 13px; border-radius: 2px; background: rgba(255,255,255,.04); overflow: hidden; min-width: 0; }
+.gbx-b > i { display: block; height: 100%; flex: none; background: var(--c, #8a939c); opacity: .78; }
+.gbx-b > i:first-child { border-radius: 2px 0 0 2px; } .gbx-b > i + i { opacity: .45; }
+.gbx-r:hover .gbx-b > i { opacity: .95; }
+.gbx-v { text-align: right; color: #e8eaed; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.gbx-s { text-align: right; color: #aeb6bf; font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (max-width: 699px) { .gbx-r { grid-template-columns: var(--gbx-cols-m, 104px minmax(0, 1fr) 52px); } }
+/* the shield lists: name, bar, amount, share */
+.shd-gbx > .gbx-r { --gbx-cols: 168px minmax(0, 1fr) 56px 40px; --gbx-cols-m: 104px minmax(0, 1fr) 48px 34px; }
+html body #view details.shd-one > .gbx { padding: 2px 0 10px 18px; }
+/* round 484: the shields' break times on All pulls, a dot per shield */
+.shd-bt { margin: 2px 0 14px; max-width: 760px; }
+.shd-bt-h { display: flex; align-items: baseline; gap: 4px 10px; flex-wrap: wrap; margin: 0 0 8px; font: 600 10.5px var(--body); text-transform: uppercase; letter-spacing: .06em; color: #868f99; }
+.shd-bt-h span { text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 400; color: #868f99; }
+.shd-bt-tr { position: relative; height: calc(var(--l, 1) * 10px + 12px); border-bottom: 1px solid rgba(255,255,255,.12); }
+.shd-bt-band { position: absolute; top: 0; bottom: 0; background: rgba(69,193,92,.10); border-left: 1px dashed rgba(126,224,143,.4); border-right: 1px dashed rgba(126,224,143,.4); }
+.shd-bt-cast { position: absolute; top: 0; bottom: 0; width: 8px; margin-left: -4px; background: linear-gradient(90deg, transparent 3px, rgba(229,83,75,.65) 3px, rgba(229,83,75,.65) 4px, transparent 4px); }
+.shd-bt-d { position: absolute; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: #45c15c; box-shadow: 0 0 0 1.5px #12151c; }
+.shd-bt-d.warn { background: #e8a23a; } .shd-bt-d:hover { transform: scale(1.4); }
+.shd-bt-ax { position: relative; height: 18px; font: 600 11px var(--body); color: #868f99; }
+.shd-bt-ax span { position: absolute; top: 3px; transform: translateX(-50%); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.shd-bt-x { margin: 2px 0 0 !important; font-size: 12.5px; color: #aeb6bf; }
+</style>
 </head>
 <body class="refine">
 <noscript><h1>Debrief: WoW raid log review for Mythic progression</h1><p>Debrief reads your World of Warcraft raid logs, from a Warcraft Logs report or your own combat log, and explains every pull: which mechanics were missed and by whom, why each player died, how your rotation compared with the top players, and what to fix before the next pull.</p><p>It also has Heroic and Mythic boss guides for every boss in the raid, a raid cooldown planner that reads Northern Sky Raid Tools (NSRT) notes, and an in-game addon. Debrief needs JavaScript turned on.</p></noscript>
@@ -23782,7 +23819,14 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-11-01', h: [{ t: 'Your key on the map', d: 'The Mythic+ tab now shows your key on the map: every pull in its own colour, with the route, where people died, the kicks that were missed, Lust and the waits. Click a pull to see what went wrong in it, each player\'s damage and the big cooldowns pressed.' }, { t: 'Find your Mythic+ keys', d: 'The Mythic+ tab is always in the top bar now. It lists your own keys this season, newest first, and finds anyone\'s by name and realm. Pick a key to see where your time went.' }, { t: 'Mythic+ tab', d: 'Open a report with a Mythic+ key, and the new Mythic+ tab shows the whole key. First, what gets you the next level, ranked by seconds on the timer. Then where you fell behind a typical fast run of your dungeon and level: the middle of the 20 fastest, a target you can reach. Your route is on the game\'s own map, with how much each pull counted. Click a map to make it bigger. Then every pull, the casts that got through, the deaths, and each player against the same spec in the fastest runs.' }, { t: 'Rotation knows single target from AoE', d: 'Your rotation is now judged by how many enemies were close: Divine Storm, Blade Flurry, Whirlwind, Spinning Crane Kick and Seed of Corruption on packs, the single-target buttons on one. For now in Mythic+, where packs are the fight. Raid shows how many enemies were close.' }, { t: 'A key for your recap', d: 'Press Ctrl + Shift + D anywhere, even in WoW, and your newest recap shows over the game; press it again to hide it. Debrief Companion asks you to pick the key once, and you can change it any time. Play in Windowed (Fullscreen) so it shows on top.' }, { t: 'Mythic+ run recap', d: 'When a key ends, Debrief Companion pops up one recap of the whole run: how close you came to the next level and what the deaths cost, a tab for each pull with what got through and whose kick was ready, kicks and stuns, avoidable damage, deaths, and everyone\'s rotation, for you or anyone in the group. Save this key brings the same recap into WoW.' }, { t: 'Debriefing Timeline, across the page', d: 'Each phase is one chart: every mechanic a row, every moment a dot, green for done right and red for a mistake, with the boss health behind. Hover a dot for what happened. Under it, every mistake is one line; click it for why and what to do next time.' }], n: [
+  { d: '2026-11-02', n: [ /* round 484 */
+    "Eternal Nightfall's shield damage looks like the Graphs tab now: names in their own column, solid bars and the numbers lined up. Each shield's list is open from the start.",
+    "Debriefing, All pulls: Eternal Nightfall shows its break times as one strip, a dot per shield next to the top kills' 10.6 to 13.9 s, instead of a tag for every shield.",
+  ], f: [
+    "Debriefing, All pulls: Eternal Nightfall sits under Phase 2 again, with only that phase's shields, even on a night when every Phase 2 shield broke in time.",
+    "Debriefing: the list of mistakes on a card is called Mistakes.",
+  ] },
+  { d: '2026-11-01', h: [{ t: 'Your key on the map', d: 'The Mythic+ tab now shows your key on the map: every pull in its own colour, with the route, where people died, the kicks that were missed, Lust and the waits. Click a pull to see its mistakes, each player\'s damage and the big cooldowns pressed.' }, { t: 'Find your Mythic+ keys', d: 'The Mythic+ tab is always in the top bar now. It lists your own keys this season, newest first, and finds anyone\'s by name and realm. Pick a key to see where your time went.' }, { t: 'Mythic+ tab', d: 'Open a report with a Mythic+ key, and the new Mythic+ tab shows the whole key. First, what gets you the next level, ranked by seconds on the timer. Then where you fell behind a typical fast run of your dungeon and level: the middle of the 20 fastest, a target you can reach. Your route is on the game\'s own map, with how much each pull counted. Click a map to make it bigger. Then every pull, the casts that got through, the deaths, and each player against the same spec in the fastest runs.' }, { t: 'Rotation knows single target from AoE', d: 'Your rotation is now judged by how many enemies were close: Divine Storm, Blade Flurry, Whirlwind, Spinning Crane Kick and Seed of Corruption on packs, the single-target buttons on one. For now in Mythic+, where packs are the fight. Raid shows how many enemies were close.' }, { t: 'A key for your recap', d: 'Press Ctrl + Shift + D anywhere, even in WoW, and your newest recap shows over the game; press it again to hide it. Debrief Companion asks you to pick the key once, and you can change it any time. Play in Windowed (Fullscreen) so it shows on top.' }, { t: 'Mythic+ run recap', d: 'When a key ends, Debrief Companion pops up one recap of the whole run: how close you came to the next level and what the deaths cost, a tab for each pull with what got through and whose kick was ready, kicks and stuns, avoidable damage, deaths, and everyone\'s rotation, for you or anyone in the group. Save this key brings the same recap into WoW.' }, { t: 'Debriefing Timeline, across the page', d: 'Each phase is one chart: every mechanic a row, every moment a dot, green for done right and red for a mistake, with the boss health behind. Hover a dot for what happened. Under it, every mistake is one line; click it for why and what to do next time.' }], n: [
     "Mythic+ kicks are counted fairly: one kick stops one cast, so a burst of casts only counts as many as there were kicks ready, and your own count is the casts charged to your kick. Each must-kick has a danger level: the dangerous ones that went off are mistakes, others show under Also went off, and small hits under Kick when you can.",
     "Mythic+ tab: open a key from your own combat log too, or from the Debrief app, not only from a report. Share it like a raid night, and the link opens on the Mythic+ tab.",
     "Mythic+ tab: see where each Lust went, on your timeline and on the pull, and each player's big cooldowns: how many, and how many went on your biggest pulls.",
@@ -33170,7 +33214,7 @@ function audit() {
       (simp || s.info || !allRows.length || s.id === 'avoid' || r.allPulls ? '' : kbChip(r.item, s.id, 100 * (nBad + nWarn) / allRows.length)) /* (where we stand among the fastest kills (Oct 22, a test)) */ +
       '<span class="sst ' + stc + '">' + (nBad || nWarn ? lvlText(lc, true) : s.info ? esc(typeof s.info === 'string' ? s.info : 'not judged') : '✓\u00a0Clean') + '</span>' + (ti ? (tile === 'line' ? '' : '</span>') + (simp ? '<span class="rw2-pc ' + stc + '">' + (simPc == null ? '—' : simPc + '%') + '</span>' + simSq : tiLn) : '') + dbnTag(jobs) + (simp ? '' : dbdDots(s.id, DD)) + '</summary><div class="secbody' + (simp ? ' sim-body' : '') + '">' + (simp && !U1 ? simLn.replace('mcx-ln sim-ln', 'sim-ln rw2-what') : '') + '' /* (no Copy link buttons on Debriefing (Oct 23 click-through)) */ + dbnBox(jobs) +
       (simp ? '' : (s.how ? '<details class="howit"><summary>How it works</summary><div>' + esc(s.how) + '</div></details>' : '')) /* (no guide button on Debriefing, Oct 23) */ + (U1 ? u1Body() : synopsis(s, rows, groups) + simTiles); // (the old counts summary was dropped: the synopsis and the table cover it)
-    if (U1) return b + (SH_ID[s.id] && !r.allPulls ? shieldBlock([r], s.id) : '') + MSTAT272(r, s) + simLinks + '</div></details>';
+    if (U1) return b + (SH_ID[s.id] && !r.allPulls ? shieldBlock([r], s.id, null, allRows.map((rw) => (rw.find((c) => c && c.t != null) || {}).t).filter((t) => t != null)) : '') + MSTAT272(r, s) + simLinks + '</div></details>';
     // grouped sections: one header row per set, then that set's rows
     // (column headings live inside each opened set's card, so the list of sets stays clean)
     // the bulky panels: a list on the left (one entry per soak, transition, frontal, shield or set) and the picked
@@ -34944,9 +34988,28 @@ function shieldParts(r, kind) {
     for (const h of hits) if (h[4] === x.dst && h[1] >= x.t - 0.5 && h[1] <= (x.off == null ? Infinity : x.off) + 0.5) by.set(h[2], (by.get(h[2]) || 0) + h[3]);
     return { t: x.t, took: x.off != null ? x.off - x.t : null, by, late: x.t > ct + 0.05 }; });
 }
-function shieldBlock(reps, kind) {
+// (round 484, Nov 2, Flex: "can you make the graphs match the ones from the graphs tab design wise?": the shields' break times on All pulls as
+// one strip, a dot per shield over the seconds it took, the top kills' band behind them, instead of a tag per shield in three rows)
+function bt484(all, mythic) {
+  const br = all.filter((p) => !p.late && p.took != null), nb = all.filter((p) => !p.late && p.took == null && p.done), pe = all.filter((p) => !p.late && p.took == null && !p.done), lt = all.filter((p) => p.late);
+  if (!br.length && !nb.length && !pe.length) return '';
+  const ts = br.map((p) => p.took), lo = Math.floor(Math.min(9, ...ts) - 0.5), hi = Math.ceil(Math.max(17, ...ts)), X = (s) => (100 * (s - lo) / (hi - lo)).toFixed(2);
+  const lanes = [], dots = br.slice().sort((a, b) => a.took - b.took).map((p) => { let k = 0; while (lanes[k] != null && lanes[k] > p.took - 0.3) k++; lanes[k] = p.took; return { p, k }; });
+  const ticks = []; for (let s = Math.ceil(lo / 2) * 2; s <= hi; s += 2) ticks.push(s);
+  const pls = (l) => [...new Set(l.map((p) => p.pull))].join(', ');
+  const x = [plural(br.length, 'shield') + ' broke' + (br.length ? ', in ' + Math.min(...ts).toFixed(1) + ' to ' + Math.max(...ts).toFixed(1) + ' s' : ''),
+    nb.length ? '<span class="r272-bad">' + nb.length + ' not broken</span> (pull ' + pls(nb) + ')' : '', pe.length ? pe.length + ' cut short by the pull ending (pull ' + pls(pe) + ')' : '', lt.length ? lt.length + ' after the wipe call, not counted' : ''].filter(Boolean).join(' · ');
+  return '<div class="shd-bt"><div class="shd-bt-h">Break times<span>A dot per shield' + (mythic ? '. The green band is the top kills, 10.6–13.9 s.' : '.') + ' Point at a dot for its pull.</span></div>' +
+    '<div class="shd-bt-tr" style="--l:' + Math.max(1, lanes.length) + '">' + (mythic ? '<span class="shd-bt-band" style="left:' + X(10.6) + '%;width:' + (X(13.9) - X(10.6)).toFixed(2) + '%" data-tt="Top kills break it in 10.6–13.9 s"></span>' : '') +
+    '<span class="shd-bt-cast" style="left:' + X(17) + '%" data-tt="The cast finishes at 17 s"></span>' +
+    dots.map(({ p, k }) => '<i class="shd-bt-d' + (mythic && p.took > 13.9 ? ' warn' : '') + '" style="left:' + X(p.took) + '%;bottom:' + (4 + 10 * k) + 'px" data-tt="' + esc('Pull ' + p.pull + ', ' + ordinal(p.k || 1) + ' shield: broke in ' + p.took.toFixed(1) + ' s') + '"></i>').join('') + '</div>' +
+    '<div class="shd-bt-ax">' + ticks.map((s) => '<span style="left:' + X(s) + '%">' + s + ' s</span>').join('') + '</div><p class="shd-bt-x">' + x + '</p></div>';
+}
+function shieldBlock(reps, kind, ph, ts) {
   /* (shields after the wipe call show, but their damage isn't counted: Debriefing counts up to the wipe call) */
-  const all = []; for (const r of reps) { let L = []; try { L = shieldParts(r, kind); } catch (er) { L = []; } for (const p of L) all.push({ ...p, pull: r.item.pull }); }
+  const all = []; for (const r of reps) { let L = []; try { L = shieldParts(r, kind); } catch (er) { L = []; } /* round 484: a phase's card, that phase's shields (All pulls by the phase, a single pull by its rows' times) */ const phs = (r.module && !r.module.error && r.module.phases) || [], phAt = (t) => { let n = null; for (const q of phs) if (t >= q.start - 0.5) n = q.name; return n; };
+    L.forEach((p, i) => { if (!ph || phAt(p.t) === ph) all.push({ ...p, pull: r.item.pull, k: i + 1 }); }); }
+  if (ts && ts.length) { const f = all.filter((p) => ts.some((t) => Math.abs(t - p.t) < 1)); if (f.length) all.splice(0, all.length, ...f); }
   const parts = all.filter((p) => !p.late), late = all.length - parts.length;
   const PL = new Map(); for (const r of reps) for (const p of r.players.values()) if (p && p.name && !PL.has(p.name)) PL.set(p.name, p); try { for (const p of players()) if (p && p.name) PL.set(p.name, p); } catch (er) { /* (names from the pulls) */ }
   const nm = (n) => { const p = PL.get(n); return p && p.color ? who(p) : '<span class="who"><span class="nm">' + esc(String(n).split('-')[0]) + '</span></span>'; };
@@ -34955,22 +35018,22 @@ function shieldBlock(reps, kind) {
   if (!parts.length || !tot) return reps.some((r) => r._stale && !r.shieldHits) ? '<p class="sub shd-f">The shield damage shows in a moment, once ' + (reps.length > 1 ? 'tonight\'s pulls are' : 'this pull is') + ' read again after the update.</p>' : ''; /* (an old saved reading has no shield hits yet (Oct 26)) */
   const night = reps.length > 1, mythic = reps[0].item.diffId === 16, rows = [...by].sort((a, b) => b[1] - a[1]), mx = rows[0][1];
   const M = (a) => (a >= 1e6 ? (a / 1e6).toFixed(1) + 'M' : Math.round(a / 1e3) + 'K');
-  const row = ([n, a]) => '<div class="dsp-r shd-r"><span>' + nm(n) + '</span><span class="dsp-b"><i style="width:' + (100 * a / mx).toFixed(1) + '%' + ((PL.get(n) || {}).color ? ';background:' + PL.get(n).color : '') + '"></i></span><b>' + M(a) + '</b><span class="shd-p">' + Math.round(100 * a / tot) + '%</span></div>';
+  /* round 484: the Graphs tab's meter row */ const gr484 = (n, a, m0, t0) => '<div class="gbx-r" style="--c:' + ((PL.get(n) || {}).color || '#8a939c') + '"><span class="gbx-n">' + nm(n) + '</span><span class="gbx-b"><i style="width:' + (100 * a / m0).toFixed(1) + '%"></i></span><b class="gbx-v">' + M(a) + '</b><span class="gbx-s">' + Math.round(100 * a / t0) + '%</span></div>';
+  const row = ([n, a]) => gr484(n, a, mx, tot);
   const chip = (dot, k, v) => '<span class="shd-c">' + (dot ? '<i class="shd-d ' + dot + '"></i>' : '') + '<span class="shd-k">' + k + '</span>' + (v ? ' ' + v : '') + '</span>';
   let chips = '';
   /* round 432 one shield list */ const one432 = !night, tk432 = kind === 'shield' && mythic ? '<span class="shd-tk">Top kills break it in <b>10.6–13.9 s</b></span>' : '';
   if (one432) chips = '';
-  else if (kind === 'shield') chips = all.map((p, i) => p.late ? chip('na', night ? 'Pull ' + p.pull : ordinal(i + 1) + ' · ' + T(p.t), 'after the wipe call') : chip(p.took == null ? (p.done ? 'bad' : 'na') : (!mythic || p.took <= 13.9) ? 'ok' : 'warn', night ? 'Pull ' + p.pull : ordinal(i + 1) + ' · ' + T(p.t),
-    p.took != null ? 'broke in <b>' + p.took.toFixed(1) + ' s</b>' : p.done ? 'not broken' : 'pull ended first')).join('') + (mythic ? chip('', 'Top kills', '10.6–13.9 s') : '');
+  else if (kind === 'shield') chips = bt484(all, mythic); /* round 484 */
   else { const tk = parts.map((p) => p.took).filter((x) => x != null).sort((a, b) => a - b), med = tk.length ? tk[Math.floor(tk.length / 2)] : null;
     chips = chip('', plural(parts.length, 'shield'), '') + (tk.length ? chip('', 'Gone in', '<b>' + tk[0].toFixed(1) + '–' + tk[tk.length - 1].toFixed(1) + ' s</b>') + chip('', 'Typically', med.toFixed(1) + ' s') : ''); }
   const top = rows.slice(0, 10), more = rows.slice(10);
-  return '<div class="shd' + (one432 ? ' shd432' : '') + '"><div class="shd-h">' + (one432 ? (kind === 'shield' ? 'Each shield' : 'Each Dreadmarch shield') + tk432 : kind === 'shield' ? 'Damage into Veil of Twilight' : 'Damage into the Dreadmarch shields') + '</div>' + (chips ? '<div class="shd-cs">' + chips + '</div>' : '') + (one432 ? all.map((p, i) => {
-      if (p.late) return '<div class="shd-one shd-late"><span class="shd-oh"><i class="shd-d na"></i><b>' + ordinal(i + 1) + ' shield</b> · ' + T(p.t) + ' · after the wipe call, not counted</span></div>'; /* round 291 each shield */ const L = [...p.by].filter(([n, a]) => n && a > 0).sort((a, b) => b[1] - a[1]); if (!L.length && !one432) return ''; /* round 432 */ const t2 = L.reduce((x, [, a]) => x + a, 0) || 1, m2 = L[0][1] || 1;
-      const row2 = ([n, a]) => '<div class="dsp-r shd-r"><span>' + nm(n) + '</span><span class="dsp-b"><i style="width:' + (100 * a / m2).toFixed(1) + '%' + ((PL.get(n) || {}).color ? ';background:' + PL.get(n).color : '') + '"></i></span><b>' + M(a) + '</b><span class="shd-p">' + Math.round(100 * a / t2) + '%</span></div>';
+  return '<div class="shd' + (one432 ? ' shd432' : '') + '"><div class="shd-h">' + (one432 ? (kind === 'shield' ? 'Each shield' : 'Each Dreadmarch shield') + tk432 : kind === 'shield' ? 'Damage into Veil of Twilight' : 'Damage into the Dreadmarch shields') + '</div>' + (chips ? (chips.startsWith('<div class="shd-bt">') ? chips : '<div class="shd-cs">' + chips + '</div>') : '') + (one432 ? all.map((p, i) => {
+      if (p.late) return '<div class="shd-one shd-late"><span class="shd-oh"><i class="shd-d na"></i><b>' + ordinal(p.k || i + 1) + ' shield</b> · ' + T(p.t) + ' · after the wipe call, not counted</span></div>'; /* round 291 each shield */ const L = [...p.by].filter(([n, a]) => n && a > 0).sort((a, b) => b[1] - a[1]); if (!L.length && !one432) return ''; /* round 432 */ const t2 = L.reduce((x, [, a]) => x + a, 0) || 1, m2 = L[0][1] || 1;
+      const row2 = ([n, a]) => gr484(n, a, m2, t2);
       /* round 356 shields folded */ const st432 = kind !== 'shield' ? '' : p.took == null ? (p.done ? 'bad' : 'na') : p.spare != null && p.spare < 1 ? 'warn' : 'ok';
-      return '<details class="shd-one' + (st432 ? ' ' + st432 : '') + '"><summary class="shd-oh">' + (st432 ? '<i class="shd-d ' + st432 + '"></i>' : '') + '<b>' + ordinal(i + 1) + ' shield</b> · ' + T(p.t) + (p.took != null ? ' · broke in <b>' + p.took.toFixed(1) + ' s</b>' + (p.spare != null ? ', <span class="shd-sp ' + st432 + '">' + p.spare.toFixed(1) + ' s to spare</span>' : '') : p.done ? ' · <span class="r272-bad">not broken</span>' : ' · pull ended first') + ' · ' + M(t2) + ' · ' + L.length + (L.length === 1 ? ' player' : ' players') + '</summary><div class="dsp">' + L.map(row2).join('') + '</div></details>'; }).join('') :
-    '<div class="dsp">' + top.map(row).join('') + '</div>' + (more.length ? '<details class="shd-more"><summary>' + more.length + ' more</summary><div class="dsp">' + more.map(row).join('') + '</div></details>' : '')) +
+      return '<details class="shd-one' + (st432 ? ' ' + st432 : '') + '" open><summary class="shd-oh">' + (st432 ? '<i class="shd-d ' + st432 + '"></i>' : '') + '<b>' + ordinal(p.k || i + 1) + ' shield</b> · ' + T(p.t) + (p.took != null ? ' · broke in <b>' + p.took.toFixed(1) + ' s</b>' + (p.spare != null ? ', <span class="shd-sp ' + st432 + '">' + p.spare.toFixed(1) + ' s to spare</span>' : '') : p.done ? ' · <span class="r272-bad">not broken</span>' : ' · pull ended first') + ' · ' + M(t2) + ' · ' + L.length + (L.length === 1 ? ' player' : ' players') + '</summary><div class="gbx shd-gbx">' + L.map(row2).join('') + '</div></details>'; }).join('') :
+    '<div class="gbx shd-gbx">' + top.concat(more).map(row).join('') + '</div>') /* round 484: one list (its "N more" was hidden since round 291) */ +
     (one432 ? '</div>' : '<p class="sub shd-f">' + M(tot) + ' into ' + plural(parts.length, 'shield') + (night ? ' over ' + plural(new Set(parts.map((p) => p.pull)).size, 'pull') : ' this pull') + '.' + (late ? ' ' + plural(late, 'more shield') + ' after the wipe call ' + (late === 1 ? 'isn\'t' : 'aren\'t') + ' counted.' : '') + '</p></div>');
 }
 // (the raid's fix: the cause that wiped us most, and on All pulls only when it wiped us twice or more)
@@ -37417,7 +37480,7 @@ function nightMechC(o) {
     const whoC = (e) => { const ws = [...e.who].sort((a, b) => b[1] - a[1]); if (!ws.length) return '<span class="mx-who">—</span>'; return '<span class="mx-who">' + ws.slice(0, 2).map(([w]) => { const p = pc.get(w); return '<span class="nm"' + (p && p.color ? ' style="color:' + p.color + '"' : '') + '>' + esc(w) + '</span>'; }).join(', ') + (ws.length > 2 ? ' <span class="mx-more">+' + (ws.length - 2) + '</span>' : '') + '</span>'; };
     void whoC; const who7 = (e) => { const ws = [...e.who].filter(([w]) => w && !/^(everyone|\u2014|-)$/i.test(w)).sort((a, b) => b[1] - a[1]); if (!ws.length) return 'Not one person';
       return ws.slice(0, 2).map(([w, c]) => { const p = pc.get(w); return '<span class="nm"' + (p && p.color ? ' style="color:' + p.color + '"' : '') + '>' + esc(w) + '</span>' + (c > 1 ? ' · ' + c : ''); }).join(', ') + (ws.length > 2 ? ' <span class="mx-more">+' + (ws.length - 2) + '</span>' : ''); };
-    const tb = top.length ? '<div class="mx-lab">What went wrong</div><div class="mx7-rows">' + top.map((e) => { const pl = [...e.pulls.keys()].sort((a, b) => a - b), c = kc(e);
+    const tb = top.length ? '<div class="mx-lab">Mistakes</div><div class="mx7-rows">' + top.map((e) => { const pl = [...e.pulls.keys()].sort((a, b) => a - b), c = kc(e);
       return '<div class="mx7-r" data-mx7="' + pl.join(',') + '" role="button" tabindex="0" title="Click to light up its pulls"><span class="mx7-d ' + c + '"></span><div class="mx7-w"><b>' + esc(e.k) + '</b><div class="mx7-c">' + pl.map((n) => '<span data-npq="' + n + '" role="button" tabindex="0" title="Open pull ' + n + '">Pull ' + n + '</span>').join('') + '</div></div><div class="mx7-n ' + c + '">' + plural(pl.length, 'pull') + '<small>' + who7(e) + '</small></div></div>'; }).join('') +
       (ks.length > 5 ? '<div class="mx7-more">and ' + (ks.length - 5) + ' more ' + (ks.length - 5 === 1 ? 'kind' : 'kinds') + '</div>' : '') + '</div>' : '';
     return sum + tb + ftL; };
@@ -37432,10 +37495,10 @@ function nightMechC(o) {
       const tl = (k, v, raw) => v ? '<div class="rw2-t"><span>' + k + '</span><b>' + (raw ? v : esc(v)) + '</b></div>' : '';
       return '<details class="panel secd st-' + LC[lv] + ' dbr-line nml rw2" id="' + sid + '" data-k="' + sid + '" data-sec="sec-' + esc(r.x.id) + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + secHead({ title: shortT(r.title), spell: r.x.spell, icon: r.x.icon }).replace(/<b>([^<(]+?) \(([^<]+)\)<\/b>/, '<b>$1 <span class="rw2-i">($2)</span></b>') +
         '<span class="rw2-pc ' + LC[lv] + '">' + (pc == null ? '—' : pc + '%') + '</span>' + bars(r) + '</summary><div class="secbody">' +
-        rw2Facts(r, { ok, wN, kb, wh, F, tl }) + (SH_ID[r.x.id] ? shieldBlock([...byPull.values()].filter((q) => q && q.players), r.x.id) : '') + '</div></details>'; }
+        rw2Facts(r, { ok, wN, kb, wh, F, tl }) + (SH_ID[r.x.id] ? shieldBlock([...byPull.values()].filter((q) => q && q.players), r.x.id, r.x.phName) : '') + '</div></details>'; }
     return '<details class="panel secd st-' + LC[lv] + ' dbr-line nml" id="' + sid + '" data-k="' + sid + '" data-sec="sec-' + esc(r.x.id) + '"' + (S.openSecs.has(sid) ? ' open' : '') + '><summary>' + secHead({ title: shortT(r.title), spell: r.x.spell, icon: r.x.icon }) + nightKb(r) + '<span class="sst ' + LC[lv] + '">' + LW[lv] + '</span>' +
       '<span class="mcx-ln">' + facts + '</span></summary><div class="secbody">' + (M ? '<div class="nml-map"><span class="wr-map mcx-map">' + miniMap(M.mp, pm) + '</span><span class="sub">Pull ' + M.n + (byPull.get(M.n) ? ', ' + esc(res(byPull.get(M.n))) : '') + '</span></div>' : '') +
-      '<div class="nml-f">' + facts + '</div>' + (r.body || '') + (SH_ID[r.x.id] ? shieldBlock([...byPull.values()].filter((q) => q && q.players), r.x.id) : '') + '</div></details>'; };
+      '<div class="nml-f">' + facts + '</div>' + (r.body || '') + (SH_ID[r.x.id] ? shieldBlock([...byPull.values()].filter((q) => q && q.players), r.x.id, r.x.phName) : '') + '</div></details>'; };
   // (Deaths over the night (your call, Oct 21: "deaths should be accounted for on all pulls"): a bar per pull (deaths up to the
   // wipe filter), what killed people most, who died most, and each pull's first death with a › to that pull's Deaths)
   const deathsLine = () => { const reps = (o.reps || []).slice().sort((a, b) => a.item.pull - b.item.pull); if (!reps.length) return '';
@@ -37472,12 +37535,13 @@ function nightMechC(o) {
   const phases = groups.map((g, i) => { const l = (g.plist || g.list).filter((r) => !isInfo(r) && judged(r).length && r.x.id !== 'avoid' && r.x.id !== 'deaths'); /* (the coach box's panels have these (Oct 22)) */ if (!l.length) return g.note ? '<p class="muted phlate" style="margin:10px 4px 0"><b>' + esc(g.name) + '</b> ' + esc(g.note) + '</p>' : '';
     /* (Oct 23, your call "more at a glance": worst first by its %, the more dangerous one first when two are within 3 points) */
     const pcOf = (r) => { const F = factsOf(r); return F.R ? 100 * (F.R - F.Wr) / F.R : 100; };
-    const pr = l.filter((r) => lvOf(r) !== 'clean').sort((a, b) => ['major', 'moderate', 'minor'].indexOf(lvOf(a)) - ['major', 'moderate', 'minor'].indexOf(lvOf(b)) || factsOf(b).Wr - factsOf(a).Wr || a.ord - b.ord).sort((a, b) => (Math.abs(pcOf(a) - pcOf(b)) > 3 ? pcOf(a) - pcOf(b) : 0)), ok = l.filter((r) => lvOf(r) === 'clean');
+    const pr = l.filter((r) => lvOf(r) !== 'clean').sort((a, b) => ['major', 'moderate', 'minor'].indexOf(lvOf(a)) - ['major', 'moderate', 'minor'].indexOf(lvOf(b)) || factsOf(b).Wr - factsOf(a).Wr || a.ord - b.ord).sort((a, b) => (Math.abs(pcOf(a) - pcOf(b)) > 3 ? pcOf(a) - pcOf(b) : 0)), ok = l.filter((r) => lvOf(r) === 'clean' && !SH_ID[r.x.id]), okC = l.filter((r) => lvOf(r) === 'clean' && SH_ID[r.x.id]); /* round 484: the shields' graph stays a card */
+    const sn484 = (r) => shortT(r.title).replace(/\s*\(.*$/, ''), cn484 = (r) => (l.filter((q) => sn484(q) === sn484(r)).length > 1 ? shortT(r.title) : sn484(r));
     const bigI = pr.findIndex((r) => judged(r).some((n) => stAt(r, n) !== 'ok' && mapIn(n, r.x.id, r.x.phName))), pl = pr.slice(); void bigI; /* (a checklist keeps its order: failed first, then slips) */
     const lv = cntL(l), lvl = lv.major ? 'major' : lv.moderate ? 'moderate' : lv.minor ? 'minor' : 'clean', m = String(g.name).match(/^P(\d+)/);
     void m; const wst = pl.length ? pl[0] : null; void ring;
     return '<details class="phase mcx-ph rw2-ph" data-mst="' + lvl + '" open><summary><span class="rw2-dot ' + LC[lvl] + '"></span><b>' + esc(g.name) + '</b><span class="rw2-st ' + LC[lvl] + '">' + (wst ? 'Worst: ' + esc(shortT(wst.title).replace(/\s*\(.*$/, '')) : 'All done right') + '</span></summary>' +
-      '<div class="dbck">' + pl.map(line).join('') + (ok.length ? '<div class="rw2-clean">✓ Clean all night: ' + esc(lpAnd(ok.map((r) => shortT(r.title).replace(/\s*\(.*$/, '')))) + '</div>' : '') + '</div></details>'; }).join('');
+      '<div class="dbck">' + pl.map(line).join('') + okC.map(line).join('') + (ok.length ? '<div class="rw2-clean">✓ Clean all night: ' + esc(lpAnd(ok.map(cn484))) + '</div>' : '') + '</div></details>'; }).join('');
   // ---- the night at a glance: a lane per mechanic that went wrong, a dot per pull ----
   const all = groups.flatMap((g) => g.list).filter((r) => !isInfo(r) && judged(r).length), probs = all.filter((r) => lvOf(r) !== 'clean');
   const tot = (k) => all.filter((r) => lvOf(r) === k).length;
@@ -64147,7 +64211,7 @@ function dsGuides() {
           if (nms2.indexOf(pre2) < 0) { var last2 = parts2[parts2.length - 1]; if (nms2.indexOf(last2) >= 0) { parts2.pop(); rest2 = last2 + ': ' + rest2; } var mn2 = String(m.m || '').toLowerCase(); what = rest2; sub2 = parts2.filter(function (p) { return p && p.toLowerCase() !== mn2; }).join(' · '); } } }
         var tag = m.death ? '<span class="lv ' + (own(m) ? 's' : 'q') + '">' + E(dTag) + '</span>' : '<span class="lv ' + svG(m) + '">' + (NEWI.indexOf(m.id) >= 0 ? '<i class="nw">New</i>' : '') + SVL(m.dead ? 5 : m.sv || 2) + (m.dead ? ' · ☠' : '') + '</span>';
         it.insertAdjacentHTML('afterbegin', '<button type="button" class="dbx-row" data-dbxo="' + i + '" aria-expanded="' + (open ? 'true' : 'false') + '"><span class="t">' + mm(m.t) + '</span><i class="dbx-mk ' + lv + (lv === 'd' && own(m) ? ' own' : '') + '" aria-hidden="true">' + (lv === 'd' ? '☠' : lv === 's' || lv === 'm' ? '!' : '') + '</i><span class="mc">' + E(m.death ? (gw ? 'Deaths' : 'Death') : m.m) + '</span><span class="w">' + chips(E(what), gw ? gw.who : m.who) + (sub2 ? ' <i class="sub">· ' + E(sub2) + '</i>' : '') + (m.lines.length > 1 && !m.death ? ' <em>(+' + (m.lines.length - 1) + ' more)</em>' : '') + '</span>' + tag + '<span class="ch" aria-hidden="true">' + (open ? '▾' : '›') + '</span></button>'); });
-      tl.insertAdjacentHTML('afterbegin', '<div class="dbx-wh"><b>What went wrong</b><span>' + (nCard ? 'In order. Click a line for why, and what to do next time.' : M.some(function (m) { return m.st !== 'ok'; }) ? 'No mistakes match these filters.' : 'No mistakes or deaths in this pull.') + '</span></div>');
+      tl.insertAdjacentHTML('afterbegin', '<div class="dbx-wh"><b>Mistakes</b><span>' + (nCard ? 'In order. Click a line for why, and what to do next time.' : M.some(function (m) { return m.st !== 'ok'; }) ? 'No mistakes match these filters.' : 'No mistakes or deaths in this pull.') + '</span></div>');
       wrap.querySelectorAll('img.oi').forEach(function (im) { if (!im.getAttribute('src')) im.removeAttribute('data-done'); }); try { hydrateIcons(); } catch (e) { /* (icons load when seen) */ }
       if (d._dbx) return; d._dbx = 1;
       /* (one small note beside the mark; a mark with a card lights its card, a card lights its marks) */

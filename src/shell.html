@@ -13131,6 +13131,43 @@ html body #tbPlan{display:none !important}
 html body #view .oa-tiles.t481g{display:grid !important}
 html body #view .oa-tiles.t481g > :not(.dbr-n){grid-column:1 / -1 !important}
 </style>
+<style>
+/* round 484 (Nov 2, Flex: "can you make the graphs match the ones from the graphs tab design wise? That should be a general rule for the website"):
+   one meter row for bar lists outside Graphs, with the Graphs tab's own sizes and colours (round 307): the name in its own column, a 13 px bar,
+   the numbers in fixed columns. Columns: --gbx-cols (desktop) and --gbx-cols-m (under 700 px) */
+.gbx { display: flex; flex-direction: column; gap: 0; max-width: 760px; }
+.gbx-r { display: grid; grid-template-columns: var(--gbx-cols, 168px minmax(0, 1fr) 60px); align-items: center; column-gap: 8px; min-height: 20px; padding: 2px 4px; border-radius: 3px; font: 600 12.5px var(--body); color: #aeb6bf; }
+.gbx > .gbx-r:nth-child(even) { background: rgba(255,255,255,.02); }
+.gbx-hd { font: 600 10.5px var(--body); text-transform: uppercase; letter-spacing: .04em; color: #7d8792; border-bottom: 1px solid #222930; padding: 0 4px 4px; margin: 0 0 2px; }
+.gbx-n { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; white-space: nowrap; font: 600 13px var(--body); }
+.gbx-n .who { display: flex !important; align-items: center; gap: 6px; min-width: 0; }
+.gbx-n .who > span:not(.av) { display: block !important; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gbx-n .who .sub { display: none !important; }
+.gbx-n .av, .gbx-n .av img { width: 16px !important; height: 16px !important; min-width: 16px; flex: none; }
+.gbx-n .nm { font: 600 13px var(--body) !important; }
+.gbx-b { display: flex; height: 13px; border-radius: 2px; background: rgba(255,255,255,.04); overflow: hidden; min-width: 0; }
+.gbx-b > i { display: block; height: 100%; flex: none; background: var(--c, #8a939c); opacity: .78; }
+.gbx-b > i:first-child { border-radius: 2px 0 0 2px; } .gbx-b > i + i { opacity: .45; }
+.gbx-r:hover .gbx-b > i { opacity: .95; }
+.gbx-v { text-align: right; color: #e8eaed; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.gbx-s { text-align: right; color: #aeb6bf; font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (max-width: 699px) { .gbx-r { grid-template-columns: var(--gbx-cols-m, 104px minmax(0, 1fr) 52px); } }
+/* the shield lists: name, bar, amount, share */
+.shd-gbx > .gbx-r { --gbx-cols: 168px minmax(0, 1fr) 56px 40px; --gbx-cols-m: 104px minmax(0, 1fr) 48px 34px; }
+html body #view details.shd-one > .gbx { padding: 2px 0 10px 18px; }
+/* round 484: the shields' break times on All pulls, a dot per shield */
+.shd-bt { margin: 2px 0 14px; max-width: 760px; }
+.shd-bt-h { display: flex; align-items: baseline; gap: 4px 10px; flex-wrap: wrap; margin: 0 0 8px; font: 600 10.5px var(--body); text-transform: uppercase; letter-spacing: .06em; color: #868f99; }
+.shd-bt-h span { text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 400; color: #868f99; }
+.shd-bt-tr { position: relative; height: calc(var(--l, 1) * 10px + 12px); border-bottom: 1px solid rgba(255,255,255,.12); }
+.shd-bt-band { position: absolute; top: 0; bottom: 0; background: rgba(69,193,92,.10); border-left: 1px dashed rgba(126,224,143,.4); border-right: 1px dashed rgba(126,224,143,.4); }
+.shd-bt-cast { position: absolute; top: 0; bottom: 0; width: 8px; margin-left: -4px; background: linear-gradient(90deg, transparent 3px, rgba(229,83,75,.65) 3px, rgba(229,83,75,.65) 4px, transparent 4px); }
+.shd-bt-d { position: absolute; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: #45c15c; box-shadow: 0 0 0 1.5px #12151c; }
+.shd-bt-d.warn { background: #e8a23a; } .shd-bt-d:hover { transform: scale(1.4); }
+.shd-bt-ax { position: relative; height: 18px; font: 600 11px var(--body); color: #868f99; }
+.shd-bt-ax span { position: absolute; top: 3px; transform: translateX(-50%); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.shd-bt-x { margin: 2px 0 0 !important; font-size: 12.5px; color: #aeb6bf; }
+</style>
 </head>
 <body class="refine">
 <noscript><h1>Debrief: WoW raid log review for Mythic progression</h1><p>Debrief reads your World of Warcraft raid logs, from a Warcraft Logs report or your own combat log, and explains every pull: which mechanics were missed and by whom, why each player died, how your rotation compared with the top players, and what to fix before the next pull.</p><p>It also has Heroic and Mythic boss guides for every boss in the raid, a raid cooldown planner that reads Northern Sky Raid Tools (NSRT) notes, and an in-game addon. Debrief needs JavaScript turned on.</p></noscript>
