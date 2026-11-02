@@ -2044,7 +2044,7 @@ const PATCH_NOTES = [
     "Eternal Nightfall's shield damage looks like the Graphs tab now: names in their own column, solid bars and the numbers lined up. Each shield's list is open from the start.",
     "Debriefing, All pulls: Eternal Nightfall shows its break times as one strip, a dot per shield next to the top kills' 10.6 to 13.9 s, instead of a tag for every shield.",
   ], f: [
-    "Mythic+: each kick counts once, and a kick on a cast that began before the log saw it still counts, so Your group and the map show the same number.",
+    "Mythic+: each kick or stun counts once, on the cast it really stopped (the enemy's newest one), and a kick on a cast that began before the log saw it still counts, so Your group and the map show the same number.",
     "Mythic+ forces: an enemy that dies without a death line in the log still counts (Temple of Sethraliss's Static Anomalies).",
     "Mythic+: hits nobody can dodge aren't avoidable any more: Kings' Rest's Gilded Destruction and Voidscar Arena's Poison Splash and Void Beam, or any one cast that lands on the whole group. Den of Nalorakk's Rotten Ground only counts past what the fastest groups take.",
     "Debriefing, All pulls: Eternal Nightfall sits under Phase 2 again, with only that phase's shields, even on a night when every Phase 2 shield broke in time.",

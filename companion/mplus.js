@@ -180,15 +180,16 @@ function build(text, E) {
     else if (x[1] === 'done') { const c = open.get(x[2] + '|' + x[4]); if (c && x[0] - c.t < 12) { c.res = 'done'; c.end = x[0]; open.delete(x[2] + '|' + x[4]); }
       else if (LIST && LIST.chan.has(lc(x[5]))) casts.push({ t: x[0], guid: x[2], mob: x[3], id: x[4], spell: x[5], res: 'chan' }); } /* (a must-kick channel started) */
   }
-  for (const c of casts) {
-    if (c.res === 'done') continue;
-    /* (one kick stops one cast: a cast start the log wrote twice took the same kick twice, so Hansso's 14 kicks read 15 in Your group (Nov 2)) */
-    const kk = kicks.find((k) => !k.used && k[4] === c.guid && k[6] === c.id && k[0] >= c.t - 0.1 && k[0] <= c.t + (c.res === 'chan' ? 8 : 6));
-    if (kk) { kk.used = true; c.res = 'kicked'; c.by = kk[2]; c.with = kk[3]; c.at = kk[0]; continue; }
-    const cc = ccs.find((k) => k[4] === c.guid && k[0] >= c.t - 0.2 && k[0] <= c.t + 4);
-    if (cc) { c.res = 'stopped'; c.by = cc[2]; c.with = cc[3]; c.at = cc[0]; }
-    else if (c.res === 'chan') c.res = 'done';
-  }
+  // (each kick, then each CC, stops one cast: the newest one that enemy began before it (an enemy has one cast open at a time, so an older cast it
+  // began again over stays 'cut'). A kick takes the newest unclaimed cast of the spell it interrupted, within 6 s (8 for a channel); a CC takes the
+  // enemy's newest cast if it's still open, within 4 s. Before (Nov 2): a cast start written twice took one kick twice (Hansso's 14 read 15), and then
+  // a kick went to the oldest match, so the cast it really stopped fell through to a CC (the addon chat's catch: Den +19, 17 stops read 22))
+  const byG = new Map(); for (const c of casts) { if (!byG.has(c.guid)) byG.set(c.guid, []); byG.get(c.guid).push(c); }
+  for (const k of kicks) { let best = null; for (const c of byG.get(k[4]) || []) if (!c.claimed && c.res !== 'done' && c.id === k[6] && c.t <= k[0] + 0.1 && k[0] <= c.t + (c.res === 'chan' ? 8 : 6) && (!best || c.t >= best.t)) best = c;
+    if (best) { k.used = true; best.claimed = true; best.res = 'kicked'; best.by = k[2]; best.with = k[3]; best.at = k[0]; } }
+  for (const k of ccs) { let last = null; for (const c of byG.get(k[4]) || []) if (c.t <= k[0] + 0.2 && (!last || c.t >= last.t)) last = c;
+    if (last && !last.claimed && last.res !== 'done' && k[0] <= last.t + 4) { last.claimed = true; last.res = 'stopped'; last.by = k[2]; last.with = k[3]; last.at = k[0]; } }
+  for (const c of casts) if (c.res === 'chan') c.res = 'done';
   // (must-kick: the dungeon's list; without one, a spell somebody deliberately kicked at least once this key (an area stun alone doesn't make one))
   const kickedIds = new Set(casts.filter((c) => c.res === 'kicked').map((c) => c.id));
   const danger = (c) => (LIST ? (LIST.kick.has(lc(c.spell)) || LIST.kick.has(lc(c.spell) + '@' + lc(c.mob))) && !LIST.unconf.has(lc(c.spell)) : kickedIds.has(c.id)); /* ("Spell@Caster": only from that enemy) */
