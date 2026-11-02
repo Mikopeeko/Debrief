@@ -1081,14 +1081,15 @@ function mpScan(it, R, text) {
   { const ty = {}; for (const u of U.values()) { if (!u.n || u.hit == null || !(u.fl & 0x40) || (u.fl & 0x3000)) continue; const o = ty[u.n] || (ty[u.n] = { cs: 0, hl: false, sw: false, hp: 0, kick: [], id: +u.g.split('-')[5] || 0, nc: 0, nk: 0, nsw: 0, nsp: 0, n: 0, mins: 0, dm: 0, mg: 0, nch: 0 });
       if (u.cs) o.cs += u.cs.size; if (u.hl) o.hl = true; if (u.sw) o.sw = true; if (u.hp > o.hp) o.hp = u.hp; o.nc += u.nc || 0; o.dm += u.dm || 0; o.mg += u.mg || 0; o.nch += u.nch || 0; o.nsw += u.nsw || 0; o.nsp += u.nsp || 0; o.n++; if (u.died != null && u.died > u.hit) o.mins += (u.died - u.hit) / 60; }
     const addK = (nm, sp) => { const o = ty[nm]; if (o && sp && !o.kick.includes(sp)) o.kick.push(sp); }; for (const e of kickEv) { addK(e.tg, e.cut); if (ty[e.tg]) ty[e.tg].nk++; } for (const p of P) for (const t of p.through || []) addK(t.mob, t.spell);
-    /* (Caster (Flex: "just because theres a cast bar doesnt make them a caster", then "it depends on the type of damage the mobs do a lot of times,
-       casters will melee but most of their damage is from spells"): 60% or more of its damage to players was magic, or it healed another enemy.
-       Melee: most of its damage was Physical, swings and physical hits like Cleave, even with a cast bar. An enemy that did under 1% of the key's
-       average enemy's damage (it died first, or only buffs) goes by casts a minute instead: 10 or more, kicks and channels counted, is Caster.
-       MP_CASTER names the ones Flex called) */
+    /* (Caster (Flex: "just because theres a cast bar doesnt make them a caster", "casters will melee but most of their damage is from spells",
+       "melee might have cast times, but its physical damage being done"): it healed another enemy, OR it began 14 or more casts a minute, OR 60% or
+       more of its damage to players was magic AND it began 10 or more a minute (kicks and channels counted). Casts a minute keeps a caster that's
+       kicked a lot (a kicked cast does no damage, so its damage is swings: Storm Adept, 19.5 a minute and 47% magic); the 10 keeps a brute with a
+       magic slam Melee (Devouring Brutalizer, 62% magic and 5 a minute, which Flex called out as a Caster). An enemy that did under 1% of the key's
+       average enemy's damage (it died first, or only buffs) goes by casts a minute alone: 10 or more. MP_CASTER names the ones Flex called) */
     const L0 = Object.values(ty), avg = L0.reduce((a, o) => a + o.dm, 0) / Math.max(1, L0.reduce((a, o) => a + o.n, 0));
     for (const o of L0) { const hits = o.nsw + o.nsp; o.swing = hits ? o.nsw / hits : 0; o.cpm = o.mins ? (o.nc + o.nk + o.nch) / o.mins : 0; o.magic = o.dm ? o.mg / o.dm : 0;
-      o.low = !(o.dm / Math.max(1, o.n) >= 0.01 * avg); o.caster = MP_CASTER.has(o.id) || o.hl || (o.low ? o.cpm >= 10 : o.magic >= 0.6); }
+      o.low = !(o.dm / Math.max(1, o.n) >= 0.01 * avg); o.caster = MP_CASTER.has(o.id) || o.hl || (o.low ? o.cpm >= 10 : o.cpm >= 14 || (o.magic >= 0.6 && o.cpm >= 10)); }
     R.mobType = ty; }
   { const real = new Set(); for (const u of U.values()) if (u.n && u.hit != null && (u.fl & 0x40) && !(u.fl & 0x3000) && !u.sum) real.add(u.n); R.realNames = real.size ? real : null; } /* (the studio's pull-accuracy fix, Nov 2) */
   if (!T) { R.route = null; return; }
@@ -1316,7 +1317,7 @@ function mpMapHtml(R, F, tl) {
         '<p class="mpt-mcm">' + (r.ready.length ? mpAnd(r.ready.map(esc)) + (r.ready.length === 1 ? ' was' : ' were') + ' ready.' : 'No defensive was ready.') + (r.used.length ? ' Used: ' + r.used.map(([n, sec]) => esc(n) + ' (' + sec + ' s before)').join(', ') + '.' : '') + ' Healthstone: ' + (r.hs != null ? 'used ' + r.hs + ' s before.' : 'not used.') + '</p>');
       return fold('x', '<span class="mpt-t2d">☠</span> <b>How ' + mpWho(RR, d.who) + ' died</b> · ' + esc(d.to || 'unknown') + (d.from ? ' (' + esc(d.from) + ')' : '') + ' · ' + (d.defs ? plural(d.defs, 'defensive') : 'no defensive'), body, ' data-dr="' + esc(d.who) + '"'); }).join('');
     // (the pack (map-extras.md item 17; Flex: "those are considered the mini bosses in dungeons or the harder mobs to deal with"): each kind of enemy with
-    // one role, Caster (60% or more of its damage was magic, or it healed another enemy) or Melee; Elite for the mini-boss tier, at least twice the health of
+    // one role, Caster (it healed another enemy, or it keeps casting: 14 or more casts a minute, or 10 or more with mostly magic damage) or Melee; Elite for the mini-boss tier, at least twice the health of
     // the key's middle trash enemy (the same on every pull), or a rare; fodder, half that or less, on one last line. 5 rows, then the rest in a hover)
     const pack = (() => { const mobs = mpMobs(RR, p), ty = RR.mobType || {}; if (!mobs.length) return '';
       if (RR.mobMid == null) { const hs = []; RR.mobTrash = new Set(); for (const q2 of RR.pulls) if (!q2.boss) for (const [n2, c2] of mpMobs(RR, q2)) { RR.mobTrash.add(n2); const h = (ty[n2] || {}).hp || 0; if (h) for (let k = 0; k < c2; k++) hs.push(h); } hs.sort((a, b) => a - b); RR.mobMid = hs.length ? hs[hs.length >> 1] : 0; } /* (the middle trash enemy of the whole key, each one counted: one-off kings don't lift it) */
