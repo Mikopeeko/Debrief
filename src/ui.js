@@ -2049,6 +2049,7 @@ const PATCH_NOTES = [
     "Mythic+ map: point at a pull, a tile or a timeline block for a short summary: its time, forces, deaths, kicks, Lust and cooldowns. The timeline marks each cast that went off with a kick ready.",
     "Mythic+ map: the pulls are tiles under the map, so the pull's card has the whole side to itself.",
     "Mythic+ map: each pull’s number sits inside the pull, in a clear spot that never covers an enemy, a mark or another label. A pull spread across the room gets one outline round all of it, like in MDT. Only the dangerous missed kicks show on the map; the rest are on the card.",
+    "Mythic+ pull card: pick one player to see Your play, what cost time in that pull (time not casting, a big cooldown held on a big pull, a death with a defensive ready, a kick missed) priced in seconds against top players of the spec. Your part adds it up.",
     "Mythic+ map: no more route lines. The pull numbers already show the order.",
     "Mythic+ boss pulls count only the trash you pulled with the boss. What the boss summoned is on its own line in the pull’s card.",
     "Mythic+ map: pointing at a pull shows just its enemies and forces. Everything else is on its card.",

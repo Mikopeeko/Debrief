@@ -24045,6 +24045,7 @@ const PATCH_NOTES = [
     "Mythic+ map: point at a pull, a tile or a timeline block for a short summary: its time, forces, deaths, kicks, Lust and cooldowns. The timeline marks each cast that went off with a kick ready.",
     "Mythic+ map: the pulls are tiles under the map, so the pull's card has the whole side to itself.",
     "Mythic+ map: each pull’s number sits inside the pull, in a clear spot that never covers an enemy, a mark or another label. A pull spread across the room gets one outline round all of it, like in MDT. Only the dangerous missed kicks show on the map; the rest are on the card.",
+    "Mythic+ pull card: pick one player to see Your play, what cost time in that pull (time not casting, a big cooldown held on a big pull, a death with a defensive ready, a kick missed) priced in seconds against top players of the spec. Your part adds it up.",
     "Mythic+ map: no more route lines. The pull numbers already show the order.",
     "Mythic+ boss pulls count only the trash you pulled with the boss. What the boss summoned is on its own line in the pull’s card.",
     "Mythic+ map: pointing at a pull shows just its enemies and forces. Everything else is on its card.",
@@ -62107,6 +62108,71 @@ const mpWhat = (R2, p, k) => { if (p.boss) return esc(p.boss); const mobs = mpMo
 // when it's someone else ("Hansso's part"); hidden with no one to show. One or two lines of tags in the icon set's colours, each picking its pull,
 // and one Next time line: a death first, then casts that went off with their kick ready, missed big cooldowns, avoidable hits, then damage behind
 // top players of their spec (Flex: "comparing the player to top players of the same spec"). Only what the page already has)
+// (Your play (the studio's your-play.md; Flex: "put rotational errors in this section … only when you have a single player selected"): one player's rows
+// for one pull, worst first, each priced in seconds on the timer, judged against the same spec in the fast run (else the same role) on pulls of the
+// same size: 1–2, 3–6, 7–14, 15+ enemies, or a boss. Round 1: time not casting, a big cooldown held on a 7+ enemy pull, a death with a defensive ready,
+// and a dangerous cast that went off with their kick ready ("!", no price, first). Rows under 2 s are left out, 3 at most, then one ✓ when earned and
+// one Next time. One source for the pull card, Your part and later the Rotation tab and the addon (window.MP_PLAY). Round 2 (each spec's area spells,
+// from the Rotation chat) plugs in through MP_PLAY_CHECKS: each is (ctx) => rows, ctx = { R, F, name, per, own, i, p, n, band, gd, top },
+// a row = { k, ic, t (HTML), s (seconds, or null for "!"), nt (the Next time text) })
+const MP_PLAY_CHECKS = [];
+// (healers' big throughput cooldowns, for Your play's held-cooldown check (healers aren't in GEN_SPECS); the length is checked against the key)
+const MP_HEAL_CD = { 'Holy Paladin': [['Avenging Wrath', 120]], 'Holy Priest': [['Apotheosis', 120]], 'Restoration Shaman': [['Ascendance', 180]], 'Restoration Druid': [['Incarnation: Tree of Life', 180], ['Convoke the Spirits', 120]],
+  'Mistweaver Monk': [['Invoke Yu\'lon, the Jade Serpent', 120], ['Invoke Chi-Ji, the Red Crane', 120]] };
+const mpPBand = (R, p) => { if (p.boss) return 'boss:' + p.boss; const n = mpCnt(R, p); return n <= 2 ? 1 : n <= 6 ? 2 : n <= 14 ? 3 : 4; };
+const mpAfter = (a, t) => { let lo = 0, hi = a.length; while (lo < hi) { const m = (lo + hi) >> 1; if (a[m] <= t) lo = m + 1; else hi = m; } return lo < a.length ? a[lo] : null; }; /* (the first time in a sorted list after t) */
+// (time not casting in a pull: busy from a cast's start to its finish, and 1.2 s (a hasted global cooldown) after each cast; time dead (until their
+// next cast, or the pull's end) is neither. { idle, alive } in seconds, or null without casts or under 10 s)
+function mpIdle(R, name, p) { const pc = (R.pc || {})[name], ps = (R.pst || {})[name] || [], s0 = p.s, e0 = p.e; if (!pc || !pc.length || e0 - s0 < 10) return null;
+  const iv = []; for (const t of pc) if (t >= s0 - 2 && t <= e0) iv.push([t, t + 1.2]); for (const t of ps) if (t >= s0 - 3 && t <= e0) { const d = mpAfter(pc, t - 0.01); iv.push([t, d != null && d - t < 6 ? d : t + 1.2]); }
+  const dz = []; for (const d of R.deathPos || []) if (d.who === name && d.t >= s0 && d.t <= e0) { const b = mpAfter(pc, d.t + 1); dz.push([d.t, b != null && b < e0 ? b : e0]); }
+  const cov = (L) => { const a = L.map(([x, y]) => [Math.max(s0, x), Math.min(e0, y)]).filter(([x, y]) => y > x).sort((u, v) => u[0] - v[0]); let tot = 0, cs = -1, ce = -1; for (const [x, y] of a) { if (x > ce) { if (ce > cs) tot += ce - cs; cs = x; ce = y; } else ce = Math.max(ce, y); } if (ce > cs) tot += ce - cs; return tot; };
+  const dead = cov(dz), alive = e0 - s0 - dead; if (alive < 8) return null; return { idle: Math.max(0, e0 - s0 - cov(iv.concat(dz))), alive }; }
+// (the fast run's share of time not casting, for one spec (else role) on one size of pull, from at least 30 s alive; else every pull of that kind)
+function mpIdleBase(F, per, band) { if (!F || !F.pc) return null; const c = F._ib || (F._ib = new Map()), key = per.spec + '|' + per.cls + '|' + per.role + '|' + band; if (c.has(key)) return c.get(key);
+  let who = (F.people || []).filter((x) => x.spec === per.spec && x.cls === per.cls), same = true; if (!who.length) { who = (F.people || []).filter((x) => x.role === per.role); same = false; }
+  const sum = (ok) => { let id = 0, al = 0; F.pulls.forEach((q) => { if (!ok(q)) return; for (const x of who) { const r = mpIdle(F, x.name, q); if (r) { id += r.idle; al += r.alive; } } }); return al >= 30 ? id / al : null; };
+  let sh = sum((q) => mpPBand(F, q) === band); if (sh == null) sh = sum((q) => !!q.boss === String(band).startsWith('boss')); /* (a boss: the same boss, else any) */
+  const out = sh == null ? null : { sh, same }; c.set(key, out); return out; }
+function mpPlay(R, F, name, i) { const p = R.pulls[i], per = (R.people || []).find((x) => x.name === name), out = { rows: [], ok: '', next: '', cost: 0, n: 0 }; if (!p || !per) return out;
+  const own = name === mpMine(R), cn = (E.CLASSES[per.cls] || [])[0] || '', gd = mpGd(p), sh = gd ? ((p.dmg || {})[name] || 0) / gd : 0, n = p.boss ? 0 : mpCnt(R, p), band = mpPBand(R, p), your = own ? 'your' : 'their';
+  const top = (same) => (same ? 'top ' + per.spec + ' ' + cn + 's' : per.role === 'healer' ? 'top healers' : per.role === 'tank' ? 'top tanks' : 'top DPS players'), rows = [];
+  // (1) time not casting, against the fast run's share on this size of pull
+  const id = mpIdle(R, name, p), b = id && mpIdleBase(F, per, band); let calm = false;
+  if (id && b) { const extra = id.idle - b.sh * id.alive; if (extra > 0) rows.push({ k: 'idle', ic: '⏸', t: 'Not casting for <b>' + id.idle.toFixed(1) + ' s</b>, about ' + Math.round(extra) + ' s more than ' + top(b.same), s: extra * sh,
+      nt: 'keep casting through the pull. ' + top(b.same).replace(/^t/, 'T') + ' stopped for about ' + Math.round(b.sh * id.alive) + ' s on a pull like this.' }); else calm = id.alive >= 20; }
+  // (2) a big cooldown ready at the start of a 7+ enemy pull and not pressed in it; priced by what it added elsewhere in this key: their damage a second
+  // with it up (20 s from each press) less without, over its 20 s, against the group's damage a second here
+  const gs = typeof GEN_SPECS !== 'undefined' ? GEN_SPECS[per.spec + ' ' + cn] : null, mine = (R.cds || {})[name] || []; let usedBig = false;
+  const cdl = ((gs && gs.cds) || []).concat((MP_HEAL_CD[per.spec + ' ' + cn] || []).map(([n2, cd]) => ({ n: n2, cd })));
+  if (n >= 7 && p.e - p.s >= 15) { let best = null; for (const c of cdl) { if (!(c.cd >= 60)) continue; const nm = new Set([c.n].concat(c.names || []).map(mpLc)), cs = mine.filter((x) => nm.has(mpLc(x.spell))); if (!cs.length) continue;
+      const gap = cs.slice(1).map((x, k) => x.t - cs[k].t).filter((v) => v >= 30), cd = Math.min(c.cd, ...gap); /* (its length here: the list's, or the shortest gap between their own presses) */
+      if (cs.some((x) => x.t >= p.s - 3 && x.t <= p.e + 1)) { usedBig = true; continue; } const last = cs.filter((x) => x.t < p.s - 3).pop(); if (last && p.s - last.t < cd) continue;
+      const pd = (R.pd || {})[name] || [], up = new Set(); for (const x of cs) for (let k = Math.floor(x.t); k < x.t + 20; k++) up.add(k); let ud = 0, ut = 0, dd = 0, dt = 0;
+      for (const q of R.pulls) for (let k = Math.floor(q.s); k < q.e; k++) { const v = pd[k] || 0; if (up.has(k)) { ud += v; ut++; } else { dd += v; dt++; } }
+      const gain = ut && dt ? Math.max(0, ud / ut - dd / dt) * Math.min(20, p.e - p.s) : 0, cost = gd ? gain / gd : 0; if (!best || cost > best.s) best = { k: 'cd', ic: '⟳', t: 'Held <b>' + esc(c.n) + '</b> on a ' + n + '-enemy pull', s: cost, nt: 'press ' + esc(c.n) + ' on pulls of 7 or more.' }; }
+    if (best) rows.push(best); }
+  // (3) a death with a defensive ready: the time dead until their next cast or the pull's end, at their usual share of the group's damage
+  for (const d of R.deathPos || []) { if (d.who !== name || d.t < p.s || d.t > p.e + 1 || !(d.ready || []).length) continue; const pc = (R.pc || {})[name] || [], bk = mpAfter(pc, d.t + 1), dead = Math.max(0, (bk != null && bk < p.e ? bk : p.e) - d.t);
+    const av = R.pulls.map((q) => { const t2 = mpGd(q); return t2 ? ((q.dmg || {})[name] || 0) / t2 : 0; }).filter((v) => v > 0), us = av.length ? av.reduce((a, v) => a + v, 0) / av.length : sh, hit = (d.hits || []).length ? d.hits[d.hits.length - 1].sp : '';
+    rows.push({ k: 'death', ic: '☠', t: 'Died with <b>' + esc(d.ready[0]) + '</b> ready', s: dead * us, nt: 'press ' + esc(d.ready[0]) + (hit ? ' before ' + esc(hit) + ' lands.' : ' before the big hit.') }); }
+  // (4) a dangerous cast that went off with their kick ready: danger, not time, so no price, and first
+  { const m = new Map(); for (const x of p.through || []) if ((x.ready || []).includes(name)) m.set(x.spell, (m.get(x.spell) || 0) + 1);
+    for (const [sp, c] of m) rows.push({ k: 'kick', ic: '!', t: '<b>' + esc(sp) + '</b> went off' + (c > 1 ? ' ' + c + ' times' : '') + ' with ' + your + ' kick ready', s: null, nt: 'kick ' + esc(sp) + '.' }); }
+  // (round 2 and later: each spec's own checks)
+  const ctx = { R, F, name, per, own, i, p, n, band, gd, top }; for (const fn of MP_PLAY_CHECKS) { try { rows.push(...(fn(ctx) || [])); } catch (e) { /* (a check that fails adds nothing) */ } }
+  out.rows = rows.filter((r) => r.s == null || r.s >= 2).sort((a, c) => (a.s == null ? -1 : 0) - (c.s == null ? -1 : 0) || (c.s || 0) - (a.s || 0)).slice(0, 3);
+  out.n = out.rows.length; out.cost = out.rows.reduce((a, r) => a + (r.s || 0), 0); out.next = out.rows.length ? out.rows[0].nt : '';
+  const kk = (p.kicks || []).filter((x) => x.who === name).length;
+  out.ok = usedBig ? '✓ Big cooldown on this big pull' : calm ? '✓ Kept casting as much as ' + top(b.same) : kk >= 2 ? '✓ ' + kk + ' kicks' : '';
+  return out; }
+if (typeof window !== 'undefined') window.MP_PLAY = { rows: mpPlay, checks: MP_PLAY_CHECKS }; /* (for the Rotation tab, and to port to the addon) */
+// (the closed one-liner and its rows, as the pull card shows them)
+function mpPlayHtml(R, F, name, i) { const y = mpPlay(R, F, name, i), own = name === mpMine(R), col = (v) => (v >= 5 ? '#ff8f87' : '#f2c46b');
+  const sum = '<b>' + (own ? 'Your play' : '<span style="color:' + mpCC(((R.people || []).find((x) => x.name === name) || {}).cls) + '">' + esc(name) + '</span>' + '’s play') + '</b> · ' + (y.n ? y.n + ' to fix' : 'nothing to fix') + (y.cost >= 1 ? ' · ' + mpMM(y.cost) : '');
+  const body = y.rows.map((r) => '<div class="mpt-ypr"><i' + (r.k === 'kick' ? ' class="mpt-t2k"' : '') + ' aria-hidden="true">' + r.ic + '</i><span>' + r.t + '</span><b' + (r.s == null ? ' class="mpt-t2k">!' : ' style="color:' + col(r.s) + '">' + mpMM(r.s)) + '</b></div>').join('') +
+    (y.ok ? '<p class="mpt-ypok">' + y.ok + '</p>' : '') + (y.next ? '<p class="mpt-nt"><b>Next time</b> ' + y.next + '</p>' : y.n || y.ok ? '' : '<p class="mpt-mcf">Nothing to fix here.</p>');
+  return { sum, body }; }
 function mpPartHtml(R, fx, pick) {
   const me = mpMine(R), name = pick || me, p = name && (R.people || []).find((x) => x.name === name); if (!p) return '<div id="mptPart" data-for="' + esc(pick || '') + '"></div>';
   const own = name === me, P = R.pulls, cn = (E.CLASSES[p.cls] || [])[0] || '', heal = p.role === 'healer', kickless = heal && !(p.cls === 'Shaman' && /restoration/i.test(p.spec || ''));
@@ -62133,6 +62199,9 @@ function mpPartHtml(R, fx, pick) {
   // (6) big cooldowns, judged as on the cards
   const cdx = mpCdN(R, p), miss = cdx ? P.map((q, i) => (mpCdMiss(R, i).includes(name) ? i : -1)).filter((i) => i >= 0) : [];
   if (cdx) row('✓', '#7ee08f', 'Big cooldowns', miss.length ? '<b class="mpt-a">missed in ' + pns(miss) + '</b>' : '<b class="mpt-g">every pull</b>', miss.length ? ' data-mppick="' + miss[0] + '"' : '');
+  // (Your play across the key: the time its rows add up to, on how many pulls; it picks the worst)
+  { const F2 = fx && fx.R, ys = P.map((q, i) => ({ i, y: mpPlay(R, F2, name, i) })).filter((x) => x.y.n), tot = ys.reduce((a, x) => a + x.y.cost, 0), w = ys.slice().sort((a, b) => b.y.cost - a.y.cost)[0];
+    if (F2 && F2.pc) row('▸', '#c39bff', own ? 'Your play' : esc(name) + '’s play', ys.length ? '<b class="' + (tot >= 5 ? 'mpt-bad' : 'mpt-a') + '">' + mpMM(tot) + '</b><small> · across ' + plural(ys.length, 'pull') + '</small>' : '<b class="mpt-g">clean</b>', w ? ' data-mppick="' + w.i + '"' : ''); }
   // (7) avoidable hits
   const av = []; P.forEach((q, i) => { for (const a of q.avoid || []) if (a.who === name && a.n) av.push({ ...a, i }); }); const avN = av.reduce((t, a) => t + a.n, 0), byP = new Map(); for (const a of av) byP.set(a.i, (byP.get(a.i) || 0) + a.n);
   const top = avN ? [...byP].sort((a, b) => b[1] - a[1])[0][0] : -1;
@@ -62419,6 +62488,7 @@ function mpScan(it, R, text) {
   const T = MP_ROUTE[mpLc(R.run.dungeon || it.boss)], P = R.pulls, N = P.length, ADV = 19, NPC = /^(Creature|Vehicle)-/;
   const ui = T ? new Set(T.floors.map((f) => f[0])) : new Set(), pts = P.map(() => ({ x: [], y: [], u: [] })), add = P.map(() => 0), taken = P.map(() => 0), seen = new Set(), lustT = [], cast = {}, summoned = new Set();
   R.summoned = summoned;
+  const pcs = R.pc = {}, pst = R.pst = {}, pdm = R.pd = {}; /* (Your play: each player's cast starts, casts, and damage a second with their pets') */
   // (a minute or longer only: Colossus Smash, on the Arms list, isn't a big cooldown. Healers also get the engine's healing cooldowns (Aura
   // Mastery, Tranquility, Revival…, CD_NAMES), less Lust and the movement ones: some healer specs have no list on the Rotation tab)
   const HEAL_CD = [...((E.CD_NAMES && E.CD_NAMES.values()) || [])].map(mpLc).filter((n) => !MP_LUST.test(n) && !/^(stampeding roar|wind rush totem|blessing of protection)$/.test(n));
@@ -62451,13 +62521,15 @@ function mpScan(it, R, text) {
     if (ev === 'SPELL_AURA_APPLIED') { if (line.indexOf('BUFF', c) < 0) continue; const f = E.split(line, c + 1); if (f[11] === 'BUFF' && String(f[4]).startsWith('Player-') && MP_LUST.test(f[9])) lustT.push([t, f[9]]);
       else if (T && f[11] === 'DEBUFF' && (/^(Player|Pet)-/.test(f[0] || '') || petOwn.has(f[0])) && NPC.test(f[4] || '') && MP_CC.has(mpLc(uq(f[9])))) { const p = npcPos.get(f[4]); const cp = lastPos.get(f[0]); ccEv.push({ t, src: f[0], who: petOwn.get(f[0]) || short(uq(f[1])), sp: uq(f[9]), tg: uq(f[5]), g: f[4], x: p && p[0], y: p && p[1], ui: p && p[2], cx: cp && cp[0], cy: cp && cp[1], cui: cp && cp[2] }); }
       continue; }
+    if (ev === 'SPELL_CAST_START' && line.startsWith('Player-', c + 1)) { const f = E.split(line, c + 1), nm = short(f[1]); (pst[nm] || (pst[nm] = [])).push(t); continue; }
     const dmg = ev === 'SPELL_DAMAGE' || ev === 'SPELL_PERIODIC_DAMAGE' || ev === 'SWING_DAMAGE' || ev === 'RANGE_DAMAGE';
     if (!dmg && ev !== 'SPELL_CAST_SUCCESS') continue;
     const f = E.split(line, c + 1);
     if (T && ev === 'SPELL_CAST_SUCCESS' && (/^(Player|Pet)-/.test(f[0] || '') || petOwn.has(f[0])) && MP_KNOCK.has(mpLc(uq(f[9])))) { const g = NPC.test(f[4] || '') ? f[4] : null, p = g ? npcPos.get(g) : null; const cp = lastPos.get(f[0]); ccEv.push({ t, src: f[0], who: petOwn.get(f[0]) || short(uq(f[1])), sp: uq(f[9]), tg: g ? uq(f[5]) : '', g, x: p && p[0], y: p && p[1], ui: p && p[2], cx: cp && cp[0], cy: cp && cp[1], cui: cp && cp[2] }); }
     if (ev === 'SPELL_CAST_SUCCESS' && String(f[0]).startsWith('Player-')) { const id = +f[8]; if (DEF.has(id) || /healthstone/i.test(f[9])) { const m = defUse.get(f[0]) || new Map(), k2 = DEF.has(id) ? id : 'hs'; m.set(k2, (m.get(k2) || []).concat(t)); defUse.set(f[0], m); } }
-    if (ev === 'SPELL_CAST_SUCCESS' && String(f[0]).startsWith('Player-')) { const nm = short(f[1]), s = cdOf.get(nm); if (s && s.has(mpLc(f[9]))) { const l = cast[nm] = cast[nm] || []; if (!l.some((x) => x[1] === f[9] && t - x[0] < 5)) l.push([t, f[9]]); } } /* (one press, even if the log writes it twice) */
+    if (ev === 'SPELL_CAST_SUCCESS' && String(f[0]).startsWith('Player-')) { const nm = short(f[1]), s = cdOf.get(nm); (pcs[nm] || (pcs[nm] = [])).push(t); if (s && s.has(mpLc(f[9]))) { const l = cast[nm] = cast[nm] || []; if (!l.some((x) => x[1] === f[9] && t - x[0] < 5)) l.push([t, f[9]]); } } /* (one press, even if the log writes it twice) */
     const adv = ev === 'SWING_DAMAGE' ? 8 : 11; if (f.length < adv + ADV) continue;
+    if (dmg && NPC.test(f[4] || '')) { const o = String(f[0]).startsWith('Player-') ? short(f[1]) : petOwn.get(f[0]); if (o) { const a = pdm[o] || (pdm[o] = []), k = t | 0; a[k] = (a[k] || 0) + num(f[adv + ADV]); } }
     if (dmg && String(f[4]).startsWith('Player-') && !String(f[0]).startsWith('Player-')) { const sp = ev === 'SWING_DAMAGE' ? 'Melee' : String(f[9] || '').replace(/^"|"$/g, ''), amt = num(f[adv + ADV]), l = hitsOf.get(f[4]) || [];
       l.push([t, sp, String(f[1] || '').replace(/^"|"$/g, ''), amt, f[adv] === f[4] ? num(f[adv + 3]) : maxOf.get(f[4]) || 0]); /* (a swing's block is the attacker's: the player's health from their own) */ if (l.length > 8) l.shift(); hitsOf.set(f[4], l);
       /* (an avoidable hit's spot: the hit player's own spot as it landed; a beam ticking every second is one hit until they're out of it for 1.6 s, and tanks aren't counted, as on the page) */
@@ -62703,6 +62775,8 @@ function mpMapHtml(R, F, tl) {
         (L.length ? '<div class="mpt-mkr mpt-mkh"><span></span><span>Kicked</span><span>CC</span></div>' + tbl : '') + (ss ? '<p class="mpt-mcf">Stops: ' + ss + '</p>' : '')); }
     // (DPS, highest first, with each player's big cooldowns pressed here in a fourth column ("none" when they have some but pressed none here, blank when
     // none are tracked, the times in the hover); the healer's healing a line under the rows)
+    // (Your play: one closed line per player, shown only while that one player is picked (mpMapPP))
+    const play = run !== 'you' ? '' : ppl.map((x) => { const h = mpPlayHtml(RR, F, x.name, i); return fold('y', h.sum, h.body, ' data-who="' + esc(x.name) + '"'); }).join('');
     const dl = ppl.slice().sort((a, b) => ((p.dmg || {})[b.name] || 0) - ((p.dmg || {})[a.name] || 0)), mx = Math.max(1, ...ppl.map((x) => (p.dmg || {})[x.name] || 0));
     const act = new Set((RR.cdWho || []).filter((n) => ((RR.cds || {})[n] || []).length)), mine = (n) => (act.has(n) ? RR.cds[n].filter((x) => x.t >= p.s - 3 && x.t <= p.e + 1) : []), cdc = act.size > 0;
     const cdCell = (n) => { if (!act.has(n)) return '<span class="mpt-mcc"></span>'; const l = mine(n); if (!l.length) return '<span class="mpt-mcc mpt-mcz">none</span>';
@@ -62736,7 +62810,7 @@ function mpMapHtml(R, F, tl) {
         (fod.length ? '<p class="mpt-pkf">+ ' + fod.map((x) => x.c + '× ' + esc(x.n2) + ' ' + role(x)).join(', ') + '</p>' : '') +
         (smn ? '<p class="mpt-pkf mpt-pks">+ ' + smn + ' summoned during the fight' + (smf ? ' (worth forces)' : '') + '</p>' : '') + '</div>'; })();
     return '<div class="mpt-mch">' + badge(q) + '<b>' + nm(q) + '</b><span>' + mpMM(p.dur) + (q.add ? ' · +' + fmt(pc(q.add)) : '') + (() => { const r2 = RR.route && RR.route.ok ? RR.route : null; return r2 ? ' · ' + fmt(100 * r2.pulls.slice(0, q.i + 1).reduce((a, x) => a + x.add, 0) / r2.full) + ' total' : ''; })() + (gd ? ' · ' + mpGF(gd) + ' group DPS' : '') + '</span></div>' +
-      '<p class="mpt-mtl">' + (tags.join(' ') || '<span class="mpt-t2g">✓ Clean</span>') + '</p>' + next + pack + plan + kicks + dps + died; };
+      '<p class="mpt-mtl">' + (tags.join(' ') || '<span class="mpt-t2g">✓ Clean</span>') + '</p>' + next + pack + plan + play + kicks + dps + died; };
   // (the pulls as tiles under the map (Flex, Nov 2: "any way to fill the dead space? Maybe the pull counter horizontal across the bottom somehow?"): the
   // badge over two lines, the name, then the time, the % and the icons; the full name, "chained" and "no spot" in the hover)
   const list = (Q) => '<ol class="mpt-mfl">' + Q.map((q) => { const pct = q.add ? pc(q.add) : 0, th = (q.p.through || []).length;
@@ -62777,7 +62851,7 @@ function mpMapPick(v, ids, sum) { const box = document.querySelector('.mpt-mdt')
   if (one) mpFitPull(box, view, ids[0]); else mpZoomTo(box, 1, null); } /* (a picked pull fills the map (item 9); several lit up, the whole floor) */
 function mpMapPeek(view, i) { if (!view) return; view.classList.toggle('peek', i != null); view.querySelectorAll('[data-pi]').forEach((x) => x.classList.toggle('pk', i != null && x.dataset.pi === String(i))); }
 // (pick a player: only their kick, CC and death marks on the map, the others' rows in the card faded; the Home character is the default later)
-function mpMapPP(name) { const box = document.querySelector('.mpt-mdt'); if (!box) return; name = name || ''; MP.pp = name;
+function mpMapPP(name) { const box = document.querySelector('.mpt-mdt'); if (!box) return; name = name || ''; MP.pp = name; box.classList.toggle('pp1', !!name); /* (Your play shows for one picked player) */
   { const pe = document.getElementById('mptPart'), it2 = MP.item, R2 = it2 && MP.R[mpK(it2)]; if (pe && R2 && pe.dataset.for !== name) pe.outerHTML = mpPartHtml(R2, MP.fastOf && MP.fastOf.k === mpK(it2) ? MP.fastOf : null, name); } /* (Your part follows the pick) */
   box.querySelectorAll('[data-mppsel]').forEach((x) => { x.value = name; const o = x.selectedOptions[0]; x.style.color = name && o ? o.style.color : ''; });
   box.querySelectorAll('.mpt-mdtv[data-v="you"] [data-who]').forEach((el) => el.classList.toggle('pp-off', !!name && !el.dataset.who.split('|').includes(name))); }
@@ -63498,6 +63572,10 @@ body.mpz-wh .spc-tt{display:none !important}
 .mpt .mpt-pkp{width:16px;height:16px;margin:0 5px 0 0;border-radius:50%;object-fit:cover;object-view-box:inset(8% 20% 32% 20%);vertical-align:-3px;background:#3b4458;filter:brightness(1.25)} .mpt .mpt-pkp0{display:inline-block;background:none}
 /* (a boss pull's summons line in the Pack: faint) */
 .mpt .mpt-pks{opacity:.7}
+/* (Your play: only while one player is picked, and only theirs; rows: icon, line, price) */
+.mpt-mdt:not(.pp1) details[data-cf="y"],.mpt-mdt details[data-cf="y"].pp-off{display:none}
+.mpt .mpt-ypr{display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--line);font-size:12.5px} .mpt .mpt-ypr > i{font-style:normal;text-align:center;color:var(--muted)} .mpt .mpt-ypr > b{font-variant-numeric:tabular-nums}
+.mpt .mpt-ypok{margin:6px 0 0;color:#7ee08f;font-size:12.5px}
 `;
  // (and src/mptab.js, the Mythic+ tab (Nov 1))
 })();
