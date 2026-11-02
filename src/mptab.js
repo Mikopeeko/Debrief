@@ -114,33 +114,35 @@ function mpPickHtml(it) { const keys = mpKeys(), find = '<button class="linkbtn 
 // sign-in sent), and anyone's by name, realm and region. Their uploads newest first; the Mythic+ ones opened a few at a time (one report
 // read each, kept by the site); only keys the character was in; the same key in several uploads shown once, opening the first)
 const MP_SEASON = (z) => !!z && (z.id === 55 || /^Mythic\+ Season 2$/i.test(z.name || ''));
-const MP_REAL = { night: 'AEVxiCJqkaR3pmxgnKtnsA', pull: 0 }; /* (Flex's Voidscar +19, shared: "See a real +19 key") */
 const MPF = { who: null, mine: false, reps: [], at: 0, page: 0, last: 1, rows: [], seen: new Map(), busy: false, err: '', done: false, view: [], addNext: false };
 function mpfMine() {
   const me = typeof meOf === 'function' ? meOf() : null, cs = groups().filter((g) => g.kind === 'char'), g = (me && cs.find((c) => c.name === me.name)) || cs[0];
   if (g) return { id: g.id, name: g.name, server: g.server || '' };
   const w = WCL.HOSTED && typeof wclMe === 'function' ? wclMe() : null, c = w && (w.chars || []).slice().sort((a, b) => b.id - a.id)[0];
   return c ? { id: c.id, name: c.n, server: (c.srv || '') + (c.srv && c.reg ? ' (' + String(c.reg).toUpperCase() + ')' : '') } : null; }
+// ---------- the Mythic+ front page (Nov 2; Flex: "id like the m+ screen to resemble something similar to the Home Screen … where you can easily
+// pull up multiple character logs … keep m+ completely its own thing", and "yes" to the studio's mock): Home's hero with a paste box for a key,
+// "Your characters" as Home's tiles (every saved character, every sign-in character, and ones added here for Mythic+ only), then the picked
+// character's keys by dungeon. Keys come in on their own (mpkImport); a reload draws them at once from what was read before ----------
+const MP_REAL = { night: 'AEVxiCJqkaR3pmxgnKtnsA', pull: 0 }; /* (Flex's Voidscar +19, shared: "See a real +19 key") */
 function mpFinder() {
   if (S.page === 'pull' && S.item) PROG_BACK = S.item; /* (the raid you came from stays one tab away) */
-  S.page = 'mpfind'; mpCss();
+  S.page = 'mpfind'; mpCss(); MPF.addNext = false;
   for (const id of ['#list', '#bossHead', '#bossPick']) { const el = $(id); if (el) el.innerHTML = ''; }
   { const oa = $('#oaTop'); if (oa) { oa.innerHTML = ''; oa.hidden = true; } }
-  MPF.addNext = false; const saved = mpkChars().length > 0; /* (every saved character's keys, by dungeon (the key-finder addendum)) */
-  const box = '<div class="fpn-box mpf-box" id="mpfBox" hidden><input id="mpfIn" placeholder="Paste a Warcraft Logs report link…" autocomplete="off" aria-label="Report link"><button class="btn" id="mpfGo" type="button">Open</button></div><div class="fp-msg" id="mpfMsg"></div>';
-  const addL = '<button class="linkbtn" type="button" data-mpf-paste="1">Paste a Warcraft Logs link</button> · <button class="linkbtn" type="button" data-mpf-file="1">Open a combat log from your PC</button>';
-  const look = mpChap('mpfLook', 'Look up anyone\'s keys', 'Type a character to see their Mythic+ keys this season.',
-    '<form class="mpf-f" id="mpfForm" autocomplete="off"><label><span>Character</span><input name="n" required spellcheck="false" aria-label="Character"></label>' +
-    '<label><span>Realm</span><input name="s" required spellcheck="false" aria-label="Realm"></label>' +
-    '<label><span>Region</span><select name="r" aria-label="Region"><option>US</option><option>EU</option><option>KR</option><option>TW</option></select></label>' +
-    '<button class="btn primary" type="submit">Find keys</button></form><p class="mpf-msg mpt-bad" id="mpfFormMsg" hidden></p>' +
-    (saved ? '<p class="mpf-alt"><button class="linkbtn" type="button" data-mpf-real="1">See a real +19 key ›</button></p>' : '<p class="mpf-alt">' + addL + ' · <button class="linkbtn" type="button" data-mpf-real="1">See a real +19 key ›</button></p>' + box));
-  $('#main').innerHTML = pgTabBar(null) + '<section id="view" class="mpt-page"><div class="mpt mpf">' + (saved ? mpChap('mpfMine', 'Your Mythic+ keys', 'Every key your saved characters played this season, by dungeon.', '<p class="mpf-alt mpf-add">Missing a key? ' + addL + '</p>' + box + '<div id="mpfList"></div>') + '<div id="mpfOther"></div>' : '<div id="mpfList"></div>') + look + '</div></section>';
+  const I = typeof TH_ICO !== 'undefined' ? TH_ICO : {};
+  const hero = '<section class="th-hero"><h1>Every key, <span class="mpf-gold">explained.</span></h1><p class="th-lead">Pick a character to see their keys, or open any key.</p>' +
+    '<div class="th-box">' + (I.link || '') + '<input id="mpfIn" placeholder="Paste a Warcraft Logs report with a key in it" autocomplete="off" aria-label="Warcraft Logs report link"><button class="btn primary" id="mpfGo" type="button">Open</button></div>' +
+    '<div class="th-links"><button type="button" data-mpf-file="1">' + (I.file || '') + 'Open a log file</button><button type="button" data-mpf-real="1">' + (I.play || '') + 'See a real +19 key</button></div>' +
+    '<div class="th-msg"><span class="fp-msg" id="mpfMsg"></span></div></section>';
+  const add = '<form class="mpf-f mpf-addf" id="mpfAddForm" autocomplete="off" hidden><label><span>Character</span><input name="n" required spellcheck="false" aria-label="Character"></label>' +
+    '<label><span>Realm</span><input name="s" required spellcheck="false" aria-label="Realm"></label><label><span>Region</span><select name="r" aria-label="Region"><option>US</option><option>EU</option><option>KR</option><option>TW</option></select></label>' +
+    '<button class="btn primary" type="submit">Add</button></form><p class="mpf-msg mpt-bad" id="mpfAddMsg" hidden></p>';
+  $('#main').innerHTML = pgTabBar(null) + '<div class="mpf-home">' + hero + '<section class="th-teams"><div class="th-h"><h2>Your characters</h2><span class="sub" id="mpfAgo"></span></div><div id="mpfCards"></div>' + add + '</section>' +
+    '<section class="mpt mpf" id="mpfKeys"></section><p class="mpf-foot2">Every saved character, and every character on your Warcraft Logs sign-in, comes in on its own. New keys show up the next time you open this tab.</p></div>';
   { const t = $('#main .pg-tabbar .mpt-tab'); if (t) { t.classList.add('on'); t.setAttribute('aria-selected', 'true'); } }
   try { navNote(); } catch (e) { /* (no address) */ } window.scrollTo(0, 0);
-  if (saved) { mpfDraw(); if (!MPK.ran) { MPK.ran = true; mpkImport(); } return; }
-  if (!MPF.who) { const m = mpfMine(); if (m) { mpfStart(m, true); return; } }
-  mpfDraw(); }
+  mpfDraw(); if (!MPK.ran) { MPK.ran = true; mpkImport(); } }
 function mpfStart(who, mine) { Object.assign(MPF, { who, mine, reps: [], at: 0, page: 0, last: 1, rows: [], seen: new Map(), busy: false, err: '', done: false }); mpfDraw(); mpfMore(); }
 // (the next few Mythic+ uploads: pages of uploads as needed, then each one's keys)
 async function mpfMore() {
@@ -177,7 +179,7 @@ function mpfRow(r, i) {
 // Keys from a pasted link join the list and stay; keys from a combat log on this PC show for this visit only)
 const MP_KEYK = 'mpt-keys', MP_DUNGEONS = ['Altar of Fangs', 'Den of Nalorakk', 'Kings\' Rest', 'Murder Row', 'Ruby Life Pools', 'Temple of Sethraliss', 'The Blinding Vale', 'Voidscar Arena'];
 const MPK = { busy: false, ran: false, err: '', n: 0, of: 0, t0: 0, pick: '', more: new Set() };
-const mpkGet = () => { try { const j = JSON.parse(store.get(MP_KEYK) || 'null'); if (j && j.chars) { j.added = j.added || []; return j; } } catch (e) { /* (unreadable: start again) */ } return { chars: {}, added: [] }; };
+const mpkGet = () => { try { const j = JSON.parse(store.get(MP_KEYK) || 'null'); if (j && j.chars) { j.added = j.added || []; j.addedChars = j.addedChars || []; return j; } } catch (e) { /* (unreadable: start again) */ } return { chars: {}, added: [], addedChars: [] }; };
 const mpkSet = (j) => { try { store.set(MP_KEYK, JSON.stringify(j)); } catch (e) { /* (full: kept for this visit) */ } };
 const mpkOf = (it) => ({ code: it.wcl.code, fight: it.wcl.fight, boss: it.boss, level: it.level, keyMs: it.keyMs, timed: it.timed, up: it.up, wallMs: it.wallMs, duration: it.duration });
 // (whose keys: every character saved on Debrief, plus every character the Warcraft Logs sign-in sent, once each (Flex: "it was only showing my druid
@@ -185,26 +187,27 @@ const mpkOf = (it) => ({ code: it.wcl.code, fight: it.wcl.fight, boss: it.boss, 
 const mpkChars = () => { const out = [], seen = new Set(); for (const g of groups()) if (g.kind === 'char' && g.id && !seen.has(+g.id)) { seen.add(+g.id); out.push(g); }
   const w = WCL.HOSTED && typeof wclMe === 'function' ? wclMe() : null;
   for (const c of (w && w.chars) || []) if (c.id && !seen.has(+c.id)) { seen.add(+c.id); out.push({ id: c.id, name: c.n, cls: (typeof WCL_CLS !== 'undefined' && WCL_CLS[c.cls]) || '', server: (c.srv || '') + (c.srv && c.reg ? ' (' + String(c.reg).toUpperCase() + ')' : ''), kind: 'char', signin: true }); }
+  for (const c of mpkGet().addedChars || []) if (c.id && !seen.has(+c.id)) { seen.add(+c.id); out.push({ ...c, kind: 'char', added: true }); } /* (added on this page, for Mythic+ only) */
   return out; };
 const mpkId = (it) => [mpLc(it.boss), it.level, it.keyMs || 'x' + Math.round((it.duration || 0) / 60), new Date(it.wallMs).toISOString().slice(0, 10)].join('|');
 async function mpkImport() {
-  const cs = mpkChars(); if (!cs.length || MPK.busy) return;
+  const cs = mpkChars(); if (!cs.length) return; if (MPK.busy) { MPK.again = true; return; }
   if (Date.now() - +(store.get(IMPORT_LOCK) || 0) < 90e3) { MPK.err = 'Another tab is reading uploads right now. Your saved keys are below; open the tab again in a minute for new ones.'; mpfDraw(); return; }
-  Object.assign(MPK, { busy: true, err: '', n: 0, of: 0, t0: Date.now() }); store.set(IMPORT_LOCK, String(Date.now())); mpfDraw();
+  Object.assign(MPK, { busy: true, err: '', n: 0, of: 0, t0: Date.now(), per: {}, again: false }); for (const g of cs) MPK.per[g.id] = { n: 0, of: 0 }; store.set(IMPORT_LOCK, String(Date.now())); mpfDraw();
   let creds = null; try { creds = await wclCreds(); } catch (e) { creds = null; }
   try { const J = mpkGet(), todo = [];
     for (const g of cs) { const c = J.chars[g.id] || (J.chars[g.id] = { done: {}, keys: [] }), p1 = await WCL.charReportsPage(creds, g.id, 1).catch(() => null); /* (no Mythic+ on the first page of uploads: none this season; left out) */
       c.none = !p1 || !p1.data.some((x) => MP_SEASON(x.zone)); if (c.none) continue; /* (one that can't be read is skipped; the rest carry on) */
       for (const x of await WCL.charReports(creds, g.id).catch(() => [])) if (MP_SEASON(x.zone) && (c.done || {})[x.code] !== x.endTime) todo.push({ g, x }); }
     mpkSet(J);
-    todo.sort((a, b) => b.x.startTime - a.x.startTime); MPK.of = todo.length; mpfDraw();
+    todo.sort((a, b) => b.x.startTime - a.x.startTime); MPK.of = todo.length; for (const { g } of todo) MPK.per[g.id].of++; mpfDraw();
     for (let i = 0; i < todo.length; i += 3) { store.set(IMPORT_LOCK, String(Date.now())); const batch = todo.slice(i, i + 3), reps = await Promise.all(batch.map(({ x }) => WCL.loadReport(creds, x.code).catch(() => null))), J2 = mpkGet();
       batch.forEach(({ g, x }, b) => { const c = J2.chars[g.id] || (J2.chars[g.id] = { done: {}, keys: [] }), rep = reps[b], nm = mpLc(g.name); if (!rep) return; /* (a private upload is tried again next time) */
         for (const it of rep.runs || []) if ((it.roster || []).some((n) => mpLc(n) === nm) && !c.keys.some((k) => k.code === it.wcl.code && k.fight === it.wcl.fight)) c.keys.push(mpkOf(it));
-        c.done[x.code] = x.endTime; });
+        c.done[x.code] = x.endTime; MPK.per[g.id].n++; });
       mpkSet(J2); MPK.n = Math.min(todo.length, i + batch.length); mpfDraw(); }
   } catch (e) { MPK.err = e.message || String(e); }
-  store.set(IMPORT_LOCK, '0'); MPK.busy = false; mpfDraw(); }
+  { const J3 = mpkGet(); J3.at = Date.now(); mpkSet(J3); } store.set(IMPORT_LOCK, '0'); MPK.busy = false; mpfDraw(); if (MPK.again) mpkImport(); }
 // (one list: the same key under two saved characters is one row with both names)
 function mpkRows(cs) { const J = mpkGet(), m = new Map();
   const put = (it, who, tag, local) => { const k = mpkId(it), o = m.get(k); if (o) { if (who && !o.who.includes(who)) o.who.push(who); return; } m.set(k, { it, who: who ? [who] : [], tag, local }); };
@@ -213,44 +216,59 @@ function mpkRows(cs) { const J = mpkGet(), m = new Map();
   for (const it of mpKeys()) if (!it.wcl && it.wallMs) put(it, '', 'from your PC', true);
   return [...m.values()]; }
 const mpfRes = (it) => { const s = it.keyMs ? it.keyMs / 1000 : 0; return { t: s ? (it.timed ? 'Timed +' + (it.up || 1) : 'Over time') : 'Left early', c: s && it.timed ? (it.up >= 2 ? 'mpt-g' : 'mpt-a') : 'mpt-m' }; };
-function mpfRow2(r, ccOf) { const i = MPF.view.push(r) - 1, it = r.it, tm = (window.DBF_MPTIMER || {})[mpLc(it.boss)], s = it.keyMs ? it.keyMs / 1000 : 0, spare = tm && s && it.timed ? tm * 60 - s : 0, R0 = mpfRes(it);
-  const time = s ? mpMM(s) + (tm ? ' of ' + tm + ':00' : '') + (spare > 0 ? ' · ' + (spare < 60 ? Math.round(spare) + ' s' : mpMM(spare)) + ' to spare' : '') : mpMM(it.duration || 0) + ' played';
+// (a key row, one slim line (Flex's slim rows): the level, the time, the result, the date and Open. The character's name only when several are listed)
+function mpfRow2(r, ccOf, showWho) { const i = MPF.view.push(r) - 1, it = r.it, tm = (window.DBF_MPTIMER || {})[mpLc(it.boss)], s = it.keyMs ? it.keyMs / 1000 : 0, spare = tm && s && it.timed ? tm * 60 - s : 0, R0 = mpfRes(it);
+  const time = s ? '<b>' + mpMM(s) + '</b>' + (tm ? ' <small>of ' + tm + ':00</small>' : '') + (spare > 0 ? ' <small>· ' + (spare < 60 ? Math.round(spare) + ' s' : mpMM(spare)) + ' to spare</small>' : '') : '<small>Not finished · ' + mpMM(it.duration || 0) + ' played</small>';
   const day = new Date(it.wallMs).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  const who = r.who.map((n) => '<span style="color:' + (ccOf(n) || 'var(--text)') + '">' + esc(n) + '</span>').join(', ') + (r.tag ? (r.who.length ? ' ' : '') + '<span class="mpt-m">' + esc(r.tag) + '</span>' : '');
-  return '<button class="mpf-r" type="button" data-mpfv="' + i + '"' + (r.n > 1 ? ' data-tt="Same key in ' + r.n + ' uploads, shown once."' : '') + '><span class="mpf-lv' + (it.level >= 15 ? ' mpf-hi' : '') + '">+' + it.level + '</span>' +
-    '<span class="mpf-dg"><b>' + (who || esc(it.boss)) + '</b><small>' + time + '</small><em class="' + R0.c + '">' + R0.t + ' · ' + day + '</em></span><span class="mpf-res ' + R0.c + '">' + R0.t + '</span><span class="mpf-dt">' + day + '</span><span class="btn sm mpf-op">Open</span></button>'; }
-// (all 8 dungeons, A to Z so nothing jumps around, each a quiet fold with its best key and how many; highest first, then newest; 3, then "Show N more")
-function mpfByDungeon(rows, id, people) { const pick = people && people.length > 1 ? MPK.pick : '', show = pick ? rows.filter((r) => r.who.includes(pick)) : rows, cc = new Map((people || []).map((p) => [p.name, p.cls ? mpCC(p.cls) : ''])), ccOf = (n) => cc.get(n);
-  const chips = people && people.length > 1 ? '<div class="mpt-mpp mpf-pp" role="group" aria-label="Show a character"><span>Show:</span><button type="button" data-mpk=""' + (pick ? '' : ' class="on"') + '>All characters <small>' + rows.length + '</small></button>' +
-    people.map((p) => '<button type="button" data-mpk="' + esc(p.name) + '" style="color:' + (ccOf(p.name) || 'var(--text)') + '"' + (pick === p.name ? ' class="on"' : '') + '>' + esc(p.name) + ' <small>' + rows.filter((r) => r.who.includes(p.name)).length + '</small></button>').join('') + '</div>' : '';
-  return chips + MP_DUNGEONS.map((d) => { const L = show.filter((r) => mpLc(r.it.boss) === mpLc(d)).sort((a, b) => b.it.level - a.it.level || b.it.wallMs - a.it.wallMs), sid = id + '-' + d.toLowerCase().replace(/[^a-z]+/g, ''), more = MPK.more.has(sid);
-    const b = (L.find((r) => r.it.timed && r.it.keyMs) || L[0] || {}).it, br = b && mpfRes(b); /* (the best key: the highest timed one, else the highest) */
-    return '<details class="mpf-dgh" id="' + sid + '" open><summary><b>' + esc(d) + '</b><span>' + (b ? '<b class="' + br.c + '">+' + b.level + ' · ' + br.t + '</b> <span class="mpt-m">' + plural(L.length, 'key') + '</span>' : '') + '</span></summary>' +
-      (L.length ? '<div class="mpf-l">' + L.slice(0, more ? L.length : 3).map((r) => mpfRow2(r, ccOf)).join('') + '</div>' + (L.length > 3 ? '<button type="button" class="linkbtn mpf-showm" data-mpfm="' + sid + '">' + (more ? 'Show fewer' : 'Show ' + (L.length - 3) + ' more') + '</button>' : '')
-        : '<p class="mpf-none">No keys yet.</p>') + '</details>'; }).join(''); }
-function mpkHtml(cs) { const rows = mpkRows(cs), people = cs.filter((g) => rows.some((r) => r.who.includes(g.name))).map((g) => ({ name: g.name, cls: g.cls }));
-  const left = MPK.n ? (Date.now() - MPK.t0) / MPK.n * (MPK.of - MPK.n) / 1000 : 0, eta = left ? ' · about ' + (left < 60 ? 'a minute' : Math.round(left / 60) + ' min') + ' left' : '';
-  const prog = MPK.busy ? '<p class="mpf-msg">Finding keys for ' + plural(cs.length, 'character') + (MPK.of ? ': ' + MPK.n + ' of ' + MPK.of + ' uploads (' + Math.round(100 * MPK.n / MPK.of) + '%)' + eta : '…') + '</p>' : MPK.err ? '<p class="mpf-msg mpt-bad">' + esc(MPK.err) + '</p>' : '';
-  return prog + mpfByDungeon(rows, 'mptK', people); }
-// (a looked-up character, or the one the sign-in sent: the same layout, one character, read a batch at a time as before)
-function mpfLookHtml() { const w = MPF.who, signed = MPF.mine && WCL.HOSTED && typeof wclMe === 'function' && wclMe(), dup = MPF.rows.filter((r) => r.n > 1);
-  const who = (signed ? 'Signed in as ' : '') + '<b>' + esc(w.name) + '</b>' + (w.server ? ' · ' + esc(w.server) : '') + ' · by dungeon';
-  const pct = MPF.reps.length ? Math.round(100 * MPF.at / MPF.reps.length) : 0;
-  const status = MPF.err ? '<p class="mpf-msg mpt-bad">' + esc(MPF.err) + '</p>' : MPF.busy ? '<p class="mpf-msg">' + (MPF.reps.length ? 'Looking through ' + esc(w.name) + '\'s uploads: ' + MPF.at + ' of ' + MPF.reps.length + ' (' + pct + '%)…' : 'Looking for Mythic+ uploads…') + '</p>'
-    : !MPF.rows.length && MPF.done ? '<p class="mpf-msg">No Mythic+ keys this season in ' + esc(w.name) + '\'s public uploads.</p>' : '';
-  return mpChap(MPF.mine ? 'mpfMine' : 'mpfLookR', MPF.mine ? 'Your Mythic+ keys' : esc(w.name) + '\'s Mythic+ keys', 'Pick a key to see where your time went.',
-    '<p class="mpf-who">' + who + '</p>' + status + mpfByDungeon(MPF.rows.map((r) => ({ it: r.it, n: r.n, who: [w.name] })), MPF.mine ? 'mptM' : 'mptL', [{ name: w.name, cls: w.cls || '' }]) +
-    (dup.length ? '<p class="mpf-foot">' + (dup.length === 1 ? 'Same key in ' + dup[0].n + ' uploads, shown once.' : plural(dup.length, 'key') + ' were in more than one upload; each is shown once.') + '</p>' : '') +
-    (!MPF.done && !MPF.busy && !MPF.err ? '<button class="btn sm mpf-more" type="button" data-mpf-more="1">Show older keys</button>' : '')); }
-function mpfDraw() { if (S.page !== 'mpfind') return; MPF.view = [];
-  const cs = mpkChars(), a = $('#mpfList'), b = $('#mpfOther');
-  if (cs.length) { if (a) a.innerHTML = mpkHtml(cs); if (b) b.innerHTML = MPF.who && !MPF.mine ? mpfLookHtml() : ''; }
-  else if (a) a.innerHTML = MPF.who ? mpfLookHtml() : '';
+  const who = (showWho ? r.who.map((n) => '<span style="color:' + (ccOf(n) || 'var(--text)') + '">' + esc(n) + '</span>').join(', ') + ' ' : '') + (r.tag ? '<span class="mpt-m">' + esc(r.tag) + '</span> ' : '');
+  return '<button class="mpf-kr" type="button" data-mpfv="' + i + '"' + (r.n > 1 ? ' data-tt="Same key in ' + r.n + ' uploads, shown once."' : '') + '><span class="mpf-lv2' + (it.level >= 15 ? ' mpf-hi' : '') + '">+' + it.level + '</span>' +
+    '<span class="mpf-kt">' + who + time + '</span><span class="mpf-res2 ' + R0.c + '">' + R0.t + '</span><span class="mpf-dt2">' + day + '</span><span class="btn sm mpf-op">Open</span></button>'; }
+// (all 8 dungeons, A to Z so nothing jumps around, each a quiet fold with its best timed key and how many. Inside: timed keys first (highest, then
+// newest), then over time, then left early, so a reset doesn't take a top slot (the studio's row fixes); 3, then "Show N more")
+const mpfRank = (it) => (it.keyMs ? (it.timed ? 0 : 1) : 2);
+function mpfByDungeon(rows, id, people) { const showWho = !!(people && people.length > 1), cc = new Map((people || []).map((p) => [p.name, p.cls ? mpCC(p.cls) : ''])), ccOf = (n) => cc.get(n);
+  return MP_DUNGEONS.map((d) => { const L = rows.filter((r) => mpLc(r.it.boss) === mpLc(d)).sort((a, b) => mpfRank(a.it) - mpfRank(b.it) || b.it.level - a.it.level || b.it.wallMs - a.it.wallMs), sid = id + '-' + d.toLowerCase().replace(/[^a-z]+/g, ''), more = MPK.more.has(sid);
+    const b = (L.find((r) => r.it.timed && r.it.keyMs) || L[0] || {}).it, br = b && mpfRes(b);
+    if (!L.length) return '<div class="mpf-dgh mpf-dg0"><div class="mpf-dsum"><b>' + esc(d) + '</b><span class="mpt-m">No keys yet</span></div></div>';
+    return '<details class="mpf-dgh" id="' + sid + '" open><summary class="mpf-dsum"><b>' + esc(d) + '</b><span><b class="' + br.c + '">+' + b.level + ' · ' + br.t + '</b> <span class="mpt-m">' + plural(L.length, 'key') + '</span></span></summary>' +
+      '<div class="mpf-kl">' + L.slice(0, more ? L.length : 3).map((r) => mpfRow2(r, ccOf, showWho)).join('') + (L.length > 3 ? '<button type="button" class="linkbtn mpf-showm" data-mpfm="' + sid + '">' + (more ? 'Show fewer' : 'Show ' + (L.length - 3) + ' more') + '</button>' : '') + '</div></details>'; }).join(''); }
+// (a character's own keys, one row each)
+function mpkOwn(c, J) { const m = new Map(); for (const k of ((J.chars[c.id] || {}).keys || [])) { const it = { ...k, wcl: { code: k.code, fight: k.fight } }, id = mpkId(it), o = m.get(id); if (o) o.n++; else m.set(id, { it, n: 1, who: [c.name] }); } return [...m.values()]; }
+// (a character's tile, Home's tt-card: the crest, the name in class colour, the class and guild, one square per dungeon (green timed +2/+3, amber +1,
+// grey not timed, dark no key), the best key and how many dungeons timed, and the keys this season, or a gold bar with % and time left while it reads)
+function mpfCard(c, J, on) { const rows = mpkOwn(c, J), cls = (E.CLASSES || {})[c.cls], per = MPK.busy && MPK.per && MPK.per[c.id];
+  const best = MP_DUNGEONS.map((d) => { const L = rows.filter((r) => mpLc(r.it.boss) === mpLc(d)), t = L.filter((r) => r.it.timed && r.it.keyMs).sort((a, b) => b.it.level - a.it.level || b.it.up - a.it.up)[0];
+    return { d, t, any: L.length, st: t ? (t.it.up >= 2 ? 'g' : 'a') : L.length ? 'm' : '' }; });
+  const strip = best.map((x) => '<i class="' + x.st + '"' + mpT1(esc(x.d) + ': ' + (x.t ? '+' + x.t.it.level + ', timed +' + (x.t.it.up || 1) : x.any ? 'not timed' : 'no key')) + '></i>').join('');
+  const top = best.filter((x) => x.t).sort((a, b) => b.t.it.level - a.t.it.level || b.t.it.up - a.t.it.up)[0], nT = best.filter((x) => x.t).length;
+  const pct = per && per.of ? Math.round(100 * per.n / per.of) : 0, left = per && per.n ? (Date.now() - MPK.t0) / Math.max(1, MPK.n) * (MPK.of - MPK.n) / 1000 : 0;
+  const l2 = per && per.of > per.n ? '<span class="tt-l">Finding keys: ' + per.n + ' of ' + per.of + ' uploads (' + pct + '%)' + (left ? ' · about ' + (left < 90 ? 'a minute' : Math.round(left / 60) + ' minutes') + ' left' : '') + '</span><span class="mpf-prog"><i style="width:' + pct + '%"></i></span>'
+    : per && !per.of ? '<span class="tt-l">Finding keys…</span><span class="mpf-prog"><i style="width:4%"></i></span>' : '<span class="tt-l">' + (rows.length ? plural(rows.length, 'key') + ' this season' : 'No keys yet this season') + '</span>';
+  return '<div class="tt-card mpf-card' + (on ? ' on' : '') + '" role="button" tabindex="0" data-mpc="' + esc(String(c.id)) + '" aria-pressed="' + !!on + '">' + banner(c) + '<span class="tt-b"><span class="tt-n"' + (cls ? ' style="color:' + cls[1] + '"' : '') + '>' + esc(c.name) + '</span>' +
+    '<span class="tt-g">' + esc([cls ? cls[0] : '', c.guild ? '‹' + c.guild + '›' : c.server || ''].filter(Boolean).join(' · ')) + '</span><span class="tt-strip mpf-strip">' + strip + '</span>' +
+    (top ? '<span class="tt-l">Best <b>+' + top.t.it.level + ' ' + esc(top.d) + '</b> · ' + nT + ' of 8 dungeons timed</span>' : '') + l2 + '</span>' + (c.added ? '<button type="button" class="mpf-x" data-mpx="' + esc(String(c.id)) + '" aria-label="Remove ' + esc(c.name) + '">×</button>' : '') + '</div>'; }
+const mpfPickId = () => { try { return localStorage.getItem('mpt-pick') || ''; } catch (e) { return MPK.pick || ''; } };
+// (the page: the cards, then the picked character's keys; redrawn as keys come in)
+function mpfDraw() { if (S.page !== 'mpfind') return; MPF.view = []; const J = mpkGet(), cs = mpkChars().filter((c) => !(J.chars[c.id] || {}).none);
+  const cards = $('#mpfCards'), keys = $('#mpfKeys'), ago = $('#mpfAgo'); if (!cards || !keys) return;
+  const pick = cs.find((c) => String(c.id) === mpfPickId()) || cs[0];
+  cards.innerHTML = '<div class="tt-row">' + cs.map((c) => mpfCard(c, J, c === pick)).join('') +
+    '<div class="tt-card tt-add mpf-addc" role="button" tabindex="0" data-mpadd="1"><span class="tt-plus" aria-hidden="true">+</span><span class="tt-n">Add a character</span><span class="tt-l">Any character by name and realm, just for Mythic+. Your raid teams aren\'t touched.</span></div></div>' +
+    (MPK.err ? '<p class="mpf-msg mpt-bad">' + esc(MPK.err) + '</p>' : '');
+  if (ago) { const m = J.at ? Math.round((Date.now() - J.at) / 60000) : null; ago.textContent = MPK.busy ? 'finding new keys…' : m == null ? '' : 'checked ' + (m < 1 ? 'just now' : m < 60 ? plural(m, 'minute') + ' ago' : 'earlier'); }
+  if (!pick) { keys.innerHTML = '<p class="mpf-msg">Add a character to see their keys, or open any key above.</p>'; return; }
+  const extra = []; for (const k of J.added) extra.push({ it: { ...k, wcl: { code: k.code, fight: k.fight } }, n: 1, who: [], tag: 'added' }); for (const it of mpKeys()) if (!it.wcl && it.wallMs) extra.push({ it, n: 1, who: [], tag: 'from your PC', local: true });
+  const own = mpkOwn(pick, J), ids = new Set(own.map((r) => mpkId(r.it))), rows = own.concat(extra.filter((r) => !ids.has(mpkId(r.it)))), cls = (E.CLASSES || {})[pick.cls];
+  keys.innerHTML = '<div class="th-h"><h2' + (cls ? ' style="color:' + cls[1] + '"' : '') + '>' + esc(pick.name) + '\'s keys</h2><span class="sub">this season, by dungeon · highest first</span></div>' +
+    '<div class="mpf-keys">' + mpfByDungeon(rows, 'mptK', null) + '</div>';
   try { mpFoldRestore(); } catch (e) { /* (folds as drawn) */ } }
 const mpfPaste = () => { const v = $('#mpfIn').value.trim(); if (!v) return; MPF.addNext = true; openReportLink(v, $('#mpfMsg')); }; /* (its keys join the list (mpOpen)) */
-document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-mpfv],[data-mpk],[data-mpfm],[data-mpf-more],[data-mpf-open],[data-mpf-paste],[data-mpf-file],[data-mpf-real],#mpfGo'); if (!t) return;
+document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-mpx],[data-mpc],[data-mpadd],[data-mpfv],[data-mpk],[data-mpfm],[data-mpf-more],[data-mpf-open],[data-mpf-paste],[data-mpf-file],[data-mpf-real],#mpfGo'); if (!t) return;
   if (t.dataset.mpfv != null) { const r = MPF.view[+t.dataset.mpfv]; if (!r) return; if (r.local) mpOpen(r.it); else mpGo(r.it.wcl.code, r.it.wcl.fight); }
   else if (t.dataset.mpk != null) { MPK.pick = t.dataset.mpk; mpfDraw(); }
+  else if (t.dataset.mpx) { e.stopPropagation(); const J = mpkGet(), id = t.dataset.mpx; J.addedChars = J.addedChars.filter((c) => String(c.id) !== id); delete J.chars[id]; mpkSet(J); mpfDraw(); }
+  else if (t.dataset.mpc) { try { localStorage.setItem('mpt-pick', t.dataset.mpc); } catch (x) { MPK.pick = t.dataset.mpc; } mpfDraw(); }
+  else if (t.dataset.mpadd) { const fm = $('#mpfAddForm'); if (fm) { fm.hidden = !fm.hidden; if (!fm.hidden) fm.n.focus(); } }
   else if (t.dataset.mpfm) { const k = t.dataset.mpfm; if (MPK.more.has(k)) MPK.more.delete(k); else MPK.more.add(k); mpfDraw(); }
   else if (t.dataset.mpfMore) mpfMore();
   else if (t.dataset.mpfOpen) mpFinder();
@@ -258,7 +276,13 @@ document.addEventListener('click', (e) => { const t = e.target.closest && e.targ
   else if (t.dataset.mpfFile) nightDlg();
   else if (t.dataset.mpfReal) openShared(MP_REAL.night, { pull: MP_REAL.pull, tab: 'mplus' });
   else if (t.id === 'mpfGo') mpfPaste(); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target && e.target.id === 'mpfIn') mpfPaste(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target && e.target.id === 'mpfIn') mpfPaste(); else if ((e.key === 'Enter' || e.key === ' ') && e.target && e.target.matches && e.target.matches('.mpf-card, .mpf-addc')) { e.preventDefault(); e.target.click(); } });
+// (a character added by name: for Mythic+ only, kept in this browser; it never touches your raid teams)
+document.addEventListener('submit', async (e) => { const fm = e.target; if (!fm || fm.id !== 'mpfAddForm') return; e.preventDefault(); const msg = $('#mpfAddMsg'), n = fm.n.value.trim(), s2 = fm.s.value.trim(), r = fm.r.value; if (!n || !s2) return; if (msg) msg.hidden = true;
+  let creds = null; try { creds = await wclCreds(); } catch (x) { creds = null; }
+  try { const c = await WCL.charInfo(creds, { name: n, srv: srvSlug(s2), reg: r }), J = mpkGet(); if (!J.addedChars.some((x) => +x.id === +c.id)) J.addedChars.push({ id: c.id, name: c.name, cls: c.cls || '', server: c.server || '', guild: c.guild || '' }); mpkSet(J);
+    try { localStorage.setItem('mpt-pick', String(c.id)); } catch (x) { MPK.pick = String(c.id); } fm.reset(); fm.hidden = true; mpfDraw(); mpkImport(); }
+  catch (x) { if (msg) { msg.textContent = x.message || String(x); msg.hidden = false; } } });
 document.addEventListener('submit', (e) => { const f = e.target; if (!f || f.id !== 'mpfForm') return; e.preventDefault();
   const n = f.n.value.trim(), s = f.s.value.trim(), r = f.r.value, msg = $('#mpfFormMsg'); if (!n || !s) return; if (msg) msg.hidden = true;
   mpfStart({ name: n, srv: srvSlug(s), reg: r, server: s + ' (' + r + ')' }, false); const l = $('#mpfList'); if (l) l.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
@@ -1802,4 +1826,20 @@ html:not([data-theme]) .mpt .mpt-chap{background-image:linear-gradient(rgba(255,
 .mpf-dgh > summary::-webkit-details-marker{display:none} .mpf-dgh > summary > b{font:700 14.5px var(--body);color:var(--text)} .mpf-dgh > summary > span{font:500 12.5px var(--body)}
 .mpf-dgh .mpf-l{margin:0 0 6px} .mpt .mpf-none{margin:0 0 10px 2px;font:500 12.5px var(--body);color:var(--faint)} .mpt .mpf-showm{margin:0 0 10px 2px;font:600 12.5px var(--body)}
 .mpf-pp small{color:var(--faint);font-weight:500} .mpt .mpf-add{margin:0 0 12px}
+.mpf-home{max-width:1120px;margin:0 auto;padding:34px var(--gmin,16px) 48px;display:flex;flex-direction:column;gap:34px} /* (Home's page spacing, under its own name: the raid side reads th-home2 as Home) */
+@media (max-width:640px){ .mpf-home{padding-top:22px;gap:26px} }
+.mpf-home .th-hero h1 .mpf-gold{color:var(--gold)} .mpf-home .mpf-card{position:relative;cursor:pointer} .mpf-home .mpf-card.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+.mpf-home .mpf-strip{grid-template-columns:repeat(8,minmax(0,1fr))} .mpf-strip i.g{background:#7ee08f} .mpf-strip i.a{background:#f3c969} .mpf-strip i.m{background:#596070}
+.mpf-prog{display:block;height:4px;margin-top:6px;border-radius:2px;background:#252a35;overflow:hidden} .mpf-prog i{display:block;height:100%;background:var(--gold);transition:width .4s}
+.mpf-home .mpf-x{position:absolute;top:8px;right:10px;width:22px;height:22px;padding:0;border:0;border-radius:50%;background:none;color:var(--faint);font:600 16px/1 var(--body);cursor:pointer} .mpf-home .mpf-x:hover{color:var(--text);background:var(--raised)}
+.mpf-home .mpf-addc .tt-l{max-width:240px;font-size:12.5px} .mpf-home .mpf-addf{margin-top:12px}
+.mpf-home #mpfKeys{max-width:none;width:100%;align-self:stretch;margin:0;padding:0} .mpf-home .mpf-addf[hidden]{display:none} .mpf-keys{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:4px 18px 10px}
+.mpf-keys .mpf-dgh{border-top:1px solid var(--line)} .mpf-keys .mpf-dgh:first-child{border-top:0} .mpf-dsum{display:flex;justify-content:space-between;align-items:baseline;gap:2px 12px;flex-wrap:wrap;padding:11px 0;cursor:pointer;list-style:none}
+.mpf-dsum::-webkit-details-marker{display:none} .mpf-dsum > b{font:600 16px var(--head);color:#f3f5f9} .mpf-dg0 .mpf-dsum{cursor:default} .mpf-dg0 .mpf-dsum > b{color:var(--muted)} .mpf-dsum > span{font:500 13.5px var(--body)}
+.mpf-kl{padding:0 0 8px 12px} .mpf .mpf-kr{display:grid;grid-template-columns:40px minmax(0,1fr) auto 46px auto;gap:12px;align-items:center;width:100%;margin:0;padding:6px 0;background:none;border:0;border-top:1px solid #20242e;border-radius:0;color:var(--text);text-align:left;cursor:pointer;font:inherit}
+.mpf .mpf-kr:first-child{border-top:0} .mpf .mpf-kr:hover{background:rgba(255,255,255,.025)} .mpf .mpf-kr:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.mpf-lv2{display:grid;place-items:center;width:40px;height:30px;border-radius:7px;border:1px solid var(--line2);font:700 15px var(--head);color:#c9ced8} .mpf-lv2.mpf-hi{border-color:var(--gold);color:#f6dc9a}
+.mpf-kt{min-width:0;font:500 13.5px var(--body);color:#c9ced8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .mpf-kt small{color:var(--faint);font-size:12.5px} .mpf-res2{font:600 13.5px var(--head)} .mpf-dt2{color:var(--faint);font-size:13px;text-align:right}
+.mpf-kr .mpf-op{pointer-events:none} .mpt .mpf-showm{margin:4px 0 2px;font:600 12.5px var(--body)} .mpf-home .mpf-foot2{margin:-18px 0 0;font:500 12.5px var(--body);color:var(--faint)}
+@media (max-width:600px){ .mpf .mpf-kr{grid-template-columns:40px minmax(0,1fr) auto auto;gap:8px} .mpf-dt2{display:none} .mpf-kl{padding-left:0} .mpf-keys{padding:4px 12px 8px} }
 `;
