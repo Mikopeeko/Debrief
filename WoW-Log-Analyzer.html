@@ -13153,7 +13153,11 @@ html body #view > .dbt.dbt.dbx .dtm-vd .dbt-it.dbx-open > .dbt-c > .dbt-mapslot{
 .dtm-tlm section.dbx-ph{margin:0 !important;border:0 !important;padding:0 !important;background:none !important}
 .dtm-tlm .dbx-tr{position:relative}
 .dtm-tlm .dbx-sc{cursor:pointer}
-.dtm-tlh{position:absolute;top:0;width:2px;margin-left:-1px;background:var(--gold);box-shadow:0 0 6px rgba(232,192,90,.7);pointer-events:none;z-index:3}
+.dtm-tlh{position:absolute;top:0;width:2px;margin-left:-1px;background:var(--gold);box-shadow:0 0 6px rgba(232,192,90,.7);z-index:3;cursor:ew-resize;touch-action:none;pointer-events:auto}
+/* (the line can be dragged (Nov 2): a wider grab area and a small gold knob on top) */
+.dtm-tlh::before{content:'';position:absolute;top:0;bottom:0;left:-7px;right:-7px}
+.dtm-tlh::after{content:'';position:absolute;top:-6px;left:50%;width:11px;height:11px;margin-left:-5.5px;border-radius:50%;background:var(--gold);box-shadow:0 0 6px rgba(232,192,90,.7)}
+body.dtm-dragging, body.dtm-dragging *{cursor:ew-resize !important;user-select:none}
 .dtm-tlm .dbx-mk.fut{opacity:.28}
 .dtm-tlm + .dtm-vd{margin-top:10px}
 /* (follow one player from the replay (Nov 2): names can be clicked; the bar says who's followed, with Show everyone) */
@@ -24027,6 +24031,8 @@ const PATCH_NOTES = [
     "Debriefing Timeline replay on a computer: Space plays or pauses, and the arrow keys step to the previous or next mistake.",
     "Debriefing Timeline replay, The Twin Fangs: the map follows the raid around the room, the Submerge beam spins from the middle, and you can see the adds, the globules where they land, the spits, the Feast slams, the blood-orb soakers and the venom puddles. The play-by-play reads in plain sentences.",
     "Ravenous Feast on the maps: one circle that slams three times in the same spot, gone after the third slam.",
+    "Debriefing Timeline replay: drag the gold line on the timeline under the map to move through the pull.",
+    "Debriefing Timeline replay: a player a mechanic hits gets a red X for two seconds (a spit's bystanders, a second Feast strike, the players in a mistake), and The Twin Fangs' globules turn green with a check the moment their shield is broken.",
     "The Coiled Altar's maps: the poison pools are drawn at their real size, a little smaller than before.",
     "Debriefing Timeline: a You and Top guilds lane under the replay shows your phase pushes, deaths, mistakes and Lust next to the 20 fastest kills (The Coiled Altar for now). Click the lane to move the replay there.",
     "Mythic+ tab, less to read: Your group is one table with each player's DPS, kicks, CC, deaths, defensives and big cooldowns. The map's controls sit in one bar, with the floors and layers on the map. The long pull list and route chart are gone: each pull's details are on its tile, its hover and its card, and the map's first line says where your enemy count ended.",
@@ -34586,7 +34592,7 @@ function miniMap(mp, pmap) {
       '<text x="' + x + '" y="' + (y + h - 2.1) + '" text-anchor="middle" style="font-size:7.5px;font-weight:700" fill="#fff" stroke="#000" stroke-width="1.8" paint-order="stroke">' + esc(t) + '</text></g>';
   };
   // adds (e.g. the Spiteful Soulcoiler casting Wail of Terror): diamond with its name; green ring = kicked, red = got off
-  const gAdd = new Set(mp.goodAdd || []), bAdd = new Set(mp.badAdd || []), addRes = [];
+  const gAdd = new Set(mp.goodAdd || []), bAdd = new Set(mp.badAdd || []), addRes = [], okAddNow = new Set((mp.okAddAt || []).filter(([, t]) => ft >= t - 0.05).map((x) => x[0])); /* (adds done right from a moment on, e.g. a globule whose shield was broken: green border and a check) */
   // (more than two of the same add: their names only on hover, so a pack doesn't bury the map in labels (map audit, Oct 19))
   const addBase = (n) => String(n).replace(/ (.*)$/, ''), addN = new Map(); for (const q of pts) if (q.kind === 'add') addN.set(addBase(q.name), (addN.get(addBase(q.name)) || 0) + 1);
   if (mp.gdzLook) for (const p of pts.filter((q) => q.kind === 'axe')) s += ic(X(p), Y(p), gdzAxe(X(p), Y(p), ft)); /* (a guide's rolling axes) */
@@ -34596,7 +34602,7 @@ function miniMap(mp, pmap) {
     if (ring) addRes.push({ x, y, ly: y + 22, w: 140, pri: -1, html: '' }, { x, y, ly: y + 34, w: 140, pri: -1, html: '' }); // (its name and kick tag: no other name prints over them)
     const look = ADD_LOOK[p.name] || ADD_LOOK[String(p.name).replace(/ \(.*\)$/, '')]; // (kick maps name adds like "Spiteful Soulcoiler (Set 1 #2)")
     // an add with its own icon still gets the kick result: green ring = kicked, red = its cast got off, and it says so
-    if (look) { const st = gAdd.has(p.guid) ? ' · kicked' : bAdd.has(p.guid) ? ' · cast got off' : ''; s += ic(x, y, (ring ? '<circle cx="' + x + '" cy="' + y + '" r="' + (look.r + 6) + '" fill="none" stroke="' + ring + '" stroke-width="3.5"/>' : '') + addIcon(x, y, look, esc(p.name)) + (look.label && !crowd ? '<text x="' + x + '" y="' + (y + look.r + 14) + '" class="ml" style="font-size:10px' + (ring ? ';font-weight:800" fill="' + ring : '') + '">' + esc(look.label + st) + '</text>' : '') + castBar(p.guid, x, y + look.r + (look.label ? 18 : 6))); continue; }
+    if (look) { const st = gAdd.has(p.guid) ? ' · kicked' : bAdd.has(p.guid) ? ' · cast got off' : ''; s += ic(x, y, (ring ? '<circle cx="' + x + '" cy="' + y + '" r="' + (look.r + 6) + '" fill="none" stroke="' + ring + '" stroke-width="3.5"/>' : '') + (okAddNow.has(p.guid) ? addIcon(x, y, look, esc(p.name)).replace('fill="#ff3b3b"', 'fill="#2fd15a"') + '<circle cx="' + (x + look.r * 0.85) + '" cy="' + (y - look.r * 0.85) + '" r="4.5" fill="#2fd15a" stroke="#000" stroke-width="1"/><path d="M' + (x + look.r * 0.85 - 2.1) + ' ' + (y - look.r * 0.85) + 'l1.5 1.7l2.8-3.2" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' : addIcon(x, y, look, esc(p.name))) + (look.label && !crowd ? '<text x="' + x + '" y="' + (y + look.r + 14) + '" class="ml" style="font-size:10px' + (ring ? ';font-weight:800" fill="' + ring : '') + '">' + esc(look.label + st) + '</text>' : '') + castBar(p.guid, x, y + look.r + (look.label ? 18 : 6))); continue; }
     s += ic(x, y, (ring ? '<circle cx="' + x + '" cy="' + y + '" r="14" fill="none" stroke="' + ring + '" stroke-width="3"/>' : '') +
       '<rect x="' + (x - 8) + '" y="' + (y - 8) + '" width="16" height="16" transform="rotate(45 ' + x + ' ' + y + ')" fill="#b46bff" stroke="#000" stroke-width="1.5"><title>' + esc(p.name) + '</title></rect>' +
       (bAdd.has(p.guid) ? '<path d="M' + (x - 4) + ' ' + (y - 4) + 'l8 8M' + (x + 4) + ' ' + (y - 4) + 'l-8 8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>' : '') +
@@ -34609,9 +34615,9 @@ function miniMap(mp, pmap) {
   // outcome markers: green ring + check = did the mechanic right, red ring + X = got it wrong
   const good = new Set(mp.good || []), bad = new Set(mp.bad || []), warnS = new Set(mp.warn || []);
   // animated maps: a red X appears only once that player is actually hit
-  const badNow = mp.badAt ? new Set(mp.badAt.filter(([, t]) => ft >= t - 0.05).map((x) => x[0])) : bad;
+  const badNow = mp.badAt ? new Set(mp.badAt.filter(([, t, e]) => ft >= t - 0.05 && (e == null || ft <= e)).map((x) => x[0])) : bad; /* (a mark with an end shows only until then: the replay's 2 s marks) */
   // (and a green check only once that player has done it: until then they have the white ring)
-  const goodNow = mp.goodAt ? new Set(mp.goodAt.filter(([, t]) => ft >= t - 0.05).map((x) => x[0])) : good;
+  const goodNow = mp.goodAt ? new Set(mp.goodAt.filter(([, t, e]) => ft >= t - 0.05 && (e == null || ft <= e)).map((x) => x[0])) : good;
   // (a short note after a name, e.g. Helical Toxins stacks; and lines joining two players for a moment, e.g. a pair)
   // (a tag can be for a stretch of time: [guid, text, from, to])
   const tagOf = new Map((mp.tags || []).filter(([, , a, b]) => a == null || (ft >= a && ft < b)).map(([g, txt]) => [g, txt]));
@@ -34670,6 +34676,7 @@ function miniMap(mp, pmap) {
   if (cbShown || (!LL && f0 != null && pts.some((q) => (q.kind === 'add' || q.kind === 'boss') && (cbs.get(q.guid) || []).some((c) => c.t0 <= f1 && c.t1 + 1.5 >= f0)))) leg.push([(x, y) => '<rect x="' + (x - 7) + '" y="' + (y - 3) + '" width="14" height="6" rx="1.5" fill="#05060a" stroke="#000"/><rect x="' + (x - 6.5) + '" y="' + (y - 2.5) + '" width="8" height="5" rx="1" fill="#f3c969"/>', 'Cast bar: gold while it casts, then green with who kicked it, or red when it went off']);
   for (const k of hasObj) leg.push([(x, y) => k === 'axe' ? '<circle cx="' + x + '" cy="' + y + '" r="5.5" fill="rgba(255,150,40,.2)" stroke="#ff9628" stroke-width="1.2" stroke-dasharray="2 2"/>' : k === 'ghost' ? '<path d="M' + (x - 5) + ' ' + (y + 6) + 'v-6a5 5 0 0 1 10 0v6l-2.5-1.7-2.5 1.7-2.5-1.7z" fill="#e9eef7" stroke="#000"/>' : '<circle cx="' + x + '" cy="' + y + '" r="5.5" fill="url(#' + (k === 'porb' ? 'orbP' : 'orbG') + ')"/>', OBJS[k][1]]);
   if (mp.lines && mp.lines.length) leg.push([(x, y) => '<path d="M1 11L11 1L15 5L5 15Z" fill="rgba(159,242,109,.4)" stroke="#9ff26d" stroke-width="1.2"/>', 'Green band: Corrosive Spit aiming, from the add through its target and beyond. It only hurts the moment it fires (turns yellow); grey dashed = the add died before it fired, so it never hit anyone. About ' + SPIT_LEN + ' yd long, ' + SPIT_W + ' yd wide, measured from bystander hits']);
+  if ((mp.okAddAt || []).length) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#2fd15a" stroke="#000"/><path d="M' + (x - 2.6) + ' ' + y + 'l1.8 2l3.4-3.8" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>', mp.okAddLegend || 'Green border with a check: done right']);
   for (const [nm, look] of Object.entries(ADD_LOOK)) if (pts.some((q) => q.kind === 'add' && q.name === nm) || (lm.frames && lm.frames.some((f) => f.pts.some((q) => q.name === nm)))) leg.push([(x, y) => addIcon(x, y, look, '', 6 / (look.r + 2.5)), look.legend || nm]);
   if ((mp.marks || []).some((m) => m.kind === 'ichor')) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="rgba(242,36,58,.2)" stroke="#f2243a" stroke-width="2" stroke-dasharray="3 2"/>', 'Red dashed ring: Coiling Ichor target (circle size not published)']);
   if ((mp.marks || []).some((m) => m.kind === 'stone')) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="rgba(255,150,40,.25)" stroke="#ff9628" stroke-width="1.5" stroke-dasharray="3 2"/>', 'Orange circle: Stone Breaker on the tank (3.5 yd)']);
@@ -65441,6 +65448,7 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
     debuffs: { 'Tainted Blood': [1.5, '#c0392b', 'Soaking a blood orb'], 'Noxious Slick': [2.5, '#c4f03c', 'In a Noxious Slick puddle (+30% damage taken)'] },
     /* (Stone Breaker's slams come from the fight check's own slam times: its debuff is the long vulnerability, not the slam) */
     secRings: [{ sec: 'stone', who: 2, r: 3.5, color: '#ff9628', dur: 1.5, legend: 'Stone Breaker slam (3.5 yd)' }],
+    okAdds: { sec: 'bulwark', unit: 'Barbed Bulwark', by: 2, up: 4, legend: 'Green border with a check: its shield was broken' },
     /* (Submerge's Vile Flood: one beam from the middle. It starts the way Vexhul faces at the cast (in the log), turns the way the raid moves
        round after it (they follow it), at the guide's 25 degrees a second for 12 s (on Wolfthorn's kill that puts it over Optt when he was hit),
        84 yd long and 9 wide as in the guide. The camera frames about 80 yd around the raid, as the room is three platforms wide) */
@@ -65694,7 +65702,9 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
         if (!P.fr) P.fr = buildFrames(rep, Math.ceil(end), MMs, RX[it0.boss]); var fr = P.fr, fi = Math.max(0, Math.min(fr.length - 1, Math.round(at / STEP)));
         var byN = {}; rep.players.forEach(function (p) { if (p && p.name) byN[p.name] = p.guid; });
         /* (every mechanic the site can draw, at its own time: frontals, circles, the pools; each mechanic map's own timing decides when it shows) */
-        var rings = [], cones = [], pools = null, seenR = {}, seenC = {}, seenX = {}, XT = {};
+        var rings = [], cones = [], pools = null, seenR = {}, seenC = {}, seenX = {}, XT = {}, BAT = [], GAT = [], seenM = {};
+        /* (a red X on a player for 2 s when a mechanic hits them (a spit's bystanders, a second Feast strike), a green check when they do it right) */
+        var markAt = function (L, g, t0) { var kk = (L === BAT ? 'b' : 'g') + g + '|' + Math.round(t0 * 10); if (!g || t0 == null || isNaN(t0) || seenM[kk]) return; seenM[kk] = 1; L.push([g, +t0, +t0 + 2]); };
         /* (a circle's colour as a word, for the map's Key: one line per kind, "Purple circle: Carrying a purple orb") */
         var CW = function (c) { return ({ '#da3df2': 'Pink', '#5fd35f': 'Green', '#7ee08f': 'Green', '#b65cff': 'Purple', '#a35cf2': 'Purple', '#b98cff': 'Lilac', '#aeb6bf': 'Grey', '#e8c05a': 'Gold', '#cdb35a': 'Gold', '#e8a23a': 'Orange', '#ff9628': 'Orange', '#f0726a': 'Red', '#c0392b': 'Dark red', '#c4f03c': 'Lime' }[String(c).toLowerCase()] || 'Coloured') + ' circle'; };
         MMs.forEach(function (x) { var mp0 = x.map || {}, F0 = mp0.frames || [], a0 = F0.length ? F0[0].t : x.t - 3, b0 = F0.length ? F0[F0.length - 1].t : x.t + 2;
@@ -65702,9 +65712,10 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
           (mp0.cones || []).concat(mp0.cone ? [mp0.cone] : []).forEach(function (c) { var q = Object.assign({}, c); if (q.at == null) q.at = x.t; var kk = (q.name || '') + '|' + Math.round(q.at * 10); if (seenC[kk]) return; seenC[kk] = 1; cones.push(q); });
           if (!pools && mp0.pools && mp0.pools.length) pools = mp0.pools;
           /* (and their lines (Corrosive Spit), markers, links and arrows: only ones with their own start and end, so each shows in its time) */
+          (mp0.badAt || []).forEach(function (q) { if (q) markAt(BAT, q[0], q[1]); }); (mp0.goodAt || []).forEach(function (q) { if (q) markAt(GAT, q[0], q[1]); });
           ['lines', 'marks', 'links', 'arrows'].forEach(function (k) { (mp0[k] || []).forEach(function (q) { if (!q || q.t0 == null || q.t1 == null) return; var kk = k + '|' + JSON.stringify(q); if (seenX[kk]) return; seenX[kk] = 1; (XT[k] = XT[k] || []).push(q); }); }); });
         /* (the players in a mistake get a ring for a few seconds as it happens) */
-        bad.forEach(function (i) { var m = M[i], lv = lvOf(m); if (((RX[it0.boss] || {}).noMap || []).indexOf(m.id) >= 0) return; /* (no circles for dispels: they stay in the list) */ var who0 =m.death && GM[i] ? GM[i].reduce(function (A, j) { return A.concat(M[j].who); }, []) : m.who; who0.forEach(function (wv) { var g = byN[wv.n]; if (g) rings.push({ guid: g, r: 3, color: lv === 'n' ? '#cdb35a' : lv === 'm' ? '#e8a23a' : '#f0726a', fill: 'rgba(240,114,106,0.14)', t0: m.t - 0.5, dur: 5, cn: CW(lv === 'n' ? '#cdb35a' : lv === 'm' ? '#e8a23a' : '#f0726a'), legend: m.death ? 'died' : 'in a mistake', label: '', tip: wv.n + ': ' + nameOf(m, i) }); }); });
+        bad.forEach(function (i) { var m = M[i], lv = lvOf(m); if (((RX[it0.boss] || {}).noMap || []).indexOf(m.id) >= 0) return; /* (no circles for dispels: they stay in the list) */ var who0 =m.death && GM[i] ? GM[i].reduce(function (A, j) { return A.concat(M[j].who); }, []) : m.who; if (!m.death) { who0.forEach(function (wv) { markAt(BAT, byN[wv.n], m.t - 0.3); }); return; } /* (a mistake: a red X on its players for 2 s) */ who0.forEach(function (wv) { var g = byN[wv.n]; if (g) rings.push({ guid: g, r: 3, color: lv === 'n' ? '#cdb35a' : lv === 'm' ? '#e8a23a' : '#f0726a', fill: 'rgba(240,114,106,0.14)', t0: m.t - 0.5, dur: 5, cn: CW(lv === 'n' ? '#cdb35a' : lv === 'm' ? '#e8a23a' : '#f0726a'), legend: m.death ? 'died' : 'in a mistake', label: '', tip: wv.n + ': ' + nameOf(m, i) }); }); });
         /* (the debuff circles from the log: each Gloombomb, orb carried, mind control and Venomfang on its player, from when it lands until it ends) */
         var DB = (RX[it0.boss] || {}).debuffs || {}; rep.players.forEach(function (p) { if (!p || !p.debuffs || !p.debuffs.forEach) return; p.debuffs.forEach(function (v, nm) { var st = DB[nm]; if (!st || !v || !v.sp) return; v.sp.forEach(function (iv) { var a1 = +iv[0], b1 = iv[1] == null ? a1 + 6 : +iv[1]; if (!(b1 > a1)) return; rings.push({ guid: p.guid, r: st[0], color: st[1], fill: st[1] + '22', t0: a1, dur: b1 - a1, cn: CW(st[1]), legend: st[2], label: '', tip: p.name + ': ' + st[2] }); }); }); });
         /* (moments from a fight check's own rows: a short circle on the players named in a row, at its time (Stone Breaker's slams)) */
@@ -65730,8 +65741,13 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
           if (shS && shG) { var shR = (shS.rows || []).map(function (row) { var tx = String((row[3] || {}).txt || ''), a = tx.match(/after ([\d.]+) s(?: \(([\d.]+) s to spare\))?/); return { t: (row[1] || {}).t, a: a ? +a[1] : null, len: a && a[2] ? +a[1] + +a[2] : null, end: /pull ended/i.test(tx), nb: /not broken/i.test(tx) }; }).filter(function (x) { return x.t != null; });
             var cast = (shR.filter(function (x) { return x.len; })[0] || {}).len;
             shR.forEach(function (x) { var d = x.a != null ? x.a : x.nb ? cast : x.end ? end - x.t : null; if (d) rings.push({ guid: shG, r: RB.shield.r, color: RB.shield.color, fill: RB.shield.color + '22', t0: x.t, dur: d, cn: CW(RB.shield.color), legend: RB.shield.cn, label: RB.shield.lab || '', tip: RB.shield.cn }); }); } }
+        /* (adds done right: a globule's border turns green with a check the moment its shield is broken by a CC; matched to the fight check's
+           rows by when each landed) */
+        var OKA = []; if (RB.okAdds) { var oa = RB.okAdds, UN = []; rep.positions.forEach(function (u, g) { if (((rep.unitNames && rep.unitNames.get(g)) || u.name) === oa.unit && u.pts.length) UN.push({ g: g, t: u.pts[0][0], used: false }); });
+          (MS[oa.sec] || []).forEach(function (row) { var lt = null; for (var q = 0; q < row.length; q++) if (row[q] && row[q].t != null) { lt = +row[q].t; break; } var by = row[oa.by] && row[oa.by].p, up = parseFloat(row[oa.up] && row[oa.up].txt); if (lt == null || !by || isNaN(up)) return;
+            var best = null; UN.forEach(function (x) { if (!x.used && Math.abs(x.t - lt) <= 1.5 && (!best || Math.abs(x.t - lt) < Math.abs(best.t - lt))) best = x; }); if (best) { best.used = true; OKA.push([best.g, lt + up]); } }); }
         Object.keys(RB.auras || {}).forEach(function (nm) { var st = RB.auras[nm], g = gOf(st[0]); if (g) (rep.bossAuras || []).forEach(function (a) { if (a && a.n === nm && a.e > a.a) rings.push({ guid: g, r: st[1], color: st[2], fill: st[2] + '22', t0: a.a, dur: a.e - a.a, cn: CW(st[2]), legend: st[3], label: st[4] || '', tip: st[3] }); }); });
-        var mp = { t: at, boss: it0.boss, pts: fr[fi].pts, frames: fr, spd: P.spd, rings: rings, cones: cones }; Object.keys(XT).forEach(function (k) { mp[k] = XT[k]; });
+        var mp = { t: at, boss: it0.boss, pts: fr[fi].pts, frames: fr, spd: P.spd, rings: rings, cones: cones }; Object.keys(XT).forEach(function (k) { mp[k] = XT[k]; }); mp.badAt = BAT; mp.goodAt = GAT; if (OKA.length) { mp.okAddAt = OKA; mp.okAddLegend = (RB.okAdds || {}).legend; }
         /* (a beam from the middle (The Twin Fangs' Vile Flood): from the boss's facing at the cast, turning the way the raid moves round after it) */
         var BM = (RX[it0.boss] || {}).beam; if (BM && (rep.tfBeams || []).length) { mp.liveBeams = true; mp.beams = rep.tfBeams.map(function (q) { var f = +q[3], a0 = Math.atan2(Math.cos(f), -Math.sin(f)) * 180 / Math.PI;
             var ang = function (t0) { var sx = 0, sy = 0, n = 0; rep.players.forEach(function (p) { var u = rep.positions.get(p.guid), b = null; if (!u) return; for (var i = 0; i < u.pts.length && u.pts[i][0] <= t0 + 0.3; i++) b = u.pts[i]; if (!b || t0 - b[0] > 3) return; var A = Math.atan2(b[2] - q[2], b[1] - q[1]); sx += Math.cos(A); sy += Math.sin(A); n++; }); return n ? Math.atan2(sy, sx) : null; };
@@ -65809,6 +65825,7 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
     /* (picking a moment plays into it: the replay starts 4 s before and stops just after, and the list follows the pick) */
     var pickI = function (k) { var X0 = box._X, t0 = box._tOf ? box._tOf(k) : 0, m = typeof k === 'number' ? X0.M[k] : null; P.pick = k; X0.F.xo = m && m.st !== 'ok' ? k : null; P.lastXo = X0.F.xo; P.userScroll = false; P.mt = Math.max(0, (t0 || 0) - 4); P.clip = { to: (t0 || 0) + 0.6 }; tip.classList.remove('on'); X0.draw(); };
     box.addEventListener('click', function (e) { var t = e.target.closest ? e.target : null; if (!t) return;
+      if (box._dragged) { e.preventDefault(); e.stopPropagation(); return; } /* (the click that ends a drag of the timeline's line does nothing more) */
       if (t.closest('.zplay')) { if (!P.auto) { P.clip = null; P.userScroll = false; P.camFree = false; } return; } /* (Play: the list follows again) */
       var sp = t.closest('[data-spd]'); if (sp) { P.spd = +sp.dataset.spd; P.clip = null; box._X.draw(); return; }
       var sc = t.closest('[data-scrub]'); if (sc && !t.closest('[data-ti]')) { var r = sc.getBoundingClientRect(), tt = Math.max(0, Math.min(box._end || 1, (e.clientX - r.left) / r.width * (box._axEnd || 1))); var rg = box.querySelector('.dtm-mm .zrange'); if (rg) { P.clip = null; P.seek = true; rg.value = Math.round(tt / STEP); rg.dispatchEvent(new Event('input')); P.mt = tt; } return; }
@@ -65841,6 +65858,16 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
       var a = document.activeElement, tg = a && a.tagName; if (tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'SELECT' || (a && a.isContentEditable)) return;
       var bx = document.querySelector('section.dbt.dtm-on .dtm'); if (!bx || !bx._keys) return; var r0 = bx.getBoundingClientRect(); if (r0.bottom < 80 || r0.top > innerHeight - 80) return; /* (only while the replay is on screen) */
       e.preventDefault(); bx._keys(k); }); }
+    /* (the timeline's gold line can be dragged: grab it, or press anywhere on the strip and slide, and the replay follows, pausing if it was
+       playing; the play-by-play fills as you go. On a phone you grab the line itself, so a swipe on the strip still scrolls it (Flex, Nov 2:
+       "make the line draggable")) */
+    var drag = null, seekX = function (cx) { var tr0 = box.querySelector('.dtm-tlm .dbx-tr'), PH0 = (box._phs || [])[box._tlPh], rg0 = box.querySelector('.dtm-mm .zrange'); if (!tr0 || !PH0 || !rg0) return;
+      var r0 = tr0.getBoundingClientRect(), tt = PH0.start + Math.max(0, Math.min(1, (cx - r0.left) / r0.width)) * (PH0.end - PH0.start); P.clip = null; P.seek = true; rg0.value = Math.round(tt / STEP); rg0.dispatchEvent(new Event('input')); P.mt = tt; };
+    box.addEventListener('pointerdown', function (e) { var sc = e.target.closest && e.target.closest('.dtm-tlm .dbx-sc'); if (!sc || e.button > 0) return; var onHead = !!e.target.closest('.dtm-tlh'); if (e.pointerType === 'touch' && !onHead) return; drag = { x: e.clientX, cx: e.clientX, moved: false, id: e.pointerId, raf: 0 }; if (onHead) e.preventDefault(); });
+    document.addEventListener('pointermove', function (e) { if (!drag || e.pointerId !== drag.id) return; if (!drag.moved && Math.abs(e.clientX - drag.x) < 4) return;
+      if (!drag.moved) { drag.moved = true; var pb = box.querySelector('.dtm-mm .zplay'); if (pb && /Pause/.test(pb.textContent)) { P.auto = true; pb.click(); P.auto = false; } document.body.classList.add('dtm-dragging'); tip.classList.remove('on'); }
+      e.preventDefault(); drag.cx = e.clientX; if (!drag.raf) drag.raf = requestAnimationFrame(function () { if (drag) { drag.raf = 0; seekX(drag.cx); } }); });
+    document.addEventListener('pointerup', function (e) { if (!drag) return; if (drag.moved) { seekX(e.clientX); box._dragged = true; setTimeout(function () { box._dragged = false; }, 0); } document.body.classList.remove('dtm-dragging'); drag = null; });
     var mine = function (e) { if (e.target.closest && e.target.closest('.dtm-pb')) P.userScroll = true; }; box.addEventListener('wheel', mine, { passive: true }); box.addEventListener('touchmove', mine, { passive: true });
     box.addEventListener('mouseover', function (e) { var b = e.target.closest && e.target.closest('[data-tt]'); if (!b || !box.contains(b)) { tip.classList.remove('on'); return; } tip.innerHTML = b.dataset.tt; tip.classList.add('on'); var r = b.getBoundingClientRect(), wd = tip.offsetWidth, x = r.left + r.width / 2 - wd / 2; x = Math.max(8, Math.min(innerWidth - wd - 8, x)); var y = r.top - tip.offsetHeight - 8; if (y < 8) y = r.bottom + 8; tip.style.left = x + 'px'; tip.style.top = y + 'px'; });
     box.addEventListener('mouseleave', function () { tip.classList.remove('on'); });

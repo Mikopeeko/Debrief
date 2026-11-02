@@ -13153,7 +13153,11 @@ html body #view > .dbt.dbt.dbx .dtm-vd .dbt-it.dbx-open > .dbt-c > .dbt-mapslot{
 .dtm-tlm section.dbx-ph{margin:0 !important;border:0 !important;padding:0 !important;background:none !important}
 .dtm-tlm .dbx-tr{position:relative}
 .dtm-tlm .dbx-sc{cursor:pointer}
-.dtm-tlh{position:absolute;top:0;width:2px;margin-left:-1px;background:var(--gold);box-shadow:0 0 6px rgba(232,192,90,.7);pointer-events:none;z-index:3}
+.dtm-tlh{position:absolute;top:0;width:2px;margin-left:-1px;background:var(--gold);box-shadow:0 0 6px rgba(232,192,90,.7);z-index:3;cursor:ew-resize;touch-action:none;pointer-events:auto}
+/* (the line can be dragged (Nov 2): a wider grab area and a small gold knob on top) */
+.dtm-tlh::before{content:'';position:absolute;top:0;bottom:0;left:-7px;right:-7px}
+.dtm-tlh::after{content:'';position:absolute;top:-6px;left:50%;width:11px;height:11px;margin-left:-5.5px;border-radius:50%;background:var(--gold);box-shadow:0 0 6px rgba(232,192,90,.7)}
+body.dtm-dragging, body.dtm-dragging *{cursor:ew-resize !important;user-select:none}
 .dtm-tlm .dbx-mk.fut{opacity:.28}
 .dtm-tlm + .dtm-vd{margin-top:10px}
 /* (follow one player from the replay (Nov 2): names can be clicked; the bar says who's followed, with Show everyone) */
