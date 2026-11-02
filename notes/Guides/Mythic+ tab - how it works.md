@@ -1,7 +1,8 @@
 # Mythic+ tab: how it works (Nov 1, 2026)
 
 The website's Mythic+ tab reads a Mythic+ key from a Warcraft Logs report and shows it top to bottom, as in the Design studio's round 3 that Flex approved ("Looks good").
-Steps 1 and 2 of the plan: the key top to bottom, and where the time went against a fast run. Routes on a map (step 3) come later.
+It covers steps 1 to 3 of the plan: the key top to bottom, where the time went against a fast run, and your route on the map (see Your route below).
+Page text never names Warcraft Logs (Flex's rule, Oct 19).
 
 ## Where it shows
 - Paste a Warcraft Logs report that has keys. A report of only keys opens on the Mythic+ tab, on the key in the link or else the newest.
@@ -48,6 +49,32 @@ Steps 1 and 2 of the plan: the key top to bottom, and where the time went agains
   - N casts went off
   - an enemy buff from the dungeon's list with its count, e.g. Bolster ×6, from the log and never explained
   A pull with something in it opens.
+
+## Your route (step 3, Nov 1)
+It comes after Where you fell behind. Flex's picks: "Yes, the map dots", and enemy counts from Raider.IO with its credit link.
+- **The four lines:**
+  - "You reached X% after pull N. Pull M added Y% when you needed Z%."
+  - the stretch where your pulls differ most from the fast run's ("Between A and B you got X% in N pulls. The fast run got Y% in M pulls.")
+  - the extra past 100% for both runs
+  - each run's biggest pull
+  Facts only, never advice.
+- **Two strips:** you and the fast run. Each pull is a piece as wide as what it counted, with its number inside. Bosses get a gold mark, and anything past 100% is striped red.
+- **On the map:**
+  - one small picture per floor, in the game's floor order
+  - your pulls numbered on a dashed path, gold for bosses and a red ring for a wipe
+  - the fast run as small grey dots and a faint path
+- **Pull by pull, side by side,** with what each pull counted and the running total.
+- **Credit:** "Enemy counts: Raider.IO", with a link (Flex's okay, Nov 1: Raider.IO's rule).
+
+How it's worked out (`mpRouteOf` in `src/mptab.js`, from the key's own events):
+- **Enemy counts:** each enemy that died counts once, in the pull it died in or after. The values come from `MP_ROUTE[dungeon].n` (NPC ID: count), built from Raider.IO's run details of each dungeon's top runs and Flex's 13 runs (Nov 1).
+- **Checked:** Flex's Voidscar Arena +12 adds up to 803, the same as Raider.IO's own list for that run (108.8%). The Design studio's 761 came from the mobs listed in each pull.
+- **Ruby Life Pools:** Raider.IO lists several of its enemies as 0. A finished key there comes out at 78%, so whenever a finished key adds up under 99%, the counts are left out with a plain note. The map and the table still show.
+- **Where each pull happened:** the middle (median) of the enemies' positions during the pull, on the floor most of them stood on. Warcraft Logs' x and y become WoW's north and west, and `mapID` is the floor's uiMapID.
+- **Floors:** corners from wago.tools `UiMapAssignment` (12.1.5.70688). Across = (maxY − y) / (maxY − minY), down = (maxX − x) / (maxX − minX).
+- **Pictures:** Wowhead's `wow.zamimg.com/images/wow/maps/enus/original/<zone>[-N].jpg`, loaded at runtime and never bundled. N is the game's floor order (`UiMapGroupMember.FloorIndex`). That matches the Design studio's hand check of Voidscar Arena, and all 18 pictures exist.
+- **Checked on the maps:** Voidscar Arena (3 floors), The Blinding Vale (1) and Ruby Life Pools (2). The dots sit on the walkways.
+- **Not yet:** grey dots for packs nobody pulled. That needs Mythic Dungeon Tools' pack layout and its author's okay.
 
 ## Rules Flex set
 - Dungeon facts from 12.1 to 12.1.5 only. Timers and lists live in `companion/mplus.js`.

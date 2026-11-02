@@ -23716,7 +23716,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-11-01', h: [{ t: 'Mythic+ tab', d: 'Open a Warcraft Logs report with a Mythic+ key, and the new Mythic+ tab shows the whole key. First, what gets you the next level, ranked by seconds on the timer. Then where you fell behind the fastest timed run of your dungeon and level. Then every pull, the casts that got through, the deaths, and each player against the same spec in the fastest runs.' }, { t: 'Rotation knows single target from AoE', d: 'Your rotation is now judged by how many enemies were close: Divine Storm, Blade Flurry, Whirlwind, Spinning Crane Kick and Seed of Corruption on packs, the single-target buttons on one. For now in Mythic+, where packs are the fight. Raid shows how many enemies were close.' }, { t: 'A key for your recap', d: 'Press Ctrl + Shift + D anywhere, even in WoW, and your newest recap shows over the game; press it again to hide it. Debrief Companion asks you to pick the key once, and you can change it any time. Play in Windowed (Fullscreen) so it shows on top.' }, { t: 'Mythic+ run recap', d: 'When a key ends, Debrief Companion pops up one recap of the whole run: how close you came to the next level and what the deaths cost, a tab for each pull with what got through and whose kick was ready, kicks and stuns, avoidable damage, deaths, and everyone\'s rotation, for you or anyone in the group. Save this key brings the same recap into WoW.' }, { t: 'Debriefing Timeline, across the page', d: 'Each phase is one chart: every mechanic a row, every moment a dot, green for done right and red for a mistake, with the boss health behind. Hover a dot for what happened. Under it, every mistake is one line; click it for why and what to do next time.' }], n: [
+  { d: '2026-11-01', h: [{ t: 'Mythic+ tab', d: 'Open a report with a Mythic+ key, and the new Mythic+ tab shows the whole key. First, what gets you the next level, ranked by seconds on the timer. Then where you fell behind the fastest timed run of your dungeon and level. Your route is on the game\'s own map, with how much each pull counted. Then every pull, the casts that got through, the deaths, and each player against the same spec in the fastest runs.' }, { t: 'Rotation knows single target from AoE', d: 'Your rotation is now judged by how many enemies were close: Divine Storm, Blade Flurry, Whirlwind, Spinning Crane Kick and Seed of Corruption on packs, the single-target buttons on one. For now in Mythic+, where packs are the fight. Raid shows how many enemies were close.' }, { t: 'A key for your recap', d: 'Press Ctrl + Shift + D anywhere, even in WoW, and your newest recap shows over the game; press it again to hide it. Debrief Companion asks you to pick the key once, and you can change it any time. Play in Windowed (Fullscreen) so it shows on top.' }, { t: 'Mythic+ run recap', d: 'When a key ends, Debrief Companion pops up one recap of the whole run: how close you came to the next level and what the deaths cost, a tab for each pull with what got through and whose kick was ready, kicks and stuns, avoidable damage, deaths, and everyone\'s rotation, for you or anyone in the group. Save this key brings the same recap into WoW.' }, { t: 'Debriefing Timeline, across the page', d: 'Each phase is one chart: every mechanic a row, every moment a dot, green for done right and red for a mistake, with the boss health behind. Hover a dot for what happened. Under it, every mistake is one line; click it for why and what to do next time.' }], n: [
     "On a smaller screen, the tiles at the top of Debriefing line up in even rows: no tile stretched across on its own and no empty gaps.",
     "The hovers on Debriefing's top tiles list every player, not just the first 10, and a tall hover stays on screen.",
     "Your recap is a side panel now: the full height of your screen on the right edge (or the left, with Side in /db card settings), one column that scrolls, in WoW and on your PC. Drag its inner edge on your PC to make it wider or narrower.",
@@ -60863,12 +60863,13 @@ async function mpRead(it, onStep) {
   if (MP.busy.has(k)) { const p0 = MP.busy.get(k); if (onStep) p0.on = onStep; return p0; }
   const p = (async () => {
     const est = Math.max(20000, it.duration * 210); /* (about 210 events a second in a key, from a +12 on Warcraft Logs) */
-    const ev = await WCL.loadEvents(S.wclCreds, it, (n) => { if (p.on) p.on('Downloading the key from Warcraft Logs…', Math.min(0.9, 0.9 * n / est)); });
+    const ev = await WCL.loadEvents(S.wclCreds, it, (n) => { if (p.on) p.on('Downloading the key…', Math.min(0.9, 0.9 * n / est)); }); /* (page text never names Warcraft Logs: Flex's rule, Oct 19) */
     if (p.on) p.on('Reading the key…', 0.92);
     const lines = await WCL.translateAsync(it, ev, () => new Promise((r) => setTimeout(r, 0)));
     await new Promise((r) => setTimeout(r, 30));
     const R = window.DBF_MPLUS ? window.DBF_MPLUS(lines.join('\n'), E) : null;
     if (!R || !R.pulls || !R.pulls.length) throw new Error('This key has no pulls Debrief could read.');
+    try { R.route = mpRouteOf(it, R, ev); } catch (e) { R.route = null; } /* (the route: where each pull happened and what it counted (step 3)) */
     MP.R[k] = R; return R;
   })();
   p.on = onStep; MP.busy.set(k, p); p.then(() => MP.busy.delete(k), () => MP.busy.delete(k));
@@ -60901,7 +60902,7 @@ function mpOpen(it) {
   try { navNote(); } catch (e) { /* (no address) */ } window.scrollTo(0, 0);
   const k = mpK(it), body = () => (MP.item === it && S.page === 'mplus' ? $('#mptBody') : null);
   if (MP.R[k]) { mpDraw(); return; }
-  const b0 = body(); if (b0) b0.innerHTML = '<div class="mpt-load">' + loadCard('Opening your key', 'Downloading the key from Warcraft Logs…', 0, 'mptLd') + '</div>';
+  const b0 = body(); if (b0) b0.innerHTML = '<div class="mpt-load">' + loadCard('Opening your key', 'Downloading the key…', 0, 'mptLd') + '</div>';
   delete MP.err[k];
   mpRead(it, (line, frac) => { const b = body(); if (b && typeof loadSet === 'function') loadSet(b, line, frac); }).then(() => { if (body()) mpDraw(); })
     .catch((err) => { MP.err[k] = err.message; const b = body(); if (b) b.innerHTML = '<div class="mpt-err"><b>Couldn\'t read this key.</b> ' + esc(err.message) + '</div>'; });
@@ -60975,7 +60976,7 @@ function mpHtml(it, R, fx) {
   const ban = '<div class="mpt-ban"><div class="mpt-kb">+' + run.level + '</div><div class="mpt-bt"><p class="mpt-k">Mythic+' + (date ? ' · ' + esc(date) : '') + '</p><h1>' + esc(run.dungeon || it.boss) + '</h1><div class="mpt-pills">' + pill +
     (ck ? '<span class="mpt-pill">' + mpMM(ck.time) + ' of ' + mpMM(ck.par) + '</span>' : run.timeMs ? '<span class="mpt-pill">' + mpMM(run.timeMs / 1000) + '</span>' : '') + '</div></div>' +
     '<div class="mpt-grp">' + R.people.slice().sort(mpByRole).map((p) => '<span class="mpt-gm" style="color:' + mpCC(p.cls) + '" title="' + esc(p.spec + ' ' + ((E.CLASSES[p.cls] || [])[0] || '')) + '">' + (MP_ROLE[p.role] || '') + '<b>' + esc(p.name) + '</b></span>').join('') + '</div></div>';
-  if (!C) return ban + '<p class="mpt-note">' + (run.left || !run.timeMs ? 'This key was left before the end, so there\'s no timer to judge. Everything that happened is below.' : 'Debrief doesn\'t know this dungeon\'s timer yet. Everything that happened is below.') + '</p>' + mpPulls(R, null) + mpCasts(R) + mpDeaths(R, null) + mpPlayers(R, fx, waiting);
+  if (!C) return ban + '<p class="mpt-note">' + (run.left || !run.timeMs ? 'This key was left before the end, so there\'s no timer to judge. Everything that happened is below.' : 'Debrief doesn\'t know this dungeon\'s timer yet. Everything that happened is below.') + '</p>' + mpRouteHtml(R, null, false) + mpPulls(R, null) + mpCasts(R) + mpDeaths(R, null) + mpPlayers(R, fx, waiting);
   // what gets you the next level
   const T = ck.time, P = ck.par, lv = ck.up, tgt = lv === 0 ? P : lv === 1 ? P * 0.8 : lv === 2 ? P * 0.6 : null, need = tgt != null ? Math.max(1, Math.round(T - tgt)) : 0; /* (as the timer shows it: 24:06 against 24:00 is 6 s) */
   const head = lv === 0 ? 'What gets you in time' : lv === 3 ? 'What would save the most time' : 'What gets you +' + (lv + 1);
@@ -60997,7 +60998,7 @@ function mpHtml(it, R, fx) {
     tile('Lost to deaths', mpMM(ck.deathCost), plural(ck.deaths, 'death'), ck.deathCost ? 'mpt-bad' : '') +
     tile('Standing between pulls', mpMM(ck.between), F ? 'fast run ' + mpMM(FC.ck.between) : 'between ' + plural(R.pulls.length, 'pull')) +
     tile('Casts that went off', String(thN), 'with a kick ready') + '</div>';
-  return ban + fixes + tiles + mpBehind(R, C, F, FC, fx, waiting) + mpPulls(R, C) + mpCasts(R) + mpDeaths(R, C) + mpPlayers(R, fx, waiting);
+  return ban + fixes + tiles + mpBehind(R, C, F, FC, fx, waiting) + mpRouteHtml(R, F, waiting) + mpPulls(R, C) + mpCasts(R) + mpDeaths(R, C) + mpPlayers(R, fx, waiting);
 }
 const mpSec = (t, sub, body) => '<section class="mpt-sec"><div class="mpt-sh"><h2>' + t + '</h2>' + (sub ? '<span>' + sub + '</span>' : '') + '</div>' + body + '</section>';
 // (where you fell behind: one timeline on the key's timer, your pulls next to a fast run, then why, stretch by stretch)
@@ -61014,7 +61015,7 @@ function mpBehind(R, C, F, FC, fx, waiting) {
     dticks.map((t) => '<i class="mpt-dth" style="left:' + X(t.x) + ';width:' + W(C.pen) + '" title="' + esc(t.d.who + ' died to ' + t.d.to + ': +' + Math.round(C.pen) + ' s') + '"></i>').join('') +
     CP.map((c) => '<span class="mpt-cp" style="left:' + X(c.you) + '"><i></i></span>').join('') + '</div>';
   const fastLane = F ? '<div class="mpt-lt"><i class="mpt-fbar" style="width:' + W(FC.ck.time) + '"></i>' + CP.filter((c) => c.fast != null).map((c) => '<span class="mpt-cp mpt-f" style="left:' + X(c.fast) + '"><i></i></span>').join('') + '</div>'
-    : '<div class="mpt-lt mpt-lt0"><span>' + (waiting ? 'Finding the fastest timed +' + R.run.level + ' on Warcraft Logs…' : 'No public fast run at this level yet.') + '</span></div>';
+    : '<div class="mpt-lt mpt-lt0"><span>' + (waiting ? 'Finding the fastest timed +' + R.run.level + '…' : 'No public fast run at this level yet.') + '</span></div>';
   const marks = '<div class="mpt-mk">' + [[0.6, '+3'], [0.8, '+2'], [1, '+1']].map(([f, l]) => '<span style="left:' + X(ck.par * f) + '">' + l + ' · ' + mpMM(ck.par * f) + '</span>').join('') + '</div>';
   const lines = [0.6, 0.8, 1].map((f) => '<i class="mpt-vl" style="left:' + X(ck.par * f) + '"></i>').join('');
   let lastX = -99, row = 0, rows = 1; const rowOf = CP.map((c) => { const x = 100 * c.you / W0; row = x - lastX < 13 ? 1 - row : 0; lastX = x; rows = Math.max(rows, row + 1); return row; }); /* (bosses close together: their labels take turns on two rows) */
@@ -61035,7 +61036,7 @@ function mpBehind(R, C, F, FC, fx, waiting) {
     const st = ck.between - FC.ck.between; sum += st <= 30 ? 'Your time standing between pulls is close to the fast run\'s.' : 'You stood ' + mpMM(st) + ' longer between pulls than the fast run.'; }
   else { const top = ST.slice().sort((a, b) => b.t - a.t)[0]; if (top) sum = 'Your longest stretch is ' + (top.name.startsWith('Start → ') ? 'from the start to <b>' + esc(top.boss) + '</b>' : 'from <b>' + esc(top.name).replace(' → ', '</b> to <b>') + '</b>') + ': ' + mpMM(top.t) + ' on the timer.'; }
   const pk = fx && fx.pick, at = pk && pk.at ? new Date(pk.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
-  const src = F ? '<p class="mpt-ex">The fast run is the fastest timed +' + R.run.level + ' ' + esc(R.run.dungeon) + ' on Warcraft Logs this season with a public log' + (at ? ' (' + esc(at) + ')' : '') + ', read the same way as yours.</p>' : '';
+  const src = F ? '<p class="mpt-ex">The fast run is this season\'s fastest timed +' + R.run.level + ' ' + esc(R.run.dungeon) + ' with a public log' + (at ? ' (' + esc(at) + ')' : '') + ', read the same way as yours.</p>' : '';
   return mpSec('Where you fell behind', F ? 'your key and a fast run on the same timer' : 'your key on its timer', timeline + why + (sum ? '<p class="mpt-why">' + sum + '</p>' : '') + src);
 }
 // (pull by pull: what was pulled, how long, what happened, and the standing after; a pull with something in it opens)
@@ -61090,6 +61091,101 @@ function mpPlayers(R, fx, waiting) {
       '<span class="mpt-pv"><b>' + Math.round((heal ? p.hps : p.dps) / 1000) + 'k</b><small>' + (heal ? 'healing a second' : 'damage a second') + '</small></span><span class="mpt-bar"><i style="width:' + (heal ? 100 : 100 * p.dps / mxD).toFixed(0) + '%"></i></span>' + vtxt +
       '<span class="mpt-m">' + plural(p.deaths, 'death') + ' · ' + plural(p.defs, 'defensive') + ' · ' + plural(p.avoid, 'avoidable hit') + '</span></div>'; }).join('');
   return mpSec('Players', runs.length ? 'each against players of the same spec in the 10 fastest runs' : 'damage and healing a second over the whole key', rows);
+}
+
+// ---------- your route (step 3, Nov 1; the Design studio's route mockup, Flex: "Yes, the map dots"; enemy counts from Raider.IO, Flex's pick) ----------
+// Each dungeon's 100%, its map pictures (Wowhead's, by zone: floor 0 is <zone>.jpg, floor 1 is <zone>-1.jpg, in the game's own floor order,
+// UiMapGroupMember.FloorIndex), its floors (uiMapID, the game's name, and the floor's corners in game coordinates: minX, maxX, minY, maxY, from
+// UiMapAssignment, 12.1.5.70688, both on wago.tools) and how much one kill of each enemy counts (NPC ID: count; from Raider.IO's run details of
+// the top runs and Flex's own, Nov 1; 0 is left out). Ruby Life Pools' counts are incomplete in Raider.IO (several of its enemies say 0), so a
+// finished key there adds up under 100% and the tab leaves its counts out.
+const MP_ROUTE = {
+  'altar of fangs': { full: 817, zone: 16865, floors: [[2588, 'Sacrificial Approach', 1414.58, 2008.33, 1662.5, 2552.08], [2589, 'Mutation Chambers', 1043.75, 1470.83, 1756.25, 2395.83], [2590, 'Altar of Fangs', 960, 1560, 1627.5, 2527.5]],
+    n: { 261550: 1, 261552: 5, 261553: 5, 261554: 25, 261557: 7, 261560: 7, 261573: 30, 262011: 25, 263109: 25, 263112: 1, 270306: 25, 271453: 5 } },
+  'den of nalorakk': { full: 729, zone: 16368, floors: [[2564, 'Dreamer\'s Passage', 4395, 4535, -5015, -4805], [2514, 'The Foraging', 4014.58, 4764.58, -5856.25, -4731.25], [2513, 'The Heart of Rage', 4500, 5129.17, -5350, -4406.25]],
+    n: { 241808: 8, 241813: 5, 241814: 7, 241816: 7, 241869: 28, 241872: 9, 241874: 5, 241876: 7, 241911: 7, 244889: 35, 245139: 7, 245143: 5, 245145: 6, 245146: 25, 245190: 5, 245752: 7, 245855: 25, 250478: 50 } },
+  'kings\' rest': { full: 608, zone: 9526, floors: [[1004, 'Kings\' Rest', -1240.31, -679.68, 2440, 3280.94]],
+    n: { 133935: 22, 134157: 5, 134158: 25, 134174: 20, 134251: 10, 134331: 25, 134739: 25, 135167: 22, 135192: 5, 135204: 7, 135231: 25, 135239: 7, 137473: 10, 137474: 25, 137478: 25, 137484: 25, 137485: 7, 137486: 25, 137487: 10, 137969: 15, 137989: 1, 270502: 7 } },
+  'murder row': { full: 655, zone: 16091, floors: [[2433, 'Murder Row', 8633.33, 8952.08, -5106.25, -4629.17], [2435, 'The Illicit Rain', 8850, 9000, -4895, -4670], [2434, 'Augurs\' Terrace', 8554.17, 9250, -5502.08, -4458.33]],
+    n: { 234849: 2, 235257: 1, 235261: 5, 235265: 25, 235267: 5, 235268: 7, 235322: 35, 235465: 25, 236071: 25, 236073: 3, 236082: 6, 236084: 7, 236085: 1, 236091: 3, 236893: 2, 236897: 7, 236902: 12, 236905: 30, 252529: 35, 255604: 6 } },
+  'ruby life pools': { full: 551, zone: 14063, floors: [[2095, 'Infusion Chambers', 1335, 1685, -450, 75], [2094, 'Ruby Overlook', 1345.83, 1868.75, -602.08, 181.25]],
+    n: { 187897: 30, 187969: 5, 188011: 5, 188067: 7, 188244: 25, 190207: 7, 197535: 30, 197697: 40, 197698: 48, 197982: 5, 198047: 25 } },
+  'temple of sethraliss': { full: 687, zone: 9527, floors: [[1038, 'Temple of Sethraliss', 3187.5, 3937.5, 2789.58, 3916.67], [1043, 'Atrium of Sethraliss', 3760.42, 4285.42, 3185.42, 3972.92]],
+    n: { 134364: 7, 134599: 7, 134600: 7, 134602: 7, 134616: 5, 134629: 25, 134686: 16, 134691: 5, 134990: 7, 134991: 25, 135007: 25, 135562: 7, 135846: 5, 136076: 25, 136250: 25, 139110: 5, 139422: 7, 139425: 7, 265057: 5, 268317: 5, 269227: 5 } },
+  'the blinding vale': { full: 686, zone: 16359, floors: [[2500, 'The Blinding Vale', 916.67, 1675, 1202.08, 2341.67]],
+    n: { 245336: 7, 245339: 6, 245345: 7, 245346: 20, 245410: 1, 245460: 7, 245473: 5, 245484: 7, 245513: 25, 245527: 1, 246871: 22, 249756: 60, 254850: 25 } },
+  'voidscar arena': { full: 738, zone: 16425, floors: [[2574, 'Halls of Spite', 4358.33, 4691.67, -705.01, -204.99], [2572, 'Voidscar Arena', 4368.75, 4718.75, -720.83, -195.83], [2573, 'Domanaar\'s Ascent', 4716.67, 5312.5, -912.5, -18.75]],
+    n: { 238883: 7, 241496: 7, 243766: 7, 243835: 5, 243983: 4, 243985: 5, 243988: 4, 243996: 4, 244260: 25, 244309: 25, 244708: 7, 245950: 65, 249461: 5, 249590: 8, 249603: 5, 249608: 5, 252053: 25, 252072: 25, 252508: 1, 263228: 25, 267545: 40, 267546: 40, 268184: 30 } },
+};
+// (from the key's own events: each enemy that died counts once, for the pull it died in or after; each pull's spot is the middle (median) of
+// its enemies' positions, on the floor most of them stood on (x and y the way WoW writes them: north and west). Checked Nov 1: Flex's Voidscar
+// Arena +12 adds up to 803 (108.8%), the same as Raider.IO's own list of that run)
+function mpRouteOf(it, R, ev) {
+  const T = MP_ROUTE[String(R.run.dungeon || it.boss).toLowerCase().replace(/[’`]/g, '\'')]; if (!T || !it.wcl || !it.wcl.actors) return null;
+  const A = it.wcl.actors, w0 = it.wcl.start, P = R.pulls, ui = new Set(T.floors.map((f) => f[0])), npc = (id) => { const a = A.get(id); return a && a.type === 'NPC' ? a : null; };
+  const pts = P.map(() => ({ x: [], y: [], u: [] })), add = P.map(() => 0), seen = new Set();
+  const pullAt = (t) => { for (let i = P.length - 1; i >= 0; i--) if (t >= P[i].s - 2) return i; return 0; };
+  let pi = 0;
+  for (const e of ev) {
+    const t = (e.timestamp - w0) / 1000;
+    if (e.type === 'death') { const a = npc(e.targetID); if (!a) continue; const k = e.targetID + ':' + (e.targetInstance || 1) + ':' + e.timestamp; if (seen.has(k)) continue; seen.add(k); const v = T.n[a.gameID]; if (v) add[pullAt(t)] += v; continue; }
+    if (e.x == null || e.y == null || !ui.has(e.mapID) || !npc(e.resourceActor === 1 ? e.sourceID : e.targetID)) continue;
+    while (pi < P.length - 1 && t > P[pi].e) pi++;
+    if (t >= P[pi].s && t <= P[pi].e) { const q = pts[pi]; q.x.push(e.y / 100); q.y.push(-e.x / 100); q.u.push(e.mapID); }
+  }
+  const med = (a) => { const s = a.slice().sort((p, q) => p - q); return s[s.length >> 1]; };
+  const out = P.map((p, i) => { const q = pts[i], c = {}; for (const u of q.u) c[u] = (c[u] || 0) + 1; const top = Object.entries(c).sort((a, b) => b[1] - a[1])[0]; if (!top) return { n: p.n, add: add[i], ui: null };
+    const u = +top[0], xs = q.x.filter((x, j) => q.u[j] === u), ys = q.y.filter((x, j) => q.u[j] === u); return { n: p.n, add: add[i], ui: u, x: med(xs), y: med(ys) }; });
+  const total = add.reduce((a, v) => a + v, 0), done = !!R.run.timeMs && !R.run.left;
+  return { full: T.full, zone: T.zone, floors: T.floors, pulls: out, total, ok: !done || total >= T.full * 0.99 };
+}
+function mpRouteHtml(R, F, waiting) {
+  const rt = R.route; if (!rt || !rt.pulls.length) return '';
+  const fr = F && F.route && F.route.full === rt.full ? F.route : null, ok = rt.ok && (!fr || fr.ok);
+  const pc = (v) => 100 * v / rt.full, fmt = (v) => (Math.round(v * 10) / 10).toFixed(1).replace(/\.0$/, '') + '%';
+  const cum = (rr, RR) => { let t = 0; return rr.pulls.map((q, i) => { t += q.add; const p = RR.pulls[i]; return { ...q, p, boss: p.boss && p.kill !== false ? p.boss : null, tot: pc(t), wipe: !!mpWipe(p, Math.max(1, (RR.people || []).length)) }; }); };
+  const Y = cum(rt, R), Fa = fr ? cum(fr, F) : null, yEnd = pc(rt.total), fEnd = fr ? pc(fr.total) : 0, done = !!R.run.timeMs && !R.run.left;
+  const what = (q) => (q.p.boss ? esc(q.p.boss) + (q.p.kill === false ? ' (not killed)' : '') : (q.p.mobs || []).slice(0, 3).map((m) => (m[1] > 1 ? m[1] + ' ' : '') + esc(m[0])).join(', ') + ((q.p.mobs || []).length > 3 ? ' and ' + (q.p.mobs.length - 3) + ' more' : ''));
+  // four plain lines
+  const lines = [];
+  if (ok) {
+    const cross = Y.findIndex((q) => q.tot >= 99.95);
+    if (cross > 0 && pc(Y[cross].add) - (100 - Y[cross - 1].tot) > 2) lines.push('<b>You reached ' + fmt(Y[cross - 1].tot) + ' after pull ' + Y[cross - 1].n + '.</b> Pull ' + Y[cross].n + ' added ' + fmt(pc(Y[cross].add)) + ' when you needed ' + fmt(100 - Y[cross - 1].tot) + '.');
+    else if (cross >= 0) lines.push('<b>Pull ' + Y[cross].n + ' took you to 100%.</b>');
+    else lines.push('<b>You reached ' + fmt(yEnd) + '</b> before the key ended.');
+    if (Fa) { const segs = (L) => { const out = []; let from = '', acc = 0, k = 0; for (const q of L) { if (!q.p.boss) k++; acc += pc(q.add); if (q.boss) { out.push({ from, to: q.boss, f: acc, k }); from = q.boss; acc = 0; k = 0; } } return out; };
+      const fs = new Map(segs(Fa).map((s) => [s.to, s])), pairs = segs(Y).map((s) => ({ s, f: fs.get(s.to) })).filter((x) => x.f && x.s.k + x.f.k > 0).sort((a, b) => Math.abs(b.s.k - b.f.k) - Math.abs(a.s.k - a.f.k) || Math.abs(b.s.f - b.f.f) - Math.abs(a.s.f - a.f.f));
+      const pr = pairs[0]; if (pr && (pr.s.k !== pr.f.k || Math.abs(pr.s.f - pr.f.f) >= 5)) lines.push('<b>' + (pr.s.from ? 'Between ' + esc(pr.s.from) + ' and ' + esc(pr.s.to) : 'Before ' + esc(pr.s.to)) + ' you got ' + fmt(pr.s.f) + ' in ' + plural(pr.s.k, 'pull') + '.</b> The fast run got ' + fmt(pr.f.f) + ' in ' + plural(pr.f.k, 'pull') + '.'); }
+    if (done) lines.push('<b>' + (yEnd > 100.5 ? 'You finished with ' + fmt(yEnd - 100) + ' extra.' : 'You finished right on 100%.') + '</b>' + (Fa ? (fEnd > 100.5 ? ' The fast run finished with ' + fmt(fEnd - 100) + ' extra.' : ' The fast run finished right on 100%.') : ''));
+    const big = Y.filter((q) => !q.p.boss).sort((a, b) => b.add - a.add)[0], fbig = Fa ? Fa.filter((q) => !q.p.boss).sort((a, b) => b.add - a.add)[0] : null;
+    if (big) lines.push('<b>Your biggest pull was pull ' + big.n + ': ' + fmt(pc(big.add)) + ' in ' + mpMM(big.p.dur) + '.</b>' + (fbig ? ' The fast run\'s was ' + fmt(pc(fbig.add)) + ' in ' + mpMM(fbig.p.dur) + '.' : ''));
+  } else lines.push('The enemy counts for ' + esc(R.run.dungeon) + ' aren\'t complete yet, so this shows where you pulled, without how much each pull counted.');
+  // two strips: each pull a piece as wide as what it counted, bosses a gold mark, past 100% striped red
+  const SC = Math.max(106, yEnd + 2, fEnd + 2), X = (v) => (100 * v / SC).toFixed(2) + '%';
+  const strip = (L, cls, end) => { let prev = 0, lastB = -99; return '<div class="mpt-strip ' + cls + '">' + L.map((q) => { const w = q.tot - prev;
+    let s = w > 0.05 ? '<i class="mpt-sp" style="left:' + X(prev) + ';width:' + X(w) + '" title="' + esc('Pull ' + q.n + ': ' + what(q).replace(/<[^>]+>/g, '') + ' (+' + fmt(w) + ', ' + fmt(q.tot) + ')') + '"><b>' + (w >= 2.4 ? q.n : '') + '</b></i>' : '';
+    if (q.boss) { const lb = q.tot - lastB > 9; if (lb) lastB = q.tot; s += '<i class="mpt-sbm" style="left:' + X(q.tot) + '" title="' + esc(q.boss + ' at ' + fmt(q.tot)) + '">' + (lb ? '<em>' + esc(q.boss) + '</em>' : '') + '</i>'; }
+    prev = q.tot; return s; }).join('') + (end > 100 ? '<u style="left:' + X(100) + ';width:' + X(end - 100) + '"></u>' : '') + '</div>'; };
+  const strips = ok ? '<div class="mpt-fz"><div class="mpt-fzk">' + [0, 25, 50, 75].map((v) => '<span style="left:' + X(v) + '">' + v + '%</span>').join('') + '<span class="mpt-r100" style="left:' + X(100) + '"><i></i>100%</span></div>' +
+    '<div class="mpt-row"><span class="mpt-rll">You</span>' + strip(Y, 'mpt-sy', yEnd) + '<span class="mpt-end">' + fmt(yEnd) + '</span></div>' +
+    (Fa ? '<div class="mpt-row"><span class="mpt-rll">Fast run</span>' + strip(Fa, 'mpt-sf', fEnd) + '<span class="mpt-end">' + fmt(fEnd) + '</span></div>' : '<div class="mpt-row"><span class="mpt-rll">Fast run</span><span class="mpt-strip0">' + (waiting ? 'Finding the fastest timed +' + R.run.level + '…' : 'No public fast run at this level yet.') + '</span></div>') +
+    '<div class="mpt-key"><span><i class="mpt-k1"></i>Your pulls (number inside)</span>' + (Fa ? '<span><i class="mpt-k4"></i>Fast run\'s pulls</span>' : '') + '<span><i class="mpt-k2 mpt-kbar"></i>Boss</span><span><i class="mpt-kover"></i>Over 100%: extra you didn\'t need</span></div></div>' : '';
+  // on the map: one picture per floor, your pulls numbered in order on a dashed path, the fast run's as small grey dots
+  const at = (f, q) => [Math.max(2, Math.min(98, 100 * (f[5] - q.y) / (f[5] - f[4]))), Math.max(2, Math.min(98, 100 * (f[3] - q.x) / (f[3] - f[2])))];
+  const maps = rt.floors.map((f, i) => ({ f, i, mine: Y.filter((q) => q.ui === f[0] && q.x != null), fast: Fa ? Fa.filter((q) => q.ui === f[0] && q.x != null) : [] })).filter((m) => m.mine.length || m.fast.length).map((m) => {
+    const path = (L, cls) => (L.length > 1 ? '<polyline class="' + cls + '" points="' + L.map((q) => at(m.f, q).join(',')).join(' ') + '"/>' : '');
+    return '<figure class="mpt-fl"><div class="mpt-mp"><img src="https://wow.zamimg.com/images/wow/maps/enus/original/' + rt.zone + (m.i ? '-' + m.i : '') + '.jpg" alt="" loading="lazy" onerror="this.remove()">' +
+      '<svg class="mpt-rl" viewBox="0 0 100 100" preserveAspectRatio="none">' + path(m.fast, 'mpt-pf') + path(m.mine, 'mpt-py') + '</svg>' +
+      m.fast.map((q) => { const [x, y] = at(m.f, q); return '<span class="mpt-fdot" style="left:' + x.toFixed(1) + '%;top:' + y.toFixed(1) + '%" title="' + esc('Fast run, pull ' + q.n + ': ' + what(q).replace(/<[^>]+>/g, '') + (ok && q.add ? ' (+' + fmt(pc(q.add)) + ')' : '')) + '"></span>'; }).join('') +
+      m.mine.map((q) => { const [x, y] = at(m.f, q); return '<span class="mpt-dot' + (q.p.boss ? ' mpt-bo' : '') + (q.wipe ? ' mpt-wp' : '') + '" style="left:' + x.toFixed(1) + '%;top:' + y.toFixed(1) + '%" title="' + esc('Pull ' + q.n + ': ' + what(q).replace(/<[^>]+>/g, '') + (ok && q.add ? ' (+' + fmt(pc(q.add)) + ')' : '') + (q.wipe ? ' · wipe' : '')) + '">' + q.n + '</span>'; }).join('') +
+      '</div><figcaption><b>' + esc(m.f[1]) + '</b>' + (m.mine.length ? ' · ' + (m.mine.length === 1 ? 'pull ' + m.mine[0].n : 'pulls ' + m.mine[0].n + '–' + m.mine[m.mine.length - 1].n) : '') + '</figcaption></figure>'; });
+  const map = maps.length ? '<h3 class="mpt-h3">On the map</h3><div class="mpt-maps">' + maps.join('<span class="mpt-arr">›</span>') + '</div><div class="mpt-key"><span><i class="mpt-k1 mpt-kdot"></i>Your pull, in order</span><span><i class="mpt-k2 mpt-kdot"></i>Boss</span><span><i class="mpt-k1 mpt-kdot mpt-kwp"></i>A wipe</span>' + (Fa ? '<span><i class="mpt-k4 mpt-kdot"></i>Fast run\'s pulls</span>' : '') + '<span>Hover a dot for what was pulled</span></div>' : '';
+  // side by side
+  const cell = (q) => (q ? '<span class="mpt-sw' + (q.p.boss ? ' mpt-bo' : '') + '">' + what(q) + '</span><span class="mpt-sv">' + (ok ? (q.add ? '+' + fmt(pc(q.add)) + ' <small>' + fmt(q.tot) + '</small>' : '<span class="mpt-m">' + (q.p.boss ? 'boss' : '0%') + '</span>') : mpMM(q.p.dur)) + '</span>' : '<span></span><span></span>');
+  const side = '<h3 class="mpt-h3">Pull by pull, side by side</h3><div class="mpt-sbs"><div class="mpt-sbh"><span>Pull</span><span>You</span><span></span><span>' + (Fa ? 'Fast run' : '') + '</span><span></span></div>' +
+    Array.from({ length: Math.max(Y.length, Fa ? Fa.length : 0) }, (_, i) => '<div class="mpt-sbr"><span class="mpt-sn2">' + (i + 1) + '</span>' + cell(Y[i]) + (Fa ? cell(Fa[i]) : '<span></span><span></span>') + '</div>').join('') + '</div>';
+  const credit = ok ? '<p class="mpt-ex">Enemy counts: <a href="https://raider.io" target="_blank" rel="noopener">Raider.IO</a>. Where each pull happened is read from the log, on the game\'s own maps.</p>' : '<p class="mpt-ex">Where each pull happened is read from the log, on the game\'s own maps.</p>';
+  return mpSec('Your route', ok ? 'how much each pull counted toward the key\'s 100%' : 'where each pull happened', '<ul class="mpt-say">' + lines.map((l) => '<li>' + l + '</li>').join('') + '</ul>' + strips + map + side + credit);
 }
 
 // ---------- the look (the Design studio's round 3; site colours, so the themes apply) ----------
@@ -61207,7 +61303,65 @@ const MP_CSS = `
 .mpt-pw small,.mpt-pv small{display:block;font:500 12.5px var(--body);color:var(--muted)}
 .mpt-pv b{font:700 17px var(--head)}
 .mpt-vs{font:700 14px var(--body)}
+.mpt-say{margin:0 0 18px;padding:0 0 0 18px;border-left:3px solid var(--gold);list-style:none}
+.mpt-say li{padding:5px 0;color:var(--mpt-soft);font-size:15.5px}
+.mpt-say b{color:var(--text)}
+.mpt-fz{margin-left:84px;margin-right:56px}
+.mpt-fzk{position:relative;height:18px}
+.mpt-fzk span{position:absolute;transform:translateX(-50%);font:600 12px var(--body);color:var(--faint)}
+.mpt-fzk .mpt-r100{color:var(--text);font-weight:700}
+.mpt-fzk .mpt-r100 i{position:absolute;left:50%;top:18px;width:2px;height:88px;background:rgba(236,232,223,.4)}
+.mpt-row{position:relative;display:flex;align-items:center;height:42px;margin-left:-84px;margin-right:-56px}
+.mpt-rll{width:84px;flex:none;font:700 14px var(--head)}
+.mpt-end{width:56px;flex:none;text-align:right;font:700 15px var(--head)}
+.mpt-strip{position:relative;flex:1;height:24px;border-radius:4px;background:var(--mpt-lane)}
+.mpt-strip0{flex:1;font:500 13px var(--body);color:var(--faint)}
+.mpt-sp{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;border-right:2px solid var(--bg);overflow:hidden}
+.mpt-sy .mpt-sp{background:var(--mpt-you)} .mpt-sf .mpt-sp{background:#7d8698}
+.mpt-sp b{font:700 12px var(--head);color:#0f1117}
+.mpt-sbm{position:absolute;top:-6px;bottom:-6px;width:0;border-left:3px solid var(--gold)}
+.mpt-sbm em{position:absolute;top:-16px;left:-2px;font:700 11px var(--head);font-style:normal;color:var(--gold);white-space:nowrap}
+.mpt-sf .mpt-sbm em{top:auto;bottom:-16px}
+.mpt-strip u{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(135deg,rgba(229,83,75,.85) 0 4px,rgba(229,83,75,.45) 4px 8px);text-decoration:none;border-radius:0 4px 4px 0}
+.mpt-fz .mpt-key{margin:16px 0 0}
+.mpt-kbar{width:3px!important} .mpt-kover{background:repeating-linear-gradient(135deg,rgba(229,83,75,.85) 0 3px,rgba(229,83,75,.45) 3px 6px)}
+.mpt-kdot{border-radius:50%!important} .mpt-kwp{box-shadow:0 0 0 2px var(--bad)}
+.mpt-h3{margin:26px 0 10px;font:700 17px var(--head);color:var(--mpt-soft)}
+.mpt-maps{display:flex;align-items:center;gap:8px}
+.mpt-arr{flex:none;font:700 22px var(--head);color:var(--faint)}
+.mpt-fl{margin:0;flex:1;min-width:0;max-width:400px} /* (small maps, never one big map: a one-floor dungeon's map is as big as one of three) */
+.mpt-mp{position:relative;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:#14171e;aspect-ratio:1024/683}
+.mpt-mp img{display:block;width:100%;height:100%;object-fit:fill;filter:saturate(.8) brightness(.85)}
+.mpt-rl{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.mpt-rl polyline{fill:none;vector-effect:non-scaling-stroke}
+.mpt-rl .mpt-py{stroke:var(--mpt-you);stroke-width:2.2;stroke-dasharray:5 4}
+.mpt-rl .mpt-pf{stroke:#c3c8d2;stroke-opacity:.55;stroke-width:1.5;stroke-dasharray:2 3}
+.mpt-dot{position:absolute;transform:translate(-50%,-50%);width:24px;height:24px;border-radius:50%;background:var(--mpt-you);color:#fff;font:700 12px var(--head);display:grid;place-items:center;border:2px solid #0f1117;box-shadow:0 2px 6px rgba(0,0,0,.6);cursor:default}
+.mpt-dot.mpt-bo{background:var(--gold);color:#0f1117}
+.mpt-dot.mpt-wp{box-shadow:0 0 0 3px var(--bad),0 2px 6px rgba(0,0,0,.6)}
+.mpt-fdot{position:absolute;transform:translate(-50%,-50%);width:9px;height:9px;border-radius:50%;background:#c3c8d2;border:1.5px solid #0f1117;opacity:.85}
+.mpt-fl figcaption{margin-top:5px;font:500 13px var(--body);color:var(--muted)}
+.mpt-fl figcaption b{color:var(--text)}
+.mpt-sbh,.mpt-sbr{display:grid;grid-template-columns:28px minmax(0,1fr) 92px minmax(0,1fr) 92px;gap:10px;align-items:baseline;padding:7px 0}
+.mpt-sbh{font:700 12px var(--head);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
+.mpt-sbr{border-bottom:1px solid var(--line);font:500 13.5px var(--body)}
+.mpt-sn2{font:700 14px var(--head);color:var(--faint)}
+.mpt-sw{color:var(--mpt-soft)}
+.mpt-sw.mpt-bo{color:var(--gold);font-weight:700}
+.mpt-sv{font:700 14px var(--head);text-align:right}
+.mpt-sv small{font:500 12px var(--body);color:var(--faint);margin-left:4px}
+.mpt-ex a{color:inherit}
 @media (max-width:860px){
+  .mpt-fz{margin-left:64px;margin-right:46px} .mpt-row{margin-left:-64px;margin-right:-46px} .mpt-rll{width:64px} .mpt-end{width:46px}
+  .mpt-sp b{font-size:10.5px}
+  .mpt-maps{flex-direction:column;align-items:stretch}
+  .mpt-fl{max-width:none}
+  .mpt-arr{display:none}
+  .mpt-dot{width:20px;height:20px;font-size:11px}
+  .mpt-sbh{display:none}
+  .mpt-sbr{grid-template-columns:24px minmax(0,1fr) auto;row-gap:2px}
+  .mpt-sbr > span:nth-child(4){grid-column:2}
+  .mpt-sbr > span:nth-child(5){grid-column:3}
   .mpt-grp{margin-left:0}
   .mpt-fxr{grid-template-columns:28px minmax(0,1fr);row-gap:2px}
   .mpt-fxs{grid-column:2;text-align:left}
