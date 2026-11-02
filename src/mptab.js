@@ -1316,7 +1316,7 @@ function mpMapHtml(R, F, tl) {
   const f0 = Math.max(0, floors.findIndex((x) => x.us[0].length));
   const views = runs.map(([v, RR], ri) => { const Q = pullsOf(RR);
     return '<div class="mpt-mdtv" data-v="' + v + '" data-n="' + Q.length + '"' + (ri ? ' hidden' : '') + '><div class="mpt-mgrid"><div class="mpt-mwrap">' + floors.map((fl, j) => '<div class="mpt-mdtm" data-f="' + j + '"' + (j === f0 ? '' : ' hidden') + '>' + svg(Q, fl) + '</div>').join('') +
-      '<div class="zctl mpt-zctl"><button type="button" data-mz="1" aria-label="Zoom in">+</button><button type="button" data-mz="-1" aria-label="Zoom out">−</button></div></div>' +
+      '<div class="zctl mpt-zctl"><button type="button" data-mz="1" aria-label="Zoom in">+</button><button type="button" data-mz="-1" aria-label="Zoom out" disabled>−</button></div></div>' +
       '<div class="mpt-mside"><div class="mpt-mcard"><p class="mpt-mc0">Click a pull, or press ▶, to see what happened in it.</p><div class="mpt-mcx" hidden></div>' + Q.map((q) => '<div class="mpt-mc" data-pi="' + q.i + '" hidden>' + card(q, v) + '</div>').join('') + '</div>' + list(Q) + '</div></div></div>'; }).join('');
   const tg = runs.length > 1 ? '<div class="mpt-mtg" role="group" aria-label="Whose pulls">' + runs.map(([v, RR], ri) => '<button type="button" data-mdtv="' + v + '" aria-pressed="' + !ri + '"' + (ri ? '' : ' class="on"') + '>' + (v === 'you' ? 'You' : 'Fast run') + ' · ' + plural(RR.pulls.filter((p) => !p.boss).length, 'pull') + '</button>').join('') + '</div>' : '';
   const chips = '<div class="mpt-mchips" role="group" aria-label="Show on the map">' + [['r', '⋯', 'Route'], ['d', '☠', 'Deaths'], ['k', '!', 'Missed kicks'], ['l', '⚡', 'Lust'], ['w', '⏱', 'Waits'], ['c', '●', 'Kicks & CC'], ['a', '◆', 'Avoidable', 1]].map(([c, i, l, off]) => '<button type="button" class="mpt-mchip' + (off ? '' : ' on') + ' mpt-mchip-' + c + '" data-mchip="' + c + '" aria-pressed="' + !off + '"><i>' + i + '</i>' + l + '</button>').join('') + '</div>';
@@ -1326,7 +1326,7 @@ function mpMapHtml(R, F, tl) {
   return '<div class="mpt-mdt no-a"><div class="mpt-mdtc">' + tg + chips + '</div>' + pp + '<div class="mpt-mrow">' + fb + step + '</div>' + views + strip + '</div>'; }
 // (picking: a click or tap on a shape, tag, mark, list row, timeline block or ◀ ▶. The map goes to the pull's floor, the pull lights up and the
 // rest dim, the card shows it; the pick stays when the tab redraws. A hover only lights up (MP.peek), never moving the card or the floor)
-const mpMdtFloor = (box, j) => { if (!box || j == null || j === '') return; j = String(j); if (MP.mz && MP.mz.f !== j) MP.mz = { f: j, z: 1, c: null }; box.querySelectorAll('[data-mdtf]').forEach((x) => x.classList.toggle('on', x.dataset.mdtf === j)); box.querySelectorAll('.mpt-mdtm').forEach((m) => { m.hidden = m.dataset.f !== j; }); };
+const mpMdtFloor = (box, j) => { if (!box || j == null || j === '') return; j = String(j); if (MP.mz && MP.mz.f !== j) { MP.mz = { f: j, z: 1, c: null }; mpZoomBtns(box, 1); } box.querySelectorAll('[data-mdtf]').forEach((x) => x.classList.toggle('on', x.dataset.mdtf === j)); box.querySelectorAll('.mpt-mdtm').forEach((m) => { m.hidden = m.dataset.f !== j; }); };
 function mpMapView(box, v) { box.querySelectorAll('[data-mdtv]').forEach((x) => { x.classList.toggle('on', x.dataset.mdtv === v); x.setAttribute('aria-pressed', String(x.dataset.mdtv === v)); }); box.querySelectorAll('.mpt-mdtv').forEach((x) => { x.hidden = x.dataset.v !== v; }); }
 function mpMapPick(v, ids, sum) { const box = document.querySelector('.mpt-mdt'); if (!box) return; const view = box.querySelector('.mpt-mdtv[data-v="' + v + '"]'); if (!view) return;
   if (view.hidden) mpMapView(box, v); ids = [].concat(ids).map(String); const one = ids.length === 1 && !sum;
@@ -1349,7 +1349,8 @@ function mpMapPP(name) { const box = document.querySelector('.mpt-mdt'); if (!bo
 // new floor goes back to 1×; picking a pull pans to it; a redraw keeps the zoom; a drag never picks)
 const MP_ZS = [1, 1.5, 2.25, 3], MP_TF = /translate\(([-\d.]+),([-\d.]+)\)(?: rotate\(([-\d.]+)\))? scale\(([-\d.]+)\)/;
 const mpZoomF = (box) => { const b = box.querySelector('[data-mdtf].on'); if (b && b.closest('.mpt-flb')) return b.dataset.mdtf; const m = box.querySelector('.mpt-mdtm:not([hidden])'); return m ? m.dataset.f : '0'; };
-function mpZoom(box, at) { if (!box) return; const fi = mpZoomF(box), st = MP.mz && MP.mz.f === fi ? MP.mz : (MP.mz = { f: fi, z: 1, c: null }); if (at) st.c = at;
+const mpZoomBtns = (box, z) => { if (!box) return; box.querySelectorAll('[data-mz="1"]').forEach((b) => { b.disabled = z >= 2.999; }); box.querySelectorAll('[data-mz="-1"]').forEach((b) => { b.disabled = z <= 1.001; }); };
+function mpZoom(box, at) { if (!box) return; const fi = mpZoomF(box), st = MP.mz && MP.mz.f === fi ? MP.mz : (MP.mz = { f: fi, z: 1, c: null }); if (at) st.c = at; mpZoomBtns(box, st.z);
   for (const svg of box.querySelectorAll('.mpt-mdtm[data-f="' + fi + '"] svg')) { const b = (svg.dataset.vb || (svg.dataset.vb = svg.getAttribute('viewBox'))).split(' ').map(Number), z = st.z, w = b[2] / z, h = b[3] / z;
     const c = st.c || [b[0] + b[2] / 2, b[1] + b[3] / 2], x = Math.max(b[0], Math.min(b[0] + b[2] - w, c[0] - w / 2)), y = Math.max(b[1], Math.min(b[1] + b[3] - h, c[1] - h / 2)); st.c = [x + w / 2, y + h / 2];
     svg.setAttribute('viewBox', [x, y, w, h].map((v) => v.toFixed(1)).join(' ')); svg.style.touchAction = z > 1 ? 'none' : 'pan-y';
@@ -1796,7 +1797,7 @@ html:not([data-theme]) .mpt .mpt-chap{background-image:linear-gradient(rgba(255,
 .mpt-mstep{display:flex;align-items:center;gap:8px} .mpt .mpt-mstep button{height:28px;margin:0;padding:0 10px;border:1px solid var(--line2);border-radius:4px;background:none;color:var(--text);font:600 13px var(--body);cursor:pointer}
 .mpt-mstep span{min-width:150px;text-align:center;font:600 13px var(--body);color:var(--text)}
 .mpt-mgrid{display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,1.2fr);gap:12px;align-items:start}
-.mpt-mwrap{position:relative} .mpt-mwrap .mpt-mdtm{aspect-ratio:16/10} .mpt-mdtm svg{touch-action:pan-y} .mpt-zctl{z-index:2} .mpt .mpt-zctl button{margin:0;font:700 16px var(--body);line-height:1}
+.mpt-mwrap{position:relative} .mpt-mwrap .mpt-mdtm{aspect-ratio:16/10} .mpt-mdtm svg{touch-action:pan-y} .mpt-zctl{z-index:2} .mpt .mpt-zctl button{margin:0;font:700 16px var(--body);line-height:1} .mpt .mpt-zctl button:disabled{opacity:.35;cursor:default;border-color:var(--line2);color:var(--muted)}
 .mpt-mdtv .mpt-mpl,.mpt-mdtv .mpt-mk{transition:opacity .12s;cursor:pointer}
 .mpt-mdtv.pick:not(.peek) .mpt-mpl:not(.hot),.mpt-mdtv.pick:not(.peek) .mpt-mk:not(.hot){opacity:.15}
 .mpt-mdtv.peek .mpt-mpl:not(.pk),.mpt-mdtv.peek .mpt-mk:not(.pk){opacity:.35}
