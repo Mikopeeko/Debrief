@@ -13110,6 +13110,36 @@ html body #view > .dbt.dbt.dbx .dtm-card .dbt-it.dbx-open > .dbt-c > .dbt-mapslo
 .dtm-tip{position:fixed;z-index:90;max-width:300px;padding:8px 10px;border:1px solid var(--line2);border-radius:6px;background:#12171d;box-shadow:0 8px 24px rgba(0,0,0,.5);font-size:12.5px;color:#aeb6bf;line-height:1.45;pointer-events:none;display:none}
 .dtm-tip.on{display:block}.dtm-tip b{color:var(--text);font-weight:700;font-size:13px}.dtm-tip .lc{color:var(--lc);font-weight:600}
 @media (max-width: 900px){.dtm-grid{grid-template-columns:minmax(0,1fr)}.dtm-card{min-height:0;height:auto !important}}
+/* Timeline replay round 2 (Nov 2): the play-by-play beside the replay */
+html body #view > .dbt.dbt.dbx .dtm-pb{position:relative;padding:10px 10px 12px}
+.dtm-pbh{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 4px 6px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#868f99}
+.dtm-pbh span{font-weight:400;letter-spacing:0;text-transform:none;font-size:12.5px}
+.dtm-pr{display:grid;grid-template-columns:38px 20px minmax(0,1fr) auto;gap:8px;align-items:start;padding:6px 6px;border-radius:4px;border-bottom:1px solid #1d232a;font-size:13px;line-height:1.4;cursor:pointer}
+.dtm-pr:hover{background:rgba(255,255,255,.03)}
+.dtm-pr .t{color:#aeb6bf;font-variant-numeric:tabular-nums}
+.dtm-pr .dtm-bd{grid-row:auto;width:18px;height:18px;font-size:11px}
+.dtm-pr .dtm-bd .icw,.dtm-pr .dtm-bd img.oi,.dtm-pr .dtm-bd svg.ico{width:18px !important;height:18px !important}
+.dtm-pr .w{min-width:0;color:#aeb6bf}
+.dtm-pr .w b{color:var(--text);font-weight:600}
+.dtm-pr .w i{font-style:normal;color:#868f99}
+.dtm-pr .lv{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--lc)}
+.dtm-pr.ph{margin-top:8px;border-bottom:0}
+.dtm-pr.ph .w b{color:var(--gold)}
+/* (the list grows as the fight goes: a line shows once the replay reaches it, and stays (Flex, Nov 2: "the list should get longer as the fight progresses")) */
+.dtm-pr.fut{display:none}
+.dtm-pr.cur{background:rgba(232,192,90,.08);box-shadow:inset 2px 0 0 var(--gold)}
+.dtm-pr .lv{padding-top:1px}
+/* (the verdict under the tiles: done right, or the mistake with why and next time) */
+.dtm-vd{border:1px solid var(--line2);border-radius:4px;background:rgba(255,255,255,.02);padding:12px 14px}
+.dtm-vd:empty{display:none}
+html body #view > .dbt.dbt.dbx .dtm-vd .dbt-it{display:block !important;margin:0 !important;padding:0 !important;border:0 !important;background:none !important;box-shadow:none !important}
+.dtm-vd .dbt-it > .dbx-row{display:none !important}
+html body #view > .dbt.dbt.dbx .dtm-vd .dbt-it.dbx-open > .dbt-c{padding:0 !important;display:block !important}
+html body #view > .dbt.dbt.dbx .dtm-vd .dbt-it.dbx-open > .dbt-c > .dbt-mapslot{display:none !important}
+.dtm-vd .dbt-it .dbt-tm{display:none !important}
+.dtm-more.r{left:auto;right:6px;padding-left:0}
+@media (max-width: 900px){html body #view > .dbt.dbt.dbx .dtm-pb{max-height:440px !important;overflow:auto}}
+@media (max-width: 700px){.dtm-pbh span{display:none}}
 @media (max-width: 700px){.dtm-tiles{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}.dtm-bar{gap:10px}.dtm-cn{display:none}.dtm-step{width:100%;justify-content:space-between}.dtm-lr{grid-template-columns:64px minmax(0,1fr)}.dtm-ax,.dtm-cmp,.dtm-key{margin-left:74px}.dtm-cmp{height:56px}.dtm-cmp div{white-space:normal;width:118px;font-size:12.5px}.dtm-now{font-size:12px}.dtm-map svg.zmap{max-height:300px !important}}
 @media (max-width: 900px){
   html body #view > .dbt.dbt.dbx .dbt-it.dbx-open > .dbt-c{grid-template-columns:minmax(0,1fr);padding-left:8px !important}
@@ -23937,7 +23967,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-11-02', h: [{ t: 'Watch the pull on the Timeline', d: 'Debriefing\'s Timeline now replays the pull on a big map: everyone\'s spot, the boss and the mechanics as they happen. Click a moment under the map and its card shows what happened and what to do next time.' }], n: [ /* round 484 */
+  { d: '2026-11-02', h: [{ t: 'Watch the pull on the Timeline', d: 'Debriefing\'s Timeline now replays the pull on a big map, with a play-by-play beside it of every mechanic and how the raid handled it. Click a moment to watch it, and the box under the map says whether it was done right and what to do next time.' }], n: [ /* round 484 */
     "Debriefing Timeline: a You and Top guilds lane under the replay shows your phase pushes, deaths, mistakes and Lust next to the 20 fastest kills (The Coiled Altar for now). Click the lane to move the replay there.",
     "Mythic+ tab, less to read: Your group is one table with each player's DPS, kicks, CC, deaths, defensives and big cooldowns. The map's controls sit in one bar, with the floors and layers on the map. The long pull list and route chart are gone: each pull's details are on its tile, its hover and its card, and the map's first line says where your enemy count ended.",
     "Mythic+ pull card: what was in the pack. The mini-bosses are marked Elite, every kind of enemy Caster (it heals, or it keeps casting) or Melee, with what to kick, and the small fodder sits on its own line. The card also shows the forces total so far and when Lust went out.",
@@ -65089,15 +65119,14 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
 
 // ===== Timeline replay (Nov 2): Debriefing's Timeline in the Mythic+ map chapter's shape. Flex: "kinda like a replay almost", "the map
 //       should show the mechanics that can be drawn as they happen", "this should update as the replay progresses". A replay of the
-//       pull on the left with the moment tiles under it, one card beside them, and You vs top guilds lanes under both. It reads the
+//       pull on the left with the moment tiles under it, a play-by-play beside them, and You vs top guilds lanes under both. It reads the
 //       Timeline's own moments and cards (round 135/457); round 457's draw() calls window.dbtReplay. Owner: the Design studio chat. =====
 (function () {
   if (typeof document === 'undefined') return;
   /* (the 20 fastest Mythic kills, from engine.js KT: Zul'jan down between 2:14 and 2:37, phase 2 about 2:30 and never past 2:56, Bloodlust as the intermission starts) */
   var TOP = { 'The Coiled Altar|16': { p1: [134, 157], p2: [150, 176] } };
-  var STEP = 0.5, P = { key: '', pick: null, fr: null, spd: 2, mt: null };
+  var STEP = 0.5, P = { key: '', pick: null, fr: null, spd: 2, mt: null, clip: null, userScroll: false, auto: false };
   var tip = null, W = function () { try { return window.dbtMapKit ? window.dbtMapKit() : {}; } catch (e) { return {}; } };
-  var axOf = function (X, T) { var end = Math.max(X.LEN, (!X.kill && X.cut) || 0, 1); return Math.max(end, T ? Math.round((T.p1[0] + T.p1[1]) / 2) + T.p2[0] + 50 : 0); };
   /* (the replay: everyone's spot every half second, from the log's own positions; a spot is held up to 8 s, and nobody is drawn while dead) */
   var buildFrames = function (r, t1, MMs) { var units = [], un = r.unitNames && r.unitNames.get ? r.unitNames : null, bu = r.bossUnits || [];
     (r.positions && r.positions.forEach ? r.positions : new Map()).forEach(function (u) { if (!u || !u.pts || !u.pts.length) return; var pl = r.players.get(u.guid), nm = (un && un.get(u.guid)) || u.name; var kind = pl ? 'player' : bu.indexOf(nm) >= 0 ? 'boss' : null; if (kind) units.push({ u: u, guid: u.guid, name: pl ? pl.name : nm, kind: kind, i: 0 }); });
@@ -65110,10 +65139,16 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
     (MMs || []).forEach(function (x) { var mp0 = x.map || {}, F0 = mp0.frames || [];
       F0.forEach(function (f) { var o = out[Math.round(f.t / STEP)]; if (!o) return; var sn = o._g || (o._g = {}); (f.pts || []).forEach(function (q) { if (q.kind === 'player' || q.kind === 'boss' || sn[q.guid]) return; sn[q.guid] = 1; o.pts.push(q); }); });
       var ex = mp0.extraPts || []; if (ex.length) { var a0 = F0.length ? F0[0].t : x.t - 3, b0 = F0.length ? F0[F0.length - 1].t : x.t + 2; for (var k = Math.max(0, Math.round(a0 / STEP)); k <= Math.round(b0 / STEP) && out[k]; k++) { var sn2 = out[k]._g || (out[k]._g = {}); ex.forEach(function (q) { if (!sn2[q.guid]) { sn2[q.guid] = 1; out[k].pts.push(q); } }); } } });
+    /* (and from when each one spawns until it dies, at its last known spot between clips: the log has an orb's spot from the second it
+       lands, the mechanic map only from its frontal (Flex, Nov 2: "its not showing the orb spawn locations, its only showing where they get dropped")) */
+    var died = r.enemyDied && r.enemyDied.get ? r.enemyDied : null, U = {};
+    (MMs || []).forEach(function (x) { ((x.map && x.map.frames) || []).forEach(function (f) { (f.pts || []).forEach(function (q) { if (q.kind === 'player' || q.kind === 'boss' || q.kind === 'ghost') return; var u = U[q.guid] || (U[q.guid] = { s: [], q: q }); u.s.push([f.t, q]); }); }); });
+    Object.keys(U).forEach(function (g) { var u = U[g], lg = r.positions && r.positions.get ? r.positions.get(g) : null; if (lg && lg.pts) lg.pts.forEach(function (p) { u.s.push([p[0], { guid: g, name: u.q.name, x: p[1], y: p[2], kind: u.q.kind }]); }); u.s.sort(function (a, b) { return a[0] - b[0]; }); var dt = died ? died.get(g) : null; u.beg = u.s[0][0]; u.end = dt != null ? dt : u.s[u.s.length - 1][0];
+      for (var k = Math.max(0, Math.ceil(u.beg / STEP)), j = 0; k * STEP <= u.end + 1e-6 && out[k]; k++) { var o = out[k], sn = o._g || (o._g = {}); if (sn[g]) continue; while (j < u.s.length - 1 && u.s[j + 1][0] <= k * STEP + 1e-6) j++; var q = u.s[j][1]; sn[g] = 1; o.pts.push({ guid: g, name: q.name, x: q.x, y: q.y, kind: q.kind }); } });
     return out; };
   window.dbtReplay = function (X) {
     var d = X.d, M = X.M, E = X.E, mm = X.mm, F = X.F, SS = W().S || {}, it0 = SS.item || {}, rep = SS.rep;
-    var key = (it0.boss || '') + '|' + (it0.startMs || ''); if (P.key !== key) { P.key = key; P.pick = null; P.fr = null; P.mt = null; }
+    var key = (it0.boss || '') + '|' + (it0.startMs || ''); if (P.key !== key) { P.key = key; P.pick = null; P.fr = null; P.mt = null; P.clip = null; P.userScroll = false; }
     d.classList.add('dtm-on');
     var box = d.querySelector(':scope > .dtm'); if (!box) { box = document.createElement('div'); box.className = 'dtm dbt-p'; d.insertBefore(box, d.querySelector(':scope > .dbx-wrap')); }
     box._X = X;
@@ -65133,11 +65168,11 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
     /* (the tiles: each phase starts with a gold tile like Mythic+'s bosses, then every mistake and death in time order; clean moments in a row fold into one tile) */
     var show = []; M.forEach(function (m, i) { if (!X.vis(m)) return; if (m.death && m.into && X.vis(m.into)) return; if (m.dupOf && X.vis(m.dupOf)) return; if (inG[i] != null) return; show.push(i); });
     var bySp = SP.map(function () { return []; }); show.forEach(function (i) { bySp[spOf(M[i].t)].push(i); });
-    var seqs = bySp.map(function (L) { var out = [], run = []; var flush = function () { if (run.length >= 3 && !(typeof P.pick === 'number' && run.indexOf(P.pick) >= 0)) out.push({ run: run.slice() }); else run.forEach(function (i) { out.push({ i: i }); }); run = []; };
+    var seqs = bySp.map(function (L) { var out = [], run = []; var flush = function () { if (run.length >= 3) out.push({ run: run.slice() }); else run.forEach(function (i) { out.push({ i: i }); }); run = []; };
       L.forEach(function (i) { if (M[i].st === 'ok') run.push(i); else { flush(); out.push({ i: i }); } }); flush(); return out; });
     var bad = show.filter(function (i) { return M[i].st !== 'ok'; });
     if (P.pick == null || (typeof P.pick === 'number' && show.indexOf(P.pick) < 0)) P.pick = F.xo != null && show.indexOf(F.xo) >= 0 ? F.xo : bad.length ? bad[0] : show[0];
-    var fromChart = false; if (F.xo != null && F.xo !== P.pick && show.indexOf(F.xo) >= 0 && box._lastXo !== F.xo) { P.pick = F.xo; P.mt = null; fromChart = true; } /* (a mark on the charts picks its tile, and the page goes up to the replay) */
+    var fromChart = false; if (F.xo != null && F.xo !== P.pick && show.indexOf(F.xo) >= 0 && box._lastXo !== F.xo) { P.pick = F.xo; P.mt = Math.max(0, M[F.xo].t - 4); P.clip = { to: M[F.xo].t + 0.6 }; fromChart = true; } /* (a mark on the charts picks its moment, plays into it, and the page goes up to the replay) */
     box._lastXo = F.xo;
     var T = TOP[(it0.boss || '') + '|' + (it0.diffId || '')];
     var tile = function (e) { if (e.ph != null) { var S0 = SP[e.ph], hot = P.pick === 'p' + e.ph; return '<button type="button" class="dtm-t lv-p' + (hot ? ' hot' : '') + '" data-ph="' + e.ph + '" data-tt="' + E('<b>' + E(S0.p.n) + '</b><br>' + mm(S0.a) + '–' + mm(S0.b) + (S0.p.hp0 != null && S0.p.hp0 !== '' && S0.p.hp1 != null && S0.p.hp1 !== '' ? '<br>Boss ' + Math.round(+S0.p.hp0) + '% → ' + Math.round(+S0.p.hp1) + '%' : '')) + '"><span class="dtm-bd">★</span><span class="n">' + E(S0.p.n) + '</span><span class="s"><i>' + mm(S0.a) + '</i>' + (S0.p.hp0 != null && S0.p.hp0 !== '' ? '<i class="hp">' + Math.round(+S0.p.hp0) + '%</i>' : '') + '</span></button>'; }
@@ -65147,30 +65182,44 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
       var tt = '<b>' + E(m.death ? (GM[i] && GM[i].length > 1 ? GM[i].length + ' deaths' : 'Death: ' + nm0) : nm0) + (m.nk && !m.death ? ' <span style="font-weight:400;color:#868f99">(' + E(m.nk) + ')</span>' : '') + '</b><br>' + mm(m.t) + (phN(m.t) ? ' · ' + E(phN(m.t)) : '') + (hp(m.t) ? ' · boss ' + hp(m.t) : '') + '<br><span class="lc lv-' + lv + '">' + E(LV(m)) + (m.dead ? ' · ☠ died' : '') + '</span>' + (who && !m.death ? ' · ' + who : '');
       return '<button type="button" class="dtm-t lv-' + lv + (hot2 ? ' hot' : '') + '" data-ti="' + i + '" data-tt="' + E(tt) + '"><span class="dtm-bd">' + bdg(m) + '</span><span class="n"' + (m.death && !(GM[i] && GM[i].length > 1) ? ' style="color:' + col((m.who[0] || {}).n) + '"' : '') + '>' + E(nm0) + '</span><span class="s"><i>' + mm(m.t) + '</i>' + (hp(m.t) ? '<i class="hp">' + hp(m.t) + '</i>' : '') + (m.dead ? '<b class="mk" style="color:#f0726a">☠</b>' : mk ? '<b class="mk">' + mk + '</b>' : '') + '</span></button>'; };
     var tiles = ''; SP.forEach(function (S0, k) { tiles += tile({ ph: k }) + seqs[k].map(tile).join(''); if (wipeT != null && k === spOf(wipeT)) tiles += '<button type="button" class="dtm-t lv-w' + (P.pick === 'w' ? ' hot' : '') + '" data-wipe="1" data-tt="' + E('<b>Wipe called</b><br>' + mm(wipeT) + (hp(wipeT) ? ' · boss ' + hp(wipeT) : '') + '<br>Nothing after this is judged.') + '"><span class="dtm-bd">✕</span><span class="n">Wipe called</span><span class="s"><i>' + mm(wipeT) + '</i>' + (hp(wipeT) ? '<i class="hp">' + hp(wipeT) + '</i>' : '') + '</span></button>'; });
-    /* (what the picked tile is: its time on the replay, the players to ring, and its card) */
-    var cardFor = function (pk) { var card = '', mv = null, at = 0, nowTxt = '', nowLv = 'g';
-    var head = function (bd, lv, t1, t2, lt) { return '<div class="dtm-ch lv-' + lv + '"><span class="dtm-bd">' + bd + '</span><div><b>' + t1 + '</b><em>' + t2 + '</em></div><span class="dtm-lt">' + E(lt) + '</span></div>'; };
-    var row = function (i) { var m = M[i]; return '<div class="dtm-rl lv-' + lvOf(m) + '" data-ti="' + i + '"><span class="t">' + mm(m.t) + '</span><span class="dtm-bd">' + bdg(m) + '</span><span>' + E(nameOf(m, i)) + ' <i>' + E(String(m.lines[0] || LV(m)).replace(/\.$/, '')) + '</i></span></div>'; };
-    if (pk === 'w') { at = wipeT; nowTxt = 'Wipe called'; nowLv = 'w'; var ch = d.querySelector(':scope > .dbt-why .dbt-chn'); card = head('✕', 'w', 'Wipe called', mm(wipeT) + (hp(wipeT) ? ' · boss ' + hp(wipeT) : ''), 'The wipe') + '<p class="dtm-p">Nothing after ' + mm(wipeT) + ' is judged.</p>' + (ch ? '<span class="dtm-k">How it went</span>' + ch.outerHTML : ''); }
-    else if (typeof pk === 'string' && pk.charAt(0) === 'p') { var k0 = +pk.slice(1), S1 = SP[k0]; at = S1.a; nowTxt = S1.p.n; nowLv = 'p'; var nB = bySp[k0].filter(function (i) { return M[i].st !== 'ok'; });
-      var cmpL = ''; if (T && k0 === 1) { var e1 = S1.a; cmpL = 'Zul\'jan went down at <b>' + mm(e1) + '</b>. Top guilds: ' + mm(T.p1[0]) + ' to ' + mm(T.p1[1]) + '. ' + (e1 <= T.p1[1] ? '<span class="g">On time.</span>' : '<span class="y">' + mm(e1 - T.p1[1]) + ' slower than the slowest top guild.</span>'); }
-      if (T && k0 === 0) cmpL = 'Top guilds push Zul\'jan between <b>' + mm(T.p1[0]) + '</b> and <b>' + mm(T.p1[1]) + '</b>.';
-      card = head('★', 'p', E(S1.p.n), mm(S1.a) + '–' + mm(S1.b) + (S1.p.hp0 != null && S1.p.hp0 !== '' && S1.p.hp1 != null && S1.p.hp1 !== '' ? ' · Boss ' + Math.round(+S1.p.hp0) + '% → ' + Math.round(+S1.p.hp1) + '%' : ''), 'Phase') + (cmpL ? '<p class="dtm-p">' + cmpL + '</p>' : '') +
-        '<span class="dtm-k">' + (nB.length ? 'Mistakes this phase' : 'This phase') + '</span>' + (nB.length ? nB.map(row).join('') : '<p class="dtm-ok">✓ Clean</p>'); }
-    else if (typeof pk === 'string' && pk.charAt(0) === 'r') { var r0 = +pk.slice(1), run = null; seqs.forEach(function (s) { s.forEach(function (e) { if (e.run && e.run[0] === r0) run = e.run; }); }); if (run) { at = M[run[0]].t; nowTxt = run.length + ' done right'; card = head('✓', 'g', run.length + ' done right', mm(M[run[0]].t) + '–' + mm(M[run[run.length - 1]].t) + (phN(M[run[0]].t) ? ' · ' + E(phN(M[run[0]].t)) : ''), 'Clean') + run.map(row).join(''); } }
-    else if (typeof pk === 'number' && M[pk]) { var m = M[pk], lv = lvOf(m), t2 = mm(m.t) + (phN(m.t) ? ' · ' + E(phN(m.t)) : '') + (hp(m.t) ? ' · boss ' + hp(m.t) : ''); at = m.t; nowLv = lv; nowTxt = nameOf(m, pk) + ' · ' + LV(m);
-      if (m.st === 'ok') { var hw = X.howIt ? X.howIt(m.sec) : ''; card = head(bdg(m), 'g', E(nameOf(m, pk)) + (m.nk ? ' <span style="font-weight:400;color:#868f99">(' + E(m.nk) + ')</span>' : ''), t2, 'Done right') + '<p class="dtm-ok">✓ Done right' + (m.n > 1 ? ', ' + m.n + ' times' : '') + '</p>' + (m.lines.length ? '<ul class="dtm-li">' + m.lines.slice(0, 5).map(function (l) { return '<li>' + X.chips(E(l), m.who) + '</li>'; }).join('') + '</ul>' : '') + (hw ? '<span class="dtm-k">What it is</span><p class="dtm-p">' + E(hw) + '</p>' : ''); }
-      else { mv = X.tl.querySelector(':scope > .dbt-it[data-i="' + pk + '"]'); card = head(bdg(m), lv, E(m.death ? (GM[pk] && GM[pk].length > 1 ? GM[pk].length + ' deaths' : 'Death: ' + nameOf(m, pk)) : nameOf(m, pk)) + (m.nk && !m.death ? ' <span style="font-weight:400;color:#868f99">(' + E(m.nk) + ')</span>' : ''), t2, LV(m)) + (mv ? '' : '<p class="dtm-p">' + E(m.lines.slice(0, 3).join('. ')) + '</p>'); } }
-    if (!card) card = '<p class="dtm-p">Pick a moment.</p>';
-      return { card: card, mv: mv, at: at, nowTxt: nowTxt, nowLv: nowLv }; };
-    var pk = P.pick, C0 = cardFor(pk), card = C0.card, mv = C0.mv, at = C0.at, nowTxt = C0.nowTxt, nowLv = C0.nowLv;
-    /* (every tile in time order, so the card can follow the replay while it plays) */
-    var ORD = []; SP.forEach(function (S0, k) { ORD.push(['p' + k, S0.a]); seqs[k].forEach(function (e) { ORD.push(e.run ? ['r' + e.run[0], M[e.run[0]].t] : [e.i, M[e.i].t]); }); }); if (wipeT != null) ORD.push(['w', wipeT]); ORD.sort(function (a, b) { return a[1] - b[1]; });
-    var cur = typeof pk === 'number' ? bad.indexOf(pk) : -1, stepL = cur >= 0 ? 'Mistake ' + (cur + 1) + ' of ' + bad.length : bad.length ? bad.length + ' mistakes' : 'No mistakes';
+    /* (the play-by-play (Flex, Nov 2: "a true play by play of the mechanics and how people responded to them"): every moment in time order,
+       one line each with what happened and who did what, added as the replay reaches it and kept for the rest of the pull; the verdict and
+       the coaching sit under the tiles ("down here it can highlight issues or if things were done correctly")) */
+    var runOf = {}; seqs.forEach(function (s) { s.forEach(function (e) { if (e.run) e.run.forEach(function (i) { runOf[i] = e.run[0]; }); }); });
+    var PB = []; SP.forEach(function (S0, k) { PB.push({ k: 'p' + k, t: S0.a }); bySp[k].forEach(function (i) { PB.push({ k: i, t: M[i].t }); }); }); if (wipeT != null) PB.push({ k: 'w', t: wipeT }); PB.sort(function (a, b) { return a.t - b.t; });
+    var tOf = function (k) { return typeof k === 'number' ? (M[k] ? M[k].t : 0) : k === 'w' ? wipeT : k.charAt(0) === 'p' ? SP[+k.slice(1)].a : k.charAt(0) === 'r' ? M[+k.slice(1)].t : 0; };
+    var hpSpan = function (S0) { return S0.p.hp0 != null && S0.p.hp0 !== '' && S0.p.hp1 != null && S0.p.hp1 !== '' ? ' <i>Boss ' + Math.round(+S0.p.hp0) + '% → ' + Math.round(+S0.p.hp1) + '%</i>' : ''; };
+    /* (what happened and how people responded: the moment's own lines from the mechanic checks, up to three, names in class colour) */
+    var told = function (m, i) { if (m.death) { var g = GM[i]; if (g && g.length > 1) return E(g.map(function (j) { var q = M[j]; return ((q.who[0] || {}).n || '') + (q.cause ? ' to ' + q.cause : ''); }).filter(Boolean).join(', ')); var n0 = (m.who[0] || {}).n || ''; return E(String(m.lines[0] || 'died').replace(/\.$/, '').replace(n0 + ' ', '')); }
+      var pre = String(m.m || '') + ': ', L = m.lines.map(function (l) { l = String(l).replace(/\.$/, ''); return l.indexOf(pre) === 0 ? l.slice(pre.length) : l; }); if (!L.length) L = [m.st === 'ok' ? 'done right' : (m.why || '')]; /* (no "Sever: " in front when the line already names Sever) */
+      return X.chips(E(L.slice(0, 3).join('; ')), m.who) + (L.length > 3 ? ' <i>(+' + (L.length - 3) + ' more)</i>' : ''); };
+    var pbRow = function (e) { var k = e.k;
+      if (typeof k === 'string' && k.charAt(0) === 'p') { var S0 = SP[+k.slice(1)]; return '<div class="dtm-pr ph lv-p" data-pk="' + k + '" data-t="' + S0.a + '"><span class="t">' + mm(S0.a) + '</span><span class="dtm-bd">★</span><span class="w no-ic nolk"><b>' + E(S0.p.n) + '</b>' + hpSpan(S0) + '</span><span></span></div>'; }
+      if (k === 'w') return '<div class="dtm-pr lv-w" data-pk="w" data-t="' + wipeT + '"><span class="t">' + mm(wipeT) + '</span><span class="dtm-bd">✕</span><span class="w no-ic nolk"><b>Wipe called</b> <i>nothing after this is judged</i></span><span></span></div>';
+      var m = M[k], lv = lvOf(m), tag = m.st === 'ok' ? '✓' : m.death ? '☠' : X.SVL(m.dead ? 5 : m.sv || 2);
+      return '<div class="dtm-pr lv-' + lv + '" data-pk="' + k + '" data-t="' + m.t + '"><span class="t">' + mm(m.t) + '</span><span class="dtm-bd">' + bdg(m) + '</span><span class="w no-ic nolk"><b' + (m.death && !(GM[k] && GM[k].length > 1) ? ' style="color:' + col((m.who[0] || {}).n) + '"' : '') + '>' + E(nameOf(m, k)) + '</b> ' + told(m, k) + '</span><span class="lv">' + E(tag) + '</span></div>'; };
+    /* (the verdict under the tiles: the Timeline's own card for a mistake or death (why, next time), done right for a clean moment, the push for a phase) */
+    var head = function (bd, lv, t1, t2, lt) { return '<div class="dtm-ch lv-' + lv + '"><span class="dtm-bd">' + bd + '</span><div class="no-ic nolk"><b>' + t1 + '</b><em>' + t2 + '</em></div><span class="dtm-lt">' + E(lt) + '</span></div>'; };
+    var verdictFor = function (k) { var html = '', mv = null;
+      if (k === 'w') { var ch = d.querySelector(':scope > .dbt-why .dbt-chn'); html = head('✕', 'w', 'Wipe called', mm(wipeT) + (hp(wipeT) ? ' · boss ' + hp(wipeT) : ''), 'The wipe') + (ch ? '<span class="dtm-k">How it went</span>' + ch.outerHTML : '<p class="dtm-p">Nothing after ' + mm(wipeT) + ' is judged.</p>'); }
+      else if (typeof k === 'string' && k.charAt(0) === 'p') { var k0 = +k.slice(1), S1 = SP[k0], L1 = bySp[k0], nO = L1.filter(function (i) { return M[i].st === 'ok'; }).length, nB = L1.filter(function (i) { return M[i].st !== 'ok' && !M[i].death; }).length, nDd = L1.filter(function (i) { return M[i].death; }).reduce(function (a, i) { return a + (GM[i] ? GM[i].length : 1); }, 0);
+        var cmpL = ''; if (T && k0 === 1) cmpL = 'Zul\'jan went down at <b>' + mm(S1.a) + '</b>. Top guilds: ' + mm(T.p1[0]) + ' to ' + mm(T.p1[1]) + '. ' + (S1.a <= T.p1[1] ? '<span class="g">On time.</span>' : '<span class="y">' + mm(S1.a - T.p1[1]) + ' slower than the slowest top guild.</span>');
+        if (T && k0 === 0) cmpL = 'Top guilds push Zul\'jan between <b>' + mm(T.p1[0]) + '</b> and <b>' + mm(T.p1[1]) + '</b>.';
+        html = head('★', 'p', E(S1.p.n), mm(S1.a) + '–' + mm(S1.b) + (S1.p.hp0 != null && S1.p.hp0 !== '' && S1.p.hp1 != null && S1.p.hp1 !== '' ? ' · Boss ' + Math.round(+S1.p.hp0) + '% → ' + Math.round(+S1.p.hp1) + '%' : ''), 'Phase') + (cmpL ? '<p class="dtm-p">' + cmpL + '</p>' : '') + '<p class="dtm-p">' + [nO ? '<span class="g">✓ ' + nO + ' done right</span>' : '', nB ? '<span class="y">' + nB + ' mistake' + (nB > 1 ? 's' : '') + '</span>' : '', nDd ? '<span class="r">☠ ' + nDd + ' death' + (nDd > 1 ? 's' : '') + '</span>' : ''].filter(Boolean).join(' · ') + '</p>'; }
+      else if (typeof k === 'number' && M[k]) { var m = M[k], lv = lvOf(m), t2 = mm(m.t) + (phN(m.t) ? ' · ' + E(phN(m.t)) : '') + (hp(m.t) ? ' · boss ' + hp(m.t) : ''), nk = m.nk && !m.death ? ' <span style="font-weight:400;color:#868f99">(' + E(m.nk) + ')</span>' : '';
+        if (m.st === 'ok') { var hw = X.howIt ? X.howIt(m.sec) : ''; html = head(bdg(m), 'g', E(nameOf(m, k)) + nk, t2, 'Done right') + '<p class="dtm-ok">✓ Done right' + (m.n > 1 ? ', ' + m.n + ' times' : '') + '</p>' + (hw ? '<span class="dtm-k">What it is</span><p class="dtm-p">' + E(hw) + '</p>' : ''); }
+        else { mv = X.tl.querySelector(':scope > .dbt-it[data-i="' + k + '"]'); html = head(bdg(m), lv, E(m.death ? (GM[k] && GM[k].length > 1 ? GM[k].length + ' deaths' : 'Death: ' + nameOf(m, k)) : nameOf(m, k)) + nk, t2, LV(m)) + (mv ? '' : '<p class="dtm-p">' + E(m.lines.slice(0, 3).join('. ')) + '</p>'); } }
+      return { html: html, mv: mv }; };
+    /* (the map's header always says where the replay is: its time and the last line at or before it) */
+    var lastAt = function (ft) { var e0 = null; for (var q = 0; q < PB.length; q++) { if (PB[q].t <= ft + 0.05) e0 = PB[q]; else break; } return e0; };
+    var nowOf = function (ft) { var e0 = lastAt(ft), k = P.pick != null && tOf(P.pick) <= ft + 0.05 && tOf(P.pick) >= ft - 1 ? P.pick : e0 ? e0.k : null, lv = 'g', tx = ''; if (k === 'w') { lv = 'w'; tx = 'Wipe called'; } else if (typeof k === 'string') { lv = 'p'; tx = SP[+k.slice(1)].p.n; } else if (k != null && M[k]) { lv = lvOf(M[k]); tx = nameOf(M[k], k) + ' · ' + LV(M[k]); } return { lv: lv, html: '<i>' + mm(Math.max(0, Math.floor(ft))) + '</i>' + E(tx) }; };
+    /* (the stepper walks the mistakes and deaths: "2 of 4 to review") */
+    var stepTxt = function (k) { var c2 = typeof k === 'number' ? bad.indexOf(k) : -1; return c2 >= 0 ? (c2 + 1) + ' of ' + bad.length + ' to review' : bad.length ? bad.length + ' to review' : 'Nothing to review'; };
+    var pk = P.pick, at = tOf(pk);
     var nOk = show.filter(function (i) { return M[i].st === 'ok'; }).length, nBd = bad.filter(function (i) { return !M[i].death; }).length, nD = bad.filter(function (i) { return M[i].death; }).reduce(function (a, i) { return a + (GM[i] ? GM[i].length : 1); }, 0);
-    var bar = '<div class="dtm-bar"><span class="dtm-tb">This pull<em>' + mm(Math.round(X.LEN)) + '</em></span><span class="dtm-cn"><b class="g">✓ ' + nOk + '</b> done right · <b class="y">' + nBd + '</b> mistake' + (nBd === 1 ? '' : 's') + ' · <b class="r">☠ ' + nD + '</b> death' + (nD === 1 ? '' : 's') + '</span><span class="dtm-sp"></span><span class="dtm-step"><button type="button" data-step="-1" aria-label="Previous mistake">◀</button><span>' + stepL + '</span><button type="button" data-step="1" aria-label="Next mistake">▶</button></span></div>';
-    /* (the lanes: you against the top guilds) */
-    var end = Math.max(X.LEN, wipeT || 0, 1), topP1 = T ? Math.round((T.p1[0] + T.p1[1]) / 2) : 0, topP2 = T ? topP1 + T.p2[0] : 0, axEnd = axOf(X, T);
+    var bar = '<div class="dtm-bar"><span class="dtm-tb">This pull<em>' + mm(Math.round(X.LEN)) + '</em></span><span class="dtm-cn"><b class="g">✓ ' + nOk + '</b> done right · <b class="y">' + nBd + '</b> mistake' + (nBd === 1 ? '' : 's') + ' · <b class="r">☠ ' + nD + '</b> death' + (nD === 1 ? '' : 's') + '</span><span class="dtm-sp"></span><span class="dtm-step"><button type="button" data-step="-1" aria-label="Previous mistake or death">◀</button><span>' + stepTxt(pk) + '</span><button type="button" data-step="1" aria-label="Next mistake or death">▶</button></span></div>';
+    /* (the lanes fit this pull plus a little room, so its marks don't pile up; the top guilds' later phases are an arrow at the end) */
+    var end = Math.max(X.LEN, wipeT || 0, 1), topP1 = T ? Math.round((T.p1[0] + T.p1[1]) / 2) : 0, topP2 = T ? topP1 + T.p2[0] : 0, axEnd = Math.max(60, Math.ceil(end * 1.12 / 15) * 15); box._axEnd = axEnd; box._end = end;
     var XP = function (t) { return Math.max(0, Math.min(100, t / axEnd * 100)); };
     var pcls = function (n) { var g = String(n || '').match(/^P(\d)/i); return g ? 'p' + g[1] : /inter/i.test(n) ? 'int' : 'p1'; };
     var you = SP.map(function (S0) { var b = Math.min(S0.b, end); return '<span class="dtm-blk ' + pcls(S0.p.n) + '" style="left:' + XP(S0.a) + '%;width:' + (XP(b) - XP(S0.a)) + '%" data-tt="' + E('<b>' + E(S0.p.n) + '</b><br>' + mm(S0.a) + '–' + mm(b) + ' · ' + mm(b - S0.a) + (S0.p.hp0 != null && S0.p.hp1 != null && S0.p.hp0 !== '' && S0.p.hp1 !== '' ? '<br>Boss ' + Math.round(+S0.p.hp0) + '% → ' + Math.round(+S0.p.hp1) + '%' : '') + '<br>Click to move the replay here.') + '">' + E(String(S0.p.n || '').split(/\s+/)[0]) + '</span>'; }).join('');
@@ -65180,31 +65229,35 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
     if (wipeT != null) you += '<span class="dtm-m cut" style="left:' + XP(wipeT) + '%" data-tt="' + E('<b>Wipe called</b><br>' + mm(wipeT)) + '"></span>';
     you += '<span class="dtm-head" style="left:' + XP(P.mt != null ? P.mt : at) + '%"></span>';
     var top = '';
-    if (T) { top = '<span class="dtm-blk p1" style="left:0;width:' + XP(topP1) + '%" data-tt="' + E('<b>P1 Zul\'jan</b><br>Top guilds push him between ' + mm(T.p1[0]) + ' and ' + mm(T.p1[1]) + '.') + '">P1</span>' +
-        '<span class="dtm-blk rng" style="left:' + XP(T.p1[0]) + '%;width:' + (XP(T.p1[1]) - XP(T.p1[0])) + '%" data-tt="' + E('<b>When top guilds push</b><br>' + mm(T.p1[0]) + ' to ' + mm(T.p1[1])) + '"></span>' +
-        '<span class="dtm-blk p2" style="left:' + XP(topP1) + '%;width:' + (XP(topP2) - XP(topP1)) + '%" data-tt="' + E('<b>P2 Malacrass</b><br>Top guilds finish it in about ' + mm(T.p2[0]) + ', never longer than ' + mm(T.p2[1]) + '.') + '">P2</span>' +
-        '<span class="dtm-m lust" style="left:' + XP(topP2) + '%" data-tt="' + E('<b>⚡ Bloodlust</b><br>All 20 fastest kills press it as the intermission starts.') + '"></span>' +
-        '<span class="dtm-more" style="left:' + XP(topP2) + '%">Intermission, P3 →</span>'; }
-    var ax = ''; for (var t = 60; t < axEnd; t += 60) ax += '<span style="left:' + XP(t) + '%">' + mm(t) + '</span>';
+    if (T) { var cl = function (t) { return Math.min(t, axEnd); };
+      top = '<span class="dtm-blk p1" style="left:0;width:' + XP(topP1) + '%" data-tt="' + E('<b>P1 Zul\'jan</b><br>Top guilds push him between ' + mm(T.p1[0]) + ' and ' + mm(T.p1[1]) + '.') + '">P1</span>';
+      if (T.p1[0] < axEnd) top += '<span class="dtm-blk rng" style="left:' + XP(T.p1[0]) + '%;width:' + (XP(cl(T.p1[1])) - XP(T.p1[0])) + '%" data-tt="' + E('<b>When top guilds push</b><br>' + mm(T.p1[0]) + ' to ' + mm(T.p1[1])) + '"></span>';
+      if (topP1 < axEnd) top += '<span class="dtm-blk p2" style="left:' + XP(topP1) + '%;width:' + (XP(cl(topP2)) - XP(topP1)) + '%" data-tt="' + E('<b>P2 Malacrass</b><br>Top guilds finish it in about ' + mm(T.p2[0]) + ', never longer than ' + mm(T.p2[1]) + '.') + '">P2</span>';
+      if (topP2 < axEnd) top += '<span class="dtm-m lust" style="left:' + XP(topP2) + '%" data-tt="' + E('<b>⚡ Bloodlust</b><br>All 20 fastest kills press it as the intermission starts.') + '"></span><span class="dtm-more" style="left:' + XP(topP2) + '%">Intermission, P3 →</span>';
+      else top += '<span class="dtm-more r">' + (topP1 >= axEnd ? 'P2 at ' + mm(topP1) : 'Intermission at ' + mm(topP2)) + ' →</span>'; }
+    var stp = axEnd <= 150 ? 15 : axEnd <= 360 ? 30 : 60, ax = ''; for (var t = stp; t < axEnd; t += stp) ax += '<span style="left:' + XP(t) + '%">' + mm(t) + '</span>';
     var cmp = '';
     if (T) { var y1 = SP[0], y2 = SP[1];
       if (y1 && SP.length > 1) { var e1b = y1.b, ok1 = e1b <= T.p1[1]; cmp += '<div style="left:' + XP(e1b) + '%"><b>Zul\'jan down · ' + mm(e1b) + '</b><span class="' + (ok1 ? 'g' : 'y') + '">' + (ok1 ? 'On time' : mm(e1b - T.p1[1]) + ' slower') + '</span> <span>(top guilds ' + mm(T.p1[0]) + '–' + mm(T.p1[1]) + ')</span></div>'; }
       if (y2) { var b2 = Math.min(y2.b, end), l2 = b2 - y2.a, done = y2.b < end - 1, o2 = l2 <= T.p2[1]; cmp += '<div style="left:' + Math.min(86, XP(b2)) + '%"><b>P2 ' + (done ? 'took ' : 'ran ') + mm(l2) + (done ? '' : ' before the wipe') + '</b><span class="' + (o2 ? 'g' : 'r') + '">' + (o2 ? 'On pace' : mm(l2 - T.p2[0]) + ' longer') + '</span> <span>(top guilds about ' + mm(T.p2[0]) + ')</span></div>'; } }
     var lanes = '<div class="dtm-ln"><div class="dtm-lr you"><b>You</b><div class="dtm-tr" data-scrub="1">' + you + '</div></div>' + (T ? '<div class="dtm-lr top"><b>Top guilds<em>20 fastest kills</em></b><div class="dtm-tr">' + top + '</div></div>' : '') + '<div class="dtm-ax">' + ax + '</div>' + (cmp ? '<div class="dtm-cmp">' + cmp + '</div>' : '') +
       '<div class="dtm-key"><span><i style="background:#7d97cf"></i>Phase</span><span><b style="color:#f0726a">☠</b> Death</span><span><b style="color:#e8a23a">!</b> Mistake</span><span><i style="background:#e8c05a;width:2px"></i>Lust</span><span><i style="border-left:2px dashed #f0726a;width:0;border-radius:0"></i>Wipe called</span><span><i style="background:#fff;width:2px"></i>Replay</span><span><i style="background:#7d97cf;opacity:.5"></i>Top guilds (faded)</span></div></div>';
-    var mapTop = '<div class="dtm-mh"><div class="dtm-mt"><b>Replay</b>' + [1, 2, 4].map(function (s) { return '<button type="button" data-spd="' + s + '" class="' + (P.spd === s ? 'on' : '') + '">' + s + '×</button>'; }).join('') + '</div><div class="dtm-now lv-' + nowLv + '">' + (nowTxt ? '<i>' + mm(Math.round(at)) + '</i>' + E(nowTxt) : '') + '</div></div>';
-    box.innerHTML = bar + '<div class="dtm-grid"><div class="dtm-left"><div class="dtm-map">' + mapTop + '<div class="mm dtm-mm"></div></div><div class="dtm-tiles">' + tiles + '</div></div><div class="dtm-card">' + card + '</div></div>' + lanes;
+    var N0 = nowOf(P.mt != null ? P.mt : at);
+    var mapTop = '<div class="dtm-mh"><div class="dtm-mt"><b>Replay</b>' + [1, 2, 4].map(function (s) { return '<button type="button" data-spd="' + s + '" class="' + (P.spd === s ? 'on' : '') + '">' + s + '×</button>'; }).join('') + '</div><div class="dtm-now lv-' + N0.lv + '">' + N0.html + '</div></div>';
+    box.innerHTML = bar + '<div class="dtm-grid"><div class="dtm-left"><div class="dtm-map">' + mapTop + '<div class="mm dtm-mm"></div></div><div class="dtm-tiles">' + tiles + '</div><div class="dtm-vd"></div></div><div class="dtm-card dtm-pb"><div class="dtm-pbh">Play by play<span>adds each mechanic as the replay reaches it</span></div><div class="dtm-pl">' + PB.map(pbRow).join('') + '</div></div></div>' + lanes;
+    box._tOf = tOf; box._bad = bad;
     var lend = function (it, cd) { if (!it) return; var hm = document.createComment('dtm-card'); if (it.parentNode) it.parentNode.insertBefore(hm, it); it._dtmHome = hm; it.classList.add('dbx-open'); cd.appendChild(it); };
     var giveBack = function (it) { if (!it) return; it.classList.remove('dbx-open'); var hm = it._dtmHome; if (hm && hm.parentNode) hm.parentNode.replaceChild(it, hm); else X.tl.appendChild(it); it._dtmHome = null; };
-    if (mv) lend(mv, box.querySelector('.dtm-card'));
-    try { if (X.spellify) X.spellify(X.v, box.querySelector('.dtm-card')); } catch (e) { /* (plain text) */ }
+    /* (one moment is current: the list shows every line up to it (the newest at the bottom, in view), its tile goes gold, and its verdict
+       shows under the tiles) */
+    var setCur = function (k, scroll) { P.pick = k; var pl = box.querySelector('.dtm-pl'); if (!pl) return;
+      var ct = tOf(k), row = null; [].slice.call(pl.querySelectorAll(':scope > .dtm-pr')).forEach(function (r) { var on = r.dataset.pk === String(k); r.classList.toggle('cur', on); if (on) row = r; r.classList.toggle('fut', +r.dataset.t > ct + 0.05); });
+      var vd = box.querySelector('.dtm-vd'); if (vd) { giveBack(vd.querySelector(':scope > .dbt-it')); var V0 = verdictFor(k); vd.innerHTML = V0.html; if (V0.mv) lend(V0.mv, vd); try { if (X.spellify) [].slice.call(vd.querySelectorAll('.dtm-p, .dtm-li')).forEach(function (el) { X.spellify(X.v, el); }); } catch (e) { /* (plain text; the title keeps one icon) */ } }
+      [].slice.call(box.querySelectorAll('.dtm-tiles .hot')).forEach(function (x2) { x2.classList.remove('hot'); }); var tk = typeof k === 'number' && runOf[k] != null ? 'r' + runOf[k] : k, sel = typeof tk === 'number' ? '[data-ti="' + tk + '"]' : tk === 'w' ? '[data-wipe]' : tk.charAt(0) === 'p' ? '[data-ph="' + tk.slice(1) + '"]' : '[data-run="' + tk.slice(1) + '"]', tEl = box.querySelector('.dtm-tiles ' + sel); if (tEl) tEl.classList.add('hot');
+      var sl = box.querySelector('.dtm-step span'); if (sl) sl.textContent = stepTxt(k);
+      var pbx = box.querySelector('.dtm-pb'); if (scroll && pbx && !P.userScroll) pbx.scrollTop = pbx.scrollHeight; /* (the newest line is at the bottom: keep it in view) */
+      if (box._fit) box._fit(); };
     /* (the replay itself: the site's own map drawing (room picture, spec icons, zoom, play bar), fed the whole pull) */
-    /* (a new card, gold tile, label and stepper without redrawing the replay) */
-    var setSide = function (k) { var C = cardFor(k), cd = box.querySelector('.dtm-card'); if (!cd) return; giveBack(cd.querySelector(':scope > .dbt-it'));
-      cd.innerHTML = C.card; if (C.mv) lend(C.mv, cd); try { if (X.spellify) X.spellify(X.v, cd); } catch (e) { /* (plain text) */ }
-      [].slice.call(box.querySelectorAll('.dtm-tiles .hot')).forEach(function (x) { x.classList.remove('hot'); }); var sel = typeof k === 'number' ? '[data-ti="' + k + '"]' : k === 'w' ? '[data-wipe]' : k.charAt(0) === 'p' ? '[data-ph="' + k.slice(1) + '"]' : '[data-run="' + k.slice(1) + '"]', tEl = box.querySelector('.dtm-tiles ' + sel); if (tEl) tEl.classList.add('hot');
-      var nw = box.querySelector('.dtm-now'); if (nw) { nw.className = 'dtm-now lv-' + C.nowLv; nw.innerHTML = C.nowTxt ? '<i>' + mm(Math.round(C.at)) + '</i>' + E(C.nowTxt) : ''; }
-      var sl = box.querySelector('.dtm-step span'), c2 = typeof k === 'number' ? bad.indexOf(k) : -1; if (sl) sl.textContent = c2 >= 0 ? 'Mistake ' + (c2 + 1) + ' of ' + bad.length : bad.length ? bad.length + ' mistakes' : 'No mistakes'; };
     var mb = box.querySelector('.dtm-mm'), w = W();
     try { if (rep && w.miniMap) { var MMs = []; try { MMs = w.modMaps ? w.modMaps(rep) || [] : []; } catch (e) { MMs = []; }
         if (!P.fr) P.fr = buildFrames(rep, Math.ceil(end), MMs); var fr = P.fr, fi = Math.max(0, Math.min(fr.length - 1, Math.round(at / STEP)));
@@ -65228,30 +65281,44 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
         var grow = function () { if (!GROW) return; var s = mb.querySelector('svg.zmap'); if (!s) return; var im = [].slice.call(s.querySelectorAll('image')).filter(function (q) { return String(q.getAttribute('href') || '').indexOf(GROW.art) >= 0; })[0]; if (!im || im.dataset.grown) return;
           var ix = +im.getAttribute('x'), iy = +im.getAttribute('y'), iw = +im.getAttribute('width'), ih = +im.getAttribute('height'), px = ix + (GROW.x - GROW.ax0) / (GROW.ax1 - GROW.ax0) * iw, py = iy + (GROW.ay1 - GROW.y) / (GROW.ay1 - GROW.ay0) * ih;
           im.setAttribute('x', px - (px - ix) * GROW.k); im.setAttribute('y', py - (py - iy) * GROW.k); im.setAttribute('width', iw * GROW.k); im.setAttribute('height', ih * GROW.k); im.dataset.grown = '1'; };
+        /* (around a picked mistake or death, the players who weren't in it fade, so the ringed ones stand out) */
+        var fade = function (ft) { var s = mb.querySelector('svg.zmap'), m = typeof P.pick === 'number' ? M[P.pick] : null; if (!s || !m || m.st === 'ok' || Math.abs(ft - m.t) > 6) return; var keep = {};
+          (m.death && GM[P.pick] ? GM[P.pick].reduce(function (A, j) { return A.concat(M[j].who); }, []) : m.who).forEach(function (w0) { keep[w0.n] = 1; });
+          [].slice.call(s.querySelectorAll('g.ic')).forEach(function (g) { var nm = ((g.querySelector('title') || {}).textContent || '').split(/[\s:·(]/)[0]; if (byN[nm] && !keep[nm]) g.style.opacity = '.35'; }); };
         var pmap = new Map(); rep.players.forEach(function (p) { if (p && p.name) pmap.set(p.name, p); });
         mb.innerHTML = w.miniMap(mp, pmap);
         if (w.bindZoom) w.bindZoom(mb); if (w.bindAnim) w.bindAnim(mb, mp, pmap); if (w.hydrateMapIcons) w.hydrateMapIcons(mb);
-        var seekT = P.mt != null ? P.mt : at; var rg = mb.querySelector('.zrange'); if (rg) { rg.value = Math.max(0, Math.min(fr.length - 1, Math.round(seekT / STEP))); rg.dispatchEvent(new Event('input')); } grow(); mb._onFrame = function (ft) { P.mt = ft; grow(); var hd = box.querySelector('.dtm-head'); if (hd) hd.style.left = XP(ft) + '%';
-          var pb = mb.querySelector('.zplay'); if (!pb || !/Pause/.test(pb.textContent)) return; /* (the card follows only while it plays) */
-          var nk = null; for (var q = 0; q < ORD.length; q++) { if (ORD[q][1] <= ft + 0.05) nk = ORD[q][0]; else break; } if (nk != null && nk !== P.pick) { P.pick = nk; setSide(nk); } }; } }
+        var seekT = P.mt != null ? P.mt : at; var rg = mb.querySelector('.zrange'); if (rg) { rg.value = Math.max(0, Math.min(fr.length - 1, Math.round(seekT / STEP))); rg.dispatchEvent(new Event('input')); } grow(); fade(seekT);
+        mb._onFrame = function (ft) { P.mt = ft; grow(); fade(ft); var hd = box.querySelector('.dtm-head'); if (hd) hd.style.left = XP(ft) + '%'; var nw = box.querySelector('.dtm-now'); if (nw) { var N1 = nowOf(ft); nw.className = 'dtm-now lv-' + N1.lv; nw.innerHTML = N1.html; }
+          var pb = mb.querySelector('.zplay'), playing = !!pb && /Pause/.test(pb.textContent);
+          if (P.clip) { if (playing && ft >= P.clip.to) { P.clip = null; P.auto = true; pb.click(); P.auto = false; } return; } /* (a picked moment plays in from 4 s before and stops just after it) */
+          if (!playing) return; /* (the play-by-play follows only while it plays) */
+          var e0 = lastAt(ft); if (e0 && e0.k !== P.pick) setCur(e0.k, true); };
+        if (P.clip) { var pb1 = mb.querySelector('.zplay'); if (pb1) { P.auto = true; pb1.click(); P.auto = false; } } } }
     catch (e) { console.error(e); mb.innerHTML = '<p class="dtm-p" style="padding:12px">The replay needs Advanced Combat Logging.</p>'; }
+    setCur(pk, true);
     if (w.hydrateIcons) w.hydrateIcons(); if (w.refreshIcons) w.refreshIcons();
-    /* (the card is as tall as the replay and the tiles; a longer card scrolls inside) */
-    var fit = function () { var lf = box.querySelector('.dtm-left'), cdv = box.querySelector('.dtm-card'); if (lf && cdv) cdv.style.height = innerWidth > 900 ? Math.max(320, lf.offsetHeight) + 'px' : ''; }; fit(); setTimeout(fit, 150); setTimeout(fit, 800);
+    /* (the play-by-play is as tall as the replay, the tiles and the verdict; a longer list scrolls inside) */
+    var fit = function () { var lf = box.querySelector('.dtm-left'), cdv = box.querySelector('.dtm-card'); if (lf && cdv) cdv.style.height = innerWidth > 900 ? Math.max(320, lf.offsetHeight) + 'px' : ''; }; box._fit = fit; fit(); setTimeout(fit, 150); setTimeout(fit, 800);
     if (fromChart && box.getBoundingClientRect().top < 0) box.scrollIntoView({ block: 'start' });
     if (box._bound) return; box._bound = 1;
     if (!tip) { tip = document.createElement('div'); tip.className = 'dtm-tip'; document.body.appendChild(tip); }
-    var pickI = function (p) { var X0 = box._X; P.pick = p; P.mt = null; var m = typeof p === 'number' ? X0.M[p] : null; X0.F.xo = m && m.st !== 'ok' ? p : null; box._lastXo = X0.F.xo; tip.classList.remove('on'); X0.draw(); };
+    /* (picking a moment plays into it: the replay starts 4 s before and stops just after, and the list follows the pick) */
+    var pickI = function (k) { var X0 = box._X, t0 = box._tOf ? box._tOf(k) : 0, m = typeof k === 'number' ? X0.M[k] : null; P.pick = k; X0.F.xo = m && m.st !== 'ok' ? k : null; box._lastXo = X0.F.xo; P.userScroll = false; P.mt = Math.max(0, (t0 || 0) - 4); P.clip = { to: (t0 || 0) + 0.6 }; tip.classList.remove('on'); X0.draw(); };
     box.addEventListener('click', function (e) { var t = e.target.closest ? e.target : null; if (!t) return;
-      var sp = t.closest('[data-spd]'); if (sp) { P.spd = +sp.dataset.spd; box._X.draw(); return; }
-      var sc = t.closest('[data-scrub]'); if (sc && !t.closest('[data-ti]')) { var X0 = box._X, S2 = W().S || {}, T0 = TOP[((S2.item || {}).boss || '') + '|' + ((S2.item || {}).diffId || '')], r = sc.getBoundingClientRect(), tt = Math.max(0, Math.min(Math.max(X0.LEN, 1), (e.clientX - r.left) / r.width * axOf(X0, T0))); var rg = box.querySelector('.dtm-mm .zrange'); if (rg) { rg.value = Math.round(tt / STEP); rg.dispatchEvent(new Event('input')); P.mt = tt; } return; }
+      if (t.closest('.zplay')) { if (!P.auto) { P.clip = null; P.userScroll = false; } return; } /* (Play: the list follows again) */
+      var sp = t.closest('[data-spd]'); if (sp) { P.spd = +sp.dataset.spd; P.clip = null; box._X.draw(); return; }
+      var sc = t.closest('[data-scrub]'); if (sc && !t.closest('[data-ti]')) { var r = sc.getBoundingClientRect(), tt = Math.max(0, Math.min(box._end || 1, (e.clientX - r.left) / r.width * (box._axEnd || 1))); var rg = box.querySelector('.dtm-mm .zrange'); if (rg) { P.clip = null; rg.value = Math.round(tt / STEP); rg.dispatchEvent(new Event('input')); P.mt = tt; } return; }
+      var pr = t.closest('.dtm-pr[data-pk]'); if (pr && box.contains(pr)) { var pk2 = pr.dataset.pk; pickI(/^\d+$/.test(pk2) ? +pk2 : pk2); return; }
       var b = t.closest('[data-ti], [data-run], [data-wipe], [data-step], [data-ph]'); if (!b || !box.contains(b)) return; e.preventDefault();
-      if (b.dataset.step) { var M0 = box._X.M, L0 = [].slice.call(box.querySelectorAll('.dtm-tiles [data-ti]')).map(function (x) { return +x.dataset.ti; }).filter(function (i) { return M0[i] && M0[i].st !== 'ok'; }), c0 = L0.indexOf(P.pick), dn = +b.dataset.step;
+      if (b.dataset.step) { var L0 = box._bad || [], c0 = L0.indexOf(P.pick), dn = +b.dataset.step;
         var nx = c0 >= 0 ? L0[(c0 + dn + L0.length) % L0.length] : dn > 0 ? L0[0] : L0[L0.length - 1]; if (nx != null) pickI(nx); return; }
       if (b.dataset.ph != null) { pickI('p' + b.dataset.ph); return; }
-      if (b.dataset.run) { pickI('r' + b.dataset.run); return; }
+      if (b.dataset.run) { pickI(+b.dataset.run); return; }
       if (b.dataset.wipe) { pickI('w'); return; }
       pickI(+b.dataset.ti); });
+    /* (scrolling the list yourself stops it following until you press Play or pick a moment) */
+    var mine = function (e) { if (e.target.closest && e.target.closest('.dtm-pb')) P.userScroll = true; }; box.addEventListener('wheel', mine, { passive: true }); box.addEventListener('touchmove', mine, { passive: true });
     box.addEventListener('mouseover', function (e) { var b = e.target.closest && e.target.closest('[data-tt]'); if (!b || !box.contains(b)) { tip.classList.remove('on'); return; } tip.innerHTML = b.dataset.tt; tip.classList.add('on'); var r = b.getBoundingClientRect(), wd = tip.offsetWidth, x = r.left + r.width / 2 - wd / 2; x = Math.max(8, Math.min(innerWidth - wd - 8, x)); var y = r.top - tip.offsetHeight - 8; if (y < 8) y = r.bottom + 8; tip.style.left = x + 'px'; tip.style.top = y + 'px'; });
     box.addEventListener('mouseleave', function () { tip.classList.remove('on'); });
     window.addEventListener('scroll', function () { if (tip) tip.classList.remove('on'); }, { passive: true });

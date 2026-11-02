@@ -13110,6 +13110,36 @@ html body #view > .dbt.dbt.dbx .dtm-card .dbt-it.dbx-open > .dbt-c > .dbt-mapslo
 .dtm-tip{position:fixed;z-index:90;max-width:300px;padding:8px 10px;border:1px solid var(--line2);border-radius:6px;background:#12171d;box-shadow:0 8px 24px rgba(0,0,0,.5);font-size:12.5px;color:#aeb6bf;line-height:1.45;pointer-events:none;display:none}
 .dtm-tip.on{display:block}.dtm-tip b{color:var(--text);font-weight:700;font-size:13px}.dtm-tip .lc{color:var(--lc);font-weight:600}
 @media (max-width: 900px){.dtm-grid{grid-template-columns:minmax(0,1fr)}.dtm-card{min-height:0;height:auto !important}}
+/* Timeline replay round 2 (Nov 2): the play-by-play beside the replay */
+html body #view > .dbt.dbt.dbx .dtm-pb{position:relative;padding:10px 10px 12px}
+.dtm-pbh{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 4px 6px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#868f99}
+.dtm-pbh span{font-weight:400;letter-spacing:0;text-transform:none;font-size:12.5px}
+.dtm-pr{display:grid;grid-template-columns:38px 20px minmax(0,1fr) auto;gap:8px;align-items:start;padding:6px 6px;border-radius:4px;border-bottom:1px solid #1d232a;font-size:13px;line-height:1.4;cursor:pointer}
+.dtm-pr:hover{background:rgba(255,255,255,.03)}
+.dtm-pr .t{color:#aeb6bf;font-variant-numeric:tabular-nums}
+.dtm-pr .dtm-bd{grid-row:auto;width:18px;height:18px;font-size:11px}
+.dtm-pr .dtm-bd .icw,.dtm-pr .dtm-bd img.oi,.dtm-pr .dtm-bd svg.ico{width:18px !important;height:18px !important}
+.dtm-pr .w{min-width:0;color:#aeb6bf}
+.dtm-pr .w b{color:var(--text);font-weight:600}
+.dtm-pr .w i{font-style:normal;color:#868f99}
+.dtm-pr .lv{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--lc)}
+.dtm-pr.ph{margin-top:8px;border-bottom:0}
+.dtm-pr.ph .w b{color:var(--gold)}
+/* (the list grows as the fight goes: a line shows once the replay reaches it, and stays (Flex, Nov 2: "the list should get longer as the fight progresses")) */
+.dtm-pr.fut{display:none}
+.dtm-pr.cur{background:rgba(232,192,90,.08);box-shadow:inset 2px 0 0 var(--gold)}
+.dtm-pr .lv{padding-top:1px}
+/* (the verdict under the tiles: done right, or the mistake with why and next time) */
+.dtm-vd{border:1px solid var(--line2);border-radius:4px;background:rgba(255,255,255,.02);padding:12px 14px}
+.dtm-vd:empty{display:none}
+html body #view > .dbt.dbt.dbx .dtm-vd .dbt-it{display:block !important;margin:0 !important;padding:0 !important;border:0 !important;background:none !important;box-shadow:none !important}
+.dtm-vd .dbt-it > .dbx-row{display:none !important}
+html body #view > .dbt.dbt.dbx .dtm-vd .dbt-it.dbx-open > .dbt-c{padding:0 !important;display:block !important}
+html body #view > .dbt.dbt.dbx .dtm-vd .dbt-it.dbx-open > .dbt-c > .dbt-mapslot{display:none !important}
+.dtm-vd .dbt-it .dbt-tm{display:none !important}
+.dtm-more.r{left:auto;right:6px;padding-left:0}
+@media (max-width: 900px){html body #view > .dbt.dbt.dbx .dtm-pb{max-height:440px !important;overflow:auto}}
+@media (max-width: 700px){.dtm-pbh span{display:none}}
 @media (max-width: 700px){.dtm-tiles{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}.dtm-bar{gap:10px}.dtm-cn{display:none}.dtm-step{width:100%;justify-content:space-between}.dtm-lr{grid-template-columns:64px minmax(0,1fr)}.dtm-ax,.dtm-cmp,.dtm-key{margin-left:74px}.dtm-cmp{height:56px}.dtm-cmp div{white-space:normal;width:118px;font-size:12.5px}.dtm-now{font-size:12px}.dtm-map svg.zmap{max-height:300px !important}}
 @media (max-width: 900px){
   html body #view > .dbt.dbt.dbx .dbt-it.dbx-open > .dbt-c{grid-template-columns:minmax(0,1fr);padding-left:8px !important}
