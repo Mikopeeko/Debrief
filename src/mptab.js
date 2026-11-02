@@ -1123,6 +1123,19 @@ const mpCCcasts = (L) => { const out = [], last = new Map(); for (const e of [..
 // log doesn't say which enemies are rare or elite (checked on Flex's log of Nov 1), and Wowhead's "elite" flag is on nearly all key trash, so the
 // Pack's Elite is the mini-boss tier by health; these two are Elite whatever their health (mplus-tab-design/npc-classes.md))
 const MP_RARE = new Set([50815, 140123]);
+// (the key's middle trash enemy by health, each one counted, and the trash kinds; the Pack's Elite rule, shared with the map's gold rings: a rare, or at
+// least twice the middle health, trash only)
+const mpMid = (RR) => { if (RR.mobMid == null) { const ty = RR.mobType || {}, hs = []; RR.mobTrash = new Set(); for (const q2 of RR.pulls) if (!q2.boss) for (const [n2, c2] of mpMobs(RR, q2)) { RR.mobTrash.add(n2); const h = (ty[n2] || {}).hp || 0; if (h) for (let k = 0; k < c2; k++) hs.push(h); }
+  hs.sort((a, b) => a - b); RR.mobMid = hs.length ? hs[hs.length >> 1] : 0; } return RR.mobMid; };
+const mpElite = (RR, n2) => { const o = n2 && (RR.mobType || {})[n2]; if (!o) return false; const mid = mpMid(RR); return MP_RARE.has(o.id) || !!(mid && o.hp >= 2 * mid && RR.mobTrash.has(n2)); };
+// (each boss's Encounter Journal portrait, as Wowhead's dungeon overview guides show them (read from the 8 guides, Nov 2), loaded at runtime, never
+// bundled; by the boss's name in letters only. Without one, the boss keeps its dot and its ★)
+const MP_BOSSPIC = { tazrah: 'tazrah', atroxus: 'atroxus', charonus: 'charonus', ravi: 'hydra', thewrithingcoil: 'writhe', zuljan: 'zuljan', thehoardmonger: 'furbolgprimal', sentinelofwinter: 'furbolgearth', nalorakk: 'bearloa',
+  kystiamanaheart: 'kystia-manaheart', zaenbladesorrow: 'zaen-bladesorrow', xathuuxtheannihilator: 'xathuux-the-annihilator', xanthuuxtheannihilator: 'xathuux-the-annihilator', lithielcinderfury: 'lithiel-cinderfury',
+  melidrussachillworn: 'melidrussa-chillworn', kokiablazehoof: 'kokia-blazehoof', kyrakkaanderkhartstormvein: 'kyrakka', thegoldenserpent: 'thegoldenserpent', mchimbatheembalmer: 'mchimbatheembalmer', thecounciloftribes: 'thecounciloftribes',
+  dazarthefirstking: 'dazarthefirstking', adderisandaspix: 'adderisandaspix', merektha: 'merektha', galvazzt: 'galvazzt', avatarofsethraliss: 'avatarofsethraliss', lightblossomtrinity: 'lightblossomtrinity', ikuzzthelighthunter: 'lighthunterikuzz',
+  lightwardenruia: 'lightwardenruia', ziekket: 'ziekket' };
+const mpBossPic = (name) => { const k = MP_BOSSPIC[String(name || '').toLowerCase().replace(/[^a-z]/g, '')]; return k ? 'https://wow.zamimg.com/images/wow/journal/ui-ej-boss-' + k + '.png' : ''; };
 // (always Caster, by NPC ID (Flex: "Yes, both casters"): Murder Row's Corrupted Warlock and Felonious Mage; then (Flex: "yea fix those things") the three
 // whose damage is mostly magic but who rarely begin a cast: Ruby Life Pools' High Channeler Ryvati, Temple of Sethraliss' Spark Channeler (both IDs)
 // and Orb Watcher)
@@ -1235,8 +1248,8 @@ function mpScan(it, R, text) {
     const zone = (Object.entries(zc).sort((a, b) => b[1] - a[1])[0] || [])[0], L = [];
     for (const u of U.values()) { if (!ok(u) || u.g.split('-')[4] !== zone) continue; const tt = u.died != null ? u.died : u.hit; let k = 0, best = 1e9;
       for (let m = 0; m < N; m++) { const d = tt < P[m].s ? P[m].s - tt : tt > P[m].e ? tt - P[m].e : 0; if (d < best) { best = d; k = m; } }
-      L.push({ x: u.at[0], y: u.at[1], ui: u.at[2], k, hp: u.hp, t: tt }); }
-    for (let m = 0; m < N; m++) if (!L.some((u) => u.k === m)) for (const u of U.values()) if (ok(u) && u.g.split('-')[4] === zone && u.hit >= P[m].s && u.hit <= P[m].e) L.push({ x: u.at[0], y: u.at[1], ui: u.at[2], k: m, hp: u.hp, t: u.hit }); /* (a pull whose enemies all died in the next one: the ones first hit in it (Den of Nalorakk's two Frostfangs, Nov 2)) */
+      L.push({ x: u.at[0], y: u.at[1], ui: u.at[2], k, hp: u.hp, t: tt, n: u.n, id: +u.g.split('-')[5] || 0 }); }
+    for (let m = 0; m < N; m++) if (!L.some((u) => u.k === m)) for (const u of U.values()) if (ok(u) && u.g.split('-')[4] === zone && u.hit >= P[m].s && u.hit <= P[m].e) L.push({ x: u.at[0], y: u.at[1], ui: u.at[2], k: m, hp: u.hp, t: u.hit, n: u.n, id: +u.g.split('-')[5] || 0 }); /* (a pull whose enemies all died in the next one: the ones first hit in it (Den of Nalorakk's two Frostfangs, Nov 2)) */
     for (let m = 0; m < N; m++) if (P[m].boss) { const us = L.filter((u) => u.k === m), top = Math.max(0, ...us.map((u) => u.hp)); for (const u of us) if (top && u.hp >= top * 0.3) u.boss = true; }
     const avT = new Map(); for (const p of P) for (const a of p.avoid || []) if (a.ts) { const k = a.who + '|' + mpLc(a.spell); avT.set(k, (avT.get(k) || []).concat(a.ts)); } /* (only the hits the key reader counted: not a cast on the whole group, not a spell's free hits (Nov 2)) */
     R.units = L; R.deathPos = deathPos; R.castPos = castPos; R.avHits = avT.size ? avHits.filter((h) => { const l = avT.get(h.who + '|' + mpLc(h.sp)); return !!l && l.some((t) => Math.abs(t - h.t) < 0.35); }) : avHits; R.kickEv = kickEv; R.ccEv = ccEv; }
@@ -1331,7 +1344,7 @@ function mpMapHtml(R, F, tl) {
   // (Know this dungeon's tips on the matching pulls: a boss's plan; trash tips only for named enemies that were in the pull. At most 3)
   const K = MP_KNOW[mpLc(R.run.dungeon)], tips = (q) => { if (!K) return []; if (q.p.boss) { const b = K.b.find(([n]) => mpLc(n) === mpLc(q.p.boss)); return b ? b[1].slice(0, 3) : []; }
     const names = mpMobs(q.RR, q.p).map((m) => mpLc(m[0])); return K.t.filter((x) => { const L = [...x.matchAll(/\*\*(.+?)\*\*/g)].map((m) => mpLc(m[1]).replace(/s$/, '')); return L.length && L.some((n) => names.some((m) => m.startsWith(n) || n.startsWith(m))); }).slice(0, 3); };
-  const svg = (Q, fl) => { const k = fl.box[2] / W, f = fl.f, here = (u) => u.ui === f[0], cen = new Map(), shapes = [], marks = [], tags = [];
+  const svg = (Q, fl) => { const k = fl.box[2] / W, f = fl.f, here = (u) => u.ui === f[0], cen = new Map(), shapes = [], marks = [], tags = [], defs = [], uid = (Q[0] && Q[0].RR === R ? 'y' : 'f') + fl.i;
     for (const q of Q) { const us = q.us.filter(here); if (us.length) { /* (its shapes and tag only where its enemies stood; its marks wherever they landed) */
       /* (one outline per group of enemies standing within 50 yards of each other (the studio, Nov 2; Voidscar pull 1 has a 46-yard gap, its
          dragged Siphoids 88 or more): a pull stretched across the room is several shapes in one colour, its number on the biggest) */
@@ -1340,15 +1353,24 @@ function mpMapHtml(R, F, tl) {
       const cl = new Map(); us.forEach((u, j) => { const r = root(j); if (!cl.has(r)) cl.set(r, []); cl.get(r).push(u); });
       const groups = [...cl.values()].sort((a, b) => b.length - a.length), big = groups[0].map((u) => px(f, u));
       cen.set(q.i, [big.reduce((a, v) => a + v[0], 0) / big.length, big.reduce((a, v) => a + v[1], 0) / big.length]);
-      const shape = (g) => { const pts = g.map((u) => px(f, u)), hp = mpHull(pts), d = (hp.length === 1 ? [hp[0], hp[0]] : hp).map((v, j) => (j ? 'L' : 'M') + v[0].toFixed(1) + ' ' + v[1].toFixed(1)).join('') + (hp.length > 2 ? 'Z' : '');
-        return '<path d="' + d + '" fill="' + q.c + '" fill-opacity=".22" stroke="' + q.c + '" stroke-opacity=".38" stroke-width="' + (30 * k).toFixed(1) + '" stroke-linejoin="round" stroke-linecap="round"/>' +
-          pts.map((v, j) => '<circle cx="' + v[0].toFixed(1) + '" cy="' + v[1].toFixed(1) + '" r="' + ((g[j].boss ? 7 : 4.5) * k).toFixed(1) + '" fill="' + q.c + '" stroke="#0f1117" stroke-width="' + (1.2 * k).toFixed(1) + '"/>').join(''); };
-      shapes.push('<g class="mpt-mpl" data-pi="' + q.i + '"' + mpT1(tip(q)) + '>' + groups.map(shape).join('') + '</g>');
+      const shape = (g, gi) => { const pts = g.map((u) => px(f, u)), hp = mpHull(pts), d = (hp.length === 1 ? [hp[0], hp[0]] : hp).map((v, j) => (j ? 'L' : 'M') + v[0].toFixed(1) + ' ' + v[1].toFixed(1)).join('') + (hp.length > 2 ? 'Z' : '');
+        const pad = 30 * k, e = 1.6 * k, id = 'mpm-' + uid + '-' + q.i + '-' + gi, lj = ' stroke-linejoin="round" stroke-linecap="round"';
+        defs.push('<mask id="' + id + '" maskUnits="userSpaceOnUse" x="-4000" y="-4000" width="9000" height="9000"><rect x="-4000" y="-4000" width="9000" height="9000" fill="#fff"/><path d="' + d + '" fill="#000" stroke="#000" stroke-width="' + pad.toFixed(1) + '"' + lj + '/></mask>');
+        return '<g class="mpt-hpg" opacity=".09"><path d="' + d + '" fill="' + q.c + '" stroke="' + q.c + '" stroke-width="' + pad.toFixed(1) + '"' + lj + '/></g>' +
+          '<path class="mpt-hedge" d="' + d + '" fill="none" stroke="' + q.c + '" stroke-width="' + (pad + 2 * e).toFixed(2) + '" data-pad="' + pad.toFixed(2) + '" data-e="' + e.toFixed(3) + '"' + lj + ' mask="url(#' + id + ')"/>' +
+          pts.map((v, j) => { const el = !g[j].boss && mpElite(q.RR, g[j].n); return '<circle cx="' + v[0].toFixed(1) + '" cy="' + v[1].toFixed(1) + '" r="' + ((g[j].boss || el ? 6.5 : 4.2) * k).toFixed(1) + '" fill="#0f1117" stroke="' + (el ? '#ffd166' : q.c) + '" stroke-width="' + (1.8 * k).toFixed(2) + '"/>'; }).join(''); };
+      const port = (() => { const src = q.p.boss && mpBossPic(q.p.boss); if (!src) return ''; const bs = us.filter((u) => u.boss).map((u) => px(f, u)), at = bs.length ? [bs.reduce((a, v) => a + v[0], 0) / bs.length, bs.reduce((a, v) => a + v[1], 0) / bs.length] : null; if (!at) return '';
+        return '<g class="mpt-bport" transform="translate(' + at[0].toFixed(1) + ',' + at[1].toFixed(1) + ') scale(' + k.toFixed(3) + ')"><circle r="15" fill="#0f1117"/><image href="' + src + '" x="-14" y="-14" width="28" height="28" preserveAspectRatio="xMidYMid slice" clip-path="url(#mpbc-' + uid + ')" onerror="this.remove()"/><circle r="14.4" fill="none" stroke="#e5c56b" stroke-width="1.4"/></g>'; })();
+      shapes.push('<g class="mpt-mpl" data-pi="' + q.i + '"' + mpT1(tip(q)) + '>' + groups.map(shape).join('') + port + '</g>');
       const top = big.reduce((a, v) => (v[1] < a[1] ? v : a)), wt = q.wait ? '⏱' + mpMM(q.wait) : '', ww = wt.length * 7 + 8;
-      tags.push('<g class="mpt-mpl mpt-mtag" data-pi="' + q.i + '" data-oy="' + (26 * k).toFixed(1) + '"' + mpT1(tip(q)) + ' transform="translate(' + top[0].toFixed(1) + ',' + (top[1] - 26 * k).toFixed(1) + ') scale(' + k.toFixed(3) + ')"><rect x="-14" y="-12" width="28" height="22" rx="4" fill="#0f1117" stroke="' + q.c + '" stroke-width="2"/><text y="5" text-anchor="middle" fill="' + q.c + '">' + (q.p.boss ? '★' : mpNo(q.RR, q.p.n)) + '</text>' +
-        (q.bad ? '<circle class="mk-bad" cx="13" cy="-11" r="5" fill="#ff8f87" stroke="#0f1117" stroke-width="1.5"/>' : '') +
-        (q.lust ? '<g class="mk-lust"><rect x="17" y="-11" width="20" height="20" rx="4" fill="#0f1117" stroke="#ffd166" stroke-width="1.5"/><text x="27" y="4" text-anchor="middle" fill="#ffd166" style="font-size:12px">⚡</text></g>' : '') +
-        (wt ? '<g class="mk-wait"><rect x="' + (-17 - ww) + '" y="-10" width="' + ww + '" height="18" rx="4" fill="#0f1117" stroke="#aeb6bf" stroke-width="1"/><text x="' + (-17 - ww / 2) + '" y="3.5" text-anchor="middle" fill="#aeb6bf" style="font-size:11px">' + wt + '</text></g>' : '') + '</g>');
+      const rr = q.RR.route && q.RR.route.ok && q.RR.route.full === rt.full ? q.RR.route : null, cum = rr ? 100 * rr.pulls.slice(0, q.i + 1).reduce((a, x) => a + x.add, 0) / rr.full : null, ptx = cum != null && !q.p.boss ? (Math.round(cum * 10) / 10).toFixed(1) + '%' : '';
+      const pw = ptx ? ptx.length * 6.6 + 12 : 0, LW = 22 + (pw ? 3 + pw : 0), x0 = -LW / 2;
+      tags.push('<g class="mpt-mpl mpt-mtag" data-pi="' + q.i + '" data-oy="' + (26 * k).toFixed(1) + '"' + mpT1(tip(q)) + ' transform="translate(' + top[0].toFixed(1) + ',' + (top[1] - 26 * k).toFixed(1) + ') scale(' + k.toFixed(3) + ')">' +
+        '<rect x="' + x0.toFixed(1) + '" y="-11" width="22" height="22" rx="4" fill="' + q.c + '" stroke="#0f1117" stroke-width="1.2"/><text class="mpt-tgn" x="' + (x0 + 11).toFixed(1) + '" y="4.5" text-anchor="middle" fill="#0f1117">' + (q.p.boss ? '★' : mpNo(q.RR, q.p.n)) + '</text>' +
+        (pw ? '<rect x="' + (x0 + 25).toFixed(1) + '" y="-10" width="' + pw.toFixed(1) + '" height="20" rx="10" fill="#0f1117" fill-opacity=".92" stroke="' + q.c + '" stroke-width="1.4"/><text class="mpt-tgp" x="' + (x0 + 25 + pw / 2).toFixed(1) + '" y="4" text-anchor="middle" fill="#e8eaed">' + ptx + '</text>' : '') +
+        (q.bad ? '<circle class="mk-bad" cx="' + (x0 + 21).toFixed(1) + '" cy="-11" r="5" fill="#ff8f87" stroke="#0f1117" stroke-width="1.5"/>' : '') +
+        (q.lust ? '<g class="mk-lust"><rect x="' + (x0 + LW + 3).toFixed(1) + '" y="-11" width="20" height="20" rx="4" fill="#0f1117" stroke="#ffd166" stroke-width="1.5"/><text x="' + (x0 + LW + 13).toFixed(1) + '" y="4" text-anchor="middle" fill="#ffd166" style="font-size:12px">⚡</text></g>' : '') +
+        (wt ? '<g class="mk-wait"><rect x="' + (x0 - 3 - ww).toFixed(1) + '" y="-10" width="' + ww + '" height="18" rx="4" fill="#0f1117" stroke="#aeb6bf" stroke-width="1"/><text x="' + (x0 - 3 - ww / 2).toFixed(1) + '" y="3.5" text-anchor="middle" fill="#aeb6bf" style="font-size:11px">' + wt + '</text></g>' : '') + '</g>');
       }
       // (☠ where each player died: their last spot before it; !N at the casters of the casts that went off, purple for the high ones, grey for the rest)
       for (const d of q.dd) if (here(d)) { const [x, y] = px(f, d); marks.push('<g class="mpt-mk mk-death" data-pi="' + q.i + '" data-who="' + esc(d.who) + '"' + mpT1('<b>' + esc(d.who) + ' died</b> here · ' + nm(q) + '<br><span class="sub">Click to see how</span>') + ' transform="translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ') scale(' + k.toFixed(3) + ')"><circle r="10" fill="#0f1117" stroke="#ff8f87" stroke-width="2"/><text y="4.5" text-anchor="middle" fill="#ff8f87" style="font-size:12px">☠</text></g>'); }
@@ -1394,8 +1416,8 @@ function mpMapHtml(R, F, tl) {
     const last = order[order.length - 1], nx = last && Q.slice(last.i + 1).find((q) => q.fl >= 0 && floors[q.fl].f[0] !== f[0]);
     if (nx) { const [x, y] = cen.get(last.i), t = 'then ' + floors[nx.fl].f[1] + ' →', tw2 = t.length * 6.4 + 14;
       route.push('<g class="mpt-mthen" data-mdtf="' + nx.fl + '" role="button" transform="translate(' + (x + 18 * k).toFixed(1) + ',' + (y + 14 * k).toFixed(1) + ') scale(' + k.toFixed(3) + ')"><rect width="' + tw2.toFixed(0) + '" height="20" rx="10" fill="#0f1117" fill-opacity=".85" stroke="#fff" stroke-opacity=".45"/><text x="' + (tw2 / 2).toFixed(0) + '" y="14" text-anchor="middle" fill="#e8ebee" style="font-size:11.5px">' + esc(t) + '</text></g>'); }
-    return '<svg viewBox="' + fl.box.map((v) => v.toFixed(1)).join(' ') + '" role="img" aria-label="' + esc(f[1]) + '"><image href="https://wow.zamimg.com/images/wow/maps/enus/original/' + rt.zone + (fl.i ? '-' + fl.i : '') + '.jpg" x="0" y="0" width="' + W + '" height="' + H + '" opacity=".85"/>' +
-      '<g class="mk-route">' + line + route.join('') + '</g>' + shapes.join('') + marks.join('') + tags.join('') + '</svg>'; };
+    return '<svg viewBox="' + fl.box.map((v) => v.toFixed(1)).join(' ') + '" role="img" aria-label="' + esc(f[1]) + '"><image href="https://wow.zamimg.com/images/wow/maps/enus/original/' + rt.zone + (fl.i ? '-' + fl.i : '') + '.jpg" x="0" y="0" width="' + W + '" height="' + H + '" opacity=".85" style="filter:brightness(.72) saturate(.75) contrast(1.05)"/>' +
+      '<defs><clipPath id="mpbc-' + uid + '" clipPathUnits="objectBoundingBox"><circle cx=".5" cy=".5" r=".5"/></clipPath>' + defs.join('') + '</defs><g class="mk-route">' + line + route.join('') + '</g>' + shapes.join('') + marks.join('') + tags.join('') + '</svg>'; };
   // (the picked pull's card: what went wrong, worst first, each player's damage a second, and the big cooldowns pressed in this pull itself
   // (from 3 s before it to 1 s after: the studio's fix, where a chain's whole list showed on each of its pulls). The fast run's from its own log)
   // (the pull card (the studio's tidy-pass.md item 7, toward 10/10, Flex: "Do 1, 2 and 3"): the title, one line of tags as in the hover, the pack, the plan,
@@ -1449,7 +1471,7 @@ function mpMapHtml(R, F, tl) {
     // one role, Caster (it healed another enemy, or it keeps casting: 14 or more casts a minute, or 10 or more with mostly magic damage) or Melee; Elite for the mini-boss tier, at least twice the health of
     // the key's middle trash enemy (the same on every pull), or a rare; fodder, half that or less, on one last line. 5 rows, then the rest in a hover)
     const pack = (() => { const mobs = mpMobs(RR, p), ty = RR.mobType || {}; if (!mobs.length) return '';
-      if (RR.mobMid == null) { const hs = []; RR.mobTrash = new Set(); for (const q2 of RR.pulls) if (!q2.boss) for (const [n2, c2] of mpMobs(RR, q2)) { RR.mobTrash.add(n2); const h = (ty[n2] || {}).hp || 0; if (h) for (let k = 0; k < c2; k++) hs.push(h); } hs.sort((a, b) => a - b); RR.mobMid = hs.length ? hs[hs.length >> 1] : 0; } /* (the middle trash enemy of the whole key, each one counted: one-off kings don't lift it) */
+      mpMid(RR); /* (the middle trash enemy of the whole key, each one counted: one-off kings don't lift it) */
       const mid = RR.mobMid, L = mobs.map(([n2, c]) => { const o = ty[n2] || {}, cast = !!o.caster, el = MP_RARE.has(o.id) || (mid && o.hp >= 2 * mid && RR.mobTrash.has(n2)), /* (trash only: never a boss or a boss fight's own enemies) */ fod = !el && mid && o.hp && o.hp <= mid / 2;
         return { n2, c, el, fod, cast, kick: o.kick || [] }; }).sort((a, b) => b.el - a.el || b.cast - a.cast || b.c - a.c);
       const tag = (k) => '<i class="mpt-pkt mpt-pk-' + k + '">' + MP_PKI[k] + '</i>', role = (x) => tag(x.cast ? 'cast' : 'melee');
@@ -1484,7 +1506,7 @@ function mpMapHtml(R, F, tl) {
   return '<div class="mpt-mdt no-a"><div class="mpt-mbar">' + tg + pp + step + '</div>' + views + strip + '</div>'; }
 // (picking: a click or tap on a shape, tag, mark, list row, timeline block or ◀ ▶. The map goes to the pull's floor, the pull lights up and the
 // rest dim, the card shows it; the pick stays when the tab redraws. A hover only lights up (MP.peek), never moving the card or the floor)
-const mpMdtFloor = (box, j) => { if (!box || j == null || j === '') return; j = String(j); if (MP.mz && MP.mz.f !== j) { MP.mz = { f: j, z: 1, c: null }; mpZoomBtns(box, 1); } box.querySelectorAll('[data-mdtf]').forEach((x) => x.classList.toggle('on', x.dataset.mdtf === j)); box.querySelectorAll('.mpt-mdtm').forEach((m) => { m.hidden = m.dataset.f !== j; }); };
+const mpMdtFloor = (box, j) => { if (!box || j == null || j === '') return; j = String(j); if (MP.mz && MP.mz.f !== j) { MP.mz = { f: j, z: 1, c: null }; mpZoomBtns(box, 1); } box.querySelectorAll('[data-mdtf]').forEach((x) => x.classList.toggle('on', x.dataset.mdtf === j)); box.querySelectorAll('.mpt-mdtm').forEach((m) => { m.hidden = m.dataset.f !== j; }); mpZoom(box); }; /* (the new floor's marks at the map's size) */
 function mpMapView(box, v) { box.querySelectorAll('[data-mdtv]').forEach((x) => { x.classList.toggle('on', x.dataset.mdtv === v); x.setAttribute('aria-pressed', String(x.dataset.mdtv === v)); }); box.querySelectorAll('.mpt-mdtv').forEach((x) => { x.hidden = x.dataset.v !== v; }); }
 function mpMapPick(v, ids, sum) { const box = document.querySelector('.mpt-mdt'); if (!box) return; const view = box.querySelector('.mpt-mdtv[data-v="' + v + '"]'); if (!view) return;
   if (view.hidden) mpMapView(box, v); ids = [].concat(ids).map(String); const one = ids.length === 1 && !sum;
@@ -1496,6 +1518,7 @@ function mpMapPick(v, ids, sum) { const box = document.querySelector('.mpt-mdt')
   const lab = box.querySelector('.mpt-mstep span'); if (lab && li) lab.textContent = one ? li.dataset.lab + ' · ' + (+ids[0] + 1) + ' of ' + view.dataset.n : plural(ids.length, 'pull') + ' lit up';
   if (li) { const ol = li.parentNode; if (li.offsetTop < ol.scrollTop || li.offsetTop + li.offsetHeight > ol.scrollTop + ol.clientHeight) ol.scrollTop = li.offsetTop - ol.clientHeight / 2; }
   MP.pick = { v, ids, sum: sum || '' };
+  for (const sv of view.querySelectorAll('.mpt-mdtm svg')) mpEdges(sv, MP.mz && MP.mz.f === (sv.closest('.mpt-mdtm') || {}).dataset.f ? MP.mz.z : 1);
   if (one) mpFitPull(box, view, ids[0]); else mpZoomTo(box, 1, null); } /* (a picked pull fills the map (item 9); several lit up, the whole floor) */
 function mpMapPeek(view, i) { if (!view) return; view.classList.toggle('peek', i != null); view.querySelectorAll('[data-pi]').forEach((x) => x.classList.toggle('pk', i != null && x.dataset.pi === String(i))); }
 // (pick a player: only their kick, CC and death marks on the map, the others' rows in the card faded; the Home character is the default later)
@@ -1521,15 +1544,21 @@ document.addEventListener('click', (e) => { const t = e.target.closest && e.targ
 const MP_ZS = [1, 1.5, 2.25, 3], MP_TF = /translate\(([-\d.]+),([-\d.]+)\)(?: rotate\(([-\d.]+)\))? scale\(([-\d.]+)\)/;
 const mpZoomF = (box) => { const b = box.querySelector('[data-mdtf].on'); if (b && b.closest('.mpt-flb')) return b.dataset.mdtf; const m = box.querySelector('.mpt-mdtm:not([hidden])'); return m ? m.dataset.f : '0'; };
 const mpZoomBtns = (box, z) => { if (!box) return; box.querySelectorAll('[data-mz="1"]').forEach((b) => { b.disabled = z >= 2.999; }); box.querySelectorAll('[data-mz="-1"]').forEach((b) => { b.disabled = z <= 1.001; }); };
-function mpZoom(box, at) { if (!box) return; const fi = mpZoomF(box), st = MP.mz && MP.mz.f === fi ? MP.mz : (MP.mz = { f: fi, z: 1, c: null }); if (at) st.c = at; mpZoomBtns(box, st.z);
+// (how much bigger the marks draw on a narrow map: the labels, portraits, dots and edges are sized for a map about 860 px wide; on a phone they grow,
+// up to 2.2x, so a label isn't 8 px tall)
+const mpSF = (box) => { const sv = [...box.querySelectorAll('.mpt-mdtm svg')].find((x) => x.clientWidth > 0); return sv ? Math.min(2.2, Math.max(1, 860 / sv.clientWidth)) : 1; };
+function mpZoom(box, at) { if (!box) return; const fi = mpZoomF(box), st = MP.mz && MP.mz.f === fi ? MP.mz : (MP.mz = { f: fi, z: 1, c: null }); if (at) st.c = at; mpZoomBtns(box, st.z); const sf = mpSF(box);
   for (const svg of box.querySelectorAll('.mpt-mdtm[data-f="' + fi + '"] svg')) { const b = (svg.dataset.vb || (svg.dataset.vb = svg.getAttribute('viewBox'))).split(' ').map(Number), z = st.z, w = b[2] / z, h = b[3] / z;
     const c = st.c || [b[0] + b[2] / 2, b[1] + b[3] / 2], x = Math.max(b[0], Math.min(b[0] + b[2] - w, c[0] - w / 2)), y = Math.max(b[1], Math.min(b[1] + b[3] - h, c[1] - h / 2)); st.c = [x + w / 2, y + h / 2];
     svg.setAttribute('viewBox', [x, y, w, h].map((v) => v.toFixed(1)).join(' ')); svg.style.touchAction = z > 1 ? 'none' : 'pan-y';
     for (const el of svg.querySelectorAll('[transform]')) { if (!el.dataset.tf) { const m = MP_TF.exec(el.getAttribute('transform')); if (!m) continue; el.dataset.tf = [m[1], m[2], m[3] || '', m[4]].join(','); }
-      const [tx, ty, rot, sc] = el.dataset.tf.split(','), oy = +el.dataset.oy || 0; el.setAttribute('transform', 'translate(' + tx + ',' + (+ty + oy - oy / z).toFixed(1) + ')' + (rot ? ' rotate(' + rot + ')' : '') + ' scale(' + (sc / z).toFixed(4) + ')'); }
+      const [tx, ty, rot, sc] = el.dataset.tf.split(','), oy = +el.dataset.oy || 0; el.setAttribute('transform', 'translate(' + tx + ',' + (+ty + oy - oy * sf / z).toFixed(1) + ')' + (rot ? ' rotate(' + rot + ')' : '') + ' scale(' + (sc * sf / z).toFixed(4) + ')'); }
     for (const el of svg.querySelectorAll('polyline, line')) { if (el.dataset.sw == null) { el.dataset.sw = el.getAttribute('stroke-width') || ''; el.dataset.da = el.getAttribute('stroke-dasharray') || ''; }
       if (el.dataset.sw) el.setAttribute('stroke-width', (el.dataset.sw / z).toFixed(3)); if (el.dataset.da) el.setAttribute('stroke-dasharray', el.dataset.da.split(' ').map((v) => (v / z).toFixed(2)).join(' ')); }
-    for (const el of svg.querySelectorAll('.mpt-mpl > circle')) { if (!el.dataset.r) el.dataset.r = el.getAttribute('r'); el.setAttribute('r', (el.dataset.r / z).toFixed(2)); } } }
+    for (const el of svg.querySelectorAll('.mpt-mpl > circle')) { if (!el.dataset.r) { el.dataset.r = el.getAttribute('r'); el.dataset.csw = el.getAttribute('stroke-width') || ''; } el.setAttribute('r', (el.dataset.r * sf / z).toFixed(2)); if (el.dataset.csw) el.setAttribute('stroke-width', (el.dataset.csw * sf / z).toFixed(3)); }
+    mpEdges(svg, z, sf); } }
+// (each pull's crisp edge: the masked copy's width is the pad plus twice the rim, the rim kept ~1.6 px on screen at any zoom, 2.4 px on the picked pull)
+function mpEdges(svg, z, sf) { const v = svg.closest('.mpt-mdtv'), pick = v && v.classList.contains('pick'); if (!sf) { const bx = svg.closest('.mpt-mdt'); sf = bx ? mpSF(bx) : 1; } for (const el of svg.querySelectorAll('.mpt-hedge')) { const hot = pick && el.closest('.mpt-mpl.hot'); el.setAttribute('stroke-width', (+el.dataset.pad + 2 * el.dataset.e * (hot ? 1.5 : 1) * sf / (z || 1)).toFixed(2)); } }
 document.addEventListener('click', (e) => { const zb = e.target.closest && e.target.closest('[data-mz]'); if (!zb) return; const box = zb.closest('.mpt-mdt'); if (!box) return; mpZoom(box); const st = MP.mz, up = zb.dataset.mz === '1';
   st.z = up ? (MP_ZS.find((v) => v > st.z + 0.01) || 3) : ([...MP_ZS].reverse().find((v) => v < st.z - 0.01) || 1); mpZoom(box); });
 { const P = new Map(); let pan = null, pin = null;
@@ -1568,7 +1597,7 @@ function mpFitPull(box, view, i) { const svg = view.querySelector('.mpt-mdtm:not
   const pl = svg.querySelector('polyline[data-pis]'), ix = pl ? pl.dataset.pis.split(',').indexOf(String(i)) : -1;
   if (ix > 0) { const [px, py] = pl.getAttribute('points').split(' ')[ix - 1].split(',').map(Number), a = Math.min(x0, px), b = Math.min(y0, py), c = Math.max(x1, px), d = Math.max(y1, py); if (fit(a, b, c, d) >= 1.5) { x0 = a; y0 = b; x1 = c; y1 = d; } }
   mpZoomTo(box, Math.max(1.5, Math.min(2.25, fit(x0, y0, x1, y1))), [(x0 + x1) / 2, (y0 + y1) / 2]); }
-function mpMapRestore() { const p = MP.pick, has = p && document.querySelector('.mpt-mdtv[data-v="' + p.v + '"]'); if (has) { MP.zNow = true; try { mpMapPick(p.v, p.ids, p.sum); } finally { MP.zNow = false; } } if (MP.pp) mpMapPP(MP.pp); if (!has && MP.mz && MP.mz.z > 1) { const st = MP.mz; mpZoom(document.querySelector('.mpt-mdt'), st.c); } }
+function mpMapRestore() { const p = MP.pick, has = p && document.querySelector('.mpt-mdtv[data-v="' + p.v + '"]'); if (has) { MP.zNow = true; try { mpMapPick(p.v, p.ids, p.sum); } finally { MP.zNow = false; } } if (MP.pp) mpMapPP(MP.pp); if (!has) { const bx = document.querySelector('.mpt-mdt'); if (bx) mpZoom(bx, MP.mz && MP.mz.z > 1 ? MP.mz.c : null); } }
 document.addEventListener('click', (e) => { const t = e.target; if (!t.closest) return; const box = t.closest('.mpt-mdt');
   if (MP.dragT && Date.now() - MP.dragT < 250 && t.closest('.mpt-mdtm')) { e.stopPropagation(); e.preventDefault(); return; } /* (the end of a drag or pinch, not a pick) */
   if (!t.closest('.mpt-lay')) document.querySelectorAll('.mpt-lay.open').forEach((x) => { x.classList.remove('open'); x.querySelector('.mpt-layb').setAttribute('aria-expanded', 'false'); });
@@ -2171,4 +2200,8 @@ body.mpz-wh .spc-tt{display:none !important}
 .mpt-res.mpt-glow{box-shadow:0 0 0 1px rgba(255,209,102,.3),0 0 14px rgba(255,209,102,.25)} .mpt .mpt-pills{align-items:center} .mpt-bmeta{font:500 13px var(--body);color:var(--mpt-soft)} .mpt-bpts,.mpt-bgain{font-weight:700}
 .mpt .mpt-bt .mpt-grp{margin:9px 0 0;gap:4px 14px} .mpt-gm img{width:16px;height:16px;border-radius:3px;margin-right:1px} .mpt .mpt-ksum{margin-top:2px;padding-top:12px;border-top:1px solid var(--line)}
 @media (max-width:700px){ .mpt-bart{width:auto;left:-12px;right:-12px;opacity:.35;-webkit-mask-image:linear-gradient(to bottom,#000 45%,transparent);mask-image:linear-gradient(to bottom,#000 45%,transparent)} }
+/* (the map's look, like MDT (the studio, Flex: "ok make it happen"): a picked pull's inside a little stronger, the others at half; the label's text) */
+.mpt-mpl.hot .mpt-hpg{opacity:.16} .mpt-mdtv.pick:not(.peek) .mpt-mpl:not(.hot){opacity:.5} .mpt-mtag .mpt-tgn{font:800 12.5px var(--body)} .mpt-mtag .mpt-tgp{font:700 11px var(--body)}
+/* (Your group's table: its columns are about 910 px; between the phone layout and a wide panel it scrolls inside its box, not the page) */
+.mpt .mpt-gtab{overflow-x:auto;scrollbar-width:thin}
 `;
