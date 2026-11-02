@@ -13075,6 +13075,37 @@ window.T473 = function (o) { var E = function (v) { return String(v == null ? ''
 window.T473.col = function (c) { c = String(c || ''); var m = { 'p468-g': '#5fdc7a', 'p469-g': '#5fdc7a', 'p468-w': '#e8a23a', 'p469-w': '#e8a23a', 'p468-b': '#ff8f87', 'p469-b': '#ff8f87', 'q-grey': '#9d9d9d', 'q-green': '#1eff00', 'q-blue': '#3b8cff', 'q-purple': '#b257f5', 'q-orange': '#ff8000', 'q-pink': '#e268a8', 'q-gold': '#e5cc80' };
   for (var k in m) if (new RegExp('(^|\\s)' + k + '(\\s|$)').test(c)) return m[k]; return ''; };
 </script>
+<style id="rcss-474">
+/* round 474 all pulls drop-down */
+html body #view .mx-sq.mx-sq.mx-big.mx7.mx7{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:3px;width:100%}
+html body #view .mx-sq.mx-sq.mx-big.mx7.mx7 > i{min-width:0;width:auto;gap:3px;transition:opacity .15s}
+html body #view .mx-sq.mx-sq.mx-big.mx7.mx7 > i::before{width:100%;max-width:24px;height:16px}
+html body #view .mx-sq.mx-sq.mx-big.mx7.mx7 > i span{font-size:12px;visibility:hidden}
+html body #view .mx-sq.mx-sq.mx-big.mx7.mx7 > i:is(:first-child,:nth-child(5n),:last-child) span{visibility:visible}
+html body #view .mx-sq.mx-sq.mx-big.mx7.mx7.mx7-dim > i:not(.mx7-on){opacity:.25}
+html body #view .mx-sq.mx-sq.mx-big.mx7.mx7.mx7-dim > i.mx7-on::before{outline:2px solid var(--text);outline-offset:1px}
+html body #view .mx7-key{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;margin:6px 0 2px;font-size:12.5px;color:var(--muted)}
+html body #view .mx7-key i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+html body #view .mx7-key i.g{background:#45c15c}html body #view .mx7-key i.y{background:#e8a23a}html body #view .mx7-key i.r{background:#e5534b}
+html body #view .mx7-key em{font-style:normal;color:var(--faint)}
+html body #view .mx7-rows .mx7-r{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:4px 10px;align-items:start;padding:9px 6px;border-top:1px solid var(--line);border-radius:6px;cursor:pointer}
+html body #view .mx7-rows .mx7-r:first-child{border-top:0}
+html body #view .mx7-rows .mx7-r:hover,html body #view .mx7-rows .mx7-r.on{background:rgba(255,255,255,.035)}
+html body #view .mx7-d{width:8px;height:8px;border-radius:50%;margin-top:6px}html body #view .mx7-d.r{background:#e5534b}html body #view .mx7-d.y{background:#e8a23a}
+html body #view .mx7-w b{font-weight:600}
+html body #view .mx7-c{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+html body #view .mx7-c span{font-size:12.5px;padding:0 6px;line-height:18px;border-radius:4px;background:rgba(255,255,255,.06);color:var(--text);cursor:pointer}
+html body #view .mx7-c span:hover{color:var(--gold)}
+html body #view .mx7-n{font-weight:700;white-space:nowrap;text-align:right}html body #view .mx7-n.r{color:#ff8f87}html body #view .mx7-n.y{color:#e8a23a}
+html body #view .mx7-n small{display:block;font-weight:600;color:var(--muted);font-size:12.5px}
+html body #view .mx7-more{padding:6px;color:var(--faint);font-size:12.5px}
+</style>
+<script id="rjs-474">/* round 474: click a mistake to light up its pulls in the row (a chip inside it opens that pull) */
+document.addEventListener('click', function (ev) { var r = ev.target.closest && ev.target.closest('.mx7-r'); if (!r || ev.target.closest('[data-npq]')) return; var sec = r.closest('.mx-p') || r.closest('details') || document, sq = sec.querySelector('.mx-sq.mx-sq.mx-big.mx7.mx7'), on = !r.classList.contains('on');
+  [].forEach.call(sec.querySelectorAll('.mx7-r.on'), function (x) { x.classList.remove('on'); }); if (on) r.classList.add('on'); if (!sq) return; var L = on ? String(r.getAttribute('data-mx7') || '').split(',') : [];
+  sq.classList.toggle('mx7-dim', on); [].forEach.call(sq.querySelectorAll('i[data-npq]'), function (i) { i.classList.toggle('mx7-on', L.indexOf(i.getAttribute('data-npq')) >= 0); }); });
+document.addEventListener('keydown', function (ev) { if (ev.key !== 'Enter' && ev.key !== ' ') return; var r = ev.target.classList && ev.target.classList.contains('mx7-r') ? ev.target : null; if (r) { ev.preventDefault(); r.click(); } });
+</script>
 </head>
 <body class="refine">
 <noscript><h1>Debrief: WoW raid log review for Mythic progression</h1><p>Debrief reads your World of Warcraft raid logs, from a Warcraft Logs report or your own combat log, and explains every pull: which mechanics were missed and by whom, why each player died, how your rotation compared with the top players, and what to fix before the next pull.</p><p>It also has Heroic and Mythic boss guides for every boss in the raid, a raid cooldown planner that reads Northern Sky Raid Tools (NSRT) notes, and an in-game addon. Debrief needs JavaScript turned on.</p></noscript>
@@ -23336,6 +23367,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-11-01', h: [{ t: 'Rotation knows single target from AoE', d: 'Your rotation is now judged by how many enemies were close: Divine Storm, Blade Flurry, Whirlwind, Spinning Crane Kick and Seed of Corruption on packs, the single-target buttons on one. For now in Mythic+, where packs are the fight. Raid shows how many enemies were close.' }, { t: 'A key for your recap', d: 'Press Ctrl + Shift + D anywhere, even in WoW, and your newest recap shows over the game; press it again to hide it. Debrief Companion asks you to pick the key once, and you can change it any time. Play in Windowed (Fullscreen) so it shows on top.' }, { t: 'Mythic+ run recap', d: 'When a key ends, Debrief Companion pops up one recap of the whole run: how close you came to the next level and what the deaths cost, a tab for each pull with what got through and whose kick was ready, kicks and stuns, avoidable damage, deaths, and everyone\'s rotation, for you or anyone in the group. Save this key brings the same recap into WoW.' }, { t: 'Debriefing Timeline, across the page', d: 'Each phase is one chart: every mechanic a row, every moment a dot, green for done right and red for a mistake, with the boss health behind. Hover a dot for what happened. Under it, every mistake is one line; click it for why and what to do next time.' }], n: [
+    "Debriefing, All pulls: each mechanic's drop-down is clearer. One line per mistake with its pulls, a key for the colours, every pull in one row, and click a mistake to light up its pulls.",
     "Debriefing: every hover on the top tiles is short and tidy: the result at the top, your number against the typical kill, what it is compared with, then the top 10 players.",
     "Boss damage on Debriefing compares you with guilds like us too, not only top guilds. The site fills in the older kills by itself, so each boss switches over within a day or two.",
     "Rotation tips on your recap say what to fix: when it slipped, a Next time line with the fix, and the number to aim for (\"Press Starsurge before Wrath whenever it's ready. Aim for 85% or more.\"), instead of the check's name and number again. Your Mythic+ key's NEXT KEY box names the fix too.",
@@ -35723,7 +35755,8 @@ function mxaOpen(ph, id) { const k = ph.dataset.phk; try { dsUndock(ph); } catch
         rq.outerHTML = mxSq(all); const J = all.filter((p) => p.v != null), th = Math.max(2, Math.floor(J.length / 3)), avg = (L) => Math.round(L.reduce((s0, p) => s0 + p.v, 0) / L.length), mv = J.length >= 4 ? avg(J.slice(-th)) - avg(J.slice(0, th)) : 0, say = mxTrend(all, mv), se = row.querySelector('.prw-s');
         if (se && !say) se.remove(); else if (se) { se.textContent = say; se.className = 'prw-s ' + (mv >= 10 ? 'up' : mv <= -10 ? 'dn' : ''); } } }
       /* (one numbered square per pull it came up in; the open row hides its own strip (the user, Oct 27: "the drop down only shows the pulls that we actually did, which is ideal")) */
-      const d = document.createElement('div'); d.className = 'mx-sqw'; d.innerHTML = '<div class="mx-lab">Each pull</div><span class="mx-sq mx-big">' + P.map((x) => '<i class="' + (x.st === 'ok' ? 'g' : x.st === 'warn' ? 'y' : 'r') + '" data-npq="' + x.p + '" data-tt="' + esc(x.tt) + '" role="button" tabindex="0"><span>' + x.p + '</span></i>').join('') + '</span>';
+      const d = document.createElement('div'); d.className = 'mx-sqw'; d.innerHTML = '<div class="mx-lab">Each pull</div><span class="mx-sq mx-big mx7" style="--n:' + P.length + '">' + P.map((x) => '<i class="' + (x.st === 'ok' ? 'g' : x.st === 'warn' ? 'y' : 'r') + '" data-npq="' + x.p + '" data-tt="' + esc(x.tt) + '" role="button" tabindex="0"><span>' + x.p + '</span></i>').join('') + '</span>' +
+      '<div class="mx7-key"><span><i class="g"></i>Clean</span><span><i class="y"></i>Some mistakes</span><span><i class="r"></i>Failed</span><em>Point at a pull to see what happened. Click it to open it.</em></div>'; /* round 474 all pulls */
       const sumP = sec.querySelector('.mx-sum'); if (sumP) { hd.after(sumP); sumP.after(d); } else hd.after(d); }
     else { const so = sm && sm.querySelector('.rw2-pc, .sst'), cn = so ? so.className : '', c = /\bbad\b/.test(cn) ? 'r' : /\bwarn\b/.test(cn) ? 'y' : /\b(ok|good)\b/.test(cn) ? 'g' : '';
       if (c) { fl.className = 'mx-fl ' + c; fl.textContent = (c === 'g' ? 'Done right' : c === 'r' ? 'Failed' : 'Some mistakes') + (so && /%/.test(so.textContent) ? ' · ' + so.textContent.trim() + ' done right' : ''); if (old) old.remove(); hd.insertBefore(fl, xb); }
@@ -36915,7 +36948,10 @@ function nightMechC(o) {
       for (const w of nm0.length ? nm0 : [...new Set((l.who || p.who || []).map((x) => String(x).split('-')[0]))]) e.who.set(w, (e.who.get(w) || 0) + 1); K.set(k, e); } }
     /* (plain "Deaths" next to "<mechanic> deaths" is the same thing on this mechanic: one row) */
     { const gen = K.get('Deaths'), sp = [...K.values()].find((e) => e.k !== 'Deaths' && / deaths$/.test(e.k)); if (gen && sp) { sp.c += gen.c; sp.bad += gen.bad; for (const [n, c] of gen.pulls) sp.pulls.set(n, (sp.pulls.get(n) || 0) + c); for (const [w, c] of gen.who) sp.who.set(w, (sp.who.get(w) || 0) + c); K.delete('Deaths'); } }
-    const ks = [...K.values()].sort((a, b) => b.c - a.c), top = ks.slice(0, 5), mx = top.length ? top[0].c : 1;
+    /* round 474 all pulls: one line per mistake */ { const nk = (k) => { const t = String(k).replace(/^[\u2014\u2013-]+\s*:?\s*/, '').replace(/\bsomeone's\b/g, 'one').replace(/\.$/, '').trim(); return t ? t.charAt(0).toUpperCase() + t.slice(1) : t; }, M2 = new Map();
+      for (const e of K.values()) { const k2 = nk(e.k); if (!k2) continue; const o = M2.get(k2); if (!o) { e.k = k2; M2.set(k2, e); continue; } o.c += e.c; o.bad += e.bad; for (const [n, c] of e.pulls) o.pulls.set(n, (o.pulls.get(n) || 0) + c); for (const [w, c] of e.who) o.who.set(w, (o.who.get(w) || 0) + c); }
+      K.clear(); for (const [k2, e] of M2) K.set(k2, e); }
+    const ks = [...K.values()].sort((a, b) => b.pulls.size - a.pulls.size || b.c - a.c), top = ks.slice(0, 5), mx = top.length ? top[0].c : 1;
     const bars = top.length ? '<div class="rw2-kh">Mistakes by kind</div><div class="rw2-ks">' + top.map((e) => { const wp = [...e.pulls].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0], pl = [...e.pulls.keys()].sort((a, b) => a - b);
       return '<div class="rw2-k" data-npq="' + wp + '" role="button" tabindex="0" title="' + esc('Pulls ' + pl.join(', ') + '. Click to open pull ' + wp + '.') + '"><span class="rw2-kl">' + esc(e.k) + '</span><span class="rw2-kb"><i class="' + (e.bad * 2 >= e.c ? 'bad' : 'warn') + '" style="width:' + Math.max(6, Math.round(100 * e.c / mx)) + '%"></i></span><span class="rw2-kn">×' + e.c + '</span><span class="rw2-kp">' + plural(e.pulls.size, 'pull') + '</span></div>'; }).join('') + (ks.length > 5 ? '<div class="rw2-more">+' + (ks.length - 5) + ' other kinds</div>' : '') + '</div>' : '';
     const h1 = J.slice(0, Math.ceil(tot / 2)), h2 = J.slice(Math.ceil(tot / 2)), wr = (l) => l.filter((n) => stAt(r, n) !== 'ok').length, a = wr(h1), b = wr(h2);
@@ -36924,11 +36960,14 @@ function nightMechC(o) {
     /* (Oct 27, the calmer panel: one sentence of facts (counts in colour), then the Mistakes table; no bars, no ×counts) */
     const cnt = (n, c) => '<b class="' + c + '">' + n + '</b>', kc = (e) => (e.bad * 2 >= e.c ? 'r' : 'y'), lo = (t) => t.charAt(0).toLowerCase() + t.slice(1), cleanN = tot - wN;
     const s1 = top.slice(0, 2).map((e, i) => (i ? lo(esc(e.k)) : esc(e.k)) + ' in ' + cnt(e.pulls.size, kc(e)) + (i ? '' : ' ' + (e.pulls.size === 1 ? 'pull' : 'pulls'))).join(', and ');
-    const sum = '<p class="mx-sum">' + 'Mistakes in ' + cnt(wN, 'r') + ' of ' + tot + ' pulls' + (top.length ? ': ' + top.slice(0, 2).map((e) => lo(esc(String(e.k).replace(/\.$/, ''))) + ' in ' + cnt(e.pulls.size, kc(e))).join(', ') + (ks.length > 2 ? ', and ' + (ks.length - 2) + ' more ' + (ks.length - 2 === 1 ? 'kind' : 'kinds') + ' below' : '') : '') + '. ' /* round 201: every kind counted, the total first */ + (cleanN ? (cleanN === tot ? 'All ' + cnt(tot, 'g') + ' pulls were clean.' : 'The other ' + (cleanN === 1 ? 'pull was' : cnt(cleanN, 'g') + ' were') + ' clean.') : 'No pull was clean.') + '</p>';
+    const sum = '<p class="mx-sum">' + (wN ? cnt(wN, wN * 2 >= tot ? 'r' : 'y') + ' of ' + plural(tot, 'pull') + ' had a mistake here.' + (cleanN ? ' The other ' + cnt(cleanN, 'g') + (cleanN === 1 ? ' was' : ' were') + ' clean.' : '') : 'All ' + cnt(tot, 'g') + ' pulls were clean.') + '</p>'; void s1;
     const pc = new Map([...pm].map(([n, p]) => [String(n).split('-')[0], p]));
     const whoC = (e) => { const ws = [...e.who].sort((a, b) => b[1] - a[1]); if (!ws.length) return '<span class="mx-who">—</span>'; return '<span class="mx-who">' + ws.slice(0, 2).map(([w]) => { const p = pc.get(w); return '<span class="nm"' + (p && p.color ? ' style="color:' + p.color + '"' : '') + '>' + esc(w) + '</span>'; }).join(', ') + (ws.length > 2 ? ' <span class="mx-more">+' + (ws.length - 2) + '</span>' : '') + '</span>'; };
-    const tb = top.length ? '<div class="mx-lab">Mistakes</div><div class="mx-tb"><div class="mx-th"><span>What happened</span><span>Pulls</span><span>Who, most often</span></div>' + top.map((e, i) => { const wp = [...e.pulls].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0];
-      return '<div class="mx-tr" data-npq="' + wp + '" role="button" tabindex="0" title="' + esc('Pulls ' + [...e.pulls.keys()].sort((a, b) => a - b).join(', ') + '. Click to open pull ' + wp + '.') + '"><span class="mx-m">' + esc(e.k) + '.</span><span class="mx-ch' + (i === 0 || kc(e) === 'r' ? ' hi' : '') + '">' + e.pulls.size + ' of ' + plural(tot, 'pull') + '</span>' + whoC(e) + '</div>'; }).join('') + '</div>' : '';
+    void whoC; const who7 = (e) => { const ws = [...e.who].filter(([w]) => w && !/^(everyone|\u2014|-)$/i.test(w)).sort((a, b) => b[1] - a[1]); if (!ws.length) return 'Not one person';
+      return ws.slice(0, 2).map(([w, c]) => { const p = pc.get(w); return '<span class="nm"' + (p && p.color ? ' style="color:' + p.color + '"' : '') + '>' + esc(w) + '</span>' + (c > 1 ? ' · ' + c : ''); }).join(', ') + (ws.length > 2 ? ' <span class="mx-more">+' + (ws.length - 2) + '</span>' : ''); };
+    const tb = top.length ? '<div class="mx-lab">What went wrong</div><div class="mx7-rows">' + top.map((e) => { const pl = [...e.pulls.keys()].sort((a, b) => a - b), c = kc(e);
+      return '<div class="mx7-r" data-mx7="' + pl.join(',') + '" role="button" tabindex="0" title="Click to light up its pulls"><span class="mx7-d ' + c + '"></span><div class="mx7-w"><b>' + esc(e.k) + '</b><div class="mx7-c">' + pl.map((n) => '<span data-npq="' + n + '" role="button" tabindex="0" title="Open pull ' + n + '">Pull ' + n + '</span>').join('') + '</div></div><div class="mx7-n ' + c + '">' + plural(pl.length, 'pull') + '<small>' + who7(e) + '</small></div></div>'; }).join('') +
+      (ks.length > 5 ? '<div class="mx7-more">and ' + (ks.length - 5) + ' more ' + (ks.length - 5 === 1 ? 'kind' : 'kinds') + '</div>' : '') + '</div>' : '';
     return sum + tb + ftL; };
   const line = (r) => { const lv = lvOf(r), wN = judged(r).filter((n) => stAt(r, n) !== 'ok').length, worst = worstOf(r), F = factsOf(r), sid = 'nml-' + r.x.id + (r.x.phSfx || ''), ok = lv === 'clean', M = ok ? null : mapAt(r);
     const who = new Map(); if (!one) for (const p of r.x.per.values()) for (const w of new Set(p.who || [])) who.set(w, (who.get(w) || 0) + 1);

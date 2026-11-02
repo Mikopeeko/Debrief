@@ -13075,6 +13075,37 @@ window.T473 = function (o) { var E = function (v) { return String(v == null ? ''
 window.T473.col = function (c) { c = String(c || ''); var m = { 'p468-g': '#5fdc7a', 'p469-g': '#5fdc7a', 'p468-w': '#e8a23a', 'p469-w': '#e8a23a', 'p468-b': '#ff8f87', 'p469-b': '#ff8f87', 'q-grey': '#9d9d9d', 'q-green': '#1eff00', 'q-blue': '#3b8cff', 'q-purple': '#b257f5', 'q-orange': '#ff8000', 'q-pink': '#e268a8', 'q-gold': '#e5cc80' };
   for (var k in m) if (new RegExp('(^|\\s)' + k + '(\\s|$)').test(c)) return m[k]; return ''; };
 </script>
+<style id="rcss-474">
+/* round 474 all pulls drop-down */
+html body #view .mx-sq.mx-sq.mx-big.mx7.mx7{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:3px;width:100%}
+html body #view .mx-sq.mx-sq.mx-big.mx7.mx7 > i{min-width:0;width:auto;gap:3px;transition:opacity .15s}
+html body #view .mx-sq.mx-sq.mx-big.mx7.mx7 > i::before{width:100%;max-width:24px;height:16px}
+html body #view .mx-sq.mx-sq.mx-big.mx7.mx7 > i span{font-size:12px;visibility:hidden}
+html body #view .mx-sq.mx-sq.mx-big.mx7.mx7 > i:is(:first-child,:nth-child(5n),:last-child) span{visibility:visible}
+html body #view .mx-sq.mx-sq.mx-big.mx7.mx7.mx7-dim > i:not(.mx7-on){opacity:.25}
+html body #view .mx-sq.mx-sq.mx-big.mx7.mx7.mx7-dim > i.mx7-on::before{outline:2px solid var(--text);outline-offset:1px}
+html body #view .mx7-key{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;margin:6px 0 2px;font-size:12.5px;color:var(--muted)}
+html body #view .mx7-key i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+html body #view .mx7-key i.g{background:#45c15c}html body #view .mx7-key i.y{background:#e8a23a}html body #view .mx7-key i.r{background:#e5534b}
+html body #view .mx7-key em{font-style:normal;color:var(--faint)}
+html body #view .mx7-rows .mx7-r{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:4px 10px;align-items:start;padding:9px 6px;border-top:1px solid var(--line);border-radius:6px;cursor:pointer}
+html body #view .mx7-rows .mx7-r:first-child{border-top:0}
+html body #view .mx7-rows .mx7-r:hover,html body #view .mx7-rows .mx7-r.on{background:rgba(255,255,255,.035)}
+html body #view .mx7-d{width:8px;height:8px;border-radius:50%;margin-top:6px}html body #view .mx7-d.r{background:#e5534b}html body #view .mx7-d.y{background:#e8a23a}
+html body #view .mx7-w b{font-weight:600}
+html body #view .mx7-c{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+html body #view .mx7-c span{font-size:12.5px;padding:0 6px;line-height:18px;border-radius:4px;background:rgba(255,255,255,.06);color:var(--text);cursor:pointer}
+html body #view .mx7-c span:hover{color:var(--gold)}
+html body #view .mx7-n{font-weight:700;white-space:nowrap;text-align:right}html body #view .mx7-n.r{color:#ff8f87}html body #view .mx7-n.y{color:#e8a23a}
+html body #view .mx7-n small{display:block;font-weight:600;color:var(--muted);font-size:12.5px}
+html body #view .mx7-more{padding:6px;color:var(--faint);font-size:12.5px}
+</style>
+<script id="rjs-474">/* round 474: click a mistake to light up its pulls in the row (a chip inside it opens that pull) */
+document.addEventListener('click', function (ev) { var r = ev.target.closest && ev.target.closest('.mx7-r'); if (!r || ev.target.closest('[data-npq]')) return; var sec = r.closest('.mx-p') || r.closest('details') || document, sq = sec.querySelector('.mx-sq.mx-sq.mx-big.mx7.mx7'), on = !r.classList.contains('on');
+  [].forEach.call(sec.querySelectorAll('.mx7-r.on'), function (x) { x.classList.remove('on'); }); if (on) r.classList.add('on'); if (!sq) return; var L = on ? String(r.getAttribute('data-mx7') || '').split(',') : [];
+  sq.classList.toggle('mx7-dim', on); [].forEach.call(sq.querySelectorAll('i[data-npq]'), function (i) { i.classList.toggle('mx7-on', L.indexOf(i.getAttribute('data-npq')) >= 0); }); });
+document.addEventListener('keydown', function (ev) { if (ev.key !== 'Enter' && ev.key !== ' ') return; var r = ev.target.classList && ev.target.classList.contains('mx7-r') ? ev.target : null; if (r) { ev.preventDefault(); r.click(); } });
+</script>
 </head>
 <body class="refine">
 <noscript><h1>Debrief: WoW raid log review for Mythic progression</h1><p>Debrief reads your World of Warcraft raid logs, from a Warcraft Logs report or your own combat log, and explains every pull: which mechanics were missed and by whom, why each player died, how your rotation compared with the top players, and what to fix before the next pull.</p><p>It also has Heroic and Mythic boss guides for every boss in the raid, a raid cooldown planner that reads Northern Sky Raid Tools (NSRT) notes, and an in-game addon. Debrief needs JavaScript turned on.</p></noscript>
