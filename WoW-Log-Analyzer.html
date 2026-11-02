@@ -24029,6 +24029,7 @@ const PATCH_NOTES = [
     "Mythic+ map: enemies show their portraits like in MDT. Elites always, the rest when you zoom in.",
     "Mythic+ map: pulls are outlined like in MDT, with their number and running %, boss portraits, and a darker map so everything stands out. On a phone the labels and portraits draw bigger so they stay readable.",
     "Mythic+ pull card: High Channeler Ryvati, Spark Channeler and Orb Watcher show as Casters. Their damage is mostly magic, even though they rarely start a cast.",
+    "Mythic+ pull card: Reban, King Dazar’s raptor, shows as Melee, not Caster.",
     "Mythic+ tab, healers: Your part asks “Did your damage time it?” When your damage is what timed the key, it says so with a gold star. Over time, it says whether matching a typical healer of your spec would have timed it.",
     "Mythic+ tab: the key's banner shows the dungeon's art, each player's spec icon, and your points in score colours with what the run added, like “471 points (+29)”.",
     "Mythic+ tab, a new top: one line of numbers under the summary, and a band with Your part on the left (your damage and share of the group, healing, deaths, kicks, cooldowns, avoidable hits) and Fix these first beside it. The bar under the tabs jumps to Debrief, Map, Your group and Dungeon.",
@@ -62367,6 +62368,8 @@ const mpBossPic = (name) => { const k = MP_BOSSPIC[String(name || '').toLowerCas
 // whose damage is mostly magic but who rarely begin a cast: Ruby Life Pools' High Channeler Ryvati, Temple of Sethraliss' Spark Channeler (both IDs)
 // and Orb Watcher)
 const MP_CASTER = new Set([235265, 236084, 197535, 139110, 265057, 135007]);
+// (always Melee, by NPC ID, whatever the rule says: Kings' Rest's Reban, a raptor, not a caster (Design studio))
+const MP_MELEE = new Set([136984]);
 // (the pack's type tags: a 12 px icon, then the word (map-extras.md item 17))
 const MP_PKI = (() => { const sv = (b) => '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">' + b + '</svg>';
   return { cast: sv('<path d="M2 10.5 8.2 4.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9.5 .8v2.4M9.5 4.2v2.4M7.1 3.4h2.4M10.3 3.4h1.9" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>') + 'Caster',
@@ -62458,7 +62461,7 @@ function mpScan(it, R, text) {
        average enemy's damage (it died first, or only buffs) goes by casts a minute alone: 10 or more. MP_CASTER names the ones Flex called) */
     const L0 = Object.values(ty), avg = L0.reduce((a, o) => a + o.dm, 0) / Math.max(1, L0.reduce((a, o) => a + o.n, 0));
     for (const o of L0) { const hits = o.nsw + o.nsp; o.swing = hits ? o.nsw / hits : 0; o.cpm = o.mins ? (o.nc + o.nk + o.nch) / o.mins : 0; o.magic = o.dm ? o.mg / o.dm : 0;
-      o.low = !(o.dm / Math.max(1, o.n) >= 0.01 * avg); o.caster = MP_CASTER.has(o.id) || o.hl || (o.low ? o.cpm >= 10 : o.cpm >= 14 || (o.magic >= 0.6 && o.cpm >= 10)); }
+      o.low = !(o.dm / Math.max(1, o.n) >= 0.01 * avg); o.caster = !MP_MELEE.has(o.id) && (MP_CASTER.has(o.id) || o.hl || (o.low ? o.cpm >= 10 : o.cpm >= 14 || (o.magic >= 0.6 && o.cpm >= 10))); }
     R.mobType = ty; }
   { const real = new Set(); for (const u of U.values()) if (u.n && u.hit != null && (u.fl & 0x40) && !(u.fl & 0x3000) && !u.sum) real.add(u.n); R.realNames = real.size ? real : null; } /* (the studio's pull-accuracy fix, Nov 2) */
   if (!T) { R.route = null; return; }

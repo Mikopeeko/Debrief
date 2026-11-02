@@ -2044,6 +2044,7 @@ const PATCH_NOTES = [
     "Mythic+ map: enemies show their portraits like in MDT. Elites always, the rest when you zoom in.",
     "Mythic+ map: pulls are outlined like in MDT, with their number and running %, boss portraits, and a darker map so everything stands out. On a phone the labels and portraits draw bigger so they stay readable.",
     "Mythic+ pull card: High Channeler Ryvati, Spark Channeler and Orb Watcher show as Casters. Their damage is mostly magic, even though they rarely start a cast.",
+    "Mythic+ pull card: Reban, King Dazar’s raptor, shows as Melee, not Caster.",
     "Mythic+ tab, healers: Your part asks “Did your damage time it?” When your damage is what timed the key, it says so with a gold star. Over time, it says whether matching a typical healer of your spec would have timed it.",
     "Mythic+ tab: the key's banner shows the dungeon's art, each player's spec icon, and your points in score colours with what the run added, like “471 points (+29)”.",
     "Mythic+ tab, a new top: one line of numbers under the summary, and a band with Your part on the left (your damage and share of the group, healing, deaths, kicks, cooldowns, avoidable hits) and Fix these first beside it. The bar under the tabs jumps to Debrief, Map, Your group and Dungeon.",
