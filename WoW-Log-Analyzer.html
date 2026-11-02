@@ -23749,7 +23749,7 @@ const PATCH_NOTES = [
     "Mythic+ tab: see where each Lust went, on your timeline and on the pull, and each player's big cooldowns: how many, and how many went on your biggest pulls.",
     "Mythic+ tab for hard keys: when the next level is out of reach, the top box shows where your time went against a typical fast run, biggest first. Trash and boss fights are counted apart, and the banner shows how much time you had to spare.",
     "Mythic+ tab, easier to use: a bar at the top jumps to each part, and one Pulls list, stretch by stretch, shows the fast run's pulls beside yours. Hover a dot on the map for its pull, or click it to open that pull.",
-    "Mythic+ tab, easier on the eyes: every part starts with one plain sentence, and Pulls, Kicks and Players stay folded until you open them. Each chart has an ⓘ, and you can hover any piece of it to see what it is.",
+    "Mythic+ tab, easier on the eyes: every part starts with one plain sentence, and Pulls, Kicks and Players stay folded until you open them. Each chart has an ⓘ, and you can hover any piece of it to see what it is. The fast run's line on the timeline is drawn the same way as yours, pull by pull, only fainter.",
     "On a smaller screen, the tiles at the top of Debriefing line up in even rows: no tile stretched across on its own and no empty gaps.",
     "The hovers on Debriefing's top tiles list every player, not just the first 10, and a tall hover stays on screen.",
     "Your recap is a side panel now: the full height of your screen on the right edge (or the left, with Side in /db card settings), one column that scrolls, in WoW and on your PC. Drag its inner edge on your PC to make it wider or narrower.",
@@ -61136,25 +61136,32 @@ const mpSec = (t, line, body, id, o) => { o = o || {}; const h = '<h2>' + t + '<
 function mpBehind(R, C, F, FC, fx, waiting) {
   const ck = C.ck, ST = mpStretches(R, C), FS = F ? mpStretches(F, FC) : [], fBy = new Map(FS.map((s) => [s.boss, s]));
   const W0 = Math.max(ck.par, ck.time, FC ? FC.ck.time : 0) * 1.03, X = (s) => (100 * Math.max(0, s) / W0).toFixed(2) + '%', W = (s) => (100 * Math.max(0, s) / W0).toFixed(2) + '%';
-  const blocks = [], dticks = [];
-  for (const p of R.pulls) { const dd = p.deaths.slice().sort((a, b) => a.t - b.t); let s0 = p.s;
-    for (const d of dd) { blocks.push({ x: C.tv(s0), w: d.t - s0, p }); dticks.push({ x: C.tv(d.t), d }); s0 = d.t; }
-    blocks.push({ x: C.tv(s0), w: p.e - s0, p }); }
   const CP = ST.map((s, i) => ({ boss: s.boss, you: i === ST.length - 1 && R.pulls[R.pulls.length - 1].boss === s.boss ? ck.time : s.at, fast: fBy.has(s.boss) ? fBy.get(s.boss).at : null }));
   if (F && CP.length && FS.length && FS[FS.length - 1].boss === CP[CP.length - 1].boss) CP[CP.length - 1].fast = FC.ck.time;
-  /* (every piece has its hover (the "easier on the eyes" round)) */
-  const youLane = '<div class="mpt-lt">' + blocks.map((b) => '<i class="mpt-blk' + (b.p.boss ? ' mpt-bo' : '') + '" style="left:' + X(b.x) + ';width:' + W(b.w) + '"' + mpT1(b.p.boss ? '<b>' + esc(b.p.boss) + '</b>: ' + mpMM(b.p.dur) + (b.p.kill === false ? ', not killed.' : '.') : '<b>Pull ' + b.p.n + '</b>: ' + mpMM(b.p.dur) + ' of trash.') + '></i>').join('') +
-    dticks.map((t) => '<i class="mpt-dth" style="left:' + X(t.x) + ';width:' + W(C.pen) + '"' + mpT1('<b>' + esc(t.d.who) + ' died</b>' + (t.d.to && t.d.to !== 'unknown' ? ' to ' + esc(t.d.to) : '') + ': +' + Math.round(C.pen) + ' s on the timer.') + '></i>').join('') +
-    CP.map((c) => '<span class="mpt-cp" style="left:' + X(c.you) + '"' + mpT1('<b>' + esc(c.boss) + ' down</b> at ' + mpMM(c.you) + (c.fast != null ? ', ' + (c.you >= c.fast ? mpMM(c.you - c.fast) + ' behind' : mpMM(c.fast - c.you) + ' ahead of') + ' the fast run.' : '.')) + '><i></i></span>').join('') +
-    (R.lust || []).map((l) => '<i class="mpt-lst" style="left:' + X(C.tv(l.t)) + '"' + mpT1('<b>Lust</b>' + (l.spell ? ' (' + esc(l.spell) + ')' : '') + ', ' + esc(mpPullName(R, l.pull)) + '.') + '></i>').join('') + '</div>'; /* (each Lust where it went out (Nov 1)) */
-  const fastLane = F ? '<div class="mpt-lt"><i class="mpt-fbar" style="width:' + W(FC.ck.time) + '"' + mpT1('<b>A typical fast run</b>: ' + mpTypical(R, fx) + '. It finished at ' + mpMM(FC.ck.time) + '.') + '></i>' + CP.filter((c) => c.fast != null).map((c) => '<span class="mpt-cp mpt-f" style="left:' + X(c.fast) + '"' + mpT1('<b>' + esc(c.boss) + ' down</b> at ' + mpMM(c.fast) + ' in the fast run.') + '><i></i></span>').join('') + '</div>'
+  // (one lane's pieces: its pulls (split at each death), bosses in gold, each death as its time on the timer, each Lust. The fast run's lane is
+  // drawn the same way, faded (the Design studio, Flex: "why use different graphics for the fast run? Wouldnt a true comparison show the same
+  // one?" then "ok well fix it then"); every piece has its hover (the "easier on the eyes" round))
+  const lane = (RR, CC, fr) => { const blocks = [], dticks = [], pre = fr ? 'Fast run, ' : '';
+    for (const p of RR.pulls) { const dd = p.deaths.slice().sort((a, b) => a.t - b.t); let s0 = p.s;
+      for (const d of dd) { blocks.push({ x: CC.tv(s0), w: d.t - s0, p }); dticks.push({ x: CC.tv(d.t), d }); s0 = d.t; }
+      blocks.push({ x: CC.tv(s0), w: p.e - s0, p }); }
+    return blocks.map((b) => '<i class="mpt-blk' + (b.p.boss ? ' mpt-bo' : '') + '" style="left:' + X(b.x) + ';width:' + W(b.w) + '"' + mpT1(b.p.boss ? '<b>' + pre + esc(b.p.boss) + '</b>: ' + mpMM(b.p.dur) + (b.p.kill === false ? ', not killed.' : '.') : '<b>' + (fr ? pre + 'pull ' : 'Pull ') + b.p.n + '</b>: ' + mpMM(b.p.dur) + ' of trash.') + '></i>').join('') +
+      dticks.map((t) => '<i class="mpt-dth" style="left:' + X(t.x) + ';width:' + W(CC.pen) + '"' + mpT1('<b>' + (fr ? 'Fast run: ' : '') + esc(t.d.who) + ' died</b>' + (t.d.to && t.d.to !== 'unknown' ? ' to ' + esc(t.d.to) : '') + ': +' + Math.round(CC.pen) + ' s on the timer.') + '></i>').join('') +
+      (RR.lust || []).map((l) => '<i class="mpt-lst" style="left:' + X(CC.tv(l.t)) + '"' + mpT1('<b>' + (fr ? 'Fast run\'s Lust' : 'Lust') + '</b>' + (l.spell ? ' (' + esc(l.spell) + ')' : '') + ', ' + esc(mpPullName(RR, l.pull)) + '.') + '></i>').join(''); }; /* (each Lust where it went out (Nov 1)) */
+  const youLane = '<div class="mpt-lt">' + lane(R, C, false) +
+    CP.map((c) => '<span class="mpt-cp" style="left:' + X(c.you) + '"' + mpT1('<b>' + esc(c.boss) + ' down</b> at ' + mpMM(c.you) + (c.fast != null ? ', ' + (c.you >= c.fast ? mpMM(c.you - c.fast) + ' behind' : mpMM(c.fast - c.you) + ' ahead of') + ' the fast run.' : '.')) + '><i></i></span>').join('') + '</div>';
+  const fDia = F ? CP.filter((c) => c.fast != null).map((c) => '<span class="mpt-cp mpt-f" style="left:' + X(c.fast) + '"' + mpT1('<b>Fast run: ' + esc(c.boss) + ' down</b> at ' + mpMM(c.fast) + '.') + '><i></i></span>').join('') : '';
+  /* (the grey bar only when the fast run's pulls can't be read) */
+  const fastLane = F && (F.pulls || []).length ? '<div class="mpt-lt mpt-ltf">' + lane(F, FC, true) + fDia + '</div>'
+    : F ? '<div class="mpt-lt"><i class="mpt-fbar" style="width:' + W(FC.ck.time) + '"' + mpT1('<b>A typical fast run</b>: ' + mpTypical(R, fx) + '. It finished at ' + mpMM(FC.ck.time) + '. Its pulls couldn\'t be read.') + '></i>' + fDia + '</div>'
     : '<div class="mpt-lt mpt-lt0"><span>' + (waiting ? 'Finding a typical fast run…' : 'No public fast run at this level yet.') + '</span></div>';
+  const fNote = F && (F.pulls || []).length ? ' It finished at ' + mpMM(FC.ck.time) + '. Same colours as yours, faded.' + (!(F.lust || []).length ? ' Lust isn\'t shown for the fast run: none was found in its log.' : '') : '';
   const marks = '<div class="mpt-mk">' + [[0.6, '+3'], [0.8, '+2'], [1, '+1']].map(([f, l]) => '<span style="left:' + X(ck.par * f) + '"' + mpT1('Finish before <b>' + mpMM(ck.par * f) + '</b> for ' + l + '.') + '>' + l + ' · ' + mpMM(ck.par * f) + '</span>').join('') + '</div>';
   const lines = [0.6, 0.8, 1].map((f) => '<i class="mpt-vl" style="left:' + X(ck.par * f) + '"></i>').join('');
   let lastX = -99, row = 0, rows = 1; const rowOf = CP.map((c) => { const x = 100 * c.you / W0; row = x - lastX < 13 ? 1 - row : 0; lastX = x; rows = Math.max(rows, row + 1); return row; }); /* (bosses close together: their labels take turns on two rows) */
   const gapRow = '<div class="mpt-gp" style="--mpt-gph:' + 40 * rows + 'px">' + CP.map((c, i) => '<span style="left:' + X(c.you) + ';--mpt-gpt:' + 40 * rowOf[i] + 'px"><b>' + esc(c.boss) + '</b>' + mpMM(c.you) + (c.fast != null ? ' · <b class="' + (i === CP.length - 1 && c.you > c.fast ? 'mpt-bad' : '') + '">' + (c.you >= c.fast ? mpMM(c.you - c.fast) + ' behind' : mpMM(c.fast - c.you) + ' ahead') + '</b>' : '') + '</span>').join('') + '</div>';
-  const timeline = '<div class="mpt-tl"><div class="mpt-tlg">' + marks + '<div class="mpt-lanes">' + lines + '<div class="mpt-ln"><span class="mpt-ll">You</span>' + youLane + '</div><div class="mpt-ln"><span class="mpt-ll"' + mpT1('<b>A typical fast run</b>: ' + mpTypical(R, fx) + '.') + '>Fast run</span>' + fastLane + '</div></div>' + gapRow + '</div>' +
-    '<div class="mpt-key"><span><i class="mpt-k1"></i>Pull</span><span><i class="mpt-k2"></i>Boss</span>' + (C.pen ? '<span><i class="mpt-k3"></i>Death (+' + Math.round(C.pen) + ' s)</span>' : '') + (F ? '<span><i class="mpt-k4"></i>Fast run</span>' : '') + '<span><i class="mpt-kd"></i>Boss down</span>' + ((R.lust || []).length ? '<span><i class="mpt-kl"></i>Lust</span>' : '') + '</div></div>';
+  const timeline = '<div class="mpt-tl"><div class="mpt-tlg">' + marks + '<div class="mpt-lanes">' + lines + '<div class="mpt-ln"><span class="mpt-ll">You</span>' + youLane + '</div><div class="mpt-ln"><span class="mpt-ll"' + mpT1('<b>A typical fast run</b>: ' + mpTypical(R, fx) + '.' + fNote) + '>Fast run</span>' + fastLane + '</div></div>' + gapRow + '</div>' +
+    '<div class="mpt-key"><span><i class="mpt-k1"></i>Pull</span><span><i class="mpt-k2"></i>Boss</span>' + (C.pen ? '<span><i class="mpt-k3"></i>Death (+' + Math.round(C.pen) + ' s)</span>' : '') + (F ? ((F.pulls || []).length ? '<span><i class="mpt-k1 mpt-kf"></i>Fast run (faded)</span>' : '<span><i class="mpt-k4"></i>Fast run</span>') : '') + '<span><i class="mpt-kd"></i>Boss down</span>' + ((R.lust || []).length ? '<span><i class="mpt-kl"></i>Lust</span>' : '') + '</div></div>';
   // why, stretch by stretch: one number a cell, the difference from the fast run, with both in its hover; only the worst one coloured (the
   // "easier on the eyes" round). Without a fast run, your own numbers
   const dv = (v) => { v = Math.round(v); return v > 0 ? '+' + mpMM(v) : v < 0 ? mpMM(v) : 'same'; }, dn = (v) => (v > 0 ? '+' + plural(v, 'pull') : v < 0 ? '−' + plural(-v, 'pull') : 'same');
@@ -61521,6 +61528,7 @@ const MP_CSS = `
 /* (the pieces with a hover) */
 .mpt-blk,.mpt-dth,.mpt-lst,.mpt-cp,.mpt-fbar,.mpt-mk span,.mpt-sp,.mpt-sbm,.mpt-strip u,.mpt-fdot,.mpt-c[data-tt],.mpt-vs[data-tt],.mpt-ll[data-tt]{cursor:help}
 .mpt-blk:hover,.mpt-sp:hover,.mpt-fbar:hover{filter:brightness(1.2)}
+.mpt-ltf .mpt-blk,.mpt-ltf .mpt-dth,.mpt-ltf .mpt-lst{opacity:.55} .mpt-ltf .mpt-blk:hover{opacity:.8} .mpt-ltf .mpt-cp{opacity:.8} .mpt-kf{opacity:.55} /* (the fast run: your colours, faded, so "You" stays the bright one) */
 .mpt-cdl{text-decoration:underline dotted var(--faint);text-underline-offset:3px;cursor:help;width:fit-content}
 .mpt-h3 .mpt-i{display:inline-grid;margin-left:8px;vertical-align:2px}
 .mpt-h3.mpt-h3a{margin:22px 0 4px}

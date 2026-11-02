@@ -2032,7 +2032,7 @@ const PATCH_NOTES = [
     "Mythic+ tab: see where each Lust went, on your timeline and on the pull, and each player's big cooldowns: how many, and how many went on your biggest pulls.",
     "Mythic+ tab for hard keys: when the next level is out of reach, the top box shows where your time went against a typical fast run, biggest first. Trash and boss fights are counted apart, and the banner shows how much time you had to spare.",
     "Mythic+ tab, easier to use: a bar at the top jumps to each part, and one Pulls list, stretch by stretch, shows the fast run's pulls beside yours. Hover a dot on the map for its pull, or click it to open that pull.",
-    "Mythic+ tab, easier on the eyes: every part starts with one plain sentence, and Pulls, Kicks and Players stay folded until you open them. Each chart has an ⓘ, and you can hover any piece of it to see what it is.",
+    "Mythic+ tab, easier on the eyes: every part starts with one plain sentence, and Pulls, Kicks and Players stay folded until you open them. Each chart has an ⓘ, and you can hover any piece of it to see what it is. The fast run's line on the timeline is drawn the same way as yours, pull by pull, only fainter.",
     "On a smaller screen, the tiles at the top of Debriefing line up in even rows: no tile stretched across on its own and no empty gaps.",
     "The hovers on Debriefing's top tiles list every player, not just the first 10, and a tall hover stays on screen.",
     "Your recap is a side panel now: the full height of your screen on the right edge (or the left, with Side in /db card settings), one column that scrolls, in WoW and on your PC. Drag its inner edge on your PC to make it wider or narrower.",
