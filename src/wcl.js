@@ -103,6 +103,17 @@ async function loadRankings(creds, item, metric) {
   return out;
 }
 
+// A Mythic+ key's parses (Nov 2): name -> { pct, spec, cls, lvl }, from bracketPercent, the parse at that key level against the same spec. Not
+// rankPercent: for a key that's the run's own score rank, about 95 for everyone in the group. Nothing for a key that wasn't timed.
+async function loadParses(creds, code, fight, metric) {
+  let j;
+  if (HOSTED) j = await api('/api/rankings?code=' + encodeURIComponent(code) + '&fight=' + fight + '&m=' + metric);
+  else { const d = await gql(creds, RANK_Q, { code, fid: [fight], m: metric }); j = d && d.reportData && d.reportData.report && d.reportData.report.rankings; }
+  const data = ((typeof j === 'string' ? JSON.parse(j) : j) || {}).data || [], out = new Map();
+  for (const f of data) for (const role of Object.values(f.roles || {})) for (const c of role.characters || []) if (c && c.name && c.bracketPercent != null) out.set(c.name, { pct: c.bracketPercent, spec: c.spec, cls: c.class, lvl: f.bracketData });
+  return out;
+}
+
 // The top players of one spec on one boss (Warcraft Logs' rankings, damage or healing), and each one's spells: their
 // share, hits, crits and casts. For the player card's comparison on Graphs (plain numbers, no advice). The site keeps the
 // answer a day. v: { e: encounter, c: class, s: spec (Warcraft Logs' names, no spaces), d: difficulty, m: 'dps' | 'hps', n }
@@ -659,6 +670,6 @@ function* translateSteps(item, events) {
   return out;
 }
 
-root.WCL = { HOSTED, mpFast, MPFAST_Q, paceRecs, rateRecs, curveRecs, killGuild, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, charReportsPage, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
+root.WCL = { HOSTED, loadParses, mpFast, MPFAST_Q, paceRecs, rateRecs, curveRecs, killGuild, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, charReportsPage, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);
