@@ -830,13 +830,17 @@ function mpPullTags(RR, i) {
   for (const b of (p.debs || []).filter((x) => x.on > 0).slice(0, 2)) t(esc(b.spell) + ' ×' + b.on, '', '<b>' + esc(b.spell) + '</b> went on ' + plural(b.on, 'player') + '.' + (b.removed ? ' ' + b.removed + ' dispelled (' + who(p.dispels, b.spell) + ').' : ''));
   const miss = mpCdMiss(RR, i); if (miss.length) t('No big cooldown: ' + miss.map(esc).join(', '), 'mpt-t2c', 'Their spec has a big cooldown, and they didn\'t press one in this pull.');
   return out; }
-// (a pull's hover (the studio's item 15, then Flex: "its just a lot of information to read"): what and how long, its tags, "Click for the details";
-// on the map's pull tags, the tiles and the timeline's blocks alike)
-function mpPullTip(RR, i, extra) { const p = RR.pulls[i], rt = RR.route && RR.route.ok ? RR.route : null, add = rt && rt.pulls[i] ? rt.pulls[i].add : 0;
+// (a pull's hover (Flex, Nov 2: "Just showing the # of mobs in the pull and % count maybe? since everything else is shown at the side when you click
+// on it"): the pull and how many enemies, counted like the Pack's line (a boss pull: the enemies with the boss, not the boss; a boss is one with 30% or
+// more of the pull's top health, as on the map, or with no health known, one never seen in a trash pull), then the forces it added and the running
+// total, then "Click for the details". No forces data (Ruby): the first line only. On the map's pull labels, the tiles and the timeline's blocks alike)
+function mpPullTip(RR, i) { const p = RR.pulls[i], rt = RR.route && RR.route.ok ? RR.route : null, add = rt && rt.pulls[i] ? rt.pulls[i].add : 0;
   const f1 = (v) => (Math.round(1000 * v / rt.full) / 10).toFixed(1).replace(/\.0$/, '') + '%', tot = rt ? rt.pulls.slice(0, i + 1).reduce((a, x) => a + x.add, 0) : 0; /* (the running total (the cut): the Pulls list had it) */
-  const top = (p.boss ? '★ ' + esc(p.boss) + ' · ' + (p.kill === false ? 'Not killed' : 'Killed') + ' · ' + mpMM(p.dur) : 'Pull ' + mpNo(RR, p.n) + ' · ' + mpMM(p.dur) + (add ? ' · +' + f1(add) : '')) + (rt ? ' · ' + f1(tot) + ' total' : '');
-  const tg = mpPullTags(RR, i).map((x) => x.replace(/ data-tt="[^"]*"/, '')).concat(extra || []);
-  return '<b>' + top + '</b><br>' + (tg.length ? tg.join('<span class="mpt-t2s"> · </span>') : '<span class="mpt-t2s">clean</span>') + '<br><span class="sub">Click for the details</span>'; }
+  const mobs = mpMobs(RR, p), ty = RR.mobType || {}, hp = (m) => (ty[m[0]] || {}).hp || 0, hi = p.boss ? Math.max(0, ...mobs.map(hp)) : 0; if (p.boss) mpMid(RR);
+  const big = (m) => p.boss && (hi ? hp(m) >= hi * 0.3 : !(RR.mobTrash || new Set()).has(m[0])), n = mobs.reduce((a, m) => a + (big(m) ? 0 : m[1]), 0), en = plural(n, 'enemy').replace(/enemys$/, 'enemies');
+  const l1 = p.boss ? '★ ' + esc(p.boss) + (n ? ' · with ' + en : '') : 'Pull ' + mpNo(RR, p.n) + (n ? ' · ' + en : '');
+  const l2 = rt ? (p.boss && !add ? '' : '+' + f1(add) + ' forces · ') + f1(tot) + ' total' : '';
+  return '<b>' + l1 + '</b>' + (l2 ? '<br>' + l2 : '') + '<br><span class="sub">Click for the details</span>'; }
 function mpGroups(P) { const out = []; let cur = { from: '', to: '', ps: [] }; for (const p of P) { cur.ps.push(p); if (p.boss && p.kill !== false) { cur.to = p.boss; out.push(cur); cur = { from: p.boss, to: '', ps: [] }; } } if (cur.ps.length) out.push(cur); return out; }
 const mpWhat = (R2, p, k) => { if (p.boss) return esc(p.boss); const mobs = mpMobs(R2, p), cnt = mobs.reduce((a, m) => a + m[1], 0);
   return plural(cnt, 'enemy').replace('enemys', 'enemies') + ': ' + mobs.slice(0, k || 3).map((m) => esc(m[0]) + (m[1] > 1 ? ' ×' + m[1] : '')).join(', ') + (mobs.length > (k || 3) ? ' and ' + (mobs.length - (k || 3)) + ' more' : ''); };
@@ -1345,7 +1349,7 @@ function mpMapHtml(R, F, tl) {
   const nm = (q) => (q.p.boss ? esc(q.p.boss) + (q.add ? ', with trash' : '') : 'Pull ' + mpNo(q.RR, q.p.n));
   const badge = (q) => '<span class="mpt-nb" style="border-color:' + q.c + ';color:' + q.c + '">' + (q.p.boss ? '★' : mpNo(q.RR, q.p.n)) + '</span>';
   const kgrp = (L) => { const m = new Map(); for (const x of L || []) { const o = m.get(x.spell) || { n: 0, r: new Set() }; o.n++; for (const w of x.ready || []) o.r.add(w); m.set(x.spell, o); } return [...m]; };
-  const tip =(q) => mpPullTip(q.RR, q.i, [q.wait ? '<span class="mpt-tg2">⏱ waited ' + mpMM(q.wait) + '</span>' : '', q.chained ? '<span class="mpt-tg2">chained</span>' : '', q.us && !q.us.length ? '<span class="mpt-tg2">no spot</span>' : ''].filter(Boolean)); /* (the studio's item 15) */
+  const tip = (q) => mpPullTip(q.RR, q.i); /* (the pull, its enemies and forces; the rest is on the card) */
   // (Know this dungeon's tips on the matching pulls: a boss's plan; trash tips only for named enemies that were in the pull. At most 3)
   const K = MP_KNOW[mpLc(R.run.dungeon)], tips = (q) => { if (!K) return []; if (q.p.boss) { const b = K.b.find(([n]) => mpLc(n) === mpLc(q.p.boss)); return b ? b[1].slice(0, 3) : []; }
     const names = mpMobs(q.RR, q.p).map((m) => mpLc(m[0])); return K.t.filter((x) => { const L = [...x.matchAll(/\*\*(.+?)\*\*/g)].map((m) => mpLc(m[1]).replace(/s$/, '')); return L.length && L.some((n) => names.some((m) => m.startsWith(n) || n.startsWith(m))); }).slice(0, 3); };
