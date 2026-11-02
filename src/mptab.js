@@ -261,7 +261,9 @@ function mpHtml(it, R, fx) {
     const parts = all.filter((x) => x[2] >= 1), less = all.filter((x) => x[2] <= -1); /* (one you did better than the fast run: in the key, green, so the numbers add up to the gap) */
     const sum = parts.reduce((a, x) => a + x[2], 0); if (!sum) return '';
     const line = !spl ? '' : (Math.abs(dp) <= 7 ? 'Your group\'s damage was close to the fast run\'s: ' + (dp ? Math.abs(dp) + '% ' + (dp < 0 ? 'less' : 'more') + ' a second' : 'the same a second') + ' while fighting.' : 'Your group did ' + Math.abs(dp) + '% ' + (dp < 0 ? 'less' : 'more') + ' damage a second than the fast run while fighting.') + ' ' +
-      (spl.more <= 0 ? 'You had less to kill, so your extra fighting was lower damage.' : spl.low <= 0 ? 'Your damage was higher, so your extra fighting was more to kill.' : spl.more >= spl.low ? 'Most of your extra fighting was more to kill.' : 'Most of your extra fighting was lower damage.');
+      /* (the studio's audit: when lower damage is the cause and the route had less or about as much to kill, the cost first, then the route) */
+      (spl.low > spl.more && spl.more < 15 ? 'That cost ' + mpMM(spl.low) + '. Your route was fine: you had ' + (spl.more <= -1 ? 'less' : 'about as much') + ' to kill ' + (spl.more <= -1 ? 'than' : 'as') + ' the fast run.'
+        : spl.low <= 0 ? 'Your damage was higher, so your extra fighting was more to kill.' : spl.more >= spl.low ? 'Most of your extra fighting was more to kill.' : 'Most of your extra fighting was lower damage.');
     return '<div class="mpt-sbar">' + parts.map(([k, l, s, d]) => '<i class="mpt-sb-' + k + '" tabindex="0" style="width:' + (100 * s / sum).toFixed(1) + '%"' + mpT1('<b>' + l + ': ' + mpMM(s) + '</b><br>' + d) + '></i>').join('') + '</div>' +
       '<div class="mpt-sk">' + parts.map(([k, l, s]) => '<span><i class="mpt-sb-' + k + '"></i>' + l + ' <b>' + mpMM(s) + '</b></span>').join('') +
       less.map(([k, , s, d, nl]) => '<span tabindex="0"' + mpT1('<b>' + nl + ': ' + mpMM(s) + '</b><br>' + d) + '>' + nl + ' <b class="mpt-g">' + mpMM(s) + '</b></span>').join('') + '</div>' +
