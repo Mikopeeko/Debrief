@@ -200,8 +200,11 @@ function build(text, E) {
   const readyNow = (t) => { const r = []; for (const [g, l] of kickNames) { let best = null; for (const k of l) { const u = lastUse(g, k, t); if (u == null || t - u >= k[1]) { const since = u == null ? -1e9 : u + k[1]; if (!best || since < best.since) best = { g, k, since }; } } if (best) r.push(best); } return r.sort((a, b) => a.since - b.since); };
   // ---- per pull ----
   const defIds = new Map(); for (const [cls, list] of Object.entries(E.DEFENSIVES || {})) for (const d of list) defIds.set(d[1], d[0]);
+  // (what a pull fought (Nov 2, the Design studio's pull-accuracy fix): only enemies the group damaged. One that only swung at someone passing
+  // by (Voidscar's second Watchful Harrower) or that no player hits (Taz'Rah's Ethereal Shades) still shapes the pulls, but isn't listed)
+  const dmgd = new Set(); for (const x of ev) if (x[1] === 'dmg') dmgd.add(x[4]);
   const out = pulls.map((p, i) => ({ n: i + 1, s: p.s, e: p.e, boss: p.enc ? p.enc.boss : null, kill: p.enc ? !!p.enc.kill : null,
-    mobs: [...p.mobs].map(([n, g]) => [n, g.size]).sort((a, b) => b[1] - a[1]), dmg: {}, heal: {}, kicks: [], stops: [], through: [], minor: [], deaths: [], defs: [], dispels: [], purges: [],
+    mobs: [...p.mobs].map(([n, g]) => [n, [...g].filter((x) => dmgd.has(x)).length]).filter((m) => m[1]).sort((a, b) => b[1] - a[1]), dmg: {}, heal: {}, kicks: [], stops: [], through: [], minor: [], deaths: [], defs: [], dispels: [], purges: [],
     avoid: {}, debs: {}, ebuffs: {} }));
   const addTo = (o, k, v) => { o[k] = (o[k] || 0) + v; }, avoidOf = (o, who, spell) => o.avoid[who + '|' + spell] || (o.avoid[who + '|' + spell] = { who, spell, n: 0, dmg: 0 });
   const recent = new Map(), inPool = new Set(), lastHit = new Map(), ownAt = new Map(); // player -> last hits; player|puddle stepped into, not ticked yet; player|spell -> its last hit; player|spell -> their own line's hit
