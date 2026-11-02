@@ -24016,7 +24016,7 @@ const PATCH_NOTES = [
     "Debriefing Timeline replay, The Coiled Altar: orbs stay on the floor until someone picks them up or a frontal pops them, ghosts stay until they reach their player or a frontal clears them, and you can see purple orb carriers, Gravebound players, Malacrass's shield and Zul'jan healing in the intermission. Axes show where they hit someone, and every player's Soul Fragments glow until they pick them up.",
     "Debriefing Timeline replay, Ula'tek: the platform stays whole until phase 3, then you see it break.",
     "Debriefing Timeline replay, tidier map: circles no longer carry long text over the players. Point at one to see what it is, and the map's Key has one line per kind.",
-    "Debriefing Timeline replay: click any name, on the map or in the play-by-play, to follow that player. Everyone else fades, everything on Debriefing follows them, and Show everyone goes back.",
+    "Debriefing Timeline replay: click any name, on the map or in the play-by-play, to follow that player. Everyone else fades, everything on Debriefing follows them, the replay stays where it was, and Show everyone goes back.",
     "The Coiled Altar's maps: the poison pools are drawn at their real size, a little smaller than before.",
     "Debriefing Timeline: a You and Top guilds lane under the replay shows your phase pushes, deaths, mistakes and Lust next to the 20 fastest kills (The Coiled Altar for now). Click the lane to move the replay there.",
     "Mythic+ tab, less to read: Your group is one table with each player's DPS, kicks, CC, deaths, defensives and big cooldowns. The map's controls sit in one bar, with the floors and layers on the map. The long pull list and route chart are gone: each pull's details are on its tile, its hover and its card, and the map's first line says where your enemy count ended.",
@@ -65452,7 +65452,10 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
     return out; };
   window.dbtReplay = function (X) {
     var d = X.d, M = X.M, E = X.E, mm = X.mm, F = X.F, SS = W().S || {}, it0 = SS.item || {}, rep = SS.rep;
-    var key = (it0.boss || '') + '|' + (it0.startMs || ''); if (P.key !== key) { P.key = key; P.pick = null; P.fr = null; P.mt = null; P.clip = null; P.userScroll = false; }
+    var key = (it0.boss || '') + '|' + (it0.startMs || ''); if (P.key !== key) { P.key = key; P.pick = null; P.fr = null; P.mt = null; P.clip = null; P.userScroll = false; P.lastXo = -1; P.fkey = key + '|' + (SS.mechP || ''); }
+    /* (following someone or letting go: the same pull, so the replay keeps its time; the list's moments are numbered afresh, so the pick is
+       the moment at that time) */
+    else if (P.fkey !== key + '|' + (SS.mechP || '')) { P.fkey = key + '|' + (SS.mechP || ''); P.pick = null; P.clip = null; P.lastXo = F.xo; P.keep = P.mt != null; }
     d.classList.add('dtm-on');
     var box = d.querySelector(':scope > .dtm'); if (!box) { box = document.createElement('div'); box.className = 'dtm dbt-p'; d.insertBefore(box, d.querySelector(':scope > .dbx-wrap')); }
     box._X = X;
@@ -65475,9 +65478,10 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
     var seqs = bySp.map(function (L) { var out = [], run = []; var flush = function () { if (run.length >= 3) out.push({ run: run.slice() }); else run.forEach(function (i) { out.push({ i: i }); }); run = []; };
       L.forEach(function (i) { if (M[i].st === 'ok') run.push(i); else { flush(); out.push({ i: i }); } }); flush(); return out; });
     var bad = show.filter(function (i) { return M[i].st !== 'ok'; });
-    if (P.pick == null || (typeof P.pick === 'number' && show.indexOf(P.pick) < 0)) P.pick = F.xo != null && show.indexOf(F.xo) >= 0 ? F.xo : bad.length ? bad[0] : show[0];
-    var fromChart = false; if (F.xo != null && F.xo !== P.pick && show.indexOf(F.xo) >= 0 && box._lastXo !== F.xo) { P.pick = F.xo; P.mt = Math.max(0, M[F.xo].t - 4); P.clip = { to: M[F.xo].t + 0.6 }; fromChart = true; } /* (a mark on the charts picks its moment, plays into it, and the page goes up to the replay) */
-    box._lastXo = F.xo;
+    if (P.pick == null || (typeof P.pick === 'number' && show.indexOf(P.pick) < 0)) { var kp = null; if (P.keep) show.forEach(function (i) { if (M[i].t <= P.mt + 0.05 && (kp == null || M[i].t >= M[kp].t)) kp = i; }); P.keep = false;
+      P.pick = kp != null ? kp : F.xo != null && show.indexOf(F.xo) >= 0 ? F.xo : bad.length ? bad[0] : show[0]; }
+    var fromChart = false; if (F.xo != null && F.xo !== P.pick && show.indexOf(F.xo) >= 0 && P.lastXo !== F.xo) { P.pick = F.xo; P.mt = Math.max(0, M[F.xo].t - 4); P.clip = { to: M[F.xo].t + 0.6 }; fromChart = true; } /* (a mark on the charts picks its moment, plays into it, and the page goes up to the replay) */
+    P.lastXo = F.xo;
     var T = TOP[(it0.boss || '') + '|' + (it0.diffId || '')];
     var tile = function (e) { if (e.ph != null) { var S0 = SP[e.ph], hot = P.pick === 'p' + e.ph; return '<button type="button" class="dtm-t lv-p' + (hot ? ' hot' : '') + '" data-ph="' + e.ph + '" data-tt="' + E('<b>' + E(S0.p.n) + '</b><br>' + mm(S0.a) + '–' + mm(S0.b) + (S0.p.hp0 != null && S0.p.hp0 !== '' && S0.p.hp1 != null && S0.p.hp1 !== '' ? '<br>Boss ' + Math.round(+S0.p.hp0) + '% → ' + Math.round(+S0.p.hp1) + '%' : '')) + '"><span class="dtm-bd">★</span><span class="n">' + E(S0.p.n) + '</span><span class="s"><i>' + mm(S0.a) + '</i>' + (S0.p.hp0 != null && S0.p.hp0 !== '' ? '<i class="hp">' + Math.round(+S0.p.hp0) + '%</i>' : '') + '</span></button>'; }
       if (e.run) { var a = M[e.run[0]], b = M[e.run[e.run.length - 1]], hr = P.pick === 'r' + e.run[0]; return '<button type="button" class="dtm-t run lv-g' + (hr ? ' hot' : '') + '" data-run="' + e.run[0] + '" data-tt="' + E('<b>✓ ' + e.run.length + ' done right</b><br>' + mm(a.t) + '–' + mm(b.t) + '<br>' + e.run.map(function (i) { return M[i].m; }).filter(function (x, k, A) { return A.indexOf(x) === k; }).slice(0, 4).join(', ')) + '"><span class="dtm-bd">✓</span><span class="n">' + e.run.length + ' done right</span><span class="s"><i>' + mm(a.t) + '–' + mm(b.t) + '</i></span></button>'; }
@@ -65711,7 +65715,7 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
     if (box._bound) return; box._bound = 1;
     if (!tip) { tip = document.createElement('div'); tip.className = 'dtm-tip'; document.body.appendChild(tip); }
     /* (picking a moment plays into it: the replay starts 4 s before and stops just after, and the list follows the pick) */
-    var pickI = function (k) { var X0 = box._X, t0 = box._tOf ? box._tOf(k) : 0, m = typeof k === 'number' ? X0.M[k] : null; P.pick = k; X0.F.xo = m && m.st !== 'ok' ? k : null; box._lastXo = X0.F.xo; P.userScroll = false; P.mt = Math.max(0, (t0 || 0) - 4); P.clip = { to: (t0 || 0) + 0.6 }; tip.classList.remove('on'); X0.draw(); };
+    var pickI = function (k) { var X0 = box._X, t0 = box._tOf ? box._tOf(k) : 0, m = typeof k === 'number' ? X0.M[k] : null; P.pick = k; X0.F.xo = m && m.st !== 'ok' ? k : null; P.lastXo = X0.F.xo; P.userScroll = false; P.mt = Math.max(0, (t0 || 0) - 4); P.clip = { to: (t0 || 0) + 0.6 }; tip.classList.remove('on'); X0.draw(); };
     box.addEventListener('click', function (e) { var t = e.target.closest ? e.target : null; if (!t) return;
       if (t.closest('.zplay')) { if (!P.auto) { P.clip = null; P.userScroll = false; } return; } /* (Play: the list follows again) */
       var sp = t.closest('[data-spd]'); if (sp) { P.spd = +sp.dataset.spd; P.clip = null; box._X.draw(); return; }
