@@ -2045,6 +2045,7 @@ const PATCH_NOTES = [
     "Mythic+ tab: Next time lines are one short sentence each, with the details in the small ⓘ, and the tab opens on your own character when they're in the key.",
     "Mythic+ map: point at a pull, a tile or a timeline block for a short summary: its time, forces, deaths, kicks, Lust and cooldowns. The timeline marks each cast that went off with a kick ready.",
     "Mythic+ map: the pulls are tiles under the map, so the pull's card has the whole side to itself.",
+    "Mythic+ map: each pull’s number sits inside the pull, on the route, and labels no longer overlap. A pull spread across the room gets one outline round all of it, like in MDT. Only the dangerous missed kicks show on the map; the rest are on the card.",
     "Mythic+ map: pointing at a pull shows just its enemies and forces. Everything else is on its card.",
     "Mythic+ map: a calmer map. Kicks and CC now live in each pull’s card.",
     "Mythic+ map: enemies show their portraits like in MDT. Elites always, the rest when you zoom in.",
