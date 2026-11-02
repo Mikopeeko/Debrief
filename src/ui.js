@@ -2037,6 +2037,7 @@ const PATCH_NOTES = [
     "Mythic+ tab: Next time lines are one short sentence each, with the details in the small ⓘ, and the tab opens on your own character when they're in the key.",
     "Mythic+ map: point at a pull, a tile or a timeline block for a short summary: its time, forces, deaths, kicks, Lust and cooldowns. The timeline marks each cast that went off with a kick ready.",
     "Mythic+ map: the pulls are tiles under the map, so the pull's card has the whole side to itself.",
+    "Mythic+ pull card: High Channeler Ryvati, Spark Channeler and Orb Watcher show as Casters. Their damage is mostly magic, even though they rarely start a cast.",
     "Mythic+ tab, healers: Your part asks “Did your damage time it?” When your damage is what timed the key, it says so with a gold star. Over time, it says whether matching a typical healer of your spec would have timed it.",
     "Mythic+ tab: the key's banner shows the dungeon's art, each player's spec icon, and your points in score colours with what the run added, like “471 points (+29)”.",
     "Mythic+ tab, a new top: one line of numbers under the summary, and a band with Your part on the left (your damage and share of the group, healing, deaths, kicks, cooldowns, avoidable hits) and Fix these first beside it. The bar under the tabs jumps to Debrief, Map, Your group and Dungeon.",

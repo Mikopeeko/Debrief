@@ -1123,8 +1123,10 @@ const mpCCcasts = (L) => { const out = [], last = new Map(); for (const e of [..
 // log doesn't say which enemies are rare or elite (checked on Flex's log of Nov 1), and Wowhead's "elite" flag is on nearly all key trash, so the
 // Pack's Elite is the mini-boss tier by health; these two are Elite whatever their health (mplus-tab-design/npc-classes.md))
 const MP_RARE = new Set([50815, 140123]);
-// (always Caster, by NPC ID (Flex: "Yes, both casters"): Murder Row's Corrupted Warlock and Felonious Mage)
-const MP_CASTER = new Set([235265, 236084]);
+// (always Caster, by NPC ID (Flex: "Yes, both casters"): Murder Row's Corrupted Warlock and Felonious Mage; then (Flex: "yea fix those things") the three
+// whose damage is mostly magic but who rarely begin a cast: Ruby Life Pools' High Channeler Ryvati, Temple of Sethraliss' Spark Channeler (both IDs)
+// and Orb Watcher)
+const MP_CASTER = new Set([235265, 236084, 197535, 139110, 265057, 135007]);
 // (the pack's type tags: a 12 px icon, then the word (map-extras.md item 17))
 const MP_PKI = (() => { const sv = (b) => '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">' + b + '</svg>';
   return { cast: sv('<path d="M2 10.5 8.2 4.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9.5 .8v2.4M9.5 4.2v2.4M7.1 3.4h2.4M10.3 3.4h1.9" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>') + 'Caster',
