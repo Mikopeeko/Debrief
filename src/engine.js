@@ -3643,7 +3643,7 @@ function caPools(ev) {
   const casts = ev.filter((e) => (e.k === 'cast' || e.k === 'start') && e.id === 1282487).map((e) => e.t).sort((a, b) => a - b).filter((t, i, a) => !i || t - a[i - 1] > 10);
   const hits = ev.filter((e) => e.k === 'dmg' && e.id === 1283290).map((e) => e.t);
   return casts.map((t, i) => { const nx = i + 1 < casts.length ? casts[i + 1] : Infinity, mine = hits.filter((x) => x >= t && x < Math.min(nx, t + 45));
-    return { t0: +(t + 5).toFixed(2), t1: +((mine.length ? Math.max(...mine) : t + 30) + 0.5).toFixed(2), r: i ? 51 : 41 }; }); /* round 414 real pools: 40 Mythic pulls' hits */
+    return { t0: +(t + 5).toFixed(2), t1: +((mine.length ? Math.max(...mine) : t + 30) + 0.5).toFixed(2), r: i ? 47 : 37 }; }); /* round 414 real pools: 40 Mythic pulls' hits; Nov 2 (Flex: "they seem a little too big"): 37 and 47, where players stop getting Noxious Ground on 3 pulls */
 }
 function buildCoiledAltar(ev, r, h) {
   const pl = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');

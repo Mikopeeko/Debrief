@@ -13139,6 +13139,9 @@ html body #view > .dbt.dbt.dbx .dtm-vd .dbt-it.dbx-open > .dbt-c{padding:0 !impo
 html body #view > .dbt.dbt.dbx .dtm-vd .dbt-it.dbx-open > .dbt-c > .dbt-mapslot{display:none !important}
 .dtm-vd .dbt-it .dbt-tm{display:none !important}
 .dtm-more.r{left:auto;right:6px;padding-left:0}
+/* (the phase 3 break on Ula'tek: a gold banner on the map for a few seconds while the whole platform fades into the broken one) */
+.dtm-brk{position:absolute;left:50%;top:46%;z-index:4;padding:8px 16px;border-radius:6px;background:rgba(10,12,16,.85);border:1px solid var(--gold);color:var(--gold);font-weight:700;font-size:13.5px;letter-spacing:.03em;white-space:nowrap;pointer-events:none;transform:translate(-50%,-50%);animation:dtmBrk 3.5s ease forwards}
+@keyframes dtmBrk{0%{opacity:0;transform:translate(-50%,-30%)}12%{opacity:1;transform:translate(-50%,-50%)}80%{opacity:1}100%{opacity:0}}
 @media (max-width: 900px){html body #view > .dbt.dbt.dbx .dtm-pb{max-height:440px !important;overflow:auto}}
 @media (max-width: 700px){.dtm-pbh span{display:none}}
 @media (max-width: 700px){.dtm-tiles{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}.dtm-bar{gap:10px}.dtm-cn{display:none}.dtm-step{width:100%;justify-content:space-between}.dtm-lr{grid-template-columns:64px minmax(0,1fr)}.dtm-ax,.dtm-cmp,.dtm-key{margin-left:74px}.dtm-cmp{height:56px}.dtm-cmp div{white-space:normal;width:118px;font-size:12.5px}.dtm-now{font-size:12px}.dtm-map svg.zmap{max-height:300px !important}}
