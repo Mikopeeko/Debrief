@@ -266,6 +266,7 @@ async function paceStep(env, maxK) {
     if (R.hasMorePages && B.pg.p < 40) B.pg.p++; else if (B.pg.i + 1 < B.parts.length) B.pg = { i: B.pg.i + 1, p: 1 }; else { delete B.pg; B.at = Date.now(); }
   } else if (B.todo.length || (B.rtodo && B.rtodo.length)) { // (a few guilds a run, from progstats, and one kill's phase totals)
     for (let ki = 0; ki < (maxK || 2) && B.rtodo && B.rtodo.length; ki++) { const [c, f, at] = B.rtodo.shift(); /* (two kills a run) */ B.rseen = B.rseen || []; B.rseen.push(c + ':' + f);
+      rr = rr || (await env.DEBRIEF_KV.get('rate-raw:' + key, 'json')) || []; if (rr.some((x) => x.c === c && x.f === f)) continue; /* (Nov 2: a kill the 500-a-boss collector already saved isn't read twice) */
       try { const o = await rateOfKill(env, c, f); if (o.kill && o.ph.length) { rr = rr || (await env.DEBRIEF_KV.get('rate-raw:' + key, 'json')) || []; const bd = o.ph.every((p) => p.bdps != null); rr.push(Object.assign({ c, f, at: o.at || at || 0, h: o.heal, ph: o.ph.map(rateRow) }, bd ? {} : { nb: 1 })); rw = true; } } catch (err) { console.warn('Rates:', c, f, err.message); } }
     const raw = B.todo.length ? (await env.DEBRIEF_KV.get('pace-raw:' + key, 'json')) || [] : null; let add = 0;
     for (const g of (raw ? B.todo.splice(0, 15) : [])) { B.seen.push(g); /* (15 guilds a run: progstats only) */
@@ -337,6 +338,24 @@ async function rateFill(env, st, key, rr, max) {
     catch (err) { console.warn('Boss damage:', x.c, x.f, err.message); if (/rate limit|429|down right now|answered 5/i.test(err.message || '')) { stop = true; break; } twins.forEach((y) => { y.nb = 1; }); n++; } }
   const left = L.filter(want).length; if (!stop && !left) st.b[fk].bf = 1;
   return { fk, L, n, left };
+}
+/* (Nov 2, Flex: "500 per boss": test copies only, driven by a paced script between the 10-minute runs. rateGrow reads the given kills
+   (up to 16) into rate-raw:<key> like the 10-minute job does, skipping one already saved or waiting in that job's list, then fills up
+   to `fill` older kills' boss damage; one save. rateIds: one page of the current patch's rankings, as code:fight and seconds) */
+async function rateGrow(env, key, ids, fill) {
+  const L = (await env.DEBRIEF_KV.get('rate-raw:' + key, 'json')) || [], st = (await env.DEBRIEF_KV.get('pace-st', 'json')) || { b: {} }, B = st.b[key] || {};
+  const have = new Set(L.map((x) => x.c + ':' + x.f).concat((B.rtodo || []).map((x) => x[0] + ':' + x[1]))); let added = 0, dup = 0, bad = 0, stop = false;
+  for (const id of ids.slice(0, 16)) { if (have.has(id)) { dup++; continue; } have.add(id); const c = id.split(':')[0], f = parseInt(id.split(':')[1], 10);
+    try { const o = await rateOfKill(env, c, f); if (o.kill && o.ph.length) { L.push(Object.assign({ c, f, at: o.at || 0, h: o.heal, ph: o.ph.map(rateRow) }, o.ph.every((p) => p.bdps != null) ? {} : { nb: 1 })); added++; } else bad++; }
+    catch (err) { console.warn('Grow:', id, err.message); if (/rate limit|429|down right now|answered 5/i.test(err.message || '')) { stop = true; break; } bad++; } }
+  const fl = stop || !(fill > 0) ? null : await rateFill(env, { b: { [key]: {} } }, key, L, Math.min(fill, 20 - added));
+  if (added || (fl && fl.n)) await env.DEBRIEF_KV.put('rate-raw:' + key, JSON.stringify(L));
+  return { key, added, dup, bad, stop, filled: fl ? fl.n : 0, left: fl ? fl.left : null, total: L.length, nb: L.filter((x) => x.nb).length, withBoss: L.filter((x) => !x.nb && x.ph && x.ph.every((q) => q[5] != null)).length };
+}
+async function rateIds(env, e, d, p, pt) {
+  let parts = null; if (!pt) { const z = await gql(env, PACE_PART_Q, { e }); parts = ((z && z.worldData && z.worldData.encounter && z.worldData.encounter.zone && z.worldData.encounter.zone.partitions) || []).map((x) => x.id); pt = parts[parts.length - 1] || 0; }
+  const r = await gql(env, PACE_RANK_Q, pt ? { e, d, p, pt } : { e, d, p }); let R = r && r.worldData && r.worldData.encounter && r.worldData.encounter.fightRankings; if (typeof R === 'string') R = JSON.parse(R); R = R || {};
+  return { pt, parts, more: !!R.hasMorePages, ids: (R.rankings || []).filter((t) => t.report && t.report.code && t.report.fightID).map((t) => [t.report.code + ':' + t.report.fightID, Math.round((t.duration || 0) / 1000), t.startTime || 0]) };
 }
 // (Oct 23, the user's ask: a two-line chart, ours against the top guilds' second by second. One kill's raid damage done, healing and
 // damage taken over the fight, from Warcraft Logs' graphs, summed over the players, plus its phases; kept in KV as curve-raw:e:d)
@@ -1662,6 +1681,9 @@ export default {
     if (url.pathname === '/api/curvestep' && /-debrief./.test(url.hostname)) { try { return json(await curveStepFor(env, url.searchParams.get('e') + ':' + url.searchParams.get('d'), parseInt(url.searchParams.get('n') || '12', 10))); } catch (err) { return json({ error: err.message }); } }
     if (url.pathname === '/api/ratetest' && /-debrief./.test(url.hostname)) { try { return json(await rateOfKill(env, url.searchParams.get('code'), parseInt(url.searchParams.get('fight'), 10))); } catch (e) { return json({ error: String(e && e.message || e) }, 500); } } /* (test copies only (Oct 23)) */
     if (url.pathname === '/api/ratefill' && /-debrief./.test(url.hostname)) { try { const st = (await env.DEBRIEF_KV.get('pace-st', 'json')) || { b: {} }, fl = await rateFill(env, st, null, null, Math.min(8, parseInt(url.searchParams.get('n'), 10) || 4)); if (fl && fl.n && url.searchParams.get('save') === '1') await env.DEBRIEF_KV.put('rate-raw:' + fl.fk, JSON.stringify(fl.L)); return json(fl && { key: fl.fk, n: fl.n, left: fl.left, nb: fl.L.filter((x) => x.nb).length, done: fl.L.filter((x) => x.ph.every((q) => q[5] != null)).length, of: fl.L.length }); } catch (e) { return json({ error: String(e && e.message || e) }, 500); } } /* (test copies only (Nov 1): a few old kills' boss damage on demand; save=1 keeps them; pace-st is left alone) */
+    if ((url.pathname === '/api/rategrow' || url.pathname === '/api/rateids') && /-debrief./.test(url.hostname)) { try { const P = url.searchParams, key = P.get('key') || '', [e, d] = key.split(':').map(Number); if (!(e > 0) || ![3, 4, 5].includes(d)) return json({ error: 'key=e:d' }, 400); /* (test copies only (Nov 2): the 500-a-boss collector's two steps) */
+      if (url.pathname === '/api/rateids') return json(await rateIds(env, e, d, Math.min(40, Math.max(1, parseInt(P.get('p'), 10) || 1)), parseInt(P.get('pt'), 10) || 0));
+      return json(await rateGrow(env, key, (P.get('ids') || '').split(',').filter((x) => /^[A-Za-z0-9]{16}:\d{1,4}$/.test(x)), Math.min(8, parseInt(P.get('fill'), 10) || 0))); } catch (e) { return json({ error: String(e && e.message || e) }, 500); } }
     if (url.pathname === '/api/bossfill' && /-debrief./.test(url.hostname)) { try { const k = /^\d+:[345]$/.test(url.searchParams.get('key') || '') ? url.searchParams.get('key') : '3429:5', ids = (url.searchParams.get('ids') || '').split(',').filter(Boolean).slice(0, 8), L = ((await env.DEBRIEF_KV.get('rate-raw:' + k, 'json')) || []).filter((x) => x.ph && ids.includes(x.c + ':' + x.f)), out = [];
       for (const x of L) { try { const o = await bossOfKill(env, x.c, x.f), ok = o.boss && o.ph.length === x.ph.length && o.ph.every((p, i) => Math.abs(p.s - x.ph[i][3]) < 2 && Math.abs(p.e - x.ph[i][4]) < 2); out.push({ c: x.c, f: x.f, b: ok ? o.ph.map((p) => p.bdps) : null, boss: o.boss }); } catch (e) { out.push({ c: x.c, f: x.f, error: e.message }); if (/rate limit|429/i.test(e.message)) break; } }
       return json({ key: k, out }); } catch (e) { return json({ error: String(e && e.message || e) }, 500); } } /* (test copies only (Nov 1): the boss damage of a few saved kills, nothing saved, to try the page with) */
