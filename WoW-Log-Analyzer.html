@@ -62030,8 +62030,9 @@ function mpScan(it, R, text) {
         const ready = defs.filter((d) => { const u = last(+d[1]); return u == null || t - u >= d[2]; }).map((d) => d[0]), used = defs.map((d) => [d[0], last(+d[1])]).filter(([, u]) => u != null && t - u < 30).map(([n, u]) => [n, Math.round(t - u)]), hs = last('hs');
         deathPos.push({ who, t, x: lp[0], y: lp[1], ui: lp[2], hits: (hitsOf.get(g) || []).filter((h) => t - h[0] <= 10).slice(-5).map((h) => ({ ago: t - h[0], sp: h[1], from: h[2], amt: h[3], pct: h[4] ? h[3] / h[4] : 0 })), ready, used, hs: hs != null && t - hs < 120 ? Math.round(t - hs) : null }); } continue; } if (!NPC.test(g || '') || f[8] === '1') continue; { const u = U.get(g); if (u && u.died == null) u.died = t; } if (seen.has(g)) continue; seen.add(g); const v = T.n[+g.split('-')[5]]; if (v) add[pullAt(t)] += v; continue; }
     if (ev === 'SPELL_INTERRUPT') { if (!T) continue; const f = E.split(line, c + 1); if (/^(Player|Pet)-/.test(f[0] || '') && NPC.test(f[4] || '')) { const p = npcPos.get(f[4]); const cp = lastPos.get(f[0]); kickEv.push({ t, src: f[0], who: short(uq(f[1])), tg: uq(f[5]), g: f[4], cut: uq(f[12]), x: p && p[0], y: p && p[1], ui: p && p[2], cx: cp && cp[0], cy: cp && cp[1], cui: cp && cp[2] }); } continue; }
-    if ((ev === 'SPELL_CAST_START' || ev === 'SPELL_HEAL') && (line.startsWith('Creature-', c + 1) || line.startsWith('Vehicle-', c + 1))) { const f = E.split(line, c + 1), u = uOf(f[0], f[1]); /* (an enemy that casts, or heals another enemy: the card's Pack) */
-      if (ev === 'SPELL_CAST_START') (u.cs || (u.cs = new Set())).add(uq(f[9])); else if (NPC.test(f[4] || '') && f[4] !== f[0]) u.hl = true; continue; }
+    if ((ev === 'SPELL_CAST_START' || ev === 'SPELL_HEAL' || ev === 'SPELL_PERIODIC_HEAL') && (line.startsWith('Creature-', c + 1) || line.startsWith('Vehicle-', c + 1))) { const f = E.split(line, c + 1), u = uOf(f[0], f[1]); /* (an enemy that casts, or heals another enemy: the card's Pack) */
+      if (ev === 'SPELL_CAST_START') { (u.cs || (u.cs = new Set())).add(uq(f[9])); u.nc = (u.nc || 0) + 1; } else if (NPC.test(f[4] || '') && f[4] !== f[0]) u.hl = true; continue; }
+    if (ev === 'SWING_MISSED' && (line.startsWith('Creature-', c + 1) || line.startsWith('Vehicle-', c + 1))) { const f = E.split(line, c + 1); if (String(f[4]).startsWith('Player-')) { const u = uOf(f[0], f[1]); u.nsw = (u.nsw || 0) + 1; } continue; } /* (a swing that missed is still a melee swing) */
     if (ev === 'SPELL_SUMMON') { const f = E.split(line, c + 1); if (f[5]) summoned.add(f[5]); if (/^Player-/.test(f[0] || '') && f[4]) petOwn.set(f[4], short(uq(f[1]))); /* (a pet's or a totem's CC is its player's) */ if (NPC.test(f[4] || '')) uOf(f[4]).sum = true; continue; } /* (summoned: not counted in "what you pulled" (round 4)) */
     if (ev === 'CHALLENGE_MODE_END') { const f = E.split(line, c + 1); R.rateAfter = num(f[5]) || null; continue; } /* (the player's rating after the key, as WoW wrote it (Nov 2)) */
     if (ev === 'SPELL_AURA_APPLIED') { if (line.indexOf('BUFF', c) < 0) continue; const f = E.split(line, c + 1); if (f[11] === 'BUFF' && String(f[4]).startsWith('Player-') && MP_LUST.test(f[9])) lustT.push([t, f[9]]);
@@ -62054,7 +62055,7 @@ function mpScan(it, R, text) {
       if (String(ig).startsWith('Player-')) { const x = +f[adv + 14], y = +f[adv + 15], mh = num(f[adv + 3]); if (x || y) lastPos.set(ig, [x, y, +f[adv + 16] || 0, t]); if (mh) maxOf.set(ig, mh); }
       else if (ev === 'SPELL_CAST_SUCCESS' && ig === f[0] && NPC.test(ig || '') && ksp.has(mpLc(f[9]))) { const x = +f[adv + 14], y = +f[adv + 15]; if (x || y) castPos.push({ t, sp: mpLc(f[9]), x, y, ui: +f[adv + 16] || 0 }); }
       if (NPC.test(f[adv] || '')) { { const x = +f[adv + 14], y = +f[adv + 15]; if (x || y) npcPos.set(f[adv], [x, y, +f[adv + 16] || 0]); } const u = uOf(f[adv]); if (!u.at) { const x = +f[adv + 14], y = +f[adv + 15]; if ((x || y) && x === x) { u.at = [x, y, +f[adv + 16] || 0]; u.hp = +f[adv + 3] || 0; } } } }
-    if (dmg && NPC.test(f[0] || '') && String(f[4]).startsWith('Player-')) { taken[pullAt(t)] += num(f[adv + ADV]); if (ev === 'SWING_DAMAGE') uOf(f[0]).sw = true; }
+    if (dmg && NPC.test(f[0] || '') && String(f[4]).startsWith('Player-')) { taken[pullAt(t)] += num(f[adv + ADV]); const u = uOf(f[0], f[1]); if (ev === 'SWING_DAMAGE') { u.sw = true; u.nsw = (u.nsw || 0) + 1; } else if (ev !== 'SPELL_PERIODIC_DAMAGE') u.nsp = (u.nsp || 0) + 1; } /* (how it fights: swings or spells, for the Pack's Caster and Melee) */
     if (T && NPC.test(f[adv] || '')) { const u = +f[adv + 16]; if (ui.has(u)) { while (pi < N - 1 && t > P[pi].e) pi++; if (t >= P[pi].s && t <= P[pi].e) { const q = pts[pi]; q.x.push(+f[adv + 14]); q.y.push(+f[adv + 15]); q.u.push(u); } } }
   }
   // (a Lust or a cooldown pressed just before a pull counts for that pull: the pull it's in, else the next one starting within 15 s, else the one before)
@@ -62068,9 +62069,13 @@ function mpScan(it, R, text) {
   R.cdWho = [...cdOf.keys()]; R.taken = taken;
   // (what kind of enemy each one is, from this key's own log (map-extras.md item 17): a caster began casts, a healer healed another enemy, melee only
   // swung; its health for Big and Small; the casts it was kicked on or let off. By name, for the pull card's Pack)
-  { const ty = {}; for (const u of U.values()) { if (!u.n || u.hit == null || !(u.fl & 0x40) || (u.fl & 0x3000)) continue; const o = ty[u.n] || (ty[u.n] = { cs: 0, hl: false, sw: false, hp: 0, kick: [], id: +u.g.split('-')[5] || 0 });
-      if (u.cs) o.cs += u.cs.size; if (u.hl) o.hl = true; if (u.sw) o.sw = true; if (u.hp > o.hp) o.hp = u.hp; }
-    const addK = (nm, sp) => { const o = ty[nm]; if (o && sp && !o.kick.includes(sp)) o.kick.push(sp); }; for (const e of kickEv) addK(e.tg, e.cut); for (const p of P) for (const t of p.through || []) addK(t.mob, t.spell);
+  { const ty = {}; for (const u of U.values()) { if (!u.n || u.hit == null || !(u.fl & 0x40) || (u.fl & 0x3000)) continue; const o = ty[u.n] || (ty[u.n] = { cs: 0, hl: false, sw: false, hp: 0, kick: [], id: +u.g.split('-')[5] || 0, nc: 0, nk: 0, nsw: 0, nsp: 0, n: 0, mins: 0 });
+      if (u.cs) o.cs += u.cs.size; if (u.hl) o.hl = true; if (u.sw) o.sw = true; if (u.hp > o.hp) o.hp = u.hp; o.nc += u.nc || 0; o.nsw += u.nsw || 0; o.nsp += u.nsp || 0; o.n++; if (u.died != null && u.died > u.hit) o.mins += (u.died - u.hit) / 60; }
+    const addK = (nm, sp) => { const o = ty[nm]; if (o && sp && !o.kick.includes(sp)) o.kick.push(sp); }; for (const e of kickEv) { addK(e.tg, e.cut); if (ty[e.tg]) ty[e.tg].nk++; } for (const p of P) for (const t of p.through || []) addK(t.mob, t.spell);
+    /* (Caster (Flex: "just because theres a cast bar doesnt make them a caster"): it healed another enemy, or it began 10 or more casts a minute
+       through its fight (a kicked channel counts). Not by its share of melee swings: a caster that's kicked often swings between casts (Enthralled
+       Shaman, 83% swings and 17 casts a minute), while melee with a cast bar begin about 5 a minute (Devouring Brutalizer). The rest are Melee) */
+    for (const o of Object.values(ty)) { const hits = o.nsw + o.nsp; o.swing = hits ? o.nsw / hits : 0; o.cpm = o.mins ? (o.nc + o.nk) / o.mins : 0; o.caster = o.hl || o.cpm >= 10; }
     R.mobType = ty; }
   { const real = new Set(); for (const u of U.values()) if (u.n && u.hit != null && (u.fl & 0x40) && !(u.fl & 0x3000) && !u.sum) real.add(u.n); R.realNames = real.size ? real : null; } /* (the studio's pull-accuracy fix, Nov 2) */
   if (!T) { R.route = null; return; }
@@ -62297,12 +62302,12 @@ function mpMapHtml(R, F, tl) {
     // the biggest threat first (Big, Healer, Caster, the rest), with its type from the log; Big and Small (twice, or half, the pull's middle enemy's
     // health) stand in for "elite", which the log doesn't say. 5 rows, then the rest in a hover)
     // (the pack (map-extras.md item 17; Flex: "those are considered the mini bosses in dungeons or the harder mobs to deal with"): each kind of enemy with
-    // one role, Caster (it cast, healed another enemy, or was kicked on a channel) or Melee; Elite for the mini-boss tier, at least twice the health of
+    // one role, Caster (it healed another enemy, or cast 10 or more times a minute) or Melee; Elite for the mini-boss tier, at least twice the health of
     // the key's middle trash enemy (the same on every pull), or a rare; fodder, half that or less, on one last line. 5 rows, then the rest in a hover)
     const pack = (() => { const mobs = mpMobs(RR, p), ty = RR.mobType || {}; if (!mobs.length) return '';
       if (RR.mobMid == null) { const hs = []; RR.mobTrash = new Set(); for (const q2 of RR.pulls) if (!q2.boss) for (const [n2, c2] of mpMobs(RR, q2)) { RR.mobTrash.add(n2); const h = (ty[n2] || {}).hp || 0; if (h) for (let k = 0; k < c2; k++) hs.push(h); } hs.sort((a, b) => a - b); RR.mobMid = hs.length ? hs[hs.length >> 1] : 0; } /* (the middle trash enemy of the whole key, each one counted: one-off kings don't lift it) */
-      const mid = RR.mobMid, L = mobs.map(([n2, c]) => { const o = ty[n2] || {}, cast = o.cs > 0 || !!o.hl || (o.kick || []).length > 0, el = MP_RARE.has(o.id) || (mid && o.hp >= 2 * mid && RR.mobTrash.has(n2)), /* (trash only: never a boss or a boss fight's own enemies) */ fod = !el && mid && o.hp && o.hp <= mid / 2;
-        return { n2, c, el, fod, cast, kick: cast ? o.kick || [] : [] }; }).sort((a, b) => b.el - a.el || b.cast - a.cast || b.c - a.c);
+      const mid = RR.mobMid, L = mobs.map(([n2, c]) => { const o = ty[n2] || {}, cast = !!o.caster, el = MP_RARE.has(o.id) || (mid && o.hp >= 2 * mid && RR.mobTrash.has(n2)), /* (trash only: never a boss or a boss fight's own enemies) */ fod = !el && mid && o.hp && o.hp <= mid / 2;
+        return { n2, c, el, fod, cast, kick: o.kick || [] }; }).sort((a, b) => b.el - a.el || b.cast - a.cast || b.c - a.c);
       const tag = (k) => '<i class="mpt-pkt mpt-pk-' + k + '">' + MP_PKI[k] + '</i>', role = (x) => tag(x.cast ? 'cast' : 'melee');
       const row = (x) => '<div class="mpt-pkr"><b>' + x.c + '×</b><span class="mpt-pkn">' + esc(x.n2) + '</span>' + (x.el ? tag('elite') : '') + role(x) + (x.kick.length ? '<small>kick: ' + x.kick.map((k) => '<b>' + esc(k) + '</b>').join(', ') + '</small>' : '') + '</div>';
       const main = L.filter((x) => !x.fod), fod = L.filter((x) => x.fod), more = main.slice(5);
@@ -62936,7 +62941,7 @@ body.mpz-wh .spc-tt{display:none !important}
 .mpt-pk{margin:6px 0 2px} .mpt-pkr{display:flex;align-items:center;flex-wrap:wrap;gap:2px 7px;padding:2px 0;font:500 12.5px var(--body)} .mpt-pkr > b{min-width:24px;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums} .mpt-pkn{font:600 13px var(--body);color:var(--text)}
 .mpt-pkr small{color:var(--muted);font-size:12px} .mpt-pkr small b{color:#c39bff;font-weight:600}
 .mpt-pkt{display:inline-flex;align-items:center;gap:3px;height:17px;padding:0 6px;border-radius:9px;font:600 11px/1 var(--body);font-style:normal;color:#aeb6bf;background:rgba(174,182,191,.12)} .mpt-pkt svg{flex:none;width:11px;height:11px}
-.mpt-pk-cast{color:#c39bff;background:rgba(195,155,255,.14)} .mpt-pk-elite{color:#f2c46b;background:rgba(242,196,107,.15)} .mpt .mpt-pkf{margin:3px 0 0;color:var(--faint);font-size:12.5px} .mpt-pkf .mpt-pkt{margin-left:2px} .mpt .mpt-pkm{margin:2px 0 0;color:var(--faint);font-size:12.5px;cursor:help}
+.mpt-pk-cast{color:#c39bff;background:rgba(195,155,255,.14)} .mpt-pk-melee{color:#c69b6d;background:rgba(198,155,109,.14)} /* (Warrior tan (Flex)) */ .mpt-pk-elite{color:#f2c46b;background:rgba(242,196,107,.15)} .mpt .mpt-pkf{margin:3px 0 0;color:var(--faint);font-size:12.5px} .mpt-pkf .mpt-pkt{margin-left:2px} .mpt .mpt-pkm{margin:2px 0 0;color:var(--faint);font-size:12.5px;cursor:help}
 .mpt-gtab .gbx-hd > span[data-tt]{cursor:help} .mpt .mpt-why1{margin:12px 0 4px}
 .mpt .mpt-gtab .gbx-r.mpt-gme{box-shadow:inset 3px 0 0 var(--gold);background:rgba(242,196,107,.07)}
 `;
