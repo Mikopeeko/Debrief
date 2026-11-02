@@ -144,6 +144,31 @@ function mpStretches(R, C) { const P = R.pulls, out = []; let from = C.T0, fromN
 function mpWipe(p, n) { const dd = p.deaths.slice().sort((a, b) => a.t - b.t);
   for (let i = 0; i < dd.length; i++) { const w = dd.filter((d, j) => j >= i && d.t <= dd[i].t + 45); if (new Set(w.map((d) => d.who)).size >= n) return { first: dd[i], list: w }; }
   return null; }
+// (group DPS (Nov 2, the Design studio's spec, Flex: "Yes, build it"): the whole group's damage a second WHILE FIGHTING. pull.dmg is each
+// player's damage a second over pull.dur (companion/mplus.js), so a pull's is their sum, and a stretch weights each pull by its length. Never the
+// whole run's: a slower run always shows less. Against the fast run, extra fighting splits in two that add up exactly: lower damage (the time
+// you'd save at its damage a second) and more to kill (the rest: more enemy health on your route; negative when you had less))
+const mpGd = (p) => Object.values(p.dmg || {}).reduce((a, v) => a + v, 0);
+const mpGrp = (ps) => { let D = 0, T = 0; for (const p of ps) { D += mpGd(p) * p.dur; T += p.dur; } return { D, T, r: T ? D / T : 0 }; };
+const mpSplit = (y, f) => (y.T && f.T && f.r ? { low: y.T - y.D / f.r, more: y.D / f.r - f.T } : null);
+const mpGF = (v) => (v >= 1e6 ? (v / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'm' : Math.round(v / 1e3) + 'k');
+const mpInSt = (RR, s) => RR.pulls.filter((p) => p.n >= s.first && p.n <= s.last);
+// (a trash or boss row in "Where your time went": its two causes, the bigger first, then both groups' DPS there)
+function mpGdTags(R, F, yp, fp, trash, ypAll, fpAll) {
+  const y = mpGrp(yp), f = mpGrp(fp), sp = mpSplit(y, f); if (!sp) return '';
+  const pc = (a, b) => Math.round(100 * Math.abs(a / b - 1));
+  /* (the count line: the whole stretch, boss pull too, the same numbers as the route's own line) */
+  const rt = R.route && R.route.ok ? R.route : null, frt = F.route && F.route.ok && rt && F.route.full === rt.full ? F.route : null;
+  const share = (RR, rr, ps) => Math.round(100 * ps.reduce((a, p) => a + ((rr.pulls[RR.pulls.indexOf(p)] || {}).add || 0), 0) / rr.full);
+  const cnt = trash && frt && ypAll ? ' In this stretch your route took ' + share(R, rt, ypAll) + '% of the enemy forces; the fast run\'s took ' + share(F, frt, fpAll) + '%.' : '';
+  const more = sp.more >= 1 ? ['More to kill ' + mpMM(sp.more), sp.more, '<b>More to kill</b><br>Your group did ' + pc(y.D, f.D) + '% more damage in all here.' + cnt, '']
+    : sp.more <= -1 ? ['Less to kill ' + mpMM(sp.more), -sp.more, '<b>Less to kill</b><br>Your group did ' + pc(y.D, f.D) + '% less damage in all here.' + cnt, 'mpt-m'] : null;
+  const many = trash && yp.length > fp.length ? ' You pulled ' + yp.length + ' times; the fast run ' + (fp.length === 1 ? 'pulled it all at once' : 'pulled ' + fp.length + ' times') + ', so every AoE hit more enemies.' : '';
+  const low = sp.low >= 1 ? ['Lower damage ' + mpMM(sp.low), sp.low, '<b>Lower damage</b><br>Your group did ' + pc(y.r, f.r) + '% less damage a second here.' + many, '']
+    : sp.low <= -1 ? ['Higher damage ' + mpMM(sp.low), -sp.low, '<b>Higher damage</b><br>Your group did ' + pc(y.r, f.r) + '% more damage a second here.', 'mpt-m'] : null;
+  const parts = [more, low].filter(Boolean).sort((a, b) => b[1] - a[1]);
+  return '<p class="mpt-gt">' + parts.map(([t, , tip, c]) => '<span class="mpt-gtc' + (c ? ' ' + c : '') + '" tabindex="0"' + mpT1(tip) + '>' + t + '</span>').concat('Group DPS ' + mpGF(y.r) + ' · fast run ' + mpGF(f.r)).join(' · ') + '</p>';
+}
 // (what gets you the next level: each fix's seconds on the timer, biggest first. A wipe: every death in it. Deaths to the same spell. A
 // must-kick cast that went off with a kick ready and killed someone. Casts that went off without killing anyone save casts, not seconds)
 function mpFixes(R, C, all) {
@@ -211,35 +236,46 @@ function mpHtml(it, R, fx) {
   const fT0 = FC ? FC.ck.time : null, far = tgt != null && F && FC && need > ck.deathCost && T - fT0 > 60;
   const went = !far ? null : (() => { const ST = mpStretches(R, C), FS = mpStretches(F, FC), fBy = new Map(FS.map((s) => [s.boss, s])), L = [];
     for (const s of ST) { const f = fBy.get(s.boss); if (!f) continue; const where = s.name.startsWith('Start → ') ? 'Trash before ' + esc(s.boss) : 'Trash between ' + esc(s.name.split(' → ')[0]) + ' and ' + esc(s.boss);
-      if (s.trash - f.trash >= 15) L.push({ s: s.trash - f.trash, t: where, d: 'You took ' + plural(s.nt, 'pull') + ' there, the fast run took ' + f.nt + '. Your trash took ' + mpMM(s.trash) + ', theirs took ' + mpMM(f.trash) + '.' });
-      if (s.bossT - f.bossT >= 15) L.push({ s: s.bossT - f.bossT, t: esc(s.boss), d: 'Your fight took ' + mpMM(s.bossT) + (s.tries > 1 ? ' over ' + s.tries + ' pulls' : '') + ', theirs took ' + mpMM(f.bossT) + '.' }); }
+      const yp = mpInSt(R, s), fp = mpInSt(F, f); /* (each row's group DPS tags: more to kill and lower damage) */
+      if (s.trash - f.trash >= 15) L.push({ s: s.trash - f.trash, t: where, d: 'You took ' + plural(s.nt, 'pull') + ' there, the fast run took ' + f.nt + '. Your trash took ' + mpMM(s.trash) + ', theirs took ' + mpMM(f.trash) + '.', g: mpGdTags(R, F, yp.filter((p) => !p.boss), fp.filter((p) => !p.boss), true, yp, fp) });
+      if (s.bossT - f.bossT >= 15) L.push({ s: s.bossT - f.bossT, t: esc(s.boss), d: 'Your fight took ' + mpMM(s.bossT) + (s.tries > 1 ? ' over ' + s.tries + ' pulls' : '') + ', theirs took ' + mpMM(f.bossT) + '.', g: mpGdTags(R, F, yp.filter((p) => p.boss), fp.filter((p) => p.boss), false) }); }
     if (ck.between - FC.ck.between >= 15) L.push({ s: ck.between - FC.ck.between, t: 'Standing between pulls', d: 'You stood still for ' + mpMM(ck.between) + ' between pulls, the fast run for ' + mpMM(FC.ck.between) + '.' });
     for (const f of mpFixes(R, C, true)) L.push(f);
     return L.filter((x) => x.s >= 15 || !x.s).sort((a, b) => b.s - a.s).slice(0, 6); })();
   // (a thin bar under the lead: the gap split into longer fighting, standing between pulls and deaths, each with its hover, a key under it and
   // no words inside (they'd be cut off on a phone). The three add up to the gap: the fighting is what's left after the other two)
   const sbar = (() => { if (!went) return ''; const gap = T - fT0, dD = ck.deathCost - FC.ck.deathCost, dS = ck.between - FC.ck.between;
-    const all = [['f', 'Longer fighting', gap - dD - dS, 'You took ' + plural(R.pulls.length, 'pull') + ', the fast run took ' + F.pulls.length + '.'],
-      ['s', 'Standing between pulls', dS, 'You stood still for ' + mpMM(ck.between) + ' between pulls, the fast run for ' + mpMM(FC.ck.between) + '.'],
-      ['d', 'Deaths', dD, 'Your ' + plural(ck.deaths, 'death') + ' put ' + mpMM(ck.deathCost) + ' on the timer.' + (FC.ck.deathCost ? ' The fast run\'s put ' + mpMM(FC.ck.deathCost) + '.' : '')]];
+    /* (with group DPS, the longer fighting is two pieces: more to kill and lower damage, from the pulls themselves) */
+    const yG = mpGrp(R.pulls), fG = mpGrp(F.pulls), spl = mpSplit(yG, fG), dp = spl ? Math.round(100 * (yG.r / fG.r - 1)) : 0, pc = (a, b) => Math.round(100 * Math.abs(a / b - 1));
+    const fight = spl ? [['fm', 'More to kill', spl.more, 'Your group did ' + pc(yG.D, fG.D) + '% ' + (yG.D >= fG.D ? 'more' : 'less') + ' damage in all while fighting. You took ' + plural(R.pulls.length, 'pull') + ', the fast run took ' + F.pulls.length + '.', 'Less to kill'],
+      ['fl', 'Lower damage', spl.low, 'Your group did ' + mpGF(yG.r) + ' damage a second while fighting, the fast run ' + mpGF(fG.r) + '.', 'Higher damage']]
+      : [['f', 'Longer fighting', gap - dD - dS, 'You took ' + plural(R.pulls.length, 'pull') + ', the fast run took ' + F.pulls.length + '.', 'Shorter fighting']];
+    const all = fight.concat([['s', 'Standing between pulls', dS, 'You stood still for ' + mpMM(ck.between) + ' between pulls, the fast run for ' + mpMM(FC.ck.between) + '.', 'Standing between pulls'],
+      ['d', 'Deaths', dD, 'Your ' + plural(ck.deaths, 'death') + ' put ' + mpMM(ck.deathCost) + ' on the timer.' + (FC.ck.deathCost ? ' The fast run\'s put ' + mpMM(FC.ck.deathCost) + '.' : ''), 'Deaths']]);
     const parts = all.filter((x) => x[2] >= 1), less = all.filter((x) => x[2] <= -1); /* (one you did better than the fast run: in the key, green, so the numbers add up to the gap) */
     const sum = parts.reduce((a, x) => a + x[2], 0); if (!sum) return '';
+    const line = !spl ? '' : (Math.abs(dp) <= 7 ? 'Your group\'s damage was close to the fast run\'s: ' + (dp ? Math.abs(dp) + '% ' + (dp < 0 ? 'less' : 'more') + ' a second' : 'the same a second') + ' while fighting.' : 'Your group did ' + Math.abs(dp) + '% ' + (dp < 0 ? 'less' : 'more') + ' damage a second than the fast run while fighting.') + ' ' +
+      (spl.more <= 0 ? 'You had less to kill, so your extra fighting was lower damage.' : spl.low <= 0 ? 'Your damage was higher, so your extra fighting was more to kill.' : spl.more >= spl.low ? 'Most of your extra fighting was more to kill.' : 'Most of your extra fighting was lower damage.');
     return '<div class="mpt-sbar">' + parts.map(([k, l, s, d]) => '<i class="mpt-sb-' + k + '" tabindex="0" style="width:' + (100 * s / sum).toFixed(1) + '%"' + mpT1('<b>' + l + ': ' + mpMM(s) + '</b><br>' + d) + '></i>').join('') + '</div>' +
       '<div class="mpt-sk">' + parts.map(([k, l, s]) => '<span><i class="mpt-sb-' + k + '"></i>' + l + ' <b>' + mpMM(s) + '</b></span>').join('') +
-      less.map(([k, l, s, d]) => '<span tabindex="0"' + mpT1('<b>' + l + ': ' + mpMM(s) + '</b><br>' + d) + '>' + l + ' <b class="mpt-g">' + mpMM(s) + '</b></span>').join('') + '</div>'; })();
+      less.map(([k, , s, d, nl]) => '<span tabindex="0"' + mpT1('<b>' + nl + ': ' + mpMM(s) + '</b><br>' + d) + '>' + nl + ' <b class="mpt-g">' + mpMM(s) + '</b></span>').join('') + '</div>' +
+      (line ? '<p class="mpt-gl">' + line + '</p>' : ''); })();
   const fixes = went ? '<section class="mpt-fx"><div class="mpt-fxh"><h2>Where your ' + mpMM(T - fT0) + ' went</h2>' + mpInfo('The ' + mpMM(T - fT0) + ' you were behind the fast run, split by cause. Hover a piece of the bar for more.') +
     '<span>A typical fast run took <b>' + mpMM(fT0) + '</b>. You needed to be <b>' + mpMM(need) + '</b> faster ' + (lv === 0 ? 'to time it' : 'for +' + (lv + 1)) + (ck.deathCost ? ', and your deaths only cost <b>' + mpMM(ck.deathCost) + '</b>.' : ', and you had no deaths.') + '</span></div>' + sbar +
-    went.map((f, i) => '<div class="mpt-fxr"><span class="mpt-fxn">' + (i + 1) + '</span><div><b class="mpt-fxt">' + f.t + '</b><p>' + f.d + '</p></div><span class="mpt-fxs">' + (f.s ? '<b class="mpt-bad">' + mpMM(f.s) + '</b><small>' + (f.plus || 'on the timer') + '</small>' : '<b class="mpt-m">' + f.ns + '</b>') + '</span></div>').join('') + '</section>' :
+    went.map((f, i) => '<div class="mpt-fxr"><span class="mpt-fxn">' + (i + 1) + '</span><div><b class="mpt-fxt">' + f.t + '</b><p>' + f.d + '</p>' + (f.g || '') + '</div><span class="mpt-fxs">' + (f.s ? '<b class="mpt-bad">' + mpMM(f.s) + '</b><small>' + (f.plus || 'on the timer') + '</small>' : '<b class="mpt-m">' + f.ns + '</b>') + '</span></div>').join('') + '</section>' :
     '<section class="mpt-fx"><div class="mpt-fxh"><h2>' + head + '</h2><span>' + (tgt != null ? 'You needed <b>' + plural(need, 'second') + '</b>.' + (verdict ? ' ' + verdict : '') : 'You got +3. These would still save time.') + '</span></div>' +
     (FIX.length ? FIX.map((f, i) => '<div class="mpt-fxr"><span class="mpt-fxn">' + (i + 1) + '</span><div><b class="mpt-fxt">' + f.t + '</b><p>' + f.d + '</p></div><span class="mpt-fxs">' + (f.s ? '<b class="mpt-g">−' + mpMM(f.s) + '</b><small>' + (f.plus || 'on the timer') + '</small>' : '<b class="mpt-m">' + f.ns + '</b>') + '</span></div>').join('')
       : '<p class="mpt-none">No deaths, and no must-kick cast went off with a kick ready. The time is in the pulls and the walking between them' + (F ? ': see where you fell behind below.' : '.') + '</p>') + '</section>';
   // slim tiles
   const thN = R.pulls.reduce((a, p) => a + p.through.length, 0), fT = FC ? FC.ck.time : null;
-  const tile = (k, v, sub, cls) => '<div class="mpt-tile"><p class="mpt-k">' + k + '</p><b class="' + (cls || '') + '">' + v + '</b><span>' + sub + '</span></div>';
-  /* (four tiles (the "easier on the eyes" round): deaths and standing are in the top box and the stretch rows, so Lust takes their place) */
-  const LU = R.lust || [];
+  const tile = (k, v, sub, cls, tip) => '<div class="mpt-tile"' + (tip ? ' tabindex="0"' + mpT1(tip) : '') + '><p class="mpt-k">' + k + '</p><b class="' + (cls || '') + '">' + v + '</b><span>' + sub + '</span></div>';
+  /* (four tiles (the "easier on the eyes" round): deaths and standing are in the top box and the stretch rows, so Lust takes their place;
+     group DPS joined them (Nov 2)) */
+  const LU = R.lust || [], yG = mpGrp(R.pulls), fGr = F ? mpGrp(F.pulls) : null, gdp = fGr && fGr.r ? Math.round(100 * (yG.r / fGr.r - 1)) : null;
   const tiles = '<div class="mpt-tiles">' + tile('Time', mpMM(T), ck.up === 0 ? '<span class="mpt-bad">' + sp(T - P) + ' over</span>' : '<span class="' + (lim - T < 90 ? 'mpt-a' : 'mpt-g') + '">' + sp(lim - T) + ' to spare</span>') +
     tile('Behind a typical fast run', F ? (T - fT >= 0 ? mpMM(T - fT) : mpMM(fT - T) + ' ahead') : waiting ? '…' : '—', F ? 'it took ' + mpMM(fT) : waiting ? 'finding a fast run' : 'no fast run found', F && T - fT > 0 ? 'mpt-bad' : '') +
+    (yG.r ? tile('Group DPS', mpGF(yG.r), gdp == null ? 'while fighting' : gdp ? Math.abs(gdp) + '% ' + (gdp < 0 ? 'less' : 'more') + ' than the fast run' : 'the same as the fast run', '',
+      '<b>Group DPS</b><br>Your whole group\'s damage a second while fighting. Walking and standing don\'t count.' + (fGr ? ' The fast run: ' + mpGF(fGr.r) + '.' : '')) : '') +
     tile('Casts that went off', String(thN), 'with a kick ready') +
     tile('Lust', LU.length ? plural(LU.length, 'time') : 'None', LU.length ? esc([...new Set(LU.map((l) => mpPullName(R, l.pull)))].join(', ')) : 'no Lust this key', LU.length ? 'mpt-lu' : 'mpt-m') + '</div>';
   return ban + mpJumpBar(R, true) + fixes + tiles + mpBehind(R, C, F, FC, fx, waiting) + mpRouteHtml(R, F, waiting) + mpPulls(R, C, F, FC) + mpCasts(R) + mpPlayers(R, fx, waiting) + mpKnowHtml(R);
@@ -341,6 +377,7 @@ function mpPulls(R, C, F, FC) {
   const ST = C ? mpStretches(R, C) : [], FS = F && FC ? mpStretches(F, FC) : [], sBy = new Map(ST.map((s) => [s.boss, s])), fsBy = new Map(FS.map((s) => [s.boss, s]));
   const FG = F ? new Map(mpGroups(F.pulls).map((g) => [g.to, g])) : new Map(), tv = (t) => (C ? C.tv(t) : t);
   MP.pinfo = {};
+  const GB = (() => { const best = R.pulls.filter((q) => !q.boss).sort((a, b) => mpGd(b) - mpGd(a))[0]; return { max: Math.max(1, ...R.pulls.map(mpGd)), best, v: best ? mpGd(best) : 0 }; })(); /* (the bars' scale: the key's best pull) */
   let opened = false;
   const row = (p) => { const i = R.pulls.indexOf(p);
     // (quiet tags (the "easier on the eyes" round): sentence case, a small dot, no box; red for deaths, yellow for Lust, grey for the rest.
@@ -352,7 +389,7 @@ function mpPulls(R, C, F, FC) {
     const cdList = cdu.length ? cdu.map(([nm, l]) => '<b>' + esc(nm) + '</b>: ' + esc([...new Set(l.map((x) => x.spell))].join(', '))).join('<br>') : 'Nobody pressed a big cooldown.';
     if (wipe) tags.push(tg('Wipe', 'mpt-tb')); else if (dd.length) tags.push(tg(plural(dd.length, 'death'), 'mpt-tb'));
     if (p.boss && p.kill === false && !wipe) tags.push(tg('Not killed', 'mpt-tb'));
-    if (lu.length) tags.push(tg('Lust', 'mpt-tl'));
+    if (lu.length) tags.push(tg('Lust', 'mpt-tlu'));
     if (p.through.length) tags.push(tg(plural(p.through.length, 'cast') + ' went off'));
     if (cdn && cdu.length < cdn) tags.push(tg(cdu.length + ' of ' + cdn + ' big cooldowns', 'mpt-tcd', '<b>Big cooldowns this pull</b><br>' + cdList)); /* (only when someone didn't press theirs (the hard-key pass)) */
     for (const b of (p.ebuffs || []).filter((x) => x.on > 0).slice(0, 2)) tags.push(tg(esc(b.spell) + ' ×' + b.on, '', '<b>' + esc(b.spell) + '</b> went on ' + plural(b.on, 'enemy').replace('enemys', 'enemies') + '.'));
@@ -374,17 +411,22 @@ function mpPulls(R, C, F, FC) {
     const add = rt ? rt.pulls[i].add : 0, forces = rt && add ? '+' + fmt(100 * add / rt.full) + ' <small>' + fmt(100 * tot[i] / rt.full) + '</small>' : '';
     MP.pinfo[p.n] = { t: p.boss ? esc(p.boss) : 'Pull ' + p.n, at: mpMM(tv(p.s)) + ' to ' + mpMM(tv(p.e)), len: mpMM(p.dur), add: rt && add ? '+' + fmt(100 * add / rt.full) : '', tot: rt ? fmt(100 * tot[i] / rt.full) : '',
       mobs: p.boss ? (p.kill === false ? 'Boss · not killed' : 'Boss · killed') : mpWhat(R, p, 4), tags: tags.filter((x) => !/mpt-tcd/.test(x)).map((x) => x.replace(/ data-tt="[^"]*"/, '')).join(''), dd: dd.slice(0, 3).map((d) => esc(d.who) + ' died to ' + esc(d.to)) };
-    const head = '<span class="mpt-pn">' + (p.boss ? esc(p.boss) : 'Pull ' + p.n) + '</span><span class="mpt-pm">' + what + '</span><span class="mpt-pt">' + mpMM(p.dur) + '</span><span class="mpt-pf">' + forces + '</span><span class="mpt-pc">' + (shown.join('') || '<span class="mpt-m">clean</span>') + '</span>';
+    /* (group DPS, pull by pull (Flex: "group dps pull by pull would be helpful as well"): the value and a bar scaled to the key's best pull,
+       trash blue and bosses gold. No red or green: the size of the pull drives it) */
+    const gd = mpGd(p), nE = (p.mobs || []).filter((m) => !(R.summoned || new Set()).has(m[0])).reduce((a, m) => a + m[1], 0);
+    const gdc = gd ? '<span class="mpt-pgd' + (p.boss ? ' mpt-bo' : '') + '" tabindex="0"' + mpT1('<b>Group DPS: ' + mpGF(gd) + '</b><br>Your whole group\'s damage a second in this ' + (p.boss ? 'boss fight' : 'pull') + (nE > 1 ? ', with ' + nE + ' enemies' : '') + '.' + (GB.best ? ' Your best trash pull: ' + mpGF(GB.v) + ' (pull ' + GB.best.n + ').' : '')) + '><b>' + mpGF(gd) + '</b><i><u style="width:' + Math.min(100, 100 * gd / GB.max).toFixed(0) + '%"></u></i></span>' : '<span class="mpt-pgd"></span>';
+    const head = '<span class="mpt-pn">' + (p.boss ? esc(p.boss) : 'Pull ' + p.n) + '</span><span class="mpt-pm">' + what + '</span><span class="mpt-pt">' + mpMM(p.dur) + '</span><span class="mpt-pf">' + forces + '</span>' + gdc + '<span class="mpt-pc">' + (shown.join('') || '<span class="mpt-m">clean</span>') + '</span>';
     return '<details id="mpt-pull-' + p.n + '" data-n="' + p.n + '" class="mpt-pr' + (p.boss ? ' mpt-boss' : '') + '"' + (open ? ' open' : '') + (body ? '' : ' data-empty') + '><summary>' + head + '</summary>' + (body ? '<div class="mpt-pd">' + body + '</div>' : '') + '</details>';
   };
   const G = mpGroups(R.pulls), tdN = R.pulls.reduce((a, p) => a + p.deaths.length, 0);
   const groups = G.map((g) => { const s = sBy.get(g.to), f = fsBy.get(g.to), fg = FG.get(g.to);
     const head = '<div class="mpt-sgh"><b>' + esc((g.from || 'Start') + ' → ' + (g.to || 'the end')) + '</b><span>' + [s ? mpMM(s.t) : '', f ? 'fast run ' + mpMM(f.t) : '', s && f ? '<b class="' + (s.t - f.t > 60 ? 'mpt-bad' : '') + '">' + (s.t >= f.t ? mpMM(s.t - f.t) + ' slower' : mpMM(f.t - s.t) + ' faster') + '</b>' : ''].filter(Boolean).join(' · ') + '</span></div>';
-    const fast = fg ? '<div class="mpt-fp"><p class="mpt-k">Fast run here</p>' + fg.ps.map((q) => { const k = F.pulls.indexOf(q), a = frt ? frt.pulls[k].add : 0; return '<div class="mpt-fpr' + (q.boss ? ' mpt-bo' : '') + '"><span>' + (q.boss ? esc(q.boss) + (a ? ', with trash' : '') : mpWhat(F, q, 2)) + '</span><b>' + (a ? '+' + fmt(100 * a / frt.full) : '') + '</b></div>'; }).join('') + '</div>' : '';
+    const fast = fg ? '<div class="mpt-fp"><p class="mpt-k">Fast run here</p>' + fg.ps.map((q) => { const k = F.pulls.indexOf(q), a = frt ? frt.pulls[k].add : 0; const g2 = mpGd(q); return '<div class="mpt-fpr' + (q.boss ? ' mpt-bo' : '') + '"><span>' + (q.boss ? esc(q.boss) + (a ? ', with trash' : '') : mpWhat(F, q, 2)) + '</span>' +
+      (g2 ? '<em class="mpt-fgd' + (q.boss ? ' mpt-bo' : '') + '" tabindex="0"' + mpT1('<b>Fast run\'s group DPS: ' + mpGF(g2) + '</b><br>Its whole group\'s damage a second in this ' + (q.boss ? 'boss fight' : 'pull') + '.') + '>' + mpGF(g2) + '<i><u style="width:' + Math.min(100, 100 * g2 / GB.max).toFixed(0) + '%"></u></i></em>' : '') + '<b>' + (a ? '+' + fmt(100 * a / frt.full) : '') + '</b></div>'; }).join('') + '</div>' : '';
     return '<div class="mpt-sg">' + head + '<div class="mpt-sgb' + (fast ? '' : ' mpt-sgb1') + '"><div>' + g.ps.map(row).join('') + '</div>' + fast + '</div></div>'; }).join('');
   const wipes = R.pulls.filter((p) => mpWipe(p, n)).map((p) => (p.boss ? esc(p.boss) : 'pull ' + p.n));
   return mpSec('Pulls', 'You took <b>' + plural(R.pulls.length, 'pull') + '</b>' + (wipes.length ? ' and wiped on <b class="mpt-bad">' + wipes.join(' and ') + '</b>.' : tdN ? ', with <b class="mpt-bad">' + plural(tdN, 'death') + '</b>.' : ' with no deaths.'),
-    '<div class="mpt-plh' + (F ? '' : ' mpt-plh1') + '"><span>Pull</span><span>What you pulled</span><span>Time</span><span>' + (rt ? 'Forces' : '') + '</span><span>What happened</span></div>' + groups +
+    '<div class="mpt-plh' + (F ? '' : ' mpt-plh1') + '"><span>Pull</span><span>What you pulled</span><span>Time</span><span>' + (rt ? 'Forces' : '') + '</span><span>Group DPS</span><span>What happened</span></div>' + groups +
     '<p class="mpt-sm">Click a pull for who died, what went off with a kick ready, and when Lust went out. Summoned enemies aren\'t counted.</p>', 'mptPulls', { fold: true });
 }
 // (casts and kicks: what went off with a kick ready, by spell and pull, and who stopped casts)
@@ -417,7 +459,17 @@ function mpPlayers(R, fx, waiting) {
   const never = (R.cdWho || []).filter((nm) => !((R.cds || {})[nm] || []).length), V = ppl.map((p) => ({ p, v: vs(p) })).filter((x) => x.v), low = V.slice().sort((a, b) => a.v.pct - b.v.pct)[0];
   const line = [(R.cdWho || []).length ? (never.length ? never.map((nm) => mpWho(R, nm)).join(', ').replace(/, ([^,]*)$/, ' and $1') + ' never pressed a big cooldown.' : 'Everyone pressed their big cooldowns.') : '',
     low ? (low.v.pct < 0 ? mpWho(R, low.p.name) + ' was furthest behind their spec (<b class="mpt-bad">' + -low.v.pct + '%</b>).' : 'Everyone was ahead of the middle player of their spec.') : ''].filter(Boolean).join(' ') || 'DPS and HPS over the whole key.';
-  return mpSec('Players', line, rows + (runs.length ? '<p class="mpt-sm">Each compared with the middle player of the same spec in the 20 fastest runs.</p>' : ''), 'mptPlayers', { fold: true });
+  // (your group, overall (Flex: "and overall"), on top in a player row's look: its DPS while fighting, against the typical fast run, then
+  // trash and bosses apart; your own numbers only until the fast run is in)
+  const F = fx && fx.R, yG = mpGrp(R.pulls), fG = F ? mpGrp(F.pulls) : null, half = (RR, b) => mpGrp(RR.pulls.filter((q) => !!q.boss === b));
+  let grp = '';
+  if (yG.r) { const dp = fG && fG.r ? Math.round(100 * (yG.r / fG.r - 1)) : null, fC = F && F.run.clock ? mpClock(F) : null;
+    const vsg = dp == null ? '<span class="mpt-vs mpt-m">' + (waiting ? '…' : '—') + '</span>' : '<span class="mpt-vs ' + (dp < 0 ? 'mpt-a' : 'mpt-g') + '" tabindex="0"' + mpT1('Against the typical fast run' + (fC ? ' (' + mpMM(fC.ck.time) + ')' : '') + ': its group did <b>' + mpGF(fG.r) + '</b> DPS while fighting.') + '>' + (dp < 0 ? -dp + '% behind' : dp + '% ahead') + '</span>';
+    const tb = (b) => { const y = half(R, b), f = F ? half(F, b) : null; return y.r ? (b ? 'Bosses ' : 'Trash ') + mpGF(y.r) + (f && f.r ? ' (fast run ' + mpGF(f.r) + ')' : '') : ''; };
+    grp = '<div class="mpt-pl mpt-plg"><span class="mpt-si mpt-gi" aria-hidden="true"><svg viewBox="0 0 16 16"><circle cx="8" cy="5" r="2.6"/><circle cx="3.6" cy="7" r="2"/><circle cx="12.4" cy="7" r="2"/><path d="M3.5 14c0-2.7 2-4.4 4.5-4.4s4.5 1.7 4.5 4.4Z"/></svg></span>' +
+      '<span class="mpt-pw"><b class="mpt-nm">Your group</b><small>while fighting</small></span><span class="mpt-pv"><b>' + mpGF(yG.r) + '</b><small>DPS</small></span><span class="mpt-bar mpt-barg"><i style="width:100%"></i></span>' + vsg +
+      '<span class="mpt-m">' + [tb(false), tb(true)].filter(Boolean).join(' · ') + '</span></div>'; }
+  return mpSec('Players', line, grp + rows + (runs.length ? '<p class="mpt-sm">Each compared with the middle player of the same spec in the 20 fastest runs.</p>' : ''), 'mptPlayers', { fold: true });
 }
 
 // ---------- what Season 2 Mythic+ knows (Nov 2, Flex: "use your new knowledge to make this page even better", creative freedom) ----------
@@ -763,6 +815,17 @@ const MP_CSS = `
 .mpt-sbar{display:flex;height:10px;border-radius:5px;overflow:hidden;margin:10px 0 6px}
 .mpt-sbar i{display:block;min-width:4px;cursor:help;box-shadow:inset -2px 0 0 var(--bg)} .mpt-sbar i:last-child{box-shadow:none} .mpt-sbar i:hover,.mpt-sbar i:focus{filter:brightness(1.2);outline:none}
 .mpt-sb-f{background:#7d9be8} .mpt-sb-s{background:#e8b45a} .mpt-sb-d{background:#e57068}
+.mpt-sb-fm{background:#7d9be8} .mpt-sb-fl{background:rgb(178,200,250)} /* (group DPS: more to kill, lower damage) */
+.mpt-gl{margin:2px 0 6px;font:500 14px var(--body);color:var(--mpt-soft)}
+.mpt-gt{margin:4px 0 0!important;font:500 13px var(--body)!important;color:var(--muted)!important}
+.mpt-gtc{color:var(--mpt-soft);text-decoration:underline dotted var(--faint);text-underline-offset:3px;cursor:help} .mpt-gtc.mpt-m{color:var(--muted)}
+.mpt-pgd{display:grid;gap:3px;align-content:start;cursor:help} .mpt-pgd b{font:700 14px var(--head);font-variant-numeric:tabular-nums}
+.mpt-pgd i,.mpt-fgd i{display:block;width:64px;max-width:100%;height:4px;border-radius:2px;background:var(--mpt-lane);overflow:hidden}
+.mpt-pgd u,.mpt-fgd u{display:block;height:100%;background:var(--mpt-you);border-radius:2px;text-decoration:none} .mpt-pgd.mpt-bo u,.mpt-fgd.mpt-bo u{background:var(--gold)}
+.mpt-fgd{display:grid;gap:2px;font:600 12.5px var(--head);font-style:normal;color:var(--muted);cursor:help} .mpt-fgd u{opacity:.55}
+.mpt-fpr > span:first-child{flex:1;min-width:0}
+.mpt-plg{border-bottom:1px solid var(--line2)} .mpt-gi{display:grid;place-items:center;background:color-mix(in srgb,var(--gold) 12%,transparent)} .mpt-gi svg{width:20px;height:20px;fill:var(--gold)}
+.mpt-bar.mpt-barg i{background:var(--gold)} .mpt-tile[data-tt]{cursor:help}
 .mpt-sk{display:flex;gap:6px 18px;flex-wrap:wrap;font:500 13.5px var(--body);color:var(--muted);margin-bottom:6px} .mpt-sk b{color:var(--text)}
 .mpt-sk i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
 /* (the pieces with a hover) */
@@ -804,7 +867,7 @@ const MP_CSS = `
 .mpt-c small{font:500 12.5px var(--body);color:var(--faint)}
 .mpt-why{margin:12px 0 0;color:var(--mpt-soft)}
 .mpt-ex{margin:6px 0 0;font:500 13px var(--body);color:var(--faint)}
-.mpt-plh,.mpt-pr summary,.mpt-sum{display:grid;grid-template-columns:100px minmax(0,1fr) 46px 96px 230px;gap:12px;align-items:baseline;padding:8px 6px}
+.mpt-plh,.mpt-pr summary,.mpt-sum{display:grid;grid-template-columns:96px minmax(0,1fr) 44px 92px 72px 200px;gap:12px;align-items:baseline;padding:8px 6px}
 .mpt-plh{margin-right:270px} .mpt-plh.mpt-plh1{margin-right:0}
 .mpt-pf{font:700 14px var(--head);white-space:nowrap;font-variant-numeric:tabular-nums} .mpt-pf small{font:500 12px var(--body);color:var(--faint);margin-left:3px}
 .mpt-sg{margin-top:14px;border-top:1px solid var(--line2)}
@@ -937,7 +1000,7 @@ const MP_CSS = `
 .mpt-ex a{color:inherit}
 .mpt-lst{position:absolute;top:-7px;bottom:-7px;width:3px;margin-left:-1.5px;background:#ffd166;border-radius:2px;box-shadow:0 0 0 1px var(--bg)} /* (Lust: the Design studio's yellow (round 4)) */
 .mpt-kl{background:#ffd166;width:4px!important}
-.mpt-tg.mpt-tl{color:#ffd166} .mpt-tg.mpt-tl::before{background:#ffd166}
+.mpt-tg.mpt-tlu{color:#ffd166} .mpt-tg.mpt-tlu::before{background:#ffd166}
 .mpt-lu{color:#ffd166}
 .mpt-shr{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px;padding:9px 0 9px 14px;border-left:3px solid var(--line2);font:500 13.5px var(--body);color:var(--muted)}
 .mpt-shr b{color:var(--text);margin-right:6px}
@@ -971,6 +1034,7 @@ const MP_CSS = `
   .mpt-tiles{flex-wrap:wrap;row-gap:12px}
   .mpt-tile{flex:1 1 45%;border-left:0;padding:0}
   .mpt-tile span{white-space:normal}
+  .mpt-tile:last-child:nth-child(odd){flex-basis:100%} /* (five tiles: the last one across, never alone in half a row) */
   .mpt-tl{margin-left:64px} .mpt-ln{margin-left:-64px} .mpt-ll{width:64px} .mpt-key{margin-left:0}
   .mpt-mk span{font-size:11px}
   .mpt-gp{height:auto;display:flex;flex-direction:column;gap:2px;margin-left:-64px}
@@ -985,6 +1049,7 @@ const MP_CSS = `
   .mpt-pr .mpt-pt{grid-column:2;grid-row:1;text-align:right}
   .mpt-pm,.mpt-pc{grid-column:1 / -1}
   .mpt-pf{grid-column:1 / -1} .mpt-pf:empty{display:none}
+  .mpt-pgd{grid-column:1 / -1;display:flex;align-items:center;gap:8px} .mpt-pgd:empty{display:none} .mpt-pgd::before{content:"Group DPS";font:700 11px var(--head);letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
   .mpt-pg{display:none}
   .mpt-pd{padding-left:6px}
   .mpt-sgb{grid-template-columns:minmax(0,1fr);gap:6px}
