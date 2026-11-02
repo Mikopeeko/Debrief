@@ -23783,6 +23783,7 @@ const PATCH_NOTES = [
     "Mythic+ tab: \"Next time\" lines say what the fast run did differently on each slow stretch, your longest waits between pulls are listed with what explains each, and your healer's damage shows first, with a line when it was what timed the key.",
     "Mythic+ tab in five chapters, with the same panels as your other pages: the key, where your time went, route and pulls, your group, and the dungeon. The result tiles moved up, right under the banner, so you read the outcome first.",
     "Mythic+ pulls, refined: a pack isn't split while its main enemy is still up, waves an enemy summons never count as a pull, and packs pulled one after another are joined in the list (\"17 packs in 14 pulls\"), so big cooldowns and Lust are judged on the whole pull, not each pack.",
+    "Mythic+ tab, a quicker read: \"Fix these first\" shows each thing's title, one Next time line and its time, three at a time, and the details open on a click. The stretch table, the route and the pull list fold away too, and the page remembers what you opened. A trash stretch slowed by damage names its two biggest gaps, like the bosses do.",
     "On a smaller screen, the tiles at the top of Debriefing line up in even rows: no tile stretched across on its own and no empty gaps.",
     "The hovers on Debriefing's top tiles list every player, not just the first 10, and a tall hover stays on screen.",
     "Your recap is a side panel now: the full height of your screen on the right edge (or the left, with Side in /db card settings), one column that scrolls, in WoW and on your PC. Drag its inner edge on your PC to make it wider or narrower.",
@@ -61009,12 +61010,22 @@ function mpShareHtml(it) { if (!it || it.wcl || it.shr || typeof shrOk !== 'func
     '<button class="btn sm' + (done ? '' : ' primary') + '" type="button" data-shr="1">' + (done ? 'Copy link' : 'Share') + '</button></div>'; }
 function mpPickHtml(it) { const keys = mpKeys(); if (keys.length < 2) return '';
   return '<div class="mpt-pick"><label for="mptPick">' + keys.length + ' keys in this report</label><select id="mptPick">' + keys.map((x, i) => '<option value="' + i + '"' + (x === it ? ' selected' : '') + '>' + esc(mpKeyName(x)) + '</option>').join('') + '</select></div>'; }
+// (each fold remembered per viewer (the quick read): the sections, Stretch by stretch, the route fold and Show N more. In this browser only;
+// without storage the page opens folded, as drawn)
+const MP_FOLDK = 'mpt-folds';
+const mpFoldGet = () => { try { return JSON.parse(localStorage.getItem(MP_FOLDK) || '{}') || {}; } catch (e) { return {}; } };
+const mpFoldSet = (id, v) => { try { const m = mpFoldGet(); m[id] = v; localStorage.setItem(MP_FOLDK, JSON.stringify(m)); } catch (e) { /* (not kept) */ } };
+function mpFoldRestore() { const m = mpFoldGet();
+  for (const [id, v] of Object.entries(m)) { const d = document.getElementById(id); if (!d) continue; if (d.tagName === 'DETAILS') d.open = !!v; else if (id === 'mptMoreRows') mpMoreSet(!!v); } }
+const mpMoreSet = (v) => { const box = document.getElementById('mptMoreRows'), b = document.querySelector('[data-mptmore]'); if (!box || !b) return; box.hidden = !v; b.textContent = v ? 'Show fewer' : 'Show ' + b.dataset.mptmore + ' more'; };
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-mptmore]'); if (!b) return; const box = document.getElementById('mptMoreRows'); if (!box) return; const v = box.hidden; mpMoreSet(v); mpFoldSet('mptMoreRows', v); });
+document.addEventListener('toggle', (e) => { const d = e.target; if (!d || !d.closest || !d.closest('.mpt')) return; if (d.id && /^mpt/.test(d.id)) mpFoldSet(d.id, d.open); if (d.open && d.querySelector('.mpt-strip')) try { mpLabelFit(); } catch (x) { /* (labels as drawn) */ } }, true);
 function mpDraw() {
   const it = MP.item, R = it && MP.R[mpK(it)], b = $('#mptBody'); if (!R || !b || S.page !== 'mplus') return;
   const fx = MP.fastOf && MP.fastOf.k === mpK(it) ? MP.fastOf : null;
-  const was = [...b.querySelectorAll('details.mpt-fold[open]')].map((d) => d.id); /* (a section you opened stays open when the fast run arrives) */
+  const was = [...b.querySelectorAll('details[id][open]')].map((d) => d.id); /* (a section you opened stays open when the fast run arrives) */
   b.innerHTML = mpHtml(it, R, fx);
-  for (const id of was) { const d = document.getElementById(id); if (d) d.open = true; }
+  mpFoldRestore(); for (const id of was) { const d = document.getElementById(id); if (d) d.open = true; }
   try { refreshIcons(); } catch (e) { /* (icons load later) */ }
   try { mpLabelFit(); } catch (e) { /* (labels stay as drawn) */ }
   mpJbTop();
@@ -61113,7 +61124,7 @@ function mpNextTrash(R, F, s, f, ST, fBy) {
   const chSize = (RR, ps) => { const ch = mpChains(RR), m = new Map(); for (const p of ps) { const c = ch[RR.pulls.indexOf(p)]; m.set(c, (m.get(c) || 0) + mpCnt(RR, p)); } return [...m.values()]; };
   const yc = chSize(R, yp), fBig = Math.max(...fp.map((p) => mpCnt(F, p)));
   const pullLine = 'Pull it in fewer, bigger pulls. The fast run took it in ' + plural(fN, 'pull') + ', its biggest pack ' + fBig + ' enemies; you took ' + yN + (yc.length > 1 ? ' pulls of ' + Math.min(...yc) + ' to ' + Math.max(...yc) : '') + '.';
-  if (sp.low > sp.more) { if (fewer) out.push(pullLine + ' Every AoE hits more enemies in a bigger pull.'); }
+  if (sp.low > sp.more) { if (fewer) out.push(pullLine + ' Every AoE hits more enemies in a bigger pull.'); else { const g = mpGapLine(R, F, yp, fp); if (g) out.push(g); } }
   else { const rt = R.route && R.route.ok ? R.route : null, frt = F.route && F.route.ok && rt && F.route.full === rt.full ? F.route : null;
     if (frt) { const share = (RR, rr, ps) => 100 * ps.reduce((a, p) => a + ((rr.pulls[RR.pulls.indexOf(p)] || {}).add || 0), 0) / rr.full; let best = null;
       for (const s2 of ST) { const f2 = s2 !== s && fBy.get(s2.boss); if (!f2) continue; const ys = share(R, rt, mpInSt(R, s2)), fs = share(F, frt, mpInSt(F, f2)); if (fs - ys >= 5 && (!best || fs - ys > best.d)) best = { s2, ys, fs, d: fs - ys }; }
@@ -61124,15 +61135,19 @@ function mpNextTrash(R, F, s, f, ST, fBy) {
   return mpNT(out.join(' '));
 }
 // (a boss where lower damage is the bigger part: the one or two biggest gaps against the fast run's same spec, or tank against tank and healer
-// against healer. Never against a player's own key average: a boss is always lower than AoE trash)
+// against healer. Never against a player's own key average: a boss is always lower than AoE trash. Trash uses the same line when the pulls
+// were already as big as the fast run's)
 function mpNextBoss(R, F, yp, fp) {
   const sp = mpSplit(mpGrp(yp), mpGrp(fp)); if (!sp || sp.low <= sp.more || sp.low < 1) return '';
+  return mpNT(mpGapLine(R, F, yp, fp));
+}
+function mpGapLine(R, F, yp, fp) {
   const rate = (ps, nm) => { let D = 0, T = 0; for (const p of ps) { D += ((p.dmg || {})[nm] || 0) * p.dur; T += p.dur; } return T ? D / T : 0; }, gaps = [];
   for (const p of R.people || []) { let m = (F.people || []).find((q) => q.spec === p.spec && q.cls === p.cls), lab = m ? 'the fast run\'s ' + esc(p.spec + ' ' + ((E.CLASSES[p.cls] || [])[0] || '')) : '';
     if (!m && p.role !== 'dps') { m = (F.people || []).find((q) => q.role === p.role); lab = 'the fast run\'s ' + p.role; }
     if (!m) continue; const mine = rate(yp, p.name), theirs = rate(fp, m.name); if (theirs - mine > 0) gaps.push({ p, mine, theirs, lab, g: theirs - mine }); }
   const top = gaps.sort((a, b) => b.g - a.g).slice(0, 2); if (!top.length) return '';
-  return mpNT('The biggest damage gap' + (top.length > 1 ? 's were ' : ' was ') + mpAnd(top.map((x) => mpWho(R, x.p.name))) + '. ' + top.map((x) => mpWho(R, x.p.name) + ' did ' + mpGF(x.mine) + ' here; ' + x.lab + ' did ' + mpGF(x.theirs) + '.').join(' '));
+  return 'The biggest damage gap' + (top.length > 1 ? 's were ' : ' was ') + mpAnd(top.map((x) => mpWho(R, x.p.name))) + '. ' + top.map((x) => mpWho(R, x.p.name) + ' did ' + mpGF(x.mine) + ' here; ' + x.lab + ' did ' + mpGF(x.theirs) + '.').join(' ');
 }
 // (a kick row: the most of that caster in one pull, and whose kick was ready when it went off)
 function mpNextKick(R, sp) {
@@ -61152,7 +61167,7 @@ function mpNextKick(R, sp) {
 // before, Lust or big cooldowns going out at the pull), then the fast run's longest, then "Pull sooner" for 10 s or more with nothing to explain it)
 function mpWaits(R, F) {
   const gaps = (RR) => RR.pulls.slice(1).map((p, i) => ({ p, prev: RR.pulls[i], g: p.s - RR.pulls[i].e })).filter((x) => x.g >= 5).sort((a, b) => b.g - a.g) /* (real gaps only: under 5 s the next pack was chained on) */;
-  const G = gaps(R).slice(0, 4); if (!G.length) return '';
+  const G = gaps(R).slice(0, 4); if (!G.length) return { h: '', nt: '' };
   const nm = (p) => (p.boss ? esc(p.boss) : 'pull ' + p.n);
   const note = (x) => { const dd = [...new Set(x.prev.deaths.map((d) => d.who))], lu = (R.lust || []).filter((l) => l.t >= x.prev.e && l.t <= x.p.s + 5);
     const cds = Object.entries(R.cds || {}).flatMap(([n, l]) => l.filter((c) => c.t >= x.prev.e && c.t <= x.p.s + 5).map((c) => [n, c.spell])), bits = [];
@@ -61164,8 +61179,7 @@ function mpWaits(R, F) {
   let h = '<div class="mpt-wts"><p class="mpt-k">Your longest waits</p>' + G.map((x) => row('Before ' + nm(x.p), x.g, note(x))).join('');
   if (FG) h += row('Fast run\'s longest', FG.g, 'Before its ' + nm(FG.p) + '.', 'mpt-wtf');
   const free = G.filter((x) => x.free && x.g >= 10).map((x) => x.p);
-  if (free.length) h += mpNT('Pull sooner before ' + (free.every((p) => !p.boss) ? (free.length === 1 ? 'pull ' : 'pulls ') + mpAnd(free.map((p) => String(p.n))) : mpAnd(free.map(nm))) + '. Nobody was dead and no big cooldown went out when you pulled.');
-  return h + '</div>';
+  return { h: h + '</div>', nt: !free.length ? '' : mpNT('Pull sooner before ' + (free.every((p) => !p.boss) ? (free.length === 1 ? 'pull ' : 'pulls ') + mpAnd(free.map((p) => String(p.n))) : mpAnd(free.map(nm))) + '. Nobody was dead and no big cooldown went out when you pulled.') }; /* (the list, and its Next time line apart: the quick read shows the line, the list on a click) */
 }
 // (what gets you the next level: each fix's seconds on the timer, biggest first. A wipe: every death in it. Deaths to the same spell. A
 // must-kick cast that went off with a kick ready and killed someone. Casts that went off without killing anyone save casts, not seconds)
@@ -61223,7 +61237,7 @@ function mpHtml(it, R, fx) {
     ((run.affixes || []).some((a) => MP_AFFIX[a]) ? '<div class="mpt-afx">' + run.affixes.filter((a) => MP_AFFIX[a]).map((a) => '<span class="mpt-af" tabindex="0"' + mpT1('<b>' + esc(MP_AFFIX[a][0]) + '</b><br>' + esc(MP_AFFIX[a][1])) + '>' + esc(MP_AFFIX[a][0]) + '</span>').join('') + '</div>' : '') + '</div>' +
     '<div class="mpt-grp">' + R.people.slice().sort(mpByRole).map((p) => '<span class="mpt-gm" style="color:' + mpCC(p.cls) + '"' + mpT1(esc(p.spec + ' ' + ((E.CLASSES[p.cls] || [])[0] || ''))) + '>' + (MP_ROLE[p.role] || '') + '<b>' + esc(p.name) + '</b></span>').join('') + '</div></div>';
   if (!C) return mpChap('mptC1', 'The key', '', ban + '<p class="mpt-note">' + (run.left || !run.timeMs ? 'This key was left before the end, so there\'s no timer to judge. Everything that happened is below.' : 'Debrief doesn\'t know this dungeon\'s timer yet. Everything that happened is below.') + '</p>') + mpJumpBar(R, false) +
-    mpChap('mptC3', 'Route and pulls', '', mpRouteHtml(R, null, false) + mpPulls(R, null, null, null)) + mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpCasts(R) + mpPlayers(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', 'for your next key', mpKnowHtml(R));
+    mpChap('mptC3', 'Route and pulls', '', mpRPFold(R, null, mpRouteHtml(R, null, false) + mpPulls(R, null, null, null))) + mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpCasts(R) + mpPlayers(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', 'for your next key', mpKnowHtml(R, true));
   // what gets you the next level
   const T = ck.time, P = ck.par, lv = ck.up, tgt = lv === 0 ? P : lv === 1 ? P * 0.8 : lv === 2 ? P * 0.6 : null, need = tgt != null ? Math.max(1, Math.round(T - tgt)) : 0; /* (as the timer shows it: 24:06 against 24:00 is 6 s) */
   const head = lv === 0 ? 'What gets you in time' : lv === 3 ? 'What would save the most time' : 'What gets you +' + (lv + 1);
@@ -61241,13 +61255,23 @@ function mpHtml(it, R, fx) {
   const went = !far ? null : (() => { const ST = mpStretches(R, C), FS = mpStretches(F, FC), fBy = new Map(FS.map((s) => [s.boss, s])), L = [];
     for (const s of ST) { const f = fBy.get(s.boss); if (!f) continue; const where = s.name.startsWith('Start → ') ? 'Trash before ' + esc(s.boss) : 'Trash between ' + esc(s.name.split(' → ')[0]) + ' and ' + esc(s.boss);
       const yp = mpInSt(R, s), fp = mpInSt(F, f); /* (each row's group DPS tags: more to kill and lower damage) */
-      if (s.trash - f.trash >= 15) L.push({ c: 'trash', s: s.trash - f.trash, t: where, d: 'You took ' + plural(s.nt, 'pull') + ' there, the fast run took ' + f.nt + '. Your trash took ' + mpMM(s.trash) + ', theirs took ' + mpMM(f.trash) + '.', g: mpGdTags(R, F, yp.filter((p) => !p.boss), fp.filter((p) => !p.boss), true, yp, fp) + mpNextTrash(R, F, s, f, ST, fBy) });
-      if (s.bossT - f.bossT >= 15) L.push({ c: 'boss', s: s.bossT - f.bossT, t: esc(s.boss), d: 'Your fight took ' + mpMM(s.bossT) + (s.tries > 1 ? ' over ' + s.tries + ' pulls' : '') + ', theirs took ' + mpMM(f.bossT) + '.', g: mpGdTags(R, F, yp.filter((p) => p.boss), fp.filter((p) => p.boss), false) + mpNextBoss(R, F, yp.filter((p) => p.boss), fp.filter((p) => p.boss)) }); }
-    if (ck.between - FC.ck.between >= 15) L.push({ c: 'stand', s: ck.between - FC.ck.between, t: 'Standing between pulls', d: 'You stood still for ' + mpMM(ck.between) + ' between pulls, the fast run for ' + mpMM(FC.ck.between) + '.', g: mpWaits(R, F) });
+      if (s.trash - f.trash >= 15) L.push({ c: 'trash', s: s.trash - f.trash, t: where, d: 'You took ' + plural(s.nt, 'pull') + ' there, the fast run took ' + f.nt + '. Your trash took ' + mpMM(s.trash) + ', theirs took ' + mpMM(f.trash) + '.', g: mpGdTags(R, F, yp.filter((p) => !p.boss), fp.filter((p) => !p.boss), true, yp, fp), nt: mpNextTrash(R, F, s, f, ST, fBy) });
+      if (s.bossT - f.bossT >= 15) L.push({ c: 'boss', s: s.bossT - f.bossT, t: esc(s.boss), d: 'Your fight took ' + mpMM(s.bossT) + (s.tries > 1 ? ' over ' + s.tries + ' pulls' : '') + ', theirs took ' + mpMM(f.bossT) + '.', g: mpGdTags(R, F, yp.filter((p) => p.boss), fp.filter((p) => p.boss), false), nt: mpNextBoss(R, F, yp.filter((p) => p.boss), fp.filter((p) => p.boss)) }); }
+    if (ck.between - FC.ck.between >= 15) L.push({ c: 'stand', s: ck.between - FC.ck.between, t: 'Standing between pulls', d: 'You stood still for ' + mpMM(ck.between) + ' between pulls, the fast run for ' + mpMM(FC.ck.between) + '.', ...((w) => ({ g: w.h, nt: w.nt }))(mpWaits(R, F)) });
     for (const f of mpFixes(R, C, true)) L.push(f);
     return L.filter((x) => x.s >= 15 || !x.s).sort((a, b) => b.s - a.s).slice(0, 6); })();
   // (a thin bar under the lead: the gap split into longer fighting, standing between pulls and deaths, each with its hover, a key under it and
   // no words inside (they'd be cut off on a phone). The three add up to the gap: the fighting is what's left after the other two)
+  // (the quick read (Nov 2, the Design studio's quick-read.md, Flex: "theres almost too much information… its a lot of alot"): a row shows its
+  // title, one Next time line (a death row: who died, plainly) and its time; the explanation and the tags open on a click (▸ turns ▾). Three rows,
+  // then "Show N more". Nothing is gone: it's one click away)
+  const fxRow = (f, i, fix) => { const nt = f.nt || (f.c === 'kick' && f.sp ? mpNextKick(R, f.sp) : '') || (f.c === 'death' ? '<p class="mpt-nt mpt-ntd">' + f.d + '</p>' : '');
+    const more = (f.c === 'death' ? '' : '<p>' + f.d + '</p>') + (f.g || ''), badge = '<span class="mpt-fxn mpt-c-' + (f.c || 'none') + '">' + (i + 1) + '</span>';
+    const right = '<span class="mpt-fxs">' + (f.s ? (fix ? '<b class="mpt-g">−' + mpMM(f.s) + '</b>' : '<b class="' + mpSz(f.s) + '">' + mpMM(f.s) + '</b>') + '<small>' + (f.plus || 'on the timer') + '</small>' : f.n ? '<b class="mpt-ab">' + f.n + '</b><small>went off</small>' : '<b class="mpt-m">' + f.ns + '</b>') + '</span>';
+    return more ? '<details class="mpt-fxd"><summary class="mpt-fxr">' + badge + '<div><b class="mpt-fxt">' + f.t + '</b>' + nt + '</div>' + right + '</summary><div class="mpt-fxm">' + more + '</div></details>'
+      : '<div class="mpt-fxr">' + badge + '<div><b class="mpt-fxt mpt-fxt0">' + f.t + '</b>' + nt + '</div>' + right + '</div>'; };
+  const fxRows = (L, fix) => L.slice(0, 3).map((f, i) => fxRow(f, i, fix)).join('') + (L.length > 3 ? '<div class="mpt-fxmore" id="mptMoreRows" hidden>' + L.slice(3).map((f, i) => fxRow(f, i + 3, fix)).join('') + '</div><button type="button" class="mpt-fxbtn" data-mptmore="' + (L.length - 3) + '">Show ' + (L.length - 3) + ' more</button>' : '');
+  let gLine = '';
   const sbar = (() => { if (!went) return ''; const gap = T - fT0, dD = ck.deathCost - FC.ck.deathCost, dS = ck.between - FC.ck.between;
     /* (with group DPS, the longer fighting is two pieces: more to kill and lower damage, from the pulls themselves) */
     const yG = mpGrp(R.pulls), fG = mpGrp(F.pulls), spl = mpSplit(yG, fG), dp = spl ? Math.round(100 * (yG.r / fG.r - 1)) : 0, pc = (a, b) => Math.round(100 * Math.abs(a / b - 1));
@@ -61265,13 +61289,13 @@ function mpHtml(it, R, fx) {
     return '<div class="mpt-sbar">' + parts.map(([k, l, s, d]) => '<i class="mpt-sb-' + k + '" tabindex="0" style="width:' + (100 * s / sum).toFixed(1) + '%"' + mpT1('<b>' + l + ': ' + mpMM(s) + '</b><br>' + d) + '></i>').join('') + '</div>' +
       '<div class="mpt-sk">' + parts.map(([k, l, s]) => '<span><i class="mpt-sb-' + k + '"></i>' + l + ' <b>' + mpMM(s) + '</b></span>').join('') +
       less.map(([k, , s, d, nl]) => '<span tabindex="0"' + mpT1('<b>' + nl + ': ' + mpMM(s) + '</b><br>' + d) + '>' + nl + ' <b class="mpt-g">' + mpMM(s) + '</b></span>').join('') + '</div>' +
-      (line ? '<p class="mpt-gl">' + line + '</p>' : ''); })();
-  const fixes = went ? '<section class="mpt-fx"><div class="mpt-fxh"><h2>Where your ' + mpMM(T - fT0) + ' went</h2>' + mpInfo('The ' + mpMM(T - fT0) + ' you were behind the fast run, split by cause. Hover a piece of the bar for more.') +
+      ((gLine = line), ''); })(); /* (the quick read: the line moved into the box's ⓘ; the bar's hover and the Group DPS tile say it too) */
+  const fixes = went ? '<section class="mpt-fx"><div class="mpt-fxh"><h2>Where your ' + mpMM(T - fT0) + ' went</h2>' + mpInfo('The ' + mpMM(T - fT0) + ' you were behind the fast run, split by cause. Hover a piece of the bar for more.' + (gLine ? '<br><br>' + gLine : '') + '<br><br>Click a row for the numbers behind it.') +
     '<span>A typical fast run took <b>' + mpMM(fT0) + '</b>. You needed to be <b>' + mpMM(need) + '</b> faster ' + (lv === 0 ? 'to time it' : 'for +' + (lv + 1)) + (ck.deathCost ? ', and your deaths only cost <b>' + mpMM(ck.deathCost) + '</b>.' : ', and you had no deaths.') + '</span></div>' + sbar +
     /* (the polish pass: each badge in its cause's colour, the seconds by size (60 s red, 20 s amber, less grey), a kick by how often it went off) */
-    went.map((f, i) => '<div class="mpt-fxr"><span class="mpt-fxn mpt-c-' + (f.c || 'none') + '">' + (i + 1) + '</span><div><b class="mpt-fxt">' + f.t + '</b><p>' + f.d + '</p>' + (f.g || '') + (f.c === 'kick' && f.sp ? mpNextKick(R, f.sp) : '') + '</div><span class="mpt-fxs">' + (f.s ? '<b class="' + mpSz(f.s) + '">' + mpMM(f.s) + '</b><small>' + (f.plus || 'on the timer') + '</small>' : f.n ? '<b class="mpt-ab">' + f.n + '</b><small>went off</small>' : '<b class="mpt-m">' + f.ns + '</b>') + '</span></div>').join('') + '</section>' :
+    fxRows(went, false) + '</section>' :
     '<section class="mpt-fx"><div class="mpt-fxh"><h2>' + head + '</h2><span>' + (tgt != null ? 'You needed <b>' + plural(need, 'second') + '</b>.' + (verdict ? ' ' + verdict : '') : 'You got +3. These would still save time.') + '</span></div>' +
-    (FIX.length ? FIX.map((f, i) => '<div class="mpt-fxr"><span class="mpt-fxn mpt-c-' + (f.c || 'none') + '">' + (i + 1) + '</span><div><b class="mpt-fxt">' + f.t + '</b><p>' + f.d + '</p>' + (f.c === 'kick' && f.sp ? mpNextKick(R, f.sp) : '') + '</div><span class="mpt-fxs">' + (f.s ? '<b class="mpt-g">−' + mpMM(f.s) + '</b><small>' + (f.plus || 'on the timer') + '</small>' : f.n ? '<b class="mpt-ab">' + f.n + '</b><small>went off</small>' : '<b class="mpt-m">' + f.ns + '</b>') + '</span></div>').join('')
+    (FIX.length ? fxRows(FIX, true)
       : '<p class="mpt-none">No deaths, and no must-kick cast went off with a kick ready. The time is in the pulls and the walking between them' + (F ? ': see where you fell behind below.' : '.') + '</p>') + '</section>';
   // slim tiles
   const thN = R.pulls.reduce((a, p) => a + p.through.length, 0), fT = FC ? FC.ck.time : null;
@@ -61288,15 +61312,24 @@ function mpHtml(it, R, fx) {
   /* (the tiles moved up under the banner, so the result is read first (the chapters round; it changes the round-3 order Flex approved, and he
      saw it in the mock)) */
   const behind = F ? (T - fT > 5 ? 'bad' : T - fT < -5 ? 'good' : '') : '';
-  return mpChap('mptC1', 'The key', '', ban + tiles) + mpJumpBar(R, true) + mpChap('mptC2', 'Where your time went', F ? 'against a typical fast run' : '', fixes + mpBehind(R, C, F, FC, fx, waiting), behind) +
-    mpChap('mptC3', 'Route and pulls', '', mpRouteHtml(R, F, waiting) + mpPulls(R, C, F, FC)) + mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpCasts(R) + mpPlayers(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', 'for your next key', mpKnowHtml(R));
+  /* (the quick read: chapter 2 is "Fix these first"; chapter 3 is one sentence with the route and the pulls a click away) */
+  return mpChap('mptC1', 'The key', '', ban + tiles) + mpJumpBar(R, true) + mpChap('mptC2', 'Fix these first', F ? 'against a typical fast run' : '', fixes + mpBehind(R, C, F, FC, fx, waiting), behind) +
+    mpChap('mptC3', 'Route and pulls', '', mpRPFold(R, F, mpRouteHtml(R, F, waiting) + mpPulls(R, C, F, FC))) + mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpCasts(R) + mpPlayers(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', 'for your next key', mpKnowHtml(R, true));
 }
 // (five chapters (Nov 2, the Design studio's chapters.md, Flex: "the page is lacking depth. Maybe find a way to separate the information so its
 // more readable in sections", then "does it have depth like my other pages do?"): each one the site's own panel, the finish Debriefing's panels
 // have, opening with a small grey label and a sub-line; a 6 px square only when the chapter has a verdict (behind red, ahead green))
 const mpChap = (id, k, sub, body, dot) => (body ? '<div class="mpt-chap" role="region" aria-label="' + k + '" id="' + id + '"><p class="mpt-chk' + (dot ? ' mpt-chk-' + dot : '') + '">' + k + (sub ? '<span>' + sub + '</span>' : '') + '</p>' + body + '</div>' : ''); /* (a div: the site's type scale resizes text in a section inside a section) */
 // (the jump bar between chapter 1 and 2 (the Design studio's round 4, by chapter since Nov 2): it sticks under the site's tab bar while you scroll)
-const mpJumpBar = (R, tl) => '<nav class="mpt-jb" aria-label="Jump to">' + [tl ? ['mptC2', 'Time'] : null, ['mptC3', 'Route and pulls'], ['mptC4', 'Your group'], MP_KNOW[mpLc(R.run.dungeon)] ? ['mptC5', 'Dungeon'] : null].filter(Boolean).map(([id, l]) => '<button type="button" data-mptj="' + id + '">' + l + '</button>').join('') + '</nav>';
+// (chapter 3 in the quick read: one sentence, how many packs and pulls and where you reached 100%, then the route and the pulls a click away)
+function mpRPFold(R, F, inner) {
+  const rt = R.route && R.route.ok ? R.route : null; let reach = '';
+  if (rt) { let t = 0; for (let k = 0; k < rt.pulls.length; k++) { t += rt.pulls[k].add; if (t >= rt.full * 0.9995) { const nx = R.pulls.slice(k + 1).find((p) => p.boss), pv = R.pulls.slice(0, k).reverse().find((p) => p.boss); /* (by boss, not pull number: the Pulls list numbers packs) */
+        reach = ' You reached 100% ' + (R.pulls[k].boss ? 'at ' + esc(R.pulls[k].boss) : nx ? 'before ' + esc(nx.boss) : pv ? 'after ' + esc(pv.boss) : 'in pack ' + R.pulls[k].n) + '.'; break; } } }
+  const line = 'You took <b>' + mpPacks(R) + '</b>' + (F ? '; the fast run took <b>' + mpPacks(F, true) + '</b>.' : '.') + reach;
+  return '<p class="mpt-rpl">' + line + '</p><details class="mpt-sub" id="mptRP"><summary>Show the route, maps and every pull</summary>' + inner + '</details>';
+}
+const mpJumpBar = (R, tl) => '<nav class="mpt-jb" aria-label="Jump to">' + [tl ? ['mptC2', 'Fix these first'] : null, ['mptC3', 'Route and pulls'], ['mptC4', 'Your group'], MP_KNOW[mpLc(R.run.dungeon)] ? ['mptC5', 'Dungeon'] : null].filter(Boolean).map(([id, l]) => '<button type="button" data-mptj="' + id + '">' + l + '</button>').join('') + '</nav>';
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-mptj]'); if (!b) return; e.preventDefault(); const s = document.getElementById(b.dataset.mptj); if (!s) return;
   if (s.tagName === 'DETAILS') s.open = true; /* (a folded section opens first) */
   else { const f = s.querySelectorAll(':scope > details.mpt-fold'); if (f.length === 1 && s.children.length === 2) f[0].open = true; } /* (a chapter that's one folded part, Know this dungeon, opens it) */
@@ -61321,8 +61354,8 @@ function mpCdLine(R, p) {
 // maybe giving them some tooltips". Hovers use the site's own look: data-tt, shown on hover, focus or a tap)
 const mpT1 = (h) => ' data-tt="' + esc(h) + '"';
 const mpInfo = (t) => '<span class="ds-i mpt-i" tabindex="0" role="note" aria-label="How to read it"' + mpT1(t) + '>ⓘ</span>';
-const mpSec = (t, line, body, id, o) => { o = o || {}; const h = '<h2>' + t + '</h2>' + (o.tip ? mpInfo(o.tip) : '') + (line ? '<span class="mpt-hl">' + line + '</span>' : '');
-  return o.fold ? '<details class="mpt-sec mpt-fold"' + (id ? ' id="' + id + '"' : '') + '><summary class="mpt-sh">' + h + '<span class="mpt-chev" aria-hidden="true"></span></summary><div class="mpt-fb">' + body + '</div></details>'
+const mpSec = (t, line, body, id, o) => { o = o || {}; const h = (o.noTitle ? '' : '<h2>' + t + '</h2>') + (o.tip ? mpInfo(o.tip) : '') + (line ? '<span class="mpt-hl">' + line + '</span>' : ''); /* (noTitle: a chapter with this one part says its name already) */
+  return o.fold ? '<details class="mpt-sec mpt-fold"' + (id ? ' id="' + id + '"' : '') + '><summary class="mpt-sh' + (o.noTitle ? ' mpt-sh0' : '') + '">' + h + '<span class="mpt-chev" aria-hidden="true"></span></summary><div class="mpt-fb">' + body + '</div></details>'
     : '<section class="mpt-sec"' + (id ? ' id="' + id + '"' : '') + '><div class="mpt-sh">' + h + '</div>' + body + '</section>'; };
 // (where you fell behind: one timeline on the key's timer, your pulls next to a fast run, then why, stretch by stretch)
 function mpBehind(R, C, F, FC, fx, waiting) {
@@ -61381,7 +61414,8 @@ function mpBehind(R, C, F, FC, fx, waiting) {
   else { const top = ST.slice().sort((a, b) => b.t - a.t)[0]; if (top) line = 'Your longest stretch was ' + (top.name.startsWith('Start → ') ? 'from the start to <b>' + esc(top.boss) + '</b>' : 'from <b>' + esc(top.name).replace(' → ', '</b> to <b>') + '</b>') + ': <b>' + mpMM(top.t) + '</b>.'; }
   const pk = fx && fx.pick, at = pk && pk.at ? new Date(pk.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
   const src = F ? '<p class="mpt-ex">The fast run is a typical one: ' + mpTypical(R, fx) + (at ? ' (' + esc(at) + ')' : '') + '.</p>' : '';
-  return mpSec('Where you fell behind', line, timeline + why + (sum ? '<p class="mpt-why">' + sum + '</p>' : '') + src, 'mptTl',
+  /* (the quick read: the lanes and their key stay; the stretch table and its sentences fold under "Stretch by stretch") */
+  return mpSec('Where you fell behind', line, timeline + '<details class="mpt-sub" id="mptStr"><summary>Stretch by stretch</summary>' + why + (sum ? '<p class="mpt-why">' + sum + '</p>' : '') + src + '</details>', 'mptTl',
     { tip: F || waiting ? '<b>How to read it</b><br>Your key and a typical fast run on the same timer, left to right. Where your line runs longer, you were slower. Hover any piece for what it is.' : '<b>How to read it</b><br>Your key on its timer, left to right. Hover any piece for what it is.' });
 }
 // (one Pulls list (Nov 1, the Design studio's round 4, Flex: "Yes, build both"): pull by pull, the route's side by side and the deaths in one
@@ -61607,7 +61641,7 @@ function mpRating(R, ck, it) {
 }
 // (know this dungeon: each boss's plan, the trash tips, and what to kick, dispel and purge, with how often each must-kick went off with a kick
 // ready in this key: high danger red, medium grey. Folded at the end, like the other reference parts)
-function mpKnowHtml(R) {
+function mpKnowHtml(R, inCh) {
   const K = MP_KNOW[mpLc(R.run.dungeon)]; if (!K) return '';
   const off = new Map(); for (const p of R.pulls) for (const t of (p.through || []).concat(p.minor || [])) off.set(mpLc(t.spell), (off.get(mpLc(t.spell)) || 0) + 1);
   const TB = new Map(Object.entries(R.tiers || {}).map(([s, v]) => [mpLc(s), v])), SP = new Map((R.spam || []).map((x) => [mpLc(x.spell), x]));
@@ -61622,7 +61656,7 @@ function mpKnowHtml(R) {
     '<div class="mpt-kl3"><div><p class="mpt-k">Kick</p><ul>' + kicks + '</ul></div>' + (K.d.length ? '<div><p class="mpt-k">Dispel</p><p>' + list(K.d) + '</p></div>' : '') + (K.p.length ? '<div><p class="mpt-k">Purge or soothe</p><p>' + list(K.p) + '</p></div>' : '') + '</div>' +
     '<p class="mpt-sm">Healers have no kick in Midnight, except Restoration Shamans.</p>';
   const W = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'], cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-  return mpSec('Know this dungeon', '<b>' + cap(W[K.b.length] || String(K.b.length)) + ' bosses</b>, <b>' + (W[K.k.length] || K.k.length) + ' spells to kick</b>, and a plan for each boss.', body, 'mptKnow', { fold: true });
+  return mpSec('Know this dungeon', '<b>' + cap(W[K.b.length] || String(K.b.length)) + ' bosses</b>, <b>' + (W[K.k.length] || K.k.length) + ' spells to kick</b>, and a plan for each boss.', body, 'mptKnow', { fold: true, noTitle: !!inCh });
 }
 
 // ---------- your route (step 3, Nov 1; the Design studio's route mockup, Flex: "Yes, the map dots"; enemy counts from Raider.IO, Flex's pick) ----------
@@ -61800,7 +61834,7 @@ document.addEventListener('mouseover', (e) => { if (S.page !== 'mplus' || MP_PT 
 document.addEventListener('click', (e) => { const d = e.target.closest && e.target.closest('.mpt-dot'); if (!d) return; e.preventDefault(); e.stopPropagation();
   if (MP_PT === 'touch' && (!MP_CARD || MP_CARD.hidden || MP_CARD.dataset.n !== d.dataset.n)) { mpCardShow(d); return; } /* (a phone: the first tap shows the card) */
   mpCardHide(); const row = document.getElementById('mpt-pull-' + d.dataset.n); if (!row) return;
-  const sec = row.closest('details.mpt-fold'); if (sec) sec.open = true; /* (Pulls starts folded) */
+  for (let d = row.parentElement && row.parentElement.closest('details'); d; d = d.parentElement && d.parentElement.closest('details')) d.open = true; /* (Pulls and the route fold start folded) */
   row.open = true; row.scrollIntoView({ behavior: 'smooth', block: 'center' }); row.classList.add('mpt-flash'); setTimeout(() => row.classList.remove('mpt-flash'), 1400); }, true);
 document.addEventListener('keydown', (e) => { if (e.key !== 'Enter' || !e.target.classList || !e.target.classList.contains('mpt-dot')) return; e.target.click(); });
 window.addEventListener('scroll', () => { if (MP_CARD && !MP_CARD.hidden) mpCardHide(); }, { passive: true });
@@ -62101,6 +62135,20 @@ html:not([data-theme]) .mpt .mpt-chap{background-image:linear-gradient(rgba(255,
 .mpt-chap .mpt-tiles{margin-top:0;border-bottom:0;padding-bottom:0}
 .mpt-chap .mpt-tile{border-left:0;box-shadow:inset 1px 0 0 var(--line)} .mpt-chap .mpt-tile:first-child{box-shadow:none}
 .mpt-fxr:hover{background:rgba(255,255,255,.025)}
+/* (the quick read (Nov 2, the studio's quick-read.md): rows open on a click, three then "Show N more", folds under "▸ …") */
+.mpt-fxd{border-top:1px solid var(--line)} .mpt-fxh + .mpt-fxd,.mpt-sk + .mpt-fxd,.mpt-sbar + .mpt-fxd{border-top:0}
+.mpt-fxd > summary.mpt-fxr{list-style:none;cursor:pointer;border-top:0} .mpt-fxd > summary::-webkit-details-marker{display:none}
+.mpt-fxd > summary .mpt-fxt::after{content:" ▸";font-size:12px;color:var(--faint)} .mpt-fxd[open] > summary .mpt-fxt::after{content:" ▾"}
+.mpt-fxm{padding:0 0 12px 40px} .mpt-fxm > p:first-child{margin:0;color:var(--mpt-soft);font-size:14.5px}
+.mpt .mpt-ntd{color:var(--mpt-soft)!important}
+.mpt-fxbtn{margin:10px 0 0 40px;height:30px;padding:0 14px;font:600 13px var(--head);letter-spacing:.04em;color:var(--muted);background:none;border:1px solid var(--line2);border-radius:999px;cursor:pointer}
+.mpt-fxbtn:hover,.mpt-fxbtn:focus-visible{color:var(--text);border-color:var(--faint);outline:none}
+.mpt-sub{margin-top:12px} .mpt-sub > summary{list-style:none;cursor:pointer;width:fit-content;font:600 13.5px var(--head);letter-spacing:.04em;color:var(--muted);padding:4px 0}
+.mpt-sub > summary::-webkit-details-marker{display:none} .mpt-sub > summary::before{content:"▸ ";color:var(--faint)} .mpt-sub[open] > summary::before{content:"▾ "}
+.mpt-sub > summary:hover{color:var(--text)} .mpt-sub[open] > summary{margin-bottom:10px}
+.mpt-rpl{margin:0;font:500 15px var(--body);color:var(--mpt-soft)} .mpt-rpl b{color:var(--text)}
+.mpt-fold > summary.mpt-sh0{grid-template-columns:minmax(0,1fr) auto} .mpt-fold > summary.mpt-sh0 .mpt-hl{grid-column:1;grid-row:1}
+@media (max-width:600px){ .mpt-fxm{padding-left:0} .mpt-fxbtn{margin-left:0} }
 .mpt-chap + .mpt-jb{margin:0 0 16px}
 @media (max-width:600px){ .mpt .mpt-chap{padding:14px 12px 16px} }
 @media (max-width:860px){
