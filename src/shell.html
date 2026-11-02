@@ -13110,6 +13110,19 @@ document.addEventListener('keydown', function (ev) { if (ev.key !== 'Enter' && e
 /* round 476: one column of mechanic rows below 1100 px, so each row keeps room for its pull squares */
 @media (max-width: 1100px) { html body #view details.phase.mcx-ph > summary .prw, html body #view .prw { grid-template-columns: minmax(0, 1fr) !important; } }
 </style>
+<style id="rcss-479">
+/* round 479 quick wins */
+html body .rcb-st:has(> b[data-g^="S"]) .rcb-bar > i{background:#ff9a3c !important}
+html body .rcb-st:has(> b[data-g^="A"]) .rcb-bar > i{background:#b981f5 !important}
+html body .rcb-st:has(> b[data-g^="B"]) .rcb-bar > i{background:#4f9dff !important}
+html body .rcb-st:has(> b[data-g^="C"]) .rcb-bar > i{background:#52d65a !important}
+html body .rcb-st:has(> b[data-g^="D"]) .rcb-bar > i{background:#c9cfd6 !important}
+html body .rcb-st:has(> b[data-g^="F"]) .rcb-bar > i{background:#e5534b !important}
+html body #view .dbn-bar.dbn-none{background:none !important;border-color:var(--line) !important;padding:7px 12px !important}
+html body #view .dbn-bar.dbn-none > span > b{color:var(--muted) !important;font-weight:600}
+html:not(.r456-pin) body .tabbar .tb-id{display:none !important}
+html body #tbPlan{display:none !important}
+</style>
 </head>
 <body class="refine">
 <noscript><h1>Debrief: WoW raid log review for Mythic progression</h1><p>Debrief reads your World of Warcraft raid logs, from a Warcraft Logs report or your own combat log, and explains every pull: which mechanics were missed and by whom, why each player died, how your rotation compared with the top players, and what to fix before the next pull.</p><p>It also has Heroic and Mythic boss guides for every boss in the raid, a raid cooldown planner that reads Northern Sky Raid Tools (NSRT) notes, and an in-game addon. Debrief needs JavaScript turned on.</p></noscript>

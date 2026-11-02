@@ -2055,6 +2055,7 @@ const PATCH_NOTES = [
     "Report card: a raider's card reads top to bottom in one column: their name with the grade beside it, the one thing to fix first, a box per list (tap one to jump to it), then the lists one under the other.",
     "Pages appear finished and calm: the count-up numbers, growing bars and slide-ins are off for now, and a pull fades in once when it's ready.",
   ], f: [
+    "Guides no longer stays lit when you go back to a raid tab. Each Report card bar is the same colour as its number. Plan is off the ☰ menu (it has its own tab), and the Home tab no longer shows two ☰ buttons.",
     "Debriefing, All pulls: in a narrower window the mechanic rows stay in one column, so their pull squares no longer fall into a tall stack.",
     "Debriefing, All pulls: clicking a mechanic no longer blanks the page for a moment after you have looked at a single pull.",
     'Deaths while mind controlled by Dreadmarch now say so ("mind controlled by Dreadmarch, then died with no killing hit") instead of naming a tiny hit as the killer, and a Gravebound death says the last soul fragment you picked up killed you, with a real fix instead of "it\'s dodgeable".',
@@ -3141,6 +3142,7 @@ function renderMain0() {
       const tab = (k) => { const l = name.get(k), soon = (k === 'cmp' && CMP_OFF()) || (k === 'gdz' && GDZ_OFF()), off = (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()) || (k === 'overview' && ASG_OFF()) || soon, tt = soon ? 'Coming soon' : k === 'overview' && off ? 'In Development' : off ? 'Under development' : TAB_TIP[k] || '';
         return '<button class="tab' + (WIP_TABS.has(k) ? ' tab-uc' : '') + (S.tab === k || (k === 'audit' && S.tab === 'overview' && !TAB_ORDER.includes('overview')) ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
         (k === 'audit' && LIVE.on ? '<span class="tab-lv" title="Following live: new pulls show up here" aria-label="Live">Live</span>' : '') /* (your idea, Oct 20: a live icon on Debriefing) */ /* (round 455: no count badge on Debriefing; Flex: "no one would know what it is") */ + (WIP_TABS.has(k) ? '<span class="tab-wip" title="Under construction" aria-label="Under construction">🚧</span>' : '') + (soon ? '<span class="tab-soon">Coming soon</span>' : '') + '</button>'; };
+      if (S.page === 'guides') S.page = 'pull'; /* round 479 guides tab: a raid page is being drawn, so Guides isn't lit (from a guide, a raid tab drew both lit) */
       return meTabHtml(S.tab === 'me') + TAB_ORDER.map(tab).join(''); })() + '</nav>' + topPick() + tbPull() + '</div>' +
     (WIP_TABS.has(S.tab) ? '<div class="cz-slot">' + (S.tab === 'rot' ? rotSite() : rotSite('the ' + ({ overview: 'Assignments', player: 'Report card', cmp: 'Compare' }[S.tab] || 'this') + ' tab', 'it')) + '</div>' : '') + // (the building site, outside the view, so a page that redraws itself keeps it)
     '<section id="view"></section>';
