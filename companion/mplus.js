@@ -277,6 +277,7 @@ async function rotation(R, text, W, opts) {
   return R;
 }
 root.DBF_MPLUS = build;
+root.DBF_MPTIMER = TIMER; // (the main window's key timer (round 482): each dungeon's time limit in minutes)
 root.DBF_MPLUS_ROT = rotation;
 if (typeof module !== 'undefined') { module.exports = build; module.exports.rotation = rotation; }
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -194,6 +194,17 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
 .c-next p { margin: 0; font-size: 15px; }
 .c-foot { padding: 6px 12px 9px; font-size: 13px; color: var(--faint); border-top: 1px solid var(--line); }
 .nm-c { font-weight: 600; }
+/* round 482 (Nov 1, Flex: "just make the current version look nicer"): the same window, tidier. The ring and the night sit together in the
+   middle, a soft glow behind the ring, the chart in a frame, the switches under a line */
+.main { justify-content: center; gap: 40px; padding: 18px 36px; }
+.mid { flex: 0 1 660px; }
+.ring::before { content: ""; position: absolute; inset: -24px; border-radius: 50%; background: radial-gradient(circle, rgba(95,220,122,.12), rgba(230,180,80,.04) 46%, transparent 68%); pointer-events: none; z-index: 0; }
+.ring.dim::before { opacity: .35; }
+.ring svg { position: relative; z-index: 1; } .ring .in { z-index: 2; }
+.night:has(.pdot), .night:has(.kb) { border: 1px solid var(--line); border-radius: 10px; background: rgba(21,25,34,.55); }
+.swrow { margin-top: 6px; padding-top: 12px; border-top: 1px solid var(--line); gap: 22px; }
+.hkline { margin-top: 4px; }
+.top #web { color: var(--text); }
 </style>
 </head>
 <body>
@@ -202,7 +213,7 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
   <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 2 57 11.5V30c0 15.5-11.3 26.6-25 32C18.3 56.6 7 45.5 7 30V11.5Z" fill="url(#lgfMetal)" stroke="#4a300a" stroke-width=".8"/><path d="M32 7 52.5 14.8V30c0 12.8-9.2 22-20.5 26.6C20.7 52 11.5 42.8 11.5 30V14.8Z" fill="url(#lgfMetalDk)"/><path d="M32 9.2 50.5 16.3V30c0 11.7-8.3 20.2-18.5 24.5C21.8 50.2 13.5 41.7 13.5 30V16.3Z" fill="url(#lgfEnamel)"/><path d="M32 9.2 50.5 16.3V23C40 20.5 24 20.5 13.5 23V16.3Z" fill="#fff" opacity=".07"/><path fill-rule="evenodd" transform="translate(0 1.2)" fill="#000" opacity=".55" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path fill-rule="evenodd" fill="url(#lgfMetal)" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path d="m29 32.4 2.7 2.7 5.6-6.1" fill="none" stroke="url(#lgfEmerald)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
   <div class="tt"><h1>Debrief Companion</h1><div class="stat" id="stat"><i></i><span id="statT">Starting…</span></div></div>
   <span class="grow"></span>
-  <a class="btn gold" id="web" href="https://debriefme.io/?pc" target="_blank" rel="noopener" title="Opens debriefme.io in your browser. It follows this PC's combat log, so every pull shows up there as it ends.">Open on the website</a>
+  <a class="btn" id="web" href="https://debriefme.io/?pc" target="_blank" rel="noopener" title="Opens debriefme.io in your browser. It follows this PC's combat log, so every pull shows up there as it ends.">Open on the website</a>
   <button class="btn ib" id="gear" type="button" aria-expanded="false" aria-controls="more" title="Settings: your combat log, every pull, updates">⚙</button>
 </header>
 <div class="updbar" id="updbar" hidden><div><b id="updT">Debrief is ready to update</b><span>Update when you aren't raiding. Afterwards, type /reload in WoW.</span></div><button class="btn gold" id="updGo" type="button">Update now</button><button class="btn" id="updLater" type="button">Later</button></div>
@@ -597,6 +608,41 @@ function ring(kind, fill, html, tip) {
   a.setAttribute('stroke-dashoffset', (RING * (1 - fill)).toFixed(1)); a.style.opacity = fill > 0.005 ? '' : '0';
   if ($('ringT').innerHTML !== html) $('ringT').innerHTML = html;
 }
+// (round 482, Nov 1: a Mythic+ key shows its timer, not the raid chart with one dot (Flex's Charonus picture): the key the last boss pull
+// belongs to, its time limit from mplus.js, how many levels it goes up, and the bosses it killed)
+function keyOf(g) { if (!g || !g.last || g.dummy) return null; const b = g.last, runs = (L.ix && L.ix.peek && L.ix.peek().runs) || [];
+  for (let i = runs.length - 1; i >= 0; i--) { const r = runs[i]; if (r.startByte <= b.startByte && (!r.endByte || b.startByte <= r.endByte)) return r; } return null; }
+const keyPar = (r) => ((window.DBF_MPTIMER || {})[String(r.boss || '').toLowerCase().replace(/[’`]/g, '\'')] || 0) * 60;
+const keyUp = (T, P) => (!P || !T ? 0 : T <= P * 0.6 ? 3 : T <= P * 0.8 ? 2 : T <= P ? 1 : 0);
+const keyBosses = (r) => L.items.filter((b) => b.kill && b.startByte >= r.startByte && (!r.endByte || b.startByte <= r.endByte));
+function keyRing(r) {
+  const n = keyBosses(r).length;
+  if (!r.endByte) return ring('on', 1, '<b>Key on</b><span>+' + r.level + ' · ' + n + ' boss' + (n === 1 ? '' : 'es') + ' down</span>', 'A key is on. Its recap pops up when it ends.');
+  const T = r.duration || 0, P = keyPar(r);
+  return ring('go', r.left ? 0.04 : r.kill ? 1 : P && T ? Math.min(1, P / T) : 0.5, '<b>Ready</b><span>for your next key</span>', r.left ? 'You left the last key.' : r.kill ? 'The last key was timed.' : 'The last key went over time.');
+}
+function keyTop(g, r) {
+  const n = keyBosses(r).length, T = r.duration || 0, P = keyPar(r), up = r.kill ? keyUp(T, P) : 0;
+  $('bossK').innerHTML = '<span class="bn">' + esc(r.boss) + ' +' + esc(r.level) + '</span> · <span style="color:#6aa8ff">Mythic+</span> · ' + n + ' boss' + (n === 1 ? '' : 'es') + ' down';
+  $('headT').innerHTML = !r.endByte ? 'Key on. Your recap pops up when it ends.' : r.left ? 'You left the key after ' + mmss(T) + '.' :
+    r.kill ? '<span style="color:var(--em)">Timed</span> in ' + mmss(T) + (P ? ' of ' + mmss(P) : '') + (up ? '. The key goes up ' + up + ' level' + (up > 1 ? 's' : '') + '.' : '.') :
+    '<span style="color:var(--warn)">Over time</span>: ' + mmss(T) + (P ? ' of ' + mmss(P) : '') + '.';
+  $('focT').hidden = true; $('acts').hidden = true;
+}
+function keyBar(r, Wd, H) {
+  const T = r.endByte ? r.duration || 0 : 0, P = keyPar(r), B = keyBosses(r), at = (b) => Math.max(0, (b.startMs + (b.duration || 0) * 1000 - r.startMs) / 1000 - 10); /* (the clock starts 10 s after the key does) */
+  const far = Math.max(T, 1, ...B.map(at)), S = P ? Math.max(P, far) * 1.02 : far * 1.06, pl = 14, pr = 18, X = (s) => pl + (Wd - pl - pr) * Math.min(1, s / S), th = 14, y = Math.max(34, Math.round(H / 2) - 10);
+  const col = !r.endByte ? '#e6b450' : r.left ? '#6c7381' : r.kill ? '#5fdc7a' : '#e8a23a', now = T || far;
+  let s = '<g class="kb"><text x="' + pl + '" y="15" fill="#6c7381" font-size="11" font-weight="600">Key timer' + (P ? ' · time it in ' + mmss(P) : '') + '</text>';
+  s += '<rect x="' + pl + '" y="' + y + '" width="' + (Wd - pl - pr) + '" height="' + th + '" rx="7" fill="#1f2430"/>';
+  s += '<rect x="' + pl + '" y="' + y + '" width="' + Math.max(th, X(now) - pl).toFixed(1) + '" height="' + th + '" rx="7" fill="' + col + '" opacity=".9"/>';
+  if (P) for (const [f, lab] of [[0.6, '+3'], [0.8, '+2'], [1, '+1']]) { const x = X(P * f).toFixed(1);
+    s += '<line x1="' + x + '" x2="' + x + '" y1="' + (y - 5) + '" y2="' + (y + th + 5) + '" stroke="#ece8df" stroke-opacity=".5" stroke-width="1.5"/><text x="' + x + '" y="' + (y - 9) + '" fill="#98a0ad" font-size="11" font-weight="700" text-anchor="middle">' + lab + ' · ' + mmss(P * f) + '</text>'; }
+  B.forEach((b, i) => { const x = X(at(b)), a = x > Wd - 70 ? 'end' : x < 50 ? 'start' : 'middle';
+    s += '<circle cx="' + x.toFixed(1) + '" cy="' + (y + th / 2) + '" r="4.5" fill="#12151c" stroke="#ece8df" stroke-width="1.6"><title>' + esc(b.boss) + ' · ' + mmss(at(b)) + '</title></circle>' +
+      '<text x="' + x.toFixed(1) + '" y="' + (y + th + 17 + (i % 2) * 14) + '" fill="#98a0ad" font-size="11" font-weight="600" text-anchor="' + a + '">' + esc(b.boss) + '</text>'; });
+  return s + '</g>';
+}
 function renderRing() {
   if (L.state === 'nodir') return ring('dim', 0, "<b>Where's WoW?</b><span>show me your WoW folder</span>");
   if (L.state === 'nolog') return ring('dim', 0, '<b>No log yet</b><span>type <kbd>/combatlog</kbd> in WoW</span>');
@@ -610,6 +656,7 @@ function renderRing() {
     /* (nothing is copied any more (Oct 24): the pop-up shows it, and WoW gets it with Save this pull or at the next login) */
     return ring('sent', 1, '<b>✓</b><span>' + (sb.kill ? 'Kill recap is up' : 'Recap is up') + '</span><em>' + ($('pop').checked ? 'in the pop-up' : 'in WoW on /recap') + '</em>', 'Pull ' + sb.pull + "'s recap is " + ($('pop').checked ? 'in the pop-up over the game. ' : 'saved. ') + 'In WoW, /reload brings it into /recap.');
   }
+  { const kr = keyOf(g); if (kr) return keyRing(kr); } /* (round 482: a key) */
   const best = done.reduce((m, b) => { const e = N[b.startByte]; return e && e.l != null ? Math.max(m, 100 - e.l) : m; }, 0);
   if (!L.live) return ring('dim', best / 100, '<b>Older log</b><span>click a dot to send a pull</span>');
   const next = !g ? 'for your first pull' : g.dummy ? 'for your next pull' : 'for pull ' + (lastDone ? lastDone.pull + 1 : 1);
@@ -632,6 +679,7 @@ function renderTop() {
     $('headT').textContent = 'After each boss pull, your recap pops up over the game with a chime.';
     $('focT').hidden = true; $('acts').hidden = true; return;
   }
+  { const kr = keyOf(g); if (kr) { keyTop(g, kr); return; } } /* (round 482: a key) */
   const done = g.list.filter((b) => b.endByte), n = done.length;
   $('bossK').innerHTML = '<span class="bn">' + esc(g.dummy ? 'Training dummy' : g.boss) + '</span>' + (g.dummy ? '' : ' · <span style="color:' + (DIFFC[g.diff] || 'var(--muted)') + '">' + esc(g.diff) + '</span>') +
     ' · ' + n + ' pull' + (n === 1 ? '' : 's') + (L.fresh ? ' tonight' : ' in this log');
@@ -651,6 +699,7 @@ const lerpC = (a, b, t) => { const p = (h) => [1, 3, 5].map((i) => parseInt(h.sl
 function renderNight() {
   const sv = $('night'), g = curGroup(), Wd = Math.max(260, Math.round(sv.clientWidth || 600)), H = Math.max(80, Math.round(sv.clientHeight || 140));
   sv.setAttribute('viewBox', '0 0 ' + Wd + ' ' + H);
+  { const kr = keyOf(g); if (kr) { sv.innerHTML = keyBar(kr, Wd, H); return; } } /* (round 482: a key) */
   const done = g && !g.dummy ? g.list.filter((b) => b.endByte) : [];
   if (!done.length) {
     sv.innerHTML = '<rect x="0.5" y="0.5" width="' + (Wd - 1) + '" height="' + (H - 1) + '" rx="10" fill="rgba(23,26,34,.5)" stroke="#2a2f3b" stroke-dasharray="4 4"/><text x="' + Wd / 2 + '" y="' + (H / 2 + 5) +
