@@ -847,10 +847,7 @@ function UI.switch(side)
     b:SetScript("OnLeave", function() if not (b.key == side and not UI.saved) then b.t:SetTextColor(rgb(COL.muted)) end end)
   end
   sw.line:Hide()
-  sw.saved.t:SetTextColor(rgb(UI.saved and COL.gold or COL.muted))
-  sw.saved:SetScript("OnClick", function() UI.saved = not UI.saved; UI.mp.pick = false; scroller:SetVerticalScroll(0); render() end)
-  sw.saved:SetScript("OnEnter", function() if not UI.saved then sw.saved.t:SetTextColor(rgb(COL.text)) end end)
-  sw.saved:SetScript("OnLeave", function() sw.saved.t:SetTextColor(rgb(UI.saved and COL.gold or COL.muted)) end)
+  sw.saved:Hide() -- (no Saved button (Nov 1, Flex: "the saved pulls are in a different location now"): the drop-downs hold the saved lists)
   sw.title:Hide(); for _, l in ipairs(sw.caret) do l:Hide() end
   pill:Show()
 end
@@ -959,7 +956,7 @@ function UI.dropdown(kind)
     if key == "ESCAPE" then close() end end) end
   local w = math.min(420, W - PAD * 2) local cw0 = CW
   CW = w - 16; useCol(3)
-  local y = kind == "boss" and UI.bossRows(6) or UI.keyRows(6, "YOUR KEYS, NEWEST FIRST", 8)
+  local y = UI.savedList(6, kind == "boss" and "raid" or "mplus") -- (the saved lists live here now (Nov 1))
   useCol(1); CW = cw0
   OC.ddBody:SetSize(w - 16, y); dd:SetSize(w, y + 6)
   dd:ClearAllPoints(); dd:SetPoint("TOPLEFT", card, "TOPLEFT", PAD - 4, -(104 + UI.SW))
@@ -977,25 +974,10 @@ function UI.fitCard(y)
   foot:ClearAllPoints(); foot:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -(TOPY + vh + 19)); foot:SetWidth(W - PAD * 2); foot:SetWordWrap(false)
   card:SetHeight(TOPY + vh + 42)
 end
-function UI.savedView()
-  W = WIDTHS[DB.width or "normal"] or 400; CW = W - PAD * 2
-  card:SetWidth(W); body:SetWidth(CW); scroller:SetWidth(CW); UI.colFrame(false, CW)
-  UI.rounded(card.lineT, "line", 8, COL.line2, 1)
-  UI.switch(nil)
-  bossT:SetText(""); resT:SetText(""); metaT:SetText(""); pill:Hide()
-  for _, c in ipairs(chips) do c:Hide() end
-  tMe:Hide(); tRaid:Hide(); tabLine:Hide(); who:Hide(); prevB:Hide(); nextB:Hide()
-  TOPY = 52
-  scroller:ClearAllPoints(); scroller:SetPoint("TOPLEFT", card, "TOPLEFT", PAD, -TOPY)
-  UI.resetPool(); local y = 4
+-- (the saved lists for one side, drawn where the drop-down is (Nov 1, Flex: "the saved pulls are in a different location now"): raid nights
+-- (tonight open, older ones a tap away) and Other pulls; or keys by day and the dungeon bosses whose key wasn't saved)
+function UI.savedList(y, side)
   local sv = UI.sv
-  if not sv.side then local cq = DB.pulls[DB.cur]; sv.side = (cq and cq.mplus) and "mplus" or "raid" end -- (opens on the side the card was on)
-  local h0 = FS("head", 17, COL.text); h0:SetPoint("TOPLEFT", 0, -y); h0:SetText("Saved pulls"); y = y + 24
-  local bk = FS("bold", 13, COL.gold); bk:SetPoint("TOPLEFT", 0, -y); bk:SetText("‹ Back") -- (back to the card you came from)
-  local bkB = BTN(); bkB:SetPoint("TOPLEFT", -4, -(y - 3)); bkB:SetSize(bk:GetStringWidth() + 8, 20); bkB.label = "back"
-  bkB:SetScript("OnClick", function() UI.saved = false; scroller:SetVerticalScroll(0); render() end)
-  bkB:SetScript("OnEnter", function() bk:SetTextColor(rgb(COL.text)) end); bkB:SetScript("OnLeave", function() bk:SetTextColor(rgb(COL.gold)) end)
-  local s0 = FS("body", 13, COL.muted); s0:SetPoint("LEFT", bk, "RIGHT", 8, 0); s0:SetText("·  tap one to open it"); y = y + 28
   -- (what goes where: raid nights (raid bosses above Normal), other pulls (raid Normal, practice), keys, and dungeon bosses whose key wasn't saved)
   local inKey = {}
   for _, q in ipairs(DB.pulls) do if q.mplus then local nk = nightKey(q); for _, p in ipairs(q.mplus.pulls or {}) do if (p.boss or "") ~= "" then inKey[nk .. "|" .. p.boss] = true end end end end
@@ -1017,19 +999,7 @@ function UI.savedView()
   end
   table.sort(norder, function(a, c) return nights[a].last > nights[c].last end)
   local nOther, nDung = 0, 0; for _, k in ipairs(OO) do nOther = nOther + OT[k].n end; for _, k in ipairs(DO) do nDung = nDung + DT[k].n end
-  -- (the switch: Raid · N nights, Mythic+ · N keys)
-  do
-    local bw = math.floor((CW - 6) / 2)
-    for k, s in ipairs({ { "raid", "Raid", #norder .. (#norder == 1 and " night" or " nights") }, { "mplus", "Mythic+", nKeys .. (nKeys == 1 and " key" or " keys") } }) do
-      local on = sv.side == s[1]; local x = (k - 1) * (bw + 6)
-      local f = RT("BACKGROUND"); f:SetPoint("TOPLEFT", x, -y); f:SetSize(bw, 30); UI.rounded(f, "fill", 5, on and COL.raised or COL.bg, on and 1 or 0.6)
-      local l = RT("BORDER"); l:SetPoint("TOPLEFT", f, "TOPLEFT"); l:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT"); UI.rounded(l, "line", 5, on and COL.line2 or COL.line, 1)
-      local t = FS("bold", 14, on and COL.text or COL.muted); t:SetText(s[2] .. "   |cff" .. COL.faint .. s[3] .. "|r"); t:SetPoint("CENTER", f, "CENTER", 0, 0)
-      local b = BTN(); b:SetPoint("TOPLEFT", x, -y); b:SetSize(bw, 30); b.label = "sv-" .. s[1]; b:SetScript("OnClick", function() sv.side = s[1]; render() end)
-    end
-    y = y + 42
-  end
-  if sv.side == "raid" then
+  if side == "raid" then
     if #norder == 0 then local n = FS("body", 13.5, COL.muted); n:SetPoint("TOPLEFT", 0, -y); n:SetText("No raid nights yet."); y = y + 30 end
     for k, nk in ipairs(norder) do
       local N = nights[nk]
@@ -1070,7 +1040,7 @@ function UI.savedView()
           g.kill and "Kill" or (g.best and ("best " .. math.floor(g.best + 0.5) .. "%") or ""), g.kill and COL.gold or COL.muted, nil, UI.svOpen(g.last), g.boss .. " · " .. g.diff, true) end end
     end
   end
-  UI.fitCard(y)
+  return y
 end
 card:HookScript("OnHide", function() UI.saved = false; UI.bpick = false; if UI.mp then UI.mp.pick = false end; UI.sv.side = nil; UI.sv.older = false; UI.sv.other = false end) -- (a closed card opens on the recap again, not the list)
 -- (the newest saved pull the character you're on was in (Oct 27): the card opens there at login, so a Paladin's card isn't a key the Druid ran)
@@ -1750,7 +1720,6 @@ function UI.mplus(raw)
 end
 local function renderOnce()
   UI.col(1)
-  if UI.saved then UI.savedView(); return end -- (Saved: the list, inside the card (Nov 1))
   local raw = DB.pulls[DB.cur]
   if raw and raw.mplus then UI.mplus(raw); return end -- (a Mythic+ key: the Mythic+ side of the same card (Nov 1))
   local dun0 = raw and raw.h and (raw.h.dungeon or (raw.h.diff or ""):match("^Mythic%+")) -- (a dungeon boss card sits on the Mythic+ side (Nov 1))

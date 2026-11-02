@@ -471,10 +471,7 @@ function cardView() {
   const tabs = !PL.length ? '' : DUN ? '<div class="ktabs solo">' + who + '</div>' /* (no lone Me tab (Nov 1)) */ : '<div class="ktabs"><span data-tab="me" class="' + (VIEW === 'me' ? 'on' : '') + '">Me</span><span data-tab="raid" class="' + (VIEW === 'raid' ? 'on' : '') + '">Raid view</span>' + who + '</div>';
   const reloadLine = LK.reload ? '<div class="krl">Debrief was updated. Type <b>/reload</b> in WoW when you\'re ready.</div>' : ''; /* (goes by itself after the /reload (Oct 24)) */
   let BDD = ''; /* round 477: a drop-down */
-  if (BPICK) { /* (tonight's bosses, from the boss name (Nov 1)): each boss on this night, its pulls, Kill or best %; tap for its newest pull */
-    const G = new Map(); for (const p of (D.night || [])) { const g = G.get(p.boss) || { name: p.boss, n: 0, kill: false, best: null, sb: 0 }; g.n++; g.sb = p.sb; if (p.kill) g.kill = true; if (p.left != null && (g.best == null || p.left < g.best)) g.best = p.left; G.set(p.boss, g); }
-    BDD = '<div class="kpdd"><div class="body0 mpx"><div class="kc"><div class="kh"><b>Tonight\'s bosses</b></div><div class="kb">' + [...G.values()].map((g) => '<div class="kr ksr" data-spull="' + g.sb + '"><span class="kd" style="background:' + (g.kill ? 'var(--good)' : 'var(--bad)') + '"></span><span></span><span><b>' + esc(g.name) + '</b> <em>' + g.n + (g.n === 1 ? ' pull' : ' pulls') + '</em><i class="ar">›</i>' + (g.kill ? '<i class="kl">Kill</i>' : g.best != null ? '<i>best ' + Math.round(g.best) + '%</i>' : '') + '</span></div>').join('') + '</div></div></div></div>';
-  }
+  if (BPICK) BDD = '<div class="kpdd"><div class="body0 mpx">' + savedList('raid') + '</div></div>'; /* (your raid nights, from the boss name (Nov 1): tonight open, older nights a tap away, Other pulls at the bottom) */
   return reloadLine + '<div class="ksticky">' + esc(H.boss) + ' · ' + esc(res) + '</div>' + (BDD ? head.replace('</button></div>', '</button></div>' + BDD) : head) + pulls + tabs + stopRow() + '<div class="kgrid one"><div class="kL">' + L + Rt + '</div></div>';
 }
 // ---------- the Mythic+ run recap (Nov 1): a Run tab and a tab per pull; Me (you, or anyone with ‹ ›) and Group (Nov 1, Flex: "filter by
@@ -486,7 +483,7 @@ let SAVED = false, MPICK = false, BPICK = false;
 const dayOf = (n) => { if (!n) return ''; const k = (ms) => new Date(ms - 6 * 3600e3).toISOString().slice(0, 10).replace(/-/g, '');
   if (n === k(Date.now())) return 'today'; if (n === k(Date.now() - 864e5)) return 'yesterday';
   return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+n.slice(4, 6) - 1] + ' ' + (+n.slice(6, 8)); };
-const topBar = (side) => '<div class="top">' + LOGO + '<b>Debrief</b>' + (side ? swRow(side) : '') + '<button class="sv' + (SAVED ? ' on' : '') + '" type="button" data-saved="1">Saved</button><button class="x" type="button" title="Close (it comes back after the next pull)" data-close="1">✕</button></div>';
+const topBar = (side) => '<div class="top">' + LOGO + '<b>Debrief</b>' + (side ? swRow(side) : '') + '<button class="x" type="button" title="Close (it comes back after the next pull)" data-close="1">✕</button></div>';
 function swRow(side) { const S0 = D.saved || {}, nk = (S0.keys || []).length, dun0 = !!((D.card && D.card.h && D.card.h.dungeon) || (D.h && D.h.dungeon)); if (dun0) side = 'mplus'; /* (a dungeon boss card sits on the Mythic+ side, never Raid (Nov 1)) */ const rb = side === 'raid' && D.h && !dun0 ? D.h.boss : S0.lastRaidBoss || 'no raid pulls yet';
   return '<div class="ksw"><span data-sw="raid" class="' + (side === 'raid' ? 'on' : '') + '">Raid<small>' + esc(rb) + '</small></span><span data-sw="mplus" class="' + (side === 'mplus' ? 'on' : '') + '">Mythic+<small>' + (nk ? nk + (nk === 1 ? ' key' : ' keys') : 'no keys yet') + '</small></span></div>'; }
 const caretSvg = (up) => '<svg class="kcar" viewBox="0 0 12 8" width="12" height="8"><path d="' + (up ? 'M1 7 L6 2 L11 7' : 'M1 1 L6 6 L11 1') + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -507,6 +504,9 @@ function keyRows(title, limit, heads) { const L0 = (D.saved || {}).keys || [], L
   if (!L0.length) out = '<p class="kno">No keys yet. Run a key with Debrief Companion on.</p>';
   if (L0.length > n) out += '<p class="kold" data-svolder="1">Show older (' + (L0.length - n) + ')</p>';
   return out; }
+// (the saved lists, one side, for the drop-downs (Nov 1, Flex: "the saved pulls are in a different location now"): raid nights (tonight open) and
+// Other pulls; or keys by day and Dungeon bosses whose key wasn't saved)
+function savedList(side) { const v = SV.side; SV.side = side; const h = savedView().replace(/^[\s\S]*?<\/div>(?=<div class="kc">|<p class="kno">|<div class="kc"><div class="kh">)/, ''); SV.side = v; return h; }
 // (Saved, short: the Raid | Mythic+ switch, then nights or keys, then the leftovers in one closed line)
 function savedView() { const S0 = D.saved || {}, nights = S0.nights || [], nk = (S0.keys || []).length; if (!SV.side) SV.side = D.mplus ? 'mplus' : 'raid';
   let h = '<p class="mph">Saved pulls<small><button class="kbk" type="button" data-saved="1">‹ Back</button>· tap one to open it</small></p>' +
@@ -703,7 +703,7 @@ function renderMplus() {
       ppl.map((q) => [q, o.dmg[q.name] || 0, o.heal[q.name] || 0]).sort((a, b) => b[1] - a[1]).map(([q, d, hh]) => '<tr><td>' + nm(q.name) + '</td><td class="r">' + kN(d) + '</td><td class="r">' + (hh ? kN(hh) : '—') + '</td></tr>').join('') + '</table>']);
   }
   const c0 = run.clock || {}, kmeta = [stat, c0.time ? mmssP(c0.time) + (c0.par ? ' of ' + mmssP(c0.par) : '') : run.timeMs ? mmssP(run.timeMs / 1000) : '', c0.up ? 'up ' + c0.up + (c0.up === 1 ? ' level' : ' levels') : '', R.pulls.length + (R.pulls.length === 1 ? ' pull' : ' pulls'), dayOf(D.saved && D.saved.keys && (D.saved.keys.find((k) => k.sb === D.saved.lastKey) || {}).night)].filter(Boolean).join(' · ');
-  const khead = '<div class="khead"><div><button class="kbn kpick" type="button" data-mpick="1">' + esc(run.dungeon) + ' +' + run.level + caretSvg(MPICK) + '</button>' + (MPICK ? '<div class="kpdd">' + keyRows('Your keys, newest first') + '</div>' : '') + '<div class="kmeta">' + kmeta + '</div></div><span class="kres' + (run.timed && !run.left ? ' k' : '') + '">' + stat + '</span></div>';
+  const khead = '<div class="khead"><div><button class="kbn kpick" type="button" data-mpick="1">' + esc(run.dungeon) + ' +' + run.level + caretSvg(MPICK) + '</button>' + (MPICK ? '<div class="kpdd"><div class="body0 mpx">' + savedList('mplus') + '</div></div>' : '') + '<div class="kmeta">' + kmeta + '</div></div><span class="kres' + (run.timed && !run.left ? ' k' : '') + '">' + stat + '</span></div>';
   app.innerHTML = topBar('mplus') + '<div class="body mpx mpk">' + khead + (chips + '<div class="kgrid one"><div class="kL">' + body + '</div></div>' /* (two columns when it's long, as the raid card (Nov 1)) */) + '</div><div class="foot"><button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">Your key, pull by pull</span></div>';
   fit();
 }
