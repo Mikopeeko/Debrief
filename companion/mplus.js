@@ -45,10 +45,11 @@ const LISTS = {
   'temple of sethraliss': { kick: ['Poisoned Cheap Shot', 'Addle Mind', 'Poison Spit', 'Essence Disruption', 'Flame Shock'], chan: ['Essence Disruption'],
     dispel: ['Cytotoxin', 'Imbued Conduction'], purge: ['Accumulate Charge'], dodge: ['Burrow'] },
 };
-// (each dungeon's timer in minutes (Nov 1, Flex: "yea" to the timer story): Wowhead's Season 2 table and each dungeon's own page agree, except
-// Altar of Fangs: 29 on its page, 30 in the table (which says it's from the PTR), so its page wins. Two levels at 80% of the timer and three at
-// 60%, as since Battle for Azeroth)
-const TIMER = { 'altar of fangs': 29, 'murder row': 34, 'den of nalorakk': 32, 'the blinding vale': 31, 'voidscar arena': 30, 'kings\' rest': 33, 'temple of sethraliss': 33, 'ruby life pools': 28 };
+// (each dungeon's timer in minutes (Nov 1, Flex: "yea" to the timer story), from Raider.IO's static data for Midnight (its keystone_timer_seconds,
+// read from the game), which agrees with the 12.1 final tuning (Icy Veins, Blizzard's Oct 13 post): Altar of Fangs 30, The Blinding Vale 30 and
+// Temple of Sethraliss 32 (Nov 1: they were 29, 31 and 33 here, from older pages). Two levels at 80% of the timer and three at 60%, as since
+// Battle for Azeroth)
+const TIMER = { 'altar of fangs': 30, 'murder row': 34, 'den of nalorakk': 32, 'the blinding vale': 30, 'voidscar arena': 30, 'kings\' rest': 33, 'temple of sethraliss': 32, 'ruby life pools': 28 };
 const lc = (s) => String(s || '').toLowerCase().replace(/[’`]/g, '\'');
 const listFor = (dungeon) => { const L = LISTS[lc(dungeon)]; if (!L) return null; const S = (a) => new Set((a || []).map(lc));
   return { kick: S(L.kick), chan: S(L.chan), ccCast: new Map((L.cc || []).map(([c, r]) => [lc(r), c])), dispel: S(L.dispel), purge: S(L.purge), dodge: S(L.dodge), own: S(L.own), pool: S(L.pool) }; };
