@@ -252,6 +252,15 @@ html, body { font-weight: 500; } .body b { font-weight: 600; } .kyou { border-le
 .body.mpx.mpk .kt.g b { color: var(--goodT); } .body.mpx.mpk .kgood { margin: 6px 0 2px 2px; } .body.mpx.mpk .kmore { padding-left: 19px; }
 .pulls.mpx-p .pc:not(.run) { background: rgba(229,83,75,.13); } .pulls.mpx-p .pc.k { background: rgba(69,193,92,.12); } .pulls.mpx-p .pc.n:not(.run) { background: rgba(232,162,58,.12); }
 .pulls.mpx-p .pc.n > i { background: var(--warn); } .pulls.mpx-p .pc.boss { font-weight: 700; }
+/* round 477: the key and boss pickers as a small drop-down over the card */
+.khead { position: relative; }
+.kpdd { position: absolute; left: 0; top: calc(100% + 4px); z-index: 40; width: min(420px, calc(100vw - 28px)); max-height: min(60vh, 420px); overflow: auto; background: var(--raised); border: 1px solid var(--line2, #353b48); border-radius: 8px; box-shadow: 0 12px 32px rgba(0,0,0,.55); padding: 4px 8px 6px; }
+.kpdd.kpdd .kc { background: none !important; border: 0 !important; margin: 0 !important; }
+.kpdd.kpdd .kh { padding: 6px 4px 2px !important; cursor: default; }
+.kpdd.kpdd .kh b { font: 700 12px Barlow Condensed, sans-serif !important; letter-spacing: .08em !important; text-transform: uppercase !important; color: var(--muted) !important; }
+.kpdd.kpdd .kb { padding: 0 !important; }
+.kpdd.kpdd .kr { padding: 6px 4px; border-radius: 5px; cursor: pointer; }
+.kpdd.kpdd .kr:hover { background: rgba(255,255,255,.05); }
 </style>
 </head>
 <body>
@@ -459,11 +468,12 @@ function cardView() {
   const who = VIEW === 'me' && PL.length > 1 ? '<span class="kwho"><button type="button" data-who="-1" title="The player before">‹</button>' + (me ? nmH(me.name) : '<b class="knm" style="color:var(--faint)">Not in this pull</b>') + '<button type="button" data-who="1" title="The next player">›</button></span>' : '';
   const tabs = !PL.length ? '' : DUN ? '<div class="ktabs solo">' + who + '</div>' /* (no lone Me tab (Nov 1)) */ : '<div class="ktabs"><span data-tab="me" class="' + (VIEW === 'me' ? 'on' : '') + '">Me</span><span data-tab="raid" class="' + (VIEW === 'raid' ? 'on' : '') + '">Raid view</span>' + who + '</div>';
   const reloadLine = LK.reload ? '<div class="krl">Debrief was updated. Type <b>/reload</b> in WoW when you\'re ready.</div>' : ''; /* (goes by itself after the /reload (Oct 24)) */
+  let BDD = ''; /* round 477: a drop-down */
   if (BPICK) { /* (tonight's bosses, from the boss name (Nov 1)): each boss on this night, its pulls, Kill or best %; tap for its newest pull */
     const G = new Map(); for (const p of (D.night || [])) { const g = G.get(p.boss) || { name: p.boss, n: 0, kill: false, best: null, sb: 0 }; g.n++; g.sb = p.sb; if (p.kill) g.kill = true; if (p.left != null && (g.best == null || p.left < g.best)) g.best = p.left; G.set(p.boss, g); }
-    return reloadLine + head + '<div class="body0 mpx"><div class="kc"><div class="kh"><b>Tonight\'s bosses</b></div><div class="kb">' + [...G.values()].map((g) => '<div class="kr ksr" data-spull="' + g.sb + '"><span class="kd" style="background:' + (g.kill ? 'var(--good)' : 'var(--bad)') + '"></span><span></span><span><b>' + esc(g.name) + '</b> <em>' + g.n + (g.n === 1 ? ' pull' : ' pulls') + '</em><i class="ar">›</i>' + (g.kill ? '<i class="kl">Kill</i>' : g.best != null ? '<i>best ' + Math.round(g.best) + '%</i>' : '') + '</span></div>').join('') + '</div></div></div>';
+    BDD = '<div class="kpdd"><div class="body0 mpx"><div class="kc"><div class="kh"><b>Tonight\'s bosses</b></div><div class="kb">' + [...G.values()].map((g) => '<div class="kr ksr" data-spull="' + g.sb + '"><span class="kd" style="background:' + (g.kill ? 'var(--good)' : 'var(--bad)') + '"></span><span></span><span><b>' + esc(g.name) + '</b> <em>' + g.n + (g.n === 1 ? ' pull' : ' pulls') + '</em><i class="ar">›</i>' + (g.kill ? '<i class="kl">Kill</i>' : g.best != null ? '<i>best ' + Math.round(g.best) + '%</i>' : '') + '</span></div>').join('') + '</div></div></div></div>';
   }
-  return reloadLine + '<div class="ksticky">' + esc(H.boss) + ' · ' + esc(res) + '</div>' + head + pulls + tabs + stopRow() + '<div class="kgrid one"><div class="kL">' + L + Rt + '</div></div>';
+  return reloadLine + '<div class="ksticky">' + esc(H.boss) + ' · ' + esc(res) + '</div>' + (BDD ? head.replace('</button></div>', '</button></div>' + BDD) : head) + pulls + tabs + stopRow() + '<div class="kgrid one"><div class="kL">' + L + Rt + '</div></div>';
 }
 // ---------- the Mythic+ run recap (Nov 1): a Run tab and a tab per pull; Me (you, or anyone with ‹ ›) and Group (Nov 1, Flex: "filter by
 // player too, so the user can see their own individual performance as well as others individual performance") ----------
@@ -666,9 +676,10 @@ function renderMplus() {
       '<p class="kwhy">' + (b.cc ? 'It needs a stun or other crowd control.' : b.ready.size ? 'Kick ready: ' + [...b.ready].sort((x, y) => y[1] - x[1]).slice(0, 3).map(([n, c]) => nm(n) + ' (' + c + ')').join(', ') + '.' : 'Nobody had a kick ready.') + '</p>' + pch(b.pulls), 'r:mpw:' + sp)), [nT + ' got through', nT > 5 ? 'r' : 'w']);
     body += sec('Avoidable damage', avRows(R.pulls.flatMap((q) => (q.avoid || []).map((a) => Object.assign({ pull: q.n }, a))), true, 'g'), [(R.avoid || 0) + (R.avoid === 1 ? ' hit' : ' hits'), 'w']);
     body += sec('Dispels and purges', dpRows(R.pulls.flatMap((q) => q.debs || []), R.pulls.flatMap((q) => q.ebuffs || [])));
-    const rk = ppl.filter((q) => q.rot && q.rot.fix.length);
-    body += sec('Rotation across the key', rk.map((q) => { const f = q.rot.fix[0]; return rv(RS[f.st] || 'warn', f.ic ? ic(f.ic) : '', nm(q.name) + ': ' + esc(f.label), q.rot.fix.length > 1 ? 'and ' + (q.rot.fix.length - 1) + ' more' : '', inPv(f.pulls.length, q.rot.pulls),
-      q.rot.fix.map((g) => '<p class="kwhy"><b>' + esc(g.label) + '</b>: ' + inPv(g.pulls.length, q.rot.pulls) + '</p>').join('') + (f.tip ? '<p class="knx"><b>Next time:</b> ' + esc(f.tip) + '</p>' : '') + pch(f.pulls), 'r:mpgk:' + q.name); }), rk.length ? [rk.length + (rk.length === 1 ? ' player' : ' players') + ' to fix', worstOf(rk.map((q) => q.rot.fix[0]), 'st')] : null);
+    /* round 477: Group is the key's performance pull by pull, not each player's rotation (Flex) */
+    body += sec('The key, pull by pull', ['<table class="mpt"><tr><th>Pull</th><th class="r">Time</th><th class="r">Group DPS</th><th class="r">Got through</th>' + (R.list ? '<th class="r">Avoidable</th>' : '') + '<th class="r">Deaths</th></tr>' +
+      R.pulls.map((q) => { const gd = Object.values(q.dmg || {}).reduce((a, v) => a + (v || 0), 0), th = q.through.length, av = (q.avoid || []).reduce((a, x) => a + x.n, 0), d = q.deaths.length;
+        return '<tr data-mp="' + q.n + '" title="Open this pull"><td>' + (q.boss ? esc(q.boss) : 'Pull ' + q.n) + '</td><td class="r">' + mmssP(q.dur) + '</td><td class="r">' + kN(gd) + '</td><td class="r"' + (th ? ' style="color:' + (th > 2 ? 'var(--badT)' : 'var(--warn)') + '"' : '') + '>' + th + '</td>' + (R.list ? '<td class="r"' + (av ? ' style="color:var(--warn)"' : '') + '>' + av + '</td>' : '') + '<td class="r"' + (d ? ' style="color:var(--badT)"' : '') + '>' + d + '</td></tr>'; }).join('') + '</table>'], [R.pulls.length + ' pulls', '']);
     body += sec('Everyone', ['<table class="mpt"><tr><th>Player</th><th class="r">DPS / HPS</th><th class="r">Kicks</th><th class="r">Stops</th><th class="r">Dispels</th>' + (R.list ? '<th class="r">Avoidable</th>' : '') + '<th class="r">Defensives</th><th class="r">Deaths</th></tr>' +
       ppl.map((q) => '<tr><td>' + nm(q.name) + ' <span style="color:var(--faint)">' + esc(q.spec) + '</span></td><td class="r"' + (PQ(q.parse) ? ' style="color:' + PQ(q.parse) + ';font-weight:700"' : '') + '>' + (heal(q) ? kN(q.hps) + ' HPS' : kN(q.dps)) + '</td><td class="r">' + q.kicks + '</td><td class="r">' + q.stops + '</td><td class="r">' + (q.dispels + (q.purges || 0)) + '</td>' + (R.list ? '<td class="r"' + (q.avoid ? ' style="color:var(--warn)"' : '') + '>' + (q.avoid || 0) + '</td>' : '') + '<td class="r">' + q.defs + '</td><td class="r"' + (q.deaths ? ' style="color:var(--badT)"' : '') + '>' + q.deaths + '</td></tr>').join('') + '</table>'], [ppl.length + ' players', '']);
   } else {
@@ -676,13 +687,12 @@ function renderMplus() {
     const oav = o.avoid || [], oavN = oav.reduce((a, x) => a + x.n, 0);
     body += sec('Avoidable damage', avRows(oav, true, 'g:' + o.n), [oavN + (oavN === 1 ? ' hit' : ' hits'), 'w']);
     // (kicks and stops, by player: what they stopped and with what)
-    const per = new Map(); for (const x of o.kicks.concat(o.stops)) { if (!per.has(x.who)) per.set(x.who, { k: 0, s: 0, with: new Map() }); const q = per.get(x.who); if (o.kicks.includes(x)) q.k++; else { q.s++; q.with.set(x.with, (q.with.get(x.with) || 0) + 1); } }
-    body += sec('Kicks and stops', [...per].sort((a, b) => (b[1].k + b[1].s) - (a[1].k + a[1].s)).map(([n, q]) => rv('okq', '', '', nm(n) + ': ' + [q.k ? q.k + (q.k === 1 ? ' kick' : ' kicks') : '', q.s ? q.s + (q.s === 1 ? ' stop' : ' stops') + ' (' + [...q.with].map(([w, c]) => esc(w) + (c > 1 ? ' ×' + c : '')).join(', ') + ')' : ''].filter(Boolean).join(', ') + '.', String(q.k + q.s))), [o.kicks.length + ' kicks · ' + o.stops.length + ' stops', 'g']);
+    /* round 477: what each player kicked or stopped (Flex: "this should show what they kicked") */
+    const per = new Map(); for (const x of o.kicks.concat(o.stops)) { if (!per.has(x.who)) per.set(x.who, { k: new Map(), s: new Map(), n: 0 }); const q = per.get(x.who), m = o.kicks.includes(x) ? q.k : q.s; m.set(x.spell, (m.get(x.spell) || 0) + 1); q.n++; }
+    const lst = (m) => [...m].sort((a, b) => b[1] - a[1]).map(([sp, c]) => '<b>' + esc(sp) + '</b>' + (c > 1 ? ' ×' + c : '')).join(', ');
+    body += sec('Kicks and stops', [...per].sort((a, b) => b[1].n - a[1].n).map(([n, q]) => rv('okq', '', '', nm(n) + ': ' + [q.k.size ? 'kicked ' + lst(q.k) : '', q.s.size ? 'stopped ' + lst(q.s) : ''].filter(Boolean).join('; ') + '.', String(q.n))), [o.kicks.length + ' kicks · ' + o.stops.length + ' stops', 'g']);
     body += sec('Deaths', o.deaths.map((x) => deathRow(x)), [o.deaths.length + (o.deaths.length === 1 ? ' death' : ' deaths'), 'r']);
-    const rp = ppl.filter((q) => rotOf(o, q.name));
-    body += sec('Rotation', rp.map((q) => { const r = rotOf(o, q.name), f = r.fix[0];
-      return rv(f ? RS[f[0]] || 'warn' : 'ok', f && f[1] ? ic(f[1]) : '', nm(q.name) + (f ? ': ' + esc(f[2]) : ''), f ? (r.fix.length > 1 ? 'and ' + (r.fix.length - 1) + ' more' : '') : 'nothing to fix', f ? esc(ofV(f[3])) : '',
-        f ? r.fix.map((g) => (g[5] != null ? '<p class="kwhy"><b>' + esc(g[2]) + '</b> ' + esc(ofV(g[3])) + (g[5] ? '. <b style="color:var(--gold)">Next time:</b> ' + esc(g[5]) : '') + '</p>' : whyL(g[2], g[4]) || '<p class="kwhy"><b>' + esc(g[2]) + '</b> ' + esc(ofV(g[3])) + '</p>')).join('') : '', 'r:mpgp:' + o.n + ':' + q.name); }));
+    /* round 477: no rotation on Group */
     const dpl = new Map(); for (const x of o.defs) dpl.set(x.who, (dpl.get(x.who) || []).concat(x.name));
     body += sec('Defensives', [...dpl].map(([n, l]) => rv('info', '', '', nm(n) + ': ' + esc([...new Set(l)].join(', ')) + '.', String(l.length))), [String(o.defs.length), '']);
     body += sec('Dispels and purges', dpRows(o.debs, o.ebuffs).concat(o.dispels.length ? [rv('okq', '', '', (o.dispels.length === 1 ? 'Dispel' : 'Dispels') + ': ' + [...new Set(o.dispels.map((x) => x.who))].map(nm).join(', ') + '.', String(o.dispels.length))] : [])
@@ -691,8 +701,8 @@ function renderMplus() {
       ppl.map((q) => [q, o.dmg[q.name] || 0, o.heal[q.name] || 0]).sort((a, b) => b[1] - a[1]).map(([q, d, hh]) => '<tr><td>' + nm(q.name) + '</td><td class="r">' + kN(d) + '</td><td class="r">' + (hh ? kN(hh) : '—') + '</td></tr>').join('') + '</table>']);
   }
   const c0 = run.clock || {}, kmeta = [stat, c0.time ? mmssP(c0.time) + (c0.par ? ' of ' + mmssP(c0.par) : '') : run.timeMs ? mmssP(run.timeMs / 1000) : '', c0.up ? 'up ' + c0.up + (c0.up === 1 ? ' level' : ' levels') : '', R.pulls.length + (R.pulls.length === 1 ? ' pull' : ' pulls'), dayOf(D.saved && D.saved.keys && (D.saved.keys.find((k) => k.sb === D.saved.lastKey) || {}).night)].filter(Boolean).join(' · ');
-  const khead = '<div class="khead"><div><button class="kbn kpick" type="button" data-mpick="1">' + esc(run.dungeon) + ' +' + run.level + caretSvg(MPICK) + '</button><div class="kmeta">' + kmeta + '</div></div><span class="kres' + (run.timed && !run.left ? ' k' : '') + '">' + stat + '</span></div>';
-  app.innerHTML = topBar('mplus') + '<div class="body mpx mpk">' + khead + (MPICK ? keyRows('Your keys, newest first') : chips + '<div class="kgrid one"><div class="kL">' + body + '</div></div>' /* (two columns when it's long, as the raid card (Nov 1)) */) + '</div><div class="foot"><button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">Your key, pull by pull</span></div>';
+  const khead = '<div class="khead"><div><button class="kbn kpick" type="button" data-mpick="1">' + esc(run.dungeon) + ' +' + run.level + caretSvg(MPICK) + '</button>' + (MPICK ? '<div class="kpdd">' + keyRows('Your keys, newest first') + '</div>' : '') + '<div class="kmeta">' + kmeta + '</div></div><span class="kres' + (run.timed && !run.left ? ' k' : '') + '">' + stat + '</span></div>';
+  app.innerHTML = topBar('mplus') + '<div class="body mpx mpk">' + khead + (chips + '<div class="kgrid one"><div class="kL">' + body + '</div></div>' /* (two columns when it's long, as the raid card (Nov 1)) */) + '</div><div class="foot"><button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">Your key, pull by pull</span></div>';
   fit();
 }
 function render() {
@@ -785,7 +795,9 @@ function cols2(b, chrome) {
   if (want !== COLS) { COLS = want; post('cols:' + want); }
 }
 window.addEventListener('resize', () => fit()); /* (the app widened or narrowed the window: measure again) */
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && (MPICK || BPICK)) { MPICK = false; BPICK = false; render(); } }); /* round 477 */
 document.addEventListener('click', (e) => {
+  if ((MPICK || BPICK) && !(e.target.closest && e.target.closest('.kpdd, [data-mpick], [data-bpick]'))) { MPICK = false; BPICK = false; render(); return; } /* round 477: outside the drop-down closes it */
   const t = e.target.closest ? e.target.closest('[data-fold],[data-row],[data-close],[data-open],[data-big],[data-cut],[data-cutt],[data-pull],[data-tab],[data-cf],[data-cr],[data-cmore],[data-who],[data-saved],[data-bpick],[data-svside],[data-svnight],[data-svother],[data-svolder],[data-sw],[data-key],[data-spull],[data-mpick],[data-mp],[data-mview],[data-mwstep],[data-mwho]') : null; if (!t) return;
   if (t.dataset.bpick) { BPICK = !BPICK; render(); return; } /* (the boss picker (Nov 1)) */
   if (t.dataset.svside) { SV.side = t.dataset.svside; SV.other = false; render(); return; } /* (Saved: Raid or Mythic+ (Nov 1)) */
