@@ -5044,6 +5044,11 @@ function buildUlatek(ev, r, h) {
   // a map couldn't show the individual waves.)
   const WAVE_V = 12.5, wvHits = auraId(UL.wave).filter((e) => h.isPlayer(e.dst) && (e.op === 'apply' || e.op === 'dose'));
   const tailW = ev.filter((e) => e.k === 'cast' && e.id === UL.waveTail && e.face != null && e.x != null);
+  // (for the Timeline replay (Nov 2): each tail wave as [time, x, y, and the way it rolls], and every Fester Burst and Mephitic Thrash
+  // cast as [time, 1 for its start or 0 when it goes off, the caster], so the map can show the Wretch's bubble and the tail's slam)
+  r.ulFx = { waves: tailW.map((c) => [+c.t.toFixed(2), +(+c.x).toFixed(2), +(+c.y).toFixed(2), +(-Math.sin(c.face)).toFixed(4), +Math.cos(c.face).toFixed(4)]),
+    fester: ev.filter((e) => (e.k === 'start' || e.k === 'cast') && e.id === UL.fester).map((e) => [+e.t.toFixed(2), e.k === 'start' ? 1 : 0, e.src]),
+    thrash: ev.filter((e) => (e.k === 'start' || e.k === 'cast') && e.id === UL.thrash).map((e) => [+e.t.toFixed(2), e.k === 'start' ? 1 : 0, e.src]) };
   // Ula'tek's own waves (and the tail's in their joint Stage 1 cast) go out from the platform's edge toward the middle for
   // about 12 s; in Stage 3 they start during her 4.5 s cast bar (measured on six Mythic pulls)
   const incOn = dmgId(UL.incubHit), incCasts = castsOf(UL.incub), wvTicks = dmgId(UL.wave);
