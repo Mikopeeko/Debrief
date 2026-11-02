@@ -2032,6 +2032,7 @@ const PATCH_NOTES = [
     "Debriefing Timeline replay, Ula'tek: the platform stays whole until phase 3, then you see it break.",
     "Debriefing Timeline replay, tidier map: circles no longer carry long text over the players. Point at one to see what it is, and the map's Key has one line per kind.",
     "Debriefing Timeline replay: click any name, on the map or in the play-by-play, to follow that player. Everyone else fades, everything on Debriefing follows them, the replay stays where it was, and Show everyone goes back.",
+    "Debriefing Timeline replay on a computer: Space plays or pauses, and the arrow keys step to the previous or next mistake.",
     "The Coiled Altar's maps: the poison pools are drawn at their real size, a little smaller than before.",
     "Debriefing Timeline: a You and Top guilds lane under the replay shows your phase pushes, deaths, mistakes and Lust next to the 20 fastest kills (The Coiled Altar for now). Click the lane to move the replay there.",
     "Mythic+ tab, less to read: Your group is one table with each player's DPS, kicks, CC, deaths, defensives and big cooldowns. The map's controls sit in one bar, with the floors and layers on the map. The long pull list and route chart are gone: each pull's details are on its tile, its hover and its card, and the map's first line says where your enemy count ended.",
@@ -34885,7 +34886,7 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
     var stepTxt = function (k) { var c2 = typeof k === 'number' ? bad.indexOf(k) : -1; return c2 >= 0 ? (c2 + 1) + ' of ' + bad.length + ' to review' : bad.length ? bad.length + ' to review' : 'Nothing to review'; };
     var pk = P.pick, at = tOf(pk);
     var nOk = show.filter(function (i) { return M[i].st === 'ok'; }).length, nBd = bad.filter(function (i) { return !M[i].death; }).length, nD = bad.filter(function (i) { return M[i].death; }).reduce(function (a, i) { return a + (GM[i] ? GM[i].length : 1); }, 0);
-    var bar = '<div class="dtm-bar"><span class="dtm-tb">This pull<em>' + mm(Math.round(X.LEN)) + '</em></span><span class="dtm-cn"><b class="g">✓ ' + nOk + '</b> done right · <b class="y">' + nBd + '</b> mistake' + (nBd === 1 ? '' : 's') + ' · <b class="r">☠ ' + nD + '</b> death' + (nD === 1 ? '' : 's') + '</span><span class="dtm-sp"></span><span class="dtm-step"><button type="button" data-step="-1" aria-label="Previous mistake or death">◀</button><span>' + stepTxt(pk) + '</span><button type="button" data-step="1" aria-label="Next mistake or death">▶</button></span></div>';
+    var bar = '<div class="dtm-bar"><span class="dtm-tb">This pull<em>' + mm(Math.round(X.LEN)) + '</em></span><span class="dtm-cn"><b class="g">✓ ' + nOk + '</b> done right · <b class="y">' + nBd + '</b> mistake' + (nBd === 1 ? '' : 's') + ' · <b class="r">☠ ' + nD + '</b> death' + (nD === 1 ? '' : 's') + '</span><span class="dtm-sp"></span><span class="dtm-step"><button type="button" data-step="-1" aria-label="Previous mistake or death" title="Previous mistake or death (left arrow)">◀</button><span>' + stepTxt(pk) + '</span><button type="button" data-step="1" aria-label="Next mistake or death" title="Next mistake or death (right arrow)">▶</button></span></div>';
     /* (the lanes fit this pull plus a little room, so its marks don't pile up; the top guilds' later phases are an arrow at the end) */
     var end = Math.max(X.LEN, wipeT || 0, 1), topP1 = T ? Math.round((T.p1[0] + T.p1[1]) / 2) : 0, topP2 = T ? topP1 + T.p2[0] : 0, axEnd = Math.max(60, Math.ceil(end * 1.12 / 15) * 15); box._axEnd = axEnd; box._end = end;
     var XP = function (t) { return Math.max(0, Math.min(100, t / axEnd * 100)); };
@@ -35006,6 +35007,7 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
         var pmap = new Map(); rep.players.forEach(function (p) { if (p && p.name) pmap.set(p.name, p); }); box._names = byN;
         mb.innerHTML = w.miniMap(mp, pmap);
         mb.addEventListener('input', function (ev) { if (ev.isTrusted) P.seek = true; }, true); /* (a drag on the slider counts as a jump) */
+        var pbT = mb.querySelector('.zplay'); if (pbT) pbT.title = 'Play or pause (Space)';
         if (w.bindZoom) w.bindZoom(mb); if (w.bindAnim) w.bindAnim(mb, mp, pmap); if (w.hydrateMapIcons) w.hydrateMapIcons(mb);
         var seekT = P.mt != null ? P.mt : at; var rg = mb.querySelector('.zrange'); if (rg) { rg.value = Math.max(0, Math.min(fr.length - 1, Math.round(seekT / STEP))); rg.dispatchEvent(new Event('input')); } grow(); fade(seekT); crack(seekT); banner(seekT); tlm(seekT);
         mb._onFrame = function (ft) { P.mt = ft; grow(); fade(ft); crack(ft); banner(ft); tlm(ft); var hd = box.querySelector('.dtm-head'); if (hd) hd.style.left = XP(ft) + '%'; var nw = box.querySelector('.dtm-now'); if (nw) { var N1 = nowOf(ft); nw.className = 'dtm-now lv-' + N1.lv; nw.innerHTML = N1.html; }
@@ -35050,6 +35052,13 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
       pickI(+b.dataset.ti); });
     /* (scrolling the list yourself stops it following until you press Play or pick a moment) */
     box.addEventListener('pointerdown', function (e) { box._pd = { el: e.target, x: e.clientX, y: e.clientY }; }, true);
+    /* (keys while the replay is on screen: Space plays or pauses, the arrows step through the mistakes like ◀ ▶; never while typing in a box
+       or with Ctrl, Alt, Shift or Cmd held (Flex, Nov 2: "Yes, add them")) */
+    box._keys = function (k) { if (k === ' ') { var pb = box.querySelector('.dtm-mm .zplay'); if (pb) pb.click(); return; } var st = box.querySelector('[data-step="' + (k === 'ArrowLeft' ? -1 : 1) + '"]'); if (st) st.click(); };
+    if (!window.__dtmKeys) { window.__dtmKeys = 1; document.addEventListener('keydown', function (e) { if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return; var k = e.key; if (k !== ' ' && k !== 'ArrowLeft' && k !== 'ArrowRight') return;
+      var a = document.activeElement, tg = a && a.tagName; if (tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'SELECT' || (a && a.isContentEditable)) return;
+      var bx = document.querySelector('section.dbt.dtm-on .dtm'); if (!bx || !bx._keys) return; var r0 = bx.getBoundingClientRect(); if (r0.bottom < 80 || r0.top > innerHeight - 80) return; /* (only while the replay is on screen) */
+      e.preventDefault(); bx._keys(k); }); }
     var mine = function (e) { if (e.target.closest && e.target.closest('.dtm-pb')) P.userScroll = true; }; box.addEventListener('wheel', mine, { passive: true }); box.addEventListener('touchmove', mine, { passive: true });
     box.addEventListener('mouseover', function (e) { var b = e.target.closest && e.target.closest('[data-tt]'); if (!b || !box.contains(b)) { tip.classList.remove('on'); return; } tip.innerHTML = b.dataset.tt; tip.classList.add('on'); var r = b.getBoundingClientRect(), wd = tip.offsetWidth, x = r.left + r.width / 2 - wd / 2; x = Math.max(8, Math.min(innerWidth - wd - 8, x)); var y = r.top - tip.offsetHeight - 8; if (y < 8) y = r.bottom + 8; tip.style.left = x + 'px'; tip.style.top = y + 'px'; });
     box.addEventListener('mouseleave', function () { tip.classList.remove('on'); });
