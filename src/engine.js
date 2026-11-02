@@ -481,6 +481,7 @@ const TF = {
   strike: 1290662, feasted: 1310096, tainted: 1310102, // Ravenous Feast strike, Feasted debuff, Tainted Blood
   sbCast: 1288538, sbDeb: 1289092, sbTank: 1310371, sbRaid: [1289153, 1289154], // Stone Breaker: tank debuff, tank soak, raid hit
   wrath: 1308711, // Uncoiled Wrath (boss enrage once its twin is dead)
+  beamCast: 1294293, // Submerge's Vile Flood beam: its cast, with where Vexhul stood and faced (the beam starts that way)
 };
 const TF_IDS = Object.values(TF).flat();
 // Entombed Sentinels spell IDs, read from Mythic pulls on Warcraft Logs (Sep 2026) and checked against Wowhead's
@@ -886,6 +887,8 @@ function buildTwinFangs(ev, r, h) {
   const L = (x) => String(x).toLowerCase();
   const S = (n) => [0, n.split(' ').map((w, i) => (i && (w === 'the' || w === 'of') ? w : w.charAt(0).toUpperCase() + w.slice(1))).join(' ')];
   const casts = castTimes(ev, L);
+  // (Submerge's beam casts, [time, x, y, facing], for the Timeline replay's beam (Nov 2))
+  r.tfBeams = ev.filter((e) => e.k === 'cast' && e.id === TF.beamCast && e.x != null && e.face != null).map((e) => [+e.t.toFixed(2), +e.x.toFixed(2), +e.y.toFixed(2), e.face]);
   const dmg = (n) => ev.filter((e) => e.k === 'dmg' && L(e.spell) === n && h.isPlayer(e.dst));
   const dmgId = (ids) => { ids = [].concat(ids); return ev.filter((e) => e.k === 'dmg' && ids.includes(e.id) && h.isPlayer(e.dst)).sort((a, b) => a.t - b.t); };
   const auraId = (id, op) => ev.filter((e) => e.k === 'aura' && e.id === id && (!op || e.op === op)).sort((a, b) => a.t - b.t);
@@ -1017,7 +1020,11 @@ function buildTwinFangs(ev, r, h) {
   // from a repeat soak or a death)
   const feastWhole = (f) => {
     const st = f.strikes.filter((s) => s.ring), last = f.strikes[f.strikes.length - 1], c0 = (f.strikes[0] || f).t - 3, c1 = (last || f).t + 1.5;
-    const rings = st.map((s) => ({ ...s.ring, label: String(f.strikes.indexOf(s) + 1), t0: c0 - 1, dur: 60, legend: 'a Ravenous Feast strike, ~' + FEAST_R + ' yd: it fills as the strike comes, then slams (numbered in order)' }));
+    // (one circle where the Feast lands, at the middle of where its soakers stood, slamming three times in that spot, each slam filling in turn
+    // and gone after the third (your note, Nov 2: "ravenous feast has 3 slams, but they are all in the exact same spot", "you dont need to draw
+    // 3 circles, just 3 slams"))
+    const fx0 = st.map((s) => s.ring), mx = fx0.reduce((v, p) => v + p.x, 0) / (fx0.length || 1), my = fx0.reduce((v, p) => v + p.y, 0) / (fx0.length || 1);
+    const rings = st.map((s, i) => { const a = i ? Math.min(st[i - 1].t + 0.8, s.t - 0.3) : c0 - 1; return { ...s.ring, x: mx, y: my, r: FEAST_R, label: String(f.strikes.indexOf(s) + 1), t0: a, dur: Math.max(0.5, s.t - a + 0.8), legend: 'Ravenous Feast, ~' + FEAST_R + ' yd: one spot, three slams (numbered in order)' }; });
     const goodAt = [], badAt = [];
     for (const s of f.strikes) { for (const g of s.who) if (!s.repeat.includes(g) && !goodAt.some((x) => x[0] === g)) goodAt.push([g, s.t]); for (const g of s.repeat) badAt.push([g, s.t]); for (const d of s.died) badAt.push([d.guid, d.t]); }
     const bad = [...new Set(badAt.map((x) => x[0]))], good = goodAt.filter((x) => !bad.includes(x[0]));

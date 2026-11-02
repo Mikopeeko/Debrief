@@ -13847,6 +13847,7 @@ const TF = {
   strike: 1290662, feasted: 1310096, tainted: 1310102, // Ravenous Feast strike, Feasted debuff, Tainted Blood
   sbCast: 1288538, sbDeb: 1289092, sbTank: 1310371, sbRaid: [1289153, 1289154], // Stone Breaker: tank debuff, tank soak, raid hit
   wrath: 1308711, // Uncoiled Wrath (boss enrage once its twin is dead)
+  beamCast: 1294293, // Submerge's Vile Flood beam: its cast, with where Vexhul stood and faced (the beam starts that way)
 };
 const TF_IDS = Object.values(TF).flat();
 // Entombed Sentinels spell IDs, read from Mythic pulls on Warcraft Logs (Sep 2026) and checked against Wowhead's
@@ -14252,6 +14253,8 @@ function buildTwinFangs(ev, r, h) {
   const L = (x) => String(x).toLowerCase();
   const S = (n) => [0, n.split(' ').map((w, i) => (i && (w === 'the' || w === 'of') ? w : w.charAt(0).toUpperCase() + w.slice(1))).join(' ')];
   const casts = castTimes(ev, L);
+  // (Submerge's beam casts, [time, x, y, facing], for the Timeline replay's beam (Nov 2))
+  r.tfBeams = ev.filter((e) => e.k === 'cast' && e.id === TF.beamCast && e.x != null && e.face != null).map((e) => [+e.t.toFixed(2), +e.x.toFixed(2), +e.y.toFixed(2), e.face]);
   const dmg = (n) => ev.filter((e) => e.k === 'dmg' && L(e.spell) === n && h.isPlayer(e.dst));
   const dmgId = (ids) => { ids = [].concat(ids); return ev.filter((e) => e.k === 'dmg' && ids.includes(e.id) && h.isPlayer(e.dst)).sort((a, b) => a.t - b.t); };
   const auraId = (id, op) => ev.filter((e) => e.k === 'aura' && e.id === id && (!op || e.op === op)).sort((a, b) => a.t - b.t);
@@ -14383,7 +14386,11 @@ function buildTwinFangs(ev, r, h) {
   // from a repeat soak or a death)
   const feastWhole = (f) => {
     const st = f.strikes.filter((s) => s.ring), last = f.strikes[f.strikes.length - 1], c0 = (f.strikes[0] || f).t - 3, c1 = (last || f).t + 1.5;
-    const rings = st.map((s) => ({ ...s.ring, label: String(f.strikes.indexOf(s) + 1), t0: c0 - 1, dur: 60, legend: 'a Ravenous Feast strike, ~' + FEAST_R + ' yd: it fills as the strike comes, then slams (numbered in order)' }));
+    // (one circle where the Feast lands, at the middle of where its soakers stood, slamming three times in that spot, each slam filling in turn
+    // and gone after the third (your note, Nov 2: "ravenous feast has 3 slams, but they are all in the exact same spot", "you dont need to draw
+    // 3 circles, just 3 slams"))
+    const fx0 = st.map((s) => s.ring), mx = fx0.reduce((v, p) => v + p.x, 0) / (fx0.length || 1), my = fx0.reduce((v, p) => v + p.y, 0) / (fx0.length || 1);
+    const rings = st.map((s, i) => { const a = i ? Math.min(st[i - 1].t + 0.8, s.t - 0.3) : c0 - 1; return { ...s.ring, x: mx, y: my, r: FEAST_R, label: String(f.strikes.indexOf(s) + 1), t0: a, dur: Math.max(0.5, s.t - a + 0.8), legend: 'Ravenous Feast, ~' + FEAST_R + ' yd: one spot, three slams (numbered in order)' }; });
     const goodAt = [], badAt = [];
     for (const s of f.strikes) { for (const g of s.who) if (!s.repeat.includes(g) && !goodAt.some((x) => x[0] === g)) goodAt.push([g, s.t]); for (const g of s.repeat) badAt.push([g, s.t]); for (const d of s.died) badAt.push([d.guid, d.t]); }
     const bad = [...new Set(badAt.map((x) => x[0]))], good = goodAt.filter((x) => !bad.includes(x[0]));
@@ -24018,6 +24025,8 @@ const PATCH_NOTES = [
     "Debriefing Timeline replay, tidier map: circles no longer carry long text over the players. Point at one to see what it is, and the map's Key has one line per kind.",
     "Debriefing Timeline replay: click any name, on the map or in the play-by-play, to follow that player. Everyone else fades, everything on Debriefing follows them, the replay stays where it was, and Show everyone goes back.",
     "Debriefing Timeline replay on a computer: Space plays or pauses, and the arrow keys step to the previous or next mistake.",
+    "Debriefing Timeline replay, The Twin Fangs: the map follows the raid around the room, the Submerge beam spins from the middle, and you can see the adds, the globules where they land, the spits, the Feast slams, the blood-orb soakers and the venom puddles. The play-by-play reads in plain sentences.",
+    "Ravenous Feast on the maps: one circle that slams three times in the same spot, gone after the third slam.",
     "The Coiled Altar's maps: the poison pools are drawn at their real size, a little smaller than before.",
     "Debriefing Timeline: a You and Top guilds lane under the replay shows your phase pushes, deaths, mistakes and Lust next to the 20 fastest kills (The Coiled Altar for now). Click the lane to move the replay there.",
     "Mythic+ tab, less to read: Your group is one table with each player's DPS, kicks, CC, deaths, defensives and big cooldowns. The map's controls sit in one bar, with the floors and layers on the map. The long pull list and route chart are gone: each pull's details are on its tile, its hover and its card, and the map's first line says where your enemy count ended.",
@@ -34460,7 +34469,7 @@ function miniMap(mp, pmap) {
     }
   }
   // (a spinning beam (the Twin Fangs' Vile Flood): one wide bar from its source, turning at v degrees a second from a0, t0 to t1)
-  if (mp.gdzLook) for (const b of mp.beams || []) { if (live && (ft < b.t0 || ft > b.t1)) continue; const a = (b.a0 + b.v * ((live ? ft : (b.t0 + b.t1) / 2) - b.t0)) * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a), hw = b.w / 2;
+  if (mp.gdzLook || mp.liveBeams) for (const b of mp.beams || []) { /* (the Timeline replay draws its beams too (Nov 2)) */ if (live && (ft < b.t0 || ft > b.t1)) continue; const a = (b.a0 + b.v * ((live ? ft : (b.t0 + b.t1) / 2) - b.t0)) * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a), hw = b.w / 2;
     const P = (s1, s2) => { const q = { x: b.x + ux * s1 - uy * s2, y: b.y + uy * s1 + ux * s2 }; return X(q).toFixed(1) + ' ' + Y(q).toFixed(1); }, box = 'M' + P(1.5, -hw * 0.6) + 'L' + P(b.len, -hw) + 'L' + P(b.len, hw) + 'L' + P(1.5, hw * 0.6) + 'Z';
     s += '<path d="' + box + '" fill="' + b.color + '" fill-opacity=".55" stroke="#000" stroke-opacity=".55" stroke-width="3" vector-effect="non-scaling-stroke"/><path d="' + box + '" fill="none" stroke="' + b.color + '" stroke-width="1.6" vector-effect="non-scaling-stroke"/>'; }
   if (mp.gdzLook) for (const w of mp.waves || []) {
@@ -34642,7 +34651,7 @@ function miniMap(mp, pmap) {
   if (good.size) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="#2fd15a" stroke-width="2.5"/><path d="M' + (x - 3) + ' ' + y + 'l2 2.5l4-4.5" fill="none" stroke="#2fd15a" stroke-width="2"/>', 'Green ✓: ' + (mp.goodLabel || 'did it right') + (mp.goodAt ? ' (from the moment they do)' : '')]);
   if (mp.gdzLook && (mp.arcs || []).some((w) => !live || (ft >= w.t0 - (w.warn || 0) && ft <= w.t1))) leg.push([(x, y) => '<path d="M' + (x - 7) + ' ' + (y + 4) + 'Q' + x + ' ' + (y - 6) + ' ' + (x + 7) + ' ' + (y + 4) + '" fill="none" stroke="' + (mp.arcs[0].color || '#b6f23a') + '" stroke-width="4"/>', mp.arcs[0].legend || 'Her waves: stand in the gap']);
   if (mp.gdzLook && (mp.waves || []).some((w) => w.warn && w.warnAt !== 'start' && (!live || (ft >= w.t0 - w.warn && ft < w.t0)))) leg.push([(x, y) => '<rect x="' + (x - 7) + '" y="' + (y - 3) + '" width="14" height="6" fill="rgba(255,90,58,.2)" stroke="#ff5a3a" stroke-width="1.5" stroke-dasharray="3 2"/>', 'a tail rising: its wave runs down the red path']);
-  if (mp.gdzLook && (mp.beams || []).some((b) => !live || (ft >= b.t0 && ft <= b.t1))) leg.push([(x, y) => '<rect x="' + (x - 7) + '" y="' + (y - 3) + '" width="14" height="6" fill="' + (mp.beams[0].color || '#9ff26d') + '" fill-opacity=".7" stroke="#000"/>', mp.beams[0].legend || 'A spinning beam: stay out of it']);
+  if ((mp.gdzLook || mp.liveBeams) && (mp.beams || []).some((b) => !live || (ft >= b.t0 && ft <= b.t1))) leg.push([(x, y) => '<rect x="' + (x - 7) + '" y="' + (y - 3) + '" width="14" height="6" fill="' + (mp.beams[0].color || '#9ff26d') + '" fill-opacity=".7" stroke="#000"/>', mp.beams[0].legend || 'A spinning beam: stay out of it']);
   if (mp.gdzLook && (mp.waves || []).some((w) => !live || (ft >= w.t0 && ft <= w.t1))) leg.push([(x, y) => '<rect x="' + (x - 7) + '" y="' + (y - 3) + '" width="14" height="6" fill="' + (mp.waves[0].color || '#b6f23a') + '" fill-opacity=".6" stroke="#000"/>', mp.waves[0].legend || 'Venom wave: step into a gap']);
   if ((mp.cysts || []).length) leg.push([(x, y) => cystBlob(x, y, '#2fd15a', null, 0.62), 'Viscous Cyst: its number, and what it was used for']);
   if ((lm.arrows || []).length) leg.push([(x, y) => '<line x1="' + (x - 6) + '" y1="' + (y + 4) + '" x2="' + (x + 3) + '" y2="' + (y - 2) + '" stroke="' + (mp.arrows[0].color || '#7fd8ff') + '" stroke-width="2.5" stroke-linecap="round"/><path d="M' + (x + 7) + ' ' + (y - 5) + 'l-6 0.5l3 4z" fill="' + (mp.arrows[0].color || '#7fd8ff') + '"/>', 'Arrow: ' + (mp.arrowLabel || 'the way Raging Crosswinds will launch them')]);
@@ -65420,6 +65429,17 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
     /* (a boss's shield from the fight check's rows (cast time + "after X s"), and boss buffs from the log [boss, yd, colour, label]) */
     shield: { sec: 'shield', boss: 'Hex Lord Malacrass', r: 6, color: '#a35cf2', cn: 'Veil of Twilight (break the shield)', lab: 'Shield' },
     auras: { 'Ghastly Regeneration': ['Zul\'jan', 7, '#5fd35f', 'Ghastly Regeneration (healing; takes double damage)', 'Healing'] } },
+    /* (The Twin Fangs: both bosses, the adds that move (Spawn of Vexhul, the Broodlings), where the shielded globules land (a few seconds),
+       Stone Breaker's slams on the tank (3.5 yd) and the blood-orb soakers (Tainted Blood). Coiling Ichor and the Feast strikes come from the
+       fight check's own maps, so they aren't drawn twice) */
+    'The Twin Fangs': { bosses: ['Vexhul', 'Ithraz'], adds: ['Spawn of Vexhul', 'Broodling of Ithraz'], flash: ['Barbed Bulwark'],
+    debuffs: { 'Tainted Blood': [1.5, '#c0392b', 'Soaking a blood orb'], 'Noxious Slick': [2.5, '#c4f03c', 'In a Noxious Slick puddle (+30% damage taken)'] },
+    /* (Stone Breaker's slams come from the fight check's own slam times: its debuff is the long vulnerability, not the slam) */
+    secRings: [{ sec: 'stone', who: 2, r: 3.5, color: '#ff9628', dur: 1.5, legend: 'Stone Breaker slam (3.5 yd)' }],
+    /* (Submerge's Vile Flood: one beam from the middle. It starts the way Vexhul faces at the cast (in the log), turns the way the raid moves
+       round after it (they follow it), at the guide's 25 degrees a second for 12 s (on Wolfthorn's kill that puts it over Optt when he was hit),
+       84 yd long and 9 wide as in the guide. The camera frames about 80 yd around the raid, as the room is three platforms wide) */
+    beam: { v: 25, dur: 12, len: 84, w: 9, color: '#9ff26d', legend: 'Vile Flood: the beam from the middle (it starts where the boss faces and turns the way the raid follows it)' }, follow: 80 },
     /* (Ula'tek: the eggs and what hatches, the adds, the heart; small labelled markers where the area's size isn't in our data) */
     "Ula'tek": { bosses: ['Ula\'tek'], adds: ['Blightscale Spawn', 'Blightscale Rawling', 'Blightscale Wretch', 'Doomscale Warden', 'Weakened Doomscale', 'Blightscale Shrieker', 'Venomous Heart', 'Blightscale Clutch', 'Slithering Clutch'], flash: [],
     debuffs: { 'Rancid Yolk': [3, '#e8c05a', 'Carrying an egg'], 'Grasping Fangs': [3, '#f0726a', 'Grasping Fangs (break it)'], "Serpent's Bite": [4, '#da3df2', "Serpent's Bite (soak)"], 'Volatile Purge': [4, '#7ee08f', 'Volatile Purge'], 'Toxic Burn': [3, '#c4f03c', 'Taking the beam'] } } };
@@ -65433,11 +65453,11 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
     (r.positions && r.positions.forEach ? r.positions : new Map()).forEach(function (u) { if (!u || !u.pts || !u.pts.length) return; var pl = r.players.get(u.guid), nm = (un && un.get(u.guid)) || u.name; var kind = pl ? 'player' : bu.indexOf(nm) >= 0 ? 'boss' : !pl && hi[nm] ? hi[nm] : ad.indexOf(nm) >= 0 && u.pts.length >= 3 ? 'add' : fl.indexOf(nm) >= 0 ? 'add' : null; if (kind) units.push({ u: u, guid: u.guid, name: pl ? pl.name : nm, kind: kind, i: 0, end: !pl && gone ? gone.get(u.guid) : null, flash: !pl && fl.indexOf(nm) >= 0, blink: !pl && !!hi[nm] }); });
     var down = {}; (r.deaths || []).forEach(function (q) { if (!q || !q.guid) return; (down[q.guid] = down[q.guid] || []).push([q.t, Infinity]); }); (r.rezzes || []).forEach(function (z) { var L = z && down[z.guid]; if (!L) return; for (var k = 0; k < L.length; k++) if (L[k][0] <= z.t && L[k][1] === Infinity) { L[k][1] = z.t; break; } });
     var isDown = function (g, t) { var L = down[g]; if (!L) return false; for (var k = 0; k < L.length; k++) if (t > L[k][0] && t < L[k][1]) return true; return false; };
-    var out = []; for (var t = 0; t <= t1 + 1e-6; t += STEP) { var pts = [];
+    var out = []; for (var t = 0; t <= t1 + 1e-6; t += STEP) { var pts = [], g0 = {};
       units.forEach(function (x) { if (isDown(x.guid, t) || (x.flash && t > x.u.pts[x.u.pts.length - 1][0] + 6)) return; var a = x.u.pts; while (x.i < a.length - 1 && a[x.i + 1][0] <= t) x.i++; var p = a[x.i], q = a[x.i + 1]; if (!p || p[0] > t + 0.6 || (t - p[0] > 8 && (x.kind === 'player' || !q))) return; /* (an enemy that barely moves (Ula'tek's heart) is logged rarely: it stays until its next spot or its death) */
         if (x.blink && t - p[0] > 1 && !(q && q[0] - p[0] <= 3)) return; /* (shown only around where the log places it: 1 s after a spot, gliding between spots up to 3 s apart) */
-        if (x.end != null && t > x.end && p[0] < x.end + 5) return; /* (gone from its death until it shows up again (spots logged in the 5 s after a death are its exit): Zul'jan leaves at the end of P1 and comes back for the intermission) */ var px = p[1], py = p[2]; if (q && q[0] > p[0] && q[0] - p[0] <= 3 && t > p[0]) { var f = Math.min(1, (t - p[0]) / (q[0] - p[0])); px += (q[1] - p[1]) * f; py += (q[2] - p[2]) * f; } pts.push({ guid: x.guid, name: x.name, x: +px.toFixed(2), y: +py.toFixed(2), kind: x.kind }); });
-      out.push({ t: +t.toFixed(2), pts: pts }); }
+        if (x.end != null && t > x.end && p[0] < x.end + 5) return; /* (gone from its death until it shows up again (spots logged in the 5 s after a death are its exit): Zul'jan leaves at the end of P1 and comes back for the intermission) */ var px = p[1], py = p[2]; if (q && q[0] > p[0] && q[0] - p[0] <= 3 && t > p[0]) { var f = Math.min(1, (t - p[0]) / (q[0] - p[0])); px += (q[1] - p[1]) * f; py += (q[2] - p[2]) * f; } g0[x.guid] = 1; pts.push({ guid: x.guid, name: x.name, x: +px.toFixed(2), y: +py.toFixed(2), kind: x.kind }); });
+      out.push({ t: +t.toFixed(2), pts: pts, _g: g0 }); }
     /* (the mechanics' own moving things (orbs, adds, ghosts) from each mechanic map, while that map plays) */
     (MMs || []).forEach(function (x) { var mp0 = x.map || {}, F0 = mp0.frames || [];
       F0.forEach(function (f) { var o = out[Math.round(f.t / STEP)]; if (!o) return; var sn = o._g || (o._g = {}); (f.pts || []).forEach(function (q) { if (q.kind === 'player' || q.kind === 'boss' || own[q.kind] || own['n:' + q.name] || sn[q.guid]) return; sn[q.guid] = 1; o.pts.push(q); }); });
@@ -65572,7 +65592,28 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
       pace: function (R) { return R.map(function (row) { var res = c(row, 2), sub = c(row, 2, 'sub'), tg = c(row, 3); return E(res) + (sub ? ' (' + E(sub) + ')' : '') + (tg ? '; ' + E(tg) : ''); }).join('. '); },
       thrash: function (R) { return R.map(function (row) { var who = c(row, 1), res = c(row, 2); return cap(E(res)) + (who && !/^nobody$/i.test(who) ? ' (' + colorize(E(who)) + ')' : ''); }).join('. '); } };
     STORY["Ula'tek"].kicks = STORY['The Coiled Altar'].kicks;
-    var story = function (m) { var SB = STORY[it0.boss], f = SB && SB[m.id]; if (!f) return ''; try { var R = rowsAt(m.id, m); return R.length ? String(f(R) || '').replace(/\s+/g, ' ').trim() : ''; } catch (e) { return ''; } };
+    /* (The Twin Fangs (Flex, Nov 2: "Yes, start with Ula'tek's neighbours")) */
+    var rng = function (L, u) { L = L.filter(function (x) { return !isNaN(x); }); if (!L.length) return ''; var a = Math.min.apply(0, L), b = Math.max.apply(0, L), f = function (x) { return String(Math.round(x * 10) / 10); }; return a === b ? f(a) + u : f(a) + ' to ' + f(b) + u; };
+    STORY['The Twin Fangs'] = {
+      bulwark: function (R) { var B = {}, BO = [], up = [], hit = [], miss = 0; R.forEach(function (row) { var p = c(row, 2, 'p'), sp = row[3] && Array.isArray(row[3].s) ? row[3].s[1] : '', u = parseFloat(c(row, 4)), ran = c(row, 5); if (p) { if (!B[p]) { B[p] = { n: 0, sp: [] }; BO.push(p); } B[p].n++; if (sp && B[p].sp.indexOf(sp) < 0) B[p].sp.push(sp); } else miss++; if (!isNaN(u)) up.push(u); if (!dash(ran)) hit.push(colorize(E(ran))); });
+        BO.sort(function (a, b) { return B[b].n - B[a].n; }); var tot = R.length - miss;
+        return (BO.length ? (tot === 1 ? 'Shield broken by ' : tot + ' shields broken by ') + andL(BO.map(function (p) { var x = B[p]; return nmH(p) + ' (' + (x.n > 1 ? x.n + ', ' : '') + E(x.sp.join(', ') || 'CC') + ')'; })) : '') + (miss ? (BO.length ? '; ' : '') + miss + ' not broken' : '') + (up.length ? '; each was up ' + rng(up, ' s') : '') + (hit.length ? '. Ran into one: ' + hit.join(', ') : ''); }, /* ("14 shields broken by Ashdknight (3, Leg Sweep), Larryg (2, Shockwave) and Arsyn (Howl of Terror); each was up 1.3 to 1.9 s") */
+      soaks: function (R) { var tot = '', one = 0, two = [], risky = [], kb = [], died = []; R.forEach(function (row) { var p = c(row, 0, 'p'); if (!p) { tot = c(row, 2); return; } var n = +c(row, 2) || 0, rk = c(row, 3), bh = c(row, 4), dd = c(row, 5); if (n === 1) one++; else if (n > 1) two.push(nmH(p) + ' (' + n + ')'); if (!dash(rk)) risky.push(nmH(p)); if (!dash(bh)) kb.push(nmH(p)); if (!dash(dd)) died.push(nmH(p)); });
+        return (tot ? E(tot) + ' globules: ' : '') + (one ? one + ' player' + (one === 1 ? '' : 's') + ' soaked one each' : '') + (two.length ? (one ? '; ' : '') + andL(two) + ' soaked more than one' : '') + (risky.length ? '. Risky soaks: ' + andL(risky) : '') + (kb.length ? '. Knocked by a shield: ' + andL(kb) : '') + (died.length ? '. Died: ' + andL(died) : ''); }, /* ("15 globules: 14 players soaked one each") */
+      stone: function (R) { var cnt = {}, raid = []; R.forEach(function (row, i) { psN(row, 2).forEach(function (p) { cnt[p] = (cnt[p] || 0) + 1; }); if (!dash(c(row, 3)) && !/^none$/i.test(c(row, 3))) raid.push(E(c(row, 0))); });
+        var main = Object.keys(cnt).sort(function (a, b) { return cnt[b] - cnt[a]; })[0], extra = R.map(function (row) { return { n: E(c(row, 0)).toLowerCase(), o: psN(row, 2).filter(function (p) { return p !== main; }) }; }).filter(function (x) { return x.o.length; });
+        return (main ? nmH(main) + ' caught ' + (cnt[main] === R.length ? (R.length === 1 ? 'the circle' : 'all ' + R.length + ' circles') : cnt[main] + ' of ' + R.length + ' circles') : 'Nobody caught the circles') + extra.map(function (x) { return '; ' + andL(x.o.map(nmH)) + ' also stood in ' + x.n; }).join('') + (raid.length ? '. Missed (the raid was hit): ' + andL(raid) : ''); }, /* ("Ironvan caught all 3 circles; Hobbz also stood in circle 2") */
+      spit: function (R) { var ok = [], bad = []; R.forEach(function (row) { var tg = psN(row, 2), res = c(row, 3), by = psN(row, 4); if (!tg.length) return; if (/only its target/i.test(res)) ok.push(nmH(tg[0])); else if (by.length) bad.push('the spit at ' + nmH(tg[0]) + ' also hit ' + andL(by.map(nmH))); else if (/add died first/i.test(res)) bad.push(nmH(tg[0]) + '\'s spit never came (the add died first)'); else if (res) bad.push('the spit at ' + nmH(tg[0]) + ': ' + colorize(E(res))); });
+        return (ok.length ? 'Spits at ' + andL(ok) + ' hit only them' : '') + (bad.length ? (ok.length ? '; ' : '') + bad.map(function (s, i) { return i || ok.length ? s : cap(s); }).join('; ') : ''); }, /* ("Spits at Larryg and Huservoker hit only them; the spit at Ashdknight also hit Optt and Hobbz") */
+      ichor: function (R) { return R.map(function (row) { var tg = psN(row, 1), inn = c(row, 2), L = inn ? inn.split(/,\s*/) : [], more = L.length > 4 ? L.length - 4 : 0; return (tg.length ? andL(tg.map(nmH)) + ' had the circles' : '') + (L.length ? '; ' + colorize(E(L.slice(0, 4).join(', '))) + (more ? ' and ' + more + ' more' : '') + ' stood in someone else\'s' : '; nobody stood in someone else\'s'); }).join('. '); }, /* ("Kargaryen, Komo and Volkovod had the circles; Huservoker (4 times), Optt (3 times) ... and 10 more stood in someone else's") */
+      feast: function (R) { return R.filter(function (row) { return /^Strike \d/.test(c(row, 0)); }).map(function (row) { var n = c(row, 2), fe = psN(row, 4), dd = psN(row, 5); return E(c(row, 0)) + ': ' + (n ? E(n) + ' soaked' : 'nobody soaked') + (fe.length ? ', ' + andL(fe.map(nmH)) + ' had already been hit' : '') + (dd.length ? ', ' + andL(dd.map(nmH)) + ' died' : ''); }).join('; '); }, /* ("Strike 1: 6 soaked; Strike 2: 8 soaked, Komo had already been hit") */
+      founts: function (R) { return R.map(function (row) { var n = c(row, 2), bu = c(row, 3), cl = row[4] && Array.isArray(row[4].pt) ? row[4].pt : [], oth = c(row, 4, 'sub'); return (n ? E(n) + ' soaked the blood orbs' : 'The blood orbs') + (dash(bu) || /^none$/i.test(bu) ? ' and none burst' : '; burst: ' + colorize(E(bu))) + (cl.length ? '. Heal absorbs cleared by ' + andL(cl.slice(0, 3).map(function (q) { return nmH(q[0]) + ' (' + E(q[1]) + ')'; })) + (oth ? ', ' + E(oth) : '') : ''); }).join('. '); }, /* ("19 soaked the blood orbs and none burst. Heal absorbs cleared by Flëxørçïst (2.1M) and Komo (1.4M), everyone else: 774k") */
+      pace: function (R) { return R.map(function (row) { var res = c(row, 2), on = c(row, 2, 'sub'), top = c(row, 3); return E(res) + (on ? ' (' + E(on) + ')' : '') + (top ? '; ' + E(top) : ''); }).join('. '); },
+      twins: function (R) { var D = {}, W = []; R.forEach(function (row) { var b = c(row, 0), dt = c(row, 2), w = c(row, 3); if (b && dt && !dash(dt) && !D[b]) D[b] = dt; if (b && w && !/^none$/i.test(w) && !dash(w)) W.push(E(b) + ' reached ' + E(w) + ' of Uncoiled Wrath'); }); var K = Object.keys(D).sort(function (a, b) { return D[a] < D[b] ? -1 : 1; });
+        return (K.length ? K.map(function (b, i) { return (i ? '' : '') + E(b) + ' died at ' + E(D[b]); }).join(' and ') : '') + (W.length ? '; ' + W.join('; ') : ''); } };
+    STORY['The Twin Fangs'].twins.all = true; /* (its rows have no times: read them all) */
+    STORY['The Twin Fangs'].kicks = STORY['The Coiled Altar'].kicks;
+    var story = function (m) { var SB = STORY[it0.boss], f = SB && SB[m.id]; if (!f) return ''; try { var R = rowsAt(m.id, m); if (!R.length && f.all) R = MS[m.id] || []; return R.length ? String(f(R) || '').replace(/\s+/g, ' ').trim() : ''; } catch (e) { return ''; } };
     var told = function (m, i) { if (m.death) { var g = GM[i]; if (g && g.length > 1) return E(g.map(function (j) { var q = M[j]; return ((q.who[0] || {}).n || '') + (q.cause ? ' to ' + q.cause : ''); }).filter(Boolean).join(', ')); var n0 = (m.who[0] || {}).n || ''; return E(String(m.lines[0] || 'died').replace(/\.$/, '').replace(n0 + ' ', '')); }
       var st = story(m), pre = String(m.m || '') + ': ', SAYS = { tankfront: 0, soakq: 0 };
       if (st) { if (!/[.!?)]$/.test(st)) st += '.'; var ex = m.st !== 'ok' && SAYS[m.id] === 0 ? String(m.lines[0] || '').replace(/\.$/, '') : ''; if (ex.indexOf(pre) === 0) ex = ex.slice(pre.length); return st + (ex ? ' <span class="lvx">' + X.chips(E(cap(ex)), m.who) + '.</span>' : ''); } /* (the sentence, then the mistake in its own colour) */
@@ -65648,17 +65689,22 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
         if (!P.fr) P.fr = buildFrames(rep, Math.ceil(end), MMs, RX[it0.boss]); var fr = P.fr, fi = Math.max(0, Math.min(fr.length - 1, Math.round(at / STEP)));
         var byN = {}; rep.players.forEach(function (p) { if (p && p.name) byN[p.name] = p.guid; });
         /* (every mechanic the site can draw, at its own time: frontals, circles, the pools; each mechanic map's own timing decides when it shows) */
-        var rings = [], cones = [], pools = null, seenR = {}, seenC = {};
+        var rings = [], cones = [], pools = null, seenR = {}, seenC = {}, seenX = {}, XT = {};
         /* (a circle's colour as a word, for the map's Key: one line per kind, "Purple circle: Carrying a purple orb") */
-        var CW = function (c) { return ({ '#da3df2': 'Pink', '#5fd35f': 'Green', '#7ee08f': 'Green', '#b65cff': 'Purple', '#a35cf2': 'Purple', '#b98cff': 'Lilac', '#aeb6bf': 'Grey', '#e8c05a': 'Gold', '#cdb35a': 'Gold', '#e8a23a': 'Orange', '#f0726a': 'Red', '#c4f03c': 'Lime' }[String(c).toLowerCase()] || 'Coloured') + ' circle'; };
+        var CW = function (c) { return ({ '#da3df2': 'Pink', '#5fd35f': 'Green', '#7ee08f': 'Green', '#b65cff': 'Purple', '#a35cf2': 'Purple', '#b98cff': 'Lilac', '#aeb6bf': 'Grey', '#e8c05a': 'Gold', '#cdb35a': 'Gold', '#e8a23a': 'Orange', '#ff9628': 'Orange', '#f0726a': 'Red', '#c0392b': 'Dark red', '#c4f03c': 'Lime' }[String(c).toLowerCase()] || 'Coloured') + ' circle'; };
         MMs.forEach(function (x) { var mp0 = x.map || {}, F0 = mp0.frames || [], a0 = F0.length ? F0[0].t : x.t - 3, b0 = F0.length ? F0[F0.length - 1].t : x.t + 2;
           (mp0.rings || []).forEach(function (g) { if (g.fx === 'debuff' && (RX[it0.boss] || {}).debuffs) return; var q = Object.assign({}, g); if (q.t0 == null) q.t0 = a0; if (q.dur == null && q.fx !== 'puddle' && q.fx !== 'zone') q.dur = Math.max(1, b0 - q.t0); var kk = (q.guid || (q.x + ',' + q.y)) + '|' + Math.round(q.t0 * 10); if (seenR[kk]) return; seenR[kk] = 1; rings.push(q); });
           (mp0.cones || []).concat(mp0.cone ? [mp0.cone] : []).forEach(function (c) { var q = Object.assign({}, c); if (q.at == null) q.at = x.t; var kk = (q.name || '') + '|' + Math.round(q.at * 10); if (seenC[kk]) return; seenC[kk] = 1; cones.push(q); });
-          if (!pools && mp0.pools && mp0.pools.length) pools = mp0.pools; });
+          if (!pools && mp0.pools && mp0.pools.length) pools = mp0.pools;
+          /* (and their lines (Corrosive Spit), markers, links and arrows: only ones with their own start and end, so each shows in its time) */
+          ['lines', 'marks', 'links', 'arrows'].forEach(function (k) { (mp0[k] || []).forEach(function (q) { if (!q || q.t0 == null || q.t1 == null) return; var kk = k + '|' + JSON.stringify(q); if (seenX[kk]) return; seenX[kk] = 1; (XT[k] = XT[k] || []).push(q); }); }); });
         /* (the players in a mistake get a ring for a few seconds as it happens) */
         bad.forEach(function (i) { var m = M[i], lv = lvOf(m); if (((RX[it0.boss] || {}).noMap || []).indexOf(m.id) >= 0) return; /* (no circles for dispels: they stay in the list) */ var who0 =m.death && GM[i] ? GM[i].reduce(function (A, j) { return A.concat(M[j].who); }, []) : m.who; who0.forEach(function (wv) { var g = byN[wv.n]; if (g) rings.push({ guid: g, r: 3, color: lv === 'n' ? '#cdb35a' : lv === 'm' ? '#e8a23a' : '#f0726a', fill: 'rgba(240,114,106,0.14)', t0: m.t - 0.5, dur: 5, cn: CW(lv === 'n' ? '#cdb35a' : lv === 'm' ? '#e8a23a' : '#f0726a'), legend: m.death ? 'died' : 'in a mistake', label: '', tip: wv.n + ': ' + nameOf(m, i) }); }); });
         /* (the debuff circles from the log: each Gloombomb, orb carried, mind control and Venomfang on its player, from when it lands until it ends) */
         var DB = (RX[it0.boss] || {}).debuffs || {}; rep.players.forEach(function (p) { if (!p || !p.debuffs || !p.debuffs.forEach) return; p.debuffs.forEach(function (v, nm) { var st = DB[nm]; if (!st || !v || !v.sp) return; v.sp.forEach(function (iv) { var a1 = +iv[0], b1 = iv[1] == null ? a1 + 6 : +iv[1]; if (!(b1 > a1)) return; rings.push({ guid: p.guid, r: st[0], color: st[1], fill: st[1] + '22', t0: a1, dur: b1 - a1, cn: CW(st[1]), legend: st[2], label: '', tip: p.name + ': ' + st[2] }); }); }); });
+        /* (moments from a fight check's own rows: a short circle on the players named in a row, at its time (Stone Breaker's slams)) */
+        ((RX[it0.boss] || {}).secRings || []).forEach(function (sr) { (MS[sr.sec] || []).forEach(function (row) { var t0 = null; for (var q = 0; q < row.length; q++) if (row[q] && row[q].t != null) { t0 = +row[q].t; break; } if (t0 == null) return;
+          var who = row[sr.who] && Array.isArray(row[sr.who].ps) ? row[sr.who].ps.map(function (z) { return Array.isArray(z) ? z[0] : z; }) : []; who.forEach(function (n) { var g = byN[n]; if (g) rings.push({ guid: g, r: sr.r, color: sr.color, fill: sr.color + '22', t0: t0 - 0.3, dur: sr.dur, cn: CW(sr.color), legend: sr.legend, label: '', tip: n + ': ' + sr.legend }); }); }); });
         /* (Soul Fragments, everyone's: each one at the spot its player picked it up, from their Gravebound until the pickup; the recorder's own
            fragments that nobody picked up stay until Gravebound ends. Drawn as the Gloombomb maps' white glowing souls (Flex, Nov 2: "They
            should be the very small white glowing orbs remember?", "Yes, do fragments")) */
@@ -65680,7 +65726,12 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
             var cast = (shR.filter(function (x) { return x.len; })[0] || {}).len;
             shR.forEach(function (x) { var d = x.a != null ? x.a : x.nb ? cast : x.end ? end - x.t : null; if (d) rings.push({ guid: shG, r: RB.shield.r, color: RB.shield.color, fill: RB.shield.color + '22', t0: x.t, dur: d, cn: CW(RB.shield.color), legend: RB.shield.cn, label: RB.shield.lab || '', tip: RB.shield.cn }); }); } }
         Object.keys(RB.auras || {}).forEach(function (nm) { var st = RB.auras[nm], g = gOf(st[0]); if (g) (rep.bossAuras || []).forEach(function (a) { if (a && a.n === nm && a.e > a.a) rings.push({ guid: g, r: st[1], color: st[2], fill: st[2] + '22', t0: a.a, dur: a.e - a.a, cn: CW(st[2]), legend: st[3], label: st[4] || '', tip: st[3] }); }); });
-        var mp = { t: at, boss: it0.boss, pts: fr[fi].pts, frames: fr, spd: P.spd, rings: rings, cones: cones };
+        var mp = { t: at, boss: it0.boss, pts: fr[fi].pts, frames: fr, spd: P.spd, rings: rings, cones: cones }; Object.keys(XT).forEach(function (k) { mp[k] = XT[k]; });
+        /* (a beam from the middle (The Twin Fangs' Vile Flood): from the boss's facing at the cast, turning the way the raid moves round after it) */
+        var BM = (RX[it0.boss] || {}).beam; if (BM && (rep.tfBeams || []).length) { mp.liveBeams = true; mp.beams = rep.tfBeams.map(function (q) { var f = +q[3], a0 = Math.atan2(Math.cos(f), -Math.sin(f)) * 180 / Math.PI;
+            var ang = function (t0) { var sx = 0, sy = 0, n = 0; rep.players.forEach(function (p) { var u = rep.positions.get(p.guid), b = null; if (!u) return; for (var i = 0; i < u.pts.length && u.pts[i][0] <= t0 + 0.3; i++) b = u.pts[i]; if (!b || t0 - b[0] > 3) return; var A = Math.atan2(b[2] - q[2], b[1] - q[1]); sx += Math.cos(A); sy += Math.sin(A); n++; }); return n ? Math.atan2(sy, sx) : null; };
+            var turn = 0; for (var k = 2; k < BM.dur; k += 1) { var A1 = ang(q[0] + k), A2 = ang(q[0] + k + 1); if (A1 == null || A2 == null) continue; var d = A2 - A1; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; turn += d; }
+            return { x: q[1], y: q[2], a0: a0, v: (turn > 0 ? 1 : -1) * BM.v, t0: q[0], t1: q[0] + BM.dur, len: BM.len, w: BM.w, color: BM.color, legend: BM.legend }; }); }
         if (pools) mp.pools = pools;
         /* (the room picture's platform is a little small: measured on its own pixels, the stone inside the dark border runs x -39.5..43.5,
            y 1115..1198.5, but players stood out to x -41.4 and y 1113.2. Drawn 8% bigger around the platform's centre, everyone stays on the
@@ -65724,9 +65775,19 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
         mb.innerHTML = w.miniMap(mp, pmap);
         mb.addEventListener('input', function (ev) { if (ev.isTrusted) P.seek = true; }, true); /* (a drag on the slider counts as a jump) */
         var pbT = mb.querySelector('.zplay'); if (pbT) pbT.title = 'Play or pause (Space)';
+        /* (a big room (The Twin Fangs' three platforms): the camera frames about FOLLOW yards around the middle of the raid and glides with it as it
+           moves; dragging or zooming the map yourself leaves it be until you press Play (Flex, Nov 2: "this map you want the map to zoom in on the
+           raids location for sure")) */
+        var FOLLOW = (RX[it0.boss] || {}).follow;
+        var cam = function (now) { if (!FOLLOW || P.camFree || !mb._zoomTo) return; var s = mb.querySelector('svg.zmap'); if (!s) return; var yd = +s.dataset.yd || 1, xs = [], ys = [];
+          [].slice.call(s.querySelectorAll('g.ic')).forEach(function (g) { if (g.querySelector('.pl')) { xs.push(+g.dataset.x); ys.push(+g.dataset.y); } }); if (!xs.length) return;
+          var med = function (L) { L.sort(function (p, q) { return p - q; }); return L[Math.floor(L.length / 2)]; }, W0 = FOLLOW * yd, cx = med(xs), cy = med(ys), tg = [cx - W0 / 2, cy - W0 / 2, W0, W0];
+          var cur = !now && mb._cam ? mb._cam : null, vb = cur ? cur.map(function (v, i) { return v + (tg[i] - v) * 0.2; }) : tg; mb._cam = vb; mb._zoomTo(vb); };
         if (w.bindZoom) w.bindZoom(mb); if (w.bindAnim) w.bindAnim(mb, mp, pmap); if (w.hydrateMapIcons) w.hydrateMapIcons(mb);
-        var seekT = P.mt != null ? P.mt : at; var rg = mb.querySelector('.zrange'); if (rg) { rg.value = Math.max(0, Math.min(fr.length - 1, Math.round(seekT / STEP))); rg.dispatchEvent(new Event('input')); } grow(); fade(seekT); crack(seekT); banner(seekT); tlm(seekT);
-        mb._onFrame = function (ft) { P.mt = ft; grow(); fade(ft); crack(ft); banner(ft); tlm(ft); var hd = box.querySelector('.dtm-head'); if (hd) hd.style.left = XP(ft) + '%'; var nw = box.querySelector('.dtm-now'); if (nw) { var N1 = nowOf(ft); nw.className = 'dtm-now lv-' + N1.lv; nw.innerHTML = N1.html; }
+        var seekT = P.mt != null ? P.mt : at; var rg = mb.querySelector('.zrange'); if (rg) { rg.value = Math.max(0, Math.min(fr.length - 1, Math.round(seekT / STEP))); rg.dispatchEvent(new Event('input')); } grow(); fade(seekT); crack(seekT); banner(seekT); tlm(seekT); cam(true);
+        if (FOLLOW) { var sv0 = mb.querySelector('svg.zmap'), pdn = null; if (sv0) { sv0.addEventListener('pointerdown', function (e) { pdn = [e.clientX, e.clientY]; }); sv0.addEventListener('pointerup', function (e) { if (pdn && Math.hypot(e.clientX - pdn[0], e.clientY - pdn[1]) > 5) P.camFree = true; pdn = null; }); }
+          [].slice.call(mb.querySelectorAll('.zin, .zout, .zfull, .zfocus')).forEach(function (b0) { b0.addEventListener('click', function () { P.camFree = true; }); }); }
+        mb._onFrame = function (ft) { P.mt = ft; grow(); fade(ft); crack(ft); banner(ft); tlm(ft); cam(false); var hd = box.querySelector('.dtm-head'); if (hd) hd.style.left = XP(ft) + '%'; var nw = box.querySelector('.dtm-now'); if (nw) { var N1 = nowOf(ft); nw.className = 'dtm-now lv-' + N1.lv; nw.innerHTML = N1.html; }
           var pb = mb.querySelector('.zplay'), playing = !!pb && /Pause/.test(pb.textContent);
           if (P.clip) { if (playing && ft >= P.clip.to) { P.clip = null; P.auto = true; pb.click(); P.auto = false; } return; } /* (a picked moment plays in from 4 s before and stops just after it) */
           if (!playing) { if (!P.seek) return; P.seek = false; } /* (the play-by-play follows while it plays, and after a jump: a click on the strip, a drag on the slider) */
@@ -65743,7 +65804,7 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
     /* (picking a moment plays into it: the replay starts 4 s before and stops just after, and the list follows the pick) */
     var pickI = function (k) { var X0 = box._X, t0 = box._tOf ? box._tOf(k) : 0, m = typeof k === 'number' ? X0.M[k] : null; P.pick = k; X0.F.xo = m && m.st !== 'ok' ? k : null; P.lastXo = X0.F.xo; P.userScroll = false; P.mt = Math.max(0, (t0 || 0) - 4); P.clip = { to: (t0 || 0) + 0.6 }; tip.classList.remove('on'); X0.draw(); };
     box.addEventListener('click', function (e) { var t = e.target.closest ? e.target : null; if (!t) return;
-      if (t.closest('.zplay')) { if (!P.auto) { P.clip = null; P.userScroll = false; } return; } /* (Play: the list follows again) */
+      if (t.closest('.zplay')) { if (!P.auto) { P.clip = null; P.userScroll = false; P.camFree = false; } return; } /* (Play: the list follows again) */
       var sp = t.closest('[data-spd]'); if (sp) { P.spd = +sp.dataset.spd; P.clip = null; box._X.draw(); return; }
       var sc = t.closest('[data-scrub]'); if (sc && !t.closest('[data-ti]')) { var r = sc.getBoundingClientRect(), tt = Math.max(0, Math.min(box._end || 1, (e.clientX - r.left) / r.width * (box._axEnd || 1))); var rg = box.querySelector('.dtm-mm .zrange'); if (rg) { P.clip = null; P.seek = true; rg.value = Math.round(tt / STEP); rg.dispatchEvent(new Event('input')); P.mt = tt; } return; }
       var follow = function (n) { var sel = document.querySelector('#opP'); if (!sel) return; var o = [].slice.call(sel.options).filter(function (x) { return !n ? !x.value : x.value === n || x.text === n || String(x.value).split('-')[0] === n || String(x.text).split('-')[0] === n; })[0]; if (!o || sel.value === o.value) return; tip.classList.remove('on');
