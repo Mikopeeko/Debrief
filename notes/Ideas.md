@@ -175,3 +175,25 @@ execution."
   night from silently borrowing another night's plans. Keep both buttons small and inside the day's box, and pre-pick last
   week's same weekday in Copy from.
 - Owners: Plan (the nights and the copy), Design studio (the look).
+
+## Defensives tile: what to compare with (Nov 1, parked)
+Flex, looking at "32% behind · vs top players" while Guilds like us was picked: "what about this one?". Then he said "lets leave it
+for now and re explore another time". Today the tile compares how often each raider presses each defensive per minute alive with the
+top players of their spec (DEF_TOP, built in). The Guilds like us switch doesn't reach it.
+- Options looked at (my ratings):
+  1. **Score it like Healthstones (8/10, my pick):**
+     - "None missed", or "20% missed · 3 of 15 who got low pressed nothing".
+     - A press up to 8 s before a low counts as answering it, so pressing early is never marked down.
+     - The top-player count stays in the hover.
+  2. **Clearer tag (6/10):** "always vs top players".
+  3. **Guilds like us (5/10):**
+     - It flatters the raid without making it safer.
+     - It needs another Warcraft Logs table for each saved kill and about a day of filling.
+  4. **Against your own past nights (5/10):** shows progress, but sets no standard.
+- **Flex's point:** defensives are often pressed **before** the hit.
+  - Counting presses can't judge that.
+  - A timing check would be shaky. Top players press 53% of their defensives near the raid's big damage moments, against 38% for random
+    timing; we're at 49%.
+  - Top players have a defensive up on only about 1 in 5 of their own biggest hits.
+  - So "press before X" can only be soft advice, except planned jobs in the NSRT note.
+  - Source: notes/Guides/Defensives and healthstones - how to judge them.md.
