@@ -26,22 +26,27 @@ const KNOCK = new Set(['thunderstorm', 'typhoon', 'ursol\'s vortex', 'ring of pe
 // mechanic" ones); purge: enemy buffs to purge or soothe; dodge: damage a player who isn't tanking should never take (bosses from the guides, trash
 // from Flex's keys and each spell's Wowhead text, Nov 1); own: a dodge-list attack aimed at each player in turn, so each player's first hit in a cast is
 // their own and only another one counts (Nov 1); pool: a puddle that puts a debuff on whoever stands in it (each landing is one hit). Seen on Flex's keys
-// Oct 4 to 31 (Murder Row, The Blinding Vale and Voidscar Arena found by date on Raider.IO), except Den of Nalorakk past its first boss)
+// Oct 4 to 31 (Murder Row, The Blinding Vale and Voidscar Arena found by date on Raider.IO), except Den of Nalorakk past its first boss.
+// free: hits a player can take in a key before they count, the most 9 in 10 fast runners took (the raid rule, Oct 22).
+// Checked Nov 2 against 24 fast runs, 3 a dungeon. What every fast runner takes isn't avoidable, so it's off the list:
+// - Kings' Rest's Gilded Destruction (12 of 12, 3 hits each);
+// - Voidscar Arena's Poison Splash (12 of 12, 6 or 7) and Void Beam (12 of 12, 1 to 5).
+// Den of Nalorakk's Rotten Ground (10 of 12, up to 7) counts past 7.)
 const LISTS = {
   'altar of fangs': { kick: ['Piercing Hiss', 'Toxic Atrophy', 'Mass Envenom'], cc: [['Evolve', 'Evolved']],
     dispel: ['Paralyzing Shots', 'Regurgitate', 'Envenom'], purge: ['Ravenous Claws'], dodge: ['Regurgitate', 'Burrowing Charge', 'Axegrinder', 'Septic Spatter'] },
   'murder row': { kick: ['Fel Missiles', 'Seduction', 'Felstorm', 'Fel Rage', 'Health Funnel', 'Chaos Bolt'], chan: ['Health Funnel', 'Fel Missiles', 'Felstorm'],
     dispel: ['Corroding Spittle', 'Heartstop Poison', 'Curse of Doom'], purge: ['Back to Work!'], dodge: ['Legion Strike'] },
   'den of nalorakk': { kick: ['Scavenge', 'Healing Breeze', 'Frigid Roar', 'Winter\'s Shroud', 'Arc Lightning'],
-    dispel: ['Insatiable Hunger', 'Toxic Spores', 'Cryo Surge', 'Glacial Torment'], purge: ['Mother\'s Wrath', 'Bestial Wrath'], dodge: ['Earthshatter Slam'], pool: ['Rotten Ground'] },
+    dispel: ['Insatiable Hunger', 'Toxic Spores', 'Cryo Surge', 'Glacial Torment'], purge: ['Mother\'s Wrath', 'Bestial Wrath'], dodge: ['Earthshatter Slam'], pool: ['Rotten Ground'], free: { 'Rotten Ground': 7 } },
   'the blinding vale': { kick: ['Light Bolt Volley', 'Light Bolt@Kezkitt', 'Disorienting Screech', 'Warden\'s Wrath', 'Lightspore Shot'],
     dispel: ['Bloodthorn Roots'], purge: [], dodge: ['Lightsower Dash', 'Fan of Thorns', 'Lightmaw Beams', 'Belch Spores', "Lightwarden's Blight"] },
   'voidscar arena': { kick: ['Demoralizing Shout', 'Shadowbolt Volley', 'Violent Sand', 'Mad Shriek', 'Mending Void'], chan: ['Mending Void'],
-    dispel: ['Melt Armor', 'Corrosive Essence'], purge: ['Bolster'], dodge: ['Nether Dash', 'Poison Splash', 'Unstable Singularity', 'Void Beam'], own: ['Nether Dash'] }, /* (Nether Dash: "Dodge Other Lines. Targets each player with a line attack.") */
+    dispel: ['Melt Armor', 'Corrosive Essence'], purge: ['Bolster'], dodge: ['Nether Dash', 'Unstable Singularity'], own: ['Nether Dash'] }, /* (Nether Dash: "Dodge Other Lines. Targets each player with a line attack.") */
   'ruby life pools': { kick: ['Ice Shield', 'Frigid Shard', 'Fiery Blast', 'Blaze Volley'], chan: ['Ice Shield'],
     dispel: ['Cold Claws', 'Rolling Thunder', 'Stormslam'], purge: ['Blaze of Glory', 'Stormcloud Barrier'], dodge: ['Molten Boulder', 'Roaring Firebreath', 'Flame Breath'] },
   'kings\' rest': { kick: ['Hex Volley', 'Bind Soul', 'Unholy Mending', 'Wretched Discharge', 'Hex', 'Poison Nova', 'Deathly Roar'],
-    dispel: ['Lingering Fluid', 'Putrid Seekers', 'Savage Maul'], purge: ['Bound by Shadow', 'Ancestral Fury', 'Bestial Berserk', 'Captain\'s Bulwark', 'Unholy Mending'], dodge: ['Gilded Destruction', 'Suppression Slam'] },
+    dispel: ['Lingering Fluid', 'Putrid Seekers', 'Savage Maul'], purge: ['Bound by Shadow', 'Ancestral Fury', 'Bestial Berserk', 'Captain\'s Bulwark', 'Unholy Mending'], dodge: ['Suppression Slam'] },
   'temple of sethraliss': { kick: ['Poisoned Cheap Shot', 'Addle Mind', 'Poison Spit', 'Essence Disruption', 'Flame Shock'], chan: ['Essence Disruption'],
     dispel: ['Cytotoxin', 'Imbued Conduction'], purge: ['Accumulate Charge'], dodge: ['Burrow'], unconf: ['Essence Disruption'] }, /* (Essence Disruption: never seen cast in 9 Temple keys, so not counted until it is (Nov 1)) */
 };
@@ -65,7 +70,7 @@ const DANGER = {
   'temple of sethraliss': { high: ['Poisoned Cheap Shot', 'Addle Mind'], low: ['Essence Disruption'] },
 };
 const listFor = (dungeon) => { const L = LISTS[lc(dungeon)]; if (!L) return null; const S = (a) => new Set((a || []).map(lc)), D = DANGER[lc(dungeon)] || {};
-  return { kick: S(L.kick), chan: S(L.chan), ccCast: new Map((L.cc || []).map(([c, r]) => [lc(r), c])), dispel: S(L.dispel), purge: S(L.purge), dodge: S(L.dodge), own: S(L.own), pool: S(L.pool), unconf: S(L.unconf), high: S(D.high), low: S(D.low) }; };
+  return { kick: S(L.kick), chan: S(L.chan), ccCast: new Map((L.cc || []).map(([c, r]) => [lc(r), c])), dispel: S(L.dispel), purge: S(L.purge), dodge: S(L.dodge), own: S(L.own), pool: S(L.pool), free: new Map(Object.entries(L.free || {}).map(([k, v]) => [lc(k), v])), unconf: S(L.unconf), high: S(D.high), low: S(D.low) }; };
 const num = (x) => { const n = +x; return n === n ? n : 0; };
 const isPlayer = (g) => typeof g === 'string' && g.startsWith('Player-');
 const isNpc = (g) => typeof g === 'string' && (g.startsWith('Creature-') || g.startsWith('Vehicle-'));
@@ -206,7 +211,14 @@ function build(text, E) {
   const out = pulls.map((p, i) => ({ n: i + 1, s: p.s, e: p.e, boss: p.enc ? p.enc.boss : null, kill: p.enc ? !!p.enc.kill : null,
     mobs: [...p.mobs].map(([n, g]) => [n, [...g].filter((x) => dmgd.has(x)).length]).filter((m) => m[1]).sort((a, b) => b[1] - a[1]), dmg: {}, heal: {}, kicks: [], stops: [], through: [], minor: [], deaths: [], defs: [], dispels: [], purges: [],
     avoid: {}, debs: {}, ebuffs: {} }));
-  const addTo = (o, k, v) => { o[k] = (o[k] || 0) + v; }, avoidOf = (o, who, spell) => o.avoid[who + '|' + spell] || (o.avoid[who + '|' + spell] = { who, spell, n: 0, dmg: 0 });
+  const addTo = (o, k, v) => { o[k] = (o[k] || 0) + v; }, avoidOf = (o, who, spell) => o.avoid[who + '|' + spell] || (o.avoid[who + '|' + spell] = { who, spell, n: 0, dmg: 0, ts: [] });
+  // (one cast that lands on every non-tank in the group, its hits within 1 s, is damage nobody could dodge: not a mistake for anyone (Nov 2, Flex: "Mechanics
+  // still being marked as avoidable when they are not avoidable", Kings' Rest's Gilded Destruction))
+  const allHit = new Set(); if (LIST) { const nt = [...players.values()].filter((p) => p.role !== 'tank').length, open = new Map(), shut = (c) => { if (c && nt && c.who.size >= nt) for (const x of c.xs) allHit.add(x); };
+    for (const x of ev) { if (x[1] !== 'hit' || x[7] || !LIST.dodge.has(lc(x[4])) || (players.get(x[2]) || {}).role === 'tank') continue; const k = lc(x[4]), c = open.get(k);
+      if (c && x[0] - c.t0 <= 1) { c.who.add(x[2]); c.xs.push(x); } else { shut(c); open.set(k, { t0: x[0], who: new Set([x[2]]), xs: [x] }); } }
+    for (const c of open.values()) shut(c); }
+  const seenN = new Map(), counts = (x) => { const k = x[2] + '|' + lc(x[4]), n = (seenN.get(k) || 0) + 1; seenN.set(k, n); return n > (LIST.free.get(lc(x[4])) || 0); }; /* (past the spell's free hits for this key) */
   const recent = new Map(), inPool = new Set(), lastHit = new Map(), ownAt = new Map(); // player -> last hits; player|puddle stepped into, not ticked yet; player|spell -> its last hit; player|spell -> their own line's hit
   for (const x of ev) {
     const pi = pullOf(x[0]), o = out[pi]; if (!o) continue;
@@ -216,7 +228,7 @@ function build(text, E) {
       /* (avoidable damage: a dodge-list spell's direct hit (not the damage-over-time some leave) on anyone but a tank, who may be standing in a frontal on purpose;
          a beam or breath that hits every second while you stand in it is one hit until you're out of it for 1.6 s (Nov 1)) */
       if (LIST && (players.get(x[2]) || {}).role !== 'tank') { if (!x[7] && LIST.dodge.has(lc(x[4])) && LIST.own.has(lc(x[4])) && !(ownAt.get(x[2] + '|' + lc(x[4])) > x[0] - 8)) ownAt.set(x[2] + '|' + lc(x[4]), x[0]); /* (their own line this cast: not a mistake) */
-      else if (!x[7] && LIST.dodge.has(lc(x[4]))) { const a = avoidOf(o, x[2], x[4]); if (!a.id && x[8]) a.id = x[8]; const k = x[2] + '|' + lc(x[4]); if (!(lastHit.get(k) > x[0] - 1.6)) a.n++; lastHit.set(k, x[0]); a.dmg += x[3]; } else if (x[7] && LIST.pool.has(lc(x[4]))) { const a = avoidOf(o, x[2], x[4]), k = x[2] + '|' + lc(x[4]); if (inPool.has(k)) { a.n++; inPool.delete(k); } a.dmg += x[3]; } } }
+      else if (!x[7] && LIST.dodge.has(lc(x[4])) && !allHit.has(x)) { const a = avoidOf(o, x[2], x[4]); if (!a.id && x[8]) a.id = x[8]; const k = x[2] + '|' + lc(x[4]); if (!(lastHit.get(k) > x[0] - 1.6) && counts(x)) { a.n++; a.ts.push(+x[0].toFixed(1)); } lastHit.set(k, x[0]); a.dmg += x[3]; } else if (x[7] && LIST.pool.has(lc(x[4]))) { const a = avoidOf(o, x[2], x[4]), k = x[2] + '|' + lc(x[4]); if (inPool.has(k)) { inPool.delete(k); if (counts(x)) { a.n++; a.ts.push(+x[0].toFixed(1)); } } a.dmg += x[3]; } } }
     /* (a puddle: one hit each time someone stepped in and it ticked on them; out again within a second isn't a mistake. Its ticks are the damage) */
     else if (x[1] === 'pool') inPool.add(x[2] + '|' + lc(x[3]));
     else if (x[1] === 'aura' && defIds.has(x[3])) o.defs.push({ t: x[0], who: x[2], name: defIds.get(x[3]) });
@@ -263,7 +275,7 @@ function build(text, E) {
   for (const o of out) for (const k of ['kicks', 'stops', 'deaths', 'defs', 'dispels', 'purges']) for (const x of o[k]) x.who = name(x.who);
   for (const o of out) for (const x of o.through.concat(o.minor)) { x.ready = x.ready.map(name); if (x.who) x.who = name(x.who); }
   for (const o of out) { const fix = (m) => { const r = {}; for (const [g, v] of Object.entries(m)) r[name(g)] = v; return r; }; o.dmg = fix(o.dmg); o.heal = fix(o.heal);
-    o.avoid = Object.values(o.avoid).filter((a) => a.n).map((a) => ({ who: name(a.who), spell: a.spell, n: a.n, dmg: Math.round(a.dmg), id: a.id || '' })).sort((a, b) => b.dmg - a.dmg);
+    o.avoid = Object.values(o.avoid).filter((a) => a.n).map((a) => ({ who: name(a.who), spell: a.spell, n: a.n, dmg: Math.round(a.dmg), id: a.id || '', ts: a.ts })).sort((a, b) => b.dmg - a.dmg);
     o.debs = Object.entries(o.debs).map(([spell, b]) => ({ spell, on: b.on, removed: b.removed })); o.ebuffs = Object.entries(o.ebuffs).map(([spell, b]) => ({ spell, on: b.on, removed: b.removed })); }
   // ---- the timer (Nov 1): how close the key was to each upgrade, what the deaths cost, and fighting against the time between pulls. The
   // clock starts 10 s after CHALLENGE_MODE_START (the countdown); the time WoW wrote at the end, less the time that passed, is what deaths added

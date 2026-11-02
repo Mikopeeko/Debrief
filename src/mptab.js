@@ -1091,7 +1091,8 @@ function mpScan(it, R, text) {
       L.push({ x: u.at[0], y: u.at[1], ui: u.at[2], k, hp: u.hp, t: tt }); }
     for (let m = 0; m < N; m++) if (!L.some((u) => u.k === m)) for (const u of U.values()) if (ok(u) && u.g.split('-')[4] === zone && u.hit >= P[m].s && u.hit <= P[m].e) L.push({ x: u.at[0], y: u.at[1], ui: u.at[2], k: m, hp: u.hp, t: u.hit }); /* (a pull whose enemies all died in the next one: the ones first hit in it (Den of Nalorakk's two Frostfangs, Nov 2)) */
     for (let m = 0; m < N; m++) if (P[m].boss) { const us = L.filter((u) => u.k === m), top = Math.max(0, ...us.map((u) => u.hp)); for (const u of us) if (top && u.hp >= top * 0.3) u.boss = true; }
-    R.units = L; R.deathPos = deathPos; R.castPos = castPos; R.avHits = avHits; R.kickEv = kickEv; R.ccEv = ccEv; }
+    const avT = new Map(); for (const p of P) for (const a of p.avoid || []) if (a.ts) { const k = a.who + '|' + mpLc(a.spell); avT.set(k, (avT.get(k) || []).concat(a.ts)); } /* (only the hits the key reader counted: not a cast on the whole group, not a spell's free hits (Nov 2)) */
+    R.units = L; R.deathPos = deathPos; R.castPos = castPos; R.avHits = avT.size ? avHits.filter((h) => { const l = avT.get(h.who + '|' + mpLc(h.sp)); return !!l && l.some((t) => Math.abs(t - h.t) < 0.35); }) : avHits; R.kickEv = kickEv; R.ccEv = ccEv; }
 }
 function mpRouteHtml(R, F, waiting) {
   const rt = R.route; if (!rt || !rt.pulls.length) return '';
@@ -1338,7 +1339,7 @@ function mpMapHtml(R, F, tl) {
     return '<div class="mpt-mch">' + badge(q) + '<b>' + nm(q) + '</b><span>' + mpMM(p.dur) + (q.add ? ' · +' + fmt(pc(q.add)) : '') + (gd ? ' · ' + mpGF(gd) + ' group DPS' : '') + '</span></div>' +
       (q.wait ? '<p class="mpt-mcw">⏱ Waited ' + mpMM(q.wait) + ' before this pull.</p>' : '') + (q.lust ? '<p class="mpt-mcl">⚡ Lust went out here.</p>' : '') +
       (out.length ? out.join('') : '<p class="mpt-mco">✓ Clean.</p>') + ex.join('') +
-      (ppl.length ? '<div class="mpt-mlh' + (cdc ? '' : ' no-cd') + '"><span>Damage a second</span>' + (cdc ? '<small>Big cooldown</small>' : '') + '</div>' + dps : '') + recap; };
+      (ppl.length ? '<div class="mpt-mlh' + (cdc ? '' : ' no-cd') + '"><span>DPS</span>' + (cdc ? '<small>Big cooldown</small>' : '') + '</div>' + dps : '') + recap; };
   // (the pulls as tiles under the map (Flex, Nov 2: "any way to fill the dead space? Maybe the pull counter horizontal across the bottom somehow?"): the
   // badge over two lines, the name, then the time, the % and the icons; the full name, "chained" and "no spot" in the hover)
   const list = (Q) => '<ol class="mpt-mfl">' + Q.map((q) => { const pct = q.add ? pc(q.add) : 0, th = (q.p.through || []).length;
