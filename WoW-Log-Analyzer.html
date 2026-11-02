@@ -20799,8 +20799,21 @@ const LISTS = {
 // Battle for Azeroth)
 const TIMER = { 'altar of fangs': 30, 'murder row': 34, 'den of nalorakk': 32, 'the blinding vale': 30, 'voidscar arena': 30, 'kings\' rest': 33, 'temple of sethraliss': 32, 'ruby life pools': 28 };
 const lc = (s) => String(s || '').toLowerCase().replace(/[’`]/g, '\'');
-const listFor = (dungeon) => { const L = LISTS[lc(dungeon)]; if (!L) return null; const S = (a) => new Set((a || []).map(lc));
-  return { kick: S(L.kick), chan: S(L.chan), ccCast: new Map((L.cc || []).map(([c, r]) => [lc(r), c])), dispel: S(L.dispel), purge: S(L.purge), dodge: S(L.dodge), own: S(L.own), pool: S(L.pool), unconf: S(L.unconf) }; };
+// (how dangerous each must-kick is when it goes off (Nov 1, the Design studio's table, Flex: "Yes, send it"): from the 12.1.5 Wowhead overviews and
+// how much each one hurt in 33 of Flex's keys, every one seen interrupted by a player. high: heals enemies, hits the whole group, takes players out or
+// makes an enemy tough; low: small hits or mechanics; anything else on the list is medium (weakens the group, or one big hit on one player))
+const DANGER = {
+  'altar of fangs': { high: ['Mass Envenom'] },
+  'murder row': { high: ['Seduction', 'Fel Rage', 'Health Funnel'], low: ['Fel Missiles', 'Felstorm'] },
+  'den of nalorakk': { high: ['Healing Breeze', 'Winter\'s Shroud'], low: ['Scavenge'] },
+  'the blinding vale': { high: ['Light Bolt Volley', 'Disorienting Screech'], low: ['Lightspore Shot', 'Warden\'s Wrath'] },
+  'voidscar arena': { high: ['Shadowbolt Volley', 'Violent Sand', 'Mad Shriek', 'Mending Void'] },
+  'ruby life pools': { high: ['Ice Shield', 'Blaze Volley'] },
+  'kings\' rest': { high: ['Hex Volley', 'Bind Soul', 'Unholy Mending', 'Wretched Discharge', 'Hex', 'Poison Nova', 'Deathly Roar'] },
+  'temple of sethraliss': { high: ['Poisoned Cheap Shot', 'Addle Mind'], low: ['Essence Disruption'] },
+};
+const listFor = (dungeon) => { const L = LISTS[lc(dungeon)]; if (!L) return null; const S = (a) => new Set((a || []).map(lc)), D = DANGER[lc(dungeon)] || {};
+  return { kick: S(L.kick), chan: S(L.chan), ccCast: new Map((L.cc || []).map(([c, r]) => [lc(r), c])), dispel: S(L.dispel), purge: S(L.purge), dodge: S(L.dodge), own: S(L.own), pool: S(L.pool), unconf: S(L.unconf), high: S(D.high), low: S(D.low) }; };
 const num = (x) => { const n = +x; return n === n ? n : 0; };
 const isPlayer = (g) => typeof g === 'string' && g.startsWith('Player-');
 const isNpc = (g) => typeof g === 'string' && (g.startsWith('Creature-') || g.startsWith('Vehicle-'));
@@ -20910,15 +20923,11 @@ function build(text, E) {
   // (must-kick: the dungeon's list; without one, a spell somebody deliberately kicked at least once this key (an area stun alone doesn't make one))
   const kickedIds = new Set(casts.filter((c) => c.res === 'kicked').map((c) => c.id));
   const danger = (c) => (LIST ? (LIST.kick.has(lc(c.spell)) || LIST.kick.has(lc(c.spell) + '@' + lc(c.mob))) && !LIST.unconf.has(lc(c.spell)) : kickedIds.has(c.id)); /* ("Spell@Caster": only from that enemy) */
-  // (kick when you can (Nov 1, the Design studio's scan of 33 of Flex's keys; Flex: "yes send that"): a must-kick that in this key came from 8 or more
-  // enemies, or went off 6 or more times within 10 seconds, is a pack's spam (Lightspore Shot: 65 casts from 30 Lashers, 14 in 10 s). One kick stops
-  // one cast, so its casts that went off are shown, not counted as mistakes. Everything else on the list is a priority kick)
-  // (held (Nov 1, the Design studio: it would file Kings' Rest's Wretched Discharge, 3.0m damage to the group a cast, as "kick when you can"): off until
-  // a danger level per spell replaces it, so every listed kick is a priority kick with the fair count)
-  const SPAM_ON = false;
+  // (each must-kick's tier, from DANGER (Nov 1, the Design studio's table; Flex: "Yes, send it"): high, low, or medium for the rest; a dungeon
+  // without lists keeps every kicked spell high, as before. How many enemies a spell came from is kept for the wording, "from 30 Lightspawn Lashers")
+  const tierOf = (c) => { if (!LIST) return 'high'; const s = lc(c.spell), sm = s + '@' + lc(c.mob); return LIST.high.has(s) || LIST.high.has(sm) ? 'high' : LIST.low.has(s) || LIST.low.has(sm) ? 'low' : 'medium'; };
   const bySpell = new Map();
   for (const c of casts) if (danger(c)) { const k = lc(c.spell), b = bySpell.get(k) || { ts: [], guids: new Set() }; b.ts.push(c.t); b.guids.add(c.guid); bySpell.set(k, b); }
-  const spam = new Set(); for (const [k, b] of bySpell) { const ts = b.ts.slice().sort((a, c) => a - c); let burst = 0; for (let i = 0, j = 0; i < ts.length; i++) { while (ts[i] - ts[j] > 10) j++; burst = Math.max(burst, i - j + 1); } if (SPAM_ON && (b.guids.size >= 8 || burst >= 6)) spam.add(k); }
   // (whose kick was ready when a must-kick cast went off: each player's interrupts for their spec, from the engine, and when they last pressed
   // them. A cast that got through with nobody's kick ready isn't a mistake (Nov 1))
   const kickNames = new Map(); for (const p of players.values()) { const l = ((E.INTERRUPTS || {})[p.cls] || []).filter((k) => !k[2] || k[2].includes(p.specId)); if (l.length) kickNames.set(p.guid, l); }
@@ -20929,7 +20938,7 @@ function build(text, E) {
   // ---- per pull ----
   const defIds = new Map(); for (const [cls, list] of Object.entries(E.DEFENSIVES || {})) for (const d of list) defIds.set(d[1], d[0]);
   const out = pulls.map((p, i) => ({ n: i + 1, s: p.s, e: p.e, boss: p.enc ? p.enc.boss : null, kill: p.enc ? !!p.enc.kill : null,
-    mobs: [...p.mobs].map(([n, g]) => [n, g.size]).sort((a, b) => b[1] - a[1]), dmg: {}, heal: {}, kicks: [], stops: [], through: [], deaths: [], defs: [], dispels: [], purges: [],
+    mobs: [...p.mobs].map(([n, g]) => [n, g.size]).sort((a, b) => b[1] - a[1]), dmg: {}, heal: {}, kicks: [], stops: [], through: [], minor: [], deaths: [], defs: [], dispels: [], purges: [],
     avoid: {}, debs: {}, ebuffs: {} }));
   const addTo = (o, k, v) => { o[k] = (o[k] || 0) + v; }, avoidOf = (o, who, spell) => o.avoid[who + '|' + spell] || (o.avoid[who + '|' + spell] = { who, spell, n: 0, dmg: 0 });
   const recent = new Map(), inPool = new Set(), lastHit = new Map(), ownAt = new Map(); // player -> last hits; player|puddle stepped into, not ticked yet; player|spell -> its last hit; player|spell -> their own line's hit
@@ -20955,20 +20964,25 @@ function build(text, E) {
     else if (x[1] === 'died') { const l = (recent.get(x[2]) || []).filter((h) => x[0] - h[0] < 5); const top = l.slice().sort((a, b) => b[3] - a[3])[0];
       o.deaths.push({ t: x[0], who: x[2], to: top ? top[1] : 'unknown', from: top ? top[2] : '', defs: out.flatMap((q) => q.defs).filter((d) => d.who === x[2] && x[0] - d.t < 30).length }); }
   }
-  for (const c of casts.slice().sort((a, b) => a.t - b.t)) {
+  const sorted = casts.slice().sort((a, b) => a.t - b.t);
+  for (const c of sorted) {
     const o = out[pullOf(c.t)]; if (!o) continue;
-    if (danger(c) && spam.has(lc(c.spell))) { const m = o.spamM || (o.spamM = new Map()), b = m.get(c.spell) || { spell: c.spell, id: c.id, casts: 0, kicked: 0, stopped: 0, guids: new Set(), mobs: new Map() };
+    if (danger(c) && tierOf(c) === 'low') { const m = o.spamM || (o.spamM = new Map()), b = m.get(c.spell) || { spell: c.spell, id: c.id, casts: 0, kicked: 0, stopped: 0, guids: new Set(), mobs: new Map() };
       b.casts++; if (c.res === 'kicked') b.kicked++; else if (c.res === 'stopped') b.stopped++; b.guids.add(c.guid); b.mobs.set(c.mob, (b.mobs.get(c.mob) || 0) + 1); m.set(c.spell, b); }
     if (c.res === 'kicked') o.kicks.push({ t: c.at, who: c.by, with: c.with, spell: c.spell, mob: c.mob, id: c.id });
     else if (c.res === 'stopped') o.stops.push({ t: c.at, who: c.by, with: c.with, spell: c.spell, mob: c.mob, id: c.id });
-    else if (c.res === 'done' && danger(c) && !spam.has(lc(c.spell))) { const rd = readyNow(c.t);
-      if (rd.length) { const w = rd[0]; if (!vPressed.has(w.g)) vPressed.set(w.g, []); vPressed.get(w.g).push([c.t, w.k[0]]);
-        o.through.push({ t: c.t, spell: c.spell, mob: c.mob, ready: rd.map((r) => r.g), who: w.g, id: c.id }); } } /* (who: the kick it's counted against; ready: every kick that was ready; id: the spell's icon) */
+  }
+  // (the fair count: high casts first, so a kick isn't spent on a lesser cast in the counting, then medium; who: the kick it's counted against; ready:
+  // every kick that was still ready; id: the spell's icon. High ones that went off are mistakes (through); medium ones are a note (minor))
+  for (const tier of ['high', 'medium']) for (const c of sorted) {
+    const o = out[pullOf(c.t)]; if (!o || c.res !== 'done' || !danger(c) || tierOf(c) !== tier) continue;
+    const rd = readyNow(c.t); if (!rd.length) continue; const w = rd[0]; if (!vPressed.has(w.g)) vPressed.set(w.g, []); vPressed.get(w.g).push([c.t, w.k[0]]);
+    (tier === 'high' ? o.through : o.minor).push({ t: c.t, spell: c.spell, mob: c.mob, ready: rd.map((r) => r.g), who: w.g, id: c.id });
   }
   // (kick when you can, per pull: each pack spell's casts, how many were kicked or stopped, from how many enemies)
   const spamOut = (m) => [...m.values()].map((b) => ({ spell: b.spell, id: b.id, casts: b.casts, kicked: b.kicked, stopped: b.stopped, enemies: b.guids.size, mob: [...b.mobs].sort((x, y) => y[1] - x[1])[0][0] })).sort((a, b) => b.casts - a.casts);
   for (const o of out) { o.spam = o.spamM ? spamOut(o.spamM) : []; delete o.spamM; }
-  for (const o of out) { const d = Math.max(1, o.e - o.s); o.dur = d; for (const k of ['dmg', 'heal']) for (const g of Object.keys(o[k])) o[k][g] = Math.round(o[k][g] / d); o.through.sort((a, b) => a.t - b.t); }
+  for (const o of out) { const d = Math.max(1, o.e - o.s); o.dur = d; for (const k of ['dmg', 'heal']) for (const g of Object.keys(o[k])) o[k][g] = Math.round(o[k][g] / d); o.through.sort((a, b) => a.t - b.t); o.minor.sort((a, b) => a.t - b.t); }
   // ---- the whole key, per player ----
   const total = Math.max(1, (run.end != null ? run.end : out.length ? out[out.length - 1].e : 1));
   const people = [...players.values()].filter((p) => p.cls).map((p) => {
@@ -20981,7 +20995,7 @@ function build(text, E) {
   });
   const name = (g) => (players.get(g) || {}).name || short(g);
   for (const o of out) for (const k of ['kicks', 'stops', 'deaths', 'defs', 'dispels', 'purges']) for (const x of o[k]) x.who = name(x.who);
-  for (const o of out) for (const x of o.through) { x.ready = x.ready.map(name); if (x.who) x.who = name(x.who); }
+  for (const o of out) for (const x of o.through.concat(o.minor)) { x.ready = x.ready.map(name); if (x.who) x.who = name(x.who); }
   for (const o of out) { const fix = (m) => { const r = {}; for (const [g, v] of Object.entries(m)) r[name(g)] = v; return r; }; o.dmg = fix(o.dmg); o.heal = fix(o.heal);
     o.avoid = Object.values(o.avoid).filter((a) => a.n).map((a) => ({ who: name(a.who), spell: a.spell, n: a.n, dmg: Math.round(a.dmg), id: a.id || '' })).sort((a, b) => b.dmg - a.dmg);
     o.debs = Object.entries(o.debs).map(([spell, b]) => ({ spell, on: b.on, removed: b.removed })); o.ebuffs = Object.entries(o.ebuffs).map(([spell, b]) => ({ spell, on: b.on, removed: b.removed })); }
@@ -20997,12 +21011,12 @@ function build(text, E) {
       deathCost: lost, deaths, upWithout: lost ? up(T - lost) : lv, fight: Math.round(fight), between: Math.max(0, Math.round(T - lost - fight)) };
   }
   const thr = out.flatMap((o) => o.through);
-  // (kick when you can, for the whole key: summed over the pulls; tiers: each must-kick seen, "spam" or "priority")
+  // (kick when you can, for the whole key: the low-danger kicks summed over the pulls; tiers: each must-kick seen, "high", "medium" or "low")
   const KS = new Map(); for (const o of out) for (const x of o.spam) { const b = KS.get(x.spell) || { spell: x.spell, id: x.id, casts: 0, kicked: 0, stopped: 0, enemies: 0, mob: x.mob }; b.casts += x.casts; b.kicked += x.kicked; b.stopped += x.stopped; KS.set(x.spell, b); }
   for (const b of KS.values()) b.enemies = (bySpell.get(lc(b.spell)) || { guids: new Set() }).guids.size;
-  const tiers = {}; for (const c of casts) if (danger(c)) tiers[c.spell] = spam.has(lc(c.spell)) ? 'spam' : 'priority';
+  const tiers = {}; for (const c of casts) if (danger(c)) tiers[c.spell] = tierOf(c); /* (high, medium or low (Nov 1)) */
   return { run, people, pulls: out, list: !!LIST, spam: [...KS.values()].sort((a, b) => b.casts - a.casts), tiers, casts: { total: casts.length, kicked: casts.filter((c) => c.res === 'kicked').length, stopped: casts.filter((c) => c.res === 'stopped').length,
-    through: thr.filter((x) => !x.cc).length, ccThrough: thr.filter((x) => x.cc).length }, avoid: people.reduce((a, p) => a + p.avoid, 0) };
+    through: thr.filter((x) => !x.cc).length, ccThrough: thr.filter((x) => x.cc).length, minor: out.reduce((a, o) => a + o.minor.length, 0) }, avoid: people.reduce((a, p) => a + p.avoid, 0) };
 }
 // ---- Rotation per pull (Nov 1, Flex: "will this also include rotation break down pull by pull?"): the website's own Rotation checks on each
 // pull of the key, as the boss card has them. It needs the website's engine and its specRun (the app has both): each pull's lines, with the
@@ -23744,7 +23758,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-11-01', h: [{ t: 'Mythic+ tab', d: 'Open a report with a Mythic+ key, and the new Mythic+ tab shows the whole key. First, what gets you the next level, ranked by seconds on the timer. Then where you fell behind a typical fast run of your dungeon and level: the middle of the 20 fastest, a target you can reach. Your route is on the game\'s own map, with how much each pull counted. Click a map to make it bigger. Then every pull, the casts that got through, the deaths, and each player against the same spec in the fastest runs.' }, { t: 'Rotation knows single target from AoE', d: 'Your rotation is now judged by how many enemies were close: Divine Storm, Blade Flurry, Whirlwind, Spinning Crane Kick and Seed of Corruption on packs, the single-target buttons on one. For now in Mythic+, where packs are the fight. Raid shows how many enemies were close.' }, { t: 'A key for your recap', d: 'Press Ctrl + Shift + D anywhere, even in WoW, and your newest recap shows over the game; press it again to hide it. Debrief Companion asks you to pick the key once, and you can change it any time. Play in Windowed (Fullscreen) so it shows on top.' }, { t: 'Mythic+ run recap', d: 'When a key ends, Debrief Companion pops up one recap of the whole run: how close you came to the next level and what the deaths cost, a tab for each pull with what got through and whose kick was ready, kicks and stuns, avoidable damage, deaths, and everyone\'s rotation, for you or anyone in the group. Save this key brings the same recap into WoW.' }, { t: 'Debriefing Timeline, across the page', d: 'Each phase is one chart: every mechanic a row, every moment a dot, green for done right and red for a mistake, with the boss health behind. Hover a dot for what happened. Under it, every mistake is one line; click it for why and what to do next time.' }], n: [
-    "Mythic+ kicks are counted fairly: one kick stops one cast, so a burst of casts only counts as many as there were kicks ready, and your own count is the casts charged to your kick.",
+    "Mythic+ kicks are counted fairly: one kick stops one cast, so a burst of casts only counts as many as there were kicks ready, and your own count is the casts charged to your kick. Each must-kick has a danger level: the dangerous ones that went off are mistakes, others show under Also went off, and small hits under Kick when you can.",
     "Mythic+ tab: open a key from your own combat log too, or from the Debrief app, not only from a report. Share it like a raid night, and the link opens on the Mythic+ tab.",
     "Mythic+ tab: see where each Lust went, on your timeline and on the pull, and each player's big cooldowns: how many, and how many went on your biggest pulls.",
     "Mythic+ tab for hard keys: when the next level is out of reach, the top box shows where your time went against a typical fast run, biggest first. Trash and boss fights are counted apart, and the banner shows how much time you had to spare.",

@@ -572,8 +572,12 @@ function renderMplus() {
   const timesW = (n) => (n === 1 ? 'once' : n + ' times');
   /* (kick when you can (Nov 1): a pack's spam, shown, never a mistake: "Lightspore Shot, from 30 Lightspawn Lashers, 26 of 65 stopped") */
   const plur = (m, n) => (n === 1 || /s$/.test(m) ? m : m + 's');
-  const spamRows = (L, kp) => L.map((s) => rv('info', ic(s.id), esc(s.spell), 'from ' + s.enemies + ' ' + esc(plur(s.mob, s.enemies)), (s.kicked + s.stopped) + ' of ' + s.casts + ' stopped',
-    '<p class="kwhy">A pack casts it: one kick stops one cast, so the ones that went off aren\'t counted as mistakes. ' + s.kicked + ' kicked, ' + s.stopped + ' stunned or stopped.</p>', 'r:mps:' + kp + ':' + s.spell));
+  const spamRows = (L, kp) => L.map((s) => rv('info', ic(s.id), esc(s.spell), 'from ' + (s.enemies > 1 ? s.enemies + ' ' + esc(plur(s.mob, s.enemies)) : esc(s.mob)), (s.kicked + s.stopped) + ' of ' + s.casts + ' stopped',
+    '<p class="kwhy">A small hit: kick it when you can. It isn\'t counted as a mistake. ' + s.kicked + ' kicked, ' + s.stopped + ' stunned or stopped.</p>', 'r:mps:' + kp + ':' + s.spell));
+  /* (also went off (Nov 1): medium kicks that went off while a kick was ready: a note with who had one, not a mistake) */
+  const minorRows = (L, kp) => { const by = new Map(); for (const x of L) { const k = x.spell + '|' + x.mob, b = by.get(k) || { spell: x.spell, mob: x.mob, id: x.id, n: 0, ready: new Map(), pulls: new Set() }; b.n++; if (x.pull) b.pulls.add(x.pull); for (const r of x.ready) b.ready.set(r, (b.ready.get(r) || 0) + 1); by.set(k, b); }
+    return [...by.values()].sort((a, b) => b.n - a.n).map((b) => rv('info', ic(b.id), esc(b.spell), 'from ' + esc(b.mob), b.n + ' went off',
+      '<p class="kwhy">Worth a kick, but not counted as a mistake.' + (b.ready.size ? ' Kick ready: ' + [...b.ready].sort((x, y) => y[1] - x[1]).slice(0, 3).map(([n, c]) => nm(n) + ' (' + c + ')').join(', ') + '.' : '') + '</p>' + (b.pulls.size ? pch(b.pulls) : ''), 'r:mpm:' + kp + ':' + b.spell)); };
   const spamSum = (L) => { const n = L.reduce((a, s) => a + s.casts, 0); return [n + (n === 1 ? ' cast' : ' casts'), '']; };
   const deathRow = (x, where) => rv('bad', '', '', (where ? '' : nm(x.who) + ' died to ') + (where ? 'Died to ' : '') + '<b>' + esc(x.to) + '</b>' + (x.from ? ' (' + esc(x.from) + ')' : '') + (where ? ', ' + where : '') + '.' + (x.defs ? '' : ' <span style="color:var(--badT)">No defensive in the 30 s before.</span>'), mmssP(x.t));
   // (avoidable damage, from the dungeon's lists: by spell, the most damage first; who: true names everyone hit; each hit's pull, when known, in the detail)
@@ -681,6 +685,7 @@ function renderMplus() {
     const by = new Map(); for (const q of R.pulls) for (const x of q.through) { const k = x.spell; if (!by.has(k)) by.set(k, { n: 0, mob: x.mob, id: x.id, cc: !!x.cc, pulls: new Set(), ready: new Map() }); const b = by.get(k); b.n++; b.pulls.add(q.n); for (const r of x.ready) b.ready.set(r, (b.ready.get(r) || 0) + 1); }
     body += sec('What got through', [...by].sort((a, b) => b[1].n - a[1].n).map(([sp, b]) => rv('bad', ic(b.id), esc(sp), 'from ' + esc(b.mob), timesW(b.n),
       '<p class="kwhy">' + (b.cc ? 'It needs a stun or other crowd control.' : b.ready.size ? 'Kick ready: ' + [...b.ready].sort((x, y) => y[1] - x[1]).slice(0, 3).map(([n, c]) => nm(n) + ' (' + c + ')').join(', ') + '.' : 'Nobody had a kick ready.') + '</p>' + pch(b.pulls), 'r:mpw:' + sp)), [nT + ' got through', nT > 5 ? 'r' : 'w']);
+    { const M = R.pulls.flatMap((q) => (q.minor || []).map((x) => Object.assign({ pull: q.n }, x))); body += sec('Also went off', minorRows(M, 'k'), [M.length + ' went off', '']); }
     body += sec('Kick when you can', spamRows(R.spam || [], 'k'), spamSum(R.spam || []));
     body += sec('Avoidable damage', avRows(R.pulls.flatMap((q) => (q.avoid || []).map((a) => Object.assign({ pull: q.n }, a))), true, 'g'), [(R.avoid || 0) + (R.avoid === 1 ? ' hit' : ' hits'), 'w']);
     body += sec('Dispels and purges', dpRows(R.pulls.flatMap((q) => q.debs || []), R.pulls.flatMap((q) => q.ebuffs || [])));
@@ -692,6 +697,7 @@ function renderMplus() {
       ppl.map((q) => '<tr><td>' + nm(q.name) + ' <span style="color:var(--faint)">' + esc(q.spec) + '</span></td><td class="r"' + (PQ(q.parse) ? ' style="color:' + PQ(q.parse) + ';font-weight:700"' : '') + '>' + (heal(q) ? kN(q.hps) + ' HPS' : kN(q.dps)) + '</td><td class="r">' + q.kicks + '</td><td class="r">' + q.stops + '</td><td class="r">' + (q.dispels + (q.purges || 0)) + '</td>' + (R.list ? '<td class="r"' + (q.avoid ? ' style="color:var(--warn)"' : '') + '>' + (q.avoid || 0) + '</td>' : '') + '<td class="r">' + q.defs + '</td><td class="r"' + (q.deaths ? ' style="color:var(--badT)"' : '') + '>' + q.deaths + '</td></tr>').join('') + '</table>'], [ppl.length + ' players', '']);
   } else {
     body += sec('Got through', gotRows(o.through, null), [o.through.length + ' got through', o.through.length > 2 ? 'r' : 'w']);
+    body += sec('Also went off', minorRows(o.minor || [], o.n), [(o.minor || []).length + ' went off', '']);
     body += sec('Kick when you can', spamRows(o.spam || [], o.n), spamSum(o.spam || []));
     const oav = o.avoid || [], oavN = oav.reduce((a, x) => a + x.n, 0);
     body += sec('Avoidable damage', avRows(oav, true, 'g:' + o.n), [oavN + (oavN === 1 ? ' hit' : ' hits'), 'w']);

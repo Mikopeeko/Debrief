@@ -136,11 +136,12 @@ local function decode(code)
     -- (a Mythic+ key (Nov 1, the in-game card): the run, the group, each pull and what happened in it; see RECAP.encodeMplus in the app)
     elseif t == "MR" then local K0 = mp(); if m.h then m.h.mstat = g(3) end; K0.run = { level = g(2), stat = g(3), time = tonumber(g(4)) or 0, par = tonumber(g(5)), up = tonumber(g(6)) or 0, next = tonumber(g(7)), dcost = tonumber(g(8)) or 0, deaths = tonumber(g(9)) or 0, upw = tonumber(g(10)), fight = tonumber(g(11)), between = tonumber(g(12)), score = g(13) }
     elseif t == "MP" then local K0 = mp(); local q = { name = g(2), cls = g(3), spec = g(4), role = g(5), dps = tonumber(g(6)) or 0, hps = tonumber(g(7)) or 0, kicks = tonumber(g(8)) or 0, stops = tonumber(g(9)) or 0, defs = tonumber(g(10)) or 0, deaths = tonumber(g(11)) or 0, dispels = tonumber(g(12)) or 0, purges = tonumber(g(13)) or 0, avoid = tonumber(g(14)) or 0, kick = g(15) == "1", rot = {} }; K0.people[#K0.people + 1] = q; K0.byP[q.name] = q
-    elseif t == "MU" then local K0 = mp(); local q = { n = tonumber(g(2)) or (#K0.pulls + 1), boss = g(3), kill = g(4) == "1", s = tonumber(g(5)) or 0, dur = tonumber(g(6)) or 0, mobs = g(7), thr = {}, spam = {}, avoid = {}, deaths = {}, kicks = {}, defs = {}, vals = {}, ds = {}, rot = {}, good = {} }; K0.pulls[#K0.pulls + 1] = q; K0.byN[q.n] = q
+    elseif t == "MU" then local K0 = mp(); local q = { n = tonumber(g(2)) or (#K0.pulls + 1), boss = g(3), kill = g(4) == "1", s = tonumber(g(5)) or 0, dur = tonumber(g(6)) or 0, mobs = g(7), thr = {}, minor = {}, spam = {}, avoid = {}, deaths = {}, kicks = {}, defs = {}, vals = {}, ds = {}, rot = {}, good = {} }; K0.pulls[#K0.pulls + 1] = q; K0.byN[q.n] = q
     elseif t == "MX" then local q = mp().byP[g(2)]; if q then local pl = {}; for _, x in ipairs(split(g(6), ";")) do if tonumber(x) then pl[#pl + 1] = tonumber(x) end end; q.rot[#q.rot + 1] = { st = g(3), ic = g(4), label = g(5), pulls = pl, of = tonumber(g(7)) or #pl, tip = g(8), aim = g(9), line = g(10) } end
     elseif t:sub(1, 1) == "M" and #t == 2 and m.mplus and m.mplus.byN[tonumber(g(2)) or -1] then
       local q = m.mplus.byN[tonumber(g(2))]
       if t == "MT" then q.thr[#q.thr + 1] = { t = tonumber(g(3)) or 0, spell = g(4), mob = g(5), cc = g(6) == "1", ready = g(7) ~= "" and split(g(7), ";") or {}, id = g(8) or "", who = g(9) or "" }
+      elseif t == "MM" then q.minor[#q.minor + 1] = { t = tonumber(g(3)) or 0, spell = g(4), mob = g(5), ready = g(6) ~= "" and split(g(6), ";") or {}, id = g(7) or "", who = g(8) or "" } -- (medium kicks that went off: a note (Nov 1))
       elseif t == "MW" then q.spam[#q.spam + 1] = { spell = g(3), casts = tonumber(g(4)) or 0, kicked = tonumber(g(5)) or 0, stopped = tonumber(g(6)) or 0, enemies = tonumber(g(7)) or 0, mob = g(8), id = g(9) or "" } -- (kick when you can (Nov 1))
       elseif t == "MA" then q.avoid[#q.avoid + 1] = { who = g(3), spell = g(4), n = tonumber(g(5)) or 0, dmg = tonumber(g(6)) or 0, id = g(7) or "" }
       elseif t == "MD" then q.deaths[#q.deaths + 1] = { t = tonumber(g(3)) or 0, who = g(4), to = g(5), from = g(6), defs = tonumber(g(7)) or 0 }
@@ -1471,8 +1472,22 @@ function UI.mplus(raw)
   -- (kick when you can (Nov 1): a pack's spam, shown, never a mistake: "Lightspore Shot, from 30 Lightspawn Lashers, 26 of 65 stopped")
   local function spamR(L, kp)
     local o = {}
-    for _, s in ipairs(L) do local mob = (s.enemies == 1 or s.mob:find("s$")) and s.mob or (s.mob .. "s")
-      o[#o + 1] = { "info", s.id, s.spell, "from " .. s.enemies .. " " .. mob, (s.kicked + s.stopped) .. " of " .. s.casts .. " stopped", { { "t", "A pack casts it: one kick stops one cast, so the ones that went off aren't counted as mistakes. " .. s.kicked .. " kicked, " .. s.stopped .. " stunned or stopped." } }, "r:mps:" .. kp .. ":" .. s.spell } end
+    for _, s in ipairs(L) do local mob = s.enemies > 1 and (s.enemies .. " " .. (s.mob:find("s$") and s.mob or (s.mob .. "s"))) or s.mob
+      o[#o + 1] = { "info", s.id, s.spell, "from " .. mob, (s.kicked + s.stopped) .. " of " .. s.casts .. " stopped", { { "t", "A small hit: kick it when you can. It isn't counted as a mistake. " .. s.kicked .. " kicked, " .. s.stopped .. " stunned or stopped." } }, "r:mps:" .. kp .. ":" .. s.spell } end
+    return o
+  end
+  -- (also went off (Nov 1): medium kicks that went off while a kick was ready: a note with who had one, not a mistake)
+  local function minorR(L, kp)
+    local by, order = {}, {}
+    for _, x in ipairs(L) do local k = x.spell .. "|" .. x.mob; local b = by[k]; if not b then b = { spell = x.spell, mob = x.mob, id = x.id, n = 0, rc = {}, ro = {}, pulls = {} }; by[k] = b; order[#order + 1] = b end
+      b.n = b.n + 1; if x.pull and (#b.pulls == 0 or b.pulls[#b.pulls][1] ~= x.pull) then b.pulls[#b.pulls + 1] = { x.pull } end
+      for _, r in ipairs(x.ready) do if not b.rc[r] then b.rc[r] = 0; b.ro[#b.ro + 1] = r end; b.rc[r] = b.rc[r] + 1 end end
+    table.sort(order, function(a, c) return a.n > c.n end)
+    local o = {}
+    for _, b in ipairs(order) do table.sort(b.ro, function(a, c) return b.rc[a] > b.rc[c] end)
+      local nm0 = {}; for i = 1, math.min(3, #b.ro) do nm0[#nm0 + 1] = "@" .. b.ro[i] .. " (" .. b.rc[b.ro[i]] .. ")" end
+      local det = { { "t", "Worth a kick, but not counted as a mistake." .. (#nm0 > 0 and (" Kick ready: " .. table.concat(nm0, ", ") .. ".") or "") } }; if #b.pulls > 0 then det[#det + 1] = { "p", b.pulls } end
+      o[#o + 1] = { "info", b.id, b.spell, "from " .. b.mob, b.n .. " went off", det, "r:mpm:" .. kp .. ":" .. b.spell } end
     return o
   end
   local function spamSum(L) local n = 0; for _, s in ipairs(L) do n = n + s.casts end; return { n .. (n == 1 and " cast" or " casts"), "" } end
@@ -1614,6 +1629,8 @@ function UI.mplus(raw)
       local SP, spo = {}, {}; for _, q in ipairs(PL) do for _, s in ipairs(q.spam or {}) do local b = SP[s.spell]; if not b then b = { spell = s.spell, id = s.id, mob = s.mob, casts = 0, kicked = 0, stopped = 0, enemies = 0 }; SP[s.spell] = b; spo[#spo + 1] = b end
         b.casts = b.casts + s.casts; b.kicked = b.kicked + s.kicked; b.stopped = b.stopped + s.stopped; b.enemies = b.enemies + s.enemies end end
       table.sort(spo, function(a, c) return a.casts > c.casts end)
+      local MN = {}; for _, q in ipairs(PL) do for _, x in ipairs(q.minor or {}) do MN[#MN + 1] = { spell = x.spell, mob = x.mob, id = x.id, ready = x.ready, pull = q.n } end end
+      secB("Also went off", minorR(MN, "k"), { #MN .. " went off", "" })
       secB("Kick when you can", spamR(spo, "k"), spamSum(spo))
       local A, DS = {}, {}; for _, q in ipairs(PL) do for _, a in ipairs(q.avoid) do A[#A + 1] = { who = a.who, spell = a.spell, n = a.n, dmg = a.dmg, id = a.id, pull = q.n } end; for _, d in ipairs(q.ds) do DS[#DS + 1] = d end end
       secB("Avoidable damage", avR(A, true, "g"), { hits(avn), "w" })
@@ -1687,6 +1704,7 @@ function UI.mplus(raw)
       -- (Group, one pull: what got through, avoidable damage, kicks and stops by player, deaths, defensives, dispels, damage and healing)
       local avn = 0; for _, a in ipairs(q.avoid) do avn = avn + a.n end
       secB("Got through", gotR(q.thr, nil), { #q.thr .. " got through", #q.thr > 2 and "r" or "w" })
+      secB("Also went off", minorR(q.minor or {}, q.n), { #(q.minor or {}) .. " went off", "" })
       secB("Kick when you can", spamR(q.spam or {}, q.n), spamSum(q.spam or {}))
       local A = {}; for _, a in ipairs(q.avoid) do A[#A + 1] = a end
       secB("Avoidable damage", avR(A, true, "g:" .. q.n), { hits(avn), "w" })
