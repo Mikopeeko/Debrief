@@ -61162,11 +61162,13 @@ function mpfByDungeon(rows, id, people) { const showWho = !!(people && people.le
 function mpkOwn(c, J) { const m = new Map(); for (const k of ((J.chars[c.id] || {}).keys || [])) { const it = { ...k, wcl: { code: k.code, fight: k.fight } }, id = mpkId(it), o = m.get(id); if (o) o.n++; else m.set(id, { it, n: 1, who: [c.name] }); } return [...m.values()]; }
 // (a character's tile, Home's tt-card: the crest, the name in class colour, the class and guild, one square per dungeon (green timed +2/+3, amber +1,
 // grey not timed, dark no key), the best key and how many dungeons timed, and the keys this season, or a gold bar with % and time left while it reads)
+const mpfSpare = (it) => { const tm = (window.DBF_MPTIMER || {})[mpLc(it.boss)]; return tm && it.keyMs ? tm * 60 - it.keyMs / 1000 : 0; };
+const mpfBetter = (a, b) => b.level - a.level || (b.up || 0) - (a.up || 0) || mpfSpare(b) - mpfSpare(a) || b.wallMs - a.wallMs; /* (highest, most levels up, most time to spare, newest) */
 function mpfCard(c, J, on) { const rows = mpkOwn(c, J), cls = (E.CLASSES || {})[c.cls], per = MPK.busy && MPK.per && MPK.per[c.id];
-  const best = MP_DUNGEONS.map((d) => { const L = rows.filter((r) => mpLc(r.it.boss) === mpLc(d)), t = L.filter((r) => r.it.timed && r.it.keyMs).sort((a, b) => b.it.level - a.it.level || b.it.up - a.it.up)[0];
+  const best = MP_DUNGEONS.map((d) => { const L = rows.filter((r) => mpLc(r.it.boss) === mpLc(d)), t = L.filter((r) => r.it.timed && r.it.keyMs).sort((a, b) => mpfBetter(a.it, b.it))[0];
     return { d, t, any: L.length, st: t ? (t.it.up >= 2 ? 'g' : 'a') : L.length ? 'm' : '' }; });
   const strip = best.map((x) => '<i class="' + x.st + '"' + mpT1(esc(x.d) + ': ' + (x.t ? '+' + x.t.it.level + ', timed +' + (x.t.it.up || 1) : x.any ? 'not timed' : 'no key')) + '></i>').join('');
-  const top = best.filter((x) => x.t).sort((a, b) => b.t.it.level - a.t.it.level || b.t.it.up - a.t.it.up)[0], nT = best.filter((x) => x.t).length;
+  const top = best.filter((x) => x.t).sort((a, b) => mpfBetter(a.t.it, b.t.it))[0], nT = best.filter((x) => x.t).length;
   const pct = per && per.of ? Math.round(100 * per.n / per.of) : 0, left = per && per.n ? (Date.now() - MPK.t0) / Math.max(1, MPK.n) * (MPK.of - MPK.n) / 1000 : 0;
   const l2 = per && per.of > per.n ? '<span class="tt-l">Finding keys: ' + per.n + ' of ' + per.of + ' uploads (' + pct + '%)' + (left ? ' · about ' + (left < 90 ? 'a minute' : Math.round(left / 60) + ' minutes') + ' left' : '') + '</span><span class="mpf-prog"><i style="width:' + pct + '%"></i></span>'
     : per && !per.of ? '<span class="tt-l">Finding keys…</span><span class="mpf-prog"><i style="width:4%"></i></span>' : '<span class="tt-l">' + (rows.length ? plural(rows.length, 'key') + ' this season' : 'No keys yet this season') + '</span>';
