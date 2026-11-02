@@ -111,6 +111,15 @@ How it's worked out (`mpRouteOf` in `src/mptab.js`, from the key's own events):
   - Hovering a row lights up its dot. A click anywhere else on the map still makes it bigger.
 - Lust is the studio's yellow (#ffd166) everywhere: the timeline mark, the key and the tags.
 
+## Hard keys (Nov 1, the Design studio's pass on Flex's +19, Flex: "Yes, send them")
+- **Where your M:SS went.** When the seconds needed for the next level are more than all the deaths cost, and the typical fast run is in and over a minute faster, the top box becomes "Where your 5:28 went" (the gap to the typical fast run).
+  - The items, by seconds, are each stretch's trash, each boss fight, the standing between pulls, and the death and kick fixes.
+  - Only gaps of 15 s or more are listed. They add up to the gap: a stretch's time splits into trash, boss, standing and deaths.
+  - "What gets you +N" stays when the next level is reachable (the +12's 6 seconds).
+- **Trash and Boss apart** in the stretch rows (`mpStretches`: `trash`, `bossT`, `tries`, `nt`). Only the worst number in a row is coloured.
+- **The cushion in the banner:** "Timed +1 · 59 s to spare" (the time under the limit you beat), amber under 90 s and green otherwise; "1:12 over" in red.
+- **Big cooldowns tag** only when someone didn't press theirs.
+
 ## Lust and big cooldowns (Nov 1)
 No new section (the Design studio's call): they go where they belong. One pass over the key's lines (`mpScan`) finds them, with the route, for a report, a log and a shared night alike.
 - **Lust:** a Bloodlust-type buff landing on the group: Bloodlust, Heroism, Time Warp, Primal Rage, Fury of the Aspects, Harrier's Cry, or any drums.
