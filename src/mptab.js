@@ -33,7 +33,7 @@ const mpSpecId = (spec, cls) => { for (const [id, s] of Object.entries(E.SPECS |
 const mpNorm = (s) => String(s || '').toLowerCase().replace(/[^a-z]/g, '');
 // (the tab: only when the open report has a key)
 const MP_TICO = '<svg class="tab-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="4.5"/><path d="M12.5 12h9M18.5 12v3.5M15.5 12v2.5"/></svg>';
-function mpTabHtml(on) { if (!mpKeys().length) return ''; on = !!on; const tt = 'Your Mythic+ key, top to bottom: what gets you a level up, where you fell behind a fast run, every pull, kick and death';
+function mpTabHtml(on) { on = !!on; const tt = mpKeys().length ? 'Your Mythic+ key, top to bottom: what gets you a level up, where you fell behind a fast run, every pull, kick and death' : 'Find your Mythic+ keys, or anyone\'s, and see where the time went'; /* (always in the top bar (the key finder, Nov 2)) */
   return '<button class="tab mpt-tab' + (on ? ' on' : '') + '" data-t="mplus" role="tab" aria-selected="' + on + '" data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + MP_TICO + 'Mythic+</button>'; }
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.mpt-tab'); if (!b) return; e.preventDefault(); e.stopPropagation(); mpOpen(); }, true);
 // (a key picked in the report's list of keys)
@@ -86,7 +86,7 @@ function mpFastRun(it) {
 
 // ---------- the page ----------
 function mpOpen(it) {
-  const keys = mpKeys(); if (!it) it = MP.item && keys.includes(MP.item) ? MP.item : keys[keys.length - 1]; if (!it) return;
+  const keys = mpKeys(); if (!it) it = MP.item && keys.includes(MP.item) ? MP.item : keys[keys.length - 1]; if (!it) { mpFinder(); return; } /* (no key open: the key finder) */
   if (S.page === 'pull' && S.item) PROG_BACK = S.item; /* (the raid you came from stays one tab away) */
   MP.item = it; S.page = 'mplus'; mpCss();
   for (const id of ['#list', '#bossHead', '#bossPick']) { const el = $(id); if (el) el.innerHTML = ''; }
@@ -106,8 +106,90 @@ function mpShareHtml(it) { if (!it || it.wcl || it.shr || typeof shrOk !== 'func
   const v = shrSaved(), left = shrMine().filter((b) => !(v && v.sent[shrIdent(b)])).length, done = v && !left;
   return '<div class="mpt-shr"><span><b>' + (done ? 'Shared' : 'Share this key') + '</b> ' + (done ? 'Anyone with the link can see it. Copy the link to send it.' : 'Read from your PC, so this page\'s address won\'t open for anyone else. Get a link anyone can open, on a PC or phone.') + '</span>' +
     '<button class="btn sm' + (done ? '' : ' primary') + '" type="button" data-shr="1">' + (done ? 'Copy link' : 'Share') + '</button></div>'; }
-function mpPickHtml(it) { const keys = mpKeys(); if (keys.length < 2) return '';
-  return '<div class="mpt-pick"><label for="mptPick">' + keys.length + ' keys in this report</label><select id="mptPick">' + keys.map((x, i) => '<option value="' + i + '"' + (x === it ? ' selected' : '') + '>' + esc(mpKeyName(x)) + '</option>').join('') + '</select></div>'; }
+function mpPickHtml(it) { const keys = mpKeys(), find = '<button class="linkbtn mpt-findl" type="button" data-mpf-open="1">Find other keys</button>'; if (keys.length < 2) return '<div class="mpt-pick">' + find + '</div>';
+  return '<div class="mpt-pick"><label for="mptPick">' + keys.length + ' keys in this report</label><select id="mptPick">' + keys.map((x, i) => '<option value="' + i + '"' + (x === it ? ' selected' : '') + '>' + esc(mpKeyName(x)) + '</option>').join('') + '</select>' + find + '</div>'; }
+// ---------- the key finder (Nov 2; Flex: "theres no way to look up your m+ logs on my website. Should put that somewhere", the Design
+// studio's key-finder.md, "Yes, send it"): the Mythic+ tab with no key open. Your keys (your character on Debrief, else the newest one the
+// sign-in sent), and anyone's by name, realm and region. Their uploads newest first; the Mythic+ ones opened a few at a time (one report
+// read each, kept by the site); only keys the character was in; the same key in several uploads shown once, opening the first)
+const MP_SEASON = (z) => !!z && (z.id === 55 || /^Mythic\+ Season 2$/i.test(z.name || ''));
+const MP_REAL = { night: 'AEVxiCJqkaR3pmxgnKtnsA', pull: 0 }; /* (Flex's Voidscar +19, shared: "See a real +19 key") */
+const MPF = { who: null, mine: false, reps: [], at: 0, page: 0, last: 1, rows: [], seen: new Map(), busy: false, err: '', done: false };
+function mpfMine() {
+  const me = typeof meOf === 'function' ? meOf() : null, cs = groups().filter((g) => g.kind === 'char'), g = (me && cs.find((c) => c.name === me.name)) || cs[0];
+  if (g) return { id: g.id, name: g.name, server: g.server || '' };
+  const w = WCL.HOSTED && typeof wclMe === 'function' ? wclMe() : null, c = w && (w.chars || []).slice().sort((a, b) => b.id - a.id)[0];
+  return c ? { id: c.id, name: c.n, server: (c.srv || '') + (c.srv && c.reg ? ' (' + String(c.reg).toUpperCase() + ')' : '') } : null; }
+function mpFinder() {
+  if (S.page === 'pull' && S.item) PROG_BACK = S.item; /* (the raid you came from stays one tab away) */
+  S.page = 'mpfind'; mpCss();
+  for (const id of ['#list', '#bossHead', '#bossPick']) { const el = $(id); if (el) el.innerHTML = ''; }
+  { const oa = $('#oaTop'); if (oa) { oa.innerHTML = ''; oa.hidden = true; } }
+  const look = mpChap('mpfLook', 'Look up anyone\'s keys', 'Type a character to see their Mythic+ keys this season.',
+    '<form class="mpf-f" id="mpfForm" autocomplete="off"><label><span>Character</span><input name="n" required spellcheck="false" aria-label="Character"></label>' +
+    '<label><span>Realm</span><input name="s" required spellcheck="false" aria-label="Realm"></label>' +
+    '<label><span>Region</span><select name="r" aria-label="Region"><option>US</option><option>EU</option><option>KR</option><option>TW</option></select></label>' +
+    '<button class="btn primary" type="submit">Find keys</button></form><p class="mpf-msg mpt-bad" id="mpfFormMsg" hidden></p>' +
+    '<p class="mpf-alt"><button class="linkbtn" type="button" data-mpf-paste="1">Paste a Warcraft Logs link</button> · <button class="linkbtn" type="button" data-mpf-file="1">Open a combat log from your PC</button> · <button class="linkbtn" type="button" data-mpf-real="1">See a real +19 key ›</button></p>' +
+    '<div class="fpn-box mpf-box" id="mpfBox" hidden><input id="mpfIn" placeholder="Paste a Warcraft Logs report link…" autocomplete="off" aria-label="Report link"><button class="btn" id="mpfGo" type="button">Open</button></div><div class="fp-msg" id="mpfMsg"></div>');
+  $('#main').innerHTML = pgTabBar(null) + '<section id="view" class="mpt-page"><div class="mpt mpf"><div id="mpfList"></div>' + look + '</div></section>';
+  { const t = $('#main .pg-tabbar .mpt-tab'); if (t) { t.classList.add('on'); t.setAttribute('aria-selected', 'true'); } }
+  try { navNote(); } catch (e) { /* (no address) */ } window.scrollTo(0, 0);
+  if (!MPF.who) { const m = mpfMine(); if (m) { mpfStart(m, true); return; } }
+  mpfDraw(); }
+function mpfStart(who, mine) { Object.assign(MPF, { who, mine, reps: [], at: 0, page: 0, last: 1, rows: [], seen: new Map(), busy: false, err: '', done: false }); mpfDraw(); mpfMore(); }
+// (the next few Mythic+ uploads: pages of uploads as needed, then each one's keys)
+async function mpfMore() {
+  if (MPF.busy || MPF.done || !MPF.who) return; const who = MPF.who; MPF.busy = true; MPF.err = ''; mpfDraw();
+  let creds = null; try { creds = await wclCreds(); } catch (e) { creds = null; }
+  try {
+    if (!who.id) { const c = await WCL.charInfo(creds, { name: who.name, srv: who.srv, reg: who.reg }); Object.assign(who, { id: c.id, name: c.name, server: c.server }); }
+    let read = 0; const had = MPF.rows.length; /* (until 8 more keys or 24 uploads: rows appear as they're found) */
+    while (read < 24 && MPF.rows.length - had < 8 && MPF.who === who) {
+      if (MPF.at >= MPF.reps.length) { if (MPF.page >= MPF.last) { MPF.done = true; break; }
+        const pg = await WCL.charReportsPage(creds, who.id, ++MPF.page); if (MPF.who !== who) return; MPF.last = pg.last; MPF.reps.push(...pg.data.filter((r) => MP_SEASON(r.zone))); continue; }
+      const r = MPF.reps[MPF.at++]; read++; mpfDraw();
+      try { const rep = await WCL.loadReport(creds, r.code); if (MPF.who !== who) return; for (const it of rep.runs || []) mpfAdd(it, who); mpfDraw(); } catch (e) { /* (a private or broken upload is skipped) */ }
+    }
+    if (MPF.at >= MPF.reps.length && MPF.page >= MPF.last) MPF.done = true;
+  } catch (e) { if (MPF.who === who) MPF.err = e.message || String(e); }
+  if (MPF.who === who) { MPF.busy = false; mpfDraw(); } }
+function mpfAdd(it, who) {
+  const nm = mpLc(who.name); if (!(it.roster || []).some((n) => mpLc(n) === nm)) return; /* (uploads list other people's keys too) */
+  const k = [mpLc(it.boss), it.level, it.keyMs || 'x' + Math.round((it.duration || 0) / 60), new Date(it.wallMs).toISOString().slice(0, 10)].join('|'), o = MPF.seen.get(k);
+  if (o) { o.n++; return; }
+  const row = { it, n: 1 }; MPF.seen.set(k, row); MPF.rows.push(row); MPF.rows.sort((a, b) => b.it.wallMs - a.it.wallMs); }
+function mpfRow(r, i) {
+  const it = r.it, tm = (window.DBF_MPTIMER || {})[mpLc(it.boss)], s = it.keyMs ? it.keyMs / 1000 : 0, spare = tm && s && it.timed ? tm * 60 - s : 0;
+  const res = s ? (it.timed ? 'Timed +' + (it.up || 1) : 'Over time') : 'Left early', rc = s && it.timed ? (it.up >= 2 ? 'mpt-g' : 'mpt-a') : 'mpt-m';
+  const time = s ? mpMM(s) + (tm ? ' of ' + tm + ':00' : '') + (spare > 0 ? ' · ' + (spare < 60 ? Math.round(spare) + ' s' : mpMM(spare)) + ' to spare' : '') : mpMM(it.duration || 0) + ' played';
+  const day = new Date(it.wallMs).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return '<button class="mpf-r" type="button" data-mpf="' + i + '"' + (r.n > 1 ? ' data-tt="Same key in ' + r.n + ' uploads, shown once."' : '') + '><span class="mpf-lv' + (it.level >= 15 ? ' mpf-hi' : '') + '">+' + it.level + '</span>' +
+    '<span class="mpf-dg"><b>' + esc(it.boss) + '</b><small>' + time + '</small><em class="' + rc + '">' + res + ' · ' + day + '</em></span><span class="mpf-res ' + rc + '">' + res + '</span><span class="mpf-dt">' + day + '</span><span class="btn sm mpf-op">Open</span></button>'; }
+function mpfDraw() {
+  const el = $('#mpfList'); if (!el || S.page !== 'mpfind') return; const w = MPF.who; if (!w) { el.innerHTML = ''; return; }
+  const signed = MPF.mine && WCL.HOSTED && typeof wclMe === 'function' && wclMe(), dup = MPF.rows.filter((r) => r.n > 1);
+  const who = (signed ? 'Signed in as ' : '') + '<b>' + esc(w.name) + '</b>' + (w.server ? ' · ' + esc(w.server) : '') + ' · newest first';
+  const pct = MPF.reps.length ? Math.round(100 * MPF.at / MPF.reps.length) : 0;
+  const status = MPF.err ? '<p class="mpf-msg mpt-bad">' + esc(MPF.err) + '</p>' : MPF.busy ? '<p class="mpf-msg">' + (MPF.reps.length ? 'Looking through ' + esc(w.name) + '\'s uploads: ' + MPF.at + ' of ' + MPF.reps.length + ' (' + pct + '%)…' : 'Looking for Mythic+ uploads…') + '</p>'
+    : !MPF.rows.length && MPF.done ? '<p class="mpf-msg">No Mythic+ keys this season in ' + esc(w.name) + '\'s public uploads.</p>' : '';
+  el.innerHTML = mpChap('mpfMine', MPF.mine ? 'Your Mythic+ keys' : esc(w.name) + '\'s Mythic+ keys', 'Pick a key to see where your time went.',
+    '<p class="mpf-who">' + who + '</p>' + (MPF.rows.length ? '<div class="mpf-l">' + MPF.rows.map(mpfRow).join('') + '</div>' : '') +
+    (dup.length ? '<p class="mpf-foot">' + (dup.length === 1 ? 'Same key in ' + dup[0].n + ' uploads, shown once.' : plural(dup.length, 'key') + ' were in more than one upload; each is shown once.') + '</p>' : '') + status +
+    (!MPF.done && !MPF.busy && !MPF.err ? '<button class="btn sm mpf-more" type="button" data-mpf-more="1">Show older keys</button>' : '')); }
+document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-mpf],[data-mpf-more],[data-mpf-open],[data-mpf-paste],[data-mpf-file],[data-mpf-real],#mpfGo'); if (!t) return;
+  if (t.dataset.mpf != null) { const r = MPF.rows[+t.dataset.mpf]; if (r) mpGo(r.it.wcl.code, r.it.wcl.fight); }
+  else if (t.dataset.mpfMore) mpfMore();
+  else if (t.dataset.mpfOpen) mpFinder();
+  else if (t.dataset.mpfPaste) { const bx = $('#mpfBox'); bx.hidden = !bx.hidden; if (!bx.hidden) $('#mpfIn').focus(); }
+  else if (t.dataset.mpfFile) nightDlg();
+  else if (t.dataset.mpfReal) openShared(MP_REAL.night, { pull: MP_REAL.pull, tab: 'mplus' });
+  else if (t.id === 'mpfGo') { const v = $('#mpfIn').value.trim(); if (v) openReportLink(v, $('#mpfMsg')); } });
+document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target && e.target.id === 'mpfIn') { const v = e.target.value.trim(); if (v) openReportLink(v, $('#mpfMsg')); } });
+document.addEventListener('submit', (e) => { const f = e.target; if (!f || f.id !== 'mpfForm') return; e.preventDefault();
+  const n = f.n.value.trim(), s = f.s.value.trim(), r = f.r.value, msg = $('#mpfFormMsg'); if (!n || !s) return; if (msg) msg.hidden = true;
+  mpfStart({ name: n, srv: srvSlug(s), reg: r, server: s + ' (' + r + ')' }, false); const l = $('#mpfList'); if (l) l.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+
 // (each fold remembered per viewer (the quick read): the sections, Stretch by stretch, the route fold and Show N more. In this browser only;
 // without storage the page opens folded, as drawn)
 const MP_FOLDK = 'mpt-folds';
@@ -1307,4 +1389,18 @@ html:not([data-theme]) .mpt .mpt-chap{background-image:linear-gradient(rgba(255,
   .mpt-pl > .mpt-vs{grid-column:2 / -1}
   .mpt-pl > span:last-child{grid-column:1 / -1}
 }
+.mpf .mpf-who{margin:0 0 10px;font:500 13.5px var(--body);color:var(--muted)} .mpf .mpf-who b{color:var(--text)}
+.mpf-l{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.mpf .mpf-r{display:grid;grid-template-columns:42px minmax(0,1fr) 104px 58px auto;align-items:center;gap:12px;width:100%;margin:0;padding:10px 4px;background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;color:var(--text);text-align:left;cursor:pointer;font:inherit}
+.mpf .mpf-r:hover{background:rgba(255,255,255,.03)} .mpf .mpf-r:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.mpf-lv{display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--line2);border-radius:4px;font:700 15px var(--head);color:var(--muted)} .mpf-lv.mpf-hi{border-color:var(--gold);color:var(--gold)}
+.mpf-dg{display:flex;flex-direction:column;min-width:0} .mpf-dg b{font:700 14.5px var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .mpf-dg small{font:500 12.5px var(--body);color:var(--muted)} .mpf-dg em{display:none;font:600 12.5px var(--body);font-style:normal}
+.mpf-res{font:600 13px var(--body)} .mpf-dt{font:500 12.5px var(--body);color:var(--muted)} .mpf-r .mpf-op{pointer-events:none}
+.mpf .mpf-msg{margin:10px 0 0;font:500 13px var(--body);color:var(--muted)} .mpf .mpf-foot{margin:8px 0 0;font:500 12px var(--body);color:var(--faint)} .mpf-more{margin-top:12px}
+.mpf-f{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1.3fr) 90px auto;gap:10px;align-items:end}
+.mpf-f label{display:flex;flex-direction:column;gap:4px;font:600 12px var(--body);color:var(--muted)}
+.mpf-f input,.mpf-f select{min-width:0;background:var(--raised);border:1px solid var(--line2);border-radius:4px;padding:8px 10px;color:var(--text);font:500 14px var(--body)}
+.mpf .mpf-alt{margin:14px 0 0;font:500 13px var(--body);color:var(--muted)} .mpf-box{margin-top:10px}
+.mpt-pick .mpt-findl{font:600 13px var(--body)}
+@media (max-width:600px){ .mpf .mpf-r{grid-template-columns:40px minmax(0,1fr) auto;gap:10px} .mpf-res,.mpf-dt{display:none} .mpf-dg em{display:block} .mpf-f{grid-template-columns:1fr 1fr} .mpf-f .btn{grid-column:1 / -1} }
 `;

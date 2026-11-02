@@ -383,6 +383,11 @@ async function charReports(creds, id, since) {
     if (since && d.length && d.every((x) => x.endTime < since)) break; } while (page <= last && page <= 5);
   return out;
 }
+// (one page of a character's reports, newest first, for the Mythic+ key finder (Nov 2): { data, last })
+async function charReportsPage(creds, id, page) {
+  const rr = HOSTED ? await api('/api/charreports?id=' + id + '&page=' + page) : (await gql(creds, CHAR_REPORTS_Q, { id, page })).characterData.character.recentReports;
+  return { data: (rr && rr.data) || [], last: (rr && rr.last_page) || 1 };
+}
 // one night's boss pulls: { at (wall-clock ms), boss, id, diffId, diff, dur, kill, endPct, endBoss, endPhase, players, deaths, first, fight }
 async function nightPulls(creds, code, lite) { /* (lite: players only, no deaths, Oct 25) */
   const rep = HOSTED ? await api('/api/night?code=' + enc(code) + '&sp=1') : ((d) => d && d.reportData && d.reportData.report)(await gql(creds, NIGHT_Q, { code }));
@@ -652,6 +657,6 @@ function* translateSteps(item, events) {
   return out;
 }
 
-root.WCL = { HOSTED, mpFast, MPFAST_Q, paceRecs, rateRecs, curveRecs, killGuild, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
+root.WCL = { HOSTED, mpFast, MPFAST_Q, paceRecs, rateRecs, curveRecs, killGuild, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, charReportsPage, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);
