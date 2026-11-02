@@ -449,17 +449,17 @@ async function rateFill(env, st, key, rr, max) {
   return { fk, L, n, left };
 }
 /* (Nov 2, Flex: "500 per boss": test copies only, driven by a paced script between the 10-minute runs. rateGrow reads the given kills
-   (up to 16) into rate-raw:<key> like the 10-minute job does, skipping one already saved or waiting in that job's list, then fills up
+   (16 reads) into rate-raw:<key> like the 10-minute job does, skipping one already saved or waiting in that job's list, then fills up
    to `fill` older kills' boss damage; one save. rateIds: one page of the current patch's rankings, as code:fight and seconds) */
 async function rateGrow(env, key, ids, fill) {
   const L = (await env.DEBRIEF_KV.get('rate-raw:' + key, 'json')) || [], st = (await env.DEBRIEF_KV.get('pace-st', 'json')) || { b: {} }, B = st.b[key] || {};
-  const have = new Set(L.map((x) => x.c + ':' + x.f).concat((B.rtodo || []).map((x) => x[0] + ':' + x[1]))); let added = 0, dup = 0, bad = 0, stop = false;
-  for (const id of ids.slice(0, 16)) { if (have.has(id)) { dup++; continue; } have.add(id); const c = id.split(':')[0], f = parseInt(id.split(':')[1], 10);
+  const have = new Set(L.map((x) => x.c + ':' + x.f).concat((B.rtodo || []).map((x) => x[0] + ':' + x[1]))); let added = 0, dup = 0, bad = 0, stop = false, used = 0, reads = 0;
+  for (const id of ids.slice(0, 40)) { if (reads >= 16) break; used++; if (have.has(id)) { dup++; continue; } have.add(id); reads++; const c = id.split(':')[0], f = parseInt(id.split(':')[1], 10); /* (16 reads a call; one already saved costs nothing, so it doesn't count; used: how many of ids were dealt with) */
     try { const o = await rateOfKill(env, c, f); if (o.kill && o.ph.length) { L.push(Object.assign({ c, f, at: o.at || 0, h: o.heal, ph: o.ph.map(rateRow) }, o.ph.every((p) => p.bdps != null) ? {} : { nb: 1 })); added++; } else bad++; }
-    catch (err) { console.warn('Grow:', id, err.message); if (/rate limit|429|down right now|answered 5/i.test(err.message || '')) { stop = true; break; } bad++; } }
+    catch (err) { console.warn('Grow:', id, err.message); if (/rate limit|429|down right now|answered 5/i.test(err.message || '')) { stop = true; used--; break; } bad++; } }
   const fl = stop || !(fill > 0) ? null : await rateFill(env, { b: { [key]: {} } }, key, L, Math.min(fill, 20 - added));
   if (added || (fl && fl.n)) await env.DEBRIEF_KV.put('rate-raw:' + key, JSON.stringify(L));
-  return { key, added, dup, bad, stop, filled: fl ? fl.n : 0, left: fl ? fl.left : null, total: L.length, nb: L.filter((x) => x.nb).length, withBoss: L.filter((x) => !x.nb && x.ph && x.ph.every((q) => q[5] != null)).length };
+  return { key, added, dup, bad, stop, used, filled: fl ? fl.n : 0, left: fl ? fl.left : null, total: L.length, nb: L.filter((x) => x.nb).length, withBoss: L.filter((x) => !x.nb && x.ph && x.ph.every((q) => q[5] != null)).length };
 }
 async function rateIds(env, e, d, p, pt) {
   let parts = null; if (!pt) { const z = await gql(env, PACE_PART_Q, { e }); parts = ((z && z.worldData && z.worldData.encounter && z.worldData.encounter.zone && z.worldData.encounter.zone.partitions) || []).map((x) => x.id); pt = parts[parts.length - 1] || 0; }
