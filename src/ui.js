@@ -2052,6 +2052,7 @@ const PATCH_NOTES = [
     "Report card: a raider's card reads top to bottom in one column: their name with the grade beside it, the one thing to fix first, a box per list (tap one to jump to it), then the lists one under the other.",
     "Pages appear finished and calm: the count-up numbers, growing bars and slide-ins are off for now, and a pull fades in once when it's ready.",
   ], f: [
+    "Debriefing, All pulls: in a narrower window the mechanic rows stay in one column, so their pull squares no longer fall into a tall stack.",
     "Debriefing, All pulls: clicking a mechanic no longer blanks the page for a moment after you have looked at a single pull.",
     'Deaths while mind controlled by Dreadmarch now say so ("mind controlled by Dreadmarch, then died with no killing hit") instead of naming a tiny hit as the killer, and a Gravebound death says the last soul fragment you picked up killed you, with a real fix instead of "it\'s dodgeable".',
     "The boxes at the top of Debriefing have square inside corners again: Avoidable damage, Defensives, Combat potions and Deaths still had slightly rounded ones.",

@@ -13106,6 +13106,10 @@ document.addEventListener('click', function (ev) { var r = ev.target.closest && 
   sq.classList.toggle('mx7-dim', on); [].forEach.call(sq.querySelectorAll('i[data-npq]'), function (i) { i.classList.toggle('mx7-on', L.indexOf(i.getAttribute('data-npq')) >= 0); }); });
 document.addEventListener('keydown', function (ev) { if (ev.key !== 'Enter' && ev.key !== ' ') return; var r = ev.target.classList && ev.target.classList.contains('mx7-r') ? ev.target : null; if (r) { ev.preventDefault(); r.click(); } });
 </script>
+<style id="rcss-476">
+/* round 476: one column of mechanic rows below 1100 px, so each row keeps room for its pull squares */
+@media (max-width: 1100px) { html body #view details.phase.mcx-ph > summary .prw, html body #view .prw { grid-template-columns: minmax(0, 1fr) !important; } }
+</style>
 </head>
 <body class="refine">
 <noscript><h1>Debrief: WoW raid log review for Mythic progression</h1><p>Debrief reads your World of Warcraft raid logs, from a Warcraft Logs report or your own combat log, and explains every pull: which mechanics were missed and by whom, why each player died, how your rotation compared with the top players, and what to fix before the next pull.</p><p>It also has Heroic and Mythic boss guides for every boss in the raid, a raid cooldown planner that reads Northern Sky Raid Tools (NSRT) notes, and an in-game addon. Debrief needs JavaScript turned on.</p></noscript>

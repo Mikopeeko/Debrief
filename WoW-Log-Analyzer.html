@@ -13106,6 +13106,10 @@ document.addEventListener('click', function (ev) { var r = ev.target.closest && 
   sq.classList.toggle('mx7-dim', on); [].forEach.call(sq.querySelectorAll('i[data-npq]'), function (i) { i.classList.toggle('mx7-on', L.indexOf(i.getAttribute('data-npq')) >= 0); }); });
 document.addEventListener('keydown', function (ev) { if (ev.key !== 'Enter' && ev.key !== ' ') return; var r = ev.target.classList && ev.target.classList.contains('mx7-r') ? ev.target : null; if (r) { ev.preventDefault(); r.click(); } });
 </script>
+<style id="rcss-476">
+/* round 476: one column of mechanic rows below 1100 px, so each row keeps room for its pull squares */
+@media (max-width: 1100px) { html body #view details.phase.mcx-ph > summary .prw, html body #view .prw { grid-template-columns: minmax(0, 1fr) !important; } }
+</style>
 </head>
 <body class="refine">
 <noscript><h1>Debrief: WoW raid log review for Mythic progression</h1><p>Debrief reads your World of Warcraft raid logs, from a Warcraft Logs report or your own combat log, and explains every pull: which mechanics were missed and by whom, why each player died, how your rotation compared with the top players, and what to fix before the next pull.</p><p>It also has Heroic and Mythic boss guides for every boss in the raid, a raid cooldown planner that reads Northern Sky Raid Tools (NSRT) notes, and an in-game addon. Debrief needs JavaScript turned on.</p></noscript>
@@ -23394,6 +23398,7 @@ const PATCH_NOTES = [
     "Report card: a raider's card reads top to bottom in one column: their name with the grade beside it, the one thing to fix first, a box per list (tap one to jump to it), then the lists one under the other.",
     "Pages appear finished and calm: the count-up numbers, growing bars and slide-ins are off for now, and a pull fades in once when it's ready.",
   ], f: [
+    "Debriefing, All pulls: in a narrower window the mechanic rows stay in one column, so their pull squares no longer fall into a tall stack.",
     "Debriefing, All pulls: clicking a mechanic no longer blanks the page for a moment after you have looked at a single pull.",
     'Deaths while mind controlled by Dreadmarch now say so ("mind controlled by Dreadmarch, then died with no killing hit") instead of naming a tiny hit as the killer, and a Gravebound death says the last soul fragment you picked up killed you, with a real fix instead of "it\'s dodgeable".',
     "The boxes at the top of Debriefing have square inside corners again: Avoidable damage, Defensives, Combat potions and Deaths still had slightly rounded ones.",
