@@ -2034,6 +2034,7 @@ const PATCH_NOTES = [
     "Mythic+ tab: Next time lines are one short sentence each, with the details in the small ⓘ, and the tab opens on your own character when they're in the key.",
     "Mythic+ map: point at a pull, a tile or a timeline block for a short summary: its time, forces, deaths, kicks, Lust and cooldowns. The timeline marks each cast that went off with a kick ready.",
     "Mythic+ map: the pulls are tiles under the map, so the pull's card has the whole side to itself.",
+    "Mythic+ tab, tidier: Your group starts open, the Show links are quiet text, a leak's row opens its full explanation, and “Pull more before Atroxus, so less is left after it” reads the right way round.",
     "Mythic+ tab: a Your part card under the key's summary shows your deaths, kicks, big cooldowns and avoidable hits, and how your damage compares with top players of your spec. Each one is a click from its pull, with one thing to do next time. Pick another player to see theirs.",
     "Mythic+ tab, quiet wins: a gold “New best” badge when a key beats your best on that dungeon, a soft glow on a +3, and a ★ on your best key in the key finder.",
     "Mythic+ tab: nothing jumps while the fast run loads. Its parts hold their place and fade in.",

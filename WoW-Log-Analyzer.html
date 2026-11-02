@@ -23980,6 +23980,7 @@ const PATCH_NOTES = [
     "Mythic+ tab: Next time lines are one short sentence each, with the details in the small ⓘ, and the tab opens on your own character when they're in the key.",
     "Mythic+ map: point at a pull, a tile or a timeline block for a short summary: its time, forces, deaths, kicks, Lust and cooldowns. The timeline marks each cast that went off with a kick ready.",
     "Mythic+ map: the pulls are tiles under the map, so the pull's card has the whole side to itself.",
+    "Mythic+ tab, tidier: Your group starts open, the Show links are quiet text, a leak's row opens its full explanation, and “Pull more before Atroxus, so less is left after it” reads the right way round.",
     "Mythic+ tab: a Your part card under the key's summary shows your deaths, kicks, big cooldowns and avoidable hits, and how your damage compares with top players of your spec. Each one is a click from its pull, with one thing to do next time. Pick another player to see theirs.",
     "Mythic+ tab, quiet wins: a gold “New best” badge when a key beats your best on that dungeon, a soft glow on a +3, and a ★ on your best key in the key finder.",
     "Mythic+ tab: nothing jumps while the fast run loads. Its parts hold their place and fade in.",
@@ -61485,7 +61486,7 @@ const mpFoldGet = () => { try { return JSON.parse(localStorage.getItem(MP_FOLDK)
 const mpFoldSet = (id, v) => { try { const m = mpFoldGet(); m[id] = v; localStorage.setItem(MP_FOLDK, JSON.stringify(m)); } catch (e) { /* (not kept) */ } };
 function mpFoldRestore() { const m = mpFoldGet();
   for (const [id, v] of Object.entries(m)) { const d = document.getElementById(id); if (!d) continue; if (d.tagName === 'DETAILS') d.open = !!v; else if (id === 'mptMoreRows') mpMoreSet(!!v); } }
-const mpMoreSet = (v) => { const box = document.getElementById('mptMoreRows'), b = document.querySelector('[data-mptmore]'); if (!box || !b) return; box.hidden = !v; b.textContent = v ? 'Show fewer' : 'Show ' + b.dataset.mptmore + ' more'; };
+const mpMoreSet = (v) => { const box = document.getElementById('mptMoreRows'), b = document.querySelector('[data-mptmore]'); if (!box || !b) return; box.hidden = !v; b.textContent = v ? 'Show fewer' : 'Show ' + b.dataset.mptmore + ' more'; b.classList.toggle('on', !!v); };
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-mptmore]'); if (!b) return; const box = document.getElementById('mptMoreRows'); if (!box) return; const v = box.hidden; mpMoreSet(v); mpFoldSet('mptMoreRows', v); });
 document.addEventListener('toggle', (e) => { const d = e.target; if (!d || !d.closest || !d.closest('.mpt')) return; if (d.id && /^mpt/.test(d.id)) mpFoldSet(d.id, d.open); if (d.open && d.querySelector('.mpt-strip')) try { mpLabelFit(); } catch (x) { /* (labels as drawn) */ } }, true);
 // (the tab opens on you (the studio's item 19, Flex's plan): your character in this key, by your Home character, then your saved ones, then your
@@ -61622,7 +61623,7 @@ function mpNextTrash(R, F, s, f, ST, fBy) {
   else { const rt = R.route && R.route.ok ? R.route : null, frt = F.route && F.route.ok && rt && F.route.full === rt.full ? F.route : null;
     if (frt) { const share = (RR, rr, ps) => 100 * ps.reduce((a, p) => a + ((rr.pulls[RR.pulls.indexOf(p)] || {}).add || 0), 0) / rr.full; let best = null;
       for (const s2 of ST) { const f2 = s2 !== s && fBy.get(s2.boss); if (!f2) continue; const ys = share(R, rt, mpInSt(R, s2)), fs = share(F, frt, mpInSt(F, f2)); if (fs - ys >= 5 && (!best || fs - ys > best.d)) best = { s2, ys, fs, d: fs - ys }; }
-      if (best) out.push(['Get more count before ' + esc(best.s2.boss) + ': the fast run had ' + Math.round(best.fs) + '% there, you had ' + Math.round(best.ys) + '%.', 'Take more of the count before ' + esc(best.s2.boss) + '. The fast run got ' + Math.round(best.fs) + '% ' + mpWhere(best.s2) + ', you got ' + Math.round(best.ys) + '%, so it needed less here.']); }
+      if (best) out.push(['Pull more before ' + esc(best.s2.boss) + ', so less is left after it: the fast run had ' + Math.round(best.fs) + '% by then, you had ' + Math.round(best.ys) + '%.', 'Pull more of the count before ' + esc(best.s2.boss) + ', so less is left after it. The fast run got ' + Math.round(best.fs) + '% ' + mpWhere(best.s2) + ', you got ' + Math.round(best.ys) + '%, so it had less to kill here.']); }
     if (fewer) out.push([pullS, pullLine]); }
   const lu = (RR, ps) => (RR.lust || []).some((l) => ps.includes(RR.pulls[l.pull])); /* (Lust only when the fast run used it here and you didn't) */
   if (lu(F, fp) && !lu(R, yp)) out.push(['The fast run used Lust here, you didn\'t.', 'The fast run used Lust here, you didn\'t.']);
@@ -61768,7 +61769,8 @@ function mpHtml(it, R, fx) {
   const fxGo = (f) => (f.ps && f.ps.length && R.units && R.units.length ? '<button type="button" class="linkbtn mpt-fxgo" data-mpps="' + f.ps.join(',') + '" data-mpt="' + esc(f.t.replace(/<[^>]+>/g, '')) + '" data-mpl="' + esc(esc(mpPNs(R, f.ps.map((k) => k + 1)))) + '">Show on the map ↑</button>' : ''); /* (the map-first round) */
   const ntSeen = new Set(), ntSame = (h) => { const m = /^(<p class="mpt-nt"><b>Next time<\/b> )([^:<]{3,40}): /.exec(h || ''); if (!m) return h; if (ntSeen.has(m[2])) return h.replace(m[0], m[1] + 'Same here: '); ntSeen.add(m[2]); return h; }; /* (two rows with the same action: the second says "Same here") */
   const fxRow = (f, i, fix) => { const nt = ntSame(f.nt || (f.c === 'kick' && f.sp ? mpNextKick(R, f.sp) : '')) || (f.c === 'death' ? '<p class="mpt-nt mpt-ntd">' + f.d + '</p>' : '');
-    const more = (f.c === 'death' ? '' : '<p>' + f.d + '</p>') + (f.g || ''), badge = '<span class="mpt-fxn mpt-c-' + (f.c || 'none') + '">' + (i + 1) + '</span>';
+    const full = ((/ data-tt="([^"]*)"/.exec(nt || '') || [])[1] || '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, '\'').replace(/&amp;/g, '&'); /* (the ⓘ's words) */
+    const more = (f.c === 'death' ? '' : '<p>' + (full || f.d) + '</p>') + (f.g || ''), badge = '<span class="mpt-fxn mpt-c-' + (f.c || 'none') + '">' + (i + 1) + '</span>';
     const right = '<span class="mpt-fxs">' + (f.s ? (fix ? '<b class="mpt-g">−' + mpMM(f.s) + '</b>' : '<b class="' + mpSz(f.s) + '">' + mpMM(f.s) + '</b>') + '<small>' + (f.plus || 'on the timer') + '</small>' : f.n ? '<b class="mpt-ab">' + f.n + '</b><small>went off</small>' : '<b class="mpt-m">' + f.ns + '</b>') + '</span>';
     return more ? '<details class="mpt-fxd"><summary class="mpt-fxr">' + badge + '<div><b class="mpt-fxt">' + f.t + '</b>' + fxGo(f) + nt + '</div>' + right + '</summary><div class="mpt-fxm">' + more + '</div></details>'
       : '<div class="mpt-fxr">' + badge + '<div><b class="mpt-fxt mpt-fxt0">' + f.t + '</b>' + fxGo(f) + nt + '</div>' + right + '</div>'; };
@@ -61871,7 +61873,7 @@ const mpCdN = (R, p) => { if (!(R.cdWho || []).includes(p.name)) return null;
 const mpT1 = (h) => ' data-tt="' + esc(h) + '"';
 const mpInfo = (t) => '<span class="ds-i mpt-i" tabindex="0" role="note" aria-label="How to read it"' + mpT1(t) + '>ⓘ</span>';
 const mpSec = (t, line, body, id, o) => { o = o || {}; const h = (o.noTitle ? '' : '<h2>' + t + '</h2>') + (o.tip ? mpInfo(o.tip) : '') + (line ? '<span class="mpt-hl">' + line + '</span>' : ''); /* (noTitle: a chapter with this one part says its name already) */
-  return o.fold ? '<details class="mpt-sec mpt-fold"' + (id ? ' id="' + id + '"' : '') + '><summary class="mpt-sh' + (o.noTitle ? ' mpt-sh0' : '') + '">' + h + '<span class="mpt-chev" aria-hidden="true"></span></summary><div class="mpt-fb">' + body + '</div></details>'
+  return o.fold ? '<details class="mpt-sec mpt-fold"' + (id ? ' id="' + id + '"' : '') + (o.open ? ' open' : '') + '><summary class="mpt-sh' + (o.noTitle ? ' mpt-sh0' : '') + '">' + h + '<span class="mpt-chev" aria-hidden="true"></span></summary><div class="mpt-fb">' + body + '</div></details>'
     : '<section class="mpt-sec"' + (id ? ' id="' + id + '"' : '') + '><div class="mpt-sh">' + h + '</div>' + body + '</section>'; };
 // (where you fell behind: one timeline on the key's timer, your pulls next to a fast run, then why, stretch by stretch)
 function mpBehind(R, C, F, FC, fx, waiting, out) {
@@ -61935,7 +61937,8 @@ function mpBehind(R, C, F, FC, fx, waiting, out) {
   /* (the quick read: the lanes and their key stay; the stretch table and its sentences fold under "Stretch by stretch") */
   if (out) { out.tl = timeline; /* (the lanes and their key moved under the map (the map-first round)) */
     /* (the cut, Nov 2: one sentence under the bar, the numbers folded) */
-    return '<p class="mpt-why mpt-why1">' + (sum || line) + '</p><details class="mpt-sub" id="mptStr"><summary>The numbers, stretch by stretch</summary>' + why + src + '</details>'; }
+    /* (Flex's "go", Nov 2: no sentence under the leak rows when there's a fast run; it repeated row 1 and the verdict with a second number) */
+    return (F ? '' : line ? '<p class="mpt-why mpt-why1">' + line + '</p>' : '') + '<details class="mpt-sub" id="mptStr"><summary>The numbers, stretch by stretch</summary>' + why + src + '</details>'; }
   return mpSec('Where you fell behind', line, (out ? '' : timeline) + '<details class="mpt-sub" id="mptStr"><summary>Stretch by stretch</summary>' + why + (sum ? '<p class="mpt-why">' + sum + '</p>' : '') + src + '</details>', 'mptTl',
     { tip: F || waiting ? '<b>How to read it</b><br>Your key and a typical fast run on the same timer, left to right. Where your line runs longer, you were slower. Hover any piece for what it is.' : '<b>How to read it</b><br>Your key on its timer, left to right. Hover any piece for what it is.' });
 }
@@ -62065,7 +62068,7 @@ function mpGroup(R, fx, waiting) {
     (R.cdWho || []).length ? (never.length ? never.map((nm) => mpWho(R, nm)).join(', ').replace(/, ([^,]*)$/, ' and $1') + ' never pressed a big cooldown.' : 'Everyone pressed their big cooldowns.') : '',
     low ? (low.v.pct < 0 ? mpWho(R, low.p.name) + ' was furthest behind their spec (<b class="mpt-bad">' + -low.v.pct + '%</b>).' : 'Everyone was ahead of the middle player of their spec.') : '',
     ppl.filter((p) => p.role === 'healer' && mpHealWorth(R, p)).map((p) => mpWho(R, p.name) + '\'s damage timed this key.').join(' ')].filter(Boolean).join(' ');
-  return mpSec('Your group', line, went + '<div class="gbx mpt-gtab">' + hd + rows + tot + '</div><div class="mpt-gft">' + foot + '</div>', 'mptPlayers', { fold: true });
+  return mpSec('Your group', line, went + '<div class="gbx mpt-gtab">' + hd + rows + tot + '</div><div class="mpt-gft">' + foot + '</div>', 'mptPlayers', { fold: true, open: true, noTitle: true }); /* (open from the start, the chapter label its title (Flex's "go")) */
 }
 // (a healer's damage, in time: worth T × r_h / (r − r_h) seconds of fighting, with T the fighting time, r the group's damage a second while
 // fighting and r_h the healer's. When that's more than the time the key was timed with, a line says so: "was worth", never "you'd have failed")
@@ -63253,6 +63256,12 @@ body.mpz-wh .spc-tt{display:none !important}
 .mpt-lt.mpt-ltw > .mpt-shim{position:absolute;left:0;top:30%;height:40%} .mpt .mpt-fxr.mpt-fxr0{align-items:center} .mpt-fxr0 > div > .mpt-shim + br + .mpt-shim{margin-top:7px}
 .mpt .mpt-shimt{color:transparent!important;user-select:none;border-radius:3px;background:linear-gradient(90deg,rgba(255,255,255,.05) 0%,rgba(255,255,255,.12) 50%,rgba(255,255,255,.05) 100%);background-size:200% 100%;animation:mptShim 1.4s ease-in-out infinite;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 @media (prefers-reduced-motion: reduce){.mpt .mpt-shimt{animation:none}} .mpt-fxwb{margin:6px 0 10px} .mpt-fxwb .mpt-shim + br + .mpt-shim{margin-top:8px}
+/* (Flex's "go" (Nov 2): Show and Show N more are quiet text links, ▸ turning ▾, gold on hover; a leak's whole title opens its words) */
+.mpt .mpt-chev{border:0;padding:0;border-radius:0;font:600 12.5px var(--body);letter-spacing:0;color:var(--muted)} .mpt-chev::before{content:"Show ▸"} .mpt-fold[open] > summary .mpt-chev::before{content:"Hide ▾"}
+.mpt .mpt-fold > summary:hover .mpt-chev,.mpt .mpt-fold > summary:focus-visible .mpt-chev{color:var(--gold)}
+.mpt .mpt-fxbtn{height:auto;margin:10px 0 0 40px;padding:0;border:0;border-radius:0;background:none;font:600 12.5px var(--body);letter-spacing:0;color:var(--muted)} .mpt .mpt-fxbtn::after{content:" ▸"} .mpt .mpt-fxbtn.on::after{content:" ▾"}
+.mpt .mpt-fxbtn:hover,.mpt .mpt-fxbtn:focus-visible{color:var(--gold);border:0} .mpt-fxd > summary .mpt-fxt{cursor:pointer} .mpt-fxd > summary:hover .mpt-fxt::after{color:var(--gold)}
+@media (max-width:600px){ .mpt .mpt-fxbtn{margin-left:0} }
 `;
  // (and src/mptab.js, the Mythic+ tab (Nov 1))
 })();
