@@ -1374,7 +1374,7 @@ function mpMapHtml(R, F, tl) {
       const gi = us.map((u, j) => j), root = (j) => (gi[j] === j ? j : (gi[j] = root(gi[j])));
       for (let a = 0; a < us.length; a++) for (let b = a + 1; b < us.length; b++) if (Math.hypot(us[a].x - us[b].x, us[a].y - us[b].y) <= 50) gi[root(a)] = root(b);
       const cl = new Map(); us.forEach((u, j) => { const r = root(j); if (!cl.has(r)) cl.set(r, []); cl.get(r).push(u); });
-      const cn = new Set(mpMobs(q.RR, q.p).map((m) => m[0])), nc = (g2) => g2.filter((u) => cn.has(u.n)).length, groups = [...cl.values()].sort((a, b) => nc(b) - nc(a) || b.length - a.length), big = groups[0].map((u) => px(f, u)); /* (the label's group: the most counted enemies, then the biggest) */
+      const cn = new Set(mpMobs(q.RR, q.p).map((m) => m[0])), nc = (g2) => g2.filter((u) => cn.has(u.n)).length, groups = [...cl.values()].sort((a, b) => nc(b) - nc(a) || b.length - a.length), bc = groups[0].filter((u) => cn.has(u.n)), big = (bc.length ? bc : groups[0]).map((u) => px(f, u)); /* (its middle: the counted enemies of that group (Flex: "put pull 2 in the middle of the group")) */ /* (the label's group: the most counted enemies, then the biggest) */
       cen.set(q.i, [big.reduce((a, v) => a + v[0], 0) / big.length, big.reduce((a, v) => a + v[1], 0) / big.length]);
       const shape = (g, gi) => { const pts = g.map((u) => px(f, u)), hp = mpHull(pts), d = (hp.length === 1 ? [hp[0], hp[0]] : hp).map((v, j) => (j ? 'L' : 'M') + v[0].toFixed(1) + ' ' + v[1].toFixed(1)).join('') + (hp.length > 2 ? 'Z' : '');
         const pad = 30 * k, e = 1.6 * k, id = 'mpm-' + uid + '-' + q.i + '-' + gi, lj = ' stroke-linejoin="round" stroke-linecap="round"';
@@ -1395,7 +1395,7 @@ function mpMapHtml(R, F, tl) {
       const pw = ptx ? ptx.length * 6.6 + 12 : 0, LW = 22 + (pw ? 3 + pw : 0), x0 = -LW / 2;
       /* (where the label sits (Flex: "try to place these inside the pulls if you can so they dont overlap"): a trash pull's at its middle, where the
          route passes; a boss pull's just above the boss (its portrait); mpTagSpread pushes apart any two that would overlap. data-bb: its box) */
-      const bp = q.p.boss ? us.filter((u) => u.boss).map((u) => px(f, u)) : [], an = q.p.boss ? (bp.length ? [bp.reduce((a, v) => a + v[0], 0) / bp.length, bp.reduce((a, v) => a + v[1], 0) / bp.length] : top) : cen.get(q.i), oy = q.p.boss ? (bp.length ? 28 : 26) : 0;
+      const bp = q.p.boss ? us.filter((u) => u.boss).map((u) => px(f, u)) : [], an = bp.length ? [bp.reduce((a, v) => a + v[0], 0) / bp.length, bp.reduce((a, v) => a + v[1], 0) / bp.length] : cen.get(q.i), oy = 0; /* (mpTagSpread moves it off what it would cover) */
       const bb = [wt ? x0 - 3 - ww : x0, q.bad ? -16 : -11, x0 + LW + (q.lust ? 23 : 0), 11].map((v) => v.toFixed(1)).join(',');
       tags.push('<g class="mpt-mpl mpt-mtag" data-pi="' + q.i + '" data-oy="' + (oy * k).toFixed(1) + '" data-bb="' + bb + '"' + mpT1(tip(q)) + ' transform="translate(' + an[0].toFixed(1) + ',' + (an[1] - oy * k).toFixed(1) + ') scale(' + k.toFixed(3) + ')">' +
         '<rect x="' + x0.toFixed(1) + '" y="-11" width="22" height="22" rx="4" fill="' + q.c + '" stroke="#0f1117" stroke-width="1.2"/><text class="mpt-tgn" x="' + (x0 + 11).toFixed(1) + '" y="4.5" text-anchor="middle" fill="#0f1117">' + (q.p.boss ? '★' : mpNo(q.RR, q.p.n)) + '</text>' +
@@ -1415,11 +1415,9 @@ function mpMapHtml(R, F, tl) {
         for (const b of bs) { const [x, y] = px(f, b), m = new Map(); for (const h of b.l) { const k2 = h.who + ' · ' + h.sp; m.set(k2, (m.get(k2) || 0) + 1); }
           marks.push('<g class="mpt-mk mk-avoid" data-pi="' + q.i + '"' + mpT1([...m].map(([k2, c]) => esc(k2) + ' ×' + c).join('<br>')) + ' transform="translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ') scale(' + k.toFixed(3) + ')"><circle r="' + (b.l.length > 1 ? 8 : 6) + '" fill="#f2c46b" fill-opacity=".9" stroke="#0f1117" stroke-width="1.5"/>' +
             (b.l.length > 1 ? '<text y="4" text-anchor="middle" fill="#0f1117" style="font-size:10px;font-weight:700">' + b.l.length + '</text>' : '') + '</g>'); } } }
-    // (the route: a dotted line through each pull's middle, in order, with a chevron at each midpoint; "then Arena →" where it leaves this floor)
+    // (no route line (Flex, Nov 2: "they already know the route based on the numbers of each pull being in order"); "then Arena →" where it leaves this floor)
     const order = Q.filter((q) => cen.has(q.i)), route = [];
-    for (let j = 1; j < order.length; j++) { const a = cen.get(order[j - 1].i), b = cen.get(order[j].i), mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2, ang = Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI;
-      route.push('<path d="M-4 -4 L2 0 L-4 4" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="2" transform="translate(' + mx.toFixed(1) + ',' + my.toFixed(1) + ') rotate(' + ang.toFixed(0) + ') scale(' + k.toFixed(3) + ')"/>'); }
-    const line = order.length > 1 ? '<polyline data-pis="' + order.map((q) => q.i).join(',') + '" points="' + order.map((q) => cen.get(q.i).map((v) => v.toFixed(1)).join(',')).join(' ') + '" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="' + (2.2 * k).toFixed(2) + '" stroke-dasharray="' + (7 * k).toFixed(1) + ' ' + (6 * k).toFixed(1) + '"/>' : '';
+    const line = '';
     const last = order[order.length - 1], nx = last && Q.slice(last.i + 1).find((q) => q.fl >= 0 && floors[q.fl].f[0] !== f[0]);
     if (nx) { const [x, y] = cen.get(last.i), t = 'then ' + floors[nx.fl].f[1] + ' →', tw2 = t.length * 6.4 + 14;
       route.push('<g class="mpt-mthen" data-mdtf="' + nx.fl + '" data-bb="0,0,' + tw2.toFixed(0) + ',20" role="button" transform="translate(' + (x + 18 * k).toFixed(1) + ',' + (y + 14 * k).toFixed(1) + ') scale(' + k.toFixed(3) + ')"><rect width="' + tw2.toFixed(0) + '" height="20" rx="10" fill="#0f1117" fill-opacity=".85" stroke="#fff" stroke-opacity=".45"/><text x="' + (tw2 / 2).toFixed(0) + '" y="14" text-anchor="middle" fill="#e8ebee" style="font-size:11.5px">' + esc(t) + '</text></g>'); }
@@ -1499,7 +1497,7 @@ function mpMapHtml(R, F, tl) {
       '<span class="mpt-mic">' + (q.p.deaths.length ? '<i class="d">☠</i>' : '') + (th ? '<i class="k">!' + th + '</i>' : '') + (q.lust ? '<i class="l">⚡</i>' : '') + '</span></span></li>'; }).join('') + '</ol>';
   const f0 = Math.max(0, floors.findIndex((x) => x.us[0].length));
   const fb = '<div class="mpt-flb" role="group" aria-label="Floor">' + (floors.length > 1 ? floors.map((fl, j) => '<button type="button" data-mdtf="' + j + '"' + (j === f0 ? ' class="on"' : '') + '>' + esc(fl.f[1]) + '</button>').join('') : '<span>' + esc(floors[0].f[1]) + '</span>') + '</div>';
-  const LAY = [['r', '⋯', 'Route'], ['d', '☠', 'Deaths'], ['k', '!', 'Missed kicks'], ['l', '⚡', 'Lust'], ['w', '⏱', 'Waits'], ['a', '◆', 'Avoidable', 1]];
+  const LAY = [['d', '☠', 'Deaths'], ['k', '!', 'Missed kicks'], ['l', '⚡', 'Lust'], ['w', '⏱', 'Waits'], ['a', '◆', 'Avoidable', 1]];
   const eye = '<b class="mpt-eye" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8s-2.4 4.5-6.5 4.5S1.5 8 1.5 8Z" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="2" fill="currentColor"/><path class="x" d="M2.5 13.5 13.5 2.5" stroke="currentColor" stroke-width="1.4"/></svg></b>';
   const lay = '<div class="mpt-lay"><button type="button" class="mpt-layb" aria-expanded="false">Layers <span class="mpt-layn">' + LAY.filter((x) => !x[3]).length + ' of ' + LAY.length + '</span> ▾</button><div class="mpt-layp" role="group" aria-label="Show on the map">' +
     LAY.map(([c, i, l, off]) => '<button type="button" class="mpt-mchip' + (off ? '' : ' on') + ' mpt-mchip-' + c + '" data-mchip="' + c + '" aria-pressed="' + !off + '"><i>' + i + '</i><span>' + l + '</span>' + eye + '</button>').join('') + '</div></div>';
@@ -1567,31 +1565,38 @@ function mpZoom(box, at) { if (!box) return; const fi = mpZoomF(box), st = MP.mz
     for (const el of svg.querySelectorAll('.mpt-mpl > circle')) { if (!el.dataset.r) { el.dataset.r = el.getAttribute('r'); el.dataset.csw = el.getAttribute('stroke-width') || ''; } el.setAttribute('r', (el.dataset.r * sf / z).toFixed(2)); if (el.dataset.csw) el.setAttribute('stroke-width', (el.dataset.csw * sf / z).toFixed(3)); }
     svg.classList.toggle('mpt-zin', z >= 1.5); for (const im of svg.querySelectorAll(z >= 1.5 ? '.mpt-ep image[data-href]' : '.mpt-epe image[data-href]')) { im.setAttribute('href', im.dataset.href); im.removeAttribute('data-href'); } /* (portraits load when shown) */
     mpTagSpread(svg, z, sf); mpEdges(svg, z, sf); } }
-// (where each pull's label sits at this zoom (Flex: "place these inside the pulls", then "make sure the numbers arent covering things up on the pulls"):
-// worked out again at every zoom, since the marks keep their screen size. In route order, each label tries spots along the route inside its pull (from
-// its middle toward the pulls before and after it), then rings round its middle inside the outline, then the same outside it; it takes the first spot
-// that covers no enemy dot or portrait, boss portrait, ☠ or "!", and no label placed before it or the "then …" chip (each box 2 px wider). A boss
-// pull's starts just above the boss's portrait. Nothing clear: the spot that covers least)
+// (where each pull's label sits at this zoom (Flex: "make sure the numbers arent covering things up on the pulls", "ideally put pull 2 in the middle of
+// the group"): worked out again at every zoom, since the marks keep their screen size. In route order, each label starts at the middle of its pull's
+// counted enemies (a boss pull's at the boss) and moves the least it can, straight up first, then down, left, right, then the diagonals, until its box
+// (2 px wider) covers no enemy dot or shown portrait, boss portrait, ☠, "!", route segment, label placed before it or button over the map; inside its own outline when that
+// fits, else the nearest clear spot. Then the "then …" chip the same way from the route's end, off every outline when it can. Nothing clear: the spot
+// that covers least)
 function mpTagSpread(svg, z, sf) { const TF = (el) => { const m = MP_TF.exec(el.getAttribute('transform') || ''); return m ? [+m[1], +m[2], +m[4]] : null; }, zin = z >= 1.5, ob = [], placed = [];
   for (const c of svg.querySelectorAll('.mpt-mpl:not(.mpt-mtag) > circle')) ob.push([+c.getAttribute('cx'), +c.getAttribute('cy'), +c.getAttribute('r')]);
   for (const el of svg.querySelectorAll('.mpt-ep, .mpt-bport, .mk-death, .mk-kick')) { const cl = el.classList, ep = cl.contains('mpt-ep'); if (ep && !zin && !cl.contains('mpt-epe')) continue; const t = TF(el); if (!t) continue;
     ob.push([t[0], t[1], t[2] * (cl.contains('mpt-bport') ? 15 : ep ? (cl.contains('mpt-epe') ? 10 : 8) : cl.contains('mk-death') ? 10 : 11)]); }
   const hl = svg.__hl || (svg.__hl = new Map([...svg.querySelectorAll('.mpt-hpg path')].map((p) => [p.closest('[data-pi]').dataset.pi, { p: (p.getAttribute('d').match(/-?[\d.]+ -?[\d.]+/g) || []).map((v) => v.split(' ').map(Number)), r: +p.getAttribute('stroke-width') / 2 }])));
   const sd = (x, y, a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy, t = L ? Math.max(0, Math.min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / L)) : 0; return Math.hypot(x - a[0] - t * dx, y - a[1] - t * dy); };
-  const inside = (pi, x, y) => { const h = hl.get(pi); if (!h || !h.p.length) return false; const P = h.p; let d = 1e9, w = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { d = Math.min(d, sd(x, y, P[j], P[i]));
+  const inside = (h, x, y) => { if (!h || !h.p.length) return false; const P = h.p; let d = 1e9, w = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { d = Math.min(d, sd(x, y, P[j], P[i]));
       if (P.length > 2 && (P[i][1] > y) !== (P[j][1] > y) && x < (P[j][0] - P[i][0]) * (y - P[i][1]) / (P[j][1] - P[i][1]) + P[i][0]) w = !w; } return w || d <= h.r; };
-  const cost = (R) => { let o = 0; for (const [x, y, r] of ob) { const dx = Math.max(R[0] - x, 0, x - R[2]), dy = Math.max(R[1] - y, 0, y - R[3]); if (dx * dx + dy * dy < r * r) o++; } for (const Q of placed) if (R[0] < Q[2] && R[2] > Q[0] && R[1] < Q[3] && R[3] > Q[1]) o += 5; return o; };
-  const th = svg.querySelector('.mpt-mthen[data-bb]'); if (th) { const t = TF(th), b = th.dataset.bb.split(',').map(Number); if (t) placed.push([t[0] + b[0] * t[2], t[1] + b[1] * t[2], t[0] + b[2] * t[2], t[1] + b[3] * t[2]]); }
-  const pl = svg.querySelector('polyline[data-pis]'), pis = pl ? pl.dataset.pis.split(',') : [], rp = pl ? (pl.getAttribute('points') || '').trim().split(/\s+/).map((v) => v.split(',').map(Number)) : [];
-  const tags = [...svg.querySelectorAll('.mpt-mtag[data-tf]')].sort((a, b) => a.dataset.pi - b.dataset.pi);
-  for (const el of tags) { const [tx, ty, , sc] = el.dataset.tf.split(',').map(Number), oy = +el.dataset.oy || 0, s = sc * sf / z, b = (el.dataset.bb || '0,0,0,0').split(',').map(Number), pi = el.dataset.pi;
-    const st = [tx, ty + oy - oy * sf / z], box = (x, y) => [x + (b[0] - 2) * s, y + (b[1] - 2) * s, x + (b[2] + 2) * s, y + (b[3] + 2) * s], step = 5 * s, rt = [], rg = [];
-    const ix = pis.indexOf(pi), nb = ix < 0 ? [] : [rp[ix - 1], rp[ix + 1]].filter(Boolean);
-    for (let d = step; d <= 160 * s; d += step) for (const v of nb) { const L = Math.hypot(v[0] - st[0], v[1] - st[1]); if (L > 1 && d < L - 6 * s) rt.push(Object.assign([st[0] + (v[0] - st[0]) * d / L, st[1] + (v[1] - st[1]) * d / L], { r: 1 })); }
-    for (let j = 1; j <= 30; j++) for (let a = 0; a < 16; a++) { const an = -Math.PI / 2 + (a % 2 ? -1 : 1) * Math.ceil(a / 2) * Math.PI / 8; rg.push([st[0] + Math.cos(an) * j * 6 * s, st[1] + Math.sin(an) * j * 6 * s]); } /* (up first, then fanning out both ways) */
-    const all = [st, ...rt, ...rg], far = (c) => Math.hypot(c[0] - st[0], c[1] - st[1]) - (c.r ? 8 * s : 0), near = [...all].sort((a, b) => far(a) - far(b)); let pick = null, best = null, bc = 1e9;
-    for (const pass of [1, 0]) { for (const c of pass ? all : near) { /* (outside: the nearest clear spot to its middle, the route a little preferred) */ if (pass && !inside(pi, c[0], c[1])) continue; const k = cost(box(c[0], c[1])); if (!k) { pick = c; break; } if (k < bc) { bc = k; best = c; } } if (pick) break; }
-    const [x, y] = pick || best || st; placed.push(box(x, y)); el.setAttribute('transform', 'translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ') scale(' + s.toFixed(4) + ')'); } }
+  const pl = svg.querySelector('polyline[data-pis]'), pis = pl ? pl.dataset.pis.split(',') : [], rp = pl ? (pl.getAttribute('points') || '').trim().split(/\s+/).map((v) => v.split(',').map(Number)) : [], seg = rp.slice(1).map((v, i) => [rp[i], v]);
+  const cross = (a, b, R) => { let t0 = 0, t1 = 1; const dx = b[0] - a[0], dy = b[1] - a[1]; for (const [p, q] of [[-dx, a[0] - R[0]], [dx, R[2] - a[0]], [-dy, a[1] - R[1]], [dy, R[3] - a[1]]]) { if (!p) { if (q < 0) return false; continue; } const r = q / p; if (p < 0) { if (r > t1) return false; if (r > t0) t0 = r; } else { if (r < t0) return false; if (r < t1) t1 = r; } } return true; };
+  /* (the buttons that float over the map: the floors, Layers, zoom; in the map's units) */
+  const ui = [], wr = svg.closest('.mpt-mwrap'), M = svg.clientWidth && svg.getScreenCTM(); if (wr && M) { const iv = M.inverse(), pt = svg.createSVGPoint(), at = (x, y) => { pt.x = x; pt.y = y; const q = pt.matrixTransform(iv); return [q.x, q.y]; };
+    for (const b of wr.querySelectorAll('.mpt-flb, .mpt-lay, .mpt-zctl')) { const r = b.getBoundingClientRect(); if (!r.width) continue; const a = at(r.left - 3, r.top - 3), c = at(r.right + 3, r.bottom + 3); ui.push([a[0], a[1], c[0], c[1]]); } }
+  const dR = (p, R) => Math.hypot(Math.max(R[0] - p[0], 0, p[0] - R[2]), Math.max(R[1] - p[1], 0, p[1] - R[3])), cs = (R) => [[R[0], R[1]], [R[2], R[1]], [R[0], R[3]], [R[2], R[3]]];
+  const hullHit = (h, R, m) => { const P = h.p, r = h.r + m; if (!P.length) return false; if (P.length === 1) return dR(P[0], R) <= r; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { if (P.length === 2 && i === 0) continue;
+      if (cross(P[j], P[i], R) || Math.min(dR(P[j], R), dR(P[i], R), ...cs(R).map((c) => sd(c[0], c[1], P[j], P[i]))) <= r) return true; } return P.length > 2 && inside({ p: P, r: 0 }, (R[0] + R[2]) / 2, (R[1] + R[3]) / 2); }; /* (a box touching an outline, its padding and edge counted) */
+  const cost = (R) => { let o = 0; for (const Q of ui) if (R[0] < Q[2] && R[2] > Q[0] && R[1] < Q[3] && R[3] > Q[1]) o += 5; for (const [x, y, r] of ob) { const dx = Math.max(R[0] - x, 0, x - R[2]), dy = Math.max(R[1] - y, 0, y - R[3]); if (dx * dx + dy * dy < r * r) o++; } for (const [a, b] of seg) if (cross(a, b, R)) o++; for (const Q of placed) if (R[0] < Q[2] && R[2] > Q[0] && R[1] < Q[3] && R[3] > Q[1]) o += 5; return o; };
+  const spots = (st, s) => { const out = [st]; for (let d = 3 * s; d <= 220 * s; d += 3 * s) { const e = d * 0.71; out.push([st[0], st[1] - d], [st[0], st[1] + d], [st[0] - d, st[1]], [st[0] + d, st[1]], [st[0] - e, st[1] - e], [st[0] + e, st[1] - e], [st[0] - e, st[1] + e], [st[0] + e, st[1] + e]); } return out; };
+  const place = (all, box, ok) => { let best = null, bc = 1e9; for (const pass of [1, 0]) for (const c of all) { if (pass && !ok(c)) continue; const k = cost(box(c)); if (!k) return c; if (k < bc) { bc = k; best = c; } } return best || all[0]; };
+  for (const el of [...svg.querySelectorAll('.mpt-mtag[data-tf]')].sort((a, b) => a.dataset.pi - b.dataset.pi)) { const [tx, ty, , sc] = el.dataset.tf.split(',').map(Number), oy = +el.dataset.oy || 0, s = sc * sf / z, b = (el.dataset.bb || '0,0,0,0').split(',').map(Number), h = hl.get(el.dataset.pi);
+    const box = (c) => [c[0] + (b[0] - 2) * s, c[1] + (b[1] - 2) * s, c[0] + (b[2] + 2) * s, c[1] + (b[3] + 2) * s], c = place(spots([tx, ty + oy - oy * sf / z], s), box, (c2) => inside(h, c2[0], c2[1]));
+    placed.push(box(c)); el.setAttribute('transform', 'translate(' + c[0].toFixed(1) + ',' + c[1].toFixed(1) + ') scale(' + s.toFixed(4) + ')'); }
+  const th = svg.querySelector('.mpt-mthen[data-tf]'); if (th) { const [tx, ty, , sc] = th.dataset.tf.split(',').map(Number), s = sc * sf / z, w = +(th.dataset.bb || '0,0,0,0').split(',')[2] || 0, st = rp.length ? rp[rp.length - 1] : [tx - 18 * sc, ty - 14 * sc];
+    const box = (c) => [c[0] - (w / 2 + 2) * s, c[1] - 12 * s, c[0] + (w / 2 + 2) * s, c[1] + 12 * s], off = (c) => { const R = box(c); return ![...hl.values()].some((h) => hullHit(h, R, 2 * s)); }; /* (its whole box clear of every outline) */
+    const vb = svg.viewBox.baseVal, inV = (c2) => { const R = box(c2); return R[0] >= vb.x && R[1] >= vb.y && R[2] <= vb.x + vb.width && R[3] <= vb.y + vb.height; }, sp = spots(st, s).filter(inV); /* (inside the map as it shows) */
+    const c = place(sp.length ? sp : spots(st, s), box, off); th.setAttribute('transform', 'translate(' + (c[0] - w / 2 * s).toFixed(1) + ',' + (c[1] - 10 * s).toFixed(1) + ') scale(' + s.toFixed(4) + ')'); } }
 // (each pull's crisp edge: the masked copy's width is the pad plus twice the rim, the rim kept ~1.6 px on screen at any zoom, 2.4 px on the picked pull)
 function mpEdges(svg, z, sf) { const v = svg.closest('.mpt-mdtv'), pick = v && v.classList.contains('pick'); if (!sf) { const bx = svg.closest('.mpt-mdt'); sf = bx ? mpSF(bx) : 1; } for (const el of svg.querySelectorAll('.mpt-hedge')) { const hot = pick && el.closest('.mpt-mpl.hot'); el.setAttribute('stroke-width', (+el.dataset.pad + 2 * el.dataset.e * (hot ? 1.5 : 1) * sf / (z || 1)).toFixed(2)); } }
 document.addEventListener('click', (e) => { const zb = e.target.closest && e.target.closest('[data-mz]'); if (!zb) return; const box = zb.closest('.mpt-mdt'); if (!box) return; mpZoom(box); const st = MP.mz, up = zb.dataset.mz === '1';
@@ -2066,7 +2071,7 @@ html:not([data-theme]) .mpt .mpt-chap{background-image:linear-gradient(rgba(255,
 .mpt-mdtv .mpt-mpl,.mpt-mdtv .mpt-mk{transition:opacity .12s;cursor:pointer}
 .mpt-mdtv.pick:not(.peek) .mpt-mpl:not(.hot),.mpt-mdtv.pick:not(.peek) .mpt-mk:not(.hot){opacity:.15}
 .mpt-mdtv.peek .mpt-mpl:not(.pk),.mpt-mdtv.peek .mpt-mk:not(.pk){opacity:.35}
-.mpt-mdt .mpt-mk.pp-off,.mpt-mdt.no-a .mk-avoid,.mpt-mdt.no-r .mk-route,.mpt-mdt.no-r .mpt-mthen,.mpt-mdt.no-d .mk-death,.mpt-mdt.no-k .mk-kick,.mpt-mdt.no-k .mk-bad,.mpt-mdt.no-l .mk-lust,.mpt-mdt.no-w .mk-wait{display:none}
+.mpt-mdt .mpt-mk.pp-off,.mpt-mdt.no-a .mk-avoid,.mpt-mdt.no-d .mk-death,.mpt-mdt.no-k .mk-kick,.mpt-mdt.no-k .mk-bad,.mpt-mdt.no-l .mk-lust,.mpt-mdt.no-w .mk-wait{display:none}
 .mpt-mthen{cursor:pointer}
 .mpt-mside{position:relative;min-width:0;min-height:380px} .mpt-mside > .mpt-mcard{position:absolute;inset:0;height:auto} /* (the card as tall as the map and its tiles; a longer one scrolls) */
 .mpt-mcard{position:relative;height:380px;overflow:auto;box-sizing:border-box;padding:10px 12px;background:var(--raised);border:1px solid var(--line2);border-radius:4px;font:500 13px/1.4 var(--body);color:var(--mpt-soft)}
@@ -2182,7 +2187,7 @@ body.mpz-wh .spc-tt{display:none !important}
 .mpt-cfd{border-top:1px solid var(--line);margin-top:8px} .mpt-cfs{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 6px;padding:7px 0 5px;cursor:pointer;list-style:none;font:500 12.5px var(--body);color:var(--muted)}
 .mpt-cfs::-webkit-details-marker{display:none} .mpt-cfs::after{content:"▸";margin-left:auto;color:var(--faint)} .mpt-cfd[open] > .mpt-cfs::after{content:"▾"} .mpt-cfs > b{color:var(--text);font-weight:600} .mpt-cfb{padding:0 0 6px}
 .mpt-cfd + .mpt-cfd{margin-top:0} .mpt-cfb .mpt-mlh{margin-top:2px}
-.mpt .mpt-mchip-r i{color:#e8eaed} .mpt .mpt-mchip-d i{color:#ff8f87} .mpt .mpt-mchip-k i{color:#c39bff} .mpt .mpt-mchip-l i{color:#ffd166} .mpt .mpt-mchip-w i{color:#aeb6bf} .mpt .mpt-mchip-a i{color:#f2c46b} .mpt-layp .mpt-mchip:not(.on) i{opacity:.45}
+.mpt .mpt-mchip-d i{color:#ff8f87} .mpt .mpt-mchip-k i{color:#c39bff} .mpt .mpt-mchip-l i{color:#ffd166} .mpt .mpt-mchip-w i{color:#aeb6bf} .mpt .mpt-mchip-a i{color:#f2c46b} .mpt-layp .mpt-mchip:not(.on) i{opacity:.45}
 .mpt-ll .mpt-i{margin-left:4px;font-size:12px;vertical-align:1px}
 /* (last time on this dungeon: the faint line under the verdict, and the key finder's 5-key trend, quiet tints) */
 .mpt .mpt-vd2{margin:2px 0 0;font:500 12.5px/1.45 var(--body);color:var(--faint)}
