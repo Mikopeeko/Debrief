@@ -61795,7 +61795,7 @@ function mpHtml(it, R, fx) {
   // (one verdict under the key's title (the studio's tidy-pass.md item 6): timed or over, then how far behind a typical fast run and the biggest part of it,
   // from the timer and the first row of Where your time went)
   const keyLine = (() => { const lim0 = ck.up === 3 ? P * 0.6 : ck.up === 2 ? P * 0.8 : P; let v = ck.up > 0 ? 'Timed +' + ck.up + ' with <b>' + mpMM(lim0 - T) + '</b> to spare.' : 'Over time by <b>' + mpMM(T - P) + '</b>.';
-    if (!F || !FC) return '<p class="mpt-vd">' + v + (waiting ? ' ' + mpShimT('You were 0:00 behind a typical fast run, the biggest part (0:00) on the trash between the two bosses.') : '') + '</p>'; const gap = T - FC.ck.time;
+    if (!F || !FC) return '<p class="mpt-vd">' + v + (waiting ? ' ' + mpShimT('You were 0:00 behind a typical fast run, the biggest part (0:00) on the trash between ' + esc(mpStretches(R, C).map((x) => x.name.replace(' → ', ' and ')).sort((x, y) => y.length - x.length)[0] || 'the two bosses') + '.') : '') /* (the placeholder as long as the key's longest stretch, so it wraps like the real line) */ + '</p>'; const gap = T - FC.ck.time;
     if (gap > 5) { const ST = mpStretches(R, C), fBy = new Map(mpStretches(F, FC).map((x) => [x.boss, x])), L = [];
       for (const x of ST) { const y = fBy.get(x.boss); if (!y) continue; L.push({ s: x.trash - y.trash, w: x.name.startsWith('Start → ') ? 'on the trash before ' + esc(x.boss) : 'on the trash between ' + esc(x.name.split(' → ')[0]) + ' and ' + esc(x.boss) }, { s: x.bossT - y.bossT, w: 'on ' + esc(x.boss) }); }
       L.push({ s: ck.between - FC.ck.between, w: 'standing between pulls' }, { s: ck.deathCost - FC.ck.deathCost, w: 'on deaths' });
