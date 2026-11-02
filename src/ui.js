@@ -2027,7 +2027,8 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-11-02', n: [ /* round 484 */
-    "Mythic+ tab, tidier: Your group is one table with each player's DPS, kicks, CC, deaths, defensives and big cooldowns. The map's controls sit in one bar, with the floors and layers on the map. Every pull is one line, and Your route starts with four tiles.",
+    "Mythic+ tab, less to read: Your group is one table with each player's DPS, kicks, CC, deaths, defensives and big cooldowns. The map's controls sit in one bar, with the floors and layers on the map. The long pull list and route chart are gone: each pull's details are on its tile, its hover and its card, and the map's first line says where your enemy count ended.",
+    "Mythic+ pull card: what was in the pack, each kind of enemy with its type (caster, healer, melee, big or small) and what to kick.",
     "Mythic+ map: point at a pull, a tile or a timeline block for a short summary: its time, forces, deaths, kicks, Lust and cooldowns. The timeline marks each cast that went off with a kick ready.",
     "Mythic+ map: the pulls are tiles under the map, so the pull's card has the whole side to itself.",
     "Mythic+ tab: Kicks and CC counts each player's stuns, disorients, fears, knockbacks and grips, even the ones that didn't stop a cast. Its bars, the Players bars and each pull's damage look like the Graphs tab.",
