@@ -96,6 +96,21 @@ How it's worked out (`mpRouteOf` in `src/mptab.js`, from the key's own events):
   On a phone with four bosses close together, one name can end up as a mark only.
 - **Not yet:** grey dots for packs nobody pulled. That needs Mythic Dungeon Tools' pack layout and its author's okay.
 
+## Round 4 layout (Nov 1, the Design studio's mplus-tab4, Flex: "Yes, build both")
+- **Order:** the banner, a jump bar (Timeline · Route · Pulls · Kicks · Players), What gets you +N, the tiles, Where you fell behind, Your route, Pulls, Casts and kicks, Players.
+  - The jump bar sticks under the site's own sticky tab bar (`--mpt-jbt` is the tab bar's height).
+  - Sections have a scroll margin, so headings aren't hidden under the jump bar.
+- **One Pulls list** replaces Pull by pull, the route's side-by-side table and Deaths (deaths live in their pulls).
+  - It's grouped by stretch, up to each boss kill. Each header reads "Atroxus → Charonus · 11:45 · fast run 8:19 · 3:26 slower".
+  - Each row shows: what was pulled (enemies something summoned aren't counted, from SPELL_SUMMON), the time, what it counted (+11.5%, with the total in small grey), and tags (Lust, Wipe or N deaths, casts that went off, Bolster ×N, Big cooldowns N of M).
+  - A row opens for its deaths in order, what went off with a kick ready, Lust and big cooldowns.
+  - "Fast run here" sits to the right of each stretch, or under it on a phone.
+- **Maps you can use:**
+  - Each dot (`data-n`) has a card on hover, or on the first tap on a phone (`MP.pinfo`). The card shows the pull, its times on the timer, what it counted, what was in it, its tags and the first 3 deaths. It stays on screen and hides on scroll.
+  - A click opens that pull's row (`#mpt-pull-N`), scrolls to it and flashes it.
+  - Hovering a row lights up its dot. A click anywhere else on the map still makes it bigger.
+- Lust is the studio's yellow (#ffd166) everywhere: the timeline mark, the key and the tags.
+
 ## Lust and big cooldowns (Nov 1)
 No new section (the Design studio's call): they go where they belong. One pass over the key's lines (`mpScan`) finds them, with the route, for a report, a log and a shared night alike.
 - **Lust:** a Bloodlust-type buff landing on the group: Bloodlust, Heroism, Time Warp, Primal Rage, Fury of the Aspects, Harrier's Cry, or any drums.
