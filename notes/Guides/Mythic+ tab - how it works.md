@@ -41,7 +41,7 @@ Page text never names Warcraft Logs (Flex's rule, Oct 19).
 - It's labelled "a typical fast run". If fewer than 20 exist, the line says how many.
 - For Voidscar Arena +12 the middle of the 20 fastest is 12:50, about a minute slower than the very fastest (11:56): the top 20 are all very fast.
 - Until it's in, the tiles say "finding a fast run" and the fast lane waits. With none, the tab shows without it. It never makes up numbers.
-- Players: each player's damage or healing a second against the middle player of the same spec in those runs (spec and class must match). With none of that spec: "no X in the fast runs".
+- Players: each player's DPS or HPS (the studio, Nov 1: "DPS" and "HPS" like Debriefing's tiles, never "damage a second") against the middle player of the same spec in those runs (spec and class must match). With none of that spec: "no X in the fast runs".
 - Warcraft Logs encounter IDs for Midnight Season 2 (zone 55): Altar of Fangs 12993, Den of Nalorakk 12825, Kings' Rest 61762, Murder Row 12813, Ruby Life Pools 112521, Temple of Sethraliss 61877, The Blinding Vale 12859, Voidscar Arena 12923.
 
 ## How it decides

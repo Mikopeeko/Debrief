@@ -61190,12 +61190,12 @@ function mpPlayers(R, fx, waiting) {
   const vs = (p) => { const heal = p.role === 'healer', a = []; for (const r of runs) for (const m of r.ppl || []) if (m.a && mpNorm(m.s) === mpNorm(p.spec) && mpNorm(m.c) === mpNorm(p.cls) && (m.r === 'healer') === heal) a.push(m.a);
     if (!a.length) return null; a.sort((x, y) => x - y); const avg = a.length % 2 ? a[a.length >> 1] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2, mine = heal ? p.hps : p.dps; return { pct: Math.round(100 * (mine - avg) / avg), n: a.length, avg }; }; /* (the middle one, like the typical fast run) */
   const rows = ppl.map((p) => { const heal = p.role === 'healer', v = vs(p), sid = mpSpecId(p.spec, p.cls), ic = typeof NDZ_SPECIC !== 'undefined' && NDZ_SPECIC[sid] ? NDZ_SPECIC[sid] : 'inv_misc_questionmark';
-    const vtxt = v ? '<span class="mpt-vs ' + (v.pct < -10 ? 'mpt-bad' : v.pct > 0 ? 'mpt-g' : '') + '" title="' + esc('Against ' + plural(v.n, p.spec + ' ' + ((E.CLASSES[p.cls] || [])[0] || '')) + ' in the fastest runs with a public log: the middle one does ' + Math.round(v.avg / 1000) + 'k a second') + '">' + (v.pct >= 0 ? v.pct + '% ahead' : -v.pct + '% behind') + '</span>'
+    const vtxt = v ? '<span class="mpt-vs ' + (v.pct < -10 ? 'mpt-bad' : v.pct > 0 ? 'mpt-g' : '') + '" title="' + esc('Against ' + plural(v.n, p.spec + ' ' + ((E.CLASSES[p.cls] || [])[0] || '')) + ' in the fastest runs with a public log: the middle one does ' + Math.round(v.avg / 1000) + 'k ' + (heal ? 'HPS' : 'DPS')) + '">' + (v.pct >= 0 ? v.pct + '% ahead' : -v.pct + '% behind') + '</span>'
       : '<span class="mpt-vs mpt-m">' + (waiting ? '…' : runs.length ? 'no ' + esc(p.spec) + ' in the fast runs' : '—') + '</span>';
     return '<div class="mpt-pl"><span class="mpt-si"><img src="' + whIcon(ic) + '" alt="" loading="lazy" onerror="this.remove()"></span><span class="mpt-pw">' + mpWho(R, p.name) + '<small>' + esc(p.spec) + '</small></span>' +
-      '<span class="mpt-pv"><b>' + Math.round((heal ? p.hps : p.dps) / 1000) + 'k</b><small>' + (heal ? 'healing a second' : 'damage a second') + '</small></span><span class="mpt-bar"><i style="width:' + (heal ? 100 : 100 * p.dps / mxD).toFixed(0) + '%"></i></span>' + vtxt +
+      '<span class="mpt-pv"><b>' + Math.round((heal ? p.hps : p.dps) / 1000) + 'k</b><small>' + (heal ? 'HPS' : 'DPS') + '</small></span><span class="mpt-bar"><i style="width:' + (heal ? 100 : 100 * p.dps / mxD).toFixed(0) + '%"></i></span>' + vtxt +
       '<span class="mpt-m">' + plural(p.deaths, 'death') + ' · ' + plural(p.defs, 'defensive') + ' · ' + plural(p.avoid, 'avoidable hit') + mpCdLine(R, p) + '</span></div>'; }).join('');
-  return mpSec('Players', runs.length ? 'each against the middle player of the same spec in the 20 fastest runs' : 'damage and healing a second over the whole key', rows, 'mptPlayers');
+  return mpSec('Players', runs.length ? 'each against the middle player of the same spec in the 20 fastest runs' : 'DPS and HPS over the whole key', rows, 'mptPlayers');
 }
 
 // ---------- your route (step 3, Nov 1; the Design studio's route mockup, Flex: "Yes, the map dots"; enemy counts from Raider.IO, Flex's pick) ----------
