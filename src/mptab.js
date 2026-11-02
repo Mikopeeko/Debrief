@@ -188,9 +188,13 @@ function mpHtml(it, R, fx) {
   const sp = (v) => (v < 60 ? Math.round(v) + ' s' : mpMM(v)), lim = ck ? (ck.up === 3 ? ck.par * 0.6 : ck.up === 2 ? ck.par * 0.8 : ck.par) : 0;
   const pill = run.left || !run.timeMs ? '<span class="mpt-pill">Left early</span>' : ck && ck.up === 0 ? '<span class="mpt-pill mpt-b">' + sp(ck.time - ck.par) + ' over</span>' : ck ? '<span class="mpt-pill ' + (lim - ck.time < 90 ? 'mpt-a' : 'mpt-g') + '">Timed +' + ck.up + ' · ' + sp(lim - ck.time) + ' to spare</span>' : run.timed ? '<span class="mpt-pill mpt-g">Timed</span>' : '<span class="mpt-pill mpt-b">Over time</span>';
   const ban = '<div class="mpt-ban"><div class="mpt-kb">+' + run.level + '</div><div class="mpt-bt"><p class="mpt-k">Mythic+' + (date ? ' · ' + esc(date) : '') + '</p><h1>' + esc(run.dungeon || it.boss) + '</h1><div class="mpt-pills">' + pill +
-    (ck ? '<span class="mpt-pill">' + mpMM(ck.time) + ' of ' + mpMM(ck.par) + '</span>' : run.timeMs ? '<span class="mpt-pill">' + mpMM(run.timeMs / 1000) + '</span>' : '') + '</div></div>' +
+    (ck ? '<span class="mpt-pill">' + mpMM(ck.time) + ' of ' + mpMM(ck.par) + '</span>' : run.timeMs ? '<span class="mpt-pill">' + mpMM(run.timeMs / 1000) + '</span>' : '') +
+    /* (the key's rating points, with how the points work in its hover (Nov 2, what Season 2 Mythic+ knows)) */
+    (() => { const rp = mpRating(R, ck); return rp ? '<span class="mpt-pill mpt-rp" tabindex="0"' + mpT1(rp.tip) + '>' + (rp.est ? '~' : '') + Math.round(rp.pts) + ' points</span>' : ''; })() + '</div>' +
+    /* (its affixes, each with a plain hover) */
+    ((run.affixes || []).some((a) => MP_AFFIX[a]) ? '<div class="mpt-afx">' + run.affixes.filter((a) => MP_AFFIX[a]).map((a) => '<span class="mpt-af" tabindex="0"' + mpT1('<b>' + esc(MP_AFFIX[a][0]) + '</b><br>' + esc(MP_AFFIX[a][1])) + '>' + esc(MP_AFFIX[a][0]) + '</span>').join('') + '</div>' : '') + '</div>' +
     '<div class="mpt-grp">' + R.people.slice().sort(mpByRole).map((p) => '<span class="mpt-gm" style="color:' + mpCC(p.cls) + '"' + mpT1(esc(p.spec + ' ' + ((E.CLASSES[p.cls] || [])[0] || ''))) + '>' + (MP_ROLE[p.role] || '') + '<b>' + esc(p.name) + '</b></span>').join('') + '</div></div>';
-  if (!C) return ban + '<p class="mpt-note">' + (run.left || !run.timeMs ? 'This key was left before the end, so there\'s no timer to judge. Everything that happened is below.' : 'Debrief doesn\'t know this dungeon\'s timer yet. Everything that happened is below.') + '</p>' + mpJumpBar(R, false) + mpRouteHtml(R, null, false) + mpPulls(R, null, null, null) + mpCasts(R) + mpPlayers(R, fx, waiting);
+  if (!C) return ban + '<p class="mpt-note">' + (run.left || !run.timeMs ? 'This key was left before the end, so there\'s no timer to judge. Everything that happened is below.' : 'Debrief doesn\'t know this dungeon\'s timer yet. Everything that happened is below.') + '</p>' + mpJumpBar(R, false) + mpRouteHtml(R, null, false) + mpPulls(R, null, null, null) + mpCasts(R) + mpPlayers(R, fx, waiting) + mpKnowHtml(R);
   // what gets you the next level
   const T = ck.time, P = ck.par, lv = ck.up, tgt = lv === 0 ? P : lv === 1 ? P * 0.8 : lv === 2 ? P * 0.6 : null, need = tgt != null ? Math.max(1, Math.round(T - tgt)) : 0; /* (as the timer shows it: 24:06 against 24:00 is 6 s) */
   const head = lv === 0 ? 'What gets you in time' : lv === 3 ? 'What would save the most time' : 'What gets you +' + (lv + 1);
@@ -238,10 +242,10 @@ function mpHtml(it, R, fx) {
     tile('Behind a typical fast run', F ? (T - fT >= 0 ? mpMM(T - fT) : mpMM(fT - T) + ' ahead') : waiting ? '…' : '—', F ? 'it took ' + mpMM(fT) : waiting ? 'finding a fast run' : 'no fast run found', F && T - fT > 0 ? 'mpt-bad' : '') +
     tile('Casts that went off', String(thN), 'with a kick ready') +
     tile('Lust', LU.length ? plural(LU.length, 'time') : 'None', LU.length ? esc([...new Set(LU.map((l) => mpPullName(R, l.pull)))].join(', ')) : 'no Lust this key', LU.length ? 'mpt-lu' : 'mpt-m') + '</div>';
-  return ban + mpJumpBar(R, true) + fixes + tiles + mpBehind(R, C, F, FC, fx, waiting) + mpRouteHtml(R, F, waiting) + mpPulls(R, C, F, FC) + mpCasts(R) + mpPlayers(R, fx, waiting);
+  return ban + mpJumpBar(R, true) + fixes + tiles + mpBehind(R, C, F, FC, fx, waiting) + mpRouteHtml(R, F, waiting) + mpPulls(R, C, F, FC) + mpCasts(R) + mpPlayers(R, fx, waiting) + mpKnowHtml(R);
 }
 // (the jump bar under the banner (the Design studio's round 4): it sticks under the site's tab bar while you scroll)
-const mpJumpBar = (R, tl) => '<nav class="mpt-jb" aria-label="Jump to">' + [tl ? ['mptTl', 'Timeline'] : null, R.route ? ['mptRoute', 'Route'] : null, ['mptPulls', 'Pulls'], ['mptKicks', 'Kicks'], ['mptPlayers', 'Players']].filter(Boolean).map(([id, l]) => '<button type="button" data-mptj="' + id + '">' + l + '</button>').join('') + '</nav>';
+const mpJumpBar = (R, tl) => '<nav class="mpt-jb" aria-label="Jump to">' + [tl ? ['mptTl', 'Timeline'] : null, R.route ? ['mptRoute', 'Route'] : null, ['mptPulls', 'Pulls'], ['mptKicks', 'Kicks'], ['mptPlayers', 'Players'], MP_KNOW[mpLc(R.run.dungeon)] ? ['mptKnow', 'Dungeon'] : null].filter(Boolean).map(([id, l]) => '<button type="button" data-mptj="' + id + '">' + l + '</button>').join('') + '</nav>';
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-mptj]'); if (!b) return; e.preventDefault(); const s = document.getElementById(b.dataset.mptj); if (!s) return;
   if (s.tagName === 'DETAILS') s.open = true; /* (a folded section opens first) */ s.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
 // (what "a typical fast run" is, for the line under the timeline and the hovers: the middle of the 20 fastest, or of as many as there are)
@@ -354,10 +358,14 @@ function mpPulls(R, C, F, FC) {
     for (const b of (p.ebuffs || []).filter((x) => x.on > 0).slice(0, 2)) tags.push(tg(esc(b.spell) + ' ×' + b.on, '', '<b>' + esc(b.spell) + '</b> went on ' + plural(b.on, 'enemy').replace('enemys', 'enemies') + '.'));
     const shown = tags.length > 3 ? tags.slice(0, 3).concat(tg('+' + (tags.length - 3), 'mpt-tm', tags.slice(3).map((x) => x.replace(/<[^>]+>/g, '')).join('<br>'))) : tags;
     const lead = wp ? wp.first : null, tk = lead && roleOf(lead.who) === 'tank';
-    const th = new Map(); for (const t of p.through) th.set(t.spell, (th.get(t.spell) || 0) + 1);
+    // (danger levels (Nov 2, companion/mplus.js 97af928, the Design studio's table): high misses are mistakes, each charged to one ready kick
+    // (`who`); medium misses (`minor`) are a quiet note, not a mistake; low ones are only in Kicks)
+    const bySp = (list) => { const m = new Map(); for (const t of list) { const o = m.get(t.spell) || { n: 0, who: new Map() }; o.n++; if (t.who) o.who.set(t.who, (o.who.get(t.who) || 0) + 1); m.set(t.spell, o); } return [...m]; };
+    const times = (k) => (k === 1 ? 'once' : k === 2 ? 'twice' : k + ' times'), th = bySp(p.through), mi = bySp(p.minor || []);
     const miss = (R.cdWho || []).filter((nm) => !cdu.some(([x]) => x === nm));
     const body = (dd.length ? '<p><b>' + (wipe ? 'The wipe, in order:' : 'Deaths, in order:') + '</b></p><ol>' + dd.map((d, j) => '<li><span class="mpt-m">' + mpMM(d.t - p.s) + ' in:</span> ' + mpWho(R, d.who) + (d === lead && tk ? ' ' + tg('tank, first', 'mpt-tb') : '') + ' died to <b class="mpt-ab">' + esc(d.to) + '</b>' + (d.from ? ' <span class="mpt-m">(from ' + esc(d.from) + ')</span>' : '') + '. ' + (d.defs ? 'Used ' + plural(d.defs, 'defensive') + '.' : '<b class="mpt-bad">No defensive used.</b>') + '</li>').join('') + '</ol>' : '') +
-      (th.size ? '<p>' + [...th].map(([s, k]) => '<b class="mpt-ab">' + esc(s) + '</b> went off ' + (k === 1 ? 'once' : k + ' times')).join(', ') + ' with a kick ready.</p>' : '') +
+      th.map(([s, o]) => '<p><b class="mpt-ab">' + esc(s) + '</b> went off ' + times(o.n) + ' with a kick ready.' + (o.who.size ? ' <span class="mpt-m">Whose kick was ready:</span> ' + [...o.who].map(([w, k]) => mpWho(R, w) + (k > 1 ? ' ×' + k : '')).join(', ') + '.' : '') + '</p>').join('') +
+      mi.map(([s, o]) => '<p class="mpt-mi"><b>' + esc(s) + '</b> went off ' + times(o.n) + ' with a kick ready. Worth a kick, but not a mistake.</p>').join('') +
       (lu.length ? '<p><b class="mpt-lu">Lust</b>' + (lu[0].spell ? ' (' + esc(lu[0].spell) + ')' : '') + ' went out ' + lu.map((l) => (l.t < p.s ? mpMM(p.s - l.t) + ' before the pull' : mpMM(l.t - p.s) + ' in')).join(' and ') + '.</p>' : '') +
       /* (one short sentence; who pressed what is in its hover) */
       (cdn ? '<p class="mpt-cdl" tabindex="0"' + mpT1('<b>Big cooldowns this pull</b><br>' + cdList) + '>' + (!miss.length ? 'Everyone pressed a big cooldown.' : !cdu.length ? 'Nobody pressed a big cooldown.' : miss.map((nm) => mpWho(R, nm)).join(', ').replace(/, ([^,]*)$/, ' and $1') + ' didn\'t press one.') + '</p>' : '');
@@ -387,7 +395,7 @@ function mpCasts(R) {
   const left = '<div><p class="mpt-k">Went off with a kick ready</p>' + (TH.length ? TH.map((t) => '<div class="mpt-kr"><span><b class="mpt-ab">' + esc(t.spell) + '</b><small>' + esc(t.mob) + '</small></span><span class="mpt-m">' + [...t.pulls].map(([n, c]) => 'pull ' + n + (c > 1 ? ' ×' + c : '')).join(', ') + '</span><b>' + t.n + '×</b></div>').join('') : '<p class="mpt-none">Nothing on the must-kick list went off while someone\'s kick was ready.</p>') +
     /* (kick when you can (Nov 1, companion/mplus.js 790983f; Flex okayed): a pack's spam, from 8 or more enemies or 6 or more casts in 10 s.
        Too many to stop them all, so it's never a mistake and never in the counts above: one quiet line each, how many you kicked) */
-    ((R.spam || []).length ? '<p class="mpt-k mpt-ksh">Kick when you can</p>' + R.spam.map((x) => '<div class="mpt-kr mpt-ks" tabindex="0"' + mpT1('<b>' + esc(x.spell) + '</b> comes from a pack: ' + x.casts + ' casts from ' + plural(x.enemies, 'enemy').replace('enemys', 'enemies') + '. That\'s too many to stop them all. Every one you kick or stop helps, and one that goes off isn\'t a mistake.') + '><span><b>' + esc(x.spell) + '</b><small>' + esc(x.mob) + (x.enemies > 1 ? ' · ' + plural(x.enemies, 'enemy').replace('enemys', 'enemies') : '') + '</small></span><span class="mpt-m">kicked ' + x.kicked + ' of ' + x.casts + (x.stopped ? ', stopped ' + x.stopped + ' more' : '') + '</span><b></b></div>').join('') : '') + '</div>';
+    ((R.spam || []).length ? '<p class="mpt-k mpt-ksh">Low danger: kick when you can</p>' + R.spam.map((x) => '<div class="mpt-kr mpt-ks" tabindex="0"' + mpT1('<b>' + esc(x.spell) + '</b> is low danger: ' + x.casts + ' casts from ' + plural(x.enemies, 'enemy').replace('enemys', 'enemies') + '. Every one you kick or stop helps, and one that goes off isn\'t a mistake.') + '><span><b>' + esc(x.spell) + '</b><small>' + esc(x.mob) + (x.enemies > 1 ? ' · ' + plural(x.enemies, 'enemy').replace('enemys', 'enemies') : '') + '</small></span><span class="mpt-m">kicked ' + x.kicked + ' of ' + x.casts + (x.stopped ? ', stopped ' + x.stopped + ' more' : '') + '</span><b></b></div>').join('') : '') + '</div>';
   const right = '<div><p class="mpt-k">Who stopped casts</p>' + (who.length ? who.map((p) => '<div class="mpt-kr2">' + mpWho(R, p.name) + '<span class="mpt-bar"><i style="width:' + (100 * (p.kicks + p.stops) / mx).toFixed(0) + '%"></i></span><span class="mpt-m">' + plural(p.kicks, 'kick') + ' · ' + plural(p.stops, 'stop') + '</span></div>').join('') : '<p class="mpt-none">No kicks or stops in this key.</p>') +
     '<p class="mpt-sm">A stop is a stun, knockback or other crowd control that cut a cast short. Healers have no kick in Midnight, except Restoration Shamans.</p></div>';
   const t0 = TH[0];
@@ -410,6 +418,106 @@ function mpPlayers(R, fx, waiting) {
   const line = [(R.cdWho || []).length ? (never.length ? never.map((nm) => mpWho(R, nm)).join(', ').replace(/, ([^,]*)$/, ' and $1') + ' never pressed a big cooldown.' : 'Everyone pressed their big cooldowns.') : '',
     low ? (low.v.pct < 0 ? mpWho(R, low.p.name) + ' was furthest behind their spec (<b class="mpt-bad">' + -low.v.pct + '%</b>).' : 'Everyone was ahead of the middle player of their spec.') : ''].filter(Boolean).join(' ') || 'DPS and HPS over the whole key.';
   return mpSec('Players', line, rows + (runs.length ? '<p class="mpt-sm">Each compared with the middle player of the same spec in the 20 fastest runs.</p>' : ''), 'mptPlayers', { fold: true });
+}
+
+// ---------- what Season 2 Mythic+ knows (Nov 2, Flex: "use your new knowledge to make this page even better", creative freedom) ----------
+// From notes/Guides/Mythic+ Season 2 - master guide.md: each dungeon's boss plans and trash tips (the guides' boss strategies, Aug 27 / Oct 2),
+// the kick, dispel and purge lists checked on Flex's keys, and the paths. Page text never names a guide (Flex's rule).
+const MP_KNOW = {
+  'altar of fangs': { b: [
+    ['Rav\'i', ['Tank it away from the Fresh Meat it drops.', 'Spread for Triple Shot.', 'Dodge the Regurgitate cone.', 'Soak during Ssscavenging.']],
+    ['The Writhing Coil', ['Kick Toxic Atrophy: it casts three in a row.', 'Dodge Burrowing Charge.', 'Death Rattle: everyone runs away, or the group wipes.', 'Uncoil splits it into 5. AoE them.']],
+    ['Zul\'jan', ['Soak all four beams.', 'Ritual Venom kills when it runs out: soak a line.', 'One Boneslicer soak clears every Ritual Venom stack.', 'Dodge the Axegrinder glaives.']]],
+    t: ['Click every totem in the first area.', 'A short stun or kite resets a Ravenous Descendant\'s fast attacks.', 'CC Evolve on the High Evolutionists.', 'Break the Empowered High Evolutionist\'s shield fast.', 'The Ascendant Serpent after the second boss must die.'],
+    k: ['Piercing Hiss', 'Toxic Atrophy', 'Mass Envenom'], d: ['Paralyzing Shots', 'Regurgitate', 'Envenom'], p: ['Ravenous Claws'] },
+  'murder row': { b: [
+    ['Kystia Manaheart', ['Kill the add: the boss takes less damage while it lives.', 'Dispel Corroding Spittle.', 'CC the Mirror Images.', 'Burst during Destabilized.']],
+    ['Zaen Bladesorrow', ['Killing Spree needs big healing.', 'Spread for Fire Bomb.', 'Blow up the first Fel Barrel with the first bombs. Hide behind the second for Murder in a Row.']],
+    ['Xanthuux the Annihilator', ['Kite the boss around the edge.', 'Legion Strike is a tank cone.', 'Put the thrown axe in melee.']],
+    ['Lithiel Cinderfury', ['Kite the Infernal.', 'Kill the Vilefiend before the ring.', 'Stack close for Fingers of Gul\'dan.', 'Take the Gateway through the ring.']]],
+    t: ['Fel Crystals in the first area can be handed in for buffs.', 'Kick Fel Rage: it\'s a big damage reduction.'],
+    k: ['Fel Missiles', 'Seduction', 'Felstorm', 'Fel Rage', 'Health Funnel', 'Chaos Bolt'], d: ['Corroding Spittle', 'Heartstop Poison', 'Curse of Doom'], p: ['Back to Work!'] },
+  'den of nalorakk': { b: [
+    ['The Hoardmonger', ['Soak the mushrooms.', 'Dodge Earthshatter Slam.', 'Watch the Ravenous Bellow knockback.']],
+    ['Sentinel of Winter', ['Stand in the eye of the storm.', 'Dispel Glacial Torment.', 'Kill the adds, then soak where they die.', 'Tank it on an add\'s body to stop the push.']],
+    ['Nalorakk', ['Put Echoing Maul at the edge.', 'Hide behind Zul\'jarra\'s shield for Overwhelming Onslaught.', 'The tank soaks Forceful Slam.', 'Soak the bears for Fury of the War God.']]],
+    t: ['Pull Spirit of Hunger one at a time.', 'The second area has small lieutenants that are good for count.'],
+    k: ['Scavenge', 'Healing Breeze', 'Frigid Roar', 'Winter\'s Shroud', 'Arc Lightning'], d: ['Insatiable Hunger', 'Toxic Spores', 'Cryo Surge', 'Glacial Torment'], p: ['Mother\'s Wrath', 'Bestial Wrath'] },
+  'the blinding vale': { b: [
+    ['Lightblossom Trinity', ['Soak by stepping into the flower, not in front of it.', 'Spread for Thornblade.', 'Avoid Fan of Thorns. Dodge Lightsower Dash.']],
+    ['Ikuzz the Light Hunter', ['Watch the Verdant Stomp knockback.', 'Kill the add to break the roots.', 'Run from Bloodthirsty Gaze.']],
+    ['Lightwarden Ruia', ['Spread for Lightfire.', 'Heal Grievous Thrash to full to remove it.', 'Pulverizing Strikes locks onto 3 players: stand still.']],
+    ['Ziekket', ['Soak the orbs for a damage buff, but watch your health.', 'Kill the adds.', 'Aim Concentrated Lightbeam at their bodies.']]],
+    t: ['You can go left or right.', 'Break Lightgorged Lashers\' shields: they heal while it\'s up.', 'Sporeblight Belchers are dangerous.'],
+    k: ['Light Bolt Volley', 'Light Bolt', 'Disorienting Screech', 'Warden\'s Wrath', 'Lightspore Shot'], d: ['Bloodthorn Roots'], p: [] },
+  'voidscar arena': { b: [
+    ['Taz\'Rah', ['Every player gets a Nether Dash line: dodge the other lines.', 'Dodge the Dark Bloom orbs.']],
+    ['Atroxus', ['Kill the add.', 'Dodge Poison Splash.']],
+    ['Charonus', ['Kite the orbs into a singularity. Ping which one each player takes.', 'Dodge Cosmic Crash.', 'Run around the boss for Void Cascade.']]],
+    t: ['Your first path gives a buff for the whole key: left for versatility, right for mastery.', 'Tank Brutok facing a wall.', 'Burst the Protective Turtle when its shield drops.', 'Kill whatever a Devouring Brutalizer tries to eat.'],
+    k: ['Demoralizing Shout', 'Shadowbolt Volley', 'Violent Sand', 'Mad Shriek', 'Mending Void'], d: ['Melt Armor', 'Corrosive Essence'], p: ['Bolster'] },
+  'ruby life pools': { b: [
+    ['Melidrussa Chillworn', ['Dodge Hailburst\'s bombs.', 'Stay out of the middle in Chillstorm.', 'Kick Frigid Shard. Break Frost Overload\'s shield.']],
+    ['Kokia Blazehoof', ['Kill the summoned add and kick its Blaze Volley.', 'Dodge Molten Boulder.', 'Tank defensive for Searing Blows.']],
+    ['Kyrakka and Erkhart Stormvein', ['Kill the dragon first.', 'Dodge Roaring Firebreath.', 'Stop casting before Interrupting Cloudburst.', 'Stormslam: tank defensive, and it can be dispelled.']]],
+    t: ['Most groups pull a lot before the first boss.', 'Defier Draghar must die.', 'Living Bomb can be dispelled.'],
+    k: ['Ice Shield', 'Frigid Shard', 'Fiery Blast', 'Blaze Volley'], d: ['Cold Claws', 'Rolling Thunder', 'Stormslam'], p: ['Blaze of Glory', 'Stormcloud Barrier'] },
+  'kings\' rest': { b: [
+    ['The Golden Serpent', ['Don\'t let the adds reach the boss.', 'Drop the Spit Gold puddles away.', 'Big healing for Serpentine Gust.']],
+    ['Mchimba the Embalmer', ['Free trapped players fast: click the right coffin.', 'Drop Burn Corruption away.', 'Kick the adds.']],
+    ['The Council of Tribes', ['Kill the Explosive Totem fast.', 'Stack for Barrel Through.', 'Kick Poison Nova.']],
+    ['Dazar, the First King', ['Kick Deathly Roar.', 'Stay out of the front in Gilded Destruction, and move off the spears.', 'Spread for Quaking Leap.']]],
+    t: ['You need every mob for count.', 'A purge kills a Minion of Zul instantly.', 'The second boss room can be two pulls, one per side.', 'Kill Healing Tide Totems fast in the hallway to the third boss.'],
+    k: ['Hex Volley', 'Bind Soul', 'Unholy Mending', 'Wretched Discharge', 'Hex', 'Poison Nova', 'Deathly Roar'], d: ['Lingering Fluid', 'Putrid Seekers', 'Savage Maul'], p: ['Bound by Shadow', 'Ancestral Fury', 'Bestial Berserk', 'Captain\'s Bulwark', 'Unholy Mending'] },
+  'temple of sethraliss': { b: [
+    ['Adderis and Aspix', ['Don\'t get pushed too far by Gale Force.', 'Save your knockback: a group soak comes right after.', 'Swap targets when one is immune.']],
+    ['Merektha', ['Break the snake stun with CC. A blue arrow shows who gets it.', 'Keep moving in Thunder Spit.', 'Kill the hatchlings. Dodge Burrow.']],
+    ['Galvazzt', ['Soak the beams.', 'Move the boss out of Induction.']],
+    ['Avatar of Sethraliss', ['Damage dealers soak the purple zones, within 4.5 seconds.', 'Drop Latent Hex away.', 'Don\'t heal the boss.']]],
+    t: ['You need a fair amount of extra trash for count.', 'Sand-Sworn Riders are deadly.', 'CC the Temple Disruptors so the orb follows you.'],
+    k: ['Poisoned Cheap Shot', 'Addle Mind', 'Poison Spit', 'Essence Disruption', 'Flame Shock'], d: ['Cytotoxin', 'Imbued Conduction'], p: ['Accumulate Charge'] },
+};
+// (the key's affixes, from its start line: the ID and a plain hover)
+const MP_AFFIX = {
+  165: ['Lindormi\'s Guidance', 'Some enemies are marked and weaker. Deaths cost no time.'],
+  148: ['Ascendant', 'About every minute, 10 orbs cast. Stop each with a kick, stun, knockback or purge for haste and speed. Missed ones make the enemies stronger.'],
+  158: ['Voidbound', 'A Void Emissary makes nearby enemies tougher. Swap to it, stop its casts and kill it for versatility and faster cooldowns.'],
+  160: ['Devour', 'Every player gets a healing absorb for 15 seconds. Heal through it or dispel it for crit and health. Missed ones make the enemies stronger.'],
+  10: ['Fortified', 'Trash has 20% more health and does 20% more damage.'],
+  9: ['Tyrannical', 'Bosses have 25% more health and do 15% more damage.'],
+  147: ['Xal\'atath\'s Guile', 'Every death adds 15 seconds to the timer.'],
+};
+// (a key's rating points: the number WoW wrote in the log when there is one, else worked out from +12 up: 15 points a level, plus up to 15 for
+// speed, full at 60% of the timer (checked on Raider.IO's own scores: a +12 at 80.3% is 372.4, a +19 at 99% 470.5). Over time: not shown)
+const mpPts = (lv, sec, par) => 365 + 15 * (lv - 12) + 15 * Math.max(0, Math.min(1, (1 - sec / par) / 0.4));
+function mpRating(R, ck) {
+  const run = R.run, lv = run.level, exact = run.score && run.score > 0 ? run.score : null;
+  if (!ck || (!exact && (lv < 12 || ck.up === 0))) return null;
+  const pts = exact || mpPts(lv, ck.time, ck.par), est = !exact, f1 = (v) => (Math.round(v * 10) / 10).toFixed(1);
+  const lines = [(est ? 'About <b>' + Math.round(pts) + '</b>' : 'This key gave <b>' + f1(pts) + '</b>') + ' points toward your rating, if it\'s your best run in this dungeon.'];
+  if (lv >= 12 && ck.up > 0) { const fast = mpPts(lv, ck.par * 0.6, ck.par), up = mpPts(lv + 1, ck.par, ck.par);
+    lines.push('From +12, each key level is worth 15 points. Finishing faster adds up to 15 more, full at 60% of the timer.');
+    if (fast - pts >= 1 && Math.round(fast) === Math.round(up)) lines.push('This key in ' + mpMM(ck.par * 0.6) + ' or less, or a +' + (lv + 1) + ' just timed: about ' + Math.round(up) + '.');
+    else { if (fast - pts >= 1) lines.push('This key in ' + mpMM(ck.par * 0.6) + ' or less: about ' + Math.round(fast) + '.'); lines.push('A +' + (lv + 1) + ' just timed: about ' + Math.round(up) + '.'); } }
+  return { pts, est, tip: '<b>Rating points</b><br>' + lines.join('<br>') };
+}
+// (know this dungeon: each boss's plan, the trash tips, and what to kick, dispel and purge, with how often each must-kick went off with a kick
+// ready in this key: high danger red, medium grey. Folded at the end, like the other reference parts)
+function mpKnowHtml(R) {
+  const K = MP_KNOW[mpLc(R.run.dungeon)]; if (!K) return '';
+  const off = new Map(); for (const p of R.pulls) for (const t of (p.through || []).concat(p.minor || [])) off.set(mpLc(t.spell), (off.get(mpLc(t.spell)) || 0) + 1);
+  const TB = new Map(Object.entries(R.tiers || {}).map(([s, v]) => [mpLc(s), v])), SP = new Map((R.spam || []).map((x) => [mpLc(x.spell), x]));
+  const tier = (s) => TB.get(mpLc(s)) || 'high', list = (a) => a.map((s) => esc(s)).join(', ').replace(/, ([^,]*)$/, ' and $1');
+  /* (a low-danger spell never counts as gone off: its line says how many you kicked instead) */
+  const kicks = K.k.map((s) => { const n = off.get(mpLc(s)) || 0, tr = tier(s), sp = SP.get(mpLc(s));
+    return '<li><b class="mpt-ab">' + esc(s) + '</b>' + (tr === 'low' ? ' <span class="mpt-m">low danger' + (sp ? ': kicked ' + sp.kicked + ' of ' + sp.casts : '') + '</span>'
+      : n ? ' <span class="' + (tr === 'high' ? 'mpt-bad' : 'mpt-m') + '">went off ' + (n === 1 ? 'once' : n + ' times') + ' with a kick ready' + (tr === 'high' ? '' : ' (' + tr + ' danger)') + '</span>' : ' <span class="mpt-g">none went off</span>') + '</li>'; }).join('');
+  const bosses = K.b.map(([n, l]) => '<div class="mpt-kb2"><h4>' + esc(n) + '</h4><ul>' + l.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul></div>').join('');
+  const body = '<div class="mpt-know">' + bosses + '<div class="mpt-kb2"><h4>Trash</h4><ul>' + K.t.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul></div></div>' +
+    '<div class="mpt-kl3"><div><p class="mpt-k">Kick</p><ul>' + kicks + '</ul></div>' + (K.d.length ? '<div><p class="mpt-k">Dispel</p><p>' + list(K.d) + '</p></div>' : '') + (K.p.length ? '<div><p class="mpt-k">Purge or soothe</p><p>' + list(K.p) + '</p></div>' : '') + '</div>' +
+    '<p class="mpt-sm">Healers have no kick in Midnight, except Restoration Shamans.</p>';
+  const W = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'], cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  return mpSec('Know this dungeon', '<b>' + cap(W[K.b.length] || String(K.b.length)) + ' bosses</b>, <b>' + (W[K.k.length] || K.k.length) + ' spells to kick</b>, and a plan for each boss.', body, 'mptKnow', { fold: true });
 }
 
 // ---------- your route (step 3, Nov 1; the Design studio's route mockup, Flex: "Yes, the map dots"; enemy counts from Raider.IO, Flex's pick) ----------
@@ -747,7 +855,20 @@ const MP_CSS = `
 .mpt-kr{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) 40px;gap:12px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line);font:500 14px var(--body)}
 .mpt-kr small{display:block;font:500 12.5px var(--body);color:var(--muted)}
 .mpt-kr > b{text-align:right}
-.mpt-ksh{margin-top:16px!important} .mpt-ks{color:var(--muted);cursor:help} .mpt-ks b{color:var(--mpt-soft);font-weight:600}
+/* (what Season 2 Mythic+ knows (Nov 2): the rating pill, the affix chips, and Know this dungeon) */
+.mpt-pill.mpt-rp{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 50%,transparent);background:color-mix(in srgb,var(--gold) 7%,transparent);cursor:help}
+.mpt-afx{display:flex;gap:4px 14px;flex-wrap:wrap;margin-top:7px}
+.mpt-af{display:inline-flex;align-items:center;gap:6px;font:500 13px var(--body);color:var(--muted);cursor:help}
+.mpt-af::before{content:"";width:6px;height:6px;border-radius:50%;background:color-mix(in srgb,var(--gold) 70%,transparent)}
+.mpt-af:hover,.mpt-af:focus{color:var(--text);outline:none}
+.mpt-know{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px 28px;margin-bottom:16px}
+.mpt-kb2{min-width:0}
+.mpt-kb2 h4{margin:0 0 3px;font:700 16px var(--head);color:var(--gold)}
+.mpt-kb2 ul,.mpt-kl3 ul{margin:0;padding-left:18px;color:var(--mpt-soft);font-size:14.5px}
+.mpt-kb2 li,.mpt-kl3 li{padding:1px 0}
+.mpt-kl3{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr);gap:14px 28px;padding-top:12px;border-top:1px solid var(--line)}
+.mpt-kl3 > div{min-width:0} .mpt-kl3 p{margin:0;color:var(--mpt-soft);font-size:14.5px} .mpt-kl3 .mpt-k{margin-bottom:4px}
+.mpt-ksh{margin-top:16px!important} .mpt-pd .mpt-mi{color:var(--muted)} .mpt-pd .mpt-mi b{color:var(--mpt-soft);font-weight:600} .mpt-ks{color:var(--muted);cursor:help} .mpt-ks b{color:var(--mpt-soft);font-weight:600}
 .mpt-kr2{display:grid;grid-template-columns:120px minmax(0,1fr) auto;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font:500 14px var(--body)}
 .mpt-kr2 .mpt-nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mpt-bar{height:6px;border-radius:3px;background:var(--raised);position:relative;overflow:hidden}
@@ -831,6 +952,7 @@ const MP_CSS = `
 @media (max-width:860px){
   .mpt-rt1{grid-template-columns:minmax(0,1fr)}
   .mpt-fold > summary{grid-template-columns:minmax(0,1fr) auto;row-gap:4px}
+  .mpt-kl3{grid-template-columns:minmax(0,1fr)}
   .mpt-fold > summary h2{grid-column:1;grid-row:1} .mpt-fold > summary .mpt-chev{grid-column:2;grid-row:1} .mpt-fold > summary .mpt-hl{grid-column:1 / -1;grid-row:2}
   .mpt-fz{margin-left:64px;margin-right:46px} .mpt-row{margin-left:-64px;margin-right:-46px} .mpt-rll{width:64px} .mpt-end{width:46px}
   .mpt-sp b{font-size:10.5px}
