@@ -23837,6 +23837,9 @@ const PATCH_NOTES = [
     "Mythic+ tab: Next time lines are one short sentence each, with the details in the small ⓘ, and the tab opens on your own character when they're in the key.",
     "Mythic+ map: point at a pull, a tile or a timeline block for a short summary: its time, forces, deaths, kicks, Lust and cooldowns. The timeline marks each cast that went off with a kick ready.",
     "Mythic+ map: the pulls are tiles under the map, so the pull's card has the whole side to itself.",
+    "Mythic+ tab, one line to read first: under the key's name, whether you timed it and by how much, how far behind a typical fast run you were, and where most of that time went.",
+    "Mythic+ map: pick a pull and the map zooms in on it, gliding from pull to pull. The pull's card is slimmer: one line of tags (deaths, casts that went off, Lust, waits), the pack and the plan, with Kicks & CC, DPS and each death folded into one line you open with a click.",
+    "Mythic+ map: each mark has one colour everywhere (deaths red, Lust gold, kicks purple, waits grey, avoidable amber, kicks and CC green), and the Layers list doubles as the key.",
     "Mythic+ tab: Kicks and CC counts each player's stuns, disorients, fears, knockbacks and grips, even the ones that didn't stop a cast. Its bars, the Players bars and each pull's damage look like the Graphs tab.",
     "Eternal Nightfall's shield damage looks like the Graphs tab now: names in their own column, solid bars and the numbers lined up. Each shield's list is open from the start.",
     "Debriefing, All pulls: Eternal Nightfall shows its break times as one strip, a dot per shield next to the top kills' 10.6 to 13.9 s, instead of a tag for every shield.",
@@ -61553,7 +61556,7 @@ function mpHtml(it, R, fx) {
     /* (the key's rating points, with how the points work in its hover (Nov 2, what Season 2 Mythic+ knows)) */
     (() => { const rp = mpRating(R, ck, it); if (!rp) return ''; const tt = ' tabindex="0"' + mpT1(rp.tip);
       return rp.gain != null ? (rp.gain ? '<span class="mpt-pill mpt-g mpt-rg"' + tt + '>+' + (Math.round(rp.gain * 10) / 10).toFixed(1) + ' rating</span>' : '<span class="mpt-pill mpt-rn"' + tt + '>No rating change</span>')
-        : '<span class="mpt-pill mpt-rp"' + tt + '>' + (rp.est ? '~' : '') + Math.round(rp.pts) + ' points</span>'; })() + '</div>' +
+        : '<span class="mpt-pill mpt-rp"' + tt + '>' + (rp.est ? '~' : '') + Math.round(rp.pts) + ' points</span>'; })() + '</div><!--MPV-->' +
     /* (its affixes, each with a plain hover) */
     ((run.affixes || []).some((a) => MP_AFFIX[a]) ? '<div class="mpt-afx">' + run.affixes.filter((a) => MP_AFFIX[a]).map((a) => '<span class="mpt-af" tabindex="0"' + mpT1('<b>' + esc(MP_AFFIX[a][0]) + '</b><br>' + esc(MP_AFFIX[a][1])) + '>' + esc(MP_AFFIX[a][0]) + '</span>').join('') + '</div>' : '') + '</div>' +
     '<div class="mpt-grp">' + R.people.slice().sort(mpByRole).map((p) => '<span class="mpt-gm" style="color:' + mpCC(p.cls) + '"' + mpT1(esc(p.spec + ' ' + ((E.CLASSES[p.cls] || [])[0] || ''))) + '>' + (MP_ROLE[p.role] || '') + '<b>' + esc(p.name) + '</b></span>').join('') + '</div></div>';
@@ -61613,6 +61616,17 @@ function mpHtml(it, R, fx) {
       '<div class="mpt-sk">' + parts.map(([k, l, s]) => '<span><i class="mpt-sb-' + k + '"></i>' + l + ' <b>' + mpMM(s) + '</b></span>').join('') +
       less.map(([k, , s, d, nl]) => '<span tabindex="0"' + mpT1('<b>' + nl + ': ' + mpMM(s) + '</b><br>' + d) + '>' + nl + ' <b class="mpt-g">' + mpMM(s) + '</b></span>').join('') + '</div>' +
       ((gLine = line), ''); })(); /* (the quick read: the line moved into the box's ⓘ; the bar's hover and the Group DPS tile say it too) */
+  // (one verdict under the key's title (the studio's tidy-pass.md item 6): timed or over, then how far behind a typical fast run and the biggest part of it,
+  // from the timer and the first row of Where your time went)
+  const keyLine = (() => { const lim0 = ck.up === 3 ? P * 0.6 : ck.up === 2 ? P * 0.8 : P; let v = ck.up > 0 ? 'Timed +' + ck.up + ' with <b>' + mpMM(lim0 - T) + '</b> to spare.' : 'Over time by <b>' + mpMM(T - P) + '</b>.';
+    if (!F || !FC) return '<p class="mpt-vd">' + v + '</p>'; const gap = T - FC.ck.time;
+    if (gap > 5) { const ST = mpStretches(R, C), fBy = new Map(mpStretches(F, FC).map((x) => [x.boss, x])), L = [];
+      for (const x of ST) { const y = fBy.get(x.boss); if (!y) continue; L.push({ s: x.trash - y.trash, w: x.name.startsWith('Start → ') ? 'on the trash before ' + esc(x.boss) : 'on the trash between ' + esc(x.name.split(' → ')[0]) + ' and ' + esc(x.boss) }, { s: x.bossT - y.bossT, w: 'on ' + esc(x.boss) }); }
+      L.push({ s: ck.between - FC.ck.between, w: 'standing between pulls' }, { s: ck.deathCost - FC.ck.deathCost, w: 'on deaths' });
+      const top = L.filter((x) => x.s >= 15).sort((a, b) => b.s - a.s)[0];
+      v += ' You were <b>' + mpMM(gap) + '</b> behind a typical fast run' + (top ? ', ' + (top.s >= gap / 2 ? 'most of it' : 'the biggest part') + ' (<b>' + mpMM(Math.min(top.s, gap)) + '</b>) ' + top.w : '') + '.'; }
+    else if (gap < -5) v += ' You were <b>' + mpMM(-gap) + '</b> ahead of a typical fast run.';
+    return '<p class="mpt-vd">' + v + '</p>'; })();
   const fixes = went ? '<section class="mpt-fx"><div class="mpt-fxh"><h2>Where your ' + mpMM(T - fT0) + ' went</h2>' + mpInfo('The ' + mpMM(T - fT0) + ' you were behind the fast run, split by cause. Hover a piece of the bar for more.' + (gLine ? '<br><br>' + gLine : '') + '<br><br>Click a row for the numbers behind it.') +
     '<span>A typical fast run took <b>' + mpMM(fT0) + '</b>. You needed to be <b>' + mpMM(need) + '</b> faster ' + (lv === 0 ? 'to time it' : 'for +' + (lv + 1)) + (ck.deathCost ? ', and your deaths only cost <b>' + mpMM(ck.deathCost) + '</b>.' : ', and you had no deaths.') + '</span></div>' + sbar +
     /* (the polish pass: each badge in its cause's colour, the seconds by size (60 s red, 20 s amber, less grey), a kick by how often it went off) */
@@ -61637,7 +61651,7 @@ function mpHtml(it, R, fx) {
   const behind = F ? (T - fT > 5 ? 'bad' : T - fT < -5 ? 'good' : '') : '';
   /* (the quick read: chapter 2 is "Fix these first"; chapter 3 is one sentence with the route and the pulls a click away) */
   const bh = {}, behindH = mpBehind(R, C, F, FC, fx, waiting, bh); /* (the map-first round: the map is chapter 2, with the timeline lanes under it) */
-  return mpChap('mptC1', 'The key', '', ban + tiles) + mpJumpBar(R, true) + mpChap('mptCM', 'Your key on the map', 'every pull, and where the mistakes were', mpRPFold(R, F, mpMapHtml(R, F, bh.tl))) +
+  return mpChap('mptC1', 'The key', '', ban.replace('<!--MPV-->', keyLine) + tiles) + mpJumpBar(R, true) + mpChap('mptCM', 'Your key on the map', 'every pull, and where the mistakes were', mpRPFold(R, F, mpMapHtml(R, F, bh.tl))) +
     mpChap('mptC2', 'Fix these first', F ? 'against a typical fast run' : '', fixes + behindH, behind) + mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpGroup(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', 'for your next key', mpKnowHtml(R, true));
 }
 // (five chapters (Nov 2, the Design studio's chapters.md, Flex: "the page is lacking depth. Maybe find a way to separate the information so its
@@ -61647,14 +61661,15 @@ const mpChap = (id, k, sub, body, dot) => (body ? '<div class="mpt-chap" role="r
 // (the jump bar between chapter 1 and 2 (the Design studio's round 4, by chapter since Nov 2): it sticks under the site's tab bar while you scroll)
 // (chapter 3 in the quick read: one sentence, how many packs and pulls and where you reached 100%, then the route and the pulls a click away)
 function mpRPFold(R, F, map) {
-  const rt = R.route && R.route.ok ? R.route : null; let reach = '';
-  if (rt) { let t = 0; for (let k = 0; k < rt.pulls.length; k++) { t += rt.pulls[k].add; if (t >= rt.full * 0.9995) { const nx = R.pulls.slice(k + 1).find((p) => p.boss), pv = R.pulls.slice(0, k).reverse().find((p) => p.boss); /* (by boss, not pull number: the Pulls list numbers packs) */
-        reach = ' You reached 100% ' + (R.pulls[k].boss ? 'at ' + esc(R.pulls[k].boss) : nx ? 'before ' + esc(nx.boss) : pv ? 'after ' + esc(pv.boss) : 'in pack ' + R.pulls[k].n); break; } }
-    /* (where the forces ended, yours and the fast run's: the facts Your route's tiles had (the cut, Nov 2)) */
+  // (the map's first line, faint (the studio's tidy-pass.md item 6): your pulls and how many chained, the fast run's, where you reached 100%, and where
+  // the count ended, yours and the fast run's)
+  const rt = R.route && R.route.ok ? R.route : null, tr = R.pulls.filter((p) => !p.boss), ch = tr.length - mpChainN(R, tr), bits = [plural(tr.length, 'pull') + (ch ? ' (' + ch + ' chained)' : '')];
+  if (F) bits.push('fast run ' + mpPacks(F, true));
+  if (rt) { let t = 0; for (let k = 0; k < rt.pulls.length; k++) { t += rt.pulls[k].add; if (t >= rt.full * 0.9995) { const nx = R.pulls.slice(k + 1).find((p) => p.boss), pv = R.pulls.slice(0, k).reverse().find((p) => p.boss);
+        bits.push('100% ' + (R.pulls[k].boss ? 'at ' + esc(R.pulls[k].boss) : nx ? 'before ' + esc(nx.boss) : pv ? 'after ' + esc(pv.boss) : 'in pack ' + R.pulls[k].n)); break; } }
     const f1 = (v) => (Math.round(v * 10) / 10).toFixed(1).replace(/\.0$/, '') + '%', fr = F && F.route && F.route.ok && F.route.full === rt.full ? F.route : null;
-    if (R.run.timeMs && !R.run.left) reach += (reach ? ' and ended' : ' You ended') + ' at <b>' + f1(100 * rt.total / rt.full) + '</b>' + (fr ? ' (the fast run ' + f1(100 * fr.total / fr.full) + ')' : ''); if (reach) reach += '.'; }
-  const line = 'You took <b>' + mpPacks(R) + '</b>' + (F ? '; the fast run took <b>' + mpPacks(F, true) + '</b>.' : '.') + reach;
-  return '<p class="mpt-rpl">' + line + '</p>' + (map || ''); /* (Every pull in detail is gone (the cut, Nov 2): its facts are in the tiles, the hovers, the card and the timeline) */ /* (the map-first round: the forces strips, route lines and Pulls fold here) */
+    if (R.run.timeMs && !R.run.left) bits.push('ended at ' + f1(100 * rt.total / rt.full) + (fr ? ' (fast run ' + f1(100 * fr.total / fr.full) + ')' : '')); }
+  return '<p class="mpt-rpl mpt-meta">' + bits.join(' · ') + '</p>' + (map || '');
 }
 const mpJumpBar = (R, tl) => '<nav class="mpt-jb" aria-label="Jump to">' + [['mptCM', 'Map'], tl ? ['mptC2', 'Fix these first'] : null, ['mptC4', 'Your group'], MP_KNOW[mpLc(R.run.dungeon)] ? ['mptC5', 'Dungeon'] : null].filter(Boolean).map(([id, l]) => '<button type="button" data-mptj="' + id + '">' + l + '</button>').join('') + '</nav>';
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-mptj]'); if (!b) return; e.preventDefault(); const s = document.getElementById(b.dataset.mptj); if (!s) return;
@@ -61710,8 +61725,8 @@ function mpBehind(R, C, F, FC, fx, waiting, out) {
   const lines = [0.6, 0.8, 1].map((f) => '<i class="mpt-vl" style="left:' + X(ck.par * f) + '"></i>').join('');
   let lastX = -99, row = 0, rows = 1; const rowOf = CP.map((c) => { const x = 100 * c.you / W0; row = x - lastX < 13 ? 1 - row : 0; lastX = x; rows = Math.max(rows, row + 1); return row; }); /* (bosses close together: their labels take turns on two rows) */
   const gapRow = '<div class="mpt-gp" style="--mpt-gph:' + 40 * rows + 'px">' + CP.map((c, i) => '<span style="left:' + X(c.you) + ';--mpt-gpt:' + 40 * rowOf[i] + 'px"><b>' + esc(c.boss) + '</b>' + mpMM(c.you) + (c.fast != null ? ' · <b class="' + (i === CP.length - 1 && c.you > c.fast ? 'mpt-bad' : '') + '">' + (c.you >= c.fast ? mpMM(c.you - c.fast) + ' behind' : mpMM(c.fast - c.you) + ' ahead') + '</b>' : '') + '</span>').join('') + '</div>';
-  const timeline = '<div class="mpt-tl"><div class="mpt-tlg">' + marks + '<div class="mpt-lanes">' + lines + '<div class="mpt-ln"><span class="mpt-ll">You</span>' + youLane + '</div><div class="mpt-ln"><span class="mpt-ll"' + mpT1('<b>A typical fast run</b>: ' + mpTypical(R, fx) + '.' + fNote) + '>Fast run</span>' + fastLane + '</div></div>' + gapRow + '</div>' +
-    '<div class="mpt-key"><span><i class="mpt-k1"></i>Pull</span><span><i class="mpt-k2"></i>Boss</span>' + (C.pen ? '<span><i class="mpt-k3"></i>Death (+' + Math.round(C.pen) + ' s)</span>' : '') + (F ? ((F.pulls || []).length ? '<span><i class="mpt-k1 mpt-kf"></i>Fast run (faded)</span>' : '<span><i class="mpt-k4"></i>Fast run</span>') : '') + '<span><i class="mpt-kd"></i>Boss down</span>' + ((R.lust || []).length ? '<span><i class="mpt-kl"></i>Lust</span>' : '') + (R.pulls.some((p) => (p.through || []).length) || (F && (F.pulls || []).some((p) => (p.through || []).length)) ? '<span><b class="mpt-kk">!</b>Went off with a kick ready</span>' : '') + '</div></div>';
+  const timeline = '<div class="mpt-tl"><div class="mpt-tlg">' + marks + '<div class="mpt-lanes">' + lines + '<div class="mpt-ln"><span class="mpt-ll">You' + mpInfo('<b>The timeline</b><br>Blue: a pull. Gold: a boss fight.' + (C.pen ? ' Red: a death, +' + Math.round(C.pen) + ' s on the timer.' : '') + ' ◇: a boss down. Gold line: Lust. Purple !: a cast went off with a kick ready.' + (F ? ' The fast run\'s lane is the same, faded.' : '')) + '</span>' + youLane + '</div><div class="mpt-ln"><span class="mpt-ll"' + mpT1('<b>A typical fast run</b>: ' + mpTypical(R, fx) + '.' + fNote) + '>Fast run</span>' + fastLane + '</div></div>' + gapRow + '</div>' +
+    '</div>'; /* (the legend moved into the ⓘ by "You" (the studio's tidy-pass.md item 8)) */
   // why, stretch by stretch: one number a cell, the difference from the fast run, with both in its hover; only the worst one coloured (the
   // "easier on the eyes" round). Without a fast run, your own numbers
   const dv = (v) => { v = Math.round(v); return v > 0 ? '+' + mpMM(v) : v < 0 ? mpMM(v) : 'same'; }, dn = (v) => (v > 0 ? '+' + plural(v, 'pull') : v < 0 ? '−' + plural(-v, 'pull') : 'same');
@@ -61758,13 +61773,17 @@ const mpCdMiss = (RR, i) => { const ci = mpChainOf(RR, i); if (ci[0] !== i || ci
   return act.filter((nm) => !RR.cds[nm].some((x) => x.t >= s0 && x.t <= e0)); }; /* (by the chain's own time, from 3 s before it to 1 s after, as the pull card counts) */
 function mpPullTags(RR, i) {
   const p = RR.pulls[i], out = [], wipe = !!mpWipe(p, Math.max(1, (RR.people || []).length)), t = (txt, cls, tip) => out.push('<span class="mpt-tg2' + (cls ? ' ' + cls : '') + '"' + (tip ? mpT1(tip) : '') + '>' + txt + '</span>');
+  const en = (n) => plural(n, 'enemy').replace(/enemys$/, 'enemies'), who = (L, sp) => [...new Set((L || []).filter((x) => x.removed === sp).map((x) => x.who))].map(esc).join(', ');
+  const grp = (L) => { const m = new Map(); for (const x of L || []) { const o = m.get(x.spell) || { n: 0, who: new Set() }; o.n++; if (x.who) o.who.add(x.who); m.set(x.spell, o); } return m; }, tw = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times');
   if (wipe) t('☠ Wipe', 'mpt-t2d', plural(p.deaths.length, 'death') + ': ' + p.deaths.map((d) => esc(d.who)).join(', ') + '.');
   else for (const d of p.deaths.slice().sort((a, b) => a.t - b.t)) t('☠ ' + esc(d.who), 'mpt-t2d', '<b>' + esc(d.who) + '</b> died to ' + esc(d.to || 'unknown') + ', ' + mpMM(d.t - p.s) + ' in.');
   if (p.boss && p.kill === false && !wipe) t('Not killed', 'mpt-t2d');
-  const ks = new Map(); for (const x of p.through || []) { const o = ks.get(x.spell) || { n: 0, who: new Set() }; o.n++; if (x.who) o.who.add(x.who); ks.set(x.spell, o); }
-  for (const [sp, o] of ks) t('! ' + esc(sp) + (o.n > 1 ? ' ×' + o.n : ''), 'mpt-t2k', '<b>' + esc(sp) + '</b> went off ' + (o.n === 1 ? 'once' : o.n === 2 ? 'twice' : o.n + ' times') + ' with a kick ready.' + (o.who.size ? '<br>Kick ready: ' + [...o.who].map(esc).join(', ') + '.' : ''));
-  if ((RR.lust || []).some((l) => l.pull === i)) t('⚡ Lust', 'mpt-t2l');
-  for (const b of (p.ebuffs || []).filter((x) => x.on > 0).slice(0, 2)) t(esc(b.spell) + ' ×' + b.on, '', '<b>' + esc(b.spell) + '</b> went on ' + plural(b.on, 'enemy').replace('enemys', 'enemies') + '.');
+  for (const [sp, o] of grp(p.through)) t('! ' + esc(sp) + (o.n > 1 ? ' ×' + o.n : ''), 'mpt-t2k', '<b>' + esc(sp) + '</b> went off ' + tw(o.n) + ' with a kick ready.' + (o.who.size ? '<br>Kick ready: ' + [...o.who].map(esc).join(', ') + '.' : ''));
+  for (const [sp, o] of grp(p.minor)) t('! ' + esc(sp) + (o.n > 1 ? ' ×' + o.n : ''), 'mpt-t2m', '<b>' + esc(sp) + '</b> went off ' + tw(o.n) + ' with a kick ready. Worth a kick, not a mistake.');
+  const lu = (RR.lust || []).find((l) => l.pull === i); if (lu) t('⚡ Lust ' + (lu.t < p.s ? mpMM(p.s - lu.t) + ' before' : mpMM(lu.t - p.s) + ' in'), 'mpt-t2l', lu.spell ? '<b>' + esc(lu.spell) + '</b>' : '');
+  const av = (p.avoid || []).filter((a) => a.n); if (av.length) t('◆ Avoidable ×' + av.reduce((a, x) => a + x.n, 0), 'mpt-t2a', av.map((a) => '<b>' + esc(a.who) + '</b> ×' + a.n + ' ' + esc(a.spell)).join('<br>'));
+  for (const b of (p.ebuffs || []).filter((x) => x.on > 0).slice(0, 2)) t(esc(b.spell) + ' ×' + b.on, '', '<b>' + esc(b.spell) + '</b> went on ' + en(b.on) + '.' + (b.removed ? ' ' + b.removed + ' purged (' + who(p.purges, b.spell) + ').' : ''));
+  for (const b of (p.debs || []).filter((x) => x.on > 0).slice(0, 2)) t(esc(b.spell) + ' ×' + b.on, '', '<b>' + esc(b.spell) + '</b> went on ' + plural(b.on, 'player') + '.' + (b.removed ? ' ' + b.removed + ' dispelled (' + who(p.dispels, b.spell) + ').' : ''));
   const miss = mpCdMiss(RR, i); if (miss.length) t('No big cooldown: ' + miss.map(esc).join(', '), 'mpt-t2c', 'Their spec has a big cooldown, and they didn\'t press one in this pull.');
   return out; }
 // (a pull's hover (the studio's item 15, then Flex: "its just a lot of information to read"): what and how long, its tags, "Click for the details";
@@ -62203,12 +62222,12 @@ function mpMapHtml(R, F, tl) {
       shapes.push('<g class="mpt-mpl" data-pi="' + q.i + '"' + mpT1(tip(q)) + '>' + groups.map(shape).join('') + '</g>');
       const top = big.reduce((a, v) => (v[1] < a[1] ? v : a)), wt = q.wait ? '⏱' + mpMM(q.wait) : '', ww = wt.length * 7 + 8;
       tags.push('<g class="mpt-mpl mpt-mtag" data-pi="' + q.i + '" data-oy="' + (26 * k).toFixed(1) + '"' + mpT1(tip(q)) + ' transform="translate(' + top[0].toFixed(1) + ',' + (top[1] - 26 * k).toFixed(1) + ') scale(' + k.toFixed(3) + ')"><rect x="-14" y="-12" width="28" height="22" rx="4" fill="#0f1117" stroke="' + q.c + '" stroke-width="2"/><text y="5" text-anchor="middle" fill="' + q.c + '">' + (q.p.boss ? '★' : mpNo(q.RR, q.p.n)) + '</text>' +
-        (q.bad ? '<circle class="mk-bad" cx="13" cy="-11" r="5" fill="#e5534b" stroke="#0f1117" stroke-width="1.5"/>' : '') +
+        (q.bad ? '<circle class="mk-bad" cx="13" cy="-11" r="5" fill="#ff8f87" stroke="#0f1117" stroke-width="1.5"/>' : '') +
         (q.lust ? '<g class="mk-lust"><rect x="17" y="-11" width="20" height="20" rx="4" fill="#0f1117" stroke="#ffd166" stroke-width="1.5"/><text x="27" y="4" text-anchor="middle" fill="#ffd166" style="font-size:12px">⚡</text></g>' : '') +
-        (wt ? '<g class="mk-wait"><rect x="' + (-17 - ww) + '" y="-10" width="' + ww + '" height="18" rx="4" fill="#0f1117" stroke="#95a0ab" stroke-width="1"/><text x="' + (-17 - ww / 2) + '" y="3.5" text-anchor="middle" fill="#c9cdd3" style="font-size:11px">' + wt + '</text></g>' : '') + '</g>');
+        (wt ? '<g class="mk-wait"><rect x="' + (-17 - ww) + '" y="-10" width="' + ww + '" height="18" rx="4" fill="#0f1117" stroke="#aeb6bf" stroke-width="1"/><text x="' + (-17 - ww / 2) + '" y="3.5" text-anchor="middle" fill="#aeb6bf" style="font-size:11px">' + wt + '</text></g>' : '') + '</g>');
       }
       // (☠ where each player died: their last spot before it; !N at the casters of the casts that went off, purple for the high ones, grey for the rest)
-      for (const d of q.dd) if (here(d)) { const [x, y] = px(f, d); marks.push('<g class="mpt-mk mk-death" data-pi="' + q.i + '" data-who="' + esc(d.who) + '"' + mpT1('<b>' + esc(d.who) + ' died</b> here · ' + nm(q) + '<br><span class="sub">Click to see how</span>') + ' transform="translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ') scale(' + k.toFixed(3) + ')"><circle r="10" fill="#0f1117" stroke="#e5534b" stroke-width="2"/><text y="4.5" text-anchor="middle" fill="#ff8f87" style="font-size:12px">☠</text></g>'); }
+      for (const d of q.dd) if (here(d)) { const [x, y] = px(f, d); marks.push('<g class="mpt-mk mk-death" data-pi="' + q.i + '" data-who="' + esc(d.who) + '"' + mpT1('<b>' + esc(d.who) + ' died</b> here · ' + nm(q) + '<br><span class="sub">Click to see how</span>') + ' transform="translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ') scale(' + k.toFixed(3) + ')"><circle r="10" fill="#0f1117" stroke="#ff8f87" stroke-width="2"/><text y="4.5" text-anchor="middle" fill="#ff8f87" style="font-size:12px">☠</text></g>'); }
       for (const [L, n, cls, col] of [[q.kh, (q.p.through || []).length, 'mk-kick', '#c39bff'], [q.km, (q.p.minor || []).length, 'mk-kick mk-kick2', '#95a0ab']]) { const l = L.filter(here); if (!l.length) continue;
         const [x, y] = px(f, { x: l.reduce((a, c) => a + c.x, 0) / l.length, y: l.reduce((a, c) => a + c.y, 0) / l.length });
         marks.push('<g class="mpt-mk ' + cls + '" data-pi="' + q.i + '"' + mpT1('<b>' + plural(n, 'cast') + ' went off with a kick ready</b> · ' + nm(q)) + ' transform="translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ') scale(' + k.toFixed(3) + ')"><circle r="11" fill="#0f1117" stroke="' + col + '" stroke-width="2"/><text y="4.5" text-anchor="middle" fill="' + col + '" style="font-size:12px">!' + n + '</text></g>'); }
@@ -62247,7 +62266,7 @@ function mpMapHtml(R, F, tl) {
     const order = Q.filter((q) => cen.has(q.i)), route = [];
     for (let j = 1; j < order.length; j++) { const a = cen.get(order[j - 1].i), b = cen.get(order[j].i), mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2, ang = Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI;
       route.push('<path d="M-4 -4 L2 0 L-4 4" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="2" transform="translate(' + mx.toFixed(1) + ',' + my.toFixed(1) + ') rotate(' + ang.toFixed(0) + ') scale(' + k.toFixed(3) + ')"/>'); }
-    const line = order.length > 1 ? '<polyline points="' + order.map((q) => cen.get(q.i).map((v) => v.toFixed(1)).join(',')).join(' ') + '" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="' + (2.2 * k).toFixed(2) + '" stroke-dasharray="' + (7 * k).toFixed(1) + ' ' + (6 * k).toFixed(1) + '"/>' : '';
+    const line = order.length > 1 ? '<polyline data-pis="' + order.map((q) => q.i).join(',') + '" points="' + order.map((q) => cen.get(q.i).map((v) => v.toFixed(1)).join(',')).join(' ') + '" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="' + (2.2 * k).toFixed(2) + '" stroke-dasharray="' + (7 * k).toFixed(1) + ' ' + (6 * k).toFixed(1) + '"/>' : '';
     const last = order[order.length - 1], nx = last && Q.slice(last.i + 1).find((q) => q.fl >= 0 && floors[q.fl].f[0] !== f[0]);
     if (nx) { const [x, y] = cen.get(last.i), t = 'then ' + floors[nx.fl].f[1] + ' →', tw2 = t.length * 6.4 + 14;
       route.push('<g class="mpt-mthen" data-mdtf="' + nx.fl + '" role="button" transform="translate(' + (x + 18 * k).toFixed(1) + ',' + (y + 14 * k).toFixed(1) + ') scale(' + k.toFixed(3) + ')"><rect width="' + tw2.toFixed(0) + '" height="20" rx="10" fill="#0f1117" fill-opacity=".85" stroke="#fff" stroke-opacity=".45"/><text x="' + (tw2 / 2).toFixed(0) + '" y="14" text-anchor="middle" fill="#e8ebee" style="font-size:11.5px">' + esc(t) + '</text></g>'); }
@@ -62255,21 +62274,21 @@ function mpMapHtml(R, F, tl) {
       '<g class="mk-route">' + line + route.join('') + '</g>' + shapes.join('') + marks.join('') + tags.join('') + '</svg>'; };
   // (the picked pull's card: what went wrong, worst first, each player's damage a second, and the big cooldowns pressed in this pull itself
   // (from 3 s before it to 1 s after: the studio's fix, where a chain's whole list showed on each of its pulls). The fast run's from its own log)
-  const card = (q, run) => { const RR = q.RR, p = q.p, gd = mpGd(p), ppl = (RR.people || []).slice().sort(mpByRole), out = [];
-    for (const d of p.deaths) out.push('<p class="mpt-mcd">☠ ' + mpWho(RR, d.who) + ' died to <b>' + esc(d.to || 'unknown') + '</b>' + (d.from ? ' (from ' + esc(d.from) + ')' : '') + ', ' + mpMM(d.t - p.s) + ' in. ' + (d.defs ? 'Used ' + plural(d.defs, 'defensive') + '.' : 'No defensive used.') + '</p>');
-    const grp = kgrp;
-    for (const [sp, o] of grp(p.through)) out.push('<p class="mpt-mck">! <b>' + esc(sp) + '</b> went off ' + tw(o.n) + ' with a kick ready.' + (o.r.size ? ' Kick ready: ' + [...o.r].map((n) => mpWho(RR, n)).join(', ') + '.' : '') + '</p>');
-    for (const [sp, o] of grp(p.minor)) out.push('<p class="mpt-mcm">! ' + esc(sp) + ' went off ' + tw(o.n) + ' with a kick ready. Worth a kick, not a mistake.</p>');
-    if (run === 'you' && p.boss && F) { const fb = F.pulls.filter((x) => x.boss === p.boss), t = fb.length ? mpNextBoss(R, F, [p], fb) : ''; if (t) out.push('<p class="mpt-mcn">▼ ' + t.replace(/^<p class="mpt-nt"><b>Next time<\/b> /, '').replace(/<\/p>$/, '') + '</p>'); }
-    const tp = tips(q), ex = []; if (tp.length) ex.push('<p class="mpt-mck2">Plan</p><ul class="mpt-mtips">' + tp.map((x) => '<li>' + mpKm(x) + '</li>').join('') + '</ul>');
+  // (the pull card (the studio's tidy-pass.md item 7, toward 10/10, Flex: "Do 1, 2 and 3"): the title, one line of tags as in the hover, the pack, the plan,
+  // then closed one-liners that open on a click (Kicks & CC, DPS, how each player died), each remembered in this browser across pulls)
+  const CF = (() => { try { return JSON.parse(localStorage.getItem('mpt-cardfold') || '{}') || {}; } catch (e) { return {}; } })();
+  const fold = (k, sum, body, at) => '<details class="mpt-cfd' + (k === 'x' ? ' mpt-mdr' : '') + '" data-cf="' + k + '"' + (at || '') + (CF[k] ? ' open' : '') + '><summary class="mpt-cfs">' + sum + '</summary><div class="mpt-cfb">' + body + '</div></details>';
+  const card = (q, run) => { const RR = q.RR, p = q.p, gd = mpGd(p), ppl = (RR.people || []).slice().sort(mpByRole), i = q.i;
+    // (one line of tags, the same as the hover's; "✓ Clean" when there's nothing)
+    const tags = mpPullTags(RR, i).concat(q.wait ? ['<span class="mpt-tg2 mpt-t2w">⏱ waited ' + mpMM(q.wait) + '</span>'] : []);
+    let next = '';
+    if (run === 'you' && p.boss && F) { const fb = F.pulls.filter((x) => x.boss === p.boss), t = fb.length ? mpNextBoss(R, F, [p], fb) : ''; if (t) next = '<p class="mpt-mcn">▼ ' + t.replace(/^<p class="mpt-nt"><b>Next time<\/b> /, '').replace(/<\/p>$/, '') + '</p>'; }
+    const tp = tips(q), plan = tp.length ? '<p class="mpt-mck2">Plan</p><ul class="mpt-mtips">' + tp.map((x) => '<li>' + mpKm(x) + '</li>').join('') + '</ul>' : '';
     const byW = (L) => { const m = new Map(); for (const x of L || []) if (x.who) m.set(x.who, (m.get(x.who) || 0) + 1); return [...m].sort((a, b) => b[1] - a[1]).map(([w, c]) => mpWho(RR, w) + ' ' + c).join(' · '); };
-    const pd = [], en = (n) => plural(n, 'enemy').replace(/enemys$/, 'enemies');
-    const rm = (L, b) => [...new Set((L || []).filter((x) => x.removed === b).map((x) => x.who))].map((n) => mpWho(RR, n)).join(', ');
-    for (const o of [].concat(p.ebuffs || [])) if (o && o.on) pd.push('<p class="mpt-mcf">' + esc(o.spell) + ' went on ' + en(o.on) + '.' + (o.removed ? ' ' + o.removed + ' purged (' + rm(p.purges, o.spell) + ').' : '') + '</p>');
-    for (const o of [].concat(p.debs || [])) if (o && o.on) pd.push('<p class="mpt-mcf">' + esc(o.spell) + ' went on ' + plural(o.on, 'player') + '.' + (o.removed ? ' ' + o.removed + ' dispelled (' + rm(p.dispels, o.spell) + ').' : '') + '</p>');
-    // (Kicks & CC as a small table (Flex, Nov 2: "Can you tidy this up lol"): one row per player, most kicks first, with the spells they kicked and their
-    // CC ("on N" for more than one enemy). The enemies kicked and the CC's targets are in each cell's hover, as on the map)
-    { const kname = (e) => (String(e.src).startsWith('Pet-') ? ((p.kicks || []).find((x) => Math.abs(x.t - e.t) < 0.5) || {}).who || e.who : e.who), P = new Map();
+    const en = (n) => plural(n, 'enemy').replace(/enemys$/, 'enemies');
+    // (Kicks & CC: one row per player, most kicks first, with the spells they kicked and their CC ("on N" for more than one enemy); the enemies kicked and
+    // the CC's targets in each cell's hover, as on the map)
+    let kicks = ''; { const kname = (e) => (String(e.src).startsWith('Pet-') ? ((p.kicks || []).find((x) => Math.abs(x.t - e.t) < 0.5) || {}).who || e.who : e.who), P = new Map();
       const row = (w) => { if (!P.has(w)) P.set(w, { w, k: new Map(), kt: new Map(), c: new Map(), nk: 0, nc: 0 }); return P.get(w); };
       for (const e of q.kx) { const o = row(kname(e)), sp = e.cut || e.tg, k2 = e.tg + '\n' + e.cut; o.nk++; o.k.set(sp, (o.k.get(sp) || 0) + 1); if (!o.kt.has(k2)) o.kt.set(k2, { tg: e.tg, cut: e.cut, n: 0 }); o.kt.get(k2).n++; }
       for (const e of q.cx) { const o = row(e.who), c = o.c.get(e.sp) || { tg: new Map() }; if (e.g && !c.tg.has(e.g)) c.tg.set(e.g, e.tg); o.c.set(e.sp, c); }
@@ -62281,26 +62300,27 @@ function mpMapHtml(R, F, tl) {
         const ch = '<b>' + esc(o.w) + '</b>' + [...o.c].map(([sp, c]) => { const nm2 = new Map(); for (const n of c.tg.values()) nm2.set(n, (nm2.get(n) || 0) + 1);
           return '<br>' + esc(sp) + (c.tg.size ? ' → ' + en(c.tg.size) + ' (' + [...nm2].map(([a, k]) => esc(a) + (k > 1 ? ' ×' + k : '')).join(', ') + ')' : ''); }).join('');
         return '<div class="mpt-mkr" data-who="' + esc(o.w) + '"><span>' + mpWho(RR, o.w) + '</span><span' + (kc ? mpT1(kh) : '') + '>' + (kc || dash) + '</span><span' + (cc ? mpT1(ch) : '') + '>' + (cc || dash) + '</span></div>'; }).join(''), ss = byW(p.stops);
-      if (L.length || ss || pd.length) ex.push('<div class="mpt-mlh2"><span>Kicks &amp; CC</span>' + (L.length ? '<small>' + [nk ? plural(nk, 'kick') : '', nc ? nc + ' CC' : ''].filter(Boolean).join(' · ') + '</small>' : '') + '</div>' +
-        (L.length ? '<div class="mpt-mkr mpt-mkh"><span></span><span>Kicked</span><span>CC</span></div>' + tbl : '') + (ss ? '<p class="mpt-mcf">Stops: ' + ss + '</p>' : '') + pd.join('')); }
-    if ((p.avoid || []).length) ex.push('<p class="mpt-mca">Avoidable: ' + p.avoid.map((a) => mpWho(RR, a.who) + ' ×' + a.n + ' ' + esc(a.spell)).join(', ') + '</p>');
-    const recap = p.deaths.map((d) => { const r = q.dd.find((x) => x.who === d.who && Math.abs(x.t - d.t) < 3); if (!r) return '';
-      return '<div class="mpt-mdr" data-dr="' + esc(d.who) + '"><p class="mpt-mck2">How ' + esc(d.who) + ' died</p>' + (r.hits.length ? '<ol>' + r.hits.map((h) => '<li><span class="mpt-m">' + h.ago.toFixed(1) + ' s before:</span> <b>' + esc(h.sp) + '</b>' + (h.from ? ' <span class="mpt-m">(' + esc(h.from) + ')</span>' : '') + ' ' + mpGF(h.amt) + (h.pct ? ' <span class="mpt-m">· ' + Math.round(100 * h.pct) + '% of their health</span>' : '') + '</li>').join('') + '</ol>' : '') +
-        '<p class="mpt-mcm">' + (r.ready.length ? mpAnd(r.ready.map(esc)) + (r.ready.length === 1 ? ' was' : ' were') + ' ready.' : 'No defensive was ready.') + (r.used.length ? ' Used: ' + r.used.map(([n, sec]) => esc(n) + ' (' + sec + ' s before)').join(', ') + '.' : '') + ' Healthstone: ' + (r.hs != null ? 'used ' + r.hs + ' s before.' : 'not used.') + '</p></div>'; }).join('');
-    // (damage a second, highest first, so the bars step down; each player's big cooldowns pressed here sit in a fourth column: "none" when they have some
-    // but pressed none here, blank when none are tracked, the times in the hover. The healer's healing is a line under the rows)
+      if (L.length || ss) kicks = fold('k', '<b>Kicks &amp; CC</b>' + (nk ? ' · ' + plural(nk, 'kick') : '') + (nc ? ' · ' + nc + ' CC' : '') + (!nk && !nc && ss ? ' · stops' : ''),
+        (L.length ? '<div class="mpt-mkr mpt-mkh"><span></span><span>Kicked</span><span>CC</span></div>' + tbl : '') + (ss ? '<p class="mpt-mcf">Stops: ' + ss + '</p>' : '')); }
+    // (DPS, highest first, with each player's big cooldowns pressed here in a fourth column ("none" when they have some but pressed none here, blank when
+    // none are tracked, the times in the hover); the healer's healing a line under the rows)
     const dl = ppl.slice().sort((a, b) => ((p.dmg || {})[b.name] || 0) - ((p.dmg || {})[a.name] || 0)), mx = Math.max(1, ...ppl.map((x) => (p.dmg || {})[x.name] || 0));
     const act = new Set((RR.cdWho || []).filter((n) => ((RR.cds || {})[n] || []).length)), mine = (n) => (act.has(n) ? RR.cds[n].filter((x) => x.t >= p.s - 3 && x.t <= p.e + 1) : []), cdc = act.size > 0;
     const cdCell = (n) => { if (!act.has(n)) return '<span class="mpt-mcc"></span>'; const l = mine(n); if (!l.length) return '<span class="mpt-mcc mpt-mcz">none</span>';
       const m = new Map(); for (const x of l) m.set(x.spell, (m.get(x.spell) || 0) + 1);
       return '<span class="mpt-mcc"' + mpT1('<b>' + esc(n) + '</b>' + l.map((x) => '<br>' + esc(x.spell) + ' · ' + (x.t < p.s ? 'just before the pull' : mpMM(x.t - p.s) + ' in')).join('')) + '>' + [...m].map(([sp, c]) => esc(sp) + (c > 1 ? ' ×' + c : '')).join(', ') + '</span>'; };
-    const dps = '<div class="gbx mpt-gbd' + (cdc ? '' : ' no-cd') + '">' + dl.map((x) => { const d = (p.dmg || {})[x.name] || 0, cc = mpCC(x.cls);
-      return '<div class="gbx-r" data-who="' + esc(x.name) + '" style="--c:' + cc + '"><span class="gbx-n" style="color:' + cc + '">' + esc(x.name) + '</span><span class="gbx-b"><i style="width:' + (100 * d / mx).toFixed(1) + '%"></i></span><b class="gbx-v">' + mpGF(d) + '</b>' + (cdc ? cdCell(x.name) : '') + '</div>'; }).join('') + '</div>' +
+    const dps = !ppl.length ? '' : fold('d', '<b>DPS</b>' + (dl[0] && (p.dmg || {})[dl[0].name] ? ' · ' + mpWho(RR, dl[0].name) + ' ' + mpGF((p.dmg || {})[dl[0].name]) : '') + (gd ? ' · group ' + mpGF(gd) : ''),
+      '<div class="mpt-mlh' + (cdc ? '' : ' no-cd') + '"><span>DPS</span>' + (cdc ? '<small>Big cooldown</small>' : '') + '</div><div class="gbx mpt-gbd' + (cdc ? '' : ' no-cd') + '">' + dl.map((x) => { const d = (p.dmg || {})[x.name] || 0, cc = mpCC(x.cls);
+        return '<div class="gbx-r" data-who="' + esc(x.name) + '" style="--c:' + cc + '"><span class="gbx-n" style="color:' + cc + '">' + esc(x.name) + '</span><span class="gbx-b"><i style="width:' + (100 * d / mx).toFixed(1) + '%"></i></span><b class="gbx-v">' + mpGF(d) + '</b>' + (cdc ? cdCell(x.name) : '') + '</div>'; }).join('') + '</div>' +
       ppl.filter((x) => x.role === 'healer' && (p.heal || {})[x.name]).map((x) => '<p class="mpt-mcf" data-who="' + esc(x.name) + '">' + mpWho(RR, x.name) + ' healed ' + mpGF(p.heal[x.name]) + ' a second.</p>').join('') +
-      (cdc && q.chained && !dl.some((x) => mine(x.name).length) ? '<p class="mpt-mcf">No big cooldowns here: chained onto the pull before, where they went out.</p>' : '');
-    // (the pack (map-extras.md item 17, Flex: "include which mobs were in each pack. and what type of mob, elite, caster, melee etc"): each kind of enemy,
-    // the biggest threat first (Big, Healer, Caster, the rest), with its type from the log; Big and Small (twice, or half, the pull's middle enemy's
-    // health) stand in for "elite", which the log doesn't say. 5 rows, then the rest in a hover)
+      (cdc && q.chained && !dl.some((x) => mine(x.name).length) ? '<p class="mpt-mcf">No big cooldowns here: chained onto the pull before, where they went out.</p>' : ''));
+    // (how each player died: the killing blow and its source, and whether a defensive was used, on the line; the last hits, what was ready and the
+    // Healthstone inside)
+    const died = p.deaths.slice().sort((a, b) => a.t - b.t).map((d) => { const r = q.dd.find((x) => x.who === d.who && Math.abs(x.t - d.t) < 3);
+      const body = '<p class="mpt-mcm">Died to <b>' + esc(d.to || 'unknown') + '</b>' + (d.from ? ' (from ' + esc(d.from) + ')' : '') + ', ' + mpMM(d.t - p.s) + ' in. ' + (d.defs ? 'Used ' + plural(d.defs, 'defensive') + '.' : 'No defensive used.') + '</p>' + (!r ? '' :
+        (r.hits.length ? '<ol>' + r.hits.map((h) => '<li><span class="mpt-m">' + h.ago.toFixed(1) + ' s before:</span> <b>' + esc(h.sp) + '</b>' + (h.from ? ' <span class="mpt-m">(' + esc(h.from) + ')</span>' : '') + ' ' + mpGF(h.amt) + (h.pct ? ' <span class="mpt-m">· ' + Math.round(100 * h.pct) + '% of their health</span>' : '') + '</li>').join('') + '</ol>' : '') +
+        '<p class="mpt-mcm">' + (r.ready.length ? mpAnd(r.ready.map(esc)) + (r.ready.length === 1 ? ' was' : ' were') + ' ready.' : 'No defensive was ready.') + (r.used.length ? ' Used: ' + r.used.map(([n, sec]) => esc(n) + ' (' + sec + ' s before)').join(', ') + '.' : '') + ' Healthstone: ' + (r.hs != null ? 'used ' + r.hs + ' s before.' : 'not used.') + '</p>');
+      return fold('x', '<span class="mpt-t2d">☠</span> <b>How ' + mpWho(RR, d.who) + ' died</b> · ' + esc(d.to || 'unknown') + (d.from ? ' (' + esc(d.from) + ')' : '') + ' · ' + (d.defs ? plural(d.defs, 'defensive') : 'no defensive'), body, ' data-dr="' + esc(d.who) + '"'); }).join('');
     // (the pack (map-extras.md item 17; Flex: "those are considered the mini bosses in dungeons or the harder mobs to deal with"): each kind of enemy with
     // one role, Caster (it healed another enemy, or cast 10 or more times a minute) or Melee; Elite for the mini-boss tier, at least twice the health of
     // the key's middle trash enemy (the same on every pull), or a rare; fodder, half that or less, on one last line. 5 rows, then the rest in a hover)
@@ -62314,10 +62334,8 @@ function mpMapHtml(R, F, tl) {
       return '<div class="mpt-pk"><p class="mpt-mck2">Pack · ' + plural(mobs.reduce((a, m) => a + m[1], 0), 'enemy').replace('enemys', 'enemies') + '</p>' + main.slice(0, 5).map(row).join('') +
         (more.length ? '<p class="mpt-pkm" tabindex="0"' + mpT1(more.map((x) => x.c + '× ' + esc(x.n2)).join('<br>')) + '>+' + plural(more.length, 'more type') + '</p>' : '') +
         (fod.length ? '<p class="mpt-pkf">+ ' + fod.map((x) => x.c + '× ' + esc(x.n2) + ' ' + role(x)).join(', ') + '</p>' : '') + '</div>'; })();
-    return '<div class="mpt-mch">' + badge(q) + '<b>' + nm(q) + '</b><span>' + mpMM(p.dur) + (q.add ? ' · +' + fmt(pc(q.add)) : '') + (() => { const r2 = RR.route && RR.route.ok ? RR.route : null; return r2 ? ' · ' + fmt(100 * r2.pulls.slice(0, q.i + 1).reduce((a, x) => a + x.add, 0) / r2.full) + ' total' : ''; })() + (gd ? ' · ' + mpGF(gd) + ' group DPS' : '') + '</span></div>' + pack +
-      (q.wait ? '<p class="mpt-mcw">⏱ Waited ' + mpMM(q.wait) + ' before this pull.</p>' : '') + (q.lust ? (() => { const l = (RR.lust || []).find((x) => x.pull === q.i); return '<p class="mpt-mcl">⚡ Lust went out ' + (!l ? 'here.' : l.t < p.s ? mpMM(p.s - l.t) + ' before the pull.' : mpMM(l.t - p.s) + ' into the pull.') + '</p>'; })() : '') +
-      (out.length ? out.join('') : '<p class="mpt-mco">✓ Clean.</p>') + ex.join('') +
-      (ppl.length ? '<div class="mpt-mlh' + (cdc ? '' : ' no-cd') + '"><span>DPS</span>' + (cdc ? '<small>Big cooldown</small>' : '') + '</div>' + dps : '') + recap; };
+    return '<div class="mpt-mch">' + badge(q) + '<b>' + nm(q) + '</b><span>' + mpMM(p.dur) + (q.add ? ' · +' + fmt(pc(q.add)) : '') + (() => { const r2 = RR.route && RR.route.ok ? RR.route : null; return r2 ? ' · ' + fmt(100 * r2.pulls.slice(0, q.i + 1).reduce((a, x) => a + x.add, 0) / r2.full) + ' total' : ''; })() + (gd ? ' · ' + mpGF(gd) + ' group DPS' : '') + '</span></div>' +
+      '<p class="mpt-mtl">' + (tags.join(' ') || '<span class="mpt-t2g">✓ Clean</span>') + '</p>' + next + pack + plan + kicks + dps + died; };
   // (the pulls as tiles under the map (Flex, Nov 2: "any way to fill the dead space? Maybe the pull counter horizontal across the bottom somehow?"): the
   // badge over two lines, the name, then the time, the % and the icons; the full name, "chained" and "no spot" in the hover)
   const list = (Q) => '<ol class="mpt-mfl">' + Q.map((q) => { const pct = q.add ? pc(q.add) : 0, th = (q.p.through || []).length;
@@ -62354,13 +62372,15 @@ function mpMapPick(v, ids, sum) { const box = document.querySelector('.mpt-mdt')
   const lab = box.querySelector('.mpt-mstep span'); if (lab && li) lab.textContent = one ? li.dataset.lab + ' · ' + (+ids[0] + 1) + ' of ' + view.dataset.n : plural(ids.length, 'pull') + ' lit up';
   if (li) { const ol = li.parentNode; if (li.offsetTop < ol.scrollTop || li.offsetTop + li.offsetHeight > ol.scrollTop + ol.clientHeight) ol.scrollTop = li.offsetTop - ol.clientHeight / 2; }
   MP.pick = { v, ids, sum: sum || '' };
-  if (MP.mz && MP.mz.z > 1) { const tg = view.querySelector('.mpt-mdtm:not([hidden]) .mpt-mtag[data-pi="' + ids[0] + '"]'); if (tg && tg.dataset.tf) { const [tx, ty] = tg.dataset.tf.split(',').map(Number); mpZoom(box, [tx, ty + (+tg.dataset.oy || 0)]); } else mpZoom(box); } }
+  if (one) mpFitPull(box, view, ids[0]); else mpZoomTo(box, 1, null); } /* (a picked pull fills the map (item 9); several lit up, the whole floor) */
 function mpMapPeek(view, i) { if (!view) return; view.classList.toggle('peek', i != null); view.querySelectorAll('[data-pi]').forEach((x) => x.classList.toggle('pk', i != null && x.dataset.pi === String(i))); }
 // (pick a player: only their kick, CC and death marks on the map, the others' rows in the card faded; the Home character is the default later)
 function mpMapPP(name) { const box = document.querySelector('.mpt-mdt'); if (!box) return; name = name || ''; MP.pp = name;
   box.querySelectorAll('[data-mppsel]').forEach((x) => { x.value = name; const o = x.selectedOptions[0]; x.style.color = name && o ? o.style.color : ''; });
   box.querySelectorAll('.mpt-mdtv[data-v="you"] [data-who]').forEach((el) => el.classList.toggle('pp-off', !!name && !el.dataset.who.split('|').includes(name))); }
 document.addEventListener('change', (e) => { const x = e.target; if (!x || !x.matches || !x.matches('[data-mppsel]')) return; mpMapPP(x.value); if (MP.ppK) { const m = mpPPGet(); m[MP.ppK] = x.value; try { localStorage.setItem(MP_PPK, JSON.stringify(m)); } catch (e2) { /* (not kept) */ } } });
+document.addEventListener('toggle', (e) => { const d = e.target; if (!d.matches || !d.matches('details[data-cf]')) return; if (d.dataset.auto) { delete d.dataset.auto; return; } const k = d.dataset.cf; /* (a skull's click opens one, and isn't kept) */ let m = {}; try { m = JSON.parse(localStorage.getItem('mpt-cardfold') || '{}') || {}; } catch (x) { m = {}; }
+  if (!!m[k] !== d.open) { m[k] = d.open; try { localStorage.setItem('mpt-cardfold', JSON.stringify(m)); } catch (x) { /* (not kept) */ } } document.querySelectorAll('details[data-cf="' + k + '"]').forEach((x) => { if (x !== d && x.open !== d.open) x.open = d.open; }); }, true); /* (the card's one-liners, open or closed the same on every pull) */
 // (zoom (Flex: "the map should have a zoom in and zoom out option"): + and − step 1×, 1.5×, 2.25×, 3×; the scroll wheel zooms smoothly in between
 // (Flex, Nov 2: "can you make it so scroll wheel zooms in and out too"; Debriefing's maps keep + and − only); drag to pan; pinch on a phone. No reset
 // and no double-click (Flex's rules for maps, Oct 20/22). Tags, marks and the route keep their size on screen, so a busy pull spreads out. A
@@ -62400,7 +62420,22 @@ document.addEventListener('click', (e) => { const zb = e.target.closest && e.tar
     document.querySelectorAll('.spc-tt').forEach((t) => { t.hidden = true; }); document.body.classList.add('mpz-wh'); clearTimeout(wh); wh = setTimeout(() => document.body.classList.remove('mpz-wh'), 250); /* (no hover card while it turns) */
     const at = () => { const m = svg.getScreenCTM(); if (!m) return null; const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(m.inverse()); return [p.x, p.y]; };
     const a = at(); st.z = z; mpZoom(box); const b = at(); if (a && b) mpZoom(box, [st.c[0] + a[0] - b[0], st.c[1] + a[1] - b[1]]); }, { passive: false }); }
-function mpMapRestore() { const p = MP.pick; if (p && document.querySelector('.mpt-mdtv[data-v="' + p.v + '"]')) mpMapPick(p.v, p.ids, p.sum); if (MP.pp) mpMapPP(MP.pp); if (MP.mz && MP.mz.z > 1) { const st = MP.mz; mpZoom(document.querySelector('.mpt-mdt'), st.c); } }
+// (a picked pull fills the map (the studio's item 9, Flex: "have the map zoomed in on the pull by default"): the box around its enemies and its tag, a
+// quarter more on each side, between 1.5× and 2.25×, gliding there in about 300 ms; a pull on another floor switches floor first. Hand zoom and drag
+// work as before, and the next pick fits again)
+function mpZoomTo(box, z, c, ms) { mpZoom(box); const st = MP.mz; if (!st) return; const z0 = st.z, c0 = (st.c || [0, 0]).slice(), t0 = performance.now(), n = MP.zAnim = (MP.zAnim || 0) + 1, D = ms == null ? (MP.zNow ? 0 : 300) : ms;
+  const go = (k) => { if (MP.zAnim !== n) return; const e = k >= 1 ? 1 : 1 - Math.pow(1 - k, 3); st.z = z0 + (z - z0) * e; mpZoom(box, c ? [c0[0] + (c[0] - c0[0]) * e, c0[1] + (c[1] - c0[1]) * e] : null); };
+  if (!D) { go(1); return; } const step = () => { const k = (performance.now() - t0) / D; go(Math.min(1, k)); if (k < 1 && MP.zAnim === n) requestAnimationFrame(step); }; requestAnimationFrame(step); setTimeout(() => go(1), D + 60); }
+function mpFitPull(box, view, i) { const svg = view.querySelector('.mpt-mdtm:not([hidden]) svg'); if (!svg) return; let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  for (const el of svg.querySelectorAll('.mpt-mpl[data-pi="' + i + '"]')) { const m = MP_TF.exec(el.getAttribute('transform') || ''); let b = null;
+    if (el.dataset.tf) { const [tx, ty] = el.dataset.tf.split(','); b = { x: +tx, y: +ty + (+el.dataset.oy || 0), width: 0, height: 0 }; } else if (m) b = { x: +m[1], y: +m[2], width: 0, height: 0 }; else { try { b = el.getBBox(); } catch (e) { b = null; } }
+    if (!b) continue; x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y); x1 = Math.max(x1, b.x + b.width); y1 = Math.max(y1, b.y + b.height); }
+  if (x1 < x0) { mpZoomTo(box, 1, null); return; } const vb = (svg.dataset.vb || svg.getAttribute('viewBox')).split(' ').map(Number), fit = (a, b, c, d) => Math.min(vb[2] / Math.max(1, (c - a) * 1.5), vb[3] / Math.max(1, (d - b) * 1.5));
+  /* (its route segment, from the pull before on this floor, when the whole of it still fits at 1.5×) */
+  const pl = svg.querySelector('polyline[data-pis]'), ix = pl ? pl.dataset.pis.split(',').indexOf(String(i)) : -1;
+  if (ix > 0) { const [px, py] = pl.getAttribute('points').split(' ')[ix - 1].split(',').map(Number), a = Math.min(x0, px), b = Math.min(y0, py), c = Math.max(x1, px), d = Math.max(y1, py); if (fit(a, b, c, d) >= 1.5) { x0 = a; y0 = b; x1 = c; y1 = d; } }
+  mpZoomTo(box, Math.max(1.5, Math.min(2.25, fit(x0, y0, x1, y1))), [(x0 + x1) / 2, (y0 + y1) / 2]); }
+function mpMapRestore() { const p = MP.pick, has = p && document.querySelector('.mpt-mdtv[data-v="' + p.v + '"]'); if (has) { MP.zNow = true; try { mpMapPick(p.v, p.ids, p.sum); } finally { MP.zNow = false; } } if (MP.pp) mpMapPP(MP.pp); if (!has && MP.mz && MP.mz.z > 1) { const st = MP.mz; mpZoom(document.querySelector('.mpt-mdt'), st.c); } }
 document.addEventListener('click', (e) => { const t = e.target; if (!t.closest) return; const box = t.closest('.mpt-mdt');
   if (MP.dragT && Date.now() - MP.dragT < 250 && t.closest('.mpt-mdtm')) { e.stopPropagation(); e.preventDefault(); return; } /* (the end of a drag or pinch, not a pick) */
   if (!t.closest('.mpt-lay')) document.querySelectorAll('.mpt-lay.open').forEach((x) => { x.classList.remove('open'); x.querySelector('.mpt-layb').setAttribute('aria-expanded', 'false'); });
@@ -62417,7 +62452,7 @@ document.addEventListener('click', (e) => { const t = e.target; if (!t.closest) 
     mpMapPick('you', ids, '<div class="mpt-mch"><b>' + go.dataset.mpt + '</b><span>' + go.dataset.mpl + '</span></div><p class="mpt-mcm">Lit up on the map. Click one for what happened in it.</p>');
     if (ch2) ch2.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
   const dm = t.closest('.mpt-mdtv .mk-death'); if (dm) { const view = dm.closest('.mpt-mdtv'), box2 = view.querySelector('.mpt-mcard'); mpMapPick(view.dataset.v, dm.dataset.pi);
-    const c = [...view.querySelectorAll('.mpt-mc[data-pi="' + dm.dataset.pi + '"] .mpt-mdr')].find((x) => x.dataset.dr === dm.dataset.who); if (c && box2) { if (box2.scrollHeight > box2.clientHeight + 4) box2.scrollTop = c.offsetTop - 6; else c.scrollIntoView({ behavior: 'smooth', block: 'center' }); } return; } /* (a phone: the card has no scroll of its own) */
+    const c = [...view.querySelectorAll('.mpt-mc[data-pi="' + dm.dataset.pi + '"] .mpt-mdr')].find((x) => x.dataset.dr === dm.dataset.who); if (c && c.tagName === 'DETAILS' && !c.open) { c.dataset.auto = '1'; c.open = true; } if (c && box2) { if (box2.scrollHeight > box2.clientHeight + 4) box2.scrollTop = c.offsetTop - 6; else c.scrollIntoView({ behavior: 'smooth', block: 'center' }); } return; } /* (a phone: the card has no scroll of its own) */
   const pi = t.closest('.mpt-mdtv [data-pi]'); if (pi && !pi.classList.contains('mpt-mc')) { mpMapPick(pi.closest('.mpt-mdtv').dataset.v, pi.dataset.pi); return; }
   const sm = t.closest('.mpt-pr > summary'); if (sm) { const n = +sm.parentNode.dataset.n; if (n) mpMapPick('you', n - 1); } /* (a pull opened in Pulls is picked on the map too, without moving the page) */
 }, true);
@@ -62944,6 +62979,14 @@ body.mpz-wh .spc-tt{display:none !important}
 .mpt-pk-cast{color:#c39bff;background:rgba(195,155,255,.14)} .mpt-pk-melee{color:#c69b6d;background:rgba(198,155,109,.14)} /* (Warrior tan (Flex)) */ .mpt-pk-elite{color:#f2c46b;background:rgba(242,196,107,.15)} .mpt .mpt-pkf{margin:3px 0 0;color:var(--faint);font-size:12.5px} .mpt-pkf .mpt-pkt{margin-left:2px} .mpt .mpt-pkm{margin:2px 0 0;color:var(--faint);font-size:12.5px;cursor:help}
 .mpt-gtab .gbx-hd > span[data-tt]{cursor:help} .mpt .mpt-why1{margin:12px 0 4px}
 .mpt .mpt-gtab .gbx-r.mpt-gme{box-shadow:inset 3px 0 0 var(--gold);background:rgba(242,196,107,.07)}
+/* (the tidy pass's items 6-8: the verdict, the map's meta line, the card's tags and one-liners, one set of icon colours) */
+.mpt .mpt-vd{margin:8px 0 0;font:500 13.5px/1.45 var(--body);color:var(--mpt-soft)} .mpt-vd b{color:var(--text)} .mpt .mpt-meta{color:var(--faint);font-size:12.5px}
+.mpt .mpt-mtl{display:flex;flex-wrap:wrap;gap:3px 10px;margin:6px 0 2px;font-size:12.5px} .mpt-t2w{color:#aeb6bf} .mpt-t2a{color:#f2c46b} .mpt-t2m{color:var(--muted)} .mpt-t2g{color:#7ee08f}
+.mpt-cfd{border-top:1px solid var(--line);margin-top:8px} .mpt-cfs{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 6px;padding:7px 0 5px;cursor:pointer;list-style:none;font:500 12.5px var(--body);color:var(--muted)}
+.mpt-cfs::-webkit-details-marker{display:none} .mpt-cfs::after{content:"▸";margin-left:auto;color:var(--faint)} .mpt-cfd[open] > .mpt-cfs::after{content:"▾"} .mpt-cfs > b{color:var(--text);font-weight:600} .mpt-cfb{padding:0 0 6px}
+.mpt-cfd + .mpt-cfd{margin-top:0} .mpt-cfb .mpt-mlh{margin-top:2px}
+.mpt .mpt-mchip-r i{color:#e8eaed} .mpt .mpt-mchip-d i{color:#ff8f87} .mpt .mpt-mchip-k i{color:#c39bff} .mpt .mpt-mchip-l i{color:#ffd166} .mpt .mpt-mchip-w i{color:#aeb6bf} .mpt .mpt-mchip-c i{color:#7ee08f} .mpt .mpt-mchip-a i{color:#f2c46b} .mpt-layp .mpt-mchip:not(.on) i{opacity:.45}
+.mpt-ll .mpt-i{margin-left:4px;font-size:12px;vertical-align:1px}
 `;
  // (and src/mptab.js, the Mythic+ tab (Nov 1))
 })();
