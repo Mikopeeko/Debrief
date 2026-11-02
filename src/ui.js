@@ -2027,6 +2027,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-11-02', n: [ /* round 484 */
+    "Mythic+ map: the pulls are tiles under the map, so the pull's card has the whole side to itself.",
     "Mythic+ tab: Kicks and CC counts each player's stuns, disorients, fears, knockbacks and grips, even the ones that didn't stop a cast. Its bars, the Players bars and each pull's damage look like the Graphs tab.",
     "Eternal Nightfall's shield damage looks like the Graphs tab now: names in their own column, solid bars and the numbers lined up. Each shield's list is open from the start.",
     "Debriefing, All pulls: Eternal Nightfall shows its break times as one strip, a dot per shield next to the top kills' 10.6 to 13.9 s, instead of a tag for every shield.",

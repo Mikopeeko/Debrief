@@ -23820,6 +23820,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-11-02', n: [ /* round 484 */
+    "Mythic+ map: the pulls are tiles under the map, so the pull's card has the whole side to itself.",
     "Mythic+ tab: Kicks and CC counts each player's stuns, disorients, fears, knockbacks and grips, even the ones that didn't stop a cast. Its bars, the Players bars and each pull's damage look like the Graphs tab.",
     "Eternal Nightfall's shield damage looks like the Graphs tab now: names in their own column, solid bars and the numbers lined up. Each shield's list is open from the start.",
     "Debriefing, All pulls: Eternal Nightfall shows its break times as one strip, a dot per shield next to the top kills' 10.6 to 13.9 s, instead of a tag for every shield.",
@@ -61435,7 +61436,9 @@ function mpGapLine(R, F, yp, fp) {
     if (!m && p.role !== 'dps') { m = (F.people || []).find((q) => q.role === p.role); lab = 'the fast run\'s ' + p.role; }
     if (!m) continue; const mine = rate(yp, p.name), theirs = rate(fp, m.name); if (theirs - mine > 0) gaps.push({ p, mine, theirs, lab, g: theirs - mine }); }
   const top = gaps.sort((a, b) => b.g - a.g).slice(0, 2); if (!top.length) return '';
-  return 'The biggest damage gap' + (top.length > 1 ? 's were ' : ' was ') + mpAnd(top.map((x) => mpWho(R, x.p.name))) + '. ' + top.map((x) => mpWho(R, x.p.name) + ' did ' + mpGF(x.mine) + ' here; ' + x.lab + ' did ' + mpGF(x.theirs) + '.').join(' ');
+  // (Flex: "love these but the wording could use some work": who was furthest behind, then their DPS against the fast run's same spec, numbers bold)
+  if (top.length === 1) { const x = top[0]; return mpWho(R, x.p.name) + ' was furthest behind the fast run here: <b>' + mpGF(x.mine) + '</b> DPS, against <b>' + mpGF(x.theirs) + '</b> from ' + x.lab + '.'; }
+  return mpAnd(top.map((x) => mpWho(R, x.p.name))) + ' were furthest behind the fast run here. ' + top.map((x, k) => mpWho(R, x.p.name) + ' did <b>' + mpGF(x.mine) + '</b>' + (k ? '' : ' DPS') + ', against <b>' + mpGF(x.theirs) + '</b> from ' + x.lab + '.').join(' ');
 }
 // (a kick row: the most of that caster in one pull, and whose kick was ready when it went off)
 function mpNextKick(R, sp) {
@@ -62334,16 +62337,18 @@ function mpMapHtml(R, F, tl) {
       (q.wait ? '<p class="mpt-mcw">⏱ Waited ' + mpMM(q.wait) + ' before this pull.</p>' : '') + (q.lust ? '<p class="mpt-mcl">⚡ Lust went out here.</p>' : '') +
       (out.length ? out.join('') : '<p class="mpt-mco">✓ Clean.</p>') + ex.join('') +
       (ppl.length ? '<div class="mpt-mlh' + (cdc ? '' : ' no-cd') + '"><span>Damage a second</span>' + (cdc ? '<small>Big cooldown</small>' : '') + '</div>' + dps : '') + recap; };
+  // (the pulls as tiles under the map (Flex, Nov 2: "any way to fill the dead space? Maybe the pull counter horizontal across the bottom somehow?"): the
+  // badge over two lines, the name, then the time, the % and the icons; the full name, "chained" and "no spot" in the hover)
   const list = (Q) => '<ol class="mpt-mfl">' + Q.map((q) => { const pct = q.add ? pc(q.add) : 0, th = (q.p.through || []).length;
-    return '<li data-pi="' + q.i + '"' + (q.fl >= 0 ? ' data-fl="' + q.fl + '"' : '') + ' data-lab="' + esc(q.p.boss ? q.p.boss : 'Pull ' + mpNo(q.RR, q.p.n)) + '" tabindex="0">' + badge(q) +
-      '<span class="mpt-pnm">' + nm(q) + ((q.chained || !q.us.length) ? '<small>' + [q.chained ? 'chained' : '', !q.us.length ? '<span' + mpT1('The run\'s log didn\'t record where these enemies stood.') + '>no spot</span>' : ''].filter(Boolean).join(' · ') + '</small>' : '') + '</span>' +
-      '<span class="mpt-mic">' + (q.p.deaths.length ? '<i class="d">☠</i>' : '') + (th ? '<i class="k">!' + th + '</i>' : '') + (q.lust ? '<i class="l">⚡</i>' : '') + '</span>' +
-      '<span class="mpt-ptm">' + mpMM(q.p.dur) + '</span><span class="mpt-pfc">' + (pct ? '+' + fmt(pct) : '<span class="mpt-m">—</span>') + '</span></li>'; }).join('') + '</ol>';
+    const tip = '<b>' + nm(q) + '</b>' + (q.chained ? '<br>Chained: pulled while the one before was still going.' : '') + (!q.us.length ? '<br>No spot: the run\'s log didn\'t record where these enemies stood.' : '');
+    return '<li data-pi="' + q.i + '"' + (q.fl >= 0 ? ' data-fl="' + q.fl + '"' : '') + ' data-lab="' + esc(q.p.boss ? q.p.boss : 'Pull ' + mpNo(q.RR, q.p.n)) + '" tabindex="0"' + mpT1(tip) + '>' + badge(q) + '<span class="mpt-pnm">' + nm(q) + '</span>' +
+      '<span class="mpt-pl2"><span class="mpt-ptm">' + mpMM(q.p.dur) + '</span><span class="mpt-pfc">' + (pct ? '+' + fmt(pct) : '—') + '</span>' +
+      '<span class="mpt-mic">' + (q.p.deaths.length ? '<i class="d">☠</i>' : '') + (th ? '<i class="k">!' + th + '</i>' : '') + (q.lust ? '<i class="l">⚡</i>' : '') + '</span></span></li>'; }).join('') + '</ol>';
   const f0 = Math.max(0, floors.findIndex((x) => x.us[0].length));
   const views = runs.map(([v, RR], ri) => { const Q = pullsOf(RR);
-    return '<div class="mpt-mdtv" data-v="' + v + '" data-n="' + Q.length + '"' + (ri ? ' hidden' : '') + '><div class="mpt-mgrid"><div class="mpt-mwrap">' + floors.map((fl, j) => '<div class="mpt-mdtm" data-f="' + j + '"' + (j === f0 ? '' : ' hidden') + '>' + svg(Q, fl) + '</div>').join('') +
-      '<div class="zctl mpt-zctl"><button type="button" data-mz="1" aria-label="Zoom in">+</button><button type="button" data-mz="-1" aria-label="Zoom out" disabled>−</button></div></div>' +
-      '<div class="mpt-mside"><div class="mpt-mcard"><p class="mpt-mc0">Click a pull, or press ▶, to see what happened in it.</p><div class="mpt-mcx" hidden></div>' + Q.map((q) => '<div class="mpt-mc" data-pi="' + q.i + '" hidden>' + card(q, v) + '</div>').join('') + '</div>' + list(Q) + '</div></div></div>'; }).join('');
+    return '<div class="mpt-mdtv" data-v="' + v + '" data-n="' + Q.length + '"' + (ri ? ' hidden' : '') + '><div class="mpt-mgrid"><div class="mpt-mleft"><div class="mpt-mwrap">' + floors.map((fl, j) => '<div class="mpt-mdtm" data-f="' + j + '"' + (j === f0 ? '' : ' hidden') + '>' + svg(Q, fl) + '</div>').join('') +
+      '<div class="zctl mpt-zctl"><button type="button" data-mz="1" aria-label="Zoom in">+</button><button type="button" data-mz="-1" aria-label="Zoom out" disabled>−</button></div></div>' + list(Q) + '</div>' +
+      '<div class="mpt-mside"><div class="mpt-mcard"><p class="mpt-mc0">Click a pull, or press ▶, to see what happened in it.</p><div class="mpt-mcx" hidden></div>' + Q.map((q) => '<div class="mpt-mc" data-pi="' + q.i + '" hidden>' + card(q, v) + '</div>').join('') + '</div></div></div></div>'; }).join('');
   const tg = runs.length > 1 ? '<div class="mpt-mtg" role="group" aria-label="Whose pulls">' + runs.map(([v, RR], ri) => '<button type="button" data-mdtv="' + v + '" aria-pressed="' + !ri + '"' + (ri ? '' : ' class="on"') + '>' + (v === 'you' ? 'You' : 'Fast run') + ' · ' + plural(RR.pulls.filter((p) => !p.boss).length, 'pull') + '</button>').join('') + '</div>' : '';
   const chips = '<div class="mpt-mchips" role="group" aria-label="Show on the map">' + [['r', '⋯', 'Route'], ['d', '☠', 'Deaths'], ['k', '!', 'Missed kicks'], ['l', '⚡', 'Lust'], ['w', '⏱', 'Waits'], ['c', '●', 'Kicks & CC'], ['a', '◆', 'Avoidable', 1]].map(([c, i, l, off]) => '<button type="button" class="mpt-mchip' + (off ? '' : ' on') + ' mpt-mchip-' + c + '" data-mchip="' + c + '" aria-pressed="' + !off + '"><i>' + i + '</i>' + l + '</button>').join('') + '</div>';
   const fb = floors.length > 1 ? '<div class="mpt-flb" role="group" aria-label="Floor">' + floors.map((fl, j) => '<button type="button" data-mdtf="' + j + '"' + (j === f0 ? ' class="on"' : '') + '>' + esc(fl.f[1]) + '</button>').join('') + '</div>' : '<span class="mpt-m">' + esc(floors[0].f[1]) + '</span>';
@@ -62835,14 +62840,14 @@ html:not([data-theme]) .mpt .mpt-chap{background-image:linear-gradient(rgba(255,
 .mpt-mrow{display:flex;justify-content:space-between;align-items:center;gap:8px 10px;flex-wrap:wrap;margin:0 0 8px}
 .mpt-mstep{display:flex;align-items:center;gap:8px} .mpt .mpt-mstep button{height:28px;margin:0;padding:0 10px;border:1px solid var(--line2);border-radius:4px;background:none;color:var(--text);font:600 13px var(--body);cursor:pointer}
 .mpt-mstep span{min-width:150px;text-align:center;font:600 13px var(--body);color:var(--text)}
-.mpt-mgrid{display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,1.2fr);gap:12px;align-items:start}
+.mpt-mgrid{display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,1.2fr);gap:12px;align-items:stretch} .mpt-mleft{display:flex;flex-direction:column;gap:10px;min-width:0}
 .mpt-mwrap{position:relative} .mpt-mwrap .mpt-mdtm{aspect-ratio:16/10} .mpt-mdtm svg{touch-action:pan-y} .mpt-zctl{z-index:2} .mpt .mpt-zctl button{margin:0;font:700 16px var(--body);line-height:1} .mpt .mpt-zctl button:disabled{opacity:.35;cursor:default;border-color:var(--line2);color:var(--muted)}
 .mpt-mdtv .mpt-mpl,.mpt-mdtv .mpt-mk{transition:opacity .12s;cursor:pointer}
 .mpt-mdtv.pick:not(.peek) .mpt-mpl:not(.hot),.mpt-mdtv.pick:not(.peek) .mpt-mk:not(.hot){opacity:.15}
 .mpt-mdtv.peek .mpt-mpl:not(.pk),.mpt-mdtv.peek .mpt-mk:not(.pk){opacity:.35}
 .mpt-mdt.no-c .mk-kcc,.mpt-mdt .mpt-mk.pp-off,.mpt-mdt.no-a .mk-avoid,.mpt-mdt.no-r .mk-route,.mpt-mdt.no-r .mpt-mthen,.mpt-mdt.no-d .mk-death,.mpt-mdt.no-k .mk-kick,.mpt-mdt.no-k .mk-bad,.mpt-mdt.no-l .mk-lust,.mpt-mdt.no-w .mk-wait{display:none}
 .mpt-mthen{cursor:pointer}
-.mpt-mside{display:flex;flex-direction:column;gap:8px;min-width:0}
+.mpt-mside{position:relative;min-width:0;min-height:380px} .mpt-mside > .mpt-mcard{position:absolute;inset:0;height:auto} /* (the card as tall as the map and its tiles; a longer one scrolls) */
 .mpt-mcard{position:relative;height:380px;overflow:auto;box-sizing:border-box;padding:10px 12px;background:var(--raised);border:1px solid var(--line2);border-radius:4px;font:500 13px/1.4 var(--body);color:var(--mpt-soft)}
 .mpt-mcard p{margin:4px 0 0} .mpt-mcard b{color:var(--text)} .mpt .mpt-mc0{margin:0;color:var(--faint)}
 .mpt-mch{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 4px} .mpt-mch > b{font:700 15px var(--body);color:var(--text)} .mpt-mch > span:last-child{color:var(--muted);font-size:12.5px}
@@ -62860,9 +62865,11 @@ html:not([data-theme]) .mpt .mpt-chap{background-image:linear-gradient(rgba(255,
 .mpt-mkr{display:grid;grid-template-columns:82px minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:baseline;font-size:12.5px;margin:2px 0} .mpt-mkr > span{min-width:0;overflow-wrap:break-word} .mpt-mkr > span[data-tt]{cursor:help}
 .mpt-mkr > span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .mpt .mpt-mkh{margin:2px 0 3px;font:700 10px var(--head);letter-spacing:.4px;text-transform:uppercase;color:var(--faint)}
 @media (max-width:700px){ .mpt .mpt-mlh{grid-template-columns:82px minmax(0,1fr) 44px 96px} }
-.mpt-mfl{list-style:none;margin:0;padding:0;max-height:300px;overflow:auto;border:1px solid var(--line2);border-radius:4px;position:relative}
-.mpt-mfl li{display:grid;grid-template-columns:30px minmax(0,1fr) auto 38px 46px;align-items:center;gap:6px;margin:0;padding:6px 8px;border-top:1px solid var(--line);cursor:pointer;font:500 13px var(--body)} .mpt-mfl li:first-child{border-top:0}
-.mpt-mfl li:hover,.mpt-mfl li.pk{background:rgba(255,255,255,.035)} .mpt-mfl li.hot{background:rgba(255,255,255,.07)} .mpt-mfl li:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.mpt-mfl{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:6px}
+.mpt-mfl li{display:grid;grid-template-columns:24px minmax(0,1fr);align-items:center;column-gap:7px;row-gap:1px;margin:0;padding:5px 7px;border:1px solid var(--line2);border-radius:4px;background:var(--raised);cursor:pointer;min-width:0}
+.mpt-mfl li .mpt-nb{grid-row:1 / 3;width:22px;height:22px;box-sizing:border-box;font-size:12px} .mpt-mfl li .mpt-pnm{font:600 12.5px var(--body)} .mpt-pl2{display:flex;align-items:baseline;gap:7px;min-width:0;white-space:nowrap;font:500 11.5px var(--body)}
+.mpt-pl2 .mpt-ptm{color:#aeb6bf;font-size:11.5px} .mpt-pl2 .mpt-pfc{color:#868f99;font-weight:500;text-align:left} .mpt-pl2 .mpt-mic{margin-left:auto}
+.mpt-mfl li:hover,.mpt-mfl li.pk{border-color:#4a5262} .mpt-mfl li.hot,.mpt-mfl li:focus-visible{outline:0;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);background:rgba(242,196,107,.06)}
 .mpt-mic{white-space:nowrap} .mpt-mic i{font-style:normal;margin-left:4px} .mpt-mic .d{color:#ff8f87} .mpt-mic .k{color:#c39bff;font-weight:700} .mpt-mic .l{color:#ffd166}
 .mpt-mstrip{margin-top:14px} .mpt-mstrip .mpt-blk[data-pi]{cursor:pointer} .mpt-mstrip .mpt-blk.hot{outline:2px solid var(--text);outline-offset:1px;z-index:2}
 .mpt-mtips{margin:2px 0 0;padding-left:18px} .mpt-mtips li{margin:2px 0} .mpt .mpt-mcv{color:var(--mpt-soft)} .mpt .mpt-mca{color:#f2c46b}
@@ -62870,7 +62877,8 @@ html:not([data-theme]) .mpt .mpt-chap{background-image:linear-gradient(rgba(255,
 .mpt .mpt-mhint{margin:8px 0 0;font:500 12px var(--body);color:var(--faint)}
 .mpt-fxgo{margin-left:8px;font:600 12.5px var(--body)!important;color:var(--mpt-you)!important;white-space:nowrap}
 .mpt-chap > .mpt-rpl{margin:0 0 10px}
-@media (max-width:820px){ .mpt-mgrid{grid-template-columns:minmax(0,1fr)} .mpt-mfl{max-height:none} .mpt-mcard{height:auto;min-height:150px} .mpt-mstep span{min-width:110px} }
+@media (max-width:820px){ .mpt-mgrid{grid-template-columns:minmax(0,1fr)} .mpt-mside{min-height:0} .mpt-mside > .mpt-mcard{position:relative;inset:auto} .mpt-mcard{height:auto;min-height:150px} .mpt-mstep span{min-width:110px} }
+@media (max-width:699px){ .mpt-mfl{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))} }
 .mpf-dgh{border-top:1px solid var(--line)} .mpf-dgh > summary{display:flex;justify-content:space-between;align-items:baseline;gap:2px 12px;flex-wrap:wrap;padding:9px 2px;cursor:pointer;list-style:none}
 .mpf-dgh > summary::-webkit-details-marker{display:none} .mpf-dgh > summary > b{font:700 14.5px var(--body);color:var(--text)} .mpf-dgh > summary > span{font:500 12.5px var(--body)}
 .mpf-dgh .mpf-l{margin:0 0 6px} .mpt .mpf-none{margin:0 0 10px 2px;font:500 12.5px var(--body);color:var(--faint)} .mpt .mpf-showm{margin:0 0 10px 2px;font:600 12.5px var(--body)}
