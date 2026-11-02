@@ -61755,6 +61755,12 @@ const mpAnd = (a) => a.join(', ').replace(/, ([^,]*)$/, ' and $1');
 // the studio's pull-accuracy fix, Nov 2). Their damage still counts toward group DPS)
 const mpMobs = (RR, p) => { const sum = RR.summoned || new Set(), real = RR.realNames; return (p.mobs || []).filter((m) => !sum.has(m[0]) && (!real || real.has(m[0]))); };
 const mpCnt = (RR, p) => mpMobs(RR, p).reduce((a, m) => a + m[1], 0);
+// (a pull's real pack (the studio, Nov 2: "33 counts every summoned add"): its enemies worth forces, when the dungeon's forces table is complete;
+// else every one. Voidscar's pull 11: 3, with 30 Scavenging Siphoids that give none)
+const mpRouteOf = (RR) => (RR.route && RR.route.ok ? MP_ROUTE[mpLc((RR.run || {}).dungeon || '')] || null : null);
+// (its size for Your play's big-pull checks and bands: the real pack without fodder (half the key's middle enemy's health or less, as on the Pack))
+const mpBigN = (RR, p) => { mpMid(RR); const rt = mpRouteOf(RR), ty = RR.mobType || {}, mid = RR.mobMid; return mpMobs(RR, p).reduce((a, m) => { const o = ty[m[0]] || {}; return a + ((!rt || rt.n[o.id]) && !(mid && o.hp && o.hp <= mid / 2) ? m[1] : 0); }, 0); };
+const mpPackN = (RR, p) => { const rt = mpRouteOf(RR), ty = RR.mobType || {}; return mpMobs(RR, p).reduce((a, m) => a + (!rt || rt.n[(ty[m[0]] || {}).id] ? m[1] : 0), 0); };
 // (a boss pull's kinds of enemy (the studio, Nov 2: "with 49 enemies" read as 49 mobs pulled with the boss): trash pulled along (worth forces in the key's
 // table, or seen in a trash pull; and there when the fight began, each one), the boss (30% or more of the most health there; with no health known, anything not
 // trash), and what the fight summoned (first hit 5 s or more into the fight, worth forces or not: Ruby's Infused Whelps that wake on Melidrussa,
@@ -61762,7 +61768,8 @@ const mpCnt = (RR, p) => mpMobs(RR, p).reduce((a, m) => a + m[1], 0);
 const mpBossKinds = (RR, mobs, p) => { mpMid(RR); const ty = RR.mobType || {}, T = MP_ROUTE[mpLc((RR.run || {}).dungeon || (MP.item || {}).boss || '')], hp = (m) => (ty[m[0]] || {}).hp || 0, hi = Math.max(0, ...mobs.map(hp)), i = RR.pulls.indexOf(p);
   const early = (n2) => { const us = (RR.units || []).filter((u) => u.k === i && u.n === n2 && u.h != null); return us.length ? us.filter((u) => u.h < p.s + 5).length : null; }, out = [];
   for (const m of mobs) { const fz = !!(T && T.n[(ty[m[0]] || {}).id]), e = early(m[0]);
-    if ((fz || RR.mobTrash.has(m[0])) && e !== 0) { const c = e == null ? m[1] : Math.min(m[1], e); out.push([[m[0], c], 'trash']); if (m[1] > c) out.push([[m[0], m[1] - c], 'sum', fz]); continue; } /* (each one there when it began is trash; the ones that came later the fight's, worth forces or not (the studio: "★ Charonus · with 30 enemies" read as 30 pulled)) */
+    const rok = !!mpRouteOf(RR); if (rok && !fz && RR.mobTrash.has(m[0]) && !(!hi || hp(m) >= hi * 0.3)) { out.push([m, 'nof']); continue; } /* (worth no forces: not pulled along) */
+    if ((fz || (!rok && RR.mobTrash.has(m[0]))) && e !== 0) { const c = e == null ? m[1] : Math.min(m[1], e); out.push([[m[0], c], 'trash']); if (m[1] > c) out.push([[m[0], m[1] - c], 'sum', fz]); continue; } /* (each one there when it began is trash; the ones that came later the fight's, worth forces or not (the studio: "★ Charonus · with 30 enemies" read as 30 pulled)) */
     if (fz || RR.mobTrash.has(m[0])) { out.push([m, 'sum', fz]); continue; }
     out.push([m, !hi || hp(m) >= hi * 0.3 ? 'boss' : 'sum']); }
   return out; };
@@ -62134,7 +62141,7 @@ function mpPullTags(RR, i) {
 // total, then "Click for the details". No forces data (Ruby): the first line only. On the map's pull labels, the tiles and the timeline's blocks alike)
 function mpPullTip(RR, i) { const p = RR.pulls[i], rt = RR.route && RR.route.ok ? RR.route : null, add = rt && rt.pulls[i] ? rt.pulls[i].add : 0;
   const f1 = (v) => (Math.round(1000 * v / rt.full) / 10).toFixed(1).replace(/\.0$/, '') + '%', tot = rt ? rt.pulls.slice(0, i + 1).reduce((a, x) => a + x.add, 0) : 0; /* (the running total (the cut): the Pulls list had it) */
-  const mobs = mpMobs(RR, p), bk = p.boss ? mpBossKinds(RR, mobs, p) : null, n = bk ? bk.reduce((a, [m, t]) => a + (t === 'trash' ? m[1] : 0), 0) : mobs.reduce((a, m) => a + m[1], 0), en = plural(n, 'enemy').replace(/enemys$/, 'enemies'); /* (a boss pull: the trash pulled along only) */
+  const mobs = mpMobs(RR, p), bk = p.boss ? mpBossKinds(RR, mobs, p) : null, n = bk ? bk.reduce((a, [m, t]) => a + (t === 'trash' ? m[1] : 0), 0) : mpPackN(RR, p), en = plural(n, 'enemy').replace(/enemys$/, 'enemies'); /* (a boss pull: the trash pulled along only) */
   const sm = bk ? bk.reduce((a, [m, t]) => a + (t === 'sum' ? m[1] : 0), 0) : 0;
   const l1 = p.boss ? '★ ' + esc(p.boss) + (n ? ' · with ' + en : '') + (sm ? ' · ' + sm + ' summoned' : '') : 'Pull ' + mpNo(RR, p.n) + (n ? ' · ' + en : '');
   const l2 = rt ? (p.boss && !add ? '' : '+' + f1(add) + ' forces · ') + f1(tot) + ' total' : '';
@@ -62187,19 +62194,30 @@ const MP_SELFCL = ['stoneform', 'fireblood', 'cloak of shadows', 'divine shield'
 // (healers' big throughput cooldowns, for Your play's held-cooldown check (healers aren't in GEN_SPECS); the length is checked against the key)
 const MP_HEAL_CD = { 'Holy Paladin': [['Avenging Wrath', 120]], 'Holy Priest': [['Apotheosis', 120]], 'Restoration Shaman': [['Ascendance', 180]], 'Restoration Druid': [['Incarnation: Tree of Life', 180], ['Convoke the Spirits', 120]],
   'Mistweaver Monk': [['Invoke Yu\'lon, the Jade Serpent', 120], ['Invoke Chi-Ji, the Red Crane', 120]] };
-const mpPBand = (R, p) => { if (p.boss) return 'boss:' + p.boss; const n = mpCnt(R, p); return n <= 2 ? 1 : n <= 6 ? 2 : n <= 14 ? 3 : 4; };
+const mpPBand = (R, p) => { if (p.boss) return 'boss:' + p.boss; const n = mpBigN(R, p); return n <= 2 ? 1 : n <= 6 ? 2 : n <= 14 ? 3 : 4; };
 const mpAfter = (a, t) => { let lo = 0, hi = a.length; while (lo < hi) { const m = (lo + hi) >> 1; if (a[m] <= t) lo = m + 1; else hi = m; } return lo < a.length ? a[lo] : null; }; /* (the first time in a sorted list after t) */
-// (time not casting in a pull: busy from a cast's start to its finish, and 1.2 s (a hasted global cooldown) after each cast; time dead (until their
-// next cast, or the pull's end) is neither. { idle, alive } in seconds, or null without casts or under 10 s)
-function mpIdle(R, name, p) { const pc = (R.pc || {})[name], ps = (R.pst || {})[name] || [], s0 = p.s; let e0 = p.e; if (!pc || !pc.length || e0 - s0 < 10) return null;
+// (one player's busy and dead stretches in [s0, e0], merged: busy from a cast's start to its finish and 1.2 s after each cast, a channel or an
+// empowered spell, and for a tank each melee hit taken (±0.75 s); dead from a death until their next cast)
+function mpBusy(R, name, s0, e0) { const pc = (R.pc || {})[name] || [], ps = (R.pst || {})[name] || [], iv = [], dz = [];
+  for (const t of pc) if (t >= s0 - 2 && t <= e0) iv.push([t, t + 1.2]); for (const L of [(R.pch || {})[name], (R.pem || {})[name]]) for (const [x, y] of L || []) if (y >= s0 && x <= e0) iv.push([x, y]);
+  for (const t of (R.tsw || {})[name] || []) if (t >= s0 && t <= e0) iv.push([t - 0.75, t + 0.75]); for (const t of ps) if (t >= s0 - 3 && t <= e0) { const d = mpAfter(pc, t - 0.01); iv.push([t, d != null && d - t < 6 ? d : t + 1.2]); }
+  for (const d of R.deathPos || []) if (d.who === name && d.t >= s0 && d.t <= e0) { const b = mpAfter(pc, d.t + 1); dz.push([d.t, b != null && b < e0 ? b : e0]); }
+  const mg = (L) => { const q = L.map(([x, y]) => [Math.max(s0, x), Math.min(e0, y)]).filter(([x, y]) => y > x).sort((u, v) => u[0] - v[0]), out = []; for (const [x, y] of q) { const l = out[out.length - 1]; if (l && x <= l[1]) l[1] = Math.max(l[1], y); else out.push([x, y]); } return out; };
+  return { b: mg(iv), d: mg(dz), n: pc.length }; }
+// (time not casting in a pull: only counted while 3 of the other 4 were casting (the studio, Nov 2: a gap the whole group shares is walking, gathering
+// or a boss out of reach, not the player); time dead is neither; a tail of over 5 s with nothing to do is left out. { idle, alive } in seconds (alive:
+// the time it was judged on), or null. The judge's runs are measured the same way)
+function mpIdle(R, name, p) { const pc = (R.pc || {})[name], s0 = p.s; let e0 = p.e; if (!pc || !pc.length || e0 - s0 < 10) return null;
   { let la = -1e9; for (const t of pc) if (t <= e0 && t > la) la = t; for (const [, b] of (R.pch || {})[name] || []) if (b <= e0 && b > la) la = b; for (const t of (R.tsw || {})[name] || []) if (t <= e0 && t > la) la = t;
     if (la > s0 && e0 - la > 5) e0 = la + 1.2; if (e0 - s0 < 10) return null; } /* (a pull's tail with nothing to do (no cast, channel or melee taken for over 5 s) isn't idle: the last enemies were finished elsewhere) */
-  const iv = []; for (const t of pc) if (t >= s0 - 2 && t <= e0) iv.push([t, t + 1.2]); for (const L of [(R.pch || {})[name], (R.pem || {})[name]]) for (const [a, b] of L || []) if (b >= s0 && a <= e0) iv.push([a, b]); /* (a channel, an empowered spell) */
-  for (const t of (R.tsw || {})[name] || []) if (t >= s0 && t <= e0) iv.push([t - 0.75, t + 0.75]); /* (a tank being hit in melee is tanking, not idle: gathering) */
-   for (const t of ps) if (t >= s0 - 3 && t <= e0) { const d = mpAfter(pc, t - 0.01); iv.push([t, d != null && d - t < 6 ? d : t + 1.2]); }
-  const dz = []; for (const d of R.deathPos || []) if (d.who === name && d.t >= s0 && d.t <= e0) { const b = mpAfter(pc, d.t + 1); dz.push([d.t, b != null && b < e0 ? b : e0]); }
-  const cov = (L) => { const a = L.map(([x, y]) => [Math.max(s0, x), Math.min(e0, y)]).filter(([x, y]) => y > x).sort((u, v) => u[0] - v[0]); let tot = 0, cs = -1, ce = -1; for (const [x, y] of a) { if (x > ce) { if (ce > cs) tot += ce - cs; cs = x; ce = y; } else ce = Math.max(ce, y); } if (ce > cs) tot += ce - cs; return tot; };
-  const dead = cov(dz), alive = e0 - s0 - dead; if (alive < 8) return null; return { idle: Math.max(0, e0 - s0 - cov(iv.concat(dz))), alive }; }
+  const ck = R._busy || (R._busy = new Map()), key = p.s + '|' + p.e; let all = ck.get(key); if (!all) { all = {}; for (const x of R.people || []) all[x.name] = mpBusy(R, x.name, p.s, p.e); ck.set(key, all); }
+  const me = all[name] || mpBusy(R, name, p.s, p.e), oth = Object.keys(all).filter((x) => x !== name && all[x].n), need = Math.max(1, Math.min(3, oth.length - 1));
+  const cuts = new Set([s0, e0]); for (const B of [me].concat(oth.map((x) => all[x]))) for (const L of [B.b, B.d]) for (const [x, y] of L) { if (x > s0 && x < e0) cuts.add(x); if (y > s0 && y < e0) cuts.add(y); }
+  const xs = [...cuts].sort((x, y) => x - y), lists = [me.d, me.b].concat(...oth.map((x) => [all[x].d, all[x].b])), ptr = lists.map(() => 0);
+  const at = (j, t) => { const L = lists[j]; let q = ptr[j]; while (q < L.length && L[q][1] <= t) q++; ptr[j] = q; return q < L.length && L[q][0] <= t; }; /* (the stretches only move forward) */
+  let idle = 0, alive = 0; for (let k = 0; k + 1 < xs.length; k++) { const x = xs[k], y = xs[k + 1], m = (x + y) / 2; const dead = at(0, m), busy = at(1, m); let c = 0; for (let j = 0; j < oth.length; j++) { const od = at(2 + 2 * j, m), ob = at(3 + 2 * j, m); if (!od && ob) c++; }
+    if (dead || c < need) continue; alive += y - x; if (!busy) idle += y - x; }
+  if (alive < 8) return null; return { idle, alive }; }
 // (the fast run's share of time not casting, for one spec (else role) on one size of pull, from at least 30 s alive; else every pull of that kind)
 // (a fast run with this spec in it, for Your play's judge when the fast run has none: from the vs-spec list (each run's specs), the one closest to the
 // middle time; at most one extra run loaded per key, in the background (it's another whole log from Warcraft Logs), then the tab redraws. null until then)
@@ -62215,7 +62233,7 @@ function mpIdleBase(F, per, band) { if (!F || !F.pc) return null; const c = F._i
   let sh = sum((q) => mpPBand(F, q) === band); if (sh == null) sh = sum((q) => !!q.boss === String(band).startsWith('boss')); /* (a boss: the same boss, else any) */
   const out = sh == null ? null : { sh, same }; c.set(key, out); return out; }
 function mpPlay(R, F, name, i) { const p = R.pulls[i], per = (R.people || []).find((x) => x.name === name), out = { rows: [], ok: '', next: '', cost: 0, n: 0 }; if (!p || !per) return out;
-  const own = name === mpMine(R), cn = (E.CLASSES[per.cls] || [])[0] || '', gd = mpGd(p), sh = gd ? ((p.dmg || {})[name] || 0) / gd : 0, n = p.boss ? 0 : mpCnt(R, p), band = mpPBand(R, p), your = own ? 'your' : esc(name) + '’s';
+  const own = name === mpMine(R), cn = (E.CLASSES[per.cls] || [])[0] || '', gd = mpGd(p), sh = gd ? ((p.dmg || {})[name] || 0) / gd : 0, n = p.boss ? 0 : mpBigN(R, p), band = mpPBand(R, p), your = own ? 'your' : esc(name) + '’s';
   const top = (same) => (same ? 'top ' + per.spec + ' ' + cn + 's' : per.role === 'healer' ? 'top healers' : per.role === 'tank' ? 'top tanks' : 'top DPS players'), rows = [];
   // (1) time not casting, against the fast run's share on this size of pull
   const hasSp = (X) => !!X && (X.people || []).some((x) => x.spec === per.spec && x.cls === per.cls), xr = hasSp(F) ? null : mpSpecRun(per, name === (MP.pp || mpMine(R))), FJ = xr && xr.R && hasSp(xr.R) ? xr.R : F;
@@ -62282,7 +62300,7 @@ function mpPlay2(x) { const { R, F, name, per, i, p, n, band, gd } = x; if (!x.s
   const casts = (RR, nm, ids, k) => cOf(RR, nm, ids).filter((t) => inP(RR, k, t)).length, all = (RR, nm, ids) => cOf(RR, nm, ids).length;
   const dmg = (RR, nm, ids, ks) => { let a = 0, h = 0; const L = (RR.dsp || {})[nm] || []; for (const k of ks || L.map((q, z) => z)) { const q = L[k]; if (q) for (const id of ids) { const v = q[id]; if (v) { a += v[0]; h += v[1]; } } } return [a, h]; };
   const per1 = (ids, dids) => { const c = all(R, name, ids); return c ? dmg(R, name, dids.length ? dids : ids)[0] / c : 0; };
-  const big7 = (RR) => RR.pulls.map((q, k) => k).filter((k) => !RR.pulls[k].boss && mpCnt(RR, RR.pulls[k]) >= 7);
+  const big7 = (RR) => RR.pulls.map((q, k) => k).filter((k) => !RR.pulls[k].boss && mpBigN(RR, RR.pulls[k]) >= 7);
   const aoeOk = (ids, dids) => { if (!dids.length) return null; for (const [RR, nms] of [[F, J], [R, [name]]]) { let c = 0, h = 0; for (const nm of nms) { const ks = big7(RR); for (const k of ks) c += casts(RR, nm, ids, k); h += dmg(RR, nm, dids, ks)[1]; } if (c >= 3) return h / c >= 2; } return null; };
   const rate = (RR, nms, ids, ks) => { let c = 0, m = 0; for (const nm of nms) for (const k of ks) { c += casts(RR, nm, ids, k); m += al(RR, nm, k) / 60; } return m >= 0.5 ? c / m : null; };
   const up = (RR, k, t) => { let c = 0; for (const u of RR.units || []) if (u.k === k && u.h != null && u.h <= t && (u.t == null || u.t <= u.h || u.t >= t)) c++; return c; };
@@ -63000,7 +63018,7 @@ function mpMapHtml(R, F, tl) {
     // (the pack (map-extras.md item 17; Flex: "those are considered the mini bosses in dungeons or the harder mobs to deal with"): each kind of enemy with
     // one role, Caster (it healed another enemy, or it keeps casting: 14 or more casts a minute, or 10 or more with mostly magic damage) or Melee; Elite for the mini-boss tier, at least twice the health of
     // the key's middle trash enemy (the same on every pull), or a rare; fodder, half that or less, on one last line. 5 rows, then the rest in a hover)
-    const pack = (() => { const all = mpMobs(RR, p), ty = RR.mobType || {}, bk = p.boss ? mpBossKinds(RR, all, p) : null, mobs = bk ? bk.filter((x) => x[1] !== 'sum').map((x) => x[0]) : all, smn = bk ? bk.reduce((a, [m, t]) => a + (t === 'sum' ? m[1] : 0), 0) : 0, smf = bk ? bk.some((x) => x[1] === 'sum' && x[2]) : false; if (!all.length) return '';
+    const pack = (() => { const all = mpMobs(RR, p), ty = RR.mobType || {}, bk = p.boss ? mpBossKinds(RR, all, p) : null, mobs = bk ? bk.filter((x) => x[1] !== 'sum' && x[1] !== 'nof').map((x) => x[0]) : all, smn = bk ? bk.reduce((a, [m, t]) => a + (t === 'sum' ? m[1] : 0), 0) : 0, smf = bk ? bk.some((x) => x[1] === 'sum' && x[2]) : false, nof = bk ? bk.reduce((a, [m, t]) => a + (t === 'nof' ? m[1] : 0), 0) : Math.max(0, all.reduce((a, m) => a + m[1], 0) - mpPackN(RR, p)); if (!all.length) return '';
       /* (a boss pull: the boss and the trash pulled along; what the fight summoned on a faint last line (the studio, Nov 2)) */
       mpMid(RR); /* (the middle trash enemy of the whole key, each one counted: one-off kings don't lift it) */
       const mid = RR.mobMid, L = mobs.map(([n2, c]) => { const o = ty[n2] || {}, cast = !!o.caster, el = MP_RARE.has(o.id) || (mid && o.hp >= 2 * mid && RR.mobTrash.has(n2)), /* (trash only: never a boss or a boss fight's own enemies) */ fod = !el && mid && o.hp && o.hp <= mid / 2;
@@ -63008,7 +63026,7 @@ function mpMapHtml(R, F, tl) {
       const tag = (k) => '<i class="mpt-pkt mpt-pk-' + k + '">' + MP_PKI[k] + '</i>', role = (x) => tag(x.cast ? 'cast' : 'melee');
       const row = (x) => '<div class="mpt-pkr"><b>' + x.c + '×</b><span class="mpt-pkn">' + ((pic) => (pic ? '<img class="mpt-pkp" src="' + pic + '" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">' : '<i class="mpt-pkp mpt-pkp0"></i>'))(mpNpcPic((ty[x.n2] || {}).id)) + esc(x.n2) + '</span>' + (x.el ? tag('elite') : '') + role(x) + (x.kick.length ? '<small>kick: ' + x.kick.map((k) => '<b>' + esc(k) + '</b>').join(', ') + '</small>' : '') + '</div>';
       const main = L.filter((x) => !x.fod), fod = L.filter((x) => x.fod), more = main.slice(5);
-      return '<div class="mpt-pk"><p class="mpt-mck2">Pack · ' + plural(mobs.reduce((a, m) => a + m[1], 0), 'enemy').replace('enemys', 'enemies') + '</p>' + main.slice(0, 5).map(row).join('') +
+      return '<div class="mpt-pk"><p class="mpt-mck2">Pack · ' + plural(p.boss ? mobs.reduce((a, m) => a + m[1], 0) : mpPackN(RR, p), 'enemy').replace('enemys', 'enemies') + (nof ? '<small class="mpt-pks"> · +' + nof + ' with no forces</small>' : '') + '</p>' + main.slice(0, 5).map(row).join('') +
         (more.length ? '<p class="mpt-pkm" tabindex="0"' + mpT1(more.map((x) => x.c + '× ' + esc(x.n2)).join('<br>')) + '>+' + plural(more.length, 'more type') + '</p>' : '') +
         (fod.length ? '<p class="mpt-pkf">+ ' + fod.map((x) => x.c + '× ' + esc(x.n2) + ' ' + role(x)).join(', ') + '</p>' : '') +
         (smn ? '<p class="mpt-pkf mpt-pks">+ ' + smn + ' summoned during the fight' + (smf ? ' (worth forces)' : '') + '</p>' : '') + '</div>'; })();
