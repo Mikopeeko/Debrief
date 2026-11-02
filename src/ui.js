@@ -2027,7 +2027,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-11-02', h: [{ t: 'Watch the pull on the Timeline', d: 'Debriefing\'s Timeline now replays the pull on a big map, with a play-by-play beside it of every mechanic and how the raid handled it. Click a moment to watch it, and the box under the map says whether it was done right and what to do next time.' }], n: [ /* round 484 */
+  { d: '2026-11-02', h: [{ t: 'Watch the pull on the Timeline', d: 'Debriefing\'s Timeline now replays the pull on a big map, with a play-by-play beside it of every mechanic and how the raid handled it, and the fight\'s timeline playing underneath. Click a dot or a line to watch that moment, and the box below says whether it was done right and what to do next time.' }], n: [ /* round 484 */
     "Debriefing Timeline replay, The Coiled Altar: orbs stay on the floor until someone picks them up or a frontal pops them, ghosts stay until they reach their player or a frontal clears them, and you can see purple orb carriers, Gravebound players, Malacrass's shield and Zul'jan healing in the intermission. Axes show where they hit someone, and Soul Fragments are small white orbs.",
     "Debriefing Timeline replay, Ula'tek: the platform stays whole until phase 3, then you see it break.",
     "The Coiled Altar's maps: the poison pools are drawn at their real size, a little smaller than before.",
@@ -34961,14 +34961,31 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
         var RM = RMX[it0.boss], brk = null; if (RM) { var S3 = SP.filter(function (S0) { return RM.at.test(String(S0.p.n || '')); })[0]; brk = S3 ? S3.a : null; mp.art = RM.whole; if (brk != null) mp.artAt = [[brk, RM.broken]]; }
         var crack = function (ft) { if (!RM || brk == null) return; var s = mb.querySelector('svg.zmap'), k = (ft - brk) / 1.6; if (!s || k < 0 || k > 1) return; var im = [].slice.call(s.querySelectorAll('image')).filter(function (q) { return String(q.getAttribute('href') || '').indexOf(RM.broken) >= 0; })[0]; if (!im || s.querySelector('image[data-whole]')) return; var w0 = im.cloneNode(); w0.setAttribute('href', String(im.getAttribute('href')).replace(RM.broken, RM.whole)); w0.setAttribute('opacity', String((1 - k).toFixed(2))); w0.setAttribute('data-whole', '1'); im.parentNode.insertBefore(w0, im.nextSibling); };
         var banner = function (ft) { var bn = box.querySelector('.dtm-brk'), on = !!RM && brk != null && ft >= brk - 0.2 && ft <= brk + 3.5; if (on && !bn) { bn = document.createElement('div'); bn.className = 'dtm-brk'; bn.textContent = RM.msg; var mw = box.querySelector('.dtm-map'); if (mw) mw.appendChild(bn); } else if (!on && bn) bn.remove(); };
+        /* (the fight's timeline under the replay, across the whole bottom: the current phase's mechanic rows (the chart that sat below,
+           moved up here), phase chips, a gold playhead, and the dots ahead of it faded until the replay reaches them. A dot plays into its
+           moment, a click on the strip jumps there, a chip jumps to its phase. The play-by-play is as tall as the map and the verdict sits
+           under the strip; the moment tiles and the chart below are hidden while the strip is up (Flex, Nov 2: "What if these were the
+           timeline played at the bottom of the map instead?", "we could potentially remove this as well with the new timeline version",
+           "maybe make the right column shorter so the timeline can expand across the whole bottom"; mock tlm3, "Yes, build it")) */
+        var PHS = ((rep.module && rep.module.phases) || []).filter(function (p) { return p && p.end > p.start; }); if (!PHS.length) PHS = [{ name: '', start: 0, end: end }]; box._phs = PHS;
+        var tlm = function (ft) { var sec = box.closest('section.dbt'), secs = (sec || document).querySelectorAll('.dbx-wrap section.dbx-ph'), gd = box.querySelector('.dtm-grid'); if (!secs.length || !gd) return;
+          var slot = box.querySelector('.dtm-tlm'); if (!slot) { slot = document.createElement('div'); slot.className = 'dtm-tlm'; gd.parentNode.insertBefore(slot, gd.nextSibling); box._tlPh = -1; }
+          if (sec) sec.classList.add('dtm-tlon'); var vd0 = box.querySelector('.dtm-left > .dtm-vd'); if (vd0) slot.parentNode.insertBefore(vd0, slot.nextSibling);
+          var k = 0; for (var i = 0; i < PHS.length; i++) if (ft >= PHS[i].start - 0.01) k = i; k = Math.min(k, secs.length - 1);
+          if (k !== box._tlPh) { box._tlPh = k; slot.innerHTML = '<div class="dtm-tlc">' + (PHS.length > 1 ? PHS.map(function (p, i) { return '<button type="button" class="' + (i === k ? 'on' : '') + '" data-tph="' + i + '">' + E(p.name) + '</button>'; }).join('') : '') + '</div>';
+            var cl = secs[k].cloneNode(true); slot.appendChild(cl); [].slice.call(cl.querySelectorAll('.dbx-mk')).forEach(function (d) { var al = d.getAttribute('aria-label'); if (al) d.dataset.tt = E(al); });
+            var tr = cl.querySelector('.dbx-tr'), lb = cl.querySelector('.dbx-labs'); if (tr) { var hd0 = document.createElement('div'); hd0.className = 'dtm-tlh'; hd0.style.height = (lb ? lb.offsetHeight || parseFloat(lb.style.height) || 140 : 140) + 'px'; tr.appendChild(hd0); } }
+          var p = PHS[k], len = Math.max(1, p.end - p.start), hd = slot.querySelector('.dtm-tlh'); if (hd) hd.style.left = Math.max(0, Math.min(100, (ft - p.start) / len * 100)) + '%';
+          [].slice.call(slot.querySelectorAll('.dbx-mk')).forEach(function (d) { var lf = parseFloat(d.style.left); if (!isNaN(lf)) d.classList.toggle('fut', p.start + lf / 100 * len > ft + 0.25); }); };
         var pmap = new Map(); rep.players.forEach(function (p) { if (p && p.name) pmap.set(p.name, p); });
         mb.innerHTML = w.miniMap(mp, pmap);
+        mb.addEventListener('input', function (ev) { if (ev.isTrusted) P.seek = true; }, true); /* (a drag on the slider counts as a jump) */
         if (w.bindZoom) w.bindZoom(mb); if (w.bindAnim) w.bindAnim(mb, mp, pmap); if (w.hydrateMapIcons) w.hydrateMapIcons(mb);
-        var seekT = P.mt != null ? P.mt : at; var rg = mb.querySelector('.zrange'); if (rg) { rg.value = Math.max(0, Math.min(fr.length - 1, Math.round(seekT / STEP))); rg.dispatchEvent(new Event('input')); } grow(); fade(seekT); crack(seekT); banner(seekT);
-        mb._onFrame = function (ft) { P.mt = ft; grow(); fade(ft); crack(ft); banner(ft); var hd = box.querySelector('.dtm-head'); if (hd) hd.style.left = XP(ft) + '%'; var nw = box.querySelector('.dtm-now'); if (nw) { var N1 = nowOf(ft); nw.className = 'dtm-now lv-' + N1.lv; nw.innerHTML = N1.html; }
+        var seekT = P.mt != null ? P.mt : at; var rg = mb.querySelector('.zrange'); if (rg) { rg.value = Math.max(0, Math.min(fr.length - 1, Math.round(seekT / STEP))); rg.dispatchEvent(new Event('input')); } grow(); fade(seekT); crack(seekT); banner(seekT); tlm(seekT);
+        mb._onFrame = function (ft) { P.mt = ft; grow(); fade(ft); crack(ft); banner(ft); tlm(ft); var hd = box.querySelector('.dtm-head'); if (hd) hd.style.left = XP(ft) + '%'; var nw = box.querySelector('.dtm-now'); if (nw) { var N1 = nowOf(ft); nw.className = 'dtm-now lv-' + N1.lv; nw.innerHTML = N1.html; }
           var pb = mb.querySelector('.zplay'), playing = !!pb && /Pause/.test(pb.textContent);
           if (P.clip) { if (playing && ft >= P.clip.to) { P.clip = null; P.auto = true; pb.click(); P.auto = false; } return; } /* (a picked moment plays in from 4 s before and stops just after it) */
-          if (!playing) return; /* (the play-by-play follows only while it plays) */
+          if (!playing) { if (!P.seek) return; P.seek = false; } /* (the play-by-play follows while it plays, and after a jump: a click on the strip, a drag on the slider) */
           var e0 = lastAt(ft); if (e0 && e0.k !== P.pick) setCur(e0.k, true); };
         if (P.clip) { var pb1 = mb.querySelector('.zplay'); if (pb1) { P.auto = true; pb1.click(); P.auto = false; } } } }
     catch (e) { console.error(e); mb.innerHTML = '<p class="dtm-p" style="padding:12px">The replay needs Advanced Combat Logging.</p>'; }
@@ -34984,7 +35001,11 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
     box.addEventListener('click', function (e) { var t = e.target.closest ? e.target : null; if (!t) return;
       if (t.closest('.zplay')) { if (!P.auto) { P.clip = null; P.userScroll = false; } return; } /* (Play: the list follows again) */
       var sp = t.closest('[data-spd]'); if (sp) { P.spd = +sp.dataset.spd; P.clip = null; box._X.draw(); return; }
-      var sc = t.closest('[data-scrub]'); if (sc && !t.closest('[data-ti]')) { var r = sc.getBoundingClientRect(), tt = Math.max(0, Math.min(box._end || 1, (e.clientX - r.left) / r.width * (box._axEnd || 1))); var rg = box.querySelector('.dtm-mm .zrange'); if (rg) { P.clip = null; rg.value = Math.round(tt / STEP); rg.dispatchEvent(new Event('input')); P.mt = tt; } return; }
+      var sc = t.closest('[data-scrub]'); if (sc && !t.closest('[data-ti]')) { var r = sc.getBoundingClientRect(), tt = Math.max(0, Math.min(box._end || 1, (e.clientX - r.left) / r.width * (box._axEnd || 1))); var rg = box.querySelector('.dtm-mm .zrange'); if (rg) { P.clip = null; P.seek = true; rg.value = Math.round(tt / STEP); rg.dispatchEvent(new Event('input')); P.mt = tt; } return; }
+      var tjump = function (tt) { var rg0 = box.querySelector('.dtm-mm .zrange'); if (!rg0) return; P.clip = null; P.seek = true; rg0.value = Math.round(tt / STEP); rg0.dispatchEvent(new Event('input')); P.mt = tt; };
+      var mk0 = t.closest('.dtm-tlm .dbx-mk[data-mi]'); if (mk0) { e.preventDefault(); e.stopPropagation(); pickI(+mk0.dataset.mi); return; }
+      var ch0 = t.closest('.dtm-tlm [data-tph]'); if (ch0) { e.stopPropagation(); var P0 = (box._phs || [])[+ch0.dataset.tph]; if (P0) { tjump(P0.start + STEP * 0.52); /* (the first step inside the phase) */ setCur('p' + ch0.dataset.tph, true); } return; }
+      var sc0 = t.closest('.dtm-tlm .dbx-sc'); if (sc0) { e.stopPropagation(); var tr0 = sc0.querySelector('.dbx-tr'), PH0 = (box._phs || [])[box._tlPh]; if (tr0 && PH0) { var r0 = tr0.getBoundingClientRect(); tjump(PH0.start + Math.max(0, Math.min(1, (e.clientX - r0.left) / r0.width)) * (PH0.end - PH0.start)); } return; }
       var pr = t.closest('.dtm-pr[data-pk]'); if (pr && box.contains(pr)) { var pk2 = pr.dataset.pk; pickI(/^\d+$/.test(pk2) ? +pk2 : pk2); return; }
       var b = t.closest('[data-ti], [data-run], [data-wipe], [data-step], [data-ph]'); if (!b || !box.contains(b)) return; e.preventDefault();
       if (b.dataset.step) { var L0 = box._bad || [], c0 = L0.indexOf(P.pick), dn = +b.dataset.step;

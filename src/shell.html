@@ -13142,6 +13142,22 @@ html body #view > .dbt.dbt.dbx .dtm-vd .dbt-it.dbx-open > .dbt-c > .dbt-mapslot{
 /* (the phase 3 break on Ula'tek: a gold banner on the map for a few seconds while the whole platform fades into the broken one) */
 .dtm-brk{position:absolute;left:50%;top:46%;z-index:4;padding:8px 16px;border-radius:6px;background:rgba(10,12,16,.85);border:1px solid var(--gold);color:var(--gold);font-weight:700;font-size:13.5px;letter-spacing:.03em;white-space:nowrap;pointer-events:none;transform:translate(-50%,-50%);animation:dtmBrk 3.5s ease forwards}
 @keyframes dtmBrk{0%{opacity:0;transform:translate(-50%,-30%)}12%{opacity:1;transform:translate(-50%,-50%)}80%{opacity:1}100%{opacity:0}}
+/* (the fight's timeline under the replay: chips, the current phase's rows, a gold playhead, faded dots ahead of it; while it's up the moment tiles,
+   the chart below and (on a computer) the slider are hidden (Flex, Nov 2, mock tlm3: "Yes, build it")) */
+.dtm-tlm{margin-top:10px;border:1px solid var(--line2);border-radius:4px;padding:8px 10px 6px;background:rgba(255,255,255,.02)}
+.dtm-tlc{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}
+.dtm-tlc:empty{display:none}
+.dtm-tlc button{font:inherit;font-size:12.5px;font-weight:600;padding:3px 11px;border-radius:999px;border:1px solid var(--line2);background:none;color:#aeb6bf;cursor:pointer}
+.dtm-tlc button:hover{color:var(--text)}
+.dtm-tlc button.on{border-color:var(--gold);color:var(--gold);background:rgba(232,192,90,.08)}
+.dtm-tlm section.dbx-ph{margin:0 !important;border:0 !important;padding:0 !important;background:none !important}
+.dtm-tlm .dbx-tr{position:relative}
+.dtm-tlm .dbx-sc{cursor:pointer}
+.dtm-tlh{position:absolute;top:0;width:2px;margin-left:-1px;background:var(--gold);box-shadow:0 0 6px rgba(232,192,90,.7);pointer-events:none;z-index:3}
+.dtm-tlm .dbx-mk.fut{opacity:.28}
+.dtm-tlm + .dtm-vd{margin-top:10px}
+html body #view > .dbt.dbt.dbx.dtm-on.dtm-tlon .dtm-tiles, html body #view > .dbt.dbt.dbx.dtm-on.dtm-tlon .dbx-wrap{display:none !important}
+@media (min-width: 901px){html body #view > .dbt.dbt.dbx.dtm-on.dtm-tlon .dtm-mm .zrange{display:none}}
 @media (max-width: 900px){html body #view > .dbt.dbt.dbx .dtm-pb{max-height:440px !important;overflow:auto}}
 @media (max-width: 700px){.dtm-pbh span{display:none}}
 @media (max-width: 700px){.dtm-tiles{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}.dtm-bar{gap:10px}.dtm-cn{display:none}.dtm-step{width:100%;justify-content:space-between}.dtm-lr{grid-template-columns:64px minmax(0,1fr)}.dtm-ax,.dtm-cmp,.dtm-key{margin-left:74px}.dtm-cmp{height:56px}.dtm-cmp div{white-space:normal;width:118px;font-size:12.5px}.dtm-now{font-size:12px}.dtm-map svg.zmap{max-height:300px !important}}
