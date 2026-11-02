@@ -119,6 +119,20 @@ function mpDraw() {
   mpJbTop();
   if (!fx) { const mine = it; MP.fastOf = { k: mpK(it), wait: true };
     mpFastRun(it).then((F) => { if (MP.item !== mine) return; MP.fastOf = { k: mpK(mine), ...F }; mpDraw(); }).catch(() => { if (MP.item !== mine) return; MP.fastOf = { k: mpK(mine), R: null, list: null }; mpDraw(); }); }
+  mpPrevRate(it, R);
+}
+// (the rating before this key, for "+15.2 rating" (Nov 2, Main's check and the studio's audit): a night shared before keys kept their end
+// rating has it only inside the key before's own lines, so that key is read in the background, once, and the banner redrawn. A night's first
+// key has nothing before it, so it keeps "471 points". Keys from a report have no rating in their lines at all)
+function mpPrevRate(it, R) {
+  if (!it || it.wcl || !R.rateAfter) return;
+  const keys = mpKeys(), i = keys.indexOf(it); if (i < 1) return;
+  for (let j = i - 1; j >= 0 && j >= i - 2; j--) { const k = keys[j], r = MP.R[mpK(k)];
+    if (k.rateAfter || (r && r.rateAfter)) return; /* (already known) */
+    if (r) continue; /* (read, but left early: no rating there; try the one before) */
+    if (k.wcl || MP.busy.has(mpK(k))) return;
+    mpRead(k).then(() => { if (MP.item === it && S.page === 'mplus') mpDraw(); }).catch(() => { /* (the banner keeps its points) */ });
+    return; }
 }
 // (the address: ?report=…&fight=…&tab=mplus opens this key again)
 async function mpGo(code, fight) {
@@ -854,7 +868,7 @@ const MP_CSS = `
 .mpt-fgd{display:grid;gap:2px;font:600 12.5px var(--head);font-style:normal;color:var(--muted);cursor:help} .mpt-fgd u{opacity:.55}
 .mpt-fpr > span:first-child{flex:1;min-width:0}
 .mpt-plg{border-bottom:1px solid var(--line2)} .mpt-gi{display:grid;place-items:center;background:color-mix(in srgb,var(--gold) 12%,transparent)} .mpt-gi svg{width:20px;height:20px;fill:var(--gold)}
-.mpt-bar.mpt-barg i{background:var(--gold)} .mpt-tile[data-tt]{cursor:help}
+.mpt-bar.mpt-barg i{background:var(--mpt-you)} /* (blue: gold means boss (the studio's audit)) */ .mpt-tile[data-tt]{cursor:help}
 .mpt-sk{display:flex;gap:6px 18px;flex-wrap:wrap;font:500 13.5px var(--body);color:var(--muted);margin-bottom:6px} .mpt-sk b{color:var(--text)}
 .mpt-sk i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
 /* (the pieces with a hover) */
