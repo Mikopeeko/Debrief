@@ -2080,6 +2080,8 @@ const PATCH_NOTES = [
     "Report card: a raider's card reads top to bottom in one column: their name with the grade beside it, the one thing to fix first, a box per list (tap one to jump to it), then the lists one under the other.",
     "Pages appear finished and calm: the count-up numbers, growing bars and slide-ins are off for now, and a pull fades in once when it's ready.",
   ], f: [
+    "Mythic+ keys an upload names by their bosses (\"Sentinel of Winter / Nalorakk / The Hoardmonger\") now show their dungeon, with its map, timer and fast run.",
+    "Mythic+ map: Kings' Rest's enemy count reaches 100% on a finished key, and a pull whose enemies died in the next pull still gets its spot.",
     "Guides no longer stays lit when you go back to a raid tab. Each Report card bar is the same colour as its number. Plan is off the ☰ menu (it has its own tab), and the Home tab no longer shows two ☰ buttons.",
     "Debriefing, All pulls: in a narrower window the mechanic rows stay in one column, so their pull squares no longer fall into a tall stack.",
     "Debriefing, All pulls: clicking a mechanic no longer blanks the page for a moment after you have looked at a single pull.",

@@ -179,7 +179,8 @@ function mpfRow(r, i) {
 // Keys from a pasted link join the list and stay; keys from a combat log on this PC show for this visit only)
 const MP_KEYK = 'mpt-keys', MP_DUNGEONS = ['Altar of Fangs', 'Den of Nalorakk', 'Kings\' Rest', 'Murder Row', 'Ruby Life Pools', 'Temple of Sethraliss', 'The Blinding Vale', 'Voidscar Arena'];
 const MPK = { busy: false, ran: false, err: '', n: 0, of: 0, t0: 0, pick: '', more: new Set() };
-const mpkGet = () => { try { const j = JSON.parse(store.get(MP_KEYK) || 'null'); if (j && j.chars) { j.added = j.added || []; j.addedChars = j.addedChars || []; return j; } } catch (e) { /* (unreadable: start again) */ } return { chars: {}, added: [], addedChars: [] }; };
+const mpDung = (n) => { if (!n || !n.includes(' / ')) return n; const d = MP_DUNGEONS.find((x) => ((MP_KNOW[mpLc(x)] || {}).b || []).some(([b]) => n.includes(b))); return d || n; }; /* (a key an upload named by its bosses) */
+const mpkGet = () => { try { const j = JSON.parse(store.get(MP_KEYK) || 'null'); if (j && j.chars) { j.added = j.added || []; j.addedChars = j.addedChars || []; for (const c of Object.values(j.chars)) for (const k of c.keys || []) k.boss = mpDung(k.boss); for (const k of j.added) k.boss = mpDung(k.boss); return j; } } catch (e) { /* (unreadable: start again) */ } return { chars: {}, added: [], addedChars: [] }; };
 const mpkSet = (j) => { try { store.set(MP_KEYK, JSON.stringify(j)); } catch (e) { /* (full: kept for this visit) */ } };
 const mpkOf = (it) => ({ code: it.wcl.code, fight: it.wcl.fight, boss: it.boss, level: it.level, keyMs: it.keyMs, timed: it.timed, up: it.up, wallMs: it.wallMs, duration: it.duration });
 // (whose keys: every character saved on Debrief, plus every character the Warcraft Logs sign-in sent, once each (Flex: "it was only showing my druid
@@ -967,8 +968,8 @@ const MP_ROUTE = {
     n: { 261550: 1, 261552: 5, 261553: 5, 261554: 25, 261557: 7, 261560: 7, 261573: 30, 262011: 25, 263109: 25, 263112: 1, 270306: 25, 271453: 5 } },
   'den of nalorakk': { full: 729, zone: 16368, floors: [[2564, 'Dreamer\'s Passage', 4395, 4535, -5015, -4805], [2514, 'The Foraging', 4014.58, 4764.58, -5856.25, -4731.25], [2513, 'The Heart of Rage', 4500, 5129.17, -5350, -4406.25]],
     n: { 241808: 8, 241813: 5, 241814: 7, 241816: 7, 241869: 28, 241872: 9, 241874: 5, 241876: 7, 241911: 7, 244889: 35, 245139: 7, 245143: 5, 245145: 6, 245146: 25, 245190: 5, 245752: 7, 245855: 25, 250478: 50 } },
-  'kings\' rest': { full: 608, zone: 9526, floors: [[1004, 'Kings\' Rest', -1240.31, -679.68, 2440, 3280.94]],
-    n: { 133935: 22, 134157: 5, 134158: 25, 134174: 20, 134251: 10, 134331: 25, 134739: 25, 135167: 22, 135192: 5, 135204: 7, 135231: 25, 135239: 7, 137473: 10, 137474: 25, 137478: 25, 137484: 25, 137485: 7, 137486: 25, 137487: 10, 137969: 15, 137989: 1, 270502: 7 } },
+  'kings\' rest': { full: 608, zone: 9526, floors: [[1004, 'Kings\' Rest', -1240.31, -679.68, 2440, 3280.94]], /* (Animated Gold: 6, from three timed keys that add up to 100% with it, Nov 2) */
+    n: { 133935: 22, 134157: 5, 134158: 25, 134174: 20, 134251: 10, 134331: 25, 134739: 25, 135167: 22, 135192: 5, 135204: 7, 135231: 25, 135239: 7, 135406: 6, 137473: 10, 137474: 25, 137478: 25, 137484: 25, 137485: 7, 137486: 25, 137487: 10, 137969: 15, 137989: 1, 270502: 7 } },
   'murder row': { full: 655, zone: 16091, floors: [[2433, 'Murder Row', 8633.33, 8952.08, -5106.25, -4629.17], [2435, 'The Illicit Rain', 8850, 9000, -4895, -4670], [2434, 'Augurs\' Terrace', 8554.17, 9250, -5502.08, -4458.33]],
     n: { 234849: 2, 235257: 1, 235261: 5, 235265: 25, 235267: 5, 235268: 7, 235322: 35, 235465: 25, 236071: 25, 236073: 3, 236082: 6, 236084: 7, 236085: 1, 236091: 3, 236893: 2, 236897: 7, 236902: 12, 236905: 30, 252529: 35, 255604: 6 } },
   'ruby life pools': { full: 551, zone: 14063, floors: [[2095, 'Infusion Chambers', 1335, 1685, -450, 75], [2094, 'Ruby Overlook', 1345.83, 1868.75, -602.08, 181.25]],
@@ -1074,6 +1075,7 @@ function mpScan(it, R, text) {
     for (const u of U.values()) { if (!ok(u) || u.g.split('-')[4] !== zone) continue; const tt = u.died != null ? u.died : u.hit; let k = 0, best = 1e9;
       for (let m = 0; m < N; m++) { const d = tt < P[m].s ? P[m].s - tt : tt > P[m].e ? tt - P[m].e : 0; if (d < best) { best = d; k = m; } }
       L.push({ x: u.at[0], y: u.at[1], ui: u.at[2], k, hp: u.hp, t: tt }); }
+    for (let m = 0; m < N; m++) if (!L.some((u) => u.k === m)) for (const u of U.values()) if (ok(u) && u.g.split('-')[4] === zone && u.hit >= P[m].s && u.hit <= P[m].e) L.push({ x: u.at[0], y: u.at[1], ui: u.at[2], k: m, hp: u.hp, t: u.hit }); /* (a pull whose enemies all died in the next one: the ones first hit in it (Den of Nalorakk's two Frostfangs, Nov 2)) */
     for (let m = 0; m < N; m++) if (P[m].boss) { const us = L.filter((u) => u.k === m), top = Math.max(0, ...us.map((u) => u.hp)); for (const u of us) if (top && u.hp >= top * 0.3) u.boss = true; }
     R.units = L; R.deathPos = deathPos; R.castPos = castPos; R.avHits = avHits; R.kickEv = kickEv; R.ccEv = ccEv; }
 }

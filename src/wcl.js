@@ -276,7 +276,9 @@ async function loadReport(creds, code, live) {
   // (Mythic+ keys, for the Mythic+ tab (Nov 1): Warcraft Logs keeps a whole key as one fight, with its level, the time on the key's timer
   // (deaths included), how many levels it went up (0: over time) and its bosses; a key left early has no time. A minute or less is a
   // key started and reset, not a run)
-  const runs = rep.fights.filter((f) => f.keystoneLevel > 0 && f.encounterID > 0 && f.endTime - f.startTime > 60000).map((f) => ({ kind: 'run', id: f.encounterID, boss: f.name, level: f.keystoneLevel, diff: '+' + f.keystoneLevel, diffId: 8, size: 5,
+  // (the dungeon's name from its ID: some uploads name a key by its bosses, "Sentinel of Winter / Nalorakk / The Hoardmonger" (the all-dungeons check, Nov 2))
+  const MPD = { 12993: 'Altar of Fangs', 12825: 'Den of Nalorakk', 61762: 'Kings\' Rest', 12813: 'Murder Row', 112521: 'Ruby Life Pools', 61877: 'Temple of Sethraliss', 12859: 'The Blinding Vale', 12923: 'Voidscar Arena' };
+  const runs = rep.fights.filter((f) => f.keystoneLevel > 0 && f.encounterID > 0 && f.endTime - f.startTime > 60000).map((f) => ({ kind: 'run', id: f.encounterID, boss: MPD[f.encounterID] || f.name, level: f.keystoneLevel, diff: '+' + f.keystoneLevel, diffId: 8, size: 5,
     timed: (f.keystoneBonus | 0) > 0, up: f.keystoneBonus | 0, keyMs: f.keystoneTime || null, affixes: f.keystoneAffixes || [], kill: !!f.kill, startMs: BASE + f.startTime, wallMs: rep.startTime + f.startTime, duration: (f.endTime - f.startTime) / 1000,
     roster: (f.friendlyPlayers || []).map((i) => (actors.get(i) || {}).name).filter(Boolean),
     wcl: { code, fight: f.id, start: f.startTime, end: f.endTime, actors, abilities, encounterID: f.encounterID, rawDiff: 8, key: true, bosses: new Map((f.dungeonPulls || []).filter((p) => p.encounterID > 0).map((p) => [p.encounterID, p.name])) } }));
