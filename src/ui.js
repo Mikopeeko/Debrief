@@ -2028,7 +2028,7 @@ function openReport() {
 const PATCH_NOTES = [
   { d: '2026-11-02', n: [ /* round 484 */
     "Mythic+ tab, less to read: Your group is one table with each player's DPS, kicks, CC, deaths, defensives and big cooldowns. The map's controls sit in one bar, with the floors and layers on the map. The long pull list and route chart are gone: each pull's details are on its tile, its hover and its card, and the map's first line says where your enemy count ended.",
-    "Mythic+ pull card: what was in the pack, each kind of enemy marked Elite (or Rare) and Caster or Melee, with what to kick. The card and the hover also show the forces total so far.",
+    "Mythic+ pull card: what was in the pack. The mini-bosses are marked Elite, every kind of enemy Caster or Melee with what to kick, and the small fodder sits on its own line. The card also shows the forces total so far and when Lust went out.",
     "Mythic+ tab: Next time lines are one short sentence each, with the details in the small ⓘ, and the tab opens on your own character when they're in the key.",
     "Mythic+ map: point at a pull, a tile or a timeline block for a short summary: its time, forces, deaths, kicks, Lust and cooldowns. The timeline marks each cast that went off with a kick ready.",
     "Mythic+ map: the pulls are tiles under the map, so the pull's card has the whole side to itself.",
