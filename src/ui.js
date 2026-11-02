@@ -2052,6 +2052,7 @@ const PATCH_NOTES = [
     "Report card: a raider's card reads top to bottom in one column: their name with the grade beside it, the one thing to fix first, a box per list (tap one to jump to it), then the lists one under the other.",
     "Pages appear finished and calm: the count-up numbers, growing bars and slide-ins are off for now, and a pull fades in once when it's ready.",
   ], f: [
+    "Debriefing, All pulls: clicking a mechanic no longer blanks the page for a moment after you have looked at a single pull.",
     'Deaths while mind controlled by Dreadmarch now say so ("mind controlled by Dreadmarch, then died with no killing hit") instead of naming a tiny hit as the killer, and a Gravebound death says the last soul fragment you picked up killed you, with a real fix instead of "it\'s dodgeable".',
     "The boxes at the top of Debriefing have square inside corners again: Avoidable damage, Defensives, Combat potions and Deaths still had slightly rounded ones.",
     "Deaths at the top of Debriefing shows the right count straight away (it could show every death for a moment first).",
@@ -3092,7 +3093,7 @@ function killFlags() { const R = document.documentElement, r = S.rep, it = r && 
   R.classList.toggle('is-kill', kill); R.classList.toggle('is-first-kill', kill && first); }
 /* (Oct 29, the flicker (the user: "watch how it flickers")): a redraw of the same single pull keeps the timeline on screen as a still copy
    until the fresh one replaces it; a first draw hides the old layout until the timeline is built (2.5 s at most)) */
-function renderMain() { const one = () => S.tab === 'audit' && S.rep && !S.rep.allPulls, v0 = document.getElementById('view'), same = one() && v0 && v0._dbtItem === S.item;
+function renderMain() { const one = () => S.tab === 'audit' && S.rep && !S.rep.allPulls && S.scope !== 'all', /* round 475 no wait on all pulls */ v0 = document.getElementById('view'), same = one() && v0 && v0._dbtItem === S.item;
   const g0 = same ? v0.querySelector(':scope > .dbt') : null, gc = g0 ? g0.cloneNode(true) : null, gcl = v0 ? ['dbt-on', 'dbt-full'].filter((c) => v0.classList.contains(c)) : [];
   const out = renderMain0(), v1 = document.getElementById('view');
   if (v1) v1._dbtOne = one(); if (v1 && one()) { v1._dbtItem = S.item; if (gc && !v1.querySelector(':scope > .dbt')) { gc.classList.add('dbt-ghost'); v1.insertBefore(gc, v1.firstChild); gcl.forEach((c) => v1.classList.add(c)); }
@@ -15591,7 +15592,7 @@ function nightMechC(o) {
   const rw2Kind = (t) => { let k = String(t || '').replace(/<[^>]+>/g, ''); const sg = k.split(' · '); k = sg.length > 1 ? sg[sg.length - 1] : k;
     k = k.replace(/\([^)]*\)/g, ''); if (rw2Names) k = k.replace(rw2Names, '§'); k = k.replace(/§(\s*(,|and)\s*§)+/g, '§').replace(/\b\d+\s+players\b/g, '§');
     const dm = k.match(/^(.+?):\s*§\s+died\b/); if (dm) k = dm[1] + ' deaths'; else if (/^§\s+died\b/.test(k)) k = 'Deaths';
-    k = k.replace(/\bP([1-4])\b/g, (m0, d) => 'P' + '\u2460\u2461\u2462\u2463'[d - 1]).replace(/^§\s*:\s*/, '').replace(/\b\d+[:.]\d+\b/g, '').replace(/\d+(\.\d+)?\s*(s|%|yd|yards|M|K)?\b/g, '').replace(/#/g, '');
+    k = k.replace(/\bP([1-4])\b/g, (m0, d) => 'P' + '\u2460\u2461\u2462\u2463'[d - 1]).replace(/^§\s*:\s*/, '').replace(/\b\d+\s+of\s+(?:the\s+)?\d+\s+/g, 'some of the ').replace(/\b\d+[:.]\d+\b/g, '').replace(/\d+(\.\d+)?\s*(s|%|yd|yards|M|K)?\b/g, '').replace(/#/g, '');
     const gp = k.match(/^([^,:]{1,20}),\s+(.+)$/); if (gp && (!/\s/.test(gp[1].trim()) || gp[2].includes(':'))) k = gp[2]; /* (a set's or group's name in front: "Set, ...", "Dreadmarch, ...") */
     const cp = k.match(/^([^:]{1,24}):\s+(.+)$/); if (cp && cp[1].trim().split(/\s+/).length <= 3) k = cp[2].trim().split(/\s+/).length > 1 ? cp[2] : cp[1].trim() + ' ' + cp[2];
     k = k.replace(/\b(after|in)\s+s\b/g, 'late');
@@ -15606,7 +15607,7 @@ function nightMechC(o) {
       for (const w of nm0.length ? nm0 : [...new Set((l.who || p.who || []).map((x) => String(x).split('-')[0]))]) e.who.set(w, (e.who.get(w) || 0) + 1); K.set(k, e); } }
     /* (plain "Deaths" next to "<mechanic> deaths" is the same thing on this mechanic: one row) */
     { const gen = K.get('Deaths'), sp = [...K.values()].find((e) => e.k !== 'Deaths' && / deaths$/.test(e.k)); if (gen && sp) { sp.c += gen.c; sp.bad += gen.bad; for (const [n, c] of gen.pulls) sp.pulls.set(n, (sp.pulls.get(n) || 0) + c); for (const [w, c] of gen.who) sp.who.set(w, (sp.who.get(w) || 0) + c); K.delete('Deaths'); } }
-    /* round 474 all pulls: one line per mistake */ { const nk = (k) => { const t = String(k).replace(/^[\u2014\u2013-]+\s*:?\s*/, '').replace(/\bsomeone's\b/g, 'one').replace(/\.$/, '').trim(); return t ? t.charAt(0).toUpperCase() + t.slice(1) : t; }, M2 = new Map();
+    /* round 474 all pulls: one line per mistake */ { const nk = (k) => { const t = String(k).replace(/^[\u2014\u2013-]+\s*:?\s*/, '').replace(/\bsomeone's\b/g, 'one').replace(/\.$/, '').trim().split(/,\s+/).filter((x, i, a) => !i || x.toLowerCase() !== a[i - 1].toLowerCase()).join(', '); return t ? t.charAt(0).toUpperCase() + t.slice(1) : t; }, M2 = new Map();
       for (const e of K.values()) { const k2 = nk(e.k); if (!k2) continue; const o = M2.get(k2); if (!o) { e.k = k2; M2.set(k2, e); continue; } o.c += e.c; o.bad += e.bad; for (const [n, c] of e.pulls) o.pulls.set(n, (o.pulls.get(n) || 0) + c); for (const [w, c] of e.who) o.who.set(w, (o.who.get(w) || 0) + c); }
       K.clear(); for (const [k2, e] of M2) K.set(k2, e); }
     const ks = [...K.values()].sort((a, b) => b.pulls.size - a.pulls.size || b.c - a.c), top = ks.slice(0, 5), mx = top.length ? top[0].c : 1;
