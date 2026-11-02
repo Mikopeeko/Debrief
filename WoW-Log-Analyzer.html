@@ -20746,6 +20746,293 @@ if (typeof module !== 'undefined') module.exports = api;
 
 </script>
 <script>
+// Debrief Companion: the Mythic+ run recap (Nov 1, Flex: "only show at the end of a dungeon ... outline the run, and have tabs to look at
+// each pull to show the mistakes on that given pull, bosses included ... DPS, HPS, Defensive usage, interupts, stopping casts with
+// disrupts, stuns etc."; and "Are you also including CC cast to stop casting even if its not a true interupt?": yes).
+// One key's log lines in (CHALLENGE_MODE_START to _END), one recap out: the run (dungeon, level, affixes, time, timed, score), its pulls
+// (trash packs and bosses), and per pull the kicks, the stops (a cast that never finished while a player's stun, knockback, silence,
+// disorient or fear was on the caster), the must-kick casts that got through while someone's kick was ready, deaths with what killed them,
+// defensives, dispels and purges, avoidable damage, and each player's damage or healing per second (pets count for their owner).
+// Must-kick lists (Nov 1, Flex: "Must-kick lists"): each Season 2 dungeon's casts to kick, casts to stop with CC, debuffs to dispel, enemy
+// buffs to purge or soothe, and damage to dodge, from the Wowhead guides and checked on Flex's keys (notes/Guides/Mythic+ must-kick lists.md).
+// A dungeon without a list falls back to "a spell somebody kicked at least once this key". Guide: notes/Guides/Mythic+ run recap - gameplan.md
+(function (root) {
+'use strict';
+// (crowd control that stops a cast: the aura a player's spell leaves on the enemy, by name)
+const CC = new Set(['leg sweep', 'shadowfury', 'static charge', 'hammer of justice', 'kidney shot', 'cheap shot', 'storm bolt', 'shockwave',
+  'intimidating shout', 'war stomp', 'chaos nova', 'fel eruption', 'mighty bash', 'maim', 'asphyxiate', 'blinding light', 'incapacitating roar',
+  'paralysis', 'binding shot', 'intimidation', 'psychic scream', 'psychic horror', 'silence', 'solar beam', 'sigil of silence', 'sigil of misery',
+  'strangulate', 'dragon\'s breath', 'ring of frost', 'mortal coil', 'howl of terror', 'fear', 'hex', 'polymorph', 'repentance', 'holy word: chastise',
+  'blinding sleet', 'sleep walk', 'quaking palm', 'gouge', 'blind', 'sap', 'imprison', 'freezing trap', 'scatter shot', 'disorienting roar',
+  'deep breath', 'terror of the skies', 'haymaker', 'bull rush', 'axe toss', 'cyclone', 'shackle undead', 'banish', 'capacitor totem',
+  'lightning lasso', 'thunderous paws', 'dead of winter', 'remorseless winter', 'gorefiend\'s grasp', 'death grip', 'mass grip', 'grip of the dead']);
+// (knockbacks and pulls leave no aura: the spell's hit on the enemy is the stop)
+const KNOCK = new Set(['thunderstorm', 'typhoon', 'ursol\'s vortex', 'ring of peace', 'blast wave', 'tail swipe', 'wing buffet', 'shining force',
+  'sigil of chains', 'gorefiend\'s grasp', 'death grip', 'mass grip', 'havoc', 'chaos nova', 'thundering orb', 'shockwave']);
+// (each dungeon's lists, by spell name as the log writes it. kick: must-kick casts; chan: the ones that are channels (the log shows them only
+// when they start); cc: [cast, what the enemy gains when nobody stopped it]; dispel: debuffs on players to remove (not the "only after a failed
+// mechanic" ones); purge: enemy buffs to purge or soothe; dodge: damage a player who isn't tanking should never take (bosses from the guides, trash
+// from Flex's keys and each spell's Wowhead text, Nov 1); own: a dodge-list attack aimed at each player in turn, so each player's first hit in a cast is
+// their own and only another one counts (Nov 1); pool: a puddle that puts a debuff on whoever stands in it (each landing is one hit). Seen on Flex's keys
+// Oct 4 to 31 (Murder Row, The Blinding Vale and Voidscar Arena found by date on Raider.IO), except Den of Nalorakk past its first boss)
+const LISTS = {
+  'altar of fangs': { kick: ['Piercing Hiss', 'Toxic Atrophy', 'Mass Envenom'], cc: [['Evolve', 'Evolved']],
+    dispel: ['Paralyzing Shots', 'Regurgitate', 'Envenom'], purge: ['Ravenous Claws'], dodge: ['Regurgitate', 'Burrowing Charge', 'Axegrinder', 'Septic Spatter'] },
+  'murder row': { kick: ['Fel Missiles', 'Seduction', 'Felstorm', 'Fel Rage', 'Health Funnel', 'Chaos Bolt'], chan: ['Health Funnel', 'Fel Missiles', 'Felstorm'],
+    dispel: ['Corroding Spittle', 'Heartstop Poison', 'Curse of Doom'], purge: ['Back to Work!'], dodge: ['Legion Strike'] },
+  'den of nalorakk': { kick: ['Scavenge', 'Healing Breeze', 'Frigid Roar', 'Winter\'s Shroud', 'Arc Lightning'],
+    dispel: ['Insatiable Hunger', 'Toxic Spores', 'Cryo Surge', 'Glacial Torment'], purge: ['Mother\'s Wrath', 'Bestial Wrath'], dodge: ['Earthshatter Slam'], pool: ['Rotten Ground'] },
+  'the blinding vale': { kick: ['Light Bolt Volley', 'Light Bolt@Kezkitt', 'Disorienting Screech', 'Warden\'s Wrath', 'Lightspore Shot'],
+    dispel: ['Bloodthorn Roots'], purge: [], dodge: ['Lightsower Dash', 'Fan of Thorns', 'Lightmaw Beams', 'Belch Spores', "Lightwarden's Blight"] },
+  'voidscar arena': { kick: ['Demoralizing Shout', 'Shadowbolt Volley', 'Violent Sand', 'Mad Shriek', 'Mending Void'], chan: ['Mending Void'],
+    dispel: ['Melt Armor', 'Corrosive Essence'], purge: ['Bolster'], dodge: ['Nether Dash', 'Poison Splash', 'Unstable Singularity', 'Void Beam'], own: ['Nether Dash'] }, /* (Nether Dash: "Dodge Other Lines. Targets each player with a line attack.") */
+  'ruby life pools': { kick: ['Ice Shield', 'Frigid Shard', 'Fiery Blast', 'Blaze Volley'], chan: ['Ice Shield'],
+    dispel: ['Cold Claws', 'Rolling Thunder', 'Stormslam'], purge: ['Blaze of Glory', 'Stormcloud Barrier'], dodge: ['Molten Boulder', 'Roaring Firebreath', 'Flame Breath'] },
+  'kings\' rest': { kick: ['Hex Volley', 'Bind Soul', 'Unholy Mending', 'Wretched Discharge', 'Hex', 'Poison Nova', 'Deathly Roar'],
+    dispel: ['Lingering Fluid', 'Putrid Seekers', 'Savage Maul'], purge: ['Bound by Shadow', 'Ancestral Fury', 'Bestial Berserk', 'Captain\'s Bulwark', 'Unholy Mending'], dodge: ['Gilded Destruction', 'Suppression Slam'] },
+  'temple of sethraliss': { kick: ['Poisoned Cheap Shot', 'Addle Mind', 'Poison Spit', 'Essence Disruption', 'Flame Shock'], chan: ['Essence Disruption'],
+    dispel: ['Cytotoxin', 'Imbued Conduction'], purge: ['Accumulate Charge'], dodge: ['Burrow'] },
+};
+// (each dungeon's timer in minutes (Nov 1, Flex: "yea" to the timer story), from Raider.IO's static data for Midnight (its keystone_timer_seconds,
+// read from the game), which agrees with the 12.1 final tuning (Icy Veins, Blizzard's Oct 13 post): Altar of Fangs 30, The Blinding Vale 30 and
+// Temple of Sethraliss 32 (Nov 1: they were 29, 31 and 33 here, from older pages). Two levels at 80% of the timer and three at 60%, as since
+// Battle for Azeroth)
+const TIMER = { 'altar of fangs': 30, 'murder row': 34, 'den of nalorakk': 32, 'the blinding vale': 30, 'voidscar arena': 30, 'kings\' rest': 33, 'temple of sethraliss': 32, 'ruby life pools': 28 };
+const lc = (s) => String(s || '').toLowerCase().replace(/[’`]/g, '\'');
+const listFor = (dungeon) => { const L = LISTS[lc(dungeon)]; if (!L) return null; const S = (a) => new Set((a || []).map(lc));
+  return { kick: S(L.kick), chan: S(L.chan), ccCast: new Map((L.cc || []).map(([c, r]) => [lc(r), c])), dispel: S(L.dispel), purge: S(L.purge), dodge: S(L.dodge), own: S(L.own), pool: S(L.pool) }; };
+const num = (x) => { const n = +x; return n === n ? n : 0; };
+const isPlayer = (g) => typeof g === 'string' && g.startsWith('Player-');
+const isNpc = (g) => typeof g === 'string' && (g.startsWith('Creature-') || g.startsWith('Vehicle-'));
+const short = (n) => String(n || '').replace(/-.*$/, '');
+const roleOf = (spec) => (/Restoration|Holy|Discipline|Mistweaver|Preservation/.test(spec) ? 'healer' : /Protection|Guardian|Blood|Brewmaster|Vengeance/.test(spec) ? 'tank' : 'dps');
+function build(text, E) {
+  const ADV = 19, lines = text.split('\n');
+  const run = { dungeon: '', level: 0, affixes: [], timed: false, timeMs: 0, score: null, started: null };
+  const players = new Map(); // guid -> { name, cls, spec, role }
+  const owners = new Map(); // pet guid -> player guid
+  const P = (g, n) => { let p = players.get(g); if (!p) { p = { guid: g, name: short(n), cls: '', spec: '' }; players.set(g, p); } if (n && !p.name) p.name = short(n); return p; };
+  const ev = []; // [t, kind, ...]
+  const encs = []; let enc = null, LIST = null, lastT = 0;
+  let t0 = null;
+  for (const line of lines) {
+    const ts = E.parseTs(line); if (!ts) continue;
+    const c = line.indexOf(',', ts.body); if (c < 0) continue;
+    const e = line.substring(ts.body, c);
+    if (t0 == null) t0 = ts.ms;
+    const t = (ts.ms - t0) / 1000;
+    const f = E.split(line, c + 1);
+    if (e === 'CHALLENGE_MODE_START') { run.dungeon = f[0]; run.level = num(f[3]); run.affixes = String(f[4] || '').replace(/[[\]]/g, '').split(/,/).filter(Boolean).map(Number); run.inst = f[1]; LIST = listFor(f[0]); continue; }
+    if (e === 'ZONE_CHANGE' && run.inst && f[0] !== run.inst && f[1] !== 'UNKNOWN AREA') { run.left = t; break; } /* (the group left the dungeon: the key ends here for the recap; a loading screen isn't leaving) */
+    lastT = t;
+    if (e === 'CHALLENGE_MODE_END') { run.timed = f[1] === '1'; run.timeMs = num(f[3]); run.score = num(f[4]) || null; run.end = t; continue; }
+    if (e === 'COMBATANT_INFO') { let s = num(f[24]); if (!E.SPECS[s]) s = num(f[23]); const p = P(f[0]); if (E.SPECS[s]) { p.spec = E.SPECS[s][0]; p.cls = E.SPECS[s][1]; p.specId = s; } continue; }
+    if (e === 'ENCOUNTER_START') { enc = { id: num(f[0]), boss: f[1], s: t, e: null }; encs.push(enc); continue; }
+    if (e === 'ENCOUNTER_END') { if (enc) { enc.e = t; enc.kill = f[4] === '1'; enc = null; } continue; }
+    if (e === 'SPELL_SUMMON' && isPlayer(f[0])) { owners.set(f[4], f[0]); continue; }
+    const sg = f[0], sn = f[1], dg = f[4], dn = f[5];
+    // (the owner of a pet or a guardian: from a summon, or the advanced block's owner field)
+    const ownerOf = (adv) => (isPlayer(sg) ? sg : owners.get(sg) || (f.length >= adv + ADV && f[adv] === sg && isPlayer(f[adv + 1]) ? f[adv + 1] : null));
+    switch (e) {
+      case 'SPELL_DAMAGE': case 'SPELL_PERIODIC_DAMAGE': case 'RANGE_DAMAGE': case 'SWING_DAMAGE': {
+        const swing = e === 'SWING_DAMAGE', adv = swing ? 8 : 11; if (f.length < adv + 8) break;
+        const hasAdv = f.length >= adv + ADV + 8, s0 = adv + (hasAdv ? ADV : 0);
+        const amt = Math.max(0, num(f[s0]) + num(f[s0 + 4]) + num(f[s0 + 5]) - Math.max(0, num(f[s0 + 2])));
+        const ow = ownerOf(adv);
+        if (ow && isNpc(dg)) { if (isPlayer(sg)) P(sg, sn); ev.push([t, 'dmg', ow, amt, dg, dn]); }
+        else if (isNpc(sg) && isPlayer(dg)) ev.push([t, 'hit', dg, amt, swing ? 'Melee' : f[9], sn, sg, e === 'SPELL_PERIODIC_DAMAGE', swing ? '' : f[8]]); /* (x[8]: the spell id, for its icon (Nov 1)) */
+        if (!swing && ow && isNpc(dg) && KNOCK.has(String(f[9]).toLowerCase())) ev.push([t, 'cc', ow, f[9], dg]);
+        break;
+      }
+      case 'SPELL_HEAL': case 'SPELL_PERIODIC_HEAL': {
+        if (f.length < 16) break; const s0 = 11 + (f.length >= 11 + ADV + 5 ? ADV : 0);
+        const eff = Math.max(0, num(f[s0 + 1]) - Math.max(0, num(f[s0 + 2]))), ow = ownerOf(11);
+        if (ow && isPlayer(dg)) ev.push([t, 'heal', ow, eff]);
+        break;
+      }
+      case 'SPELL_CAST_START': if (isNpc(sg)) ev.push([t, 'start', sg, sn, num(f[8]), f[9]]); break;
+      case 'SPELL_CAST_SUCCESS': { const ow = ownerOf(11);
+        if (ow) ev.push([t, 'cast', ow, num(f[8]), f[9]]); /* (a player's or their pet's: kicks, defensives) */
+        else if (isNpc(sg)) ev.push([t, 'done', sg, sn, num(f[8]), f[9]]);
+        break; }
+      case 'SPELL_INTERRUPT': { const ow = isPlayer(sg) ? sg : owners.get(sg); if (ow && isNpc(dg)) ev.push([t, 'kick', ow, f[9], dg, dn, num(f[11]), f[12]]); break; }
+      case 'SPELL_AURA_APPLIED': {
+        const ow = isPlayer(sg) ? sg : owners.get(sg);
+        if (ow && isNpc(dg) && CC.has(String(f[9]).toLowerCase())) ev.push([t, 'cc', ow, f[9], dg]);
+        else if (isPlayer(sg) && sg === dg) ev.push([t, 'aura', sg, num(f[8]), f[9]]);
+        else if (LIST && isNpc(sg) && isPlayer(dg) && f[11] === 'DEBUFF' && LIST.dispel.has(lc(f[9]))) ev.push([t, 'deb', dg, f[9]]); /* (a debuff to dispel landed) */
+        else if (LIST && isNpc(sg) && isPlayer(dg) && f[11] === 'DEBUFF' && LIST.pool.has(lc(f[9]))) ev.push([t, 'pool', dg, f[9]]); /* (someone stepped into a puddle) */
+        else if (LIST && isNpc(dg) && f[11] === 'BUFF' && (LIST.purge.has(lc(f[9])) || LIST.ccCast.has(lc(f[9])))) ev.push([t, 'ebuff', dg, f[9], dn]); /* (an enemy buff to purge, or what an unstopped cast gave) */
+        break;
+      }
+      /* (a buff taken off is a purge or soothe; a debuff taken off is a dispel, a friendly NPC's too: Altar's Cursed Bones get their Cursed cleansed) */
+      case 'SPELL_DISPEL': case 'SPELL_STOLEN': { const ow = isPlayer(sg) ? sg : owners.get(sg); if (ow) ev.push([t, e === 'SPELL_STOLEN' || f[14] === 'BUFF' ? 'purge' : 'dispel', ow, f[9], dg, dn, f[12]]); break; }
+      case 'UNIT_DIED': if (isPlayer(dg)) { if (f[8] !== '1') ev.push([t, 'died', dg, dn]); } else if (isNpc(dg)) ev.push([t, 'mobdied', dg]); break; /* (1 at the end: Feign Death, not a death, as the website reads it) */
+      default: break;
+    }
+  }
+  if (!players.size) return null;
+  if (run.end == null && run.left == null) run.left = lastT; /* (no end line: the app ended the key where the group left the dungeon (Nov 1)) */
+  for (const p of players.values()) p.role = roleOf(p.spec);
+  // ---- pulls: bosses are their own; trash starts when new enemies are engaged after the last pack is dead, or after a 4 s lull ----
+  const pulls = [], alive = new Set(), seen = new Set(); let cur = null, last = -1e9;
+  const inEnc = (t) => encs.find((x) => t >= x.s - 1 && t <= (x.e == null ? 1e9 : x.e + 1));
+  for (const x of ev) {
+    const t = x[0];
+    if (x[1] === 'mobdied') { alive.delete(x[2]); continue; }
+    let mob = null; if (x[1] === 'dmg') mob = [x[4], x[5]]; else if (x[1] === 'hit') mob = [x[6], x[5]]; if (!mob) continue;
+    const boss = inEnc(t);
+    if (boss) { if (!cur || cur.enc !== boss) { cur = { s: boss.s, e: boss.e || t, enc: boss, mobs: new Map() }; pulls.push(cur); } }
+    else if (!seen.has(mob[0]) && (!cur || cur.enc || alive.size === 0 || t - last > 4)) { cur = { s: t, e: t, enc: null, mobs: new Map() }; pulls.push(cur); }
+    if (!seen.has(mob[0])) { seen.add(mob[0]); alive.add(mob[0]); }
+    if (!cur.mobs.has(mob[1])) cur.mobs.set(mob[1], new Set()); cur.mobs.get(mob[1]).add(mob[0]);
+    if (!boss) cur.e = Math.max(cur.e, t); last = t;
+  }
+  // (a pack of one stray enemy hit for a few seconds is folded into the pull before it)
+  for (let i = pulls.length - 1; i > 0; i--) { const p = pulls[i]; const n = [...p.mobs.values()].reduce((a, s) => a + s.size, 0); if (!p.enc && n <= 1 && p.e - p.s < 8) { const q = pulls[i - 1]; for (const [k, v] of p.mobs) { if (!q.mobs.has(k)) q.mobs.set(k, new Set()); for (const g of v) q.mobs.get(k).add(g); } q.e = Math.max(q.e, p.e); pulls.splice(i, 1); } }
+  const pullOf = (t) => { for (let i = pulls.length - 1; i >= 0; i--) if (t >= pulls[i].s - 2) return i; return 0; };
+  // ---- casts: kicked, stopped, finished or cut short ----
+  const casts = [], open = new Map();
+  const kicks = ev.filter((x) => x[1] === 'kick'), ccs = ev.filter((x) => x[1] === 'cc');
+  for (const x of ev) {
+    if (x[1] === 'start') { const k = x[2] + '|' + x[4]; const c = { t: x[0], guid: x[2], mob: x[3], id: x[4], spell: x[5], res: 'cut' }; casts.push(c); open.set(k, c); }
+    else if (x[1] === 'done') { const c = open.get(x[2] + '|' + x[4]); if (c && x[0] - c.t < 12) { c.res = 'done'; c.end = x[0]; open.delete(x[2] + '|' + x[4]); }
+      else if (LIST && LIST.chan.has(lc(x[5]))) casts.push({ t: x[0], guid: x[2], mob: x[3], id: x[4], spell: x[5], res: 'chan' }); } /* (a must-kick channel started) */
+  }
+  for (const c of casts) {
+    if (c.res === 'done') continue;
+    const kk = kicks.find((k) => k[4] === c.guid && k[6] === c.id && k[0] >= c.t - 0.1 && k[0] <= c.t + (c.res === 'chan' ? 8 : 6));
+    if (kk) { c.res = 'kicked'; c.by = kk[2]; c.with = kk[3]; c.at = kk[0]; continue; }
+    const cc = ccs.find((k) => k[4] === c.guid && k[0] >= c.t - 0.2 && k[0] <= c.t + 4);
+    if (cc) { c.res = 'stopped'; c.by = cc[2]; c.with = cc[3]; c.at = cc[0]; }
+    else if (c.res === 'chan') c.res = 'done';
+  }
+  // (must-kick: the dungeon's list; without one, a spell somebody deliberately kicked at least once this key (an area stun alone doesn't make one))
+  const kickedIds = new Set(casts.filter((c) => c.res === 'kicked').map((c) => c.id));
+  const danger = (c) => (LIST ? LIST.kick.has(lc(c.spell)) || LIST.kick.has(lc(c.spell) + '@' + lc(c.mob)) : kickedIds.has(c.id)); /* ("Spell@Caster": only from that enemy) */
+  // (whose kick was ready when a must-kick cast went off: each player's interrupts for their spec, from the engine, and when they last pressed
+  // them. A cast that got through with nobody's kick ready isn't a mistake (Nov 1))
+  const kickNames = new Map(); for (const p of players.values()) { const l = ((E.INTERRUPTS || {})[p.cls] || []).filter((k) => !k[2] || k[2].includes(p.specId)); if (l.length) kickNames.set(p.guid, l); }
+  const pressed = new Map(); for (const x of ev) if (x[1] === 'cast' && kickNames.has(x[2]) && kickNames.get(x[2]).some((k) => k[0] === x[4])) { if (!pressed.has(x[2])) pressed.set(x[2], []); pressed.get(x[2]).push([x[0], x[4]]); }
+  const readyAt = (t) => [...kickNames].filter(([g, l]) => l.some((k) => { const last = (pressed.get(g) || []).filter((q) => q[1] === k[0] && q[0] < t).pop(); return !last || t - last[0] >= k[1]; })).map(([g]) => g);
+  // ---- per pull ----
+  const defIds = new Map(); for (const [cls, list] of Object.entries(E.DEFENSIVES || {})) for (const d of list) defIds.set(d[1], d[0]);
+  const out = pulls.map((p, i) => ({ n: i + 1, s: p.s, e: p.e, boss: p.enc ? p.enc.boss : null, kill: p.enc ? !!p.enc.kill : null,
+    mobs: [...p.mobs].map(([n, g]) => [n, g.size]).sort((a, b) => b[1] - a[1]), dmg: {}, heal: {}, kicks: [], stops: [], through: [], deaths: [], defs: [], dispels: [], purges: [],
+    avoid: {}, debs: {}, ebuffs: {} }));
+  const addTo = (o, k, v) => { o[k] = (o[k] || 0) + v; }, avoidOf = (o, who, spell) => o.avoid[who + '|' + spell] || (o.avoid[who + '|' + spell] = { who, spell, n: 0, dmg: 0 });
+  const recent = new Map(), inPool = new Set(), lastHit = new Map(), ownAt = new Map(); // player -> last hits; player|puddle stepped into, not ticked yet; player|spell -> its last hit; player|spell -> their own line's hit
+  for (const x of ev) {
+    const pi = pullOf(x[0]), o = out[pi]; if (!o) continue;
+    if (x[1] === 'dmg') addTo(o.dmg, x[2], x[3]);
+    else if (x[1] === 'heal') addTo(o.heal, x[2], x[3]);
+    else if (x[1] === 'hit') { const l = recent.get(x[2]) || []; l.push([x[0], x[4], x[5], x[3]]); if (l.length > 6) l.shift(); recent.set(x[2], l);
+      /* (avoidable damage: a dodge-list spell's direct hit (not the damage-over-time some leave) on anyone but a tank, who may be standing in a frontal on purpose;
+         a beam or breath that hits every second while you stand in it is one hit until you're out of it for 1.6 s (Nov 1)) */
+      if (LIST && (players.get(x[2]) || {}).role !== 'tank') { if (!x[7] && LIST.dodge.has(lc(x[4])) && LIST.own.has(lc(x[4])) && !(ownAt.get(x[2] + '|' + lc(x[4])) > x[0] - 8)) ownAt.set(x[2] + '|' + lc(x[4]), x[0]); /* (their own line this cast: not a mistake) */
+      else if (!x[7] && LIST.dodge.has(lc(x[4]))) { const a = avoidOf(o, x[2], x[4]); if (!a.id && x[8]) a.id = x[8]; const k = x[2] + '|' + lc(x[4]); if (!(lastHit.get(k) > x[0] - 1.6)) a.n++; lastHit.set(k, x[0]); a.dmg += x[3]; } else if (x[7] && LIST.pool.has(lc(x[4]))) { const a = avoidOf(o, x[2], x[4]), k = x[2] + '|' + lc(x[4]); if (inPool.has(k)) { a.n++; inPool.delete(k); } a.dmg += x[3]; } } }
+    /* (a puddle: one hit each time someone stepped in and it ticked on them; out again within a second isn't a mistake. Its ticks are the damage) */
+    else if (x[1] === 'pool') inPool.add(x[2] + '|' + lc(x[3]));
+    else if (x[1] === 'aura' && defIds.has(x[3])) o.defs.push({ t: x[0], who: x[2], name: defIds.get(x[3]) });
+    else if (x[1] === 'cast' && defIds.has(x[3])) { if (!o.defs.some((d) => d.who === x[2] && d.name === defIds.get(x[3]) && Math.abs(d.t - x[0]) < 2)) o.defs.push({ t: x[0], who: x[2], name: defIds.get(x[3]) }); }
+    else if (x[1] === 'dispel' || x[1] === 'purge') { o[x[1] + 's'].push({ t: x[0], who: x[2], removed: x[6], on: short(x[5]) });
+      const m = x[1] === 'dispel' ? o.debs : o.ebuffs, k = LIST && (x[1] === 'dispel' ? LIST.dispel : LIST.purge).has(lc(x[6])) ? x[6] : null; if (k) { const b = m[k] || (m[k] = { on: 0, removed: 0 }); b.removed++; } }
+    else if (x[1] === 'deb') { const b = o.debs[x[3]] || (o.debs[x[3]] = { on: 0, removed: 0 }); b.on++; }
+    else if (x[1] === 'ebuff') {
+      if (LIST.ccCast.has(lc(x[3]))) o.through.push({ t: x[0], spell: LIST.ccCast.get(lc(x[3])), mob: short(x[4]), ready: [], cc: true }); /* (nobody stunned it: the enemy got its buff) */
+      else { const b = o.ebuffs[x[3]] || (o.ebuffs[x[3]] = { on: 0, removed: 0 }); b.on++; } }
+    else if (x[1] === 'died') { const l = (recent.get(x[2]) || []).filter((h) => x[0] - h[0] < 5); const top = l.slice().sort((a, b) => b[3] - a[3])[0];
+      o.deaths.push({ t: x[0], who: x[2], to: top ? top[1] : 'unknown', from: top ? top[2] : '', defs: out.flatMap((q) => q.defs).filter((d) => d.who === x[2] && x[0] - d.t < 30).length }); }
+  }
+  for (const c of casts) {
+    const o = out[pullOf(c.t)]; if (!o) continue;
+    if (c.res === 'kicked') o.kicks.push({ t: c.at, who: c.by, with: c.with, spell: c.spell, mob: c.mob, id: c.id });
+    else if (c.res === 'stopped') o.stops.push({ t: c.at, who: c.by, with: c.with, spell: c.spell, mob: c.mob, id: c.id });
+    else if (c.res === 'done' && danger(c)) { const rd = readyAt(c.t); if (rd.length) o.through.push({ t: c.t, spell: c.spell, mob: c.mob, ready: rd, id: c.id }); } /* (id: the spell's icon (Nov 1)) */
+  }
+  for (const o of out) { const d = Math.max(1, o.e - o.s); o.dur = d; for (const k of ['dmg', 'heal']) for (const g of Object.keys(o[k])) o[k][g] = Math.round(o[k][g] / d); o.through.sort((a, b) => a.t - b.t); }
+  // ---- the whole key, per player ----
+  const total = Math.max(1, (run.end != null ? run.end : out.length ? out[out.length - 1].e : 1));
+  const people = [...players.values()].filter((p) => p.cls).map((p) => {
+    const sum = (k) => out.reduce((a, o) => a + (o[k][p.guid] || 0) * o.dur, 0);
+    const cnt = (k) => out.reduce((a, o) => a + o[k].filter((x) => x.who === p.guid).length, 0);
+    const av = out.flatMap((o) => Object.values(o.avoid).filter((a) => a.who === p.guid && a.n));
+    return { guid: p.guid, name: p.name, cls: p.cls, spec: p.spec, role: p.role, dps: Math.round(sum('dmg') / total), hps: Math.round(sum('heal') / total),
+      kicks: cnt('kicks'), stops: cnt('stops'), deaths: cnt('deaths'), defs: cnt('defs'), dispels: cnt('dispels'), purges: cnt('purges'), kick: kickNames.has(p.guid) || cnt('kicks') > 0, /* (has a kick: their spec's, or they kicked something) */
+      avoid: av.reduce((a, x) => a + x.n, 0), avoidDmg: av.reduce((a, x) => a + x.dmg, 0) };
+  });
+  const name = (g) => (players.get(g) || {}).name || short(g);
+  for (const o of out) for (const k of ['kicks', 'stops', 'deaths', 'defs', 'dispels', 'purges']) for (const x of o[k]) x.who = name(x.who);
+  for (const o of out) for (const x of o.through) x.ready = x.ready.map(name);
+  for (const o of out) { const fix = (m) => { const r = {}; for (const [g, v] of Object.entries(m)) r[name(g)] = v; return r; }; o.dmg = fix(o.dmg); o.heal = fix(o.heal);
+    o.avoid = Object.values(o.avoid).filter((a) => a.n).map((a) => ({ who: name(a.who), spell: a.spell, n: a.n, dmg: Math.round(a.dmg), id: a.id || '' })).sort((a, b) => b.dmg - a.dmg);
+    o.debs = Object.entries(o.debs).map(([spell, b]) => ({ spell, on: b.on, removed: b.removed })); o.ebuffs = Object.entries(o.ebuffs).map(([spell, b]) => ({ spell, on: b.on, removed: b.removed })); }
+  // ---- the timer (Nov 1): how close the key was to each upgrade, what the deaths cost, and fighting against the time between pulls. The
+  // clock starts 10 s after CHALLENGE_MODE_START (the countdown); the time WoW wrote at the end, less the time that passed, is what deaths added
+  // (15 s each at +12 and up on Flex's keys, nothing at +2 to +5), within a second or two, so it's rounded to 5 s ----
+  const par = TIMER[lc(run.dungeon)];
+  if (par && run.timeMs && run.end != null && !run.left) {
+    const T = run.timeMs / 1000, P = par * 60, fight = out.reduce((a, o) => a + o.dur, 0);
+    const lost = Math.max(0, Math.round((T - (run.end - 10) - 1) / 5) * 5), deaths = out.reduce((a, o) => a + o.deaths.length, 0);
+    const up = (s) => (s <= P * 0.6 ? 3 : s <= P * 0.8 ? 2 : s <= P ? 1 : 0), lv = up(T);
+    run.clock = { par: P, time: T, up: lv, next: lv && lv < 3 ? (lv === 1 ? P * 0.8 : P * 0.6) : null, over: lv ? 0 : T - P,
+      deathCost: lost, deaths, upWithout: lost ? up(T - lost) : lv, fight: Math.round(fight), between: Math.max(0, Math.round(T - lost - fight)) };
+  }
+  const thr = out.flatMap((o) => o.through);
+  return { run, people, pulls: out, list: !!LIST, casts: { total: casts.length, kicked: casts.filter((c) => c.res === 'kicked').length, stopped: casts.filter((c) => c.res === 'stopped').length,
+    through: thr.filter((x) => !x.cc).length, ccThrough: thr.filter((x) => x.cc).length }, avoid: people.reduce((a, p) => a + p.avoid, 0) };
+}
+// ---- Rotation per pull (Nov 1, Flex: "will this also include rotation break down pull by pull?"): the website's own Rotation checks on each
+// pull of the key, as the boss card has them. It needs the website's engine and its specRun (the app has both): each pull's lines, with the
+// key's spec lines stamped at the pull's start, read as one fight (1 to 2 seconds for a whole key). A Mythic+ pull isn't a raid pull: potions, raid openers and mana at the end
+// aren't judged, and a big cooldown's "uses" count on bosses only (holding one on trash for the next pull is normal). opts.line turns a check
+// into the card's short line, opts.icon a spell name into its icon id. Adds o.rot (each player's top 3 fixes and what went well) and
+// people[].rot (the fixes that came up most across the key) ----
+const plainT = (s) => String(s == null ? '' : s).replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, '\'').trim();
+const ROT_SKIP = /^(Opener|Mana at the)|potion/i; /* (a potion is for the big pull or the boss, not every pull: "Combat potions", "Potion with Breath of Eons") */
+async function rotation(R, text, W, opts) {
+  const E = W.E, o2 = opts || {}, line = o2.line || ((c) => plainT(c.label)), icon = o2.icon || (() => ''), lines = text.split('\n');
+  let t0 = null; const ts = new Float64Array(lines.length);
+  for (let i = 0; i < lines.length; i++) { const p = E.parseTs(lines[i]); if (!p) { ts[i] = i ? ts[i - 1] : 0; continue; } if (t0 == null) t0 = p.ms; ts[i] = (p.ms - t0) / 1000; }
+  const info = lines.filter((l) => l.indexOf('COMBATANT_INFO') > 0), stamp = /^.*?(?=  )/, began = Date.now();
+  let i0 = 0;
+  for (const o of R.pulls) {
+    if (Date.now() - began > (o2.budget || 30000)) break;
+    while (i0 < lines.length && ts[i0] < o.s - 1) i0++; let i1 = i0; while (i1 < lines.length && ts[i1] <= o.e + 1) i1++;
+    const pe = i1 - i0 > 50 ? E.parseTs(lines[i0]) : null; if (!pe) continue;
+    const st = (lines[i0].match(stamp) || [''])[0], seg = info.map((l) => l.replace(stamp, st)).concat(lines.slice(i0, i1)).join('\n');
+    const b = { kind: 'pull', startMs: pe.ms, id: 990002, boss: o.boss || 'Pull ' + o.n, diffId: 8, kill: true, duration: o.dur, pull: o.n, dungeon: true };
+    let rep = null; try { rep = E.analyze(b, seg, { packs: (W.S && W.S.packs) || E.PACKS, overrides: {} }); } catch (e) { rep = null; }
+    if (!rep) continue;
+    o.rot = {};
+    for (const p of rep.players.values()) {
+      if (!p.specName || !p.name) continue;
+      let x = null; try { x = W.specRun(p.specName, [rep], p.name, true); } catch (e) { x = null; }
+      if (!x || !x.checks) continue;
+      const cs = x.checks.filter((c) => c.st && c.st !== 'na' && !/^(st|boss):/.test(String(c.k || '')) && !ROT_SKIP.test(plainT(c.label)) && !(!o.boss && / uses$/i.test(plainT(c.label))));
+      const fix = cs.filter((c) => c.st === 'bad' || c.st === 'warn').sort((a, c) => (c.st === 'bad') - (a.st === 'bad') || (c.cost || 0) - (a.cost || 0)).slice(0, 3);
+      const ln = (c) => { try { return plainT(line(c)); } catch (e) { return plainT(c.label); } };
+      const bt = (c) => { try { return o2.bits ? o2.bits(c, o.s) : null; } catch (e) { return null; } }; /* (what happened, the fix, the bar and the moments (Nov 1)) */
+      o.rot[short(p.name)] = { fix: fix.map((c) => { const b = bt(c); return b ? [c.st, icon(c.ic) || '', plainT(c.label), plainT(c.v), [b.what, b.why].filter(Boolean).join(' '), b.tip, b.aim, b.mom.join(';')] : [c.st, icon(c.ic) || '', plainT(c.label), plainT(c.v), ln(c)]; }), good: cs.filter((c) => c.st === 'ok' && c.isMain).slice(0, 3).map((c) => plainT(c.label)) };
+    }
+    await new Promise((r) => setTimeout(r, 0)); /* (the app stays responsive between pulls) */
+  }
+  // (across the key: each player's fixes by how many pulls they came up in, the worst colour, and the line from the first of them)
+  for (const q of R.people) {
+    const by = new Map(), seen = R.pulls.filter((o) => o.rot && o.rot[q.name]);
+    for (const o of seen) for (const f of o.rot[q.name].fix) { const k = f[2], a = by.get(k) || { st: f[0], ic: f[1], label: k, line: f[4], tip: f[5] || '', aim: f[6] || '', pulls: [] }; if (f[0] === 'bad') a.st = 'bad'; a.pulls.push(o.n); by.set(k, a); }
+    q.rot = seen.length ? { pulls: seen.length, fix: [...by.values()].sort((a, c) => c.pulls.length - a.pulls.length || (c.st === 'bad') - (a.st === 'bad')).slice(0, 4) } : null;
+  }
+  return R;
+}
+root.DBF_MPLUS = build;
+root.DBF_MPTIMER = TIMER; // (the main window's key timer (round 482): each dungeon's time limit in minutes)
+root.DBF_MPLUS_ROT = rotation;
+if (typeof module !== 'undefined') { module.exports = build; module.exports.rotation = rotation; }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
 (function (root) {
 'use strict';
 // Warcraft Logs reports: fetched through the local helper (server.ps1), then translated into
@@ -20834,7 +21121,7 @@ async function gql(creds, query, variables) {
 }
 
 const REPORT_Q = `query($code:String!){reportData{report(code:$code){title startTime endTime zone{name} guild{id name}
-  fights{id encounterID name difficulty kill startTime endTime size keystoneLevel fightPercentage bossPercentage lastPhase lastPhaseIsIntermission friendlyPlayers}
+  fights{id encounterID name difficulty kill startTime endTime size keystoneLevel keystoneTime keystoneBonus keystoneAffixes fightPercentage bossPercentage lastPhase lastPhaseIsIntermission friendlyPlayers dungeonPulls{encounterID name}}
   masterData{actors{id name type subType server petOwner gameID} abilities{gameID name type}}}}}`;
 const EVENTS_Q = `query($code:String!,$fid:[Int]!,$s:Float!,$e:Float!){reportData{report(code:$code){
   events(fightIDs:$fid,startTime:$s,endTime:$e,limit:10000,includeResources:true){data nextPageTimestamp}}}}`;
@@ -20943,10 +21230,34 @@ async function playerAbOf(run, v) {
   return { dur: Math.round(Math.max(1, (f.endTime - f.startTime) / 1000)), ab: dd.map((e) => ({ name: e.name, id: e.guid, total: e.total || 0, casts: casts.get(e.name) || 0 })),
     cast: kk.map((e) => ({ name: e.name, id: e.guid, n: e.total || 0 })) }; // (every spell they cast, cooldowns too, for casts a minute and cooldown uses)
 }
+// The fastest timed runs of one dungeon at one key level this season, for the Mythic+ tab (Nov 1): Warcraft Logs' speed rankings (its
+// bracket is the level less one: bracket 11 is +12, checked on Voidscar Arena), the 10 fastest with a public log, each with who played
+// what and their damage (healers: healing) a second from the run's own rankings, 5 runs a request. v: { e: the dungeon (Warcraft Logs'
+// encounter), l: the key level }
+const MPFAST_Q = `query($e:Int!,$b:Int!){worldData{encounter(id:$e){fightRankings(bracket:$b,metric:speed,page:1)}}}`;
+async function mpFastOf(run, v) {
+  const P = (x) => (typeof x === 'string' ? JSON.parse(x) : x);
+  const fr = await run(MPFAST_Q, { e: v.e, b: v.l - 1 }), R = P(fr && fr.worldData && fr.worldData.encounter && fr.worldData.encounter.fightRankings) || {};
+  const top = (R.rankings || []).filter((t) => t && t.report && /^[A-Za-z0-9]{8,32}$/.test(t.report.code) && t.report.fightID > 0 && t.duration > 0 && (t.bracketData == null || t.bracketData === v.l)).slice(0, 10);
+  const chunks = []; for (let i = 0; i < top.length; i += 5) chunks.push(top.slice(i, i + 5));
+  const amt = (x) => { const m = new Map(); for (const f of (P(x) || {}).data || []) for (const role of Object.values(f.roles || {})) for (const c of role.characters || []) if (c && c.name) m.set(c.name, Math.round(c.amount || 0)); return m; };
+  const got = await Promise.all(chunks.map(async (ch) => {
+    const q = 'query{reportData{' + ch.map((t, i) => { const f = t.report.fightID | 0; return 'k' + i + ':report(code:"' + t.report.code + '"){d:rankings(fightIDs:[' + f + '],playerMetric:dps) h:rankings(fightIDs:[' + f + '],playerMetric:hps)}'; }).join(' ') + '}}';
+    let d = null; try { d = await run(q, {}); } catch (e) { d = null; }
+    return ch.map((t, i) => { const x = d && d.reportData && d.reportData['k' + i], D = x ? amt(x.d) : new Map(), H = x ? amt(x.h) : new Map();
+      return { code: t.report.code, fight: t.report.fightID, at: t.report.startTime || 0, dur: Math.round(t.duration), deaths: t.deaths | 0, region: t.server ? t.server.region || '' : '', server: t.server ? t.server.name || '' : '',
+        ppl: (t.team || []).map((m) => { const r = /heal/i.test(m.role) ? 'healer' : /tank/i.test(m.role) ? 'tank' : 'dps'; return { n: m.name, c: m.class, s: m.spec, r, a: (r === 'healer' ? H : D).get(m.name) || null }; }) }; });
+  }));
+  return { e: v.e, l: v.l, runs: got.flat() };
+}
 // </topspec>
 async function topSpec(creds, v) {
   if (HOSTED) return api('/api/topspec?e=' + v.e + '&c=' + encodeURIComponent(v.c) + '&s=' + encodeURIComponent(v.s) + '&d=' + v.d + '&m=' + v.m + '&v=4'); // (v=4: the top 8, each with their own spells and their kill's report and fight)
   return topSpecOf((q, vars) => gql(creds, q, vars), v);
+}
+async function mpFast(creds, v) {
+  if (HOSTED) return api('/api/mpfast?e=' + v.e + '&l=' + v.l);
+  return mpFastOf((q, vars) => gql(creds, q, vars), v);
 }
 async function topKills(creds, v) {
   if (HOSTED) return api('/api/topkills?e=' + v.e + '&d=' + v.d + '&p=' + v.p + '&v=2'); // (v=2: answers with each guild's number)
@@ -20994,8 +21305,15 @@ async function loadReport(creds, code, live) {
       roster: (f.friendlyPlayers || []).map((i) => (actors.get(i) || {}).name).filter(Boolean),
       pull: pulls[k], run: null, wallMs: rep.startTime + f.startTime, wcl: { code, fight: f.id, start: f.startTime, end: f.endTime, actors, abilities, encounterID: f.encounterID, rawDiff: diffId } };
   });
+  // (Mythic+ keys, for the Mythic+ tab (Nov 1): Warcraft Logs keeps a whole key as one fight, with its level, the time on the key's timer
+  // (deaths included), how many levels it went up (0: over time) and its bosses; a key left early has no time. A minute or less is a
+  // key started and reset, not a run)
+  const runs = rep.fights.filter((f) => f.keystoneLevel > 0 && f.encounterID > 0 && f.endTime - f.startTime > 60000).map((f) => ({ kind: 'run', id: f.encounterID, boss: f.name, level: f.keystoneLevel, diff: '+' + f.keystoneLevel, diffId: 8, size: 5,
+    timed: (f.keystoneBonus | 0) > 0, up: f.keystoneBonus | 0, keyMs: f.keystoneTime || null, affixes: f.keystoneAffixes || [], kill: !!f.kill, startMs: BASE + f.startTime, wallMs: rep.startTime + f.startTime, duration: (f.endTime - f.startTime) / 1000,
+    roster: (f.friendlyPlayers || []).map((i) => (actors.get(i) || {}).name).filter(Boolean),
+    wcl: { code, fight: f.id, start: f.startTime, end: f.endTime, actors, abilities, encounterID: f.encounterID, rawDiff: 8, key: true, bosses: new Map((f.dungeonPulls || []).filter((p) => p.encounterID > 0).map((p) => [p.encounterID, p.name])) } }));
   // (endMs: the time of the report's last event, which keeps moving while someone live logs it)
-  return { title: rep.title, zone: rep.zone && rep.zone.name, bosses, runs: [], dungeons, endMs: rep.endTime || null };
+  return { title: rep.title, zone: rep.zone && rep.zone.name, bosses, runs, dungeons, endMs: rep.endTime || null };
 }
 
 // ---------- a team's reports: every raid night as short pull summaries (saved progress), no event downloads ----------
@@ -21263,7 +21581,13 @@ function* translateSteps(item, events) {
     return [has ? who : '0000000000000000', '0000000000000000', hp, mx, 0, 0, 0, 0, 0, 0, pw[0], pw[1], pw[2], pw[3], x, y, e.mapID || 0, fc.toFixed(4), 0].join(',');
   };
   const add = (e, body) => out.push(stamp(e.timestamp) + body);
-  out.push(stamp(w.start) + 'ENCOUNTER_START,' + w.encounterID + ',' + q(item.boss) + ',' + w.rawDiff + ',' + item.size + ',0');
+  // (a Mythic+ key (Nov 1) is written the way WoW writes one: the key's start and end around it, and each boss's start and end inside it, with
+  // the boss's name in English from the key's pull list (the events carry the logger's own language). Its time is the time on the key's timer)
+  const key = !!w.key; let keyEnd = false;
+  const keyBoss = (e) => q((w.bosses && w.bosses.get(e.encounterID)) || e.name || 'Boss');
+  const keyEndLine = () => 'CHALLENGE_MODE_END,0,' + (item.timed ? 1 : 0) + ',' + item.level + ',' + Math.round(item.keyMs) + ',0';
+  if (key) out.push(stamp(w.start) + 'CHALLENGE_MODE_START,' + q(item.boss) + ',0,0,' + item.level + ',[' + (item.affixes || []).join(',') + ']');
+  else out.push(stamp(w.start) + 'ENCOUNTER_START,' + w.encounterID + ',' + q(item.boss) + ',' + w.rawDiff + ',' + item.size + ',0');
   // pets first, so their damage is credited to their owner
   for (const a of actors.values()) if (a.type === 'Pet' && a.petOwner != null)
     out.push(stamp(w.start) + 'SPELL_SUMMON,' + unit(a.petOwner) + ',' + unit(a.id) + ',0,"Summon",0x1');
@@ -21339,9 +21663,12 @@ function* translateSteps(item, events) {
       case 'interrupt':
         add(e, 'SPELL_INTERRUPT,' + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + spell(e.extraAbilityGameID));
         break;
-      case 'dispel':
-        add(e, 'SPELL_DISPEL,' + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + spell(e.extraAbilityGameID) + ',DEBUFF');
+      case 'dispel': /* (on a key, a buff taken off an enemy is a purge or soothe (Nov 1)) */
+        add(e, 'SPELL_DISPEL,' + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + spell(e.extraAbilityGameID) + (key && e.isBuff ? ',BUFF' : ',DEBUFF'));
         break;
+      case 'dungeonencounterstart': if (key) add(e, 'ENCOUNTER_START,' + e.encounterID + ',' + keyBoss(e) + ',8,5,0'); break;
+      case 'dungeonencounterend': if (key) add(e, 'ENCOUNTER_END,' + e.encounterID + ',' + keyBoss(e) + ',8,5,' + (e.kill ? 1 : 0) + ',0'); break;
+      case 'dungeonend': if (key && item.keyMs && !keyEnd) { keyEnd = true; add(e, keyEndLine()); } break;
       case 'resurrect': // (battle rezzes, for the wipe call (Oct 23))
         add(e, 'SPELL_RESURRECT,' + src(e) + ',' + dst(e) + ',' + spell(ab));
         break;
@@ -21352,11 +21679,12 @@ function* translateSteps(item, events) {
         break; }
     }
   }
-  out.push(stamp(w.end) + 'ENCOUNTER_END,' + w.encounterID + ',' + q(item.boss) + ',' + w.rawDiff + ',' + item.size + ',' + (item.kill ? 1 : 0) + ',' + Math.round((w.end - w.start)));
+  if (key) { if (item.keyMs && !keyEnd) out.push(stamp(w.end) + keyEndLine()); } /* (a key left early has no end: the reader ends it at its last line) */
+  else out.push(stamp(w.end) + 'ENCOUNTER_END,' + w.encounterID + ',' + q(item.boss) + ',' + w.rawDiff + ',' + item.size + ',' + (item.kill ? 1 : 0) + ',' + Math.round((w.end - w.start)));
   return out;
 }
 
-root.WCL = { HOSTED, paceRecs, rateRecs, curveRecs, killGuild, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
+root.WCL = { HOSTED, mpFast, MPFAST_Q, paceRecs, rateRecs, curveRecs, killGuild, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -23156,7 +23484,7 @@ function myPageInTab(root, g) { const pg = root.querySelector('.home.prog'); if 
 // (the tabs on a team's page: My Page lit when it's your team's; the raid's tabs open the raid you came from, on that tab)
 function pgTabBar(g) { const t = homeTarget(), back = !!(PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK)), name = new Map([['live', 'Recap']].concat(TABS));
   return '<div class="tabbar pg-tabbar"><nav class="tabs" role="tablist">' + meTabHtml(!!(t && g && g.gid === t.gid)) + TAB_ORDER.map((k) => { const off = !back || (k === 'cmp' && CMP_OFF()) || (k === 'gdz' && GDZ_OFF()) || (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()) || (k === 'overview' && ASG_OFF()), tt = !back ? 'Open a raid night first' : k === 'overview' && off ? 'In Development' : off ? 'Under development' : TAB_TIP[k] || '';
-    return '<button class="tab' + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + tabIco(k) + esc(name.get(k)) + '</button>'; }).join('') + '</nav></div>'; }
+    return '<button class="tab' + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + tabIco(k) + esc(name.get(k)) + '</button>'; }).join('') + mpTabHtml() + '</nav></div>'; } /* (Mythic+ when the open report has a key, Nov 1) */
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.pg-tabbar .tab'); if (!b) return; const k = b.dataset.t;
   if (k === 'me') { const h = meHomeChar(); if (h) { meSwitch(h.gid); return; } if (!b.classList.contains('on')) openMyPage(); return; } if (b.classList.contains('tab-off')) { b.focus(); return; } if (k === 'overview') { planPage(); window.scrollTo(0, 0); return; } S.tab = k; select(PROG_BACK); });
 // ---- the boss banner on top of every tab ----
@@ -23388,7 +23716,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-11-01', h: [{ t: 'Rotation knows single target from AoE', d: 'Your rotation is now judged by how many enemies were close: Divine Storm, Blade Flurry, Whirlwind, Spinning Crane Kick and Seed of Corruption on packs, the single-target buttons on one. For now in Mythic+, where packs are the fight. Raid shows how many enemies were close.' }, { t: 'A key for your recap', d: 'Press Ctrl + Shift + D anywhere, even in WoW, and your newest recap shows over the game; press it again to hide it. Debrief Companion asks you to pick the key once, and you can change it any time. Play in Windowed (Fullscreen) so it shows on top.' }, { t: 'Mythic+ run recap', d: 'When a key ends, Debrief Companion pops up one recap of the whole run: how close you came to the next level and what the deaths cost, a tab for each pull with what got through and whose kick was ready, kicks and stuns, avoidable damage, deaths, and everyone\'s rotation, for you or anyone in the group. Save this key brings the same recap into WoW.' }, { t: 'Debriefing Timeline, across the page', d: 'Each phase is one chart: every mechanic a row, every moment a dot, green for done right and red for a mistake, with the boss health behind. Hover a dot for what happened. Under it, every mistake is one line; click it for why and what to do next time.' }], n: [
+  { d: '2026-11-01', h: [{ t: 'Mythic+ tab', d: 'Open a Warcraft Logs report with a Mythic+ key, and the new Mythic+ tab shows the whole key. First, what gets you the next level, ranked by seconds on the timer. Then where you fell behind the fastest timed run of your dungeon and level. Then every pull, the casts that got through, the deaths, and each player against the same spec in the fastest runs.' }, { t: 'Rotation knows single target from AoE', d: 'Your rotation is now judged by how many enemies were close: Divine Storm, Blade Flurry, Whirlwind, Spinning Crane Kick and Seed of Corruption on packs, the single-target buttons on one. For now in Mythic+, where packs are the fight. Raid shows how many enemies were close.' }, { t: 'A key for your recap', d: 'Press Ctrl + Shift + D anywhere, even in WoW, and your newest recap shows over the game; press it again to hide it. Debrief Companion asks you to pick the key once, and you can change it any time. Play in Windowed (Fullscreen) so it shows on top.' }, { t: 'Mythic+ run recap', d: 'When a key ends, Debrief Companion pops up one recap of the whole run: how close you came to the next level and what the deaths cost, a tab for each pull with what got through and whose kick was ready, kicks and stuns, avoidable damage, deaths, and everyone\'s rotation, for you or anyone in the group. Save this key brings the same recap into WoW.' }, { t: 'Debriefing Timeline, across the page', d: 'Each phase is one chart: every mechanic a row, every moment a dot, green for done right and red for a mistake, with the boss health behind. Hover a dot for what happened. Under it, every mistake is one line; click it for why and what to do next time.' }], n: [
     "On a smaller screen, the tiles at the top of Debriefing line up in even rows: no tile stretched across on its own and no empty gaps.",
     "The hovers on Debriefing's top tiles list every player, not just the first 10, and a tall hover stays on screen.",
     "Your recap is a side panel now: the full height of your screen on the right edge (or the left, with Side in /db card settings), one column that scrolls, in WoW and on your PC. Drag its inner edge on your PC to make it wider or narrower.",
@@ -24509,7 +24837,7 @@ function renderMain0() {
         return '<button class="tab' + (WIP_TABS.has(k) ? ' tab-uc' : '') + (S.tab === k || (k === 'audit' && S.tab === 'overview' && !TAB_ORDER.includes('overview')) ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
         (k === 'audit' && LIVE.on ? '<span class="tab-lv" title="Following live: new pulls show up here" aria-label="Live">Live</span>' : '') /* (your idea, Oct 20: a live icon on Debriefing) */ /* (round 455: no count badge on Debriefing; Flex: "no one would know what it is") */ + (WIP_TABS.has(k) ? '<span class="tab-wip" title="Under construction" aria-label="Under construction">🚧</span>' : '') + (soon ? '<span class="tab-soon">Coming soon</span>' : '') + '</button>'; };
       if (S.page === 'guides') S.page = 'pull'; /* round 479 guides tab: a raid page is being drawn, so Guides isn't lit (from a guide, a raid tab drew both lit) */
-      return meTabHtml(S.tab === 'me') + TAB_ORDER.map(tab).join(''); })() + '</nav>' + topPick() + tbPull() + '</div>' +
+      return meTabHtml(S.tab === 'me') + TAB_ORDER.map(tab).join('') + mpTabHtml(); })() + '</nav>' + topPick() + tbPull() + '</div>' + /* (Mythic+ when the open report has a key, Nov 1) */
     (WIP_TABS.has(S.tab) ? '<div class="cz-slot">' + (S.tab === 'rot' ? rotSite() : rotSite('the ' + ({ overview: 'Assignments', player: 'Report card', cmp: 'Compare' }[S.tab] || 'this') + ' tab', 'it')) + '</div>' : '') + // (the building site, outside the view, so a page that redraws itself keeps it)
     '<section id="view"></section>';
   bindTopPick();
@@ -51648,9 +51976,12 @@ async function openWcl(link, creds, live, fresh) {
     const keep = new Set(rep.bosses); for (const k of [...CACHE.keys()]) if (!keep.has(k)) CACHE.delete(k); }
   else CACHE.clear();
   S.file = null; S.wclCreds = creds; S.wclCode = link.code; S.shr = null;
-  S.index = { bosses: rep.bosses, runs: [] };
+  S.index = { bosses: rep.bosses, runs: [], keys: rep.runs || [] }; /* (keys: its Mythic+ keys, for the Mythic+ tab (Nov 1)) */
   $('.brand p').textContent = 'Warcraft Logs: ' + (rep.title || link.code);
   renderList();
+  // (a report of keys opens on the Mythic+ tab: the key in the link, else the newest; a raid report with keys keeps the tab beside its raid tabs)
+  { const kk = S.index.keys, want = link.fight ? kk.find((r) => r.wcl.fight === link.fight) : null;
+    if (want || (kk.length && (!rep.bosses.length || mpWantTab(link.code)))) { if (LIVE.on && !rep.bosses.length) setLive(false); LIVE.seen.clear(); LIVE.endMs = rep.endMs; liveUi(); mpOpen(want || kk[kk.length - 1]); return; } }
   // live mode survives the auto-reload after an app update
   let wasLive = false; try { wasLive = sessionStorage.getItem('wla-live') === '1'; } catch (e) { /* ignore */ }
   // a report someone is still live logging (its last event only minutes old) is followed live without being asked
@@ -51967,6 +52298,7 @@ function navState() {
   if (S.page === 'home') return { nav: 1, v: 'h' };
   if (S.page === 'guides') return { nav: 1, v: 'gd', b: S.gdzBoss || null, d: S.gdzDiff || null };
   if (S.page === 'ingame') return { nav: 1, v: 'ig' }; if (S.page === 'plan') return { nav: 1, v: 'pl' }; /* (Plan has an address too, Oct 27) */
+  if (S.page === 'mplus' && MP.item) return { nav: 1, v: 'mp', code: MP.item.wcl.code, fight: MP.item.wcl.fight, tab: 'mplus' }; /* (a Mythic+ key, Nov 1) */
   return null;
 }
 // (a boss guide's own address (Oct 27): /guide/the-coiled-altar/mythic, so each guide is a page search engines list)
@@ -51977,7 +52309,7 @@ const navKey = (st) => (st ? [st.v, st.code, st.fight, st.bi, st.night, st.tab, 
 function navNote() {
   const st = navState(); if (!st) return;
   const cur = history.state && history.state.nav ? navKey(history.state) : null, k = navKey(st);
-  let url = WCL.HOSTED ? (st.v === 'p' && st.night ? shrUrl(st) : st.v === 'p' && st.code ? '?report=' + st.code + '&fight=' + st.fight + '&tab=' + encodeURIComponent(st.tab || 'audit') + (st.scope === 'all' ? '&all=1' : '') + (st.sel ? '&p=' + encodeURIComponent(st.sel) : '') : st.v === 'gd' ? '?guides' + (st.b ? '&boss=' + encodeURIComponent(st.b) : '') + (st.d ? '&d=' + st.d : '') : st.v === 'ig' ? '?ingame' : st.v === 'pl' ? '?plan' : location.pathname) : location.pathname + location.search;
+  let url = WCL.HOSTED ? (st.v === 'mp' ? '?report=' + st.code + '&fight=' + st.fight + '&tab=mplus' : st.v === 'p' && st.night ? shrUrl(st) : st.v === 'p' && st.code ? '?report=' + st.code + '&fight=' + st.fight + '&tab=' + encodeURIComponent(st.tab || 'audit') + (st.scope === 'all' ? '&all=1' : '') + (st.sel ? '&p=' + encodeURIComponent(st.sel) : '') : st.v === 'gd' ? '?guides' + (st.b ? '&boss=' + encodeURIComponent(st.b) : '') + (st.d ? '&d=' + st.d : '') : st.v === 'ig' ? '?ingame' : st.v === 'pl' ? '?plan' : location.pathname) : location.pathname + location.search;
   if (WCL.HOSTED) { try { document.title = st.v === 'gd' && st.b ? st.b + ' ' + ((st.d || S.gdzDiff) === 'h' ? 'Heroic' : 'Mythic') + ' guide · Debrief' : PAGE_TITLE_SITE; } catch (e) { /* ignore */ } if (st.v === 'gd' && st.b) url = '/guide/' + guideSlug(st.b) + '/' + ((st.d || S.gdzDiff) === 'h' ? 'heroic' : 'mythic'); else if (url.startsWith('?')) url = '/' + url; else if (location.pathname.startsWith('/guide/')) url = '/'; } /* (guides at their own address, Oct 27) */
   const boot = NAV_BOOT; NAV_BOOT = false;
   // (the same page with another player picked on Rotation: the step is kept up to date for a reload, not a new step)
@@ -51987,6 +52319,7 @@ async function navGo(st) {
   if (st.v === 'h') { home(); }
   else if (st.v === 'gd') { openGuides(st.b, st.d); }
   else if (st.v === 'ig') { openInGame(); } else if (st.v === 'pl') { planPage(); }
+  else if (st.v === 'mp') { await mpGo(st.code, st.fight); } /* (a Mythic+ key, Nov 1) */
   else if (st.v === 'g') { progressPage(undefined, st.g); if (st.mine) S.progMine = true; } // (set before the page draws)
   else if (st.v === 'p') {
     let b = null;
@@ -60494,6 +60827,420 @@ if (typeof document !== 'undefined') {
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#ppWin')) { $('#ppWin').remove(); if (!$('#ndzWiz') && !$('#ndzGuide') && !$('#ndzNoteView') && !$('#ndzShot')) document.body.classList.remove('ndz-modal'); } });
 }
  // (the build puts src/guides.js here, inside this file's scope)
+// ---------- The Mythic+ tab (Nov 1, Flex: "a Mythic Plus tab to analyze the key run top to bottom ... mechanical execution and failures,
+// pull to pull failures, interrupt failures ... a root analysis ... comparing it against top runs or faster runs of the same level") ----------
+// The Design studio's round 3, approved ("Looks good"): the banner, What gets you +N ranked by seconds on the timer, slim tiles, Where you fell
+// behind (your pulls on the key's timer next to a fast run, then why, stretch by stretch), pull by pull, casts and kicks, deaths and players.
+// (the build puts this file inside ui.js's scope, after the guides)
+// - The key: a Warcraft Logs report's key (WCL.loadReport lists them as S.index.keys), its events written as WoW writes a key (wcl.js) and
+//   read by the PC app's own reader, companion/mplus.js (DBF_MPLUS): the same pulls, deaths, kicks, casts that went off and timer.
+// - The fast run: the fastest timed run of the same dungeon and level this season with a public log (Warcraft Logs' speed rankings, through
+//   /api/mpfast, kept a day), read the same way. Until it's in, or when there's none, the tab shows without it: never made-up numbers.
+// - Players: each one's damage or healing a second against the players of the same spec in the 10 fastest runs.
+// - Routes on a map are step 3 (researched apart).
+const MP = { item: null, R: {}, busy: new Map(), fast: {}, fastR: {}, err: {} };
+const mpKeys = () => (S.index && S.index.keys) || [];
+const mpK = (it) => it.wcl.code + ':' + it.wcl.fight;
+const mpMM = (s) => { const neg = s < 0; s = Math.round(Math.abs(s)); return (neg ? '−' : '') + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const mpCC = (cls) => ((E.CLASSES || {})[cls] || [])[1] || 'var(--text)';
+const mpWho = (R, n) => { const p = (R.people || []).find((x) => x.name === n); return '<b class="mpt-nm" style="color:' + (p ? mpCC(p.cls) : 'var(--text)') + '">' + esc(n) + '</b>'; };
+const MP_ROLE = { tank: '<svg viewBox="0 0 16 16" class="mpt-ro" aria-hidden="true"><path d="M8 1.5 13.5 3.6v4.1c0 3.2-2.4 5.6-5.5 6.8C4.9 13.3 2.5 10.9 2.5 7.7V3.6Z"/></svg>', healer: '<svg viewBox="0 0 16 16" class="mpt-ro" aria-hidden="true"><path d="M6.3 2h3.4v4.3H14v3.4H9.7V14H6.3V9.7H2V6.3h4.3Z"/></svg>', dps: '<svg viewBox="0 0 16 16" class="mpt-ro" aria-hidden="true"><path d="M12.8 1.6 14.4 3.2 6.9 10.7l1.1 1.1-1.2 1.2-1.6-1.6-2.4 2.4-1.3-1.3 2.4-2.4-1.6-1.6 1.2-1.2 1.1 1.1Z"/></svg>' };
+const MP_ORDER = ['tank', 'healer', 'dps'], mpByRole = (a, b) => MP_ORDER.indexOf(a.role) - MP_ORDER.indexOf(b.role);
+const mpSpecId = (spec, cls) => { for (const [id, s] of Object.entries(E.SPECS || {})) if (s[0] === spec && s[1] === cls) return +id; return 0; };
+const mpNorm = (s) => String(s || '').toLowerCase().replace(/[^a-z]/g, '');
+// (the tab: only when the open report has a key)
+const MP_TICO = '<svg class="tab-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="4.5"/><path d="M12.5 12h9M18.5 12v3.5M15.5 12v2.5"/></svg>';
+function mpTabHtml(on) { if (!mpKeys().length) return ''; on = !!on; const tt = 'Your Mythic+ key, top to bottom: what gets you a level up, where you fell behind a fast run, every pull, kick and death';
+  return '<button class="tab mpt-tab' + (on ? ' on' : '') + '" data-t="mplus" role="tab" aria-selected="' + on + '" data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + MP_TICO + 'Mythic+</button>'; }
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.mpt-tab'); if (!b) return; e.preventDefault(); e.stopPropagation(); mpOpen(); }, true);
+// (a key picked in the report's list of keys)
+document.addEventListener('change', (e) => { const s = e.target; if (!s || s.id !== 'mptPick') return; const it = mpKeys()[+s.value]; if (it) mpOpen(it); });
+function mpKeyName(it) { return it.boss + ' +' + it.level + ' · ' + (it.keyMs ? mpMM(it.keyMs / 1000) : 'left early') + (it.keyMs ? (it.timed ? ' · Timed +' + it.up : ' · Over time') : ''); }
+
+// ---------- reading a key: its events, written as WoW writes a key, then the app's own reader ----------
+async function mpRead(it, onStep) {
+  const k = mpK(it); if (MP.R[k]) return MP.R[k];
+  if (MP.busy.has(k)) { const p0 = MP.busy.get(k); if (onStep) p0.on = onStep; return p0; }
+  const p = (async () => {
+    const est = Math.max(20000, it.duration * 210); /* (about 210 events a second in a key, from a +12 on Warcraft Logs) */
+    const ev = await WCL.loadEvents(S.wclCreds, it, (n) => { if (p.on) p.on('Downloading the key from Warcraft Logs…', Math.min(0.9, 0.9 * n / est)); });
+    if (p.on) p.on('Reading the key…', 0.92);
+    const lines = await WCL.translateAsync(it, ev, () => new Promise((r) => setTimeout(r, 0)));
+    await new Promise((r) => setTimeout(r, 30));
+    const R = window.DBF_MPLUS ? window.DBF_MPLUS(lines.join('\n'), E) : null;
+    if (!R || !R.pulls || !R.pulls.length) throw new Error('This key has no pulls Debrief could read.');
+    MP.R[k] = R; return R;
+  })();
+  p.on = onStep; MP.busy.set(k, p); p.then(() => MP.busy.delete(k), () => MP.busy.delete(k));
+  return p;
+}
+// (the fast run: the fastest public timed run of this dungeon and level, not this key itself; a report that won't open is skipped)
+function mpFastRun(it) {
+  const lk = it.id + ':' + it.level;
+  if (!MP.fast[lk]) MP.fast[lk] = WCL.mpFast(S.wclCreds, { e: it.id, l: it.level }).catch((e) => ({ error: e.message, runs: [] }));
+  return MP.fast[lk].then(async (L) => {
+    const cand = (L.runs || []).filter((r) => !(r.code === it.wcl.code && r.fight === it.wcl.fight)).slice(0, 3);
+    for (const c of cand) {
+      const fk = c.code + ':' + c.fight;
+      if (!MP.fastR[fk]) MP.fastR[fk] = (async () => { const rep = await WCL.loadReport(S.wclCreds, c.code), fit = (rep.runs || []).find((x) => x.wcl.fight === c.fight); if (!fit || !fit.keyMs) throw new Error('not a finished key'); return { it: fit, R: await mpRead(fit) }; })();
+      try { const got = await MP.fastR[fk]; if (got.R && got.R.run.clock) return { list: L, pick: c, it: got.it, R: got.R }; } catch (e) { /* (the next fastest) */ }
+    }
+    return { list: L, pick: null, R: null };
+  });
+}
+
+// ---------- the page ----------
+function mpOpen(it) {
+  const keys = mpKeys(); if (!it) it = MP.item && keys.includes(MP.item) ? MP.item : keys[keys.length - 1]; if (!it) return;
+  if (S.page === 'pull' && S.item) PROG_BACK = S.item; /* (the raid you came from stays one tab away) */
+  MP.item = it; S.page = 'mplus'; mpCss();
+  for (const id of ['#list', '#bossHead', '#bossPick']) { const el = $(id); if (el) el.innerHTML = ''; }
+  { const oa = $('#oaTop'); if (oa) { oa.innerHTML = ''; oa.hidden = true; } }
+  $('#main').innerHTML = pgTabBar(null) + '<section id="view" class="mpt-page"><div class="mpt">' + mpPickHtml(it) + '<div id="mptBody"></div></div></section>';
+  { const nav = $('#main .pg-tabbar nav'); if (nav && !nav.querySelector('.mpt-tab')) nav.insertAdjacentHTML('beforeend', mpTabHtml()); const t = nav && nav.querySelector('.mpt-tab'); if (t) { t.classList.add('on'); t.setAttribute('aria-selected', 'true'); } }
+  try { navNote(); } catch (e) { /* (no address) */ } window.scrollTo(0, 0);
+  const k = mpK(it), body = () => (MP.item === it && S.page === 'mplus' ? $('#mptBody') : null);
+  if (MP.R[k]) { mpDraw(); return; }
+  const b0 = body(); if (b0) b0.innerHTML = '<div class="mpt-load">' + loadCard('Opening your key', 'Downloading the key from Warcraft Logs…', 0, 'mptLd') + '</div>';
+  delete MP.err[k];
+  mpRead(it, (line, frac) => { const b = body(); if (b && typeof loadSet === 'function') loadSet(b, line, frac); }).then(() => { if (body()) mpDraw(); })
+    .catch((err) => { MP.err[k] = err.message; const b = body(); if (b) b.innerHTML = '<div class="mpt-err"><b>Couldn\'t read this key.</b> ' + esc(err.message) + '</div>'; });
+}
+function mpPickHtml(it) { const keys = mpKeys(); if (keys.length < 2) return '';
+  return '<div class="mpt-pick"><label for="mptPick">' + keys.length + ' keys in this report</label><select id="mptPick">' + keys.map((x, i) => '<option value="' + i + '"' + (x === it ? ' selected' : '') + '>' + esc(mpKeyName(x)) + '</option>').join('') + '</select></div>'; }
+function mpDraw() {
+  const it = MP.item, R = it && MP.R[mpK(it)], b = $('#mptBody'); if (!R || !b || S.page !== 'mplus') return;
+  const fx = MP.fastOf && MP.fastOf.k === mpK(it) ? MP.fastOf : null;
+  b.innerHTML = mpHtml(it, R, fx);
+  try { refreshIcons(); } catch (e) { /* (icons load later) */ }
+  if (!fx) { const mine = it; MP.fastOf = { k: mpK(it), wait: true };
+    mpFastRun(it).then((F) => { if (MP.item !== mine) return; MP.fastOf = { k: mpK(mine), ...F }; mpDraw(); }).catch(() => { if (MP.item !== mine) return; MP.fastOf = { k: mpK(mine), R: null, list: null }; mpDraw(); }); }
+}
+// (the address: ?report=…&fight=…&tab=mplus opens this key again)
+async function mpGo(code, fight) {
+  if (S.wclCode !== code || !S.index) { let creds = null; try { creds = await wclCreds(); } catch (e) { creds = null; } await openWcl({ code, fight }, creds); return; }
+  const it = mpKeys().find((x) => x.wcl.fight === fight); if (it) mpOpen(it); else home();
+}
+const mpWantTab = (code) => { try { return RQ.get('tab') === 'mplus' && RQ.get('report') === code; } catch (e) { return false; } };
+
+// ---------- the numbers ----------
+// (the key's timer: it starts after the countdown, and each death adds its penalty where it happened (15 s at +12 on Flex's keys, measured
+// from the time WoW wrote at the end); tv(t) is the timer at a moment of the log)
+function mpClock(R) { const ck = R.run.clock; if (!ck) return null;
+  const D = R.pulls.flatMap((p) => p.deaths.map((d) => d.t)).sort((a, b) => a - b), pen = D.length ? ck.deathCost / D.length : 0;
+  let T0 = R.run.end + ck.deathCost - ck.time; if (!(T0 >= 0 && T0 <= 30)) T0 = 10;
+  return { ck, pen, T0, tv: (t) => t - T0 + pen * D.filter((x) => x < t).length }; }
+// (stretches: from the start (or a boss) to the next boss: the pulls in it, the time fighting, the deaths and the time between pulls)
+function mpStretches(R, C) { const P = R.pulls, out = []; let from = C.T0, fromName = 'Start', fi = 0;
+  P.forEach((b, bi) => { if (!b.boss || b.kill === false) return; /* (a boss you wiped on, or reset, is part of the stretch to its kill) */ const ps = P.slice(fi, bi + 1), d = ps.reduce((a, p) => a + p.deaths.length, 0), fight = ps.reduce((a, p) => a + p.dur, 0), wall = b.e - from;
+    out.push({ name: fromName + ' → ' + b.boss, boss: b.boss, n: ps.length, fight, d, pen: d * C.pen, stand: Math.max(0, wall - fight), t: wall + d * C.pen, first: ps[0].n, last: b.n, at: C.tv(b.e) }); from = b.e; fromName = b.boss; fi = bi + 1; });
+  return out; }
+// (a wipe: the whole group dead within 45 seconds; its deaths, from the first one, and which death started it)
+function mpWipe(p, n) { const dd = p.deaths.slice().sort((a, b) => a.t - b.t);
+  for (let i = 0; i < dd.length; i++) { const w = dd.filter((d, j) => j >= i && d.t <= dd[i].t + 45); if (new Set(w.map((d) => d.who)).size >= n) return { first: dd[i], list: w }; }
+  return null; }
+// (what gets you the next level: each fix's seconds on the timer, biggest first. A wipe: every death in it. Deaths to the same spell. A
+// must-kick cast that went off with a kick ready and killed someone. Casts that went off without killing anyone save casts, not seconds)
+function mpFixes(R, C) {
+  const P = R.pulls, n = Math.max(1, (R.people || []).length), pen = Math.round(C.pen) || 15, out = [], used = new Set();
+  const roleOf = (w) => ((R.people || []).find((p) => p.name === w) || {}).role || '';
+  for (const p of P) { const wp = mpWipe(p, n); if (!wp) continue;
+    const dd = wp.list; dd.forEach((d) => used.add(d)); const f = wp.first, tank = roleOf(f.who) === 'tank';
+    out.push({ s: dd.length * pen, t: 'Don\'t wipe on ' + (p.boss ? esc(p.boss) : 'pull ' + p.n), plus: 'plus the run back',
+      d: (tank ? 'Your tank ' : '') + mpWho(R, f.who) + ' died first, to <b class="mpt-ab">' + esc(f.to) + '</b>' + (f.defs ? '.' : ', with <b class="mpt-bad">no defensive</b>.') + ' Everyone else was dead ' + Math.max(1, Math.round(dd[dd.length - 1].t - f.t)) + ' s later.' }); }
+  // (a must-kick cast and the deaths it caused: the same spell from the same kind of enemy, in a pull where it went off with a kick ready)
+  const thr = new Map(); for (const p of P) for (const t of p.through) { const k = t.spell + '|' + t.mob, o = thr.get(k) || { spell: t.spell, mob: t.mob, n: 0, pulls: new Set() }; o.n++; o.pulls.add(p.n); thr.set(k, o); }
+  const by = new Map(), rest = []; for (const p of P) for (const d of p.deaths) { if (used.has(d) || !d.to || d.to === 'unknown') { if (!used.has(d)) rest.push({ ...d, pull: p.n }); continue; } const k = thr.get(d.to + '|' + d.from), key = k && k.pulls.has(p.n) ? 'k|' + d.to + '|' + d.from : 'd|' + d.to, o = by.get(key) || { to: d.to, k: key[0] === 'k' ? k : null, list: [] }; o.list.push({ ...d, pull: p.n }); by.set(key, o); }
+  for (const o of by.values()) { const names = [...new Set(o.list.map((d) => d.who))], killed = names.map((w) => mpWho(R, w)).join(' and '), times = o.list.length;
+    if (o.k) { o.k.done = true; const pl = [...o.k.pulls]; out.push({ s: times * pen, t: 'Kick ' + esc(o.to) + (pl.length === 1 ? ' in pull ' + pl[0] : ''), d: 'It went off ' + plural(o.k.n, 'time') + ' with a kick ready, and killed ' + killed + (times > names.length ? ' ' + (times === 2 ? 'twice' : times + ' times') : '') + '.' }); }
+    else if (times >= 2) out.push({ s: times * pen, t: plural(times, 'death') + ' to ' + esc(o.to), d: 'Who died: ' + o.list.map((d) => mpWho(R, d.who) + ' <span class="mpt-m">(pull ' + d.pull + ')</span>').join(', ') + '. Each death put ' + pen + ' s on the timer.' });
+    else rest.push(...o.list); }
+  out.sort((a, b) => b.s - a.s);
+  // (then must-kick casts that went off without killing anyone: fewer casts, not seconds)
+  const wiped = new Set(P.filter((p) => mpWipe(p, n)).map((p) => p.n));
+  const bySp = new Map(); for (const p of P) for (const t of p.through) { const k = thr.get(t.spell + '|' + t.mob); if (!k || k.done) continue; const o = bySp.get(t.spell) || { spell: t.spell, n: 0, pulls: new Map() }; o.n++; o.pulls.set(p.n, (o.pulls.get(p.n) || 0) + 1); bySp.set(t.spell, o); }
+  for (const k of [...bySp.values()].filter((x) => x.n >= 2).sort((a, b) => b.n - a.n).slice(0, 2)) { const pl = [...k.pulls.keys()], [bp, bn] = [...k.pulls].sort((a, b) => b[1] - a[1])[0];
+    out.push({ s: 0, ns: 'fewer casts', t: 'Kick ' + esc(k.spell), d: 'It went off ' + plural(k.n, 'time') + ' with a kick ready' + (pl.length === 1 && wiped.has(bp) ? ', all in the pull ' + bp + ' wipe' : pl.length > 1 && bn * 2 >= k.n && wiped.has(bp) ? ', ' + bn + ' of them in the pull ' + bp + ' wipe' : pl.length <= 3 ? ', in ' + (pl.length === 1 ? 'pull ' : 'pulls ') + pl.join(', ').replace(/, (\d+)$/, ' and $1') : ', across ' + pl.length + ' pulls') + '.' }); }
+  // (last, the deaths left, one to each cause, as one line)
+  if (rest.length) out.push({ s: rest.length * pen, t: rest.length === 1 ? 'One more death' : plural(rest.length, 'more death'), d: rest.sort((a, b) => a.t - b.t).map((d) => mpWho(R, d.who) + ' to <b class="mpt-ab">' + esc(d.to || 'unknown') + '</b> <span class="mpt-m">(pull ' + d.pull + ')</span>').join(', ') + '.' });
+  return out.slice(0, 3); }
+
+// ---------- the parts, top to bottom ----------
+function mpHtml(it, R, fx) {
+  const C = mpClock(R), ck = C && C.ck, run = R.run, F = fx && fx.R ? fx.R : null, FC = F ? mpClock(F) : null, waiting = !fx || fx.wait;
+  const date = it.wallMs ? new Date(it.wallMs).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+  const pull = (n) => R.pulls.find((p) => p.n === n);
+  // the banner
+  const pill = run.left || !run.timeMs ? '<span class="mpt-pill">Left early</span>' : run.timed ? '<span class="mpt-pill mpt-g">Timed · +' + ((ck && ck.up) || it.up || 1) + '</span>' : '<span class="mpt-pill mpt-b">Over time</span>';
+  const ban = '<div class="mpt-ban"><div class="mpt-kb">+' + run.level + '</div><div class="mpt-bt"><p class="mpt-k">Mythic+' + (date ? ' · ' + esc(date) : '') + '</p><h1>' + esc(run.dungeon || it.boss) + '</h1><div class="mpt-pills">' + pill +
+    (ck ? '<span class="mpt-pill">' + mpMM(ck.time) + ' of ' + mpMM(ck.par) + '</span>' : run.timeMs ? '<span class="mpt-pill">' + mpMM(run.timeMs / 1000) + '</span>' : '') + '</div></div>' +
+    '<div class="mpt-grp">' + R.people.slice().sort(mpByRole).map((p) => '<span class="mpt-gm" style="color:' + mpCC(p.cls) + '" title="' + esc(p.spec + ' ' + ((E.CLASSES[p.cls] || [])[0] || '')) + '">' + (MP_ROLE[p.role] || '') + '<b>' + esc(p.name) + '</b></span>').join('') + '</div></div>';
+  if (!C) return ban + '<p class="mpt-note">' + (run.left || !run.timeMs ? 'This key was left before the end, so there\'s no timer to judge. Everything that happened is below.' : 'Debrief doesn\'t know this dungeon\'s timer yet. Everything that happened is below.') + '</p>' + mpPulls(R, null) + mpCasts(R) + mpDeaths(R, null) + mpPlayers(R, fx, waiting);
+  // what gets you the next level
+  const T = ck.time, P = ck.par, lv = ck.up, tgt = lv === 0 ? P : lv === 1 ? P * 0.8 : lv === 2 ? P * 0.6 : null, need = tgt != null ? Math.max(1, Math.round(T - tgt)) : 0; /* (as the timer shows it: 24:06 against 24:00 is 6 s) */
+  const head = lv === 0 ? 'What gets you in time' : lv === 3 ? 'What would save the most time' : 'What gets you +' + (lv + 1);
+  const FIX = mpFixes(R, C);
+  let verdict = '';
+  if (tgt != null && FIX.length) { const ok = FIX.filter((f) => f.s >= need).length;
+    if (FIX[0].s >= need && FIX[1] && FIX[1].s >= need) verdict = (ok === 2 ? 'Either of the first two' : 'Any one of these') + ' would have done it.';
+    else if (FIX[0].s >= need) verdict = 'The first one alone would have done it.';
+    else { let sum = 0, k = 0; for (const f of FIX) { sum += f.s; k++; if (sum >= need) break; }
+      verdict = sum >= need ? 'The first ' + k + ' together would have done it.' : ck.deathCost >= need ? 'Together these save ' + mpMM(sum) + ', and no deaths at all would have done it.' : ck.deathCost ? 'Even with no deaths, you\'d be ' + plural(need - ck.deathCost, 'second') + ' short. The rest is pace' + (F ? ': see where you fell behind, below.' : '.') : 'The time is in the pace' + (F ? ': see where you fell behind, below.' : '.'); } }
+  const fixes = '<section class="mpt-fx"><div class="mpt-fxh"><h2>' + head + '</h2><span>' + (tgt != null ? 'You needed <b>' + plural(need, 'second') + '</b>.' + (verdict ? ' ' + verdict : '') : 'You got +3. These would still save time.') + '</span></div>' +
+    (FIX.length ? FIX.map((f, i) => '<div class="mpt-fxr"><span class="mpt-fxn">' + (i + 1) + '</span><div><b class="mpt-fxt">' + f.t + '</b><p>' + f.d + '</p></div><span class="mpt-fxs">' + (f.s ? '<b class="mpt-g">−' + mpMM(f.s) + '</b><small>' + (f.plus || 'on the timer') + '</small>' : '<b class="mpt-m">' + f.ns + '</b>') + '</span></div>').join('')
+      : '<p class="mpt-none">No deaths, and no must-kick cast went off with a kick ready. The time is in the pulls and the walking between them' + (F ? ': see where you fell behind below.' : '.') + '</p>') + '</section>';
+  // slim tiles
+  const thN = R.pulls.reduce((a, p) => a + p.through.length, 0), fT = FC ? FC.ck.time : null;
+  const tile = (k, v, sub, cls) => '<div class="mpt-tile"><p class="mpt-k">' + k + '</p><b class="' + (cls || '') + '">' + v + '</b><span>' + sub + '</span></div>';
+  const tiles = '<div class="mpt-tiles">' + tile('Time', mpMM(T), 'of ' + mpMM(P)) +
+    tile('Behind a fast run', F ? (T - fT >= 0 ? mpMM(T - fT) : mpMM(fT - T) + ' ahead') : waiting ? '…' : '—', F ? 'fast run ' + mpMM(fT) : waiting ? 'finding a fast run' : 'no fast run found', F && T - fT > 0 ? 'mpt-bad' : '') +
+    tile('Lost to deaths', mpMM(ck.deathCost), plural(ck.deaths, 'death'), ck.deathCost ? 'mpt-bad' : '') +
+    tile('Standing between pulls', mpMM(ck.between), F ? 'fast run ' + mpMM(FC.ck.between) : 'between ' + plural(R.pulls.length, 'pull')) +
+    tile('Casts that went off', String(thN), 'with a kick ready') + '</div>';
+  return ban + fixes + tiles + mpBehind(R, C, F, FC, fx, waiting) + mpPulls(R, C) + mpCasts(R) + mpDeaths(R, C) + mpPlayers(R, fx, waiting);
+}
+const mpSec = (t, sub, body) => '<section class="mpt-sec"><div class="mpt-sh"><h2>' + t + '</h2>' + (sub ? '<span>' + sub + '</span>' : '') + '</div>' + body + '</section>';
+// (where you fell behind: one timeline on the key's timer, your pulls next to a fast run, then why, stretch by stretch)
+function mpBehind(R, C, F, FC, fx, waiting) {
+  const ck = C.ck, ST = mpStretches(R, C), FS = F ? mpStretches(F, FC) : [], fBy = new Map(FS.map((s) => [s.boss, s]));
+  const W0 = Math.max(ck.par, ck.time, FC ? FC.ck.time : 0) * 1.03, X = (s) => (100 * Math.max(0, s) / W0).toFixed(2) + '%', W = (s) => (100 * Math.max(0, s) / W0).toFixed(2) + '%';
+  const blocks = [], dticks = [];
+  for (const p of R.pulls) { const dd = p.deaths.slice().sort((a, b) => a.t - b.t); let s0 = p.s;
+    for (const d of dd) { blocks.push({ x: C.tv(s0), w: d.t - s0, p }); dticks.push({ x: C.tv(d.t), d }); s0 = d.t; }
+    blocks.push({ x: C.tv(s0), w: p.e - s0, p }); }
+  const CP = ST.map((s, i) => ({ boss: s.boss, you: i === ST.length - 1 && R.pulls[R.pulls.length - 1].boss === s.boss ? ck.time : s.at, fast: fBy.has(s.boss) ? fBy.get(s.boss).at : null }));
+  if (F && CP.length && FS.length && FS[FS.length - 1].boss === CP[CP.length - 1].boss) CP[CP.length - 1].fast = FC.ck.time;
+  const youLane = '<div class="mpt-lt">' + blocks.map((b) => '<i class="mpt-blk' + (b.p.boss ? ' mpt-bo' : '') + '" style="left:' + X(b.x) + ';width:' + W(b.w) + '" title="' + esc((b.p.boss || 'Pull ' + b.p.n) + ' · ' + mpMM(b.p.dur)) + '"></i>').join('') +
+    dticks.map((t) => '<i class="mpt-dth" style="left:' + X(t.x) + ';width:' + W(C.pen) + '" title="' + esc(t.d.who + ' died to ' + t.d.to + ': +' + Math.round(C.pen) + ' s') + '"></i>').join('') +
+    CP.map((c) => '<span class="mpt-cp" style="left:' + X(c.you) + '"><i></i></span>').join('') + '</div>';
+  const fastLane = F ? '<div class="mpt-lt"><i class="mpt-fbar" style="width:' + W(FC.ck.time) + '"></i>' + CP.filter((c) => c.fast != null).map((c) => '<span class="mpt-cp mpt-f" style="left:' + X(c.fast) + '"><i></i></span>').join('') + '</div>'
+    : '<div class="mpt-lt mpt-lt0"><span>' + (waiting ? 'Finding the fastest timed +' + R.run.level + ' on Warcraft Logs…' : 'No public fast run at this level yet.') + '</span></div>';
+  const marks = '<div class="mpt-mk">' + [[0.6, '+3'], [0.8, '+2'], [1, '+1']].map(([f, l]) => '<span style="left:' + X(ck.par * f) + '">' + l + ' · ' + mpMM(ck.par * f) + '</span>').join('') + '</div>';
+  const lines = [0.6, 0.8, 1].map((f) => '<i class="mpt-vl" style="left:' + X(ck.par * f) + '"></i>').join('');
+  let lastX = -99, row = 0, rows = 1; const rowOf = CP.map((c) => { const x = 100 * c.you / W0; row = x - lastX < 13 ? 1 - row : 0; lastX = x; rows = Math.max(rows, row + 1); return row; }); /* (bosses close together: their labels take turns on two rows) */
+  const gapRow = '<div class="mpt-gp" style="--mpt-gph:' + 40 * rows + 'px">' + CP.map((c, i) => '<span style="left:' + X(c.you) + ';--mpt-gpt:' + 40 * rowOf[i] + 'px"><b>' + esc(c.boss) + '</b>' + mpMM(c.you) + (c.fast != null ? ' · <b class="' + (i === CP.length - 1 && c.you > c.fast ? 'mpt-bad' : '') + '">' + (c.you >= c.fast ? mpMM(c.you - c.fast) + ' behind' : mpMM(c.fast - c.you) + ' ahead') + '</b>' : '') + '</span>').join('') + '</div>';
+  const timeline = '<div class="mpt-tl"><div class="mpt-tlg">' + marks + '<div class="mpt-lanes">' + lines + '<div class="mpt-ln"><span class="mpt-ll">You</span>' + youLane + '</div><div class="mpt-ln"><span class="mpt-ll">Fast run</span>' + fastLane + '</div></div>' + gapRow + '</div>' +
+    '<div class="mpt-key"><span><i class="mpt-k1"></i>Pull</span><span><i class="mpt-k2"></i>Boss</span>' + (C.pen ? '<span><i class="mpt-k3"></i>Death (+' + Math.round(C.pen) + ' s)</span>' : '') + (F ? '<span><i class="mpt-k4"></i>Fast run</span>' : '') + '<span><i class="mpt-kd"></i>Boss down</span></div></div>';
+  // why, stretch by stretch: only the worst number in a row coloured
+  const why = '<div class="mpt-wyh"><span>Stretch</span><span>Time</span><span>Pulls</span><span>Fighting</span><span>Deaths</span><span>Standing</span></div>' + ST.map((s) => { const f = fBy.get(s.boss);
+    const diffs = f ? [['n', (s.n - f.n) * 60], ['fight', s.fight - f.fight], ['d', s.pen - f.pen], ['stand', s.stand - f.stand]] : [], worst = diffs.sort((a, b) => b[1] - a[1])[0];
+    const c = (k, y, fv) => '<span class="mpt-c" data-l="' + { n: 'Pulls', fight: 'Fighting', d: 'Deaths', stand: 'Standing' }[k] + '"><b class="' + (worst && worst[0] === k && worst[1] > 20 ? 'mpt-bad' : '') + '">' + y + '</b>' + (f ? '<small>fast ' + fv + '</small>' : '') + '</span>';
+    return '<div class="mpt-wyr"><span class="mpt-sn">' + esc(s.name) + '<small>' + (s.first === s.last ? 'pull ' + s.first : 'pulls ' + s.first + '–' + s.last) + '</small></span><span class="mpt-c" data-l="Time"><b>' + mpMM(s.t) + '</b>' + (f ? '<small>' + (s.t > f.t + 5 ? mpMM(s.t - f.t) + ' slower' : s.t < f.t - 5 ? mpMM(f.t - s.t) + ' faster' : 'on pace') + '</small>' : '') + '</span>' +
+      c('n', s.n, f && f.n) + c('fight', mpMM(s.fight), f && mpMM(f.fight)) + c('d', s.d ? s.d + ' · ' + mpMM(s.pen) : '0', f && f.d) + c('stand', mpMM(s.stand), f && mpMM(f.stand)) + '</div>'; }).join('');
+  let sum = '';
+  if (F) { const gaps = ST.map((s) => { const f = fBy.get(s.boss); return f ? { s, f, g: s.t - f.t } : null; }).filter(Boolean).sort((a, b) => b.g - a.g), top = gaps[0];
+    if (top && top.g > 15) { const s = top.s, f = top.f, bits = [];
+      if (s.n > f.n) bits.push(plural(s.n - f.n, 'pull') + ' more than the fast run'); if (s.fight - f.fight > 20) bits.push(mpMM(s.fight - f.fight) + ' longer fighting'); if (s.d) bits.push(plural(s.d, 'death') + ' (' + mpMM(s.pen) + ')'); if (s.stand - f.stand > 20) bits.push(mpMM(s.stand - f.stand) + ' more standing');
+      sum = 'Most of the gap is ' + (s.name.startsWith('Start → ') ? 'from the start to <b>' + esc(s.boss) + '</b>' : 'between <b>' + esc(s.name).replace(' → ', '</b> and <b>') + '</b>') + ': ' + mpMM(top.g) + (bits.length ? ', with ' + bits.join(', ').replace(/, ([^,]*)$/, ' and $1') : '') + '. '; }
+    const st = ck.between - FC.ck.between; sum += st <= 30 ? 'Your time standing between pulls is close to the fast run\'s.' : 'You stood ' + mpMM(st) + ' longer between pulls than the fast run.'; }
+  else { const top = ST.slice().sort((a, b) => b.t - a.t)[0]; if (top) sum = 'Your longest stretch is ' + (top.name.startsWith('Start → ') ? 'from the start to <b>' + esc(top.boss) + '</b>' : 'from <b>' + esc(top.name).replace(' → ', '</b> to <b>') + '</b>') + ': ' + mpMM(top.t) + ' on the timer.'; }
+  const pk = fx && fx.pick, at = pk && pk.at ? new Date(pk.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+  const src = F ? '<p class="mpt-ex">The fast run is the fastest timed +' + R.run.level + ' ' + esc(R.run.dungeon) + ' on Warcraft Logs this season with a public log' + (at ? ' (' + esc(at) + ')' : '') + ', read the same way as yours.</p>' : '';
+  return mpSec('Where you fell behind', F ? 'your key and a fast run on the same timer' : 'your key on its timer', timeline + why + (sum ? '<p class="mpt-why">' + sum + '</p>' : '') + src);
+}
+// (pull by pull: what was pulled, how long, what happened, and the standing after; a pull with something in it opens)
+function mpPulls(R, C) {
+  const n = Math.max(1, (R.people || []).length), roleOf = (w) => ((R.people || []).find((p) => p.name === w) || {}).role || '';
+  let opened = false;
+  const rows = R.pulls.map((p, i) => {
+    const mobs = p.mobs || [], cnt = mobs.reduce((a, m) => a + m[1], 0), next = R.pulls[i + 1], gap = next ? next.s - p.e : 0;
+    const what = (p.boss ? '' : plural(cnt, 'enemy').replace('enemys', 'enemies') + ': ') + mobs.filter((m) => !p.boss || m[0] !== p.boss).slice(0, 3).map((m) => esc(m[0]) + (m[1] > 1 ? ' ×' + m[1] : '')).join(', ') + (mobs.length > 3 ? ' and ' + (mobs.length - 3) + ' more' : '');
+    const dd = p.deaths.slice().sort((a, b) => a.t - b.t), wp = mpWipe(p, n), wipe = !!wp, tags = [];
+    if (wipe) tags.push('<span class="mpt-tg mpt-tb">Wipe</span>'); else if (dd.length) tags.push('<span class="mpt-tg mpt-tb">' + plural(dd.length, 'death') + '</span>');
+    if (p.boss && p.kill === false && !wipe) tags.push('<span class="mpt-tg mpt-tb">Not killed</span>');
+    if (p.through.length) tags.push('<span class="mpt-tg">' + plural(p.through.length, 'cast') + ' went off</span>');
+    for (const b of (p.ebuffs || []).filter((x) => x.on > 0).slice(0, 2)) tags.push('<span class="mpt-tg" title="' + esc(b.spell + ' went on ' + plural(b.on, 'enemy').replace('enemys', 'enemies') + ' (from your log)') + '">' + esc(b.spell) + ' ×' + b.on + '</span>');
+    const lead = wp ? wp.first : null, tk = lead && roleOf(lead.who) === 'tank';
+    const th = new Map(); for (const t of p.through) th.set(t.spell, (th.get(t.spell) || 0) + 1);
+    const body = (dd.length ? '<p><b>' + (wipe ? 'The wipe, in order:' : 'Deaths, in order:') + '</b></p><ol>' + dd.map((d, j) => '<li><span class="mpt-m">' + mpMM(d.t - p.s) + ' in</span> ' + mpWho(R, d.who) + (d === lead && tk ? ' <span class="mpt-tg mpt-tb">tank, first</span>' : '') + ' died to <b class="mpt-ab">' + esc(d.to) + '</b>' + (d.from ? ' <span class="mpt-m">(' + esc(d.from) + ')</span>' : '') + (d.defs ? ' · ' + plural(d.defs, 'defensive') + ' used' : ' · <b class="mpt-bad">no defensive</b>') + '</li>').join('') + '</ol>' : '') +
+      (th.size ? '<p>' + [...th].map(([s, k]) => '<b class="mpt-ab">' + esc(s) + '</b> went off ' + (k === 1 ? 'once' : k + ' times')).join(', ') + ' with a kick ready.</p>' : '');
+    const open = !opened && wipe; if (open) opened = true;
+    const head = '<span class="mpt-pn">' + (p.boss ? esc(p.boss) : 'Pull ' + p.n) + '</span><span class="mpt-pm">' + what + '</span><span class="mpt-pt">' + mpMM(p.dur) + '</span><span class="mpt-pc">' + (tags.join('') || '<span class="mpt-m">clean</span>') + '</span><span class="mpt-pg">' + (gap > 0.5 ? '+' + Math.round(gap) + ' s' : '') + '</span>';
+    return body ? '<details class="mpt-pr' + (p.boss ? ' mpt-boss' : '') + '"' + (open ? ' open' : '') + '><summary>' + head + '</summary><div class="mpt-pd">' + body + '</div></details>' : '<div class="mpt-pr mpt-pr0' + (p.boss ? ' mpt-boss' : '') + '"><div class="mpt-sum">' + head + '</div></div>';
+  }).join('');
+  return mpSec('Pull by pull', plural(R.pulls.length, 'pull') + ' · click one for what happened', '<div class="mpt-plh"><span>Pull</span><span>What you pulled</span><span>Time</span><span>What happened</span><span title="Standing before the next pull">Then</span></div>' + rows);
+}
+// (casts and kicks: what went off with a kick ready, by spell and pull, and who stopped casts)
+function mpCasts(R) {
+  const thru = new Map(); for (const p of R.pulls) for (const t of p.through) { const k = t.spell + '|' + t.mob, o = thru.get(k) || { spell: t.spell, mob: t.mob, n: 0, pulls: new Map() }; o.n++; o.pulls.set(p.n, (o.pulls.get(p.n) || 0) + 1); thru.set(k, o); }
+  const TH = [...thru.values()].sort((a, b) => b.n - a.n), thN = TH.reduce((a, t) => a + t.n, 0);
+  const who = R.people.filter((p) => p.kicks + p.stops > 0).sort((a, b) => b.kicks + b.stops - a.kicks - a.stops), mx = Math.max(1, ...who.map((p) => p.kicks + p.stops));
+  const left = '<div><p class="mpt-k">Went off with a kick ready</p>' + (TH.length ? TH.map((t) => '<div class="mpt-kr"><span><b class="mpt-ab">' + esc(t.spell) + '</b><small>' + esc(t.mob) + '</small></span><span class="mpt-m">' + [...t.pulls].map(([n, c]) => 'pull ' + n + (c > 1 ? ' ×' + c : '')).join(', ') + '</span><b>' + t.n + '×</b></div>').join('') : '<p class="mpt-none">Nothing on the must-kick list went off while someone\'s kick was ready.</p>') + '</div>';
+  const right = '<div><p class="mpt-k">Who stopped casts</p>' + (who.length ? who.map((p) => '<div class="mpt-kr2">' + mpWho(R, p.name) + '<span class="mpt-bar"><i style="width:' + (100 * (p.kicks + p.stops) / mx).toFixed(0) + '%"></i></span><span class="mpt-m">' + plural(p.kicks, 'kick') + ' · ' + plural(p.stops, 'stop') + '</span></div>').join('') : '<p class="mpt-none">No kicks or stops in this key.</p>') +
+    '<p class="mpt-sm">A stop is a stun, knockback or other crowd control that cut a cast short. Healers have no kick in Midnight, except Restoration Shamans.</p></div>';
+  return mpSec('Casts and kicks', thN ? plural(thN, 'cast') + ' went off with a kick ready' : 'nothing on the must-kick list got through', '<div class="mpt-two">' + left + right + '</div>');
+}
+// (deaths, grouped by pull)
+function mpDeaths(R, C) {
+  const n = Math.max(1, (R.people || []).length), all = R.pulls.filter((p) => p.deaths.length), tot = all.reduce((a, p) => a + p.deaths.length, 0);
+  const body = all.map((p) => { const ds = p.deaths.slice().sort((a, b) => a.t - b.t), wipe = !!mpWipe(p, n);
+    return '<div class="mpt-dg"><span class="mpt-dp">' + (p.boss ? esc(p.boss) : 'Pull ' + p.n) + (wipe ? ' · <b class="mpt-bad">wipe</b>' : p.boss && p.kill === false ? ' · not killed' : '') + '</span><div>' + ds.map((d) => '<div class="mpt-dr">' + mpWho(R, d.who) + '<span>died to <b class="mpt-ab">' + esc(d.to) + '</b>' + (d.from ? ' <span class="mpt-m">(' + esc(d.from) + ')</span>' : '') + '</span><span class="' + (d.defs ? 'mpt-m' : 'mpt-bad') + '">' + (d.defs ? plural(d.defs, 'defensive') : 'no defensive') + '</span></div>').join('') + '</div></div>'; }).join('');
+  return mpSec('Deaths', tot ? plural(tot, 'death') + (C && C.ck.deathCost ? ' · ' + mpMM(C.ck.deathCost) + ' on the timer' : '') : 'nobody died', body || '<p class="mpt-none">Nobody died this key.</p>');
+}
+// (players: damage or healing a second with a bar, against the players of the same spec in the 10 fastest runs, and deaths, defensives
+// and avoidable hits)
+function mpPlayers(R, fx, waiting) {
+  const ppl = R.people.slice().sort(mpByRole), mxD = Math.max(1, ...ppl.filter((p) => p.role !== 'healer').map((p) => p.dps)), runs = (fx && fx.list && fx.list.runs) || [];
+  const vs = (p) => { const heal = p.role === 'healer', a = []; for (const r of runs) for (const m of r.ppl || []) if (m.a && mpNorm(m.s) === mpNorm(p.spec) && mpNorm(m.c) === mpNorm(p.cls) && (m.r === 'healer') === heal) a.push(m.a);
+    if (!a.length) return null; const avg = a.reduce((s, x) => s + x, 0) / a.length, mine = heal ? p.hps : p.dps; return { pct: Math.round(100 * (mine - avg) / avg), n: a.length, avg }; };
+  const rows = ppl.map((p) => { const heal = p.role === 'healer', v = vs(p), sid = mpSpecId(p.spec, p.cls), ic = typeof NDZ_SPECIC !== 'undefined' && NDZ_SPECIC[sid] ? NDZ_SPECIC[sid] : 'inv_misc_questionmark';
+    const vtxt = v ? '<span class="mpt-vs ' + (v.pct < -10 ? 'mpt-bad' : v.pct > 0 ? 'mpt-g' : '') + '" title="' + esc('Against ' + plural(v.n, p.spec + ' ' + ((E.CLASSES[p.cls] || [])[0] || '')) + ' in the 10 fastest runs: ' + Math.round(v.avg / 1000) + 'k a second on average') + '">' + (v.pct >= 0 ? v.pct + '% ahead' : -v.pct + '% behind') + '</span>'
+      : '<span class="mpt-vs mpt-m">' + (waiting ? '…' : runs.length ? 'no ' + esc(p.spec) + ' in the fast runs' : '—') + '</span>';
+    return '<div class="mpt-pl"><span class="mpt-si"><img src="' + whIcon(ic) + '" alt="" loading="lazy" onerror="this.remove()"></span><span class="mpt-pw">' + mpWho(R, p.name) + '<small>' + esc(p.spec) + '</small></span>' +
+      '<span class="mpt-pv"><b>' + Math.round((heal ? p.hps : p.dps) / 1000) + 'k</b><small>' + (heal ? 'healing a second' : 'damage a second') + '</small></span><span class="mpt-bar"><i style="width:' + (heal ? 100 : 100 * p.dps / mxD).toFixed(0) + '%"></i></span>' + vtxt +
+      '<span class="mpt-m">' + plural(p.deaths, 'death') + ' · ' + plural(p.defs, 'defensive') + ' · ' + plural(p.avoid, 'avoidable hit') + '</span></div>'; }).join('');
+  return mpSec('Players', runs.length ? 'each against players of the same spec in the 10 fastest runs' : 'damage and healing a second over the whole key', rows);
+}
+
+// ---------- the look (the Design studio's round 3; site colours, so the themes apply) ----------
+function mpCss() { if (document.getElementById('mpt-css')) return; const st = document.createElement('style'); st.id = 'mpt-css'; st.textContent = MP_CSS; document.head.appendChild(st); }
+const MP_CSS = `
+.mpt{--mpt-soft:#d6d1c6;--mpt-badT:#ff8f87;--mpt-goodT:#7ee08f;--mpt-ab:#c39bff;--mpt-you:#5b8def;--mpt-lane:#191d26;--mpt-fast:#5d6577;max-width:1180px;margin:0 auto;padding:0 0 80px;font:15px/1.5 var(--body)}
+.mpt .mpt-g{color:var(--mpt-goodT)} .mpt .mpt-bad{color:var(--mpt-badT)} .mpt .mpt-m{color:var(--muted)} .mpt .mpt-ab{color:var(--mpt-ab)} .mpt .mpt-nm{font-weight:700}
+.mpt .mpt-k{margin:0;font:700 12.5px var(--head);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.mpt-pick{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 0 0;font:600 13.5px var(--body);color:var(--muted)}
+.mpt-pick select{max-width:100%;background:var(--raised);border:1px solid var(--line2);border-radius:4px;padding:5px 8px;color:var(--text);font:600 13.5px var(--body)}
+.mpt-load{padding:30px 0}
+.mpt-err,.mpt-note{margin:18px 0;padding:12px 14px;border-left:3px solid var(--mpt-badT);color:var(--mpt-soft)}
+.mpt-note{border-left-color:var(--line2)}
+.mpt-ban{position:relative;display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:20px 0;border-bottom:1px solid var(--line)}
+.mpt-kb{width:68px;height:68px;border-radius:4px;display:grid;place-items:center;font:700 30px var(--head);color:var(--gold);border:2px solid color-mix(in srgb,var(--gold) 60%,transparent);background:color-mix(in srgb,var(--gold) 8%,transparent);flex:none}
+.mpt-bt h1{margin:1px 0 6px;font:700 34px/1 var(--head)}
+.mpt-pills{display:flex;gap:8px;flex-wrap:wrap}
+.mpt-pill{font:700 13px var(--head);letter-spacing:.04em;padding:2px 10px;border-radius:999px;border:1px solid var(--line2);color:var(--mpt-soft)}
+.mpt-pill.mpt-g{border-color:rgba(126,224,143,.45);background:rgba(126,224,143,.07)}
+.mpt-pill.mpt-b{color:var(--mpt-badT);border-color:rgba(255,143,135,.45)}
+.mpt-grp{margin-left:auto;display:flex;gap:14px;flex-wrap:wrap}
+.mpt-gm{display:inline-flex;align-items:center;gap:5px;font:600 14px var(--body)}
+.mpt-gm b{font-weight:700}
+.mpt-ro{width:13px;height:13px;fill:currentColor;opacity:.85;flex:none}
+.mpt-fx{margin:20px 0 0;padding:4px 0 4px 18px;border-left:3px solid var(--gold)}
+.mpt-fxh{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+.mpt-fxh h2{margin:0;font:700 22px var(--head);color:var(--gold)}
+.mpt-fxh span{font:500 15px var(--body);color:var(--mpt-soft)}
+.mpt-fxr{display:grid;grid-template-columns:28px minmax(0,1fr) 130px;gap:12px;align-items:start;padding:10px 0;border-top:1px solid var(--line)}
+.mpt-fxh + .mpt-fxr{border-top:0}
+.mpt-fxn{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--gold) 14%,transparent);color:var(--gold);font:700 13.5px var(--head);margin-top:2px}
+.mpt-fxt{font:700 18px var(--head)}
+.mpt-fxr p{margin:1px 0 0;color:var(--mpt-soft);font-size:15px}
+.mpt-fxs{text-align:right}
+.mpt-fxs b{display:block;font:700 22px var(--head)}
+.mpt-fxs small{font:500 12.5px var(--body);color:var(--faint)}
+.mpt-none{margin:6px 0;color:var(--muted)}
+.mpt-tiles{display:flex;margin-top:22px;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.mpt-tile{flex:1;min-width:0;padding:0 16px;border-left:1px solid var(--line)}
+.mpt-tile:first-child{border-left:0;padding-left:0}
+.mpt-tile > b{display:block;font:700 22px/1.15 var(--head);margin:1px 0}
+.mpt-tile span{font:500 13px var(--body);color:var(--muted);white-space:nowrap}
+.mpt-sec{margin-top:32px}
+.mpt-sh{display:flex;align-items:baseline;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.mpt-sh h2{margin:0;font:700 22px var(--head)}
+.mpt-sh span{font:500 13.5px var(--body);color:var(--muted)}
+.mpt-tl{margin-left:84px}
+.mpt-mk{position:relative;height:18px}
+.mpt-mk span{position:absolute;transform:translateX(-50%);font:700 12px var(--body);color:var(--muted);white-space:nowrap}
+.mpt-lanes{position:relative}
+.mpt-vl{position:absolute;top:0;bottom:0;width:1.5px;background:rgba(236,232,223,.16)}
+.mpt-ln{position:relative;display:flex;align-items:center;height:34px;margin-left:-84px}
+.mpt-ll{width:84px;flex:none;font:700 14px var(--head)}
+.mpt-lt{position:relative;flex:1;height:16px;border-radius:4px;background:var(--mpt-lane)}
+.mpt-lt0{background:none;display:flex;align-items:center}
+.mpt-lt0 span{font:500 13px var(--body);color:var(--faint)}
+.mpt-blk{position:absolute;top:0;bottom:0;background:var(--mpt-you);border-radius:2px;box-shadow:inset -1px 0 0 var(--bg)}
+.mpt-blk.mpt-bo{background:var(--gold)}
+.mpt-dth{position:absolute;top:-3px;bottom:-3px;background:var(--bad);border-radius:2px;min-width:2px}
+.mpt-fbar{position:absolute;left:0;top:4px;bottom:4px;border-radius:4px;background:var(--mpt-fast)}
+.mpt-cp{position:absolute;top:50%;transform:translate(-50%,-50%)}
+.mpt-cp i{display:block;width:11px;height:11px;transform:rotate(45deg);background:var(--text);border:2px solid var(--bg)}
+.mpt-gp{position:relative;height:var(--mpt-gph,40px);margin-top:4px}
+.mpt-gp span{position:absolute;top:var(--mpt-gpt,0);transform:translateX(-50%);font:500 12.5px/1.3 var(--body);color:var(--muted);text-align:center;white-space:nowrap}
+.mpt-gp span:last-child{transform:translateX(-80%)}
+.mpt-gp b{display:block;color:var(--text);font-weight:700}
+.mpt-key{display:flex;gap:16px;flex-wrap:wrap;margin:6px 0 0 84px;font:500 12.5px var(--body);color:var(--faint)}
+.mpt-key i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.mpt-k1{background:var(--mpt-you)} .mpt-k2{background:var(--gold)} .mpt-k3{background:var(--bad)} .mpt-k4{background:var(--mpt-fast)} .mpt-kd{background:var(--text);transform:rotate(45deg) scale(.8)}
+.mpt-wyh,.mpt-wyr{display:grid;grid-template-columns:minmax(0,1.5fr) repeat(5,minmax(0,1fr));gap:12px;align-items:center;padding:9px 0}
+.mpt-wyh{margin-top:18px;font:700 12px var(--head);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
+.mpt-wyr{border-bottom:1px solid var(--line)}
+.mpt-sn{font:700 15px var(--head)}
+.mpt-sn small{display:block;font:500 12.5px var(--body);color:var(--muted)}
+.mpt-c b{display:block;font:700 16px var(--head);font-variant-numeric:tabular-nums}
+.mpt-c small{font:500 12.5px var(--body);color:var(--faint)}
+.mpt-why{margin:12px 0 0;color:var(--mpt-soft)}
+.mpt-ex{margin:6px 0 0;font:500 13px var(--body);color:var(--faint)}
+.mpt-plh,.mpt-pr summary,.mpt-sum{display:grid;grid-template-columns:110px minmax(0,1fr) 50px 250px 46px;gap:14px;align-items:baseline;padding:8px 6px}
+.mpt-plh{font:700 12px var(--head);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
+.mpt-pr{border-bottom:1px solid var(--line)}
+.mpt-pr summary{cursor:pointer;list-style:none}
+.mpt-pr summary::-webkit-details-marker{display:none}
+.mpt-pr summary:hover{background:rgba(255,255,255,.025)}
+.mpt-pn{font:700 15px var(--head)}
+.mpt-pr.mpt-boss .mpt-pn{color:var(--gold)}
+.mpt-pm{font:500 13.5px var(--body);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mpt-pt{font:700 15px var(--head);font-variant-numeric:tabular-nums}
+.mpt-pc{display:flex;gap:6px;flex-wrap:wrap}
+.mpt-tg{font:700 11.5px var(--head);letter-spacing:.05em;text-transform:uppercase;padding:0 7px;border-radius:4px;border:1px solid var(--line2);color:var(--muted);white-space:nowrap}
+.mpt-tg.mpt-tb{color:var(--mpt-badT);border-color:rgba(255,143,135,.45)}
+.mpt-pg{font:500 13px var(--body);color:var(--faint);text-align:right}
+.mpt-pd{padding:2px 6px 12px 130px;color:var(--mpt-soft);font-size:14.5px}
+.mpt-pd p{margin:4px 0}
+.mpt-pd ol{margin:4px 0;padding-left:20px}
+.mpt-sm{margin:8px 0 0;font:500 13px var(--body);color:var(--faint)}
+.mpt-two{display:grid;grid-template-columns:1.2fr 1fr;gap:34px}
+.mpt-two .mpt-k{margin-bottom:4px}
+.mpt-kr{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) 40px;gap:12px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line);font:500 14px var(--body)}
+.mpt-kr small{display:block;font:500 12.5px var(--body);color:var(--muted)}
+.mpt-kr > b{text-align:right}
+.mpt-kr2{display:grid;grid-template-columns:120px minmax(0,1fr) auto;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font:500 14px var(--body)}
+.mpt-kr2 .mpt-nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mpt-bar{height:6px;border-radius:3px;background:var(--raised);position:relative;overflow:hidden}
+.mpt-bar i{position:absolute;left:0;top:0;bottom:0;background:#7d8698;border-radius:3px}
+.mpt-dg{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.mpt-dp{color:var(--muted);font:600 13.5px var(--body)}
+.mpt-dr{display:grid;grid-template-columns:120px minmax(0,1fr) 120px;gap:12px;align-items:baseline;font:500 14px var(--body);padding:1px 0}
+.mpt-dr .mpt-nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mpt-pl{display:grid;grid-template-columns:34px 140px 110px minmax(80px,1fr) 130px minmax(0,1.5fr);gap:14px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font:500 14px var(--body)}
+.mpt-si{width:32px;height:32px;border-radius:4px;overflow:hidden;background:var(--raised);box-shadow:0 0 0 1px #000}
+.mpt-si img{width:100%;height:100%;display:block}
+.mpt-pw{min-width:0}
+.mpt-pw .mpt-nm{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mpt-pw small,.mpt-pv small{display:block;font:500 12.5px var(--body);color:var(--muted)}
+.mpt-pv b{font:700 17px var(--head)}
+.mpt-vs{font:700 14px var(--body)}
+@media (max-width:860px){
+  .mpt-grp{margin-left:0}
+  .mpt-fxr{grid-template-columns:28px minmax(0,1fr);row-gap:2px}
+  .mpt-fxs{grid-column:2;text-align:left}
+  .mpt-fxs b{display:inline;font-size:18px;margin-right:6px}
+  .mpt-tiles{flex-wrap:wrap;row-gap:12px}
+  .mpt-tile{flex:1 1 45%;border-left:0;padding:0}
+  .mpt-tile span{white-space:normal}
+  .mpt-tl{margin-left:64px} .mpt-ln{margin-left:-64px} .mpt-ll{width:64px} .mpt-key{margin-left:0}
+  .mpt-mk span{font-size:11px}
+  .mpt-gp{height:auto;display:flex;flex-direction:column;gap:2px;margin-left:-64px}
+  .mpt-gp span,.mpt-gp span:last-child{position:static;transform:none;text-align:left}
+  .mpt-gp b{display:inline;margin-right:6px}
+  .mpt-wyh{display:none}
+  .mpt-wyr{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:8px}
+  .mpt-wyr .mpt-sn{grid-column:1 / -1}
+  .mpt-c::before{content:attr(data-l);display:block;font:700 11px var(--head);letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .mpt-plh{display:none}
+  .mpt-pr summary,.mpt-sum{grid-template-columns:minmax(0,1fr) auto;row-gap:3px}
+  .mpt-pr .mpt-pt{grid-column:2;grid-row:1;text-align:right}
+  .mpt-pm,.mpt-pc{grid-column:1 / -1}
+  .mpt-pg{display:none}
+  .mpt-pd{padding-left:6px}
+  .mpt-two{grid-template-columns:1fr}
+  .mpt-dg{grid-template-columns:1fr}
+  .mpt-dr{grid-template-columns:auto 1fr;row-gap:1px}
+  .mpt-dr > span:nth-child(3){grid-column:1 / -1}
+  .mpt-pl{grid-template-columns:34px minmax(0,1fr) auto;row-gap:4px}
+  .mpt-pl .mpt-bar{display:none}
+  .mpt-pl > .mpt-vs{grid-column:2 / -1}
+  .mpt-pl > span:last-child{grid-column:1 / -1}
+}
+`;
+ // (and src/mptab.js, the Mythic+ tab (Nov 1))
 })();
 
 // ===== Design studio round 3 (Oct 25): bars. Reads the scores other chats already draw and sets --p (and a fold) so the CSS can draw one bar language.

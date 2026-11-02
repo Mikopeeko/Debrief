@@ -86,7 +86,7 @@ async function gql(creds, query, variables) {
 }
 
 const REPORT_Q = `query($code:String!){reportData{report(code:$code){title startTime endTime zone{name} guild{id name}
-  fights{id encounterID name difficulty kill startTime endTime size keystoneLevel fightPercentage bossPercentage lastPhase lastPhaseIsIntermission friendlyPlayers}
+  fights{id encounterID name difficulty kill startTime endTime size keystoneLevel keystoneTime keystoneBonus keystoneAffixes fightPercentage bossPercentage lastPhase lastPhaseIsIntermission friendlyPlayers dungeonPulls{encounterID name}}
   masterData{actors{id name type subType server petOwner gameID} abilities{gameID name type}}}}}`;
 const EVENTS_Q = `query($code:String!,$fid:[Int]!,$s:Float!,$e:Float!){reportData{report(code:$code){
   events(fightIDs:$fid,startTime:$s,endTime:$e,limit:10000,includeResources:true){data nextPageTimestamp}}}}`;
@@ -195,10 +195,34 @@ async function playerAbOf(run, v) {
   return { dur: Math.round(Math.max(1, (f.endTime - f.startTime) / 1000)), ab: dd.map((e) => ({ name: e.name, id: e.guid, total: e.total || 0, casts: casts.get(e.name) || 0 })),
     cast: kk.map((e) => ({ name: e.name, id: e.guid, n: e.total || 0 })) }; // (every spell they cast, cooldowns too, for casts a minute and cooldown uses)
 }
+// The fastest timed runs of one dungeon at one key level this season, for the Mythic+ tab (Nov 1): Warcraft Logs' speed rankings (its
+// bracket is the level less one: bracket 11 is +12, checked on Voidscar Arena), the 10 fastest with a public log, each with who played
+// what and their damage (healers: healing) a second from the run's own rankings, 5 runs a request. v: { e: the dungeon (Warcraft Logs'
+// encounter), l: the key level }
+const MPFAST_Q = `query($e:Int!,$b:Int!){worldData{encounter(id:$e){fightRankings(bracket:$b,metric:speed,page:1)}}}`;
+async function mpFastOf(run, v) {
+  const P = (x) => (typeof x === 'string' ? JSON.parse(x) : x);
+  const fr = await run(MPFAST_Q, { e: v.e, b: v.l - 1 }), R = P(fr && fr.worldData && fr.worldData.encounter && fr.worldData.encounter.fightRankings) || {};
+  const top = (R.rankings || []).filter((t) => t && t.report && /^[A-Za-z0-9]{8,32}$/.test(t.report.code) && t.report.fightID > 0 && t.duration > 0 && (t.bracketData == null || t.bracketData === v.l)).slice(0, 10);
+  const chunks = []; for (let i = 0; i < top.length; i += 5) chunks.push(top.slice(i, i + 5));
+  const amt = (x) => { const m = new Map(); for (const f of (P(x) || {}).data || []) for (const role of Object.values(f.roles || {})) for (const c of role.characters || []) if (c && c.name) m.set(c.name, Math.round(c.amount || 0)); return m; };
+  const got = await Promise.all(chunks.map(async (ch) => {
+    const q = 'query{reportData{' + ch.map((t, i) => { const f = t.report.fightID | 0; return 'k' + i + ':report(code:"' + t.report.code + '"){d:rankings(fightIDs:[' + f + '],playerMetric:dps) h:rankings(fightIDs:[' + f + '],playerMetric:hps)}'; }).join(' ') + '}}';
+    let d = null; try { d = await run(q, {}); } catch (e) { d = null; }
+    return ch.map((t, i) => { const x = d && d.reportData && d.reportData['k' + i], D = x ? amt(x.d) : new Map(), H = x ? amt(x.h) : new Map();
+      return { code: t.report.code, fight: t.report.fightID, at: t.report.startTime || 0, dur: Math.round(t.duration), deaths: t.deaths | 0, region: t.server ? t.server.region || '' : '', server: t.server ? t.server.name || '' : '',
+        ppl: (t.team || []).map((m) => { const r = /heal/i.test(m.role) ? 'healer' : /tank/i.test(m.role) ? 'tank' : 'dps'; return { n: m.name, c: m.class, s: m.spec, r, a: (r === 'healer' ? H : D).get(m.name) || null }; }) }; });
+  }));
+  return { e: v.e, l: v.l, runs: got.flat() };
+}
 // </topspec>
 async function topSpec(creds, v) {
   if (HOSTED) return api('/api/topspec?e=' + v.e + '&c=' + encodeURIComponent(v.c) + '&s=' + encodeURIComponent(v.s) + '&d=' + v.d + '&m=' + v.m + '&v=4'); // (v=4: the top 8, each with their own spells and their kill's report and fight)
   return topSpecOf((q, vars) => gql(creds, q, vars), v);
+}
+async function mpFast(creds, v) {
+  if (HOSTED) return api('/api/mpfast?e=' + v.e + '&l=' + v.l);
+  return mpFastOf((q, vars) => gql(creds, q, vars), v);
 }
 async function topKills(creds, v) {
   if (HOSTED) return api('/api/topkills?e=' + v.e + '&d=' + v.d + '&p=' + v.p + '&v=2'); // (v=2: answers with each guild's number)
@@ -246,8 +270,15 @@ async function loadReport(creds, code, live) {
       roster: (f.friendlyPlayers || []).map((i) => (actors.get(i) || {}).name).filter(Boolean),
       pull: pulls[k], run: null, wallMs: rep.startTime + f.startTime, wcl: { code, fight: f.id, start: f.startTime, end: f.endTime, actors, abilities, encounterID: f.encounterID, rawDiff: diffId } };
   });
+  // (Mythic+ keys, for the Mythic+ tab (Nov 1): Warcraft Logs keeps a whole key as one fight, with its level, the time on the key's timer
+  // (deaths included), how many levels it went up (0: over time) and its bosses; a key left early has no time. A minute or less is a
+  // key started and reset, not a run)
+  const runs = rep.fights.filter((f) => f.keystoneLevel > 0 && f.encounterID > 0 && f.endTime - f.startTime > 60000).map((f) => ({ kind: 'run', id: f.encounterID, boss: f.name, level: f.keystoneLevel, diff: '+' + f.keystoneLevel, diffId: 8, size: 5,
+    timed: (f.keystoneBonus | 0) > 0, up: f.keystoneBonus | 0, keyMs: f.keystoneTime || null, affixes: f.keystoneAffixes || [], kill: !!f.kill, startMs: BASE + f.startTime, wallMs: rep.startTime + f.startTime, duration: (f.endTime - f.startTime) / 1000,
+    roster: (f.friendlyPlayers || []).map((i) => (actors.get(i) || {}).name).filter(Boolean),
+    wcl: { code, fight: f.id, start: f.startTime, end: f.endTime, actors, abilities, encounterID: f.encounterID, rawDiff: 8, key: true, bosses: new Map((f.dungeonPulls || []).filter((p) => p.encounterID > 0).map((p) => [p.encounterID, p.name])) } }));
   // (endMs: the time of the report's last event, which keeps moving while someone live logs it)
-  return { title: rep.title, zone: rep.zone && rep.zone.name, bosses, runs: [], dungeons, endMs: rep.endTime || null };
+  return { title: rep.title, zone: rep.zone && rep.zone.name, bosses, runs, dungeons, endMs: rep.endTime || null };
 }
 
 // ---------- a team's reports: every raid night as short pull summaries (saved progress), no event downloads ----------
@@ -515,7 +546,13 @@ function* translateSteps(item, events) {
     return [has ? who : '0000000000000000', '0000000000000000', hp, mx, 0, 0, 0, 0, 0, 0, pw[0], pw[1], pw[2], pw[3], x, y, e.mapID || 0, fc.toFixed(4), 0].join(',');
   };
   const add = (e, body) => out.push(stamp(e.timestamp) + body);
-  out.push(stamp(w.start) + 'ENCOUNTER_START,' + w.encounterID + ',' + q(item.boss) + ',' + w.rawDiff + ',' + item.size + ',0');
+  // (a Mythic+ key (Nov 1) is written the way WoW writes one: the key's start and end around it, and each boss's start and end inside it, with
+  // the boss's name in English from the key's pull list (the events carry the logger's own language). Its time is the time on the key's timer)
+  const key = !!w.key; let keyEnd = false;
+  const keyBoss = (e) => q((w.bosses && w.bosses.get(e.encounterID)) || e.name || 'Boss');
+  const keyEndLine = () => 'CHALLENGE_MODE_END,0,' + (item.timed ? 1 : 0) + ',' + item.level + ',' + Math.round(item.keyMs) + ',0';
+  if (key) out.push(stamp(w.start) + 'CHALLENGE_MODE_START,' + q(item.boss) + ',0,0,' + item.level + ',[' + (item.affixes || []).join(',') + ']');
+  else out.push(stamp(w.start) + 'ENCOUNTER_START,' + w.encounterID + ',' + q(item.boss) + ',' + w.rawDiff + ',' + item.size + ',0');
   // pets first, so their damage is credited to their owner
   for (const a of actors.values()) if (a.type === 'Pet' && a.petOwner != null)
     out.push(stamp(w.start) + 'SPELL_SUMMON,' + unit(a.petOwner) + ',' + unit(a.id) + ',0,"Summon",0x1');
@@ -591,9 +628,12 @@ function* translateSteps(item, events) {
       case 'interrupt':
         add(e, 'SPELL_INTERRUPT,' + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + spell(e.extraAbilityGameID));
         break;
-      case 'dispel':
-        add(e, 'SPELL_DISPEL,' + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + spell(e.extraAbilityGameID) + ',DEBUFF');
+      case 'dispel': /* (on a key, a buff taken off an enemy is a purge or soothe (Nov 1)) */
+        add(e, 'SPELL_DISPEL,' + src(e) + ',' + dst(e) + ',' + spell(ab) + ',' + spell(e.extraAbilityGameID) + (key && e.isBuff ? ',BUFF' : ',DEBUFF'));
         break;
+      case 'dungeonencounterstart': if (key) add(e, 'ENCOUNTER_START,' + e.encounterID + ',' + keyBoss(e) + ',8,5,0'); break;
+      case 'dungeonencounterend': if (key) add(e, 'ENCOUNTER_END,' + e.encounterID + ',' + keyBoss(e) + ',8,5,' + (e.kill ? 1 : 0) + ',0'); break;
+      case 'dungeonend': if (key && item.keyMs && !keyEnd) { keyEnd = true; add(e, keyEndLine()); } break;
       case 'resurrect': // (battle rezzes, for the wipe call (Oct 23))
         add(e, 'SPELL_RESURRECT,' + src(e) + ',' + dst(e) + ',' + spell(ab));
         break;
@@ -604,10 +644,11 @@ function* translateSteps(item, events) {
         break; }
     }
   }
-  out.push(stamp(w.end) + 'ENCOUNTER_END,' + w.encounterID + ',' + q(item.boss) + ',' + w.rawDiff + ',' + item.size + ',' + (item.kill ? 1 : 0) + ',' + Math.round((w.end - w.start)));
+  if (key) { if (item.keyMs && !keyEnd) out.push(stamp(w.end) + keyEndLine()); } /* (a key left early has no end: the reader ends it at its last line) */
+  else out.push(stamp(w.end) + 'ENCOUNTER_END,' + w.encounterID + ',' + q(item.boss) + ',' + w.rawDiff + ',' + item.size + ',' + (item.kill ? 1 : 0) + ',' + Math.round((w.end - w.start)));
   return out;
 }
 
-root.WCL = { HOSTED, paceRecs, rateRecs, curveRecs, killGuild, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
+root.WCL = { HOSTED, mpFast, MPFAST_Q, paceRecs, rateRecs, curveRecs, killGuild, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);

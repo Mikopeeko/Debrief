@@ -1792,7 +1792,7 @@ function myPageInTab(root, g) { const pg = root.querySelector('.home.prog'); if 
 // (the tabs on a team's page: My Page lit when it's your team's; the raid's tabs open the raid you came from, on that tab)
 function pgTabBar(g) { const t = homeTarget(), back = !!(PROG_BACK && S.index && S.index.bosses && S.index.bosses.includes(PROG_BACK)), name = new Map([['live', 'Recap']].concat(TABS));
   return '<div class="tabbar pg-tabbar"><nav class="tabs" role="tablist">' + meTabHtml(!!(t && g && g.gid === t.gid)) + TAB_ORDER.map((k) => { const off = !back || (k === 'cmp' && CMP_OFF()) || (k === 'gdz' && GDZ_OFF()) || (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()) || (k === 'overview' && ASG_OFF()), tt = !back ? 'Open a raid night first' : k === 'overview' && off ? 'In Development' : off ? 'Under development' : TAB_TIP[k] || '';
-    return '<button class="tab' + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + tabIco(k) + esc(name.get(k)) + '</button>'; }).join('') + '</nav></div>'; }
+    return '<button class="tab' + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + tabIco(k) + esc(name.get(k)) + '</button>'; }).join('') + mpTabHtml() + '</nav></div>'; } /* (Mythic+ when the open report has a key, Nov 1) */
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.pg-tabbar .tab'); if (!b) return; const k = b.dataset.t;
   if (k === 'me') { const h = meHomeChar(); if (h) { meSwitch(h.gid); return; } if (!b.classList.contains('on')) openMyPage(); return; } if (b.classList.contains('tab-off')) { b.focus(); return; } if (k === 'overview') { planPage(); window.scrollTo(0, 0); return; } S.tab = k; select(PROG_BACK); });
 // ---- the boss banner on top of every tab ----
@@ -2024,7 +2024,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-11-01', h: [{ t: 'Rotation knows single target from AoE', d: 'Your rotation is now judged by how many enemies were close: Divine Storm, Blade Flurry, Whirlwind, Spinning Crane Kick and Seed of Corruption on packs, the single-target buttons on one. For now in Mythic+, where packs are the fight. Raid shows how many enemies were close.' }, { t: 'A key for your recap', d: 'Press Ctrl + Shift + D anywhere, even in WoW, and your newest recap shows over the game; press it again to hide it. Debrief Companion asks you to pick the key once, and you can change it any time. Play in Windowed (Fullscreen) so it shows on top.' }, { t: 'Mythic+ run recap', d: 'When a key ends, Debrief Companion pops up one recap of the whole run: how close you came to the next level and what the deaths cost, a tab for each pull with what got through and whose kick was ready, kicks and stuns, avoidable damage, deaths, and everyone\'s rotation, for you or anyone in the group. Save this key brings the same recap into WoW.' }, { t: 'Debriefing Timeline, across the page', d: 'Each phase is one chart: every mechanic a row, every moment a dot, green for done right and red for a mistake, with the boss health behind. Hover a dot for what happened. Under it, every mistake is one line; click it for why and what to do next time.' }], n: [
+  { d: '2026-11-01', h: [{ t: 'Mythic+ tab', d: 'Open a Warcraft Logs report with a Mythic+ key, and the new Mythic+ tab shows the whole key. First, what gets you the next level, ranked by seconds on the timer. Then where you fell behind the fastest timed run of your dungeon and level. Then every pull, the casts that got through, the deaths, and each player against the same spec in the fastest runs.' }, { t: 'Rotation knows single target from AoE', d: 'Your rotation is now judged by how many enemies were close: Divine Storm, Blade Flurry, Whirlwind, Spinning Crane Kick and Seed of Corruption on packs, the single-target buttons on one. For now in Mythic+, where packs are the fight. Raid shows how many enemies were close.' }, { t: 'A key for your recap', d: 'Press Ctrl + Shift + D anywhere, even in WoW, and your newest recap shows over the game; press it again to hide it. Debrief Companion asks you to pick the key once, and you can change it any time. Play in Windowed (Fullscreen) so it shows on top.' }, { t: 'Mythic+ run recap', d: 'When a key ends, Debrief Companion pops up one recap of the whole run: how close you came to the next level and what the deaths cost, a tab for each pull with what got through and whose kick was ready, kicks and stuns, avoidable damage, deaths, and everyone\'s rotation, for you or anyone in the group. Save this key brings the same recap into WoW.' }, { t: 'Debriefing Timeline, across the page', d: 'Each phase is one chart: every mechanic a row, every moment a dot, green for done right and red for a mistake, with the boss health behind. Hover a dot for what happened. Under it, every mistake is one line; click it for why and what to do next time.' }], n: [
     "On a smaller screen, the tiles at the top of Debriefing line up in even rows: no tile stretched across on its own and no empty gaps.",
     "The hovers on Debriefing's top tiles list every player, not just the first 10, and a tall hover stays on screen.",
     "Your recap is a side panel now: the full height of your screen on the right edge (or the left, with Side in /db card settings), one column that scrolls, in WoW and on your PC. Drag its inner edge on your PC to make it wider or narrower.",
@@ -3145,7 +3145,7 @@ function renderMain0() {
         return '<button class="tab' + (WIP_TABS.has(k) ? ' tab-uc' : '') + (S.tab === k || (k === 'audit' && S.tab === 'overview' && !TAB_ORDER.includes('overview')) ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
         (k === 'audit' && LIVE.on ? '<span class="tab-lv" title="Following live: new pulls show up here" aria-label="Live">Live</span>' : '') /* (your idea, Oct 20: a live icon on Debriefing) */ /* (round 455: no count badge on Debriefing; Flex: "no one would know what it is") */ + (WIP_TABS.has(k) ? '<span class="tab-wip" title="Under construction" aria-label="Under construction">🚧</span>' : '') + (soon ? '<span class="tab-soon">Coming soon</span>' : '') + '</button>'; };
       if (S.page === 'guides') S.page = 'pull'; /* round 479 guides tab: a raid page is being drawn, so Guides isn't lit (from a guide, a raid tab drew both lit) */
-      return meTabHtml(S.tab === 'me') + TAB_ORDER.map(tab).join(''); })() + '</nav>' + topPick() + tbPull() + '</div>' +
+      return meTabHtml(S.tab === 'me') + TAB_ORDER.map(tab).join('') + mpTabHtml(); })() + '</nav>' + topPick() + tbPull() + '</div>' + /* (Mythic+ when the open report has a key, Nov 1) */
     (WIP_TABS.has(S.tab) ? '<div class="cz-slot">' + (S.tab === 'rot' ? rotSite() : rotSite('the ' + ({ overview: 'Assignments', player: 'Report card', cmp: 'Compare' }[S.tab] || 'this') + ' tab', 'it')) + '</div>' : '') + // (the building site, outside the view, so a page that redraws itself keeps it)
     '<section id="view"></section>';
   bindTopPick();
@@ -30284,9 +30284,12 @@ async function openWcl(link, creds, live, fresh) {
     const keep = new Set(rep.bosses); for (const k of [...CACHE.keys()]) if (!keep.has(k)) CACHE.delete(k); }
   else CACHE.clear();
   S.file = null; S.wclCreds = creds; S.wclCode = link.code; S.shr = null;
-  S.index = { bosses: rep.bosses, runs: [] };
+  S.index = { bosses: rep.bosses, runs: [], keys: rep.runs || [] }; /* (keys: its Mythic+ keys, for the Mythic+ tab (Nov 1)) */
   $('.brand p').textContent = 'Warcraft Logs: ' + (rep.title || link.code);
   renderList();
+  // (a report of keys opens on the Mythic+ tab: the key in the link, else the newest; a raid report with keys keeps the tab beside its raid tabs)
+  { const kk = S.index.keys, want = link.fight ? kk.find((r) => r.wcl.fight === link.fight) : null;
+    if (want || (kk.length && (!rep.bosses.length || mpWantTab(link.code)))) { if (LIVE.on && !rep.bosses.length) setLive(false); LIVE.seen.clear(); LIVE.endMs = rep.endMs; liveUi(); mpOpen(want || kk[kk.length - 1]); return; } }
   // live mode survives the auto-reload after an app update
   let wasLive = false; try { wasLive = sessionStorage.getItem('wla-live') === '1'; } catch (e) { /* ignore */ }
   // a report someone is still live logging (its last event only minutes old) is followed live without being asked
@@ -30603,6 +30606,7 @@ function navState() {
   if (S.page === 'home') return { nav: 1, v: 'h' };
   if (S.page === 'guides') return { nav: 1, v: 'gd', b: S.gdzBoss || null, d: S.gdzDiff || null };
   if (S.page === 'ingame') return { nav: 1, v: 'ig' }; if (S.page === 'plan') return { nav: 1, v: 'pl' }; /* (Plan has an address too, Oct 27) */
+  if (S.page === 'mplus' && MP.item) return { nav: 1, v: 'mp', code: MP.item.wcl.code, fight: MP.item.wcl.fight, tab: 'mplus' }; /* (a Mythic+ key, Nov 1) */
   return null;
 }
 // (a boss guide's own address (Oct 27): /guide/the-coiled-altar/mythic, so each guide is a page search engines list)
@@ -30613,7 +30617,7 @@ const navKey = (st) => (st ? [st.v, st.code, st.fight, st.bi, st.night, st.tab, 
 function navNote() {
   const st = navState(); if (!st) return;
   const cur = history.state && history.state.nav ? navKey(history.state) : null, k = navKey(st);
-  let url = WCL.HOSTED ? (st.v === 'p' && st.night ? shrUrl(st) : st.v === 'p' && st.code ? '?report=' + st.code + '&fight=' + st.fight + '&tab=' + encodeURIComponent(st.tab || 'audit') + (st.scope === 'all' ? '&all=1' : '') + (st.sel ? '&p=' + encodeURIComponent(st.sel) : '') : st.v === 'gd' ? '?guides' + (st.b ? '&boss=' + encodeURIComponent(st.b) : '') + (st.d ? '&d=' + st.d : '') : st.v === 'ig' ? '?ingame' : st.v === 'pl' ? '?plan' : location.pathname) : location.pathname + location.search;
+  let url = WCL.HOSTED ? (st.v === 'mp' ? '?report=' + st.code + '&fight=' + st.fight + '&tab=mplus' : st.v === 'p' && st.night ? shrUrl(st) : st.v === 'p' && st.code ? '?report=' + st.code + '&fight=' + st.fight + '&tab=' + encodeURIComponent(st.tab || 'audit') + (st.scope === 'all' ? '&all=1' : '') + (st.sel ? '&p=' + encodeURIComponent(st.sel) : '') : st.v === 'gd' ? '?guides' + (st.b ? '&boss=' + encodeURIComponent(st.b) : '') + (st.d ? '&d=' + st.d : '') : st.v === 'ig' ? '?ingame' : st.v === 'pl' ? '?plan' : location.pathname) : location.pathname + location.search;
   if (WCL.HOSTED) { try { document.title = st.v === 'gd' && st.b ? st.b + ' ' + ((st.d || S.gdzDiff) === 'h' ? 'Heroic' : 'Mythic') + ' guide · Debrief' : PAGE_TITLE_SITE; } catch (e) { /* ignore */ } if (st.v === 'gd' && st.b) url = '/guide/' + guideSlug(st.b) + '/' + ((st.d || S.gdzDiff) === 'h' ? 'heroic' : 'mythic'); else if (url.startsWith('?')) url = '/' + url; else if (location.pathname.startsWith('/guide/')) url = '/'; } /* (guides at their own address, Oct 27) */
   const boot = NAV_BOOT; NAV_BOOT = false;
   // (the same page with another player picked on Rotation: the step is kept up to date for a reload, not a new step)
@@ -30623,6 +30627,7 @@ async function navGo(st) {
   if (st.v === 'h') { home(); }
   else if (st.v === 'gd') { openGuides(st.b, st.d); }
   else if (st.v === 'ig') { openInGame(); } else if (st.v === 'pl') { planPage(); }
+  else if (st.v === 'mp') { await mpGo(st.code, st.fight); } /* (a Mythic+ key, Nov 1) */
   else if (st.v === 'g') { progressPage(undefined, st.g); if (st.mine) S.progMine = true; } // (set before the page draws)
   else if (st.v === 'p') {
     let b = null;
@@ -32596,6 +32601,7 @@ if (WCL.HOSTED && !window.WLA_DESKTOP) {
   }
 }
 /*GUIDES*/ // (the build puts src/guides.js here, inside this file's scope)
+/*MPTAB*/ // (and src/mptab.js, the Mythic+ tab (Nov 1))
 })();
 
 // ===== Design studio round 3 (Oct 25): bars. Reads the scores other chats already draw and sets --p (and a fold) so the CSS can draw one bar language.
