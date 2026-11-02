@@ -1,6 +1,7 @@
 // The recap pop-up (Oct 22): a small window that floats over WoW right after a boss pull ("Your recap is ready", one click
 // for the coach card). It never takes focus from the game: Windows shows it without activating it, it has no taskbar
-// button, and it stays on top. It hides when the next pull starts or when you close it. Drag it by its top; the spot is kept.
+// button, and it stays on top. It hides when the next pull starts or when you close it.
+// (layout A since Nov 1: a full-height side panel on the right or left edge of the game's screen; drag its inner edge for width)
 using System;
 using System.Drawing;
 using System.IO;
@@ -53,63 +54,60 @@ namespace Debrief {
       // (as wide as the card style picked in the addon: Detailed is the widest, and opens more; Oct 22)
       // (sized for the screen it opens on, not the app's: a 4K screen at 150% needs 1.5 times the pixels, or the recap comes out
       // two-thirds size, one column and cut off (the user's screenshot, Oct 24))
-      var look = Wow.AddonLook(here); int bw = WidthOf(look[0]);
-      var probe = placed ? Bounds : SavedBounds(bw, 70);
-      int dpi = DpiAt(probe); var waP = Screen.FromRectangle(probe).WorkingArea;
-      int w = Math.Min((int)Math.Round(bw * dpi / 96.0), (int)(waP.Width * 0.94)), h0 = (int)Math.Round(70 * dpi / 96.0);
-      oneW = w; if (cols == 2) w = Math.Min(w * 2, (int)(waP.Width * 0.94)); // (two columns when the card is long (Oct 24))
-      if (fixW > 0) w = Math.Min(fixW, (int)(waP.Width * 0.94)); // (the Whole night window keeps its width (Oct 24))
+      var look = Wow.AddonLook(here);
       if (json.StartsWith("{")) { string lk = "{}"; try { lk = new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(Wow.AddonCard(here)); } catch { } json = "{\"look\":\"" + look[1] + "\",\"lk\":" + lk + "," + json.Substring(1); } // (and your /db card settings (Oct 24))
       pending = json;
-      if (!placed) { placed = true; Bounds = SavedBounds(w, h0); }
-      else if (Width != w) { var wa = Screen.FromHandle(Handle).WorkingArea; int x = Left + Width / 2 - w / 2; SetBounds(Math.Max(wa.Left, Math.Min(x, wa.Right - w)), Top, w, Height); }
+      placed = true; Dock(); // (the side panel, at its side and width (Nov 1))
       if (!Visible) { Show(); SetWindowPos(Handle, (IntPtr)(-1) /* HWND_TOPMOST */, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010 | 0x0040 /* NOSIZE NOMOVE NOACTIVATE SHOWWINDOW */); }
       if (web.CoreWebView2 == null) { if (!starting) { starting = true; BeginInvoke(new Action(async () => await Start())); } }
       else if (ready) Send(json);
     }
-    int cols = 1, oneW = 0, fixW = 0;
+    bool docking, sizing; const int EdgeW = 6;
     // (the recap hotkey (Nov 1): the last recap again, on top of the game (windowed or windowed fullscreen), without taking focus)
     public bool HasRecap { get { return pending != null; } }
-    public void ShowAgain() { if (!Visible) Show(); SetWindowPos(Handle, (IntPtr)(-1) /* HWND_TOPMOST */, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010 | 0x0040 /* NOSIZE NOMOVE NOACTIVATE SHOWWINDOW */); }
+    public void ShowAgain() { if (placed) Dock(); if (!Visible) Show(); SetWindowPos(Handle, (IntPtr)(-1) /* HWND_TOPMOST */, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010 | 0x0040 /* NOSIZE NOMOVE NOACTIVATE SHOWWINDOW */); }
     void Send(string json) { try { web.CoreWebView2.PostWebMessageAsJson(json); } catch (Exception e) { Program.Log("popup send: " + e.Message); } }
 
     void OnMessage(object s, CoreWebView2WebMessageReceivedEventArgs e) {
       string m; try { m = e.TryGetWebMessageAsString() ?? ""; } catch { return; }
       if (m == "ready") { ready = true; if (pending != null) Send(pending); }
-      else if (m == "close") { SaveBounds(); Hide(); }
+      else if (m == "close") Hide();
       else if (m == "open") main.ShowInFront();
       else if (m.StartsWith("pull:")) main.PopupPull(m.Substring(5)); // (a pull chip: the main page loads that pull's coach box)
       else if (m.StartsWith("key:")) main.PopupKey(m.Substring(4)); // (a key picked from the switch, Saved or the key's name (Nov 1))
       else if (m.StartsWith("cut:")) main.PopupCut(m.Substring(4)); // (Stop at death changed: the main page rebuilds the coach box)
-      else if (m.StartsWith("cols:")) {
-        // (two columns when the card is long (Oct 24): twice as wide, still centred where it was; back to one when it fits)
-        cols = m == "cols:2" ? 2 : 1; fixW = 0; if (oneW <= 0) return;
-        var wa = Screen.FromHandle(Handle).WorkingArea; int w = cols == 2 ? Math.Min(oneW * 2, (int)(wa.Width * 0.94)) : oneW;
-        if (Width != w) { int x = Left + Width / 2 - w / 2; SetBounds(Math.Max(wa.Left, Math.Min(x, wa.Right - w)), Top, w, Height); }
-      }
-      else if (m.StartsWith("w:")) {
-        // (the Whole night window (Oct 24): the width the page asks for, like the big window in game; still centred where it was)
-        double cw; if (!double.TryParse(m.Substring(2), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out cw)) return;
-        var wa = Screen.FromHandle(Handle).WorkingArea; int w = Math.Min((int)Math.Round(cw * Dpi() / 96.0), (int)(wa.Width * 0.94)); fixW = w;
-        if (Width != w) { int x = Left + Width / 2 - w / 2; SetBounds(Math.Max(wa.Left, Math.Min(x, wa.Right - w)), Top, w, Height); }
-      }
-      else if (m.StartsWith("h:")) {
-        // (the window fits the card, up to most of the screen, and stays centred where it was: over your character)
-        double h; if (!double.TryParse(m.Substring(2), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out h)) return;
-        var wa = Screen.FromHandle(Handle).WorkingArea;
-        int px = Math.Max(Px(56), Math.Min((int)Math.Ceiling(h * Dpi() / 96.0), (int)(wa.Height * 0.85)));
-        int top = Math.Min(Top + Height / 2 - px / 2, wa.Bottom - px - 8);
-        SetBounds(Left, Math.Max(wa.Top, top), Width, px);
-      }
+      else if (m.StartsWith("cols:") || m.StartsWith("w:") || m.StartsWith("h:")) { } // (one shape since layout A (Nov 1): the panel keeps its full height and width, whatever the card asks)
     }
 
     // (twice as wide as before, two columns (Oct 23); the addon's Width picks a little more or less)
     // (one column like /recap since Oct 24: the addon's card widths (360, 400, 480, 560, 680), a little roomier)
     static int WidthOf(string w) { return w == "narrow" ? 420 : w == "wide" ? 540 : w == "large" ? 620 : w == "xl" ? 740 : 460; }
 
-    protected override void OnMove(EventArgs e) { base.OnMove(e); if (placed && Visible) SaveBounds(); }
+    // ---------- layout A (Nov 1, Flex: "Lets just do A"): a side panel against the right edge of the game's screen (or the left, from /db's Side),
+    // its full working height; as wide as the addon's Width, or the width its inner edge was dragged to (kept until Width changes in /db).
+    // One column that scrolls inside; it never doubles, follows the card's height, or moves ----------
+    void Dock() {
+      var look = Wow.AddonLook(here); var wa = GameScreen().WorkingArea; bool left = look.Length > 2 && look[2] == "left";
+      int dpi = DpiAt(wa), w = SavedW(look[0]); if (w <= 0) w = (int)Math.Round(WidthOf(look[0]) * dpi / 96.0);
+      w = Math.Max((int)Math.Round(380 * dpi / 96.0), Math.Min(w, (int)(wa.Width * 0.6)));
+      docking = true; try { SetBounds(left ? wa.Left : wa.Right - w, wa.Top, w, wa.Height); } finally { docking = false; }
+      var pad = left ? new Padding(0, 0, EdgeW, 0) : new Padding(EdgeW, 0, 0, 0); if (Padding != pad) Padding = pad; // (the inner edge: a thin strip to drag)
+    }
+    protected override void OnMove(EventArgs e) { base.OnMove(e); if (placed && Visible && !docking && !sizing) BeginInvoke(new Action(Dock)); } // (it stays docked)
+    protected override void WndProc(ref Message m) {
+      if (m.Msg == 0x0084 /* WM_NCHITTEST */ && placed) {
+        long lp = m.LParam.ToInt64(); var p = PointToClient(new Point((short)(lp & 0xffff), (short)((lp >> 16) & 0xffff))); bool left = Padding.Right > 0;
+        if (!left && p.X < EdgeW) { m.Result = (IntPtr)10 /* HTLEFT */; return; }
+        if (left && p.X >= ClientSize.Width - EdgeW) { m.Result = (IntPtr)11 /* HTRIGHT */; return; }
+      }
+      if (m.Msg == 0x0231 /* WM_ENTERSIZEMOVE */) sizing = true;
+      if (m.Msg == 0x0232 /* WM_EXITSIZEMOVE */) { sizing = false; SaveW(); BeginInvoke(new Action(Dock)); }
+      base.WndProc(ref m);
+    }
+    string SideFile { get { return Path.Combine(here, "popup-side.txt"); } } // ("<the addon's Width>,<pixels>": a dragged width, for that Width setting)
+    int SavedW(string widthSetting) { try { var p = File.ReadAllText(SideFile).Split(','); if (p.Length > 1 && p[0] == widthSetting) return int.Parse(p[1]); } catch { } return 0; }
+    void SaveW() { try { File.WriteAllText(SideFile, Wow.AddonLook(here)[0] + "," + Width); } catch { } }
 
-    // ---------- its spot, kept between pulls and starts (right over your character at first: the middle of WoW's screen) ----------
     [DllImport("user32.dll")] static extern bool SetWindowPos(IntPtr h, IntPtr after, int x, int y, int cx, int cy, uint flags);
     [DllImport("user32.dll")] static extern int GetDpiForWindow(IntPtr h);
     // (the pop-up's own screen scaling once it has a window, the app's before that; DpiAt: the scaling of the screen a spot is on)
@@ -122,26 +120,11 @@ namespace Debrief {
       return Dpi();
     }
     int Px(int v) { return (int)Math.Round(v * Dpi() / 96.0); }
-    string BoundsFile { get { return Path.Combine(here, "popup2.txt"); } }
     static Screen GameScreen() {
       foreach (var n in new[] { "Wow", "WowT", "WowB" }) {
         try { foreach (var p in System.Diagnostics.Process.GetProcessesByName(n)) if (p.MainWindowHandle != IntPtr.Zero) return Screen.FromHandle(p.MainWindowHandle); } catch { }
       }
       return Screen.PrimaryScreen;
     }
-    Rectangle SavedBounds(int w, int h) {
-      var wa = GameScreen().WorkingArea;
-      var r = new Rectangle(wa.Left + (wa.Width - w) / 2, wa.Top + wa.Height / 2 - h / 2, w, h); // (right over your character)
-      try {
-        var p = File.ReadAllText(BoundsFile).Split(',');
-        // (kept by its centre, so a wider window still sits over your character; older saves had no width: 580)
-        int ow = p.Length > 2 ? int.Parse(p[2]) : Px(580);
-        var s = new Rectangle(int.Parse(p[0]) + ow / 2 - w / 2, int.Parse(p[1]), w, h);
-        s.X = Math.Max(wa.Left, Math.Min(s.X, wa.Right - w));
-        foreach (var sc in Screen.AllScreens) if (sc.WorkingArea.IntersectsWith(new Rectangle(s.X + 20, s.Y + 5, Math.Max(1, w - 40), 30))) return s;
-      } catch { }
-      return r;
-    }
-    void SaveBounds() { try { File.WriteAllText(BoundsFile, Left + "," + Top + "," + Width); } catch { } }
   }
 }

@@ -20,8 +20,8 @@ body.is-kill.k-anim { animation: killGlow 1.8s ease-out both; }
 @keyframes killGlow { 0% { box-shadow: inset 0 0 0 2px rgba(230,180,80,.95), inset 0 0 70px rgba(230,180,80,.34); } 100% { box-shadow: inset 0 0 0 1px rgba(230,180,80,.6), inset 0 0 26px rgba(230,180,80,.14); } }
 body.is-kill .kyou .kv { font-size: 17px; }
 @media (prefers-reduced-motion: reduce) { body.k-anim { animation: none !important; } .mini { animation: none !important; } }
-.wrap { display: flex; flex-direction: column; max-height: 100vh; }
-.top { display: flex; align-items: center; gap: 8px; padding: 10px 10px 9px 14px; border-bottom: 1px solid var(--line); app-region: drag; -webkit-app-region: drag; cursor: move; flex: none; }
+.wrap { display: flex; flex-direction: column; max-height: 100vh; height: 100vh; } /* (layout A: a full-height side panel; the card scrolls inside (Nov 1)) */
+.top { display: flex; align-items: center; gap: 8px; padding: 10px 10px 9px 14px; border-bottom: 1px solid var(--line); flex: none; } /* (docked: no dragging (Nov 1)) */
 .top svg { width: 17px; height: 19px; flex: none; }
 .top b { font: 700 17px Barlow Condensed, sans-serif; }
 .top .bt { font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
@@ -768,7 +768,7 @@ function stopRow() {
 let waiting = false;
 // (the window grows to fit the card, up to most of the screen; the rest scrolls)
 function fit() { const bd0 = document.querySelector('.body'); if (bd0) bd0.onscroll = () => bd0.classList.toggle('scrolled', bd0.scrollTop > 140); /* (the slim bar (Nov 1)) */ requestAnimationFrame(() => { const a = document.getElementById('app'), m = a.querySelector('.mini'), t = a.querySelector('.top'), b = a.querySelector('.body'), f = a.querySelector('.foot');
-  if (!m && b) cols2(b, (t ? t.offsetHeight : 0) + (f ? f.offsetHeight : 0));
+  /* (one column always since layout A (Nov 1): the side panel never doubles) */ void cols2;
   const want = m ? m.offsetHeight + 2 : (t ? t.offsetHeight : 0) + (b ? b.scrollHeight : 0) + (f ? f.offsetHeight : 0) + 2; post('h:' + Math.ceil(want)); }); }
 // (two columns when the card is long (Oct 24), like the card in WoW: measured at one column's width; when it's taller than the window can
 // grow (most of the screen), the sections from the one that best balances the two sides move to a right column and the window doubles)

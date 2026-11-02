@@ -232,11 +232,7 @@ tinsert(UISpecialFrames, "DebriefCard")
 -- the top: drag it to move the card
 local top = CreateFrame("Frame", nil, card); top:SetPoint("TOPLEFT", 0, 0); top:SetPoint("TOPRIGHT", -36, 0); top:SetHeight(40)
 top:EnableMouse(true); top:RegisterForDrag("LeftButton")
-top:SetScript("OnDragStart", function() if not DB.lock then card:StartMoving() end end)
-top:SetScript("OnDragStop", function()
-  card:StopMovingOrSizing()
-  local p, _, rp, x, y = card:GetPoint(); DB.pos = { p, rp, x, y }
-end)
+-- (dragging the top no longer moves the card: it's a side panel since Nov 1, UI.dock)
 local logo = top:CreateTexture(nil, "ARTWORK"); logo:SetSize(20, 20); logo:SetPoint("TOPLEFT", PAD, -12); logo:SetTexture(MEDIA .. "Media\\logo")
 local title = top:CreateFontString(nil, "OVERLAY"); setFont(title, "head", 17); title:SetPoint("LEFT", logo, "RIGHT", 7, 0); title:SetTextColor(rgb(COL.text)); title:SetText("Debrief")
 local bossT = top:CreateFontString(nil, "OVERLAY"); setFont(bossT, "body", 13); bossT:SetPoint("LEFT", title, "RIGHT", 9, -1); bossT:SetTextColor(rgb(COL.muted)); bossT:SetWidth(250); bossT:SetJustifyH("LEFT"); bossT:SetWordWrap(false)
@@ -816,6 +812,8 @@ end
 -- default" is on; an empty one stays open, so its one green line shows)
 local SHUT = { rotation = true, boss = true, surv = true, died = true }
 local UI = { startsShut = function(key, n) return n > 0 and SHUT[key] and DB.openSecs == false end, rotRow = rotRow, rotGood = rotGood, rowS = rowS, wipeRow = wipeRow, trendCards = trendCards, cardCharts = cardCharts, cardGrade = cardGrade, parseK = parseK, goalFor = goalFor, onlyBad = onlyBad, moreLink = moreLink, nextBox = nextBox, chipColors = chipColors, pickWho = pickWho, ordN = ordN, cutIdx = cutIdx, cutView = cutView, showPull = showPull, resultOf = resultOf, resetPool = resetPool, classHex = classHex, rounded = rounded, pullQ = pullQ, worst = worstFirst, col = useCol, colFrame = colFrame, two = { cols = 1, brk = 0, n = 0, marks = {} } }
+-- (layout A (Nov 1, Flex: "Lets just do A"): the card is a full-height panel against the right edge of the screen, or the left (/db Side))
+function UI.dock() card:ClearAllPoints(); local L = DB and DB.panelSide == "left"; card:SetPoint(L and "TOPLEFT" or "TOPRIGHT", UIParent, L and "TOPLEFT" or "TOPRIGHT", 0, 0) end
 -- ---------- one card (Nov 1): the Raid | Mythic+ switch, Saved inside the card, the key picker ----------
 UI.SW = 0 -- (the switch sits in the top bar now (Nov 1): nothing moves down for it)
 UI.sw = { raid = OC.swRaid, key = OC.swKey, line = OC.swLine, saved = OC.savedB, title = OC.titleB, caret = OC.caret }
@@ -970,8 +968,8 @@ end
 -- (the end of every card: never taller than the screen, the rest scrolls and the footer says so)
 function UI.fitCard(y)
   body:SetHeight(math.max(10, y))
-  local room = math.max(320, ((UIParent and UIParent.GetHeight and UIParent:GetHeight()) or 768) / math.max(0.5, (card.GetScale and card:GetScale()) or 1) - 60)
-  local vh = math.max(10, math.min(y, room - TOPY - 42))
+  local room = math.max(320, ((UIParent and UIParent.GetHeight and UIParent:GetHeight()) or 768) / math.max(0.5, (card.GetScale and card:GetScale()) or 1)) -- (the screen's full height: the side panel (Nov 1))
+  local vh = math.max(10, room - TOPY - 42)
   scroller:SetSize(W - PAD * 2, vh)
   scroller:SetVerticalScroll(math.min((scroller:GetVerticalScroll() or 0), math.max(0, y - vh)))
   foot:SetText(y > vh + 4 and "Scroll for more  ·  /recap opens this again" or "/recap opens this again  ·  /db settings")
@@ -1740,8 +1738,8 @@ function UI.mplus(raw)
   -- (never taller than the screen: the rest scrolls, and the footer says so; as the boss card does)
   if TW.cols == 2 then UI.colFrame(true, CW, y); UI.col(1); y = math.max(TW.lh or 0, y) end
   body:SetHeight(math.max(10, y))
-  local room = math.max(320, ((UIParent and UIParent.GetHeight and UIParent:GetHeight()) or 768) / math.max(0.5, (card.GetScale and card:GetScale()) or 1) - 60)
-  local vh = math.max(10, math.min(y, room - TOPY - 42))
+  local room = math.max(320, ((UIParent and UIParent.GetHeight and UIParent:GetHeight()) or 768) / math.max(0.5, (card.GetScale and card:GetScale()) or 1)) -- (the screen's full height: the side panel (Nov 1))
+  local vh = math.max(10, room - TOPY - 42)
   TW.total, TW.avail, TW.room = y, room - TOPY - 42, room
   scroller:SetSize(W - PAD * 2, vh)
   scroller:SetVerticalScroll(math.min((scroller:GetVerticalScroll() or 0), math.max(0, y - vh)))
@@ -2333,8 +2331,8 @@ local function renderOnce()
   if T.cols == 2 then UI.colFrame(true, CW, y); UI.col(1); y = math.max(T.lh or 0, y) end
   body:SetHeight(math.max(10, y))
   -- (never taller than the screen: the rest scrolls, and the footer says so)
-  local room = math.max(320, ((UIParent and UIParent.GetHeight and UIParent:GetHeight()) or 768) / math.max(0.5, (card.GetScale and card:GetScale()) or 1) - 60)
-  local vh = math.max(10, math.min(y, room - TOPY - 42))
+  local room = math.max(320, ((UIParent and UIParent.GetHeight and UIParent:GetHeight()) or 768) / math.max(0.5, (card.GetScale and card:GetScale()) or 1)) -- (the screen's full height: the side panel (Nov 1))
+  local vh = math.max(10, room - TOPY - 42)
   T.total, T.avail, T.room = y, room - TOPY - 42, room
   scroller:SetSize(W - PAD * 2, vh)
   scroller:SetVerticalScroll(math.min((scroller:GetVerticalScroll() or 0), math.max(0, y - vh)))
@@ -2348,21 +2346,8 @@ local function renderAll()
   local T = UI.two
   T.cols, T.brk, T.cwc, T.rotMark = 1, 0, nil, nil
   renderOnce()
-  -- (the long card (Nov 1, Flex: "once it gets past a certain length it needs to widen and be two columns"): taller than two-thirds of the
-  -- screen (Nov 1, Flex: "the window is still very long, what happened to it being 2 columns?"), it goes twice as wide (capped at the screen)
-  -- with Rotation, or the Raid view's later lists, on the right; a key splits at the section that best balances the two sides)
+  -- (one column always: the side panel scrolls instead of widening (Nov 1, layout A))
   local raw = DB.pulls[DB.cur]
-  if not UI.saved and raw and T.total and T.room and T.total + TOPY + 42 > (T.room + 60) * 0.67 then
-    local cw1 = (WIDTHS[DB.width or "normal"] or 400) - PAD * 2
-    local sw = ((UIParent and UIParent.GetWidth and UIParent:GetWidth()) or 1365) / math.max(0.5, (card.GetScale and card:GetScale()) or 1)
-    local cwc = math.min(cw1, math.floor((sw - 60 - PAD * 2 - 16) / 2))
-    if cwc >= 300 then
-      T.cwc = cwc < cw1 and cwc or nil; T.cols = 2; T.brk = 0; renderOnce() -- (measured with the two-column order)
-      local best = T.rotMark
-      if not best then local bh = T.total or 0; for i, yb in ipairs(T.marks) do local hh = math.max(yb, (T.total or 0) - yb + 2); if yb > 60 and hh < bh then best, bh = i, hh end end end
-      if best then T.brk = best else T.cols, T.cwc = 1, nil end; renderOnce() -- (no section to split at: one column again)
-    end
-  end
   UI.dropdown(not UI.saved and raw and ((raw.mplus and UI.mp.pick and "key") or (not raw.mplus and UI.bpick and "boss")) or nil) -- (over the card, after it's drawn)
   if Debrief_FitPreview then Debrief_FitPreview() end
 end
@@ -3219,6 +3204,8 @@ local function buildOptions()
     switch("Colour-blind colours", "Blue for good, orange for bad.", function() return DB.colorblind == true end, function(v) DB.colorblind = v end, true)
     pslider("Text size", nil, 0.85, 1.2, function() return DB.fontScale or 1 end, function(v) DB.fontScale = v end)
     choice("Width", nil, WIDTH_CHOICES, function() return DB.width or "normal" end, function(v) DB.width = v end)
+    choice("When I close it", nil, { { "ask", "Ask to save" }, { "always", "Always save" } }, function() return DB.saveOnClose or "ask" end, function(v) DB.saveOnClose = v ~= "ask" and v or nil end, true) -- (the Save this pull? box (Nov 1))
+    choice("Side", nil, { { "right", "Right" }, { "left", "Left" } }, function() return DB.panelSide or "right" end, function(v) DB.panelSide = v; if not (Debrief_PreviewReal and Debrief_PreviewReal()) then UI.dock() end end, true) -- (which edge the recap docks to (Nov 1))
     -- (the font: ‹ name › through Debrief's own, the game's, and every font your other addons share)
     do
       local base = { { "debrief", "Debrief" }, { "wow", "WoW" }, { "arial", "Arial Narrow" }, { "morpheus", "Morpheus headings" } }
@@ -3320,7 +3307,7 @@ function Debrief_PreviewFix()
   if not PREV_REAL or not DB then return end
   if (opt and opt:IsShown()) or (DebriefTutorial and DebriefTutorial:IsShown()) then return end
   Debrief_PreviewOff(); card:SetScale(DB.scale or 1); card:ClearAllPoints()
-  if DB.pos then card:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) else card:SetPoint("CENTER", 260, 60) end
+  UI.dock()
 end
 function Debrief_ToggleOptions()
   if not DB then return end
@@ -3334,7 +3321,7 @@ function Debrief_ToggleOptions()
     opt:HookScript("OnHide", function()
       Debrief_PreviewOff(); Debrief_SettingsClosed(); if card:IsShown() then if #DB.pulls > 0 then render() else card:Hide() end end -- (your own pulls again)
       card:SetScale(DB.scale or 1); card:ClearAllPoints()
-      if DB.pos then card:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) else card:SetPoint("CENTER", 260, 60) end
+      UI.dock()
     end)
   end
   -- (the card beside it, so every change shows at once: the built-in sample, every section filled (Oct 24); the give-back hook above is
@@ -3538,7 +3525,7 @@ do
     elseif not on and prevOn then
       prevOn = false; ringOn(false); Debrief_PreviewOff()
       card:SetScale(DB.scale or 1); card:ClearAllPoints()
-      if DB.pos then card:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) else card:SetPoint("CENTER", 260, 60) end
+      UI.dock()
       card:Hide()
     end
   end
@@ -3594,7 +3581,7 @@ function Debrief_BringShow(alone)
   bring.t:SetText(behindN == 1 and ("Your newest pull" .. ((behindBoss and behindBoss ~= "") and (" on " .. behindBoss) or "") .. " isn't in the addon yet.") or (behindN .. " newer pulls aren't in the addon yet."))
   bringB.t:SetText(behindN == 1 and "Save this pull" or "Save these pulls") end
   bring:ClearAllPoints(); bring.alone = nil
-  if card:IsShown() then bring:SetParent(card); bring:SetFrameStrata("HIGH"); bring:SetPoint("BOTTOMLEFT", card, "TOPLEFT", 0, 6); bring:SetPoint("BOTTOMRIGHT", card, "TOPRIGHT", 0, 6); bring:Show()
+  if card:IsShown() then bring:SetParent(card); bring:SetFrameStrata("HIGH"); bring:SetSize(400, 36); local L = DB.panelSide == "left"; bring:SetPoint(L and "TOPLEFT" or "TOPRIGHT", card, L and "TOPRIGHT" or "TOPLEFT", L and 8 or -8, -8); bring:Show() -- (beside the side panel (Nov 1))
   elseif alone then bring:SetParent(UIParent); bring:SetFrameStrata("HIGH"); bring:SetSize(400, 36); bring:SetPoint("CENTER", UIParent, "CENTER", 260, 160); bring.alone = true; bring:Show()
   else bring:Hide() end
 end
@@ -3602,6 +3589,47 @@ end
 -- (a key that just ended (Nov 1): "Your Altar of Fangs key isn't in the addon yet." with Save this key)
 function Debrief_Behind(boss, key) behindN = behindN + 1; behindBoss = boss; bring.key = key; Debrief_BringShow() end
 function Debrief_BringIsShown() return bring:IsShown(), behindN end -- (for tests)
+
+-- ---------- Save this pull? when you close the card (Nov 1, Flex: "if they click the X to close it, it asks if they want to save the pull.
+-- Clicking yes saves it and reloads the UI"): only when a pull isn't in the addon yet, never in a fight or a running key (the X just closes,
+-- and the pulls wait for the next close); Not now doesn't ask again until there's a new pull; Always save saves on every close (/db can turn
+-- it off). The click on Save, or on the X with Always, is what lets WoW reload. After it, the card opens where you were ----------
+do
+  local ask = CreateFrame("Frame", nil, card); OC.ask = ask; ask:SetFrameLevel(card:GetFrameLevel() + 60); ask:EnableMouse(true); ask:Hide()
+  ask:SetSize(340, 146); ask:SetPoint("TOP", card, "TOP", 0, -60); skin(ask, 8, COL.raised, 1, COL.gold, 0.85, true)
+  ask.h = ask:CreateFontString(nil, "OVERLAY"); setFont(ask.h, "bold", 16); ask.h:SetPoint("TOPLEFT", 16, -14); ask.h:SetTextColor(rgb(COL.text))
+  ask.t = ask:CreateFontString(nil, "OVERLAY"); setFont(ask.t, "body", 13); ask.t:SetPoint("TOPLEFT", 16, -38); ask.t:SetWidth(308); ask.t:SetJustifyH("LEFT"); ask.t:SetTextColor(rgb(COL.soft))
+  ask.t:SetText("It stays in Saved after you log out. WoW reloads for a moment.")
+  local function btn(label, gold)
+    local b = CreateFrame("Button", nil, ask); b:SetSize(gold and 96 or 84, 26); skin(b, 5, gold and COL.gold or COL.raised, 1, gold and COL.gold or COL.line2, 1)
+    b.t = b:CreateFontString(nil, "OVERLAY"); setFont(b.t, "bold", 13); b.t:SetPoint("CENTER", 0, 0); b.t:SetTextColor(rgb(gold and "1b1406" or COL.text)); b.t:SetText(label); return b
+  end
+  ask.save = btn("Save", true); ask.save:SetPoint("BOTTOMLEFT", 16, 14)
+  ask.no = btn("Not now"); ask.no:SetPoint("LEFT", ask.save, "RIGHT", 8, 0)
+  ask.cb = CreateFrame("Button", nil, ask); ask.cb:SetSize(220, 18); ask.cb:SetPoint("TOPLEFT", 16, -78)
+  ask.cb.box = ask.cb:CreateTexture(nil, "ARTWORK"); ask.cb.box:SetSize(14, 14); ask.cb.box:SetPoint("LEFT", 0, 0); rounded(ask.cb.box, "line", 3, COL.muted, 1)
+  ask.cb.tick = ask.cb:CreateTexture(nil, "OVERLAY"); ask.cb.tick:SetSize(14, 14); ask.cb.tick:SetPoint("CENTER", ask.cb.box, "CENTER", 0, 0); ask.cb.tick:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready"); ask.cb.tick:Hide()
+  ask.cb.t = ask.cb:CreateFontString(nil, "OVERLAY"); setFont(ask.cb.t, "body", 13); ask.cb.t:SetPoint("LEFT", ask.cb.box, "RIGHT", 8, 0); ask.cb.t:SetTextColor(rgb(COL.soft)); ask.cb.t:SetText("Always save when I close")
+  ask.cb:SetScript("OnClick", function(self) self.on = not self.on; self.tick:SetShown(self.on) end)
+  local askedAt = 0
+  local function reloadNow()
+    DB.openAfter = true
+    local m = DB.pulls[DB.cur]; if m and m.h then DB.reopenAt = { boss = m.h.boss, pull = m.h.pull, dur = m.h.dur, view = view, who = DB.who, mpull = UI.mp and UI.mp.pull or 0 } end -- (where you were)
+    if C_UI and C_UI.Reload then C_UI.Reload() elseif ReloadUI then ReloadUI() end
+  end
+  local function keyRunning() return C_ChallengeMode and C_ChallengeMode.IsChallengeModeActive and C_ChallengeMode.IsChallengeModeActive() end
+  function Debrief_CloseAsk()
+    ask:Hide()
+    if behindN == 0 or behindN <= askedAt or InCombatLockdown() or keyRunning() or not (DEBRIEF_HAS_APP or DB.hasApp) or (Debrief_PreviewReal and Debrief_PreviewReal()) then card:Hide(); return end
+    if DB.saveOnClose == "always" then reloadNow(); return end
+    ask.h:SetText((behindN == 1 and bring.key) and "Save this key?" or (behindN == 1 and "Save this pull?" or ("Save these " .. behindN .. " pulls?")))
+    ask.cb.on = false; ask.cb.tick:Hide(); ask:Show()
+  end
+  ask.save:SetScript("OnClick", function() if InCombatLockdown() then ask:Hide(); card:Hide(); return end; if ask.cb.on then DB.saveOnClose = "always" end; reloadNow() end)
+  ask.no:SetScript("OnClick", function() askedAt = behindN; ask:Hide(); card:Hide() end)
+  card:HookScript("OnHide", function() ask:Hide() end)
+end
+close:SetScript("OnClick", function() Debrief_CloseAsk() end)
 
 -- ---------- opening it: key, slash command ----------
 function Debrief_Toggle()
@@ -3623,7 +3651,7 @@ SlashCmdList.DEBRIEFMO = function() Debrief_ToggleOptions() end
 SLASH_DEBRIEF1 = "/recap"; SLASH_DEBRIEF2 = "/debrief" -- (your card; /debrief setup the guided setup again. /dbr went on Oct 25)
 -- (one way to open the card (Nov 1, Flex: "i want /recap to be the only manual way to open any window outside of the settings being /db"))
 SlashCmdList.DEBRIEF = function() Debrief_Toggle() end
-function Debrief_ResetPos() DB.pos = nil; card:ClearAllPoints(); card:SetPoint("CENTER", 260, 60); say("card moved back to the middle.") end
+function Debrief_ResetPos() DB.pos = nil; UI.dock(); say("card back at the " .. ((DB.panelSide == "left") and "left" or "right") .. " edge.") end
 function Debrief_Clear() if PREV_REAL then PREV_REAL.pulls = {}; PREV_REAL.cur = nil else DB.pulls = {}; DB.cur = nil end; card:Hide(); big:Hide(); mini:Hide(); say("pulls cleared.") end
 function Debrief_Demo() local m = decode(SAMPLE); if m then m.demo = true; addPull(m); showCard(); say("showing a sample Mythic Coiled Altar wipe (made-up names; Vexmira is the Holy Paladin). Use the arrows to see other players.") end end
 
@@ -3724,7 +3752,7 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4, a5)
     DB.detailed, DB.compact, DB.tiles, DB.glance, DB.mini = true, false, true, nil, false -- (one card: every section the settings leave on, never the mini bar) -- (Standard opens folded since Oct 25)
     if not DB.diedBack then DB.maxDied = 3; DB.diedBack = true end -- (once: the Who died list is shown again; the filter is Stop at)
     autoLog()
-    if DB.pos then card:ClearAllPoints(); card:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) end
+    UI.dock() -- (the side panel (Nov 1))
   elseif e == "PLAYER_LOGIN" then
     Debrief_ApplyStyle()
     DB.myChars = DB.myChars or {}; local me0 = UnitName and UnitName("player"); if me0 then DB.myChars[me0] = true end -- (your characters, for Saved (Nov 1))
@@ -3740,7 +3768,12 @@ ev:SetScript("OnEvent", function(self, e, arg, a2, a3, a4, a5)
       DB.keySet = true
     end
     if DB.reopenOpt then DB.reopenOpt = nil; if C_Timer then C_Timer.After(1, function() if not InCombatLockdown() and not (DebriefOptions and DebriefOptions:IsShown()) then Debrief_ToggleOptions() end end) end end -- (Send to my PC pop-up: /db again (Oct 25))
-    if DB.openAfter then DB.openAfter = nil; if C_Timer and #DB.pulls > 0 then C_Timer.After(1, function() if not InCombatLockdown() then card:Show(); render() end end) end end -- (Save this pull: the card again (Oct 25))
+    if DB.openAfter then DB.openAfter = nil; local R = DB.reopenAt; DB.reopenAt = nil -- (Save this pull: the card again (Oct 25); where you were, after Save on close (Nov 1))
+      if C_Timer and #DB.pulls > 0 then C_Timer.After(1, function() if InCombatLockdown() then return end
+        if R then for i, q in ipairs(DB.pulls) do if q.h and q.h.boss == R.boss and tostring(q.h.pull) == tostring(R.pull) and q.h.dur == R.dur then DB.cur = i end end end
+        card:Show()
+        if R then view = R.view or view; DB.who = R.who; local q = DB.pulls[DB.cur]; if q and q.mplus and UI.mp then UI.mp.raw = q; UI.mp.pull = R.mpull or 0 end end
+        render() end) end end
     if DEBRIEF_HAS_APP or DB.hasApp then say("ready. Your recap pops up on your PC after each boss pull." .. ((DB.fromApp or 0) > 0 and (" " .. DB.fromApp .. " new pull" .. (DB.fromApp == 1 and "" or "s") .. " from Debrief Companion: /recap.") or " /recap shows them here too."))
     else say("ready. Your recaps come from Debrief Companion on your PC.") end
   end
