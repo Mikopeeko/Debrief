@@ -165,9 +165,12 @@ function build(text, E) {
   // (kick when you can (Nov 1, the Design studio's scan of 33 of Flex's keys; Flex: "yes send that"): a must-kick that in this key came from 8 or more
   // enemies, or went off 6 or more times within 10 seconds, is a pack's spam (Lightspore Shot: 65 casts from 30 Lashers, 14 in 10 s). One kick stops
   // one cast, so its casts that went off are shown, not counted as mistakes. Everything else on the list is a priority kick)
+  // (held (Nov 1, the Design studio: it would file Kings' Rest's Wretched Discharge, 3.0m damage to the group a cast, as "kick when you can"): off until
+  // a danger level per spell replaces it, so every listed kick is a priority kick with the fair count)
+  const SPAM_ON = false;
   const bySpell = new Map();
   for (const c of casts) if (danger(c)) { const k = lc(c.spell), b = bySpell.get(k) || { ts: [], guids: new Set() }; b.ts.push(c.t); b.guids.add(c.guid); bySpell.set(k, b); }
-  const spam = new Set(); for (const [k, b] of bySpell) { const ts = b.ts.slice().sort((a, c) => a - c); let burst = 0; for (let i = 0, j = 0; i < ts.length; i++) { while (ts[i] - ts[j] > 10) j++; burst = Math.max(burst, i - j + 1); } if (b.guids.size >= 8 || burst >= 6) spam.add(k); }
+  const spam = new Set(); for (const [k, b] of bySpell) { const ts = b.ts.slice().sort((a, c) => a - c); let burst = 0; for (let i = 0, j = 0; i < ts.length; i++) { while (ts[i] - ts[j] > 10) j++; burst = Math.max(burst, i - j + 1); } if (SPAM_ON && (b.guids.size >= 8 || burst >= 6)) spam.add(k); }
   // (whose kick was ready when a must-kick cast went off: each player's interrupts for their spec, from the engine, and when they last pressed
   // them. A cast that got through with nobody's kick ready isn't a mistake (Nov 1))
   const kickNames = new Map(); for (const p of players.values()) { const l = ((E.INTERRUPTS || {})[p.cls] || []).filter((k) => !k[2] || k[2].includes(p.specId)); if (l.length) kickNames.set(p.guid, l); }
