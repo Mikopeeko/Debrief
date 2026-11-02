@@ -23833,7 +23833,7 @@ function openReport() {
 const PATCH_NOTES = [
   { d: '2026-11-02', n: [ /* round 484 */
     "Mythic+ tab, less to read: Your group is one table with each player's DPS, kicks, CC, deaths, defensives and big cooldowns. The map's controls sit in one bar, with the floors and layers on the map. The long pull list and route chart are gone: each pull's details are on its tile, its hover and its card, and the map's first line says where your enemy count ended.",
-    "Mythic+ pull card: what was in the pack. The mini-bosses are marked Elite, every kind of enemy Caster or Melee with what to kick, and the small fodder sits on its own line. The card also shows the forces total so far and when Lust went out.",
+    "Mythic+ pull card: what was in the pack. The mini-bosses are marked Elite, every kind of enemy Caster (most of its damage is magic, or it heals) or Melee, with what to kick, and the small fodder sits on its own line. The card also shows the forces total so far and when Lust went out.",
     "Mythic+ tab: Next time lines are one short sentence each, with the details in the small ⓘ, and the tab opens on your own character when they're in the key.",
     "Mythic+ map: point at a pull, a tile or a timeline block for a short summary: its time, forces, deaths, kicks, Lust and cooldowns. The timeline marks each cast that went off with a kick ready.",
     "Mythic+ map: the pulls are tiles under the map, so the pull's card has the whole side to itself.",
@@ -62015,6 +62015,8 @@ const mpCCcasts = (L) => { const out = [], last = new Map(); for (const e of [..
 // log doesn't say which enemies are rare or elite (checked on Flex's log of Nov 1), and Wowhead's "elite" flag is on nearly all key trash, so the
 // Pack's Elite is the mini-boss tier by health; these two are Elite whatever their health (mplus-tab-design/npc-classes.md))
 const MP_RARE = new Set([50815, 140123]);
+// (always Caster, by NPC ID (Flex: "Yes, both casters"): Murder Row's Corrupted Warlock and Felonious Mage)
+const MP_CASTER = new Set([235265, 236084]);
 // (the pack's type tags: a 12 px icon, then the word (map-extras.md item 17))
 const MP_PKI = (() => { const sv = (b) => '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">' + b + '</svg>';
   return { cast: sv('<path d="M2 10.5 8.2 4.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9.5 .8v2.4M9.5 4.2v2.4M7.1 3.4h2.4M10.3 3.4h1.9" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>') + 'Caster',
@@ -62050,7 +62052,7 @@ function mpScan(it, R, text) {
         deathPos.push({ who, t, x: lp[0], y: lp[1], ui: lp[2], hits: (hitsOf.get(g) || []).filter((h) => t - h[0] <= 10).slice(-5).map((h) => ({ ago: t - h[0], sp: h[1], from: h[2], amt: h[3], pct: h[4] ? h[3] / h[4] : 0 })), ready, used, hs: hs != null && t - hs < 120 ? Math.round(t - hs) : null }); } continue; } if (!NPC.test(g || '') || f[8] === '1') continue; { const u = U.get(g); if (u && u.died == null) u.died = t; } if (seen.has(g)) continue; seen.add(g); const v = T.n[+g.split('-')[5]]; if (v) add[pullAt(t)] += v; continue; }
     if (ev === 'SPELL_INTERRUPT') { if (!T) continue; const f = E.split(line, c + 1); if (/^(Player|Pet)-/.test(f[0] || '') && NPC.test(f[4] || '')) { const p = npcPos.get(f[4]); const cp = lastPos.get(f[0]); kickEv.push({ t, src: f[0], who: short(uq(f[1])), tg: uq(f[5]), g: f[4], cut: uq(f[12]), x: p && p[0], y: p && p[1], ui: p && p[2], cx: cp && cp[0], cy: cp && cp[1], cui: cp && cp[2] }); } continue; }
     if ((ev === 'SPELL_CAST_START' || ev === 'SPELL_HEAL' || ev === 'SPELL_PERIODIC_HEAL') && (line.startsWith('Creature-', c + 1) || line.startsWith('Vehicle-', c + 1))) { const f = E.split(line, c + 1), u = uOf(f[0], f[1]); /* (an enemy that casts, or heals another enemy: the card's Pack) */
-      if (ev === 'SPELL_CAST_START') { (u.cs || (u.cs = new Set())).add(uq(f[9])); u.nc = (u.nc || 0) + 1; } else if (NPC.test(f[4] || '') && f[4] !== f[0]) u.hl = true; continue; }
+      if (ev === 'SPELL_CAST_START') { (u.cs || (u.cs = new Set())).add(uq(f[9])); u.nc = (u.nc || 0) + 1; (u.cst || (u.cst = {}))[f[8]] = t; } else if (NPC.test(f[4] || '') && f[4] !== f[0]) u.hl = true; continue; }
     if (ev === 'SWING_MISSED' && (line.startsWith('Creature-', c + 1) || line.startsWith('Vehicle-', c + 1))) { const f = E.split(line, c + 1); if (String(f[4]).startsWith('Player-')) { const u = uOf(f[0], f[1]); u.nsw = (u.nsw || 0) + 1; } continue; } /* (a swing that missed is still a melee swing) */
     if (ev === 'SPELL_SUMMON') { const f = E.split(line, c + 1); if (f[5]) summoned.add(f[5]); if (/^Player-/.test(f[0] || '') && f[4]) petOwn.set(f[4], short(uq(f[1]))); /* (a pet's or a totem's CC is its player's) */ if (NPC.test(f[4] || '')) uOf(f[4]).sum = true; continue; } /* (summoned: not counted in "what you pulled" (round 4)) */
     if (ev === 'CHALLENGE_MODE_END') { const f = E.split(line, c + 1); R.rateAfter = num(f[5]) || null; continue; } /* (the player's rating after the key, as WoW wrote it (Nov 2)) */
@@ -62074,7 +62076,12 @@ function mpScan(it, R, text) {
       if (String(ig).startsWith('Player-')) { const x = +f[adv + 14], y = +f[adv + 15], mh = num(f[adv + 3]); if (x || y) lastPos.set(ig, [x, y, +f[adv + 16] || 0, t]); if (mh) maxOf.set(ig, mh); }
       else if (ev === 'SPELL_CAST_SUCCESS' && ig === f[0] && NPC.test(ig || '') && ksp.has(mpLc(f[9]))) { const x = +f[adv + 14], y = +f[adv + 15]; if (x || y) castPos.push({ t, sp: mpLc(f[9]), x, y, ui: +f[adv + 16] || 0 }); }
       if (NPC.test(f[adv] || '')) { { const x = +f[adv + 14], y = +f[adv + 15]; if (x || y) npcPos.set(f[adv], [x, y, +f[adv + 16] || 0]); } const u = uOf(f[adv]); if (!u.at) { const x = +f[adv + 14], y = +f[adv + 15]; if ((x || y) && x === x) { u.at = [x, y, +f[adv + 16] || 0]; u.hp = +f[adv + 3] || 0; } } } }
-    if (dmg && NPC.test(f[0] || '') && String(f[4]).startsWith('Player-')) { taken[pullAt(t)] += num(f[adv + ADV]); const u = uOf(f[0], f[1]); if (ev === 'SWING_DAMAGE') { u.sw = true; u.nsw = (u.nsw || 0) + 1; } else if (ev !== 'SPELL_PERIODIC_DAMAGE') u.nsp = (u.nsp || 0) + 1; } /* (how it fights: swings or spells, for the Pack's Caster and Melee) */
+    if (dmg && NPC.test(f[0] || '') && String(f[4]).startsWith('Player-')) { taken[pullAt(t)] += num(f[adv + ADV]); const u = uOf(f[0], f[1]); if (ev === 'SWING_DAMAGE') { u.sw = true; u.nsw = (u.nsw || 0) + 1; } else if (ev !== 'SPELL_PERIODIC_DAMAGE') u.nsp = (u.nsp || 0) + 1;
+      /* (how it fights, for the Pack's Caster and Melee: its damage to players and how much of it was magic, by the spell's school (anything but
+         Physical; swings are Physical), the hit and what a shield took; a channel's ticks, one cast per channel (a gap of 3 s or more starts a new one,
+         and none counts when it began a cast of that spell in the 6 s before)) */
+      const a = num(f[adv + ADV]) + num(f[adv + ADV + 6]); u.dm = (u.dm || 0) + a; if (ev !== 'SWING_DAMAGE' && (parseInt(f[10], 16) || 1) !== 1) u.mg = (u.mg || 0) + a;
+      if (ev === 'SPELL_PERIODIC_DAMAGE') { const ch = u.ch || (u.ch = {}), lt = ch[f[8]]; ch[f[8]] = t; if (!(lt > t - 3) && !(u.cst && u.cst[f[8]] > t - 6)) u.nch = (u.nch || 0) + 1; } }
     if (T && NPC.test(f[adv] || '')) { const u = +f[adv + 16]; if (ui.has(u)) { while (pi < N - 1 && t > P[pi].e) pi++; if (t >= P[pi].s && t <= P[pi].e) { const q = pts[pi]; q.x.push(+f[adv + 14]); q.y.push(+f[adv + 15]); q.u.push(u); } } }
   }
   // (a Lust or a cooldown pressed just before a pull counts for that pull: the pull it's in, else the next one starting within 15 s, else the one before)
@@ -62088,13 +62095,17 @@ function mpScan(it, R, text) {
   R.cdWho = [...cdOf.keys()]; R.taken = taken;
   // (what kind of enemy each one is, from this key's own log (map-extras.md item 17): a caster began casts, a healer healed another enemy, melee only
   // swung; its health for Big and Small; the casts it was kicked on or let off. By name, for the pull card's Pack)
-  { const ty = {}; for (const u of U.values()) { if (!u.n || u.hit == null || !(u.fl & 0x40) || (u.fl & 0x3000)) continue; const o = ty[u.n] || (ty[u.n] = { cs: 0, hl: false, sw: false, hp: 0, kick: [], id: +u.g.split('-')[5] || 0, nc: 0, nk: 0, nsw: 0, nsp: 0, n: 0, mins: 0 });
-      if (u.cs) o.cs += u.cs.size; if (u.hl) o.hl = true; if (u.sw) o.sw = true; if (u.hp > o.hp) o.hp = u.hp; o.nc += u.nc || 0; o.nsw += u.nsw || 0; o.nsp += u.nsp || 0; o.n++; if (u.died != null && u.died > u.hit) o.mins += (u.died - u.hit) / 60; }
+  { const ty = {}; for (const u of U.values()) { if (!u.n || u.hit == null || !(u.fl & 0x40) || (u.fl & 0x3000)) continue; const o = ty[u.n] || (ty[u.n] = { cs: 0, hl: false, sw: false, hp: 0, kick: [], id: +u.g.split('-')[5] || 0, nc: 0, nk: 0, nsw: 0, nsp: 0, n: 0, mins: 0, dm: 0, mg: 0, nch: 0 });
+      if (u.cs) o.cs += u.cs.size; if (u.hl) o.hl = true; if (u.sw) o.sw = true; if (u.hp > o.hp) o.hp = u.hp; o.nc += u.nc || 0; o.dm += u.dm || 0; o.mg += u.mg || 0; o.nch += u.nch || 0; o.nsw += u.nsw || 0; o.nsp += u.nsp || 0; o.n++; if (u.died != null && u.died > u.hit) o.mins += (u.died - u.hit) / 60; }
     const addK = (nm, sp) => { const o = ty[nm]; if (o && sp && !o.kick.includes(sp)) o.kick.push(sp); }; for (const e of kickEv) { addK(e.tg, e.cut); if (ty[e.tg]) ty[e.tg].nk++; } for (const p of P) for (const t of p.through || []) addK(t.mob, t.spell);
-    /* (Caster (Flex: "just because theres a cast bar doesnt make them a caster"): it healed another enemy, or it began 10 or more casts a minute
-       through its fight (a kicked channel counts). Not by its share of melee swings: a caster that's kicked often swings between casts (Enthralled
-       Shaman, 83% swings and 17 casts a minute), while melee with a cast bar begin about 5 a minute (Devouring Brutalizer). The rest are Melee) */
-    for (const o of Object.values(ty)) { const hits = o.nsw + o.nsp; o.swing = hits ? o.nsw / hits : 0; o.cpm = o.mins ? (o.nc + o.nk) / o.mins : 0; o.caster = o.hl || o.cpm >= 10; }
+    /* (Caster (Flex: "just because theres a cast bar doesnt make them a caster", then "it depends on the type of damage the mobs do a lot of times,
+       casters will melee but most of their damage is from spells"): 60% or more of its damage to players was magic, or it healed another enemy.
+       Melee: most of its damage was Physical, swings and physical hits like Cleave, even with a cast bar. An enemy that did under 1% of the key's
+       average enemy's damage (it died first, or only buffs) goes by casts a minute instead: 10 or more, kicks and channels counted, is Caster.
+       MP_CASTER names the ones Flex called) */
+    const L0 = Object.values(ty), avg = L0.reduce((a, o) => a + o.dm, 0) / Math.max(1, L0.reduce((a, o) => a + o.n, 0));
+    for (const o of L0) { const hits = o.nsw + o.nsp; o.swing = hits ? o.nsw / hits : 0; o.cpm = o.mins ? (o.nc + o.nk + o.nch) / o.mins : 0; o.magic = o.dm ? o.mg / o.dm : 0;
+      o.low = !(o.dm / Math.max(1, o.n) >= 0.01 * avg); o.caster = MP_CASTER.has(o.id) || o.hl || (o.low ? o.cpm >= 10 : o.magic >= 0.6); }
     R.mobType = ty; }
   { const real = new Set(); for (const u of U.values()) if (u.n && u.hit != null && (u.fl & 0x40) && !(u.fl & 0x3000) && !u.sum) real.add(u.n); R.realNames = real.size ? real : null; } /* (the studio's pull-accuracy fix, Nov 2) */
   if (!T) { R.route = null; return; }
@@ -62322,7 +62333,7 @@ function mpMapHtml(R, F, tl) {
         '<p class="mpt-mcm">' + (r.ready.length ? mpAnd(r.ready.map(esc)) + (r.ready.length === 1 ? ' was' : ' were') + ' ready.' : 'No defensive was ready.') + (r.used.length ? ' Used: ' + r.used.map(([n, sec]) => esc(n) + ' (' + sec + ' s before)').join(', ') + '.' : '') + ' Healthstone: ' + (r.hs != null ? 'used ' + r.hs + ' s before.' : 'not used.') + '</p>');
       return fold('x', '<span class="mpt-t2d">☠</span> <b>How ' + mpWho(RR, d.who) + ' died</b> · ' + esc(d.to || 'unknown') + (d.from ? ' (' + esc(d.from) + ')' : '') + ' · ' + (d.defs ? plural(d.defs, 'defensive') : 'no defensive'), body, ' data-dr="' + esc(d.who) + '"'); }).join('');
     // (the pack (map-extras.md item 17; Flex: "those are considered the mini bosses in dungeons or the harder mobs to deal with"): each kind of enemy with
-    // one role, Caster (it healed another enemy, or cast 10 or more times a minute) or Melee; Elite for the mini-boss tier, at least twice the health of
+    // one role, Caster (60% or more of its damage was magic, or it healed another enemy) or Melee; Elite for the mini-boss tier, at least twice the health of
     // the key's middle trash enemy (the same on every pull), or a rare; fodder, half that or less, on one last line. 5 rows, then the rest in a hover)
     const pack = (() => { const mobs = mpMobs(RR, p), ty = RR.mobType || {}; if (!mobs.length) return '';
       if (RR.mobMid == null) { const hs = []; RR.mobTrash = new Set(); for (const q2 of RR.pulls) if (!q2.boss) for (const [n2, c2] of mpMobs(RR, q2)) { RR.mobTrash.add(n2); const h = (ty[n2] || {}).hp || 0; if (h) for (let k = 0; k < c2; k++) hs.push(h); } hs.sort((a, b) => a - b); RR.mobMid = hs.length ? hs[hs.length >> 1] : 0; } /* (the middle trash enemy of the whole key, each one counted: one-off kings don't lift it) */
