@@ -76,6 +76,7 @@ function build(text, E) {
   const run = { dungeon: '', level: 0, affixes: [], timed: false, timeMs: 0, score: null, started: null };
   const players = new Map(); // guid -> { name, cls, spec, role }
   const owners = new Map(); // pet guid -> player guid
+  const mobHp = new Map(), spawned = new Set(); // enemy guid -> its most health seen; enemies an enemy summoned (a mechanic's wave, never a pack of their own)
   const P = (g, n) => { let p = players.get(g); if (!p) { p = { guid: g, name: short(n), cls: '', spec: '' }; players.set(g, p); } if (n && !p.name) p.name = short(n); return p; };
   const ev = []; // [t, kind, ...]
   const encs = []; let enc = null, LIST = null, lastT = 0;
@@ -95,6 +96,7 @@ function build(text, E) {
     if (e === 'ENCOUNTER_START') { enc = { id: num(f[0]), boss: f[1], s: t, e: null }; encs.push(enc); continue; }
     if (e === 'ENCOUNTER_END') { if (enc) { enc.e = t; enc.kill = f[4] === '1'; enc = null; } continue; }
     if (e === 'SPELL_SUMMON' && isPlayer(f[0])) { owners.set(f[4], f[0]); continue; }
+    if (e === 'SPELL_SUMMON' && isNpc(f[0])) { spawned.add(f[4]); continue; }
     const sg = f[0], sn = f[1], dg = f[4], dn = f[5];
     // (the owner of a pet or a guardian: from a summon, or the advanced block's owner field)
     const ownerOf = (adv) => (isPlayer(sg) ? sg : owners.get(sg) || (f.length >= adv + ADV && f[adv] === sg && isPlayer(f[adv + 1]) ? f[adv + 1] : null));
@@ -104,7 +106,7 @@ function build(text, E) {
         const hasAdv = f.length >= adv + ADV + 8, s0 = adv + (hasAdv ? ADV : 0);
         const amt = Math.max(0, num(f[s0]) + num(f[s0 + 4]) + num(f[s0 + 5]) - Math.max(0, num(f[s0 + 2])));
         const ow = ownerOf(adv);
-        if (ow && isNpc(dg)) { if (isPlayer(sg)) P(sg, sn); ev.push([t, 'dmg', ow, amt, dg, dn]); }
+        if (ow && isNpc(dg)) { if (isPlayer(sg)) P(sg, sn); ev.push([t, 'dmg', ow, amt, dg, dn]); if (hasAdv && f[adv] === dg) { const m = num(f[adv + 3]); if (m > (mobHp.get(dg) || 0)) mobHp.set(dg, m); } } /* (the advanced block is the enemy hit: its max health) */
         else if (isNpc(sg) && isPlayer(dg)) ev.push([t, 'hit', dg, amt, swing ? 'Melee' : f[9], sn, sg, e === 'SPELL_PERIODIC_DAMAGE', swing ? '' : f[8]]); /* (x[8]: the spell id, for its icon (Nov 1)) */
         if (!swing && ow && isNpc(dg) && KNOCK.has(String(f[9]).toLowerCase())) ev.push([t, 'cc', ow, f[9], dg]);
         break;
@@ -143,17 +145,21 @@ function build(text, E) {
   // more after the pull last took on new enemies even with stragglers still alive (Nov 2, Flex: "theres times where youre saying they pulled 51
   // mobs at a time": one straggler kept the old pull open, so the next packs piled into it, Blinding Vale's first "pull" 66 enemies over 4½
   // minutes). Packs dragged together within seconds stay one pull. An enemy counts in the pull it joined, not again in the next ----
+  // (the studio's audit of that, Nov 2: a pack isn't over while its main enemy (the most health) is alive or more than a quarter of it is; Raj'kess's
+  // orbs come in waves and had split his pack in two. An enemy another enemy summoned never starts a pull)
   const PULL_GAP = 20, pulls = [], alive = new Set(), seen = new Set(); let cur = null, last = -1e9;
   const inEnc = (t) => encs.find((x) => t >= x.s - 1 && t <= (x.e == null ? 1e9 : x.e + 1));
+  const hitAt = new Map(), busy = (g, t) => alive.has(g) && t - (hitAt.get(g) || -1e9) <= 10; /* (alive and hit in the last 10 s: an enemy that never logs its death doesn't hold a pack open) */
+  const settled = (c, t) => !busy(c.main, t) && [...c.own].filter((g) => busy(g, t)).length <= c.own.size / 4;
   for (const x of ev) {
     const t = x[0];
     if (x[1] === 'mobdied') { alive.delete(x[2]); continue; }
     let mob = null; if (x[1] === 'dmg') mob = [x[4], x[5]]; else if (x[1] === 'hit') mob = [x[6], x[5]]; if (!mob) continue;
-    const boss = inEnc(t), isNew = !seen.has(mob[0]);
+    const boss = inEnc(t), isNew = !seen.has(mob[0]), wave = spawned.has(mob[0]) && cur && !cur.enc;
     if (boss) { if (!cur || cur.enc !== boss) { cur = { s: boss.s, e: boss.e || t, enc: boss, mobs: new Map(), hit: new Set() }; pulls.push(cur); } }
-    else if (isNew && (!cur || cur.enc || alive.size === 0 || t - last > 4 || t - cur.nw >= PULL_GAP)) { cur = { s: t, e: t, enc: null, mobs: new Map(), hit: new Set(), nw: t, chain: !!cur && !cur.enc && alive.size > 0 && t - last <= 4 }; pulls.push(cur); } /* (chain: joined while the fighting went on, no lull) */
-    if (isNew) { seen.add(mob[0]); alive.add(mob[0]); if (!cur.enc) cur.nw = t; }
-    cur.hit.add(mob[0]); /* (every enemy hit in it, leftovers too: the stray fold below judges by these, as before) */
+    else if (isNew && !wave && (!cur || cur.enc || alive.size === 0 || t - last > 4 || (t - cur.nw >= PULL_GAP && settled(cur, t)))) { cur = { s: t, e: t, enc: null, mobs: new Map(), hit: new Set(), own: new Set(), main: null, nw: t, chain: !!cur && !cur.enc && alive.size > 0 && t - last <= 4 }; pulls.push(cur); } /* (chain: joined while the fighting went on, no lull) */
+    if (isNew) { seen.add(mob[0]); alive.add(mob[0]); if (!cur.enc && !spawned.has(mob[0])) { cur.nw = t; cur.own.add(mob[0]); if (!cur.main || (mobHp.get(mob[0]) || 0) > (mobHp.get(cur.main) || 0)) cur.main = mob[0]; } }
+    cur.hit.add(mob[0]); hitAt.set(mob[0], t); /* (every enemy hit in it, leftovers too: the stray fold below judges by these, as before) */
     if (cur.enc || isNew) { if (!cur.mobs.has(mob[1])) cur.mobs.set(mob[1], new Set()); cur.mobs.get(mob[1]).add(mob[0]); }
     if (!boss) cur.e = Math.max(cur.e, t); last = t;
   }
