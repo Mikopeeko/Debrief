@@ -371,7 +371,8 @@ function createIndexer(opts) {
         if (withKeys) runs.push(run); // (the in-game app reads the whole key at its end: the Mythic+ run recap (Nov 1)); the website's Mythic+ tab too
       } else if (ev === 'CHALLENGE_MODE_END' && run) {
         run.kill = f[1] === '1'; run.result = run.kill ? 'Timed' : 'Depleted';
-        run.duration = num(f[3]) / 1000 || (ts.ms - run.startMs) / 1000; run.timeMs = num(f[3]); run.endByte = end; run = null; /* (timeMs 0: a key left early, its end written when the next key starts) */
+        run.duration = num(f[3]) / 1000 || (ts.ms - run.startMs) / 1000; run.timeMs = num(f[3]); run.endByte = end; /* (timeMs 0: a key left early, its end written when the next key starts) */
+        run.rateScore = num(f[4]) || 0; run.rateAfter = num(f[5]) || 0; run = null; /* (the key's rating points and the player's rating after it, as WoW wrote them (Nov 2): the Mythic+ tab's "+15.2 rating") */
       } else if (ev === 'ZONE_CHANGE' && run && withDungeons && run.inst && f[0] !== run.inst && f[1] !== 'UNKNOWN AREA') {
         // (the app: the group left the dungeon with the key unfinished (Nov 1). WoW writes the key's end only when the next key starts, so its
         // run recap would pop up then; the key ends here instead. A loading screen's UNKNOWN AREA isn't leaving)
