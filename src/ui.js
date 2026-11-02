@@ -2057,6 +2057,7 @@ const PATCH_NOTES = [
     "Mythic+ map: point at a pull, a tile or a timeline block for a short summary: its time, forces, deaths, kicks, Lust and cooldowns. The timeline marks each cast that went off with a kick ready.",
     "Mythic+ map: the pulls are tiles under the map, so the pull's card has the whole side to itself.",
     "Mythic+ map: each pull’s number sits inside the pull, in a clear spot that never covers an enemy, a mark or another label. A pull spread across the room gets one outline round all of it, like in MDT. Only the dangerous missed kicks show on the map; the rest are on the card.",
+    "Mythic+ tab: a new Rotation section after the map. For each player it says whether their rotation was done right over the whole key, with single target and AoE apart (by how many enemies the group was fighting at each press), and what they did wrong most often.",
     "Mythic+ dispels: each pull card shows the debuffs worth dispelling, how fast they came off, and any left on too long while someone’s dispel was ready. Your part counts your dispels and self-cleanses like Stoneform, and Your group has a Dispels column.",
     "Mythic+ deaths no longer list a talent or racial defensive you never press as “ready”.",
     "Mythic+ map: no more route lines. The pull numbers already show the order.",
