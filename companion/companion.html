@@ -209,6 +209,7 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
    4 px corners, the flat #171a22 panel, Barlow Condensed, numbers first, colour only where it means something ---------- */
 :root { --body: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif; } /* (Barlow Condensed throughout, as the site (Nov 3)) */
 .cs-top { gap: 12px; padding: 11px 20px; min-height: 66px; }
+.wmline { align-self: center; color: #f2c46b; font: 500 12.5px var(--body); }
 .cs-av { width: 44px; height: 44px; border-radius: 50%; flex: none; background: #222 center/cover no-repeat; box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--cls, #6c7381); } /* (a dark gap so the ring reads on any backdrop, Horde red or Alliance blue (the studio, Nov 3)) */
 .cs-av.emb { background-size: 70%; box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--cls, #6c7381), 0 0 16px color-mix(in srgb, var(--cls, #6c7381) 45%, transparent); }
 .cs-who { min-width: 0; }
@@ -297,6 +298,7 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
         <label class="tg" for="pop" title="After each boss pull, a small bar floats over the game: click it for your recap. It never takes focus from WoW and closes when the next pull starts."><input type="checkbox" id="pop" checked>Pop-up recap</label>
         <span class="tg hk" title="Press it anywhere, even in WoW, to show or hide your recap over the game."><span>Recap key</span><button class="btn hkb" id="hkBtn" type="button">…</button></span>
         <button class="btn" id="setBtn" type="button" title="Every setting of your recap window: what it shows, its look, where it sits">Settings</button>
+        <span class="wmline" id="wmLine" hidden></span>
       </div><p class="hkline" id="hkLine"></p></div>
 <footer class="foot">
   <button class="lnk" id="logT" type="button" title="Pick another combat log">Log: looking…</button>
@@ -616,7 +618,7 @@ function mplusShow(r, again) {
           for (const o of R.pulls) delete o.rot; for (const q of R.people || []) delete q.rot; } }
       // (the key for the pop-up's Saved list; it no longer goes into WoW (Nov 3))
       (L.mpRes = L.mpRes || {})[r.startByte] = { stat: R.run.left ? 'L' : R.run.timed ? 'T' : 'O', up: (R.run.clock && R.run.clock.up) || 0, people: R.people.map((p) => [p.name, p.cls]) }; L.mpLast = r.startByte;
-      L.popUp = true; j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: true, data: { full: true, mplus: R, saved: popSaved(), mpc: { name: L.name, run: mpcRun(r) } } }) }).catch(() => {});
+      L.popUp = true; if (window.DBF_TOUR) DBF_TOUR.pause(); j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: true, data: { full: true, mplus: R, saved: popSaved(), mpc: { name: L.name, run: mpcRun(r) } } }) }).catch(() => {});
     } catch (e) { console.error(e); }
     stat(L.live ? 'Watching your combat log' : '', L.live ? 'live' : '');
   }).catch(() => {});
@@ -632,6 +634,7 @@ function popShow(model, code, copied, pack, cm) {
   L.popUp = true;
   const data = { h: model.h, coach: (model.coach && model.coach.raid) || null, cls: (model.players || []).map((p) => [String(p.name || '').split('-')[0], p.cls]), code, copiedAlready: !!copied, full: true, pack: pack || null, cut: cm ? cm.cut : null, cutN: cm ? cm.cutN : 0, wc: cm ? cm.wc || null : null, card: cardOf(model), night: popNight(L.popLast && L.popLast.b ? L.popLast.b.startByte : null) };
   data.saved = popSaved(); /* (the switch and Saved (Nov 1)) */
+  if (window.DBF_TOUR) DBF_TOUR.pause(); /* (the walkthrough waits behind a real recap) */
   j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: true, data }) }).catch(() => {});
 }
 function popHide() { if (!L.popUp) return; L.popUp = false; j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: false }) }).catch(() => {}); }
@@ -1295,6 +1298,20 @@ function csDraw(d, offline) {
   body.innerHTML = h;
 }
 csInit();
+// ---------- the first-time walkthrough (Nov 3, the studio's walkthrough-brief.md): once, after setup has found WoW's logs and the recap key is
+// picked; players who had Debrief before get it once too, as "New". Skip, Esc or Done and it never comes back by itself (Setup › Help replays it) ----------
+(async function tourFirst() {
+  const seen = () => { try { return !!(localStorage.getItem('dbf-tour-done') || localStorage.getItem('dbf-tour')); } catch (e) { return true; } };
+  if (seen()) return;
+  for (let i = 0; i < 3600 && !(L.state === 'ok' && $('hkAsk').hidden); i++) await new Promise((r) => setTimeout(r, 1000));
+  for (let i = 0; i < 16 && !document.querySelector('.cs-tiles'); i++) await new Promise((r) => setTimeout(r, 500)); /* (your season drawn first, if there's one) */
+  let X = {}, hk = {}; try { X = await j('/setup'); } catch (e) { /* (an older app) */ } try { hk = await j('/hotkey'); } catch (e) { /* (no key) */ }
+  if (seen() || !window.DBF_TOUR) return;
+  DBF_TOUR.start({ fs: X.display === 'fullscreen', old: !!X.old, key: hk.name || 'Ctrl + R' });
+})();
+// (Windowed (Fullscreen) waiting for WoW to close, from the walkthrough's or Setup's Yes, switch it: a small line until it's done)
+async function wmWatch() { try { const x = await j('/setup/winmode'), el = $('wmLine'); el.hidden = x.state !== 'queued' && x.state !== 'done'; el.textContent = x.state === 'queued' ? 'Switching to Windowed (Fullscreen) when WoW closes' : x.state === 'done' ? 'WoW opens in Windowed (Fullscreen) next time' : ''; } catch (e) { /* (an older app) */ } }
+wmWatch(); setInterval(wmWatch, 10000);
 j('/app-version').then((x) => { RECAP.addonV = x.addon || ''; RECAP.appV = RECAP.appV || x.version || ''; }).catch(() => {});
 stat('Loading Debrief…', 'busy'); renderMain();
 engineReady.then(() => loadLogs()).catch((e) => stat(e.message, 'err'));
@@ -1302,5 +1319,7 @@ engineReady.then(() => loadLogs()).catch((e) => stat(e.message, 'err'));
 </script>
 <script src="/recap.js"></script>
 <script src="/mplus.js"></script>
+<script>window.DBF_WIN = 'main';</script>
+<script src="/tour.js"></script>
 </body>
 </html>

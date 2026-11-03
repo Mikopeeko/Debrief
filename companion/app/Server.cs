@@ -167,6 +167,7 @@ namespace Debrief {
         else if (get && path == "/settings") Send(res, File.ReadAllBytes(Path.Combine(here, "settings.html")), "text/html; charset=utf-8");
         else if (post && path == "/setup/open") { OpenSettings?.Invoke(); SendJson(res, new Dictionary<string, object> { { "ok", true } }); }
         else if (post && path == "/setup/sample") { ShowSample?.Invoke(); SendJson(res, new Dictionary<string, object> { { "ok", true } }); }
+        else if (path == "/setup/winmode") SendJson(res, post ? WinMode.Switch(here) : WinMode.Info()); // (Windowed (Fullscreen) by a press (Nov 3, the walkthrough))
         else if (post && path == "/setup/wowdir") SendJson(res, new Dictionary<string, object> { { "logs", PickWowDir != null ? PickWowDir() : "" } });
         else if (get && path == "/setup") SendJson(res, SetupInfo());
         else if (get && path == "/setup/chars") SendJson(res, CharsInfo()); // (the Companion window's character (Nov 3))
@@ -221,7 +222,7 @@ namespace Debrief {
         try { var cfg = Path.Combine(retail, @"WTF\Config.wtf"); if (File.Exists(cfg)) { var t = File.ReadAllText(cfg); var w = System.Text.RegularExpressions.Regex.Match(t, "SET gxWindow \"(\\d)\"", System.Text.RegularExpressions.RegexOptions.IgnoreCase); var mx = System.Text.RegularExpressions.Regex.Match(t, "SET gxMaximize \"(\\d)\"", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
           display = w.Success && w.Groups[1].Value == "0" ? "fullscreen" : mx.Success && mx.Groups[1].Value == "1" ? "fullwin" : "windowed"; } } catch { }
       }
-      o["addon"] = addon; o["display"] = display;
+      o["addon"] = addon; o["display"] = display; o["old"] = File.Exists(Path.Combine(here, "lastpop.json")); // (had a recap before: the walkthrough says "New")
       var card = Wow.AddonCard(here); o["me"] = card.ContainsKey("me") ? card["me"] : ""; o["chars"] = card.ContainsKey("mine") ? card["mine"] : new List<string>();
       int n = 1; try { n = System.Windows.Forms.Screen.AllScreens.Length; } catch { } o["screens"] = n;
       return o;

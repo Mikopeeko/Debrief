@@ -195,7 +195,7 @@ const CLS = { WARRIOR: '#c69b6d', PALADIN: '#f48cba', HUNTER: '#aad372', ROGUE: 
 const PVCLS = {}; /* (the preview pull's players) */
 const clsMap = () => { let m = {}; try { m = JSON.parse(localStorage.getItem('dbf-cls') || '{}'); } catch (e) { m = {}; } return Object.assign({}, PVCLS, m); };
 const short = (n) => String(n || '').split('-')[0];
-let SETUP = null, HK = null, PAGE = 'card', OPENDD = '', HKWAIT = false, HKMSG = '', PVV = 'me', FOLD = false;
+let SETUP = null, HK = null, PAGE = 'card', OPENDD = '', HKWAIT = false, HKMSG = '', PVV = 'me', FOLD = false, WM = { state: '', msg: '' };
 try { FOLD = localStorage.getItem('dbf-set-fold') === '1'; } catch (e) { /* closed */ } /* (Customize what shows: closed until you open it, then remembered) */
 try { const p = sessionStorage.getItem('dbf-set-page'); if (p) PAGE = p; } catch (e) { /* first page */ }
 { const h = location.hash.slice(1).split(':'); if (['pop', 'card', 'raid', 'look', 'setup'].includes(h[0])) PAGE = h[0]; if (h.includes('pv')) document.body.classList.add('pvopen'); if (h.includes('open')) FOLD = true; if (h.includes('shut')) FOLD = false; } /* (#page, #page:pv with the preview open, #card:open with the fold open: for pictures) */
@@ -211,12 +211,12 @@ function pageHtml() {
     const kd = HK && HK.wowOnly ? 'Shows or hides your recap while you\'re in WoW.' + (/^Ctrl \+ R$/.test(HK.name || '') ? ' WoW\'s own Ctrl + R (frame rate) won\'t work while Debrief runs.' : '') : 'Shows or hides your recap, even while you play.';
     return '<section class="pg on">' + head('pop', 'Pop-up', PVL) + '<div class="hint">How your recap window opens and where it sits.</div>' +
       '<div class="lab">When it opens</div>' +
-      row('Pop up after each pull', 'A few seconds after every boss pull, and at the end of a key.', tg('pop', sw('pop', true))) +
-      row('Recap key', HKMSG ? '<span class="msg">' + esc(HKMSG) + '</span>' : kd, '<div class="kc' + (HKWAIT ? ' wait' : '') + '">' + (HKWAIT ? 'Press your keys…' : k) + '</div><button type="button" class="lk" data-hk="1">' + (HKWAIT ? 'Cancel' : 'Change') + '</button>') +
-      row('Hide during a fight', 'It stays closed until the fight ends.', tg('hideFight', S.hideFight)) +
-      row('Close by itself', 'Not while your mouse is on it.', seg('autoClose', [[0, 'Never'], [30, '30 s'], [60, '60 s'], [120, '2 min']], S.autoClose)) +
+      row('Pop up after each pull', 'A few seconds after every boss pull, and at the end of a key.', tg('pop', sw('pop', true)), '', ' data-tour="pop"') +
+      row('Recap key', HKMSG ? '<span class="msg">' + esc(HKMSG) + '</span>' : kd, '<div class="kc' + (HKWAIT ? ' wait' : '') + '">' + (HKWAIT ? 'Press your keys…' : k) + '</div><button type="button" class="lk" data-hk="1">' + (HKWAIT ? 'Cancel' : 'Change') + '</button>', '', ' data-tour="pop"') +
+      row('Hide during a fight', 'It stays closed until the fight ends.', tg('hideFight', S.hideFight), '', ' data-tour="pop"') +
+      row('Close by itself', 'Not while your mouse is on it.', seg('autoClose', [[0, 'Never'], [30, '30 s'], [60, '60 s'], [120, '2 min']], S.autoClose), '', ' data-tour="pop"') +
       '<div class="lab">Where it sits</div>' +
-      (SETUP && SETUP.screens >= 2 ? row('Screen', 'Your second screen keeps it off the game.', seg('screen', [['main', 'Main screen'], ['second', 'Second screen']], S.screen)) : '') +
+      (SETUP && SETUP.screens >= 2 ? row('Screen', 'Your second screen keeps it off the game.', seg('screen', [['main', 'Main screen'], ['second', 'Second screen']], S.screen), '', ' data-tour="pop"') : '') +
       row('Lock in place', 'It can\'t be moved or resized.', tg('lock', S.lock)) +
       row('Size and place', 'Back to fitting each pull, in the middle of the screen.', '<button type="button" class="btn" data-act="resetPlace">Reset</button>') + '</section>';
   }
@@ -241,12 +241,12 @@ function pageHtml() {
     const cc = clsCol();
     return '<section class="pg on">' + head('look', 'Look', PVL) + '<div class="hint">Colours, style and size of your recap window.</div>' +
       '<div class="lab">Colour</div>' +
-      row('Accent', 'The class colour of the character you\'re on, or one of Debrief\'s.', '<div class="sw">' + ACC.map(([k, l, c]) => '<button type="button" data-acc="' + k + '" title="' + l + '" class="' + (S.accent === k ? 'on' : '') + '" style="background:' + (c || cc) + '"></button>').join('') + '</div>') +
+      row('Accent', 'The class colour of the character you\'re on, or one of Debrief\'s.', '<div class="sw">' + ACC.map(([k, l, c]) => '<button type="button" data-acc="' + k + '" title="' + l + '" class="' + (S.accent === k ? 'on' : '') + '" style="background:' + (c || cc) + '"></button>').join('') + '</div>', '', ' data-tour="look"') +
       row('Colour-blind colours', 'Blue for good, orange for bad.', tg('colorblind', S.colorblind)) +
       '<div class="lab">Style</div>' +
       row('Card style', '', seg('style', [['panels', 'Panels'], ['glass', 'Glass'], ['flat', 'Flat']], S.style)) +
       row('Font', '', '<button type="button" class="sel" data-dd="font">' + (S.font === 'plain' ? 'Plain' : 'Debrief') + '<em>▾</em>' + (OPENDD === 'font' ? '<div class="dd">' + [['debrief', 'Debrief'], ['plain', 'Plain']].map(([v, l]) => '<button type="button" data-font="' + v + '" class="' + (S.font === v ? 'on' : '') + '">' + l + '</button>').join('') + '</div>' : '') + '</button>') +
-      row('Size', 'Text and icons. Drag the window\'s corner for its width.', '<div class="sl"><input type="range" min="85" max="120" step="5" value="' + Math.round(S.size * 100) + '" data-range="size" aria-label="Size"><span>' + Math.round(S.size * 100) + '%</span></div>') + '</section>';
+      row('Size', 'Text and icons. Drag the window\'s corner for its width.', '<div class="sl"><input type="range" min="85" max="120" step="5" value="' + Math.round(S.size * 100) + '" data-range="size" aria-label="Size"><span>' + Math.round(S.size * 100) + '%</span></div>', '', ' data-tour="look"') + '</section>';
   }
   // Setup
   const X = SETUP || {}, cm = clsMap(), me = S.me || X.me || '', chars = X.chars || [];
@@ -254,13 +254,15 @@ function pageHtml() {
     : X.display === 'fullwin' ? ['', 'Windowed (Fullscreen): your recap shows over WoW.'] : X.display === 'windowed' ? ['', 'Windowed: your recap shows over WoW.'] : ['no', 'Not found yet. WoW writes it the first time you play.'];
   const ad = X.addon === 'ok' ? ['', 'On. The Debrief addon turns it on every time you log in.', ''] : [X.retail ? 'am' : 'no', X.addon === 'old' ? 'The Debrief addon in WoW is out of date, so your combat log may stay off.' : 'The Debrief addon isn\'t in WoW, so your combat log may stay off.', X.retail ? '<button type="button" class="btn" data-act="addon">Put it back</button>' : ''];
   return '<section class="pg on">' + head('setup', 'Setup', PVL) + '<div class="hint">Debrief checks these by itself. Green means you\'re set.</div><div class="lab">Checks</div>' +
-    '<div class="row' + (X.retail ? '' : ' am') + '"><span class="dot' + (X.retail ? '' : ' am') + '"></span>' + txt('WoW folder', X.retail ? '<span class="path">' + esc(X.retail) + '</span>' : 'Not found. Pick the folder WoW is in.') + '<button type="button" class="lk" data-act="wowdir">Change</button></div>' +
-    '<div class="row' + (ad[0] === 'am' ? ' am' : '') + '"><span class="dot' + (ad[0] ? ' ' + ad[0] : '') + '"></span>' + txt('Combat log', ad[1]) + ad[2] + '</div>' +
-    '<div class="row' + (dm[0] === 'am' ? ' am' : '') + '"><span class="dot' + (dm[0] ? ' ' + dm[0] : '') + '"></span>' + txt('Display mode', dm[1]) + '</div>' +
-    '<div class="row"><span class="dot' + (me ? '' : ' am') + '"></span>' + txt('You', 'Found from the characters you play on this PC.') + '<button type="button" class="sel" data-dd="me"><span style="color:' + (CLS[cm[short(me)]] || 'var(--text)') + '">' + esc(short(me) || 'Pick one') + '</span><em>▾</em>' +
+    '<div class="row' + (X.retail ? '' : ' am') + '" data-tour="setup"><span class="dot' + (X.retail ? '' : ' am') + '"></span>' + txt('WoW folder', X.retail ? '<span class="path">' + esc(X.retail) + '</span>' : 'Not found. Pick the folder WoW is in.') + '<button type="button" class="lk" data-act="wowdir">Change</button></div>' +
+    '<div class="row' + (ad[0] === 'am' ? ' am' : '') + '" data-tour="setup"><span class="dot' + (ad[0] ? ' ' + ad[0] : '') + '"></span>' + txt('Combat log', ad[1]) + ad[2] + '</div>' +
+    '<div class="row' + (dm[0] === 'am' ? ' am' : '') + '" data-tour="setup"><span class="dot' + (dm[0] ? ' ' + dm[0] : '') + '"></span>' + txt('Display mode', dm[1] + (WM.msg ? '<br><span class="msg">' + esc(WM.msg) + '</span>' : '')) +
+      (X.display === 'fullscreen' && WM.state !== 'queued' && WM.state !== 'done' ? '<button type="button" class="btn" data-act="winmode">Yes, switch it</button>' : '') + '</div>' + /* (Windowed (Fullscreen) by a press (Nov 3)) */
+    '<div class="row" data-tour="setup"><span class="dot' + (me ? '' : ' am') + '"></span>' + txt('You', 'Found from the characters you play on this PC.') + '<button type="button" class="sel" data-dd="me"><span style="color:' + (CLS[cm[short(me)]] || 'var(--text)') + '">' + esc(short(me) || 'Pick one') + '</span><em>▾</em>' +
       (OPENDD === 'me' ? '<div class="dd">' + chars.map((c) => '<button type="button" data-me="' + esc(c) + '" class="' + (short(c) === short(me) ? 'on' : '') + '" style="color:' + (CLS[cm[short(c)]] || 'var(--text)') + '">' + esc(c) + '</button>').join('') + (S.me ? '<button type="button" data-me="" style="color:var(--muted)">Find it by itself</button>' : '') + '</div>' : '') + '</button></div>' +
     '<div class="lab">Help</div>' +
     row('Sample recap', 'See the window with a made-up pull.', '<button type="button" class="btn" data-act="sample">Show</button>') +
+    row('Show the walkthrough again', 'A quick tour of where everything is.', '<button type="button" class="btn" data-act="tour">Start</button>') +
     row('Run the setup again', 'Your recap key and the first steps, in the Companion window.', '<button type="button" class="btn" data-act="setup">Start</button>') + '</section>';
 }
 const kN = (v) => (v >= 1e6 ? (v / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'm' : Math.round(v / 1000) + 'k');
@@ -278,7 +280,8 @@ function railHtml() {
     '<div class="foot"><b>Debrief Companion ' + esc((SETUP && SETUP.version) || '') + '</b><br>' + (up ? 'Update ready · <button type="button" class="lk" data-act="update">Update now</button>' : (CHECKING ? 'Checking…' : 'Up to date · <button type="button" class="lk" data-act="check">Check</button>')) + '</div>';
 }
 let CHECKING = false;
-function draw() { const sc = $('mid').scrollTop; $('rail').innerHTML = railHtml(); $('mid').innerHTML = pageHtml(); $('mid').scrollTop = sc; }
+function draw() { const sc = $('mid').scrollTop; $('rail').innerHTML = railHtml(); $('mid').innerHTML = pageHtml(); $('mid').scrollTop = sc; if (window.DBF_TOUR) DBF_TOUR.draw(); }
+window.DBF_TOURPAGE = (p) => { if (PAGE !== p) { PAGE = p; OPENDD = ''; PVV = 'me'; $('mid').scrollTop = 0; pvView(); draw(); } }; /* (the walkthrough turns to its step's page) */
 
 // ---------- what each control does ----------
 document.addEventListener('click', (e) => { if (!document.body.classList.contains('pvopen') || (e.target.closest && (e.target.closest('#pv') || e.target.closest('[data-pv]')))) return; document.body.classList.remove('pvopen'); e.preventDefault(); e.stopPropagation(); }, true);
@@ -305,6 +308,8 @@ document.addEventListener('click', async (e) => {
   if (d.act === 'addon') { try { await j('/addon'); } catch (x) { /* shown below */ } await setupLoad(); return; }
   if (d.act === 'sample') { postJ('/setup/sample').catch(() => {}); return; }
   if (d.act === 'setup') { post('setup'); return; }
+  if (d.act === 'tour') { if (window.DBF_TOUR) DBF_TOUR.start({ fs: !!(SETUP && SETUP.display === 'fullscreen'), key: (HK && HK.name) || 'Ctrl + R' }); return; }
+  if (d.act === 'winmode') { t.disabled = true; try { WM = await postJ('/setup/winmode'); } catch (x) { WM = { state: 'error', msg: 'Couldn\'t change it: in WoW, Options › Graphics › Display Mode › Windowed (Fullscreen).' }; } await setupLoad(); return; }
   if (d.act === 'check') { CHECKING = true; draw(); try { const x = await postJ('/update-check'); if (SETUP) SETUP.update = x.available || ''; } catch (x) { /* offline */ } CHECKING = false; draw(); return; }
   if (d.act === 'update') { postJ('/update').catch(() => {}); return; }
 });
@@ -321,7 +326,7 @@ document.addEventListener('keydown', async (e) => {
   try { const x = await postJ('/hotkey', { mods, vk: e.keyCode, name: hkNm(e) }); if (x.error) { HKMSG = x.error; draw(); return; } } catch (x) { HKMSG = String(x.message || x); draw(); return; }
   HKWAIT = false; HKMSG = ''; await hkLoad(); draw();
 });
-$('close').addEventListener('click', () => post('close'));
+$('close').addEventListener('click', () => { if (window.DBF_TOUR) DBF_TOUR.closed(); post('close'); });
 // (another window changed something: the Companion's Pop up, the pop-up's own side after a drag, or the character you're on)
 window.addEventListener('storage', (e) => { if (e.key === KEY) S = load(); if (e.key === KEY || e.key === 'dbf-cur-cls' || /^dbf-sw-/.test(e.key || '')) draw(); });
 
@@ -340,10 +345,12 @@ $('pvF').addEventListener('load', async () => {
   try { w.DBF_SHOW(Object.assign({}, M.data, { full: true }, M.data.lk ? {} : { lk: M.lk || {} })); pvView(); } catch (e) { console.error(e); }
 });
 
-async function setupLoad() { try { SETUP = await j('/setup'); } catch (e) { SETUP = SETUP || null; } draw(); }
+async function setupLoad() { try { SETUP = await j('/setup'); } catch (e) { SETUP = SETUP || null; } try { WM = await j('/setup/winmode'); } catch (e) { /* (an older app) */ } draw(); }
 async function hkLoad() { try { HK = await j('/hotkey'); } catch (e) { HK = null; } }
 $('logo').innerHTML = LOGO;
 draw(); hkLoad().then(draw); setupLoad();
 post('ready');
 </script>
+<script>window.DBF_WIN = 'set';</script>
+<script src="/tour.js"></script>
 </body></html>

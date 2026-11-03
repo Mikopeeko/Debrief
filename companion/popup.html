@@ -823,7 +823,7 @@ function mpcRender() {
 }
 function fit() { try { bossFirstFix(); applyLook(); } catch (e) { /* (as drawn) */ } const bd0 = document.querySelector('.body'); if (bd0) bd0.onscroll = () => bd0.classList.toggle('scrolled', bd0.scrollTop > 140); /* (the slim bar (Nov 1)) */ requestAnimationFrame(() => { const a = document.getElementById('app'), m = a.querySelector('.mini'), t = a.querySelector('.top'), b = a.querySelector('.body'), f = a.querySelector('.foot');
   /* (one column always since layout A (Nov 1): the side panel never doubles) */ void cols2;
-  void m; void t; void b; void f; post('h:' + cardH() + ':' + document.documentElement.clientWidth); capNow(); }); setTimeout(fitNow, 60); }
+  void m; void t; void b; void f; post('h:' + cardH() + ':' + document.documentElement.clientWidth); capNow(); if (window.DBF_TOUR) DBF_TOUR.draw(); }); setTimeout(fitNow, 60); }
 // (the same measure without waiting for a frame: a window not shown yet gets no frames, and the app sizes it before showing it (Nov 3))
 function fitNow() { const a = document.getElementById('app'); if (!a) return; capNow(); if (D && D.mplus && D.mpc) { post('h:99999:' + document.documentElement.clientWidth); return; } /* (a key: two columns at the cap, it scrolls) */
   post('h:' + cardH() + ':' + document.documentElement.clientWidth); }
@@ -905,7 +905,7 @@ document.addEventListener('click', (e) => {
   if (t.dataset.cutt) { const v = D.cut ? 0 : 1; waiting = true; D.cut = v; render(); post('cut:' + v); return; } /* (Wipe call on or off) */
   if (t.dataset.cut) { const v = Math.max(0, Math.min(8, (D.cut || 0) + (+t.dataset.cut))); if (v !== D.cut) { waiting = true; D.cut = v; render(); post('cut:' + v); } return; }
   if (t.dataset.big) { big = true; render(); return; }
-  if (t.dataset.close) { post('close'); return; }
+  if (t.dataset.close) { if (window.DBF_TOUR) DBF_TOUR.closed(); post('close'); return; }
   if (t.dataset.open) { post('open'); return; }
   if (t.dataset.fold) { OPEN[t.dataset.fold] = !isOpen(t.dataset.fold); render(); return; }
   if (t.dataset.row && t.classList.contains('has')) { OPEN[t.dataset.row] = !OPEN[t.dataset.row]; render(); }
@@ -1047,5 +1047,7 @@ let RZT = 0; window.addEventListener('resize', () => { clearTimeout(RZT); RZT = 
 for (const [k, ht] of [['n', 12], ['s', 15], ['w', 10], ['e', 11], ['nw', 13], ['ne', 14], ['sw', 16], ['se', 17]]) { const z = document.createElement('div'); z.className = 'rz ' + k; z.addEventListener('mousedown', (e) => { if (e.button) return; e.preventDefault(); post('rs:' + ht); }); document.body.appendChild(z); }
 })();
 </script>
+<script>window.DBF_WIN = /[?&]preview=1/.test(location.search) ? '' : 'pop'; /* (the walkthrough's pop-up steps; never in Settings' preview) */</script>
+<script src="/tour.js"></script>
 </body>
 </html>
