@@ -24,6 +24,7 @@ namespace Debrief {
     readonly Timer fitTimer = new Timer { Interval = 2500 }; // (if the card never reports its height, it shows anyway)
     string pending; bool ready, starting, w11;
     bool userPlaced, locked, moved, resized, fitting; Rectangle userR; int fitStage; long resetSeen = -1; string wantScreen = "main"; double sizeZ = 1;
+    int capW, capH; // (the largest it may be for this card, from the page; 0 = not known yet)
 
     public PopupForm(MainForm main, string here, int port, CoreWebView2Environment env) {
       this.main = main; this.here = here; this.port = port; this.env = env;
@@ -69,7 +70,7 @@ namespace Debrief {
     public void ShowRecap(string json) {
       var look = Wow.AddonLook(here);
       if (json.StartsWith("{")) { string lk = "{}"; try { lk = new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(Wow.AddonCard(here)); } catch { } json = "{\"look\":\"" + look[1] + "\",\"lk\":" + lk + "," + json.Substring(1); } // (who you are, from WoW's folders)
-      pending = json;
+      pending = json; ClearCap(); // (a new card: its own cap comes once it's drawn)
       if (userPlaced && OnScreen(userR)) { Place(userR.X, userR.Y, userR.Width, userR.Height); ShowNoFocus(); } // (your size and place)
       else BeginFit(false);
       if (web.CoreWebView2 == null) { if (!starting) { starting = true; var h = Handle; BeginInvoke(new Action(async () => await Start())); } }
@@ -90,6 +91,7 @@ namespace Debrief {
       else if (m == "settings") main.ShowSettings(); // (the gear (Nov 3))
       else if (m.StartsWith("set:")) ApplySet(m.Substring(4)); // (the settings window's Screen, Lock in place, Size and Size and place: Reset)
       else if (m.StartsWith("h:")) OnHeight(m.Substring(2)); // (the card's height, for Fit to the pull)
+      else if (m.StartsWith("cap:")) OnCap(m.Substring(4)); // (the largest it may be: only as big as what fits (Nov 3))
       else if (m.StartsWith("rs:")) { int ht; if (!locked && int.TryParse(m.Substring(3), out ht) && ht >= 10 && ht <= 17) BeginInvoke(new Action(() => { ReleaseCapture(); SendMessage(Handle, 0x00A1 /* WM_NCLBUTTONDOWN */, (IntPtr)ht, IntPtr.Zero); })); } // (a resize edge pressed)
       else if (m.StartsWith("pull:")) main.PopupPull(m.Substring(5)); // (a pull chip: the main page loads that pull's coach box)
       else if (m.StartsWith("key:")) main.PopupKey(m.Substring(4)); // (a key picked from the switch, Saved or the key's name (Nov 1))
@@ -103,7 +105,7 @@ namespace Debrief {
       bool fresh = recenter || !Visible || !OnScreen(Bounds);
       int h = fresh ? Math.Max(Px(360, wa), (int)(wa.Height * 0.6)) : Height;
       int x = fresh ? wa.Left + (wa.Width - w) / 2 : Left + (Width - w) / 2, y = fresh ? wa.Top + (int)(wa.Height * 0.12) : Top;
-      fitting = true; fitStage = 1; Place(x, y, w, h); fitTimer.Stop(); fitTimer.Start();
+      ClearCap(); fitting = true; fitStage = 1; Place(x, y, w, h); fitTimer.Stop(); fitTimer.Start();
       Tell("refit");
     }
     // ("h:<height>:<width>" in the page's pixels, measured at the width it's at now; one measured before a resize is passed over)
@@ -122,14 +124,32 @@ namespace Debrief {
     void FinishFit(int h) {
       fitTimer.Stop(); if (!fitting) return; fitting = false;
       if (h > 0) Place(Left, Top, Width, h);
-      ShowNoFocus();
+      ShowNoFocus(); Tell("cap"); // (now the most it may grow to)
+    }
+    // (only as big as what fits (the studio, Nov 3; Flex: "we can keep the window resize but we should make it only sizable to what fits, not go bigger
+    // than that"): "cap:<card height>:<width it was measured at>:<widest width its columns fill>", in the page's pixels. Smaller stays free (it scrolls);
+    // a drag past the card's edge stops there; a card shorter than the window shrinks it, its top edge and your width kept)
+    void OnCap(string s) {
+      if (fitting) return; // (Fit to the pull sizes it first)
+      var p = s.Split(':'); double hc, wc, mw;
+      if (p.Length < 3 || !double.TryParse(p[0], NumberStyles.Float, CultureInfo.InvariantCulture, out hc) || !double.TryParse(p[1], NumberStyles.Float, CultureInfo.InvariantCulture, out wc) || !double.TryParse(p[2], NumberStyles.Float, CultureInfo.InvariantCulture, out mw)) return;
+      double sc = Dpi() / 96.0; if (hc > 0 && Math.Abs(wc - ClientSize.Width / sc) > 3) return; // (measured at another width: a newer one comes)
+      var wa = Screen.FromControl(this).WorkingArea;
+      capH = hc > 0 ? Math.Min(wa.Height, (int)Math.Ceiling(hc * sc)) : 0; capW = mw > 0 ? Math.Min(wa.Width, (int)Math.Round(mw * sc)) : 0;
+      Limits(wa); MaximumSize = new Size(capW, capH); // (a window bigger than that shrinks to it now, top-left kept)
+    }
+    void ClearCap() { capW = capH = 0; MaximumSize = Size.Empty; }
+    void Limits(Rectangle wa) {
+      int minW = Math.Min(Px(300, wa), wa.Width), minH = Math.Min(Px(360, wa), wa.Height);
+      if (capW > 0) minW = Math.Min(minW, capW); if (capH > 0) minH = Math.Min(minH, capH); // (a short card: no empty space under it)
+      MaximumSize = Size.Empty; MinimumSize = new Size(minW, minH);
     }
     // (moved or resized programmatically: kept on its screen)
     void Place(int x, int y, int w, int h) {
       var wa = Screen.FromRectangle(new Rectangle(x, y, Math.Max(1, w), Math.Max(1, h))).WorkingArea;
       w = Math.Min(w, wa.Width); h = Math.Min(h, wa.Height);
       x = Math.Max(wa.Left, Math.Min(x, wa.Right - w)); y = Math.Max(wa.Top, Math.Min(y, wa.Bottom - h));
-      MinimumSize = new Size(Math.Min(Px(300, wa), wa.Width), Math.Min(Px(360, wa), wa.Height));
+      Limits(wa); if (capW > 0 || capH > 0) MaximumSize = new Size(capW, capH);
       SetBounds(x, y, w, h);
     }
 

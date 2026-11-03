@@ -818,14 +818,31 @@ function mpcRender() {
   const f = document.getElementById('mpcF'), short = (n) => String(n || '').split('-')[0];
   const me = (R.people || []).find((p) => LK.me && (p.name === LK.me || short(p.name) === short(LK.me))) || (R.people || []).find((p) => (LK.mine || []).some((n) => p.name === n || short(p.name) === short(n)));
   setTimeout(fitNow, 30);
-  f.addEventListener('load', () => { try { f.contentWindow.DBF_MPCARD({ name: D.mpc.name, run: D.mpc.run, me: me ? me.name : '' }); } catch (e) { console.error(e); } }, { once: true });
+  f.addEventListener('load', () => { try { f.contentWindow.DBF_MPCARD({ name: D.mpc.name, run: D.mpc.run, me: me ? me.name : '' }); } catch (e) { console.error(e); }
+    try { let q = 0; new f.contentWindow.ResizeObserver(() => { clearTimeout(q); q = setTimeout(capNow, 60); }).observe(f.contentDocument.body); } catch (e) { /* (no cap until the next resize) */ } }, { once: true }); /* (the key's page draws in steps: the cap follows it) */
 }
 function fit() { try { bossFirstFix(); applyLook(); } catch (e) { /* (as drawn) */ } const bd0 = document.querySelector('.body'); if (bd0) bd0.onscroll = () => bd0.classList.toggle('scrolled', bd0.scrollTop > 140); /* (the slim bar (Nov 1)) */ requestAnimationFrame(() => { const a = document.getElementById('app'), m = a.querySelector('.mini'), t = a.querySelector('.top'), b = a.querySelector('.body'), f = a.querySelector('.foot');
   /* (one column always since layout A (Nov 1): the side panel never doubles) */ void cols2;
-  void m; void t; void b; void f; post('h:' + cardH() + ':' + document.documentElement.clientWidth); }); setTimeout(fitNow, 60); }
+  void m; void t; void b; void f; post('h:' + cardH() + ':' + document.documentElement.clientWidth); capNow(); }); setTimeout(fitNow, 60); }
 // (the same measure without waiting for a frame: a window not shown yet gets no frames, and the app sizes it before showing it (Nov 3))
-function fitNow() { const a = document.getElementById('app'); if (!a) return; if (D && D.mplus && D.mpc) { post('h:99999:' + document.documentElement.clientWidth); return; } /* (a key: two columns at the cap, it scrolls) */
+function fitNow() { const a = document.getElementById('app'); if (!a) return; capNow(); if (D && D.mplus && D.mpc) { post('h:99999:' + document.documentElement.clientWidth); return; } /* (a key: two columns at the cap, it scrolls) */
   post('h:' + cardH() + ':' + document.documentElement.clientWidth); }
+// (the largest the window may be (the studio, Nov 3; Flex: "only sizable to what fits"): the card's own height at this width, and the width of as many
+// columns as the card fills: one about 520, two about 1000, three about 1500 (a raid card's columns are 420 px and up, three at most); 0 = no cap)
+function capNow() { const a = document.getElementById('app'); if (!a || a.querySelector('.mini')) { post('cap:0:0:0'); return; }
+  post('cap:' + (D && D.mplus && D.mpc ? mpcH() : cardH()) + ':' + document.documentElement.clientWidth + ':' + fitMaxW()); }
+window.DBF_CAPV = () => ({ h: D && D.mplus && D.mpc ? mpcH() : cardH(), w: fitMaxW() }); /* (the same numbers, for tests and pictures) */
+function fitMaxW() { const a = document.getElementById('app'); if (!a) return 0; const z = parseFloat(a.style.zoom) || 1, W = (n) => Math.round((n >= 3 ? 1500 : n === 2 ? 1000 : 520) * z);
+  const f = document.getElementById('mpcF'); if (f) { let n = 2; try { const t = f.contentDocument.querySelector('.mpcg-top'); if (t) n = [...t.children].filter((c) => c.offsetHeight).length; } catch (e) { /* (still loading) */ } return W(Math.min(2, n)); } /* (a key: its short blocks in two columns at most, the map under them) */
+  const L = a.querySelector('.body:not(.mpx) .kgrid.one > .kL'); if (!L) return W(2);
+  const kids = [...L.children].filter((c) => c.offsetHeight > 0), cols = new Set(kids.map((c) => Math.round(c.getBoundingClientRect().left / 40))).size;
+  const fits = Math.max(1, Math.min(3, Math.floor((L.clientWidth + 22) / 442))); /* (how many columns this width makes) */
+  return W(cols < fits ? cols : Math.min(3, kids.length)); } /* (a column left empty at this width: no wider than the filled ones) */
+// (a key's card: the header, the key's own page inside the frame down to its last block, and the footer)
+function mpcH() { const a = document.getElementById('app'), f = document.getElementById('mpcF'); if (!a || !f) return 0; const z = parseFloat(a.style.zoom) || 1;
+  let inner = 0; try { const d = f.contentDocument, b = d.getElementById('mptBody'); if (!b || !b.children.length) return 0; for (const c of b.children) inner = Math.max(inner, c.getBoundingClientRect().bottom + d.documentElement.scrollTop); inner += 16; } catch (e) { return 0; }
+  const t = a.querySelector('.top'), hd = document.getElementById('mpcHead'), ft = a.querySelector('.foot');
+  return Math.ceil(((t ? t.offsetHeight : 0) + (hd ? hd.offsetHeight : 0) + (ft ? ft.offsetHeight : 0) + 2 + inner) * z); }
 // (the card's own height: the header, what's in the body down to its last line, and the footer; never the empty space of a taller window)
 function cardH() { const a = document.getElementById('app'); if (!a) return 0; const m = a.querySelector('.mini'); if (m) return m.offsetHeight + 2;
   const t = a.querySelector('.top'), b = a.querySelector('.body'), f = a.querySelector('.foot'), z = parseFloat(a.style.zoom) || 1; let inner = 0;
@@ -1024,7 +1041,7 @@ function ttShow(el, ev) {
 document.addEventListener('mouseover', (e) => { const el = e.target.closest ? e.target.closest('.ic[data-sid]') : null; if (el) ttShow(el, e); });
 document.addEventListener('mouseout', (e) => { const el = e.target.closest ? e.target.closest('.ic[data-sid]') : null; if (el && !(e.relatedTarget && el.contains(e.relatedTarget))) { const b = document.getElementById('ktt'); if (b) { b.hidden = true; b.dataset.for = ''; } } });
 window.DBF_SHOW = take; // (tests)
-if (wv) wv.addEventListener('message', (e) => { if (e.data === 'refit') { fitNow(); return; } if (e.data === 'frame:w10') { document.body.classList.add('w10'); return; } if (e.data === 'frame:w11') return; if (typeof e.data === 'string' && e.data.startsWith('side:')) { const S = SETS(); if (S) { S.side = e.data.slice(5) === 'left' ? 'left' : 'right'; try { localStorage.setItem(SETK, JSON.stringify(S)); } catch (x) { /* kept */ } } return; } take(e.data); });
+if (wv) wv.addEventListener('message', (e) => { if (e.data === 'refit') { fitNow(); return; } if (e.data === 'cap') { capNow(); return; } if (e.data === 'frame:w10') { document.body.classList.add('w10'); return; } if (e.data === 'frame:w11') return; if (typeof e.data === 'string' && e.data.startsWith('side:')) { const S = SETS(); if (S) { S.side = e.data.slice(5) === 'left' ? 'left' : 'right'; try { localStorage.setItem(SETK, JSON.stringify(S)); } catch (x) { /* kept */ } } return; } take(e.data); });
 post('ready'); sendPlace();
 let RZT = 0; window.addEventListener('resize', () => { clearTimeout(RZT); RZT = setTimeout(fitNow, 40); }); /* (the window changed width: the card's height again, for Fit to the pull) */
 for (const [k, ht] of [['n', 12], ['s', 15], ['w', 10], ['e', 11], ['nw', 13], ['ne', 14], ['sw', 16], ['se', 17]]) { const z = document.createElement('div'); z.className = 'rz ' + k; z.addEventListener('mousedown', (e) => { if (e.button) return; e.preventDefault(); post('rs:' + ht); }); document.body.appendChild(z); }
