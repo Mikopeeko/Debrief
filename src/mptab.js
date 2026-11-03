@@ -1495,7 +1495,7 @@ async function mpRwStart(R, text) { if (R._rw || !window.DBF_MPLUS_ROT || !windo
     if (k || !rw.stale) break; for (let j = 0; j < 50 && pend(); j++) await new Promise((r) => setTimeout(r, 300));
     for (const o of R.pulls) delete o.rot; for (const q of R.people || []) delete q.rot; for (const k2 of Object.keys(all)) delete all[k2]; rw.raw = {}; }
   rw.done = true; R._rwS = null; mpRwPaint(R); { const pe = document.getElementById('mptPart'); if (pe) mpRotPart(R, pe.dataset.for || ''); }
-  if (MP.item && MP.R[mpK(MP.item)] === R && MP.pick && MP.pick.auto) mpMapAutoGo(); } /* (the auto pick counts the rotation's mistakes too) */
+  if (MP.item && MP.R[mpK(MP.item)] === R && MP.pick && MP.pick.auto) mpMapAutoGo(false, true); } /* (the auto pick counts the rotation's mistakes too, moving only a card that's off screen) */
 // (words: no guide names (a sentence naming one goes), "1 was"; a value as the card says it, "3 of 6")
 const MP_RW_GUIDE = /\b(Wowhead|Icy Veins|SimulationCraft|Raidbots|Bloodmallet|WoWAnalyzer|log tool)\b|\b(a|both|the|one|another) guides?\b|\bthe simulations?\b/i;
 const mpRwTxt = (s) => String(s || '').split(/(?<=[.!?])\s+/).filter((x) => x && !MP_RW_GUIDE.test(x)).join(' ').replace(/\b1 were\b/g, '1 was').trim();
@@ -2315,8 +2315,9 @@ function mpMapAuto(R) { const name = MP.pp || '', who = (w) => !name || w === na
   R.pulls.forEach((q, i) => { let n = 0; for (const d of q.deaths || []) if (who(d.who)) n++; for (const x of q.through || []) if (who(x.who)) n++; for (const a of q.avoid || []) if (who(a.who)) n += a.n || 0;
     for (const [nm, r] of Object.entries(q.rot || {})) if (who(nm)) n += ((r && r.fix) || []).filter((f2) => f2[0] === 'bad').length; if (n > bn) { bn = n; best = i; } });
   return best; }
-function mpMapAutoGo(now) { const it = MP.item, R = it && MP.R[mpK(it)], box = document.querySelector('.mpt-mdt'), view = box && box.querySelector('.mpt-mdtv[data-v="you"]'); if (!R || !view || view.hidden) return false;
+function mpMapAutoGo(now, quiet) { const it = MP.item, R = it && MP.R[mpK(it)], box = document.querySelector('.mpt-mdt'), view = box && box.querySelector('.mpt-mdtv[data-v="you"]'); if (!R || !view || view.hidden) return false;
   const i = String(mpMapAuto(R)), p = MP.pick; if (!now && p && p.auto && p.k === mpK(it) && p.ids[0] === i) { p.pp = MP.pp || ''; return true; } /* (the same pull: the card stays put) */
+  if (quiet && p && p.auto && p.k === mpK(it) && !document.hidden) { const r = view.querySelector('.mpt-mcard').getBoundingClientRect(); if (r.height && r.bottom > 0 && r.top < innerHeight) return true; } /* (the rotation arriving: a card on screen stays on the pull being read (the studio, Nov 3: "no jumps under someone's eyes")) */
   MP.zNow = !!now; try { mpMapPick('you', [i], '', true); } finally { MP.zNow = false; } return true; }
 const mpMapAutoOn = () => { const p = MP.pick; return !p || p.auto || p.k !== (MP.item ? mpK(MP.item) : ''); }; /* (the viewer hasn't picked a pull on this key) */
 function mpMapPeek(view, i) { if (!view) return; view.classList.toggle('peek', i != null); view.querySelectorAll('[data-pi]').forEach((x) => x.classList.toggle('pk', i != null && x.dataset.pi === String(i))); }
@@ -2432,7 +2433,7 @@ function mpFitPull(box, view, i) { const svg = view.querySelector('.mpt-mdtm:not
   const pl = svg.querySelector('polyline[data-pis]'), ix = pl ? pl.dataset.pis.split(',').indexOf(String(i)) : -1;
   if (ix > 0) { const [px, py] = pl.getAttribute('points').split(' ')[ix - 1].split(',').map(Number), a = Math.min(x0, px), b = Math.min(y0, py), c = Math.max(x1, px), d = Math.max(y1, py); if (fit(a, b, c, d) >= 1.5) { x0 = a; y0 = b; x1 = c; y1 = d; } }
   mpZoomTo(box, Math.max(1.5, Math.min(2.25, fit(x0, y0, x1, y1))), [(x0 + x1) / 2, (y0 + y1) / 2]); }
-function mpMapRestore() { const p = MP.pick, has = p && !p.auto && p.k === (MP.item ? mpK(MP.item) : '') && document.querySelector('.mpt-mdtv[data-v="' + p.v + '"]'); if (has) { MP.zNow = true; try { mpMapPick(p.v, p.ids, p.sum); } finally { MP.zNow = false; } } if (MP.pp) mpMapPP(MP.pp); if (!has && !mpMapAutoGo(true)) { const bx = document.querySelector('.mpt-mdt'); if (bx) mpZoom(bx, MP.mz && MP.mz.z > 1 ? MP.mz.c : null); } }
+function mpMapRestore() { const p = MP.pick, has = p && p.k === (MP.item ? mpK(MP.item) : '') && document.querySelector('.mpt-mdtv[data-v="' + p.v + '"]'); if (has) { MP.zNow = true; try { mpMapPick(p.v, p.ids, p.sum, p.auto); } finally { MP.zNow = false; } } /* (a redraw keeps this key's pick, the auto one too) */ if (MP.pp) mpMapPP(MP.pp); if (!has && !mpMapAutoGo(true)) { const bx = document.querySelector('.mpt-mdt'); if (bx) mpZoom(bx, MP.mz && MP.mz.z > 1 ? MP.mz.c : null); } }
 document.addEventListener('click', (e) => { const t = e.target; if (!t.closest) return; const box = t.closest('.mpt-mdt');
   if (MP.dragT && Date.now() - MP.dragT < 250 && t.closest('.mpt-mdtm')) { e.stopPropagation(); e.preventDefault(); return; } /* (the end of a drag or pinch, not a pick) */
   if (!t.closest('.mpt-lay')) document.querySelectorAll('.mpt-lay.open').forEach((x) => { x.classList.remove('open'); x.querySelector('.mpt-layb').setAttribute('aria-expanded', 'false'); });
