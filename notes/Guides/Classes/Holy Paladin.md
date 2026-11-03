@@ -12,7 +12,9 @@ Use Divine Toll and Avenging Wrath as often as possible ("saving them for a rain
 ## Hero trees and builds
 - **Herald of the Sun for raid** (both guides; Icy Veins: Lightsmith "not competitive in raiding"). Herald buffs Holy Shock and the spenders;
   Word of Glory becomes Eternal Flame#156322 (heals a bit more + small HoT); Dawnlight#431377 HoTs, Sun's Avatar#431425 beams to them.
-- Mythic+: Herald by default (better reactive healing). Lightsmith = more damage, fewer guarantees. Delves: Lightsmith (Wowhead).
+- **Mythic+: Lightsmith.** Raider.IO, Nov 3, top 500 world runs (+23/+24): 331 of 347 Holy Paladins ran Lightsmith (95%), 66 of 70 in the top 100,
+  and 55 of 64 players ran it only. Flex's +19s and +20s since mid-September are Lightsmith too. Wowhead's "Herald by default (better reactive
+  healing), Lightsmith = more damage, fewer guarantees" doesn't match the top keys. Delves: Lightsmith (Wowhead).
 - **Beacon of Virtue#200025 is the default** (more HPS, burstier) — if you can use it close to on cooldown. Beacon of Faith#156910 = more mana,
   easier, lower output; take it if you can't get value from Virtue. Lightsmith → Faith builds. M+ Faith → swap Pillars of Light for Rising Sunlight#1277651.
 - Talent notes (Wowhead):
@@ -108,6 +110,7 @@ Lightsmith: Avenging Wrath for damage often; Blessing of the Forge#433011 makes 
 - Stats: Wowhead Haste = Crit; Icy Veins Haste > Crit (Herald).
 - Icy Veins' raid list has "Judgment as much as possible" above spending; Wowhead calls over-Judging a common mistake. Wowhead is more specific → follow it.
 - Avenging Wrath: Wowhead "on cooldown when you need healing"; Icy Veins "line up with longer damage windows". Both: as many uses as possible.
+- Mythic+ hero tree: Wowhead says Herald by default; the top keys on Raider.IO run Lightsmith 95% of the time → follow the keys.
 
 ## What a log can check
 Holy Power wasted (generators at 5, not counting Divine Toll at 1-2); Infusion procs spent on Flash of Light vs Judgment vs expired; Divine Toll and
