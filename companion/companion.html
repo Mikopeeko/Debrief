@@ -432,7 +432,7 @@ function renderPulls() {
 
 // ---------- live: wait for the log to grow (no timers, so it keeps up while minimized) ----------
 async function waitLoop() {
-  L.waiting = true;
+  L.waiting = true; csWatch(L.size); /* (the character in the log you open with, too) */
   while (L.live) {
     let x;
     try { x = await j('/wait?name=' + encodeURIComponent(L.name) + '&size=' + L.size + (L.dummy ? '&quick=1' : '')); } catch (e) { stat('Lost the companion: ' + e.message, 'err'); await new Promise((r) => setTimeout(r, 3000)); continue; }
@@ -1227,7 +1227,7 @@ async function csWatch(size) {
   if (!CS.chars.length || !L.name || Date.now() - CS.scanAt < 15000) return; CS.scanAt = Date.now();
   try { const from = Math.max(0, size - 131072), r = await fetch('/read?name=' + encodeURIComponent(L.name) + '&from=' + from + '&to=' + size); if (!r.ok) return;
     const t = new TextDecoder().decode(await r.arrayBuffer()); let best = -1, hit = null;
-    for (const c of CS.chars) { const i = t.lastIndexOf('"' + c.name + '-'); if (i > best) { const rl = t.slice(i + c.name.length + 2, t.indexOf('"', i + 1)); if (csNorm(rl) === csNorm(c.realm)) { best = i; hit = c; } } }
+    for (const c of CS.chars) { const i = t.lastIndexOf('"' + c.name + '-'); if (i > best) { const rl = t.slice(i + c.name.length + 2, t.indexOf('"', i + 1)).replace(/-(US|EU|KR|TW|CN)$/i, ''); /* (retail writes "Name-Realm-US") */ if (csNorm(rl) === csNorm(c.realm)) { best = i; hit = c; } } }
     if (hit && csKey(hit) !== csKey(CS.cur)) csSet(hit, true);
   } catch (e) { /* (next time) */ }
 }
