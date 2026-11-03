@@ -2027,7 +2027,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-11-03', h: [{ t: 'Your season in Debrief Companion', d: 'The Companion window now shows the character you\'re playing: item level, Raider.IO score, Mythic bosses killed, your best parse on each boss and your best keys. Log in on an alt and it switches to them.' }, { t: 'Your recap lives on your PC now', d: 'Debrief Companion\'s pop-up shows your Mythic+ keys the way the website does, you can drag it anywhere and resize it, and a new Settings window holds every setting with a live preview. The WoW addon now only keeps your combat log on, so there\'s no more /reload.' }], n: [
+  { d: '2026-11-03', h: [{ t: 'A new Home page', d: 'Home is one tidy page now: your progress on every boss, the last raid nights, everyone\'s Mythic+ score and the team\'s keys, with a team sheet you can sort. Pick your character at the top, and the page follows them.' }, { t: 'Your season in Debrief Companion', d: 'The Companion window now shows the character you\'re playing: item level, Raider.IO score, Mythic bosses killed, your best parse on each boss and your best keys. Log in on an alt and it switches to them.' }, { t: 'Your recap lives on your PC now', d: 'Debrief Companion\'s pop-up shows your Mythic+ keys the way the website does, you can drag it anywhere and resize it, and a new Settings window holds every setting with a live preview. The WoW addon now only keeps your combat log on, so there\'s no more /reload.' }], n: [
     "Debrief Companion settings: four pages instead of five, with Raid view inside Your card. Pick Simple, Standard or Detailed, and the rest waits under Customize what shows. Each part has its own colour.",
     "Debrief Companion: your recap key starts as Ctrl + R, and it only works while you're in WoW, so your browser's Ctrl + R still refreshes. It's the way back to any recap, even mid-raid. Change it in Settings.",
     "Debrief Companion: the My class accent follows the character you're playing, the Chime is gone, and Report a problem only counts problems from the current addon.",
@@ -31425,6 +31425,13 @@ const PAGE_TIPS = {
   hub: [
     { sel: '.pg-hub .hc-card', t: 'Your teams', p: 'Each card is a team or a character. It shows the boss they\'re on now, a square per boss (orange once killed) and their kills on each difficulty. Click one to see every boss and night.' },
     { sel: '.pg-hub .pg-addc', t: 'Add more', p: 'Paste a team, guild or character page from Warcraft Logs. "Which link?" says exactly what to copy.' }],
+  home: [
+    { sel: '.hd-strip', t: 'At a glance', p: 'Your progress, the boss you\'re on, your pulls on it, the team\'s Mythic+ score and the best key this week.' },
+    { sel: '.hd-track', t: 'Each boss', p: 'Green is killed. Violet is how far you got. Click a boss to open its last night.' },
+    { sel: '.hd-nights', t: 'Raid nights', p: 'The last six nights, newest first. Click one to go through it pull by pull.' },
+    { sel: '.pc-diffs', t: 'Pick a difficulty', p: 'Every raid number on the page follows it.' },
+    { sel: '#hdMe', t: 'Your character', p: 'Pick a character to see their team. They\'re marked YOU on the page.' },
+    { sel: '.hd-tabs', t: 'The team sheet', p: 'Everyone on the team, with their Mythic+ score, item level and parses. Click a column to sort it.' }],
   team: [
     { sel: '#pgNow', t: 'What you\'re on now', p: 'The boss your team is working on, with your best pull and a dot for every pull. Open its last night from here.' },
     { sel: '#pgNights', t: 'Raid nights', p: 'Every raid night, newest first, with how far you got. Click one to go through it pull by pull.' },
@@ -31440,7 +31447,7 @@ const AUDIT_FIRST = [
 const TIPS_V = { live: 2, perf: 5, audit: 3, overview: 5, team: 2, rot: 2, player: 2, cmp: 1 }; // (bumped when a page's tips change, so they show once more)
 const TIPS_KEY = (k) => 'wla-tips-' + k + (TIPS_V[k] ? '-v' + TIPS_V[k] : '');
 // (which page is up: a pull's tab, the teams page, or a team's page)
-const tipsPage = () => (S.page === 'ingame' && $('#main .igm-page') ? 'ingame' : $('#main .pg-hub') && !S.hubHome ? 'hub' : $('#pgEdit') ? 'team' : S.rep && $('#view') ? (S.tab === 'rot' && $('#view .rot-pick') ? 'rotpick' : S.tab) : null);
+const tipsPage = () => (S.page === 'ingame' && $('#main .igm-page') ? 'ingame' : $('#main .pg-hub') && !S.hubHome ? 'hub' : $('#main .home.hd') ? 'home' : $('#pgEdit') ? 'team' : S.rep && $('#view') ? (S.tab === 'rot' && $('#view .rot-pick') ? 'rotpick' : S.tab) : null);
 const tipVis = (sel) => { for (const e of document.querySelectorAll(sel)) { const b = e.getBoundingClientRect(); if (b.width > 4 && b.height > 4) return e; } return null; };
 let TIPS_WAIT = null;
 function pageTips(k, force) {
@@ -32567,6 +32574,173 @@ function rankChips(g) {
     (r.s ? '<span class="pgc">' + esc(r.sn || 'Server') + ' <b>' + n(r.s) + '</b></span>' : '') + (r.sp ? '<span class="pgc">Speed <b>' + n(r.sp) + '</b></span>' : '') : '';
 }
 const youChips = (c) => (c && c.parse ? '<span class="pgc">' + esc(c.parse.spec) + ' <b>' + Math.floor(c.parse.best) + '</b> best · <b>' + Math.floor(c.parse.med) + '</b> median</span>' : '');
+// ---- Home: your team's page as one compact dashboard (Nov 3, the studio's home-redesign-brief.md; Flex: "I want to completely re-design this. I want to
+// also incorporate mythic+ into this page ... Everything is too big ... professional and polished", then on the studio's mocks: "A, with C's table").
+// The header (crest, ranks, difficulty, the character menu), five numbers, progression beside the last raid nights, the Mythic+ ladder, recent keys and
+// Since last raid, then the team sheet, every raid night and every key as tabs. Mythic+ from Raider.IO by name and realm, through the site (kept an hour);
+// "—" when Raider.IO doesn't know someone ----
+const hdRegion = (g) => { const m = /\(([A-Za-z]{2})\)\s*$/.exec(String((g && g.server) || '')); return m ? m[1].toLowerCase() : 'us'; };
+const hdSrv = (g) => String((g && g.server) || '').replace(/\s*\([A-Za-z]{2}\)\s*$/, '');
+const hdLc = (s) => String(s || '').toLowerCase();
+const hdDay = (at) => new Date(at - 6 * 3600e3);
+const hdDate = (at) => hdDay(at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+const hdNum = (n) => (n == null ? '—' : Number(n).toLocaleString('en-US'));
+const hdBossShort = (b) => String(b || '').replace(/^The /, '').replace(/ the .*$/, '');
+// (the track's columns are narrow: the long names lose a word there; the hover keeps the whole name)
+const hdTrackName = (b) => ({ 'Nymrissa Wavecaller': 'Nymrissa', 'Entombed Sentinels': 'Sentinels', 'The Lost Explorers': 'Explorers' })[b] || hdBossShort(b);
+const hdClsKey = (c) => String(c || '').toUpperCase().replace(/\s+/g, ''); /* (Raider.IO's "Death Knight" is the log's DEATHKNIGHT) */
+// (the team's raiders: its regulars this tier, with their class and realm; a realm the log doesn't give is the team's)
+function hdRaiders(g) { const tm = teamMembers(g), mem = new Map(tm.map((m) => [m.name, m])); let names = []; try { names = planTeamRegs(g).reg; } catch (e) { names = []; }
+  if (!names.length) names = tm.map((m) => m.name);
+  return names.slice(0, 30).map((n) => { const m = mem.get(n) || {}; return { name: String(n).split('-')[0], cls: m.cls || null, srv: m.srv || hdSrv(g) }; }); }
+// (Raider.IO for a team: asked once an hour; the page draws again when it comes)
+const HD_RIO = new Map();
+function hdRio(g, ready) { const o = HD_RIO.get(g.gid); if (o && (o.p || Date.now() - o.at < 3600e3)) return o.d;
+  const R = hdRaiders(g), x = { at: Date.now(), d: o ? o.d : null, p: null }; if (!R.length) { x.d = { chars: [] }; HD_RIO.set(g.gid, x); return x.d; }
+  x.p = WCL.rioTeam(hdRegion(g), R.map((m) => [m.name, m.srv])).then((d) => { x.d = d || { chars: [] }; x.p = null; x.at = Date.now(); ready(); })
+    .catch(() => { x.d = x.d || { chars: [], err: true }; x.p = null; x.at = Date.now() - 3300e3; ready(); }); /* (an error: asked again in 5 minutes) */
+  HD_RIO.set(g.gid, x); return x.d; }
+// (Since last raid's numbers, as Since last raid works them out: each raider's grade on the last two nights that shared a boss)
+function hdSince(list) {
+  const nights = new Map(); for (const v of list) { if (!v.gr) continue; const k = nightOf(v.at); if (!nights.has(k)) nights.set(k, []); nights.get(k).push(v); }
+  const ks = [...nights.keys()].sort(); if (ks.length < 1) return null;
+  const B = nights.get(ks[ks.length - 1]), inB = new Set(B.map((v) => v.boss)), kA = ks.slice(0, -1).reverse().find((k) => nights.get(k).some((v) => inB.has(v.boss))), A = kA ? nights.get(kA) : null;
+  const shared = A ? [...inB].filter((b) => A.some((v) => v.boss === b)) : [...inB];
+  const avgs = (l) => { const m = new Map(); for (const v of l.filter((x) => shared.includes(x.boss))) for (const [n, [sc, u, cls]] of Object.entries(v.gr)) { const w = Math.max(20, u || 0), y = m.get(n) || { s: 0, w: 0, k: 0, cls }; y.s += sc * w; y.w += w; y.k++; y.cls = cls || y.cls; m.set(n, y); }
+    return new Map([...m].filter(([, y]) => y.k >= 2).map(([n, y]) => [n, { v: y.s / y.w, cls: y.cls }])); };
+  const b = avgs(B), a = A ? avgs(A) : new Map(), rows = [...b].filter(([n]) => a.has(n)).map(([n, y]) => ({ n, v: y.v, was: a.get(n).v, d: y.v - a.get(n).v, cls: y.cls })).sort((x, y) => y.d - x.d);
+  return { a, b, rows, up: rows.filter((x) => x.d >= 2), dn: rows.filter((x) => x.d <= -2).reverse(), sub: A ? nightLabel(A[0].at) + ' → ' + nightLabel(B[0].at) : nightLabel(B[0].at) }; }
+// (a character's team: the one they were picked on, else the newest of the teams that logged their nights)
+function hdTeamOf(c) { const teams = groups().filter((x) => x.kind !== 'char'), rw = (c.raidsWithAll || []).concat(c.raidsWith ? [c.raidsWith] : []), me = meOf();
+  if (me && me.char === c.gid && me.team) { const t = teams.find((x) => x.gid === me.team); if (t) return t; }
+  const last = (t) => { let m = 0; for (const v of HIST.mem.values()) if (pullGroups(v).includes(t.gid) && (v.players || []).includes(c.name) && v.at > m) m = v.at; return m; };
+  const L = teams.filter((t) => rw.some((r) => r.id === t.id) || last(t)).sort((x, y) => last(y) - last(x)); return L[0] || null; }
+const hdFace = (c) => { const u = lookUrl(c, '-avatar.jpg'), k = c.cls && E.CLASSES[c.cls]; return '<span class="hd-av" style="--cc:' + (k ? k[1] : 'var(--gold)') + '">' + (u ? '<img src="' + u + '" alt="" loading="lazy" onerror="this.remove()">' : '') + '</span>'; };
+// (the character menu: everyone you've added, ✓ on the one shown, then Add)
+function hdMeMenu(cur) { const chars = groups().filter((x) => x.kind === 'char');
+  const btn = cur ? '<button class="hd-meb" id="hdMe" type="button" aria-haspopup="menu" aria-expanded="false" data-gid="' + esc(cur.gid) + '">' + hdFace(cur) + '<b style="color:' + ((E.CLASSES[cur.cls] || [])[1] || 'var(--text)') + '">' + esc(gName(cur)) + '</b>' + (cur.parse ? '<span class="num">' + Math.floor(cur.parse.best) + ' best</span>' : '') + '<i aria-hidden="true">▾</i></button>'
+    : '<button class="hd-meb" id="hdMe" type="button" aria-haspopup="menu" aria-expanded="false"><b>' + (chars.length ? 'Pick your character' : 'Add your character') + '</b><i aria-hidden="true">▾</i></button>';
+  return '<div class="hd-me">' + btn + '<div class="hd-mm" id="hdMeMenu" role="menu" hidden>' + chars.map((c) => { const k = E.CLASSES[c.cls] || [], t = hdTeamOf(c), on = cur && c.gid === cur.gid;
+      return '<button class="hd-mi' + (on ? ' on' : '') + '" type="button" role="menuitem" data-hdme="' + esc(c.gid) + '">' + hdFace(c) + '<span><b style="color:' + (k[1] || 'var(--text)') + '">' + esc(gName(c)) + '</b><em>' + esc([c.parse && c.parse.spec ? c.parse.spec + ' ' + (k[0] || '') : k[0] || '', String(c.server || '').replace(/\s*\([A-Za-z]{2}\)\s*$/, ''), t ? gName(t) : ''].filter(Boolean).join(' · ')) + '</em></span>' + (on ? '<i class="hd-ck" aria-hidden="true">✓</i>' : '') + '</button>'; }).join('') +
+    (chars.length ? '<div class="hd-ms"></div>' : '') + '<button class="hd-mi hd-add" type="button" role="menuitem" data-hdadd="1">+ Add a character</button><p class="hd-mh">The page shows the team and the numbers of the character you pick.</p></div></div>'; }
+// (the menu's "81 best": the character's best parse average on their most played spec, read once from their rankings the way their own page
+// does (Mythic, else Heroic) and kept with them; no rankings: the name alone)
+const HD_PQ = new Set();
+async function hdParse(c) { if (!c || !c.cls || c.parse || HD_PQ.has(c.gid) || store.get(RANK_OFF) === '1') return; HD_PQ.add(c.gid);
+  try { const creds = await wclCreds(), specs = Object.entries(E.SPECS).filter(([, [, k]]) => k === c.cls).map(([id, [n]]) => ({ n, heal: HEAL_SPECS.has(+id) }));
+    const get = (d, m, s) => { const k = c.id + '|' + d + '|' + m + '|' + (s || ''); if (!RANK_CACHE.has(k)) RANK_CACHE.set(k, WCL.charRankings(creds, c.id, d, m, s).catch((e) => { RANK_CACHE.delete(k); throw e; })); return RANK_CACHE.get(k); };
+    let main = c.mainSpec; if (!main) { const z0 = await get(5, 'dps', null), cnt = new Map(); for (const x of (z0 && z0.rankings) || []) if (x.spec && x.totalKills) cnt.set(x.spec, (cnt.get(x.spec) || 0) + x.totalKills); const top = [...cnt].sort((a, b) => b[1] - a[1])[0]; main = top && top[0]; }
+    if (!main) return; const sp = specs.find((x) => x.n === main), m = sp && sp.heal ? 'hps' : 'dps'; let d = 5, z = await get(5, m, main); if (!z || z.bestPerformanceAverage == null) { d = 4; z = await get(4, m, main); }
+    const x = groups().find((q) => q.gid === c.gid); if (!x) return; x.mainSpec = main; if (z && z.bestPerformanceAverage != null) x.parse = { spec: main, best: z.bestPerformanceAverage, med: z.medianPerformanceAverage || 0, d }; groupPut(x);
+    const b = document.getElementById('hdMe'); if (x.parse && b && b.dataset.gid === c.gid && !b.querySelector('.num')) b.querySelector('i').insertAdjacentHTML('beforebegin', '<span class="num">' + Math.floor(x.parse.best) + ' best</span>');
+  } catch (e) { /* (no rankings: the name alone) */ } }
+let HD_DOC = false;
+// (the page)
+function hdDash(X) {
+  const { g, list, order, diffs, cur, killedOn, bestOf, nightsL, nightOpen, diffName, sw, rkOk, team, pgMsg, meLd, liveStrip, sugg, meCard, back, openB, lastK, you, info } = X;
+  const D = g && g.kind !== 'char' ? hdRio(g, () => { if (S.page === 'prog' && S.progView === g.gid && document.querySelector('#main .hd')) renderProgress(); }) : null;
+  const R = g && g.kind !== 'char' ? hdRaiders(g) : [], rioBy = new Map(((D && D.chars) || []).filter((c) => !c.none).map((c) => [hdLc(c.n), c])), wait = !D;
+  const rioOf = (n) => rioBy.get(hdLc(n)) || null, colOf = (n, cls) => ((E.CLASSES[cls] || E.CLASSES[hdClsKey((rioOf(n) || {}).cls)] || [])[1] || 'var(--text)');
+  const meName = you ? you.name : null, YOU = (n) => (meName && hdLc(n) === hdLc(meName) ? '<span class="hd-you">YOU</span>' : '');
+  const lab = (t, em) => '<div class="hd-lab">' + t + (em ? '<em>' + em + '</em>' : '') + '</div>', shim = (w) => '<span class="hd-shim" style="width:' + w + '" aria-hidden="true"></span>';
+  // (the header)
+  const guild = you && you.guild ? '&lt;' + esc(you.guild) + '&gt; · ' : '';
+  const head = '<header class="hd-head"><div class="hd-crest">' + banner(g) + '</div><div class="hd-tt"><div class="hd-nm"><h1>' + esc(gName(g)) + '</h1><span>' + guild + esc(hdSrv(g) || gKind(g)) + '</span></div>' +
+    '<div class="hd-chips"><span class="pg-chs" id="pgRkChips">' + rankChips(g) + '</span>' + (rkOk ? '<button class="pgc pgc-t" id="pgRkT" type="button" aria-expanded="' + !!S.pgRkOpen + '" aria-controls="pgRk">All rankings ' + (S.pgRkOpen ? '▴' : '▾') + '</button>' : '') +
+    '<button class="linkbtn hd-edit" id="pgEdit" type="button">Edit</button></div></div><div class="hd-ctl">' + sw + hdMeMenu(you || (meOf() && groups().find((x) => x.kind === 'char' && x.gid === meOf().char)) || null) + '</div></header>';
+  const rkBox = rkOk ? '<section class="pg-rkbox" id="pgRk"' + (S.pgRkOpen ? '' : ' hidden') + '><div class="pg-rk2"><section class="panel pg-rank" id="pgRank"></section></div></section>' : '';
+  // (the boss now: the newest pulled without a kill on this difficulty, else the last kill)
+  const nowBoss = openB ? openB.boss : lastK ? lastK.boss : null, bl = nowBoss ? list.filter((v) => v.boss === nowBoss).sort((a, b) => a.at - b.at) : [], bk = bl.filter((v) => v.kill), pr = bk.length ? bl.filter((v) => v.at <= bk[0].at) : bl, nb = bestOf(bl);
+  const nts = new Set(pr.map((v) => nightOf(v.at))).size, time = pr.reduce((s, v) => s + (v.dur || 0), 0), pct = bk.length ? 100 : nb && nb.left != null ? Math.floor(100 - nb.left) : null;
+  const left = nb && nb.left != null && !bk.length ? nb.label + (/%$/.test(nb.label) ? ' left' : '') : '';
+  // (the strip: five numbers)
+  const others = diffs.filter(([d]) => d !== cur).map(([d, nm]) => nm + ' ' + killedOn(d) + '/' + order.length).join(' · ');
+  const scores = R.map((m) => rioOf(m.name)).filter((c) => c && c.score != null), avg = scores.length ? Math.round(scores.reduce((s, c) => s + c.score, 0) / scores.length) : null;
+  const avgCol = avg != null ? scores.slice().sort((x, y) => Math.abs(x.score - avg) - Math.abs(y.score - avg))[0].col : '';
+  const runsOf = (k) => R.flatMap((m) => ((rioOf(m.name) || {})[k] || []).map((x) => ({ ...x, who: m.name, cls: m.cls })));
+  const wk = runsOf('week').sort((x, y) => y.l - x.l || (y.up > 0) - (x.up > 0)), sb = wk.length ? null : runsOf('best').sort((x, y) => y.l - x.l || (y.up > 0) - (x.up > 0))[0], top = wk[0] || sb;
+  const topN = top && wk.length ? wk.filter((x) => x.who === top.who && x.up > 0).length : 0;
+  const cell = (l, v, d) => '<div class="hd-k">' + lab(l) + '<div class="hd-kv">' + v + '</div><div class="hd-kd">' + d + '</div></div>';
+  const strip = '<section class="hd-strip">' +
+    cell(esc(diffName) + ' progress', '<span class="num">' + killedOn(cur) + '</span><small>/' + order.length + '</small>', esc(others || plural(nightsL.length, 'raid night'))) +
+    cell(openB ? 'Now on' : 'Last kill', nowBoss ? (bk.length ? '<span class="hd-g">Killed</span>' : '<span class="hd-p num">' + (pct != null ? pct + '%' : '—') + '</span>') : '—', nowBoss ? esc(nowBoss) + (left ? ' · best ' + esc(left) : bk.length ? ' · ' + esc(hdDate(bk[bk.length - 1].at)) : '') : 'Nothing pulled yet') +
+    cell('On this boss', nowBoss ? '<span class="num">' + pr.length + '</span><small> pulls' + (bk.length ? ' to the kill' : '') + '</small>' : '—', nowBoss ? plural(nts, 'night') + ' · ' + esc(durH(time)) : '') +
+    cell('Team Mythic+', wait ? shim('3.5em') : avg != null ? '<span class="num" style="color:' + esc(avgCol || 'var(--text)') + '">' + hdNum(avg) + '</span>' : '—', wait ? shim('9em') : avg != null ? 'average of ' + plural(scores.length, 'raider') : 'Raider.IO doesn\'t know this team yet') +
+    cell(wk.length ? 'Best key this week' : 'Best key this season', wait ? shim('2.5em') : top ? '<span class="num" style="color:' + (top.up > 0 ? '#ff8000' : 'var(--muted)') + '">+' + top.l + '</span>' : '—',
+      wait ? shim('8em') : top ? '<span style="color:' + colOf(top.who, top.cls) + '">' + esc(top.who) + '</span>' + (wk.length ? ' · ' + (topN ? plural(topN, 'key') + ' timed this week' : 'over time') : ' · this season') : 'No keys this week') + '</section>';
+  // (progression: the boss track, the boss now with its numbers, and its best pull of each night)
+  const lastN = nightsL.find((n) => nowBoss && n.by.some((x) => x.boss === nowBoss)), lastL = lastN && lastN.by.find((x) => x.boss === nowBoss).l, lastOp = lastL && nightOpen(lastL);
+  const track = '<div class="hd-track">' + order.map((boss, i) => { const b2 = list.filter((v) => v.boss === boss).sort((a, b) => a.at - b.at), k = b2.find((v) => v.kill), nb2 = bestOf(b2), d2 = k ? 100 : nb2 && nb2.left != null ? Math.floor(100 - nb2.left) : 0;
+      const ln = b2.length ? nightsL.find((n) => n.by.some((x) => x.boss === boss)) : null, op = ln ? nightOpen(ln.by.find((x) => x.boss === boss).l) : null, st = k ? 'k' : b2.length ? 'p' : 'n';
+      return '<button class="hd-bt hd-bt-' + st + '" type="button"' + (op ? ' data-code="' + esc(op.code) + '" data-fight="' + esc(String(op.fight)) + '"' : ' disabled') + ' data-tt="' + esc('<b>' + esc(boss) + '</b><br>' + (k ? 'Killed ' + esc(nightLabel(k.at)) + ' on pull ' + k.pull : b2.length ? 'Best ' + esc(nb2 ? nb2.label : '—') + ' · ' + plural(b2.length, 'pull') : 'Not pulled on ' + esc(diffName) + ' yet') + (op ? '<br><span class="sub">Click to open its last night</span>' : '')) + '">' +
+        '<i class="hd-bar"><u style="width:' + d2 + '%"></u></i><b>' + (i + 1) + ' · ' + esc(hdTrackName(boss)) + '</b><span>' + (k ? esc(hdDate(k.at)) : b2.length ? d2 + '% done' : 'not pulled') + '</span></button>'; }).join('') + '</div>';
+  const per = new Map(); for (const v of pr) { const k = nightOf(v.at), o = per.get(k); if (!o || (v.kill && !o.kill) || (!o.kill && !v.kill && v.left != null && (o.left == null || v.left < o.left))) per.set(k, v); }
+  const pts = [...per.values()].sort((a, b) => a.at - b.at).slice(-12), W = 620, H = 150, L = 30, Rr = 14, T = 18, B = 22;
+  const px = (i) => L + (pts.length < 2 ? (W - L - Rr) / 2 : (i * (W - L - Rr)) / (pts.length - 1)), py = (p) => T + (H - T - B) * (1 - p / 100), dn = (v) => (v.kill ? 100 : v.left != null ? Math.floor(100 - v.left) : 0);
+  const chart = pts.length ? '<svg class="hd-ch" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="Best pull of each night">' + [0, 25, 50, 75, 100].map((t) => '<line x1="' + L + '" x2="' + (W - Rr) + '" y1="' + py(t).toFixed(1) + '" y2="' + py(t).toFixed(1) + '" class="hd-chg"/><text x="' + (L - 6) + '" y="' + (py(t) + 3.5).toFixed(1) + '" text-anchor="end" class="hd-chy">' + t + '%</text>').join('') +
+      (pts.length > 1 ? '<path class="hd-cha" d="M' + px(0).toFixed(1) + ' ' + py(0).toFixed(1) + pts.map((v, i) => 'L' + px(i).toFixed(1) + ' ' + py(dn(v)).toFixed(1)).join('') + 'L' + px(pts.length - 1).toFixed(1) + ' ' + py(0).toFixed(1) + 'Z"/><polyline class="hd-chl" points="' + pts.map((v, i) => px(i).toFixed(1) + ',' + py(dn(v)).toFixed(1)).join(' ') + '"/>' : '') +
+      pts.map((v, i) => { const l2 = pr.filter((x) => nightOf(x.at) === nightOf(v.at)), op = nightOpen(l2), last = i === pts.length - 1;
+        return '<g class="hd-cp' + (op ? '' : ' off') + '"' + (op ? ' data-code="' + esc(op.code) + '" data-fight="' + esc(String(op.fight)) + '"' : '') + ' data-tt="' + esc('<b>' + esc(nightLabel(v.at)) + '</b> · ' + (v.kill ? 'Kill' : esc(v.label) + (/%$/.test(v.label) ? ' left' : '')) + ' · ' + plural(l2.length, 'pull')) + '"><circle cx="' + px(i).toFixed(1) + '" cy="' + py(dn(v)).toFixed(1) + '" r="' + (last ? 5 : 3.6) + '"' + (v.kill ? ' class="k"' : '') + '/>' +
+          '<text x="' + px(i).toFixed(1) + '" y="' + (py(dn(v)) - 9).toFixed(1) + '" text-anchor="middle" class="hd-chv">' + (v.kill ? 'Kill' : dn(v) + '%') + '</text><text x="' + px(i).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle" class="hd-chx">' + esc(hdDate(v.at)) + '</text></g>'; }).join('') + '</svg>' : '<p class="sub">No pulls on this boss yet.</p>';
+  const prog = '<section class="hd-pn hd-prog"><div class="hd-ph"><h3>Progression</h3><span class="m">' + esc(diffName) + ' · ' + killedOn(cur) + ' of ' + order.length + ' killed</span>' + (lastOp ? '<button class="hd-lk" id="pnwGo" type="button" data-code="' + esc(lastOp.code) + '" data-fight="' + esc(String(lastOp.fight)) + '">Open the last night ›</button>' : '') + '</div>' + track +
+    (nowBoss ? '<div class="hd-now"><div class="hd-nb">' + lab(esc(nowBoss)) + '<div class="hd-big ' + (bk.length ? 'hd-g' : 'hd-p') + '">' + (bk.length ? 'Killed' : pct != null ? pct + '%' : '—') + '</div><div class="hd-kd">' + (bk.length ? 'on ' + esc(nightLabel(bk[0].at)) + ', pull ' + bk[0].pull + ' of the night' : 'of the fight done on the best pull') + '</div>' +
+      '<div class="hd-facts"><span><b class="num">' + pr.length + '</b> pulls</span><span><b class="num">' + nts + '</b> ' + (nts === 1 ? 'night' : 'nights') + '</span><span><b class="num">' + esc(durH(time)) + '</b> on it</span>' + (left ? '<span><b>' + esc(left.replace(/ left$/, '')) + '</b> left</span>' : '') + '</div></div>' +
+      '<div class="hd-chw">' + lab('Best pull of each night') + chart + '</div></div>' : '') + '</section>';
+  // (raid nights: the last 6, the whole list on its tab)
+  const nRow = (n) => { const kill = n.main.l.some((v) => v.kill), d = hdDay(n.at), sub = plural(n.main.l.length, 'pull') + (kill ? ' · killed on pull ' + n.main.l.find((v) => v.kill).pull : n.nb ? ' · best ' + n.nb.label + (/%$/.test(n.nb.label) ? ' left' : '') : '') + (n.by.length > 1 ? ' · and ' + plural(n.by.length - 1, 'more boss').replace('bosss', 'bosses') : '');
+    return '<button class="hd-row hd-nr" type="button"' + (n.op ? ' data-code="' + esc(n.op.code) + '" data-fight="' + esc(String(n.op.fight)) + '"' : ' disabled title="This night is only in your combat log"') + '><span class="hd-dw">' + esc(d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()) + '</span><span class="hd-dt num">' + esc(hdDate(n.at)) + '</span>' +
+      '<span class="hd-nn"><b>' + esc(n.main.boss) + '</b><em>' + esc(sub) + '</em></span>' + (kill ? '<span class="hd-tag k">Kill</span>' : '<span class="hd-p num">' + (n.nb && n.nb.left != null ? Math.floor(100 - n.nb.left) + '%' : '—') + '</span>') + '</button>'; };
+  const nights = '<section class="hd-pn hd-nights"><div class="hd-ph"><h3>Raid nights</h3><span class="m">' + plural(nightsL.length, 'night') + ' on ' + esc(diffName) + '</span><button class="hd-lk2" type="button" data-hdtab="nights">All ›</button></div>' + nightsL.slice(0, 6).map(nRow).join('') + '</section>';
+  // (Mythic+: the ladder, recent keys)
+  const ranked = R.map((m) => ({ m, c: rioOf(m.name) })).filter((x) => x.c && x.c.score != null).sort((x, y) => y.c.score - x.c.score);
+  const specOf = (c, m) => (c && c.spec ? c.spec + ' ' + (c.cls || '') : (E.CLASSES[m.cls] || [])[0] || '');
+  const ladder = '<section class="hd-pn"><div class="hd-ph"><h3>Mythic+ ladder</h3><span class="m">Raider.IO, this season</span></div>' + (wait ? [0, 1, 2, 3, 4].map(() => '<div class="hd-row">' + shim('100%') + '</div>').join('') : ranked.length ? ranked.slice(0, 8).map((x, i) => '<div class="hd-row' + (YOU(x.m.name) ? ' hd-mine" style="--cc:' + colOf(x.m.name, x.m.cls) : '') + '"><span class="hd-rk num">' + (i + 1) + '</span><span class="hd-pl" style="color:' + colOf(x.m.name, x.m.cls) + '">' + esc(x.m.name) + YOU(x.m.name) + '</span><span class="hd-sp">' + esc(specOf(x.c, x.m)) + '</span><span class="hd-sc num" style="color:' + esc(x.c.col || 'var(--text)') + '">' + hdNum(x.c.score) + '</span></div>').join('') +
+      (ranked.length > 8 ? '<button class="hd-more" type="button" data-hdtab="sheet" data-hdsort="score">Show all ' + R.length + '</button>' : '') : '<p class="hd-none">Raider.IO doesn\'t have scores for this team yet.</p>') + '</section>';
+  const keysAll = (() => { const m = new Map(); for (const x of runsOf('recent')) { const k = hdLc(x.d) + '|' + Math.round(x.at / 60000); const o = m.get(k); if (o) o.with.push(x); else m.set(k, { ...x, with: [x] }); } return [...m.values()].sort((a, b) => b.at - a.at); })();
+  const kRow = (x) => '<div class="hd-row hd-kr"><span class="hd-dt num">' + esc(hdDate(x.at)) + '</span><span class="hd-kl num" style="color:' + (x.up > 0 ? '#ff8000' : 'var(--faint)') + '">+' + x.l + '</span><span class="hd-kn">' + esc(x.d) + '</span><span class="hd-kw" style="color:' + colOf(x.who, x.cls) + '">' + esc(x.who) + (x.with.length > 1 ? '<em> +' + (x.with.length - 1) + '</em>' : '') + '</span>' +
+    (x.up > 0 ? '<span class="hd-g">timed +' + x.up + '</span>' : '<span class="hd-r">over time</span>') + '</div>'; /* (a key opens on the Mythic+ tab once that's live; until then not a link) */
+  const keys = '<section class="hd-pn"><div class="hd-ph"><h3>Recent keys</h3><span class="m">the team, newest first</span>' + (keysAll.length > 8 ? '<button class="hd-lk2" type="button" data-hdtab="keys">All ›</button>' : '') + '</div>' + (wait ? [0, 1, 2, 3, 4].map(() => '<div class="hd-row">' + shim('100%') + '</div>').join('') : keysAll.length ? keysAll.slice(0, 8).map(kRow).join('') : '<p class="hd-none">No keys from the team on Raider.IO yet.</p>') + '</section>';
+  // (Since last raid, smaller: got better and slipped by 2 points or more, 4 a side)
+  const SL = hdSince(list), sl = (x) => '<div class="hd-row hd-sr"><span class="hd-pl" style="color:' + ((E.CLASSES[x.cls] || [])[1] || 'var(--text)') + '">' + esc(x.n) + '</span><span class="hd-gr">' + gradeChip(letterOf(x.was)) + '<span class="sub">→</span>' + gradeChip(letterOf(x.v)) + '</span>' + plTr(x.d) + '</div>';
+  const lv = SL ? SL.rows.length - SL.up.length - SL.dn.length : 0, moreU = SL ? Math.max(0, SL.up.length - 4) : 0, moreD = SL ? Math.max(0, SL.dn.length - 4) : 0;
+  const since = '<section class="hd-pn"><div class="hd-ph"><h3>Since last raid</h3><span class="m">' + (SL ? esc(SL.sub) + ' · report card grade' : 'report card grade') + '</span></div>' + (SL && SL.rows.length ? '<div class="hd-sc2"><div><div class="hd-lab hd-g">▲ Got better</div>' + (SL.up.length ? SL.up.slice(0, 4).map(sl).join('') : '<p class="hd-none">Nobody rose 2 points or more.</p>') + '</div>' +
+      '<div><div class="hd-lab hd-r">▼ Slipped</div>' + (SL.dn.length ? SL.dn.slice(0, 4).map(sl).join('') : '<p class="hd-none">Nobody dropped 2 points or more.</p>') + '</div></div>' +
+      '<p class="hd-foot">' + [moreU ? '+' + moreU + ' more got better' : '', moreD ? '+' + moreD + ' more slipped' : '', lv ? lv + ' about the same' : ''].filter(Boolean).join(' · ') + '</p>' : '<p class="hd-none">Two raid nights on the same boss with grades are needed to compare.</p>') + '</section>';
+  // (the tabs: the team sheet (sortable), every raid night, every key)
+  const tab = S.hdTab || 'sheet', so = S.hdSort || { k: 'score', d: -1 };
+  const rowsS = R.map((m) => { const c = rioOf(m.name), gB = SL && SL.b.get(m.name), gA = SL && SL.a.get(m.name), lk = c && c.recent && c.recent.slice().sort((a, b) => b.at - a.at)[0];
+    return { m, c, ilvl: c ? c.ilvl : null, score: c ? c.score : null, grade: gB ? gB.v : null, d: gB && gA ? gB.v - gA.v : null, lk }; });
+  const val = (r) => (so.k === 'name' ? hdLc(r.m.name) : so.k === 'spec' ? hdLc(specOf(r.c, r.m)) : so.k === 'ilvl' ? r.ilvl : so.k === 'grade' ? r.grade : so.k === 'key' ? (r.lk ? r.lk.l : null) : r.score);
+  rowsS.sort((a, b) => { const x = val(a), y = val(b); if (x == null && y == null) return hdLc(a.m.name) < hdLc(b.m.name) ? -1 : 1; if (x == null) return 1; if (y == null) return -1; return (x < y ? -1 : x > y ? 1 : 0) * so.d; });
+  const th = (k, t, cls) => '<button class="hd-th' + (cls ? ' ' + cls : '') + (so.k === k ? ' on' : '') + '" type="button" data-hdsort="' + k + '">' + t + (so.k === k ? (so.d > 0 ? ' ▲' : ' ▼') : '') + '</button>';
+  const sheet = '<div class="hd-sheet"><div class="hd-shh">' + th('rank', '#', 'c-n') + th('name', 'Raider', 'c-p') + th('spec', 'Spec', 'c-s') + th('ilvl', 'Item level', 'c-i') + th('grade', 'Raid grade', 'c-g') + th('score', 'Mythic+', 'c-m') + th('key', 'Latest key', 'c-k') + '</div>' +
+    rowsS.map((r, i) => '<div class="hd-shr' + (YOU(r.m.name) ? ' hd-mine" style="--cc:' + colOf(r.m.name, r.m.cls) : '') + '"><span class="c-n num">' + (i + 1) + '</span><span class="c-p hd-pl" style="color:' + colOf(r.m.name, r.m.cls) + '">' + esc(r.m.name) + YOU(r.m.name) + '</span>' +
+      '<span class="c-s">' + esc(specOf(r.c, r.m)) + (r.c && r.c.role ? '<em> · ' + esc(/^heal/i.test(r.c.role) ? 'Healer' : /^tank/i.test(r.c.role) ? 'Tank' : 'DPS') + '</em>' : '') + '</span><span class="c-i num">' + (wait ? shim('2em') : r.ilvl != null ? Math.round(r.ilvl) : '—') + '</span>' +
+      '<span class="c-g">' + (r.grade != null ? gradeChip(letterOf(r.grade)) + (r.d != null ? (Math.abs(r.d) < 2 ? '<em>about the same</em>' : plTr(r.d)) : '') : '<em>—</em>') + '</span>' +
+      '<span class="c-m num" style="color:' + esc((r.c && r.c.col) || 'var(--muted)') + '">' + (wait ? shim('3em') : hdNum(r.score)) + '</span>' +
+      '<span class="c-k">' + (wait ? shim('8em') : r.lk ? '<b class="num" style="color:' + (r.lk.up > 0 ? '#ff8000' : 'var(--faint)') + '">+' + r.lk.l + '</b> ' + esc(r.lk.d) + '<em> · ' + esc(hdDate(r.lk.at)) + '</em>' : '—') + '</span></div>').join('') + '</div>';
+  const tabs = '<section class="hd-pn hd-tabs"><div class="hd-tb" role="tablist">' + [['sheet', 'Team sheet', R.length], ['nights', 'Raid nights', nightsL.length], ['keys', 'Keys', keysAll.length]].map(([k, t, n]) => '<button type="button" role="tab" data-hdtab="' + k + '" aria-selected="' + (tab === k) + '"' + (tab === k ? ' class="on"' : '') + '>' + t + ' <span class="num">' + n + '</span></button>').join('') + '</div>' +
+    (tab === 'sheet' ? sheet : tab === 'nights' ? '<div class="hd-all">' + nightsL.map(nRow).join('') + '</div>' : '<div class="hd-all">' + (keysAll.length ? keysAll.map(kRow).join('') : '<p class="hd-none">No keys from the team on Raider.IO yet.</p>') + '</div>') + '</section>';
+  return '<div class="home prog hd" id="hdPage">' + (back ? '<div class="pg-links">' + back + '</div>' : '') + head + rkBox + team + pgMsg + meLd + liveStrip + sugg + meCard + strip +
+    '<div class="hd-g2">' + prog + nights + '</div><div class="hd-g3">' + ladder + keys + since + '</div>' + tabs + (info ? '<div class="hd-info">' + info + '</div>' : '') + '</div>'; }
+// (a character with no team: the header with the character menu, then a plain line)
+function hdNoTeam(c, rest) { const k = E.CLASSES[c.cls] || [];
+  return '<div class="home prog hd" id="hdPage"><header class="hd-head"><div class="hd-crest">' + banner(c) + '</div><div class="hd-tt"><div class="hd-nm"><h1 style="color:' + (k[1] || 'var(--text)') + '">' + esc(gName(c)) + '</h1><span>' + esc([k[0], String(c.server || '')].filter(Boolean).join(' · ')) + '</span></div></div><div class="hd-ctl">' + hdMeMenu(c) + '</div></header>' +
+    '<section class="hd-pn hd-noteam"><b>Not on a team yet</b><span class="sub">Add your team, and this page shows its progress, raid nights and Mythic+.</span><button class="btn primary" type="button" data-hdaddteam="1">Add a team</button></section>' + (rest || '') + '</div>'; }
+// (the page's own clicks: the character menu, the tabs and the sort, the boss track and the night chart)
+function hdBind(ROOT) {
+  const b = ROOT.querySelector('#hdMe'), m = ROOT.querySelector('#hdMeMenu');
+  if (b && m) { const close = () => { m.hidden = true; b.setAttribute('aria-expanded', 'false'); };
+    b.onclick = (e) => { e.stopPropagation(); m.hidden = !m.hidden; b.setAttribute('aria-expanded', String(!m.hidden)); if (!m.hidden) { const f = m.querySelector('.hd-mi:not(.on)'); if (f) f.focus(); } };
+    m.onclick = (e) => { const t = e.target.closest('[data-hdme], [data-hdadd]'); if (!t) return; close(); if (t.dataset.hdadd) { gsStart(); return; } meSwitch(t.dataset.hdme); window.scrollTo(0, 0); };
+    if (!HD_DOC) { HD_DOC = true; document.addEventListener('click', (e) => { const mm = document.getElementById('hdMeMenu'), bb = document.getElementById('hdMe'); if (mm && !mm.hidden && !e.target.closest('.hd-me')) { mm.hidden = true; if (bb) bb.setAttribute('aria-expanded', 'false'); } }, { capture: true }); }
+    hdParse(groups().find((x) => x.gid === b.dataset.gid));
+    m.onkeydown = (e) => { if (e.key === 'Escape') { close(); b.focus(); } }; }
+  ROOT.querySelectorAll('[data-hdaddteam]').forEach((x) => (x.onclick = () => gsStart()));
+  ROOT.querySelectorAll('[data-hdtab]').forEach((x) => (x.onclick = () => { S.hdTab = x.dataset.hdtab; if (x.dataset.hdsort) S.hdSort = { k: x.dataset.hdsort, d: -1 }; renderProgress(); const t = document.querySelector('#hdPage .hd-tabs'); if (t && x.closest('.hd-g2, .hd-g3')) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
+  ROOT.querySelectorAll('.hd-sheet [data-hdsort]').forEach((x) => (x.onclick = () => { const k = x.dataset.hdsort, o = S.hdSort || { k: 'score', d: -1 }; S.hdSort = { k, d: o.k === k ? -o.d : k === 'name' || k === 'spec' ? 1 : -1 }; renderProgress(); }));
+  ROOT.querySelectorAll('.hd-bt[data-code], .hd-cp[data-code], .hd-nr[data-code], #pnwGo').forEach((x) => (x.onclick = async () => { try { await openWcl({ code: x.dataset.code, fight: +x.dataset.fight || null }, await wclCreds()); } catch (e) { toast('<span>' + esc(e.message) + '</span>', 6000); } }));
+}
 function renderProgress(msg, msgErr) {
   // (inTab: drawn inside the My Page tab of the raid that's open, which stays a raid page (your call, Oct 19); otherwise the page of its own)
   const inTab = !!(S.rep && S.tab === 'me' && $('#view')), ROOT = inTab ? $('#view') : $('#main');
@@ -32712,7 +32886,11 @@ function renderProgress(msg, msgErr) {
     (open.length ? '<div class="pc-open"><span class="sub">Not pulled on ' + esc(diffName) + ' yet</span>' + open.map((boss) => '<span class="pc-chip"><span class="pc-av">' + art(boss, 'pc-av-art') + '</span>' + esc(boss) + '</span>').join('') + '</div>' : '') + '</section>';
   // (a character with their Armory picture: the page's top is a banner in their class colour, with them standing on its right)
   const cfig = lookFig(g, 'pg-cmw'), ccol = cfig && g.cls && E.CLASSES[g.cls] ? E.CLASSES[g.cls][1] : 'var(--gold)';
-  ROOT.innerHTML = (inTab ? '' : pgTabBar(g)) + '<div class="home prog pg-v2' + (inTab ? ' pg-intab' : '') + '"><div class="pg-links">' + (mineOf ? '<button class="lnk pg-back" id="pgTeamBack" type="button">‹ Back to ' + esc(gName(mineOf)) + '</button>' : '') + back + '</div>' +
+  // (Home as a dashboard (Nov 3): your team's page; a character with no team gets the header and a plain line. Raid pages' My Page tab and a
+  // character's own page stay as they were)
+  const hdOn = !inTab && !!g && (all.length > 0 || (g.kind === 'char' && !!g.last && !(ldC && ldC.gid === g.gid))) && (g.kind !== 'char' || (!mineOf && !S.progMine && !mePair()));
+  const HDX = hdOn ? { g, list, order, diffs, cur, killedOn, bestOf, nightsL, nightOpen, diffName, sw, rkOk, team, pgMsg, meLd, liveStrip, sugg, meCard, back, openB, lastK, you, info } : null;
+  ROOT.innerHTML = hdOn ? pgTabBar(g) + (g.kind !== 'char' ? hdDash(HDX) : hdNoTeam(g, all.length ? chpHtml(g, list, order, diffName) : '')) : (inTab ? '' : pgTabBar(g)) + '<div class="home prog pg-v2' + (inTab ? ' pg-intab' : '') + '"><div class="pg-links">' + (mineOf ? '<button class="lnk pg-back" id="pgTeamBack" type="button">‹ Back to ' + esc(gName(mineOf)) + '</button>' : '') + back + '</div>' +
     '<div class="pg-top' + (cfig ? ' pg-chero" style="--cc:' + ccol : '') + '">' + cfig + '<div class="pg-ttl">' + banner(g) + '<div class="pg-tt"><h1' + (g && g.kind === 'char' && g.cls && E.CLASSES[g.cls] ? ' style="color:' + E.CLASSES[g.cls][1] + '"' : '') + '>' + esc(g ? gName(g) : 'Everything saved') + (g ? '<button class="pg-editb" id="pgEdit" type="button" aria-expanded="' + !!editing + '" title="Rename or remove">Edit</button>' : '') + '</h1>' + charAff(g) + chips + (you ? '<div class="pg-you"' + (you.cls && you.parse && youC ? ' style="--sart:' + specArt({ cls: you.cls, specName: you.parse.spec + ' ' + youC[0] }) + '"' : '') + '>' + banner(you) + '<span>You: <b' + (youC ? ' style="color:' + youC[1] + '"' : '') + '>' + esc(gName(you)) + '</b>' + (youC ? ' · ' + esc(youC[0]) : '') + '</span><span class="pg-ych" id="pgYouChips">' + youChips(you) + '</span><button class="linkbtn" id="pgMine" type="button">See your summary ›</button></div>' : '') + '<div class="sub pg-sum">The Venomous Abyss' + (list.length ? ' · ' + plural(list.length, 'pull') + ' over ' + plural(nN, 'night') + ' on ' + esc(diffName) : '') + '</div>' + info + '</div></div>' + sw + '</div>' + rkBox + team + pgMsg + meLd + liveStrip + meCard + sugg +
     (g && !g.last && !all.length && !ldC && !msgErr && S.progBusy === g.gid ? impCard(g) /* (its first nights coming in, an import really running: a loading card, not an empty page) */
       : all.length && g && g.kind === 'char' ? chpHtml(g, list, order, diffName) /* (a character's own page: their summary and every pull) */
@@ -32762,7 +32940,7 @@ function renderProgress(msg, msgErr) {
   if (you && you.cls) charRankPanel(you, cur, 'pgRankMe', g.gid);
   // (the tips: not over a pop-up question, and not while a team just added is still bringing in its first nights, when the
   // page is mostly empty and the question can pop up any moment; they come once it's answered and the nights are in)
-  if (!$('#pgMeD') && !$('#pgSuggD') && !(g && !g.last)) pageTips('team');
+  if (!$('#pgMeD') && !$('#pgSuggD') && !(g && !g.last)) pageTips($('#main .home.hd') ? 'home' : 'team');
   // (new nights: checked by themselves when the page opens, if not in the last 10 minutes; the line under the name says when)
   if (g && S.progBusy !== g.gid) autoCheck(g);
   // (rename: your own name for it, shown everywhere; an empty name goes back to its Warcraft Logs name)
@@ -32797,7 +32975,7 @@ function renderProgress(msg, msgErr) {
   });
   // (Welcome Back! (your note, Oct 19): your own team's page opens as My Page, the same layout as the tab)
   const homeT = !inTab && g ? homeTarget() : null;
-  if (inTab || (homeT && homeT.gid === g.gid)) { if (!inTab) { const pg = ROOT.querySelector('.home.prog'); if (pg) pg.classList.add('pg-intab'); } myPageInTab(ROOT, g); }
+  if (hdOn) hdBind(ROOT); else if (inTab || (homeT && homeT.gid === g.gid)) { if (!inTab) { const pg = ROOT.querySelector('.home.prog'); if (pg) pg.classList.add('pg-intab'); } myPageInTab(ROOT, g); }
 }
 $('#brandHome').onclick = () => home();
 // Your teams, in the top bar on every page: a menu of your teams and your character (each with how far it is; the one

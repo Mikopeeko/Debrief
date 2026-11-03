@@ -394,6 +394,22 @@ ROUTES['/api/curves'] = { age: 1800, v: (p) => { const e = parseInt(p.get('e'), 
   run: async (env, v) => ({ key: v.e + ':' + v.d, recs: (await env.DEBRIEF_KV.get('curve-raw:' + v.e + ':' + v.d, 'json')) || [] }) };
 ROUTES['/api/rates'] = { age: 1800, v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10); return e > 0 && e < 1e6 && [3, 4, 5].includes(d) ? { e, d } : null; },
   run: async (env, v) => ({ key: v.e + ':' + v.d, recs: (await env.DEBRIEF_KV.get('rate-raw:' + v.e + ':' + v.d, 'json')) || [] }) };
+// (Raider.IO for Home's Mythic+ (Nov 3, the studio's home-redesign-brief.md): each raider's season score and its colour, item level, spec, recent keys,
+// this week's best and the season's best, by name and realm. One request for the whole team; each character kept an hour, shared by every team it's on.
+// Raider.IO not knowing a character: { none } (shown as "—"); a Raider.IO error isn't kept)
+const rioTrim = (j, n, s) => { const sc = (((j.mythic_plus_scores_by_season || [])[0] || {}).segments || {}).all || {}, run = (x) => ({ d: x.dungeon || '', l: x.mythic_level | 0, at: Date.parse(x.completed_at) || 0, up: x.num_keystone_upgrades | 0 });
+  return { n: j.name || n, s, cls: j.class || '', spec: j.active_spec_name || '', role: j.active_spec_role || '', ilvl: (j.gear && j.gear.item_level_equipped) || null, score: sc.score != null ? Math.round(sc.score) : null, col: sc.color || '',
+    recent: (j.mythic_plus_recent_runs || []).slice(0, 10).map(run), week: (j.mythic_plus_weekly_highest_level_runs || []).slice(0, 10).map(run), best: (j.mythic_plus_best_runs || []).slice(0, 3).map(run) }; };
+async function rioOne(r, s, n) { let res; try { res = await fetch('https://raider.io/api/v1/characters/profile?region=' + r + '&realm=' + encodeURIComponent(s) + '&name=' + encodeURIComponent(n) + '&fields=' + encodeURIComponent('mythic_plus_scores_by_season:current,mythic_plus_recent_runs,mythic_plus_weekly_highest_level_runs,mythic_plus_best_runs,gear'), { headers: { 'User-Agent': 'Debrief (https://debriefme.io)', Accept: 'application/json' } }); } catch (e) { return { d: { n, s, none: true }, keep: false }; }
+  if (res.status === 400 || res.status === 404) return { d: { n, s, none: true }, keep: true }; if (!res.ok) return { d: { n, s, none: true }, keep: false };
+  try { return { d: rioTrim(await res.json(), n, s), keep: true }; } catch (e) { return { d: { n, s, none: true }, keep: false }; } }
+ROUTES['/api/rioteam'] = { age: 3600,
+  v: (p) => { const r = String(p.get('r') || '').toLowerCase(), c = String(p.get('c') || '').split(',').map((x) => x.split('|')).filter((x) => x.length === 2 && x[0] && x[1] && x[0].length < 40 && x[1].length < 60).slice(0, 40); return /^(us|eu|kr|tw)$/.test(r) && c.length ? { r, c } : null; },
+  run: async (env, v) => { const cache = caches.default, out = [];
+    for (const [n, s] of v.c) { const key = new Request('https://rio.debriefme.io/v1/' + v.r + '/' + encodeURIComponent(s.toLowerCase()) + '/' + encodeURIComponent(n.toLowerCase())), hit = await cache.match(key);
+      if (hit) { out.push(await hit.json()); continue; } const o = await rioOne(v.r, s, n); out.push(o.d);
+      if (o.keep) await cache.put(key, new Response(JSON.stringify(o.d), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=3600' } })); }
+    return { r: v.r, chars: out }; } };
 ROUTES['/api/pace'] = { age: 1800,
   v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10); return e > 0 && e < 1e6 && [3, 4, 5].includes(d) ? { e, d } : null; },
   run: async (env, v) => { const key = v.e + ':' + v.d, raw = await env.DEBRIEF_KV.get('pace-raw:' + key, 'json');
