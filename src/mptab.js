@@ -2267,8 +2267,8 @@ const mpSkHow = (s) => { const g = s.hid && s.hid.sp ? s.hid.sp : s.hid ? s.hid.
   return g ? esc(g) + (c.length ? ', then ' + mpAnd(c) : '') : c.length ? mpAnd(c).replace(/^an? /, (m) => m.toUpperCase()) : ''; };
 const mpSkTip = (RR, s) => { const t = MP_SK_TAG[s.tag]; return '<b>' + mpSkTitle(RR, s) + '</b>' + (s.hid ? ' · hidden for ' + mpMM(s.hid.e - s.hid.s) : '') + '<br>' + mpSkHow(s) + '<br>' + t[0] + (s.died.length ? ': ' + plural(s.died.length, 'death') : '') + '<br><span class="sub">Click for how it went</span>'; };
 // (the pull list's row, between the two pulls it sat between)
-const mpSkLi = (RR, s, n, fl) => '<li class="mpt-skl" data-pi="s' + n + '"' + (fl >= 0 ? ' data-fl="' + fl + '"' : '') + ' data-lab="' + mpSkTitle(RR, s) + '" data-after="' + s.i + '" tabindex="0"' + mpT1(mpSkTip(RR, s)) + '>' +
-  '<span class="mpt-nb mpt-skb">⤼</span><span class="mpt-pnm">' + mpSkTitle(RR, s, true) + '</span><span class="mpt-pl2">' + (s.hid ? '<span class="mpt-ptm">' + mpMM(s.hid.e - s.hid.s) + '</span>' : '') + '<span class="mpt-pfc">' + esc(mpSkShort(s)) + '</span><span class="mpt-mic">' + (s.died.length ? '<i class="d">☠</i>' : '') + '</span></span></li>';
+const mpSkLi = (RR, s, n, fl) => '<li class="mpt-skl" data-pi="s' + n + '"' + (fl >= 0 ? ' data-fl="' + fl + '"' : '') + ' data-lab="' + mpSkTitle(RR, s) + '" data-after="' + s.i + '" tabindex="0"' + mpT1(mpSkTip(RR, s)) + ' aria-label="' + mpSkTitle(RR, s) + '">' +
+  '<span class="mpt-nb mpt-skb">⤼</span><span class="mpt-pfc">' + esc(s.cc[0] ? s.cc[0].sp : s.hid && s.hid.sp ? (mpLc(s.hid.sp) === 'shroud of concealment' ? 'Shroud' : s.hid.sp.replace(/^Mass /, '')) : 'Invisible') + '</span><span class="mpt-mic">' + (s.died.length ? '<i class="d">☠</i>' : '') + '</span></li>';
 // (on one floor of the map: the walk in (dotted), the hidden walk (dashed, with a soft band), the tool's icon with "Skip · 0:15", each control's icon on its
 // enemy, where an enemy came in (a small dot) and ☠ where someone died. Marks keep their size when the map zooms, as the others do)
 function mpSkSvg(RR, f, k, px) {
@@ -2502,10 +2502,10 @@ function mpMapHtml(R, F, tl) {
       '<p class="mpt-mtl">' + (tags.join(' ') || '<span class="mpt-t2g">✓ Clean</span>') + '</p>' + next + pack + plan + play + kicks + dps + (run === 'you' && MP_ROT_ON && !MP_RK_OLD ? fold('r', '<b>Rotation</b>', '<p class="mpt-mcf">Checking the rotation…</p>', ' data-rwp="' + i + '"') : '') + died; };
   // (the pulls as tiles under the map (Flex, Nov 2: "any way to fill the dead space? Maybe the pull counter horizontal across the bottom somehow?"): the
   // badge over two lines, the name, then the time, the % and the icons; the full name, "chained" and "no spot" in the hover)
-  const list0 = (Q) => '<ol class="mpt-mfl">' + Q.map((q) => { const pct = q.add ? pc(q.add) : 0, th = (q.p.through || []).length;
-    return '<li data-pi="' + q.i + '"' + (q.fl >= 0 ? ' data-fl="' + q.fl + '"' : '') + ' data-lab="' + esc(q.p.boss ? q.p.boss : 'Pull ' + mpNo(q.RR, q.p.n)) + '" tabindex="0"' + mpT1(tip(q)) + '>' + badge(q) + '<span class="mpt-pnm">' + nm(q) + '</span>' +
-      '<span class="mpt-pl2"><span class="mpt-ptm">' + mpMM(q.p.dur) + '</span><span class="mpt-pfc">' + (pct ? '+' + fmt(pct) : '—') + '</span>' +
-      '<span class="mpt-mic">' + (q.p.deaths.some((d) => !d.gap) ? '<i class="d">☠</i>' : '') + (th ? '<i class="k">!' + th + '</i>' : '') + (q.lust ? '<i class="l">⚡</i>' : '') + '</span></span></li>'; }).join('') + '</ol>';
+  // (one thin line a tile (Nov 3): the badge, the time, the icons; the name and the forces are in the hover)
+  const list0 = (Q) => '<ol class="mpt-mfl">' + Q.map((q) => { const th = (q.p.through || []).length;
+    return '<li data-pi="' + q.i + '"' + (q.fl >= 0 ? ' data-fl="' + q.fl + '"' : '') + ' data-lab="' + esc(q.p.boss ? q.p.boss : 'Pull ' + mpNo(q.RR, q.p.n)) + '" tabindex="0"' + mpT1(tip(q)) + ' aria-label="' + esc(q.p.boss ? q.p.boss : 'Pull ' + mpNo(q.RR, q.p.n)) + '">' + badge(q) + '<span class="mpt-ptm">' + mpMM(q.p.dur) + '</span>' +
+      '<span class="mpt-mic">' + (q.lust ? '<i class="l">⚡</i>' : '') + (q.p.deaths.some((d) => !d.gap) ? '<i class="d">☠</i>' : '') + (th ? '<i class="k">!' + th + '</i>' : '') + '</span></li>'; }).join('') + '</ol>';
   // (a skip's row sits between the two pulls it was between)
   const list = (Q) => { let h = list0(Q); const RR = Q[0] && Q[0].RR; (RR && RR.skips || []).forEach((sk, n) => { const li = mpSkLi(RR, sk, n, sk.at ? fIdx(sk.at[2]) : -1), at = h.indexOf('<li data-pi="' + sk.i + '"'); h = at >= 0 ? h.slice(0, at) + li + h.slice(at) : h.replace('</ol>', li + '</ol>'); }); return h; };
   const f0 = Math.max(0, floors.findIndex((x) => x.us[0].length));
@@ -3108,7 +3108,7 @@ html:not([data-theme]) .mpt .mpt-chap{background-image:linear-gradient(rgba(255,
 .mpt-mdt .mpt-mk.pp-off,.mpt-mdt.no-a .mk-avoid,.mpt-mdt.no-d .mk-death,.mpt-mdt.no-k .mk-kick,.mpt-mdt.no-k .mk-bad,.mpt-mdt.no-l .mk-lust,.mpt-mdt.no-w .mk-wait{display:none}
 /* (pack skips (Nov 3): violet, the stealth colour; a dashed tile between the pulls; the card's time list) */
 .mpt-mdt.no-s .mpt-skg{display:none} .mpt-skg{cursor:pointer} .mpt-skg:hover .mpt-skh{stroke-width:3.4} .mpt .mpt-mchip-s i{color:#c39bff}
-.mpt-nb.mpt-skb{border-color:#c39bff;color:#c39bff} .mpt-mfl li.mpt-skl{border-style:dashed;border-color:rgba(195,155,255,.55)} .mpt-mfl li.mpt-skl .mpt-pnm{color:#d9c6ff} .mpt-mfl li.mpt-skl .mpt-pfc{color:var(--muted)}
+.mpt-nb.mpt-skb{border-color:#c39bff;color:#c39bff} .mpt-mfl li.mpt-skl{border-style:dashed;border-color:rgba(195,155,255,.55)} .mpt-mfl li.mpt-skl .mpt-pnm{color:#d9c6ff} .mpt-mfl li.mpt-skl .mpt-pfc{color:#d9c6ff}
 .mpt-mfl li.mpt-skl.hot,.mpt-mfl li.mpt-skl:focus-visible{border-color:#c39bff;box-shadow:inset 0 0 0 1px #c39bff;background:rgba(195,155,255,.07)}
 .mpt-skr{display:grid;grid-template-columns:40px 20px minmax(0,1fr);gap:6px 8px;align-items:center;margin:8px 0 6px;font:500 13px/1.35 var(--body);color:var(--mpt-soft)} .mpt-skr .t{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12.5px}
 .mpt-skr .dot{width:7px;height:7px;border-radius:50%;background:#59616b;margin:0 auto} .mpt-skr .m{color:var(--muted)} .mpt-skr b{color:var(--text)} .mpt-skr .icw{width:20px;height:20px}
@@ -3135,9 +3135,10 @@ html:not([data-theme]) .mpt .mpt-chap{background-image:linear-gradient(rgba(255,
 .mpt-mkr{display:grid;grid-template-columns:82px minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:baseline;font-size:12.5px;margin:2px 0} .mpt-mkr > span{min-width:0;overflow-wrap:break-word} .mpt-mkr > span[data-tt]{cursor:help}
 .mpt-mkr > span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .mpt .mpt-mkh{margin:2px 0 3px;font:700 10px var(--head);letter-spacing:.4px;text-transform:uppercase;color:var(--faint)}
 @media (max-width:700px){ .mpt .mpt-mlh{grid-template-columns:82px minmax(0,1fr) 44px 96px} }
-.mpt-mfl{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:6px}
-.mpt-mfl li{display:grid;grid-template-columns:24px minmax(0,1fr);align-items:center;column-gap:7px;row-gap:1px;margin:0;padding:5px 7px;border:1px solid var(--line2);border-radius:4px;background:var(--raised);cursor:pointer;min-width:0}
-.mpt-mfl li .mpt-nb{grid-row:1 / 3;width:22px;height:22px;box-sizing:border-box;font-size:12px} .mpt-mfl li .mpt-pnm{font:600 12.5px var(--body)} .mpt-pl2{display:flex;align-items:baseline;gap:7px;min-width:0;white-space:nowrap;font:500 11.5px var(--body)}
+.mpt-mfl{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(max(80px,calc((100% - 28px) / 8)),1fr));gap:4px} /* (Nov 3: one thin line a tile, 8 a row; fewer, never under 80 px, on a narrow screen) */
+.mpt-mfl li{display:flex;align-items:center;gap:5px;height:24px;box-sizing:border-box;margin:0;padding:0 5px 0 2px;border:1px solid var(--line2);border-radius:4px;background:var(--raised);cursor:pointer;min-width:0;overflow:hidden;white-space:nowrap}
+.mpt-mfl li .mpt-nb{flex:none;width:18px;height:18px;box-sizing:border-box;border-width:1.5px;font-size:11px} .mpt-mfl li .mpt-ptm{flex:none;font:600 12.5px var(--body);color:#aeb6bf}
+.mpt-mfl li .mpt-pfc{min-width:0;overflow:hidden;text-overflow:ellipsis;font:600 12.5px var(--body);color:#d9c6ff;text-align:left} .mpt-mfl li .mpt-mic{margin-left:auto;flex:none;font-size:11px} .mpt-mfl li .mpt-mic i:first-child{margin-left:0} .mpt-mfl li .mpt-pnm{font:600 12.5px var(--body)} .mpt-pl2{display:flex;align-items:baseline;gap:7px;min-width:0;white-space:nowrap;font:500 11.5px var(--body)}
 .mpt-pl2 .mpt-ptm{color:#aeb6bf;font-size:11.5px} .mpt-pl2 .mpt-pfc{color:#868f99;font-weight:500;text-align:left} .mpt-pl2 .mpt-mic{margin-left:auto}
 .mpt-mfl li:hover,.mpt-mfl li.pk{border-color:#4a5262} .mpt-mfl li.hot,.mpt-mfl li:focus-visible{outline:0;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);background:rgba(242,196,107,.06)}
 .mpt-mic{white-space:nowrap} .mpt-mic i{font-style:normal;margin-left:4px} .mpt-mic .d{color:#ff8f87} .mpt-mic .k{color:#c39bff;font-weight:700} .mpt-mic .l{color:#ffd166}
@@ -3148,7 +3149,7 @@ html:not([data-theme]) .mpt .mpt-chap{background-image:linear-gradient(rgba(255,
 .mpt-fxgo{margin-left:8px;font:600 12.5px var(--body)!important;color:var(--mpt-you)!important;white-space:nowrap}
 .mpt-chap > .mpt-rpl{margin:0 0 10px}
 @media (max-width:820px){ .mpt-mgrid{grid-template-columns:minmax(0,1fr)} .mpt-mside{min-height:0} .mpt-mside > .mpt-mcard{position:relative;inset:auto} .mpt-mcard{height:auto;min-height:150px} .mpt-mstep span{min-width:110px} }
-@media (max-width:699px){ .mpt-mfl{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))} }
+@media (max-width:699px){ .mpt-mfl{grid-template-columns:repeat(4,minmax(0,1fr))} } /* (4 a row on a phone) */
 .mpf-dgh{border-top:1px solid var(--line)} .mpf-dgh > summary{display:flex;justify-content:space-between;align-items:baseline;gap:2px 12px;flex-wrap:wrap;padding:9px 2px;cursor:pointer;list-style:none}
 .mpf-dgh > summary::-webkit-details-marker{display:none} .mpf-dgh > summary > b{font:700 14.5px var(--body);color:var(--text)} .mpf-dgh > summary > span{font:500 12.5px var(--body)}
 .mpf-dgh .mpf-l{margin:0 0 6px} .mpt .mpf-none{margin:0 0 10px 2px;font:500 12.5px var(--body);color:var(--faint)} .mpt .mpf-showm{margin:0 0 10px 2px;font:600 12.5px var(--body)}
