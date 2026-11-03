@@ -63402,7 +63402,7 @@ function mpHtml(it, R, fx) {
   const bh = {}, behindH = mpBehind(R, C, F, FC, fx, waiting, bh); /* (the map-first round: the map is chapter 2, with the timeline lanes under it) */
   // (layout v3: a band in the key's panel, Your part on the left and Fix these first on the right, shown once; the old chapter below the map is gone)
   const band = mpBand(R, fx, '<p class="mpt-chk' + (behind ? ' mpt-chk-' + behind : '') + '">Fix these first' + (F ? '<span>against a typical fast run</span>' : '') + '</p>' + fixes + behindH);
-  return mpChap('mptC1', 'The key', '', ban + '<div class="mpt-ksum">' + keyLine + stats + mpLastTime(it, R) + '</div>' + band) + mpJumpBar(R, true) + mpChap('mptCM', 'Your key on the map', 'every pull, and where the mistakes were', mpRPFold(R, F, mpMapHtml(R, F, bh.tl))) + (MP_ROT_ON ? (MP_RK_OLD ? mpChap('mptCR', 'Rotation', 'single target and AoE, over the whole key', mpRkHtml(R)) : mpChap('mptCR', 'Rotation', 'the whole run', mpRwHtml(R))) : '') +
+  return mpChap('mptC1', 'The key', '', ban + '<div class="mpt-ksum">' + keyLine + stats + mpLastTime(it, R) + '</div>' + band) + mpJumpBar(R, true) + mpChap('mptCM', 'Your key on the map', 'every pull, and where the mistakes were', mpRPFold(R, F, mpMapHtml(R, F, bh.tl), waiting)) + (MP_ROT_ON ? (MP_RK_OLD ? mpChap('mptCR', 'Rotation', 'single target and AoE, over the whole key', mpRkHtml(R)) : mpChap('mptCR', 'Rotation', 'the whole run', mpRwHtml(R))) : '') +
     mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpGroup(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', 'for your next key', mpKnowHtml(R, true));
 }
 // (five chapters (Nov 2, the Design studio's chapters.md, Flex: "the page is lacking depth. Maybe find a way to separate the information so its
@@ -63411,16 +63411,23 @@ function mpHtml(it, R, fx) {
 const mpChap = (id, k, sub, body, dot) => (body ? '<div class="mpt-chap" role="region" aria-label="' + k + '" id="' + id + '"><p class="mpt-chk' + (dot ? ' mpt-chk-' + dot : '') + '">' + k + (sub ? '<span>' + sub + '</span>' : '') + '</p>' + body + '</div>' : ''); /* (a div: the site's type scale resizes text in a section inside a section) */
 // (the jump bar between chapter 1 and 2 (the Design studio's round 4, by chapter since Nov 2): it sticks under the site's tab bar while you scroll)
 // (chapter 3 in the quick read: one sentence, how many packs and pulls and where you reached 100%, then the route and the pulls a click away)
-function mpRPFold(R, F, map) {
+function mpRPFold(R, F, map, wait) {
   // (the map's first line, faint (the studio's tidy-pass.md item 6): your pulls and how many chained, the fast run's, where you reached 100%, and where
   // the count ended, yours and the fast run's)
-  const rt = R.route && R.route.ok ? R.route : null, tr = R.pulls.filter((p) => !p.boss), ch = tr.length - mpChainN(R, tr), bits = [plural(tr.length, 'pull') + (ch ? ' (' + ch + ' chained)' : '')];
-  if (F) bits.push('fast run ' + mpPacks(F, true));
+  // (the key numbers in colour (the studio, Nov 3): the pulls when you took more, the end when you ended lower)
+  const nF = F ? F.pulls.filter((p) => !p.boss).length : 0, cl = (t, on) => (on ? '<span class="mpt-rpa">' + t + '</span>' : t);
+  const rt = R.route && R.route.ok ? R.route : null, tr = R.pulls.filter((p) => !p.boss), ch = tr.length - mpChainN(R, tr), more = !!F && tr.length > nF, bits = [cl(plural(tr.length, 'pull'), more) + (ch ? ' (' + ch + ' chained)' : '')];
+  if (F) bits.push('fast run ' + cl(mpPacks(F, true), more));
   if (rt) { let t = 0; for (let k = 0; k < rt.pulls.length; k++) { t += rt.pulls[k].add; if (t >= rt.full * 0.9995) { const nx = R.pulls.slice(k + 1).find((p) => p.boss), pv = R.pulls.slice(0, k).reverse().find((p) => p.boss);
         bits.push('100% ' + (R.pulls[k].boss ? 'at ' + esc(R.pulls[k].boss) : nx ? 'before ' + esc(nx.boss) : pv ? 'after ' + esc(pv.boss) : 'in pack ' + R.pulls[k].n)); break; } }
     const f1 = (v) => (Math.round(v * 10) / 10).toFixed(1).replace(/\.0$/, '') + '%', fr = F && F.route && F.route.ok && F.route.full === rt.full ? F.route : null;
-    if (R.run.timeMs && !R.run.left) bits.push('ended at ' + f1(100 * rt.total / rt.full) + (fr ? ' (fast run ' + f1(100 * fr.total / fr.full) + ')' : '')); }
-  return '<p class="mpt-rpl mpt-meta">' + bits.join(' · ') + '</p>' + (map || '');
+    const lo = !!fr && rt.total / rt.full < fr.total / fr.full - 0.0005;
+    if (R.run.timeMs && !R.run.left) bits.push('ended at ' + cl(f1(100 * rt.total / rt.full), lo) + (fr ? ' (fast run ' + cl(f1(100 * fr.total / fr.full), lo) + ')' : '')); }
+  // (the headline, as "Where your 5:28 went" (the studio, Nov 3: why that section never gets missed and this one does): the pulls against the fast run's,
+  // amber when you took more, green when fewer; a placeholder while the fast run loads)
+  const d = tr.length - nF, hd = F ? (d > 0 ? 'You took <b class="a">' + plural(d, 'more pull') + '</b> than the fast run' : d < 0 ? 'You took <b class="g">' + plural(-d, 'fewer pull') + '</b> than the fast run' : '<b>The same number of pulls</b> as the fast run')
+    : wait ? mpShimT('You took 3 more pulls than the fast run') : '';
+  return (hd ? '<div class="mpt-fxh mpt-mph"><h2' + (F ? ' class="' + mpFi().trim() + '"' : '') + '>' + hd + '</h2></div>' : '') + '<p class="mpt-rpl mpt-meta">' + bits.join(' · ') + '</p>' + (map || '');
 }
 // (the band: Your part beside Fix these first (layout v3); Your part alone when the key has no timer)
 const mpBand = (R, fx, right) => '<div class="mpt-band' + (right ? '' : ' mpt-band1') + '" id="mptBand"><div class="mpt-bl">' + mpPartHtml(R, fx, MP.pp) + '</div>' + (right ? '<div class="mpt-br">' + right + '</div>' : '') + '</div>';
@@ -64949,16 +64956,17 @@ function mpMapHtml(R, F, tl) {
       '<div class="mpt-mside"><div class="mpt-mcard"><p class="mpt-mc0">Pick a pull.</p><div class="mpt-mcx" hidden></div>' + Q.map((q) => '<div class="mpt-mc" data-pi="' + q.i + '" hidden>' + card(q, v) + '</div>').join('') + '</div></div></div></div>'; }).join('');
   // (the map's controls in one bar (Nov 2, the studio's tidy-pass.md, Flex: "this section could be organized much better"): You and Fast run as slim
   // tabs, the player as a select, the stepper on the right; the floors and the layers sit on the map)
-  // (each tab says what it shows and, on the fast run's, how many fewer pulls it took (Flex, Nov 3: "this section is easy to get overlooked"; "try 2 first"))
-  const nP = (RR) => RR.pulls.filter((p) => !p.boss).length, nY = nP(R);
-  const tg = runs.length > 1 ? '<div class="mpt-mtg" role="group" aria-label="Whose pulls">' + runs.map(([v, RR], ri) => '<button type="button" data-mdtv="' + v + '" aria-pressed="' + !ri + '"' + (ri ? '' : ' class="on"') + '>' + (v === 'you' ? 'Your route' : 'Fast run’s route') + ' · ' + plural(nP(RR), 'pull') + (v !== 'you' && nP(RR) < nY ? ' · <b class="mpt-mtgd">' + (nY - nP(RR)) + ' fewer</b>' : '') + '</button>').join('') + '</div>' : '';
+  // (each tab says what it shows (Flex, Nov 3: "this section is easy to get overlooked"; "try 2 first"); the headline above says how many more or fewer)
+  const nP = (RR) => RR.pulls.filter((p) => !p.boss).length;
+  const tg = runs.length > 1 ? '<div class="mpt-mtg" role="group" aria-label="Whose pulls">' + runs.map(([v, RR], ri) => '<button type="button" data-mdtv="' + v + '" aria-pressed="' + !ri + '"' + (ri ? '' : ' class="on"') + '>' + (v === 'you' ? 'Your route' : 'Fast run’s route') + ' · ' + plural(nP(RR), 'pull') + '</button>').join('') + '</div>' : '';
   const step = '<div class="mpt-mstep"><button type="button" data-mstep="-1" aria-label="Previous pull">◀</button><span>Pick a pull</span><button type="button" data-mstep="1" aria-label="Next pull">▶</button></div>';
   const pl = (R.people || []).slice().sort(mpByRole), pp = pl.length ? '<label class="mpt-ppl">Player <select class="mpt-ppsel" data-mppsel aria-label="Show a player"><option value="">Everyone</option>' + pl.map((x) => '<option value="' + esc(x.name) + '" style="color:' + mpCC(x.cls) + '">' + esc(x.name) + '</option>').join('') + '</select></label>' : '';
   return '<div class="mpt-mdt no-a"><div class="mpt-mbar">' + tg + pp + step + '</div>' + views + strip + '</div>'; }
 // (picking: a click or tap on a shape, tag, mark, list row, timeline block or ◀ ▶. The map goes to the pull's floor, the pull lights up and the
 // rest dim, the card shows it; the pick stays when the tab redraws. A hover only lights up (MP.peek), never moving the card or the floor)
 const mpMdtFloor = (box, j) => { if (!box || j == null || j === '') return; j = String(j); if (MP.mz && MP.mz.f !== j) { MP.mz = { f: j, z: 1, c: null }; mpZoomBtns(box, 1); } box.querySelectorAll('[data-mdtf]').forEach((x) => x.classList.toggle('on', x.dataset.mdtf === j)); box.querySelectorAll('.mpt-mdtm').forEach((m) => { m.hidden = m.dataset.f !== j; }); mpZoom(box); }; /* (the new floor's marks at the map's size) */
-function mpMapView(box, v) { box.querySelectorAll('[data-mdtv]').forEach((x) => { x.classList.toggle('on', x.dataset.mdtv === v); x.setAttribute('aria-pressed', String(x.dataset.mdtv === v)); }); box.querySelectorAll('.mpt-mdtv').forEach((x) => { x.hidden = x.dataset.v !== v; }); }
+function mpMapView(box, v) { if (v === 'you' && MP.pickLag) setTimeout(() => { if (MP.pickLag && MP.pick && MP.pick.auto) { MP.pickLag = false; mpMapAutoGo(); } }, 0); /* (an auto pick that waited while You was hidden) */
+  box.querySelectorAll('[data-mdtv]').forEach((x) => { x.classList.toggle('on', x.dataset.mdtv === v); x.setAttribute('aria-pressed', String(x.dataset.mdtv === v)); }); box.querySelectorAll('.mpt-mdtv').forEach((x) => { x.hidden = x.dataset.v !== v; }); }
 function mpMapPick(v, ids, sum, auto) { const box = document.querySelector('.mpt-mdt'); if (!box) return; const view = box.querySelector('.mpt-mdtv[data-v="' + v + '"]'); if (!view) return;
   box.querySelectorAll('.mpt-mdtv').forEach((x) => x.classList.toggle('apick', !!auto && x === view)); /* ("Most mistakes" only on the auto pick) */
   if (view.hidden) mpMapView(box, v); ids = [].concat(ids).map(String); const one = ids.length === 1 && !sum;
@@ -64979,7 +64987,8 @@ function mpMapAuto(R) { const name = MP.pp || '', who = (w) => !name || w === na
   R.pulls.forEach((q, i) => { let n = 0; for (const d of q.deaths || []) if (who(d.who)) n++; for (const x of q.through || []) if (who(x.who)) n++; for (const a of q.avoid || []) if (who(a.who)) n += a.n || 0;
     for (const [nm, r] of Object.entries(q.rot || {})) if (who(nm)) n += ((r && r.fix) || []).filter((f2) => f2[0] === 'bad').length; if (n > bn) { bn = n; best = i; } });
   return best; }
-function mpMapAutoGo(now, quiet) { const it = MP.item, R = it && MP.R[mpK(it)], box = document.querySelector('.mpt-mdt'), view = box && box.querySelector('.mpt-mdtv[data-v="you"]'); if (!R || !view || view.hidden) return false;
+function mpMapAutoGo(now, quiet) { const it = MP.item, R = it && MP.R[mpK(it)], box = document.querySelector('.mpt-mdt'), view = box && box.querySelector('.mpt-mdtv[data-v="you"]'); if (!R || !view) return false;
+  if (view.hidden) { MP.pickLag = true; return false; } MP.pickLag = false; /* (Fast run's route open: it picks when You comes back) */
   const i = String(mpMapAuto(R)), p = MP.pick; if (!now && p && p.auto && p.k === mpK(it) && p.ids[0] === i) { p.pp = MP.pp || ''; return true; } /* (the same pull: the card stays put) */
   if (quiet && p && p.auto && p.k === mpK(it) && !document.hidden) { const r = view.querySelector('.mpt-mcard').getBoundingClientRect(); if (r.height && r.bottom > 0 && r.top < innerHeight) return true; } /* (the rotation arriving: a card on screen stays on the pull being read (the studio, Nov 3: "no jumps under someone's eyes")) */
   MP.zNow = !!now; try { mpMapPick('you', [i], '', true); } finally { MP.zNow = false; } return true; }
@@ -65600,7 +65609,9 @@ body.mpz-wh .spc-tt{display:none !important}
 /* (the map's controls: one bar; the floors and the layers on the map) */
 .mpt-mbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 22px;margin:0 0 10px;border-bottom:1px solid #222930}
 .mpt-mbar .mpt-mtg{display:flex;gap:18px;border:0;border-radius:0;overflow:visible} .mpt .mpt-mbar .mpt-mtg button{height:auto;margin:0 0 -1px;padding:8px 0;border:0;border-bottom:2px solid transparent;background:none;color:var(--muted);font:600 13.5px var(--body)} .mpt .mpt-mbar .mpt-mtg button + button{border-left:0}
-.mpt .mpt-mbar .mpt-mtg button.on{background:none;color:var(--text);border-bottom-color:var(--gold)} .mpt .mpt-mbar .mpt-mtg button b.mpt-mtgd{color:#f2c46b;font-weight:700}
+.mpt .mpt-mbar .mpt-mtg button.on{background:none;color:var(--text);border-bottom-color:var(--gold)} .mpt .mpt-mbar .mpt-mtg button:not(.on):hover{color:var(--text)}
+/* (the map's headline (Nov 3): as "Where your 5:28 went" (its size in the band), the sentence plain, its key words amber or green; the grey line's key numbers in amber) */
+.mpt .mpt-mph{margin:2px 0 4px} .mpt .mpt-mph h2{font-size:15px;color:var(--text)} .mpt .mpt-mph h2 b{font-weight:700;color:var(--text)} .mpt .mpt-mph h2 b.a{color:#f2c46b} .mpt .mpt-mph h2 b.g{color:#7ee08f} .mpt .mpt-meta .mpt-rpa{color:#f2c46b}
 .mpt-ppl{display:inline-flex;align-items:center;gap:8px;font:600 12.5px var(--body);color:var(--faint)} .mpt .mpt-ppsel{appearance:none;-webkit-appearance:none;height:26px;margin:0;padding:0 18px 0 2px;border:0;border-bottom:1px solid var(--line2);border-radius:0;background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0h10L5 6z' fill='%23868f99'/%3E%3C/svg%3E") no-repeat right 3px center;color:var(--text);font:600 13px var(--body);cursor:pointer}
 .mpt .mpt-ppsel option{background:#14171d} .mpt-mbar .mpt-mstep{margin-left:auto;padding:4px 0}
 .mpt-mwrap .mpt-flb{position:absolute;left:8px;top:8px;z-index:3;display:flex;flex-wrap:wrap;gap:2px;max-width:calc(100% - 150px);padding:3px;border-radius:6px;background:rgba(10,12,16,.78)}
