@@ -245,8 +245,9 @@ function build(text, E) {
       else { const b = o.ebuffs[x[3]] || (o.ebuffs[x[3]] = { on: 0, removed: 0 }); b.on++; } }
     /* (what killed them: the hit with overkill in the 1.5 s before (the killing blow, as the raid engine's last hit); else the biggest of the last 5 s.
        Before (Nov 3, the studio's audit): always the biggest after overkill, so a killing swing that was nearly all overkill lost to an earlier spell) */
-    else if (x[1] === 'died') { const l = (recent.get(x[2]) || []).filter((h) => x[0] - h[0] < 5), kb = l.filter((h) => h[4] > 0 && x[0] - h[0] <= 1.5).pop(); const top = kb || l.slice().sort((a, b) => b[3] - a[3])[0];
-      o.deaths.push({ t: x[0], who: x[2], to: top ? top[1] : 'unknown', from: top ? top[2] : '', defs: out.flatMap((q) => q.defs).filter((d) => d.who === x[2] && x[0] - d.t < 30).length, ...(x[0] > o.e + 2 ? { gap: true } : {}) }); } /* (gap: after the pull had ended, before the next one (a skip, a walk): counted for the key, not for the pull) */
+    else if (x[1] === 'died') { const l = (recent.get(x[2]) || []).filter((h) => x[0] - h[0] < 5), kb = l.filter((h) => h[4] > 0 && x[0] - h[0] <= 1.5).pop(), big = l.slice().sort((a, b) => b[3] - a[3])[0], top = kb || big;
+      o.deaths.push({ t: x[0], who: x[2], to: top ? top[1] : 'unknown', from: top ? top[2] : '', defs: out.flatMap((q) => q.defs).filter((d) => d.who === x[2] && x[0] - d.t < 30).length, ...(x[0] > o.e + 2 ? { gap: true } : {}),
+        ...(big && top && (big[1] !== top[1] || big[2] !== top[2]) ? { big: big[1], bigFrom: big[2] } : {}) }); } /* (big: the biggest hit, for coaching, when it isn't the killing blow (Nov 3)) */ /* (gap: after the pull had ended, before the next one (a skip, a walk): counted for the key, not for the pull) */
   }
   const sorted = casts.slice().sort((a, b) => a.t - b.t);
   for (const c of sorted) {
