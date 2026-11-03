@@ -32597,8 +32597,9 @@ function hdRaiders(g) { const tm = teamMembers(g), mem = new Map(tm.map((m) => [
   return names.slice(0, 30).map((n) => { const m = mem.get(n) || {}; return { name: String(n).split('-')[0], cls: m.cls || null, srv: m.srv || hdSrv(g) }; }); }
 // (Raider.IO for a team: asked once an hour; the page draws again when it comes)
 const HD_RIO = new Map();
-function hdRio(g, ready) { const o = HD_RIO.get(g.gid); if (o && (o.p || Date.now() - o.at < 3600e3)) return o.d;
-  const R = hdRaiders(g), x = { at: Date.now(), d: o ? o.d : null, p: null }; if (!R.length) { x.d = { chars: [] }; HD_RIO.set(g.gid, x); return x.d; }
+function hdRio(g, ready) { const R = hdRaiders(g), sig = R.map((m) => m.name + '|' + m.srv).join(','), o = HD_RIO.get(g.gid); if (o && o.sig === sig && (o.p || Date.now() - o.at < 3600e3)) return o.d;
+  // (the same raiders: kept an hour; new ones (nights still coming in): asked again, the last answer showing meanwhile)
+  const x = { at: Date.now(), d: o ? o.d : null, p: null, sig }; if (!R.length) { x.d = { chars: [] }; HD_RIO.set(g.gid, x); return x.d; }
   x.p = WCL.rioTeam(hdRegion(g), R.map((m) => [m.name, m.srv])).then((d) => { x.d = d || { chars: [] }; x.p = null; x.at = Date.now(); ready(); })
     .catch(() => { x.d = x.d || { chars: [], err: true }; x.p = null; x.at = Date.now() - 3300e3; ready(); }); /* (an error: asked again in 5 minutes) */
   HD_RIO.set(g.gid, x); return x.d; }
